@@ -40,6 +40,9 @@ namespace Anki
       const s32 imageWidth = image.get_size(1);
       const s32 imageStride = image.get_stride();
 
+      edgeLists.imageHeight = imageHeight;
+      edgeLists.imageWidth = imageWidth;
+
       // TODO: won't detect an edge on the last horizontal (for x search) or vertical (for y search)
       //       pixel. Is there a fast way to do this?
 

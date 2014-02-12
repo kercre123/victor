@@ -122,25 +122,9 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerBinary_ComputeIndexLimitsVertical)
   {
     PUSH_MEMORY_STACK(scratch_CMX);
 
-    const Result result = lktb.UpdateTrackOnce(nextImage,
+    const Result result = lktb.UpdateTrack(nextImage,
       edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, edgeDetection_maxDetectionsPerType,
-      matching_maxDistance, matching_maxCorrespondences, TemplateTracker::TRANSFORM_TRANSLATION, scratch_CMX);
-
-    ASSERT_TRUE(result == RESULT_OK);
-
-    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch_CMX);
-    transform_groundTruth[0][2] = 2.3691f;
-    transform_groundTruth[1][2] = -3.5082f;
-
-    ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(lktb.get_transformation().get_homography(), transform_groundTruth, .01, .01));
-  }
-
-  {
-    PUSH_MEMORY_STACK(scratch_CMX);
-
-    const Result result = lktb.UpdateTrackOnce(nextImage,
-      edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, edgeDetection_maxDetectionsPerType,
-      matching_maxDistance, matching_maxCorrespondences, TemplateTracker::TRANSFORM_PROJECTIVE, scratch_CMX);
+      matching_maxDistance, matching_maxCorrespondences, scratch_CMX);
 
     ASSERT_TRUE(result == RESULT_OK);
 

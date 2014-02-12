@@ -2032,24 +2032,12 @@ namespace Anki
         return transformation;
       }
 
-      Result LucasKanadeTrackerBinary::UpdateTrackOnce(
+      Result LucasKanadeTrackerBinary::UpdateTrack(
         const Array<u8> &nextImage,
         const u8 edgeDetection_grayvalueThreshold, const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType,
         const s32 matching_maxDistance, const s32 matching_maxCorrespondences,
-        const TransformType updateType,
         MemoryStack scratch)
       {
-        Result lastResult;
-
-        const s32 nextImageHeight = nextImage.get_size(0);
-        const s32 nextImageWidth = nextImage.get_size(1);
-
-        AnkiConditionalErrorAndReturnValue(updateType==TRANSFORM_TRANSLATION || updateType == TRANSFORM_PROJECTIVE,
-          RESULT_FAIL_INVALID_PARAMETERS, "LucasKanadeTrackerBinary::UpdateTrackOnce", "Only TRANSFORM_TRANSLATION or TRANSFORM_PROJECTIVE are supported");
-
-        AnkiConditionalErrorAndReturnValue(templateImage.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "LucasKanadeTrackerBinary::UpdateTrackOnce", "nextImage is not valid");
-
         EdgeLists nextImageEdges;
 
         nextImageEdges.xDecreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, scratch);
@@ -2058,12 +2046,45 @@ namespace Anki
         nextImageEdges.yIncreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, scratch);
 
         AnkiConditionalErrorAndReturnValue(nextImageEdges.xDecreasing.IsValid() && nextImageEdges.xIncreasing.IsValid() && nextImageEdges.yDecreasing.IsValid() && nextImageEdges.yIncreasing.IsValid(),
-          RESULT_FAIL_OUT_OF_MEMORY, "LucasKanadeTrackerBinary::UpdateTrackOnce", "Could not allocate local scratch");
+          RESULT_FAIL_OUT_OF_MEMORY, "LucasKanadeTrackerBinary::UpdateTrack", "Could not allocate local scratch");
 
         lastResult = DetectBlurredEdges(nextImage, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, nextImageEdges);
 
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
-          lastResult, "LucasKanadeTrackerBinary::UpdateTrackOnce", "DetectBlurredEdge failed");
+          lastResult, "LucasKanadeTrackerBinary::UpdateTrack", "DetectBlurredEdge failed");
+
+        lastResult = this->IterativelyRefineTrack(
+          nextImageEdges,
+          matching_maxDistance, matching_maxCorrespondences,
+          TRANSFORM_TRANSLATION, scratch);
+
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+          lastResult, "LucasKanadeTrackerBinary::UpdateTrack", "TRANSFORM_TRANSLATION failed");
+
+        lastResult = this->IterativelyRefineTrack(
+          nextImageEdges,
+          matching_maxDistance, matching_maxCorrespondences,
+          TRANSFORM_PROJECTIVE, scratch);
+
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+          lastResult, "LucasKanadeTrackerBinary::UpdateTrack", "TRANSFORM_PROJECTIVE failed");
+
+        return RESULT_OK;
+      }
+
+      Result LucasKanadeTrackerBinary::IterativelyRefineTrack(
+        const EdgeLists &nextImageEdges,
+        const s32 matching_maxDistance, const s32 matching_maxCorrespondences,
+        const TransformType updateType,
+        MemoryStack scratch)
+      {
+        Result lastResult;
+
+        AnkiConditionalErrorAndReturnValue(updateType==TRANSFORM_TRANSLATION || updateType == TRANSFORM_PROJECTIVE,
+          RESULT_FAIL_INVALID_PARAMETERS, "LucasKanadeTrackerBinary::IterativelyRefineTrack", "Only TRANSFORM_TRANSLATION or TRANSFORM_PROJECTIVE are supported");
+
+        AnkiConditionalErrorAndReturnValue(nextImageEdges.xDecreasing.IsValid() && nextImageEdges.xIncreasing.IsValid() && nextImageEdges.yDecreasing.IsValid() && nextImageEdges.yIncreasing.IsValid(),
+          RESULT_FAIL_INVALID_OBJECT, "LucasKanadeTrackerBinary::IterativelyRefineTrack", "input edges are not valid");
 
 #ifdef SEND_BINARY_IMAGES_TO_MATLAB
         {
@@ -2071,7 +2092,7 @@ namespace Anki
 
           Matlab matlab(false);
 
-          Array<u8> rendered(nextImageHeight, nextImageWidth, scratch);
+          Array<u8> rendered(nextImageEdges.imageHeight, nextImageEdges.imageWidth, scratch);
 
           rendered.SetZero();
           DrawPoints(nextImageEdges.xDecreasing, 1, rendered);
@@ -2098,57 +2119,57 @@ namespace Anki
           this->transformation,
           this->templateEdges.xDecreasing,
           nextImageEdges.xDecreasing,
-          nextImage.get_size(0),
-          nextImage.get_size(1),
+          nextImageEdges.imageHeight,
+          nextImageEdges.imageWidth,
           correspondences,
           scratch);
 
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
-          lastResult, "LucasKanadeTrackerBinary::UpdateTrackOnce", "FindHorizontalCorrespondences 1 failed");
+          lastResult, "LucasKanadeTrackerBinary::IterativelyRefineTrack", "FindHorizontalCorrespondences 1 failed");
 
         lastResult = LucasKanadeTrackerBinary::FindHorizontalCorrespondences(
           matching_maxDistance,
           this->transformation,
           this->templateEdges.xIncreasing,
           nextImageEdges.xIncreasing,
-          nextImage.get_size(0),
-          nextImage.get_size(1),
+          nextImageEdges.imageHeight,
+          nextImageEdges.imageWidth,
           correspondences,
           scratch);
 
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
-          lastResult, "LucasKanadeTrackerBinary::UpdateTrackOnce", "FindHorizontalCorrespondences 2 failed");
+          lastResult, "LucasKanadeTrackerBinary::IterativelyRefineTrack", "FindHorizontalCorrespondences 2 failed");
 
         lastResult = LucasKanadeTrackerBinary::FindVerticalCorrespondences(
           matching_maxDistance,
           this->transformation,
           this->templateEdges.yDecreasing,
           nextImageEdges.yDecreasing,
-          nextImage.get_size(0),
-          nextImage.get_size(1),
+          nextImageEdges.imageHeight,
+          nextImageEdges.imageWidth,
           correspondences,
           scratch);
 
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
-          lastResult, "LucasKanadeTrackerBinary::UpdateTrackOnce", "FindVerticalCorrespondences 1 failed");
+          lastResult, "LucasKanadeTrackerBinary::IterativelyRefineTrack", "FindVerticalCorrespondences 1 failed");
 
         lastResult = LucasKanadeTrackerBinary::FindVerticalCorrespondences(
           matching_maxDistance,
           this->transformation,
           this->templateEdges.yIncreasing,
           nextImageEdges.yIncreasing,
-          nextImage.get_size(0),
-          nextImage.get_size(1),
+          nextImageEdges.imageHeight,
+          nextImageEdges.imageWidth,
           correspondences,
           scratch);
 
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
-          lastResult, "LucasKanadeTrackerBinary::UpdateTrackOnce", "FindVerticalCorrespondences 2 failed");
+          lastResult, "LucasKanadeTrackerBinary::IterativelyRefineTrack", "FindVerticalCorrespondences 2 failed");
 
         lastResult = this->UpdateTransformation(correspondences, updateType, scratch);
 
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
-          lastResult, "LucasKanadeTrackerBinary::UpdateTrackOnce", "UpdateTransformation failed");
+          lastResult, "LucasKanadeTrackerBinary::IterativelyRefineTrack", "UpdateTransformation failed");
 
         return RESULT_OK;
       }

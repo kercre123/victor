@@ -241,7 +241,7 @@ namespace Anki
         // LucasKanadeTracker or LucasKanadeTrackerFast, but is also liable to be less accurate and
         // more jittery.
         //
-        // Also different, is that the user should call UpdateTrackOnce as many times as desired. There
+        // Also different, is that the user should call IterativelyRefineTrack as many times as desired. There
         // is no iteration within.
 
       public:
@@ -290,9 +290,15 @@ namespace Anki
           const u8 edgeDetection_grayvalueThreshold, const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType,
           MemoryStack &memory);
 
-        Result UpdateTrackOnce(
+        // Runs one iteration each of translation and projective
+        Result UpdateTrack(
           const Array<u8> &nextImage,
           const u8 edgeDetection_grayvalueThreshold, const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType,
+          const s32 matching_maxDistance, const s32 matching_maxCorrespondences,
+          MemoryStack scratch);
+
+        Result IterativelyRefineTrack(
+          const EdgeLists &nextImageEdges,
           const s32 matching_maxDistance, const s32 matching_maxCorrespondences,
           const TransformType updateType,
           MemoryStack scratch);
