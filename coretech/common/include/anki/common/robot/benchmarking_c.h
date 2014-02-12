@@ -14,7 +14,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/common/robot/config.h"
 
-#define NUM_BENCHMARK_EVENTS 0xFFFF
+#define NUM_BENCHMARK_EVENTS 0xFFF
 
 #ifdef __cplusplus
 extern "C" {

@@ -67,7 +67,7 @@ namespace Anki {
       const u32 FRAMEBUFFER_HEIGHT = 480;
       const u32 DDR_BUFFER_SIZE   = FRAMEBUFFER_WIDTH * FRAMEBUFFER_HEIGHT;
       
-#ifdef SIMULATOR
+#if SIMULATOR
       char cmxBuffer_[CMX_BUFFER_SIZE];
       u8   ddrBuffer_[DDR_BUFFER_SIZE] ALIGNVARIABLE;
 #else

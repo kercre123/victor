@@ -388,28 +388,28 @@ namespace Anki
             "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "Template widths and height must divisible by 2^numPyramidLevels");
         }
 
-        A_full = FixedLengthList<Array<f32>>(numPyramidLevels, memory);
+        A_full = FixedLengthList<Array<f32> >(numPyramidLevels, memory);
 
         AnkiConditionalErrorAndReturn(A_full.IsValid(),
           "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "Could not allocate A_full");
 
         A_full.set_size(numPyramidLevels);
 
-        templateCoordinates = FixedLengthList<Meshgrid<f32>>(numPyramidLevels, memory);
+        templateCoordinates = FixedLengthList<Meshgrid<f32> >(numPyramidLevels, memory);
 
         AnkiConditionalErrorAndReturn(templateCoordinates.IsValid(),
           "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "Could not allocate templateCoordinates");
 
         templateCoordinates.set_size(numPyramidLevels);
 
-        templateImagePyramid = FixedLengthList<Array<u8>>(numPyramidLevels, memory);
+        templateImagePyramid = FixedLengthList<Array<u8> >(numPyramidLevels, memory);
 
         AnkiConditionalErrorAndReturn(templateImagePyramid.IsValid(),
           "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "Could not allocate templateImagePyramid");
 
         templateImagePyramid.set_size(numPyramidLevels);
 
-        templateWeights = FixedLengthList<Array<f32>>(numPyramidLevels, memory);
+        templateWeights = FixedLengthList<Array<f32> >(numPyramidLevels, memory);
 
         AnkiConditionalErrorAndReturn(templateWeights.IsValid(),
           "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "Could not allocate templateWeights");
@@ -766,7 +766,7 @@ namespace Anki
         //Array<f32> yPrevious(1, numPointsY*numPointsX, scratch);
 
         // Initialize with some very extreme coordinates
-        FixedLengthList<Quadrilateral<f32>> previousCorners(NUM_PREVIOUS_QUADS_TO_COMPARE, scratch);
+        FixedLengthList<Quadrilateral<f32> > previousCorners(NUM_PREVIOUS_QUADS_TO_COMPARE, scratch);
 
         for(s32 i=0; i<NUM_PREVIOUS_QUADS_TO_COMPARE; i++) {
           previousCorners[i] = Quadrilateral<f32>(Point<f32>(-1e10f,-1e10f), Point<f32>(-1e10f,-1e10f), Point<f32>(-1e10f,-1e10f), Point<f32>(-1e10f,-1e10f));
@@ -1073,10 +1073,10 @@ namespace Anki
         this->transformation = PlanarTransformation_f32(transformType, templateQuad, scratch);
 
         // Allocate the scratch for the pyramid lists
-        templateCoordinates = FixedLengthList<Meshgrid<f32>>(numPyramidLevels, scratch);
-        templateImagePyramid = FixedLengthList<Array<u8>>(numPyramidLevels, scratch);
-        templateImageXGradientPyramid = FixedLengthList<Array<s16>>(numPyramidLevels, scratch);
-        templateImageYGradientPyramid = FixedLengthList<Array<s16>>(numPyramidLevels, scratch);
+        templateCoordinates = FixedLengthList<Meshgrid<f32> >(numPyramidLevels, scratch);
+        templateImagePyramid = FixedLengthList<Array<u8> >(numPyramidLevels, scratch);
+        templateImageXGradientPyramid = FixedLengthList<Array<s16> >(numPyramidLevels, scratch);
+        templateImageYGradientPyramid = FixedLengthList<Array<s16> >(numPyramidLevels, scratch);
 
         templateCoordinates.set_size(numPyramidLevels);
         templateImagePyramid.set_size(numPyramidLevels);
@@ -1227,7 +1227,7 @@ namespace Anki
         const Point<f32>& centerOffset = this->transformation.get_centerOffset();
 
         // Initialize with some very extreme coordinates
-        FixedLengthList<Quadrilateral<f32>> previousCorners(NUM_PREVIOUS_QUADS_TO_COMPARE, scratch);
+        FixedLengthList<Quadrilateral<f32> > previousCorners(NUM_PREVIOUS_QUADS_TO_COMPARE, scratch);
 
         for(s32 i=0; i<NUM_PREVIOUS_QUADS_TO_COMPARE; i++) {
           previousCorners[i] = Quadrilateral<f32>(Point<f32>(-1e10f,-1e10f), Point<f32>(-1e10f,-1e10f), Point<f32>(-1e10f,-1e10f), Point<f32>(-1e10f,-1e10f));
@@ -1448,7 +1448,7 @@ namespace Anki
         const Point<f32>& centerOffset = this->transformation.get_centerOffset();
 
         // Initialize with some very extreme coordinates
-        FixedLengthList<Quadrilateral<f32>> previousCorners(NUM_PREVIOUS_QUADS_TO_COMPARE, scratch);
+        FixedLengthList<Quadrilateral<f32> > previousCorners(NUM_PREVIOUS_QUADS_TO_COMPARE, scratch);
 
         for(s32 i=0; i<NUM_PREVIOUS_QUADS_TO_COMPARE; i++) {
           previousCorners[i] = Quadrilateral<f32>(Point<f32>(-1e10f,-1e10f), Point<f32>(-1e10f,-1e10f), Point<f32>(-1e10f,-1e10f), Point<f32>(-1e10f,-1e10f));

@@ -13,6 +13,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include <windows.h>
 #elif defined(USING_MOVIDIUS_COMPILER)
 #include "DrvTimer.h"
+#elif defined(__EDG__)
+extern u32 XXX_HACK_FOR_PETE(void);
 #else
 #include <sys/time.h>
 #endif
@@ -30,6 +32,8 @@ static const u32 crc32Table[CRC32_TABLE_LENGTH] = {0x0, 0x77073096, 0xEE0E612C, 
 #define MAX_PRINTF_DIGITS 50
 #define PRINTF_BUFFER_SIZE 1024
 int printfBuffer[PRINTF_BUFFER_SIZE];
+  
+#if 1
 void explicitPrintf(int (*writeChar)(int), int reverseEachFourCharacters, const char *format, ...)
 {
   const char * const formatStart = format;
@@ -135,6 +139,8 @@ void explicitPrintf(int (*writeChar)(int), int reverseEachFourCharacters, const 
 
   va_end(arguments);
 }
+
+#endif
 
 void PrintF64(int (*writeChar)(int), f64 value)
 {
@@ -434,6 +440,8 @@ double GetTime()
   const f64 timeInSeconds = (1.0 / 1000.0) * DrvTimerTicksToMs(DrvTimerGetSysTicks64());
 #elif defined(__APPLE_CC__)
   const f64 timeInSeconds = 0.0; // TODO: implement
+#elif defined(__EDG__)  // ARM-MDK
+  const f64 timeInSeconds = XXX_HACK_FOR_PETE() / 1000000.0;
 #else // Generic Unix
   timespec ts;
   clock_gettime(CLOCK_MONOTONIC, &ts);

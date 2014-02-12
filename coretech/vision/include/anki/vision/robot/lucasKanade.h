@@ -130,10 +130,10 @@ namespace Anki
 
       protected:
         // A_full is the list of derivative matrices for each level of the pyramid
-        FixedLengthList<Array<f32>> A_full;
-        FixedLengthList<Array<u8>> templateImagePyramid;
-        FixedLengthList<Meshgrid<f32>> templateCoordinates;
-        FixedLengthList<Array<f32>> templateWeights;
+        FixedLengthList<Array<f32> > A_full;
+        FixedLengthList<Array<u8> > templateImagePyramid;
+        FixedLengthList<Meshgrid<f32> > templateCoordinates;
+        FixedLengthList<Array<f32> > templateWeights;
 
         s32 numPyramidLevels;
 
@@ -184,10 +184,10 @@ namespace Anki
         PlanarTransformation_f32 get_transformation() const;
 
       protected:
-        FixedLengthList<Meshgrid<f32>> templateCoordinates;
-        FixedLengthList<Array<u8>> templateImagePyramid;
-        FixedLengthList<Array<s16>> templateImageXGradientPyramid;
-        FixedLengthList<Array<s16>> templateImageYGradientPyramid;
+        FixedLengthList<Meshgrid<f32> > templateCoordinates;
+        FixedLengthList<Array<u8> > templateImagePyramid;
+        FixedLengthList<Array<s16> > templateImageXGradientPyramid;
+        FixedLengthList<Array<s16> > templateImageYGradientPyramid;
 
         s32 numPyramidLevels;
 

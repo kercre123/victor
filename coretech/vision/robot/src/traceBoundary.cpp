@@ -1,4 +1,4 @@
-﻿/**
+/**
 File: traceBoundary.cpp
 Author: Peter Barnum
 Created: 2013

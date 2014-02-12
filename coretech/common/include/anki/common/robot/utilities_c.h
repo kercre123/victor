@@ -48,6 +48,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define ALIGNVARIABLE __attribute__ ((aligned (16)))
 #elif defined(__GNUC__)
 #define ALIGNVARIABLE __attribute__ ((aligned (16)))
+#elif defined(__EDG__)  // MDK-ARM
+#define ALIGNVARIABLE __attribute__ ((aligned (16)))
 #endif
 #endif // #ifndef ALIGNVARIABLE
 

@@ -1,4 +1,4 @@
-﻿/**
+/**
 File: computeCharacteristicScale.cpp
 Author: Peter Barnum
 Created: 2013

@@ -24,7 +24,7 @@ namespace Anki
       {
         printf("\n\n\nStarting unit tests\n\n");
 
-        swcLeonFlushCaches();
+        //swcLeonFlushCaches();
 
         RUN_ALL_TESTS();
 

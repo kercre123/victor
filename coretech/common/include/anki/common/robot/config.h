@@ -106,6 +106,18 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #endif // #if defined(__APPLE_CC__)
 
+#if defined(__EDG__)  // MDK-ARM
+
+#ifndef restrict
+#define restrict
+#endif
+
+#ifndef staticInline
+#define staticInline static __inline
+#endif
+
+#endif
+
 #if defined(USING_MOVIDIUS_COMPILER) // If using any movidius compiler
 //#warning USING MOVIDIUS COMPILER!!
 #undef ANKICORETECH_EMBEDDED_USE_MATLAB
@@ -163,8 +175,8 @@ extern "C" {
 #include <float.h>
 #include <stdarg.h>
 
-#undef printf
-#define printf(...) explicitPrintf(0, EXPLICIT_PRINTF_FLIP_CHARACTERS, __VA_ARGS__)
+//#undef printf
+//#define printf(...) explicitPrintf(0, EXPLICIT_PRINTF_FLIP_CHARACTERS, __VA_ARGS__)
 
   //#define printf(...) (_xprintf(SYSTEM_PUTCHAR_FUNCTION , 0, __VA_ARGS__ ) )
 #define xprintf(...) (_xprintf(SYSTEM_PUTCHAR_FUNCTION , 0, __VA_ARGS__ ) )
@@ -212,8 +224,8 @@ extern "C" {
 // then we want to swap printf for explicitPrintf
 #ifndef ANKI_MEX_BUILD
 #define EXPLICIT_PRINTF_FLIP_CHARACTERS 0
-#undef printf
-#define printf(...) explicitPrintf(0, EXPLICIT_PRINTF_FLIP_CHARACTERS, __VA_ARGS__)
+//#undef printf
+//#define printf(...) explicitPrintf(0, EXPLICIT_PRINTF_FLIP_CHARACTERS, __VA_ARGS__)
 #endif
 
 #ifdef _DEBUG

@@ -56,20 +56,14 @@ extern "C" {
 }
 #endif
 #ifndef SIMULATOR
-#undef printf
-
-// PRINT will actually buffer messages, to be sent by long execution "thread"
-#define PUTCHAR_FUNC Anki::Cozmo::HAL::USBBufferChar
-
-#define printf(...) _xprintf(PUTCHAR_FUNC, 0, __VA_ARGS__)
-#define PRINT(...) explicitPrintf(PUTCHAR_FUNC, 0, __VA_ARGS__)
+#define PRINT(...) printf(__VA_ARGS__)
 
 // Prints once every num_calls_between_prints times you call it
 #define PERIODIC_PRINT(num_calls_between_prints, ...)  \
 { \
   static u16 cnt = num_calls_between_prints; \
   if (cnt++ >= num_calls_between_prints) { \
-    explicitPrintf(PUTCHAR_FUNC, 0, __VA_ARGS__); \
+    printf(__VA_ARGS__); \
     cnt = 0; \
   } \
 }
@@ -144,6 +138,9 @@ namespace Anki
       // Get the number of microseconds since boot
       u32 GetMicroCounter(void);
       void MicroWait(u32 microseconds);
+
+      // Get the CPU's core frequency
+      u32 GetCoreFrequencyMHz();
       
       // Get a sync'd timestamp (e.g. for messages), in milliseconds
       TimeStamp GetTimeStamp(void);
@@ -182,7 +179,10 @@ namespace Anki
       // USB / UART
       //
       
-      void UARTInit();
+      int UARTPrintf(const char* format, ...);
+      int UARTPutChar(int c);
+      void UARTPutString(const char* s);
+      int UARTGetChar(u32 timeout = 0);
       
       // Send a variable length buffer
       void USBSendBuffer(const u8* buffer, const u32 size);
@@ -220,8 +220,8 @@ namespace Anki
         MOTOR_LEFT_WHEEL = 0,
         MOTOR_RIGHT_WHEEL,
         MOTOR_LIFT,
-        MOTOR_GRIP,
         MOTOR_HEAD,
+        MOTOR_GRIP,
         MOTOR_COUNT
       };
 
@@ -465,6 +465,12 @@ namespace Anki
       
 #endif // if USE_OFFBOARD_VISION
       
+      // Definition of the data structure being transferred between SYSCON and
+      // the vision processor
+      struct GlobalData
+      {
+        u8 padding[64];
+      };
       
     } // namespace HAL
   } // namespace Cozmo

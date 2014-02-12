@@ -75,6 +75,9 @@ Matlab matlab(false);
 #if defined(USING_MOVIDIUS_COMPILER)
 #define DDR_BUFFER_LOCATION __attribute__((section(".ddr.bss")))
 #define CMX_BUFFER_LOCATION __attribute__((section(".cmx.bss")))
+#elif defined(__EDG__)  // ARM-MDK
+#define DDR_BUFFER_LOCATION __attribute__((section(".ram1")))
+#define CMX_BUFFER_LOCATION __attribute__((section(".ram1")))
 #else
 #define DDR_BUFFER_LOCATION
 #define CMX_BUFFER_LOCATION

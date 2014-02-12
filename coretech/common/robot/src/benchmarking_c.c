@@ -16,12 +16,16 @@ For internal use only. No part of this code may be used without a signed non-dis
 // Included at the top-level config
 #elif defined(USING_MOVIDIUS_SHAVE_COMPILER)
 // Included at the top-level config
+#elif defined(__EDG__)
+// Nothing to do here
 #else
 #include <sys/time.h>
 #endif
 
 #ifdef USING_MOVIDIUS_GCC_COMPILER
 #define BENCHMARK_EVENTS_LOCATION __attribute__((section(".ddr.bss")))
+#elif defined(__EDG__)  // MDK-ARM
+#define BENCHMARK_EVENTS_LOCATION __attribute__((section(".ram1")))
 #else
 #define BENCHMARK_EVENTS_LOCATION
 #endif
@@ -56,6 +60,8 @@ unsigned long long GetBenchmarkTime()
   return DrvTimerGetSysTicks64();
 #elif defined(USING_MOVIDIUS_SHAVE_COMPILER)
   return 0; // TODO: implement
+#elif defined (__EDG__)  // MDK-ARM
+  return XXX_HACK_FOR_PETE();
 #else
   timespec ts;
   clock_gettime(CLOCK_MONOTONIC, &ts);
@@ -156,6 +162,8 @@ void PrintBenchmarkResults(const BenchmarkPrintType printType)
         const double elapsedTime = (1.0 / 1000.0) * DrvTimerTicksToMs(rawElapsedTime);
 #elif defined(USING_MOVIDIUS_SHAVE_COMPILER)
         const double elapsedTime = 0.0;
+#elif defined(__EDG__)  // MDK-ARM
+        const double elapsedTime = (double)rawElapsedTime / 1000000.0;
 #else
         const double elapsedTime = (double)rawElapsedTime / 1000000000.0;
 #endif
@@ -180,7 +188,7 @@ void PrintBenchmarkResults(const BenchmarkPrintType printType)
         totalTimes[i]/(double)numEvents[i], minTimes[i], maxTimes[i], totalTimes[i], numEvents[i]);
     } else if (printType == BENCHMARK_PRINT_TOTALS) {
       printf(": Total:%fs\n",
-        totalTimes[i]);
+        (float)totalTimes[i]);
     }
   } // for(i=0; i<numEventNames; i++)
 } // void PrintBenchmarkResults()
