@@ -414,9 +414,9 @@
               <FilePath>.\hal\uart.cpp</FilePath>
             </File>
             <File>
-              <FileName>motor.cpp</FileName>
+              <FileName>motors.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\hal\motor.cpp</FilePath>
+              <FilePath>.\hal\motors.cpp</FilePath>
             </File>
             <File>
               <FileName>timer.cpp</FileName>

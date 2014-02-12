@@ -355,7 +355,7 @@
             <uSurpInc>1</uSurpInc>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>USE_STDPERIPH_DRIVER,STM32F429_439xx,USE_DEFAULT_TIMEOUT_CALLBACK,</Define>
+              <Define>USE_STDPERIPH_DRIVER,STM32F429_439xx,USE_DEFAULT_TIMEOUT_CALLBACK,USE_EMBEDDED_PHY,USE_USB_OTG_FS</Define>
               <Undefine></Undefine>
               <IncludePath>.\arm_hal;.\arm_hal\lib;..\include;..\coretech\common\include;..\coretech\messaging\include;..\coretech\planning\include;..\coretech\vision\include;.\supervisor\src</IncludePath>
             </VariousControls>
@@ -401,27 +401,32 @@
             <File>
               <FileName>main.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\arm_hal\main.cpp</FilePath>
+              <FilePath>.\arm_hal\hal\main.cpp</FilePath>
             </File>
             <File>
               <FileName>uart.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\arm_hal\uart.cpp</FilePath>
+              <FilePath>.\arm_hal\hal\uart.cpp</FilePath>
             </File>
             <File>
               <FileName>timer.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\arm_hal\timer.cpp</FilePath>
+              <FilePath>.\arm_hal\hal\timer.cpp</FilePath>
             </File>
             <File>
               <FileName>retarget.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\arm_hal\retarget.cpp</FilePath>
+              <FilePath>.\arm_hal\hal\retarget.cpp</FilePath>
             </File>
             <File>
               <FileName>frontCamera.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\arm_hal\frontCamera.cpp</FilePath>
+              <FilePath>.\arm_hal\hal\frontCamera.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>startup.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\startup.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -603,6 +608,66 @@
               <FileType>1</FileType>
               <FilePath>.\arm_hal\lib\system_stm32f4xx.c</FilePath>
             </File>
+            <File>
+              <FileName>usb_bsp_template.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\arm_hal\lib\usb\usb_bsp_template.c</FilePath>
+            </File>
+            <File>
+              <FileName>usb_core.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\arm_hal\lib\usb\usb_core.c</FilePath>
+            </File>
+            <File>
+              <FileName>usb_dcd.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\arm_hal\lib\usb\usb_dcd.c</FilePath>
+            </File>
+            <File>
+              <FileName>usb_dcd_int.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\arm_hal\lib\usb\usb_dcd_int.c</FilePath>
+            </File>
+            <File>
+              <FileName>usbd_cdc_core.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\arm_hal\lib\usb\usbd_cdc_core.c</FilePath>
+            </File>
+            <File>
+              <FileName>usbd_cdc_if_template.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\arm_hal\lib\usb\usbd_cdc_if_template.c</FilePath>
+            </File>
+            <File>
+              <FileName>usbd_core.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\arm_hal\lib\usb\usbd_core.c</FilePath>
+            </File>
+            <File>
+              <FileName>usbd_desc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\arm_hal\lib\usb\usbd_desc.c</FilePath>
+            </File>
+            <File>
+              <FileName>usbd_ioreq.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\arm_hal\lib\usb\usbd_ioreq.c</FilePath>
+            </File>
+            <File>
+              <FileName>usbd_req.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\arm_hal\lib\usb\usbd_req.c</FilePath>
+            </File>
+            <File>
+              <FileName>usbd_usr.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\arm_hal\lib\usb\usbd_usr.c</FilePath>
+            </File>
+            <File>
+              <FileName>usbd_cdc_vcp.cpp</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\arm_hal\lib\usb\usbd_cdc_vcp.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -611,7 +676,7 @@
             <File>
               <FileName>startup_stm32f429_439xx.s</FileName>
               <FileType>2</FileType>
-              <FilePath>.\arm_hal\asm\startup_stm32f429_439xx.s</FilePath>
+              <FilePath>.\arm_hal\startup\startup_stm32f429_439xx.s</FilePath>
             </File>
           </Files>
         </Group>
@@ -1385,27 +1450,32 @@
             <File>
               <FileName>main.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\arm_hal\main.cpp</FilePath>
+              <FilePath>.\arm_hal\hal\main.cpp</FilePath>
             </File>
             <File>
               <FileName>uart.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\arm_hal\uart.cpp</FilePath>
+              <FilePath>.\arm_hal\hal\uart.cpp</FilePath>
             </File>
             <File>
               <FileName>timer.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\arm_hal\timer.cpp</FilePath>
+              <FilePath>.\arm_hal\hal\timer.cpp</FilePath>
             </File>
             <File>
               <FileName>retarget.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\arm_hal\retarget.cpp</FilePath>
+              <FilePath>.\arm_hal\hal\retarget.cpp</FilePath>
             </File>
             <File>
               <FileName>frontCamera.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\arm_hal\frontCamera.cpp</FilePath>
+              <FilePath>.\arm_hal\hal\frontCamera.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>startup.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\startup.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -1587,6 +1657,66 @@
               <FileType>1</FileType>
               <FilePath>.\arm_hal\lib\system_stm32f4xx.c</FilePath>
             </File>
+            <File>
+              <FileName>usb_bsp_template.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\arm_hal\lib\usb\usb_bsp_template.c</FilePath>
+            </File>
+            <File>
+              <FileName>usb_core.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\arm_hal\lib\usb\usb_core.c</FilePath>
+            </File>
+            <File>
+              <FileName>usb_dcd.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\arm_hal\lib\usb\usb_dcd.c</FilePath>
+            </File>
+            <File>
+              <FileName>usb_dcd_int.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\arm_hal\lib\usb\usb_dcd_int.c</FilePath>
+            </File>
+            <File>
+              <FileName>usbd_cdc_core.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\arm_hal\lib\usb\usbd_cdc_core.c</FilePath>
+            </File>
+            <File>
+              <FileName>usbd_cdc_if_template.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\arm_hal\lib\usb\usbd_cdc_if_template.c</FilePath>
+            </File>
+            <File>
+              <FileName>usbd_core.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\arm_hal\lib\usb\usbd_core.c</FilePath>
+            </File>
+            <File>
+              <FileName>usbd_desc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\arm_hal\lib\usb\usbd_desc.c</FilePath>
+            </File>
+            <File>
+              <FileName>usbd_ioreq.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\arm_hal\lib\usb\usbd_ioreq.c</FilePath>
+            </File>
+            <File>
+              <FileName>usbd_req.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\arm_hal\lib\usb\usbd_req.c</FilePath>
+            </File>
+            <File>
+              <FileName>usbd_usr.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\arm_hal\lib\usb\usbd_usr.c</FilePath>
+            </File>
+            <File>
+              <FileName>usbd_cdc_vcp.cpp</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\arm_hal\lib\usb\usbd_cdc_vcp.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1595,7 +1725,7 @@
             <File>
               <FileName>startup_stm32f429_439xx.s</FileName>
               <FileType>2</FileType>
-              <FilePath>.\arm_hal\asm\startup_stm32f429_439xx.s</FilePath>
+              <FilePath>.\arm_hal\startup\startup_stm32f429_439xx.s</FilePath>
             </File>
           </Files>
         </Group>
