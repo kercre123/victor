@@ -14,6 +14,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/find.h"
 #include "anki/common/robot/benchmarking_c.h"
 #include "anki/common/robot/draw.h"
+#include "anki/common/robot/comparisons.h"
 
 #include "anki/vision/robot/miscVisionKernels.h"
 #include "anki/vision/robot/imageProcessing.h"
@@ -202,6 +203,60 @@ namespace Anki
         }
 
         return out;
+      }
+
+      Result PlanarTransformation_f32::TransformArray(const Array<u8> &in,
+        Array<u8> &out,
+        MemoryStack scratch,
+        const f32 scale) const
+      {
+        AnkiConditionalErrorAndReturnValue(in.IsValid() && out.IsValid(),
+          RESULT_FAIL_INVALID_OBJECT, "PlanarTransformation_f32::TransformArray", "inputs are not valid");
+
+        AnkiConditionalErrorAndReturnValue(in.get_size(0) == out.get_size(0) && in.get_size(1) == out.get_size(1),
+          RESULT_FAIL_INVALID_SIZE, "PlanarTransformation_f32::TransformArray", "input and output are different sizes");
+
+        const s32 arrHeight = in.get_size(0);
+        const s32 arrWidth = in.get_size(1);
+
+        Array<f32> homographyInv(3,3,scratch);
+        homographyInv.Set(this->homography);
+
+        //Invert3x3(
+        //  homographyInv[0][0], homographyInv[0][1], homographyInv[0][2],
+        //  homographyInv[1][0], homographyInv[1][1], homographyInv[1][2],
+        //  homographyInv[2][0], homographyInv[2][1], homographyInv[2][2]);
+
+        //const s32 numPoints = in.get_size(0) * in.get_size(1);
+
+        Array<f32> xIn(arrHeight,arrWidth,scratch);
+        Array<f32> yIn(arrHeight,arrWidth,scratch);
+        Array<f32> xTransformed(arrHeight,arrWidth,scratch);
+        Array<f32> yTransformed(arrHeight,arrWidth,scratch);
+
+        s32 ci = 0;
+        for(s32 y=0; y<arrHeight; y++) {
+          f32 * restrict pXIn = xIn.Pointer(y,0);
+          f32 * restrict pYIn = yIn.Pointer(y,0);
+
+          for(s32 x=0; x<arrWidth; x++) {
+            pXIn[x] = static_cast<f32>(x) - this->centerOffset.x;
+            pYIn[x] = static_cast<f32>(y) - this->centerOffset.y;
+          }
+        }
+
+        TransformPointsStatic(xIn, yIn, scale, this->centerOffset, xTransformed, yTransformed, this->get_transformType(), this->get_homography());
+
+        /*xIn.Print("xIn", 0,10,0,10);
+        yIn.Print("yIn", 0,10,0,10);
+
+        xTransformed.Print("xTransformed", 0,10,0,10);
+        yTransformed.Print("yTransformed", 0,10,0,10);*/
+
+        if((lastResult = Interp2<u8,u8>(in, xTransformed, yTransformed, out, INTERPOLATE_LINEAR, 0)) != RESULT_OK)
+          return lastResult;
+
+        return RESULT_OK;
       }
 
       Result PlanarTransformation_f32::Set(const PlanarTransformation_f32 &newTransformation)
@@ -2252,8 +2307,8 @@ namespace Anki
       Result LucasKanadeTrackerBinary::UpdateTransformation(const FixedLengthList<LucasKanadeTrackerBinary::Correspondence> &correspondences, const TransformType updateType, MemoryStack scratch)
       {
         if(updateType == TRANSFORM_TRANSLATION) {
-          f64 sumX = 0.0;
-          f64 sumY = 0.0;
+          f32 sumX = 0.0;
+          f32 sumY = 0.0;
 
           s32 numX = 0;
           s32 numY = 0;
@@ -2274,8 +2329,8 @@ namespace Anki
 
           Array<f32> update(1,2,scratch);
 
-          update[0][0] = sumX / f64(numX);
-          update[0][1] = sumY / f64(numY);
+          update[0][0] = sumX / f32(numX);
+          update[0][1] = sumY / f32(numY);
 
           update.Print("update");
 

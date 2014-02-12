@@ -75,6 +75,11 @@ namespace Anki
           MemoryStack scratch,
           const f32 scale=1.0f) const;
 
+        Result TransformArray(const Array<u8> &in,
+          Array<u8> &out,
+          MemoryStack scratch,
+          const f32 scale=1.0f) const;
+
         // Set this object's transformType, centerOffset, initialCorners, and homography
         Result Set(const PlanarTransformation_f32 &newTransformation);
 

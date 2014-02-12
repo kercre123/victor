@@ -104,6 +104,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerBinary_ComputeIndexLimitsVertical)
 
   Array<u8> templateImage(cozmo_2014_01_29_11_41_05_10_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_10_320x240_WIDTH, scratch_CMX);
   Array<u8> nextImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratch_CMX);
+  Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratch_CMX);
 
   const Quadrilateral<f32> templateQuad(Point<f32>(128,78), Point<f32>(220,74), Point<f32>(229,167), Point<f32>(127,171));
   const u8 edgeDetection_grayvalueThreshold = 100;
@@ -122,8 +123,11 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerBinary_ComputeIndexLimitsVertical)
     edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, edgeDetection_maxDetectionsPerType,
     matching_maxDistance, matching_maxCorrespondences, TemplateTracker::TRANSFORM_TRANSLATION, scratch_CMX);
 
+  lktb.get_transformation().TransformArray(templateImage, warpedTemplateImage, scratch_CMX, 1.0f);
+
   templateImage.Show("templateImage", false, false, true);
   nextImage.Show("nextImage", false, false, true);
+  warpedTemplateImage.Show("warpedTemplateImage", false, false, true);
   lktb.ShowTemplate(false, true);
   cv::waitKey();
 
