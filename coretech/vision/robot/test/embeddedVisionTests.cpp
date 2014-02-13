@@ -2991,7 +2991,8 @@ int RUN_ALL_TESTS()
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;
 
-  CALL_GTEST_TEST(CoreTech_Vision, ComputeIndexLimits);
+  CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerBinary);
+  //CALL_GTEST_TEST(CoreTech_Vision, ComputeIndexLimits);
   CALL_GTEST_TEST(CoreTech_Vision, DetectBlurredEdge);
 
 #ifdef BENCHMARK_AFFINE
