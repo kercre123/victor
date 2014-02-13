@@ -9,9 +9,14 @@
 namespace Anki {
   namespace Cozmo {
     namespace Messages {
+
+      // Create all the dispatch function prototypes (all implemented
+      // manually below).  We need the prototypes for the LUT below
+#define MESSAGE_DEFINITION_MODE MESSAGE_DISPATCH_DEFINITION_MODE
+#include "anki/cozmo/MessageDefinitions.h"
       
       namespace {
-        
+  
         // 4. Fill in the message information lookup table:
         typedef struct {
           u8 priority;
@@ -22,7 +27,6 @@ namespace Anki {
         const size_t NUM_TABLE_ENTRIES = NUM_MSG_IDS + 1;
         TableEntry LookupTable_[NUM_TABLE_ENTRIES] = {
           {0, 0, 0}, // Empty entry for NO_MESSAGE_ID
-#undef  MESSAGE_DEFINITION_MODE
 #define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_MODE
 #include "anki/cozmo/MessageDefinitions.h"
           {0, 0, 0} // Final dummy entry without comma at end
@@ -138,6 +142,7 @@ namespace Anki {
       
       
 #pragma --- Message Dispatch Functions ---
+      
       
       void ProcessRobotAddedToWorldMessage(const RobotAddedToWorld& msg)
       {

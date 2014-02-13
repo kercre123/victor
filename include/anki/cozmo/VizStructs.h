@@ -42,26 +42,6 @@ namespace Anki {
       NUM_VIZ_MSG_IDS // Final entry without comma at end
     } VizMsgID;
 
-    
-#ifndef THIS_IS_ACTUALLY_BASESTATION
-    // 4. Fill in the message information lookup table:
-    typedef struct {
-      u8 priority;
-      u8 size;
-      void (*dispatchFcn)(const u8* buffer);
-    } TableEntry;
-    
-    const size_t NUM_TABLE_ENTRIES = NUM_VIZ_MSG_IDS + 1;
-    TableEntry LookupTable_[NUM_TABLE_ENTRIES] = {
-      {0, 0, 0}, // Empty entry for NO_MESSAGE_ID
-#undef  MESSAGE_DEFINITION_MODE
-#define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_MODE
-#include "anki/cozmo/VizMsgDefs.h"
-      {0, 0, 0} // Final dummy entry without comma at end
-    };
-#endif //ifndef THIS_IS_ACTUALLY_BASESTATION
-    
-    
 #ifdef THIS_IS_ACTUALLY_BASESTATION
 #define COZMO_BASESTATION
 #undef COZMO_ROBOT

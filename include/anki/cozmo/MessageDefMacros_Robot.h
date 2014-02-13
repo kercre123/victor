@@ -33,9 +33,12 @@
 #undef MESSAGE_STRUCT_DEFINITION_MODE
 #undef MESSAGE_TABLE_DEFINITION_MODE
 #undef MESSAGE_ENUM_DEFINITION_MODE
-#define MESSAGE_STRUCT_DEFINITION_MODE 0
-#define MESSAGE_TABLE_DEFINITION_MODE  1
-#define MESSAGE_ENUM_DEFINITION_MODE   2
+#undef MESSAGE_DISPATCH_DEFINITION_MODE
+
+#define MESSAGE_STRUCT_DEFINITION_MODE   0
+#define MESSAGE_TABLE_DEFINITION_MODE    1
+#define MESSAGE_ENUM_DEFINITION_MODE     2
+#define MESSAGE_DISPATCH_DEFINITION_MODE 3
 
 #define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__)
 #define START_TIMESTAMPED_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__)
@@ -48,6 +51,7 @@
 // Helper macros
 #undef GET_DISPATCH_FCN_NAME
 #undef GET_STRUCT_TYPENAME
+#undef GET_QUOTED_STRUCT_TYPENAME
 #undef GET_MESSAGE_ID
 
 #define GET_DISPATCH_FCN_NAME(__MSG_TYPE__) Process##__MSG_TYPE__##Message
@@ -61,7 +65,7 @@ START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
 ADD_MESSAGE_MEMBER(TimeStamp_t, timestamp)
 
 //
-// First Mode: Define typedef'd struct and the prototype for a ProcessMessage
+// Define typedef'd struct and the prototype for a ProcessMessage
 // dispatch function for each message.  It is your job to _implement_ that
 // dispatch function.
 //
@@ -72,6 +76,21 @@ ADD_MESSAGE_MEMBER(TimeStamp_t, timestamp)
 //        u16 bar;
 //     } FooBar;
 //
+#if MESSAGE_DEFINITION_MODE == MESSAGE_STRUCT_DEFINITION_MODE
+// TODO: Is it possible, using a macro, to verify the type sizes are correctly ordered?
+#define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) typedef struct {
+
+#define END_MESSAGE_DEFINITION(__MSG_TYPE__) } GET_STRUCT_TYPENAME(__MSG_TYPE__);
+
+#define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__) __TYPE__ __NAME__;
+
+#define ADD_MESSAGE_MEMBER_ARRAY(__TYPE__, __NAME__, __LENGTH__) __TYPE__ __NAME__[__LENGTH__];
+
+
+//
+// Define dispatch function for each message struct
+//
+//   For example:
 //     void ProcessFooBarMessage(const FooBar& msg);
 //
 //   It also creates this inline wrapper, which you should not need to use
@@ -81,23 +100,25 @@ ADD_MESSAGE_MEMBER(TimeStamp_t, timestamp)
 //        ProcessFooBarMessage(*reinterpret_cast<const FooBar*>(buffer));
 //     }
 //
-#if MESSAGE_DEFINITION_MODE == MESSAGE_STRUCT_DEFINITION_MODE
-// TODO: Is it possible, using a macro, to verify the type sizes are correctly ordered?
-#define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) typedef struct {
 
-#define END_MESSAGE_DEFINITION(__MSG_TYPE__) } GET_STRUCT_TYPENAME(__MSG_TYPE__); \
+#elif MESSAGE_DEFINITION_MODE == MESSAGE_DISPATCH_DEFINITION_MODE
+// TODO: Is it possible, using a macro, to verify the type sizes are correctly ordered?
+
+
+#define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
 void GET_DISPATCH_FCN_NAME(__MSG_TYPE__)(const __MSG_TYPE__& msg); \
 inline void GET_DISPATCH_FCN_NAME(__MSG_TYPE__)(const u8* buffer) { \
 GET_DISPATCH_FCN_NAME(__MSG_TYPE__)(*reinterpret_cast<const GET_STRUCT_TYPENAME(__MSG_TYPE__)*>(buffer)); \
 }
 
-#define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__) __TYPE__ __NAME__;
+#define END_MESSAGE_DEFINITION(__MSG_TYPE__)
+#define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__)
+#define ADD_MESSAGE_MEMBER_ARRAY(__TYPE__, __NAME__, __LENGTH__)
 
-#define ADD_MESSAGE_MEMBER_ARRAY(__TYPE__, __NAME__, __LENGTH__) __TYPE__ __NAME__[__LENGTH__];
 
 
 //
-// Second Mode: Define entry in LookupTable
+// Define entry in LookupTable
 //
 //   For example:
 //      {<priority>, sizeof(f32)+sizeof(u16)+0, ProcessFooBarMessage}
@@ -115,7 +136,7 @@ GET_DISPATCH_FCN_NAME(__MSG_TYPE__)(*reinterpret_cast<const GET_STRUCT_TYPENAME(
 
 
 //
-// Third Mode: Define enumerated message ID
+// Define enumerated message ID
 //
 //   For example:
 //      FooBar_ID,
@@ -126,6 +147,8 @@ GET_DISPATCH_FCN_NAME(__MSG_TYPE__)(*reinterpret_cast<const GET_STRUCT_TYPENAME(
 #define END_MESSAGE_DEFINITION(__MSG_TYPE__)
 #define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__)
 #define ADD_MESSAGE_MEMBER_ARRAY(__TYPE__, __NAME__, __LENGTH__)
+
+
 
 
 //

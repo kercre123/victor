@@ -40,6 +40,7 @@ if(NOT WIN32)
     CoreTech_Vision_Basestation
     CoreTech_Messaging_Shared
     CppController # Webots C++ Controller
+    jsoncpp
     ${OPENCV_LIBS}
   )
 endif()

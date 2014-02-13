@@ -24,7 +24,8 @@
 
 
 #define DEBUG_COZMO_PHYSICS 0
-    
+
+
 // Types for paths
 typedef std::vector<float> PathVertex_t;
 typedef std::vector<PathVertex_t> Path_t;
@@ -61,12 +62,151 @@ static float arcRes_rad = 0.2;
 
 const int SIZEOF_FLOAT = sizeof(float);
 
-
 #if DEBUG_COZMO_PHYSICS
 #define PRINT(...) dWebotsConsolePrintf(__VA_ARGS__)
 #else
 #define PRINT(...)
 #endif
+
+
+namespace Anki {
+  namespace Cozmo{
+    
+    // TODO: Move the following to VizStructs.cpp?
+#define MESSAGE_DEFINITION_MODE MESSAGE_DISPATCH_DEFINITION_MODE
+#include "anki/cozmo/VizMsgDefs.h"
+    
+    typedef struct {
+      u8 priority;
+      u8 size;
+      void (*dispatchFcn)(const u8* buffer);
+    } TableEntry;
+    
+    const size_t NUM_TABLE_ENTRIES = Anki::Cozmo::NUM_VIZ_MSG_IDS + 1;
+    TableEntry LookupTable_[NUM_TABLE_ENTRIES] = {
+      {0, 0, 0}, // Empty entry for NO_MESSAGE_ID
+#undef  MESSAGE_DEFINITION_MODE
+#define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_MODE
+#include "anki/cozmo/VizMsgDefs.h"
+      {0, 0, 0} // Final dummy entry without comma at end
+    };
+    
+    void ProcessVizObjectMessage(const VizObject& msg)
+    {
+      PRINT("Processing SetVizObject %d %d (%f %f %f) (%f %f %f %f) %d \n",
+            msg.objectID,
+            msg.objectTypeID,
+            msg.x_trans_m, msg.y_trans_m, msg.z_trans_m,
+            msg.rot_deg, msg.rot_axis_x, msg.rot_axis_y, msg.rot_axis_z,
+            msg.color);
+      
+      objectMap_[msg.objectID] = msg;
+    }
+    
+    
+    void ProcessVizEraseObjectMessage(const VizEraseObject& msg)
+    {
+      PRINT("Processing EraseObject\n");
+      
+      if (msg.objectID == ALL_OBJECT_IDs) {
+        objectMap_.clear();
+      } else {
+        objectMap_.erase(msg.objectID);
+      }
+    }
+    
+    
+    void ProcessVizAppendPathSegmentLineMessage(const VizAppendPathSegmentLine &msg)
+    {
+      PRINT("Processing AppendLine\n");
+      
+      PathVertex_t startPt = {msg.x_start_m, msg.y_start_m, msg.z_start_m};
+      PathVertex_t endPt = {msg.x_end_m, msg.y_end_m, msg.z_end_m};
+      
+      pathMap_[msg.pathID].push_back(startPt);
+      pathMap_[msg.pathID].push_back(endPt);
+    }
+    
+    void ProcessVizAppendPathSegmentArcMessage(const VizAppendPathSegmentArc &msg)
+    {
+      PRINT("Processing AppendArc\n");
+      
+      float center_x = msg.x_center_m;
+      float center_y = msg.y_center_m;
+      float center_z = 0;
+      
+      float radius = msg.radius_m;
+      float startRad = msg.start_rad;
+      float sweepRad = msg.sweep_rad;
+      float endRad = startRad + sweepRad;
+      
+      float dir = (sweepRad > 0 ? 1 : -1);
+      
+      // Make endRad be between -PI and PI
+      while (endRad > PI) {
+        endRad -= 2*PI;
+      }
+      while (endRad < -PI) {
+        endRad += 2*PI;
+      }
+      
+      
+      if (dir == 1) {
+        // Make startRad < endRad
+        while (startRad > endRad) {
+          startRad -= 2*PI;
+        }
+      } else {
+        // Make startRad > endRad
+        while (startRad < endRad) {
+          startRad += 2*PI;
+        }
+      }
+      
+      // Add points along arc from startRad to endRad at arcRes_rad resolution
+      float currRad = startRad;
+      float dx,dy,cosCurrRad;
+      //dWebotsConsolePrintf("***** ARC rad %f (%f to %f), radius %f\n", currRad, startRad, endRad, radius);
+      
+      while (currRad*dir < endRad*dir) {
+        cosCurrRad = cos(currRad);
+        dx = cos(currRad) * radius;
+        dy = sin(currRad) * radius;
+        PathVertex_t pt = {center_x + dx, center_y + dy, center_z};
+        pathMap_[msg.pathID].push_back(pt);
+        currRad += dir * arcRes_rad;
+      }
+      
+    }
+    
+    void ProcessVizSetPathColorMessage(const VizSetPathColor& msg)
+    {
+      PRINT("Processing SetPathColor\n");
+      
+      pathColorMap_[msg.pathID] = msg.colorID;
+    }
+    
+    void ProcessVizErasePathMessage(const VizErasePath& msg)
+    {
+      PRINT("Processing ErasePath\n");
+      
+      if (msg.pathID == ALL_PATH_IDs) {
+        pathMap_.clear();
+      } else {
+        pathMap_.erase(msg.pathID);
+      }
+    }
+    
+    void ProcessVizDefineColorMessage(const VizDefineColor& msg)
+    {
+      PRINT("Processing DefineColor\n");
+      
+      colorMap_[msg.colorID] = msg;
+    }
+    
+  } // namespace Cozmo
+} // namespace Anki
+
 
 /*
  * Note: This plugin will become operational only after it was compiled and associated with the current world (.wbt).
@@ -406,124 +546,6 @@ void webots_physics_cleanup() {
 
 
 
-namespace Anki {
-  namespace Cozmo{
 
-
-    void ProcessVizObjectMessage(const VizObject& msg)
-    {
-      PRINT("Processing SetVizObject %d %d (%f %f %f) (%f %f %f %f) %d \n",
-             msg.objectID,
-             msg.objectTypeID,
-             msg.x_trans_m, msg.y_trans_m, msg.z_trans_m,
-             msg.rot_deg, msg.rot_axis_x, msg.rot_axis_y, msg.rot_axis_z,
-             msg.color);
-
-      objectMap_[msg.objectID] = msg;
-    }
-
-    
-    void ProcessVizEraseObjectMessage(const VizEraseObject& msg)
-    {
-      PRINT("Processing EraseObject\n");
-      
-      if (msg.objectID == ALL_OBJECT_IDs) {
-        objectMap_.clear();
-      } else {
-        objectMap_.erase(msg.objectID);
-      }
-    }
-    
-    
-    void ProcessVizAppendPathSegmentLineMessage(const VizAppendPathSegmentLine &msg)
-    {
-      PRINT("Processing AppendLine\n");
-      
-      PathVertex_t startPt = {msg.x_start_m, msg.y_start_m, msg.z_start_m};
-      PathVertex_t endPt = {msg.x_end_m, msg.y_end_m, msg.z_end_m};
-      
-      pathMap_[msg.pathID].push_back(startPt);
-      pathMap_[msg.pathID].push_back(endPt);
-    }
-
-    void ProcessVizAppendPathSegmentArcMessage(const VizAppendPathSegmentArc &msg)
-    {
-      PRINT("Processing AppendArc\n");
-      
-      float center_x = msg.x_center_m;
-      float center_y = msg.y_center_m;
-      float center_z = 0;
-      
-      float radius = msg.radius_m;
-      float startRad = msg.start_rad;
-      float sweepRad = msg.sweep_rad;
-      float endRad = startRad + sweepRad;
-      
-      float dir = (sweepRad > 0 ? 1 : -1);
-      
-      // Make endRad be between -PI and PI
-      while (endRad > PI) {
-        endRad -= 2*PI;
-      }
-      while (endRad < -PI) {
-        endRad += 2*PI;
-      }
-      
-      
-      if (dir == 1) {
-        // Make startRad < endRad
-        while (startRad > endRad) {
-          startRad -= 2*PI;
-        }
-      } else {
-        // Make startRad > endRad
-        while (startRad < endRad) {
-          startRad += 2*PI;
-        }
-      }
-      
-      // Add points along arc from startRad to endRad at arcRes_rad resolution
-      float currRad = startRad;
-      float dx,dy,cosCurrRad;
-      //dWebotsConsolePrintf("***** ARC rad %f (%f to %f), radius %f\n", currRad, startRad, endRad, radius);
-      
-      while (currRad*dir < endRad*dir) {
-        cosCurrRad = cos(currRad);
-        dx = cos(currRad) * radius;
-        dy = sin(currRad) * radius;
-        PathVertex_t pt = {center_x + dx, center_y + dy, center_z};
-        pathMap_[msg.pathID].push_back(pt);
-        currRad += dir * arcRes_rad;
-      }
-
-    }
-
-    void ProcessVizSetPathColorMessage(const VizSetPathColor& msg)
-    {
-      PRINT("Processing SetPathColor\n");
-      
-      pathColorMap_[msg.pathID] = msg.colorID;
-    }
-    
-    void ProcessVizErasePathMessage(const VizErasePath& msg)
-    {
-      PRINT("Processing ErasePath\n");
-      
-      if (msg.pathID == ALL_PATH_IDs) {
-        pathMap_.clear();
-      } else {
-        pathMap_.erase(msg.pathID);
-      }
-    }
-    
-    void ProcessVizDefineColorMessage(const VizDefineColor& msg)
-    {
-      PRINT("Processing DefineColor\n");
-      
-      colorMap_[msg.colorID] = msg;
-    }
-
-  }
-}
 
 

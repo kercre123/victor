@@ -15,6 +15,8 @@
 #ifndef COZMO_MESSAGE_BASESTATION_H
 #define COZMO_MESSAGE_BASESTATION_H
 
+#include "json/json.h"
+
 #include "anki/common/types.h"
 
 namespace Anki {

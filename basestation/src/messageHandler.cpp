@@ -102,22 +102,22 @@ namespace Anki {
       
       Quad2f corners;
       
-      corners[Quad::TopLeft].x()     = msg.get_x_imgUpperLeft();
-      corners[Quad::TopLeft].y()     = msg.get_y_imgUpperLeft();
+      corners[Quad::TopLeft].x()     = msg.x_imgUpperLeft;
+      corners[Quad::TopLeft].y()     = msg.y_imgUpperLeft;
       
-      corners[Quad::BottomLeft].x()  = msg.get_x_imgLowerLeft();
-      corners[Quad::BottomLeft].y()  = msg.get_y_imgLowerLeft();
+      corners[Quad::BottomLeft].x()  = msg.x_imgLowerLeft;
+      corners[Quad::BottomLeft].y()  = msg.y_imgLowerLeft;
       
-      corners[Quad::TopRight].x()    = msg.get_x_imgUpperRight();
-      corners[Quad::TopRight].y()    = msg.get_y_imgUpperRight();
+      corners[Quad::TopRight].x()    = msg.x_imgUpperRight;
+      corners[Quad::TopRight].y()    = msg.y_imgUpperRight;
       
-      corners[Quad::BottomRight].x() = msg.get_x_imgLowerRight();
-      corners[Quad::BottomRight].y() = msg.get_y_imgLowerRight();
+      corners[Quad::BottomRight].x() = msg.x_imgLowerRight;
+      corners[Quad::BottomRight].y() = msg.y_imgLowerRight;
 
       CORETECH_ASSERT(robot != NULL);
       
       const Vision::Camera& camera = robot->get_camHead();
-      Vision::ObservedMarker marker(msg.get_code(), corners, camera);
+      Vision::ObservedMarker marker(&(msg.code[0]), corners, camera);
       
       // Give this vision marker to BlockWorld for processing
       BlockWorld::getInstance()->QueueObservedMarker(marker);
@@ -131,13 +131,13 @@ namespace Anki {
     {
       // Convert calibration message into a calibration object to pass to
       // the robot
-      Vision::CameraCalibration calib(msg.get_nrows(),
-                                      msg.get_ncols(),
-                                      msg.get_focalLength_x(),
-                                      msg.get_focalLength_y(),
-                                      msg.get_center_x(),
-                                      msg.get_center_y(),
-                                      msg.get_skew());
+      Vision::CameraCalibration calib(msg.nrows,
+                                      msg.ncols,
+                                      msg.focalLength_x,
+                                      msg.focalLength_y,
+                                      msg.center_x,
+                                      msg.center_y,
+                                      msg.skew);
       
       robot->set_camCalibration(calib);
       
