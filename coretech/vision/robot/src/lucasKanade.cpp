@@ -2213,7 +2213,7 @@ namespace Anki
         return RESULT_OK;
       }
 
-      Result LucasKanadeTrackerBinary::FindVerticalCorrespondences(
+      Result LucasKanadeTrackerBinary::FindVerticalCorrespondences_Translation(
         const s32 maxMatchingDistance,
         const PlanarTransformation_f32 &transformation,
         const FixedLengthList<Point<s16> > &templatePoints,
@@ -2282,9 +2282,9 @@ namespace Anki
         } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
 
         return RESULT_OK;
-      } // Result LucasKanadeTrackerBinary::FindVerticalCorrespondences()
+      } // Result LucasKanadeTrackerBinary::FindVerticalCorrespondences_Translation()
 
-      Result LucasKanadeTrackerBinary::FindHorizontalCorrespondences(
+      Result LucasKanadeTrackerBinary::FindHorizontalCorrespondences_Translation(
         const s32 maxMatchingDistance,
         const PlanarTransformation_f32 &transformation,
         const FixedLengthList<Point<s16> > &templatePoints,
@@ -2353,7 +2353,149 @@ namespace Anki
         } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
 
         return RESULT_OK;
-      } // Result LucasKanadeTrackerBinary::FindHorizontalCorrespondences()
+      } // Result LucasKanadeTrackerBinary::FindHorizontalCorrespondences_Translation()
+
+      Result LucasKanadeTrackerBinary::FindVerticalCorrespondences_Projective(
+        const s32 maxMatchingDistance,
+        const PlanarTransformation_f32 &transformation,
+        const FixedLengthList<Point<s16> > &templatePoints,
+        const FixedLengthList<Point<s16> > &newPoints,
+        const s32 imageHeight,
+        const s32 imageWidth,
+        const Array<s32> &xStartIndexes,
+        FixedLengthList<LucasKanadeTrackerBinary::Correspondence> &correspondences,
+        MemoryStack scratch)
+      {
+        const s32 numTemplatePoints = templatePoints.get_size();
+
+        const Array<f32> &homography = transformation.get_homography();
+        const Point<f32> &centerOffset = transformation.get_centerOffset();
+
+        const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
+        const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
+        const f32 h20 = homography[2][0]; const f32 h21 = homography[2][1]; const f32 h22 = 1.0f;
+
+        AnkiAssert(FLT_NEAR(homography[2][2], 1.0f));
+
+        const Point<s16> * restrict pTemplatePoints = templatePoints.Pointer(0);
+        const Point<s16> * restrict pNewPoints = newPoints.Pointer(0);
+        const s32 * restrict pXStartIndexes = xStartIndexes.Pointer(0,0);
+
+        for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++) {
+          const f32 xr = static_cast<f32>(pTemplatePoints[iPoint].x);
+          const f32 yr = static_cast<f32>(pTemplatePoints[iPoint].y);
+
+          //
+          // Warp x and y based on the current homography
+          //
+
+          // Subtract the center offset
+          const f32 xc = xr - centerOffset.x;
+          const f32 yc = yr - centerOffset.y;
+
+          // Projective warp
+          const f32 wpi = 1.0f / (h20*xc + h21*yc + h22);
+          const f32 warpedX = (h00*xc + h01*yc + h02) * wpi;
+          const f32 warpedY = (h10*xc + h11*yc + h12) * wpi;
+
+          // TODO: verify the -0.5f is correct
+          const s32 warpedXrounded = static_cast<s32>(Roundf(warpedX + centerOffset.x - 0.5f));
+          const s32 warpedYrounded = static_cast<s32>(Roundf(warpedY + centerOffset.y - 0.5f));
+
+          if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance)) {
+            for(s32 offset=-maxMatchingDistance; offset<=maxMatchingDistance; offset++) {
+              const s32 xpRounded = warpedXrounded;
+              const s32 ypRounded = warpedYrounded + offset;
+
+              // TODO: make a binary search?
+              for(s32 iMatch=pXStartIndexes[xpRounded]; iMatch<pXStartIndexes[xpRounded+1]; iMatch++) {
+                if(ypRounded == pNewPoints[iMatch].y) {
+                  Correspondence cor;
+                  cor.originalTemplatePoint = Point<f32>(xc, yc);
+                  cor.warpedTemplatePoint = Point<f32>(warpedX, warpedY);
+                  cor.matchedPoint = Point<f32>(warpedX, warpedY+static_cast<f32>(offset));
+                  cor.isVerticalMatch = true;
+
+                  correspondences.PushBack(cor);
+                }
+              }
+            } // for(s32 iOffset=-maxMatchingDistance; iOffset<=maxMatchingDistance; iOffset++)
+          } // if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance))
+        } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
+
+        return RESULT_OK;
+      } // Result LucasKanadeTrackerBinary::FindVerticalCorrespondences_Projective()
+
+      Result LucasKanadeTrackerBinary::FindHorizontalCorrespondences_Projective(
+        const s32 maxMatchingDistance,
+        const PlanarTransformation_f32 &transformation,
+        const FixedLengthList<Point<s16> > &templatePoints,
+        const FixedLengthList<Point<s16> > &newPoints,
+        const s32 imageHeight,
+        const s32 imageWidth,
+        const Array<s32> &yStartIndexes,
+        FixedLengthList<LucasKanadeTrackerBinary::Correspondence> &correspondences,
+        MemoryStack scratch)
+      {
+        const s32 numTemplatePoints = templatePoints.get_size();
+
+        const Array<f32> &homography = transformation.get_homography();
+        const Point<f32> &centerOffset = transformation.get_centerOffset();
+
+        const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
+        const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
+        const f32 h20 = homography[2][0]; const f32 h21 = homography[2][1]; const f32 h22 = 1.0f;
+
+        AnkiAssert(FLT_NEAR(homography[2][2], 1.0f));
+
+        const Point<s16> * restrict pTemplatePoints = templatePoints.Pointer(0);
+        const Point<s16> * restrict pNewPoints = newPoints.Pointer(0);
+        const s32 * restrict pYStartIndexes = yStartIndexes.Pointer(0,0);
+
+        for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++) {
+          const f32 xr = static_cast<f32>(pTemplatePoints[iPoint].x);
+          const f32 yr = static_cast<f32>(pTemplatePoints[iPoint].y);
+
+          //
+          // Warp x and y based on the current homography
+          //
+
+          // Subtract the center offset
+          const f32 xc = xr - centerOffset.x;
+          const f32 yc = yr - centerOffset.y;
+
+          // Projective warp
+          const f32 wpi = 1.0f / (h20*xc + h21*yc + h22);
+          const f32 warpedX = (h00*xc + h01*yc + h02) * wpi;
+          const f32 warpedY = (h10*xc + h11*yc + h12) * wpi;
+
+          // TODO: verify the -0.5f is correct
+          const s32 warpedXrounded = static_cast<s32>(Roundf(warpedX + centerOffset.x - 0.5f));
+          const s32 warpedYrounded = static_cast<s32>(Roundf(warpedY + centerOffset.y - 0.5f));
+
+          if(warpedXrounded >= maxMatchingDistance && warpedXrounded < (imageWidth-maxMatchingDistance)) {
+            for(s32 offset=-maxMatchingDistance; offset<=maxMatchingDistance; offset++) {
+              const s32 xpRounded = warpedXrounded + offset;
+              const s32 ypRounded = warpedYrounded;
+
+              // TODO: make a binary search?
+              for(s32 iMatch=pYStartIndexes[ypRounded]; iMatch<pYStartIndexes[ypRounded+1]; iMatch++) {
+                if(xpRounded == pNewPoints[iMatch].x) {
+                  Correspondence cor;
+                  cor.originalTemplatePoint = Point<f32>(xc, yc);
+                  cor.warpedTemplatePoint = Point<f32>(warpedX, warpedY);
+                  cor.matchedPoint = Point<f32>(warpedX+static_cast<f32>(offset), warpedY);
+                  cor.isVerticalMatch = false;
+
+                  correspondences.PushBack(cor);
+                }
+              }
+            } // for(s32 iOffset=-maxMatchingDistance; iOffset<=maxMatchingDistance; iOffset++)
+          } // if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance))
+        } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
+
+        return RESULT_OK;
+      } // Result LucasKanadeTrackerBinary::FindHorizontalCorrespondences_Projective()
 
       Result LucasKanadeTrackerBinary::IterativelyRefineTrack_Translation(
         const EdgeLists &nextImageEdges,
@@ -2365,7 +2507,7 @@ namespace Anki
 
         FixedLengthList<LucasKanadeTrackerBinary::Correspondence> correspondences(matching_maxCorrespondences, scratch);
 
-        lastResult = LucasKanadeTrackerBinary::FindHorizontalCorrespondences(
+        lastResult = LucasKanadeTrackerBinary::FindHorizontalCorrespondences_Translation(
           matching_maxDistance,
           this->transformation,
           this->templateEdges.xDecreasing,
@@ -2379,7 +2521,7 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
           lastResult, "LucasKanadeTrackerBinary::IterativelyRefineTrack", "FindHorizontalCorrespondences 1 failed");
 
-        lastResult = LucasKanadeTrackerBinary::FindHorizontalCorrespondences(
+        lastResult = LucasKanadeTrackerBinary::FindHorizontalCorrespondences_Translation(
           matching_maxDistance,
           this->transformation,
           this->templateEdges.xIncreasing,
@@ -2393,7 +2535,7 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
           lastResult, "LucasKanadeTrackerBinary::IterativelyRefineTrack", "FindHorizontalCorrespondences 2 failed");
 
-        lastResult = LucasKanadeTrackerBinary::FindVerticalCorrespondences(
+        lastResult = LucasKanadeTrackerBinary::FindVerticalCorrespondences_Translation(
           matching_maxDistance,
           this->transformation,
           this->templateEdges.yDecreasing,
@@ -2407,7 +2549,7 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
           lastResult, "LucasKanadeTrackerBinary::IterativelyRefineTrack", "FindVerticalCorrespondences 1 failed");
 
-        lastResult = LucasKanadeTrackerBinary::FindVerticalCorrespondences(
+        lastResult = LucasKanadeTrackerBinary::FindVerticalCorrespondences_Translation(
           matching_maxDistance,
           this->transformation,
           this->templateEdges.yIncreasing,
@@ -2465,7 +2607,7 @@ namespace Anki
 
         FixedLengthList<LucasKanadeTrackerBinary::Correspondence> correspondences(matching_maxCorrespondences, scratch);
 
-        lastResult = LucasKanadeTrackerBinary::FindHorizontalCorrespondences(
+        lastResult = LucasKanadeTrackerBinary::FindHorizontalCorrespondences_Projective(
           matching_maxDistance,
           this->transformation,
           this->templateEdges.xDecreasing,
@@ -2479,7 +2621,7 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
           lastResult, "LucasKanadeTrackerBinary::IterativelyRefineTrack", "FindHorizontalCorrespondences 1 failed");
 
-        lastResult = LucasKanadeTrackerBinary::FindHorizontalCorrespondences(
+        lastResult = LucasKanadeTrackerBinary::FindHorizontalCorrespondences_Projective(
           matching_maxDistance,
           this->transformation,
           this->templateEdges.xIncreasing,
@@ -2493,7 +2635,7 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
           lastResult, "LucasKanadeTrackerBinary::IterativelyRefineTrack", "FindHorizontalCorrespondences 2 failed");
 
-        lastResult = LucasKanadeTrackerBinary::FindVerticalCorrespondences(
+        lastResult = LucasKanadeTrackerBinary::FindVerticalCorrespondences_Projective(
           matching_maxDistance,
           this->transformation,
           this->templateEdges.yDecreasing,
@@ -2507,7 +2649,7 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
           lastResult, "LucasKanadeTrackerBinary::IterativelyRefineTrack", "FindVerticalCorrespondences 1 failed");
 
-        lastResult = LucasKanadeTrackerBinary::FindVerticalCorrespondences(
+        lastResult = LucasKanadeTrackerBinary::FindVerticalCorrespondences_Projective(
           matching_maxDistance,
           this->transformation,
           this->templateEdges.yIncreasing,

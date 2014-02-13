@@ -323,7 +323,7 @@ namespace Anki
         // The list of points must be sorted in X, from low to high
         static Result ComputeIndexLimitsHorizontal(const FixedLengthList<Point<s16> > &points, Array<s32> &xStartIndexes);
 
-        static Result FindVerticalCorrespondences(
+        static Result FindVerticalCorrespondences_Translation(
           const s32 maxMatchingDistance,
           const PlanarTransformation_f32 &transformation,
           const FixedLengthList<Point<s16> > &templatePoints,
@@ -334,7 +334,29 @@ namespace Anki
           FixedLengthList<LucasKanadeTrackerBinary::Correspondence> &correspondences,
           MemoryStack scratch);
 
-        static Result FindHorizontalCorrespondences(
+        static Result FindHorizontalCorrespondences_Translation(
+          const s32 maxMatchingDistance,
+          const PlanarTransformation_f32 &transformation,
+          const FixedLengthList<Point<s16> > &templatePoints,
+          const FixedLengthList<Point<s16> > &newPoints,
+          const s32 imageHeight,
+          const s32 imageWidth,
+          const Array<s32> &yStartIndexes, //< Computed by ComputeIndexLimitsVertical
+          FixedLengthList<LucasKanadeTrackerBinary::Correspondence> &correspondences,
+          MemoryStack scratch);
+
+        static Result FindVerticalCorrespondences_Projective(
+          const s32 maxMatchingDistance,
+          const PlanarTransformation_f32 &transformation,
+          const FixedLengthList<Point<s16> > &templatePoints,
+          const FixedLengthList<Point<s16> > &newPoints,
+          const s32 imageHeight,
+          const s32 imageWidth,
+          const Array<s32> &xStartIndexes, //< Computed by ComputeIndexLimitsHorizontal
+          FixedLengthList<LucasKanadeTrackerBinary::Correspondence> &correspondences,
+          MemoryStack scratch);
+
+        static Result FindHorizontalCorrespondences_Projective(
           const s32 maxMatchingDistance,
           const PlanarTransformation_f32 &transformation,
           const FixedLengthList<Point<s16> > &templatePoints,
