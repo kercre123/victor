@@ -249,38 +249,6 @@
         <IsCurrentTarget>1</IsCurrentTarget>
       </OPTFL>
       <CpuCode>255</CpuCode>
-      <Books>
-        <Book>
-          <Number>0</Number>
-          <Title>STM32F4 Series Reference Manual</Title>
-          <Path>$$Device:STM32F429NI$Documents\STM32F4xx_RM.PDF</Path>
-        </Book>
-        <Book>
-          <Number>1</Number>
-          <Title>STM32F429 Data Sheet</Title>
-          <Path>$$Device:STM32F429NI$Documents\STM32F429_DS.PDF</Path>
-        </Book>
-        <Book>
-          <Number>2</Number>
-          <Title>MCBSTM32F400 User's Guide</Title>
-          <Path>$$Device:STM32F429NI$Documents\mcbstm32f400.chm</Path>
-        </Book>
-        <Book>
-          <Number>3</Number>
-          <Title>STM32F4 Discovery Board</Title>
-          <Path>http://www.st.com/st-web-ui/static/active/en/resource/technical/document/user_manual/DM00039084.pdf</Path>
-        </Book>
-        <Book>
-          <Number>4</Number>
-          <Title>Cortex-M4 Technical Reference Manual</Title>
-          <Path>$$Device:STM32F429NI$Documents\DDI0439C_CORTEX_M4_R0P1_TRM.PDF</Path>
-        </Book>
-        <Book>
-          <Number>5</Number>
-          <Title>Cortex-M4 Generic User Guide</Title>
-          <Path>$$Device:STM32F429NI$Documents\DUI0553A_CORTEX_M4_DGUG.PDF</Path>
-        </Book>
-      </Books>
       <DllOpt>
         <SimDllName>SARMCM3.DLL</SimDllName>
         <SimDllArguments> -REMAP -MPU</SimDllArguments>
