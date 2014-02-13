@@ -2032,6 +2032,27 @@ namespace Anki
         return transformation;
       }
 
+      Result LucasKanadeTrackerBinary::ComputeAllIndexLimits(const EdgeLists &imageEdges, AllIndexLimits &allLimits, MemoryStack &memory)
+      {
+        allLimits.xDecreasing_yStartIndexes = Array<s32>(1, imageEdges.imageWidth+1, memory);
+        allLimits.xIncreasing_yStartIndexes = Array<s32>(1, imageEdges.imageWidth+1, memory);
+        allLimits.yDecreasing_xStartIndexes = Array<s32>(1, imageEdges.imageHeight+1, memory);
+        allLimits.yIncreasing_xStartIndexes = Array<s32>(1, imageEdges.imageHeight+1, memory);
+
+        AnkiConditionalErrorAndReturnValue(allLimits.yIncreasing_xStartIndexes.IsValid(),
+          RESULT_FAIL_OUT_OF_MEMORY, "LucasKanadeTrackerBinary::ComputeAllIndexLimits", "Could not allocate local memory");
+
+        ComputeIndexLimitsVertical(imageEdges.xDecreasing, allLimits.xDecreasing_yStartIndexes);
+
+        ComputeIndexLimitsVertical(imageEdges.xIncreasing, allLimits.xIncreasing_yStartIndexes);
+
+        ComputeIndexLimitsHorizontal(imageEdges.yDecreasing, allLimits.yDecreasing_xStartIndexes);
+
+        ComputeIndexLimitsHorizontal(imageEdges.yIncreasing, allLimits.yIncreasing_xStartIndexes);
+
+        return RESULT_OK;
+      }
+
       Result LucasKanadeTrackerBinary::UpdateTrack(
         const Array<u8> &nextImage,
         const u8 edgeDetection_grayvalueThreshold, const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType,
@@ -2053,8 +2074,16 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
           lastResult, "LucasKanadeTrackerBinary::UpdateTrack", "DetectBlurredEdge failed");
 
+        // First, to sped up the correspondence search, find the min and max of x or y points
+        AllIndexLimits allLimits;
+
+        if((lastResult = LucasKanadeTrackerBinary::ComputeAllIndexLimits(nextImageEdges, allLimits, scratch)) != RESULT_OK)
+          return lastResult;
+
+        // Second, compute the actual correspondence and refine the homography
+
         lastResult = this->IterativelyRefineTrack(
-          nextImageEdges,
+          nextImageEdges, allLimits,
           matching_maxDistance, matching_maxCorrespondences,
           TRANSFORM_TRANSLATION, scratch);
 
@@ -2062,7 +2091,7 @@ namespace Anki
           lastResult, "LucasKanadeTrackerBinary::UpdateTrack", "TRANSFORM_TRANSLATION failed");
 
         lastResult = this->IterativelyRefineTrack(
-          nextImageEdges,
+          nextImageEdges, allLimits,
           matching_maxDistance, matching_maxCorrespondences,
           TRANSFORM_PROJECTIVE, scratch);
 
@@ -2074,6 +2103,7 @@ namespace Anki
 
       Result LucasKanadeTrackerBinary::IterativelyRefineTrack(
         const EdgeLists &nextImageEdges,
+        const AllIndexLimits &allLimits,
         const s32 matching_maxDistance, const s32 matching_maxCorrespondences,
         const TransformType updateType,
         MemoryStack scratch)
@@ -2121,6 +2151,7 @@ namespace Anki
           nextImageEdges.xDecreasing,
           nextImageEdges.imageHeight,
           nextImageEdges.imageWidth,
+          allLimits.xDecreasing_yStartIndexes,
           correspondences,
           scratch);
 
@@ -2134,6 +2165,7 @@ namespace Anki
           nextImageEdges.xIncreasing,
           nextImageEdges.imageHeight,
           nextImageEdges.imageWidth,
+          allLimits.xIncreasing_yStartIndexes,
           correspondences,
           scratch);
 
@@ -2147,6 +2179,7 @@ namespace Anki
           nextImageEdges.yDecreasing,
           nextImageEdges.imageHeight,
           nextImageEdges.imageWidth,
+          allLimits.yDecreasing_xStartIndexes,
           correspondences,
           scratch);
 
@@ -2160,6 +2193,7 @@ namespace Anki
           nextImageEdges.yIncreasing,
           nextImageEdges.imageHeight,
           nextImageEdges.imageWidth,
+          allLimits.yIncreasing_xStartIndexes,
           correspondences,
           scratch);
 
@@ -2245,20 +2279,11 @@ namespace Anki
         const FixedLengthList<Point<s16> > &newPoints,
         const s32 imageHeight,
         const s32 imageWidth,
+        const Array<s32> &xStartIndexes,
         FixedLengthList<LucasKanadeTrackerBinary::Correspondence> &correspondences,
         MemoryStack scratch)
       {
-        Result lastResult;
-
         const s32 numTemplatePoints = templatePoints.get_size();
-        const s32 numNewPoints = newPoints.get_size();
-
-        Array<s32> xStartIndexes(1, imageHeight+1, scratch);
-
-        lastResult = ComputeIndexLimitsHorizontal(newPoints, xStartIndexes);
-
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
-          lastResult, "LucasKanadeTrackerBinary::FindVerticalCorrespondences", "ComputeIndexLimitsVertical failed");
 
         const Array<f32> &homography = transformation.get_homography();
         const Point<f32> &centerOffset = transformation.get_centerOffset();
@@ -2325,23 +2350,11 @@ namespace Anki
         const FixedLengthList<Point<s16> > &newPoints,
         const s32 imageHeight,
         const s32 imageWidth,
+        const Array<s32> &yStartIndexes,
         FixedLengthList<LucasKanadeTrackerBinary::Correspondence> &correspondences,
         MemoryStack scratch)
       {
-        Result lastResult;
-
         const s32 numTemplatePoints = templatePoints.get_size();
-        const s32 numNewPoints = newPoints.get_size();
-
-        Array<s32> yStartIndexes(1, imageWidth+1, scratch);
-
-        lastResult = ComputeIndexLimitsVertical(newPoints, yStartIndexes);
-
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
-          lastResult, "LucasKanadeTrackerBinary::FindHorizontalCorrespondences", "ComputeIndexLimitsHorizontal failed");
-
-        //newPoints.Print("newPoints");
-        //yStartIndexes.Print("yStartIndexes");
 
         const Array<f32> &homography = transformation.get_homography();
         const Point<f32> &centerOffset = transformation.get_centerOffset();

@@ -245,43 +245,6 @@ namespace Anki
         // is no iteration within.
 
       public:
-
-        typedef struct
-        {
-          Point<f32> originalTemplatePoint;
-          Point<f32> warpedTemplatePoint;
-          Point<f32> matchedPoint;
-          bool isVerticalMatch;
-        } Correspondence;
-
-        // Find the min and max indexes of point with a given Y location
-        // The list of points must be sorted in Y, from low to high
-        static Result ComputeIndexLimitsVertical(const FixedLengthList<Point<s16> > &points, Array<s32> &yStartIndexes);
-
-        // Find the min and max indexes of point with a given X location
-        // The list of points must be sorted in X, from low to high
-        static Result ComputeIndexLimitsHorizontal(const FixedLengthList<Point<s16> > &points, Array<s32> &xStartIndexes);
-
-        static Result FindVerticalCorrespondences(
-          const s32 maxMatchingDistance,
-          const PlanarTransformation_f32 &transformation,
-          const FixedLengthList<Point<s16> > &templatePoints,
-          const FixedLengthList<Point<s16> > &newPoints,
-          const s32 imageHeight,
-          const s32 imageWidth,
-          FixedLengthList<LucasKanadeTrackerBinary::Correspondence> &correspondences,
-          MemoryStack scratch);
-
-        static Result FindHorizontalCorrespondences(
-          const s32 maxMatchingDistance,
-          const PlanarTransformation_f32 &transformation,
-          const FixedLengthList<Point<s16> > &templatePoints,
-          const FixedLengthList<Point<s16> > &newPoints,
-          const s32 imageHeight,
-          const s32 imageWidth,
-          FixedLengthList<LucasKanadeTrackerBinary::Correspondence> &correspondences,
-          MemoryStack scratch);
-
         LucasKanadeTrackerBinary();
 
         // the real max number of edge pixels is maxEdgePixelsPerType*4, for each of the four edge types
@@ -297,12 +260,6 @@ namespace Anki
           const s32 matching_maxDistance, const s32 matching_maxCorrespondences,
           MemoryStack scratch);
 
-        Result IterativelyRefineTrack(
-          const EdgeLists &nextImageEdges,
-          const s32 matching_maxDistance, const s32 matching_maxCorrespondences,
-          const TransformType updateType,
-          MemoryStack scratch);
-
         bool IsValid() const;
 
         Result ShowTemplate(const bool waitForKeypress, const bool fitImageToWindow) const;
@@ -311,6 +268,22 @@ namespace Anki
         PlanarTransformation_f32 get_transformation() const;
 
       protected:
+        typedef struct
+        {
+          Array<s32> xDecreasing_yStartIndexes;
+          Array<s32> xIncreasing_yStartIndexes;
+          Array<s32> yDecreasing_xStartIndexes;
+          Array<s32> yIncreasing_xStartIndexes;
+        } AllIndexLimits;
+
+        typedef struct
+        {
+          Point<f32> originalTemplatePoint;
+          Point<f32> warpedTemplatePoint;
+          Point<f32> matchedPoint;
+          bool isVerticalMatch;
+        } Correspondence;
+
         Array<u8> templateImage;
         Quadrilateral<f32> templateQuad;
 
@@ -334,13 +307,53 @@ namespace Anki
 
 #ifdef ANKICORETECH_EMBEDDED_USE_OPENCV
         // Allocates the returned cv::Mat on the heap
-        static cv::Mat LucasKanadeTrackerBinary::DrawIndexes(
+        static cv::Mat DrawIndexes(
           const s32 imageHeight, const s32 imageWidth,
           const FixedLengthList<Point<s16> > &indexPoints1,
           const FixedLengthList<Point<s16> > &indexPoints2,
           const FixedLengthList<Point<s16> > &indexPoints3,
           const FixedLengthList<Point<s16> > &indexPoints4);
 #endif
+
+        // Find the min and max indexes of point with a given Y location
+        // The list of points must be sorted in Y, from low to high
+        static Result ComputeIndexLimitsVertical(const FixedLengthList<Point<s16> > &points, Array<s32> &yStartIndexes);
+
+        // Find the min and max indexes of point with a given X location
+        // The list of points must be sorted in X, from low to high
+        static Result ComputeIndexLimitsHorizontal(const FixedLengthList<Point<s16> > &points, Array<s32> &xStartIndexes);
+
+        static Result FindVerticalCorrespondences(
+          const s32 maxMatchingDistance,
+          const PlanarTransformation_f32 &transformation,
+          const FixedLengthList<Point<s16> > &templatePoints,
+          const FixedLengthList<Point<s16> > &newPoints,
+          const s32 imageHeight,
+          const s32 imageWidth,
+          const Array<s32> &xStartIndexes, //< Computed by ComputeIndexLimitsHorizontal
+          FixedLengthList<LucasKanadeTrackerBinary::Correspondence> &correspondences,
+          MemoryStack scratch);
+
+        static Result FindHorizontalCorrespondences(
+          const s32 maxMatchingDistance,
+          const PlanarTransformation_f32 &transformation,
+          const FixedLengthList<Point<s16> > &templatePoints,
+          const FixedLengthList<Point<s16> > &newPoints,
+          const s32 imageHeight,
+          const s32 imageWidth,
+          const Array<s32> &yStartIndexes, //< Computed by ComputeIndexLimitsVertical
+          FixedLengthList<LucasKanadeTrackerBinary::Correspondence> &correspondences,
+          MemoryStack scratch);
+
+        // Allocates allLimits, and computes all the indexe limits
+        static Result ComputeAllIndexLimits(const EdgeLists &imageEdges, AllIndexLimits &allLimits, MemoryStack &memory);
+
+        Result IterativelyRefineTrack(
+          const EdgeLists &nextImageEdges,
+          const AllIndexLimits &allLimits,
+          const s32 matching_maxDistance, const s32 matching_maxCorrespondences,
+          const TransformType updateType,
+          MemoryStack scratch);
 
         Result UpdateTransformation(const FixedLengthList<LucasKanadeTrackerBinary::Correspondence> &correspondences, const TransformType updateType, MemoryStack scratch);
       }; // class LucasKanadeTrackerBinary

@@ -149,69 +149,70 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerBinary_ComputeIndexLimitsVertical)
   GTEST_RETURN_HERE;
 }
 
-GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerBinary_ComputeIndexLimits)
-{
-  MemoryStack scratch_CMX(&cmxBuffer[0], CMX_BUFFER_SIZE);
-  ASSERT_TRUE(scratch_CMX.IsValid());
-
-  FixedLengthList<Point<s16> > points(5, scratch_CMX);
-  Array<s32> xStartIndexes(1, 641, scratch_CMX);
-  Array<s32> yStartIndexes(1, 481, scratch_CMX);
-
-  points.PushBack(Point<s16>(1,0));
-  points.PushBack(Point<s16>(2,4));
-  points.PushBack(Point<s16>(4,4));
-  points.PushBack(Point<s16>(4,5));
-  points.PushBack(Point<s16>(6,479));
-
-  {
-    const Result result = TemplateTracker::LucasKanadeTrackerBinary::ComputeIndexLimitsHorizontal(points, xStartIndexes);
-    ASSERT_TRUE(result == RESULT_OK);
-  }
-
-  //xStartIndexes.Print("xStartIndexes");
-
-  for(s32 x=0; x<=1; x++) {
-    ASSERT_TRUE(xStartIndexes[0][x] == 0);
-  }
-
-  ASSERT_TRUE(xStartIndexes[0][2] == 1);
-
-  for(s32 x=3; x<=4; x++) {
-    ASSERT_TRUE(xStartIndexes[0][x] == 2);
-  }
-
-  for(s32 x=5; x<=6; x++) {
-    ASSERT_TRUE(xStartIndexes[0][x] == 4);
-  }
-
-  for(s32 x=7; x<=640; x++) {
-    ASSERT_TRUE(xStartIndexes[0][x] == 5);
-  }
-
-  {
-    const Result result = TemplateTracker::LucasKanadeTrackerBinary::ComputeIndexLimitsVertical(points, yStartIndexes);
-    ASSERT_TRUE(result == RESULT_OK);
-  }
-
-  //yStartIndexes.Print("yStartIndexes");
-
-  ASSERT_TRUE(yStartIndexes[0][0] == 0);
-
-  for(s32 y=1; y<=4; y++) {
-    ASSERT_TRUE(yStartIndexes[0][y] == 1);
-  }
-
-  ASSERT_TRUE(yStartIndexes[0][5] == 3);
-
-  for(s32 y=6; y<=479; y++) {
-    ASSERT_TRUE(yStartIndexes[0][y] == 4);
-  }
-
-  ASSERT_TRUE(yStartIndexes[0][480] == 5);
-
-  GTEST_RETURN_HERE;
-}
+// TODO: If needed, test these protected methods
+//GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerBinary_ComputeIndexLimits)
+//{
+//  MemoryStack scratch_CMX(&cmxBuffer[0], CMX_BUFFER_SIZE);
+//  ASSERT_TRUE(scratch_CMX.IsValid());
+//
+//  FixedLengthList<Point<s16> > points(5, scratch_CMX);
+//  Array<s32> xStartIndexes(1, 641, scratch_CMX);
+//  Array<s32> yStartIndexes(1, 481, scratch_CMX);
+//
+//  points.PushBack(Point<s16>(1,0));
+//  points.PushBack(Point<s16>(2,4));
+//  points.PushBack(Point<s16>(4,4));
+//  points.PushBack(Point<s16>(4,5));
+//  points.PushBack(Point<s16>(6,479));
+//
+//  {
+//    const Result result = TemplateTracker::LucasKanadeTrackerBinary::ComputeIndexLimitsHorizontal(points, xStartIndexes);
+//    ASSERT_TRUE(result == RESULT_OK);
+//  }
+//
+//  //xStartIndexes.Print("xStartIndexes");
+//
+//  for(s32 x=0; x<=1; x++) {
+//    ASSERT_TRUE(xStartIndexes[0][x] == 0);
+//  }
+//
+//  ASSERT_TRUE(xStartIndexes[0][2] == 1);
+//
+//  for(s32 x=3; x<=4; x++) {
+//    ASSERT_TRUE(xStartIndexes[0][x] == 2);
+//  }
+//
+//  for(s32 x=5; x<=6; x++) {
+//    ASSERT_TRUE(xStartIndexes[0][x] == 4);
+//  }
+//
+//  for(s32 x=7; x<=640; x++) {
+//    ASSERT_TRUE(xStartIndexes[0][x] == 5);
+//  }
+//
+//  {
+//    const Result result = TemplateTracker::LucasKanadeTrackerBinary::ComputeIndexLimitsVertical(points, yStartIndexes);
+//    ASSERT_TRUE(result == RESULT_OK);
+//  }
+//
+//  //yStartIndexes.Print("yStartIndexes");
+//
+//  ASSERT_TRUE(yStartIndexes[0][0] == 0);
+//
+//  for(s32 y=1; y<=4; y++) {
+//    ASSERT_TRUE(yStartIndexes[0][y] == 1);
+//  }
+//
+//  ASSERT_TRUE(yStartIndexes[0][5] == 3);
+//
+//  for(s32 y=6; y<=479; y++) {
+//    ASSERT_TRUE(yStartIndexes[0][y] == 4);
+//  }
+//
+//  ASSERT_TRUE(yStartIndexes[0][480] == 5);
+//
+//  GTEST_RETURN_HERE;
+//}
 
 GTEST_TEST(CoreTech_Vision, DetectBlurredEdge)
 {
