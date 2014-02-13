@@ -88,7 +88,7 @@ Matlab matlab(false);
 #if (defined(RUN_LOW_MEMORY_IMAGE_TESTS) || defined(RUN_TRACKER_TESTS)) &&\
   !defined(RUN_MAIN_BIG_MEMORY_TESTS) && !defined(RUN_ALL_BIG_MEMORY_TESTS)
 #define DDR_BUFFER_SIZE 320000
-#define CMX_BUFFER_SIZE 6000000 // TODO: switch back to 600k
+#define CMX_BUFFER_SIZE 600000
 #else
 #define DDR_BUFFER_SIZE 4000000
 #define CMX_BUFFER_SIZE 6000000

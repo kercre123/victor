@@ -2387,7 +2387,8 @@ namespace Anki
         const s32 imageHeight,
         const s32 imageWidth,
         const Array<s32> &xStartIndexes,
-        FixedLengthList<LucasKanadeTrackerBinary::Correspondence> &correspondences,
+        Array<f32> &AtA,
+        Array<f32> &Atb,
         MemoryStack scratch)
       {
         const s32 numTemplatePoints = templatePoints.get_size();
@@ -2400,6 +2401,17 @@ namespace Anki
         const f32 h20 = homography[2][0]; const f32 h21 = homography[2][1]; const f32 h22 = 1.0f;
 
         AnkiAssert(FLT_NEAR(homography[2][2], 1.0f));
+
+        // These addresses should be known at compile time, so should be faster
+        f32 AtA_raw[8][8];
+        f32 Atb_raw[8];
+
+        for(s32 ia=0; ia<8; ia++) {
+          for(s32 ja=0; ja<8; ja++) {
+            AtA_raw[ia][ja] = 0;
+          }
+          Atb_raw[ia] = 0;
+        }
 
         const Point<s16> * restrict pTemplatePoints = templatePoints.Pointer(0);
         const Point<s16> * restrict pNewPoints = newPoints.Pointer(0);
@@ -2446,18 +2458,31 @@ namespace Anki
               // TODO: make a binary search?
               for(s32 iMatch=pXStartIndexes[xpRounded]; iMatch<pXStartIndexes[xpRounded+1]; iMatch++) {
                 if(ypRounded == pNewPoints[iMatch].y) {
-                  Correspondence cor;
-                  cor.originalTemplatePoint = Point<f32>(xc, yc);
-                  cor.warpedTemplatePoint = Point<f32>(warpedX, warpedY);
-                  cor.matchedPoint = Point<f32>(warpedX, warpedY+static_cast<f32>(offset));
-                  cor.isVerticalMatch = true;
+                  const f32 yp = warpedY + static_cast<f32>(offset);
 
-                  correspondences.PushBack(cor);
+                  const f32 aValues[8] = {0, 0, 0, -xc, -yc, -1, xc*yp, yc*yp};
+
+                  const f32 bValue = -yp;
+
+                  for(s32 ia=0; ia<8; ia++) {
+                    for(s32 ja=ia; ja<8; ja++) {
+                      AtA_raw[ia][ja] += aValues[ia] * aValues[ja];
+                    }
+
+                    Atb_raw[ia] += aValues[ia] * bValue;
+                  }
                 }
               }
             } // for(s32 iOffset=-maxMatchingDistance; iOffset<=maxMatchingDistance; iOffset++)
           } // if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance))
         } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
+
+        for(s32 ia=0; ia<8; ia++) {
+          for(s32 ja=ia; ja<8; ja++) {
+            AtA[ia][ja] = AtA_raw[ia][ja];
+          }
+          Atb[0][ia] = Atb_raw[ia];
+        }
 
         return RESULT_OK;
       } // Result LucasKanadeTrackerBinary::FindVerticalCorrespondences_Projective()
@@ -2470,7 +2495,8 @@ namespace Anki
         const s32 imageHeight,
         const s32 imageWidth,
         const Array<s32> &yStartIndexes,
-        FixedLengthList<LucasKanadeTrackerBinary::Correspondence> &correspondences,
+        Array<f32> &AtA,
+        Array<f32> &Atb_t,
         MemoryStack scratch)
       {
         const s32 numTemplatePoints = templatePoints.get_size();
@@ -2483,6 +2509,17 @@ namespace Anki
         const f32 h20 = homography[2][0]; const f32 h21 = homography[2][1]; const f32 h22 = 1.0f;
 
         AnkiAssert(FLT_NEAR(homography[2][2], 1.0f));
+
+        // These addresses should be known at compile time, so should be faster
+        f32 AtA_raw[8][8];
+        f32 Atb_t_raw[8];
+
+        for(s32 ia=0; ia<8; ia++) {
+          for(s32 ja=0; ja<8; ja++) {
+            AtA_raw[ia][ja] = 0;
+          }
+          Atb_t_raw[ia] = 0;
+        }
 
         const Point<s16> * restrict pTemplatePoints = templatePoints.Pointer(0);
         const Point<s16> * restrict pNewPoints = newPoints.Pointer(0);
@@ -2529,18 +2566,31 @@ namespace Anki
               // TODO: make a binary search?
               for(s32 iMatch=pYStartIndexes[ypRounded]; iMatch<pYStartIndexes[ypRounded+1]; iMatch++) {
                 if(xpRounded == pNewPoints[iMatch].x) {
-                  Correspondence cor;
-                  cor.originalTemplatePoint = Point<f32>(xc, yc);
-                  cor.warpedTemplatePoint = Point<f32>(warpedX, warpedY);
-                  cor.matchedPoint = Point<f32>(warpedX+static_cast<f32>(offset), warpedY);
-                  cor.isVerticalMatch = false;
+                  const f32 xp = warpedX + static_cast<f32>(offset);
 
-                  correspondences.PushBack(cor);
+                  const f32 aValues[8] = {xc, yc, 1, 0, 0, 0, -xc*xp, -yc*xp};
+
+                  const f32 bValue = xp;
+
+                  for(s32 ia=0; ia<8; ia++) {
+                    for(s32 ja=ia; ja<8; ja++) {
+                      AtA_raw[ia][ja] += aValues[ia] * aValues[ja];
+                    }
+
+                    Atb_t_raw[ia] += aValues[ia] * bValue;
+                  }
                 }
               }
             } // for(s32 iOffset=-maxMatchingDistance; iOffset<=maxMatchingDistance; iOffset++)
           } // if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance))
         } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
+
+        for(s32 ia=0; ia<8; ia++) {
+          for(s32 ja=ia; ja<8; ja++) {
+            AtA[ia][ja] = AtA_raw[ia][ja];
+          }
+          Atb_t[0][ia] = Atb_t_raw[ia];
+        }
 
         return RESULT_OK;
       } // Result LucasKanadeTrackerBinary::FindHorizontalCorrespondences_Projective()
@@ -2562,8 +2612,6 @@ namespace Anki
         s32 numX_xIncreasing;
         s32 numY_yDecreasing;
         s32 numY_yIncreasing;
-
-        FixedLengthList<LucasKanadeTrackerBinary::Correspondence> correspondences(matching_maxCorrespondences, scratch);
 
         lastResult = LucasKanadeTrackerBinary::FindHorizontalCorrespondences_Translation(
           matching_maxDistance,
@@ -2653,7 +2701,15 @@ namespace Anki
       {
         Result lastResult;
 
-        FixedLengthList<LucasKanadeTrackerBinary::Correspondence> correspondences(matching_maxCorrespondences, scratch);
+        Array<f32> AtA_xDecreasing(8,8,scratch);
+        Array<f32> AtA_xIncreasing(8,8,scratch);
+        Array<f32> AtA_yDecreasing(8,8,scratch);
+        Array<f32> AtA_yIncreasing(8,8,scratch);
+
+        Array<f32> Atb_t_xDecreasing(1,8,scratch);
+        Array<f32> Atb_t_xIncreasing(1,8,scratch);
+        Array<f32> Atb_t_yDecreasing(1,8,scratch);
+        Array<f32> Atb_t_yIncreasing(1,8,scratch);
 
         lastResult = LucasKanadeTrackerBinary::FindHorizontalCorrespondences_Projective(
           matching_maxDistance,
@@ -2663,7 +2719,7 @@ namespace Anki
           nextImageEdges.imageHeight,
           nextImageEdges.imageWidth,
           allLimits.xDecreasing_yStartIndexes,
-          correspondences,
+          AtA_xDecreasing, Atb_t_xDecreasing,
           scratch);
 
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
@@ -2677,7 +2733,7 @@ namespace Anki
           nextImageEdges.imageHeight,
           nextImageEdges.imageWidth,
           allLimits.xIncreasing_yStartIndexes,
-          correspondences,
+          AtA_xIncreasing, Atb_t_xIncreasing,
           scratch);
 
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
@@ -2691,7 +2747,7 @@ namespace Anki
           nextImageEdges.imageHeight,
           nextImageEdges.imageWidth,
           allLimits.yDecreasing_xStartIndexes,
-          correspondences,
+          AtA_yDecreasing, Atb_t_yDecreasing,
           scratch);
 
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
@@ -2705,7 +2761,7 @@ namespace Anki
           nextImageEdges.imageHeight,
           nextImageEdges.imageWidth,
           allLimits.yIncreasing_xStartIndexes,
-          correspondences,
+          AtA_yIncreasing, Atb_t_yIncreasing,
           scratch);
 
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
@@ -2713,71 +2769,24 @@ namespace Anki
 
         // Update the transformation
         {
-          const s32 numCorrespondences = correspondences.get_size();
-          const Correspondence * restrict pCorrespondences = correspondences.Pointer(0);
-
-          const s32 numTransformationParameters = 8;
-
-          if(numCorrespondences < numTransformationParameters)
-            return RESULT_OK;
-
-          Array<f32> At(numTransformationParameters, numCorrespondences, scratch);
-          Array<f32> bt(1, numCorrespondences, scratch);
-
-          Array<f32> AtA(numTransformationParameters, numTransformationParameters, scratch);
-          Array<f32> Atb(numTransformationParameters, 1, scratch);
-          Array<f32> Atb_t(1, numTransformationParameters, scratch);
-
           Array<f32> newHomography(3, 3, scratch);
 
-          AnkiConditionalErrorAndReturnValue(At.IsValid() && bt.IsValid() && AtA.IsValid() && Atb.IsValid() && Atb_t.IsValid() && newHomography.IsValid(),
-            RESULT_FAIL_OUT_OF_MEMORY, "LucasKanadeTrackerBinary::UpdateTransformation", "Could not allocate local memory");
+          Array<f32> AtA(8,8,scratch);
+          Array<f32> Atb_t(1,8,scratch);
 
-          f32 * restrict pBt = bt.Pointer(0,0);
-
-          for(s32 i=0; i<numCorrespondences; i++) {
-            const f32 xi = pCorrespondences[i].originalTemplatePoint.x;
-            const f32 yi = pCorrespondences[i].originalTemplatePoint.y;
-
-            if( pCorrespondences[i].isVerticalMatch) {
-              const f32 yp = pCorrespondences[i].matchedPoint.y;
-
-              *At.Pointer(3,i) = -xi;
-              *At.Pointer(4,i) = -yi;
-              *At.Pointer(5,i) = -1;
-              *At.Pointer(6,i) = xi*yp;
-              *At.Pointer(7,i) = yi*yp;
-
-              pBt[i] = -yp;
-            } else {
-              const f32 xp = pCorrespondences[i].matchedPoint.x;
-              *At.Pointer(0,i) = xi;
-              *At.Pointer(1,i) = yi;
-              *At.Pointer(2,i) = 1;
-              *At.Pointer(6,i) = -xi*xp;
-              *At.Pointer(7,i) = -yi*xp;
-
-              pBt[i] = xp;
+          // The total AtA and Atb matrices are just the elementwise sums of their partial versions
+          for(s32 y=0; y<8; y++) {
+            for(s32 x=0; x<8; x++) {
+              AtA[y][x] = AtA_xDecreasing[y][x] + AtA_xIncreasing[y][x] + AtA_yDecreasing[y][x] + AtA_yIncreasing[y][x];
             }
+
+            Atb_t[0][y] = Atb_t_xDecreasing[0][y] + Atb_t_xIncreasing[0][y] + Atb_t_yDecreasing[0][y] + Atb_t_yIncreasing[0][y];
           }
 
-          /*{
-          PUSH_MEMORY_STACK(scratch);
-          Array<f32> A(numCorrespondences, numTransformationParameters, scratch);
-          Matrix::Transpose(At, A);
-          A.Print("A");
-          }*/
-
-          //At.Print("At");
-          //bt.Print("bt");
-
-          Matrix::MultiplyTranspose(At, At, AtA);
-          Matrix::MultiplyTranspose(At, bt, Atb);
+          Matrix::MakeSymmetric(AtA, false);
 
           //AtA.Print("AtA");
-          //Atb.Print("Atb");
-
-          Matrix::Transpose(Atb, Atb_t);
+          //Atb_t.Print("Atb_t");
 
           lastResult = Matrix::SolveLeastSquaresWithCholesky<f32>(AtA, Atb_t, false);
 

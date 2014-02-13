@@ -276,23 +276,11 @@ namespace Anki
           Array<s32> yIncreasing_xStartIndexes;
         } AllIndexLimits;
 
-        typedef struct
-        {
-          Point<f32> originalTemplatePoint;
-          Point<f32> warpedTemplatePoint;
-          Point<f32> matchedPoint;
-          bool isVerticalMatch;
-        } Correspondence;
-
         Array<u8> templateImage;
         Quadrilateral<f32> templateQuad;
 
         // The indexes of the detected edges
         EdgeLists templateEdges;
-        //FixedLengthList<Point<s16> > template_xDecreasingIndexes;
-        //FixedLengthList<Point<s16> > template_xIncreasingIndexes;
-        //FixedLengthList<Point<s16> > template_yDecreasingIndexes;
-        //FixedLengthList<Point<s16> > template_yIncreasingIndexes;
 
         f32 homographyOffsetX;
         f32 homographyOffsetY;
@@ -355,7 +343,8 @@ namespace Anki
           const s32 imageHeight,
           const s32 imageWidth,
           const Array<s32> &xStartIndexes, //< Computed by ComputeIndexLimitsHorizontal
-          FixedLengthList<LucasKanadeTrackerBinary::Correspondence> &correspondences,
+          Array<f32> &AtA,
+          Array<f32> &Atb,
           MemoryStack scratch);
 
         static Result FindHorizontalCorrespondences_Projective(
@@ -366,7 +355,8 @@ namespace Anki
           const s32 imageHeight,
           const s32 imageWidth,
           const Array<s32> &yStartIndexes, //< Computed by ComputeIndexLimitsVertical
-          FixedLengthList<LucasKanadeTrackerBinary::Correspondence> &correspondences,
+          Array<f32> &AtA,
+          Array<f32> &Atb,
           MemoryStack scratch);
 
         // Allocates allLimits, and computes all the indexe limits
