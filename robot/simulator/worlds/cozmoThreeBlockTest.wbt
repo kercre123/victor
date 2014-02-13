@@ -1,4 +1,5 @@
 #VRML_SIM V6.0 utf8
+
 WorldInfo {
   info [
     "Cozmo test world. All rights reserved. Copyright (c) Anki, Inc."
@@ -133,35 +134,29 @@ DEF OffboardVisionProcessor USBConnection {
 #}
 
 Block1x1 {
-  name "Block060_1"
+  name "Bullseye"
   translation -0.183  -0.051  0.0299152
   rotation 1 0 0 0
   
   facemarkerFront [
-    #"textures/Block060_Face01.png"
-    "textures/batteryMarker.png"
+    "textures/bullseye.png"
   ]
   facemarkerBack [
-    #"textures/Block060_Face02.png"
-    "textures/batteryMarker.png"
-  ]
+	"textures/bullseye.png"  ]
   facemarkerLeft [
-    #"textures/Block060_Face03.png"
-    "textures/batteryMarker.png"
+    "textures/bullseye.png"
   ]
   facemarkerRight [
-    #"textures/Block060_Face04.png"
-    "textures/batteryMarker.png"
+    "textures/bullseye.png"
   ]
   facemarkerTop [
-    #"textures/Block060_Face05.png"
-    "textures/batteryMarker.png"
+    "textures/bullseye.png"
   ]
   facemarkerBottom [
-    #"textures/Block060_Face06.png"
-    "textures/batteryMarker.png"
+    "textures/bullseye.png"
   ]
 }
+
 Block1x1 {
   name "Block065_1"
   translation 0.2  -0.1  0.0299152
@@ -255,37 +250,33 @@ Block1x1 {
     "textures/batteryMarker.png"
   ]
 }
+
 Block1x1 {
-  name "Block070_1"
+  name "AngryFace"
   translation 0.4 0 0.0299152 
   rotation 0 0 1 -0.1309
   blockColor 0 0 1
   
   facemarkerFront [
-    #"textures/Block060_Face01.png"
-    "textures/batteryMarker.png"
+    "textures/angryFace.png"
   ]
   facemarkerBack [
-    #"textures/Block060_Face02.png"
-    "textures/batteryMarker.png"
+    "textures/angryFace.png"
   ]
   facemarkerLeft [
-    #"textures/Block060_Face03.png"
-    "textures/batteryMarker.png"
+    "textures/angryFace.png"
   ]
   facemarkerRight [
-    #"textures/Block060_Face04.png"
-    "textures/batteryMarker.png"
+    "textures/angryFace.png"
   ]
   facemarkerTop [
-    #"textures/Block060_Face05.png"
-    "textures/batteryMarker.png"
+    "textures/angryFace.png"
   ]
   facemarkerBottom [
-    #"textures/Block060_Face06.png"
-    "textures/batteryMarker.png"
+    "textures/angryFace.png"
   ]
 }
+
 Block2x1 {
   name "Block075_1"
   translation -0.3 -0.3  0.03

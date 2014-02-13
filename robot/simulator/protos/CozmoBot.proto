@@ -14,6 +14,7 @@ PROTO CozmoBot [
   field SFInt32 commsChannel 1
   field SFInt32 usbChannel 88
   field SFString controller "cozmo_c_controller"
+  field SFString controllerArgs ""
   
   #field SFVec3f spotLightTranslation 0 .03 -.03
   #field SFRotation spotLightRotation 1 0 0 0
@@ -360,6 +361,9 @@ Supervisor {
     mass 1
   }
   locked TRUE
+  
   controller IS controller
+  controllerArgs IS controllerArgs
+  
 } # Supervisor definition
 } # PROTO definition
