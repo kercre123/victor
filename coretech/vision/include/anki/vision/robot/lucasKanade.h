@@ -366,8 +366,6 @@ namespace Anki
           const AllIndexLimits &allLimits,
           const s32 matching_maxDistance, const s32 matching_maxCorrespondences,
           MemoryStack scratch);
-
-        Result UpdateTransformation(const FixedLengthList<LucasKanadeTrackerBinary::Correspondence> &correspondences, const TransformType updateType, MemoryStack scratch);
       }; // class LucasKanadeTrackerBinary
     } // namespace TemplateTracker
   } // namespace Embedded
