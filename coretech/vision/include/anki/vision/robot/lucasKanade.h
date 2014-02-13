@@ -331,7 +331,8 @@ namespace Anki
           const s32 imageHeight,
           const s32 imageWidth,
           const Array<s32> &xStartIndexes, //< Computed by ComputeIndexLimitsHorizontal
-          FixedLengthList<LucasKanadeTrackerBinary::Correspondence> &correspondences,
+          f32 &sumY,
+          s32 &numCorrespondences,
           MemoryStack scratch);
 
         static Result FindHorizontalCorrespondences_Translation(
@@ -342,7 +343,8 @@ namespace Anki
           const s32 imageHeight,
           const s32 imageWidth,
           const Array<s32> &yStartIndexes, //< Computed by ComputeIndexLimitsVertical
-          FixedLengthList<LucasKanadeTrackerBinary::Correspondence> &correspondences,
+          f32 &sumX,
+          s32 &numCorrespondences,
           MemoryStack scratch);
 
         static Result FindVerticalCorrespondences_Projective(

@@ -97,7 +97,7 @@ Matlab matlab(false);
 DDR_BUFFER_LOCATION char ddrBuffer[DDR_BUFFER_SIZE];
 CMX_BUFFER_LOCATION char cmxBuffer[CMX_BUFFER_SIZE];
 
-GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerBinary_ComputeIndexLimitsVertical)
+GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerBinary)
 {
   MemoryStack scratch_CMX(&cmxBuffer[0], CMX_BUFFER_SIZE);
   ASSERT_TRUE(scratch_CMX.IsValid());
