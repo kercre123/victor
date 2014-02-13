@@ -24,6 +24,10 @@ using namespace std;
 #error Currently, only visual c++ is supported
 #endif
 
+#ifndef ANKICORETECH_EMBEDDED_USE_OPENCV
+#error OpenCV is required
+#endif
+
 void ProcessRawBuffer(RawBuffer &buffer, const string outputFilenamePattern, const bool freeBuffer, const BufferAction action, const bool swapEndianForHeaders, const bool swapEndianForContents, const bool requireCRCmatch)
 {
   const s32 outputFilenameLength = 1024;

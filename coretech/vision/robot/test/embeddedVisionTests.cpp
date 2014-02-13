@@ -117,14 +117,20 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerBinary)
   templateImage.Set(&cozmo_2014_01_29_11_41_05_10_320x240[0], cozmo_2014_01_29_11_41_05_10_320x240_WIDTH*cozmo_2014_01_29_11_41_05_10_320x240_HEIGHT);
   nextImage.Set(&cozmo_2014_01_29_11_41_05_12_320x240[0], cozmo_2014_01_29_11_41_05_12_320x240_WIDTH*cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT);
 
+  InitBenchmarking();
+
+  BeginBenchmark("LucasKanadeTrackerBinary init");
   TemplateTracker::LucasKanadeTrackerBinary lktb(templateImage, templateQuad, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, edgeDetection_maxDetectionsPerType, scratch_CMX);
+  EndBenchmark("LucasKanadeTrackerBinary init");
 
   {
     PUSH_MEMORY_STACK(scratch_CMX);
 
+    BeginBenchmark("LucasKanadeTrackerBinary update");
     const Result result = lktb.UpdateTrack(nextImage,
       edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, edgeDetection_maxDetectionsPerType,
       matching_maxDistance, matching_maxCorrespondences, scratch_CMX);
+    EndBenchmark("LucasKanadeTrackerBinary update");
 
     ASSERT_TRUE(result == RESULT_OK);
 
@@ -137,6 +143,8 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerBinary)
 
     ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(lktb.get_transformation().get_homography(), transform_groundTruth, .01, .01));
   }
+
+  PrintBenchmarkResults_OnlyTotals();
 
   //lktb.get_transformation().TransformArray(templateImage, warpedTemplateImage, scratch_CMX, 1.0f);
 
@@ -792,10 +800,10 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerFast)
 
     const f64 time2 = GetTime();
 
-    printf("Translation-only LK totalTime:%f initTime:%f updateTrack:%f\n", time2-time0, time1-time0, time2-time1);
-    PrintBenchmarkResults_OnlyTotals();
+    printf("Translation-only FAST-LK totalTime:%f initTime:%f updateTrack:%f\n", time2-time0, time1-time0, time2-time1);
+    PrintBenchmarkResults_All();
 
-    tracker.get_transformation().Print("Translation-only Fast LK");
+    //tracker.get_transformation().Print("Translation-only Fast LK");
 
     // This ground truth is from the PC c++ version
     Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
@@ -826,10 +834,10 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerFast)
 
     const f64 time2 = GetTime();
 
-    printf("Affine LK totalTime:%f initTime:%f updateTrack:%f\n", time2-time0, time1-time0, time2-time1);
-    PrintBenchmarkResults_OnlyTotals();
+    printf("Affine FAST-LK totalTime:%f initTime:%f updateTrack:%f\n", time2-time0, time1-time0, time2-time1);
+    PrintBenchmarkResults_All();
 
-    tracker.get_transformation().Print("Affine Fast LK");
+    //tracker.get_transformation().Print("Affine Fast LK");
 
     // This ground truth is from the PC c++ version
     Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
@@ -906,7 +914,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
     const f64 time2 = GetTime();
 
     printf("Translation-only LK totalTime:%f initTime:%f updateTrack:%f\n", time2-time0, time1-time0, time2-time1);
-    PrintBenchmarkResults_OnlyTotals();
+    PrintBenchmarkResults_All();
 
     tracker.get_transformation().Print("Translation-only LK");
 
@@ -939,7 +947,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
     const f64 time2 = GetTime();
 
     printf("Affine LK totalTime:%f initTime:%f updateTrack:%f\n", time2-time0, time1-time0, time2-time1);
-    PrintBenchmarkResults_OnlyTotals();
+    PrintBenchmarkResults_All();
 
     tracker.get_transformation().Print("Affine LK");
 
@@ -974,7 +982,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
     const f64 time2 = GetTime();
 
     printf("Projective LK totalTime:%f initTime:%f updateTrack:%f\n", time2-time0, time1-time0, time2-time1);
-    PrintBenchmarkResults_OnlyTotals();
+    PrintBenchmarkResults_All();
 
     tracker.get_transformation().Print("Projective LK");
 
@@ -1524,7 +1532,7 @@ GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage_lowMemory)
 
     printf("totalTime: %f\n", time1-time0);
 
-    PrintBenchmarkResults_OnlyTotals();
+    PrintBenchmarkResults_All();
 
     ASSERT_TRUE(result == RESULT_OK);
   }
@@ -3005,11 +3013,9 @@ int RUN_ALL_TESTS()
   CALL_GTEST_TEST(CoreTech_Vision, DownsampleByPowerOfTwo);
   CALL_GTEST_TEST(CoreTech_Vision, EndianCopying);
   CALL_GTEST_TEST(CoreTech_Vision, ComputeDockingErrorSignalAffine);
-#ifdef RUN_FAST_LK_AND_NOT_NORMAL_LK
+
   CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerFast);
-#else
   CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTracker);
-#endif
 
   CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering);
   CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageGeneration);

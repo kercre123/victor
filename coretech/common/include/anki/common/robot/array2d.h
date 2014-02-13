@@ -293,10 +293,9 @@ namespace Anki
     }
 #endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
     template<typename Type> void Array<Type>::Show(const char * const windowName, const bool waitForKeypress, const bool scaleValues, const bool fitImageToWindow) const
     {
-      // If opencv is not used, just do nothing
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
       AnkiConditionalError(this->IsValid(), "Array<Type>::Show", "Array<Type> is not valid");
 
       if(fitImageToWindow) {
@@ -324,8 +323,8 @@ namespace Anki
       if(waitForKeypress) {
         cv::waitKey();
       }
-#endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
     }
+#endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
     template<typename Type> Result Array<Type>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {

@@ -19,7 +19,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/miscVisionKernels.h"
 #include "anki/vision/robot/imageProcessing.h"
 
-#define SEND_BINARY_IMAGES_TO_MATLAB
+//#define SEND_BINARY_IMAGES_TO_MATLAB
 
 namespace Anki
 {
@@ -2069,7 +2069,11 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(nextImageEdges.xDecreasing.IsValid() && nextImageEdges.xIncreasing.IsValid() && nextImageEdges.yDecreasing.IsValid() && nextImageEdges.yIncreasing.IsValid(),
           RESULT_FAIL_OUT_OF_MEMORY, "LucasKanadeTrackerBinary::UpdateTrack", "Could not allocate local scratch");
 
+        BeginBenchmark("ut_DetectEdges");
+
         lastResult = DetectBlurredEdges(nextImage, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, nextImageEdges);
+
+        EndBenchmark("ut_DetectEdges");
 
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
           lastResult, "LucasKanadeTrackerBinary::UpdateTrack", "DetectBlurredEdge failed");
@@ -2077,23 +2081,35 @@ namespace Anki
         // First, to speed up the correspondence search, find the min and max of x or y points
         AllIndexLimits allLimits;
 
+        BeginBenchmark("ut_IndexLimits");
+
         if((lastResult = LucasKanadeTrackerBinary::ComputeAllIndexLimits(nextImageEdges, allLimits, scratch)) != RESULT_OK)
           return lastResult;
 
+        EndBenchmark("ut_IndexLimits");
+
         // Second, compute the actual correspondence and refine the homography
+
+        BeginBenchmark("ut_translation");
 
         lastResult = this->IterativelyRefineTrack(
           nextImageEdges, allLimits,
           matching_maxDistance, matching_maxCorrespondences,
           TRANSFORM_TRANSLATION, scratch);
 
+        EndBenchmark("ut_translation");
+
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
           lastResult, "LucasKanadeTrackerBinary::UpdateTrack", "TRANSFORM_TRANSLATION failed");
+
+        BeginBenchmark("ut_projective");
 
         lastResult = this->IterativelyRefineTrack(
           nextImageEdges, allLimits,
           matching_maxDistance, matching_maxCorrespondences,
           TRANSFORM_PROJECTIVE, scratch);
+
+        EndBenchmark("ut_projective");
 
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
           lastResult, "LucasKanadeTrackerBinary::UpdateTrack", "TRANSFORM_PROJECTIVE failed");

@@ -25,7 +25,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #ifdef __cplusplus
 extern "C" {
 #endif
-  // Call this before doing an benchmarking, to clear the buffer of benchmarkEvents.
+  // Call this before doing any benchmarking, to clear the buffer of benchmarkEvents.
   // Can be called multiple times.
   void InitBenchmarking();
 
