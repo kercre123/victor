@@ -681,8 +681,6 @@ GTEST_TEST(CoreTech_Vision, ComputeDockingErrorSignalAffine)
     horizontalTrackingResolution, blockMarkerWidthInMM, horizontalFocalLengthInMM,
     rel_x, rel_y, rel_rad, ms) == RESULT_OK);
 
-  //printf("%f %f %f\n", rel_x, rel_y, rel_rad);
-
   // TODO: manually compute the correct output
   ASSERT_TRUE(FLT_NEAR(rel_x,2.7116308f));
   ASSERT_TRUE(NEAR(rel_y,-8.1348925f, 0.1f)); // The Myriad inexact floating point mode is imprecise here
@@ -803,7 +801,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerFast)
 
     const f64 time2 = GetTime();
 
-    printf("Translation-only FAST-LK totalTime:%f initTime:%f updateTrack:%f\n", time2-time0, time1-time0, time2-time1);
+    printf("Translation-only FAST-LK totalTime:%dms initTime:%dms updateTrack:%dms\n", (s32)Round(1000*(time2-time0)), (s32)Round(1000*(time1-time0)), (s32)Round(1000*(time2-time1)));
     PrintBenchmarkResults_All();
 
     //tracker.get_transformation().Print("Translation-only Fast LK");
@@ -837,7 +835,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerFast)
 
     const f64 time2 = GetTime();
 
-    printf("Affine FAST-LK totalTime:%f initTime:%f updateTrack:%f\n", time2-time0, time1-time0, time2-time1);
+    printf("Affine FAST-LK totalTime:%dms initTime:%dms updateTrack:%dms\n", (s32)Round(1000*(time2-time0)), (s32)Round(1000*(time1-time0)), (s32)Round(1000*(time2-time1)));
     PrintBenchmarkResults_All();
 
     //tracker.get_transformation().Print("Affine Fast LK");
@@ -916,7 +914,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
 
     const f64 time2 = GetTime();
 
-    printf("Translation-only LK totalTime:%f initTime:%f updateTrack:%f\n", time2-time0, time1-time0, time2-time1);
+    printf("Translation-only LK totalTime:%dms initTime:%dms updateTrack:%dms\n", (s32)Round(1000*(time2-time0)), (s32)Round(1000*(time1-time0)), (s32)Round(1000*(time2-time1)));
     PrintBenchmarkResults_All();
 
     tracker.get_transformation().Print("Translation-only LK");
@@ -949,7 +947,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
 
     const f64 time2 = GetTime();
 
-    printf("Affine LK totalTime:%f initTime:%f updateTrack:%f\n", time2-time0, time1-time0, time2-time1);
+    printf("Affine LK totalTime:%dms initTime:%dms updateTrack:%dms\n", (s32)Round(1000*(time2-time0)), (s32)Round(1000*(time1-time0)), (s32)Round(1000*(time2-time1)));
     PrintBenchmarkResults_All();
 
     tracker.get_transformation().Print("Affine LK");
@@ -984,7 +982,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
 
     const f64 time2 = GetTime();
 
-    printf("Projective LK totalTime:%f initTime:%f updateTrack:%f\n", time2-time0, time1-time0, time2-time1);
+    printf("Projective LK totalTime:%dms initTime:%dms updateTrack:%dms\n", (s32)Round(1000*(time2-time0)), (s32)Round(1000*(time1-time0)), (s32)Round(1000*(time2-time1)));
     PrintBenchmarkResults_All();
 
     tracker.get_transformation().Print("Projective LK");
@@ -1416,7 +1414,7 @@ GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage)
       scratch2);
     const f64 time1 = GetTime();
 
-    printf("totalTime: %f\n", time1-time0);
+    printf("totalTime: %dms\n", (s32)Round(1000*(time1-time0)));
 
     //PrintBenchmarkResults();
 
@@ -1533,7 +1531,7 @@ GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage_lowMemory)
       scratch2);
     const f64 time1 = GetTime();
 
-    printf("totalTime: %f\n", time1-time0);
+    printf("totalTime: %dms\n", (s32)Round(1000*(time1-time0)));
 
     PrintBenchmarkResults_All();
 
@@ -2519,7 +2517,7 @@ GTEST_TEST(CoreTech_Vision, ComponentsSize)
   printf("Final size: %d\n"
     "Difference: %d\n"
     "Expected size of a components: %d\n"
-    "Actual size (includes overhead): %f\n",
+    "Actual size (includes overhead): %d\n",
     usedBytes1,
     usedBytes1 - usedBytes0,
     sizeof(ConnectedComponentSegment),

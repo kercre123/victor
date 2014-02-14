@@ -222,11 +222,11 @@ void PrintBenchmarkResults(const BenchmarkPrintType printType)
     printf("Event ");
     printf(eventNames[i]);
     if(printType == BENCHMARK_PRINT_ALL) {
-      printf(": Mean:%fs Min:%fs Max:%fs Total:%fs NumEvents:%d\n",
-        (float)(totalTimes[i]/(double)numEvents[i]), (float)minTimes[i], (float)maxTimes[i], (float)totalTimes[i], numEvents[i]);
+      printf(": Mean:%dus Min:%dus Max:%dus Total:%dus NumEvents:%d\n",
+        (s32)Round(1000000*totalTimes[i]/(double)numEvents[i]), (s32)Round(1000000*minTimes[i]), (s32)Round(1000000*maxTimes[i]), (s32)Round(1000000*totalTimes[i]), (s32)numEvents[i]);
     } else if (printType == BENCHMARK_PRINT_TOTALS) {
-      printf(": Total:%fs\n",
-        (float)totalTimes[i]);
+      printf(": Total:%dus\n",
+        (s32)Round(1000000*totalTimes[i]));
     }
   } // for(i=0; i<numEventNames; i++)
 } // void PrintBenchmarkResults()

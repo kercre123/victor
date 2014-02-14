@@ -690,9 +690,9 @@ GTEST_TEST(CoreTech_Common, ExplicitPrintf)
   const f32 *float3 = (f32*)&hex3;
   const f32 *float4 = (f32*)&hex4;
 
-  explicitPrintf(0, EXPLICIT_PRINTF_FLIP_CHARACTERS, "The following two lines should be the same:\n");
-  explicitPrintf(0, EXPLICIT_PRINTF_FLIP_CHARACTERS, "%x %x %x %x\n", hex1, hex2, hex3, hex4);
-  explicitPrintf(0, EXPLICIT_PRINTF_FLIP_CHARACTERS, "%x %x %x %x\n", *((u32*) float1), *((u32*) float2), *((u32*) float3), *((u32*)float4));
+  explicitPrintf(0, 0, "The following two lines should be the same:\n");
+  explicitPrintf(0, 0, "%x %x %x %x\n", hex1, hex2, hex3, hex4);
+  explicitPrintf(0, 0, "%x %x %x %x\n", *((u32*) float1), *((u32*) float2), *((u32*) float3), *((u32*)float4));
 
   //explicitPrintf(0, EXPLICIT_PRINTF_FLIP_CHARACTERS, "%f %f %f %f\n", *float1, *float2, *float3, *float4);
 
