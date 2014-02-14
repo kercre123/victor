@@ -13,8 +13,6 @@ namespace Anki
 {
   namespace Embedded
   {
-    static Result lastResult;
-
     Result DetectBlurredEdges(const Array<u8> &image, const u8 grayvalueThreshold, const s32 minComponentWidth, EdgeLists &edgeLists)
     {
       Rectangle<s32> imageRegionOfInterest(0, image.get_size(1), 0, image.get_size(0));

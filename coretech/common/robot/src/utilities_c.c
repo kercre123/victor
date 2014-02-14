@@ -147,7 +147,6 @@ void PrintF64(int (*writeChar)(int), f64 value)
   const s32 maxDecimalDigits = 6;
   f64 decimalPart;
 
-  s32 digitIndex;
   s32 numDecimalDigitsUsed = 0;
 
   // If null, default to putchar
@@ -199,7 +198,6 @@ void PrintF64(int (*writeChar)(int), f64 value)
   }
 
   // This loop prints out the part after the decimal point
-  digitIndex = 0;
   while(value > 0.0f && numDecimalDigitsUsed < maxDecimalDigits) {
     s32 curDigit;
 

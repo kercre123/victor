@@ -73,7 +73,7 @@ namespace Anki {
     // and V_max' = max speed that can be reached
     totalDistToTarget_ = endPos_ - startPos_;
     if (fabs(d) > fabs(totalDistToTarget_)) {
-      maxReachableVel_ = sqrt( ((2*accel*fabs(totalDistToTarget_)) + (endVel_*endVel_) + (startVel_*startVel_)) * 0.5 );
+      maxReachableVel_ = sqrt( ((2*accel*fabs(totalDistToTarget_)) + (endVel_*endVel_) + (startVel_*startVel_)) * 0.5f );
       maxReachableVel_ *= direction_;
 #if(DEBUG_VPG)
       printf("VPG new V_max: %f (d = %f)\n", maxReachableVel_, d);

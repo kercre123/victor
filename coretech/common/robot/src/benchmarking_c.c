@@ -24,7 +24,7 @@ extern u32 XXX_HACK_FOR_PETE(void);
 
 #ifdef USING_MOVIDIUS_GCC_COMPILER
 #define BENCHMARK_EVENTS_LOCATION __attribute__((section(".ddr.bss")))
-#elif defined(__EDG__)  // MDK-ARM
+#elif defined(__EDG__) // MDK-ARM
 #define BENCHMARK_EVENTS_LOCATION __attribute__((section(".ram1")))
 #else
 #define BENCHMARK_EVENTS_LOCATION
@@ -223,7 +223,7 @@ void PrintBenchmarkResults(const BenchmarkPrintType printType)
     printf(eventNames[i]);
     if(printType == BENCHMARK_PRINT_ALL) {
       printf(": Mean:%fs Min:%fs Max:%fs Total:%fs NumEvents:%d\n",
-        totalTimes[i]/(double)numEvents[i], minTimes[i], maxTimes[i], totalTimes[i], numEvents[i]);
+        (float)(totalTimes[i]/(double)numEvents[i]), (float)minTimes[i], (float)maxTimes[i], (float)totalTimes[i], numEvents[i]);
     } else if (printType == BENCHMARK_PRINT_TOTALS) {
       printf(": Total:%fs\n",
         (float)totalTimes[i]);

@@ -677,16 +677,12 @@ namespace Anki
         for(s32 x=realMinX; x<realMaxX; x++) {
           if(Flags::TypeCharacteristics<Type>::isBasicType) {
             if(Flags::TypeCharacteristics<Type>::isInteger) {
-              if(sizeof(Type) == 1) {
-                printf("%d ", static_cast<s32>(pThisData[x]));
-              } else {
-                printf("%d ", pThisData[x]);
-              }
+              printf("%d ", static_cast<s32>(pThisData[x]));              
             } else {
               if(version==1) {
-                printf("%f ", pThisData[x]);
+                printf("%f ", (float)pThisData[x]);
               } else {
-                printf("%e ", pThisData[x]);
+                printf("%e ", (float)pThisData[x]);
               }
             }
           } else {
