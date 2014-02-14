@@ -2308,10 +2308,10 @@ GTEST_TEST(CoreTech_Vision, TraceInteriorBoundary)
 } // GTEST_TEST(CoreTech_Vision, TraceInteriorBoundary)
 
 #if !ANKICORETECH_EMBEDDED_USE_GTEST
-int RUN_ALL_TESTS()
+s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
 {
-  s32 numPassedTests = 0;
-  s32 numFailedTests = 0;
+  numPassedTests = 0;
+  numFailedTests = 0;
 
   CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerBinary);
   CALL_GTEST_TEST(CoreTech_Vision, DetectBlurredEdge);
@@ -2344,8 +2344,6 @@ int RUN_ALL_TESTS()
   CALL_GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale);
   CALL_GTEST_TEST(CoreTech_Vision, TraceInteriorBoundary);
 
-  printf("\n========================================================================\nUNIT TEST RESULTS:\nNumber Passed:%d\nNumber Failed:%d\n========================================================================\n", numPassedTests, numFailedTests);
-
   return numFailedTests;
-} // int RUN_ALL_TESTS()
+} // int RUN_ALL_VISION_TESTS()
 #endif // #if !ANKICORETECH_EMBEDDED_USE_GTEST

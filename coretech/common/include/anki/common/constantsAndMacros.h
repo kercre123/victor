@@ -152,6 +152,8 @@
 
 // TRUE if x is near y by the amount epsilon, else FALSE
 #define FLT_NEAR(x,y) ((x) == (y) || (((x) > (y)-(FLOATING_POINT_COMPARISON_TOLERANCE)) && ((x) < (y)+(FLOATING_POINT_COMPARISON_TOLERANCE))))
+#define DBL_NEAR(x,y) ((x) == (y) || (((x) > (y)-((f64)FLOATING_POINT_COMPARISON_TOLERANCE)) && ((x) < (y)+((f64)FLOATING_POINT_COMPARISON_TOLERANCE))))
+
 #ifndef NEAR
 #define NEAR(x,y,epsilon) ((x) == (y) || (((x) > (y)-(epsilon)) && ((x) < (y)+(epsilon))))
 #endif

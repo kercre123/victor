@@ -22,15 +22,19 @@ For internal use only. No part of this code may be used without a signed non-dis
 #if ANKICORETECH_EMBEDDED_USE_GTEST
 int main(int argc, char ** argv)
 #else
-int RUN_ALL_TESTS();
+int RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests);
 int main()
 #endif
 {
 #if ANKICORETECH_EMBEDDED_USE_GTEST
   ::testing::InitGoogleTest(&argc, argv);
-#endif
-
   const int result = RUN_ALL_TESTS();
+#else
+  s32 numPassedTests;
+  s32 numFailedTests;
+  const int result = RUN_ALL_VISION_TESTS(numPassedTests, numFailedTests);
+  printf("\n========================================================================\nUNIT TEST RESULTS:\nNumber Passed:%d\nNumber Failed:%d\n========================================================================\n", numPassedTests, numFailedTests);
+#endif
 
   return result;
 }

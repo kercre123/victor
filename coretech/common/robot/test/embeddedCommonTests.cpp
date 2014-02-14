@@ -352,9 +352,9 @@ GTEST_TEST(CoreTech_Common, SerializedBuffer)
   {
     SerializedBufferConstIterator iterator(serialized);
 
-    s32 segment1LengthB = -1;
-    s32 segment2LengthB = -1;
-    s32 segment3LengthB = -1;
+    //s32 segment1LengthB = -1;
+    //s32 segment2LengthB = -1;
+    //s32 segment3LengthB = -1;
 
     char * buffer = reinterpret_cast<char*>(serialized.get_memoryStack().get_buffer());
 
@@ -1017,9 +1017,9 @@ GTEST_TEST(CoreTech_Common, ArrayPatterns)
 
       for(s32 x=0; x<arrayWidth; x++) {
         if(x==y) {
-          ASSERT_TRUE(FLT_NEAR(pOut[x], 1.0));
+          ASSERT_TRUE(DBL_NEAR(pOut[x], 1.0));
         } else {
-          ASSERT_TRUE(FLT_NEAR(pOut[x], 0.0));
+          ASSERT_TRUE(DBL_NEAR(pOut[x], 0.0));
         }
       }
     }
@@ -3079,10 +3079,10 @@ GTEST_TEST(CoreTech_Common, ArrayFillPattern)
 }
 
 #if !defined(ANKICORETECH_EMBEDDED_USE_GTEST)
-int RUN_ALL_TESTS()
+void RUN_ALL_COMMON_TESTS(s32 &numPassedTests, s32 &numFailedTests)
 {
-  s32 numPassedTests = 0;
-  s32 numFailedTests = 0;
+  numPassedTests = 0;
+  numFailedTests = 0;
 
   CALL_GTEST_TEST(CoreTech_Common, CompressArray);
   CALL_GTEST_TEST(CoreTech_Common, Heatshrink);
@@ -3142,6 +3142,6 @@ int RUN_ALL_TESTS()
 
   printf("\n========================================================================\nUNIT TEST RESULTS:\nNumber Passed:%d\nNumber Failed:%d\n========================================================================\n", numPassedTests, numFailedTests);
 
-  return numFailedTests;
-} // int RUN_ALL_TESTS()
+  return;
+} // int RUN_ALL_COMMON_TESTS()
 #endif // #if !defined(ANKICORETECH_EMBEDDED_USE_GTEST)

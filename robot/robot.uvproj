@@ -399,19 +399,14 @@
           <GroupName>hal</GroupName>
           <Files>
             <File>
+              <FileName>frontCamera.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\frontCamera.cpp</FilePath>
+            </File>
+            <File>
               <FileName>main.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\main.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>uart.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\uart.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>timer.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\timer.cpp</FilePath>
             </File>
             <File>
               <FileName>retarget.cpp</FileName>
@@ -419,14 +414,19 @@
               <FilePath>.\arm_hal\hal\retarget.cpp</FilePath>
             </File>
             <File>
-              <FileName>frontCamera.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\frontCamera.cpp</FilePath>
-            </File>
-            <File>
               <FileName>startup.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\startup.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>timer.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\timer.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>uart.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\uart.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -774,16 +774,6 @@
           <GroupName>coretech-common</GroupName>
           <Files>
             <File>
-              <FileName>radians.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\shared\src\radians.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>velocityProfileGenerator.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\shared\src\velocityProfileGenerator.cpp</FilePath>
-            </File>
-            <File>
               <FileName>array2d.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\robot\src\array2d.cpp</FilePath>
@@ -797,6 +787,11 @@
               <FileName>comparisons.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\robot\src\comparisons.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>compress.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\robot\src\compress.cpp</FilePath>
             </File>
             <File>
               <FileName>draw.cpp</FileName>
@@ -859,6 +854,11 @@
               <FilePath>..\coretech\common\robot\src\opencvLight.cpp</FilePath>
             </File>
             <File>
+              <FileName>radians.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\shared\src\radians.cpp</FilePath>
+            </File>
+            <File>
               <FileName>sequences.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\robot\src\sequences.cpp</FilePath>
@@ -867,6 +867,16 @@
               <FileName>serialize.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\robot\src\serialize.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>shave_addVectors.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\coretech\common\robot\src\shave\shave_addVectors.c</FilePath>
+            </File>
+            <File>
+              <FileName>shave_printTest.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\coretech\common\robot\src\shave\shave_printTest.c</FilePath>
             </File>
             <File>
               <FileName>trig_fast.cpp</FileName>
@@ -883,6 +893,26 @@
               <FileType>1</FileType>
               <FilePath>..\coretech\common\robot\src\utilities_c.c</FilePath>
             </File>
+            <File>
+              <FileName>velocityProfileGenerator.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\shared\src\velocityProfileGenerator.cpp</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>coretech-external</GroupName>
+          <Files>
+            <File>
+              <FileName>heatshrink_decoder.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\..\coretech-external\heatshrink\heatshrink_decoder.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>heatshrink_encoder.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\..\coretech-external\heatshrink\heatshrink_encoder.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -895,9 +925,9 @@
           <GroupName>coretech-vision</GroupName>
           <Files>
             <File>
-              <FileName>computeCharacteristicScale.cpp</FileName>
+              <FileName>connectedComponents.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\computeCharacteristicScale.cpp</FilePath>
+              <FilePath>..\coretech\vision\robot\src\connectedComponents.cpp</FilePath>
             </File>
             <File>
               <FileName>computeQuadrilaterals.cpp</FileName>
@@ -905,9 +935,9 @@
               <FilePath>..\coretech\vision\robot\src\computeQuadrilaterals.cpp</FilePath>
             </File>
             <File>
-              <FileName>connectedComponents.cpp</FileName>
+              <FileName>computeCharacteristicScale.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\connectedComponents.cpp</FilePath>
+              <FilePath>..\coretech\vision\robot\src\computeCharacteristicScale.cpp</FilePath>
             </File>
             <File>
               <FileName>docking_vision.cpp</FileName>
@@ -918,6 +948,11 @@
               <FileName>draw_vision.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\draw_vision.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>edgeDetection.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\edgeDetection.cpp</FilePath>
             </File>
             <File>
               <FileName>fiducialMarkerDefinitionType0.h</FileName>
@@ -960,16 +995,6 @@
               <FilePath>..\coretech\vision\robot\src\thresholdScaleImage.cpp</FilePath>
             </File>
             <File>
-              <FileName>traceBoundary.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\traceBoundary.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>transformations.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\transformations.cpp</FilePath>
-            </File>
-            <File>
               <FileName>shave_integralImageFiltering.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\coretech\vision\robot\src\shave\shave_integralImageFiltering.c</FilePath>
@@ -980,14 +1005,19 @@
               <FilePath>..\coretech\vision\robot\src\shave\shave_integralImageGeneration.c</FilePath>
             </File>
             <File>
-              <FileName>edgeDetection.cpp</FileName>
+              <FileName>traceBoundary.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\edgeDetection.cpp</FilePath>
+              <FilePath>..\coretech\vision\robot\src\traceBoundary.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>transformations.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\transformations.cpp</FilePath>
             </File>
           </Files>
         </Group>
         <Group>
-          <GroupName>vision-tests</GroupName>
+          <GroupName>embedded-tests</GroupName>
           <GroupOption>
             <CommonProperty>
               <UseCPPCompiler>0</UseCPPCompiler>
@@ -1047,21 +1077,26 @@
           </GroupOption>
           <Files>
             <File>
+              <FileName>embeddedCommonTests.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\robot\test\embeddedCommonTests.cpp</FilePath>
+            </File>
+            <File>
               <FileName>embeddedVisionTests.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\test\embeddedVisionTests.cpp</FilePath>
             </File>
             <File>
-              <FileName>run_myriad_embeddedVisionTests.cpp</FileName>
+              <FileName>run_m4_embeddedTests.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\test\run_myriad_embeddedVisionTests.cpp</FilePath>
+              <FilePath>.\test\run_m4_embeddedTests.cpp</FilePath>
             </File>
           </Files>
         </Group>
       </Groups>
     </Target>
     <Target>
-      <TargetName>vision-tests</TargetName>
+      <TargetName>embedded-tests</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
       <TargetOption>
@@ -1409,9 +1444,9 @@
             <uSurpInc>1</uSurpInc>
             <VariousControls>
               <MiscControls>--asm</MiscControls>
-              <Define>USE_STDPERIPH_DRIVER,STM32F429_439xx,USE_DEFAULT_TIMEOUT_CALLBACK,COZMO_ROBOT</Define>
+              <Define>USE_STDPERIPH_DRIVER,STM32F429_439xx,USE_DEFAULT_TIMEOUT_CALLBACK,COZMO_ROBOT,ANKICORETECH_EMBEDDED_USE_HEATSHRINK</Define>
               <Undefine></Undefine>
-              <IncludePath>.\arm_hal;.\arm_hal\lib;..\include;..\coretech\common\include;..\coretech\messaging\include;..\coretech\planning\include;..\coretech\vision\include;.\supervisor\src</IncludePath>
+              <IncludePath>.\arm_hal;.\arm_hal\lib;..\include;..\coretech\common\include;..\coretech\messaging\include;..\coretech\planning\include;..\coretech\vision\include;.\supervisor\src;..\..\coretech-external\heatshrink</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -1453,19 +1488,14 @@
           <GroupName>hal</GroupName>
           <Files>
             <File>
+              <FileName>frontCamera.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\frontCamera.cpp</FilePath>
+            </File>
+            <File>
               <FileName>main.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\main.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>uart.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\uart.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>timer.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\timer.cpp</FilePath>
             </File>
             <File>
               <FileName>retarget.cpp</FileName>
@@ -1473,14 +1503,19 @@
               <FilePath>.\arm_hal\hal\retarget.cpp</FilePath>
             </File>
             <File>
-              <FileName>frontCamera.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\frontCamera.cpp</FilePath>
-            </File>
-            <File>
               <FileName>startup.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\startup.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>timer.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\timer.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>uart.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\uart.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -1885,16 +1920,6 @@
           <GroupName>coretech-common</GroupName>
           <Files>
             <File>
-              <FileName>radians.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\shared\src\radians.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>velocityProfileGenerator.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\shared\src\velocityProfileGenerator.cpp</FilePath>
-            </File>
-            <File>
               <FileName>array2d.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\robot\src\array2d.cpp</FilePath>
@@ -1908,6 +1933,11 @@
               <FileName>comparisons.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\robot\src\comparisons.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>compress.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\robot\src\compress.cpp</FilePath>
             </File>
             <File>
               <FileName>draw.cpp</FileName>
@@ -1970,6 +2000,11 @@
               <FilePath>..\coretech\common\robot\src\opencvLight.cpp</FilePath>
             </File>
             <File>
+              <FileName>radians.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\shared\src\radians.cpp</FilePath>
+            </File>
+            <File>
               <FileName>sequences.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\robot\src\sequences.cpp</FilePath>
@@ -1978,6 +2013,16 @@
               <FileName>serialize.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\robot\src\serialize.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>shave_addVectors.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\coretech\common\robot\src\shave\shave_addVectors.c</FilePath>
+            </File>
+            <File>
+              <FileName>shave_printTest.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\coretech\common\robot\src\shave\shave_printTest.c</FilePath>
             </File>
             <File>
               <FileName>trig_fast.cpp</FileName>
@@ -1994,6 +2039,26 @@
               <FileType>1</FileType>
               <FilePath>..\coretech\common\robot\src\utilities_c.c</FilePath>
             </File>
+            <File>
+              <FileName>velocityProfileGenerator.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\shared\src\velocityProfileGenerator.cpp</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>coretech-external</GroupName>
+          <Files>
+            <File>
+              <FileName>heatshrink_decoder.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\..\coretech-external\heatshrink\heatshrink_decoder.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>heatshrink_encoder.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\..\coretech-external\heatshrink\heatshrink_encoder.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -2006,9 +2071,9 @@
           <GroupName>coretech-vision</GroupName>
           <Files>
             <File>
-              <FileName>computeCharacteristicScale.cpp</FileName>
+              <FileName>connectedComponents.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\computeCharacteristicScale.cpp</FilePath>
+              <FilePath>..\coretech\vision\robot\src\connectedComponents.cpp</FilePath>
             </File>
             <File>
               <FileName>computeQuadrilaterals.cpp</FileName>
@@ -2016,9 +2081,9 @@
               <FilePath>..\coretech\vision\robot\src\computeQuadrilaterals.cpp</FilePath>
             </File>
             <File>
-              <FileName>connectedComponents.cpp</FileName>
+              <FileName>computeCharacteristicScale.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\connectedComponents.cpp</FilePath>
+              <FilePath>..\coretech\vision\robot\src\computeCharacteristicScale.cpp</FilePath>
             </File>
             <File>
               <FileName>docking_vision.cpp</FileName>
@@ -2029,6 +2094,11 @@
               <FileName>draw_vision.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\draw_vision.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>edgeDetection.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\edgeDetection.cpp</FilePath>
             </File>
             <File>
               <FileName>fiducialMarkerDefinitionType0.h</FileName>
@@ -2071,16 +2141,6 @@
               <FilePath>..\coretech\vision\robot\src\thresholdScaleImage.cpp</FilePath>
             </File>
             <File>
-              <FileName>traceBoundary.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\traceBoundary.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>transformations.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\transformations.cpp</FilePath>
-            </File>
-            <File>
               <FileName>shave_integralImageFiltering.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\coretech\vision\robot\src\shave\shave_integralImageFiltering.c</FilePath>
@@ -2091,24 +2151,34 @@
               <FilePath>..\coretech\vision\robot\src\shave\shave_integralImageGeneration.c</FilePath>
             </File>
             <File>
-              <FileName>edgeDetection.cpp</FileName>
+              <FileName>traceBoundary.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\edgeDetection.cpp</FilePath>
+              <FilePath>..\coretech\vision\robot\src\traceBoundary.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>transformations.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\transformations.cpp</FilePath>
             </File>
           </Files>
         </Group>
         <Group>
-          <GroupName>vision-tests</GroupName>
+          <GroupName>embedded-tests</GroupName>
           <Files>
+            <File>
+              <FileName>embeddedCommonTests.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\robot\test\embeddedCommonTests.cpp</FilePath>
+            </File>
             <File>
               <FileName>embeddedVisionTests.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\test\embeddedVisionTests.cpp</FilePath>
             </File>
             <File>
-              <FileName>run_myriad_embeddedVisionTests.cpp</FileName>
+              <FileName>run_m4_embeddedTests.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\test\run_myriad_embeddedVisionTests.cpp</FilePath>
+              <FilePath>.\test\run_m4_embeddedTests.cpp</FilePath>
             </File>
           </Files>
         </Group>
