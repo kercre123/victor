@@ -16,20 +16,20 @@ namespace Anki
     void HAL::USBSendHeader(const u8 packetType)
     {
       using namespace HAL;
-      USBPutChar(Messages::USB_PACKET_HEADER[0]);
-      USBPutChar(Messages::USB_PACKET_HEADER[1]);
-      USBPutChar(Messages::USB_PACKET_HEADER[2]);
-      USBPutChar(Messages::USB_PACKET_HEADER[3]);
+      USBPutChar(USB_PACKET_HEADER[0]);
+      USBPutChar(USB_PACKET_HEADER[1]);
+      USBPutChar(USB_PACKET_HEADER[2]);
+      USBPutChar(USB_PACKET_HEADER[3]);
       USBPutChar(packetType);
     }
     
     void HAL::USBSendFooter(const u8 packetType)
     {
       using namespace HAL;
-      USBPutChar(Messages::USB_PACKET_FOOTER[0]);
-      USBPutChar(Messages::USB_PACKET_FOOTER[1]);
-      USBPutChar(Messages::USB_PACKET_FOOTER[2]);
-      USBPutChar(Messages::USB_PACKET_FOOTER[3]);
+      USBPutChar(USB_PACKET_FOOTER[0]);
+      USBPutChar(USB_PACKET_FOOTER[1]);
+      USBPutChar(USB_PACKET_FOOTER[2]);
+      USBPutChar(USB_PACKET_FOOTER[3]);
       USBPutChar(packetType);
       
 #ifdef SIMULATOR
@@ -80,7 +80,7 @@ namespace Anki
     
     // TODO: pull the downsampling out of this function
     void HAL::USBSendFrame(const u8*        frame,
-                           const TimeStamp  timestamp,
+                           const TimeStamp_t  timestamp,
                            const CameraMode inputResolution,
                            const CameraMode sendResolution,
                            const u8         commandByte)
@@ -97,10 +97,10 @@ namespace Anki
       USBPutChar(frameResHeader);
       
       // Send the timestamp
-      static_assert(sizeof(TimeStamp) == 4,
-                    "Currently assuming sizeof(TimeStamp)==4 when sending to "
+      static_assert(sizeof(TimeStamp_t) == 4,
+                    "Currently assuming sizeof(TimeStamp_t)==4 when sending to "
                     "offboard vision processor in Matlab.");
-      USBSendBuffer(reinterpret_cast<const u8*>(&timestamp), sizeof(TimeStamp));
+      USBSendBuffer(reinterpret_cast<const u8*>(&timestamp), sizeof(TimeStamp_t));
       
       const u16 nrows = CameraModeInfo[inputResolution].height;
       const u16 ncols = CameraModeInfo[inputResolution].width;
@@ -169,10 +169,10 @@ namespace Anki
       if(USBGetNumBytesToRead() > 5)
       {
         // Peek at the next four bytes to see if we have a header waiting
-        if(USBPeekChar(0) == Messages::USB_PACKET_HEADER[0] &&
-           USBPeekChar(1) == Messages::USB_PACKET_HEADER[1] &&
-           USBPeekChar(2) == Messages::USB_PACKET_HEADER[2] &&
-           USBPeekChar(3) == Messages::USB_PACKET_HEADER[3])
+        if(USBPeekChar(0) == USB_PACKET_HEADER[0] &&
+           USBPeekChar(1) == USB_PACKET_HEADER[1] &&
+           USBPeekChar(2) == USB_PACKET_HEADER[2] &&
+           USBPeekChar(3) == USB_PACKET_HEADER[3])
         {
           // We have a header, so next byte (which we know is availale since
           // we had 5 bytes to read above) will be the message ID.  We can

@@ -24,7 +24,10 @@ namespace Anki
   namespace Embedded
   {
 #pragma mark --- Point Class Declaration ---
-    // 2D Point Class:
+    // 2D Point Class
+    //
+    // WARNING:
+    // The coordinate order of Array objects is (y,x), while Point objects are (x,y)
     template<typename Type> class Point
     {
     public:
@@ -56,13 +59,17 @@ namespace Anki
       Point<Type>& operator-= (const Point<Type> &point2);
 
       inline Point<Type>& operator= (const Point<Type> &point2);
-      
-      float Dist(const Point<Type> &point2) const;
-      
+
+      // The L2 (Euclidian) distance between this point and an input point.
+      f32 Dist(const Point<Type> &point2) const;
     }; // class Point<Type>
 
 #pragma mark --- Rectangle Class Declaration ---
 
+    // A rectangle is bounded by a left, right, top, and bottom
+    //
+    // WARNING:
+    // The width and height of a floating point Rectangle is different than that of an integer rectangle.
     template<typename Type> class Rectangle
     {
     public:
@@ -89,13 +96,18 @@ namespace Anki
 
       inline Rectangle<Type>& operator= (const Rectangle<Type> &rect2);
 
+      // WARNING:
+      // The width and height of a floating point Rectangle is different than that of an integer rectangle.
       Type get_width() const;
 
+      // WARNING:
+      // The width and height of a floating point Rectangle is different than that of an integer rectangle.
       Type get_height() const;
     }; // class Rectangle<Type>
 
 #pragma mark --- Quadrilateral Class Declaration ---
 
+    // A Quadrilateral is defined by four Point objects
     template<typename Type> class Quadrilateral
     {
     public:
@@ -106,12 +118,15 @@ namespace Anki
       Quadrilateral(const Point<Type> &corner1, const Point<Type> &corner2, const Point<Type> &corner3, const Point<Type> &corner4);
 
       Quadrilateral(const Quadrilateral<Type>& quad);
-      
+
       Quadrilateral(const Rectangle<Type>& rect);
 
       void Print() const;
 
       Point<Type> ComputeCenter() const;
+
+      // WARNING:
+      // The width and height of a floating point Rectangle is different than that of an integer rectangle.
       Rectangle<Type> ComputeBoundingRectangle() const;
 
       bool operator== (const Quadrilateral<Type> &quad2) const;

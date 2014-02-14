@@ -79,14 +79,14 @@ namespace Anki
       this->y *= value;
       return *this;
     }
-    
+
     template<typename Type> Point<Type>& Point<Type>::operator-= (const Type value)
     {
       this->x -= value;
       this->y -= value;
       return *this;
     }
-    
+
     template<typename Type> Point<Type>& Point<Type>::operator-= (const Point<Type> &point2)
     {
       this->x -= point2.x;
@@ -102,11 +102,11 @@ namespace Anki
       return *this;
     }
 
-    template<typename Type> float Point<Type>::Dist(const Point<Type> &point2) const
+    template<typename Type> f32 Point<Type>::Dist(const Point<Type> &point2) const
     {
-      return (float)sqrt((this->x - point2.x)*(this->x - point2.x) + (this->y - point2.y)*(this->y - point2.y));
+      return (f32)sqrt((this->x - point2.x)*(this->x - point2.x) + (this->y - point2.y)*(this->y - point2.y));
     }
-    
+
 #pragma mark --- Point Specializations ---
     template<> void Point<f32>::Print() const;
     template<> void Point<f64>::Print() const;
@@ -210,7 +210,7 @@ namespace Anki
         this->corners[i] = quad2.corners[i];
       }
     }
-    
+
     template<typename Type> Quadrilateral<Type>::Quadrilateral(const Rectangle<Type>& rect)
     {
       this->corners[0].x = rect.left;   this->corners[0].y = rect.top;
@@ -242,13 +242,13 @@ namespace Anki
 
       return center;
     }
-    
+
     template<typename Type> Rectangle<Type> Quadrilateral<Type>::ComputeBoundingRectangle() const
     {
       Rectangle<Type> boundingBox(this->corners[0].x,
-                                  this->corners[0].x,
-                                  this->corners[0].y,
-                                  this->corners[0].y);
+        this->corners[0].x,
+        this->corners[0].y,
+        this->corners[0].y);
 
       // Initialize the template rectangle to the bounding box of the given
       // quadrilateral
@@ -258,7 +258,7 @@ namespace Anki
         boundingBox.top    = MIN(boundingBox.top,    this->corners[i].y);
         boundingBox.bottom = MAX(boundingBox.bottom, this->corners[i].y);
       }
-      
+
       return boundingBox;
     }
 

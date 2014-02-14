@@ -23,14 +23,14 @@ namespace Anki
 #pragma mark --- FixedLengthList Definitions ---
 
 #ifndef USING_MOVIDIUS_COMPILER
-    template<typename Type> FixedLengthList<Type> AllocateFixedLengthListFromHeap(s32 maximumSize, const Flags::Buffer flags=Flags::Buffer(true,false))
-    {
-      const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array<Type>::ComputeMinimumRequiredMemory(1, maximumSize, flags); // The required memory, plus a bit more
+    //template<typename Type> FixedLengthList<Type> AllocateFixedLengthListFromHeap(s32 maximumSize, const Flags::Buffer flags=Flags::Buffer(true,false,false))
+    //{
+    //  const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array<Type>::ComputeMinimumRequiredMemory(1, maximumSize, flags); // The required memory, plus a bit more
 
-      FixedLengthList<Type> mat(maximumSize, calloc(requiredMemory, 1), requiredMemory, flags);
+    //  FixedLengthList<Type> mat(maximumSize, calloc(requiredMemory, 1), requiredMemory, flags);
 
-      return mat;
-    } // FixedLengthList AllocateFixedLengthListFromHeap_Type(s32 maximumSize, const Flags::Buffer flags=Flags::Buffer(true,false))
+    //  return mat;
+    //} // FixedLengthList AllocateFixedLengthListFromHeap_Type(s32 maximumSize, const Flags::Buffer flags=Flags::Buffer(true,false))
 #endif // #ifndef USING_MOVIDIUS_COMPILER
 
     template<typename Type> inline Type* FixedLengthList<Type>::Pointer(const s32 index)
@@ -64,14 +64,24 @@ namespace Anki
       : ArraySlice<Type>(Array<Type>(1, maximumSize, data, dataLength, flags), LinearSequence<s32>(0,0), LinearSequence<s32>(0,0))
     {
       this->arrayData = this->array.Pointer(0,0);
-      this->set_size(0);
+
+      if(flags.get_isFullyAllocated()) {
+        this->set_size(maximumSize);
+      } else {
+        this->set_size(0);
+      }
     } // FixedLengthList<Type>::FixedLengthList(s32 maximumSize, void * data, s32 dataLength, const Flags::Buffer flags)
 
     template<typename Type> FixedLengthList<Type>::FixedLengthList(s32 maximumSize, MemoryStack &memory, const Flags::Buffer flags)
       : ArraySlice<Type>(Array<Type>(1, maximumSize, memory, flags), LinearSequence<s32>(0,0), LinearSequence<s32>(0,0))
     {
       this->arrayData = this->array.Pointer(0,0);
-      this->set_size(0);
+
+      if(flags.get_isFullyAllocated()) {
+        this->set_size(maximumSize);
+      } else {
+        this->set_size(0);
+      }
     } // FixedLengthList<Type>::FixedLengthList(s32 maximumSize, MemoryStack &memory, const Flags::Buffer flags)
 
     template<typename Type> bool FixedLengthList<Type>::IsValid() const

@@ -147,7 +147,7 @@ void ScrollingIntegralImage_u8_s32_FilterRow(
   //    }
   //#elif OPTIMIZATION_VERSION == 3
   //    //for(x=minXSimd; x<maxXSimd; x+=4) {
-  //    // Warning: doesn't check if minXSimd > maxXSimd
+  //    // WARNING: doesn't check if minXSimd > maxXSimd
   //    __asm(
   //    ".set x i10 \n"
   //      ".set numPixelsToProcess i14 \n"

@@ -82,7 +82,7 @@ namespace Anki
         return gaussianKernel;
       }
 
-      // Note: uses a 32-bit accumulator, so be careful of overflows
+      // NOTE: uses a 32-bit accumulator, so be careful of overflows
       Result Correlate1d(const FixedPointArray<s32> &in1, const FixedPointArray<s32> &in2, FixedPointArray<s32> &out)
       {
         const s32 outputLength = in1.get_size(1) + in2.get_size(1) - 1;
@@ -192,7 +192,7 @@ namespace Anki
         return RESULT_OK;
       } // Result Correlate1d(const FixedPointArray<s32> &in1, const FixedPointArray<s32> &in2, FixedPointArray<s32> &out)
 
-      // Note: uses a 32-bit accumulator, so be careful of overflows
+      // NOTE: uses a 32-bit accumulator, so be careful of overflows
       Result Correlate1dCircularAndSameSizeOutput(const FixedPointArray<s32> &image, const FixedPointArray<s32> &filter, FixedPointArray<s32> &out)
       {
         const s32 imageHeight = image.get_size(0);

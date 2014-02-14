@@ -155,6 +155,10 @@ classdef LucasKanadeTracker < handle
                     Downsample = TrackingResolution;
                     TrackingResolution = [ncols nrows]/Downsample;
                 else
+                    if(ncols < nrows)
+                        disp('Warning: ncols < nrows. These may be swapped');
+                    end
+                    
                     % [ncols nrows] tracking resolution provided, compute
                     % the corresponding downsampling factor
                     Downsample = mean([ncols nrows]./TrackingResolution);

@@ -9,6 +9,10 @@ Copyright Anki, Inc. 2013
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
 **/
 
+#ifndef COZMO_ROBOT
+#define COZMO_ROBOT
+#endif
+
 #include "anki/common/robot/config.h"
 #include "anki/common/robot/array2d.h"
 #include "anki/common/robot/benchmarking_c.h"
@@ -25,6 +29,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/shaveKernels_c.h"
 #include "anki/common/robot/utilities.h"
 #include "anki/common/robot/serialize.h"
+#include "anki/common/robot/compress.h"
 
 #if defined(USING_MOVIDIUS_COMPILER)
 namespace Anki
@@ -38,6 +43,9 @@ namespace Anki
     }
   }
 }
+#include "anki/cozmo/robot/messages.h"
+#else
+#include "anki/cozmo/basestation/messages.h"
 #endif
 
 using namespace Anki::Embedded;
@@ -56,11 +64,7 @@ Matlab matlab(false);
 #include "gtest/gtest.h"
 #endif
 
-//#ifdef USING_MOVIDIUS_GCC_COMPILER
-//#include "swcLeonUtils.h"
-//#endif
-
-#define MAX_BYTES 50000
+#define MAX_BYTES 300000
 
 #if defined(USING_MOVIDIUS_COMPILER)
 #define BUFFER_LOCATION __attribute__((section(".cmx.bss")))
@@ -69,6 +73,182 @@ Matlab matlab(false);
 #endif
 
 BUFFER_LOCATION static char buffer[MAX_BYTES];
+
+GTEST_TEST(CoreTech_Common, CompressArray)
+{
+  const s32 arrayHeight = 3;
+  const s32 arrayWidth = 4;
+
+  //printf("Compressor size: %d Decompressor size:%d\n", sizeof(heatshrink_encoder), sizeof(heatshrink_decoder));
+
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  Array<s16> original(arrayHeight, arrayWidth, ms);
+
+  original.SetZero();
+
+  const s32 compressedBufferLength = 1000;
+  void * compressedBuffer = ms.Allocate(compressedBufferLength);
+  memset(compressedBuffer, 0, compressedBufferLength);
+
+  CompressedArray<s16> compressed(compressedBuffer, compressedBufferLength, 0,
+    arrayHeight, arrayWidth, Flags::Buffer());
+
+  for(s32 y=0; y<arrayHeight; y++) {
+    for(s32 x=0; x<arrayWidth; x++) {
+      original[y][x] = static_cast<s16>(10*y + x + 3);
+    }
+  }
+
+  {
+    const Result result = Compress<s16>(original, compressed, ms);
+    ASSERT_TRUE(result == RESULT_OK);
+  }
+
+  original.Print("original");
+
+  {
+    const s32 originalLength = original.get_size(0) * original.get_stride();
+    const s32 compressedLength = compressed.get_compressedBufferUsedLength();
+    printf("Original Length:%d Compressed Length:%d Compression percent size:%f\n", originalLength, compressedLength, 100.0f*f32(compressedLength)/f32(originalLength));
+  }
+
+  Array<s16> decompressed = Decompress<s16>(compressed, ms);
+
+  decompressed.Print("decompressed");
+
+  ASSERT_TRUE(AreElementwiseEqual<s16>(original, decompressed));
+
+  GTEST_RETURN_HERE;
+}
+
+GTEST_TEST(CoreTech_Common, Heatshrink)
+{
+  const s32 dataLength = 1000;
+
+  //printf("Compressor size: %d Decompressor size:%d\n", sizeof(heatshrink_encoder), sizeof(heatshrink_decoder));
+
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  Array<u8> original(1, dataLength, ms);
+  Array<u8> compressed(1, dataLength + dataLength/2 + 4, ms);
+  Array<u8> decompressed(1, dataLength + dataLength/2 + 4, ms);
+
+  compressed.SetZero();
+  decompressed.SetZero();
+
+  for(s32 i=0; i<dataLength; i++) {
+    original[0][i] = static_cast<u8>((i<<1) + 5);
+  }
+
+  s32 compressedLength = -1;
+  ASSERT_TRUE(Compress(original.Pointer(0,0), dataLength, compressed.Pointer(0,0), compressed.get_size(1), compressedLength, ms) == RESULT_OK);
+
+  //original.Print("original");
+  //compressed.Print("compressed", 0, 0, 0, compressedLength-1);
+
+  printf("Original Length:%d Compressed Length:%d Compression percent size:%f\n", dataLength, compressedLength, 100.0f*f32(compressedLength)/f32(dataLength));
+
+  s32 uncompressedLength = -1;
+  ASSERT_TRUE(Decompress(compressed.Pointer(0,0), compressedLength, decompressed.Pointer(0,0), decompressed.get_size(1), uncompressedLength, ms) == RESULT_OK);
+  decompressed.Resize(1, dataLength, ms);
+
+  //decompressed.Print("decompressed");
+
+  ASSERT_TRUE(AreElementwiseEqual<u8>(original, decompressed));
+  ASSERT_TRUE(uncompressedLength == dataLength);
+
+  GTEST_RETURN_HERE;
+}
+
+// TODO: make this a real test, if needed
+#if 0
+GTEST_TEST(CoreTech_Common, SendSerializedBufferOverUSB)
+{
+  const s32 segment1Length = 32;
+  const s32 segment2Length = 64;
+
+  const s32 segment3Height = 4;
+  const s32 segment3Width = 3;
+
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, 5000);
+  ASSERT_TRUE(ms.IsValid());
+
+  void * segment1 = ms.Allocate(segment1Length);
+  s32 * segment2 = reinterpret_cast<s32*>(ms.Allocate(segment2Length));
+  Array<u8> segment3(segment3Height, segment3Width, ms);
+
+  ASSERT_TRUE(segment1 != NULL);
+  ASSERT_TRUE(segment2 != NULL);
+  ASSERT_TRUE(segment3.IsValid());
+
+  for(s32 i=0; i<segment1Length; i++) {
+    reinterpret_cast<u8*>(segment1)[i] = i + 1;
+  }
+
+  for(s32 i=0; i<(segment2Length/sizeof(s32)); i++) {
+    segment2[i] = 2*i + 1;
+  }
+
+  for(s32 y=0; y<segment3Height; y++) {
+    for(s32 x=0; x<segment3Width; x++) {
+      segment3[y][x] = 10*y + x;
+    }
+  }
+
+  ASSERT_TRUE(buffer != NULL);
+  SerializedBuffer serialized(buffer+5000, 6000, Flags::Buffer(true,true,false));
+  ASSERT_TRUE(serialized.IsValid());
+
+  void * segment1b = serialized.PushBack(segment1, segment1Length);
+  void * segment2b = serialized.PushBack(segment2, segment2Length);
+  void * segment3b = serialized.PushBack(segment3);
+
+  ASSERT_TRUE(segment1b != NULL);
+  ASSERT_TRUE(segment2b != NULL);
+  ASSERT_TRUE(segment3b != NULL);
+
+  //printf("0x%x 0x%x\n", serialized.get_memoryStack().get_buffer(), serialized.get_memoryStack().get_validBufferStart());
+
+  //u8 * rawBuffer = reinterpret_cast<u8*>(serialized.get_memoryStack().get_buffer());
+  //const s32 rawBufferLength = serialized.get_memoryStack().get_usedBytes();
+  //for(s32 i=0; i<rawBufferLength; i++) {
+  //  printf("%x ", rawBuffer[i]);
+  //}
+  //printf("\n\n\n\n\n");
+
+#ifdef USING_MOVIDIUS_GCC_COMPILER
+  for(s32 i=0; i<10; i++) {
+    Anki::Cozmo::HAL::USBPutChar(13);
+  }
+
+  for(s32 i=0; i<SERIALIZED_BUFFER_HEADER_LENGTH; i++) {
+    Anki::Cozmo::HAL::USBPutChar(SERIALIZED_BUFFER_HEADER[i]);
+  }
+
+  Anki::Cozmo::HAL::USBSendBuffer(reinterpret_cast<u8*>(serialized.get_memoryStack().get_validBufferStart()), serialized.get_memoryStack().get_usedBytes());
+
+  for(s32 i=0; i<SERIALIZED_BUFFER_FOOTER_LENGTH; i++) {
+    Anki::Cozmo::HAL::USBPutChar(SERIALIZED_BUFFER_FOOTER[i]);
+  }
+
+  while(1) {}
+#else
+  u8 * rawBuffer = reinterpret_cast<u8*>(serialized.get_memoryStack().get_buffer());
+  const s32 rawBufferLength = serialized.get_memoryStack().get_usedBytes();
+  for(s32 i=0; i<rawBufferLength; i++) {
+    printf("%d ", rawBuffer[i]);
+  }
+#endif
+
+  GTEST_RETURN_HERE;
+}
+#endif // #if 0
 
 GTEST_TEST(CoreTech_Common, SerializedBuffer)
 {
@@ -116,24 +296,35 @@ GTEST_TEST(CoreTech_Common, SerializedBuffer)
   {
     SerializedBufferConstIterator iterator(serialized);
 
-    s32 segment1LengthB = -1;
-    s32 segment2LengthB = -1;
-    s32 segment3LengthB = -1;
+    {
+      s32 segment1LengthB = -1;
+      SerializedBuffer::DataType segment1Type;
+      ASSERT_TRUE(iterator.HasNext());
+      const void * segment1c = iterator.GetNext(segment1LengthB, segment1Type);
+      ASSERT_TRUE(segment1LengthB == segment1Length);
+      ASSERT_TRUE(reinterpret_cast<size_t>(segment1b) == reinterpret_cast<size_t>(segment1c)-SerializedBuffer::SERIALIZED_SEGMENT_HEADER_LENGTH);
+      ASSERT_TRUE(segment1Type == SerializedBuffer::DATA_TYPE_RAW);
+    }
 
-    ASSERT_TRUE(iterator.HasNext());
-    const void * segment1c = iterator.GetNext(segment1LengthB);
-    ASSERT_TRUE(segment1LengthB == segment1Length);
-    ASSERT_TRUE(segment1b == segment1c);
+    {
+      s32 segment2LengthB = -1;
+      SerializedBuffer::DataType segment2Type;
+      ASSERT_TRUE(iterator.HasNext());
+      const void * segment2c = iterator.GetNext(segment2LengthB, segment2Type);
+      ASSERT_TRUE(segment2LengthB == segment2Length);
+      ASSERT_TRUE(reinterpret_cast<size_t>(segment2b) == reinterpret_cast<size_t>(segment2c)-SerializedBuffer::SERIALIZED_SEGMENT_HEADER_LENGTH);
+      ASSERT_TRUE(segment2Type == SerializedBuffer::DATA_TYPE_RAW);
+    }
 
-    ASSERT_TRUE(iterator.HasNext());
-    const void * segment2c = iterator.GetNext(segment2LengthB);
-    ASSERT_TRUE(segment2LengthB == segment2Length);
-    ASSERT_TRUE(segment2b == segment2c);
-
-    ASSERT_TRUE(iterator.HasNext());
-    const void * segment3c = iterator.GetNext(segment3LengthB);
-    ASSERT_TRUE(segment3LengthB == segment3Length);
-    ASSERT_TRUE(segment3b == segment3c);
+    {
+      s32 segment3LengthB = -1;
+      SerializedBuffer::DataType segment3Type;
+      ASSERT_TRUE(iterator.HasNext());
+      const void * segment3c = iterator.GetNext(segment3LengthB, segment3Type);
+      ASSERT_TRUE(segment3LengthB == segment3Length);
+      ASSERT_TRUE(reinterpret_cast<size_t>(segment3b) == reinterpret_cast<size_t>(segment3c)-SerializedBuffer::SERIALIZED_SEGMENT_HEADER_LENGTH);
+      ASSERT_TRUE(segment3Type == SerializedBuffer::DATA_TYPE_RAW);
+    }
 
     ASSERT_FALSE(iterator.HasNext());
   }
@@ -142,17 +333,17 @@ GTEST_TEST(CoreTech_Common, SerializedBuffer)
   {
     SerializedBufferConstIterator iterator(serialized);
 
-    s32 segment1LengthB = -1;
-    s32 segment2LengthB = -1;
-    s32 segment3LengthB = -1;
-
     char * buffer = reinterpret_cast<char*>(serialized.get_memoryStack().get_buffer());
 
     buffer[16]++;
 
-    ASSERT_TRUE(iterator.HasNext());
-    const void * segment1c = iterator.GetNext(segment1LengthB);
-    ASSERT_TRUE(segment1c == NULL);
+    {
+      s32 segment1LengthB = -1;
+      SerializedBuffer::DataType segment1Type;
+      ASSERT_TRUE(iterator.HasNext());
+      const void * segment1c = iterator.GetNext(segment1LengthB, segment1Type);
+      ASSERT_TRUE(segment1c == NULL);
+    }
 
     buffer[16]--;
   }
@@ -169,14 +360,23 @@ GTEST_TEST(CoreTech_Common, SerializedBuffer)
 
     buffer[80]++;
 
-    ASSERT_TRUE(iterator.HasNext());
-    const void * segment1c = iterator.GetNext(segment1LengthB);
-    ASSERT_TRUE(segment1LengthB == segment1Length);
-    ASSERT_TRUE(segment1b == segment1c);
+    {
+      s32 segment1LengthB = -1;
+      SerializedBuffer::DataType segment1Type;
+      ASSERT_TRUE(iterator.HasNext());
+      const void * segment1c = iterator.GetNext(segment1LengthB, segment1Type);
+      ASSERT_TRUE(segment1LengthB == segment1Length);
+      ASSERT_TRUE(reinterpret_cast<size_t>(segment1b) == reinterpret_cast<size_t>(segment1c)-SerializedBuffer::SERIALIZED_SEGMENT_HEADER_LENGTH);
+      ASSERT_TRUE(segment1Type == SerializedBuffer::DATA_TYPE_RAW);
+    }
 
-    ASSERT_TRUE(iterator.HasNext());
-    const void * segment2c = iterator.GetNext(segment2LengthB);
-    ASSERT_TRUE(segment2c == NULL);
+    {
+      s32 segment2LengthB = -1;
+      SerializedBuffer::DataType segment2Type;
+      ASSERT_TRUE(iterator.HasNext());
+      const void * segment2c = iterator.GetNext(segment2LengthB, segment2Type);
+      ASSERT_TRUE(segment2c == NULL);
+    }
 
     buffer[80]--;
   }
@@ -185,27 +385,37 @@ GTEST_TEST(CoreTech_Common, SerializedBuffer)
   {
     SerializedBufferConstIterator iterator(serialized);
 
-    s32 segment1LengthB = -1;
-    s32 segment2LengthB = -1;
-    s32 segment3LengthB = -1;
-
     char * buffer = reinterpret_cast<char*>(serialized.get_memoryStack().get_buffer());
 
     buffer[200]++;
 
-    ASSERT_TRUE(iterator.HasNext());
-    const void * segment1c = iterator.GetNext(segment1LengthB);
-    ASSERT_TRUE(segment1LengthB == segment1Length);
-    ASSERT_TRUE(segment1b == segment1c);
+    {
+      s32 segment1LengthB = -1;
+      SerializedBuffer::DataType segment1Type;
+      ASSERT_TRUE(iterator.HasNext());
+      const void * segment1c = iterator.GetNext(segment1LengthB, segment1Type);
+      ASSERT_TRUE(segment1LengthB == segment1Length);
+      ASSERT_TRUE(reinterpret_cast<size_t>(segment1b) == reinterpret_cast<size_t>(segment1c)-SerializedBuffer::SERIALIZED_SEGMENT_HEADER_LENGTH);
+      ASSERT_TRUE(segment1Type == SerializedBuffer::DATA_TYPE_RAW);
+    }
 
-    ASSERT_TRUE(iterator.HasNext());
-    const void * segment2c = iterator.GetNext(segment2LengthB);
-    ASSERT_TRUE(segment2LengthB == segment2Length);
-    ASSERT_TRUE(segment2b == segment2c);
+    {
+      s32 segment2LengthB = -1;
+      SerializedBuffer::DataType segment2Type;
+      ASSERT_TRUE(iterator.HasNext());
+      const void * segment2c = iterator.GetNext(segment2LengthB, segment2Type);
+      ASSERT_TRUE(segment2LengthB == segment2Length);
+      ASSERT_TRUE(reinterpret_cast<size_t>(segment2b) == reinterpret_cast<size_t>(segment2c)-SerializedBuffer::SERIALIZED_SEGMENT_HEADER_LENGTH);
+      ASSERT_TRUE(segment2Type == SerializedBuffer::DATA_TYPE_RAW);
+    }
 
-    ASSERT_TRUE(iterator.HasNext());
-    const void * segment3c = iterator.GetNext(segment3LengthB);
-    ASSERT_TRUE(segment3c == NULL);
+    {
+      s32 segment3LengthB = -1;
+      SerializedBuffer::DataType segment3Type;
+      ASSERT_TRUE(iterator.HasNext());
+      const void * segment3c = iterator.GetNext(segment3LengthB, segment3Type);
+      ASSERT_TRUE(segment3c == NULL);
+    }
 
     ASSERT_FALSE(iterator.HasNext());
 
@@ -2816,7 +3026,7 @@ GTEST_TEST(CoreTech_Common, ArrayFillPattern)
   MemoryStack ms(alignedBuffer, numBytes-MEMORY_ALIGNMENT);
 
   // Create a matrix, and manually set a few values
-  Array<s16> simpleArray(height, width, ms, Flags::Buffer(true,true));
+  Array<s16> simpleArray(height, width, ms, Flags::Buffer(true,true,false));
   ASSERT_TRUE(simpleArray.get_rawDataPointer() != NULL);
 
   ASSERT_TRUE(simpleArray.IsValid());
@@ -2874,6 +3084,10 @@ int RUN_ALL_TESTS()
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;
 
+  CALL_GTEST_TEST(CoreTech_Common, CompressArray);
+  CALL_GTEST_TEST(CoreTech_Common, Heatshrink);
+  //CALL_GTEST_TEST(CoreTech_Common, SendSerializedBufferOverUSB);
+  CALL_GTEST_TEST(CoreTech_Common, SerializedBuffer);
   CALL_GTEST_TEST(CoreTech_Common, CRC32Code);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStackIterator);
   CALL_GTEST_TEST(CoreTech_Common, ShaveAddTest);

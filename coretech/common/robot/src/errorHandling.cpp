@@ -21,7 +21,25 @@ extern "C" {
   void _Anki_Logf(int logLevel, const char* eventName, const char* eventValue, const char* file, const char* funct, int line, ...)
   {
 #if ANKI_OUTPUT_DEBUG_LEVEL == ANKI_OUTPUT_DEBUG_PRINTF
+    // Don't print all the path of the file
+    s32 lastSlashIndex = -1;
+    for(s32 i=0; i<10000; i++) {
+      if(file[i] == '\\' ||
+        file[i] == '/') {
+          lastSlashIndex = i;
+      } else if(!file[i]) {
+        break;
+      }
+    }
+
+    if(lastSlashIndex >= 0) {
+      file += lastSlashIndex + 1;
+    }
+
     explicitPrintf(0,EXPLICIT_PRINTF_FLIP_CHARACTERS, "LOG[%d] - ", logLevel);
+    explicitPrintf(0,EXPLICIT_PRINTF_FLIP_CHARACTERS, file);
+    explicitPrintf(0,EXPLICIT_PRINTF_FLIP_CHARACTERS, "@");
+    explicitPrintf(0,EXPLICIT_PRINTF_FLIP_CHARACTERS, "%d - ", line);
     explicitPrintf(0,EXPLICIT_PRINTF_FLIP_CHARACTERS, eventName);
     explicitPrintf(0,EXPLICIT_PRINTF_FLIP_CHARACTERS, " - ");
     explicitPrintf(0,EXPLICIT_PRINTF_FLIP_CHARACTERS, eventValue);
@@ -32,7 +50,25 @@ extern "C" {
   void _Anki_Log(int logLevel, const char* eventName, const char* eventValue, const char* file, const char* funct, int line, ...)
   {
 #if ANKI_OUTPUT_DEBUG_LEVEL == ANKI_OUTPUT_DEBUG_PRINTF
+    // Don't print all the path of the file
+    s32 lastSlashIndex = -1;
+    for(s32 i=0; i<10000; i++) {
+      if(file[i] == '\\' ||
+        file[i] == '/') {
+          lastSlashIndex = i;
+      } else if(!file[i]) {
+        break;
+      }
+    }
+
+    if(lastSlashIndex >= 0) {
+      file += lastSlashIndex + 1;
+    }
+
     explicitPrintf(0,EXPLICIT_PRINTF_FLIP_CHARACTERS, "LOG[%d] - ", logLevel);
+    explicitPrintf(0,EXPLICIT_PRINTF_FLIP_CHARACTERS, file);
+    explicitPrintf(0,EXPLICIT_PRINTF_FLIP_CHARACTERS, "@");
+    explicitPrintf(0,EXPLICIT_PRINTF_FLIP_CHARACTERS, "%d - ", line);
     explicitPrintf(0,EXPLICIT_PRINTF_FLIP_CHARACTERS, eventName);
     explicitPrintf(0,EXPLICIT_PRINTF_FLIP_CHARACTERS, " - ");
     explicitPrintf(0,EXPLICIT_PRINTF_FLIP_CHARACTERS, eventValue);

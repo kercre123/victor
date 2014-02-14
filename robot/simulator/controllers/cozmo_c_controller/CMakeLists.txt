@@ -10,10 +10,6 @@ set(PHYSICS_PLUGIN_DIR ${SIMULATOR_DIR}/plugins/physics/cozmo_physics)
 
 set(ROBOT_SRC_DIR ${PROJECT_SOURCE_DIR}/robot/supervisor/src)
 
-file(GLOB CORETECH_ROBOT_VISION_SRC "${PROJECT_SOURCE_DIR}/coretech/vision/robot/src/*.c*")
-
-file(GLOB CORETECH_ROBOT_COMMON_SRC "${PROJECT_SOURCE_DIR}/coretech/common/robot/src/*.c*")
-
 file(GLOB COZMO_ROBOT_SUPERVISOR_SRC "${ROBOT_SRC_DIR}/*.cpp")
 
 file(GLOB COZMO_ROBOT_HEADER_FILES "${COZMO_INCLUDE_DIR}/anki/cozmo/robot/*.h")
@@ -49,12 +45,6 @@ set(SOURCE_FILES
 
   ${COZMO_ROBOT_SUPERVISOR_SRC}
   
-  ${CORETECH_ROBOT_VISION_SRC}
-  
-  ${CORETECH_ROBOT_COMMON_SRC}
-
-	${PROJECT_SOURCE_DIR}/coretech/messaging/robot/utilMessaging.c
-
 #	${COZMO_ROBOT_SRC_DIR}/hal/simhal/sim_encoders.cpp
 #	${COZMO_ROBOT_SRC_DIR}/hal/simhal/sim_motors.cpp
 #	${COZMO_ROBOT_SRC_DIR}/hal/simhal/sim_timers.cpp
@@ -75,23 +65,27 @@ set(HEADER_FILES
 	${COZMO_INCLUDE_FILES}
 )
 
-add_executable(cozmo_c_controller ${SOURCE_FILES} ${HEADER_FILES})
+if(NOT WIN32)
+  add_executable(cozmo_c_controller ${SOURCE_FILES} ${HEADER_FILES})
 
-target_link_libraries(cozmo_c_controller 
-	CppController
-	CoreTech_Common_Robot
-	CoreTech_Common_Basestation # needed?
-	mx 
-	eng
-)
+  target_link_libraries(cozmo_c_controller 
+    CppController
+    CoreTech_Common_Robot
+    CoreTech_Vision_Robot
+    CoreTech_Messaging_Shared
+    mx 
+    eng
+    ${ALL_EMBEDDED_LIBRARIES}
+  )
 
-set_target_properties(
-	cozmo_c_controller PROPERTIES
-  COMPILE_DEFINITIONS USE_TCP_MESSAGING_INTERFACE
-	LINK_FLAGS "-Wl,-rpath,${MATLAB_ROOT_DIR}/bin/maci64/"
-	#XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++98"
-	#XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libstdc++"
-)
+  set_target_properties(
+    cozmo_c_controller PROPERTIES
+    COMPILE_DEFINITIONS USE_TCP_MESSAGING_INTERFACE
+    LINK_FLAGS "-Wl,-rpath,${MATLAB_ROOT_DIR}/bin/maci64/"
+    #XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++98"
+    #XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libstdc++"
+  )
+endif()
 
 # Make sure a copy of the target exists in cozmo_c_controller/
 # no matter where the target is actually built.

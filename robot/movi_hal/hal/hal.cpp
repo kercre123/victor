@@ -71,8 +71,9 @@ namespace Anki
 
         // Check neck potentiometer here, until radio implements it
         // ...
-
+#ifdef USE_CAPTURE_IMAGES
         Robot::step_MainExecution();
+#endif
 
         static u32 now = 0;
         //if ((HAL::GetMicroCounter() - now) > 5000000)
@@ -159,7 +160,10 @@ namespace Anki
 #endif
 
         FrontCameraInit();
+        
+#ifndef USE_CAPTURE_IMAGES
         MotorInit();
+#endif
       }
 
       // Called from Robot::Init(), but not actually used here.
@@ -189,9 +193,12 @@ namespace Anki
       // Communications
       //bool IsConnected() {return false;}
       u8 RadioFromBase(u8 buffer[RADIO_BUFFER_SIZE]) {return 0;}
-      bool RadioSendMessage(const Messages::ID msgID, const void *message) {return true;}
+      bool RadioSendMessage(const Messages::ID msgID, const void *message, TimeStamp_t ts) {return true;}
       Messages::ID RadioGetNextMessage(u8* buffer) {return Messages::NO_MESSAGE_ID;}
       
+      // Gyro
+      static f32 gyroValues_[3] = {0};
+      const f32* GyroGetSpeed() {return gyroValues_;}
       
       // Misc
       //bool IsInitialized();

@@ -41,7 +41,8 @@ Result Serial::Open(
   char dcbInitString[STRING_LENGTH];
 
   // TODO: safe version?
-  snprintf(lpPortName, STRING_LENGTH, "COM%d", comPort);
+  // Opening a com port greater than 9 requires the weird "\\\\.\\" syntax
+  snprintf(lpPortName, STRING_LENGTH, "\\\\.\\COM%d", comPort);
 
   comPortHandle = CreateFile(
     lpPortName,
@@ -52,7 +53,9 @@ Result Serial::Open(
     FILE_FLAG_OVERLAPPED,
     0);
 
-  AnkiConditionalErrorAndReturnValue(comPortHandle != NULL,
+  //std::cout << GetLastError() << "\n";
+
+  AnkiConditionalErrorAndReturnValue(comPortHandle != NULL && comPortHandle != INVALID_HANDLE_VALUE,
     RESULT_FAIL, "Serial::Open", "Could not open port");
 
   memset(&this->readEventHandle, 0, sizeof(this->readEventHandle));
@@ -100,7 +103,7 @@ Result Serial::Open(
   AnkiConditionalErrorAndReturnValue(isPurged,
     RESULT_FAIL, "Serial::Open", "Could not clear errors");
 
-  printf("Com port opened");
+  printf("Com port %d opened at %d baud\n", comPort, baudRate);
 
   return RESULT_OK;
 }

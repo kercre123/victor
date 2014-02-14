@@ -30,21 +30,49 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define BENCHMARK_EVENTS_LOCATION
 #endif
 
-BENCHMARK_EVENTS_LOCATION BenchmarkEvent benchmarkEvents[NUM_BENCHMARK_EVENTS];
-int currentBenchmarkEvent;
+typedef enum
+{
+  BENCHMARK_EVENT_BEGIN,
+  BENCHMARK_EVENT_END
+} BenchmarkEventType;
 
-BENCHMARK_EVENTS_LOCATION static const char * eventNames[NUM_BENCHMARK_EVENTS];
+typedef struct
+{
+  const char * name; // WARNING: name must be in globally available memory
+  unsigned long long time;
+  BenchmarkEventType type;
+} BenchmarkEvent;
+
+typedef enum
+{
+  BENCHMARK_PRINT_ALL,
+  BENCHMARK_PRINT_TOTALS,
+} BenchmarkPrintType;
+
+// A big array, full of events
+BENCHMARK_EVENTS_LOCATION BenchmarkEvent benchmarkEvents[MAX_BENCHMARK_EVENTS];
+
+// The index of the next place to record a benchmark event
+int numBenchmarkEvent;
+
+BENCHMARK_EVENTS_LOCATION static const char * eventNames[MAX_BENCHMARK_EVENTS];
 static volatile int numEventNames;
 
-BENCHMARK_EVENTS_LOCATION static double totalTimes[NUM_BENCHMARK_EVENTS];
-BENCHMARK_EVENTS_LOCATION static double minTimes[NUM_BENCHMARK_EVENTS];
-BENCHMARK_EVENTS_LOCATION static double maxTimes[NUM_BENCHMARK_EVENTS];
-BENCHMARK_EVENTS_LOCATION static unsigned int numEvents[NUM_BENCHMARK_EVENTS];
-BENCHMARK_EVENTS_LOCATION static int lastBeginIndex[NUM_BENCHMARK_EVENTS];
+BENCHMARK_EVENTS_LOCATION static double totalTimes[MAX_BENCHMARK_EVENTS];
+BENCHMARK_EVENTS_LOCATION static double minTimes[MAX_BENCHMARK_EVENTS];
+BENCHMARK_EVENTS_LOCATION static double maxTimes[MAX_BENCHMARK_EVENTS];
+BENCHMARK_EVENTS_LOCATION static unsigned int numEvents[MAX_BENCHMARK_EVENTS];
+BENCHMARK_EVENTS_LOCATION static int lastBeginIndex[MAX_BENCHMARK_EVENTS];
+
+void AddBenchmarkEvent(const char *name, unsigned long long time, BenchmarkEventType type);
+
+void PrintBenchmarkResults_All();
+void PrintBenchmarkResults_OnlyTotals();
+void PrintBenchmarkResults(const BenchmarkPrintType printType);
 
 void InitBenchmarking()
 {
-  currentBenchmarkEvent = 0;
+  numBenchmarkEvent = 0;
 }
 
 unsigned long long GetBenchmarkTime()
@@ -71,15 +99,15 @@ unsigned long long GetBenchmarkTime()
 
 void AddBenchmarkEvent(const char *name, unsigned long long time, BenchmarkEventType type)
 {
-  benchmarkEvents[currentBenchmarkEvent].name = name;
-  benchmarkEvents[currentBenchmarkEvent].time = time;
-  benchmarkEvents[currentBenchmarkEvent].type = type;
+  benchmarkEvents[numBenchmarkEvent].name = name;
+  benchmarkEvents[numBenchmarkEvent].time = time;
+  benchmarkEvents[numBenchmarkEvent].type = type;
 
-  currentBenchmarkEvent++;
+  numBenchmarkEvent++;
 
   // If we run out of space, just keep overwriting the last event
-  if(currentBenchmarkEvent >= NUM_BENCHMARK_EVENTS)
-    currentBenchmarkEvent = NUM_BENCHMARK_EVENTS-1;
+  if(numBenchmarkEvent >= MAX_BENCHMARK_EVENTS)
+    numBenchmarkEvent = MAX_BENCHMARK_EVENTS-1;
 }
 
 void BeginBenchmark(const char *name)
@@ -119,6 +147,16 @@ unsigned int AddName(const char * const name)
   }
 }
 
+void PrintBenchmarkResults_All()
+{
+  PrintBenchmarkResults(BENCHMARK_PRINT_ALL);
+}
+
+void PrintBenchmarkResults_OnlyTotals()
+{
+  PrintBenchmarkResults(BENCHMARK_PRINT_TOTALS);
+}
+
 void PrintBenchmarkResults(const BenchmarkPrintType printType)
 {
   int i;
@@ -132,7 +170,7 @@ void PrintBenchmarkResults(const BenchmarkPrintType printType)
 
   numEventNames = 0;
 
-  for(i=0; i<NUM_BENCHMARK_EVENTS; i++) {
+  for(i=0; i<MAX_BENCHMARK_EVENTS; i++) {
     totalTimes[i] = 0.0;
     minTimes[i] = (double)(0x7FFFFFFFFFFFFFFFLL);
     maxTimes[i] = (double)(-0x7FFFFFFFFFFFFFFFLL);
@@ -140,13 +178,13 @@ void PrintBenchmarkResults(const BenchmarkPrintType printType)
     lastBeginIndex[i] = -1;
   }
 
-  for(i=0; i<currentBenchmarkEvent; i++) {
+  for(i=0; i<numBenchmarkEvent; i++) {
     const unsigned int index = AddName(benchmarkEvents[i].name);
     if(benchmarkEvents[i].type == BENCHMARK_EVENT_BEGIN) {
       lastBeginIndex[index] = i;
     } else { // BENCHMARK_EVENT_END
       if(lastBeginIndex[index] < 0) {
-        printf("Benchmark parse error: Perhaps BeginBenchmark() and EndBenchmark() were nested, or there were more than %d benchmark events.\n", NUM_BENCHMARK_EVENTS);
+        printf("Benchmark parse error: Perhaps BeginBenchmark() and EndBenchmark() were nested, or there were more than %d benchmark events.\n", MAX_BENCHMARK_EVENTS);
         continue;
       }
 
@@ -178,7 +216,7 @@ void PrintBenchmarkResults(const BenchmarkPrintType printType)
         lastBeginIndex[index] = -1;
       }
     }
-  } // for(i=0; i<currentBenchmarkEvent; i++)
+  } // for(i=0; i<numBenchmarkEvent; i++)
 
   for(i=0; i<numEventNames; i++) {
     printf("Event ");

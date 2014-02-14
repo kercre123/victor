@@ -8,7 +8,7 @@ WorldInfo {
     ""
   ]
   physics "cozmo_physics"
-  basicTimeStep 2
+  basicTimeStep 5
   contactProperties [
     DEF FLOOR_FRONTWHEEL ContactProperties {
       material1 "cmat_floor"
@@ -234,8 +234,7 @@ DEF Cozmo CozmoBot {
   usbChannel 10
   rotation 0 1 0 -1.5708
 #  controller "cozmo_matlab"
-#  controller "cozmo_c_controller"
-  controller "cozmo_docking_controller_test"
+  controller "cozmo_c_controller"
 }
 
 DEF OffboardVisionProcessor USBConnection {

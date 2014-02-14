@@ -43,7 +43,7 @@ namespace Anki
       // with "numBorderPixels" extra pixels. For example, using a 5x5 filter would require an extra
       // 3 border pixels, because floor(5/2)+1 = 3. When numBorderPixels>0, then the outermost pixel
       // will be replicated to estimate the unknown values.
-      ScrollingIntegralImage_u8_s32(const s32 bufferHeight, const s32 imageWidth, const s32 numBorderPixels, MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false));
+      ScrollingIntegralImage_u8_s32(const s32 bufferHeight, const s32 imageWidth, const s32 numBorderPixels, MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false,false));
 
       // Using the data from "image", scroll this integral image down. For example, if the integral
       // image is windowed between rows 0 to 100, then scrolling down by 10 lines would make it
@@ -94,6 +94,7 @@ namespace Anki
       // Compute the nth row of an integral image
       static void ComputeIntegralImageRow(const u8 * restrict paddedImage_currentRow, const s32 * restrict integralImage_previousRow, s32 * restrict integralImage_currentRow, const s32 integralImageWidth);
 
+      // Virtually zero-pads to the left and right of an image row
       Result PadImageRow_unsafe(const Array<u8> &image, const s32 whichRow, Array<u8> &paddedRow);
       Result PadImageRow(const Array<u8> &image, const s32 whichRow, Array<u8> &paddedRow);
     };

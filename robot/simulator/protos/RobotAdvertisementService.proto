@@ -1,0 +1,10 @@
+PROTO RobotAdvertisementService [
+  field SFString name "RobotAdvertisementService"
+]
+{
+Supervisor {
+  
+  name IS name
+  controller "robot_advertisement_controller"
+} # Supervisor definition
+} # PROTO definition

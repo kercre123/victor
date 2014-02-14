@@ -1,7 +1,7 @@
 #ifndef __Products_Cozmo__Mat__
 #define __Products_Cozmo__Mat__
 
-#include "anki/cozmo/messages.h"
+#include "anki/cozmo/basestation/messages.h"
 
 #include "anki/common/basestation/math/pose.h"
 #include "anki/vision/basestation/marker2d.h"

@@ -27,8 +27,7 @@
 // message protocol between them.  However, the macros used to generate actual
 // code based on the definitions below *is* specific to the two platforms.
 // Define those macros elsewhere:
-#include "messageDefMacros.h"
-
+#include "anki/cozmo/MessageDefinitionMacros.h"
 
 #if 0 // EXAMPLE
 // Foo message

@@ -41,15 +41,24 @@ namespace Anki
     template<typename Type> class Array
     {
     public:
+      // The stride is the "numCols*sizeof(Type)" rounded up by 16, plus any boundary padding
       static s32 ComputeRequiredStride(const s32 numCols, const Flags::Buffer flags);
 
+      // The minimum required memory is the size of a stride, times the number of rows
       static s32 ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const Flags::Buffer flags);
 
+      // Initializes Array as invalid
       Array();
 
-      // Constructor for a Array, pointing to user-allocated data. This is more restrictive than
-      // most matrix libraries, and as an example, it may make it hard to convert from OpenCV to
-      // Array, though the reverse is trivial.
+      // Constructor for a Array, pointing to user-allocated MemoryStack. This is the preferred
+      // method for creating a new Array.
+      //
+      // Flags: :Buffer.isFullyAllocated doesn't do anything
+      Array(const s32 numRows, const s32 numCols, MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false,false));
+
+      // Constructor for a Array, pointing to user-allocated data. This type of array is more
+      // restrictive than most matrix libraries. For example, it may make it hard to convert from
+      // OpenCV: :Mat to Array, though the reverse is trivial.
       //
       // If following are true, then the contents of data will not be modified, and it will work as
       // a normal buffer without extra zeros as stride padding:
@@ -57,15 +66,15 @@ namespace Anki
       // 2. reinterpret_cast<size_t>(data) % MEMORY_ALIGNMENT == 0
       // 3. flags.get_useBoundaryFillPatterns == false
       // 4. numRows*numCols*sizeof(Type) <= dataLength
-      Array(const s32 numRows, const s32 numCols, void * data, const s32 dataLength, const Flags::Buffer flags=Flags::Buffer(false,false));
-
-      // Constructor for a Array, pointing to user-allocated MemoryStack
-      Array(const s32 numRows, const s32 numCols, MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false));
+      //
+      // If Flags::Buffer.isFullyAllocated == true, then the input data buffer's stride must be a
+      // simple multiple
+      Array(const s32 numRows, const s32 numCols, void * data, const s32 dataLength, const Flags::Buffer flags=Flags::Buffer(false,false,true));
 
       // Pointer to the data, at a given (y,x) location
       //
       // NOTE:
-      // Using this in a inner loop is very innefficient. Instead, declare a pointer outside the
+      // Using this in a inner loop is very inefficient. Instead, declare a pointer outside the
       // inner loop, like: "Type * restrict pArray = Array.Pointer(5);", then index
       // pArray in the inner loop.
       inline const Type* Pointer(const s32 index0, const s32 index1) const;
@@ -76,7 +85,7 @@ namespace Anki
       // "array.Pointer(5)[0] = 6;"
       //
       // NOTE:
-      // Using this in a inner loop is very innefficient. Instead, declare a pointer outside the
+      // Using this in a inner loop is very inefficient. Instead, declare a pointer outside the
       // inner loop, like: "Type * restrict pArray = Array[5];", then index
       // pArray in the inner loop.
       inline const Type * operator[](const s32 index0) const;
@@ -85,53 +94,65 @@ namespace Anki
       // Pointer to the data, at a given (y,x) location
       //
       // NOTE:
-      // Using this in a inner loop is very innefficient. Instead, declare a pointer outside the
-      // inner loop, like: "Type * restrict pArray = Array.Pointer(Point<s16>(5,0));",
-      // then index pArray in the inner loop.
+      // The default order of coordinates for the Point() constructor is (x,y). So for example,
+      // access Array[5][3] via Array.Pointer(Point<s16>(3,5))
+      //
+      // NOTE:
+      // Using this in a inner loop is very inefficient. Instead, declare a pointer outside the
+      // inner loop, like: "Type * restrict pArray = Array.Pointer(Point<s16>(5,0));", then index
+      // pArray in the inner loop.
       inline const Type* Pointer(const Point<s16> &point) const;
       inline Type* Pointer(const Point<s16> &point);
 
       // Return a slice accessor for this array, like the Matlab expression "array(1:5, 2:3:5)"
+      //
+      // NOTE:
+      // If min or max is less than 0, it is equivalent to (end+value). For example, "Array(0,-1,3,5)"
+      // is the same as "Array(0,arrayHeight-1,3,5)"
       ArraySlice<Type> operator() ();
       ArraySlice<Type> operator() (const LinearSequence<s32> &ySlice, const LinearSequence<s32> &xSlice);
-      ArraySlice<Type> operator() (s32 minY, s32 maxY, s32 minX, s32 maxX); // If min or max is less than 0, it is equivalent to (end+value)
-      ArraySlice<Type> operator() (s32 minY, s32 incrementY, s32 maxY, s32 minX, s32 incrementX, s32 maxX); // If min or max is less than 0, it is equivalent to (end+value)
-      //operator ArraySlice<Type>(); // Implicit conversion
-
+      ArraySlice<Type> operator() (s32 minY, s32 maxY, s32 minX, s32 maxX);
+      ArraySlice<Type> operator() (s32 minY, s32 incrementY, s32 maxY, s32 minX, s32 incrementX, s32 maxX);
       ConstArraySlice<Type> operator() () const;
       ConstArraySlice<Type> operator() (const LinearSequence<s32> &ySlice, const LinearSequence<s32> &xSlice) const;
-      ConstArraySlice<Type> operator() (s32 minY, s32 maxY, s32 minX, s32 maxX) const; // If min or max is less than 0, it is equivalent to (end+value)
-      ConstArraySlice<Type> operator() (s32 minY, s32 incrementY, s32 maxY, s32 minX, s32 incrementX, s32 maxX) const; // If min or max is less than 0, it is equivalent to (end+value)
-      //operator ConstArraySlice<Type>() const; // Implicit conversion
+      ConstArraySlice<Type> operator() (s32 minY, s32 maxY, s32 minX, s32 maxX) const;
+      ConstArraySlice<Type> operator() (s32 minY, s32 incrementY, s32 maxY, s32 minX, s32 incrementX, s32 maxX) const;
 
-      // ArraySlice Transpose doesn't modify the data, it just sets a flag
+      // ArraySlice Transpose doesn't modify the data, it just sets an "isTransposed" flag.
       ConstArraySliceExpression<Type> Transpose() const;
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
       // Returns a templated cv::Mat_ that shares the same buffer with this Array. No data is copied.
       cv::Mat_<Type>& get_CvMat_();
+
+      // Use the simple OpenCV gui to display this array as an image
+      void Show(const char * const windowName, const bool waitForKeypress, const bool scaleValues=false, const bool fitImageToWindow=false) const;
 #endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
-      void Show(const char * const windowName, const bool waitForKeypress, const bool scaleValues=false) const;
-
       // Print out the contents of this Array
+      //
+      // NOTE:
+      // * If the min X or Y is less than zero, it will be treated as zero
+      // * If the max X or Y is greater than the size of the array minus one, it will be treated as
+      //   the size of the array minus one
       Result Print(const char * const variableName = "Array", const s32 minY = 0, const s32 maxY = 0x7FFFFFE, const s32 minX = 0, const s32 maxX = 0x7FFFFFE) const;
       Result PrintAlternate(const char * const variableName = "Array", const s32 version=2, const s32 minY = 0, const s32 maxY = 0x7FFFFFE, const s32 minX = 0, const s32 maxX = 0x7FFFFFE) const;
 
-      // Checks the basic parameters of this Array.
-      // If the Array was constructed with flags |= Flags::Buffer::USE_BOUNDARY_FILL_PATTERNS, then
-      // return if any memory was written out of bounds (via fill patterns at the
-      // beginning and end).
+      // Checks the basic parameters of this Array, and if it is allocated.
+      //
+      // If the Array was constructed with Flags::Buffer::USE_BOUNDARY_FILL_PATTERNS, then it also
+      // checks for out of bounds writes (via fill patterns at the beginning and end).
       bool IsValid() const;
 
       // Resize will use MemoryStack::Reallocate() to change the Array's size. It only works if this
       // Array was the last thing allocated. The reallocated memory will not be cleared
       //
-      // WARNING: This will not update any references to the memory, you must update all references
-      //          manually.
+      //
+      // WARNING:
+      // This will not update any references to the memory, you must update all references manually.
       Result Resize(const s32 numRows, const s32 numCols, MemoryStack &memory);
 
-      // Set every element in the Array to zero, including the stride padding, but not including the optional fill patterns (if they exist)
+      // Set every element in the Array to zero, including the stride padding, but not including the optional fill patterns (if they exist).
       // Returns the number of bytes set to zero
       s32 SetZero();
 
@@ -139,50 +160,53 @@ namespace Anki
       // Returns the number of values set
       s32 Set(const Type value);
 
+      // Elementwise copies the input Array into this array. No memory is allocated.
       s32 Set(const Array<Type> &in);
 
       // Copy values to this Array.
       // If the input array does not contain enough elements, the remainder of this Array will be filled with zeros.
       // Returns the number of values set (not counting extra zeros)
-
       s32 Set(const Type * const values, const s32 numValues);
-      //s32 Set(const s32 * const values, const s32 numValues);
-      //s32 Set(const f64 * const values, const s32 numValues);
 
       // Read in the input, then cast it to this object's type
+      //
+      // WARNING:
+      // This should be kept explicit, to prevent accidental casting between different datatypes.
       template<typename InType> s32 SetCast(const Array<InType> &in);
       template<typename InType> s32 SetCast(const InType * const values, const s32 numValues);
 
-      // TODO: implement all these
+      // TODO: implement these?
       //template<typename FindType1, typename FindType2> s32 Set(const Find<FindType1, FindType2> &find, const Type value);
       //template<typename FindType1, typename FindType2> s32 Set(const Find<FindType1, FindType2> &find, const Array<Type> &in, bool useFindForInput=false);
       //template<typename FindType1, typename FindType2> s32 Set(const Find<FindType1, FindType2> &find, const ConstArraySlice<Type> &in);
 
       // This is a shallow copy. There's no reference counting. Updating the data of one array will
-      // update that of others (because they point to the same location in memory). However,
-      // Resizing or other operations on an array won't update the others.
+      // update that of others (because they point to the same location in memory).
+      // However, Resizing or other operations on one array won't update the others.
       Array& operator= (const Array & rightHandSide);
 
       // Similar to Matlabs size(matrix, dimension), and dimension is in {0,1}
       s32 get_size(s32 dimension) const;
 
-      // Get the stride, which is the number of bytes between an element at (n,m) and one at (n+1,m)
+      // Get the stride, which is the number of bytes between an element at (n,m) and an element at (n+1,m)
       s32 get_stride() const;
 
       // Get the stride, without the optional fill pattern. This is the number of bytes on a
-      // horizontal line that can safely be read and written to. If this array was created without
-      // fill patterns, it returns the same value as get_stride().
+      // horizontal line that can safely be written to. If this array was created without fill
+      // patterns, it returns the same value as get_stride().
       s32 get_strideWithoutFillPatterns() const;
 
-      void* get_rawDataPointer();
-
-      const void* get_rawDataPointer() const;
-
+      // Return the flags that were used when this object was constructed.
       Flags::Buffer get_flags() const;
 
+      // These are for very low-level access to the buffers. Probably you want to be using one of
+      // the Pointer() accessor methods instead of these.
+      void* get_rawDataPointer();
+      const void* get_rawDataPointer() const;
+
     protected:
-      // Bit-inverse of MemoryStack patterns. The pattern will be put twice at
-      // the beginning and end of each line.
+      // This pattern will be put twice at the beginning and end of each line. (Twice matches up
+      // nicely for 16-byte memory alignment).
       static const u32 FILL_PATTERN_START = 0XFF05FF06;
       static const u32 FILL_PATTERN_END = 0X07FF08FF;
 
@@ -201,15 +225,22 @@ namespace Anki
       void * rawDataPointer;
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
+      // WARNING:
+      // If the OpenCV API changes, this could cause OpenCV errors even where no OpenCV is used.
+      // This will probably be easily fixable, but be aware.
       cv::Mat_<Type> cvMatMirror;
 #endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
+      // Basic allocation method
       void* AllocateBufferFromMemoryStack(const s32 numRows, const s32 stride, MemoryStack &memory, s32 &numBytesAllocated, const Flags::Buffer flags, bool reAllocate);
 
+      // Performs checks and sets appropriate parameters for this object
       Result InitializeBuffer(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const Flags::Buffer flags);
 
-      void InvalidateArray(); // Set all the buffers and sizes to zero, to signal an invalid array
+      // Set all the buffers and sizes to zero, to signal an invalid array
+      void InvalidateArray();
 
+      // If this object's Type is a basic type, this method prints out this object.
       Result PrintBasicType(const char * const variableName, const s32 version, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
     }; // class Array
 
@@ -220,16 +251,13 @@ namespace Anki
     public:
       FixedPointArray();
 
-      // Constructor for a Array, pointing to user-allocated data. If the pointer to *data is not
-      // aligned to MEMORY_ALIGNMENT, this Array will start at the next aligned location.
-      // Unfortunately, this is more restrictive than most matrix libraries, and as an example,
-      // it may make it hard to convert from OpenCV to Array, though the reverse is trivial.
-      // All memory in the array is zeroed out once it is allocated
-      FixedPointArray(const s32 numRows, const s32 numCols, void * const data, const s32 dataLength, const s32 numFractionalBits, const Flags::Buffer flags=Flags::Buffer(true,false));
+      // Same as Array() constructor
+      // This is the preferred method for constructing an FixedPointArray
+      FixedPointArray(const s32 numRows, const s32 numCols, const s32 numFractionalBits, MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false,false));
 
-      // Constructor for a Array, pointing to user-allocated MemoryStack
-      // All memory in the array is zeroed out once it is allocated
-      FixedPointArray(const s32 numRows, const s32 numCols, const s32 numFractionalBits, MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false));
+      // Same as Array() constructor
+      // This is the advanced method for constructing an FixedPointArray
+      FixedPointArray(const s32 numRows, const s32 numCols, void * const data, const s32 dataLength, const s32 numFractionalBits, const Flags::Buffer flags=Flags::Buffer(true,false,false));
 
       s32 get_numFractionalBits() const;
 

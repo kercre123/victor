@@ -16,24 +16,32 @@ switch(this.trackerType)
             corners(:,2)-mean(corners(:,2)));
         [~,sortIndex] = sort(th);
         
-        upperLeft = corners(sortIndex(1),:);
-        upperRight = corners(sortIndex(2),:);
+        lineLeft = corners(sortIndex(4),:);
+        lineRight = corners(sortIndex(3),:);
         
-        assert(upperRight(1) > upperLeft(1), ...
-            ['UpperRight corner should be to the right ' ...
-            'of the UpperLeft corner.']);
+        assert(lineRight(1) > lineLeft(1), ...
+            ['lineRight corner should be to the right ' ...
+            'of the lineLeft corner.']);
         
         % Get the angle from vertical of the top bar of the
         % marker we're tracking
-        L = sqrt(sum( (upperRight-upperLeft).^2) );
-        angleError = -asin( (upperRight(2)-upperLeft(2)) / L);
+        L = sqrt(sum( (lineRight-lineLeft).^2) );
+        angleError = -asin( (lineRight(2)-lineLeft(2)) / L);
+
+        % Scale angle by some amount to get a better approximation of the actual angular
+        % deviation from normal that we want. 
+        % This should probably be based on things like camera parameters, 
+        % the height difference between the camera and the expected height of the line, 
+        % and the current distance to the block, but for now just use a magic number that 
+        % seems to mostly work for blocks at ground level for typical docking distances.
+        angleError = angleError * 4;
         
         fx = this.headCalibrationMatrix(1,1);
         currentDistance = BlockMarker3D.ReferenceWidth * fx / L;
         distError = currentDistance; % - CozmoVisionProcessor.LIFT_DISTANCE;
         
         % TODO: should i be comparing to ncols/2 or calibration center?
-        midPointErr = -( (upperRight(1)+upperLeft(1))/2 - ...
+        midPointErr = -( (lineRight(1)+lineLeft(1))/2 - ...
             this.trackingResolution(1)/2 );
         midPointErr = midPointErr * currentDistance / fx;
         

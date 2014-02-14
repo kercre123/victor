@@ -105,25 +105,28 @@ namespace Anki
 
         //upperLeft = corners(sortIndex(1),:);
         //upperRight = corners(sortIndex(2),:);
-        const Point<f32> upperLeft = templateRegion[indexes[0][0]];
-        const Point<f32> upperRight = templateRegion[indexes[0][1]];
-
+//        const Point<f32> upperLeft = templateRegion[indexes[0][0]];
+//        const Point<f32> upperRight = templateRegion[indexes[0][1]];
+        const Point<f32> lineLeft = templateRegion[indexes[0][3]];  // bottomLeft
+        const Point<f32> lineRight = templateRegion[indexes[0][2]]; // bottomRight
+        
         //AnkiAssert(upperRight(1) > upperLeft(1), ...%if upperRight(1) < upperLeft(1)
         //  ['UpperRight corner should be to the right ' ...
         //  'of the UpperLeft corner.']);
 
-        AnkiAssert(upperRight.x > upperLeft.x);
+        AnkiAssert(lineRight.x > lineLeft.x);
 
         // Get the angle from vertical of the top bar of the marker we're tracking
 
         //L = sqrt(sum( (upperRight-upperLeft).^2) );
-        const f32 lineDx = upperRight.x - upperLeft.x;
-        const f32 lineDy = upperRight.y - upperLeft.y;
+        const f32 lineDx = lineRight.x - lineLeft.x;
+        const f32 lineDy = lineRight.y - lineLeft.y;
         const f32 lineLength = sqrtf(lineDx*lineDx + lineDy*lineDy);
 
         //angleError = -asin( (upperRight(2)-upperLeft(2)) / L);
-        const f32 angleError = -asinf( (upperRight.y-upperLeft.y) / lineLength);
-
+        //const f32 angleError = -asinf( (upperRight.y-upperLeft.y) / lineLength);
+        const f32 angleError = -asinf( (lineRight.y-lineLeft.y) / lineLength) * 4;  // Multiply by scalar which makes angleError a little more accurate.  TODO: Something smarter than this.
+        
         //currentDistance = BlockMarker3D.ReferenceWidth * this.calibration.fc(1) / L;
         const f32 distanceError = blockMarkerWidthInMM * horizontalFocalLengthInMM / lineLength;
 
@@ -134,7 +137,7 @@ namespace Anki
         // TODO: should I be comparing to ncols/2 or calibration center?
 
         //midPointErr = -( (upperRight(1)+upperLeft(1))/2 - this.trackingResolution(1)/2 );
-        f32 midpointError = -( (upperRight.x+upperLeft.x)/2 - horizontalTrackingResolution/2 );
+        f32 midpointError = -( (lineRight.x+lineLeft.x)/2 - horizontalTrackingResolution/2 );
 
         //midPointErr = midPointErr * currentDistance / this.calibration.fc(1);
         midpointError *= distanceError / horizontalFocalLengthInMM;

@@ -37,6 +37,9 @@ namespace Anki
       bool operator== (const ConnectedComponentSegment &component2) const;
     }; // class ConnectedComponentSegment
 
+    // A ConnectedComponents class holds a list of ConnectedComponentSegment objects
+    // It can incrementally parse an input binary image per-row, updating its global list as it goes
+    // It also contains various utilities to remove poor-quality components
     class ConnectedComponents
     {
     public:
@@ -45,7 +48,6 @@ namespace Anki
       // TODO: Doublecheck that this is correct for corner cases
       static inline s64 CompareConnectedComponentSegments(const ConnectedComponentSegment &a, const ConnectedComponentSegment &b);
 
-      // TODO: when this class is converted to accept single scanlines as input, this will be significantly refactored
       static Result Extract1dComponents(const u8 * restrict binaryImageRow, const s16 binaryImageWidth, const s16 minComponentWidth, const s16 maxSkipDistance, FixedLengthList<ConnectedComponentSegment> &extractedComponents);
 
       ConnectedComponents();
@@ -57,6 +59,7 @@ namespace Anki
       // single list of ComponentSegments
       Result Extract2dComponents_FullImage(const Array<u8> &binaryImage, const s16 minComponentWidth, const s16 maxSkipDistance);
 
+      // Methods to parse an input binary image per-row, updating this object's global list as it goes
       Result Extract2dComponents_PerRow_Initialize();
       Result Extract2dComponents_PerRow_NextRow(const u8 * restrict binaryImageRow, const s32 imageWidth, const s16 whichRow, const s16 minComponentWidth, const s16 maxSkipDistance);
       Result Extract2dComponents_PerRow_Finalize();
@@ -82,12 +85,12 @@ namespace Anki
 
       // Iterate through components, and compute the number of pixels for each component
       // componentSizes must be at least sizeof(s32)*(maximumdId+1) bytes
-      // Note: this is probably inefficient, compared with interlacing the loops in a kernel
+      // NOTE: this is probably inefficient, compared with interlacing the loops in a kernel
       Result ComputeComponentSizes(FixedLengthList<s32> &componentSizes);
 
       // Iterate through components, and compute the centroid of each component componentCentroids
       // must be at least sizeof(Point<s16>)*(maximumdId+1) bytes
-      // Note: this is probably inefficient, compared with interlacing the loops in a kernel
+      // NOTE: this is probably inefficient, compared with interlacing the loops in a kernel
       //
       // For a ConnectedComponent that has a maximum id of N, this function requires
       // 4n + 4 bytes of scratch.
@@ -95,12 +98,12 @@ namespace Anki
 
       // Iterate through components, and compute bounding box for each component
       // componentBoundingBoxes must be at least sizeof(Rectangle<s16>)*(maximumdId+1) bytes
-      // Note: this is probably inefficient, compared with interlacing the loops in a kernel
+      // NOTE: this is probably inefficient, compared with interlacing the loops in a kernel
       Result ComputeComponentBoundingBoxes(FixedLengthList<Rectangle<s16> > &componentBoundingBoxes);
 
       // Iterate through components, and compute the number of componentSegments that have each id
       // componentSizes must be at least sizeof(s32)*(maximumdId+1) bytes
-      // Note: this is probably inefficient, compared with interlacing the loops in a kernel
+      // NOTE: this is probably inefficient, compared with interlacing the loops in a kernel
       Result ComputeNumComponentSegmentsForEachId(FixedLengthList<s32> &numComponentSegments);
 
       // Goes through the list components, and computes the number of pixels for each.
@@ -123,7 +126,7 @@ namespace Anki
       // "solidMultiplyThreshold*numPixels > boundingWidth*boundingHeight". A resonable value is
       // between 1.5*pow(2,5) = 48 and 5<<5 = 160.
       //
-      // Note: This can overflow if the number of pixels is greater than 2^26 (a bit more Ultra-HD
+      // NOTE: This can overflow if the number of pixels is greater than 2^26 (a bit more Ultra-HD
       //       resolution)
       //
       // For a ConnectedComponent that has a maximum id of N, this function requires 8N + 8 bytes

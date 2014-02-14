@@ -37,10 +37,10 @@ namespace Anki
 
       FixedPointArray<s32> Get1dGaussianKernel(const s32 sigma, const s32 numSigmaFractionalBits, const s32 numStandardDeviations, MemoryStack &scratch);
 
-      // Note: uses a 32-bit accumulator, so be careful of overflows
+      // NOTE: uses a 32-bit accumulator, so be careful of overflows
       Result Correlate1d(const FixedPointArray<s32> &in1, const FixedPointArray<s32> &in2, FixedPointArray<s32> &out);
 
-      // Note: uses a 32-bit accumulator, so be careful of overflows
+      // NOTE: uses a 32-bit accumulator, so be careful of overflows
       Result Correlate1dCircularAndSameSizeOutput(const FixedPointArray<s32> &image, const FixedPointArray<s32> &filter, FixedPointArray<s32> &out);
 
       //

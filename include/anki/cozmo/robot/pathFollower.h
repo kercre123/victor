@@ -46,6 +46,7 @@ namespace Anki
       bool StartPathTraversal(void);
       bool IsTraversingPath(void);
       
+      void PrintPath();
       void PrintPathSegment(s16 segment);
       
       // Simulation debug

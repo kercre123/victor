@@ -27,6 +27,7 @@ namespace Anki
 
     template<typename Type> inline Type RoundDown(Type number, Type multiple);
 
+    // Taylor-series approximation of an exponential function
     template<typename Type> Type approximateExp(const Type exponent, const s32 numTerms = 10);
 
     // Swap a with b

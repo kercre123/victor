@@ -30,6 +30,8 @@ namespace Anki {
       void Destroy();
       
       ReturnCode Update(void);
+      
+      void StopTracking();
 
       // Select a block type to look for to dock with.  Use 0 to disable.
       // Next time the vision system sees a block of this type while looking
