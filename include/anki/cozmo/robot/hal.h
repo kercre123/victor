@@ -170,7 +170,7 @@ namespace Anki
 
       // .....................
 
-#pragma mark --- Audio ---
+// #pragma mark --- Audio ---
       /////////////////////////////////////////////////////////////////////
       // AUDIO
       //
@@ -180,7 +180,7 @@ namespace Anki
       // Play an audio sample at 24 kHz. Returns true if it was played.
       bool AudioPlay(s16 buffer[AUDIO_SAMPLE_SIZE]);
 
-#pragma mark --- Flash Memory ---
+// #pragma mark --- Flash Memory ---
       /////////////////////////////////////////////////////////////////////
       // FLASH MEMORY
       //
@@ -189,7 +189,7 @@ namespace Anki
       void FlashWrite(u32 page, u8 data[FLASH_PAGE_SIZE]);
       void FlashRead(u32 page, u8 data[FLASH_PAGE_SIZE]);
 
-#pragma mark --- USB / UART ---
+// #pragma mark --- USB / UART ---
       /////////////////////////////////////////////////////////////////////
       // USB / UART
       //
@@ -225,10 +225,10 @@ namespace Anki
       // Prototype matches putc for printf.
       int USBPutChar(int c);
 
-#pragma mark --- Sensors ---
+// #pragma mark --- Sensors ---
       const f32* GyroGetSpeed();
 
-#pragma mark --- Motors ---
+// #pragma mark --- Motors ---
       /////////////////////////////////////////////////////////////////////
       // MOTORS
       //
@@ -260,7 +260,7 @@ namespace Anki
       // Measures the unitless load on all motors
       s32 MotorGetLoad();
 
-#pragma mark --- Cameras ---
+// #pragma mark --- Cameras ---
       /////////////////////////////////////////////////////////////////////
       // CAMERAS
       // TODO: Add functions for adjusting ROI of cameras?
@@ -345,7 +345,7 @@ namespace Anki
       // but currently, the consumer has to set it
       void CameraSetIsEndOfFrame(CameraID cameraID, bool isEOF);
 
-#pragma mark --- Battery ---
+// #pragma mark --- Battery ---
       /////////////////////////////////////////////////////////////////////
       // BATTERY
       //
@@ -359,7 +359,7 @@ namespace Anki
       // Return whether or not the robot is connected to a charger
       bool BatteryIsOnCharger();
 
-#pragma mark --- UI LEDS ---
+// #pragma mark --- UI LEDS ---
       /////////////////////////////////////////////////////////////////////
       // UI LEDs
       //
@@ -369,7 +369,7 @@ namespace Anki
       // Set the intensity for each LED channel in the range [0, 255]
       void LEDSet(u8 leds[LED_CHANNEL_COUNT]);
 
-#pragma mark --- Radio ---
+// #pragma mark --- Radio ---
       /////////////////////////////////////////////////////////////////////
       // RADIO
       //

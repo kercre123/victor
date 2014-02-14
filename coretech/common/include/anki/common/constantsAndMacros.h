@@ -50,11 +50,11 @@
 /* Why not use M_PI and M_PI_2 that are provided by the math.h include above? */
 
 #ifndef M_PI
-#define M_PI       3.14159265358979323846
+#define M_PI       3.14159265358979323846f
 #endif
 
 #ifndef M_PI_2
-#define M_PI_2     1.57079632679489661923
+#define M_PI_2     1.57079632679489661923f
 #endif
 
 #ifndef PI
@@ -148,7 +148,7 @@
 
 // Tolerance for which two floating point numbers are considered equal (to deal
 // with imprecision in floating point representation).
-#define FLOATING_POINT_COMPARISON_TOLERANCE 1e-5
+#define FLOATING_POINT_COMPARISON_TOLERANCE 1e-5f
 
 // TRUE if x is near y by the amount epsilon, else FALSE
 #define FLT_NEAR(x,y) ((x) == (y) || (((x) > (y)-(FLOATING_POINT_COMPARISON_TOLERANCE)) && ((x) < (y)+(FLOATING_POINT_COMPARISON_TOLERANCE))))
@@ -157,7 +157,7 @@
 #endif
 
 // TRUE if x is within FLOATING_POINT_COMPARISON_TOLERANCE of 0.0
-#define NEAR_ZERO(x) (NEAR(x, 0.0, FLOATING_POINT_COMPARISON_TOLERANCE))
+#define NEAR_ZERO(x) (NEAR(x, 0.0f, FLOATING_POINT_COMPARISON_TOLERANCE))
 
 // TRUE if greater than the negative of the tolerance
 #define FLT_GTR_ZERO(x) ((x) >= -FLOATING_POINT_COMPARISON_TOLERANCE)

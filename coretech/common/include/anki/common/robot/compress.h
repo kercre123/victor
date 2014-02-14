@@ -106,8 +106,8 @@ namespace Anki
     template<typename Type> CompressedArray<Type>::CompressedArray()
       : compressedBuffer(NULL), compressedBufferMaxLength(-1), compressedBufferUsedLength(-1)
     {
-      this->size[0] = -1;
-      this->size[0] = -1;
+      this->arraySize[0] = -1;
+      this->arraySize[0] = -1;
     }
 
     template<typename Type> CompressedArray<Type>::CompressedArray(void * compressedBuffer, const s32 compressedBufferMaxLength, const s32 compressedBufferUsedLength, const s32 arrayHeight, const s32 arrayWidth, const Flags::Buffer &arrayFlags)

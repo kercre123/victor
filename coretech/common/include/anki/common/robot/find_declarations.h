@@ -58,7 +58,7 @@ namespace Anki
       };
     } // namepace Comparison
 
-#pragma mark --- Declarations ---
+// #pragma mark --- Declarations ---
 
     // Find acts similar to the Matlab find(). It is useful for quick prototyping of Matlab-like c++ code.
     template<typename Type1, typename Operator, typename Type2> class Find

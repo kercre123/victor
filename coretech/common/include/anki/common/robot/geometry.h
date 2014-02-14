@@ -19,7 +19,7 @@ namespace Anki
 {
   namespace Embedded
   {
-#pragma mark --- Point Definitions ---
+// #pragma mark --- Point Definitions ---
 
     template<typename Type> Point<Type>::Point()
       : x(static_cast<Type>(0)), y(static_cast<Type>(0))
@@ -107,11 +107,11 @@ namespace Anki
       return (f32)sqrt((this->x - point2.x)*(this->x - point2.x) + (this->y - point2.y)*(this->y - point2.y));
     }
 
-#pragma mark --- Point Specializations ---
+// #pragma mark --- Point Specializations ---
     template<> void Point<f32>::Print() const;
     template<> void Point<f64>::Print() const;
 
-#pragma mark --- Rectangle Definitions ---
+// #pragma mark --- Rectangle Definitions ---
 
     template<typename Type> Rectangle<Type>::Rectangle()
       : left(static_cast<Type>(0)), right(static_cast<Type>(0)), top(static_cast<Type>(0)), bottom(static_cast<Type>(0))
@@ -177,7 +177,7 @@ namespace Anki
       return bottom - top + 1;
     }
 
-#pragma mark --- Rectangle Specializations ---
+// #pragma mark --- Rectangle Specializations ---
     template<> void Rectangle<f32>::Print() const;
     template<> void Rectangle<f64>::Print() const;
 
@@ -187,7 +187,7 @@ namespace Anki
     template<> f32 Rectangle<f32>::get_height() const;
     template<> f64 Rectangle<f64>::get_height() const;
 
-#pragma mark --- Quadrilateral Definitions ---
+// #pragma mark --- Quadrilateral Definitions ---
 
     template<typename Type> Quadrilateral<Type>::Quadrilateral()
     {
@@ -313,11 +313,11 @@ namespace Anki
       return corners[index];
     }
 
-#pragma mark --- Quadrilateral Specializations ---
+// #pragma mark --- Quadrilateral Specializations ---
     template<> void Quadrilateral<f32>::Print() const;
     template<> void Quadrilateral<f64>::Print() const;
 
-#pragma mark --- C Conversions ---
+// #pragma mark --- C Conversions ---
     C_Rectangle_s16 get_C_Rectangle_s16(const Rectangle<s16> &rect);
   } // namespace Embedded
 } // namespace Anki

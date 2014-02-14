@@ -60,6 +60,6 @@ end
 
 fprintf(fileId,...
     ['};\n\n',...
-     '#endif // _SAVEIMAGEASHEADER_', defineFilename, '_H_']);
+     '#endif // _SAVEIMAGEASHEADER_', defineFilename, '_H_\n']);
 
 fclose(fileId);

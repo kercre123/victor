@@ -203,7 +203,7 @@ namespace Anki
           pNewPreviousComponents1d[iCurrent] = newComponent;
 
           const Result result = components.PushBack(newComponent);
-#pragma unused(result)
+//#pragma unused(result)
 
           AnkiConditionalWarnAndReturnValue(result == RESULT_OK, result, "extract2dComponents", "Extracted maximum number of 2d components");
         } // if(!foundMatch)

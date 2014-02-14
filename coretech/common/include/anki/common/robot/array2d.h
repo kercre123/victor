@@ -33,7 +33,7 @@ namespace Anki
 
     //template<typename Type1, typename Type2> class Find;
 
-#pragma mark --- Array Definitions ---
+    // #pragma mark --- Array Definitions ---
 
     // Factory method to create an Array from the heap. The data of the returned Array must be freed by the user.
     // This is separate from the normal constructor, as Array objects are not supposed to manage memory
@@ -469,9 +469,8 @@ namespace Anki
       // This is a little tough to write a general case for, so this method should be specialized
       // for each relevant case
       AnkiAssert(false);
-
-      AnkiConditionalErrorAndReturnValue(false,
-        0, "Array<Type>::Set", "SetCast must be specialized");
+			
+			return 0;
     }
 
     template<typename Type> s32 Array<Type>::Set(const Type * const values, const s32 numValues)
@@ -701,7 +700,7 @@ namespace Anki
       return RESULT_OK;
     }
 
-#pragma mark --- FixedPointArray Definitions ---
+    // #pragma mark --- FixedPointArray Definitions ---
 
     template<typename Type> FixedPointArray<Type>::FixedPointArray()
       : Array<Type>(), numFractionalBits(-1)
@@ -725,7 +724,7 @@ namespace Anki
       return numFractionalBits;
     }
 
-#pragma mark --- Array Specializations ---
+    // #pragma mark --- Array Specializations ---
 
     template<> Result Array<bool>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
     template<> Result Array<u8>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
@@ -745,7 +744,7 @@ namespace Anki
     template<> template<> s32 Array<u8>::SetCast(const s32 * const values, const s32 numValues);
     template<> template<> s32 Array<s16>::SetCast(const s32 * const values, const s32 numValues);
 
-#pragma mark --- C Conversions ---
+    // #pragma mark --- C Conversions ---
     C_Array_s32 get_C_Array_s32(Array<s32> &array);
   } // namespace Embedded
 } //namespace Anki

@@ -250,7 +250,7 @@ namespace Anki
         Array<f32> xTransformed(arrHeight,arrWidth,scratch);
         Array<f32> yTransformed(arrHeight,arrWidth,scratch);
 
-        s32 ci = 0;
+        //s32 ci = 0;
         for(s32 y=0; y<arrHeight; y++) {
           f32 * restrict pXIn = xIn.Pointer(y,0);
           f32 * restrict pYIn = yIn.Pointer(y,0);

@@ -19,7 +19,6 @@ namespace Anki
 {
   namespace Embedded
   {
-#pragma mark --- Definitions ---
     template<typename Type> ConstArraySlice<Type>::ConstArraySlice()
       : ySlice(LinearSequence<s32>()), xSlice(LinearSequence<s32>()), array(Array<Type>())
     {

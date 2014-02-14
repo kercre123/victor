@@ -23,7 +23,7 @@ namespace Anki
   {
     namespace InterpolateOperation
     {
-#pragma mark --- Definitions ---
+// #pragma mark
 
       // const Type h00, h01, h02, h10, h11, h12;
       template<typename Type> Affine<Type>::Affine(const Array<Type> &homography)
@@ -305,7 +305,7 @@ namespace Anki
       return RESULT_OK;
     }
 
-#pragma mark --- Specializations ---
+// #pragma mark --- Specializations ---
 
     template<> Result Interp2(const Array<u8> &reference, const Array<f32> &xCoordinates, const Array<f32> &yCoordinates, Array<u8> &out, const InterpolationType interpolationType, const u8 invalidValue);
 

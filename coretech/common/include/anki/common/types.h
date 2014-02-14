@@ -70,7 +70,7 @@ namespace Anki
     // Return values:
     typedef enum {
       RESULT_OK = 0,
-      RESULT_FAIL = 0xFFFFFFFF,
+      RESULT_FAIL = 0x00000001,
       RESULT_FAIL_MEMORY = 0x01000000,
       RESULT_FAIL_OUT_OF_MEMORY = 0x01000001,
       RESULT_FAIL_UNINITIALIZED_MEMORY = 0x01000002,

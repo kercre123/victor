@@ -17,7 +17,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #elif defined(USING_MOVIDIUS_SHAVE_COMPILER)
 // Included at the top-level config
 #elif defined(__EDG__)
-// Nothing to do here
+extern u32 XXX_HACK_FOR_PETE(void);
 #else
 #include <sys/time.h>
 #endif
@@ -50,10 +50,10 @@ typedef enum
 } BenchmarkPrintType;
 
 // A big array, full of events
-BENCHMARK_EVENTS_LOCATION BenchmarkEvent benchmarkEvents[MAX_BENCHMARK_EVENTS];
+BENCHMARK_EVENTS_LOCATION static BenchmarkEvent benchmarkEvents[MAX_BENCHMARK_EVENTS];
 
 // The index of the next place to record a benchmark event
-int numBenchmarkEvent;
+static int numBenchmarkEvents;
 
 BENCHMARK_EVENTS_LOCATION static const char * eventNames[MAX_BENCHMARK_EVENTS];
 static volatile int numEventNames;
@@ -66,16 +66,16 @@ BENCHMARK_EVENTS_LOCATION static int lastBeginIndex[MAX_BENCHMARK_EVENTS];
 
 void AddBenchmarkEvent(const char *name, unsigned long long time, BenchmarkEventType type);
 
-void PrintBenchmarkResults_All();
-void PrintBenchmarkResults_OnlyTotals();
+void PrintBenchmarkResults_All(void);
+void PrintBenchmarkResults_OnlyTotals(void);
 void PrintBenchmarkResults(const BenchmarkPrintType printType);
 
-void InitBenchmarking()
+void InitBenchmarking(void)
 {
-  numBenchmarkEvent = 0;
+  numBenchmarkEvents = 0;
 }
 
-unsigned long long GetBenchmarkTime()
+unsigned long long GetBenchmarkTime(void)
 {
 #if defined(_MSC_VER)
   LARGE_INTEGER counter;
@@ -99,15 +99,15 @@ unsigned long long GetBenchmarkTime()
 
 void AddBenchmarkEvent(const char *name, unsigned long long time, BenchmarkEventType type)
 {
-  benchmarkEvents[numBenchmarkEvent].name = name;
-  benchmarkEvents[numBenchmarkEvent].time = time;
-  benchmarkEvents[numBenchmarkEvent].type = type;
+  benchmarkEvents[numBenchmarkEvents].name = name;
+  benchmarkEvents[numBenchmarkEvents].time = time;
+  benchmarkEvents[numBenchmarkEvents].type = type;
 
-  numBenchmarkEvent++;
+  numBenchmarkEvents++;
 
   // If we run out of space, just keep overwriting the last event
-  if(numBenchmarkEvent >= MAX_BENCHMARK_EVENTS)
-    numBenchmarkEvent = MAX_BENCHMARK_EVENTS-1;
+  if(numBenchmarkEvents >= MAX_BENCHMARK_EVENTS)
+    numBenchmarkEvents = MAX_BENCHMARK_EVENTS-1;
 }
 
 void BeginBenchmark(const char *name)
@@ -147,12 +147,12 @@ unsigned int AddName(const char * const name)
   }
 }
 
-void PrintBenchmarkResults_All()
+void PrintBenchmarkResults_All(void)
 {
   PrintBenchmarkResults(BENCHMARK_PRINT_ALL);
 }
 
-void PrintBenchmarkResults_OnlyTotals()
+void PrintBenchmarkResults_OnlyTotals(void)
 {
   PrintBenchmarkResults(BENCHMARK_PRINT_TOTALS);
 }
@@ -178,7 +178,7 @@ void PrintBenchmarkResults(const BenchmarkPrintType printType)
     lastBeginIndex[i] = -1;
   }
 
-  for(i=0; i<numBenchmarkEvent; i++) {
+  for(i=0; i<numBenchmarkEvents; i++) {
     const unsigned int index = AddName(benchmarkEvents[i].name);
     if(benchmarkEvents[i].type == BENCHMARK_EVENT_BEGIN) {
       lastBeginIndex[index] = i;
@@ -190,7 +190,7 @@ void PrintBenchmarkResults(const BenchmarkPrintType printType)
 
       {
         const unsigned long long rawElapsedTime = benchmarkEvents[i].time - benchmarkEvents[lastBeginIndex[index]].time;
-#pragma unused (rawElapsedTime) // may or may not get used depending on #ifs below
+        //#pragma unused (rawElapsedTime) // may or may not get used depending on #ifs below
 
 #if defined(_MSC_VER)
         const double elapsedTime = (double)rawElapsedTime / freqencyDouble;
@@ -216,7 +216,7 @@ void PrintBenchmarkResults(const BenchmarkPrintType printType)
         lastBeginIndex[index] = -1;
       }
     }
-  } // for(i=0; i<numBenchmarkEvent; i++)
+  } // for(i=0; i<numBenchmarkEvents; i++)
 
   for(i=0; i<numEventNames; i++) {
     printf("Event ");

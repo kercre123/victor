@@ -37,7 +37,8 @@ namespace Anki
       
       bool CameraIsEndOfFrame(CameraID cameraID){ return false; }
       
-      TimeStamp GetTimeStamp(void){ return (TimeStamp)0; }
+			#warning fix this
+      //TimeStamp GetTimeStamp(void){ return (TimeStamp)0; }
       
       int GetRobotID(){ return 0; }
       void UpdateDisplay(){ }

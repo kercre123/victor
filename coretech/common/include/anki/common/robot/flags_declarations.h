@@ -20,7 +20,7 @@ namespace Anki
   {
     namespace Flags
     {
-#pragma mark --- Declarations ---
+// #pragma mark --- Declarations ---
 
       class Buffer
       {
@@ -70,7 +70,7 @@ namespace Anki
         static inline Type epsilon() { return 0; }
       };
 
-#pragma mark --- Declaration Specializations ---
+// #pragma mark --- Declaration Specializations ---
       template<> class TypeCharacteristics<bool>
       {
       public:

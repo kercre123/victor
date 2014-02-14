@@ -20,7 +20,7 @@ namespace Anki
 {
   namespace Embedded
   {
-#pragma mark --- FixedLengthList Definitions ---
+// #pragma mark --- FixedLengthList Definitions ---
 
 #ifndef USING_MOVIDIUS_COMPILER
     //template<typename Type> FixedLengthList<Type> AllocateFixedLengthListFromHeap(s32 maximumSize, const Flags::Buffer flags=Flags::Buffer(true,false,false))

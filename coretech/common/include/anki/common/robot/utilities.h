@@ -21,7 +21,7 @@ namespace Anki
 {
   namespace Embedded
   {
-#pragma mark --- Definitions ---
+    // #pragma mark
 
     template<typename Type> inline Type RoundUp(Type number, Type multiple)
     {

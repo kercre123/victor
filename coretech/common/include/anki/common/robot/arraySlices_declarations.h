@@ -19,7 +19,7 @@ namespace Anki
 {
   namespace Embedded
   {
-#pragma mark --- Class Declarations ---
+    // #pragma mark --- Class Declarations ---
 
     template<typename Type> class ConstArraySlice;
     template<typename Type> class ArraySlice;

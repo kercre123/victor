@@ -80,8 +80,10 @@ extern "C" {
 #define Anki_STRING_LENGTH 1024
   static char renderedLogString[Anki_STRING_LENGTH];
 
+#ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable: 4100) // Unreference formal parameter
+#endif
   void _Anki_Logf(int logLevel, const char* eventName, const char* eventValue, const char* file, const char* funct, int line, ...)
   {
 #if ANKI_OUTPUT_DEBUG_LEVEL == ANKI_OUTPUT_DEBUG_PRINTF
@@ -122,7 +124,9 @@ extern "C" {
     //fflush(stdout);
 #endif // #if ANKI_OUTPUT_DEBUG_LEVEL == ANKI_OUTPUT_DEBUG_PRINTF
   }
+#ifdef _MSC_VER
 #pragma warning(pop)
+#endif
 
 #endif // #ifdef USING_MOVIDIUS_GCC_COMPILER
 

@@ -22,7 +22,7 @@ namespace Anki
   {
     namespace Matrix
     {
-#pragma mark --- Declarations ---
+// #pragma mark --- Declarations ---
 
       //
       // Simple matrix statistics

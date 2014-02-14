@@ -21,7 +21,7 @@ namespace Anki
 {
   namespace Embedded
   {
-#pragma mark --- Declarations ---
+// #pragma mark --- Declarations ---
     // When transmitting a serialized buffer, the header and footer of the entire buffer are each 8 bytes
     // These just contain a validation pattern, not data
     static const s32 SERIALIZED_BUFFER_HEADER_LENGTH = 8;

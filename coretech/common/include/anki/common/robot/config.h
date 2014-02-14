@@ -109,12 +109,14 @@ For internal use only. No part of this code may be used without a signed non-dis
 #if defined(__EDG__)  // MDK-ARM
 
 #ifndef restrict
-#define restrict
+#define restrict __restrict
 #endif
 
 #ifndef staticInline
 #define staticInline static __inline
 #endif
+
+#define ANKI_DEBUG_LEVEL ANKI_DEBUG_ERRORS
 
 #endif
 
@@ -175,8 +177,8 @@ extern "C" {
 #include <float.h>
 #include <stdarg.h>
 
-//#undef printf
-//#define printf(...) explicitPrintf(0, EXPLICIT_PRINTF_FLIP_CHARACTERS, __VA_ARGS__)
+  //#undef printf
+  //#define printf(...) explicitPrintf(0, EXPLICIT_PRINTF_FLIP_CHARACTERS, __VA_ARGS__)
 
   //#define printf(...) (_xprintf(SYSTEM_PUTCHAR_FUNCTION , 0, __VA_ARGS__ ) )
 #define xprintf(...) (_xprintf(SYSTEM_PUTCHAR_FUNCTION , 0, __VA_ARGS__ ) )

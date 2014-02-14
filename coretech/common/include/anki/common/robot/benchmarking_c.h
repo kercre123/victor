@@ -20,14 +20,14 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/common/robot/config.h"
 
-#define NUM_BENCHMARK_EVENTS 0xFFF
+#define MAX_BENCHMARK_EVENTS 0xFFF
 
 #ifdef __cplusplus
 extern "C" {
 #endif
   // Call this before doing any benchmarking, to clear the buffer of benchmarkEvents.
   // Can be called multiple times.
-  void InitBenchmarking();
+  void InitBenchmarking(void);
 
   // Use these functions to add a new event to the list. These functions are very fast.
   //
@@ -40,8 +40,8 @@ extern "C" {
   void EndBenchmark(const char *name);
 
   // Compile and print out all the benchmark events that were recorded
-  void PrintBenchmarkResults_All();
-  void PrintBenchmarkResults_OnlyTotals();
+  void PrintBenchmarkResults_All(void);
+  void PrintBenchmarkResults_OnlyTotals(void);
 
 #ifdef __cplusplus
 }

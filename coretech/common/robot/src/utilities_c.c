@@ -147,7 +147,7 @@ void PrintF64(int (*writeChar)(int), f64 value)
   const s32 maxDecimalDigits = 6;
   f64 decimalPart;
 
-  s32 digitIndex = -1;
+  s32 digitIndex;
   s32 numDecimalDigitsUsed = 0;
 
   // If null, default to putchar
@@ -428,7 +428,7 @@ void PrintU32Hex(int (*writeChar)(int), u32 value)
   return;
 } // void printInt(s32 value)
 
-double GetTime()
+f64 GetTime(void)
 {
 #if defined(_MSC_VER)
   f64 timeInSeconds;

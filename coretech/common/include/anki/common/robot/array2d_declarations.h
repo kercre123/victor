@@ -36,7 +36,7 @@ namespace Anki
 
     //template<typename Type1, typename Type2> class Find;
 
-#pragma mark --- Array Class Declaration ---
+    // #pragma mark --- Array Class Declaration ---
 
     template<typename Type> class Array
     {
@@ -244,7 +244,7 @@ namespace Anki
       Result PrintBasicType(const char * const variableName, const s32 version, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
     }; // class Array
 
-#pragma mark --- FixedPointArray Class Declaration ---
+    // #pragma mark --- FixedPointArray Class Declaration ---
 
     template<typename Type> class FixedPointArray : public Array<Type>
     {

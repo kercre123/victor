@@ -20,7 +20,7 @@ namespace Anki
   {
     namespace Flags
     {
-#pragma mark --- Definitions ---
+// #pragma mark
     } // namespace Flags
   } // namespace Embedded
 } // namespace Anki

@@ -19,7 +19,7 @@ namespace Anki
 {
   namespace Embedded
   {
-#pragma mark --- Definitions ---
+// #pragma mark
 
     template<typename Type> LinearSequence<Type>::LinearSequence()
       : start(-1), increment(static_cast<Type>(-1)), end(-1)
@@ -483,7 +483,7 @@ namespace Anki
       return yGridVector;
     }
 
-#pragma mark --- Specializations ---
+// #pragma mark --- Specializations ---
 
     template<> s32 LinearSequence<f32>::computeSize(const f32 start, const f32 increment, const f32 end);
     template<> s32 LinearSequence<f64>::computeSize(const f64 start, const f64 increment, const f64 end);
