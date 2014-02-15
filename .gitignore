@@ -87,3 +87,5 @@ robot/robot.uvgui.anki
 robot/robot_robot.dep
 robot/robot_vision-tests.dep
 robot/startup_stm32f429_439xx.lst
+coretech/vision/robot/test/embeddedVisionTests - Copy.cpp
+robot/robot_embedded-tests.dep

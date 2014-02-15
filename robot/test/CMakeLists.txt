@@ -3,7 +3,9 @@
 # Robot CoreTech_Common Tests
 
 add_executable(run_pc_embeddedTests
-	run_pc_embeddedTests.cpp
+  embeddedTests.h
+  embeddedTests.cpp
+  run_pc_embeddedTests.cpp  
 	embeddedCommonTests.cpp
   embeddedVisionTests.cpp)
 

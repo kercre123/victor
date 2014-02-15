@@ -9,10 +9,6 @@ Copyright Anki, Inc. 2013
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
 **/
 
-#ifndef COZMO_ROBOT
-#define COZMO_ROBOT
-#endif
-
 #include "anki/common/robot/config.h"
 #include "anki/common/robot/gtestLight.h"
 #include "anki/common/robot/matlabInterface.h"
@@ -27,43 +23,19 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/docking_vision.h"
 #include "anki/vision/robot/imageProcessing.h"
 
-using namespace Anki::Embedded;
-
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
-#include "opencv2/core/core.hpp"
-#endif
-
-//#if ANKICORETECH_EMBEDDED_USE_MATLAB
-//Matlab matlab(false);
-//#endif
-
-#if ANKICORETECH_EMBEDDED_USE_GTEST
-#include "gtest/gtest.h"
-#endif
-
 #include "../../coretech/vision/blockImages/blockImage50_320x240.h"
 #include "../../coretech/vision/blockImages/blockImages00189_80x60.h"
 #include "../../coretech/vision/blockImages/blockImages00190_80x60.h"
 #include "../../../systemTestImages/cozmo_2014_01_29_11_41_05_10_320x240.h"
 #include "../../../systemTestImages/cozmo_2014_01_29_11_41_05_12_320x240.h"
 
-#if defined(__EDG__)  // ARM-MDK
-#define DDR_BUFFER_LOCATION __attribute__((section(".ram1"),zero_init))
-#define CMX_BUFFER_LOCATION __attribute__((section(".ram1"),zero_init))
-#else
-#define DDR_BUFFER_LOCATION
-#define CMX_BUFFER_LOCATION
-#endif
+#include "embeddedTests.h"
 
-#define DDR_BUFFER_SIZE 320000
-#define CMX_BUFFER_SIZE 600000
-
-DDR_BUFFER_LOCATION char ddrBuffer[DDR_BUFFER_SIZE];
-CMX_BUFFER_LOCATION char cmxBuffer[CMX_BUFFER_SIZE];
+using namespace Anki::Embedded;
 
 GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerBinary)
 {
-  MemoryStack scratch_CMX(&cmxBuffer[0], CMX_BUFFER_SIZE);
+  MemoryStack scratch_CMX(&largeBuffer[0], LARGE_BUFFER_SIZE);
   ASSERT_TRUE(scratch_CMX.IsValid());
 
   Array<u8> templateImage(cozmo_2014_01_29_11_41_05_10_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_10_320x240_WIDTH, scratch_CMX);
@@ -127,7 +99,7 @@ GTEST_TEST(CoreTech_Vision, DetectBlurredEdge)
   const s32 minComponentWidth = 3;
   const s32 maxExtrema = 500;
 
-  MemoryStack scratch_CMX(&cmxBuffer[0], CMX_BUFFER_SIZE);
+  MemoryStack scratch_CMX(&largeBuffer[0], LARGE_BUFFER_SIZE);
   ASSERT_TRUE(scratch_CMX.IsValid());
 
   Array<u8> image(48, 64, scratch_CMX);
@@ -248,23 +220,9 @@ GTEST_TEST(CoreTech_Vision, DetectBlurredEdge)
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, DetectBlurredEdge)
 
-GTEST_TEST(CoreTech_Vision, IsDDROkay)
-{
-  printf("Starting DDR test\n");
-
-  // This test may crash the board every other time
-  for(s32 i=0; i<DDR_BUFFER_SIZE; i++) {
-    ddrBuffer[i] = 0;
-  }
-
-  printf("DDR test didn't crash\n");
-
-  GTEST_RETURN_HERE;
-} // GTEST_TEST(CoreTech_Vision, IsDDROkay)
-
 GTEST_TEST(CoreTech_Vision, DownsampleByPowerOfTwo)
 {
-  MemoryStack scratch_CMX(&cmxBuffer[0], CMX_BUFFER_SIZE);
+  MemoryStack scratch_CMX(&largeBuffer[0], LARGE_BUFFER_SIZE);
 
   ASSERT_TRUE(scratch_CMX.IsValid());
 
@@ -324,239 +282,6 @@ bool IsBlockImage50_320x240Valid(const u8 * const imageBuffer, const bool isBigE
   return true;
 } // bool IsBlockImage50_320x240Valid()
 
-s32 invalidateCacheWithGarbage(bool setddrBuffer, bool setcmxBuffer)
-{
-  // "Invalidate" the cache by copying garbage between the buffers
-
-  const s32 bufferSize = MIN(DDR_BUFFER_SIZE, CMX_BUFFER_SIZE);
-
-  s32 totalValue = 5;
-  for(s32 i=0; i<DDR_BUFFER_SIZE; i++) {
-    totalValue += ddrBuffer[i];
-  }
-
-  printf("Ignore these values: %d ", totalValue);
-
-  for(s32 i=0; i<CMX_BUFFER_SIZE; i++) {
-    totalValue += cmxBuffer[i];
-  }
-
-  printf("%d ", totalValue);
-
-  if(setcmxBuffer) {
-    for(s32 i=0; i<bufferSize; i++) {
-      cmxBuffer[i] += ddrBuffer[i];
-    }
-
-    printf("%d ", cmxBuffer[1001]);
-  }
-
-  if(setddrBuffer) {
-    for(s32 i=0; i<bufferSize; i++) {
-      ddrBuffer[i] += cmxBuffer[i];
-    }
-
-    printf("%d ", ddrBuffer[10001]);
-  }
-
-  for(s32 i=0; i<bufferSize; i++) {
-    totalValue += ddrBuffer[i];
-  }
-
-  printf("%d\n", totalValue);
-
-  return totalValue;
-} // void flushCache()
-
-GTEST_TEST(CoreTech_Vision, EndianCopying)
-{
-  enum EndianType {ENDIAN_UNKNOWN, ENDIAN_BIG, ENDIAN_LITTLE};
-
-  const s32 bufferSize = MIN(DDR_BUFFER_SIZE, CMX_BUFFER_SIZE);
-
-  MemoryStack scratch_DDR(&ddrBuffer[0], DDR_BUFFER_SIZE);
-  MemoryStack scratch_CMX(&cmxBuffer[0], CMX_BUFFER_SIZE);
-
-  ASSERT_TRUE(scratch_DDR.IsValid());
-  ASSERT_TRUE(scratch_CMX.IsValid());
-
-  EndianType detectedEndian = ENDIAN_UNKNOWN;
-
-  invalidateCacheWithGarbage(true, true);
-
-  // Create a test pattern in CMX and DDR with 32-bit accesses
-  for(s32 i=0; i<(bufferSize>>2); i++) {
-    reinterpret_cast<u32*>(cmxBuffer)[i] = i;
-    reinterpret_cast<u32*>(ddrBuffer)[i] = i;
-  }
-
-  printf("Checking small buffer, test 1: ");
-  if(cmxBuffer[100] == 25) {
-    printf("Little endian detected\n");
-    if(detectedEndian != ENDIAN_UNKNOWN && detectedEndian != ENDIAN_LITTLE) {
-      ASSERT_TRUE(false);
-    }
-    detectedEndian = ENDIAN_LITTLE;
-  } else if(cmxBuffer[103] == 25) {
-    printf("Big endian detected\n");
-    if(detectedEndian != ENDIAN_UNKNOWN && detectedEndian != ENDIAN_BIG) {
-      ASSERT_TRUE(false);
-    }
-    detectedEndian = ENDIAN_BIG;
-  } else {
-    printf("Endian mixup detected\n");
-    ASSERT_TRUE(false);
-  }
-
-  printf("Checking big buffer, test 1: ");
-  if(ddrBuffer[100] == 25) {
-    printf("Little endian detected\n");
-    if(detectedEndian != ENDIAN_UNKNOWN && detectedEndian != ENDIAN_LITTLE) {
-      ASSERT_TRUE(false);
-    }
-    detectedEndian = ENDIAN_LITTLE;
-  } else if(ddrBuffer[103] == 25) {
-    printf("Big endian detected\n");
-    if(detectedEndian != ENDIAN_UNKNOWN && detectedEndian != ENDIAN_BIG) {
-      ASSERT_TRUE(false);
-    }
-    detectedEndian = ENDIAN_BIG;
-  } else {
-    printf("Endian mixup detected\n");
-    ASSERT_TRUE(false);
-  }
-
-  invalidateCacheWithGarbage(true, true);
-
-  // Create a test pattern in CMX and DDR with 8-bit accesses
-  for(s32 i=0; i<bufferSize; i++) {
-    reinterpret_cast<u8*>(cmxBuffer)[i] = i % 256;
-    reinterpret_cast<u8*>(ddrBuffer)[i] = i % 256;
-  }
-
-  printf("Checking small buffer, test 2: ");
-  if(cmxBuffer[100] == 100) {
-    printf("Endian is correct\n");
-  } else {
-    printf("Endian mixup detected\n");
-    ASSERT_TRUE(false);
-  }
-
-  printf("Checking big buffer, test 2: ");
-  if(ddrBuffer[100] == 100) {
-    printf("Endian is correct\n");
-  } else {
-    // This type of failure is expected on the Leon
-#ifndef USING_MOVIDIUS_GCC_COMPILER
-    printf("Endian mixup detected\n");
-    ASSERT_TRUE(false);
-#else
-    printf("Endian mixup detected, but this is on the Leon\n");
-#endif
-  }
-
-  invalidateCacheWithGarbage(true, true);
-
-  for(s32 i=0; i<(bufferSize>>2); i++) {
-    reinterpret_cast<u32*>(ddrBuffer)[i] = i;
-  }
-
-  invalidateCacheWithGarbage(false, true);
-
-  for(s32 i=0; i<(bufferSize>>2); i++) {
-    reinterpret_cast<u32*>(cmxBuffer)[i] = reinterpret_cast<u32*>(ddrBuffer)[i];
-  }
-
-  printf("Checking small buffer, test 3: ");
-  if(detectedEndian == ENDIAN_LITTLE) {
-    if(cmxBuffer[100] == 25) {
-      printf("Endian is correct\n");
-    } else {
-      printf("Endian mixup detected\n");
-      ASSERT_TRUE(false);
-    }
-  } else {
-    if(cmxBuffer[103] == 25) {
-      printf("Endian is correct\n");
-    } else {
-      printf("Endian mixup detected\n");
-      ASSERT_TRUE(false);
-    }
-  }
-
-  invalidateCacheWithGarbage(true, true);
-
-  for(s32 i=0; i<bufferSize; i++) {
-    reinterpret_cast<u8*>(cmxBuffer)[i] = i % 256;
-  }
-
-  invalidateCacheWithGarbage(true, false);
-
-  for(s32 i=0; i<bufferSize; i++) {
-    reinterpret_cast<u8*>(ddrBuffer)[i] = reinterpret_cast<u8*>(cmxBuffer)[i];
-  }
-
-  printf("Checking small buffer, test 4: ");
-  if(detectedEndian == ENDIAN_LITTLE) {
-    if(cmxBuffer[100] == 100) {
-      printf("Endian is correct\n");
-    } else {
-      printf("Endian mixup detected\n");
-      ASSERT_TRUE(false);
-    }
-  } else {
-    if(cmxBuffer[103] == 100) {
-      printf("Endian is correct\n");
-    } else {
-      // This type of failure is expected on the Leon
-#ifndef USING_MOVIDIUS_GCC_COMPILER
-      printf("Endian mixup detected\n");
-      ASSERT_TRUE(false);
-#else
-      printf("Endian mixup detected, but this is on the Leon\n");
-#endif
-    }
-  }
-
-  for(s32 i=0; i<bufferSize; i++) {
-    reinterpret_cast<u8*>(ddrBuffer)[i] = i % 256;
-  }
-
-  invalidateCacheWithGarbage(false, true);
-
-  for(s32 i=0; i<bufferSize; i++) {
-    reinterpret_cast<u8*>(cmxBuffer)[i] = reinterpret_cast<u8*>(ddrBuffer)[i];
-  }
-
-  printf("Checking small buffer, test 5: ");
-  if(cmxBuffer[100] == 100) {
-    printf("Endian is correct\n");
-  } else {
-    // This type of failure is expected on the Leon
-#ifndef USING_MOVIDIUS_GCC_COMPILER
-    printf("Endian mixup detected\n");
-    ASSERT_TRUE(false);
-#else
-    printf("Endian mixup detected, but this is on the Leon\n");
-#endif
-  }
-
-  // Even though the Leon is messed up, the big and small buffers should be messed up in the same way
-  // On the PC, they are correct in the same way
-  ASSERT_TRUE(cmxBuffer[100] == ddrBuffer[100]);
-  ASSERT_TRUE(cmxBuffer[103] == ddrBuffer[103]);
-
-#ifdef USING_MOVIDIUS_GCC_COMPILER
-  ASSERT_TRUE(cmxBuffer[100] == 103);
-  ASSERT_TRUE(cmxBuffer[103] == 100);
-#else
-  ASSERT_TRUE(cmxBuffer[100] == 100);
-  ASSERT_TRUE(cmxBuffer[103] == 103);
-#endif
-
-  GTEST_RETURN_HERE;
-} // GTEST_TEST(CoreTech_Vision, EndianCopying)
-
 GTEST_TEST(CoreTech_Vision, ComputeDockingErrorSignalAffine)
 {
   // TODO: make these the real values
@@ -564,7 +289,7 @@ GTEST_TEST(CoreTech_Vision, ComputeDockingErrorSignalAffine)
   const f32 blockMarkerWidthInMM = 50.0f;
   const f32 horizontalFocalLengthInMM = 5.0f;
 
-  MemoryStack ms(&cmxBuffer[0], CMX_BUFFER_SIZE);
+  MemoryStack ms(&largeBuffer[0], LARGE_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   const Quadrilateral<f32> initialCorners(Point<f32>(5.0f,5.0f), Point<f32>(100.0f,100.0f), Point<f32>(50.0f,20.0f), Point<f32>(10.0f,80.0f));
@@ -600,7 +325,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerFast)
 
   // TODO: add check that images were loaded correctly
 
-  MemoryStack scratch1(&cmxBuffer[0], 600000);
+  MemoryStack scratch1(&largeBuffer[0], 600000);
 
   ASSERT_TRUE(scratch1.IsValid());
 
@@ -706,7 +431,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
   // TODO: add check that images were loaded correctly
 
   //MemoryStack scratch0(&ddrBuffer[0], 80*60*2 + 256);
-  MemoryStack scratch1(&cmxBuffer[0], 600000);
+  MemoryStack scratch1(&largeBuffer[0], 600000);
 
   //ASSERT_TRUE(scratch0.IsValid());
   ASSERT_TRUE(scratch1.IsValid());
@@ -833,7 +558,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
 
 GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering)
 {
-  MemoryStack ms(&cmxBuffer[0], CMX_BUFFER_SIZE);
+  MemoryStack ms(&largeBuffer[0], LARGE_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   Array<u8> image(3,16,ms);
@@ -974,7 +699,7 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering)
 
 GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageGeneration)
 {
-  MemoryStack ms(&cmxBuffer[0], CMX_BUFFER_SIZE);
+  MemoryStack ms(&largeBuffer[0], LARGE_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   Array<u8> image(3,16,ms);
@@ -1196,9 +921,9 @@ GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage_lowMemory)
   const s32 maxMarkers = 100;
   const s32 maxConnectedComponentSegments = 25000/2;
 
-  //MemoryStack scratch0(&ddrBuffer[0], DDR_BUFFER_SIZE);
-  MemoryStack scratch1(&cmxBuffer[0], CMX_BUFFER_SIZE/2);
-  MemoryStack scratch2(&cmxBuffer[0] + CMX_BUFFER_SIZE/2, CMX_BUFFER_SIZE/2);
+  //MemoryStack scratch0(&ddrBuffer[0], LARGE_BUFFER_SIZE);
+  MemoryStack scratch1(&largeBuffer[0], LARGE_BUFFER_SIZE/2);
+  MemoryStack scratch2(&largeBuffer[0] + LARGE_BUFFER_SIZE/2, LARGE_BUFFER_SIZE/2);
 
   //ASSERT_TRUE(scratch0.IsValid());
   ASSERT_TRUE(scratch1.IsValid());
@@ -1276,7 +1001,7 @@ GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents)
   const s32 imageWidth = 640;
   const s32 minDistanceFromImageEdge = 2;
 
-  MemoryStack ms(&cmxBuffer[0], CMX_BUFFER_SIZE);
+  MemoryStack ms(&largeBuffer[0], LARGE_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   FixedLengthList<BlockMarker> markers(50, ms);
@@ -1327,8 +1052,8 @@ GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents)
 
 GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput)
 {
-  const s32 numBytes = MIN(CMX_BUFFER_SIZE, 5000);
-  MemoryStack ms(&cmxBuffer[0], numBytes);
+  const s32 numBytes = MIN(LARGE_BUFFER_SIZE, 5000);
+  MemoryStack ms(&largeBuffer[0], numBytes);
   ASSERT_TRUE(ms.IsValid());
 
   FixedPointArray<s32> image(1,15,2,ms);
@@ -1358,9 +1083,9 @@ GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput)
 GTEST_TEST(CoreTech_Vision, LaplacianPeaks)
 {
 #define LaplacianPeaks_BOUNDARY_LENGTH 65
-  const s32 numBytes = MIN(CMX_BUFFER_SIZE, 5000);
+  const s32 numBytes = MIN(LARGE_BUFFER_SIZE, 5000);
 
-  MemoryStack ms(&cmxBuffer[0], numBytes);
+  MemoryStack ms(&largeBuffer[0], numBytes);
   ASSERT_TRUE(ms.IsValid());
 
   FixedLengthList<Point<s16> > boundary(LaplacianPeaks_BOUNDARY_LENGTH, ms);
@@ -1400,8 +1125,8 @@ GTEST_TEST(CoreTech_Vision, LaplacianPeaks)
 
 GTEST_TEST(CoreTech_Vision, Correlate1d)
 {
-  const s32 numBytes = MIN(CMX_BUFFER_SIZE, 5000);
-  MemoryStack ms(&cmxBuffer[0], numBytes);
+  const s32 numBytes = MIN(LARGE_BUFFER_SIZE, 5000);
+  MemoryStack ms(&largeBuffer[0], numBytes);
   ASSERT_TRUE(ms.IsValid());
 
   {
@@ -1521,7 +1246,7 @@ GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary)
   const s32 boundaryLength = 65;
   const s32 startComponentIndex = 0;
 
-  MemoryStack ms(&cmxBuffer[0], CMX_BUFFER_SIZE);
+  MemoryStack ms(&largeBuffer[0], LARGE_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   ConnectedComponents components(numComponents, 640, ms);
@@ -1542,7 +1267,7 @@ GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary)
   //#define DRAW_TraceNextExteriorBoundary
 #ifdef DRAW_TraceNextExteriorBoundary
   {
-    MemoryStack scratch0(&ddrBuffer[0], DDR_BUFFER_SIZE);
+    MemoryStack scratch0(&ddrBuffer[0], LARGE_BUFFER_SIZE);
     ASSERT_TRUE(scratch0.IsValid());
 
     Array<u8> drawnComponents(480, 640, scratch0);
@@ -1574,7 +1299,7 @@ GTEST_TEST(CoreTech_Vision, ComputeComponentBoundingBoxes)
 {
   const s32 numComponents = 10;
 
-  MemoryStack ms(&cmxBuffer[0], CMX_BUFFER_SIZE);
+  MemoryStack ms(&largeBuffer[0], LARGE_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   ConnectedComponents components(numComponents, 640, ms);
@@ -1620,7 +1345,7 @@ GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids)
 {
   const s32 numComponents = 10;
 
-  MemoryStack ms(&cmxBuffer[0], CMX_BUFFER_SIZE);
+  MemoryStack ms(&largeBuffer[0], LARGE_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   ConnectedComponents components(numComponents, 640, ms);
@@ -1668,7 +1393,7 @@ GTEST_TEST(CoreTech_Vision, InvalidateSolidOrSparseComponents)
   const s32 sparseMultiplyThreshold = 10 << 5;
   const s32 solidMultiplyThreshold = 2 << 5;
 
-  MemoryStack ms(&cmxBuffer[0], CMX_BUFFER_SIZE);
+  MemoryStack ms(&largeBuffer[0], LARGE_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   ConnectedComponents components(numComponents, 640, ms);
@@ -1720,7 +1445,7 @@ GTEST_TEST(CoreTech_Vision, InvalidateSmallOrLargeComponents)
   const s32 minimumNumPixels = 6;
   const s32 maximumNumPixels = 1000;
 
-  MemoryStack ms(&cmxBuffer[0], CMX_BUFFER_SIZE);
+  MemoryStack ms(&largeBuffer[0], LARGE_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   ConnectedComponents components(numComponents, 640, ms);
@@ -1789,7 +1514,7 @@ GTEST_TEST(CoreTech_Vision, CompressComponentIds)
 {
   const s32 numComponents = 10;
 
-  MemoryStack ms(&cmxBuffer[0], CMX_BUFFER_SIZE);
+  MemoryStack ms(&largeBuffer[0], LARGE_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   ConnectedComponents components(numComponents, 640, ms);
@@ -1842,9 +1567,9 @@ GTEST_TEST(CoreTech_Vision, CompressComponentIds)
 GTEST_TEST(CoreTech_Vision, ComponentsSize)
 {
   const s32 numComponents = 500;
-  const s32 numBytes = MIN(CMX_BUFFER_SIZE, 10000);
+  const s32 numBytes = MIN(LARGE_BUFFER_SIZE, 10000);
 
-  MemoryStack ms(&cmxBuffer[0], numBytes);
+  MemoryStack ms(&largeBuffer[0], numBytes);
   ASSERT_TRUE(ms.IsValid());
 
   const s32 usedBytes0 = ms.get_usedBytes();
@@ -1879,7 +1604,7 @@ GTEST_TEST(CoreTech_Vision, SortComponents)
 {
   const s32 numComponents = 10;
 
-  MemoryStack ms(&cmxBuffer[0], CMX_BUFFER_SIZE);
+  MemoryStack ms(&largeBuffer[0], LARGE_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   ConnectedComponents components(numComponents, 640, ms);
@@ -1927,7 +1652,7 @@ GTEST_TEST(CoreTech_Vision, SortComponentsById)
 {
   const s32 numComponents = 10;
 
-  MemoryStack ms(&cmxBuffer[0], CMX_BUFFER_SIZE);
+  MemoryStack ms(&largeBuffer[0], LARGE_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   ConnectedComponents components(numComponents, 640, ms);
@@ -1982,7 +1707,7 @@ GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
   const s32 maxComponentSegments = 100;
 
   // Allocate memory from the heap, for the memory allocator
-  MemoryStack ms(&cmxBuffer[0], CMX_BUFFER_SIZE);
+  MemoryStack ms(&largeBuffer[0], LARGE_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
 #define ApproximateConnectedComponents2d_binaryImageDataLength (18*5)
@@ -2051,14 +1776,14 @@ GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
 GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d)
 {
   const s32 imageWidth = 50;
-  const s32 numBytes = MIN(CMX_BUFFER_SIZE, 5000);
+  const s32 numBytes = MIN(LARGE_BUFFER_SIZE, 5000);
 
   const s32 minComponentWidth = 3;
   const s32 maxComponents = 10;
   const s32 maxSkipDistance = 1;
 
   // Allocate memory from the heap, for the memory allocator
-  MemoryStack ms(&cmxBuffer[0], numBytes);
+  MemoryStack ms(&largeBuffer[0], numBytes);
   ASSERT_TRUE(ms.IsValid());
 
   u8 * binaryImageRow = reinterpret_cast<u8*>(ms.Allocate(imageWidth));
@@ -2091,10 +1816,10 @@ GTEST_TEST(CoreTech_Vision, BinomialFilter)
 {
   const s32 imageWidth = 10;
   const s32 imageHeight = 5;
-  const s32 numBytes = MIN(CMX_BUFFER_SIZE, 5000);
+  const s32 numBytes = MIN(LARGE_BUFFER_SIZE, 5000);
 
   // Allocate memory from the heap, for the memory allocator
-  MemoryStack ms(&cmxBuffer[0], numBytes);
+  MemoryStack ms(&largeBuffer[0], numBytes);
 
   ASSERT_TRUE(ms.IsValid());
 
@@ -2138,9 +1863,9 @@ GTEST_TEST(CoreTech_Vision, DownsampleByFactor)
   const s32 imageHeight = 4;
 
   // Allocate memory from the heap, for the memory allocator
-  const s32 numBytes = MIN(CMX_BUFFER_SIZE, 1000);
+  const s32 numBytes = MIN(LARGE_BUFFER_SIZE, 1000);
 
-  MemoryStack ms(&cmxBuffer[0], numBytes);
+  MemoryStack ms(&largeBuffer[0], numBytes);
 
   ASSERT_TRUE(ms.IsValid());
 
@@ -2214,9 +1939,9 @@ GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale)
     {15073280, 13107200, 11796480, 11468800, 11468800, 11468800, 11468800, 11796480, 12517376, 12255232, 10813440, 10158080, 10551296, 10158080, 7929856, 5046272}};
 
   // Allocate memory from the heap, for the memory allocator
-  const s32 numBytes = MIN(CMX_BUFFER_SIZE, 10000);
+  const s32 numBytes = MIN(LARGE_BUFFER_SIZE, 10000);
 
-  MemoryStack ms(&cmxBuffer[0], numBytes);
+  MemoryStack ms(&largeBuffer[0], numBytes);
 
   ASSERT_TRUE(ms.IsValid());
 
@@ -2280,9 +2005,9 @@ GTEST_TEST(CoreTech_Vision, TraceInteriorBoundary)
   groundTruth[8] = Point<s16>(9,6);
 
   // Allocate memory from the heap, for the memory allocator
-  const s32 numBytes = MIN(CMX_BUFFER_SIZE, 10000);
+  const s32 numBytes = MIN(LARGE_BUFFER_SIZE, 10000);
 
-  MemoryStack ms(&cmxBuffer[0], numBytes);
+  MemoryStack ms(&largeBuffer[0], numBytes);
 
   ASSERT_TRUE(ms.IsValid());
 
@@ -2315,9 +2040,7 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
 
   CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerBinary);
   CALL_GTEST_TEST(CoreTech_Vision, DetectBlurredEdge);
-  CALL_GTEST_TEST(CoreTech_Vision, IsDDROkay);
   CALL_GTEST_TEST(CoreTech_Vision, DownsampleByPowerOfTwo);
-  CALL_GTEST_TEST(CoreTech_Vision, EndianCopying);
   CALL_GTEST_TEST(CoreTech_Vision, ComputeDockingErrorSignalAffine);
   CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerFast);
   CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTracker);
