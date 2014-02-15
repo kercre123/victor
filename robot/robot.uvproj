@@ -1079,12 +1079,22 @@
             <File>
               <FileName>embeddedCommonTests.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\test\embeddedCommonTests.cpp</FilePath>
+              <FilePath>.\test\embeddedCommonTests.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>embeddedTests.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\test\embeddedTests.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>embeddedTests.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\test\embeddedTests.h</FilePath>
             </File>
             <File>
               <FileName>embeddedVisionTests.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\test\embeddedVisionTests.cpp</FilePath>
+              <FilePath>.\test\embeddedVisionTests.cpp</FilePath>
             </File>
             <File>
               <FileName>run_m4_embeddedTests.cpp</FileName>
@@ -2168,12 +2178,22 @@
             <File>
               <FileName>embeddedCommonTests.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\test\embeddedCommonTests.cpp</FilePath>
+              <FilePath>.\test\embeddedCommonTests.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>embeddedTests.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\test\embeddedTests.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>embeddedTests.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\test\embeddedTests.h</FilePath>
             </File>
             <File>
               <FileName>embeddedVisionTests.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\test\embeddedVisionTests.cpp</FilePath>
+              <FilePath>.\test\embeddedVisionTests.cpp</FilePath>
             </File>
             <File>
               <FileName>run_m4_embeddedTests.cpp</FileName>

@@ -32,24 +32,16 @@ extern Anki::Embedded::Matlab matlab;
 #include "gtest/gtest.h"
 #endif
 
-#if defined(ROBOT_HARDWARE)
+//#if defined(ROBOT_HARDWARE)
 #include "anki/cozmo/robot/messages.h"
-#else
-#include "anki/cozmo/basestation/messages.h"
-#endif
+//#else
+//#include "anki/cozmo/basestation/messages.h"
+//#endif
 
-#if defined(__EDG__)  // ARM-MDK
-#define LARGE_BUFFER_LOCATION __attribute__((section(".ram1"), zero_init))
-#define SMALL_BUFFER_LOCATION __attribute__((section(".ARM.__at_0x20004100"), zero_init))
-#else
-#define LARGE_BUFFER_LOCATION
-#define SMALL_BUFFER_LOCATION
-#endif
-
-#define LARGE_BUFFER_SIZE 2000000
+#define LARGE_BUFFER_SIZE 900000
 #define SMALL_BUFFER_SIZE 190000
 
-extern LARGE_BUFFER_LOCATION char largeBuffer[LARGE_BUFFER_SIZE];
-extern SMALL_BUFFER_LOCATION char smallBuffer[SMALL_BUFFER_SIZE];
+extern char largeBuffer[LARGE_BUFFER_SIZE];
+extern char smallBuffer[SMALL_BUFFER_SIZE];
 
 #endif // _ANKICORETECHEMBEDDED_TESTS_H_
