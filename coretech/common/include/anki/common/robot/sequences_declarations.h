@@ -24,7 +24,7 @@ namespace Anki
     template<typename Type> class ArraySlice;
     class MemoryStack;
 
-// #pragma mark --- Class Declarations ---
+    // #pragma mark --- Class Declarations ---
     template<typename Type> class Sequence
     {
     }; // class Sequence

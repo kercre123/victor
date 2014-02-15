@@ -83,7 +83,7 @@ GTEST_TEST(CoreTech_Common, CompressArray)
   ASSERT_TRUE(AreElementwiseEqual<s16>(original, decompressed));
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Common, CompressArray)
 
 GTEST_TEST(CoreTech_Common, Heatshrink)
 {
@@ -124,92 +124,7 @@ GTEST_TEST(CoreTech_Common, Heatshrink)
   ASSERT_TRUE(uncompressedLength == dataLength);
 
   GTEST_RETURN_HERE;
-}
-
-// TODO: make this a real test, if needed
-#if 0
-GTEST_TEST(CoreTech_Common, SendSerializedBufferOverUSB)
-{
-  const s32 segment1Length = 32;
-  const s32 segment2Length = 64;
-
-  const s32 segment3Height = 4;
-  const s32 segment3Width = 3;
-
-  ASSERT_TRUE(largeBuffer != NULL);
-  MemoryStack ms(largeBuffer, 5000);
-  ASSERT_TRUE(ms.IsValid());
-
-  void * segment1 = ms.Allocate(segment1Length);
-  s32 * segment2 = reinterpret_cast<s32*>(ms.Allocate(segment2Length));
-  Array<u8> segment3(segment3Height, segment3Width, ms);
-
-  ASSERT_TRUE(segment1 != NULL);
-  ASSERT_TRUE(segment2 != NULL);
-  ASSERT_TRUE(segment3.IsValid());
-
-  for(s32 i=0; i<segment1Length; i++) {
-    reinterpret_cast<u8*>(segment1)[i] = i + 1;
-  }
-
-  for(s32 i=0; i<(segment2Length/sizeof(s32)); i++) {
-    segment2[i] = 2*i + 1;
-  }
-
-  for(s32 y=0; y<segment3Height; y++) {
-    for(s32 x=0; x<segment3Width; x++) {
-      segment3[y][x] = 10*y + x;
-    }
-  }
-
-  ASSERT_TRUE(largeBuffer != NULL);
-  SerializedBuffer serialized(largeBuffer+5000, 6000, Flags::Buffer(true,true,false));
-  ASSERT_TRUE(serialized.IsValid());
-
-  void * segment1b = serialized.PushBack(segment1, segment1Length);
-  void * segment2b = serialized.PushBack(segment2, segment2Length);
-  void * segment3b = serialized.PushBack(segment3);
-
-  ASSERT_TRUE(segment1b != NULL);
-  ASSERT_TRUE(segment2b != NULL);
-  ASSERT_TRUE(segment3b != NULL);
-
-  //printf("0x%x 0x%x\n", serialized.get_memoryStack().get_buffer(), serialized.get_memoryStack().get_validBufferStart());
-
-  //u8 * rawBuffer = reinterpret_cast<u8*>(serialized.get_memoryStack().get_buffer());
-  //const s32 rawBufferLength = serialized.get_memoryStack().get_usedBytes();
-  //for(s32 i=0; i<rawBufferLength; i++) {
-  //  printf("%x ", rawBuffer[i]);
-  //}
-  //printf("\n\n\n\n\n");
-
-#ifdef USING_MOVIDIUS_GCC_COMPILER
-  for(s32 i=0; i<10; i++) {
-    Anki::Cozmo::HAL::USBPutChar(13);
-  }
-
-  for(s32 i=0; i<SERIALIZED_BUFFER_HEADER_LENGTH; i++) {
-    Anki::Cozmo::HAL::USBPutChar(SERIALIZED_BUFFER_HEADER[i]);
-  }
-
-  Anki::Cozmo::HAL::USBSendBuffer(reinterpret_cast<u8*>(serialized.get_memoryStack().get_validBufferStart()), serialized.get_memoryStack().get_usedBytes());
-
-  for(s32 i=0; i<SERIALIZED_BUFFER_FOOTER_LENGTH; i++) {
-    Anki::Cozmo::HAL::USBPutChar(SERIALIZED_BUFFER_FOOTER[i]);
-  }
-
-  while(1) {}
-#else
-  u8 * rawBuffer = reinterpret_cast<u8*>(serialized.get_memoryStack().get_buffer());
-  const s32 rawBufferLength = serialized.get_memoryStack().get_usedBytes();
-  for(s32 i=0; i<rawBufferLength; i++) {
-    printf("%d ", rawBuffer[i]);
-  }
-#endif
-
-  GTEST_RETURN_HERE;
-}
-#endif // #if 0
+} // GTEST_TEST(CoreTech_Common, Heatshrink)
 
 GTEST_TEST(CoreTech_Common, SerializedBuffer)
 {
@@ -384,7 +299,7 @@ GTEST_TEST(CoreTech_Common, SerializedBuffer)
   }
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Common, SerializedBuffer)
 
 GTEST_TEST(CoreTech_Common, CRC32Code)
 {
@@ -405,7 +320,7 @@ GTEST_TEST(CoreTech_Common, CRC32Code)
   ASSERT_TRUE(crc == crc_groundTruth);
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Common, CRC32Code)
 
 GTEST_TEST(CoreTech_Common, MemoryStackIterator)
 {
@@ -464,7 +379,7 @@ GTEST_TEST(CoreTech_Common, MemoryStackIterator)
   ASSERT_FALSE(msi.HasNext());
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Common, MemoryStackIterator)
 
 GTEST_TEST(CoreTech_Common, ShaveAddTest)
 {
@@ -529,7 +444,7 @@ GTEST_TEST(CoreTech_Common, ShaveAddTest)
   }
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Common, ShaveAddTest)
 
 GTEST_TEST(CoreTech_Common, ShavePrintfTest)
 {
@@ -547,7 +462,7 @@ GTEST_TEST(CoreTech_Common, ShavePrintfTest)
   printf("If on the Myriad, the previous line should read: \"Shave printf test passed\"\n");
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Common, ShavePrintfTest)
 
 GTEST_TEST(CoreTech_Common, MatrixTranspose)
 {
@@ -583,7 +498,7 @@ GTEST_TEST(CoreTech_Common, MatrixTranspose)
   //out.Print("out");
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Common, MatrixTranspose)
 
 GTEST_TEST(CoreTech_Common, CholeskyDecomposition)
 {
@@ -637,7 +552,7 @@ GTEST_TEST(CoreTech_Common, CholeskyDecomposition)
   ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(Bt_Xt, Xt_groundTruth, .01, .001));
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Common, CholeskyDecomposition)
 
 GTEST_TEST(CoreTech_Common, ExplicitPrintf)
 {
@@ -658,7 +573,7 @@ GTEST_TEST(CoreTech_Common, ExplicitPrintf)
   //explicitPrintf(0, EXPLICIT_PRINTF_FLIP_CHARACTERS, "%f %f %f %f\n", *float1, *float2, *float3, *float4);
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Common, ExplicitPrintf)
 
 GTEST_TEST(CoreTech_Common, MatrixSortWithIndexes)
 {
@@ -759,7 +674,7 @@ GTEST_TEST(CoreTech_Common, MatrixSortWithIndexes)
   }
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Common, MatrixSortWithIndexes)
 
 GTEST_TEST(CoreTech_Common, MatrixSort)
 {
@@ -827,7 +742,7 @@ GTEST_TEST(CoreTech_Common, MatrixSort)
   }
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Common, MatrixSort)
 
 GTEST_TEST(CoreTech_Common, MatrixMultiplyTranspose)
 {
@@ -873,7 +788,7 @@ GTEST_TEST(CoreTech_Common, MatrixMultiplyTranspose)
   }
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Common, MatrixMultiplyTranspose)
 
 GTEST_TEST(CoreTech_Common, Reshape)
 {
@@ -930,7 +845,7 @@ GTEST_TEST(CoreTech_Common, Reshape)
   }
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Common, Reshape)
 
 GTEST_TEST(CoreTech_Common, ArrayPatterns)
 {
@@ -1009,7 +924,7 @@ GTEST_TEST(CoreTech_Common, ArrayPatterns)
   }
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Common, ArrayPatterns)
 
 GTEST_TEST(CoreTech_Common, Interp2_Affine_twoDimensional)
 {
@@ -1064,7 +979,7 @@ GTEST_TEST(CoreTech_Common, Interp2_Affine_twoDimensional)
   }
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Common, Interp2_Affine_twoDimensional)
 
 GTEST_TEST(CoreTech_Common, Interp2_Affine_oneDimensional)
 {
@@ -1113,7 +1028,7 @@ GTEST_TEST(CoreTech_Common, Interp2_Affine_oneDimensional)
   }
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Common, Interp2_Affine_oneDimensional)
 
 GTEST_TEST(CoreTech_Common, Interp2_twoDimensional)
 {
@@ -1154,7 +1069,7 @@ GTEST_TEST(CoreTech_Common, Interp2_twoDimensional)
   }
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Common, Interp2_twoDimensional)
 
 GTEST_TEST(CoreTech_Common, Interp2_oneDimensional)
 {
@@ -1187,7 +1102,7 @@ GTEST_TEST(CoreTech_Common, Interp2_oneDimensional)
   }
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Common, Interp2_oneDimensional)
 
 GTEST_TEST(CoreTech_Common, Meshgrid_twoDimensional)
 {
@@ -1222,7 +1137,7 @@ GTEST_TEST(CoreTech_Common, Meshgrid_twoDimensional)
   }
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Common, Meshgrid_twoDimensional)
 
 GTEST_TEST(CoreTech_Common, Meshgrid_oneDimensional)
 {
@@ -1269,7 +1184,7 @@ GTEST_TEST(CoreTech_Common, Meshgrid_oneDimensional)
   }
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Common, Meshgrid_oneDimensional)
 
 GTEST_TEST(CoreTech_Common, Linspace)
 {
@@ -1288,7 +1203,7 @@ GTEST_TEST(CoreTech_Common, Linspace)
   ASSERT_TRUE(sequence4.get_size() == 10);
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Common, Linspace)
 
 GTEST_TEST(CoreTech_Common, Find_SetArray1)
 {
@@ -1352,7 +1267,7 @@ GTEST_TEST(CoreTech_Common, Find_SetArray1)
   } // PUSH_MEMORY_STACK(memory);
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Common, Find_SetArray1)
 
 GTEST_TEST(CoreTech_Common, Find_SetArray2)
 {
@@ -1424,7 +1339,7 @@ GTEST_TEST(CoreTech_Common, Find_SetArray2)
   } // PUSH_MEMORY_STACK(memory);
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Common, Find_SetArray2)
 
 GTEST_TEST(CoreTech_Common, Find_SetValue)
 {
@@ -1474,7 +1389,7 @@ GTEST_TEST(CoreTech_Common, Find_SetValue)
   }
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Common, Find_SetValue)
 
 GTEST_TEST(CoreTech_Common, ZeroSizedArray)
 {
@@ -1509,7 +1424,7 @@ GTEST_TEST(CoreTech_Common, ZeroSizedArray)
   ASSERT_TRUE(xIndexes.get_size(1) == 0);
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Common, ZeroSizedArray)
 
 GTEST_TEST(CoreTech_Common, Find_Evaluate1D)
 {
@@ -1635,7 +1550,7 @@ GTEST_TEST(CoreTech_Common, Find_Evaluate1D)
   } // PUSH_MEMORY_STACK(ms)
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Common, Find_Evaluate1D)
 
 GTEST_TEST(CoreTech_Common, Find_Evaluate2D)
 {
@@ -1703,7 +1618,7 @@ GTEST_TEST(CoreTech_Common, Find_Evaluate2D)
   }
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Common, Find_Evaluate2D)
 
 GTEST_TEST(CoreTech_Common, Find_NumMatchesAndBoundingRectangle)
 {
@@ -1754,7 +1669,7 @@ GTEST_TEST(CoreTech_Common, Find_NumMatchesAndBoundingRectangle)
   ASSERT_TRUE(find.get_limits() == Rectangle<s32>(0,5,2,3));
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Common, Find_NumMatchesAndBoundingRectangle)
 
 GTEST_TEST(CoreTech_Common, MatrixElementwise)
 {
@@ -2051,7 +1966,7 @@ GTEST_TEST(CoreTech_Common, MatrixElementwise)
   }
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Common, MatrixElementwise)
 
 GTEST_TEST(CoreTech_Common, SliceArrayAssignment)
 {
@@ -2130,7 +2045,7 @@ GTEST_TEST(CoreTech_Common, SliceArrayAssignment)
   }
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Common, SliceArrayAssignment)
 
 GTEST_TEST(CoreTech_Common, SliceArrayCompileTest)
 {
@@ -2166,7 +2081,7 @@ GTEST_TEST(CoreTech_Common, SliceArrayCompileTest)
   //printf("%d %d %d\n", slice2.get_xSlice().get_start(), slice2.get_xSlice().get_end(), *slice2.get_array().Pointer(0,0));
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Common, SliceArrayCompileTest)
 
 GTEST_TEST(CoreTech_Common, MatrixMinAndMaxAndSum)
 {
@@ -2208,7 +2123,7 @@ GTEST_TEST(CoreTech_Common, MatrixMinAndMaxAndSum)
   ASSERT_TRUE(sum3 == 65);
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Common, MatrixMinAndMaxAndSum)
 
 GTEST_TEST(CoreTech_Common, ReallocateArray)
 {
@@ -2237,7 +2152,7 @@ GTEST_TEST(CoreTech_Common, ReallocateArray)
   ASSERT_TRUE(!array2.IsValid());
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Common, ReallocateArray)
 
 GTEST_TEST(CoreTech_Common, ReallocateMemoryStack)
 {
@@ -2262,7 +2177,7 @@ GTEST_TEST(CoreTech_Common, ReallocateMemoryStack)
   ASSERT_TRUE(memory1 == NULL);
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Common, ReallocateMemoryStack)
 
 GTEST_TEST(CoreTech_Common, LinearSequence)
 {
@@ -2355,44 +2270,7 @@ GTEST_TEST(CoreTech_Common, LinearSequence)
   } // PUSH_MEMORY_STACK(ms)
 
   GTEST_RETURN_HERE;
-}
-
-// This test requires a stopwatch, and takes about ten seconds to do manually
-//#define TEST_BENCHMARKING
-#ifdef TEST_BENCHMARKING
-GTEST_TEST(CoreTech_Common, Benchmarking)
-{
-  InitBenchmarking();
-
-  BeginBenchmark("testOuter");
-
-  const double startTime0 = GetTime();
-  while((GetTime() - startTime0) < 1.0) {}
-
-  BeginBenchmark("testInner");
-  const double startTime1 = GetTime();
-  while((GetTime() - startTime1) < 1.0) {}
-  EndBenchmark("testInner");
-
-  BeginBenchmark("testInner");
-  const double startTime2 = GetTime();
-  while((GetTime() - startTime2) < 2.0) {}
-  EndBenchmark("testInner");
-
-  BeginBenchmark("testInner");
-  const double startTime3 = GetTime();
-  while((GetTime() - startTime3) < 3.0) {}
-  EndBenchmark("testInner");
-
-  EndBenchmark("testOuter");
-
-  PrintBenchmarkResults();
-
-  printf("Done with benchmarking test\n");
-
-  GTEST_RETURN_HERE;
-}
-#endif //#ifdef TEST_BENCHMARKING
+} // GTEST_TEST(CoreTech_Common, LinearSequence)
 
 GTEST_TEST(CoreTech_Common, MemoryStackId)
 {
@@ -2427,7 +2305,7 @@ GTEST_TEST(CoreTech_Common, MemoryStackId)
   ASSERT_TRUE(id5 == 4);
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Common, MemoryStackId)
 
 GTEST_TEST(CoreTech_Common, ApproximateExp)
 {
@@ -2469,7 +2347,7 @@ GTEST_TEST(CoreTech_Common, ApproximateExp)
   ASSERT_TRUE(ABS(valN5 - 0.367879441171442) < .0001);
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Common, ApproximateExp)
 
 GTEST_TEST(CoreTech_Common, MatrixMultiply)
 {
@@ -2518,7 +2396,7 @@ GTEST_TEST(CoreTech_Common, MatrixMultiply)
   ASSERT_TRUE(AreElementwiseEqual(matOut, matOut_groundTruth));
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Common, MatrixMultiply)
 
 GTEST_TEST(CoreTech_Common, ComputeHomography)
 {
@@ -2585,7 +2463,7 @@ GTEST_TEST(CoreTech_Common, ComputeHomography)
   ASSERT_TRUE(AreElementwiseEqual_PercentThreshold(homography, homography_groundTruth, .01, .01));
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Common, ComputeHomography)
 
 GTEST_TEST(CoreTech_Common, MemoryStack)
 {
@@ -2663,20 +2541,20 @@ GTEST_TEST(CoreTech_Common, MemoryStack)
 #endif // #if ANKI_DEBUG_LEVEL > ANKI_DEBUG_ERRORS
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Common, MemoryStack)
 
 s32 CheckMemoryStackUsage(MemoryStack ms, s32 numBytes)
 {
   ms.Allocate(numBytes);
   return ms.get_usedBytes();
-}
+} // s32 CheckMemoryStackUsage(MemoryStack ms, s32 numBytes)
 
 s32 CheckConstCasting(const MemoryStack ms, s32 numBytes)
 {
   // ms.Allocate(1); // Will not compile
 
   return CheckMemoryStackUsage(ms, numBytes);
-}
+} // s32 CheckConstCasting(const MemoryStack ms, s32 numBytes)
 
 GTEST_TEST(CoreTech_Common, MemoryStack_call)
 {
@@ -2699,7 +2577,7 @@ GTEST_TEST(CoreTech_Common, MemoryStack_call)
   ASSERT_TRUE(ms.get_usedBytes() == originalUsedBytes);
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Common, MemoryStack_call)
 
 GTEST_TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1)
 {
@@ -2735,93 +2613,7 @@ GTEST_TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1)
 #endif // #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS
 
   GTEST_RETURN_HERE;
-}
-
-#if ANKICORETECH_EMBEDDED_USE_MATLAB
-GTEST_TEST(CoreTech_Common, SimpleMatlabTest1)
-{
-  matlab.EvalStringEcho("simpleVector = double([1.1,2.1,3.1,4.1,5.1]);");
-  double *simpleVector = matlab.Get<double>("simpleVector");
-
-  printf("simple vector:\n%f %f %f %f %f\n", simpleVector[0], simpleVector[1], simpleVector[2], simpleVector[3], simpleVector[4]);
-
-  ASSERT_EQ(1.1, simpleVector[0]);
-  ASSERT_EQ(2.1, simpleVector[1]);
-  ASSERT_EQ(3.1, simpleVector[2]);
-  ASSERT_EQ(4.1, simpleVector[3]);
-  ASSERT_EQ(5.1, simpleVector[4]);
-
-  free(simpleVector); simpleVector = NULL;
-
-  GTEST_RETURN_HERE;
-}
-#endif //#if ANKICORETECH_EMBEDDED_USE_MATLAB
-
-#if ANKICORETECH_EMBEDDED_USE_MATLAB
-GTEST_TEST(CoreTech_Common, SimpleMatlabTest2)
-{
-  MemoryStack ms(calloc(1000000,1), 1000000);
-  ASSERT_TRUE(ms.IsValid());
-
-  matlab.EvalStringEcho("simpleArray = int16([1,2,3,4,5;6,7,8,9,10]);");
-  Array<s16> simpleArray = matlab.GetArray<s16>("simpleArray", ms);
-  printf("simple matrix:\n");
-  simpleArray.Print();
-
-  ASSERT_EQ(1, *simpleArray.Pointer(0,0));
-  ASSERT_EQ(2, *simpleArray.Pointer(0,1));
-  ASSERT_EQ(3, *simpleArray.Pointer(0,2));
-  ASSERT_EQ(4, *simpleArray.Pointer(0,3));
-  ASSERT_EQ(5, *simpleArray.Pointer(0,4));
-  ASSERT_EQ(6, *simpleArray.Pointer(1,0));
-  ASSERT_EQ(7, *simpleArray.Pointer(1,1));
-  ASSERT_EQ(8, *simpleArray.Pointer(1,2));
-  ASSERT_EQ(9, *simpleArray.Pointer(1,3));
-  ASSERT_EQ(10, *simpleArray.Pointer(1,4));
-
-  free(ms.get_buffer());
-
-  GTEST_RETURN_HERE;
-}
-#endif //#if ANKICORETECH_EMBEDDED_USE_MATLAB
-
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
-GTEST_TEST(CoreTech_Common, SimpleOpenCVTest)
-{
-  cv::Mat src, dst;
-
-  const double sigma = 1.5;
-  const double numSigma = 2.0;
-  const int k = 2*int(std::ceil(double(numSigma)*sigma)) + 1;
-
-  src = cv::Mat(100, 6, CV_64F, 0.0);
-  dst = cv::Mat(100, 6, CV_64F);
-
-  cv::Size ksize(k,k);
-
-  src.at<double>(50, 0) = 5;
-  src.at<double>(50, 1) = 6;
-  src.at<double>(50, 2) = 7;
-
-  cv::GaussianBlur(src, dst, ksize, sigma, sigma, cv::BORDER_REFLECT_101);
-
-  printf("%f %f\n%f %f\n%f %f\n",
-    src.at<double>(50, 0), src.at<double>(50, 1), *( ((double*)src.data) + 50*6), *( ((double*)src.data) + 50*6 + 1), dst.at<double>(50, 0), dst.at<double>(50, 1));
-  /*std::cout << src.at<double>(50, 0) << " "
-  << src.at<double>(50, 1) << "\n"
-  << *( ((double*)src.data) + 50*6) << " "
-  << *( ((double*)src.data) + 50*6 + 1) << "\n"
-  << dst.at<double>(50, 0) << " "
-  << dst.at<double>(50, 1) << "\n";*/
-
-  ASSERT_EQ(5, src.at<double>(50, 0));
-  ASSERT_EQ(6, src.at<double>(50, 1));
-  ASSERT_TRUE(abs(1.49208 - dst.at<double>(50, 0)) < .00001);
-  ASSERT_TRUE(abs(1.39378 - dst.at<double>(50, 1)) < .00001);
-
-  GTEST_RETURN_HERE;
-}
-#endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
+} // GTEST_TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1)
 
 GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
 {
@@ -2904,7 +2696,7 @@ GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
 #endif //#if ANKICORETECH_EMBEDDED_USE_OPENCV
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
 
 GTEST_TEST(CoreTech_Common, ArraySpecifiedClass)
 {
@@ -2930,7 +2722,7 @@ GTEST_TEST(CoreTech_Common, ArraySpecifiedClass)
   ASSERT_TRUE((*simpleArray.Pointer(0,0)) == 1); // If the templating fails, this will equal 49
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Common, ArraySpecifiedClass)
 
 GTEST_TEST(CoreTech_Common, ArrayAlignment1)
 {
@@ -2954,7 +2746,7 @@ GTEST_TEST(CoreTech_Common, ArrayAlignment1)
   }
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Common, ArrayAlignment1)
 
 GTEST_TEST(CoreTech_Common, MemoryStackAlignment)
 {
@@ -2974,7 +2766,7 @@ GTEST_TEST(CoreTech_Common, MemoryStackAlignment)
   }
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Common, MemoryStackAlignment)
 
 GTEST_TEST(CoreTech_Common, ArrayFillPattern)
 {
@@ -3037,7 +2829,130 @@ GTEST_TEST(CoreTech_Common, ArrayFillPattern)
   }
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Common, ArrayFillPattern)
+
+// This test requires a stopwatch, and takes about ten seconds to do manually
+//#define TEST_BENCHMARKING
+#ifdef TEST_BENCHMARKING
+GTEST_TEST(CoreTech_Common, Benchmarking)
+{
+  InitBenchmarking();
+
+  BeginBenchmark("testOuter");
+
+  const double startTime0 = GetTime();
+  while((GetTime() - startTime0) < 1.0) {}
+
+  BeginBenchmark("testInner");
+  const double startTime1 = GetTime();
+  while((GetTime() - startTime1) < 1.0) {}
+  EndBenchmark("testInner");
+
+  BeginBenchmark("testInner");
+  const double startTime2 = GetTime();
+  while((GetTime() - startTime2) < 2.0) {}
+  EndBenchmark("testInner");
+
+  BeginBenchmark("testInner");
+  const double startTime3 = GetTime();
+  while((GetTime() - startTime3) < 3.0) {}
+  EndBenchmark("testInner");
+
+  EndBenchmark("testOuter");
+
+  PrintBenchmarkResults();
+
+  printf("Done with benchmarking test\n");
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Common, Benchmarking)
+#endif //#ifdef TEST_BENCHMARKING
+
+#if ANKICORETECH_EMBEDDED_USE_MATLAB
+GTEST_TEST(CoreTech_Common, SimpleMatlabTest1)
+{
+  matlab.EvalStringEcho("simpleVector = double([1.1,2.1,3.1,4.1,5.1]);");
+  double *simpleVector = matlab.Get<double>("simpleVector");
+
+  printf("simple vector:\n%f %f %f %f %f\n", simpleVector[0], simpleVector[1], simpleVector[2], simpleVector[3], simpleVector[4]);
+
+  ASSERT_EQ(1.1, simpleVector[0]);
+  ASSERT_EQ(2.1, simpleVector[1]);
+  ASSERT_EQ(3.1, simpleVector[2]);
+  ASSERT_EQ(4.1, simpleVector[3]);
+  ASSERT_EQ(5.1, simpleVector[4]);
+
+  free(simpleVector); simpleVector = NULL;
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Common, SimpleMatlabTest1)
+#endif //#if ANKICORETECH_EMBEDDED_USE_MATLAB
+
+#if ANKICORETECH_EMBEDDED_USE_MATLAB
+GTEST_TEST(CoreTech_Common, SimpleMatlabTest2)
+{
+  MemoryStack ms(calloc(1000000,1), 1000000);
+  ASSERT_TRUE(ms.IsValid());
+
+  matlab.EvalStringEcho("simpleArray = int16([1,2,3,4,5;6,7,8,9,10]);");
+  Array<s16> simpleArray = matlab.GetArray<s16>("simpleArray", ms);
+  printf("simple matrix:\n");
+  simpleArray.Print();
+
+  ASSERT_EQ(1, *simpleArray.Pointer(0,0));
+  ASSERT_EQ(2, *simpleArray.Pointer(0,1));
+  ASSERT_EQ(3, *simpleArray.Pointer(0,2));
+  ASSERT_EQ(4, *simpleArray.Pointer(0,3));
+  ASSERT_EQ(5, *simpleArray.Pointer(0,4));
+  ASSERT_EQ(6, *simpleArray.Pointer(1,0));
+  ASSERT_EQ(7, *simpleArray.Pointer(1,1));
+  ASSERT_EQ(8, *simpleArray.Pointer(1,2));
+  ASSERT_EQ(9, *simpleArray.Pointer(1,3));
+  ASSERT_EQ(10, *simpleArray.Pointer(1,4));
+
+  free(ms.get_buffer());
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Common, SimpleMatlabTest2)
+#endif //#if ANKICORETECH_EMBEDDED_USE_MATLAB
+
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
+GTEST_TEST(CoreTech_Common, SimpleOpenCVTest)
+{
+  cv::Mat src, dst;
+
+  const double sigma = 1.5;
+  const double numSigma = 2.0;
+  const int k = 2*int(std::ceil(double(numSigma)*sigma)) + 1;
+
+  src = cv::Mat(100, 6, CV_64F, 0.0);
+  dst = cv::Mat(100, 6, CV_64F);
+
+  cv::Size ksize(k,k);
+
+  src.at<double>(50, 0) = 5;
+  src.at<double>(50, 1) = 6;
+  src.at<double>(50, 2) = 7;
+
+  cv::GaussianBlur(src, dst, ksize, sigma, sigma, cv::BORDER_REFLECT_101);
+
+  printf("%f %f\n%f %f\n%f %f\n",
+    src.at<double>(50, 0), src.at<double>(50, 1), *( ((double*)src.data) + 50*6), *( ((double*)src.data) + 50*6 + 1), dst.at<double>(50, 0), dst.at<double>(50, 1));
+  /*std::cout << src.at<double>(50, 0) << " "
+  << src.at<double>(50, 1) << "\n"
+  << *( ((double*)src.data) + 50*6) << " "
+  << *( ((double*)src.data) + 50*6 + 1) << "\n"
+  << dst.at<double>(50, 0) << " "
+  << dst.at<double>(50, 1) << "\n";*/
+
+  ASSERT_EQ(5, src.at<double>(50, 0));
+  ASSERT_EQ(6, src.at<double>(50, 1));
+  ASSERT_TRUE(abs(1.49208 - dst.at<double>(50, 0)) < .00001);
+  ASSERT_TRUE(abs(1.39378 - dst.at<double>(50, 1)) < .00001);
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Common, SimpleOpenCVTest)
+#endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
 #if !defined(ANKICORETECH_EMBEDDED_USE_GTEST)
 void RUN_ALL_COMMON_TESTS(s32 &numPassedTests, s32 &numFailedTests)
@@ -3047,7 +2962,6 @@ void RUN_ALL_COMMON_TESTS(s32 &numPassedTests, s32 &numFailedTests)
 
   CALL_GTEST_TEST(CoreTech_Common, CompressArray);
   CALL_GTEST_TEST(CoreTech_Common, Heatshrink);
-  //CALL_GTEST_TEST(CoreTech_Common, SendSerializedBufferOverUSB);
   CALL_GTEST_TEST(CoreTech_Common, SerializedBuffer);
   CALL_GTEST_TEST(CoreTech_Common, CRC32Code);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStackIterator);
@@ -3061,6 +2975,8 @@ void RUN_ALL_COMMON_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   CALL_GTEST_TEST(CoreTech_Common, MatrixMultiplyTranspose);
   CALL_GTEST_TEST(CoreTech_Common, Reshape);
   CALL_GTEST_TEST(CoreTech_Common, ArrayPatterns);
+  CALL_GTEST_TEST(CoreTech_Common, Interp2_Affine_twoDimensional);
+  CALL_GTEST_TEST(CoreTech_Common, Interp2_Affine_oneDimensional);
   CALL_GTEST_TEST(CoreTech_Common, Interp2_twoDimensional);
   CALL_GTEST_TEST(CoreTech_Common, Interp2_oneDimensional);
   CALL_GTEST_TEST(CoreTech_Common, Meshgrid_twoDimensional);
@@ -3077,14 +2993,9 @@ void RUN_ALL_COMMON_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   CALL_GTEST_TEST(CoreTech_Common, SliceArrayAssignment);
   CALL_GTEST_TEST(CoreTech_Common, SliceArrayCompileTest);
   CALL_GTEST_TEST(CoreTech_Common, MatrixMinAndMaxAndSum);
-  CALL_GTEST_TEST(CoreTech_Common, LinearSequence);
   CALL_GTEST_TEST(CoreTech_Common, ReallocateArray);
   CALL_GTEST_TEST(CoreTech_Common, ReallocateMemoryStack);
-
-#ifdef TEST_BENCHMARKING
-  CALL_GTEST_TEST(CoreTech_Common, Benchmarking);
-#endif
-
+  CALL_GTEST_TEST(CoreTech_Common, LinearSequence);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStackId);
   CALL_GTEST_TEST(CoreTech_Common, ApproximateExp);
   CALL_GTEST_TEST(CoreTech_Common, MatrixMultiply);
@@ -3092,14 +3003,19 @@ void RUN_ALL_COMMON_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   CALL_GTEST_TEST(CoreTech_Common, MemoryStack);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStack_call);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1);
-  //CALL_GTEST_TEST(CoreTech_Common, SimpleMatlabTest1);
-  //CALL_GTEST_TEST(CoreTech_Common, SimpleMatlabTest2);
-  //CALL_GTEST_TEST(CoreTech_Common, SimpleOpenCVTest);
   CALL_GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest);
   CALL_GTEST_TEST(CoreTech_Common, ArraySpecifiedClass);
   CALL_GTEST_TEST(CoreTech_Common, ArrayAlignment1);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStackAlignment);
   CALL_GTEST_TEST(CoreTech_Common, ArrayFillPattern);
+
+#ifdef TEST_BENCHMARKING
+  CALL_GTEST_TEST(CoreTech_Common, Benchmarking);
+#endif
+
+  //CALL_GTEST_TEST(CoreTech_Common, SimpleMatlabTest1);
+  //CALL_GTEST_TEST(CoreTech_Common, SimpleMatlabTest2);
+  //CALL_GTEST_TEST(CoreTech_Common, SimpleOpenCVTest);
 
   printf("\n========================================================================\nUNIT TEST RESULTS:\nNumber Passed:%d\nNumber Failed:%d\n========================================================================\n", numPassedTests, numFailedTests);
 

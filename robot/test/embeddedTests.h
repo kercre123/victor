@@ -39,7 +39,7 @@ extern Anki::Embedded::Matlab matlab;
 //#endif
 
 #define LARGE_BUFFER_SIZE 900000
-#define SMALL_BUFFER_SIZE 190000
+#define SMALL_BUFFER_SIZE 170000 // The max here is somewhere between 175000 and 180000
 
 extern char largeBuffer[LARGE_BUFFER_SIZE];
 extern char smallBuffer[SMALL_BUFFER_SIZE];
