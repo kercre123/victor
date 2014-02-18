@@ -7,7 +7,7 @@ Copyright Anki, Inc. 2013
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
 **/
 
-#include "anki/vision/robot/miscVisionKernels.h"
+#include "anki/vision/robot/fiducialDetection.h"
 #include "anki/vision/robot/imageProcessing.h"
 
 //using namespace std;
@@ -16,8 +16,6 @@ namespace Anki
 {
   namespace Embedded
   {
-    static Result lastResult;
-
     Result ExtractLaplacianPeaks(const FixedLengthList<Point<s16> > &boundary, FixedLengthList<Point<s16> > &peaks, MemoryStack scratch)
     {
       AnkiConditionalErrorAndReturnValue(boundary.IsValid(),
@@ -35,6 +33,8 @@ namespace Anki
       const s32 maximumTemporaryPeaks = boundary.get_size() / 3; // Worst case
       const s32 numSigmaFractionalBits = 8;
       const s32 numStandardDeviations = 3;
+
+      Result lastResult;
 
       const s32 boundaryLength = boundary.get_size();
 

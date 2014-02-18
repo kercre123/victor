@@ -7,14 +7,12 @@ Copyright Anki, Inc. 2013
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
 **/
 
-#include "anki/vision/robot/miscVisionKernels.h"
+#include "anki/vision/robot/fiducialDetection.h"
 
 namespace Anki
 {
   namespace Embedded
   {
-    static Result lastResult;
-
     // This function checks if the input quad is valid
     // If the input is valid, the output quad has the corner-opposite order of the points, and in the non-rotated and corner-opposite format, and adds +1, so it matches the Matlab
     // Assumes that the quad pointer are in either clockwise or counter-clockwise order
@@ -111,6 +109,8 @@ namespace Anki
     Result ComputeQuadrilateralsFromConnectedComponents(const ConnectedComponents &components, const s32 minQuadArea, const s32 quadSymmetryThreshold, const s32 minDistanceFromImageEdge, const s32 imageHeight, const s32 imageWidth, FixedLengthList<Quadrilateral<s16> > &extractedQuads, MemoryStack scratch)
     {
       const s32 MAX_BOUNDARY_LENTH = 10000; // Probably significantly longer than would ever be needed
+
+      Result lastResult;
 
       AnkiConditionalErrorAndReturnValue(components.IsValid(),
         RESULT_FAIL_INVALID_OBJECT, "ComputeQuadrilateralsFromConnectedComponents", "components is not valid");

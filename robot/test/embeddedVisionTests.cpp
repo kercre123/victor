@@ -16,12 +16,13 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/comparisons.h"
 #include "anki/common/robot/arrayPatterns.h"
 
-#include "anki/vision/robot/miscVisionKernels.h"
+#include "anki/vision/robot/fiducialDetection.h"
 #include "anki/vision/robot/integralImage.h"
 #include "anki/vision/robot/draw_vision.h"
 #include "anki/vision/robot/lucasKanade.h"
 #include "anki/vision/robot/docking_vision.h"
 #include "anki/vision/robot/imageProcessing.h"
+#include "anki/vision/robot/transformations.h"
 
 #include "../../coretech/vision/blockImages/blockImage50_320x240.h"
 #include "../../coretech/vision/blockImages/blockImages00189_80x60.h"
@@ -297,7 +298,7 @@ GTEST_TEST(CoreTech_Vision, ComputeDockingErrorSignalAffine)
   ASSERT_TRUE(ms.IsValid());
 
   const Quadrilateral<f32> initialCorners(Point<f32>(5.0f,5.0f), Point<f32>(100.0f,100.0f), Point<f32>(50.0f,20.0f), Point<f32>(10.0f,80.0f));
-  const TemplateTracker::PlanarTransformation_f32 transform(TemplateTracker::TRANSFORM_AFFINE, initialCorners, ms);
+  const Transformations::PlanarTransformation_f32 transform(Transformations::TRANSFORM_AFFINE, initialCorners, ms);
 
   f32 rel_x, rel_y, rel_rad;
   ASSERT_TRUE(Docking::ComputeDockingErrorSignal(transform,
@@ -355,7 +356,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerFast)
 
     const f64 time0 = GetTime();
 
-    TemplateTracker::LucasKanadeTrackerFast tracker(image1, templateRegion, numPyramidLevels, TemplateTracker::TRANSFORM_TRANSLATION, ridgeWeight, scratch1);
+    TemplateTracker::LucasKanadeTrackerFast tracker(image1, templateRegion, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, ridgeWeight, scratch1);
 
     ASSERT_TRUE(tracker.IsValid());
 
@@ -388,7 +389,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerFast)
 
     const f64 time0 = GetTime();
 
-    TemplateTracker::LucasKanadeTrackerFast tracker(image1, templateRegion, numPyramidLevels, TemplateTracker::TRANSFORM_AFFINE, ridgeWeight, scratch1);
+    TemplateTracker::LucasKanadeTrackerFast tracker(image1, templateRegion, numPyramidLevels, Transformations::TRANSFORM_AFFINE, ridgeWeight, scratch1);
 
     ASSERT_TRUE(tracker.IsValid());
 
@@ -462,7 +463,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
 
     const f64 time0 = GetTime();
 
-    TemplateTracker::LucasKanadeTracker_f32 tracker(image1, templateRegion, numPyramidLevels, TemplateTracker::TRANSFORM_TRANSLATION, ridgeWeight, scratch1);
+    TemplateTracker::LucasKanadeTracker_f32 tracker(image1, templateRegion, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, ridgeWeight, scratch1);
 
     ASSERT_TRUE(tracker.IsValid());
 
@@ -496,7 +497,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
 
     const f64 time0 = GetTime();
 
-    TemplateTracker::LucasKanadeTracker_f32 tracker(image1, templateRegion, numPyramidLevels, TemplateTracker::TRANSFORM_AFFINE, ridgeWeight, scratch1);
+    TemplateTracker::LucasKanadeTracker_f32 tracker(image1, templateRegion, numPyramidLevels, Transformations::TRANSFORM_AFFINE, ridgeWeight, scratch1);
 
     ASSERT_TRUE(tracker.IsValid());
 
@@ -530,7 +531,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
 
     const f64 time0 = GetTime();
 
-    TemplateTracker::LucasKanadeTracker_f32 tracker(image1, templateRegion, numPyramidLevels, TemplateTracker::TRANSFORM_PROJECTIVE, ridgeWeight, scratch1);
+    TemplateTracker::LucasKanadeTracker_f32 tracker(image1, templateRegion, numPyramidLevels, Transformations::TRANSFORM_PROJECTIVE, ridgeWeight, scratch1);
 
     ASSERT_TRUE(tracker.IsValid());
 
@@ -956,7 +957,7 @@ GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage_lowMemory)
 
   {
     const f64 time0 = GetTime();
-    const Result result = SimpleDetector_Steps12345_lowMemory(
+    const Result result = DetectFiducialMarkers(
       image,
       markers,
       homographies,

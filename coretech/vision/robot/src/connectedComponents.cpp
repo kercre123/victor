@@ -13,8 +13,6 @@ namespace Anki
 {
   namespace Embedded
   {
-    static Result lastResult;
-
     ConnectedComponentSegment::ConnectedComponentSegment()
       : xStart(-1), xEnd(-1), y(-1), id(0)
     {
@@ -203,7 +201,7 @@ namespace Anki
           pNewPreviousComponents1d[iCurrent] = newComponent;
 
           const Result result = components.PushBack(newComponent);
-//#pragma unused(result)
+          //#pragma unused(result)
 
           AnkiConditionalWarnAndReturnValue(result == RESULT_OK, result, "extract2dComponents", "Extracted maximum number of 2d components");
         } // if(!foundMatch)
@@ -273,6 +271,8 @@ namespace Anki
 
     Result ConnectedComponents::Extract2dComponents_FullImage(const Array<u8> &binaryImage, const s16 minComponentWidth, const s16 maxSkipDistance)
     {
+      Result lastResult;
+
       const s32 imageHeight = binaryImage.get_size(0);
       const s32 imageWidth = binaryImage.get_size(1);
 
@@ -445,6 +445,8 @@ namespace Anki
     // 12n + 12 bytes of scratch.
     Result ConnectedComponents::ComputeComponentCentroids(FixedLengthList<Point<s16> > &componentCentroids, MemoryStack scratch)
     {
+      Result lastResult;
+
       AnkiConditionalErrorAndReturnValue(componentCentroids.IsValid(), RESULT_FAIL_INVALID_OBJECT, "ComputeComponentSizes", "componentCentroids is not valid");
       AnkiConditionalErrorAndReturnValue(components.IsValid(), RESULT_FAIL_INVALID_OBJECT, "ComputeComponentSizes", "components is not valid");
 
@@ -767,6 +769,8 @@ namespace Anki
     Result ConnectedComponents::InvalidateFilledCenterComponents(const s32 percentHorizontal, const s32 percentVertical, MemoryStack scratch)
     {
       const s32 numFractionalBitsForPercents = 8;
+
+      Result lastResult;
 
       FixedLengthList<Rectangle<s16> > componentBoundingBoxes(maximumId+1, scratch);
 

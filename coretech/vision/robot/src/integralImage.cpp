@@ -14,8 +14,6 @@ namespace Anki
 {
   namespace Embedded
   {
-    static Result lastResult;
-
     ScrollingIntegralImage_u8_s32::ScrollingIntegralImage_u8_s32()
       : Array<s32>(), imageWidth(-1), maxRow(-1), rowOffset(-1), numBorderPixels(-1)
     {
@@ -35,6 +33,8 @@ namespace Anki
 
     Result ScrollingIntegralImage_u8_s32::ScrollDown(const Array<u8> &image, s32 numRowsToScroll, MemoryStack scratch)
     {
+      Result lastResult;
+
       const s32 imageHeight = image.get_size(0);
       const s32 imageWidth = image.get_size(1);
 

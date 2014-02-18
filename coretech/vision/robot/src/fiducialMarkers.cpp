@@ -9,7 +9,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/vision/robot/fiducialMarkers.h"
 
-#include "anki/vision/robot/miscVisionKernels.h"
+#include "anki/vision/robot/fiducialDetection.h"
 #include "anki/vision/robot/draw_vision.h"
 
 #include "fiducialMarkerDefinitionType0.h"
@@ -23,8 +23,6 @@ namespace Anki
 {
   namespace Embedded
   {
-    static Result lastResult;
-
     BlockMarker::BlockMarker()
     {
     } // BlockMarker::BlockMarker()
@@ -218,6 +216,8 @@ namespace Anki
     //  4. Lower right
     Result FiducialMarkerParser::ExtractBlockMarker(const Array<u8> &image, const Quadrilateral<s16> &quad, const Array<f64> &homography, const f32 minContrastRatio, BlockMarker &marker, MemoryStack scratch) const
     {
+      Result lastResult;
+
       FixedLengthList<s16> meanValues(MAX_FIDUCIAL_MARKER_BITS, scratch);
 
       const s32 numBits = bits.get_size();

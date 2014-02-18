@@ -1,5 +1,5 @@
 /**
-File: miscVisionKernels.h
+File: fiducialDetection.h
 Author: Peter Barnum
 Created: 2013
 
@@ -19,7 +19,8 @@ namespace Anki
 {
   namespace Embedded
   {
-    Result SimpleDetector_Steps12345_lowMemory(
+    // The primary wrapper function for detecting fiducial markers in an image
+    Result DetectFiducialMarkers(
       const Array<u8> &image,
       FixedLengthList<BlockMarker> &markers,
       FixedLengthList<Array<f64> > &homographies,
@@ -35,15 +36,23 @@ namespace Anki
       MemoryStack scratch1,
       MemoryStack scratch2);
 
-    Result ComputeCharacteristicScaleImageAndBinarizeAndExtractComponents(
+    // Used by DetectFiducialMarkers
+    //
+    // Compute characteristic scale, binary image, and extract connected components
+    Result ExtractComponentsViaCharacteristicScale(
       const Array<u8> &image,
       const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier,
       const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
       ConnectedComponents &components,
       MemoryStack scratch);
 
+    // Used by DetectFiducialMarkers
+    //
+    // Extracts quadrilaterals from a list of connected component segments
     Result ComputeQuadrilateralsFromConnectedComponents(const ConnectedComponents &components, const s32 minQuadArea, const s32 quadSymmetryThreshold, const s32 minDistanceFromImageEdge, const s32 imageHeight, const s32 imageWidth, FixedLengthList<Quadrilateral<s16> > &extractedQuads, MemoryStack scratch);
 
+    // Used by DetectFiducialMarkers
+    //
     // Starting a components.Pointer(startComponentIndex), trace the exterior boundary for the
     // component starting at startComponentIndex. extractedBoundary must be at at least
     // "3*componentWidth + 3*componentHeight" (If you don't know the size of the component, you can
@@ -62,9 +71,6 @@ namespace Anki
     //
     // Requires ??? bytes of scratch
     Result ExtractLaplacianPeaks(const FixedLengthList<Point<s16> > &boundary, FixedLengthList<Point<s16> > &peaks, MemoryStack scratch);
-
-    // Compute the homography from the input quad. The input quad point should be ordered in the non-rotated, corner-opposite format
-    Result ComputeHomographyFromQuad(const Quadrilateral<s16> &quad, Array<f64> &homography, MemoryStack scratch);
   } // namespace Embedded
 } // namespace Anki
 

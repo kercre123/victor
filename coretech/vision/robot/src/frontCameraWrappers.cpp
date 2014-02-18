@@ -11,10 +11,10 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/benchmarking_c.h"
 
 #include "anki/vision/robot/fiducialMarkers.h"
-#include "anki/vision/robot/miscVisionKernels.h"
+#include "anki/vision/robot/fiducialDetection.h"
 #include "anki/vision/robot/draw_vision.h"
+#include "anki/vision/robot/transformations.h"
 
-#include "anki/vision/robot/draw_vision.h"
 #include "anki/common/robot/matlabInterface.h"
 
 //#define SEND_DRAWN_COMPONENTS
@@ -25,9 +25,7 @@ namespace Anki
 {
   namespace Embedded
   {
-    static Result lastResult;
-
-    Result SimpleDetector_Steps12345_lowMemory(
+    Result DetectFiducialMarkers(
       const Array<u8> &image,
       FixedLengthList<BlockMarker> &markers,
       FixedLengthList<Array<f64> > &homographies,
@@ -43,12 +41,14 @@ namespace Anki
       MemoryStack scratch1,
       MemoryStack scratch2)
     {
-      BeginBenchmark("SimpleDetector_Steps12345_lowMemory");
+      Result lastResult;
+
+      BeginBenchmark("DetectFiducialMarkers");
 
       const s32 imageHeight = image.get_size(0);
       const s32 imageWidth = image.get_size(1);
 
-      BeginBenchmark("ComputeCharacteristicScaleImageAndBinarizeAndExtractComponents");
+      BeginBenchmark("ExtractComponentsViaCharacteristicScale");
       ConnectedComponents extractedComponents = ConnectedComponents(maxConnectedComponentSegments, imageWidth, scratch2);
       {
         PUSH_MEMORY_STACK(scratch1); // Push the current state of the scratch buffer onto the system stack
@@ -56,7 +56,7 @@ namespace Anki
         // 1. Compute the Scale image (use local scratch1)
         // 2. Binarize the Scale image (store in outer scratch2)
         // 3. Compute connected components from the binary image (use local scratch2, store in outer scratch1)
-        if((lastResult = ComputeCharacteristicScaleImageAndBinarizeAndExtractComponents(
+        if((lastResult = ExtractComponentsViaCharacteristicScale(
           image,
           scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier,
           component1d_minComponentWidth, component1d_maxSkipDistance,
@@ -74,7 +74,7 @@ namespace Anki
           return lastResult;
         }
       }
-      EndBenchmark("ComputeCharacteristicScaleImageAndBinarizeAndExtractComponents");
+      EndBenchmark("ExtractComponentsViaCharacteristicScale");
 
       // 3b. Remove poor components
       {
@@ -131,7 +131,7 @@ namespace Anki
       for(s32 iQuad=0; iQuad<extractedQuads.get_size(); iQuad++) {
         Array<f64> &currentHomography = homographies[iQuad];
 
-        if((lastResult = ComputeHomographyFromQuad(extractedQuads[iQuad], currentHomography, scratch1)) != RESULT_OK)
+        if((lastResult = Transformations::ComputeHomographyFromQuad(extractedQuads[iQuad], currentHomography, scratch1)) != RESULT_OK)
           return lastResult;
 
         //currentHomography.Print("currentHomography");
@@ -166,9 +166,9 @@ namespace Anki
       }
       EndBenchmark("ExtractBlockMarker");
 
-      EndBenchmark("SimpleDetector_Steps12345_lowMemory");
+      EndBenchmark("DetectFiducialMarkers");
 
       return RESULT_OK;
-    } //  SimpleDetector_Steps12345_lowMemory()
+    } //  DetectFiducialMarkers()
   } // namespace Embedded
 } // namespace Anki

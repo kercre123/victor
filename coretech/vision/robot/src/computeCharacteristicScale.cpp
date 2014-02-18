@@ -11,7 +11,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/benchmarking_c.h"
 #include "anki/common/robot/interpolate.h"
 
-#include "anki/vision/robot/miscVisionKernels.h"
+#include "anki/vision/robot/fiducialDetection.h"
 #include "anki/vision/robot/integralImage.h"
 #include "anki/vision/robot/imageProcessing.h"
 
@@ -24,15 +24,13 @@ namespace Anki
 #define MAX_PYRAMID_LEVELS 8
 #define MAX_ALPHAS 128
 
-    Result ComputeCharacteristicScaleImageAndBinarizeAndExtractComponents(
+    Result ExtractComponentsViaCharacteristicScale(
       const Array<u8> &image,
       const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier,
       const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
       ConnectedComponents &components,
       MemoryStack scratch)
     {
-      Result lastResult;
-
       BeginBenchmark("ccsiabaec_init");
       const s32 thresholdMultiplier_numFractionalBits = 16;
 
@@ -51,6 +49,8 @@ namespace Anki
 
       const s32 imageHeight = image.get_size(0);
       const s32 imageWidth = image.get_size(1);
+
+      Result lastResult;
 
       AnkiConditionalErrorAndReturnValue(image.IsValid(),
         RESULT_FAIL_INVALID_OBJECT, "ComputeCharacteristicScaleImageAndBinarize", "image is not valid");
@@ -162,6 +162,6 @@ namespace Anki
       EndBenchmark("ccsiabaec_finalize");
 
       return RESULT_OK;
-    } // ComputeCharacteristicScaleImageAndBinarizeAndExtractComponents
+    } // ExtractComponentsViaCharacteristicScale
   } // namespace Embedded
 } // namespace Anki
