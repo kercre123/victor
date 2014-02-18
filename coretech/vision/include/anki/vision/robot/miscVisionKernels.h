@@ -39,47 +39,6 @@ namespace Anki
       CHARACTERISTIC_SCALE_LOW_MEMORY = 2
     } CharacteristicScaleAlgorithm;
 
-    // Replaces the matlab code for the first three steps of SimpleDetector
-    Result SimpleDetector_Steps123(
-      const Array<u8> &image,
-      const CharacteristicScaleAlgorithm scaleAlgorithm,
-      const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier,
-      const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
-      const s32 component_minimumNumPixels, const s32 component_maximumNumPixels,
-      const s32 component_sparseMultiplyThreshold, const s32 component_solidMultiplyThreshold,
-      ConnectedComponents &extractedComponents,
-      MemoryStack scratch1,
-      MemoryStack scratch2);
-
-    Result SimpleDetector_Steps1234(
-      const Array<u8> &image,
-      FixedLengthList<BlockMarker> &markers,
-      FixedLengthList<Array<f64> > &homographies,
-      const CharacteristicScaleAlgorithm scaleAlgorithm,
-      const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier,
-      const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
-      const s32 component_minimumNumPixels, const s32 component_maximumNumPixels,
-      const s32 component_sparseMultiplyThreshold, const s32 component_solidMultiplyThreshold,
-      const s32 component_percentHorizontal, const s32 component_percentVertical,
-      const s32 quads_minQuadArea, const s32 quads_quadSymmetryThreshold, const s32 quads_minDistanceFromImageEdge,
-      MemoryStack scratch1,
-      MemoryStack scratch2);
-
-    Result SimpleDetector_Steps12345(
-      const Array<u8> &image,
-      FixedLengthList<BlockMarker> &markers,
-      FixedLengthList<Array<f64> > &homographies,
-      const CharacteristicScaleAlgorithm scaleAlgorithm,
-      const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier,
-      const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
-      const s32 component_minimumNumPixels, const s32 component_maximumNumPixels,
-      const s32 component_sparseMultiplyThreshold, const s32 component_solidMultiplyThreshold,
-      const s32 component_percentHorizontal, const s32 component_percentVertical,
-      const s32 quads_minQuadArea, const s32 quads_quadSymmetryThreshold, const s32 quads_minDistanceFromImageEdge,
-      const f32 decode_minContrastRatio,
-      MemoryStack scratch1,
-      MemoryStack scratch2);
-
     Result SimpleDetector_Steps12345_lowMemory(
       const Array<u8> &image,
       FixedLengthList<BlockMarker> &markers,
