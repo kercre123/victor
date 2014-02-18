@@ -35,17 +35,20 @@ using namespace Anki::Embedded;
 
 GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerBinary)
 {
-  MemoryStack scratch_CMX(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(scratch_CMX.IsValid());
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(scratchOnchip.IsValid());
 
-  Array<u8> templateImage(cozmo_2014_01_29_11_41_05_10_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_10_320x240_WIDTH, scratch_CMX);
-  Array<u8> nextImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratch_CMX);
-  Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratch_CMX);
+  MemoryStack scratchCcm(&onchipBuffer[0], CCM_BUFFER_SIZE);
+  ASSERT_TRUE(scratchCcm.IsValid());
+
+  Array<u8> templateImage(cozmo_2014_01_29_11_41_05_10_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_10_320x240_WIDTH, scratchOnchip);
+  Array<u8> nextImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOnchip);
 
   const Quadrilateral<f32> templateQuad(Point<f32>(128,78), Point<f32>(220,74), Point<f32>(229,167), Point<f32>(127,171));
   const u8 edgeDetection_grayvalueThreshold = 100;
   const s32 edgeDetection_minComponentWidth = 2;
-  const s32 edgeDetection_maxDetectionsPerType = 3000;
+  const s32 templateEdgeDetection_maxDetectionsPerType = 500;
+  const s32 updateEdgeDetection_maxDetectionsPerType = 2500;
 
   const s32 matching_maxDistance = 7;
   const s32 matching_maxCorrespondences = 10000;
@@ -56,33 +59,34 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerBinary)
   InitBenchmarking();
 
   BeginBenchmark("LucasKanadeTrackerBinary init");
-  TemplateTracker::LucasKanadeTrackerBinary lktb(templateImage, templateQuad, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, edgeDetection_maxDetectionsPerType, scratch_CMX);
+  TemplateTracker::LucasKanadeTrackerBinary lktb(templateImage, templateQuad, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, templateEdgeDetection_maxDetectionsPerType, scratchOnchip);
   EndBenchmark("LucasKanadeTrackerBinary init");
 
-  {
-    PUSH_MEMORY_STACK(scratch_CMX);
+  BeginBenchmark("LucasKanadeTrackerBinary update");
+  const Result result = lktb.UpdateTrack(nextImage,
+    edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType,
+    matching_maxDistance, matching_maxCorrespondences, scratchCcm);
+  EndBenchmark("LucasKanadeTrackerBinary update");
 
-    BeginBenchmark("LucasKanadeTrackerBinary update");
-    const Result result = lktb.UpdateTrack(nextImage,
-      edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, edgeDetection_maxDetectionsPerType,
-      matching_maxDistance, matching_maxCorrespondences, scratch_CMX);
-    EndBenchmark("LucasKanadeTrackerBinary update");
+  ASSERT_TRUE(result == RESULT_OK);
 
-    ASSERT_TRUE(result == RESULT_OK);
+  MemoryStack scratchOffchip(&onchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(scratchOffchip.IsValid());
 
-    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch_CMX);
-    transform_groundTruth[0][0] = 1.0693f;  transform_groundTruth[0][1] = 0.0008f; transform_groundTruth[0][2] = 2.2256f;
-    transform_groundTruth[1][0] = 0.0010f;  transform_groundTruth[1][1] = 1.0604f; transform_groundTruth[1][2] = -4.1188f;
-    transform_groundTruth[2][0] = -0.0001f; transform_groundTruth[2][1] = 0.0f;    transform_groundTruth[2][2] = 1.0f;
+  //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
 
-    //lktb.get_transformation().get_homography().Print("h");
+  Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
+  transform_groundTruth[0][0] = 1.0693f;  transform_groundTruth[0][1] = 0.0008f; transform_groundTruth[0][2] = 2.2256f;
+  transform_groundTruth[1][0] = 0.0010f;  transform_groundTruth[1][1] = 1.0604f; transform_groundTruth[1][2] = -4.1188f;
+  transform_groundTruth[2][0] = -0.0001f; transform_groundTruth[2][1] = 0.0f;    transform_groundTruth[2][2] = 1.0f;
 
-    ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(lktb.get_transformation().get_homography(), transform_groundTruth, .01, .01));
-  }
+  //lktb.get_transformation().get_homography().Print("h");
+
+  ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(lktb.get_transformation().get_homography(), transform_groundTruth, .01, .01));
 
   PrintBenchmarkResults_OnlyTotals();
 
-  //lktb.get_transformation().TransformArray(templateImage, warpedTemplateImage, scratch_CMX, 1.0f);
+  //lktb.get_transformation().TransformArray(templateImage, warpedTemplateImage, scratchOffchip, 1.0f);
 
   //templateImage.Show("templateImage", false, false, true);
   //nextImage.Show("nextImage", false, false, true);
@@ -99,17 +103,17 @@ GTEST_TEST(CoreTech_Vision, DetectBlurredEdge)
   const s32 minComponentWidth = 3;
   const s32 maxExtrema = 500;
 
-  MemoryStack scratch_CMX(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(scratch_CMX.IsValid());
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(scratchOffchip.IsValid());
 
-  Array<u8> image(48, 64, scratch_CMX);
+  Array<u8> image(48, 64, scratchOffchip);
 
   EdgeLists edges;
 
-  edges.xDecreasing = FixedLengthList<Point<s16> >(maxExtrema, scratch_CMX);
-  edges.xIncreasing = FixedLengthList<Point<s16> >(maxExtrema, scratch_CMX);
-  edges.yDecreasing = FixedLengthList<Point<s16> >(maxExtrema, scratch_CMX);
-  edges.yIncreasing = FixedLengthList<Point<s16> >(maxExtrema, scratch_CMX);
+  edges.xDecreasing = FixedLengthList<Point<s16> >(maxExtrema, scratchOffchip);
+  edges.xIncreasing = FixedLengthList<Point<s16> >(maxExtrema, scratchOffchip);
+  edges.yDecreasing = FixedLengthList<Point<s16> >(maxExtrema, scratchOffchip);
+  edges.yIncreasing = FixedLengthList<Point<s16> >(maxExtrema, scratchOffchip);
 
   for(s32 y=0; y<24; y++) {
     for(s32 x=0; x<32; x++) {
@@ -222,19 +226,19 @@ GTEST_TEST(CoreTech_Vision, DetectBlurredEdge)
 
 GTEST_TEST(CoreTech_Vision, DownsampleByPowerOfTwo)
 {
-  MemoryStack scratch_CMX(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  ASSERT_TRUE(scratch_CMX.IsValid());
+  ASSERT_TRUE(scratchOffchip.IsValid());
 
   ASSERT_TRUE(blockImage50_320x240_WIDTH % MEMORY_ALIGNMENT == 0);
   ASSERT_TRUE(reinterpret_cast<size_t>(&blockImage50_320x240[0]) % MEMORY_ALIGNMENT == 0);
 
   Array<u8> in(blockImage50_320x240_HEIGHT, blockImage50_320x240_WIDTH, const_cast<u8*>(&blockImage50_320x240[0]), blockImage50_320x240_WIDTH*blockImage50_320x240_HEIGHT, Flags::Buffer(false,false,false));
 
-  Array<u8> out(60, 80, scratch_CMX);
+  Array<u8> out(60, 80, scratchOffchip);
   //in.Print("in");
 
-  const Result result = ImageProcessing::DownsampleByPowerOfTwo<u8,u32,u8>(in, 2, out, scratch_CMX);
+  const Result result = ImageProcessing::DownsampleByPowerOfTwo<u8,u32,u8>(in, 2, out, scratchOffchip);
   ASSERT_TRUE(result == RESULT_OK);
 
   printf("%d %d %d %d", out[0][0], out[0][17], out[40][80-1], out[59][80-3]);

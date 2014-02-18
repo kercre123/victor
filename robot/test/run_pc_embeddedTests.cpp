@@ -37,13 +37,13 @@ int main()
 
 #else // #if ANKICORETECH_EMBEDDED_USE_GTEST
 
-  s32 numPassedTests_common;
-  s32 numFailedTests_common;
-  RUN_ALL_COMMON_TESTS(numPassedTests_common, numFailedTests_common);
-
   s32 numPassedTests_vision;
   s32 numFailedTests_vision;
   RUN_ALL_VISION_TESTS(numPassedTests_vision, numFailedTests_vision);
+
+  s32 numPassedTests_common;
+  s32 numFailedTests_common;
+  RUN_ALL_COMMON_TESTS(numPassedTests_common, numFailedTests_common);
 
   const s32 numPassedTests = numPassedTests_common + numPassedTests_vision;
   const s32 numFailedTests = numFailedTests_common + numFailedTests_vision;

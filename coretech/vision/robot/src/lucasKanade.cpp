@@ -1840,25 +1840,26 @@ namespace Anki
         Point<f32> centerOffset((templateImage.get_size(1)-1) / 2.0f, (templateImage.get_size(0)-1) / 2.0f);
         this->transformation = PlanarTransformation_f32(TRANSFORM_PROJECTIVE, templateQuad, centerOffset, memory);
 
-        this->templateImage = Array<u8>(templateImageHeight, templateImageWidth, memory);
+        //this->templateImage = Array<u8>(templateImageHeight, templateImageWidth, memory);
         this->templateQuad = templateQuad;
+
+        this->templateImageHeight = templateImage.get_size(0);
+        this->templateImageWidth = templateImage.get_size(1);
 
         this->templateEdges.xDecreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, memory);
         this->templateEdges.xIncreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, memory);
         this->templateEdges.yDecreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, memory);
         this->templateEdges.yIncreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, memory);
 
-        AnkiConditionalErrorAndReturn(this->templateImage.IsValid() &&
+        AnkiConditionalErrorAndReturn(
           this->templateEdges.xDecreasing.IsValid() && this->templateEdges.xIncreasing.IsValid() &&
           this->templateEdges.yDecreasing.IsValid() && this->templateEdges.yIncreasing.IsValid(),
           "LucasKanadeTrackerBinary::LucasKanadeTrackerBinary", "Could not allocate local memory");
 
-        this->templateImage.Set(templateImage);
-
         const Rectangle<f32> templateRectRaw = templateQuad.ComputeBoundingRectangle();
         const Rectangle<s32> templateRect(static_cast<s32>(templateRectRaw.left), static_cast<s32>(templateRectRaw.right), static_cast<s32>(templateRectRaw.top), static_cast<s32>(templateRectRaw.bottom));
 
-        const Result result = DetectBlurredEdges(this->templateImage, templateRect, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, this->templateEdges);
+        const Result result = DetectBlurredEdges(templateImage, templateRect, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, this->templateEdges);
 
         AnkiConditionalErrorAndReturn(result == RESULT_OK,
           "LucasKanadeTrackerBinary::LucasKanadeTrackerBinary", "DetectBlurredEdge failed");
@@ -1913,7 +1914,7 @@ namespace Anki
         const char * windowName = "LucasKanadeTrackerBinary Template";
 
         cv::Mat toShow = LucasKanadeTrackerBinary::DrawIndexes(
-          templateImage.get_size(0), templateImage.get_size(1),
+          templateImageHeight, templateImageWidth,
           templateEdges.xDecreasing, templateEdges.xIncreasing, templateEdges.yDecreasing, templateEdges.yIncreasing);
 
         if(fitImageToWindow) {
@@ -2002,9 +2003,6 @@ namespace Anki
       bool LucasKanadeTrackerBinary::IsValid() const
       {
         if(!this->isValid)
-          return false;
-
-        if(!templateImage.IsValid())
           return false;
 
         if(!templateEdges.xDecreasing.IsValid())

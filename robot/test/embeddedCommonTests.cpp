@@ -3017,7 +3017,7 @@ void RUN_ALL_COMMON_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   //CALL_GTEST_TEST(CoreTech_Common, SimpleMatlabTest2);
   //CALL_GTEST_TEST(CoreTech_Common, SimpleOpenCVTest);
 
-  printf("\n========================================================================\nUNIT TEST RESULTS:\nNumber Passed:%d\nNumber Failed:%d\n========================================================================\n", numPassedTests, numFailedTests);
+//  printf("\n========================================================================\nUNIT TEST RESULTS:\nNumber Passed:%d\nNumber Failed:%d\n========================================================================\n", numPassedTests, numFailedTests);
 
   return;
 } // int RUN_ALL_COMMON_TESTS()

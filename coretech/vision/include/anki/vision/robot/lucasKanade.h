@@ -276,7 +276,9 @@ namespace Anki
           Array<s32> yIncreasing_xStartIndexes;
         } AllIndexLimits;
 
-        Array<u8> templateImage;
+        //Array<u8> templateImage;
+        s32 templateImageHeight;
+        s32 templateImageWidth;
         Quadrilateral<f32> templateQuad;
 
         // The indexes of the detected edges
