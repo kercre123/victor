@@ -35,7 +35,7 @@ using namespace Anki::Embedded;
 
 GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerBinary)
 {
-  MemoryStack scratch_CMX(&largeBuffer[0], LARGE_BUFFER_SIZE);
+  MemoryStack scratch_CMX(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(scratch_CMX.IsValid());
 
   Array<u8> templateImage(cozmo_2014_01_29_11_41_05_10_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_10_320x240_WIDTH, scratch_CMX);
@@ -99,7 +99,7 @@ GTEST_TEST(CoreTech_Vision, DetectBlurredEdge)
   const s32 minComponentWidth = 3;
   const s32 maxExtrema = 500;
 
-  MemoryStack scratch_CMX(&largeBuffer[0], LARGE_BUFFER_SIZE);
+  MemoryStack scratch_CMX(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(scratch_CMX.IsValid());
 
   Array<u8> image(48, 64, scratch_CMX);
@@ -222,7 +222,7 @@ GTEST_TEST(CoreTech_Vision, DetectBlurredEdge)
 
 GTEST_TEST(CoreTech_Vision, DownsampleByPowerOfTwo)
 {
-  MemoryStack scratch_CMX(&largeBuffer[0], LARGE_BUFFER_SIZE);
+  MemoryStack scratch_CMX(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
   ASSERT_TRUE(scratch_CMX.IsValid());
 
@@ -289,7 +289,7 @@ GTEST_TEST(CoreTech_Vision, ComputeDockingErrorSignalAffine)
   const f32 blockMarkerWidthInMM = 50.0f;
   const f32 horizontalFocalLengthInMM = 5.0f;
 
-  MemoryStack ms(&largeBuffer[0], LARGE_BUFFER_SIZE);
+  MemoryStack ms(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   const Quadrilateral<f32> initialCorners(Point<f32>(5.0f,5.0f), Point<f32>(100.0f,100.0f), Point<f32>(50.0f,20.0f), Point<f32>(10.0f,80.0f));
@@ -325,7 +325,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerFast)
 
   // TODO: add check that images were loaded correctly
 
-  MemoryStack scratch1(&largeBuffer[0], 600000);
+  MemoryStack scratch1(&offchipBuffer[0], 600000);
 
   ASSERT_TRUE(scratch1.IsValid());
 
@@ -431,7 +431,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
   // TODO: add check that images were loaded correctly
 
   //MemoryStack scratch0(&ddrBuffer[0], 80*60*2 + 256);
-  MemoryStack scratch1(&largeBuffer[0], 600000);
+  MemoryStack scratch1(&offchipBuffer[0], 600000);
 
   //ASSERT_TRUE(scratch0.IsValid());
   ASSERT_TRUE(scratch1.IsValid());
@@ -558,7 +558,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
 
 GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering)
 {
-  MemoryStack ms(&largeBuffer[0], LARGE_BUFFER_SIZE);
+  MemoryStack ms(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   Array<u8> image(3,16,ms);
@@ -699,7 +699,7 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering)
 
 GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageGeneration)
 {
-  MemoryStack ms(&largeBuffer[0], LARGE_BUFFER_SIZE);
+  MemoryStack ms(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   Array<u8> image(3,16,ms);
@@ -921,9 +921,9 @@ GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage_lowMemory)
   const s32 maxMarkers = 100;
   const s32 maxConnectedComponentSegments = 25000/2;
 
-  //MemoryStack scratch0(&ddrBuffer[0], LARGE_BUFFER_SIZE);
-  MemoryStack scratch1(&largeBuffer[0], LARGE_BUFFER_SIZE/2);
-  MemoryStack scratch2(&largeBuffer[0] + LARGE_BUFFER_SIZE/2, LARGE_BUFFER_SIZE/2);
+  //MemoryStack scratch0(&ddrBuffer[0], OFFCHIP_BUFFER_SIZE);
+  MemoryStack scratch1(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE/2);
+  MemoryStack scratch2(&offchipBuffer[0] + OFFCHIP_BUFFER_SIZE/2, OFFCHIP_BUFFER_SIZE/2);
 
   //ASSERT_TRUE(scratch0.IsValid());
   ASSERT_TRUE(scratch1.IsValid());
@@ -1001,7 +1001,7 @@ GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents)
   const s32 imageWidth = 640;
   const s32 minDistanceFromImageEdge = 2;
 
-  MemoryStack ms(&largeBuffer[0], LARGE_BUFFER_SIZE);
+  MemoryStack ms(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   FixedLengthList<BlockMarker> markers(50, ms);
@@ -1052,8 +1052,8 @@ GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents)
 
 GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput)
 {
-  const s32 numBytes = MIN(LARGE_BUFFER_SIZE, 5000);
-  MemoryStack ms(&largeBuffer[0], numBytes);
+  const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 5000);
+  MemoryStack ms(&offchipBuffer[0], numBytes);
   ASSERT_TRUE(ms.IsValid());
 
   FixedPointArray<s32> image(1,15,2,ms);
@@ -1083,9 +1083,9 @@ GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput)
 GTEST_TEST(CoreTech_Vision, LaplacianPeaks)
 {
 #define LaplacianPeaks_BOUNDARY_LENGTH 65
-  const s32 numBytes = MIN(LARGE_BUFFER_SIZE, 5000);
+  const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 5000);
 
-  MemoryStack ms(&largeBuffer[0], numBytes);
+  MemoryStack ms(&offchipBuffer[0], numBytes);
   ASSERT_TRUE(ms.IsValid());
 
   FixedLengthList<Point<s16> > boundary(LaplacianPeaks_BOUNDARY_LENGTH, ms);
@@ -1125,8 +1125,8 @@ GTEST_TEST(CoreTech_Vision, LaplacianPeaks)
 
 GTEST_TEST(CoreTech_Vision, Correlate1d)
 {
-  const s32 numBytes = MIN(LARGE_BUFFER_SIZE, 5000);
-  MemoryStack ms(&largeBuffer[0], numBytes);
+  const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 5000);
+  MemoryStack ms(&offchipBuffer[0], numBytes);
   ASSERT_TRUE(ms.IsValid());
 
   {
@@ -1246,7 +1246,7 @@ GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary)
   const s32 boundaryLength = 65;
   const s32 startComponentIndex = 0;
 
-  MemoryStack ms(&largeBuffer[0], LARGE_BUFFER_SIZE);
+  MemoryStack ms(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   ConnectedComponents components(numComponents, 640, ms);
@@ -1267,7 +1267,7 @@ GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary)
   //#define DRAW_TraceNextExteriorBoundary
 #ifdef DRAW_TraceNextExteriorBoundary
   {
-    MemoryStack scratch0(&ddrBuffer[0], LARGE_BUFFER_SIZE);
+    MemoryStack scratch0(&ddrBuffer[0], OFFCHIP_BUFFER_SIZE);
     ASSERT_TRUE(scratch0.IsValid());
 
     Array<u8> drawnComponents(480, 640, scratch0);
@@ -1299,7 +1299,7 @@ GTEST_TEST(CoreTech_Vision, ComputeComponentBoundingBoxes)
 {
   const s32 numComponents = 10;
 
-  MemoryStack ms(&largeBuffer[0], LARGE_BUFFER_SIZE);
+  MemoryStack ms(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   ConnectedComponents components(numComponents, 640, ms);
@@ -1345,7 +1345,7 @@ GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids)
 {
   const s32 numComponents = 10;
 
-  MemoryStack ms(&largeBuffer[0], LARGE_BUFFER_SIZE);
+  MemoryStack ms(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   ConnectedComponents components(numComponents, 640, ms);
@@ -1393,7 +1393,7 @@ GTEST_TEST(CoreTech_Vision, InvalidateSolidOrSparseComponents)
   const s32 sparseMultiplyThreshold = 10 << 5;
   const s32 solidMultiplyThreshold = 2 << 5;
 
-  MemoryStack ms(&largeBuffer[0], LARGE_BUFFER_SIZE);
+  MemoryStack ms(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   ConnectedComponents components(numComponents, 640, ms);
@@ -1445,7 +1445,7 @@ GTEST_TEST(CoreTech_Vision, InvalidateSmallOrLargeComponents)
   const s32 minimumNumPixels = 6;
   const s32 maximumNumPixels = 1000;
 
-  MemoryStack ms(&largeBuffer[0], LARGE_BUFFER_SIZE);
+  MemoryStack ms(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   ConnectedComponents components(numComponents, 640, ms);
@@ -1514,7 +1514,7 @@ GTEST_TEST(CoreTech_Vision, CompressComponentIds)
 {
   const s32 numComponents = 10;
 
-  MemoryStack ms(&largeBuffer[0], LARGE_BUFFER_SIZE);
+  MemoryStack ms(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   ConnectedComponents components(numComponents, 640, ms);
@@ -1567,9 +1567,9 @@ GTEST_TEST(CoreTech_Vision, CompressComponentIds)
 GTEST_TEST(CoreTech_Vision, ComponentsSize)
 {
   const s32 numComponents = 500;
-  const s32 numBytes = MIN(LARGE_BUFFER_SIZE, 10000);
+  const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 10000);
 
-  MemoryStack ms(&largeBuffer[0], numBytes);
+  MemoryStack ms(&offchipBuffer[0], numBytes);
   ASSERT_TRUE(ms.IsValid());
 
   const s32 usedBytes0 = ms.get_usedBytes();
@@ -1604,7 +1604,7 @@ GTEST_TEST(CoreTech_Vision, SortComponents)
 {
   const s32 numComponents = 10;
 
-  MemoryStack ms(&largeBuffer[0], LARGE_BUFFER_SIZE);
+  MemoryStack ms(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   ConnectedComponents components(numComponents, 640, ms);
@@ -1652,7 +1652,7 @@ GTEST_TEST(CoreTech_Vision, SortComponentsById)
 {
   const s32 numComponents = 10;
 
-  MemoryStack ms(&largeBuffer[0], LARGE_BUFFER_SIZE);
+  MemoryStack ms(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   ConnectedComponents components(numComponents, 640, ms);
@@ -1707,7 +1707,7 @@ GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
   const s32 maxComponentSegments = 100;
 
   // Allocate memory from the heap, for the memory allocator
-  MemoryStack ms(&largeBuffer[0], LARGE_BUFFER_SIZE);
+  MemoryStack ms(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
 #define ApproximateConnectedComponents2d_binaryImageDataLength (18*5)
@@ -1776,14 +1776,14 @@ GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
 GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d)
 {
   const s32 imageWidth = 50;
-  const s32 numBytes = MIN(LARGE_BUFFER_SIZE, 5000);
+  const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 5000);
 
   const s32 minComponentWidth = 3;
   const s32 maxComponents = 10;
   const s32 maxSkipDistance = 1;
 
   // Allocate memory from the heap, for the memory allocator
-  MemoryStack ms(&largeBuffer[0], numBytes);
+  MemoryStack ms(&offchipBuffer[0], numBytes);
   ASSERT_TRUE(ms.IsValid());
 
   u8 * binaryImageRow = reinterpret_cast<u8*>(ms.Allocate(imageWidth));
@@ -1816,10 +1816,10 @@ GTEST_TEST(CoreTech_Vision, BinomialFilter)
 {
   const s32 imageWidth = 10;
   const s32 imageHeight = 5;
-  const s32 numBytes = MIN(LARGE_BUFFER_SIZE, 5000);
+  const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 5000);
 
   // Allocate memory from the heap, for the memory allocator
-  MemoryStack ms(&largeBuffer[0], numBytes);
+  MemoryStack ms(&offchipBuffer[0], numBytes);
 
   ASSERT_TRUE(ms.IsValid());
 
@@ -1863,9 +1863,9 @@ GTEST_TEST(CoreTech_Vision, DownsampleByFactor)
   const s32 imageHeight = 4;
 
   // Allocate memory from the heap, for the memory allocator
-  const s32 numBytes = MIN(LARGE_BUFFER_SIZE, 1000);
+  const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 1000);
 
-  MemoryStack ms(&largeBuffer[0], numBytes);
+  MemoryStack ms(&offchipBuffer[0], numBytes);
 
   ASSERT_TRUE(ms.IsValid());
 
@@ -1939,9 +1939,9 @@ GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale)
     {15073280, 13107200, 11796480, 11468800, 11468800, 11468800, 11468800, 11796480, 12517376, 12255232, 10813440, 10158080, 10551296, 10158080, 7929856, 5046272}};
 
   // Allocate memory from the heap, for the memory allocator
-  const s32 numBytes = MIN(LARGE_BUFFER_SIZE, 10000);
+  const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 10000);
 
-  MemoryStack ms(&largeBuffer[0], numBytes);
+  MemoryStack ms(&offchipBuffer[0], numBytes);
 
   ASSERT_TRUE(ms.IsValid());
 
@@ -2005,9 +2005,9 @@ GTEST_TEST(CoreTech_Vision, TraceInteriorBoundary)
   groundTruth[8] = Point<s16>(9,6);
 
   // Allocate memory from the heap, for the memory allocator
-  const s32 numBytes = MIN(LARGE_BUFFER_SIZE, 10000);
+  const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 10000);
 
-  MemoryStack ms(&largeBuffer[0], numBytes);
+  MemoryStack ms(&offchipBuffer[0], numBytes);
 
   ASSERT_TRUE(ms.IsValid());
 

@@ -38,10 +38,12 @@ extern Anki::Embedded::Matlab matlab;
 //#include "anki/cozmo/basestation/messages.h"
 //#endif
 
-#define LARGE_BUFFER_SIZE 900000
-#define SMALL_BUFFER_SIZE 170000 // The max here is somewhere between 175000 and 180000
+#define OFFCHIP_BUFFER_SIZE 900000
+#define ONCHIP_BUFFER_SIZE 170000 // The max here is somewhere between 175000 and 180000 bytes
+#define CCM_BUFFER_SIZE 50000 // The max here is probably 65536 (0x10000) bytes
 
-extern char largeBuffer[LARGE_BUFFER_SIZE];
-extern char smallBuffer[SMALL_BUFFER_SIZE];
+extern char offchipBuffer[OFFCHIP_BUFFER_SIZE];
+extern char onchipBuffer[ONCHIP_BUFFER_SIZE];
+extern char ccmBuffer[CCM_BUFFER_SIZE];
 
 #endif // _ANKICORETECHEMBEDDED_TESTS_H_
