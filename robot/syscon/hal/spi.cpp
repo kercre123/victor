@@ -41,18 +41,21 @@ void SPIInit()
 
 s32 SPITransmitReceive(u16 length, const u8* dataTX, u8* dataRX)
 {
+  using namespace Anki::Cozmo::HAL;
+  
   u16 i;
-  u32 counter = 0;
-  const u32 TIMEOUT = 0x01000000;
+  const u32 TIMEOUT = 4000;  // 4ms
+  
+  u32 now = GetMicroCounter();
   
   for (i = 0; i < length; i++)
   {
     NRF_SPI0->TXD = (u32)dataTX[i];
     
-    while (!NRF_SPI0->EVENTS_READY && (counter < TIMEOUT))
-      counter++;
+    while (!NRF_SPI0->EVENTS_READY && ((GetMicroCounter() - now) < TIMEOUT))
+      ;
     
-    if (counter >= TIMEOUT)
+    if ((GetMicroCounter() - now) >= TIMEOUT)
     {
       return 1;
     }

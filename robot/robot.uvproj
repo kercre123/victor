@@ -355,7 +355,7 @@
             <uSurpInc>1</uSurpInc>
             <VariousControls>
               <MiscControls>--asm</MiscControls>
-              <Define>USE_STDPERIPH_DRIVER,STM32F429_439xx,USE_DEFAULT_TIMEOUT_CALLBACK,USE_EMBEDDED_PHY,USE_USB_OTG_FS,COZMO_ROBOT</Define>
+              <Define>USE_STDPERIPH_DRIVER,STM32F429_439xx,USE_DEFAULT_TIMEOUT_CALLBACK,USE_EMBEDDED_PHY,USE_USB_OTG_FS,COZMO_ROBOT,ROBOT_HARDWARE</Define>
               <Undefine></Undefine>
               <IncludePath>.\arm_hal;.\arm_hal\lib;..\include;..\coretech\common\include;..\coretech\messaging\include;..\coretech\planning\include;..\coretech\vision\include;.\supervisor\src</IncludePath>
             </VariousControls>
@@ -427,6 +427,11 @@
               <FileName>uart.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\uart.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>spi.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\spi.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -1526,6 +1531,11 @@
               <FileName>uart.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\uart.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>spi.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\spi.cpp</FilePath>
             </File>
           </Files>
         </Group>
