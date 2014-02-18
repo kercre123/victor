@@ -37,13 +37,14 @@ namespace Anki
       }
       
       bool CameraIsEndOfFrame(CameraID cameraID){ return false; }
+      void CameraSetIsEndOfFrame(CameraID, bool){ }
       
-			#warning fix this
-      //TimeStamp GetTimeStamp(void){ return (TimeStamp)0; }
+      typedef u32 TimeStamp;
+      TimeStamp GetTimeStamp(void){ return (TimeStamp)0; }
       
       int GetRobotID(){ return 0; }
       void UpdateDisplay(){ }
-      bool RadioSendMessage(Anki::Cozmo::Messages::ID, const void*){ return true; }
+      bool RadioSendMessage(Anki::Cozmo::Messages::ID, const void*, u32){ return true; }
       
       ReturnCode Init(){ return 0; }
       ReturnCode Step(){ return 0; }
