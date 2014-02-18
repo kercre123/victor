@@ -19,26 +19,6 @@ namespace Anki
 {
   namespace Embedded
   {
-    typedef enum {
-      BOUNDARY_UNKNOWN = -1,
-      BOUNDARY_N  = 0,
-      BOUNDARY_NE = 1,
-      BOUNDARY_E  = 2,
-      BOUNDARY_SE = 3,
-      BOUNDARY_S  = 4,
-      BOUNDARY_SW = 5,
-      BOUNDARY_W  = 6,
-      BOUNDARY_NW = 7
-    } BoundaryDirection;
-
-    const s32 MAX_BOUNDARY_LENGTH = 2000;
-
-    typedef enum {
-      CHARACTERISTIC_SCALE_ORIGINAL = 0,
-      CHARACTERISTIC_SCALE_MEDIUM_MEMORY = 1,
-      CHARACTERISTIC_SCALE_LOW_MEMORY = 2
-    } CharacteristicScaleAlgorithm;
-
     Result SimpleDetector_Steps12345_lowMemory(
       const Array<u8> &image,
       FixedLengthList<BlockMarker> &markers,
@@ -55,25 +35,12 @@ namespace Anki
       MemoryStack scratch1,
       MemoryStack scratch2);
 
-    //Result DetectFiducialMarkers(const Array<u8> &image, FixedLengthList<BlockMarker> &markers, MemoryStack scratch);
-
-    // Compute the characteristic scale using the binomial filter and a LOT of scratch memory
-    Result ComputeCharacteristicScaleImage(const Array<u8> &image, const s32 numPyramidLevels, FixedPointArray<u32> &scaleImage, MemoryStack scratch);
-
-    // Compute the characteristic scale using the box filter and a little scratch memory
-    // thresholdMultiplier is SQ15.16
-    Result ComputeCharacteristicScaleImageAndBinarize(const Array<u8> &image, const s32 numPyramidLevels, Array<u8> &binaryImage, const s32 thresholdMultiplier, MemoryStack scratch);
-
     Result ComputeCharacteristicScaleImageAndBinarizeAndExtractComponents(
       const Array<u8> &image,
       const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier,
       const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
       ConnectedComponents &components,
       MemoryStack scratch);
-
-    Result BinarizeScaleImage(const Array<u8> &originalImage, const FixedPointArray<u32> &scaleImage, Array<u8> &binaryImage);
-
-    Result TraceInteriorBoundary(const Array<u8> &binaryImage, const Point<s16> &startPoint, BoundaryDirection initialDirection, FixedLengthList<Point<s16> > &boundary);
 
     Result ComputeQuadrilateralsFromConnectedComponents(const ConnectedComponents &components, const s32 minQuadArea, const s32 quadSymmetryThreshold, const s32 minDistanceFromImageEdge, const s32 imageHeight, const s32 imageWidth, FixedLengthList<Quadrilateral<s16> > &extractedQuads, MemoryStack scratch);
 
