@@ -194,4 +194,11 @@
 // Square of a number
 #define SQUARE(x) ((x) * (x))
 
+///////////////////////////////////////////////////////////////////
+// OTHER MACROS (e.g. for more complex code generation)
+//////////////////////////////////////////////////////////////////
+
+#define QUOTE_HELPER(__ARG__) #__ARG__
+#define QUOTE(__ARG__) QUOTE_HELPER(__ARG__)
+
 #endif // CORETECH_COMMON_CONSTANTS_AND_MACROS_H_
