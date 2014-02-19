@@ -21,7 +21,7 @@ namespace Anki
 {
   namespace Embedded
   {
-// #pragma mark --- ScrollingIntegralImage Class Definition ---
+    // #pragma mark --- ScrollingIntegralImage Class Definition ---
 
     // A ScrollingIntegralImage computes and integral image from and input image. To save memory, the entire Integral Image isn't computed at once. Instead, the ScrollingIntegralImage computes and stores a small window, plus optional border padding. For example, for an input image of size MxN, a ScrollingIntegralImage could be of size OxN (where O < N)
     // The suffix is _InputType_AccumulatorType
@@ -63,7 +63,7 @@ namespace Anki
       //
       // If the filter is larger than this ScrollingIntegralImage's numBorderPixels, then the
       // borders will be zeros.
-      Result FilterRow(const Rectangle<s16> &filter, const s32 imageRow, Array<s32> &output);
+      Result FilterRow(const Rectangle<s16> &filter, const s32 imageRow, Array<s32> &output) const;
 
       // Get the current min and max rows that can be filtered with FilterRow(), for a give filter
       // that extends filterHalfHeight above or below its center.
@@ -99,7 +99,7 @@ namespace Anki
       Result PadImageRow(const Array<u8> &image, const s32 whichRow, Array<u8> &paddedRow);
     };
 
-// #pragma mark --- ScrollingIntegralImage Implementations ---
+    // #pragma mark --- ScrollingIntegralImage Implementations ---
   } // namespace Embedded
 } //namespace Anki
 

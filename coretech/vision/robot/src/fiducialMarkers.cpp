@@ -124,7 +124,7 @@ namespace Anki
 
       const f32 fixedPointDivider = 1.0f / static_cast<f32>(2 << (this->numFractionalBits-1));
 
-//#define SEND_WARPED_LOCATIONS
+      //#define SEND_WARPED_LOCATIONS
 #ifdef SEND_WARPED_LOCATIONS
       Matlab matlab(false);
       matlab.EvalStringEcho("if ~exist('warpedPoints', 'var') warpedPoints = zeros(2, 0); end;");
@@ -211,7 +211,7 @@ namespace Anki
     //  4. Lower right
     Result FiducialMarkerParser::ExtractBlockMarker(const Array<u8> &image, const Quadrilateral<s16> &quad, const Array<f32> &homography, const f32 minContrastRatio, BlockMarker &marker, MemoryStack scratch) const
     {
-      BeginBenchmark("fmpebm.init");
+      BeginBenchmark("fmpebm_init");
 
       Result lastResult;
 
@@ -235,9 +235,9 @@ namespace Anki
       }
 #endif
 
-      EndBenchmark("fmpebm.init");
+      EndBenchmark("fmpebm_init");
 
-      BeginBenchmark("fmpebm.extractMean");
+      BeginBenchmark("fmpebm_extractMean");
       for(s32 bit=0; bit<numBits; bit++) {
         if((lastResult = bits[bit].ExtractMeanValue(image, quad, homography, meanValues[bit])) != RESULT_OK)
           return lastResult;
@@ -258,9 +258,9 @@ namespace Anki
       }
 #endif // #ifdef SEND_PROBE_LOCATIONS
 
-      EndBenchmark("fmpebm.extractMean");
+      EndBenchmark("fmpebm_extractMean");
 
-      BeginBenchmark("fmpebm.orient");
+      BeginBenchmark("fmpebm_orient");
       FixedLengthList<u8> binarizedBits(MAX_FIDUCIAL_MARKER_BITS, scratch);
 
       // [this, binaryString] = orientAndThreshold(this, this.means);
@@ -272,15 +272,15 @@ namespace Anki
       if(marker.orientation == BlockMarker::ORIENTATION_UNKNOWN)
         return RESULT_OK; // It couldn't be parsed, but this is not a code failure
 
-      EndBenchmark("fmpebm.orient");
+      EndBenchmark("fmpebm_orient");
 
-      BeginBenchmark("fmpebm.decode");
+      BeginBenchmark("fmpebm_decode");
 
       // this = decodeIDs(this, binaryString);
       if((lastResult = DecodeId(binarizedBits, marker.blockType, marker.faceType, scratch)) != RESULT_OK)
         return lastResult;
 
-      EndBenchmark("fmpebm.decode");
+      EndBenchmark("fmpebm_decode");
 
       return RESULT_OK;
     }
