@@ -1,6 +1,15 @@
 # products-cozmo/test/CMakeLists.txt
 
+file(GLOB TEST_SRC_FILES "*.cpp")
+
 if(NOT WIN32)
-  add_executable(cozmo_Test cozmo_Test.cpp)
-  target_link_libraries(cozmo_Test Cozmo gtest)
+  add_executable(run_CozmoTests ${TEST_SRC_FILES})
+  
+  target_link_libraries(run_CozmoTests 
+     Cozmo_Basestation 
+     CoreTech_Common_Basestation 
+     CoreTech_Vision_Basestation 
+     CoreTech_Messaging_Shared 
+     ${OPENCV_LIBS} gtest jsoncpp)
+     
 endif()

@@ -1,3 +1,5 @@
+# Defines
+add_definitions(-DSIMULATOR)
 
 # TODO: Get this from an environment variable?
 set(WEBOTS_APP_DIR /Applications/Webots)

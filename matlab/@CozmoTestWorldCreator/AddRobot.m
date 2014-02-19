@@ -2,12 +2,21 @@ function AddRobot(this, varargin)
 
 Name      = 'Cozmo_1';
 RobotPose = {Pose()};
+HeadAngle = 0;
 CommsChannel   = 1;
 
 parseVarargin(varargin{:});
 
 if ~iscell(RobotPose)
     RobotPose = {RobotPose};
+end
+
+if isscalar(HeadAngle)
+    HeadAngle = HeadAngle * length(RobotPose);
+else
+    assert(length(HeadAngle) == length(RobotPose), ...
+        ['Number of head angles should be one or the same as the ' ...
+        'number of poses.']);
 end
 
 underscoreIndex = strfind(Name, '_');
@@ -30,13 +39,13 @@ fprintf(fid, [...
     ], Name, Name, CommsChannel, this.usbChannel);
 
 
-% Pass the list of poses as controllerArgs
+% Pass the list of poses and head angles as controllerArgs
 for i_pose = 1:length(RobotPose)
     T = RobotPose{i_pose}.T/1000;
-    fprintf(fid, '%f %f %f %f %f %f %f ', ...
+    fprintf(fid, '%f %f %f %f %f %f %f %f', ...
         RobotPose{i_pose}.axis(1), RobotPose{i_pose}.axis(2), RobotPose{i_pose}.axis(3), ...
         RobotPose{i_pose}.angle, ...
-        T(1), T(2), T(3));
+        T(1), T(2), T(3), HeadAngle(i_pose));
 end
 
 fprintf(fid, '"\n}\n\n'); 

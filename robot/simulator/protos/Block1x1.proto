@@ -2,6 +2,7 @@
 
 PROTO Block1x1 [
   field SFString name "Block000"
+  field SFString type "1" # BlockType
   field SFVec3f translation 0 0 0.03
   field SFRotation rotation 0 0 1 0
   field SFFloat density 1000
@@ -23,6 +24,7 @@ PROTO Block1x1 [
 {
 Robot {
   name IS name
+  model IS type
   translation IS translation
   rotation IS rotation
   contactMaterial "cmat_block"
