@@ -11,6 +11,8 @@
  **/
 
 #include "anki/common/basestation/jsonTools.h"
+#include "anki/common/basestation/math/pose.h"
+
 #include "json/json.h"
 #include <vector>
 
@@ -71,6 +73,28 @@ namespace JsonTools
   std::string GetValue<std::string>(const Json::Value& node) {
     return node.asString();
   }
+  
+  
+  bool GetPoseOptional(const Json::Value& node, Anki::Pose3d& pose)
+  {
+    bool retVal = false;
+    
+    Anki::Point3f axis, translation;
+    if(node.isMember("Angle") &&
+       GetPointOptional(node, "Axis", axis) &&
+       GetPointOptional(node, "Translation", translation))
+    {
+      const Anki::Radians angle(node["Angle"].asFloat());
+      pose.set_rotation(angle, axis);
+      
+      pose.set_translation(translation);
+      
+      retVal = true;
+    }
+    
+    return retVal;
+  } // GetPoseOptional()
+  
   
 __attribute__((used)) void PrintJson(const Json::Value& config, int maxDepth)
 {
