@@ -14,12 +14,23 @@
 namespace Anki {
   namespace Cozmo {
     
+    const Block::BlockInfoTableEntry_t Block::BlockInfoLUT_[NUM_BLOCK_TYPES] = {
+      {.name = "UNKNOWN"}
+#define BLOCK_DEFINITION_MODE BLOCK_LUT_MODE
+#include "anki/cozmo/basestation/BlockDefinitions.h"
+    };
+    
 #pragma mark --- Generic Block Implementation ---
     
     void Block::AddFace(const FaceName whichFace,
                         const Vision::Marker::Code &code,
                         const float markerSize_mm)
     {
+      if(whichFace >= NUM_FACES) {
+        // Special case: macro-generated placeholder face 
+        return;
+      }
+      
       Pose3d facePose;
       
       const float halfWidth  = 0.5f * this->GetWidth();   // y
@@ -73,14 +84,15 @@ namespace Anki {
     
     //unsigned int Block::numBlocks = 0;
     
-    ObjectType_t Block::NumTypes = 0;
+    //ObjectType_t Block::NumTypes = 0;
    
     Block::Block(const ObjectType_t type)
-    : ObservableObject(type), blockCorners_(8)
+    : ObservableObject(type),
+      color_(BlockInfoLUT_[type].color),
+      size_(BlockInfoLUT_[type].size),
+      name_(BlockInfoLUT_[type].name),
+      blockCorners_(8)
     {
-      
-      //color_ = BlockInfoLUT_[ID_].color;
-      //size_  = BlockInfoLUT_[ID_].size;
       
       //++Block::numBlocks;
       
@@ -101,6 +113,10 @@ namespace Anki {
       blockCorners_[LEFT_BACK_BOTTOM]   = {-halfWidth, halfDepth,-halfHeight};
       blockCorners_[RIGHT_BACK_BOTTOM]  = { halfWidth, halfDepth,-halfHeight};
       
+      for(auto face : BlockInfoLUT_[type_].faces) {
+        AddFace(face.whichFace, face.code, face.size);
+      }
+      
     } // Constructor: Block(type)
     
     
@@ -118,7 +134,7 @@ namespace Anki {
    
 #pragma mark ---  Block_Cube1x1 Implementation ---
     
-    const ObjectType_t Block_Cube1x1::BlockType = Block::NumTypes++;
+    //const ObjectType_t Block_Cube1x1::BlockType = Block::NumTypes++;
     
     const std::vector<RotationMatrix3d> Block_Cube1x1::rotationAmbiguities_ = {
       RotationMatrix3d({1,0,0,  0,1,0,  0,0,1}),
@@ -134,16 +150,19 @@ namespace Anki {
       return Block_Cube1x1::rotationAmbiguities_;
     }
     
-    Block_Cube1x1::Block_Cube1x1()
-    : Block(Block_Cube1x1::BlockType)
+    Block_Cube1x1::Block_Cube1x1(Block::Type type)
+    : Block(type)
     {
-      
+      // The sizes specified by the block definitions should
+      // agree with this being a cube (all dimensions the same)
+      CORETECH_ASSERT(size_.x() == size_.y())
+      CORETECH_ASSERT(size_.y() == size_.z())
     }
     
     
 #pragma mark ---  Block_2x1 Implementation ---
     
-    const ObjectType_t Block_2x1::BlockType = Block::NumTypes++;
+    //const ObjectType_t Block_2x1::BlockType = Block::NumTypes++;
     
     const std::vector<RotationMatrix3d> Block_2x1::rotationAmbiguities_ = {
       RotationMatrix3d({1,0,0,  0,1,0,  0,0,1}),
@@ -155,8 +174,8 @@ namespace Anki {
       return Block_2x1::rotationAmbiguities_;
     }
     
-    Block_2x1::Block_2x1()
-    : Block(Block_2x1::BlockType)
+    Block_2x1::Block_2x1(Block::Type type)
+    : Block(type)
     {
       
     }

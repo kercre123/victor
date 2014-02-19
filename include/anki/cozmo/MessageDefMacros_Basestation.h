@@ -12,6 +12,9 @@
  * Copyright 2013, Anki, Inc.
  */
 
+// This include gives us the QUOTE macro we use below
+#include "anki/common/constantsAndMacros.h"
+
 // Explicitly undefine so we can redefine without warnings from previous includes
 #undef START_MESSAGE_DEFINITION
 #undef START_TIMESTAMPED_MESSAGE_DEFINITION
@@ -63,11 +66,11 @@
 #undef GET_DISPATCH_FCN_NAME
 #undef GET_MESSAGE_ID
 
-#define QUOTE(__ARG__) #__ARG__
-#define STR(__ARG__) QUOTE(__ARG__)
+//#define QUOTE(__ARG__) #__ARG__
+//#define STR(__ARG__) QUOTE(__ARG__)
 
 #define GET_MESSAGE_CLASSNAME(__MSG_TYPE__) Message##__MSG_TYPE__
-#define GET_QUOTED_MESSAGE_CLASSNAME(__MSG_TYPE__) STR(GET_MESSAGE_CLASSNAME(__MSG_TYPE__))
+#define GET_QUOTED_MESSAGE_CLASSNAME(__MSG_TYPE__) QUOTE(GET_MESSAGE_CLASSNAME(__MSG_TYPE__))
 #define GET_DISPATCH_FCN_NAME(__MSG_TYPE__) ProcessPacketAs_Message##__MSG_TYPE__
 #define GET_MESSAGE_ID(__MSG_TYPE__) __MSG_TYPE__##_ID
 
@@ -371,7 +374,7 @@ if(not JsonTools::GetValueOptional(root, QUOTE(__NAME__), this->__NAME__)) { \
 
 
 #define ADD_MESSAGE_MEMBER_ARRAY(__TYPE__, __NAME__, __LENGTH__) \
-if(not JsonTools::GetValueArrayOptional(root, QUOTE(__NAME__), this->__NAME__)) { \
+if(not JsonTools::GetArrayOptional(root, QUOTE(__NAME__), this->__NAME__)) { \
   fprintf(stderr, QUOTE(No '%s' member found!\n), QUOTE(__NAME__)); \
   CORETECH_THROW(QUOTE(Unable to get array message member from JSON file.)); \
 }

@@ -12,6 +12,7 @@ namespace Anki
   namespace Cozmo
   {
     BlockWorld* BlockWorld::singletonInstance_ = 0;
+    const std::map<ObjectID_t, Vision::ObservableObject*> BlockWorld::EmptyObjectMap;
     
     /*
     BlockWorld::BlockWorld( MessagingInterface* msgInterfaceIn )
@@ -33,21 +34,10 @@ namespace Anki
       //
       // 1x1 Cubes
       //
-      
-      // "FUEL"
-      {
-        Block_Cube1x1* block = new Block_Cube1x1();
-        block->SetColor(1.f, 0.f, 0.f);
-        block->SetSize(60.f, 60.f, 60.f);
-        block->SetName("FUEL");
-        block->AddFace(Block::FRONT_FACE,
-                       {115, 117, 167, 238, 206, 221, 156, 168,  58, 114, 118},
-                       32.f);
+      blockLibrary_.AddObject(new Block_Cube1x1(Block::FUEL_BLOCK_TYPE));
 
-        
-        //float temp = block->GetMinDim();
-        blockLibrary_.AddObject(block);
-      }
+      blockLibrary_.AddObject(new Block_Cube1x1(Block::BULLSEYE_BLOCK_TYPE));
+
       
       //
       // 2x1
@@ -158,9 +148,8 @@ namespace Anki
         if(overlappingObjects.empty()) {
           // no existing blocks overlapped with the block we saw, so add it
           // as a new block
-          
-          objectsExisting[objSeen->GetType()][objSeen->GetID()] = objSeen;
           objSeen->SetID(objectsExisting[objSeen->GetType()].size());
+          objectsExisting[objSeen->GetType()][objSeen->GetID()] = objSeen;
           
           fprintf(stdout, "Adding new block with type=%hu and ID=%hu at (%.1f, %.1f, %.1f)\n",
                   objSeen->GetType(), objSeen->GetID(),
