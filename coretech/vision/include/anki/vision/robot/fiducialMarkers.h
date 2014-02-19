@@ -81,7 +81,7 @@ namespace Anki
       //
       // NOTE:
       // The meanValue is not the mean value of the whole quad, just the part of the quad that is sampled by this Bit.
-      Result ExtractMeanValue(const Array<u8> &image, const Quadrilateral<s16> &quad, const Array<f64> &homography, s16 &meanValue) const;
+      Result ExtractMeanValue(const Array<u8> &image, const Quadrilateral<s16> &quad, const Array<f32> &homography, s16 &meanValue) const;
 
       FiducialMarkerParserBit& operator= (const FiducialMarkerParserBit& bit2);
 
@@ -111,7 +111,7 @@ namespace Anki
 
       FiducialMarkerParser(const FiducialMarkerParser& marker2);
 
-      Result ExtractBlockMarker(const Array<u8> &image, const Quadrilateral<s16> &quad, const Array<f64> &homography, const f32 minContrastRatio, BlockMarker &marker, MemoryStack scratch) const;
+      Result ExtractBlockMarker(const Array<u8> &image, const Quadrilateral<s16> &quad, const Array<f32> &homography, const f32 minContrastRatio, BlockMarker &marker, MemoryStack scratch) const;
 
       FiducialMarkerParser& operator= (const FiducialMarkerParser& marker2);
 

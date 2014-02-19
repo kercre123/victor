@@ -34,7 +34,7 @@ namespace Anki
       };
 
       // Simple helper function to compute the homography from an input quad. The input quad point should be ordered in the non-rotated, corner-opposite format
-      Result ComputeHomographyFromQuad(const Quadrilateral<s16> &quad, Array<f64> &homography, MemoryStack scratch);
+      Result ComputeHomographyFromQuad(const Quadrilateral<s16> &quad, Array<f32> &homography, MemoryStack scratch);
 
       // A PlanarTransformation object can do the following:
       // 1. Hold the current planar transformation, and optionally the initial extents of the quadrilateral

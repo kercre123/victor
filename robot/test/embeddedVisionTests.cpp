@@ -940,13 +940,13 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
   ASSERT_TRUE(IsBlockImage50_320x240Valid(image.Pointer(0,0), false));
 
   FixedLengthList<BlockMarker> markers(maxMarkers, scratchOnchip);
-  FixedLengthList<Array<f64> > homographies(maxMarkers, scratchOnchip);
+  FixedLengthList<Array<f32> > homographies(maxMarkers, scratchOnchip);
 
   markers.set_size(maxMarkers);
   homographies.set_size(maxMarkers);
 
   for(s32 i=0; i<maxMarkers; i++) {
-    Array<f64> newArray(3, 3, scratchOnchip);
+    Array<f32> newArray(3, 3, scratchOnchip);
     homographies[i] = newArray;
   } // for(s32 i=0; i<maximumSize; i++)
 

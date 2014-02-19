@@ -23,7 +23,7 @@ namespace Anki
     Result DetectFiducialMarkers(
       const Array<u8> &image,
       FixedLengthList<BlockMarker> &markers,
-      FixedLengthList<Array<f64> > &homographies,
+      FixedLengthList<Array<f32> > &homographies,
       const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier,
       const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
       const s32 component_minimumNumPixels, const s32 component_maximumNumPixels,

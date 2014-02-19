@@ -28,7 +28,7 @@ namespace Anki
     Result DetectFiducialMarkers(
       const Array<u8> &image,
       FixedLengthList<BlockMarker> &markers,
-      FixedLengthList<Array<f64> > &homographies,
+      FixedLengthList<Array<f32> > &homographies,
       const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier,
       const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
       const s32 component_minimumNumPixels, const s32 component_maximumNumPixels,
@@ -130,7 +130,7 @@ namespace Anki
       BeginBenchmark("ComputeHomographyFromQuad");
       markers.set_size(extractedQuads.get_size());
       for(s32 iQuad=0; iQuad<extractedQuads.get_size(); iQuad++) {
-        Array<f64> &currentHomography = homographies[iQuad];
+        Array<f32> &currentHomography = homographies[iQuad];
 
         if((lastResult = Transformations::ComputeHomographyFromQuad(extractedQuads[iQuad], currentHomography, scratchOnchip)) != RESULT_OK)
           return lastResult;
@@ -151,7 +151,7 @@ namespace Anki
 
       BeginBenchmark("ExtractBlockMarker");
       for(s32 iQuad=0; iQuad<extractedQuads.get_size(); iQuad++) {
-        const Array<f64> &currentHomography = homographies[iQuad];
+        const Array<f32> &currentHomography = homographies[iQuad];
         const Quadrilateral<s16> &currentQuad = extractedQuads[iQuad];
         BlockMarker &currentMarker = markers[iQuad];
 
