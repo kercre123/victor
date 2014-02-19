@@ -41,12 +41,13 @@ namespace Anki
     class BlockWorld
     {
     public:
-      static const unsigned int MaxRobots = 4;
-      static bool ZAxisPointsUp; // normally true, false for Webots
+      //static const unsigned int MaxRobots = 4;
+      //static bool ZAxisPointsUp; // normally true, false for Webots
 
-      static BlockWorld* getInstance();
+      BlockWorld();
+      //static BlockWorld* getInstance();
       
-      const std::vector<Block>& get_blocks(const BlockID_t ofType) const;
+      void Init(RobotManager* robotMgr);
       
       void Update(void);
       
@@ -60,16 +61,20 @@ namespace Anki
       void CommandRobotToDock(const RobotID_t whichRobot,
                               const Block&    whichBlock);
       
+      const Vision::ObservableObjectLibrary& GetBlockLibrary() const;
+      const std::map<ObjectID_t, Vision::ObservableObject*>& GetExistingBlocks(const ObjectType_t blockType) const;
+      const Vision::ObservableObjectLibrary& GetMatLibrary() const;
+      
       ~BlockWorld();
       
     protected:
       
-      static BlockWorld* singletonInstance_;
+      //static BlockWorld* singletonInstance_;
       
-      BlockWorld(); // protected constructor for singleton
+      //BlockWorld(); // protected constructor for singleton
       
       RobotManager*    robotMgr_;
-      MessageHandler*  msgHandler_;
+      //MessageHandler*  msgHandler_;
       
       std::list<Vision::ObservedMarker> obsMarkers_;
       //std::map<Robot*, std::list<Vision::ObservedMarker*> > obsMarkersByRobot_;
@@ -87,10 +92,7 @@ namespace Anki
       ObjectsMap_t existingBlocks_;
       ObjectsMap_t existingMatPieces_;
       
-      // Store all the blocks in the world, with a reserved slot for
-      // each type of block, and then a list of pointers to each block
-      // of that type we've actually seen.
-      std::vector< std::vector<Block> > blocks;
+      static const std::map<ObjectID_t, Vision::ObservableObject*> EmptyObjectMap;
       
       
       void FindOverlappingObjects(const Vision::ObservableObject* objectSeen,
@@ -104,6 +106,7 @@ namespace Anki
       
     }; // class BlockWorld
 
+    /*
     inline BlockWorld* BlockWorld::getInstance()
     {
       // Instantiate singleton instance if not done already
@@ -112,11 +115,24 @@ namespace Anki
       }
       return singletonInstance_;
     }
+     */
     
-    inline const std::vector<Block>& BlockWorld::get_blocks(const BlockID_t ofType) const
+    inline const std::map<ObjectID_t, Vision::ObservableObject*>& BlockWorld::GetExistingBlocks(const ObjectType_t blockType) const
     {
-      CORETECH_ASSERT(ofType >= 0 && ofType < this->blocks.size());
-      return this->blocks[ofType];
+      auto blocksWithID = existingBlocks_.find(blockType);
+      if(blocksWithID != existingBlocks_.end()) {
+        return blocksWithID->second;
+      } else {
+        return BlockWorld::EmptyObjectMap;
+      }
+    }
+    
+    inline const Vision::ObservableObjectLibrary& BlockWorld::GetBlockLibrary() const {
+      return blockLibrary_;
+    }
+    
+    inline const Vision::ObservableObjectLibrary& BlockWorld::GetMatLibrary() const {
+      return matLibrary_;
     }
     
   } // namespace Cozmo

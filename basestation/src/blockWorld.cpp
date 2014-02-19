@@ -11,7 +11,7 @@ namespace Anki
 {
   namespace Cozmo
   {
-    BlockWorld* BlockWorld::singletonInstance_ = 0;
+    //BlockWorld* BlockWorld::singletonInstance_ = 0;
     const std::map<ObjectID_t, Vision::ObservableObject*> BlockWorld::EmptyObjectMap;
     
     /*
@@ -22,12 +22,13 @@ namespace Anki
     }
      */
     
-    bool BlockWorld::ZAxisPointsUp = true;
+    //bool BlockWorld::ZAxisPointsUp = true;
     
     
     BlockWorld::BlockWorld( )
-    : robotMgr_(RobotManager::getInstance()),
-      msgHandler_(MessageHandler::getInstance())
+    : robotMgr_(NULL)
+//    : robotMgr_(RobotManager::getInstance()),
+//      msgHandler_(MessageHandler::getInstance())
     {
       // TODO: Create each known block / matpiece from a configuration/definitions file
       
@@ -109,6 +110,13 @@ namespace Anki
       }
         
     } // ~BlockWorld() Destructor
+    
+    
+    void BlockWorld::Init(RobotManager* robotMgr)
+    {
+      robotMgr_ = robotMgr;
+    }
+    
     
     //template<class ObjectType>
     void BlockWorld::FindOverlappingObjects(const Vision::ObservableObject* objectSeen,
@@ -296,6 +304,7 @@ namespace Anki
                    obsMarkers_.size());
         obsMarkers_.clear();
       }
+
       
       //
       // Update visualization:

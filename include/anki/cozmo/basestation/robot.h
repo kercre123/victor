@@ -36,7 +36,7 @@ namespace Anki {
         DOCK
       };
       
-      Robot(const RobotID_t robotID, BlockWorld& world);
+      Robot(const RobotID_t robotID, BlockWorld* world);
       
       void Update();
       
@@ -114,13 +114,19 @@ namespace Anki {
     //
     // RobotManager class for keeping up with available robots, by their ID
     //
-    // Note that this is a singleton
+    // TODO: Singleton or not?
+#define USE_SINGLETON_ROBOT_MANAGER 0
+    
     class RobotManager
     {
     public:
-      
+    
+#if USE_SINGLETON_ROBOT_MANAGER
       // Return singleton instance
       static RobotManager* getInstance();
+#else
+      RobotManager();
+#endif
       
       // Get the list of known robot ID's
       std::vector<RobotID_t> const& GetRobotIDList() const;
@@ -132,7 +138,7 @@ namespace Anki {
       bool DoesRobotExist(const RobotID_t withID) const;
       
       // Add / remove robots
-      void AddRobot(const RobotID_t withID, BlockWorld& toWorld);
+      void AddRobot(const RobotID_t withID, BlockWorld* toWorld);
       void RemoveRobot(const RobotID_t withID);
       
       // Call each Robot's Update() function
@@ -144,15 +150,18 @@ namespace Anki {
       
     protected:
       
+#if USE_SINGLETON_ROBOT_MANAGER
       RobotManager(); // protected constructor for singleton class
       
       static RobotManager* singletonInstance_;
+#endif
       
       std::map<RobotID_t,Robot*> robots_;
       std::vector<RobotID_t>     ids_;
       
     }; // class RobotManager
     
+#if USE_SINGLETON_ROBOT_MANAGER
     inline RobotManager* RobotManager::getInstance()
     {
       if(0 == singletonInstance_) {
@@ -160,6 +169,7 @@ namespace Anki {
       }
       return singletonInstance_;
     }
+#endif
     
   } // namespace Cozmo
 } // namespace Anki

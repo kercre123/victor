@@ -16,15 +16,26 @@
 
 namespace Anki {
   namespace Cozmo {
-    
+
+#if USE_SINGLETON_MESSAGE_HANDLER
     MessageHandler* MessageHandler::singletonInstance_ = 0;
+#endif
     
-    ReturnCode MessageHandler::Init(Comms::IComms* comms)
+    MessageHandler::MessageHandler()
+    : comms_(NULL), robotMgr_(NULL), blockWorld_(NULL)
+    {
+      
+    }
+    ReturnCode MessageHandler::Init(Comms::IComms* comms,
+                                    RobotManager*  robotMgr,
+                                    BlockWorld*    blockWorld)
     {
       ReturnCode retVal = EXIT_FAILURE;
       
       //TODO: PRINT_NAMED_DEBUG("MessageHandler", "Initializing comms");
       comms_ = comms;
+      robotMgr_ = robotMgr;
+      blockWorld_ = blockWorld;
       
       if(comms_) {
         isInitialized_ = comms_->IsInitialized();
@@ -36,38 +47,41 @@ namespace Anki {
       
       return retVal;
     }
-    
-    MessageHandler::MessageHandler()
-    {
-      robotMgr_ = RobotManager::getInstance();
-    }
+
     
     ReturnCode MessageHandler::ProcessPacket(const Comms::MsgPacket& packet)
     {
       ReturnCode retVal = EXIT_FAILURE;
       
-      const u8 msgID = packet.data[0];
-      
-      if(lookupTable_[msgID].size != packet.dataLen-1) {
-        PRINT_NAMED_ERROR("MessageBufferWrongSize",
-                          "Buffer's size does not match expected size for this message ID.");
+      if(robotMgr_ == NULL) {
+        PRINT_NAMED_ERROR("MessageHandler:NullRobotManager",
+                          "RobotManager NULL when MessageHandler::ProcessPacket() called.");
       }
       else {
-        const RobotID_t robotID = packet.sourceId;
-        Robot* robot = RobotManager::getInstance()->GetRobotByID(robotID);
-        if(robot == NULL) {
-          PRINT_NAMED_ERROR("MessageFromInvalidRobotSource",
-                            "Message %d received from invalid robot source ID %d.",
-                            msgID, robotID);
+        const u8 msgID = packet.data[0];
+        
+        if(lookupTable_[msgID].size != packet.dataLen-1) {
+          PRINT_NAMED_ERROR("MessageBufferWrongSize",
+                            "Buffer's size does not match expected size for this message ID.");
         }
         else {
-          // This calls the (macro-generated) ProcessPacketAs_MessageX() method
-          // indicated by the lookup table, which will cast the buffer as the
-          // correct message type and call the specified robot's ProcessMessage(MessageX)
-          // method.
-          retVal = (*this.*lookupTable_[msgID].ProcessPacketAs)(robot, packet.data+1);
+          const RobotID_t robotID = packet.sourceId;
+          //Robot* robot = RobotManager::getInstance()->GetRobotByID(robotID);
+          Robot* robot = robotMgr_->GetRobotByID(robotID);
+          if(robot == NULL) {
+            PRINT_NAMED_ERROR("MessageFromInvalidRobotSource",
+                              "Message %d received from invalid robot source ID %d.",
+                              msgID, robotID);
+          }
+          else {
+            // This calls the (macro-generated) ProcessPacketAs_MessageX() method
+            // indicated by the lookup table, which will cast the buffer as the
+            // correct message type and call the specified robot's ProcessMessage(MessageX)
+            // method.
+            retVal = (*this.*lookupTable_[msgID].ProcessPacketAs)(robot, packet.data+1);
+          }
         }
-      }
+      } // if(robotMgr_ != NULL)
       
       return retVal;
     } // ProcessBuffer()
@@ -100,28 +114,35 @@ namespace Anki {
     {
       ReturnCode retVal = EXIT_FAILURE;
       
-      Quad2f corners;
-      
-      corners[Quad::TopLeft].x()     = msg.x_imgUpperLeft;
-      corners[Quad::TopLeft].y()     = msg.y_imgUpperLeft;
-      
-      corners[Quad::BottomLeft].x()  = msg.x_imgLowerLeft;
-      corners[Quad::BottomLeft].y()  = msg.y_imgLowerLeft;
-      
-      corners[Quad::TopRight].x()    = msg.x_imgUpperRight;
-      corners[Quad::TopRight].y()    = msg.y_imgUpperRight;
-      
-      corners[Quad::BottomRight].x() = msg.x_imgLowerRight;
-      corners[Quad::BottomRight].y() = msg.y_imgLowerRight;
-
-      CORETECH_ASSERT(robot != NULL);
-      
-      const Vision::Camera& camera = robot->get_camHead();
-      Vision::ObservedMarker marker(&(msg.code[0]), corners, camera);
-      
-      // Give this vision marker to BlockWorld for processing
-      BlockWorld::getInstance()->QueueObservedMarker(marker);
-      retVal = EXIT_SUCCESS;
+      if(blockWorld_ == NULL) {
+        PRINT_NAMED_ERROR("MessageHandler:NullBlockWorld",
+                          "BlockWorld NULL when MessageHandler::ProcessMessage(VisionMarker) called.");
+      }
+      else {
+        Quad2f corners;
+        
+        corners[Quad::TopLeft].x()     = msg.x_imgUpperLeft;
+        corners[Quad::TopLeft].y()     = msg.y_imgUpperLeft;
+        
+        corners[Quad::BottomLeft].x()  = msg.x_imgLowerLeft;
+        corners[Quad::BottomLeft].y()  = msg.y_imgLowerLeft;
+        
+        corners[Quad::TopRight].x()    = msg.x_imgUpperRight;
+        corners[Quad::TopRight].y()    = msg.y_imgUpperRight;
+        
+        corners[Quad::BottomRight].x() = msg.x_imgLowerRight;
+        corners[Quad::BottomRight].y() = msg.y_imgLowerRight;
+        
+        CORETECH_ASSERT(robot != NULL);
+        
+        const Vision::Camera& camera = robot->get_camHead();
+        Vision::ObservedMarker marker(&(msg.code[0]), corners, camera);
+        
+        // Give this vision marker to BlockWorld for processing
+        blockWorld_->QueueObservedMarker(marker);
+        
+        retVal = EXIT_SUCCESS;
+      }
       
       return retVal;
     } // ProcessMessage(MessageVisionMarker)

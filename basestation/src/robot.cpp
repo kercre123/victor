@@ -19,14 +19,17 @@ namespace Anki {
   namespace Cozmo {
     
 #pragma mark --- RobotManager Class Implementations ---
+
+#if USE_SINGLETON_ROBOT_MANAGER
     RobotManager* RobotManager::singletonInstance_ = 0;
+#endif
     
     RobotManager::RobotManager()
     {
       
     }
     
-    void RobotManager::AddRobot(const RobotID_t withID, BlockWorld& toWorld)
+    void RobotManager::AddRobot(const RobotID_t withID, BlockWorld* toWorld)
     {
       robots_[withID] = new Robot(withID, toWorld);
       ids_.push_back(withID);
@@ -66,8 +69,8 @@ namespace Anki {
     
 #pragma mark --- Robot Class Implementations ---
     
-    Robot::Robot(const RobotID_t robotID, BlockWorld& world)
-    : ID_(robotID), world_(BlockWorld::getInstance()),
+    Robot::Robot(const RobotID_t robotID, BlockWorld* world)
+    : ID_(robotID), world_(world),
       pose(-M_PI_2, Z_AXIS_3D, {{0.f, 0.f, WHEEL_RAD_TO_MM}}),
       neckPose(0.f,Y_AXIS_3D, {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &pose),
       headCamPose({0,0,1,  -1,0,0,  0,-1,0},

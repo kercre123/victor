@@ -42,9 +42,17 @@ using namespace Anki::Cozmo;
 int main(int argc, char **argv)
 {
   
-  // Comms
+  // Instantiate all the modules we need
   Anki::Cozmo::TCPComms robotComms;
-  MessageHandler::getInstance()->Init(&robotComms);
+  BlockWorld blockWorld;
+  RobotManager robotMgr;
+  MessageHandler msgHandler;
+  
+  // Initialize the modules by telling them about each other:
+  msgHandler.Init(&robotComms, &robotMgr, &blockWorld);
+  blockWorld.Init(&robotMgr);
+  
+  
   VizManager::getInstance()->Init();
   
   
@@ -95,7 +103,7 @@ int main(int argc, char **argv)
         for(auto robotID : advertisingRobotIDs) {
           printf("RobotComms connecting to robot %d.\n", robotID);
           robotComms.ConnectToRobotByID(robotID);
-          RobotManager::getInstance()->AddRobot(robotID, *BlockWorld::getInstance());
+          robotMgr.AddRobot(robotID, &blockWorld);
         }
       }
     }
@@ -105,14 +113,15 @@ int main(int argc, char **argv)
       continue;
     }
 
-    MessageHandler::getInstance()->ProcessMessages();
+    //MessageHandler::getInstance()->ProcessMessages();
+    msgHandler.ProcessMessages();
     
     //
     // Check for any outgoing messages from each basestation robot:
     //
-    for(auto robotiD : RobotManager::getInstance()->GetRobotIDList())
+    for(auto robotiD : robotMgr.GetRobotIDList())
     {
-      Anki::Cozmo::Robot* robot = RobotManager::getInstance()->GetRobotByID(robotiD);
+      Anki::Cozmo::Robot* robot = robotMgr.GetRobotByID(robotiD);
       while(robot->hasOutgoingMessages())
       {
         
@@ -139,7 +148,7 @@ int main(int argc, char **argv)
     } // for each robot
     
     // Update the world (force robots to process their messages)
-    BlockWorld::getInstance()->Update();
+    blockWorld.Update();
     
   } // while still stepping
 

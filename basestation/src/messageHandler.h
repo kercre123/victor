@@ -32,16 +32,25 @@ namespace Anki {
     
 #include "anki/cozmo/MessageDefinitions.h"
     
-    // NOTE: this is a singleton class
+    
+#define USE_SINGLETON_MESSAGE_HANDLER 0
+    
+    // TODO: make singleton or not?
     class MessageHandler
     {
     public:
       
-      // Set the message handler's communications manager
-      ReturnCode Init(Comms::IComms* comms);
-      
+#if USE_SINGLETON_MESSAGE_HANDLER
       // Get a pointer to the singleton instance
       inline static MessageHandler* getInstance();
+#else
+      MessageHandler(); // Force construction with stuff in Init()?
+#endif
+      
+      // Set the message handler's communications manager
+      ReturnCode Init(Comms::IComms* comms,
+                      RobotManager*  robotMgr,
+                      BlockWorld*    blockWorld);
       
       // As long as there are messages available from the comms object,
       // process them and pass them along to robots.
@@ -52,16 +61,20 @@ namespace Anki {
       
     protected:
       
+#if USE_SINGLETON_MESSAGE_HANDLER
       // Protected default constructor for singleton.  This grabs a pointer
       // to the singleton RobotManager.
       MessageHandler();
       
       static MessageHandler* singletonInstance_;
+#endif
       
+      Comms::IComms* comms_;
       RobotManager* robotMgr_;
+      BlockWorld*   blockWorld_;
       
       bool isInitialized_;
-      Comms::IComms* comms_;
+
       
       // Process a raw byte buffer as a message and send it to the specified
       // robot
@@ -95,7 +108,8 @@ namespace Anki {
       
     }; // class MessageHandler
     
-    
+
+#if USE_SINGLETON_MESSAGE_HANDLER
     inline MessageHandler* MessageHandler::getInstance()
     {
       // If we haven't already instantiated the singleton, do so now.
@@ -105,6 +119,7 @@ namespace Anki {
       
       return singletonInstance_;
     }
+#endif
     
   } // namespace Cozmo
 } // namespace Anki
