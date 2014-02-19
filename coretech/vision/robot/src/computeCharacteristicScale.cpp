@@ -35,8 +35,8 @@ namespace Anki
       const s32 thresholdMultiplier_numFractionalBits = 16;
 
       // Integral image constants
-      const s32 numBorderPixels = 33; // 2^5 + 1 = 33
-      const s32 integralImageHeight = 96; // 96*(640+33*2)*4 = 271104, though with padding, it is 96*720*4 = 276480
+      const s32 numBorderPixels = 17; // For qvga, 2^4 + 1 = 17
+      const s32 integralImageHeight = 64; // 96*(640+33*2)*4 = 271104, though with padding, it is 96*720*4 = 276480
       const s32 numRowsToScroll = integralImageHeight - 2*numBorderPixels;
 
       // To normalize a sum of 1 / ((2*n+1)^2), we approximate a division as a mulitiply and shift.
@@ -52,8 +52,14 @@ namespace Anki
 
       Result lastResult;
 
+      AnkiConditionalErrorAndReturnValue(scratch.IsValid(),
+        RESULT_FAIL_INVALID_OBJECT, "ComputeCharacteristicScaleImageAndBinarize", "scratch is not valid");
+
       AnkiConditionalErrorAndReturnValue(image.IsValid(),
         RESULT_FAIL_INVALID_OBJECT, "ComputeCharacteristicScaleImageAndBinarize", "image is not valid");
+
+      AnkiConditionalErrorAndReturnValue(components.IsValid(),
+        RESULT_FAIL_INVALID_OBJECT, "ComputeCharacteristicScaleImageAndBinarize", "components is not valid");
 
       AnkiConditionalErrorAndReturnValue(scaleImage_numPyramidLevels <= 4 && scaleImage_numPyramidLevels > 0,
         RESULT_FAIL_INVALID_PARAMETERS, "ComputeCharacteristicScaleImageAndBinarize", "scaleImage_numPyramidLevels must be less than %d", 4+1);
@@ -72,7 +78,10 @@ namespace Anki
       Array<u8> binaryImageRow(1, imageWidth, scratch);
       u8 * restrict pBinaryImageRow = binaryImageRow[0];
 
-      if((lastResult = components.Extract2dComponents_PerRow_Initialize()) != RESULT_OK)
+      AnkiConditionalErrorAndReturnValue(binaryImageRow.IsValid(),
+        RESULT_FAIL_OUT_OF_MEMORY, "ComputeCharacteristicScaleImageAndBinarize", "binaryImageRow is not valid");
+
+      if((lastResult = components.Extract2dComponents_PerRow_Initialize(scratch)) != RESULT_OK)
         return lastResult;
 
       s32 imageY = 0;

@@ -94,39 +94,48 @@ namespace Anki
     } // Result Extract1dComponents(const u8 * restrict binaryImageRow, const s32 binaryImageWidth, const s32 minComponentWidth, FixedLengthList<Point<s16> > &components)
 
     ConnectedComponents::ConnectedComponents()
-      : isSortedInId(true), isSortedInY(true), isSortedInX(true), maximumId(0), maxImageWidth(-1)
+      : curState(STATE_INVALID), isSortedInId(true), isSortedInY(true), isSortedInX(true), maximumId(0), maxImageWidth(-1)
     {
     }
 
-    // Constructor for a ConnectedComponents, pointing to user-allocated MemoryStack
     ConnectedComponents::ConnectedComponents(const s32 maxComponentSegments, const s32 maxImageWidth, MemoryStack &memory)
-      : isSortedInId(true), isSortedInY(true), isSortedInX(true), maximumId(0), maxImageWidth(maxImageWidth)
+      : curState(STATE_INVALID), isSortedInId(true), isSortedInY(true), isSortedInX(true), maximumId(0), maxImageWidth(maxImageWidth), maxComponentSegments(maxComponentSegments)
     {
       AnkiConditionalError(maxComponentSegments > 0 && maxComponentSegments <= u16_MAX,
         "ConnectedComponents::ConnectedComponents", "maxComponentSegments must be greater than zero and less than 0xFFFF");
 
       this->components = FixedLengthList<ConnectedComponentSegment>(maxComponentSegments, memory);
 
-      // NOTE: these are really only needed for the Extract2dComponents methods, so if the scratch
-      //       memory is needed, these could be allocated later.
-      this->previousComponents1d = FixedLengthList<ConnectedComponentSegment>(maxImageWidth, memory);
-      this->currentComponents1d = FixedLengthList<ConnectedComponentSegment>(maxImageWidth, memory);
-      this->newPreviousComponents1d = FixedLengthList<ConnectedComponentSegment>(maxImageWidth, memory);
-      this->equivalentComponents = FixedLengthList<u16>(maxComponentSegments, memory);
+      this->previousComponents1d = FixedLengthList<ConnectedComponentSegment>();
+      this->currentComponents1d = FixedLengthList<ConnectedComponentSegment>();
+      this->newPreviousComponents1d = FixedLengthList<ConnectedComponentSegment>();
+      this->equivalentComponents = FixedLengthList<u16>();
+
+      this->curState = STATE_CONSTRUCTED;
     } // ConnectedComponents(const s32 maxComponentSegments, MemoryStack &memory)
 
-    Result ConnectedComponents::Extract2dComponents_PerRow_Initialize()
+    Result ConnectedComponents::Extract2dComponents_PerRow_Initialize(MemoryStack &memory)
     {
       const u16 MAX_2D_COMPONENTS = static_cast<u16>(components.get_maximumSize());
+
+      AnkiConditionalErrorAndReturnValue(this->curState == STATE_CONSTRUCTED,
+        RESULT_FAIL, "ConnectedComponents::Extract2dComponents_PerRow_NextRow", "Object is not constructed (or was initialized earlier)");
 
       components.Clear();
 
       this->maximumId = 0;
 
+      this->previousComponents1d = FixedLengthList<ConnectedComponentSegment>(maxImageWidth, memory);
+      this->currentComponents1d = FixedLengthList<ConnectedComponentSegment>(maxImageWidth, memory);
+      this->newPreviousComponents1d = FixedLengthList<ConnectedComponentSegment>(maxImageWidth, memory);
+      this->equivalentComponents = FixedLengthList<u16>(maxComponentSegments, memory);
+
       u16 * restrict pEquivalentComponents = equivalentComponents.Pointer(0);
       for(s32 i=0; i<MAX_2D_COMPONENTS; i++) {
         pEquivalentComponents[i] = static_cast<u16>(i);
       }
+
+      this->curState = STATE_INITIALIZED;
 
       return RESULT_OK;
     } // Result ConnectedComponents::Extract2dComponents_PerRow_Initialize()
@@ -135,7 +144,9 @@ namespace Anki
     {
       AnkiAssert(imageWidth <= maxImageWidth);
 
-      //for(s32 y=0; y<imageHeight; y++) {
+      AnkiConditionalErrorAndReturnValue(this->curState == STATE_INITIALIZED,
+        RESULT_FAIL, "ConnectedComponents::Extract2dComponents_PerRow_NextRow", "Object is not initialized");
+
       const ConnectedComponentSegment * restrict pCurrentComponents1d = currentComponents1d.Pointer(0);
       const ConnectedComponentSegment * restrict pPreviousComponents1d = previousComponents1d.Pointer(0);
       ConnectedComponentSegment * restrict pNewPreviousComponents1d = newPreviousComponents1d.Pointer(0);
@@ -209,7 +220,6 @@ namespace Anki
 
       // Update previousComponents1d to be newPreviousComponents1d
       Swap(previousComponents1d, newPreviousComponents1d);
-      //} // for(s32 y=0; y<imageHeight; y++)
 
       return RESULT_OK;
     } // Result ConnectedComponents::Extract2dComponents_PerRow_NextRow(const Array<u8> &binaryImageRow, const s16 minComponentWidth, const s16 maxSkipDistance)
@@ -217,6 +227,10 @@ namespace Anki
     Result ConnectedComponents::Extract2dComponents_PerRow_Finalize()
     {
       const s32 MAX_EQUIVALENT_ITERATIONS = 3;
+
+      AnkiConditionalErrorAndReturnValue(this->curState == STATE_INITIALIZED,
+        RESULT_FAIL, "ConnectedComponents::Extract2dComponents_PerRow_NextRow", "Object is not initialized");
+
       u16 * restrict pEquivalentComponents = equivalentComponents.Pointer(0);
 
       const s32 numComponents = components.get_size();
@@ -260,6 +274,8 @@ namespace Anki
 
       FindMaximumId();
 
+      this->curState = STATE_FINALIZED;
+
       // TODO: put this back if it is needed by some other algorithm
       // Sort all 1D components by id, y, then x
       // const Result result = SortConnectedComponentSegmentsById();
@@ -269,14 +285,14 @@ namespace Anki
       return RESULT_OK;
     } // Result ConnectedComponents::Extract2dComponents_PerRow_Finalize()
 
-    Result ConnectedComponents::Extract2dComponents_FullImage(const Array<u8> &binaryImage, const s16 minComponentWidth, const s16 maxSkipDistance)
+    Result ConnectedComponents::Extract2dComponents_FullImage(const Array<u8> &binaryImage, const s16 minComponentWidth, const s16 maxSkipDistance, MemoryStack scratch)
     {
       Result lastResult;
 
       const s32 imageHeight = binaryImage.get_size(0);
       const s32 imageWidth = binaryImage.get_size(1);
 
-      if((lastResult = Extract2dComponents_PerRow_Initialize()) != RESULT_OK)
+      if((lastResult = Extract2dComponents_PerRow_Initialize(scratch)) != RESULT_OK)
         return lastResult;
 
       for(s32 y=0; y<imageHeight; y++) {
@@ -292,8 +308,6 @@ namespace Anki
       return RESULT_OK;
     }
 
-    // Sort the components by id (the ids are sorted in increasing value, but with zero at the end {1...MAX_VALUE,0}), then y, then xStart
-    // TODO: determine how fast this method is, then suggest usage
     Result ConnectedComponents::SortConnectedComponentSegments()
     {
       // Performs insersion sort
@@ -323,9 +337,6 @@ namespace Anki
       return RESULT_OK;
     } // Result SortConnectedComponentSegments(FixedLengthList<ConnectedComponentSegment> &components)
 
-    // Sort the components by id. This will retain the original ordering as well, so if the
-    // components are already sorted in y, the output of this method will be sorted in id and y.
-    // Requires numValidComponentSegments*sizeof(ConnectedComponentSegment) bytes of scratch
     Result ConnectedComponents::SortConnectedComponentSegmentsById(MemoryStack scratch)
     {
       // Performs bucket sort
@@ -359,7 +370,7 @@ namespace Anki
 
       // Could fail if we don't have enough scratch space
       if(!componentsTmp.IsValid())
-        return RESULT_FAIL_INVALID_OBJECT;
+        return RESULT_FAIL_OUT_OF_MEMORY;
 
       // Convert the absolute count to a cumulative count (ignoring id == zero)
       u16 totalCount = 0;
@@ -394,7 +405,6 @@ namespace Anki
       return RESULT_OK;
     }
 
-    // Iterate through components, and return the maximum id
     Result ConnectedComponents::FindMaximumId()
     {
       const s32 numComponents = components.get_size();
@@ -408,9 +418,6 @@ namespace Anki
       return RESULT_OK;
     }
 
-    // Iterate through components, and compute the number of pixels for each
-    // componentSizes must be at least sizeof(s32)*(maximumdId+1) bytes
-    // NOTE: this is probably inefficient, compared with interlacing the loops in a kernel
     Result ConnectedComponents::ComputeComponentSizes(FixedLengthList<s32> &componentSizes)
     {
       AnkiConditionalErrorAndReturnValue(componentSizes.IsValid(), RESULT_FAIL_INVALID_OBJECT, "ComputeComponentSizes", "componentSizes is not valid");
@@ -434,15 +441,6 @@ namespace Anki
       return RESULT_OK;
     }
 
-    // Iterate through components, and compute the centroid of each component componentCentroids
-    // must be at least sizeof(Point<s16>)*(maximumdId+1) bytes
-    // NOTE: this is probably inefficient, compared with interlacing the loops in a kernel
-    // Iterate through components, and compute the centroid of each component componentCentroids
-    // must be at least sizeof(Point<s16>)*(maximumdId+1) bytes
-    // NOTE: this is probably inefficient, compared with interlacing the loops in a kernel
-    //
-    // For a ConnectedComponent that has a maximum id of N, this function requires
-    // 12n + 12 bytes of scratch.
     Result ConnectedComponents::ComputeComponentCentroids(FixedLengthList<Point<s16> > &componentCentroids, MemoryStack scratch)
     {
       Result lastResult;
@@ -497,9 +495,6 @@ namespace Anki
       return RESULT_OK;
     }
 
-    // Iterate through components, and compute bounding box for each component
-    // componentBoundingBoxes must be at least sizeof(Rectangle<s16>)*(maximumdId+1) bytes
-    // NOTE: this is probably inefficient, compared with interlacing the loops in a kernel
     Result ConnectedComponents::ComputeComponentBoundingBoxes(FixedLengthList<Rectangle<s16> > &componentBoundingBoxes)
     {
       AnkiConditionalErrorAndReturnValue(componentBoundingBoxes.IsValid(), RESULT_FAIL_INVALID_OBJECT, "ComputeComponentSizes", "componentBoundingBoxes is not valid");
@@ -535,9 +530,6 @@ namespace Anki
       return RESULT_OK;
     }
 
-    // Iterate through components, and compute the number of componentSegments that have each id
-    // componentSizes must be at least sizeof(s32)*(maximumdId+1) bytes
-    // NOTE: this is probably inefficient, compared with interlacing the loops in a kernel
     Result ConnectedComponents::ComputeNumComponentSegmentsForEachId(FixedLengthList<s32> &numComponentSegments)
     {
       AnkiConditionalErrorAndReturnValue(numComponentSegments.IsValid(), RESULT_FAIL_INVALID_OBJECT, "ComputeComponentSizes", "numComponentSegments is not valid");
@@ -560,14 +552,6 @@ namespace Anki
       return RESULT_OK;
     }
 
-    // The list of components may have unused ids. This function compresses the set of ids, so that
-    // max(ids) == numberOfUniqueValues(ids). The function then returns the maximum id. For example, the list of ids {0,4,5,7} would be
-    // changed to {0,1,2,3}, and it would return 3.
-    //
-    // For a ConnectedComponent that has a maximum id of N, this function requires
-    // 3n + 3 bytes of scratch.
-    //
-    // TODO: If scratch usage is a bigger issue than computation time, this could be done with a bitmask
     Result ConnectedComponents::CompressConnectedComponentSegmentIds(MemoryStack scratch)
     {
       s32 numUsedIds = 0;
@@ -611,16 +595,11 @@ namespace Anki
 
       FindMaximumId(); // maximumId should be equal to (currentCompressedId - 1)
 
-      // TODO: think is this can modify the this->isSortedInId attribute. I think it can't
+      // TODO: Think if this can modify the this->isSortedInId attribute. I think it can't
 
       return RESULT_OK;
     } // Result CompressConnectedComponentSegmentIds(FixedLengthList<ConnectedComponentSegment> &components, MemoryStack scratch)
 
-    // Goes through the list components, and computes the number of pixels for each.
-    // For any componentId with less than minimumNumPixels pixels, all ConnectedComponentSegment with that id will have their ids set to zero
-    //
-    // For a ConnectedComponent that has a maximum id of N, this function requires
-    // 4n + 4 bytes of scratch.
     Result ConnectedComponents::InvalidateSmallOrLargeComponents(const s32 minimumNumPixels, const s32 maximumNumPixels, MemoryStack scratch)
     {
       const ConnectedComponentSegment * restrict pConstComponents = components.Pointer(0);
@@ -658,23 +637,6 @@ namespace Anki
       return RESULT_OK;
     }
 
-    // Goes through the list components, and computes the "solidness", which is the ratio of
-    // "numPixels / (boundingWidth*boundingHeight)". For any componentId with that is too solid or
-    // sparse (opposite of solid), all ConnectedComponentSegment with that id will have their ids
-    // set to zero
-    //
-    // The SQ26.5 parameter sparseMultiplyThreshold is set so that a component is invalid if
-    // "sparseMultiplyThreshold*numPixels < boundingWidth*boundingHeight".
-    // A resonable value is between 5<<5 = 160 and 100<<5 = 3200.
-    //
-    // The SQ26.5 parameter solidMultiplyThreshold is set so that a component is invalid if
-    // "solidMultiplyThreshold*numPixels > boundingWidth*boundingHeight".
-    // A resonable value is between 1.5*pow(2,5) = 48 and 5<<5 = 160.
-    //
-    // NOTE: This can overflow if the number of pixels is greater than 2^26 (a bit more Ultra-HD resolution)
-    //
-    // For a ConnectedComponent that has a maximum id of N, this function requires
-    // 8N + 8 bytes of scratch.
     Result ConnectedComponents::InvalidateSolidOrSparseComponents(const s32 sparseMultiplyThreshold, const s32 solidMultiplyThreshold, MemoryStack scratch)
     {
       const ConnectedComponentSegment * restrict pConstComponents = components.Pointer(0);
@@ -755,17 +717,6 @@ namespace Anki
       return RESULT_OK;
     }
 
-    // If a component doesn't have a hollow center, it's not a fiducial. Based on a component's
-    // centroid, and its maximum extent, this method makes sure no componentSegment is inside of
-    // an inner rectangle. For example, take a component centered at (50,50), that is 20 pixels
-    // wide and high. If percentHorizontal=0.5 and percentVertical=0.25, then no componentSegment
-    // should intersect the rectangle between (40,45) and (60,55).
-    //
-    // percentHorizontal and percentVertical are SQ23.8,
-    // and should range from (0.0, 1.0), non-inclusive
-    //
-    // For a ConnectedComponent that has a maximum id of N, this function requires 10N + 10 bytes
-    // of scratch.
     Result ConnectedComponents::InvalidateFilledCenterComponents(const s32 percentHorizontal, const s32 percentVertical, MemoryStack scratch)
     {
       const s32 numFractionalBitsForPercents = 8;
@@ -876,7 +827,28 @@ namespace Anki
     bool ConnectedComponents::IsValid() const
     {
       // TODO: should we do any other checks here?
-      return components.IsValid();
+
+      if(curState == STATE_INVALID)
+        return false;
+
+      if(!components.IsValid())
+        return false;
+
+      if(curState == STATE_INITIALIZED) {
+        if(!currentComponents1d.IsValid())
+          return false;
+
+        if(!previousComponents1d.IsValid())
+          return false;
+
+        if(!newPreviousComponents1d.IsValid())
+          return false;
+
+        if(!equivalentComponents.IsValid())
+          return false;
+      }
+
+      return true;
     }
 
     Result ConnectedComponents::Print() const

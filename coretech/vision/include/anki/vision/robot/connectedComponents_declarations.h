@@ -53,14 +53,20 @@ namespace Anki
       ConnectedComponents();
 
       // Constructor for a ConnectedComponents, pointing to user-allocated MemoryStack
+      // The memory should remain valid for the entire life of the object
       ConnectedComponents(const s32 maxComponentSegments, const s32 maxImageWidth, MemoryStack &memory);
 
       // Extract 2d connected components from binaryImage All extracted components are stored in a
       // single list of ComponentSegments
-      Result Extract2dComponents_FullImage(const Array<u8> &binaryImage, const s16 minComponentWidth, const s16 maxSkipDistance);
+      Result Extract2dComponents_FullImage(const Array<u8> &binaryImage, const s16 minComponentWidth, const s16 maxSkipDistance, MemoryStack scratch);
 
       // Methods to parse an input binary image per-row, updating this object's global list as it goes
-      Result Extract2dComponents_PerRow_Initialize();
+      //
+      // WARNING:
+      // The memory allocated in Extract2dComponents_PerRow_Initialize() must be valid until
+      // Extract2dComponents_PerRow_Finalize() is called. It does not have to be in the same
+      // location as the memory used by the constructor.
+      Result Extract2dComponents_PerRow_Initialize(MemoryStack &memory);
       Result Extract2dComponents_PerRow_NextRow(const u8 * restrict binaryImageRow, const s32 imageWidth, const s16 whichRow, const s16 minComponentWidth, const s16 maxSkipDistance);
       Result Extract2dComponents_PerRow_Finalize();
 
@@ -167,19 +173,29 @@ namespace Anki
       bool get_isSortedInX() const;
 
     protected:
+      enum State
+      {
+        STATE_INVALID,
+        STATE_CONSTRUCTED,
+        STATE_INITIALIZED,
+        STATE_FINALIZED
+      };
+
       FixedLengthList<ConnectedComponentSegment> components;
       FixedLengthList<ConnectedComponentSegment> currentComponents1d;
       FixedLengthList<ConnectedComponentSegment> previousComponents1d;
       FixedLengthList<ConnectedComponentSegment> newPreviousComponents1d;
       FixedLengthList<u16> equivalentComponents;
 
+      State curState;
+
       bool isSortedInId;
       bool isSortedInY;
       bool isSortedInX;
 
       u16 maximumId;
-
       s32 maxImageWidth;
+      s32 maxComponentSegments;
 
       // Iterate through components, and update the maximum id
       Result FindMaximumId();

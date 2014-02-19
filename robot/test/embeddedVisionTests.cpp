@@ -894,7 +894,7 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageGeneration)
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageGeneration)
 
-GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage_lowMemory)
+GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
 {
   // TODO: Check that the image loaded correctly
   //ASSERT_TRUE(IsBlockImage50_320x240Valid(&blockImage50_320x240[0], imagesAreEndianSwapped));
@@ -924,32 +924,29 @@ GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage_lowMemory)
   const f32 decode_minContrastRatio = 1.25;
 
   const s32 maxMarkers = 100;
-  const s32 maxConnectedComponentSegments = 25000/2;
+  const s32 maxConnectedComponentSegments = 5000; // 25000/4 = 6250
 
-  //MemoryStack scratch0(&ddrBuffer[0], OFFCHIP_BUFFER_SIZE);
-  MemoryStack scratch1(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE/2);
-  MemoryStack scratch2(&offchipBuffer[0] + OFFCHIP_BUFFER_SIZE/2, OFFCHIP_BUFFER_SIZE/2);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
 
-  //ASSERT_TRUE(scratch0.IsValid());
-  ASSERT_TRUE(scratch1.IsValid());
-  ASSERT_TRUE(scratch2.IsValid());
+  ASSERT_TRUE(scratchOffchip.IsValid());
+  ASSERT_TRUE(scratchOnchip.IsValid());
+  ASSERT_TRUE(scratchCcm.IsValid());
 
-  /*Array<u8> image(blockImage50_320x240_HEIGHT, blockImage50_320x240_WIDTH, scratch0);*/
-  Array<u8> image(blockImage50_320x240_HEIGHT, blockImage50_320x240_WIDTH, scratch1);
+  Array<u8> image(blockImage50_320x240_HEIGHT, blockImage50_320x240_WIDTH, scratchOffchip);
   image.Set(blockImage50_320x240, blockImage50_320x240_WIDTH*blockImage50_320x240_HEIGHT);
-
-  //image.Print("image", 0, 0, 0, 50);
 
   ASSERT_TRUE(IsBlockImage50_320x240Valid(image.Pointer(0,0), false));
 
-  FixedLengthList<BlockMarker> markers(maxMarkers, scratch2);
-  FixedLengthList<Array<f64> > homographies(maxMarkers, scratch2);
+  FixedLengthList<BlockMarker> markers(maxMarkers, scratchOnchip);
+  FixedLengthList<Array<f64> > homographies(maxMarkers, scratchOnchip);
 
   markers.set_size(maxMarkers);
   homographies.set_size(maxMarkers);
 
   for(s32 i=0; i<maxMarkers; i++) {
-    Array<f64> newArray(3, 3, scratch2);
+    Array<f64> newArray(3, 3, scratchOnchip);
     homographies[i] = newArray;
   } // for(s32 i=0; i<maximumSize; i++)
 
@@ -970,8 +967,8 @@ GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage_lowMemory)
       decode_minContrastRatio,
       maxConnectedComponentSegments,
       maxExtractedQuads,
-      scratch1,
-      scratch2);
+      scratchOnchip,
+      scratchCcm);
     const f64 time1 = GetTime();
 
     printf("totalTime: %dms\n", (s32)Round(1000*(time1-time0)));
@@ -995,7 +992,7 @@ GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage_lowMemory)
   ASSERT_TRUE(markers[0].corners[3] == Point<s16>(139,169));
 
   GTEST_RETURN_HERE;
-} // GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage_lowMemory)
+} // GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
 
 GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents)
 {
@@ -1759,7 +1756,7 @@ GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
   ConnectedComponents components(maxComponentSegments, imageWidth, ms);
   ASSERT_TRUE(components.IsValid());
 
-  const Result result = components.Extract2dComponents_FullImage(binaryImage, minComponentWidth, maxSkipDistance);
+  const Result result = components.Extract2dComponents_FullImage(binaryImage, minComponentWidth, maxSkipDistance, ms);
   ASSERT_TRUE(result == RESULT_OK);
 
   ASSERT_TRUE(components.SortConnectedComponentSegmentsById(ms) == RESULT_OK);
@@ -1914,7 +1911,7 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTracker);
   CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering);
   CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageGeneration);
-  CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage_lowMemory);
+  CALL_GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers);
   CALL_GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents);
   CALL_GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput);
   CALL_GTEST_TEST(CoreTech_Vision, LaplacianPeaks);

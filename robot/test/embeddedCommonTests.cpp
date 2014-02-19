@@ -2955,7 +2955,7 @@ GTEST_TEST(CoreTech_Common, SimpleOpenCVTest)
 #endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
 #if !defined(ANKICORETECH_EMBEDDED_USE_GTEST)
-void RUN_ALL_COMMON_TESTS(s32 &numPassedTests, s32 &numFailedTests)
+s32 RUN_ALL_COMMON_TESTS(s32 &numPassedTests, s32 &numFailedTests)
 {
   numPassedTests = 0;
   numFailedTests = 0;
@@ -3017,8 +3017,8 @@ void RUN_ALL_COMMON_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   //CALL_GTEST_TEST(CoreTech_Common, SimpleMatlabTest2);
   //CALL_GTEST_TEST(CoreTech_Common, SimpleOpenCVTest);
 
-//  printf("\n========================================================================\nUNIT TEST RESULTS:\nNumber Passed:%d\nNumber Failed:%d\n========================================================================\n", numPassedTests, numFailedTests);
+  //  printf("\n========================================================================\nUNIT TEST RESULTS:\nNumber Passed:%d\nNumber Failed:%d\n========================================================================\n", numPassedTests, numFailedTests);
 
-  return;
+  return numFailedTests;
 } // int RUN_ALL_COMMON_TESTS()
 #endif // #if !defined(ANKICORETECH_EMBEDDED_USE_GTEST)

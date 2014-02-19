@@ -33,8 +33,8 @@ namespace Anki
       const f32 decode_minContrastRatio,
       const s32 maxConnectedComponentSegments,
       const s32 maxExtractedQuads,
-      MemoryStack scratch1,
-      MemoryStack scratch2);
+      MemoryStack scratchOnchip,
+      MemoryStack scratchCcm);
 
     // Used by DetectFiducialMarkers
     //

@@ -25,8 +25,8 @@ Anki::Embedded::Matlab matlab(false);
 #if ANKICORETECH_EMBEDDED_USE_GTEST
 int main(int argc, char ** argv)
 #else
-int RUN_ALL_COMMON_TESTS(s32 &numPassedTests, s32 &numFailedTests);
-int RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests);
+s32 RUN_ALL_COMMON_TESTS(s32 &numPassedTests, s32 &numFailedTests);
+s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests);
 int main()
 #endif
 {
@@ -37,12 +37,12 @@ int main()
 
 #else // #if ANKICORETECH_EMBEDDED_USE_GTEST
 
-  s32 numPassedTests_vision;
-  s32 numFailedTests_vision;
+  s32 numPassedTests_vision = 0;
+  s32 numFailedTests_vision = 0;
   RUN_ALL_VISION_TESTS(numPassedTests_vision, numFailedTests_vision);
 
-  s32 numPassedTests_common;
-  s32 numFailedTests_common;
+  s32 numPassedTests_common = 0;
+  s32 numFailedTests_common = 0;
   RUN_ALL_COMMON_TESTS(numPassedTests_common, numFailedTests_common);
 
   const s32 numPassedTests = numPassedTests_common + numPassedTests_vision;
@@ -55,6 +55,8 @@ int main()
     "Number Passed:%d\n"
     "Number Failed:%d\n"
     "========================================================================\n", numPassedTests, numFailedTests);
+
+  const int result = numFailedTests;
 
 #endif // #if ANKICORETECH_EMBEDDED_USE_GTEST ... #else
 
