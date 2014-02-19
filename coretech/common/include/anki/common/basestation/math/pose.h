@@ -212,8 +212,13 @@ namespace Anki {
     // respect to the root / world pose.
     Pose3d getWithRespectTo(const Pose3d *otherPose) const;
     
-    // Check to see if two poses are the same.  Return true if so.  P_diff will
-    // contain the transformation from this pose to P_other.
+    // Check to see if two poses are the same.  Return true if so.
+    // If requested, P_diff will contain the transformation from this pose to
+    // P_other.
+    bool IsSameAs(const Pose3d& P_other,
+                  const float   distThreshold,
+                  const Radians angleThreshold) const;
+    
     bool IsSameAs(const Pose3d& P_other,
                   const float   distThreshold,
                   const Radians angleThreshold,
@@ -348,7 +353,14 @@ namespace Anki {
   inline const Pose3d* Pose3d::get_parent() const
   { return this->parent; }
 
-  
+  inline bool Pose3d::IsSameAs(const Pose3d& P_other,
+                       const float   distThreshold,
+                       const Radians angleThreshold) const
+  {
+    Pose3d P_diff_temp;
+    return this->IsSameAs(P_other, distThreshold, angleThreshold,
+                          P_diff_temp);
+  }
   
 } // namespace Anki
 
