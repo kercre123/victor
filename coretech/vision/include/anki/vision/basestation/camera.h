@@ -11,8 +11,14 @@
 
 #include <array>
 
+#include "json/json.h"
+
 //#include "anki/common/types.h"
 #include "anki/common/basestation/math/pose.h"
+
+#ifdef SIMULATOR
+#include <webots/Camera.hpp>
+#endif
 
 namespace Anki {
   
@@ -40,6 +46,13 @@ namespace Anki {
                         const f32 skew,
                         const std::vector<float> &distCoeffs);
       
+      // Construct from a Json node
+      CameraCalibration(const Json::Value& jsonNode);
+      
+#ifdef SIMULATOR
+      CameraCalibration(const webots::Camera* camera);
+#endif
+      
       // Accessors:
       u16     get_nrows()         const;
       u16     get_ncols()         const;
@@ -56,6 +69,8 @@ namespace Anki {
       //   0      fy     center_y;
       //   0       0         1    ]
       Matrix_3x3f get_calibrationMatrix() const;
+      
+      void CreateJson(Json::Value& jsonNode) const;
       
     protected:
       

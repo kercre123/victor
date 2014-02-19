@@ -8,6 +8,8 @@
 
 #include <algorithm>
 
+#include "anki/common/basestation/jsonTools.h"
+
 #if ANKICORETECH_USE_OPENCV
 #include "opencv2/calib3d/calib3d.hpp"
 #endif
@@ -58,7 +60,32 @@ namespace Anki {
               0.f);
      */
   }
-  
+    
+  CameraCalibration::CameraCalibration(const Json::Value &jsonNode)
+  {
+    CORETECH_ASSERT(jsonNode.isMember("nrows"));
+    nrows = JsonTools::GetValue<u16>(jsonNode["nrows"]);
+    
+    CORETECH_ASSERT(jsonNode.isMember("ncols"));
+    ncols = JsonTools::GetValue<u16>(jsonNode["ncols"]);
+    
+    CORETECH_ASSERT(jsonNode.isMember("focalLength_x"));
+    focalLength_x = JsonTools::GetValue<f32>(jsonNode["focalLength_x"]);
+    
+    CORETECH_ASSERT(jsonNode.isMember("focalLength_y"))
+    focalLength_y = JsonTools::GetValue<f32>(jsonNode["focalLength_y"]);
+    
+    CORETECH_ASSERT(jsonNode.isMember("center_x"))
+    center.x() = JsonTools::GetValue<f32>(jsonNode["center_x"]);
+
+    CORETECH_ASSERT(jsonNode.isMember("center_y"))
+    center.y() = JsonTools::GetValue<f32>(jsonNode["center_y"]);
+    
+    CORETECH_ASSERT(jsonNode.isMember("skew"))
+    skew = JsonTools::GetValue<f32>(jsonNode["skew"]);
+    
+    // TODO: Add distortion coefficients
+  }
   
   Matrix_3x3f CameraCalibration::get_calibrationMatrix(void) const
   {
@@ -72,6 +99,19 @@ namespace Anki {
     return K;
   } // get_calibrationMatrix()
   
+    
+  void CameraCalibration::CreateJson(Json::Value& jsonNode) const
+  {
+    jsonNode["nrows"] = nrows;
+    jsonNode["ncols"] = ncols;
+    jsonNode["focalLength_x"] = focalLength_x;
+    jsonNode["focalLength_y"] = focalLength_y;
+    jsonNode["center_x"] = center.x();
+    jsonNode["center_y"] = center.y();
+    jsonNode["skew"] = skew;
+  }
+    
+    
 #if ANKICORETECH_USE_OPENCV
   Pose3d Camera::computeObjectPoseHelper(const std::vector<cv::Point2f>& cvImagePoints,
                                          const std::vector<cv::Point3f>& cvObjPoints) const
