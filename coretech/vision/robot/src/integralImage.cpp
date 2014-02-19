@@ -8,7 +8,6 @@ For internal use only. No part of this code may be used without a signed non-dis
 **/
 
 #include "anki/vision/robot/integralImage.h"
-#include "anki/vision/robot/shaveKernels_vision_c.h"
 
 namespace Anki
 {
@@ -147,7 +146,6 @@ namespace Anki
     {
       AnkiAssert(this->IsValid());
       AnkiAssert(output.IsValid());
-      //AnkiAssert(this->minRow >= 0);
 
       // TODO: support these
       AnkiAssert(filter.left <= 0);
@@ -165,8 +163,6 @@ namespace Anki
       // Get the four pointers to the corners of the filter in the integral image.
       // The x offset is added at the end, because it might be invalid for x==0.
       // The -1 terms are because the rectangular sums should be inclusive.
-      /*const s32 topOffset = imageRow + filter.top - 1 + this->numBorderPixels - this->rowOffset + this->numBorderPixels;
-      const s32 bottomOffset = imageRow + filter.bottom + this->numBorderPixels - this->rowOffset + this->numBorderPixels;*/
       const s32 topOffset = imageRow - this->rowOffset + filter.top - 1 ;
       const s32 bottomOffset = imageRow - this->rowOffset + filter.bottom;
       const s32 leftOffset = filter.left - 1 + this->numBorderPixels;
@@ -179,27 +175,17 @@ namespace Anki
 
       s32 * restrict pOutput = output.Pointer(0,0);
 
-#if defined(USING_MOVIDIUS_COMPILER) && !defined(EMULATE_SHAVE_ON_LEON)
+      s32 x;
 
-      swcResetShave(0);
-      swcSetAbsoluteDefaultStack(0);
+      if(minX > 0)
+        memset(pOutput, 0, minX*sizeof(s32));
 
-      START_SHAVE_WITH_ARGUMENTS(0, ScrollingIntegralImage_u8_s32_FilterRow,
-        "iiiiiiii",
-        ConvertCMXAddressToShave(pIntegralImage_00),
-        ConvertCMXAddressToShave(pIntegralImage_01),
-        ConvertCMXAddressToShave(pIntegralImage_10),
-        ConvertCMXAddressToShave(pIntegralImage_11),
-        minX,
-        maxX,
-        this->imageWidth,
-        ConvertCMXAddressToShave(pOutput));
+      for(x=minX; x<=maxX; x++) {
+        pOutput[x] = pIntegralImage_11[x] - pIntegralImage_10[x] + pIntegralImage_00[x] - pIntegralImage_01[x];
+      }
 
-      swcWaitShave(0);
-
-#else
-      emulate_ScrollingIntegralImage_u8_s32_FilterRow(pIntegralImage_00, pIntegralImage_01, pIntegralImage_10, pIntegralImage_11, minX, maxX, this->imageWidth, pOutput);
-#endif
+      if((maxX+1) < imageWidth)
+        memset(pOutput+maxX+1, 0, (imageWidth - (maxX+1))*sizeof(s32));
 
       return RESULT_OK;
     }

@@ -85,19 +85,10 @@ extern "C" {
   void PrintF64(int (*writeChar)(int), f64 value); // Print a single float
   void PrintF64WithExponent(int (*writeChar)(int), f64 value); // Print a single float in format "significand * 2^exponent"
 
-#if defined(USING_MOVIDIUS_GCC_COMPILER)
-#define powf powF32S32
-#define pow powF64S32
-
-  f32 powF32S32(const f32 x, const s32 y);
-  f64 powF64S32(const f64 x, const s32 y);
-#endif // #if defined(USING_MOVIDIUS_GCC_COMPILER)
-
   // Data is the data to compute the CRC code of
   // dataLength is the number of bytes of data
   // Use initialCRC=0xFFFFFFFF for the first pass
-  u32 ComputeCRC32_littleEndian(const void * data, const s32 dataLength, const u32 initialCRC);
-  u32 ComputeCRC32_bigEndian(const void * data, const s32 dataLength, const u32 initialCRC);
+  u32 ComputeCRC32(const void * data, const s32 dataLength, const u32 initialCRC);
 
 #ifdef __cplusplus
 }

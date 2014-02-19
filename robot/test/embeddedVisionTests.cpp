@@ -1095,16 +1095,6 @@ GTEST_TEST(CoreTech_Vision, LaplacianPeaks)
   const s32 componentsX_groundTruth[66] = {105, 105, 106, 107, 108, 109, 109, 108, 107, 106, 105, 105, 105, 105, 106, 107, 108, 109, 108, 107, 106, 105, 105, 104, 104, 104, 104, 104, 103, 103, 103, 103, 103, 102, 101, 101, 101, 101, 101, 100, 100, 100, 100, 100, 101, 102, 103, 104, 104, 104, 103, 102, 101, 100, 100, 101, 102, 102, 102, 102, 102, 103, 104, 104, 105};
   const s32 componentsY_groundTruth[66] = {200, 201, 201, 201, 201, 201, 202, 202, 202, 202, 202, 203, 204, 205, 205, 205, 205, 205, 205, 205, 205, 205, 206, 206, 207, 208, 209, 210, 210, 209, 208, 207, 206, 206, 206, 207, 208, 209, 210, 210, 209, 208, 207, 206, 206, 206, 206, 206, 205, 204, 204, 204, 204, 204, 203, 203, 203, 202, 201, 200, 201, 201, 201, 200, 200};
 
-  //swcLeonDisableCaches();
-  //swcLeonFlushDcache();
-  //swcLeonFlushCaches();
-  //do{ printf("a\n"); } while(swcLeonIsCacheFlushPending());
-
-  //swcLeonDisableCaches();
-  //swcLeonFlushDcache();
-  //swcLeonFlushCaches();
-  //do{ printf("a:%d\n", componentsX_groundTruth[0]); } while(swcLeonIsCacheFlushPending());
-
   for(s32 i=0; i<LaplacianPeaks_BOUNDARY_LENGTH; i++) {
     boundary.PushBack(Point<s16>(componentsX_groundTruth[i], componentsY_groundTruth[i]));
   }

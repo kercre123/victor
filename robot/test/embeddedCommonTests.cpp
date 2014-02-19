@@ -26,7 +26,6 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/find.h"
 #include "anki/common/robot/interpolate.h"
 #include "anki/common/robot/arrayPatterns.h"
-#include "anki/common/robot/shaveKernels_c.h"
 #include "anki/common/robot/utilities.h"
 #include "anki/common/robot/serialize.h"
 #include "anki/common/robot/compress.h"
@@ -307,11 +306,7 @@ GTEST_TEST(CoreTech_Common, CRC32Code)
   const u32 data[] = {0x1234BEF2, 0xA342EE00, 0x00000000, 0xFFFFFFFF};
   const u32 initialCRC = 0xFFFFFFFF;
 
-#if defined(USING_MOVIDIUS_GCC_COMPILER)
-  const u32 crc = ComputeCRC32_bigEndian(&data[0], numDataBytes, initialCRC);
-#else
-  const u32 crc = ComputeCRC32_littleEndian(&data[0], numDataBytes, initialCRC);
-#endif
+  const u32 crc = ComputeCRC32(&data[0], numDataBytes, initialCRC);
 
   const u32 crc_groundTruth = 0xF2939FF3;
 
@@ -380,89 +375,6 @@ GTEST_TEST(CoreTech_Common, MemoryStackIterator)
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Common, MemoryStackIterator)
-
-GTEST_TEST(CoreTech_Common, ShaveAddTest)
-{
-  const s32 numElements = 3000;
-
-  AnkiAssert(numElements % 4 == 0);
-
-  // On the Myriad, the buffer is local to the SHAVE we'll be using to process
-  // On the PC, the buffer is just the normal buffer that is somewhere in CMX
-#if defined(USING_MOVIDIUS_COMPILER) && !defined(EMULATE_SHAVE_ON_LEON)
-  MemoryStack ms(shave0_localBuffer, LOCAL_SHAVE_BUFFER_SIZE);
-#else
-  ASSERT_TRUE(offchipBuffer != NULL);
-  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
-#endif
-
-  ASSERT_TRUE(ms.IsValid());
-
-  Array<s32> in1(1, numElements, ms);
-  Array<s32> in2(1, numElements, ms);
-  Array<s32> out(1, numElements, ms);
-
-  s32 * restrict pIn1 = in1.Pointer(0,0);
-  s32 * restrict pIn2 = in2.Pointer(0,0);
-  s32 * restrict pOut = out.Pointer(0,0);
-
-  for(s32 i=0; i<numElements; i++) {
-    pIn1[i] = i + 1;
-    pIn2[i] = 2*i + 10;
-  }
-
-  //printf("Leon: 0x%x=%d 0x%x=%d\n", &(pIn1[100]), pIn1[100], &(pIn2[303]), pIn2[303]);
-  double t0 = GetTime();
-#if defined(USING_MOVIDIUS_COMPILER) && !defined(EMULATE_SHAVE_ON_LEON)
-  swcResetShave(0);
-  swcSetAbsoluteDefaultStack(0);
-
-  START_SHAVE_WITH_ARGUMENTS(0, AddVectors_s32x4,
-    "iiii",
-    ConvertCMXAddressToShave(pIn1),
-    ConvertCMXAddressToShave(pIn2),
-    ConvertCMXAddressToShave(pOut),
-    numElements);
-
-  swcWaitShave(0);
-#else // #if defined(USING_MOVIDIUS_COMPILER) && !defined(EMULATE_SHAVE_ON_LEON)
-  emulate_AddVectors_s32x4(
-    pIn1,
-    pIn2,
-    pOut,
-    numElements);
-#endif // #if defined(USING_MOVIDIUS_COMPILER) && !defined(EMULATE_SHAVE_ON_LEON) ... #else
-  double t1 = GetTime();
-
-  printf("Completed in %f seconds\n", t1-t0);
-
-  for(s32 i=0; i<numElements; i++) {
-    if(pOut[i] != (3*i + 11)) {
-      printf("Error at %d: %d!=%d\n", i, pOut[i], (3*i + 11));
-    }
-    ASSERT_TRUE(pOut[i] == (3*i + 11));
-  }
-
-  GTEST_RETURN_HERE;
-} // GTEST_TEST(CoreTech_Common, ShaveAddTest)
-
-GTEST_TEST(CoreTech_Common, ShavePrintfTest)
-{
-#if defined(USING_MOVIDIUS_COMPILER) && !defined(EMULATE_SHAVE_ON_LEON)
-  swcResetShave(0);
-  swcSetAbsoluteDefaultStack(0);
-
-  START_SHAVE(0, PrintTest);
-
-  swcWaitShave(0);
-#else
-  emulate_PrintTest();
-#endif // #if defined(USING_MOVIDIUS_COMPILER) && !defined(EMULATE_SHAVE_ON_LEON)
-
-  printf("If on the Myriad, the previous line should read: \"Shave printf test passed\"\n");
-
-  GTEST_RETURN_HERE;
-} // GTEST_TEST(CoreTech_Common, ShavePrintfTest)
 
 GTEST_TEST(CoreTech_Common, MatrixTranspose)
 {
@@ -2965,8 +2877,6 @@ s32 RUN_ALL_COMMON_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   CALL_GTEST_TEST(CoreTech_Common, SerializedBuffer);
   CALL_GTEST_TEST(CoreTech_Common, CRC32Code);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStackIterator);
-  CALL_GTEST_TEST(CoreTech_Common, ShaveAddTest);
-  CALL_GTEST_TEST(CoreTech_Common, ShavePrintfTest);
   CALL_GTEST_TEST(CoreTech_Common, MatrixTranspose);
   CALL_GTEST_TEST(CoreTech_Common, CholeskyDecomposition);
   CALL_GTEST_TEST(CoreTech_Common, ExplicitPrintf);

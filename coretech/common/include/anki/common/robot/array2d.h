@@ -31,45 +31,7 @@ namespace Anki
     template<typename Type> class ConstArraySlice;
     template<typename Type> class ConstArraySliceExpression;
 
-    //template<typename Type1, typename Type2> class Find;
-
     // #pragma mark --- Array Definitions ---
-
-    // Factory method to create an Array from the heap. The data of the returned Array must be freed by the user.
-    // This is separate from the normal constructor, as Array objects are not supposed to manage memory
-#ifndef USING_MOVIDIUS_COMPILER
-    //template<typename Type> Array<Type> AllocateArrayFromHeap(const s32 numRows, const s32 numCols, const Flags::Buffer flags=Flags::Buffer(true,false))
-    //{
-    //  const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array<Type>::ComputeMinimumRequiredMemory(numRows, numCols, flags); // The required memory, plus a bit more
-
-    //  Type * const rawDataPointer = reinterpret_cast<Type*>(calloc(requiredMemory, 1));
-    //  Type * const dataPointer = reinterpret_cast<Type*>(RoundUp<size_t>(reinterpret_cast<size_t>(rawDataPointer), MEMORY_ALIGNMENT));
-
-    //  const s32 offsetAmount = static_cast<s32>(reinterpret_cast<size_t>(dataPointer) - reinterpret_cast<size_t>(rawDataPointer));
-
-    //  Array<Type> mat(numRows, numCols, dataPointer, requiredMemory-offsetAmount, flags);
-
-    //  mat.set_rawDataPointer(rawDataPointer);
-
-    //  return mat;
-    //}
-
-    //template<typename Type> FixedPointArray<Type> AllocateFixedPointArrayFromHeap(const s32 numRows, const s32 numCols, const s32 numFractionalBits, const Flags::Buffer flags=Flags::Buffer(true,false))
-    //{
-    //  const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array<Type>::ComputeMinimumRequiredMemory(numRows, numCols, flags); // The required memory, plus a bit more
-
-    //  Type * const rawDataPointer = reinterpret_cast<Type*>(calloc(requiredMemory, 1));
-    //  Type * const dataPointer = reinterpret_cast<Type*>(RoundUp<size_t>(reinterpret_cast<size_t>(rawDataPointer), MEMORY_ALIGNMENT));
-
-    //  const s32 offsetAmount = static_cast<s32>(reinterpret_cast<size_t>(dataPointer) - reinterpret_cast<size_t>(rawDataPointer));
-
-    //  FixedPointArray<Type> mat(numRows, numCols, dataPointer, requiredMemory-offsetAmount, numFractionalBits, flags);
-
-    //  mat.set_rawDataPointer(rawDataPointer);
-
-    //  return mat;
-    //}
-#endif // #ifndef USING_MOVIDIUS_COMPILER
 
     template<typename Type> s32 Array<Type>::ComputeRequiredStride(const s32 numCols, const Flags::Buffer flags)
     {
@@ -100,16 +62,6 @@ namespace Anki
 
     template<typename Type> Array<Type>::Array(const s32 numRows, const s32 numCols, void * data, const s32 dataLength, const Flags::Buffer flags)
     {
-#if defined(USING_MOVIDIUS_COMPILER)
-#if defined(USING_MOVIDIUS_GCC_COMPILER)
-      data = ConvertCMXAddressToLeon(data);
-#elif defined(USING_MOVIDIUS_SHAVE_COMPILER)
-      data = ConvertCMXAddressToShave(data);
-#else
-#error Unknown Movidius compiler
-#endif
-#endif // #if defined(USING_MOVIDIUS_COMPILER)
-
       InvalidateArray();
 
       AnkiConditionalErrorAndReturn(reinterpret_cast<size_t>(data)%MEMORY_ALIGNMENT == 0,
@@ -148,16 +100,6 @@ namespace Anki
       s32 numBytesAllocated = 0;
 
       void * allocatedBuffer = AllocateBufferFromMemoryStack(numRows, ComputeRequiredStride(numCols, flags), memory, numBytesAllocated, flags, false);
-
-#if defined(USING_MOVIDIUS_COMPILER)
-#if defined(USING_MOVIDIUS_GCC_COMPILER)
-      allocatedBuffer = ConvertCMXAddressToLeon(allocatedBuffer);
-#elif defined(USING_MOVIDIUS_SHAVE_COMPILER)
-      allocatedBuffer = ConvertCMXAddressToShave(allocatedBuffer);
-#else
-#error Unknown Movidius compiler
-#endif
-#endif // #if defined(USING_MOVIDIUS_COMPILER)
 
       InitializeBuffer(numRows,
         numCols,
@@ -469,8 +411,8 @@ namespace Anki
       // This is a little tough to write a general case for, so this method should be specialized
       // for each relevant case
       AnkiAssert(false);
-			
-			return 0;
+
+      return 0;
     }
 
     template<typename Type> s32 Array<Type>::Set(const Type * const values, const s32 numValues)
@@ -677,7 +619,7 @@ namespace Anki
         for(s32 x=realMinX; x<realMaxX; x++) {
           if(Flags::TypeCharacteristics<Type>::isBasicType) {
             if(Flags::TypeCharacteristics<Type>::isInteger) {
-              printf("%d ", static_cast<s32>(pThisData[x]));              
+              printf("%d ", static_cast<s32>(pThisData[x]));
             } else {
               if(version==1) {
                 printf("%f ", (float)pThisData[x]);

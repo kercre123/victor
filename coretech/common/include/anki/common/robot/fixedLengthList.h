@@ -20,18 +20,7 @@ namespace Anki
 {
   namespace Embedded
   {
-// #pragma mark --- FixedLengthList Definitions ---
-
-#ifndef USING_MOVIDIUS_COMPILER
-    //template<typename Type> FixedLengthList<Type> AllocateFixedLengthListFromHeap(s32 maximumSize, const Flags::Buffer flags=Flags::Buffer(true,false,false))
-    //{
-    //  const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array<Type>::ComputeMinimumRequiredMemory(1, maximumSize, flags); // The required memory, plus a bit more
-
-    //  FixedLengthList<Type> mat(maximumSize, calloc(requiredMemory, 1), requiredMemory, flags);
-
-    //  return mat;
-    //} // FixedLengthList AllocateFixedLengthListFromHeap_Type(s32 maximumSize, const Flags::Buffer flags=Flags::Buffer(true,false))
-#endif // #ifndef USING_MOVIDIUS_COMPILER
+    // #pragma mark --- FixedLengthList Definitions ---
 
     template<typename Type> inline Type* FixedLengthList<Type>::Pointer(const s32 index)
     {

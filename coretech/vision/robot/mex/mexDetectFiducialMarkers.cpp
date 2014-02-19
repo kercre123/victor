@@ -2,7 +2,9 @@
 
 #include "anki/common/robot/matlabInterface.h"
 
-#include "anki/vision/robot/miscVisionKernels.h"
+#include "anki/vision/robot/lucasKanade.h"
+#include "anki/vision/robot/fiducialMarkers.h"
+#include "anki/vision/robot/fiducialDetection.h"
 
 #include <string.h>
 #include <vector>
@@ -36,64 +38,65 @@ using namespace Anki::Embedded;
 // quads_quadSymmetryThreshold = 1.5;
 // quads_minDistanceFromImageEdge = 2;
 // decode_minContrastRatio = 1.25;
-// [quads, blockTypes, faceTypes, orientations] = mexSimpleDetectorSteps12345(image, scaleImage_numPyramidLevels, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_percentHorizontal, component_percentVertical, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio);
+// [quads, blockTypes, faceTypes, orientations] = mexDetectFiducialMarkers(image, scaleImage_numPyramidLevels, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_percentHorizontal, component_percentVertical, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio);
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
-  AnkiConditionalErrorAndReturn(nrhs == 16 && nlhs == 4, "mexSimpleDetectorSteps12345", "Call this function as following: [quads, blockTypes, faceTypes, orientations] = mexSimpleDetectorSteps12345(uint8(image), scaleImage_useWhichAlgorithm, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_percentHorizontal, component_percentVertical, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio);");
+  const s32 maxMarkers = 100;
+  const s32 maxExtractedQuads = 1000/2;
+  const s32 maxConnectedComponentSegments = 5000; // 25000/4 = 6250
+
+  AnkiConditionalErrorAndReturn(nrhs == 16 && nlhs == 4, "mexDetectFiducialMarkers", "Call this function as following: [quads, blockTypes, faceTypes, orientations] = mexDetectFiducialMarkers(uint8(image), scaleImage_useWhichAlgorithm, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_percentHorizontal, component_percentVertical, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio);");
 
   const s32 bufferSize = 10000000;
   MemoryStack memory(malloc(bufferSize), bufferSize);
-  AnkiConditionalErrorAndReturn(memory.IsValid(), "mexSimpleDetectorSteps12345", "Memory could not be allocated");
+  AnkiConditionalErrorAndReturn(memory.IsValid(), "mexDetectFiducialMarkers", "Memory could not be allocated");
 
   Array<u8> image = mxArrayToArray<u8>(prhs[0], memory);
-  const CharacteristicScaleAlgorithm scaleImage_useWhichAlgorithm = static_cast<CharacteristicScaleAlgorithm>(static_cast<s32>(mxGetScalar(prhs[1])));
-  const s32 scaleImage_numPyramidLevels = static_cast<s32>(mxGetScalar(prhs[2]));
-  const s32 scaleImage_thresholdMultiplier = static_cast<s32>(Round(pow(2,16)*mxGetScalar(prhs[3]))); // Convert from double to SQ15.16
-  const s16 component1d_minComponentWidth = static_cast<s16>(mxGetScalar(prhs[4]));
-  const s16 component1d_maxSkipDistance = static_cast<s16>(mxGetScalar(prhs[5]));
-  const s32 component_minimumNumPixels = static_cast<s32>(mxGetScalar(prhs[6]));
-  const s32 component_maximumNumPixels = static_cast<s32>(mxGetScalar(prhs[7]));
-  const s32 component_sparseMultiplyThreshold = static_cast<s32>(Round(pow(2,5)*mxGetScalar(prhs[8]))); // Convert from double to SQ26.5
-  const s32 component_solidMultiplyThreshold = static_cast<s32>(Round(pow(2,5)*mxGetScalar(prhs[9]))); // Convert from double to SQ26.5
-  const s32 component_percentHorizontal = static_cast<s32>(Round(pow(2,8)*mxGetScalar(prhs[10]))); // Convert from double to SQ23.8
-  const s32 component_percentVertical = static_cast<s32>(Round(pow(2,8)*mxGetScalar(prhs[11]))); // Convert from double to SQ23.8
-  const s32 quads_minQuadArea = static_cast<s32>(mxGetScalar(prhs[12]));
-  const s32 quads_quadSymmetryThreshold = static_cast<s32>(Round(pow(2,8)*mxGetScalar(prhs[13]))); // Convert from double to SQ23.8
-  const s32 quads_minDistanceFromImageEdge = static_cast<s32>(mxGetScalar(prhs[14]));
-  const f32 decode_minContrastRatio = static_cast<f32>(mxGetScalar(prhs[15]));
+  const s32 scaleImage_numPyramidLevels = static_cast<s32>(mxGetScalar(prhs[1]));
+  const s32 scaleImage_thresholdMultiplier = static_cast<s32>(Round(pow(2,16)*mxGetScalar(prhs[2]))); // Convert from double to SQ15.16
+  const s16 component1d_minComponentWidth = static_cast<s16>(mxGetScalar(prhs[3]));
+  const s16 component1d_maxSkipDistance = static_cast<s16>(mxGetScalar(prhs[4]));
+  const s32 component_minimumNumPixels = static_cast<s32>(mxGetScalar(prhs[5]));
+  const s32 component_maximumNumPixels = static_cast<s32>(mxGetScalar(prhs[6]));
+  const s32 component_sparseMultiplyThreshold = static_cast<s32>(Round(pow(2,5)*mxGetScalar(prhs[7]))); // Convert from double to SQ26.5
+  const s32 component_solidMultiplyThreshold = static_cast<s32>(Round(pow(2,5)*mxGetScalar(prhs[8]))); // Convert from double to SQ26.5
+  const s32 component_percentHorizontal = static_cast<s32>(Round(pow(2,8)*mxGetScalar(prhs[9]))); // Convert from double to SQ23.8
+  const s32 component_percentVertical = static_cast<s32>(Round(pow(2,8)*mxGetScalar(prhs[10]))); // Convert from double to SQ23.8
+  const s32 quads_minQuadArea = static_cast<s32>(mxGetScalar(prhs[11]));
+  const s32 quads_quadSymmetryThreshold = static_cast<s32>(Round(pow(2,8)*mxGetScalar(prhs[12]))); // Convert from double to SQ23.8
+  const s32 quads_minDistanceFromImageEdge = static_cast<s32>(mxGetScalar(prhs[13]));
+  const f32 decode_minContrastRatio = static_cast<f32>(mxGetScalar(prhs[14]));
 
-  AnkiConditionalErrorAndReturn(image.IsValid(), "mexSimpleDetectorSteps12345", "Could not allocate image");
+  AnkiConditionalErrorAndReturn(image.IsValid(), "mexDetectFiducialMarkers", "Could not allocate image");
 
   const u32 numBytes0 = 10000000;
   MemoryStack scratch0(calloc(numBytes0,1), numBytes0);
-  AnkiConditionalErrorAndReturn(scratch0.IsValid(), "mexSimpleDetectorSteps12345", "Scratch0 could not be allocated");
+  AnkiConditionalErrorAndReturn(scratch0.IsValid(), "mexDetectFiducialMarkers", "Scratch0 could not be allocated");
 
   const u32 numBytes1 = 10000000;
   MemoryStack scratch1(calloc(numBytes1,1), numBytes0);
-  AnkiConditionalErrorAndReturn(scratch1.IsValid(), "mexSimpleDetectorSteps12345", "Scratch1 could not be allocated");
+  AnkiConditionalErrorAndReturn(scratch1.IsValid(), "mexDetectFiducialMarkers", "Scratch1 could not be allocated");
 
   const u32 numBytes2 = 10000000;
   MemoryStack scratch2(calloc(numBytes2,1), numBytes2);
-  AnkiConditionalErrorAndReturn(scratch2.IsValid(), "mexSimpleDetectorSteps12345", "Scratch2 could not be allocated");
+  AnkiConditionalErrorAndReturn(scratch2.IsValid(), "mexDetectFiducialMarkers", "Scratch2 could not be allocated");
 
-  const s32 maxMarkers = 100;
   FixedLengthList<BlockMarker> markers(maxMarkers, scratch0);
-  FixedLengthList<Array<f64>> homographies(maxMarkers, scratch0);
+  FixedLengthList<Array<f32>> homographies(maxMarkers, scratch0);
 
   markers.set_size(maxMarkers);
   homographies.set_size(maxMarkers);
 
   for(s32 i=0; i<maxMarkers; i++) {
-    Array<f64> newArray(3, 3, scratch0);
+    Array<f32> newArray(3, 3, scratch0);
     homographies[i] = newArray;
   }
 
   {
-    const Result result = SimpleDetector_Steps12345(
+    const Result result = DetectFiducialMarkers(
       image,
       markers,
       homographies,
-      scaleImage_useWhichAlgorithm,
       scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier,
       component1d_minComponentWidth, component1d_maxSkipDistance,
       component_minimumNumPixels, component_maximumNumPixels,
@@ -101,10 +104,12 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       component_percentHorizontal, component_percentVertical,
       quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge,
       decode_minContrastRatio,
+      maxConnectedComponentSegments,
+      maxExtractedQuads,
       scratch1,
       scratch2);
 
-    AnkiConditionalErrorAndReturn(result == RESULT_OK, "mexSimpleDetectorSteps12345", "SimpleDetector_Steps12345 Failed");
+    AnkiConditionalErrorAndReturn(result == RESULT_OK, "mexDetectFiducialMarkers", "SimpleDetector_Steps12345 Failed");
   }
 
   const s32 numMarkers = markers.get_size();
