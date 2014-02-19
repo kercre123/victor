@@ -13,7 +13,6 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define _ANKICORETECHEMBEDDED_COMMON_POINT_DECLARATIONS_H_
 
 #include "anki/common/robot/config.h"
-#include "anki/common/robot/cInterfaces_c.h"
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
 #include "opencv2/core/core.hpp"
@@ -23,7 +22,7 @@ namespace Anki
 {
   namespace Embedded
   {
-// #pragma mark --- Point Class Declaration ---
+    // #pragma mark --- Point Class Declaration ---
     // 2D Point Class
     //
     // WARNING:
@@ -64,7 +63,7 @@ namespace Anki
       f32 Dist(const Point<Type> &point2) const;
     }; // class Point<Type>
 
-// #pragma mark --- Rectangle Class Declaration ---
+    // #pragma mark --- Rectangle Class Declaration ---
 
     // A rectangle is bounded by a left, right, top, and bottom
     //
@@ -105,7 +104,7 @@ namespace Anki
       Type get_height() const;
     }; // class Rectangle<Type>
 
-// #pragma mark --- Quadrilateral Class Declaration ---
+    // #pragma mark --- Quadrilateral Class Declaration ---
 
     // A Quadrilateral is defined by four Point objects
     template<typename Type> class Quadrilateral
@@ -140,9 +139,6 @@ namespace Anki
       inline const Point<Type>& operator[] (const s32 index) const;
       inline Point<Type>& operator[] (const s32 index);
     }; // class Quadrilateral<Type>
-
-// #pragma mark --- C Conversions ---
-    C_Rectangle_s16 get_C_Rectangle_s16(const Rectangle<s16> &rect);
   } // namespace Embedded
 } // namespace Anki
 

@@ -19,7 +19,6 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/errorHandling.h"
 #include "anki/common/robot/geometry.h"
 #include "anki/common/robot/utilities_c.h"
-#include "anki/common/robot/cInterfaces_c.h"
 #include "anki/common/robot/sequences.h"
 #include "anki/common/robot/matrix.h"
 
@@ -681,9 +680,6 @@ namespace Anki
 
     template<> template<> s32 Array<u8>::SetCast(const s32 * const values, const s32 numValues);
     template<> template<> s32 Array<s16>::SetCast(const s32 * const values, const s32 numValues);
-
-    // #pragma mark --- C Conversions ---
-    C_Array_s32 get_C_Array_s32(Array<s32> &array);
   } // namespace Embedded
 } //namespace Anki
 
