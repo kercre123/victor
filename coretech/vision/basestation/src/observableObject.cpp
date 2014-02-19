@@ -330,8 +330,11 @@ namespace Anki {
         
         // Compute the object pose from all the corresponding 2d (image)
         // and 3d (object) points
+        const Pose3d* originalParent = pose_.get_parent();
         pose_ = camera->computeObjectPose(imgPoints, objPoints);
-      
+        if(pose_.get_parent() != originalParent) {
+          pose_ = pose_.getWithRespectTo(originalParent);
+        }
       } // IF more than one member
       
     } // RecomputePose()
