@@ -20,20 +20,20 @@ classdef CozmoVisionProcessor < handle
         MESSAGE_COMMAND          = char(sscanf('DD', '%2x'));
         MESSAGE_ID_DEFINITION    = char(sscanf('D0', '%2x'));
         HEAD_CALIBRATION         = char(sscanf('C1', '%2x'));
-        MAT_CALIBRATION          = char(sscanf('C2', '%2x'));
         DETECT_COMMAND           = char(sscanf('AB', '%2x'));
-        SET_DOCKING_BLOCK        = char(sscanf('BC', '%2x'));
+        SET_MARKER_TO_TRACK      = char(sscanf('BC', '%2x'));
         TRACK_COMMAND            = char(sscanf('CD', '%2x'));
-        MAT_ODOMETRY_COMMAND     = char(sscanf('DE', '%2x'));
-        MAT_LOCALIZATION_COMMAND = char(sscanf('EF', '%2x'));
+        ROBOT_STATE_MESSAGE      = char(sscanf('DE', '%2x'));
         DISPLAY_IMAGE_COMMAND    = char(sscanf('F0', '%2x'));
                     
         LIFT_DISTANCE = 34;  % in mm, forward from robot origin
         
         % Robot Geometry
-        NECK_JOINT_POSITION = [-15  0   45]; % relative to robot origin
-        HEAD_CAM_ROTATION   = [0 0 1; -1 0 0; 0 -1 0]; % (rodrigues(-pi/2*[0 1 0])*rodrigues(pi/2*[1 0 0]))'
-        HEAD_CAM_POSITION   = [ 20  0  -10]; % relative to neck joint
+        NECK_JOINT_POSITION = [-15.5  0  25]; % relative to robot origin
+        HEAD_CAM_ROTATION   = [0 0 1; -1 0 0; 0 -1 0]; % rodrigues(-pi/2*[1 0 0])*rodrigues(pi/2*[0 1 0])
+        %HEAD_CAM_ROTATION   = [0 1 0; 0 0 -1; -1 0 0];
+        HEAD_CAM_POSITION   = [ 25  0  15]; % relative to neck joint
+        WHEEL_RADIUS        = 20;
         
     end % Constant Properties
     
@@ -49,20 +49,18 @@ classdef CozmoVisionProcessor < handle
         % LUT for enumerated message ID values 
         messageIDs;
         
-        dockingBlock;
+        markerToTrack;
         
         % Camera calibration information:
         headCam;
-        headCalibrationMatrix;
-        %matCalibrationMatrix;
-        matCamPixPerMM;
         
         blockPose;
-        %headCamPose;
         robotPose;
         neckPose;
         marker3d;
         H_init;
+        
+        headAngleNoiseStdDev;
         
         % On simulator, no need to flip.  On robot, need to flip
         flipImage;
@@ -72,12 +70,12 @@ classdef CozmoVisionProcessor < handle
         trackerType;
         trackingResolution;
         
+        markerLibrary;
         detectionResolution;
         
         block;
         
-        % For mat localization
-        matLocalizationResolution;
+        
         
         % Display handles
         h_fig;
@@ -90,6 +88,11 @@ classdef CozmoVisionProcessor < handle
         h_distError;
         h_leftRightError;
         h_angleError;
+        
+        h_fig_localize;
+        h_path;
+        h_positionError;
+        h_orientationError;
         
         escapePressed;
     end
@@ -105,8 +108,12 @@ classdef CozmoVisionProcessor < handle
             if ~isa(data, 'uint8') && this.doEndianSwap
                data = swapbytes(data); 
             end
-                
+            try
             castedData = typecast(data, outputType);
+            catch
+                desktop
+                keyboard
+            end
             
             if ~strcmp(outputType, 'uint8') && this.doEndianSwap
                 castedData = swapbytes(castedData);
@@ -126,13 +133,23 @@ classdef CozmoVisionProcessor < handle
             FlipImage = true;
             TrackerType = 'affine';
             TrackingResolution = [80 60];
-            MatLocalizationResolution = [320 240];
             DetectionResolution = [320 240];
             Verbosity = 1;
             DoEndianSwap = false; % false for simulator, true with Movidius
             TIME_STEP = 30; %#ok<PROP>
-
+            MarkerLibraryFile = [];
+            HeadAngleNoiseStdDev = 1; % in degrees
+            
             parseVarargin(varargin{:});
+            
+            if ~isempty(MarkerLibraryFile)
+                temp = load(MarkerLibraryFile);
+                if ~isfield(temp, 'markerLibrary') || ~isa(temp.markerLibrary, 'VisionMarkerLibrary')
+                    error('No VisionMarkerLibrary found in the specified file.');
+                end 
+                this.markerLibrary = temp.markerLibrary;
+                clear temp
+            end
             
             assert(isa(SerialDevice, 'serial') || ...
                 isa(SerialDevice, 'SimulatedSerial'), ...
@@ -142,6 +159,8 @@ classdef CozmoVisionProcessor < handle
             
             fclose(this.serialDevice);
             fopen(this.serialDevice);
+            
+            this.headAngleNoiseStdDev = HeadAngleNoiseStdDev;
             
             this.doEndianSwap = DoEndianSwap;
                         
@@ -156,20 +175,17 @@ classdef CozmoVisionProcessor < handle
             this.detectionResolution = DetectionResolution;
             
             this.desiredBufferSize = this.computeDesiredBufferLength(this.detectionResolution);
-            
-            this.matLocalizationResolution = MatLocalizationResolution;
-            this.dockingBlock = 0;
+           
+            this.markerToTrack = [];
                         
             % Set up Robot head camera geometry
-            this.robotPose = Pose();
+            this.robotPose = Pose(-pi/2*[0 0 1], [0;0;CozmoVisionProcessor.WHEEL_RADIUS]);
             this.neckPose = Pose([0 0 0], this.NECK_JOINT_POSITION);
             this.neckPose.parent = this.robotPose;
             
-            WIDTH = BlockMarker3D.ReferenceWidth;
+            %WIDTH = BlockMarker3D.ReferenceWidth;
             %this.marker3d = WIDTH/2 * [-1 -1 0; -1 1 0; 1 -1 0; 1 1 0];
-            this.marker3d = WIDTH/2 * [0 1 1; 0 1 -1; 0 -1 1; 0 -1 -1];
             
-                        
             this.h_fig = namedFigure('CozmoVisionProcessor', ...
                 'KeypressFcn', @(src,edata)this.keyPressCallback(src,edata));
             this.h_axes = subplot(1,1,1, 'Parent', this.h_fig);
@@ -215,11 +231,40 @@ classdef CozmoVisionProcessor < handle
             
             colormap(this.h_fig, 'gray');
             
+            
+            this.h_fig_localize = namedFigure('CozmoLocalization');
+            subplot(3,1,1, 'Parent', this.h_fig_localize)
+            hold off, this.h_path(1) = plot(nan, nan, 'r+-');
+            hold on, this.h_path(2) = plot(nan, nan, 'bx-');
+            grid on
+            axis equal
+            title('Robot Path'), xlabel('X (mm)'), ylabel('Y (mm)')
+            
+            subplot(3,1,2, 'Parent', this.h_fig_localize);
+            cla
+            this.h_positionError = plot(nan, nan, 'ro-');
+            title('Position Error'), xlabel('Time (s)'), ylabel('Error (mm)')
+            
+            subplot(3,1,3, 'Parent', this.h_fig_localize);
+            cla
+            this.h_orientationError = plot(nan, nan, 'ro-');
+            title('Orientation Error'), xlabel('Time (s)'), ylabel('Error (degrees)')
+            
         end % Constructor: CozmoVisionProcessor()
        
         function done = get.isDone(this)
             if isa(this.serialDevice, 'SimulatedSerial')
                 done = this.escapePressed || wb_robot_step(this.TIME_STEP) == -1;
+                
+                %                 % Display a profile report after some simulation time has
+                %                 % passed
+                %                 if wb_robot_get_time() > 2
+                %                     S = profile('STATUS');
+                %                     if strcmp(S.ProfilerStatus, 'on')
+                %                         profile report
+                %                         profile off
+                %                     end
+                %                 end
             else
                 done = this.escapePressed;
             end
@@ -234,9 +279,9 @@ classdef CozmoVisionProcessor < handle
             
             this.serialBuffer = [];
             this.escapePressed = false;
-            
+
             while ~this.isDone
-                t = tic;
+                %t = tic;
                 
                 this.Update();
 
@@ -334,106 +379,6 @@ classdef CozmoVisionProcessor < handle
         end % FUNCTION PacketToImage()
     
         
-        function updateBlockPose(this, H)
-            
-            this.block.pose = this.headCam.computeExtrinsics(...
-                this.LKtracker.corners, this.marker3d);
-            this.block.pose.parent = this.headCam.pose;
-            
-            %{
-            % Compute pose of block w.r.t. camera
-            % De-embed the initial 3D pose from the homography:
-            scale = mean([norm(H(:,1));norm(H(:,2))]);
-            %scale = H(3,3);
-            H = H/scale;
-            
-            u1 = H(:,1);
-            u1 = u1 / norm(u1);
-            u2 = H(:,2) - dot(u1,H(:,2)) * u1;
-            u2 = u2 / norm(u2);
-            u3 = cross(u1,u2);
-            R = [u1 u2 u3];
-            %Rvec = rodrigues(Rmat);
-            T    = H(:,3);
-            
-            this.block.pose = Pose(R,T);
-            this.block.pose.parent = this.headCam.pose;
-            %} 
-
-            %{
-            desktop
-            keyboard
-                                    
-            % Draw the block reprojected in the camera
-            pos = getPosition(this.block);
-            
-            X = reshape(pos(:,1), 4, []);
-            Y = reshape(pos(:,2), 4, []);
-            Z = reshape(pos(:,3), 4, []);
-            
-            [u,v] = this.headCam.projectPoints(X, Y, Z);
-            
-            if any(u(:)>=1) || any(u(:)<=this.trackingResolution(1)) || ...
-                    any(v(:)>=1) || any(v(:)<=this.trackingResolution(2))
-                
-                w = zeros(size(u));
-                h_block = findobj(this.h_axes, 'Tag', 'Block');
-                if isempty(h_block)
-                    patch(u,v,w, this.block.color, 'FaceAlpha', 0.3, ...
-                        'LineWidth', 3, 'Parent', this.h_axes, 'Tag', 'Block');
-                else
-                    set(h_block, 'XData', u, 'YData', v, 'ZData', w);
-                end
-                
-                % Plot block origin:
-                h_origin = findobj(this.h_axes, 'Tag', 'BlockOrigin');
-                if isempty(h_origin)
-                    plot(u(1), v(1), 'o', 'MarkerSize', 12, ...
-                        'MarkerEdgeColor', 'k', 'MarkerFaceColor', this.block.color, ...
-                        'LineWidth', 2, ...
-                        'Parent', this.h_axes, 'Tag', 'BlockOrigin');
-                else
-                    set(h_origin, 'XData', u(1), 'YData', v(1));
-                end
-                
-            end
-            
-            % Draw the block's markers reprojected in the camera
-            for i_marker = 1:this.block.numMarkers
-                marker = this.block.markers{i_marker};
-                                
-                % Get the position of the marker w.r.t. the camera, ready for
-                % projection:
-                P = getPosition(marker, this.headCam.pose);
-                
-                [u,v] = this.headCam.projectPoints(P);
-                
-                if any(u(:)>=1) || any(u(:)<=this.trackingResolution(1)) || ...
-                        any(v(:)>=1) || any(v(:)<=this.trackingResolution(2))
-                    
-                    w = .01*ones(size(u)); % put slightly in front of blocks
-                    TagStr = sprintf('Marker%d', i_marker);
-                    h_marker = findobj(this.h_axes, 'Tag', TagStr);
-                    if isempty(h_marker)
-                        patch(u([1 3 4 2]),v([1 3 4 2]),w, 'w', ...
-                            'FaceColor', 'none', 'EdgeColor', 'w', ...
-                            'LineWidth', 3, 'Parent', this.h_axes, 'Tag', TagStr);
-                    else
-                        set(h_marker, 'XData', u([1 3 4 2]), ...
-                            'YData', v([1 3 4 2]), 'ZData', w)
-                    end
-                    
-                end
-            end % FOR each marker
-            %}
-            
-            %desktop 
-            %keyboard
-            
-            % Now switch to block with respect to robot, instead of camera
-            this.block.pose = this.block.pose.getWithRespectTo(this.robotPose);
-            
-        end % updateBlockPose()
 
         function setHeadAngle(this, newHeadAngle)
             

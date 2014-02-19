@@ -23,6 +23,12 @@
 
 namespace Anki {
   namespace Cozmo {
+    
+    // Forward declaration
+    namespace VisionSystem {
+      class MarkerCode;
+    }
+    
     namespace DockingController {
 
       // TODO: Add if/when needed?
@@ -52,7 +58,8 @@ namespace Anki {
       //                  e.g. To place a block on top of two other blocks, the robot would need to "dock" to
       //                       one of the blocks at some horizontal offset.
       // dockOffsetAngle: Docking offset angle. +ve means block is facing robot's right side.
-      void StartDocking(u16 blockId, f32 dockOffsetDistX, f32 dockOffsetDistY = 0, f32 dockOffsetAngle = 0);
+      void StartDocking(const VisionSystem::MarkerCode& codeToDockWith,
+                        f32 dockOffsetDistX, f32 dockOffsetDistY = 0, f32 dockOffsetAngle = 0);
       
     } // namespace DockingController
   } // namespace Cozmo

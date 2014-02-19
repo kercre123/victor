@@ -6,9 +6,9 @@ if(NOT WIN32)
     run_coreTechPlanningStandalone.cpp)
 
   target_link_libraries(run_coreTechPlanningStandalone
-    CoreTech_Planning_Basestation
+          CoreTech_Planning_Basestation
           CoreTech_Common_Basestation
-          jsoncpp)
+          jsoncpp ${OPENCV_LIBS})
 
   include_directories(../src)
 
@@ -21,5 +21,5 @@ if(NOT WIN32)
           CoreTech_Planning_Basestation
           CoreTech_Common_Basestation
           jsoncpp
-          gtest)
+          gtest ${OPENCV_LIBS})
 endif()

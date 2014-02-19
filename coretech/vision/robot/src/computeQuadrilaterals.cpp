@@ -57,12 +57,12 @@ namespace Anki
         quadSwapped[1].x-quadSwapped[3].x, quadSwapped[1].y-quadSwapped[3].y);
 
       // cross product of vectors anchored at corner 2
-      const s32 detC = Determinant2x2(
+      s32 detC = Determinant2x2(
         quadSwapped[3].x-quadSwapped[2].x, quadSwapped[3].y-quadSwapped[2].y,
         quadSwapped[0].x-quadSwapped[2].x, quadSwapped[0].y-quadSwapped[2].y);
 
       // cross product of vectors anchored at corner 1
-      const s32 detD = Determinant2x2(
+      s32 detD = Determinant2x2(
         quadSwapped[0].x-quadSwapped[1].x, quadSwapped[0].y-quadSwapped[1].y,
         quadSwapped[3].x-quadSwapped[1].x, quadSwapped[3].y-quadSwapped[1].y);
 
@@ -71,14 +71,20 @@ namespace Anki
 
       detA = abs(detA);
       detB = abs(detB);
+      detC = abs(detC);
+      detD = abs(detD);
 
       const s32 maxDetAB = MAX(detA,detB);
       const s32 minDetAB = MIN(detA,detB);
+      const s32 maxDetCD = MAX(detC,detD);
+      const s32 minDetCD = MIN(detC,detD);
 
-      // Is the quad symmetry above the threshold?
-      const s32 ratio1Value = maxDetAB << numFractionalBits;
-      const s32 ratio2Value = minDetAB*quadSymmetryThreshold;
-      if(ratio1Value >= ratio2Value)
+      // Is either quad symmetry check above the threshold?
+      const s32 ratio1Value_AB = maxDetAB << numFractionalBits;
+      const s32 ratio2Value_AB = minDetAB*quadSymmetryThreshold;
+      const s32 ratio1Value_CD = maxDetCD << numFractionalBits;
+      const s32 ratio2Value_CD = minDetCD*quadSymmetryThreshold;
+      if(ratio1Value_AB >= ratio2Value_AB && ratio1Value_CD >= ratio2Value_CD)
         return false;
 
       // Check if any of the corners are close to the edge of the image

@@ -3,6 +3,7 @@
 PROTO USBConnection [ 
   field SFString name "USBConnection"
   field SFString controller "offboard_vision_processor"
+  field SFString robotName "Cozmo_1"
   field SFInt32 usbChannel 88
   field SFInt32 bufferSize 500000
 ]
@@ -28,6 +29,7 @@ Supervisor {
 
   name IS name
   controller IS controller
+  controllerArgs IS robotName
 } # Supervisor
 
 } # PROTO

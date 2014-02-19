@@ -1,4 +1,5 @@
 #VRML_SIM V6.0 utf8
+
 WorldInfo {
   info [
     "Cozmo test world. All rights reserved. Copyright (c) Anki, Inc."
@@ -7,7 +8,9 @@ WorldInfo {
     "Date: 02 Aug 2013"
     ""
   ]
+  physics "cozmo_physics"
   basicTimeStep 5
+  gravity 0 0 -9.81
   contactProperties [
     DEF FLOOR_FRONTWHEEL ContactProperties {
       material1 "cmat_floor"
@@ -77,8 +80,9 @@ WorldInfo {
   ]
 }
 Viewpoint {
-  orientation -0.118742 0.988082 0.097946 2.51612
-  position 0.75138 0.342175 -1.26362
+  fieldOfView 0.785398
+  orientation 0.225533 0.521621 0.822828 2.45799
+  position 1.37409 1.36507 0.903049
 }
 Background {
   skyColor [
@@ -86,75 +90,18 @@ Background {
   ]
 }
 DirectionalLight {
-  ambientIntensity 0.5
-  direction 1 -2 1
+  ambientIntensity 0.75
+  direction -1 -1 -2
   castShadows TRUE
 }
-DEF FLOOR Solid {
-  rotation 0 1 0 3.1415
-  children [
-    Shape {
-      appearance Appearance {
-        texture ImageTexture {
-          url [
-            "mat.png"
-          ]
-        }
-      }
-      geometry Box {
-        size 1 0.001 1
-      }
-    }
-  ]
-  contactMaterial "cmat_floor"
-  boundingObject Transform {
-    translation 0.5 0 0.5
-    children [
-      Plane {
-      }
-    ]
-  }
-}
-DEF WALL_1 Solid {
-  translation 0.51 0.025 0
-  children [
-    DEF WALL_SHAPE Shape {
-      appearance Appearance {
-        material Material {
-          diffuseColor 0.12549 0.368627 0.729412
-        }
-      }
-      geometry Box {
-        size 0.02 0.05 1
-      }
-    }
-  ]
-  boundingObject USE WALL_SHAPE
-}
-DEF WALL_2 Solid {
-  translation -0.51 0.025 0
-  children [
-    USE WALL_SHAPE
-  ]
-  boundingObject USE WALL_SHAPE
-}
-DEF WALL_3 Solid {
-  translation 0 0.025 -0.51
-  rotation 0 1 0 1.5708
-  children [
-    USE WALL_SHAPE
-  ]
-  boundingObject USE WALL_SHAPE
-}
-DEF WALL_4 Solid {
-  translation 0 0.025 0.51
-  rotation 0 1 0 1.5708
-  children [
-    USE WALL_SHAPE
-  ]
-  boundingObject USE WALL_SHAPE
+
+CozmoMat {
+
 }
 
+XYaxesDisplay {
+
+}
 
 RobotAdvertisementService {
 
@@ -162,10 +109,11 @@ RobotAdvertisementService {
 
 DEF Cozmo CozmoBot {
   # In front of two green blocks:
-  translation 0.286003 0.021 0.0510032
-  rotation 0.000381577 1 -0.000141993 0.7071  
+  translation 0.286003  0.0510032  0.021
+  rotation 0 0 1 -0.7071  
   name "CozmoBot_1"
   commsChannel 1
+  usbChannel 10
   controller "cozmo_c_controller"
   # In front of 2x1 purple block
   #translation -0.07 0.014 -0.21
@@ -176,137 +124,163 @@ BlockWorldComms {
 
 }
 
-OverlayDisplay {
-
+DEF OffboardVisionProcessor USBConnection {
+  controller "offboard_vision_processor"
+  usbChannel 10
 }
+
+#OverlayDisplay {
+#
+#}
 
 Block1x1 {
-  name "Block060_1"
-  translation -0.183 0.0299152 -0.051
-  rotation 0.975737 0.030364 -0.21683 6.32128e-17
-  facemarker1 [
-    "textures/Block060_Face01.png"
+  name "Bullseye"
+  translation -0.183  -0.051  0.0299152
+  rotation 1 0 0 0
+  
+  facemarkerFront [
+    "textures/bullseye.png"
   ]
-  facemarker2 [
-    "textures/Block060_Face02.png"
+  facemarkerBack [
+	"textures/bullseye.png"  ]
+  facemarkerLeft [
+    "textures/bullseye.png"
   ]
-  facemarker3 [
-    "textures/Block060_Face03.png"
+  facemarkerRight [
+    "textures/bullseye.png"
   ]
-  facemarker4 [
-    "textures/Block060_Face04.png"
+  facemarkerTop [
+    "textures/bullseye.png"
   ]
-  facemarker5 [
-    "textures/Block060_Face05.png"
-  ]
-  facemarker6 [
-    "textures/Block060_Face06.png"
+  facemarkerBottom [
+    "textures/bullseye.png"
   ]
 }
+
 Block1x1 {
   name "Block065_1"
-  translation 0.2 0.0299152 -0.1
-  rotation -1.45555e-10 1 2.17839e-10 0.3927
+  translation 0.2  -0.1  0.0299152
+  rotation 0 0 1 0.3927
   blockColor 0 1 0
   
-  facemarker1 [
-    "textures/Block065_Face01.png"
+  facemarkerFront [
+    #"textures/Block060_Face01.png"
+    "textures/batteryMarker.png"
   ]
-  facemarker2 [
-    "textures/Block065_Face02.png"
+  facemarkerBack [
+    #"textures/Block060_Face02.png"
+    "textures/batteryMarker.png"
   ]
-  facemarker3 [
-    "textures/Block065_Face03.png"
+  facemarkerLeft [
+    #"textures/Block060_Face03.png"
+    "textures/batteryMarker.png"
   ]
-  facemarker4 [
-    "textures/Block065_Face04.png"
+  facemarkerRight [
+    #"textures/Block060_Face04.png"
+    "textures/batteryMarker.png"
   ]
-  facemarker5 [
-    "textures/Block065_Face05.png"
+  facemarkerTop [
+    #"textures/Block060_Face05.png"
+    "textures/batteryMarker.png"
   ]
-  facemarker6 [
-    "textures/Block065_Face06.png"
+  facemarkerBottom [
+    #"textures/Block060_Face06.png"
+    "textures/batteryMarker.png"
   ]
 }
 Block1x1 {
   name "Block065_2"
-  translation 0.1 0.0299152 -0.1
-  rotation -1.29362e-10 1 2.01645e-10 0.43
+  translation 0.1  -0.1  0.0299152
+  rotation 0 0 1 0.43
   blockColor 0 1 0
   
-  facemarker1 [
-    "textures/Block065_Face01.png"
+ facemarkerFront [
+    #"textures/Block060_Face01.png"
+    "textures/batteryMarker.png"
   ]
-  facemarker2 [
-    "textures/Block065_Face02.png"
+  facemarkerBack [
+    #"textures/Block060_Face02.png"
+    "textures/batteryMarker.png"
   ]
-  facemarker3 [
-    "textures/Block065_Face03.png"
+  facemarkerLeft [
+    #"textures/Block060_Face03.png"
+    "textures/batteryMarker.png"
   ]
-  facemarker4 [
-    "textures/Block065_Face04.png"
+  facemarkerRight [
+    #"textures/Block060_Face04.png"
+    "textures/batteryMarker.png"
   ]
-  facemarker5 [
-    "textures/Block065_Face05.png"
+  facemarkerTop [
+    #"textures/Block060_Face05.png"
+    "textures/batteryMarker.png"
   ]
-  facemarker6 [
-    "textures/Block065_Face06.png"
+  facemarkerBottom [
+    #"textures/Block060_Face06.png"
+    "textures/batteryMarker.png"
   ]
 }
 Block1x1 {
   name "Block065_3"
-  translation 0.3 0.0299152 -0.1
-  rotation -1.29362e-10 1 2.01645e-10 1.24
+  translation 0.3  -0.1  0.0299152
+  rotation 0 0 1 1.24
   blockColor 0 1 0
   
-  facemarker1 [
-    "textures/Block065_Face01.png"
+  facemarkerFront [
+    #"textures/Block060_Face01.png"
+    "textures/batteryMarker.png"
   ]
-  facemarker2 [
-    "textures/Block065_Face02.png"
+  facemarkerBack [
+    #"textures/Block060_Face02.png"
+    "textures/batteryMarker.png"
   ]
-  facemarker3 [
-    "textures/Block065_Face03.png"
+  facemarkerLeft [
+    #"textures/Block060_Face03.png"
+    "textures/batteryMarker.png"
   ]
-  facemarker4 [
-    "textures/Block065_Face04.png"
+  facemarkerRight [
+    #"textures/Block060_Face04.png"
+    "textures/batteryMarker.png"
   ]
-  facemarker5 [
-    "textures/Block065_Face05.png"
+  facemarkerTop [
+    #"textures/Block060_Face05.png"
+    "textures/batteryMarker.png"
   ]
-  facemarker6 [
-    "textures/Block065_Face06.png"
+  facemarkerBottom [
+    #"textures/Block060_Face06.png"
+    "textures/batteryMarker.png"
   ]
 }
+
 Block1x1 {
-  name "Block070_1"
-  translation 0.4 0.0299152 4.03022e-10
-  rotation 5.87559e-10 1 -5.15275e-10 -0.1309
+  name "AngryFace"
+  translation 0.4 0 0.0299152 
+  rotation 0 0 1 -0.1309
   blockColor 0 0 1
   
-  facemarker1 [
-    "textures/Block070_Face01.png"
+  facemarkerFront [
+    "textures/angryFace.png"
   ]
-  facemarker2 [
-    "textures/Block070_Face02.png"
+  facemarkerBack [
+    "textures/angryFace.png"
   ]
-  facemarker3 [
-    "textures/Block070_Face03.png"
+  facemarkerLeft [
+    "textures/angryFace.png"
   ]
-  facemarker4 [
-    "textures/Block070_Face04.png"
+  facemarkerRight [
+    "textures/angryFace.png"
   ]
-  facemarker5 [
-    "textures/Block070_Face05.png"
+  facemarkerTop [
+    "textures/angryFace.png"
   ]
-  facemarker6 [
-    "textures/Block070_Face06.png"
+  facemarkerBottom [
+    "textures/angryFace.png"
   ]
 }
+
 Block2x1 {
   name "Block075_1"
-  translation -0.3 0.03 -0.3
-  rotation 0 1 0 0.78
+  translation -0.3 -0.3  0.03
+  rotation 0 0 1 0.78
   blockColor 0.5 0.1 0.75
   
   facemarker1 [

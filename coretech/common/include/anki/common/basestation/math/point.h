@@ -47,9 +47,8 @@ namespace Anki {
     // Constructors
     Point( void );
     Point(const Point<N,T>& pt);
+    //Point(const std::array<T,N>& array); // Creates ambiguity with opencv Point3_ constructor below
     
-    //Point(const T x, const T y); // Only valid if N==2
-    //Point(const T x, const T y, const T z); // Only valid if N==3
 
 #if __cplusplus == 201103L
     // Point(T x1, T x2, ..., T xN);
@@ -112,6 +111,7 @@ namespace Anki {
     T makeUnitLength(void);
     
   protected:
+    // TODO: Switch to std::array<T,N> here?
     T data[N];
     
   }; // class Point
@@ -215,6 +215,13 @@ namespace Anki {
       this->data[i] = pt.data[i];
     }
   }
+  /*
+  template<size_t N, typename T>
+  Point<N,T>::Point(const std::array<T,N>& array)
+  {
+    std::copy(this->data, this->data+N, array.begin());
+  }
+  */
   
 #if __cplusplus < 201103L
   template<size_t N, typename T>

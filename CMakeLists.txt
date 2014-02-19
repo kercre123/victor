@@ -9,6 +9,9 @@ ankiProject(Cozmo)
 set(COZMO_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
 file(GLOB COZMO_INCLUDE_FILES "${COZMO_INCLUDE_DIR}/anki/cozmo/*.h")
 
+# This sets the root path for the PlatformPathManager when not on iOS
+add_definitions(-DSYSTEM_ROOT_PATH=${PROJECT_SOURCE_DIR})
+
 include_directories(
 	${COZMO_INCLUDE_DIR}
 	coretech/common/include

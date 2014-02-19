@@ -35,6 +35,11 @@ typedef int64_t  s64;
 typedef float    f32;
 typedef double   f64;
 
+typedef u32 RobotID_t;
+typedef u16 BlockID_t;
+typedef u16 ObjectID_t;
+typedef u16 ObjectType_t;
+
 // If we're using c++, ReturnCode is in a namespace. In c, it's not.
 #ifdef __cplusplus
 namespace Anki

@@ -190,7 +190,7 @@ namespace Anki
 
         bool isValid;
 
-#ifdef ANKICORETECH_EMBEDDED_USE_OPENCV
+#if defined(ANKICORETECH_EMBEDDED_USE_OPENCV) && ANKICORETECH_EMBEDDED_USE_OPENCV
         // Allocates the returned cv::Mat on the heap
         static cv::Mat DrawIndexes(
           const s32 imageHeight, const s32 imageWidth,

@@ -4,10 +4,10 @@
  * Author: Andrew Stein
  * Date:   1/21/2014
  *
- * Description: Currently this is basically just a copy of the robot's 
- *              messages.h header file. Once the basestation has its own data
- *              structures for messages, then this file should probably be 
- *              updated.
+ * Description: Defines a base Message class from which all the other messages
+ *              inherit.  The inherited classes are auto-generated via multiple
+ *              re-includes of the MessageDefinitions.h file, with specific
+ *              "mode" flags set.
  *
  * Copyright: Anki, Inc. 2014
  **/
@@ -15,32 +15,35 @@
 #ifndef COZMO_MESSAGE_BASESTATION_H
 #define COZMO_MESSAGE_BASESTATION_H
 
+#include "json/json.h"
+
 #include "anki/common/types.h"
 
 namespace Anki {
+
   namespace Cozmo {
-    namespace Messages {
-      
-      // 1. Initial include just defines the definition modes for use below
-#include "anki/cozmo/MessageDefinitions.h"
-      
-      // 2. Define all the message structs:
-#define MESSAGE_DEFINITION_MODE MESSAGE_STRUCT_DEFINITION_MODE
-#include "anki/cozmo/MessageDefinitions.h"
-      
-      // 3. Create the enumerated message IDs:
-      typedef enum {
-        NO_MESSAGE_ID = 0,
+    
+    // 1. Initial include just defines the definition modes for use below
 #undef MESSAGE_DEFINITION_MODE
-#define MESSAGE_DEFINITION_MODE MESSAGE_ENUM_DEFINITION_MODE
 #include "anki/cozmo/MessageDefinitions.h"
-        NUM_MSG_IDS // Final entry without comma at end
-      } ID;
+    
+    // Base message class
+    class Message
+    {
+    public:
       
-      // Return the size of a message, given its ID
-      u8 GetSize(const ID msgID);
+      virtual void GetBytes(u8* buffer) const = 0;
       
-    } // namespace Messages
+      static u8 GetSize() { return 0; }
+      
+    }; // class Message
+
+
+    // 2. Define all the message classes:
+#define MESSAGE_DEFINITION_MODE MESSAGE_CLASS_DEFINITION_MODE
+#include "anki/cozmo/MessageDefinitions.h"
+
+
   } // namespace Cozmo
 } // namespace Anki
 

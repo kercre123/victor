@@ -21,7 +21,7 @@ namespace Anki {
         
 				void AppendPathSegmentArc(s32 path_id,
 																	f32 x_center_m, f32 y_center_m,
-																	f32 radius_m, f32 startRad, f32 endRad);
+																	f32 radius_m, f32 startRad, f32 sweepRad);
         
 				void ShowPath(s32 path_id, bool show);
         

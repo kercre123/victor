@@ -13,6 +13,8 @@
 
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
+#include <stdio.h>
+#include <string>
 
 #if(USE_WEBOTS_TXRX)
 #include <webots/Supervisor.hpp>
@@ -47,6 +49,8 @@ namespace Anki {
       regMsg.robotID = HAL::GetRobotID();
       regMsg.enableAdvertisement = 1;
       regMsg.port = ROBOT_RADIO_BASE_PORT + regMsg.robotID;
+      
+      PRINT("sim_radio: Sending registration for robot %d on port %d\n", regMsg.robotID, regMsg.port);
       advRegClient.Send((char*)&regMsg, sizeof(regMsg));
     }
     
@@ -56,6 +60,8 @@ namespace Anki {
       RobotAdvertisementRegistration regMsg;
       regMsg.robotID = HAL::GetRobotID();
       regMsg.enableAdvertisement = 0;
+      
+      PRINT("sim_radio: Sending deregistration for robot %d\n", regMsg.robotID);
       advRegClient.Send((char*)&regMsg, sizeof(regMsg));
     }
     
@@ -116,8 +122,8 @@ namespace Anki {
         const u8 header[HEADER_LENGTH] = {
           RADIO_PACKET_HEADER[0],
           RADIO_PACKET_HEADER[1],
-          static_cast<u8>(HAL::GetRobotID()),
-          static_cast<u8>(msgID)};
+          static_cast<u8>(msgID),
+          static_cast<u8>(HAL::GetRobotID())};
         
         // Send the actual message
         const u8 size = Messages::GetSize(msgID);
@@ -129,13 +135,12 @@ namespace Anki {
         // Send the message header (0xBEEF + timestamp + robotID + msgID)
         // For TCP comms, send timestamp immediately after the header.
         // This is needed on the basestation side to properly order messages.
-        const u8 HEADER_LENGTH = 8;
+        const u8 HEADER_LENGTH = 7;
         u8 header[HEADER_LENGTH];
-        UtilMsgError packRes = UtilMsgPack(header, HEADER_LENGTH, NULL, "ccicc",
+        UtilMsgError packRes = UtilMsgPack(header, HEADER_LENGTH, NULL, "ccic",
                     RADIO_PACKET_HEADER[0],
                     RADIO_PACKET_HEADER[1],
                     ts,
-                    HAL::GetRobotID(),
                     msgID);
         
         assert (packRes == UTILMSG_OK);
@@ -256,31 +261,52 @@ namespace Anki {
       if (server.HasClient()) {
         const u32 bytesAvailable = RadioGetNumBytesAvailable();
         if(bytesAvailable > 0) {
-          Messages::ID msgID = static_cast<Messages::ID>(recvBuf_[0]);
+    
+          const int headerSize = sizeof(RADIO_PACKET_HEADER);
+          const int footerSize = sizeof(RADIO_PACKET_FOOTER);
           
-          if(msgID == Messages::NO_MESSAGE_ID) {
-            PRINT("Received NO_MESSAGE_ID over radio.\n");
-            // TODO: Not sure what to do here. Toss everything in the buffer? Advance one byte?
+          // Look for valid header
+          std::string strBuf(recvBuf_, recvBuf_ + recvBufSize_);  // TODO: Just make recvBuf a string
+          std::size_t n = strBuf.find((char*)RADIO_PACKET_HEADER, 0, headerSize);
+          if (n == std::string::npos) {
+            // Header not found at all
+            // Delete everything
+            recvBufSize_ = 0;
+            return retVal;
+          } else if (n != 0) {
+            // Header was not found at the beginning.
+            // Delete everything up until the header.
+            strBuf = strBuf.substr(n);
+            memcpy(recvBuf_, strBuf.c_str(), strBuf.length());
+            recvBufSize_ = strBuf.length();
           }
-          else {
+          
+          
+          // Look for footer
+          n = strBuf.find((char*)RADIO_PACKET_FOOTER, 0, footerSize);
+          if (n == std::string::npos) {
+            // Footer not found at all
+            return retVal;
+          } else {
+            // Footer was found
+            
+            // Check that message size is correct
+            Messages::ID msgID = static_cast<Messages::ID>(recvBuf_[headerSize]);
             const u8 size = Messages::GetSize(msgID);
+            int msgLen = n - headerSize - 1;  // Doesn't include msgID
             
-            // Check to see if we have the whole message (plus ID) available
-            if(bytesAvailable >= size + 1)
-            {
-              // Copy the data (not including message ID) out of the receive
-              // buffer and into the location provided
-              memcpy(buffer, recvBuf_+1, size);
-              
-              // Shift the data in the receive buffer down to get the message
-              // and its ID byte out of the buffer
-              recvBufSize_ -= size+1;
-              memmove(recvBuf_, recvBuf_+size+1, recvBufSize_);
-              
-              retVal = msgID;
-            } // if bytesAvailable >= size+1
+            if (msgLen != size) {
+              PRINT("WARNING: Message size mismatch: ID %d, expected %d bytes, but got %d bytes\n", msgID, size, msgLen);
+            }
             
-          } // if/else msgID == NO_MESSAGE_ID
+            // Copy message contents to buffer
+            std::memcpy((void*)buffer, recvBuf_ + headerSize + 1, msgLen);
+            retVal = msgID;
+            
+            // Shift recvBuf contents down
+            memcpy(recvBuf_, recvBuf_ + n + footerSize, recvBufSize_ - 1 - msgLen - headerSize - footerSize);
+            recvBufSize_ -= headerSize + 1 + msgLen + footerSize;
+          }
           
         } // if bytesAvailable > 0
       }

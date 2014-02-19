@@ -1,4 +1,8 @@
-function detectAndDisplay(img, h_axes, h_img)
+function detectAndDisplay(img, h_axes, h_img, markerLibrary)
+
+if nargin < 4
+    markerLibrary = [];
+end
 
 %persistent h_detections;
 
@@ -26,11 +30,22 @@ end
 if numDetections > 0
     hold(h_axes, 'on')
     for i = 1:numDetections
-        draw(detections{i}, 'where', h_axes, 'drawTextLabels', 'short');
+        if isempty(markerLibrary)
+            detections{i}.DrawProbes('Tag', 'BlockMarker2D', 'Parent', h_axes);
+        else
+            match = markerLibrary.IdentifyMarker(detections{i});
+            if isempty(match)
+                detections{i}.DrawProbes('Tag', 'BlockMarker2D', 'Parent', h_axes);
+            else
+                detections{i}.Draw('Tag', 'BlockMarker2D', 'Parent', h_axes);
+            end
+        end
+        %draw(detections{i}, 'where', h_axes, 'drawTextLabels', 'short');
     end
     
     set(h_axes, 'XColor', 'g', 'YColor', 'g');
     hold(h_axes, 'off')
+    drawnow
 else
     set(h_axes, 'XColor', 'r', 'YColor', 'r');
 end

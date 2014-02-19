@@ -1,3 +1,5 @@
+# Defines
+add_definitions(-DSIMULATOR)
 
 # TODO: Get this from an environment variable?
 set(WEBOTS_APP_DIR /Applications/Webots)
@@ -11,6 +13,7 @@ if (IS_DIRECTORY ${WEBOTS_APP_DIR})
    add_subdirectory(controllers/blockworld_controller)
    add_subdirectory(controllers/cozmo_c_controller)
    add_subdirectory(controllers/robot_advertisement_controller)
+   add_subdirectory(controllers/visionUnitTestController)
 else ()
   message(STATUS "Webots app directory not found, not building simulator")
 endif (IS_DIRECTORY ${WEBOTS_APP_DIR})

@@ -59,7 +59,20 @@ namespace Anki {
     Rodrigues(Rmat, *this);
   }
   
+  
+  UnitQuaternion::UnitQuaternion(const RotationVector3d& Rvec)
+  {
+    const float halfAngle = Rvec.get_angle().ToFloat() * 0.5f;
+    this->data[0] = std::cos(halfAngle);
+    
+    const float sinHalfAngle = std::sin(halfAngle);
+    this->data[1] = Rvec.get_axis().x() * sinHalfAngle;
+    this->data[2] = Rvec.get_axis().y() * sinHalfAngle;
+    this->data[3] = Rvec.get_axis().z() * sinHalfAngle;
+  }
+  
   RotationMatrix3d::RotationMatrix3d(void)
+//  : rotationVector(0.f, {Z_AXIS_3D})
   {
     (*this)(0,0) = 1.f;
     (*this)(0,1) = 0.f;
@@ -76,15 +89,37 @@ namespace Anki {
   } // Constructor: RotationMatrix3d()
   
   RotationMatrix3d::RotationMatrix3d(const RotationVector3d &rotVec_in)
-  : rotationVector(rotVec_in)
+//  : rotationVector(rotVec_in)
   {
-    Rodrigues(this->rotationVector, *this);
+    Rodrigues(rotVec_in, *this);
   }
   
-  RotationMatrix3d::RotationMatrix3d(const Radians angle, const Vec3f &axis)
-  : rotationVector(angle, axis)
+  RotationMatrix3d::RotationMatrix3d(const Matrix_3x3f &matrix3x3)
+  : Matrix_3x3f(matrix3x3)
   {
-    Rodrigues(this->rotationVector, *this);
+    CORETECH_ASSERT(std::abs(this->getColumn(0).length() - 1.f) < 1e-6f &&
+                    std::abs(this->getColumn(1).length() - 1.f) < 1e-6f &&
+                    std::abs(this->getColumn(2).length() - 1.f) < 1e-6f);
+  }
+  
+  
+  RotationMatrix3d::RotationMatrix3d(std::initializer_list<float> initValues)
+  : Matrix_3x3f(initValues)
+  {
+    CORETECH_ASSERT(std::abs(this->getColumn(0).length() - 1.f) < 1e-6f &&
+                    std::abs(this->getColumn(1).length() - 1.f) < 1e-6f &&
+                    std::abs(this->getColumn(2).length() - 1.f) < 1e-6f);
+    
+    //Rodrigues(*this, rotationVector);
+  }
+                                  
+  
+  
+  RotationMatrix3d::RotationMatrix3d(const Radians angle, const Vec3f &axis)
+  //: rotationVector(angle, axis)
+  {
+    RotationVector3d Rvec(angle, axis);
+    Rodrigues(Rvec, *this);
   }
   
   /* Isn't this inherited from the base class now?
@@ -103,6 +138,28 @@ namespace Anki {
     
   } // RotationMatrix3d::operator*(Point3f)
   */
+  
+  
+  Radians RotationMatrix3d::GetAngleDiffFrom(const RotationMatrix3d &other) const
+  {
+    // See also:
+    // "Metrics for 3D Rotations: Comparison and Analysis", Du Q. Huynh
+    //
+    // TODO: use quaternion difference?  Might be cheaper than the matrix multiplication below
+    //     UnitQuaternion qThis(this->rotationVector), qOther(otherPose.rotationVector);
+    //
+    // const Radians angleDiff( 2.f*std::acos(std::abs(dot(qThis, qOther))) );
+    //
+    
+    // R = R_this * R_other^T
+    RotationMatrix3d R(other.getTranspose());
+    R.preMultiplyBy(*this);
+    
+    const Radians angleDiff( std::acos(0.5f*(R.Trace() - 1.f)) );
+    
+    return angleDiff;
+  }
+  
   
   void Rodrigues(const RotationVector3d &Rvec_in,
                  RotationMatrix3d &Rmat_out)
@@ -137,6 +194,58 @@ namespace Anki {
 #endif
     
   } // Rodrigues(Rmat, Rvec)
+  
+  /*
+  void RotationMatrix3d::operator*=(const RotationMatrix3d &other)
+  {
+    // Regular matrix multiplcation
+    Matrix_3x3f::operator*=(other);
+    
+    // Keep the rotation vector updated
+    Rodrigues(*this, this->rotationVector);
+  }
+  
+  void RotationMatrix3d::preMultiplyBy(const RotationMatrix3d &other)
+  {
+    // Regular matrix multiplication
+    Matrix_3x3f::preMultiplyBy(other);
+    
+    // Keep the rotation vector updated
+    Rodrigues(*this, this->rotationVector);
+  }
+   */
+  
+  RotationMatrix3d& RotationMatrix3d::Transpose(void)
+  {
+    Matrix_3x3f::Transpose();
+   
+    /*
+    // Just negate rotation angle:
+    Radians angle;
+    Vec3f   axis;
+    rotationVector.get_angleAndAxis(angle, axis);
+    rotationVector = RotationVector3d(-angle, axis);
+    */
+    return *this;
+  } // Transpose()
+  
+  RotationMatrix3d  RotationMatrix3d::getTranspose() const
+  {
+    RotationMatrix3d Rt(*this);
+    Rt.Transpose();
+    return Rt;
+  }
+  
+  void RotationMatrix3d::Invert(void)
+  {
+    this->Transpose();
+  }
+  
+  RotationMatrix3d RotationMatrix3d::getInverse(void) const
+  {
+    return this->getTranspose();
+  }
+  
   
   
 } // namespace Anki

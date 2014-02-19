@@ -5,9 +5,6 @@ cmake_minimum_required(VERSION 2.8)
 # Include paths
 file(GLOB COZMO_ROBOT_HEADER_FILES "${COZMO_INCLUDE_DIR}/anki/cozmo/robot/*.h")
 
-# Defines
-add_definitions(-DSIMULATOR)
-
 include_directories(
   ${WEBOTS_CPP_INCLUDE_DIR}
 )
