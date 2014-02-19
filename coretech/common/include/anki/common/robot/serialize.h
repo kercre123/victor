@@ -20,7 +20,7 @@ namespace Anki
 {
   namespace Embedded
   {
-#pragma mark --- Definitions ---
+// #pragma mark
 
     template<typename Type> Result SerializedBuffer::EncodeBasicType(u32 &code)
     {
@@ -181,7 +181,7 @@ namespace Anki
       return segment;
     }
 
-#pragma mark --- Specializations ---
+// #pragma mark --- Specializations ---
   } // namespace Embedded
 } //namespace Anki
 

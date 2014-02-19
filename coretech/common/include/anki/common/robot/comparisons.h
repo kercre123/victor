@@ -19,7 +19,7 @@ namespace Anki
 {
   namespace Embedded
   {
-#pragma mark --- Definitions ---
+    // #pragma mark
 
     template<typename Type> bool AreElementwiseEqual(const Array<Type> &array1, const Array<Type> &array2, const Type threshold)
     {

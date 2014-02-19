@@ -1,0 +1,15 @@
+# coretech/common/robot/test/CMakeLists.txt
+
+# Robot CoreTech_Common Tests
+
+add_executable(run_pc_embeddedTests
+  embeddedTests.h
+  embeddedTests.cpp
+  run_pc_embeddedTests.cpp  
+	embeddedCommonTests.cpp
+  embeddedVisionTests.cpp)
+
+target_link_libraries(run_pc_embeddedTests
+  CoreTech_Common_Robot
+  CoreTech_Vision_Robot
+  ${ALL_EMBEDDED_LIBRARIES})

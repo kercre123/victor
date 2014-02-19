@@ -232,9 +232,9 @@ namespace Anki {
 
     // If clockwise then difference should be -ve, and vice versa.
     if(!clockwise && diff < 0.0f) {
-      diff += 2.0*PI_F;
+      diff += 2.0f*PI_F;
     } else if(clockwise && diff > 0.0f) {
-      diff -= 2.0*PI_F;
+      diff -= 2.0f*PI_F;
     }
 
     return diff;
@@ -257,10 +257,10 @@ namespace Anki {
     if(ABS(radians_) < 10.0f) {
       // For small values of radians, rescale manually to avoid doing division
       while(radians_ <= -PI_F) {
-        radians_ += 2.0*PI_F;
+        radians_ += 2.0f*PI_F;
       }
       while(radians_ > PI_F) {
-        radians_ -= 2.0*PI_F;
+        radians_ -= 2.0f*PI_F;
       }
     } else {
       // Otherwise compute and adjust at once (more expensive due to divide)

@@ -51,6 +51,8 @@ namespace Anki
       void Print() const;
     }; // class BlockMarker
 
+    // A FiducialMarkerParserBit object samples an input image, to determine if a given image
+    // area is binary 0 or 1.
     class FiducialMarkerParserBit
     {
     public:
@@ -74,7 +76,12 @@ namespace Anki
       // All data from probeLocations is copied into this instance's local memory
       FiducialMarkerParserBit(const s16 * const probesX, const s16 * const probesY, const s16 * const probeWeights, const s32 numProbes, const FiducialMarkerParserBit::Type type, const s32 numFractionalBits, MemoryStack &memory);
 
-      Result ExtractMeanValue(const Array<u8> &image, const Quadrilateral<s16> &quad, const Array<f64> &homography, s16 &meanValue) const;
+      // Based on the probe locations that this object was initialized with, compute the mean value in a given image, with
+      // an overall bounding Quadrilateral.
+      //
+      // NOTE:
+      // The meanValue is not the mean value of the whole quad, just the part of the quad that is sampled by this Bit.
+      Result ExtractMeanValue(const Array<u8> &image, const Quadrilateral<s16> &quad, const Array<f32> &homography, s16 &meanValue) const;
 
       FiducialMarkerParserBit& operator= (const FiducialMarkerParserBit& bit2);
 
@@ -91,16 +98,10 @@ namespace Anki
       FixedLengthList<s16> probeWeights;
       FiducialMarkerParserBit::Type type;
       s32 numFractionalBits;
-
-      // The static data buffer for this object's probeLocations and probeWeights. Modifying this will change the values in probeLocations and probeWeights.
-      //Point<s16> probeLocationsBuffer[MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS];
-      //s16 probeWeightsBuffer[MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS];
-      //char probeLocationsBuffer[NUM_BYTES_probeLocationsBuffer];
-      //char probeWeightsBuffer[NUM_BYTES_probeWeightsBuffer];
-
-      //void PrepareBuffers();
     }; // class FiducialMarkerParserBit
 
+    // A FiducialMarkerParser takes an input image and Quadrilateral, and extracts the binary code.
+    // It contains a list of FiducialMarkerParserBit objects that sample different locations of the code.
     class FiducialMarkerParser
     {
     public:
@@ -110,7 +111,7 @@ namespace Anki
 
       FiducialMarkerParser(const FiducialMarkerParser& marker2);
 
-      Result ExtractBlockMarker(const Array<u8> &image, const Quadrilateral<s16> &quad, const Array<f64> &homography, const f32 minContrastRatio, BlockMarker &marker, MemoryStack scratch) const;
+      Result ExtractBlockMarker(const Array<u8> &image, const Quadrilateral<s16> &quad, const Array<f32> &homography, const f32 minContrastRatio, BlockMarker &marker, MemoryStack scratch) const;
 
       FiducialMarkerParser& operator= (const FiducialMarkerParser& marker2);
 
@@ -123,15 +124,15 @@ namespace Anki
       s32 leftBitIndex;
       s32 rightBitIndex;
 
-      //FiducialMarkerParserBit bitsBuffer[MAX_FIDUCIAL_MARKER_BITS];
-      //char bitsBuffer[NUM_BYTES_bitsBuffer];
-
+      // Once all FiducialMarkerParserBit have been parsed, determine if the code is valid, by checking its checksum
       static bool IsChecksumValid(const FixedLengthList<u8> &checksumBits, const FixedLengthList<u8> &blockBits, const FixedLengthList<u8> &faceBits);
 
       Result InitializeAsDefaultParser(MemoryStack &memory);
 
+      // Once all FiducialMarkerParserBit have been parsed, determine the orientation of the code
       Result DetermineOrientationAndBinarizeAndReorderCorners(const FixedLengthList<s16> &meanValues, const f32 minContrastRatio, BlockMarker &marker, FixedLengthList<u8> &binarizedBits, MemoryStack scratch) const;
 
+      // Once all FiducialMarkerParserBit have been parsed, determine the ID number of the code
       Result DecodeId(const FixedLengthList<u8> &binarizedBits, s16 &blockType, s16 &faceType, MemoryStack scratch) const;
 
       // Starting at startIndex, search through this->bits to find the first instance of the given type

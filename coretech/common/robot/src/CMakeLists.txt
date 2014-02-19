@@ -1,6 +1,6 @@
 # coretech/common/robot/src/CMakeLists.txt
 
-file(GLOB SOURCE_FILES *.c *.cpp ../../shared/src/*.cpp shave/*.c)
+file(GLOB SOURCE_FILES *.c *.cpp ../../shared/src/*.cpp)
 
 file(GLOB HEADER_FILES 
 	*.h 

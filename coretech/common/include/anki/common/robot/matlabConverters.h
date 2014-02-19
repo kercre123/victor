@@ -36,7 +36,7 @@
 
 namespace Anki {
   namespace Embedded {
-#pragma mark --- Matlab Converter Definitions ---
+// #pragma mark --- Matlab Converter Definitions ---
 
     // Convert a Matlab mxArray to an Anki::Array, without allocating memory
     template<typename Type> void mxArrayToArray(const mxArray * const array, Array<Type> &mat);
@@ -71,7 +71,7 @@ namespace Anki {
     template<> mxClassID getMatlabClassID<s64>(void);
     template<> mxClassID getMatlabClassID<u64>(void);
 
-#pragma mark --- Matlab Converter Implementations ---
+// #pragma mark --- Matlab Converter Implementations ---
 
     template<typename Type> void mxArrayToArray(const mxArray * const array, Array<Type> &mat)
     {

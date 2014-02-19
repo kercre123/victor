@@ -24,11 +24,18 @@ namespace Anki
     template<typename Type> class ArraySlice;
     class MemoryStack;
 
-#pragma mark --- Class Declarations ---
+    // #pragma mark --- Class Declarations ---
     template<typename Type> class Sequence
     {
     }; // class Sequence
 
+    // A LinearSequence is like the result of a call to Matlab's linspace() It has a start, end, and
+    // increment. It does not explicitly compute the values in the sequence, so does not require
+    // much memory.
+    //
+    // WARNING:
+    // The "end" of a LinearSequence is computed automatically, and is less-than-or-equal-to the
+    // requested end.
     template<typename Type> class LinearSequence : public Sequence<Type>
     {
     public:
@@ -41,6 +48,7 @@ namespace Anki
       // Matlab equivalent: start:increment:end
       LinearSequence(const Type start, const Type increment, const Type end);
 
+      // Explicitly evaluate each element of the sequence, and put the results in an Array.
       Array<Type> Evaluate(MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false,false)) const;
       Result Evaluate(ArraySlice<Type> out) const;
 
@@ -48,8 +56,12 @@ namespace Anki
 
       Type get_increment() const;
 
+      // WARNING:
+      // The "end" of a LinearSequence is computed automatically, and is less-than-or-equal-to the
+      // requested end.
       Type get_end() const;
 
+      // Matlab equivalent: length(start:increment:end)
       s32 get_size() const;
 
     protected:
@@ -83,24 +95,31 @@ namespace Anki
     //protected:
     //};
 
+    // A Meshgrid is like the result of a call to Matlab's meshgrid(). It is made of two
+    // LinearSequence objects, so does not require much memory.
     template<typename Type> class Meshgrid
     {
     public:
+      Meshgrid();
+
       // Matlab equivalent: meshgrid(xGridVector, yGridVector)
       Meshgrid(const LinearSequence<Type> xGridVector, const LinearSequence<Type> yGridVector);
 
-      // If xVector==true, evaluate xGridVector. If false, evaluate yGridVector
+      // Allocate an Array, and evaluate this Meshgrid object
+      //
       // If isOutColumnMajor==true, then the output vector will be column-major(like Matlab)
-      // The finax suffix 1 or 2 is for 1D or 2D output
+      // The first suffix X or Y is for the xGrid vs yGrid
+      // The second suffix 1 or 2 is for 1D vs 2D output
       Array<Type> EvaluateX1(bool isOutColumnMajor, MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false,false)) const;
       Array<Type> EvaluateX2(MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false,false)) const;
-
       Array<Type> EvaluateY1(bool isOutColumnMajor, MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false,false)) const;
       Array<Type> EvaluateY2(MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false,false)) const;
 
+      // Evaluate this Meshgrid object into a pre-allocated Array
+      //
+      // If isOutColumnMajor==true, then the output vector will be column-major(like Matlab)
       Result EvaluateX1(bool isOutColumnMajor, ArraySlice<Type> out) const;
       Result EvaluateX2(ArraySlice<Type> out) const;
-
       Result EvaluateY1(bool isOutColumnMajor, ArraySlice<Type> out) const;
       Result EvaluateY2(ArraySlice<Type> out) const;
 

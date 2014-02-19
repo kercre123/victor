@@ -96,7 +96,7 @@ namespace Anki {
       } // private namespace
       
 
-#pragma mark --- Messages Method Implementations ---
+// #pragma mark --- Messages Method Implementations ---
       
       u8 GetSize(const ID msgID)
       {
@@ -317,7 +317,7 @@ namespace Anki {
       
       
       
-#pragma mark --- VisionSystem::Mailbox Template Implementations ---
+// #pragma mark --- VisionSystem::Mailbox Template Implementations ---
       
       bool CheckMailbox(VisionMarker& msg)
       {

@@ -19,7 +19,7 @@ namespace Anki
 {
   namespace Embedded
   {
-#pragma mark --- Definitions ---
+// #pragma mark
 
     template<typename Type> Result DrawRectangle(Array<Type> &image, Point<s16> point1, Point<s16> point2, const s32 lineWidth, const Type lineColor, const Type backgroundColor)
     {
@@ -190,6 +190,30 @@ namespace Anki
 
       return RESULT_OK;
     } // template<typename Type> Result DrawExampleSquaresImage(Array<Type> &image)
+
+    template<typename Type> Result DrawPoints(const FixedLengthList<Point<Type> > &points, const u8 grayvalue, Array<u8> &image)
+    {
+      AnkiConditionalErrorAndReturnValue(image.IsValid() && points.IsValid(),
+        RESULT_FAIL_INVALID_OBJECT, "DrawPoints", "inputs are not valid");
+
+      const s32 imageHeight = image.get_size(0);
+      const s32 imageWidth = image.get_size(1);
+
+      const s32 numPoints = points.get_size();
+
+      const Point<Type> * pPoints = points.Pointer(0);
+
+      for(s32 iPoint=0; iPoint<numPoints; iPoint++) {
+        const s32 y = static_cast<s32>(pPoints[iPoint].y);
+        const s32 x = static_cast<s32>(pPoints[iPoint].x);
+
+        if(x >= 0 && x < imageWidth && y >= 0 && y < imageHeight) {
+          image[y][x] = grayvalue;
+        }
+      }
+
+      return RESULT_OK;
+    }
   } // namespace Embedded
 } // namespace Anki
 

@@ -6,7 +6,7 @@
 #include "anki/common/robot/matlabInterface.h"
 
 #include "anki/vision/robot/imageProcessing.h"
-#include "anki/vision/robot/miscVisionKernels.h"
+#include "anki/vision/robot/imageProcessing.h"
 
 #define VERBOSITY 0
 

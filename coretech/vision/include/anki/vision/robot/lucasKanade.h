@@ -13,9 +13,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define _ANKICORETECHEMBEDDED_VISION_LUCAS_KANADE_H_
 
 #include "anki/common/robot/config.h"
-#include "anki/common/robot/array2d.h"
-#include "anki/common/robot/fixedLengthList.h"
-#include "anki/common/robot/geometry.h"
+#include "anki/vision/robot/edgeDetection.h"
+#include "anki/vision/robot/transformations.h"
 
 namespace Anki
 {
@@ -23,117 +22,35 @@ namespace Anki
   {
     namespace TemplateTracker
     {
-      // The type of transformation.
-      //
-      // The first byte is the degrees of freedom of the transformation, so if it bit-shifted right
-      // by 8, it is equal to the number of parameters
-      enum TransformType
-      {
-        TRANSFORM_UNKNOWN     = 0x0000,
-        TRANSFORM_TRANSLATION = 0x0200,
-        TRANSFORM_AFFINE      = 0x0600,
-        TRANSFORM_PROJECTIVE  = 0x0800
-      };
-
       const s32 NUM_PREVIOUS_QUADS_TO_COMPARE = 2;
-
-      class PlanarTransformation_f32
-      {
-        // A PlanarTransformation object can do the following:
-        // 1. Hold the current planar transformation, and optionally the initial extents of the plane segment quadrilateral
-        // 2. Update the planar transformation with an update delta
-        // 3. Transform a set of points or a quadrilateral to the new coordinate frame
-
-      public:
-
-        PlanarTransformation_f32(const TransformType transformType, const Quadrilateral<f32> &initialCorners, const Array<f32> &initialHomography, MemoryStack &memory);
-
-        // Initialize with an identity homography
-        PlanarTransformation_f32(const TransformType transformType, const Quadrilateral<f32> &initialCorners, MemoryStack &memory);
-
-        // Initialize with an identity homography and corners with all zero coordinates
-        PlanarTransformation_f32(const TransformType transformType, MemoryStack &memory);
-
-        // Initialize as invalid
-        PlanarTransformation_f32();
-
-        // Using the current transformation, warp the In points to the Out points.
-        // xIn, yIn, xOut, and yOut must be 1xN.
-        // xOut and yOut must be allocated before calling
-        // Requires at least N*sizeof(f32) bytes of scratch
-        Result TransformPoints(
-          const Array<f32> &xIn, const Array<f32> &yIn,
-          const f32 scale, Array<f32> &xOut, Array<f32> &yOut) const;
-
-        // Update the transformation. The format of the update should be as follows:
-        // TRANSFORM_TRANSLATION: [-dx, -dy]
-        Result Update(const Array<f32> &update, MemoryStack scratch, TransformType updateType=TRANSFORM_UNKNOWN);
-
-        Result Print(const char * const variableName = "Transformation");
-
-        Quadrilateral<f32> TransformQuadrilateral(const Quadrilateral<f32> &in,
-          MemoryStack scratch,
-          const f32 scale=1.0f) const;
-
-        Result set_transformType(const TransformType transformType);
-
-        TransformType get_transformType() const;
-
-        Result set_homography(const Array<f32>& in);
-
-        const Array<f32>& get_homography() const;
-
-        Result set_initialCorners(const Quadrilateral<f32> &initialCorners);
-
-        const Quadrilateral<f32>& get_initialCorners() const;
-
-        const Point<f32>& get_centerOffset() const;
-
-        Quadrilateral<f32> get_transformedCorners(MemoryStack scratch) const;
-
-      protected:
-        TransformType transformType;
-
-        Array<f32> homography; // All types of plane transformations are stored in a 3x3 homography matrix, though some values may be zero (or ones for diagonals)
-
-        Quadrilateral<f32> initialCorners; // The initial corners of the valid region
-
-        Point<f32> centerOffset;
-
-        static Result TransformPointsStatic(
-          const Array<f32> &xIn, const Array<f32> &yIn,
-          const f32 scale,
-          const Point<f32>& centerOffset,
-          Array<f32> &xOut, Array<f32> &yOut,
-          const TransformType transformType,
-          const Array<f32> &homography);
-      };
 
       class LucasKanadeTracker_f32
       {
         // The generic LucasKanadeTracker class can track a template with the Lucas-Kanade method,
         // either with translation-only, affine, or projective updates. The two main steps are
-        // initialization and update. Note that this class uses a lot of memory (on the order of
-        // 600kb for an 80x60 input).
+        // initialization and update.
+        //
+        // NOTE:
+        // This class uses a lot of memory (on the order of 600kb for an 80x60 input).
 
       public:
-        LucasKanadeTracker_f32(void) : isValid(false), isInitialized(false) { }
-        LucasKanadeTracker_f32(const Array<u8> &templateImage, const Quadrilateral<f32> &templateRegion, const s32 numPyramidLevels, const TransformType transformType, const f32 ridgeWeight, MemoryStack &memory);
+        LucasKanadeTracker_f32();
+        LucasKanadeTracker_f32(const Array<u8> &templateImage, const Quadrilateral<f32> &templateRegion, const s32 numPyramidLevels, const Transformations::TransformType transformType, const f32 ridgeWeight, MemoryStack &memory);
 
         Result UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, const bool useWeights, bool& converged, MemoryStack scratch);
 
         bool IsValid() const;
 
-        Result set_transformation(const PlanarTransformation_f32 &transformation);
+        Result set_transformation(const Transformations::PlanarTransformation_f32 &transformation);
 
-        PlanarTransformation_f32 get_transformation() const;
+        Transformations::PlanarTransformation_f32 get_transformation() const;
 
       protected:
         // A_full is the list of derivative matrices for each level of the pyramid
-        FixedLengthList<Array<f32>> A_full;
-        FixedLengthList<Array<u8>> templateImagePyramid;
-        FixedLengthList<Meshgrid<f32>> templateCoordinates;
-        FixedLengthList<Array<f32>> templateWeights;
+        FixedLengthList<Array<f32> > A_full;
+        FixedLengthList<Array<u8> > templateImagePyramid;
+        FixedLengthList<Meshgrid<f32> > templateCoordinates;
+        FixedLengthList<Array<f32> > templateWeights;
 
         s32 numPyramidLevels;
 
@@ -146,7 +63,7 @@ namespace Anki
         f32 templateRegionHeight;
         f32 templateRegionWidth;
 
-        PlanarTransformation_f32 transformation;
+        Transformations::PlanarTransformation_f32 transformation;
 
         f32 ridgeWeight;
 
@@ -162,32 +79,31 @@ namespace Anki
         // Allocated some permanant structures using memory, as well as some temporary structures. As a result, it should only be called once.
         Result InitializeTemplate(const Array<u8> &templateImage, MemoryStack &memory);
 
-        Result IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const TransformType curTransformType, const bool useWeights, bool &converged, MemoryStack scratch);
+        Result IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const Transformations::TransformType curTransformType, const bool useWeights, bool &converged, MemoryStack scratch);
       }; // class LucasKanadeTracker_f32
 
       class LucasKanadeTrackerFast
       {
         // An Translation-only or Affine-plus-translation LucasKanadeTracker. Unlike the general
-        // LucasKanadeTracker, this version uses much less memory, and will eventually be better optimized.
+        // LucasKanadeTracker, this version uses much less memory, and could be better optimized.
 
       public:
-        LucasKanadeTrackerFast(void) : isValid(false) { }
-
-        LucasKanadeTrackerFast(const Array<u8> &templateImage, const Quadrilateral<f32> &templateQuad, const s32 numPyramidLevels, const TransformType transformType, const f32 ridgeWeight, MemoryStack &memory);
+        LucasKanadeTrackerFast();
+        LucasKanadeTrackerFast(const Array<u8> &templateImage, const Quadrilateral<f32> &templateQuad, const s32 numPyramidLevels, const Transformations::TransformType transformType, const f32 ridgeWeight, MemoryStack &memory);
 
         Result UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, bool& converged, MemoryStack scratch);
 
         bool IsValid() const;
 
-        Result set_transformation(const PlanarTransformation_f32 &transformation);
+        Result set_transformation(const Transformations::PlanarTransformation_f32 &transformation);
 
-        PlanarTransformation_f32 get_transformation() const;
+        Transformations::PlanarTransformation_f32 get_transformation() const;
 
       protected:
-        FixedLengthList<Meshgrid<f32>> templateCoordinates;
-        FixedLengthList<Array<u8>> templateImagePyramid;
-        FixedLengthList<Array<s16>> templateImageXGradientPyramid;
-        FixedLengthList<Array<s16>> templateImageYGradientPyramid;
+        FixedLengthList<Meshgrid<f32> > templateCoordinates;
+        FixedLengthList<Array<u8> > templateImagePyramid;
+        FixedLengthList<Array<s16> > templateImageXGradientPyramid;
+        FixedLengthList<Array<s16> > templateImageYGradientPyramid;
 
         s32 numPyramidLevels;
 
@@ -200,7 +116,7 @@ namespace Anki
         f32 templateRegionHeight;
         f32 templateRegionWidth;
 
-        PlanarTransformation_f32 transformation;
+        Transformations::PlanarTransformation_f32 transformation;
 
         f32 ridgeWeight;
 
@@ -208,11 +124,160 @@ namespace Anki
 
         bool isValid;
 
-        Result IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const TransformType curTransformType, bool &converged, MemoryStack scratch);
+        Result IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const Transformations::TransformType curTransformType, bool &converged, MemoryStack scratch);
 
         Result IterativelyRefineTrack_Translation(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack scratch);
         Result IterativelyRefineTrack_Affine(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack scratch);
       }; // class LucasKanadeTrackerFast
+
+      class LucasKanadeTrackerBinary
+      {
+        // A binary-image LucasKanade tracker. This is liable to be much faster than the standard
+        // LucasKanadeTracker or LucasKanadeTrackerFast, but is also liable to be less accurate and
+        // more jittery.
+        //
+        // Also different, is that the user should call IterativelyRefineTrack as many times as desired. There
+        // is no iteration within.
+
+      public:
+        LucasKanadeTrackerBinary();
+
+        // the real max number of edge pixels is maxEdgePixelsPerType*4, for each of the four edge types
+        LucasKanadeTrackerBinary(
+          const Array<u8> &templateImage, const Quadrilateral<f32> &templateQuad,
+          const u8 edgeDetection_grayvalueThreshold, const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType,
+          MemoryStack &memory);
+
+        // Runs one iteration each of translation and projective
+        Result UpdateTrack(
+          const Array<u8> &nextImage,
+          const u8 edgeDetection_grayvalueThreshold, const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType,
+          const s32 matching_maxDistance, const s32 matching_maxCorrespondences,
+          MemoryStack scratch);
+
+        bool IsValid() const;
+
+        Result ShowTemplate(const bool waitForKeypress, const bool fitImageToWindow) const;
+
+        Result set_transformation(const Transformations::PlanarTransformation_f32 &transformation);
+        Transformations::PlanarTransformation_f32 get_transformation() const;
+
+      protected:
+        typedef struct
+        {
+          Array<s32> xDecreasing_yStartIndexes;
+          Array<s32> xIncreasing_yStartIndexes;
+          Array<s32> yDecreasing_xStartIndexes;
+          Array<s32> yIncreasing_xStartIndexes;
+        } AllIndexLimits;
+
+        //Array<u8> templateImage;
+        s32 templateImageHeight;
+        s32 templateImageWidth;
+        Quadrilateral<f32> templateQuad;
+
+        // The indexes of the detected edges
+        EdgeLists templateEdges;
+
+        f32 homographyOffsetX;
+        f32 homographyOffsetY;
+
+        Meshgrid<f32> grid;
+        Array<f32> xGrid;
+        Array<f32> yGrid;
+
+        Transformations::PlanarTransformation_f32 transformation;
+
+        bool isValid;
+
+#if defined(ANKICORETECH_EMBEDDED_USE_OPENCV) && ANKICORETECH_EMBEDDED_USE_OPENCV
+        // Allocates the returned cv::Mat on the heap
+        static cv::Mat DrawIndexes(
+          const s32 imageHeight, const s32 imageWidth,
+          const FixedLengthList<Point<s16> > &indexPoints1,
+          const FixedLengthList<Point<s16> > &indexPoints2,
+          const FixedLengthList<Point<s16> > &indexPoints3,
+          const FixedLengthList<Point<s16> > &indexPoints4);
+#endif
+
+        // Find the min and max indexes of point with a given Y location
+        // The list of points must be sorted in Y, from low to high
+        static Result ComputeIndexLimitsVertical(const FixedLengthList<Point<s16> > &points, Array<s32> &yStartIndexes);
+
+        // Find the min and max indexes of point with a given X location
+        // The list of points must be sorted in X, from low to high
+        static Result ComputeIndexLimitsHorizontal(const FixedLengthList<Point<s16> > &points, Array<s32> &xStartIndexes);
+
+        static Result FindVerticalCorrespondences_Translation(
+          const s32 maxMatchingDistance,
+          const Transformations::PlanarTransformation_f32 &transformation,
+          const FixedLengthList<Point<s16> > &templatePoints,
+          const FixedLengthList<Point<s16> > &newPoints,
+          const s32 imageHeight,
+          const s32 imageWidth,
+          const Array<s32> &xStartIndexes, //< Computed by ComputeIndexLimitsHorizontal
+          f32 &sumY,
+          s32 &numCorrespondences,
+          MemoryStack scratch);
+
+        static Result FindHorizontalCorrespondences_Translation(
+          const s32 maxMatchingDistance,
+          const Transformations::PlanarTransformation_f32 &transformation,
+          const FixedLengthList<Point<s16> > &templatePoints,
+          const FixedLengthList<Point<s16> > &newPoints,
+          const s32 imageHeight,
+          const s32 imageWidth,
+          const Array<s32> &yStartIndexes, //< Computed by ComputeIndexLimitsVertical
+          f32 &sumX,
+          s32 &numCorrespondences,
+          MemoryStack scratch);
+
+        static Result FindVerticalCorrespondences_Projective(
+          const s32 maxMatchingDistance,
+          const Transformations::PlanarTransformation_f32 &transformation,
+          const FixedLengthList<Point<s16> > &templatePoints,
+          const FixedLengthList<Point<s16> > &newPoints,
+          const s32 imageHeight,
+          const s32 imageWidth,
+          const Array<s32> &xStartIndexes, //< Computed by ComputeIndexLimitsHorizontal
+          Array<f32> &AtA,
+          Array<f32> &Atb,
+          MemoryStack scratch);
+
+        static Result FindHorizontalCorrespondences_Projective(
+          const s32 maxMatchingDistance,
+          const Transformations::PlanarTransformation_f32 &transformation,
+          const FixedLengthList<Point<s16> > &templatePoints,
+          const FixedLengthList<Point<s16> > &newPoints,
+          const s32 imageHeight,
+          const s32 imageWidth,
+          const Array<s32> &yStartIndexes, //< Computed by ComputeIndexLimitsVertical
+          Array<f32> &AtA,
+          Array<f32> &Atb,
+          MemoryStack scratch);
+
+        // Allocates allLimits, and computes all the indexe limits
+        static Result ComputeAllIndexLimits(const EdgeLists &imageEdges, AllIndexLimits &allLimits, MemoryStack &memory);
+
+        Result IterativelyRefineTrack(
+          const EdgeLists &nextImageEdges,
+          const AllIndexLimits &allLimits,
+          const s32 matching_maxDistance, const s32 matching_maxCorrespondences,
+          const Transformations::TransformType updateType,
+          MemoryStack scratch);
+
+        Result IterativelyRefineTrack_Translation(
+          const EdgeLists &nextImageEdges,
+          const AllIndexLimits &allLimits,
+          const s32 matching_maxDistance, const s32 matching_maxCorrespondences,
+          MemoryStack scratch);
+
+        Result IterativelyRefineTrack_Projective(
+          const EdgeLists &nextImageEdges,
+          const AllIndexLimits &allLimits,
+          const s32 matching_maxDistance, const s32 matching_maxCorrespondences,
+          MemoryStack scratch);
+      }; // class LucasKanadeTrackerBinary
     } // namespace TemplateTracker
   } // namespace Embedded
 } //namespace Anki

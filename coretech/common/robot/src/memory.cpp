@@ -15,6 +15,11 @@ namespace Anki
 {
   namespace Embedded
   {
+    MemoryStack::MemoryStack()
+      : buffer(NULL)
+    {
+    }
+
     MemoryStack::MemoryStack(void *buffer, s32 bufferLength, Flags::Buffer flags)
       : buffer(buffer), totalBytes(bufferLength), usedBytes(0), usedBytesBeforeLastAllocation(0), lastAllocatedMemory(NULL), flags(flags)
     {

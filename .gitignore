@@ -85,3 +85,10 @@ coretech/common/include/anki/common/robot/array2d.h.orig
 movidiusTests/shaveTests4/output/
 CMakeFiles
 visionUnitTestController
+robot/robot.uvgui.anki
+robot/robot_robot.dep
+robot/robot_vision-tests.dep
+robot/startup_stm32f429_439xx.lst
+coretech/vision/robot/test/embeddedVisionTests - Copy.cpp
+robot/robot_embedded-tests.dep
+*.MikeAnderson

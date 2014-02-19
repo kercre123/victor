@@ -22,7 +22,7 @@ namespace Anki
   {
     namespace Matrix
     {
-#pragma mark --- Declarations ---
+// #pragma mark --- Declarations ---
 
       //
       // Simple matrix statistics
@@ -93,7 +93,7 @@ namespace Anki
 
       // Compute the homography such that "transformedPoints = homography * originalPoints"
       //
-      // Warning: This uses the inhomogeneous solution and the Cholesky decomposition, therefore it
+      // WARNING: This uses the inhomogeneous solution and the Cholesky decomposition, therefore it
       //          will be incorrect if H_33 is zero, which happens in certain cases of lines at
       //          inifinty. For more details, see Multiple View Geometry 2nd Edition, Example 4.1
       template<typename Type> Result EstimateHomography(
@@ -135,6 +135,7 @@ namespace Anki
       template<typename TypeIn, typename TypeOut> Array<TypeOut> Vectorize(const bool isColumnMajor, const Array<TypeIn> &in, MemoryStack &memory);
 
       // Perform an immediate matrix transpose (unlike the lazy transpose of ArraySlice)
+      // in and out must be different Array objects
       template<typename TypeIn, typename TypeOut> Result Transpose(const Array<TypeIn> &in, Array<TypeOut> &out);
 
       //

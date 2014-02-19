@@ -19,9 +19,11 @@ namespace Anki
 {
   namespace Embedded
   {
+    // Similar to Matlab's zeros()
     template<typename Type> Result Zeros(Array<Type> &out);
     template<typename Type> Array<Type> Zeros(const s32 arrayHeight, const s32 arrayWidth, MemoryStack &memory);
 
+    // Similat to Matlab's ones()
     template<typename Type> Result Ones(Array<Type> &out);
     template<typename Type> Array<Type> Ones(const s32 arrayHeight, const s32 arrayWidth, MemoryStack &memory);
 
@@ -29,9 +31,11 @@ namespace Anki
     //template<typename Type> Result Rand(Array<Type> &arr);
     //template<typename Type> Array<Type> Rand(const s32 arrayHeight, const s32 arrayWidth, MemoryStack &memory);
 
+    // Similar to Matlab's eye()
     template<typename Type> Result Eye(Array<Type> &out);
     template<typename Type> Array<Type> Eye(const s32 arrayHeight, const s32 arrayWidth, MemoryStack &memory);
 
+    // Similar to Matlab's exp(in)
     template<typename Type> Array<Type> Exp(const Array<Type> &in, MemoryStack &memory);
   } // namespace Embedded
 } //namespace Anki

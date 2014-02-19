@@ -31,45 +31,7 @@ namespace Anki
     template<typename Type> class ConstArraySlice;
     template<typename Type> class ConstArraySliceExpression;
 
-    //template<typename Type1, typename Type2> class Find;
-
-#pragma mark --- Array Definitions ---
-
-    // Factory method to create an Array from the heap. The data of the returned Array must be freed by the user.
-    // This is separate from the normal constructor, as Array objects are not supposed to manage memory
-#ifndef USING_MOVIDIUS_COMPILER
-    //template<typename Type> Array<Type> AllocateArrayFromHeap(const s32 numRows, const s32 numCols, const Flags::Buffer flags=Flags::Buffer(true,false))
-    //{
-    //  const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array<Type>::ComputeMinimumRequiredMemory(numRows, numCols, flags); // The required memory, plus a bit more
-
-    //  Type * const rawDataPointer = reinterpret_cast<Type*>(calloc(requiredMemory, 1));
-    //  Type * const dataPointer = reinterpret_cast<Type*>(RoundUp<size_t>(reinterpret_cast<size_t>(rawDataPointer), MEMORY_ALIGNMENT));
-
-    //  const s32 offsetAmount = static_cast<s32>(reinterpret_cast<size_t>(dataPointer) - reinterpret_cast<size_t>(rawDataPointer));
-
-    //  Array<Type> mat(numRows, numCols, dataPointer, requiredMemory-offsetAmount, flags);
-
-    //  mat.set_rawDataPointer(rawDataPointer);
-
-    //  return mat;
-    //}
-
-    //template<typename Type> FixedPointArray<Type> AllocateFixedPointArrayFromHeap(const s32 numRows, const s32 numCols, const s32 numFractionalBits, const Flags::Buffer flags=Flags::Buffer(true,false))
-    //{
-    //  const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array<Type>::ComputeMinimumRequiredMemory(numRows, numCols, flags); // The required memory, plus a bit more
-
-    //  Type * const rawDataPointer = reinterpret_cast<Type*>(calloc(requiredMemory, 1));
-    //  Type * const dataPointer = reinterpret_cast<Type*>(RoundUp<size_t>(reinterpret_cast<size_t>(rawDataPointer), MEMORY_ALIGNMENT));
-
-    //  const s32 offsetAmount = static_cast<s32>(reinterpret_cast<size_t>(dataPointer) - reinterpret_cast<size_t>(rawDataPointer));
-
-    //  FixedPointArray<Type> mat(numRows, numCols, dataPointer, requiredMemory-offsetAmount, numFractionalBits, flags);
-
-    //  mat.set_rawDataPointer(rawDataPointer);
-
-    //  return mat;
-    //}
-#endif // #ifndef USING_MOVIDIUS_COMPILER
+    // #pragma mark --- Array Definitions ---
 
     template<typename Type> s32 Array<Type>::ComputeRequiredStride(const s32 numCols, const Flags::Buffer flags)
     {
@@ -100,16 +62,6 @@ namespace Anki
 
     template<typename Type> Array<Type>::Array(const s32 numRows, const s32 numCols, void * data, const s32 dataLength, const Flags::Buffer flags)
     {
-#if defined(USING_MOVIDIUS_COMPILER)
-#if defined(USING_MOVIDIUS_GCC_COMPILER)
-      data = ConvertCMXAddressToLeon(data);
-#elif defined(USING_MOVIDIUS_SHAVE_COMPILER)
-      data = ConvertCMXAddressToShave(data);
-#else
-#error Unknown Movidius compiler
-#endif
-#endif // #if defined(USING_MOVIDIUS_COMPILER)
-
       InvalidateArray();
 
       AnkiConditionalErrorAndReturn(reinterpret_cast<size_t>(data)%MEMORY_ALIGNMENT == 0,
@@ -148,16 +100,6 @@ namespace Anki
       s32 numBytesAllocated = 0;
 
       void * allocatedBuffer = AllocateBufferFromMemoryStack(numRows, ComputeRequiredStride(numCols, flags), memory, numBytesAllocated, flags, false);
-
-#if defined(USING_MOVIDIUS_COMPILER)
-#if defined(USING_MOVIDIUS_GCC_COMPILER)
-      allocatedBuffer = ConvertCMXAddressToLeon(allocatedBuffer);
-#elif defined(USING_MOVIDIUS_SHAVE_COMPILER)
-      allocatedBuffer = ConvertCMXAddressToShave(allocatedBuffer);
-#else
-#error Unknown Movidius compiler
-#endif
-#endif // #if defined(USING_MOVIDIUS_COMPILER)
 
       InitializeBuffer(numRows,
         numCols,
@@ -293,11 +235,16 @@ namespace Anki
     }
 #endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
-    template<typename Type> void Array<Type>::Show(const char * const windowName, const bool waitForKeypress, const bool scaleValues) const
-    {
-      // If opencv is not used, just do nothing
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
+    template<typename Type> void Array<Type>::Show(const char * const windowName, const bool waitForKeypress, const bool scaleValues, const bool fitImageToWindow) const
+    {
       AnkiConditionalError(this->IsValid(), "Array<Type>::Show", "Array<Type> is not valid");
+
+      if(fitImageToWindow) {
+        cv::namedWindow(windowName, CV_WINDOW_NORMAL);
+      } else {
+        cv::namedWindow(windowName, CV_WINDOW_AUTOSIZE);
+      }
 
       if(scaleValues) {
         cv::Mat_<f64> scaledArray(this->get_size(0), this->get_size(1));
@@ -318,8 +265,8 @@ namespace Anki
       if(waitForKeypress) {
         cv::waitKey();
       }
-#endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
     }
+#endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
     template<typename Type> Result Array<Type>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
@@ -465,8 +412,7 @@ namespace Anki
       // for each relevant case
       AnkiAssert(false);
 
-      AnkiConditionalErrorAndReturnValue(false,
-        0, "Array<Type>::Set", "SetCast must be specialized");
+      return 0;
     }
 
     template<typename Type> s32 Array<Type>::Set(const Type * const values, const s32 numValues)
@@ -673,16 +619,12 @@ namespace Anki
         for(s32 x=realMinX; x<realMaxX; x++) {
           if(Flags::TypeCharacteristics<Type>::isBasicType) {
             if(Flags::TypeCharacteristics<Type>::isInteger) {
-              if(sizeof(Type) == 1) {
-                printf("%d ", static_cast<s32>(pThisData[x]));
-              } else {
-                printf("%d ", pThisData[x]);
-              }
+              printf("%d ", static_cast<s32>(pThisData[x]));
             } else {
               if(version==1) {
-                printf("%f ", pThisData[x]);
+                printf("%f ", (float)pThisData[x]);
               } else {
-                printf("%e ", pThisData[x]);
+                printf("%e ", (float)pThisData[x]);
               }
             }
           } else {
@@ -696,7 +638,7 @@ namespace Anki
       return RESULT_OK;
     }
 
-#pragma mark --- FixedPointArray Definitions ---
+    // #pragma mark --- FixedPointArray Definitions ---
 
     template<typename Type> FixedPointArray<Type>::FixedPointArray()
       : Array<Type>(), numFractionalBits(-1)
@@ -720,7 +662,7 @@ namespace Anki
       return numFractionalBits;
     }
 
-#pragma mark --- Array Specializations ---
+    // #pragma mark --- Array Specializations ---
 
     template<> Result Array<bool>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
     template<> Result Array<u8>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
@@ -740,7 +682,7 @@ namespace Anki
     template<> template<> s32 Array<u8>::SetCast(const s32 * const values, const s32 numValues);
     template<> template<> s32 Array<s16>::SetCast(const s32 * const values, const s32 numValues);
 
-#pragma mark --- C Conversions ---
+    // #pragma mark --- C Conversions ---
     C_Array_s32 get_C_Array_s32(Array<s32> &array);
   } // namespace Embedded
 } //namespace Anki

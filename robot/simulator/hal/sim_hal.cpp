@@ -197,6 +197,11 @@ namespace Anki {
 #else
     ReturnCode InitSimRadio(s32 robotID);
 #endif
+   
+    namespace HAL {
+      // Forward Declaration.  This is implemented in sim_uart.cpp
+      void UARTInit();
+    }
     
     ReturnCode HAL::Init()
     {

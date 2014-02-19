@@ -405,9 +405,11 @@ if __name__ == '__main__':
     elif arg == 'quit':
       quitDebuggerOnCompletion = True
     elif arg == 'capture-images':
-      target = 'capture-images'
       LEON_ASM_C_CXX_OPT += '-DUSE_OFFBOARD_VISION=0 -DUSE_CAPTURE_IMAGES '
       LEON_ASM_C_CXX_OPT += '-DDEFAULT_BAUDRATE=1000000 '
+    elif arg == 'stream-images':
+      LEON_ASM_C_CXX_OPT += '-DUSE_OFFBOARD_VISION=0 -DUSE_CAPTURE_IMAGES -DUSE_STREAM_IMAGES '
+      LEON_ASM_C_CXX_OPT += '-DDEFAULT_BAUDRATE=1000000 '      
     else:
       print 'Invalid argument: ' + arg
       sys.exit(1)

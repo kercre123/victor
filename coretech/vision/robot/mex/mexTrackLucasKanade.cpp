@@ -34,7 +34,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   Array<u8> templateImage = mxArrayToArray<u8>(prhs[0], memory);
   Array<f64> templateRegionRectangle_array = mxArrayToArray<f64>(prhs[1], memory);
   const s32 numPyramidLevels = static_cast<s32>(mxGetScalar(prhs[2]));
-  const TemplateTracker::TransformType transformType = static_cast<TemplateTracker::TransformType>(static_cast<s32>(mxGetScalar(prhs[3])));
+  const Transformations::TransformType transformType = static_cast<Transformations::TransformType>(static_cast<s32>(mxGetScalar(prhs[3])));
   const f32 ridgeWeight = static_cast<f32>(mxGetScalar(prhs[4]));
   Array<u8> nextImage = mxArrayToArray<u8>(prhs[5], memory);
   const s32 maxIterations = static_cast<s32>(mxGetScalar(prhs[6]));
@@ -56,7 +56,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   AnkiConditionalErrorAndReturn(tracker.IsValid(), "mexTrackLucasKanade", "Could not construct tracker");
 
-  TemplateTracker::PlanarTransformation_f32 initialTransform(transformType, memory);
+  Transformations::PlanarTransformation_f32 initialTransform(transformType, memory);
 
   Array<f32> homography(3, 3, memory);
   homography.SetCast<f64>(homography_f64);
@@ -73,7 +73,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     AnkiError("mexTrackLucasKanade", "UpdateTrack");
     return;
   }
-  
+
   // TODO: Return convergence flag?
 
   const Array<f32> &newHomography = tracker.get_transformation().get_homography();
