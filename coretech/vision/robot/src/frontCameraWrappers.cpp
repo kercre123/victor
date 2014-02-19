@@ -142,13 +142,20 @@ namespace Anki
       // 5. Decode fiducial markers from the candidate quadrilaterals
       const FiducialMarkerParser parser = FiducialMarkerParser(scratchOnchip);
 
+      BeginBenchmark("Copy Image To Onchip");
+      // Random access to off-chip is extremely slow, so copy the whole image to on-chip first
+      // TODO: use a DMA call a few steps ago
+      Array<u8> imageOnChip(imageHeight, imageWidth, scratchOnchip);
+      imageOnChip.Set(image);
+      EndBenchmark("Copy Image To Onchip");
+
       BeginBenchmark("ExtractBlockMarker");
       for(s32 iQuad=0; iQuad<extractedQuads.get_size(); iQuad++) {
         const Array<f64> &currentHomography = homographies[iQuad];
         const Quadrilateral<s16> &currentQuad = extractedQuads[iQuad];
         BlockMarker &currentMarker = markers[iQuad];
 
-        if((lastResult = parser.ExtractBlockMarker(image, currentQuad, currentHomography, decode_minContrastRatio, currentMarker, scratchOnchip)) != RESULT_OK)
+        if((lastResult = parser.ExtractBlockMarker(imageOnChip, currentQuad, currentHomography, decode_minContrastRatio, currentMarker, scratchOnchip)) != RESULT_OK)
           return lastResult;
       }
 

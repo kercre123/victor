@@ -9,6 +9,9 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/vision/robot/fiducialMarkers.h"
 
+#include "anki/common/robot/benchmarking_c.h"
+#include "anki/common/robot/matlabInterface.h"
+
 #include "anki/vision/robot/fiducialDetection.h"
 #include "anki/vision/robot/draw_vision.h"
 
@@ -109,6 +112,8 @@ namespace Anki
       const s32 imageHeight = image.get_size(0);
       const s32 imageWidth = image.get_size(1);
 
+      //#define USE_64_BIT
+#ifdef USE_64_BIT
       const f64 h00 = homography[0][0];
       const f64 h10 = homography[1][0];
       const f64 h20 = homography[2][0];
@@ -119,7 +124,20 @@ namespace Anki
       const f64 h12 = homography[1][2];
       const f64 h22 = homography[2][2];
 
-      const f64 fixedPointDivider = 1.0 / pow(2.0, this->numFractionalBits);
+      const f64 fixedPointDivider = 1.0 / static_cast<f64>(2 << (this->numFractionalBits-1));
+#else // #ifdef USE_64_BIT
+      const f32 h00 = static_cast<f32>(homography[0][0]);
+      const f32 h10 = static_cast<f32>(homography[1][0]);
+      const f32 h20 = static_cast<f32>(homography[2][0]);
+      const f32 h01 = static_cast<f32>(homography[0][1]);
+      const f32 h11 = static_cast<f32>(homography[1][1]);
+      const f32 h21 = static_cast<f32>(homography[2][1]);
+      const f32 h02 = static_cast<f32>(homography[0][2]);
+      const f32 h12 = static_cast<f32>(homography[1][2]);
+      const f32 h22 = static_cast<f32>(homography[2][2]);
+
+      const f32 fixedPointDivider = 1.0f / static_cast<f32>(2 << (this->numFractionalBits-1));
+#endif // #ifdef USE_64_BIT ... #else
 
       //#define SEND_WARPED_LOCATIONS
 #ifdef SEND_WARPED_LOCATIONS
@@ -128,8 +146,11 @@ namespace Anki
       matlab.EvalStringEcho("if ~exist('warpedPoints', 'var') warpedPoints = zeros(2, 0); end;");
 #endif
 
+      const Point<s16> * restrict pProbeLocations = this->probeLocations.Pointer(0);
+
       const s32 numProbeLocations = probeLocations.get_size();
       for(s32 probe=0; probe<numProbeLocations; probe++) {
+#ifdef USE_64_BIT
         const f64 x = static_cast<f64>(this->probeLocations[probe].x) * fixedPointDivider;
         const f64 y = static_cast<f64>(this->probeLocations[probe].y) * fixedPointDivider;
         const s16 weight = this->probeWeights[probe];
@@ -139,6 +160,17 @@ namespace Anki
 
         const f64 warpedXf = (h00 * x + h01 *y + h02) * homogenousDivisor;
         const f64 warpedYf = (h10 * x + h11 *y + h12) * homogenousDivisor;
+#else // #ifdef USE_64_BIT
+        const f32 x = static_cast<f32>(this->probeLocations[probe].x) * fixedPointDivider;
+        const f32 y = static_cast<f32>(this->probeLocations[probe].y) * fixedPointDivider;
+        const s16 weight = this->probeWeights[probe];
+
+        // 1. Map each probe to its warped locations
+        const f32 homogenousDivisor = 1.0f / (h20*x + h21*y + h22);
+
+        const f32 warpedXf = (h00 * x + h01 *y + h02) * homogenousDivisor;
+        const f32 warpedYf = (h10 * x + h11 *y + h12) * homogenousDivisor;
+#endif // #ifdef USE_64_BIT ... #else
 
         const s16 warpedX = static_cast<s16>(Round(warpedXf));
         const s16 warpedY = static_cast<s16>(Round(warpedYf));
@@ -153,17 +185,17 @@ namespace Anki
         AnkiAssert(warpedY >= 0  && warpedX >= 0 && warpedY < imageHeight && warpedX < imageWidth);
 
         // This is the direct way to access a pixel. It doesn't work when there's an endian conflict
-        //const s16 imageValue = static_cast<s16>(*image.Pointer(warpedY, warpedX));
+        const s16 imageValue = static_cast<s16>(*image.Pointer(warpedY, warpedX));
 
         // This is the indirect way. It reads a whole 32-bit word, then extracts the correct byte
-        const u32 * restrict pImageY = reinterpret_cast<const u32*>(image.Pointer(warpedY,0));
-        const s32 xWord = warpedX >> 2;
+        //const u32 * restrict pImageY = reinterpret_cast<const u32*>(image.Pointer(warpedY,0));
+        //const s32 xWord = warpedX >> 2;
 
-        const s32 xByte = warpedX - (xWord << 2);
+        //const s32 xByte = warpedX - (xWord << 2);
 
-        const u32 curPixelWord = pImageY[xWord];
-        const u8 curPixel = (curPixelWord & (0xFF << (8*xByte))) >> (8*xByte);
-        const s16 imageValue = static_cast<s16>(curPixel);
+        //const u32 curPixelWord = pImageY[xWord];
+        //const u8 curPixel = (curPixelWord & (0xFF << (8*xByte))) >> (8*xByte);
+        //const s16 imageValue = static_cast<s16>(curPixel);
 
         accumulator += weight * imageValue;
       }
@@ -216,6 +248,8 @@ namespace Anki
     //  4. Lower right
     Result FiducialMarkerParser::ExtractBlockMarker(const Array<u8> &image, const Quadrilateral<s16> &quad, const Array<f64> &homography, const f32 minContrastRatio, BlockMarker &marker, MemoryStack scratch) const
     {
+      BeginBenchmark("fmpebm.init");
+
       Result lastResult;
 
       FixedLengthList<s16> meanValues(MAX_FIDUCIAL_MARKER_BITS, scratch);
@@ -238,6 +272,9 @@ namespace Anki
       }
 #endif
 
+      EndBenchmark("fmpebm.init");
+
+      BeginBenchmark("fmpebm.extractMean");
       for(s32 bit=0; bit<numBits; bit++) {
         if((lastResult = bits[bit].ExtractMeanValue(image, quad, homography, meanValues[bit])) != RESULT_OK)
           return lastResult;
@@ -258,6 +295,9 @@ namespace Anki
       }
 #endif // #ifdef SEND_PROBE_LOCATIONS
 
+      EndBenchmark("fmpebm.extractMean");
+
+      BeginBenchmark("fmpebm.orient");
       FixedLengthList<u8> binarizedBits(MAX_FIDUCIAL_MARKER_BITS, scratch);
 
       // [this, binaryString] = orientAndThreshold(this, this.means);
@@ -269,9 +309,15 @@ namespace Anki
       if(marker.orientation == BlockMarker::ORIENTATION_UNKNOWN)
         return RESULT_OK; // It couldn't be parsed, but this is not a code failure
 
+      EndBenchmark("fmpebm.orient");
+
+      BeginBenchmark("fmpebm.decode");
+
       // this = decodeIDs(this, binaryString);
       if((lastResult = DecodeId(binarizedBits, marker.blockType, marker.faceType, scratch)) != RESULT_OK)
         return lastResult;
+
+      EndBenchmark("fmpebm.decode");
 
       return RESULT_OK;
     }
