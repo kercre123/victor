@@ -67,6 +67,10 @@ namespace Anki {
                             const Radians angleThreshold,
                             Pose3d& P_diff) const;
       
+      virtual bool IsSameAs(const ObservableObject&  otherObject,
+                            const float   distThreshold,
+                            const Radians angleThreshold) const;
+      
       virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const = 0;
       
       // For creating derived objects from a pointer to this base class, see
@@ -139,6 +143,15 @@ namespace Anki {
       pose_ = newPose;
     }
     
+    inline bool ObservableObject::IsSameAs(const ObservableObject&  otherObject,
+                                           const float              distThreshold,
+                                           const Radians            angleThreshold) const
+    {
+      Pose3d P_diff_temp;
+      return this->IsSameAs(otherObject, distThreshold, angleThreshold,
+                            P_diff_temp);
+    }
+                                    
     /*
     // Derive specific observable objects from this class to get a clone method,
     // without having to specifically write one in each derived class.
@@ -177,12 +190,14 @@ namespace Anki {
       // Groups markers referring to the same type, and clusters them into
       // observed objects, returned in objectsSeen.  Used markers will be
       // removed from the input list, so markers referring to objects unknown
-      // to this library will remain.
+      // to this library will remain.  If seenOnlyBy is non-NULL, only markers
+      // seen by that camera will be considered.
       void CreateObjectsFromMarkers(std::list<ObservedMarker>& markers,
                                     std::vector<ObservableObject*>& objectsSeen,
                                     const Camera* seenOnlyBy = NULL) const;
       
-      // Only one object in a library can have each type
+      // Only one object in a library can have each type. Return a pointer to
+      // that object, or NULL if none exists.
       const ObservableObject* GetObjectWithType(const ObjectType_t type) const;
       
       // Return a pointer to a vector of pointers to known objects with at
@@ -228,7 +243,8 @@ namespace Anki {
         Pose3d pose_;
         
         MatchList matches_;
-      };
+        
+      }; // class PoseCluster
       
       void ClusterObjectPoses(const std::vector<PoseMatchPair>& possiblePoses,
                               const ObservableObject*         libObject,
