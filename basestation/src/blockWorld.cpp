@@ -179,9 +179,90 @@ namespace Anki
         } // if/else overlapping existing blocks found
      
       } // for each block seen
-
+     
     } // AddAndUpdateObjects()
     
+    
+    bool BlockWorld::UpdateRobotPose(Robot* robot)
+    {
+      bool wasPoseUpdated = false;
+      
+      // Get all mat objects *seen by this robot's camera*
+      std::vector<Vision::ObservableObject*> matsSeen;
+      matLibrary_.CreateObjectsFromMarkers(obsMarkers_, matsSeen,
+                                           &robot->get_camHead());
+      
+      // TODO: what to do when a robot sees multiple mat pieces at the same time
+      if(not matsSeen.empty()) {
+        if(matsSeen.size() > 1) {
+          PRINT_NAMED_WARNING("MultipleMatPiecesObserved",
+                              "Robot %d observed more than one mat pieces at "
+                              "the same time; will only use first for now.");
+        }
+        
+        // At this point the mat's pose should be relative to the robot's
+        // camera's pose
+        const Pose3d* matWrtCamera = &(matsSeen[0]->GetPose());
+        CORETECH_ASSERT(matWrtCamera->get_parent() ==
+                        &(robot->get_camHead().get_pose())); // MatPose's parent is camera
+        /*
+         PRINT_INFO("Observed mat w.r.t. camera is (%f,%f,%f)\n",
+         matWrtCamera->get_translation().x(),
+         matWrtCamera->get_translation().y(),
+         matWrtCamera->get_translation().z());
+         */
+        
+        // Now get the pose of the robot relative to the mat, using the pose
+        // tree
+        CORETECH_ASSERT(matWrtCamera->get_parent()->get_parent()->get_parent() ==
+                        &(robot->get_pose())); // Robot pose is just a couple more up the pose chain
+        
+        Pose3d newPose( robot->get_pose().getWithRespectTo(matWrtCamera) );
+        
+        Pose3d P_diff;
+        CORETECH_ASSERT( newPose.IsSameAs((*(robot->get_camHead().get_pose().get_parent()) *
+                                           robot->get_camHead().get_pose() *
+                                           (*matWrtCamera)).getInverse(),
+                                          5.f, 5*M_PI/180.f, P_diff) );
+        
+        
+        /*
+         Pose3d newPose( (*(robot->get_camHead().get_pose().get_parent()) *
+         robot->get_camHead().get_pose() *
+         (*matWrtCamera)).getInverse() );
+         */
+        newPose.set_parent( Pose3d::World); // robot->get_pose().get_parent() );
+        robot->set_pose(newPose);
+        wasPoseUpdated = true;
+        
+        PRINT_INFO("Using mat %d to localize robot %d at (%.3f,%.3f,%.3f), %.1fdeg@(%.2f,%.2f,%.2f)\n",
+                   matsSeen[0]->GetID(), robot->get_ID(),
+                   robot->get_pose().get_translation().x(),
+                   robot->get_pose().get_translation().y(),
+                   robot->get_pose().get_translation().z(),
+                   robot->get_pose().get_rotationAngle().getDegrees(),
+                   robot->get_pose().get_rotationAxis().x(),
+                   robot->get_pose().get_rotationAxis().y(),
+                   robot->get_pose().get_rotationAxis().z());
+        
+      } // IF any mat piece was seen
+
+      return wasPoseUpdated;
+      
+    } // UpdateRobotPose()
+    
+    
+    uint32_t BlockWorld::UpdateBlockPoses()
+    {
+      std::vector<Vision::ObservableObject*> blocksSeen;
+      blockLibrary_.CreateObjectsFromMarkers(obsMarkers_, blocksSeen);
+      
+      // Use them to add or update existing blocks in our world
+      AddAndUpdateObjects(blocksSeen, existingBlocks_);
+
+      return blocksSeen.size();
+      
+    } // UpdateBlockPoses()
     
     void BlockWorld::Update(void)
     {
@@ -190,69 +271,13 @@ namespace Anki
       //
       // Localize robots using mat observations
       //
-      std::vector<Vision::ObservableObject*> matsSeen;
       for(auto robotID : robotMgr_->GetRobotIDList())
       {
         Robot* robot = robotMgr_->GetRobotByID(robotID);
         
-        // Get all mat objects *seen by this robot's camera*
-        matsSeen.clear();
-        matLibrary_.CreateObjectsFromMarkers(obsMarkers_, matsSeen,
-                                             &robot->get_camHead());
+        CORETECH_ASSERT(robot != NULL);
         
-        // TODO: what to do when a robot sees multiple mat pieces at the same time
-        if(not matsSeen.empty()) {
-          if(matsSeen.size() > 1) {
-            PRINT_NAMED_WARNING("MultipleMatPiecesObserved",
-                                "Robot %d observed more than one mat pieces at "
-                                "the same time; will only use first for now.");
-          }
-          
-          // At this point the mat's pose should be relative to the robot's
-          // camera's pose
-          const Pose3d* matWrtCamera = &(matsSeen[0]->GetPose());
-          CORETECH_ASSERT(matWrtCamera->get_parent() ==
-                          &(robot->get_camHead().get_pose())); // MatPose's parent is camera
-          /*
-          PRINT_INFO("Observed mat w.r.t. camera is (%f,%f,%f)\n",
-                     matWrtCamera->get_translation().x(),
-                     matWrtCamera->get_translation().y(),
-                     matWrtCamera->get_translation().z());
-          */
-          
-          // Now get the pose of the robot relative to the mat, using the pose
-          // tree
-          CORETECH_ASSERT(matWrtCamera->get_parent()->get_parent()->get_parent() ==
-                          &(robot->get_pose())); // Robot pose is just a couple more up the pose chain
-          
-          Pose3d newPose( robot->get_pose().getWithRespectTo(matWrtCamera) );
-          
-          Pose3d P_diff;
-          CORETECH_ASSERT( newPose.IsSameAs((*(robot->get_camHead().get_pose().get_parent()) *
-                                             robot->get_camHead().get_pose() *
-                                             (*matWrtCamera)).getInverse(),
-                                            5.f, 5*M_PI/180.f, P_diff) );
-          
-          
-          /*
-          Pose3d newPose( (*(robot->get_camHead().get_pose().get_parent()) *
-                           robot->get_camHead().get_pose() *
-                           (*matWrtCamera)).getInverse() );
-          */
-          newPose.set_parent( Pose3d::World); // robot->get_pose().get_parent() );
-          robot->set_pose(newPose);
-          
-          PRINT_INFO("Using mat %d to localize robot %d at (%.3f,%.3f,%.3f), %.1fdeg@(%.2f,%.2f,%.2f)\n",
-                     matsSeen[0]->GetID(), robotID,
-                     robot->get_pose().get_translation().x(),
-                     robot->get_pose().get_translation().y(),
-                     robot->get_pose().get_translation().z(),
-                     robot->get_pose().get_rotationAngle().getDegrees(),
-                     robot->get_pose().get_rotationAxis().x(),
-                     robot->get_pose().get_rotationAxis().y(),
-                     robot->get_pose().get_rotationAxis().z());
-
-        } // IF any mat piece was seen
+        UpdateRobotPose(robot);
         
       } // FOR each robotID
       
@@ -260,11 +285,8 @@ namespace Anki
       //
       // Find any observed blocks from the remaining markers
       //
-      std::vector<Vision::ObservableObject*> blocksSeen;
-      blockLibrary_.CreateObjectsFromMarkers(obsMarkers_, blocksSeen);
+      UpdateBlockPoses();
       
-      // Use them to add or update existing blocks in our world
-      AddAndUpdateObjects(blocksSeen, existingBlocks_);
       
       // TODO: Deal with unknown markers?
       

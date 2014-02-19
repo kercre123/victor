@@ -50,6 +50,10 @@ namespace Anki
       
       void Update(void);
       
+      bool UpdateRobotPose(Robot* robot);
+      
+      uint32_t UpdateBlockPoses();
+      
       void QueueObservedMarker(const Vision::ObservedMarker& marker);
                                //Robot* seenByRobot);
       
@@ -96,7 +100,7 @@ namespace Anki
       
       //template<class ObjectType>
       void AddAndUpdateObjects(const std::vector<Vision::ObservableObject*> objectsSeen,
-                               ObjectsMap_t& objectsExisting);
+                                   ObjectsMap_t& objectsExisting);
       
     }; // class BlockWorld
 
