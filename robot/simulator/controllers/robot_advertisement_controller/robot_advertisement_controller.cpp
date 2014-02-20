@@ -76,10 +76,10 @@ int main(int argc, char **argv)
   
       if (bytes_recvd == sizeof(regMsg)) {
         if (regMsg.enableAdvertisement) {
-          std::cout << "Registering robot " << regMsg.robotID << " on port " << regMsg.port << " with advertisement service\n";
+          std::cout << "Registering robot " << (int)regMsg.robotID << " on port " << regMsg.port << " with advertisement service\n";
           robotPortMap[regMsg.robotID] = regMsg.port;
         } else {
-          std::cout << "Deregistering robot " << regMsg.robotID << " from advertisement service\n";
+          std::cout << "Deregistering robot " << (int)regMsg.robotID << " from advertisement service\n";
           robotPortMap.erase(regMsg.robotID);
         }
       }

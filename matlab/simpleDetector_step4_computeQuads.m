@@ -34,13 +34,61 @@ for i_region = 1:numRegions
     regionMap(indexList{i_region}) = i_region;
     
     if strcmp(embeddedConversions.emptyCenterDetection, 'matlab_original')
+        
+        [~,interiorIndex] = bwfill(regionMap==i_region, ...
+            centroid(i_region,1), centroid(i_region,2));
+        
+        interiorAreaRatio = length(interiorIndex) / length(indexList{i_region});
+        expectedRatio = VisionMarker.FiducialInnerArea / VisionMarker.FiducialArea;
+        if interiorAreaRatio < 0.25 * expectedRatio
+            continue;
+        end
+            %{
+        
         % Check to see if interior of this region is roughly empty: 
         x = xgrid(indexList{i_region});
         y = ygrid(indexList{i_region});
-        xcen = centroid(i_region,1);
-        ycen = centroid(i_region,2);
-        x = round(0.5*(x-xcen)+xcen);
-        y = round(0.5*(y-ycen)+ycen);
+                
+        
+        
+        %xcen = centroid(i_region,1);
+        %ycen = centroid(i_region,2);
+        xcen = (min(x(:))+max(x(:)))/2;
+        ycen = (min(y(:))+max(y(:)))/2;
+        x = round(0.25*(x-xcen)+xcen);
+        y = round(0.25*(y-ycen)+ycen);
+
+        %{
+        % Draw a line from extreme to extreme and let the centroid be the
+        % intersection of that line. This gives the _projected_ centroid of
+        % the square, not the image-space centroid
+        x1 = min(x(:));
+        x2 = max(x(:));
+        assert(x1 ~= x2, 'Min and max x should not be equal.');
+        y1 = min(y(x==x1));
+        y2 = max(y(x==x2));
+        m1 = (y1 - y2) / (x1 - x2);
+        b1 = y1-m1*x1;
+                
+        [y1,index1] = min(y(:));
+        [y2,index2] = max(y(:));
+        if x(index1) == x(index2)
+            xcen = x(index1);
+            ycen = m1*xcen + b1;
+        else
+            m2 = (y1 - y2) / (x(index1) - x(index2));
+            b2 = y1 - m2*x(index1);
+            
+            xcen = (b2-b1)/(m1-m2);
+            ycen = m1*xcen + b1;
+        end
+        
+        x = x(:)-xcen;
+        y = y(:)-ycen;
+        x = round([0.5*x; 0.25*x]+xcen);
+        y = round([0.5*y; 0.25*y]+ycen);
+        %}
+        
         x = max(x, 1);
         x = min(x, ncols);
         y = max(y, 1);
@@ -62,6 +110,7 @@ for i_region = 1:numRegions
 
            continue; 
         end
+        %}
     end
     
     % % External boundary
@@ -235,8 +284,14 @@ for i_region = 1:numRegions
                 detA = abs(detA);
                 detB = abs(detB);
                 
+                %detC = abs(detC);
+                %detD = abs(detD);
+                
+                ratioAB = max(detA,detB) / min(detA,detB);
+                ratioCD = max(detC,detD) / min(detC,detD);
+                
                 % Is the quad symmetry below the threshold?
-                if max(detA,detB) / min(detA,detB) < 1.5
+                if min(ratioAB, ratioCD) < 2
                     
                     tform = []; %#ok<NASGU>
                     if computeTransformFromBoundary

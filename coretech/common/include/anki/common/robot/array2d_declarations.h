@@ -18,7 +18,6 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/errorHandling.h"
 #include "anki/common/robot/geometry_declarations.h"
 #include "anki/common/robot/utilities_c.h"
-#include "anki/common/robot/cInterfaces_c.h"
 #include "anki/common/robot/sequences_declarations.h"
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV

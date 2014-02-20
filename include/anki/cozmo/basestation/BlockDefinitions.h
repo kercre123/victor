@@ -1,0 +1,31 @@
+#include "BlockDefinitionMacros.h"
+
+#if 0 // EXAMPLE
+// Foo message
+START_BLOCK_DEFINITION(Foo, 1)
+ADD_MESSAGE_MEMBER(f32, fooMember1)
+ADD_MESSAGE_MEMBER(u16, fooMember2)
+ADD_MESSAGE_MEMBER(u8,  fooMember3)
+END_MESSAGE_DEFINITION(Foo)
+#endif 
+
+START_BLOCK_DEFINITION(FUEL, (60.f,60.f,60.f), (1.f,0.f,0.f))
+//SET_COLOR(1.f, 0.f, 0.f) // Red
+//SET_SIZE(60.f, 60.f, 60.f)
+ADD_FACE_CODE(FRONT_FACE, 32.f,
+              115, 117, 167, 238, 206, 221, 156, 168,  58, 114, 118)
+END_BLOCK_DEFINITION
+
+START_BLOCK_DEFINITION(BULLSEYE, (60.f,60.f,60.f), (0.f,1.f,0.f))
+ADD_FACE_CODE(FRONT_FACE, 32.f,
+              2,  86, 106,  64,  24,  13,  56,   0,  56,  96,  48)
+END_BLOCK_DEFINITION
+
+START_BLOCK_DEFINITION(TEMP2x1, (120.f, 60.f, 60.f), (0.f,0.f,1.f))
+//SET_COLOR(0.f, 0.f, 1.f) // Blue
+//SET_SIZE(120.f, 60.f, 60.f)
+ADD_FACE_CODE(FRONT_FACE, 32.f,
+              115, 117, 167, 238, 206, 221, 156, 168,  58, 114, 118)
+ADD_FACE_CODE(LEFT_FACE, 32.f,
+              115, 117, 167, 238, 206, 221, 156, 168,  58, 114, 118)
+END_BLOCK_DEFINITION

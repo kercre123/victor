@@ -1,0 +1,309 @@
+/*
+ * File:          cozmo_c_controller.c
+ * Date:
+ * Description:   
+ * Author:        
+ * Modifications: 
+ */
+
+
+#include <cstdlib>
+#include <cstdio>
+#include <cmath>
+#include <array>
+#include <fstream>
+#include <webots/Supervisor.hpp>
+
+#include "json/json.h"
+
+#include "anki/common/types.h"
+#include "anki/common/robot/matlabInterface.h"
+
+#include "anki/common/basestation/jsonTools.h"
+#include "anki/common/basestation/platformPathManager.h"
+
+#include "anki/vision/basestation/camera.h"
+
+#include "anki/cozmo/basestation/messages.h"
+
+
+#define USE_MATLAB_DETECTION 1
+
+using namespace Anki;
+
+#ifdef SIMULATOR
+// TODO: put this elsewhere?
+Anki::Vision::CameraCalibration::CameraCalibration(const webots::Camera* camera)
+{
+  nrows  = static_cast<u16>(camera->getHeight());
+  ncols  = static_cast<u16>(camera->getWidth());
+  
+  f32 width  = static_cast<f32>(ncols);
+  f32 height = static_cast<f32>(nrows);
+  f32 aspect = width/height;
+  
+  f32 fov_hor = camera->getFov();
+  f32 fov_ver = fov_hor / aspect;
+  
+  f32 fy = height / (2.f * std::tan(0.5f*fov_ver));
+  
+  focalLength_x = fy;
+  focalLength_y = fy;
+  center.x()    = 0.5f*width;
+  center.y()    = 0.5f*height;
+  skew          = 0.f;
+  
+  // TODO: Add radial distortion coefficients
+  
+}
+#endif
+
+
+/*
+ * This is the main program.
+ * The arguments of the main function can be specified by the
+ * "controllerArgs" field of the Robot node
+ */
+int main(int argc, char **argv)
+{
+  const int TIME_STEP = 5;
+  
+  // TODO: Add specification of head angle too
+  
+  const int NUM_POSE_VALS = 8;
+  
+  if(argc < (NUM_POSE_VALS+1)) {
+    fprintf(stderr, "Not enough controllerArgs to specify a single robot pose.\n");
+    return -1;
+  }
+  else if( ((argc-1) % NUM_POSE_VALS) != 0 ) {
+    fprintf(stderr, "Robot poses should be specified in groups of 8 values (Xaxis,Yaxis,Zaxis,Angle,Tx,Ty,Tz,HeadAngle).\n");
+    return -1;
+  }
+  
+  const int numPoses = (argc-1)/NUM_POSE_VALS;
+  int rotIndex = 1;
+  int transIndex = 5;
+  int headAngleIndex = 8;
+  
+#if USE_MATLAB_DETECTION
+  // Create a Matlab engine and initialize the path
+  Embedded::Matlab matlab(false);
+  matlab.EvalStringEcho("run(fullfile('..', '..', '..', '..', 'matlab', 'initCozmoPath'));");
+#endif
+  
+  webots::Supervisor webotRobot_;
+  
+  // Motors
+  webots::Motor* headMotor_  = webotRobot_.getMotor("motor_head_pitch");
+  webots::Motor* liftMotor_  = webotRobot_.getMotor("lift_motor");
+  webots::Motor* liftMotor2_ = webotRobot_.getMotor("lift_motor2");
+  
+  // Enable position measurements on head and lift
+  headMotor_->enablePosition(TIME_STEP);
+  liftMotor_->enablePosition(TIME_STEP);
+  liftMotor2_->enablePosition(TIME_STEP);
+ 
+  // Lower the lift out of the way
+  liftMotor_->setPosition(-0.25);
+  liftMotor2_->setPosition(0.25);
+
+  // Camera
+  webots::Camera* headCam_ = webotRobot_.getCamera("cam_head");
+  headCam_->enable(TIME_STEP);
+  Vision::CameraCalibration calib(headCam_);
+  Json::Value jsonCalib;
+  calib.CreateJson(jsonCalib);
+  
+  // Grab the robot node and its rotation/translation fields so we can
+  // manually move it around to the specified poses
+  const std::string robotName(webotRobot_.getName());
+  webots::Node* robotNode   = webotRobot_.getFromDef(robotName);
+  if(robotNode == NULL) {
+    fprintf(stderr, "Could not robot node with DEF '%s'.\n", robotName.c_str());
+    return -1;
+  }
+  webots::Field* transField = robotNode->getField("translation");
+  webots::Field* rotField   = robotNode->getField("rotation");
+  
+  webotRobot_.step(TIME_STEP);
+  
+  for(int i_pose=0; i_pose<numPoses; ++i_pose,
+      rotIndex+=NUM_POSE_VALS, transIndex+=NUM_POSE_VALS, headAngleIndex+=NUM_POSE_VALS)
+  {
+   
+    // Move to next pose
+    const double translation_m[3] = {
+      atof(argv[transIndex]),
+      atof(argv[transIndex+1]),
+      atof(argv[transIndex+2])
+    };
+    
+    const double rotation[4] = {
+      atof(argv[rotIndex]),
+      atof(argv[rotIndex+1]),
+      atof(argv[rotIndex+2]),
+      atof(argv[rotIndex+3])
+    };
+
+    const double headAngle = atof(argv[headAngleIndex]);
+    headMotor_->setPosition(headAngle);
+    
+    rotField->setSFRotation(rotation);
+    transField->setSFVec3f(translation_m);
+
+    fprintf(stdout, "Moving robot '%s' to (%.3f,%.3f,%.3f), "
+            "%.1fdeg @ (%.3f,%.3f,%.3f), with headAngle=%.1fdeg\n", robotName.c_str(),
+            translation_m[0], translation_m[1], translation_m[2],
+            rotation[3]*180./M_PI, rotation[0], rotation[1], rotation[2],
+            headAngle*180./M_PI);
+    
+    // Step until the head and lift are in position
+    const float TOL = .01f;
+    float headErr, liftErr, liftErr2;
+    do {
+      webotRobot_.step(TIME_STEP);
+      headErr  = fabs(headMotor_->getPosition()  - headMotor_->getTargetposition());
+      liftErr  = fabs(liftMotor_->getPosition()  - liftMotor_->getTargetposition());
+      liftErr2 = fabs(liftMotor2_->getPosition() - liftMotor2_->getTargetposition());
+      //fprintf(stdout, "HeadErr = %.4f, LiftErr = %.4f, LiftErr2 = %.4f\n", headErr, liftErr, liftErr2);
+    } while(headErr > TOL || liftErr > TOL || liftErr2 > TOL);
+    //fprintf(stdout, "Head and lift in position. Continuing.\n");
+    
+    Json::Value root;
+    
+    // Store the ground truth robot pose
+    for(int i=0; i<3; ++i) {
+      root["RobotPose"]["Translation"].append(M_TO_MM(translation_m[i]));
+      root["RobotPose"]["Axis"].append(rotation[i]);
+    }
+    root["RobotPose"]["Angle"]     = rotation[3];
+    root["RobotPose"]["HeadAngle"] = headAngle;
+    
+    // Store the camera calibration
+    root["CameraCalibration"] = jsonCalib;
+    
+    // Store the ground truth block poses and world name
+    int numBlocks = 0;
+    webots::Node* rootNode = webotRobot_.getRoot();
+    webots::Field* children = rootNode->getField("children");
+    const int numNodes = children->getCount();
+    for(int i_node=0; i_node<numNodes; ++i_node) {
+      webots::Node* child = children->getMFNode(i_node);
+      
+      webots::Field* nameField = child->getField("name");
+      if(nameField != NULL && nameField->getSFString().compare(0,5,"Block") == 0)
+      {
+        Json::Value jsonBlock;
+        jsonBlock["BlockName"] = child->getField("name")->getSFString();
+        //ObjectType_t blockType = std::stoi(child->getField("type")->getSFString());
+        jsonBlock["Type"] = std::stoi(child->getField("type")->getSFString());
+        
+        const double *blockTrans_m = child->getField("translation")->getSFVec3f();
+        const double *blockRot   = child->getField("rotation")->getSFRotation();
+        for(int i=0; i<3; ++i) {
+          jsonBlock["BlockPose"]["Translation"].append(M_TO_MM(blockTrans_m[i]));
+          jsonBlock["BlockPose"]["Axis"].append(blockRot[i]);
+        }
+        jsonBlock["BlockPose"]["Angle"] = blockRot[3];
+        
+        root["Blocks"].append(jsonBlock);
+        numBlocks++;
+      } // if this is a block
+      else if(child->getType() == webots::Node::WORLD_INFO) {
+        root["WorldTitle"] = child->getField("title")->getSFString();
+      }
+      
+    } // for each node
+    root["NumBlocks"] = numBlocks;
+    
+    CORETECH_ASSERT(root.isMember("WorldTitle"));
+    
+    // Save each marker
+    std::string outputPath = PlatformPathManager::getInstance()->PrependPath(PlatformPathManager::Test, "basestation/test/blockWorldTests/") + root["WorldTitle"].asString();
+    
+    std::string imgFilename = outputPath + "_Pose" + std::to_string(i_pose) + ".png";
+    headCam_->saveImage(imgFilename, 100);
+    
+    // Store the associated image file
+    root["ImageFile"]  = imgFilename;
+    
+    std::string jsonFilename = outputPath + "_Pose" + std::to_string(i_pose) + ".json";
+    
+    std::vector<Cozmo::MessageVisionMarker> markers;
+
+#if USE_MATLAB_DETECTION
+    // Process the image with Matlab to detect the vision markers
+    matlab.EvalStringEcho("markers = simpleDetector('%s'); "
+                          "numMarkers = length(markers);", imgFilename.c_str());
+
+    const int numMarkers = static_cast<int>(*matlab.Get<double>("numMarkers"));
+    fprintf(stdout, "Detected %d markers at pose %d.\n", numMarkers, i_pose);
+    
+    for(int i_marker=0; i_marker<numMarkers; ++i_marker) {
+      Cozmo::MessageVisionMarker msg;
+      matlab.EvalStringEcho("marker = markers{%d}; "
+                            "corners = marker.corners; "
+                            "byteArray = marker.byteArray; ", i_marker+1);
+
+      const double* x_corners = mxGetPr(matlab.GetArray("corners"));
+      const double* y_corners = x_corners + 4;
+      
+      msg.x_imgUpperLeft  = x_corners[0];
+      msg.y_imgUpperLeft  = y_corners[0];
+      
+      msg.x_imgLowerLeft  = x_corners[1];
+      msg.y_imgLowerLeft  = y_corners[1];
+      
+      msg.x_imgUpperRight = x_corners[2];
+      msg.y_imgUpperRight = y_corners[2];
+      
+      msg.x_imgLowerRight = x_corners[3];
+      msg.y_imgLowerRight = y_corners[3];
+      
+      const u8* code = reinterpret_cast<const u8*>(mxGetData(matlab.GetArray("byteArray")));
+      
+      std::copy(code, code + VISION_MARKER_CODE_LENGTH, msg.code.begin());
+      
+      markers.emplace_back(msg);
+      
+    } // for each marker
+#else
+    // TODO: process with embedded vision instead of needing Matlab
+    fprintf(stderr, "Non-matlab detection not implemented yet.\n");
+    return -1;
+#endif
+    
+    // Store the VisionMarkers
+    root["NumMarkers"] = numMarkers;
+    for(auto & marker : markers) {
+      Json::Value jsonMarker = marker.CreateJson();
+      
+      fprintf(stdout, "Creating JSON for marker with corners (%.1f,%.1f), (%.1f,%.1f), "
+              "(%.1f,%.1f), (%.1f,%.1f), with code = [",
+              marker.x_imgUpperLeft,  marker.y_imgUpperLeft,
+              marker.x_imgLowerLeft,  marker.y_imgLowerLeft,
+              marker.x_imgUpperRight, marker.y_imgUpperRight,
+              marker.x_imgLowerRight, marker.y_imgLowerRight);
+      for(int i=0; i<VISION_MARKER_CODE_LENGTH; ++i) {
+        fprintf(stdout, "%d ", marker.code[i]);
+      }
+      fprintf(stdout, "\b]\n");
+      
+      root["VisionMarkers"].append(jsonMarker);
+      
+    } // for each marker
+    
+    // Actually write the Json to file
+    std::ofstream jsonFile(jsonFilename, std::ofstream::out);
+    
+    fprintf(stdout, "Writing JSON to file %s.\n", jsonFilename.c_str());
+    jsonFile << root.toStyledString();
+    jsonFile.close();
+    
+  } // for each pose
+ 
+  // TODO: Stop / quit simulation?
+  
+  return 0;
+}

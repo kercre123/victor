@@ -120,7 +120,8 @@ extern bool _errG;
 #define PRINT_NAMED_DEBUG(name, format, ...) do{DASDebug(name, format, ##__VA_ARGS__);}while(0)
 
 #else 
-#define PRINT_INFO(format, ...)
+  
+#define PRINT_INFO(format, ...) do{ fprintf(stdout, format, __VA_ARGS__); }while(0)
 #define PRINT_DEBUG(format, ...)
 #define PRINT_DAS_BY_TYPE(type, format, ...)
 #define PRINT_NAMED_ERROR(name, format, ...)

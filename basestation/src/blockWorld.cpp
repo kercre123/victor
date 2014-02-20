@@ -3,12 +3,16 @@
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/mat.h"
 #include "anki/cozmo/basestation/messages.h"
-#include "anki/cozmo/basestation/robot.h"
+
+#include "messageHandler.h"
+#include "vizManager.h"
 
 namespace Anki
 {
   namespace Cozmo
   {
+    //BlockWorld* BlockWorld::singletonInstance_ = 0;
+    const std::map<ObjectID_t, Vision::ObservableObject*> BlockWorld::EmptyObjectMap;
     
     /*
     BlockWorld::BlockWorld( MessagingInterface* msgInterfaceIn )
@@ -18,427 +22,331 @@ namespace Anki
     }
      */
     
-    bool BlockWorld::ZAxisPointsUp = true;
+    //bool BlockWorld::ZAxisPointsUp = true;
     
     
     BlockWorld::BlockWorld( )
-    : blocks(BlockWorld::MaxBlockTypes)
+    : robotMgr_(NULL)
+//    : robotMgr_(RobotManager::getInstance()),
+//      msgHandler_(MessageHandler::getInstance())
     {
+      // TODO: Create each known block / matpiece from a configuration/definitions file
       
-    }
-    
-    BlockWorld::~BlockWorld(void)
-    {
-            
-    } // BlockWorld Destructor
-    
-    
-    void BlockWorld::addRobot(const u32 withID)
-    {
-      /*
-      const u8& ID = robot->get_ID();
+      //
+      // 1x1 Cubes
+      //
+      blockLibrary_.AddObject(new Block_Cube1x1(Block::FUEL_BLOCK_TYPE));
+
+      blockLibrary_.AddObject(new Block_Cube1x1(Block::BULLSEYE_BLOCK_TYPE));
+
       
-      if(this->robots.count(ID) > 0) {
-        CORETECH_THROW("Robot with ID already in BlockWorld.");
+      //
+      // 2x1
+      //
+      
+      // "TEMP2x1"
+      {/*
+        Block_2x1* block = new Block_2x1(++blockID);
+        block->AddFace(Block::FRONT_FACE,
+                       {115, 117, 167, 238, 206, 221, 156, 168,  58, 114, 118},
+                       32.f);
+        block->AddFace(Block::LEFT_FACE,
+                       {32, 115, 117, 167, 238, 206, 221, 156, 168,  58, 114, 118},
+                       32.f);
+        block->SetColor(0.f, 0.f, 1.f);
+        block->SetSize(120.f, 60.f, 60.f);
+        block->SetName("TEMP2x1");
+        blockLibrary_.AddObject(block);
+        */
       }
       
-      this->robots[ID] = robot;
-      */
-      //robots.push_back(robot);
-      robots.emplace_back();
-      robots.back().addToWorld(withID);
+      //
+      //
+      //
+      ObjectType_t matType=0;
       
-    } // addRobot()
-    
-    void BlockWorld::queueMessage(const u8 *msg)
-    {
-      this->messages.push(msg);
-    }
-        
-    void getCorrespondingCorners(const BlockMarker2d& marker2d,
-                                 const Block&         block,
-                                 Quad3f&              corners3d)
-    {
-      const Block::FaceName whichFace = Block::FaceType_to_FaceName(marker2d.get_faceType());
-      const BlockMarker3d& marker3d = block.get_faceMarker(whichFace);
-      
-      // First update the head pose according to the blockMarker
-      // TODO: this should probably not actually rotate the head but instead
-      //       use the head angle from the correct timestamped state history?
-      //       (doing it this way prevents this method from being const since
-      //        it changes the robot for each marker)
-      Robot& robot = marker2d.get_seenBy();
-      robot.set_headAngle(marker2d.get_headAngle());
-      
-      // Figure out where the marker we saw is in 3D space, in camera's
-      // coordinate frame. (Since the marker's coordinates relative to
-      // the block are used here, the computed pose will be the blockPose
-      // we want -- still relative to the camera however.)
-      marker3d.getSquareCorners(corners3d, &(block.get_pose())); // corners3d relative to (canonical) Block pose
-      
-    } // getCorrespondingCorners()
-    
-    void BlockWorld::clusterBlockPoses(const std::vector<MarkerPosePair>& blockPoses,
-                                       const f32 distThreshold,
-                                       std::vector<std::vector<const MarkerPosePair*> >& markerClusters)
-    {
-      std::vector<bool> assigned(blockPoses.size(), false);
-      
-      for(size_t i_pose=0; i_pose < blockPoses.size(); ++i_pose)
+      // Webots mat:
       {
-        if(not assigned[i_pose])
-        {
-          // Start a new block with this marker and mark it as assigned
-          // to a block
-          markerClusters.emplace_back(); // adds new cluster
-          markerClusters.back().emplace_back(&(blockPoses[i_pose])); // add this marker to that cluster
-          assigned[i_pose] = true;
-          
-          // See how far unassigned marker's poses are from this one:
-          for(size_t i_other=0; i_other < blockPoses.size(); ++i_other)
-          {
-            if(not assigned[i_other])
-            {
-              f32 dist = computeDistanceBetween(blockPoses[i_pose].second,
-                                                blockPoses[i_other].second);
-              
-              // If close enough, add it to the current cluster
-              if(dist < distThreshold) {
-                markerClusters.back().emplace_back(&(blockPoses[i_other]));
-              }
-            } // if not assigned
-          } // for each other blockPose
-        } // if not assigned
-      } // for each blockPose
-      
-      // Sanity check:
-      for(bool each_assigned : assigned)
-      {
-        // All markers should have been assigned a block
-        CORETECH_ASSERT(each_assigned);
+        MatPiece* mat = new MatPiece(++matType);
+        mat->AddMarker({24, 24, 24, 16, 25, 49, 56, 9, 56, 48, 32},
+                       Pose3d(2.094395, {-0.577350,0.577350,-0.577350}, {-250.000000,250.000000,0.000000}),
+                       90.000000);
+        mat->AddMarker({35, 64, 70, 196, 140, 137, 8, 1, 48, 32, 34},
+                       Pose3d(-3.141593, {1.000000,0.000000,0.000000}, {0.000000,250.000000,0.000000}),
+                       90.000000);
+        mat->AddMarker({35, 64, 70, 196, 141, 137, 8, 1, 48, 32, 34},
+                       Pose3d(-3.141593, {1.000000,0.000000,0.000000}, {250.000000,250.000000,0.000000}),
+                       90.000000);
+        mat->AddMarker({24, 24, 24, 16, 24, 49, 56, 9, 56, 48, 32},
+                       Pose3d(2.094395, {-0.577350,0.577350,-0.577350}, {-250.000000,0.000000,0.000000}),
+                       90.000000);
+        mat->AddMarker({35, 98, 2, 196, 136, 9, 24, 0, 32, 34, 98},
+                       Pose3d(1.570796, {-1.000000,0.000000,0.000000}, {0.000000,0.000000,0.000000}),
+                       90.000000);
+        mat->AddMarker({8, 24, 24, 24, 8, 25, 56, 33, 56, 24, 48},
+                       Pose3d(2.094395, {-0.577350,-0.577350,0.577350}, {250.000000,0.000000,0.000000}),
+                       90.000000);
+        mat->AddMarker({35, 98, 2, 196, 137, 9, 24, 1, 32, 34, 98},
+                       Pose3d(1.570796, {-1.000000,0.000000,0.000000}, {-250.000000,-250.000000,0.000000}),
+                       90.000000);
+        mat->AddMarker({35, 98, 2, 196, 136, 9, 24, 1, 32, 34, 98},
+                       Pose3d(1.570796, {-1.000000,0.000000,0.000000}, {0.000000,-250.000000,0.000000}),
+                       90.000000);
+        mat->AddMarker({8, 24, 24, 24, 9, 25, 56, 33, 56, 24, 48},
+                       Pose3d(2.094395, {-0.577350,-0.577350,0.577350}, {250.000000,-250.000000,0.000000}),
+                       90.000000);
+
+        matLibrary_.AddObject(mat);
       }
-      
-    } // clusterBlockPoses()
+
+    } // BlockWorld() Constructor
     
-    void BlockWorld::computeIndividualBlockPoses(const BlockMarker2dMultiMap& blockMarkers2d,
-                                                 const Block&                 B_init,
-                                                 std::vector<MarkerPosePair>& blockPoses)
+    BlockWorld::~BlockWorld()
     {
-      // Get the range of iterators into the multimap with the current BlockType
-      std::pair<BlockMarker2dMultiMap::const_iterator, BlockMarker2dMultiMap::const_iterator> range;
-      range = blockMarkers2d.equal_range(B_init.get_type());
-      
-      // Second FOR loop iterates over each marker with this BlockType,
-      // using the range we just got from equal_range.
-      for(auto markerIter=range.first; markerIter != range.second; ++markerIter)
+      for(auto blockTypes : existingBlocks_) {
+        for(auto blockIDs : blockTypes.second) {
+          delete blockIDs.second;
+        }
+      }
+        
+    } // ~BlockWorld() Destructor
+    
+    
+    void BlockWorld::Init(RobotManager* robotMgr)
+    {
+      robotMgr_ = robotMgr;
+    }
+    
+    
+    //template<class ObjectType>
+    void BlockWorld::FindOverlappingObjects(const Vision::ObservableObject* objectSeen,
+                                            const ObjectsMap_t& objectsExisting,
+                                            std::vector<Vision::ObservableObject*>& overlappingExistingObjects) const
+    {
+      auto objectsExistingIter = objectsExisting.find(objectSeen->GetType());
+      if(objectsExistingIter != objectsExisting.end())
       {
-        const BlockMarker2d& marker2d = markerIter->second;
-        
-        // Inside this loop, all markers we consider should have the same
-        // type as the Block we instantiated above.
-        CORETECH_ASSERT(marker2d.get_blockType() == B_init.get_type());
-        
-        Quad3f corners3d;
-        getCorrespondingCorners(marker2d, B_init, corners3d);
-        const Camera& cam = marker2d.get_seenBy().get_camHead();
-        Pose3d blockPose(cam.computeObjectPose(marker2d.get_quad(), corners3d));
-        
-        // Now get the block pose in World coordinates using the pose tree,
-        // instead of being in camera-centric coordinates, and add it to the
-        // list of computed poses for this block type
-        blockPoses.emplace_back(marker2d, blockPose.getWithRespectTo(Pose3d::World));
-        
-      } // for each marker with current blockType
-    } // computeIndividualBlockPoses
-    
-    void BlockWorld::groupPosesIntoBlocks(const std::vector<MarkerPosePair>& blockPoses,
-                                          Block&                             B_init,
-                                          std::vector<Block>&                blocksSeen)
-    {
-      
-      if(blockPoses.size() > 1) {
-        
-        // Group markers which could be part of the same block (i.e. those
-        // whose poses are colocated, noting that the pose is relative to
-        // the center of the block)
-        std::vector<std::vector<const MarkerPosePair*> > markerClusters;
-        clusterBlockPoses(blockPoses, 0.5f*B_init.get_minDim(),
-                          markerClusters);
-        
-        fprintf(stdout, "Grouping %lu observed 2D markers of type %d into %lu blocks.\n",
-                blockPoses.size(), B_init.get_type(), markerClusters.size());
-        
-        
-        // For each new block, re-estimate the pose based on all markers that
-        // were assigned to it
-        for(auto & cluster : markerClusters)
+        for(auto objExist : objectsExistingIter->second)
         {
-          CORETECH_ASSERT(not cluster.empty());
-          
-          if(cluster.size() == 1) {
-            fprintf(stdout, "Singleton cluster: using already-computed pose.\n");
-            
-            // No need to re-estimate, just use the one marker we saw.
-            B_init.set_pose(cluster[0]->second);
-            blocksSeen.push_back(B_init);
+          // TODO: smarter block pose comparison
+          const float minDist = 5.f; // TODO: make parameter ... 0.5f*std::min(minDimSeen, objExist->GetMinDim());
+          const Radians angleThresh( 5.f*M_PI/180.f ); // TODO: make parameter
+          Pose3d P_diff;
+          if( objExist.second->IsSameAs(*objectSeen, minDist, angleThresh, P_diff) ) {
+            overlappingExistingObjects.push_back(objExist.second);
           }
-          else {
-            fprintf(stdout, "Re-computing pose from all memers of cluster.\n");
-            
-            std::vector<Point2f> imgPoints;
-            std::vector<Point3f> objPoints;
-            imgPoints.reserve(4*cluster.size());
-            objPoints.reserve(4*cluster.size());
-            
-            // TODO: Implement ability to estimate block pose with markers seen by different robots
-            const Robot* robot = &(cluster[0]->first.get_seenBy());
-            
-            for(auto & clusterMember : cluster)
-            {
-              const BlockMarker2d& marker2d = clusterMember->first;
-              
-              if(&(marker2d.get_seenBy()) == robot)
-              {
-                Quad3f corners3d;
-                getCorrespondingCorners(marker2d, B_init, corners3d);
-                
-                for(Quad::CornerName i_face=Quad::FirstCorner;
-                    i_face < Quad::NumCorners; ++i_face)
-                {
-                  imgPoints.push_back(marker2d.get_quad()[i_face]);
-                  objPoints.push_back(corners3d[i_face]);
-                }
-              }
-              else {
-                fprintf(stdout, "Ability to re-estimate single block's "
-                        "pose from markers seen by two different robots "
-                        "not yet implemented. Will just use markers from "
-                        "first robot in the cluster.\n");
-              }
-              
-            } // for each cluster member
-            
-            // Compute the block pose from all the corresponding 2d (image)
-            // and 3d (object) points
-            Pose3d blockPose(robot->get_camHead().computeObjectPose(imgPoints, objPoints));
-            
-            // Now get the block pose in World coordinates using the pose
-            // tree, instead of being in camera-centric coordinates, and
-            // assign that pose to the temporary Block of this type
-            B_init.set_pose(blockPose.getWithRespectTo(Pose3d::World));
-            
-            // Add this to the list of blocks seen
-            blocksSeen.push_back(B_init);
-            
-          } // if 1 or more members in this cluster
           
-        } // for each cluster
-        
-      } else {
-        CORETECH_ASSERT(not blockPoses.empty());
-        
-        // Just have one marker of this block type
-        B_init.set_pose(blockPoses[0].second);
-        blocksSeen.push_back(B_init);
+        } // for each existing object of this type
       }
-    } // groupBlockPoses()
-    
-    
-    void BlockWorld::addAndUpdateBlocks(BlockMarker2dMultiMap& blockMarkers2d)
-    {
-      // If any robots saw any markers, update/add the corresponding blocks:
-      if(not blockMarkers2d.empty())
-      {
-        fprintf(stdout, "Saw %lu total BlockMarker2d's from all robots.\n",
-                blockMarkers2d.size());
-        
-        // First for loop iterates over each unique BlockType in the multimap,
-        // using upper_bound call.
-        for(auto blockTypeIter = blockMarkers2d.begin(), end = blockMarkers2d.end();
-            blockTypeIter != end;
-            blockTypeIter = blockMarkers2d.upper_bound(blockTypeIter->first) )
-        {
-          // Instantiate a block of this type (at canonical location).  This in
-          // turn will instantiate its faces' 3D markers.
-          Block B_init(blockTypeIter->first);
-          
-          // We will store a computed block pose for each 2d marker, with a
-          // reference to that 2d marker.  (This is so we can recompute
-          // Block pose from clusters of 2d markers later, without having to
-          // reassociate them.)
-          std::vector<MarkerPosePair> blockPoses;
-          computeIndividualBlockPoses(blockMarkers2d, B_init, blockPoses);
-          
-          // Group individual block poses into blocks seen, clustering as needed
-          std::vector<Block> blocksSeen;
-          groupPosesIntoBlocks(blockPoses, B_init, blocksSeen);
-          
-          // Now go through all the blocks we saw, check if they overlap with a
-          // block we already know about, or if they are a new one
-          // TODO: be smarter about merge decisions
-          // TODO: need a way to decide when to delete a block we've seen!!
-          const std::vector<Block>::size_type blockTypeIndex = static_cast<std::vector<Block>::size_type>(B_init.get_type());
-          
-          for(const Block& blockSeen : blocksSeen) {
-            
-            const float minDimSeen = blockSeen.get_minDim();
-            
-            // Store pointers to any existing blocks that overlap with this one
-            std::vector<Block*> overlappingBlocks;
-            
-            for(Block & blockExist : this->blocks[blockTypeIndex])
-            {
-              // TODO: smarter block pose comparison
-              const float minDist = 0.5f*std::min(minDimSeen, blockExist.get_minDim());
-              if( computeDistanceBetween(blockSeen.get_pose(),
-                                         blockExist.get_pose()) < minDist )
-              {
-                overlappingBlocks.push_back(&blockExist);
-              }
-              
-            } // for each existing block of this type
-            
-            if(overlappingBlocks.empty()) {
-              // no existing blocks overlapped with the block we saw, so add it
-              // as a new block
-              
-              fprintf(stdout, "Adding new block %lu at (%.1f, %.1f, %.1f)\n",
-                      blockTypeIndex,
-                      blockSeen.get_pose().get_translation().x(),
-                      blockSeen.get_pose().get_translation().y(),
-                      blockSeen.get_pose().get_translation().z());
-              
-              this->blocks[blockTypeIndex].push_back(blockSeen);
-              
-            } else {
-              if(overlappingBlocks.size() > 1) {
-                fprintf(stdout, "More than one overlapping block found -- will use first.\n");
-                // TODO: do something smarter here?
-              }
-              
-              fprintf(stdout, "Merging observation of block %lu at (%.1f, %.1f, %.1f)\n",
-                      blockTypeIndex,
-                      blockSeen.get_pose().get_translation().x(),
-                      blockSeen.get_pose().get_translation().y(),
-                      blockSeen.get_pose().get_translation().z());
-              
-              // TODO: better way of merging existing/observed block pose
-              overlappingBlocks[0]->set_pose( blockSeen.get_pose() );
-              
-            } // if/else overlapping existing blocks found
-            
-          } // for each block seen
-          
-        } // for each blockType
-        
-      } // if we saw any block markers
       
-    } // addAndUpdateBlocks()
+    } // FindOverlappingObjects()
     
     
-    void BlockWorld::update(void)
+    void BlockWorld::AddAndUpdateObjects(const std::vector<Vision::ObservableObject*> objectsSeen,
+                                         ObjectsMap_t& objectsExisting)
     {
-      // Get updated observations from each robot and update blocks' and robots'
-      // poses accordingly
-      BlockMarker2dMultiMap blockMarkers2d;
-      
-      for(Robot& robot : this->robots)
-      {
-        // Tell each robot to take a step, which will have it
-        // check and parse any messages received from the physical
-        // robot, and update its pose.
-        robot.step();
+      for(auto objSeen : objectsSeen) {
         
-        // Adds the 2d markers each robot saw to the multimap container,
-        // grouped by the block type of the marker
-        const std::vector<BlockMarker2d>& markers2d = robot.getVisibleBlockMarkers2d();
-        for(const BlockMarker2d& marker2d : markers2d)
-        {
-          blockMarkers2d.emplace(marker2d.get_blockType(), marker2d);
+        //const float minDimSeen = objSeen->GetMinDim();
+        
+        // Store pointers to any existing blocks that overlap with this one
+        std::vector<Vision::ObservableObject*> overlappingObjects;
+        FindOverlappingObjects(objSeen, objectsExisting, overlappingObjects);
+        
+        if(overlappingObjects.empty()) {
+          // no existing blocks overlapped with the block we saw, so add it
+          // as a new block
+          objSeen->SetID(objectsExisting[objSeen->GetType()].size());
+          objectsExisting[objSeen->GetType()][objSeen->GetID()] = objSeen;
+          
+          fprintf(stdout, "Adding new block with type=%hu and ID=%hu at (%.1f, %.1f, %.1f)\n",
+                  objSeen->GetType(), objSeen->GetID(),
+                  objSeen->GetPose().get_translation().x(),
+                  objSeen->GetPose().get_translation().y(),
+                  objSeen->GetPose().get_translation().z());
+        }
+        else {
+          if(overlappingObjects.size() > 1) {
+            fprintf(stdout, "More than one overlapping block found -- will use first.\n");
+            // TODO: do something smarter here?
+          }
+          
+          fprintf(stdout, "Merging observation of block type=%hu, ID=%hu at (%.1f, %.1f, %.1f)\n",
+                  objSeen->GetType(), objSeen->GetID(),
+                  objSeen->GetPose().get_translation().x(),
+                  objSeen->GetPose().get_translation().y(),
+                  objSeen->GetPose().get_translation().z());
+          
+          // TODO: better way of merging existing/observed block pose
+          overlappingObjects[0]->SetPose( objSeen->GetPose() );
+          
+          // Now that we've merged in objSeen, we can delete it because we
+          // will no longer be using it.  Otherwise, we'd leak.
+          delete objSeen;
+          
+        } // if/else overlapping existing blocks found
+     
+      } // for each block seen
+     
+    } // AddAndUpdateObjects()
+    
+    
+    bool BlockWorld::UpdateRobotPose(Robot* robot)
+    {
+      bool wasPoseUpdated = false;
+      
+      // Get all mat objects *seen by this robot's camera*
+      std::vector<Vision::ObservableObject*> matsSeen;
+      matLibrary_.CreateObjectsFromMarkers(obsMarkers_, matsSeen,
+                                           &robot->get_camHead());
+      
+      // TODO: what to do when a robot sees multiple mat pieces at the same time
+      if(not matsSeen.empty()) {
+        if(matsSeen.size() > 1) {
+          PRINT_NAMED_WARNING("MultipleMatPiecesObserved",
+                              "Robot %d observed more than one mat pieces at "
+                              "the same time; will only use first for now.");
         }
         
-      } // for each robot
-      
-      addAndUpdateBlocks(blockMarkers2d);
-      
-    } // update()
-    
-    void BlockWorld::commandRobotToDock(const size_t whichRobot,
-                                        const Block& whichBlock)
-    {
-      if(whichRobot < this->robots.size())
-      {
+        // At this point the mat's pose should be relative to the robot's
+        // camera's pose
+        const Pose3d* matWrtCamera = &(matsSeen[0]->GetPose());
+        CORETECH_ASSERT(matWrtCamera->get_parent() ==
+                        &(robot->get_camHead().get_pose())); // MatPose's parent is camera
+        /*
+         PRINT_INFO("Observed mat w.r.t. camera is (%f,%f,%f)\n",
+         matWrtCamera->get_translation().x(),
+         matWrtCamera->get_translation().y(),
+         matWrtCamera->get_translation().z());
+         */
+        
+        // Now get the pose of the robot relative to the mat, using the pose
+        // tree
+        CORETECH_ASSERT(matWrtCamera->get_parent()->get_parent()->get_parent() ==
+                        &(robot->get_pose())); // Robot pose is just a couple more up the pose chain
+        
+        Pose3d newPose( robot->get_pose().getWithRespectTo(matWrtCamera) );
+        
+        Pose3d P_diff;
+        CORETECH_ASSERT( newPose.IsSameAs((*(robot->get_camHead().get_pose().get_parent()) *
+                                           robot->get_camHead().get_pose() *
+                                           (*matWrtCamera)).getInverse(),
+                                          5.f, 5*M_PI/180.f, P_diff) );
+        
+        
+        /*
+         Pose3d newPose( (*(robot->get_camHead().get_pose().get_parent()) *
+         robot->get_camHead().get_pose() *
+         (*matWrtCamera)).getInverse() );
+         */
+        newPose.set_parent( Pose3d::World); // robot->get_pose().get_parent() );
+        robot->set_pose(newPose);
+        wasPoseUpdated = true;
+        
+        PRINT_INFO("Using mat %d to localize robot %d at (%.3f,%.3f,%.3f), %.1fdeg@(%.2f,%.2f,%.2f)\n",
+                   matsSeen[0]->GetID(), robot->get_ID(),
+                   robot->get_pose().get_translation().x(),
+                   robot->get_pose().get_translation().y(),
+                   robot->get_pose().get_translation().z(),
+                   robot->get_pose().get_rotationAngle().getDegrees(),
+                   robot->get_pose().get_rotationAxis().x(),
+                   robot->get_pose().get_rotationAxis().y(),
+                   robot->get_pose().get_rotationAxis().z());
+        
+      } // IF any mat piece was seen
 
-        this->robots[whichRobot].dockWithBlock(whichBlock);
+      return wasPoseUpdated;
+      
+    } // UpdateRobotPose()
+    
+    
+    uint32_t BlockWorld::UpdateBlockPoses()
+    {
+      std::vector<Vision::ObservableObject*> blocksSeen;
+      blockLibrary_.CreateObjectsFromMarkers(obsMarkers_, blocksSeen);
+      
+      // Use them to add or update existing blocks in our world
+      AddAndUpdateObjects(blocksSeen, existingBlocks_);
+
+      return blocksSeen.size();
+      
+    } // UpdateBlockPoses()
+    
+    void BlockWorld::Update(void)
+    {
+      robotMgr_->UpdateAllRobots();
+      
+      //
+      // Localize robots using mat observations
+      //
+      for(auto robotID : robotMgr_->GetRobotIDList())
+      {
+        Robot* robot = robotMgr_->GetRobotByID(robotID);
+        
+        CORETECH_ASSERT(robot != NULL);
+        
+        UpdateRobotPose(robot);
+        
+      } // FOR each robotID
+      
+      
+      //
+      // Find any observed blocks from the remaining markers
+      //
+      UpdateBlockPoses();
+      
+      
+      // TODO: Deal with unknown markers?
+      
+      // Toss any remaining markers?
+      if(not obsMarkers_.empty()) {
+        PRINT_INFO("%lu messages did not match any known objects and went unused.\n",
+                   obsMarkers_.size());
+        obsMarkers_.clear();
+      }
+
+      
+      //
+      // Update visualization:
+      //
+      
+      // Draw all blocks we know about
+      VizManager::getInstance()->EraseAllVizObjects();
+      for(auto blocksByType : existingBlocks_) {
+        for(auto blocksByID : blocksByType.second) {
+          
+          const Block* block = dynamic_cast<Block*>(blocksByID.second);
+          VizManager::getInstance()->SetVizObject(block->GetID(),
+                                                  block->GetType(),
+                                                  block->GetSize(),
+                                                  block->GetPose());
+
+        } // FOR each ID of this type
+      } // FOR each type
+      
+      
+    } // Update()
+    
+    
+    void BlockWorld::QueueObservedMarker(const Vision::ObservedMarker& marker)
+    {
+      obsMarkers_.emplace_back(marker);
+      //obsMarkersByRobot_[seenByRobot].push_back(&obsMarkers_.back());
+    }
+    
+    void BlockWorld::CommandRobotToDock(const RobotID_t whichRobot,
+                                        const Block&    whichBlock)
+    {
+      Robot* robot = robotMgr_->GetRobotByID(whichRobot);
+      if(robot != 0)
+      {
+        robot->dockWithBlock(whichBlock);
         
       } else {
         fprintf(stdout, "Invalid robot commanded to Dock.\n");
       }
     } // commandRobotToDock()
-    
-    /*
-    void BlockWorld::updateRobotPose(Robot *robot)
-    {
-      // TODO: Can the robot do this for itself?
-      
-      // Use the robot's current MatMarker (if there is one) to update its
-      // pose
-      const MatMarker2d* matMarker = robot->get_matMarker2d();
-      if(matMarker != NULL)
-      {
-        // Convert the MatMarker's image coordinates to a World
-        // coordinates position
-        Point2f centerVec(matMarker->get_imagePose().get_translation());
-        
-        const CameraCalibration& camCalib = robot->get_camDown().get_calibration();
-        
-        const Point2f imageCenterPt(camCalib.get_center_pt());
-        
-        if(this->zAxisPointsUp) {
-          // xvec = imgCen(1)-xcenIndex;
-          // yvec = imgCen(2)-ycenIndex;
 
-          centerVec *= -1.f;
-          centerVec += imageCenterPt;
-          
-        } else {
-          // xvec = xcenIndex - imgCen(1);
-          // yvec = ycenIndex - imgCen(2);
-         
-          centerVec -= imageCenterPt;
-        }
-        
-        //xvecRot =  xvec*cos(-marker.upAngle) + yvec*sin(-marker.upAngle);
-        //yvecRot = -xvec*sin(-marker.upAngle) + yvec*cos(-marker.upAngle);
-        // xMat = xvecRot/pixPerMM + marker.X*squareWidth - squareWidth/2 -
-        //          matSize(1)/2;
-        // yMat = yvecRot/pixPerMM + marker.Y*squareWidth - squareWidth/2 -
-        //          matSize(2)/2;
-        RotationMatrix2d R(matMarker->get_upAngle());
-        Point2f matPoint(R*centerVec);
-        matPoint *= 1.f / robot->get_downCamPixPerMM();
-        matPoint.x() += matMarker->get_xSquare() * MatMarker2d::SquareWidth;
-        matPoint.y() += matMarker->get_ySquare() * MatMarker2d::SquareWidth;
-        matPoint -= MatMarker2d::SquareWidth * .5f;
-        matPoint.x() -= MatSection::Size.x() * .5f;
-        matPoint.x() -= MatSection::Size.y() * .5f;
-        
-        if(not this->zAxisPointsUp) {
-          matPoint.x() *= -1.f;
-        }
-        
-        // orient1 = orient1 + marker.upAngle;
-        Radians angle( matMarker->get_imagePose().get_angle()
-                       + matMarker->get_upAngle() );
-        
-        Pose3d robotPose( Pose2d(angle, matPoint) );
-        
-        robot->set_pose( robotPose );
-        
-      } // if matMarker not NULL
-      
-    } // updateRobotPose()
-    */
     
   } // namespace Cozmo
 } // namespace Anki

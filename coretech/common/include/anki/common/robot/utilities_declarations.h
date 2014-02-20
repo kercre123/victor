@@ -56,20 +56,6 @@ namespace Anki
     // Cartesian coordinates to Polar coordinates
     template<typename Type> void Cart2Pol(const Type x, const Type y, Type &rho, Type &theta);
 
-    // If we're using memory that might be shared between the Leon and SHAVE,
-    // this function returns the address in the form that is endian-correct and efficient
-    // On Leon,  this is 0xA0******
-    // On Shave, this is 0x10******
-    template<typename Type> Type* ConvertCMXAddressToLeon(Type * pointer);
-    template<typename Type> const Type* ConvertCMXAddressToLeon(const Type * pointer);
-
-    template<typename Type> Type* ConvertCMXAddressToShave(Type * pointer);
-    template<typename Type> const Type* ConvertCMXAddressToShave(const Type * pointer);
-
-    // Movidius doesn't have floating point printf (no %f option), so do it with %d
-    void PrintfOneArray_f32(const Array<f32> &array, const char * variableName);
-    void PrintfOneArray_f64(const Array<f64> &array, const char * variableName);
-
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
     // Converts from typeid names to openCV types
     int ConvertToOpenCvType(const char *typeName, size_t byteDepth);

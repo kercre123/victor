@@ -59,7 +59,7 @@ namespace Anki {
     Radians       get_angle() const;
     const Vec3f&  get_axis()  const;
     void          get_angleAndAxis(Radians &angle, Vec3f &axis) const;
-   
+    
   private:
     Radians angle;
     Vec3f axis; // unit vector
@@ -67,23 +67,47 @@ namespace Anki {
   }; // class RotationVector3d
   
   
+  class UnitQuaternion : public Point<4, float>
+  {
+  public:
+    UnitQuaternion(const RotationVector3d& Rvec);
+    
+  }; // class UnitQuaternion
+  
+  
   class RotationMatrix3d : public Matrix_3x3f
   {
   public:
     RotationMatrix3d(); // 3x3 identity matrix (no rotation)
     RotationMatrix3d(const RotationVector3d &rotationVector);
-    RotationMatrix3d(const Matrix<float> &matrix3x3);
+    RotationMatrix3d(const Matrix_3x3f &matrix3x3);
+    RotationMatrix3d(std::initializer_list<float> initVals);
     RotationMatrix3d(const Radians angle, const Vec3f &axis);
   
-    Radians  get_angle() const;
-    Vec3f    get_axis()  const;
+    //Radians  get_angle() const;
+    //Vec3f    get_axis()  const;
+    
+    Radians GetAngleDiffFrom(const RotationMatrix3d &other) const;
+    
+    /*
+    // Overload math operations to keep rotation vector updated:
+    void operator*=(const RotationMatrix3d &other);
+    void preMultiplyBy(const RotationMatrix3d &other);
+    */
+    
+    // Matrix inversion and transpose just negate the change the sign of the
+    // rotation angle
+    RotationMatrix3d& Transpose(void);
+    RotationMatrix3d  getTranspose() const;
+    void Invert(void); // same as transpose
+    RotationMatrix3d getInverse(void) const;
+    
     
   protected:
-    RotationVector3d rotationVector;
+    //RotationVector3d rotationVector;
     
   }; // class RotationMatrix3d
-
- 
+  
   // Rodrigues' formula for converting between angle+axis representation and 3x3
   // matrix representation.
   void Rodrigues(const RotationVector3d &Rvec_in,
@@ -94,7 +118,7 @@ namespace Anki {
 
   
 #pragma mark --- Inline Implementations ---
-  
+  /*
   inline Radians RotationMatrix3d::get_angle(void) const
   {
     return this->rotationVector.get_angle();
@@ -104,6 +128,7 @@ namespace Anki {
   {
     return this->rotationVector.get_axis();
   }
+   */
   
   inline Radians RotationVector3d::get_angle(void) const
   {
@@ -121,6 +146,8 @@ namespace Anki {
     axis = this->axis;
     angle = this->angle;
   }
+  
+
 
 } // namespace Anki
 

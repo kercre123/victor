@@ -215,11 +215,7 @@ namespace Anki
       segmentU32[1] = static_cast<u32>(type);
 
       // TODO: decide if the CRC should be computed on the length (png doesn't do this)
-#ifdef USING_MOVIDIUS_GCC_COMPILER
-      crc =  ComputeCRC32_bigEndian(segmentU32, SERIALIZED_SEGMENT_HEADER_LENGTH, crc);
-#else
-      crc =  ComputeCRC32_littleEndian(segmentU32, SERIALIZED_SEGMENT_HEADER_LENGTH, crc);
-#endif
+      crc =  ComputeCRC32(segmentU32, SERIALIZED_SEGMENT_HEADER_LENGTH, crc);
 
       segmentU32 += (SERIALIZED_SEGMENT_HEADER_LENGTH>>2);
 
@@ -233,11 +229,7 @@ namespace Anki
           segmentU32[i] = headerU32[i];
         }
 
-#ifdef USING_MOVIDIUS_GCC_COMPILER
-        crc =  ComputeCRC32_bigEndian(segmentU32, headerLength, crc);
-#else
-        crc =  ComputeCRC32_littleEndian(segmentU32, headerLength, crc);
-#endif
+        crc =  ComputeCRC32(segmentU32, headerLength, crc);
       } // if(header != NULL)
 
       segmentU32 += (headerLength>>2);
@@ -254,14 +246,11 @@ namespace Anki
         }
 
         const s32 numBytesToCrc = numBytesAllocated-headerLength-SERIALIZED_SEGMENT_HEADER_LENGTH-SERIALIZED_SEGMENT_FOOTER_LENGTH;
-#ifdef USING_MOVIDIUS_GCC_COMPILER
-        crc =  ComputeCRC32_bigEndian(segmentU32, numBytesToCrc, crc);
-#else
-        crc =  ComputeCRC32_littleEndian(segmentU32, numBytesToCrc, crc);
-#endif
+
+        crc =  ComputeCRC32(segmentU32, numBytesToCrc, crc);
 
         // Add a CRC code computed from the header and data
-        //const u32 crc2 =  ComputeCRC32_littleEndian(segmentStart, numBytesAllocated - SERIALIZED_SEGMENT_FOOTER_LENGTH, 0xFFFFFFFF);
+        //const u32 crc2 =  ComputeCRC32(segmentStart, numBytesAllocated - SERIALIZED_SEGMENT_FOOTER_LENGTH, 0xFFFFFFFF);
         reinterpret_cast<u32*>(segmentStart + numBytesAllocated - SERIALIZED_SEGMENT_FOOTER_LENGTH)[0] = crc;
         //printf("crc: 0x%x\n", crc);
       } // if(data != NULL)
@@ -348,11 +337,7 @@ namespace Anki
       if(requireCRCmatch) {
         const u32 expectedCRC = reinterpret_cast<const u32*>(reinterpret_cast<const u8*>(segmentToReturn)+segmentLength)[0];
 
-#ifdef USING_MOVIDIUS_GCC_COMPILER
-        const u32 computedCrc =  ComputeCRC32_bigEndian(segmentToReturn, segmentLength, 0xFFFFFFFF);
-#else
-        const u32 computedCrc =  ComputeCRC32_littleEndian(segmentToReturn, segmentLength, 0xFFFFFFFF);
-#endif
+        const u32 computedCrc =  ComputeCRC32(segmentToReturn, segmentLength, 0xFFFFFFFF);
 
         AnkiConditionalErrorAndReturnValue(expectedCRC == computedCrc,
           NULL, "SerializedBufferConstIterator::GetNext", "CRCs don't match (%x != %x)", expectedCRC, computedCrc);

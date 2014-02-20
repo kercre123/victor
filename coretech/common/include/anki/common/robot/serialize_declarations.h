@@ -21,7 +21,7 @@ namespace Anki
 {
   namespace Embedded
   {
-// #pragma mark --- Declarations ---
+    // #pragma mark --- Declarations ---
     // When transmitting a serialized buffer, the header and footer of the entire buffer are each 8 bytes
     // These just contain a validation pattern, not data
     static const s32 SERIALIZED_BUFFER_HEADER_LENGTH = 8;
@@ -115,6 +115,7 @@ namespace Anki
       // This is to make this call compatible with the standard void* PushBack()
       template<typename Type> Type* PushBack(const Type *data, const s32 dataLength);
 
+      // Push back an Array
       template<typename Type> void* PushBack(const Array<Type> &in);
 
       bool IsValid() const;
@@ -126,7 +127,6 @@ namespace Anki
     protected:
       MemoryStack memoryStack;
 
-      // if scratch != NULL, use compression
       void* PushBack_Generic(const SerializedBuffer::DataType type, const void * header, s32 headerLength, const void * data, s32 dataLength);
     }; // class SerializedBuffer
 
@@ -136,8 +136,8 @@ namespace Anki
       SerializedBufferConstIterator(const SerializedBuffer &serializedBuffer);
 
       // Same as the standard MemoryStackConstIterator::GetNext(), plus:
-      // 1. Checks the CRC code and returns NULL if it fails
-      // 2. dataLength is the number of bytes of the returned buffer
+      // 1. dataLength is the number of bytes of the returned buffer
+      // 2. If requireCRCmatch==true, checks the CRC code and returns NULL if it fails
       const void * GetNext(s32 &dataLength, SerializedBuffer::DataType &type, const bool requireCRCmatch=true);
     }; // class MemoryStackConstIterator
 
@@ -147,8 +147,8 @@ namespace Anki
       SerializedBufferIterator(SerializedBuffer &serializedBuffer);
 
       // Same as the standard MemoryStackIterator::GetNext(), plus:
-      // 1. Checks the CRC code and returns NULL if it fails
-      // 2. dataLength is the number of bytes of the returned buffer
+      // 1. dataLength is the number of bytes of the returned buffer
+      // 2. If requireCRCmatch==true, checks the CRC code and returns NULL if it fails
       void * GetNext(const bool swapEndian, s32 &dataLength, SerializedBuffer::DataType &type, const bool requireCRCmatch=true);
     }; // class MemoryStackConstIterator
   } // namespace Embedded

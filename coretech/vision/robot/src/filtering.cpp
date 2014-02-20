@@ -7,7 +7,7 @@ Copyright Anki, Inc. 2013
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
 **/
 
-#include "anki/vision/robot/miscVisionKernels.h"
+#include "anki/vision/robot/fiducialDetection.h"
 
 //using namespace std;
 
@@ -17,8 +17,6 @@ namespace Anki
   {
     namespace ImageProcessing
     {
-      //static Result lastResult;
-
       typedef enum
       {
         BITSHIFT_NONE,

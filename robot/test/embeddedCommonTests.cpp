@@ -26,7 +26,6 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/find.h"
 #include "anki/common/robot/interpolate.h"
 #include "anki/common/robot/arrayPatterns.h"
-#include "anki/common/robot/shaveKernels_c.h"
 #include "anki/common/robot/utilities.h"
 #include "anki/common/robot/serialize.h"
 #include "anki/common/robot/compress.h"
@@ -42,8 +41,8 @@ GTEST_TEST(CoreTech_Common, CompressArray)
 
   //printf("Compressor size: %d Decompressor size:%d\n", sizeof(heatshrink_encoder), sizeof(heatshrink_decoder));
 
-  ASSERT_TRUE(largeBuffer != NULL);
-  MemoryStack ms(largeBuffer, LARGE_BUFFER_SIZE);
+  ASSERT_TRUE(offchipBuffer != NULL);
+  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   Array<s16> original(arrayHeight, arrayWidth, ms);
@@ -91,8 +90,8 @@ GTEST_TEST(CoreTech_Common, Heatshrink)
 
   //printf("Compressor size: %d Decompressor size:%d\n", sizeof(heatshrink_encoder), sizeof(heatshrink_decoder));
 
-  ASSERT_TRUE(largeBuffer != NULL);
-  MemoryStack ms(largeBuffer, LARGE_BUFFER_SIZE);
+  ASSERT_TRUE(offchipBuffer != NULL);
+  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   Array<u8> original(1, dataLength, ms);
@@ -132,8 +131,8 @@ GTEST_TEST(CoreTech_Common, SerializedBuffer)
   const s32 segment2Length = 64;
   const s32 segment3Length = 128;
 
-  ASSERT_TRUE(largeBuffer != NULL);
-  MemoryStack ms(largeBuffer, 5000);
+  ASSERT_TRUE(offchipBuffer != NULL);
+  MemoryStack ms(offchipBuffer, 5000);
   ASSERT_TRUE(ms.IsValid());
 
   void * segment1 = ms.Allocate(segment1Length);
@@ -156,8 +155,8 @@ GTEST_TEST(CoreTech_Common, SerializedBuffer)
     reinterpret_cast<u8*>(segment3)[i] = 3*i + 1;
   }
 
-  ASSERT_TRUE(largeBuffer != NULL);
-  SerializedBuffer serialized(largeBuffer+5000, 6000);
+  ASSERT_TRUE(offchipBuffer != NULL);
+  SerializedBuffer serialized(offchipBuffer+5000, 6000);
   ASSERT_TRUE(serialized.IsValid());
 
   void * segment1b = serialized.PushBack(segment1, segment1Length);
@@ -307,11 +306,7 @@ GTEST_TEST(CoreTech_Common, CRC32Code)
   const u32 data[] = {0x1234BEF2, 0xA342EE00, 0x00000000, 0xFFFFFFFF};
   const u32 initialCRC = 0xFFFFFFFF;
 
-#if defined(USING_MOVIDIUS_GCC_COMPILER)
-  const u32 crc = ComputeCRC32_bigEndian(&data[0], numDataBytes, initialCRC);
-#else
-  const u32 crc = ComputeCRC32_littleEndian(&data[0], numDataBytes, initialCRC);
-#endif
+  const u32 crc = ComputeCRC32(&data[0], numDataBytes, initialCRC);
 
   const u32 crc_groundTruth = 0xF2939FF3;
 
@@ -343,8 +338,8 @@ GTEST_TEST(CoreTech_Common, MemoryStackIterator)
   const s32 segment2Length = 64;
   const s32 segment3Length = 128;
 
-  ASSERT_TRUE(largeBuffer != NULL);
-  MemoryStack ms(largeBuffer, LARGE_BUFFER_SIZE);
+  ASSERT_TRUE(offchipBuffer != NULL);
+  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   void * segment1 = ms.Allocate(segment1Length);
@@ -381,93 +376,10 @@ GTEST_TEST(CoreTech_Common, MemoryStackIterator)
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Common, MemoryStackIterator)
 
-GTEST_TEST(CoreTech_Common, ShaveAddTest)
-{
-  const s32 numElements = 3000;
-
-  AnkiAssert(numElements % 4 == 0);
-
-  // On the Myriad, the buffer is local to the SHAVE we'll be using to process
-  // On the PC, the buffer is just the normal buffer that is somewhere in CMX
-#if defined(USING_MOVIDIUS_COMPILER) && !defined(EMULATE_SHAVE_ON_LEON)
-  MemoryStack ms(shave0_localBuffer, LOCAL_SHAVE_BUFFER_SIZE);
-#else
-  ASSERT_TRUE(largeBuffer != NULL);
-  MemoryStack ms(largeBuffer, LARGE_BUFFER_SIZE);
-#endif
-
-  ASSERT_TRUE(ms.IsValid());
-
-  Array<s32> in1(1, numElements, ms);
-  Array<s32> in2(1, numElements, ms);
-  Array<s32> out(1, numElements, ms);
-
-  s32 * restrict pIn1 = in1.Pointer(0,0);
-  s32 * restrict pIn2 = in2.Pointer(0,0);
-  s32 * restrict pOut = out.Pointer(0,0);
-
-  for(s32 i=0; i<numElements; i++) {
-    pIn1[i] = i + 1;
-    pIn2[i] = 2*i + 10;
-  }
-
-  //printf("Leon: 0x%x=%d 0x%x=%d\n", &(pIn1[100]), pIn1[100], &(pIn2[303]), pIn2[303]);
-  double t0 = GetTime();
-#if defined(USING_MOVIDIUS_COMPILER) && !defined(EMULATE_SHAVE_ON_LEON)
-  swcResetShave(0);
-  swcSetAbsoluteDefaultStack(0);
-
-  START_SHAVE_WITH_ARGUMENTS(0, AddVectors_s32x4,
-    "iiii",
-    ConvertCMXAddressToShave(pIn1),
-    ConvertCMXAddressToShave(pIn2),
-    ConvertCMXAddressToShave(pOut),
-    numElements);
-
-  swcWaitShave(0);
-#else // #if defined(USING_MOVIDIUS_COMPILER) && !defined(EMULATE_SHAVE_ON_LEON)
-  emulate_AddVectors_s32x4(
-    pIn1,
-    pIn2,
-    pOut,
-    numElements);
-#endif // #if defined(USING_MOVIDIUS_COMPILER) && !defined(EMULATE_SHAVE_ON_LEON) ... #else
-  double t1 = GetTime();
-
-  printf("Completed in %f seconds\n", t1-t0);
-
-  for(s32 i=0; i<numElements; i++) {
-    if(pOut[i] != (3*i + 11)) {
-      printf("Error at %d: %d!=%d\n", i, pOut[i], (3*i + 11));
-    }
-    ASSERT_TRUE(pOut[i] == (3*i + 11));
-  }
-
-  GTEST_RETURN_HERE;
-} // GTEST_TEST(CoreTech_Common, ShaveAddTest)
-
-GTEST_TEST(CoreTech_Common, ShavePrintfTest)
-{
-#if defined(USING_MOVIDIUS_COMPILER) && !defined(EMULATE_SHAVE_ON_LEON)
-  swcResetShave(0);
-  swcSetAbsoluteDefaultStack(0);
-
-  START_SHAVE(0, PrintTest);
-
-  swcWaitShave(0);
-#else
-  emulate_PrintTest();
-#endif // #if defined(USING_MOVIDIUS_COMPILER) && !defined(EMULATE_SHAVE_ON_LEON)
-
-  printf("If on the Myriad, the previous line should read: \"Shave printf test passed\"\n");
-
-  GTEST_RETURN_HERE;
-} // GTEST_TEST(CoreTech_Common, ShavePrintfTest)
-
 GTEST_TEST(CoreTech_Common, MatrixTranspose)
 {
-  ASSERT_TRUE(largeBuffer != NULL);
-  MemoryStack ms(largeBuffer, LARGE_BUFFER_SIZE);
+  ASSERT_TRUE(offchipBuffer != NULL);
+  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   const s32 in_data[12] = {
@@ -502,8 +414,8 @@ GTEST_TEST(CoreTech_Common, MatrixTranspose)
 
 GTEST_TEST(CoreTech_Common, CholeskyDecomposition)
 {
-  ASSERT_TRUE(largeBuffer != NULL);
-  MemoryStack ms(largeBuffer, LARGE_BUFFER_SIZE);
+  ASSERT_TRUE(offchipBuffer != NULL);
+  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   const f32 A_data[9] = {
@@ -577,8 +489,8 @@ GTEST_TEST(CoreTech_Common, ExplicitPrintf)
 
 GTEST_TEST(CoreTech_Common, MatrixSortWithIndexes)
 {
-  ASSERT_TRUE(largeBuffer != NULL);
-  MemoryStack ms(largeBuffer, LARGE_BUFFER_SIZE);
+  ASSERT_TRUE(offchipBuffer != NULL);
+  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   const s32 arr_data[15] = {81, 10, 16, 91, 28, 97, 13, 55, 96, 91, 96, 49, 63, 96, 80};
@@ -678,8 +590,8 @@ GTEST_TEST(CoreTech_Common, MatrixSortWithIndexes)
 
 GTEST_TEST(CoreTech_Common, MatrixSort)
 {
-  ASSERT_TRUE(largeBuffer != NULL);
-  MemoryStack ms(largeBuffer, LARGE_BUFFER_SIZE);
+  ASSERT_TRUE(offchipBuffer != NULL);
+  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   const s32 arr_data[15] = {81, 10, 16, 91, 28, 97, 13, 55, 96, 91, 96, 49, 63, 96, 80};
@@ -746,8 +658,8 @@ GTEST_TEST(CoreTech_Common, MatrixSort)
 
 GTEST_TEST(CoreTech_Common, MatrixMultiplyTranspose)
 {
-  ASSERT_TRUE(largeBuffer != NULL);
-  MemoryStack ms(largeBuffer, LARGE_BUFFER_SIZE);
+  ASSERT_TRUE(offchipBuffer != NULL);
+  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   Array<s32> in1(2,3,ms);
@@ -792,8 +704,8 @@ GTEST_TEST(CoreTech_Common, MatrixMultiplyTranspose)
 
 GTEST_TEST(CoreTech_Common, Reshape)
 {
-  ASSERT_TRUE(largeBuffer != NULL);
-  MemoryStack ms(largeBuffer, LARGE_BUFFER_SIZE);
+  ASSERT_TRUE(offchipBuffer != NULL);
+  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   Array<s32> in(2,2,ms);
@@ -849,8 +761,8 @@ GTEST_TEST(CoreTech_Common, Reshape)
 
 GTEST_TEST(CoreTech_Common, ArrayPatterns)
 {
-  ASSERT_TRUE(largeBuffer != NULL);
-  MemoryStack ms(largeBuffer, LARGE_BUFFER_SIZE);
+  ASSERT_TRUE(offchipBuffer != NULL);
+  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   const s32 arrayHeight = 3;
@@ -928,8 +840,8 @@ GTEST_TEST(CoreTech_Common, ArrayPatterns)
 
 GTEST_TEST(CoreTech_Common, Interp2_Affine_twoDimensional)
 {
-  ASSERT_TRUE(largeBuffer != NULL);
-  MemoryStack ms(largeBuffer, LARGE_BUFFER_SIZE);
+  ASSERT_TRUE(offchipBuffer != NULL);
+  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   Array<u8> reference(3,5,ms);
@@ -983,8 +895,8 @@ GTEST_TEST(CoreTech_Common, Interp2_Affine_twoDimensional)
 
 GTEST_TEST(CoreTech_Common, Interp2_Affine_oneDimensional)
 {
-  ASSERT_TRUE(largeBuffer != NULL);
-  MemoryStack ms(largeBuffer, LARGE_BUFFER_SIZE);
+  ASSERT_TRUE(offchipBuffer != NULL);
+  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   Array<u8> reference(3,5,ms);
@@ -1032,8 +944,8 @@ GTEST_TEST(CoreTech_Common, Interp2_Affine_oneDimensional)
 
 GTEST_TEST(CoreTech_Common, Interp2_twoDimensional)
 {
-  ASSERT_TRUE(largeBuffer != NULL);
-  MemoryStack ms(largeBuffer, LARGE_BUFFER_SIZE);
+  ASSERT_TRUE(offchipBuffer != NULL);
+  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   Array<u8> reference(3,5,ms);
@@ -1073,8 +985,8 @@ GTEST_TEST(CoreTech_Common, Interp2_twoDimensional)
 
 GTEST_TEST(CoreTech_Common, Interp2_oneDimensional)
 {
-  ASSERT_TRUE(largeBuffer != NULL);
-  MemoryStack ms(largeBuffer, LARGE_BUFFER_SIZE);
+  ASSERT_TRUE(offchipBuffer != NULL);
+  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   Array<u8> reference(3,5,ms);
@@ -1106,8 +1018,8 @@ GTEST_TEST(CoreTech_Common, Interp2_oneDimensional)
 
 GTEST_TEST(CoreTech_Common, Meshgrid_twoDimensional)
 {
-  ASSERT_TRUE(largeBuffer != NULL);
-  MemoryStack ms(largeBuffer, LARGE_BUFFER_SIZE);
+  ASSERT_TRUE(offchipBuffer != NULL);
+  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   // [x,y] = meshgrid(1:5,1:3)
@@ -1141,8 +1053,8 @@ GTEST_TEST(CoreTech_Common, Meshgrid_twoDimensional)
 
 GTEST_TEST(CoreTech_Common, Meshgrid_oneDimensional)
 {
-  ASSERT_TRUE(largeBuffer != NULL);
-  MemoryStack ms(largeBuffer, LARGE_BUFFER_SIZE);
+  ASSERT_TRUE(offchipBuffer != NULL);
+  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   // [x,y] = meshgrid(1:5,1:3)
@@ -1188,8 +1100,8 @@ GTEST_TEST(CoreTech_Common, Meshgrid_oneDimensional)
 
 GTEST_TEST(CoreTech_Common, Linspace)
 {
-  ASSERT_TRUE(largeBuffer != NULL);
-  MemoryStack ms(largeBuffer, LARGE_BUFFER_SIZE);
+  ASSERT_TRUE(offchipBuffer != NULL);
+  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   LinearSequence<f32> sequence1 = Linspace<f32>(0,9,10);
@@ -1207,8 +1119,8 @@ GTEST_TEST(CoreTech_Common, Linspace)
 
 GTEST_TEST(CoreTech_Common, Find_SetArray1)
 {
-  ASSERT_TRUE(largeBuffer != NULL);
-  MemoryStack ms(largeBuffer, LARGE_BUFFER_SIZE);
+  ASSERT_TRUE(offchipBuffer != NULL);
+  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   Array<s32> in1(1,6,ms); //in1: 2000 2000 2000 3 4 5
@@ -1271,8 +1183,8 @@ GTEST_TEST(CoreTech_Common, Find_SetArray1)
 
 GTEST_TEST(CoreTech_Common, Find_SetArray2)
 {
-  ASSERT_TRUE(largeBuffer != NULL);
-  MemoryStack ms(largeBuffer, LARGE_BUFFER_SIZE);
+  ASSERT_TRUE(offchipBuffer != NULL);
+  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   Array<f32> in1(1,6,ms);
@@ -1343,8 +1255,8 @@ GTEST_TEST(CoreTech_Common, Find_SetArray2)
 
 GTEST_TEST(CoreTech_Common, Find_SetValue)
 {
-  ASSERT_TRUE(largeBuffer != NULL);
-  MemoryStack ms(largeBuffer, LARGE_BUFFER_SIZE);
+  ASSERT_TRUE(offchipBuffer != NULL);
+  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   Array<u16> in1(5,6,ms);
@@ -1393,8 +1305,8 @@ GTEST_TEST(CoreTech_Common, Find_SetValue)
 
 GTEST_TEST(CoreTech_Common, ZeroSizedArray)
 {
-  ASSERT_TRUE(largeBuffer != NULL);
-  MemoryStack ms(largeBuffer, LARGE_BUFFER_SIZE);
+  ASSERT_TRUE(offchipBuffer != NULL);
+  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   Array<s32> in1(1,6,ms);
@@ -1428,8 +1340,8 @@ GTEST_TEST(CoreTech_Common, ZeroSizedArray)
 
 GTEST_TEST(CoreTech_Common, Find_Evaluate1D)
 {
-  ASSERT_TRUE(largeBuffer != NULL);
-  MemoryStack ms(largeBuffer, LARGE_BUFFER_SIZE);
+  ASSERT_TRUE(offchipBuffer != NULL);
+  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   Array<s32> in1(1,6,ms);
@@ -1554,8 +1466,8 @@ GTEST_TEST(CoreTech_Common, Find_Evaluate1D)
 
 GTEST_TEST(CoreTech_Common, Find_Evaluate2D)
 {
-  ASSERT_TRUE(largeBuffer != NULL);
-  MemoryStack ms(largeBuffer, LARGE_BUFFER_SIZE);
+  ASSERT_TRUE(offchipBuffer != NULL);
+  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   Array<s32> in1(5,6,ms);
@@ -1622,8 +1534,8 @@ GTEST_TEST(CoreTech_Common, Find_Evaluate2D)
 
 GTEST_TEST(CoreTech_Common, Find_NumMatchesAndBoundingRectangle)
 {
-  ASSERT_TRUE(largeBuffer != NULL);
-  MemoryStack ms(largeBuffer, LARGE_BUFFER_SIZE);
+  ASSERT_TRUE(offchipBuffer != NULL);
+  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   Array<s32> in1(5,6,ms);
@@ -1673,8 +1585,8 @@ GTEST_TEST(CoreTech_Common, Find_NumMatchesAndBoundingRectangle)
 
 GTEST_TEST(CoreTech_Common, MatrixElementwise)
 {
-  ASSERT_TRUE(largeBuffer != NULL);
-  MemoryStack ms(largeBuffer, LARGE_BUFFER_SIZE);
+  ASSERT_TRUE(offchipBuffer != NULL);
+  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   Array<s32> in1(5,6,ms);
@@ -1970,8 +1882,8 @@ GTEST_TEST(CoreTech_Common, MatrixElementwise)
 
 GTEST_TEST(CoreTech_Common, SliceArrayAssignment)
 {
-  ASSERT_TRUE(largeBuffer != NULL);
-  MemoryStack ms(largeBuffer, LARGE_BUFFER_SIZE);
+  ASSERT_TRUE(offchipBuffer != NULL);
+  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   Array<u8> array1(5,6,ms);
@@ -2050,8 +1962,8 @@ GTEST_TEST(CoreTech_Common, SliceArrayAssignment)
 GTEST_TEST(CoreTech_Common, SliceArrayCompileTest)
 {
   // This is just a compile test, and should always pass unless there's a very serious error
-  ASSERT_TRUE(largeBuffer != NULL);
-  MemoryStack ms(largeBuffer, LARGE_BUFFER_SIZE);
+  ASSERT_TRUE(offchipBuffer != NULL);
+  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   Array<u8> array1(20,30,ms);
@@ -2085,8 +1997,8 @@ GTEST_TEST(CoreTech_Common, SliceArrayCompileTest)
 
 GTEST_TEST(CoreTech_Common, MatrixMinAndMaxAndSum)
 {
-  ASSERT_TRUE(largeBuffer != NULL);
-  MemoryStack ms(largeBuffer, LARGE_BUFFER_SIZE);
+  ASSERT_TRUE(offchipBuffer != NULL);
+  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   Array<u8> array(5,5,ms);
@@ -2127,8 +2039,8 @@ GTEST_TEST(CoreTech_Common, MatrixMinAndMaxAndSum)
 
 GTEST_TEST(CoreTech_Common, ReallocateArray)
 {
-  ASSERT_TRUE(largeBuffer != NULL);
-  MemoryStack ms(largeBuffer, LARGE_BUFFER_SIZE);
+  ASSERT_TRUE(offchipBuffer != NULL);
+  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   Array<u8> array1(20,30,ms);
@@ -2156,8 +2068,8 @@ GTEST_TEST(CoreTech_Common, ReallocateArray)
 
 GTEST_TEST(CoreTech_Common, ReallocateMemoryStack)
 {
-  ASSERT_TRUE(largeBuffer != NULL);
-  MemoryStack ms(largeBuffer, LARGE_BUFFER_SIZE);
+  ASSERT_TRUE(offchipBuffer != NULL);
+  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   void *memory1 = ms.Allocate(100);
@@ -2181,8 +2093,8 @@ GTEST_TEST(CoreTech_Common, ReallocateMemoryStack)
 
 GTEST_TEST(CoreTech_Common, LinearSequence)
 {
-  ASSERT_TRUE(largeBuffer != NULL);
-  MemoryStack ms(largeBuffer, LARGE_BUFFER_SIZE);
+  ASSERT_TRUE(offchipBuffer != NULL);
+  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   // Test s32 sequences
@@ -2276,18 +2188,18 @@ GTEST_TEST(CoreTech_Common, MemoryStackId)
 {
   //printf("%f %f %f %f %f\n", 43423442334324.010203, 15.500, 15.0, 0.05, 0.12004333);
 
-  const s32 numBytes = MIN(LARGE_BUFFER_SIZE, 5000);
-  ASSERT_TRUE(largeBuffer != NULL);
-  MemoryStack ms(largeBuffer, numBytes);
+  const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 5000);
+  ASSERT_TRUE(offchipBuffer != NULL);
+  MemoryStack ms(offchipBuffer, numBytes);
   ASSERT_TRUE(ms.IsValid());
 
-  MemoryStack ms1(largeBuffer, 50);
-  MemoryStack ms2(largeBuffer+50, 50);
+  MemoryStack ms1(offchipBuffer, 50);
+  MemoryStack ms2(offchipBuffer+50, 50);
   MemoryStack ms2b(ms2);
   MemoryStack ms2c(ms2b);
-  MemoryStack ms3(largeBuffer+50*2, 50);
-  MemoryStack ms4(largeBuffer+50*3, 50);
-  MemoryStack ms5(largeBuffer+50*4, 50);
+  MemoryStack ms3(offchipBuffer+50*2, 50);
+  MemoryStack ms4(offchipBuffer+50*3, 50);
+  MemoryStack ms5(offchipBuffer+50*4, 50);
 
   const s32 id1 = ms1.get_id();
   const s32 id2 = ms2.get_id() - id1;
@@ -2351,9 +2263,9 @@ GTEST_TEST(CoreTech_Common, ApproximateExp)
 
 GTEST_TEST(CoreTech_Common, MatrixMultiply)
 {
-  const s32 numBytes = MIN(LARGE_BUFFER_SIZE, 5000);
-  ASSERT_TRUE(largeBuffer != NULL);
-  MemoryStack ms(largeBuffer, numBytes);
+  const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 5000);
+  ASSERT_TRUE(offchipBuffer != NULL);
+  MemoryStack ms(offchipBuffer, numBytes);
   ASSERT_TRUE(ms.IsValid());
 
 #define MatrixMultiply_mat1DataLength 10
@@ -2400,9 +2312,9 @@ GTEST_TEST(CoreTech_Common, MatrixMultiply)
 
 GTEST_TEST(CoreTech_Common, ComputeHomography)
 {
-  const s32 numBytes = MIN(LARGE_BUFFER_SIZE, 5000);
-  ASSERT_TRUE(largeBuffer != NULL);
-  MemoryStack ms(largeBuffer, numBytes);
+  const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 5000);
+  ASSERT_TRUE(offchipBuffer != NULL);
+  MemoryStack ms(offchipBuffer, numBytes);
   ASSERT_TRUE(ms.IsValid());
 
   Array<f64> homography_groundTruth(3, 3, ms);
@@ -2469,9 +2381,9 @@ GTEST_TEST(CoreTech_Common, MemoryStack)
 {
   ASSERT_TRUE(MEMORY_ALIGNMENT == 16);
 
-  const s32 numBytes = MIN(LARGE_BUFFER_SIZE, 200);
-  void * alignedBuffer = reinterpret_cast<void*>(RoundUp(reinterpret_cast<size_t>(largeBuffer), MEMORY_ALIGNMENT));
-  ASSERT_TRUE(largeBuffer != NULL);
+  const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 200);
+  void * alignedBuffer = reinterpret_cast<void*>(RoundUp(reinterpret_cast<size_t>(offchipBuffer), MEMORY_ALIGNMENT));
+  ASSERT_TRUE(offchipBuffer != NULL);
   MemoryStack ms(alignedBuffer, numBytes);
   ASSERT_TRUE(ms.IsValid());
 
@@ -2558,9 +2470,9 @@ s32 CheckConstCasting(const MemoryStack ms, s32 numBytes)
 
 GTEST_TEST(CoreTech_Common, MemoryStack_call)
 {
-  const s32 numBytes = MIN(LARGE_BUFFER_SIZE, 100);
-  ASSERT_TRUE(largeBuffer != NULL);
-  MemoryStack ms(largeBuffer, numBytes);
+  const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 100);
+  ASSERT_TRUE(offchipBuffer != NULL);
+  MemoryStack ms(offchipBuffer, numBytes);
 
   ASSERT_TRUE(ms.get_usedBytes() == 0);
 
@@ -2583,12 +2495,12 @@ GTEST_TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1)
 {
   ASSERT_TRUE(MEMORY_ALIGNMENT == 16);
 
-  const s32 numBytes = MIN(LARGE_BUFFER_SIZE, 104); // 12*9 = 104
-  ASSERT_TRUE(largeBuffer != NULL);
+  const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 104); // 12*9 = 104
+  ASSERT_TRUE(offchipBuffer != NULL);
 
-  void * alignedBuffer = reinterpret_cast<void*>(RoundUp<size_t>(reinterpret_cast<size_t>(largeBuffer), MEMORY_ALIGNMENT));
+  void * alignedBuffer = reinterpret_cast<void*>(RoundUp<size_t>(reinterpret_cast<size_t>(offchipBuffer), MEMORY_ALIGNMENT));
 
-  const size_t bufferShift = reinterpret_cast<size_t>(alignedBuffer) - reinterpret_cast<size_t>(largeBuffer);
+  const size_t bufferShift = reinterpret_cast<size_t>(alignedBuffer) - reinterpret_cast<size_t>(offchipBuffer);
   ASSERT_TRUE(bufferShift < static_cast<size_t>(MEMORY_ALIGNMENT));
 
   MemoryStack ms(alignedBuffer, numBytes);
@@ -2618,9 +2530,9 @@ GTEST_TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1)
 GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
 {
   // Allocate memory from the heap, for the memory allocator
-  const s32 numBytes = MIN(LARGE_BUFFER_SIZE, 1000);
-  ASSERT_TRUE(largeBuffer != NULL);
-  MemoryStack ms(largeBuffer, numBytes);
+  const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 1000);
+  ASSERT_TRUE(offchipBuffer != NULL);
+  MemoryStack ms(offchipBuffer, numBytes);
 
   // Create a matrix, and manually set a few values
   Array<s16> simpleArray(10, 6, ms);
@@ -2700,10 +2612,10 @@ GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
 
 GTEST_TEST(CoreTech_Common, ArraySpecifiedClass)
 {
-  const s32 numBytes = MIN(LARGE_BUFFER_SIZE, 1000);
-  ASSERT_TRUE(largeBuffer != NULL);
+  const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 1000);
+  ASSERT_TRUE(offchipBuffer != NULL);
 
-  MemoryStack ms(largeBuffer, numBytes);
+  MemoryStack ms(offchipBuffer, numBytes);
 
   Array<u8> simpleArray(3, 3, ms);
 
@@ -2726,14 +2638,14 @@ GTEST_TEST(CoreTech_Common, ArraySpecifiedClass)
 
 GTEST_TEST(CoreTech_Common, ArrayAlignment1)
 {
-  ASSERT_TRUE(largeBuffer != NULL);
+  ASSERT_TRUE(offchipBuffer != NULL);
 
-  void *alignedBuffer = reinterpret_cast<void*>( RoundUp(reinterpret_cast<size_t>(largeBuffer), MEMORY_ALIGNMENT) );
+  void *alignedBuffer = reinterpret_cast<void*>( RoundUp(reinterpret_cast<size_t>(offchipBuffer), MEMORY_ALIGNMENT) );
 
   // Check all offsets
   for(s32 offset=0; offset<=16; offset++) {
     void * const alignedBufferAndOffset = reinterpret_cast<char*>(alignedBuffer) + offset;
-    Array<s16> simpleArray(10, 8, alignedBufferAndOffset, LARGE_BUFFER_SIZE-offset-8);
+    Array<s16> simpleArray(10, 8, alignedBufferAndOffset, OFFCHIP_BUFFER_SIZE-offset-8);
 
     if(offset%MEMORY_ALIGNMENT == 0) {
       ASSERT_TRUE(simpleArray.IsValid());
@@ -2750,10 +2662,10 @@ GTEST_TEST(CoreTech_Common, ArrayAlignment1)
 
 GTEST_TEST(CoreTech_Common, MemoryStackAlignment)
 {
-  const s32 numBytes = MIN(LARGE_BUFFER_SIZE, 1000);
-  ASSERT_TRUE(largeBuffer != NULL);
+  const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 1000);
+  ASSERT_TRUE(offchipBuffer != NULL);
 
-  void *alignedBuffer = reinterpret_cast<void*>( RoundUp(reinterpret_cast<size_t>(largeBuffer), MEMORY_ALIGNMENT) );
+  void *alignedBuffer = reinterpret_cast<void*>( RoundUp(reinterpret_cast<size_t>(offchipBuffer), MEMORY_ALIGNMENT) );
 
   // Check all offsets
   for(s32 offset=0; offset<8; offset++) {
@@ -2771,10 +2683,10 @@ GTEST_TEST(CoreTech_Common, MemoryStackAlignment)
 GTEST_TEST(CoreTech_Common, ArrayFillPattern)
 {
   const s32 width = 6, height = 10;
-  const s32 numBytes = MIN(LARGE_BUFFER_SIZE, 1000);
-  ASSERT_TRUE(largeBuffer != NULL);
+  const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 1000);
+  ASSERT_TRUE(offchipBuffer != NULL);
 
-  void *alignedBuffer = reinterpret_cast<void*>( RoundUp(reinterpret_cast<size_t>(largeBuffer), MEMORY_ALIGNMENT) );
+  void *alignedBuffer = reinterpret_cast<void*>( RoundUp(reinterpret_cast<size_t>(offchipBuffer), MEMORY_ALIGNMENT) );
 
   MemoryStack ms(alignedBuffer, numBytes-MEMORY_ALIGNMENT);
 
@@ -2955,7 +2867,7 @@ GTEST_TEST(CoreTech_Common, SimpleOpenCVTest)
 #endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
 #if !defined(ANKICORETECH_EMBEDDED_USE_GTEST)
-void RUN_ALL_COMMON_TESTS(s32 &numPassedTests, s32 &numFailedTests)
+s32 RUN_ALL_COMMON_TESTS(s32 &numPassedTests, s32 &numFailedTests)
 {
   numPassedTests = 0;
   numFailedTests = 0;
@@ -2965,8 +2877,6 @@ void RUN_ALL_COMMON_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   CALL_GTEST_TEST(CoreTech_Common, SerializedBuffer);
   CALL_GTEST_TEST(CoreTech_Common, CRC32Code);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStackIterator);
-  CALL_GTEST_TEST(CoreTech_Common, ShaveAddTest);
-  CALL_GTEST_TEST(CoreTech_Common, ShavePrintfTest);
   CALL_GTEST_TEST(CoreTech_Common, MatrixTranspose);
   CALL_GTEST_TEST(CoreTech_Common, CholeskyDecomposition);
   CALL_GTEST_TEST(CoreTech_Common, ExplicitPrintf);
@@ -3017,8 +2927,8 @@ void RUN_ALL_COMMON_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   //CALL_GTEST_TEST(CoreTech_Common, SimpleMatlabTest2);
   //CALL_GTEST_TEST(CoreTech_Common, SimpleOpenCVTest);
 
-  printf("\n========================================================================\nUNIT TEST RESULTS:\nNumber Passed:%d\nNumber Failed:%d\n========================================================================\n", numPassedTests, numFailedTests);
+  //  printf("\n========================================================================\nUNIT TEST RESULTS:\nNumber Passed:%d\nNumber Failed:%d\n========================================================================\n", numPassedTests, numFailedTests);
 
-  return;
+  return numFailedTests;
 } // int RUN_ALL_COMMON_TESTS()
 #endif // #if !defined(ANKICORETECH_EMBEDDED_USE_GTEST)

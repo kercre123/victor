@@ -30,7 +30,8 @@ namespace Anki {
       // State Machine Operation Modes
       //
       enum OperationMode {
-        INITIALIZING,
+        INIT_RADIO_CONNECTION,
+        INIT_MOTOR_CALIBRATION,
         WAITING,
         PICK_UP_BLOCK,
         PUT_DOWN_BLOCK,
@@ -39,7 +40,7 @@ namespace Anki {
       
       OperationMode GetOperationMode();
       void SetOperationMode(OperationMode newMode);
-
+      
     } // namespace Robot
     
   } // namespace Cozmo

@@ -178,15 +178,33 @@ GTEST_TEST(TestMatrix, SmallMatrixConstructorsAndAccessors)
   ASSERT_ANY_THROW(M(2,2));
   
   
+  // Contstructor with initial value array
+  float N_init_array[] = {0, 1, 2, 3,
+                          4, 5, 6, 7,
+                          8, 9,10,11};
+  
+  {
+    Matrix_3x4f N(N_init_array);
+    
+    EXPECT_EQ(N(0,0),0);  EXPECT_EQ(N(0,1),1);  EXPECT_EQ(N(0,2),2);  EXPECT_EQ(N(0,3),3);
+    EXPECT_EQ(N(1,0),4);  EXPECT_EQ(N(1,1),5);  EXPECT_EQ(N(1,2),6);  EXPECT_EQ(N(1,3),7);
+    EXPECT_EQ(N(2,0),8);  EXPECT_EQ(N(2,1),9);  EXPECT_EQ(N(2,2),10); EXPECT_EQ(N(2,3),11);
+  }
   
   
-  // Contstructor with initial values
-  float N_init_array[] = {0, 1, 2,
-                          3, 4, 5,
-                          6, 7, 8};
-  Matrix_3x3f N(N_init_array);
+  // Constructor with initializer list
+  {
+    Matrix_3x4f N({0,1,2,3, 4,5,6,7, 8,9,10,11});
+
+    EXPECT_EQ(N(0,0),0);  EXPECT_EQ(N(0,1),1);  EXPECT_EQ(N(0,2),2);  EXPECT_EQ(N(0,3),3);
+    EXPECT_EQ(N(1,0),4);  EXPECT_EQ(N(1,1),5);  EXPECT_EQ(N(1,2),6);  EXPECT_EQ(N(1,3),7);
+    EXPECT_EQ(N(2,0),8);  EXPECT_EQ(N(2,1),9);  EXPECT_EQ(N(2,2),10); EXPECT_EQ(N(2,3),11);
+  }
   
-  ASSERT_EQ(N(0,0),0);  ASSERT_EQ(N(0,0),0);  
+  // Constructor with incorrect number of values in initializer list should fail
+  // Note the ^ just matches the beginning of the failure message.
+  EXPECT_DEATH( Matrix_3x3f Q({1,2,3}), "^Assertion failed");
+  
 }
 
 // Normal matrix multiplication

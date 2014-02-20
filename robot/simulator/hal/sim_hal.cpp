@@ -115,7 +115,7 @@ namespace Anki {
         }
         
         // Convert mm/s to rad/s
-        return -speed_mm_per_s / WHEEL_RAD_TO_MM;
+        return speed_mm_per_s / WHEEL_RAD_TO_MM;
       }
       
       void MotorUpdate()
@@ -197,6 +197,11 @@ namespace Anki {
 #else
     ReturnCode InitSimRadio(s32 robotID);
 #endif
+   
+    namespace HAL {
+      // Forward Declaration.  This is implemented in sim_uart.cpp
+      void UARTInit();
+    }
     
     ReturnCode HAL::Init()
     {
@@ -215,10 +220,10 @@ namespace Anki {
       con_ = webotRobot_.getConnector("connector");
       con_->enablePresence(TIME_STEP);
       
-      matCam_ = webotRobot_.getCamera("cam_down");
+      //matCam_ = webotRobot_.getCamera("cam_down");
       headCam_ = webotRobot_.getCamera("cam_head");
       
-      matCam_->enable(VISION_TIME_STEP);
+      //matCam_->enable(VISION_TIME_STEP);
       headCam_->enable(VISION_TIME_STEP);
       
       tx_ = webotRobot_.getEmitter("radio_tx");
@@ -309,7 +314,7 @@ namespace Anki {
     void HAL::Destroy()
     {
       // Turn off components: (strictly necessary?)
-      matCam_->disable();
+      //matCam_->disable();
       headCam_->disable();
       
       gps_->disable();
@@ -423,7 +428,7 @@ namespace Anki {
         case MOTOR_LEFT_WHEEL:
         case MOTOR_RIGHT_WHEEL:
         {
-          return -motorSpeeds_[motor] * WHEEL_RAD_TO_MM;
+          return motorSpeeds_[motor] * WHEEL_RAD_TO_MM;
         }
 
         case MOTOR_LIFT:
@@ -454,7 +459,7 @@ namespace Anki {
       switch(motor) {
         case MOTOR_RIGHT_WHEEL:
         case MOTOR_LEFT_WHEEL:
-          return -motorPositions_[motor] * WHEEL_RAD_TO_MM;
+          return motorPositions_[motor] * WHEEL_RAD_TO_MM;
         case MOTOR_LIFT:
         case MOTOR_HEAD:
           return motorPositions_[motor];
@@ -532,7 +537,7 @@ namespace Anki {
     const HAL::CameraInfo* HAL::GetMatCamInfo(void)
     {
       if(isInitialized) {
-        FillCameraInfo(matCam_, matCamInfo_);
+        //FillCameraInfo(matCam_, matCamInfo_);
         return &matCamInfo_;
       }
       else {
@@ -618,6 +623,7 @@ namespace Anki {
           
         case CAMERA_MAT:
         {
+          
           if (mode != CAMERA_MODE_VGA) {
             PRINT("ERROR (CameraStartFrame): Mat camera only supports VGA\n");
             return;
@@ -629,7 +635,7 @@ namespace Anki {
           matCamStartCaptureTime_ = GetMicroCounter();
            */
 
-          GetGrayscaleFrameHelper(matCam_, frameBuffer);
+          //GetGrayscaleFrameHelper(matCam_, frameBuffer);
           
           break;
         }

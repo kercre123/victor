@@ -45,7 +45,7 @@ namespace Anki {
         // Change this value to run different test modes
         const TestModeController::TestMode DEFAULT_TEST_MODE = TestModeController::TM_NONE;
 #endif
-        Robot::OperationMode mode_ = INITIALIZING;
+        Robot::OperationMode mode_ = INIT_RADIO_CONNECTION;
         
       } // Robot private namespace
       
@@ -78,12 +78,48 @@ namespace Anki {
       
       
       // The initial "stretch" and reset motor positions routine
-      void MotorCalibrationUpdate()
+      // Returns true when done.
+      bool MotorCalibrationUpdate()
       {
-        if (LiftController::IsCalibrated()) {
+        bool isDone = false;
+        
+        if(LiftController::IsCalibrated()) {
           PRINT("Motors calibrated\n");
-          mode_ = WAITING;
+          isDone = true;
         }
+        
+        return isDone;
+      }
+      
+      ReturnCode SendCameraCalibToBase()
+      {
+        ReturnCode retVal = EXIT_FAILURE;
+        
+        const HAL::CameraInfo* headCamInfo = HAL::GetHeadCamInfo();
+        if(headCamInfo == NULL) {
+          PRINT("NULL HeadCamInfo retrieved from HAL.\n");
+        }
+        else {
+          Messages::HeadCameraCalibration headCalibMsg = {
+            headCamInfo->focalLength_x,
+            headCamInfo->focalLength_y,
+            headCamInfo->fov_ver,
+            headCamInfo->center_x,
+            headCamInfo->center_y,
+            headCamInfo->skew,
+            headCamInfo->nrows,
+            headCamInfo->ncols
+          };
+          
+          PRINT("Robot sending camera calibration message.\n");
+          if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::HeadCameraCalibration),
+                                   &headCalibMsg))
+          {
+            retVal = EXIT_SUCCESS;
+          }
+        }
+        
+        return retVal;
       }
       
       ReturnCode Init(void)
@@ -144,20 +180,10 @@ namespace Anki {
           return EXIT_FAILURE;
         }
         
-        
         // Start calibration
         StartMotorCalibrationRoutine();
       
-        
-        // Once initialization is done, broadcast a message that this robot
-        // is ready to go
-        PRINT("Robot broadcasting availability message.\n");
-        Messages::RobotAvailable msg;
-        msg.robotID = HAL::GetRobotID();
-        HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RobotAvailable), &msg);
-        
-        mode_ = INITIALIZING;
-
+        mode_ = INIT_RADIO_CONNECTION;
         
         return EXIT_SUCCESS;
         
@@ -208,6 +234,13 @@ namespace Anki {
         
         // Check for any messages from the vision system and pass them along to
         // the basestation, update the docking controller, etc.
+        Messages::VisionMarker markerMsg;
+        while( Messages::CheckMailbox(markerMsg) )
+        {
+          HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::VisionMarker), &markerMsg);
+        }
+        
+        /*
         Messages::MatMarkerObserved matMsg;
         while( Messages::CheckMailbox(matMsg) )
         {
@@ -220,7 +253,7 @@ namespace Anki {
           HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::BlockMarkerObserved), &blockMsg);
           
         } // while blockMarkerMailbox has mail
-                
+        */      
         
         //////////////////////////////////////////////////////////////
         // Head & Lift Position Updates
@@ -240,9 +273,35 @@ namespace Anki {
 
         switch(mode_)
         {
-          case INITIALIZING:
+          case INIT_RADIO_CONNECTION:
           {
-            MotorCalibrationUpdate(); // switches mode_ to WAITING
+            if(HAL::RadioIsConnected() ) {
+              PRINT("Robot %d's radio is connected.\n", HAL::GetRobotID());
+              
+              if(SendCameraCalibToBase() == EXIT_FAILURE) {
+                PRINT("Failed to send camera calibration to base.");
+                // TODO: die here or what?
+              }
+              
+              mode_ = INIT_MOTOR_CALIBRATION;
+            }
+            
+            break;
+          }
+        
+          case INIT_MOTOR_CALIBRATION:
+          {
+            if(MotorCalibrationUpdate()) {
+              // Once initialization is done, broadcast a message that this robot
+              // is ready to go
+              Messages::RobotAvailable msg;
+              msg.robotID = HAL::GetRobotID();
+              PRINT("Robot %d broadcasting availability message.\n", msg.robotID);
+              HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RobotAvailable), &msg);
+            
+              mode_ = WAITING;
+            }
+            
             break;
           }
           case WAITING:

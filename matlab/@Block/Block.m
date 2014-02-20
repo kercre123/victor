@@ -37,12 +37,17 @@ classdef Block < handle
     
     methods(Access = 'public')
         
-        function this = Block(blockType, firstMarkerID)
+        function this = Block(blockType, varargin)
+
+            if nargin==2
+                warning('Deprecated usage: please switch to name-value pairs.');
+                varargin = {'firstMarkerID', varargin{1}};
+            end
             
             this.poseProtected = Pose();
             this.blockType = blockType;
                         
-            createModel(this, firstMarkerID);
+            createModel(this, varargin{:});
             
         end
         

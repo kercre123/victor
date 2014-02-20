@@ -1,0 +1,260 @@
+#ifndef ANKI_VISION_OBSERVABLE_OBJECT_H
+#define ANKI_VISION_OBSERVABLE_OBJECT_H
+
+#include <list>
+
+#include "anki/vision/basestation/visionMarker.h"
+
+namespace Anki {
+  namespace Vision {
+    
+    // Forward declaration
+    class Camera;
+    
+    // A marker match is a pairing of an ObservedMarker with a KnownMarker
+    typedef std::pair<const Vision::ObservedMarker*, const Vision::KnownMarker*> MarkerMatch;
+    
+    // Pairing of a pose and the match which implies it
+    typedef std::pair<Pose3d, MarkerMatch> PoseMatchPair;
+    
+    
+    class ObservableObject
+    {
+    public:
+      // Do we want to be req'd to instantiate with all codes up front?
+      ObservableObject(){};
+      
+      ObservableObject(ObjectType_t type);
+      
+      //ObservableObject(const std::vector<std::pair<Marker::Code,Pose3d> >& codesAndPoses);
+      
+      virtual ~ObservableObject(){};
+      
+      // Specify the extistence of a marker with the given code at the given
+      // pose (relative to the object's origin), and the specfied size in mm
+      void AddMarker(const Marker::Code& withCode, const Pose3d& atPose,
+                     const f32 size_mm);
+      
+      std::list<KnownMarker> const& GetMarkers() const {return markers_;}
+      
+      // Return a pointer to a vector all this object's Markers with the
+      // specified code. A NULL pointer is returned if there are no markers
+      // with that code.
+      std::vector<const KnownMarker*> const* GetMarkersWithCode(const Marker::Code& whichCode) const;
+
+      // Add possible poses implied by seeing the observed marker to the list.
+      // Each pose will be paired with a pointer to the known marker on this
+      // object from which it was computed.
+      // If the marker doesn't match any found on this object, the possiblePoses
+      // list will not be modified.
+      void ComputePossiblePoses(const ObservedMarker*     obsMarker,
+                                std::vector<PoseMatchPair>& possiblePoses) const;
+      
+      // Accessors:
+      ObjectID_t      GetID()     const;
+      ObjectType_t    GetType()   const;
+      const Pose3d&   GetPose()   const;
+      //virtual float GetMinDim() const = 0;
+      
+      void SetID(const ObjectID_t newID);
+      void SetPose(const Pose3d& newPose);
+      
+      // Return true if this object is the same as the other. Sub-classes can
+      // overload this function to provide for rotational ambiguity when
+      // comparing, e.g. for cubes or other blocks.
+      virtual bool IsSameAs(const ObservableObject&  otherObject,
+                            const float   distThreshold,
+                            const Radians angleThreshold,
+                            Pose3d& P_diff) const;
+      
+      virtual bool IsSameAs(const ObservableObject&  otherObject,
+                            const float   distThreshold,
+                            const Radians angleThreshold) const;
+      
+      virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const = 0;
+      
+      // For creating derived objects from a pointer to this base class, see
+      // ObservableObjectBase below
+      virtual ObservableObject* Clone() const = 0;
+      
+    protected:
+      
+      //static const std::vector<RotationMatrix3d> rotationAmbiguities_;
+      
+      ObjectType_t type_;
+      ObjectID_t   ID_;
+      
+      // Using a list here so that adding new markers does not affect references
+      // to pre-existing markers
+      std::list<KnownMarker> markers_;
+      
+      // Holds a LUT (by code) to all the markers of this object which have that
+      // code.
+      std::map<Marker::Code, std::vector<const KnownMarker*> > markersWithCode_;
+      
+      Pose3d pose_;
+      
+      /*
+      // Canonical pose used as the parent pose for the object's markers so
+      // possiblePoses for this object can be computed from observations of its
+      // markers
+      Pose3d canonicalPose_;
+      
+      // We will represent any ambiguity in an object's pose by simply keeping
+      // a list of possible poses.  Since a single (oriented) marker can
+      // completely determine 6DoF pose, the ambiguity aries from identical
+      // markers used multiple times on an object with symmetry -- and thus
+      // there should be a small, finite, discrete set of possible poses we need
+      // to store here.
+      // Note this is a separate notion than the uncertainty of each estimated
+      // pose, which should be stored inside the Pose3d object, if represented
+      // at all.
+      std::list<Pose3d> possiblePoses_;
+      */
+    };
+    
+    //
+    // Inline accessors
+    //
+    /*
+    inline std::set<const Camera*> const& ObservableObject::GetObserver() const {
+      return observers_;
+    }
+     */
+    
+    inline ObjectID_t ObservableObject::GetID() const {
+      return ID_;
+    }
+    
+    inline ObjectType_t ObservableObject::GetType() const {
+      return type_;
+    }
+    
+    //virtual float GetMinDim() const = 0;
+    inline const Pose3d& ObservableObject::GetPose() const {
+      return pose_;
+    }
+    
+    inline void ObservableObject::SetID(const ObjectID_t newID) {
+      ID_ = newID;
+    }
+  
+    inline void ObservableObject::SetPose(const Pose3d& newPose) {
+      pose_ = newPose;
+    }
+    
+    inline bool ObservableObject::IsSameAs(const ObservableObject&  otherObject,
+                                           const float              distThreshold,
+                                           const Radians            angleThreshold) const
+    {
+      Pose3d P_diff_temp;
+      return this->IsSameAs(otherObject, distThreshold, angleThreshold,
+                            P_diff_temp);
+    }
+                                    
+    /*
+    // Derive specific observable objects from this class to get a clone method,
+    // without having to specifically write one in each derived class.
+    //
+    // I believe this is know as the Curiously Recurring Template Pattern (CRTP)
+    //
+    // For example:
+    //   class SomeNewObject : public ObservableObjectBase<SomeNewObject> { ... };
+    //
+    template <class Derived>
+    class ObservableObjectBase : public ObservableObject
+    {
+    public:
+      virtual ObservableObject* clone() const
+      {
+        // Call the copy constructor
+        return new Derived(static_cast<const Derived&>(*this));
+      }
+    };
+    */
+    
+    class ObservableObjectLibrary
+    {
+    public:
+      
+      ObservableObjectLibrary(){};
+      
+      u32 GetNumObjects() const;
+      
+      //bool IsInitialized() const;
+      
+      // Add an object to the known list. Note that this permits addition of
+      // objects at run time.
+      void AddObject(const ObservableObject* object);
+      
+      // Groups markers referring to the same type, and clusters them into
+      // observed objects, returned in objectsSeen.  Used markers will be
+      // removed from the input list, so markers referring to objects unknown
+      // to this library will remain.  If seenOnlyBy is non-NULL, only markers
+      // seen by that camera will be considered.
+      void CreateObjectsFromMarkers(std::list<ObservedMarker>& markers,
+                                    std::vector<ObservableObject*>& objectsSeen,
+                                    const Camera* seenOnlyBy = NULL) const;
+      
+      // Only one object in a library can have each type. Return a pointer to
+      // that object, or NULL if none exists.
+      const ObservableObject* GetObjectWithType(const ObjectType_t type) const;
+      
+      // Return a pointer to a vector of pointers to known objects with at
+      // least one of the specified markers or codes on it. If  there is no
+      // object with that marker/code, a NULL pointer is returned.
+      std::vector<const ObservableObject*> const* GetObjectsWithMarker(const Marker& marker) const;
+      std::vector<const ObservableObject*> const* GetObjectsWithCode(const Marker::Code& code) const;
+      
+    protected:
+      
+      //std::list<const ObservableObject*> knownObjects_;
+      std::map<ObjectType_t, const ObservableObject*> knownObjects_;
+      
+      // Store a list of pointers to all objects that have at least one marker
+      // with that code.  You can then use the objects' GetMarkersWithCode()
+      // method to get the list of markers on each object.
+      std::map<Marker::Code, std::vector<const ObservableObject*> > objectsWithCode_;
+      
+      // A PoseCluster is a pairing of a single pose and all the marker matches
+      // that imply that pose
+      class PoseCluster
+      {
+      public:
+        typedef std::list<std::pair<const ObservedMarker*, KnownMarker> > MatchList;
+        
+        PoseCluster(const PoseMatchPair& match);
+        
+        // Returns true if match was added
+        bool TryToAddMatch(const PoseMatchPair& match,
+                           const float distThreshold, const Radians angleThreshold,
+                           const std::vector<RotationMatrix3d>& R_ambiguities);
+        
+        const Pose3d& GetPose() const { return pose_; }
+        const size_t  GetSize() const { return matches_.size(); }
+        
+        const MatchList& GetMatches() const;
+        
+        // Updates pose based on all member matches. Does nothing if there is
+        // only one member.
+        void RecomputePose();
+        
+      protected:
+        Pose3d pose_;
+        
+        MatchList matches_;
+        
+      }; // class PoseCluster
+      
+      void ClusterObjectPoses(const std::vector<PoseMatchPair>& possiblePoses,
+                              const ObservableObject*         libObject,
+                              const float distThreshold, const Radians angleThreshold,
+                              std::vector<PoseCluster>& poseClusters) const;
+      
+    }; // class ObservableObjectLibrary
+    
+    
+  } // namespace Vision
+} // namespace Anki
+
+#endif // ANKI_VISION_OBSERVABLE_OBJECT_H

@@ -12,19 +12,13 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #if defined(_MSC_VER)
 #include <windows.h>
-#elif defined(USING_MOVIDIUS_GCC_COMPILER)
-// Included at the top-level config
-#elif defined(USING_MOVIDIUS_SHAVE_COMPILER)
-// Included at the top-level config
 #elif defined(__EDG__)
 extern u32 XXX_HACK_FOR_PETE(void);
 #else
 #include <sys/time.h>
 #endif
 
-#ifdef USING_MOVIDIUS_GCC_COMPILER
-#define BENCHMARK_EVENTS_LOCATION __attribute__((section(".ddr.bss")))
-#elif defined(__EDG__) // MDK-ARM
+#if defined(__EDG__) // MDK-ARM
 #define BENCHMARK_EVENTS_LOCATION __attribute__((section(".ram1")))
 #else
 #define BENCHMARK_EVENTS_LOCATION
@@ -83,10 +77,6 @@ unsigned long long GetBenchmarkTime(void)
 
   return counter.QuadPart;
 #elif defined(__APPLE_CC__)
-  return 0; // TODO: implement
-#elif defined(USING_MOVIDIUS_GCC_COMPILER)
-  return DrvTimerGetSysTicks64();
-#elif defined(USING_MOVIDIUS_SHAVE_COMPILER)
   return 0; // TODO: implement
 #elif defined (__EDG__)  // MDK-ARM
   return XXX_HACK_FOR_PETE();
@@ -195,10 +185,6 @@ void PrintBenchmarkResults(const BenchmarkPrintType printType)
 #if defined(_MSC_VER)
         const double elapsedTime = (double)rawElapsedTime / freqencyDouble;
 #elif defined(__APPLE_CC__)
-        const double elapsedTime = 0.0;
-#elif defined(USING_MOVIDIUS_GCC_COMPILER)
-        const double elapsedTime = (1.0 / 1000.0) * DrvTimerTicksToMs(rawElapsedTime);
-#elif defined(USING_MOVIDIUS_SHAVE_COMPILER)
         const double elapsedTime = 0.0;
 #elif defined(__EDG__)  // MDK-ARM
         const double elapsedTime = (double)rawElapsedTime / 1000000.0;

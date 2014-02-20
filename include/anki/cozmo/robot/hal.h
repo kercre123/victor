@@ -42,7 +42,7 @@
 #include "anki/cozmo/robot/cozmoConfig.h"
 
 #ifndef USE_OFFBOARD_VISION
-#define USE_OFFBOARD_VISION 0
+#define USE_OFFBOARD_VISION 1
 #endif
 
 // Uncomment to use USB instead of UART
@@ -449,9 +449,9 @@ namespace Anki
       // Bytes to add to USB frame header to tell the offboard processor
       // what to do with the frame
       const u8 USB_VISION_COMMAND_DETECTBLOCKS    = 0xAB;
-      const u8 USB_VISION_COMMAND_SETDOCKBLOCK    = 0xBC;
+      const u8 USB_VISION_COMMAND_SETTRACKMARKER  = 0xBC;
       const u8 USB_VISION_COMMAND_TRACK           = 0xCD;
-      const u8 USB_VISION_COMMAND_MATODOMETRY     = 0xDE;
+      const u8 USB_VISION_COMMAND_ROBOTSTATE      = 0xDE;
       const u8 USB_VISION_COMMAND_MATLOCALIZATION = 0xEF;
       const u8 USB_VISION_COMMAND_DISPLAY_IMAGE   = 0xF0;
       const u8 USB_VISION_COMMAND_SAVE_BUFFERED_DATA = 0x01;

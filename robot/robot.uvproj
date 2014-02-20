@@ -342,7 +342,7 @@
           <Cads>
             <interw>1</interw>
             <Optim>3</Optim>
-            <oTime>0</oTime>
+            <oTime>1</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>1</OneElfS>
             <Strict>0</Strict>
@@ -879,16 +879,6 @@
               <FilePath>..\coretech\common\robot\src\serialize.cpp</FilePath>
             </File>
             <File>
-              <FileName>shave_addVectors.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\coretech\common\robot\src\shave\shave_addVectors.c</FilePath>
-            </File>
-            <File>
-              <FileName>shave_printTest.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\coretech\common\robot\src\shave\shave_printTest.c</FilePath>
-            </File>
-            <File>
               <FileName>trig_fast.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\robot\src\trig_fast.cpp</FilePath>
@@ -998,21 +988,6 @@
               <FileName>lucasKanade.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\lucasKanade.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>thresholdScaleImage.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\thresholdScaleImage.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>shave_integralImageFiltering.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\coretech\vision\robot\src\shave\shave_integralImageFiltering.c</FilePath>
-            </File>
-            <File>
-              <FileName>shave_integralImageGeneration.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\coretech\vision\robot\src\shave\shave_integralImageGeneration.c</FilePath>
             </File>
             <File>
               <FileName>traceBoundary.cpp</FileName>
@@ -1451,7 +1426,7 @@
           <Cads>
             <interw>1</interw>
             <Optim>3</Optim>
-            <oTime>0</oTime>
+            <oTime>1</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>1</OneElfS>
             <Strict>0</Strict>
@@ -2045,16 +2020,6 @@
               <FilePath>..\coretech\common\robot\src\serialize.cpp</FilePath>
             </File>
             <File>
-              <FileName>shave_addVectors.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\coretech\common\robot\src\shave\shave_addVectors.c</FilePath>
-            </File>
-            <File>
-              <FileName>shave_printTest.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\coretech\common\robot\src\shave\shave_printTest.c</FilePath>
-            </File>
-            <File>
               <FileName>trig_fast.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\robot\src\trig_fast.cpp</FilePath>
@@ -2164,21 +2129,6 @@
               <FileName>lucasKanade.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\lucasKanade.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>thresholdScaleImage.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\thresholdScaleImage.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>shave_integralImageFiltering.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\coretech\vision\robot\src\shave\shave_integralImageFiltering.c</FilePath>
-            </File>
-            <File>
-              <FileName>shave_integralImageGeneration.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\coretech\vision\robot\src\shave\shave_integralImageGeneration.c</FilePath>
             </File>
             <File>
               <FileName>traceBoundary.cpp</FileName>

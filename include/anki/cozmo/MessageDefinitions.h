@@ -1,6 +1,6 @@
 // All message definitions should look like this:
 //
-//   START_MESSAGE_DEFINITION(MessageTypeName, Priority, DispatchFunctionPtr)
+//   START_MESSAGE_DEFINITION(MessageTypeName, Priority)
 //   ADD_MESSAGE_MEMBER(MemberType, MemberName)
 //   ADD_MESSAGE_MEMBER(MemberType, MemberName)
 //   ...
@@ -8,7 +8,7 @@
 //
 // For example:
 //
-//   START_MESSAGE_DEFINITION(CozmoMsg_Foo, 1, ProcessFoo)
+//   START_MESSAGE_DEFINITION(CozmoMsg_Foo, 1)
 //   ADD_MESSAGE_MEMBER(f32, fooMember1)
 //   ADD_MESSAGE_MEMBER(u16, fooMember2)
 //   ADD_MESSAGE_MEMBER(u8,  fooMember3)
@@ -26,8 +26,14 @@
 // This file is not specific to robot or basestation, as it defines the common
 // message protocol between them.  However, the macros used to generate actual
 // code based on the definitions below *is* specific to the two platforms.
-// Define those macros elsewhere:
-#include "anki/cozmo/MessageDefinitionMacros.h"
+// Include the correct one based on the definition of COZMO_ROBOT / COZMO_BASESTATION
+#if defined(COZMO_ROBOT)
+#include "anki/cozmo/MessageDefMacros_Robot.h"
+#elif defined(COZMO_BASESTATION)
+#include "anki/cozmo/MessageDefMacros_Basestation.h"
+#else
+#error Either COZMO_ROBOT or COZMO_BASESTATION should be defined.
+#endif
 
 #if 0 // EXAMPLE
 // Foo message
@@ -37,6 +43,12 @@ ADD_MESSAGE_MEMBER(u16, fooMember2)
 ADD_MESSAGE_MEMBER(u8,  fooMember3)
 END_MESSAGE_DEFINITION(Foo)
 #endif 
+
+START_TIMESTAMPED_MESSAGE_DEFINITION(RobotState, 1)
+ADD_MESSAGE_MEMBER(f32, headAngle) // TODO: make fixed point
+// ADD_MESSAGE_MEMBER(f32, liftHeight) // TODO: make fixed point
+// wheel speeds? position estimate? ...
+END_MESSAGE_DEFINITION(RobotState)
 
 // SetMotion
 START_MESSAGE_DEFINITION(SetMotion, 1)
@@ -79,6 +91,22 @@ ADD_MESSAGE_MEMBER(f32, endRad)
 ADD_COMMON_PATH_SEGMENT_MEMBERS
 END_MESSAGE_DEFINITION(SetPathSegmentArc)
 
+
+// VisionMarker
+#define VISION_MARKER_CODE_LENGTH 11 // ceil( (9*9 + 4)/8 )
+
+START_TIMESTAMPED_MESSAGE_DEFINITION(VisionMarker, 1)
+// TODO: make the corner coordinates fixed point
+ADD_MESSAGE_MEMBER(f32, x_imgUpperLeft)
+ADD_MESSAGE_MEMBER(f32, y_imgUpperLeft)
+ADD_MESSAGE_MEMBER(f32, x_imgLowerLeft)
+ADD_MESSAGE_MEMBER(f32, y_imgLowerLeft)
+ADD_MESSAGE_MEMBER(f32, x_imgUpperRight)
+ADD_MESSAGE_MEMBER(f32, y_imgUpperRight)
+ADD_MESSAGE_MEMBER(f32, x_imgLowerRight)
+ADD_MESSAGE_MEMBER(f32, y_imgLowerRight)
+ADD_MESSAGE_MEMBER_ARRAY(u8, code, VISION_MARKER_CODE_LENGTH)
+END_MESSAGE_DEFINITION(VisionMarker)
 
 // BlockMarkerObserved
 // TODO: this has to be split into two packets for BTLE (size > 20 bytes)
@@ -167,9 +195,9 @@ ADD_MESSAGE_MEMBER(u8, success)
 END_MESSAGE_DEFINITION(TemplateInitialized)
 
 // TotalBlocksDetected
-START_MESSAGE_DEFINITION(TotalBlocksDetected, 1)
-ADD_MESSAGE_MEMBER(u8, numBlocks)
-END_MESSAGE_DEFINITION(TotalBlocksDetected)
+START_MESSAGE_DEFINITION(TotalVisionMarkersSeen, 1)
+ADD_MESSAGE_MEMBER(u8, numMarkers)
+END_MESSAGE_DEFINITION(TotalVisionMarkersSeen)
 
 
 

@@ -9,9 +9,14 @@
 namespace Anki {
   namespace Cozmo {
     namespace Messages {
+
+      // Create all the dispatch function prototypes (all implemented
+      // manually below).  We need the prototypes for the LUT below
+#define MESSAGE_DEFINITION_MODE MESSAGE_DISPATCH_DEFINITION_MODE
+#include "anki/cozmo/MessageDefinitions.h"
       
       namespace {
-        
+  
         // 4. Fill in the message information lookup table:
         typedef struct {
           u8 priority;
@@ -19,10 +24,9 @@ namespace Anki {
           void (*dispatchFcn)(const u8* buffer);
         } TableEntry;
         
-        // TODO: Would be nice to use NUM_MSG_IDS instead of hard-coded 256 here.
-        TableEntry LookupTable_[256] = {
+        const size_t NUM_TABLE_ENTRIES = NUM_MSG_IDS + 1;
+        TableEntry LookupTable_[NUM_TABLE_ENTRIES] = {
           {0, 0, 0}, // Empty entry for NO_MESSAGE_ID
-#undef  MESSAGE_DEFINITION_MODE
 #define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_MODE
 #include "anki/cozmo/MessageDefinitions.h"
           {0, 0, 0} // Final dummy entry without comma at end
@@ -44,7 +48,9 @@ namespace Anki {
         //   by the faster MainExecution.
         //
         
-        const u8 MAX_BLOCK_MARKER_MESSAGES = 32; // max blocks we can see in one image
+        // max vision markers we can see in one image and transmit to the
+        // basestation
+        const u8 MAX_MARKER_MESSAGES = 32;
         
         // Single-message Mailbox Class
         template<typename MsgType>
@@ -82,8 +88,9 @@ namespace Anki {
         
         // Mailboxes for different types of messages that the vision
         // system communicates to main execution:
-        MultiMailbox<Messages::BlockMarkerObserved, MAX_BLOCK_MARKER_MESSAGES> blockMarkerMailbox_;
-        Mailbox<Messages::MatMarkerObserved>    matMarkerMailbox_;
+        //MultiMailbox<Messages::BlockMarkerObserved, MAX_BLOCK_MARKER_MESSAGES> blockMarkerMailbox_;
+        //Mailbox<Messages::MatMarkerObserved>    matMarkerMailbox_;
+        MultiMailbox<Messages::VisionMarker, MAX_MARKER_MESSAGES> visionMarkerMailbox_;
         Mailbox<Messages::DockingErrorSignal>   dockingMailbox_;
         
       } // private namespace
@@ -135,6 +142,7 @@ namespace Anki {
       
       
 #pragma --- Message Dispatch Functions ---
+      
       
       void ProcessRobotAddedToWorldMessage(const RobotAddedToWorld& msg)
       {
@@ -209,23 +217,24 @@ namespace Anki {
       } // ProcessAbsLocalizationUpdateMessage()
       
       
-      void ProcessBlockMarkerObservedMessage(const BlockMarkerObserved& msg)
+      void ProcessVisionMarkerMessage(const VisionMarker& msg)
       {
-        PRINT("Processing BlockMarker message\n");
+        PRINT("Processing VisionMarker message\n");
         
-        blockMarkerMailbox_.putMessage(msg);
+        visionMarkerMailbox_.putMessage(msg);
         
-        VisionSystem::CheckForDockingBlock(msg.blockType);
+        
+        VisionSystem::CheckForTrackingMarker(msg.code);
       }
       
-      void ProcessTotalBlocksDetectedMessage(const TotalBlocksDetected& msg)
+      void ProcessTotalVisionMarkersSeenMessage(const TotalVisionMarkersSeen& msg)
       {
-        PRINT("Saw %d block markers.\n", msg.numBlocks);
+        PRINT("Saw %d vision markers.\n", msg.numMarkers);
       }
       
       void ProcessTemplateInitializedMessage(const TemplateInitialized& msg)
       {
-        VisionSystem::SetDockingMode(static_cast<bool>(msg.success));
+        VisionSystem::SetTrackingMode(static_cast<bool>(msg.success));
       }
       
       void ProcessDockingErrorSignalMessage(const DockingErrorSignal& msg)
@@ -263,6 +272,15 @@ namespace Anki {
       
       
       // TODO: Fill these in once they are needed/used:
+      
+      void ProcessBlockMarkerObservedMessage(const BlockMarkerObserved& msg) {
+        PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
+      }
+      
+      void ProcessMatMarkerObservedMessage(const MatMarkerObserved& msg) {
+        PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
+      }
+      
       void ProcessClearPathMessage(const ClearPath& msg) {
         PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
       }
@@ -272,10 +290,6 @@ namespace Anki {
       }
       
       void ProcessRobotAvailableMessage(const RobotAvailable& msg) {
-        PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
-      }
-      
-      void ProcessMatMarkerObservedMessage(const MatMarkerObserved& msg) {
         PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
       }
       
@@ -297,10 +311,20 @@ namespace Anki {
         PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
       }
       
+      void ProcessRobotStateMessage(const RobotState& msg) {
+        PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
+      }
+      
       
       
 // #pragma mark --- VisionSystem::Mailbox Template Implementations ---
       
+      bool CheckMailbox(VisionMarker& msg)
+      {
+        return visionMarkerMailbox_.getMessage(msg);
+      }
+      
+      /*
       bool CheckMailbox(BlockMarkerObserved& msg)
       {
         return blockMarkerMailbox_.getMessage(msg);
@@ -310,6 +334,7 @@ namespace Anki {
       {
         return matMarkerMailbox_.getMessage(msg);
       }
+       */
       
       bool CheckMailbox(DockingErrorSignal&  msg)
       {
