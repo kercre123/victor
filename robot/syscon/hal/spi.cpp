@@ -5,9 +5,9 @@
 
 namespace
 {
-  const u8 PIN_SPI_MISO = 14;
-  const u8 PIN_SPI_MOSI = 15;
-  const u8 PIN_SPI_SCK = 16;
+  const u8 PIN_SPI_MISO = 1;
+  const u8 PIN_SPI_MOSI = 0;
+  const u8 PIN_SPI_SCK = 30;  // SPI_SCLK_HEAD
 }
 
 void SPIInit()
@@ -46,19 +46,12 @@ s32 SPITransmitReceive(u16 length, const u8* dataTX, u8* dataRX)
   u16 i;
   const u32 TIMEOUT = 4000;  // 4ms
   
-  u32 now = GetMicroCounter();
-  
   for (i = 0; i < length; i++)
   {
     NRF_SPI0->TXD = (u32)dataTX[i];
     
-    while (!NRF_SPI0->EVENTS_READY && ((GetMicroCounter() - now) < TIMEOUT))
+    while (!NRF_SPI0->EVENTS_READY)
       ;
-    
-    if ((GetMicroCounter() - now) >= TIMEOUT)
-    {
-      return 1;
-    }
     
     dataRX[i] = NRF_SPI0->RXD;
     

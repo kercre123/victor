@@ -92,3 +92,8 @@ robot/startup_stm32f429_439xx.lst
 coretech/vision/robot/test/embeddedVisionTests - Copy.cpp
 robot/robot_embedded-tests.dep
 *.MikeAnderson
+*.dep
+*.map
+*.lst
+*.ini
+robot/syscon/JLinkLog.txt

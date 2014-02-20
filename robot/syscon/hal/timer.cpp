@@ -14,6 +14,7 @@ namespace Anki
   {
     namespace HAL
     {
+      // Caution: timer-wrapping issues
       u32 GetMicroCounter()
       {
         if (NRF_RTC1->COUNTER < m_low)

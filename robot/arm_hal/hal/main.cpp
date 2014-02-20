@@ -10,7 +10,7 @@ extern "C" {
 #include "lib/usb/usbd_desc.h"
 }
 
- __ALIGN_BEGIN USB_OTG_CORE_HANDLE    USB_OTG_dev __ALIGN_END ;
+//__ALIGN_BEGIN USB_OTG_CORE_HANDLE    USB_OTG_dev __ALIGN_END ;
 
 extern u8 m_buffer1[];
 
@@ -20,6 +20,8 @@ namespace Anki
   {
     namespace HAL
     {
+      extern GlobalData m_dataBodyToHead;
+      
       // Forward declarations
       void Startup();
       void SPIInit();

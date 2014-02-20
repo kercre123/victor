@@ -64,6 +64,13 @@ namespace Anki
         while (*s)
           UARTPutChar(*s++);
       }
+      
+      void UARTPutHex(u8 c)
+      {
+        static u8 hex[] = "0123456789ABCDEF";
+        UARTPutChar(hex[c >> 4]);
+        UARTPutChar(hex[c & 0xF]);
+      }
 
       s32 UARTGetChar(u32 timeout)
       {

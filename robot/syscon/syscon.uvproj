@@ -355,7 +355,7 @@
             <uSurpInc>0</uSurpInc>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>NRF51</Define>
+              <Define>NRF51,COZMO_ROBOT</Define>
               <Undefine></Undefine>
               <IncludePath>.\lib\Include;.\lib\Include\app_common;.\lib\Include\ble;.\lib\Include\ble\ble_services;.\lib\Include\ble\rpc;.\lib\Include\gcc;..\..\include;..\..\coretech\common\include;..\supervisor\src</IncludePath>
             </VariousControls>

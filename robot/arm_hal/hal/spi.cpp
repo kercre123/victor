@@ -9,8 +9,8 @@ namespace Anki
   {
     namespace HAL
     {
-      static GlobalData m_dataBodyToHead;
-      static GlobalData m_dataHeadToBody;
+      volatile GlobalData m_dataBodyToHead;
+      volatile GlobalData m_dataHeadToBody;
       
       static void ConfigurePins()
       {
@@ -44,6 +44,11 @@ namespace Anki
         SPI_InitStructure.SPI_FirstBit = SPI_FirstBit_LSB;
         SPI_InitStructure.SPI_CRCPolynomial = 7;
         SPI_Init(SPI6, &SPI_InitStructure);
+        
+        for (int i = 0; i < 64; i++)
+          m_dataHeadToBody.padding[i] = i;
+        
+        m_dataHeadToBody.padding[0] = 'H';
       }
       
       static void ConfigureDMA()
@@ -61,7 +66,7 @@ namespace Anki
         DMA_InitStructure.DMA_MemoryBurst = DMA_MemoryBurst_Single;
         DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;
         DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
-        DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;
+        DMA_InitStructure.DMA_Mode = DMA_Mode_Circular;
         DMA_InitStructure.DMA_PeripheralBaseAddr = (u32)&(SPI6->DR);
         DMA_InitStructure.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;
         DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
@@ -70,12 +75,12 @@ namespace Anki
         // Configure TX DMA
         DMA_InitStructure.DMA_Channel = DMA_Channel_1;
         DMA_InitStructure.DMA_DIR = DMA_DIR_MemoryToPeripheral;
-        DMA_InitStructure.DMA_Memory0BaseAddr = (u32)&m_dataBodyToHead;
+        DMA_InitStructure.DMA_Memory0BaseAddr = (u32)&m_dataHeadToBody;
         DMA_Init(DMA2_Stream5, &DMA_InitStructure);
         // Configure RX DMA
         DMA_InitStructure.DMA_Channel = DMA_Channel_1;
         DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralToMemory;
-        DMA_InitStructure.DMA_Memory0BaseAddr = (u32)&m_dataHeadToBody;
+        DMA_InitStructure.DMA_Memory0BaseAddr = (u32)&m_dataBodyToHead;
         DMA_Init(DMA2_Stream6, &DMA_InitStructure);
         
         // Enable DMA
@@ -122,9 +127,17 @@ namespace Anki
 extern "C"
 void DMA2_Stream6_IRQHandler(void)
 {
+  using namespace Anki::Cozmo::HAL;
+  
   // Clear DMA Transfer Complete flags
   DMA_ClearFlag(DMA2_Stream5, DMA_FLAG_TCIF5);
   DMA_ClearFlag(DMA2_Stream6, DMA_FLAG_TCIF6);
+  
+  // Verify the magic identifier byte from the body board
+  if (m_dataBodyToHead.padding[0] != 'B')
+  {
+    NVIC_SystemReset();
+  }
   
   // Run MainExecution
   Anki::Cozmo::Robot::step_MainExecution();

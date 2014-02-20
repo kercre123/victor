@@ -1,7 +1,9 @@
+#include "motors.h"
 #include "spi.h"
 #include "uart.h"
 #include "timer.h"
 #include "nrf.h"
+#include "nrf_gpio.h"
 
 namespace Anki
 {
@@ -12,6 +14,17 @@ namespace Anki
       const u32 MAX_FAILED_TRANSFER_COUNT = 10;
       GlobalData g_dataTX;
       GlobalData g_dataRX;
+      
+      void PowerInit()
+      {
+        const u8 PIN_VINs_EN = 11;
+        nrf_gpio_cfg_output(PIN_VINs_EN);
+        nrf_gpio_pin_set(PIN_VINs_EN);
+        
+        const u8 PIN_VDDs_EN = 12;
+        nrf_gpio_cfg_output(PIN_VDDs_EN);
+        nrf_gpio_pin_clear(PIN_VDDs_EN);
+      }
     }
   }
 }
@@ -39,29 +52,41 @@ int main(void)
   u32 failedTransferCount = 0;
   
   // Initialize the hardware peripherals
+  PowerInit();
   TimerInit();
   UARTInit();
   SPIInit();
-  //MotorsInit();
+  MotorsInit();
   
   UARTPutString("\r\nInitialized...\r\n");
   
   GetMicroCounter();
   
+  //nrf_gpio_cfg_input(4, NRF_GPIO_PIN_NOPULL);
+  
+  for (int i = 0; i < 64; i++)
+    g_dataTX.padding[i] = 0x33;
+  
+  g_dataTX.padding[0] = 'B';
+  
+  //MotorsSetPower(MOTOR_LEFT_WHEEL, 200);
+  //MotorsSetPower(MOTOR_RIGHT_WHEEL, -100);
+  
   while (1)
   {
+    // Exchange data with the head board
     result = SPITransmitReceive(
       sizeof(GlobalData), 
       (const u8*)&g_dataTX,
       (u8*)&g_dataRX);
     
-    if (result)
+    if (result || g_dataRX.padding[0] != 'H')
     {
       if(++failedTransferCount > MAX_FAILED_TRANSFER_COUNT)
       {
         UARTPutString("\r\nToo many failed transfers\r\n");
         
-        // Perform a full system reset in order to reinitialize the other board
+        // Perform a full system reset in order to reinitialize the head board
         NVIC_SystemReset();
       }
     } else {
