@@ -10,7 +10,7 @@ extern "C" {
 #include "lib/usb/usbd_desc.h"
 }
 
- __ALIGN_BEGIN USB_OTG_CORE_HANDLE    USB_OTG_dev __ALIGN_END ;
+//__ALIGN_BEGIN USB_OTG_CORE_HANDLE    USB_OTG_dev __ALIGN_END ;
 
 extern u8 m_buffer1[];
 
@@ -20,6 +20,8 @@ namespace Anki
   {
     namespace HAL
     {
+      extern GlobalData m_dataBodyToHead;
+      
       // Forward declarations
       void Startup();
       void SPIInit();
@@ -80,11 +82,23 @@ int main(void)
   SPIInit();
   
   UARTPutString("Initializing Robot\r\n");
-  Anki::Cozmo::Robot::Init();
+  //Anki::Cozmo::Robot::Init();
   
   while (1)
   {
-    Anki::Cozmo::Robot::step_LongExecution();
+    UARTPutString("----------------\r\n");
+    for (int j = 0; j < 4; j++)
+    {
+      for (int i = 0; i < 16; i++)
+      {
+        UARTPutHex(m_dataBodyToHead.padding[j*16 + i]);
+        UARTPutChar(' ');
+      }
+      UARTPutString("\r\n");
+    }
+    
+    
+    //Anki::Cozmo::Robot::step_LongExecution();
   }
   
   /*FrontCameraInit();

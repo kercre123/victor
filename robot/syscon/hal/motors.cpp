@@ -5,6 +5,9 @@
 
 #define PRIORITY    1
 
+// 16 MHz timer with PWM running at 20kHz
+#define TIMER_TICKS_END ((16000000 / 20000) - 1)
+
 namespace
 {  
   struct MotorInfo
@@ -22,17 +25,16 @@ namespace
     u8 pin;
   };
   
-  // TODO: Fill with real indices
-  const u8 LEFT_WHEEL_FORWARD_PIN = 10;
-  const u8 LEFT_WHEEL_BACKWARD_PIN = 11;
-  const u8 RIGHT_WHEEL_FORWARD_PIN = 12;
-  const u8 RIGHT_WHEEL_BACKWARD_PIN = 13;
-  const u8 LIFT_UP_PIN = 14;
-  const u8 LIFT_DOWN_PIN = 15;
-  const u8 HEAD_UP_PIN = 16;
-  const u8 HEAD_DOWN_PIN = 17;
+  const u8 LEFT_WHEEL_FORWARD_PIN = 7;
+  const u8 LEFT_WHEEL_BACKWARD_PIN = 3;
+  const u8 RIGHT_WHEEL_FORWARD_PIN = 9;
+  const u8 RIGHT_WHEEL_BACKWARD_PIN = 10;
+  const u8 LIFT_UP_PIN = 25;
+  const u8 LIFT_DOWN_PIN = 24;
+  const u8 HEAD_UP_PIN = 23;
+  const u8 HEAD_DOWN_PIN = 22;
   
-  static const MotorInfo m_motors[] =
+  const MotorInfo m_motors[] =
   {
     {
       LEFT_WHEEL_FORWARD_PIN,
@@ -58,21 +60,23 @@ namespace
   
   // Given a gear ratio of 815.4:1 and 4 encoder ticks per revolution, we
   // compute the radians per tick on the lift as:
-  static const f32 RADIANS_PER_LIFT_TICK = (0.5 * M_PI) / 815.4;
+  const f32 RADIANS_PER_LIFT_TICK = (0.5 * M_PI) / 815.4;
 
   // If no encoder activity for 200ms, we may as well be stopped
-  static const u32 ENCODER_TIMEOUT_US = 200000;
+  const u32 ENCODER_TIMEOUT_US = 200000;
 
   // Set a max speed and reject all noise above it
-  static const u32 MAX_SPEED_MM_S = 500;
-  static const u32 DEBOUNCE_US = (MM_PER_TICK * 1000) / MAX_SPEED_MM_S;
+  const u32 MAX_SPEED_MM_S = 500;
+  const u32 DEBOUNCE_US = (MM_PER_TICK * 1000) / MAX_SPEED_MM_S;
   
   // Setup the GPIO indices
   const u8 ENCODER_COUNT = 4;
-  const u8 ENCODER_1_PIN = 1;  // TODO: Fill with real indices
-  const u8 ENCODER_2_PIN = 2;
-  const u8 ENCODER_3_PIN = 3;
-  const u8 ENCODER_4_PIN = 4;
+  const u8 ENCODER_1_PIN = 4;
+  const u8 ENCODER_2_PIN = 21;
+  const u8 ENCODER_3_PIN = 8;
+  // 3B
+  const u8 ENCODER_4_PIN = 20;
+  // 4B
   
   // NOTE: Do NOT re-order the MotorID enum, because this depends on it
   MotorPosition m_motorPositions[Anki::Cozmo::HAL::MOTOR_COUNT] =
@@ -87,7 +91,45 @@ namespace
   u32 m_pinsHigh = 0;
 }
 
-void MotorInit()
+static void ConfigureTimer(NRF_TIMER_Type* timer, const u8 taskChannel, const u8 ppiChannel)
+{
+  // Configure the timer to be in 16-bit timer mode
+  timer->MODE = TIMER_MODE_MODE_Timer;
+  timer->BITMODE = TIMER_BITMODE_BITMODE_16Bit << TIMER_BITMODE_BITMODE_Pos;
+  timer->PRESCALER = 0;
+  
+  // Clears the timer to 0
+  timer->TASKS_CLEAR = 1;
+  
+  // XXX: 0 and 799 are invalid
+  // for 0, use GPIO to disable / cut power to motor (don't waste current)
+  // for 799, just clamp to 798
+  timer->CC[0] = 300;  // PWM n + 0
+  timer->CC[1] = 500;  // PWM n + 1
+  timer->CC[3] = TIMER_TICKS_END;    // Trigger on timer wrap-around at 800
+  
+  // Configure the timer to reset the count when it hits the period defined in compare[3]
+  timer->SHORTS = 1 << TIMER_SHORTS_COMPARE3_CLEAR_Pos;
+  
+  // Configure PPI channels to toggle the output PWM pins on matching timer compare
+  // Match compare[0] (PWM n + 0)
+  NRF_PPI->CH[ppiChannel + 0].EEP = (u32)&timer->EVENTS_COMPARE[0];
+  NRF_PPI->CH[ppiChannel + 0].TEP = (u32)&NRF_GPIOTE->TASKS_OUT[taskChannel + 0];
+  
+  // Match compare[3] (timer wrap-around)
+  NRF_PPI->CH[ppiChannel + 1].EEP = (u32)&timer->EVENTS_COMPARE[3];
+  NRF_PPI->CH[ppiChannel + 1].TEP = (u32)&NRF_GPIOTE->TASKS_OUT[taskChannel + 0];
+  
+  // Match compare[1] (PWM n + 1)
+  NRF_PPI->CH[ppiChannel + 2].EEP = (u32)&timer->EVENTS_COMPARE[1];
+  NRF_PPI->CH[ppiChannel + 2].TEP = (u32)&NRF_GPIOTE->TASKS_OUT[taskChannel + 1];
+  
+  // Match compare[3] (timer wrap-around)
+  NRF_PPI->CH[ppiChannel + 3].EEP = (u32)&timer->EVENTS_COMPARE[3];
+  NRF_PPI->CH[ppiChannel + 3].TEP = (u32)&NRF_GPIOTE->TASKS_OUT[taskChannel + 1];
+}
+
+void MotorsInit()
 {
   int i;
   // Clear all GPIOTE interrupts
@@ -101,6 +143,41 @@ void MotorInit()
   // Clear pending events
   NRF_GPIOTE->EVENTS_PORT = 0;
   
+  // Configure TIMER1 and TIMER2 with the appropriate task and PPI channels
+  ConfigureTimer(NRF_TIMER1, 0, 0);
+  ConfigureTimer(NRF_TIMER2, 2, 4);
+  
+  // Enable PPI channels
+  NRF_PPI->CHEN = (1 << 0) | (1 << 1) | (1 << 2) | (1 << 3) |
+                  (1 << 4) | (1 << 5) | (1 << 6) | (1 << 7);
+  
+  // Star the timers
+  NRF_TIMER1->TASKS_START = 1;
+  NRF_TIMER2->TASKS_START = 1;
+  
+  // Configure each motor pin as an output
+  for (i = 0; i < sizeof(m_motors) / sizeof(MotorInfo); i++)
+  {
+    const MotorInfo* motorInfo = &m_motors[i];
+    nrf_gpio_cfg_output(motorInfo->backwardDownPin);
+    nrf_gpio_cfg_output(motorInfo->forwardUpPin);
+    
+    nrf_gpio_pin_clear(motorInfo->forwardUpPin);
+    
+    nrf_gpio_pin_clear(motorInfo->backwardDownPin);
+    
+    // Configure the GPIOTE channels to toggle for PWM
+    //nrf_gpiote_task_config(i, motorInfo->backwardDownPin, 
+    //  NRF_GPIOTE_POLARITY_TOGGLE, NRF_GPIOTE_INITIAL_VALUE_HIGH);
+    
+    //nrf_gpiote_task_config(i, motorInfo->forwardUpPin, 
+    //  NRF_GPIOTE_POLARITY_TOGGLE, NRF_GPIOTE_INITIAL_VALUE_HIGH);
+  }
+  
+  nrf_gpio_pin_set(m_motors[0].forwardUpPin);
+  nrf_gpio_pin_clear(m_motors[0].backwardDownPin);
+  
+  // Get the current state of the input pins
   u32 state = NRF_GPIO->IN;
   
   // Enable interrupt on port event

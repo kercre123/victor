@@ -196,6 +196,7 @@ namespace Anki
 
       int UARTPrintf(const char* format, ...);
       int UARTPutChar(int c);
+      void UARTPutHex(u8 c);
       void UARTPutString(const char* s);
       int UARTGetChar(u32 timeout = 0);
 
