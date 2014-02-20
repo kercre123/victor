@@ -44,8 +44,10 @@ namespace Anki
           "Number Failed:%d\n"
           "========================================================================\n", numPassedTests, numFailedTests);
   
+#ifndef USING_SIMULATOR
         while(1)
           ;     // Because we don't trust hal.cpp
+#endif
       }
 
       void step_MainExecution()
