@@ -2063,9 +2063,130 @@ namespace Anki
                     for(s32 ja=ia; ja<8; ja++) {
                       AtA_raw[ia][ja] += aValues[ia] * aValues[ja];
                     }
-
-                    Atb_raw[ia] += aValues[ia] * bValue;
+										Atb_raw[ia] += bValue * aValues[ia];
                   }
+									
+									//const f32 aValues[8] = {0, 0, 0, -xc, -yc, -1, xc*yp, yc*yp};
+
+                  //const f32 bValue = -yp;
+
+                  /*for(s32 ia=3; ia<8; ia++) {
+                    for(s32 ja=ia; ja<8; ja++) {
+                      AtA_raw[ia][ja] += aValues[ia] * aValues[ja];
+                    }
+                 }*/
+									
+									/*for(s32 ja=3; ja<8; ja++) {
+										AtA_raw[3][ja] += aValues[3] * aValues[ja];
+									}
+									
+									for(s32 ja=4; ja<8; ja++) {
+										AtA_raw[4][ja] += aValues[4] * aValues[ja];
+									}
+									
+									for(s32 ja=5; ja<8; ja++) {
+										AtA_raw[5][ja] += aValues[5] * aValues[ja];
+									}
+									
+									for(s32 ja=6; ja<8; ja++) {
+										AtA_raw[6][ja] += aValues[6] * aValues[ja];
+									}
+									
+									for(s32 ja=7; ja<8; ja++) {
+										AtA_raw[7][ja] += aValues[7] * aValues[ja];
+									}
+										
+									Atb_raw[3] -= yp * aValues[3];
+									Atb_raw[4] -= yp * aValues[4];
+									Atb_raw[5] -= yp * aValues[5];
+									Atb_raw[6] -= yp * aValues[6];
+									Atb_raw[7] -= yp * aValues[7];*/
+									
+									/*const f32 aValues[8] = {0, 0, 0, -xc, -yc, -1, xc*yp, yc*yp};
+									
+									AtA_raw[3][3] += aValues[3] * aValues[3];
+									AtA_raw[3][4] += aValues[3] * aValues[4];
+									AtA_raw[3][5] += aValues[3] * aValues[5];
+									AtA_raw[3][6] += aValues[3] * aValues[6];
+									AtA_raw[3][7] += aValues[3] * aValues[7];
+									
+									AtA_raw[4][4] += aValues[4] * aValues[4];
+									AtA_raw[4][5] += aValues[4] * aValues[5];
+									AtA_raw[4][6] += aValues[4] * aValues[6];
+									AtA_raw[4][7] += aValues[4] * aValues[7];
+									
+									AtA_raw[5][5] += aValues[5] * aValues[5];
+									AtA_raw[5][6] += aValues[5] * aValues[6];
+									AtA_raw[5][7] += aValues[5] * aValues[7];
+									
+									AtA_raw[6][6] += aValues[6] * aValues[6];
+									AtA_raw[6][7] += aValues[6] * aValues[7];
+									
+									AtA_raw[7][7] += aValues[7] * aValues[7];
+																			
+									Atb_raw[3] -= yp * aValues[3];
+									Atb_raw[4] -= yp * aValues[4];
+									Atb_raw[5] -= yp * aValues[5];
+									Atb_raw[6] -= yp * aValues[6];
+									Atb_raw[7] -= yp * aValues[7];*/
+									
+									/*const f32 aValues6 = xc*yp;
+									const f32 aValues7 = yc*yp;
+									
+									AtA_raw[3][3] += -xc * -xc;
+									AtA_raw[3][4] += -xc * -yc;
+									AtA_raw[3][5] += -xc * -1;
+									AtA_raw[3][6] += -xc * aValues6;
+									AtA_raw[3][7] += -xc * aValues7;
+									
+									AtA_raw[4][4] += -yc * -yc;
+									AtA_raw[4][5] += -yc * -1;
+									AtA_raw[4][6] += -yc * aValues6;
+									AtA_raw[4][7] += -yc * aValues7;
+									
+									AtA_raw[5][5] += -1 * -1;
+									AtA_raw[5][6] += -1 * aValues6;
+									AtA_raw[5][7] += -1 * aValues7;
+									
+									AtA_raw[6][6] += aValues6 * aValues6;
+									AtA_raw[6][7] += aValues6 * aValues7;
+									
+									AtA_raw[7][7] += aValues7 * aValues7;
+																			
+									Atb_raw[3] -= yp * -xc;
+									Atb_raw[4] -= yp * -yc;
+									Atb_raw[5] -= yp * -1;
+									Atb_raw[6] -= yp * aValues6;
+									Atb_raw[7] -= yp * aValues7;*/
+									
+									/*const f32 aValues6 = xc*yp;
+									const f32 aValues7 = yc*yp;
+									
+									AtA_raw[3][3] += xc * xc;
+									AtA_raw[3][4] += xc * yc;
+									AtA_raw[3][5] += xc;
+									AtA_raw[3][6] -= xc * aValues6;
+									AtA_raw[3][7] -= xc * aValues7;
+									
+									AtA_raw[4][4] += yc * yc;
+									AtA_raw[4][5] += yc;
+									AtA_raw[4][6] -= yc * aValues6;
+									AtA_raw[4][7] -= yc * aValues7;
+									
+									AtA_raw[5][5] += 1;
+									AtA_raw[5][6] -= aValues6;
+									AtA_raw[5][7] -= aValues7;
+									
+									AtA_raw[6][6] += aValues6 * aValues6;
+									AtA_raw[6][7] += aValues6 * aValues7;
+									
+									AtA_raw[7][7] += aValues7 * aValues7;
+																			
+									Atb_raw[3] += yp * xc;
+									Atb_raw[4] += yp * yc;
+									Atb_raw[5] += yp;
+									Atb_raw[6] -= yp * aValues6;
+									Atb_raw[7] -= yp * aValues7;*/
                 }
               }
             } // for(s32 iOffset=-maxMatchingDistance; iOffset<=maxMatchingDistance; iOffset++)
