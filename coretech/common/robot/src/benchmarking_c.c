@@ -58,7 +58,7 @@ BENCHMARK_EVENTS_LOCATION static double maxTimes[MAX_BENCHMARK_EVENTS];
 BENCHMARK_EVENTS_LOCATION static unsigned int numEvents[MAX_BENCHMARK_EVENTS];
 BENCHMARK_EVENTS_LOCATION static int lastBeginIndex[MAX_BENCHMARK_EVENTS];
 
-void AddBenchmarkEvent(const char *name, unsigned long long time, BenchmarkEventType type);
+staticInline void AddBenchmarkEvent(const char *name, unsigned long long time, BenchmarkEventType type);
 
 void PrintBenchmarkResults_All(void);
 void PrintBenchmarkResults_OnlyTotals(void);
@@ -87,7 +87,7 @@ unsigned long long GetBenchmarkTime(void)
 #endif
 }
 
-void AddBenchmarkEvent(const char *name, unsigned long long time, BenchmarkEventType type)
+staticInline void AddBenchmarkEvent(const char *name, unsigned long long time, BenchmarkEventType type)
 {
   benchmarkEvents[numBenchmarkEvents].name = name;
   benchmarkEvents[numBenchmarkEvents].time = time;

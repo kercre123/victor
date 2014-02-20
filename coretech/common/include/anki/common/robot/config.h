@@ -43,6 +43,10 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define staticInline static __inline
 #endif
 
+#ifndef NO_INLINE
+#define NO_INLINE
+#endif
+
 #ifdef _DEBUG
 #define ANKI_DEBUG_LEVEL ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS
 #else
@@ -68,6 +72,10 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define staticInline static inline
 #endif
 
+#ifndef NO_INLINE
+#define NO_INLINE
+#endif
+
 #define ANKI_DEBUG_LEVEL ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS
 
 #endif // #if defined(__APPLE_CC__)
@@ -81,6 +89,10 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #ifndef staticInline
 #define staticInline static __inline
+#endif
+
+#ifndef NO_INLINE
+#define NO_INLINE __declspec(noinline)
 #endif
 
 #define ANKI_DEBUG_LEVEL ANKI_DEBUG_ERRORS
