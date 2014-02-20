@@ -68,14 +68,15 @@ namespace Anki
       // Webots mat:
       {
         MatPiece* mat = new MatPiece(++matType);
+        
         mat->AddMarker({24, 24, 24, 16, 25, 49, 56, 9, 56, 48, 32},
                        Pose3d(2.094395, {-0.577350,0.577350,-0.577350}, {-250.000000,250.000000,0.000000}),
                        90.000000);
         mat->AddMarker({35, 64, 70, 196, 140, 137, 8, 1, 48, 32, 34},
-                       Pose3d(-3.141593, {1.000000,0.000000,0.000000}, {0.000000,250.000000,0.000000}),
+                       Pose3d(-3.141593, {-0.000000,-0.707107,0.707107}, {0.000000,250.000000,0.000000}),
                        90.000000);
         mat->AddMarker({35, 64, 70, 196, 141, 137, 8, 1, 48, 32, 34},
-                       Pose3d(-3.141593, {1.000000,0.000000,0.000000}, {250.000000,250.000000,0.000000}),
+                       Pose3d(-3.141593, {-0.000000,-0.707107,0.707107}, {250.000000,250.000000,0.000000}),
                        90.000000);
         mat->AddMarker({24, 24, 24, 16, 24, 49, 56, 9, 56, 48, 32},
                        Pose3d(2.094395, {-0.577350,0.577350,-0.577350}, {-250.000000,0.000000,0.000000}),
@@ -95,7 +96,7 @@ namespace Anki
         mat->AddMarker({8, 24, 24, 24, 9, 25, 56, 33, 56, 24, 48},
                        Pose3d(2.094395, {-0.577350,-0.577350,0.577350}, {250.000000,-250.000000,0.000000}),
                        90.000000);
-
+        
         matLibrary_.AddObject(mat);
       }
 
@@ -299,10 +300,10 @@ namespace Anki
       // TODO: Deal with unknown markers?
       
       // Toss any remaining markers?
-      if(not obsMarkers_.empty()) {
-        PRINT_INFO("%lu messages did not match any known objects and went unused.\n",
-                   obsMarkers_.size());
-        obsMarkers_.clear();
+      uint32_t numUnused = ClearObservedMarkers();
+      if(numUnused > 0) {
+        PRINT_INFO("%u messages did not match any known objects and went unused.\n",
+                   numUnused);
       }
 
       
@@ -332,6 +333,13 @@ namespace Anki
     {
       obsMarkers_.emplace_back(marker);
       //obsMarkersByRobot_[seenByRobot].push_back(&obsMarkers_.back());
+    }
+    
+    uint32_t BlockWorld::ClearObservedMarkers()
+    {
+      uint32_t numCleared = obsMarkers_.size();
+      obsMarkers_.clear();
+      return numCleared;
     }
     
     void BlockWorld::CommandRobotToDock(const RobotID_t whichRobot,
