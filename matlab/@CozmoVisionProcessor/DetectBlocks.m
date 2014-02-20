@@ -7,6 +7,10 @@ delete(findobj(this.h_axes, 'Tag', 'DetectedMarkers'));
 cozmoName = wb_robot_get_controller_arguments();
 cozmoNode = wb_supervisor_node_get_from_def(cozmoName);
 
+if cozmoNode.isNull
+    error('No CozmoBot node DEF "%s" found.', cozmoName);
+end
+
 T = 1000*wb_supervisor_field_get_sf_vec3f(wb_supervisor_node_get_field(cozmoNode, 'translation'));
 R_true = wb_supervisor_field_get_sf_rotation(wb_supervisor_node_get_field(cozmoNode, 'rotation'));
 wb_supervisor_set_label(1, ...

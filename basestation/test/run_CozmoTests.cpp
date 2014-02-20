@@ -33,14 +33,21 @@ TEST(Cozmo, BlockWorldVisionTest)
   Json::Value jsonData;
   std::vector<std::string> jsonFileList;
   
-  // TODO: get all available tests from some directory?
-  
   std::string jsonFilePath = PlatformPathManager::getInstance()->PrependPath(PlatformPathManager::Test, "basestation/test/blockWorldTests/");
+
+  // TODO: automatically get all available tests from some directory?
+  jsonFileList.emplace_back(jsonFilePath + "visionTest_TwoBlocksOnePose_Pose0.json");
   
-  jsonFileList.emplace_back(jsonFilePath + "visionTestWorld1_Pose0.json");
+  jsonFileList.emplace_back(jsonFilePath + "visionTest_MatPoseTest_Pose0.json");
+  jsonFileList.emplace_back(jsonFilePath + "visionTest_MatPoseTest_Pose1.json");
+  jsonFileList.emplace_back(jsonFilePath + "visionTest_MatPoseTest_Pose2.json");
+  jsonFileList.emplace_back(jsonFilePath + "visionTest_MatPoseTest_Pose3.json");
+  
   
   for(auto & jsonFilename : jsonFileList)
   {
+    fprintf(stdout, "\n\nLoading JSON file '%s'\n", jsonFilename.c_str());
+    
     std::ifstream jsonFile(jsonFilename);
     bool jsonParseResult = reader.parse(jsonFile, jsonData);
     ASSERT_TRUE(jsonParseResult);
@@ -110,59 +117,69 @@ TEST(Cozmo, BlockWorldVisionTest)
     // estimates for the blocks
     uint32_t numBlocksObserved = blockWorld.UpdateBlockPoses();
     
+    // Toss unused markers
+    uint32_t numUnusedMarkers = blockWorld.ClearObservedMarkers();
+    if(numUnusedMarkers > 0) {
+      fprintf(stdout, "%u observed markers went unused for block/robot "
+              "localization.\n", numUnusedMarkers);
+    }
+    
     // TODO: In the case that the robot's pose is not estimated correctly (or
     //       at all, e.g. due to no visible mat marker), check block poses
     //       relative to robot, instead of relative to absolute world coords?
     
-    ASSERT_TRUE(jsonData.isMember("Blocks"));
-    const Json::Value& jsonBlocks = jsonData["Blocks"];
-    const int numBlocksTrue = jsonBlocks.size();
-    
-    ASSERT_EQ(numBlocksObserved, numBlocksTrue);
-    
-    // Check to see that we found and successfully localized each ground truth
-    // block
-    for(int i_block=0; i_block<numBlocksTrue; ++i_block)
+    if(jsonData.isMember("Blocks"))
     {
-      ObjectType_t blockType;
-      ASSERT_TRUE(JsonTools::GetValueOptional(jsonBlocks[i_block], "Type", blockType));
+      const Json::Value& jsonBlocks = jsonData["Blocks"];
+      const int numBlocksTrue = jsonBlocks.size();
       
-      const Vision::ObservableObject* block = blockWorld.GetBlockLibrary().GetObjectWithType(blockType);
+      ASSERT_EQ(numBlocksObserved, numBlocksTrue);
       
-      // The ground truth block type should be known to the block world
-      ASSERT_TRUE(block != NULL);
-      Block *groundTruthBlock = dynamic_cast<Block*>(block->Clone());
-      
-      // Set its pose to what is listed in the json file
-      Pose3d blockPose;
-      ASSERT_TRUE(jsonBlocks[i_block].isMember("BlockPose"));
-      ASSERT_TRUE(JsonTools::GetPoseOptional(jsonBlocks[i_block]["BlockPose"], blockPose));
-      groundTruthBlock->SetPose(blockPose);
-      
-      // Make sure this ground truth block was seen and its estimated pose
-      // matches the ground truth pose
-      auto observedBlocks = blockWorld.GetExistingBlocks(groundTruthBlock->GetType());
-      int matchesFound = 0;
-      
-      for(auto & observedBlock : observedBlocks)
+      // Check to see that we found and successfully localized each ground truth
+      // block
+      for(int i_block=0; i_block<numBlocksTrue; ++i_block)
       {
-        // The threshold will vary with how far away the block actually is
-        float blockPoseDistThreshold_mm = (blockPoseDistThresholdFraction *
-                                           (groundTruthBlock->GetPose().get_translation() -
-                                            robotPose.get_translation()).length());
-
-        if(groundTruthBlock->IsSameAs(*observedBlock.second,
-                                      blockPoseDistThreshold_mm,
-                                      blockPoseAngleThreshold))
+        ObjectType_t blockType;
+        ASSERT_TRUE(JsonTools::GetValueOptional(jsonBlocks[i_block], "Type", blockType));
+        
+        const Vision::ObservableObject* block = blockWorld.GetBlockLibrary().GetObjectWithType(blockType);
+        
+        // The ground truth block type should be known to the block world
+        ASSERT_TRUE(block != NULL);
+        Block *groundTruthBlock = dynamic_cast<Block*>(block->Clone());
+        
+        // Set its pose to what is listed in the json file
+        Pose3d blockPose;
+        ASSERT_TRUE(jsonBlocks[i_block].isMember("BlockPose"));
+        ASSERT_TRUE(JsonTools::GetPoseOptional(jsonBlocks[i_block]["BlockPose"], blockPose));
+        groundTruthBlock->SetPose(blockPose);
+        
+        // Make sure this ground truth block was seen and its estimated pose
+        // matches the ground truth pose
+        auto observedBlocks = blockWorld.GetExistingBlocks(groundTruthBlock->GetType());
+        int matchesFound = 0;
+        
+        for(auto & observedBlock : observedBlocks)
         {
-          ++matchesFound;
-        }
-      } // for each observed block
-      EXPECT_EQ(matchesFound, 1); // Exactly one observed block should match
+          // The threshold will vary with how far away the block actually is
+          float blockPoseDistThreshold_mm = (blockPoseDistThresholdFraction *
+                                             (groundTruthBlock->GetPose().get_translation() -
+                                              robotPose.get_translation()).length());
+          
+          if(groundTruthBlock->IsSameAs(*observedBlock.second,
+                                        blockPoseDistThreshold_mm,
+                                        blockPoseAngleThreshold))
+          {
+            ++matchesFound;
+          }
+        } // for each observed block
+        EXPECT_EQ(matchesFound, 1); // Exactly one observed block should match
+        
+        delete groundTruthBlock;
+        
+      } // for each ground truth block
       
-      delete groundTruthBlock;
-      
-    } // for each ground truth block
+    } // IF there are blocks
     
   } // for each jsonFile
   
