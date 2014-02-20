@@ -1,3 +1,4 @@
+#include "anki/cozmo/robot/hal.h"
 #include "motors.h"
 #include "nrf.h"
 #include "nrf_gpio.h"
@@ -18,6 +19,7 @@ namespace
   
   struct MotorPosition
   {
+    volatile u32* pwm;  // This is a pointer to TIMERx->CC[0 or 1]
     s32 position;
     u32 lastTick;
     u32 delta;
@@ -74,18 +76,17 @@ namespace
   const u8 ENCODER_1_PIN = 4;
   const u8 ENCODER_2_PIN = 21;
   const u8 ENCODER_3_PIN = 8;
-  // 3B
+  // TODO: 3B
   const u8 ENCODER_4_PIN = 20;
-  // 4B
+  // TODO: 4B
   
   // NOTE: Do NOT re-order the MotorID enum, because this depends on it
   MotorPosition m_motorPositions[Anki::Cozmo::HAL::MOTOR_COUNT] =
   {
-    {0, 0, 0, MM_PER_TICK, ENCODER_1_PIN},  // MOTOR_LEFT_WHEEL
-    {0, 0, 0, MM_PER_TICK, ENCODER_2_PIN},  // MOTOR_RIGHT_WHEEL
-    {0, 0, 0, RADIANS_PER_LIFT_TICK, ENCODER_3_PIN},  // MOTOR_LIFT
-    {0, 0, 0, RADIANS_PER_LIFT_TICK, ENCODER_4_PIN},  // MOTOR_HEAD
-    //{0}  // Zero out the rest
+    {&NRF_TIMER1->CC[0], 0, 0, 0, MM_PER_TICK, ENCODER_1_PIN},  // MOTOR_LEFT_WHEEL
+    {&NRF_TIMER1->CC[1], 0, 0, 0, MM_PER_TICK, ENCODER_2_PIN},  // MOTOR_RIGHT_WHEEL
+    {&NRF_TIMER2->CC[0], 0, 0, 0, RADIANS_PER_LIFT_TICK, ENCODER_3_PIN},  // MOTOR_LIFT
+    {&NRF_TIMER2->CC[1], 0, 0, 0, RADIANS_PER_LIFT_TICK, ENCODER_4_PIN},  // MOTOR_HEAD
   };
   
   u32 m_pinsHigh = 0;
@@ -104,8 +105,8 @@ static void ConfigureTimer(NRF_TIMER_Type* timer, const u8 taskChannel, const u8
   // XXX: 0 and 799 are invalid
   // for 0, use GPIO to disable / cut power to motor (don't waste current)
   // for 799, just clamp to 798
-  timer->CC[0] = 300;  // PWM n + 0
-  timer->CC[1] = 500;  // PWM n + 1
+  timer->CC[0] = 0;  // PWM n + 0
+  timer->CC[1] = 0;  // PWM n + 1
   timer->CC[3] = TIMER_TICKS_END;    // Trigger on timer wrap-around at 800
   
   // Configure the timer to reset the count when it hits the period defined in compare[3]
@@ -147,35 +148,26 @@ void MotorsInit()
   ConfigureTimer(NRF_TIMER1, 0, 0);
   ConfigureTimer(NRF_TIMER2, 2, 4);
   
-  // Enable PPI channels
-  NRF_PPI->CHEN = (1 << 0) | (1 << 1) | (1 << 2) | (1 << 3) |
-                  (1 << 4) | (1 << 5) | (1 << 6) | (1 << 7);
+  // Enable PPI channels for timer reset
+  NRF_PPI->CHEN = (1 << 1) | (1 << 3) | (1 << 5) | (1 << 7);
   
-  // Star the timers
+  // Disable PPI channels for PWM
+  NRF_PPI->CHENCLR = (1 << 0) | (1 << 2) | (1 << 4) | (1 << 6);
+  
+  // Start the timers
   NRF_TIMER1->TASKS_START = 1;
   NRF_TIMER2->TASKS_START = 1;
   
   // Configure each motor pin as an output
   for (i = 0; i < sizeof(m_motors) / sizeof(MotorInfo); i++)
   {
+    // Configure the pins for the motor bridge to be outputs and default high (stopped)
     const MotorInfo* motorInfo = &m_motors[i];
     nrf_gpio_cfg_output(motorInfo->backwardDownPin);
     nrf_gpio_cfg_output(motorInfo->forwardUpPin);
-    
-    nrf_gpio_pin_clear(motorInfo->forwardUpPin);
-    
-    nrf_gpio_pin_clear(motorInfo->backwardDownPin);
-    
-    // Configure the GPIOTE channels to toggle for PWM
-    //nrf_gpiote_task_config(i, motorInfo->backwardDownPin, 
-    //  NRF_GPIOTE_POLARITY_TOGGLE, NRF_GPIOTE_INITIAL_VALUE_HIGH);
-    
-    //nrf_gpiote_task_config(i, motorInfo->forwardUpPin, 
-    //  NRF_GPIOTE_POLARITY_TOGGLE, NRF_GPIOTE_INITIAL_VALUE_HIGH);
+    nrf_gpio_pin_set(motorInfo->forwardUpPin);
+    nrf_gpio_pin_set(motorInfo->backwardDownPin);
   }
-  
-  nrf_gpio_pin_set(m_motors[0].forwardUpPin);
-  nrf_gpio_pin_clear(m_motors[0].backwardDownPin);
   
   // Get the current state of the input pins
   u32 state = NRF_GPIO->IN;
@@ -200,8 +192,61 @@ void MotorsInit()
   }
 }
 
-void MotorSetPower(Anki::Cozmo::HAL::MotorID motorID, u16 power)
+void MotorsSetPower(Anki::Cozmo::HAL::MotorID motorID, s16 power)
 {
+  // PPI channel[index * 2] contains the PWM timer capture-compare
+  u32 channelMask = 1 << ((u32)motorID << 1);
+  
+  const MotorInfo* motorInfo = &m_motors[motorID];
+  MotorPosition* motorPosition = &m_motorPositions[motorID];
+  
+  if (power == 0)
+  {
+    // Clear the PPI and GPIOTE channels from running and set the lines high (stopped)
+    NRF_PPI->CHENCLR = channelMask;
+    nrf_gpiote_unconfig(motorID);
+    
+    nrf_gpio_pin_set(motorInfo->backwardDownPin);
+    nrf_gpio_pin_set(motorInfo->forwardUpPin);
+  } else {
+    // Clamp the PWM power
+    u32 value = power < 0 ? -power : power;
+    if (value > 798)
+      value = 798;
+    
+    *motorPosition->pwm = value;
+    
+    // Check the sign bit for the current direction (designated by unitsPerTick) and the new power
+    bool isDifferentDirection = (motorPosition->unitsPerTick >> 31) != ((u32)power >> 31);
+    
+    // Make sure the PPI and GPIOTE channels for this PWM are enabled
+    if (!(NRF_PPI->CHEN & channelMask) || isDifferentDirection)
+    {
+      // Unconfigure the current GPIOTE setting and change it later
+      nrf_gpiote_unconfig(motorID);
+      
+      if (power < 0)
+      {
+        if (motorPosition->unitsPerTick > 0)
+          motorPosition->unitsPerTick = -motorPosition->unitsPerTick;
+        
+        // Switch the task to the correct pin and disable the other direction
+        nrf_gpio_pin_set(motorInfo->forwardUpPin);
+        nrf_gpiote_task_config(motorID, motorInfo->backwardDownPin,
+          NRF_GPIOTE_POLARITY_TOGGLE, NRF_GPIOTE_INITIAL_VALUE_HIGH);  // TODO: Figure out what's causing the polarity issue that messes with duty cycle
+      } else {
+        if (motorPosition->unitsPerTick < 0)
+          motorPosition->unitsPerTick = -motorPosition->unitsPerTick;
+        
+        nrf_gpio_pin_set(motorInfo->backwardDownPin);
+        nrf_gpiote_task_config(motorID, motorInfo->forwardUpPin,
+          NRF_GPIOTE_POLARITY_TOGGLE, NRF_GPIOTE_INITIAL_VALUE_LOW);
+      }
+      
+      // Enable the PPI channel
+      NRF_PPI->CHENSET = channelMask;
+    }
+  }
 }
 
 extern "C"

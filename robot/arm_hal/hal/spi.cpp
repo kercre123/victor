@@ -140,5 +140,5 @@ void DMA2_Stream6_IRQHandler(void)
   }
   
   // Run MainExecution
-  //Anki::Cozmo::Robot::step_MainExecution();
+  Anki::Cozmo::Robot::step_MainExecution();
 }

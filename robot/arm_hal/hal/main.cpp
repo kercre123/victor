@@ -82,23 +82,11 @@ int main(void)
   SPIInit();
   
   UARTPutString("Initializing Robot\r\n");
-  //Anki::Cozmo::Robot::Init();
+  Anki::Cozmo::Robot::Init();
   
   while (1)
   {
-    UARTPutString("----------------\r\n");
-    for (int j = 0; j < 4; j++)
-    {
-      for (int i = 0; i < 16; i++)
-      {
-        UARTPutHex(m_dataBodyToHead.padding[j*16 + i]);
-        UARTPutChar(' ');
-      }
-      UARTPutString("\r\n");
-    }
-    
-    
-    //Anki::Cozmo::Robot::step_LongExecution();
+    Anki::Cozmo::Robot::step_LongExecution();
   }
   
   /*FrontCameraInit();

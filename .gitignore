@@ -96,3 +96,4 @@ robot/robot_embedded-tests.dep
 *.map
 *.lst
 *.ini
+robot/syscon/JLinkLog.txt

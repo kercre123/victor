@@ -56,7 +56,7 @@ int main(void)
   TimerInit();
   UARTInit();
   SPIInit();
-  //MotorsInit();
+  MotorsInit();
   
   UARTPutString("\r\nInitialized...\r\n");
   
@@ -69,6 +69,9 @@ int main(void)
   
   g_dataTX.padding[0] = 'B';
   
+  //MotorsSetPower(MOTOR_LEFT_WHEEL, 200);
+  //MotorsSetPower(MOTOR_RIGHT_WHEEL, -100);
+  
   while (1)
   {
     // Exchange data with the head board
@@ -76,17 +79,6 @@ int main(void)
       sizeof(GlobalData), 
       (const u8*)&g_dataTX,
       (u8*)&g_dataRX);
-      
-    UARTPutString("================\r\n");
-    for (int j = 0; j < 4; j++)
-    {
-      for (int i = 0; i < 16; i++)
-      {
-        UARTPutHex(g_dataRX.padding[j*16 + i]);
-        UARTPutChar(' ');
-      }
-      UARTPutString("\r\n");
-    }
     
     if (result || g_dataRX.padding[0] != 'H')
     {
