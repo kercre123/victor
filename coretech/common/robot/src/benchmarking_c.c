@@ -60,16 +60,14 @@ BENCHMARK_EVENTS_LOCATION static int lastBeginIndex[MAX_BENCHMARK_EVENTS];
 
 staticInline void AddBenchmarkEvent(const char *name, unsigned long long time, BenchmarkEventType type);
 
-void PrintBenchmarkResults_All(void);
-void PrintBenchmarkResults_OnlyTotals(void);
-void PrintBenchmarkResults(const BenchmarkPrintType printType);
+static void PrintBenchmarkResults(const BenchmarkPrintType printType);
 
 void InitBenchmarking(void)
 {
   numBenchmarkEvents = 0;
 }
 
-unsigned long long GetBenchmarkTime(void)
+staticInline unsigned long long GetBenchmarkTime(void)
 {
 #if defined(_MSC_VER)
   LARGE_INTEGER counter;
@@ -110,7 +108,7 @@ void EndBenchmark(const char *name)
   AddBenchmarkEvent(name, GetBenchmarkTime(), BENCHMARK_EVENT_END);
 } // void endBenchmark(const char *name)
 
-int GetNameIndex(const char * const name, unsigned int * index)
+static int GetNameIndex(const char * const name, unsigned int * index)
 {
   int i;
   for(i=0; i<numEventNames; i++)
@@ -125,7 +123,7 @@ int GetNameIndex(const char * const name, unsigned int * index)
   return -1;
 }
 
-unsigned int AddName(const char * const name)
+static unsigned int AddName(const char * const name)
 {
   unsigned int index = 0;
 
@@ -147,7 +145,7 @@ void PrintBenchmarkResults_OnlyTotals(void)
   PrintBenchmarkResults(BENCHMARK_PRINT_TOTALS);
 }
 
-void PrintBenchmarkResults(const BenchmarkPrintType printType)
+static void PrintBenchmarkResults(const BenchmarkPrintType printType)
 {
   int i;
 
