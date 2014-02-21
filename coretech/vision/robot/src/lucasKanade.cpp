@@ -2029,6 +2029,43 @@ namespace Anki
           const f32 warpedX = (h00*xc + h01*yc + h02) * wpi;
           const f32 warpedY = (h10*xc + h11*yc + h12) * wpi;
 
+          const s32 warpedX_SQ27p4 = static_cast<s32>( warpedX * static_cast<f32>(1<<4) );
+          const s32 warpedY_SQ27p4 = static_cast<s32>( warpedY * static_cast<f32>(1<<4) );
+          
+          //#define TOFIX(d, q) ((int)( (d)*(double)(1<<(q)) ))
+          //const s32 warpedXFixed1 = static_cast<s32>( warpedX * static_cast<f32>(1<<16) );
+					
+          /*const f32 fixedShift = static_cast<f32>(1<<16);
+					f32 warpedXFixed2_f32;
+					s32 warpedXFixed2;
+          s32 warpedXFixed3;*/
+					
+          //"VMOV %1,%2"
+					//\nVCVT.F32.S32 %1,%1
+          // , "=r" ( warpedXFixed2_f32 ) //Output registers
+/*          __asm{VMOV %0 %1
+                : "=r" ( warpedXFixed2 )
+                : "r"(warpedX) //Input registers
+                : //Clobbered registers
+          };*/
+          /*
+          __asm
+          {
+            VMUL.F32 warpedXFixed2_f32, warpedX, fixedShift
+            VCVT.S32.F32 warpedXFixed2_f32, warpedXFixed2_f32
+            VMOV warpedXFixed2, warpedXFixed2_f32            
+          }
+          
+          __asm
+          {
+            //VCVT.S32.F32 warpedXFixed2_f32, warpedX, #4
+            //VCVT.S32.F32 warpedXFixed2_f32, warpedX
+            VMOV warpedXFixed3, warpedXFixed2_f32            
+          }
+          */
+					
+					//printf("%d %d %d\n", warpedXFixed1, warpedXFixed2, warpedXFixed3);
+
           // TODO: verify the -0.5f is correct
           const s32 warpedXrounded = static_cast<s32>(Roundf(warpedX + centerOffset.x - 0.5f));
           const s32 warpedYrounded = static_cast<s32>(Roundf(warpedY + centerOffset.y - 0.5f));
@@ -2053,7 +2090,8 @@ namespace Anki
               // TODO: make a binary search?
               for(s32 iMatch=pXStartIndexes[xpRounded]; iMatch<pXStartIndexes[xpRounded+1]; iMatch++) {
                 if(ypRounded == pNewPoints[iMatch].y) {
-                  const f32 yp = warpedY + static_cast<f32>(offset);
+                  const f32 yp = warpedY + static_cast<f32>(offset);                  
+                  const s32 yp_SQ27p4 = warpedX_SQ27p4 + (offset << 4);                  
 
                   const f32 aValues[8] = {0, 0, 0, -xc, -yc, -1, xc*yp, yc*yp};
 
@@ -2063,10 +2101,10 @@ namespace Anki
                     for(s32 ja=ia; ja<8; ja++) {
                       AtA_raw[ia][ja] += aValues[ia] * aValues[ja];
                     }
-										Atb_raw[ia] += bValue * aValues[ia];
+                    Atb_raw[ia] += bValue * aValues[ia];
                   }
-									
-									//const f32 aValues[8] = {0, 0, 0, -xc, -yc, -1, xc*yp, yc*yp};
+
+                  //const f32 aValues[8] = {0, 0, 0, -xc, -yc, -1, xc*yp, yc*yp};
 
                   //const f32 bValue = -yp;
 
@@ -2075,120 +2113,120 @@ namespace Anki
                       AtA_raw[ia][ja] += aValues[ia] * aValues[ja];
                     }
                  }*/
-									
-									/*for(s32 ja=3; ja<8; ja++) {
-										AtA_raw[3][ja] += aValues[3] * aValues[ja];
-									}
-									
-									for(s32 ja=4; ja<8; ja++) {
-										AtA_raw[4][ja] += aValues[4] * aValues[ja];
-									}
-									
-									for(s32 ja=5; ja<8; ja++) {
-										AtA_raw[5][ja] += aValues[5] * aValues[ja];
-									}
-									
-									for(s32 ja=6; ja<8; ja++) {
-										AtA_raw[6][ja] += aValues[6] * aValues[ja];
-									}
-									
-									for(s32 ja=7; ja<8; ja++) {
-										AtA_raw[7][ja] += aValues[7] * aValues[ja];
-									}
-										
-									Atb_raw[3] -= yp * aValues[3];
-									Atb_raw[4] -= yp * aValues[4];
-									Atb_raw[5] -= yp * aValues[5];
-									Atb_raw[6] -= yp * aValues[6];
-									Atb_raw[7] -= yp * aValues[7];*/
-									
-									/*const f32 aValues[8] = {0, 0, 0, -xc, -yc, -1, xc*yp, yc*yp};
-									
-									AtA_raw[3][3] += aValues[3] * aValues[3];
-									AtA_raw[3][4] += aValues[3] * aValues[4];
-									AtA_raw[3][5] += aValues[3] * aValues[5];
-									AtA_raw[3][6] += aValues[3] * aValues[6];
-									AtA_raw[3][7] += aValues[3] * aValues[7];
-									
-									AtA_raw[4][4] += aValues[4] * aValues[4];
-									AtA_raw[4][5] += aValues[4] * aValues[5];
-									AtA_raw[4][6] += aValues[4] * aValues[6];
-									AtA_raw[4][7] += aValues[4] * aValues[7];
-									
-									AtA_raw[5][5] += aValues[5] * aValues[5];
-									AtA_raw[5][6] += aValues[5] * aValues[6];
-									AtA_raw[5][7] += aValues[5] * aValues[7];
-									
-									AtA_raw[6][6] += aValues[6] * aValues[6];
-									AtA_raw[6][7] += aValues[6] * aValues[7];
-									
-									AtA_raw[7][7] += aValues[7] * aValues[7];
-																			
-									Atb_raw[3] -= yp * aValues[3];
-									Atb_raw[4] -= yp * aValues[4];
-									Atb_raw[5] -= yp * aValues[5];
-									Atb_raw[6] -= yp * aValues[6];
-									Atb_raw[7] -= yp * aValues[7];*/
-									
-									/*const f32 aValues6 = xc*yp;
-									const f32 aValues7 = yc*yp;
-									
-									AtA_raw[3][3] += -xc * -xc;
-									AtA_raw[3][4] += -xc * -yc;
-									AtA_raw[3][5] += -xc * -1;
-									AtA_raw[3][6] += -xc * aValues6;
-									AtA_raw[3][7] += -xc * aValues7;
-									
-									AtA_raw[4][4] += -yc * -yc;
-									AtA_raw[4][5] += -yc * -1;
-									AtA_raw[4][6] += -yc * aValues6;
-									AtA_raw[4][7] += -yc * aValues7;
-									
-									AtA_raw[5][5] += -1 * -1;
-									AtA_raw[5][6] += -1 * aValues6;
-									AtA_raw[5][7] += -1 * aValues7;
-									
-									AtA_raw[6][6] += aValues6 * aValues6;
-									AtA_raw[6][7] += aValues6 * aValues7;
-									
-									AtA_raw[7][7] += aValues7 * aValues7;
-																			
-									Atb_raw[3] -= yp * -xc;
-									Atb_raw[4] -= yp * -yc;
-									Atb_raw[5] -= yp * -1;
-									Atb_raw[6] -= yp * aValues6;
-									Atb_raw[7] -= yp * aValues7;*/
-									
-									/*const f32 aValues6 = xc*yp;
-									const f32 aValues7 = yc*yp;
-									
-									AtA_raw[3][3] += xc * xc;
-									AtA_raw[3][4] += xc * yc;
-									AtA_raw[3][5] += xc;
-									AtA_raw[3][6] -= xc * aValues6;
-									AtA_raw[3][7] -= xc * aValues7;
-									
-									AtA_raw[4][4] += yc * yc;
-									AtA_raw[4][5] += yc;
-									AtA_raw[4][6] -= yc * aValues6;
-									AtA_raw[4][7] -= yc * aValues7;
-									
-									AtA_raw[5][5] += 1;
-									AtA_raw[5][6] -= aValues6;
-									AtA_raw[5][7] -= aValues7;
-									
-									AtA_raw[6][6] += aValues6 * aValues6;
-									AtA_raw[6][7] += aValues6 * aValues7;
-									
-									AtA_raw[7][7] += aValues7 * aValues7;
-																			
-									Atb_raw[3] += yp * xc;
-									Atb_raw[4] += yp * yc;
-									Atb_raw[5] += yp;
-									Atb_raw[6] -= yp * aValues6;
-									Atb_raw[7] -= yp * aValues7;*/
+
+                  /*for(s32 ja=3; ja<8; ja++) {
+                    AtA_raw[3][ja] += aValues[3] * aValues[ja];
+                  }
+
+                  for(s32 ja=4; ja<8; ja++) {
+                    AtA_raw[4][ja] += aValues[4] * aValues[ja];
+                  }
+
+                  for(s32 ja=5; ja<8; ja++) {
+                    AtA_raw[5][ja] += aValues[5] * aValues[ja];
+                  }
+
+                  for(s32 ja=6; ja<8; ja++) {
+                    AtA_raw[6][ja] += aValues[6] * aValues[ja];
+                  }
+
+                  for(s32 ja=7; ja<8; ja++) {
+                    AtA_raw[7][ja] += aValues[7] * aValues[ja];
+                  }
+
+                  Atb_raw[3] -= yp * aValues[3];
+                  Atb_raw[4] -= yp * aValues[4];
+                  Atb_raw[5] -= yp * aValues[5];
+                  Atb_raw[6] -= yp * aValues[6];
+                  Atb_raw[7] -= yp * aValues[7];*/
+
+                  /*const f32 aValues[8] = {0, 0, 0, -xc, -yc, -1, xc*yp, yc*yp};
+
+                  AtA_raw[3][3] += aValues[3] * aValues[3];
+                  AtA_raw[3][4] += aValues[3] * aValues[4];
+                  AtA_raw[3][5] += aValues[3] * aValues[5];
+                  AtA_raw[3][6] += aValues[3] * aValues[6];
+                  AtA_raw[3][7] += aValues[3] * aValues[7];
+
+                  AtA_raw[4][4] += aValues[4] * aValues[4];
+                  AtA_raw[4][5] += aValues[4] * aValues[5];
+                  AtA_raw[4][6] += aValues[4] * aValues[6];
+                  AtA_raw[4][7] += aValues[4] * aValues[7];
+
+                  AtA_raw[5][5] += aValues[5] * aValues[5];
+                  AtA_raw[5][6] += aValues[5] * aValues[6];
+                  AtA_raw[5][7] += aValues[5] * aValues[7];
+
+                  AtA_raw[6][6] += aValues[6] * aValues[6];
+                  AtA_raw[6][7] += aValues[6] * aValues[7];
+
+                  AtA_raw[7][7] += aValues[7] * aValues[7];
+
+                  Atb_raw[3] -= yp * aValues[3];
+                  Atb_raw[4] -= yp * aValues[4];
+                  Atb_raw[5] -= yp * aValues[5];
+                  Atb_raw[6] -= yp * aValues[6];
+                  Atb_raw[7] -= yp * aValues[7];*/
+
+                  /*const f32 aValues6 = xc*yp;
+                  const f32 aValues7 = yc*yp;
+
+                  AtA_raw[3][3] += -xc * -xc;
+                  AtA_raw[3][4] += -xc * -yc;
+                  AtA_raw[3][5] += -xc * -1;
+                  AtA_raw[3][6] += -xc * aValues6;
+                  AtA_raw[3][7] += -xc * aValues7;
+
+                  AtA_raw[4][4] += -yc * -yc;
+                  AtA_raw[4][5] += -yc * -1;
+                  AtA_raw[4][6] += -yc * aValues6;
+                  AtA_raw[4][7] += -yc * aValues7;
+
+                  AtA_raw[5][5] += -1 * -1;
+                  AtA_raw[5][6] += -1 * aValues6;
+                  AtA_raw[5][7] += -1 * aValues7;
+
+                  AtA_raw[6][6] += aValues6 * aValues6;
+                  AtA_raw[6][7] += aValues6 * aValues7;
+
+                  AtA_raw[7][7] += aValues7 * aValues7;
+
+                  Atb_raw[3] -= yp * -xc;
+                  Atb_raw[4] -= yp * -yc;
+                  Atb_raw[5] -= yp * -1;
+                  Atb_raw[6] -= yp * aValues6;
+                  Atb_raw[7] -= yp * aValues7;*/
+
+                  /*const f32 aValues6 = xc*yp;
+                  const f32 aValues7 = yc*yp;
+
+                  AtA_raw[3][3] += xc * xc;
+                  AtA_raw[3][4] += xc * yc;
+                  AtA_raw[3][5] += xc;
+                  AtA_raw[3][6] -= xc * aValues6;
+                  AtA_raw[3][7] -= xc * aValues7;
+
+                  AtA_raw[4][4] += yc * yc;
+                  AtA_raw[4][5] += yc;
+                  AtA_raw[4][6] -= yc * aValues6;
+                  AtA_raw[4][7] -= yc * aValues7;
+
+                  AtA_raw[5][5] += 1;
+                  AtA_raw[5][6] -= aValues6;
+                  AtA_raw[5][7] -= aValues7;
+
+                  AtA_raw[6][6] += aValues6 * aValues6;
+                  AtA_raw[6][7] += aValues6 * aValues7;
+
+                  AtA_raw[7][7] += aValues7 * aValues7;
+
+                  Atb_raw[3] += yp * xc;
+                  Atb_raw[4] += yp * yc;
+                  Atb_raw[5] += yp;
+                  Atb_raw[6] -= yp * aValues6;
+                  Atb_raw[7] -= yp * aValues7;*/
                 }
-              }
+              } // if(ypRounded == pNewPoints[iMatch].y)
             } // for(s32 iOffset=-maxMatchingDistance; iOffset<=maxMatchingDistance; iOffset++)
           } // if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance))
         } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
