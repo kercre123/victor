@@ -32,6 +32,9 @@ classdef CozmoTestWorldCreator
         
         AddBlock(this, varargin);
        
+        function Run(this)
+           system(['open ' this.worldFile]); 
+        end
     end
     
 end % classdef CozmoTestWorldCreator

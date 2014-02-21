@@ -20,6 +20,7 @@ TestWorld.AddBlock('BlockPose', Pose(pi/4*[0 0 1], [333 75 30]), ...
 TestWorld.AddBlock('BlockPose', Pose(-pi/4*[0 0 1], [333 -75 30]), ...
     'BlockProto', 'Block1x1', 'BlockType', 2, 'FrontFace', 'bullseye');
 
+TestWorld.Run();
 
 %% MatPoseTest
 % No blocks, just testing robot pose estimation as it moves around to
@@ -43,6 +44,8 @@ headAngles = [-10 -15 -12 -10 -14 -12 -10 -23] * pi/180;
 TestWorld.AddRobot('Name', 'Cozmo_1', ...
     'RobotPose', poses, ...
     'HeadAngle', headAngles);
+
+TestWorld.Run();
 
 %% RepeatedBlock
 % Lots of blocks of the same type
@@ -83,4 +86,6 @@ TestWorld.AddBlock('BlockPose', Pose(pi*[1 0 0], [414 0 90]), ...
 
 TestWorld.AddBlock('BlockPose', Pose(3*pi/2*[1 0 0], [414 0 150]), ...
     'BlockProto', 'Block1x1', 'BlockType', 2, 'FrontFace', 'bullseye');
+
+TestWorld.Run();
 

@@ -321,7 +321,7 @@ int main(int argc, char **argv)
     
   } // for each pose
  
-  // TODO: Stop / quit simulation?
+  webotRobot_.simulationQuit(EXIT_SUCCESS);
   
   return 0;
 }
