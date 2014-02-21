@@ -219,7 +219,8 @@ const char *visionTestJsonFiles[] = {
   "visionTest_TwoBlocksOnePose.json",
   "visionTest_MatPoseTest.json",
   "visionTest_RepeatedBlock.json",
-  "visionTest_VaryingDistance.json"
+  "visionTest_VaryingDistance.json",
+  "visionTest_OffTheMat.json"
 };
 
 

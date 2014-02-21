@@ -147,21 +147,28 @@ int main(int argc, char **argv)
     webots::Field* nameField = child->getField("name");
     if(nameField != NULL && nameField->getSFString().compare(0,5,"Block") == 0)
     {
-      Json::Value jsonBlock;
-      jsonBlock["BlockName"] = child->getField("name")->getSFString();
-      //ObjectType_t blockType = std::stoi(child->getField("type")->getSFString());
-      jsonBlock["Type"] = std::stoi(child->getField("type")->getSFString());
-      
-      const double *blockTrans_m = child->getField("translation")->getSFVec3f();
-      const double *blockRot   = child->getField("rotation")->getSFRotation();
-      for(int i=0; i<3; ++i) {
-        jsonBlock["BlockPose"]["Translation"].append(M_TO_MM(blockTrans_m[i]));
-        jsonBlock["BlockPose"]["Axis"].append(blockRot[i]);
+      ObjectType_t blockType = std::stoi(child->getField("type")->getSFString());
+      if(blockType > 0)
+      {
+        Json::Value jsonBlock;
+        jsonBlock["Type"] = blockType;
+        
+        jsonBlock["BlockName"] = child->getField("name")->getSFString();
+        
+        const double *blockTrans_m = child->getField("translation")->getSFVec3f();
+        const double *blockRot   = child->getField("rotation")->getSFRotation();
+        for(int i=0; i<3; ++i) {
+          jsonBlock["BlockPose"]["Translation"].append(M_TO_MM(blockTrans_m[i]));
+          jsonBlock["BlockPose"]["Axis"].append(blockRot[i]);
+        }
+        jsonBlock["BlockPose"]["Angle"] = blockRot[3];
+        
+        root["Blocks"].append(jsonBlock);
+        numBlocks++;
       }
-      jsonBlock["BlockPose"]["Angle"] = blockRot[3];
-      
-      root["Blocks"].append(jsonBlock);
-      numBlocks++;
+      else {
+        fprintf(stdout, "Skipping unobserved (Type 0) block.\n");
+      }
     } // if this is a block
     else if(child->getType() == webots::Node::WORLD_INFO) {
       root["WorldTitle"] = child->getField("title")->getSFString();

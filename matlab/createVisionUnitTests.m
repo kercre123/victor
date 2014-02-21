@@ -12,7 +12,8 @@ TestWorld = CozmoTestWorldCreator('WorldFile', ...
 
 TestWorld.AddRobot('Name', 'Cozmo_1', ...
     'RobotPose', Pose([0 0 0], [80 0 20]), ...
-    'HeadAngle', -10*pi/180);
+    'HeadAngle', -10*pi/180, ...
+    'CameraResolution', [320 240]);
 
 TestWorld.AddBlock('BlockPose', Pose(pi/4*[0 0 1], [333 75 30]), ...
     'BlockProto', 'Block1x1', 'BlockType', 1, 'FrontFace', 'batteryMarker');
@@ -43,7 +44,8 @@ headAngles = [-10 -15 -12 -10 -14 -12 -10 -23] * pi/180;
 
 TestWorld.AddRobot('Name', 'Cozmo_1', ...
     'RobotPose', poses, ...
-    'HeadAngle', headAngles);
+    'HeadAngle', headAngles, ...
+    'CameraResolution', [320 240]);
 
 TestWorld.Run();
 
@@ -55,7 +57,8 @@ TestWorld = CozmoTestWorldCreator('WorldFile', ...
     'CheckRobotPose', false);
 
 TestWorld.AddRobot('Name', 'Cozmo_1', ...
-    'RobotPose', Pose([0 0 0], [0 0 18]), 'HeadAngle', 5*pi/180);
+    'RobotPose', Pose([0 0 0], [0 0 18]), 'HeadAngle', 5*pi/180, ...
+    'CameraResolution', [640 480]);
 
 % Right stack
 TestWorld.AddBlock('BlockPose', Pose(-pi/4*[0 0 1], [333 -75 30]), ...
@@ -104,7 +107,7 @@ for i = 1:length(d)
     poses{end+1} = Pose(pi*[0 0 1], [d(i) 0 18]); %#ok<SAGROW>
 end
     
-headAngles = linspace(-.3, 0, length(poses));
+headAngles = linspace(-.3, -.05, length(poses));
 
 % Repeat the distances with the robot slightly turned
 theta = linspace(4, 22, length(poses)) * pi/180;
@@ -116,9 +119,39 @@ headAngles = [headAngles headAngles];
 
 TestWorld.AddRobot('Name', 'Cozmo_1', ...
     'RobotPose', poses, ...
-    'HeadAngle', headAngles);
+    'HeadAngle', headAngles, 'CameraResolution', [640 480]);
 
 TestWorld.AddBlock('BlockPose', Pose(0*[0 0 1], [-100 0 30]), ...
     'BlockProto', 'Block1x1', 'BlockType', 1, 'FrontFace', 'batteryMarker');
+
+TestWorld.Run();
+
+%% OffTheMat
+% Resting on top of some blocks, looking down and seeing mat plus other
+% blocks from above
+
+worldName = 'OffTheMat';
+TestWorld = CozmoTestWorldCreator('WorldFile', ...
+    fullfile(rootPath, ['visionTest_' worldName '.wbt']));
+
+% 4 unobserved (type 0) blocks together, clustered around the specified
+% center for Cozmo to sit on
+center = [-100 -220 30];
+TestWorld.AddBlock('BlockPose', Pose([0 0 0], center+[-30 -30 0]), ...
+    'BlockProto', 'Block1x1', 'BlockType', 0);
+TestWorld.AddBlock('BlockPose', Pose([0 0 0], center+[-30  30 0]), ...
+    'BlockProto', 'Block1x1', 'BlockType', 0);
+TestWorld.AddBlock('BlockPose', Pose([0 0 0], center+[ 30 -30 0]), ...
+    'BlockProto', 'Block1x1', 'BlockType', 0);
+TestWorld.AddBlock('BlockPose', Pose([0 0 0], center+[ 30  30 0]), ...
+    'BlockProto', 'Block1x1', 'BlockType', 0);
+
+% One Block for him to see
+TestWorld.AddBlock('BlockPose', Pose(pi/4*[0 0 1], [70 70 30]), ...
+    'BlockProto', 'Block1x1', 'BlockType', 2, 'FrontFace', 'bullseye');
+
+TestWorld.AddRobot('Name', 'Cozmo_1', ...
+    'RobotPose', Pose(pi/3*[0 0 1], center+[15 35 50]), ...
+    'HeadAngle', -22*pi/180, 'CameraResolution', [320 240]);
 
 TestWorld.Run();
