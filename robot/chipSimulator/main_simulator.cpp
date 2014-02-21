@@ -15,9 +15,9 @@ extern "C" {
 
 int main(void)
 {
-	printf("hello whirrled\n");
+	//printf("hello whirrled\n");
 	
 	Anki::Cozmo::Robot::Init();
 	
-	return 1;
+	return 0;
 }

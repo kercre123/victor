@@ -1736,9 +1736,9 @@ namespace Anki
 #endif // #ifdef SEND_BINARY_IMAGES_TO_MATLAB
 
         if(updateType == Transformations::TRANSFORM_TRANSLATION) {
-          return IterativelyRefineTrack_Translation(nextImageEdges, allLimits, matching_maxDistance, matching_maxCorrespondences, scratch);
+          return IterativelyRefineTrack_Translation(nextImageEdges, allLimits, matching_maxDistance, matching_maxCorrespondences, false, scratch);
         } else if(updateType == Transformations::TRANSFORM_PROJECTIVE) {
-          return IterativelyRefineTrack_Projective(nextImageEdges, allLimits, matching_maxDistance, matching_maxCorrespondences, scratch);
+          return IterativelyRefineTrack_Projective(nextImageEdges, allLimits, matching_maxDistance, matching_maxCorrespondences, false, scratch);
         }
 
         return RESULT_FAIL;
@@ -1891,6 +1891,89 @@ namespace Anki
         return RESULT_OK;
       } // Result LucasKanadeTrackerBinary::FindVerticalCorrespondences_Translation()
 
+      Result LucasKanadeTrackerBinary::FindVerticalCorrespondences_Translation_FixedPoint(
+        const s32 maxMatchingDistance,
+        const Transformations::PlanarTransformation_f32 &transformation,
+        const FixedLengthList<Point<s16> > &templatePoints,
+        const FixedLengthList<Point<s16> > &newPoints,
+        const s32 imageHeight,
+        const s32 imageWidth,
+        const Array<s32> &xStartIndexes,
+        f32 &sumY,
+        s32 &numCorrespondences,
+        MemoryStack scratch)
+      {
+        const s32 numTemplatePoints = templatePoints.get_size();
+
+        const Array<f32> &homography = transformation.get_homography();
+        const Point<f32> &centerOffset = transformation.get_centerOffset();
+
+        const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
+        const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
+        const f32 h20 = homography[2][0]; const f32 h21 = homography[2][1]; const f32 h22 = 1.0f;
+
+        AnkiAssert(FLT_NEAR(homography[2][2], 1.0f));
+
+        sumY = 0.0f;
+        numCorrespondences = 0;
+
+        const Point<s16> * restrict pTemplatePoints = templatePoints.Pointer(0);
+        const Point<s16> * restrict pNewPoints = newPoints.Pointer(0);
+        const s32 * restrict pXStartIndexes = xStartIndexes.Pointer(0,0);
+
+        for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++) {
+          const f32 xr = static_cast<f32>(pTemplatePoints[iPoint].x);
+          const f32 yr = static_cast<f32>(pTemplatePoints[iPoint].y);
+
+          //
+          // Warp x and y based on the current homography
+          //
+
+          // Subtract the center offset
+          const f32 xc = xr - centerOffset.x;
+          const f32 yc = yr - centerOffset.y;
+
+          // Projective warp
+          const f32 wpi = 1.0f / (h20*xc + h21*yc + h22);
+          const f32 warpedX = (h00*xc + h01*yc + h02) * wpi;
+          const f32 warpedY = (h10*xc + h11*yc + h12) * wpi;
+
+          // TODO: verify the -0.5f is correct
+          const s32 warpedXrounded = static_cast<s32>(Roundf(warpedX + centerOffset.x - 0.5f));
+          const s32 warpedYrounded = static_cast<s32>(Roundf(warpedY + centerOffset.y - 0.5f));
+
+          if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance)) {
+            s32 minOffset = -maxMatchingDistance;
+            s32 maxOffset = maxMatchingDistance + 1;
+
+            // TODO: manually verify these conditions are correct
+            if(warpedXrounded < maxMatchingDistance) {
+              minOffset += (maxMatchingDistance - warpedXrounded);
+            }
+
+            if(warpedXrounded > (imageWidth - maxMatchingDistance - 2)) {
+              maxOffset += (imageWidth - warpedXrounded - maxMatchingDistance - 2);
+            }
+
+            for(s32 offset=minOffset; offset<maxOffset; offset++) {
+              const s32 xpRounded = warpedXrounded;
+              const s32 ypRounded = warpedYrounded + offset;
+
+              // TODO: make a binary search?
+              for(s32 iMatch=pXStartIndexes[xpRounded]; iMatch<pXStartIndexes[xpRounded+1]; iMatch++) {
+                if(ypRounded == pNewPoints[iMatch].y) {
+                  const f32 matchedY = warpedY + static_cast<f32>(offset);
+                  sumY += (matchedY - warpedY);
+                  numCorrespondences++;
+                }
+              }
+            } // for(s32 iOffset=-maxMatchingDistance; iOffset<=maxMatchingDistance; iOffset++)
+          } // if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance))
+        } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
+
+        return RESULT_OK;
+      } // Result LucasKanadeTrackerBinary::FindVerticalCorrespondences_Translation_FixedPoint()
+
       Result LucasKanadeTrackerBinary::FindHorizontalCorrespondences_Translation(
         const s32 maxMatchingDistance,
         const Transformations::PlanarTransformation_f32 &transformation,
@@ -1973,6 +2056,89 @@ namespace Anki
 
         return RESULT_OK;
       } // Result LucasKanadeTrackerBinary::FindHorizontalCorrespondences_Translation()
+
+      Result LucasKanadeTrackerBinary::FindHorizontalCorrespondences_Translation_FixedPoint(
+        const s32 maxMatchingDistance,
+        const Transformations::PlanarTransformation_f32 &transformation,
+        const FixedLengthList<Point<s16> > &templatePoints,
+        const FixedLengthList<Point<s16> > &newPoints,
+        const s32 imageHeight,
+        const s32 imageWidth,
+        const Array<s32> &yStartIndexes,
+        f32 &sumX,
+        s32 &numCorrespondences,
+        MemoryStack scratch)
+      {
+        const s32 numTemplatePoints = templatePoints.get_size();
+
+        const Array<f32> &homography = transformation.get_homography();
+        const Point<f32> &centerOffset = transformation.get_centerOffset();
+
+        const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
+        const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
+        const f32 h20 = homography[2][0]; const f32 h21 = homography[2][1]; const f32 h22 = 1.0f;
+
+        AnkiAssert(FLT_NEAR(homography[2][2], 1.0f));
+
+        sumX = 0.0f;
+        numCorrespondences = 0;
+
+        const Point<s16> * restrict pTemplatePoints = templatePoints.Pointer(0);
+        const Point<s16> * restrict pNewPoints = newPoints.Pointer(0);
+        const s32 * restrict pYStartIndexes = yStartIndexes.Pointer(0,0);
+
+        for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++) {
+          const f32 xr = static_cast<f32>(pTemplatePoints[iPoint].x);
+          const f32 yr = static_cast<f32>(pTemplatePoints[iPoint].y);
+
+          //
+          // Warp x and y based on the current homography
+          //
+
+          // Subtract the center offset
+          const f32 xc = xr - centerOffset.x;
+          const f32 yc = yr - centerOffset.y;
+
+          // Projective warp
+          const f32 wpi = 1.0f / (h20*xc + h21*yc + h22);
+          const f32 warpedX = (h00*xc + h01*yc + h02) * wpi;
+          const f32 warpedY = (h10*xc + h11*yc + h12) * wpi;
+
+          // TODO: verify the -0.5f is correct
+          const s32 warpedXrounded = static_cast<s32>(Roundf(warpedX + centerOffset.x - 0.5f));
+          const s32 warpedYrounded = static_cast<s32>(Roundf(warpedY + centerOffset.y - 0.5f));
+
+          if(warpedXrounded >= maxMatchingDistance && warpedXrounded < (imageWidth-maxMatchingDistance)) {
+            s32 minOffset = -maxMatchingDistance;
+            s32 maxOffset = maxMatchingDistance + 1;
+
+            // TODO: manually verify these conditions are correct
+            if(warpedYrounded < maxMatchingDistance) {
+              minOffset += (maxMatchingDistance - warpedYrounded);
+            }
+
+            if(warpedYrounded > (imageHeight - maxMatchingDistance - 2)) {
+              maxOffset += (imageHeight - warpedYrounded - maxMatchingDistance - 2);
+            }
+
+            for(s32 offset=minOffset; offset<maxOffset; offset++) {
+              const s32 xpRounded = warpedXrounded + offset;
+              const s32 ypRounded = warpedYrounded;
+
+              // TODO: make a binary search?
+              for(s32 iMatch=pYStartIndexes[ypRounded]; iMatch<pYStartIndexes[ypRounded+1]; iMatch++) {
+                if(xpRounded == pNewPoints[iMatch].x) {
+                  const f32 matchedX = warpedX + static_cast<f32>(offset);
+                  sumX += (matchedX - warpedX);
+                  numCorrespondences++;
+                }
+              }
+            } // for(s32 iOffset=-maxMatchingDistance; iOffset<=maxMatchingDistance; iOffset++)
+          } // if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance))
+        } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
+
+        return RESULT_OK;
+      } // Result LucasKanadeTrackerBinary::FindHorizontalCorrespondences_Translation_FixedPoint()
 
       Result LucasKanadeTrackerBinary::FindVerticalCorrespondences_Projective(
         const s32 maxMatchingDistance,
@@ -2063,11 +2229,132 @@ namespace Anki
                     for(s32 ja=ia; ja<8; ja++) {
                       AtA_raw[ia][ja] += aValues[ia] * aValues[ja];
                     }
-
-                    Atb_raw[ia] += aValues[ia] * bValue;
+                    Atb_raw[ia] += bValue * aValues[ia];
                   }
+
+                  //const f32 aValues[8] = {0, 0, 0, -xc, -yc, -1, xc*yp, yc*yp};
+
+                  //const f32 bValue = -yp;
+
+                  /*for(s32 ia=3; ia<8; ia++) {
+                  for(s32 ja=ia; ja<8; ja++) {
+                  AtA_raw[ia][ja] += aValues[ia] * aValues[ja];
+                  }
+                  }*/
+
+                  /*for(s32 ja=3; ja<8; ja++) {
+                  AtA_raw[3][ja] += aValues[3] * aValues[ja];
+                  }
+
+                  for(s32 ja=4; ja<8; ja++) {
+                  AtA_raw[4][ja] += aValues[4] * aValues[ja];
+                  }
+
+                  for(s32 ja=5; ja<8; ja++) {
+                  AtA_raw[5][ja] += aValues[5] * aValues[ja];
+                  }
+
+                  for(s32 ja=6; ja<8; ja++) {
+                  AtA_raw[6][ja] += aValues[6] * aValues[ja];
+                  }
+
+                  for(s32 ja=7; ja<8; ja++) {
+                  AtA_raw[7][ja] += aValues[7] * aValues[ja];
+                  }
+
+                  Atb_raw[3] -= yp * aValues[3];
+                  Atb_raw[4] -= yp * aValues[4];
+                  Atb_raw[5] -= yp * aValues[5];
+                  Atb_raw[6] -= yp * aValues[6];
+                  Atb_raw[7] -= yp * aValues[7];*/
+
+                  /*const f32 aValues[8] = {0, 0, 0, -xc, -yc, -1, xc*yp, yc*yp};
+
+                  AtA_raw[3][3] += aValues[3] * aValues[3];
+                  AtA_raw[3][4] += aValues[3] * aValues[4];
+                  AtA_raw[3][5] += aValues[3] * aValues[5];
+                  AtA_raw[3][6] += aValues[3] * aValues[6];
+                  AtA_raw[3][7] += aValues[3] * aValues[7];
+
+                  AtA_raw[4][4] += aValues[4] * aValues[4];
+                  AtA_raw[4][5] += aValues[4] * aValues[5];
+                  AtA_raw[4][6] += aValues[4] * aValues[6];
+                  AtA_raw[4][7] += aValues[4] * aValues[7];
+
+                  AtA_raw[5][5] += aValues[5] * aValues[5];
+                  AtA_raw[5][6] += aValues[5] * aValues[6];
+                  AtA_raw[5][7] += aValues[5] * aValues[7];
+
+                  AtA_raw[6][6] += aValues[6] * aValues[6];
+                  AtA_raw[6][7] += aValues[6] * aValues[7];
+
+                  AtA_raw[7][7] += aValues[7] * aValues[7];
+
+                  Atb_raw[3] -= yp * aValues[3];
+                  Atb_raw[4] -= yp * aValues[4];
+                  Atb_raw[5] -= yp * aValues[5];
+                  Atb_raw[6] -= yp * aValues[6];
+                  Atb_raw[7] -= yp * aValues[7];*/
+
+                  /*const f32 aValues6 = xc*yp;
+                  const f32 aValues7 = yc*yp;
+
+                  AtA_raw[3][3] += -xc * -xc;
+                  AtA_raw[3][4] += -xc * -yc;
+                  AtA_raw[3][5] += -xc * -1;
+                  AtA_raw[3][6] += -xc * aValues6;
+                  AtA_raw[3][7] += -xc * aValues7;
+
+                  AtA_raw[4][4] += -yc * -yc;
+                  AtA_raw[4][5] += -yc * -1;
+                  AtA_raw[4][6] += -yc * aValues6;
+                  AtA_raw[4][7] += -yc * aValues7;
+
+                  AtA_raw[5][5] += -1 * -1;
+                  AtA_raw[5][6] += -1 * aValues6;
+                  AtA_raw[5][7] += -1 * aValues7;
+
+                  AtA_raw[6][6] += aValues6 * aValues6;
+                  AtA_raw[6][7] += aValues6 * aValues7;
+
+                  AtA_raw[7][7] += aValues7 * aValues7;
+
+                  Atb_raw[3] -= yp * -xc;
+                  Atb_raw[4] -= yp * -yc;
+                  Atb_raw[5] -= yp * -1;
+                  Atb_raw[6] -= yp * aValues6;
+                  Atb_raw[7] -= yp * aValues7;*/
+
+                  /*const f32 aValues6 = xc*yp;
+                  const f32 aValues7 = yc*yp;
+
+                  AtA_raw[3][3] += xc * xc;
+                  AtA_raw[3][4] += xc * yc;
+                  AtA_raw[3][5] += xc;
+                  AtA_raw[3][6] -= xc * aValues6;
+                  AtA_raw[3][7] -= xc * aValues7;
+
+                  AtA_raw[4][4] += yc * yc;
+                  AtA_raw[4][5] += yc;
+                  AtA_raw[4][6] -= yc * aValues6;
+                  AtA_raw[4][7] -= yc * aValues7;
+
+                  AtA_raw[5][5] += 1;
+                  AtA_raw[5][6] -= aValues6;
+                  AtA_raw[5][7] -= aValues7;
+
+                  AtA_raw[6][6] += aValues6 * aValues6;
+                  AtA_raw[6][7] += aValues6 * aValues7;
+
+                  AtA_raw[7][7] += aValues7 * aValues7;
+
+                  Atb_raw[3] += yp * xc;
+                  Atb_raw[4] += yp * yc;
+                  Atb_raw[5] += yp;
+                  Atb_raw[6] -= yp * aValues6;
+                  Atb_raw[7] -= yp * aValues7;*/
                 }
-              }
+              } // if(ypRounded == pNewPoints[iMatch].y)
             } // for(s32 iOffset=-maxMatchingDistance; iOffset<=maxMatchingDistance; iOffset++)
           } // if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance))
         } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
@@ -2081,6 +2368,161 @@ namespace Anki
 
         return RESULT_OK;
       } // Result LucasKanadeTrackerBinary::FindVerticalCorrespondences_Projective()
+
+      Result LucasKanadeTrackerBinary::FindVerticalCorrespondences_Projective_FixedPoint(
+        const s32 maxMatchingDistance,
+        const Transformations::PlanarTransformation_f32 &transformation,
+        const FixedLengthList<Point<s16> > &templatePoints,
+        const FixedLengthList<Point<s16> > &newPoints,
+        const s32 imageHeight,
+        const s32 imageWidth,
+        const Array<s32> &xStartIndexes,
+        Array<f32> &AtA,
+        Array<f32> &Atb,
+        MemoryStack scratch)
+      {
+        //const s32 numFractionalBits = 2;
+
+        const s32 numTemplatePoints = templatePoints.get_size();
+
+        const Array<f32> &homography = transformation.get_homography();
+        const Point<f32> &centerOffset = transformation.get_centerOffset();
+
+        const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
+        const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
+        const f32 h20 = homography[2][0]; const f32 h21 = homography[2][1]; const f32 h22 = 1.0f;
+
+        AnkiAssert(FLT_NEAR(homography[2][2], 1.0f));
+
+        // These addresses should be known at compile time, so should be faster
+        s64 AtA_raw[8][8];
+        s64 Atb_raw[8];
+
+        for(s32 ia=0; ia<8; ia++) {
+          for(s32 ja=0; ja<8; ja++) {
+            AtA_raw[ia][ja] = 0;
+          }
+          Atb_raw[ia] = 0;
+        }
+
+        const Point<s16> * restrict pTemplatePoints = templatePoints.Pointer(0);
+        const Point<s16> * restrict pNewPoints = newPoints.Pointer(0);
+        const s32 * restrict pXStartIndexes = xStartIndexes.Pointer(0,0);
+
+        for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++) {
+          const f32 xr = static_cast<f32>(pTemplatePoints[iPoint].x);
+          const f32 yr = static_cast<f32>(pTemplatePoints[iPoint].y);
+
+          //
+          // Warp x and y based on the current homography
+          //
+
+          // Subtract the center offset
+          const f32 xc = xr - centerOffset.x;
+          const f32 yc = yr - centerOffset.y;
+
+          //const s32 xc_SQ27p1 = static_cast<s32>(Round(xc * static_cast<f32>(1<<numFractionalBits)));
+          //const s32 yc_SQ27p1 = static_cast<s32>(Round(yc * static_cast<f32>(1<<numFractionalBits)));
+          const s32 xc_s32 = static_cast<s32>(Round(xc));
+          const s32 yc_s32 = static_cast<s32>(Round(yc));
+
+          // Projective warp
+          const f32 wpi = 1.0f / (h20*xc + h21*yc + h22);
+          const f32 warpedX = (h00*xc + h01*yc + h02) * wpi;
+          const f32 warpedY = (h10*xc + h11*yc + h12) * wpi;
+
+          //const s32 warpedX_SQ27p1 = static_cast<s32>(Round(warpedX * static_cast<f32>(1<<numFractionalBits)));
+          //const s32 warpedY_SQ27p1 = static_cast<s32>(Round(warpedY * static_cast<f32>(1<<numFractionalBits)));
+          const s32 warpedX_s32 = static_cast<s32>(Round(warpedX));
+          const s32 warpedY_s32 = static_cast<s32>(Round(warpedY));
+
+          // TODO: verify the -0.5f is correct
+          const s32 warpedXrounded = static_cast<s32>(Roundf(warpedX + centerOffset.x - 0.5f));
+          const s32 warpedYrounded = static_cast<s32>(Roundf(warpedY + centerOffset.y - 0.5f));
+
+          if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance)) {
+            s32 minOffset = -maxMatchingDistance;
+            s32 maxOffset = maxMatchingDistance + 1;
+
+            // TODO: manually verify these conditions are correct
+            if(warpedXrounded < maxMatchingDistance) {
+              minOffset += (maxMatchingDistance - warpedXrounded);
+            }
+
+            if(warpedXrounded > (imageWidth - maxMatchingDistance - 2)) {
+              maxOffset += (imageWidth - warpedXrounded - maxMatchingDistance - 2);
+            }
+
+            for(s32 offset=minOffset; offset<maxOffset; offset++) {
+              const s32 xpRounded = warpedXrounded;
+              const s32 ypRounded = warpedYrounded + offset;
+
+              // TODO: make a binary search?
+              for(s32 iMatch=pXStartIndexes[xpRounded]; iMatch<pXStartIndexes[xpRounded+1]; iMatch++) {
+                if(ypRounded == pNewPoints[iMatch].y) {
+                  //const f32 yp = warpedY + static_cast<f32>(offset);
+                  //const s64 yp_SQ27p1 = warpedX_s32 + (offset << numFractionalBits);
+                  const s64 yp_s32 = warpedY_s32 + offset;
+
+                  //const f32 aValues[8] = {0, 0, 0, -xc, -yc, -1, xc*yp, yc*yp};
+                  const s64 aValues[8] = {
+                    0, 0, 0,
+                    -xc_s32,
+                    -yc_s32,
+                    -1, //(-1) << numFractionalBits,
+                    xc_s32 * yp_s32,
+                    yc_s32 * yp_s32};
+
+                  //const f32 aValues[8] = {0, 0, 0, -xc, -yc, -1, xc*yp, yc*yp};
+
+                  const s64 bValue = -yp_s32;
+
+                  for(s32 ia=0; ia<8; ia++) {
+                    for(s32 ja=ia; ja<8; ja++) {
+                      AtA_raw[ia][ja] += aValues[ia] * aValues[ja];
+                    }
+
+                    Atb_raw[ia] += bValue * aValues[ia];
+                  }
+
+                  //for(s32 ia=0; ia<6; ia++) {
+                  //  for(s32 ja=ia; ja<8; ja++) {
+                  //    if(ja < 6) {
+                  //      AtA_raw[ia][ja] += (aValues[ia] * aValues[ja]) >> numFractionalBits;
+                  //    } else {
+                  //      AtA_raw[ia][ja] += (aValues[ia] * aValues[ja]) >> (2*numFractionalBits);
+                  //    }
+                  //  }
+
+                  //  Atb_raw[ia] += (bValue * aValues[ia]) >> numFractionalBits;
+                  //}
+
+                  //for(s32 ia=6; ia<8; ia++) {
+                  //  for(s32 ja=ia; ja<8; ja++) {
+                  //    AtA_raw[ia][ja] += (aValues[ia] * aValues[ja]) >> (3*numFractionalBits);
+                  //  }
+
+                  //  Atb_raw[ia] += (bValue * aValues[ia]) >> (2*numFractionalBits);
+                  //}
+                }
+              } // if(ypRounded == pNewPoints[iMatch].y)
+            } // for(s32 iOffset=-maxMatchingDistance; iOffset<=maxMatchingDistance; iOffset++)
+          } // if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance))
+        } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
+
+        for(s32 ia=0; ia<8; ia++) {
+          for(s32 ja=ia; ja<8; ja++) {
+            //AtA[ia][ja] = static_cast<f32>(AtA_raw[ia][ja]) / (static_cast<f32>(1<<numFractionalBits));
+            //AtA[ia][ja] = static_cast<f32>(AtA_raw[ia][ja] >> numFractionalBits);
+            AtA[ia][ja] = static_cast<f32>(AtA_raw[ia][ja]);
+          }
+          //Atb[0][ia] = static_cast<f32>(Atb_raw[ia]) / (static_cast<f32>(1<<numFractionalBits));
+          //Atb[0][ia] = static_cast<f32>(Atb_raw[ia] >> numFractionalBits);
+          Atb[0][ia] = static_cast<f32>(Atb_raw[ia]);
+        }
+
+        return RESULT_OK;
+      } // Result LucasKanadeTrackerBinary::FindVerticalCorrespondences_Projective_FixedPoint()
 
       Result LucasKanadeTrackerBinary::FindHorizontalCorrespondences_Projective(
         const s32 maxMatchingDistance,
@@ -2190,10 +2632,119 @@ namespace Anki
         return RESULT_OK;
       } // Result LucasKanadeTrackerBinary::FindHorizontalCorrespondences_Projective()
 
+      Result LucasKanadeTrackerBinary::FindHorizontalCorrespondences_Projective_FixedPoint(
+        const s32 maxMatchingDistance,
+        const Transformations::PlanarTransformation_f32 &transformation,
+        const FixedLengthList<Point<s16> > &templatePoints,
+        const FixedLengthList<Point<s16> > &newPoints,
+        const s32 imageHeight,
+        const s32 imageWidth,
+        const Array<s32> &yStartIndexes,
+        Array<f32> &AtA,
+        Array<f32> &Atb_t,
+        MemoryStack scratch)
+      {
+        const s32 numTemplatePoints = templatePoints.get_size();
+
+        const Array<f32> &homography = transformation.get_homography();
+        const Point<f32> &centerOffset = transformation.get_centerOffset();
+
+        const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
+        const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
+        const f32 h20 = homography[2][0]; const f32 h21 = homography[2][1]; const f32 h22 = 1.0f;
+
+        AnkiAssert(FLT_NEAR(homography[2][2], 1.0f));
+
+        // These addresses should be known at compile time, so should be faster
+        f32 AtA_raw[8][8];
+        f32 Atb_t_raw[8];
+
+        for(s32 ia=0; ia<8; ia++) {
+          for(s32 ja=0; ja<8; ja++) {
+            AtA_raw[ia][ja] = 0;
+          }
+          Atb_t_raw[ia] = 0;
+        }
+
+        const Point<s16> * restrict pTemplatePoints = templatePoints.Pointer(0);
+        const Point<s16> * restrict pNewPoints = newPoints.Pointer(0);
+        const s32 * restrict pYStartIndexes = yStartIndexes.Pointer(0,0);
+
+        for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++) {
+          const f32 xr = static_cast<f32>(pTemplatePoints[iPoint].x);
+          const f32 yr = static_cast<f32>(pTemplatePoints[iPoint].y);
+
+          //
+          // Warp x and y based on the current homography
+          //
+
+          // Subtract the center offset
+          const f32 xc = xr - centerOffset.x;
+          const f32 yc = yr - centerOffset.y;
+
+          // Projective warp
+          const f32 wpi = 1.0f / (h20*xc + h21*yc + h22);
+          const f32 warpedX = (h00*xc + h01*yc + h02) * wpi;
+          const f32 warpedY = (h10*xc + h11*yc + h12) * wpi;
+
+          // TODO: verify the -0.5f is correct
+          const s32 warpedXrounded = static_cast<s32>(Roundf(warpedX + centerOffset.x - 0.5f));
+          const s32 warpedYrounded = static_cast<s32>(Roundf(warpedY + centerOffset.y - 0.5f));
+
+          if(warpedXrounded >= maxMatchingDistance && warpedXrounded < (imageWidth-maxMatchingDistance)) {
+            s32 minOffset = -maxMatchingDistance;
+            s32 maxOffset = maxMatchingDistance + 1;
+
+            // TODO: manually verify these conditions are correct
+            if(warpedYrounded < maxMatchingDistance) {
+              minOffset += (maxMatchingDistance - warpedYrounded);
+            }
+
+            if(warpedYrounded > (imageHeight - maxMatchingDistance - 2)) {
+              maxOffset += (imageHeight - warpedYrounded - maxMatchingDistance - 2);
+            }
+
+            for(s32 offset=minOffset; offset<maxOffset; offset++) {
+              const s32 xpRounded = warpedXrounded + offset;
+              const s32 ypRounded = warpedYrounded;
+
+              // TODO: make a binary search?
+              for(s32 iMatch=pYStartIndexes[ypRounded]; iMatch<pYStartIndexes[ypRounded+1]; iMatch++) {
+                if(xpRounded == pNewPoints[iMatch].x) {
+                  const f32 xp = warpedX + static_cast<f32>(offset);
+
+                  const f32 aValues[8] = {xc, yc, 1, 0, 0, 0, -xc*xp, -yc*xp};
+
+                  const f32 bValue = xp;
+
+                  for(s32 ia=0; ia<8; ia++) {
+                    for(s32 ja=ia; ja<8; ja++) {
+                      AtA_raw[ia][ja] += aValues[ia] * aValues[ja];
+                    }
+
+                    Atb_t_raw[ia] += aValues[ia] * bValue;
+                  }
+                }
+              }
+            } // for(s32 iOffset=-maxMatchingDistance; iOffset<=maxMatchingDistance; iOffset++)
+          } // if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance))
+        } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
+
+        for(s32 ia=0; ia<8; ia++) {
+          for(s32 ja=ia; ja<8; ja++) {
+            AtA[ia][ja] = AtA_raw[ia][ja];
+          }
+          Atb_t[0][ia] = Atb_t_raw[ia];
+        }
+
+        return RESULT_OK;
+      } // Result LucasKanadeTrackerBinary::FindHorizontalCorrespondences_Projective_FixedPoint()
+
       Result LucasKanadeTrackerBinary::IterativelyRefineTrack_Translation(
         const EdgeLists &nextImageEdges,
         const AllIndexLimits &allLimits,
         const s32 matching_maxDistance, const s32 matching_maxCorrespondences,
+        const bool useFixedPoint,
         MemoryStack scratch)
       {
         Result lastResult;
@@ -2292,6 +2843,7 @@ namespace Anki
         const EdgeLists &nextImageEdges,
         const AllIndexLimits &allLimits,
         const s32 matching_maxDistance, const s32 matching_maxCorrespondences,
+        const bool useFixedPoint,
         MemoryStack scratch)
       {
         Result lastResult;
@@ -2344,6 +2896,23 @@ namespace Anki
           allLimits.yDecreasing_xStartIndexes,
           AtA_yDecreasing, Atb_t_yDecreasing,
           scratch);
+
+        //AtA_yDecreasing.Print("AtA_yDecreasing float");
+        //Atb_t_yDecreasing.Print("Atb_t_yDecreasing float");
+
+        //LucasKanadeTrackerBinary::FindVerticalCorrespondences_Projective_FixedPoint(
+        //  matching_maxDistance,
+        //  this->transformation,
+        //  this->templateEdges.yDecreasing,
+        //  nextImageEdges.yDecreasing,
+        //  nextImageEdges.imageHeight,
+        //  nextImageEdges.imageWidth,
+        //  allLimits.yDecreasing_xStartIndexes,
+        //  AtA_yDecreasing, Atb_t_yDecreasing,
+        //  scratch);
+
+        //AtA_yDecreasing.Print("AtA_yDecreasing fixed");
+        //Atb_t_yDecreasing.Print("Atb_t_yDecreasing fixed");
 
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
           lastResult, "LucasKanadeTrackerBinary::IterativelyRefineTrack", "FindVerticalCorrespondences 1 failed");
