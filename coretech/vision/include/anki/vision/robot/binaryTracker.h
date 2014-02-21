@@ -42,6 +42,8 @@ namespace Anki
           const Array<u8> &nextImage,
           const u8 edgeDetection_grayvalueThreshold, const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType,
           const s32 matching_maxDistance, const s32 matching_maxCorrespondences,
+          const bool useFixedPoint_translation,
+          const bool useFixedPoint_projective,
           MemoryStack scratch);
 
         bool IsValid() const;
@@ -117,7 +119,7 @@ namespace Anki
           const s32 imageHeight,
           const s32 imageWidth,
           const Array<s32> &xStartIndexes, //< Computed by ComputeIndexLimitsHorizontal
-          f32 &sumY,
+          s32 &sumY,
           s32 &numCorrespondences,
           MemoryStack scratch);
 
@@ -141,7 +143,7 @@ namespace Anki
           const s32 imageHeight,
           const s32 imageWidth,
           const Array<s32> &yStartIndexes, //< Computed by ComputeIndexLimitsVertical
-          f32 &sumX,
+          s32 &sumX,
           s32 &numCorrespondences,
           MemoryStack scratch);
 
@@ -201,6 +203,7 @@ namespace Anki
           const AllIndexLimits &allLimits,
           const s32 matching_maxDistance, const s32 matching_maxCorrespondences,
           const Transformations::TransformType updateType,
+          const bool useFixedPoint,
           MemoryStack scratch);
 
         Result IterativelyRefineTrack_Translation(

@@ -539,6 +539,11 @@
           <GroupName>coretech-vision</GroupName>
           <Files>
             <File>
+              <FileName>binaryTracker.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\..\coretech\vision\robot\src\binaryTracker.cpp</FilePath>
+            </File>
+            <File>
               <FileName>computeCharacteristicScale.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\..\coretech\vision\robot\src\computeCharacteristicScale.cpp</FilePath>
