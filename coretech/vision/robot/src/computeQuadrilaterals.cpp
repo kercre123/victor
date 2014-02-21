@@ -124,8 +124,8 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(components.get_isSortedInId(),
         RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "components must be sorted in id");
 
-      FixedLengthList<Point<s16> > extractedBoundary(MAX_BOUNDARY_LENTH, scratch);
-      FixedLengthList<Point<s16> > peaks(4, scratch);
+      FixedLengthList<Point<s16> > extractedBoundary(MAX_BOUNDARY_LENTH, scratch, Flags::Buffer(false,false,false));
+      FixedLengthList<Point<s16> > peaks(4, scratch, Flags::Buffer(false,false,false));
 
       s32 startComponentIndex = 0;
 

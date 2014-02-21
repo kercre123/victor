@@ -142,7 +142,7 @@ namespace Anki
       return RESULT_OK;
     }
 
-    Result ScrollingIntegralImage_u8_s32::FilterRow(const Rectangle<s16> &filter, const s32 imageRow, Array<s32> &output)
+    Result ScrollingIntegralImage_u8_s32::FilterRow(const Rectangle<s16> &filter, const s32 imageRow, Array<s32> &output) const
     {
       AnkiAssert(this->IsValid());
       AnkiAssert(output.IsValid());

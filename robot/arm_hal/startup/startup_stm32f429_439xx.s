@@ -46,7 +46,7 @@
 
 Stack_Mem       EQU     0x20000000
 Stack_Size      EQU     (16 * 1024)
-__initial_sp	  EQU		  (Stack_Mem + Stack_Size - 4)
+__initial_sp	EQU		(Stack_Mem + Stack_Size - 4)
 
 
 Heap_Mem        EQU     (Stack_Mem + Stack_Size)

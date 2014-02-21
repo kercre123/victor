@@ -67,7 +67,7 @@ namespace Anki
         extractedComponents,
         scratchOnchip)) != RESULT_OK)
       {
-        /* DEBUG: drop a display of extracted components into matlab
+        /* // DEBUG: drop a display of extracted components into matlab
         Embedded::Matlab matlab(false);
         matlab.PutArray(image, "image");
         Array<u8> empty(image.get_size(0), image.get_size(1), scratchOnchip);

@@ -6,7 +6,7 @@
 // Initialize the PWM peripheral on the designated pins in the source file.
 void MotorsInit();
 
-// Set the (unitless) power for a specified motor
-void MotorsSetPower(Anki::Cozmo::HAL::MotorID motorID, u16 power);
+// Set the (unitless) power for a specified motor in the range [-798, 798].
+void MotorsSetPower(Anki::Cozmo::HAL::MotorID motorID, s16 power);
 
 #endif
