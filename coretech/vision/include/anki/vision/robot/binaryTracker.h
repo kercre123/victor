@@ -22,17 +22,17 @@ namespace Anki
   {
     namespace TemplateTracker
     {
-      class LucasKanadeTrackerBinary
+      class BinaryTracker
       {
         // A binary-image tracker. This is liable to be much faster than trackers like the standard
         // LucasKanadeTracker or LucasKanadeTrackerFast, but is also liable to be less accurate and
         // more jittery.
 
       public:
-        LucasKanadeTrackerBinary();
+        BinaryTracker();
 
         // the real max number of edge pixels is maxEdgePixelsPerType*4, for each of the four edge types
-        LucasKanadeTrackerBinary(
+        BinaryTracker(
           const Array<u8> &templateImage, const Quadrilateral<f32> &templateQuad,
           const u8 edgeDetection_grayvalueThreshold, const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType,
           MemoryStack &memory);
@@ -216,7 +216,7 @@ namespace Anki
           const s32 matching_maxDistance, const s32 matching_maxCorrespondences,
           const bool useFixedPoint,
           MemoryStack scratch);
-      }; // class LucasKanadeTrackerBinary
+      }; // class BinaryTracker
     } // namespace TemplateTracker
   } // namespace Embedded
 } //namespace Anki

@@ -28,12 +28,12 @@ namespace Anki
   {
     namespace TemplateTracker
     {
-      LucasKanadeTrackerBinary::LucasKanadeTrackerBinary()
+      BinaryTracker::BinaryTracker()
         : isValid(false)
       {
       }
 
-      LucasKanadeTrackerBinary::LucasKanadeTrackerBinary(
+      BinaryTracker::BinaryTracker(
         const Array<u8> &templateImage, const Quadrilateral<f32> &templateQuad,
         const u8 edgeDetection_grayvalueThreshold, const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType,
         MemoryStack &memory)
@@ -43,10 +43,10 @@ namespace Anki
         const s32 templateImageWidth = templateImage.get_size(1);
 
         AnkiConditionalErrorAndReturn(templateImageHeight > 0 && templateImageWidth > 0,
-          "LucasKanadeTrackerBinary::LucasKanadeTrackerBinary", "template widths and heights must be greater than zero");
+          "BinaryTracker::BinaryTracker", "template widths and heights must be greater than zero");
 
         AnkiConditionalErrorAndReturn(templateImage.IsValid(),
-          "LucasKanadeTrackerBinary::LucasKanadeTrackerBinary", "templateImage is not valid");
+          "BinaryTracker::BinaryTracker", "templateImage is not valid");
 
         Point<f32> centerOffset((templateImage.get_size(1)-1) / 2.0f, (templateImage.get_size(0)-1) / 2.0f);
         this->transformation = Transformations::PlanarTransformation_f32(Transformations::TRANSFORM_PROJECTIVE, templateQuad, centerOffset, memory);
@@ -65,7 +65,7 @@ namespace Anki
         AnkiConditionalErrorAndReturn(
           this->templateEdges.xDecreasing.IsValid() && this->templateEdges.xIncreasing.IsValid() &&
           this->templateEdges.yDecreasing.IsValid() && this->templateEdges.yIncreasing.IsValid(),
-          "LucasKanadeTrackerBinary::LucasKanadeTrackerBinary", "Could not allocate local memory");
+          "BinaryTracker::BinaryTracker", "Could not allocate local memory");
 
         const Rectangle<f32> templateRectRaw = templateQuad.ComputeBoundingRectangle();
         const Rectangle<s32> templateRect(static_cast<s32>(templateRectRaw.left), static_cast<s32>(templateRectRaw.right), static_cast<s32>(templateRectRaw.top), static_cast<s32>(templateRectRaw.bottom));
@@ -73,7 +73,7 @@ namespace Anki
         const Result result = DetectBlurredEdges(templateImage, templateRect, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, this->templateEdges);
 
         AnkiConditionalErrorAndReturn(result == RESULT_OK,
-          "LucasKanadeTrackerBinary::LucasKanadeTrackerBinary", "DetectBlurredEdge failed");
+          "BinaryTracker::BinaryTracker", "DetectBlurredEdge failed");
 
 #ifdef SEND_BINARY_IMAGES_TO_MATLAB
         {
@@ -114,7 +114,7 @@ namespace Anki
         this->isValid = true;
       }
 
-      Result LucasKanadeTrackerBinary::ShowTemplate(const bool waitForKeypress, const bool fitImageToWindow) const
+      Result BinaryTracker::ShowTemplate(const bool waitForKeypress, const bool fitImageToWindow) const
       {
 #ifndef ANKICORETECH_EMBEDDED_USE_OPENCV
         return RESULT_FAIL;
@@ -122,9 +122,9 @@ namespace Anki
         if(!this->IsValid())
           return RESULT_FAIL;
 
-        const char * windowName = "LucasKanadeTrackerBinary Template";
+        const char * windowName = "BinaryTracker Template";
 
-        cv::Mat toShow = LucasKanadeTrackerBinary::DrawIndexes(
+        cv::Mat toShow = BinaryTracker::DrawIndexes(
           templateImageHeight, templateImageWidth,
           templateEdges.xDecreasing, templateEdges.xIncreasing, templateEdges.yDecreasing, templateEdges.yIncreasing);
 
@@ -145,7 +145,7 @@ namespace Anki
 
 #ifdef ANKICORETECH_EMBEDDED_USE_OPENCV
       // Allocates the returned cv::Mat on the heap
-      cv::Mat LucasKanadeTrackerBinary::DrawIndexes(
+      cv::Mat BinaryTracker::DrawIndexes(
         const s32 imageHeight, const s32 imageWidth,
         const FixedLengthList<Point<s16> > &indexPoints1,
         const FixedLengthList<Point<s16> > &indexPoints2,
@@ -211,7 +211,7 @@ namespace Anki
 
 #endif
 
-      bool LucasKanadeTrackerBinary::IsValid() const
+      bool BinaryTracker::IsValid() const
       {
         if(!this->isValid)
           return false;
@@ -231,17 +231,17 @@ namespace Anki
         return true;
       }
 
-      Result LucasKanadeTrackerBinary::set_transformation(const Transformations::PlanarTransformation_f32 &transformation)
+      Result BinaryTracker::set_transformation(const Transformations::PlanarTransformation_f32 &transformation)
       {
         return this->transformation.Set(transformation);
       }
 
-      Transformations::PlanarTransformation_f32 LucasKanadeTrackerBinary::get_transformation() const
+      Transformations::PlanarTransformation_f32 BinaryTracker::get_transformation() const
       {
         return transformation;
       }
 
-      Result LucasKanadeTrackerBinary::ComputeAllIndexLimits(const EdgeLists &imageEdges, AllIndexLimits &allLimits, MemoryStack &memory)
+      Result BinaryTracker::ComputeAllIndexLimits(const EdgeLists &imageEdges, AllIndexLimits &allLimits, MemoryStack &memory)
       {
         allLimits.xDecreasing_yStartIndexes = Array<s32>(1, imageEdges.imageWidth+1, memory);
         allLimits.xIncreasing_yStartIndexes = Array<s32>(1, imageEdges.imageWidth+1, memory);
@@ -249,7 +249,7 @@ namespace Anki
         allLimits.yIncreasing_xStartIndexes = Array<s32>(1, imageEdges.imageHeight+1, memory);
 
         AnkiConditionalErrorAndReturnValue(allLimits.yIncreasing_xStartIndexes.IsValid(),
-          RESULT_FAIL_OUT_OF_MEMORY, "LucasKanadeTrackerBinary::ComputeAllIndexLimits", "Could not allocate local memory");
+          RESULT_FAIL_OUT_OF_MEMORY, "BinaryTracker::ComputeAllIndexLimits", "Could not allocate local memory");
 
         ComputeIndexLimitsVertical(imageEdges.xDecreasing, allLimits.xDecreasing_yStartIndexes);
 
@@ -262,7 +262,7 @@ namespace Anki
         return RESULT_OK;
       }
 
-      Result LucasKanadeTrackerBinary::UpdateTrack(
+      Result BinaryTracker::UpdateTrack(
         const Array<u8> &nextImage,
         const u8 edgeDetection_grayvalueThreshold, const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType,
         const s32 matching_maxDistance, const s32 matching_maxCorrespondences,
@@ -278,7 +278,7 @@ namespace Anki
         nextImageEdges.yIncreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, scratch);
 
         AnkiConditionalErrorAndReturnValue(nextImageEdges.xDecreasing.IsValid() && nextImageEdges.xIncreasing.IsValid() && nextImageEdges.yDecreasing.IsValid() && nextImageEdges.yIncreasing.IsValid(),
-          RESULT_FAIL_OUT_OF_MEMORY, "LucasKanadeTrackerBinary::UpdateTrack", "Could not allocate local scratch");
+          RESULT_FAIL_OUT_OF_MEMORY, "BinaryTracker::UpdateTrack", "Could not allocate local scratch");
 
         BeginBenchmark("ut_DetectEdges");
 
@@ -287,14 +287,14 @@ namespace Anki
         EndBenchmark("ut_DetectEdges");
 
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
-          lastResult, "LucasKanadeTrackerBinary::UpdateTrack", "DetectBlurredEdge failed");
+          lastResult, "BinaryTracker::UpdateTrack", "DetectBlurredEdge failed");
 
         // First, to speed up the correspondence search, find the min and max of x or y points
         AllIndexLimits allLimits;
 
         BeginBenchmark("ut_IndexLimits");
 
-        if((lastResult = LucasKanadeTrackerBinary::ComputeAllIndexLimits(nextImageEdges, allLimits, scratch)) != RESULT_OK)
+        if((lastResult = BinaryTracker::ComputeAllIndexLimits(nextImageEdges, allLimits, scratch)) != RESULT_OK)
           return lastResult;
 
         EndBenchmark("ut_IndexLimits");
@@ -311,7 +311,7 @@ namespace Anki
         EndBenchmark("ut_translation");
 
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
-          lastResult, "LucasKanadeTrackerBinary::UpdateTrack", "Transformations::TRANSFORM_TRANSLATION failed");
+          lastResult, "BinaryTracker::UpdateTrack", "Transformations::TRANSFORM_TRANSLATION failed");
 
         BeginBenchmark("ut_projective");
 
@@ -323,12 +323,12 @@ namespace Anki
         EndBenchmark("ut_projective");
 
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
-          lastResult, "LucasKanadeTrackerBinary::UpdateTrack", "Transformations::TRANSFORM_PROJECTIVE failed");
+          lastResult, "BinaryTracker::UpdateTrack", "Transformations::TRANSFORM_PROJECTIVE failed");
 
         return RESULT_OK;
       }
 
-      Result LucasKanadeTrackerBinary::IterativelyRefineTrack(
+      Result BinaryTracker::IterativelyRefineTrack(
         const EdgeLists &nextImageEdges,
         const AllIndexLimits &allLimits,
         const s32 matching_maxDistance, const s32 matching_maxCorrespondences,
@@ -336,10 +336,10 @@ namespace Anki
         MemoryStack scratch)
       {
         AnkiConditionalErrorAndReturnValue(updateType==Transformations::TRANSFORM_TRANSLATION || updateType == Transformations::TRANSFORM_PROJECTIVE,
-          RESULT_FAIL_INVALID_PARAMETERS, "LucasKanadeTrackerBinary::IterativelyRefineTrack", "Only Transformations::TRANSFORM_TRANSLATION or Transformations::TRANSFORM_PROJECTIVE are supported");
+          RESULT_FAIL_INVALID_PARAMETERS, "BinaryTracker::IterativelyRefineTrack", "Only Transformations::TRANSFORM_TRANSLATION or Transformations::TRANSFORM_PROJECTIVE are supported");
 
         AnkiConditionalErrorAndReturnValue(nextImageEdges.xDecreasing.IsValid() && nextImageEdges.xIncreasing.IsValid() && nextImageEdges.yDecreasing.IsValid() && nextImageEdges.yIncreasing.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "LucasKanadeTrackerBinary::IterativelyRefineTrack", "input edges are not valid");
+          RESULT_FAIL_INVALID_OBJECT, "BinaryTracker::IterativelyRefineTrack", "input edges are not valid");
 
 #ifdef SEND_BINARY_IMAGES_TO_MATLAB
         {
@@ -376,7 +376,7 @@ namespace Anki
         return RESULT_FAIL;
       }
 
-      Result LucasKanadeTrackerBinary::ComputeIndexLimitsVertical(const FixedLengthList<Point<s16> > &points, Array<s32> &yStartIndexes)
+      Result BinaryTracker::ComputeIndexLimitsVertical(const FixedLengthList<Point<s16> > &points, Array<s32> &yStartIndexes)
       {
         const Point<s16> * restrict pPoints = points.Pointer(0);
         s32 * restrict pIndexes = yStartIndexes.Pointer(0,0);
@@ -408,7 +408,7 @@ namespace Anki
         return RESULT_OK;
       }
 
-      Result LucasKanadeTrackerBinary::ComputeIndexLimitsHorizontal(const FixedLengthList<Point<s16> > &points, Array<s32> &xStartIndexes)
+      Result BinaryTracker::ComputeIndexLimitsHorizontal(const FixedLengthList<Point<s16> > &points, Array<s32> &xStartIndexes)
       {
         const Point<s16> * restrict pPoints = points.Pointer(0);
         s32 * restrict pIndexes = xStartIndexes.Pointer(0,0);
@@ -440,7 +440,7 @@ namespace Anki
         return RESULT_OK;
       }
 
-      Result LucasKanadeTrackerBinary::FindVerticalCorrespondences_Translation(
+      Result BinaryTracker::FindVerticalCorrespondences_Translation(
         const s32 maxMatchingDistance,
         const Transformations::PlanarTransformation_f32 &transformation,
         const FixedLengthList<Point<s16> > &templatePoints,
@@ -521,9 +521,9 @@ namespace Anki
         } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
 
         return RESULT_OK;
-      } // Result LucasKanadeTrackerBinary::FindVerticalCorrespondences_Translation()
+      } // Result BinaryTracker::FindVerticalCorrespondences_Translation()
 
-      Result LucasKanadeTrackerBinary::FindVerticalCorrespondences_Translation_FixedPoint(
+      Result BinaryTracker::FindVerticalCorrespondences_Translation_FixedPoint(
         const s32 maxMatchingDistance,
         const Transformations::PlanarTransformation_f32 &transformation,
         const FixedLengthList<Point<s16> > &templatePoints,
@@ -604,9 +604,9 @@ namespace Anki
         } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
 
         return RESULT_OK;
-      } // Result LucasKanadeTrackerBinary::FindVerticalCorrespondences_Translation_FixedPoint()
+      } // Result BinaryTracker::FindVerticalCorrespondences_Translation_FixedPoint()
 
-      Result LucasKanadeTrackerBinary::FindHorizontalCorrespondences_Translation(
+      Result BinaryTracker::FindHorizontalCorrespondences_Translation(
         const s32 maxMatchingDistance,
         const Transformations::PlanarTransformation_f32 &transformation,
         const FixedLengthList<Point<s16> > &templatePoints,
@@ -687,9 +687,9 @@ namespace Anki
         } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
 
         return RESULT_OK;
-      } // Result LucasKanadeTrackerBinary::FindHorizontalCorrespondences_Translation()
+      } // Result BinaryTracker::FindHorizontalCorrespondences_Translation()
 
-      Result LucasKanadeTrackerBinary::FindHorizontalCorrespondences_Translation_FixedPoint(
+      Result BinaryTracker::FindHorizontalCorrespondences_Translation_FixedPoint(
         const s32 maxMatchingDistance,
         const Transformations::PlanarTransformation_f32 &transformation,
         const FixedLengthList<Point<s16> > &templatePoints,
@@ -770,9 +770,9 @@ namespace Anki
         } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
 
         return RESULT_OK;
-      } // Result LucasKanadeTrackerBinary::FindHorizontalCorrespondences_Translation_FixedPoint()
+      } // Result BinaryTracker::FindHorizontalCorrespondences_Translation_FixedPoint()
 
-      Result LucasKanadeTrackerBinary::FindVerticalCorrespondences_Projective(
+      Result BinaryTracker::FindVerticalCorrespondences_Projective(
         const s32 maxMatchingDistance,
         const Transformations::PlanarTransformation_f32 &transformation,
         const FixedLengthList<Point<s16> > &templatePoints,
@@ -999,9 +999,9 @@ namespace Anki
         }
 
         return RESULT_OK;
-      } // Result LucasKanadeTrackerBinary::FindVerticalCorrespondences_Projective()
+      } // Result BinaryTracker::FindVerticalCorrespondences_Projective()
 
-      Result LucasKanadeTrackerBinary::FindVerticalCorrespondences_Projective_FixedPoint(
+      Result BinaryTracker::FindVerticalCorrespondences_Projective_FixedPoint(
         const s32 maxMatchingDistance,
         const Transformations::PlanarTransformation_f32 &transformation,
         const FixedLengthList<Point<s16> > &templatePoints,
@@ -1154,9 +1154,9 @@ namespace Anki
         }
 
         return RESULT_OK;
-      } // Result LucasKanadeTrackerBinary::FindVerticalCorrespondences_Projective_FixedPoint()
+      } // Result BinaryTracker::FindVerticalCorrespondences_Projective_FixedPoint()
 
-      Result LucasKanadeTrackerBinary::FindHorizontalCorrespondences_Projective(
+      Result BinaryTracker::FindHorizontalCorrespondences_Projective(
         const s32 maxMatchingDistance,
         const Transformations::PlanarTransformation_f32 &transformation,
         const FixedLengthList<Point<s16> > &templatePoints,
@@ -1262,9 +1262,9 @@ namespace Anki
         }
 
         return RESULT_OK;
-      } // Result LucasKanadeTrackerBinary::FindHorizontalCorrespondences_Projective()
+      } // Result BinaryTracker::FindHorizontalCorrespondences_Projective()
 
-      Result LucasKanadeTrackerBinary::FindHorizontalCorrespondences_Projective_FixedPoint(
+      Result BinaryTracker::FindHorizontalCorrespondences_Projective_FixedPoint(
         const s32 maxMatchingDistance,
         const Transformations::PlanarTransformation_f32 &transformation,
         const FixedLengthList<Point<s16> > &templatePoints,
@@ -1370,9 +1370,9 @@ namespace Anki
         }
 
         return RESULT_OK;
-      } // Result LucasKanadeTrackerBinary::FindHorizontalCorrespondences_Projective_FixedPoint()
+      } // Result BinaryTracker::FindHorizontalCorrespondences_Projective_FixedPoint()
 
-      Result LucasKanadeTrackerBinary::IterativelyRefineTrack_Translation(
+      Result BinaryTracker::IterativelyRefineTrack_Translation(
         const EdgeLists &nextImageEdges,
         const AllIndexLimits &allLimits,
         const s32 matching_maxDistance, const s32 matching_maxCorrespondences,
@@ -1391,7 +1391,7 @@ namespace Anki
         s32 numY_yDecreasing;
         s32 numY_yIncreasing;
 
-        lastResult = LucasKanadeTrackerBinary::FindHorizontalCorrespondences_Translation(
+        lastResult = BinaryTracker::FindHorizontalCorrespondences_Translation(
           matching_maxDistance,
           this->transformation,
           this->templateEdges.xDecreasing,
@@ -1403,9 +1403,9 @@ namespace Anki
           scratch);
 
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
-          lastResult, "LucasKanadeTrackerBinary::IterativelyRefineTrack", "FindHorizontalCorrespondences 1 failed");
+          lastResult, "BinaryTracker::IterativelyRefineTrack", "FindHorizontalCorrespondences 1 failed");
 
-        lastResult = LucasKanadeTrackerBinary::FindHorizontalCorrespondences_Translation(
+        lastResult = BinaryTracker::FindHorizontalCorrespondences_Translation(
           matching_maxDistance,
           this->transformation,
           this->templateEdges.xIncreasing,
@@ -1417,9 +1417,9 @@ namespace Anki
           scratch);
 
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
-          lastResult, "LucasKanadeTrackerBinary::IterativelyRefineTrack", "FindHorizontalCorrespondences 2 failed");
+          lastResult, "BinaryTracker::IterativelyRefineTrack", "FindHorizontalCorrespondences 2 failed");
 
-        lastResult = LucasKanadeTrackerBinary::FindVerticalCorrespondences_Translation(
+        lastResult = BinaryTracker::FindVerticalCorrespondences_Translation(
           matching_maxDistance,
           this->transformation,
           this->templateEdges.yDecreasing,
@@ -1431,9 +1431,9 @@ namespace Anki
           scratch);
 
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
-          lastResult, "LucasKanadeTrackerBinary::IterativelyRefineTrack", "FindVerticalCorrespondences 1 failed");
+          lastResult, "BinaryTracker::IterativelyRefineTrack", "FindVerticalCorrespondences 1 failed");
 
-        lastResult = LucasKanadeTrackerBinary::FindVerticalCorrespondences_Translation(
+        lastResult = BinaryTracker::FindVerticalCorrespondences_Translation(
           matching_maxDistance,
           this->transformation,
           this->templateEdges.yIncreasing,
@@ -1445,7 +1445,7 @@ namespace Anki
           scratch);
 
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
-          lastResult, "LucasKanadeTrackerBinary::IterativelyRefineTrack", "FindVerticalCorrespondences 2 failed");
+          lastResult, "BinaryTracker::IterativelyRefineTrack", "FindVerticalCorrespondences 2 failed");
 
         // Update the transformation
         {
@@ -1469,9 +1469,9 @@ namespace Anki
         }
 
         return RESULT_OK;
-      } // Result LucasKanadeTrackerBinary::IterativelyRefineTrack_Translation()
+      } // Result BinaryTracker::IterativelyRefineTrack_Translation()
 
-      Result LucasKanadeTrackerBinary::IterativelyRefineTrack_Projective(
+      Result BinaryTracker::IterativelyRefineTrack_Projective(
         const EdgeLists &nextImageEdges,
         const AllIndexLimits &allLimits,
         const s32 matching_maxDistance, const s32 matching_maxCorrespondences,
@@ -1490,7 +1490,7 @@ namespace Anki
         Array<f32> Atb_t_yDecreasing(1,8,scratch);
         Array<f32> Atb_t_yIncreasing(1,8,scratch);
 
-        lastResult = LucasKanadeTrackerBinary::FindHorizontalCorrespondences_Projective(
+        lastResult = BinaryTracker::FindHorizontalCorrespondences_Projective(
           matching_maxDistance,
           this->transformation,
           this->templateEdges.xDecreasing,
@@ -1502,9 +1502,9 @@ namespace Anki
           scratch);
 
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
-          lastResult, "LucasKanadeTrackerBinary::IterativelyRefineTrack", "FindHorizontalCorrespondences 1 failed");
+          lastResult, "BinaryTracker::IterativelyRefineTrack", "FindHorizontalCorrespondences 1 failed");
 
-        lastResult = LucasKanadeTrackerBinary::FindHorizontalCorrespondences_Projective(
+        lastResult = BinaryTracker::FindHorizontalCorrespondences_Projective(
           matching_maxDistance,
           this->transformation,
           this->templateEdges.xIncreasing,
@@ -1516,9 +1516,9 @@ namespace Anki
           scratch);
 
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
-          lastResult, "LucasKanadeTrackerBinary::IterativelyRefineTrack", "FindHorizontalCorrespondences 2 failed");
+          lastResult, "BinaryTracker::IterativelyRefineTrack", "FindHorizontalCorrespondences 2 failed");
 
-        lastResult = LucasKanadeTrackerBinary::FindVerticalCorrespondences_Projective(
+        lastResult = BinaryTracker::FindVerticalCorrespondences_Projective(
           matching_maxDistance,
           this->transformation,
           this->templateEdges.yDecreasing,
@@ -1532,7 +1532,7 @@ namespace Anki
         //AtA_yDecreasing.Print("AtA_yDecreasing float");
         //Atb_t_yDecreasing.Print("Atb_t_yDecreasing float");
 
-        //LucasKanadeTrackerBinary::FindVerticalCorrespondences_Projective_FixedPoint(
+        //BinaryTracker::FindVerticalCorrespondences_Projective_FixedPoint(
         //  matching_maxDistance,
         //  this->transformation,
         //  this->templateEdges.yDecreasing,
@@ -1547,9 +1547,9 @@ namespace Anki
         //Atb_t_yDecreasing.Print("Atb_t_yDecreasing fixed");
 
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
-          lastResult, "LucasKanadeTrackerBinary::IterativelyRefineTrack", "FindVerticalCorrespondences 1 failed");
+          lastResult, "BinaryTracker::IterativelyRefineTrack", "FindVerticalCorrespondences 1 failed");
 
-        lastResult = LucasKanadeTrackerBinary::FindVerticalCorrespondences_Projective(
+        lastResult = BinaryTracker::FindVerticalCorrespondences_Projective(
           matching_maxDistance,
           this->transformation,
           this->templateEdges.yIncreasing,
@@ -1561,7 +1561,7 @@ namespace Anki
           scratch);
 
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
-          lastResult, "LucasKanadeTrackerBinary::IterativelyRefineTrack", "FindVerticalCorrespondences 2 failed");
+          lastResult, "BinaryTracker::IterativelyRefineTrack", "FindVerticalCorrespondences 2 failed");
 
         // Update the transformation
         {
@@ -1589,7 +1589,7 @@ namespace Anki
           //Atb_t.Print("result");
 
           AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
-            lastResult, "LucasKanadeTrackerBinary::UpdateTransformation", "SolveLeastSquaresWithCholesky failed");
+            lastResult, "BinaryTracker::UpdateTransformation", "SolveLeastSquaresWithCholesky failed");
 
           const f32 * restrict pAtb_t = Atb_t.Pointer(0,0);
 
@@ -1603,7 +1603,7 @@ namespace Anki
         }
 
         return RESULT_OK;
-      } // Result LucasKanadeTrackerBinary::IterativelyRefineTrack_Projective()
+      } // Result BinaryTracker::IterativelyRefineTrack_Projective()
     } // namespace TemplateTracker
   } // namespace Embedded
 } // namespace Anki

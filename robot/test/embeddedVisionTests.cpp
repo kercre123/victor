@@ -35,7 +35,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 using namespace Anki::Embedded;
 
-GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerBinary)
+GTEST_TEST(CoreTech_Vision, BinaryTracker)
 {
   MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
   ASSERT_TRUE(scratchOnchip.IsValid());
@@ -60,15 +60,15 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerBinary)
 
   InitBenchmarking();
 
-  BeginBenchmark("LucasKanadeTrackerBinary init");
-  TemplateTracker::LucasKanadeTrackerBinary lktb(templateImage, templateQuad, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, templateEdgeDetection_maxDetectionsPerType, scratchOnchip);
-  EndBenchmark("LucasKanadeTrackerBinary init");
+  BeginBenchmark("BinaryTracker init");
+  TemplateTracker::BinaryTracker lktb(templateImage, templateQuad, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, templateEdgeDetection_maxDetectionsPerType, scratchOnchip);
+  EndBenchmark("BinaryTracker init");
 
-  BeginBenchmark("LucasKanadeTrackerBinary update");
+  BeginBenchmark("BinaryTracker update");
   const Result result = lktb.UpdateTrack(nextImage,
     edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType,
     matching_maxDistance, matching_maxCorrespondences, scratchCcm);
-  EndBenchmark("LucasKanadeTrackerBinary update");
+  EndBenchmark("BinaryTracker update");
 
   ASSERT_TRUE(result == RESULT_OK);
 
@@ -97,7 +97,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerBinary)
   //cv::waitKey();
 
   GTEST_RETURN_HERE;
-} // GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerBinary)
+} // GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
 GTEST_TEST(CoreTech_Vision, DetectBlurredEdge)
 {
@@ -1894,7 +1894,7 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   numPassedTests = 0;
   numFailedTests = 0;
 
-  CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerBinary);
+  CALL_GTEST_TEST(CoreTech_Vision, BinaryTracker);
   CALL_GTEST_TEST(CoreTech_Vision, DetectBlurredEdge);
   CALL_GTEST_TEST(CoreTech_Vision, DownsampleByPowerOfTwo);
   CALL_GTEST_TEST(CoreTech_Vision, ComputeDockingErrorSignalAffine);
