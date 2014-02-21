@@ -23,7 +23,7 @@ namespace Anki
   {
     namespace InterpolateOperation
     {
-// #pragma mark
+      // #pragma mark
 
       // const Type h00, h01, h02, h10, h11, h12;
       template<typename Type> Affine<Type>::Affine(const Array<Type> &homography)
@@ -147,9 +147,9 @@ namespace Anki
           const f32 alphaY = curY - y0;
           const f32 alphaYinverse = 1.0f - alphaY;
 
-          const s32 y0S32 = static_cast<s32>(Roundf(y0));
-          const s32 y1S32 = static_cast<s32>(Roundf(y1));
-          const s32 x0S32 = static_cast<s32>(Roundf(x0));
+          const s32 y0S32 = static_cast<s32>(Round(y0));
+          const s32 y1S32 = static_cast<s32>(Round(y1));
+          const s32 x0S32 = static_cast<s32>(Round(x0));
 
           const TypeIn * restrict pReference_y0 = reference.Pointer(y0S32, x0S32);
           const TypeIn * restrict pReference_y1 = reference.Pointer(y1S32, x0S32);
@@ -276,9 +276,9 @@ namespace Anki
           const f32 alphaY = yTransformed - y0;
           const f32 alphaYinverse = 1.0f - alphaY;
 
-          const s32 y0S32 = static_cast<s32>(Roundf(y0));
-          const s32 y1S32 = static_cast<s32>(Roundf(y1));
-          const s32 x0S32 = static_cast<s32>(Roundf(x0));
+          const s32 y0S32 = static_cast<s32>(Round(y0));
+          const s32 y1S32 = static_cast<s32>(Round(y1));
+          const s32 x0S32 = static_cast<s32>(Round(x0));
 
           const TypeIn * restrict pReference_y0 = reference.Pointer(y0S32, x0S32);
           const TypeIn * restrict pReference_y1 = reference.Pointer(y1S32, x0S32);
@@ -305,7 +305,7 @@ namespace Anki
       return RESULT_OK;
     }
 
-// #pragma mark --- Specializations ---
+    // #pragma mark --- Specializations ---
 
     template<> Result Interp2(const Array<u8> &reference, const Array<f32> &xCoordinates, const Array<f32> &yCoordinates, Array<u8> &out, const InterpolationType interpolationType, const u8 invalidValue);
 

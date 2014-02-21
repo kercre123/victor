@@ -195,7 +195,7 @@ void PrintF64(int (*writeChar)(int), f64 value)
     }
 
     if (FLT_NEAR(value, ceilf(value))) {
-      curDigit = (s32)(Roundf((f32)(value)));
+      curDigit = (s32) DBL_ROUND(value);
       numDecimalDigitsUsed = maxDecimalDigits; // To exit while loop since this is the last digit we want to print
     } else {
       curDigit = (s32)(floorf((f32)(value)));
@@ -419,22 +419,22 @@ f64 GetTime(void)
   return timeInSeconds;
 }
 
-f32 Roundf(const f32 number)
-{
-  if(number > 0)
-    return floorf(number + 0.5f);
-  else
-    return ceilf(number - 0.5f);
-}
-
-f64 Round(const f64 number)
-{
-  // This casting wierdness is because the myriad doesn't have a double-precision floor function.
-  if(number > 0)
-    return (f64)(floorf((f32)(number) + 0.5f));
-  else
-    return (f64)(ceilf((f32)(number) - 0.5f));
-}
+//f32 Roundf(const f32 number)
+//{
+//  if(number > 0)
+//    return floorf(number + 0.5f);
+//  else
+//    return ceilf(number - 0.5f);
+//}
+//
+//f64 Round(const f64 number)
+//{
+//  // This casting wierdness is because the myriad doesn't have a double-precision floor function.
+//  if(number > 0)
+//    return (f64)(floorf((f32)(number) + 0.5f));
+//  else
+//    return (f64)(ceilf((f32)(number) - 0.5f));
+//}
 
 s32 IsPowerOfTwo(u32 x)
 {
