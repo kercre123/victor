@@ -1,7 +1,7 @@
 /**
  * File: jsonTools.cpp
  *
- * Author: Brad Neuman
+ * Authors: Brad Neuman, Andrew Stein
  * Created: 2014-01-10
  *
  * Description: Utility functions for dealing with jsoncpp objects
@@ -74,6 +74,11 @@ namespace JsonTools
     return node.asString();
   }
   
+  // Boolean
+  template<>
+  bool GetValue<bool>(const Json::Value& node) {
+    return node.asBool();
+  }
   
   bool GetPoseOptional(const Json::Value& node, Anki::Pose3d& pose)
   {
