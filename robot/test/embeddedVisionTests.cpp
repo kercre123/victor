@@ -23,6 +23,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/docking_vision.h"
 #include "anki/vision/robot/imageProcessing.h"
 #include "anki/vision/robot/transformations.h"
+#include "anki/vision/robot/binaryTracker.h"
 
 #include "../../coretech/vision/blockImages/blockImage50_320x240.h"
 #include "../../coretech/vision/blockImages/blockImages00189_80x60.h"
