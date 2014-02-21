@@ -1,0 +1,581 @@
+{
+   "Blocks" : [
+      {
+         "BlockName" : "Block",
+         "BlockPose" : {
+            "Angle" : 0.0,
+            "Axis" : [ 0.0, 1.0, 0.0 ],
+            "Translation" : [ -100.0, 0.0, 29.754750 ]
+         },
+         "Type" : 1
+      }
+   ],
+   "CameraCalibration" : {
+      "center_x" : 320.0,
+      "center_y" : 240.0,
+      "focalLength_x" : 667.8306884765625,
+      "focalLength_y" : 667.8306884765625,
+      "ncols" : 640,
+      "nrows" : 480,
+      "skew" : 0.0
+   },
+   "CheckRobotPose" : false,
+   "NumBlocks" : 1,
+   "Poses" : [
+      {
+         "ImageFile" : "/Users/andrew/Code/products-cozmo/basestation/test/blockWorldTests/visionTest_VaryingDistance0.png",
+         "NumMarkers" : 1,
+         "RobotPose" : {
+            "Angle" : 3.1415930,
+            "Axis" : [ 0.0, 0.0, 1.0 ],
+            "HeadAngle" : -0.30,
+            "Translation" : [ 0.0, 0.0, 18.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "code" : [ 115, 117, 167, 238, 206, 221, 156, 168, 58, 114, 118 ],
+               "timestamp" : 48,
+               "x_imgLowerLeft" : 152.8252410888672,
+               "x_imgLowerRight" : 487.5702514648438,
+               "x_imgUpperLeft" : 123.3467864990234,
+               "x_imgUpperRight" : 516.8767089843750,
+               "y_imgLowerLeft" : 441.1725769042969,
+               "y_imgLowerRight" : 441.2174987792969,
+               "y_imgUpperLeft" : 99.30777740478516,
+               "y_imgUpperRight" : 99.33972930908203
+            }
+         ]
+      },
+      {
+         "ImageFile" : "/Users/andrew/Code/products-cozmo/basestation/test/blockWorldTests/visionTest_VaryingDistance1.png",
+         "NumMarkers" : 1,
+         "RobotPose" : {
+            "Angle" : 3.1415930,
+            "Axis" : [ 0.0, 0.0, 1.0 ],
+            "HeadAngle" : -0.268750,
+            "Translation" : [ 50.0, 0.0, 18.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "code" : [ 115, 117, 167, 238, 206, 221, 156, 168, 58, 114, 118 ],
+               "timestamp" : 48,
+               "x_imgLowerLeft" : 223.8582763671875,
+               "x_imgLowerRight" : 416.8289184570312,
+               "x_imgUpperLeft" : 215.4527587890625,
+               "x_imgUpperRight" : 425.1154174804688,
+               "y_imgLowerLeft" : 288.2807006835938,
+               "y_imgLowerRight" : 288.34667968750,
+               "y_imgUpperLeft" : 89.9738769531250,
+               "y_imgUpperRight" : 89.99079895019531
+            }
+         ]
+      },
+      {
+         "ImageFile" : "/Users/andrew/Code/products-cozmo/basestation/test/blockWorldTests/visionTest_VaryingDistance2.png",
+         "NumMarkers" : 1,
+         "RobotPose" : {
+            "Angle" : 3.1415930,
+            "Axis" : [ 0.0, 0.0, 1.0 ],
+            "HeadAngle" : -0.23750,
+            "Translation" : [ 100.0, 0.0, 18.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "code" : [ 115, 117, 167, 238, 206, 221, 156, 168, 58, 114, 118 ],
+               "timestamp" : 48,
+               "x_imgLowerLeft" : 253.1102752685547,
+               "x_imgLowerRight" : 387.722656250,
+               "x_imgUpperLeft" : 249.4357147216797,
+               "x_imgUpperRight" : 391.2962646484375,
+               "y_imgLowerLeft" : 240.2581634521484,
+               "y_imgLowerRight" : 240.2868347167969,
+               "y_imgUpperLeft" : 102.3137588500977,
+               "y_imgUpperRight" : 102.3358230590820
+            }
+         ]
+      },
+      {
+         "ImageFile" : "/Users/andrew/Code/products-cozmo/basestation/test/blockWorldTests/visionTest_VaryingDistance3.png",
+         "NumMarkers" : 2,
+         "RobotPose" : {
+            "Angle" : 3.1415930,
+            "Axis" : [ 0.0, 0.0, 1.0 ],
+            "HeadAngle" : -0.206250,
+            "Translation" : [ 150.0, 0.0, 18.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "code" : [ 115, 117, 167, 238, 206, 221, 156, 168, 58, 114, 118 ],
+               "timestamp" : 48,
+               "x_imgLowerLeft" : 268.6976623535156,
+               "x_imgLowerRight" : 372.1803588867188,
+               "x_imgUpperLeft" : 266.8719177246094,
+               "x_imgUpperRight" : 373.8155212402344,
+               "y_imgLowerLeft" : 228.0823974609375,
+               "y_imgLowerRight" : 228.1735382080078,
+               "y_imgUpperLeft" : 122.4350280761719,
+               "y_imgUpperRight" : 122.44824218750
+            },
+            {
+               "Name" : "MessageVisionMarker",
+               "code" : [ 35, 98, 2, 196, 136, 9, 24, 0, 32, 34, 98 ],
+               "timestamp" : 48,
+               "x_imgLowerLeft" : 162.4600219726562,
+               "x_imgLowerRight" : 23.96524047851562,
+               "x_imgUpperLeft" : 478.3643798828125,
+               "x_imgUpperRight" : 616.8892822265625,
+               "y_imgLowerLeft" : 282.5840148925781,
+               "y_imgLowerRight" : 444.5580139160156,
+               "y_imgUpperLeft" : 282.4469299316406,
+               "y_imgUpperRight" : 444.7554626464844
+            }
+         ]
+      },
+      {
+         "ImageFile" : "/Users/andrew/Code/products-cozmo/basestation/test/blockWorldTests/visionTest_VaryingDistance4.png",
+         "NumMarkers" : 2,
+         "RobotPose" : {
+            "Angle" : 3.1415930,
+            "Axis" : [ 0.0, 0.0, 1.0 ],
+            "HeadAngle" : -0.1750,
+            "Translation" : [ 200.0, 0.0, 18.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "code" : [ 115, 117, 167, 238, 206, 221, 156, 168, 58, 114, 118 ],
+               "timestamp" : 48,
+               "x_imgLowerLeft" : 278.7321472167969,
+               "x_imgLowerRight" : 362.2130737304688,
+               "x_imgUpperLeft" : 277.6535034179688,
+               "x_imgUpperRight" : 363.2057495117188,
+               "y_imgLowerLeft" : 224.0763854980469,
+               "y_imgLowerRight" : 224.0526123046875,
+               "y_imgUpperLeft" : 139.0903015136719,
+               "y_imgUpperRight" : 139.1244354248047
+            },
+            {
+               "Name" : "MessageVisionMarker",
+               "code" : [ 35, 98, 2, 196, 136, 9, 24, 0, 32, 34, 98 ],
+               "timestamp" : 48,
+               "x_imgLowerLeft" : 194.6887969970703,
+               "x_imgLowerRight" : 120.8289337158203,
+               "x_imgUpperLeft" : 446.4625854492188,
+               "x_imgUpperRight" : 520.3651733398438,
+               "y_imgLowerLeft" : 265.65917968750,
+               "y_imgLowerRight" : 353.5286254882812,
+               "y_imgUpperLeft" : 265.6193542480469,
+               "y_imgUpperRight" : 353.4966430664062
+            }
+         ]
+      },
+      {
+         "ImageFile" : "/Users/andrew/Code/products-cozmo/basestation/test/blockWorldTests/visionTest_VaryingDistance5.png",
+         "NumMarkers" : 2,
+         "RobotPose" : {
+            "Angle" : 3.1415930,
+            "Axis" : [ 0.0, 0.0, 1.0 ],
+            "HeadAngle" : -0.143750,
+            "Translation" : [ 250.0, 0.0, 18.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "code" : [ 115, 117, 167, 238, 206, 221, 156, 168, 58, 114, 118 ],
+               "timestamp" : 48,
+               "x_imgLowerLeft" : 285.0807189941406,
+               "x_imgLowerRight" : 355.8320922851562,
+               "x_imgUpperLeft" : 284.2343444824219,
+               "x_imgUpperRight" : 356.6308593750,
+               "y_imgLowerLeft" : 230.7334899902344,
+               "y_imgLowerRight" : 230.8510131835938,
+               "y_imgUpperLeft" : 159.1209411621094,
+               "y_imgUpperRight" : 159.2273864746094
+            },
+            {
+               "Name" : "MessageVisionMarker",
+               "code" : [ 35, 98, 2, 196, 136, 9, 24, 0, 32, 34, 98 ],
+               "timestamp" : 48,
+               "x_imgLowerLeft" : 216.4660949707031,
+               "x_imgLowerRight" : 169.6997375488281,
+               "x_imgUpperLeft" : 424.6639404296875,
+               "x_imgUpperRight" : 471.4328308105469,
+               "y_imgLowerLeft" : 263.60644531250,
+               "y_imgLowerRight" : 319.5818176269531,
+               "y_imgUpperLeft" : 263.5285644531250,
+               "y_imgUpperRight" : 319.5252685546875
+            }
+         ]
+      },
+      {
+         "ImageFile" : "/Users/andrew/Code/products-cozmo/basestation/test/blockWorldTests/visionTest_VaryingDistance6.png",
+         "NumMarkers" : 2,
+         "RobotPose" : {
+            "Angle" : 3.1415930,
+            "Axis" : [ 0.0, 0.0, 1.0 ],
+            "HeadAngle" : -0.11250,
+            "Translation" : [ 300.0, 0.0, 18.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "code" : [ 115, 117, 167, 238, 206, 221, 156, 168, 58, 114, 118 ],
+               "timestamp" : 48,
+               "x_imgLowerLeft" : 289.8907470703125,
+               "x_imgLowerRight" : 350.9204406738281,
+               "x_imgUpperLeft" : 289.5070190429688,
+               "x_imgUpperRight" : 351.3505249023438,
+               "y_imgLowerLeft" : 244.3716888427734,
+               "y_imgLowerRight" : 244.3347625732422,
+               "y_imgUpperLeft" : 182.7018280029297,
+               "y_imgUpperRight" : 182.7755737304688
+            },
+            {
+               "Name" : "MessageVisionMarker",
+               "code" : [ 35, 98, 2, 196, 136, 9, 24, 0, 32, 34, 98 ],
+               "timestamp" : 48,
+               "x_imgLowerLeft" : 231.5488586425781,
+               "x_imgLowerRight" : 198.9378814697266,
+               "x_imgUpperLeft" : 409.0751342773438,
+               "x_imgUpperRight" : 441.7370605468750,
+               "y_imgLowerLeft" : 271.6274719238281,
+               "y_imgLowerRight" : 310.4114074707031,
+               "y_imgUpperLeft" : 271.3974914550781,
+               "y_imgUpperRight" : 310.4862976074219
+            }
+         ]
+      },
+      {
+         "ImageFile" : "/Users/andrew/Code/products-cozmo/basestation/test/blockWorldTests/visionTest_VaryingDistance7.png",
+         "NumMarkers" : 2,
+         "RobotPose" : {
+            "Angle" : 3.1415930,
+            "Axis" : [ 0.0, 0.0, 1.0 ],
+            "HeadAngle" : -0.081250,
+            "Translation" : [ 350.0, 0.0, 18.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "code" : [ 115, 117, 167, 238, 206, 221, 156, 168, 58, 114, 118 ],
+               "timestamp" : 48,
+               "x_imgLowerLeft" : 293.8661193847656,
+               "x_imgLowerRight" : 347.0122985839844,
+               "x_imgUpperLeft" : 293.6779785156250,
+               "x_imgUpperRight" : 347.2879638671875,
+               "y_imgLowerLeft" : 255.2149505615234,
+               "y_imgLowerRight" : 255.2679290771484,
+               "y_imgUpperLeft" : 202.3754119873047,
+               "y_imgUpperRight" : 202.3242034912109
+            },
+            {
+               "Name" : "MessageVisionMarker",
+               "code" : [ 35, 98, 2, 196, 136, 9, 24, 0, 32, 34, 34 ],
+               "timestamp" : 48,
+               "x_imgLowerLeft" : 243.1805419921875,
+               "x_imgLowerRight" : 220.2762908935547,
+               "x_imgUpperLeft" : 397.9059753417969,
+               "x_imgUpperRight" : 420.7998657226562,
+               "y_imgLowerLeft" : 279.6419982910156,
+               "y_imgLowerRight" : 307.3145141601562,
+               "y_imgUpperLeft" : 279.5114135742188,
+               "y_imgUpperRight" : 307.2665405273438
+            }
+         ]
+      },
+      {
+         "ImageFile" : "/Users/andrew/Code/products-cozmo/basestation/test/blockWorldTests/visionTest_VaryingDistance8.png",
+         "NumMarkers" : 2,
+         "RobotPose" : {
+            "Angle" : 3.1415930,
+            "Axis" : [ 0.0, 0.0, 1.0 ],
+            "HeadAngle" : -0.050,
+            "Translation" : [ 400.0, 0.0, 18.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "code" : [ 115, 117, 167, 238, 206, 221, 156, 168, 58, 114, 118 ],
+               "timestamp" : 48,
+               "x_imgLowerLeft" : 296.4288024902344,
+               "x_imgLowerRight" : 344.5661010742188,
+               "x_imgUpperLeft" : 296.4039611816406,
+               "x_imgUpperRight" : 344.6000366210938,
+               "y_imgLowerLeft" : 270.6056213378906,
+               "y_imgLowerRight" : 270.6222229003906,
+               "y_imgUpperLeft" : 222.4301605224609,
+               "y_imgUpperRight" : 222.4343719482422
+            },
+            {
+               "Name" : "MessageVisionMarker",
+               "code" : [ 35, 98, 2, 68, 128, 9, 24, 0, 32, 34, 98 ],
+               "timestamp" : 48,
+               "x_imgLowerLeft" : 251.8044738769531,
+               "x_imgLowerRight" : 233.8654174804688,
+               "x_imgUpperLeft" : 389.3194274902344,
+               "x_imgUpperRight" : 407.1663818359375,
+               "y_imgLowerLeft" : 290.7713623046875,
+               "y_imgLowerRight" : 313.4587097167969,
+               "y_imgUpperLeft" : 290.7678833007812,
+               "y_imgUpperRight" : 313.4339599609375
+            }
+         ]
+      },
+      {
+         "ImageFile" : "/Users/andrew/Code/products-cozmo/basestation/test/blockWorldTests/visionTest_VaryingDistance9.png",
+         "NumMarkers" : 1,
+         "RobotPose" : {
+            "Angle" : 3.0717790,
+            "Axis" : [ 0.0, 0.0, -1.0 ],
+            "HeadAngle" : -0.30,
+            "Translation" : [ 0.0, 0.0, 18.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "code" : [ 115, 117, 167, 238, 206, 221, 156, 168, 58, 114, 118 ],
+               "timestamp" : 48,
+               "x_imgLowerLeft" : 204.5499877929688,
+               "x_imgLowerRight" : 540.675292968750,
+               "x_imgUpperLeft" : 185.0647277832031,
+               "x_imgUpperRight" : 579.0430908203125,
+               "y_imgLowerLeft" : 442.0297546386719,
+               "y_imgLowerRight" : 455.8108215332031,
+               "y_imgUpperLeft" : 106.0659713745117,
+               "y_imgUpperRight" : 108.7947387695312
+            }
+         ]
+      },
+      {
+         "ImageFile" : "/Users/andrew/Code/products-cozmo/basestation/test/blockWorldTests/visionTest_VaryingDistance10.png",
+         "NumMarkers" : 1,
+         "RobotPose" : {
+            "Angle" : 3.032510,
+            "Axis" : [ 0.0, 0.0, -1.0 ],
+            "HeadAngle" : -0.268750,
+            "Translation" : [ 50.0, 0.0, 18.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "code" : [ 115, 117, 167, 238, 206, 221, 156, 168, 58, 114, 118 ],
+               "timestamp" : 48,
+               "x_imgLowerLeft" : 301.3668518066406,
+               "x_imgLowerRight" : 496.1784667968750,
+               "x_imgUpperLeft" : 299.7924194335938,
+               "x_imgUpperRight" : 511.6277770996094,
+               "y_imgLowerLeft" : 287.7431945800781,
+               "y_imgLowerRight" : 295.1033020019531,
+               "y_imgUpperLeft" : 92.10597229003906,
+               "y_imgUpperRight" : 93.52120208740234
+            }
+         ]
+      },
+      {
+         "ImageFile" : "/Users/andrew/Code/products-cozmo/basestation/test/blockWorldTests/visionTest_VaryingDistance11.png",
+         "NumMarkers" : 1,
+         "RobotPose" : {
+            "Angle" : 2.993240,
+            "Axis" : [ 0.0, 0.0, -1.0 ],
+            "HeadAngle" : -0.23750,
+            "Translation" : [ 100.0, 0.0, 18.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "code" : [ 115, 117, 167, 238, 206, 221, 156, 168, 58, 114, 118 ],
+               "timestamp" : 48,
+               "x_imgLowerLeft" : 356.3472595214844,
+               "x_imgLowerRight" : 495.1657104492188,
+               "x_imgUpperLeft" : 358.3466186523438,
+               "x_imgUpperRight" : 504.4908447265625,
+               "y_imgLowerLeft" : 241.4317626953125,
+               "y_imgLowerRight" : 246.5039672851562,
+               "y_imgUpperLeft" : 103.0715255737305,
+               "y_imgUpperRight" : 104.1277847290039
+            }
+         ]
+      },
+      {
+         "ImageFile" : "/Users/andrew/Code/products-cozmo/basestation/test/blockWorldTests/visionTest_VaryingDistance12.png",
+         "NumMarkers" : 1,
+         "RobotPose" : {
+            "Angle" : 2.953970,
+            "Axis" : [ 0.0, 0.0, -1.0 ],
+            "HeadAngle" : -0.206250,
+            "Translation" : [ 150.0, 0.0, 18.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "code" : [ 115, 117, 167, 238, 206, 221, 156, 168, 58, 114, 118 ],
+               "timestamp" : 48,
+               "x_imgLowerLeft" : 398.9352111816406,
+               "x_imgLowerRight" : 506.9610595703125,
+               "x_imgUpperLeft" : 401.4742736816406,
+               "x_imgUpperRight" : 513.5446777343750,
+               "y_imgLowerLeft" : 228.6630554199219,
+               "y_imgLowerRight" : 232.6623840332031,
+               "y_imgUpperLeft" : 122.0731124877930,
+               "y_imgUpperRight" : 122.9555130004883
+            }
+         ]
+      },
+      {
+         "ImageFile" : "/Users/andrew/Code/products-cozmo/basestation/test/blockWorldTests/visionTest_VaryingDistance13.png",
+         "NumMarkers" : 1,
+         "RobotPose" : {
+            "Angle" : 2.91470,
+            "Axis" : [ 0.0, 0.0, -1.0 ],
+            "HeadAngle" : -0.1750,
+            "Translation" : [ 200.0, 0.0, 18.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "code" : [ 115, 117, 167, 238, 206, 221, 156, 168, 58, 114, 118 ],
+               "timestamp" : 48,
+               "x_imgLowerLeft" : 435.8309020996094,
+               "x_imgLowerRight" : 524.75878906250,
+               "x_imgUpperLeft" : 438.4033813476562,
+               "x_imgUpperRight" : 529.675781250,
+               "y_imgLowerLeft" : 230.0720672607422,
+               "y_imgLowerRight" : 233.1948699951172,
+               "y_imgUpperLeft" : 143.1449737548828,
+               "y_imgUpperRight" : 144.3966064453125
+            }
+         ]
+      },
+      {
+         "ImageFile" : "/Users/andrew/Code/products-cozmo/basestation/test/blockWorldTests/visionTest_VaryingDistance14.png",
+         "NumMarkers" : 1,
+         "RobotPose" : {
+            "Angle" : 2.875430,
+            "Axis" : [ 0.0, 0.0, -1.0 ],
+            "HeadAngle" : -0.143750,
+            "Translation" : [ 250.0, 0.0, 18.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "code" : [ 115, 117, 167, 238, 206, 221, 156, 168, 58, 114, 118 ],
+               "timestamp" : 48,
+               "x_imgLowerLeft" : 469.5952453613281,
+               "x_imgLowerRight" : 546.2999877929688,
+               "x_imgUpperLeft" : 472.1177062988281,
+               "x_imgUpperRight" : 549.8098754882812,
+               "y_imgLowerLeft" : 237.9651641845703,
+               "y_imgLowerRight" : 241.0258483886719,
+               "y_imgUpperLeft" : 165.0886840820312,
+               "y_imgUpperRight" : 165.0537719726562
+            }
+         ]
+      },
+      {
+         "ImageFile" : "/Users/andrew/Code/products-cozmo/basestation/test/blockWorldTests/visionTest_VaryingDistance15.png",
+         "NumMarkers" : 1,
+         "RobotPose" : {
+            "Angle" : 2.836160,
+            "Axis" : [ 0.0, 0.0, -1.0 ],
+            "HeadAngle" : -0.11250,
+            "Translation" : [ 300.0, 0.0, 18.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "code" : [ 115, 117, 167, 238, 206, 221, 156, 168, 58, 114, 118 ],
+               "timestamp" : 48,
+               "x_imgLowerLeft" : 502.7508850097656,
+               "x_imgLowerRight" : 570.5772094726562,
+               "x_imgUpperLeft" : 504.4795227050781,
+               "x_imgUpperRight" : 573.3181762695312,
+               "y_imgLowerLeft" : 248.8455657958984,
+               "y_imgLowerRight" : 251.3218078613281,
+               "y_imgUpperLeft" : 185.0642089843750,
+               "y_imgUpperRight" : 185.0760192871094
+            }
+         ]
+      },
+      {
+         "ImageFile" : "/Users/andrew/Code/products-cozmo/basestation/test/blockWorldTests/visionTest_VaryingDistance16.png",
+         "NumMarkers" : 2,
+         "RobotPose" : {
+            "Angle" : 2.796890,
+            "Axis" : [ 0.0, 0.0, -1.0 ],
+            "HeadAngle" : -0.081250,
+            "Translation" : [ 350.0, 0.0, 18.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "code" : [ 115, 117, 167, 238, 206, 221, 156, 168, 58, 114, 118 ],
+               "timestamp" : 48,
+               "x_imgLowerLeft" : 535.4675292968750,
+               "x_imgLowerRight" : 596.1197509765625,
+               "x_imgUpperLeft" : 536.9942626953125,
+               "x_imgUpperRight" : 598.0278930664062,
+               "y_imgLowerLeft" : 261.5315856933594,
+               "y_imgLowerRight" : 263.8664855957031,
+               "y_imgUpperLeft" : 205.3371582031250,
+               "y_imgUpperRight" : 205.6670074462891
+            },
+            {
+               "Name" : "MessageVisionMarker",
+               "code" : [ 35, 98, 2, 196, 136, 9, 24, 1, 32, 34, 98 ],
+               "timestamp" : 48,
+               "x_imgLowerLeft" : 113.0147552490234,
+               "x_imgLowerRight" : 15.30468368530273,
+               "x_imgUpperLeft" : 227.2868652343750,
+               "x_imgUpperRight" : 149.0099487304688,
+               "y_imgLowerLeft" : 265.9657897949219,
+               "y_imgLowerRight" : 283.3189392089844,
+               "y_imgUpperLeft" : 271.6885375976562,
+               "y_imgUpperRight" : 291.7199096679688
+            }
+         ]
+      },
+      {
+         "ImageFile" : "/Users/andrew/Code/products-cozmo/basestation/test/blockWorldTests/visionTest_VaryingDistance17.png",
+         "NumMarkers" : 2,
+         "RobotPose" : {
+            "Angle" : 2.757620,
+            "Axis" : [ 0.0, 0.0, -1.0 ],
+            "HeadAngle" : -0.050,
+            "Translation" : [ 400.0, 0.0, 18.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "code" : [ 115, 117, 167, 238, 206, 221, 156, 168, 58, 114, 118 ],
+               "timestamp" : 48,
+               "x_imgLowerLeft" : 568.3550415039062,
+               "x_imgLowerRight" : 623.6085815429688,
+               "x_imgUpperLeft" : 569.3954467773438,
+               "x_imgUpperRight" : 624.790527343750,
+               "y_imgLowerLeft" : 276.2218933105469,
+               "y_imgLowerRight" : 278.4471130371094,
+               "y_imgUpperLeft" : 225.4881134033203,
+               "y_imgUpperRight" : 226.6174926757812
+            },
+            {
+               "Name" : "MessageVisionMarker",
+               "code" : [ 35, 64, 2, 196, 128, 9, 24, 1, 32, 34, 66 ],
+               "timestamp" : 48,
+               "x_imgLowerLeft" : 181.8411102294922,
+               "x_imgLowerRight" : 105.1652221679688,
+               "x_imgUpperLeft" : 287.2445373535156,
+               "x_imgUpperRight" : 224.771972656250,
+               "y_imgLowerLeft" : 279.9220886230469,
+               "y_imgLowerRight" : 293.8717651367188,
+               "y_imgUpperLeft" : 284.9222717285156,
+               "y_imgUpperRight" : 301.0176696777344
+            }
+         ]
+      }
+   ],
+   "WorldTitle" : "visionTest_VaryingDistance"
+}

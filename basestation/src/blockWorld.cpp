@@ -127,18 +127,35 @@ namespace Anki
                                             const ObjectsMap_t& objectsExisting,
                                             std::vector<Vision::ObservableObject*>& overlappingExistingObjects) const
     {
+      // TODO: We should really be taking uncertainty/distance into account
+      //const float distThresholdFraction = 0.05f;
+      const float   distThresh_mm = 20.f; // large to handle higher error at a distance
+      const Radians angleThresh( DEG_TO_RAD(10.f) );
+      
+      // TODO: make angle threshold also vary with distance?
+      // TODO: make these parameters/arguments
+      
       auto objectsExistingIter = objectsExisting.find(objectSeen->GetType());
       if(objectsExistingIter != objectsExisting.end())
       {
         for(auto objExist : objectsExistingIter->second)
         {
           // TODO: smarter block pose comparison
-          const float minDist = 5.f; // TODO: make parameter ... 0.5f*std::min(minDimSeen, objExist->GetMinDim());
-          const Radians angleThresh( 5.f*M_PI/180.f ); // TODO: make parameter
+          //const float minDist = 5.f; // TODO: make parameter ... 0.5f*std::min(minDimSeen, objExist->GetMinDim());
+          
+          //const float distToExist_mm = (objExist.second->GetPose().get_translation() -
+          //                              <robotThatSawMe???>->GetPose().get_translation()).length();
+          
+          //const float distThresh_mm = distThresholdFraction * distToExist_mm;
+          
           Pose3d P_diff;
-          if( objExist.second->IsSameAs(*objectSeen, minDist, angleThresh, P_diff) ) {
+          if( objExist.second->IsSameAs(*objectSeen, distThresh_mm, angleThresh, P_diff) ) {
             overlappingExistingObjects.push_back(objExist.second);
-          }
+          } /*else {
+            fprintf(stdout, "Not merging: Tdiff = %.1fmm, Angle_diff=%.1fdeg\n",
+                    P_diff.get_translation().length(), P_diff.get_rotationAngle().getDegrees());
+            objExist.second->IsSameAs(*objectSeen, distThresh_mm, angleThresh, P_diff);
+          }*/
           
         } // for each existing object of this type
       }

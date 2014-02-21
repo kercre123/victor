@@ -35,7 +35,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
   const Radians robotPoseAngleThreshold    = DEG_TO_RAD(3.f);
   
   Json::Reader reader;
-  Json::Value jsonData;
+  Json::Value jsonRoot;
   std::vector<std::string> jsonFileList;
   
   const std::string subPath("basestation/test/blockWorldTests/");
@@ -43,159 +43,172 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
   
   fprintf(stdout, "\n\nLoading JSON file '%s'\n", jsonFilename.c_str());
   
-  BlockWorld blockWorld; // New block world for each file
-  
   std::ifstream jsonFile(jsonFilename);
-  bool jsonParseResult = reader.parse(jsonFile, jsonData);
+  bool jsonParseResult = reader.parse(jsonFile, jsonRoot);
   ASSERT_TRUE(jsonParseResult);
-  // TODO: Support multiple robots
+
+  BlockWorld blockWorld;
+  Robot robot(0, &blockWorld);    // TODO: Support multiple robots
+
   
-  Pose3d robotPose;
-  ASSERT_TRUE(JsonTools::GetPoseOptional(jsonData["RobotPose"], robotPose));
-  
-  float headAngle;
-  ASSERT_TRUE(JsonTools::GetValueOptional(jsonData["RobotPose"], "HeadAngle", headAngle));
-  
-  Robot robot(0, &blockWorld);
-  robot.set_headAngle(headAngle);
-  
-  ASSERT_TRUE(jsonData.isMember("CameraCalibration"));
-  Vision::CameraCalibration calib(jsonData["CameraCalibration"]);
+  ASSERT_TRUE(jsonRoot.isMember("CameraCalibration"));
+  Vision::CameraCalibration calib(jsonRoot["CameraCalibration"]);
   robot.set_camCalibration(calib);
   
-  int NumMarkers;
-  ASSERT_TRUE(JsonTools::GetValueOptional(jsonData, "NumMarkers", NumMarkers));
-  
-  ASSERT_TRUE(jsonData.isMember("VisionMarkers"));
-  Json::Value jsonMessages = jsonData["VisionMarkers"];
-  ASSERT_EQ(NumMarkers, jsonMessages.size());
-  
-  std::vector<MessageVisionMarker> messages;
-  messages.reserve(jsonMessages.size());
-  
-  for(auto const& jsonMsg : jsonMessages) {
-    MessageVisionMarker msg(jsonMsg);
-    
-    Quad2f corners;
-    corners[Quad::TopLeft].x()     = msg.x_imgUpperLeft;
-    corners[Quad::TopLeft].y()     = msg.y_imgUpperLeft;
-    
-    corners[Quad::TopRight].x()    = msg.x_imgUpperRight;
-    corners[Quad::TopRight].y()    = msg.y_imgUpperRight;
-    
-    corners[Quad::BottomLeft].x()  = msg.x_imgLowerLeft;
-    corners[Quad::BottomLeft].y()  = msg.y_imgLowerLeft;
-    
-    corners[Quad::BottomRight].x() = msg.x_imgLowerRight;
-    corners[Quad::BottomRight].y() = msg.y_imgLowerRight;
-    
-    // TODO: get the camera of the robot corresponding to the one that saw this VisionMarker
-    const Vision::Camera& camera = robot.get_camHead();
-    Vision::ObservedMarker marker(&(msg.code[0]), corners, camera);
-    
-    // Give this vision marker to BlockWorld for processing
-    blockWorld.QueueObservedMarker(marker);
-    
-  } // for each VisionMarker in the jsonFile
-  
   bool checkRobotPose;
-  ASSERT_TRUE(JsonTools::GetValueOptional(jsonData, "CheckRobotPose", checkRobotPose));
+  ASSERT_TRUE(JsonTools::GetValueOptional(jsonRoot, "CheckRobotPose", checkRobotPose));
+
+  // Everything before this is per-world, not per-pose
   
-  if(checkRobotPose) {
-    // Use all the VisionMarkers to update the blockworld's pose estimates for
-    // all the robots
-    // TODO: loop over all robots
-    ASSERT_TRUE(blockWorld.UpdateRobotPose(&robot));
-    
-    // Make sure the estimated robot pose matches the ground truth pose
-    const bool robotPoseMatches = robotPose.IsSameAs(robot.get_pose(),
-                                                     robotPoseDistThreshold_mm,
-                                                     robotPoseAngleThreshold);
-    EXPECT_TRUE(robotPoseMatches);
-    
-    if(not robotPoseMatches) {
-      // Use ground truth pose so we can continue
-      robot.set_pose(robotPose);
-    }
-  }
-  else {
-    // Just set the robot's pose to the ground truth in the JSON file
-    robot.set_pose(robotPose);
-  }
+  ASSERT_TRUE(jsonRoot.isMember("Poses"));
   
-  // Use the rest of the VisionMarkers to update the blockworld's pose
-  // estimates for the blocks
-  uint32_t numBlocksObserved = blockWorld.UpdateBlockPoses();
+  const int NumPoses = jsonRoot["Poses"].size();
   
-  // Toss unused markers
-  uint32_t numUnusedMarkers = blockWorld.ClearObservedMarkers();
-  if(numUnusedMarkers > 0) {
-    fprintf(stdout, "%u observed markers went unused for block/robot "
-            "localization.\n", numUnusedMarkers);
-  }
-  
-  if(jsonData.isMember("Blocks"))
+  for(int i_pose=0; i_pose<NumPoses; ++i_pose)
   {
-    const Json::Value& jsonBlocks = jsonData["Blocks"];
-    const int numBlocksTrue = jsonBlocks.size();
+    const Json::Value& jsonData = jsonRoot["Poses"][i_pose];
     
-    ASSERT_EQ(numBlocksObserved, numBlocksTrue);
+    int NumMarkers;
+    ASSERT_TRUE(JsonTools::GetValueOptional(jsonData, "NumMarkers", NumMarkers));
     
-    // Check to see that we found and successfully localized each ground truth
-    // block
-    for(int i_block=0; i_block<numBlocksTrue; ++i_block)
+    ASSERT_TRUE(jsonData.isMember("VisionMarkers"));
+    Json::Value jsonMessages = jsonData["VisionMarkers"];
+    ASSERT_EQ(NumMarkers, jsonMessages.size());
+    
+    std::vector<MessageVisionMarker> messages;
+    messages.reserve(jsonMessages.size());
+    
+    for(auto const& jsonMsg : jsonMessages) {
+      MessageVisionMarker msg(jsonMsg);
+      
+      Quad2f corners;
+      corners[Quad::TopLeft].x()     = msg.x_imgUpperLeft;
+      corners[Quad::TopLeft].y()     = msg.y_imgUpperLeft;
+      
+      corners[Quad::TopRight].x()    = msg.x_imgUpperRight;
+      corners[Quad::TopRight].y()    = msg.y_imgUpperRight;
+      
+      corners[Quad::BottomLeft].x()  = msg.x_imgLowerLeft;
+      corners[Quad::BottomLeft].y()  = msg.y_imgLowerLeft;
+      
+      corners[Quad::BottomRight].x() = msg.x_imgLowerRight;
+      corners[Quad::BottomRight].y() = msg.y_imgLowerRight;
+      
+      // TODO: get the camera of the robot corresponding to the one that saw this VisionMarker
+      const Vision::Camera& camera = robot.get_camHead();
+      Vision::ObservedMarker marker(&(msg.code[0]), corners, camera);
+      
+      // Give this vision marker to BlockWorld for processing
+      blockWorld.QueueObservedMarker(marker);
+      
+    } // for each VisionMarker in the jsonFile
+    
+    
+    Pose3d trueRobotPose;
+    ASSERT_TRUE(JsonTools::GetPoseOptional(jsonData, "RobotPose", trueRobotPose));
+    
+    float headAngle;
+    ASSERT_TRUE(JsonTools::GetValueOptional(jsonData["RobotPose"], "HeadAngle", headAngle));
+    robot.set_headAngle(headAngle);
+    
+    
+    if(checkRobotPose) {
+      // Use all the VisionMarkers to update the blockworld's pose estimates for
+      // all the robots
+      // TODO: loop over all robots
+      ASSERT_TRUE(blockWorld.UpdateRobotPose(&robot));
+      
+      // Make sure the estimated robot pose matches the ground truth pose
+      const bool robotPoseMatches = trueRobotPose.IsSameAs(robot.get_pose(),
+                                                           robotPoseDistThreshold_mm,
+                                                           robotPoseAngleThreshold);
+      EXPECT_TRUE(robotPoseMatches);
+      
+      if(not robotPoseMatches) {
+        // Use ground truth pose so we can continue
+        robot.set_pose(trueRobotPose);
+      }
+    }
+    else {
+      // Just set the robot's pose to the ground truth in the JSON file
+      robot.set_pose(trueRobotPose);
+    }
+    
+    // Use the rest of the VisionMarkers to update the blockworld's pose
+    // estimates for the blocks
+    uint32_t numBlocksObserved = blockWorld.UpdateBlockPoses();
+    
+    // Toss unused markers
+    uint32_t numUnusedMarkers = blockWorld.ClearObservedMarkers();
+    if(numUnusedMarkers > 0) {
+      fprintf(stdout, "%u observed markers went unused for block/robot "
+              "localization.\n", numUnusedMarkers);
+    }
+    
+    if(jsonRoot.isMember("Blocks"))
     {
-      ObjectType_t blockType;
-      ASSERT_TRUE(JsonTools::GetValueOptional(jsonBlocks[i_block], "Type", blockType));
+      const Json::Value& jsonBlocks = jsonRoot["Blocks"];
+      const int numBlocksTrue = jsonBlocks.size();
       
-      const Vision::ObservableObject* block = blockWorld.GetBlockLibrary().GetObjectWithType(blockType);
+      ASSERT_EQ(numBlocksObserved, numBlocksTrue);
       
-      // The ground truth block type should be known to the block world
-      ASSERT_TRUE(block != NULL);
-      Block *groundTruthBlock = dynamic_cast<Block*>(block->Clone());
-      
-      // Set its pose to what is listed in the json file
-      Pose3d blockPose;
-      ASSERT_TRUE(jsonBlocks[i_block].isMember("BlockPose"));
-      ASSERT_TRUE(JsonTools::GetPoseOptional(jsonBlocks[i_block]["BlockPose"], blockPose));
-      groundTruthBlock->SetPose(blockPose);
-      
-      // Make sure this ground truth block was seen and its estimated pose
-      // matches the ground truth pose
-      auto observedBlocks = blockWorld.GetExistingBlocks(groundTruthBlock->GetType());
-      int matchesFound = 0;
-      
-      // The threshold will vary with how far away the block actually is
-      const float blockPoseDistThreshold_mm = (blockPoseDistThresholdFraction *
-                                               (groundTruthBlock->GetPose().get_translation() -
-                                                robotPose.get_translation()).length());
-      
-      for(auto & observedBlock : observedBlocks)
+      // Check to see that we found and successfully localized each ground truth
+      // block
+      for(int i_block=0; i_block<numBlocksTrue; ++i_block)
       {
-        if(groundTruthBlock->IsSameAs(*observedBlock.second,
-                                      blockPoseDistThreshold_mm,
-                                      blockPoseAngleThreshold))
+        ObjectType_t blockType;
+        ASSERT_TRUE(JsonTools::GetValueOptional(jsonBlocks[i_block], "Type", blockType));
+        
+        const Vision::ObservableObject* block = blockWorld.GetBlockLibrary().GetObjectWithType(blockType);
+        
+        // The ground truth block type should be known to the block world
+        ASSERT_TRUE(block != NULL);
+        Block *groundTruthBlock = dynamic_cast<Block*>(block->Clone());
+        
+        // Set its pose to what is listed in the json file
+        Pose3d blockPose;
+        ASSERT_TRUE(jsonBlocks[i_block].isMember("BlockPose"));
+        ASSERT_TRUE(JsonTools::GetPoseOptional(jsonBlocks[i_block], "BlockPose", blockPose));
+        groundTruthBlock->SetPose(blockPose);
+        
+        // Make sure this ground truth block was seen and its estimated pose
+        // matches the ground truth pose
+        auto observedBlocks = blockWorld.GetExistingBlocks(groundTruthBlock->GetType());
+        int matchesFound = 0;
+        
+        // The threshold will vary with how far away the block actually is
+        const float blockPoseDistThreshold_mm = (blockPoseDistThresholdFraction *
+                                                 (groundTruthBlock->GetPose().get_translation() -
+                                                  trueRobotPose.get_translation()).length());
+        
+        for(auto & observedBlock : observedBlocks)
         {
-          const Vec3f& T_true = groundTruthBlock->GetPose().get_translation();
-          fprintf(stdout, "Block position error = %.1fmm at a distance of %.1fmm\n",
-                  (T_true - observedBlock.second->GetPose().get_translation()).length(),
-                  (T_true - robotPose.get_translation()).length());
-                  
-          ++matchesFound;
-        }
-      } // for each observed block
+          if(groundTruthBlock->IsSameAs(*observedBlock.second,
+                                        blockPoseDistThreshold_mm,
+                                        blockPoseAngleThreshold))
+          {
+            const Vec3f& T_true = groundTruthBlock->GetPose().get_translation();
+            fprintf(stdout, "Block position error = %.1fmm at a distance of %.1fmm\n",
+                    (T_true - observedBlock.second->GetPose().get_translation()).length(),
+                    (T_true - trueRobotPose.get_translation()).length());
+            
+            ++matchesFound;
+          }
+        } // for each observed block
+        
+        EXPECT_EQ(matchesFound, 1); // Exactly one observed block should match
+        
+        delete groundTruthBlock;
+        
+      } // for each ground truth block
       
-      EXPECT_EQ(matchesFound, 1); // Exactly one observed block should match
-      
-      delete groundTruthBlock;
-      
-    } // for each ground truth block
-    
-  } // IF there are blocks
-  else {
-    EXPECT_EQ(0, numBlocksObserved) <<
-    "No blocks in defined in the JSON file, but some were observed.";
-  }
+    } // IF there are blocks
+    else {
+      EXPECT_EQ(0, numBlocksObserved) <<
+      "No blocks are defined in the JSON file, but some were observed.";
+    }
+  
+  } // FOR each pose
   
 } // TEST_P(BlockWorldTest, BlockAndRobotLocalization)
 
@@ -203,35 +216,12 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
 // This is the list of JSON files containing vision test worlds:
 // TODO: automatically get all available tests from some directory?
 const char *visionTestJsonFiles[] = {
-  "visionTest_TwoBlocksOnePose_Pose0.json",
-  "visionTest_MatPoseTest_Pose0.json",
-  "visionTest_MatPoseTest_Pose1.json",
-  "visionTest_MatPoseTest_Pose2.json",
-  "visionTest_MatPoseTest_Pose3.json",
-  "visionTest_MatPoseTest_Pose4.json",
-  "visionTest_MatPoseTest_Pose5.json",
-  "visionTest_MatPoseTest_Pose6.json",
-  "visionTest_MatPoseTest_Pose7.json",
-  "visionTest_RepeatedBlock_Pose0.json",
-  "visionTest_VaryingDistance_Pose0.json",
-  "visionTest_VaryingDistance_Pose1.json",
-  "visionTest_VaryingDistance_Pose2.json",
-  "visionTest_VaryingDistance_Pose3.json",
-  "visionTest_VaryingDistance_Pose4.json",
-  "visionTest_VaryingDistance_Pose5.json",
-  "visionTest_VaryingDistance_Pose6.json",
-  "visionTest_VaryingDistance_Pose7.json",
-  "visionTest_VaryingDistance_Pose8.json",
-  "visionTest_VaryingDistance_Pose9.json",
-  "visionTest_VaryingDistance_Pose10.json",
-  "visionTest_VaryingDistance_Pose11.json",
-  "visionTest_VaryingDistance_Pose12.json",
-  "visionTest_VaryingDistance_Pose13.json",
-  "visionTest_VaryingDistance_Pose14.json",
-  "visionTest_VaryingDistance_Pose15.json",
-  "visionTest_VaryingDistance_Pose16.json",
-  "visionTest_VaryingDistance_Pose17.json"
+  "visionTest_TwoBlocksOnePose.json",
+  "visionTest_MatPoseTest.json",
+  "visionTest_RepeatedBlock.json",
+  "visionTest_VaryingDistance.json"
 };
+
 
 // This actually creates the set of tests, one for each filename above.
 INSTANTIATE_TEST_CASE_P(JsonFileBased, BlockWorldTest,
