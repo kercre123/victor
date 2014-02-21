@@ -4,6 +4,7 @@ classdef CozmoTestWorldCreator
         worldFile;
         usbChannel;
         useOffboardVision;
+        checkRobotPose;
     end
     
     methods
@@ -12,12 +13,14 @@ classdef CozmoTestWorldCreator
             WorldFile = '';
             UseOffboardVision = false;
             USBChannel = 10;
+            CheckRobotPose = true;
             
             parseVarargin(varargin{:});
             
             this.worldFile = WorldFile;
             this.usbChannel = USBChannel;
             this.useOffboardVision = UseOffboardVision;
+            this.checkRobotPose = CheckRobotPose;
             
             StartWorldFile(this);
             

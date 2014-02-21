@@ -23,11 +23,9 @@ TEST(Cozmo, BlockWorldVisionTest)
   
   // TODO: Tighten/loosen thresholds?
   const float   blockPoseDistThresholdFraction = 0.05f; // within 5% of actual distance
-  const Radians blockPoseAngleThreshold    = DEG_TO_RAD(3.f);
+  const Radians blockPoseAngleThreshold    = DEG_TO_RAD(5.f); // TODO: make dependent on distance?
   const float   robotPoseDistThreshold_mm  = 5.f;
   const Radians robotPoseAngleThreshold    = DEG_TO_RAD(3.f);
-  
-  BlockWorld blockWorld;
   
   Json::Reader reader;
   Json::Value jsonData;
@@ -36,17 +34,26 @@ TEST(Cozmo, BlockWorldVisionTest)
   std::string jsonFilePath = PlatformPathManager::getInstance()->PrependPath(PlatformPathManager::Test, "basestation/test/blockWorldTests/");
 
   // TODO: automatically get all available tests from some directory?
+  
   jsonFileList.emplace_back(jsonFilePath + "visionTest_TwoBlocksOnePose_Pose0.json");
   
   jsonFileList.emplace_back(jsonFilePath + "visionTest_MatPoseTest_Pose0.json");
   jsonFileList.emplace_back(jsonFilePath + "visionTest_MatPoseTest_Pose1.json");
   jsonFileList.emplace_back(jsonFilePath + "visionTest_MatPoseTest_Pose2.json");
   jsonFileList.emplace_back(jsonFilePath + "visionTest_MatPoseTest_Pose3.json");
+  jsonFileList.emplace_back(jsonFilePath + "visionTest_MatPoseTest_Pose4.json");
+  jsonFileList.emplace_back(jsonFilePath + "visionTest_MatPoseTest_Pose5.json");
+  jsonFileList.emplace_back(jsonFilePath + "visionTest_MatPoseTest_Pose6.json");
+  jsonFileList.emplace_back(jsonFilePath + "visionTest_MatPoseTest_Pose7.json");
+  
+  jsonFileList.emplace_back(jsonFilePath + "visionTest_RepeatedBlock_Pose0.json");
   
   
   for(auto & jsonFilename : jsonFileList)
   {
     fprintf(stdout, "\n\nLoading JSON file '%s'\n", jsonFilename.c_str());
+    
+    BlockWorld blockWorld; // New block world for each file
     
     std::ifstream jsonFile(jsonFilename);
     bool jsonParseResult = reader.parse(jsonFile, jsonData);
@@ -103,15 +110,24 @@ TEST(Cozmo, BlockWorldVisionTest)
       
     } // for each VisionMarker in the jsonFile
     
-    // Use all the VisionMarkers to update the blockworld's pose estimates for
-    // all the robots
-    // TODO: loop over all robots
-    ASSERT_TRUE(blockWorld.UpdateRobotPose(&robot));
+    bool checkRobotPose;
+    ASSERT_TRUE(JsonTools::GetValueOptional(jsonData, "CheckRobotPose", checkRobotPose));
     
-    // Make sure the estimated robot pose matches the ground truth pose
-    EXPECT_TRUE(robotPose.IsSameAs(robot.get_pose(),
-                                   robotPoseDistThreshold_mm,
-                                   robotPoseAngleThreshold));
+    if(checkRobotPose) {
+      // Use all the VisionMarkers to update the blockworld's pose estimates for
+      // all the robots
+      // TODO: loop over all robots
+      ASSERT_TRUE(blockWorld.UpdateRobotPose(&robot));
+      
+      // Make sure the estimated robot pose matches the ground truth pose
+      EXPECT_TRUE(robotPose.IsSameAs(robot.get_pose(),
+                                     robotPoseDistThreshold_mm,
+                                     robotPoseAngleThreshold));
+    }
+    else {
+      // Just set the robot's pose to the ground truth in the JSON file
+      robot.set_pose(robotPose);
+    }
     
     // Use the rest of the VisionMarkers to update the blockworld's pose
     // estimates for the blocks
@@ -124,9 +140,6 @@ TEST(Cozmo, BlockWorldVisionTest)
               "localization.\n", numUnusedMarkers);
     }
     
-    // TODO: In the case that the robot's pose is not estimated correctly (or
-    //       at all, e.g. due to no visible mat marker), check block poses
-    //       relative to robot, instead of relative to absolute world coords?
     
     if(jsonData.isMember("Blocks"))
     {
@@ -159,13 +172,13 @@ TEST(Cozmo, BlockWorldVisionTest)
         auto observedBlocks = blockWorld.GetExistingBlocks(groundTruthBlock->GetType());
         int matchesFound = 0;
         
+        // The threshold will vary with how far away the block actually is
+        const float blockPoseDistThreshold_mm = (blockPoseDistThresholdFraction *
+                                                 (groundTruthBlock->GetPose().get_translation() -
+                                                  robotPose.get_translation()).length());
+        
         for(auto & observedBlock : observedBlocks)
         {
-          // The threshold will vary with how far away the block actually is
-          float blockPoseDistThreshold_mm = (blockPoseDistThresholdFraction *
-                                             (groundTruthBlock->GetPose().get_translation() -
-                                              robotPose.get_translation()).length());
-          
           if(groundTruthBlock->IsSameAs(*observedBlock.second,
                                         blockPoseDistThreshold_mm,
                                         blockPoseAngleThreshold))
@@ -173,6 +186,7 @@ TEST(Cozmo, BlockWorldVisionTest)
             ++matchesFound;
           }
         } // for each observed block
+        
         EXPECT_EQ(matchesFound, 1); // Exactly one observed block should match
         
         delete groundTruthBlock;

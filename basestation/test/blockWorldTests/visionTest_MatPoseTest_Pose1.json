@@ -8,6 +8,7 @@
       "nrows" : 480,
       "skew" : 0.0
    },
+   "CheckRobotPose" : true,
    "ImageFile" : "/Users/andrew/Code/products-cozmo/basestation/test/blockWorldTests/visionTest_MatPoseTest_Pose1.png",
    "NumBlocks" : 0,
    "NumMarkers" : 2,
@@ -21,28 +22,28 @@
       {
          "Name" : "MessageVisionMarker",
          "code" : [ 96, 72, 12, 136, 152, 17, 48, 1, 36, 36, 12 ],
-         "timestamp" : 1657616072,
-         "x_imgLowerLeft" : 458.59082031250,
-         "x_imgLowerRight" : 411.4120788574219,
-         "x_imgUpperLeft" : 599.1652832031250,
-         "x_imgUpperRight" : 503.4854431152344,
-         "y_imgLowerLeft" : 141.6672821044922,
-         "y_imgLowerRight" : 157.1765441894531,
-         "y_imgUpperLeft" : 149.7432556152344,
-         "y_imgUpperRight" : 163.0273132324219
+         "timestamp" : 1650322056,
+         "x_imgLowerLeft" : 458.5863037109375,
+         "x_imgLowerRight" : 411.4205322265625,
+         "x_imgUpperLeft" : 599.1793212890625,
+         "x_imgUpperRight" : 503.4903869628906,
+         "y_imgLowerLeft" : 141.6676177978516,
+         "y_imgLowerRight" : 157.1771545410156,
+         "y_imgUpperLeft" : 149.7446594238281,
+         "y_imgUpperRight" : 163.0262145996094
       },
       {
          "Name" : "MessageVisionMarker",
          "code" : [ 35, 98, 2, 196, 136, 9, 24, 0, 32, 34, 98 ],
-         "timestamp" : 1657616072,
-         "x_imgLowerLeft" : 383.5890197753906,
-         "x_imgLowerRight" : 501.23535156250,
-         "x_imgUpperLeft" : 47.54476165771484,
-         "x_imgUpperRight" : 251.4207611083984,
-         "y_imgLowerLeft" : 346.5213928222656,
-         "y_imgLowerRight" : 238.9301452636719,
-         "y_imgUpperLeft" : 276.3845825195312,
-         "y_imgUpperRight" : 209.5331573486328
+         "timestamp" : 1650322056,
+         "x_imgLowerLeft" : 383.5831604003906,
+         "x_imgLowerRight" : 501.2381591796875,
+         "x_imgUpperLeft" : 47.53999710083008,
+         "x_imgUpperRight" : 251.4164886474609,
+         "y_imgLowerLeft" : 346.5219421386719,
+         "y_imgLowerRight" : 238.9296569824219,
+         "y_imgUpperLeft" : 276.3840332031250,
+         "y_imgUpperRight" : 209.5344238281250
       }
    ],
    "WorldTitle" : "visionTest_MatPoseTest"

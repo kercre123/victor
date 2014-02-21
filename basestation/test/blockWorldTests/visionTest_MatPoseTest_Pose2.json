@@ -8,6 +8,7 @@
       "nrows" : 480,
       "skew" : 0.0
    },
+   "CheckRobotPose" : true,
    "ImageFile" : "/Users/andrew/Code/products-cozmo/basestation/test/blockWorldTests/visionTest_MatPoseTest_Pose2.png",
    "NumBlocks" : 0,
    "NumMarkers" : 2,
@@ -20,29 +21,29 @@
    "VisionMarkers" : [
       {
          "Name" : "MessageVisionMarker",
-         "code" : [ 255, 191, 255, 127, 223, 255, 252, 253, 248, 248, 254 ],
-         "timestamp" : 1657616072,
-         "x_imgLowerLeft" : 169.9996643066406,
-         "x_imgLowerRight" : 89.03908538818359,
-         "x_imgUpperLeft" : 223.4670715332031,
-         "x_imgUpperRight" : 246.2518768310547,
-         "y_imgLowerLeft" : 172.9983978271484,
-         "y_imgLowerRight" : 177.0405883789062,
-         "y_imgUpperLeft" : 170.978027343750,
-         "y_imgUpperRight" : 187.2792510986328
+         "code" : [ 255, 175, 255, 127, 223, 255, 252, 253, 248, 248, 254 ],
+         "timestamp" : 1650322056,
+         "x_imgLowerLeft" : 170.0076904296875,
+         "x_imgLowerRight" : 89.04600524902344,
+         "x_imgUpperLeft" : 223.4906616210938,
+         "x_imgUpperRight" : 246.1057434082031,
+         "y_imgLowerLeft" : 172.9980316162109,
+         "y_imgLowerRight" : 177.0401611328125,
+         "y_imgUpperLeft" : 170.9771118164062,
+         "y_imgUpperRight" : 187.2657470703125
       },
       {
          "Name" : "MessageVisionMarker",
          "code" : [ 35, 64, 70, 196, 140, 137, 8, 1, 48, 32, 34 ],
-         "timestamp" : 1657616072,
-         "x_imgLowerLeft" : 144.2158050537109,
-         "x_imgLowerRight" : 209.3506317138672,
-         "x_imgUpperLeft" : 392.3366088867188,
-         "x_imgUpperRight" : 565.7376708984375,
-         "y_imgLowerLeft" : 260.9501647949219,
-         "y_imgLowerRight" : 362.0082702636719,
-         "y_imgUpperLeft" : 238.6017608642578,
-         "y_imgUpperRight" : 308.1294555664062
+         "timestamp" : 1650322056,
+         "x_imgLowerLeft" : 144.2174682617188,
+         "x_imgLowerRight" : 209.3459472656250,
+         "x_imgUpperLeft" : 392.3341369628906,
+         "x_imgUpperRight" : 565.737792968750,
+         "y_imgLowerLeft" : 260.9504699707031,
+         "y_imgLowerRight" : 362.0088195800781,
+         "y_imgUpperLeft" : 238.6018371582031,
+         "y_imgUpperRight" : 308.1296691894531
       }
    ],
    "WorldTitle" : "visionTest_MatPoseTest"

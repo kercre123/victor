@@ -8,6 +8,7 @@
       "nrows" : 480,
       "skew" : 0.0
    },
+   "CheckRobotPose" : true,
    "ImageFile" : "/Users/andrew/Code/products-cozmo/basestation/test/blockWorldTests/visionTest_MatPoseTest_Pose0.png",
    "NumBlocks" : 0,
    "NumMarkers" : 1,
@@ -21,15 +22,15 @@
       {
          "Name" : "MessageVisionMarker",
          "code" : [ 35, 98, 2, 196, 136, 9, 24, 1, 32, 34, 98 ],
-         "timestamp" : 1657616072,
-         "x_imgLowerLeft" : 512.9514160156250,
-         "x_imgLowerRight" : 431.6497497558594,
-         "x_imgUpperLeft" : 17.24925804138184,
-         "x_imgUpperRight" : 145.3498992919922,
-         "y_imgLowerLeft" : 418.3165893554688,
-         "y_imgLowerRight" : 292.6280517578125,
-         "y_imgUpperLeft" : 418.3242797851562,
-         "y_imgUpperRight" : 292.64160156250
+         "timestamp" : 1650322056,
+         "x_imgLowerLeft" : 512.9505615234375,
+         "x_imgLowerRight" : 431.6502075195312,
+         "x_imgUpperLeft" : 17.24961471557617,
+         "x_imgUpperRight" : 145.3508300781250,
+         "y_imgLowerLeft" : 418.3172912597656,
+         "y_imgLowerRight" : 292.6275024414062,
+         "y_imgUpperLeft" : 418.3235473632812,
+         "y_imgUpperRight" : 292.6420288085938
       }
    ],
    "WorldTitle" : "visionTest_MatPoseTest"
