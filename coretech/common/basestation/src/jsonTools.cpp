@@ -80,21 +80,24 @@ namespace JsonTools
     return node.asBool();
   }
   
-  bool GetPoseOptional(const Json::Value& node, Anki::Pose3d& pose)
+  bool GetPoseOptional(const Json::Value& config, const std::string& key, Anki::Pose3d& pose)
   {
     bool retVal = false;
     
-    Anki::Point3f axis, translation;
-    if(node.isMember("Angle") &&
-       GetPointOptional(node, "Axis", axis) &&
-       GetPointOptional(node, "Translation", translation))
-    {
-      const Anki::Radians angle(node["Angle"].asFloat());
-      pose.set_rotation(angle, axis);
-      
-      pose.set_translation(translation);
-      
-      retVal = true;
+    const Json::Value& child = config[key];
+    if(not child.isNull()) {
+      Anki::Point3f axis, translation;
+      if(child.isMember("Angle") &&
+         GetPointOptional(child, "Axis", axis) &&
+         GetPointOptional(child, "Translation", translation))
+      {
+        const Anki::Radians angle(child["Angle"].asFloat());
+        pose.set_rotation(angle, axis);
+        
+        pose.set_translation(translation);
+        
+        retVal = true;
+      }
     }
     
     return retVal;
