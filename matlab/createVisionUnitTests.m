@@ -89,3 +89,36 @@ TestWorld.AddBlock('BlockPose', Pose(3*pi/2*[1 0 0], [414 0 150]), ...
 
 TestWorld.Run();
 
+
+%% VaryingDistance
+% Looking at 1 block, as the robot moves away and looks up
+
+worldName = 'VaryingDistance';
+TestWorld = CozmoTestWorldCreator('WorldFile', ...
+    fullfile(rootPath, ['visionTest_' worldName '.wbt']), ...
+    'CheckRobotPose', false);
+
+poses = {};
+d = 0:50:400;
+for i = 1:length(d)
+    poses{end+1} = Pose(pi*[0 0 1], [d(i) 0 18]); %#ok<SAGROW>
+end
+    
+headAngles = linspace(-.3, 0, length(poses));
+
+% Repeat the distances with the robot slightly turned
+theta = linspace(4, 22, length(poses)) * pi/180;
+for i = 1:length(theta)
+    poses{end+1} = Pose((pi+theta(i))*[0 0 1], [d(i) 0 18]); %#ok<SAGROW>
+end
+
+headAngles = [headAngles headAngles];
+
+TestWorld.AddRobot('Name', 'Cozmo_1', ...
+    'RobotPose', poses, ...
+    'HeadAngle', headAngles);
+
+TestWorld.AddBlock('BlockPose', Pose(0*[0 0 1], [-100 0 30]), ...
+    'BlockProto', 'Block1x1', 'BlockType', 1, 'FrontFace', 'batteryMarker');
+
+TestWorld.Run();

@@ -176,6 +176,11 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
                                       blockPoseDistThreshold_mm,
                                       blockPoseAngleThreshold))
         {
+          const Vec3f& T_true = groundTruthBlock->GetPose().get_translation();
+          fprintf(stdout, "Block position error = %.1fmm at a distance of %.1fmm\n",
+                  (T_true - observedBlock.second->GetPose().get_translation()).length(),
+                  (T_true - robotPose.get_translation()).length());
+                  
           ++matchesFound;
         }
       } // for each observed block
@@ -207,7 +212,25 @@ const char *visionTestJsonFiles[] = {
   "visionTest_MatPoseTest_Pose5.json",
   "visionTest_MatPoseTest_Pose6.json",
   "visionTest_MatPoseTest_Pose7.json",
-  "visionTest_RepeatedBlock_Pose0.json"
+  "visionTest_RepeatedBlock_Pose0.json",
+  "visionTest_VaryingDistance_Pose0.json",
+  "visionTest_VaryingDistance_Pose1.json",
+  "visionTest_VaryingDistance_Pose2.json",
+  "visionTest_VaryingDistance_Pose3.json",
+  "visionTest_VaryingDistance_Pose4.json",
+  "visionTest_VaryingDistance_Pose5.json",
+  "visionTest_VaryingDistance_Pose6.json",
+  "visionTest_VaryingDistance_Pose7.json",
+  "visionTest_VaryingDistance_Pose8.json",
+  "visionTest_VaryingDistance_Pose9.json",
+  "visionTest_VaryingDistance_Pose10.json",
+  "visionTest_VaryingDistance_Pose11.json",
+  "visionTest_VaryingDistance_Pose12.json",
+  "visionTest_VaryingDistance_Pose13.json",
+  "visionTest_VaryingDistance_Pose14.json",
+  "visionTest_VaryingDistance_Pose15.json",
+  "visionTest_VaryingDistance_Pose16.json",
+  "visionTest_VaryingDistance_Pose17.json"
 };
 
 // This actually creates the set of tests, one for each filename above.

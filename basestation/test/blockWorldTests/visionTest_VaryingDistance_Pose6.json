@@ -1,0 +1,61 @@
+{
+   "Blocks" : [
+      {
+         "BlockName" : "Block",
+         "BlockPose" : {
+            "Angle" : 3.674827354230343e-06,
+            "Axis" : [ 1.0, 2.731799555233885e-13, -4.273713318936202e-14 ],
+            "Translation" : [ -100.0, -0.0001145290453299642, 27.48491989667822 ]
+         },
+         "Type" : 1
+      }
+   ],
+   "CameraCalibration" : {
+      "center_x" : 320.0,
+      "center_y" : 240.0,
+      "focalLength_x" : 667.8306884765625,
+      "focalLength_y" : 667.8306884765625,
+      "ncols" : 640,
+      "nrows" : 480,
+      "skew" : 0.0
+   },
+   "CheckRobotPose" : false,
+   "ImageFile" : "/Users/andrew/Code/products-cozmo/basestation/test/blockWorldTests/visionTest_VaryingDistance_Pose6.png",
+   "NumBlocks" : 1,
+   "NumMarkers" : 2,
+   "RobotPose" : {
+      "Angle" : 3.1415930,
+      "Axis" : [ 0.0, 0.0, 1.0 ],
+      "HeadAngle" : -0.11250,
+      "Translation" : [ 300.0, 0.0, 18.0 ]
+   },
+   "VisionMarkers" : [
+      {
+         "Name" : "MessageVisionMarker",
+         "code" : [ 115, 117, 167, 238, 206, 221, 156, 168, 58, 114, 118 ],
+         "timestamp" : 1740434504,
+         "x_imgLowerLeft" : 289.8907470703125,
+         "x_imgLowerRight" : 350.9204406738281,
+         "x_imgUpperLeft" : 289.5070190429688,
+         "x_imgUpperRight" : 351.3505249023438,
+         "y_imgLowerLeft" : 244.3716888427734,
+         "y_imgLowerRight" : 244.3347625732422,
+         "y_imgUpperLeft" : 182.7018280029297,
+         "y_imgUpperRight" : 182.7755737304688
+      },
+      {
+         "Name" : "MessageVisionMarker",
+         "code" : [ 35, 98, 2, 196, 136, 9, 24, 0, 32, 34, 98 ],
+         "timestamp" : 1740434504,
+         "x_imgLowerLeft" : 231.5488586425781,
+         "x_imgLowerRight" : 198.9378814697266,
+         "x_imgUpperLeft" : 409.0751342773438,
+         "x_imgUpperRight" : 441.7370605468750,
+         "y_imgLowerLeft" : 271.6274719238281,
+         "y_imgLowerRight" : 310.4114074707031,
+         "y_imgUpperLeft" : 271.3974914550781,
+         "y_imgUpperRight" : 310.4862976074219
+      }
+   ],
+   "WorldTitle" : "visionTest_VaryingDistance"
+}
