@@ -1,9 +1,14 @@
 /*
- * File:          cozmo_c_controller.c
- * Date:
- * Description:   
- * Author:        
+ * File:          visionUnitTestController.cpp
+ * Author:        Andrew Stein
+ * Date:          2/13/2014
+ *
+ * Description:   Webot controller to load vision test worlds and create JSON
+ *                ground truth files for vision system unit tests.
+ *
  * Modifications: 
+ * 
+ * Copyright 2014, Anki, Inc.
  */
 
 
@@ -155,8 +160,8 @@ int main(int argc, char **argv)
     fprintf(stdout, "Moving robot '%s' to (%.3f,%.3f,%.3f), "
             "%.1fdeg @ (%.3f,%.3f,%.3f), with headAngle=%.1fdeg\n", robotName.c_str(),
             translation_m[0], translation_m[1], translation_m[2],
-            rotation[3]*180./M_PI, rotation[0], rotation[1], rotation[2],
-            headAngle*180./M_PI);
+            RAD_TO_DEG(rotation[3]), rotation[0], rotation[1], rotation[2],
+            RAD_TO_DEG(headAngle));
     
     // Step until the head and lift are in position
     const float TOL = .01f;
@@ -212,6 +217,18 @@ int main(int argc, char **argv)
       } // if this is a block
       else if(child->getType() == webots::Node::WORLD_INFO) {
         root["WorldTitle"] = child->getField("title")->getSFString();
+        
+        std::string checkPoseStr = child->getField("info")->getMFString(0);
+        if(checkPoseStr.back() == '0') {
+          root["CheckRobotPose"] = false;
+        }
+        else if(checkPoseStr.back() == '1') {
+          root["CheckRobotPose"] = true;
+        }
+        else {
+          CORETECH_THROW("Unexpected character when looking for CheckRobotPose "
+                         "setting in WorldInfo.\n");
+        }
       }
       
     } // for each node
@@ -261,8 +278,9 @@ int main(int argc, char **argv)
       msg.x_imgLowerRight = x_corners[3];
       msg.y_imgLowerRight = y_corners[3];
       
-      const u8* code = reinterpret_cast<const u8*>(mxGetData(matlab.GetArray("byteArray")));
-      
+      mxArray* mxByteArray = matlab.GetArray("byteArray");
+      CORETECH_ASSERT(mxGetNumberOfElements(mxByteArray) == VISION_MARKER_CODE_LENGTH);
+      const u8* code = reinterpret_cast<const u8*>(mxGetData(mxByteArray));
       std::copy(code, code + VISION_MARKER_CODE_LENGTH, msg.code.begin());
       
       markers.emplace_back(msg);
@@ -303,7 +321,7 @@ int main(int argc, char **argv)
     
   } // for each pose
  
-  // TODO: Stop / quit simulation?
+  webotRobot_.simulationQuit(EXIT_SUCCESS);
   
   return 0;
 }

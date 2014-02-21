@@ -61,7 +61,7 @@ Block2x1 {
   ]
 }
 
-DEF Cozmo CozmoBot {
+DEF Cozmo_1 CozmoBot {
   name "CozmoBot_1"
   commsChannel 1
   rotation 0 0 1 -1.5708
