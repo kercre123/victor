@@ -514,8 +514,8 @@ namespace Anki
           const f32 warpedY = (h10*xc + h11*yc + h12) * wpi;
 
           // TODO: verify the -0.5f is correct
-          const s32 warpedXrounded = static_cast<s32>(Roundf(warpedX + centerOffset.x - 0.5f));
-          const s32 warpedYrounded = static_cast<s32>(Roundf(warpedY + centerOffset.y - 0.5f));
+          const s32 warpedXrounded = static_cast<s32>(Round(warpedX + centerOffset.x - 0.5f));
+          const s32 warpedYrounded = static_cast<s32>(Round(warpedY + centerOffset.y - 0.5f));
 
           if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance)) {
             s32 minOffset = -maxMatchingDistance;
@@ -605,8 +605,8 @@ namespace Anki
           //const s32 warpedY_s32 = static_cast<s32>(Round(warpedY));
 
           // TODO: verify the -0.5f is correct
-          const s32 warpedXrounded = static_cast<s32>(Roundf(warpedX + centerOffset.x - 0.5f));
-          const s32 warpedYrounded = static_cast<s32>(Roundf(warpedY + centerOffset.y - 0.5f));
+          const s32 warpedXrounded = static_cast<s32>(Round(warpedX + centerOffset.x - 0.5f));
+          const s32 warpedYrounded = static_cast<s32>(Round(warpedY + centerOffset.y - 0.5f));
 
           if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance)) {
             s32 minOffset = -maxMatchingDistance;
@@ -687,8 +687,8 @@ namespace Anki
           const f32 warpedY = (h10*xc + h11*yc + h12) * wpi;
 
           // TODO: verify the -0.5f is correct
-          const s32 warpedXrounded = static_cast<s32>(Roundf(warpedX + centerOffset.x - 0.5f));
-          const s32 warpedYrounded = static_cast<s32>(Roundf(warpedY + centerOffset.y - 0.5f));
+          const s32 warpedXrounded = static_cast<s32>(Round(warpedX + centerOffset.x - 0.5f));
+          const s32 warpedYrounded = static_cast<s32>(Round(warpedY + centerOffset.y - 0.5f));
 
           if(warpedXrounded >= maxMatchingDistance && warpedXrounded < (imageWidth-maxMatchingDistance)) {
             s32 minOffset = -maxMatchingDistance;
@@ -777,8 +777,8 @@ namespace Anki
           //const s32 warpedY_s32 = static_cast<s32>(Round(warpedY));
 
           // TODO: verify the -0.5f is correct
-          const s32 warpedXrounded = static_cast<s32>(Roundf(warpedX + centerOffset.x - 0.5f));
-          const s32 warpedYrounded = static_cast<s32>(Roundf(warpedY + centerOffset.y - 0.5f));
+          const s32 warpedXrounded = static_cast<s32>(Round(warpedX + centerOffset.x - 0.5f));
+          const s32 warpedYrounded = static_cast<s32>(Round(warpedY + centerOffset.y - 0.5f));
 
           if(warpedXrounded >= maxMatchingDistance && warpedXrounded < (imageWidth-maxMatchingDistance)) {
             s32 minOffset = -maxMatchingDistance;
@@ -868,8 +868,8 @@ namespace Anki
           const f32 warpedY = (h10*xc + h11*yc + h12) * wpi;
 
           // TODO: verify the -0.5f is correct
-          const s32 warpedXrounded = static_cast<s32>(Roundf(warpedX + centerOffset.x - 0.5f));
-          const s32 warpedYrounded = static_cast<s32>(Roundf(warpedY + centerOffset.y - 0.5f));
+          const s32 warpedXrounded = static_cast<s32>(Round(warpedX + centerOffset.x - 0.5f));
+          const s32 warpedYrounded = static_cast<s32>(Round(warpedY + centerOffset.y - 0.5f));
 
           if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance)) {
             s32 minOffset = -maxMatchingDistance;
@@ -1067,6 +1067,7 @@ namespace Anki
         AnkiAssert(FLT_NEAR(homography[2][2], 1.0f));
 
         // These addresses should be known at compile time, so should be faster
+#ifndef __EDG__ // natural C
         s64 AtA_raw[8][8];
         s64 Atb_raw[8];
 
@@ -1076,6 +1077,15 @@ namespace Anki
           }
           Atb_raw[ia] = 0;
         }
+#else // ARM optimized
+        s32 AtA_raw33 = 0, AtA_raw34 = 0, AtA_raw35 = 0, AtA_raw36 = 0, AtA_raw37 = 0;
+        s32 AtA_raw44 = 0, AtA_raw45 = 0, AtA_raw46 = 0, AtA_raw47 = 0;
+        s32 AtA_raw55 = 0, AtA_raw56 = 0, AtA_raw57 = 0;
+        s32 AtA_raw66 = 0, AtA_raw67 = 0;
+        s32 AtA_raw77 = 0;
+
+        s32 Atb_raw3 = 0, Atb_raw4 = 0, Atb_raw5 = 0, Atb_raw6 = 0, Atb_raw7 = 0;
+#endif // #ifndef __EDG__ ... #else
 
         const Point<s16> * restrict pTemplatePoints = templatePoints.Pointer(0);
         const Point<s16> * restrict pNewPoints = newPoints.Pointer(0);
@@ -1109,8 +1119,8 @@ namespace Anki
           const s32 warpedY_s32 = static_cast<s32>(Round(warpedY));
 
           // TODO: verify the -0.5f is correct
-          const s32 warpedXrounded = static_cast<s32>(Roundf(warpedX + centerOffset.x - 0.5f));
-          const s32 warpedYrounded = static_cast<s32>(Roundf(warpedY + centerOffset.y - 0.5f));
+          const s32 warpedXrounded = static_cast<s32>(Round(warpedX + centerOffset.x - 0.5f));
+          const s32 warpedYrounded = static_cast<s32>(Round(warpedY + centerOffset.y - 0.5f));
 
           if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance)) {
             s32 minOffset = -maxMatchingDistance;
@@ -1132,11 +1142,9 @@ namespace Anki
               // TODO: make a binary search?
               for(s32 iMatch=pXStartIndexes[xpRounded]; iMatch<pXStartIndexes[xpRounded+1]; iMatch++) {
                 if(ypRounded == pNewPoints[iMatch].y) {
-                  //const f32 yp = warpedY + static_cast<f32>(offset);
-                  //const s64 yp_SQ27p1 = warpedX_s32 + (offset << numFractionalBits);
                   const s32 yp_s32 = warpedY_s32 + offset;
 
-                  //const f32 aValues[8] = {0, 0, 0, -xc, -yc, -1, xc*yp, yc*yp};
+#ifndef __EDG__ // natural C
                   const s32 aValues[8] = {
                     0, 0, 0,
                     -xc_s32,
@@ -1145,37 +1153,128 @@ namespace Anki
                     xc_s32 * yp_s32,
                     yc_s32 * yp_s32};
 
-                  //const f32 aValues[8] = {0, 0, 0, -xc, -yc, -1, xc*yp, yc*yp};
-
                   const s32 bValue = -yp_s32;
 
                   for(s32 ia=0; ia<8; ia++) {
                     for(s32 ja=ia; ja<8; ja++) {
-                      // 32x32 -> 64 MAC
-                      //AtA_raw[ia][ja] += aValues[ia] * aValues[ja];
-                      AtA_raw[ia][ja] = __SMLALD(aValues[ia], aValues[ja], AtA_raw[ia][ja]);
+                      AtA_raw[ia][ja] += aValues[ia] * aValues[ja];
                     }
 
-                    // 32x32 -> 64 MAC
-                    //Atb_raw[ia] += bValue * aValues[ia];
-                    Atb_raw[ia] = __SMLALD(bValue, aValues[ia], Atb_raw[ia]);
+                    Atb_raw[ia] += bValue * aValues[ia];
                   }
+#else // ARM optimized
+                  //const s32 aValues[8] = {
+                  //  0, 0, 0,
+                  //  -xc_s32,
+                  //  -yc_s32,
+                  //  -1, //(-1) << numFractionalBits,
+                  //  xc_s32 * yp_s32,
+                  //  yc_s32 * yp_s32};
+
+                  //const s32 bValue = -yp_s32;
+
+                  //for(s32 ia=0; ia<8; ia++) {
+                  //  for(s32 ja=ia; ja<8; ja++) {
+                  //    AtA_raw[ia][ja] = __SMLALD(aValues[ia], aValues[ja], AtA_raw[ia][ja]);
+                  //  }
+
+                  //  Atb_raw[ia] = __SMLALD(bValue, aValues[ia], Atb_raw[ia]);
+                  //}
+
+                  //const s32 aValues[8] = {
+                  //  0, 0, 0,
+                  //  -xc_s32,
+                  //  -yc_s32,
+                  //  -1, //(-1) << numFractionalBits,
+                  //  xc_s32 * yp_s32,
+                  //  yc_s32 * yp_s32};
+
+                  //const s32 bValue = -yp_s32;
+
+                  //for(s32 ja=3; ja<8; ja++) {
+                  //  AtA_raw[3][ja] = __SMLALD(aValues[3], aValues[ja], AtA_raw[3][ja]);
+                  //}
+
+                  //for(s32 ja=4; ja<8; ja++) {
+                  //  AtA_raw[4][ja] = __SMLALD(aValues[4], aValues[ja], AtA_raw[4][ja]);
+                  //}
+
+                  //for(s32 ja=5; ja<8; ja++) {
+                  //  AtA_raw[5][ja] = __SMLALD(aValues[5], aValues[ja], AtA_raw[5][ja]);
+                  //}
+
+                  //for(s32 ja=6; ja<8; ja++) {
+                  //  AtA_raw[6][ja] = __SMLALD(aValues[6], aValues[ja], AtA_raw[6][ja]);
+                  //}
+
+                  //for(s32 ja=7; ja<8; ja++) {
+                  //  AtA_raw[7][ja] = __SMLALD(aValues[7], aValues[ja], AtA_raw[7][ja]);
+                  //}
+
+                  //Atb_raw[3] = __SMLALD(bValue, aValues[3], Atb_raw[3]);
+                  //Atb_raw[4] = __SMLALD(bValue, aValues[4], Atb_raw[4]);
+                  //Atb_raw[5] = __SMLALD(bValue, aValues[5], Atb_raw[5]);
+                  //Atb_raw[6] = __SMLALD(bValue, aValues[6], Atb_raw[6]);
+                  //Atb_raw[7] = __SMLALD(bValue, aValues[7], Atb_raw[7]);
+
+                  const s32 aValues3 = -xc_s32;
+                  const s32 aValues4 = -yc_s32;
+                  //const s32 aValues5 =  -1;
+                  const s32 aValues6 = xc_s32 * yp_s32;
+                  const s32 aValues7 = yc_s32 * yp_s32;
+
+                  const s32 bValue = -yp_s32;
+
+                  AtA_raw33 = __SMMLA(aValues3, aValues3, AtA_raw33);
+                  AtA_raw34 = __SMMLA(aValues3, aValues4, AtA_raw34);
+                  AtA_raw35 -= aValues3;
+                  AtA_raw36 = __SMMLA(aValues3, aValues6, AtA_raw36);
+                  AtA_raw37 = __SMMLA(aValues3, aValues7, AtA_raw37);
+
+                  AtA_raw44 = __SMMLA(aValues4, aValues4, AtA_raw44);
+                  AtA_raw45 -= aValues4;
+                  AtA_raw46 = __SMMLA(aValues4, aValues6, AtA_raw46);
+                  AtA_raw47 = __SMMLA(aValues4, aValues7, AtA_raw47);
+
+                  AtA_raw55 += 1;
+                  AtA_raw56 -= aValues6;
+                  AtA_raw57 -= aValues7;
+
+                  AtA_raw66 = __SMMLA(aValues6, aValues6, AtA_raw66);
+                  AtA_raw67 = __SMMLA(aValues6, aValues7, AtA_raw67);
+
+                  AtA_raw77 = __SMMLA(aValues7, aValues7, AtA_raw77);
+
+                  Atb_raw3 = __SMMLA(bValue, aValues3, Atb_raw3);
+                  Atb_raw4 = __SMMLA(bValue, aValues4, Atb_raw4);
+                  Atb_raw5 -= bValue;
+                  Atb_raw6 = __SMMLA(bValue, aValues6, Atb_raw6);
+                  Atb_raw7 = __SMMLA(bValue, aValues7, Atb_raw7);
+
+#endif // #ifndef __EDG__ ... #else
                 }
               } // if(ypRounded == pNewPoints[iMatch].y)
             } // for(s32 iOffset=-maxMatchingDistance; iOffset<=maxMatchingDistance; iOffset++)
           } // if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance))
         } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
 
+#ifndef __EDG__ // natural C
         for(s32 ia=0; ia<8; ia++) {
           for(s32 ja=ia; ja<8; ja++) {
-            //AtA[ia][ja] = static_cast<f32>(AtA_raw[ia][ja]) / (static_cast<f32>(1<<numFractionalBits));
-            //AtA[ia][ja] = static_cast<f32>(AtA_raw[ia][ja] >> numFractionalBits);
             AtA[ia][ja] = static_cast<f32>(AtA_raw[ia][ja]);
           }
-          //Atb[0][ia] = static_cast<f32>(Atb_raw[ia]) / (static_cast<f32>(1<<numFractionalBits));
-          //Atb[0][ia] = static_cast<f32>(Atb_raw[ia] >> numFractionalBits);
+
           Atb[0][ia] = static_cast<f32>(Atb_raw[ia]);
         }
+#else // ARM optimized
+        AtA[3][3] = static_cast<f32>(AtA_raw33); AtA[3][4] = static_cast<f32>(AtA_raw34); AtA[3][5] = static_cast<f32>(AtA_raw35); AtA[3][6] = static_cast<f32>(AtA_raw36); AtA[3][7] = static_cast<f32>(AtA_raw37);
+        AtA[4][4] = static_cast<f32>(AtA_raw44); AtA[4][5] = static_cast<f32>(AtA_raw45); AtA[4][6] = static_cast<f32>(AtA_raw46); AtA[4][7] = static_cast<f32>(AtA_raw47);
+        AtA[5][5] = static_cast<f32>(AtA_raw55); AtA[5][6] = static_cast<f32>(AtA_raw56); AtA[5][7] = static_cast<f32>(AtA_raw57);
+        AtA[6][6] = static_cast<f32>(AtA_raw66); AtA[6][7] = static_cast<f32>(AtA_raw67);
+        AtA[7][7] = static_cast<f32>(AtA_raw77);
+
+        Atb[0][3] = static_cast<f32>(Atb_raw3); Atb[0][4] = static_cast<f32>(Atb_raw4); Atb[0][5] = static_cast<f32>(Atb_raw5); Atb[0][6] = static_cast<f32>(Atb_raw6); Atb[0][7] = static_cast<f32>(Atb_raw7);
+#endif // #ifndef __EDG__ ... #else
 
         return RESULT_OK;
       } // NO_INLINE Result BinaryTracker::FindVerticalCorrespondences_Projective_FixedPoint()
@@ -1236,8 +1335,8 @@ namespace Anki
           const f32 warpedY = (h10*xc + h11*yc + h12) * wpi;
 
           // TODO: verify the -0.5f is correct
-          const s32 warpedXrounded = static_cast<s32>(Roundf(warpedX + centerOffset.x - 0.5f));
-          const s32 warpedYrounded = static_cast<s32>(Roundf(warpedY + centerOffset.y - 0.5f));
+          const s32 warpedXrounded = static_cast<s32>(Round(warpedX + centerOffset.x - 0.5f));
+          const s32 warpedYrounded = static_cast<s32>(Round(warpedY + centerOffset.y - 0.5f));
 
           if(warpedXrounded >= maxMatchingDistance && warpedXrounded < (imageWidth-maxMatchingDistance)) {
             s32 minOffset = -maxMatchingDistance;
@@ -1350,8 +1449,8 @@ namespace Anki
           const s32 warpedY_s32 = static_cast<s32>(Round(warpedY));
 
           // TODO: verify the -0.5f is correct
-          const s32 warpedXrounded = static_cast<s32>(Roundf(warpedX + centerOffset.x - 0.5f));
-          const s32 warpedYrounded = static_cast<s32>(Roundf(warpedY + centerOffset.y - 0.5f));
+          const s32 warpedXrounded = static_cast<s32>(Round(warpedX + centerOffset.x - 0.5f));
+          const s32 warpedYrounded = static_cast<s32>(Round(warpedY + centerOffset.y - 0.5f));
 
           if(warpedXrounded >= maxMatchingDistance && warpedXrounded < (imageWidth-maxMatchingDistance)) {
             s32 minOffset = -maxMatchingDistance;

@@ -173,10 +173,10 @@ namespace Anki
           Array<f32> templateMask = Array<f32>(templateImageHeight, templateImageWidth, memory);
           templateMask.SetZero();
           templateMask(
-            static_cast<s32>(Roundf(templateRegion.top)),
-            static_cast<s32>(Roundf(templateRegion.bottom)),
-            static_cast<s32>(Roundf(templateRegion.left)),
-            static_cast<s32>(Roundf(templateRegion.right))).Set(1.0f);
+            static_cast<s32>(Round(templateRegion.top)),
+            static_cast<s32>(Round(templateRegion.bottom)),
+            static_cast<s32>(Round(templateRegion.left)),
+            static_cast<s32>(Round(templateRegion.right))).Set(1.0f);
           EndBenchmark("InitializeTemplate.setTemplateMask");
 
           for(s32 iScale=0; iScale<this->numPyramidLevels; iScale++) {
@@ -986,9 +986,9 @@ namespace Anki
               const f32 alphaY = yTransformed - y0;
               const f32 alphaYinverse = 1.0f - alphaY;
 
-              const s32 y0S32 = static_cast<s32>(Roundf(y0));
-              const s32 y1S32 = static_cast<s32>(Roundf(y1));
-              const s32 x0S32 = static_cast<s32>(Roundf(x0));
+              const s32 y0S32 = static_cast<s32>(Round(y0));
+              const s32 y1S32 = static_cast<s32>(Round(y1));
+              const s32 x0S32 = static_cast<s32>(Round(x0));
 
               const u8 * restrict pReference_y0 = nextImage.Pointer(y0S32, x0S32);
               const u8 * restrict pReference_y1 = nextImage.Pointer(y1S32, x0S32);
@@ -1000,7 +1000,7 @@ namespace Anki
 
               const f32 interpolatedPixelF32 = InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse);
 
-              //const u8 interpolatedPixel = static_cast<u8>(Roundf(interpolatedPixelF32));
+              //const u8 interpolatedPixel = static_cast<u8>(Round(interpolatedPixelF32));
 
               // This block is the non-interpolation part of the per-sample algorithm
               {
@@ -1216,9 +1216,9 @@ namespace Anki
               const f32 alphaY = yTransformed - y0;
               const f32 alphaYinverse = 1.0f - alphaY;
 
-              const s32 y0S32 = static_cast<s32>(Roundf(y0));
-              const s32 y1S32 = static_cast<s32>(Roundf(y1));
-              const s32 x0S32 = static_cast<s32>(Roundf(x0));
+              const s32 y0S32 = static_cast<s32>(Round(y0));
+              const s32 y1S32 = static_cast<s32>(Round(y1));
+              const s32 x0S32 = static_cast<s32>(Round(x0));
 
               const u8 * restrict pReference_y0 = nextImage.Pointer(y0S32, x0S32);
               const u8 * restrict pReference_y1 = nextImage.Pointer(y1S32, x0S32);
@@ -1230,7 +1230,7 @@ namespace Anki
 
               const f32 interpolatedPixelF32 = InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse);
 
-              //const u8 interpolatedPixel = static_cast<u8>(Roundf(interpolatedPixelF32));
+              //const u8 interpolatedPixel = static_cast<u8>(Round(interpolatedPixelF32));
 
               // This block is the non-interpolation part of the per-sample algorithm
               {
