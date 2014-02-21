@@ -220,7 +220,31 @@ namespace Anki
           s32 &numCorrespondences,
           MemoryStack scratch);
 
+        static Result FindVerticalCorrespondences_Translation_FixedPoint(
+          const s32 maxMatchingDistance,
+          const Transformations::PlanarTransformation_f32 &transformation,
+          const FixedLengthList<Point<s16> > &templatePoints,
+          const FixedLengthList<Point<s16> > &newPoints,
+          const s32 imageHeight,
+          const s32 imageWidth,
+          const Array<s32> &xStartIndexes, //< Computed by ComputeIndexLimitsHorizontal
+          f32 &sumY,
+          s32 &numCorrespondences,
+          MemoryStack scratch);
+
         static Result FindHorizontalCorrespondences_Translation(
+          const s32 maxMatchingDistance,
+          const Transformations::PlanarTransformation_f32 &transformation,
+          const FixedLengthList<Point<s16> > &templatePoints,
+          const FixedLengthList<Point<s16> > &newPoints,
+          const s32 imageHeight,
+          const s32 imageWidth,
+          const Array<s32> &yStartIndexes, //< Computed by ComputeIndexLimitsVertical
+          f32 &sumX,
+          s32 &numCorrespondences,
+          MemoryStack scratch);
+
+        static Result FindHorizontalCorrespondences_Translation_FixedPoint(
           const s32 maxMatchingDistance,
           const Transformations::PlanarTransformation_f32 &transformation,
           const FixedLengthList<Point<s16> > &templatePoints,
@@ -244,7 +268,7 @@ namespace Anki
           Array<f32> &Atb,
           MemoryStack scratch);
 
-        static Result FindHorizontalCorrespondences_Projective(
+        static Result FindVerticalCorrespondences_Projective_FixedPoint(
           const s32 maxMatchingDistance,
           const Transformations::PlanarTransformation_f32 &transformation,
           const FixedLengthList<Point<s16> > &templatePoints,
@@ -254,6 +278,30 @@ namespace Anki
           const Array<s32> &yStartIndexes, //< Computed by ComputeIndexLimitsVertical
           Array<f32> &AtA,
           Array<f32> &Atb,
+          MemoryStack scratch);
+
+        static Result FindHorizontalCorrespondences_Projective(
+          const s32 maxMatchingDistance,
+          const Transformations::PlanarTransformation_f32 &transformation,
+          const FixedLengthList<Point<s16> > &templatePoints,
+          const FixedLengthList<Point<s16> > &newPoints,
+          const s32 imageHeight,
+          const s32 imageWidth,
+          const Array<s32> &yStartIndexes, //< Computed by ComputeIndexLimitsVertical
+          Array<f32> &AtA,
+          Array<f32> &Atb_t,
+          MemoryStack scratch);
+
+        static Result FindHorizontalCorrespondences_Projective_FixedPoint(
+          const s32 maxMatchingDistance,
+          const Transformations::PlanarTransformation_f32 &transformation,
+          const FixedLengthList<Point<s16> > &templatePoints,
+          const FixedLengthList<Point<s16> > &newPoints,
+          const s32 imageHeight,
+          const s32 imageWidth,
+          const Array<s32> &yStartIndexes, //< Computed by ComputeIndexLimitsVertical
+          Array<f32> &AtA,
+          Array<f32> &Atb_t,
           MemoryStack scratch);
 
         // Allocates allLimits, and computes all the indexe limits
@@ -270,12 +318,14 @@ namespace Anki
           const EdgeLists &nextImageEdges,
           const AllIndexLimits &allLimits,
           const s32 matching_maxDistance, const s32 matching_maxCorrespondences,
+          const bool useFixedPoint,
           MemoryStack scratch);
 
         Result IterativelyRefineTrack_Projective(
           const EdgeLists &nextImageEdges,
           const AllIndexLimits &allLimits,
           const s32 matching_maxDistance, const s32 matching_maxCorrespondences,
+          const bool useFixedPoint,
           MemoryStack scratch);
       }; // class LucasKanadeTrackerBinary
     } // namespace TemplateTracker
