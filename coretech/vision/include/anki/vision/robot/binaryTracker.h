@@ -42,7 +42,6 @@ namespace Anki
           const Array<u8> &nextImage,
           const u8 edgeDetection_grayvalueThreshold, const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType,
           const s32 matching_maxDistance, const s32 matching_maxCorrespondences,
-          const bool useFixedPoint_translation,
           const bool useFixedPoint_projective,
           MemoryStack scratch);
 
@@ -99,17 +98,17 @@ namespace Anki
         // The list of points must be sorted in X, from low to high
         static Result ComputeIndexLimitsHorizontal(const FixedLengthList<Point<s16> > &points, Array<s32> &xStartIndexes);
 
-        static Result FindVerticalCorrespondences_Translation(
-          const s32 maxMatchingDistance,
-          const Transformations::PlanarTransformation_f32 &transformation,
-          const FixedLengthList<Point<s16> > &templatePoints,
-          const FixedLengthList<Point<s16> > &newPoints,
-          const s32 imageHeight,
-          const s32 imageWidth,
-          const Array<s32> &xStartIndexes, //< Computed by ComputeIndexLimitsHorizontal
-          f32 &sumY,
-          s32 &numCorrespondences,
-          MemoryStack scratch);
+        /*static Result FindVerticalCorrespondences_Translation(
+        const s32 maxMatchingDistance,
+        const Transformations::PlanarTransformation_f32 &transformation,
+        const FixedLengthList<Point<s16> > &templatePoints,
+        const FixedLengthList<Point<s16> > &newPoints,
+        const s32 imageHeight,
+        const s32 imageWidth,
+        const Array<s32> &xStartIndexes, //< Computed by ComputeIndexLimitsHorizontal
+        f32 &sumY,
+        s32 &numCorrespondences,
+        MemoryStack scratch);*/
 
         static Result FindVerticalCorrespondences_Translation_FixedPoint(
           const s32 maxMatchingDistance,
@@ -123,17 +122,17 @@ namespace Anki
           s32 &numCorrespondences,
           MemoryStack scratch);
 
-        static Result FindHorizontalCorrespondences_Translation(
-          const s32 maxMatchingDistance,
-          const Transformations::PlanarTransformation_f32 &transformation,
-          const FixedLengthList<Point<s16> > &templatePoints,
-          const FixedLengthList<Point<s16> > &newPoints,
-          const s32 imageHeight,
-          const s32 imageWidth,
-          const Array<s32> &yStartIndexes, //< Computed by ComputeIndexLimitsVertical
-          f32 &sumX,
-          s32 &numCorrespondences,
-          MemoryStack scratch);
+        /*static Result FindHorizontalCorrespondences_Translation(
+        const s32 maxMatchingDistance,
+        const Transformations::PlanarTransformation_f32 &transformation,
+        const FixedLengthList<Point<s16> > &templatePoints,
+        const FixedLengthList<Point<s16> > &newPoints,
+        const s32 imageHeight,
+        const s32 imageWidth,
+        const Array<s32> &yStartIndexes, //< Computed by ComputeIndexLimitsVertical
+        f32 &sumX,
+        s32 &numCorrespondences,
+        MemoryStack scratch);*/
 
         static Result FindHorizontalCorrespondences_Translation_FixedPoint(
           const s32 maxMatchingDistance,
@@ -156,7 +155,7 @@ namespace Anki
           const s32 imageWidth,
           const Array<s32> &xStartIndexes, //< Computed by ComputeIndexLimitsHorizontal
           Array<f32> &AtA,
-          Array<f32> &Atb,
+          Array<f32> &Atb_t,
           MemoryStack scratch);
 
         static Result FindVerticalCorrespondences_Projective_FixedPoint(
@@ -168,7 +167,7 @@ namespace Anki
           const s32 imageWidth,
           const Array<s32> &yStartIndexes, //< Computed by ComputeIndexLimitsVertical
           Array<f32> &AtA,
-          Array<f32> &Atb,
+          Array<f32> &Atb_t,
           MemoryStack scratch);
 
         static Result FindHorizontalCorrespondences_Projective(
@@ -210,7 +209,6 @@ namespace Anki
           const EdgeLists &nextImageEdges,
           const AllIndexLimits &allLimits,
           const s32 matching_maxDistance, const s32 matching_maxCorrespondences,
-          const bool useFixedPoint,
           MemoryStack scratch);
 
         Result IterativelyRefineTrack_Projective(

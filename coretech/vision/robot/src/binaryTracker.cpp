@@ -280,7 +280,6 @@ namespace Anki
         const Array<u8> &nextImage,
         const u8 edgeDetection_grayvalueThreshold, const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType,
         const s32 matching_maxDistance, const s32 matching_maxCorrespondences,
-        const bool useFixedPoint_translation,
         const bool useFixedPoint_projective,
         MemoryStack scratch)
       {
@@ -322,7 +321,7 @@ namespace Anki
         lastResult = this->IterativelyRefineTrack(
           nextImageEdges, allLimits,
           matching_maxDistance, matching_maxCorrespondences,
-          Transformations::TRANSFORM_TRANSLATION, useFixedPoint_translation, scratch);
+          Transformations::TRANSFORM_TRANSLATION, false, scratch);
 
         EndBenchmark("ut_translation");
 
@@ -394,7 +393,7 @@ namespace Anki
 #endif // #ifdef SEND_BINARY_IMAGES_TO_MATLAB
 
         if(updateType == Transformations::TRANSFORM_TRANSLATION) {
-          return IterativelyRefineTrack_Translation(nextImageEdges, allLimits, matching_maxDistance, matching_maxCorrespondences, useFixedPoint, scratch);
+          return IterativelyRefineTrack_Translation(nextImageEdges, allLimits, matching_maxDistance, matching_maxCorrespondences, scratch);
         } else if(updateType == Transformations::TRANSFORM_PROJECTIVE) {
           return IterativelyRefineTrack_Projective(nextImageEdges, allLimits, matching_maxDistance, matching_maxCorrespondences, useFixedPoint, scratch);
         }
@@ -466,88 +465,88 @@ namespace Anki
         return RESULT_OK;
       }
 
-      Result BinaryTracker::FindVerticalCorrespondences_Translation(
-        const s32 maxMatchingDistance,
-        const Transformations::PlanarTransformation_f32 &transformation,
-        const FixedLengthList<Point<s16> > &templatePoints,
-        const FixedLengthList<Point<s16> > &newPoints,
-        const s32 imageHeight,
-        const s32 imageWidth,
-        const Array<s32> &xStartIndexes,
-        f32 &sumY,
-        s32 &numCorrespondences,
-        MemoryStack scratch)
+      /*      Result BinaryTracker::FindVerticalCorrespondences_Translation(
+      const s32 maxMatchingDistance,
+      const Transformations::PlanarTransformation_f32 &transformation,
+      const FixedLengthList<Point<s16> > &templatePoints,
+      const FixedLengthList<Point<s16> > &newPoints,
+      const s32 imageHeight,
+      const s32 imageWidth,
+      const Array<s32> &xStartIndexes,
+      f32 &sumY,
+      s32 &numCorrespondences,
+      MemoryStack scratch)
       {
-        const s32 numTemplatePoints = templatePoints.get_size();
+      const s32 numTemplatePoints = templatePoints.get_size();
 
-        const Array<f32> &homography = transformation.get_homography();
-        const Point<f32> &centerOffset = transformation.get_centerOffset();
+      const Array<f32> &homography = transformation.get_homography();
+      const Point<f32> &centerOffset = transformation.get_centerOffset();
 
-        const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
-        const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
-        const f32 h20 = homography[2][0]; const f32 h21 = homography[2][1]; const f32 h22 = 1.0f;
+      const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
+      const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
+      const f32 h20 = homography[2][0]; const f32 h21 = homography[2][1]; const f32 h22 = 1.0f;
 
-        AnkiAssert(FLT_NEAR(homography[2][2], 1.0f));
+      AnkiAssert(FLT_NEAR(homography[2][2], 1.0f));
 
-        sumY = 0.0f;
-        numCorrespondences = 0;
+      sumY = 0.0f;
+      numCorrespondences = 0;
 
-        const Point<s16> * restrict pTemplatePoints = templatePoints.Pointer(0);
-        const Point<s16> * restrict pNewPoints = newPoints.Pointer(0);
-        const s32 * restrict pXStartIndexes = xStartIndexes.Pointer(0,0);
+      const Point<s16> * restrict pTemplatePoints = templatePoints.Pointer(0);
+      const Point<s16> * restrict pNewPoints = newPoints.Pointer(0);
+      const s32 * restrict pXStartIndexes = xStartIndexes.Pointer(0,0);
 
-        for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++) {
-          const f32 xr = static_cast<f32>(pTemplatePoints[iPoint].x);
-          const f32 yr = static_cast<f32>(pTemplatePoints[iPoint].y);
+      for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++) {
+      const f32 xr = static_cast<f32>(pTemplatePoints[iPoint].x);
+      const f32 yr = static_cast<f32>(pTemplatePoints[iPoint].y);
 
-          //
-          // Warp x and y based on the current homography
-          //
+      //
+      // Warp x and y based on the current homography
+      //
 
-          // Subtract the center offset
-          const f32 xc = xr - centerOffset.x;
-          const f32 yc = yr - centerOffset.y;
+      // Subtract the center offset
+      const f32 xc = xr - centerOffset.x;
+      const f32 yc = yr - centerOffset.y;
 
-          // Projective warp
-          const f32 wpi = 1.0f / (h20*xc + h21*yc + h22);
-          const f32 warpedX = (h00*xc + h01*yc + h02) * wpi;
-          const f32 warpedY = (h10*xc + h11*yc + h12) * wpi;
+      // Projective warp
+      const f32 wpi = 1.0f / (h20*xc + h21*yc + h22);
+      const f32 warpedX = (h00*xc + h01*yc + h02) * wpi;
+      const f32 warpedY = (h10*xc + h11*yc + h12) * wpi;
 
-          // TODO: verify the -0.5f is correct
-          const s32 warpedXrounded = static_cast<s32>(Round(warpedX + centerOffset.x - 0.5f));
-          const s32 warpedYrounded = static_cast<s32>(Round(warpedY + centerOffset.y - 0.5f));
+      // TODO: verify the -0.5f is correct
+      const s32 warpedXrounded = static_cast<s32>(Round(warpedX + centerOffset.x - 0.5f));
+      const s32 warpedYrounded = static_cast<s32>(Round(warpedY + centerOffset.y - 0.5f));
 
-          if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance)) {
-            s32 minOffset = -maxMatchingDistance;
-            s32 maxOffset = maxMatchingDistance + 1;
+      if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance)) {
+      s32 minOffset = -maxMatchingDistance;
+      s32 maxOffset = maxMatchingDistance + 1;
 
-            // TODO: manually verify these conditions are correct
-            if(warpedXrounded < maxMatchingDistance) {
-              minOffset += (maxMatchingDistance - warpedXrounded);
-            }
+      // TODO: manually verify these conditions are correct
+      if(warpedXrounded < maxMatchingDistance) {
+      minOffset += (maxMatchingDistance - warpedXrounded);
+      }
 
-            if(warpedXrounded > (imageWidth - maxMatchingDistance - 2)) {
-              maxOffset += (imageWidth - warpedXrounded - maxMatchingDistance - 2);
-            }
+      if(warpedXrounded > (imageWidth - maxMatchingDistance - 2)) {
+      maxOffset += (imageWidth - warpedXrounded - maxMatchingDistance - 2);
+      }
 
-            for(s32 offset=minOffset; offset<maxOffset; offset++) {
-              const s32 xpRounded = warpedXrounded;
-              const s32 ypRounded = warpedYrounded + offset;
+      for(s32 offset=minOffset; offset<maxOffset; offset++) {
+      const s32 xpRounded = warpedXrounded;
+      const s32 ypRounded = warpedYrounded + offset;
 
-              // TODO: make a binary search?
-              for(s32 iMatch=pXStartIndexes[xpRounded]; iMatch<pXStartIndexes[xpRounded+1]; iMatch++) {
-                if(ypRounded == pNewPoints[iMatch].y) {
-                  //const f32 matchedY = warpedY + static_cast<f32>(offset);
-                  sumY += offset;
-                  numCorrespondences++;
-                }
-              }
-            } // for(s32 iOffset=-maxMatchingDistance; iOffset<=maxMatchingDistance; iOffset++)
-          } // if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance))
-        } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
+      // TODO: make a binary search?
+      for(s32 iMatch=pXStartIndexes[xpRounded]; iMatch<pXStartIndexes[xpRounded+1]; iMatch++) {
+      if(ypRounded == pNewPoints[iMatch].y) {
+      //const f32 matchedY = warpedY + static_cast<f32>(offset);
+      sumY += offset;
+      numCorrespondences++;
+      }
+      }
+      } // for(s32 iOffset=-maxMatchingDistance; iOffset<=maxMatchingDistance; iOffset++)
+      } // if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance))
+      } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
 
-        return RESULT_OK;
-      } // Result BinaryTracker::FindVerticalCorrespondences_Translation()
+      return RESULT_OK;
+      } // Result BinaryTracker::FindVerticalCorrespondences_Translation()*/
 
       Result BinaryTracker::FindVerticalCorrespondences_Translation_FixedPoint(
         const s32 maxMatchingDistance,
@@ -639,88 +638,88 @@ namespace Anki
         return RESULT_OK;
       } // Result BinaryTracker::FindVerticalCorrespondences_Translation_FixedPoint()
 
-      Result BinaryTracker::FindHorizontalCorrespondences_Translation(
-        const s32 maxMatchingDistance,
-        const Transformations::PlanarTransformation_f32 &transformation,
-        const FixedLengthList<Point<s16> > &templatePoints,
-        const FixedLengthList<Point<s16> > &newPoints,
-        const s32 imageHeight,
-        const s32 imageWidth,
-        const Array<s32> &yStartIndexes,
-        f32 &sumX,
-        s32 &numCorrespondences,
-        MemoryStack scratch)
+      /*      Result BinaryTracker::FindHorizontalCorrespondences_Translation(
+      const s32 maxMatchingDistance,
+      const Transformations::PlanarTransformation_f32 &transformation,
+      const FixedLengthList<Point<s16> > &templatePoints,
+      const FixedLengthList<Point<s16> > &newPoints,
+      const s32 imageHeight,
+      const s32 imageWidth,
+      const Array<s32> &yStartIndexes,
+      f32 &sumX,
+      s32 &numCorrespondences,
+      MemoryStack scratch)
       {
-        const s32 numTemplatePoints = templatePoints.get_size();
+      const s32 numTemplatePoints = templatePoints.get_size();
 
-        const Array<f32> &homography = transformation.get_homography();
-        const Point<f32> &centerOffset = transformation.get_centerOffset();
+      const Array<f32> &homography = transformation.get_homography();
+      const Point<f32> &centerOffset = transformation.get_centerOffset();
 
-        const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
-        const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
-        const f32 h20 = homography[2][0]; const f32 h21 = homography[2][1]; const f32 h22 = 1.0f;
+      const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
+      const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
+      const f32 h20 = homography[2][0]; const f32 h21 = homography[2][1]; const f32 h22 = 1.0f;
 
-        AnkiAssert(FLT_NEAR(homography[2][2], 1.0f));
+      AnkiAssert(FLT_NEAR(homography[2][2], 1.0f));
 
-        sumX = 0.0f;
-        numCorrespondences = 0;
+      sumX = 0.0f;
+      numCorrespondences = 0;
 
-        const Point<s16> * restrict pTemplatePoints = templatePoints.Pointer(0);
-        const Point<s16> * restrict pNewPoints = newPoints.Pointer(0);
-        const s32 * restrict pYStartIndexes = yStartIndexes.Pointer(0,0);
+      const Point<s16> * restrict pTemplatePoints = templatePoints.Pointer(0);
+      const Point<s16> * restrict pNewPoints = newPoints.Pointer(0);
+      const s32 * restrict pYStartIndexes = yStartIndexes.Pointer(0,0);
 
-        for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++) {
-          const f32 xr = static_cast<f32>(pTemplatePoints[iPoint].x);
-          const f32 yr = static_cast<f32>(pTemplatePoints[iPoint].y);
+      for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++) {
+      const f32 xr = static_cast<f32>(pTemplatePoints[iPoint].x);
+      const f32 yr = static_cast<f32>(pTemplatePoints[iPoint].y);
 
-          //
-          // Warp x and y based on the current homography
-          //
+      //
+      // Warp x and y based on the current homography
+      //
 
-          // Subtract the center offset
-          const f32 xc = xr - centerOffset.x;
-          const f32 yc = yr - centerOffset.y;
+      // Subtract the center offset
+      const f32 xc = xr - centerOffset.x;
+      const f32 yc = yr - centerOffset.y;
 
-          // Projective warp
-          const f32 wpi = 1.0f / (h20*xc + h21*yc + h22);
-          const f32 warpedX = (h00*xc + h01*yc + h02) * wpi;
-          const f32 warpedY = (h10*xc + h11*yc + h12) * wpi;
+      // Projective warp
+      const f32 wpi = 1.0f / (h20*xc + h21*yc + h22);
+      const f32 warpedX = (h00*xc + h01*yc + h02) * wpi;
+      const f32 warpedY = (h10*xc + h11*yc + h12) * wpi;
 
-          // TODO: verify the -0.5f is correct
-          const s32 warpedXrounded = static_cast<s32>(Round(warpedX + centerOffset.x - 0.5f));
-          const s32 warpedYrounded = static_cast<s32>(Round(warpedY + centerOffset.y - 0.5f));
+      // TODO: verify the -0.5f is correct
+      const s32 warpedXrounded = static_cast<s32>(Round(warpedX + centerOffset.x - 0.5f));
+      const s32 warpedYrounded = static_cast<s32>(Round(warpedY + centerOffset.y - 0.5f));
 
-          if(warpedXrounded >= maxMatchingDistance && warpedXrounded < (imageWidth-maxMatchingDistance)) {
-            s32 minOffset = -maxMatchingDistance;
-            s32 maxOffset = maxMatchingDistance + 1;
+      if(warpedXrounded >= maxMatchingDistance && warpedXrounded < (imageWidth-maxMatchingDistance)) {
+      s32 minOffset = -maxMatchingDistance;
+      s32 maxOffset = maxMatchingDistance + 1;
 
-            // TODO: manually verify these conditions are correct
-            if(warpedYrounded < maxMatchingDistance) {
-              minOffset += (maxMatchingDistance - warpedYrounded);
-            }
+      // TODO: manually verify these conditions are correct
+      if(warpedYrounded < maxMatchingDistance) {
+      minOffset += (maxMatchingDistance - warpedYrounded);
+      }
 
-            if(warpedYrounded > (imageHeight - maxMatchingDistance - 2)) {
-              maxOffset += (imageHeight - warpedYrounded - maxMatchingDistance - 2);
-            }
+      if(warpedYrounded > (imageHeight - maxMatchingDistance - 2)) {
+      maxOffset += (imageHeight - warpedYrounded - maxMatchingDistance - 2);
+      }
 
-            for(s32 offset=minOffset; offset<maxOffset; offset++) {
-              const s32 xpRounded = warpedXrounded + offset;
-              const s32 ypRounded = warpedYrounded;
+      for(s32 offset=minOffset; offset<maxOffset; offset++) {
+      const s32 xpRounded = warpedXrounded + offset;
+      const s32 ypRounded = warpedYrounded;
 
-              // TODO: make a binary search?
-              for(s32 iMatch=pYStartIndexes[ypRounded]; iMatch<pYStartIndexes[ypRounded+1]; iMatch++) {
-                if(xpRounded == pNewPoints[iMatch].x) {
-                  //const f32 matchedX = warpedX + static_cast<f32>(offset);
-                  sumX += offset;
-                  numCorrespondences++;
-                }
-              }
-            } // for(s32 iOffset=-maxMatchingDistance; iOffset<=maxMatchingDistance; iOffset++)
-          } // if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance))
-        } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
+      // TODO: make a binary search?
+      for(s32 iMatch=pYStartIndexes[ypRounded]; iMatch<pYStartIndexes[ypRounded+1]; iMatch++) {
+      if(xpRounded == pNewPoints[iMatch].x) {
+      //const f32 matchedX = warpedX + static_cast<f32>(offset);
+      sumX += offset;
+      numCorrespondences++;
+      }
+      }
+      } // for(s32 iOffset=-maxMatchingDistance; iOffset<=maxMatchingDistance; iOffset++)
+      } // if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance))
+      } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
 
-        return RESULT_OK;
-      } // Result BinaryTracker::FindHorizontalCorrespondences_Translation()
+      return RESULT_OK;
+      } // Result BinaryTracker::FindHorizontalCorrespondences_Translation()*/
 
       Result BinaryTracker::FindHorizontalCorrespondences_Translation_FixedPoint(
         const s32 maxMatchingDistance,
@@ -821,7 +820,7 @@ namespace Anki
         const s32 imageWidth,
         const Array<s32> &xStartIndexes,
         Array<f32> &AtA,
-        Array<f32> &Atb,
+        Array<f32> &Atb_t,
         MemoryStack scratch)
       {
         const s32 numTemplatePoints = templatePoints.get_size();
@@ -836,15 +835,25 @@ namespace Anki
         AnkiAssert(FLT_NEAR(homography[2][2], 1.0f));
 
         // These addresses should be known at compile time, so should be faster
+#ifndef __EDG__ // natural C
         f32 AtA_raw[8][8];
-        f32 Atb_raw[8];
+        f32 Atb_t_raw[8];
 
         for(s32 ia=0; ia<8; ia++) {
           for(s32 ja=0; ja<8; ja++) {
             AtA_raw[ia][ja] = 0;
           }
-          Atb_raw[ia] = 0;
+          Atb_t_raw[ia] = 0;
         }
+#else // ARM optimized
+        f32 AtA_raw33 = 0, AtA_raw34 = 0, AtA_raw35 = 0, AtA_raw36 = 0, AtA_raw37 = 0;
+        f32 AtA_raw44 = 0, AtA_raw45 = 0, AtA_raw46 = 0, AtA_raw47 = 0;
+        f32 AtA_raw55 = 0, AtA_raw56 = 0, AtA_raw57 = 0;
+        f32 AtA_raw66 = 0, AtA_raw67 = 0;
+        f32 AtA_raw77 = 0;
+
+        f32 Atb_t_raw3 = 0, Atb_t_raw4 = 0, Atb_t_raw5 = 0, Atb_t_raw6 = 0, Atb_t_raw7 = 0;
+#endif // #ifndef __EDG__ ... #else
 
         const Point<s16> * restrict pTemplatePoints = templatePoints.Pointer(0);
         const Point<s16> * restrict pNewPoints = newPoints.Pointer(0);
@@ -868,8 +877,13 @@ namespace Anki
           const f32 warpedY = (h10*xc + h11*yc + h12) * wpi;
 
           // TODO: verify the -0.5f is correct
-          const s32 warpedXrounded = static_cast<s32>(Round(warpedX + centerOffset.x - 0.5f));
-          const s32 warpedYrounded = static_cast<s32>(Round(warpedY + centerOffset.y - 0.5f));
+          #ifndef __EDG__ // natural C
+            const s32 warpedXrounded = static_cast<s32>(Round(warpedX + centerOffset.x - 0.5f));
+            const s32 warpedYrounded = static_cast<s32>(Round(warpedY + centerOffset.y - 0.5f));
+          #else // ARM optimized
+            const s32 warpedXrounded = static_cast<s32>((warpedX + centerOffset.x - 0.5f));
+            const s32 warpedYrounded = static_cast<s32>((warpedY + centerOffset.y - 0.5f));
+          #endif // #ifndef __EDG__ ... #else
 
           if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance)) {
             s32 minOffset = -maxMatchingDistance;
@@ -893,6 +907,7 @@ namespace Anki
                 if(ypRounded == pNewPoints[iMatch].y) {
                   const f32 yp = warpedY + static_cast<f32>(offset);
 
+#ifndef __EDG__ // natural C
                   const f32 aValues[8] = {0, 0, 0, -xc, -yc, -1, xc*yp, yc*yp};
 
                   const f32 bValue = -yp;
@@ -901,8 +916,38 @@ namespace Anki
                     for(s32 ja=ia; ja<8; ja++) {
                       AtA_raw[ia][ja] += aValues[ia] * aValues[ja];
                     }
-                    Atb_raw[ia] += bValue * aValues[ia];
+                    Atb_t_raw[ia] += bValue * aValues[ia];
                   }
+#else // ARM optimized
+                  const f32 aValues6 = xc*yp;
+                  const f32 aValues7 = yc*yp;
+
+                  AtA_raw33 += xc * xc;
+                  AtA_raw34 += xc * yc;
+                  AtA_raw35 += xc;
+                  AtA_raw36 -= xc * aValues6;
+                  AtA_raw37 -= xc * aValues7;
+
+                  AtA_raw44 += yc * yc;
+                  AtA_raw45 += yc;
+                  AtA_raw46 -= yc * aValues6;
+                  AtA_raw47 -= yc * aValues7;
+
+                  AtA_raw55 += 1;
+                  AtA_raw56 -= aValues6;
+                  AtA_raw57 -= aValues7;
+
+                  AtA_raw66 += aValues6 * aValues6;
+                  AtA_raw67 += aValues6 * aValues7;
+
+                  AtA_raw77 += aValues7 * aValues7;
+
+                  Atb_t_raw3 += yp * xc;
+                  Atb_t_raw4 += yp * yc;
+                  Atb_t_raw5 += yp;
+                  Atb_t_raw6 -= yp * aValues6;
+                  Atb_t_raw7 -= yp * aValues7;
+#endif // #ifndef __EDG__ ... #else
 
                   //const f32 aValues[8] = {0, 0, 0, -xc, -yc, -1, xc*yp, yc*yp};
 
@@ -934,11 +979,11 @@ namespace Anki
                   AtA_raw[7][ja] += aValues[7] * aValues[ja];
                   }
 
-                  Atb_raw[3] -= yp * aValues[3];
-                  Atb_raw[4] -= yp * aValues[4];
-                  Atb_raw[5] -= yp * aValues[5];
-                  Atb_raw[6] -= yp * aValues[6];
-                  Atb_raw[7] -= yp * aValues[7];*/
+                  Atb_t_raw[3] -= yp * aValues[3];
+                  Atb_t_raw[4] -= yp * aValues[4];
+                  Atb_t_raw[5] -= yp * aValues[5];
+                  Atb_t_raw[6] -= yp * aValues[6];
+                  Atb_t_raw[7] -= yp * aValues[7];*/
 
                   /*const f32 aValues[8] = {0, 0, 0, -xc, -yc, -1, xc*yp, yc*yp};
 
@@ -962,11 +1007,11 @@ namespace Anki
 
                   AtA_raw[7][7] += aValues[7] * aValues[7];
 
-                  Atb_raw[3] -= yp * aValues[3];
-                  Atb_raw[4] -= yp * aValues[4];
-                  Atb_raw[5] -= yp * aValues[5];
-                  Atb_raw[6] -= yp * aValues[6];
-                  Atb_raw[7] -= yp * aValues[7];*/
+                  Atb_t_raw[3] -= yp * aValues[3];
+                  Atb_t_raw[4] -= yp * aValues[4];
+                  Atb_t_raw[5] -= yp * aValues[5];
+                  Atb_t_raw[6] -= yp * aValues[6];
+                  Atb_t_raw[7] -= yp * aValues[7];*/
 
                   /*const f32 aValues6 = xc*yp;
                   const f32 aValues7 = yc*yp;
@@ -991,11 +1036,11 @@ namespace Anki
 
                   AtA_raw[7][7] += aValues7 * aValues7;
 
-                  Atb_raw[3] -= yp * -xc;
-                  Atb_raw[4] -= yp * -yc;
-                  Atb_raw[5] -= yp * -1;
-                  Atb_raw[6] -= yp * aValues6;
-                  Atb_raw[7] -= yp * aValues7;*/
+                  Atb_t_raw[3] -= yp * -xc;
+                  Atb_t_raw[4] -= yp * -yc;
+                  Atb_t_raw[5] -= yp * -1;
+                  Atb_t_raw[6] -= yp * aValues6;
+                  Atb_t_raw[7] -= yp * aValues7;*/
 
                   /*const f32 aValues6 = xc*yp;
                   const f32 aValues7 = yc*yp;
@@ -1020,23 +1065,33 @@ namespace Anki
 
                   AtA_raw[7][7] += aValues7 * aValues7;
 
-                  Atb_raw[3] += yp * xc;
-                  Atb_raw[4] += yp * yc;
-                  Atb_raw[5] += yp;
-                  Atb_raw[6] -= yp * aValues6;
-                  Atb_raw[7] -= yp * aValues7;*/
+                  Atb_t_raw[3] += yp * xc;
+                  Atb_t_raw[4] += yp * yc;
+                  Atb_t_raw[5] += yp;
+                  Atb_t_raw[6] -= yp * aValues6;
+                  Atb_t_raw[7] -= yp * aValues7;*/
                 }
               } // if(ypRounded == pNewPoints[iMatch].y)
             } // for(s32 iOffset=-maxMatchingDistance; iOffset<=maxMatchingDistance; iOffset++)
           } // if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance))
         } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
 
+#ifndef __EDG__ // natural C
         for(s32 ia=0; ia<8; ia++) {
           for(s32 ja=ia; ja<8; ja++) {
             AtA[ia][ja] = AtA_raw[ia][ja];
           }
-          Atb[0][ia] = Atb_raw[ia];
+          Atb_t[0][ia] = Atb_t_raw[ia];
         }
+#else // ARM optimized
+        AtA[3][3] = AtA_raw33; AtA[3][4] = AtA_raw34; AtA[3][5] = AtA_raw35; AtA[3][6] = AtA_raw36; AtA[3][7] = AtA_raw37;
+        AtA[4][4] = AtA_raw44; AtA[4][5] = AtA_raw45; AtA[4][6] = AtA_raw46; AtA[4][7] = AtA_raw47;
+        AtA[5][5] = AtA_raw55; AtA[5][6] = AtA_raw56; AtA[5][7] = AtA_raw57;
+        AtA[6][6] = AtA_raw66; AtA[6][7] = AtA_raw67;
+        AtA[7][7] = AtA_raw77;
+
+        Atb_t[0][3] = Atb_t_raw3; Atb_t[0][4] = Atb_t_raw4; Atb_t[0][5] = Atb_t_raw5; Atb_t[0][6] = Atb_t_raw6; Atb_t[0][7] = Atb_t_raw7;
+#endif // #ifndef __EDG__ ... #else
 
         return RESULT_OK;
       } // NO_INLINE Result BinaryTracker::FindVerticalCorrespondences_Projective()
@@ -1050,7 +1105,7 @@ namespace Anki
         const s32 imageWidth,
         const Array<s32> &xStartIndexes,
         Array<f32> &AtA,
-        Array<f32> &Atb,
+        Array<f32> &Atb_t,
         MemoryStack scratch)
       {
         //const s32 numFractionalBits = 2;
@@ -1069,13 +1124,13 @@ namespace Anki
         // These addresses should be known at compile time, so should be faster
 #ifndef __EDG__ // natural C
         s64 AtA_raw[8][8];
-        s64 Atb_raw[8];
+        s64 Atb_t_raw[8];
 
         for(s32 ia=0; ia<8; ia++) {
           for(s32 ja=0; ja<8; ja++) {
             AtA_raw[ia][ja] = 0;
           }
-          Atb_raw[ia] = 0;
+          Atb_t_raw[ia] = 0;
         }
 #else // ARM optimized
         s32 AtA_raw33 = 0, AtA_raw34 = 0, AtA_raw35 = 0, AtA_raw36 = 0, AtA_raw37 = 0;
@@ -1084,7 +1139,7 @@ namespace Anki
         s32 AtA_raw66 = 0, AtA_raw67 = 0;
         s32 AtA_raw77 = 0;
 
-        s32 Atb_raw3 = 0, Atb_raw4 = 0, Atb_raw5 = 0, Atb_raw6 = 0, Atb_raw7 = 0;
+        s32 Atb_t_raw3 = 0, Atb_t_raw4 = 0, Atb_t_raw5 = 0, Atb_t_raw6 = 0, Atb_t_raw7 = 0;
 #endif // #ifndef __EDG__ ... #else
 
         const Point<s16> * restrict pTemplatePoints = templatePoints.Pointer(0);
@@ -1160,7 +1215,7 @@ namespace Anki
                       AtA_raw[ia][ja] += aValues[ia] * aValues[ja];
                     }
 
-                    Atb_raw[ia] += bValue * aValues[ia];
+                    Atb_t_raw[ia] += bValue * aValues[ia];
                   }
 #else // ARM optimized
                   //const s32 aValues[8] = {
@@ -1178,7 +1233,7 @@ namespace Anki
                   //    AtA_raw[ia][ja] = __SMLALD(aValues[ia], aValues[ja], AtA_raw[ia][ja]);
                   //  }
 
-                  //  Atb_raw[ia] = __SMLALD(bValue, aValues[ia], Atb_raw[ia]);
+                  //  Atb_t_raw[ia] = __SMLALD(bValue, aValues[ia], Atb_t_raw[ia]);
                   //}
 
                   //const s32 aValues[8] = {
@@ -1211,11 +1266,11 @@ namespace Anki
                   //  AtA_raw[7][ja] = __SMLALD(aValues[7], aValues[ja], AtA_raw[7][ja]);
                   //}
 
-                  //Atb_raw[3] = __SMLALD(bValue, aValues[3], Atb_raw[3]);
-                  //Atb_raw[4] = __SMLALD(bValue, aValues[4], Atb_raw[4]);
-                  //Atb_raw[5] = __SMLALD(bValue, aValues[5], Atb_raw[5]);
-                  //Atb_raw[6] = __SMLALD(bValue, aValues[6], Atb_raw[6]);
-                  //Atb_raw[7] = __SMLALD(bValue, aValues[7], Atb_raw[7]);
+                  //Atb_t_raw[3] = __SMLALD(bValue, aValues[3], Atb_t_raw[3]);
+                  //Atb_t_raw[4] = __SMLALD(bValue, aValues[4], Atb_t_raw[4]);
+                  //Atb_t_raw[5] = __SMLALD(bValue, aValues[5], Atb_t_raw[5]);
+                  //Atb_t_raw[6] = __SMLALD(bValue, aValues[6], Atb_t_raw[6]);
+                  //Atb_t_raw[7] = __SMLALD(bValue, aValues[7], Atb_t_raw[7]);
 
                   const s32 aValues3 = -xc_s32;
                   const s32 aValues4 = -yc_s32;
@@ -1245,11 +1300,11 @@ namespace Anki
 
                   AtA_raw77 = __SMMLA(aValues7, aValues7, AtA_raw77);
 
-                  Atb_raw3 = __SMMLA(bValue, aValues3, Atb_raw3);
-                  Atb_raw4 = __SMMLA(bValue, aValues4, Atb_raw4);
-                  Atb_raw5 -= bValue;
-                  Atb_raw6 = __SMMLA(bValue, aValues6, Atb_raw6);
-                  Atb_raw7 = __SMMLA(bValue, aValues7, Atb_raw7);
+                  Atb_t_raw3 = __SMMLA(bValue, aValues3, Atb_t_raw3);
+                  Atb_t_raw4 = __SMMLA(bValue, aValues4, Atb_t_raw4);
+                  Atb_t_raw5 -= bValue;
+                  Atb_t_raw6 = __SMMLA(bValue, aValues6, Atb_t_raw6);
+                  Atb_t_raw7 = __SMMLA(bValue, aValues7, Atb_t_raw7);
 
 #endif // #ifndef __EDG__ ... #else
                 }
@@ -1264,7 +1319,7 @@ namespace Anki
             AtA[ia][ja] = static_cast<f32>(AtA_raw[ia][ja]);
           }
 
-          Atb[0][ia] = static_cast<f32>(Atb_raw[ia]);
+          Atb_t[0][ia] = static_cast<f32>(Atb_t_raw[ia]);
         }
 #else // ARM optimized
         AtA[3][3] = static_cast<f32>(AtA_raw33); AtA[3][4] = static_cast<f32>(AtA_raw34); AtA[3][5] = static_cast<f32>(AtA_raw35); AtA[3][6] = static_cast<f32>(AtA_raw36); AtA[3][7] = static_cast<f32>(AtA_raw37);
@@ -1273,7 +1328,7 @@ namespace Anki
         AtA[6][6] = static_cast<f32>(AtA_raw66); AtA[6][7] = static_cast<f32>(AtA_raw67);
         AtA[7][7] = static_cast<f32>(AtA_raw77);
 
-        Atb[0][3] = static_cast<f32>(Atb_raw3); Atb[0][4] = static_cast<f32>(Atb_raw4); Atb[0][5] = static_cast<f32>(Atb_raw5); Atb[0][6] = static_cast<f32>(Atb_raw6); Atb[0][7] = static_cast<f32>(Atb_raw7);
+        Atb_t[0][3] = static_cast<f32>(Atb_t_raw3); Atb_t[0][4] = static_cast<f32>(Atb_t_raw4); Atb_t[0][5] = static_cast<f32>(Atb_t_raw5); Atb_t[0][6] = static_cast<f32>(Atb_t_raw6); Atb_t[0][7] = static_cast<f32>(Atb_t_raw7);
 #endif // #ifndef __EDG__ ... #else
 
         return RESULT_OK;
@@ -1303,6 +1358,7 @@ namespace Anki
         AnkiAssert(FLT_NEAR(homography[2][2], 1.0f));
 
         // These addresses should be known at compile time, so should be faster
+#ifndef __EDG__ // natural C
         f32 AtA_raw[8][8];
         f32 Atb_t_raw[8];
 
@@ -1312,6 +1368,15 @@ namespace Anki
           }
           Atb_t_raw[ia] = 0;
         }
+#else // ARM optimized
+        f32 AtA_raw00 = 0, AtA_raw01 = 0, AtA_raw02 = 0, AtA_raw06 = 0, AtA_raw07 = 0;
+        f32 AtA_raw11 = 0, AtA_raw12 = 0, AtA_raw16 = 0, AtA_raw17 = 0;
+        f32 AtA_raw22 = 0, AtA_raw26 = 0, AtA_raw27 = 0;
+        f32 AtA_raw66 = 0, AtA_raw67 = 0;
+        f32 AtA_raw77 = 0;
+
+        f32 Atb_t_raw0 = 0, Atb_t_raw1 = 0, Atb_t_raw2 = 0, Atb_t_raw6 = 0, Atb_t_raw7 = 0;
+#endif // #ifndef __EDG__ ... #else
 
         const Point<s16> * restrict pTemplatePoints = templatePoints.Pointer(0);
         const Point<s16> * restrict pNewPoints = newPoints.Pointer(0);
@@ -1335,8 +1400,13 @@ namespace Anki
           const f32 warpedY = (h10*xc + h11*yc + h12) * wpi;
 
           // TODO: verify the -0.5f is correct
-          const s32 warpedXrounded = static_cast<s32>(Round(warpedX + centerOffset.x - 0.5f));
-          const s32 warpedYrounded = static_cast<s32>(Round(warpedY + centerOffset.y - 0.5f));
+          #ifndef __EDG__ // natural C
+            const s32 warpedXrounded = static_cast<s32>(Round(warpedX + centerOffset.x - 0.5f));
+            const s32 warpedYrounded = static_cast<s32>(Round(warpedY + centerOffset.y - 0.5f));
+          #else // ARM optimized
+            const s32 warpedXrounded = static_cast<s32>((warpedX + centerOffset.x - 0.5f));
+            const s32 warpedYrounded = static_cast<s32>((warpedY + centerOffset.y - 0.5f));
+          #endif // #ifndef __EDG__ ... #else
 
           if(warpedXrounded >= maxMatchingDistance && warpedXrounded < (imageWidth-maxMatchingDistance)) {
             s32 minOffset = -maxMatchingDistance;
@@ -1360,6 +1430,7 @@ namespace Anki
                 if(xpRounded == pNewPoints[iMatch].x) {
                   const f32 xp = warpedX + static_cast<f32>(offset);
 
+#ifndef __EDG__ // natural C
                   const f32 aValues[8] = {xc, yc, 1, 0, 0, 0, -xc*xp, -yc*xp};
 
                   const f32 bValue = xp;
@@ -1371,18 +1442,58 @@ namespace Anki
 
                     Atb_t_raw[ia] += aValues[ia] * bValue;
                   }
+#else // ARM optimized
+                  const f32 aValues6 = -xc*xp;
+                  const f32 aValues7 = -yc*xp;
+
+                  AtA_raw00 += xc * xc;
+                  AtA_raw01 += xc * yc;
+                  AtA_raw02 += xc;
+                  AtA_raw06 += xc * aValues6;
+                  AtA_raw07 += xc * aValues7;
+
+                  AtA_raw11 += yc * yc;
+                  AtA_raw12 += yc;
+                  AtA_raw16 += yc * aValues6;
+                  AtA_raw17 += yc * aValues7;
+
+                  AtA_raw22 += 1;
+                  AtA_raw26 += aValues6;
+                  AtA_raw27 += aValues7;
+
+                  AtA_raw66 += aValues6 * aValues6;
+                  AtA_raw67 += aValues6 * aValues7;
+
+                  AtA_raw77 += aValues7 * aValues7;
+
+                  Atb_t_raw0 += xc * xp;
+                  Atb_t_raw1 += yc * xp;
+                  Atb_t_raw2 += xp;
+                  Atb_t_raw6 += aValues6 * xp;
+                  Atb_t_raw7 += aValues7 * xp;
+#endif // #ifndef __EDG__ ... #else
                 }
               }
             } // for(s32 iOffset=-maxMatchingDistance; iOffset<=maxMatchingDistance; iOffset++)
           } // if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance))
         } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
 
+#ifndef __EDG__ // natural C
         for(s32 ia=0; ia<8; ia++) {
           for(s32 ja=ia; ja<8; ja++) {
             AtA[ia][ja] = AtA_raw[ia][ja];
           }
           Atb_t[0][ia] = Atb_t_raw[ia];
         }
+#else // ARM optimized
+        AtA[0][0] = AtA_raw00; AtA[0][1] = AtA_raw01; AtA[0][2] = AtA_raw02; AtA[0][6] = AtA_raw06; AtA[0][7] = AtA_raw07;
+        AtA[1][1] = AtA_raw11; AtA[1][2] = AtA_raw12; AtA[1][6] = AtA_raw16; AtA[1][7] = AtA_raw17;
+        AtA[2][2] = AtA_raw22; AtA[2][6] = AtA_raw26; AtA[2][7] = AtA_raw27;
+        AtA[6][6] = AtA_raw66; AtA[6][7] = AtA_raw67;
+        AtA[7][7] = AtA_raw77;
+
+        Atb_t[0][0] = Atb_t_raw0; Atb_t[0][1] = Atb_t_raw1; Atb_t[0][2] = Atb_t_raw2; Atb_t[0][6] = Atb_t_raw6; Atb_t[0][7] = Atb_t_raw7;
+#endif // #ifndef __EDG__ ... #else
 
         return RESULT_OK;
       } // NO_INLINE Result BinaryTracker::FindHorizontalCorrespondences_Projective()
@@ -1508,186 +1619,96 @@ namespace Anki
         const EdgeLists &nextImageEdges,
         const AllIndexLimits &allLimits,
         const s32 matching_maxDistance, const s32 matching_maxCorrespondences,
-        const bool useFixedPoint,
         MemoryStack scratch)
       {
         Result lastResult;
 
-        if(useFixedPoint) {
-          s32 sumX_xDecreasing;
-          s32 sumX_xIncreasing;
-          s32 sumY_yDecreasing;
-          s32 sumY_yIncreasing;
+        s32 sumX_xDecreasing;
+        s32 sumX_xIncreasing;
+        s32 sumY_yDecreasing;
+        s32 sumY_yIncreasing;
 
-          s32 numX_xDecreasing;
-          s32 numX_xIncreasing;
-          s32 numY_yDecreasing;
-          s32 numY_yIncreasing;
+        s32 numX_xDecreasing;
+        s32 numX_xIncreasing;
+        s32 numY_yDecreasing;
+        s32 numY_yIncreasing;
 
-          lastResult = BinaryTracker::FindHorizontalCorrespondences_Translation_FixedPoint(
-            matching_maxDistance,
-            this->transformation,
-            this->templateEdges.xDecreasing,
-            nextImageEdges.xDecreasing,
-            nextImageEdges.imageHeight,
-            nextImageEdges.imageWidth,
-            allLimits.xDecreasing_yStartIndexes,
-            sumX_xDecreasing, numX_xDecreasing,
-            scratch);
+        lastResult = BinaryTracker::FindHorizontalCorrespondences_Translation_FixedPoint(
+          matching_maxDistance,
+          this->transformation,
+          this->templateEdges.xDecreasing,
+          nextImageEdges.xDecreasing,
+          nextImageEdges.imageHeight,
+          nextImageEdges.imageWidth,
+          allLimits.xDecreasing_yStartIndexes,
+          sumX_xDecreasing, numX_xDecreasing,
+          scratch);
 
-          AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
-            lastResult, "BinaryTracker::IterativelyRefineTrack", "FindHorizontalCorrespondences 1 failed");
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+          lastResult, "BinaryTracker::IterativelyRefineTrack", "FindHorizontalCorrespondences 1 failed");
 
-          lastResult = BinaryTracker::FindHorizontalCorrespondences_Translation_FixedPoint(
-            matching_maxDistance,
-            this->transformation,
-            this->templateEdges.xIncreasing,
-            nextImageEdges.xIncreasing,
-            nextImageEdges.imageHeight,
-            nextImageEdges.imageWidth,
-            allLimits.xIncreasing_yStartIndexes,
-            sumX_xIncreasing, numX_xIncreasing,
-            scratch);
+        lastResult = BinaryTracker::FindHorizontalCorrespondences_Translation_FixedPoint(
+          matching_maxDistance,
+          this->transformation,
+          this->templateEdges.xIncreasing,
+          nextImageEdges.xIncreasing,
+          nextImageEdges.imageHeight,
+          nextImageEdges.imageWidth,
+          allLimits.xIncreasing_yStartIndexes,
+          sumX_xIncreasing, numX_xIncreasing,
+          scratch);
 
-          AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
-            lastResult, "BinaryTracker::IterativelyRefineTrack", "FindHorizontalCorrespondences 2 failed");
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+          lastResult, "BinaryTracker::IterativelyRefineTrack", "FindHorizontalCorrespondences 2 failed");
 
-          lastResult = BinaryTracker::FindVerticalCorrespondences_Translation_FixedPoint(
-            matching_maxDistance,
-            this->transformation,
-            this->templateEdges.yDecreasing,
-            nextImageEdges.yDecreasing,
-            nextImageEdges.imageHeight,
-            nextImageEdges.imageWidth,
-            allLimits.yDecreasing_xStartIndexes,
-            sumY_yDecreasing, numY_yDecreasing,
-            scratch);
+        lastResult = BinaryTracker::FindVerticalCorrespondences_Translation_FixedPoint(
+          matching_maxDistance,
+          this->transformation,
+          this->templateEdges.yDecreasing,
+          nextImageEdges.yDecreasing,
+          nextImageEdges.imageHeight,
+          nextImageEdges.imageWidth,
+          allLimits.yDecreasing_xStartIndexes,
+          sumY_yDecreasing, numY_yDecreasing,
+          scratch);
 
-          AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
-            lastResult, "BinaryTracker::IterativelyRefineTrack", "FindVerticalCorrespondences 1 failed");
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+          lastResult, "BinaryTracker::IterativelyRefineTrack", "FindVerticalCorrespondences 1 failed");
 
-          lastResult = BinaryTracker::FindVerticalCorrespondences_Translation_FixedPoint(
-            matching_maxDistance,
-            this->transformation,
-            this->templateEdges.yIncreasing,
-            nextImageEdges.yIncreasing,
-            nextImageEdges.imageHeight,
-            nextImageEdges.imageWidth,
-            allLimits.yIncreasing_xStartIndexes,
-            sumY_yIncreasing, numY_yIncreasing,
-            scratch);
+        lastResult = BinaryTracker::FindVerticalCorrespondences_Translation_FixedPoint(
+          matching_maxDistance,
+          this->transformation,
+          this->templateEdges.yIncreasing,
+          nextImageEdges.yIncreasing,
+          nextImageEdges.imageHeight,
+          nextImageEdges.imageWidth,
+          allLimits.yIncreasing_xStartIndexes,
+          sumY_yIncreasing, numY_yIncreasing,
+          scratch);
 
-          AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
-            lastResult, "BinaryTracker::IterativelyRefineTrack", "FindVerticalCorrespondences 2 failed");
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+          lastResult, "BinaryTracker::IterativelyRefineTrack", "FindVerticalCorrespondences 2 failed");
 
-          // Update the transformation
-          {
-            Array<f32> update(1,2,scratch);
+        // Update the transformation
+        {
+          Array<f32> update(1,2,scratch);
 
-            const s32 sumX = sumX_xDecreasing + sumX_xIncreasing;
-            const s32 numX = numX_xDecreasing + numX_xIncreasing;
+          const s32 sumX = sumX_xDecreasing + sumX_xIncreasing;
+          const s32 numX = numX_xDecreasing + numX_xIncreasing;
 
-            const s32 sumY = sumY_yDecreasing + sumY_yIncreasing;
-            const s32 numY = numY_yDecreasing + numY_yIncreasing;
+          const s32 sumY = sumY_yDecreasing + sumY_yIncreasing;
+          const s32 numY = numY_yDecreasing + numY_yIncreasing;
 
-            if(numX < 1 || numY < 1)
-              return RESULT_OK;
+          if(numX < 1 || numY < 1)
+            return RESULT_OK;
 
-            update[0][0] = f32(-sumX) / f32(numX);
-            update[0][1] = f32(-sumY) / f32(numY);
+          update[0][0] = f32(-sumX) / f32(numX);
+          update[0][1] = f32(-sumY) / f32(numY);
 
-            //update.Print("update");
+          //update.Print("update");
 
-            this->transformation.Update(update, scratch, Transformations::TRANSFORM_TRANSLATION);
-          }
-        } else { // if(useFixedPoint)
-          f32 sumX_xDecreasing;
-          f32 sumX_xIncreasing;
-          f32 sumY_yDecreasing;
-          f32 sumY_yIncreasing;
-
-          s32 numX_xDecreasing;
-          s32 numX_xIncreasing;
-          s32 numY_yDecreasing;
-          s32 numY_yIncreasing;
-
-          lastResult = BinaryTracker::FindHorizontalCorrespondences_Translation(
-            matching_maxDistance,
-            this->transformation,
-            this->templateEdges.xDecreasing,
-            nextImageEdges.xDecreasing,
-            nextImageEdges.imageHeight,
-            nextImageEdges.imageWidth,
-            allLimits.xDecreasing_yStartIndexes,
-            sumX_xDecreasing, numX_xDecreasing,
-            scratch);
-
-          AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
-            lastResult, "BinaryTracker::IterativelyRefineTrack", "FindHorizontalCorrespondences 1 failed");
-
-          lastResult = BinaryTracker::FindHorizontalCorrespondences_Translation(
-            matching_maxDistance,
-            this->transformation,
-            this->templateEdges.xIncreasing,
-            nextImageEdges.xIncreasing,
-            nextImageEdges.imageHeight,
-            nextImageEdges.imageWidth,
-            allLimits.xIncreasing_yStartIndexes,
-            sumX_xIncreasing, numX_xIncreasing,
-            scratch);
-
-          AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
-            lastResult, "BinaryTracker::IterativelyRefineTrack", "FindHorizontalCorrespondences 2 failed");
-
-          lastResult = BinaryTracker::FindVerticalCorrespondences_Translation(
-            matching_maxDistance,
-            this->transformation,
-            this->templateEdges.yDecreasing,
-            nextImageEdges.yDecreasing,
-            nextImageEdges.imageHeight,
-            nextImageEdges.imageWidth,
-            allLimits.yDecreasing_xStartIndexes,
-            sumY_yDecreasing, numY_yDecreasing,
-            scratch);
-
-          AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
-            lastResult, "BinaryTracker::IterativelyRefineTrack", "FindVerticalCorrespondences 1 failed");
-
-          lastResult = BinaryTracker::FindVerticalCorrespondences_Translation(
-            matching_maxDistance,
-            this->transformation,
-            this->templateEdges.yIncreasing,
-            nextImageEdges.yIncreasing,
-            nextImageEdges.imageHeight,
-            nextImageEdges.imageWidth,
-            allLimits.yIncreasing_xStartIndexes,
-            sumY_yIncreasing, numY_yIncreasing,
-            scratch);
-
-          AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
-            lastResult, "BinaryTracker::IterativelyRefineTrack", "FindVerticalCorrespondences 2 failed");
-
-          // Update the transformation
-          {
-            Array<f32> update(1,2,scratch);
-
-            const f32 sumX = sumX_xDecreasing + sumX_xIncreasing;
-            const s32 numX = numX_xDecreasing + numX_xIncreasing;
-
-            const f32 sumY = sumY_yDecreasing + sumY_yIncreasing;
-            const s32 numY = numY_yDecreasing + numY_yIncreasing;
-
-            if(numX < 1 || numY < 1)
-              return RESULT_OK;
-
-            update[0][0] = -sumX / f32(numX);
-            update[0][1] = -sumY / f32(numY);
-
-            //update.Print("update");
-
-            this->transformation.Update(update, scratch, Transformations::TRANSFORM_TRANSLATION);
-          }
-        } // if(useFixedPoint) ... else
+          this->transformation.Update(update, scratch, Transformations::TRANSFORM_TRANSLATION);
+        }
 
         return RESULT_OK;
       } // Result BinaryTracker::IterativelyRefineTrack_Translation()
