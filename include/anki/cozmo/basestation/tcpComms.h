@@ -42,7 +42,7 @@ namespace Cozmo {
   
   
   
-  class TCPComms : public IComms {
+  class TCPComms : public Comms::IComms {
   public:
     
     // Default constructor
@@ -57,9 +57,9 @@ namespace Cozmo {
     // Returns the number of messages ready for processing in the BLEVehicleMgr. Returns 0 if no messages are available.
     virtual int GetNumPendingMsgPackets() { return recvdMsgPackets_.size(); };
   
-    virtual int Send(const MsgPacket &p);
+    virtual int Send(const Comms::MsgPacket &p);
 
-    virtual bool GetNextMsgPacket(MsgPacket &p);
+    virtual bool GetNextMsgPacket(Comms::MsgPacket &p);
     
     
     // when game is unpaused we need to dump old messages
@@ -113,7 +113,7 @@ namespace Cozmo {
     map<int, ConnectedRobotInfo> connectedRobots_;
     
     // 'Queue' of received messages from all connected robots
-    multimap<TimeStamp_t, MsgPacket> recvdMsgPackets_;
+    multimap<TimeStamp_t, Comms::MsgPacket> recvdMsgPackets_;
     
   };
 

@@ -44,7 +44,7 @@ int main(int argc, char **argv)
 #if(FREE_DRIVE_DUBINS_TEST)
   Sim::KeyboardController::Enable();
 #else
-  //Sim::KeyboardController::Enable();
+  Sim::KeyboardController::Enable();
 #endif
   
   Sim::OverlayDisplay::Init();
@@ -56,7 +56,7 @@ int main(int argc, char **argv)
       break;
     }
       
-    if(Sim::KeyboardController::IsEnabled() && Robot::GetOperationMode() != Robot::INITIALIZING) {
+    if(Sim::KeyboardController::IsEnabled() && Robot::GetOperationMode() == Robot::WAITING) {
       Sim::KeyboardController::ProcessKeystroke();
     }      
   }

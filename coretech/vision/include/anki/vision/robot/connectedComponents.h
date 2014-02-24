@@ -22,7 +22,7 @@ namespace Anki
 {
   namespace Embedded
   {
-#pragma mark --- Definitions ---
+// #pragma mark --- Definitions ---
 
     inline s64 ConnectedComponents::CompareConnectedComponentSegments(const ConnectedComponentSegment &a, const ConnectedComponentSegment &b)
     {

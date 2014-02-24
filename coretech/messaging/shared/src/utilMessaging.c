@@ -18,6 +18,11 @@
 #include <string.h>
 #include "anki/messaging/shared/utilMessaging.h"
 #include <assert.h>
+#include <limits.h>
+
+#ifndef UINT8_MAX
+#define UINT8_MAX UCHAR_MAX
+#endif
 
 void* WriteU64(void *dest, unsigned long long src) {
   memcpy((char *) dest, (char*)&src, sizeof(src));

@@ -188,6 +188,7 @@ namespace Anki {
   void Pose3d::preComposeWith(const Pose3d &other)
   {
     this->rotationMatrix.preMultiplyBy(other.rotationMatrix);
+    this->set_rotation(this->rotationMatrix); // keep Rvec and Rmat in sync
     this->translation = other.rotationMatrix * this->translation;
     this->translation += other.translation;
   }
@@ -313,6 +314,10 @@ namespace Anki {
     
     POSE *P_wrt_other = NULL;
     
+    // "to" can get changed below, but we want to set the returned pose's
+    // parent to it, so we keep a copy here.
+    const POSE *newParent = to;
+    
     if(to == POSE::World) {
       
       // Special (but common!) case: get with respect to the
@@ -333,27 +338,55 @@ namespace Anki {
       // which is the only way they could possibly share the same parent.
       // Until that's true, walk the deeper node up until it is at the same
       // depth as the shallower node, keeping track of the total transformation
-      // along the way. (NITE: Only one of the following two while loops should
+      // along the way. (NOTE: Only one of the following two while loops should
       // run, depending on which node is deeper in the tree)
       
-      while(from->getTreeDepth() > to->getTreeDepth())
+      int depthDiff = from->getTreeDepth() - to->getTreeDepth();
+
+      while(depthDiff > 0)
       {
         CORETECH_ASSERT(from->parent != NULL);
         
         P_from.preComposeWith( *(from->parent) );
         from = from->parent;
         
+        if(from->parent == to) {
+          // We bumped into the "to" pose on the way up to the common parent, so
+          // we've got the the chained transform ready to go, and there's no
+          // need to walk past the "to" pose, up to the common parent, and right
+          // back down, which would unnecessarily compose two more poses which
+          // are the inverse of one another by construction.
+          P_from.parent = newParent;
+          return P_from;
+        }
+        
+        --depthDiff;
       }
       
-      while(to->getTreeDepth() > from->getTreeDepth())
+      while(depthDiff < 0)
       {
         CORETECH_ASSERT(to->parent != NULL);
-        
+
         P_to.preComposeWith( *(to->parent) );
         to = to->parent;
+        
+        if(to->parent == from) {
+          // We bumped into the "from" pose on the way up to the common parent,
+          // so we've got the the (inverse of the) chained transform ready to
+          // go, and there's no need to walk past the "from" pose, up to the
+          // common parent, and right back down, which would unnecessarily
+          // compose two more poses which are the inverse of one another by
+          // construction.
+          P_to.Invert();
+          P_to.parent = newParent;
+          return P_to;
+        }
+        
+        --depthDiff;
       }
       
       // Treedepths should now match:
+      CORETECH_ASSERT(depthDiff == 0);
       CORETECH_ASSERT(to->getTreeDepth() == from->getTreeDepth());
       
       // Now that we are pointing to the nodes of the same depth, keep moving up
@@ -383,7 +416,7 @@ namespace Anki {
     
     // The Pose we are about to return is w.r.t. the "other" pose provided (that
     // was the whole point of the exercise!), so set its parent accordingly:
-    P_wrt_other->parent = to;
+    P_wrt_other->parent = newParent;
     
     CORETECH_ASSERT(P_wrt_other != NULL);
     
@@ -401,6 +434,101 @@ namespace Anki {
     return getWithRespectToHelper<Pose3d>(this, otherPose);
   }
   
+  bool Pose3d::IsSameAs(const Pose3d& P_other,
+                        const float distThreshold,
+                        const Radians angleThreshold,
+                        Pose3d& P_diff) const
+  {
+    bool isSame = false;
+    
+    // Compute the transformation that takes P1 to P2
+    // Pdiff = P_other * inv(P_this)
+    P_diff = this->getInverse();
+    P_diff.preComposeWith(P_other);
+    
+    // First, check to see if the translational difference between the two
+    // poses is small enough to call them a match
+    if(P_diff.get_translation().length() < distThreshold) {
+      
+      // Next check to see if the rotational difference is small
+      if(P_diff.get_rotationAngle() < angleThreshold) {
+        isSame = true;
+      }
+
+    } // if translation component is small enough
+    
+    return isSame;
+
+  } // IsSameAs()
+  
+  
+  bool Pose3d::IsSameAs_WithAmbiguity(const Pose3d& P_other,
+                                      const std::vector<RotationMatrix3d>& R_ambiguities,
+                                      const float   distThreshold,
+                                      const Radians angleThreshold,
+                                      const bool    useAbsRotation,
+                                      Pose3d& P_diff) const
+  {
+    bool isSame = false;
+
+    // P_this represents the canonical/reference pose after some arbitrary
+    // transformation, T:
+    //    P_this = T * P_ref
+    //
+    // If P_other is another ambigously-rotated version of this canonical pose
+    // that has undergone the same transformation, T, then it is:
+    //    P_other = T * [R_amb | 0] * P_ref
+    //
+    // So we compute P_diff = inv(P_this) * P_other.  If the above is true, then
+    // P_diff is equivalent to:
+    //    P_diff = inv(P_ref) * inv(T) * T * P_amb * P_ref
+    //           = inv(P_ref) * [R_amb | 0] * P_ref
+    //
+    // Without loss of generality, we can assume P_ref is the identity
+    // transformation (or, equivalently, that the input poses -- this and other
+    // have been pre-adjusted by inv(P_ref) before calling this function). In
+    // that case, P_diff = [R_amb | 0].  
+    //
+    
+    P_diff = this->getInverse();
+    P_diff *= P_other;
+    
+    // First, check to see if the translational difference between the two
+    // poses is small enough to call them a match
+    if(P_diff.get_translation().length() < distThreshold) {
+      
+      // Next check to see if the rotational difference is small
+      
+      if(P_diff.get_rotationAngle() < angleThreshold) {
+        // Rotation is same, without even considering the ambiguities
+        isSame = true;
+      }
+      else {
+        // Need to consider ambiguities...
+        
+        RotationMatrix3d R(P_diff.get_rotationMatrix());
+        
+        if(useAbsRotation) {
+          // The ambiguities are assumed to be defined up various sign flips
+          R.abs();
+        }
+        
+        // Check to see if the rotational part of the pose difference is
+        // similar enough to one of the rotational ambiguities
+        for(auto R_ambiguity : R_ambiguities) {
+          if(R.GetAngleDiffFrom(R_ambiguity) < angleThreshold) {
+            isSame = true;
+            break;
+          }
+        }
+      }
+    } // if translation component is small enough
+    
+    return isSame;
+    
+  } // IsSameAs_WithAmbiguity()
+  
+  
 #pragma mark --- Global Functions ---
   
   float computeDistanceBetween(const Pose3d& pose1, const Pose3d& pose2)
@@ -411,6 +539,9 @@ namespace Anki {
     distVec -= pose2.get_translation();
     return distVec.length();
   }
+
+  
+
 
   
 } // namespace Anki

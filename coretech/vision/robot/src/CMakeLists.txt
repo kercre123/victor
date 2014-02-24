@@ -2,7 +2,7 @@
 
 # Robot Vision Library
 
-file(GLOB SOURCE_FILES *.c *.cpp shave/*.c)
+file(GLOB SOURCE_FILES *.c *.cpp)
 
 file(GLOB HEADER_FILES 
 	"*.h"

@@ -9,6 +9,7 @@ WorldInfo {
   ]
   physics "cozmo_physics"
   basicTimeStep 5
+  gravity 0 0 -9.81
   contactProperties [
     DEF FLOOR_FRONTWHEEL ContactProperties {
       material1 "cmat_floor"
@@ -78,8 +79,9 @@ WorldInfo {
   ]
 }
 Viewpoint {
-  orientation -0.118742 0.988082 0.097946 2.51612
-  position 0.75138 0.342175 -1.26362
+  fieldOfView 0.785398
+  orientation 0.225533 0.521621 0.822828 2.45799
+  position 1.37409 1.36507 0.903049
 }
 Background {
   skyColor [
@@ -87,152 +89,60 @@ Background {
   ]
 }
 DirectionalLight {
-  ambientIntensity 0.5
-  direction 1 -2 1
+  ambientIntensity 0.75
+  direction -1 -1 -2
   castShadows TRUE
 }
 
+CozmoMat {
 
-DEF COORD_AXES Transform {
-  translation -0.6 0.06 0.6
-  rotation 1 0 0 -1.57
+}
 
-  children [
-    Shape {
-      appearance Appearance {
-        material Material {
-        diffuseColor 0.9 0 0
-        }
-      }
-      geometry IndexedLineSet {
-        coord Coordinate {
-          point [
-            # Frame
-            0 0 0
-            0 0.1 0
-            0.1 0 0
-            
-            # X
-            0.12 -0.02 0
-            0.16 0.02 0   
-            0.12 0.02 0
-            0.16 -0.02 0
-            
-            # Y
-            0 0.12 0
-            0 0.14 0
-            -0.02 0.16 0
-            0.02 0.16 0 		 
-          ]
-        } # Coordinate
-        coordIndex [ 
-          # Frame
-          1 0 2 -1 
-          
-          # X
-          3 4 -1 5 6 -1
-          			 
-          # Y
-          7 8 9 -1 8 10 -1
-        ]
-      } # IndexLineSet
-    }
-  ]
-} # COORD_AXES Transform
+XYaxesDisplay {
 
-DEF FLOOR Solid {
-  rotation 0 1 0 3.1415
-  children [
-    Shape {
-      appearance Appearance {
-        texture ImageTexture {
-          url [
-            "mat.png"
-          ]
-        }
-      }
-      geometry Box {
-        size 1 0.001 1
-      }
-    }
-  ]
-  contactMaterial "cmat_floor"
-  boundingObject Transform {
-    translation 0.5 0 0.5
-    children [
-      Plane {
-      }
-    ]
-  }
 }
-DEF WALL_1 Solid {
-  translation 0.51 0.025 0
-  children [
-    DEF WALL_SHAPE Shape {
-      appearance Appearance {
-        material Material {
-          diffuseColor 0.12549 0.368627 0.729412
-        }
-      }
-      geometry Box {
-        size 0.02 0.05 1
-      }
-    }
-  ]
-  boundingObject USE WALL_SHAPE
-}
-DEF WALL_2 Solid {
-  translation -0.51 0.025 0
-  children [
-    USE WALL_SHAPE
-  ]
-  boundingObject USE WALL_SHAPE
-}
-DEF WALL_3 Solid {
-  translation 0 0.025 -0.51
-  rotation 0 1 0 1.5708
-  children [
-    USE WALL_SHAPE
-  ]
-  boundingObject USE WALL_SHAPE
-}
-DEF WALL_4 Solid {
-  translation 0 0.025 0.51
-  rotation 0 1 0 1.5708
-  children [
-    USE WALL_SHAPE
-  ]
-  boundingObject USE WALL_SHAPE
-}
-Block1x1 {
+
+DEF FuelBlock Block1x1 {
   name "Block060_1"
-  translation 4.89512e-10 0.0298305 0.2
-  rotation -0.0026561 0.999996 0.00129937 2.04586e-07
+  translation 0 -0.15 0.03
+  rotation 0 0 1 0
   blockColor 0.5 0.1 0.75
-  facemarker1 [
-    "textures/Block060_Face01.png"
+  
+  facemarkerFront [
+    #"textures/Block060_Face01.png"
+    "textures/batteryMarker.png"
   ]
-  facemarker2 [
-    "textures/Block060_Face02.png"
+  facemarkerBack [
+    #"textures/Block060_Face02.png"
+    "textures/batteryMarker.png"
   ]
-  facemarker3 [
-    "textures/Block060_Face03.png"
+  facemarkerLeft [
+    #"textures/Block060_Face03.png"
+    "textures/batteryMarker.png"
   ]
-  facemarker4 [
-    "textures/Block060_Face04.png"
+  facemarkerRight [
+    #"textures/Block060_Face04.png"
+    "textures/batteryMarker.png"
   ]
-  facemarker5 [
-    "textures/Block060_Face05.png"
+  facemarkerTop [
+    #"textures/Block060_Face05.png"
+    "textures/batteryMarker.png"
   ]
-  facemarker6 [
-    "textures/Block060_Face06.png"
+  facemarkerBottom [
+    #"textures/Block060_Face06.png"
+    "textures/batteryMarker.png"
   ]
 }
-DEF Cozmo CozmoBot {
+
+RobotAdvertisementService {
+
+}
+
+DEF Cozmo_1 CozmoBot {
   name "CozmoBot_1"
   commsChannel 1
   usbChannel 10
-  rotation 0 1 0 -1.5708
+  rotation 0 0 1 -1.5708
 #  controller "cozmo_matlab"
   controller "cozmo_c_controller"
 }
@@ -242,13 +152,9 @@ DEF OffboardVisionProcessor USBConnection {
   usbChannel 10
 }
 
-#DEF CozmoBotPose Robot {
-#
-#}
+BlockWorldComms {
 
-#DEF WorldComms BlockWorldComms {
-#
-#}
+}
 
 #OverlayDisplay {
 #

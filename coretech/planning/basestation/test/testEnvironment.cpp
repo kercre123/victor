@@ -6,6 +6,7 @@
 #define protected public
 
 #include "anki/common/basestation/general.h"
+#include "anki/common/basestation/platformPathManager.h"
 #include "anki/planning/basestation/xythetaEnvironment.h"
 
 using namespace std;
@@ -40,7 +41,7 @@ GTEST_TEST(TestEnvironment, LoadPrimFile)
 
   // TODO:(bn) open something saved in the test dir isntead, so we
   // know not to change or remove it
-  EXPECT_TRUE(env.ReadMotionPrimitives("../coretech/planning/matlab/unicycle_backonlystraight_mprim.json"));
+  EXPECT_TRUE(env.ReadMotionPrimitives(PREPEND_SCOPED_PATH(Test, "coretech/planning/matlab/unicycle_backonlystraight_mprim.json").c_str()));
 
   EXPECT_FALSE(env.allMotionPrimitives_.empty());
   for(size_t i=0; i<env.allMotionPrimitives_.size(); ++i) {
@@ -54,7 +55,7 @@ GTEST_TEST(TestEnvironment, SuccessorsFromZero)
   // Assuming this is running from root/build......
   xythetaEnvironment env;
 
-  EXPECT_TRUE(env.ReadMotionPrimitives("../coretech/planning/matlab/unicycle_backonlystraight_mprim.json"));
+  EXPECT_TRUE(env.ReadMotionPrimitives(PREPEND_SCOPED_PATH(Test, "coretech/planning/matlab/unicycle_backonlystraight_mprim.json").c_str()));
 
   State curr(0,0,0);
 
@@ -120,7 +121,7 @@ GTEST_TEST(TestEnvironment, SuccessorsFromNonzero)
   // Assuming this is running from root/build......
   xythetaEnvironment env;
 
-  EXPECT_TRUE(env.ReadMotionPrimitives("../coretech/planning/matlab/unicycle_backonlystraight_mprim.json"));
+  EXPECT_TRUE(env.ReadMotionPrimitives(PREPEND_SCOPED_PATH(Test, "coretech/planning/matlab/unicycle_backonlystraight_mprim.json").c_str()));
 
   State curr(-14,107,15);
 

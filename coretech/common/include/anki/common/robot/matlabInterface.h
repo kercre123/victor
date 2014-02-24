@@ -133,7 +133,7 @@ namespace Anki
       template<typename Type> Type* Get(const std::string name);
     }; // class Matlab
 
-#pragma mark --- Implementations ---
+    // #pragma mark --- Implementations ---
 
     template<typename Type>
     mxClassID Matlab::GetMatlabClassID()
@@ -282,7 +282,7 @@ namespace Anki
 
     template<> Result Matlab::Put<Point<s16> >(const Point<s16> * values, s32 nValues, const std::string name);
 
-#pragma mark --- Specializations ---
+    // #pragma mark --- Specializations ---
     template<> mxClassID Matlab::GetMatlabClassID<u8>();
     template<> mxClassID Matlab::GetMatlabClassID<u16>();
     template<> mxClassID Matlab::GetMatlabClassID<s16>();

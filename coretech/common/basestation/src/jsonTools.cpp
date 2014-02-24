@@ -1,7 +1,7 @@
 /**
  * File: jsonTools.cpp
  *
- * Author: Brad Neuman
+ * Authors: Brad Neuman, Andrew Stein
  * Created: 2014-01-10
  *
  * Description: Utility functions for dealing with jsoncpp objects
@@ -11,107 +11,96 @@
  **/
 
 #include "anki/common/basestation/jsonTools.h"
+#include "anki/common/basestation/math/pose.h"
+
 #include "json/json.h"
 #include <vector>
 
-using namespace std;
 
 namespace Anki
 {
 
 namespace JsonTools
 {
+  
+// Specializations of GetValue for all types we care about
 
-bool GetValueOptional(const Json::Value& config, const std::string& key, std::string& value)
-{
-  const Json::Value& child(config[key]);
-  if(child.isNull())
-    return false;
+  // Floating point
+  template<>
+  float GetValue<float>(const Json::Value& node) {
+    return node.asFloat();
+  }
+  
+  template<>
+  double GetValue<double>(const Json::Value& node) {
+    return node.asDouble();
+  }
+  
+  // Unsigned int
+  template<>
+  uint8_t GetValue<uint8_t>(const Json::Value& node) {
+    return node.asUInt();
+  }
 
-  value = child.asString();
-  return true;
-}
+  template<>
+  uint16_t GetValue<uint16_t>(const Json::Value& node) {
+    return node.asUInt();
+  }
 
-bool GetValueOptional(const Json::Value& config, const std::string& key, uint8_t& value)
-{
-  const Json::Value& child(config[key]);
-  if(child.isNull())
-    return false;
+  template<>
+  uint32_t GetValue<uint32_t>(const Json::Value& node) {
+    return node.asUInt();
+  }
 
-  value = child.asUInt();
-  return true;
-}
-
-bool GetValueOptional(const Json::Value& config, const std::string& key, uint16_t& value)
-{
-  const Json::Value& child(config[key]);
-  if(child.isNull())
-    return false;
-
-  value = child.asUInt();
-  return true;
-}
-
-bool GetValueOptional(const Json::Value& config, const std::string& key, uint32_t& value)
-{
-  const Json::Value& child(config[key]);
-  if(child.isNull())
-    return false;
-
-  value = child.asUInt();
-  return true;
-}
-
-bool GetValueOptional(const Json::Value& config, const std::string& key, int8_t& value)
-{
-  const Json::Value& child(config[key]);
-  if(child.isNull())
-    return false;
-
-  value = child.asInt();
-  return true;
-}
-
-bool GetValueOptional(const Json::Value& config, const std::string& key, int16_t& value)
-{
-  const Json::Value& child(config[key]);
-  if(child.isNull())
-    return false;
-
-  value = child.asInt();
-  return true;
-}
-
-bool GetValueOptional(const Json::Value& config, const std::string& key, int32_t& value)
-{
-  const Json::Value& child(config[key]);
-  if(child.isNull())
-    return false;
-
-  value = child.asInt();
-  return true;
-}
-
-bool GetValueOptional(const Json::Value& config, const std::string& key, float& value)
-{
-  const Json::Value& child(config[key]);
-  if(child.isNull())
-    return false;
-
-  value = child.asFloat();
-  return true;
-}
-
-bool GetValueOptional(const Json::Value& config, const std::string& key, double& value)
-{
-  const Json::Value& child(config[key]);
-  if(child.isNull())
-    return false;
-
-  value = child.asDouble();
-  return true;
-}
-
+  // Signed int
+  template<>
+  int8_t GetValue<int8_t>(const Json::Value& node) {
+    return node.asInt();
+  }
+  
+  template<>
+  int16_t GetValue<int16_t>(const Json::Value& node) {
+    return node.asInt();
+  }
+  
+  template<>
+  int32_t GetValue<int32_t>(const Json::Value& node) {
+    return node.asInt();
+  }
+  
+  // String
+  template<>
+  std::string GetValue<std::string>(const Json::Value& node) {
+    return node.asString();
+  }
+  
+  // Boolean
+  template<>
+  bool GetValue<bool>(const Json::Value& node) {
+    return node.asBool();
+  }
+  
+  bool GetPoseOptional(const Json::Value& node, Anki::Pose3d& pose)
+  {
+    bool retVal = false;
+    
+    Anki::Point3f axis, translation;
+    if(node.isMember("Angle") &&
+       GetPointOptional(node, "Axis", axis) &&
+       GetPointOptional(node, "Translation", translation))
+    {
+      const Anki::Radians angle(node["Angle"].asFloat());
+      pose.set_rotation(angle, axis);
+      
+      pose.set_translation(translation);
+      
+      retVal = true;
+    }
+    
+    return retVal;
+  } // GetPoseOptional()
+  
+  
 __attribute__((used)) void PrintJson(const Json::Value& config, int maxDepth)
 {
   if(maxDepth == 0) {
@@ -122,7 +111,7 @@ __attribute__((used)) void PrintJson(const Json::Value& config, int maxDepth)
     // we need to replace everything below the max depth with "...",
     // using a breadth-first iteration because I don't want to be
     // iterating over things while I'm messing with their children
-    vector<Json::Value::iterator> Q1, Q2;
+    std::vector<Json::Value::iterator> Q1, Q2;
     Json::Value tree(config);
 
     for(Json::Value::iterator it = tree.begin();
@@ -133,7 +122,7 @@ __attribute__((used)) void PrintJson(const Json::Value& config, int maxDepth)
 
     for(unsigned int currDepth = 1; currDepth < maxDepth; ++currDepth) {
       Q2.clear();
-      for(vector<Json::Value::iterator>::iterator qIt = Q1.begin();
+      for(std::vector<Json::Value::iterator>::iterator qIt = Q1.begin();
           qIt != Q1.end();
           ++qIt) {
         if((**qIt).size() > 1) {
@@ -149,7 +138,7 @@ __attribute__((used)) void PrintJson(const Json::Value& config, int maxDepth)
     }
 
     // now everything at the maxDepth is in Q1
-    for(vector<Json::Value::iterator>::iterator qIt = Q1.begin();
+    for(std::vector<Json::Value::iterator>::iterator qIt = Q1.begin();
         qIt != Q1.end();
         ++qIt) {
       if((**qIt).size() > 1)
@@ -160,8 +149,9 @@ __attribute__((used)) void PrintJson(const Json::Value& config, int maxDepth)
     std::cout<<"<note: limited printing depth to "<<maxDepth<<">\n";
     std::cout<<writer.write(tree)<<std::endl;
   }
-}
+} // PrintJson()
 
-}
+} // namespace JsonTools
 
-}
+} // namespace Anki
+

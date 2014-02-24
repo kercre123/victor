@@ -9,10 +9,12 @@
 #include "testModeController.h"
 #include "anki/cozmo/robot/debug.h"
 #include "anki/cozmo/robot/localization.h"
+#include "anki/cozmo/robot/messages.h"
 #include "anki/cozmo/robot/pathFollower.h"
 #include "anki/cozmo/robot/speedController.h"
 #include "anki/cozmo/robot/steeringController.h"
 #include "anki/cozmo/robot/wheelController.h"
+#include "anki/cozmo/robot/visionSystem.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -104,8 +106,14 @@ namespace Anki {
         };
         u8 pickAndPlaceState_ = PAP_WAITING_FOR_PICKUP_BLOCK;
         
-        const u16 BLOCK_TO_PICK_UP = 60;
-        const u16 BLOCK_TO_PLACE_ON = 50;
+        //const u16 BLOCK_TO_PICK_UP = 60;
+        //const u16 BLOCK_TO_PLACE_ON = 50;
+        const u8 BLOCK_TO_PICK_UP[VISION_MARKER_CODE_LENGTH] = {
+          115,  117,  167,  238,  206,  221,  156,  168,   58,  114,  118 // "FUEL"
+        };
+        const u8 BLOCK_TO_PLACE_ON[VISION_MARKER_CODE_LENGTH] = {
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 // TODO: fill in with another block
+        };
         ////// End of PickAndPlaceTest ////
         
         
@@ -146,13 +154,17 @@ namespace Anki {
         switch(pickAndPlaceState_)
         {
           case PAP_WAITING_FOR_PICKUP_BLOCK:
-            PickAndPlaceController::PickUpBlock(BLOCK_TO_PICK_UP, 0);
+          {
+            VisionSystem::MarkerCode code(BLOCK_TO_PICK_UP);
+            PickAndPlaceController::PickUpBlock(code, 0);
             pickAndPlaceState_ = PAP_DOCKING;
             break;
+          }
           case PAP_DOCKING:
             if (!PickAndPlaceController::IsBusy()) {
               if (PickAndPlaceController::DidLastActionSucceed()) {
-                PickAndPlaceController::PlaceOnBlock(BLOCK_TO_PLACE_ON, 0, 0);
+                VisionSystem::MarkerCode code(BLOCK_TO_PLACE_ON);
+                PickAndPlaceController::PlaceOnBlock(code, 0, 0);
                 pickAndPlaceState_ = PAP_PLACING;
               } else {
                 pickAndPlaceState_ = PAP_WAITING_FOR_PICKUP_BLOCK;
@@ -662,7 +674,7 @@ namespace Anki {
       ReturnCode Update()
       {
         // Don't run Update until robot is finished initializing
-        if (Robot::GetOperationMode() != Robot::INITIALIZING) {
+        if (Robot::GetOperationMode() == Robot::WAITING) {
           if (updateFunc) {
             return updateFunc();
           }

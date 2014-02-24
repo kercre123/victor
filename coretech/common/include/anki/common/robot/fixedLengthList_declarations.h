@@ -20,6 +20,7 @@ namespace Anki
 {
   namespace Embedded
   {
+    // A FixedLengthList is a list with a fixed maximum size, which is allocated at construction.
     template<typename Type> class FixedLengthList : public ArraySlice<Type>
     {
     public:
@@ -69,15 +70,17 @@ namespace Anki
       // Returns the number of bytes set to zero
       inline s32 SetZero();
 
+      // The maximum size is set at object construction
       inline s32 get_maximumSize() const;
 
+      // The current size changes as the FixedLengthList is used
       inline s32 get_size() const;
 
       // Attempt to set the size to newSize. Returns the value that was actually set.
       s32 set_size(s32 newSize);
 
     protected:
-      // For speed, have some direct pointers to the Array's protected members
+      // For speed, this is a direct pointer to the Array's protected data
       Type * arrayData;
     }; // class FixedLengthList
   } // namespace Embedded

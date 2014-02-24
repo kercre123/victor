@@ -1,70 +1,87 @@
+/**
+ * File: messages.cpp  (Basestation)
+ *
+ * Author: Andrew Stein
+ * Date:   1/21/2014
+ *
+ * Description: Defines a base Message class from which all the other messages
+ *              inherit.  The inherited classes are auto-generated via multiple
+ *              re-includes of the MessageDefinitions.h file, with specific
+ *              "mode" flags set.
+ *
+ * Copyright: Anki, Inc. 2014
+ **/
+
+#include <cstring> // for memcpy used in the constructor, created by MessageDefinitions
+#include <array>
+
+#include "anki/common/basestation/exceptions.h"
+#include "anki/common/basestation/jsonTools.h"
+
 #include "anki/cozmo/basestation/messages.h"
+
 
 
 namespace Anki {
   namespace Cozmo {
-    namespace Messages {
-      
-      // TODO: Fill this in!
-     
-     
-      namespace {
-        
-        // 4. Fill in the message information lookup table:
-        typedef struct {
-          u8 priority;
-          u8 size;
-          void (*dispatchFcn)(const u8* buffer);
-        } TableEntry;
-        
-        // TODO: Would be nice to use NUM_MSG_IDS instead of hard-coded 256 here.
-        TableEntry LookupTable_[256] = {
-          {0,0,0}, // Empty entry for NO_MESSAGE_ID
-#undef  MESSAGE_DEFINITION_MODE
-#define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_MODE
+    
+    // Impelement all the message classes' constructors from byte buffers
+#define MESSAGE_DEFINITION_MODE MESSAGE_CLASS_BUFFER_CONSTRUCTOR_MODE
 #include "anki/cozmo/MessageDefinitions.h"
-          {0, 0, 0} // Final dummy entry without comma at end
-        };
-        
-      } // private namespace
-      
-      u8 GetSize(const ID msgID)
-      {
-        return LookupTable_[msgID].size;
-      }
-      
-      
+    
+    // Implement all the message classes' constructors from json files
+#define MESSAGE_DEFINITION_MODE MESSAGE_CLASS_JSON_CONSTRUCTOR_MODE
+#include "anki/cozmo/MessageDefinitions.h"
+    
+    // Implement all the message classes' GetSize() methods
+#define MESSAGE_DEFINITION_MODE MESSAGE_CLASS_GETSIZE_MODE
+#include "anki/cozmo/MessageDefinitions.h"
+
+    // Implement all the message classes' GetBytes() methods
+#define MESSAGE_DEFINITION_MODE MESSAGE_CLASS_GETBYTES_MODE
+#include "anki/cozmo/MessageDefinitions.h"
+
+    // Implement all the message classes' CreatJson() methods
+#define MESSAGE_DEFINITION_MODE MESSAGE_CREATE_JSON_MODE
+#include "anki/cozmo/MessageDefinitions.h"
+    
+
+    
+    /*
       // THese are dummy placeholders to avoid linker errors for now
       
-void ProcessClearPathMessage(const ClearPath&) {}
-
-void ProcessSetMotionMessage(const SetMotion&) {}
-
-void ProcessRobotAvailableMessage(const RobotAvailable&) {}
-
-void ProcessMatMarkerObservedMessage(const MatMarkerObserved&) {}
-
-void ProcessRobotAddedToWorldMessage(const RobotAddedToWorld&) {}
-
-void ProcessSetPathSegmentArcMessage(const SetPathSegmentArc&) {}
-
-void ProcessDockingErrorSignalMessage(const DockingErrorSignal&) {}
-
-void ProcessSetPathSegmentLineMessage(const SetPathSegmentLine&) {}
-
-void ProcessBlockMarkerObservedMessage(const BlockMarkerObserved&) {}
-
-void ProcessTemplateInitializedMessage(const TemplateInitialized&) {}
-
-void ProcessTotalBlocksDetectedMessage(const TotalBlocksDetected&) {}
-
-void ProcessMatCameraCalibrationMessage(const MatCameraCalibration&) {}
-
-void ProcessAbsLocalizationUpdateMessage(const AbsLocalizationUpdate&) {}
-
-void ProcessHeadCameraCalibrationMessage(const HeadCameraCalibration&) {}
-
+      void ProcessClearPathMessage(const ClearPath&) {}
       
-    } // namespace Messages
+      void ProcessSetMotionMessage(const SetMotion&) {}
+      
+      void ProcessRobotAvailableMessage(const RobotAvailable&) {}
+      
+      void ProcessVisionMarkerMessage(const VisionMarker&) {}
+      
+      void ProcessMatMarkerObservedMessage(const MatMarkerObserved&) {}
+      
+      void ProcessRobotAddedToWorldMessage(const RobotAddedToWorld&) {}
+      
+      void ProcessSetPathSegmentArcMessage(const SetPathSegmentArc&) {}
+      
+      void ProcessDockingErrorSignalMessage(const DockingErrorSignal&) {}
+      
+      void ProcessSetPathSegmentLineMessage(const SetPathSegmentLine&) {}
+      
+      void ProcessBlockMarkerObservedMessage(const BlockMarkerObserved&) {}
+      
+      void ProcessTemplateInitializedMessage(const TemplateInitialized&) {}
+      
+      void ProcessTotalVisionMarkersSeenMessage(const TotalVisionMarkersSeen&) {}
+      
+      void ProcessMatCameraCalibrationMessage(const MatCameraCalibration&) {}
+      
+      void ProcessAbsLocalizationUpdateMessage(const AbsLocalizationUpdate&) {}
+      
+      void ProcessHeadCameraCalibrationMessage(const HeadCameraCalibration&) {}
+      
+      void ProcessRobotStateMessage(const RobotState& msg) {}
+      */
+
   } // namespace Cozmo
 } // namespace Anki

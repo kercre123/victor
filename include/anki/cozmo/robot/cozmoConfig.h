@@ -57,14 +57,14 @@ namespace Anki {
     const u32 ROBOT_ADVERTISEMENT_REGISTRATION_PORT = 5101;
     
     typedef struct {
+      u16 port;                // Port that robot is accepting connections on
       u8 robotID;
       u8 enableAdvertisement;  // 1 when robot wants to advertise, 0 otherwise.
-      u32 port;                // Port that robot is accepting connections on
     } RobotAdvertisementRegistration;
     
     typedef struct  {
+      u16 port;
       u8 robotID;
-      u32 port;
     } RobotAdvertisement;
     
     // If most recent advertisement message is older than this,

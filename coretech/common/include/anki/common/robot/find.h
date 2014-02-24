@@ -20,7 +20,7 @@ namespace Anki
 {
   namespace Embedded
   {
-#pragma mark --- Definitions ---
+// #pragma mark
 
     template<typename Type1, typename Operator, typename Type2> Find<Type1,Operator,Type2>::Find(const Array<Type1> &array1, const Array<Type2> &array2)
       : array1(array1), compareWithValue(false), array2(array2), value(static_cast<Type2>(0)), numOutputDimensions(0)

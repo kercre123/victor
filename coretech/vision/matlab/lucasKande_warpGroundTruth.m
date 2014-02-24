@@ -21,7 +21,7 @@ function [result, mask, warpedMask] = lucasKande_warpGroundTruth(image, H, outpu
 outputImageSize = double(outputImageSize);
  
 if ~exist('regionOfInterestQuad', 'var')
-    regionOfInterestQuad = [0,0; size(image,1),0; size(image,1),size(image,2); 0,size(image,2)];
+    regionOfInterestQuad = [0,0; 0,size(image,1); size(image,2),size(image,1); size(image,2),0];
 end
 
 if ~exist('interpMethod','var')

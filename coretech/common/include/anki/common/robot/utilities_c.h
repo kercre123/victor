@@ -48,6 +48,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define ALIGNVARIABLE __attribute__ ((aligned (16)))
 #elif defined(__GNUC__)
 #define ALIGNVARIABLE __attribute__ ((aligned (16)))
+#elif defined(__EDG__)  // MDK-ARM
+#define ALIGNVARIABLE __attribute__ ((aligned (16)))
 #endif
 #endif // #ifndef ALIGNVARIABLE
 
@@ -61,8 +63,8 @@ extern "C" {
   ( ((u32)((value) & 0x00FF0000)) >>  8) | \
   ( ((u32)((value) & 0xFF000000)) >> 24))
 
-  f32 Roundf(const f32 number);
-  f64 Round(const f64 number);
+  //f32 Roundf(const f32 number);
+  //f64 Round(const f64 number);
 
   // Returns 1 if it is a power of two, zero otherwise
   s32 IsPowerOfTwo(u32 x);
@@ -74,31 +76,19 @@ extern "C" {
   s32 IsOdd(const s32 x);
 
   // Get the current system time. Currently only implemented for MSVC and generic linux
-  double GetTime();
+  f64 GetTime(void);
 
   void explicitPrintf(int (*writeChar)(int), int reverseEachFourCharacters, const char *format, ...);
-  // void explicitPrintfWithExplicitBuffer(int reverseEachFourCharacters, int * buffer, const char *format, ...);
 
   void PrintS32(int (*writeChar)(int), s32 value); // Print a single number
   void PrintU32Hex(int (*writeChar)(int), u32 value); // Print a single unsigned int in hex format 0xabcd0123
   void PrintF64(int (*writeChar)(int), f64 value); // Print a single float
   void PrintF64WithExponent(int (*writeChar)(int), f64 value); // Print a single float in format "significand * 2^exponent"
 
-#if defined(USING_MOVIDIUS_GCC_COMPILER)
-  //#define memset explicitMemset
-#define powf powF32S32
-#define pow powF64S32
-
-  //void* explicitMemset(void * dst, int value, size_t size);
-  f32 powF32S32(const f32 x, const s32 y);
-  f64 powF64S32(const f64 x, const s32 y);
-#endif // #if defined(USING_MOVIDIUS_GCC_COMPILER)
-
   // Data is the data to compute the CRC code of
   // dataLength is the number of bytes of data
   // Use initialCRC=0xFFFFFFFF for the first pass
-  u32 ComputeCRC32_littleEndian(const void * data, const s32 dataLength, const u32 initialCRC);
-  u32 ComputeCRC32_bigEndian(const void * data, const s32 dataLength, const u32 initialCRC);
+  u32 ComputeCRC32(const void * data, const s32 dataLength, const u32 initialCRC);
 
 #ifdef __cplusplus
 }

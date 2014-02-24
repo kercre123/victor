@@ -36,7 +36,7 @@ switch(this.trackerType)
         % seems to mostly work for blocks at ground level for typical docking distances.
         angleError = angleError * 4;
         
-        fx = this.headCalibrationMatrix(1,1);
+        fx = this.headCam.focalLength(1) * this.trackingResolution(1)/this.headCam.ncols;
         currentDistance = BlockMarker3D.ReferenceWidth * fx / L;
         distError = currentDistance; % - CozmoVisionProcessor.LIFT_DISTANCE;
         
@@ -49,8 +49,11 @@ switch(this.trackerType)
         
         % Note that LKtracker internally does recentering -- we
         % need to factor that in here as well. Thus the C term.
+             
+        %scale = this.headCam.ncols/this.trackingResolution(1);
         C = [1 0 -this.LKtracker.xcen; 0 1 -this.LKtracker.ycen; 0 0 1];
-        H = this.headCalibrationMatrix\(C\this.LKtracker.tform*C*this.headCalibrationMatrix*this.H_init);
+        K = this.headCam.calibrationMatrix;
+        H = K\(C\this.LKtracker.tform*C*K*this.H_init);
         
         % This computes the equivalent H, but is more expensive
         % since it involves an SVD internally to compute the

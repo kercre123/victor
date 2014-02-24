@@ -21,7 +21,7 @@ namespace Anki
 {
   namespace Embedded
   {
-#pragma mark --- Definitions ---
+    // #pragma mark
 
     template<typename Type> inline Type RoundUp(Type number, Type multiple)
     {
@@ -134,52 +134,20 @@ namespace Anki
       rho = sqrtf(x*x + y*y);
     }
 
-    template<typename Type> Type* ConvertCMXAddressToLeon(Type * pointer)
+    inline f32 Round(f32 x)
     {
-      size_t pointer_t = reinterpret_cast<size_t>(pointer);
-
-      if((pointer_t & 0xFF000000) == 0x10000000) {
-        pointer_t &= 0x00FFFFFF;
-        pointer_t |= 0xA0000000;
-      }
-
-      return reinterpret_cast<Type*>(pointer_t);
+      if(x > 0)
+        return floorf(x + 0.5f);
+      else
+        return ceilf(x - 0.5f);
     }
 
-    template<typename Type> const Type* ConvertCMXAddressToLeon(const Type * pointer)
+    inline f64 Round(f64 x)
     {
-      size_t pointer_t = reinterpret_cast<size_t>(pointer);
-
-      if((pointer_t & 0xFF000000) == 0x10000000) {
-        pointer_t &= 0x00FFFFFF;
-        pointer_t |= 0xA0000000;
-      }
-
-      return reinterpret_cast<Type*>(pointer_t);
-    }
-
-    template<typename Type> Type* ConvertCMXAddressToShave(Type * pointer)
-    {
-      size_t pointer_t = reinterpret_cast<size_t>(pointer);
-
-      if((pointer_t & 0xFF000000) == 0xA0000000) {
-        pointer_t &= 0x00FFFFFF;
-        pointer_t |= 0x10000000;
-      }
-
-      return reinterpret_cast<Type*>(pointer_t);
-    }
-
-    template<typename Type> const Type* ConvertCMXAddressToShave(const Type * pointer)
-    {
-      size_t pointer_t = reinterpret_cast<size_t>(pointer);
-
-      if((pointer_t & 0xFF000000) == 0xA0000000) {
-        pointer_t &= 0x00FFFFFF;
-        pointer_t |= 0x10000000;
-      }
-
-      return reinterpret_cast<Type*>(pointer_t);
+      if(x > 0)
+        return floor(x + 0.5);
+      else
+        return ceil(x - 0.5);
     }
   } // namespace Embedded
 } // namespace Anki

@@ -32,48 +32,49 @@ namespace Anki
     // Allocate() data has fill patterns at the beginning and end, to ensure that buffers did not
     // overflow. This can be tested with IsValid().
     //
-    // The safest way to use a MemoryStack is to pass by value. Passed by value: A copy is made on the
-    // system stack. This means that on return of that function, the MemoryStack will be automatically
-    // "popped" to the location it was before calling the function.
+    // The safest way to use a MemoryStack is to pass by value. Passed by value: A copy is made on
+    // the system stack. This means that on return of that function, the MemoryStack will be
+    // automatically "popped" to the location it was before calling the function.
     //
-    // A reference can be used for passing to initialization functions, or for speed- or
-    // memory-critical areas. Passed by const reference: Using the copy constructor allows nested call
-    // to push onto the MemoryStack, without modifying the MemoryStack at higher levels of the system
-    // stack. Passed by non-const reference: This will compile and work, but use with caution, as the
-    // MemoryStack object will no longer mirror the system stack. Mainly useful for initialization
-    // functions.
-    //
-
+    // A reference can be used for passing to initialization functions, or for speed-critical or
+    // memory-critical areas.
+    // 1. Passed by const reference: Using the copy constructor allows nested call to push onto the
+    // MemoryStack, without modifying the MemoryStack at higher levels of the system stack.
+    // 2. Passed by non-const reference: This will compile and work, but use with caution, as the
+    // MemoryStack object will no longer mirror the system stack. Mainly useful for initialization functions.
     class MemoryStack
     {
     public:
       static const u32 FILL_PATTERN_START = 0xFF01FF02;
       static const u32 FILL_PATTERN_END = 0x03FF04FF;
 
+      // The header contains the size of the allocated segment, and the fill pattern
       static const s32 HEADER_LENGTH = 8;
+
+      // The footer is just a fill pattern
       static const s32 FOOTER_LENGTH = 4;
 
-      MemoryStack(void) : buffer(NULL) { }
+      MemoryStack();
       MemoryStack(void *buffer, const s32 bufferLength, const Flags::Buffer flags=Flags::Buffer(true,true,false));
-      MemoryStack(const MemoryStack &ms); // This is a safe way to remove const by making a copy, rather than using const_cast()
+      MemoryStack(const MemoryStack &ms);
 
       // Allocate numBytes worth of memory, with the start byte-aligned to MEMORY_ALIGNMENT
       //
       // numBytesAllocated is an optional parameter. To satisfy stride requirements, Allocate() may
       // allocate more than numBytesRequested. numBytesAllocated is the amount of memory available
-      // to the user from the returned void* pointer, and doesn't include overhead like the fill
-      // patterns.
+      // to the user from the returned void* pointer, and doesn't include overhead like the fill patterns.
       //
-      // All memory in the array is zeroed out once it is allocated, making Allocate more like calloc() than malloc()
+      // If Flags::Buffer::zeroAllocatedMemory is true, then all memory in the array is zeroed out
+      // once it is allocated, making Allocate more like calloc() than malloc()
       void* Allocate(const s32 numBytesRequested);
       void* Allocate(const s32 numBytesRequested, s32 &numBytesAllocated);
 
       // Reallocate will change the size of the last allocated memory segment. It only works on the
       // last segment. The return value is equal to memoryLocation, or NULL if there was an error.
-      // The reallocated memory will not be cleared
+      // The reallocated memory will not be cleared.
       //
-      // WARNING: This will not update any references to the memory, you must update all references
-      //          manually.
+      // WARNING:
+      // This will not update any references to the memory, you must update all references manually.
       void* Reallocate(void* memoryLocation, s32 numBytesRequested);
       void* Reallocate(void* memoryLocation, s32 numBytesRequested, s32 &numBytesAllocated);
 
@@ -122,12 +123,10 @@ namespace Anki
 
       s32 id;
 
-      // flags are set via MemoryStack::Flags
       Flags::Buffer flags;
 
     private:
       const void* Allocate(const s32 numBytes) const; // Not allowed
-      //MemoryStack & operator= (const MemoryStack & rightHandSide); // Not allowed
     }; // class MemoryStack
 
     class MemoryStackConstIterator
@@ -137,6 +136,7 @@ namespace Anki
 
       bool HasNext() const;
 
+      // Returns NULL if there are no more segments
       const void * GetNext(s32 &segmentLength);
 
       const MemoryStack& get_memory() const;
@@ -151,6 +151,7 @@ namespace Anki
     public:
       MemoryStackIterator(MemoryStack &memory);
 
+      // Returns NULL if there are no more segments
       void * GetNext(s32 &segmentLength);
 
       MemoryStack& get_memory();

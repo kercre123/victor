@@ -19,7 +19,7 @@ namespace Anki
 {
   namespace Embedded
   {
-#pragma mark --- Definitions ---
+    // #pragma mark
 
     template<typename Type> LinearSequence<Type>::LinearSequence()
       : start(-1), increment(static_cast<Type>(-1)), end(-1)
@@ -185,6 +185,11 @@ namespace Anki
         sequence, "Linspace", "Could not set sequence to have the correct size.");
 
       return sequence;
+    }
+
+    template<typename Type> Meshgrid<Type>::Meshgrid()
+      : xGridVector(), yGridVector()
+    {
     }
 
     template<typename Type> Meshgrid<Type>::Meshgrid(const LinearSequence<Type> xGridVector, const LinearSequence<Type> yGridVector)
@@ -478,8 +483,9 @@ namespace Anki
       return yGridVector;
     }
 
-#pragma mark --- Specializations ---
+    // #pragma mark --- Specializations ---
 
+    template<> s32 LinearSequence<u8>::computeSize(const u8 start, const u8 increment, const u8 end);
     template<> s32 LinearSequence<f32>::computeSize(const f32 start, const f32 increment, const f32 end);
     template<> s32 LinearSequence<f64>::computeSize(const f64 start, const f64 increment, const f64 end);
   } // namespace Embedded

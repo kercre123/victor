@@ -14,6 +14,25 @@ namespace Anki
 {
   namespace Embedded
   {
+    template<> s32 LinearSequence<u8>::computeSize(const u8 start, const u8 increment, const u8 end)
+    {
+      AnkiAssert(increment != static_cast<u8>(0));
+
+      // 12:1:10
+      if(increment > 0 && start > end) {
+        return 0;
+      }
+
+      const u8 minLimit = MIN(start, end);
+      const u8 maxLimit = MAX(start, end);
+      const u8 incrementMagnitude = increment;
+
+      const u8 validRange = maxLimit - minLimit + 1;
+      const s32 size = (validRange+incrementMagnitude-1)/incrementMagnitude;
+
+      return size;
+    }
+
     template<> s32 LinearSequence<f32>::computeSize(const f32 start, const f32 increment, const f32 end)
     {
       const f32 smallestIncrement = static_cast<f32>(1e-8);

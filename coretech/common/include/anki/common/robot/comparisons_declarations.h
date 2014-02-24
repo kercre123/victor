@@ -19,7 +19,7 @@ namespace Anki
 {
   namespace Embedded
   {
-#pragma mark --- Declarations ---
+// #pragma mark --- Declarations ---
     // Check every element of this array against the input array. If the arrays are different
     // sizes, uninitialized, or if any element is more different than the threshold, then
     // return false.

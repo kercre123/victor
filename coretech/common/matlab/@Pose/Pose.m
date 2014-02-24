@@ -145,7 +145,7 @@ classdef Pose < handle
         
         function v = get.axis(this)
             theta = this.angle;
-            if theta > 0
+            if abs(theta) > 0
                 v = this.Rvec / theta;
             else
                 v = [1 0 0]';

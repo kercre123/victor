@@ -23,7 +23,7 @@ namespace Anki
 {
   namespace Embedded
   {
-#pragma mark --- Definitions ---
+// #pragma mark --- Definitions ---
 
     template<typename Type> Result DrawComponents(Array<Type> &image, ConnectedComponents &components, Type minValue, Type maxValue)
     {

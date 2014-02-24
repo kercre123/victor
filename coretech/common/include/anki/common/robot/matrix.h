@@ -22,7 +22,7 @@ namespace Anki
   {
     namespace Matrix
     {
-#pragma mark --- Definitions ---
+// #pragma mark
 
       template<typename Type> Type Min(const ConstArraySliceExpression<Type> &mat)
       {

@@ -9,7 +9,10 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/vision/robot/fiducialMarkers.h"
 
-#include "anki/vision/robot/miscVisionKernels.h"
+#include "anki/common/robot/benchmarking_c.h"
+#include "anki/common/robot/matlabInterface.h"
+
+#include "anki/vision/robot/fiducialDetection.h"
 #include "anki/vision/robot/draw_vision.h"
 
 #include "fiducialMarkerDefinitionType0.h"
@@ -23,8 +26,6 @@ namespace Anki
 {
   namespace Embedded
   {
-    static Result lastResult;
-
     BlockMarker::BlockMarker()
     {
     } // BlockMarker::BlockMarker()
@@ -104,46 +105,49 @@ namespace Anki
       return *this;
     } // FiducialMarkerParserBit& FiducialMarkerParserBit::operator= (const FiducialMarkerParserBit& bit2)
 
-    Result FiducialMarkerParserBit::ExtractMeanValue(const Array<u8> &image, const Quadrilateral<s16> &quad, const Array<f64> &homography, s16 &meanValue) const
+    Result FiducialMarkerParserBit::ExtractMeanValue(const Array<u8> &image, const Quadrilateral<s16> &quad, const Array<f32> &homography, s16 &meanValue) const
     {
       s32 accumulator = 0;
 
       const s32 imageHeight = image.get_size(0);
       const s32 imageWidth = image.get_size(1);
 
-      const f64 h00 = homography[0][0];
-      const f64 h10 = homography[1][0];
-      const f64 h20 = homography[2][0];
-      const f64 h01 = homography[0][1];
-      const f64 h11 = homography[1][1];
-      const f64 h21 = homography[2][1];
-      const f64 h02 = homography[0][2];
-      const f64 h12 = homography[1][2];
-      const f64 h22 = homography[2][2];
+      const f32 h00 = homography[0][0];
+      const f32 h10 = homography[1][0];
+      const f32 h20 = homography[2][0];
+      const f32 h01 = homography[0][1];
+      const f32 h11 = homography[1][1];
+      const f32 h21 = homography[2][1];
+      const f32 h02 = homography[0][2];
+      const f32 h12 = homography[1][2];
+      const f32 h22 = homography[2][2];
 
-      const f64 fixedPointDivider = 1.0 / pow(2.0, this->numFractionalBits);
+      const f32 fixedPointDivider = 1.0f / static_cast<f32>(2 << (this->numFractionalBits-1));
 
       //#define SEND_WARPED_LOCATIONS
 #ifdef SEND_WARPED_LOCATIONS
       Matlab matlab(false);
-      //matlab.EvalStringEcho("warpedPoints = zeros(2, %d);", probeLocations.get_size());
       matlab.EvalStringEcho("if ~exist('warpedPoints', 'var') warpedPoints = zeros(2, 0); end;");
+      //matlab.EvalStringEcho("warpedPoints = zeros(2, 0);");
 #endif
+
+      const Point<s16> * restrict pProbeLocations = this->probeLocations.Pointer(0);
+      const s16 * restrict pProbeWeights = this->probeWeights.Pointer(0);
 
       const s32 numProbeLocations = probeLocations.get_size();
       for(s32 probe=0; probe<numProbeLocations; probe++) {
-        const f64 x = static_cast<f64>(this->probeLocations[probe].x) * fixedPointDivider;
-        const f64 y = static_cast<f64>(this->probeLocations[probe].y) * fixedPointDivider;
-        const s16 weight = this->probeWeights[probe];
+        const f32 x = static_cast<f32>(pProbeLocations[probe].x) * fixedPointDivider;
+        const f32 y = static_cast<f32>(pProbeLocations[probe].y) * fixedPointDivider;
+        const s16 weight = pProbeWeights[probe];
 
         // 1. Map each probe to its warped locations
-        const f64 homogenousDivisor = 1.0 / (h20*x + h21*y + h22);
+        const f32 homogenousDivisor = 1.0f / (h20*x + h21*y + h22);
 
-        const f64 warpedXf = (h00 * x + h01 *y + h02) * homogenousDivisor;
-        const f64 warpedYf = (h10 * x + h11 *y + h12) * homogenousDivisor;
+        const f32 warpedXf = (h00 * x + h01 *y + h02) * homogenousDivisor;
+        const f32 warpedYf = (h10 * x + h11 *y + h12) * homogenousDivisor;
 
-        const s16 warpedX = static_cast<s16>(Round(warpedXf));
-        const s16 warpedY = static_cast<s16>(Round(warpedYf));
+        const s32 warpedX = static_cast<s32>(Round(warpedXf));
+        const s32 warpedY = static_cast<s32>(Round(warpedYf));
 
 #ifdef SEND_WARPED_LOCATIONS
         matlab.EvalStringEcho("warpedPoints(:,end+1) = [%f, %f];", warpedXf, warpedYf);
@@ -154,18 +158,7 @@ namespace Anki
         // This should only fail if there's a bug in the quad extraction
         AnkiAssert(warpedY >= 0  && warpedX >= 0 && warpedY < imageHeight && warpedX < imageWidth);
 
-        // This is the direct way to access a pixel. It doesn't work when there's an endian conflict
-        //const s16 imageValue = static_cast<s16>(*image.Pointer(warpedY, warpedX));
-
-        // This is the indirect way. It reads a whole 32-bit word, then extracts the correct byte
-        const u32 * restrict pImageY = reinterpret_cast<const u32*>(image.Pointer(warpedY,0));
-        const s32 xWord = warpedX >> 2;
-
-        const s32 xByte = warpedX - (xWord << 2);
-
-        const u32 curPixelWord = pImageY[xWord];
-        const u8 curPixel = (curPixelWord & (0xFF << (8*xByte))) >> (8*xByte);
-        const s16 imageValue = static_cast<s16>(curPixel);
+        const s16 imageValue = static_cast<s16>(*image.Pointer(warpedY, warpedX));
 
         accumulator += weight * imageValue;
       }
@@ -173,7 +166,7 @@ namespace Anki
       meanValue = (accumulator >> this->numFractionalBits);
 
       return RESULT_OK;
-    } // Result FiducialMarkerParserBit::ExtractMeanValue(const Array<u8> &image, const Quadrilateral<s16> &quad, const Array<f64> &homography, s16 &meanValue)
+    } // Result FiducialMarkerParserBit::ExtractMeanValue(const Array<u8> &image, const Quadrilateral<s16> &quad, const Array<f32> &homography, s16 &meanValue)
 
     const FixedLengthList<Point<s16> >& FiducialMarkerParserBit::get_probeLocations() const
     {
@@ -216,8 +209,12 @@ namespace Anki
     //  2. Lower left
     //  3. Upper right
     //  4. Lower right
-    Result FiducialMarkerParser::ExtractBlockMarker(const Array<u8> &image, const Quadrilateral<s16> &quad, const Array<f64> &homography, const f32 minContrastRatio, BlockMarker &marker, MemoryStack scratch) const
+    Result FiducialMarkerParser::ExtractBlockMarker(const Array<u8> &image, const Quadrilateral<s16> &quad, const Array<f32> &homography, const f32 minContrastRatio, BlockMarker &marker, MemoryStack scratch) const
     {
+      BeginBenchmark("fmpebm_init");
+
+      Result lastResult;
+
       FixedLengthList<s16> meanValues(MAX_FIDUCIAL_MARKER_BITS, scratch);
 
       const s32 numBits = bits.get_size();
@@ -238,6 +235,9 @@ namespace Anki
       }
 #endif
 
+      EndBenchmark("fmpebm_init");
+
+      BeginBenchmark("fmpebm_extractMean");
       for(s32 bit=0; bit<numBits; bit++) {
         if((lastResult = bits[bit].ExtractMeanValue(image, quad, homography, meanValues[bit])) != RESULT_OK)
           return lastResult;
@@ -258,6 +258,9 @@ namespace Anki
       }
 #endif // #ifdef SEND_PROBE_LOCATIONS
 
+      EndBenchmark("fmpebm_extractMean");
+
+      BeginBenchmark("fmpebm_orient");
       FixedLengthList<u8> binarizedBits(MAX_FIDUCIAL_MARKER_BITS, scratch);
 
       // [this, binaryString] = orientAndThreshold(this, this.means);
@@ -269,9 +272,15 @@ namespace Anki
       if(marker.orientation == BlockMarker::ORIENTATION_UNKNOWN)
         return RESULT_OK; // It couldn't be parsed, but this is not a code failure
 
+      EndBenchmark("fmpebm_orient");
+
+      BeginBenchmark("fmpebm_decode");
+
       // this = decodeIDs(this, binaryString);
       if((lastResult = DecodeId(binarizedBits, marker.blockType, marker.faceType, scratch)) != RESULT_OK)
         return lastResult;
+
+      EndBenchmark("fmpebm_decode");
 
       return RESULT_OK;
     }
@@ -331,7 +340,7 @@ namespace Anki
       FixedLengthList<u8> bitReadingOrder(meanValues.get_size(), scratch);
       bitReadingOrder.set_size(meanValues.get_size());
 
-      // Note: this won't find ties, but that should be rare
+      // NOTE: this won't find ties, but that should be rare
       if(upBitValue == maxValue) {
         marker.orientation = BlockMarker::ORIENTATION_UP;
         darkValue = (downBitValue + leftBitValue + rightBitValue) / 3;

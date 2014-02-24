@@ -8,6 +8,8 @@
 
 #include <algorithm>
 
+#include "anki/common/basestation/jsonTools.h"
+
 #if ANKICORETECH_USE_OPENCV
 #include "opencv2/calib3d/calib3d.hpp"
 #endif
@@ -16,14 +18,17 @@
 
 namespace Anki {
   
+  namespace Vision {
+    
   Camera::Camera(void)
+  : isCalibrationSet(false)
   {
     
   } // Constructor: Camera()
   
   Camera::Camera(const CameraCalibration &calib_in,
                  const Pose3d& pose_in)
-  : calibration(calib_in), pose(pose_in)
+  : calibration(calib_in), isCalibrationSet(true), pose(pose_in)
   {
     
   } // Constructor: Camera(calibration, pose)
@@ -55,7 +60,32 @@ namespace Anki {
               0.f);
      */
   }
-  
+    
+  CameraCalibration::CameraCalibration(const Json::Value &jsonNode)
+  {
+    CORETECH_ASSERT(jsonNode.isMember("nrows"));
+    nrows = JsonTools::GetValue<u16>(jsonNode["nrows"]);
+    
+    CORETECH_ASSERT(jsonNode.isMember("ncols"));
+    ncols = JsonTools::GetValue<u16>(jsonNode["ncols"]);
+    
+    CORETECH_ASSERT(jsonNode.isMember("focalLength_x"));
+    focalLength_x = JsonTools::GetValue<f32>(jsonNode["focalLength_x"]);
+    
+    CORETECH_ASSERT(jsonNode.isMember("focalLength_y"))
+    focalLength_y = JsonTools::GetValue<f32>(jsonNode["focalLength_y"]);
+    
+    CORETECH_ASSERT(jsonNode.isMember("center_x"))
+    center.x() = JsonTools::GetValue<f32>(jsonNode["center_x"]);
+
+    CORETECH_ASSERT(jsonNode.isMember("center_y"))
+    center.y() = JsonTools::GetValue<f32>(jsonNode["center_y"]);
+    
+    CORETECH_ASSERT(jsonNode.isMember("skew"))
+    skew = JsonTools::GetValue<f32>(jsonNode["skew"]);
+    
+    // TODO: Add distortion coefficients
+  }
   
   Matrix_3x3f CameraCalibration::get_calibrationMatrix(void) const
   {
@@ -69,6 +99,19 @@ namespace Anki {
     return K;
   } // get_calibrationMatrix()
   
+    
+  void CameraCalibration::CreateJson(Json::Value& jsonNode) const
+  {
+    jsonNode["nrows"] = nrows;
+    jsonNode["ncols"] = ncols;
+    jsonNode["focalLength_x"] = focalLength_x;
+    jsonNode["focalLength_y"] = focalLength_y;
+    jsonNode["center_x"] = center.x();
+    jsonNode["center_y"] = center.y();
+    jsonNode["skew"] = skew;
+  }
+    
+    
 #if ANKICORETECH_USE_OPENCV
   Pose3d Camera::computeObjectPoseHelper(const std::vector<cv::Point2f>& cvImagePoints,
                                          const std::vector<cv::Point3f>& cvObjPoints) const
@@ -97,7 +140,10 @@ namespace Anki {
   Pose3d Camera::computeObjectPose(const std::vector<Point2f>& imgPoints,
                                    const std::vector<Point3f>& objPoints) const
   {
-    
+    if(not isCalibrationSet) {
+      CORETECH_THROW("Camera::computeObjectPose() called before calibration set.");
+    }
+
 #if ANKICORETECH_USE_OPENCV
     std::vector<cv::Point2f> cvImagePoints;
     std::vector<cv::Point3f> cvObjPoints;
@@ -123,18 +169,22 @@ namespace Anki {
   Pose3d Camera::computeObjectPose(const Quad2f& imgPoints,
                                    const Quad3f& objPoints) const
   {
+    if(not isCalibrationSet) {
+      CORETECH_THROW("Camera::computeObjectPose() called before calibration set.");
+    }
+    
 #if ANKICORETECH_USE_OPENCV
     std::vector<cv::Point2f> cvImagePoints;
     std::vector<cv::Point3f> cvObjPoints;
     
     cvImagePoints.emplace_back(imgPoints[Quad::TopLeft].get_CvPoint_());
-    cvImagePoints.emplace_back(imgPoints[Quad::TopRight].get_CvPoint_());
     cvImagePoints.emplace_back(imgPoints[Quad::BottomLeft].get_CvPoint_());
+    cvImagePoints.emplace_back(imgPoints[Quad::TopRight].get_CvPoint_());
     cvImagePoints.emplace_back(imgPoints[Quad::BottomRight].get_CvPoint_());
     
     cvObjPoints.emplace_back(objPoints[Quad::TopLeft].get_CvPoint3_());
-    cvObjPoints.emplace_back(objPoints[Quad::TopRight].get_CvPoint3_());
     cvObjPoints.emplace_back(objPoints[Quad::BottomLeft].get_CvPoint3_());
+    cvObjPoints.emplace_back(objPoints[Quad::TopRight].get_CvPoint3_());
     cvObjPoints.emplace_back(objPoints[Quad::BottomRight].get_CvPoint3_());
     
     return computeObjectPoseHelper(cvImagePoints, cvObjPoints);
@@ -150,6 +200,10 @@ namespace Anki {
   void  Camera::project3dPoint(const Point3f& objPoint,
                                Point2f&       imgPoint) const
   {
+    if(not isCalibrationSet) {
+      CORETECH_THROW("Camera::project3dPoint() called before calibration set.");
+    }
+    
     const f32 BEHIND_CAM = std::numeric_limits<f32>::quiet_NaN();
     
     if(objPoint.z() <= 0.f)
@@ -194,5 +248,5 @@ namespace Anki {
     }
   } // project3dPoints(Quads)
 
-  
+  } // namespace Vision
 } // namespace Anki

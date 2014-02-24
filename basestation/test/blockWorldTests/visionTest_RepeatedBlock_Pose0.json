@@ -1,0 +1,458 @@
+{
+   "Blocks" : [
+      {
+         "BlockName" : "Block",
+         "BlockPose" : {
+            "Angle" : 0.7853980000082023,
+            "Axis" : [ 4.450050807219165e-06, 1.843270971646158e-06, -0.9999999999883997 ],
+            "Translation" : [ 333.0, -75.00011479073218, 27.45815516386237 ]
+         },
+         "Type" : 2
+      },
+      {
+         "BlockName" : "Block",
+         "BlockPose" : {
+            "Angle" : 0.7853980000082285,
+            "Axis" : [ 4.457129069893948e-06, 1.846202883419560e-06, -0.9999999999883628 ],
+            "Translation" : [ 333.0, -75.00029135372135, 87.43166359724658 ]
+         },
+         "Type" : 2
+      },
+      {
+         "BlockName" : "Block",
+         "BlockPose" : {
+            "Angle" : 0.7853980000082358,
+            "Axis" : [ 4.459098715841628e-06, 1.847018737267239e-06, -0.9999999999883527 ],
+            "Translation" : [ 333.0, -75.00051290916349, 147.4184203394605 ]
+         },
+         "Type" : 2
+      },
+      {
+         "BlockName" : "Block",
+         "BlockPose" : {
+            "Angle" : -0.7853980000082023,
+            "Axis" : [ -4.450050789428813e-06, 1.843270964289501e-06, -0.9999999999883997 ],
+            "Translation" : [ 333.0, 74.99988520724438, 27.45870614346256 ]
+         },
+         "Type" : 2
+      },
+      {
+         "BlockName" : "Block",
+         "BlockPose" : {
+            "Angle" : -0.7853980000082283,
+            "Axis" : [ -4.457129042362142e-06, 1.846202872025500e-06, -0.9999999999883628 ],
+            "Translation" : [ 333.0, 74.99970864469057, 87.43221457662911 ]
+         },
+         "Type" : 2
+      },
+      {
+         "BlockName" : "Block",
+         "BlockPose" : {
+            "Angle" : -0.7853980000082358,
+            "Axis" : [ -4.459098594831453e-06, 1.847018687174241e-06, -0.9999999999883525 ],
+            "Translation" : [ 333.0, 74.9994870892960, 147.4189713188970 ]
+         },
+         "Type" : 2
+      },
+      {
+         "BlockName" : "Block",
+         "BlockPose" : {
+            "Angle" : -1.570799875521268,
+            "Axis" : [ -1.0, 1.069348920714978e-10, -1.069530709314098e-10 ],
+            "Translation" : [ 413.9999999935758, -0.0001128896303235993, 27.45843158591962 ]
+         },
+         "Type" : 2
+      },
+      {
+         "BlockName" : "Block",
+         "BlockPose" : {
+            "Angle" : 3.141589186639173,
+            "Axis" : [ -1.0, 7.406116881039965e-11, -2.121262583341483e-10 ],
+            "Translation" : [ 413.9999999692318, 0.0003832899234501323, 87.43194527027596 ]
+         },
+         "Type" : 2
+      },
+      {
+         "BlockName" : "Block",
+         "BlockPose" : {
+            "Angle" : 1.570759722105491,
+            "Axis" : [ -0.9999999999990209, 9.893384908740362e-07, -9.897051458454500e-07 ],
+            "Translation" : [ 413.9999863191186, 0.007319389094867006, 147.4230390099511 ]
+         },
+         "Type" : 2
+      }
+   ],
+   "CameraCalibration" : {
+      "center_x" : 320.0,
+      "center_y" : 240.0,
+      "focalLength_x" : 667.8306884765625,
+      "focalLength_y" : 667.8306884765625,
+      "ncols" : 640,
+      "nrows" : 480,
+      "skew" : 0.0
+   },
+   "CheckRobotPose" : false,
+   "ImageFile" : "/Users/andrew/Code/products-cozmo/basestation/test/blockWorldTests/visionTest_RepeatedBlock_Pose0.png",
+   "NumBlocks" : 9,
+   "NumMarkers" : 27,
+   "RobotPose" : {
+      "Angle" : 0.0,
+      "Axis" : [ 1.0, 0.0, 0.0 ],
+      "HeadAngle" : 0.0872660,
+      "Translation" : [ 0.0, 0.0, 18.0 ]
+   },
+   "VisionMarkers" : [
+      {
+         "Name" : "MessageVisionMarker",
+         "code" : [ 2, 86, 106, 64, 24, 13, 56, 0, 56, 96, 48 ],
+         "timestamp" : 1784208456,
+         "x_imgLowerLeft" : 95.27310943603516,
+         "x_imgLowerRight" : 129.7305603027344,
+         "x_imgUpperLeft" : 96.88727569580078,
+         "x_imgUpperRight" : 131.5697631835938,
+         "y_imgLowerLeft" : 148.1617279052734,
+         "y_imgLowerRight" : 136.5568542480469,
+         "y_imgUpperLeft" : 81.37404632568359,
+         "y_imgUpperRight" : 64.61621093750
+      },
+      {
+         "Name" : "MessageVisionMarker",
+         "code" : [ 2, 86, 106, 64, 24, 13, 56, 0, 56, 96, 48 ],
+         "timestamp" : 1784208456,
+         "x_imgLowerLeft" : 173.5625762939453,
+         "x_imgLowerRight" : 232.8729858398438,
+         "x_imgUpperLeft" : 174.8610076904297,
+         "x_imgUpperRight" : 233.9046173095703,
+         "y_imgLowerLeft" : 136.8094329833984,
+         "y_imgLowerRight" : 148.5743255615234,
+         "y_imgUpperLeft" : 64.18570709228516,
+         "y_imgUpperRight" : 81.08632659912109
+      },
+      {
+         "Name" : "MessageVisionMarker",
+         "code" : [ 2, 86, 106, 64, 24, 13, 56, 0, 56, 96, 48 ],
+         "timestamp" : 1784208456,
+         "x_imgLowerLeft" : 407.7343444824219,
+         "x_imgLowerRight" : 467.3947753906250,
+         "x_imgUpperLeft" : 407.0411987304688,
+         "x_imgUpperRight" : 466.1116638183594,
+         "y_imgLowerLeft" : 148.6652526855469,
+         "y_imgLowerRight" : 136.9931030273438,
+         "y_imgUpperLeft" : 81.02608489990234,
+         "y_imgUpperRight" : 64.12693786621094
+      },
+      {
+         "Name" : "MessageVisionMarker",
+         "code" : [ 2, 86, 106, 64, 24, 13, 56, 0, 56, 96, 48 ],
+         "timestamp" : 1784208456,
+         "x_imgLowerLeft" : 511.2449340820312,
+         "x_imgLowerRight" : 545.8034057617188,
+         "x_imgUpperLeft" : 509.3422546386719,
+         "x_imgUpperRight" : 543.9369506835938,
+         "y_imgLowerLeft" : 136.5554199218750,
+         "y_imgLowerRight" : 148.2056732177734,
+         "y_imgUpperLeft" : 64.57659912109375,
+         "y_imgUpperRight" : 81.3283691406250
+      },
+      {
+         "Name" : "MessageVisionMarker",
+         "code" : [ 144, 146, 178, 38, 11, 11, 2, 21, 20, 160, 32 ],
+         "timestamp" : 1784208456,
+         "x_imgLowerLeft" : 119.9610748291016,
+         "x_imgLowerRight" : 113.9749145507812,
+         "x_imgUpperLeft" : 108.6352386474609,
+         "x_imgUpperRight" : 102.6618194580078,
+         "y_imgLowerLeft" : 119.8293762207031,
+         "y_imgLowerRight" : 84.78776550292969,
+         "y_imgUpperLeft" : 128.0219879150391,
+         "y_imgUpperRight" : 107.9784317016602
+      },
+      {
+         "Name" : "MessageVisionMarker",
+         "code" : [ 80, 0, 160, 0, 64, 1, 128, 1, 0, 2, 0 ],
+         "timestamp" : 1784208456,
+         "x_imgLowerLeft" : 196.9698028564453,
+         "x_imgLowerRight" : 190.2805023193359,
+         "x_imgUpperLeft" : 218.8165435791016,
+         "x_imgUpperRight" : 212.0221405029297,
+         "y_imgLowerLeft" : 89.61079406738281,
+         "y_imgLowerRight" : 96.45831298828125,
+         "y_imgUpperLeft" : 119.6558532714844,
+         "y_imgUpperRight" : 126.2459487915039
+      },
+      {
+         "Name" : "MessageVisionMarker",
+         "code" : [ 248, 241, 241, 227, 247, 255, 254, 255, 254, 252, 240 ],
+         "timestamp" : 1784208456,
+         "x_imgLowerLeft" : 444.140136718750,
+         "x_imgLowerRight" : 429.9476623535156,
+         "x_imgUpperLeft" : 450.4883728027344,
+         "x_imgUpperRight" : 423.5187988281250,
+         "y_imgLowerLeft" : 90.46105194091797,
+         "y_imgLowerRight" : 90.67435455322266,
+         "y_imgUpperLeft" : 96.88222503662109,
+         "y_imgUpperRight" : 133.9980773925781
+      },
+      {
+         "Name" : "MessageVisionMarker",
+         "code" : [ 2, 86, 106, 64, 24, 13, 56, 0, 56, 96, 48 ],
+         "timestamp" : 1784208456,
+         "x_imgLowerLeft" : 349.8177490234375,
+         "x_imgLowerRight" : 349.5925903320312,
+         "x_imgUpperLeft" : 291.0799865722656,
+         "x_imgUpperRight" : 291.3317871093750,
+         "y_imgLowerLeft" : 172.6627655029297,
+         "y_imgLowerRight" : 115.0769348144531,
+         "y_imgUpperLeft" : 172.6104125976562,
+         "y_imgUpperRight" : 115.1308593750
+      },
+      {
+         "Name" : "MessageVisionMarker",
+         "code" : [ 252, 240, 241, 225, 227, 199, 198, 207, 206, 254, 244 ],
+         "timestamp" : 1784208456,
+         "x_imgLowerLeft" : 335.4714050292969,
+         "x_imgLowerRight" : 329.6524047851562,
+         "x_imgUpperLeft" : 332.2198791503906,
+         "x_imgUpperRight" : 308.0392456054688,
+         "y_imgLowerLeft" : 139.1769256591797,
+         "y_imgLowerRight" : 131.2944030761719,
+         "y_imgUpperLeft" : 154.685058593750,
+         "y_imgUpperRight" : 160.2114562988281
+      },
+      {
+         "Name" : "MessageVisionMarker",
+         "code" : [ 2, 86, 106, 64, 24, 13, 56, 0, 56, 96, 48 ],
+         "timestamp" : 1784208456,
+         "x_imgLowerLeft" : 91.09188079833984,
+         "x_imgLowerRight" : 126.5846328735352,
+         "x_imgUpperLeft" : 93.2409667968750,
+         "x_imgUpperRight" : 128.5924835205078,
+         "y_imgLowerLeft" : 274.0198364257812,
+         "y_imgLowerRight" : 272.1505432128906,
+         "y_imgUpperLeft" : 203.8673858642578,
+         "y_imgUpperRight" : 196.4172821044922
+      },
+      {
+         "Name" : "MessageVisionMarker",
+         "code" : [ 2, 86, 106, 64, 24, 13, 56, 0, 56, 96, 48 ],
+         "timestamp" : 1784208456,
+         "x_imgLowerLeft" : 170.8724212646484,
+         "x_imgLowerRight" : 231.5842437744141,
+         "x_imgUpperLeft" : 172.3075866699219,
+         "x_imgUpperRight" : 232.3730773925781,
+         "y_imgLowerLeft" : 271.9130554199219,
+         "y_imgLowerRight" : 273.9905700683594,
+         "y_imgUpperLeft" : 196.5822601318359,
+         "y_imgUpperRight" : 203.9958496093750
+      },
+      {
+         "Name" : "MessageVisionMarker",
+         "code" : [ 2, 86, 106, 64, 24, 13, 56, 0, 56, 96, 48 ],
+         "timestamp" : 1784208456,
+         "x_imgLowerLeft" : 409.5257263183594,
+         "x_imgLowerRight" : 470.0716552734375,
+         "x_imgUpperLeft" : 408.3160400390625,
+         "x_imgUpperRight" : 468.5270996093750,
+         "y_imgLowerLeft" : 273.9811401367188,
+         "y_imgLowerRight" : 271.8998107910156,
+         "y_imgUpperLeft" : 204.0132751464844,
+         "y_imgUpperRight" : 196.5933532714844
+      },
+      {
+         "Name" : "MessageVisionMarker",
+         "code" : [ 2, 86, 106, 64, 24, 13, 56, 0, 56, 96, 48 ],
+         "timestamp" : 1784208456,
+         "x_imgLowerLeft" : 514.3614501953125,
+         "x_imgLowerRight" : 549.8810424804688,
+         "x_imgUpperLeft" : 512.300781250,
+         "x_imgUpperRight" : 547.6882324218750,
+         "y_imgLowerLeft" : 272.0343017578125,
+         "y_imgLowerRight" : 274.1228637695312,
+         "y_imgUpperLeft" : 196.3788757324219,
+         "y_imgUpperRight" : 203.8661193847656
+      },
+      {
+         "Name" : "MessageVisionMarker",
+         "code" : [ 251, 242, 240, 240, 225, 227, 224, 199, 194, 218, 214 ],
+         "timestamp" : 1784208456,
+         "x_imgLowerLeft" : 100.7681884765625,
+         "x_imgLowerRight" : 107.6529846191406,
+         "x_imgUpperLeft" : 100.7908630371094,
+         "x_imgUpperRight" : 112.0910644531250,
+         "y_imgLowerLeft" : 246.3411407470703,
+         "y_imgLowerRight" : 258.0325317382812,
+         "y_imgUpperLeft" : 230.5274353027344,
+         "y_imgUpperRight" : 212.2655029296875
+      },
+      {
+         "Name" : "MessageVisionMarker",
+         "code" : [ 154, 146, 18, 18, 7, 39, 164, 189, 252, 124, 52 ],
+         "timestamp" : 1784208456,
+         "x_imgLowerLeft" : 193.9921722412109,
+         "x_imgLowerRight" : 196.7812194824219,
+         "x_imgUpperLeft" : 203.0750122070312,
+         "x_imgUpperRight" : 210.3005676269531,
+         "y_imgLowerLeft" : 219.8821563720703,
+         "y_imgLowerRight" : 254.9984283447266,
+         "y_imgUpperLeft" : 216.8539886474609,
+         "y_imgUpperRight" : 255.2557830810547
+      },
+      {
+         "Name" : "MessageVisionMarker",
+         "code" : [ 255, 255, 255, 255, 255, 255, 252, 253, 248, 250, 254 ],
+         "timestamp" : 1784208456,
+         "x_imgLowerLeft" : 446.1146850585938,
+         "x_imgLowerRight" : 437.1661376953125,
+         "x_imgUpperLeft" : 452.0265197753906,
+         "x_imgUpperRight" : 588.1972045898438,
+         "y_imgLowerLeft" : 219.8377532958984,
+         "y_imgLowerRight" : 217.0854797363281,
+         "y_imgUpperLeft" : 225.8097076416016,
+         "y_imgUpperRight" : -107.9709777832031
+      },
+      {
+         "Name" : "MessageVisionMarker",
+         "code" : [ 32, 101, 64, 10, 129, 21, 0, 41, 2, 80, 100 ],
+         "timestamp" : 1784208456,
+         "x_imgLowerLeft" : 529.5880126953125,
+         "x_imgLowerRight" : 535.6709594726562,
+         "x_imgUpperLeft" : 524.5901489257812,
+         "x_imgUpperRight" : 530.4019165039062,
+         "y_imgLowerLeft" : 255.2299194335938,
+         "y_imgLowerRight" : 255.5182037353516,
+         "y_imgUpperLeft" : 221.9743041992188,
+         "y_imgUpperRight" : 216.5292663574219
+      },
+      {
+         "Name" : "MessageVisionMarker",
+         "code" : [ 2, 86, 106, 64, 24, 13, 56, 0, 56, 96, 48 ],
+         "timestamp" : 1784208456,
+         "x_imgLowerLeft" : 349.8619689941406,
+         "x_imgLowerRight" : 291.2045593261719,
+         "x_imgUpperLeft" : 349.8949890136719,
+         "x_imgUpperRight" : 291.1436462402344,
+         "y_imgLowerLeft" : 219.1595153808594,
+         "y_imgLowerRight" : 219.0868225097656,
+         "y_imgUpperLeft" : 277.8715209960938,
+         "y_imgUpperRight" : 277.9089355468750
+      },
+      {
+         "Name" : "MessageVisionMarker",
+         "code" : [ 130, 134, 156, 253, 249, 249, 242, 163, 134, 6, 4 ],
+         "timestamp" : 1784208456,
+         "x_imgLowerLeft" : 305.9804992675781,
+         "x_imgLowerRight" : 311.4090270996094,
+         "x_imgUpperLeft" : 315.1605224609375,
+         "x_imgUpperRight" : 333.3301391601562,
+         "y_imgLowerLeft" : 241.9072875976562,
+         "y_imgLowerRight" : 262.1868591308594,
+         "y_imgUpperLeft" : 233.3338928222656,
+         "y_imgUpperRight" : 261.8958435058594
+      },
+      {
+         "Name" : "MessageVisionMarker",
+         "code" : [ 2, 86, 106, 64, 24, 13, 56, 0, 56, 96, 48 ],
+         "timestamp" : 1784208456,
+         "x_imgLowerLeft" : 290.8042297363281,
+         "x_imgLowerRight" : 290.4495239257812,
+         "x_imgUpperLeft" : 350.3703308105469,
+         "x_imgUpperRight" : 350.5601501464844,
+         "y_imgLowerLeft" : 326.0209350585938,
+         "y_imgLowerRight" : 385.8275146484375,
+         "y_imgUpperLeft" : 325.9844970703125,
+         "y_imgUpperRight" : 385.8470458984375
+      },
+      {
+         "Name" : "MessageVisionMarker",
+         "code" : [ 2, 86, 106, 64, 24, 13, 56, 0, 56, 96, 48 ],
+         "timestamp" : 1784208456,
+         "x_imgLowerLeft" : 87.33036041259766,
+         "x_imgLowerRight" : 123.1839141845703,
+         "x_imgUpperLeft" : 89.50022125244141,
+         "x_imgUpperRight" : 124.9994812011719,
+         "y_imgLowerLeft" : 403.2577514648438,
+         "y_imgLowerRight" : 411.9416503906250,
+         "y_imgUpperLeft" : 330.9956970214844,
+         "y_imgUpperRight" : 333.7252807617188
+      },
+      {
+         "Name" : "MessageVisionMarker",
+         "code" : [ 2, 86, 106, 64, 24, 13, 56, 0, 56, 96, 48 ],
+         "timestamp" : 1784208456,
+         "x_imgLowerLeft" : 168.2188262939453,
+         "x_imgLowerRight" : 230.1428833007812,
+         "x_imgUpperLeft" : 169.6054382324219,
+         "x_imgUpperRight" : 230.9489746093750,
+         "y_imgLowerLeft" : 411.7864685058594,
+         "y_imgLowerRight" : 403.3120727539062,
+         "y_imgUpperLeft" : 333.7350158691406,
+         "y_imgUpperRight" : 331.0653991699219
+      },
+      {
+         "Name" : "MessageVisionMarker",
+         "code" : [ 2, 86, 106, 64, 24, 13, 56, 0, 56, 96, 48 ],
+         "timestamp" : 1784208456,
+         "x_imgLowerLeft" : 410.5964660644531,
+         "x_imgLowerRight" : 472.7073974609375,
+         "x_imgUpperLeft" : 410.0509643554688,
+         "x_imgUpperRight" : 471.2948303222656,
+         "y_imgLowerLeft" : 403.1968688964844,
+         "y_imgLowerRight" : 411.8716125488281,
+         "y_imgUpperLeft" : 331.0699462890625,
+         "y_imgUpperRight" : 333.7484436035156
+      },
+      {
+         "Name" : "MessageVisionMarker",
+         "code" : [ 2, 86, 106, 64, 24, 13, 56, 0, 56, 96, 48 ],
+         "timestamp" : 1784208456,
+         "x_imgLowerLeft" : 517.8287963867188,
+         "x_imgLowerRight" : 553.5774536132812,
+         "x_imgUpperLeft" : 515.9846801757812,
+         "x_imgUpperRight" : 551.3966064453125,
+         "y_imgLowerLeft" : 411.7600097656250,
+         "y_imgLowerRight" : 403.2423095703125,
+         "y_imgUpperLeft" : 333.8085632324219,
+         "y_imgUpperRight" : 331.1243286132812
+      },
+      {
+         "Name" : "MessageVisionMarker",
+         "code" : [ 130, 134, 156, 253, 249, 249, 242, 179, 134, 4, 4 ],
+         "timestamp" : 1784208456,
+         "x_imgLowerLeft" : 306.1980285644531,
+         "x_imgLowerRight" : 311.0023803710938,
+         "x_imgUpperLeft" : 314.8119506835938,
+         "x_imgUpperRight" : 330.8914184570312,
+         "y_imgLowerLeft" : 348.2922058105469,
+         "y_imgLowerRight" : 369.7295837402344,
+         "y_imgUpperLeft" : 340.9114990234375,
+         "y_imgUpperRight" : 370.0811767578125
+      },
+      {
+         "Name" : "MessageVisionMarker",
+         "code" : [ 158, 190, 253, 233, 251, 211, 198, 133, 140, 26, 30 ],
+         "timestamp" : 1784208456,
+         "x_imgLowerLeft" : 108.2506866455078,
+         "x_imgLowerRight" : 101.97753906250,
+         "x_imgUpperLeft" : 116.2075805664062,
+         "x_imgUpperRight" : 105.5876922607422,
+         "y_imgLowerLeft" : 350.38378906250,
+         "y_imgLowerRight" : 351.0256042480469,
+         "y_imgUpperLeft" : 371.7450256347656,
+         "y_imgUpperRight" : 400.4303588867188
+      },
+      {
+         "Name" : "MessageVisionMarker",
+         "code" : [ 0, 5, 4, 10, 1, 5, 16, 25, 50, 32, 36 ],
+         "timestamp" : 1784208456,
+         "x_imgLowerLeft" : 206.8831481933594,
+         "x_imgLowerRight" : 194.5752563476562,
+         "x_imgUpperLeft" : 213.8704528808594,
+         "x_imgUpperRight" : 204.246093750,
+         "y_imgLowerLeft" : 350.6620483398438,
+         "y_imgLowerRight" : 350.9642333984375,
+         "y_imgUpperLeft" : 380.4438781738281,
+         "y_imgUpperRight" : 389.8529663085938
+      }
+   ],
+   "WorldTitle" : "visionTest_RepeatedBlock"
+}

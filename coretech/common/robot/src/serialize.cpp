@@ -95,6 +95,71 @@ namespace Anki
       return RESULT_OK;
     }
 
+    Result SerializedBuffer::FindSerializedBuffer(const void * rawBuffer, const s32 rawBufferLength, s32 &startIndex, s32 &endIndex)
+    {
+      startIndex = -1;
+      endIndex = -1;
+
+      AnkiConditionalErrorAndReturnValue(rawBuffer != NULL,
+        RESULT_FAIL_UNINITIALIZED_MEMORY, "SerializedBuffer::FindSerializedBuffer", "rawBuffer is NULL");
+
+      AnkiConditionalErrorAndReturnValue(rawBufferLength >= 0,
+        RESULT_FAIL_INVALID_PARAMETERS, "SerializedBuffer::FindSerializedBuffer", "rawBufferLength is >= 0");
+
+      if(rawBufferLength == 0)
+        return RESULT_OK;
+
+      const u8 * rawBufferU8 = reinterpret_cast<const u8*>(rawBuffer);
+
+      s32 state = 0;
+      s32 index = 0;
+
+      // Look for the header
+      while(index < rawBufferLength) {
+        if(state == SERIALIZED_BUFFER_HEADER_LENGTH) {
+          startIndex = index;
+          break;
+        }
+
+        if(rawBufferU8[index] == SERIALIZED_BUFFER_HEADER[state]) {
+          state++;
+        } else if(rawBufferU8[index] == SERIALIZED_BUFFER_HEADER[0]) {
+          state = 1;
+        } else {
+          state = 0;
+        }
+
+        index++;
+      } // while(index < rawBufferLength)
+
+      // Look for the footer
+      state = 0;
+      while(index < rawBufferLength) {
+        if(state == SERIALIZED_BUFFER_FOOTER_LENGTH) {
+          endIndex = index-SERIALIZED_BUFFER_FOOTER_LENGTH-1;
+          break;
+        }
+
+        //printf("%d) %d %x %x\n", index, state, rawBufferU8[index], SERIALIZED_BUFFER_FOOTER[state]);
+
+        if(rawBufferU8[index] == SERIALIZED_BUFFER_FOOTER[state]) {
+          state++;
+        } else if(rawBufferU8[index] == SERIALIZED_BUFFER_FOOTER[0]) {
+          state = 1;
+        } else {
+          state = 0;
+        }
+
+        index++;
+      } // while(index < rawBufferLength)
+
+      if(state == SERIALIZED_BUFFER_FOOTER_LENGTH) {
+        endIndex = index-SERIALIZED_BUFFER_FOOTER_LENGTH-1;
+      }
+
+      return RESULT_OK;
+    } // void FindSerializedBuffer(const void * rawBuffer, s32 &startIndex, s32 &endIndex)
+
     void* SerializedBuffer::PushBack(const void * data, const s32 dataLength)
     {
       return PushBack_Generic(DATA_TYPE_RAW, NULL, 0, data, dataLength);
@@ -135,7 +200,7 @@ namespace Anki
 
       const s32 totalLength = RoundUp<s32>(dataLength, 4) + headerLength;
 
-      const s32 bytesRequired = totalLength+SERIALIZED_SEGEMENT_HEADER_LENGTH+SERIALIZED_SEGMENT_FOOTER_LENGTH;
+      const s32 bytesRequired = totalLength+SERIALIZED_SEGMENT_HEADER_LENGTH+SERIALIZED_SEGMENT_FOOTER_LENGTH;
 
       s32 numBytesAllocated = -1;
       u8 * const segmentStart = reinterpret_cast<u8*>( memoryStack.Allocate(bytesRequired, numBytesAllocated) );
@@ -150,13 +215,9 @@ namespace Anki
       segmentU32[1] = static_cast<u32>(type);
 
       // TODO: decide if the CRC should be computed on the length (png doesn't do this)
-#ifdef USING_MOVIDIUS_GCC_COMPILER
-      crc =  ComputeCRC32_bigEndian(segmentU32, SERIALIZED_SEGEMENT_HEADER_LENGTH, crc);
-#else
-      crc =  ComputeCRC32_littleEndian(segmentU32, SERIALIZED_SEGEMENT_HEADER_LENGTH, crc);
-#endif
+      crc =  ComputeCRC32(segmentU32, SERIALIZED_SEGMENT_HEADER_LENGTH, crc);
 
-      segmentU32 += (SERIALIZED_SEGEMENT_HEADER_LENGTH>>2);
+      segmentU32 += (SERIALIZED_SEGMENT_HEADER_LENGTH>>2);
 
       if(header != NULL) {
         // Endian-safe copy (it may copy a little extra)
@@ -168,11 +229,7 @@ namespace Anki
           segmentU32[i] = headerU32[i];
         }
 
-#ifdef USING_MOVIDIUS_GCC_COMPILER
-        crc =  ComputeCRC32_bigEndian(segmentU32, headerLength, crc);
-#else
-        crc =  ComputeCRC32_littleEndian(segmentU32, headerLength, crc);
-#endif
+        crc =  ComputeCRC32(segmentU32, headerLength, crc);
       } // if(header != NULL)
 
       segmentU32 += (headerLength>>2);
@@ -188,15 +245,12 @@ namespace Anki
           segmentU32[i] = dataU32[i];
         }
 
-        const s32 numBytesToCrc = numBytesAllocated-headerLength-SERIALIZED_SEGEMENT_HEADER_LENGTH-SERIALIZED_SEGMENT_FOOTER_LENGTH;
-#ifdef USING_MOVIDIUS_GCC_COMPILER
-        crc =  ComputeCRC32_bigEndian(segmentU32, numBytesToCrc, crc);
-#else
-        crc =  ComputeCRC32_littleEndian(segmentU32, numBytesToCrc, crc);
-#endif
+        const s32 numBytesToCrc = numBytesAllocated-headerLength-SERIALIZED_SEGMENT_HEADER_LENGTH-SERIALIZED_SEGMENT_FOOTER_LENGTH;
+
+        crc =  ComputeCRC32(segmentU32, numBytesToCrc, crc);
 
         // Add a CRC code computed from the header and data
-        //const u32 crc2 =  ComputeCRC32_littleEndian(segmentStart, numBytesAllocated - SERIALIZED_SEGMENT_FOOTER_LENGTH, 0xFFFFFFFF);
+        //const u32 crc2 =  ComputeCRC32(segmentStart, numBytesAllocated - SERIALIZED_SEGMENT_FOOTER_LENGTH, 0xFFFFFFFF);
         reinterpret_cast<u32*>(segmentStart + numBytesAllocated - SERIALIZED_SEGMENT_FOOTER_LENGTH)[0] = crc;
         //printf("crc: 0x%x\n", crc);
       } // if(data != NULL)
@@ -270,7 +324,7 @@ namespace Anki
     {
     }
 
-    const void * SerializedBufferConstIterator::GetNext(s32 &dataLength, SerializedBuffer::DataType &type)
+    const void * SerializedBufferConstIterator::GetNext(s32 &dataLength, SerializedBuffer::DataType &type, const bool requireCRCmatch)
     {
       s32 segmentLength = -1;
       const void * segmentToReturn = MemoryStackConstIterator::GetNext(segmentLength);
@@ -280,21 +334,19 @@ namespace Anki
 
       segmentLength -= SerializedBuffer::SERIALIZED_SEGMENT_FOOTER_LENGTH;
 
-      const u32 expectedCRC = reinterpret_cast<const u32*>(reinterpret_cast<const u8*>(segmentToReturn)+segmentLength)[0];
+      if(requireCRCmatch) {
+        const u32 expectedCRC = reinterpret_cast<const u32*>(reinterpret_cast<const u8*>(segmentToReturn)+segmentLength)[0];
 
-#ifdef USING_MOVIDIUS_GCC_COMPILER
-      const u32 computedCrc =  ComputeCRC32_bigEndian(segmentToReturn, segmentLength, 0xFFFFFFFF);
-#else
-      const u32 computedCrc =  ComputeCRC32_littleEndian(segmentToReturn, segmentLength, 0xFFFFFFFF);
-#endif
+        const u32 computedCrc =  ComputeCRC32(segmentToReturn, segmentLength, 0xFFFFFFFF);
 
-      AnkiConditionalErrorAndReturnValue(expectedCRC == computedCrc,
-        NULL, "SerializedBufferConstIterator::GetNext", "CRCs don't match (%x != %x)", expectedCRC, computedCrc);
+        AnkiConditionalErrorAndReturnValue(expectedCRC == computedCrc,
+          NULL, "SerializedBufferConstIterator::GetNext", "CRCs don't match (%x != %x)", expectedCRC, computedCrc);
+      } // if(requireCRCmatch)
 
       dataLength = reinterpret_cast<const u32*>(segmentToReturn)[0];
       type = static_cast<SerializedBuffer::DataType>(reinterpret_cast<const u32*>(segmentToReturn)[1]);
 
-      return reinterpret_cast<const u8*>(segmentToReturn) + SerializedBuffer::SERIALIZED_SEGEMENT_HEADER_LENGTH;
+      return reinterpret_cast<const u8*>(segmentToReturn) + SerializedBuffer::SERIALIZED_SEGMENT_HEADER_LENGTH;
     }
 
     SerializedBufferIterator::SerializedBufferIterator(SerializedBuffer &serializedBuffer)
@@ -302,11 +354,11 @@ namespace Anki
     {
     }
 
-    void * SerializedBufferIterator::GetNext(const bool swapEndian, s32 &dataLength, SerializedBuffer::DataType &type)
+    void * SerializedBufferIterator::GetNext(const bool swapEndian, s32 &dataLength, SerializedBuffer::DataType &type, const bool requireCRCmatch)
     {
       // To avoid code duplication, we'll use the const version of GetNext(), though our MemoryStack is not const
 
-      u8 * segment = reinterpret_cast<u8*>(const_cast<void*>(SerializedBufferConstIterator::GetNext(dataLength, type)));
+      u8 * segment = reinterpret_cast<u8*>(const_cast<void*>(SerializedBufferConstIterator::GetNext(dataLength, type, requireCRCmatch)));
 
       AnkiConditionalErrorAndReturnValue(segment != NULL,
         NULL, "SerializedBufferIterator::GetNext", "segment is NULL");

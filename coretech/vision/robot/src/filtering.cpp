@@ -7,7 +7,7 @@ Copyright Anki, Inc. 2013
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
 **/
 
-#include "anki/vision/robot/miscVisionKernels.h"
+#include "anki/vision/robot/fiducialDetection.h"
 
 //using namespace std;
 
@@ -17,8 +17,6 @@ namespace Anki
   {
     namespace ImageProcessing
     {
-      //static Result lastResult;
-
       typedef enum
       {
         BITSHIFT_NONE,
@@ -48,7 +46,7 @@ namespace Anki
         const s32 halfWidth = 1 + ((sigma*numStandardDeviations) >> numSigmaFractionalBits);
         const f32 halfWidthF32 = static_cast<f32>(halfWidth);
 
-        FixedPointArray<s32> gaussianKernel(1, 2*halfWidth + 1, numSigmaFractionalBits, scratch);
+        FixedPointArray<s32> gaussianKernel(1, 2*halfWidth + 1, numSigmaFractionalBits, scratch, Flags::Buffer(false,false,false));
         s32 * restrict pGaussianKernel = gaussianKernel.Pointer(0,0);
 
         {
@@ -69,8 +67,9 @@ namespace Anki
 
           // Normalize to sum to one
           const f32 sumInverse = 1.0f / sum;
+          const f32 twoToNumBits = powf(2.0f, static_cast<f32>(numSigmaFractionalBits));
           for(s32 i=0; i<(2*halfWidth+1); i++) {
-            const f32 gScaled = pGaussianKernelF32[i] * sumInverse * powf(2.0f, static_cast<f32>(numSigmaFractionalBits));
+            const f32 gScaled = pGaussianKernelF32[i] * sumInverse * twoToNumBits;
             pGaussianKernel[i] = static_cast<s32>(Round(gScaled));
           }
 
@@ -82,7 +81,7 @@ namespace Anki
         return gaussianKernel;
       }
 
-      // Note: uses a 32-bit accumulator, so be careful of overflows
+      // NOTE: uses a 32-bit accumulator, so be careful of overflows
       Result Correlate1d(const FixedPointArray<s32> &in1, const FixedPointArray<s32> &in2, FixedPointArray<s32> &out)
       {
         const s32 outputLength = in1.get_size(1) + in2.get_size(1) - 1;
@@ -192,7 +191,7 @@ namespace Anki
         return RESULT_OK;
       } // Result Correlate1d(const FixedPointArray<s32> &in1, const FixedPointArray<s32> &in2, FixedPointArray<s32> &out)
 
-      // Note: uses a 32-bit accumulator, so be careful of overflows
+      // NOTE: uses a 32-bit accumulator, so be careful of overflows
       Result Correlate1dCircularAndSameSizeOutput(const FixedPointArray<s32> &image, const FixedPointArray<s32> &filter, FixedPointArray<s32> &out)
       {
         const s32 imageHeight = image.get_size(0);
