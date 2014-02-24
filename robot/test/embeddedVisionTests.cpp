@@ -89,7 +89,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     transform_groundTruth[1][0] = 0.0010f;  transform_groundTruth[1][1] = 1.0604f; transform_groundTruth[1][2] = -4.1188f;
     transform_groundTruth[2][0] = -0.0001f; transform_groundTruth[2][1] = 0.0f;    transform_groundTruth[2][2] = 1.0f;
 
-    lktb.get_transformation().get_homography().Print("fixed-float");
+    //lktb.get_transformation().get_homography().Print("fixed-float");
 
     ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(lktb.get_transformation().get_homography(), transform_groundTruth, .01, .01));
   }
