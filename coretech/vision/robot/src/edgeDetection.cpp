@@ -42,6 +42,16 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(minComponentWidth > 0,
         RESULT_FAIL_INVALID_SIZE, "DetectBlurredEdges", "minComponentWidth is too small");
 
+      AnkiConditionalErrorAndReturnValue(edgeLists.xDecreasing.get_maximumSize() == edgeLists.xIncreasing.get_maximumSize() &&
+        edgeLists.xDecreasing.get_maximumSize() == edgeLists.yDecreasing.get_maximumSize() &&
+        edgeLists.xDecreasing.get_maximumSize() == edgeLists.yIncreasing.get_maximumSize(),
+        RESULT_FAIL_INVALID_SIZE, "DetectBlurredEdges", "All edgeLists must have the same maximum size");
+
+      edgeLists.xDecreasing.Clear();
+      edgeLists.xIncreasing.Clear();
+      edgeLists.yDecreasing.Clear();
+      edgeLists.yIncreasing.Clear();
+
       const s32 imageHeight = image.get_size(0);
       const s32 imageWidth = image.get_size(1);
       const s32 imageStride = image.get_stride();
@@ -68,8 +78,7 @@ namespace Anki
 
       s32 xDecreasingSize = edgeLists.xDecreasing.get_size();
       s32 xIncreasingSize = edgeLists.xIncreasing.get_size();
-      s32 xDecreasingMaxSize = edgeLists.xDecreasing.get_maximumSize();
-      s32 xIncreasingMaxSize = edgeLists.xIncreasing.get_maximumSize();
+      s32 xMaxSizeM1 = edgeLists.xDecreasing.get_maximumSize() - 1;
       Point<s16> * restrict pXDecreasing = edgeLists.xDecreasing.Pointer(0);
       Point<s16> * restrict pXIncreasing = edgeLists.xIncreasing.Pointer(0);
 
@@ -101,7 +110,7 @@ namespace Anki
 
               if(componentWidth >= minComponentWidth) {
                 //edgeLists.xDecreasing.PushBack(Point<s16>(x,y));
-                if(xDecreasingSize < (xDecreasingMaxSize-1)) {
+                if(xDecreasingSize < xMaxSizeM1) {
                   pXDecreasing[xDecreasingSize].x = x;
                   pXDecreasing[xDecreasingSize].y = y;
                   xDecreasingSize++;
@@ -124,7 +133,7 @@ namespace Anki
 
               if(componentWidth >= minComponentWidth) {
                 //edgeLists.xIncreasing.PushBack(Point<s16>(x,y));
-                if(xIncreasingSize < (xIncreasingMaxSize-1)) {
+                if(xIncreasingSize < xMaxSizeM1) {
                   pXIncreasing[xIncreasingSize].x = x;
                   pXIncreasing[xIncreasingSize].y = y;
                   xIncreasingSize++;
@@ -153,8 +162,7 @@ namespace Anki
 
       s32 yDecreasingSize = edgeLists.yDecreasing.get_size();
       s32 yIncreasingSize = edgeLists.yIncreasing.get_size();
-      s32 yDecreasingMaxSize = edgeLists.yDecreasing.get_maximumSize();
-      s32 yIncreasingMaxSize = edgeLists.yIncreasing.get_maximumSize();
+      s32 yMaxSizeM1 = edgeLists.yDecreasing.get_maximumSize() - 1;
       Point<s16> * restrict pYDecreasing = edgeLists.yDecreasing.Pointer(0);
       Point<s16> * restrict pYIncreasing = edgeLists.yIncreasing.Pointer(0);
 
@@ -187,7 +195,7 @@ namespace Anki
 
               if(componentWidth >= minComponentWidth) {
                 //edgeLists.yDecreasing.PushBack(Point<s16>(x,y));
-                if(yDecreasingSize < (yDecreasingMaxSize-1)) {
+                if(yDecreasingSize < yMaxSizeM1) {
                   pYDecreasing[yDecreasingSize].x = x;
                   pYDecreasing[yDecreasingSize].y = y;
                   yDecreasingSize++;
@@ -211,7 +219,7 @@ namespace Anki
 
               if(componentWidth >= minComponentWidth) {
                 //edgeLists.yIncreasing.PushBack(Point<s16>(x,y));
-                if(yIncreasingSize < (yIncreasingMaxSize-1)) {
+                if(yIncreasingSize < yMaxSizeM1) {
                   pYIncreasing[yIncreasingSize].x = x;
                   pYIncreasing[yIncreasingSize].y = y;
                   yIncreasingSize++;
