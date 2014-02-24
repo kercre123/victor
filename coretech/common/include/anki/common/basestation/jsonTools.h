@@ -103,7 +103,7 @@ namespace Anki
     
     // Get an Anki::Pose3d object by name (translation, rotation axis/angle).
     // Returns true if Pose is set successfully, false otherwise.
-    bool GetPoseOptional(const Json::Value& node, Anki::Pose3d& pose);
+    bool GetPoseOptional(const Json::Value& node, const std::string& key, Anki::Pose3d& pose);
     
     // Dump the json to stdout (pretty-printed). The depth argument limits
     // the depth of the tree that is printed. It is 0 by default, which
