@@ -22,7 +22,17 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 //#define SEND_BINARY_IMAGES_TO_MATLAB
 
-#ifdef __EDG__
+#define USE_ARM_ACCELERATION
+
+#if defined(__EDG__)
+#ifndef USE_ARM_ACCELERATION
+#warning not using USE_ARM_ACCELERATION
+#endif
+#else
+#undef USE_ARM_ACCELERATION
+#endif
+
+#if defined(USE_ARM_ACCELERATION)
 #include <ARMCM4.h>
 //#include <core_cmInstr.h>
 //#include <core_cmFunc.h>
@@ -484,6 +494,7 @@ namespace Anki
       const f32 warpedY = (h10*xc + h11*yc + h12) * wpi;
 
       // TODO: verify the -0.5f is correct
+      // TODO: can this be done faster on the M4?
       const s32 warpedXrounded = static_cast<s32>(Round(warpedX + centerOffset.x - 0.5f));
       const s32 warpedYrounded = static_cast<s32>(Round(warpedY + centerOffset.y - 0.5f));
 
@@ -575,6 +586,7 @@ namespace Anki
           //const s32 warpedY_s32 = static_cast<s32>(Round(warpedY));
 
           // TODO: verify the -0.5f is correct
+          // TODO: can this be done faster on the M4?
           const s32 warpedXrounded = static_cast<s32>(Round(warpedX + centerOffset.x - 0.5f));
           const s32 warpedYrounded = static_cast<s32>(Round(warpedY + centerOffset.y - 0.5f));
 
@@ -657,6 +669,7 @@ namespace Anki
       const f32 warpedY = (h10*xc + h11*yc + h12) * wpi;
 
       // TODO: verify the -0.5f is correct
+      // TODO: can this be done faster on the M4?
       const s32 warpedXrounded = static_cast<s32>(Round(warpedX + centerOffset.x - 0.5f));
       const s32 warpedYrounded = static_cast<s32>(Round(warpedY + centerOffset.y - 0.5f));
 
@@ -747,6 +760,7 @@ namespace Anki
           //const s32 warpedY_s32 = static_cast<s32>(Round(warpedY));
 
           // TODO: verify the -0.5f is correct
+          // TODO: can this be done faster on the M4?
           const s32 warpedXrounded = static_cast<s32>(Round(warpedX + centerOffset.x - 0.5f));
           const s32 warpedYrounded = static_cast<s32>(Round(warpedY + centerOffset.y - 0.5f));
 
@@ -806,7 +820,7 @@ namespace Anki
         AnkiAssert(FLT_NEAR(homography[2][2], 1.0f));
 
         // These addresses should be known at compile time, so should be faster
-#if !defined(__EDG__) // natural C
+#if !defined(USE_ARM_ACCELERATION) // natural C
         f32 AtA_raw[8][8];
         f32 Atb_t_raw[8];
 
@@ -824,7 +838,7 @@ namespace Anki
         f32 AtA_raw77 = 0;
 
         f32 Atb_t_raw3 = 0, Atb_t_raw4 = 0, Atb_t_raw5 = 0, Atb_t_raw6 = 0, Atb_t_raw7 = 0;
-#endif // #if !defined(__EDG__) ... #else
+#endif // #if !defined(USE_ARM_ACCELERATION) ... #else
 
         const Point<s16> * restrict pTemplatePoints = templatePoints.Pointer(0);
         const Point<s16> * restrict pNewPoints = newPoints.Pointer(0);
@@ -848,13 +862,9 @@ namespace Anki
           const f32 warpedY = (h10*xc + h11*yc + h12) * wpi;
 
           // TODO: verify the -0.5f is correct
-#if !defined(__EDG__) // natural C
+          // TODO: can this be done faster on the M4?
           const s32 warpedXrounded = static_cast<s32>(Round(warpedX + centerOffset.x - 0.5f));
           const s32 warpedYrounded = static_cast<s32>(Round(warpedY + centerOffset.y - 0.5f));
-#else // ARM optimized
-          const s32 warpedXrounded = static_cast<s32>((warpedX + centerOffset.x - 0.5f));
-          const s32 warpedYrounded = static_cast<s32>((warpedY + centerOffset.y - 0.5f));
-#endif // #if !defined(__EDG__) ... #else
 
           if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance)) {
             s32 minOffset = -maxMatchingDistance;
@@ -878,7 +888,7 @@ namespace Anki
                 if(ypRounded == pNewPoints[iMatch].y) {
                   const f32 yp = warpedY + static_cast<f32>(offset);
 
-#if !defined(__EDG__) // natural C
+#if !defined(USE_ARM_ACCELERATION) // natural C
                   const f32 aValues[8] = {0, 0, 0, -xc, -yc, -1, xc*yp, yc*yp};
 
                   const f32 bValue = -yp;
@@ -918,7 +928,7 @@ namespace Anki
                   Atb_t_raw5 += yp;
                   Atb_t_raw6 -= yp * aValues6;
                   Atb_t_raw7 -= yp * aValues7;
-#endif // #if !defined(__EDG__) ... #else
+#endif // #if !defined(USE_ARM_ACCELERATION) ... #else
 
                   //const f32 aValues[8] = {0, 0, 0, -xc, -yc, -1, xc*yp, yc*yp};
 
@@ -1047,7 +1057,7 @@ namespace Anki
           } // if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance))
         } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
 
-#if !defined(__EDG__) // natural C
+#if !defined(USE_ARM_ACCELERATION) // natural C
         for(s32 ia=0; ia<8; ia++) {
           for(s32 ja=ia; ja<8; ja++) {
             AtA[ia][ja] = AtA_raw[ia][ja];
@@ -1062,7 +1072,7 @@ namespace Anki
         AtA[7][7] = AtA_raw77;
 
         Atb_t[0][3] = Atb_t_raw3; Atb_t[0][4] = Atb_t_raw4; Atb_t[0][5] = Atb_t_raw5; Atb_t[0][6] = Atb_t_raw6; Atb_t[0][7] = Atb_t_raw7;
-#endif // #if !defined(__EDG__) ... #else
+#endif // #if !defined(USE_ARM_ACCELERATION) ... #else
 
         return RESULT_OK;
       } // NO_INLINE Result BinaryTracker::FindVerticalCorrespondences_Projective()
@@ -1093,7 +1103,7 @@ namespace Anki
         AnkiAssert(FLT_NEAR(homography[2][2], 1.0f));
 
         // These addresses should be known at compile time, so should be faster
-#if !defined(__EDG__) // natural C
+#if !defined(USE_ARM_ACCELERATION) // natural C
         s64 AtA_raw[8][8];
         s64 Atb_t_raw[8];
 
@@ -1111,7 +1121,7 @@ namespace Anki
         s32 AtA_raw77 = 0;
 
         s32 Atb_t_raw3 = 0, Atb_t_raw4 = 0, Atb_t_raw5 = 0, Atb_t_raw6 = 0, Atb_t_raw7 = 0;
-#endif // #if !defined(__EDG__) ... #else
+#endif // #if !defined(USE_ARM_ACCELERATION) ... #else
 
         const Point<s16> * restrict pTemplatePoints = templatePoints.Pointer(0);
         const Point<s16> * restrict pNewPoints = newPoints.Pointer(0);
@@ -1145,6 +1155,7 @@ namespace Anki
           const s32 warpedY_s32 = static_cast<s32>(Round(warpedY));
 
           // TODO: verify the -0.5f is correct
+          // TODO: can this be done faster on the M4?
           const s32 warpedXrounded = static_cast<s32>(Round(warpedX + centerOffset.x - 0.5f));
           const s32 warpedYrounded = static_cast<s32>(Round(warpedY + centerOffset.y - 0.5f));
 
@@ -1170,7 +1181,7 @@ namespace Anki
                 if(ypRounded == pNewPoints[iMatch].y) {
                   const s32 yp_s32 = warpedY_s32 + offset;
 
-#if !defined(__EDG__) // natural C
+#if !defined(USE_ARM_ACCELERATION) // natural C
                   const s32 aValues[8] = {
                     0, 0, 0,
                     -xc_s32,
@@ -1277,14 +1288,14 @@ namespace Anki
                   Atb_t_raw6 = __SMMLA(bValue, aValues6, Atb_t_raw6);
                   Atb_t_raw7 = __SMMLA(bValue, aValues7, Atb_t_raw7);
 
-#endif // #if !defined(__EDG__) ... #else
+#endif // #if !defined(USE_ARM_ACCELERATION) ... #else
                 }
               } // if(ypRounded == pNewPoints[iMatch].y)
             } // for(s32 iOffset=-maxMatchingDistance; iOffset<=maxMatchingDistance; iOffset++)
           } // if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance))
         } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
 
-#if !defined(__EDG__) // natural C
+#if !defined(USE_ARM_ACCELERATION) // natural C
         for(s32 ia=0; ia<8; ia++) {
           for(s32 ja=ia; ja<8; ja++) {
             AtA[ia][ja] = static_cast<f32>(AtA_raw[ia][ja]);
@@ -1300,7 +1311,7 @@ namespace Anki
         AtA[7][7] = static_cast<f32>(AtA_raw77);
 
         Atb_t[0][3] = static_cast<f32>(Atb_t_raw3); Atb_t[0][4] = static_cast<f32>(Atb_t_raw4); Atb_t[0][5] = static_cast<f32>(Atb_t_raw5); Atb_t[0][6] = static_cast<f32>(Atb_t_raw6); Atb_t[0][7] = static_cast<f32>(Atb_t_raw7);
-#endif // #if !defined(__EDG__) ... #else
+#endif // #if !defined(USE_ARM_ACCELERATION) ... #else
 
         return RESULT_OK;
       } // NO_INLINE Result BinaryTracker::FindVerticalCorrespondences_Projective_FixedPoint()
@@ -1329,7 +1340,7 @@ namespace Anki
         AnkiAssert(FLT_NEAR(homography[2][2], 1.0f));
 
         // These addresses should be known at compile time, so should be faster
-#if !defined(__EDG__) // natural C
+#if !defined(USE_ARM_ACCELERATION) // natural C
         f32 AtA_raw[8][8];
         f32 Atb_t_raw[8];
 
@@ -1347,7 +1358,7 @@ namespace Anki
         f32 AtA_raw77 = 0;
 
         f32 Atb_t_raw0 = 0, Atb_t_raw1 = 0, Atb_t_raw2 = 0, Atb_t_raw6 = 0, Atb_t_raw7 = 0;
-#endif // #if !defined(__EDG__) ... #else
+#endif // #if !defined(USE_ARM_ACCELERATION) ... #else
 
         const Point<s16> * restrict pTemplatePoints = templatePoints.Pointer(0);
         const Point<s16> * restrict pNewPoints = newPoints.Pointer(0);
@@ -1371,13 +1382,9 @@ namespace Anki
           const f32 warpedY = (h10*xc + h11*yc + h12) * wpi;
 
           // TODO: verify the -0.5f is correct
-#if !defined(__EDG__) // natural C
+          // TODO: can this be done faster on the M4?
           const s32 warpedXrounded = static_cast<s32>(Round(warpedX + centerOffset.x - 0.5f));
           const s32 warpedYrounded = static_cast<s32>(Round(warpedY + centerOffset.y - 0.5f));
-#else // ARM optimized
-          const s32 warpedXrounded = static_cast<s32>((warpedX + centerOffset.x - 0.5f));
-          const s32 warpedYrounded = static_cast<s32>((warpedY + centerOffset.y - 0.5f));
-#endif // #if !defined(__EDG__) ... #else
 
           if(warpedXrounded >= maxMatchingDistance && warpedXrounded < (imageWidth-maxMatchingDistance)) {
             s32 minOffset = -maxMatchingDistance;
@@ -1401,7 +1408,7 @@ namespace Anki
                 if(xpRounded == pNewPoints[iMatch].x) {
                   const f32 xp = warpedX + static_cast<f32>(offset);
 
-#if !defined(__EDG__) // natural C
+#if !defined(USE_ARM_ACCELERATION) // natural C
                   const f32 aValues[8] = {xc, yc, 1, 0, 0, 0, -xc*xp, -yc*xp};
 
                   const f32 bValue = xp;
@@ -1442,14 +1449,14 @@ namespace Anki
                   Atb_t_raw2 += xp;
                   Atb_t_raw6 += aValues6 * xp;
                   Atb_t_raw7 += aValues7 * xp;
-#endif // #if !defined(__EDG__) ... #else
+#endif // #if !defined(USE_ARM_ACCELERATION) ... #else
                 }
               }
             } // for(s32 iOffset=-maxMatchingDistance; iOffset<=maxMatchingDistance; iOffset++)
           } // if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance))
         } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
 
-#if !defined(__EDG__) // natural C
+#if !defined(USE_ARM_ACCELERATION) // natural C
         for(s32 ia=0; ia<8; ia++) {
           for(s32 ja=ia; ja<8; ja++) {
             AtA[ia][ja] = AtA_raw[ia][ja];
@@ -1464,7 +1471,7 @@ namespace Anki
         AtA[7][7] = AtA_raw77;
 
         Atb_t[0][0] = Atb_t_raw0; Atb_t[0][1] = Atb_t_raw1; Atb_t[0][2] = Atb_t_raw2; Atb_t[0][6] = Atb_t_raw6; Atb_t[0][7] = Atb_t_raw7;
-#endif // #if !defined(__EDG__) ... #else
+#endif // #if !defined(USE_ARM_ACCELERATION) ... #else
 
         return RESULT_OK;
       } // NO_INLINE Result BinaryTracker::FindHorizontalCorrespondences_Projective()
@@ -1531,6 +1538,7 @@ namespace Anki
           const s32 warpedY_s32 = static_cast<s32>(Round(warpedY));
 
           // TODO: verify the -0.5f is correct
+          // TODO: can this be done faster on the M4?
           const s32 warpedXrounded = static_cast<s32>(Round(warpedX + centerOffset.x - 0.5f));
           const s32 warpedYrounded = static_cast<s32>(Round(warpedY + centerOffset.y - 0.5f));
 
@@ -1717,6 +1725,9 @@ namespace Anki
             allLimits.xDecreasing_yStartIndexes, AtA_xDecreasing, Atb_t_xDecreasing, scratch);
         } // if(useFixedPoint) ... else
 
+        //AtA_xDecreasing.Print("AtA_xDecreasing");
+        //Atb_t_xDecreasing.Print("Atb_t_xDecreasing");
+
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
           lastResult, "BinaryTracker::IterativelyRefineTrack", "FindHorizontalCorrespondences 1 failed");
 
@@ -1733,6 +1744,9 @@ namespace Anki
             nextImageEdges.imageHeight, nextImageEdges.imageWidth,
             allLimits.xIncreasing_yStartIndexes, AtA_xIncreasing, Atb_t_xIncreasing, scratch);
         } // if(useFixedPoint) ... else
+
+        //AtA_xIncreasing.Print("AtA_xIncreasing");
+        //Atb_t_xIncreasing.Print("Atb_t_xIncreasing");
 
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
           lastResult, "BinaryTracker::IterativelyRefineTrack", "FindHorizontalCorrespondences 2 failed");
@@ -1751,22 +1765,8 @@ namespace Anki
             allLimits.yDecreasing_xStartIndexes, AtA_yDecreasing, Atb_t_yDecreasing, scratch);
         } // if(useFixedPoint) ... else
 
-        //AtA_yDecreasing.Print("AtA_yDecreasing float");
-        //Atb_t_yDecreasing.Print("Atb_t_yDecreasing float");
-
-        //BinaryTracker::FindVerticalCorrespondences_Projective_FixedPoint(
-        //  matching_maxDistance,
-        //  this->transformation,
-        //  this->templateEdges.yDecreasing,
-        //  nextImageEdges.yDecreasing,
-        //  nextImageEdges.imageHeight,
-        //  nextImageEdges.imageWidth,
-        //  allLimits.yDecreasing_xStartIndexes,
-        //  AtA_yDecreasing, Atb_t_yDecreasing,
-        //  scratch);
-
-        //AtA_yDecreasing.Print("AtA_yDecreasing fixed");
-        //Atb_t_yDecreasing.Print("Atb_t_yDecreasing fixed");
+        //AtA_yDecreasing.Print("AtA_yDecreasing");
+        //Atb_t_yDecreasing.Print("Atb_t_yDecreasing");
 
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
           lastResult, "BinaryTracker::IterativelyRefineTrack", "FindVerticalCorrespondences 1 failed");
@@ -1784,6 +1784,9 @@ namespace Anki
             nextImageEdges.imageHeight, nextImageEdges.imageWidth,
             allLimits.yIncreasing_xStartIndexes, AtA_yIncreasing, Atb_t_yIncreasing, scratch);
         } // if(useFixedPoint) ... else
+
+        //AtA_yIncreasing.Print("AtA_yIncreasing");
+        //Atb_t_yIncreasing.Print("Atb_t_yIncreasing");
 
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
           lastResult, "BinaryTracker::IterativelyRefineTrack", "FindVerticalCorrespondences 2 failed");

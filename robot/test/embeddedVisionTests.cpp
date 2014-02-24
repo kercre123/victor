@@ -91,37 +91,39 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     lktb.get_transformation().get_homography().Print("fixed-float");
 
-    //ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(lktb.get_transformation().get_homography(), transform_groundTruth, .01, .01));
+    ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(lktb.get_transformation().get_homography(), transform_groundTruth, .01, .01));
   }
 
   // fixed translation, fixed projective
+  /*
   {
-    PUSH_MEMORY_STACK(scratchOnchip);
+  PUSH_MEMORY_STACK(scratchOnchip);
 
-    TemplateTracker::BinaryTracker lktb(templateImage, templateQuad, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, templateEdgeDetection_maxDetectionsPerType, scratchOnchip);
+  TemplateTracker::BinaryTracker lktb(templateImage, templateQuad, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, templateEdgeDetection_maxDetectionsPerType, scratchOnchip);
 
-    BeginBenchmark("BinaryTracker update fixed-fixed");
-    const Result result = lktb.UpdateTrack(nextImage,
-      edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType,
-      matching_maxDistance, matching_maxCorrespondences, true, scratchCcm);
-    EndBenchmark("BinaryTracker update fixed-fixed");
+  BeginBenchmark("BinaryTracker update fixed-fixed");
+  const Result result = lktb.UpdateTrack(nextImage,
+  edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType,
+  matching_maxDistance, matching_maxCorrespondences, true, scratchCcm);
+  EndBenchmark("BinaryTracker update fixed-fixed");
 
-    ASSERT_TRUE(result == RESULT_OK);
+  ASSERT_TRUE(result == RESULT_OK);
 
-    MemoryStack scratchOffchip(&onchipBuffer[0], OFFCHIP_BUFFER_SIZE);
-    ASSERT_TRUE(scratchOffchip.IsValid());
+  MemoryStack scratchOffchip(&onchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(scratchOffchip.IsValid());
 
-    //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
+  //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
 
-    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
-    transform_groundTruth[0][0] = 1.0527f; transform_groundTruth[0][1] = -0.0006f; transform_groundTruth[0][2] = 2.3852f;
-    transform_groundTruth[1][0] = 0.0002f; transform_groundTruth[1][1] = 1.0437f;  transform_groundTruth[1][2] = -4.0982f;
-    transform_groundTruth[2][0] = -0.0001f;    transform_groundTruth[2][1] = 0.0f;     transform_groundTruth[2][2] = 1.0f;
+  Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
+  transform_groundTruth[0][0] = 1.0527f; transform_groundTruth[0][1] = -0.0006f; transform_groundTruth[0][2] = 2.3852f;
+  transform_groundTruth[1][0] = 0.0002f; transform_groundTruth[1][1] = 1.0437f;  transform_groundTruth[1][2] = -4.0982f;
+  transform_groundTruth[2][0] = -0.0001f;    transform_groundTruth[2][1] = 0.0f;     transform_groundTruth[2][2] = 1.0f;
 
-    lktb.get_transformation().get_homography().Print("fixed-fixed");
+  lktb.get_transformation().get_homography().Print("fixed-fixed");
 
-    //ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(lktb.get_transformation().get_homography(), transform_groundTruth, .01, .01));
+  //ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(lktb.get_transformation().get_homography(), transform_groundTruth, .01, .01));
   }
+  */
 
   PrintBenchmarkResults_OnlyTotals();
 
