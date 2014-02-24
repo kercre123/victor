@@ -197,14 +197,6 @@ namespace Anki
         // Allocates allLimits, and computes all the indexe limits
         static Result ComputeAllIndexLimits(const EdgeLists &imageEdges, AllIndexLimits &allLimits, MemoryStack &memory);
 
-        Result IterativelyRefineTrack(
-          const EdgeLists &nextImageEdges,
-          const AllIndexLimits &allLimits,
-          const s32 matching_maxDistance, const s32 matching_maxCorrespondences,
-          const Transformations::TransformType updateType,
-          const bool useFixedPoint,
-          MemoryStack scratch);
-
         Result IterativelyRefineTrack_Translation(
           const EdgeLists &nextImageEdges,
           const AllIndexLimits &allLimits,

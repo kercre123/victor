@@ -295,68 +295,6 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(nextImageEdges.xDecreasing.IsValid() && nextImageEdges.xIncreasing.IsValid() && nextImageEdges.yDecreasing.IsValid() && nextImageEdges.yIncreasing.IsValid(),
           RESULT_FAIL_OUT_OF_MEMORY, "BinaryTracker::UpdateTrack", "Could not allocate local scratch");
 
-        BeginBenchmark("ut_DetectEdges");
-
-        lastResult = DetectBlurredEdges(nextImage, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, nextImageEdges);
-
-        EndBenchmark("ut_DetectEdges");
-
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
-          lastResult, "BinaryTracker::UpdateTrack", "DetectBlurredEdge failed");
-
-        // First, to speed up the correspondence search, find the min and max of x or y points
-        AllIndexLimits allLimits;
-
-        BeginBenchmark("ut_IndexLimits");
-
-        if((lastResult = BinaryTracker::ComputeAllIndexLimits(nextImageEdges, allLimits, scratch)) != RESULT_OK)
-          return lastResult;
-
-        EndBenchmark("ut_IndexLimits");
-
-        // Second, compute the actual correspondence and refine the homography
-
-        BeginBenchmark("ut_translation");
-
-        lastResult = this->IterativelyRefineTrack(
-          nextImageEdges, allLimits,
-          matching_maxDistance, matching_maxCorrespondences,
-          Transformations::TRANSFORM_TRANSLATION, false, scratch);
-
-        EndBenchmark("ut_translation");
-
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
-          lastResult, "BinaryTracker::UpdateTrack", "Transformations::TRANSFORM_TRANSLATION failed");
-
-        BeginBenchmark("ut_projective");
-
-        lastResult = this->IterativelyRefineTrack(
-          nextImageEdges, allLimits,
-          matching_maxDistance, matching_maxCorrespondences,
-          Transformations::TRANSFORM_PROJECTIVE, useFixedPoint_projective, scratch);
-
-        EndBenchmark("ut_projective");
-
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
-          lastResult, "BinaryTracker::UpdateTrack", "Transformations::TRANSFORM_PROJECTIVE failed");
-
-        return RESULT_OK;
-      }
-
-      Result BinaryTracker::IterativelyRefineTrack(
-        const EdgeLists &nextImageEdges,
-        const AllIndexLimits &allLimits,
-        const s32 matching_maxDistance, const s32 matching_maxCorrespondences,
-        const Transformations::TransformType updateType,
-        const bool useFixedPoint,
-        MemoryStack scratch)
-      {
-        AnkiConditionalErrorAndReturnValue(updateType==Transformations::TRANSFORM_TRANSLATION || updateType == Transformations::TRANSFORM_PROJECTIVE,
-          RESULT_FAIL_INVALID_PARAMETERS, "BinaryTracker::IterativelyRefineTrack", "Only Transformations::TRANSFORM_TRANSLATION or Transformations::TRANSFORM_PROJECTIVE are supported");
-
-        AnkiConditionalErrorAndReturnValue(nextImageEdges.xDecreasing.IsValid() && nextImageEdges.xIncreasing.IsValid() && nextImageEdges.yDecreasing.IsValid() && nextImageEdges.yIncreasing.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "BinaryTracker::IterativelyRefineTrack", "input edges are not valid");
-
 #ifdef SEND_BINARY_IMAGES_TO_MATLAB
         {
           MemoryStack matlabScratch(malloc(1000000),1000000);
@@ -392,13 +330,46 @@ namespace Anki
         }
 #endif // #ifdef SEND_BINARY_IMAGES_TO_MATLAB
 
-        if(updateType == Transformations::TRANSFORM_TRANSLATION) {
-          return IterativelyRefineTrack_Translation(nextImageEdges, allLimits, matching_maxDistance, matching_maxCorrespondences, scratch);
-        } else if(updateType == Transformations::TRANSFORM_PROJECTIVE) {
-          return IterativelyRefineTrack_Projective(nextImageEdges, allLimits, matching_maxDistance, matching_maxCorrespondences, useFixedPoint, scratch);
-        }
+        BeginBenchmark("ut_DetectEdges");
 
-        return RESULT_FAIL;
+        lastResult = DetectBlurredEdges(nextImage, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, nextImageEdges);
+
+        EndBenchmark("ut_DetectEdges");
+
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+          lastResult, "BinaryTracker::UpdateTrack", "DetectBlurredEdge failed");
+
+        // First, to speed up the correspondence search, find the min and max of x or y points
+        AllIndexLimits allLimits;
+
+        BeginBenchmark("ut_IndexLimits");
+
+        if((lastResult = BinaryTracker::ComputeAllIndexLimits(nextImageEdges, allLimits, scratch)) != RESULT_OK)
+          return lastResult;
+
+        EndBenchmark("ut_IndexLimits");
+
+        // Second, compute the actual correspondence and refine the homography
+
+        BeginBenchmark("ut_translation");
+
+        lastResult = IterativelyRefineTrack_Translation(nextImageEdges, allLimits, matching_maxDistance, matching_maxCorrespondences, scratch);
+
+        EndBenchmark("ut_translation");
+
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+          lastResult, "BinaryTracker::UpdateTrack", "Transformations::TRANSFORM_TRANSLATION failed");
+
+        BeginBenchmark("ut_projective");
+
+        lastResult = IterativelyRefineTrack_Projective(nextImageEdges, allLimits, matching_maxDistance, matching_maxCorrespondences, useFixedPoint_projective, scratch);
+
+        EndBenchmark("ut_projective");
+
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+          lastResult, "BinaryTracker::UpdateTrack", "Transformations::TRANSFORM_PROJECTIVE failed");
+
+        return RESULT_OK;
       }
 
       Result BinaryTracker::ComputeIndexLimitsVertical(const FixedLengthList<Point<s16> > &points, Array<s32> &yStartIndexes)
