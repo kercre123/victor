@@ -267,10 +267,10 @@ namespace Anki
 
       Result BinaryTracker::ComputeAllIndexLimits(const EdgeLists &imageEdges, AllIndexLimits &allLimits, MemoryStack &memory)
       {
-        allLimits.xDecreasing_yStartIndexes = Array<s32>(1, imageEdges.imageWidth+1, memory);
-        allLimits.xIncreasing_yStartIndexes = Array<s32>(1, imageEdges.imageWidth+1, memory);
-        allLimits.yDecreasing_xStartIndexes = Array<s32>(1, imageEdges.imageHeight+1, memory);
-        allLimits.yIncreasing_xStartIndexes = Array<s32>(1, imageEdges.imageHeight+1, memory);
+        allLimits.xDecreasing_yStartIndexes = Array<s32>(1, imageEdges.imageWidth+1, memory, Flags::Buffer(false,false,false));
+        allLimits.xIncreasing_yStartIndexes = Array<s32>(1, imageEdges.imageWidth+1, memory, Flags::Buffer(false,false,false));
+        allLimits.yDecreasing_xStartIndexes = Array<s32>(1, imageEdges.imageHeight+1, memory, Flags::Buffer(false,false,false));
+        allLimits.yIncreasing_xStartIndexes = Array<s32>(1, imageEdges.imageHeight+1, memory, Flags::Buffer(false,false,false));
 
         AnkiConditionalErrorAndReturnValue(allLimits.yIncreasing_xStartIndexes.IsValid(),
           RESULT_FAIL_OUT_OF_MEMORY, "BinaryTracker::ComputeAllIndexLimits", "Could not allocate local memory");
@@ -1811,13 +1811,18 @@ namespace Anki
 
           //AtA.Print("AtA");
           //Atb_t.Print("Atb_t");
-
-          lastResult = Matrix::SolveLeastSquaresWithCholesky<f32>(AtA, Atb_t, false);
+          bool numericalFailure;
+          lastResult = Matrix::SolveLeastSquaresWithCholesky<f32>(AtA, Atb_t, false, numericalFailure);
 
           //Atb_t.Print("result");
 
           AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
             lastResult, "BinaryTracker::UpdateTransformation", "SolveLeastSquaresWithCholesky failed");
+
+          if(numericalFailure){
+            AnkiWarn("BinaryTracker::UpdateTransformation", "numericalFailure");
+            return RESULT_OK;
+          }
 
           const f32 * restrict pAtb_t = Atb_t.Pointer(0,0);
 

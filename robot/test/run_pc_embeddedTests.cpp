@@ -60,6 +60,7 @@ int main()
 
 #endif // #if ANKICORETECH_EMBEDDED_USE_GTEST ... #else
 
+  printf("\n");
   return result;
 }
 #endif
