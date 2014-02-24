@@ -22,7 +22,6 @@
 #include "json/json.h"
 
 #include "anki/common/types.h"
-#include "anki/common/robot/matlabInterface.h"
 
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/platformPathManager.h"
@@ -33,6 +32,10 @@
 
 
 #define USE_MATLAB_DETECTION 1
+
+#if USE_MATLAB_DETECTION
+#include "anki/common/robot/matlabInterface.h"
+#endif
 
 using namespace Anki;
 
@@ -259,8 +262,11 @@ int main(int argc, char **argv)
 
 #if USE_MATLAB_DETECTION
     // Process the image with Matlab to detect the vision markers
-    matlab.EvalStringEcho("markers = simpleDetector('%s'); "
-                          "numMarkers = length(markers);", imgFilename.c_str());
+    matlab.EvalStringEcho("img = imread('%s'); " // "img = separable_filter(img, gaussian_kernel(1)); "
+                          "imwrite(img, '%s'); "
+                          "markers = simpleDetector(img); "
+                          "numMarkers = length(markers);",
+                          imgFilename.c_str(), imgFilename.c_str());
 
     const int numMarkers = static_cast<int>(*matlab.Get<double>("numMarkers"));
     fprintf(stdout, "Detected %d markers at pose %d.\n", numMarkers, i_pose);
@@ -274,17 +280,18 @@ int main(int argc, char **argv)
       const double* x_corners = mxGetPr(matlab.GetArray("corners"));
       const double* y_corners = x_corners + 4;
       
-      msg.x_imgUpperLeft  = x_corners[0];
-      msg.y_imgUpperLeft  = y_corners[0];
+      // Sutract one for Matlab indexing!
+      msg.x_imgUpperLeft  = x_corners[0]-1.f;
+      msg.y_imgUpperLeft  = y_corners[0]-1.f;
       
-      msg.x_imgLowerLeft  = x_corners[1];
-      msg.y_imgLowerLeft  = y_corners[1];
+      msg.x_imgLowerLeft  = x_corners[1]-1.f;
+      msg.y_imgLowerLeft  = y_corners[1]-1.f;
       
-      msg.x_imgUpperRight = x_corners[2];
-      msg.y_imgUpperRight = y_corners[2];
+      msg.x_imgUpperRight = x_corners[2]-1.f;
+      msg.y_imgUpperRight = y_corners[2]-1.f;
       
-      msg.x_imgLowerRight = x_corners[3];
-      msg.y_imgLowerRight = y_corners[3];
+      msg.x_imgLowerRight = x_corners[3]-1.f;
+      msg.y_imgLowerRight = y_corners[3]-1.f;
       
       mxArray* mxByteArray = matlab.GetArray("byteArray");
       CORETECH_ASSERT(mxGetNumberOfElements(mxByteArray) == VISION_MARKER_CODE_LENGTH);

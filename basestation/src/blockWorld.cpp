@@ -130,7 +130,7 @@ namespace Anki
       // TODO: We should really be taking uncertainty/distance into account
       //const float distThresholdFraction = 0.05f;
       const float   distThresh_mm = 20.f; // large to handle higher error at a distance
-      const Radians angleThresh( DEG_TO_RAD(10.f) );
+      const Radians angleThresh( DEG_TO_RAD(15.f) );
       
       // TODO: make angle threshold also vary with distance?
       // TODO: make these parameters/arguments

@@ -102,7 +102,8 @@ TestWorld = CozmoTestWorldCreator('WorldFile', ...
     'CheckRobotPose', false);
 
 poses = {};
-d = 0:50:400;
+%d = 0:5:350;
+d = 0:50:350;
 for i = 1:length(d)
     poses{end+1} = Pose(pi*[0 0 1], [d(i) 0 18]); %#ok<SAGROW>
 end

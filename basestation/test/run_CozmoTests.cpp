@@ -10,6 +10,8 @@
 
 #include "anki/cozmo/basestation/blockWorld.h"
 
+#include "anki/common/robot/matlabInterface.h"
+
 TEST(Cozmo, SimpleCozmoTest)
 {
   ASSERT_TRUE(true);
@@ -22,6 +24,8 @@ class BlockWorldTest : public ::testing::TestWithParam<const char*>
   
 }; // class BlockWorldTest
 
+#define DISPLAY_ERRORS 1
+
 // This is the parameterized test, instantied with a list of Json files below
 TEST_P(BlockWorldTest, BlockAndRobotLocalization)
 {
@@ -29,8 +33,8 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
   using namespace Cozmo;
   
   // TODO: Tighten/loosen thresholds?
-  const float   blockPoseDistThresholdFraction = 0.05f; // within 5% of actual distance
-  const Radians blockPoseAngleThreshold    = DEG_TO_RAD(5.f); // TODO: make dependent on distance?
+  const float   blockPoseDistThresholdFraction = 0.03f; // within 3% of actual distance
+  const Radians blockPoseAngleThreshold    = DEG_TO_RAD(10.f); // TODO: make dependent on distance?
   const float   robotPoseDistThreshold_mm  = 5.f;
   const Radians robotPoseAngleThreshold    = DEG_TO_RAD(3.f);
   
@@ -63,6 +67,18 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
   ASSERT_TRUE(jsonRoot.isMember("Poses"));
   
   const int NumPoses = jsonRoot["Poses"].size();
+  
+#if DISPLAY_ERRORS
+  struct ErrorStruct {
+    Vec3f T_robot, T_blockTrue, T_blockObs;
+    ErrorStruct(const Vec3f& a, const Vec3f& b, const Vec3f& c)
+    : T_robot(a), T_blockTrue(b), T_blockObs(c)
+    {
+      
+    }
+  };
+  std::vector<ErrorStruct> errorVsDist;
+#endif
   
   for(int i_pose=0; i_pose<NumPoses; ++i_pose)
   {
@@ -119,10 +135,18 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
       ASSERT_TRUE(blockWorld.UpdateRobotPose(&robot));
       
       // Make sure the estimated robot pose matches the ground truth pose
+      Pose3d P_diff;
       const bool robotPoseMatches = trueRobotPose.IsSameAs(robot.get_pose(),
                                                            robotPoseDistThreshold_mm,
-                                                           robotPoseAngleThreshold);
+                                                           robotPoseAngleThreshold, P_diff);
+      
+      fprintf(stdout, "X/Y error in robot pose = %.2fmm, Z error = %.2fmm\n",
+              sqrtf(P_diff.get_translation().x()*P_diff.get_translation().x() +
+                    P_diff.get_translation().y()*P_diff.get_translation().y()),
+              P_diff.get_translation().z());
+      
       EXPECT_TRUE(robotPoseMatches);
+      
       
       if(not robotPoseMatches) {
         // Use ground truth pose so we can continue
@@ -150,7 +174,10 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
       const Json::Value& jsonBlocks = jsonRoot["Blocks"];
       const int numBlocksTrue = jsonBlocks.size();
       
-      ASSERT_EQ(numBlocksObserved, numBlocksTrue);
+      EXPECT_EQ(numBlocksObserved, numBlocksTrue);
+      
+      //if(numBlocksObserved != numBlocksTrue)
+      //  break;
       
       // Check to see that we found and successfully localized each ground truth
       // block
@@ -183,15 +210,41 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
         
         for(auto & observedBlock : observedBlocks)
         {
+          Pose3d P_diff;
           if(groundTruthBlock->IsSameAs(*observedBlock.second,
                                         blockPoseDistThreshold_mm,
-                                        blockPoseAngleThreshold))
+                                        blockPoseAngleThreshold, P_diff))
           {
-            const Vec3f& T_true = groundTruthBlock->GetPose().get_translation();
-            fprintf(stdout, "Block position error = %.1fmm at a distance of %.1fmm\n",
-                    (T_true - observedBlock.second->GetPose().get_translation()).length(),
-                    (T_true - trueRobotPose.get_translation()).length());
-            
+            if(matchesFound > 0) {
+              // We just found multiple matches for this ground truth block
+              fprintf(stdout, "Match #%d found for one ground truth block. "
+                      "T_diff = %.2fmm (vs. %.2fmm), Angle_diff = %.1fdeg\n",
+                      matchesFound+1, P_diff.get_translation().length(),
+                      blockPoseDistThreshold_mm,
+                      P_diff.get_rotationAngle().getDegrees());
+              groundTruthBlock->IsSameAs(*observedBlock.second,
+                                         blockPoseDistThreshold_mm,
+                                         blockPoseAngleThreshold, P_diff);
+            }
+#if DISPLAY_ERRORS
+            if(matchesFound == 0) {
+              const Vec3f& T_true = groundTruthBlock->GetPose().get_translation();
+              
+              Vec3f T_dir(T_true - trueRobotPose.get_translation());
+              const float distance = T_dir.makeUnitLength();
+              
+              const Vec3f T_error(T_true - observedBlock.second->GetPose().get_translation());
+              /*
+               fprintf(stdout, "Block position error = %.1fmm at a distance of %.1fmm\n",
+               (T_true - observedBlock.second->GetPose().get_translation()).length(),
+               ().length());
+               */
+              //errorVsDist.push_back(std::make_pair( distance, dot(T_error, T_dir) ));
+              //errorVsDist.push_back(std::make_pair(distance, (T_true - observedBlock.second->GetPose().get_translation()).length()));
+              errorVsDist.emplace_back(trueRobotPose.get_translation(),
+                                       groundTruthBlock->GetPose().get_translation(), observedBlock.second->GetPose().get_translation());
+            }
+#endif
             ++matchesFound;
           }
         } // for each observed block
@@ -210,16 +263,31 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
   
   } // FOR each pose
   
+#if DISPLAY_ERRORS
+  // Plot the error vs distance in Matlab
+  //Anki::Embedded::Matlab matlab(false);
+  fprintf(stdout, "Paste this into Matlab to get an error vs. distance plot:\n");
+  fprintf(stdout, "errorVsDist = [");
+  for(auto measurement : errorVsDist) {
+    fprintf(stdout, "%f %f %f   %f %f %f   %f %f %f;\n",
+            measurement.T_robot.x(), measurement.T_robot.y(), measurement.T_robot.z(),
+            measurement.T_blockTrue.x(), measurement.T_blockTrue.y(), measurement.T_blockTrue.z(),
+            measurement.T_blockObs.x(), measurement.T_blockObs.y(), measurement.T_blockObs.z());
+            
+  }
+  fprintf(stdout, "];\n");
+#endif
+  
 } // TEST_P(BlockWorldTest, BlockAndRobotLocalization)
 
 
 // This is the list of JSON files containing vision test worlds:
 // TODO: automatically get all available tests from some directory?
 const char *visionTestJsonFiles[] = {
-  "visionTest_TwoBlocksOnePose.json",
-  "visionTest_MatPoseTest.json",
-  "visionTest_RepeatedBlock.json",
   "visionTest_VaryingDistance.json",
+  "visionTest_MatPoseTest.json",
+  "visionTest_TwoBlocksOnePose.json",
+  "visionTest_RepeatedBlock.json",
   "visionTest_OffTheMat.json"
 };
 
