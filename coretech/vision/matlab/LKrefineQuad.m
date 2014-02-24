@@ -5,7 +5,7 @@ DebugDisplay = false;
 
 parseVarargin(varargin{:});
 
-diagonal = round(sqrt(max( sum((corners(1,:)-corners(4,:)).^2), ...
+diagonal = round(2*sqrt(max( sum((corners(1,:)-corners(4,:)).^2), ...
     sum((corners(2,:)-corners(3,:)).^2))));
 
 border = VisionMarker.SquareWidth*VisionMarker.FiducialPaddingFraction;
@@ -15,7 +15,7 @@ template = ones(size(xgrid));
 template(xgrid>0 & xgrid<1 & ygrid>0& ygrid<1) = 0;
 template(xgrid>VisionMarker.SquareWidth & xgrid<(1-VisionMarker.SquareWidth) & ...
     ygrid>VisionMarker.SquareWidth & ygrid<(1-VisionMarker.SquareWidth)) = 1;
-template = separable_filter(template, gaussian_kernel(0.5));
+% template = separable_filter(template, gaussian_kernel(5));
 
 middle = false(size(xgrid));
 midEdge = 0.5*VisionMarker.ProbeParameters.Number*VisionMarker.SquareWidth;
