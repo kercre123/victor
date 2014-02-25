@@ -97,7 +97,7 @@ templateImageResized = imresize(templateImage, [imageResizedHeight, imageResized
 newImageResized = imresize(newImage, [imageResizedHeight, imageResizedWidth]);
 
 if binarizeWithAutomata
-    [xMinima1Image, xMaxima1Image, yMinima1Image, yMaxima1Image] = lucasKandeBinary_binarizeWithAutomata(templateImageResized, grayvalueThreshold, minComponentWidth);
+    [xMinima1Image, xMaxima1Image, yMinima1Image, yMaxima1Image] = binaryTracker_binarizeWithAutomata(templateImageResized, grayvalueThreshold, minComponentWidth);
 else
     [~, xMinima1Image, yMinima1Image] = computeBinaryExtrema(...
         templateImageResized, extremaFilterWidth, extremaFilterSigma, extremaDerivativeThreshold, true, false);
@@ -112,7 +112,7 @@ xMaxima1Image(~templateMask) = 0;
 yMaxima1Image(~templateMask) = 0;
 
 if binarizeWithAutomata
-    [xMinima2Image, xMaxima2Image, yMinima2Image, yMaxima2Image] = lucasKandeBinary_binarizeWithAutomata(newImageResized, grayvalueThreshold, minComponentWidth);
+    [xMinima2Image, xMaxima2Image, yMinima2Image, yMaxima2Image] = binaryTracker_binarizeWithAutomata(newImageResized, grayvalueThreshold, minComponentWidth);
 else
     [~, xMinima2Image, yMinima2Image] = computeBinaryExtrema(...
         newImageResized, extremaFilterWidth, extremaFilterSigma, extremaDerivativeThreshold, true, false);
