@@ -76,9 +76,11 @@ namespace Anki
 
       const s32 imageStride = image.get_stride();
 
-      s32 xDecreasingSize = edgeLists.xDecreasing.get_size();
-      s32 xIncreasingSize = edgeLists.xIncreasing.get_size();
-      s32 xMaxSizeM1 = edgeLists.xDecreasing.get_maximumSize() - 1;
+      const u32 xDecreasingSize_tmp = edgeLists.xDecreasing.get_size();
+      const u32 xIncreasingSize_tmp = edgeLists.xIncreasing.get_size();
+      u32 xSize_u16x2 = xDecreasingSize_tmp&0xFFFF + ((xIncreasingSize_tmp&0xFFFF) << 16);
+
+      const u32 xMaxSizeM1 = edgeLists.xDecreasing.get_maximumSize() - 1;
       Point<s16> * restrict pXDecreasing = edgeLists.xDecreasing.Pointer(0);
       Point<s16> * restrict pXIncreasing = edgeLists.xIncreasing.Pointer(0);
 
@@ -118,10 +120,12 @@ namespace Anki
 
               if(componentWidth >= minComponentWidth) {
                 //edgeLists.xDecreasing.PushBack(Point<s16>(x,y));
-                if(xDecreasingSize < xMaxSizeM1) {
-                  pXDecreasing[xDecreasingSize].x = x;
-                  pXDecreasing[xDecreasingSize].y = y;
-                  xDecreasingSize++;
+
+                const u32 xDecreasingSize_local = xSize_u16x2 & 0xFFFF;
+                if(xDecreasingSize_local < xMaxSizeM1) {
+                  pXDecreasing[xDecreasingSize_local].x = x;
+                  pXDecreasing[xDecreasingSize_local].y = y;
+                  xSize_u16x2++; // Increments the lower (decreasing) half
                 }
               }
 
@@ -147,10 +151,11 @@ namespace Anki
 
               if(componentWidth >= minComponentWidth) {
                 //edgeLists.xIncreasing.PushBack(Point<s16>(x,y));
-                if(xIncreasingSize < xMaxSizeM1) {
-                  pXIncreasing[xIncreasingSize].x = x;
-                  pXIncreasing[xIncreasingSize].y = y;
-                  xIncreasingSize++;
+                const u32 xIncreasingSize_local = xSize_u16x2 >> 16;
+                if(xIncreasingSize_local < xMaxSizeM1) {
+                  pXIncreasing[xIncreasingSize_local].x = x;
+                  pXIncreasing[xIncreasingSize_local].y = y;
+                  xSize_u16x2 += 0x10000; // Increments the upper (increasing) half
                 }
               }
 
@@ -166,8 +171,10 @@ namespace Anki
         pImage += imageStride;
       } // for(s32 y=0; y<imageRegionOfInterest.bottom; y++)
 
-      edgeLists.xDecreasing.set_size(xDecreasingSize);
-      edgeLists.xIncreasing.set_size(xIncreasingSize);
+      const u32 xDecreasingSize_local = xSize_u16x2 & 0xFFFF;
+      const u32 xIncreasingSize_local = xSize_u16x2 >> 16;
+      edgeLists.xDecreasing.set_size(xDecreasingSize_local);
+      edgeLists.xIncreasing.set_size(xIncreasingSize_local);
     } // DetectBlurredEdges_horizontal()
 
     NO_INLINE static void DetectBlurredEdges_vertical(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const u8 grayvalueThreshold, const s32 minComponentWidth, EdgeLists &edgeLists)
