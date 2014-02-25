@@ -25,7 +25,10 @@ namespace Anki
     const f32 ON_BLACK = 1.0f;
 
     NO_INLINE static void DetectBlurredEdges_horizontal(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const u8 grayvalueThreshold, const s32 minComponentWidth, EdgeLists &edgeLists);
+    NO_INLINE static void DetectBlurredEdges_horizontal_320etc(const Array<u8> &image, const u8 grayvalueThreshold, EdgeLists &edgeLists);
+
     NO_INLINE static void DetectBlurredEdges_vertical(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const u8 grayvalueThreshold, const s32 minComponentWidth, EdgeLists &edgeLists);
+    NO_INLINE static void DetectBlurredEdges_vertical_320etc(const Array<u8> &image, const u8 grayvalueThreshold, EdgeLists &edgeLists);
 
     Result DetectBlurredEdges(const Array<u8> &image, const u8 grayvalueThreshold, const s32 minComponentWidth, EdgeLists &edgeLists)
     {
@@ -62,8 +65,13 @@ namespace Anki
       // TODO: won't detect an edge on the last horizontal (for x search) or vertical (for y search)
       //       pixel. Is there a fast way to do this?
 
-      DetectBlurredEdges_horizontal(image, imageRegionOfInterest, grayvalueThreshold, minComponentWidth, edgeLists);
-      DetectBlurredEdges_vertical(image, imageRegionOfInterest, grayvalueThreshold, minComponentWidth, edgeLists);
+      if(imageWidth==320 && imageHeight==240 &&  imageStride==320 && imageRegionOfInterest.left==0 && imageRegionOfInterest.right==320 && minComponentWidth==2) {
+        DetectBlurredEdges_horizontal_320etc(image, grayvalueThreshold, edgeLists);
+        DetectBlurredEdges_vertical_320etc(image, grayvalueThreshold, edgeLists);
+      } else {
+        DetectBlurredEdges_horizontal(image, imageRegionOfInterest, grayvalueThreshold, minComponentWidth, edgeLists);
+        DetectBlurredEdges_vertical(image, imageRegionOfInterest, grayvalueThreshold, minComponentWidth, edgeLists);
+      }
 
       return RESULT_OK;
     } // Result DetectBlurredEdges()
@@ -177,6 +185,129 @@ namespace Anki
       edgeLists.xIncreasing.set_size(xIncreasingSize_local);
     } // DetectBlurredEdges_horizontal()
 
+    NO_INLINE static void DetectBlurredEdges_horizontal_320etc(const Array<u8> &image, const u8 grayvalueThreshold, EdgeLists &edgeLists)
+    {
+      //
+      // Detect horizontal positive and negative transitions
+      //
+
+      const u16 xDecreasingSize_tmp = edgeLists.xDecreasing.get_size();
+      const u16 xIncreasingSize_tmp = edgeLists.xIncreasing.get_size();
+      u32 xSize_u16x2 = xDecreasingSize_tmp + (xIncreasingSize_tmp<<16);
+
+      const u32 xMaxSizeM1 = edgeLists.xDecreasing.get_maximumSize() - 1;
+      Point<s16> * restrict pXDecreasing = edgeLists.xDecreasing.Pointer(0);
+      Point<s16> * restrict pXIncreasing = edgeLists.xIncreasing.Pointer(0);
+
+      // image is modified within this function, but is returned to its initial state before returning
+      u8 * restrict pImage = const_cast<u8*>( image.Pointer(0,0) );
+
+      const s32 imageRegionOfInterest_rightM1 = 320 - 1;
+
+      for(s32 y=0; y<240; y++) {
+        bool onWhite; // State curState;
+
+        // Is the first pixel white or black? (probably noisy, but that's okay)
+        if(pImage[0] > grayvalueThreshold) {
+          onWhite = true; //curState = ON_WHITE;
+        } else {
+          onWhite = false; //curState = ON_BLACK;
+        }
+
+        s32 lastSwitchX = 0;
+        s32 x = 0;
+        while(x < 320) {
+          if(onWhite) { //if(curState == ON_WHITE) {
+            // If on white
+
+            const u8 oldEndOfLine = pImage[imageRegionOfInterest_rightM1];
+            pImage[imageRegionOfInterest_rightM1] = 0;
+
+            //while( (x < 320) && (pImage[x] > grayvalueThreshold)) {
+            /*while(pImage[x] > grayvalueThreshold) {
+            x++;
+            }*/
+
+            x--;
+            while(true) {
+              x++;
+              if(pImage[x] <= grayvalueThreshold) {
+                break;
+              }
+            }
+
+            onWhite = false; //curState = ON_BLACK;
+
+            if(x < (imageRegionOfInterest_rightM1)) {
+              const s32 componentWidth = x - lastSwitchX;
+
+              if(componentWidth >= 2) {
+                //edgeLists.xDecreasing.PushBack(Point<s16>(x,y));
+
+                const u32 xDecreasingSize_local = xSize_u16x2 & 0xFFFF;
+                if(xDecreasingSize_local < xMaxSizeM1) {
+                  pXDecreasing[xDecreasingSize_local].x = x;
+                  pXDecreasing[xDecreasingSize_local].y = y;
+                  xSize_u16x2++; // Increments the lower (decreasing) half
+                }
+              }
+
+              lastSwitchX = x;
+            } // if(x < (imageRegionOfInterest_rightM1)
+
+            pImage[imageRegionOfInterest_rightM1] = oldEndOfLine;
+          } else {
+            // If on black
+
+            const u8 oldEndOfLine = pImage[imageRegionOfInterest_rightM1];
+            pImage[imageRegionOfInterest_rightM1] = 255;
+
+            //while( (x < 320) && (pImage[x] < grayvalueThreshold)) {
+            //while(pImage[x] < grayvalueThreshold) {
+            //  x++;
+            //}
+
+            x--;
+            while(true) {
+              x++;
+              if(pImage[x] >= grayvalueThreshold) {
+                break;
+              }
+            }
+
+            onWhite = true; //curState = ON_WHITE;
+
+            if(x < (imageRegionOfInterest_rightM1)) {
+              const s32 componentWidth = x - lastSwitchX;
+
+              if(componentWidth >= 2) {
+                //edgeLists.xIncreasing.PushBack(Point<s16>(x,y));
+                const u32 xIncreasingSize_local = xSize_u16x2 >> 16;
+                if(xIncreasingSize_local < xMaxSizeM1) {
+                  pXIncreasing[xIncreasingSize_local].x = x;
+                  pXIncreasing[xIncreasingSize_local].y = y;
+                  xSize_u16x2 += 0x10000; // Increments the upper (increasing) half
+                }
+              }
+
+              lastSwitchX = x;
+            } // if(x < (imageRegionOfInterest_rightM1))
+
+            pImage[imageRegionOfInterest_rightM1] = oldEndOfLine;
+          } // if(curState == ON_WHITE) ... else
+
+          x++;
+        } // if(curState == ON_WHITE) ... else
+
+        pImage += 320;
+      } // for(s32 y=0; y<240; y++)
+
+      const u32 xDecreasingSize_local = xSize_u16x2 & 0xFFFF;
+      const u32 xIncreasingSize_local = xSize_u16x2 >> 16;
+      edgeLists.xDecreasing.set_size(xDecreasingSize_local);
+      edgeLists.xIncreasing.set_size(xIncreasingSize_local);
+    } // DetectBlurredEdges_horizontal_320etc()
+
     NO_INLINE static void DetectBlurredEdges_vertical(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const u8 grayvalueThreshold, const s32 minComponentWidth, EdgeLists &edgeLists)
     {
       //
@@ -263,5 +394,90 @@ namespace Anki
       edgeLists.yDecreasing.set_size(yDecreasingSize);
       edgeLists.yIncreasing.set_size(yIncreasingSize);
     } // DetectBlurredEdges_vertical()
+
+    NO_INLINE static void DetectBlurredEdges_vertical_320etc(const Array<u8> &image, const u8 grayvalueThreshold, EdgeLists &edgeLists)
+    {
+      //
+      //  Detect vertical positive and negative transitions
+      //
+
+      s32 yDecreasingSize = edgeLists.yDecreasing.get_size();
+      s32 yIncreasingSize = edgeLists.yIncreasing.get_size();
+      s32 yMaxSizeM1 = edgeLists.yDecreasing.get_maximumSize() - 1;
+      Point<s16> * restrict pYDecreasing = edgeLists.yDecreasing.Pointer(0);
+      Point<s16> * restrict pYIncreasing = edgeLists.yIncreasing.Pointer(0);
+
+      for(s32 x=0; x<320; x++) {
+        const u8 * restrict pImage = image.Pointer(0, x);
+
+        State curState;
+
+        // Is the first pixel white or black? (probably noisy, but that's okay)
+        if(pImage[0] > grayvalueThreshold)
+          curState = ON_WHITE;
+        else
+          curState = ON_BLACK;
+
+        s32 lastSwitchY = 0;
+        s32 y = 0;
+        while(y < 240) {
+          if(curState == ON_WHITE) {
+            // If on white
+
+            while( (y < 240) && (pImage[0] > grayvalueThreshold) ){
+              y++;
+              pImage += 320;
+            }
+
+            curState = ON_BLACK;
+
+            if(y < (240-1)) {
+              const s32 componentWidth = y - lastSwitchY;
+
+              if(componentWidth >= 2) {
+                //edgeLists.yDecreasing.PushBack(Point<s16>(x,y));
+                if(yDecreasingSize < yMaxSizeM1) {
+                  pYDecreasing[yDecreasingSize].x = x;
+                  pYDecreasing[yDecreasingSize].y = y;
+                  yDecreasingSize++;
+                }
+              }
+
+              lastSwitchY = y;
+            } // if(y < (240-1)
+          } else {
+            // If on black
+
+            while( (y < 240) && (pImage[0] < grayvalueThreshold) ) {
+              y++;
+              pImage += 320;
+            }
+
+            curState = ON_WHITE;
+
+            if(y < (240-1)) {
+              const s32 componentWidth = y - lastSwitchY;
+
+              if(componentWidth >= 2) {
+                //edgeLists.yIncreasing.PushBack(Point<s16>(x,y));
+                if(yIncreasingSize < yMaxSizeM1) {
+                  pYIncreasing[yIncreasingSize].x = x;
+                  pYIncreasing[yIncreasingSize].y = y;
+                  yIncreasingSize++;
+                }
+              }
+
+              lastSwitchY = y;
+            } // if(y < (240-1)
+          } // if(curState == ON_WHITE) ... else
+
+          y++;
+          pImage += 320;
+        } // while(y < 240)
+      } // for(s32 x=0; x<imageRegionOfInterest.right; x++)
+
+      edgeLists.yDecreasing.set_size(yDecreasingSize);
+      edgeLists.yIncreasing.set_size(yIncreasingSize);
+    }
   } // namespace Embedded
 } // namespace Anki
