@@ -52,7 +52,7 @@ namespace Anki
 
       BinaryTracker::BinaryTracker(
         const Array<u8> &templateImage, const Quadrilateral<f32> &templateQuad,
-        const u8 edgeDetection_grayvalueThreshold, const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType,
+        const u8 edgeDetection_grayvalueThreshold, const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
         MemoryStack &memory)
         : isValid(false)
       {
@@ -87,7 +87,7 @@ namespace Anki
         const Rectangle<f32> templateRectRaw = templateQuad.ComputeBoundingRectangle();
         const Rectangle<s32> templateRect(static_cast<s32>(templateRectRaw.left), static_cast<s32>(templateRectRaw.right), static_cast<s32>(templateRectRaw.top), static_cast<s32>(templateRectRaw.bottom));
 
-        const Result result = DetectBlurredEdges(templateImage, templateRect, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, this->templateEdges);
+        const Result result = DetectBlurredEdges(templateImage, templateRect, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, edgeDetection_everyNLines, this->templateEdges);
 
         AnkiConditionalErrorAndReturn(result == RESULT_OK,
           "BinaryTracker::BinaryTracker", "DetectBlurredEdge failed");
@@ -288,7 +288,7 @@ namespace Anki
 
       Result BinaryTracker::UpdateTrack(
         const Array<u8> &nextImage,
-        const u8 edgeDetection_grayvalueThreshold, const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType,
+        const u8 edgeDetection_grayvalueThreshold, const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
         const s32 matching_maxDistance, const s32 matching_maxCorrespondences,
         const bool useFixedPoint_projective,
         MemoryStack scratch)
@@ -342,7 +342,7 @@ namespace Anki
 
         BeginBenchmark("ut_DetectEdges");
 
-        lastResult = DetectBlurredEdges(nextImage, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, nextImageEdges);
+        lastResult = DetectBlurredEdges(nextImage, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, edgeDetection_everyNLines, nextImageEdges);
 
         EndBenchmark("ut_DetectEdges");
 
