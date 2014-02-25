@@ -85,6 +85,8 @@ namespace Anki
       // image is modified within this function, but is returned to its initial state before returning
       u8 * restrict pImage = const_cast<u8*>( image.Pointer(imageRegionOfInterest.top,0) );
 
+      const s32 imageRegionOfInterest_rightM1 = imageRegionOfInterest.right - 1;
+
       for(s32 y=imageRegionOfInterest.top; y<imageRegionOfInterest.bottom; y++) {
         bool onWhite; // State curState;
 
@@ -101,8 +103,8 @@ namespace Anki
           if(onWhite) { //if(curState == ON_WHITE) {
             // If on white
 
-            const u8 oldEndOfLine = pImage[imageRegionOfInterest.right-1];
-            pImage[imageRegionOfInterest.right-1] = 0;
+            const u8 oldEndOfLine = pImage[imageRegionOfInterest_rightM1];
+            pImage[imageRegionOfInterest_rightM1] = 0;
 
             //while( (x < imageRegionOfInterest.right) && (pImage[x] > grayvalueThreshold)) {
             while(pImage[x] > grayvalueThreshold) {
@@ -111,7 +113,7 @@ namespace Anki
 
             onWhite = false; //curState = ON_BLACK;
 
-            if(x < (imageRegionOfInterest.right-1)) {
+            if(x < (imageRegionOfInterest_rightM1)) {
               const s32 componentWidth = x - lastSwitchX;
 
               if(componentWidth >= minComponentWidth) {
@@ -124,14 +126,14 @@ namespace Anki
               }
 
               lastSwitchX = x;
-            } // if(x < (imageRegionOfInterest.right-1)
+            } // if(x < (imageRegionOfInterest_rightM1)
 
-            pImage[imageRegionOfInterest.right-1] = oldEndOfLine;
+            pImage[imageRegionOfInterest_rightM1] = oldEndOfLine;
           } else {
             // If on black
 
-            const u8 oldEndOfLine = pImage[imageRegionOfInterest.right-1];
-            pImage[imageRegionOfInterest.right-1] = 255;
+            const u8 oldEndOfLine = pImage[imageRegionOfInterest_rightM1];
+            pImage[imageRegionOfInterest_rightM1] = 255;
 
             //while( (x < imageRegionOfInterest.right) && (pImage[x] < grayvalueThreshold)) {
             while(pImage[x] < grayvalueThreshold) {
@@ -140,7 +142,7 @@ namespace Anki
 
             onWhite = true; //curState = ON_WHITE;
 
-            if(x < (imageRegionOfInterest.right-1)) {
+            if(x < (imageRegionOfInterest_rightM1)) {
               const s32 componentWidth = x - lastSwitchX;
 
               if(componentWidth >= minComponentWidth) {
@@ -153,9 +155,9 @@ namespace Anki
               }
 
               lastSwitchX = x;
-            } // if(x < (imageRegionOfInterest.right-1))
+            } // if(x < (imageRegionOfInterest_rightM1))
 
-            pImage[imageRegionOfInterest.right-1] = oldEndOfLine;
+            pImage[imageRegionOfInterest_rightM1] = oldEndOfLine;
           } // if(curState == ON_WHITE) ... else
 
           x++;
