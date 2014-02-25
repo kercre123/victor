@@ -35,6 +35,7 @@ namespace Anki
     } EdgeLists;
 
     // Calculate local extrema (edges) in an image. Returns four list for the four directions of change.
+    // image is modified within this function, but is returned to its initial state before returning
     Result DetectBlurredEdges(const Array<u8> &image, const u8 grayvalueThreshold, const s32 minComponentWidth, EdgeLists &edgeLists);
     Result DetectBlurredEdges(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const u8 grayvalueThreshold, const s32 minComponentWidth, EdgeLists &edgeLists);
   } // namespace Embedded

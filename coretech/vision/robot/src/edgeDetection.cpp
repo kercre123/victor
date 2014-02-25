@@ -82,28 +82,34 @@ namespace Anki
       Point<s16> * restrict pXDecreasing = edgeLists.xDecreasing.Pointer(0);
       Point<s16> * restrict pXIncreasing = edgeLists.xIncreasing.Pointer(0);
 
-      for(s32 y=imageRegionOfInterest.top; y<imageRegionOfInterest.bottom; y++) {
-        const u8 * restrict pImage = image.Pointer(y,0);
+      // image is modified within this function, but is returned to its initial state before returning
+      u8 * restrict pImage = const_cast<u8*>( image.Pointer(imageRegionOfInterest.top,0) );
 
-        State curState;
+      for(s32 y=imageRegionOfInterest.top; y<imageRegionOfInterest.bottom; y++) {
+        bool onWhite; // State curState;
 
         // Is the first pixel white or black? (probably noisy, but that's okay)
-        if(pImage[0] > grayvalueThreshold)
-          curState = ON_WHITE;
-        else
-          curState = ON_BLACK;
+        if(pImage[0] > grayvalueThreshold) {
+          onWhite = true; //curState = ON_WHITE;
+        } else {
+          onWhite = false; //curState = ON_BLACK;
+        }
 
         s32 lastSwitchX = imageRegionOfInterest.left;
         s32 x = imageRegionOfInterest.left;
         while(x < imageRegionOfInterest.right) {
-          if(curState == ON_WHITE) {
+          if(onWhite) { //if(curState == ON_WHITE) {
             // If on white
 
-            while( (x < imageRegionOfInterest.right) && (pImage[x] > grayvalueThreshold)) {
+            const u8 oldEndOfLine = pImage[imageRegionOfInterest.right-1];
+            pImage[imageRegionOfInterest.right-1] = 0;
+
+            //while( (x < imageRegionOfInterest.right) && (pImage[x] > grayvalueThreshold)) {
+            while(pImage[x] > grayvalueThreshold) {
               x++;
             }
 
-            curState = ON_BLACK;
+            onWhite = false; //curState = ON_BLACK;
 
             if(x < (imageRegionOfInterest.right-1)) {
               const s32 componentWidth = x - lastSwitchX;
@@ -119,14 +125,20 @@ namespace Anki
 
               lastSwitchX = x;
             } // if(x < (imageRegionOfInterest.right-1)
+
+            pImage[imageRegionOfInterest.right-1] = oldEndOfLine;
           } else {
             // If on black
 
-            while( (x < imageRegionOfInterest.right) && (pImage[x] < grayvalueThreshold)) {
+            const u8 oldEndOfLine = pImage[imageRegionOfInterest.right-1];
+            pImage[imageRegionOfInterest.right-1] = 255;
+
+            //while( (x < imageRegionOfInterest.right) && (pImage[x] < grayvalueThreshold)) {
+            while(pImage[x] < grayvalueThreshold) {
               x++;
             }
 
-            curState = ON_WHITE;
+            onWhite = true; //curState = ON_WHITE;
 
             if(x < (imageRegionOfInterest.right-1)) {
               const s32 componentWidth = x - lastSwitchX;
@@ -142,10 +154,14 @@ namespace Anki
 
               lastSwitchX = x;
             } // if(x < (imageRegionOfInterest.right-1))
+
+            pImage[imageRegionOfInterest.right-1] = oldEndOfLine;
           } // if(curState == ON_WHITE) ... else
 
           x++;
         } // if(curState == ON_WHITE) ... else
+
+        pImage += imageStride;
       } // for(s32 y=0; y<imageRegionOfInterest.bottom; y++)
 
       edgeLists.xDecreasing.set_size(xDecreasingSize);
