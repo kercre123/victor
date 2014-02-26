@@ -20,9 +20,9 @@ namespace Anki
     };*/
 
     // Float registers are more plentiful on the M4. Could this be faster?
-    typedef f32 State;
-    const f32 ON_WHITE = 0;
-    const f32 ON_BLACK = 1.0f;
+    //typedef f32 State;
+    //const f32 ON_WHITE = 0;
+    //const f32 ON_BLACK = 1.0f;
 
     NO_INLINE static void DetectBlurredEdges_horizontal(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const u8 grayvalueThreshold, const s32 minComponentWidth, const s32 everyNLines, EdgeLists &edgeLists);
     NO_INLINE static void DetectBlurredEdges_vertical(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const u8 grayvalueThreshold, const s32 minComponentWidth, const s32 everyNLines, EdgeLists &edgeLists);
@@ -85,18 +85,18 @@ namespace Anki
       for(s32 y=imageRegionOfInterest.top; y<imageRegionOfInterest.bottom; y+=everyNLines) {
         const u8 * restrict pImage = image.Pointer(y,0);
 
-        State curState;
+        bool onWhite;
 
         // Is the first pixel white or black? (probably noisy, but that's okay)
         if(pImage[0] > grayvalueThreshold)
-          curState = ON_WHITE;
+          onWhite = true;
         else
-          curState = ON_BLACK;
+          onWhite = false;
 
         s32 lastSwitchX = imageRegionOfInterest.left;
         s32 x = imageRegionOfInterest.left;
         while(x < imageRegionOfInterest.right) {
-          if(curState == ON_WHITE) {
+          if(onWhite) {
             // If on white
 
             while(x < (imageRegionOfInterest.right-3)) {
@@ -121,7 +121,7 @@ namespace Anki
               x++;
             }
 
-            curState = ON_BLACK;
+            onWhite = false;
 
             if(x < (imageRegionOfInterest.right-1)) {
               const s32 componentWidth = x - lastSwitchX;
@@ -162,7 +162,7 @@ namespace Anki
               x++;
             }
 
-            curState = ON_WHITE;
+            onWhite = true;
 
             if(x < (imageRegionOfInterest.right-1)) {
               const s32 componentWidth = x - lastSwitchX;
@@ -178,10 +178,10 @@ namespace Anki
 
               lastSwitchX = x;
             } // if(x < (imageRegionOfInterest.right-1))
-          } // if(curState == ON_WHITE) ... else
+          } // if(onWhite) ... else
 
           x++;
-        } // if(curState == ON_WHITE) ... else
+        } // if(onWhite) ... else
       } // for(s32 y=0; y<imageRegionOfInterest.bottom; y++)
 
       edgeLists.xDecreasing.set_size(xDecreasingSize);
@@ -205,18 +205,18 @@ namespace Anki
       for(s32 x=imageRegionOfInterest.left; x<imageRegionOfInterest.right; x+=everyNLines) {
         const u8 * restrict pImage = image.Pointer(imageRegionOfInterest.top, x);
 
-        State curState;
+        bool onWhite;
 
         // Is the first pixel white or black? (probably noisy, but that's okay)
         if(pImage[0] > grayvalueThreshold)
-          curState = ON_WHITE;
+          onWhite = true;
         else
-          curState = ON_BLACK;
+          onWhite = false;
 
         s32 lastSwitchY = imageRegionOfInterest.top;
         s32 y = imageRegionOfInterest.top;
         while(y < imageRegionOfInterest.bottom) {
-          if(curState == ON_WHITE) {
+          if(onWhite) {
             // If on white
 
             //while(y < (imageRegionOfInterest.bottom-3)) {
@@ -260,7 +260,7 @@ namespace Anki
               pImage += imageStride;
             }
 
-            curState = ON_BLACK;
+            onWhite = false;
 
             if(y < (imageRegionOfInterest.bottom-1)) {
               const s32 componentWidth = y - lastSwitchY;
@@ -298,7 +298,7 @@ namespace Anki
               pImage += imageStride;
             }
 
-            curState = ON_WHITE;
+            onWhite = true;
 
             if(y < (imageRegionOfInterest.bottom-1)) {
               const s32 componentWidth = y - lastSwitchY;
@@ -314,7 +314,7 @@ namespace Anki
 
               lastSwitchY = y;
             } // if(y < (imageRegionOfInterest.bottom-1)
-          } // if(curState == ON_WHITE) ... else
+          } // if(onWhite) ... else
 
           y++;
           pImage += imageStride;
