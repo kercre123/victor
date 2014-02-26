@@ -114,7 +114,7 @@ namespace Anki
               if( ((pixels_u8x4 & 0xFF000000) >> 24) <= grayvalueThreshold )
                 break;
 
-              x+=4;
+              x += 4;
             }
 
             while( (x < imageRegionOfInterest.right) && (pImage[x] > grayvalueThreshold)) {
@@ -155,7 +155,7 @@ namespace Anki
               if( ((pixels_u8x4 & 0xFF000000) >> 24) >= grayvalueThreshold )
                 break;
 
-              x+=4;
+              x += 4;
             }
 
             while( (x < imageRegionOfInterest.right) && (pImage[x] < grayvalueThreshold)) {
@@ -219,6 +219,42 @@ namespace Anki
           if(curState == ON_WHITE) {
             // If on white
 
+            //while(y < (imageRegionOfInterest.bottom-3)) {
+            //  const u8 pixel0 = pImage[0];
+            //  const u8 pixel1 = pImage[imageStride];
+            //  const u8 pixel2 = pImage[2*imageStride];
+            //  const u8 pixel3 = pImage[3*imageStride];
+
+            //  if(pixel0 <= grayvalueThreshold)
+            //    break;
+
+            //  if(pixel1 <= grayvalueThreshold)
+            //    break;
+
+            //  if(pixel2 <= grayvalueThreshold)
+            //    break;
+
+            //  if(pixel3 <= grayvalueThreshold)
+            //    break;
+
+            //  y+=4;
+            //  pImage += 4*imageStride;
+            //}
+
+            while(y < (imageRegionOfInterest.bottom-1)) {
+              const u8 pixel0 = pImage[0];
+              const u8 pixel1 = pImage[imageStride];
+
+              if(pixel0 <= grayvalueThreshold)
+                break;
+
+              if(pixel1 <= grayvalueThreshold)
+                break;
+
+              y += 2;
+              pImage += 2*imageStride;
+            }
+
             while( (y < imageRegionOfInterest.bottom) && (pImage[0] > grayvalueThreshold) ){
               y++;
               pImage += imageStride;
@@ -242,6 +278,20 @@ namespace Anki
             } // if(y < (imageRegionOfInterest.bottom-1)
           } else {
             // If on black
+
+            while(y < (imageRegionOfInterest.bottom-1)) {
+              const u8 pixel0 = pImage[0];
+              const u8 pixel1 = pImage[imageStride];
+
+              if(pixel0 >= grayvalueThreshold)
+                break;
+
+              if(pixel1 >= grayvalueThreshold)
+                break;
+
+              y += 2;
+              pImage += 2*imageStride;
+            }
 
             while( (y < imageRegionOfInterest.bottom) && (pImage[0] < grayvalueThreshold) ) {
               y++;
