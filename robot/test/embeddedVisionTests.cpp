@@ -99,7 +99,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     lktb.get_transformation().get_homography().Print("fixed-float 1");
 
-    //ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(lktb.get_transformation().get_homography(), transform_groundTruth, .01, .01));
+    ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(lktb.get_transformation().get_homography(), transform_groundTruth, .01, .01));
 
     PrintBenchmarkResults_OnlyTotals();
   }
@@ -141,7 +141,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     lktb.get_transformation().get_homography().Print("fixed-float 2");
 
-    //ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(lktb.get_transformation().get_homography(), transform_groundTruth, .01, .01));
+    ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(lktb.get_transformation().get_homography(), transform_groundTruth, .01, .01));
 
     PrintBenchmarkResults_OnlyTotals();
   }

@@ -24,17 +24,17 @@ namespace Anki
     //const f32 ON_WHITE = 0;
     //const f32 ON_BLACK = 1.0f;
 
-    NO_INLINE static void DetectBlurredEdges_horizontal(Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const u8 grayvalueThreshold, const s32 minComponentWidth, const s32 everyNLines, EdgeLists &edgeLists);
-    NO_INLINE static void DetectBlurredEdges_vertical(Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const u8 grayvalueThreshold, const s32 minComponentWidth, const s32 everyNLines, EdgeLists &edgeLists);
+    NO_INLINE static void DetectBlurredEdges_horizontal(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const u8 grayvalueThreshold, const s32 minComponentWidth, const s32 everyNLines, EdgeLists &edgeLists);
+    NO_INLINE static void DetectBlurredEdges_vertical(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const u8 grayvalueThreshold, const s32 minComponentWidth, const s32 everyNLines, EdgeLists &edgeLists);
 
-    Result DetectBlurredEdges(Array<u8> &image, const u8 grayvalueThreshold, const s32 minComponentWidth, const s32 everyNLines, EdgeLists &edgeLists)
+    Result DetectBlurredEdges(const Array<u8> &image, const u8 grayvalueThreshold, const s32 minComponentWidth, const s32 everyNLines, EdgeLists &edgeLists)
     {
       Rectangle<s32> imageRegionOfInterest(0, image.get_size(1), 0, image.get_size(0));
 
       return DetectBlurredEdges(image, imageRegionOfInterest, grayvalueThreshold, minComponentWidth, everyNLines, edgeLists);
     }
 
-    Result DetectBlurredEdges(Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const u8 grayvalueThreshold, const s32 minComponentWidth, const s32 everyNLines, EdgeLists &edgeLists)
+    Result DetectBlurredEdges(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const u8 grayvalueThreshold, const s32 minComponentWidth, const s32 everyNLines, EdgeLists &edgeLists)
     {
       AnkiConditionalErrorAndReturnValue(image.IsValid() && edgeLists.xDecreasing.IsValid() && edgeLists.xIncreasing.IsValid() && edgeLists.yDecreasing.IsValid() && edgeLists.yIncreasing.IsValid(),
         RESULT_FAIL_INVALID_OBJECT, "DetectBlurredEdges", "Arrays are not valid");
@@ -62,16 +62,13 @@ namespace Anki
       // TODO: won't detect an edge on the last horizontal (for x search) or vertical (for y search)
       //       pixel. Is there a fast way to do this?
 
-      // Don't check the final row or column
-      const Rectangle<s32> imageRegionOfInterestSubset(imageRegionOfInterest.left, imageRegionOfInterest.right-1, imageRegionOfInterest.top, imageRegionOfInterest.bottom-1);
-
-      DetectBlurredEdges_horizontal(image, imageRegionOfInterestSubset, grayvalueThreshold, minComponentWidth, everyNLines, edgeLists);
-      DetectBlurredEdges_vertical(image, imageRegionOfInterestSubset, grayvalueThreshold, minComponentWidth, everyNLines, edgeLists);
+      DetectBlurredEdges_horizontal(image, imageRegionOfInterest, grayvalueThreshold, minComponentWidth, everyNLines, edgeLists);
+      DetectBlurredEdges_vertical(image, imageRegionOfInterest, grayvalueThreshold, minComponentWidth, everyNLines, edgeLists);
 
       return RESULT_OK;
     } // Result DetectBlurredEdges()
 
-    NO_INLINE static void DetectBlurredEdges_horizontal(Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const u8 grayvalueThreshold, const s32 minComponentWidth, const s32 everyNLines, EdgeLists &edgeLists)
+    NO_INLINE static void DetectBlurredEdges_horizontal(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const u8 grayvalueThreshold, const s32 minComponentWidth, const s32 everyNLines, EdgeLists &edgeLists)
     {
       //
       // Detect horizontal positive and negative transitions
@@ -90,7 +87,7 @@ namespace Anki
       u32 * restrict pXIncreasing = reinterpret_cast<u32 *>(edgeLists.xIncreasing.Pointer(0));
 
       for(u32 y=imageRegionOfInterestU32.top; y<imageRegionOfInterestU32.bottom; y+=everyNLines) {
-        u8 * restrict pImage = image.Pointer(y,0);
+        const u8 * restrict pImage = image.Pointer(y,0);
 
         bool onWhite;
 
@@ -106,10 +103,7 @@ namespace Anki
           if(onWhite) {
             // If on white
 
-            pImage[imageRegionOfInterestU32.right] = 0;
-
-            //while(x < (imageRegionOfInterestU32.right-3)) {
-            while(true) {
+            while(x < (imageRegionOfInterestU32.right-3)) {
               const u32 pixels_u8x4 = *reinterpret_cast<const u32 *>(pImage+x);
 
               if( (pixels_u8x4 & 0xFF) <= grayvalueThreshold )
@@ -127,8 +121,7 @@ namespace Anki
               x += 4;
             }
 
-            //while( (x < imageRegionOfInterestU32.right) && (pImage[x] > grayvalueThreshold)) {
-            while(pImage[x] > grayvalueThreshold) {
+            while( (x < imageRegionOfInterestU32.right) && (pImage[x] > grayvalueThreshold)) {
               x++;
             }
 
@@ -152,10 +145,7 @@ namespace Anki
           } else {
             // If on black
 
-            pImage[imageRegionOfInterestU32.right] = 255;
-
-            //while(x < (imageRegionOfInterestU32.right-3)) {
-            while(true) {
+            while(x < (imageRegionOfInterestU32.right-3)) {
               const u32 pixels_u8x4 = *reinterpret_cast<const u32 *>(pImage+x);
 
               if( (pixels_u8x4 & 0xFF) >= grayvalueThreshold )
@@ -173,8 +163,7 @@ namespace Anki
               x += 4;
             }
 
-            //while( (x < imageRegionOfInterestU32.right) && (pImage[x] < grayvalueThreshold)) {
-            while(pImage[x] < grayvalueThreshold) {
+            while( (x < imageRegionOfInterestU32.right) && (pImage[x] < grayvalueThreshold)) {
               x++;
             }
 
@@ -205,7 +194,7 @@ namespace Anki
       edgeLists.xIncreasing.set_size(xIncreasingSize);
     } // DetectBlurredEdges_horizontal()
 
-    NO_INLINE static void DetectBlurredEdges_vertical(Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const u8 grayvalueThreshold, const s32 minComponentWidth, const s32 everyNLines, EdgeLists &edgeLists)
+    NO_INLINE static void DetectBlurredEdges_vertical(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const u8 grayvalueThreshold, const s32 minComponentWidth, const s32 everyNLines, EdgeLists &edgeLists)
     {
       //
       //  Detect vertical positive and negative transitions
@@ -220,7 +209,7 @@ namespace Anki
       u32 * restrict pYIncreasing = reinterpret_cast<u32 *>(edgeLists.yIncreasing.Pointer(0));
 
       for(s32 x=imageRegionOfInterest.left; x<imageRegionOfInterest.right; x+=everyNLines) {
-        u8 * restrict pImage = image.Pointer(imageRegionOfInterest.top, x);
+        const u8 * restrict pImage = image.Pointer(imageRegionOfInterest.top, x);
 
         bool onWhite;
 
@@ -236,10 +225,7 @@ namespace Anki
           if(onWhite) {
             // If on white
 
-            pImage[imageRegionOfInterest.bottom] = 0;
-
-            //while(y < (imageRegionOfInterest.bottom-1)) {
-            while(true) {
+            while(y < (imageRegionOfInterest.bottom-1)) {
               const u8 pixel0 = pImage[0];
               const u8 pixel1 = pImage[imageStride];
 
@@ -253,8 +239,7 @@ namespace Anki
               pImage += 2*imageStride;
             }
 
-            //while( (y < imageRegionOfInterest.bottom) && (pImage[0] > grayvalueThreshold) ){
-            while(pImage[0] > grayvalueThreshold){
+            while( (y < imageRegionOfInterest.bottom) && (pImage[0] > grayvalueThreshold) ){
               y++;
               pImage += imageStride;
             }
@@ -279,10 +264,7 @@ namespace Anki
           } else {
             // If on black
 
-            pImage[imageRegionOfInterest.bottom] = 255;
-
-            //while(y < (imageRegionOfInterest.bottom-1)) {
-            while(true) {
+            while(y < (imageRegionOfInterest.bottom-1)) {
               const u8 pixel0 = pImage[0];
               const u8 pixel1 = pImage[imageStride];
 
@@ -296,8 +278,7 @@ namespace Anki
               pImage += 2*imageStride;
             }
 
-            //while( (y < imageRegionOfInterest.bottom) && (pImage[0] < grayvalueThreshold) ) {
-            while(pImage[0] < grayvalueThreshold) {
+            while( (y < imageRegionOfInterest.bottom) && (pImage[0] < grayvalueThreshold) ) {
               y++;
               pImage += imageStride;
             }
