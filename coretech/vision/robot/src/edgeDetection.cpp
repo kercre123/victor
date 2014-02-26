@@ -99,6 +99,24 @@ namespace Anki
           if(curState == ON_WHITE) {
             // If on white
 
+            while(x < (imageRegionOfInterest.right-3)) {
+              const u32 pixels_u8x4 = *reinterpret_cast<const u32 *>(pImage+x);
+
+              if( (pixels_u8x4 & 0xFF) <= grayvalueThreshold )
+                break;
+
+              if( ((pixels_u8x4 & 0xFF00) >> 8) <= grayvalueThreshold )
+                break;
+
+              if( ((pixels_u8x4 & 0xFF0000) >> 16) <= grayvalueThreshold )
+                break;
+
+              if( ((pixels_u8x4 & 0xFF000000) >> 24) <= grayvalueThreshold )
+                break;
+
+              x+=4;
+            }
+
             while( (x < imageRegionOfInterest.right) && (pImage[x] > grayvalueThreshold)) {
               x++;
             }
