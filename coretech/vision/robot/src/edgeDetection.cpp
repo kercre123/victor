@@ -74,15 +74,19 @@ namespace Anki
       // Detect horizontal positive and negative transitions
       //
 
-      const s32 imageStride = image.get_stride();
+      const u32 imageStride = image.get_stride();
 
-      s32 xDecreasingSize = edgeLists.xDecreasing.get_size();
-      s32 xIncreasingSize = edgeLists.xIncreasing.get_size();
-      s32 xMaxSizeM1 = edgeLists.xDecreasing.get_maximumSize() - 1;
+      const Rectangle<u32> imageRegionOfInterestU32(imageRegionOfInterest.left, imageRegionOfInterest.right, imageRegionOfInterest.top, imageRegionOfInterest.bottom);
+
+      const u32 minComponentWidthU32 = minComponentWidth;
+
+      u32 xDecreasingSize = edgeLists.xDecreasing.get_size();
+      u32 xIncreasingSize = edgeLists.xIncreasing.get_size();
+      u32 xMaxSizeM1 = edgeLists.xDecreasing.get_maximumSize() - 1;
       Point<s16> * restrict pXDecreasing = edgeLists.xDecreasing.Pointer(0);
       Point<s16> * restrict pXIncreasing = edgeLists.xIncreasing.Pointer(0);
 
-      for(s32 y=imageRegionOfInterest.top; y<imageRegionOfInterest.bottom; y+=everyNLines) {
+      for(u32 y=imageRegionOfInterestU32.top; y<imageRegionOfInterestU32.bottom; y+=everyNLines) {
         const u8 * restrict pImage = image.Pointer(y,0);
 
         bool onWhite;
@@ -93,13 +97,13 @@ namespace Anki
         else
           onWhite = false;
 
-        s32 lastSwitchX = imageRegionOfInterest.left;
-        s32 x = imageRegionOfInterest.left;
-        while(x < imageRegionOfInterest.right) {
+        u32 lastSwitchX = imageRegionOfInterestU32.left;
+        u32 x = imageRegionOfInterestU32.left;
+        while(x < imageRegionOfInterestU32.right) {
           if(onWhite) {
             // If on white
 
-            while(x < (imageRegionOfInterest.right-3)) {
+            while(x < (imageRegionOfInterestU32.right-3)) {
               const u32 pixels_u8x4 = *reinterpret_cast<const u32 *>(pImage+x);
 
               if( (pixels_u8x4 & 0xFF) <= grayvalueThreshold )
@@ -117,16 +121,16 @@ namespace Anki
               x += 4;
             }
 
-            while( (x < imageRegionOfInterest.right) && (pImage[x] > grayvalueThreshold)) {
+            while( (x < imageRegionOfInterestU32.right) && (pImage[x] > grayvalueThreshold)) {
               x++;
             }
 
             onWhite = false;
 
-            if(x < (imageRegionOfInterest.right-1)) {
-              const s32 componentWidth = x - lastSwitchX;
+            if(x < (imageRegionOfInterestU32.right-1)) {
+              const u32 componentWidth = x - lastSwitchX;
 
-              if(componentWidth >= minComponentWidth) {
+              if(componentWidth >= minComponentWidthU32) {
                 //edgeLists.xDecreasing.PushBack(Point<s16>(x,y));
                 if(xDecreasingSize < xMaxSizeM1) {
                   pXDecreasing[xDecreasingSize].x = x;
@@ -136,11 +140,11 @@ namespace Anki
               }
 
               lastSwitchX = x;
-            } // if(x < (imageRegionOfInterest.right-1)
+            } // if(x < (imageRegionOfInterestU32.right-1)
           } else {
             // If on black
 
-            while(x < (imageRegionOfInterest.right-3)) {
+            while(x < (imageRegionOfInterestU32.right-3)) {
               const u32 pixels_u8x4 = *reinterpret_cast<const u32 *>(pImage+x);
 
               if( (pixels_u8x4 & 0xFF) >= grayvalueThreshold )
@@ -158,16 +162,16 @@ namespace Anki
               x += 4;
             }
 
-            while( (x < imageRegionOfInterest.right) && (pImage[x] < grayvalueThreshold)) {
+            while( (x < imageRegionOfInterestU32.right) && (pImage[x] < grayvalueThreshold)) {
               x++;
             }
 
             onWhite = true;
 
-            if(x < (imageRegionOfInterest.right-1)) {
-              const s32 componentWidth = x - lastSwitchX;
+            if(x < (imageRegionOfInterestU32.right-1)) {
+              const u32 componentWidth = x - lastSwitchX;
 
-              if(componentWidth >= minComponentWidth) {
+              if(componentWidth >= minComponentWidthU32) {
                 //edgeLists.xIncreasing.PushBack(Point<s16>(x,y));
                 if(xIncreasingSize < xMaxSizeM1) {
                   pXIncreasing[xIncreasingSize].x = x;
@@ -177,12 +181,12 @@ namespace Anki
               }
 
               lastSwitchX = x;
-            } // if(x < (imageRegionOfInterest.right-1))
+            } // if(x < (imageRegionOfInterestU32.right-1))
           } // if(onWhite) ... else
 
           x++;
         } // if(onWhite) ... else
-      } // for(s32 y=0; y<imageRegionOfInterest.bottom; y++)
+      } // for(u32 y=0; y<imageRegionOfInterestU32.bottom; y++)
 
       edgeLists.xDecreasing.set_size(xDecreasingSize);
       edgeLists.xIncreasing.set_size(xIncreasingSize);
