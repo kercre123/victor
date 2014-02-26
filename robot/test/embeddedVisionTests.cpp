@@ -62,10 +62,10 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
   templateImage.Set(&cozmo_2014_01_29_11_41_05_10_320x240[0], cozmo_2014_01_29_11_41_05_10_320x240_WIDTH*cozmo_2014_01_29_11_41_05_10_320x240_HEIGHT);
   nextImage.Set(&cozmo_2014_01_29_11_41_05_12_320x240[0], cozmo_2014_01_29_11_41_05_12_320x240_WIDTH*cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT);
 
-  // fixed translation, floating projective
+  // Skip zero rows/columns
   {
     PUSH_MEMORY_STACK(scratchOnchip);
-    
+
     InitBenchmarking();
 
     const s32 templateEdgeDetection_everyNLines = 1;
@@ -80,7 +80,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     BeginBenchmark("BinaryTracker update fixed-float");
     const Result result = lktb.UpdateTrack(nextImage,
       edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType, 1,
-      matching_maxTranslationDistance, matching_maxProjectiveDistance, matching_maxCorrespondences, false, scratchCcm);
+      matching_maxTranslationDistance, matching_maxProjectiveDistance, matching_maxCorrespondences, scratchCcm);
     EndBenchmark("BinaryTracker update fixed-float");
 
     ASSERT_TRUE(result == RESULT_OK);
@@ -98,16 +98,16 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     lktb.get_transformation().get_homography().Print("fixed-float 1");
 
     ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(lktb.get_transformation().get_homography(), transform_groundTruth, .01, .01));
-    
+
     PrintBenchmarkResults_OnlyTotals();
   }
 
-  // fixed translation, floating projective
+  // Skip one row/column
   {
     PUSH_MEMORY_STACK(scratchOnchip);
 
     InitBenchmarking();
-    
+
     const s32 templateEdgeDetection_everyNLines = 2;
 
     BeginBenchmark("BinaryTracker init");
@@ -120,7 +120,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     BeginBenchmark("BinaryTracker update fixed-float");
     const Result result = lktb.UpdateTrack(nextImage,
       edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType, 1,
-      matching_maxTranslationDistance, matching_maxProjectiveDistance, matching_maxCorrespondences, false, scratchCcm);
+      matching_maxTranslationDistance, matching_maxProjectiveDistance, matching_maxCorrespondences, scratchCcm);
     EndBenchmark("BinaryTracker update fixed-float");
 
     ASSERT_TRUE(result == RESULT_OK);
@@ -138,7 +138,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     lktb.get_transformation().get_homography().Print("fixed-float 2");
 
     ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(lktb.get_transformation().get_homography(), transform_groundTruth, .01, .01));
-    
+
     PrintBenchmarkResults_OnlyTotals();
   }
 
@@ -172,8 +172,6 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
   //ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(lktb.get_transformation().get_homography(), transform_groundTruth, .01, .01));
   }
   */
-
-  
 
   //lktb.get_transformation().TransformArray(templateImage, warpedTemplateImage, scratchOffchip, 1.0f);
 
