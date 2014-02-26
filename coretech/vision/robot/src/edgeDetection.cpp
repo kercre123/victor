@@ -62,8 +62,11 @@ namespace Anki
       // TODO: won't detect an edge on the last horizontal (for x search) or vertical (for y search)
       //       pixel. Is there a fast way to do this?
 
-      DetectBlurredEdges_horizontal(image, imageRegionOfInterest, grayvalueThreshold, minComponentWidth, everyNLines, edgeLists);
-      DetectBlurredEdges_vertical(image, imageRegionOfInterest, grayvalueThreshold, minComponentWidth, everyNLines, edgeLists);
+      // Don't check the final row or column
+      const Rectangle<s32> imageRegionOfInterestSubset(imageRegionOfInterest.left, imageRegionOfInterest.right-1, imageRegionOfInterest.top, imageRegionOfInterest.bottom-1);
+
+      DetectBlurredEdges_horizontal(image, imageRegionOfInterestSubset, grayvalueThreshold, minComponentWidth, everyNLines, edgeLists);
+      DetectBlurredEdges_vertical(image, imageRegionOfInterestSubset, grayvalueThreshold, minComponentWidth, everyNLines, edgeLists);
 
       return RESULT_OK;
     } // Result DetectBlurredEdges()
@@ -87,7 +90,7 @@ namespace Anki
       u32 * restrict pXIncreasing = reinterpret_cast<u32 *>(edgeLists.xIncreasing.Pointer(0));
 
       for(u32 y=imageRegionOfInterestU32.top; y<imageRegionOfInterestU32.bottom; y+=everyNLines) {
-        const u8 * restrict pImage = image.Pointer(y,0);
+        u8 * restrict pImage = image.Pointer(y,0);
 
         bool onWhite;
 
@@ -103,7 +106,10 @@ namespace Anki
           if(onWhite) {
             // If on white
 
-            while(x < (imageRegionOfInterestU32.right-3)) {
+            pImage[imageRegionOfInterestU32.right] = 0;
+
+            //while(x < (imageRegionOfInterestU32.right-3)) {
+            while(true) {
               const u32 pixels_u8x4 = *reinterpret_cast<const u32 *>(pImage+x);
 
               if( (pixels_u8x4 & 0xFF) <= grayvalueThreshold )
@@ -121,7 +127,8 @@ namespace Anki
               x += 4;
             }
 
-            while( (x < imageRegionOfInterestU32.right) && (pImage[x] > grayvalueThreshold)) {
+            //while( (x < imageRegionOfInterestU32.right) && (pImage[x] > grayvalueThreshold)) {
+            while(pImage[x] > grayvalueThreshold) {
               x++;
             }
 
@@ -145,7 +152,10 @@ namespace Anki
           } else {
             // If on black
 
-            while(x < (imageRegionOfInterestU32.right-3)) {
+            pImage[imageRegionOfInterestU32.right] = 255;
+
+            //while(x < (imageRegionOfInterestU32.right-3)) {
+            while(true) {
               const u32 pixels_u8x4 = *reinterpret_cast<const u32 *>(pImage+x);
 
               if( (pixels_u8x4 & 0xFF) >= grayvalueThreshold )
@@ -163,7 +173,8 @@ namespace Anki
               x += 4;
             }
 
-            while( (x < imageRegionOfInterestU32.right) && (pImage[x] < grayvalueThreshold)) {
+            //while( (x < imageRegionOfInterestU32.right) && (pImage[x] < grayvalueThreshold)) {
+            while(pImage[x] < grayvalueThreshold) {
               x++;
             }
 
@@ -209,7 +220,7 @@ namespace Anki
       u32 * restrict pYIncreasing = reinterpret_cast<u32 *>(edgeLists.yIncreasing.Pointer(0));
 
       for(s32 x=imageRegionOfInterest.left; x<imageRegionOfInterest.right; x+=everyNLines) {
-        const u8 * restrict pImage = image.Pointer(imageRegionOfInterest.top, x);
+        u8 * restrict pImage = image.Pointer(imageRegionOfInterest.top, x);
 
         bool onWhite;
 
@@ -225,7 +236,10 @@ namespace Anki
           if(onWhite) {
             // If on white
 
-            while(y < (imageRegionOfInterest.bottom-1)) {
+            pImage[imageRegionOfInterest.bottom] = 0;
+
+            //while(y < (imageRegionOfInterest.bottom-1)) {
+            while(true) {
               const u8 pixel0 = pImage[0];
               const u8 pixel1 = pImage[imageStride];
 
@@ -239,7 +253,8 @@ namespace Anki
               pImage += 2*imageStride;
             }
 
-            while( (y < imageRegionOfInterest.bottom) && (pImage[0] > grayvalueThreshold) ){
+            //while( (y < imageRegionOfInterest.bottom) && (pImage[0] > grayvalueThreshold) ){
+            while(pImage[0] > grayvalueThreshold){
               y++;
               pImage += imageStride;
             }
@@ -264,7 +279,10 @@ namespace Anki
           } else {
             // If on black
 
-            while(y < (imageRegionOfInterest.bottom-1)) {
+            pImage[imageRegionOfInterest.bottom] = 255;
+
+            //while(y < (imageRegionOfInterest.bottom-1)) {
+            while(true) {
               const u8 pixel0 = pImage[0];
               const u8 pixel1 = pImage[imageStride];
 
@@ -278,7 +296,8 @@ namespace Anki
               pImage += 2*imageStride;
             }
 
-            while( (y < imageRegionOfInterest.bottom) && (pImage[0] < grayvalueThreshold) ) {
+            //while( (y < imageRegionOfInterest.bottom) && (pImage[0] < grayvalueThreshold) ) {
+            while(pImage[0] < grayvalueThreshold) {
               y++;
               pImage += imageStride;
             }
