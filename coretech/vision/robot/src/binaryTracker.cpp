@@ -20,6 +20,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/imageProcessing.h"
 #include "anki/vision/robot/transformations.h"
 
+#include <math.h>
+
 //#define SEND_BINARY_IMAGES_TO_MATLAB
 
 #define USE_ARM_ACCELERATION
@@ -45,6 +47,24 @@ namespace Anki
   {
     namespace TemplateTracker
     {
+      NO_INLINE static s32 RoundS32_minusPointFive(f32 x)
+      {
+        //return RoundS32(x - 0.5f);
+#if !defined(USE_ARM_ACCELERATION)
+        // Some platforms may not round to zero correctly, so do the function calls
+        if(x > 0)
+          return static_cast<s32>(floorf(x));
+        else
+          return static_cast<s32>(ceilf(x - 1.0f));
+#else
+        // The M4 rounds to zero correctly, without the function call
+        if(x > 0)
+          return static_cast<s32>(x);
+        else
+          return static_cast<s32>(x - 1.0f);
+#endif
+      }
+
       BinaryTracker::BinaryTracker()
         : isValid(false)
       {
@@ -463,7 +483,7 @@ namespace Anki
         const Array<f32> &homography = transformation.get_homography();
         const Point<f32> &centerOffset = transformation.get_centerOffset();
 
-        // TODO: if the homography is just translation, we can do this faster
+        // TODO: if the homography is just translation, we can do this faster (just slightly, as most of the cost is the search)
         const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
         const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
         const f32 h20 = homography[2][0]; const f32 h21 = homography[2][1]; const f32 h22 = 1.0f;
@@ -489,22 +509,27 @@ namespace Anki
           const f32 xc = xr - centerOffset.x;
           const f32 yc = yr - centerOffset.y;
 
-          //const s32 xc_s32 = static_cast<s32>(Round(xc));
-          //const s32 yc_s32 = static_cast<s32>(Round(yc));
+          //const s32 xc_s32 = RoundS32(xc));
+          //const s32 yc_s32 = RoundS32(yc));
 
           // Projective warp
           const f32 wpi = 1.0f / (h20*xc + h21*yc + h22);
           const f32 warpedX = (h00*xc + h01*yc + h02) * wpi;
           const f32 warpedY = (h10*xc + h11*yc + h12) * wpi;
-
+          
           //TODO: if these are always .5, then we should floor here and add to sumY at the end
-          //const s32 warpedX_s32 = static_cast<s32>(Round(warpedX));
-          //const s32 warpedY_s32 = static_cast<s32>(Round(warpedY));
+          //const s32 warpedX_s32 = RoundS32(warpedX));
+          //const s32 warpedY_s32 = RoundS32(warpedY));
 
           // TODO: verify the -0.5f is correct
           // TODO: can this be done faster on the M4?
-          const s32 warpedXrounded = static_cast<s32>(Round(warpedX + centerOffset.x - 0.5f));
-          const s32 warpedYrounded = static_cast<s32>(Round(warpedY + centerOffset.y - 0.5f));
+          //#if !defined(USE_ARM_ACCELERATION)
+          const s32 warpedXrounded = RoundS32_minusPointFive(warpedX + centerOffset.x);
+          const s32 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
+          /*#else
+          const s32 warpedXrounded = static_cast<s32>(lrintf(warpedX + centerOffset.x - 0.5f));
+          const s32 warpedYrounded = static_cast<s32>(lrintf(warpedY + centerOffset.y - 0.5f));
+          #endif*/
 
           if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance)) {
             s32 minOffset = -maxMatchingDistance;
@@ -536,8 +561,8 @@ namespace Anki
           } // if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance))
         } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
 
-        sumY = static_cast<s32>(Round(sumYF32));
-        numCorrespondences = static_cast<s32>(Round(numCorrespondencesF32));
+        sumY = RoundS32(sumYF32);
+        numCorrespondences = RoundS32(numCorrespondencesF32);
 
         return RESULT_OK;
       } // Result BinaryTracker::FindVerticalCorrespondences_Translation()
@@ -584,8 +609,8 @@ namespace Anki
           const f32 xc = xr - centerOffset.x;
           const f32 yc = yr - centerOffset.y;
 
-          //const s32 xc_s32 = static_cast<s32>(Round(xc));
-          //const s32 yc_s32 = static_cast<s32>(Round(yc));
+          //const s32 xc_s32 = RoundS32(xc));
+          //const s32 yc_s32 = RoundS32(yc));
 
           // Projective warp
           const f32 wpi = 1.0f / (h20*xc + h21*yc + h22);
@@ -593,13 +618,13 @@ namespace Anki
           const f32 warpedY = (h10*xc + h11*yc + h12) * wpi;
 
           //TODO: if these are always .5, then we should floor here and add to sumY at the end
-          //const s32 warpedX_s32 = static_cast<s32>(Round(warpedX));
-          //const s32 warpedY_s32 = static_cast<s32>(Round(warpedY));
+          //const s32 warpedX_s32 = RoundS32(warpedX));
+          //const s32 warpedY_s32 = RoundS32(warpedY));
 
           // TODO: verify the -0.5f is correct
           // TODO: can this be done faster on the M4?
-          const s32 warpedXrounded = static_cast<s32>(Round(warpedX + centerOffset.x - 0.5f));
-          const s32 warpedYrounded = static_cast<s32>(Round(warpedY + centerOffset.y - 0.5f));
+          const s32 warpedXrounded = RoundS32_minusPointFive(warpedX + centerOffset.x);
+          const s32 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
 
           if(warpedXrounded >= maxMatchingDistance && warpedXrounded < (imageWidth-maxMatchingDistance)) {
             s32 minOffset = -maxMatchingDistance;
@@ -632,8 +657,8 @@ namespace Anki
           } // if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance))
         } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
 
-        sumX = static_cast<s32>(Round(sumXF32));
-        numCorrespondences = static_cast<s32>(Round(numCorrespondencesF32));
+        sumX = RoundS32(sumXF32);
+        numCorrespondences = RoundS32(numCorrespondencesF32);
 
         return RESULT_OK;
       } // Result BinaryTracker::FindHorizontalCorrespondences_Translation()
@@ -705,8 +730,8 @@ namespace Anki
 
           // TODO: verify the -0.5f is correct
           // TODO: can this be done faster on the M4?
-          const s32 warpedXrounded = static_cast<s32>(Round(warpedX + centerOffset.x - 0.5f));
-          const s32 warpedYrounded = static_cast<s32>(Round(warpedY + centerOffset.y - 0.5f));
+          const s32 warpedXrounded = RoundS32_minusPointFive(warpedX + centerOffset.x);
+          const s32 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
 
           if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance)) {
             s32 minOffset = -maxMatchingDistance;
@@ -981,25 +1006,25 @@ namespace Anki
           const f32 xc = xr - centerOffset.x;
           const f32 yc = yr - centerOffset.y;
 
-          //const s32 xc_SQ27p1 = static_cast<s32>(Round(xc * static_cast<f32>(1<<numFractionalBits)));
-          //const s32 yc_SQ27p1 = static_cast<s32>(Round(yc * static_cast<f32>(1<<numFractionalBits)));
-          const s32 xc_s32 = static_cast<s32>(Round(xc));
-          const s32 yc_s32 = static_cast<s32>(Round(yc));
+          //const s32 xc_SQ27p1 = RoundS32(xc * static_cast<f32>(1<<numFractionalBits)));
+          //const s32 yc_SQ27p1 = RoundS32(yc * static_cast<f32>(1<<numFractionalBits)));
+          const s32 xc_s32 = RoundS32(xc);
+          const s32 yc_s32 = RoundS32(yc);
 
           // Projective warp
           const f32 wpi = 1.0f / (h20*xc + h21*yc + h22);
           const f32 warpedX = (h00*xc + h01*yc + h02) * wpi;
           const f32 warpedY = (h10*xc + h11*yc + h12) * wpi;
 
-          //const s32 warpedX_SQ27p1 = static_cast<s32>(Round(warpedX * static_cast<f32>(1<<numFractionalBits)));
-          //const s32 warpedY_SQ27p1 = static_cast<s32>(Round(warpedY * static_cast<f32>(1<<numFractionalBits)));
-          const s32 warpedX_s32 = static_cast<s32>(Round(warpedX));
-          const s32 warpedY_s32 = static_cast<s32>(Round(warpedY));
+          //const s32 warpedX_SQ27p1 = RoundS32(warpedX * static_cast<f32>(1<<numFractionalBits)));
+          //const s32 warpedY_SQ27p1 = RoundS32(warpedY * static_cast<f32>(1<<numFractionalBits)));
+          const s32 warpedX_s32 = RoundS32(warpedX);
+          const s32 warpedY_s32 = RoundS32(warpedY);
 
           // TODO: verify the -0.5f is correct
           // TODO: can this be done faster on the M4?
-          const s32 warpedXrounded = static_cast<s32>(Round(warpedX + centerOffset.x - 0.5f));
-          const s32 warpedYrounded = static_cast<s32>(Round(warpedY + centerOffset.y - 0.5f));
+          const s32 warpedXrounded = RoundS32_minusPointFive(warpedX + centerOffset.x);
+          const s32 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
 
           if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance)) {
             s32 minOffset = -maxMatchingDistance;
@@ -1225,8 +1250,8 @@ namespace Anki
 
           // TODO: verify the -0.5f is correct
           // TODO: can this be done faster on the M4?
-          const s32 warpedXrounded = static_cast<s32>(Round(warpedX + centerOffset.x - 0.5f));
-          const s32 warpedYrounded = static_cast<s32>(Round(warpedY + centerOffset.y - 0.5f));
+          const s32 warpedXrounded = RoundS32_minusPointFive(warpedX + centerOffset.x);
+          const s32 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
 
           if(warpedXrounded >= maxMatchingDistance && warpedXrounded < (imageWidth-maxMatchingDistance)) {
             s32 minOffset = -maxMatchingDistance;
@@ -1368,21 +1393,21 @@ namespace Anki
           const f32 xc = xr - centerOffset.x;
           const f32 yc = yr - centerOffset.y;
 
-          const s32 xc_s32 = static_cast<s32>(Round(xc));
-          const s32 yc_s32 = static_cast<s32>(Round(yc));
+          const s32 xc_s32 = RoundS32(xc);
+          const s32 yc_s32 = RoundS32(yc);
 
           // Projective warp
           const f32 wpi = 1.0f / (h20*xc + h21*yc + h22);
           const f32 warpedX = (h00*xc + h01*yc + h02) * wpi;
           const f32 warpedY = (h10*xc + h11*yc + h12) * wpi;
 
-          const s32 warpedX_s32 = static_cast<s32>(Round(warpedX));
-          const s32 warpedY_s32 = static_cast<s32>(Round(warpedY));
+          const s32 warpedX_s32 = RoundS32(warpedX);
+          const s32 warpedY_s32 = RoundS32(warpedY);
 
           // TODO: verify the -0.5f is correct
           // TODO: can this be done faster on the M4?
-          const s32 warpedXrounded = static_cast<s32>(Round(warpedX + centerOffset.x - 0.5f));
-          const s32 warpedYrounded = static_cast<s32>(Round(warpedY + centerOffset.y - 0.5f));
+          const s32 warpedXrounded = RoundS32_minusPointFive(warpedX + centerOffset.x);
+          const s32 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
 
           if(warpedXrounded >= maxMatchingDistance && warpedXrounded < (imageWidth-maxMatchingDistance)) {
             s32 minOffset = -maxMatchingDistance;

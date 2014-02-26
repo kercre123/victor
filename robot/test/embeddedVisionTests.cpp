@@ -62,11 +62,11 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
   templateImage.Set(&cozmo_2014_01_29_11_41_05_10_320x240[0], cozmo_2014_01_29_11_41_05_10_320x240_WIDTH*cozmo_2014_01_29_11_41_05_10_320x240_HEIGHT);
   nextImage.Set(&cozmo_2014_01_29_11_41_05_12_320x240[0], cozmo_2014_01_29_11_41_05_12_320x240_WIDTH*cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT);
 
-  InitBenchmarking();
-
   // fixed translation, floating projective
   {
     PUSH_MEMORY_STACK(scratchOnchip);
+    
+    InitBenchmarking();
 
     const s32 templateEdgeDetection_everyNLines = 1;
 
@@ -97,13 +97,17 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     lktb.get_transformation().get_homography().Print("fixed-float 1");
 
-    //ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(lktb.get_transformation().get_homography(), transform_groundTruth, .01, .01));
+    ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(lktb.get_transformation().get_homography(), transform_groundTruth, .01, .01));
+    
+    PrintBenchmarkResults_OnlyTotals();
   }
 
   // fixed translation, floating projective
   {
     PUSH_MEMORY_STACK(scratchOnchip);
 
+    InitBenchmarking();
+    
     const s32 templateEdgeDetection_everyNLines = 2;
 
     BeginBenchmark("BinaryTracker init");
@@ -133,7 +137,9 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     lktb.get_transformation().get_homography().Print("fixed-float 2");
 
-    //ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(lktb.get_transformation().get_homography(), transform_groundTruth, .01, .01));
+    ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(lktb.get_transformation().get_homography(), transform_groundTruth, .01, .01));
+    
+    PrintBenchmarkResults_OnlyTotals();
   }
 
   // fixed translation, fixed projective
@@ -167,7 +173,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
   }
   */
 
-  PrintBenchmarkResults_OnlyTotals();
+  
 
   //lktb.get_transformation().TransformArray(templateImage, warpedTemplateImage, scratchOffchip, 1.0f);
 
