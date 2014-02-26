@@ -99,69 +99,31 @@ namespace Anki
           if(curState == ON_WHITE) {
             // If on white
 
-            bool foundEdge = false;
+            while(x < (imageRegionOfInterest.right-3)) {
+              const u32 pixels_u8x4 = *reinterpret_cast<const u32 *>(pImage+x);
 
-            //// Do non-word-aligned checks
-            while(((x&3) != 0) && (x < imageRegionOfInterest.right)) {
-              if(pImage[x] <= grayvalueThreshold) {
-                foundEdge = true;
+              if( (pixels_u8x4 & 0xFF) <= grayvalueThreshold )
                 break;
-              }
 
+              if( ((pixels_u8x4 & 0xFF00) >> 8) <= grayvalueThreshold )
+                break;
+
+              if( ((pixels_u8x4 & 0xFF0000) >> 16) <= grayvalueThreshold )
+                break;
+
+              if( ((pixels_u8x4 & 0xFF000000) >> 24) <= grayvalueThreshold )
+                break;
+
+              x+=4;
+            }
+
+            while( (x < imageRegionOfInterest.right) && (pImage[x] > grayvalueThreshold)) {
               x++;
             }
 
-            // If we didn't find an edge on the non-aligned checks
-            if(!foundEdge) {
-              // Do word-aligned checks 4x unrolled
-              while(x < (imageRegionOfInterest.right-3)) {
-                const u32 pixels_u8x4 = *reinterpret_cast<const u32 *>(pImage+x);
-
-                if( (pixels_u8x4 & 0xFF) <= grayvalueThreshold ) {
-                  foundEdge = true;
-                  break;
-                }
-
-                x++;
-
-                if( ((pixels_u8x4 & 0xFF00) >> 8) <= grayvalueThreshold ) {
-                  foundEdge = true;
-                  break;
-                }
-
-                x++;
-
-                if( ((pixels_u8x4 & 0xFF0000) >> 16) <= grayvalueThreshold ) {
-                  foundEdge = true;
-                  break;
-                }
-
-                x++;
-
-                if( ((pixels_u8x4 & 0xFF000000) >> 24) <= grayvalueThreshold ) {
-                  foundEdge = true;
-                  break;
-                }
-
-                x++;
-                //x += 4;
-              }
-
-              // Finish reminder of checks
-              if(!foundEdge) {
-                while( (x < imageRegionOfInterest.right)) {
-                  if(pImage[x] <= grayvalueThreshold) {
-                    foundEdge = true;
-                    break;
-                  }
-                  x++;
-                }
-              } // if(!foundEdge)
-            } // if(!foundEdge)
             curState = ON_BLACK;
 
-            //if(x < (imageRegionOfInterest.right-1)) {
-            if(foundEdge) {
+            if(x < (imageRegionOfInterest.right-1)) {
               const s32 componentWidth = x - lastSwitchX;
 
               if(componentWidth >= minComponentWidth) {
@@ -177,6 +139,24 @@ namespace Anki
             } // if(x < (imageRegionOfInterest.right-1)
           } else {
             // If on black
+
+            while(x < (imageRegionOfInterest.right-3)) {
+              const u32 pixels_u8x4 = *reinterpret_cast<const u32 *>(pImage+x);
+
+              if( (pixels_u8x4 & 0xFF) >= grayvalueThreshold )
+                break;
+
+              if( ((pixels_u8x4 & 0xFF00) >> 8) >= grayvalueThreshold )
+                break;
+
+              if( ((pixels_u8x4 & 0xFF0000) >> 16) >= grayvalueThreshold )
+                break;
+
+              if( ((pixels_u8x4 & 0xFF000000) >> 24) >= grayvalueThreshold )
+                break;
+
+              x+=4;
+            }
 
             while( (x < imageRegionOfInterest.right) && (pImage[x] < grayvalueThreshold)) {
               x++;

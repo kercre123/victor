@@ -93,9 +93,9 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
 
     Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
-    transform_groundTruth[0][0] = 1.0693f;  transform_groundTruth[0][1] = 0.0007f; transform_groundTruth[0][2] = 2.3081f;
-    transform_groundTruth[1][0] = 0.0010f;  transform_groundTruth[1][1] = 1.0605f; transform_groundTruth[1][2] = -4.1184f;
-    transform_groundTruth[2][0] = 0.0f; transform_groundTruth[2][1] = 0.0f;    transform_groundTruth[2][2] = 1.0f;
+    transform_groundTruth[0][0] = 1.0693f;  transform_groundTruth[0][1] = 0.0008f; transform_groundTruth[0][2] = 2.2256f;
+    transform_groundTruth[1][0] = 0.0010f;  transform_groundTruth[1][1] = 1.0604f; transform_groundTruth[1][2] = -4.1188f;
+    transform_groundTruth[2][0] = -0.0001f; transform_groundTruth[2][1] = 0.0f;    transform_groundTruth[2][2] = 1.0f;
 
     lktb.get_transformation().get_homography().Print("fixed-float 1");
 
@@ -135,8 +135,8 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
 
     Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
-    transform_groundTruth[0][0] = 1.0681f;  transform_groundTruth[0][1] = 0.0f; transform_groundTruth[0][2] = 2.2967f;
-    transform_groundTruth[1][0] = -0.0008f;  transform_groundTruth[1][1] = 1.0607f; transform_groundTruth[1][2] = -4.1339f;
+    transform_groundTruth[0][0] = 1.0681f;  transform_groundTruth[0][1] = 0.0f; transform_groundTruth[0][2] = 2.2348f;
+    transform_groundTruth[1][0] = -0.0008f;  transform_groundTruth[1][1] = 1.0607f; transform_groundTruth[1][2] = -4.1342f;
     transform_groundTruth[2][0] = -0.0001f; transform_groundTruth[2][1] = 0.0f;    transform_groundTruth[2][2] = 1.0f;
 
     lktb.get_transformation().get_homography().Print("fixed-float 2");
