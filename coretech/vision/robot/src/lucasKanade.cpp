@@ -15,6 +15,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/benchmarking_c.h"
 #include "anki/common/robot/draw.h"
 #include "anki/common/robot/comparisons.h"
+#include "anki/common/robot/errorHandling.h"
 
 #include "anki/vision/robot/fiducialDetection.h"
 #include "anki/vision/robot/imageProcessing.h"
@@ -592,8 +593,14 @@ namespace Anki
           //b.Print("Orig b");
 
           BeginBenchmark("IterativelyRefineTrack.solveForUpdate");
-          if((lastResult = Matrix::SolveLeastSquaresWithCholesky(AWAt, b, false)) != RESULT_OK)
+          bool numericalFailure;
+          if((lastResult = Matrix::SolveLeastSquaresWithCholesky(AWAt, b, false, numericalFailure)) != RESULT_OK)
             return lastResult;
+
+          if(numericalFailure){
+            AnkiWarn("LucasKanadeTracker_f32::IterativelyRefineTrack", "numericalFailure");
+            return RESULT_OK;
+          }
           EndBenchmark("IterativelyRefineTrack.solveForUpdate");
 
           //b.Print("Orig update");
@@ -1039,8 +1046,15 @@ namespace Anki
           //AWAt.Print("New AWAt");
           //b.Print("New b");
 
-          if((lastResult = Matrix::SolveLeastSquaresWithCholesky(AWAt, b, false)) != RESULT_OK)
+          bool numericalFailure;
+
+          if((lastResult = Matrix::SolveLeastSquaresWithCholesky(AWAt, b, false, numericalFailure)) != RESULT_OK)
             return lastResult;
+
+          if(numericalFailure){
+            AnkiWarn("LucasKanadeTrackerFast::IterativelyRefineTrack_Translation", "numericalFailure");
+            return RESULT_OK;
+          }
 
           //b.Print("New update");
 
@@ -1290,8 +1304,15 @@ namespace Anki
           //AWAt.Print("New AWAt");
           //b.Print("New b");
 
-          if((lastResult = Matrix::SolveLeastSquaresWithCholesky(AWAt, b, false)) != RESULT_OK)
+          bool numericalFailure;
+
+          if((lastResult = Matrix::SolveLeastSquaresWithCholesky(AWAt, b, false, numericalFailure)) != RESULT_OK)
             return lastResult;
+
+          if(numericalFailure){
+            AnkiWarn("LucasKanadeTrackerFast::IterativelyRefineTrack_Affine", "numericalFailure");
+            return RESULT_OK;
+          }
 
           //b.Print("New update");
 

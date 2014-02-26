@@ -1,7 +1,7 @@
 
-% function warpedImage = lucasKanadeBinary_warpWithHomography(image, homography)
+% function warpedImage = binaryTracker_warpWithHomography(image, homography)
 
-function warpedImage = lucasKanadeBinary_warpWithHomography(image, homography)
+function warpedImage = binaryTracker_warpWithHomography(image, homography)
  
 if ~exist('interpMethod','var')
    interpMethod='linear';

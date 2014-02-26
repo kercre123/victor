@@ -22,7 +22,6 @@
 #include "json/json.h"
 
 #include "anki/common/types.h"
-#include "anki/common/robot/matlabInterface.h"
 
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/platformPathManager.h"
@@ -33,6 +32,10 @@
 
 
 #define USE_MATLAB_DETECTION 1
+
+#if USE_MATLAB_DETECTION
+#include "anki/common/robot/matlabInterface.h"
+#endif
 
 using namespace Anki;
 
@@ -133,6 +136,69 @@ int main(int argc, char **argv)
   
   webotRobot_.step(TIME_STEP);
   
+  
+  Json::Value root;
+  
+  // Store the ground truth block poses and world name
+  int numBlocks = 0;
+  webots::Node* rootNode = webotRobot_.getRoot();
+  webots::Field* children = rootNode->getField("children");
+  const int numNodes = children->getCount();
+  for(int i_node=0; i_node<numNodes; ++i_node) {
+    webots::Node* child = children->getMFNode(i_node);
+    
+    webots::Field* nameField = child->getField("name");
+    if(nameField != NULL && nameField->getSFString().compare(0,5,"Block") == 0)
+    {
+      ObjectType_t blockType = std::stoi(child->getField("type")->getSFString());
+      if(blockType > 0)
+      {
+        Json::Value jsonBlock;
+        jsonBlock["Type"] = blockType;
+        
+        jsonBlock["BlockName"] = child->getField("name")->getSFString();
+        
+        const double *blockTrans_m = child->getField("translation")->getSFVec3f();
+        const double *blockRot   = child->getField("rotation")->getSFRotation();
+        for(int i=0; i<3; ++i) {
+          jsonBlock["BlockPose"]["Translation"].append(M_TO_MM(blockTrans_m[i]));
+          jsonBlock["BlockPose"]["Axis"].append(blockRot[i]);
+        }
+        jsonBlock["BlockPose"]["Angle"] = blockRot[3];
+        
+        root["Blocks"].append(jsonBlock);
+        numBlocks++;
+      }
+      else {
+        fprintf(stdout, "Skipping unobserved (Type 0) block.\n");
+      }
+    } // if this is a block
+    else if(child->getType() == webots::Node::WORLD_INFO) {
+      root["WorldTitle"] = child->getField("title")->getSFString();
+      
+      std::string checkPoseStr = child->getField("info")->getMFString(0);
+      if(checkPoseStr.back() == '0') {
+        root["CheckRobotPose"] = false;
+      }
+      else if(checkPoseStr.back() == '1') {
+        root["CheckRobotPose"] = true;
+      }
+      else {
+        CORETECH_THROW("Unexpected character when looking for CheckRobotPose "
+                       "setting in WorldInfo.\n");
+      }
+    }
+    
+  } // for each node
+  root["NumBlocks"] = numBlocks;
+  
+  // Store the camera calibration
+  root["CameraCalibration"] = jsonCalib;
+  
+  CORETECH_ASSERT(root.isMember("WorldTitle"));
+  
+  std::string outputPath = PlatformPathManager::getInstance()->PrependPath(PlatformPathManager::Test, "basestation/test/blockWorldTests/") + root["WorldTitle"].asString();
+  
   for(int i_pose=0; i_pose<numPoses; ++i_pose,
       rotIndex+=NUM_POSE_VALS, transIndex+=NUM_POSE_VALS, headAngleIndex+=NUM_POSE_VALS)
   {
@@ -175,84 +241,32 @@ int main(int argc, char **argv)
     } while(headErr > TOL || liftErr > TOL || liftErr2 > TOL);
     //fprintf(stdout, "Head and lift in position. Continuing.\n");
     
-    Json::Value root;
-    
-    // Store the ground truth robot pose
-    for(int i=0; i<3; ++i) {
-      root["RobotPose"]["Translation"].append(M_TO_MM(translation_m[i]));
-      root["RobotPose"]["Axis"].append(rotation[i]);
-    }
-    root["RobotPose"]["Angle"]     = rotation[3];
-    root["RobotPose"]["HeadAngle"] = headAngle;
-    
-    // Store the camera calibration
-    root["CameraCalibration"] = jsonCalib;
-    
-    // Store the ground truth block poses and world name
-    int numBlocks = 0;
-    webots::Node* rootNode = webotRobot_.getRoot();
-    webots::Field* children = rootNode->getField("children");
-    const int numNodes = children->getCount();
-    for(int i_node=0; i_node<numNodes; ++i_node) {
-      webots::Node* child = children->getMFNode(i_node);
-      
-      webots::Field* nameField = child->getField("name");
-      if(nameField != NULL && nameField->getSFString().compare(0,5,"Block") == 0)
-      {
-        Json::Value jsonBlock;
-        jsonBlock["BlockName"] = child->getField("name")->getSFString();
-        //ObjectType_t blockType = std::stoi(child->getField("type")->getSFString());
-        jsonBlock["Type"] = std::stoi(child->getField("type")->getSFString());
-        
-        const double *blockTrans_m = child->getField("translation")->getSFVec3f();
-        const double *blockRot   = child->getField("rotation")->getSFRotation();
-        for(int i=0; i<3; ++i) {
-          jsonBlock["BlockPose"]["Translation"].append(M_TO_MM(blockTrans_m[i]));
-          jsonBlock["BlockPose"]["Axis"].append(blockRot[i]);
-        }
-        jsonBlock["BlockPose"]["Angle"] = blockRot[3];
-        
-        root["Blocks"].append(jsonBlock);
-        numBlocks++;
-      } // if this is a block
-      else if(child->getType() == webots::Node::WORLD_INFO) {
-        root["WorldTitle"] = child->getField("title")->getSFString();
-        
-        std::string checkPoseStr = child->getField("info")->getMFString(0);
-        if(checkPoseStr.back() == '0') {
-          root["CheckRobotPose"] = false;
-        }
-        else if(checkPoseStr.back() == '1') {
-          root["CheckRobotPose"] = true;
-        }
-        else {
-          CORETECH_THROW("Unexpected character when looking for CheckRobotPose "
-                         "setting in WorldInfo.\n");
-        }
-      }
-      
-    } // for each node
-    root["NumBlocks"] = numBlocks;
-    
-    CORETECH_ASSERT(root.isMember("WorldTitle"));
-    
-    // Save each marker
-    std::string outputPath = PlatformPathManager::getInstance()->PrependPath(PlatformPathManager::Test, "basestation/test/blockWorldTests/") + root["WorldTitle"].asString();
-    
-    std::string imgFilename = outputPath + "_Pose" + std::to_string(i_pose) + ".png";
+    Json::Value currentPose;
+
+    // Store the image from the current position
+    std::string imgFilename = outputPath + std::to_string(i_pose) + ".png";
     headCam_->saveImage(imgFilename, 100);
     
     // Store the associated image file
-    root["ImageFile"]  = imgFilename;
+    currentPose["ImageFile"]  = imgFilename;
     
-    std::string jsonFilename = outputPath + "_Pose" + std::to_string(i_pose) + ".json";
+    // Store the ground truth robot pose
+    for(int i=0; i<3; ++i) {
+      currentPose["RobotPose"]["Translation"].append(M_TO_MM(translation_m[i]));
+      currentPose["RobotPose"]["Axis"].append(rotation[i]);
+    }
+    currentPose["RobotPose"]["Angle"]     = rotation[3];
+    currentPose["RobotPose"]["HeadAngle"] = headAngle;
     
     std::vector<Cozmo::MessageVisionMarker> markers;
 
 #if USE_MATLAB_DETECTION
     // Process the image with Matlab to detect the vision markers
-    matlab.EvalStringEcho("markers = simpleDetector('%s'); "
-                          "numMarkers = length(markers);", imgFilename.c_str());
+    matlab.EvalStringEcho("img = imread('%s'); " // "img = separable_filter(img, gaussian_kernel(1)); "
+                          "imwrite(img, '%s'); "
+                          "markers = simpleDetector(img); "
+                          "numMarkers = length(markers);",
+                          imgFilename.c_str(), imgFilename.c_str());
 
     const int numMarkers = static_cast<int>(*matlab.Get<double>("numMarkers"));
     fprintf(stdout, "Detected %d markers at pose %d.\n", numMarkers, i_pose);
@@ -266,17 +280,18 @@ int main(int argc, char **argv)
       const double* x_corners = mxGetPr(matlab.GetArray("corners"));
       const double* y_corners = x_corners + 4;
       
-      msg.x_imgUpperLeft  = x_corners[0];
-      msg.y_imgUpperLeft  = y_corners[0];
+      // Sutract one for Matlab indexing!
+      msg.x_imgUpperLeft  = x_corners[0]-1.f;
+      msg.y_imgUpperLeft  = y_corners[0]-1.f;
       
-      msg.x_imgLowerLeft  = x_corners[1];
-      msg.y_imgLowerLeft  = y_corners[1];
+      msg.x_imgLowerLeft  = x_corners[1]-1.f;
+      msg.y_imgLowerLeft  = y_corners[1]-1.f;
       
-      msg.x_imgUpperRight = x_corners[2];
-      msg.y_imgUpperRight = y_corners[2];
+      msg.x_imgUpperRight = x_corners[2]-1.f;
+      msg.y_imgUpperRight = y_corners[2]-1.f;
       
-      msg.x_imgLowerRight = x_corners[3];
-      msg.y_imgLowerRight = y_corners[3];
+      msg.x_imgLowerRight = x_corners[3]-1.f;
+      msg.y_imgLowerRight = y_corners[3]-1.f;
       
       mxArray* mxByteArray = matlab.GetArray("byteArray");
       CORETECH_ASSERT(mxGetNumberOfElements(mxByteArray) == VISION_MARKER_CODE_LENGTH);
@@ -293,7 +308,7 @@ int main(int argc, char **argv)
 #endif
     
     // Store the VisionMarkers
-    root["NumMarkers"] = numMarkers;
+    currentPose["NumMarkers"] = numMarkers;
     for(auto & marker : markers) {
       Json::Value jsonMarker = marker.CreateJson();
       
@@ -308,19 +323,23 @@ int main(int argc, char **argv)
       }
       fprintf(stdout, "\b]\n");
       
-      root["VisionMarkers"].append(jsonMarker);
+      currentPose["VisionMarkers"].append(jsonMarker);
       
     } // for each marker
     
-    // Actually write the Json to file
-    std::ofstream jsonFile(jsonFilename, std::ofstream::out);
-    
-    fprintf(stdout, "Writing JSON to file %s.\n", jsonFilename.c_str());
-    jsonFile << root.toStyledString();
-    jsonFile.close();
+    root["Poses"].append(currentPose);
     
   } // for each pose
  
+  // Actually write the Json to file
+  
+  std::string jsonFilename = outputPath + ".json";
+  std::ofstream jsonFile(jsonFilename, std::ofstream::out);
+  
+  fprintf(stdout, "Writing JSON to file %s.\n", jsonFilename.c_str());
+  jsonFile << root.toStyledString();
+  jsonFile.close();
+  
   webotRobot_.simulationQuit(EXIT_SUCCESS);
   
   return 0;

@@ -1,0 +1,78 @@
+{
+   "Blocks" : [
+      {
+         "BlockName" : "Block",
+         "BlockPose" : {
+            "Angle" : 0.7853979999999999,
+            "Axis" : [ 0.0, 0.0, 1.0 ],
+            "Translation" : [ 70.0, 70.0, 29.754750 ]
+         },
+         "Type" : 2
+      }
+   ],
+   "CameraCalibration" : {
+      "center_x" : 160.0,
+      "center_y" : 120.0,
+      "focalLength_x" : 333.9153442382812,
+      "focalLength_y" : 333.9153442382812,
+      "ncols" : 320,
+      "nrows" : 240,
+      "skew" : 0.0
+   },
+   "CheckRobotPose" : true,
+   "NumBlocks" : 1,
+   "Poses" : [
+      {
+         "ImageFile" : "/Users/andrew/Code/products-cozmo/basestation/test/blockWorldTests/visionTest_OffTheMat0.png",
+         "NumMarkers" : 3,
+         "RobotPose" : {
+            "Angle" : 1.0471980,
+            "Axis" : [ 0.0, 0.0, 1.0 ],
+            "HeadAngle" : -0.3839720,
+            "Translation" : [ -85.0, -185.0, 80.0 ]
+         },
+         "VisionMarkers" : [
+            {
+               "Name" : "MessageVisionMarker",
+               "code" : [ 2, 86, 106, 64, 24, 13, 56, 0, 56, 96, 48 ],
+               "timestamp" : 48,
+               "x_imgLowerLeft" : 139.6499786376953,
+               "x_imgLowerRight" : 178.6396942138672,
+               "x_imgUpperLeft" : 139.1264801025391,
+               "x_imgUpperRight" : 179.9435119628906,
+               "y_imgLowerLeft" : 109.4798507690430,
+               "y_imgLowerRight" : 113.2279205322266,
+               "y_imgUpperLeft" : 70.24549102783203,
+               "y_imgUpperRight" : 72.87800598144531
+            },
+            {
+               "Name" : "MessageVisionMarker",
+               "code" : [ 173, 168, 65, 65, 96, 65, 74, 27, 30, 190, 46 ],
+               "timestamp" : 48,
+               "x_imgLowerLeft" : 148.7275543212891,
+               "x_imgLowerRight" : 156.1437988281250,
+               "x_imgUpperLeft" : 169.0686187744141,
+               "x_imgUpperRight" : 168.1707305908203,
+               "y_imgLowerLeft" : 78.76618194580078,
+               "y_imgLowerRight" : 103.8612365722656,
+               "y_imgUpperLeft" : 84.50773620605469,
+               "y_imgUpperRight" : 100.1087265014648
+            },
+            {
+               "Name" : "MessageVisionMarker",
+               "code" : [ 35, 98, 2, 196, 136, 9, 24, 0, 32, 34, 98 ],
+               "timestamp" : 48,
+               "x_imgLowerLeft" : 86.01718139648438,
+               "x_imgLowerRight" : 231.1682128906250,
+               "x_imgUpperLeft" : 44.41477584838867,
+               "x_imgUpperRight" : 157.4312438964844,
+               "y_imgLowerLeft" : 227.2067413330078,
+               "y_imgLowerRight" : 176.8835296630859,
+               "y_imgUpperLeft" : 151.6161193847656,
+               "y_imgUpperRight" : 126.1885986328125
+            }
+         ]
+      }
+   ],
+   "WorldTitle" : "visionTest_OffTheMat"
+}

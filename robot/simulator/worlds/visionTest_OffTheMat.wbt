@@ -1,6 +1,6 @@
 #VRML_SIM V6.0 utf8
  WorldInfo {
-   title "visionTest_MatPoseTest"
+   title "visionTest_OffTheMat"
   info [
     "CheckRobotPose: 1",
     "Cozmo Vision System Test world. All rights reserved. Copyright (c) Anki, Inc.",
@@ -104,6 +104,71 @@ CozmoMat {
 XYaxesDisplay {
 }
 
+Block1x1 {
+  name "Block"
+  type "0"
+  translation -0.130000 -0.250000 0.030000
+  rotation    1.000000 0.000000 0.000000 0.000000
+  facemarkerFront  ["textures/.png"]
+  facemarkerBack   ["textures/.png"]
+  facemarkerLeft   ["textures/.png"]
+  facemarkerRight  ["textures/.png"]
+  facemarkerTop    ["textures/.png"]
+  facemarkerBottom ["textures/.png"]
+}
+
+Block1x1 {
+  name "Block"
+  type "0"
+  translation -0.130000 -0.190000 0.030000
+  rotation    1.000000 0.000000 0.000000 0.000000
+  facemarkerFront  ["textures/.png"]
+  facemarkerBack   ["textures/.png"]
+  facemarkerLeft   ["textures/.png"]
+  facemarkerRight  ["textures/.png"]
+  facemarkerTop    ["textures/.png"]
+  facemarkerBottom ["textures/.png"]
+}
+
+Block1x1 {
+  name "Block"
+  type "0"
+  translation -0.070000 -0.250000 0.030000
+  rotation    1.000000 0.000000 0.000000 0.000000
+  facemarkerFront  ["textures/.png"]
+  facemarkerBack   ["textures/.png"]
+  facemarkerLeft   ["textures/.png"]
+  facemarkerRight  ["textures/.png"]
+  facemarkerTop    ["textures/.png"]
+  facemarkerBottom ["textures/.png"]
+}
+
+Block1x1 {
+  name "Block"
+  type "0"
+  translation -0.070000 -0.190000 0.030000
+  rotation    1.000000 0.000000 0.000000 0.000000
+  facemarkerFront  ["textures/.png"]
+  facemarkerBack   ["textures/.png"]
+  facemarkerLeft   ["textures/.png"]
+  facemarkerRight  ["textures/.png"]
+  facemarkerTop    ["textures/.png"]
+  facemarkerBottom ["textures/.png"]
+}
+
+Block1x1 {
+  name "Block"
+  type "2"
+  translation 0.070000 0.070000 0.030000
+  rotation    0.000000 0.000000 1.000000 0.785398
+  facemarkerFront  ["textures/bullseye.png"]
+  facemarkerBack   ["textures/bullseye.png"]
+  facemarkerLeft   ["textures/bullseye.png"]
+  facemarkerRight  ["textures/bullseye.png"]
+  facemarkerTop    ["textures/bullseye.png"]
+  facemarkerBottom ["textures/bullseye.png"]
+}
+
 DEF Cozmo_1 CozmoBot {
   name "Cozmo_1"
   commsChannel 1
@@ -111,6 +176,6 @@ DEF Cozmo_1 CozmoBot {
   cameraWidth  320
   cameraHeight 240
   controller "visionUnitTestController"
-  controllerArgs "1.000000 0.000000 0.000000 0.000000 -0.170000 -0.260000 0.018000 -0.174533 0.000000 0.000000 1.000000 0.492700 -0.163000 -0.095000 0.018000 -0.261799 0.000000 0.000000 -1.000000 0.392700 -0.180000 0.327000 0.018000 -0.209440 0.000000 0.000000 -1.000000 2.748785 0.421000 0.063000 0.018000 -0.174533 0.000000 0.000000 -1.000000 1.570800 0.256000 0.417000 0.018000 -0.244346 0.000000 0.000000 1.000000 0.608000 0.104000 -0.370000 0.018000 -0.209440 0.000000 0.000000 1.000000 0.608000 -0.400000 -0.338000 0.018000 -0.174533 0.000000 0.000000 1.000000 0.608000 -0.382000 -0.089000 0.018000 -0.401426 "
+  controllerArgs "0.000000 0.000000 1.000000 1.047198 -0.085000 -0.185000 0.080000 -0.383972 "
 }
 

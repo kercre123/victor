@@ -34,13 +34,13 @@ namespace Anki
         // the real max number of edge pixels is maxEdgePixelsPerType*4, for each of the four edge types
         BinaryTracker(
           const Array<u8> &templateImage, const Quadrilateral<f32> &templateQuad,
-          const u8 edgeDetection_grayvalueThreshold, const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType,
+          const u8 edgeDetection_grayvalueThreshold, const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
           MemoryStack &memory);
 
         // Runs one iteration each of translation and projective
         Result UpdateTrack(
           const Array<u8> &nextImage,
-          const u8 edgeDetection_grayvalueThreshold, const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType,
+          const u8 edgeDetection_grayvalueThreshold, const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
           const s32 matching_maxDistance, const s32 matching_maxCorrespondences,
           const bool useFixedPoint_projective,
           MemoryStack scratch);
@@ -196,14 +196,6 @@ namespace Anki
 
         // Allocates allLimits, and computes all the indexe limits
         static Result ComputeAllIndexLimits(const EdgeLists &imageEdges, AllIndexLimits &allLimits, MemoryStack &memory);
-
-        Result IterativelyRefineTrack(
-          const EdgeLists &nextImageEdges,
-          const AllIndexLimits &allLimits,
-          const s32 matching_maxDistance, const s32 matching_maxCorrespondences,
-          const Transformations::TransformType updateType,
-          const bool useFixedPoint,
-          MemoryStack scratch);
 
         Result IterativelyRefineTrack_Translation(
           const EdgeLists &nextImageEdges,

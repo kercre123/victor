@@ -439,8 +439,11 @@ GTEST_TEST(CoreTech_Common, CholeskyDecomposition)
   A_L.Print("A");
   Bt_Xt.Print("Bt");
 
-  const Result result = Matrix::SolveLeastSquaresWithCholesky(A_L, Bt_Xt, true);
+  bool numericalFailure;
+
+  const Result result = Matrix::SolveLeastSquaresWithCholesky(A_L, Bt_Xt, true, numericalFailure);
   ASSERT_TRUE(result == RESULT_OK);
+  ASSERT_TRUE(numericalFailure == false);
 
   A_L.Print("L");
   Bt_Xt.Print("Xt");
