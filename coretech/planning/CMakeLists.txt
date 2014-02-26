@@ -7,6 +7,9 @@ file(GLOB CORETECH_PLANNING_INCLUDE_FILES "${CORETECH_PLANNING_INCLUDE_DIR}/*.h"
 add_subdirectory(basestation/src)
 add_subdirectory(basestation/test)
 
+add_subdirectory(shared/src)
+# add_subdirectory(shared/test)
+
 # add_subdirectory(robot/src)
 # add_subdirectory(robot/test) 
 

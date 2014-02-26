@@ -41,9 +41,7 @@ int main(int argc, char **argv)
   }
   
   
-#if(FREE_DRIVE_DUBINS_TEST)
-  Sim::KeyboardController::Enable();
-#else
+#if(FREE_DRIVE_DUBINS_TEST || ENABLE_KEYBOARD_CONTROL)
   Sim::KeyboardController::Enable();
 #endif
   
@@ -56,7 +54,7 @@ int main(int argc, char **argv)
       break;
     }
       
-    if(Sim::KeyboardController::IsEnabled() && Robot::GetOperationMode() == Robot::WAITING) {
+    if(Sim::KeyboardController::IsEnabled() ) {
       Sim::KeyboardController::ProcessKeystroke();
     }      
   }

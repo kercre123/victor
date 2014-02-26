@@ -338,9 +338,9 @@ namespace Anki {
       const double* northVector = compass_->getValues();
       
       x = position[0];
-      y = -position[2];
+      y = position[1];
       
-      rad = std::atan2(northVector[2], northVector[0]);
+      rad = std::atan2(-northVector[1], northVector[0]);
       
       //PRINT("GroundTruth:  pos %f %f %f   rad %f %f %f\n", position[0], position[1], position[2],
       //      northVector[0], northVector[1], northVector[2]);

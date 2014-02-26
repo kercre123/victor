@@ -22,7 +22,7 @@ public:
 
   bool Accept();
   void DisconnectClient();
-  bool HasClient();
+  bool HasClient() const;
   //bool SetBlocking()
 
   int Send(const char* data, int size);
