@@ -76,7 +76,10 @@ namespace Anki
 
       const u32 imageStride = image.get_stride();
 
-      const Rectangle<u32> imageRegionOfInterestU32(imageRegionOfInterest.left, imageRegionOfInterest.right, imageRegionOfInterest.top, imageRegionOfInterest.bottom);
+      //const Rectangle<u32> imageRegionOfInterestU32(imageRegionOfInterest.left, imageRegionOfInterest.right, imageRegionOfInterest.top, imageRegionOfInterest.bottom);
+
+      const u32 imageRegionOfInterest_leftRight = static_cast<u32>(imageRegionOfInterest.left) + (static_cast<u32>(imageRegionOfInterest.right) << 16);
+      const u32 imageRegionOfInterest_topBottom = static_cast<u32>(imageRegionOfInterest.top) + (static_cast<u32>(imageRegionOfInterest.bottom) << 16);
 
       const u32 minComponentWidthU32 = minComponentWidth;
 
@@ -86,7 +89,7 @@ namespace Anki
       Point<s16> * restrict pXDecreasing = edgeLists.xDecreasing.Pointer(0);
       Point<s16> * restrict pXIncreasing = edgeLists.xIncreasing.Pointer(0);
 
-      for(u32 y=imageRegionOfInterestU32.top; y<imageRegionOfInterestU32.bottom; y+=everyNLines) {
+      for(u32 y=(imageRegionOfInterest_topBottom&0xFFFF); y<((imageRegionOfInterest_topBottom&0xFFFF0000)>>16); y+=everyNLines) {
         const u8 * restrict pImage = image.Pointer(y,0);
 
         bool onWhite;
@@ -97,13 +100,13 @@ namespace Anki
         else
           onWhite = false;
 
-        u32 lastSwitchX = imageRegionOfInterestU32.left;
-        u32 x = imageRegionOfInterestU32.left;
-        while(x < imageRegionOfInterestU32.right) {
+        u32 lastSwitchX = (imageRegionOfInterest_leftRight&0xFFFF);
+        u32 x = (imageRegionOfInterest_leftRight&0xFFFF);
+        while(x < ((imageRegionOfInterest_leftRight&0xFFFF0000)>>16)) {
           if(onWhite) {
             // If on white
 
-            while(x < (imageRegionOfInterestU32.right-3)) {
+            while(x < ((((imageRegionOfInterest_leftRight - (3<<16)) & 0xFFFF0000)>>16))) {
               const u32 pixels_u8x4 = *reinterpret_cast<const u32 *>(pImage+x);
 
               if( (pixels_u8x4 & 0xFF) <= grayvalueThreshold )
@@ -121,13 +124,13 @@ namespace Anki
               x += 4;
             }
 
-            while( (x < imageRegionOfInterestU32.right) && (pImage[x] > grayvalueThreshold)) {
+            while( (x < ((imageRegionOfInterest_leftRight&0xFFFF0000)>>16)) && (pImage[x] > grayvalueThreshold)) {
               x++;
             }
 
             onWhite = false;
 
-            if(x < (imageRegionOfInterestU32.right-1)) {
+            if(x < ((((imageRegionOfInterest_leftRight - (1<<16)) & 0xFFFF0000)>>16))) {
               const u32 componentWidth = x - lastSwitchX;
 
               if(componentWidth >= minComponentWidthU32) {
@@ -140,11 +143,11 @@ namespace Anki
               }
 
               lastSwitchX = x;
-            } // if(x < (imageRegionOfInterestU32.right-1)
+            } // if(x < (((imageRegionOfInterest_leftRight&0xFFFF0000)>>16)-1)
           } else {
             // If on black
 
-            while(x < (imageRegionOfInterestU32.right-3)) {
+            while(x < ((((imageRegionOfInterest_leftRight - (3<<16)) & 0xFFFF0000)>>16))) {
               const u32 pixels_u8x4 = *reinterpret_cast<const u32 *>(pImage+x);
 
               if( (pixels_u8x4 & 0xFF) >= grayvalueThreshold )
@@ -162,13 +165,13 @@ namespace Anki
               x += 4;
             }
 
-            while( (x < imageRegionOfInterestU32.right) && (pImage[x] < grayvalueThreshold)) {
+            while( (x < ((imageRegionOfInterest_leftRight&0xFFFF0000)>>16)) && (pImage[x] < grayvalueThreshold)) {
               x++;
             }
 
             onWhite = true;
 
-            if(x < (imageRegionOfInterestU32.right-1)) {
+            if(x < ((((imageRegionOfInterest_leftRight - (1<<16)) & 0xFFFF0000)>>16))) {
               const u32 componentWidth = x - lastSwitchX;
 
               if(componentWidth >= minComponentWidthU32) {
@@ -181,12 +184,12 @@ namespace Anki
               }
 
               lastSwitchX = x;
-            } // if(x < (imageRegionOfInterestU32.right-1))
+            } // if(x < (((imageRegionOfInterest_leftRight&0xFFFF0000)>>16)-1))
           } // if(onWhite) ... else
 
           x++;
         } // if(onWhite) ... else
-      } // for(u32 y=0; y<imageRegionOfInterestU32.bottom; y++)
+      } // for(u32 y=0; y<((imageRegionOfInterest_topBottom&0xFFFF0000)>>16); y++)
 
       edgeLists.xDecreasing.set_size(xDecreasingSize);
       edgeLists.xIncreasing.set_size(xIncreasingSize);
