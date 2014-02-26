@@ -138,7 +138,7 @@ namespace Anki {
     const f32 LIFT_ARM_LENGTH = 61.f;
     
     // Height of the actual fork relative to the joint where the lift arm attaches to the fork assembly
-    const f32 LIFT_FORK_HEIGHT_REL_TO_ARM_END = -2.8f;
+    const f32 LIFT_FORK_HEIGHT_REL_TO_ARM_END = -12.8f;
     
     // TODO: convert to using these in degree form?
     const f32 MIN_HEAD_ANGLE = DEG_TO_RAD(-25.f);
