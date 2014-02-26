@@ -1,7 +1,7 @@
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/debug.h"
 #include "dockingController.h"
-#include "anki/cozmo/robot/path.h"
+#include "anki/planning/shared/path.h"
 #include "anki/cozmo/robot/pathFollower.h"
 #include "anki/cozmo/robot/localization.h"
 #include "anki/cozmo/robot/steeringController.h"
@@ -51,7 +51,7 @@ namespace Anki
         
         const f32 LOOK_AHEAD_DIST_M = 0.01f;
 
-        Path path_;
+        Planning::Path path_;
         s16 currPathSegment_ = -1;
         
         // Shortest distance to path
@@ -104,14 +104,14 @@ namespace Anki
         Viz::ErasePath(0);
         for (u8 i=0; i<path_.GetNumSegments(); ++i) {
           switch(path_[i].type) {
-            case PST_LINE:
+            case Planning::PST_LINE:
               Viz::AppendPathSegmentLine(0,
                                          path_[i].def.line.startPt_x,
                                          path_[i].def.line.startPt_y,
                                          path_[i].def.line.endPt_x,
                                          path_[i].def.line.endPt_y);
               break;
-            case PST_ARC:
+            case Planning::PST_ARC:
               Viz::AppendPathSegmentArc(0,
                                         path_[i].def.arc.centerPt_x,
                                         path_[i].def.arc.centerPt_y,
@@ -153,30 +153,31 @@ namespace Anki
                             f32 final_straight_approach_length,
                             f32 *path_length)
       {
-        return path_.GenerateDubinsPath(start_x, start_y, start_theta,
-                                        end_x, end_y, end_theta,
-                                        start_radius, end_radius,
-                                        final_straight_approach_length,
-                                        path_length);
+        return Planning::GenerateDubinsPath(path_,
+                                            start_x, start_y, start_theta,
+                                            end_x, end_y, end_theta,
+                                            start_radius, end_radius,
+                                            final_straight_approach_length,
+                                            path_length);
       }
       
       
-      void PreProcessPathSegment(const PathSegment &segment)
+      void PreProcessPathSegment(const Planning::PathSegment &segment)
       {
         switch(segment.type) {
-          case PST_LINE:
+          case Planning::PST_LINE:
           {
-            const PathSegmentDef::s_line* l = &(segment.def.line);
+            const Planning::PathSegmentDef::s_line* l = &(segment.def.line);
             line_m_ = (l->endPt_y - l->startPt_y) / (l->endPt_x - l->startPt_x);
             line_b_ = l->startPt_y - line_m_ * l->startPt_x;
             line_dy_sign_ = ((l->endPt_y - l->startPt_y) >= 0) ? 1.0 : -1.0;
             line_theta_ = atan2_fast(l->endPt_y - l->startPt_y, l->endPt_x - l->startPt_x);
             break;
           }
-          case PST_ARC:
+          case Planning::PST_ARC:
             arc_angTraversed_ = 0;
             break;
-          case PST_POINT_TURN:
+          case Planning::PST_POINT_TURN:
           default:
             break;
         }
@@ -187,11 +188,11 @@ namespace Anki
       {
         assert(path_.GetNumSegments() > 0);
         
-        SegmentRangeStatus res;
+        Planning::SegmentRangeStatus res;
         f32 distToSegment, angError;
         
         u8 closestSegId = 0;
-        SegmentRangeStatus closestSegmentRangeStatus = OOR_NEAR_END;
+        Planning::SegmentRangeStatus closestSegmentRangeStatus = Planning::OOR_NEAR_END;
         f32 distToClosestSegment = FLT_MAX;
         
         for (u8 i=0; i<path_.GetNumSegments(); ++i) {
@@ -199,7 +200,7 @@ namespace Anki
 #if(DEBUG_PATH_FOLLOWER)
           PRINT("PathDist: %f  (res=%d)\n", distToSegment, res);
 #endif
-          if (ABS(distToSegment) < distToClosestSegment && (res == IN_SEGMENT_RANGE || res == OOR_NEAR_START)) {
+          if (ABS(distToSegment) < distToClosestSegment && (res == Planning::IN_SEGMENT_RANGE || res == Planning::OOR_NEAR_START)) {
             closestSegId = i;
             distToClosestSegment = ABS(distToSegment);
             closestSegmentRangeStatus = res;
@@ -259,7 +260,7 @@ namespace Anki
       }
       
       
-      SegmentRangeStatus ProcessPathSegment(f32 &shortestDistanceToPath_m, f32 &radDiff)
+      Planning::SegmentRangeStatus ProcessPathSegment(f32 &shortestDistanceToPath_m, f32 &radDiff)
       {
         // Get current robot pose
         f32 x, y;
@@ -279,9 +280,9 @@ namespace Anki
       
       
 
-      SegmentRangeStatus ProcessPathSegmentPointTurn(f32 &shortestDistanceToPath_m, f32 &radDiff)
+      Planning::SegmentRangeStatus ProcessPathSegmentPointTurn(f32 &shortestDistanceToPath_m, f32 &radDiff)
       {
-        const PathSegmentDef::s_turn* currSeg = &(path_[currPathSegment_].def.turn);
+        const Planning::PathSegmentDef::s_turn* currSeg = &(path_[currPathSegment_].def.turn);
         
 #if(DEBUG_PATH_FOLLOWER)
         Radians currOrientation = Localization::GetCurrentMatOrientation();
@@ -303,12 +304,12 @@ namespace Anki
         } else {
           if (SteeringController::GetMode() != SteeringController::SM_POINT_TURN) {
             pointTurnStarted_ = false;
-            return OOR_NEAR_END;
+            return Planning::OOR_NEAR_END;
           }
         }
 
         
-        return IN_SEGMENT_RANGE;
+        return Planning::IN_SEGMENT_RANGE;
       }
       
       // Post-path completion cleanup
@@ -355,11 +356,12 @@ namespace Anki
         const f32 end_radius = 0.05;
         const f32 final_straight_approach_length = 0.1;
         f32 path_length;
-        u8 numSegments = path_.GenerateDubinsPath(start_x, start_y, start_theta.ToFloat(),
-                                                  end_x, end_y, end_theta,
-                                                  start_radius, end_radius,
-                                                  final_straight_approach_length,
-                                                  &path_length);
+        u8 numSegments = Planning::GenerateDubinsPath(path_,
+                                                      start_x, start_y, start_theta.ToFloat(),
+                                                      end_x, end_y, end_theta,
+                                                      start_radius, end_radius,
+                                                      final_straight_approach_length,
+                                                      &path_length);
         const f32 distToTarget = sqrtf((start_x - end_x)*(start_x - end_x) + (start_y - end_y)*(start_y - end_y));
         PERIODIC_PRINT(500, "Dubins Test: pathLength %f, distToTarget %f\n", path_length, distToTarget);
         
@@ -382,13 +384,13 @@ namespace Anki
           return EXIT_FAILURE;
         }
         
-        SegmentRangeStatus segRes = OOR_NEAR_END;
+        Planning::SegmentRangeStatus segRes = Planning::OOR_NEAR_END;
         switch (path_[currPathSegment_].type) {
-          case PST_LINE:
-          case PST_ARC:
+          case Planning::PST_LINE:
+          case Planning::PST_ARC:
             segRes = ProcessPathSegment(distToPath_m_, radToPath_);
             break;
-          case PST_POINT_TURN:
+          case Planning::PST_POINT_TURN:
             segRes = ProcessPathSegmentPointTurn(distToPath_m_, radToPath_);
             break;
           default:
@@ -401,7 +403,7 @@ namespace Anki
 #endif
         
         // Go to next path segment if no longer in range of the current one
-        if (segRes == OOR_NEAR_END) {
+        if (segRes == Planning::OOR_NEAR_END) {
           if (++currPathSegment_ >= path_.GetNumSegments()) {
             // Path is complete
             PathComplete();
