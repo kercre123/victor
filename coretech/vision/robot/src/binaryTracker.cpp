@@ -67,7 +67,7 @@ namespace Anki
       }
 
       BinaryTracker::BinaryTracker(
-        const Array<u8> &templateImage, const Quadrilateral<f32> &templateQuad,
+        Array<u8> &templateImage, const Quadrilateral<f32> &templateQuad,
         const u8 edgeDetection_grayvalueThreshold, const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
         MemoryStack &memory)
         : isValid(false)
@@ -301,7 +301,7 @@ namespace Anki
       } // BinaryTracker::ComputeAllIndexLimits()
 
       Result BinaryTracker::UpdateTrack(
-        const Array<u8> &nextImage,
+        Array<u8> &nextImage,
         const u8 edgeDetection_grayvalueThreshold, const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
         const s32 matching_maxTranslationDistance, const s32 matching_maxProjectiveDistance, const s32 matching_maxCorrespondences,
         MemoryStack scratch)
