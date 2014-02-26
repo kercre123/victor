@@ -75,7 +75,7 @@ namespace Anki {
       // For pose information
       webots::GPS* gps_;
       webots::Compass* compass_;
-      webots::Node* estPose_;
+      //webots::Node* estPose_;
       //char locStr[MAX_TEXT_DISPLAY_LENGTH];
       
       // Gyro
@@ -149,9 +149,10 @@ namespace Anki {
       void SetLiftAngularVelocity(const f32 rad_per_sec)
       {
         liftMotor_->setVelocity(rad_per_sec);
-        liftMotor2_->setVelocity(-rad_per_sec);
+        liftMotor2_->setVelocity(rad_per_sec);
       }
       
+#if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
       void EngageGripper()
       {
         //Should we lock to a block which is close to the connector?
@@ -178,7 +179,7 @@ namespace Anki {
           //printf("UNLOCKED!\n");
         }
       }
-
+#endif
     } // "private" namespace
     
     namespace Sim {
@@ -210,18 +211,20 @@ namespace Anki {
       // TODO: need to check return code?
       UARTInit();
       
-      leftWheelMotor_  = webotRobot_.getMotor("wheel_fl");
-      rightWheelMotor_ = webotRobot_.getMotor("wheel_fr");
+      leftWheelMotor_  = webotRobot_.getMotor("LeftWheelMotor");
+      rightWheelMotor_ = webotRobot_.getMotor("RightWheelMotor");
       
-      headMotor_  = webotRobot_.getMotor("motor_head_pitch");
-      liftMotor_  = webotRobot_.getMotor("lift_motor");
-      liftMotor2_ = webotRobot_.getMotor("lift_motor2");
+      headMotor_  = webotRobot_.getMotor("HeadMotor");
+      liftMotor_  = webotRobot_.getMotor("LiftMotor");
+      liftMotor2_ = webotRobot_.getMotor("LiftMotorFront");
       
+#if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
       con_ = webotRobot_.getConnector("connector");
       con_->enablePresence(TIME_STEP);
+#endif
       
       //matCam_ = webotRobot_.getCamera("cam_down");
-      headCam_ = webotRobot_.getCamera("cam_head");
+      headCam_ = webotRobot_.getCamera("HeadCamera");
       
       //matCam_->enable(VISION_TIME_STEP);
       headCam_->enable(VISION_TIME_STEP);
@@ -291,7 +294,7 @@ namespace Anki {
       compass_ = webotRobot_.getCompass("compass");
       gps_->enable(TIME_STEP);
       compass_->enable(TIME_STEP);
-      estPose_ = webotRobot_.getFromDef("CozmoBotPose");
+      //estPose_ = webotRobot_.getFromDef("CozmoBotPose");
       
       // Gyro
       gyro_ = webotRobot_.getGyro("gyro");
@@ -391,6 +394,7 @@ namespace Anki {
           // TODO: Assuming linear relationship, but it's not!
           SetLiftAngularVelocity(power * MAX_LIFT_SPEED);
           break;
+#if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
         case MOTOR_GRIP:
           if (power > 0) {
             EngageGripper();
@@ -398,6 +402,7 @@ namespace Anki {
             DisengageGripper();
           }
           break;
+#endif
         case MOTOR_HEAD:
           // TODO: Assuming linear relationship, but it's not!
           SetHeadAngularVelocity(power * MAX_HEAD_SPEED);

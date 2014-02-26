@@ -45,6 +45,8 @@
 #define USE_OFFBOARD_VISION 1
 #endif
 
+#define HAVE_ACTIVE_GRIPPER 0
+
 // Uncomment to use USB instead of UART
 //#define USE_USB
 

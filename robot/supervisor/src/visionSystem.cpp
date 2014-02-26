@@ -120,7 +120,7 @@ namespace Anki {
       const u8 MAX_TRACKING_FAILURES = 5;
       u8 numTrackFailures_ = 0;
 
-      f32 matCamPixPerMM_ = 1.f;
+      //f32 matCamPixPerMM_ = 1.f;
 
 #if USE_FAST_LK
       Embedded::TemplateTracker::LucasKanadeTrackerFast tracker_;
@@ -181,12 +181,14 @@ namespace Anki {
           return EXIT_FAILURE;
         }
 
+        /*
         // Compute the resolution of the mat camera from its FOV and height
         // off the mat:
         f32 matCamHeightInPix = ((static_cast<f32>(matCamInfo_->nrows)*.5f) /
                                  tanf(matCamInfo_->fov_ver * .5f));
         matCamPixPerMM_ = matCamHeightInPix / MAT_CAM_HEIGHT_FROM_GROUND_MM;
-
+         */
+        
 #if USE_OFFBOARD_VISION
         PRINT("VisionSystem::Init(): Registering message IDs for offboard processing.\n");
 

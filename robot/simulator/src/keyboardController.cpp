@@ -147,12 +147,13 @@ namespace Anki {
               break;
             }
                */
-              
+#if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
             case CKEY_UNLOCK: //spacebar-key: unlock
             {
               GripController::DisengageGripper();
               break;
             }
+#endif
             default:
             {
               //if(not PathFollower::IsTraversingPath()) {
