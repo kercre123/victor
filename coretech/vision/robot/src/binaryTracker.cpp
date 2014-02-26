@@ -483,7 +483,7 @@ namespace Anki
 
         AnkiAssert(FLT_NEAR(homography[2][2], 1.0f));
 
-        f32 sumYF32 = 0.0f;
+        sumY = 0;
         f32 numCorrespondencesF32 = 0.0f;
 
         const Point<s16> * restrict pTemplatePoints = templatePoints.Pointer(0);
@@ -508,40 +508,33 @@ namespace Anki
           const f32 warpedY = (h10*xc + h11*yc + h12) * wpi;
 
           // TODO: verify the -0.5f is correct
-          const s32 warpedXrounded = RoundS32_minusPointFive(warpedX + centerOffset.x);
-          const s32 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
+          const s16 warpedXrounded = RoundS32_minusPointFive(warpedX + centerOffset.x);
+          const s16 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
 
           if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance)) {
-            s32 minOffset = -maxMatchingDistance;
-            s32 maxOffset = maxMatchingDistance + 1;
+            const s16 minY = warpedYrounded - maxMatchingDistance;
+            const s16 maxY = warpedYrounded + maxMatchingDistance;
 
-            // TODO: manually verify these conditions are correct
-            if(warpedXrounded < maxMatchingDistance) {
-              minOffset += (maxMatchingDistance - warpedXrounded);
+            s32 curIndex = pXStartIndexes[warpedXrounded];
+            const s32 endIndex = pXStartIndexes[warpedXrounded+1];
+
+            // Find the start of the valid matches
+            while( (curIndex<endIndex) && (pNewPoints[curIndex].y<minY) ) {
+              curIndex++;
             }
 
-            if(warpedXrounded > (imageWidth - maxMatchingDistance - 2)) {
-              maxOffset += (imageWidth - warpedXrounded - maxMatchingDistance - 2);
+            // For every valid match, increment the sum and counter
+            while( (curIndex<endIndex) && (pNewPoints[curIndex].y<=maxY) ) {
+              const s16 offset = pNewPoints[curIndex].y - warpedYrounded;
+
+              sumY += offset;
+              numCorrespondencesF32 += 1.0f;
+
+              curIndex++;
             }
-
-            f32 offsetF32 = static_cast<f32>(minOffset);
-            for(s32 offset=minOffset; offset<maxOffset; offset++) {
-              const s32 xpRounded = warpedXrounded;
-              const s32 ypRounded = warpedYrounded + offset;
-
-              // TODO: make a binary search?
-              for(s32 iMatch=pXStartIndexes[xpRounded]; iMatch<pXStartIndexes[xpRounded+1]; iMatch++) {
-                if(ypRounded == pNewPoints[iMatch].y) {
-                  sumYF32 += offsetF32;
-                  numCorrespondencesF32 += 1.0f;
-                }
-              }
-              offsetF32 += 1.0f;
-            } // for(s32 iOffset=-maxMatchingDistance; iOffset<=maxMatchingDistance; iOffset++)
           } // if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance))
         } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
 
-        sumY = RoundS32(sumYF32);
         numCorrespondences = RoundS32(numCorrespondencesF32);
 
         return RESULT_OK;
@@ -570,7 +563,7 @@ namespace Anki
 
         AnkiAssert(FLT_NEAR(homography[2][2], 1.0f));
 
-        f32 sumXF32 = 0.0f;
+        sumX = 0;
         f32 numCorrespondencesF32 = 0.0f;
 
         const Point<s16> * restrict pTemplatePoints = templatePoints.Pointer(0);
@@ -599,37 +592,29 @@ namespace Anki
           const s32 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
 
           if(warpedXrounded >= maxMatchingDistance && warpedXrounded < (imageWidth-maxMatchingDistance)) {
-            s32 minOffset = -maxMatchingDistance;
-            s32 maxOffset = maxMatchingDistance + 1;
+            const s16 minX = warpedXrounded - maxMatchingDistance;
+            const s16 maxX = warpedXrounded + maxMatchingDistance;
 
-            // TODO: manually verify these conditions are correct
-            if(warpedYrounded < maxMatchingDistance) {
-              minOffset += (maxMatchingDistance - warpedYrounded);
+            s32 curIndex = pYStartIndexes[warpedYrounded];
+            const s32 endIndex = pYStartIndexes[warpedYrounded+1];
+
+            // Find the start of the valid matches
+            while( (curIndex<endIndex) && (pNewPoints[curIndex].x<minX) ) {
+              curIndex++;
             }
 
-            if(warpedYrounded > (imageHeight - maxMatchingDistance - 2)) {
-              maxOffset += (imageHeight - warpedYrounded - maxMatchingDistance - 2);
+            // For every valid match, increment the sum and counter
+            while( (curIndex<endIndex) && (pNewPoints[curIndex].x<=maxX) ) {
+              const s16 offset = pNewPoints[curIndex].x - warpedXrounded;
+
+              sumX += offset;
+              numCorrespondencesF32 += 1.0f;
+
+              curIndex++;
             }
-
-            f32 offsetF32 = static_cast<f32>(minOffset);
-            for(s32 offset=minOffset; offset<maxOffset; offset++) {
-              const s32 xpRounded = warpedXrounded + offset;
-              const s32 ypRounded = warpedYrounded;
-
-              // TODO: make a binary search?
-              for(s32 iMatch=pYStartIndexes[ypRounded]; iMatch<pYStartIndexes[ypRounded+1]; iMatch++) {
-                if(xpRounded == pNewPoints[iMatch].x) {
-                  sumXF32 += offsetF32;
-                  numCorrespondencesF32 += 1.0f;
-                }
-              }
-
-              offsetF32 += 1.0f;
-            } // for(s32 iOffset=-maxMatchingDistance; iOffset<=maxMatchingDistance; iOffset++)
           } // if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance))
         } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
 
-        sumX = RoundS32(sumXF32);
         numCorrespondences = RoundS32(numCorrespondencesF32);
 
         return RESULT_OK;
@@ -705,71 +690,66 @@ namespace Anki
           const s32 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
 
           if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance)) {
-            s32 minOffset = -maxMatchingDistance;
-            s32 maxOffset = maxMatchingDistance + 1;
+            const s16 minY = warpedYrounded - maxMatchingDistance;
+            const s16 maxY = warpedYrounded + maxMatchingDistance;
 
-            // TODO: manually verify these conditions are correct
-            if(warpedXrounded < maxMatchingDistance) {
-              minOffset += (maxMatchingDistance - warpedXrounded);
+            s32 curIndex = pXStartIndexes[warpedXrounded];
+            const s32 endIndex = pXStartIndexes[warpedXrounded+1];
+
+            // Find the start of the valid matches
+            while( (curIndex<endIndex) && (pNewPoints[curIndex].y<minY) ) {
+              curIndex++;
             }
 
-            if(warpedXrounded > (imageWidth - maxMatchingDistance - 2)) {
-              maxOffset += (imageWidth - warpedXrounded - maxMatchingDistance - 2);
-            }
-
-            for(s32 offset=minOffset; offset<maxOffset; offset++) {
-              const s32 xpRounded = warpedXrounded;
-              const s32 ypRounded = warpedYrounded + offset;
-
-              // TODO: make a binary search?
-              for(s32 iMatch=pXStartIndexes[xpRounded]; iMatch<pXStartIndexes[xpRounded+1]; iMatch++) {
-                if(ypRounded == pNewPoints[iMatch].y) {
-                  const f32 yp = warpedY + static_cast<f32>(offset);
+            // For every valid match, increment the sum and counter
+            while( (curIndex<endIndex) && (pNewPoints[curIndex].y<=maxY) ) {
+              const s16 offset = pNewPoints[curIndex].y - warpedYrounded;
+              const f32 yp = warpedY + static_cast<f32>(offset);
 
 #if !defined(USE_ARM_ACCELERATION) // natural C
-                  const f32 aValues[8] = {0, 0, 0, -xc, -yc, -1, xc*yp, yc*yp};
+              const f32 aValues[8] = {0, 0, 0, -xc, -yc, -1, xc*yp, yc*yp};
 
-                  const f32 bValue = -yp;
+              const f32 bValue = -yp;
 
-                  for(s32 ia=0; ia<8; ia++) {
-                    for(s32 ja=ia; ja<8; ja++) {
-                      AtA_raw[ia][ja] += aValues[ia] * aValues[ja];
-                    }
-                    Atb_t_raw[ia] += bValue * aValues[ia];
-                  }
-#else // ARM optimized
-                  const f32 aValues6 = xc*yp;
-                  const f32 aValues7 = yc*yp;
-
-                  AtA_raw33 += xc * xc;
-                  AtA_raw34 += xc * yc;
-                  AtA_raw35 += xc;
-                  AtA_raw36 -= xc * aValues6;
-                  AtA_raw37 -= xc * aValues7;
-
-                  AtA_raw44 += yc * yc;
-                  AtA_raw45 += yc;
-                  AtA_raw46 -= yc * aValues6;
-                  AtA_raw47 -= yc * aValues7;
-
-                  AtA_raw55 += 1;
-                  AtA_raw56 -= aValues6;
-                  AtA_raw57 -= aValues7;
-
-                  AtA_raw66 += aValues6 * aValues6;
-                  AtA_raw67 += aValues6 * aValues7;
-
-                  AtA_raw77 += aValues7 * aValues7;
-
-                  Atb_t_raw3 += yp * xc;
-                  Atb_t_raw4 += yp * yc;
-                  Atb_t_raw5 += yp;
-                  Atb_t_raw6 -= yp * aValues6;
-                  Atb_t_raw7 -= yp * aValues7;
-#endif // #if !defined(USE_ARM_ACCELERATION) ... #else
+              for(s32 ia=0; ia<8; ia++) {
+                for(s32 ja=ia; ja<8; ja++) {
+                  AtA_raw[ia][ja] += aValues[ia] * aValues[ja];
                 }
-              } // if(ypRounded == pNewPoints[iMatch].y)
-            } // for(s32 iOffset=-maxMatchingDistance; iOffset<=maxMatchingDistance; iOffset++)
+                Atb_t_raw[ia] += bValue * aValues[ia];
+              }
+#else // ARM optimized
+              const f32 aValues6 = xc*yp;
+              const f32 aValues7 = yc*yp;
+
+              AtA_raw33 += xc * xc;
+              AtA_raw34 += xc * yc;
+              AtA_raw35 += xc;
+              AtA_raw36 -= xc * aValues6;
+              AtA_raw37 -= xc * aValues7;
+
+              AtA_raw44 += yc * yc;
+              AtA_raw45 += yc;
+              AtA_raw46 -= yc * aValues6;
+              AtA_raw47 -= yc * aValues7;
+
+              AtA_raw55 += 1;
+              AtA_raw56 -= aValues6;
+              AtA_raw57 -= aValues7;
+
+              AtA_raw66 += aValues6 * aValues6;
+              AtA_raw67 += aValues6 * aValues7;
+
+              AtA_raw77 += aValues7 * aValues7;
+
+              Atb_t_raw3 += yp * xc;
+              Atb_t_raw4 += yp * yc;
+              Atb_t_raw5 += yp;
+              Atb_t_raw6 -= yp * aValues6;
+              Atb_t_raw7 -= yp * aValues7;
+#endif // #if !defined(USE_ARM_ACCELERATION) ... #else
+
+              curIndex++;
+            }
           } // if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance))
         } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
 
@@ -863,72 +843,67 @@ namespace Anki
           const s32 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
 
           if(warpedXrounded >= maxMatchingDistance && warpedXrounded < (imageWidth-maxMatchingDistance)) {
-            s32 minOffset = -maxMatchingDistance;
-            s32 maxOffset = maxMatchingDistance + 1;
+            const s16 minX = warpedXrounded - maxMatchingDistance;
+            const s16 maxX = warpedXrounded + maxMatchingDistance;
 
-            // TODO: manually verify these conditions are correct
-            if(warpedYrounded < maxMatchingDistance) {
-              minOffset += (maxMatchingDistance - warpedYrounded);
+            s32 curIndex = pYStartIndexes[warpedYrounded];
+            const s32 endIndex = pYStartIndexes[warpedYrounded+1];
+
+            // Find the start of the valid matches
+            while( (curIndex<endIndex) && (pNewPoints[curIndex].x<minX) ) {
+              curIndex++;
             }
 
-            if(warpedYrounded > (imageHeight - maxMatchingDistance - 2)) {
-              maxOffset += (imageHeight - warpedYrounded - maxMatchingDistance - 2);
-            }
-
-            for(s32 offset=minOffset; offset<maxOffset; offset++) {
-              const s32 xpRounded = warpedXrounded + offset;
-              const s32 ypRounded = warpedYrounded;
-
-              // TODO: make a binary search?
-              for(s32 iMatch=pYStartIndexes[ypRounded]; iMatch<pYStartIndexes[ypRounded+1]; iMatch++) {
-                if(xpRounded == pNewPoints[iMatch].x) {
-                  const f32 xp = warpedX + static_cast<f32>(offset);
+            // For every valid match, increment the sum and counter
+            while( (curIndex<endIndex) && (pNewPoints[curIndex].x<=maxX) ) {
+              const s16 offset = pNewPoints[curIndex].x - warpedXrounded;
+              const f32 xp = warpedX + static_cast<f32>(offset);
 
 #if !defined(USE_ARM_ACCELERATION) // natural C
-                  const f32 aValues[8] = {xc, yc, 1, 0, 0, 0, -xc*xp, -yc*xp};
+              const f32 aValues[8] = {xc, yc, 1, 0, 0, 0, -xc*xp, -yc*xp};
 
-                  const f32 bValue = xp;
+              const f32 bValue = xp;
 
-                  for(s32 ia=0; ia<8; ia++) {
-                    for(s32 ja=ia; ja<8; ja++) {
-                      AtA_raw[ia][ja] += aValues[ia] * aValues[ja];
-                    }
-
-                    Atb_t_raw[ia] += aValues[ia] * bValue;
-                  }
-#else // ARM optimized
-                  const f32 aValues6 = -xc*xp;
-                  const f32 aValues7 = -yc*xp;
-
-                  AtA_raw00 += xc * xc;
-                  AtA_raw01 += xc * yc;
-                  AtA_raw02 += xc;
-                  AtA_raw06 += xc * aValues6;
-                  AtA_raw07 += xc * aValues7;
-
-                  AtA_raw11 += yc * yc;
-                  AtA_raw12 += yc;
-                  AtA_raw16 += yc * aValues6;
-                  AtA_raw17 += yc * aValues7;
-
-                  AtA_raw22 += 1;
-                  AtA_raw26 += aValues6;
-                  AtA_raw27 += aValues7;
-
-                  AtA_raw66 += aValues6 * aValues6;
-                  AtA_raw67 += aValues6 * aValues7;
-
-                  AtA_raw77 += aValues7 * aValues7;
-
-                  Atb_t_raw0 += xc * xp;
-                  Atb_t_raw1 += yc * xp;
-                  Atb_t_raw2 += xp;
-                  Atb_t_raw6 += aValues6 * xp;
-                  Atb_t_raw7 += aValues7 * xp;
-#endif // #if !defined(USE_ARM_ACCELERATION) ... #else
+              for(s32 ia=0; ia<8; ia++) {
+                for(s32 ja=ia; ja<8; ja++) {
+                  AtA_raw[ia][ja] += aValues[ia] * aValues[ja];
                 }
+
+                Atb_t_raw[ia] += aValues[ia] * bValue;
               }
-            } // for(s32 iOffset=-maxMatchingDistance; iOffset<=maxMatchingDistance; iOffset++)
+#else // ARM optimized
+              const f32 aValues6 = -xc*xp;
+              const f32 aValues7 = -yc*xp;
+
+              AtA_raw00 += xc * xc;
+              AtA_raw01 += xc * yc;
+              AtA_raw02 += xc;
+              AtA_raw06 += xc * aValues6;
+              AtA_raw07 += xc * aValues7;
+
+              AtA_raw11 += yc * yc;
+              AtA_raw12 += yc;
+              AtA_raw16 += yc * aValues6;
+              AtA_raw17 += yc * aValues7;
+
+              AtA_raw22 += 1;
+              AtA_raw26 += aValues6;
+              AtA_raw27 += aValues7;
+
+              AtA_raw66 += aValues6 * aValues6;
+              AtA_raw67 += aValues6 * aValues7;
+
+              AtA_raw77 += aValues7 * aValues7;
+
+              Atb_t_raw0 += xc * xp;
+              Atb_t_raw1 += yc * xp;
+              Atb_t_raw2 += xp;
+              Atb_t_raw6 += aValues6 * xp;
+              Atb_t_raw7 += aValues7 * xp;
+#endif // #if !defined(USE_ARM_ACCELERATION) ... #else
+
+              curIndex++;
+            }
           } // if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance))
         } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
 
