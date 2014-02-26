@@ -41,7 +41,7 @@ namespace Anki
         Result UpdateTrack(
           const Array<u8> &nextImage,
           const u8 edgeDetection_grayvalueThreshold, const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
-          const s32 matching_maxDistance, const s32 matching_maxCorrespondences,
+          const s32 matching_maxTranslationDistance, const s32 matching_maxProjectiveDistance, const s32 matching_maxCorrespondences,
           const bool useFixedPoint_projective,
           MemoryStack scratch);
 
@@ -98,19 +98,7 @@ namespace Anki
         // The list of points must be sorted in X, from low to high
         static Result ComputeIndexLimitsHorizontal(const FixedLengthList<Point<s16> > &points, Array<s32> &xStartIndexes);
 
-        /*static Result FindVerticalCorrespondences_Translation(
-        const s32 maxMatchingDistance,
-        const Transformations::PlanarTransformation_f32 &transformation,
-        const FixedLengthList<Point<s16> > &templatePoints,
-        const FixedLengthList<Point<s16> > &newPoints,
-        const s32 imageHeight,
-        const s32 imageWidth,
-        const Array<s32> &xStartIndexes, //< Computed by ComputeIndexLimitsHorizontal
-        f32 &sumY,
-        s32 &numCorrespondences,
-        MemoryStack scratch);*/
-
-        static Result FindVerticalCorrespondences_Translation_FixedPoint(
+        NO_INLINE static Result FindVerticalCorrespondences_Translation(
           const s32 maxMatchingDistance,
           const Transformations::PlanarTransformation_f32 &transformation,
           const FixedLengthList<Point<s16> > &templatePoints,
@@ -122,19 +110,7 @@ namespace Anki
           s32 &numCorrespondences,
           MemoryStack scratch);
 
-        /*static Result FindHorizontalCorrespondences_Translation(
-        const s32 maxMatchingDistance,
-        const Transformations::PlanarTransformation_f32 &transformation,
-        const FixedLengthList<Point<s16> > &templatePoints,
-        const FixedLengthList<Point<s16> > &newPoints,
-        const s32 imageHeight,
-        const s32 imageWidth,
-        const Array<s32> &yStartIndexes, //< Computed by ComputeIndexLimitsVertical
-        f32 &sumX,
-        s32 &numCorrespondences,
-        MemoryStack scratch);*/
-
-        static Result FindHorizontalCorrespondences_Translation_FixedPoint(
+        NO_INLINE static Result FindHorizontalCorrespondences_Translation(
           const s32 maxMatchingDistance,
           const Transformations::PlanarTransformation_f32 &transformation,
           const FixedLengthList<Point<s16> > &templatePoints,
@@ -146,7 +122,7 @@ namespace Anki
           s32 &numCorrespondences,
           MemoryStack scratch);
 
-        static Result FindVerticalCorrespondences_Projective(
+        NO_INLINE static Result FindVerticalCorrespondences_Projective(
           const s32 maxMatchingDistance,
           const Transformations::PlanarTransformation_f32 &transformation,
           const FixedLengthList<Point<s16> > &templatePoints,
@@ -158,7 +134,7 @@ namespace Anki
           Array<f32> &Atb_t,
           MemoryStack scratch);
 
-        static Result FindVerticalCorrespondences_Projective_FixedPoint(
+        NO_INLINE static Result FindVerticalCorrespondences_Projective_FixedPoint(
           const s32 maxMatchingDistance,
           const Transformations::PlanarTransformation_f32 &transformation,
           const FixedLengthList<Point<s16> > &templatePoints,
