@@ -76,20 +76,17 @@ namespace Anki
 
       const u32 imageStride = image.get_stride();
 
-      //const Rectangle<u32> imageRegionOfInterestU32(imageRegionOfInterest.left, imageRegionOfInterest.right, imageRegionOfInterest.top, imageRegionOfInterest.bottom);
-
-      const u32 imageRegionOfInterest_leftRight = static_cast<u32>(imageRegionOfInterest.left) + (static_cast<u32>(imageRegionOfInterest.right) << 16);
-      const u32 imageRegionOfInterest_topBottom = static_cast<u32>(imageRegionOfInterest.top) + (static_cast<u32>(imageRegionOfInterest.bottom) << 16);
+      const Rectangle<u32> imageRegionOfInterestU32(imageRegionOfInterest.left, imageRegionOfInterest.right, imageRegionOfInterest.top, imageRegionOfInterest.bottom);
 
       const u32 minComponentWidthU32 = minComponentWidth;
 
       u32 xDecreasingSize = edgeLists.xDecreasing.get_size();
       u32 xIncreasingSize = edgeLists.xIncreasing.get_size();
       u32 xMaxSizeM1 = edgeLists.xDecreasing.get_maximumSize() - 1;
-      Point<s16> * restrict pXDecreasing = edgeLists.xDecreasing.Pointer(0);
-      Point<s16> * restrict pXIncreasing = edgeLists.xIncreasing.Pointer(0);
+      u32 * restrict pXDecreasing = reinterpret_cast<u32 *>(edgeLists.xDecreasing.Pointer(0));
+      u32 * restrict pXIncreasing = reinterpret_cast<u32 *>(edgeLists.xIncreasing.Pointer(0));
 
-      for(u32 y=(imageRegionOfInterest_topBottom&0xFFFF); y<((imageRegionOfInterest_topBottom&0xFFFF0000)>>16); y+=everyNLines) {
+      for(u32 y=imageRegionOfInterestU32.top; y<imageRegionOfInterestU32.bottom; y+=everyNLines) {
         const u8 * restrict pImage = image.Pointer(y,0);
 
         bool onWhite;
@@ -100,13 +97,13 @@ namespace Anki
         else
           onWhite = false;
 
-        u32 lastSwitchX = (imageRegionOfInterest_leftRight&0xFFFF);
-        u32 x = (imageRegionOfInterest_leftRight&0xFFFF);
-        while(x < ((imageRegionOfInterest_leftRight&0xFFFF0000)>>16)) {
+        u32 lastSwitchX = imageRegionOfInterestU32.left;
+        u32 x = imageRegionOfInterestU32.left;
+        while(x < imageRegionOfInterestU32.right) {
           if(onWhite) {
             // If on white
 
-            while(x < ((((imageRegionOfInterest_leftRight - (3<<16)) & 0xFFFF0000)>>16))) {
+            while(x < (imageRegionOfInterestU32.right-3)) {
               const u32 pixels_u8x4 = *reinterpret_cast<const u32 *>(pImage+x);
 
               if( (pixels_u8x4 & 0xFF) <= grayvalueThreshold )
@@ -124,30 +121,31 @@ namespace Anki
               x += 4;
             }
 
-            while( (x < ((imageRegionOfInterest_leftRight&0xFFFF0000)>>16)) && (pImage[x] > grayvalueThreshold)) {
+            while( (x < imageRegionOfInterestU32.right) && (pImage[x] > grayvalueThreshold)) {
               x++;
             }
 
             onWhite = false;
 
-            if(x < ((((imageRegionOfInterest_leftRight - (1<<16)) & 0xFFFF0000)>>16))) {
+            if(x < (imageRegionOfInterestU32.right-1)) {
               const u32 componentWidth = x - lastSwitchX;
 
               if(componentWidth >= minComponentWidthU32) {
-                //edgeLists.xDecreasing.PushBack(Point<s16>(x,y));
+                // If there's room, add the point to the list
                 if(xDecreasingSize < xMaxSizeM1) {
-                  pXDecreasing[xDecreasingSize].x = x;
-                  pXDecreasing[xDecreasingSize].y = y;
+                  u32 newPoint = (y << 16) + x; // Set x and y in one operation
+                  pXDecreasing[xDecreasingSize] = newPoint;
+
                   xDecreasingSize++;
                 }
               }
 
               lastSwitchX = x;
-            } // if(x < (((imageRegionOfInterest_leftRight&0xFFFF0000)>>16)-1)
+            } // if(x < (imageRegionOfInterestU32.right-1)
           } else {
             // If on black
 
-            while(x < ((((imageRegionOfInterest_leftRight - (3<<16)) & 0xFFFF0000)>>16))) {
+            while(x < (imageRegionOfInterestU32.right-3)) {
               const u32 pixels_u8x4 = *reinterpret_cast<const u32 *>(pImage+x);
 
               if( (pixels_u8x4 & 0xFF) >= grayvalueThreshold )
@@ -165,31 +163,32 @@ namespace Anki
               x += 4;
             }
 
-            while( (x < ((imageRegionOfInterest_leftRight&0xFFFF0000)>>16)) && (pImage[x] < grayvalueThreshold)) {
+            while( (x < imageRegionOfInterestU32.right) && (pImage[x] < grayvalueThreshold)) {
               x++;
             }
 
             onWhite = true;
 
-            if(x < ((((imageRegionOfInterest_leftRight - (1<<16)) & 0xFFFF0000)>>16))) {
+            if(x < (imageRegionOfInterestU32.right-1)) {
               const u32 componentWidth = x - lastSwitchX;
 
               if(componentWidth >= minComponentWidthU32) {
-                //edgeLists.xIncreasing.PushBack(Point<s16>(x,y));
+                // If there's room, add the point to the list
                 if(xIncreasingSize < xMaxSizeM1) {
-                  pXIncreasing[xIncreasingSize].x = x;
-                  pXIncreasing[xIncreasingSize].y = y;
+                  u32 newPoint = (y << 16) + x;
+                  pXIncreasing[xIncreasingSize] = newPoint;
+
                   xIncreasingSize++;
                 }
               }
 
               lastSwitchX = x;
-            } // if(x < (((imageRegionOfInterest_leftRight&0xFFFF0000)>>16)-1))
+            } // if(x < (imageRegionOfInterestU32.right-1))
           } // if(onWhite) ... else
 
           x++;
         } // if(onWhite) ... else
-      } // for(u32 y=0; y<((imageRegionOfInterest_topBottom&0xFFFF0000)>>16); y++)
+      } // for(u32 y=0; y<imageRegionOfInterestU32.bottom; y++)
 
       edgeLists.xDecreasing.set_size(xDecreasingSize);
       edgeLists.xIncreasing.set_size(xIncreasingSize);
@@ -206,8 +205,8 @@ namespace Anki
       s32 yDecreasingSize = edgeLists.yDecreasing.get_size();
       s32 yIncreasingSize = edgeLists.yIncreasing.get_size();
       s32 yMaxSizeM1 = edgeLists.yDecreasing.get_maximumSize() - 1;
-      Point<s16> * restrict pYDecreasing = edgeLists.yDecreasing.Pointer(0);
-      Point<s16> * restrict pYIncreasing = edgeLists.yIncreasing.Pointer(0);
+      u32 * restrict pYDecreasing = reinterpret_cast<u32 *>(edgeLists.yDecreasing.Pointer(0));
+      u32 * restrict pYIncreasing = reinterpret_cast<u32 *>(edgeLists.yIncreasing.Pointer(0));
 
       for(s32 x=imageRegionOfInterest.left; x<imageRegionOfInterest.right; x+=everyNLines) {
         const u8 * restrict pImage = image.Pointer(imageRegionOfInterest.top, x);
@@ -225,28 +224,6 @@ namespace Anki
         while(y < imageRegionOfInterest.bottom) {
           if(onWhite) {
             // If on white
-
-            //while(y < (imageRegionOfInterest.bottom-3)) {
-            //  const u8 pixel0 = pImage[0];
-            //  const u8 pixel1 = pImage[imageStride];
-            //  const u8 pixel2 = pImage[2*imageStride];
-            //  const u8 pixel3 = pImage[3*imageStride];
-
-            //  if(pixel0 <= grayvalueThreshold)
-            //    break;
-
-            //  if(pixel1 <= grayvalueThreshold)
-            //    break;
-
-            //  if(pixel2 <= grayvalueThreshold)
-            //    break;
-
-            //  if(pixel3 <= grayvalueThreshold)
-            //    break;
-
-            //  y+=4;
-            //  pImage += 4*imageStride;
-            //}
 
             while(y < (imageRegionOfInterest.bottom-1)) {
               const u8 pixel0 = pImage[0];
@@ -273,10 +250,11 @@ namespace Anki
               const s32 componentWidth = y - lastSwitchY;
 
               if(componentWidth >= minComponentWidth) {
-                //edgeLists.yDecreasing.PushBack(Point<s16>(x,y));
+                // If there's room, add the point to the list
                 if(yDecreasingSize < yMaxSizeM1) {
-                  pYDecreasing[yDecreasingSize].x = x;
-                  pYDecreasing[yDecreasingSize].y = y;
+                  u32 newPoint = (y << 16) + x;
+                  pYDecreasing[yDecreasingSize] = newPoint;
+
                   yDecreasingSize++;
                 }
               }
@@ -311,10 +289,11 @@ namespace Anki
               const s32 componentWidth = y - lastSwitchY;
 
               if(componentWidth >= minComponentWidth) {
-                //edgeLists.yIncreasing.PushBack(Point<s16>(x,y));
+                // If there's room, add the point to the list
                 if(yIncreasingSize < yMaxSizeM1) {
-                  pYIncreasing[yIncreasingSize].x = x;
-                  pYIncreasing[yIncreasingSize].y = y;
+                  u32 newPoint = (y << 16) + x;
+                  pYIncreasing[yIncreasingSize] = newPoint;
+
                   yIncreasingSize++;
                 }
               }
