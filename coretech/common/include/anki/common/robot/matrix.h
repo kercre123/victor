@@ -22,7 +22,7 @@ namespace Anki
   {
     namespace Matrix
     {
-// #pragma mark
+      // #pragma mark
 
       template<typename Type> Type Min(const ConstArraySliceExpression<Type> &mat)
       {
@@ -239,11 +239,14 @@ namespace Anki
       template<typename Type> Result SolveLeastSquaresWithCholesky(
         Array<Type> &A_L,       //!< Input A Matrix and Output lower-triangular L matrix
         Array<Type> &Bt_Xt,     //!< Input B-transpose matrix and Output X-transpose solution
-        bool realCholesky       //!< A real Cholesky is slower to compute, and not required if only the X solution is required
+        bool realCholesky,      //!< A real Cholesky is slower to compute, and not required if only the X solution is required
+        bool &numericalFailure  //!< If true, the solver failed because of numerical instability
         )
       {
         const s32 matrixHeight = A_L.get_size(0);
         const s32 numSamples = Bt_Xt.get_size(0);
+
+        numericalFailure = false;
 
         AnkiConditionalErrorAndReturnValue(A_L.IsValid(),
           RESULT_FAIL_INVALID_OBJECT, "CholeskyDecomposition", "A_L is not valid");
@@ -287,8 +290,10 @@ namespace Anki
               sum -= value*value;
             }
 
-            if(sum < minStableValue)
-              return RESULT_FAIL_NUMERICAL;
+            if(sum < minStableValue) {
+              numericalFailure = true;
+              return RESULT_OK;
+            }
 
             // TODO: change this f32 square root to f64 if Type==f64
             const Type sumRoot = static_cast<Type>(sqrtf(static_cast<f32>(sum)));
@@ -416,10 +421,17 @@ namespace Anki
 
         Matrix::Transpose(Atb, Atbt);
 
-        const Result choleskyResult = SolveLeastSquaresWithCholesky(AtA, Atbt, false);
+        bool numericalFailure;
+
+        const Result choleskyResult = SolveLeastSquaresWithCholesky(AtA, Atbt, false, numericalFailure);
 
         AnkiConditionalErrorAndReturnValue(choleskyResult == RESULT_OK,
           choleskyResult, "EstimateHomography", "SolveLeastSquaresWithCholesky failed");
+
+        if(numericalFailure){
+          AnkiWarn("EstimateHomography", "numericalFailure");
+          return RESULT_OK;
+        }
 
         Type * restrict pAtbt = Atbt.Pointer(0,0);
 

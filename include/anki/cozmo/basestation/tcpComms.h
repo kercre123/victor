@@ -85,9 +85,9 @@ namespace Cozmo {
     // Disconnects from all robots.
     void DisconnectAllRobots();
     
-    int GetNumConnectedRobots() { return connectedRobots_.size(); }
+    int GetNumConnectedRobots() const { return connectedRobots_.size(); }
     
-    int GetNumAdvertisingRobots() { return advertisingRobots_.size(); }
+    int GetNumAdvertisingRobots() const { return advertisingRobots_.size(); }
     
     int GetAdvertisingRobotIDs(vector<int> &robotIDs);
     

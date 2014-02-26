@@ -17,6 +17,7 @@ include_directories(
 	coretech/common/include
 	coretech/messaging/include
 	coretech/vision/include
+	coretech/planning/include
 )
 
 add_subdirectory(basestation)

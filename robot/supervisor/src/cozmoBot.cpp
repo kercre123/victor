@@ -184,9 +184,15 @@ namespace Anki {
         
         // Start calibration
         StartMotorCalibrationRoutine();
-      
-        mode_ = INIT_RADIO_CONNECTION;
-        
+
+        // TestModeController only updates when in WAITING so skip
+        // waiting for a radio connection and just go.
+        if (DEFAULT_TEST_MODE != TestModeController::TM_NONE) {
+          mode_ = INIT_MOTOR_CALIBRATION;
+        } else {
+          mode_ = INIT_RADIO_CONNECTION;
+        }
+
         return EXIT_SUCCESS;
         
       } // Robot::Init()

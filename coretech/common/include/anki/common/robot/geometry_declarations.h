@@ -13,6 +13,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define _ANKICORETECHEMBEDDED_COMMON_POINT_DECLARATIONS_H_
 
 #include "anki/common/robot/config.h"
+#include "anki/common/shared/radians.h"
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
 #include "opencv2/core/core.hpp"
@@ -103,7 +104,43 @@ namespace Anki
       // The width and height of a floating point Rectangle is different than that of an integer rectangle.
       Type get_height() const;
     }; // class Rectangle<Type>
+    
+    typedef Point<float> Point2f;
 
+    
+    // #pragma mark --- Pose2d Class Declaration ---
+
+		class Pose2d
+		{
+		public:
+			// Constructors:
+			Pose2d() : coord(0,0), angle(0) {}
+			Pose2d(const float x, const float y, const Radians angle) : coord(x,y), angle(angle) {};
+			Pose2d(const Pose2d &other) {
+				*this = other;
+			}
+      
+			// Accessors:
+			float   get_x()     const {return coord.x;}
+			float   get_y()     const {return coord.y;}
+			Point2f get_xy()    const {return coord;}
+			Radians get_angle() const {return angle;}
+      
+			float& x() {return coord.x;}
+			float& y() {return coord.y;}
+      
+			void operator=(const Pose2d &other) {
+				this->coord = other.coord;
+				this->angle = other.angle;
+			}
+      
+			Point2f coord;
+			Radians angle;
+      
+		}; // class Pose2d
+
+    
+    
     // #pragma mark --- Quadrilateral Class Declaration ---
 
     // A Quadrilateral is defined by four Point objects

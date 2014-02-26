@@ -17,6 +17,8 @@ if(NOT WIN32)
   target_link_libraries(Cozmo_Basestation 
     CoreTech_Common_Basestation 
     CoreTech_Vision_Basestation 
+    CoreTech_Planning_Basestation
+    CoreTech_Planning_Shared
     ${ZLIB_LIBRARY}
   )
 endif()

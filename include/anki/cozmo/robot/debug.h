@@ -25,5 +25,6 @@
 
 
 #define FREE_DRIVE_DUBINS_TEST 0
+#define ENABLE_KEYBOARD_CONTROL 1
 
 #endif

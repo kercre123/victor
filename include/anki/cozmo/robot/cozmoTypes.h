@@ -32,44 +32,4 @@ typedef u8 BOOL;
 #define INVALID_IDEAL_FOLLOW_LINE_IDX s16_MAX
 
 
-/// This should be in CoreTech-Common
-namespace Anki{
-	namespace Embedded {
-	
-		typedef Point<float> Point2f;
-
-		class Pose2d
-		{
-		public:
-			// Constructors:
-			Pose2d() : coord(0,0), angle(0) {}
-			Pose2d(const float x, const float y, const Radians angle) ;
-			Pose2d(const Pose2d &other) {
-				*this = other;
-			}
-		
-			// Accessors:
-			float   get_x()     const {return coord.x;}
-			float   get_y()     const {return coord.y;}
-			Point2f get_xy()    const {return coord;}
-			Radians get_angle() const {return angle;}
-
-			float& x() {return coord.x;}
-			float& y() {return coord.y;}
-		
-			void operator=(const Pose2d &other) {
-				this->coord = other.coord;
-				this->angle = other.angle;
-			}
-
-
-			Point2f coord;
-			Radians angle;
-		
-		}; // class Pose2d
-
-	} // namespace Embedded
-} // namespace Anki
-
-
 #endif // COZMO_TYPES_H
