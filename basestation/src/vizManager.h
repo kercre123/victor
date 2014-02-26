@@ -4,8 +4,9 @@
  * Author: Kevin Yoon
  * Date:   2/5/2014
  *
- * Description:
- *
+ * Description: Implements the VizManager class for vizualizing objects such as 
+ *              blocks and robot paths in a Webots simulated world. The Webots 
+ *              world needs to invoke the cozmo_physics plugin in order for this to work.
  *
  * Copyright: Anki, Inc. 2014
  **/
