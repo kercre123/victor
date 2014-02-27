@@ -9,6 +9,8 @@ namespace
   const u32 UART_BAUDRATE = 1000000;
 
   const u8 PIN_TX = 17;
+  
+  bool m_isInitialized = false;
 }
 
 namespace Anki
@@ -24,6 +26,9 @@ namespace Anki
       
       int UARTPutChar(int c)
       {
+        if (!m_isInitialized)
+          return 0;
+        
         NRF_UART0->TXD = (u8)c;
 
         // Wait for the data to transmit
@@ -46,6 +51,14 @@ namespace Anki
         static u8 hex[] = "0123456789ABCDEF";
         UARTPutChar(hex[c >> 4]);
         UARTPutChar(hex[c & 0xF]);
+      }
+      
+      void UARTPutHex32(u32 data)
+      {
+        UARTPutHex(data >> 24);
+        UARTPutHex(data >> 16);
+        UARTPutHex(data >> 8);
+        UARTPutHex(data);
       }
       
       /*int UARTGetChar(u32 timeout)
@@ -92,4 +105,6 @@ void UARTInit()
   NRF_UART0->TASKS_STARTTX = 1;
   //NRF_UART0->TASKS_STARTRX = 1;
   //NRF_UART0->EVENTS_RXDRDY = 0;
+  
+  m_isInitialized = true;
 }

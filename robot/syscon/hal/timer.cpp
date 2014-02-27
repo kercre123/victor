@@ -4,6 +4,8 @@
 
 namespace
 {
+  const u32 IRQ_PRIORITY = 1;
+  
   u32 m_low = 0;
   u8 m_high = 0;
 }
@@ -14,14 +16,8 @@ namespace Anki
   {
     namespace HAL
     {
-      // Caution: timer-wrapping issues
       u32 GetMicroCounter()
       {
-        if (NRF_RTC1->COUNTER < m_low)
-        {
-          m_high++;
-        }
-        
         m_low = NRF_RTC1->COUNTER;
         u32 ticks = ((u32)m_high << 24) | m_low;
         
@@ -41,14 +37,25 @@ namespace Anki
 
 void TimerInit()
 {
+  // Clear all RTC1 interrupts
+  NRF_RTC1->INTENCLR = 0xFFFFFFFF;
+  
+  // Clear pending interrupts
+  NVIC_ClearPendingIRQ(RTC1_IRQn);
+  NVIC_SetPriority(RTC1_IRQn, IRQ_PRIORITY);
+  NVIC_EnableIRQ(RTC1_IRQn);
+  
+  // XXX: Keep this section commented until we figure out a fix for the
+  // external oscillator. It doesn't seem to start up all the time.
+  
   // The synthesized LFCLK requires the 16MHz HFCLK to be running, since there's no
   // external crystal/oscillator.
-  NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
-  NRF_CLOCK->TASKS_HFCLKSTART = 1;
+  //NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
+  //NRF_CLOCK->TASKS_HFCLKSTART = 1;
   
   // Wait for the external oscillator to start
-  while (!NRF_CLOCK->EVENTS_HFCLKSTARTED)
-    ;
+  //while (!NRF_CLOCK->EVENTS_HFCLKSTARTED)
+  //  ;
   
   // Enabling constant latency as indicated by PAN 11 "HFCLK: Base current with HFCLK 
   // running is too high" found at Product Anomaly document found at
@@ -77,6 +84,27 @@ void TimerInit()
   // resolution. This should still provide enough for this chip/board.  
   NRF_RTC1->PRESCALER = 0;
   
+  // Enable interrupts on RTC1 overflow
+  NRF_RTC1->INTENSET = RTC_INTENSET_OVRFLW_Msk;
+  
   // Start the RTC
   NRF_RTC1->TASKS_START = 1;
+}
+
+// XXX:
+// Need to verify a better way of incrementing the high part of the counter.
+// The counter will be sensitive to wrapping when inside of an interrupt,
+// i.e. encoders. It was not enough to check:
+// if (NRF_RTC1->COUNTER < m_low)
+// because the value returned by COUNTER was occasionally less than m_low
+// when inside of MicroWait(). This means we read incorrect clock ticks with
+// that method.
+extern "C"
+void RTC1_IRQHandler()
+{
+  // Increment the high part of the timer
+  m_high++;
+  
+  // Clear the event/interrupt
+  NRF_RTC1->EVENTS_OVRFLW = 0;
 }

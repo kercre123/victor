@@ -3,12 +3,12 @@
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "hal/portable.h"
 
-extern "C" {
-#include "lib/usb/usbd_cdc_core.h"
-#include "lib/usb/usbd_usr.h"
-#include "lib/usb/usb_conf.h"
-#include "lib/usb/usbd_desc.h"
-}
+//extern "C" {
+//#include "lib/usb/usbd_cdc_core.h"
+//#include "lib/usb/usbd_usr.h"
+//#include "lib/usb/usb_conf.h"
+//#include "lib/usb/usbd_desc.h"
+//}
 
 //__ALIGN_BEGIN USB_OTG_CORE_HANDLE    USB_OTG_dev __ALIGN_END ;
 
@@ -20,7 +20,7 @@ namespace Anki
   {
     namespace HAL
     {
-      extern GlobalData m_dataBodyToHead;
+      extern GlobalDataToHead m_dataToHead;
       
       // Forward declarations
       void Startup();
