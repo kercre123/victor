@@ -115,7 +115,7 @@ namespace Anki
       bool AppendPointTurn(u32 matID, f32 x, f32 y, f32 targetAngle, f32 maxAngularVel, f32 angularAccel, f32 angularDecel);
        
       // Accessor for PathSegment at specified index
-      const PathSegment& operator[](const u8 idx) {return path_[idx];}
+      const PathSegment& operator[](const u8 idx) const {return path_[idx];}
 
       // Verifies that the path segment at the specified index
       // starts at where the previous segments ends.

@@ -1,11 +1,22 @@
 #include "anki/planning/shared/path.h"
-#include "anki/common/robot/utilities_c.h"
-#include "anki/common/robot/trig_fast.h"
 #include "anki/common/shared/radians.h"
-
+#include "anki/common/constantsAndMacros.h"
+#include <assert.h>
 #include <math.h>
 
 #define CONTINUITY_TOL_SQUARED_M2 0.0000001
+
+#ifdef CORETECH_BASESTATION
+#include <stdio.h>
+#include <float.h>
+#define ATAN2_FAST(y,x) atan2(y,x)
+#define ATAN2_ACC(y,x) atan2(y,x)
+#elif defined CORETECH_ROBOT
+#include "anki/common/robot/utilities_c.h"
+#include "anki/common/robot/trig_fast.h"
+#define ATAN2_FAST(y,x) atan2_fast(y,x)
+#define ATAN2_ACC(y,x) atan2_acc(y,x)
+#endif
 
 
 namespace Anki
@@ -126,7 +137,7 @@ namespace Anki
       f32 line_m_ = (seg->endPt_y - seg->startPt_y) / (seg->endPt_x - seg->startPt_x);
       f32 line_b_ = seg->startPt_y - line_m_ * seg->startPt_x;
       f32 line_dy_sign_ = ((seg->endPt_y - seg->startPt_y) >= 0) ? 1.0 : -1.0;
-      Radians line_theta_ = atan2_fast(seg->endPt_y - seg->startPt_y, seg->endPt_x - seg->startPt_x);
+      Radians line_theta_ = ATAN2_FAST(seg->endPt_y - seg->startPt_y, seg->endPt_x - seg->startPt_x);
       
       
       // Find shortest path to current segment.
@@ -268,7 +279,7 @@ namespace Anki
       
       // Find heading error
       bool movingCCW = seg->sweepRad >= 0;
-      Anki::Radians theta_line = atan2_fast(dy,dx); // angle of line from circle center to robot
+      Anki::Radians theta_line = ATAN2_FAST(dy,dx); // angle of line from circle center to robot
       Anki::Radians theta_tangent = theta_line + Anki::Radians((movingCCW ? 1 : -1 ) * PIDIV2);
       
       radDiff = (theta_tangent - angle).ToFloat();
@@ -414,7 +425,7 @@ namespace Anki
       a_end_x = end_x - center_x;
       a_end_y = end_y - center_y;
       
-      f32 theta = atan2_acc(a_end_y, a_end_x) - atan2_acc(a_start_y, a_start_x);
+      f32 theta = ATAN2_ACC(a_end_y, a_end_x) - ATAN2_ACC(a_start_y, a_start_x);
       if (theta < 0 && CCW)
         return theta + 2*PI_F;
       else if (theta > 0 && !CCW)
@@ -543,7 +554,7 @@ namespace Anki
       n_x = v1_x * cosTanPtAngle - v1_y * sinTanPtAngle;
       n_y = v1_x * sinTanPtAngle + v1_y * cosTanPtAngle;
       
-      tanPtAngle = atan2_acc(n_y, n_x);
+      tanPtAngle = ATAN2_ACC(n_y, n_x);
       
       // Compute tangent points
       p_t1_x = p_c1_x + n_x * r1 * sign1;
@@ -579,7 +590,7 @@ namespace Anki
       ps->def.arc.centerPt_x = p_c1_x;
       ps->def.arc.centerPt_y = p_c1_y;
       ps->def.arc.radius = start_radius;
-      ps->def.arc.startRad = atan2_acc(startPt_y - p_c1_y, startPt_x - p_c1_x);
+      ps->def.arc.startRad = ATAN2_ACC(startPt_y - p_c1_y, startPt_x - p_c1_x);
       ps->def.arc.sweepRad = GetArcAngle(startPt_x, startPt_y, p_t1_x, p_t1_y, p_c1_x, p_c1_y, sign1 < 0);
       segment_length = ABS(ps->def.arc.sweepRad) * start_radius;
       
@@ -606,7 +617,7 @@ namespace Anki
       ps->def.arc.centerPt_x = p_c2_x;
       ps->def.arc.centerPt_y = p_c2_y;
       ps->def.arc.radius = end_radius;
-      ps->def.arc.startRad = atan2_acc(p_t2_y - p_c2_y, p_t2_x - p_c2_x);
+      ps->def.arc.startRad = ATAN2_ACC(p_t2_y - p_c2_y, p_t2_x - p_c2_x);
       ps->def.arc.sweepRad = GetArcAngle(p_t2_x, p_t2_y, endPt_x, endPt_y, p_c2_x, p_c2_y, sign2 < 0);
       segment_length = ABS(ps->def.arc.sweepRad) * end_radius;
       
@@ -734,7 +745,7 @@ namespace Anki
       }
   
       printf("Continuity fail: Segment %d start point (%f, %f), Segment %d end point (%f, %f)\n",
-            pathSegmentIdx, start_x, start_y, end_x, end_y);
+            pathSegmentIdx, start_x, start_y, pathSegmentIdx - 1, end_x, end_y);
       return false;
     }
   

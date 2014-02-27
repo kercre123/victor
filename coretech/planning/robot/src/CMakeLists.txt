@@ -1,18 +1,18 @@
-# coretech/planning/basestation/src/CMakeLists.txt
+# coretech/planning/robot/src/CMakeLists.txt
 
-# Basestation Planning Library
+# Robot Planning Library
 
-add_definitions(-DCORETECH_BASESTATION)
+add_definitions(-DCORETECH_ROBOT)
 
 file(GLOB SOURCE_FILES "*.cpp")
 
 file(GLOB HEADER_FILES 
 	"*.h"
-	"${CORETECH_PLANNING_INCLUDE_DIR}/basestation/*.h"
+	"${CORETECH_PLANNING_INCLUDE_DIR}/robot/*.h"
 )
 
 if(NOT WIN32)
-  add_library(CoreTech_Planning_Basestation 
+  add_library(CoreTech_Planning_Robot
     ${SOURCE_FILES}
     ${CORETECH_PLANNING_SHARED_SRC_FILES}
     ${HEADER_FILES}
