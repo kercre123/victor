@@ -511,7 +511,8 @@ namespace Anki
           const s16 warpedXrounded = RoundS32_minusPointFive(warpedX + centerOffset.x);
           const s16 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
 
-          if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance)) {
+          //if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance)) {
+          if(warpedXrounded >= 0 && warpedXrounded < imageWidth) {
             const s16 minY = warpedYrounded - maxMatchingDistance;
             const s16 maxY = warpedYrounded + maxMatchingDistance;
 
@@ -591,7 +592,8 @@ namespace Anki
           const s32 warpedXrounded = RoundS32_minusPointFive(warpedX + centerOffset.x);
           const s32 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
 
-          if(warpedXrounded >= maxMatchingDistance && warpedXrounded < (imageWidth-maxMatchingDistance)) {
+          //if(warpedXrounded >= maxMatchingDistance && warpedXrounded < (imageWidth-maxMatchingDistance)) {
+          if(warpedYrounded >= 0 && warpedYrounded < imageHeight) {
             const s16 minX = warpedXrounded - maxMatchingDistance;
             const s16 maxX = warpedXrounded + maxMatchingDistance;
 
