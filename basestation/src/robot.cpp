@@ -10,10 +10,12 @@
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/messages.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/common/basestation/general.h"
 
 // TODO: This is shared between basestation and robot and should be moved up
 #include "anki/cozmo/robot/cozmoConfig.h"
 
+#include "messageHandler.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -29,9 +31,17 @@ namespace Anki {
       
     }
     
-    void RobotManager::AddRobot(const RobotID_t withID, BlockWorld* toWorld)
+    ReturnCode RobotManager::Init(MessageHandler* msgHandler, BlockWorld* blockWorld)
     {
-      robots_[withID] = new Robot(withID, toWorld);
+      msgHandler_ = msgHandler;
+      blockWorld_ = blockWorld;
+      
+      return EXIT_SUCCESS;
+    }
+    
+    void RobotManager::AddRobot(const RobotID_t withID)
+    {
+      robots_[withID] = new Robot(withID, msgHandler_, blockWorld_);
       ids_.push_back(withID);
     }
     
@@ -69,8 +79,8 @@ namespace Anki {
     
 #pragma mark --- Robot Class Implementations ---
     
-    Robot::Robot(const RobotID_t robotID, BlockWorld* world)
-    : ID_(robotID), world_(world),
+    Robot::Robot(const RobotID_t robotID, MessageHandler* msgHandler, BlockWorld* world)
+    : ID_(robotID), msgHandler_(msgHandler), world_(world),
       pose(-M_PI_2, Z_AXIS_3D, {{0.f, 0.f, WHEEL_RAD_TO_MM}}),
       neckPose(0.f,Y_AXIS_3D, {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &pose),
       headCamPose({0,0,1,  -1,0,0,  0,-1,0},

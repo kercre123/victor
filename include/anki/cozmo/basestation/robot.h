@@ -17,6 +17,8 @@
 #include "anki/vision/basestation/camera.h"
 #include "anki/vision/basestation/visionMarker.h"
 
+#include "anki/planning/shared/path.h"
+
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/messages.h"
 
@@ -25,6 +27,7 @@ namespace Anki {
     
     // Forward declarations:
     class BlockWorld;
+    class MessageHandler;
     
     class Robot
     {
@@ -36,7 +39,7 @@ namespace Anki {
         DOCK
       };
       
-      Robot(const RobotID_t robotID, BlockWorld* world);
+      Robot(const RobotID_t robotID, MessageHandler* msgHandler, BlockWorld* world);
       
       void Update();
       
@@ -59,6 +62,9 @@ namespace Anki {
     protected:
       // The robot's identifier
       RobotID_t     ID_;
+      
+      // A reference to the MessageHandler that the robot uses for outgoing comms
+      MessageHandler* msgHandler_;
       
       // A reference to the BlockWorld the robot lives in
       BlockWorld*   world_;
@@ -127,6 +133,9 @@ namespace Anki {
 #else
       RobotManager();
 #endif
+
+      // Sets pointers to other managers
+      ReturnCode Init(MessageHandler* msgHandler, BlockWorld* blockWorld);
       
       // Get the list of known robot ID's
       std::vector<RobotID_t> const& GetRobotIDList() const;
@@ -138,7 +147,7 @@ namespace Anki {
       bool DoesRobotExist(const RobotID_t withID) const;
       
       // Add / remove robots
-      void AddRobot(const RobotID_t withID, BlockWorld* toWorld);
+      void AddRobot(const RobotID_t withID);
       void RemoveRobot(const RobotID_t withID);
       
       // Call each Robot's Update() function
@@ -155,6 +164,9 @@ namespace Anki {
       
       static RobotManager* singletonInstance_;
 #endif
+      
+      MessageHandler* msgHandler_;
+      BlockWorld* blockWorld_;
       
       std::map<RobotID_t,Robot*> robots_;
       std::vector<RobotID_t>     ids_;

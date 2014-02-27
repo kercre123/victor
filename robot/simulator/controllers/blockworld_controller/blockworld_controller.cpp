@@ -22,6 +22,7 @@
 #include "anki/cozmo/basestation/robot.h"
 //#include "anki/messaging/basestation/messagingInterface.h"
 #include "vizManager.h"
+#include "pathPlanner.h"
 
 #include "anki/cozmo/robot/cozmoConfig.h"
 
@@ -47,9 +48,11 @@ int main(int argc, char **argv)
   BlockWorld blockWorld;
   RobotManager robotMgr;
   MessageHandler msgHandler;
+  PathPlanner pathPlanner;
   
   // Initialize the modules by telling them about each other:
   msgHandler.Init(&robotComms, &robotMgr, &blockWorld);
+  robotMgr.Init(&msgHandler, &blockWorld);
   blockWorld.Init(&robotMgr);
   
   
@@ -103,7 +106,7 @@ int main(int argc, char **argv)
         for(auto robotID : advertisingRobotIDs) {
           printf("RobotComms connecting to robot %d.\n", robotID);
           robotComms.ConnectToRobotByID(robotID);
-          robotMgr.AddRobot(robotID, &blockWorld);
+          robotMgr.AddRobot(robotID);
         }
       }
     }

@@ -3,6 +3,7 @@
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/mat.h"
 #include "anki/cozmo/basestation/messages.h"
+#include "anki/cozmo/basestation/robot.h"
 
 #include "messageHandler.h"
 #include "vizManager.h"
