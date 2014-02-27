@@ -211,13 +211,6 @@ namespace Anki
           return 1;
 
         value = ParseInt(arg) / 100.0f;
-        HAL::MotorSetPower(HAL::MOTOR_GRIP, value);
-
-        arg = GetArgument(5);
-        if (!arg)
-          return 1;
-
-        value = ParseInt(arg) / 100.0f;
         HAL::MotorSetPower(HAL::MOTOR_HEAD, value);
 
         // Get the number of milliseconds to wait
@@ -230,7 +223,6 @@ namespace Anki
         HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, 0);
         HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, 0);
         HAL::MotorSetPower(HAL::MOTOR_LIFT, 0);
-        HAL::MotorSetPower(HAL::MOTOR_GRIP, 0);
         HAL::MotorSetPower(HAL::MOTOR_HEAD, 0);
 
         return 0;

@@ -241,7 +241,7 @@ namespace Anki
         MOTOR_RIGHT_WHEEL,
         MOTOR_LIFT,
         MOTOR_HEAD,
-        MOTOR_GRIP,
+        //MOTOR_GRIP,
         MOTOR_COUNT
       };
 
