@@ -33,10 +33,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #endif
 
 #if defined(USE_ARM_ACCELERATION)
-#include <ARMCM4.h>
-//#include <core_cmInstr.h>
-//#include <core_cmFunc.h>
-//#include <core_cm4_simd.h>
+#include <stm32f4xx.h>
 #endif
 
 namespace Anki

@@ -97,9 +97,12 @@ namespace Anki
       USBPutChar(frameResHeader);
       
       // Send the timestamp
+#warning "This is broken on keil"
+#ifndef __EDG__
       static_assert(sizeof(TimeStamp_t) == 4,
                     "Currently assuming sizeof(TimeStamp_t)==4 when sending to "
                     "offboard vision processor in Matlab.");
+#endif
       USBSendBuffer(reinterpret_cast<const u8*>(&timestamp), sizeof(TimeStamp_t));
       
       const u16 nrows = CameraModeInfo[inputResolution].height;

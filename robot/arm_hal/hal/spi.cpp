@@ -9,8 +9,8 @@ namespace Anki
   {
     namespace HAL
     {
-      volatile GlobalData m_dataBodyToHead;
-      volatile GlobalData m_dataHeadToBody;
+      volatile GlobalDataToHead m_dataToHead;
+      volatile GlobalDataToBody m_dataToBody;
       
       static void ConfigurePins()
       {
@@ -45,10 +45,8 @@ namespace Anki
         SPI_InitStructure.SPI_CRCPolynomial = 7;
         SPI_Init(SPI6, &SPI_InitStructure);
         
-        for (int i = 0; i < 64; i++)
-          m_dataHeadToBody.padding[i] = i;
-        
-        m_dataHeadToBody.padding[0] = 'H';
+        // Set the source to note the message is coming from the head
+        m_dataToBody.common.source = SPI_SOURCE_HEAD;
       }
       
       static void ConfigureDMA()
@@ -60,7 +58,7 @@ namespace Anki
         DMA_DeInit(DMA2_Stream6);
         
         DMA_InitTypeDef DMA_InitStructure;
-        DMA_InitStructure.DMA_BufferSize = sizeof(m_dataBodyToHead);
+        DMA_InitStructure.DMA_BufferSize = sizeof(m_dataToHead);
         DMA_InitStructure.DMA_FIFOMode = DMA_FIFOMode_Disable;
         DMA_InitStructure.DMA_FIFOThreshold = DMA_FIFOThreshold_1QuarterFull;
         DMA_InitStructure.DMA_MemoryBurst = DMA_MemoryBurst_Single;
@@ -75,12 +73,12 @@ namespace Anki
         // Configure TX DMA
         DMA_InitStructure.DMA_Channel = DMA_Channel_1;
         DMA_InitStructure.DMA_DIR = DMA_DIR_MemoryToPeripheral;
-        DMA_InitStructure.DMA_Memory0BaseAddr = (u32)&m_dataHeadToBody;
+        DMA_InitStructure.DMA_Memory0BaseAddr = (u32)&m_dataToBody;
         DMA_Init(DMA2_Stream5, &DMA_InitStructure);
         // Configure RX DMA
         DMA_InitStructure.DMA_Channel = DMA_Channel_1;
         DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralToMemory;
-        DMA_InitStructure.DMA_Memory0BaseAddr = (u32)&m_dataBodyToHead;
+        DMA_InitStructure.DMA_Memory0BaseAddr = (u32)&m_dataToHead;
         DMA_Init(DMA2_Stream6, &DMA_InitStructure);
         
         // Enable DMA
@@ -134,7 +132,7 @@ void DMA2_Stream6_IRQHandler(void)
   DMA_ClearFlag(DMA2_Stream6, DMA_FLAG_TCIF6);
   
   // Verify the magic identifier byte from the body board
-  if (m_dataBodyToHead.padding[0] != 'B')
+  if (m_dataToHead.common.source != SPI_SOURCE_BODY)
   {
     NVIC_SystemReset();
   }
