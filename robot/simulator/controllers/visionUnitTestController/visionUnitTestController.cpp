@@ -103,9 +103,9 @@ int main(int argc, char **argv)
   webots::Supervisor webotRobot_;
   
   // Motors
-  webots::Motor* headMotor_  = webotRobot_.getMotor("motor_head_pitch");
-  webots::Motor* liftMotor_  = webotRobot_.getMotor("lift_motor");
-  webots::Motor* liftMotor2_ = webotRobot_.getMotor("lift_motor2");
+  webots::Motor* headMotor_  = webotRobot_.getMotor("HeadMotor");
+  webots::Motor* liftMotor_  = webotRobot_.getMotor("LiftMotor");
+  webots::Motor* liftMotor2_ = webotRobot_.getMotor("LiftMotorFront");
   
   // Enable position measurements on head and lift
   headMotor_->enablePosition(TIME_STEP);
@@ -113,11 +113,11 @@ int main(int argc, char **argv)
   liftMotor2_->enablePosition(TIME_STEP);
  
   // Lower the lift out of the way
-  liftMotor_->setPosition(-0.25);
-  liftMotor2_->setPosition(0.25);
+  liftMotor_->setPosition(0.f);
+  liftMotor2_->setPosition(0.f);
 
   // Camera
-  webots::Camera* headCam_ = webotRobot_.getCamera("cam_head");
+  webots::Camera* headCam_ = webotRobot_.getCamera("HeadCamera");
   headCam_->enable(TIME_STEP);
   Vision::CameraCalibration calib(headCam_);
   Json::Value jsonCalib;
@@ -230,7 +230,7 @@ int main(int argc, char **argv)
             RAD_TO_DEG(headAngle));
     
     // Step until the head and lift are in position
-    const float TOL = .01f;
+    const float TOL = DEG_TO_RAD(0.5f);
     float headErr, liftErr, liftErr2;
     do {
       webotRobot_.step(TIME_STEP);
@@ -262,7 +262,8 @@ int main(int argc, char **argv)
 
 #if USE_MATLAB_DETECTION
     // Process the image with Matlab to detect the vision markers
-    matlab.EvalStringEcho("img = imread('%s'); " // "img = separable_filter(img, gaussian_kernel(1)); "
+    matlab.EvalStringEcho("img = imread('%s'); "
+                          "img = separable_filter(img, gaussian_kernel(0.5)); "
                           "imwrite(img, '%s'); "
                           "markers = simpleDetector(img); "
                           "numMarkers = length(markers);",

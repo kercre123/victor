@@ -280,7 +280,7 @@ Supervisor {
     
       boundingObject USE BODY_SHAPE
       physics Physics {
-         density 2000
+         density 1500
       }
     } # BODY Solid
     
@@ -338,7 +338,7 @@ Supervisor {
       ] # BACKPACK Solid children
       
       physics Physics {
-        density 3000
+        density 2000
       }
     } # BACKPACK Solid
 
@@ -361,7 +361,7 @@ Supervisor {
 	  contactMaterial "nofriction"
 	  boundingObject USE CASTER_SHAPE
 	  physics Physics {
-		 density 10000
+		 density 5000
 	  }	
     } # CASTER Solid
     
@@ -426,7 +426,7 @@ Supervisor {
         contactMaterial "highfriction"
         boundingObject USE DRIVE_TIRE
         physics DEF WHEEL_PHYSICS Physics {
-          density 5000
+          density 1000
         }
       }
     }

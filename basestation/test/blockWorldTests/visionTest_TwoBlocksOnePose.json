@@ -5,7 +5,7 @@
          "BlockPose" : {
             "Angle" : 0.7853979999999999,
             "Axis" : [ 0.0, 0.0, 1.0 ],
-            "Translation" : [ 333.0, 75.0, 29.754750 ]
+            "Translation" : [ 310.0, 50.0, 21.754750 ]
          },
          "Type" : 1
       },
@@ -14,7 +14,7 @@
          "BlockPose" : {
             "Angle" : 0.7853979999999999,
             "Axis" : [ 0.0, 0.0, -1.0 ],
-            "Translation" : [ 333.0, -75.0, 29.754750 ]
+            "Translation" : [ 310.0, -50.0, 21.754750 ]
          },
          "Type" : 2
       }
@@ -33,104 +33,91 @@
    "Poses" : [
       {
          "ImageFile" : "/Users/andrew/Code/products-cozmo/basestation/test/blockWorldTests/visionTest_TwoBlocksOnePose0.png",
-         "NumMarkers" : 7,
+         "NumMarkers" : 6,
          "RobotPose" : {
             "Angle" : 0.0,
             "Axis" : [ 1.0, 0.0, 0.0 ],
             "HeadAngle" : -0.1745330,
-            "Translation" : [ 80.0, 0.0, 20.0 ]
+            "Translation" : [ 135.0, 0.0, 14.20 ]
          },
          "VisionMarkers" : [
             {
                "Name" : "MessageVisionMarker",
-               "code" : [ 115, 117, 167, 238, 206, 221, 156, 8, 58, 114, 118 ],
-               "timestamp" : 48,
-               "x_imgLowerLeft" : 6.952983856201172,
-               "x_imgLowerRight" : 27.34061622619629,
-               "x_imgUpperLeft" : 3.093474626541138,
-               "x_imgUpperRight" : 23.55655860900879,
-               "y_imgLowerLeft" : 121.5571670532227,
-               "y_imgLowerRight" : 128.2655487060547,
-               "y_imgUpperLeft" : 73.91264343261719,
-               "y_imgUpperRight" : 75.42006683349609
+               "code" : [ 115, 117, 167, 238, 206, 221, 156, 40, 56, 114, 118 ],
+               "timestamp" : 1846690664,
+               "x_imgLowerLeft" : 15.51160717010498,
+               "x_imgLowerRight" : 38.07414627075195,
+               "x_imgUpperLeft" : 12.24435520172119,
+               "x_imgUpperRight" : 34.76825714111328,
+               "y_imgLowerLeft" : 123.0081100463867,
+               "y_imgLowerRight" : 129.8526153564453,
+               "y_imgUpperLeft" : 72.69292449951172,
+               "y_imgUpperRight" : 73.70852661132812
             },
             {
                "Name" : "MessageVisionMarker",
                "code" : [ 115, 117, 167, 238, 206, 221, 156, 168, 58, 114, 118 ],
-               "timestamp" : 48,
-               "x_imgLowerLeft" : 57.55273818969727,
-               "x_imgLowerRight" : 101.1165847778320,
-               "x_imgUpperLeft" : 54.70368576049805,
-               "x_imgUpperRight" : 99.52194976806641,
-               "y_imgLowerLeft" : 128.2975921630859,
-               "y_imgLowerRight" : 121.6740798950195,
-               "y_imgUpperLeft" : 75.38327026367188,
-               "y_imgUpperRight" : 73.88779449462891
+               "timestamp" : 1846690664,
+               "x_imgLowerLeft" : 66.55516052246094,
+               "x_imgLowerRight" : 111.0101013183594,
+               "x_imgUpperLeft" : 64.00180816650391,
+               "x_imgUpperRight" : 109.8201675415039,
+               "y_imgLowerLeft" : 129.6324005126953,
+               "y_imgLowerRight" : 122.7631454467773,
+               "y_imgUpperLeft" : 73.89191436767578,
+               "y_imgUpperRight" : 72.93183135986328
             },
             {
                "Name" : "MessageVisionMarker",
                "code" : [ 2, 86, 106, 64, 24, 13, 56, 0, 56, 96, 48 ],
-               "timestamp" : 48,
-               "x_imgLowerLeft" : 219.8254089355469,
-               "x_imgLowerRight" : 263.3901062011719,
-               "x_imgUpperLeft" : 221.4028472900391,
-               "x_imgUpperRight" : 266.1877136230469,
-               "y_imgLowerLeft" : 121.6444625854492,
-               "y_imgLowerRight" : 128.3008728027344,
-               "y_imgUpperLeft" : 73.88532257080078,
-               "y_imgUpperRight" : 75.38599395751953
+               "timestamp" : 1846690664,
+               "x_imgLowerLeft" : 207.8258819580078,
+               "x_imgLowerRight" : 252.4811706542969,
+               "x_imgUpperLeft" : 208.9640045166016,
+               "x_imgUpperRight" : 254.9999084472656,
+               "y_imgLowerLeft" : 122.7929840087891,
+               "y_imgLowerRight" : 129.7854919433594,
+               "y_imgUpperLeft" : 72.95880889892578,
+               "y_imgUpperRight" : 73.71825408935547
             },
             {
                "Name" : "MessageVisionMarker",
-               "code" : [ 2, 86, 106, 64, 24, 13, 56, 0, 56, 96, 48 ],
-               "timestamp" : 48,
-               "x_imgLowerLeft" : 293.7055053710938,
-               "x_imgLowerRight" : 313.9775085449219,
-               "x_imgUpperLeft" : 297.4232788085938,
-               "x_imgUpperRight" : 317.8104248046875,
-               "y_imgLowerLeft" : 128.0628967285156,
-               "y_imgLowerRight" : 121.5600433349609,
-               "y_imgUpperLeft" : 75.5080566406250,
-               "y_imgUpperRight" : 74.04544830322266
+               "code" : [ 2, 86, 106, 64, 16, 13, 56, 0, 56, 96, 48 ],
+               "timestamp" : 1846690664,
+               "x_imgLowerLeft" : 280.9215698242188,
+               "x_imgLowerRight" : 303.5119934082031,
+               "x_imgUpperLeft" : 284.7577514648438,
+               "x_imgUpperRight" : 306.9183349609375,
+               "y_imgLowerLeft" : 129.8293914794922,
+               "y_imgLowerRight" : 123.1134262084961,
+               "y_imgUpperLeft" : 73.57122802734375,
+               "y_imgUpperRight" : 72.84381866455078
             },
             {
                "Name" : "MessageVisionMarker",
-               "code" : [ 199, 143, 143, 63, 127, 123, 178, 103, 70, 198, 142 ],
-               "timestamp" : 48,
-               "x_imgLowerLeft" : 250.5037231445312,
-               "x_imgLowerRight" : 248.7430114746094,
-               "x_imgUpperLeft" : 230.5264587402344,
-               "x_imgUpperRight" : 236.9958190917969,
-               "y_imgLowerLeft" : 120.9073333740234,
-               "y_imgLowerRight" : 87.80638885498047,
-               "y_imgUpperLeft" : 94.26908111572266,
-               "y_imgUpperRight" : 87.48630523681641
-            },
-            {
-               "Name" : "MessageVisionMarker",
-               "code" : [ 178, 48, 6, 14, 8, 17, 22, 1, 32, 40, 0 ],
-               "timestamp" : 48,
-               "x_imgLowerLeft" : 311.4129638671875,
-               "x_imgLowerRight" : 308.5931396484375,
-               "x_imgUpperLeft" : 303.6244201660156,
-               "x_imgUpperRight" : 299.7198486328125,
-               "y_imgLowerLeft" : 105.4277648925781,
-               "y_imgLowerRight" : 82.64278411865234,
-               "y_imgUpperLeft" : 114.8686676025391,
-               "y_imgUpperRight" : 99.30781555175781
+               "code" : [ 252, 249, 241, 227, 227, 199, 198, 143, 156, 156, 56 ],
+               "timestamp" : 1846690664,
+               "x_imgLowerLeft" : 235.0702819824219,
+               "x_imgLowerRight" : 240.2525177001953,
+               "x_imgUpperLeft" : 223.9278869628906,
+               "x_imgUpperRight" : 225.6526794433594,
+               "y_imgLowerLeft" : 111.7548446655273,
+               "y_imgLowerRight" : 106.5139083862305,
+               "y_imgUpperLeft" : 111.8001327514648,
+               "y_imgUpperRight" : 85.77687072753906
             },
             {
                "Name" : "MessageVisionMarker",
                "code" : [ 8, 24, 24, 24, 8, 25, 56, 33, 56, 24, 48 ],
-               "timestamp" : 48,
-               "x_imgLowerLeft" : 232.2324829101562,
-               "x_imgLowerRight" : 88.77788543701172,
-               "x_imgUpperLeft" : 284.7398071289062,
-               "x_imgUpperRight" : 36.26046752929688,
-               "y_imgLowerLeft" : 146.6608428955078,
-               "y_imgLowerRight" : 146.6228179931641,
-               "y_imgUpperLeft" : 209.4436340332031,
-               "y_imgUpperRight" : 209.49316406250
+               "timestamp" : 1846690664,
+               "x_imgLowerLeft" : 238.0745544433594,
+               "x_imgLowerRight" : 80.93476104736328,
+               "x_imgUpperLeft" : 304.8099060058594,
+               "x_imgUpperRight" : 13.73781204223633,
+               "y_imgLowerLeft" : 147.5032806396484,
+               "y_imgLowerRight" : 147.4775543212891,
+               "y_imgUpperLeft" : 218.7021789550781,
+               "y_imgUpperRight" : 219.2153167724609
             }
          ]
       }

@@ -27,8 +27,8 @@ namespace Anki {
       // Private memers:
       namespace {
         // Constants for Webots:
-        const f32 DRIVE_VELOCITY_SLOW = 100.0f; // mm/s
-        const f32 TURN_WHEEL_VELOCITY_SLOW = 100.0f;  //mm/s
+        const f32 DRIVE_VELOCITY_SLOW = 75.0f; // mm/s
+        const f32 TURN_WHEEL_VELOCITY_SLOW = 75.0f;  //mm/s
         const f32 TURN_VELOCITY_SLOW = 1.0f;
         const f32 LIFT_CENTER = -0.275;
         const f32 LIFT_UP = 0.635;
@@ -110,24 +110,24 @@ namespace Anki {
               
             case CKEY_HEAD_UP: //s-key: move head up
             {
-              HeadController::SetAngularVelocity(1.5f*TURN_VELOCITY_SLOW);
+              HeadController::SetAngularVelocity(TURN_VELOCITY_SLOW);
               break;
             }
               
             case CKEY_HEAD_DOWN: //x-key: move head down
             {
-              HeadController::SetAngularVelocity(-1.5f*TURN_VELOCITY_SLOW);
+              HeadController::SetAngularVelocity(-TURN_VELOCITY_SLOW);
               break;
             }
             case CKEY_LIFT_UP: //a-key: move lift up
             {
-              LiftController::SetAngularVelocity(1.5f*TURN_VELOCITY_SLOW);
+              LiftController::SetAngularVelocity(TURN_VELOCITY_SLOW);
               break;
             }
               
             case CKEY_LIFT_DOWN: //z-key: move lift down
             {
-              LiftController::SetAngularVelocity(-1.5f*TURN_VELOCITY_SLOW);
+              LiftController::SetAngularVelocity(-TURN_VELOCITY_SLOW);
               break;
             }
               /*

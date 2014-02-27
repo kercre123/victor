@@ -7,9 +7,9 @@ WorldInfo {
     "Date: 02 Aug 2013"
     ""
   ]
+  gravity 0 0 -9.81
   physics "cozmo_physics"
   basicTimeStep 5
-  gravity 0 0 -9.81
   contactProperties [
     DEF FLOOR_FRONTWHEEL ContactProperties {
       material1 "cmat_floor"
@@ -78,16 +78,18 @@ WorldInfo {
     }
   ]
 }
+
 Viewpoint {
-  fieldOfView 0.785398
-  orientation 0.225533 0.521621 0.822828 2.45799
-  position 1.37409 1.36507 0.903049
+  orientation -0.0536013 0.551406 0.832513 3.3031
+  position -0.170719 1.79635 0.864585
 }
+
 Background {
   skyColor [
     0.4 0.7 1
   ]
 }
+
 DirectionalLight {
   ambientIntensity 0.75
   direction -1 -1 -2
@@ -95,68 +97,274 @@ DirectionalLight {
 }
 
 CozmoMat {
-
-}
-
-XYaxesDisplay {
-
-}
-
-DEF FuelBlock Block1x1 {
-  name "Block060_1"
-  translation 0 -0.15 0.03
-  rotation 0 0 1 0
-  blockColor 0.5 0.1 0.75
-  
-  facemarkerFront [
-    #"textures/Block060_Face01.png"
-    "textures/batteryMarker.png"
-  ]
-  facemarkerBack [
-    #"textures/Block060_Face02.png"
-    "textures/batteryMarker.png"
-  ]
-  facemarkerLeft [
-    #"textures/Block060_Face03.png"
-    "textures/batteryMarker.png"
-  ]
-  facemarkerRight [
-    #"textures/Block060_Face04.png"
-    "textures/batteryMarker.png"
-  ]
-  facemarkerTop [
-    #"textures/Block060_Face05.png"
-    "textures/batteryMarker.png"
-  ]
-  facemarkerBottom [
-    #"textures/Block060_Face06.png"
-    "textures/batteryMarker.png"
-  ]
 }
 
 RobotAdvertisementService {
+}
 
+#OLD Solid {
+#  translation 0 0 0.03
+#  
+#  children [
+#    Solid {
+#      translation 0.019 0.019 0.019
+#      physics DEF CORNER_PHYSICS Physics { 
+#        density 300
+#      }
+#      children [
+#        DEF CORNER Shape {
+#          appearance Appearance {
+#            material Material {
+#              diffuseColor 0.1 0.1 0.1
+#            }
+#          }
+#          geometry Box {
+#            size 0.00725 0.00725 0.00725
+#          }
+#        }
+#      ]
+#      boundingObject USE CORNER
+#    }
+#    Solid {
+#      translation -0.019 0.019 0.019
+#      physics USE CORNER_PHYSICS
+#      children [
+#        USE CORNER
+#      ]
+#      boundingObject USE CORNER
+#    }
+#    Solid {
+#      translation -0.019 -0.019 0.019
+#      physics USE CORNER_PHYSICS
+#      children [
+#        USE CORNER
+#      ]
+#      boundingObject USE CORNER
+#    }
+#    Solid {
+#      translation -0.019 -0.019 -0.019
+#      physics USE CORNER_PHYSICS
+#      children [
+#        USE CORNER
+#      ]
+#      boundingObject USE CORNER
+#    }
+#    Solid {
+#      translation 0.019 -0.019 -0.019
+#      physics USE CORNER_PHYSICS
+#      children [
+#        USE CORNER
+#      ]
+#      boundingObject USE CORNER
+#    }
+#    Solid {
+#      translation 0.019 0.019 -0.019
+#      physics USE CORNER_PHYSICS
+#      children [
+#        USE CORNER
+#      ]
+#      boundingObject USE CORNER
+#    }
+#    Solid {
+#      translation 0.019 -0.019 0.019
+#      physics USE CORNER_PHYSICS
+#      children [
+#        USE CORNER
+#      ]
+#      boundingObject USE CORNER
+#    }
+#    Solid {
+#      translation -0.019 0.019 -0.019
+#      physics USE CORNER_PHYSICS
+#      children [
+#        USE CORNER
+#      ]
+#      boundingObject USE CORNER
+#    }
+#    DEF FACES Group {
+#      children [
+#        Transform {
+#          translation 0 0 -0.020875
+#          rotation 1 0 0 0
+#          children [
+#            DEF FACE Group {
+#              children [
+#                Solid { 
+#                children [
+#                DEF FACE_MIDDLE Shape {
+#                  appearance DEF BLOCK_APPEARANCE Appearance {
+#                    material Material {
+#                      diffuseColor 0.9 0 0
+#                    }
+#                  }
+#                  geometry Box {
+#                    size 0.0295 0.0295 0.0025
+#                  }
+#                }
+#                ]
+#                boundingObject USE FACE_MIDDLE
+#                physics Physics {
+#                }
+#                }
+#                DEF FACE_HOLE_ASSEMBLY Group {
+#                  children [
+#                    Transform {
+#                      translation 0.01175 0.0175 0
+#                      children [
+#                        Shape {
+#                          appearance USE BLOCK_APPEARANCE
+#                          geometry Box {
+#                            size 0.006 0.00725 0.0025
+#                          }
+#                        }
+#                      ]
+#                    }
+#                    Transform {
+#                      translation -0.01175 0.0175 0
+#                      children [
+#                        Shape {
+#                          appearance USE BLOCK_APPEARANCE
+#                          geometry Box {
+#                            size 0.006 0.00725 0.0025
+#                          }
+#                        }
+#                      ]
+#                    }
+#                    Transform {
+#                      translation 0 0.020875 0
+#                      children [
+#                        Shape {
+#                          appearance USE BLOCK_APPEARANCE
+#                          geometry Box {
+#                            size 0.0295 0.00225 0.0025
+#                          }
+#                        }
+#                      ]
+#                    }
+#                  ]
+#                }
+#                Transform {
+#                  rotation 0 0 1 1.5708
+#                  children [
+#                    USE FACE_HOLE_ASSEMBLY
+#                  ]
+#                }
+#                Transform {
+#                  rotation 0 0 1 -1.5708
+#                  children [
+#                    USE FACE_HOLE_ASSEMBLY
+#                  ]
+#                }
+#                Transform {
+#                  rotation 0 0 1 3.1415
+#                  children [
+#                    USE FACE_HOLE_ASSEMBLY
+#                  ]
+#                }
+#              ] # FACE Group children
+#            } # FACE Group
+#          ] # Transform children
+#          #physics DEF FACE_PHYSICS Physics {
+#          #}
+#          #boundingObject USE FACE
+#        } # Transform
+#         
+#        Transform {
+#          translation 0 0 0.020875
+#          children [
+#            USE FACE
+#          ]
+#          #boundingObject USE FACE
+#          #physics USE FACE_PHYSICS
+#        }
+#        Transform {
+#          translation 0.020875 0 0
+#          rotation 0 1 0 1.5708
+#          children [
+#            USE FACE
+#          ]
+#          #boundingObject USE FACE
+#          #physics USE FACE_PHYSICS
+#        }
+#        Transform {
+#          translation -0.020875 0 0
+#          rotation 0 1 0 1.5708
+#          children [
+#            USE FACE
+#          ]
+#          #boundingObject USE FACE
+#          #physics USE FACE_PHYSICS
+#        }
+#        Transform {
+#          translation 0 0.020875 0
+#          rotation 1 0 0 1.5708
+#          children [
+#            USE FACE
+#          ]
+#          #boundingObject USE FACE
+#          #physics USE FACE_PHYSICS
+#        }
+#        Transform {
+#          translation 0 -0.020875 0
+#          rotation 1 0 0 1.5708
+#          children [
+#            USE FACE
+#          ]
+#          #boundingObject USE FACE
+#          #physics USE FACE_PHYSICS
+#        }
+#      ]
+#    }
+#  ]
+#  #boundingObject USE FACES
+#  #contactMaterial "cmat_block"
+#  #physics Physics {
+#  #  density 200
+#  #}
+#} # OLD Block Solid
+
+XYaxesDisplay {
+}
+
+DEF FuelBlock Block1x1 {
+  hidden linearVelocity_0 4.504e-18 -1.94584e-11 -2.2883e-16
+  hidden angularVelocity_0 4.0155e-16 3.20475e-31 -1.39815e-17
+  name "Block060_1"
+  translation -5.40228e-19 -0.15 0.0299844
+  rotation 1 1.82119e-13 -4.23988e-13 3.67483e-06
+  blockColor 0.5 0.1 0.75
+  facemarkerFront [
+    "textures/batteryMarker.png"
+  ]
+  facemarkerBack [
+    "textures/batteryMarker.png"
+  ]
+  facemarkerLeft [
+    "textures/batteryMarker.png"
+  ]
+  facemarkerRight [
+    "textures/batteryMarker.png"
+  ]
+  facemarkerTop [
+    "textures/batteryMarker.png"
+  ]
+  facemarkerBottom [
+    "textures/batteryMarker.png"
+  ]
 }
 
 DEF Cozmo_1 CozmoBot {
+  translation 0 0 .014
+  rotation 0 0 1 0
   name "CozmoBot_1"
-  commsChannel 1
+  #headAngle -0.251457
+  #liftAngle  0
   usbChannel 10
-  rotation 0 0 1 -1.5708
-#  controller "cozmo_matlab"
-  controller "cozmo_c_controller"
 }
 
-DEF OffboardVisionProcessor USBConnection {
-  controller "offboard_vision_processor"
+DEF OffboardVision USBConnection {
   usbChannel 10
 }
 
 BlockWorldComms {
-
 }
-
-#OverlayDisplay {
-#
-#}
-
