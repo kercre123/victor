@@ -283,22 +283,22 @@ Block2x1 {
   rotation 0 0 1 0.78
   blockColor 0.5 0.1 0.75
   
-  facemarker1 [
-    "textures/Block075_Face01.png"
+  facemarkerTop [
+    "textures/bullseye.png"
   ]
-  facemarker2 [
-    "textures/Block075_Face02.png"
+  facemarkerBottom [
+    "textures/bullseye.png"
   ]
-  facemarker3 [
-    "textures/Block075_Face03.png"
+  facemarkerFront [
+    "textures/bullseye.png"
   ]
-  facemarker4 [
-    "textures/Block075_Face04.png"
+  facemarkerBack [
+    "textures/bullseye.png"
   ]
-  facemarker5 [
-    "textures/Block075_Face05.png"
+  facemarkerLeft [
+    "textures/bullseye.png"
   ]
-  facemarker6 [
-    "textures/Block075_Face06.png"
+  facemarkerRight [
+    "textures/bullseye.png"
   ]
 }

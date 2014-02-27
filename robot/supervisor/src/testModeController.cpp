@@ -511,6 +511,7 @@ namespace Anki {
       
       ReturnCode GripperTestUpdate()
       {
+#if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
         static bool up = false;
         
         // Change direction
@@ -527,7 +528,7 @@ namespace Anki {
           
           ticCnt_ = 0;
         }
-        
+#endif
         return EXIT_SUCCESS;
       }
       
@@ -648,10 +649,12 @@ namespace Anki {
             ret = HeadTestInit();
             updateFunc = HeadTestUpdate;
             break;
+#if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
           case TM_GRIPPER:
             ret = GripperTestInit();
             updateFunc = GripperTestUpdate;
             break;
+#endif
           case TM_STOP_TEST:
             ret = StopTestInit();
             updateFunc = StopTestUpdate;
