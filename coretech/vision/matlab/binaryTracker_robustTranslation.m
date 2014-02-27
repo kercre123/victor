@@ -7,9 +7,11 @@
 % maxScaleChangePercent = 0.1;
 % [dx, dy] = binaryTracker_robustTranslation(im1, im2, mask1, 100, 2, maxSearchDistance, maxScaleChangePercent);
 
-% for i = 4:4:49
-%     im1 = uint8(imresize(imread(sprintf('C:/Anki/systemTestImages/cozmo_2014-01-29_11-41-05_%d.png',i-4)), [240,320]));
-%     im2 = uint8(imresize(imread(sprintf('C:/Anki/systemTestImages/cozmo_2014-01-29_11-41-05_%d.png',i)), [240,320]));
+
+% mask1 = imread('C:\Anki\systemTestImages\cozmo_date2014_02_27_time14_56_37_frame0_mask.png');
+% for i = 1:4:49
+%     im1 = uint8(imresize(imread(sprintf('C:/Anki/systemTestImages/cozmo_date2014_02_27_time14_56_37_frame%d.png',i-1)), [240,320]));
+%     im2 = uint8(imresize(imread(sprintf('C:/Anki/systemTestImages/cozmo_date2014_02_27_time14_56_37_frame%d.png',i)),   [240,320]));
 %     [dx, dy] = binaryTracker_robustTranslation(im1, im2, mask1, 100, 2, 40, 0.1);
 %     homography = eye(3,3); homography(1,3) = -dx; homography(2,3) = -dy;
 %     warped2 = uint8(binaryTracker_warpWithHomography(im2, homography));
@@ -40,26 +42,47 @@ maskSize = [max(maskIndsX(:))-min(maskIndsX(:)), max(maskIndsY(:))-min(maskIndsY
 
 inlierDistance = round(mean(maskSize) * maxScaleChangePercent);
 
-maxMatches = max([max(numMatches_xMinima(:)), max(numMatches_xMaxima(:)), max(numMatches_yMinima(:)), max(numMatches_yMaxima(:))]);
+% maxMatches = max([max(numMatches_xMinima(:)), max(numMatches_xMaxima(:)), max(numMatches_yMinima(:)), max(numMatches_yMaxima(:))]);
+
+blurSize = 2*inlierDistance + 1;
+
+blurKernel1D = fspecial('gaussian', [blurSize,1], blurSize/2); 
+blurKernel1D = blurKernel1D / max(blurKernel1D(:));
+
+blurKernel2D = fspecial('gaussian', [blurSize,blurSize], blurSize/2); 
+blurKernel2D = blurKernel2D / max(blurKernel2D(:));
+
+numMatches_xMinimaBlur1 = imfilter(numMatches_xMinima, blurKernel1D');
+numMatches_xMaximaBlur1 = imfilter(numMatches_xMaxima, blurKernel1D');
+numMatches_yMinimaBlur1 = imfilter(numMatches_yMinima, blurKernel1D);
+numMatches_yMaximaBlur1 = imfilter(numMatches_yMaxima, blurKernel1D);
 
 totalMatches = numMatches_xMinima + numMatches_xMaxima + numMatches_yMinima + numMatches_yMaxima;
 
-blurSize = 2*inlierDistance + 1;
-% blurKernel = ones(, 2*inlierDistance+1);
-blurKernel =  fspecial('gaussian', [blurSize,blurSize], blurSize/2); 
-blurKernel = blurKernel / max(blurKernel(:));
+totalMatches1 = numMatches_xMinima + numMatches_yMinima;
+totalMatches2 = numMatches_xMinima + numMatches_yMaxima;
+totalMatches3 = numMatches_xMaxima + numMatches_yMinima;
+totalMatches4 = numMatches_xMaxima + numMatches_yMaxima;
 
-totalMatchesFilt = imfilter(totalMatches, blurKernel);
+totalMatches_blur1 = numMatches_xMinimaBlur1 + numMatches_xMaximaBlur1 + numMatches_yMinimaBlur1 + numMatches_yMaximaBlur1;
+totalMatchesFilt = imfilter(totalMatches, blurKernel2D);
+
+% maxVal = max(totalMatchesFilt(:));
+% [indsY, indsX] = find(totalMatchesFilt == maxVal);
+
+maxVal = max(totalMatches_blur1(:));
+[indsY, indsX] = find(totalMatches_blur1 == maxVal);
 
 % imshows(numMatches_xMinima/maxMatches, numMatches_xMaxima/maxMatches, numMatches_yMinima/maxMatches, numMatches_yMaxima/maxMatches, totalMatches/max(totalMatches(:)));
 % imshows(totalMatches/max(totalMatches(:)), totalMatchesFilt/max(totalMatchesFilt(:)));
 
-maxVal = max(totalMatchesFilt(:));
-[indsY, indsX] = find(totalMatchesFilt == maxVal);
-
 offsets = (-maxSearchDistance):maxSearchDistance;
 dy = offsets(indsY(1));
 dx = offsets(indsX(1));
+
+totalMatchesFiltL = totalMatchesFilt .^ 4;
+
+% imshows(totalMatches1/max(totalMatches1(:)), totalMatches2/max(totalMatches2(:)), totalMatches3/max(totalMatches3(:)), totalMatches4/max(totalMatches4(:)), totalMatches/max(totalMatches(:)), totalMatchesFiltL/max(totalMatchesFiltL(:)), 'maximize')
 
 disp(sprintf('Best offset is (%d,%d)', dx, dy))
 

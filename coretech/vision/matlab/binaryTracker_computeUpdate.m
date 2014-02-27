@@ -241,11 +241,6 @@ function updatedHomography = updateHomography(initialHomography, correspondences
         
         updatedHomography = initialHomography;
         updatedHomography(1:2,3) = updatedHomography(1:2,3) + [update(1); update(2)];
-    elseif strcmpi(updateType, 'robust-translation')
-        matchThreshold = 1; % Any pixels within matchThreshold pixels either way are counted as matches
-        
-        verticalInds = correspondences(7,:) == true;
-        horizontalInds = correspondences(7,:) == false;
     else
         if strcmpi(updateType, 'projective')
             numPoints = size(correspondences,2);
