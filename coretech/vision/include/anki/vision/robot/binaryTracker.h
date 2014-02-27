@@ -121,6 +121,17 @@ namespace Anki
           s32 &numCorrespondences,
           MemoryStack scratch);
 
+        NO_INLINE static Result FindVerticalCorrespondences_Translation_2D(
+          const s32 maxVerticalMatchingDistance, const s32 maxHorizontalMatchingDistance,
+          const Transformations::PlanarTransformation_f32 &transformation,
+          const FixedLengthList<Point<s16> > &templatePoints,
+          const FixedLengthList<Point<s16> > &newPoints,
+          const s32 imageHeight,
+          const s32 imageWidth,
+          const Array<s32> &xStartIndexes, //< Computed by ComputeIndexLimitsHorizontal
+          Array<s32> &numMatches, //< an array of size (2*maxHorizontalMatchingDistance + 1) x (2*maxVerticalMatchingDistance + 1)
+          MemoryStack scratch);
+
         NO_INLINE static Result FindVerticalCorrespondences_Projective(
           const s32 maxMatchingDistance,
           const Transformations::PlanarTransformation_f32 &transformation,

@@ -622,6 +622,90 @@ namespace Anki
         return RESULT_OK;
       } // Result BinaryTracker::FindHorizontalCorrespondences_Translation()
 
+      NO_INLINE Result BinaryTracker::FindVerticalCorrespondences_Translation_2D(
+        const s32 maxVerticalMatchingDistance, const s32 maxHorizontalMatchingDistance,
+        const Transformations::PlanarTransformation_f32 &transformation,
+        const FixedLengthList<Point<s16> > &templatePoints,
+        const FixedLengthList<Point<s16> > &newPoints,
+        const s32 imageHeight,
+        const s32 imageWidth,
+        const Array<s32> &xStartIndexes, //< Computed by ComputeIndexLimitsHorizontal
+        Array<s32> &numMatches, //< an array of size (2*maxHorizontalMatchingDistance + 1) x (2*maxVerticalMatchingDistance + 1)
+        MemoryStack scratch)
+      {
+        AnkiConditionalErrorAndReturnValue(numMatches.get_size(0) == (2*maxHorizontalMatchingDistance+1) && numMatches.get_size(1) == (2*maxVerticalMatchingDistance+1),
+          RESULT_FAIL_INVALID_SIZE, "BinaryTracker::FindVerticalCorrespondences_Translation_2D", "numMatches is the wrong size");
+
+        const s32 numTemplatePoints = templatePoints.get_size();
+
+        const Array<f32> &homography = transformation.get_homography();
+        const Point<f32> &centerOffset = transformation.get_centerOffset();
+
+        // TODO: if the homography is just translation, we can do this faster (just slightly, as most of the cost is the search)
+        const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
+        const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
+        const f32 h20 = homography[2][0]; const f32 h21 = homography[2][1]; const f32 h22 = 1.0f;
+
+        AnkiAssert(FLT_NEAR(homography[2][2], 1.0f));
+
+        numMatches.SetZero();
+
+        const Point<s16> * restrict pTemplatePoints = templatePoints.Pointer(0);
+        const Point<s16> * restrict pNewPoints = newPoints.Pointer(0);
+        const s32 * restrict pXStartIndexes = xStartIndexes.Pointer(0,0);
+
+        for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++) {
+          const f32 xr = static_cast<f32>(pTemplatePoints[iPoint].x);
+          const f32 yr = static_cast<f32>(pTemplatePoints[iPoint].y);
+
+          //
+          // Warp x and y based on the current homography
+          //
+
+          // Subtract the center offset
+          const f32 xc = xr - centerOffset.x;
+          const f32 yc = yr - centerOffset.y;
+
+          // Projective warp
+          const f32 wpi = 1.0f / (h20*xc + h21*yc + h22);
+          const f32 warpedX = (h00*xc + h01*yc + h02) * wpi;
+          const f32 warpedY = (h10*xc + h11*yc + h12) * wpi;
+
+          // TODO: verify the -0.5f is correct
+          const s32 warpedXrounded_center = RoundS32_minusPointFive(warpedX + centerOffset.x);
+          const s32 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
+
+          const s32 warpedXrounded_min = MAX(0,            warpedXrounded_center - maxHorizontalMatchingDistance);
+          const s32 warpedXrounded_max = MIN(imageWidth-1, warpedXrounded_center + maxHorizontalMatchingDistance);
+
+          for(s32 warpedXrounded=warpedXrounded_min; warpedXrounded<=warpedXrounded_max; warpedXrounded++) {
+            s32 * restrict pNumMatches = numMatches[warpedXrounded - warpedXrounded_center + maxHorizontalMatchingDistance];
+
+            const s32 minY = warpedYrounded - maxVerticalMatchingDistance;
+            const s32 maxY = warpedYrounded + maxVerticalMatchingDistance;
+
+            s32 curIndex = pXStartIndexes[warpedXrounded];
+            const s32 endIndex = pXStartIndexes[warpedXrounded+1];
+
+            // Find the start of the valid matches
+            while( (curIndex<endIndex) && (pNewPoints[curIndex].y<minY) ) {
+              curIndex++;
+            }
+
+            // For every valid match, increment the sum and counter
+            while( (curIndex<endIndex) && (pNewPoints[curIndex].y<=maxY) ) {
+              const s32 offset = pNewPoints[curIndex].y - warpedYrounded;
+
+              pNumMatches[offset + maxVerticalMatchingDistance]++;
+
+              curIndex++;
+            }
+          } // for(s32 warpedXrounded=warpedXrounded_min; warpedXrounded<=warpedXrounded_max; warpedXrounded++)
+        } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
+
+        return RESULT_OK;
+      }
+
       NO_INLINE Result BinaryTracker::FindVerticalCorrespondences_Projective(
         const s32 maxMatchingDistance,
         const Transformations::PlanarTransformation_f32 &transformation,
