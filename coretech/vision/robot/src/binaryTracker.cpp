@@ -508,13 +508,13 @@ namespace Anki
           const f32 warpedY = (h10*xc + h11*yc + h12) * wpi;
 
           // TODO: verify the -0.5f is correct
-          const s16 warpedXrounded = RoundS32_minusPointFive(warpedX + centerOffset.x);
-          const s16 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
+          const s32 warpedXrounded = RoundS32_minusPointFive(warpedX + centerOffset.x);
+          const s32 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
 
           //if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance)) {
           if(warpedXrounded >= 0 && warpedXrounded < imageWidth) {
-            const s16 minY = warpedYrounded - maxMatchingDistance;
-            const s16 maxY = warpedYrounded + maxMatchingDistance;
+            const s32 minY = warpedYrounded - maxMatchingDistance;
+            const s32 maxY = warpedYrounded + maxMatchingDistance;
 
             s32 curIndex = pXStartIndexes[warpedXrounded];
             const s32 endIndex = pXStartIndexes[warpedXrounded+1];
@@ -526,7 +526,7 @@ namespace Anki
 
             // For every valid match, increment the sum and counter
             while( (curIndex<endIndex) && (pNewPoints[curIndex].y<=maxY) ) {
-              const s16 offset = pNewPoints[curIndex].y - warpedYrounded;
+              const s32 offset = pNewPoints[curIndex].y - warpedYrounded;
 
               sumY += offset;
               numCorrespondencesF32 += 1.0f;
@@ -594,8 +594,8 @@ namespace Anki
 
           //if(warpedXrounded >= maxMatchingDistance && warpedXrounded < (imageWidth-maxMatchingDistance)) {
           if(warpedYrounded >= 0 && warpedYrounded < imageHeight) {
-            const s16 minX = warpedXrounded - maxMatchingDistance;
-            const s16 maxX = warpedXrounded + maxMatchingDistance;
+            const s32 minX = warpedXrounded - maxMatchingDistance;
+            const s32 maxX = warpedXrounded + maxMatchingDistance;
 
             s32 curIndex = pYStartIndexes[warpedYrounded];
             const s32 endIndex = pYStartIndexes[warpedYrounded+1];
@@ -607,7 +607,7 @@ namespace Anki
 
             // For every valid match, increment the sum and counter
             while( (curIndex<endIndex) && (pNewPoints[curIndex].x<=maxX) ) {
-              const s16 offset = pNewPoints[curIndex].x - warpedXrounded;
+              const s32 offset = pNewPoints[curIndex].x - warpedXrounded;
 
               sumX += offset;
               numCorrespondencesF32 += 1.0f;
@@ -692,8 +692,8 @@ namespace Anki
           const s32 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
 
           if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance)) {
-            const s16 minY = warpedYrounded - maxMatchingDistance;
-            const s16 maxY = warpedYrounded + maxMatchingDistance;
+            const s32 minY = warpedYrounded - maxMatchingDistance;
+            const s32 maxY = warpedYrounded + maxMatchingDistance;
 
             s32 curIndex = pXStartIndexes[warpedXrounded];
             const s32 endIndex = pXStartIndexes[warpedXrounded+1];
@@ -705,7 +705,7 @@ namespace Anki
 
             // For every valid match, increment the sum and counter
             while( (curIndex<endIndex) && (pNewPoints[curIndex].y<=maxY) ) {
-              const s16 offset = pNewPoints[curIndex].y - warpedYrounded;
+              const s32 offset = pNewPoints[curIndex].y - warpedYrounded;
               const f32 yp = warpedY + static_cast<f32>(offset);
 
 #if !defined(USE_ARM_ACCELERATION) // natural C
@@ -845,8 +845,8 @@ namespace Anki
           const s32 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
 
           if(warpedXrounded >= maxMatchingDistance && warpedXrounded < (imageWidth-maxMatchingDistance)) {
-            const s16 minX = warpedXrounded - maxMatchingDistance;
-            const s16 maxX = warpedXrounded + maxMatchingDistance;
+            const s32 minX = warpedXrounded - maxMatchingDistance;
+            const s32 maxX = warpedXrounded + maxMatchingDistance;
 
             s32 curIndex = pYStartIndexes[warpedYrounded];
             const s32 endIndex = pYStartIndexes[warpedYrounded+1];
@@ -858,7 +858,7 @@ namespace Anki
 
             // For every valid match, increment the sum and counter
             while( (curIndex<endIndex) && (pNewPoints[curIndex].x<=maxX) ) {
-              const s16 offset = pNewPoints[curIndex].x - warpedXrounded;
+              const s32 offset = pNewPoints[curIndex].x - warpedXrounded;
               const f32 xp = warpedX + static_cast<f32>(offset);
 
 #if !defined(USE_ARM_ACCELERATION) // natural C
