@@ -46,7 +46,7 @@ namespace Anki
         const s32 halfWidth = 1 + ((sigma*numStandardDeviations) >> numSigmaFractionalBits);
         const f32 halfWidthF32 = static_cast<f32>(halfWidth);
 
-        FixedPointArray<s32> gaussianKernel(1, 2*halfWidth + 1, numSigmaFractionalBits, scratch);
+        FixedPointArray<s32> gaussianKernel(1, 2*halfWidth + 1, numSigmaFractionalBits, scratch, Flags::Buffer(false,false,false));
         s32 * restrict pGaussianKernel = gaussianKernel.Pointer(0,0);
 
         {
@@ -67,8 +67,9 @@ namespace Anki
 
           // Normalize to sum to one
           const f32 sumInverse = 1.0f / sum;
+          const f32 twoToNumBits = powf(2.0f, static_cast<f32>(numSigmaFractionalBits));
           for(s32 i=0; i<(2*halfWidth+1); i++) {
-            const f32 gScaled = pGaussianKernelF32[i] * sumInverse * powf(2.0f, static_cast<f32>(numSigmaFractionalBits));
+            const f32 gScaled = pGaussianKernelF32[i] * sumInverse * twoToNumBits;
             pGaussianKernel[i] = static_cast<s32>(Round(gScaled));
           }
 

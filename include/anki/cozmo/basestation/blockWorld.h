@@ -55,6 +55,10 @@ namespace Anki
       
       uint32_t UpdateBlockPoses();
       
+      // Empties the queue of observed markers, returning the number that were
+      // still in it before being cleared.
+      uint32_t ClearObservedMarkers();
+      
       void QueueObservedMarker(const Vision::ObservedMarker& marker);
                                //Robot* seenByRobot);
       

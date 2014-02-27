@@ -138,7 +138,7 @@ RobotAdvertisementService {
 
 }
 
-DEF Cozmo CozmoBot {
+DEF Cozmo_1 CozmoBot {
   name "CozmoBot_1"
   commsChannel 1
   usbChannel 10

@@ -178,13 +178,13 @@ namespace Anki {
     std::vector<cv::Point3f> cvObjPoints;
     
     cvImagePoints.emplace_back(imgPoints[Quad::TopLeft].get_CvPoint_());
-    cvImagePoints.emplace_back(imgPoints[Quad::TopRight].get_CvPoint_());
     cvImagePoints.emplace_back(imgPoints[Quad::BottomLeft].get_CvPoint_());
+    cvImagePoints.emplace_back(imgPoints[Quad::TopRight].get_CvPoint_());
     cvImagePoints.emplace_back(imgPoints[Quad::BottomRight].get_CvPoint_());
     
     cvObjPoints.emplace_back(objPoints[Quad::TopLeft].get_CvPoint3_());
-    cvObjPoints.emplace_back(objPoints[Quad::TopRight].get_CvPoint3_());
     cvObjPoints.emplace_back(objPoints[Quad::BottomLeft].get_CvPoint3_());
+    cvObjPoints.emplace_back(objPoints[Quad::TopRight].get_CvPoint3_());
     cvObjPoints.emplace_back(objPoints[Quad::BottomRight].get_CvPoint3_());
     
     return computeObjectPoseHelper(cvImagePoints, cvObjPoints);

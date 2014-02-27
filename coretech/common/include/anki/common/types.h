@@ -78,8 +78,7 @@ namespace Anki
       RESULT_FAIL_IO                   = 0x02000000,
       RESULT_FAIL_INVALID_PARAMETERS   = 0x03000000,
       RESULT_FAIL_INVALID_OBJECT       = 0x04000000,
-      RESULT_FAIL_INVALID_SIZE         = 0x05000000,
-      RESULT_FAIL_NUMERICAL            = 0x06000000 // TODO: numerical should really be a warning, not an error/failure
+      RESULT_FAIL_INVALID_SIZE         = 0x05000000
     } Result;
 #ifdef __cplusplus
   }

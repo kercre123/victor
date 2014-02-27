@@ -39,7 +39,7 @@ namespace Anki
                             f32 end_x, f32 end_y, f32 end_theta,
                             f32 start_radius, f32 end_radius,
                             f32 final_straight_approach_length = 0,
-                            f32 *path_length = NULL);
+                            f32 *path_length = 0);
       
       bool GetPathError(f32 &shortestDistanceToPath_m, f32 &radDiff);
       

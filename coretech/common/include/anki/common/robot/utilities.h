@@ -133,6 +133,22 @@ namespace Anki
       theta = atan2_fast(y, x);
       rho = sqrtf(x*x + y*y);
     }
+
+    inline f32 Round(f32 x)
+    {
+      if(x > 0)
+        return floorf(x + 0.5f);
+      else
+        return ceilf(x - 0.5f);
+    }
+
+    inline f64 Round(f64 x)
+    {
+      if(x > 0)
+        return floor(x + 0.5);
+      else
+        return ceil(x - 0.5);
+    }
   } // namespace Embedded
 } // namespace Anki
 

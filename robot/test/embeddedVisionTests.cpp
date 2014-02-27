@@ -23,6 +23,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/docking_vision.h"
 #include "anki/vision/robot/imageProcessing.h"
 #include "anki/vision/robot/transformations.h"
+#include "anki/vision/robot/binaryTracker.h"
 
 #include "../../coretech/vision/blockImages/blockImage50_320x240.h"
 #include "../../coretech/vision/blockImages/blockImages00189_80x60.h"
@@ -34,12 +35,12 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 using namespace Anki::Embedded;
 
-GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerBinary)
+GTEST_TEST(CoreTech_Vision, BinaryTracker)
 {
   MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
   ASSERT_TRUE(scratchOnchip.IsValid());
 
-  MemoryStack scratchCcm(&onchipBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
   ASSERT_TRUE(scratchCcm.IsValid());
 
   Array<u8> templateImage(cozmo_2014_01_29_11_41_05_10_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_10_320x240_WIDTH, scratchOnchip);
@@ -48,7 +49,9 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerBinary)
   const Quadrilateral<f32> templateQuad(Point<f32>(128,78), Point<f32>(220,74), Point<f32>(229,167), Point<f32>(127,171));
   const u8 edgeDetection_grayvalueThreshold = 100;
   const s32 edgeDetection_minComponentWidth = 2;
+
   const s32 templateEdgeDetection_maxDetectionsPerType = 500;
+
   const s32 updateEdgeDetection_maxDetectionsPerType = 2500;
 
   const s32 matching_maxDistance = 7;
@@ -59,15 +62,90 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerBinary)
 
   InitBenchmarking();
 
-  BeginBenchmark("LucasKanadeTrackerBinary init");
-  TemplateTracker::LucasKanadeTrackerBinary lktb(templateImage, templateQuad, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, templateEdgeDetection_maxDetectionsPerType, scratchOnchip);
-  EndBenchmark("LucasKanadeTrackerBinary init");
+  // fixed translation, floating projective
+  {
+    PUSH_MEMORY_STACK(scratchOnchip);
 
-  BeginBenchmark("LucasKanadeTrackerBinary update");
+    const s32 templateEdgeDetection_everyNLines = 1;
+
+    BeginBenchmark("BinaryTracker init");
+    TemplateTracker::BinaryTracker lktb(templateImage, templateQuad, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, templateEdgeDetection_maxDetectionsPerType, templateEdgeDetection_everyNLines, scratchOnchip);
+    EndBenchmark("BinaryTracker init");
+
+    //templateImage.Show("templateImage",false);
+    //nextImage.Show("nextImage",false);
+
+    BeginBenchmark("BinaryTracker update fixed-float");
+    const Result result = lktb.UpdateTrack(nextImage,
+      edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType, 1,
+      matching_maxDistance, matching_maxCorrespondences, false, scratchCcm);
+    EndBenchmark("BinaryTracker update fixed-float");
+
+    ASSERT_TRUE(result == RESULT_OK);
+
+    MemoryStack scratchOffchip(&onchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+    ASSERT_TRUE(scratchOffchip.IsValid());
+
+    //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
+
+    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
+    transform_groundTruth[0][0] = 1.0693f;  transform_groundTruth[0][1] = 0.0008f; transform_groundTruth[0][2] = 2.2256f;
+    transform_groundTruth[1][0] = 0.0010f;  transform_groundTruth[1][1] = 1.0604f; transform_groundTruth[1][2] = -4.1188f;
+    transform_groundTruth[2][0] = -0.0001f; transform_groundTruth[2][1] = 0.0f;    transform_groundTruth[2][2] = 1.0f;
+
+    lktb.get_transformation().get_homography().Print("fixed-float 1");
+
+    ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(lktb.get_transformation().get_homography(), transform_groundTruth, .01, .01));
+  }
+
+  // fixed translation, floating projective
+  {
+    PUSH_MEMORY_STACK(scratchOnchip);
+
+    const s32 templateEdgeDetection_everyNLines = 2;
+
+    BeginBenchmark("BinaryTracker init");
+    TemplateTracker::BinaryTracker lktb(templateImage, templateQuad, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, templateEdgeDetection_maxDetectionsPerType, templateEdgeDetection_everyNLines, scratchOnchip);
+    EndBenchmark("BinaryTracker init");
+
+    //templateImage.Show("templateImage",false);
+    //nextImage.Show("nextImage",false);
+
+    BeginBenchmark("BinaryTracker update fixed-float");
+    const Result result = lktb.UpdateTrack(nextImage,
+      edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType, 1,
+      matching_maxDistance, matching_maxCorrespondences, false, scratchCcm);
+    EndBenchmark("BinaryTracker update fixed-float");
+
+    ASSERT_TRUE(result == RESULT_OK);
+
+    MemoryStack scratchOffchip(&onchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+    ASSERT_TRUE(scratchOffchip.IsValid());
+
+    //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
+
+    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
+    transform_groundTruth[0][0] = 1.0681f;  transform_groundTruth[0][1] = 0.0f; transform_groundTruth[0][2] = 2.2348f;
+    transform_groundTruth[1][0] = -0.0008f;  transform_groundTruth[1][1] = 1.0607f; transform_groundTruth[1][2] = -4.1342f;
+    transform_groundTruth[2][0] = -0.0001f; transform_groundTruth[2][1] = 0.0f;    transform_groundTruth[2][2] = 1.0f;
+
+    lktb.get_transformation().get_homography().Print("fixed-float 2");
+
+    ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(lktb.get_transformation().get_homography(), transform_groundTruth, .01, .01));
+  }
+
+  // fixed translation, fixed projective
+  /*
+  {
+  PUSH_MEMORY_STACK(scratchOnchip);
+
+  TemplateTracker::BinaryTracker lktb(templateImage, templateQuad, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, templateEdgeDetection_maxDetectionsPerType, scratchOnchip);
+
+  BeginBenchmark("BinaryTracker update fixed-fixed");
   const Result result = lktb.UpdateTrack(nextImage,
-    edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType,
-    matching_maxDistance, matching_maxCorrespondences, scratchCcm);
-  EndBenchmark("LucasKanadeTrackerBinary update");
+  edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType,
+  matching_maxDistance, matching_maxCorrespondences, true, scratchCcm);
+  EndBenchmark("BinaryTracker update fixed-fixed");
 
   ASSERT_TRUE(result == RESULT_OK);
 
@@ -77,13 +155,15 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerBinary)
   //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
 
   Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
-  transform_groundTruth[0][0] = 1.0693f;  transform_groundTruth[0][1] = 0.0008f; transform_groundTruth[0][2] = 2.2256f;
-  transform_groundTruth[1][0] = 0.0010f;  transform_groundTruth[1][1] = 1.0604f; transform_groundTruth[1][2] = -4.1188f;
-  transform_groundTruth[2][0] = -0.0001f; transform_groundTruth[2][1] = 0.0f;    transform_groundTruth[2][2] = 1.0f;
+  transform_groundTruth[0][0] = 1.0527f; transform_groundTruth[0][1] = -0.0006f; transform_groundTruth[0][2] = 2.3852f;
+  transform_groundTruth[1][0] = 0.0002f; transform_groundTruth[1][1] = 1.0437f;  transform_groundTruth[1][2] = -4.0982f;
+  transform_groundTruth[2][0] = -0.0001f;    transform_groundTruth[2][1] = 0.0f;     transform_groundTruth[2][2] = 1.0f;
 
-  //lktb.get_transformation().get_homography().Print("h");
+  lktb.get_transformation().get_homography().Print("fixed-fixed");
 
-  ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(lktb.get_transformation().get_homography(), transform_groundTruth, .01, .01));
+  //ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(lktb.get_transformation().get_homography(), transform_groundTruth, .01, .01));
+  }
+  */
 
   PrintBenchmarkResults_OnlyTotals();
 
@@ -96,13 +176,14 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerBinary)
   //cv::waitKey();
 
   GTEST_RETURN_HERE;
-} // GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerBinary)
+} // GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
 GTEST_TEST(CoreTech_Vision, DetectBlurredEdge)
 {
   const u8 grayvalueThreshold = 128;
   const s32 minComponentWidth = 3;
   const s32 maxExtrema = 500;
+  const s32 everyNLines = 1;
 
   MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(scratchOffchip.IsValid());
@@ -143,7 +224,7 @@ GTEST_TEST(CoreTech_Vision, DetectBlurredEdge)
 
   //image.Show("image", true);
 
-  const Result result = DetectBlurredEdges(image, grayvalueThreshold, minComponentWidth, edges);
+  const Result result = DetectBlurredEdges(image, grayvalueThreshold, minComponentWidth, everyNLines, edges);
 
   ASSERT_TRUE(result == RESULT_OK);
 
@@ -1893,7 +1974,7 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   numPassedTests = 0;
   numFailedTests = 0;
 
-  CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerBinary);
+  CALL_GTEST_TEST(CoreTech_Vision, BinaryTracker);
   CALL_GTEST_TEST(CoreTech_Vision, DetectBlurredEdge);
   CALL_GTEST_TEST(CoreTech_Vision, DownsampleByPowerOfTwo);
   CALL_GTEST_TEST(CoreTech_Vision, ComputeDockingErrorSignalAffine);

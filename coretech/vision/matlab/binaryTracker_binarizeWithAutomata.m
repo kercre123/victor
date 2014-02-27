@@ -1,4 +1,4 @@
-% function lucasKandeBinary_binarizeWithAutomata()
+% function binaryTracker_binarizeWithAutomata()
 
 % im = imread('C:/Anki/systemTestImages/cozmo_2014-01-29_11-41-05_0.png');
 % im = imread('C:/Anki/systemTestImages/cozmo_2014-01-29_11-41-05_10.png');
@@ -6,9 +6,9 @@
 
 % processingSize = [240,320];
 
-% [xMinima1Image, xMaxima1Image, yMinima1Image, yMaxima1Image] = lucasKandeBinary_binarizeWithAutomata(imresize(im,processingSize), 100, 3);
+% [xMinima1Image, xMaxima1Image, yMinima1Image, yMaxima1Image] = binaryTracker_binarizeWithAutomata(imresize(im,processingSize), 100, 3);
 
-function [xMinima1Image, xMaxima1Image, yMinima1Image, yMaxima1Image] = lucasKandeBinary_binarizeWithAutomata(image, grayvalueThreshold, minComponentWidth)
+function [xMinima1Image, xMaxima1Image, yMinima1Image, yMaxima1Image] = binaryTracker_binarizeWithAutomata(image, grayvalueThreshold, minComponentWidth)
 
 assert(grayvalueThreshold >=0 && grayvalueThreshold <= 255); 
 

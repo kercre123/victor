@@ -97,3 +97,4 @@ robot/robot_embedded-tests.dep
 *.lst
 *.ini
 robot/syscon/JLinkLog.txt
+robot/chipSimulator/robot_chipSimulator.uvguix.anki

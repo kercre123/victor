@@ -40,6 +40,9 @@ namespace Anki {
   template<class Derived>
   Derived* SingletonBase<Derived>::singletonInstance_ = NULL;
   
+  // Macro for convenience
+#define PREPEND_SCOPED_PATH(__SCOPE__, __NAME__) \
+  ::Anki::PlatformPathManager::getInstance()->PrependPath(::Anki::PlatformPathManager::__SCOPE__, __NAME__)
   
   class PlatformPathManager : public SingletonBase<PlatformPathManager>
   {

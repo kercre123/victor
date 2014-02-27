@@ -63,8 +63,8 @@ extern "C" {
   ( ((u32)((value) & 0x00FF0000)) >>  8) | \
   ( ((u32)((value) & 0xFF000000)) >> 24))
 
-  f32 Roundf(const f32 number);
-  f64 Round(const f64 number);
+  //f32 Roundf(const f32 number);
+  //f64 Round(const f64 number);
 
   // Returns 1 if it is a power of two, zero otherwise
   s32 IsPowerOfTwo(u32 x);

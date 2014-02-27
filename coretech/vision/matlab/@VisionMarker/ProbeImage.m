@@ -30,7 +30,7 @@ assert(isequal(size(corners), [4 2]), ...
 % into the image coordinates, according to the corner positions
 tform = cp2tform(corners, [0 0 1 1; 0 1 0 1]', 'projective');
 
-if doRefinement
+if false % doRefinement
     [corners, H] = LKrefineQuad(img, corners, tform.tdata.Tinv', ...
         'MaxIterations', 10, 'DebugDisplay', false);
 else

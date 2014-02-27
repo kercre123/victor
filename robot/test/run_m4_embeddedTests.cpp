@@ -25,13 +25,13 @@ namespace Anki
       {
         printf("\n\n\nStarting unit tests\n\n");
 
-				s32 numPassedTests_vision;
-        s32 numFailedTests_vision;
+				s32 numPassedTests_vision = 0;
+        s32 numFailedTests_vision = 0;
         RUN_ALL_VISION_TESTS(numPassedTests_vision, numFailedTests_vision);
 				
-        s32 numPassedTests_common;
-        s32 numFailedTests_common;
-        RUN_ALL_COMMON_TESTS(numPassedTests_common, numFailedTests_common);
+        s32 numPassedTests_common = 0;
+        s32 numFailedTests_common = 0;
+        //RUN_ALL_COMMON_TESTS(numPassedTests_common, numFailedTests_common);
         
         const s32 numPassedTests = numPassedTests_common + numPassedTests_vision;
         const s32 numFailedTests = numFailedTests_common + numFailedTests_vision;
@@ -44,8 +44,10 @@ namespace Anki
           "Number Failed:%d\n"
           "========================================================================\n", numPassedTests, numFailedTests);
   
+#ifndef USING_SIMULATOR
         while(1)
           ;     // Because we don't trust hal.cpp
+#endif
       }
 
       void step_MainExecution()

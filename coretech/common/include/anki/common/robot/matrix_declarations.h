@@ -22,7 +22,7 @@ namespace Anki
   {
     namespace Matrix
     {
-// #pragma mark --- Declarations ---
+      // #pragma mark --- Declarations ---
 
       //
       // Simple matrix statistics
@@ -86,9 +86,10 @@ namespace Anki
 
       // Compute the Cholesky-Banachiewicz decomposition, to return a lower-triangular matrix L such that A=L*L'
       template<typename Type> Result SolveLeastSquaresWithCholesky(
-        Array<Type> &A_L,       //!< Input A Matrix and Output lower-triangular L matrix
-        Array<Type> &Bt_Xt,     //!< Input B-transpose matrix and Output X-transpose solution
-        bool realCholesky=false //!< A real Cholesky is slower to compute, and not required if only the X solution is required
+        Array<Type> &A_L,      //!< Input A Matrix and Output lower-triangular L matrix
+        Array<Type> &Bt_Xt,    //!< Input B-transpose matrix and Output X-transpose solution
+        bool realCholesky,     //!< A real Cholesky is slower to compute, and not required if only the X solution is required
+        bool &numericalFailure //!< If true, the solver failed because of numerical instability
         );
 
       // Compute the homography such that "transformedPoints = homography * originalPoints"
