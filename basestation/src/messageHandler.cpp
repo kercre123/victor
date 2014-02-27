@@ -47,6 +47,17 @@ namespace Anki {
       
       return retVal;
     }
+    
+
+    ReturnCode MessageHandler::SendMessage(const RobotID_t robotID, const Message& msg)
+    {
+      Comms::MsgPacket p;
+      msg.GetBytes(p.data);
+      p.dataLen = msg.GetSize();
+      p.destId = robotID;
+      
+      return comms_->Send(p) > 0;
+    }
 
     
     ReturnCode MessageHandler::ProcessPacket(const Comms::MsgPacket& packet)
@@ -173,9 +184,9 @@ namespace Anki {
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageRobotAvailable const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageMatMarkerObserved const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageRobotAddedToWorld const&){return EXIT_FAILURE;}
-    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageSetPathSegmentArc const&){return EXIT_FAILURE;}
+    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageAppendPathSegmentArc const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageDockingErrorSignal const&){return EXIT_FAILURE;}
-    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageSetPathSegmentLine const&){return EXIT_FAILURE;}
+    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageAppendPathSegmentLine const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageBlockMarkerObserved const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageTemplateInitialized const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageMatCameraCalibration const&){return EXIT_FAILURE;}

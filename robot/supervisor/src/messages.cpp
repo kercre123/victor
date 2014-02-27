@@ -293,11 +293,11 @@ namespace Anki {
         PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
       }
       
-      void ProcessSetPathSegmentArcMessage(const SetPathSegmentArc& msg) {
+      void ProcessAppendPathSegmentArcMessage(const AppendPathSegmentArc& msg) {
         PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
       }
       
-      void ProcessSetPathSegmentLineMessage(const SetPathSegmentLine& msg) {
+      void ProcessAppendPathSegmentLineMessage(const AppendPathSegmentLine& msg) {
         PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
       }
       

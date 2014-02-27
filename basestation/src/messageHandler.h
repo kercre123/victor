@@ -24,7 +24,7 @@
 #include "anki/common/types.h"
 
 #include "anki/cozmo/basestation/messages.h"
-#include "anki/cozmo/basestation/robot.h" 
+
 #include "anki/messaging/basestation/IComms.h"
 
 namespace Anki {
@@ -34,6 +34,10 @@ namespace Anki {
     
     
 #define USE_SINGLETON_MESSAGE_HANDLER 0
+    
+    class Robot;
+    class RobotManager;
+    class BlockWorld;
     
     // TODO: make singleton or not?
     class MessageHandler
