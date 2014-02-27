@@ -218,7 +218,7 @@
             <hadIRAM2>1</hadIRAM2>
             <hadIROM2>0</hadIROM2>
             <StupSel>8</StupSel>
-            <useUlib>1</useUlib>
+            <useUlib>0</useUlib>
             <EndSel>0</EndSel>
             <uLtcg>0</uLtcg>
             <RoSelD>3</RoSelD>
@@ -355,7 +355,7 @@
             <uSurpInc>1</uSurpInc>
             <VariousControls>
               <MiscControls>--asm</MiscControls>
-              <Define>USE_STDPERIPH_DRIVER,STM32F429_439xx,USE_DEFAULT_TIMEOUT_CALLBACK,USE_EMBEDDED_PHY,USE_USB_OTG_FS,COZMO_ROBOT,ROBOT_HARDWARE,ANKICORETECH_EMBEDDED_USE_HEATSHRINK</Define>
+              <Define>USE_STDPERIPH_DRIVER,STM32F429_439xx,USE_DEFAULT_TIMEOUT_CALLBACK,USE_EMBEDDED_PHY,USE_USB_OTG_FS,COZMO_ROBOT,ROBOT_HARDWARE,ANKICORETECH_EMBEDDED_USE_HEATSHRINK,</Define>
               <Undefine></Undefine>
               <IncludePath>.\arm_hal;.\arm_hal\lib;..\include;..\coretech\common\include;..\coretech\messaging\include;..\coretech\planning\include;..\coretech\vision\include;.\supervisor\src;..\..\coretech-external\heatshrink;C:\Keil\ARM\Pack\ARM\CMSIS\3.20.4\Device\ARM\ARMCM4\Include</IncludePath>
             </VariousControls>
@@ -734,11 +734,6 @@
               <FilePath>.\supervisor\src\offboardVision.cpp</FilePath>
             </File>
             <File>
-              <FileName>path.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\path.cpp</FilePath>
-            </File>
-            <File>
               <FileName>pathFollower.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\pathFollower.cpp</FilePath>
@@ -920,6 +915,13 @@
         </Group>
         <Group>
           <GroupName>coretech-planning</GroupName>
+          <Files>
+            <File>
+              <FileName>path.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\planning\shared\src\path.cpp</FilePath>
+            </File>
+          </Files>
         </Group>
         <Group>
           <GroupName>coretech-vision</GroupName>
@@ -1880,11 +1882,6 @@
               <FilePath>.\supervisor\src\offboardVision.cpp</FilePath>
             </File>
             <File>
-              <FileName>path.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\path.cpp</FilePath>
-            </File>
-            <File>
               <FileName>pathFollower.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\pathFollower.cpp</FilePath>
@@ -2066,6 +2063,13 @@
         </Group>
         <Group>
           <GroupName>coretech-planning</GroupName>
+          <Files>
+            <File>
+              <FileName>path.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\planning\shared\src\path.cpp</FilePath>
+            </File>
+          </Files>
         </Group>
         <Group>
           <GroupName>coretech-vision</GroupName>

@@ -197,6 +197,7 @@ namespace Anki
       int UARTPrintf(const char* format, ...);
       int UARTPutChar(int c);
       void UARTPutHex(u8 c);
+      void UARTPutHex32(u32 data);
       void UARTPutString(const char* s);
       int UARTGetChar(u32 timeout = 0);
 
@@ -491,11 +492,29 @@ namespace Anki
 
 #endif // if USE_OFFBOARD_VISION
 
-      // Definition of the data structure being transferred between SYSCON and
+      // Definition of the data structures being transferred between SYSCON and
       // the vision processor
-      struct GlobalData
+      enum SPISource
       {
-        u8 padding[64];
+        SPI_SOURCE_HEAD = 'H',
+        SPI_SOURCE_BODY = 'B'
+      };
+      
+      struct GlobalCommon
+      {
+        SPISource source;
+      };
+      
+      struct GlobalDataToHead
+      {
+        GlobalCommon common;
+        u8 padding[63];
+      };
+      
+      struct GlobalDataToBody
+      {
+        GlobalCommon common;
+        u8 padding[63];
       };
 
     } // namespace HAL

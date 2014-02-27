@@ -12,8 +12,8 @@ namespace Anki
     namespace HAL
     {
       const u32 MAX_FAILED_TRANSFER_COUNT = 10;
-      GlobalData g_dataTX;
-      GlobalData g_dataRX;
+      GlobalDataToHead g_dataToHead;
+      GlobalDataToBody g_dataToBody;
       
       void PowerInit()
       {
@@ -60,27 +60,17 @@ int main(void)
   
   UARTPutString("\r\nInitialized...\r\n");
   
-  GetMicroCounter();
-  
-  //nrf_gpio_cfg_input(4, NRF_GPIO_PIN_NOPULL);
-  
-  for (int i = 0; i < 64; i++)
-    g_dataTX.padding[i] = 0x33;
-  
-  g_dataTX.padding[0] = 'B';
-  
-  //MotorsSetPower(MOTOR_LEFT_WHEEL, 200);
-  //MotorsSetPower(MOTOR_RIGHT_WHEEL, -100);
+  g_dataToHead.common.source = SPI_SOURCE_BODY;
   
   while (1)
   {
     // Exchange data with the head board
     result = SPITransmitReceive(
-      sizeof(GlobalData), 
-      (const u8*)&g_dataTX,
-      (u8*)&g_dataRX);
+      sizeof(GlobalDataToBody), 
+      (const u8*)&g_dataToHead,
+      (u8*)&g_dataToBody);
     
-    if (result || g_dataRX.padding[0] != 'H')
+    if (result || g_dataToBody.common.source != SPI_SOURCE_HEAD)
     {
       if(++failedTransferCount > MAX_FAILED_TRANSFER_COUNT)
       {
@@ -95,7 +85,7 @@ int main(void)
       // ...
     }
     
-    // 200Hz
+    // Update at 200Hz
     MicroWait(5000);
   }
   
