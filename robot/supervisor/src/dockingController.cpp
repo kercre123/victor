@@ -6,7 +6,7 @@
 #include "liftController.h"
 
 #include "anki/cozmo/robot/cozmoConfig.h"
-#include "anki/cozmo/robot/cozmoTypes.h"
+#include "anki/common/robot/geometry.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/localization.h"
 #include "anki/cozmo/robot/visionSystem.h"

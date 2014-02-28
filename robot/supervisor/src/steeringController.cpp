@@ -23,6 +23,8 @@
 
 #include "anki/common/robot/trig_fast.h"
 
+#define INVALID_IDEAL_FOLLOW_LINE_IDX s16_MAX
+
 namespace Anki {
   namespace Cozmo {
   namespace SteeringController {
@@ -213,6 +215,7 @@ namespace Anki {
       //Convert the curvature to 1/mm
       curvature *= 1000.0f;
       
+      // TODO: Get rid of this??
       //STOP: This will make us coast when we command 0, good for now,
       //but we might need to break later
       if (desspeed < 0) {
