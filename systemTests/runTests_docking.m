@@ -1,8 +1,8 @@
-% function run_testTrackers(allTestsFilename)
+% function runTests_docking(allTestsFilename)
 
-% run_testTrackers('C:/Anki/systemTestImages/allDockerTests.json', 'C:/Anki/systemTestImages/results.mat');
+% runTests_docking('C:/Anki/systemTestImages/allDockerTests.json', 'C:/Anki/systemTestImages/results_docking.mat');
 
-function run_testTrackers(allTestsFilename, outputFilename)
+function runTests_docking(allTestsFilename, outputFilename)
 
 mainResolution = [480,640];
 downsampleFactor = 1;
