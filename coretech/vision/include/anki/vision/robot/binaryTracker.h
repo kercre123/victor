@@ -38,15 +38,22 @@ namespace Anki
           MemoryStack &memory);
 
         // Runs one iteration each of translation and projective
+        //
+        // numMatches returns the number of template pixels within verification_maxTranslationDistance of a point in nextImage
+        // To check is the update is reasonable, numMatches / this->get_numTemplatePixels() will give the percentage of matches
         Result UpdateTrack(
           const Array<u8> &nextImage,
           const u8 edgeDetection_grayvalueThreshold, const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
-          const s32 matching_maxTranslationDistance, const s32 matching_maxProjectiveDistance, const s32 matching_maxCorrespondences,
+          const s32 matching_maxTranslationDistance, const s32 matching_maxProjectiveDistance,
+          const s32 verification_maxTranslationDistance,
+          s32 &numMatches,
           MemoryStack scratch);
 
         bool IsValid() const;
 
         Result ShowTemplate(const bool waitForKeypress, const bool fitImageToWindow) const;
+
+        s32 get_numTemplatePixels() const;
 
         Result set_transformation(const Transformations::PlanarTransformation_f32 &transformation);
         Transformations::PlanarTransformation_f32 get_transformation() const;
@@ -121,17 +128,6 @@ namespace Anki
           s32 &numCorrespondences,
           MemoryStack scratch);
 
-        NO_INLINE static Result FindVerticalCorrespondences_Translation_2D(
-          const s32 maxVerticalMatchingDistance, const s32 maxHorizontalMatchingDistance,
-          const Transformations::PlanarTransformation_f32 &transformation,
-          const FixedLengthList<Point<s16> > &templatePoints,
-          const FixedLengthList<Point<s16> > &newPoints,
-          const s32 imageHeight,
-          const s32 imageWidth,
-          const Array<s32> &xStartIndexes, //< Computed by ComputeIndexLimitsHorizontal
-          Array<s32> &numMatches, //< an array of size (2*maxHorizontalMatchingDistance + 1) x (2*maxVerticalMatchingDistance + 1)
-          MemoryStack scratch);
-
         NO_INLINE static Result FindVerticalCorrespondences_Projective(
           const s32 maxMatchingDistance,
           const Transformations::PlanarTransformation_f32 &transformation,
@@ -156,19 +152,50 @@ namespace Anki
           Array<f32> &Atb_t,
           MemoryStack scratch);
 
+        NO_INLINE static Result FindVerticalCorrespondences_Verify(
+          const s32 maxMatchingDistance,
+          const Transformations::PlanarTransformation_f32 &transformation,
+          const FixedLengthList<Point<s16> > &templatePoints,
+          const FixedLengthList<Point<s16> > &newPoints,
+          const s32 imageHeight,
+          const s32 imageWidth,
+          const Array<s32> &xStartIndexes, //< Computed by ComputeIndexLimitsHorizontal
+          s32 &numTemplatePixelsMatched,
+          MemoryStack scratch);
+
+        NO_INLINE static Result FindHorizontalCorrespondences_Verify(
+          const s32 maxMatchingDistance,
+          const Transformations::PlanarTransformation_f32 &transformation,
+          const FixedLengthList<Point<s16> > &templatePoints,
+          const FixedLengthList<Point<s16> > &newPoints,
+          const s32 imageHeight,
+          const s32 imageWidth,
+          const Array<s32> &yStartIndexes, //< Computed by ComputeIndexLimitsVertical
+          s32 &numTemplatePixelsMatched,
+          MemoryStack scratch);
+
         // Allocates allLimits, and computes all the indexe limits
         static Result ComputeAllIndexLimits(const EdgeLists &imageEdges, AllIndexLimits &allLimits, MemoryStack &memory);
 
         Result IterativelyRefineTrack_Translation(
           const EdgeLists &nextImageEdges,
           const AllIndexLimits &allLimits,
-          const s32 matching_maxDistance, const s32 matching_maxCorrespondences,
+          const s32 matching_maxDistance,
           MemoryStack scratch);
 
         Result IterativelyRefineTrack_Projective(
           const EdgeLists &nextImageEdges,
           const AllIndexLimits &allLimits,
-          const s32 matching_maxDistance, const s32 matching_maxCorrespondences,
+          const s32 matching_maxDistance,
+          MemoryStack scratch);
+
+        // Only checks for the first match for each template pixel, within matching_maxDistance pixels.
+        // For each template pixel matched, numTemplatePixelsMatched is incremented
+        Result VerifyTrack(
+          const EdgeLists &nextImageEdges,
+          const AllIndexLimits &allLimits,
+          const s32 matching_maxDistance,
+          s32 &numTemplatePixelsMatched,
           MemoryStack scratch);
       }; // class BinaryTracker
     } // namespace TemplateTracker
