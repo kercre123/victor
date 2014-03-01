@@ -45,7 +45,7 @@ function editGroundTruth_OpeningFcn(hObject, eventdata, handles, varargin)
     resolutionHorizontal = 640;
     resolutionVertical = 480;
 
-    setSavedDisplayParameters();
+    setFromSavedDisplayParameters();
 
     % Choose default command line output for editGroundTruth
     handles.output = hObject;
@@ -69,47 +69,53 @@ function varargout = editGroundTruth_OutputFcn(hObject, eventdata, handles)
 % Create Functions
 %
 
+function curTest_CreateFcn(hObject, eventdata, handles)
+    global curTestNumber;
+    setDefaultGuiObjectColor(hObject);
+    set(hObject,'String',num2str(curTestNumber));
+
 function curSequence_CreateFcn(hObject, eventdata, handles) %#ok<*INUSD>
     global curSequenceNumber;
-
-    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-        set(hObject,'BackgroundColor','white');
-    end
-
+    setDefaultGuiObjectColor(hObject);
     set(hObject,'String',num2str(curSequenceNumber));
-
-function curDisplayType_CreateFcn(hObject, eventdata, handles)
-    global curDisplayType;
-
-    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-        set(hObject,'BackgroundColor','white');
-    end
-
-    set(hObject,'String',num2str(curDisplayType));
 
 function curImage_CreateFcn(hObject, eventdata, handles)
     global curFrameNumber;
-
-    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-        set(hObject,'BackgroundColor','white');
-    end
-
+    setDefaultGuiObjectColor(hObject);
     set(hObject,'String',num2str(curFrameNumber));
 
+function curSet_CreateFcn(hObject, eventdata, handles)
+    global curSet;
+    setDefaultGuiObjectColor(hObject);
+    set(hObject,'String',num2str(curSet));
+    
+function curDisplayType_CreateFcn(hObject, eventdata, handles)
+    global curDisplayType;
+    setDefaultGuiObjectColor(hObject);
+    set(hObject,'String',num2str(curDisplayType));    
+
+function maxTest_CreateFcn(hObject, eventdata, handles)
+    global maxTestNumber;
+    set(hObject,'String',num2str(maxTestNumber));    
+    
 function maxSequence_CreateFcn(hObject, eventdata, handles)
     global maxSequenceNumber;
-
     set(hObject,'String',num2str(maxSequenceNumber));
 
 function maxImage_CreateFcn(hObject, eventdata, handles)
     global maxFrameNumber;
-
     set(hObject,'String',num2str(maxFrameNumber));
 
+function maxSet_CreateFcn(hObject, eventdata, handles)
+    global maxSet;
+    set(hObject,'String',num2str(maxSet));    
+
+function maxDisplayType_CreateFcn(hObject, eventdata, handles)
+    global maxDisplayType;
+    set(hObject,'String',num2str(maxDisplayType));    
+
 function configFilename_CreateFcn(hObject, eventdata, handles)
-    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-        set(hObject,'BackgroundColor','white');
-    end
+    setDefaultGuiObjectColor(hObject);
 
 function figure1_CreateFcn(hObject, eventdata, handles)
 
@@ -125,80 +131,38 @@ function configFilenameNoteText_CreateFcn(hObject, eventdata, handles)
 
 function previousTest_CreateFcn(hObject, eventdata, handles)
 
-function maxTest_CreateFcn(hObject, eventdata, handles)
-    global maxTestNumber;
-    set(hObject,'String',num2str(maxTestNumber));
-
 function nextTest_CreateFcn(hObject, eventdata, handles)
-
-function curTest_CreateFcn(hObject, eventdata, handles)
-    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-        set(hObject,'BackgroundColor','white');
-    end
-
-    global curTestNumber;
-    set(hObject,'String',num2str(curTestNumber));
-
 
 function displayParameter1_CreateFcn(hObject, eventdata, handles)
     global displayParameter1;
-
-    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-        set(hObject,'BackgroundColor','white');
-    end
-
+    setDefaultGuiObjectColor(hObject);
     set(hObject,'String',num2str(displayParameter1));
 
 function displayParameter2_CreateFcn(hObject, eventdata, handles)
     global displayParameter2;
-
-    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-        set(hObject,'BackgroundColor','white');
-    end
-
+    setDefaultGuiObjectColor(hObject);
     set(hObject,'String',num2str(displayParameter2));
 
 function displayParameter3_CreateFcn(hObject, eventdata, handles)
     global displayParameter3;
-
-    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-        set(hObject,'BackgroundColor','white');
-    end
-
+    setDefaultGuiObjectColor(hObject);
     set(hObject,'String',num2str(displayParameter3));
 
 function displayParameter4_CreateFcn(hObject, eventdata, handles)
     global displayParameter4;
-
-    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-        set(hObject,'BackgroundColor','white');
-    end
-
+    setDefaultGuiObjectColor(hObject);
     set(hObject,'String',num2str(displayParameter4));
-    
+
 function resolutionHorizontal_CreateFcn(hObject, eventdata, handles)
     global resolutionHorizontal;
-    
-    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-        set(hObject,'BackgroundColor','white');
-    end
-    
+    setDefaultGuiObjectColor(hObject);
     set(hObject,'String',num2str(resolutionHorizontal));
 
 function resolutionVertical_CreateFcn(hObject, eventdata, handles)
     global resolutionVertical;
-
-    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-        set(hObject,'BackgroundColor','white');
-    end
-    
+    setDefaultGuiObjectColor(hObject);
     set(hObject,'String',num2str(resolutionVertical));
 
-function curSet_CreateFcn(hObject, eventdata, handles)
-    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-        set(hObject,'BackgroundColor','white');
-    end  
-    
 %
 % End Create Functions
 %
@@ -209,404 +173,237 @@ function curSet_CreateFcn(hObject, eventdata, handles)
 
 function configFilename_Callback(hObject, eventdata, handles)
     loadAllTestsFile()
+
+function setDefaultGuiObjectColor(hObject)
+    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+        set(hObject,'BackgroundColor','white');
+    end
     
 function previousTest_Callback(hObject, eventdata, handles)
     global curTestNumber;
-    global curSequenceNumber;
-
-    if curTestNumber > 1
-        curTestNumber = curTestNumber - 1;
-        curSequenceNumber = 1;
-    end
-
+    curTestNumber = curTestNumber - 1;
+    fixBounds();
     sequenceChanged(handles, true);
-    
+
 function previousTest2_Callback(hObject, eventdata, handles)
     global curTestNumber;
-    global maxTestNumber;
-    global curSequenceNumber;
-
-    newTestNumber = curTestNumber - 5;
-    newTestNumber = max(1, min(maxTestNumber, newTestNumber));
-
-    if newTestNumber ~= curTestNumber
-        curSequenceNumber = 1;
-    end
-
-    curTestNumber = newTestNumber;
-
+    curTestNumber = curTestNumber - 5;
+    fixBounds();
     sequenceChanged(handles, true);
 
 function previousTest3_Callback(hObject, eventdata, handles)
     global curTestNumber;
-    global maxTestNumber;
-    global curSequenceNumber;
-
-    newTestNumber = curTestNumber - 100;
-    newTestNumber = max(1, min(maxTestNumber, newTestNumber));
-
-    if newTestNumber ~= curTestNumber
-        curSequenceNumber = 1;
-    end
-
-    curTestNumber = newTestNumber;
-
-    sequenceChanged(handles, true);        
+    curTestNumber = curTestNumber - 100;
+    fixBounds();
+    sequenceChanged(handles, true);
 
 function nextTest_Callback(hObject, eventdata, handles)
-    global curSequenceNumber;
     global curTestNumber;
-    global maxTestNumber;
-
-    if curTestNumber < maxTestNumber
-        curTestNumber = curTestNumber + 1;
-        curSequenceNumber = 1;
-    end
-
+    curTestNumber = curTestNumber + 1;
+    fixBounds();
     sequenceChanged(handles, true);
-    
+
 function nextTest2_Callback(hObject, eventdata, handles)
-    global curSequenceNumber;
     global curTestNumber;
-    global maxTestNumber;
-
-    newTestNumber = curTestNumber + 5;
-    newTestNumber = max(1, min(maxTestNumber, newTestNumber));
-
-    if newTestNumber ~= curTestNumber
-        curSequenceNumber = 1;
-    end
-
-    curTestNumber = newTestNumber;
-
+    curTestNumber = curTestNumber + 5;
+    fixBounds();
     sequenceChanged(handles, true);
 
 function nextTest3_Callback(hObject, eventdata, handles)
-    global curSequenceNumber;
     global curTestNumber;
-    global maxTestNumber;
-
-    newTestNumber = curTestNumber + 100;
-    newTestNumber = max(1, min(maxTestNumber, newTestNumber));
-
-    if newTestNumber ~= curTestNumber
-        curSequenceNumber = 1;
-    end
-
-    curTestNumber = newTestNumber;
-
+    curTestNumber = curTestNumber + 100;
+    fixBounds();
     sequenceChanged(handles, true);
 
 function curTest_Callback(hObject, eventdata, handles)
-    global curSequenceNumber;
     global curTestNumber;
-    global maxTestNumber;
-
-    curTestNumberNew = str2double(get(hObject,'String'));
-
-    if curTestNumberNew <= maxTestNumber && curTestNumberNew >= 1
-        curTestNumber = curTestNumberNew;
-    end
-
-    curSequenceNumber = 1;
-
+    curTestNumber = str2double(get(hObject,'String'));
+    fixBounds();
     sequenceChanged(handles, true);
 
 function previousSequence_Callback(hObject, eventdata, handles) %#ok<*INUSL>
     global curSequenceNumber;
-
-    if curSequenceNumber > 1
-        curSequenceNumber = curSequenceNumber - 1;
-    end
-
+    curSequenceNumber = curSequenceNumber - 1;
+    fixBounds();
     sequenceChanged(handles, true);
 
 function previousSequence2_Callback(hObject, eventdata, handles)
     global curSequenceNumber;
-    global maxSequenceNumber;
-
     curSequenceNumber = curSequenceNumber - 5;
-    curSequenceNumber = max(1, min(maxSequenceNumber, curSequenceNumber));
+    fixBounds();
     sequenceChanged(handles, true);
 
 function previousSequence3_Callback(hObject, eventdata, handles)
     global curSequenceNumber;
-    global maxSequenceNumber;
-
     curSequenceNumber = curSequenceNumber - 100;
-    curSequenceNumber = max(1, min(maxSequenceNumber, curSequenceNumber));
+    fixBounds();
     sequenceChanged(handles, true);
-    
+
 function nextSequence_Callback(hObject, eventdata, handles)
     global curSequenceNumber;
-    global maxSequenceNumber;
-
-    if curSequenceNumber < maxSequenceNumber
-        curSequenceNumber = curSequenceNumber + 1;
-    end
-
+    curSequenceNumber = curSequenceNumber + 1;
+    fixBounds();
     sequenceChanged(handles, true);
 
 function nextSequence2_Callback(hObject, eventdata, handles)
     global curSequenceNumber;
-    global maxSequenceNumber;
-
     curSequenceNumber = curSequenceNumber + 5;
-    curSequenceNumber = max(1, min(maxSequenceNumber, curSequenceNumber));
+    fixBounds();
     sequenceChanged(handles, true);
 
 function nextSequence3_Callback(hObject, eventdata, handles)
     global curSequenceNumber;
-    global maxSequenceNumber;
-
     curSequenceNumber = curSequenceNumber + 100;
-    curSequenceNumber = max(1, min(maxSequenceNumber, curSequenceNumber));
+    fixBounds();
     sequenceChanged(handles, true);
-    
 
 function curSequence_Callback(hObject, eventdata, handles)
     global curSequenceNumber;
-    global maxSequenceNumber;
-
-    curSequenceNumberNew = str2double(get(hObject,'String'));
-
-    if curSequenceNumberNew <= maxSequenceNumber && curSequenceNumberNew >= 1
-        curSequenceNumber = curSequenceNumberNew;
-    end
-
+    curSequenceNumber = str2double(get(hObject,'String'));
+    fixBounds();
     sequenceChanged(handles);
-    
+
 function previousImage_Callback(hObject, eventdata, handles) %#ok<*DEFNU>
     global curFrameNumber;
-
-    if curFrameNumber > 1
-        curFrameNumber = curFrameNumber - 1;
-    end
-
+    curFrameNumber = curFrameNumber - 1;
+    fixBounds();
     sequenceChanged(handles);
 
 function previousImage2_Callback(hObject, eventdata, handles)
     global curFrameNumber;
-    global maxFrameNumber;
-
     curFrameNumber = curFrameNumber - 5;
-    curFrameNumber = max(1, min(maxFrameNumber, curFrameNumber));
+    fixBounds();
     sequenceChanged(handles);
 
 function previousImage3_Callback(hObject, eventdata, handles)
     global curFrameNumber;
-    global maxFrameNumber;
-
     curFrameNumber = curFrameNumber - 100;
-    curFrameNumber = max(1, min(maxFrameNumber, curFrameNumber));
-    sequenceChanged(handles);    
-    
+    fixBounds();
+    sequenceChanged(handles);
 
 function nextImage_Callback(hObject, eventdata, handles)
     global curFrameNumber;
-    global maxFrameNumber;
-
-    if curFrameNumber < maxFrameNumber
-        curFrameNumber = curFrameNumber + 1;
-    end
-
+    curFrameNumber = curFrameNumber + 1;
+    fixBounds();
     sequenceChanged(handles);
 
 function nextImage2_Callback(hObject, eventdata, handles)
     global curFrameNumber;
-    global maxFrameNumber;
-
     curFrameNumber = curFrameNumber + 5;
-    curFrameNumber = max(1, min(maxFrameNumber, curFrameNumber));
+    fixBounds();
     sequenceChanged(handles);
 
 function nextImage3_Callback(hObject, eventdata, handles)
     global curFrameNumber;
-    global maxFrameNumber;
-
     curFrameNumber = curFrameNumber + 100;
-    curFrameNumber = max(1, min(maxFrameNumber, curFrameNumber));
-    sequenceChanged(handles);    
-    
+    fixBounds();
+    sequenceChanged(handles);
+
 function curImage_Callback(hObject, eventdata, handles)
-    global maxSequenceNumber;
     global curFrameNumber;
+    curFrameNumber = str2double(get(hObject,'String'));
+    fixBounds();
+    sequenceChanged(handles);
 
-    curFrameNumberNew = str2double(get(hObject,'String'));
-
-    if curFrameNumberNew <= maxSequenceNumber && curFrameNumberNew >= 1
-        curFrameNumber = curFrameNumberNew;
-    end
-
-    sequenceChanged(handles);    
-        
-    
-
-
-
-    
 function nextSet_Callback(hObject, eventdata, handles)
     global curSet;
-    global maxSet;
-
     curSet = curSet + 1;
-    curSet = max(1, min(maxSet, curSet));
+    fixBounds();
     sequenceChanged(handles);
-    
+
 function nextSet2_Callback(hObject, eventdata, handles)
     global curSet;
-    global maxSet;
-
     curSet = curSet + 5;
-    curSet = max(1, min(maxSet, curSet));
+    fixBounds();
     sequenceChanged(handles);
-    
+
 function nextSet3_Callback(hObject, eventdata, handles)
     global curSet;
-    global maxSet;
-
     curSet = curSet + 100;
-    curSet = max(1, min(maxSet, curSet));
+    fixBounds();
     sequenceChanged(handles);
-    
+
 function previousSet_Callback(hObject, eventdata, handles)
     global curSet;
-    global maxSet;
-
     curSet = curSet - 1;
-    curSet = max(1, min(maxSet, curSet));
+    fixBounds();
     sequenceChanged(handles);
 
 function previousSet2_Callback(hObject, eventdata, handles)
     global curSet;
-    global maxSet;
-
     curSet = curSet - 5;
-    curSet = max(1, min(maxSet, curSet));
+    fixBounds();
     sequenceChanged(handles);
-    
+
 function previousSet3_Callback(hObject, eventdata, handles)
     global curSet;
-    global maxSet;
-
     curSet = curSet - 100;
-    curSet = max(1, min(maxSet, curSet));
+    fixBounds();
     sequenceChanged(handles);
-    
+
 function curSet_Callback(hObject, eventdata, handles)
+    global curSet;
+    curSet = str2double(get(hObject,'String'));
+    fixBounds();
+    sequenceChanged(handles);
 
 function previousDisplayType_Callback(hObject, eventdata, handles)
     global curDisplayType;
-    global displayParameter1;
-    global displayParameter2;
-    global displayParameter3;
-    global displayParameter4;
-    global savedDisplayParameters;
-
-    savedDisplayParameters{curDisplayType}(1) = displayParameter1;
-    savedDisplayParameters{curDisplayType}(2) = displayParameter2;
-    savedDisplayParameters{curDisplayType}(3) = displayParameter3;
-    savedDisplayParameters{curDisplayType}(4) = displayParameter4;
-
-    if curDisplayType > 1
-        curDisplayType = curDisplayType - 1;
-    end
-
-    setSavedDisplayParameters();
-
+    setToSavedDisplayParameters();
+    curDisplayType = curDisplayType - 1;
+    fixBounds();
+    setFromSavedDisplayParameters();
     sequenceChanged(handles);
 
 function nextDisplayType_Callback(hObject, eventdata, handles)
     global curDisplayType;
-    global maxDisplayType;
-    global displayParameter1;
-    global displayParameter2;
-    global displayParameter3;
-    global displayParameter4;
-    global savedDisplayParameters;
-
-    savedDisplayParameters{curDisplayType}(1) = displayParameter1;
-    savedDisplayParameters{curDisplayType}(2) = displayParameter2;
-    savedDisplayParameters{curDisplayType}(3) = displayParameter3;
-    savedDisplayParameters{curDisplayType}(4) = displayParameter4;
-
-    if curDisplayType < maxDisplayType
-        curDisplayType = curDisplayType + 1;
-    end
-
-    setSavedDisplayParameters();
-
+    setToSavedDisplayParameters();
+    curDisplayType = curDisplayType + 1;
+    fixBounds();
+    setFromSavedDisplayParameters();
     sequenceChanged(handles);
 
 function curDisplayType_Callback(hObject, eventdata, handles)
     global curDisplayType;
-    global maxDisplayType;
-    global displayParameter1;
-    global displayParameter2;
-    global displayParameter3;
-    global displayParameter4;
-    global savedDisplayParameters;
-
-    savedDisplayParameters{curDisplayType}(1) = displayParameter1;
-    savedDisplayParameters{curDisplayType}(2) = displayParameter2;
-    savedDisplayParameters{curDisplayType}(3) = displayParameter3;
-    savedDisplayParameters{curDisplayType}(4) = displayParameter4;
-
-    curDisplayTypeNew = str2double(get(hObject,'String'));
-
-    if curDisplayTypeNew <= maxDisplayType && curDisplayTypeNew >= 1
-        curDisplayType = curDisplayTypeNew;
-    end
-
-    setSavedDisplayParameters();
-
+    setToSavedDisplayParameters();
+    curDisplayType = str2double(get(hObject,'String'));
+    fixBounds();
+    setFromSavedDisplayParameters();
     sequenceChanged(handles);
 
 function displayParameter1_Callback(hObject, eventdata, handles)
     global displayParameter1;
-
     displayParameter1 = str2double(get(hObject,'String'));
-
     sequenceChanged(handles);
 
 function displayParameter2_Callback(hObject, eventdata, handles)
     global displayParameter2;
-
     displayParameter2 = str2double(get(hObject,'String'));
-
     sequenceChanged(handles);
 
 function displayParameter3_Callback(hObject, eventdata, handles)
     global displayParameter3;
-
     displayParameter3 = str2double(get(hObject,'String'));
-
     sequenceChanged(handles);
 
 function displayParameter4_Callback(hObject, eventdata, handles)
     global displayParameter4;
-
     displayParameter4 = str2double(get(hObject,'String'));
-
     sequenceChanged(handles);
 
 function resolutionHorizontal_Callback(hObject, eventdata, handles)
     global resolutionHorizontal;
-    
     resolutionHorizontal = str2double(get(hObject,'String'));
-    
     sequenceChanged(handles, false, true);
-    
+
 function resolutionVertical_Callback(hObject, eventdata, handles)
     global resolutionVertical;
-    
     resolutionVertical = str2double(get(hObject,'String'));
-    
     sequenceChanged(handles, false, true);
- 
+
 function labelingTypePanel_SelectionChangeFcn(hObject, eventdata, handles)
     global pointsType;
-    
+
     if eventdata.NewValue == handles.errorSignalPoints
         pointsType = 'errorSignal';
         sequenceChanged(handles);
@@ -624,7 +421,20 @@ function labelingTypePanel_SelectionChangeFcn(hObject, eventdata, handles)
 % End Callback Functions
 %
 
-function setSavedDisplayParameters()
+function setToSavedDisplayParameters()
+    global curDisplayType;
+    global displayParameter1;
+    global displayParameter2;
+    global displayParameter3;
+    global displayParameter4;
+    global savedDisplayParameters;
+
+    savedDisplayParameters{curDisplayType}(1) = displayParameter1;
+    savedDisplayParameters{curDisplayType}(2) = displayParameter2;
+    savedDisplayParameters{curDisplayType}(3) = displayParameter3;
+    savedDisplayParameters{curDisplayType}(4) = displayParameter4;
+
+function setFromSavedDisplayParameters()
     global curDisplayType;
     global displayParameter1;
     global displayParameter2;
@@ -743,6 +553,38 @@ function index = findFrameNumberIndex(jsonData, sequenceNumberIndex, frameNumber
 
     return;
 
+function boundsFixed = fixBounds()
+    global curTestNumber;
+    global maxTestNumber;
+    global curSequenceNumber;
+    global maxSequenceNumber;
+    global curFrameNumber;
+    global maxFrameNumber;
+    global curSet;
+    global maxSet;
+    global curDisplayType;
+    global maxDisplayType;
+
+    boundsFixed = false;
+
+    curTestNumberOriginal = curTestNumber;
+    curSequenceNumberOriginal = curSequenceNumber;
+    curFrameNumberOriginal = curFrameNumber;
+    curSetOriginal = curSet;
+
+    curTestNumber = max(1, min(maxTestNumber, curTestNumber));
+    curSequenceNumber = max(1, min(maxSequenceNumber, curSequenceNumber));
+    curFrameNumber = max(1, min(maxFrameNumber, curFrameNumber));
+    curSet = max(1, min(maxSet, curSet));
+    curDisplayType = max(1, min(maxDisplayType, curDisplayType));
+
+    if curTestNumberOriginal ~= curTestNumber
+        curSequenceNumber = 1;
+        boundsFixed = true;    
+    elseif curSequenceNumberOriginal ~= curSequenceNumber || curFrameNumberOriginal ~= curFrameNumber || curSetOriginal ~= curSet || curDisplayType ~= maxDisplayType
+        boundsFixed = true;
+    end    
+    
 function sequenceChanged(handles, resetAll, resetZoomOnly)
     global jsonConfigFilename;
     global jsonData;
@@ -771,24 +613,18 @@ function sequenceChanged(handles, resetAll, resetZoomOnly)
     if ~exist('resetAll', 'var')
         resetAll = false;
     end
-    
+
     if ~exist('resetZoomOnly', 'var')
         resetZoomOnly = false;
     end
 
-    if curSequenceNumber < 1
-        curSequenceNumber = 1;
-    end
+    fixBounds();
 
-    if curSequenceNumber > maxSequenceNumber
-        curSequenceNumber = maxSequenceNumber;
-    end
-    
     if ~strcmpi(pointsType, 'fiducialMarker')
         curSet = 1;
         maxSet = 1;
     end
-    
+
     if resetAll
         try
             loadConfigFile();
@@ -804,7 +640,7 @@ function sequenceChanged(handles, resetAll, resetZoomOnly)
 
         curSet = 1;
         maxSet = 1;
-        
+
         for i = 1:maxSequenceNumber
             if isfield(jsonData.sequences{i}, 'groundTruth') && ~iscell(jsonData.sequences{i}.groundTruth)
                 jsonData.sequences{i}.groundTruth = {jsonData.sequences{i}.groundTruth};
@@ -844,7 +680,9 @@ function sequenceChanged(handles, resetAll, resetZoomOnly)
         set(handles.templatePoints, 'Enable', 'on');
     else
         set(handles.templatePoints, 'Enable', 'off');
-        pointsType = 'errorSignal';
+        if strcmpi(pointsType, 'template')
+            pointsType = 'errorSignal';
+        end
     end
 
     if strcmp(pointsType, 'errorSignal')
@@ -868,8 +706,8 @@ function sequenceChanged(handles, resetAll, resetZoomOnly)
         imageResized = imresize(image, [resolutionVertical,resolutionHorizontal], 'nearest');
     else
         imageResized = image;
-    end    
-    
+    end
+
     if curDisplayType == 1
         % original image
         set(handles.panelDisplayType, 'Title', 'Display Type: Original')
@@ -916,12 +754,12 @@ function sequenceChanged(handles, resetAll, resetZoomOnly)
 %         kernel = fspecial('gaussian',[5 1],1.5); % the default kernel
         h = 11;
         h2 = floor(h/2);
-        
+
         % normal +-1 filter
 %         kernel = ones(h,h);
 %         kernel(h2:end, h2:end) = -1;
 %         kernel = kernel / sum(kernel(:));
-% 
+%
 %         imageResized = imfilter(double(imageResized), kernel);
 %         imageResized = imageResized - min(imageResized(:));
 %         imageResized = imageResized / max(imageResized(:));
@@ -929,12 +767,12 @@ function sequenceChanged(handles, resetAll, resetZoomOnly)
 %         imageResized = imageResized / max(imageResized(:));
 
         % template
-        
+
         kernel = 220*ones(h,h);
         kernel(h2:end, h2:end) = 40;
-        
+
         imageResized = double(imageResized);
-        
+
         filteredImageA = zeros(size(imageResized));
         for y = (1+h2):(size(imageResized,1)-h2)
             for x = (1+h2):(size(imageResized,2)-h2)
@@ -942,7 +780,7 @@ function sequenceChanged(handles, resetAll, resetZoomOnly)
                 filteredImageA(y,x) = sad;
             end
         end
-        
+
         kernel = imrotate(kernel, 270);
         filteredImageB = zeros(size(imageResized));
         for y = (1+h2):(size(imageResized,1)-h2)
@@ -951,9 +789,9 @@ function sequenceChanged(handles, resetAll, resetZoomOnly)
                 filteredImageB(y,x) = sad;
             end
         end
-        
+
         filteredImage = min(filteredImageA, filteredImageB);
-        
+
         imageResized = filteredImage;
         imageResized = imageResized / max(imageResized(:));
         imageResized = 10.^(imageResized);
@@ -963,9 +801,9 @@ function sequenceChanged(handles, resetAll, resetZoomOnly)
     elseif curDisplayType == 5
         kernel = ones(5,5);
         kernel = kernel / sum(kernel(:));
-        
+
         filteredImage = imfilter(imageResized, kernel);
-        
+
         ulImage = zeros(size(imageResized));
         offset = 5;
         for y = (1+offset):(size(imageResized,1)-offset)
@@ -976,11 +814,11 @@ function sequenceChanged(handles, resetAll, resetZoomOnly)
                                filteredImage(y, x);
             end
         end
-        
+
         ulImage = ulImage / 255;
-        
+
         figure(1); imshow(ulImage);
-        
+
         figure(100);
         kernel = fspecial('gaussian',[displayParameter1 1], displayParameter2);
         c = cornermetric(imageResized, 'Harris', 'FilterCoefficients', kernel);
@@ -988,7 +826,7 @@ function sequenceChanged(handles, resetAll, resetZoomOnly)
         cp = cp / max(cp(:));
         imageResized = cp;
     end
-    
+
     imageHandle = imshow(imageResized);
 
     if ~resetAll && ~resetZoomOnly
@@ -1002,7 +840,7 @@ function sequenceChanged(handles, resetAll, resetZoomOnly)
     if index ~= -1
         xScaleInv = resolutionHorizontal / size(image,2);
         yScaleInv = resolutionVertical / size(image,1);
-        
+
         if strcmp(pointsType, 'errorSignal')
             if ~isfield(jsonData.sequences{curSequenceNumber}.groundTruth{index}, 'errorSignalCorners') || isempty(jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners)
                 jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners = {};
@@ -1057,7 +895,7 @@ function sequenceChanged(handles, resetAll, resetZoomOnly)
             end
 
             plotType = 'b+';
-        elseif strcmp(pointsType, 'fiducialMarker')    
+        elseif strcmp(pointsType, 'fiducialMarker')
             if ~isfield(jsonData.sequences{curSequenceNumber}.groundTruth{index}, 'templateCorners') || isempty(jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners)
                 jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners = {};
             end
@@ -1119,7 +957,7 @@ function ButtonClicked(hObject, eventdata, handles)
     global maxTemplateCorners;
     global resolutionHorizontal;
     global resolutionVertical;
-    
+
     axesHandle  = get(imageHandle,'Parent');
     imPosition = get(axesHandle, 'CurrentPoint') - 0.5;
 
@@ -1147,10 +985,10 @@ function ButtonClicked(hObject, eventdata, handles)
     if strcmp(buttonType, 'normal') % left click
         xScale = size(image,2) / resolutionHorizontal;
         yScale = size(image,1) / resolutionVertical;
-        
+
         newPoint.x = imPosition(1) * xScale;
         newPoint.y = imPosition(2) * yScale;
-    
+
         if strcmp(pointsType, 'errorSignal')
             if ~isfield(jsonData.sequences{curSequenceNumber}.groundTruth{index}, 'errorSignalCorners') || isempty(jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners)
                 jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners = {};
@@ -1185,7 +1023,7 @@ function ButtonClicked(hObject, eventdata, handles)
     elseif strcmp(buttonType, 'alt') % right click
         xScaleInv = resolutionHorizontal / size(image,2);
         yScaleInv = resolutionVertical / size(image,1);
-        
+
         minDist = Inf;
         minInd = -1;
 
@@ -1225,4 +1063,6 @@ function ButtonClicked(hObject, eventdata, handles)
     end
 
     sequenceChanged(allHandles);
+
+
 
