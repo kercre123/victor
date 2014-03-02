@@ -706,9 +706,12 @@ namespace Anki
           }
           
         }
-        path.AppendLine(0, preStraightApproach_x, preStraightApproach_y, end_x, end_y);
         
-        shortestPathLength += final_straight_approach_length;
+        // Optionally, append a 4th straight line segment
+        if (final_straight_approach_length != 0) {
+          path.AppendLine(0, preStraightApproach_x, preStraightApproach_y, end_x, end_y);
+          shortestPathLength += final_straight_approach_length;
+        }
         
         if (path_length) {
           *path_length = shortestPathLength;

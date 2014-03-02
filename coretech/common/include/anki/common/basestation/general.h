@@ -184,6 +184,14 @@ bool CompareSecond (const std::pair<X,Y>& a, const std::pair<X,Y>& b) {
   return a.second < b.second;
 }
 
+  
+///////////////////////////////////////////////////////////////////
+// PRINT HELPERS
+///////////////////////////////////////////////////////////////////
+void PrintBytesHex(const char* bytes, int num_bytes);
+
+void PrintBytesUInt(const char* bytes, int num_bytes);
+  
 
 // Makes a beep (for debugging?)
 void SystemBeep();

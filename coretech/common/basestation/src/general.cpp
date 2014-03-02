@@ -195,6 +195,22 @@ int ReadLine(FILE* stream, const char * format, ...) {
   return true;
 }
 
+
+void PrintBytesHex(const char* bytes, int num_bytes)
+{
+  for (int i=0; i<num_bytes;i++){
+    printf("0x%x ", (unsigned char)bytes[i]);
+  }
+}
+
+void PrintBytesUInt(const char* bytes, int num_bytes)
+{
+  for (int i=0; i<num_bytes;i++){
+    printf("%u ", (unsigned char)bytes[i]);
+  }
+}
+
+  
 void SystemBeep()
 {
   printf("\a");
