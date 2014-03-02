@@ -3,8 +3,9 @@
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/localization.h"
 #include "anki/cozmo/robot/visionSystem.h"
-
-#include "anki/common/shared/radians.h"
+#include "anki/cozmo/robot/pathFollower.h"
+#include "anki/cozmo/robot/speedController.h"
+#include "dockingController.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -269,6 +270,33 @@ namespace Anki {
         }
         
       } // ProcessUARTMessages()
+
+      
+      void ProcessClearPathMessage(const ClearPath& msg) {
+        SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
+        PathFollower::ClearPath();
+        //SteeringController::ExecuteDirectDrive(0,0);
+      }
+
+      void ProcessAppendPathSegmentArcMessage(const AppendPathSegmentArc& msg) {
+        PathFollower::AppendPathSegment_Arc(0, msg.x_center_m, msg.y_center_m, msg.radius_m, msg.startRad, msg.sweepRad);
+      }
+      
+      void ProcessAppendPathSegmentLineMessage(const AppendPathSegmentLine& msg) {
+        PathFollower::AppendPathSegment_Line(0, msg.x_start_m, msg.y_start_m, msg.x_end_m, msg.y_end_m);
+      }
+      
+      void ProcessExecutePathMessage(const ExecutePath& msg) {
+        PathFollower::StartPathTraversal();
+      }
+      
+      void ProcessDockWithBlockMessage(const DockWithBlock& msg) {
+        const VisionSystem::MarkerCode code(msg.blockCode);
+        DockingController::StartDocking(code,
+                                        msg.horizontalOffset_mm,
+                                        0, 0);
+      }
+
       
       
       // TODO: Fill these in once they are needed/used:
@@ -281,23 +309,12 @@ namespace Anki {
         PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
       }
       
-      void ProcessClearPathMessage(const ClearPath& msg) {
-        PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
-      }
       
       void ProcessSetMotionMessage(const SetMotion& msg) {
         PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
       }
       
       void ProcessRobotAvailableMessage(const RobotAvailable& msg) {
-        PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
-      }
-      
-      void ProcessAppendPathSegmentArcMessage(const AppendPathSegmentArc& msg) {
-        PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
-      }
-      
-      void ProcessAppendPathSegmentLineMessage(const AppendPathSegmentLine& msg) {
         PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
       }
       

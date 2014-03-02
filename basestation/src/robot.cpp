@@ -6,6 +6,7 @@
 //  Copyright (c) 2013 Anki, Inc. All rights reserved.
 //
 
+#include "pathPlanner.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/messages.h"
@@ -31,17 +32,18 @@ namespace Anki {
       
     }
     
-    ReturnCode RobotManager::Init(MessageHandler* msgHandler, BlockWorld* blockWorld)
+    ReturnCode RobotManager::Init(MessageHandler* msgHandler, BlockWorld* blockWorld, PathPlanner* pathPlanner)
     {
       msgHandler_ = msgHandler;
       blockWorld_ = blockWorld;
+      pathPlanner_ = pathPlanner;
       
       return EXIT_SUCCESS;
     }
     
     void RobotManager::AddRobot(const RobotID_t withID)
     {
-      robots_[withID] = new Robot(withID, msgHandler_, blockWorld_);
+      robots_[withID] = new Robot(withID, msgHandler_, blockWorld_, pathPlanner_);
       ids_.push_back(withID);
     }
     
@@ -79,8 +81,8 @@ namespace Anki {
     
 #pragma mark --- Robot Class Implementations ---
     
-    Robot::Robot(const RobotID_t robotID, MessageHandler* msgHandler, BlockWorld* world)
-    : ID_(robotID), msgHandler_(msgHandler), world_(world),
+    Robot::Robot(const RobotID_t robotID, MessageHandler* msgHandler, BlockWorld* world, PathPlanner* pathPlanner)
+    : ID_(robotID), msgHandler_(msgHandler), world_(world), pathPlanner_(pathPlanner),
       pose(-M_PI_2, Z_AXIS_3D, {{0.f, 0.f, WHEEL_RAD_TO_MM}}),
       neckPose(0.f,Y_AXIS_3D, {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &pose),
       headCamPose({0,0,1,  -1,0,0,  0,-1,0},
@@ -307,6 +309,112 @@ namespace Anki {
       
     } // dockWithBlock()
 
+    
+    ReturnCode Robot::GetPathToPose(const Pose3d& targetPose, Planning::Path& path)
+    {
+      
+      return pathPlanner_->GetPlan(path, get_pose(), targetPose);
+      
+      
+    }
+    
+    ReturnCode Robot::ExecutePathToPose(const Pose3d& pose)
+    {
+      Planning::Path p;
+      if (GetPathToPose(pose, p) == EXIT_SUCCESS) {
+        return SendExecutePath(p);
+      }
+        
+      return EXIT_FAILURE;
+      
+    }
+    
+    
+    
+    // ============ Messaging ================
+    
+    // Clears the path that the robot is executing which also stops the robot
+    ReturnCode Robot::SendClearPath()
+    {
+      MessageClearPath m;
+      m.pathID = 0;
+      
+      return msgHandler_->SendMessage(ID_, m);
+    }
+    
+    // Sends a path to the robot to be immediately executed
+    ReturnCode Robot::SendExecutePath(const Planning::Path& path)
+    {
+      // TODO: Clear currently executing path or write to buffered path?
+      if (SendClearPath() == EXIT_FAILURE)
+        return EXIT_FAILURE;
+
+      
+      // Send path segments
+      for (u8 i=0; i<path.GetNumSegments(); i++)
+      {
+        switch (path[i].type)
+        {
+          case Planning::PST_LINE:
+          {
+            MessageAppendPathSegmentLine m;
+            const Planning::PathSegmentDef::s_line* l = &(path[i].def.line);
+            m.x_start_m = l->startPt_x;
+            m.y_start_m = l->startPt_y;
+            m.x_end_m = l->endPt_x;
+            m.y_end_m = l->endPt_y;
+            m.pathID = 0;
+            m.segmentID = i;
+            
+            // TODO: Add speed profile params
+            
+            if (msgHandler_->SendMessage(ID_, m) == EXIT_FAILURE)
+              return EXIT_FAILURE;
+            break;
+          }
+          case Planning::PST_ARC:
+          {
+            MessageAppendPathSegmentArc m;
+            const Planning::PathSegmentDef::s_arc* a = &(path[i].def.arc);
+            m.x_center_m = a->centerPt_x;
+            m.y_center_m = a->centerPt_y;
+            m.radius_m = a->radius;
+            m.startRad = a->startRad;
+            m.sweepRad = a->sweepRad;
+            m.pathID = 0;
+            m.segmentID = i;
+            
+            // TODO: Add speed profile params
+            
+            if (msgHandler_->SendMessage(ID_, m) == EXIT_FAILURE)
+              return EXIT_FAILURE;
+            break;
+          }
+          case Planning::PST_POINT_TURN:
+            PRINT_NAMED_ERROR("PointTurnNotImplemented", "Point turns not working yet");
+            return EXIT_FAILURE;
+          default:
+            PRINT_NAMED_ERROR("Invalid path segment", "Can't send path segment of unknown type");
+            return EXIT_FAILURE;
+            
+        }
+      }
+      
+      // Send start path execution message
+      MessageExecutePath m;
+      m.pathID = 0;
+      return msgHandler_->SendMessage(ID_, m);
+    }
+    
+    
+    ReturnCode Robot::SendDockWithBlock(const u8* blockCode, const f32 markerWidth_mm, const DockAction_t dockAction)
+    {
+      MessageDockWithBlock m;
+      m.markerWidth_mm = markerWidth_mm;
+      std::copy(blockCode, blockCode + m.blockCode.size(), m.blockCode.begin());
+      
+      return msgHandler_->SendMessage(ID_, m);
+    }
     
     
   } // namespace Cozmo

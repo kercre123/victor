@@ -40,8 +40,8 @@ namespace Anki {
       // type objectTypeID located at the specified pose.
       // The object will be the
       void SetVizObject(u32 objectID, u32 objectTypeID,
-                        const Anki::Point3f &size,
-                        const Anki::Pose3d &pose,
+                        const Point3f &size,
+                        const Pose3d &pose,
                         u32 colorID = DEFAULT_COLOR_ID);
       
       // Erases the object corresponding to the objectID

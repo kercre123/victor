@@ -72,7 +72,7 @@ ADD_MESSAGE_MEMBER(s16, desiredSpeed_mmPerSec) \
 ADD_MESSAGE_MEMBER(s16, terminalSpeed_mmPerSec) \
 ADD_MESSAGE_MEMBER(u8,  segmentID)
 
-// SetPathSegmentLine
+// AppendPathSegmentLine
 START_MESSAGE_DEFINITION(AppendPathSegmentLine, 1)
 ADD_MESSAGE_MEMBER(f32, x_start_m)
 ADD_MESSAGE_MEMBER(f32, y_start_m)
@@ -81,19 +81,32 @@ ADD_MESSAGE_MEMBER(f32, y_end_m)
 ADD_COMMON_PATH_SEGMENT_MEMBERS
 END_MESSAGE_DEFINITION(AppendPathSegmentLine)
 
-// SetPathSegmentArc
+// AppendPathSegmentArc
 START_MESSAGE_DEFINITION(AppendPathSegmentArc, 1)
 ADD_MESSAGE_MEMBER(f32, x_center_m)
 ADD_MESSAGE_MEMBER(f32, y_center_m)
 ADD_MESSAGE_MEMBER(f32, radius_m)
 ADD_MESSAGE_MEMBER(f32, startRad)
-ADD_MESSAGE_MEMBER(f32, endRad)
+ADD_MESSAGE_MEMBER(f32, sweepRad)
 ADD_COMMON_PATH_SEGMENT_MEMBERS
 END_MESSAGE_DEFINITION(AppendPathSegmentArc)
 
+// ExecutePath
+START_MESSAGE_DEFINITION(ExecutePath, 1)
+ADD_MESSAGE_MEMBER(u16, pathID)   // u16 or u8?
+END_MESSAGE_DEFINITION(ExecutePath)
 
 // VisionMarker
 #define VISION_MARKER_CODE_LENGTH 11 // ceil( (9*9 + 4)/8 )
+
+// DockToBlock
+START_MESSAGE_DEFINITION(DockWithBlock, 1)
+ADD_MESSAGE_MEMBER(f32, horizontalOffset_mm)  // Offset wrt to docking block. Don't know if this will work yet.
+ADD_MESSAGE_MEMBER(f32, markerWidth_mm)
+ADD_MESSAGE_MEMBER(u8, dockAction)  // See DockAction_t
+ADD_MESSAGE_MEMBER_ARRAY(u8, blockCode, VISION_MARKER_CODE_LENGTH)
+END_MESSAGE_DEFINITION(DockWithBlock)
+
 
 START_TIMESTAMPED_MESSAGE_DEFINITION(VisionMarker, 1)
 // TODO: make the corner coordinates fixed point

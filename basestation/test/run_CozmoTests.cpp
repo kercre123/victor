@@ -53,7 +53,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
   ASSERT_TRUE(jsonParseResult);
 
   BlockWorld blockWorld;
-  Robot robot(0, 0, &blockWorld);    // TODO: Support multiple robots
+  Robot robot(0, 0, &blockWorld, 0);    // TODO: Support multiple robots
 
   
   ASSERT_TRUE(jsonRoot.isMember("CameraCalibration"));

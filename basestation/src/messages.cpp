@@ -32,6 +32,10 @@ namespace Anki {
     // Implement all the message classes' constructors from json files
 #define MESSAGE_DEFINITION_MODE MESSAGE_CLASS_JSON_CONSTRUCTOR_MODE
 #include "anki/cozmo/MessageDefinitions.h"
+
+    // Implement all the message classes' GetID() methods
+#define MESSAGE_DEFINITION_MODE MESSAGE_CLASS_GETID_MODE
+#include "anki/cozmo/MessageDefinitions.h"
     
     // Implement all the message classes' GetSize() methods
 #define MESSAGE_DEFINITION_MODE MESSAGE_CLASS_GETSIZE_MODE

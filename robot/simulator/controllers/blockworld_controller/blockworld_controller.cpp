@@ -23,6 +23,7 @@
 //#include "anki/messaging/basestation/messagingInterface.h"
 #include "vizManager.h"
 #include "pathPlanner.h"
+#include "behaviorManager.h"
 
 #include "anki/cozmo/robot/cozmoConfig.h"
 
@@ -38,23 +39,25 @@ webots::Supervisor basestationController;
 // main()
 //
 
+using namespace Anki;
 using namespace Anki::Cozmo;
 
 int main(int argc, char **argv)
 {
   
   // Instantiate all the modules we need
-  Anki::Cozmo::TCPComms robotComms;
+  TCPComms robotComms;
   BlockWorld blockWorld;
   RobotManager robotMgr;
   MessageHandler msgHandler;
   PathPlanner pathPlanner;
+  BehaviorManager behaviorMgr;
   
   // Initialize the modules by telling them about each other:
   msgHandler.Init(&robotComms, &robotMgr, &blockWorld);
-  robotMgr.Init(&msgHandler, &blockWorld);
+  robotMgr.Init(&msgHandler, &blockWorld, &pathPlanner);
   blockWorld.Init(&robotMgr);
-  
+  behaviorMgr.Init(&robotMgr, &blockWorld);
   
   VizManager::getInstance()->Init();
   
@@ -64,7 +67,7 @@ int main(int argc, char **argv)
   webots::Receiver* rx[MAX_ROBOTS];
   webots::Emitter*  tx[MAX_ROBOTS];
 #endif
-  basestationController.keyboardEnable(Anki::Cozmo::TIME_STEP);
+  basestationController.keyboardEnable(TIME_STEP);
 
 
   
@@ -88,11 +91,11 @@ int main(int argc, char **argv)
   //
   // Main Execution loop: step the world forward forever
   //
-  while (basestationController.step(Anki::Cozmo::TIME_STEP) != -1)
+  while (basestationController.step(TIME_STEP) != -1)
   {
     // Update time
     // (To be done from iOS eventually)
-    Anki::BaseStationTimer::getInstance()->UpdateTime(SEC_TO_NANOS(basestationController.getTime()));
+    BaseStationTimer::getInstance()->UpdateTime(SEC_TO_NANOS(basestationController.getTime()));
     
     // Read messages from all robots
     robotComms.Update();
@@ -124,7 +127,7 @@ int main(int argc, char **argv)
     //
     for(auto robotiD : robotMgr.GetRobotIDList())
     {
-      Anki::Cozmo::Robot* robot = robotMgr.GetRobotByID(robotiD);
+      Robot* robot = robotMgr.GetRobotByID(robotiD);
       while(robot->hasOutgoingMessages())
       {
         
@@ -139,7 +142,7 @@ int main(int argc, char **argv)
           tx[i]->send(msgData, msgSize);
         }
 #else
-        Anki::Comms::MsgPacket p;
+        Comms::MsgPacket p;
         p.destId = robot->get_ID();
         robot->getOutgoingMessage(p.data, p.dataLen);
         if (p.dataLen > 0) {
@@ -152,6 +155,12 @@ int main(int argc, char **argv)
     
     // Update the world (force robots to process their messages)
     blockWorld.Update();
+    
+    // Update the behavior manager.
+    // TODO: This object encompasses, for the time-being, what some higher level
+    // module(s) would do.  e.g. Some combination of game state, build planner,
+    // personality planner, etc.
+    behaviorMgr.Update();
     
   } // while still stepping
 
