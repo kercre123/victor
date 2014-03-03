@@ -55,7 +55,7 @@ static UdpServer server;
 static bool drawPaths_ = true;
 
 // Default height offset of paths (m)
-static float heightOffset_ = 0.1;
+static float heightOffset_ = 0.05;
 
 // Default angular resolution of arc path segments (radians)
 static float arcRes_rad = 0.2;
@@ -293,11 +293,11 @@ void webots_physics_step() {
         pathID = msg[PLUGIN_MSG_PATH_ID];
         pt[0] = msg[LINE_START_X];
         pt[1] = msg[LINE_START_Y];
-        pt[2] = heightOffset_;
+        pt[2] = 0;
         pathMap_[pathID].push_back(pt);
         pt[0] = msg[LINE_END_X];
         pt[1] = msg[LINE_END_Y];
-        pt[2] = heightOffset_;
+        pt[2] = 0;
         pathMap_[pathID].push_back(pt);
         msgOffset += LINE_MSG_SIZE;
         //dWebotsConsolePrintf("***** LINE RECVD (robot %d, path %d, totalPathPoints %d)\n", robotID, pathID, robotPathMap[robotID][pathID].size());
@@ -312,7 +312,7 @@ void webots_physics_step() {
           
           float center_x = msg[ARC_CENTER_X];
           float center_y = msg[ARC_CENTER_Y];
-          float center_z = heightOffset_;
+          float center_z = 0;
 
           float radius = msg[ARC_RADIUS];
           float startRad = msg[ARC_START_RAD];
@@ -466,7 +466,6 @@ void webots_physics_draw(int pass, const char *view) {
       glBegin(GL_LINE_STRIP);
       
       for (Path_t::iterator pathIt = pathMapIt->second.begin(); pathIt != pathMapIt->second.end(); pathIt++) {
-//        glVertex3f((*pathIt)[0],(*pathIt)[2],-(*pathIt)[1]); // Map to simulation world coords
         glVertex3f((*pathIt)[0],(*pathIt)[1],(*pathIt)[2] + heightOffset_);
       }
       glEnd();
