@@ -106,26 +106,26 @@ XYaxesDisplay {
 
 Block2x1 {
   name "Block075_1"
-  translation 0 -0.2 0.03
+  translation 0 -0.2 0.022
   rotation 0 0 1 0
   blockColor 0.5 0.1 0.75
-  facemarker1 [
-    "textures/Block075_Face01.png"
+  facemarkerTop [
+    "textures/bullseye.png"
   ]
-  facemarker2 [
-    "textures/Block075_Face02.png"
+  facemarkerBottom [
+    "textures/bullseye.png"
   ]
-  facemarker3 [
-    "textures/Block075_Face03.png"
+  facemarkerLeft [
+    "textures/bullseye.png"
   ]
-  facemarker4 [
-    "textures/Block075_Face04.png"
+  facemarkerRight [
+    "textures/bullseye.png"
   ]
-  facemarker5 [
-    "textures/Block075_Face05.png"
+  facemarkerFront [
+    "textures/bullseye.png"
   ]
-  facemarker6 [
-    "textures/Block075_Face06.png"
+  facemarkerBack [
+    "textures/bullseye.png"
   ]
 }
 

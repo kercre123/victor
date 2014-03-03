@@ -147,7 +147,7 @@ fprintf(fid, '  ] # Solid children\n\n');
 fprintf(fid, '  contactMaterial "cmat_floor"\n');
 fprintf(fid, '  boundingObject Transform {\n');
 fprintf(fid, '    rotation 1 0 0 1.5708\n');
-fprintf(fid, '    translation 0.5 0.5 0\n');
+fprintf(fid, '    translation 0.5 0.5 0.0025\n');
 fprintf(fid, '    children [\n');
 fprintf(fid, '      Plane {\n');
 fprintf(fid, '      }\n');

@@ -66,7 +66,9 @@ namespace Anki {
       void StartMotorCalibrationRoutine()
       {
         LiftController::StartCalibrationRoutine();
+#if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
         GripController::DisengageGripper();
+#endif
         SteeringController::ExecuteDirectDrive(0,0);
 
 #ifdef SIMULATOR
@@ -267,8 +269,10 @@ namespace Anki {
 
         HeadController::Update();
         LiftController::Update();
+#if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
         GripController::Update();
-                
+#endif
+        
         PathFollower::Update();
         PickAndPlaceController::Update();
         DockingController::Update();

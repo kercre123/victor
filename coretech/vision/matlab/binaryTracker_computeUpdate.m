@@ -1,5 +1,5 @@
 
-% function lucasKanadeBinary_computeUpdate()
+% function binaryTracker_computeUpdate()
 
 % updateType in {'translation', 'projective'}
 
@@ -28,36 +28,36 @@
 % im2 = imresize(im2, [120,160]);
 % mask1 = imresize(mask1, [120,160]);
 
-% updatedHomography = lucasKanadeBinary_computeUpdate(im1, mask1, im2, eye(3), 1.0, 5, 1.0, extremaDerivativeThreshold, 15, 'translation')
-% updatedHomography = lucasKanadeBinary_computeUpdate(im1, mask1, im2, eye(3), 1.0, 5, 1.0, extremaDerivativeThreshold, 15, 'projective')
+% updatedHomography = binaryTracker_computeUpdate(im1, mask1, im2, eye(3), 1.0, 5, 1.0, extremaDerivativeThreshold, 15, 'translation')
+% updatedHomography = binaryTracker_computeUpdate(im1, mask1, im2, eye(3), 1.0, 5, 1.0, extremaDerivativeThreshold, 15, 'projective')
 
 % homography = eye(3);
 % for i = 1:10
 %   maxMatchingDistance = floor(14/i);
 %   maxMatchingDistance = maxMatchingDistance + (1-mod(maxMatchingDistance,2));
-%   homography = lucasKanadeBinary_computeUpdate(im1, mask1, im2, homography, 1.0, 5, 1.0, extremaDerivativeThreshold, maxMatchingDistance, 'translation')
+%   homography = binaryTracker_computeUpdate(im1, mask1, im2, homography, 1.0, 5, 1.0, extremaDerivativeThreshold, maxMatchingDistance, 'translation')
 % end
 
 % homography1 = eye(3);
-% im1w1 = lucasKanadeBinary_warpWithHomography(im1, homography1);
-% homography2 = lucasKanadeBinary_computeUpdate(im1, mask1, im2, homography1, 1.0, 5, 1.0, extremaDerivativeThreshold, 7, 'translation')
-% im1w2 = lucasKanadeBinary_warpWithHomography(im1, homography2);
-% homography3 = lucasKanadeBinary_computeUpdate(im1, mask1, im2, homography2, 1.0, 5, 1.0, extremaDerivativeThreshold, 3, 'translation')
-% im1w3 = lucasKanadeBinary_warpWithHomography(im1, homography3);
-% homography4 = lucasKanadeBinary_computeUpdate(im1, mask1, im2, homography3, 1.0, 5, 1.0, extremaDerivativeThreshold, 7, 'projective')
-% im1w4 = lucasKanadeBinary_warpWithHomography(im1, homography4);
-% homography5 = lucasKanadeBinary_computeUpdate(im1, mask1, im2, homography4, 1.0, 5, 1.0, extremaDerivativeThreshold, 5, 'projective')
-% im1w5 = lucasKanadeBinary_warpWithHomography(im1, homography5); 
+% im1w1 = binaryTracker_warpWithHomography(im1, homography1);
+% homography2 = binaryTracker_computeUpdate(im1, mask1, im2, homography1, 1.0, 5, 1.0, extremaDerivativeThreshold, 7, 'translation')
+% im1w2 = binaryTracker_warpWithHomography(im1, homography2);
+% homography3 = binaryTracker_computeUpdate(im1, mask1, im2, homography2, 1.0, 5, 1.0, extremaDerivativeThreshold, 3, 'translation')
+% im1w3 = binaryTracker_warpWithHomography(im1, homography3);
+% homography4 = binaryTracker_computeUpdate(im1, mask1, im2, homography3, 1.0, 5, 1.0, extremaDerivativeThreshold, 7, 'projective')
+% im1w4 = binaryTracker_warpWithHomography(im1, homography4);
+% homography5 = binaryTracker_computeUpdate(im1, mask1, im2, homography4, 1.0, 5, 1.0, extremaDerivativeThreshold, 5, 'projective')
+% im1w5 = binaryTracker_warpWithHomography(im1, homography5); 
 % imshows(im1, im2, uint8(im1w2), uint8(im1w3), uint8(im1w4), uint8(im1w5), 'maximize');
 
 % homography1 = eye(3);
-% homography2 = lucasKanadeBinary_computeUpdate(im1, mask1, im2, homography1, 1.0, 5, 1.0, extremaDerivativeThreshold, 7, 'translation')
-% im1w2a = lucasKanadeBinary_warpWithHomography(im1, homography2);
-% homography3 = lucasKanadeBinary_computeUpdate(im1, mask1, im2, homography2, 1.0, 5, 1.0, extremaDerivativeThreshold, 7, 'projective')
-% im1w3a = lucasKanadeBinary_warpWithHomography(im1, homography3);
+% homography2 = binaryTracker_computeUpdate(im1, mask1, im2, homography1, 1.0, 5, 1.0, extremaDerivativeThreshold, 7, 'translation')
+% im1w2a = binaryTracker_warpWithHomography(im1, homography2);
+% homography3 = binaryTracker_computeUpdate(im1, mask1, im2, homography2, 1.0, 5, 1.0, extremaDerivativeThreshold, 7, 'projective')
+% im1w3a = binaryTracker_warpWithHomography(im1, homography3);
 % imshows(im1, im2, uint8(im1w2a), uint8(im1w3a), 'maximize');
 
-function updatedHomography = lucasKanadeBinary_computeUpdate(...
+function updatedHomography = binaryTracker_computeUpdate(...
     templateImage, templateMask,...
     newImage,...
     initialHomography, scale,...
@@ -241,7 +241,6 @@ function updatedHomography = updateHomography(initialHomography, correspondences
         
         updatedHomography = initialHomography;
         updatedHomography(1:2,3) = updatedHomography(1:2,3) + [update(1); update(2)];
-
     else
         if strcmpi(updateType, 'projective')
             numPoints = size(correspondences,2);

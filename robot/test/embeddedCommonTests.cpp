@@ -34,6 +34,24 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 using namespace Anki::Embedded;
 
+GTEST_TEST(CoreTech_Common, RoundFloat)
+{
+  const s32 numNumbers = 12;
+  const f32 f32s[numNumbers] =             {-1.1f, -1.0f, -0.9f, -0.5f, -0.4f, -0.0f, 0.0f, 0.2f, 0.5f, 0.6f, 1.0f, 1.001f};
+  const f32 s32s_groundTruth[numNumbers] = {-1,       -1,    -1,    -1,     0,     0,    0,    0,    1,    1,    1,      1};
+  s32 s32s[numNumbers];
+
+  //const f32 pointFive = 0.5f;
+  for(s32 i=0; i<numNumbers; i++) {
+    s32s[i] = RoundS32(f32s[i]);
+
+    //printf("%f = %d\n", f32s[i], s32s[i]);
+    ASSERT_TRUE(s32s[i] == s32s_groundTruth[i]);
+  }
+
+  GTEST_RETURN_HERE;
+}
+
 GTEST_TEST(CoreTech_Common, CompressArray)
 {
   const s32 arrayHeight = 3;
@@ -2875,6 +2893,7 @@ s32 RUN_ALL_COMMON_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   numPassedTests = 0;
   numFailedTests = 0;
 
+  CALL_GTEST_TEST(CoreTech_Common, RoundFloat);
   CALL_GTEST_TEST(CoreTech_Common, CompressArray);
   CALL_GTEST_TEST(CoreTech_Common, Heatshrink);
   CALL_GTEST_TEST(CoreTech_Common, SerializedBuffer);

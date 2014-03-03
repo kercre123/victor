@@ -29,11 +29,12 @@ classdef CozmoVisionProcessor < handle
         LIFT_DISTANCE = 34;  % in mm, forward from robot origin
         
         % Robot Geometry
-        NECK_JOINT_POSITION = [-15.5  0  25]; % relative to robot origin
+        % TODO: read this out of cozmoConfig.h or JSON file?
+        NECK_JOINT_POSITION = [-13 0 33.5]; % relative to robot origin
         HEAD_CAM_ROTATION   = [0 0 1; -1 0 0; 0 -1 0]; % rodrigues(-pi/2*[1 0 0])*rodrigues(pi/2*[0 1 0])
         %HEAD_CAM_ROTATION   = [0 1 0; 0 0 -1; -1 0 0];
-        HEAD_CAM_POSITION   = [ 25  0  15]; % relative to neck joint
-        WHEEL_RADIUS        = 20;
+        HEAD_CAM_POSITION   = [11.45 0 -6]; % relative to neck joint
+        WHEEL_RADIUS        = 14.2;
         
     end % Constant Properties
     
