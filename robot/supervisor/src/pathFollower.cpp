@@ -135,26 +135,33 @@ namespace Anki
       
       // Add path segment
       // TODO: Change units to meters
-      bool AppendPathSegment_Line(u32 matID, f32 x_start_mm, f32 y_start_mm, f32 x_end_mm, f32 y_end_mm)
+      bool AppendPathSegment_Line(u32 matID, f32 x_start_mm, f32 y_start_mm, f32 x_end_mm, f32 y_end_mm,
+                                  f32 targetSpeed, f32 accel, f32 decel)
       {
-        return path_.AppendLine(matID, x_start_mm, y_start_mm, x_end_mm, y_end_mm);
+        return path_.AppendLine(matID, x_start_mm, y_start_mm, x_end_mm, y_end_mm,
+                                targetSpeed, accel, decel);
       }
       
       
-      bool AppendPathSegment_Arc(u32 matID, f32 x_center_mm, f32 y_center_mm, f32 radius_mm, f32 startRad, f32 sweepRad)
+      bool AppendPathSegment_Arc(u32 matID, f32 x_center_mm, f32 y_center_mm, f32 radius_mm, f32 startRad, f32 sweepRad,
+                                 f32 targetSpeed, f32 accel, f32 decel)
       {
-        return path_.AppendArc(matID, x_center_mm, y_center_mm, radius_mm, startRad, sweepRad);
+        return path_.AppendArc(matID, x_center_mm, y_center_mm, radius_mm, startRad, sweepRad,
+                               targetSpeed, accel, decel);
       }
       
       
-      bool AppendPathSegment_PointTurn(u32 matID, f32 x, f32 y, f32 targetAngle, f32 maxAngularVel, f32 angularAccel, f32 angularDecel)
+      bool AppendPathSegment_PointTurn(u32 matID, f32 x, f32 y, f32 targetAngle,
+                                       f32 targetRotSpeed, f32 rotAccel, f32 rotDecel)
       {
-        return path_.AppendPointTurn(matID, x, y, targetAngle, maxAngularVel, angularAccel, angularDecel);
+        return path_.AppendPointTurn(matID, x, y, targetAngle,
+                                     targetRotSpeed, rotAccel, rotDecel);
       }
       
       u8 GenerateDubinsPath(f32 start_x, f32 start_y, f32 start_theta,
                             f32 end_x, f32 end_y, f32 end_theta,
                             f32 start_radius, f32 end_radius,
+                            f32 targetSpeed, f32 accel, f32 decel,
                             f32 final_straight_approach_length,
                             f32 *path_length)
       {
@@ -162,6 +169,7 @@ namespace Anki
                                             start_x, start_y, start_theta,
                                             end_x, end_y, end_theta,
                                             start_radius, end_radius,
+                                            targetSpeed, accel, decel,
                                             final_straight_approach_length,
                                             path_length);
       }
@@ -291,8 +299,8 @@ namespace Anki
         
 #if(DEBUG_PATH_FOLLOWER)
         Radians currOrientation = Localization::GetCurrentMatOrientation();
-        PRINT("currPathSeg: %d, TURN  currAngle: %f, targetAngle: %f, maxAngVel: %f, angAccel: %f, angDecel: %f\n",
-               currPathSegment_, currOrientation.ToFloat(), currSeg->targetAngle, currSeg->maxAngularVel, currSeg->angularAccel, currSeg->angularDecel);
+        PRINT("currPathSeg: %d, TURN  currAngle: %f, targetAngle: %f\n",
+               currPathSegment_, currOrientation.ToFloat(), currSeg->targetAngle);
 #endif
         
         // When the car is stopped, initiate point turn
@@ -301,9 +309,9 @@ namespace Anki
           PRINT("EXECUTE POINT TURN\n");
 #endif
           SteeringController::ExecutePointTurn(currSeg->targetAngle,
-                                               currSeg->maxAngularVel,
-                                               currSeg->angularAccel,
-                                               currSeg->angularDecel);
+                                               path_[currPathSegment_].GetTargetSpeed(),
+                                               path_[currPathSegment_].GetAccel(),
+                                               path_[currPathSegment_].GetDecel());
           pointTurnStarted_ = true;
 
         } else {
@@ -354,17 +362,21 @@ namespace Anki
         Localization::GetCurrentMatPose(start_x,start_y,start_theta);
         path_.Clear();
         
-        const f32 end_x = 0.0;
-        const f32 end_y = 0.25;
+        const f32 end_x = 0;
+        const f32 end_y = 250;
         const f32 end_theta = 0.5*PI;
-        const f32 start_radius = 0.05;
-        const f32 end_radius = 0.05;
+        const f32 start_radius = 50;
+        const f32 end_radius = 50;
+        const f32 targetSpeed = 100;
+        const f32 accel = 200;
+        const f32 decel = 200;
         const f32 final_straight_approach_length = 0.1;
         f32 path_length;
         u8 numSegments = Planning::GenerateDubinsPath(path_,
                                                       start_x, start_y, start_theta.ToFloat(),
                                                       end_x, end_y, end_theta,
                                                       start_radius, end_radius,
+                                                      targetSpeed, accel, decel,
                                                       final_straight_approach_length,
                                                       &path_length);
         const f32 distToTarget = sqrtf((start_x - end_x)*(start_x - end_x) + (start_y - end_y)*(start_y - end_y));

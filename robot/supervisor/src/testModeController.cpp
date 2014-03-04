@@ -95,7 +95,15 @@ namespace Anki {
         const f32 DOCK_PATH_TOGGLE_TIME_S = 3.f;
         
         ////// End of DockPathTest ////
-
+        
+        
+        //////// PathFollowTest /////////
+        const f32 PF_TARGET_SPEED_MMPS = 160;
+        const f32 PF_ACCEL_MMPS2 = 200;
+        const f32 PF_DECEL_MMPS2 = 500;
+        
+        ////// End of PathFollowTest ////
+        
         
         //////// PickAndPlaceTest /////////
         enum {
@@ -253,20 +261,25 @@ namespace Anki {
       {
         const u32 startDriveTime_us = 500000;
         if (!pathStarted_ && HAL::GetMicroCounter() > startDriveTime_us) {
-          SpeedController::SetUserCommandedAcceleration( MAX(ONE_OVER_CONTROL_DT + 1, 500) );  // This can't be smaller than 1/CONTROL_DT!
+          SpeedController::SetUserCommandedAcceleration( MAX(ONE_OVER_CONTROL_DT + 1, 100) );  // This can't be smaller than 1/CONTROL_DT!
           SpeedController::SetUserCommandedDesiredVehicleSpeed(160);
           PRINT("Speed commanded: %d mm/s\n",
                 SpeedController::GetUserCommandedDesiredVehicleSpeed() );
           
           // Create a path and follow it
-          PathFollower::AppendPathSegment_Line(0, 0.0, 0.0, 300, -300);
+          PathFollower::AppendPathSegment_Line(0, 0.0, 0.0, 300, -300,
+                                               PF_TARGET_SPEED_MMPS, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
           float arc1_radius = sqrt(5000);  // Radius of sqrt(50^2 + 50^2)
-          PathFollower::AppendPathSegment_Arc(0, 350, -250, arc1_radius, -0.75*PI, 0.75*PI);
-          PathFollower::AppendPathSegment_Line(0, 350 + arc1_radius, -250, 350 + arc1_radius, 200);
+          PathFollower::AppendPathSegment_Arc(0, 350, -250, arc1_radius, -0.75*PI, 0.75*PI,
+                                              PF_TARGET_SPEED_MMPS, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
+          PathFollower::AppendPathSegment_Line(0, 350 + arc1_radius, -250, 350 + arc1_radius, 200,
+                                               PF_TARGET_SPEED_MMPS, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
           float arc2_radius = sqrt(20000); // Radius of sqrt(100^2 + 100^2)
           //PathFollower::AppendPathSegment_Arc(0, 0.35 + arc1_radius - arc2_radius, 0.2, arc2_radius, 0, PIDIV2);
-          PathFollower::AppendPathSegment_Arc(0, 350 + arc1_radius - arc2_radius, 200, arc2_radius, 0, 3*PIDIV2);
-          PathFollower::AppendPathSegment_Arc(0, 350 + arc1_radius - arc2_radius, 200 - 2*arc2_radius, arc2_radius, PIDIV2, -3.5*PIDIV2);
+          PathFollower::AppendPathSegment_Arc(0, 350 + arc1_radius - arc2_radius, 200, arc2_radius, 0, 3*PIDIV2,
+                                              PF_TARGET_SPEED_MMPS, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
+          PathFollower::AppendPathSegment_Arc(0, 350 + arc1_radius - arc2_radius, 200 - 2*arc2_radius, arc2_radius, PIDIV2, -3.5*PIDIV2,
+                                              PF_TARGET_SPEED_MMPS, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
           
           PathFollower::StartPathTraversal();
           pathStarted_ = true;

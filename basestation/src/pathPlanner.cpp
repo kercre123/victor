@@ -13,6 +13,9 @@
 #include "anki/common/basestation/general.h"
 //#include "anki/cozmo/robot/cozmoConfig.h"
 
+#define DUBINS_TARGET_SPEED_MMPS 100
+#define DUBINS_ACCEL_MMPS2 200
+#define DUBINS_DECEL_MMPS2 500
 
 #define DUBINS_START_RADIUS_MM 50
 #define DUBINS_END_RADIUS_MM 50
@@ -34,7 +37,8 @@ namespace Anki {
       if (Planning::GenerateDubinsPath(path,
                                        startPt.x(), startPt.y(), startAngle,
                                        targetPt.x(), targetPt.y(), targetAngle,
-                                       DUBINS_START_RADIUS_MM, DUBINS_END_RADIUS_MM) == 0) {
+                                       DUBINS_START_RADIUS_MM, DUBINS_END_RADIUS_MM,
+                                       DUBINS_TARGET_SPEED_MMPS, DUBINS_ACCEL_MMPS2, DUBINS_DECEL_MMPS2) == 0) {
         PRINT_NAMED_INFO("No path found", "Could not generate Dubins path\n");
         return EXIT_FAILURE;
       }

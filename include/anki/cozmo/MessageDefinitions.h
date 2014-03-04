@@ -67,9 +67,10 @@ END_MESSAGE_DEFINITION(ClearPath)
 
 // Common members for PathSegment message definitions below:
 #define ADD_COMMON_PATH_SEGMENT_MEMBERS \
+ADD_MESSAGE_MEMBER(f32, targetSpeed) \
+ADD_MESSAGE_MEMBER(f32, accel) \
+ADD_MESSAGE_MEMBER(f32, decel) \
 ADD_MESSAGE_MEMBER(u16, pathID) \
-ADD_MESSAGE_MEMBER(s16, desiredSpeed_mmPerSec) \
-ADD_MESSAGE_MEMBER(s16, terminalSpeed_mmPerSec) \
 ADD_MESSAGE_MEMBER(u8,  segmentID)
 
 // AppendPathSegmentLine

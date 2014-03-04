@@ -61,6 +61,7 @@ namespace Anki {
         const u16 DOCK_APPROACH_SPEED_MMPS = 20;
         const u16 DOCK_FAR_APPROACH_SPEED_MMPS = 30;
         const u16 DOCK_APPROACH_ACCEL_MMPS2 = 200;
+        const u16 DOCK_APPROACH_DECEL_MMPS2 = 200;
         
         // Code of the VisionMarker we are trying to dock to
         VisionSystem::MarkerCode dockMarkerCode_;
@@ -314,6 +315,9 @@ namespace Anki {
                                                               dockPose_.angle.ToFloat(),
                                                               DOCK_PATH_START_RADIUS_MM,
                                                               DOCK_PATH_END_RADIUS_MM,
+                                                              DOCK_APPROACH_SPEED_MMPS,
+                                                              DOCK_APPROACH_ACCEL_MMPS2,
+                                                              DOCK_APPROACH_DECEL_MMPS2,
                                                               FINAL_APPROACH_STRAIGHT_SEGMENT_LENGTH_MM,
                                                               &path_length);
 
@@ -332,7 +336,8 @@ namespace Anki {
           f32 y_start_mm = dockPose_.y() - 3 * distToBlock * sinf(dockPose_.angle.ToFloat());
           
           PathFollower::ClearPath();
-          PathFollower::AppendPathSegment_Line(0, x_start_mm, y_start_mm, dockPose_.x(), dockPose_.y());
+          PathFollower::AppendPathSegment_Line(0, x_start_mm, y_start_mm, dockPose_.x(), dockPose_.y(),
+                                               DOCK_APPROACH_SPEED_MMPS, DOCK_APPROACH_ACCEL_MMPS2, DOCK_APPROACH_DECEL_MMPS2);
           
           followingBlockNormalPath_ = true;
           //PRINT("Computing straight line path (%f, %f) to (%f, %f)\n", x_start_m, y_start_m, dockPose_.x(), dockPose_.y());
