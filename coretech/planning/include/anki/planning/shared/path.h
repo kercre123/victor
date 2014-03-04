@@ -53,9 +53,6 @@ namespace Anki
         f32 x;
         f32 y;
         f32 targetAngle;
-        f32 maxAngularVel;
-        f32 angularAccel;
-        f32 angularDecel;
       } turn;
     } PathSegmentDef;
     
@@ -68,19 +65,27 @@ namespace Anki
     
     class PathSegment
     {
-
       
     public:
       PathSegment() : type_(PST_UNKNOWN) {};
       
-      void DefineLine(f32 x_start, f32 y_start, f32 x_end, f32 y_end);
-      void DefineArc(f32 x_center, f32 y_center, f32 radius, f32 startRad, f32 sweepRad);
-      void DefinePointTurn(f32 x, f32 y, f32 targetAngle);
+      // Defines the path segment as a line
+      void DefineLine(f32 x_start, f32 y_start, f32 x_end, f32 y_end,
+                      f32 targetSpeed, f32 accel, f32 decel);
       
-      void SetSpeedProfile(f32 targetSpeed, f32 accel);
+      // Defines the path segment as an arc
+      void DefineArc(f32 x_center, f32 y_center, f32 radius, f32 startRad, f32 sweepRad,
+                     f32 targetSpeed, f32 accel, f32 decel);
+      
+      // Defines the path segment as a point turn
+      void DefinePointTurn(f32 x, f32 y, f32 targetAngle,
+                           f32 targetRotSpeed, f32 rotAccel, f32 rotDecel);
+      
+      // Sets the speed parameters of the current segment
+      void SetSpeedProfile(f32 targetSpeed, f32 accel, f32 decel);
       
       // Returns length of the segment
-      f32 GetLength() const;
+      const f32 GetLength() const;
       
       void GetStartPoint(f32 &x, f32 &y) const;
       void GetEndPoint(f32 &x, f32 &y) const;
@@ -95,6 +100,7 @@ namespace Anki
       
       const f32 GetTargetSpeed() const {return targetSpeed_;}
       const f32 GetAccel() const {return accel_;}
+      const f32 GetDecel() const {return decel_;}
 
     private:
       SegmentRangeStatus GetDistToLineSegment(const f32 x, const f32 y, const f32 angle,
@@ -108,6 +114,7 @@ namespace Anki
       
       f32 targetSpeed_;  // Desired speed during segment. (In mm/s for lines and arcs. In rad/s for point turn.)
       f32 accel_;        // Acceleration with which targetSpeed may be approached. (In mm/s^2 for lines and arcs. In rad/s^2 for point turn.)
+      f32 decel_;        // Deceleration with which targetSpeed may be approached. (In mm/s^2 for lines and arcs. In rad/s^2 for point turn.)
       
     };
 
@@ -124,11 +131,15 @@ namespace Anki
       void PrintPath() const;
       void PrintSegment(u8 segment) const;
       
-      
       // Add path segment
-      bool AppendLine(u32 matID, f32 x_start, f32 y_start, f32 x_end, f32 y_end);
-      bool AppendArc(u32 matID, f32 x_center, f32 y_center, f32 radius, f32 startRad, f32 sweepRad);
-      bool AppendPointTurn(u32 matID, f32 x, f32 y, f32 targetAngle, f32 maxAngularVel, f32 angularAccel, f32 angularDecel);
+      bool AppendLine(u32 matID, f32 x_start, f32 y_start, f32 x_end, f32 y_end,
+                      f32 targetSpeed, f32 accel, f32 decel);
+      
+      bool AppendArc(u32 matID, f32 x_center, f32 y_center, f32 radius, f32 startRad, f32 sweepRad,
+                     f32 targetSpeed, f32 accel, f32 decel);
+      
+      bool AppendPointTurn(u32 matID, f32 x, f32 y, f32 targetAngle,
+                           f32 targetRotSpeed, f32 rotAccel, f32 rotDecel);
        
       // Accessor for PathSegment at specified index
       const PathSegment& operator[](const u8 idx) const {return path_[idx];}
@@ -147,7 +158,8 @@ namespace Anki
 
       bool CheckSegmentContinuity(f32 tolerance_distance_squared, u8 pathSegmentIdx) const;
       
-      void AddArc(f32 x_center, f32 y_center, f32 radius, f32 startRad, f32 sweepRad);
+      void AddArc(f32 x_center, f32 y_center, f32 radius, f32 startRad, f32 sweepRad,
+                  f32 targetSpeed, f32 accel, f32 decel);
 
       // Returns angle between two points on a circle
       //f32 GetArcAngle(f32 start_x, f32 start_y, f32 end_x, f32 end_y, f32 center_x, f32 center_y, bool CCW);
@@ -179,6 +191,7 @@ namespace Anki
                           f32 start_x, f32 start_y, f32 start_theta,
                           f32 end_x, f32 end_y, f32 end_theta,
                           f32 start_radius, f32 end_radius,
+                          f32 targetSpeed, f32 accel, f32 decel,
                           f32 final_straight_approach_length = 0,
                           f32 *path_length = 0);
    
