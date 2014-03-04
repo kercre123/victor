@@ -353,12 +353,12 @@ namespace Anki {
       // Send path segments
       for (u8 i=0; i<path.GetNumSegments(); i++)
       {
-        switch (path[i].type)
+        switch (path[i].GetType())
         {
           case Planning::PST_LINE:
           {
             MessageAppendPathSegmentLine m;
-            const Planning::PathSegmentDef::s_line* l = &(path[i].def.line);
+            const Planning::PathSegmentDef::s_line* l = &(path[i].GetDef().line);
             m.x_start_mm = l->startPt_x;
             m.y_start_mm = l->startPt_y;
             m.x_end_mm = l->endPt_x;
@@ -375,7 +375,7 @@ namespace Anki {
           case Planning::PST_ARC:
           {
             MessageAppendPathSegmentArc m;
-            const Planning::PathSegmentDef::s_arc* a = &(path[i].def.arc);
+            const Planning::PathSegmentDef::s_arc* a = &(path[i].GetDef().arc);
             m.x_center_mm = a->centerPt_x;
             m.y_center_mm = a->centerPt_y;
             m.radius_mm = a->radius;

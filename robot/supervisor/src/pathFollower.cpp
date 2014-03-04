@@ -107,21 +107,22 @@ namespace Anki
 #if(ENABLE_PATH_VIZ)
         Viz::ErasePath(0);
         for (u8 i=0; i<path_.GetNumSegments(); ++i) {
-          switch(path_[i].type) {
+          const Planning::PathSegmentDef& ps = path_[i].GetDef();
+          switch(path_[i].GetType()) {
             case Planning::PST_LINE:
               Viz::AppendPathSegmentLine(0,
-                                         path_[i].def.line.startPt_x,
-                                         path_[i].def.line.startPt_y,
-                                         path_[i].def.line.endPt_x,
-                                         path_[i].def.line.endPt_y);
+                                         ps.line.startPt_x,
+                                         ps.line.startPt_y,
+                                         ps.line.endPt_x,
+                                         ps.line.endPt_y);
               break;
             case Planning::PST_ARC:
               Viz::AppendPathSegmentArc(0,
-                                        path_[i].def.arc.centerPt_x,
-                                        path_[i].def.arc.centerPt_y,
-                                        path_[i].def.arc.radius,
-                                        path_[i].def.arc.startRad,
-                                        path_[i].def.arc.sweepRad);
+                                        ps.arc.centerPt_x,
+                                        ps.arc.centerPt_y,
+                                        ps.arc.radius,
+                                        ps.arc.startRad,
+                                        ps.arc.sweepRad);
               break;
             default:
               break;
@@ -168,10 +169,10 @@ namespace Anki
       
       void PreProcessPathSegment(const Planning::PathSegment &segment)
       {
-        switch(segment.type) {
+        switch(segment.GetType()) {
           case Planning::PST_LINE:
           {
-            const Planning::PathSegmentDef::s_line* l = &(segment.def.line);
+            const Planning::PathSegmentDef::s_line* l = &(segment.GetDef().line);
             line_m_ = (l->endPt_y - l->startPt_y) / (l->endPt_x - l->startPt_x);
             line_b_ = l->startPt_y - line_m_ * l->startPt_x;
             line_dy_sign_ = ((l->endPt_y - l->startPt_y) >= 0) ? 1.0 : -1.0;
@@ -286,7 +287,7 @@ namespace Anki
 
       Planning::SegmentRangeStatus ProcessPathSegmentPointTurn(f32 &shortestDistanceToPath_mm, f32 &radDiff)
       {
-        const Planning::PathSegmentDef::s_turn* currSeg = &(path_[currPathSegment_].def.turn);
+        const Planning::PathSegmentDef::s_turn* currSeg = &(path_[currPathSegment_].GetDef().turn);
         
 #if(DEBUG_PATH_FOLLOWER)
         Radians currOrientation = Localization::GetCurrentMatOrientation();
@@ -389,7 +390,7 @@ namespace Anki
         }
         
         Planning::SegmentRangeStatus segRes = Planning::OOR_NEAR_END;
-        switch (path_[currPathSegment_].type) {
+        switch (path_[currPathSegment_].GetType()) {
           case Planning::PST_LINE:
           case Planning::PST_ARC:
             segRes = ProcessPathSegment(distToPath_mm_, radToPath_);
