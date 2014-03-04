@@ -1113,13 +1113,17 @@ function sequenceChanged(handles, resetAll, resetZoomOnly)
 
     end
 
-function ButtonClicked(hObject, eventdata, handles)
+function Save()
+    global jsonData;
     global jsonConfigFilename;
+    fixBounds();
+    savejson('',jsonData,jsonConfigFilename);
+    
+function ButtonClicked(hObject, eventdata, handles)
     global jsonData;
     global curSequenceNumber;
     global curFrameNumber;
     global curSet;
-    global maxSet;
     global image;
     global allHandles;
     global imageFigureHandle;
@@ -1149,6 +1153,8 @@ function ButtonClicked(hObject, eventdata, handles)
         jsonData.sequences{curSequenceNumber}.groundTruth{end+1}.frameNumber = allFrameNumbers(curFrameNumber);
         index = length(jsonData.sequences{curSequenceNumber}.groundTruth);
     end
+    
+    fixBounds();
 
     % disp(index)
     buttonType = get(imageFigureHandle,'selectionType');
@@ -1179,7 +1185,7 @@ function ButtonClicked(hObject, eventdata, handles)
             end
         end
 
-        savejson('',jsonData,jsonConfigFilename);
+        Save();
     elseif strcmp(buttonType, 'alt') % right click
         xScaleInv = resolutionHorizontal / size(image,2);
         yScaleInv = resolutionVertical / size(image,1);
@@ -1200,7 +1206,7 @@ function ButtonClicked(hObject, eventdata, handles)
             if minInd ~= -1 && minDist < (min(size(image,1),size(image,2))/50)
                 newCorners = jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners([1:(minInd-1),(minInd+1):end]);
                 jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners = newCorners;
-                savejson('',jsonData,jsonConfigFilename);
+                Save();
             end
         elseif strcmp(pointsType, 'template')
             for i = 1:length(jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners)
@@ -1215,7 +1221,7 @@ function ButtonClicked(hObject, eventdata, handles)
             if minInd ~= -1 && minDist < (min(size(image,1),size(image,2))/50)
                 newCorners = jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners([1:(minInd-1),(minInd+1):end]);
                 jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners = newCorners;
-                savejson('',jsonData,jsonConfigFilename);
+                Save();
             end
         elseif strcmp(pointsType, 'fiducialMarker')
             for i = 1:length(jsonData.sequences{curSequenceNumber}.groundTruth{index}.fiducialMarkerCorners{curSet})
@@ -1230,7 +1236,7 @@ function ButtonClicked(hObject, eventdata, handles)
             if minInd ~= -1 && minDist < (min(size(image,1),size(image,2))/50)
                 newCorners = jsonData.sequences{curSequenceNumber}.groundTruth{index}.fiducialMarkerCorners{curSet}([1:(minInd-1),(minInd+1):end]);
                 jsonData.sequences{curSequenceNumber}.groundTruth{index}.fiducialMarkerCorners{curSet} = newCorners;
-                savejson('',jsonData,jsonConfigFilename);
+                Save();
             end
         end
     end
