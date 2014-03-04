@@ -16,12 +16,12 @@ namespace Anki {
 				void ErasePath(s32 path_id);
         
 				void AppendPathSegmentLine(s32 path_id,
-																	 f32 x_start_m, f32 y_start_m,
-																	 f32 x_end_m, f32 y_end_m);
+																	 f32 x_start_mm, f32 y_start_mm,
+																	 f32 x_end_mm, f32 y_end_mm);
         
 				void AppendPathSegmentArc(s32 path_id,
-																	f32 x_center_m, f32 y_center_m,
-																	f32 radius_m, f32 startRad, f32 sweepRad);
+																	f32 x_center_mm, f32 y_center_mm,
+																	f32 radius_mm, f32 startRad, f32 sweepRad);
         
 				void ShowPath(s32 path_id, bool show);
         

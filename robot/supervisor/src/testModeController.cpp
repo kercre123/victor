@@ -259,17 +259,15 @@ namespace Anki {
                 SpeedController::GetUserCommandedDesiredVehicleSpeed() );
           
           // Create a path and follow it
-          PathFollower::AppendPathSegment_Line(0, 0.0, 0.0, 0.3, -0.3);
-          
-          //PathFollower::AppendPathSegment_PointTurn(0, 0.3, -0.3, -PIDIV2-0.05, PIDIV2, PIDIV2, PIDIV2);
-          
-          float arc1_radius = sqrt(0.005);  // Radius of sqrt(0.05^2 + 0.05^2)
-          PathFollower::AppendPathSegment_Arc(0, 0.35, -0.25, arc1_radius, -0.75*PI, 0.75*PI);
-          PathFollower::AppendPathSegment_Line(0, 0.35 + arc1_radius, -0.25, 0.35 + arc1_radius, 0.2);
-          float arc2_radius = sqrt(0.02); // Radius of sqrt(0.1^2 + 0.1^2)
+          PathFollower::AppendPathSegment_Line(0, 0.0, 0.0, 300, -300);
+          float arc1_radius = sqrt(5000);  // Radius of sqrt(50^2 + 50^2)
+          PathFollower::AppendPathSegment_Arc(0, 350, -250, arc1_radius, -0.75*PI, 0.75*PI);
+          PathFollower::AppendPathSegment_Line(0, 350 + arc1_radius, -250, 350 + arc1_radius, 200);
+          float arc2_radius = sqrt(20000); // Radius of sqrt(100^2 + 100^2)
           //PathFollower::AppendPathSegment_Arc(0, 0.35 + arc1_radius - arc2_radius, 0.2, arc2_radius, 0, PIDIV2);
-          PathFollower::AppendPathSegment_Arc(0, 0.35 + arc1_radius - arc2_radius, 0.2, arc2_radius, 0, 3*PIDIV2);
-          PathFollower::AppendPathSegment_Arc(0, 0.35 + arc1_radius - arc2_radius, 0.2 - 2*arc2_radius, arc2_radius, PIDIV2, -3.5*PIDIV2);
+          PathFollower::AppendPathSegment_Arc(0, 350 + arc1_radius - arc2_radius, 200, arc2_radius, 0, 3*PIDIV2);
+          PathFollower::AppendPathSegment_Arc(0, 350 + arc1_radius - arc2_radius, 200 - 2*arc2_radius, arc2_radius, PIDIV2, -3.5*PIDIV2);
+          
           PathFollower::StartPathTraversal();
           pathStarted_ = true;
         }

@@ -49,13 +49,17 @@ namespace Anki
         f32 arc_angTraversed_;
         // ===== End of pre-processed path segment info ===
         
-        const f32 LOOK_AHEAD_DIST_M = 0.01f;
+        const f32 CONTINUITY_TOL_MM2 = 1;
+        
+        const f32 LOOK_AHEAD_DIST_MM = 10;
+        
+        const f32 TOO_FAR_FROM_PATH_DIST_MM = 50;
 
         Planning::Path path_;
         s16 currPathSegment_ = -1;
         
         // Shortest distance to path
-        f32 distToPath_m_ = 0;
+        f32 distToPath_mm_ = 0;
         
         // Angular error with path
         f32 radToPath_ = 0;
@@ -130,15 +134,15 @@ namespace Anki
       
       // Add path segment
       // TODO: Change units to meters
-      bool AppendPathSegment_Line(u32 matID, f32 x_start_m, f32 y_start_m, f32 x_end_m, f32 y_end_m)
+      bool AppendPathSegment_Line(u32 matID, f32 x_start_mm, f32 y_start_mm, f32 x_end_mm, f32 y_end_mm)
       {
-        return path_.AppendLine(matID, x_start_m, y_start_m, x_end_m, y_end_m);
+        return path_.AppendLine(matID, x_start_mm, y_start_mm, x_end_mm, y_end_mm);
       }
       
       
-      bool AppendPathSegment_Arc(u32 matID, f32 x_center_m, f32 y_center_m, f32 radius_m, f32 startRad, f32 sweepRad)
+      bool AppendPathSegment_Arc(u32 matID, f32 x_center_mm, f32 y_center_mm, f32 radius_mm, f32 startRad, f32 sweepRad)
       {
-        return path_.AppendArc(matID, x_center_m, y_center_m, radius_m, startRad, sweepRad);
+        return path_.AppendArc(matID, x_center_mm, y_center_mm, radius_mm, startRad, sweepRad);
       }
       
       
@@ -221,7 +225,7 @@ namespace Anki
           
           path_.PrintPath();
           
-          if (!path_.CheckContinuity()) {
+          if (!path_.CheckContinuity(CONTINUITY_TOL_MM2)) {
             PRINT("ERROR: Path is discontinuous\n");
             return false;
           }
@@ -260,7 +264,7 @@ namespace Anki
       }
       
       
-      Planning::SegmentRangeStatus ProcessPathSegment(f32 &shortestDistanceToPath_m, f32 &radDiff)
+      Planning::SegmentRangeStatus ProcessPathSegment(f32 &shortestDistanceToPath_mm, f32 &radDiff)
       {
         // Get current robot pose
         f32 x, y;
@@ -269,18 +273,18 @@ namespace Anki
         
 
         // Compute lookahead position
-        if (LOOK_AHEAD_DIST_M != 0) {
-          x += LOOK_AHEAD_DIST_M * cosf(angle.ToFloat());
-          y += LOOK_AHEAD_DIST_M * sinf(angle.ToFloat());
+        if (LOOK_AHEAD_DIST_MM != 0) {
+          x += LOOK_AHEAD_DIST_MM * cosf(angle.ToFloat());
+          y += LOOK_AHEAD_DIST_MM * sinf(angle.ToFloat());
         }
         
       
-        return path_[currPathSegment_].GetDistToSegment(x,y,angle.ToFloat(),shortestDistanceToPath_m,radDiff);
+        return path_[currPathSegment_].GetDistToSegment(x,y,angle.ToFloat(),shortestDistanceToPath_mm,radDiff);
       }
       
       
 
-      Planning::SegmentRangeStatus ProcessPathSegmentPointTurn(f32 &shortestDistanceToPath_m, f32 &radDiff)
+      Planning::SegmentRangeStatus ProcessPathSegmentPointTurn(f32 &shortestDistanceToPath_mm, f32 &radDiff)
       {
         const Planning::PathSegmentDef::s_turn* currSeg = &(path_[currPathSegment_].def.turn);
         
@@ -326,13 +330,13 @@ namespace Anki
       }
       
       
-      bool GetPathError(f32 &shortestDistanceToPath_m, f32 &radDiff)
+      bool GetPathError(f32 &shortestDistanceToPath_mm, f32 &radDiff)
       {
         if (!IsTraversingPath()) {
           return false;
         }
         
-        shortestDistanceToPath_m = distToPath_m_;
+        shortestDistanceToPath_mm = distToPath_mm_;
         radDiff = radToPath_;
         return true;
       }
@@ -388,10 +392,10 @@ namespace Anki
         switch (path_[currPathSegment_].type) {
           case Planning::PST_LINE:
           case Planning::PST_ARC:
-            segRes = ProcessPathSegment(distToPath_m_, radToPath_);
+            segRes = ProcessPathSegment(distToPath_mm_, radToPath_);
             break;
           case Planning::PST_POINT_TURN:
-            segRes = ProcessPathSegmentPointTurn(distToPath_m_, radToPath_);
+            segRes = ProcessPathSegmentPointTurn(distToPath_mm_, radToPath_);
             break;
           default:
             // TODO: Error?
@@ -399,7 +403,7 @@ namespace Anki
         }
         
 #if(DEBUG_PATH_FOLLOWER)
-        PERIODIC_PRINT(DBG_PERIOD,"PATH ERROR: %f m, %f deg\n", distToPath_m_, RAD_TO_DEG(radToPath_));
+        PERIODIC_PRINT(DBG_PERIOD,"PATH ERROR: %f mm, %f deg\n", distToPath_mm_, RAD_TO_DEG(radToPath_));
 #endif
         
         // Go to next path segment if no longer in range of the current one
@@ -421,11 +425,11 @@ namespace Anki
         if (!DockingController::IsBusy()) {
           // Check that starting error is not too big
           // TODO: Check for excessive heading error as well?
-          if (distToPath_m_ > 0.05) {
+          if (distToPath_mm_ > TOO_FAR_FROM_PATH_DIST_MM) {
             currPathSegment_ = -1;
-  #if(DEBUG_PATH_FOLLOWER)
-            PRINT("PATH STARTING ERROR TOO LARGE %f\n", distToPath_m_);
-  #endif
+#if(DEBUG_PATH_FOLLOWER)
+            PRINT("PATH STARTING ERROR TOO LARGE (%f mm)\n", distToPath_mm_);
+#endif
             return EXIT_FAILURE;
           }
         }

@@ -359,10 +359,10 @@ namespace Anki {
           {
             MessageAppendPathSegmentLine m;
             const Planning::PathSegmentDef::s_line* l = &(path[i].def.line);
-            m.x_start_m = l->startPt_x;
-            m.y_start_m = l->startPt_y;
-            m.x_end_m = l->endPt_x;
-            m.y_end_m = l->endPt_y;
+            m.x_start_mm = l->startPt_x;
+            m.y_start_mm = l->startPt_y;
+            m.x_end_mm = l->endPt_x;
+            m.y_end_mm = l->endPt_y;
             m.pathID = 0;
             m.segmentID = i;
             
@@ -376,9 +376,9 @@ namespace Anki {
           {
             MessageAppendPathSegmentArc m;
             const Planning::PathSegmentDef::s_arc* a = &(path[i].def.arc);
-            m.x_center_m = a->centerPt_x;
-            m.y_center_m = a->centerPt_y;
-            m.radius_m = a->radius;
+            m.x_center_mm = a->centerPt_x;
+            m.y_center_mm = a->centerPt_y;
+            m.radius_mm = a->radius;
             m.startRad = a->startRad;
             m.sweepRad = a->sweepRad;
             m.pathID = 0;

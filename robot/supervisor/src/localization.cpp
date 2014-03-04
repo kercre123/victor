@@ -215,16 +215,16 @@ namespace Anki {
 
       void SetCurrentMatPose(f32  x, f32  y, Radians  angle)
       {
-        currentMatX_ = x * 1000;  // convert to mm
-        currentMatY_ = y * 1000;  // convert to mm
+        currentMatX_ = x;
+        currentMatY_ = y;
         currentMatHeading_ = angle;
 
       } // SetCurrentMatPose()
       
       void GetCurrentMatPose(f32& x, f32& y, Radians& angle)
       {
-        x = currentMatX_ * 0.001; // convert to m
-        y = currentMatY_ * 0.001; // convert to m
+        x = currentMatX_;
+        y = currentMatY_;
         angle = currentMatHeading_;
       } // GetCurrentMatPose()
       

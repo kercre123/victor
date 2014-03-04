@@ -304,7 +304,7 @@ namespace Anki {
         bool gotError = PathFollower::GetPathError(pathDistErr, pathRadErr);
         
         if (gotError) {
-          fidx = pathDistErr*1000.f; // Convert to mm
+          fidx = pathDistErr;
           
           // HACK!
           //SetGains(DEFAULT_STEERING_K1, DEFAULT_STEERING_K2);
@@ -319,7 +319,7 @@ namespace Anki {
 #if(DEBUG_MAIN_EXECUTION)
           {
             using namespace Sim::OverlayDisplay;
-            SetText(PATH_ERROR, "PathError: %.4f m, %.1f deg  => fidx: %f",
+            SetText(PATH_ERROR, "PathError: %.2f mm, %.1f deg  => fidx: %f",
                     pathDistErr, pathRadErr * (180.f/M_PI),
                     fidx);
           }

@@ -43,29 +43,29 @@ namespace Anki {
           physicsComms_->send(msg, sizeof(msg));
         }
         
-        void AppendPathSegmentLine(s32 path_id, f32 x_start_m, f32 y_start_m, f32 x_end_m, f32 y_end_m)
+        void AppendPathSegmentLine(s32 path_id, f32 x_start_mm, f32 y_start_mm, f32 x_end_mm, f32 y_end_mm)
         {
           f32 msg[LINE_MSG_SIZE];
           msg[0] = PLUGIN_MSG_APPEND_LINE;
           msg[PLUGIN_MSG_ROBOT_ID] = HAL::GetRobotID();
           msg[PLUGIN_MSG_PATH_ID] = path_id;
-          msg[LINE_START_X] = x_start_m;
-          msg[LINE_START_Y] = y_start_m;
-          msg[LINE_END_X] = x_end_m;
-          msg[LINE_END_Y] = y_end_m;
+          msg[LINE_START_X] = x_start_mm * 0.001;
+          msg[LINE_START_Y] = y_start_mm * 0.001;
+          msg[LINE_END_X] = x_end_mm * 0.001;
+          msg[LINE_END_Y] = y_end_mm * 0.001;
           
           physicsComms_->send(msg, sizeof(msg));
         }
         
-        void AppendPathSegmentArc(s32 path_id, f32 x_center_m, f32 y_center_m, f32 radius_m, f32 startRad, f32 sweepRad)
+        void AppendPathSegmentArc(s32 path_id, f32 x_center_mm, f32 y_center_mm, f32 radius_mm, f32 startRad, f32 sweepRad)
         {
           f32 msg[ARC_MSG_SIZE];
           msg[0] = PLUGIN_MSG_APPEND_ARC;
           msg[PLUGIN_MSG_ROBOT_ID] = HAL::GetRobotID();
           msg[PLUGIN_MSG_PATH_ID] = path_id;
-          msg[ARC_CENTER_X] = x_center_m;
-          msg[ARC_CENTER_Y] = y_center_m;
-          msg[ARC_RADIUS] = radius_m;
+          msg[ARC_CENTER_X] = x_center_mm * 0.001;
+          msg[ARC_CENTER_Y] = y_center_mm * 0.001;
+          msg[ARC_RADIUS] = radius_mm * 0.001;
           msg[ARC_START_RAD] = startRad;
           msg[ARC_SWEEP_RAD] = sweepRad;
           
