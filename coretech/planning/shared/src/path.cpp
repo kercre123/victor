@@ -24,81 +24,136 @@ namespace Anki
   {
 
     ////////////// PathSegment implementations ////////////
-    ReturnCode PathSegment::GetStartPoint(f32 &x, f32 &y) const
+    void PathSegment::DefineLine(f32 x_start, f32 y_start, f32 x_end, f32 y_end)
     {
-      switch(type){
-        case PST_LINE:
-          x = def.line.startPt_x;
-          y = def.line.startPt_y;
-          break;
-        case PST_ARC:
-          x = def.arc.centerPt_x + def.arc.radius * cosf(def.arc.startRad);
-          y = def.arc.centerPt_y + def.arc.radius * sinf(def.arc.startRad);
-          break;
-        case PST_POINT_TURN:
-          x = def.turn.x;
-          y = def.turn.y;
-          break;
-        default:
-          printf("ERROR (GetStartPoint): Undefined segment %d\n", type);
-          return EXIT_FAILURE;
-      }
-      
-      return EXIT_SUCCESS;
+      type_ = PST_LINE;
+      def_.line.startPt_x = x_start;
+      def_.line.startPt_y = y_start;
+      def_.line.endPt_x = x_end;
+      def_.line.endPt_y = y_end;
     }
     
-    ReturnCode PathSegment::GetEndPoint(f32 &x, f32 &y) const
+    void PathSegment::DefineArc(f32 x_center, f32 y_center, f32 radius, f32 startRad, f32 sweepRad)
     {
-      switch(type){
+      type_ = PST_ARC;
+      def_.arc.centerPt_x = x_center;
+      def_.arc.centerPt_y = y_center;
+      def_.arc.radius = radius;
+      def_.arc.startRad = startRad;
+      def_.arc.sweepRad = sweepRad;
+    }
+    
+    void PathSegment::DefinePointTurn(f32 x, f32 y, f32 targetAngle)
+    {
+      type_ = PST_POINT_TURN;
+      def_.turn.x = x;
+      def_.turn.y = y;
+      def_.turn.targetAngle = targetAngle;
+    }
+
+    void PathSegment::SetSpeedProfile(f32 targetSpeed, f32 accel)
+    {
+      targetSpeed_ = targetSpeed;
+      accel_ = accel;
+    }
+    
+    f32 PathSegment::GetLength() const
+    {
+      switch(type_)
+      {
         case PST_LINE:
-          x = def.line.endPt_x;
-          y = def.line.endPt_y;
+          return sqrtf((def_.line.startPt_x - def_.line.endPt_x)*(def_.line.startPt_x - def_.line.endPt_x) + (def_.line.startPt_y - def_.line.endPt_y)*(def_.line.startPt_y - def_.line.endPt_y));
+        case PST_ARC:
+          return ABS(def_.arc.sweepRad) * def_.arc.radius;
+        case PST_POINT_TURN:
+          return 0;
+        default:
+          printf("ERROR (Path::GetLength): Undefined segment %d\n", type_);
+          assert(false);
+      }
+    }
+    
+    
+    void PathSegment::GetStartPoint(f32 &x, f32 &y) const
+    {
+      switch(type_){
+        case PST_LINE:
+          x = def_.line.startPt_x;
+          y = def_.line.startPt_y;
           break;
         case PST_ARC:
-          x = def.arc.centerPt_x + def.arc.radius * cosf(def.arc.startRad + def.arc.sweepRad);
-          y = def.arc.centerPt_y + def.arc.radius * sinf(def.arc.startRad + def.arc.sweepRad);
+          x = def_.arc.centerPt_x + def_.arc.radius * cosf(def_.arc.startRad);
+          y = def_.arc.centerPt_y + def_.arc.radius * sinf(def_.arc.startRad);
           break;
         case PST_POINT_TURN:
-          x = def.turn.x;
-          y = def.turn.y;
+          x = def_.turn.x;
+          y = def_.turn.y;
           break;
         default:
-          printf("ERROR (GetEndPoint): Undefined segment %d\n", type);
-          return EXIT_FAILURE;
+          printf("ERROR (GetStartPoint): Undefined segment %d\n", type_);
+          assert(false);
       }
-      
-      return EXIT_SUCCESS;
+    }
+    
+    void PathSegment::GetEndPoint(f32 &x, f32 &y) const
+    {
+      switch(type_){
+        case PST_LINE:
+          x = def_.line.endPt_x;
+          y = def_.line.endPt_y;
+          break;
+        case PST_ARC:
+          x = def_.arc.centerPt_x + def_.arc.radius * cosf(def_.arc.startRad + def_.arc.sweepRad);
+          y = def_.arc.centerPt_y + def_.arc.radius * sinf(def_.arc.startRad + def_.arc.sweepRad);
+          break;
+        case PST_POINT_TURN:
+          x = def_.turn.x;
+          y = def_.turn.y;
+          break;
+        default:
+          printf("ERROR (GetEndPoint): Undefined segment %d\n", type_);
+          assert(false);
+      }
     }
 
     
     
     void PathSegment::Print() const
     {
-      switch(type) {
+      switch(type_) {
         case PST_LINE:
+        {
+          const PathSegmentDef::s_line& seg = def_.line;
           printf("line: (%f, %f) to (%f, %f)\n",
-                def.line.startPt_x,
-                def.line.startPt_y,
-                def.line.endPt_x,
-                def.line.endPt_y);
+                seg.startPt_x,
+                seg.startPt_y,
+                seg.endPt_x,
+                seg.endPt_y);
           break;
+        }
         case PST_ARC:
+        {
+          const PathSegmentDef::s_arc& seg = def_.arc;
           printf("arc: centerPt (%f, %f), radius %f, startAng %f, sweep %f\n",
-                def.arc.centerPt_x,
-                def.arc.centerPt_y,
-                def.arc.radius,
-                def.arc.startRad,
-                def.arc.sweepRad);
+                seg.centerPt_x,
+                seg.centerPt_y,
+                seg.radius,
+                seg.startRad,
+                seg.sweepRad);
           break;
+        }
         case PST_POINT_TURN:
+        {
+          const PathSegmentDef::s_turn& seg = def_.turn;
           printf("ptTurn: x %f, y %f, targetAngle %f, maxAngularVel %f, angularAccel %f, angularDecel %f\n",
-                def.turn.x,
-                def.turn.y,
-                def.turn.targetAngle,
-                def.turn.maxAngularVel,
-                def.turn.angularAccel,
-                def.turn.angularDecel);
+                seg.x,
+                seg.y,
+                seg.targetAngle,
+                seg.maxAngularVel,
+                seg.angularAccel,
+                seg.angularDecel);
           break;
+        }
         default:
           break;
       }
@@ -111,7 +166,7 @@ namespace Anki
     {
       SegmentRangeStatus res = OOR_NEAR_END;
       
-      switch(type) {
+      switch(type_) {
         case PST_LINE:
           res = GetDistToLineSegment(x,y,angle,shortestDistanceToPath,radDiff);
           break;
@@ -121,6 +176,8 @@ namespace Anki
         case PST_POINT_TURN:
                   // TODO: What do we do here?
           break;
+        default:
+          assert(false);
       }
       
       return res;
@@ -131,7 +188,7 @@ namespace Anki
     SegmentRangeStatus PathSegment::GetDistToLineSegment(const f32 x, const f32 y, const f32 angle,
                                                         f32 &shortestDistanceToPath, f32 &radDiff) const
     {
-      const PathSegmentDef::s_line* seg = &(def.line);
+      const PathSegmentDef::s_line* seg = &(def_.line);
       
       f32 line_m_ = (seg->endPt_y - seg->startPt_y) / (seg->endPt_x - seg->startPt_x);
       f32 line_b_ = seg->startPt_y - line_m_ * seg->startPt_x;
@@ -253,7 +310,7 @@ namespace Anki
     SegmentRangeStatus PathSegment::GetDistToArcSegment(const f32 x, const f32 y, const f32 angle,
                                                        f32 &shortestDistanceToPath, f32 &radDiff) const
     {
-      const PathSegmentDef::s_arc* seg = &(def.arc);
+      const PathSegmentDef::s_arc* seg = &(def_.arc);
       
 #if(DEBUG_PATH_FOLLOWER)
       PRINT("currPathSeg: %d, ARC (%f, %f), startRad: %f, sweepRad: %f, radius: %f\n",
@@ -581,17 +638,15 @@ namespace Anki
        );
 #endif
       
-      
+
       // Generate path segment definitions
       path_length = 0;
       ps = &path[num_segments];
-      ps->type = PST_ARC;
-      ps->def.arc.centerPt_x = p_c1_x;
-      ps->def.arc.centerPt_y = p_c1_y;
-      ps->def.arc.radius = start_radius;
-      ps->def.arc.startRad = ATAN2_ACC(startPt_y - p_c1_y, startPt_x - p_c1_x);
-      ps->def.arc.sweepRad = GetArcAngle(startPt_x, startPt_y, p_t1_x, p_t1_y, p_c1_x, p_c1_y, sign1 < 0);
-      segment_length = ABS(ps->def.arc.sweepRad) * start_radius;
+      ps->DefineArc(p_c1_x, p_c1_y,
+                    start_radius,
+                    ATAN2_ACC(startPt_y - p_c1_y, startPt_x - p_c1_x),
+                    GetArcAngle(startPt_x, startPt_y, p_t1_x, p_t1_y, p_c1_x, p_c1_y, sign1 < 0));
+      segment_length = ps->GetLength();
       
       if(segment_length > 0) {
         path_length += segment_length;
@@ -599,12 +654,8 @@ namespace Anki
       }
       
       ps = &path[num_segments];
-      ps->type = PST_LINE;
-      ps->def.line.startPt_x = p_t1_x;
-      ps->def.line.startPt_y = p_t1_y;
-      ps->def.line.endPt_x = p_t2_x;
-      ps->def.line.endPt_y = p_t2_y;
-      segment_length = sqrtf((p_t2_x - p_t1_x)*(p_t2_x - p_t1_x) + (p_t2_y - p_t1_y)*(p_t2_y - p_t1_y));
+      ps->DefineLine(p_t1_x, p_t1_y, p_t2_x, p_t2_y);
+      segment_length = ps->GetLength();
 
       if(segment_length > 0) {
         path_length += segment_length;
@@ -612,14 +663,12 @@ namespace Anki
       }
       
       ps = &path[num_segments];
-      ps->type = PST_ARC;
-      ps->def.arc.centerPt_x = p_c2_x;
-      ps->def.arc.centerPt_y = p_c2_y;
-      ps->def.arc.radius = end_radius;
-      ps->def.arc.startRad = ATAN2_ACC(p_t2_y - p_c2_y, p_t2_x - p_c2_x);
-      ps->def.arc.sweepRad = GetArcAngle(p_t2_x, p_t2_y, endPt_x, endPt_y, p_c2_x, p_c2_y, sign2 < 0);
-      segment_length = ABS(ps->def.arc.sweepRad) * end_radius;
-      
+      ps->DefineArc(p_c2_x, p_c2_y,
+                    end_radius,
+                    ATAN2_ACC(p_t2_y - p_c2_y, p_t2_x - p_c2_x),
+                    GetArcAngle(p_t2_x, p_t2_y, endPt_x, endPt_y, p_c2_x, p_c2_y, sign2 < 0));
+      segment_length = ps->GetLength();
+
       if(segment_length > 0) {
         path_length += segment_length;
         ++num_segments;
@@ -685,16 +734,16 @@ namespace Anki
         for (u32 j = 0; j < shortestNumSegments; ++j) {
           //path_[j] = csc_path[shortestPathType][j];
           
-          switch(csc_path[shortestPathType][j].type) {
+          switch(csc_path[shortestPathType][j].GetType()) {
             case PST_LINE:
             {
-              const PathSegmentDef::s_line *l = &(csc_path[shortestPathType][j].def.line);
+              const PathSegmentDef::s_line *l = &(csc_path[shortestPathType][j].GetDef().line);
               path.AppendLine(0, l->startPt_x, l->startPt_y, l->endPt_x, l->endPt_y);
               break;
             }
             case PST_ARC:
             {
-              const PathSegmentDef::s_arc *a = &(csc_path[shortestPathType][j].def.arc);
+              const PathSegmentDef::s_arc *a = &(csc_path[shortestPathType][j].GetDef().arc);
               path.AppendArc(0, a->centerPt_x, a->centerPt_y, a->radius, a->startRad, a->sweepRad);
               break;
             }
@@ -778,12 +827,7 @@ namespace Anki
         return false;
       }
       
-      path_[numPathSegments_].type = PST_LINE;
-      path_[numPathSegments_].def.line.startPt_x = x_start;
-      path_[numPathSegments_].def.line.startPt_y = y_start;
-      path_[numPathSegments_].def.line.endPt_x = x_end;
-      path_[numPathSegments_].def.line.endPt_y = y_end;
-      
+      path_[numPathSegments_].DefineLine(x_start, y_start, x_end, y_end);
       numPathSegments_++;
       
       return true;
@@ -791,12 +835,7 @@ namespace Anki
   
   
     void Path::AddArc(f32 x_center, f32 y_center, f32 radius, f32 startRad, f32 sweepRad) {
-      path_[numPathSegments_].type = PST_ARC;
-      path_[numPathSegments_].def.arc.centerPt_x = x_center;
-      path_[numPathSegments_].def.arc.centerPt_y = y_center;
-      path_[numPathSegments_].def.arc.radius = radius;
-      path_[numPathSegments_].def.arc.startRad = startRad;
-      path_[numPathSegments_].def.arc.sweepRad = sweepRad;
+      path_[numPathSegments_].DefineArc(x_center, y_center, radius, startRad, sweepRad);
       numPathSegments_++;
     }
   
@@ -876,14 +915,7 @@ namespace Anki
         return false;
       }
       
-      path_[numPathSegments_].type = PST_POINT_TURN;
-      path_[numPathSegments_].def.turn.x = x;
-      path_[numPathSegments_].def.turn.y = y;
-      path_[numPathSegments_].def.turn.targetAngle = targetAngle;
-      path_[numPathSegments_].def.turn.maxAngularVel = maxAngularVel;
-      path_[numPathSegments_].def.turn.angularAccel = angularAccel;
-      path_[numPathSegments_].def.turn.angularDecel = angularDecel;
-      
+      path_[numPathSegments_].DefinePointTurn(x,y,targetAngle);
       numPathSegments_++;
       
       return true;

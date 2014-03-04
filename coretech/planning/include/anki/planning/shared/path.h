@@ -21,7 +21,8 @@ namespace Anki
     
     
     typedef enum {
-      PST_LINE = 0,
+      PST_UNKNOWN = 0,
+      PST_LINE,
       PST_ARC,
       PST_POINT_TURN
     } PathSegmentType;
@@ -67,23 +68,33 @@ namespace Anki
     
     class PathSegment
     {
-    public:
-      PathSegment(){};
+
       
-      ReturnCode GetStartPoint(f32 &x, f32 &y) const;
-      ReturnCode GetEndPoint(f32 &x, f32 &y) const;
+    public:
+      PathSegment() : type_(PST_UNKNOWN) {};
+      
+      void DefineLine(f32 x_start, f32 y_start, f32 x_end, f32 y_end);
+      void DefineArc(f32 x_center, f32 y_center, f32 radius, f32 startRad, f32 sweepRad);
+      void DefinePointTurn(f32 x, f32 y, f32 targetAngle);
+      
+      void SetSpeedProfile(f32 targetSpeed, f32 accel);
+      
+      // Returns length of the segment
+      f32 GetLength() const;
+      
+      void GetStartPoint(f32 &x, f32 &y) const;
+      void GetEndPoint(f32 &x, f32 &y) const;
       
       void Print() const;
 
       SegmentRangeStatus GetDistToSegment(const f32 x, const f32 y, const f32 angle,
                                          f32 &shortestDistanceToPath, f32 &radDiff) const;
       
+      const PathSegmentType GetType() const {return type_;}
+      const PathSegmentDef& GetDef() const {return def_;}
       
-      PathSegmentType type;
-      PathSegmentDef def;
-      
-      s16 desiredSpeed_mmPerSec;  // Desired speed during segment
-      s16 terminalSpeed_mmPerSec; // Desired speed by the time we reach the end of the segment
+      const f32 GetTargetSpeed() const {return targetSpeed_;}
+      const f32 GetAccel() const {return accel_;}
 
     private:
       SegmentRangeStatus GetDistToLineSegment(const f32 x, const f32 y, const f32 angle,
@@ -92,7 +103,12 @@ namespace Anki
       SegmentRangeStatus GetDistToArcSegment(const f32 x, const f32 y, const f32 angle,
                                             f32 &shortestDistanceToPath, f32 &radDiff) const;
       
-
+      PathSegmentType type_;
+      PathSegmentDef def_;
+      
+      f32 targetSpeed_;  // Desired speed during segment. (In mm/s for lines and arcs. In rad/s for point turn.)
+      f32 accel_;        // Acceleration with which targetSpeed may be approached. (In mm/s^2 for lines and arcs. In rad/s^2 for point turn.)
+      
     };
 
     
