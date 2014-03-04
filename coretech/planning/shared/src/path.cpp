@@ -4,7 +4,6 @@
 #include <assert.h>
 #include <math.h>
 
-#define CONTINUITY_TOL_SQUARED_M2 0.0000001
 
 #ifdef CORETECH_BASESTATION
 #include <stdio.h>
@@ -108,16 +107,16 @@ namespace Anki
 
     
     SegmentRangeStatus PathSegment::GetDistToSegment(const f32 x, const f32 y, const f32 angle,
-                                                    f32 &shortestDistanceToPath_m, f32 &radDiff) const
+                                                    f32 &shortestDistanceToPath, f32 &radDiff) const
     {
       SegmentRangeStatus res = OOR_NEAR_END;
       
       switch(type) {
         case PST_LINE:
-          res = GetDistToLineSegment(x,y,angle,shortestDistanceToPath_m,radDiff);
+          res = GetDistToLineSegment(x,y,angle,shortestDistanceToPath,radDiff);
           break;
         case PST_ARC:
-          res = GetDistToArcSegment(x,y,angle,shortestDistanceToPath_m,radDiff);
+          res = GetDistToArcSegment(x,y,angle,shortestDistanceToPath,radDiff);
           break;
         case PST_POINT_TURN:
                   // TODO: What do we do here?
@@ -130,7 +129,7 @@ namespace Anki
 
     
     SegmentRangeStatus PathSegment::GetDistToLineSegment(const f32 x, const f32 y, const f32 angle,
-                                                        f32 &shortestDistanceToPath_m, f32 &radDiff) const
+                                                        f32 &shortestDistanceToPath, f32 &radDiff) const
     {
       const PathSegmentDef::s_line* seg = &(def.line);
       
@@ -162,9 +161,9 @@ namespace Anki
       if (FLT_NEAR(seg->startPt_x, seg->endPt_x)) {
         // Special case: Vertical line
         if (seg->endPt_y > seg->startPt_y) {
-          shortestDistanceToPath_m = seg->startPt_x - x;
+          shortestDistanceToPath = seg->startPt_x - x;
         } else {
-          shortestDistanceToPath_m = x - seg->startPt_x;
+          shortestDistanceToPath = x - seg->startPt_x;
         }
         
         // Compute angle difference
@@ -184,9 +183,9 @@ namespace Anki
       } else if (FLT_NEAR(seg->startPt_y, seg->endPt_y)) {
         // Special case: Horizontal line
         if (seg->endPt_x > seg->startPt_x) {
-          shortestDistanceToPath_m = y - seg->startPt_y;
+          shortestDistanceToPath = y - seg->startPt_y;
         } else {
-          shortestDistanceToPath_m = seg->startPt_y - y;
+          shortestDistanceToPath = seg->startPt_y - y;
         }
         
         // Compute angle difference
@@ -213,7 +212,7 @@ namespace Anki
         f32 dy = y - y_intersect;
         f32 dx = x - x_intersect;
         
-        shortestDistanceToPath_m = sqrtf(dy*dy + dx*dx);
+        shortestDistanceToPath = sqrtf(dy*dy + dx*dx);
         
 #if(DEBUG_PATH_FOLLOWER)
         PERIODIC_PRINT(DBG_PERIOD, "m: %f, b: %f\n",line_m_,line_b_);
@@ -225,7 +224,7 @@ namespace Anki
 #endif
         
         // Compute the sign of the error distance
-        shortestDistanceToPath_m *= (SIGN(line_m_) ? 1 : -1) * (SIGN(dy) ? 1 : -1) * line_dy_sign_;
+        shortestDistanceToPath *= (SIGN(line_m_) ? 1 : -1) * (SIGN(dy) ? 1 : -1) * line_dy_sign_;
         
         
         // Compute angle difference
@@ -252,7 +251,7 @@ namespace Anki
 
 
     SegmentRangeStatus PathSegment::GetDistToArcSegment(const f32 x, const f32 y, const f32 angle,
-                                                       f32 &shortestDistanceToPath_m, f32 &radDiff) const
+                                                       f32 &shortestDistanceToPath, f32 &radDiff) const
     {
       const PathSegmentDef::s_arc* seg = &(def.arc);
       
@@ -288,7 +287,7 @@ namespace Anki
       // with true vertical so we don't take sqrts of -ve numbers.
       f32 x_intersect, y_intersect;
       if (NEAR(ABS(theta_line.ToFloat()), PIDIV2, 0.01)) {
-        shortestDistanceToPath_m = ABS(dy) - r;
+        shortestDistanceToPath = ABS(dy) - r;
         x_intersect = x_center;
         y_intersect = y_center + r * (dx > 0 ? 1 : -1);
         
@@ -326,7 +325,7 @@ namespace Anki
         y_intersect = y_center + (dy > 0 ? 1 : -1) * sqrtf(r*r - (x_intersect - x_center) * (x_intersect - x_center));
         
         // Compute distance to intersection point (i.e. shortest distance to arc)
-        shortestDistanceToPath_m = sqrtf((x - x_intersect) * (x - x_intersect) + (y - y_intersect) * (y - y_intersect));
+        shortestDistanceToPath = sqrtf((x - x_intersect) * (x - x_intersect) + (y - y_intersect) * (y - y_intersect));
         
 #if(DEBUG_PATH_FOLLOWER)
         PRINT("A: %f, B: %f, C: %f, sqrt: %f\n", A, B, C, sqrtPart);
@@ -339,7 +338,7 @@ namespace Anki
       // Figure out sign of distance according to robot orientation and whether it's inside or outside the circle.
       bool robotInsideCircle = ABS(dx) < ABS(x_intersect - x_center);
       if ((robotInsideCircle && !movingCCW) || (!robotInsideCircle && movingCCW)) {
-        shortestDistanceToPath_m *= -1;
+        shortestDistanceToPath *= -1;
       }
       
       
@@ -349,7 +348,7 @@ namespace Anki
       PRINT("x: %f, y: %f, m: %f, b: %f\n", x,y,m,b);
       PRINT("x_center: %f, y_center: %f\n", x_center, y_center);
       PRINT("x_int: %f, y_int: %f\n", x_intersect, y_intersect);
-      PRINT("dy: %f, dx: %f, dist: %f, radDiff: %f\n", dy, dx, shortestDistanceToPath_m, radDiff);
+      PRINT("dy: %f, dx: %f, dist: %f, radDiff: %f\n", dy, dx, shortestDistanceToPath, radDiff);
       PRINT("insideCircle: %d\n", robotInsideCircle);
       PRINT("theta_line: %f, theta_tangent: %f\n", theta_line.ToFloat(), theta_tangent.ToFloat());
 #endif
@@ -729,7 +728,7 @@ namespace Anki
     // TODO: Eventually, this function should also be made to check that
     // orientation is not discontiuous and that velocity profile is smooth
     // at transition points.
-    bool Path::CheckSegmentContinuity(u8 pathSegmentIdx) const
+    bool Path::CheckSegmentContinuity(f32 tolerance_distance_squared, u8 pathSegmentIdx) const
     {
       // If checking continuity on non-existent piece
       if (pathSegmentIdx >= numPathSegments_)
@@ -743,7 +742,7 @@ namespace Anki
       f32 start_x, start_y, end_x, end_y;
       path_[pathSegmentIdx].GetStartPoint(start_x, start_y);
       path_[pathSegmentIdx-1].GetEndPoint(end_x, end_y);
-      if ((start_x - end_x)*(start_x - end_x) + (start_y - end_y)*(start_y - end_y) < CONTINUITY_TOL_SQUARED_M2) {
+      if ((start_x - end_x)*(start_x - end_x) + (start_y - end_y)*(start_y - end_y) < tolerance_distance_squared) {
         return true;
       }
   
@@ -752,12 +751,12 @@ namespace Anki
       return false;
     }
   
-    bool Path::CheckContinuity(s16 pathSegmentIdx) const
+    bool Path::CheckContinuity(f32 tolerance_distance_squared, s16 pathSegmentIdx) const
     {
       // Check entire path?
       if (pathSegmentIdx < 0) {
         for (u8 i=0; i< numPathSegments_; ++i) {
-          if (!CheckSegmentContinuity(i)) {
+          if (!CheckSegmentContinuity(tolerance_distance_squared, i)) {
             printf("ERROR: Continuity check failed on segment %d\n", i);
             return false;
           }
@@ -766,13 +765,13 @@ namespace Anki
       }
       
       // Just check specified segment
-      return CheckSegmentContinuity(pathSegmentIdx);
+      return CheckSegmentContinuity(tolerance_distance_squared, pathSegmentIdx);
     }
   
     
     // Add path segment
     // tODO: Change units to meters
-    bool Path::AppendLine(u32 matID, f32 x_start_m, f32 y_start_m, f32 x_end_m, f32 y_end_m)
+    bool Path::AppendLine(u32 matID, f32 x_start, f32 y_start, f32 x_end, f32 y_end)
     {
       if (numPathSegments_ >= MAX_NUM_PATH_SEGMENTS) {
         printf("ERROR (AppendLine): Exceeded path size\n");
@@ -780,10 +779,10 @@ namespace Anki
       }
       
       path_[numPathSegments_].type = PST_LINE;
-      path_[numPathSegments_].def.line.startPt_x = x_start_m;
-      path_[numPathSegments_].def.line.startPt_y = y_start_m;
-      path_[numPathSegments_].def.line.endPt_x = x_end_m;
-      path_[numPathSegments_].def.line.endPt_y = y_end_m;
+      path_[numPathSegments_].def.line.startPt_x = x_start;
+      path_[numPathSegments_].def.line.startPt_y = y_start;
+      path_[numPathSegments_].def.line.endPt_x = x_end;
+      path_[numPathSegments_].def.line.endPt_y = y_end;
       
       numPathSegments_++;
       
@@ -791,18 +790,18 @@ namespace Anki
     }
   
   
-    void Path::AddArc(f32 x_center_m, f32 y_center_m, f32 radius_m, f32 startRad, f32 sweepRad) {
+    void Path::AddArc(f32 x_center, f32 y_center, f32 radius, f32 startRad, f32 sweepRad) {
       path_[numPathSegments_].type = PST_ARC;
-      path_[numPathSegments_].def.arc.centerPt_x = x_center_m;
-      path_[numPathSegments_].def.arc.centerPt_y = y_center_m;
-      path_[numPathSegments_].def.arc.radius = radius_m;
+      path_[numPathSegments_].def.arc.centerPt_x = x_center;
+      path_[numPathSegments_].def.arc.centerPt_y = y_center;
+      path_[numPathSegments_].def.arc.radius = radius;
       path_[numPathSegments_].def.arc.startRad = startRad;
       path_[numPathSegments_].def.arc.sweepRad = sweepRad;
       numPathSegments_++;
     }
   
   
-    bool Path::AppendArc(u32 matID, f32 x_center_m, f32 y_center_m, f32 radius_m, f32 startRad, f32 sweepRad)
+    bool Path::AppendArc(u32 matID, f32 x_center, f32 y_center, f32 radius, f32 startRad, f32 sweepRad)
     {
       if (numPathSegments_ >= MAX_NUM_PATH_SEGMENTS) {
         printf("ERROR (AppendArc): Exceeded path size\n");
@@ -851,7 +850,7 @@ namespace Anki
           sweep = MAX( -ABS((limitAngle - currAngle).ToFloat()), -sweepRadLeft);
         }
         
-        AddArc(x_center_m, y_center_m, radius_m, currAngle.ToFloat(), sweep);
+        AddArc(x_center, y_center, radius, currAngle.ToFloat(), sweep);
           
         if (ABS(sweep) == sweepRadLeft) {
           sweepRadLeft = 0;
