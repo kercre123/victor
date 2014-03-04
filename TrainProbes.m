@@ -15,6 +15,11 @@ DEBUG_DISPLAY = true;
 
 parseVarargin(varargin{:});
     
+%% Create Probe Pattern
+N_angles = 8;
+angles = linspace(0, 2*pi, N_angles +1);
+probePattern = struct('x', [0 probeRadius/workingResolution*cos(angles)], ...
+    'y', [0 probeRadius/workingResolution*sin(angles)]);
 
 %% Load marker images
 fnames = getfnames(markerImageDir, 'images');
@@ -56,7 +61,7 @@ end
 labels = 1:numImages;
 numLabels = numImages;
  
-[xgrid,ygrid] = meshgrid(1:workingResolution);
+[xgrid,ygrid] = meshgrid(linspace(0,1,workingResolution)); %1:workingResolution);
 
 %% Perturb corners
 
@@ -70,15 +75,22 @@ if numPerturbations
     for i = 1:numPerturbations
         corners_i = corners + perturbSigma*randn(4,2);
         T = cp2tform(corners_i, corners, 'projective');
-        [xi,yi] = tforminv(T, xgrid, ygrid);
+        [xi,yi] = tforminv(T, xgrid*(workingResolution-1)+1, ygrid*(workingResolution-1)+1);
         
         for i_img = 1:numImages
-            img_perturb{i,i_img} = separable_filter(interp2(img{i_img}, xi, yi, 'linear', 1), probeKernel, [], 'replicate');
+            %img_perturb{i,i_img} = separable_filter(interp2(img{i_img}, xi, yi, 'linear', 1), probeKernel, [], 'replicate');
+            img_perturb{i,i_img} = interp2(img{i_img}, xi, yi, 'linear', 1);
         end
     end
     
-    namedFigure('Average Perturbed Images');
-    for j = 1:numImages, subplot(2,ceil(numImages/2),j), imagesc(mean(cat(3, img_perturb{:,j}),3)), axis image, end
+    if DEBUG_DISPLAY
+        namedFigure('Average Perturbed Images');
+        for j = 1:numImages
+            subplot(2,ceil(numImages/2),j)
+            imagesc(mean(cat(3, img_perturb{:,j}),3)), axis image
+        end
+        colormap(gray);
+    end
     
     labels = [labels row(repmat(labels, [numPerturbations 1]))];
     img = [img(:); img_perturb(:)];
@@ -106,8 +118,16 @@ end
 
 
 %% Create samples 
-probeValues = reshape(img, [], numImages);
+%probeValues = reshape(img, [], numImages);
+fprintf('Computing probe values...');
+probeValues = zeros(workingResolution^2, numImages);
+X = (workingResolution-1)*(probePattern.x(ones(workingResolution^2,1),:) + xgrid(:)*ones(1,length(probePattern.x))) + 1;
+Y = (workingResolution-1)*(probePattern.y(ones(workingResolution^2,1),:) + ygrid(:)*ones(1,length(probePattern.y))) + 1;
 
+for i = 1:numImages
+   probeValues(:,i) = mean(interp2(img(:,:,i), X, Y, 'linear', 1),2);
+end
+fprintf('Done.\n');
 % probeValues = cell(1,numImages*4);
 % for i = 1:numImages*4
 %     probeValues{i}  = interp2(img(:,:,i), xgrid, ygrid, 'nearest');    
@@ -138,11 +158,12 @@ catch E
     end
 end
     
-
-namedFigure('DecisionTree'), clf
-fprintf('Drawing tree...');
-DrawTree(root, 0);
-fprintf('Done.\n');
+if DEBUG_DISPLAY
+    namedFigure('DecisionTree'), clf
+    fprintf('Drawing tree...');
+    DrawTree(root, 0);
+    fprintf('Done.\n');
+end
 
 % probes = GetProbeList(root);
 %
@@ -160,9 +181,14 @@ fprintf('Done.\n');
 %     end
 % end
 
-namedFigure('Sampled Test Results');
-colormap(gray)
-maxDisplay = 48;
+fprintf('Testing on training images...');
+if DEBUG_DISPLAY
+    namedFigure('Sampled Test Results'); clf
+    colormap(gray)
+    maxDisplay = 48;
+else
+    maxDisplay = 0;
+end
 correct = false(1,numImages);
 randIndex = row(randperm(numImages));
 for i_rand = 1:numImages
@@ -170,16 +196,16 @@ for i_rand = 1:numImages
     
     %testImg = mean(im2double(imread(fullfile(markerImageDir, fnames{i}))),3);
     testImg = img(:,:,i);
-    radius = probeRadius/workingResolution * size(testImg,1);
+    %radius = probeRadius/workingResolution * size(testImg,1);
     if i_rand <= maxDisplay
         subplot(6, maxDisplay/6, i_rand), hold off, imagesc(testImg), axis image, hold on
-        displayRadius = radius;
+        doDisplay = true;
     else 
-        displayRadius = 0;
+        doDisplay = false;
     end
     
     %testImg = separable_filter(testImg, gaussian_kernel(radius/2), [], 'replicate');
-    result = TestTree(root, testImg, displayRadius);
+    result = TestTree(root, testImg, [], probePattern, doDisplay);
     if ischar(result)
         correct(i) = strcmp(result, labelNames{labels(i)});
         if ~correct(i)
@@ -202,10 +228,49 @@ for i_rand = 1:numImages
     end
     
 end
-fprintf('Got %d of %d training images right (%.1f%%)\n', ...
+fprintf(' Got %d of %d training images right (%.1f%%)\n', ...
     sum(correct), length(correct), sum(correct)/length(correct)*100);
 if sum(correct) ~= length(correct)
     warning('We should have ZERO training error!');
+end
+
+% Also test on original images
+correct = false(1,length(fnames));
+if DEBUG_DISPLAY
+    namedFigure('Original Image Errors'), clf
+end
+for i = 1:length(fnames)    
+    testImg = mean(im2double(imread(fullfile(markerImageDir, fnames{i}))),3);
+    % radius = probeRadius/workingResolution * size(testImg,1);
+        
+    %testImg = separable_filter(testImg, gaussian_kernel(radius/2), [], 'replicate');
+    result = TestTree(root, testImg, [], probePattern);
+    if ischar(result)
+        correct(i) = strcmp(result, labelNames{labels(i)});
+        
+        if DEBUG_DISPLAY && ~correct(i)
+            h_axes = axes;
+            imagesc(testImg, 'Parent', h_axes); hold on
+            axis(h_axes, 'image');
+            TestTree(root, testImg, [], probePattern, true);
+        end
+                        
+    else
+        warning('Reached node with multiple remaining labels: ')
+        for j = 1:length(result)
+            fprintf('%s, ', labelNames{labels(result(j))});
+        end
+        fprintf('\b\b\n');
+    end
+    
+end
+if DEBUG_DISPLAY && any(~correct)
+    fix_subplots(2,ceil(sum(~correct)/2));
+end
+fprintf('Got %d of %d original images right (%.1f%%)\n', ...
+    sum(correct), length(correct), sum(correct)/length(correct)*100);
+if sum(correct) ~= length(correct)
+    warning('We should have ZERO errors on original images!');
 end
 
     function node = buildTree(node, used)
@@ -328,8 +393,8 @@ unusedProbes = find(~used);
             % Choose the probe location with the highest score
             %[~,node.whichProbe] = max(score(:));
             node.whichProbe = unusedProbes(whichUnusedProbe);
-            node.x = (xgrid(node.whichProbe)-1)/workingResolution;
-            node.y = (ygrid(node.whichProbe)-1)/workingResolution;
+            node.x = xgrid(node.whichProbe);%-1)/workingResolution;
+            node.y = ygrid(node.whichProbe);%-1)/workingResolution;
             node.infoGain = infoGain(whichUnusedProbe);
             node.remainingLabels = sprintf('%s ', labelNames{unique(labels(node.remaining))});
             
