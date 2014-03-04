@@ -14,6 +14,7 @@ embeddedConversions = EmbeddedConversionsManager; % 1-cp2tform, 2-opencv_cp2tfor
 showTiming = false;
 thresholdFraction = 1; % fraction of local mean to use as threshold
 maxSmoothingFraction = 0.1; % fraction of max dim
+decodeMarkers = true;
 
 parseVarargin(varargin{:});
 
@@ -226,6 +227,13 @@ else % if strcmp(embeddedConversions.completeCImplementationType, 'c_singleStep1
     else
         img_decode = img;
         quads_decode = quads;
+    end
+    
+    
+    if ~decodeMarkers
+        % Don't decode the markers, just return all extracted quads
+        markers = quads;
+        return;
     end
 
     % Decode to find BlockMarker2D objects

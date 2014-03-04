@@ -1,6 +1,6 @@
-% function runTests_docking(allTestsFilename)
+% function runTests_docking(allTestsFilename, outputFilename)
 
-% runTests_docking('C:/Anki/systemTestImages/allDockerTests.json', 'C:/Anki/systemTestImages/results_docking.mat');
+% runTests_docking('C:/Anki/products-cozmo/systemTests/tests/allDockerTests.json', 'C:/Anki/systemTestImages/results_docking.mat');
 
 function runTests_docking(allTestsFilename, outputFilename)
 
