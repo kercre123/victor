@@ -8,6 +8,8 @@ probeRadius = 5;
 minInfoGain = 0;
 maxDepth = 20;
 addRotations = true;
+numPerturbations = 50;
+perturbSigma = 2;
 
 DEBUG_DISPLAY = true;
 
@@ -22,17 +24,76 @@ fnames = getfnames(markerImageDir, 'images');
 numImages = length(fnames);
 labelNames = cell(1,numImages);
 img = cell(1, numImages);
+distMap = cell(1, numImages);
 for i = 1:numImages
-    img{i} = imresize(mean(im2double(imread(fullfile(markerImageDir, fnames{i}))),3), workingResolution*[1 1]);
-    img{i} = separable_filter(img{i}, gaussian_kernel(probeRadius));
+    img{i} = imread(fullfile(markerImageDir, fnames{i}));
+    
+    
+    if numPerturbations > 0
+        img{i} = imresize(mean(im2double(img{i}),3), workingResolution*[1 1], 'nearest');
+    else
+        img{i} = imresize(mean(im2double(img{i}),3), workingResolution*[1 1], 'bilinear');
+        distMap{i} = img{i}(:,:,1) > 0.5;
+        
+        img{i} = separable_filter(img{i}, gaussian_kernel(0.5*probeRadius), [], 'replicate');
+    end
+    
+    if ~numPerturbations
+        distMap{i} = bwdist( ...
+            image_right(distMap{i}) ~= distMap{i} | ...
+            image_left(distMap{i})  ~= distMap{i} | ...
+            image_up(distMap{i})    ~= distMap{i} | ...
+            image_down(distMap{i})  ~= distMap{i});
+        %distMap{i} = imresize(distMap{i}, workingResolution*[1 1]);
+    end
+    
     [~,labelNames{i}] = fileparts(fnames{i});
 end
-img = cat(3, img{:});
+
+if ~numPerturbations
+    distMap = cat(3, distMap{:});
+end
 labels = 1:numImages;
+numLabels = numImages;
+ 
+[xgrid,ygrid] = meshgrid(1:workingResolution);
+
+%% Perturb corners
+
+if numPerturbations
+    fprintf('Creating perturbed images...');
+    
+    probeKernel = gaussian_kernel(probeRadius/2, 2);
+    
+    img_perturb = cell(numPerturbations, numImages);
+    corners = [0 0; 0 workingResolution; workingResolution 0; workingResolution workingResolution] + 0.5;
+    for i = 1:numPerturbations
+        corners_i = corners + perturbSigma*randn(4,2);
+        T = cp2tform(corners_i, corners, 'projective');
+        [xi,yi] = tforminv(T, xgrid, ygrid);
+        
+        for i_img = 1:numImages
+            img_perturb{i,i_img} = separable_filter(interp2(img{i_img}, xi, yi, 'linear', 1), probeKernel, [], 'replicate');
+        end
+    end
+    
+    namedFigure('Average Perturbed Images');
+    for j = 1:numImages, subplot(2,ceil(numImages/2),j), imagesc(mean(cat(3, img_perturb{:,j}),3)), axis image, end
+    
+    labels = [labels row(repmat(labels, [numPerturbations 1]))];
+    img = [img(:); img_perturb(:)];
+    fprintf('Done.\n');
+end
+img = cat(3, img{:});
+numImages = size(img,3);
 
 %% Add all four rotations
 if addRotations
     img = cat(3, img, imrotate(img,90), imrotate(img,180), imrotate(img, 270));
+    if ~numPerturbations
+        distMap = cat(3, distMap, imrotate(distMap,90), imrotate(distMap,180), imrotate(distMap, 270));
+    end
+    
     labels = repmat(labels, [1 4]);
     
     numImages = 4*numImages;
@@ -45,7 +106,6 @@ end
 
 
 %% Create samples 
-[xgrid,ygrid] = meshgrid(1:workingResolution);
 probeValues = reshape(img, [], numImages);
 
 % probeValues = cell(1,numImages*4);
@@ -79,30 +139,60 @@ catch E
 end
     
 
-namedFigure('DecisionTree')
+namedFigure('DecisionTree'), clf
+fprintf('Drawing tree...');
 DrawTree(root, 0);
+fprintf('Done.\n');
 
-probes = GetProbeList(root);
+% probes = GetProbeList(root);
+%
+% namedFigure('ProbeLocations'), colormap(gray), clf
+%
+% for i = 1:min(32,numImages)
+%     subplot(4,min(8,numImages),i), hold off, imagesc(img(:,:,i)), axis image, hold on
+%     
+%     fieldName = ['label_' labelNames{labels(i)}];
+%     if isfield(probes, fieldName)
+%         usedProbes = probes.(fieldName);
+%         plot(xgrid(usedProbes), ygrid(usedProbes), 'ro');
+%     else
+%         warning('No field for label "%s"', labelNames{labels(i)});
+%     end
+% end
 
-namedFigure('ProbeLocations'), colormap(gray), clf
-
-for i = 1:min(32,numImages)
-    subplot(4,min(32,numImages),i), hold off, imagesc(img(:,:,i)), axis image, hold on
-    
-    fieldName = ['label_' labelNames{labels(i)}];
-    if isfield(probes, fieldName)
-        usedProbes = probes.(fieldName);
-        plot(xgrid(usedProbes), ygrid(usedProbes), 'ro');
-    else
-        warning('No field for label "%s"', labelNames{labels(i)});
-    end
-end
-
+namedFigure('Sampled Test Results');
+colormap(gray)
+maxDisplay = 48;
 correct = false(1,numImages);
-for i = 1:numImages
-    result = TestTree(root, img(:,:,i));
+randIndex = row(randperm(numImages));
+for i_rand = 1:numImages
+    i = randIndex(i_rand);
+    
+    %testImg = mean(im2double(imread(fullfile(markerImageDir, fnames{i}))),3);
+    testImg = img(:,:,i);
+    radius = probeRadius/workingResolution * size(testImg,1);
+    if i_rand <= maxDisplay
+        subplot(6, maxDisplay/6, i_rand), hold off, imagesc(testImg), axis image, hold on
+        displayRadius = radius;
+    else 
+        displayRadius = 0;
+    end
+    
+    %testImg = separable_filter(testImg, gaussian_kernel(radius/2), [], 'replicate');
+    result = TestTree(root, testImg, displayRadius);
     if ischar(result)
         correct(i) = strcmp(result, labelNames{labels(i)});
+        if ~correct(i)
+            color = 'r';
+        else 
+            color = 'g';
+        end
+        
+        if i_rand <= maxDisplay
+            set(gca, 'XColor', color, 'YColor', color);
+            title(result)
+        end
+                
     else
         warning('Reached node with multiple remaining labels: ')
         for j = 1:length(result)
@@ -130,7 +220,7 @@ end
             fprintf('LeafNode for label = %d, or "%s"\n', node.labelID, node.labelName);
            
         else 
-            markerProb = max(eps,hist(labels(node.remaining), 1:numImages));
+            markerProb = max(eps,hist(labels(node.remaining), 1:numLabels));
             markerProb = markerProb/max(eps,sum(markerProb));
 
 %             % Compute distance map from current probes
@@ -174,28 +264,30 @@ unusedProbes = find(~used);
             % from any edge in any image, since those will still be closer 
             % to black or white even after blurring.
             probeIsOn = 1 - probeValues(unusedProbes,node.remaining);
-            p_on = sum(probeIsOn,2)/size(probeIsOn,2);
-            p_off = 1 - p_on;
-            
-            markerProb_on  = zeros(numProbes,numImages);
-            markerProb_off = zeros(numProbes,numImages);
+                        
+            markerProb_on  = zeros(numProbes,numLabels);
+            markerProb_off = zeros(numProbes,numLabels);
             
             L = labels(node.remaining); 
             for i_probe = 1:numProbes
                 %markerProb_on(i_probe,:) = max(eps,hist(L(probeIsOn(i_probe,:)), 1:numImages));
                 %markerProb_off(i_probe,:) = max(eps,hist(L(~probeIsOn(i_probe,:)), 1:numImages));
-                markerProb_on(i_probe,:) = max(eps, accumarray(L(:), probeIsOn(i_probe,:)', [numImages 1])');
-                markerProb_off(i_probe,:) = max(eps, accumarray(L(:), 1-probeIsOn(i_probe,:)', [numImages 1])');
+                markerProb_on(i_probe,:) = max(eps, accumarray(L(:), probeIsOn(i_probe,:)', [numLabels 1])');
+                markerProb_off(i_probe,:) = max(eps, accumarray(L(:), 1-probeIsOn(i_probe,:)', [numLabels 1])');
             end
-            markerProb_on = markerProb_on ./ (sum(markerProb_on,2)*ones(1,numImages));
+            markerProb_on = markerProb_on ./ (sum(markerProb_on,2)*ones(1,numLabels));
             %markerProb_off = 1 - markerProb_on;
-            markerProb_off = markerProb_off ./ (sum(markerProb_off,2)*ones(1,numImages));
+            markerProb_off = markerProb_off ./ (sum(markerProb_off,2)*ones(1,numLabels));
+            
+            p_on = sum(probeIsOn,2)/size(probeIsOn,2);
+            p_off = 1 - p_on;
             
             conditionalEntropy = - (p_on.*sum(markerProb_on.*log2(max(eps,markerProb_on)), 2) + ...
                 p_off.*sum(markerProb_off.*log2(max(eps,markerProb_off)), 2));
             
             infoGain = currentEntropy - conditionalEntropy;
             
+            %{
             if DEBUG_DISPLAY
                 temp = zeros(workingResolution);
                 temp(unusedProbes) = infoGain;
@@ -207,6 +299,7 @@ unusedProbes = find(~used);
                 end
                 pause
             end
+            %}
             
             % Find all probes with the max information gain and if there
             % are more than one, choose the one furthest from the current
@@ -238,47 +331,74 @@ unusedProbes = find(~used);
             node.x = (xgrid(node.whichProbe)-1)/workingResolution;
             node.y = (ygrid(node.whichProbe)-1)/workingResolution;
             node.infoGain = infoGain(whichUnusedProbe);
-            node.remainingLabels = sprintf('%s ', labelNames{labels(node.remaining)});
+            node.remainingLabels = sprintf('%s ', labelNames{unique(labels(node.remaining))});
             
             % Recurse left and right from this node
-            leftRemaining = node.remaining(probeValues(node.whichProbe,node.remaining) < .5);
-            if ~isempty(leftRemaining) 
-                if length(leftRemaining) == length(node.remaining)
-                    error('BuildTree:UselessSplit', ...
-                            'Reached split that makes no progress with [%s] remaining.', ...
-                            sprintf('%s ', labelNames{labels(node.remaining)}));
-                else
-                    usedLeft = used;
-                    usedLeft(node.whichProbe) = true;
-                    leftChild.remaining = leftRemaining;
-                    leftChild.depth = node.depth+1;
-                    if leftChild.depth <= maxDepth
-                        node.leftChild = buildTree(leftChild, usedLeft);
-                    else
-                        error('BuildTree:MaxDepth', ...
-                            'Reached max depth with [%s] remaining.', ...
-                            sprintf('%s ', labelNames{labels(leftRemaining)}));
-                    end
-                end
+            goLeft = probeValues(node.whichProbe,node.remaining) < .5;
+            if ~numPerturbations
+                D = reshape(distMap(:,:,node.remaining), [], length(node.remaining));
+                uncertain = D(node.whichProbe,:) < probeRadius;
+            else
+                uncertain = false(size(node.remaining));
             end
             
-            rightRemaining = node.remaining(probeValues(node.whichProbe,node.remaining) >= .5);
-            if ~isempty(rightRemaining)
-                if length(rightRemaining) == length(node.remaining)
-                    error('BuildTree:UselessSplit', ...
-                        'Reached split that makes no progress with [%s\b] remaining.', ...
-                        sprintf('%s ', labelNames{labels(node.remaining)}));
-                else
+            if all(uncertain)
+               error('BuildTree:ProbeOnEdges', ...
+                   'Selected probe is uncertain for all remaining images.'); 
+               %used(node.whichProbe) = true;
+               %node = buildTree(node, used);
+            else
+                leftRemaining = node.remaining(goLeft | uncertain);
+                if ~isempty(leftRemaining)
+                    usedLeft = used;
+                    usedLeft(node.whichProbe) = true;
+                    
+                    if length(leftRemaining) == length(node.remaining)
+                        if any(uncertain)
+                            node = buildTree(node, usedLeft);
+                        else
+                            error('BuildTree:UselessSplit', ...
+                                'Reached split that makes no progress with [%s\b] remaining.', ...
+                                sprintf('%s ', labelNames{labels(node.remaining)}));
+                        end
+                    else
+                        leftChild.remaining = leftRemaining;
+                        leftChild.depth = node.depth+1;
+                        if leftChild.depth <= maxDepth
+                            node.leftChild = buildTree(leftChild, usedLeft);
+                        else
+                            error('BuildTree:MaxDepth', ...
+                                'Reached max depth with [%s] remaining.', ...
+                                sprintf('%s ', labelNames{labels(leftRemaining)}));
+                        end
+                    end
+                end
+                
+                %rightRemaining = node.remaining(probeValues(node.whichProbe,node.remaining) >= .5);
+                rightRemaining = node.remaining(~goLeft | uncertain);
+                if ~isempty(rightRemaining)
                     usedRight = used;
                     usedRight(node.whichProbe) = true;
-                    rightChild.remaining = rightRemaining;
-                    rightChild.depth = node.depth+1;
-                    if rightChild.depth <= maxDepth
-                        node.rightChild = buildTree(rightChild, usedRight);
+                    
+                    if length(rightRemaining) == length(node.remaining)
+                        if any(uncertain)
+                            node = buildTree(node, usedRight);
+                        else
+                            error('BuildTree:UselessSplit', ...
+                                'Reached split that makes no progress with [%s\b] remaining.', ...
+                                sprintf('%s ', labelNames{labels(node.remaining)}));
+                        end
                     else
-                        error('BuildTree:MaxDepth', ...
-                            'Reached max depth with [%s\b] remaining.', ...
-                            sprintf('%s ', labelNames{labels(rightRemaining)}));
+                        
+                        rightChild.remaining = rightRemaining;
+                        rightChild.depth = node.depth+1;
+                        if rightChild.depth <= maxDepth
+                            node.rightChild = buildTree(rightChild, usedRight);
+                        else
+                            error('BuildTree:MaxDepth', ...
+                                'Reached max depth with [%s\b] remaining.', ...
+                                sprintf('%s ', labelNames{labels(rightRemaining)}));
+                        end
                     end
                 end
             end
