@@ -69,6 +69,13 @@ namespace Cozmo {
       memcpy(sendBuf + sendBufLen, RADIO_PACKET_FOOTER, sizeof(RADIO_PACKET_FOOTER));
       sendBufLen += sizeof(RADIO_PACKET_FOOTER);
 
+      /*
+      printf("SENDBUF (hex): ");
+      PrintBytesHex(sendBuf, sendBufLen);
+      printf("\nSENDBUF (uint): ");
+      PrintBytesUInt(sendBuf, sendBufLen);
+      printf("\n");
+      */
       
       return it->second.client->Send(sendBuf, sendBufLen);
     }

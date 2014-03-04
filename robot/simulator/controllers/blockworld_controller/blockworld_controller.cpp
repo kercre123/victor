@@ -29,8 +29,6 @@
 
 #include "anki/cozmo/basestation/tcpComms.h"
 
-// TODO: Get rid of this once we're sure it's working with TCP stuff
-#define USE_WEBOTS_TXRX 0
 
 webots::Supervisor basestationController;
 
@@ -61,32 +59,7 @@ int main(int argc, char **argv)
   
   VizManager::getInstance()->Init();
   
-  
-#if(USE_WEBOTS_TXRX)
-  const int MAX_ROBOTS = Anki::Cozmo::BlockWorld::MaxRobots;
-  webots::Receiver* rx[MAX_ROBOTS];
-  webots::Emitter*  tx[MAX_ROBOTS];
-#endif
   basestationController.keyboardEnable(TIME_STEP);
-
-
-  
-#if(USE_WEBOTS_TXRX)
-  //
-  // Initialize World Transmitters/Receivers
-  // (one for each robot, up to MAX_ROBOTS)
-  //
-  char rxRadioName[12], txRadioName[12];
-  
-  for(int i=0; i<MAX_ROBOTS; ++i) {
-    snprintf(rxRadioName, 11, "radio_rx_%d", i+1);
-    snprintf(txRadioName, 11, "radio_tx_%d", i+1);
-    
-    tx[i] = basestationController.getEmitter(txRadioName);
-    rx[i] = basestationController.getReceiver(rxRadioName);
-    rx[i]->enable(Anki::Cozmo::TIME_STEP);
-  }
-#endif
   
   //
   // Main Execution loop: step the world forward forever
@@ -130,25 +103,12 @@ int main(int argc, char **argv)
       Robot* robot = robotMgr.GetRobotByID(robotiD);
       while(robot->hasOutgoingMessages())
       {
-        
-#if(USE_WEBOTS_TXRX)
-        // Buffer for the message data we're going to send:
-        // (getOutgoingMessage() will copy data into it)
-        unsigned char msgData[255];
-        u8 msgSize = 255;
-        
-        robot.getOutgoingMessage(msgData, msgSize);
-        if(msgSize > 0) {
-          tx[i]->send(msgData, msgSize);
-        }
-#else
         Comms::MsgPacket p;
         p.destId = robot->get_ID();
         robot->getOutgoingMessage(p.data, p.dataLen);
         if (p.dataLen > 0) {
           robotComms.Send(p);
         }
-#endif
       } // while robot i still has outgoing messages to send
       
     } // for each robot

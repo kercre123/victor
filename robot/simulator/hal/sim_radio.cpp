@@ -16,13 +16,9 @@
 #include <stdio.h>
 #include <string>
 
-#if(USE_WEBOTS_TXRX)
-#include <webots/Supervisor.hpp>
-#else
 #include "anki/messaging/shared/TcpServer.h"
 #include "anki/messaging/shared/UdpClient.h"
 #include "anki/messaging/shared/utilMessaging.h"
-#endif
 
 namespace Anki {
   namespace Cozmo {
@@ -31,13 +27,9 @@ namespace Anki {
       const u16 RECV_BUFFER_SIZE = 1024;
       
       // For communications with basestation
-#if(USE_WEBOTS_TXRX)
-      webots::Emitter *tx_;
-      webots::Receiver *rx_;
-#else
       TcpServer server;
       UdpClient advRegClient;
-#endif
+
       u8 recvBuf_[RECV_BUFFER_SIZE];
       s32 recvBufSize_ = 0;
     }
@@ -66,33 +58,14 @@ namespace Anki {
     }
     
     
-#if(USE_WEBOTS_TXRX)
-    ReturnCode InitSimRadio(webots::Robot& webotRobot, s32 robotID)
-#else
     ReturnCode InitSimRadio(s32 robotID)
-#endif
     {
-#if(USE_WEBOTS_TXRX)
-      tx_ = webotRobot.getEmitter("radio_tx");
-      rx_ = webotRobot.getReceiver("radio_rx");
-      
-      if(tx_==NULL || rx_==NULL) {
-        return EXIT_FAILURE;
-      }
-      
-      rx_->enable(TIME_STEP);
-      rx_->setChannel(robotID);
-      tx_->setChannel(robotID);
-#else
       server.StartListening(ROBOT_RADIO_BASE_PORT + robotID);
       
       // Register with advertising service by sending IP and port info
       // NOTE: Since there is no ACK robot_advertisement_controller must be running before this happens!
       advRegClient.Connect("127.0.0.1", ROBOT_ADVERTISEMENT_REGISTRATION_PORT);
       RegisterRobot();
-      
-#endif
-      
       recvBufSize_ = 0;
       
       return EXIT_SUCCESS;
@@ -103,7 +76,6 @@ namespace Anki {
       return server.HasClient();
     }
 
-#if(!USE_WEBOTS_TXRX)
     void DisconnectRadio(void)
     {
       server.DisconnectClient();
@@ -111,26 +83,10 @@ namespace Anki {
       
       RegisterRobot();
     }
-#endif
     
     bool HAL::RadioSendMessage(const Messages::ID msgID, const void *buffer, TimeStamp_t ts)
     {
       if (server.HasClient()) {
-#if(USE_WEBOTS_TXRX)
-        // Send the message header (0xBEEF + robotID + msgID)
-        const u8 HEADER_LENGTH = 4;
-        const u8 header[HEADER_LENGTH] = {
-          RADIO_PACKET_HEADER[0],
-          RADIO_PACKET_HEADER[1],
-          static_cast<u8>(msgID),
-          static_cast<u8>(HAL::GetRobotID())};
-        
-        // Send the actual message
-        const u8 size = Messages::GetSize(msgID);
-
-        tx_->send(header, HEADER_LENGTH);
-        tx_->send(buffer, size);
-#else
 
         // Send the message header (0xBEEF + timestamp + robotID + msgID)
         // For TCP comms, send timestamp immediately after the header.
@@ -172,7 +128,6 @@ namespace Anki {
         }
         printf("\n");
         */
-#endif
         
         return true;
       }
@@ -190,29 +145,6 @@ namespace Anki {
       // Check for incoming data and add it to receive buffer
       int dataSize;
       
-#if(USE_WEBOTS_TXRX)
-      const void* data;
-      
-      // Read receiver for as long as it is not empty.
-      while (rx_->getQueueLength() > 0) {
-        
-        // Get head packet
-        data = rx_->getData();
-        dataSize = rx_->getDataSize();
-        
-        if(recvBufSize_ + dataSize > RECV_BUFFER_SIZE) {
-          PRINT("Radio receive buffer full!");
-          return recvBufSize_;
-        }
-        
-        // Copy data to receive buffer
-        memcpy(&recvBuf_[recvBufSize_], data, dataSize);
-        recvBufSize_ += dataSize;
-        
-        // Delete processed packet from queue
-        rx_->nextPacket();
-      }
-#else
       // Read available data
       dataSize = server.Recv((char*)&recvBuf_[recvBufSize_], RECV_BUFFER_SIZE - recvBufSize_);
       if (dataSize > 0) {
@@ -221,7 +153,6 @@ namespace Anki {
         // Something went wrong
         DisconnectRadio();
       }
-#endif
       
       return recvBufSize_;
       
@@ -317,13 +248,11 @@ namespace Anki {
 
     void RadioUpdate()
     {
-#if(!USE_WEBOTS_TXRX)
       if(!server.HasClient()) {
         if (server.Accept()) {
           DeregisterRobot();
         }
       }
-#endif
     }
 
     

@@ -93,10 +93,6 @@ extern "C" {
   } \
 }
 
-// Whether or not to use TCP server (0) or Webots emitter/receiver (1)
-// as the BTLE channel. (TODO: Phase out webots emitter/receiver)
-#define USE_WEBOTS_TXRX 0
-
 #endif  // #elif defined(SIMULATOR)
 
 #define REG_WORD(x) *(volatile u32*)(x)
