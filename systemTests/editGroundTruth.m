@@ -151,6 +151,10 @@ function previousTest_CreateFcn(hObject, eventdata, handles)
 
 function nextTest_CreateFcn(hObject, eventdata, handles)
 
+function curTestFilename_CreateFcn(hObject, eventdata, handles)
+
+function curImageFilename_CreateFcn(hObject, eventdata, handles)
+
 function displayParameter1_CreateFcn(hObject, eventdata, handles)
     global displayParameter1;
     setDefaultGuiObjectColor(hObject);
@@ -180,7 +184,7 @@ function resolutionVertical_CreateFcn(hObject, eventdata, handles)
     global resolutionVertical;
     setDefaultGuiObjectColor(hObject);
     set(hObject,'String',num2str(resolutionVertical));
-
+    
 %
 % End Create Functions
 %
@@ -435,6 +439,18 @@ function labelingTypePanel_SelectionChangeFcn(hObject, eventdata, handles)
         assert(false);
     end
 
+% --- If Enable == 'on', executes on mouse press in 5 pixel border.
+% --- Otherwise, executes on mouse press in 5 pixel border or over curImageFilename.
+function curImageFilename_ButtonDownFcn(hObject, eventdata, handles)
+    global jsonData;
+    global dataPath;
+    global curSequenceNumber;
+    global curFrameNumber;
+    
+    curFilename = [dataPath, sprintf(jsonData.sequences{curSequenceNumber}.filenamePattern, jsonData.sequences{curSequenceNumber}.frameNumbers(curFrameNumber))];
+    clipboard('copy', curFilename)
+    disp(sprintf('Copied to clipboard: %s', curFilename));
+    
 %
 % End Callback Functions
 %
@@ -471,10 +487,15 @@ function loadConfigFile()
     global jsonConfigFilename;
     global jsonData;
     global dataPath;
+    global allHandles;
 
     jsonConfigFilename = [dataPath, jsonAllTestsData.tests{curTestNumber}];
     jsonConfigFilename = strrep(jsonConfigFilename, '\', '/');
 
+    slashIndexes = strfind(jsonConfigFilename, '/');
+    jsonConfigFilenameWithoutPath = jsonConfigFilename((slashIndexes(end)+1):end);
+    set(allHandles.curTestFilename, 'String', jsonConfigFilenameWithoutPath);
+    
     jsonData = loadjson(jsonConfigFilename);
 
     if ~iscell(jsonData.sequences)
@@ -802,6 +823,10 @@ function sequenceChanged(handles, resetAll, resetZoomOnly)
 
     curFilename = [dataPath, sprintf(jsonData.sequences{curSequenceNumber}.filenamePattern, jsonData.sequences{curSequenceNumber}.frameNumbers(curFrameNumber))];
     image = imread(curFilename);
+    
+    slashIndexes = strfind(curFilename, '/');
+    curFilenameWithoutPath = curFilename((slashIndexes(end)+1):end);
+    set(handles.curImageFilename, 'String', curFilenameWithoutPath)
 
     set(handles.curTest, 'String', num2str(curTestNumber))
     set(handles.maxTest, 'String', num2str(maxTestNumber))
@@ -1211,6 +1236,7 @@ function ButtonClicked(hObject, eventdata, handles)
     end
 
     sequenceChanged(allHandles);
+
 
 
 
