@@ -433,6 +433,11 @@
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\spi.cpp</FilePath>
             </File>
+            <File>
+              <FileName>motors.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\motors.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1523,6 +1528,11 @@
               <FileName>spi.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\spi.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>motors.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\motors.cpp</FilePath>
             </File>
           </Files>
         </Group>

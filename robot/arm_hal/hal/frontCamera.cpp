@@ -30,7 +30,7 @@ GPIO_PIN_SOURCE(SCL, GPIOB, 6);
 GPIO_PIN_SOURCE(SDA, GPIOB, 9);
 
 bool isEOF = false;
-u8 m_buffer1[320*240 * 4] __attribute__((align(32)));
+u8 m_buffer1[320*240 * 4];
 //static u8 m_buffer2[320*240*2];
 
 namespace Anki

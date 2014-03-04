@@ -110,7 +110,6 @@ namespace Anki
       //
       // Parameters / Constants
       //
-      const f32 MOTOR_PWM_MAXVAL = 2400.f;
       const f32 MOTOR_MAX_POWER = 1.0f;
 
       ///////////////////
@@ -503,18 +502,24 @@ namespace Anki
       struct GlobalCommon
       {
         SPISource source;
+        u8 RESERVED[3];
       };
       
       struct GlobalDataToHead
       {
         GlobalCommon common;
-        u8 padding[63];
+        
+        u8 RESERVED[60];  // Pad out to 64 bytes
       };
+      
+      // TODO: get static_assert to work so we can verify sizeof
       
       struct GlobalDataToBody
       {
         GlobalCommon common;
-        u8 padding[63];
+        s16 motorPWM[MOTOR_COUNT];
+        
+        u8 reserved[52];  // Pad out to 64 bytes
       };
 
     } // namespace HAL

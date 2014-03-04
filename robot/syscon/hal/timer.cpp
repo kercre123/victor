@@ -21,15 +21,28 @@ namespace Anki
         m_low = NRF_RTC1->COUNTER;
         u32 ticks = ((u32)m_high << 24) | m_low;
         
-        // TODO: This is really 30.517
+        // TODO: This is really 30.517 us per tick
         return ticks * 30;
       }
       
-      void MicroWait(u32 microseconds)
+      __asm void MicroWait(u32 microseconds)
       {
-        u32 now = GetMicroCounter();
-        while ((GetMicroCounter() - now) < microseconds)
-          ;
+loop
+          SUBS r0, r0, #1
+          NOP
+          NOP
+          NOP
+          NOP
+          NOP
+          NOP
+          NOP
+          NOP
+          NOP
+          NOP
+          NOP
+          NOP
+          BNE loop
+          BX lr
       }
     }
   }

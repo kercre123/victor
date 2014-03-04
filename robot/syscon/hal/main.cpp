@@ -65,12 +65,13 @@ int main(void)
   while (1)
   {
     // Exchange data with the head board
-    result = SPITransmitReceive(
-      sizeof(GlobalDataToBody), 
+    SPITransmitReceive(
+      sizeof(GlobalDataToBody),
       (const u8*)&g_dataToHead,
       (u8*)&g_dataToBody);
     
-    if (result || g_dataToBody.common.source != SPI_SOURCE_HEAD)
+    // Verify the source
+    if (g_dataToBody.common.source != SPI_SOURCE_HEAD)
     {
       if(++failedTransferCount > MAX_FAILED_TRANSFER_COUNT)
       {
@@ -80,9 +81,15 @@ int main(void)
         NVIC_SystemReset();
       }
     } else {
-      // TODO:
-      // Update motors and such
-      // ...
+      failedTransferCount = 0;
+      
+      // Update motors
+      for (int i = 0; i < MOTOR_COUNT; i++)
+      {
+        MotorsSetPower((MotorID)i, g_dataToBody.motorPWM[i]);
+      }
+      
+      MotorsUpdate();
     }
     
     // Update at 200Hz

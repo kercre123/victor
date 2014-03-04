@@ -1,30 +1,6 @@
 #include "console.h"
 #include "anki/cozmo/robot/hal.h"
 
-// TODO: use this when switching to M2. No support for strcasecmp on M1.
-//#include <string.h>
-
-/*int strcasecmp(const char* buffer1, const char* buffer2)
-{
-  while(*buffer1 && *buffer2)
-  {
-    u32 c1 = *buffer1;
-    u32 c2 = *buffer2;
-    if (c1 >= 'A' && c1 <= 'Z')
-      c1 = 'a' + c1 - 'A';
-    if (c2 >= 'A' && c2 <= 'Z')
-      c2 = 'a' + c2 - 'A';
-    if (c1 != c2)
-    {
-      return 1;
-    }
-    buffer1++;
-    buffer2++;
-  }
-  // Return 0 if they both match
-  return *buffer1 | *buffer2;
-}*/
-
 namespace Anki
 {
   namespace Cozmo
@@ -32,9 +8,8 @@ namespace Anki
     namespace Console
     {
       static const u32 BUFFER_SIZE = 128;
-      static const u32 BUFFER_MASK = 0x7f;
       static char m_buffer[BUFFER_SIZE];
-      static u32 m_index = 0;
+      static s32 m_index = 0;
       static u32 m_argumentCount = 0;
 
       typedef int (*ConsoleFunction)();
@@ -244,7 +219,6 @@ namespace Anki
 
       static void ParseCommand()
       {
-
         const int functionCount = sizeof(m_commands) / sizeof(ConsoleCommand);
         char* buffer = m_buffer;
         if (!strcmp(buffer, "?"))
@@ -273,7 +247,7 @@ namespace Anki
           for (int i = 0; i < functionCount; i++)
           {
             const ConsoleCommand* cmd = &m_commands[i];
-            if (!strcmp(cmd->command, buffer) && cmd->function)
+            if (!strcasecmp(cmd->command, buffer) && cmd->function)
             {
               foundCommand = true;
 

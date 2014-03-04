@@ -9,4 +9,7 @@ void MotorsInit();
 // Set the (unitless) power for a specified motor in the range [-798, 798].
 void MotorsSetPower(Anki::Cozmo::HAL::MotorID motorID, s16 power);
 
+// Updates the PWM values for the timers in a safe manner
+void MotorsUpdate();
+
 #endif

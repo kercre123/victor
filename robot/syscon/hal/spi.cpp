@@ -26,7 +26,7 @@ void SPIInit()
   NRF_SPI0->PSELMOSI = PIN_SPI_MOSI;
   
   // Base frequency starts at 0x02000000
-  NRF_SPI0->FREQUENCY = (0x02000000 << Freq_1Mbps);
+  NRF_SPI0->FREQUENCY = (0x02000000 << Freq_125Kbps); //Freq_1Mbps);
  
   // Configure for SPI_MODE0 with LSB-first transmission
   NRF_SPI0->CONFIG = (SPI_CONFIG_CPHA_Leading << SPI_CONFIG_CPHA_Pos) |
@@ -39,12 +39,9 @@ void SPIInit()
   NRF_SPI0->ENABLE = 1;
 }
 
-s32 SPITransmitReceive(u16 length, const u8* dataTX, u8* dataRX)
+void SPITransmitReceive(u16 length, const u8* dataTX, u8* dataRX)
 {
-  using namespace Anki::Cozmo::HAL;
-  
   u16 i;
-  const u32 TIMEOUT = 4000;  // 4ms
   
   for (i = 0; i < length; i++)
   {
@@ -57,6 +54,4 @@ s32 SPITransmitReceive(u16 length, const u8* dataTX, u8* dataRX)
     
     NRF_SPI0->EVENTS_READY = 0;
   }
-  
-  return 0;
 }

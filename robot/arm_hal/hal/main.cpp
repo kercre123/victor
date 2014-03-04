@@ -3,15 +3,6 @@
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "hal/portable.h"
 
-//extern "C" {
-//#include "lib/usb/usbd_cdc_core.h"
-//#include "lib/usb/usbd_usr.h"
-//#include "lib/usb/usb_conf.h"
-//#include "lib/usb/usbd_desc.h"
-//}
-
-//__ALIGN_BEGIN USB_OTG_CORE_HANDLE    USB_OTG_dev __ALIGN_END ;
-
 extern u8 m_buffer1[];
 
 namespace Anki
@@ -53,11 +44,6 @@ namespace Anki
       ReturnCode Step(){ return 0; }
       void Destroy(){ }
       
-      void MotorSetPower(MotorID motor, f32 power){ }
-      void MotorResetPosition(MotorID motor){ }
-      f32 MotorGetSpeed(MotorID motor){ return 0; }
-      f32 MotorGetPosition(MotorID motor){ return 0; }
-      
       const CameraInfo* GetHeadCamInfo(){ return 0; }
       const CameraInfo* GetMatCamInfo(){ return 0; }
       
@@ -78,12 +64,8 @@ int main(void)
   Startup();
   TimerInit();
   UARTInit();
-  
-  UARTPutString("UART Initialized\r\n");
-  
   SPIInit();
   
-  UARTPutString("Initializing Robot\r\n");
   Anki::Cozmo::Robot::Init();
   
   while (1)
