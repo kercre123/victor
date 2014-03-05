@@ -38,6 +38,7 @@ namespace Anki
       const f32 decode_minContrastRatio,
       const s32 maxConnectedComponentSegments,
       const s32 maxExtractedQuads,
+      const bool returnInvalidMarkers,
       MemoryStack scratchOnchip,
       MemoryStack scratchCcm)
     {
@@ -47,6 +48,12 @@ namespace Anki
 
       const s32 imageHeight = image.get_size(0);
       const s32 imageWidth = image.get_size(1);
+
+      AnkiConditionalErrorAndReturnValue(imageHeight <= 240 && imageWidth <= 320,
+        RESULT_FAIL_INVALID_SIZE, "DetectFiducialMarkers", "The image is too large to test");
+
+      AnkiConditionalErrorAndReturnValue(scaleImage_numPyramidLevels <= 3,
+        RESULT_FAIL_INVALID_SIZE, "DetectFiducialMarkers", "Only 3 pyramid levels are supported");
 
       BeginBenchmark("ExtractComponentsViaCharacteristicScale");
 
@@ -160,18 +167,20 @@ namespace Anki
       }
 
       // Remove invalid markers from the list
-      for(s32 iQuad=0; iQuad<extractedQuads.get_size(); iQuad++) {
-        if(markers[iQuad].blockType == -1) {
-          for(s32 jQuad=iQuad; jQuad<extractedQuads.get_size(); jQuad++) {
-            markers[jQuad] = markers[jQuad+1];
-            homographies[jQuad] = homographies[jQuad+1];
+      if(!returnInvalidMarkers) {
+        for(s32 iQuad=0; iQuad<extractedQuads.get_size(); iQuad++) {
+          if(markers[iQuad].blockType == -1) {
+            for(s32 jQuad=iQuad; jQuad<extractedQuads.get_size(); jQuad++) {
+              markers[jQuad] = markers[jQuad+1];
+              homographies[jQuad] = homographies[jQuad+1];
+            }
+            extractedQuads.set_size(extractedQuads.get_size()-1);
+            markers.set_size(markers.get_size()-1);
+            homographies.set_size(homographies.get_size()-1);
+            iQuad--;
           }
-          extractedQuads.set_size(extractedQuads.get_size()-1);
-          markers.set_size(markers.get_size()-1);
-          homographies.set_size(homographies.get_size()-1);
-          iQuad--;
         }
-      }
+      } // if(!returnInvalidMarkers)
       EndBenchmark("ExtractBlockMarker");
 
       EndBenchmark("DetectFiducialMarkers");

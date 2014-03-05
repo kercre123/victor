@@ -33,6 +33,7 @@ namespace Anki
       const f32 decode_minContrastRatio,
       const s32 maxConnectedComponentSegments,
       const s32 maxExtractedQuads,
+      const bool returnInvalidMarkers,
       MemoryStack scratchOnchip,
       MemoryStack scratchCcm);
 

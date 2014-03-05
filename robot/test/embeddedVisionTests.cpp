@@ -1147,6 +1147,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
       decode_minContrastRatio,
       maxConnectedComponentSegments,
       maxExtractedQuads,
+      false,
       scratchOnchip,
       scratchCcm);
     const f64 time1 = GetTime();

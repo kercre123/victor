@@ -21,11 +21,10 @@ using namespace Anki::Embedded;
 // image(101:(100+size(imageMarker,1)-2), 101:(100+size(imageMarker,2)-2)) = imageMarker(2:(end-1), 2:(end-1));
 // imageSize = [480,640];
 
-// scaleImage_useWhichAlgorithm = 1;
-// scaleImage_numPyramidLevels = 4;
-// scaleImage_thresholdMultiplier = 0.75;
-// component1d_minComponentWidth = 0;
-// component1d_maxSkipDistance = 0;
+//scaleImage_thresholdMultiplier = .75;
+//scaleImage_numPyramidLevels = 3;
+//component1d_minComponentWidth = 0;
+//component1d_maxSkipDistance = 0;
 // minSideLength = round(0.03*max(imageSize(1),imageSize(2)));
 // maxSideLength = round(0.97*min(imageSize(1),imageSize(2)));
 // component_minimumNumPixels = round(minSideLength*minSideLength - (0.8*minSideLength)*(0.8*minSideLength));
@@ -34,18 +33,19 @@ using namespace Anki::Embedded;
 // component_solidMultiplyThreshold = 2.0;
 // component_percentHorizontal = 0.5;
 // component_percentVertical = 0.5;
-// quads_minQuadArea = 100;
-// quads_quadSymmetryThreshold = 1.5;
+// quads_minQuadArea = 100 / 4;
+// quads_quadSymmetryThreshold = 2.0;
 // quads_minDistanceFromImageEdge = 2;
 // decode_minContrastRatio = 1.25;
-// [quads, blockTypes, faceTypes, orientations] = mexDetectFiducialMarkers(image, scaleImage_numPyramidLevels, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_percentHorizontal, component_percentVertical, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio);
+// returnInvalidMarkers = 0;
+// [quads, blockTypes, faceTypes, orientations] = mexDetectFiducialMarkers(imresize(image,[240,320]), scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_percentHorizontal, component_percentVertical, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, returnInvalidMarkers);
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
   const s32 maxMarkers = 100;
   const s32 maxExtractedQuads = 1000/2;
   const s32 maxConnectedComponentSegments = 5000; // 25000/4 = 6250
 
-  AnkiConditionalErrorAndReturn(nrhs == 16 && nlhs == 4, "mexDetectFiducialMarkers", "Call this function as following: [quads, blockTypes, faceTypes, orientations] = mexDetectFiducialMarkers(uint8(image), scaleImage_useWhichAlgorithm, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_percentHorizontal, component_percentVertical, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio);");
+  AnkiConditionalErrorAndReturn(nrhs == 16 && nlhs == 4, "mexDetectFiducialMarkers", "Call this function as following: [quads, blockTypes, faceTypes, orientations] = mexDetectFiducialMarkers(uint8(image), scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_percentHorizontal, component_percentVertical, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, returnInvalidMarkers);");
 
   const s32 bufferSize = 10000000;
   MemoryStack memory(malloc(bufferSize), bufferSize);
@@ -66,6 +66,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   const s32 quads_quadSymmetryThreshold = static_cast<s32>(Round(pow(2,8)*mxGetScalar(prhs[12]))); // Convert from double to SQ23.8
   const s32 quads_minDistanceFromImageEdge = static_cast<s32>(mxGetScalar(prhs[13]));
   const f32 decode_minContrastRatio = static_cast<f32>(mxGetScalar(prhs[14]));
+  const bool returnInvalidMarkers = static_cast<bool>(RoundS32(mxGetScalar(prhs[15])));
 
   AnkiConditionalErrorAndReturn(image.IsValid(), "mexDetectFiducialMarkers", "Could not allocate image");
 
@@ -106,6 +107,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       decode_minContrastRatio,
       maxConnectedComponentSegments,
       maxExtractedQuads,
+      returnInvalidMarkers,
       scratch1,
       scratch2);
 

@@ -7,7 +7,9 @@ function [resultsData, resultsString] = runTests_quadExtraction(allTestsFilename
 originalResolution = [480,640];
 testingResolutions = {[480,640], [240,320], [120,160]};
 useUndistortion = false;
-maxMatchDistance = 4; % If all corners of a quad are not detected within this threshold, it is considered a complete failure
+maxMatchDistance = 8; % If all corners of a quad are not detected within this threshold, it is considered a complete failure
+
+showExtractedQuads = true;
 
 assert(exist('allTestsFilename', 'var') == 1);
 assert(exist('outputFilename', 'var') == 1);
@@ -22,7 +24,7 @@ allTests = loadjson(allTestsFilename);
 slashIndexes = strfind(allTestsFilename, '/');
 dataPath = allTestsFilename(1:(slashIndexes(end)));
 
-testFunctions = {@extractQuads_matlabOriginal};
+testFunctions = {@extractQuads_matlabOriginal, @extractQuads_c};
 
 resultsData = cell(length(allTests), 1);
 resultsString = '';
@@ -82,7 +84,7 @@ for iTest = 1:length(allTests)
                 
                 curTestFunction = testFunctions{iTestFunction};
                 extractedQuads = curTestFunction(imageResized);
-                
+                                
                 groundTruthCorners = jsonData.sequences{allImages{iFrame,2}}.groundTruth{allImages{iFrame,3}}.fiducialMarkerCorners;
                 if ~iscell(groundTruthCorners)
                     groundTruthCorners = {groundTruthCorners};
@@ -112,8 +114,8 @@ for iTest = 1:length(allTests)
                         dists = Inf * ones(4,1);
                         for iGrCorner = 1:4
                             for iExCorner = 1:4
-                                dist = sqrt( (curExtractedQuad(iExCorner,1) - curGroundTruthCorners{iGrCorner}.x*scale)^2 + (curExtractedQuad(iExCorner,2) - curGroundTruthCorners{iGrCorner}.y*scale)^2);
-                                if dist <= (maxMatchDistance*scale)
+                                dist = sqrt( (curExtractedQuad(iExCorner,1) - curGroundTruthCorners{iGrCorner}.x*scale)^2 + (curExtractedQuad(iExCorner,2) - curGroundTruthCorners{iGrCorner}.y*scale)^2) / scale;
+                                if dist <= maxMatchDistance
                                     dists(iGrCorner) = dist;
                                     numMatched = numMatched + 1;
                                     break;
@@ -131,9 +133,7 @@ for iTest = 1:length(allTests)
                     % bestDistances is infinity if no good match was found
                     resultsData{iTest}{iTestingResolution}{iFrame}{iTestFunction}{iGroundTruth} = bestDistances;
                 end % for iGroundTruth = 1:length(groundTruthCorners)
-                
-                
-                
+                                
                 someDistances = zeros(4,length(groundTruthCorners));
                 for iGroundTruth = 1:length(groundTruthCorners)
                     someDistances(:,iGroundTruth) = resultsData{iTest}{iTestingResolution}{iFrame}{iTestFunction}{iGroundTruth};
@@ -159,6 +159,13 @@ for iTest = 1:length(allTests)
                 save(outputFilename, 'resultsData', 'resultsString', 'curDateAndTime');
                 
                 disp(curResultsString);
+                                
+                if showExtractedQuads
+                    figure(iTest*100 + iTestingResolution*10 + iFrame);
+                    subplot(1,length(testFunctions),iTestFunction); 
+                    plotQuads(imageResized, extractedQuads);
+%                     pause();
+                end
             end % for iTestFunction = 1:length(testFunctions)
             pause(.01);
         end % for iFrame = 1:size(allImages,1)
@@ -183,10 +190,56 @@ function index = findFrameNumberIndex(jsonData, sequenceNumberIndex, frameNumber
             return;
         end
     end
+    
+function plotQuads(image, quads)
+    hold off;
+    imshow(image);
+    hold on; 
+    for i=1:length(quads) 
+        plot(quads{i}([1:4,1],1),  quads{i}([1:4,1],2));
+    end
 
 function detectedQuads = extractQuads_matlabOriginal(image)
     detectedQuads = simpleDetector(image, 'decodeMarkers', false);
 
+function detectedQuads = extractQuads_c(image)
+    imageSize = size(image);
+    
+    if imageSize(1) > 240 || imageSize(2) > 320
+        detectedQuads = {};
+        return;
+    end
+    
+    if imageSize(2) == 320
+        scaleImage_numPyramidLevels = 3;
+        quads_minQuadArea = round(100 / 4);
+    elseif imageSize(2) == 160
+        scaleImage_numPyramidLevels = 2;
+        quads_minQuadArea = round(100 / (4^2));
+    elseif imageSize(2) == 80
+        scaleImage_numPyramidLevels = 1;
+        quads_minQuadArea = round(100 / (4^3));
+    else
+        assert(false);
+    end
+    
+    scaleImage_thresholdMultiplier = .75;    
+    component1d_minComponentWidth = 0;
+    component1d_maxSkipDistance = 0;
+    minSideLength = round(0.03*max(imageSize(1),imageSize(2)));
+    maxSideLength = round(0.97*min(imageSize(1),imageSize(2)));
+    component_minimumNumPixels = round(minSideLength*minSideLength - (0.8*minSideLength)*(0.8*minSideLength));
+    component_maximumNumPixels = round(maxSideLength*maxSideLength - (0.8*maxSideLength)*(0.8*maxSideLength));
+    component_sparseMultiplyThreshold = 1000.0;
+    component_solidMultiplyThreshold = 2.0;
+    component_percentHorizontal = 0.5;
+    component_percentVertical = 0.5;
+    quads_quadSymmetryThreshold = 2.0;
+    quads_minDistanceFromImageEdge = 2;
+    decode_minContrastRatio = 1.25;
+    returnInvalidMarkers = 1;
 
-
+    [detectedQuads, ~, ~, ~] = mexDetectFiducialMarkers(image, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_percentHorizontal, component_percentVertical, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, returnInvalidMarkers);
+    
+%     keyboard
 
