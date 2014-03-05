@@ -343,7 +343,7 @@ namespace Anki {
           //PRINT("Computing straight line path (%f, %f) to (%f, %f)\n", x_start_m, y_start_m, dockPose_.x(), dockPose_.y());
         }
 
-        
+        /*
         // Set speed
         // TODO: Add hysteresis
         if (distToBlock < FAR_DIST_TO_BLOCK_THRESH_MM) {
@@ -352,7 +352,7 @@ namespace Anki {
           SpeedController::SetUserCommandedDesiredVehicleSpeed( DOCK_FAR_APPROACH_SPEED_MMPS );
         }
         SpeedController::SetUserCommandedAcceleration( DOCK_APPROACH_ACCEL_MMPS2 );
-
+        */
         
         // Start following path
         createdValidPath_ = PathFollower::StartPathTraversal();

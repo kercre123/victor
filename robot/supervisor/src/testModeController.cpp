@@ -261,7 +261,7 @@ namespace Anki {
       {
         const u32 startDriveTime_us = 500000;
         if (!pathStarted_ && HAL::GetMicroCounter() > startDriveTime_us) {
-          SpeedController::SetUserCommandedAcceleration( MAX(ONE_OVER_CONTROL_DT + 1, 100) );  // This can't be smaller than 1/CONTROL_DT!
+          SpeedController::SetUserCommandedAcceleration( 100 ); 
           SpeedController::SetUserCommandedDesiredVehicleSpeed(160);
           PRINT("Speed commanded: %d mm/s\n",
                 SpeedController::GetUserCommandedDesiredVehicleSpeed() );

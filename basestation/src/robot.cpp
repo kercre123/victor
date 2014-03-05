@@ -366,7 +366,9 @@ namespace Anki {
             m.pathID = 0;
             m.segmentID = i;
             
-            // TODO: Add speed profile params
+            m.targetSpeed = path[i].GetTargetSpeed();
+            m.accel = path[i].GetAccel();
+            m.decel = path[i].GetDecel();
             
             if (msgHandler_->SendMessage(ID_, m) == EXIT_FAILURE)
               return EXIT_FAILURE;
@@ -384,7 +386,9 @@ namespace Anki {
             m.pathID = 0;
             m.segmentID = i;
             
-            // TODO: Add speed profile params
+            m.targetSpeed = path[i].GetTargetSpeed();
+            m.accel = path[i].GetAccel();
+            m.decel = path[i].GetDecel();
             
             if (msgHandler_->SendMessage(ID_, m) == EXIT_FAILURE)
               return EXIT_FAILURE;

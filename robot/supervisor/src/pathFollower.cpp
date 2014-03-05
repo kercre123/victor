@@ -247,7 +247,19 @@ namespace Anki
           
           //currPathSegment_ = 0;
           currPathSegment_ = GetClosestSegment(x,y,angle.ToFloat());
-          
+
+          // Set speed
+          SpeedController::SetUserCommandedDesiredVehicleSpeed( path_[currPathSegment_].GetTargetSpeed() );
+          SpeedController::SetUserCommandedAcceleration( path_[currPathSegment_].GetAccel() );
+          SpeedController::SetUserCommandedDeceleration( path_[currPathSegment_].GetDecel() );
+
+#if(DEBUG_PATH_FOLLOWER)
+          PRINT("*** PATH START SEGMENT %d: speed = %f, accel = %f, decel = %f\n",
+                currPathSegment_,
+                path_[currPathSegment_].GetTargetSpeed(),
+                path_[currPathSegment_].GetAccel(),
+                path_[currPathSegment_].GetDecel());
+#endif
           
           PreProcessPathSegment(path_[currPathSegment_]);
 
@@ -331,7 +343,7 @@ namespace Anki
         pointTurnStarted_ = false;
         currPathSegment_ = -1;
 #if(DEBUG_PATH_FOLLOWER)
-        PRINT("PATH COMPLETE\n");
+        PRINT("*** PATH COMPLETE ***\n");
 #endif
 #if(ENABLE_PATH_VIZ)
         Viz::ErasePath(0);
@@ -429,10 +441,20 @@ namespace Anki
           
           PreProcessPathSegment(path_[currPathSegment_]);
           
+          // Command new speed for segment
+          SpeedController::SetUserCommandedDesiredVehicleSpeed( path_[currPathSegment_].GetTargetSpeed() );
+          SpeedController::SetUserCommandedAcceleration( path_[currPathSegment_].GetAccel() );
+          SpeedController::SetUserCommandedDeceleration( path_[currPathSegment_].GetDecel() );
           
 #if(DEBUG_PATH_FOLLOWER)
-          PRINT("PATH SEGMENT %d\n", currPathSegment_);
+          PRINT("*** PATH SEGMENT %d: speed = %f, accel = %f, decel = %f\n",
+                currPathSegment_,
+                path_[currPathSegment_].GetTargetSpeed(),
+                path_[currPathSegment_].GetAccel(),
+                path_[currPathSegment_].GetDecel());
 #endif
+          WheelController::ResetIntegralGainSums();
+          
         }
         
         if (!DockingController::IsBusy()) {

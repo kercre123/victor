@@ -289,11 +289,6 @@ namespace Anki {
       }
       
       void ProcessExecutePathMessage(const ExecutePath& msg) {
-        
-        // TODO: This stuff should be part of the path definition, but just set some speed for now
-        SpeedController::SetUserCommandedAcceleration( MAX(ONE_OVER_CONTROL_DT + 1, 500) );  // This can't be smaller than 1/CONTROL_DT!
-        SpeedController::SetUserCommandedDesiredVehicleSpeed(160);
-        
         PathFollower::StartPathTraversal();
       }
       
