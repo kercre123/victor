@@ -18,8 +18,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/matlabInterface.h"
 
 //#define SEND_DRAWN_COMPONENTS
-//#define SEND_COMPONENT_USAGE
-//#define PRINTF_INTERMEDIATES
+#define SHOW_DRAWN_COMPONENTS
 
 namespace Anki
 {
@@ -85,6 +84,16 @@ namespace Anki
         return lastResult;
       }
 
+#ifdef SHOW_DRAWN_COMPONENTS
+      {
+        MemoryStack bigScratch(malloc(1000000), 1000000);
+        Array<u8> empty(image.get_size(0), image.get_size(1), bigScratch);
+        Embedded::DrawComponents<u8>(empty, extractedComponents, 64, 255);
+        empty.Show("components orig", false);
+        free(bigScratch.get_buffer());
+      }
+#endif
+
       EndBenchmark("ExtractComponentsViaCharacteristicScale");
 
       { // 3b. Remove poor components
@@ -123,6 +132,16 @@ namespace Anki
         extractedComponents.SortConnectedComponentSegmentsById(scratchOnchip);
         EndBenchmark("SortConnectedComponentSegmentsById");
       } // 3b. Remove poor components
+
+#ifdef SHOW_DRAWN_COMPONENTS
+      {
+        MemoryStack bigScratch(malloc(1000000), 1000000);
+        Array<u8> empty(image.get_size(0), image.get_size(1), bigScratch);
+        Embedded::DrawComponents<u8>(empty, extractedComponents, 64, 255);
+        empty.Show("components good", true);
+        free(bigScratch.get_buffer());
+      }
+#endif
 
       // 4. Compute candidate quadrilaterals from the connected components
       BeginBenchmark("ComputeQuadrilateralsFromConnectedComponents");

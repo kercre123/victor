@@ -200,7 +200,7 @@ function plotQuads(image, quads)
     end
 
 function detectedQuads = extractQuads_matlabOriginal(image)
-    detectedQuads = simpleDetector(image, 'decodeMarkers', false);
+    detectedQuads = simpleDetector(image, 'decodeMarkers', false, 'showComponents', true);
 
 function detectedQuads = extractQuads_c(image)
     imageSize = size(image);
