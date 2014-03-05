@@ -7,7 +7,7 @@ function [resultsData, resultsString] = runTests_quadExtraction(allTestsFilename
 originalResolution = [480,640];
 testingResolutions = {[480,640], [240,320], [120,160]};
 useUndistortion = false;
-maxMatchDistance = 8; % If all corners of a quad are not detected within this threshold, it is considered a complete failure
+maxMatchDistance = 10; % If all corners of a quad are not detected within this threshold, it is considered a complete failure
 
 showExtractedQuads = true;
 
@@ -25,6 +25,9 @@ slashIndexes = strfind(allTestsFilename, '/');
 dataPath = allTestsFilename(1:(slashIndexes(end)));
 
 testFunctions = {@extractQuads_matlabOriginal, @extractQuads_c};
+testFunctionNames = {...
+    'matlab',...
+    'C     '};
 
 resultsData = cell(length(allTests), 1);
 resultsString = '';
@@ -97,6 +100,7 @@ for iTest = 1:length(allTests)
 
                 % For all labeled quads, find if any of the extracted quads
                 % match within maxMatchDistance pixels
+                isExtractedQuadsMatched = zeros(length(extractedQuads),1);
                 for iGroundTruth = 1:length(groundTruthCorners)
                     curGroundTruthCorners = groundTruthCorners{iGroundTruth};
 
@@ -124,6 +128,7 @@ for iTest = 1:length(allTests)
                         end
 
                         if numMatched == 4
+                            isExtractedQuadsMatched(iQuad) = 1;
                             if mean(dists) < mean(bestDistances)
                                 bestDistances = dists;
                             end
@@ -144,7 +149,8 @@ for iTest = 1:length(allTests)
                 inds = ~isinf(someDistances(1,:));
                 someDistances = someDistances(:,inds);
 
-                curResultsString = sprintf('Test:%d/%d Resolution:%dx%d Frame:%d/%d TestFunction:%d/%d time:%fs numMatched=%d/%d mean=%f median=%f std=%f max=%f',...
+                curResultsString = sprintf('(%s) Test:%d/%d Resolution:%dx%d Frame:%d/%d TestFunction:%d/%d time:%fs numMatched=%d/%d mean=%f median=%f std=%f max=%f',...
+                    testFunctionNames{iTestFunction},...
                     iTest, length(allTests),...
                     testingResolutions{iTestingResolution}(2), testingResolutions{iTestingResolution}(1),...
                     iFrame, size(allImages,1),...
@@ -163,7 +169,7 @@ for iTest = 1:length(allTests)
                 if showExtractedQuads
                     figure(iTest*100 + iTestingResolution*10 + iFrame);
                     subplot(1,length(testFunctions),iTestFunction);
-                    plotQuads(img, extractedQuads, groundTruthCorners, scale)
+                    plotQuads(img, extractedQuads, isExtractedQuadsMatched, groundTruthCorners, scale, testFunctionNames{iTestFunction})
 %                     pause();
                 end
             end % for iTestFunction = 1:length(testFunctions)
@@ -191,13 +197,20 @@ function index = findFrameNumberIndex(jsonData, sequenceNumberIndex, frameNumber
         end
     end
 
-function plotQuads(image, extractedQuads, groundTruthCorners, scale)
+function plotQuads(image, extractedQuads, isExtractedQuadsMatched, groundTruthCorners, scale, titleString)
     hold off;
     imshow(image);
     hold on;
     
+    title(titleString);
+    
     for i=1:length(extractedQuads)
-        plot((1/scale)*extractedQuads{i}([1:4,1],1), (1/scale)*extractedQuads{i}([1:4,1],2), 'b');
+        if isExtractedQuadsMatched(i)
+            plotString = 'b';
+        else
+            plotString = 'r';
+        end
+        plot((1/scale)*extractedQuads{i}([1:4,1],1), (1/scale)*extractedQuads{i}([1:4,1],2), plotString);
     end
     
     for i=1:length(groundTruthCorners)
