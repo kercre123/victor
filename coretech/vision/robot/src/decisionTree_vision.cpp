@@ -19,8 +19,14 @@ namespace Anki
     }
 
     FiducialMarkerDecisionTree::FiducialMarkerDecisionTree(const u8 * restrict treeData, const s32 treeDataLength, const s32 treeDataNumFractionalBits, const s32 treeMaxDepth, const s16 * restrict probeXOffsets, const s16 * restrict probeYOffsets, const s32 numProbeOffsets)
-      : DecisionTree(treeData, treeDataLength, treeDataNumFractionalBits, treeMaxDepth), probeXOffsets(probeXOffsets), probeYOffsets(probeYOffsets), numProbeOffsets(numProbeOffsets)
+      : DecisionTree(treeData, treeDataLength, treeDataNumFractionalBits, treeMaxDepth), probeXOffsets(NULL), probeYOffsets(NULL), numProbeOffsets(-1)
     {
+      AnkiConditionalErrorAndReturn(probeXOffsets != NULL && probeYOffsets != NULL, "FiducialMarkerDecisionTree::FiducialMarkerDecisionTree", "probes are NULL");
+      AnkiConditionalErrorAndReturn(numProbeOffsets > 0, "FiducialMarkerDecisionTree::FiducialMarkerDecisionTree", "numProbeOffsets > 0");
+
+      this->probeXOffsets = probeXOffsets;
+      this->probeYOffsets = probeYOffsets;
+      this->numProbeOffsets = numProbeOffsets;
     }
 
     Result FiducialMarkerDecisionTree::Classify(const Array<u8> &image, const Array<f32> &homography, u32 grayvalueThreshold, s32 &label) const
@@ -116,6 +122,20 @@ namespace Anki
 
       // If this is reached, we ran out of tree to query
       return RESULT_FAIL;
+    }
+
+    bool FiducialMarkerDecisionTree::IsValid() const
+    {
+      if(DecisionTree::IsValid() == false)
+        return false;
+
+      if(!probeXOffsets)
+        return false;
+
+      if(!probeYOffsets)
+        return false;
+
+      return true;
     }
   } // namespace Embedded
 } // namespace Anki

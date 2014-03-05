@@ -41,10 +41,12 @@ namespace Anki
       // If the sum of all probes if greater than grayvalueThreshold, then that point is considered white
       Result Classify(const Array<u8> &image, const Array<f32> &homography, u32 grayvalueThreshold, s32 &label) const;
 
+      bool IsValid() const;
+
     protected:
       const s16 * restrict probeXOffsets;
       const s16 * restrict probeYOffsets;
-      const s32 numProbeOffsets;
+      s32 numProbeOffsets;
     }; // class DecisionTree
   } // namespace Embedded
 } // namespace Anki
