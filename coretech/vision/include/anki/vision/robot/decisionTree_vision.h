@@ -24,14 +24,27 @@ namespace Anki
     class FiducialMarkerDecisionTree : public DecisionTree
     {
     public:
+      typedef struct {
+        s16 probeXCenter;
+        s16 probeYCenter;
+        u16 leftChildIndex;
+        u16 label; //< If the high bit of the label is 1, then this node is a leaf
+      } Node;
+
       FiducialMarkerDecisionTree();
 
       // treeDataLength is the number of bytes in the treeData buffer
       // Warning: The input treeData buffer is not copied, and must be globally available
-      FiducialMarkerDecisionTree(const u8 * restrict treeData, const s32 treeDataLength, const s32 treeDataNumFractionalBits);
+      FiducialMarkerDecisionTree(const u8 * restrict treeData, const s32 treeDataLength, const s32 treeDataNumFractionalBits, const s32 treeMaxDepth, const s16 * restrict probeXOffsets, const s16 * restrict probeYOffsets, const s32 numProbeOffsets);
 
       // Transform the image coordinates via transformation, then query the tree
-      Result Classify(const Array<u8> &image, const Transformations::PlanarTransformation_f32 &transformation);
+      // If the sum of all probes if greater than grayvalueThreshold, then that point is considered white
+      Result Classify(const Array<u8> &image, const Array<f32> &homography, u32 grayvalueThreshold, s32 &label) const;
+
+    protected:
+      const s16 * restrict probeXOffsets;
+      const s16 * restrict probeYOffsets;
+      const s32 numProbeOffsets;
     }; // class DecisionTree
   } // namespace Embedded
 } // namespace Anki

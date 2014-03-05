@@ -24,6 +24,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/imageProcessing.h"
 #include "anki/vision/robot/transformations.h"
 #include "anki/vision/robot/binaryTracker.h"
+#include "anki/vision/robot/decisionTree_vision.h"
 
 #include "../../coretech/vision/blockImages/blockImage50_320x240.h"
 #include "../../coretech/vision/blockImages/blockImages00189_80x60.h"
@@ -34,6 +35,74 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "embeddedTests.h"
 
 using namespace Anki::Embedded;
+
+GTEST_TEST(CoreTech_Vision, DecisionTreeVision)
+{
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(scratchOnchip.IsValid());
+
+  const s32 numNodes = 7;
+  const s32 treeDataLength = numNodes * sizeof(FiducialMarkerDecisionTree::Node);
+  FiducialMarkerDecisionTree::Node treeData[numNodes];
+  const s32 treeDataNumFractionalBits = 0;
+  const s32 treeMaxDepth = 2;
+  const s32 numProbeOffsets = 1;
+  const s16 probeXOffsets[numProbeOffsets] = {0};
+  const s16 probeYOffsets[numProbeOffsets] = {0};
+  u32 grayvalueThreshold = 128;
+
+  treeData[0].probeXCenter = 0;
+  treeData[0].probeYCenter = 0;
+  treeData[0].leftChildIndex = 1;
+  treeData[0].label = 0;
+
+  treeData[1].probeXCenter = 1;
+  treeData[1].probeYCenter = 0;
+  treeData[1].leftChildIndex = 3;
+  treeData[1].label = 1;
+
+  treeData[2].probeXCenter = 2;
+  treeData[2].probeYCenter = 0;
+  treeData[2].leftChildIndex = 5;
+  treeData[2].label = 2;
+
+  treeData[3].probeXCenter = 0x7FFF;
+  treeData[3].probeYCenter = 0x7FFF;
+  treeData[3].leftChildIndex = 0xFFFF;
+  treeData[3].label = 3 + (1<<15);
+
+  treeData[4].probeXCenter = 0x7FFF;
+  treeData[4].probeYCenter = 0x7FFF;
+  treeData[4].leftChildIndex = 0xFFFF;
+  treeData[4].label = 4 + (1<<15);
+
+  treeData[5].probeXCenter = 0x7FFF;
+  treeData[5].probeYCenter = 0x7FFF;
+  treeData[5].leftChildIndex = 0xFFFF;
+  treeData[5].label = 5 + (1<<15);
+
+  treeData[6].probeXCenter = 0x7FFF;
+  treeData[6].probeYCenter = 0x7FFF;
+  treeData[6].leftChildIndex = 0xFFFF;
+  treeData[6].label = 6 + (1<<15);
+
+  FiducialMarkerDecisionTree tree(reinterpret_cast<u8*>(&treeData[0]), treeDataLength, treeDataNumFractionalBits, treeMaxDepth, probeXOffsets, probeYOffsets, numProbeOffsets);
+
+  Array<f32> homography = Eye<f32>(3,3,scratchOnchip);
+  Array<u8> image(1,3,scratchOnchip);
+
+  image[0][0] = grayvalueThreshold; // black
+  image[0][2] = grayvalueThreshold + 1; // white
+
+  s32 label = -1;
+  const Result result = tree.Classify(image, homography, grayvalueThreshold, label);
+
+  ASSERT_TRUE(result == RESULT_OK);
+
+  ASSERT_TRUE(label == 5);
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Vision, DecisionTreeVision)
 
 GTEST_TEST(CoreTech_Vision, BinaryTracker)
 {
@@ -128,7 +197,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     TemplateTracker::BinaryTracker tracker(templateImage, templateQuad, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, templateEdgeDetection_maxDetectionsPerType, templateEdgeDetection_everyNLines, scratchOnchip);
     EndBenchmark("BinaryTracker init");
 
-    const s32 numTemplatePixels = tracker.get_numTemplatePixels(); 
+    const s32 numTemplatePixels = tracker.get_numTemplatePixels();
 
     ASSERT_TRUE(numTemplatePixels == 599);
 
@@ -137,7 +206,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     BeginBenchmark("BinaryTracker update fixed-float");
 
-    s32 numMatches; 
+    s32 numMatches;
 
     const Result result = tracker.UpdateTrack(nextImage,
       edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType, 1,
@@ -2004,6 +2073,7 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   numPassedTests = 0;
   numFailedTests = 0;
 
+  CALL_GTEST_TEST(CoreTech_Vision, DecisionTreeVision);
   CALL_GTEST_TEST(CoreTech_Vision, BinaryTracker);
   CALL_GTEST_TEST(CoreTech_Vision, DetectBlurredEdge);
   CALL_GTEST_TEST(CoreTech_Vision, DownsampleByPowerOfTwo);
