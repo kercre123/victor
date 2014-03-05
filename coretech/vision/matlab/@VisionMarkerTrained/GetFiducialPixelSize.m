@@ -1,15 +1,33 @@
-function [squareWidth_pix, padding_pix] = GetFiducialPixelSize(imageSize)
+function [squareWidth_pix, padding_pix] = GetFiducialPixelSize(imageSize, ...
+    imageSizeType)
 
-imageWidthFraction = 1 - 2*VisionMarkerTrained.SquareWidthFraction - ...
-    2*VisionMarkerTrained.FiducialPaddingFraction*VisionMarkerTrained.SquareWidthFraction;
+switch(imageSizeType)
+    case 'CodeImageOnly'
+        
+        fiducialWidth_pix = imageSize / (1-2*VisionMarkerTrained.SquareWidthFraction-2*VisionMarkerTrained.FiducialPaddingFraction);
+                 
+        %squareWidth_pix = VisionMarkerTrained.SquareWidthFraction * imageSize;
+        
+        %padding_pix     = VisionMarkerTrained.FiducialPaddingFraction*squareWidth_pix;
+        
+    case 'WithPaddedFiducial'
+        
+        fiducialWidth_pix = imageSize / (1 + 2*VisionMarkerTrained.FiducialPaddingFraction);
+        
+%         codeImageWidth = imageSize / (1 + 2*VisionMarkerTrained.SquareWidthFraction + ...
+%             4*VisionMarkerTrained.FiducialPaddingFraction*VisionMarkerTrained.SquareWidthFraction);
+%          
+%         squareWidth_pix = VisionMarkerTrained.SquareWidthFraction*codeImageWidth;
+%         padding_pix = VisionMarkerTrained.FiducialPaddingFraction*squareWidth_pix;
+        
+    otherwise
+        error('Unrecognized imageSizeType "%s"', imageSizeType);
+end
+   
+squareWidth_pix = VisionMarkerTrained.SquareWidthFraction * fiducialWidth_pix;
+padding_pix = VisionMarkerTrained.FiducialPaddingFraction * fiducialWidth_pix;
 
-pixScale = imageSize/imageWidthFraction;
-
-squareWidth_pix = VisionMarkerTrained.SquareWidthFraction * pixScale;
-
-padding_pix     = VisionMarkerTrained.FiducialPaddingFraction*squareWidth_pix;
-
-squareWidth_pix = round(squareWidth_pix);
-padding_pix = round(padding_pix);
+%squareWidth_pix = round(squareWidth_pix);
+%padding_pix = round(padding_pix);
 
 end

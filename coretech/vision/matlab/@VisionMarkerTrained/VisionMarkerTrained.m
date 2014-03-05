@@ -12,8 +12,8 @@ classdef VisionMarkerTrained
                 
         MinContrastRatio = 1.25;  % bright/dark has to be at least this
         
-        SquareWidthFraction = 0.1; % as a fraction of the marker image width
-        FiducialPaddingFraction = 1; % as a Fraction of SquareWidth
+        SquareWidthFraction = 0.1; % as a fraction of the fiducial width
+        FiducialPaddingFraction = 0.1; % as a fraction of the fiducial width
         
         ProbePattern = VisionMarkerTrained.CreateProbePattern();
         
@@ -30,7 +30,8 @@ classdef VisionMarkerTrained
         img = AddFiducial(img, varargin);
         AddFiducialBatch(inputDir, outputDir, varargin);
         TrainProbeTree(varargin);
-        [squareWidth_pix, padding_pix] = GetFiducialPixelSize(imageSize);
+        [squareWidth_pix, padding_pix] = GetFiducialPixelSize(imageSize, imageSizeType);
+        corners = GetFiducialCorners(imageSize);
         
     end % Static Methods
     

@@ -45,8 +45,12 @@ end
 [nrows,ncols] = size(img);
 assert(nrows==ncols, 'By now, image should be square.');
 
-[squareWidth_pix, padding_pix] = VisionMarkerTrained.GetFiducialPixelSize(nrows);
-imgNew = padarray(img, 2*padding_pix+squareWidth_pix*[1 1], 1, 'both');
+[squareWidth_pix, padding_pix] = VisionMarkerTrained.GetFiducialPixelSize(...
+    nrows, 'CodeImageOnly');
+imgNew = padarray(img, round(2*padding_pix+squareWidth_pix)*[1 1], 1, 'both');
+
+padding_pix = round(padding_pix);
+squareWidth_pix = round(squareWidth_pix);
 
 [nrows,ncols,~] = size(imgNew);
 imgNew(padding_pix+(1:squareWidth_pix), (padding_pix+1):(ncols-padding_pix)) = 0;
@@ -56,12 +60,22 @@ imgNew((padding_pix+1):(nrows-padding_pix), padding_pix+(1:squareWidth_pix)) = 0
 imgNew((padding_pix+1):(nrows-padding_pix), (ncols-padding_pix-squareWidth_pix+1):(ncols-padding_pix)) = 0;
 
 if nargout == 0
-    subplot 121, imagesc(img), axis image
+    subplot 131, imagesc(img), axis image
     
     squareFrac = VisionMarkerTrained.SquareWidthFraction;
-    paddingFrac = VisionMarkerTrained.FiducialPaddingFraction*VisionMarkerTrained.SquareWidthFraction;
-    subplot 122, imagesc([-paddingFrac 1+paddingFrac], [-paddingFrac 1+paddingFrac], imgNew), axis image
+    paddingFrac = VisionMarkerTrained.FiducialPaddingFraction;
+    
+    subplot 132, hold off, imagesc([-paddingFrac 1+paddingFrac], [-paddingFrac 1+paddingFrac], imgNew), axis image, hold on
     rectangle('Pos', [(squareFrac+paddingFrac)*[1 1] (1-2*squareFrac-2*paddingFrac)*[1 1]], 'EdgeColor', 'r', 'LineStyle', '--');
+    plot([0 0 1 1], [0 1 0 1], 'y+');
+    
+    subplot 133, hold off, imagesc(imgNew), axis image, hold on
+    Corners = [padding_pix+1 padding_pix+1;
+        padding_pix+1 nrows-padding_pix-1;
+        ncols-padding_pix-1 padding_pix+1;
+        ncols-padding_pix-1 nrows-padding_pix+1];
+    plot(Corners(:,1), Corners(:,2), 'y+');
+    rectangle('Pos', [(squareWidth_pix+2*padding_pix)*[1 1] (nrows-2*squareWidth_pix-4*padding_pix)*[1 1]], 'EdgeColor', 'r', 'LineStyle', '--');
     
     colormap(gray)
 end
