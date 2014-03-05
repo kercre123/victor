@@ -1079,8 +1079,8 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
   // TODO: Check that the image loaded correctly
   //ASSERT_TRUE(IsBlockImage50_320x240Valid(&blockImage50_320x240[0], imagesAreEndianSwapped));
 
-  //const s32 scaleImage_thresholdMultiplier = 65536; // 1.0*(2^16)=65536
-  const s32 scaleImage_thresholdMultiplier = 49152; // .75*(2^16)=49152
+  const s32 scaleImage_thresholdMultiplier = 65536; // 1.0*(2^16)=65536
+  //const s32 scaleImage_thresholdMultiplier = 49152; // .75*(2^16)=49152
   const s32 scaleImage_numPyramidLevels = 3;
 
   const s32 component1d_minComponentWidth = 0;
@@ -1170,10 +1170,17 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
   ASSERT_TRUE(markers[0].faceType == 5);
   ASSERT_TRUE(markers[0].orientation == BlockMarker::ORIENTATION_LEFT);
 
-  ASSERT_TRUE(markers[0].corners[0] == Point<s16>(105,132));
-  ASSERT_TRUE(markers[0].corners[1] == Point<s16>(103,167));
-  ASSERT_TRUE(markers[0].corners[2] == Point<s16>(140,133));
-  ASSERT_TRUE(markers[0].corners[3] == Point<s16>(139,169));
+  if(scaleImage_thresholdMultiplier == 65536) {
+    ASSERT_TRUE(markers[0].corners[0] == Point<s16>(105,131));
+    ASSERT_TRUE(markers[0].corners[1] == Point<s16>(103,167));
+    ASSERT_TRUE(markers[0].corners[2] == Point<s16>(141,133));
+    ASSERT_TRUE(markers[0].corners[3] == Point<s16>(139,169));
+  } else {
+    ASSERT_TRUE(markers[0].corners[0] == Point<s16>(105,132));
+    ASSERT_TRUE(markers[0].corners[1] == Point<s16>(103,167));
+    ASSERT_TRUE(markers[0].corners[2] == Point<s16>(140,133));
+    ASSERT_TRUE(markers[0].corners[3] == Point<s16>(139,169));
+  }
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)

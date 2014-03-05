@@ -52,8 +52,11 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(image.IsValid() && markers.IsValid() && homographies.IsValid() && scratchOffChip.IsValid() && scratchOnchip.IsValid() && scratchCcm.IsValid(),
         RESULT_FAIL_INVALID_OBJECT, "DetectFiducialMarkers", "Some input is invalid");
 
-      AnkiConditionalErrorAndReturnValue(imageHeight <= 240 && imageWidth <= 320,
-        RESULT_FAIL_INVALID_SIZE, "DetectFiducialMarkers", "The image is too large to test");
+      // On the robot, we don't have enough memory for resolutions over QVGA
+      if(scratchOffChip.get_totalBytes() < 1000000 && scratchOnchip.get_totalBytes() < 1000000 && scratchCcm.get_totalBytes() < 1000000) {
+        AnkiConditionalErrorAndReturnValue(imageHeight <= 240 && imageWidth <= 320,
+          RESULT_FAIL_INVALID_SIZE, "DetectFiducialMarkers", "The image is too large to test");
+      }
 
       AnkiConditionalErrorAndReturnValue(scaleImage_numPyramidLevels <= 3,
         RESULT_FAIL_INVALID_SIZE, "DetectFiducialMarkers", "Only 3 pyramid levels are supported");
