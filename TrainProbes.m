@@ -8,8 +8,11 @@ probeRadius = 5;
 minInfoGain = 0;
 maxDepth = 20;
 addRotations = true;
-numPerturbations = 50;
+numPerturbations = 100;
 perturbSigma = 2;
+
+probeRegion = [0 1];
+imageCoords = [0 1];
 
 DEBUG_DISPLAY = true;
 
@@ -30,14 +33,16 @@ numImages = length(fnames);
 labelNames = cell(1,numImages);
 img = cell(1, numImages);
 distMap = cell(1, numImages);
+
+resamplingResolution = round(1/(probeRegion(2)-probeRegion(1))*workingResolution);
+
 for i = 1:numImages
     img{i} = imread(fullfile(markerImageDir, fnames{i}));
     
-    
     if numPerturbations > 0
-        img{i} = imresize(mean(im2double(img{i}),3), workingResolution*[1 1], 'nearest');
+        img{i} = imresize(mean(im2double(img{i}),3), resamplingResolution*[1 1], 'nearest');
     else
-        img{i} = imresize(mean(im2double(img{i}),3), workingResolution*[1 1], 'bilinear');
+        img{i} = imresize(mean(im2double(img{i}),3), resamplingResolution*[1 1], 'bilinear');
         distMap{i} = img{i}(:,:,1) > 0.5;
         
         img{i} = separable_filter(img{i}, gaussian_kernel(0.5*probeRadius), [], 'replicate');
@@ -61,33 +66,39 @@ end
 labels = 1:numImages;
 numLabels = numImages;
  
-[xgrid,ygrid] = meshgrid(linspace(0,1,workingResolution)); %1:workingResolution);
+%assert(probeRegion(1)>=0 && probeRegion(1)<1 && probeRegion(2)<=1 && probeRegion(2)>0 && probeRegion(1)<probeRegion(2), 'Invalid crop.');
+
+%[xgrid,ygrid] = meshgrid(linspace(0,1,workingResolution));
+
+imageCoords = linspace(imageCoords(1), imageCoords(2), resamplingResolution);
 
 %% Perturb corners
-
+[xgrid,ygrid] = meshgrid(imageCoords);
 if numPerturbations
     fprintf('Creating perturbed images...');
     
-    probeKernel = gaussian_kernel(probeRadius/2, 2);
-    
     img_perturb = cell(numPerturbations, numImages);
-    corners = [0 0; 0 workingResolution; workingResolution 0; workingResolution workingResolution] + 0.5;
+    %corners = [0 0; 0 workingResolution; workingResolution 0; workingResolution workingResolution] + 0.5;
+    corners = [0 0; 0 1; 1 0; 1 1];
+    sigma = perturbSigma/resamplingResolution;
     for i = 1:numPerturbations
-        corners_i = corners + perturbSigma*randn(4,2);
+        perturbation = max(-3*sigma, min(3*sigma, sigma*randn(4,2)));
+        corners_i = corners + perturbation;
         T = cp2tform(corners_i, corners, 'projective');
-        [xi,yi] = tforminv(T, xgrid*(workingResolution-1)+1, ygrid*(workingResolution-1)+1);
+        [xi,yi] = tforminv(T, xgrid, ygrid);
         
         for i_img = 1:numImages
             %img_perturb{i,i_img} = separable_filter(interp2(img{i_img}, xi, yi, 'linear', 1), probeKernel, [], 'replicate');
-            img_perturb{i,i_img} = interp2(img{i_img}, xi, yi, 'linear', 1);
+            img_perturb{i,i_img} = interp2(imageCoords, imageCoords, img{i_img}, xi, yi, 'linear', 1);
         end
     end
     
     if DEBUG_DISPLAY
-        namedFigure('Average Perturbed Images');
+        namedFigure('Average Perturbed Images'); clf
         for j = 1:numImages
             subplot(2,ceil(numImages/2),j)
-            imagesc(mean(cat(3, img_perturb{:,j}),3)), axis image
+            imagesc(imageCoords([1 end]), imageCoords([1 end]), ...
+                mean(cat(3, img_perturb{:,j}),3)), axis image
         end
         colormap(gray);
     end
@@ -120,12 +131,20 @@ end
 %% Create samples 
 %probeValues = reshape(img, [], numImages);
 fprintf('Computing probe values...');
+[xgrid,ygrid] = meshgrid(linspace(probeRegion(1),probeRegion(2),workingResolution)); %1:workingResolution);
 probeValues = zeros(workingResolution^2, numImages);
-X = (workingResolution-1)*(probePattern.x(ones(workingResolution^2,1),:) + xgrid(:)*ones(1,length(probePattern.x))) + 1;
-Y = (workingResolution-1)*(probePattern.y(ones(workingResolution^2,1),:) + ygrid(:)*ones(1,length(probePattern.y))) + 1;
+X = probePattern.x(ones(workingResolution^2,1),:) + xgrid(:)*ones(1,length(probePattern.x));
+Y = probePattern.y(ones(workingResolution^2,1),:) + ygrid(:)*ones(1,length(probePattern.y));
 
+[~, padding] = VisionMarkerTrained.GetFiducialPixelSize(resamplingResolution);
+Corners = [padding padding;
+    padding resamplingResolution-padding;
+    resamplingResolution-padding padding;
+    resamplingResolution-padding resamplingResolution-padding];
+tform = cp2tform([0 0 1 1; 0 1 0 1]', Corners, 'projective');
+[xi,yi] = tformfwd(tform, X, Y);
 for i = 1:numImages
-   probeValues(:,i) = mean(interp2(img(:,:,i), X, Y, 'linear', 1),2);
+   probeValues(:,i) = mean(interp2(img(:,:,i), xi, yi, 'linear', 1),2);
 end
 fprintf('Done.\n');
 % probeValues = cell(1,numImages*4);
@@ -198,14 +217,23 @@ for i_rand = 1:numImages
     testImg = img(:,:,i);
     %radius = probeRadius/workingResolution * size(testImg,1);
     if i_rand <= maxDisplay
-        subplot(6, maxDisplay/6, i_rand), hold off, imagesc(testImg), axis image, hold on
+        subplot(6, maxDisplay/6, i_rand), hold off
+        imagesc(testImg), axis image, hold on
         doDisplay = true;
     else 
         doDisplay = false;
     end
     
     %testImg = separable_filter(testImg, gaussian_kernel(radius/2), [], 'replicate');
-    result = TestTree(root, testImg, [], probePattern, doDisplay);
+    [nrows,ncols,~] = size(testImg);
+    [~, padding] = VisionMarkerTrained.GetFiducialPixelSize(nrows);
+    Corners = [padding padding;
+        padding nrows-padding;
+        ncols-padding padding;
+        ncols-padding nrows-padding];
+    tform = cp2tform([0 0 1 1; 0 1 0 1]', Corners, 'projective');
+    
+    result = TestTree(root, testImg, tform, 0.5, probePattern, doDisplay);
     if ischar(result)
         correct(i) = strcmp(result, labelNames{labels(i)});
         if ~correct(i)
@@ -244,15 +272,24 @@ for i = 1:length(fnames)
     % radius = probeRadius/workingResolution * size(testImg,1);
         
     %testImg = separable_filter(testImg, gaussian_kernel(radius/2), [], 'replicate');
-    result = TestTree(root, testImg, [], probePattern);
+    [nrows,ncols,~] = size(testImg);
+    [~, padding] = VisionMarkerTrained.GetFiducialPixelSize(nrows);
+    Corners = [padding padding;
+        padding nrows-padding;
+        ncols-padding padding;
+        ncols-padding nrows-padding];
+    tform = cp2tform([0 0 1 1; 0 1 0 1]', Corners, 'projective');
+    
+    result = TestTree(root, testImg, tform, 0.5, probePattern);
     if ischar(result)
         correct(i) = strcmp(result, labelNames{labels(i)});
         
         if DEBUG_DISPLAY && ~correct(i)
-            h_axes = axes;
+            h_axes = axes; %#ok<LAXES>
             imagesc(testImg, 'Parent', h_axes); hold on
             axis(h_axes, 'image');
-            TestTree(root, testImg, [], probePattern, true);
+            TestTree(root, testImg, tform, 0.5, probePattern, true);
+            title(h_axes, result);
         end
                         
     else
