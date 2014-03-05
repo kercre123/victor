@@ -56,10 +56,10 @@ namespace Anki
       if(scratchOffChip.get_totalBytes() < 1000000 && scratchOnchip.get_totalBytes() < 1000000 && scratchCcm.get_totalBytes() < 1000000) {
         AnkiConditionalErrorAndReturnValue(imageHeight <= 240 && imageWidth <= 320,
           RESULT_FAIL_INVALID_SIZE, "DetectFiducialMarkers", "The image is too large to test");
-      }
 
-      AnkiConditionalErrorAndReturnValue(scaleImage_numPyramidLevels <= 3,
-        RESULT_FAIL_INVALID_SIZE, "DetectFiducialMarkers", "Only 3 pyramid levels are supported");
+        AnkiConditionalErrorAndReturnValue(scaleImage_numPyramidLevels <= 3,
+          RESULT_FAIL_INVALID_SIZE, "DetectFiducialMarkers", "Only 3 pyramid levels are supported");
+      }
 
       BeginBenchmark("ExtractComponentsViaCharacteristicScale");
 

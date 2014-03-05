@@ -41,13 +41,13 @@ using namespace Anki::Embedded;
 // [quads, blockTypes, faceTypes, orientations] = mexDetectFiducialMarkers(imresize(image,[240,320]), scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_percentHorizontal, component_percentVertical, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, returnInvalidMarkers);
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
-  const s32 maxMarkers = 100;
-  const s32 maxExtractedQuads = 1000/2;
-  const s32 maxConnectedComponentSegments = 5000; // 25000/4 = 6250
+  const s32 maxMarkers = 500;
+  const s32 maxExtractedQuads = 5000;
+  const s32 maxConnectedComponentSegments = 500000; // 642*480/2 = 154000
+  const s32 bufferSize = 10000000;
 
   AnkiConditionalErrorAndReturn(nrhs == 16 && nlhs == 4, "mexDetectFiducialMarkers", "Call this function as following: [quads, blockTypes, faceTypes, orientations] = mexDetectFiducialMarkers(uint8(image), scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_percentHorizontal, component_percentVertical, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, returnInvalidMarkers);");
 
-  const s32 bufferSize = 10000000;
   MemoryStack memory(malloc(bufferSize), bufferSize);
   AnkiConditionalErrorAndReturn(memory.IsValid(), "mexDetectFiducialMarkers", "Memory could not be allocated");
 
@@ -70,20 +70,16 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   AnkiConditionalErrorAndReturn(image.IsValid(), "mexDetectFiducialMarkers", "Could not allocate image");
 
-  const u32 numBytes0 = 10000000;
-  MemoryStack scratch0(calloc(numBytes0,1), numBytes0);
+  MemoryStack scratch0(calloc(bufferSize,1), bufferSize);
   AnkiConditionalErrorAndReturn(scratch0.IsValid(), "mexDetectFiducialMarkers", "Scratch0 could not be allocated");
 
-  const u32 numBytes1 = 10000000;
-  MemoryStack scratch1(calloc(numBytes1,1), numBytes0);
+  MemoryStack scratch1(calloc(bufferSize,1), bufferSize);
   AnkiConditionalErrorAndReturn(scratch1.IsValid(), "mexDetectFiducialMarkers", "Scratch1 could not be allocated");
 
-  const u32 numBytes2 = 10000000;
-  MemoryStack scratch2(calloc(numBytes2,1), numBytes2);
+  MemoryStack scratch2(calloc(bufferSize,1), bufferSize);
   AnkiConditionalErrorAndReturn(scratch2.IsValid(), "mexDetectFiducialMarkers", "Scratch2 could not be allocated");
 
-  const u32 numBytes3 = 10000000;
-  MemoryStack scratch3(calloc(numBytes3,1), numBytes3);
+  MemoryStack scratch3(calloc(bufferSize,1), bufferSize);
   AnkiConditionalErrorAndReturn(scratch3.IsValid(), "mexDetectFiducialMarkers", "Scratch3 could not be allocated");
 
   FixedLengthList<BlockMarker> markers(maxMarkers, scratch0);
@@ -116,7 +112,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       scratch2,
       scratch3);
 
-    AnkiConditionalErrorAndReturn(result == RESULT_OK, "mexDetectFiducialMarkers", "SimpleDetector_Steps12345 Failed");
+    AnkiConditionalErrorAndReturn(result == RESULT_OK, "mexDetectFiducialMarkers", "mexDetectFiducialMarkers Failed");
   }
 
   const s32 numMarkers = markers.get_size();

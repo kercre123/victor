@@ -212,12 +212,15 @@ function detectedQuads = extractQuads_matlabOriginal(image)
 function detectedQuads = extractQuads_c(image)
     imageSize = size(image);
 
-    if imageSize(1) > 240 || imageSize(2) > 320
-        detectedQuads = {};
-        return;
-    end
+%     if imageSize(1) > 240 || imageSize(2) > 320
+%         detectedQuads = {};
+%         return;
+%     end
 
-    if imageSize(2) == 320
+    if imageSize(2) == 640
+        scaleImage_numPyramidLevels = 4;
+        quads_minQuadArea = round(100);
+    elseif imageSize(2) == 320
         scaleImage_numPyramidLevels = 3;
         quads_minQuadArea = round(100 / 4);
     elseif imageSize(2) == 160

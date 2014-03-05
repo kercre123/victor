@@ -139,15 +139,26 @@ namespace Anki
     {
       BeginBenchmark("ecvcs_init");
 
+      const s32 imageHeight = image.get_size(0);
+      const s32 imageWidth = image.get_size(1);
+
       // Integral image constants
-      const s32 numBorderPixels = 17; // For qvga, 2^4 + 1 = 17
-      const s32 integralImageHeight = 64; // 96*(640+33*2)*4 = 271104, though with padding, it is 96*720*4 = 276480
+      s32 numBorderPixels;
+      s32 integralImageHeight;
+
+      if(imageWidth <= 320 && scaleImage_numPyramidLevels <= 3) {
+        numBorderPixels = 17; // For qvga, 2^4 + 1 = 17
+        integralImageHeight = 64; // 96*(640+33*2)*4 = 271104, though with padding, it is 96*720*4 = 276480
+      } else {
+        // Note: These numbers are liable to be too big to fit on the M4 efficiently
+        s32 scaleFactor = static_cast<s32>(ceilf(static_cast<f32>(imageWidth) / 320.0f));
+        numBorderPixels = (1<<(scaleImage_numPyramidLevels+1)) + 1;
+        integralImageHeight = 64*scaleFactor;
+      }
+
       const s32 numRowsToScroll = integralImageHeight - 2*numBorderPixels;
 
       const s32 maxFilterHalfWidth = 1 << (scaleImage_numPyramidLevels+1);
-
-      const s32 imageHeight = image.get_size(0);
-      const s32 imageWidth = image.get_size(1);
 
       Result lastResult;
 
@@ -163,8 +174,11 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(components.IsValid(),
         RESULT_FAIL_INVALID_OBJECT, "ExtractComponentsViaCharacteristicScale", "components is not valid");
 
-      AnkiConditionalErrorAndReturnValue(scaleImage_numPyramidLevels <= 4 && scaleImage_numPyramidLevels > 0,
-        RESULT_FAIL_INVALID_PARAMETERS, "ExtractComponentsViaCharacteristicScale", "scaleImage_numPyramidLevels must be less than %d", 4+1);
+      //AnkiConditionalErrorAndReturnValue(scaleImage_numPyramidLevels <= 4 && scaleImage_numPyramidLevels > 0,
+      //  RESULT_FAIL_INVALID_PARAMETERS, "ExtractComponentsViaCharacteristicScale", "scaleImage_numPyramidLevels must be less than %d", 4+1);
+
+      AnkiConditionalErrorAndReturnValue(scaleImage_numPyramidLevels <= 8 && scaleImage_numPyramidLevels > 0,
+        RESULT_FAIL_INVALID_PARAMETERS, "ExtractComponentsViaCharacteristicScale", "scaleImage_numPyramidLevels must be less than %d", 8+1);
 
       // Initialize the first integralImageHeight rows of the integralImage
       ScrollingIntegralImage_u8_s32 integralImage(integralImageHeight, imageWidth, numBorderPixels, slowScratch);
@@ -172,7 +186,7 @@ namespace Anki
         return lastResult;
 
       // Prepare the memory for the filtered rows for each level of the pyramid
-      Array<s32> filteredRows[5];
+      Array<s32> filteredRows[9];
       for(s32 i=0; i<=scaleImage_numPyramidLevels; i++) {
         filteredRows[i] = Array<s32>(1, imageWidth, fastScratch);
       }
