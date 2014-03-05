@@ -38,6 +38,7 @@ namespace Anki
       const s32 maxConnectedComponentSegments,
       const s32 maxExtractedQuads,
       const bool returnInvalidMarkers,
+      MemoryStack scratchOffChip,
       MemoryStack scratchOnchip,
       MemoryStack scratchCcm)
     {
@@ -48,6 +49,9 @@ namespace Anki
       const s32 imageHeight = image.get_size(0);
       const s32 imageWidth = image.get_size(1);
 
+      AnkiConditionalErrorAndReturnValue(image.IsValid() && markers.IsValid() && homographies.IsValid() && scratchOffChip.IsValid() && scratchOnchip.IsValid() && scratchCcm.IsValid(),
+        RESULT_FAIL_INVALID_OBJECT, "DetectFiducialMarkers", "Some input is invalid");
+
       AnkiConditionalErrorAndReturnValue(imageHeight <= 240 && imageWidth <= 320,
         RESULT_FAIL_INVALID_SIZE, "DetectFiducialMarkers", "The image is too large to test");
 
@@ -56,9 +60,8 @@ namespace Anki
 
       BeginBenchmark("ExtractComponentsViaCharacteristicScale");
 
-      AnkiAssert(scratchCcm.IsValid());
-
-      ConnectedComponents extractedComponents = ConnectedComponents(maxConnectedComponentSegments, imageWidth, scratchCcm);
+      //ConnectedComponents extractedComponents = ConnectedComponents(maxConnectedComponentSegments, imageWidth, scratchCcm);
+      ConnectedComponents extractedComponents = ConnectedComponents(maxConnectedComponentSegments, imageWidth, scratchOffChip);
 
       AnkiConditionalErrorAndReturnValue(extractedComponents.IsValid(),
         RESULT_FAIL_INVALID_OBJECT, "DetectFiducialMarkers", "extractedComponents could not be allocated");

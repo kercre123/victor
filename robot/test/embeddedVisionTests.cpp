@@ -1079,7 +1079,8 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
   // TODO: Check that the image loaded correctly
   //ASSERT_TRUE(IsBlockImage50_320x240Valid(&blockImage50_320x240[0], imagesAreEndianSwapped));
 
-  const s32 scaleImage_thresholdMultiplier = 49152; // .75 * (2^16) = 49152
+  //const s32 scaleImage_thresholdMultiplier = 65536; // 1.0*(2^16)=65536
+  const s32 scaleImage_thresholdMultiplier = 49152; // .75*(2^16)=49152
   const s32 scaleImage_numPyramidLevels = 3;
 
   const s32 component1d_minComponentWidth = 0;
@@ -1148,6 +1149,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
       maxConnectedComponentSegments,
       maxExtractedQuads,
       false,
+      scratchOffchip,
       scratchOnchip,
       scratchCcm);
     const f64 time1 = GetTime();

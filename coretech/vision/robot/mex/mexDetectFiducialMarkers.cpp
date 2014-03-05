@@ -82,6 +82,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   MemoryStack scratch2(calloc(numBytes2,1), numBytes2);
   AnkiConditionalErrorAndReturn(scratch2.IsValid(), "mexDetectFiducialMarkers", "Scratch2 could not be allocated");
 
+  const u32 numBytes3 = 10000000;
+  MemoryStack scratch3(calloc(numBytes3,1), numBytes3);
+  AnkiConditionalErrorAndReturn(scratch3.IsValid(), "mexDetectFiducialMarkers", "Scratch3 could not be allocated");
+
   FixedLengthList<BlockMarker> markers(maxMarkers, scratch0);
   FixedLengthList<Array<f32>> homographies(maxMarkers, scratch0);
 
@@ -109,7 +113,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       maxExtractedQuads,
       returnInvalidMarkers,
       scratch1,
-      scratch2);
+      scratch2,
+      scratch3);
 
     AnkiConditionalErrorAndReturn(result == RESULT_OK, "mexDetectFiducialMarkers", "SimpleDetector_Steps12345 Failed");
   }
@@ -182,4 +187,5 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   free(scratch0.get_buffer());
   free(scratch1.get_buffer());
   free(scratch2.get_buffer());
+  free(scratch3.get_buffer());
 }

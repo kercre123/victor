@@ -34,6 +34,7 @@ namespace Anki
       const s32 maxConnectedComponentSegments,
       const s32 maxExtractedQuads,
       const bool returnInvalidMarkers,
+      MemoryStack scratchOffChip,
       MemoryStack scratchOnchip,
       MemoryStack scratchCcm);
 
