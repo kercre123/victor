@@ -74,7 +74,7 @@ namespace Anki
         scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier,
         component1d_minComponentWidth, component1d_maxSkipDistance,
         extractedComponents,
-        scratchOnchip)) != RESULT_OK)
+        scratchCcm, scratchOnchip)) != RESULT_OK)
       {
         /* // DEBUG: drop a display of extracted components into matlab
         Embedded::Matlab matlab(false);

@@ -1105,7 +1105,8 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
   const f32 decode_minContrastRatio = 1.25;
 
   const s32 maxMarkers = 100;
-  const s32 maxConnectedComponentSegments = 5000; // 25000/4 = 6250
+  //const s32 maxConnectedComponentSegments = 5000; // 25000/4 = 6250
+  const s32 maxConnectedComponentSegments = 39000; // 322*240/2 = 38640
 
   MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
   MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
@@ -1120,14 +1121,14 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
 
   ASSERT_TRUE(IsBlockImage50_320x240Valid(image.Pointer(0,0), false));
 
-  FixedLengthList<BlockMarker> markers(maxMarkers, scratchOnchip);
-  FixedLengthList<Array<f32> > homographies(maxMarkers, scratchOnchip);
+  FixedLengthList<BlockMarker> markers(maxMarkers, scratchCcm);
+  FixedLengthList<Array<f32> > homographies(maxMarkers, scratchCcm);
 
   markers.set_size(maxMarkers);
   homographies.set_size(maxMarkers);
 
   for(s32 i=0; i<maxMarkers; i++) {
-    Array<f32> newArray(3, 3, scratchOnchip);
+    Array<f32> newArray(3, 3, scratchCcm);
     homographies[i] = newArray;
   } // for(s32 i=0; i<maximumSize; i++)
 

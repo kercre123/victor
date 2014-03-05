@@ -134,7 +134,8 @@ namespace Anki
       const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier,
       const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
       ConnectedComponents &components,
-      MemoryStack scratch)
+      MemoryStack fastScratch,
+      MemoryStack slowScratch)
     {
       BeginBenchmark("ecvcs_init");
 
@@ -150,8 +151,11 @@ namespace Anki
 
       Result lastResult;
 
-      AnkiConditionalErrorAndReturnValue(scratch.IsValid(),
+      AnkiConditionalErrorAndReturnValue(fastScratch.IsValid() && slowScratch.IsValid(),
         RESULT_FAIL_INVALID_OBJECT, "ExtractComponentsViaCharacteristicScale", "scratch is not valid");
+
+      AnkiConditionalErrorAndReturnValue(fastScratch.get_buffer() != slowScratch.get_buffer(),
+        RESULT_FAIL_ALIASED_MEMORY, "ExtractComponentsViaCharacteristicScale", "fast and slow scratch buffers cannot be the same object");
 
       AnkiConditionalErrorAndReturnValue(image.IsValid(),
         RESULT_FAIL_INVALID_OBJECT, "ExtractComponentsViaCharacteristicScale", "image is not valid");
@@ -163,23 +167,23 @@ namespace Anki
         RESULT_FAIL_INVALID_PARAMETERS, "ExtractComponentsViaCharacteristicScale", "scaleImage_numPyramidLevels must be less than %d", 4+1);
 
       // Initialize the first integralImageHeight rows of the integralImage
-      ScrollingIntegralImage_u8_s32 integralImage(integralImageHeight, imageWidth, numBorderPixels, scratch);
-      if((lastResult = integralImage.ScrollDown(image, integralImageHeight, scratch)) != RESULT_OK)
+      ScrollingIntegralImage_u8_s32 integralImage(integralImageHeight, imageWidth, numBorderPixels, slowScratch);
+      if((lastResult = integralImage.ScrollDown(image, integralImageHeight, fastScratch)) != RESULT_OK)
         return lastResult;
 
       // Prepare the memory for the filtered rows for each level of the pyramid
       Array<s32> filteredRows[5];
       for(s32 i=0; i<=scaleImage_numPyramidLevels; i++) {
-        filteredRows[i] = Array<s32>(1, imageWidth, scratch);
+        filteredRows[i] = Array<s32>(1, imageWidth, fastScratch);
       }
 
-      Array<u8> binaryImageRow(1, imageWidth, scratch);
+      Array<u8> binaryImageRow(1, imageWidth, fastScratch);
       u8 * restrict pBinaryImageRow = binaryImageRow[0];
 
       AnkiConditionalErrorAndReturnValue(binaryImageRow.IsValid(),
         RESULT_FAIL_OUT_OF_MEMORY, "ExtractComponentsViaCharacteristicScale", "binaryImageRow is not valid");
 
-      if((lastResult = components.Extract2dComponents_PerRow_Initialize(scratch)) != RESULT_OK)
+      if((lastResult = components.Extract2dComponents_PerRow_Initialize(fastScratch, slowScratch)) != RESULT_OK)
         return lastResult;
 
       s32 imageY = 0;
@@ -212,7 +216,7 @@ namespace Anki
 
         // If we've reached the bottom of this integral image, scroll it up
         if(integralImage.get_maxRow(maxFilterHalfWidth) < imageY) {
-          if((lastResult = integralImage.ScrollDown(image, numRowsToScroll, scratch)) != RESULT_OK)
+          if((lastResult = integralImage.ScrollDown(image, numRowsToScroll, fastScratch)) != RESULT_OK)
             return lastResult;
         }
 

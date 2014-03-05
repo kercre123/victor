@@ -41,12 +41,14 @@ namespace Anki
     // Used by DetectFiducialMarkers
     //
     // Compute characteristic scale, binary image, and extract connected components
+    // Warning: fastScratch and slowScratch cannot be the same object pointing to the same memory
     Result ExtractComponentsViaCharacteristicScale(
       const Array<u8> &image,
       const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier,
       const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
       ConnectedComponents &components,
-      MemoryStack scratch);
+      MemoryStack fastScratch,
+      MemoryStack slowScratch);
 
     // Used by DetectFiducialMarkers
     //
