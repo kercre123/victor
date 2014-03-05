@@ -134,31 +134,40 @@ namespace Anki
         case PST_LINE:
         {
           const PathSegmentDef::s_line& seg = def_.line;
-          printf("line: (%f, %f) to (%f, %f)\n",
-                seg.startPt_x,
-                seg.startPt_y,
-                seg.endPt_x,
-                seg.endPt_y);
+          printf("line: (%f, %f) to (%f, %f), speed/accel/decel = (%f, %f, %f)\n",
+                 seg.startPt_x,
+                 seg.startPt_y,
+                 seg.endPt_x,
+                 seg.endPt_y,
+                 GetTargetSpeed(),
+                 GetAccel(),
+                 GetDecel());
           break;
         }
         case PST_ARC:
         {
           const PathSegmentDef::s_arc& seg = def_.arc;
-          printf("arc: centerPt (%f, %f), radius %f, startAng %f, sweep %f\n",
-                seg.centerPt_x,
-                seg.centerPt_y,
-                seg.radius,
-                seg.startRad,
-                seg.sweepRad);
+          printf("arc: centerPt (%f, %f), radius %f, startAng %f, sweep %f, speed/accel/decel = (%f, %f, %f)\n",
+                 seg.centerPt_x,
+                 seg.centerPt_y,
+                 seg.radius,
+                 seg.startRad,
+                 seg.sweepRad,
+                 GetTargetSpeed(),
+                 GetAccel(),
+                 GetDecel());
           break;
         }
         case PST_POINT_TURN:
         {
           const PathSegmentDef::s_turn& seg = def_.turn;
-          printf("ptTurn: x %f, y %f, targetAngle %f\n",
-                seg.x,
-                seg.y,
-                seg.targetAngle);
+          printf("ptTurn: x %f, y %f, targetAngle %f, speed/accel/decel = (%f, %f, %f)\n",
+                 seg.x,
+                 seg.y,
+                 seg.targetAngle,
+                 GetTargetSpeed(),
+                 GetAccel(),
+                 GetDecel());
           break;
         }
         default:
