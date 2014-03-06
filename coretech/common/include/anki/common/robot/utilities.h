@@ -149,6 +149,31 @@ namespace Anki
       else
         return ceil(x - 0.5);
     }
+
+    inline s32 RoundS32(f32 x)
+    {
+#if !defined(__EDG__)
+      // Some platforms may not round to zero correctly, so do the function calls
+      if(x > 0)
+        return static_cast<s32>(floorf(x + 0.5f));
+      else
+        return static_cast<s32>(ceilf(x - 0.5f));
+#else
+      // The M4 rounds to zero correctly, without the function call
+      if(x > 0)
+        return static_cast<s32>(x + 0.5f);
+      else
+        return static_cast<s32>(x - 0.5f);
+#endif
+    }
+
+    inline s64 RoundS32(f64 x)
+    {
+      if(x > 0)
+        return static_cast<s32>(floor(x + 0.5));
+      else
+        return static_cast<s32>(ceil(x - 0.5));
+    }
   } // namespace Embedded
 } // namespace Anki
 
