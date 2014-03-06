@@ -9,11 +9,6 @@
 namespace Anki {
   namespace Cozmo {
     namespace Messages {
-
-      // Create all the dispatch function prototypes (all implemented
-      // manually below).  We need the prototypes for the LUT below
-#define MESSAGE_DEFINITION_MODE MESSAGE_DISPATCH_DEFINITION_MODE
-#include "anki/cozmo/MessageDefinitions.h"
       
       namespace {
   
