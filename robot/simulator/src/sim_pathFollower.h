@@ -23,11 +23,6 @@ namespace Anki {
 																	f32 x_center_mm, f32 y_center_mm,
 																	f32 radius_mm, f32 startRad, f32 sweepRad);
         
-				void ShowPath(s32 path_id, bool show);
-        
-				void SetPathHeightOffset(f32 m);
-        
-        
       } // namespace Viz
       
     } // namespace PathFollower

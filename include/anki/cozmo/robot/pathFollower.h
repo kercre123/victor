@@ -50,9 +50,6 @@ namespace Anki
       void PrintPath();
       void PrintPathSegment(s16 segment);
       
-      // Simulation debug
-      void EnablePathVisualization(bool on);
-      
     } // namespace PathFollower
     
    

@@ -97,12 +97,6 @@ namespace Anki
       } // Update()
       
       
-      void EnablePathVisualization(bool on)
-      {
-        visualizePath_ = on;
-      }
-      
-      
       void SetPathForViz() {
 #if(ENABLE_PATH_VIZ)
         Viz::ErasePath(0);
@@ -269,11 +263,6 @@ namespace Anki
         
         // Visualize path
         SetPathForViz();
-        if (visualizePath_) {
-#if(ENABLE_PATH_VIZ)
-          Viz::ShowPath(0, true);
-#endif
-        }
         
         return TRUE;
       }

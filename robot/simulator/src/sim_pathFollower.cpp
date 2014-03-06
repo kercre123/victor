@@ -1,10 +1,8 @@
 #include <cstdlib>
 
 #include "anki/cozmo/robot/hal.h"
-
+#include "anki/cozmo/VizStructs.h"
 #include "sim_pathFollower.h"
-
-#include "cozmo_physics.h"
 
 #include <webots/Supervisor.hpp>
 
@@ -22,75 +20,64 @@ namespace Anki {
           // For communications with the cozmo_physics plugin used for drawing
           // paths with OpenGL.  Note that plugin comms uses channel 0.
           webots::Emitter *physicsComms_ = Sim::CozmoBot->getEmitter("cozmo_physics_comms");
+          
+          static const u32 MAX_SIZE_SEND_BUF = 128;
+          char sendBuf[MAX_SIZE_SEND_BUF];
         }
         
         ReturnCode Init(void)
         {
-          
-          // Initialize path drawing settings
-          SetPathHeightOffset(0.05);
-          
           return EXIT_SUCCESS;
           
         } // Init()
         
         void ErasePath(s32 path_id)
         {
-          f32 msg[ERASE_PATH_MSG_SIZE];
-          msg[0] = PLUGIN_MSG_ERASE_PATH;
-          msg[PLUGIN_MSG_ROBOT_ID] = HAL::GetRobotID();
-          msg[PLUGIN_MSG_PATH_ID] = path_id;
-          physicsComms_->send(msg, sizeof(msg));
+          VizErasePath msg;
+          msg.pathID = path_id;
+          
+          sendBuf[0] = VizErasePath_ID;
+          memcpy(sendBuf + 1, &msg, sizeof(msg));
+          physicsComms_->send(sendBuf, sizeof(msg)+1);
+          
+          //PRINT("ERASE PATH: %d bytes\n", (int)sizeof(msg) + 1);
+
         }
         
         void AppendPathSegmentLine(s32 path_id, f32 x_start_mm, f32 y_start_mm, f32 x_end_mm, f32 y_end_mm)
         {
-          f32 msg[LINE_MSG_SIZE];
-          msg[0] = PLUGIN_MSG_APPEND_LINE;
-          msg[PLUGIN_MSG_ROBOT_ID] = HAL::GetRobotID();
-          msg[PLUGIN_MSG_PATH_ID] = path_id;
-          msg[LINE_START_X] = x_start_mm * 0.001;
-          msg[LINE_START_Y] = y_start_mm * 0.001;
-          msg[LINE_END_X] = x_end_mm * 0.001;
-          msg[LINE_END_Y] = y_end_mm * 0.001;
+          VizAppendPathSegmentLine msg;
+          msg.pathID = path_id;
+          msg.x_start_m = MM_TO_M(x_start_mm);
+          msg.y_start_m = MM_TO_M(y_start_mm);
+          msg.z_start_m = 0;
+          msg.x_end_m = MM_TO_M(x_end_mm);
+          msg.y_end_m = MM_TO_M(y_end_mm);
+          msg.z_end_m = 0;
           
-          physicsComms_->send(msg, sizeof(msg));
+          sendBuf[0] = VizAppendPathSegmentLine_ID;
+          memcpy(sendBuf + 1, &msg, sizeof(msg));
+          physicsComms_->send(sendBuf, sizeof(msg)+1);
+          
+          //PRINT("APPEND LINE: %d bytes\n", (int)sizeof(msg) + 1);
         }
         
         void AppendPathSegmentArc(s32 path_id, f32 x_center_mm, f32 y_center_mm, f32 radius_mm, f32 startRad, f32 sweepRad)
         {
-          f32 msg[ARC_MSG_SIZE];
-          msg[0] = PLUGIN_MSG_APPEND_ARC;
-          msg[PLUGIN_MSG_ROBOT_ID] = HAL::GetRobotID();
-          msg[PLUGIN_MSG_PATH_ID] = path_id;
-          msg[ARC_CENTER_X] = x_center_mm * 0.001;
-          msg[ARC_CENTER_Y] = y_center_mm * 0.001;
-          msg[ARC_RADIUS] = radius_mm * 0.001;
-          msg[ARC_START_RAD] = startRad;
-          msg[ARC_SWEEP_RAD] = sweepRad;
+          VizAppendPathSegmentArc msg;
+          msg.pathID = path_id;
+          msg.x_center_m = MM_TO_M(x_center_mm);
+          msg.y_center_m = MM_TO_M(y_center_mm);
+          msg.radius_m = MM_TO_M(radius_mm);
+          msg.start_rad = startRad;
+          msg.sweep_rad = sweepRad;
           
-          physicsComms_->send(msg, sizeof(msg));
+          sendBuf[0] = VizAppendPathSegmentArc_ID;
+          memcpy(sendBuf + 1, &msg, sizeof(msg));
+          physicsComms_->send(sendBuf, sizeof(msg)+1);
+          
+          //PRINT("APPEND ARC: %d bytes\n", (int)sizeof(msg) + 1);
         }
-        
-        void ShowPath(s32 path_id, bool show)
-        {
-          f32 msg[SHOW_PATH_MSG_SIZE];
-          msg[0] = PLUGIN_MSG_SHOW_PATH;
-          msg[PLUGIN_MSG_ROBOT_ID] = HAL::GetRobotID();
-          msg[PLUGIN_MSG_PATH_ID] = path_id;
-          msg[SHOW_PATH] = show ? 1 : 0;
-          physicsComms_->send(msg, sizeof(msg));
-        }
-        
-        void SetPathHeightOffset(f32 m){
-          f32 msg[SET_HEIGHT_OFFSET_MSG_SIZE];
-          msg[0] = PLUGIN_MSG_SET_HEIGHT_OFFSET;
-          msg[PLUGIN_MSG_ROBOT_ID] = HAL::GetRobotID();
-          //msg[PLUGIN_MSG_PATH_ID] = path_id;
-          msg[HEIGHT_OFFSET] = m;
-          physicsComms_->send(msg, sizeof(msg));
-        }
-        
         
       } // namespace Viz
       
