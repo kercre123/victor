@@ -18,17 +18,15 @@
 #endif
 
 #ifndef SIMULATOR
-#define ENABLE_PATH_VIZ 0
+#define ENABLE_PATH_VIZ 0  // This must always be 0!
 #else
+#include "sim_viz.h"
+using namespace Anki::Cozmo::Sim;
 #define ENABLE_PATH_VIZ 1
 #endif
 
 // The number of tics desired in between debug prints
 #define DBG_PERIOD 200
-
-#if ENABLE_PATH_VIZ
-#include "sim_pathFollower.h"
-#endif
 
 namespace Anki
 {
@@ -66,8 +64,6 @@ namespace Anki
         
         bool pointTurnStarted_ = false;
         
-        bool visualizePath_ = TRUE;
-        
       } // Private Members
       
       
@@ -75,13 +71,6 @@ namespace Anki
       {
         ClearPath();
         
-#if ENABLE_PATH_VIZ
-        if(Viz::Init() == EXIT_FAILURE) {
-          PRINT("PathFollower visualization init failed.\n");
-          return EXIT_FAILURE;
-        }
-#endif
-      
         return EXIT_SUCCESS;
       }
       

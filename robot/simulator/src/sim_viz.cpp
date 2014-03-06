@@ -2,7 +2,7 @@
 
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/VizStructs.h"
-#include "sim_pathFollower.h"
+#include "sim_viz.h"
 
 #include <webots/Supervisor.hpp>
 
@@ -11,9 +11,7 @@ namespace Anki {
     
     namespace Sim {
       extern webots::Supervisor* CozmoBot;
-    }
-    
-    namespace PathFollower {
+
       namespace Viz {
         
         namespace {
@@ -24,12 +22,6 @@ namespace Anki {
           static const u32 MAX_SIZE_SEND_BUF = 128;
           char sendBuf[MAX_SIZE_SEND_BUF];
         }
-        
-        ReturnCode Init(void)
-        {
-          return EXIT_SUCCESS;
-          
-        } // Init()
         
         void ErasePath(s32 path_id)
         {
@@ -80,7 +72,6 @@ namespace Anki {
         }
         
       } // namespace Viz
-      
-    } // namespace PathFollower
+    } // namespace Sim
   } // namespace Cozmo
 } // namespace Anki

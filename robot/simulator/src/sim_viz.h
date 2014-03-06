@@ -1,18 +1,18 @@
-#ifndef ANKI_SIM_PATH_FOLLOWER_H
-#define ANKI_SIM_PATH_FOLLOWER_H
+// General visualization interface to cozmo_physics.
+// Any viz message that exists in VizMsgDefs.h is eligible to be sent from here.
+
+#ifndef ANKI_SIM_VIZ_H
+#define ANKI_SIM_VIZ_H
 
 #include "anki/common/types.h"
 
 namespace Anki {
   namespace Cozmo { // TODO: Can PathFollower be made generic, put in coretech, and pulled out of Cozmo namespace?
     
-    namespace PathFollower {
-      
-      // Augment existing PathFollower namespace with visualsization methods
+    namespace Sim {
+
 			namespace Viz {
-        
-        ReturnCode Init();
-        
+                
 				void ErasePath(s32 path_id);
         
 				void AppendPathSegmentLine(s32 path_id,
@@ -25,8 +25,8 @@ namespace Anki {
         
       } // namespace Viz
       
-    } // namespace PathFollower
+    } // namespace Sim
   } // namespace Cozmo
 } // namespace Anki
 
-#endif // ANKI_SIM_PATH_FOLLOWER_H
+#endif // ANKI_SIM_VIZ_H
