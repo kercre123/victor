@@ -3,7 +3,6 @@ function root = TrainProbes(varargin)
 %% Parameters
 markerImageDir = '~/Box Sync/Cozmo SE/VisionMarkers/letters';
 workingResolution = 50;
-probeRadius = 5;
 %maxSamples = 100;
 minInfoGain = 0;
 maxDepth = 20;
@@ -15,6 +14,7 @@ probeRegion = [0 1];
 imageCoords = [0 1];
 
 DEBUG_DISPLAY = true;
+DrawTrees = false;
 
 parseVarargin(varargin{:});
     
@@ -165,7 +165,7 @@ catch E
     end
 end
 
-if DEBUG_DISPLAY
+if DEBUG_DISPLAY && DrawTrees
     namedFigure('Multiclass DecisionTree'), clf
     fprintf('Drawing multi-class tree...');
     DrawTree(root, 0);
@@ -187,7 +187,7 @@ for i_label = 1:numLabels
     root.verifiers(i_label) = buildTree(verifier, ...
         false(workingResolution), currentLabels, currentLabelNames);
     
-    if DEBUG_DISPLAY
+    if DEBUG_DISPLAY && DrawTrees
         namedFigure(sprintf('%s DecisionTree', labelNames{i_label})), clf
         fprintf('Drawing %s tree...', labelNames{i_label});
         DrawTree(root.verifiers(i_label), 0);
@@ -406,8 +406,7 @@ end
             node.labelName = labelNames{node.labelID};
             fprintf('LeafNode for label = %d, or "%s"\n', node.labelID, node.labelName);
            
-        else 
-                        
+        else            
             unusedProbes = find(~used);
             
             infoGain = computeInfoGain(labels(node.remaining), length(labelNames), ...
@@ -455,80 +454,39 @@ end
             
             % Recurse left and right from this node
             goLeft = probeValues(node.whichProbe,node.remaining) < .5;
-            if ~numPerturbations
-                D = reshape(distMap(:,:,node.remaining), [], length(node.remaining));
-                uncertain = D(node.whichProbe,:) < probeRadius;
-            else
-                uncertain = false(size(node.remaining));
-            end
-            
-            if all(uncertain)
-               error('BuildTree:ProbeOnEdges', ...
-                   'Selected probe is uncertain for all remaining images.'); 
-               %used(node.whichProbe) = true;
-               %node = buildTree(node, used);
-            else
-                leftRemaining = node.remaining(goLeft | uncertain);
+            leftRemaining = node.remaining(goLeft);
                 
-                if length(leftRemaining) == length(node.remaining)
-                    % That split makes no progress.  Try again without
-                    % letting us choose this node again
-                    used(node.whichProbe) = true;
-                    node = buildTree(node, used, labels, labelNames);
-                else
-                    if ~isempty(leftRemaining)
-                        usedLeft = used;
-                        usedLeft(node.whichProbe) = true;
-                        
-                        if length(leftRemaining) == length(node.remaining)
-                            if any(uncertain)
-                                node = buildTree(node, usedLeft, labels, labelNames);
-                            else
-                                error('BuildTree:UselessSplit', ...
-                                    'Reached split that makes no progress with [%s\b] remaining.', ...
-                                    sprintf('%s ', labelNames{labels(node.remaining)}));
-                            end
-                        else
-                            leftChild.remaining = leftRemaining;
-                            leftChild.depth = node.depth+1;
-                            if leftChild.depth <= maxDepth
-                                node.leftChild = buildTree(leftChild, usedLeft, labels, labelNames);
-                            else
-                                error('BuildTree:MaxDepth', ...
-                                    'Reached max depth with [%s] remaining.', ...
-                                    sprintf('%s ', labelNames{labels(leftRemaining)}));
-                            end
-                        end
-                    end
+            if isempty(leftRemaining) || length(leftRemaining) == length(node.remaining)
+                % That split makes no progress.  Try again without
+                % letting us choose this node again
+                used(node.whichProbe) = true;
+                node = buildTree(node, used, labels, labelNames);
+                
+            elseif node.depth+1 > maxDepth
+                error('BuildTree:MaxDepth', ...
+                        'Reached max depth with [%s\b] remaining.', ...
+                        sprintf('%s ', labelNames{labels(leftRemaining)}));
                     
-                    %rightRemaining = node.remaining(probeValues(node.whichProbe,node.remaining) >= .5);
-                    rightRemaining = node.remaining(~goLeft | uncertain);
-                    if ~isempty(rightRemaining)
-                        usedRight = used;
-                        usedRight(node.whichProbe) = true;
-                        
-                        if length(rightRemaining) == length(node.remaining)
-                            if any(uncertain)
-                                node = buildTree(node, usedRight, labels, labelNames);
-                            else
-                                error('BuildTree:UselessSplit', ...
-                                    'Reached split that makes no progress with [%s\b] remaining.', ...
-                                    sprintf('%s ', labelNames{labels(node.remaining)}));
-                            end
-                        else
-                            
-                            rightChild.remaining = rightRemaining;
-                            rightChild.depth = node.depth+1;
-                            if rightChild.depth <= maxDepth
-                                node.rightChild = buildTree(rightChild, usedRight, labels, labelNames);
-                            else
-                                error('BuildTree:MaxDepth', ...
-                                    'Reached max depth with [%s\b] remaining.', ...
-                                    sprintf('%s ', labelNames{labels(rightRemaining)}));
-                            end
-                        end
-                    end % IF isempty(rightRemaining)
-                end % if length(leftRemaining) == length(node.remaining)
+            else
+                % Recurse left
+                usedLeft = used;
+                usedLeft(node.whichProbe) = true;
+                
+                leftChild.remaining = leftRemaining;
+                leftChild.depth = node.depth+1;
+                node.leftChild = buildTree(leftChild, usedLeft, labels, labelNames);
+                
+                % Recurse right
+                rightRemaining = node.remaining(~goLeft);
+                assert(~isempty(rightRemaining) && length(rightRemaining) < length(node.remaining));
+                
+                usedRight = used;
+                usedRight(node.whichProbe) = true;
+                
+                rightChild.remaining = rightRemaining;
+                rightChild.depth = node.depth+1;
+                node.rightChild = buildTree(rightChild, usedRight, labels, labelNames);
+                
             end
         end
         
