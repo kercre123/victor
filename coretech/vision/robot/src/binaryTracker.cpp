@@ -65,6 +65,29 @@ namespace Anki
 #endif
       }
 
+      staticInline void TransformPoint(const Point<s16> * restrict pTemplatePoints, const s32 iPoint, const Point<f32> &centerOffset, const f32 h00, const f32 h01, const f32 h02, const f32 h10, const f32 h11, const f32 h12, const f32 h20, const f32 h21, const f32 h22, f32 &xc, f32 &yc, f32 &warpedX, f32 &warpedY, s32 &warpedXrounded, s32 &warpedYrounded)
+      {
+        const f32 xr = static_cast<f32>(pTemplatePoints[iPoint].x);
+        const f32 yr = static_cast<f32>(pTemplatePoints[iPoint].y);
+
+        //
+        // Warp x and y based on the current homography
+        //
+
+        // Subtract the center offset
+        xc = xr - centerOffset.x;
+        yc = yr - centerOffset.y;
+
+        // Projective warp
+        const f32 wpi = 1.0f / (h20*xc + h21*yc + h22);
+        warpedX = (h00*xc + h01*yc + h02) * wpi;
+        warpedY = (h10*xc + h11*yc + h12) * wpi;
+
+        // TODO: verify the -0.5f is correct
+        warpedXrounded = RoundS32_minusPointFive(warpedX + centerOffset.x);
+        warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
+      }
+
       BinaryTracker::BinaryTracker()
         : isValid(false)
       {
@@ -514,25 +537,9 @@ namespace Anki
         const s32 * restrict pXStartIndexes = xStartIndexes.Pointer(0,0);
 
         for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++) {
-          const f32 xr = static_cast<f32>(pTemplatePoints[iPoint].x);
-          const f32 yr = static_cast<f32>(pTemplatePoints[iPoint].y);
-
-          //
-          // Warp x and y based on the current homography
-          //
-
-          // Subtract the center offset
-          const f32 xc = xr - centerOffset.x;
-          const f32 yc = yr - centerOffset.y;
-
-          // Projective warp
-          const f32 wpi = 1.0f / (h20*xc + h21*yc + h22);
-          const f32 warpedX = (h00*xc + h01*yc + h02) * wpi;
-          const f32 warpedY = (h10*xc + h11*yc + h12) * wpi;
-
-          // TODO: verify the -0.5f is correct
-          const s32 warpedXrounded = RoundS32_minusPointFive(warpedX + centerOffset.x);
-          const s32 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
+          f32 xc, yc, warpedX, warpedY;
+          s32 warpedXrounded, warpedYrounded;
+          TransformPoint(pTemplatePoints, iPoint, centerOffset, h00, h01, h02, h10, h11, h12, h20, h21, h22, xc, yc, warpedX, warpedY, warpedXrounded, warpedYrounded);
 
           //if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance)) {
           if(warpedXrounded >= 0 && warpedXrounded < imageWidth) {
@@ -595,27 +602,10 @@ namespace Anki
         const s32 * restrict pYStartIndexes = yStartIndexes.Pointer(0,0);
 
         for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++) {
-          const f32 xr = static_cast<f32>(pTemplatePoints[iPoint].x);
-          const f32 yr = static_cast<f32>(pTemplatePoints[iPoint].y);
+          f32 xc, yc, warpedX, warpedY;
+          s32 warpedXrounded, warpedYrounded;
+          TransformPoint(pTemplatePoints, iPoint, centerOffset, h00, h01, h02, h10, h11, h12, h20, h21, h22, xc, yc, warpedX, warpedY, warpedXrounded, warpedYrounded);
 
-          //
-          // Warp x and y based on the current homography
-          //
-
-          // Subtract the center offset
-          const f32 xc = xr - centerOffset.x;
-          const f32 yc = yr - centerOffset.y;
-
-          // Projective warp
-          const f32 wpi = 1.0f / (h20*xc + h21*yc + h22);
-          const f32 warpedX = (h00*xc + h01*yc + h02) * wpi;
-          const f32 warpedY = (h10*xc + h11*yc + h12) * wpi;
-
-          // TODO: verify the -0.5f is correct
-          const s32 warpedXrounded = RoundS32_minusPointFive(warpedX + centerOffset.x);
-          const s32 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
-
-          //if(warpedXrounded >= maxMatchingDistance && warpedXrounded < (imageWidth-maxMatchingDistance)) {
           if(warpedYrounded >= 0 && warpedYrounded < imageHeight) {
             const s32 minX = warpedXrounded - maxMatchingDistance;
             const s32 maxX = warpedXrounded + maxMatchingDistance;
@@ -694,25 +684,9 @@ namespace Anki
         const s32 * restrict pXStartIndexes = xStartIndexes.Pointer(0,0);
 
         for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++) {
-          const f32 xr = static_cast<f32>(pTemplatePoints[iPoint].x);
-          const f32 yr = static_cast<f32>(pTemplatePoints[iPoint].y);
-
-          //
-          // Warp x and y based on the current homography
-          //
-
-          // Subtract the center offset
-          const f32 xc = xr - centerOffset.x;
-          const f32 yc = yr - centerOffset.y;
-
-          // Projective warp
-          const f32 wpi = 1.0f / (h20*xc + h21*yc + h22);
-          const f32 warpedX = (h00*xc + h01*yc + h02) * wpi;
-          const f32 warpedY = (h10*xc + h11*yc + h12) * wpi;
-
-          // TODO: verify the -0.5f is correct
-          const s32 warpedXrounded = RoundS32_minusPointFive(warpedX + centerOffset.x);
-          const s32 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
+          f32 xc, yc, warpedX, warpedY;
+          s32 warpedXrounded, warpedYrounded;
+          TransformPoint(pTemplatePoints, iPoint, centerOffset, h00, h01, h02, h10, h11, h12, h20, h21, h22, xc, yc, warpedX, warpedY, warpedXrounded, warpedYrounded);
 
           if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance)) {
             const s32 minY = warpedYrounded - maxMatchingDistance;
@@ -847,25 +821,9 @@ namespace Anki
         const s32 * restrict pYStartIndexes = yStartIndexes.Pointer(0,0);
 
         for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++) {
-          const f32 xr = static_cast<f32>(pTemplatePoints[iPoint].x);
-          const f32 yr = static_cast<f32>(pTemplatePoints[iPoint].y);
-
-          //
-          // Warp x and y based on the current homography
-          //
-
-          // Subtract the center offset
-          const f32 xc = xr - centerOffset.x;
-          const f32 yc = yr - centerOffset.y;
-
-          // Projective warp
-          const f32 wpi = 1.0f / (h20*xc + h21*yc + h22);
-          const f32 warpedX = (h00*xc + h01*yc + h02) * wpi;
-          const f32 warpedY = (h10*xc + h11*yc + h12) * wpi;
-
-          // TODO: verify the -0.5f is correct
-          const s32 warpedXrounded = RoundS32_minusPointFive(warpedX + centerOffset.x);
-          const s32 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
+          f32 xc, yc, warpedX, warpedY;
+          s32 warpedXrounded, warpedYrounded;
+          TransformPoint(pTemplatePoints, iPoint, centerOffset, h00, h01, h02, h10, h11, h12, h20, h21, h22, xc, yc, warpedX, warpedY, warpedXrounded, warpedYrounded);
 
           if(warpedXrounded >= maxMatchingDistance && warpedXrounded < (imageWidth-maxMatchingDistance)) {
             const s32 minX = warpedXrounded - maxMatchingDistance;
@@ -982,27 +940,10 @@ namespace Anki
         const s32 * restrict pXStartIndexes = xStartIndexes.Pointer(0,0);
 
         for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++) {
-          const f32 xr = static_cast<f32>(pTemplatePoints[iPoint].x);
-          const f32 yr = static_cast<f32>(pTemplatePoints[iPoint].y);
+          f32 xc, yc, warpedX, warpedY;
+          s32 warpedXrounded, warpedYrounded;
+          TransformPoint(pTemplatePoints, iPoint, centerOffset, h00, h01, h02, h10, h11, h12, h20, h21, h22, xc, yc, warpedX, warpedY, warpedXrounded, warpedYrounded);
 
-          //
-          // Warp x and y based on the current homography
-          //
-
-          // Subtract the center offset
-          const f32 xc = xr - centerOffset.x;
-          const f32 yc = yr - centerOffset.y;
-
-          // Projective warp
-          const f32 wpi = 1.0f / (h20*xc + h21*yc + h22);
-          const f32 warpedX = (h00*xc + h01*yc + h02) * wpi;
-          const f32 warpedY = (h10*xc + h11*yc + h12) * wpi;
-
-          // TODO: verify the -0.5f is correct
-          const s32 warpedXrounded = RoundS32_minusPointFive(warpedX + centerOffset.x);
-          const s32 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
-
-          //if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance)) {
           if(warpedXrounded >= 0 && warpedXrounded < imageWidth) {
             const s32 minY = warpedYrounded - maxMatchingDistance;
             const s32 maxY = warpedYrounded + maxMatchingDistance;
@@ -1056,27 +997,10 @@ namespace Anki
         const s32 * restrict pYStartIndexes = yStartIndexes.Pointer(0,0);
 
         for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++) {
-          const f32 xr = static_cast<f32>(pTemplatePoints[iPoint].x);
-          const f32 yr = static_cast<f32>(pTemplatePoints[iPoint].y);
+          f32 xc, yc, warpedX, warpedY;
+          s32 warpedXrounded, warpedYrounded;
+          TransformPoint(pTemplatePoints, iPoint, centerOffset, h00, h01, h02, h10, h11, h12, h20, h21, h22, xc, yc, warpedX, warpedY, warpedXrounded, warpedYrounded);
 
-          //
-          // Warp x and y based on the current homography
-          //
-
-          // Subtract the center offset
-          const f32 xc = xr - centerOffset.x;
-          const f32 yc = yr - centerOffset.y;
-
-          // Projective warp
-          const f32 wpi = 1.0f / (h20*xc + h21*yc + h22);
-          const f32 warpedX = (h00*xc + h01*yc + h02) * wpi;
-          const f32 warpedY = (h10*xc + h11*yc + h12) * wpi;
-
-          // TODO: verify the -0.5f is correct
-          const s32 warpedXrounded = RoundS32_minusPointFive(warpedX + centerOffset.x);
-          const s32 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
-
-          //if(warpedXrounded >= maxMatchingDistance && warpedXrounded < (imageWidth-maxMatchingDistance)) {
           if(warpedYrounded >= 0 && warpedYrounded < imageHeight) {
             const s32 minX = warpedXrounded - maxMatchingDistance;
             const s32 maxX = warpedXrounded + maxMatchingDistance;
