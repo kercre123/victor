@@ -18,7 +18,7 @@ function updatedHomography = binaryTracker_computeUpdateFromBinary_projectiveRob
     initialHomography, scale,...
     maxMatchingDistance)
 
-maxIterations = 1000;
+maxIterations = 50;
 
 imageHeight = size(xDecreasingTemplate, 1);
 imageWidth = size(xDecreasingTemplate, 2);
@@ -130,8 +130,8 @@ function updatedHomography = updateHomography_ransac(...
   xDecreasingTemplateList_x, xDecreasingTemplateList_y, yDecreasingTemplateList_x, yDecreasingTemplateList_y, xIncreasingTemplateList_x, xIncreasingTemplateList_y, yIncreasingTemplateList_x, yIncreasingTemplateList_y,...
   xDecreasingNew, xIncreasingNew, yDecreasingNew, yIncreasingNew)
 
-    verifyRange = 1;
-    numPointsPerEdge = 50;
+    verifyRange = 2;
+    numPointsPerEdge = 4;
 
     allCorrespondences_cell = {correspondences_xDecreasing, correspondences_xIncreasing, correspondences_yDecreasing, correspondences_yIncreasing};
 %     allCorrespondences_array = [correspondences_xDecreasing, correspondences_xIncreasing, correspondences_yDecreasing, correspondences_yIncreasing];

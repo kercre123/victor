@@ -10,15 +10,19 @@
 
 % Minima = Decreasing 
 % Maxima = Increasing
+
+% The value of the output images is the number of pixels that should be
+% subtracted from the integer position of any nonzero pixel. For example,
+% if xDecreasingImage(50,50)=0.4, then the true position is (49.6,50.0)
 function [xDecreasingImage, xIncreasingImage, yDecreasingImage, yIncreasingImage] = binaryTracker_binarizeWithAutomata(image, grayvalueThreshold, minComponentWidth)
 
 assert(grayvalueThreshold >=0 && grayvalueThreshold <= 255);
 
-xDecreasingImage = zeros(size(image), 'uint8');
-xIncreasingImage = zeros(size(image), 'uint8');
+xDecreasingImage = zeros(size(image));
+xIncreasingImage = zeros(size(image));
 
-yDecreasingImage = zeros(size(image), 'uint8');
-yIncreasingImage = zeros(size(image), 'uint8');
+yDecreasingImage = zeros(size(image));
+yIncreasingImage = zeros(size(image));
 
 % states:
 % 1. on white
@@ -50,7 +54,9 @@ for y = 1:size(image,1)
                 componentWidth = x - lastSwitchX;
 
                 if componentWidth >= minComponentWidth
-                    xDecreasingImage(y,x) = 255;
+                    lastDiff = image(y,x-1) - grayvalueThreshold;
+                    curDiff = grayvalueThreshold - image(y,x);
+                    xDecreasingImage(y,x) = curDiff / (lastDiff+curDiff);
                 end
 
                 lastSwitchX = x;
@@ -66,7 +72,9 @@ for y = 1:size(image,1)
                 componentWidth = x - lastSwitchX;
 
                 if componentWidth >= minComponentWidth
-                    xIncreasingImage(y,x) = 255;
+                    lastDiff = grayvalueThreshold - image(y,x-1);
+                    curDiff = image(y,x) - grayvalueThreshold;
+                    xIncreasingImage(y,x) = lastDiff / (lastDiff+curDiff);
                 end
 
                 lastSwitchX = x;
@@ -103,7 +111,9 @@ for x = 1:size(image,2)
                 componentWidth = y - lastSwitchY;
 
                 if componentWidth >= minComponentWidth
-                    yDecreasingImage(y,x) = 255;
+                    lastDiff = image(y-1,x) - grayvalueThreshold;
+                    curDiff = grayvalueThreshold - image(y,x);
+                    yDecreasingImage(y,x) = curDiff / (lastDiff+curDiff);
                 end
 
                 lastSwitchY = y;
@@ -119,7 +129,9 @@ for x = 1:size(image,2)
                 componentWidth = y - lastSwitchY;
 
                 if componentWidth >= minComponentWidth
-                    yIncreasingImage(y,x) = 255;
+                    lastDiff = grayvalueThreshold - image(y-1,x);
+                    curDiff = image(y,x) - grayvalueThreshold;
+                    yIncreasingImage(y,x) = lastDiff / (lastDiff+curDiff);
                 end
 
                 lastSwitchY = y;
