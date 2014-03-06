@@ -24,10 +24,11 @@ allTests = loadjson(allTestsFilename);
 slashIndexes = strfind(allTestsFilename, '/');
 dataPath = allTestsFilename(1:(slashIndexes(end)));
 
-testFunctions = {@extractQuads_matlabOriginal, @extractQuads_c};
+testFunctions = {@extractQuads_matlabOriginal, @extractQuads_c_noRefinement, @extractQuads_c_withRefinement};
 testFunctionNames = {...
     'matlab',...
-    'C     '};
+    'C-no  ',...
+    'C-with'};
 
 resultsData = cell(length(allTests), 1);
 resultsString = '';
@@ -170,7 +171,6 @@ for iTest = 1:length(allTests)
                     figure(iTest*100 + iTestingResolution*10 + iFrame);
                     subplot(1,length(testFunctions),iTestFunction);
                     plotQuads(img, extractedQuads, isExtractedQuadsMatched, groundTruthCorners, scale, testFunctionNames{iTestFunction})
-%                     pause();
                 end
             end % for iTestFunction = 1:length(testFunctions)
             pause(.01);
@@ -220,34 +220,40 @@ function plotQuads(image, extractedQuads, isExtractedQuadsMatched, groundTruthCo
     end
 
 function detectedQuads = extractQuads_matlabOriginal(image)
-    detectedQuads = simpleDetector(image, 'decodeMarkers', false, 'showComponents', true);
+%     detectedQuads = simpleDetector(image, 'decodeMarkers', false, 'showComponents', true);
+    detectedQuads = simpleDetector(image, 'decodeMarkers', false);
 
-function detectedQuads = extractQuads_c(image)
+function detectedQuads = extractQuads_c_noRefinement(image)
+    detectedQuads = extractQuads_c_total(image, false);
+    
+function detectedQuads = extractQuads_c_withRefinement(image)
+    detectedQuads = extractQuads_c_total(image, true);    
+    
+function detectedQuads = extractQuads_c_total(image, useRefinement)
     imageSize = size(image);
-
-%     if imageSize(1) > 240 || imageSize(2) > 320
-%         detectedQuads = {};
-%         return;
-%     end
 
     if imageSize(2) == 640
         scaleImage_numPyramidLevels = 4;
         quads_minQuadArea = round(100);
+        scale = 1;
     elseif imageSize(2) == 320
         scaleImage_numPyramidLevels = 3;
         quads_minQuadArea = round(100 / 4);
+        scale = 0.5;
     elseif imageSize(2) == 160
         scaleImage_numPyramidLevels = 2;
         quads_minQuadArea = round(100 / (4^2));
+        scale = 0.25;
     elseif imageSize(2) == 80
         scaleImage_numPyramidLevels = 1;
         quads_minQuadArea = round(100 / (4^3));
+        scale = 0.125;
     else
         assert(false);
     end
 
-%     scaleImage_thresholdMultiplier = .75;
-    scaleImage_thresholdMultiplier = 1.0;
+%     scaleImage_thresholdMultiplier = .75; % Fewer components
+    scaleImage_thresholdMultiplier = 1.0; % More components
     component1d_minComponentWidth = 0;
     component1d_maxSkipDistance = 0;
     minSideLength = round(0.03*max(imageSize(1),imageSize(2)));
@@ -265,5 +271,63 @@ function detectedQuads = extractQuads_c(image)
 
     [detectedQuads, ~, ~, ~] = mexDetectFiducialMarkers(image, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_percentHorizontal, component_percentVertical, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, returnInvalidMarkers);
 
-%     keyboard
+    imageHeight = imageSize(1);
+    imageWidth = imageSize(2);
+    homographyOffset = [(imageWidth-1)/2, (imageHeight-1)/2];
+    
+    if useRefinement
+        [xDecreasing2Image, xIncreasing2Image, yDecreasing2Image, yIncreasing2Image] = binaryTracker_binarizeWithAutomata(image, 128, 1);
+        
+        for iQuad = 1:length(detectedQuads)
+            originalQuad = detectedQuads{iQuad};
+            offsetOriginalQuad = originalQuad - repmat(homographyOffset, [4,1]);            
+            
+            [xDecreasing1Image, xIncreasing1Image, yDecreasing1Image, yIncreasing1Image] = binaryTracker_binarizeQuadrilateral(originalQuad, size(image), true);
+            
+            translation_maxMatchingDistance = floor(3*scale/2);
+            if translation_maxMatchingDistance == 0
+                translation_maxMatchingDistance = 1;
+            else
+                translation_maxMatchingDistance = 2 * translation_maxMatchingDistance + 1;
+            end
+             translatedHomography = binaryTracker_computeUpdateFromBinary(...
+                xDecreasing1Image, xIncreasing1Image, yDecreasing1Image, yIncreasing1Image,...
+                xDecreasing2Image, xIncreasing2Image, yDecreasing2Image, yIncreasing2Image,...
+                eye(3,3), 1.0,...
+                translation_maxMatchingDistance, 'translation');
+            
+            offsetTranslatedQuad = inv(translatedHomography) * [offsetOriginalQuad, ones(4,1)]';
+            offsetTranslatedQuad = offsetTranslatedQuad ./ repmat(offsetTranslatedQuad(3,:), [3,1]);
+            translatedQuad = offsetTranslatedQuad(1:2,:)' + repmat(homographyOffset, [4,1]);
+                        
+            projective_maxMatchingDistance = floor(3*scale/2);
+            if projective_maxMatchingDistance == 0
+                projective_maxMatchingDistance = 1;
+            else
+                projective_maxMatchingDistance = 2 * projective_maxMatchingDistance + 1;
+            end
+            projectiveHomography = binaryTracker_computeUpdateFromBinary(...
+                xDecreasing1Image, xIncreasing1Image, yDecreasing1Image, yIncreasing1Image,...
+                xDecreasing2Image, xIncreasing2Image, yDecreasing2Image, yIncreasing2Image,...                
+                eye(3,3), 1.0,...
+                projective_maxMatchingDistance, 'projective');
+            
+            offsetProjectiveQuad = inv(projectiveHomography) * [offsetOriginalQuad, ones(4,1)]';
+            offsetProjectiveQuad = offsetProjectiveQuad ./ repmat(offsetProjectiveQuad(3,:), [3,1]);
+            projectiveQuad = offsetProjectiveQuad(1:2,:)' + repmat(homographyOffset, [4,1]);
+            
+            if imageSize(2) == 160 && iQuad == 2
+                figure(1000);
+                hold off;
+                imshow(image);
+                hold on;            
+                plot(originalQuad([1:4,1],1), originalQuad([1:4,1],2), 'r--');
+                plot(translatedQuad([1:4,1],1), translatedQuad([1:4,1],2), 'b');
+                plot(projectiveQuad([1:4,1],1), projectiveQuad([1:4,1],2), 'g');
+            end
+            
+%             keyboard
 
+            detectedQuads{iQuad} = projectiveQuad; 
+        end
+    end
