@@ -87,10 +87,7 @@ namespace Anki {
       f32 motorPrevPositions_[HAL::MOTOR_COUNT];
       f32 motorSpeeds_[HAL::MOTOR_COUNT];
       f32 motorSpeedCoeffs_[HAL::MOTOR_COUNT];
-      
-      // For communications with basestation
-      webots::Emitter *tx_;
-      webots::Receiver *rx_;
+
       
 #pragma mark --- Simulated Hardware Interface "Private Methods" ---
       // Localization
@@ -224,10 +221,7 @@ namespace Anki {
       
       //matCam_->enable(VISION_TIME_STEP);
       headCam_->enable(VISION_TIME_STEP);
-      
-      tx_ = webotRobot_.getEmitter("radio_tx");
-      rx_ = webotRobot_.getReceiver("radio_rx");
-      
+
       
       // Set ID
       // Expected format of name is <SomeName>_<robotID>
@@ -314,9 +308,6 @@ namespace Anki {
       
       gps_->disable();
       compass_->disable();
-      
-      // Do we care about actually disabling this?  It lives in sim_radio.cpp now...
-      //rx_->disable();
 
     } // Destroy()
     

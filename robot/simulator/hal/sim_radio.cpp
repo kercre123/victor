@@ -20,6 +20,16 @@
 #include "anki/messaging/shared/UdpClient.h"
 #include "anki/messaging/shared/utilMessaging.h"
 
+// For getting local host's IP address
+#define _GNU_SOURCE     /* To get defns of NI_MAXSERV and NI_MAXHOST */
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <ifaddrs.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+
 namespace Anki {
   namespace Cozmo {
     
@@ -32,25 +42,22 @@ namespace Anki {
 
       u8 recvBuf_[RECV_BUFFER_SIZE];
       s32 recvBufSize_ = 0;
+      
+      RobotAdvertisementRegistration regMsg;
     }
 
     // Register robot with advertisement service
     void RegisterRobot()
     {
-      RobotAdvertisementRegistration regMsg;
-      regMsg.robotID = HAL::GetRobotID();
       regMsg.enableAdvertisement = 1;
-      regMsg.port = ROBOT_RADIO_BASE_PORT + regMsg.robotID;
       
-      PRINT("sim_radio: Sending registration for robot %d on port %d\n", regMsg.robotID, regMsg.port);
+      PRINT("sim_radio: Sending registration for robot %d at address %s on port %d\n", regMsg.robotID, regMsg.robotAddr, regMsg.port);
       advRegClient.Send((char*)&regMsg, sizeof(regMsg));
     }
     
     // Deregister robot with advertisement service
     void DeregisterRobot()
     {
-      RobotAdvertisementRegistration regMsg;
-      regMsg.robotID = HAL::GetRobotID();
       regMsg.enableAdvertisement = 0;
       
       PRINT("sim_radio: Sending deregistration for robot %d\n", regMsg.robotID);
@@ -64,7 +71,55 @@ namespace Anki {
       
       // Register with advertising service by sending IP and port info
       // NOTE: Since there is no ACK robot_advertisement_controller must be running before this happens!
+      //       We also assume that when working with simluated robots on Webots, the advertisement service is running on the same host.
       advRegClient.Connect("127.0.0.1", ROBOT_ADVERTISEMENT_REGISTRATION_PORT);
+      
+      // Get robot's IPv4 address.
+      // Looking for (and assuming there is only one) address that starts with 192.
+      struct ifaddrs *ifaddr, *ifa;
+      if (getifaddrs(&ifaddr) != 0) {
+        PRINT("getifaddrs failed\n");
+        assert(false);
+      }
+      
+      
+      int family, s, n;
+      char host[NI_MAXHOST];
+      for (ifa = ifaddr, n = 0; ifa != NULL; ifa = ifa->ifa_next, n++) {
+        if (ifa->ifa_addr == NULL)
+          continue;
+        
+        family = ifa->ifa_addr->sa_family;
+        
+        // Display IPv4 addresses only
+        if (family == AF_INET) {
+          s = getnameinfo(ifa->ifa_addr,
+                          (family == AF_INET) ? sizeof(struct sockaddr_in) :
+                          sizeof(struct sockaddr_in6),
+                          host, NI_MAXHOST,
+                          NULL, 0, NI_NUMERICHOST);
+          if (s != 0) {
+            PRINT("getnameinfo() failed\n");
+            assert(false);
+          }
+          
+          // Does address start with 192?
+          if (strncmp(host, "192.", 4) == 0)
+          {
+            PRINT("Local host IP: %s\n", host);
+            break;
+          }
+        }
+      }
+      freeifaddrs(ifaddr);
+      
+      
+      
+      // Fill in advertisement registration message
+      regMsg.robotID = (u8)HAL::GetRobotID();
+      regMsg.port = ROBOT_RADIO_BASE_PORT + regMsg.robotID;
+      memcpy(regMsg.robotAddr, host, sizeof(regMsg.robotAddr));
+      
       RegisterRobot();
       recvBufSize_ = 0;
       

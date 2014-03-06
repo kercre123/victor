@@ -96,7 +96,7 @@ namespace Cozmo {
         
 #if(DEBUG_TCPCOMMS)
         if (advertisingRobots_.find(advMsg.robotID) == advertisingRobots_.end()) {
-          printf("Detected advertising robot %d on port %d\n", advMsg.robotID, advMsg.port);
+          printf("Detected advertising robot %d on host %s at port %d\n", advMsg.robotID, advMsg.robotAddr, advMsg.port);
         }
 #endif
         
@@ -237,9 +237,9 @@ namespace Cozmo {
       
       TcpClient *client = new TcpClient();
       
-      if (client->Connect(ROBOT_SIM_WORLD_HOST, it->second.robotInfo.port)) {
+      if (client->Connect((char*)it->second.robotInfo.robotAddr, it->second.robotInfo.port)) {
 #if(DEBUG_TCPCOMMS)
-        printf("Connected to robot %d at %s:%d\n", it->second.robotInfo.robotID, ROBOT_SIM_WORLD_HOST, it->second.robotInfo.port);
+        printf("Connected to robot %d at %s:%d\n", it->second.robotInfo.robotID, it->second.robotInfo.robotAddr, it->second.robotInfo.port);
 #endif
         connectedRobots_[robotID].client = client;
         return true;
