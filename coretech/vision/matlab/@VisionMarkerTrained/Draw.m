@@ -1,6 +1,7 @@
 function h = Draw(this, varargin)
 
 Color = 'r';
+TopColor = 'g';
 Tag = class(this);
 Parent = [];
 TextColor = 'y';
@@ -16,6 +17,11 @@ end
 if isempty(this.pose)
     h = plot(this.corners([1 2 4 3 1],1), this.corners([1 2 4 3 1],2), Color, ...
         'LineWidth', 3, 'Parent', Parent, 'Tag', Tag);
+    
+    if ~isempty(TopColor)
+        h(end+1) = plot(this.corners([1 3],1), this.corners([1 3],2), TopColor, ...
+            'LineWidth', 3, 'Parent', Parent, 'Tag', Tag);
+    end
     
     h_text = [];
     if ~isempty(String)
