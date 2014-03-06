@@ -19,6 +19,9 @@ classdef VisionMarkerTrained
         
         ProbeTree = VisionMarkerTrained.LoadProbeTree();
         
+        DarkProbes   = VisionMarkerTrained.CreateProbes('dark'); 
+        BrightProbes = VisionMarkerTrained.CreateProbes('bright');
+        
         % X-Z Plane: 
         Canonical3dCorners = [-1 0 1; -1 0 -1; 1 0 1; 1 0 -1];
         % X-Y Plane: Canonical3dCorners = [-1 -1 0; -1 1 0; 1 -1 0; 1 1 0];
@@ -32,6 +35,7 @@ classdef VisionMarkerTrained
         TrainProbeTree(varargin);
         [squareWidth_pix, padding_pix] = GetFiducialPixelSize(imageSize, imageSizeType);
         corners = GetFiducialCorners(imageSize);
+        threshold = ComputeThreshold(img, tform);
         
     end % Static Methods
     
@@ -40,6 +44,8 @@ classdef VisionMarkerTrained
         pattern = CreateProbePattern();
         
         tree = LoadProbeTree();
+        
+        probes = CreateProbes(probeType); 
         
         outputString = GenerateEmbeddedMarkerDefinitionCode(varargin);
                 
@@ -72,38 +78,40 @@ classdef VisionMarkerTrained
             parseVarargin(varargin{:});
             
             assert(~isempty(VisionMarkerTrained.ProbeTree), 'No probe tree loaded.');
-    
-%             if isempty(Corners)
-%                 Corners = [
-%                 [nrows,ncols,~] = size(img);
-%                 assert(nrows==ncols, 'Image must be square if no corners are provided.');
-%                 [~, padding] = VisionMarkerTrained.GetFiducialPixelSize(nrows);
-%                 Corners = [padding padding ncols-padding ncols-padding; 
-%                     padding nrows-padding padding nrows-padding]';
-%             end
             
-            maxVal = max(img(:));
-            minVal = min(img(:));
-            if maxVal < VisionMarkerTrained.MinContrastRatio*minVal
-                warning('VisionMarkerTrained:TooLittleContrast', ...
-                    'Not enough contrast to create VisionMarkerTrained.');
+            if isempty(Corners)
+                Corners = [0 0; 0 1; 1 0; 1 1];
+            end
+            
+            this.corners = Corners;
+            
+            tform = cp2tform([0 0 1 1; 0 1 0 1]', Corners, 'projective');
+            this.H = tform.tdata.T';
+            
+            threshold = VisionMarkerTrained.ComputeThreshold(img, tform);
+            
+            if threshold < 0
+                %warning('VisionMarkerTrained:TooLittleContrast', ...
+                %    'Not enough contrast to create VisionMarkerTrained.');
                 this.isValid = false;
             else
-                threshold = (min(img(:)) + max(img(:)))/2;
-
-                if isempty(Corners)
-                    Corners = [0 0; 0 1; 1 0; 1 1];
-                end
-                    
-                tform = cp2tform([0 0 1 1; 0 1 0 1]', Corners, 'projective');
-                this.H = tform.tdata.T';
                 [this.codeName, this.codeID] = TestTree( ...
                     VisionMarkerTrained.ProbeTree, img, tform, threshold, ...
                     VisionMarkerTrained.ProbePattern);
                 
-                this.corners = Corners;
-                this.isValid = ~strcmp(this.codeName, 'UNKNOWN');
-            end
+                if any(strcmp(this.codeName, {'UNKNOWN', 'ALL_WHITE', 'ALL_BLACK'}))
+                    this.isValid = false;
+                else
+                    [verificationResult, verifiedID] = TestTree( ...
+                        VisionMarkerTrained.ProbeTree.verifiers(this.codeID), ...
+                        img, tform, threshold, VisionMarkerTrained.ProbePattern);
+                    
+                    this.isValid = verifiedID == 2;
+                    if this.isValid
+                        assert(strcmp(verificationResult, this.codeName));
+                    end
+                end
+            end % IF threshold < 0
             
             this.pose = Pose;
             this.fiducialSize = Size;
