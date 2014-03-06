@@ -1,8 +1,8 @@
 % function binaryTracker_binarizeWithAutomata()
 
-% im = imread('C:/Anki/systemTestImages/cozmo_2014-01-29_11-41-05_0.png');
-% im = imread('C:/Anki/systemTestImages/cozmo_2014-01-29_11-41-05_10.png');
-% im = imread('C:/Anki/systemTestImages/cozmo_2014-01-29_11-41-05_49.png');
+% im1 = imread('C:/Anki/systemTestImages/cozmo_date2014_01_29_time11_41_05_frame0.png');
+% im2 = imread('C:/Anki/systemTestImages/cozmo_date2014_01_29_time11_41_05_frame10.png');
+% im3 = imread('C:/Anki/systemTestImages/cozmo_date2014_01_29_time11_41_05_frame49.png');
 
 % processingSize = [240,320];
 
@@ -50,7 +50,7 @@ for y = 1:size(image,1)
                 componentWidth = x - lastSwitchX;
 
                 if componentWidth >= minComponentWidth
-                    xDecreasingImage(y,x) = 1;
+                    xDecreasingImage(y,x) = 255;
                 end
 
                 lastSwitchX = x;
@@ -66,7 +66,7 @@ for y = 1:size(image,1)
                 componentWidth = x - lastSwitchX;
 
                 if componentWidth >= minComponentWidth
-                    xIncreasingImage(y,x) = 1;
+                    xIncreasingImage(y,x) = 255;
                 end
 
                 lastSwitchX = x;
@@ -103,7 +103,7 @@ for x = 1:size(image,2)
                 componentWidth = y - lastSwitchY;
 
                 if componentWidth >= minComponentWidth
-                    yDecreasingImage(y,x) = 1;
+                    yDecreasingImage(y,x) = 255;
                 end
 
                 lastSwitchY = y;
@@ -119,7 +119,7 @@ for x = 1:size(image,2)
                 componentWidth = y - lastSwitchY;
 
                 if componentWidth >= minComponentWidth
-                    yIncreasingImage(y,x) = 1;
+                    yIncreasingImage(y,x) = 255;
                 end
 
                 lastSwitchY = y;

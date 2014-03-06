@@ -3,13 +3,13 @@
 
 % updateType in {'translation', 'projective'}
 
-function updatedHomography = binaryTracker_computeUpdateFromBinary(...
+function [updatedHomography, numTemplatePixelsMatched] = binaryTracker_computeUpdateFromBinary(...
     xDecreasingTemplate, xIncreasingTemplate, yDecreasingTemplate, yIncreasingTemplate,...
     xDecreasingNew, xIncreasingNew, yDecreasingNew, yIncreasingNew,...
     initialHomography, scale,...
     maxMatchingDistance, updateType)
 
-assert(mod(maxMatchingDistance,2) == 1);
+verifyRange = 1;
 
 imageHeight = size(xDecreasingTemplate, 1);
 imageWidth = size(xDecreasingTemplate, 2);
@@ -52,6 +52,10 @@ allCorrespondences = [correspondences_xDecreasing, correspondences_xIncreasing, 
 
 updatedHomography = updateHomography(initialHomography, allCorrespondences, updateType);
 
+numTemplatePixelsMatched = binaryTracker_verifyTrack(...
+  updatedHomography, verifyRange,...
+  xDecreasingTemplateList_x, xDecreasingTemplateList_y, yDecreasingTemplateList_x, yDecreasingTemplateList_y, xIncreasingTemplateList_x, xIncreasingTemplateList_y, yIncreasingTemplateList_x, yIncreasingTemplateList_y,...
+  xDecreasingNew, xIncreasingNew, yDecreasingNew, yIncreasingNew);
 % keyboard
 
 function correspondences = findCorrespondences(templateExtremaList_x, templateExtremaList_y, newExtremaImage, homography, homographyOffset, maxMatchingDistance, isVerticalSearch)
