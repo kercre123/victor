@@ -36,7 +36,7 @@ classdef VisionMarkerTrained
         [squareWidth_pix, padding_pix] = GetFiducialPixelSize(imageSize, imageSizeType);
         corners = GetFiducialCorners(imageSize);
         threshold = ComputeThreshold(img, tform);
-        
+        outputString = GenerateHeaderFile(varargin);
     end % Static Methods
     
     methods(Static = true, Access = 'protected')
@@ -46,8 +46,6 @@ classdef VisionMarkerTrained
         tree = LoadProbeTree();
         
         probes = CreateProbes(probeType); 
-        
-        outputString = GenerateEmbeddedMarkerDefinitionCode(varargin);
                 
     end % Protected Static Methods
     

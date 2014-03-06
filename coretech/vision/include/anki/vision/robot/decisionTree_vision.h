@@ -48,6 +48,7 @@ namespace Anki
       const s16 * restrict probeYOffsets;
       s32 numProbeOffsets;
     }; // class DecisionTree
+    
   } // namespace Embedded
 } // namespace Anki
 
