@@ -28,6 +28,15 @@ namespace Anki {
       VIZ_COLOR_EXECUTED_PATH
     };
     
+    // === VizObject ID ranges ===
+    // [0, 999]: Robots
+    // [1000, 1099]: Cuboids
+    // [1100, 1199]: Ramps
+    const u32 ROBOT_ID_BASE = 0;
+    const u32 CUBOID_ID_BASE = 1000;
+    const u32 RAMP_ID_BASE = 1100;
+    
+    
     
     // NOTE: this is a singleton class
     class VizManager
@@ -40,15 +49,35 @@ namespace Anki {
       inline static VizManager* getInstance();
       
       
+      // ===== Convenience object draw functions for specific object types ====
+      
+      // These convenience functions basically call DrawObject() with the
+      // appropriate objectTypeID as well as by offseting the objectID by
+      // some base amount so that the caller need not be concerned with
+      // making robot and block object IDs that don't collide with each other.
+      
+      void DrawRobot(const u32 robotID,
+                     const Pose3d &pose,
+                     const u32 colorID = DEFAULT_COLOR_ID);
+      
+      void DrawCuboid(const u32 blockID,
+                      const Point3f &size,
+                      const Pose3d &pose,
+                      const u32 colorID = DEFAULT_COLOR_ID);
+      
+      //void DrawRamp();
+      
+      
       // ===== Static object draw functions ====
       
       // Sets the id objectID to correspond to a drawable object of
-      // type objectTypeID located at the specified pose.
-      // The object will be the
-      void SetVizObject(const u32 objectID, const u32 objectTypeID,
-                        const Point3f &size,
-                        const Pose3d &pose,
-                        const u32 colorID = DEFAULT_COLOR_ID);
+      // type objectTypeID (See VizObjectTypes) located at the specified pose.
+      // For parameterized types, like VIZ_CUBOID, size determines the dimensions
+      // of the object. For other types, like VIZ_ROBOT, size is ignored.
+      void DrawObject(const u32 objectID, const u32 objectTypeID,
+                      const Point3f &size,
+                      const Pose3d &pose,
+                      const u32 colorID = DEFAULT_COLOR_ID);
       
       // Erases the object corresponding to the objectID
       void EraseVizObject(const u32 objectID);

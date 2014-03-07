@@ -338,14 +338,21 @@ namespace Anki
         for(auto blocksByID : blocksByType.second) {
           
           const Block* block = dynamic_cast<Block*>(blocksByID.second);
-          VizManager::getInstance()->SetVizObject(block->GetID(),
-                                                  block->GetType(),
-                                                  block->GetSize(),
-                                                  block->GetPose());
+          VizManager::getInstance()->DrawCuboid(block->GetID(),
+                                                //block->GetType(),
+                                                block->GetSize(),
+                                                block->GetPose());
 
         } // FOR each ID of this type
       } // FOR each type
       
+      
+      // Draw all robot poses
+      for(auto robotID : robotMgr_->GetRobotIDList())
+      {
+        Robot* robot = robotMgr_->GetRobotByID(robotID);
+        VizManager::getInstance()->DrawRobot(robotID, robot->get_pose());
+      }
       
     } // Update()
     

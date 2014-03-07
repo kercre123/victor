@@ -3,7 +3,7 @@
  * Date:  09-25-2013        
  * Description: Webots physics plugin for drawing paths in the cozmo simulator. 
  *              Paths currently consist only of arcs and straights.
- *              This plugin receives messages from the CozmoBot class
+ *              This plugin receives messages from the sim_viz methods
  *              via an Emitter. See VizMsgDefs.h for message formats.
  *  
  * Author: Kevin Yoon       
@@ -91,7 +91,7 @@ namespace Anki {
     
     void ProcessVizObjectMessage(const VizObject& msg)
     {
-      PRINT("Processing SetVizObject %d %d (%f %f %f) (%f %f %f %f) %d \n",
+      PRINT("Processing DrawObject %d %d (%f %f %f) (%f %f %f %f) %d \n",
             msg.objectID,
             msg.objectTypeID,
             msg.x_trans_m, msg.y_trans_m, msg.z_trans_m,
@@ -251,7 +251,6 @@ void webots_physics_step() {
   
   //// Process draw messages from CozmoBot ////
   // Since data isn't packetized, need to process multiple packets per read.
-  
   u8 *tmpBuf = (u8*)dWebotsReceive(&bytes_recvd);
   static int recvBufSize = 0;
   if (bytes_recvd > 0) {
@@ -285,7 +284,6 @@ void webots_physics_step() {
   
   
   ///// Process messages from basestation /////
-
   while ((bytes_recvd = server.Recv((char*)recvBuf, MAX_RECV_BUF_SIZE)) > 0) {
     int msgID = static_cast<Anki::Cozmo::VizMsgID>(recvBuf[0]);
     PRINT( "Processing msgs from Basestation: Got msg %d (%d bytes)\n", msgID, bytes_recvd);
@@ -296,14 +294,13 @@ void webots_physics_step() {
 }
 
 
-void draw_cuboid(float x, float y, float z)
+void draw_cuboid(float x_dim, float y_dim, float z_dim)
 {
   
    // Webots hack
-  float halfX = x*0.5;
-  float halfY = y*0.5;
-  float halfZ = z*0.5;
- 
+  float halfX = x_dim*0.5;
+  float halfY = y_dim*0.5;
+  float halfZ = z_dim*0.5;
   
   // TOP
   glBegin(GL_LINE_LOOP);
@@ -342,6 +339,57 @@ void draw_cuboid(float x, float y, float z)
   
   glFlush();
 }
+
+
+void draw_ramp()
+{
+  dWebotsConsolePrintf("!!!! ERROR: draw_ramp() undefined !!!!!!\n");
+}
+
+
+
+void draw_robot()
+{
+  // Tetrahedron-y shape that represents robot's pose by pointing to the top of where the robot's head should be.
+  // Origin is at the the point between the front wheels at ground-level. x-axis points forward. y-axis points left.
+  
+  glBegin(GL_TRIANGLES);
+  
+  // Location of tip
+  float x = -0.013;
+  float y = 0;
+  float z = 0.068;
+  
+  // Dimensions of tetrahedon-h shape
+  float l = 0.03;      // along x-axis
+  float half_w = 0.01; // along y-axis
+  float h = 0.01;      // along z-axis
+  
+  // Bottom face
+  glVertex3f( x, y, z);
+  glVertex3f( x-l, y+half_w, z);
+  glVertex3f( x-l, y-half_w, z);
+  
+  // Left face
+  glVertex3f( x, y, z);
+  glVertex3f( x-l, y+half_w, z);
+  glVertex3f( x-l, y, z+h);
+  
+  // Right face
+  glVertex3f( x, y, z);
+  glVertex3f( x-l, y, z+h);
+  glVertex3f( x-l, y-half_w, z);
+  
+  // Back face
+  glVertex3f( x-l, y, z+h);
+  glVertex3f( x-l, y+half_w, z);
+  glVertex3f( x-l, y-half_w, z);
+  
+  glEnd();
+  
+}
+
+
 
 
 void webots_physics_draw(int pass, const char *view) {
@@ -403,20 +451,22 @@ void webots_physics_draw(int pass, const char *view) {
       glTranslatef(obj->x_trans_m, obj->y_trans_m, obj->z_trans_m);
       glRotatef(obj->rot_deg, obj->rot_axis_x, obj->rot_axis_y, obj->rot_axis_z);
 
-      // For now, all objects are just bounding boxes
-      draw_cuboid(obj->x_size_m, obj->y_size_m, obj->z_size_m);
       
-      // TODO: use objectType-specific drawing functions
-      /*
+      // Use objectType-specific drawing functions
       switch(obj->objectTypeID) {
-        case 0:
-          
+        case Anki::Cozmo::VIZ_ROBOT:
+          draw_robot();
+          break;
+        case Anki::Cozmo::VIZ_CUBOID:
+          draw_cuboid(obj->x_size_m, obj->y_size_m, obj->z_size_m);
+          break;
+        case Anki::Cozmo::VIZ_RAMP:
+          draw_ramp();
           break;
         default:
           PRINT("Unknown objectTypeID %d\n", obj->objectTypeID);
           break;
       }
-       */
       
       glPopMatrix();
       

@@ -38,14 +38,46 @@ namespace Anki {
       isInitialized_ = false;
     }
 
+    // ===== Convenience object draw functions for specific object types ====
+    
+    void VizManager::DrawRobot(const u32 robotID,
+                               const Pose3d &pose,
+                               const u32 colorID)
+    {
+      CORETECH_ASSERT(robotID < CUBOID_ID_BASE);
+      
+      Anki::Point3f dims; // junk
+      DrawObject(ROBOT_ID_BASE + robotID,
+                 VIZ_ROBOT,
+                 dims,
+                 pose,
+                 colorID);
+    }
+    
+    void VizManager::DrawCuboid(const u32 blockID,
+                                const Point3f &size,
+                                const Pose3d &pose,
+                                const u32 colorID)
+    {
+      CORETECH_ASSERT(blockID < (RAMP_ID_BASE - CUBOID_ID_BASE));
+      
+      DrawObject(CUBOID_ID_BASE + blockID,
+                 VIZ_CUBOID,
+                 size,
+                 pose,
+                 colorID);
+    }
+    
+    
+    
     
     // ================== Object drawing methods ====================
     
-    void VizManager::SetVizObject(const u32 objectID,
-                                  const u32 objectTypeID,
-                                  const Anki::Point3f &size_mm,
-                                  const Anki::Pose3d &pose,
-                                  const u32 colorID)
+    void VizManager::DrawObject(const u32 objectID,
+                                const u32 objectTypeID,
+                                const Anki::Point3f &size_mm,
+                                const Anki::Pose3d &pose,
+                                const u32 colorID)
     {
       VizObject v;
       v.objectID = objectID;
