@@ -16,6 +16,7 @@
 
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/types.h"
+#include "anki/planning/shared/path.h"
 #include "anki/messaging/shared/UdpClient.h"
 #include "anki/cozmo/VizStructs.h"
 
@@ -39,13 +40,13 @@ namespace Anki {
       // Sets the id objectID to correspond to a drawable object of
       // type objectTypeID located at the specified pose.
       // The object will be the
-      void SetVizObject(u32 objectID, u32 objectTypeID,
+      void SetVizObject(const u32 objectID, const u32 objectTypeID,
                         const Point3f &size,
                         const Pose3d &pose,
-                        u32 colorID = DEFAULT_COLOR_ID);
+                        const u32 colorID = DEFAULT_COLOR_ID);
       
       // Erases the object corresponding to the objectID
-      void EraseVizObject(u32 objectID);
+      void EraseVizObject(const u32 objectID);
       
       // Erases all objects. (Not paths)
       void EraseAllVizObjects();
@@ -53,25 +54,29 @@ namespace Anki {
       
       // ===== Path draw functions ====
       
+      void DrawPath(const u32 pathID,
+                    const Planning::Path& p,
+                    const u32 colorID = DEFAULT_COLOR_ID);
+      
       // Appends the specified line segment to the path with id pathID
-      void AppendPathSegmentLine(u32 pathID,
-                                 f32 x_start_mm, f32 y_start_mm,
-                                 f32 x_end_mm, f32 y_end_m);
+      void AppendPathSegmentLine(const u32 pathID,
+                                 const f32 x_start_mm, const f32 y_start_mm,
+                                 const f32 x_end_mm, const f32 y_end_m);
 
       // Appends the specified arc segment to the path with id pathID
-      void AppendPathSegmentArc(u32 pathID,
-                                f32 x_center_mm, f32 y_center_mm,
-                                f32 radius_mm, f32 startRad, f32 sweepRad);
+      void AppendPathSegmentArc(const u32 pathID,
+                                const f32 x_center_mm, const f32 y_center_mm,
+                                const f32 radius_mm, const f32 startRad, const f32 sweepRad);
       
       // Sets the color of the path to the one corresponding to colorID
-      void SetPathColor(u32 pathID, u32 colorID);
+      void SetPathColor(const u32 pathID, const u32 colorID);
       
       //void ShowPath(u32 pathID, bool show);
       
       //void SetPathHeightOffset(f32 m);
 
       // Erases the path corresponding to pathID
-      void ErasePath(u32 pathID);
+      void ErasePath(const u32 pathID);
       
       // Erases all paths
       void EraseAllPaths();
@@ -80,9 +85,11 @@ namespace Anki {
       // ==== Color functions =====
       
       // Sets the index colorID to correspond to the specified color vector
-      void DefineColor(u32 colorID, f32 red, f32 green, f32 blue, f32 transparency);
+      void DefineColor(const u32 colorID,
+                       const f32 red, const f32 green, const f32 blue,
+                       const f32 alpha);
       
-      void ClearAllColors();
+      //void ClearAllColors();
       
     
       
