@@ -500,7 +500,7 @@ namespace Anki
     void VisionMarker::Print() const
     {
       printf("[Type %s]: (%d,%d) (%d,%d) (%d,%d) (%d,%d)] ",
-        VisionMarkerTypeStrings[markerType],
+        Vision::MarkerTypeStrings[markerType],
         corners[0].x, corners[0].y,
         corners[1].x, corners[1].y,
         corners[2].x, corners[2].y,
