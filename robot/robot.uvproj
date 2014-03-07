@@ -804,6 +804,11 @@
               <FilePath>..\coretech\common\robot\src\compress.cpp</FilePath>
             </File>
             <File>
+              <FileName>decisionTree.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\robot\src\decisionTree.cpp</FilePath>
+            </File>
+            <File>
               <FileName>draw.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\robot\src\draw.cpp</FilePath>
@@ -950,6 +955,11 @@
               <FileName>computeCharacteristicScale.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\computeCharacteristicScale.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>decisionTree_vision.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\decisionTree_vision.cpp</FilePath>
             </File>
             <File>
               <FileName>docking_vision.cpp</FileName>
@@ -1957,6 +1967,11 @@
               <FilePath>..\coretech\common\robot\src\compress.cpp</FilePath>
             </File>
             <File>
+              <FileName>decisionTree.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\robot\src\decisionTree.cpp</FilePath>
+            </File>
+            <File>
               <FileName>draw.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\robot\src\draw.cpp</FilePath>
@@ -2103,6 +2118,11 @@
               <FileName>computeCharacteristicScale.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\computeCharacteristicScale.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>decisionTree_vision.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\decisionTree_vision.cpp</FilePath>
             </File>
             <File>
               <FileName>docking_vision.cpp</FileName>
