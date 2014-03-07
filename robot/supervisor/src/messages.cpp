@@ -217,9 +217,8 @@ namespace Anki {
         PRINT("Processing VisionMarker message\n");
         
         visionMarkerMailbox_.putMessage(msg);
-        
-        
-        VisionSystem::CheckForTrackingMarker(msg.code);
+                
+        VisionSystem::CheckForTrackingMarker(msg.markerType);
       }
       
       void ProcessTotalVisionMarkersSeenMessage(const TotalVisionMarkersSeen& msg)

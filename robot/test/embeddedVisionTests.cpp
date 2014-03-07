@@ -1119,7 +1119,8 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
 
   ASSERT_TRUE(IsBlockImage50_320x240Valid(image.Pointer(0,0), false));
 
-  FixedLengthList<BlockMarker> markers(maxMarkers, scratchOnchip);
+  //FixedLengthList<BlockMarker> markers(maxMarkers, scratchOnchip);
+  FixedLengthList<VisionMarker> markers(maxMarkers, scratchOnchip);
   FixedLengthList<Array<f32> > homographies(maxMarkers, scratchOnchip);
 
   markers.set_size(maxMarkers);
@@ -1162,9 +1163,10 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
 
   ASSERT_TRUE(markers.get_size() == 1);
 
-  ASSERT_TRUE(markers[0].blockType == 15);
-  ASSERT_TRUE(markers[0].faceType == 5);
-  ASSERT_TRUE(markers[0].orientation == BlockMarker::ORIENTATION_LEFT);
+  // TODO: Add validation of marker.bits
+  //ASSERT_TRUE(markers[0].blockType == 15);
+  //ASSERT_TRUE(markers[0].faceType == 5);
+  //ASSERT_TRUE(markers[0].orientation == BlockMarker::ORIENTATION_LEFT);
 
   ASSERT_TRUE(markers[0].corners[0] == Point<s16>(105,132));
   ASSERT_TRUE(markers[0].corners[1] == Point<s16>(103,167));

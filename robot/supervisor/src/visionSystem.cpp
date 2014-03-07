@@ -4,6 +4,8 @@
 #include "anki/common/robot/serialize.h"
 
 #include "anki/vision/robot/docking_vision.h"
+#include "anki/vision/robot/fiducialDetection.h"
+#include "anki/vision/robot/fiducialMarkers.h"
 #include "anki/vision/robot/imageProcessing.h"
 #include "anki/vision/robot/lucasKanade.h"
 
@@ -110,7 +112,7 @@ namespace Anki {
       // TODO: need one of these for both mat and head cameras?
       //bool continuousCaptureStarted_ = false;
 
-      MarkerCode trackingCode_;
+      Embedded::VisionMarkerType trackingMarker_;
 
       bool isTrackingMarkerFound_ = false;
 
@@ -311,9 +313,9 @@ namespace Anki {
       }
 
       
-      ReturnCode SetMarkerToTrack(const MarkerCode& codeToTrack)
+      ReturnCode SetMarkerToTrack(const Embedded::VisionMarkerType& markerToTrack)
       {
-        trackingCode_.Set(codeToTrack);
+        trackingMarker_ = markerToTrack;
         
         isTrackingMarkerFound_ = false;
         isTemplateInitialized_ = false;
@@ -334,64 +336,10 @@ namespace Anki {
       }
       
       
-      MarkerCode::MarkerCode()
-      : isSet_(false)
-      {
-      
-      }
-      
-      MarkerCode::MarkerCode(const u8* bits)
-      : isSet_(true)
-      {
-        memcpy(this->bits_, bits, CODE_LENGTH_IN_BYTES);
-      }
-      
-      void MarkerCode::Set(const MarkerCode& other)
-      {
-        memcpy(this->bits_, other.bits_, MarkerCode::CODE_LENGTH_IN_BYTES);
-        this->isSet_ = true;
-      }
-      
-      void MarkerCode::Unset()
-      {
-        this->isSet_ = false;
-      }
-      
-      bool MarkerCode::IsSet() const {
-        return this->isSet_;
-      }
-      
-      const u8* MarkerCode::GetBits() const
-      {
-        return this->bits_;
-      }
-      
-      bool MarkerCode::operator==(const u8* otherBits) const
-      {
-        AnkiAssert(otherBits != NULL);
-        bool same = (this->isSet_ && this->bits_[0] == otherBits[0]);
-        for(u8 i=1; same && i < VISION_MARKER_CODE_LENGTH; ++i) {
-          same = this->bits_[i] == otherBits[i];
-        }
-        return same;
-      }
-      
-      bool MarkerCode::operator==(const MarkerCode& other) const
-      {
-        bool same = (this->isSet_ && other.isSet_ &&
-                     this->bits_[0] == other.bits_[0]);
-        
-        for(u8 i=1; same && i<VISION_MARKER_CODE_LENGTH; ++i) {
-          same = this->bits_[i] == other.bits_[i];
-        }
-        
-        return same;
-      }
-
-      void CheckForTrackingMarker(const u8* bits)
+      void CheckForTrackingMarker(const u16 inputMarker)
       {
         // If we have a block to dock with set, see if this was it
-        if(trackingCode_ == bits)
+        if(trackingMarker_ == static_cast<Embedded::VisionMarkerType>(inputMarker))
         {
           isTrackingMarkerFound_ = true;
         }
@@ -427,7 +375,7 @@ namespace Anki {
           if(numTrackFailures_ == MAX_TRACKING_FAILURES) {
 
             // This resets docking, puttings us back in LOOKING_FOR_MARKERS mode
-            SetMarkerToTrack(trackingCode_);
+            SetMarkerToTrack(trackingMarker_);
             numTrackFailures_ = 0;
           }
         }
@@ -854,7 +802,7 @@ namespace Anki {
           const s32 maxMarkers = 100;
           const s32 maxConnectedComponentSegments = 25000/2;
 
-          Embedded::FixedLengthList<Embedded::BlockMarker> markers(maxMarkers, detectorScratch2_);
+          Embedded::FixedLengthList<Embedded::VisionMarker> markers(maxMarkers, detectorScratch2_);
           Embedded::FixedLengthList<Embedded::Array<f32> > homographies(maxMarkers, detectorScratch2_);
 
           for(s32 i=0; i<maxMarkers; i++) {
@@ -894,9 +842,10 @@ namespace Anki {
           {
             for(s32 i_marker = 0; i_marker < markers.get_size(); ++i_marker)
             {
-              const Embedded::BlockMarker& crntMarker = markers[i_marker];
+              const Embedded::VisionMarker& crntMarker = markers[i_marker];
 
               // TODO: convert corners from shorts (fixed point?) to floats
+              /*
               Messages::BlockMarkerObserved msg = {
                 frame.timestamp,
                 HeadController::GetAngleRad(), // headAngle
@@ -914,7 +863,22 @@ namespace Anki {
               };
 
               Messages::ProcessBlockMarkerObservedMessage(msg);
-
+               */
+              
+              Messages::VisionMarker msg;
+              msg.timestamp = frame.timestamp;
+              msg.x_imgUpperLeft  = static_cast<f32>(crntMarker.corners[0].x);
+              msg.y_imgUpperLeft  = static_cast<f32>(crntMarker.corners[0].y);
+              msg.x_imgLowerLeft  = static_cast<f32>(crntMarker.corners[1].x);
+              msg.y_imgLowerLeft  = static_cast<f32>(crntMarker.corners[1].y);
+              msg.x_imgUpperRight = static_cast<f32>(crntMarker.corners[2].x);
+              msg.y_imgUpperRight = static_cast<f32>(crntMarker.corners[2].y);
+              msg.x_imgLowerRight = static_cast<f32>(crntMarker.corners[3].x);
+              msg.y_imgLowerRight = static_cast<f32>(crntMarker.corners[3].y);
+              msg.markerType = static_cast<u16>(crntMarker.markerType);
+              
+              Messages::ProcessVisionMarkerMessage(msg);
+              
 #if USE_MATLAB_VISUALIZATION
               matlabViz_.PutQuad(crntMarker.corners, "detectedQuad");
               matlabViz_.EvalStringEcho("plot(detectedQuad([1 2 4 3 1],1)+1, "
