@@ -26,7 +26,8 @@ namespace Anki
   {
     Result DetectFiducialMarkers(
       const Array<u8> &image,
-      FixedLengthList<BlockMarker> &markers,
+      //FixedLengthList<BlockMarker> &markers,
+      FixedLengthList<VisionMarker> &markers,
       FixedLengthList<Array<f32> > &homographies,
       const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier,
       const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
@@ -172,7 +173,7 @@ namespace Anki
       EndBenchmark("ComputeHomographyFromQuad");
 
       // 5. Decode fiducial markers from the candidate quadrilaterals
-      const FiducialMarkerParser parser = FiducialMarkerParser(scratchOnchip);
+      //const FiducialMarkerParser parser = FiducialMarkerParser(scratchOnchip);
 
       //BeginBenchmark("Copy Image To Onchip");
       //// Random access to off-chip is extremely slow, so copy the whole image to on-chip first
@@ -181,20 +182,31 @@ namespace Anki
       //imageOnChip.Set(image);
       //EndBenchmark("Copy Image To Onchip");
 
-      BeginBenchmark("ExtractBlockMarker");
+      BeginBenchmark("ExtractVisionMarker");
       for(s32 iQuad=0; iQuad<extractedQuads.get_size(); iQuad++) {
         const Array<f32> &currentHomography = homographies[iQuad];
         const Quadrilateral<s16> &currentQuad = extractedQuads[iQuad];
+        /*
         BlockMarker &currentMarker = markers[iQuad];
 
         if((lastResult = parser.ExtractBlockMarker(image, currentQuad, currentHomography, decode_minContrastRatio, currentMarker, scratchOnchip)) != RESULT_OK)
+        return lastResult;
+        */
+        VisionMarker &currentMarker = markers[iQuad];
+
+        if((lastResult = currentMarker.Extract(image, currentQuad, currentHomography,
+          decode_minContrastRatio)) != RESULT_OK)
+        {
           return lastResult;
+        }
       }
 
       // Remove invalid markers from the list
       if(!returnInvalidMarkers) {
+        // Remove invalid markers from the list
         for(s32 iQuad=0; iQuad<extractedQuads.get_size(); iQuad++) {
-          if(markers[iQuad].blockType == -1) {
+          //if(markers[iQuad].blockType == -1) {
+          if(!markers[iQuad].isValid) {
             for(s32 jQuad=iQuad; jQuad<extractedQuads.get_size(); jQuad++) {
               markers[jQuad] = markers[jQuad+1];
               homographies[jQuad] = homographies[jQuad+1];
@@ -205,8 +217,9 @@ namespace Anki
             iQuad--;
           }
         }
-      } // if(!returnInvalidMarkers)
-      EndBenchmark("ExtractBlockMarker");
+      }
+
+      EndBenchmark("ExtractVisionMarker");
 
       EndBenchmark("DetectFiducialMarkers");
 

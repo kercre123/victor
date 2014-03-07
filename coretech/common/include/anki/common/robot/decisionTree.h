@@ -37,6 +37,8 @@ namespace Anki
       //Result Classify(const Array<u8> &image, const Transformations::PlanarTransformation_f32 &transformation);
 
       bool IsValid() const;
+      
+      s32 GetNumFractionalBits() const;
 
     protected:
       const u8 * restrict treeData;
@@ -44,6 +46,11 @@ namespace Anki
       s32 treeDataNumFractionalBits;
       s32 treeMaxDepth;
     }; // class DecisionTree
+    
+    inline s32 DecisionTree::GetNumFractionalBits() const {
+      return this->treeDataNumFractionalBits;
+    }
+    
   } // namespace Embedded
 } // namespace Anki
 

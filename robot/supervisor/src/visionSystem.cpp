@@ -4,10 +4,13 @@
 #include "anki/common/robot/serialize.h"
 
 #include "anki/vision/robot/docking_vision.h"
+#include "anki/vision/robot/fiducialDetection.h"
+#include "anki/vision/robot/fiducialMarkers.h"
 #include "anki/vision/robot/imageProcessing.h"
 #include "anki/vision/robot/lucasKanade.h"
 
 #include "anki/common/shared/radians.h"
+#include "anki/common/robot/utilities.h"
 
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
@@ -109,7 +112,7 @@ namespace Anki {
       // TODO: need one of these for both mat and head cameras?
       //bool continuousCaptureStarted_ = false;
 
-      MarkerCode trackingCode_;
+      Embedded::VisionMarkerType trackingMarker_;
 
       bool isTrackingMarkerFound_ = false;
 
@@ -310,9 +313,9 @@ namespace Anki {
       }
 
       
-      ReturnCode SetMarkerToTrack(const MarkerCode& codeToTrack)
+      ReturnCode SetMarkerToTrack(const Embedded::VisionMarkerType& markerToTrack)
       {
-        trackingCode_.Set(codeToTrack);
+        trackingMarker_ = markerToTrack;
         
         isTrackingMarkerFound_ = false;
         isTemplateInitialized_ = false;
@@ -333,64 +336,10 @@ namespace Anki {
       }
       
       
-      MarkerCode::MarkerCode()
-      : isSet_(false)
-      {
-      
-      }
-      
-      MarkerCode::MarkerCode(const u8* bits)
-      : isSet_(true)
-      {
-        memcpy(this->bits_, bits, CODE_LENGTH_IN_BYTES);
-      }
-      
-      void MarkerCode::Set(const MarkerCode& other)
-      {
-        memcpy(this->bits_, other.bits_, MarkerCode::CODE_LENGTH_IN_BYTES);
-        this->isSet_ = true;
-      }
-      
-      void MarkerCode::Unset()
-      {
-        this->isSet_ = false;
-      }
-      
-      bool MarkerCode::IsSet() const {
-        return this->isSet_;
-      }
-      
-      const u8* MarkerCode::GetBits() const
-      {
-        return this->bits_;
-      }
-      
-      bool MarkerCode::operator==(const u8* otherBits) const
-      {
-        AnkiAssert(otherBits != NULL);
-        bool same = (this->isSet_ && this->bits_[0] == otherBits[0]);
-        for(u8 i=1; same && i < VISION_MARKER_CODE_LENGTH; ++i) {
-          same = this->bits_[i] == otherBits[i];
-        }
-        return same;
-      }
-      
-      bool MarkerCode::operator==(const MarkerCode& other) const
-      {
-        bool same = (this->isSet_ && other.isSet_ &&
-                     this->bits_[0] == other.bits_[0]);
-        
-        for(u8 i=1; same && i<VISION_MARKER_CODE_LENGTH; ++i) {
-          same = this->bits_[i] == other.bits_[i];
-        }
-        
-        return same;
-      }
-
-      void CheckForTrackingMarker(const u8* bits)
+      void CheckForTrackingMarker(const u16 inputMarker)
       {
         // If we have a block to dock with set, see if this was it
-        if(trackingCode_ == bits)
+        if(trackingMarker_ == static_cast<Embedded::VisionMarkerType>(inputMarker))
         {
           isTrackingMarkerFound_ = true;
         }
@@ -426,7 +375,7 @@ namespace Anki {
           if(numTrackFailures_ == MAX_TRACKING_FAILURES) {
 
             // This resets docking, puttings us back in LOOKING_FOR_MARKERS mode
-            SetMarkerToTrack(trackingCode_);
+            SetMarkerToTrack(trackingMarker_);
             numTrackFailures_ = 0;
           }
         }
@@ -835,8 +784,8 @@ namespace Anki {
           const f32 minSideLength = 0.03f*static_cast<f32>(MAX(detectWidth,detectHeight));
           const f32 maxSideLength = 0.97f*static_cast<f32>(MIN(detectWidth,detectHeight));
 
-          const s32 component_minimumNumPixels = static_cast<s32>(Round(minSideLength*minSideLength - (0.8f*minSideLength)*(0.8f*minSideLength)));
-          const s32 component_maximumNumPixels = static_cast<s32>(Round(maxSideLength*maxSideLength - (0.8f*maxSideLength)*(0.8f*maxSideLength)));
+          const s32 component_minimumNumPixels = static_cast<s32>(Embedded::Round(minSideLength*minSideLength - (0.8f*minSideLength)*(0.8f*minSideLength)));
+          const s32 component_maximumNumPixels = static_cast<s32>(Embedded::Round(maxSideLength*maxSideLength - (0.8f*maxSideLength)*(0.8f*maxSideLength)));
           const s32 component_sparseMultiplyThreshold = 1000 << 5;
           const s32 component_solidMultiplyThreshold = 2 << 5;
 
@@ -853,11 +802,11 @@ namespace Anki {
           const s32 maxMarkers = 100;
           const s32 maxConnectedComponentSegments = 25000/2;
 
-          Embedded::FixedLengthList<Embedded::BlockMarker> markers(maxMarkers, detectorScratch2_);
-          Embedded::FixedLengthList<Embedded::Array<f64> > homographies(maxMarkers, detectorScratch2_);
+          Embedded::FixedLengthList<Embedded::VisionMarker> markers(maxMarkers, detectorScratch2_);
+          Embedded::FixedLengthList<Embedded::Array<f32> > homographies(maxMarkers, detectorScratch2_);
 
           for(s32 i=0; i<maxMarkers; i++) {
-            Embedded::Array<f64> newArray(3, 3, detectorScratch2_);
+            Embedded::Array<f32> newArray(3, 3, detectorScratch2_);
             homographies[i] = newArray;
           } // for(s32 i=0; i<maximumSize; i++)
 
@@ -869,33 +818,34 @@ namespace Anki {
                                     "            'YLim', [.5 size(detectionImage,1)+.5]);");
 #endif
 
-          if(SimpleDetector_Steps12345_lowMemory(image,
-                                                 markers,
-                                                 homographies,
-                                                 scaleImage_numPyramidLevels,
-                                                 scaleImage_thresholdMultiplier,
-                                                 component1d_minComponentWidth,
-                                                 component1d_maxSkipDistance,
-                                                 component_minimumNumPixels,
-                                                 component_maximumNumPixels,
-                                                 component_sparseMultiplyThreshold,
-                                                 component_solidMultiplyThreshold,
-                                                 component_percentHorizontal,
-                                                 component_percentVertical,
-                                                 quads_minQuadArea,
-                                                 quads_quadSymmetryThreshold,
-                                                 quads_minDistanceFromImageEdge,
-                                                 decode_minContrastRatio,
-                                                 maxConnectedComponentSegments,
-                                                 maxExtractedQuads,
-                                                 detectorScratch1_,
-                                                 detectorScratch2_) == Embedded::RESULT_OK)
+          if(Embedded::DetectFiducialMarkers(image,
+                                             markers,
+                                             homographies,
+                                             scaleImage_numPyramidLevels,
+                                             scaleImage_thresholdMultiplier,
+                                             component1d_minComponentWidth,
+                                             component1d_maxSkipDistance,
+                                             component_minimumNumPixels,
+                                             component_maximumNumPixels,
+                                             component_sparseMultiplyThreshold,
+                                             component_solidMultiplyThreshold,
+                                             component_percentHorizontal,
+                                             component_percentVertical,
+                                             quads_minQuadArea,
+                                             quads_quadSymmetryThreshold,
+                                             quads_minDistanceFromImageEdge,
+                                             decode_minContrastRatio,
+                                             maxConnectedComponentSegments,
+                                             maxExtractedQuads,
+                                             detectorScratch1_,
+                                             detectorScratch2_) == Embedded::RESULT_OK)
           {
             for(s32 i_marker = 0; i_marker < markers.get_size(); ++i_marker)
             {
-              const Embedded::BlockMarker& crntMarker = markers[i_marker];
+              const Embedded::VisionMarker& crntMarker = markers[i_marker];
 
               // TODO: convert corners from shorts (fixed point?) to floats
+              /*
               Messages::BlockMarkerObserved msg = {
                 frame.timestamp,
                 HeadController::GetAngleRad(), // headAngle
@@ -913,7 +863,22 @@ namespace Anki {
               };
 
               Messages::ProcessBlockMarkerObservedMessage(msg);
-
+               */
+              
+              Messages::VisionMarker msg;
+              msg.timestamp = frame.timestamp;
+              msg.x_imgUpperLeft  = static_cast<f32>(crntMarker.corners[0].x);
+              msg.y_imgUpperLeft  = static_cast<f32>(crntMarker.corners[0].y);
+              msg.x_imgLowerLeft  = static_cast<f32>(crntMarker.corners[1].x);
+              msg.y_imgLowerLeft  = static_cast<f32>(crntMarker.corners[1].y);
+              msg.x_imgUpperRight = static_cast<f32>(crntMarker.corners[2].x);
+              msg.y_imgUpperRight = static_cast<f32>(crntMarker.corners[2].y);
+              msg.x_imgLowerRight = static_cast<f32>(crntMarker.corners[3].x);
+              msg.y_imgLowerRight = static_cast<f32>(crntMarker.corners[3].y);
+              msg.markerType = static_cast<u16>(crntMarker.markerType);
+              
+              Messages::ProcessVisionMarkerMessage(msg);
+              
 #if USE_MATLAB_VISUALIZATION
               matlabViz_.PutQuad(crntMarker.corners, "detectedQuad");
               matlabViz_.EvalStringEcho("plot(detectedQuad([1 2 4 3 1],1)+1, "
@@ -927,7 +892,7 @@ namespace Anki {
               // If it did, and we haven't already initialized the template tracker
               // (thanks to a previous marker setting isDockingBlockFound to true),
               // then initialize the template tracker now
-              if(isDockingBlockFound_ && not isTemplateInitialized_)
+              if(isTrackingMarkerFound_ && not isTemplateInitialized_)
               {
                 using namespace Embedded;
 
@@ -947,7 +912,8 @@ namespace Anki {
 
                 if(InitTemplate(frame, trackingQuad_) == EXIT_SUCCESS)
                 {
-                  SetDockingMode(static_cast<bool>(true));
+                  AnkiAssert(isTemplateInitialized_ == true);
+                  SetTrackingMode(isTemplateInitialized_);
                 }
 
               } // if(isDockingBlockFound_ && not isTemplateInitialized_)
@@ -1015,13 +981,13 @@ namespace Anki {
 #if USE_FAST_LK
           tracker_ = LucasKanadeTrackerFast(image, templateQuad,
                                             NUM_TRACKING_PYRAMID_LEVELS,
-                                            TRANSFORM_AFFINE,
+                                            Embedded::Transformations::TRANSFORM_AFFINE,
                                             TRACKING_RIDGE_WEIGHT,
                                             trackerScratch_);
 #else
           tracker_ = LucasKanadeTracker_f32(image, templateQuad,
                                             NUM_TRACKING_PYRAMID_LEVELS,
-                                            TRANSFORM_AFFINE,
+                                            Embedded::Transformations::TRANSFORM_AFFINE,
                                             TRACKING_RIDGE_WEIGHT,
                                             trackerScratch_);
 #endif
@@ -1104,7 +1070,7 @@ namespace Anki {
 
               Docking::ComputeDockingErrorSignal(tracker_.get_transformation(),
                                                  HAL::CameraModeInfo[TRACKING_RESOLUTION].width,
-                                                 BLOCK_MARKER_WIDTH_MM,
+                                                 29.5f, // TODO: Get this from the docking command message from basestation
                                                  headCamInfo_->focalLength_x / fxAdj,
                                                  dockErrMsg.x_distErr,
                                                  dockErrMsg.y_horErr,
