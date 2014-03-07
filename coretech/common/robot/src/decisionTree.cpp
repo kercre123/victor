@@ -18,7 +18,7 @@ namespace Anki
     {
     }
 
-    DecisionTree::DecisionTree(const u8 * restrict treeData, const s32 treeDataLength, const s32 treeDataNumFractionalBits, const s32 treeMaxDepth)
+    DecisionTree::DecisionTree(const void * restrict treeData, const s32 treeDataLength, const s32 treeDataNumFractionalBits, const s32 treeMaxDepth)
       : treeData(NULL), treeDataLength(-1), treeDataNumFractionalBits(-1), treeMaxDepth(-1)
     {
       AnkiConditionalErrorAndReturn(treeData != NULL, "DecisionTree::DecisionTree", "treeData is NULL");
@@ -37,6 +37,16 @@ namespace Anki
         return false;
 
       return true;
+    }
+
+    s32 DecisionTree::get_numFractionalBits() const
+    {
+      return this->treeDataNumFractionalBits;
+    }
+
+    s32 DecisionTree::get_numMaxDepth() const
+    {
+      return this->treeMaxDepth;
     }
   } // namespace Embedded
 } // namespace Anki
