@@ -73,11 +73,45 @@ int main(void)
   
   FrontCameraInit();
   
+#if 0
+  // Motor testing...
+  while (1)
+  {
+    MotorSetPower(MOTOR_LEFT_WHEEL, 0.3f);
+    MicroWait(500000);
+    MotorSetPower(MOTOR_LEFT_WHEEL, -0.3f);
+    MicroWait(500000);
+    MotorSetPower(MOTOR_LEFT_WHEEL, 0.0f);
+    
+    MotorSetPower(MOTOR_RIGHT_WHEEL, 0.3f);
+    MicroWait(500000);
+    MotorSetPower(MOTOR_RIGHT_WHEEL, -0.3f);
+    MicroWait(500000);
+    MotorSetPower(MOTOR_RIGHT_WHEEL, 0.0f);
+    
+    MotorSetPower(MOTOR_LIFT, 0.3f);
+    MicroWait(500000);
+    MotorSetPower(MOTOR_LIFT, -0.3f);
+    MicroWait(500000);
+    MotorSetPower(MOTOR_LIFT, 0.0f);
+    
+    MotorSetPower(MOTOR_HEAD, 0.3f);
+    MicroWait(500000);
+    MotorSetPower(MOTOR_HEAD, -0.3f);
+    MicroWait(500000);
+    MotorSetPower(MOTOR_HEAD, -0.0f);
+    MicroWait(500000);
+  }
+  
+#else
+  
   Anki::Cozmo::Robot::Init();
   
   while (Anki::Cozmo::Robot::step_LongExecution() == EXIT_SUCCESS)
   {
   }
+  
+#endif
   
   
   /*u32 startTime = GetMicroCounter();

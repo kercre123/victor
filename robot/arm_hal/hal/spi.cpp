@@ -163,8 +163,6 @@ void DMA2_Stream2_IRQHandler(void)
   
   s_failedTransferCount = 0;
   
-  UARTPutChar('.');
-  
   // Run MainExecution
   Anki::Cozmo::Robot::step_MainExecution();
 }
