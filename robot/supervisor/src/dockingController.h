@@ -21,8 +21,7 @@
 
 #include "anki/cozmo/robot/messages.h"
 
-// Just to get VisionMarkerType enum?
-#include "anki/vision/robot/visionMarkerDecisionTrees.h"
+#include "anki/vision/MarkerCodeDefinitions.h"
 
 namespace Anki {
   
@@ -57,7 +56,7 @@ namespace Anki {
       //                  e.g. To place a block on top of two other blocks, the robot would need to "dock" to
       //                       one of the blocks at some horizontal offset.
       // dockOffsetAngle: Docking offset angle. +ve means block is facing robot's right side.
-      void StartDocking(const Embedded::VisionMarkerType& codeToDockWith,
+      void StartDocking(const Vision::MarkerType& codeToDockWith,
                         f32 dockOffsetDistX, f32 dockOffsetDistY = 0, f32 dockOffsetAngle = 0);
       
     } // namespace DockingController

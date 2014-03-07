@@ -61,7 +61,7 @@ namespace Anki {
         const u16 DOCK_APPROACH_ACCEL_MMPS2 = 200;
         
         // Code of the VisionMarker we are trying to dock to
-        Embedded::VisionMarkerType dockMarker_;
+        Vision::MarkerType dockMarker_;
         
         // TODO: set error tolerances in mm and convert to pixels based on camera resolution?
         const f32 VERTICAL_TARGET_ERROR_TOLERANCE = 1.f;   // in pixels
@@ -364,7 +364,7 @@ namespace Anki {
       }
       
       
-      void StartDocking(const Embedded::VisionMarkerType& dockingMarker,
+      void StartDocking(const Vision::MarkerType& dockingMarker,
                         f32 dockOffsetDistX, f32 dockOffsetDistY, f32 dockOffsetAngle)
       {
         dockMarker_ = dockingMarker;

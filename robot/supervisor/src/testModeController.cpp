@@ -108,8 +108,8 @@ namespace Anki {
         
         //const u16 BLOCK_TO_PICK_UP = 60;
         //const u16 BLOCK_TO_PLACE_ON = 50;
-        const Embedded::VisionMarkerType BLOCK_TO_PICK_UP = Embedded::MARKER_BATTERIES;
-        const Embedded::VisionMarkerType BLOCK_TO_PLACE_ON = Embedded::MARKER_BULLSEYE;
+        const Vision::MarkerType BLOCK_TO_PICK_UP = Vision::MARKER_BATTERIES;
+        const Vision::MarkerType BLOCK_TO_PLACE_ON = Vision::MARKER_BULLSEYE;
         ////// End of PickAndPlaceTest ////
         
         

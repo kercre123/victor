@@ -39,7 +39,7 @@ namespace Anki {
         Mode mode_ = IDLE;
         Action action_ = DOCKING_LOW;
         
-        Embedded::VisionMarkerType dockToMarker_;
+        Vision::MarkerType dockToMarker_;
         f32 dockOffsetDistX_ = 0;
         f32 dockOffsetDistY_ = 0;
         f32 dockOffsetAng_ = 0;
@@ -191,7 +191,7 @@ namespace Anki {
         return mode_ != IDLE;
       }
                 
-      void PickUpBlock(const Embedded::VisionMarkerType blockMarker, const u8 level)
+      void PickUpBlock(const Vision::MarkerType blockMarker, const u8 level)
       {
         // TODO: If block blockID is on level 1, the robot should first
         // identify the block directly below it and then dock to that
@@ -215,7 +215,7 @@ namespace Anki {
         lastActionSucceeded_ = false;
       }
       
-      void PlaceOnBlock(const Embedded::VisionMarkerType blockMarker,
+      void PlaceOnBlock(const Vision::MarkerType blockMarker,
                         const f32 horizontal_offset, const f32 angular_offset)
       {
         // TODO: Confirm that blockID is on level 0?

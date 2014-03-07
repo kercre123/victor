@@ -36,7 +36,7 @@ namespace Anki {
       // docking mode.
       // TODO: Something smarter about seeing the block in the expected place as well?
       //ReturnCode SetMarkerToTrack(const MarkerCode& codeToTrack);
-      ReturnCode SetMarkerToTrack(const Embedded::VisionMarkerType& markerToTrack);
+      ReturnCode SetMarkerToTrack(const Vision::MarkerType& markerToTrack);
       
       // NOTE: the following are provided as public API because they messaging
       //       system may call them.

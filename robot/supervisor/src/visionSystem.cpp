@@ -115,7 +115,7 @@ namespace Anki {
       // TODO: need one of these for both mat and head cameras?
       //bool continuousCaptureStarted_ = false;
 
-      Embedded::VisionMarkerType trackingMarker_;
+      Vision::MarkerType trackingMarker_;
 
       bool isTrackingMarkerFound_ = false;
 
@@ -215,8 +215,8 @@ namespace Anki {
                            GET_MESSAGE_ID(Messages::VisionMarker));
         
         {
-          for(s32 i=0; i<Embedded::NUM_MARKER_TYPES; ++i) {
-            HAL::SendMessageID(Embedded::VisionMarkerTypeStrings[i], i);
+          for(s32 i=0; i<Vision::NUM_MARKER_TYPES; ++i) {
+            HAL::SendMessageID(Vision::MarkerTypeStrings[i], i);
           }
         }
         
@@ -322,7 +322,7 @@ namespace Anki {
       }
 
       
-      ReturnCode SetMarkerToTrack(const Embedded::VisionMarkerType& markerToTrack)
+      ReturnCode SetMarkerToTrack(const Vision::MarkerType& markerToTrack)
       {
         trackingMarker_ = markerToTrack;
         
@@ -347,7 +347,7 @@ namespace Anki {
       void CheckForTrackingMarker(const u16 inputMarker)
       {
         // If we have a block to dock with set, see if this was it
-        if(trackingMarker_ == static_cast<Embedded::VisionMarkerType>(inputMarker))
+        if(trackingMarker_ == static_cast<Vision::MarkerType>(inputMarker))
         {
           isTrackingMarkerFound_ = true;
         }

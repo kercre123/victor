@@ -22,8 +22,7 @@
 
 #include "anki/cozmo/robot/messages.h"
 
-// TODO: This include is just to get enumerated list of marker types.  Fix.
-#include "anki/vision/robot/visionMarkerDecisionTrees.h"
+#include "anki/vision/MarkerCodeDefinitions.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -59,9 +58,9 @@ namespace Anki {
 
       // level: 0 = block is at same height as robot (i.e. robot floor height)
       //        1 = block is at one block height above robot floor height.
-      void PickUpBlock(const Embedded::VisionMarkerType blockID, const u8 level);
+      void PickUpBlock(const Vision::MarkerType blockID, const u8 level);
       
-      void PlaceOnBlock(const Embedded::VisionMarkerType blockID,
+      void PlaceOnBlock(const Vision::MarkerType blockID,
                         const f32 horizontal_offset, const f32 angular_offset);
       
     } // namespace PickAndPlaceController
