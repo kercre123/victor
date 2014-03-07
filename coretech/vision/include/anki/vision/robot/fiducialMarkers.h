@@ -63,7 +63,7 @@ namespace Anki
     public:
      
       Quadrilateral<s16> corners; // SQ 15.0 (Though may be changed later)
-      VisionMarkerType markerType;
+      Vision::MarkerType markerType;
       bool isValid;
       
       VisionMarker();

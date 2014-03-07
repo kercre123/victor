@@ -1,0 +1,33 @@
+
+#ifndef ANKI_COZMO_VISIONMARKERTYPES_H
+#define ANKI_COZMO_VISIONMARKERTYPES_H
+namespace Anki {
+  namespace Vision {
+    
+    enum MarkerType {
+      MARKER_ALL_BLACK,
+      MARKER_ALL_WHITE,
+      MARKER_ANGRYFACE,
+      MARKER_ANKILOGO,
+      MARKER_BATTERIES,
+      MARKER_BULLSEYE,
+      MARKER_FIRE,
+      MARKER_SQUAREPLUSCORNERS,
+      NUM_MARKER_TYPES
+    };
+    
+    const char * const MarkerTypeStrings[NUM_MARKER_TYPES] = {
+      "MARKER_ALL_BLACK",
+      "MARKER_ALL_WHITE",
+      "MARKER_ANGRYFACE",
+      "MARKER_ANKILOGO",
+      "MARKER_BATTERIES",
+      "MARKER_BULLSEYE",
+      "MARKER_FIRE",
+      "MARKER_SQUAREPLUSCORNERS",
+    };
+    
+  } // namespace Vision
+} // namespace Anki
+
+#endif // ANKI_COZMO_VISIONMARKERTYPES_H

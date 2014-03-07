@@ -11,6 +11,8 @@
 
 #include "anki/vision/robot/decisionTree_vision.h"
 
+#include "anki/vision/MarkerCodeDefinitions.h"
+
 namespace Anki {
   namespace Embedded {
     namespace VisionMarkerDecisionTree {
@@ -755,55 +757,27 @@ namespace Anki {
         VerifyNodes_19,
       };
       
-    } // namespace VisionMarkerDecisionTree
-    
-    // Note that this is outside the VisionMarkerDecisionTree namespace
-    enum VisionMarkerType {
-      MARKER_ALL_BLACK,
-      MARKER_ALL_WHITE,
-      MARKER_ANGRYFACE,
-      MARKER_ANKILOGO,
-      MARKER_BATTERIES,
-      MARKER_BULLSEYE,
-      MARKER_FIRE,
-      MARKER_SQUAREPLUSCORNERS,
-      NUM_MARKER_TYPES
-    };
-    
-    const char * const VisionMarkerTypeStrings[NUM_MARKER_TYPES] = {
-      "MARKER_ALL_BLACK",
-      "MARKER_ALL_WHITE",
-      "MARKER_ANGRYFACE",
-      "MARKER_ANKILOGO",
-      "MARKER_BATTERIES",
-      "MARKER_BULLSEYE",
-      "MARKER_FIRE",
-      "MARKER_SQUAREPLUSCORNERS",
-    };
-    
-    namespace VisionMarkerDecisionTree {
-      
-      const VisionMarkerType RemoveOrientationLUT[NUM_MARKER_LABELS_ORIENTED] = {
-        MARKER_ANGRYFACE,
-        MARKER_ANGRYFACE,
-        MARKER_ANGRYFACE,
-        MARKER_ANGRYFACE,
-        MARKER_ANKILOGO,
-        MARKER_ANKILOGO,
-        MARKER_ANKILOGO,
-        MARKER_ANKILOGO,
-        MARKER_BATTERIES,
-        MARKER_BATTERIES,
-        MARKER_BATTERIES,
-        MARKER_BATTERIES,
-        MARKER_BULLSEYE,
-        MARKER_FIRE,
-        MARKER_FIRE,
-        MARKER_FIRE,
-        MARKER_FIRE,
-        MARKER_SQUAREPLUSCORNERS,
-        MARKER_ALL_WHITE,
-        MARKER_ALL_BLACK,
+      const Vision::MarkerType RemoveOrientationLUT[NUM_MARKER_LABELS_ORIENTED] = {
+        Vision::MARKER_ANGRYFACE,
+        Vision::MARKER_ANGRYFACE,
+        Vision::MARKER_ANGRYFACE,
+        Vision::MARKER_ANGRYFACE,
+        Vision::MARKER_ANKILOGO,
+        Vision::MARKER_ANKILOGO,
+        Vision::MARKER_ANKILOGO,
+        Vision::MARKER_ANKILOGO,
+        Vision::MARKER_BATTERIES,
+        Vision::MARKER_BATTERIES,
+        Vision::MARKER_BATTERIES,
+        Vision::MARKER_BATTERIES,
+        Vision::MARKER_BULLSEYE,
+        Vision::MARKER_FIRE,
+        Vision::MARKER_FIRE,
+        Vision::MARKER_FIRE,
+        Vision::MARKER_FIRE,
+        Vision::MARKER_SQUAREPLUSCORNERS,
+        Vision::MARKER_ALL_WHITE,
+        Vision::MARKER_ALL_BLACK,
       };
       
     } // namespace VisionMarkerDecisionTree
