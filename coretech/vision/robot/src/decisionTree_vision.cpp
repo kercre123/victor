@@ -18,7 +18,7 @@ namespace Anki
     {
     }
 
-    FiducialMarkerDecisionTree::FiducialMarkerDecisionTree(const u8 * restrict treeData, const s32 treeDataLength, const s32 treeDataNumFractionalBits, const s32 treeMaxDepth, const s16 * restrict probeXOffsets, const s16 * restrict probeYOffsets, const s32 numProbeOffsets)
+    FiducialMarkerDecisionTree::FiducialMarkerDecisionTree(const void * restrict treeData, const s32 treeDataLength, const s32 treeDataNumFractionalBits, const s32 treeMaxDepth, const s16 * restrict probeXOffsets, const s16 * restrict probeYOffsets, const s32 numProbeOffsets)
       : DecisionTree(treeData, treeDataLength, treeDataNumFractionalBits, treeMaxDepth), probeXOffsets(NULL), probeYOffsets(NULL), numProbeOffsets(-1)
     {
       AnkiConditionalErrorAndReturn(probeXOffsets != NULL && probeYOffsets != NULL, "FiducialMarkerDecisionTree::FiducialMarkerDecisionTree", "probes are NULL");
@@ -29,7 +29,7 @@ namespace Anki
       this->numProbeOffsets = numProbeOffsets;
     }
 
-    Result FiducialMarkerDecisionTree::Classify(const Array<u8> &image, const Array<f32> &homography, u32 grayvalueThreshold, s32 &label) const
+    Result FiducialMarkerDecisionTree::Classify(const Array<u8> &image, const Array<f32> &homography, u8 meanGrayvalueThreshold, s32 &label) const
     {
       const s32 imageHeight = image.get_size(0);
       const s32 imageWidth = image.get_size(1);
@@ -55,13 +55,11 @@ namespace Anki
       const f32 h12 = homography[1][2];
       const f32 h22 = homography[2][2];
 
+      const u32 sumGrayvalueThreshold = meanGrayvalueThreshold * numProbeOffsets;
+
       f32 fixedPointDivider;
 
-      if(this->treeDataNumFractionalBits == 0) {
-        fixedPointDivider = 1.0f;
-      } else {
-        fixedPointDivider = 1.0f / static_cast<f32>(2 << (this->treeDataNumFractionalBits-1));
-      }
+      fixedPointDivider = 1.0f / static_cast<f32>(1 << this->treeDataNumFractionalBits);
 
       f32 probeXOffsetsF32[9];
       f32 probeYOffsetsF32[9];
@@ -111,7 +109,7 @@ namespace Anki
 
         // If the point is white, go to the left child
         // If the point is black, go to the right child
-        if(accumulator > grayvalueThreshold) {
+        if(accumulator > sumGrayvalueThreshold) {
           nodeIndex = pTreeData[nodeIndex].leftChildIndex;
         } else {
           nodeIndex = pTreeData[nodeIndex].leftChildIndex + 1;

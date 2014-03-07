@@ -27,6 +27,10 @@ namespace Anki
 {
   namespace Embedded
   {
+    FiducialMarkerDecisionTree VisionMarker::multiClassTree;
+    FiducialMarkerDecisionTree VisionMarker::verificationTrees[VisionMarkerDecisionTree::NUM_MARKER_LABELS_ORIENTED];
+    bool VisionMarker::areTreesInitialized = false;
+
     BlockMarker::BlockMarker()
     {
     } // BlockMarker::BlockMarker()
@@ -35,53 +39,7 @@ namespace Anki
     {
       printf("[%d,%d: (%d,%d) (%d,%d) (%d,%d) (%d,%d)] ", blockType, faceType, corners[0].x, corners[0].y, corners[1].x, corners[1].y, corners[2].x, corners[2].y, corners[3].x, corners[3].y);
     }
-    
-    FiducialMarkerDecisionTree VisionMarker::multiClassTree;
-    FiducialMarkerDecisionTree VisionMarker::verificationTrees[VisionMarkerDecisionTree::NUM_MARKER_LABELS_ORIENTED];
-    
-    VisionMarker::VisionMarker()
-    {
-      if(VisionMarker::areTreesInitialized == false) {
-        
-        using namespace VisionMarkerDecisionTree;
-        
-        // Initialize trees on first use
-        VisionMarker::multiClassTree = FiducialMarkerDecisionTree(reinterpret_cast<const u8*>(MultiClassNodes),
-                                                                  NUM_NODES_MULTICLASS,
-                                                                  TREE_NUM_FRACTIONAL_BITS,
-                                                                  MAX_DEPTH_MULTICLASS,
-                                                                  ProbePoints_X, ProbePoints_Y,
-                                                                  NUM_PROBE_POINTS);
-        
-        for(s32 i=0; i<NUM_MARKER_LABELS_ORIENTED; ++i)
-        {
-          VisionMarker::verificationTrees[i] = FiducialMarkerDecisionTree(reinterpret_cast<const u8*>(VerifyNodes[i]),
-                                                                          NUM_NODES_VERIFY[i],
-                                                                          TREE_NUM_FRACTIONAL_BITS,
-                                                                          MAX_DEPTH_VERIFY[i],
-                                                                          ProbePoints_X, ProbePoints_Y,
-                                                                          NUM_PROBE_POINTS);
-        }
-        
-        VisionMarker::areTreesInitialized = true;
-        
-      } // IF trees initialized
-      
-      
-    } // VisionMarker::VisionMarker()
-    
-    void VisionMarker::Print() const
-    {
-      printf("[Type %d]: (%d,%d) (%d,%d) (%d,%d) (%d,%d)] ",
-             markerType,
-             corners[0].x, corners[0].y,
-             corners[1].x, corners[1].y,
-             corners[2].x, corners[2].y,
-             corners[3].x, corners[3].y);
-    } // VisionMarker::Print()
-    
-    bool VisionMarker::areTreesInitialized = false;
-    
+
     FiducialMarkerParserBit::FiducialMarkerParserBit(MemoryStack &memory)
     {
       this->type = FIDUCIAL_BIT_UNINITIALIZED;
@@ -169,7 +127,7 @@ namespace Anki
       const f32 h12 = homography[1][2];
       const f32 h22 = homography[2][2];
 
-      const f32 fixedPointDivider = 1.0f / static_cast<f32>(2 << (this->numFractionalBits-1));
+      const f32 fixedPointDivider = 1.0f / static_cast<f32>(1 << this->numFractionalBits);
 
       //#define SEND_WARPED_LOCATIONS
 #ifdef SEND_WARPED_LOCATIONS
@@ -332,195 +290,6 @@ namespace Anki
       return RESULT_OK;
     }
 
-    Result VisionMarker::ComputeThreshold(const Array <u8> &image,
-                                          const Array<f32> &homography,
-                                          const f32 minContrastRatio,
-                                          u32& threshold)
-    {
-      using namespace VisionMarkerDecisionTree;
-     
-      Result lastResult = RESULT_OK;
-      
-      const s32 imageHeight = image.get_size(0);
-      const s32 imageWidth = image.get_size(1);
-
-      const f32 h00 = homography[0][0];
-      const f32 h10 = homography[1][0];
-      const f32 h20 = homography[2][0];
-      const f32 h01 = homography[0][1];
-      const f32 h11 = homography[1][1];
-      const f32 h21 = homography[2][1];
-      const f32 h02 = homography[0][2];
-      const f32 h12 = homography[1][2];
-      const f32 h22 = homography[2][2];
-      
-      f32 fixedPointDivider;
-      
-      const s32 numFracBits = VisionMarker::multiClassTree.GetNumFractionalBits();
-      
-      if(numFracBits == 0) {
-        fixedPointDivider = 1.0f;
-      } else {
-        fixedPointDivider = 1.0f / static_cast<f32>(2 << (numFracBits-1));
-      }
-      
-      f32 probePointsX_F32[NUM_PROBE_POINTS];
-      f32 probePointsY_F32[NUM_PROBE_POINTS];
-      
-      for(s32 i_pt=0; i_pt<NUM_PROBE_POINTS; i_pt++) {
-        probePointsX_F32[i_pt] = static_cast<f32>(ProbePoints_X[i_pt]) * fixedPointDivider;
-        probePointsY_F32[i_pt] = static_cast<f32>(ProbePoints_Y[i_pt]) * fixedPointDivider;
-      }
-      
-      u32 darkAccumulator = 0, brightAccumulator = 0;
-      for(s32 i_probe=0; i_probe<NUM_THRESHOLD_PROBES; ++i_probe) {
-        
-        const f32 xCenterDark = static_cast<f32>(ThresholdDarkProbe_X[i_probe]) * fixedPointDivider;
-        const f32 yCenterDark = static_cast<f32>(ThresholdDarkProbe_Y[i_probe]) * fixedPointDivider;
-
-        const f32 xCenterBright = static_cast<f32>(ThresholdBrightProbe_X[i_probe]) * fixedPointDivider;
-        const f32 yCenterBright = static_cast<f32>(ThresholdBrightProbe_Y[i_probe]) * fixedPointDivider;
-        
-        // TODO: Make getting the average value of a probe pattern into a function
-        for(s32 i_pt=0; i_pt<NUM_PROBE_POINTS; i_pt++) {
-
-          { // Dark points
-            // 1. Map each probe to its warped locations
-            const f32 x = xCenterDark + probePointsX_F32[i_pt];
-            const f32 y = yCenterDark + probePointsY_F32[i_pt];
-            
-            const f32 homogenousDivisor = 1.0f / (h20*x + h21*y + h22);
-            
-            const f32 warpedXf = (h00 * x + h01 * y + h02) * homogenousDivisor;
-            const f32 warpedYf = (h10 * x + h11 * y + h12) * homogenousDivisor;
-            
-            const s32 warpedX = RoundS32(warpedXf);
-            const s32 warpedY = RoundS32(warpedYf);
-            
-            // 2. Sample the image
-            
-            // This should only fail if there's a bug in the quad extraction
-            AnkiAssert(warpedY >= 0  && warpedX >= 0 && warpedY < imageHeight && warpedX < imageWidth);
-            
-            const u8 imageValue = *image.Pointer(warpedY, warpedX);
-            
-            darkAccumulator += imageValue;
-          }
-          
-          { // Bright points
-            // 1. Map each probe to its warped locations
-            const f32 x = xCenterBright + probePointsX_F32[i_pt];
-            const f32 y = yCenterBright + probePointsY_F32[i_pt];
-            
-            const f32 homogenousDivisor = 1.0f / (h20*x + h21*y + h22);
-            
-            const f32 warpedXf = (h00 * x + h01 * y + h02) * homogenousDivisor;
-            const f32 warpedYf = (h10 * x + h11 * y + h12) * homogenousDivisor;
-            
-            const s32 warpedX = RoundS32(warpedXf);
-            const s32 warpedY = RoundS32(warpedYf);
-            
-            // 2. Sample the image
-            
-            // This should only fail if there's a bug in the quad extraction
-            AnkiAssert(warpedY >= 0  && warpedX >= 0 && warpedY < imageHeight && warpedX < imageWidth);
-            
-            const u8 imageValue = *image.Pointer(warpedY, warpedX);
-            
-            brightAccumulator += imageValue;
-          }
-        } // FOR each probe point
-        
-      } // FOR each probe
-
-      // Is this correct?
-      if(static_cast<f32>(brightAccumulator) < static_cast<f32>(darkAccumulator)*minContrastRatio) {
-        // Not enough contrast, return threshold == u32::max()
-        // Note this is not a "failure" of the method though, so we should still
-        // return RESULT_OK
-        threshold = UINT32_MAX;
-      }
-      else {
-        // The accumulators now contain the _sum_ of all the bright and dark values
-        // To compute the threshold, I can average those sums and divide by N =
-        // numProbes * numPointsPerProbe, or equivalently, just compute the
-        // threshold as (sum(Dark) + sum(Bright)) / (2*N)
-        threshold = (darkAccumulator + brightAccumulator) / (NUM_PROBE_POINTS*NUM_THRESHOLD_PROBES*2);
-      }
-      
-      return lastResult;
-      
-    } // ComputeThreshold()
-    
-    
-    Result VisionMarker::Extract(const Array<u8> &image, const Quadrilateral<s16> &quad,
-                                 const Array<f32> &homography, const f32 minContrastRatio)
-    {
-      using namespace VisionMarkerDecisionTree;
-      
-      Result lastResult = RESULT_FAIL;
-      this->isValid = false;
-      
-      BeginBenchmark("vme_threshold");
-      u32 threshold;
-      if((lastResult = ComputeThreshold(image, homography, minContrastRatio, threshold)) != RESULT_OK) {
-        return lastResult;
-      }
-      EndBenchmark("vme_threshold");
-      
-      // ComputeThreshold sets threshold to max u32 value if minContrastRatio was not met
-      if(threshold != UINT32_MAX)
-      {
-        BeginBenchmark("vme_classify");
-        
-        //s16 multiClassLabel = static_cast<s16>(MARKER_UNKNOWN);
-        
-        s32 tempLabel;
-        if((lastResult = VisionMarker::multiClassTree.Classify(image, homography,
-                                                               threshold, tempLabel)) != RESULT_OK) {
-          return lastResult;
-        }
-        
-        OrientedMarkerLabel multiClassLabel = static_cast<OrientedMarkerLabel>(tempLabel);
-        
-        EndBenchmark("vme_classify");
-        
-        if(multiClassLabel != MARKER_UNKNOWN) {
-          BeginBenchmark("vme_verify");
-          if((lastResult = VisionMarker::verificationTrees[multiClassLabel].Classify(image, homography,
-                                                                                     threshold, tempLabel)) != RESULT_OK)
-          {
-            return lastResult;
-          }
-          EndBenchmark("vme_verify");
-          
-          OrientedMarkerLabel verifyLabel = static_cast<OrientedMarkerLabel>(tempLabel);
-          if(verifyLabel == multiClassLabel)
-          {
-            // We have a valid, verified classification.
-            
-            // 1. Get the unoriented type
-            this->markerType = RemoveOrientationLUT[multiClassLabel];
-            
-            // 2. Reorder the original detected corners to the canonical ordering for
-            // this type
-            for(s32 i_corner=0; i_corner<4; ++i_corner)
-            {
-              this->corners[i_corner] = quad[CornerReorderLUT[multiClassLabel][i_corner]];
-            }
-            
-            // Mark this as a valid marker (note that reaching this point should
-            // be the only way isValid is true.
-            this->isValid = true;
-          }
-        }
-      } // IF threshld != u32::max()
-
-      return lastResult;
-      
-    } // VisionMarker::Extract()
-    
-  
     FiducialMarkerParser& FiducialMarkerParser::operator= (const FiducialMarkerParser& marker2)
     {
       this->bits = marker2.bits;
@@ -722,5 +491,236 @@ namespace Anki
 
       return true;
     }
+
+    VisionMarker::VisionMarker()
+    {
+      Initialize();
+    } // VisionMarker::VisionMarker()
+
+    void VisionMarker::Print() const
+    {
+      printf("[Type %s]: (%d,%d) (%d,%d) (%d,%d) (%d,%d)] ",
+        VisionMarkerTypeStrings[markerType],
+        corners[0].x, corners[0].y,
+        corners[1].x, corners[1].y,
+        corners[2].x, corners[2].y,
+        corners[3].x, corners[3].y);
+    } // VisionMarker::Print()
+
+    void VisionMarker::Initialize()
+    {
+      if(VisionMarker::areTreesInitialized == false) {
+        using namespace VisionMarkerDecisionTree;
+
+        // Initialize trees on first use
+        VisionMarker::multiClassTree = FiducialMarkerDecisionTree(reinterpret_cast<const u8*>(MultiClassNodes),
+          NUM_NODES_MULTICLASS,
+          TREE_NUM_FRACTIONAL_BITS,
+          MAX_DEPTH_MULTICLASS,
+          ProbePoints_X, ProbePoints_Y,
+          NUM_PROBE_POINTS);
+
+        for(s32 i=0; i<NUM_MARKER_LABELS_ORIENTED; ++i)
+        {
+          VisionMarker::verificationTrees[i] = FiducialMarkerDecisionTree(reinterpret_cast<const u8*>(VerifyNodes[i]),
+            NUM_NODES_VERIFY[i],
+            TREE_NUM_FRACTIONAL_BITS,
+            MAX_DEPTH_VERIFY[i],
+            ProbePoints_X, ProbePoints_Y,
+            NUM_PROBE_POINTS);
+        }
+
+        VisionMarker::areTreesInitialized = true;
+      } // IF trees initialized
+    }
+
+    Result VisionMarker::ComputeThreshold(const Array <u8> &image,
+      const Array<f32> &homography,
+      const f32 minContrastRatio,
+      bool &isHighContrast,
+      u8 &meanGrayvalueThreshold)
+    {
+      using namespace VisionMarkerDecisionTree;
+
+      Result lastResult = RESULT_OK;
+
+      Initialize();
+
+      const s32 imageHeight = image.get_size(0);
+      const s32 imageWidth = image.get_size(1);
+
+      const f32 h00 = homography[0][0];
+      const f32 h10 = homography[1][0];
+      const f32 h20 = homography[2][0];
+      const f32 h01 = homography[0][1];
+      const f32 h11 = homography[1][1];
+      const f32 h21 = homography[2][1];
+      const f32 h02 = homography[0][2];
+      const f32 h12 = homography[1][2];
+      const f32 h22 = homography[2][2];
+
+      f32 fixedPointDivider;
+
+      const s32 numFracBits = VisionMarker::multiClassTree.get_numFractionalBits();
+
+      AnkiAssert(numFracBits >= 0);
+
+      fixedPointDivider = 1.0f / static_cast<f32>(1 << numFracBits);
+
+      f32 probePointsX_F32[NUM_PROBE_POINTS];
+      f32 probePointsY_F32[NUM_PROBE_POINTS];
+
+      for(s32 i_pt=0; i_pt<NUM_PROBE_POINTS; i_pt++) {
+        probePointsX_F32[i_pt] = static_cast<f32>(ProbePoints_X[i_pt]) * fixedPointDivider;
+        probePointsY_F32[i_pt] = static_cast<f32>(ProbePoints_Y[i_pt]) * fixedPointDivider;
+      }
+
+      u32 darkAccumulator = 0, brightAccumulator = 0;
+      for(s32 i_probe=0; i_probe<NUM_THRESHOLD_PROBES; ++i_probe) {
+        const f32 xCenterDark = static_cast<f32>(ThresholdDarkProbe_X[i_probe]) * fixedPointDivider;
+        const f32 yCenterDark = static_cast<f32>(ThresholdDarkProbe_Y[i_probe]) * fixedPointDivider;
+
+        const f32 xCenterBright = static_cast<f32>(ThresholdBrightProbe_X[i_probe]) * fixedPointDivider;
+        const f32 yCenterBright = static_cast<f32>(ThresholdBrightProbe_Y[i_probe]) * fixedPointDivider;
+
+        // TODO: Make getting the average value of a probe pattern into a function
+        for(s32 i_pt=0; i_pt<NUM_PROBE_POINTS; i_pt++) {
+          { // Dark points
+            // 1. Map each probe to its warped locations
+            const f32 x = xCenterDark + probePointsX_F32[i_pt];
+            const f32 y = yCenterDark + probePointsY_F32[i_pt];
+
+            const f32 homogenousDivisor = 1.0f / (h20*x + h21*y + h22);
+
+            const f32 warpedXf = (h00 * x + h01 * y + h02) * homogenousDivisor;
+            const f32 warpedYf = (h10 * x + h11 * y + h12) * homogenousDivisor;
+
+            const s32 warpedX = RoundS32(warpedXf);
+            const s32 warpedY = RoundS32(warpedYf);
+
+            // 2. Sample the image
+
+            // This should only fail if there's a bug in the quad extraction
+            AnkiAssert(warpedY >= 0  && warpedX >= 0 && warpedY < imageHeight && warpedX < imageWidth);
+
+            const u8 imageValue = *image.Pointer(warpedY, warpedX);
+
+            darkAccumulator += imageValue;
+          }
+
+          { // Bright points
+            // 1. Map each probe to its warped locations
+            const f32 x = xCenterBright + probePointsX_F32[i_pt];
+            const f32 y = yCenterBright + probePointsY_F32[i_pt];
+
+            const f32 homogenousDivisor = 1.0f / (h20*x + h21*y + h22);
+
+            const f32 warpedXf = (h00 * x + h01 * y + h02) * homogenousDivisor;
+            const f32 warpedYf = (h10 * x + h11 * y + h12) * homogenousDivisor;
+
+            const s32 warpedX = RoundS32(warpedXf);
+            const s32 warpedY = RoundS32(warpedYf);
+
+            // 2. Sample the image
+
+            // This should only fail if there's a bug in the quad extraction
+            AnkiAssert(warpedY >= 0  && warpedX >= 0 && warpedY < imageHeight && warpedX < imageWidth);
+
+            const u8 imageValue = *image.Pointer(warpedY, warpedX);
+
+            brightAccumulator += imageValue;
+          }
+        } // FOR each probe point
+      } // FOR each probe
+
+      // Is this correct?
+      if(static_cast<f32>(brightAccumulator) < static_cast<f32>(darkAccumulator)*minContrastRatio) {
+        // Not enough contrast, return isHighContrast = false Note this is not a "failure" of the
+        // method though, so we should still return RESULT_OK
+        isHighContrast = false;
+        meanGrayvalueThreshold = 0;
+      }
+      else {
+        // The accumulators now contain the _sum_ of all the bright and dark values To compute the
+        // threshold, I can average those sums and divide by N = numProbes * numPointsPerProbe, or
+        // equivalently, just compute the threshold as (sum(Dark) + sum(Bright)) / (2*N)
+        isHighContrast = true;
+        meanGrayvalueThreshold = static_cast<u8>((darkAccumulator + brightAccumulator) / (NUM_PROBE_POINTS*NUM_THRESHOLD_PROBES*2));
+      }
+
+      return lastResult;
+    } // ComputeThreshold()
+
+    Result VisionMarker::Extract(const Array<u8> &image, const Quadrilateral<s16> &quad,
+      const Array<f32> &homography, const f32 minContrastRatio)
+    {
+      using namespace VisionMarkerDecisionTree;
+
+      Result lastResult = RESULT_FAIL;
+      this->isValid = false;
+
+      Initialize();
+
+      BeginBenchmark("vme_threshold");
+      u8 meanGrayvalueThreshold;
+      bool isHighContrast;
+      if((lastResult = ComputeThreshold(image, homography, minContrastRatio, isHighContrast, meanGrayvalueThreshold)) != RESULT_OK) {
+        return lastResult;
+      }
+      EndBenchmark("vme_threshold");
+
+      // If the contrast sufficient for ComputeThreshold, parse the marker
+      if(isHighContrast)
+      {
+        BeginBenchmark("vme_classify");
+
+        //s16 multiClassLabel = static_cast<s16>(MARKER_UNKNOWN);
+
+        s32 tempLabel;
+        if((lastResult = VisionMarker::multiClassTree.Classify(image, homography,
+          meanGrayvalueThreshold, tempLabel)) != RESULT_OK) {
+            return lastResult;
+        }
+
+        const OrientedMarkerLabel multiClassLabel = static_cast<OrientedMarkerLabel>(tempLabel);
+
+        EndBenchmark("vme_classify");
+
+        if(multiClassLabel != MARKER_UNKNOWN) {
+          BeginBenchmark("vme_verify");
+          if((lastResult = VisionMarker::verificationTrees[multiClassLabel].Classify(image, homography,
+            meanGrayvalueThreshold, tempLabel)) != RESULT_OK)
+          {
+            return lastResult;
+          }
+
+          const OrientedMarkerLabel verifyLabel = static_cast<OrientedMarkerLabel>(tempLabel);
+          if(verifyLabel == multiClassLabel)
+          {
+            // We have a valid, verified classification.
+
+            // 1. Get the unoriented type
+            this->markerType = RemoveOrientationLUT[multiClassLabel];
+
+            // 2. Reorder the original detected corners to the canonical ordering for
+            // this type
+            for(s32 i_corner=0; i_corner<4; ++i_corner)
+            {
+              this->corners[i_corner] = quad[CornerReorderLUT[multiClassLabel][i_corner]];
+            }
+
+            // Mark this as a valid marker (note that reaching this point should
+            // be the only way isValid is true.
+            this->isValid = true;
+          }
+
+          EndBenchmark("vme_verify");
+        }
+      } else {
+        AnkiWarn("VisionMarker::Extract", "Poor contrast marker detected");
+      }
+
+      return lastResult;
+    } // VisionMarker::Extract()
   } // namespace Embedded
 } // namespace Anki
