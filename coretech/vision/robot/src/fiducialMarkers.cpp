@@ -697,7 +697,7 @@ namespace Anki
           }
 
           const OrientedMarkerLabel verifyLabel = static_cast<OrientedMarkerLabel>(tempLabel);
-          if(verifyLabel == multiClassLabel || 1)
+          if(verifyLabel == multiClassLabel)
           {
             // We have a valid, verified classification.
 

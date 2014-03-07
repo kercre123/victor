@@ -261,6 +261,31 @@ namespace Anki
       return boundingBox;
     }
 
+    template<typename Type> Quadrilateral<Type> Quadrilateral<Type>::ComputeClockwiseCorners() const
+    {
+      char tmpBuffer[128];
+      MemoryStack scratch(tmpBuffer, 128);
+
+      Array<f32> thetas(1,4,scratch);
+      Array<s32> indexes(1,4,scratch);
+      Point<Type> center = this->ComputeCenter();
+
+      for(s32 i=0; i<4; i++) {
+        f32 rho = 0.0f;
+
+        Cart2Pol<f32>(
+          static_cast<f32>(this->corners[i].x - center.x),
+          static_cast<f32>(this->corners[i].y - center.y),
+          rho, thetas[0][i]);
+      }
+
+      Matrix::Sort(thetas, indexes, 1);
+
+      const Quadrilateral<Type> sortedQuad(this->corners[indexes[0][0]], this->corners[indexes[0][1]], this->corners[indexes[0][2]], this->corners[indexes[0][3]]);
+
+      return sortedQuad;
+    }
+
     template<typename Type> bool Quadrilateral<Type>::operator== (const Quadrilateral<Type> &quad2) const
     {
       for(s32 i=0; i<4; i++) {

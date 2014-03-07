@@ -107,11 +107,9 @@ namespace Anki
           accumulator += imageValue;
         } // for(s32 iProbe=0; iProbe<numProbeOffsets; iProbe++)
 
-        
-        // TODO: Figure out if this is < > <= >=
         // If the point is black, go to the left child
         // If the point is white, go to the right child
-        if(accumulator < sumGrayvalueThreshold) {
+        if(accumulator <= sumGrayvalueThreshold) {
           nodeIndex = pTreeData[nodeIndex].leftChildIndex;
         } else {
           nodeIndex = pTreeData[nodeIndex].leftChildIndex + 1;

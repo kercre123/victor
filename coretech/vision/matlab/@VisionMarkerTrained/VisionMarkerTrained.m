@@ -72,6 +72,7 @@ classdef VisionMarkerTrained
             Corners = [];
             Pose = [];
             Size = 1;
+            UseSortedCorners = true;
                         
             parseVarargin(varargin{:});
             
@@ -83,7 +84,20 @@ classdef VisionMarkerTrained
             
             this.corners = Corners;
             
-            tform = cp2tform([0 0 1 1; 0 1 0 1]', Corners, 'projective');
+            if UseSortedCorners
+                centerX = mean(Corners(:,1));
+                centerY = mean(Corners(:,2));
+
+                [thetas,~] = cart2pol(Corners(:,1)-centerX, Corners(:,2)-centerY);
+                [~,sortedIndexes] = sort(thetas);
+                
+                sortedCorners = Corners(sortedIndexes,:);
+                
+                tform = cp2tform([0 0 1 1; 0 1 1 0]', sortedCorners, 'projective');
+            else
+                tform = cp2tform([0 0 1 1; 0 1 0 1]', Corners, 'projective');
+            end            
+            
             this.H = tform.tdata.T';
             
             threshold = VisionMarkerTrained.ComputeThreshold(img, tform);
