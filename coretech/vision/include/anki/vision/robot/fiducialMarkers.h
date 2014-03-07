@@ -17,6 +17,11 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/vision/robot/connectedComponents.h"
 
+#include "anki/vision/robot/decisionTree_vision.h"
+
+#include "anki/vision/robot/visionMarkerDecisionTrees.h"
+
+// For old QR-style BlockMarkers
 #define MAX_FIDUCIAL_MARKER_BITS 25
 #define MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS 81
 
@@ -50,6 +55,35 @@ namespace Anki
 
       void Print() const;
     }; // class BlockMarker
+    
+    
+    // A VisionMarker is a location Quadrilateral, with a markerType.
+    class VisionMarker
+    {
+    public:
+     
+      Quadrilateral<s16> corners; // SQ 15.0 (Though may be changed later)
+      VisionMarkerType markerType;
+      bool isValid;
+      
+      VisionMarker();
+      
+      Result Extract(const Array<u8> &image, const Quadrilateral<s16> &quad,
+                     const Array<f32> &homography, const f32 minContrastRatio);
+      
+      void Print() const;
+      
+    protected:
+      
+      Result ComputeThreshold(const Array <u8> &image, const Array<f32> &homography,
+                              u32& threshold);
+      
+      static bool areTreesInitialized;
+      static FiducialMarkerDecisionTree multiClassTree;
+      static FiducialMarkerDecisionTree verificationTrees[VisionMarkerDecisionTree::NUM_MARKER_LABELS_ORIENTED];
+
+    }; // class VisionMarker
+    
 
     // A FiducialMarkerParserBit object samples an input image, to determine if a given image
     // area is binary 0 or 1.
@@ -112,7 +146,7 @@ namespace Anki
       FiducialMarkerParser(const FiducialMarkerParser& marker2);
 
       Result ExtractBlockMarker(const Array<u8> &image, const Quadrilateral<s16> &quad, const Array<f32> &homography, const f32 minContrastRatio, BlockMarker &marker, MemoryStack scratch) const;
-
+      
       FiducialMarkerParser& operator= (const FiducialMarkerParser& marker2);
 
     protected:

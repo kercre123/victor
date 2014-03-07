@@ -21,11 +21,10 @@ using namespace Anki::Embedded;
 // image(101:(100+size(imageMarker,1)-2), 101:(100+size(imageMarker,2)-2)) = imageMarker(2:(end-1), 2:(end-1));
 // imageSize = [480,640];
 
-// scaleImage_useWhichAlgorithm = 1;
-// scaleImage_numPyramidLevels = 4;
-// scaleImage_thresholdMultiplier = 0.75;
-// component1d_minComponentWidth = 0;
-// component1d_maxSkipDistance = 0;
+//scaleImage_thresholdMultiplier = .75;
+//scaleImage_numPyramidLevels = 3;
+//component1d_minComponentWidth = 0;
+//component1d_maxSkipDistance = 0;
 // minSideLength = round(0.03*max(imageSize(1),imageSize(2)));
 // maxSideLength = round(0.97*min(imageSize(1),imageSize(2)));
 // component_minimumNumPixels = round(minSideLength*minSideLength - (0.8*minSideLength)*(0.8*minSideLength));
@@ -34,23 +33,24 @@ using namespace Anki::Embedded;
 // component_solidMultiplyThreshold = 2.0;
 // component_percentHorizontal = 0.5;
 // component_percentVertical = 0.5;
-// quads_minQuadArea = 100;
-// quads_quadSymmetryThreshold = 1.5;
+// quads_minQuadArea = 100 / 4;
+// quads_quadSymmetryThreshold = 2.0;
 // quads_minDistanceFromImageEdge = 2;
 // decode_minContrastRatio = 1.25;
-// [quads, blockTypes, faceTypes, orientations] = mexDetectFiducialMarkers(image, scaleImage_numPyramidLevels, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_percentHorizontal, component_percentVertical, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio);
+// returnInvalidMarkers = 0;
+// [quads, markerTypes] = mexDetectFiducialMarkers(imresize(image,[240,320]), scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_percentHorizontal, component_percentVertical, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, returnInvalidMarkers);
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
   const s32 maxMarkers = 100;
   const s32 maxExtractedQuads = 1000/2;
   const s32 maxConnectedComponentSegments = 5000; // 25000/4 = 6250
-
-  AnkiConditionalErrorAndReturn(nrhs == 16 && nlhs == 4, "mexDetectFiducialMarkers", "Call this function as following: [quads, blockTypes, faceTypes, orientations] = mexDetectFiducialMarkers(uint8(image), scaleImage_useWhichAlgorithm, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_percentHorizontal, component_percentVertical, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio);");
+  
+  AnkiConditionalErrorAndReturn(nrhs == 16 && nlhs == 2, "mexDetectFiducialMarkers", "Call this function as following: [quads, markerTypes] = mexDetectFiducialMarkers(uint8(image), scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_percentHorizontal, component_percentVertical, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, returnInvalidMarkers);");
 
   const s32 bufferSize = 10000000;
   MemoryStack memory(malloc(bufferSize), bufferSize);
   AnkiConditionalErrorAndReturn(memory.IsValid(), "mexDetectFiducialMarkers", "Memory could not be allocated");
-
+  
   Array<u8> image = mxArrayToArray<u8>(prhs[0], memory);
   const s32 scaleImage_numPyramidLevels = static_cast<s32>(mxGetScalar(prhs[1]));
   const s32 scaleImage_thresholdMultiplier = static_cast<s32>(Round(pow(2,16)*mxGetScalar(prhs[2]))); // Convert from double to SQ15.16
@@ -66,7 +66,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   const s32 quads_quadSymmetryThreshold = static_cast<s32>(Round(pow(2,8)*mxGetScalar(prhs[12]))); // Convert from double to SQ23.8
   const s32 quads_minDistanceFromImageEdge = static_cast<s32>(mxGetScalar(prhs[13]));
   const f32 decode_minContrastRatio = static_cast<f32>(mxGetScalar(prhs[14]));
-
+ 
   AnkiConditionalErrorAndReturn(image.IsValid(), "mexDetectFiducialMarkers", "Could not allocate image");
 
   const u32 numBytes0 = 10000000;
@@ -81,7 +81,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   MemoryStack scratch2(calloc(numBytes2,1), numBytes2);
   AnkiConditionalErrorAndReturn(scratch2.IsValid(), "mexDetectFiducialMarkers", "Scratch2 could not be allocated");
 
-  FixedLengthList<BlockMarker> markers(maxMarkers, scratch0);
+  FixedLengthList<VisionMarker> markers(maxMarkers, scratch0);
   FixedLengthList<Array<f32>> homographies(maxMarkers, scratch0);
 
   markers.set_size(maxMarkers);
@@ -118,8 +118,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     std::vector<Array<f64> > quads;
     quads.resize(numMarkers);
 
-    Array<f64> blockTypes(1, numMarkers, scratch0);
-    Array<f64> faceTypes(1, numMarkers, scratch0);
+    Array<f64> markerTypes(1, numMarkers, scratch0);
+    //Array<f64> faceTypes(1, numMarkers, scratch0);
     Array<f64> orientations(1, numMarkers, scratch0);
 
     for(s32 i=0; i<numMarkers; i++) {
@@ -130,9 +130,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         quads[i][y][1] = markers[i].corners[y].y;
       }
 
-      blockTypes[0][i] = markers[i].blockType;
-      faceTypes[0][i] = markers[i].faceType;
+      markerTypes[0][i] = markers[i].markerType;
+      //faceTypes[0][i] = markers[i].faceType;
 
+      /*
       if(markers[i].orientation == BlockMarker::ORIENTATION_UP) {
         orientations[0][i] = 0.0;
       } else if(markers[i].orientation == BlockMarker::ORIENTATION_DOWN) {
@@ -144,6 +145,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       } else {
         orientations[0][i] = -100000.0; // Invalid
       }
+       */
     }
 
     const mwSize markersMatlab_ndim = 2;
@@ -154,26 +156,26 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       mxSetCell(quadsMatlab, i, arrayToMxArray<f64>(quads[i]));
     }
 
-    mxArray *blockTypesMatlab = arrayToMxArray<f64>(blockTypes);
-    mxArray *faceTypesMatlab = arrayToMxArray<f64>(faceTypes);
-    mxArray *orientationsMatlab = arrayToMxArray<f64>(orientations);
+    mxArray *markerTypesMatlab = arrayToMxArray<f64>(markerTypes);
+    //mxArray *faceTypesMatlab = arrayToMxArray<f64>(faceTypes);
+    //mxArray *orientationsMatlab = arrayToMxArray<f64>(orientations);
 
     plhs[0] = quadsMatlab;
-    plhs[1] = blockTypesMatlab;
-    plhs[2] = faceTypesMatlab;
-    plhs[3] = orientationsMatlab;
+    plhs[1] = markerTypesMatlab;
+    //plhs[2] = faceTypesMatlab;
+    //plhs[3] = orientationsMatlab;
   } else { // if(numMarkers != 0)
     const mwSize markersMatlab_ndim = 2;
     const mwSize markersMatlab_dims[] = {0, 0};
     mxArray *quadsMatlab = mxCreateCellArray(markersMatlab_ndim, markersMatlab_dims);
-    mxArray *blockTypesMatlab = mxCreateNumericArray(2, markersMatlab_dims, mxDOUBLE_CLASS, mxREAL);
-    mxArray *faceTypesMatlab = mxCreateNumericArray(2, markersMatlab_dims, mxDOUBLE_CLASS, mxREAL);
-    mxArray *orientationsMatlab = mxCreateNumericArray(2, markersMatlab_dims, mxDOUBLE_CLASS, mxREAL);
+    mxArray *markerTypesMatlab = mxCreateNumericArray(2, markersMatlab_dims, mxDOUBLE_CLASS, mxREAL);
+    //mxArray *faceTypesMatlab = mxCreateNumericArray(2, markersMatlab_dims, mxDOUBLE_CLASS, mxREAL);
+    //mxArray *orientationsMatlab = mxCreateNumericArray(2, markersMatlab_dims, mxDOUBLE_CLASS, mxREAL);
 
     plhs[0] = quadsMatlab;
-    plhs[1] = blockTypesMatlab;
-    plhs[2] = faceTypesMatlab;
-    plhs[3] = orientationsMatlab;
+    plhs[1] = markerTypesMatlab;
+    //plhs[2] = faceTypesMatlab;
+    //plhs[3] = orientationsMatlab;
   } // if(numMarkers != 0) ... else
 
   free(memory.get_buffer());
