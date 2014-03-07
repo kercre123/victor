@@ -18,6 +18,9 @@
 #include "anki/cozmo/robot/messages.h"
 #include "anki/cozmo/robot/visionSystem.h"
 
+// TODO: make it so we don't have to include this entire file to get just the enums
+#include "anki/vision/robot/visionMarkerDecisionTrees.h"
+
 #include "headController.h"
 
 // Set to 1 to use LucasKanadeTrackerFast, 0 for LucasKanadeTracker_f32
@@ -211,7 +214,13 @@ namespace Anki {
         HAL::SendMessageID("CozmoMsg_VisionMarker",
                            GET_MESSAGE_ID(Messages::VisionMarker));
         
-        //HAL::SendMessageID("CozmoMsg_HeadCameraCalibration",
+        {
+          for(s32 i=0; i<Embedded::NUM_MARKER_TYPES; ++i) {
+            HAL::SendMessageID(Embedded::VisionMarkerTypeStrings[i], i);
+          }
+        }
+        
+                           //HAL::SendMessageID("CozmoMsg_HeadCameraCalibration",
         //                   GET_MESSAGE_ID(Messages::HeadCameraCalibration));
 
         // TODO: Update this to send mat and head cam calibration separately
@@ -329,8 +338,7 @@ namespace Anki {
         // same frame where it sees the block, instead of needing a second
         // USBSendFrame call.
         HAL::USBSendPacket(HAL::USB_VISION_COMMAND_SETTRACKMARKER,
-                           trackingCode_.GetBits(),
-                           MarkerCode::CODE_LENGTH_IN_BYTES);
+                           &trackingMarker_, sizeof(trackingMarker_));
 #endif
         return EXIT_SUCCESS;
       }
