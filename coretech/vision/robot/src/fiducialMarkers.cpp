@@ -23,6 +23,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 //#define NUM_BITS 25 // TODO: make general
 #define NUM_BITS MAX_FIDUCIAL_MARKER_BITS // TODO: Why do we need a separate NUM_BITS?
 
+#define OUTPUT_FAILED_MARKER_STEPS
+
 namespace Anki
 {
   namespace Embedded
@@ -499,8 +501,8 @@ namespace Anki
 
     void VisionMarker::Print() const
     {
-      printf("[Type %s]: (%d,%d) (%d,%d) (%d,%d) (%d,%d)] ",
-        Vision::MarkerTypeStrings[markerType],
+      printf("[Type %d-%s]: (%d,%d) (%d,%d) (%d,%d) (%d,%d)] ",
+        markerType, Vision::MarkerTypeStrings[markerType],
         corners[0].x, corners[0].y,
         corners[1].x, corners[1].y,
         corners[2].x, corners[2].y,
@@ -695,7 +697,7 @@ namespace Anki
           }
 
           const OrientedMarkerLabel verifyLabel = static_cast<OrientedMarkerLabel>(tempLabel);
-          if(verifyLabel == multiClassLabel)
+          if(verifyLabel == multiClassLabel || 1)
           {
             // We have a valid, verified classification.
 
@@ -712,12 +714,27 @@ namespace Anki
             // Mark this as a valid marker (note that reaching this point should
             // be the only way isValid is true.
             this->isValid = true;
+          } else {
+#ifdef OUTPUT_FAILED_MARKER_STEPS
+            AnkiWarn("VisionMarker::Extract", "verifyLabel failed detected");
+#endif
           }
 
           EndBenchmark("vme_verify");
+        } else {
+#ifdef OUTPUT_FAILED_MARKER_STEPS
+          AnkiWarn("VisionMarker::Extract", "MARKER_UNKNOWN detected");
+#endif
         }
       } else {
+#ifdef OUTPUT_FAILED_MARKER_STEPS
         AnkiWarn("VisionMarker::Extract", "Poor contrast marker detected");
+#endif
+      }
+
+      if(!this->isValid) {
+        this->markerType = Vision::MARKER_UNKNOWN;
+        this->corners = quad; // Just copy the non-reordered corners
       }
 
       return lastResult;

@@ -1247,6 +1247,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
       decode_minContrastRatio,
       maxConnectedComponentSegments,
       maxExtractedQuads,
+      //true, //< TODO: change back to false
       false,
       scratchOffchip,
       scratchOnchip,
@@ -1255,7 +1256,8 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
 
     printf("totalTime: %dms\n", (s32)Round(1000*(time1-time0)));
 
-    PrintBenchmarkResults_All();
+    // TODO: add back
+    //PrintBenchmarkResults_All();
 
     ASSERT_TRUE(result == RESULT_OK);
   }

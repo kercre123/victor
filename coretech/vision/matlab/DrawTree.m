@@ -30,7 +30,7 @@
         
         if isfield(root, 'labelName')
             if useShortLabels
-                text(x+.01,-y, createSimpleLabelString(root));
+                text(x+.01,-y, createSimpleLabelString(root), 'Hor', 'c');
             else
                 text(x,-(y+.5), root.labelName, 'Hor', 'c');
             end
@@ -63,7 +63,8 @@
     end
     
     function textLabel = createSimpleLabelString(root)    
-        
+        % Take the long string of labels from the root node, and create a
+        % numbers-only version
         if isfield(root, 'x')
             textLabel = sprintf('(.%d,.%d) ', round(root.x*100), round(root.y*100));
         else
@@ -106,7 +107,6 @@
                         shortDegreesString = [shortDegreesString, '3'];
                     end
                 end
-%                 originalLabelString(degreesStart:(degreesStart+2))
             end
             shortDegreesString = [shortDegreesString, '}'];
             

@@ -1,9 +1,8 @@
-
 #ifndef ANKI_COZMO_VISIONMARKERTYPES_H
 #define ANKI_COZMO_VISIONMARKERTYPES_H
+
 namespace Anki {
   namespace Vision {
-    
     enum MarkerType {
       MARKER_ALL_BLACK,
       MARKER_ALL_WHITE,
@@ -13,10 +12,11 @@ namespace Anki {
       MARKER_BULLSEYE,
       MARKER_FIRE,
       MARKER_SQUAREPLUSCORNERS,
-      NUM_MARKER_TYPES
+      NUM_MARKER_TYPES,
+      MARKER_UNKNOWN = NUM_MARKER_TYPES
     };
-    
-    const char * const MarkerTypeStrings[NUM_MARKER_TYPES] = {
+
+    const char * const MarkerTypeStrings[NUM_MARKER_TYPES+1] = {
       "MARKER_ALL_BLACK",
       "MARKER_ALL_WHITE",
       "MARKER_ANGRYFACE",
@@ -25,8 +25,8 @@ namespace Anki {
       "MARKER_BULLSEYE",
       "MARKER_FIRE",
       "MARKER_SQUAREPLUSCORNERS",
+      "MARKER_UNKNOWN"
     };
-    
   } // namespace Vision
 } // namespace Anki
 

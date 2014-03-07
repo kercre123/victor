@@ -203,9 +203,7 @@ namespace Anki
 
       // Remove invalid markers from the list
       if(!returnInvalidMarkers) {
-        // Remove invalid markers from the list
         for(s32 iQuad=0; iQuad<extractedQuads.get_size(); iQuad++) {
-          //if(markers[iQuad].blockType == -1) {
           if(!markers[iQuad].isValid) {
             for(s32 jQuad=iQuad; jQuad<extractedQuads.get_size(); jQuad++) {
               markers[jQuad] = markers[jQuad+1];
