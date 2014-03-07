@@ -76,7 +76,7 @@ namespace Anki
     protected:
       
       Result ComputeThreshold(const Array <u8> &image, const Array<f32> &homography,
-                              u32& threshold);
+                              const f32 minContrastRatio, u32& threshold);
       
       static bool areTreesInitialized;
       static FiducialMarkerDecisionTree multiClassTree;
