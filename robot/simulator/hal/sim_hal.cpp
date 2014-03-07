@@ -250,7 +250,7 @@ namespace Anki {
       motors_[MOTOR_RIGHT_WHEEL] = rightWheelMotor_;
       motors_[MOTOR_HEAD] = headMotor_;
       motors_[MOTOR_LIFT] = liftMotor_;
-      motors_[MOTOR_GRIP] = NULL;
+      //motors_[MOTOR_GRIP] = NULL;
       
       // Initialize motor positions
       for (int i=0; i < MOTOR_COUNT; ++i) {
@@ -353,13 +353,13 @@ namespace Anki {
     
     
     
-    const f32* HAL::GyroGetSpeed()
-    {
-      gyroValues_[0] = (f32)(gyro_->getValues()[0]);
-      gyroValues_[1] = (f32)(gyro_->getValues()[1]);
-      gyroValues_[2] = (f32)(gyro_->getValues()[2]);
-      return gyroValues_;
-    }
+    //const f32* HAL::GyroGetSpeed()
+    //{
+    //  gyroValues_[0] = (f32)(gyro_->getValues()[0]);
+    //  gyroValues_[1] = (f32)(gyro_->getValues()[1]);
+    //  gyroValues_[2] = (f32)(gyro_->getValues()[2]);
+    //  return gyroValues_;
+    //}
     
     
     // Set the motor power in the unitless range [-1.0, 1.0]
@@ -423,9 +423,9 @@ namespace Anki {
           return motorSpeeds_[MOTOR_LIFT];
         }
           
-        case MOTOR_GRIP:
-          // TODO
-          break;
+        //case MOTOR_GRIP:
+        //  // TODO
+        //  break;
           
         case MOTOR_HEAD:
         {
