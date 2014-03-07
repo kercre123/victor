@@ -7,7 +7,9 @@ function [resultsData, resultsString] = runTests_quadExtraction(allTestsFilename
 originalResolution = [480,640];
 testingResolutions = {[480,640], [240,320], [120,160]};
 useUndistortion = false;
-maxMatchDistance = 4; % If all corners of a quad are not detected within this threshold, it is considered a complete failure
+maxMatchDistance = 10; % If all corners of a quad are not detected within this threshold, it is considered a complete failure
+
+showExtractedQuads = true;
 
 assert(exist('allTestsFilename', 'var') == 1);
 assert(exist('outputFilename', 'var') == 1);
@@ -22,7 +24,11 @@ allTests = loadjson(allTestsFilename);
 slashIndexes = strfind(allTestsFilename, '/');
 dataPath = allTestsFilename(1:(slashIndexes(end)));
 
-testFunctions = {@extractQuads_matlabOriginal};
+testFunctions = {@extractQuads_matlabOriginal, @extractQuads_c_noRefinement, @extractQuads_c_withRefinement};
+testFunctionNames = {...
+    'matlab',...
+    'C-no  ',...
+    'C-with'};
 
 resultsData = cell(length(allTests), 1);
 resultsString = '';
@@ -35,7 +41,7 @@ for iTest = 1:length(allTests)
     end
 
     allImages = cell(0,3);
-        
+
     % At the start, load all the images into memory, and undistort as required
     for iSequence = 1:length(jsonData.sequences)
         if ~iscell(jsonData.sequences{iSequence}.groundTruth)
@@ -64,7 +70,7 @@ for iTest = 1:length(allTests)
     % Init code here
 
     resultsData{iTest} = cell(length(testingResolutions), 1);
-    
+
     for iTestingResolution = 1:length(testingResolutions)
         testingResolution = testingResolutions{iTestingResolution};
         scale = testingResolution(1) / originalResolution(1);
@@ -75,53 +81,55 @@ for iTest = 1:length(allTests)
             imageResized = imresize(allImages{iFrame,1}, testingResolution);
 
             resultsData{iTest}{iTestingResolution}{iFrame} = cell(length(testFunctions), 1);
-            
+
             % For every type of quad extraction function
             for iTestFunction = 1:length(testFunctions)
                 tic
-                
+
                 curTestFunction = testFunctions{iTestFunction};
                 extractedQuads = curTestFunction(imageResized);
-                
+
                 groundTruthCorners = jsonData.sequences{allImages{iFrame,2}}.groundTruth{allImages{iFrame,3}}.fiducialMarkerCorners;
                 if ~iscell(groundTruthCorners)
                     groundTruthCorners = {groundTruthCorners};
                 end
-                
+
                 groundTruthCorners = groundTruthCorners(1:(end-1));
-                
+
 %                 resultsData{iTest}{iTestingResolution}{iFrame}{iTestFunction} = Inf * ones(length(groundTruthCorners), 1);
                 resultsData{iTest}{iTestingResolution}{iFrame}{iTestFunction} = cell(length(groundTruthCorners), 1);
-                
+
                 % For all labeled quads, find if any of the extracted quads
                 % match within maxMatchDistance pixels
+                isExtractedQuadsMatched = zeros(length(extractedQuads),1);
                 for iGroundTruth = 1:length(groundTruthCorners)
                     curGroundTruthCorners = groundTruthCorners{iGroundTruth};
-                    
+
                     assert(length(curGroundTruthCorners) == 4);
-                    
+
                     % Find the closest matching quad to the current ground
                     % truth quad
                     bestDistances = Inf * ones(4,1);
                     for iQuad = 1:length(extractedQuads)
                         curExtractedQuad = extractedQuads{iQuad};
-                        
+
                         assert(size(curExtractedQuad,1) == 4);
-                        
+
                         numMatched = 0;
                         dists = Inf * ones(4,1);
                         for iGrCorner = 1:4
                             for iExCorner = 1:4
-                                dist = sqrt( (curExtractedQuad(iExCorner,1) - curGroundTruthCorners{iGrCorner}.x*scale)^2 + (curExtractedQuad(iExCorner,2) - curGroundTruthCorners{iGrCorner}.y*scale)^2);
-                                if dist <= (maxMatchDistance*scale)
+                                dist = sqrt( (curExtractedQuad(iExCorner,1) - curGroundTruthCorners{iGrCorner}.x*scale)^2 + (curExtractedQuad(iExCorner,2) - curGroundTruthCorners{iGrCorner}.y*scale)^2) / scale;
+                                if dist <= maxMatchDistance
                                     dists(iGrCorner) = dist;
                                     numMatched = numMatched + 1;
                                     break;
                                 end
                             end
                         end
-                        
+
                         if numMatched == 4
+                            isExtractedQuadsMatched(iQuad) = 1;
                             if mean(dists) < mean(bestDistances)
                                 bestDistances = dists;
                             end
@@ -131,20 +139,19 @@ for iTest = 1:length(allTests)
                     % bestDistances is infinity if no good match was found
                     resultsData{iTest}{iTestingResolution}{iFrame}{iTestFunction}{iGroundTruth} = bestDistances;
                 end % for iGroundTruth = 1:length(groundTruthCorners)
-                
-                
-                
+
                 someDistances = zeros(4,length(groundTruthCorners));
                 for iGroundTruth = 1:length(groundTruthCorners)
                     someDistances(:,iGroundTruth) = resultsData{iTest}{iTestingResolution}{iFrame}{iTestFunction}{iGroundTruth};
                 end
-                
+
                 numMatched = sum(~isinf(someDistances(1,:)));
-                
+
                 inds = ~isinf(someDistances(1,:));
                 someDistances = someDistances(:,inds);
-                
-                curResultsString = sprintf('Test:%d/%d Resolution:%dx%d Frame:%d/%d TestFunction:%d/%d time:%fs numMatched=%d/%d mean=%f median=%f std=%f max=%f',...
+
+                curResultsString = sprintf('(%s) Test:%d/%d Resolution:%dx%d Frame:%d/%d TestFunction:%d/%d time:%fs numMatched=%d/%d mean=%f median=%f std=%f max=%f',...
+                    testFunctionNames{iTestFunction},...
                     iTest, length(allTests),...
                     testingResolutions{iTestingResolution}(2), testingResolutions{iTestingResolution}(1),...
                     iFrame, size(allImages,1),...
@@ -152,13 +159,19 @@ for iTest = 1:length(allTests)
                     toc(),...
                     numMatched, length(groundTruthCorners),...
                     mean(someDistances(:)), median(someDistances(:)), std(someDistances(:)), max(someDistances(:)) );
-                
+
                 resultsString = [resultsString, sprintf('\n'), curResultsString];
-                
+
                 curDateAndTime = round(clock());
                 save(outputFilename, 'resultsData', 'resultsString', 'curDateAndTime');
-                
+
                 disp(curResultsString);
+
+                if showExtractedQuads
+                    figure(iTest*100 + iTestingResolution*10 + iFrame);
+                    subplot(1,length(testFunctions),iTestFunction);
+                    plotQuads(img, extractedQuads, isExtractedQuadsMatched, groundTruthCorners, scale, testFunctionNames{iTestFunction})
+                end
             end % for iTestFunction = 1:length(testFunctions)
             pause(.01);
         end % for iFrame = 1:size(allImages,1)
@@ -184,9 +197,137 @@ function index = findFrameNumberIndex(jsonData, sequenceNumberIndex, frameNumber
         end
     end
 
+function plotQuads(image, extractedQuads, isExtractedQuadsMatched, groundTruthCorners, scale, titleString)
+    hold off;
+    imshow(image);
+    hold on;
+    
+    title(titleString);
+    
+    for i=1:length(extractedQuads)
+        if isExtractedQuadsMatched(i)
+            plotString = 'b';
+        else
+            plotString = 'r';
+        end
+        plot((1/scale)*extractedQuads{i}([1:4,1],1), (1/scale)*extractedQuads{i}([1:4,1],2), plotString);
+    end
+    
+    for i=1:length(groundTruthCorners)
+        curQuadX = [groundTruthCorners{i}{1}.x, groundTruthCorners{i}{2}.x, groundTruthCorners{i}{3}.x, groundTruthCorners{i}{4}.x, groundTruthCorners{i}{1}.x];
+        curQuadY = [groundTruthCorners{i}{1}.y, groundTruthCorners{i}{2}.y, groundTruthCorners{i}{3}.y, groundTruthCorners{i}{4}.y, groundTruthCorners{i}{1}.y];
+        plot(curQuadX, curQuadY, 'g--');
+    end
+
 function detectedQuads = extractQuads_matlabOriginal(image)
+%     detectedQuads = simpleDetector(image, 'decodeMarkers', false, 'showComponents', true);
     detectedQuads = simpleDetector(image, 'decodeMarkers', false);
 
+function detectedQuads = extractQuads_c_noRefinement(image)
+    detectedQuads = extractQuads_c_total(image, false);
+    
+function detectedQuads = extractQuads_c_withRefinement(image)
+    detectedQuads = extractQuads_c_total(image, true);    
+    
+function detectedQuads = extractQuads_c_total(image, useRefinement)
+    imageSize = size(image);
 
+    if imageSize(2) == 640
+        scaleImage_numPyramidLevels = 4;
+        quads_minQuadArea = round(100);
+        scale = 1;
+    elseif imageSize(2) == 320
+        scaleImage_numPyramidLevels = 3;
+        quads_minQuadArea = round(100 / 4);
+        scale = 0.5;
+    elseif imageSize(2) == 160
+        scaleImage_numPyramidLevels = 2;
+        quads_minQuadArea = round(100 / (4^2));
+        scale = 0.25;
+    elseif imageSize(2) == 80
+        scaleImage_numPyramidLevels = 1;
+        quads_minQuadArea = round(100 / (4^3));
+        scale = 0.125;
+    else
+        assert(false);
+    end
 
+%     scaleImage_thresholdMultiplier = .75; % Fewer components
+    scaleImage_thresholdMultiplier = 1.0; % More components
+    component1d_minComponentWidth = 0;
+    component1d_maxSkipDistance = 0;
+    minSideLength = round(0.03*max(imageSize(1),imageSize(2)));
+    maxSideLength = round(0.97*min(imageSize(1),imageSize(2)));
+    component_minimumNumPixels = round(minSideLength*minSideLength - (0.8*minSideLength)*(0.8*minSideLength));
+    component_maximumNumPixels = round(maxSideLength*maxSideLength - (0.8*maxSideLength)*(0.8*maxSideLength));
+    component_sparseMultiplyThreshold = 1000.0;
+    component_solidMultiplyThreshold = 2.0;
+    component_percentHorizontal = 0.5;
+    component_percentVertical = 0.5;
+    quads_quadSymmetryThreshold = 2.0;
+    quads_minDistanceFromImageEdge = 2;
+    decode_minContrastRatio = 1.25;
+    returnInvalidMarkers = 1;
 
+    [detectedQuads, ~, ~, ~] = mexDetectFiducialMarkers(image, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_percentHorizontal, component_percentVertical, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, returnInvalidMarkers);
+
+    imageHeight = imageSize(1);
+    imageWidth = imageSize(2);
+    homographyOffset = [(imageWidth-1)/2, (imageHeight-1)/2];
+    
+    if useRefinement
+        [xDecreasing2Image, xIncreasing2Image, yDecreasing2Image, yIncreasing2Image] = binaryTracker_binarizeWithAutomata(image, 128, 1);
+        
+        for iQuad = 1:length(detectedQuads)
+            originalQuad = detectedQuads{iQuad};
+            offsetOriginalQuad = originalQuad - repmat(homographyOffset, [4,1]);            
+            
+            [xDecreasing1Image, xIncreasing1Image, yDecreasing1Image, yIncreasing1Image] = binaryTracker_binarizeQuadrilateral(originalQuad, size(image), true);
+            
+            translation_maxMatchingDistance = floor(3*scale/2);
+            if translation_maxMatchingDistance == 0
+                translation_maxMatchingDistance = 1;
+            else
+                translation_maxMatchingDistance = 2 * translation_maxMatchingDistance + 1;
+            end
+             translatedHomography = binaryTracker_computeUpdateFromBinary(...
+                xDecreasing1Image, xIncreasing1Image, yDecreasing1Image, yIncreasing1Image,...
+                xDecreasing2Image, xIncreasing2Image, yDecreasing2Image, yIncreasing2Image,...
+                eye(3,3), 1.0,...
+                translation_maxMatchingDistance, 'translation');
+            
+            offsetTranslatedQuad = inv(translatedHomography) * [offsetOriginalQuad, ones(4,1)]';
+            offsetTranslatedQuad = offsetTranslatedQuad ./ repmat(offsetTranslatedQuad(3,:), [3,1]);
+            translatedQuad = offsetTranslatedQuad(1:2,:)' + repmat(homographyOffset, [4,1]);
+                        
+            projective_maxMatchingDistance = floor(3*scale/2);
+            if projective_maxMatchingDistance == 0
+                projective_maxMatchingDistance = 1;
+            else
+                projective_maxMatchingDistance = 2 * projective_maxMatchingDistance + 1;
+            end
+            projectiveHomography = binaryTracker_computeUpdateFromBinary(...
+                xDecreasing1Image, xIncreasing1Image, yDecreasing1Image, yIncreasing1Image,...
+                xDecreasing2Image, xIncreasing2Image, yDecreasing2Image, yIncreasing2Image,...                
+                eye(3,3), 1.0,...
+                projective_maxMatchingDistance, 'projective');
+            
+            offsetProjectiveQuad = inv(projectiveHomography) * [offsetOriginalQuad, ones(4,1)]';
+            offsetProjectiveQuad = offsetProjectiveQuad ./ repmat(offsetProjectiveQuad(3,:), [3,1]);
+            projectiveQuad = offsetProjectiveQuad(1:2,:)' + repmat(homographyOffset, [4,1]);
+            
+            if imageSize(2) == 160 && iQuad == 2
+                figure(1000);
+                hold off;
+                imshow(image);
+                hold on;            
+                plot(originalQuad([1:4,1],1), originalQuad([1:4,1],2), 'r--');
+                plot(translatedQuad([1:4,1],1), translatedQuad([1:4,1],2), 'b');
+                plot(projectiveQuad([1:4,1],1), projectiveQuad([1:4,1],2), 'g');
+            end
+            
+%             keyboard
+
+            detectedQuads{iQuad} = projectiveQuad; 
+        end
+    end

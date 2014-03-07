@@ -65,8 +65,9 @@ namespace Anki
       // WARNING:
       // The memory allocated in Extract2dComponents_PerRow_Initialize() must be valid until
       // Extract2dComponents_PerRow_Finalize() is called. It does not have to be in the same
-      // location as the memory used by the constructor.
-      Result Extract2dComponents_PerRow_Initialize(MemoryStack &memory);
+      // location as the memory used by the constructor
+      // Note: fastMemory and slowMemory can be the same object pointing to the same memory
+      Result Extract2dComponents_PerRow_Initialize(MemoryStack &fastMemory, MemoryStack &slowMemory);
       Result Extract2dComponents_PerRow_NextRow(const u8 * restrict binaryImageRow, const s32 imageWidth, const s16 whichRow, const s16 minComponentWidth, const s16 maxSkipDistance);
       Result Extract2dComponents_PerRow_Finalize();
 

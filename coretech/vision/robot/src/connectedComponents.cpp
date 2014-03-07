@@ -114,7 +114,7 @@ namespace Anki
       this->curState = STATE_CONSTRUCTED;
     } // ConnectedComponents(const s32 maxComponentSegments, MemoryStack &memory)
 
-    Result ConnectedComponents::Extract2dComponents_PerRow_Initialize(MemoryStack &memory)
+    Result ConnectedComponents::Extract2dComponents_PerRow_Initialize(MemoryStack &fastMemory, MemoryStack &slowMemory)
     {
       const u16 MAX_2D_COMPONENTS = static_cast<u16>(components.get_maximumSize());
 
@@ -125,10 +125,10 @@ namespace Anki
 
       this->maximumId = 0;
 
-      this->previousComponents1d = FixedLengthList<ConnectedComponentSegment>(maxImageWidth, memory);
-      this->currentComponents1d = FixedLengthList<ConnectedComponentSegment>(maxImageWidth, memory);
-      this->newPreviousComponents1d = FixedLengthList<ConnectedComponentSegment>(maxImageWidth, memory);
-      this->equivalentComponents = FixedLengthList<u16>(maxComponentSegments, memory);
+      this->previousComponents1d = FixedLengthList<ConnectedComponentSegment>(maxImageWidth, fastMemory);
+      this->currentComponents1d = FixedLengthList<ConnectedComponentSegment>(maxImageWidth, fastMemory);
+      this->newPreviousComponents1d = FixedLengthList<ConnectedComponentSegment>(maxImageWidth, fastMemory);
+      this->equivalentComponents = FixedLengthList<u16>(maxComponentSegments, slowMemory);
 
       u16 * restrict pEquivalentComponents = equivalentComponents.Pointer(0);
       for(s32 i=0; i<MAX_2D_COMPONENTS; i++) {
@@ -292,7 +292,7 @@ namespace Anki
       const s32 imageHeight = binaryImage.get_size(0);
       const s32 imageWidth = binaryImage.get_size(1);
 
-      if((lastResult = Extract2dComponents_PerRow_Initialize(scratch)) != RESULT_OK)
+      if((lastResult = Extract2dComponents_PerRow_Initialize(scratch, scratch)) != RESULT_OK)
         return lastResult;
 
       for(s32 y=0; y<imageHeight; y++) {

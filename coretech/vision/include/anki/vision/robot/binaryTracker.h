@@ -46,8 +46,10 @@ namespace Anki
           const u8 edgeDetection_grayvalueThreshold, const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
           const s32 matching_maxTranslationDistance, const s32 matching_maxProjectiveDistance,
           const s32 verification_maxTranslationDistance,
+          const bool useList, //< using a list is liable to be slower
           s32 &numMatches,
-          MemoryStack scratch);
+          MemoryStack fastScratch,
+          MemoryStack slowScratch);
 
         bool IsValid() const;
 
@@ -66,6 +68,14 @@ namespace Anki
           Array<s32> yDecreasing_xStartIndexes;
           Array<s32> yIncreasing_xStartIndexes;
         } AllIndexLimits;
+
+        typedef struct
+        {
+          //u16 templateIndex;
+          //u16 matchedIndex;
+          Point<f32> templatePoint;
+          Point<f32> matchedPoint;
+        } IndexCorrespondence;
 
         //Array<u8> templateImage;
         s32 templateImageHeight;
@@ -113,8 +123,7 @@ namespace Anki
           const s32 imageWidth,
           const Array<s32> &xStartIndexes, //< Computed by ComputeIndexLimitsHorizontal
           s32 &sumY,
-          s32 &numCorrespondences,
-          MemoryStack scratch);
+          s32 &numCorrespondences);
 
         NO_INLINE static Result FindHorizontalCorrespondences_Translation(
           const s32 maxMatchingDistance,
@@ -125,8 +134,7 @@ namespace Anki
           const s32 imageWidth,
           const Array<s32> &yStartIndexes, //< Computed by ComputeIndexLimitsVertical
           s32 &sumX,
-          s32 &numCorrespondences,
-          MemoryStack scratch);
+          s32 &numCorrespondences);
 
         NO_INLINE static Result FindVerticalCorrespondences_Projective(
           const s32 maxMatchingDistance,
@@ -137,8 +145,7 @@ namespace Anki
           const s32 imageWidth,
           const Array<s32> &xStartIndexes, //< Computed by ComputeIndexLimitsHorizontal
           Array<f32> &AtA,
-          Array<f32> &Atb_t,
-          MemoryStack scratch);
+          Array<f32> &Atb_t);
 
         NO_INLINE static Result FindHorizontalCorrespondences_Projective(
           const s32 maxMatchingDistance,
@@ -149,8 +156,7 @@ namespace Anki
           const s32 imageWidth,
           const Array<s32> &yStartIndexes, //< Computed by ComputeIndexLimitsVertical
           Array<f32> &AtA,
-          Array<f32> &Atb_t,
-          MemoryStack scratch);
+          Array<f32> &Atb_t);
 
         NO_INLINE static Result FindVerticalCorrespondences_Verify(
           const s32 maxMatchingDistance,
@@ -160,8 +166,7 @@ namespace Anki
           const s32 imageHeight,
           const s32 imageWidth,
           const Array<s32> &xStartIndexes, //< Computed by ComputeIndexLimitsHorizontal
-          s32 &numTemplatePixelsMatched,
-          MemoryStack scratch);
+          s32 &numTemplatePixelsMatched);
 
         NO_INLINE static Result FindHorizontalCorrespondences_Verify(
           const s32 maxMatchingDistance,
@@ -171,8 +176,39 @@ namespace Anki
           const s32 imageHeight,
           const s32 imageWidth,
           const Array<s32> &yStartIndexes, //< Computed by ComputeIndexLimitsVertical
-          s32 &numTemplatePixelsMatched,
-          MemoryStack scratch);
+          s32 &numTemplatePixelsMatched);
+
+        // Note: Clears the list matchingIndexes before starting
+        NO_INLINE static Result FindVerticalCorrespondences_List(
+          const s32 maxMatchingDistance,
+          const Transformations::PlanarTransformation_f32 &transformation,
+          const FixedLengthList<Point<s16> > &templatePoints,
+          const FixedLengthList<Point<s16> > &newPoints,
+          const s32 imageHeight,
+          const s32 imageWidth,
+          const Array<s32> &xStartIndexes, //< Computed by ComputeIndexLimitsHorizontal
+          FixedLengthList<IndexCorrespondence> &matchingIndexes);
+
+        // Note: Clears the list matchingIndexes before starting
+        NO_INLINE static Result FindHorizontalCorrespondences_List(
+          const s32 maxMatchingDistance,
+          const Transformations::PlanarTransformation_f32 &transformation,
+          const FixedLengthList<Point<s16> > &templatePoints,
+          const FixedLengthList<Point<s16> > &newPoints,
+          const s32 imageHeight,
+          const s32 imageWidth,
+          const Array<s32> &yStartIndexes, //< Computed by ComputeIndexLimitsVertical
+          FixedLengthList<IndexCorrespondence> &matchingIndexes);
+
+        NO_INLINE static Result ApplyVerticalCorrespondenceList_Projective(
+          const FixedLengthList<IndexCorrespondence> &matchingIndexes,
+          Array<f32> &AtA,
+          Array<f32> &Atb_t);
+
+        NO_INLINE static Result ApplyHorizontalCorrespondenceList_Projective(
+          const FixedLengthList<IndexCorrespondence> &matchingIndexes,
+          Array<f32> &AtA,
+          Array<f32> &Atb_t);
 
         // Allocates allLimits, and computes all the indexe limits
         static Result ComputeAllIndexLimits(const EdgeLists &imageEdges, AllIndexLimits &allLimits, MemoryStack &memory);
@@ -188,6 +224,15 @@ namespace Anki
           const AllIndexLimits &allLimits,
           const s32 matching_maxDistance,
           MemoryStack scratch);
+
+        // WARNING: Probably List projective is slower than non-list
+        Result IterativelyRefineTrack_List_Projective(
+          const EdgeLists &nextImageEdges,
+          const AllIndexLimits &allLimits,
+          const s32 matching_maxDistance,
+          const s32 maxMatchesPerType,
+          MemoryStack fastScratch,
+          MemoryStack slowScratch);
 
         // Only checks for the first match for each template pixel, within matching_maxDistance pixels.
         // For each template pixel matched, numTemplatePixelsMatched is incremented

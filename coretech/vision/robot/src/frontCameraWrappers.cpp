@@ -18,8 +18,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/matlabInterface.h"
 
 //#define SEND_DRAWN_COMPONENTS
-//#define SEND_COMPONENT_USAGE
-//#define PRINTF_INTERMEDIATES
+//#define SHOW_DRAWN_COMPONENTS
 
 namespace Anki
 {
@@ -39,6 +38,8 @@ namespace Anki
       const f32 decode_minContrastRatio,
       const s32 maxConnectedComponentSegments,
       const s32 maxExtractedQuads,
+      const bool returnInvalidMarkers,
+      MemoryStack scratchOffChip,
       MemoryStack scratchOnchip,
       MemoryStack scratchCcm)
     {
@@ -49,11 +50,22 @@ namespace Anki
       const s32 imageHeight = image.get_size(0);
       const s32 imageWidth = image.get_size(1);
 
+      AnkiConditionalErrorAndReturnValue(image.IsValid() && markers.IsValid() && homographies.IsValid() && scratchOffChip.IsValid() && scratchOnchip.IsValid() && scratchCcm.IsValid(),
+        RESULT_FAIL_INVALID_OBJECT, "DetectFiducialMarkers", "Some input is invalid");
+
+      // On the robot, we don't have enough memory for resolutions over QVGA
+      if(scratchOffChip.get_totalBytes() < 1000000 && scratchOnchip.get_totalBytes() < 1000000 && scratchCcm.get_totalBytes() < 1000000) {
+        AnkiConditionalErrorAndReturnValue(imageHeight <= 240 && imageWidth <= 320,
+          RESULT_FAIL_INVALID_SIZE, "DetectFiducialMarkers", "The image is too large to test");
+
+        AnkiConditionalErrorAndReturnValue(scaleImage_numPyramidLevels <= 3,
+          RESULT_FAIL_INVALID_SIZE, "DetectFiducialMarkers", "Only 3 pyramid levels are supported");
+      }
+
       BeginBenchmark("ExtractComponentsViaCharacteristicScale");
 
-      AnkiAssert(scratchCcm.IsValid());
-
-      ConnectedComponents extractedComponents = ConnectedComponents(maxConnectedComponentSegments, imageWidth, scratchCcm);
+      //ConnectedComponents extractedComponents = ConnectedComponents(maxConnectedComponentSegments, imageWidth, scratchCcm);
+      ConnectedComponents extractedComponents = ConnectedComponents(maxConnectedComponentSegments, imageWidth, scratchOffChip);
 
       AnkiConditionalErrorAndReturnValue(extractedComponents.IsValid(),
         RESULT_FAIL_INVALID_OBJECT, "DetectFiducialMarkers", "extractedComponents could not be allocated");
@@ -66,7 +78,7 @@ namespace Anki
         scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier,
         component1d_minComponentWidth, component1d_maxSkipDistance,
         extractedComponents,
-        scratchOnchip)) != RESULT_OK)
+        scratchCcm, scratchOnchip)) != RESULT_OK)
       {
         /* // DEBUG: drop a display of extracted components into matlab
         Embedded::Matlab matlab(false);
@@ -78,6 +90,16 @@ namespace Anki
         */
         return lastResult;
       }
+
+#ifdef SHOW_DRAWN_COMPONENTS
+      {
+        MemoryStack bigScratch(malloc(1000000), 1000000);
+        Array<u8> empty(image.get_size(0), image.get_size(1), bigScratch);
+        Embedded::DrawComponents<u8>(empty, extractedComponents, 64, 255);
+        empty.Show("components orig", false);
+        free(bigScratch.get_buffer());
+      }
+#endif
 
       EndBenchmark("ExtractComponentsViaCharacteristicScale");
 
@@ -117,6 +139,16 @@ namespace Anki
         extractedComponents.SortConnectedComponentSegmentsById(scratchOnchip);
         EndBenchmark("SortConnectedComponentSegmentsById");
       } // 3b. Remove poor components
+
+#ifdef SHOW_DRAWN_COMPONENTS
+      {
+        MemoryStack bigScratch(malloc(1000000), 1000000);
+        Array<u8> empty(image.get_size(0), image.get_size(1), bigScratch);
+        Embedded::DrawComponents<u8>(empty, extractedComponents, 64, 255);
+        empty.Show("components good", true);
+        free(bigScratch.get_buffer());
+      }
+#endif
 
       // 4. Compute candidate quadrilaterals from the connected components
       BeginBenchmark("ComputeQuadrilateralsFromConnectedComponents");
@@ -158,33 +190,36 @@ namespace Anki
         BlockMarker &currentMarker = markers[iQuad];
 
         if((lastResult = parser.ExtractBlockMarker(image, currentQuad, currentHomography, decode_minContrastRatio, currentMarker, scratchOnchip)) != RESULT_OK)
-          return lastResult;
-         */
+        return lastResult;
+        */
         VisionMarker &currentMarker = markers[iQuad];
-        
+
         if((lastResult = currentMarker.Extract(image, currentQuad, currentHomography,
-                                               decode_minContrastRatio)) != RESULT_OK)
+          decode_minContrastRatio)) != RESULT_OK)
         {
           return lastResult;
         }
       }
 
       // Remove invalid markers from the list
-      for(s32 iQuad=0; iQuad<extractedQuads.get_size(); iQuad++) {
-        //if(markers[iQuad].blockType == -1) {
-        if(not markers[iQuad].isValid) {
-          for(s32 jQuad=iQuad; jQuad<extractedQuads.get_size(); jQuad++) {
-            markers[jQuad] = markers[jQuad+1];
-            homographies[jQuad] = homographies[jQuad+1];
+      if(!returnInvalidMarkers) {
+        // Remove invalid markers from the list
+        for(s32 iQuad=0; iQuad<extractedQuads.get_size(); iQuad++) {
+          //if(markers[iQuad].blockType == -1) {
+          if(!markers[iQuad].isValid) {
+            for(s32 jQuad=iQuad; jQuad<extractedQuads.get_size(); jQuad++) {
+              markers[jQuad] = markers[jQuad+1];
+              homographies[jQuad] = homographies[jQuad+1];
+            }
+            extractedQuads.set_size(extractedQuads.get_size()-1);
+            markers.set_size(markers.get_size()-1);
+            homographies.set_size(homographies.get_size()-1);
+            iQuad--;
           }
-          extractedQuads.set_size(extractedQuads.get_size()-1);
-          markers.set_size(markers.get_size()-1);
-          homographies.set_size(homographies.get_size()-1);
-          iQuad--;
         }
       }
-      EndBenchmark("ExtractVisionMarker");
 
+      EndBenchmark("ExtractVisionMarker");
 
       EndBenchmark("DetectFiducialMarkers");
 
