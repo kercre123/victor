@@ -45,9 +45,6 @@
 #define USE_OFFBOARD_VISION 1
 #endif
 
-// Uncomment to use USB instead of UART
-//#define USE_USB
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -220,14 +217,11 @@ namespace Anki
       // Until a valid packet header is found and the entire packet is
       // available, NO_MESSAGE_ID will be returned.  Once a valid header
       // is found and returned, its MessageID is returned.
-      Messages::ID USBGetNextMessage(u8 *buffer);
+      Messages::ID USBGetNextMessage(u8* buffer);
 
       // Send a byte.
       // Prototype matches putc for printf.
       int USBPutChar(int c);
-
-// #pragma mark --- Sensors ---
-      const f32* GyroGetSpeed();
 
 // #pragma mark --- Motors ---
       /////////////////////////////////////////////////////////////////////

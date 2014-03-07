@@ -68,19 +68,22 @@ int main(void)
   
   Anki::Cozmo::Robot::Init();
   
-  while (1)
+  while (Anki::Cozmo::Robot::step_LongExecution() == EXIT_SUCCESS)
   {
-    Anki::Cozmo::Robot::step_LongExecution();
   }
   
   /*FrontCameraInit();
   
   u32 startTime = GetMicroCounter();
+  
+  for (int i = 0; i < 320*240; i++)
+    m_buffer1[i] = 0;
+  
   while (1)
   {
     //while (!isEOF) ;
     
-    //if (isEOF)
+    if (isEOF)
     {
       UARTPutChar(0xbe);
       UARTPutChar(0xef);
@@ -88,20 +91,17 @@ int main(void)
       UARTPutChar(0xff);
       UARTPutChar(0xbd);
       
-      for (int y = 0; y < 240; y++)
+      for (int y = 0; y < 240; y += 1)
       {
-        for (int x = 0; x < 320; x++)
+        for (int x = 0; x < 320; x += 1)
         {
           UARTPutChar(m_buffer1[y * 320*2 + x*2]);
         }
       }
       
       StartFrame();
-      //MicroWait(250000);
     }
-    
-    //MicroWait(2000);
-  }*/
+  } */
   
 }
 

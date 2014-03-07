@@ -1,5 +1,6 @@
 #include "anki/cozmo/robot/hal.h"
 #include "motors.h"
+#include "timer.h"
 #include "nrf.h"
 #include "nrf_gpio.h"
 #include "nrf_gpiote.h"
@@ -379,7 +380,7 @@ static void HandlePinTransition(MotorInfo* motorInfo, u8 encoderIndex, u32 pinSt
       nrf_gpio_cfg_sense_input(pin, NRF_GPIO_PIN_NOPULL, NRF_GPIO_PIN_SENSE_LOW);
       m_pinsHigh |= mask;
       
-      u32 ticks = Anki::Cozmo::HAL::GetMicroCounter();
+      u32 ticks = GetCounter();
       if ((ticks - encoderData->lastTick) > DEBOUNCE_US)
       {
         encoderData->delta = ticks - encoderData->lastTick;
