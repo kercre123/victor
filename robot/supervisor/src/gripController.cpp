@@ -2,6 +2,8 @@
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
 
+#if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
+
 namespace Anki {
   namespace Cozmo {
     namespace GripController {
@@ -79,3 +81,5 @@ namespace Anki {
     } // namespace GripController
   } // namespace Cozmo
 } // namespace Anki
+
+#endif

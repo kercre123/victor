@@ -146,8 +146,8 @@ namespace Anki
         const f32 warpedXf = (h00 * x + h01 *y + h02) * homogenousDivisor;
         const f32 warpedYf = (h10 * x + h11 *y + h12) * homogenousDivisor;
 
-        const s32 warpedX = static_cast<s32>(Round(warpedXf));
-        const s32 warpedY = static_cast<s32>(Round(warpedYf));
+        const s32 warpedX = RoundS32(warpedXf);
+        const s32 warpedY = RoundS32(warpedYf);
 
 #ifdef SEND_WARPED_LOCATIONS
         matlab.EvalStringEcho("warpedPoints(:,end+1) = [%f, %f];", warpedXf, warpedYf);

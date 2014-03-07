@@ -47,8 +47,10 @@ namespace Anki {
         // Tilts head up and down
         TM_HEAD,
         
+#if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
         // Engages and disengages gripper
         TM_GRIPPER,
+#endif
         
         // Drives slow and then stops.
         // Drives fast and then stops.

@@ -2,7 +2,7 @@
 
 PROTO Block2x1 [
   field SFString name "Block000"
-  field SFVec3f translation 0 0 0.03
+  field SFVec3f translation 0 0 0.022
   field SFRotation rotation 0 0 1 0
   field SFFloat density 500
   field SFColor blockColor 1 0 0
@@ -30,14 +30,14 @@ Robot {
     DEF Block1x1Texture Transform {
       children [
         Connector {
-          translation 0 0 0.03
+          translation 0 0 0.022
           rotation 0 1 0 0
           model "magnetic"
           type "passive"
           autoLock TRUE
         }
         Connector {
-          translation 0 0 -0.03
+          translation 0 0 -0.022
           rotation 0 1 0 3.14159
           model "magnetic"
           type "passive"
@@ -45,14 +45,14 @@ Robot {
         }
         
         Connector {
-          translation 0.06 0 0
+          translation 0.044 0 0
           rotation 0 1 0 1.57079
           model "magnetic"
           type "passive"
           autoLock TRUE
         }
         Connector {
-          translation -0.06 0 0
+          translation -0.044 0 0
           rotation 0 1 0 -1.57079
           model "magnetic"
           type "passive"
@@ -60,14 +60,14 @@ Robot {
         }
         
         Connector {
-          translation 0 0.03 0
+          translation 0 0.022 0
           rotation 1 0 0 -1.57079
           model "magnetic"
           type "passive"
           autoLock TRUE
         }
         Connector {
-          translation 0 -0.03 0
+          translation 0 -0.022 0
           rotation 1 0 0 1.57079
           model "magnetic"
           type "passive"
@@ -76,7 +76,7 @@ Robot {
         
         # Front Face
         Transform {
-          translation -0.03 0 0
+          translation -0.022 0 0
           children [
 
             Shape {
@@ -86,8 +86,8 @@ Robot {
                   url IS facemarkerFront
                 }
               }
-              geometry Box {
-                size 0.0605 0.038 0.038
+              geometry DEF SMALL_FACE_BOX Box {
+                size 0.0445 0.0295 0.0295
               }
             }
           ] 
@@ -95,7 +95,7 @@ Robot {
         
         # Back Face
         Transform {
-          translation 0.03 0 0
+          translation 0.022 0 0
           children [
 
             Shape {
@@ -105,16 +105,14 @@ Robot {
                   url IS facemarkerBack
                 }
               }
-              geometry Box {
-                size 0.0605 0.038 0.038
-              }
+              geometry USE SMALL_FACE_BOX
             }
           ] 
         }
         
         # Left Face
         Transform {
-          translation 0 0.015 0
+          translation 0 0.011 0
           children [
 
             Shape {
@@ -124,8 +122,8 @@ Robot {
                   url IS facemarkerLeft
                 }
               }
-              geometry Box {
-                size 0.038 0.0305 0.038
+              geometry DEF LARGE_FACE_BOX Box {
+                size 0.0295 0.0225 0.0295
               }
             }
           ] 
@@ -133,7 +131,8 @@ Robot {
         
        # Right Face
        Transform {
-          translation 0 -0.015 0
+          rotation 1 0 0 3.1415
+          translation 0 -0.011 0
           children [
 
             Shape {
@@ -143,16 +142,15 @@ Robot {
                   url IS facemarkerRight
                 }
               }
-              geometry Box {
-                size 0.038 0.0305 0.038
-              }
+              geometry USE LARGE_FACE_BOX
             }
           ] 
         }
 
         # Bottom Face
         Transform {
-          translation 0 0 -0.015
+          rotation 1 0 0 -1.5708
+          translation 0 0 -0.011
           children [
 
             Shape {
@@ -162,16 +160,15 @@ Robot {
                   url IS facemarkerBottom
                 }
               }
-              geometry Box {
-                size 0.038 0.038 0.0305 
-              }
+              geometry USE LARGE_FACE_BOX
             }
           ] 
         }
         
         # Top Face
         Transform {
-          translation 0 0 0.015
+          rotation 1 0 0 1.5708
+          translation 0 0 0.011
           children [
 
             Shape {
@@ -181,9 +178,7 @@ Robot {
                   url IS facemarkerTop
                 }
               }
-              geometry Box {
-                size 0.038 0.038 0.0305
-              }
+              geometry USE LARGE_FACE_BOX
             }
           ] 
         }
@@ -197,7 +192,7 @@ Robot {
         }
       }
       geometry Box {
-        size 0.12 0.06 0.06
+        size 0.088 0.044 0.044
       }
     }
    

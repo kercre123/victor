@@ -97,6 +97,13 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #define ANKI_DEBUG_LEVEL ANKI_DEBUG_ERRORS
 
+//#define ARM_MATH_CM4
+//#define ARM_MATH_ROUNDING
+//#define __FPU_PRESENT 1
+
+//#include "ARMCM4.h"
+//#include "arm_math.h"
+
 #endif // #if defined(__EDG__)  // MDK-ARM
 
 //

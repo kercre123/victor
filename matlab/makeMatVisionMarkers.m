@@ -20,7 +20,7 @@ ygrid  = [ 250  250  250;
 
 anki = imread('~/Box Sync/Cozmo SE/VisionMarkers/ankiLogo.png');
 
-createWebotsMat(anki, numCorners', xgrid', ygrid', angles', 90, markerLibrary);
+createWebotsMat(anki, numCorners', xgrid', ygrid', angles', 75, markerLibrary);
 
 markerLibrary.Save();
 

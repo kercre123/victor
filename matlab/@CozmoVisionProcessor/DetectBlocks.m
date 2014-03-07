@@ -89,7 +89,7 @@ for i = 1:length(markers)
                
                % Simulate noise on the head angle with std. dev. of 1
                % degree
-               this.setHeadAngle(-.251 + this.headAngleNoiseStdDev*randn*pi/180);
+               this.setHeadAngle(-.251); % + this.headAngleNoiseStdDev*randn*pi/180);
                
                %{
                % Focal length / camera center noise

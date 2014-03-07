@@ -1,3 +1,4 @@
+#VRML_SIM V7.3.0 utf8
 PROTO CozmoBot [
   field SFVec3f translation 0 0 0.02
   field SFRotation rotation 0 0 1 0
@@ -5,15 +6,14 @@ PROTO CozmoBot [
 
   field SFInt32  cameraWidth  640
   field SFInt32  cameraHeight 480
-  field SFFloat fieldOfViewHead 0.92
-  field SFBool useSphericalHeadCamera FALSE
+  field SFFloat fieldOfView   0.92
   
   field SFFloat headAngle 0 
   field SFFloat headAngle_lowLimit -0.4363 # 25 degrees down
   field SFFloat headAngle_highLimit 0.6109 # 35 degrees up
   
   field SFFloat liftAngle 0
-  field SFFloat liftAngle_lowLimit -0.2618 # 15 degrees down
+  field SFFloat liftAngle_lowLimit  0
   field SFFloat liftAngle_highLimit 1.047  # 60 degrees up
   
   field SFInt32 commsChannel 1
@@ -21,20 +21,25 @@ PROTO CozmoBot [
   
   field SFString controller "cozmo_c_controller"
   field SFString controllerArgs ""
-  
-  #field SFVec3f spotLightTranslation 0 .03 -.03
-  #field SFRotation spotLightRotation 1 0 0 0
-  #field SFFloat spotLightBeamWidth 0.5
-  #field SFFloat spotLightCutOffAngle 0.8
-  #field SFVec3f spotLightDirection 0 0 -1
+
+  field SFColor bodyColor 0.9 0.88 0.88
 ]
 {
+
 Supervisor {
   translation IS translation
   rotation IS rotation
+  name IS name
+  controller IS controller
+  controllerArgs IS controllerArgs
+  
+  physics Physics {
+    density 5000
+    #mass 0.17 # about 6 ounces
+  }
   
   children [
-    
+  
     # Comms for sending paths for drawing to the physics plugin
     Emitter { 
       name "cozmo_physics_comms"
@@ -71,305 +76,668 @@ Supervisor {
     Gyro {
       name "gyro"
     }
-     
-    Solid {
-      translation -0.06 0 0.027
-      children [
-        DEF LBase Shape {
-          geometry Box {
-            size 0.01 0.01 0.02 
-          }
-        }
-        Transform {
-          children [
-            HingeJoint {
-              jointParameters HingeJointParameters {
-                position IS liftAngle
-                minStop IS liftAngle_lowLimit
-                maxStop IS liftAngle_highLimit
-                axis 0 -1 0
-              }
-              device RotationalMotor {
-                name "lift_motor"
-              }
-              endPoint Solid {
-                translation 0.045 0 0
-                children [
-                  HingeJoint {
-                    jointParameters HingeJointParameters {
-                      anchor 0.045 0 0
-                      minStop IS liftAngle_lowLimit
-                      maxStop IS liftAngle_highLimit
-                      axis   0 -1 0
-                    }
-                    device RotationalMotor {
-                      name "lift_motor2"
-                    }
-                    endPoint Solid {
-                      translation 0.05 0 0
-                      children [
-                      
-                        Connector {
-                          translation 0.0025 0 0
-                          rotation 0 0 1 3.14159
-                          model "magnetic"
-                          type "active"
-                          distanceTolerance 0.003
-                          snap TRUE
-                        }
-                        DEF LIFTFRONT Shape {
-                          geometry Box {
-                            size 0.005 0.03 0.01
-                          }
-                        }
-                      ]
-                      boundingObject USE LIFTFRONT
-                      physics Physics {
-                        density 1
-                      }
-                    }
-                  }
-                  DEF LBottom Shape {
-                    geometry Box {
-                      size 0.095 0.001 0.005
-                    }
-                  }
-                ]
-                boundingObject USE LBottom
-                physics Physics {
-                  density 1
-                  centerOfMass [
-                    0 0 0
-                  ]
-                }
-              }
-            }
-          ]
-        }
-      ]
-      boundingObject USE LBase
-      physics Physics {
-        density 50000
-      }
-    }
-    Solid {
-      translation -0.025 0 .002
-      children [
-        DEF BODY Shape {
-          appearance Appearance {
-            material DEF MAT_WHITE Material {
-              diffuseColor 1 1 1
-            }
-          }
-          geometry Box {
-            size 0.08 0.04 0.030 
-          }
-        }
-      ]
-    }
-    Solid {
-      translation -0.025 0 0.002 
-      boundingObject USE BODY
-      physics Physics {
-        density 5000
-      }
-    }
-    DEF WHEEL_REAR_LEFT HingeJoint {
-      jointParameters HingeJointParameters {
-        anchor -0.05 0.03 0
-        axis 0 1 0
-      }
-      endPoint Solid {
-        translation -0.05 0.03 0
-        rotation 1 0 0 0
-        children [
-          DEF WHEEL_BOX Shape {
-            appearance Appearance {
-              material Material {
-                diffuseColor 0.505501 0.505501 0.505501
-              }
-            }
-            geometry Box {
-              size 0.01 0.02 0.002 
-            }
-          }
-          DEF WHEEL Transform {
-            rotation 1 0 0 0
-            children [
-              Shape {
-                appearance Appearance {
-                  material Material {
-                    diffuseColor 0.254032 0.254032 0.254032
-                  }
-                }
-                geometry Cylinder {
-                  height 0.005
-                  radius 0.02
-                  subdivision 36
-                }
-              }
-            ]
-          }
-        ]
-        contactMaterial "nofriction"
-        boundingObject USE WHEEL
-        physics Physics {
-        }
-      }
-    }
-    DEF WHEEL_REAR_RIGHT HingeJoint {
-      jointParameters HingeJointParameters {
-        position -1.15762e-11
-        anchor -0.05 -0.03 0
-        axis 0 1 0
-      }
-      endPoint Solid {
-        translation -0.05 -0.03 0
-        rotation 1 0 0 0
-        children [
-          USE WHEEL_BOX
-          USE WHEEL
-        ]
-        contactMaterial "nofriction"
-        boundingObject USE WHEEL
-        physics Physics {
-        }
-      }
-    }
-    DEF GPS_SENSOR GPS {
+    
+    # Are these still needed?
+    GPS {
       name "gps"
       translation 0 0 0
     }    
-    DEF COMPASS_SENSOR Compass {
+    Compass {
       name "compass"
     }
-    DEF WHEEL_FRONT_LEFT HingeJoint {
-      jointParameters HingeJointParameters {
-        anchor 0 0.03 0
-        axis 0 1 0
-      }
-      device RotationalMotor {
-        name "wheel_fl"
-	    maxVelocity 30
-      }
-      endPoint Solid {
-        translation 0 0.0385 0
-        rotation 1 0 0 0
-        children [
-          USE WHEEL_BOX
-          USE WHEEL
-        ]
-        contactMaterial "highfriction"
-        boundingObject USE WHEEL
-        physics Physics {
-        }
-      }
-    }
-    DEF WHEEL_FRONT_RIGHT HingeJoint {
-      jointParameters HingeJointParameters {
-        position -1.15794e-11
-        anchor 0 -0.03 0
-        axis 0 1 0
-      }
-      device RotationalMotor {
-        name "wheel_fr"
-	    maxVelocity 30
-      }
-      endPoint Solid {
-        translation 0 -0.0385 0
-        rotation 1 0 0 0
-        children [
-          USE WHEEL_BOX
-          USE WHEEL
-        ]
-        contactMaterial "highfriction"
-        boundingObject USE WHEEL
-        physics Physics {
-          centerOfMass [
-            0 0 0
-          ]
-        }
-      }
-    }
-    DEF HEAD HingeJoint {
-      jointParameters HingeJointParameters {
-        anchor   -0.0155 0 0.025
-        axis     0 -1 0
-        maxStop IS headAngle_highLimit
-        minStop IS headAngle_lowLimit
-        position IS headAngle	
-      }
-      device RotationalMotor {
-        name "motor_head_pitch"
-      }
-      endPoint Solid {
-        rotation 0 1 0 0
-        children [
-          DEF CAM_HEAD Camera {
-            translation 0.0095 0 0.040
-            rotation 1 -1 -1 2.0944
-            #children [
-            #  Transform {
-            #     translation 0 0 0 # IS spotLightTranslation #0 .03 -.03
-            #    rotation 1 0 0 0 # IS spotLightRotation #1 0 0 0
-                #children [
-                #  SpotLight {
-                #    beamWidth 1 # IS spotLightBeamWidth #0.5
-                #    cutOffAngle 1.2 # IS spotLightCutOffAngle #0.8
-                #    direction 0 0 -1 # IS spotLightDirection #0 0 -1
-                #    intensity 0.8
-                #  }
-                #]
-             # }
-            #]
-            name "cam_head"
-            spherical IS useSphericalHeadCamera
-            width IS cameraWidth
-            height IS cameraHeight
-            fieldOfView IS fieldOfViewHead
-            near 0.001
-            pixelSize 0.5
-            colorNoise 0.01
+    
+    
+    DEF HEAD Transform {
+      translation -0.013 0 0.0335
+      children [
+        HingeJoint {
+          jointParameters HingeJointParameters {
+            maxStop IS headAngle_highLimit
+        	minStop IS headAngle_lowLimit
+        	position IS headAngle
+            axis 0 -1 0
           }
-          DEF EYE_LEFT Transform {
-            translation -0.015 0.017 0.045 
-            rotation 0 0 1 -1.5708
+          device RotationalMotor {
+            name "HeadMotor"
+          }
+          endPoint Solid {            
             children [
-              DEF EYE_SHAPE Shape {
+              DEF EAR_SQUARES Shape {
+                appearance Appearance {
+                  material DEF OrangePlastic Material {
+                    diffuseColor 0.8 0.404776 0
+                  }
+                }
+                geometry Box {
+                  size 0.005 0.041 0.005
+                }
+              }
+              DEF EARS Shape {
                 appearance Appearance {
                   material Material {
-                    diffuseColor 1 1 1
+                    diffuseColor 0.5 0.5 0.5
                   }
                 }
                 geometry Cylinder {
                   height 0.04
-                  radius 0.015
-                  subdivision 24
+                  radius 0.007
+                  subdivision 16
+                }
+              }
+              DEF EYES Transform {
+                translation 0.02 0 0.002
+                children [
+                  DEF LEFT_EYE Transform {
+                    translation 0 0.006 0
+                    rotation 0 0 1 1.5708
+                    children [
+                      DEF EYE_SHAPE Shape {
+                        appearance Appearance {
+                          material Material {
+                            ambientIntensity 0.1
+                            diffuseColor 0 0 0
+                            emissiveColor 0.1 0.5 1
+                          }
+                        }
+                        geometry Cylinder {
+                          height 0.002
+                          radius 0.005
+                          subdivision 16
+                        }
+                      }
+                    ]
+                  }
+                  DEF RIGHT_EYE Transform {
+                    translation 0 -0.006 0
+                    rotation 0 0 1 1.5708
+                    children [
+                      USE EYE_SHAPE
+                    ]
+                  }
+                  DEF LEFT_EYE_CENTER Transform {
+                    translation 0 0.006 0
+                    rotation 0 0 1 1.5708
+                    children [
+                      DEF EYE_CENTER_SHAPE Shape {
+                        appearance Appearance {
+                          material Material {
+                            diffuseColor 0.5 0.5 0.5
+                          }
+                        }
+                        geometry Cylinder {
+                          height 0.0021
+                          radius 0.0035
+                          subdivision 16
+                        }
+                      }
+                    ]
+                  }
+                  DEF RIGHT_EYE_CENTER Transform {
+                    translation 0 -0.006 0
+                    rotation 0 0 1 1.5708
+                    children [
+                      USE EYE_CENTER_SHAPE
+                    ]
+                  }
+                ]
+              }
+              Camera {
+                name "HeadCamera"
+                translation 0.01145 0 -0.006
+                rotation 0.57735 -0.57735 -0.57735 2.0944
+                width IS cameraWidth
+                height IS cameraHeight
+                fieldOfView IS fieldOfView
+              }
+              DEF FACE Transform {
+                translation 0.016 0 0
+                rotation 0 0 1 1.5708
+                children [
+                  Shape {
+                    appearance Appearance {
+                      material DEF DarkGray Material {
+                        diffuseColor 0.5 0.5 0.5
+                      }
+                    }
+                    geometry DEF FACE Cylinder {
+                      height 0.008
+                      radius 0.015
+                      subdivision 24
+                    }
+                  }
+                ]
+              }
+              Shape {
+                appearance Appearance {
+                  material Material {
+                    diffuseColor IS bodyColor
+                  }
+                }  
+                geometry Sphere {
+                  radius 0.02
+                  subdivision 3
                 }
               }
             ]
+            name "head"
           }
-          DEF EYE_RIGHT Transform {
-            translation -0.015 -0.017 0.045
-            rotation 0 0 1 -1.5708
+        }
+      ]
+    }
+    
+    DEF BODY Solid {
+      translation -0.015 0 0
+      children [
+        DEF BODY_SHAPE Group { 
+          children [
+			Transform {
+			  translation 0.015 0 0
+			  children [
+				Shape {
+				  appearance Appearance {
+					material Material {
+					diffuseColor IS bodyColor
+					}
+				  }  
+				  geometry Cylinder {
+					height 0.0312
+					radius 0.013
+					subdivision 16
+				  }
+				}
+			  ]
+			}
+			Transform {
+			  translation -0.015 0 0
+			  children [
+				Shape {
+				  appearance Appearance {
+					material Material {
+					  diffuseColor IS bodyColor
+					}
+				  }  
+				  geometry Cylinder {
+					height 0.0312
+					radius 0.013
+					subdivision 16
+				  }
+				}
+			  ]
+			}
+			Shape {
+			  appearance Appearance {
+				material Material {
+				  diffuseColor IS bodyColor
+				}
+			  }  
+			  geometry Box {
+				size 0.03 0.0312 0.026
+			  }
+			}
+		  ] # BODY_SHAPE Group children
+        } # BODY_SHAPE Group
+      ] # BODY Solid children
+    
+      boundingObject USE BODY_SHAPE
+      physics Physics {
+         density 1500
+      }
+    } # BODY Solid
+    
+    DEF BACKPACK Solid {
+      translation -0.04 0 0.0192
+      children [
+        Transform {
+          children [
+            Shape {
+              appearance Appearance {
+                material Material {
+                  diffuseColor IS bodyColor
+                }
+              }  
+              geometry Box {
+                size 0.03 0.039 0.018
+              }
+            }
+          ]
+        }
+        Transform {
+          translation 0 0 0.009
+          children [
+            Shape {
+              appearance Appearance {
+                material Material {
+                  diffuseColor IS bodyColor
+                }
+              }  
+              geometry Cylinder {
+                height 0.039
+                radius 0.015
+                subdivision 20
+              }
+            }
+          ]
+        }
+        Transform {
+          translation 0 0 -0.009
+          children [
+            Shape {
+              appearance Appearance {
+                material Material {
+                  diffuseColor IS bodyColor
+                }
+              }  
+              geometry Cylinder {
+                height 0.039
+                radius 0.015
+                subdivision 20
+              }
+            }
+          ]
+        }
+      ] # BACKPACK Solid children
+      
+      physics Physics {
+        density 2000
+      }
+    } # BACKPACK Solid
+
+    DEF CASTER Solid {
+	  translation -0.03 0 -0.0097
+	  children [
+		Shape {
+		  appearance Appearance {
+			material Material {
+			  diffuseColor 0.57995 0.464927 0.275319
+			}
+		  }
+		  geometry DEF CASTER_SHAPE Cylinder {
+			height 0.024
+			radius 0.0045
+			subdivision 16
+		  }
+		}
+	  ]
+	  contactMaterial "nofriction"
+	  boundingObject USE CASTER_SHAPE
+	  physics Physics {
+		 density 5000
+	  }	
+    } # CASTER Solid
+    
+    DEF LEFT_FRONT_WHEEL HingeJoint {
+      jointParameters HingeJointParameters {
+        axis 0 1 0
+      }
+      device RotationalMotor {
+        name "LeftWheelMotor"
+        maxVelocity 30
+      }
+      endPoint Solid {
+        translation 0 0.02385 0
+        children [
+          Transform {
+            translation 0 -0.0025 0
             children [
-              USE EYE_SHAPE
+              DEF DRIVE_HUB Group {
+                children [
+                  Shape {
+					appearance Appearance {
+					  material DEF WHEEL_HUB_MATERIAL Material {
+					    diffuseColor 0.6 0.6 0.6
+					  }
+					}
+					geometry Cylinder {
+					  height 0.0115
+					  radius 0.0132
+					  subdivision 22
+					}
+				 }
+				 Transform {
+				   translation .005 0 0
+				   children [
+					 Shape {
+					   appearance Appearance {
+					     material USE OrangePlastic
+					   }
+					   geometry Box {
+						 size .01 .0125 .004
+					   }
+					 }
+				    ]
+				  }
+				]
+              }
             ]
           }
+          DEF DRIVE_TIRE Shape {
+            appearance Appearance {
+              material Material {
+                diffuseColor 0.25 0.25 0.25
+              }
+            }
+            geometry Cylinder {
+              height 0.003
+              radius 0.0142
+              subdivision 22
+            }
+          }
         ]
+        contactMaterial "highfriction"
+        boundingObject USE DRIVE_TIRE
+        physics DEF WHEEL_PHYSICS Physics {
+          density 1000
+        }
       }
     }
-  ]
-  name IS name
-  
-  physics Physics {
-    density -1
-    mass 1
-  }
-  locked TRUE
-  
-  controller IS controller
-  controllerArgs IS controllerArgs
-  
-} # Supervisor definition
+    DEF RIGHT_FRONT_WHEEL HingeJoint {
+      jointParameters HingeJointParameters {
+        axis 0 1 0
+      }
+      device RotationalMotor {
+        name "RightWheelMotor"
+        maxVelocity 30
+      }
+      endPoint Solid {
+        translation 0 -0.02385 0
+        children [
+          Transform {
+            translation 0 0.0025 0
+            children [
+              USE DRIVE_HUB
+            ]
+          }
+          USE DRIVE_TIRE
+        ]
+        contactMaterial "highfriction"
+        boundingObject USE DRIVE_TIRE
+        physics USE WHEEL_PHYSICS
+      }
+    }
+    DEF REAR_AXLE Transform {
+      translation -.03 0 0 
+       children [
+		DEF LEFT_REAR_WHEEL HingeJoint {
+		  jointParameters HingeJointParameters {
+			axis 0 1 0
+		  }
+		  endPoint Solid {
+			translation 0 0.02385 0
+			children [
+			  Transform {
+				translation 0 -0.0025 0
+				children [
+				  DEF REAR_HUB Shape {
+					appearance Appearance {
+					  material USE WHEEL_HUB_MATERIAL
+					}
+					geometry Cylinder {
+					  height 0.0115
+					  radius 0.0127
+					  subdivision 22
+					}
+				  }
+				]
+			  }
+			  DEF REAR_TIRE Shape {
+				appearance Appearance {
+				  material Material {
+					diffuseColor 0.25 0.25 0.25
+				  }
+				}
+				geometry Cylinder {
+				  height 0.003
+				  radius 0.0137
+				  subdivision 22
+				}
+			  }
+			]
+			contactMaterial "nofriction"
+			boundingObject USE REAR_TIRE
+			physics USE WHEEL_PHYSICS
+		  }
+		}
+		DEF RIGHT_REAR_WHEEL HingeJoint {
+		  jointParameters HingeJointParameters {
+			axis 0 1 0
+		  }
+		  endPoint Solid {
+			translation 0 -0.02385 0
+			children [
+			  USE REAR_TIRE
+			  Transform {
+				translation 0 0.0025 0
+				children [
+				  USE REAR_HUB
+				]
+			  }
+			]
+			contactMaterial "nofriction"
+			boundingObject USE REAR_TIRE
+			physics USE WHEEL_PHYSICS
+		  }
+		}
+	  ] # Transform children
+    } # Rear Wheel Transform
+    
+    DEF LIFT Transform {
+      translation -0.04 0 0.0275
+      
+      children [
+        Shape {
+          geometry Cylinder {
+            height 0.048
+            radius 0.003
+            subdivision 14
+          }
+        }
+        HingeJoint {
+          jointParameters HingeJointParameters {
+            axis 0 -1 0
+            position IS liftAngle
+            minStop IS liftAngle_lowLimit
+            maxStop IS liftAngle_highLimit
+          }
+          device RotationalMotor {
+            name "LiftMotor"
+          }
+          endPoint Solid {
+			children [
+			  Transform {
+				translation 0.0597 0 -0.0127
+				children [
+				  HingeJoint {
+					jointParameters HingeJointParameters {
+					  axis 0 1 0
+					  position IS liftAngle
+					  minStop IS liftAngle_lowLimit
+					  maxStop IS liftAngle_highLimit
+					}
+					device RotationalMotor {
+					  name "LiftMotorFront"
+					}
+					endPoint DEF SmallFingerGripper Solid {
+					  translation 0.002 0 0
+					  children [
+						Transform {
+						  translation 0.0017 -0.017 -0.01
+						  children [
+							DEF GRIPPER_FINGER Group {
+							  children [
+								Solid {
+								  children [
+									Shape {
+									  appearance Appearance {
+										material USE DarkGray
+									  }
+									  geometry DEF GRIPPER_FINGER_SHAPE IndexedFaceSet {
+										coord Coordinate {
+										  point [
+											0 0.00075 0
+											0 0.00075 0.008
+											0.0033 0.00075 0.008
+											0.0034 0.00075 0.0108
+											0.006 0.00075 0.0108
+											0.006 0.00075 0.008
+											0.0034 0.00075 0
+											0 -0.00075 0
+											0 -0.00075 0.008
+											0.0033 -0.00075 0.008
+											0.0034 -0.00075 0.0108
+											0.006 -0.00075 0.0108
+											0.006 -0.00075 0.008
+											0.0034 -0.00075 0
+										  ]
+										}
+										coordIndex [
+										  0, 1, 6, -1, 1, 2, 6, -1, 2, 5
+										  6, -1, 2, 3, 4, -1, 2, 4, 5, -1
+										  13, 8, 7, -1, 13, 9, 8, -1, 13, 12
+										  9, -1, 11, 10, 9, -1, 12, 11, 9, -1
+										  1, 8, 2, -1, 2, 8, 9, -1, 3, 10
+										  4, -1, 4, 10, 11, -1, 2, 9, 3, -1
+										  3, 9, 10, -1, 4, 11, 12, -1, 4, 12
+										  5, -1, 5, 12, 13, -1, 5, 13, 6, -1
+										  13, 7, 0, -1, 6, 13, 0, -1
+										]
+									  }
+									}
+								  ]
+								  boundingObject USE GRIPPER_FINGER_SHAPE
+								  #physics Physics { 
+								  #   density 5000
+								  #}
+								}
+							  ]
+							}
+						  ]
+						}
+						Transform {
+						  translation 0.0017 0.017 -0.01
+						  children [
+							USE GRIPPER_FINGER
+						  ]
+						}
+						DEF LIFTER_SHAPE Group {
+						  children [
+							Transform {
+							  translation 0 -0.017 -0.005
+							  children [
+								DEF GRIPPER_SIDE Shape {
+								  geometry Box {
+									size 0.003 0.006 0.02
+								  }
+								}
+							  ]
+							}
+							Transform {
+							  translation 0 0.017 -0.005
+							  children [
+								DEF GRIPPER_SIDE Shape {
+								  geometry Box {
+									size 0.003 0.006 0.02
+								  }
+								}
+							  ]
+							}
+							Transform {
+							  translation 0 0 -0.02
+							  children [
+								DEF GRIPPER_BOTTOM Shape {
+								  geometry Box {
+									size 0.003 0.04 0.01
+								  }
+								}
+							  ]
+							}
+						   ]
+						 }
+					  ]
+					  boundingObject USE LIFTER_SHAPE
+					  #physics Physics {
+					  #  density 100
+					  #}
+					}  # SmallFingerGripper Solid
+				  } # Hinge Joint
+				] # Transform children
+			  } # Transform
+				
+			  DEF LEFT_LIFT_ARM Transform {
+				translation 0 0.02175 0
+				children [
+				  DEF LIFT_ARM_SHAPE Shape {
+					geometry IndexedFaceSet {
+					  coord Coordinate {
+						point [
+						  0 0.002 -0.0025
+						  0 0.002 0.0025
+						  0.04 0.002 0.0025
+						  0.0597 0.002 -0.0102
+						  0.0597 0.002 -0.0152
+						  0.04 0.002 -0.0025
+						  0 -0.002 -0.0025
+						  0 -0.002 0.0025
+						  0.04 -0.002 0.0025
+						  0.0597 -0.002 -0.0102
+						  0.0597 -0.002 -0.0152
+						  0.04 -0.002 -0.0025
+						]
+					  }
+					  coordIndex [
+						0, 1, 2, -1, 0, 2, 5, -1, 2, 3
+						4, -1, 2, 4, 5, -1, 8, 7, 6, -1
+						11, 8, 6, -1, 10, 9, 8, -1, 11, 10
+						8, -1, 1, 7, 8, -1, 1, 8, 2, -1
+						2, 8, 9, -1, 2, 9, 3, -1, 3, 9
+						10, -1, 3, 10, 4, -1, 0, 6, 7, -1
+						0, 7, 1, -1, 11, 6, 0, -1, 11, 0
+						5, -1, 10, 11, 5, -1, 10, 5, 4, -1
+					  ]
+					  creaseAngle 12
+					}
+				  }
+				  Transform {
+					translation 0.0597 -0.0025 -0.0127
+					children [
+					  Shape {
+						geometry Cylinder {
+						  height 0.01
+						  radius 0.0025
+						}
+					  }
+					]
+				  }
+				]
+			  } # LEFT_LIFT_ARM Transform
+			  
+			  DEF RIGHT_LIFT_ARM Transform {
+				translation 0 -0.02175 0
+				children [
+				  USE LIFT_ARM_SHAPE
+				  Transform {
+					translation 0.0597 0.0025 -0.0127
+					children [
+					  Shape {
+						geometry Cylinder {
+						  height 0.01
+						  radius 0.0025
+						}
+					  }
+					]
+				  }
+				]
+			  } # RIGHT_LIFT_ARM Transform
+			  
+			] # endPoint Solid children
+		  } # endPoint Transform
+		} # HingeJoint
+	  ] # LIFT Transform children
+	  #physics Physics {
+	  #  density 5000
+	  #}
+    } # Lift Transform
+    
+  ] # Supervisor children
+} # Supervisor
+
 } # PROTO definition
