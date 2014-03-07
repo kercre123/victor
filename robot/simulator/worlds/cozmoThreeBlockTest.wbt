@@ -112,7 +112,6 @@ DEF Cozmo_1 CozmoBot {
   translation 0.286003  0.0510032  0.021
   rotation 0 0 1 -0.7071  
   name "CozmoBot_1"
-  commsChannel 1
   usbChannel 10
   controller "cozmo_c_controller"
   # In front of 2x1 purple block

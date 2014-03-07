@@ -171,7 +171,6 @@ Block1x1 {
 
 DEF Cozmo_1 CozmoBot {
   name "Cozmo_1"
-  commsChannel 1
   usbChannel   10
   cameraWidth  320
   cameraHeight 240
