@@ -112,6 +112,9 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
   ASSERT_TRUE(scratchCcm.IsValid());
 
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(scratchOffchip.IsValid());
+
   Array<u8> templateImage(cozmo_2014_01_29_11_41_05_10_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_10_320x240_WIDTH, scratchOnchip);
   Array<u8> nextImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOnchip);
 
@@ -131,11 +134,12 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
   templateImage.Set(&cozmo_2014_01_29_11_41_05_10_320x240[0], cozmo_2014_01_29_11_41_05_10_320x240_WIDTH*cozmo_2014_01_29_11_41_05_10_320x240_HEIGHT);
   nextImage.Set(&cozmo_2014_01_29_11_41_05_12_320x240[0], cozmo_2014_01_29_11_41_05_12_320x240_WIDTH*cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT);
 
-  // Skip zero rows/columns
+  // Skip zero rows/columns (non-list)
   {
+    PUSH_MEMORY_STACK(scratchOffchip);
     PUSH_MEMORY_STACK(scratchOnchip);
 
-    printf("Skip 0\n");
+    printf("Skip 0 nonlist\n");
 
     InitBenchmarking();
 
@@ -158,16 +162,13 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     const Result result = tracker.UpdateTrack(nextImage,
       edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType, 1,
-      matching_maxTranslationDistance, matching_maxProjectiveDistance, verification_maxTranslationDistance, numMatches, scratchCcm);
+      matching_maxTranslationDistance, matching_maxProjectiveDistance, verification_maxTranslationDistance, false, numMatches, scratchCcm, scratchOffchip);
     EndBenchmark("BinaryTracker update fixed-float");
 
     ASSERT_TRUE(result == RESULT_OK);
 
     // TODO: verify this number manually
     ASSERT_TRUE(numMatches == 1161);
-
-    MemoryStack scratchOffchip(&onchipBuffer[0], OFFCHIP_BUFFER_SIZE);
-    ASSERT_TRUE(scratchOffchip.IsValid());
 
     //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
 
@@ -183,11 +184,12 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     PrintBenchmarkResults_OnlyTotals();
   }
 
-  // Skip one row/column
+  // Skip one row/column (non-list)
   {
+    PUSH_MEMORY_STACK(scratchOffchip);
     PUSH_MEMORY_STACK(scratchOnchip);
 
-    printf("\nSkip 1\n");
+    printf("\nSkip 1 nonlist\n");
 
     InitBenchmarking();
 
@@ -210,7 +212,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     const Result result = tracker.UpdateTrack(nextImage,
       edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType, 1,
-      matching_maxTranslationDistance, matching_maxProjectiveDistance, verification_maxTranslationDistance, numMatches, scratchCcm);
+      matching_maxTranslationDistance, matching_maxProjectiveDistance, verification_maxTranslationDistance, false, numMatches, scratchCcm, scratchOffchip);
     EndBenchmark("BinaryTracker update fixed-float");
 
     ASSERT_TRUE(result == RESULT_OK);
@@ -218,8 +220,105 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     // TODO: verify this number manually
     ASSERT_TRUE(numMatches == 581);
 
-    MemoryStack scratchOffchip(&onchipBuffer[0], OFFCHIP_BUFFER_SIZE);
-    ASSERT_TRUE(scratchOffchip.IsValid());
+    //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
+
+    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
+    transform_groundTruth[0][0] = 1.0681f;  transform_groundTruth[0][1] = 0.0f; transform_groundTruth[0][2] = 2.2348f;
+    transform_groundTruth[1][0] = -0.0008f;  transform_groundTruth[1][1] = 1.0607f; transform_groundTruth[1][2] = -4.1342f;
+    transform_groundTruth[2][0] = -0.0001f; transform_groundTruth[2][1] = 0.0f;    transform_groundTruth[2][2] = 1.0f;
+
+    //tracker.get_transformation().get_homography().Print("fixed-float 2");
+
+    ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
+
+    PrintBenchmarkResults_OnlyTotals();
+  }
+
+  // Skip zero rows/columns (with-list)
+  {
+    PUSH_MEMORY_STACK(scratchOffchip);
+    PUSH_MEMORY_STACK(scratchOnchip);
+
+    printf("\nSkip 0 list\n");
+
+    InitBenchmarking();
+
+    const s32 templateEdgeDetection_everyNLines = 1;
+
+    BeginBenchmark("BinaryTracker init");
+    TemplateTracker::BinaryTracker tracker(templateImage, templateQuad, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, templateEdgeDetection_maxDetectionsPerType, templateEdgeDetection_everyNLines, scratchOnchip);
+    EndBenchmark("BinaryTracker init");
+
+    const s32 numTemplatePixels = tracker.get_numTemplatePixels();
+
+    ASSERT_TRUE(numTemplatePixels == 1201);
+
+    //templateImage.Show("templateImage",false);
+    //nextImage.Show("nextImage",false);
+
+    BeginBenchmark("BinaryTracker update fixed-float");
+
+    s32 numMatches;
+
+    const Result result = tracker.UpdateTrack(nextImage,
+      edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType, 1,
+      matching_maxTranslationDistance, matching_maxProjectiveDistance, verification_maxTranslationDistance, true, numMatches, scratchCcm, scratchOffchip);
+    EndBenchmark("BinaryTracker update fixed-float");
+
+    ASSERT_TRUE(result == RESULT_OK);
+
+    // TODO: verify this number manually
+    ASSERT_TRUE(numMatches == 1161);
+
+    //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
+
+    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
+    transform_groundTruth[0][0] = 1.0693f;  transform_groundTruth[0][1] = 0.0008f; transform_groundTruth[0][2] = 2.2256f;
+    transform_groundTruth[1][0] = 0.0010f;  transform_groundTruth[1][1] = 1.0604f; transform_groundTruth[1][2] = -4.1188f;
+    transform_groundTruth[2][0] = -0.0001f; transform_groundTruth[2][1] = 0.0f;    transform_groundTruth[2][2] = 1.0f;
+
+    //tracker.get_transformation().get_homography().Print("fixed-float 1");
+
+    ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
+
+    PrintBenchmarkResults_OnlyTotals();
+  }
+
+  // Skip one row/column (with-list)
+  {
+    PUSH_MEMORY_STACK(scratchOffchip);
+    PUSH_MEMORY_STACK(scratchOnchip);
+
+    printf("\nSkip 1 list\n");
+
+    InitBenchmarking();
+
+    const s32 templateEdgeDetection_everyNLines = 2;
+
+    BeginBenchmark("BinaryTracker init");
+    TemplateTracker::BinaryTracker tracker(templateImage, templateQuad, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, templateEdgeDetection_maxDetectionsPerType, templateEdgeDetection_everyNLines, scratchOnchip);
+    EndBenchmark("BinaryTracker init");
+
+    const s32 numTemplatePixels = tracker.get_numTemplatePixels();
+
+    ASSERT_TRUE(numTemplatePixels == 599);
+
+    //templateImage.Show("templateImage",false);
+    //nextImage.Show("nextImage",false);
+
+    BeginBenchmark("BinaryTracker update fixed-float");
+
+    s32 numMatches;
+
+    const Result result = tracker.UpdateTrack(nextImage,
+      edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType, 1,
+      matching_maxTranslationDistance, matching_maxProjectiveDistance, verification_maxTranslationDistance, true, numMatches, scratchCcm, scratchOffchip);
+    EndBenchmark("BinaryTracker update fixed-float");
+
+    ASSERT_TRUE(result == RESULT_OK);
+
+    // TODO: verify this number manually
+    ASSERT_TRUE(numMatches == 581);
 
     //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
 
@@ -250,7 +349,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
   ASSERT_TRUE(result == RESULT_OK);
 
-  MemoryStack scratchOffchip(&onchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(scratchOffchip.IsValid());
 
   //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
