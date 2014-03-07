@@ -17,6 +17,7 @@
 #include "anki/cozmo/robot/cozmoConfig.h"
 
 #include "messageHandler.h"
+#include "vizManager.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -402,6 +403,9 @@ namespace Anki {
             return EXIT_FAILURE;
             
         }
+        
+        // Visualize path
+        VizManager::getInstance()->DrawPath(ID_,path,VIZ_COLOR_EXECUTED_PATH);
       }
       
       // Send start path execution message

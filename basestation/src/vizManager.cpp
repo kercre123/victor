@@ -26,6 +26,9 @@ namespace Anki {
         PRINT_INFO("Failed to init VizManager client (%s:%d)\n", ROBOT_SIM_WORLD_HOST, VIZ_SERVER_PORT);
         isInitialized_ = false;
       }
+    
+      // Define colors
+      DefineColor(VIZ_COLOR_EXECUTED_PATH, 1.0, 0.0, 0.0, 1.0);
       
       return isInitialized_ ? EXIT_SUCCESS : EXIT_FAILURE;
     }

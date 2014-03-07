@@ -22,7 +22,8 @@
 #else
 #include "sim_viz.h"
 using namespace Anki::Cozmo::Sim;
-#define ENABLE_PATH_VIZ 1
+#define ENABLE_PATH_VIZ 0  // To enable visualization of paths from robot
+                           // (Default is 0. Normally this is done from basestation.)
 #endif
 
 // The number of tics desired in between debug prints

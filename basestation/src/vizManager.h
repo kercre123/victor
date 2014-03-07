@@ -23,6 +23,11 @@
 namespace Anki {
   namespace Cozmo {
     
+    // List of color IDs
+    enum VIZ_COLOR_ID {
+      VIZ_COLOR_EXECUTED_PATH
+    };
+    
     
     // NOTE: this is a singleton class
     class VizManager
