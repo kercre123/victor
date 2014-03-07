@@ -23,6 +23,9 @@ using namespace Anki::Embedded;
 
 // image = imresize(imread('??'), [240,320]);
 
+// image = imresize(rgb2gray(imread('C:\Anki\blockImages\testTrainedCodes.png')), [240,320]);
+// imageSize = size(image);
+
 //scaleImage_thresholdMultiplier = .75;
 //scaleImage_numPyramidLevels = 3;
 //component1d_minComponentWidth = 0;
@@ -52,7 +55,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   MemoryStack memory(malloc(bufferSize), bufferSize);
   AnkiConditionalErrorAndReturn(memory.IsValid(), "mexDetectFiducialMarkers", "Memory could not be allocated");
-  
+
   Array<u8> image = mxArrayToArray<u8>(prhs[0], memory);
   const s32 scaleImage_numPyramidLevels = static_cast<s32>(mxGetScalar(prhs[1]));
   const s32 scaleImage_thresholdMultiplier = static_cast<s32>(Round(pow(2,16)*mxGetScalar(prhs[2]))); // Convert from double to SQ15.16
@@ -83,7 +86,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   MemoryStack scratch3(calloc(bufferSize,1), bufferSize);
   AnkiConditionalErrorAndReturn(scratch3.IsValid(), "mexDetectFiducialMarkers", "Scratch3 could not be allocated");
-  
+
   FixedLengthList<VisionMarker> markers(maxMarkers, scratch0);
   FixedLengthList<Array<f32>> homographies(maxMarkers, scratch0);
 
@@ -140,17 +143,17 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
       /*
       if(markers[i].orientation == BlockMarker::ORIENTATION_UP) {
-        orientations[0][i] = 0.0;
+      orientations[0][i] = 0.0;
       } else if(markers[i].orientation == BlockMarker::ORIENTATION_DOWN) {
-        orientations[0][i] = PI;
+      orientations[0][i] = PI;
       } else if(markers[i].orientation == BlockMarker::ORIENTATION_LEFT) {
-        orientations[0][i] = PI / 2.0;
+      orientations[0][i] = PI / 2.0;
       } else if(markers[i].orientation == BlockMarker::ORIENTATION_RIGHT) {
-        orientations[0][i] = 3.0 * PI / 2.0;
+      orientations[0][i] = 3.0 * PI / 2.0;
       } else {
-        orientations[0][i] = -100000.0; // Invalid
+      orientations[0][i] = -100000.0; // Invalid
       }
-       */
+      */
     }
 
     const mwSize markersMatlab_ndim = 2;

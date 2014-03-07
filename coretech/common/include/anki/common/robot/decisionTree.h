@@ -26,31 +26,24 @@ namespace Anki
 
       // treeDataLength is the number of bytes in the treeData buffer
       // Warning: The input treeData buffer is not copied, and must be globally available
-      DecisionTree(const u8 * restrict treeData, const s32 treeDataLength, const s32 treeDataNumFractionalBits, const s32 treeMaxDepth);
+      DecisionTree(const void * restrict treeData, const s32 treeDataLength, const s32 treeDataNumFractionalBits, const s32 treeMaxDepth);
 
       // TODO: These could be virtual methods, but I'm avoiding such things on the embedded side
 
       // Query the tree using the input image
       //Result Classify(const Array<u8> &image);
 
-      // Transform the image coordinates via transformation, then query the tree
-      //Result Classify(const Array<u8> &image, const Transformations::PlanarTransformation_f32 &transformation);
-
       bool IsValid() const;
-      
-      s32 GetNumFractionalBits() const;
+
+      s32 get_numFractionalBits() const;
+      s32 get_numMaxDepth() const;
 
     protected:
-      const u8 * restrict treeData;
+      const void * restrict treeData;
       s32 treeDataLength;
       s32 treeDataNumFractionalBits;
       s32 treeMaxDepth;
     }; // class DecisionTree
-    
-    inline s32 DecisionTree::GetNumFractionalBits() const {
-      return this->treeDataNumFractionalBits;
-    }
-    
   } // namespace Embedded
 } // namespace Anki
 

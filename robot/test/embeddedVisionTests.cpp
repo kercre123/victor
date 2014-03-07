@@ -1176,9 +1176,6 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageGeneration)
 
 GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
 {
-  // TODO: Check that the image loaded correctly
-  //ASSERT_TRUE(IsBlockImage50_320x240Valid(&blockImage50_320x240[0], imagesAreEndianSwapped));
-
   const s32 scaleImage_thresholdMultiplier = 65536; // 1.0*(2^16)=65536
   //const s32 scaleImage_thresholdMultiplier = 49152; // .75*(2^16)=49152
   const s32 scaleImage_numPyramidLevels = 3;
@@ -1186,8 +1183,8 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
   const s32 component1d_minComponentWidth = 0;
   const s32 component1d_maxSkipDistance = 0;
 
-  const f32 minSideLength = 0.03f*MAX(blockImage50_320x240_HEIGHT,blockImage50_320x240_WIDTH);
-  const f32 maxSideLength = 0.97f*MIN(blockImage50_320x240_HEIGHT,blockImage50_320x240_WIDTH);
+  const f32 minSideLength = 0.03f*MAX(newFiducials_320x240_HEIGHT,newFiducials_320x240_WIDTH);
+  const f32 maxSideLength = 0.97f*MIN(newFiducials_320x240_HEIGHT,newFiducials_320x240_WIDTH);
 
   const s32 component_minimumNumPixels = static_cast<s32>(Round(minSideLength*minSideLength - (0.8f*minSideLength)*(0.8f*minSideLength)));
   const s32 component_maximumNumPixels = static_cast<s32>(Round(maxSideLength*maxSideLength - (0.8f*maxSideLength)*(0.8f*maxSideLength)));
@@ -1216,10 +1213,11 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
   ASSERT_TRUE(scratchOnchip.IsValid());
   ASSERT_TRUE(scratchCcm.IsValid());
 
-  Array<u8> image(blockImage50_320x240_HEIGHT, blockImage50_320x240_WIDTH, scratchOffchip);
-  image.Set(blockImage50_320x240, blockImage50_320x240_WIDTH*blockImage50_320x240_HEIGHT);
+  Array<u8> image(newFiducials_320x240_HEIGHT, newFiducials_320x240_WIDTH, scratchOffchip);
+  image.Set(newFiducials_320x240, newFiducials_320x240_WIDTH*newFiducials_320x240_HEIGHT);
 
-  ASSERT_TRUE(IsBlockImage50_320x240Valid(image.Pointer(0,0), false));
+  // TODO: Check that the image loaded correctly
+  //ASSERT_TRUE(IsnewFiducials_320x240Valid(image.Pointer(0,0), false));
 
   FixedLengthList<VisionMarker> markers(maxMarkers, scratchCcm);
   FixedLengthList<Array<f32> > homographies(maxMarkers, scratchCcm);
