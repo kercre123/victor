@@ -481,7 +481,7 @@ namespace Anki
           return lastResult;
         }
         
-        OrientedMarkerLabel multiClassLabel = static_cast<OrientedMarkerLabel>(READ_LEAF(tempLabel));
+        OrientedMarkerLabel multiClassLabel = static_cast<OrientedMarkerLabel>(tempLabel);
         
         EndBenchmark("vme_classify");
         
@@ -494,7 +494,7 @@ namespace Anki
           }
           EndBenchmark("vme_verify");
           
-          OrientedMarkerLabel verifyLabel = static_cast<OrientedMarkerLabel>(READ_LEAF(tempLabel));
+          OrientedMarkerLabel verifyLabel = static_cast<OrientedMarkerLabel>(tempLabel);
           if(verifyLabel == multiClassLabel)
           {
             // We have a valid, verified classification.
