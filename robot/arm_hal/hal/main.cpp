@@ -64,7 +64,14 @@ int main(void)
   Startup();
   TimerInit();
   UARTInit();
+  
+  UARTPutString("UART!\r\n");
+  
   SPIInit();
+  
+  UARTPutString("SPI!\r\n");
+  
+  FrontCameraInit();
   
   Anki::Cozmo::Robot::Init();
   
@@ -72,9 +79,8 @@ int main(void)
   {
   }
   
-  /*FrontCameraInit();
   
-  u32 startTime = GetMicroCounter();
+  /*u32 startTime = GetMicroCounter();
   
   for (int i = 0; i < 320*240; i++)
     m_buffer1[i] = 0;

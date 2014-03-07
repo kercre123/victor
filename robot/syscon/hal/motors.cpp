@@ -53,6 +53,12 @@ namespace
   
   // TODO: Get real values and do 16.16 fixed point
   
+  /* XXX: 
+      Wheel Drives: 283.5:1
+      Lift Drive: 729:1
+      Head Drive: 67.5:1
+  */
+  
   // Given a gear ratio of 91.7:1 and 125.67mm wheel circumference, we compute
   // the mm per tick as (using 4 magnets):
   const s32 MM_PER_TICK = 1; //125.67 / 182.0 / 4.0;
