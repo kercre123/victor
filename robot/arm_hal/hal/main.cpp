@@ -3,15 +3,6 @@
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "hal/portable.h"
 
-//extern "C" {
-//#include "lib/usb/usbd_cdc_core.h"
-//#include "lib/usb/usbd_usr.h"
-//#include "lib/usb/usb_conf.h"
-//#include "lib/usb/usbd_desc.h"
-//}
-
-//__ALIGN_BEGIN USB_OTG_CORE_HANDLE    USB_OTG_dev __ALIGN_END ;
-
 extern u8 m_buffer1[];
 
 namespace Anki
@@ -53,11 +44,6 @@ namespace Anki
       ReturnCode Step(){ return 0; }
       void Destroy(){ }
       
-      void MotorSetPower(MotorID motor, f32 power){ }
-      void MotorResetPosition(MotorID motor){ }
-      f32 MotorGetSpeed(MotorID motor){ return 0; }
-      f32 MotorGetPosition(MotorID motor){ return 0; }
-      
       const CameraInfo* GetHeadCamInfo(){ return 0; }
       const CameraInfo* GetMatCamInfo(){ return 0; }
       
@@ -79,26 +65,65 @@ int main(void)
   TimerInit();
   UARTInit();
   
-  UARTPutString("UART Initialized\r\n");
+  UARTPutString("UART!\r\n");
   
   SPIInit();
   
-  UARTPutString("Initializing Robot\r\n");
-  Anki::Cozmo::Robot::Init();
+  UARTPutString("SPI!\r\n");
   
+  FrontCameraInit();
+  
+#if 0
+  // Motor testing...
   while (1)
   {
-    Anki::Cozmo::Robot::step_LongExecution();
+    MotorSetPower(MOTOR_LEFT_WHEEL, 0.3f);
+    MicroWait(500000);
+    MotorSetPower(MOTOR_LEFT_WHEEL, -0.3f);
+    MicroWait(500000);
+    MotorSetPower(MOTOR_LEFT_WHEEL, 0.0f);
+    
+    MotorSetPower(MOTOR_RIGHT_WHEEL, 0.3f);
+    MicroWait(500000);
+    MotorSetPower(MOTOR_RIGHT_WHEEL, -0.3f);
+    MicroWait(500000);
+    MotorSetPower(MOTOR_RIGHT_WHEEL, 0.0f);
+    
+    MotorSetPower(MOTOR_LIFT, 0.3f);
+    MicroWait(500000);
+    MotorSetPower(MOTOR_LIFT, -0.3f);
+    MicroWait(500000);
+    MotorSetPower(MOTOR_LIFT, 0.0f);
+    
+    MotorSetPower(MOTOR_HEAD, 0.3f);
+    MicroWait(500000);
+    MotorSetPower(MOTOR_HEAD, -0.3f);
+    MicroWait(500000);
+    MotorSetPower(MOTOR_HEAD, -0.0f);
+    MicroWait(500000);
   }
   
-  /*FrontCameraInit();
+#else
   
-  u32 startTime = GetMicroCounter();
+  Anki::Cozmo::Robot::Init();
+  
+  while (Anki::Cozmo::Robot::step_LongExecution() == EXIT_SUCCESS)
+  {
+  }
+  
+#endif
+  
+  
+  /*u32 startTime = GetMicroCounter();
+  
+  for (int i = 0; i < 320*240; i++)
+    m_buffer1[i] = 0;
+  
   while (1)
   {
     //while (!isEOF) ;
     
-    //if (isEOF)
+    if (isEOF)
     {
       UARTPutChar(0xbe);
       UARTPutChar(0xef);
@@ -106,20 +131,17 @@ int main(void)
       UARTPutChar(0xff);
       UARTPutChar(0xbd);
       
-      for (int y = 0; y < 240; y++)
+      for (int y = 0; y < 240; y += 1)
       {
-        for (int x = 0; x < 320; x++)
+        for (int x = 0; x < 320; x += 1)
         {
           UARTPutChar(m_buffer1[y * 320*2 + x*2]);
         }
       }
       
       StartFrame();
-      //MicroWait(250000);
     }
-    
-    //MicroWait(2000);
-  }*/
+  } */
   
 }
 

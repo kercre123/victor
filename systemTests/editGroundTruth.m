@@ -26,15 +26,33 @@ end
 function editGroundTruth_OpeningFcn(hObject, eventdata, handles, varargin)
     global maxErrorSignalCorners;
     global maxTemplateCorners;
+    global maxFiducialMarkerCorners;
     global curDisplayType;
     global maxDisplayType;
     global savedDisplayParameters;
     global resolutionHorizontal;
     global resolutionVertical;
+    global curTestNumber;
+    global maxTestNumber;
+    global curSequenceNumber;
+    global maxSequenceNumber;
+    global curFrameNumber;
+    global maxFrameNumber;
+    global curSet;
+    global maxSet;
 
+    curTestNumber = 1;
+    maxTestNumber = 1;
+    curSequenceNumber = 1;
+    maxSequenceNumber = 1;
+    curFrameNumber = 1;
+    maxFrameNumber = 1;
+    curSet = 1;
+    maxSet = 2;
     maxErrorSignalCorners = 2;
     maxTemplateCorners = 4;
-    curDisplayType = 5;
+    maxFiducialMarkerCorners = 4;
+    curDisplayType = 1;
     maxDisplayType = 5;
     savedDisplayParameters = cell(5,1);
     savedDisplayParameters{1} = zeros(4,1);
@@ -45,7 +63,7 @@ function editGroundTruth_OpeningFcn(hObject, eventdata, handles, varargin)
     resolutionHorizontal = 640;
     resolutionVertical = 480;
 
-    setSavedDisplayParameters();
+    setFromSavedDisplayParameters();
 
     % Choose default command line output for editGroundTruth
     handles.output = hObject;
@@ -69,47 +87,53 @@ function varargout = editGroundTruth_OutputFcn(hObject, eventdata, handles)
 % Create Functions
 %
 
+function curTest_CreateFcn(hObject, eventdata, handles)
+    global curTestNumber;
+    setDefaultGuiObjectColor(hObject);
+    set(hObject,'String',num2str(curTestNumber));
+
 function curSequence_CreateFcn(hObject, eventdata, handles) %#ok<*INUSD>
     global curSequenceNumber;
-
-    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-        set(hObject,'BackgroundColor','white');
-    end
-
+    setDefaultGuiObjectColor(hObject);
     set(hObject,'String',num2str(curSequenceNumber));
-
-function curDisplayType_CreateFcn(hObject, eventdata, handles)
-    global curDisplayType;
-
-    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-        set(hObject,'BackgroundColor','white');
-    end
-
-    set(hObject,'String',num2str(curDisplayType));
 
 function curImage_CreateFcn(hObject, eventdata, handles)
     global curFrameNumber;
-
-    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-        set(hObject,'BackgroundColor','white');
-    end
-
+    setDefaultGuiObjectColor(hObject);
     set(hObject,'String',num2str(curFrameNumber));
+
+function curSet_CreateFcn(hObject, eventdata, handles)
+    global curSet;
+    setDefaultGuiObjectColor(hObject);
+    set(hObject,'String',num2str(curSet));
+
+function curDisplayType_CreateFcn(hObject, eventdata, handles)
+    global curDisplayType;
+    setDefaultGuiObjectColor(hObject);
+    set(hObject,'String',num2str(curDisplayType));
+
+function maxTest_CreateFcn(hObject, eventdata, handles)
+    global maxTestNumber;
+    set(hObject,'String',num2str(maxTestNumber));
 
 function maxSequence_CreateFcn(hObject, eventdata, handles)
     global maxSequenceNumber;
-
     set(hObject,'String',num2str(maxSequenceNumber));
 
 function maxImage_CreateFcn(hObject, eventdata, handles)
     global maxFrameNumber;
-
     set(hObject,'String',num2str(maxFrameNumber));
 
+function maxSet_CreateFcn(hObject, eventdata, handles)
+    global maxSet;
+    set(hObject,'String',num2str(maxSet));
+
+function maxDisplayType_CreateFcn(hObject, eventdata, handles)
+    global maxDisplayType;
+    set(hObject,'String',num2str(maxDisplayType));
+
 function configFilename_CreateFcn(hObject, eventdata, handles)
-    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-        set(hObject,'BackgroundColor','white');
-    end
+    setDefaultGuiObjectColor(hObject);
 
 function figure1_CreateFcn(hObject, eventdata, handles)
 
@@ -125,73 +149,40 @@ function configFilenameNoteText_CreateFcn(hObject, eventdata, handles)
 
 function previousTest_CreateFcn(hObject, eventdata, handles)
 
-function maxTest_CreateFcn(hObject, eventdata, handles)
-    global maxTestNumber;
-    set(hObject,'String',num2str(maxTestNumber));
-
 function nextTest_CreateFcn(hObject, eventdata, handles)
 
-function curTest_CreateFcn(hObject, eventdata, handles)
-    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-        set(hObject,'BackgroundColor','white');
-    end
+function curTestFilename_CreateFcn(hObject, eventdata, handles)
 
-    global curTestNumber;
-    set(hObject,'String',num2str(curTestNumber));
-
+function curImageFilename_CreateFcn(hObject, eventdata, handles)
 
 function displayParameter1_CreateFcn(hObject, eventdata, handles)
     global displayParameter1;
-
-    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-        set(hObject,'BackgroundColor','white');
-    end
-
+    setDefaultGuiObjectColor(hObject);
     set(hObject,'String',num2str(displayParameter1));
 
 function displayParameter2_CreateFcn(hObject, eventdata, handles)
     global displayParameter2;
-
-    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-        set(hObject,'BackgroundColor','white');
-    end
-
+    setDefaultGuiObjectColor(hObject);
     set(hObject,'String',num2str(displayParameter2));
 
 function displayParameter3_CreateFcn(hObject, eventdata, handles)
     global displayParameter3;
-
-    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-        set(hObject,'BackgroundColor','white');
-    end
-
+    setDefaultGuiObjectColor(hObject);
     set(hObject,'String',num2str(displayParameter3));
 
 function displayParameter4_CreateFcn(hObject, eventdata, handles)
     global displayParameter4;
-
-    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-        set(hObject,'BackgroundColor','white');
-    end
-
+    setDefaultGuiObjectColor(hObject);
     set(hObject,'String',num2str(displayParameter4));
-    
+
 function resolutionHorizontal_CreateFcn(hObject, eventdata, handles)
     global resolutionHorizontal;
-    
-    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-        set(hObject,'BackgroundColor','white');
-    end
-    
+    setDefaultGuiObjectColor(hObject);
     set(hObject,'String',num2str(resolutionHorizontal));
 
 function resolutionVertical_CreateFcn(hObject, eventdata, handles)
     global resolutionVertical;
-
-    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-        set(hObject,'BackgroundColor','white');
-    end
-    
+    setDefaultGuiObjectColor(hObject);
     set(hObject,'String',num2str(resolutionVertical));
     
 %
@@ -202,431 +193,282 @@ function resolutionVertical_CreateFcn(hObject, eventdata, handles)
 % Callback Functions
 %
 
-function previousSequence_Callback(hObject, eventdata, handles) %#ok<*INUSL>
-    global curSequenceNumber;
-
-    if curSequenceNumber > 1
-        curSequenceNumber = curSequenceNumber - 1;
-    end
-
-    sequenceChanged(handles, true);
-
-function nextSequence_Callback(hObject, eventdata, handles)
-    global curSequenceNumber;
-    global maxSequenceNumber;
-
-    if curSequenceNumber < maxSequenceNumber
-        curSequenceNumber = curSequenceNumber + 1;
-    end
-
-    sequenceChanged(handles, true);
-
-function curSequence_Callback(hObject, eventdata, handles)
-    global curSequenceNumber;
-    global maxSequenceNumber;
-
-    curSequenceNumberNew = str2double(get(hObject,'String'));
-
-    if curSequenceNumberNew <= maxSequenceNumber && curSequenceNumberNew >= 1
-        curSequenceNumber = curSequenceNumberNew;
-    end
-
-    sequenceChanged(handles);
-
-function previousImage_Callback(hObject, eventdata, handles) %#ok<*DEFNU>
-    global curFrameNumber;
-
-    if curFrameNumber > 1
-        curFrameNumber = curFrameNumber - 1;
-    end
-
-    sequenceChanged(handles);
-
-function nextImage_Callback(hObject, eventdata, handles)
-    global curFrameNumber;
-    global maxFrameNumber;
-
-    if curFrameNumber < maxFrameNumber
-        curFrameNumber = curFrameNumber + 1;
-    end
-
-    sequenceChanged(handles);
-
-function curImage_Callback(hObject, eventdata, handles)
-    global maxSequenceNumber;
-    global curFrameNumber;
-
-    curFrameNumberNew = str2double(get(hObject,'String'));
-
-    if curFrameNumberNew <= maxSequenceNumber && curFrameNumberNew >= 1
-        curFrameNumber = curFrameNumberNew;
-    end
-
-    sequenceChanged(handles);
-
 function configFilename_Callback(hObject, eventdata, handles)
     loadAllTestsFile()
 
+function setDefaultGuiObjectColor(hObject)
+    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+        set(hObject,'BackgroundColor','white');
+    end
+
 function previousTest_Callback(hObject, eventdata, handles)
     global curTestNumber;
-    global curSequenceNumber;
-
-    if curTestNumber > 1
-        curTestNumber = curTestNumber - 1;
-        curSequenceNumber = 1;
-    end
-
-    sequenceChanged(handles, true);
-
-function nextTest_Callback(hObject, eventdata, handles)
-    global curSequenceNumber;
-    global curTestNumber;
-    global maxTestNumber;
-
-    if curTestNumber < maxTestNumber
-        curTestNumber = curTestNumber + 1;
-        curSequenceNumber = 1;
-    end
-
-    sequenceChanged(handles, true);
-
-function curTest_Callback(hObject, eventdata, handles)
-    global curSequenceNumber;
-    global curTestNumber;
-    global maxTestNumber;
-
-    curTestNumberNew = str2double(get(hObject,'String'));
-
-    if curTestNumberNew <= maxTestNumber && curTestNumberNew >= 1
-        curTestNumber = curTestNumberNew;
-    end
-
-    curSequenceNumber = 1;
-
-    sequenceChanged(handles, true);
-
-function errorSignalPoints_Callback(hObject, eventdata, handles)
-    global pointsType;
-    if get(hObject,'Value')
-        pointsType = 'errorSignal';
-    end
-
-    sequenceChanged(handles);
-
-function templatePoints_Callback(hObject, eventdata, handles)
-    global pointsType;
-    if get(hObject,'Value')
-        pointsType = 'template';
-    end
-
-    sequenceChanged(handles);
-
-function nextImage2_Callback(hObject, eventdata, handles)
-    global curFrameNumber;
-    global maxFrameNumber;
-
-    curFrameNumber = curFrameNumber + 5;
-    curFrameNumber = max(1, min(maxFrameNumber, curFrameNumber));
-    sequenceChanged(handles);
-
-function nextImage3_Callback(hObject, eventdata, handles)
-    global curFrameNumber;
-    global maxFrameNumber;
-
-    curFrameNumber = curFrameNumber + 10;
-    curFrameNumber = max(1, min(maxFrameNumber, curFrameNumber));
-    sequenceChanged(handles);
-
-function nextImage4_Callback(hObject, eventdata, handles)
-    global curFrameNumber;
-    global maxFrameNumber;
-
-    curFrameNumber = curFrameNumber + 25;
-    curFrameNumber = max(1, min(maxFrameNumber, curFrameNumber));
-    sequenceChanged(handles);
-
-function previousImage2_Callback(hObject, eventdata, handles)
-    global curFrameNumber;
-    global maxFrameNumber;
-
-    curFrameNumber = curFrameNumber - 5;
-    curFrameNumber = max(1, min(maxFrameNumber, curFrameNumber));
-    sequenceChanged(handles);
-
-function previousImage3_Callback(hObject, eventdata, handles)
-    global curFrameNumber;
-    global maxFrameNumber;
-
-    curFrameNumber = curFrameNumber - 10;
-    curFrameNumber = max(1, min(maxFrameNumber, curFrameNumber));
-    sequenceChanged(handles);
-
-function previousImage4_Callback(hObject, eventdata, handles)
-    global curFrameNumber;
-    global maxFrameNumber;
-
-    curFrameNumber = curFrameNumber - 25;
-    curFrameNumber = max(1, min(maxFrameNumber, curFrameNumber));
-    sequenceChanged(handles);
-
-function nextSequence2_Callback(hObject, eventdata, handles)
-    global curSequenceNumber;
-    global maxSequenceNumber;
-
-    curSequenceNumber = curSequenceNumber + 5;
-    curSequenceNumber = max(1, min(maxSequenceNumber, curSequenceNumber));
-    sequenceChanged(handles, true);
-
-function nextSequence3_Callback(hObject, eventdata, handles)
-    global curSequenceNumber;
-    global maxSequenceNumber;
-
-    curSequenceNumber = curSequenceNumber + 10;
-    curSequenceNumber = max(1, min(maxSequenceNumber, curSequenceNumber));
-    sequenceChanged(handles, true);
-
-function nextSequence4_Callback(hObject, eventdata, handles)
-    global curSequenceNumber;
-    global maxSequenceNumber;
-
-    curSequenceNumber = curSequenceNumber + 25;
-    curSequenceNumber = max(1, min(maxSequenceNumber, curSequenceNumber));
-    sequenceChanged(handles, true);
-
-function previousSequence2_Callback(hObject, eventdata, handles)
-    global curSequenceNumber;
-    global maxSequenceNumber;
-
-    curSequenceNumber = curSequenceNumber - 5;
-    curSequenceNumber = max(1, min(maxSequenceNumber, curSequenceNumber));
-    sequenceChanged(handles, true);
-
-function previousSequence3_Callback(hObject, eventdata, handles)
-    global curSequenceNumber;
-    global maxSequenceNumber;
-
-    curSequenceNumber = curSequenceNumber - 10;
-    curSequenceNumber = max(1, min(maxSequenceNumber, curSequenceNumber));
-    sequenceChanged(handles, true);
-
-function previousSequence4_Callback(hObject, eventdata, handles)
-    global curSequenceNumber;
-    global maxSequenceNumber;
-
-    curSequenceNumber = curSequenceNumber - 25;
-    curSequenceNumber = max(1, min(maxSequenceNumber, curSequenceNumber));
-    sequenceChanged(handles, true);
-
-function nextTest2_Callback(hObject, eventdata, handles)
-    global curSequenceNumber;
-    global curTestNumber;
-    global maxTestNumber;
-
-    newTestNumber = curTestNumber + 5;
-    newTestNumber = max(1, min(maxTestNumber, newTestNumber));
-
-    if newTestNumber ~= curTestNumber
-        curSequenceNumber = 1;
-    end
-
-    curTestNumber = newTestNumber;
-
-    sequenceChanged(handles, true);
-
-function nextTest3_Callback(hObject, eventdata, handles)
-    global curSequenceNumber;
-    global curTestNumber;
-    global maxTestNumber;
-
-    newTestNumber = curTestNumber + 10;
-    newTestNumber = max(1, min(maxTestNumber, newTestNumber));
-
-    if newTestNumber ~= curTestNumber
-        curSequenceNumber = 1;
-    end
-
-    curTestNumber = newTestNumber;
-
-    sequenceChanged(handles, true);
-
-function nextTest4_Callback(hObject, eventdata, handles)
-    global curSequenceNumber;
-    global curTestNumber;
-    global maxTestNumber;
-
-    newTestNumber = curTestNumber + 25;
-    newTestNumber = max(1, min(maxTestNumber, newTestNumber));
-
-    if newTestNumber ~= curTestNumber
-        curSequenceNumber = 1;
-    end
-
-    curTestNumber = newTestNumber;
-
+    curTestNumber = curTestNumber - 1;
+    fixBounds();
     sequenceChanged(handles, true);
 
 function previousTest2_Callback(hObject, eventdata, handles)
     global curTestNumber;
-    global maxTestNumber;
-    global curSequenceNumber;
-
-    newTestNumber = curTestNumber - 5;
-    newTestNumber = max(1, min(maxTestNumber, newTestNumber));
-
-    if newTestNumber ~= curTestNumber
-        curSequenceNumber = 1;
-    end
-
-    curTestNumber = newTestNumber;
-
+    curTestNumber = curTestNumber - 5;
+    fixBounds();
     sequenceChanged(handles, true);
 
 function previousTest3_Callback(hObject, eventdata, handles)
     global curTestNumber;
-    global maxTestNumber;
-    global curSequenceNumber;
-
-    newTestNumber = curTestNumber - 10;
-    newTestNumber = max(1, min(maxTestNumber, newTestNumber));
-
-    if newTestNumber ~= curTestNumber
-        curSequenceNumber = 1;
-    end
-
-    curTestNumber = newTestNumber;
-
+    curTestNumber = curTestNumber - 100;
+    fixBounds();
     sequenceChanged(handles, true);
 
-function previousTest4_Callback(hObject, eventdata, handles)
+function nextTest_Callback(hObject, eventdata, handles)
     global curTestNumber;
-    global maxTestNumber;
-    global curSequenceNumber;
-
-    newTestNumber = curTestNumber - 25;
-    newTestNumber = max(1, min(maxTestNumber, newTestNumber));
-
-    if newTestNumber ~= curTestNumber
-        curSequenceNumber = 1;
-    end
-
-    curTestNumber = newTestNumber;
-
+    curTestNumber = curTestNumber + 1;
+    fixBounds();
     sequenceChanged(handles, true);
+
+function nextTest2_Callback(hObject, eventdata, handles)
+    global curTestNumber;
+    curTestNumber = curTestNumber + 5;
+    fixBounds();
+    sequenceChanged(handles, true);
+
+function nextTest3_Callback(hObject, eventdata, handles)
+    global curTestNumber;
+    curTestNumber = curTestNumber + 100;
+    fixBounds();
+    sequenceChanged(handles, true);
+
+function curTest_Callback(hObject, eventdata, handles)
+    global curTestNumber;
+    curTestNumber = str2double(get(hObject,'String'));
+    fixBounds();
+    sequenceChanged(handles, true);
+
+function previousSequence_Callback(hObject, eventdata, handles) %#ok<*INUSL>
+    global curSequenceNumber;
+    curSequenceNumber = curSequenceNumber - 1;
+    fixBounds();
+    sequenceChanged(handles, true);
+
+function previousSequence2_Callback(hObject, eventdata, handles)
+    global curSequenceNumber;
+    curSequenceNumber = curSequenceNumber - 5;
+    fixBounds();
+    sequenceChanged(handles, true);
+
+function previousSequence3_Callback(hObject, eventdata, handles)
+    global curSequenceNumber;
+    curSequenceNumber = curSequenceNumber - 100;
+    fixBounds();
+    sequenceChanged(handles, true);
+
+function nextSequence_Callback(hObject, eventdata, handles)
+    global curSequenceNumber;
+    curSequenceNumber = curSequenceNumber + 1;
+    fixBounds();
+    sequenceChanged(handles, true);
+
+function nextSequence2_Callback(hObject, eventdata, handles)
+    global curSequenceNumber;
+    curSequenceNumber = curSequenceNumber + 5;
+    fixBounds();
+    sequenceChanged(handles, true);
+
+function nextSequence3_Callback(hObject, eventdata, handles)
+    global curSequenceNumber;
+    curSequenceNumber = curSequenceNumber + 100;
+    fixBounds();
+    sequenceChanged(handles, true);
+
+function curSequence_Callback(hObject, eventdata, handles)
+    global curSequenceNumber;
+    curSequenceNumber = str2double(get(hObject,'String'));
+    fixBounds();
+    sequenceChanged(handles);
+
+function previousImage_Callback(hObject, eventdata, handles) %#ok<*DEFNU>
+    global curFrameNumber;
+    curFrameNumber = curFrameNumber - 1;
+    fixBounds();
+    sequenceChanged(handles);
+
+function previousImage2_Callback(hObject, eventdata, handles)
+    global curFrameNumber;
+    curFrameNumber = curFrameNumber - 5;
+    fixBounds();
+    sequenceChanged(handles);
+
+function previousImage3_Callback(hObject, eventdata, handles)
+    global curFrameNumber;
+    curFrameNumber = curFrameNumber - 100;
+    fixBounds();
+    sequenceChanged(handles);
+
+function nextImage_Callback(hObject, eventdata, handles)
+    global curFrameNumber;
+    curFrameNumber = curFrameNumber + 1;
+    fixBounds();
+    sequenceChanged(handles);
+
+function nextImage2_Callback(hObject, eventdata, handles)
+    global curFrameNumber;
+    curFrameNumber = curFrameNumber + 5;
+    fixBounds();
+    sequenceChanged(handles);
+
+function nextImage3_Callback(hObject, eventdata, handles)
+    global curFrameNumber;
+    curFrameNumber = curFrameNumber + 100;
+    fixBounds();
+    sequenceChanged(handles);
+
+function curImage_Callback(hObject, eventdata, handles)
+    global curFrameNumber;
+    curFrameNumber = str2double(get(hObject,'String'));
+    fixBounds();
+    sequenceChanged(handles);
+
+function nextSet_Callback(hObject, eventdata, handles)
+    global curSet;
+    curSet = curSet + 1;
+    fixBounds();
+    sequenceChanged(handles);
+
+function nextSet2_Callback(hObject, eventdata, handles)
+    global curSet;
+    curSet = curSet + 5;
+    fixBounds();
+    sequenceChanged(handles);
+
+function nextSet3_Callback(hObject, eventdata, handles)
+    global curSet;
+    curSet = curSet + 100;
+    fixBounds();
+    sequenceChanged(handles);
+
+function previousSet_Callback(hObject, eventdata, handles)
+    global curSet;
+    curSet = curSet - 1;
+    fixBounds();
+    sequenceChanged(handles);
+
+function previousSet2_Callback(hObject, eventdata, handles)
+    global curSet;
+    curSet = curSet - 5;
+    fixBounds();
+    sequenceChanged(handles);
+
+function previousSet3_Callback(hObject, eventdata, handles)
+    global curSet;
+    curSet = curSet - 100;
+    fixBounds();
+    sequenceChanged(handles);
+
+function curSet_Callback(hObject, eventdata, handles)
+    global curSet;
+    curSet = str2double(get(hObject,'String'));
+    fixBounds();
+    sequenceChanged(handles);
 
 function previousDisplayType_Callback(hObject, eventdata, handles)
     global curDisplayType;
-    global displayParameter1;
-    global displayParameter2;
-    global displayParameter3;
-    global displayParameter4;
-    global savedDisplayParameters;
-
-    savedDisplayParameters{curDisplayType}(1) = displayParameter1;
-    savedDisplayParameters{curDisplayType}(2) = displayParameter2;
-    savedDisplayParameters{curDisplayType}(3) = displayParameter3;
-    savedDisplayParameters{curDisplayType}(4) = displayParameter4;
-
-    if curDisplayType > 1
-        curDisplayType = curDisplayType - 1;
-    end
-
-    setSavedDisplayParameters();
-
+    setToSavedDisplayParameters();
+    curDisplayType = curDisplayType - 1;
+    fixBounds();
+    setFromSavedDisplayParameters();
     sequenceChanged(handles);
 
 function nextDisplayType_Callback(hObject, eventdata, handles)
     global curDisplayType;
-    global maxDisplayType;
-    global displayParameter1;
-    global displayParameter2;
-    global displayParameter3;
-    global displayParameter4;
-    global savedDisplayParameters;
-
-    savedDisplayParameters{curDisplayType}(1) = displayParameter1;
-    savedDisplayParameters{curDisplayType}(2) = displayParameter2;
-    savedDisplayParameters{curDisplayType}(3) = displayParameter3;
-    savedDisplayParameters{curDisplayType}(4) = displayParameter4;
-
-    if curDisplayType < maxDisplayType
-        curDisplayType = curDisplayType + 1;
-    end
-
-    setSavedDisplayParameters();
-
+    setToSavedDisplayParameters();
+    curDisplayType = curDisplayType + 1;
+    fixBounds();
+    setFromSavedDisplayParameters();
     sequenceChanged(handles);
 
 function curDisplayType_Callback(hObject, eventdata, handles)
     global curDisplayType;
-    global maxDisplayType;
-    global displayParameter1;
-    global displayParameter2;
-    global displayParameter3;
-    global displayParameter4;
-    global savedDisplayParameters;
-
-    savedDisplayParameters{curDisplayType}(1) = displayParameter1;
-    savedDisplayParameters{curDisplayType}(2) = displayParameter2;
-    savedDisplayParameters{curDisplayType}(3) = displayParameter3;
-    savedDisplayParameters{curDisplayType}(4) = displayParameter4;
-
-    curDisplayTypeNew = str2double(get(hObject,'String'));
-
-    if curDisplayTypeNew <= maxDisplayType && curDisplayTypeNew >= 1
-        curDisplayType = curDisplayTypeNew;
-    end
-
-    setSavedDisplayParameters();
-
+    setToSavedDisplayParameters();
+    curDisplayType = str2double(get(hObject,'String'));
+    fixBounds();
+    setFromSavedDisplayParameters();
     sequenceChanged(handles);
 
 function displayParameter1_Callback(hObject, eventdata, handles)
     global displayParameter1;
-
     displayParameter1 = str2double(get(hObject,'String'));
-
     sequenceChanged(handles);
 
 function displayParameter2_Callback(hObject, eventdata, handles)
     global displayParameter2;
-
     displayParameter2 = str2double(get(hObject,'String'));
-
     sequenceChanged(handles);
 
 function displayParameter3_Callback(hObject, eventdata, handles)
     global displayParameter3;
-
     displayParameter3 = str2double(get(hObject,'String'));
-
     sequenceChanged(handles);
 
 function displayParameter4_Callback(hObject, eventdata, handles)
     global displayParameter4;
-
     displayParameter4 = str2double(get(hObject,'String'));
-
     sequenceChanged(handles);
 
 function resolutionHorizontal_Callback(hObject, eventdata, handles)
     global resolutionHorizontal;
-    
     resolutionHorizontal = str2double(get(hObject,'String'));
-    
     sequenceChanged(handles, false, true);
-    
+
 function resolutionVertical_Callback(hObject, eventdata, handles)
     global resolutionVertical;
-    
     resolutionVertical = str2double(get(hObject,'String'));
-    
     sequenceChanged(handles, false, true);
+
+function labelingTypePanel_SelectionChangeFcn(hObject, eventdata, handles)
+    global pointsType;
+
+    if eventdata.NewValue == handles.errorSignalPoints
+        pointsType = 'errorSignal';
+        sequenceChanged(handles);
+    elseif eventdata.NewValue == handles.templatePoints
+        pointsType = 'template';
+        sequenceChanged(handles);
+    elseif eventdata.NewValue == handles.fiducialMarkerPoints
+        pointsType = 'fiducialMarker';
+        sequenceChanged(handles);
+    else
+        assert(false);
+    end
+
+% --- If Enable == 'on', executes on mouse press in 5 pixel border.
+% --- Otherwise, executes on mouse press in 5 pixel border or over curImageFilename.
+function curImageFilename_ButtonDownFcn(hObject, eventdata, handles)
+    global jsonData;
+    global dataPath;
+    global curSequenceNumber;
+    global curFrameNumber;
+    
+    curFilename = [dataPath, sprintf(jsonData.sequences{curSequenceNumber}.filenamePattern, jsonData.sequences{curSequenceNumber}.frameNumbers(curFrameNumber))];
+    clipboard('copy', curFilename)
+    disp(sprintf('Copied to clipboard: %s', curFilename));
     
 %
 % End Callback Functions
 %
 
-function setSavedDisplayParameters()
+function setToSavedDisplayParameters()
+    global curDisplayType;
+    global displayParameter1;
+    global displayParameter2;
+    global displayParameter3;
+    global displayParameter4;
+    global savedDisplayParameters;
+
+    savedDisplayParameters{curDisplayType}(1) = displayParameter1;
+    savedDisplayParameters{curDisplayType}(2) = displayParameter2;
+    savedDisplayParameters{curDisplayType}(3) = displayParameter3;
+    savedDisplayParameters{curDisplayType}(4) = displayParameter4;
+
+function setFromSavedDisplayParameters()
     global curDisplayType;
     global displayParameter1;
     global displayParameter2;
@@ -645,10 +487,15 @@ function loadConfigFile()
     global jsonConfigFilename;
     global jsonData;
     global dataPath;
+    global allHandles;
 
     jsonConfigFilename = [dataPath, jsonAllTestsData.tests{curTestNumber}];
     jsonConfigFilename = strrep(jsonConfigFilename, '\', '/');
 
+    slashIndexes = strfind(jsonConfigFilename, '/');
+    jsonConfigFilenameWithoutPath = jsonConfigFilename((slashIndexes(end)+1):end);
+    set(allHandles.curTestFilename, 'String', jsonConfigFilenameWithoutPath);
+    
     jsonData = loadjson(jsonConfigFilename);
 
     if ~iscell(jsonData.sequences)
@@ -694,24 +541,64 @@ function loadAllTestsFile()
 
     image = rand([480,640]);
 
-    pointer = [
-        nan, nan, nan, nan, 2,   2,   2,   2,   2,   2,   2,   2,   nan, nan, nan, nan;
-        nan, nan, nan, 2,   nan, nan, nan, nan, nan, nan, nan, nan, 2,   nan, nan, nan;
-        nan, nan, 2,   nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, 2,   nan, nan;
-        nan, 2,   nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, 2,   nan;
-        2,   nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, 2;
-        2,   nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, 2;
-        2,   nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, 2;
-        2,   nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, 2;
-        2,   nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, 2;
-        2,   nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, 2;
-        2,   nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, 2;
-        2,   nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, 2;
-        nan, 2,   nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, 2,   nan;
-        nan, nan, 2,   nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, 2,   nan, nan;
-        nan, nan, nan, 2,   nan, nan, nan, nan, nan, nan, nan, nan, 2,   nan, nan, nan;
-        nan, nan, nan, nan, 2,   2,   2,   2,   2,   2,   2,   2,   nan, nan, nan, nan;];
+    N = nan;
+    
+% White ring 1-width
+%     pointer = [
+%         N, N, N, N, 2, 2, 2, 2, 2, 2, 2, 2, N, N, N, N;
+%         N, N, N, 2, N, N, N, N, N, N, N, N, 2, N, N, N;
+%         N, N, 2, N, N, N, N, N, N, N, N, N, N, 2, N, N;
+%         N, 2, N, N, N, N, N, N, N, N, N, N, N, N, 2, N;
+%         2, N, N, N, N, N, N, N, N, N, N, N, N, N, N, 2;
+%         2, N, N, N, N, N, N, N, N, N, N, N, N, N, N, 2;
+%         2, N, N, N, N, N, N, N, N, N, N, N, N, N, N, 2;
+%         2, N, N, N, N, N, N, N, N, N, N, N, N, N, N, 2;
+%         2, N, N, N, N, N, N, N, N, N, N, N, N, N, N, 2;
+%         2, N, N, N, N, N, N, N, N, N, N, N, N, N, N, 2;
+%         2, N, N, N, N, N, N, N, N, N, N, N, N, N, N, 2;
+%         2, N, N, N, N, N, N, N, N, N, N, N, N, N, N, 2;
+%         N, 2, N, N, N, N, N, N, N, N, N, N, N, N, 2, N;
+%         N, N, 2, N, N, N, N, N, N, N, N, N, N, 2, N, N;
+%         N, N, N, 2, N, N, N, N, N, N, N, N, 2, N, N, N;
+%         N, N, N, N, 2, 2, 2, 2, 2, 2, 2, 2, N, N, N, N;];
 
+% Alternating white-black ring 1-width
+%     pointer = [
+%         N, N, N, N, 2, 1, 2, 1, 2, 1, 2, 1, N, N, N, N;
+%         N, N, N, 1, N, N, N, N, N, N, N, N, 2, N, N, N;
+%         N, N, 2, N, N, N, N, N, N, N, N, N, N, 1, N, N;
+%         N, 1, N, N, N, N, N, N, N, N, N, N, N, N, 2, N;
+%         2, N, N, N, N, N, N, N, N, N, N, N, N, N, N, 1;
+%         1, N, N, N, N, N, N, N, N, N, N, N, N, N, N, 2;
+%         2, N, N, N, N, N, N, N, N, N, N, N, N, N, N, 1;
+%         1, N, N, N, N, N, N, N, N, N, N, N, N, N, N, 2;
+%         2, N, N, N, N, N, N, N, N, N, N, N, N, N, N, 1;
+%         1, N, N, N, N, N, N, N, N, N, N, N, N, N, N, 2;
+%         2, N, N, N, N, N, N, N, N, N, N, N, N, N, N, 1;
+%         1, N, N, N, N, N, N, N, N, N, N, N, N, N, N, 2;
+%         N, 2, N, N, N, N, N, N, N, N, N, N, N, N, 1, N;
+%         N, N, 1, N, N, N, N, N, N, N, N, N, N, 2, N, N;
+%         N, N, N, 2, N, N, N, N, N, N, N, N, 1, N, N, N;
+%         N, N, N, N, 1, 2, 1, 2, 1, 2, 1, 2, N, N, N, N;];
+
+% Alternating white-black ring 2-width
+    pointer = [
+        N, N, N, N, 2, 1, 2, 1, 2, 1, 2, 1, N, N, N, N;
+        N, N, N, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, N, N, N;
+        N, N, 2, 1, N, N, N, N, N, N, N, N, 2, 1, N, N;
+        N, 1, 2, N, N, N, N, N, N, N, N, N, N, 1, 2, N;
+        2, 2, N, N, N, N, N, N, N, N, N, N, N, N, 1, 1;
+        1, 1, N, N, N, N, N, N, N, N, N, N, N, N, 2, 2;
+        2, 2, N, N, N, N, N, N, N, N, N, N, N, N, 1, 1;
+        1, 1, N, N, N, N, N, N, N, N, N, N, N, N, 2, 2;
+        2, 2, N, N, N, N, N, N, N, N, N, N, N, N, 1, 1;
+        1, 1, N, N, N, N, N, N, N, N, N, N, N, N, 2, 2;
+        2, 2, N, N, N, N, N, N, N, N, N, N, N, N, 1, 1;
+        1, 1, N, N, N, N, N, N, N, N, N, N, N, N, 2, 2;
+        N, 2, 1, N, N, N, N, N, N, N, N, N, N, 2, 1, N;
+        N, N, 1, 2, N, N, N, N, N, N, N, N, 1, 2, N, N;
+        N, N, N, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, N, N, N;
+        N, N, N, N, 1, 2, 1, 2, 1, 2, 1, 2, N, N, N, N;];
 
     set(imageFigureHandle,'Pointer','custom','PointerShapeCData',pointer,'PointerShapeHotSpot',(size(pointer))/2)
 
@@ -745,6 +632,132 @@ function index = findFrameNumberIndex(jsonData, sequenceNumberIndex, frameNumber
 
     return;
 
+function sanitizeGroundTruthJson()
+% Don't call this function directly, call fixBounds() instead
+    global jsonData;
+    global curSequenceNumber;
+    global curFrameNumber;
+
+    % Add ground truth field, if not there already
+    if ~isfield(jsonData.sequences{curSequenceNumber}, 'groundTruth')
+        jsonData.sequences{curSequenceNumber}.groundTruth = {};
+    end
+    
+    if ~iscell(jsonData.sequences{curSequenceNumber}.groundTruth)
+        jsonData.sequences{curSequenceNumber}.groundTruth = {jsonData.sequences{curSequenceNumber}.groundTruth};
+    end
+    
+    % For all indexes, remove empty sets of fiducialMarkerCorners
+    for iSequence = 1:length(jsonData.sequences)
+        for iFrame = 1:length(jsonData.sequences{iSequence}.groundTruth)
+            if isfield(jsonData.sequences{iSequence}.groundTruth{iFrame}, 'fiducialMarkerCorners')
+                if isempty(jsonData.sequences{iSequence}.groundTruth{iFrame}.fiducialMarkerCorners)
+                    jsonData.sequences{iSequence}.groundTruth{iFrame}.fiducialMarkerCorners = {{}};
+                end
+                
+                if ~iscell(jsonData.sequences{iSequence}.groundTruth{iFrame}.fiducialMarkerCorners{1})
+                    jsonData.sequences{iSequence}.groundTruth{iFrame}.fiducialMarkerCorners = {jsonData.sequences{iSequence}.groundTruth{iFrame}.fiducialMarkerCorners};
+                end
+                
+                numSets = length(jsonData.sequences{iSequence}.groundTruth{iFrame}.fiducialMarkerCorners);
+                validSets = zeros(numSets,1);
+                for iSet = 1:numSets
+                    if ~isempty(jsonData.sequences{iSequence}.groundTruth{iFrame}.fiducialMarkerCorners{iSet})
+                        validSets(iSet) = 1;
+                    end
+                end
+                
+                validSets = logical(validSets);
+                jsonData.sequences{iSequence}.groundTruth{iFrame}.fiducialMarkerCorners = jsonData.sequences{iSequence}.groundTruth{iFrame}.fiducialMarkerCorners(validSets);
+            end
+        end
+    end
+    
+    index = findFrameNumberIndex(jsonData, curSequenceNumber, curFrameNumber);
+
+    if index ~= -1
+        % Add errorSignalCorners, if not there already
+        if ~isfield(jsonData.sequences{curSequenceNumber}.groundTruth{index}, 'errorSignalCorners') || isempty(jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners)
+            jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners = {};
+        end
+
+        if ~iscell(jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners)
+            jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners = {jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners};
+        end
+
+        % Add templateCorners, if not there already
+        if ~isfield(jsonData.sequences{curSequenceNumber}.groundTruth{index}, 'templateCorners') || isempty(jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners)
+            jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners = {};
+        end
+
+        if ~iscell(jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners)
+            jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners = {jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners};
+        end
+
+        % Add fiducialMarkerCorners, if not there already
+        if ~isfield(jsonData.sequences{curSequenceNumber}.groundTruth{index}, 'fiducialMarkerCorners') || isempty(jsonData.sequences{curSequenceNumber}.groundTruth{index}.fiducialMarkerCorners)
+            jsonData.sequences{curSequenceNumber}.groundTruth{index}.fiducialMarkerCorners = {{}};
+        end
+
+%         if ~iscell(jsonData.sequences{curSequenceNumber}.groundTruth{index}.fiducialMarkerCorners{1})
+%             jsonData.sequences{curSequenceNumber}.groundTruth{index}.fiducialMarkerCorners = {jsonData.sequences{curSequenceNumber}.groundTruth{index}.fiducialMarkerCorners};
+%         end
+
+        % Add an empty set at the end of the fiducialMarkerCorners list
+        if ~isempty(jsonData.sequences{curSequenceNumber}.groundTruth{index}.fiducialMarkerCorners{end})
+            jsonData.sequences{curSequenceNumber}.groundTruth{index}.fiducialMarkerCorners{end+1} = {};
+        end
+    end
+
+function boundsFixed = fixBounds()
+    global curTestNumber;
+    global maxTestNumber;
+    global curSequenceNumber;
+    global maxSequenceNumber;
+    global curFrameNumber;
+    global maxFrameNumber;
+    global curSet;
+    global maxSet;
+    global curDisplayType;
+    global maxDisplayType;
+    global pointsType;
+    global jsonData;
+
+    boundsFixed = false;
+
+    curTestNumberOriginal = curTestNumber;
+    curSequenceNumberOriginal = curSequenceNumber;
+    curFrameNumberOriginal = curFrameNumber;
+    curSetOriginal = curSet;
+
+    curTestNumber = max(1, min(maxTestNumber, curTestNumber));
+    curSequenceNumber = max(1, min(maxSequenceNumber, curSequenceNumber));
+    curFrameNumber = max(1, min(maxFrameNumber, curFrameNumber));
+    curDisplayType = max(1, min(maxDisplayType, curDisplayType));
+
+    sanitizeGroundTruthJson();
+
+    if ~strcmpi(pointsType, 'fiducialMarker')
+        maxSet = 1;
+    else
+        index = findFrameNumberIndex(jsonData, curSequenceNumber, curFrameNumber);
+        
+        if index == -1
+            maxSet = 1;
+        else
+            maxSet = length(jsonData.sequences{curSequenceNumber}.groundTruth{index}.fiducialMarkerCorners);
+        end
+    end
+
+    curSet = max(1, min(maxSet, curSet));
+
+    if curTestNumberOriginal ~= curTestNumber
+        curSequenceNumber = 1;
+        boundsFixed = true;
+    elseif curSequenceNumberOriginal ~= curSequenceNumber || curFrameNumberOriginal ~= curFrameNumber || curSetOriginal ~= curSet || curDisplayType ~= maxDisplayType
+        boundsFixed = true;
+    end
+
 function sequenceChanged(handles, resetAll, resetZoomOnly)
     global jsonConfigFilename;
     global jsonData;
@@ -755,6 +768,8 @@ function sequenceChanged(handles, resetAll, resetZoomOnly)
     global maxSequenceNumber;
     global curFrameNumber;
     global maxFrameNumber;
+    global curSet;
+    global maxSet;
     global curDisplayType;
     global maxDisplayType;
     global displayParameter1;
@@ -771,18 +786,12 @@ function sequenceChanged(handles, resetAll, resetZoomOnly)
     if ~exist('resetAll', 'var')
         resetAll = false;
     end
-    
+
     if ~exist('resetZoomOnly', 'var')
         resetZoomOnly = false;
     end
 
-    if curSequenceNumber < 1
-        curSequenceNumber = 1;
-    end
-
-    if curSequenceNumber > maxSequenceNumber
-        curSequenceNumber = maxSequenceNumber;
-    end
+    fixBounds();
 
     if resetAll
         try
@@ -802,18 +811,22 @@ function sequenceChanged(handles, resetAll, resetZoomOnly)
                 jsonData.sequences{i}.groundTruth = {jsonData.sequences{i}.groundTruth};
             end
         end
-    else
-        if curFrameNumber < 1
-            curFrameNumber = 1;
-        end
-
-        if curFrameNumber > maxFrameNumber
-            curFrameNumber = maxFrameNumber;
-        end
+%     else
+%         if curFrameNumber < 1
+%             curFrameNumber = 1;
+%         end
+%
+%         if curFrameNumber > maxFrameNumber
+%             curFrameNumber = maxFrameNumber;
+%         end
     end
 
     curFilename = [dataPath, sprintf(jsonData.sequences{curSequenceNumber}.filenamePattern, jsonData.sequences{curSequenceNumber}.frameNumbers(curFrameNumber))];
     image = imread(curFilename);
+    
+    slashIndexes = strfind(curFilename, '/');
+    curFilenameWithoutPath = curFilename((slashIndexes(end)+1):end);
+    set(handles.curImageFilename, 'String', curFilenameWithoutPath)
 
     set(handles.curTest, 'String', num2str(curTestNumber))
     set(handles.maxTest, 'String', num2str(maxTestNumber))
@@ -821,6 +834,8 @@ function sequenceChanged(handles, resetAll, resetZoomOnly)
     set(handles.maxSequence, 'String', num2str(maxSequenceNumber))
     set(handles.curImage, 'String', num2str(curFrameNumber))
     set(handles.maxImage, 'String', num2str(maxFrameNumber))
+    set(handles.curSet, 'String', num2str(curSet))
+    set(handles.maxSet, 'String', num2str(maxSet))
     set(handles.curDisplayType, 'String', num2str(curDisplayType))
     set(handles.maxDisplayType, 'String', num2str(maxDisplayType))
     set(handles.displayParameter1, 'String', num2str(displayParameter1))
@@ -834,16 +849,28 @@ function sequenceChanged(handles, resetAll, resetZoomOnly)
         set(handles.templatePoints, 'Enable', 'on');
     else
         set(handles.templatePoints, 'Enable', 'off');
-        pointsType = 'errorSignal';
+        if strcmpi(pointsType, 'template')
+            pointsType = 'errorSignal';
+        end
     end
 
     if strcmp(pointsType, 'errorSignal')
         set(handles.errorSignalPoints, 'Value', 1);
         set(handles.templatePoints, 'Value', 0);
+        set(handles.fiducialMarkerPoints, 'Value', 0);
     elseif strcmp(pointsType, 'template')
         set(handles.errorSignalPoints, 'Value', 0);
         set(handles.templatePoints, 'Value', 1);
+        set(handles.fiducialMarkerPoints, 'Value', 0);
+    elseif strcmp(pointsType, 'fiducialMarker')
+        set(handles.errorSignalPoints, 'Value', 0);
+        set(handles.templatePoints, 'Value', 0);
+        set(handles.fiducialMarkerPoints, 'Value', 1);
+    else
+        assert(false);
     end
+
+    fixBounds();
 
     index = findFrameNumberIndex(jsonData, curSequenceNumber, curFrameNumber);
 
@@ -858,8 +885,8 @@ function sequenceChanged(handles, resetAll, resetZoomOnly)
         imageResized = imresize(image, [resolutionVertical,resolutionHorizontal], 'nearest');
     else
         imageResized = image;
-    end    
-    
+    end
+
     if curDisplayType == 1
         % original image
         set(handles.panelDisplayType, 'Title', 'Display Type: Original')
@@ -906,12 +933,12 @@ function sequenceChanged(handles, resetAll, resetZoomOnly)
 %         kernel = fspecial('gaussian',[5 1],1.5); % the default kernel
         h = 11;
         h2 = floor(h/2);
-        
+
         % normal +-1 filter
 %         kernel = ones(h,h);
 %         kernel(h2:end, h2:end) = -1;
 %         kernel = kernel / sum(kernel(:));
-% 
+%
 %         imageResized = imfilter(double(imageResized), kernel);
 %         imageResized = imageResized - min(imageResized(:));
 %         imageResized = imageResized / max(imageResized(:));
@@ -919,12 +946,12 @@ function sequenceChanged(handles, resetAll, resetZoomOnly)
 %         imageResized = imageResized / max(imageResized(:));
 
         % template
-        
+
         kernel = 220*ones(h,h);
         kernel(h2:end, h2:end) = 40;
-        
+
         imageResized = double(imageResized);
-        
+
         filteredImageA = zeros(size(imageResized));
         for y = (1+h2):(size(imageResized,1)-h2)
             for x = (1+h2):(size(imageResized,2)-h2)
@@ -932,7 +959,7 @@ function sequenceChanged(handles, resetAll, resetZoomOnly)
                 filteredImageA(y,x) = sad;
             end
         end
-        
+
         kernel = imrotate(kernel, 270);
         filteredImageB = zeros(size(imageResized));
         for y = (1+h2):(size(imageResized,1)-h2)
@@ -941,9 +968,9 @@ function sequenceChanged(handles, resetAll, resetZoomOnly)
                 filteredImageB(y,x) = sad;
             end
         end
-        
+
         filteredImage = min(filteredImageA, filteredImageB);
-        
+
         imageResized = filteredImage;
         imageResized = imageResized / max(imageResized(:));
         imageResized = 10.^(imageResized);
@@ -953,9 +980,9 @@ function sequenceChanged(handles, resetAll, resetZoomOnly)
     elseif curDisplayType == 5
         kernel = ones(5,5);
         kernel = kernel / sum(kernel(:));
-        
+
         filteredImage = imfilter(imageResized, kernel);
-        
+
         ulImage = zeros(size(imageResized));
         offset = 5;
         for y = (1+offset):(size(imageResized,1)-offset)
@@ -966,11 +993,11 @@ function sequenceChanged(handles, resetAll, resetZoomOnly)
                                filteredImage(y, x);
             end
         end
-        
+
         ulImage = ulImage / 255;
-        
+
         figure(1); imshow(ulImage);
-        
+
         figure(100);
         kernel = fspecial('gaussian',[displayParameter1 1], displayParameter2);
         c = cornermetric(imageResized, 'Harris', 'FilterCoefficients', kernel);
@@ -978,7 +1005,7 @@ function sequenceChanged(handles, resetAll, resetZoomOnly)
         cp = cp / max(cp(:));
         imageResized = cp;
     end
-    
+
     imageHandle = imshow(imageResized);
 
     if ~resetAll && ~resetZoomOnly
@@ -992,32 +1019,20 @@ function sequenceChanged(handles, resetAll, resetZoomOnly)
     if index ~= -1
         xScaleInv = resolutionHorizontal / size(image,2);
         yScaleInv = resolutionVertical / size(image,1);
-        
+
         if strcmp(pointsType, 'errorSignal')
-            if ~isfield(jsonData.sequences{curSequenceNumber}.groundTruth{index}, 'errorSignalCorners') || isempty(jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners)
-                jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners = {};
-            end
-
-            if ~iscell(jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners)
-                jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners = {jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners};
-            end
-
             allCorners = jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners;
-            plotType = 'r+';
 
             if length(allCorners) == 2
                 plotHandle = plot(xScaleInv*([allCorners{1}.x,allCorners{2}.x]+0.5), yScaleInv*([allCorners{1}.y,allCorners{2}.y]+0.5), 'r');
                 set(plotHandle, 'HitTest', 'off')
             end
+
+            for i = 1:length(allCorners)
+                scatterHandle = scatter(xScaleInv*(allCorners{i}.x+0.5), yScaleInv*(allCorners{i}.y+0.5), 'r+');
+                set(scatterHandle, 'HitTest', 'off')
+            end
         elseif strcmp(pointsType, 'template')
-            if ~isfield(jsonData.sequences{curSequenceNumber}.groundTruth{index}, 'templateCorners') || isempty(jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners)
-                jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners = {};
-            end
-
-            if ~iscell(jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners)
-                jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners = {jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners};
-            end
-
             allCorners = jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners;
 
             if length(allCorners) == 4
@@ -1046,20 +1061,69 @@ function sequenceChanged(handles, resetAll, resetZoomOnly)
                 set(plotHandle, 'HitTest', 'off')
             end
 
-            plotType = 'b+';
+            for i = 1:length(allCorners)
+                scatterHandle = scatter(xScaleInv*(allCorners{i}.x+0.5), yScaleInv*(allCorners{i}.y+0.5), 'b+');
+                set(scatterHandle, 'HitTest', 'off')
+            end
+        elseif strcmp(pointsType, 'fiducialMarker')
+            maxSet = length(jsonData.sequences{curSequenceNumber}.groundTruth{index}.fiducialMarkerCorners);
+
+            for iSet = 1:length(jsonData.sequences{curSequenceNumber}.groundTruth{index}.fiducialMarkerCorners)
+                if iSet == curSet
+                    linePlotType = 'g';
+                else
+                    linePlotType = 'y';
+                end
+
+                allCorners = jsonData.sequences{curSequenceNumber}.groundTruth{index}.fiducialMarkerCorners{iSet};
+                if length(allCorners) == 4
+                    % first, sort the corners
+                    cornersX = [allCorners{1}.x, allCorners{2}.x, allCorners{3}.x, allCorners{4}.x];
+                    cornersY = [allCorners{1}.y, allCorners{2}.y, allCorners{3}.y, allCorners{4}.y];
+
+                    centerX = mean(cornersX);
+                    centerY = mean(cornersY);
+
+                    [thetas,~] = cart2pol(cornersX-centerX, cornersY-centerY);
+                    [~,sortedIndexes] = sort(thetas);
+
+                    for i = 1:4
+                        jsonData.sequences{curSequenceNumber}.groundTruth{index}.fiducialMarkerCorners{iSet}{i}.x = cornersX(sortedIndexes(i));
+                        jsonData.sequences{curSequenceNumber}.groundTruth{index}.fiducialMarkerCorners{iSet}{i}.y = cornersY(sortedIndexes(i));
+                    end
+
+                    allCorners = jsonData.sequences{curSequenceNumber}.groundTruth{index}.fiducialMarkerCorners{iSet};
+
+                    % second, plot the sorted corners
+                    plotHandle = plot(...
+                        xScaleInv*([allCorners{1}.x,allCorners{2}.x,allCorners{3}.x,allCorners{4}.x,allCorners{1}.x]+0.5),...
+                        yScaleInv*([allCorners{1}.y,allCorners{2}.y,allCorners{3}.y,allCorners{4}.y,allCorners{1}.y]+0.5),...
+                        linePlotType);
+                    set(plotHandle, 'HitTest', 'off')
+                end
+
+                for i = 1:length(allCorners)
+                    scatterHandle = scatter(xScaleInv*(allCorners{i}.x+0.5), yScaleInv*(allCorners{i}.y+0.5), [linePlotType,'+']);
+                    set(scatterHandle, 'HitTest', 'off')
+                end
+            end % for iSet = 1:length(jsonData.sequences{curSequenceNumber}.groundTruth{index}.fiducialMarkerCorners)
+        else
+            assert(false);
         end
 
-        for i = 1:length(allCorners)
-            scatterHandle = scatter(xScaleInv*(allCorners{i}.x+0.5), yScaleInv*(allCorners{i}.y+0.5), plotType);
-            set(scatterHandle, 'HitTest', 'off')
-        end
     end
 
-function ButtonClicked(hObject, eventdata, handles)
+function Save()
+    global jsonData;
     global jsonConfigFilename;
+    fixBounds();
+    savejson('',jsonData,jsonConfigFilename);
+    
+function ButtonClicked(hObject, eventdata, handles)
     global jsonData;
     global curSequenceNumber;
     global curFrameNumber;
+    global curSet;
     global image;
     global allHandles;
     global imageFigureHandle;
@@ -1067,9 +1131,10 @@ function ButtonClicked(hObject, eventdata, handles)
     global pointsType;
     global maxErrorSignalCorners;
     global maxTemplateCorners;
+    global maxFiducialMarkerCorners;
     global resolutionHorizontal;
     global resolutionVertical;
-    
+
     axesHandle  = get(imageHandle,'Parent');
     imPosition = get(axesHandle, 'CurrentPoint') - 0.5;
 
@@ -1079,63 +1144,52 @@ function ButtonClicked(hObject, eventdata, handles)
         return;
     end
 
+    fixBounds();
+
     index = findFrameNumberIndex(jsonData, curSequenceNumber, curFrameNumber);
 
     if index == -1
-        if ~isfield(jsonData.sequences{curSequenceNumber}, 'groundTruth')
-            jsonData.sequences{curSequenceNumber}.groundTruth = {};
-        end
-
         allFrameNumbers = jsonData.sequences{curSequenceNumber}.frameNumbers;
         jsonData.sequences{curSequenceNumber}.groundTruth{end+1}.frameNumber = allFrameNumbers(curFrameNumber);
-%         jsonData.sequences{curSequenceNumber}.groundTruth{end}.errorSignalCorners = {};
         index = length(jsonData.sequences{curSequenceNumber}.groundTruth);
     end
+    
+    fixBounds();
 
     % disp(index)
     buttonType = get(imageFigureHandle,'selectionType');
     if strcmp(buttonType, 'normal') % left click
         xScale = size(image,2) / resolutionHorizontal;
         yScale = size(image,1) / resolutionVertical;
-        
+
         newPoint.x = imPosition(1) * xScale;
         newPoint.y = imPosition(2) * yScale;
-    
+
         if strcmp(pointsType, 'errorSignal')
-            if ~isfield(jsonData.sequences{curSequenceNumber}.groundTruth{index}, 'errorSignalCorners') || isempty(jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners)
-                jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners = {};
-            end
-
-            if ~iscell(jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners)
-                jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners = {jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners};
-            end
-
             if(length(jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners) < maxErrorSignalCorners)
                 jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners{end+1} = newPoint;
             else
                 disp(sprintf('Cannot add point, because only %d error signal corners are allowed', maxErrorSignalCorners));
             end
         elseif strcmp(pointsType, 'template')
-            if ~isfield(jsonData.sequences{curSequenceNumber}.groundTruth{index}, 'templateCorners') || isempty(jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners)
-                jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners = {};
-            end
-
-            if ~iscell(jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners)
-                jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners = {jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners};
-            end
-
             if(length(jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners) < maxTemplateCorners)
                 jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners{end+1} = newPoint;
              else
                 disp(sprintf('Cannot add point, because only %d template corners are allowed', maxTemplateCorners));
             end
+        elseif strcmp(pointsType, 'fiducialMarker')
+            if(length(jsonData.sequences{curSequenceNumber}.groundTruth{index}.fiducialMarkerCorners{curSet}) < maxFiducialMarkerCorners)
+                jsonData.sequences{curSequenceNumber}.groundTruth{index}.fiducialMarkerCorners{curSet}{end+1} = newPoint;
+            else
+                disp(sprintf('Cannot add point, because only %d fiduciual marker corners are allowed', maxFiducialMarkerCorners));
+            end
         end
 
-        savejson('',jsonData,jsonConfigFilename);
+        Save();
     elseif strcmp(buttonType, 'alt') % right click
         xScaleInv = resolutionHorizontal / size(image,2);
         yScaleInv = resolutionVertical / size(image,1);
-        
+
         minDist = Inf;
         minInd = -1;
 
@@ -1149,11 +1203,10 @@ function ButtonClicked(hObject, eventdata, handles)
                 end
             end
 
-
             if minInd ~= -1 && minDist < (min(size(image,1),size(image,2))/50)
                 newCorners = jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners([1:(minInd-1),(minInd+1):end]);
                 jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners = newCorners;
-                savejson('',jsonData,jsonConfigFilename);
+                Save();
             end
         elseif strcmp(pointsType, 'template')
             for i = 1:length(jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners)
@@ -1165,21 +1218,30 @@ function ButtonClicked(hObject, eventdata, handles)
                 end
             end
 
-
             if minInd ~= -1 && minDist < (min(size(image,1),size(image,2))/50)
                 newCorners = jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners([1:(minInd-1),(minInd+1):end]);
                 jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners = newCorners;
-                savejson('',jsonData,jsonConfigFilename);
+                Save();
+            end
+        elseif strcmp(pointsType, 'fiducialMarker')
+            for i = 1:length(jsonData.sequences{curSequenceNumber}.groundTruth{index}.fiducialMarkerCorners{curSet})
+                curCorner = jsonData.sequences{curSequenceNumber}.groundTruth{index}.fiducialMarkerCorners{curSet}{i};
+                dist = sqrt((curCorner.x*xScaleInv - imPosition(1))^2 + (curCorner.y*yScaleInv - imPosition(2))^2);
+                if dist < minDist
+                    minDist = dist;
+                    minInd = i;
+                end
+            end
+
+            if minInd ~= -1 && minDist < (min(size(image,1),size(image,2))/50)
+                newCorners = jsonData.sequences{curSequenceNumber}.groundTruth{index}.fiducialMarkerCorners{curSet}([1:(minInd-1),(minInd+1):end]);
+                jsonData.sequences{curSequenceNumber}.groundTruth{index}.fiducialMarkerCorners{curSet} = newCorners;
+                Save();
             end
         end
     end
 
     sequenceChanged(allHandles);
-
-
-
-
-
 
 
 

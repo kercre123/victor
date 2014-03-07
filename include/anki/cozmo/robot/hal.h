@@ -47,9 +47,6 @@
 
 #define HAVE_ACTIVE_GRIPPER 0
 
-// Uncomment to use USB instead of UART
-//#define USE_USB
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -108,7 +105,6 @@ namespace Anki
       //
       // Parameters / Constants
       //
-      const f32 MOTOR_PWM_MAXVAL = 2400.f;
       const f32 MOTOR_MAX_POWER = 1.0f;
 
       ///////////////////
@@ -219,14 +215,11 @@ namespace Anki
       // Until a valid packet header is found and the entire packet is
       // available, NO_MESSAGE_ID will be returned.  Once a valid header
       // is found and returned, its MessageID is returned.
-      Messages::ID USBGetNextMessage(u8 *buffer);
+      Messages::ID USBGetNextMessage(u8* buffer);
 
       // Send a byte.
       // Prototype matches putc for printf.
       int USBPutChar(int c);
-
-// #pragma mark --- Sensors ---
-      const f32* GyroGetSpeed();
 
 // #pragma mark --- Motors ---
       /////////////////////////////////////////////////////////////////////
@@ -239,7 +232,7 @@ namespace Anki
         MOTOR_RIGHT_WHEEL,
         MOTOR_LIFT,
         MOTOR_HEAD,
-        MOTOR_GRIP,
+        //MOTOR_GRIP,
         MOTOR_COUNT
       };
 
@@ -501,18 +494,24 @@ namespace Anki
       struct GlobalCommon
       {
         SPISource source;
+        u8 RESERVED[3];
       };
       
       struct GlobalDataToHead
       {
         GlobalCommon common;
-        u8 padding[63];
+        
+        u8 RESERVED[60];  // Pad out to 64 bytes
       };
+      
+      // TODO: get static_assert to work so we can verify sizeof
       
       struct GlobalDataToBody
       {
         GlobalCommon common;
-        u8 padding[63];
+        s16 motorPWM[MOTOR_COUNT];
+        
+        u8 reserved[52];  // Pad out to 64 bytes
       };
 
     } // namespace HAL

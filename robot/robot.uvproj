@@ -141,7 +141,7 @@
             <RestoreTracepoints>0</RestoreTracepoints>
           </Target>
           <RunDebugAfterBuild>0</RunDebugAfterBuild>
-          <TargetSelection>11</TargetSelection>
+          <TargetSelection>1</TargetSelection>
           <SimDlls>
             <CpuDll></CpuDll>
             <CpuDllArguments></CpuDllArguments>
@@ -155,7 +155,7 @@
             <PeripheralDll></PeripheralDll>
             <PeripheralDllArguments></PeripheralDllArguments>
             <InitializationFile></InitializationFile>
-            <Driver>STLink\ST-LINKIII-KEIL_SWO.dll</Driver>
+            <Driver>BIN\UL2CM3.DLL</Driver>
           </TargetDlls>
         </DebugOption>
         <Utilities>
@@ -432,6 +432,11 @@
               <FileName>spi.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\spi.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>motors.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\motors.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -799,6 +804,11 @@
               <FilePath>..\coretech\common\robot\src\compress.cpp</FilePath>
             </File>
             <File>
+              <FileName>decisionTree.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\robot\src\decisionTree.cpp</FilePath>
+            </File>
+            <File>
               <FileName>draw.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\robot\src\draw.cpp</FilePath>
@@ -945,6 +955,11 @@
               <FileName>computeCharacteristicScale.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\computeCharacteristicScale.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>decisionTree_vision.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\decisionTree_vision.cpp</FilePath>
             </File>
             <File>
               <FileName>docking_vision.cpp</FileName>
@@ -1232,7 +1247,7 @@
             <RestoreTracepoints>0</RestoreTracepoints>
           </Target>
           <RunDebugAfterBuild>0</RunDebugAfterBuild>
-          <TargetSelection>11</TargetSelection>
+          <TargetSelection>1</TargetSelection>
           <SimDlls>
             <CpuDll></CpuDll>
             <CpuDllArguments></CpuDllArguments>
@@ -1246,7 +1261,7 @@
             <PeripheralDll></PeripheralDll>
             <PeripheralDllArguments></PeripheralDllArguments>
             <InitializationFile></InitializationFile>
-            <Driver>STLink\ST-LINKIII-KEIL_SWO.dll</Driver>
+            <Driver>BIN\UL2CM3.DLL</Driver>
           </TargetDlls>
         </DebugOption>
         <Utilities>
@@ -1523,6 +1538,11 @@
               <FileName>spi.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\spi.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>motors.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\motors.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -1947,6 +1967,11 @@
               <FilePath>..\coretech\common\robot\src\compress.cpp</FilePath>
             </File>
             <File>
+              <FileName>decisionTree.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\robot\src\decisionTree.cpp</FilePath>
+            </File>
+            <File>
               <FileName>draw.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\robot\src\draw.cpp</FilePath>
@@ -2093,6 +2118,11 @@
               <FileName>computeCharacteristicScale.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\computeCharacteristicScale.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>decisionTree_vision.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\decisionTree_vision.cpp</FilePath>
             </File>
             <File>
               <FileName>docking_vision.cpp</FileName>

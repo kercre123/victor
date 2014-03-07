@@ -1,119 +1,16 @@
-/**
-  ******************************************************************************
-  * @file    system_stm32f4xx.c
-  * @author  MCD Application Team
-  * @version V1.0.0
-  * @date    20-September-2013
-  * @brief   CMSIS Cortex-M4 Device Peripheral Access Layer System Source File.
-  *          This file is customized to run on STM32F429I-DISCO board only.
-  *
-  *          The STM32F4xx is configured to run at 180 MHz, following the three  
-  *          configuration below:
-  *            - PLL_SOURCE_HSI                : HSI (~16MHz) used to clock the PLL, and
-  *                                              the PLL is used as system clock source.  
-  *            - PLL_SOURCE_HSE                : HSE (8MHz) used to clock the PLL, and 
-  *                                              the PLL is used as system clock source.
-  *            - PLL_SOURCE_HSE_BYPASS(default): HSE bypassed with an external clock 
-  *                                              (8MHz, coming from ST-Link) used to clock
-  *                                              the PLL, and the PLL is used as system
-  *                                              clock source.  
-  * 
-  * 1.  This file provides two functions and one global variable to be called from 
-  *     user application:
-  *      - SystemInit(): Setups the system clock (System clock source, PLL Multiplier
-  *                      and Divider factors, AHB/APBx prescalers and Flash settings),
-  *                      depending on the configuration made in the clock xls tool.
-  *                      This function is called at startup just after reset and 
-  *                      before branch to main program. This call is made inside
-  *                      the "startup_stm32f429_439xx.s" file.
-  *
-  *      - SystemCoreClock variable: Contains the core clock (HCLK), it can be used
-  *                                  by the user application to setup the SysTick 
-  *                                  timer or configure other parameters.
-  *
-  *      - SystemCoreClockUpdate(): Updates the variable SystemCoreClock and must
-  *                                 be called whenever the core clock is changed
-  *                                 during program execution.
-  *
-  * 2. After each device reset the HSI (16 MHz) is used as system clock source.
-  *    Then SystemInit() function is called, in "startup_stm32f429_439xx.s" file, to
-  *    configure the system clock before to branch to main program.
-  *
-  * 3. If the system clock source selected by user fails to startup, the SystemInit()
-  *    function will do nothing and HSI still used as system clock source. User can 
-  *    add some code to deal with this issue inside the SetSysClock() function.
-  *
-  * 4. The default value of HSE crystal is set to 8MHz, refer to "HSE_VALUE" define
-  *    in "stm32f4xx.h" file. When HSE is used as system clock source, directly or
-  *    through PLL, and you are using different crystal you have to adapt the HSE
-  *    value to your own configuration.
-  ****************************************************************************** 
-  * @attention
-  *
-  * <h2><center>&copy; COPYRIGHT 2013 STMicroelectronics</center></h2>
-  *
-  * Licensed under MCD-ST Liberty SW License Agreement V2, (the "License");
-  * You may not use this file except in compliance with the License.
-  * You may obtain a copy of the License at:
-  *
-  *        http://www.st.com/software_license_agreement_liberty_v2
-  *
-  * Unless required by applicable law or agreed to in writing, software 
-  * distributed under the License is distributed on an "AS IS" BASIS, 
-  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  * See the License for the specific language governing permissions and
-  * limitations under the License.
-  *
-  ******************************************************************************
-  */
-
-/** @addtogroup CMSIS
-  * @{
-  */
-
-/** @addtogroup stm32f4xx_system
-  * @{
-  */  
-  
-/** @addtogroup STM32F4xx_System_Private_Includes
-  * @{
-  */
-
 #include "stm32f4xx.h"
 
-/**
-  * @}
-  */
 
-/** @addtogroup STM32F4xx_System_Private_TypesDefinitions
-  * @{
-  */
 
-/**
-  * @}
-  */
-
-/** @addtogroup STM32F4xx_System_Private_Defines
-  * @{
-  */
-
-/************************* Miscellaneous Configuration ************************/
-/*!< Uncomment the following line if you need to use external SDRAM mounted
-     on STM32F429I-DISCO board as data memory  */
 #define DATA_IN_ExtSDRAM
 
 /*!< Uncomment the following line if you need to relocate your vector Table in
      Internal SRAM. */
 /* #define VECT_TAB_SRAM */
-#define VECT_TAB_OFFSET  0x00 /*!< Vector Table base offset field. 
-                                   This value must be a multiple of 0x200. */
-/******************************************************************************/
+#define VECT_TAB_OFFSET  0x0
 
-/************************* PLL Parameters *************************************/
-/* Select the PLL clock source */
-
-//#define PLL_SOURCE_HSI        // HSI (~16 MHz) used to clock the PLL, and the PLL is used as system clock source
-#define PLL_SOURCE_HSE        // HSE (8MHz) used to clock the PLL, and the PLL is used as system clock source
+#define PLL_SOURCE_HSI        // HSI (~16 MHz) used to clock the PLL, and the PLL is used as system clock source
+//#define PLL_SOURCE_HSE        // HSE (8MHz) used to clock the PLL, and the PLL is used as system clock source
 //#define PLL_SOURCE_HSE_BYPASS   // HSE bypassed with an external clock (8MHz, coming from ST-Link) used to clock
                                 // the PLL, and the PLL is used as system clock source
 
@@ -136,54 +33,51 @@
 
 
 
-/**
-  * @}
-  */
 
-/** @addtogroup STM32F4xx_System_Private_Macros
-  * @{
-  */
-
-/**
-  * @}
-  */
-
-/** @addtogroup STM32F4xx_System_Private_Variables
-  * @{
-  */
 
   uint32_t SystemCoreClock = 180000000;
 
   __I uint8_t AHBPrescTable[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 9};
 
-/**
-  * @}
-  */
-
-/** @addtogroup STM32F4xx_System_Private_FunctionPrototypes
-  * @{
-  */
 
 static void SetSysClock(void);
 #if defined (DATA_IN_ExtSDRAM)
   static void SystemInit_ExtMemCtl(void); 
 #endif /* DATA_IN_ExtSDRAM */
 
-/**
-  * @}
-  */
+static void SetAFBitmask(GPIO_TypeDef* gpio, u32 bitmask)
+{
+  int i;
+  for (i = 0; i < 16; i++)
+  {
+    if (bitmask & (1 << i))
+    {
+       GPIO_PinAFConfig(gpio, i, GPIO_AF_FMC);
+    }
+  }
+}
 
-/** @addtogroup STM32F4xx_System_Private_Functions
-  * @{
-  */
+#define BIT(a, x) ((a >> x) & 1)
 
-/**
-  * @brief  Setup the microcontroller system
-  *         Initialize the Embedded Flash Interface, the PLL and update the 
-  *         SystemFrequency variable.
-  * @param  None
-  * @retval None
-  */
+// This function takes the value the RAM needs to see and swizzles it according
+// to how the RAM is actually mapped to the MCU.
+static u16 GetSwizzledAddress(u16 a)
+{
+  return (BIT(a, 0) << 5) |
+    (BIT(a, 1) << 3) |
+    (BIT(a, 2) << 4) |
+    (BIT(a, 3) << 2) |
+    (BIT(a, 4) << 7) |
+    (BIT(a, 5) << 1) |
+    (BIT(a, 6) << 6) |  // Unchanged
+    (BIT(a, 7) << 0) |
+    (BIT(a, 8) << 11) |
+    (BIT(a, 9) << 8) |
+    (BIT(a, 10) << 10) |  // Unchanged
+    (BIT(a, 11) << 9);
+}
+  
+
 void SystemInit(void)
 {
   /* FPU settings ------------------------------------------------------------*/
@@ -201,8 +95,10 @@ void SystemInit(void)
   RCC->CR &= (uint32_t)0xFEF6FFFF;
 
   /* Reset PLLCFGR register */
-  // 360/25 = 25 MHz / 25 * 360 / 2 == 180 MHz
-  RCC->PLLCFGR = 0x24005a19; //0x24003010;
+  // 180 MHz from 16 MHz HSI == PLL @ 360 / 32
+  RCC->PLLCFGR = 0x24002D20;
+  
+  //101101000 00010
 
   /* Reset HSEBYP bit */
   RCC->CR &= (uint32_t)0xFFFBFFFF;
@@ -426,102 +322,150 @@ void SystemInit_ExtMemCtl(void)
 {
   register uint32_t tmpreg = 0, timeout = 0xFFFF;
   register uint32_t index;
+  GPIO_InitTypeDef GPIO_InitStructure;
 
   /* Enable GPIOC, GPIOD, GPIOE, GPIOF, GPIOG, GPIOH and GPIOI interface 
       clock */
   RCC->AHB1ENR |= 0x000001FC;
-  
+#if 0  
   /* Connect PCx pins to FMC Alternate function */
   GPIOC->AFR[0]  = 0x0000000c;
   GPIOC->AFR[1]  = 0x00007700;
-  /* Configure PCx pins in Alternate function mode */  
+  /* Configure PCx pins in Alternate function mode */
   GPIOC->MODER   = 0x00a00002;
-  /* Configure PCx pins speed to 50 MHz */  
+  /* Configure PCx pins speed to 50 MHz */
   GPIOC->OSPEEDR = 0x00a00002;
-  /* Configure PCx pins Output type to push-pull */  
+  /* Configure PCx pins Output type to push-pull */
   GPIOC->OTYPER  = 0x00000000;
-  /* No pull-up, pull-down for PCx pins */ 
+  /* No pull-up, pull-down for PCx pins */
   GPIOC->PUPDR   = 0x00500000;
   
   /* Connect PDx pins to FMC Alternate function */
   GPIOD->AFR[0]  = 0x000000CC;
   GPIOD->AFR[1]  = 0xCC000CCC;
-  /* Configure PDx pins in Alternate function mode */  
+  /* Configure PDx pins in Alternate function mode */
   GPIOD->MODER   = 0xA02A000A;
-  /* Configure PDx pins speed to 50 MHz */  
+  /* Configure PDx pins speed to 50 MHz */
   GPIOD->OSPEEDR = 0xA02A000A;
-  /* Configure PDx pins Output type to push-pull */  
+  /* Configure PDx pins Output type to push-pull */
   GPIOD->OTYPER  = 0x00000000;
-  /* No pull-up, pull-down for PDx pins */ 
+  /* No pull-up, pull-down for PDx pins */
   GPIOD->PUPDR   = 0x00000000;
 
   /* Connect PEx pins to FMC Alternate function */
   GPIOE->AFR[0]  = 0xC00000CC;
   GPIOE->AFR[1]  = 0xCCCCCCCC;
-  /* Configure PEx pins in Alternate function mode */ 
+  /* Configure PEx pins in Alternate function mode */
   GPIOE->MODER   = 0xAAAA800A;
-  /* Configure PEx pins speed to 50 MHz */ 
+  /* Configure PEx pins speed to 50 MHz */
   GPIOE->OSPEEDR = 0xAAAA800A;
-  /* Configure PEx pins Output type to push-pull */  
+  /* Configure PEx pins Output type to push-pull */
   GPIOE->OTYPER  = 0x00000000;
-  /* No pull-up, pull-down for PEx pins */ 
+  /* No pull-up, pull-down for PEx pins */
   GPIOE->PUPDR   = 0x00000000;
 
   /* Connect PFx pins to FMC Alternate function */
   GPIOF->AFR[0]  = 0xcccccccc;
   GPIOF->AFR[1]  = 0xcccccccc;
-  /* Configure PFx pins in Alternate function mode */   
+  /* Configure PFx pins in Alternate function mode */
   GPIOF->MODER   = 0xAA800AAA;
-  /* Configure PFx pins speed to 50 MHz */ 
+  /* Configure PFx pins speed to 50 MHz */
   GPIOF->OSPEEDR = 0xAA800AAA;
-  /* Configure PFx pins Output type to push-pull */  
+  /* Configure PFx pins Output type to push-pull */
   GPIOF->OTYPER  = 0x00000000;
-  /* No pull-up, pull-down for PFx pins */ 
+  /* No pull-up, pull-down for PFx pins */
   GPIOF->PUPDR   = 0x00000000;
 
   /* Connect PGx pins to FMC Alternate function */
   GPIOG->AFR[0]  = 0xcccccccc;
   GPIOG->AFR[1]  = 0xcccccccc;
-  /* Configure PGx pins in Alternate function mode */ 
+  /* Configure PGx pins in Alternate function mode */
   GPIOG->MODER   = 0xaaaaaaaa;
-  /* Configure PGx pins speed to 50 MHz */ 
+  /* Configure PGx pins speed to 50 MHz */
   GPIOG->OSPEEDR = 0xaaaaaaaa;
-  /* Configure PGx pins Output type to push-pull */  
+  /* Configure PGx pins Output type to push-pull */
   GPIOG->OTYPER  = 0x00000000;
-  /* No pull-up, pull-down for PGx pins */ 
+  /* No pull-up, pull-down for PGx pins */
   GPIOG->PUPDR   = 0x00000000;
   
   /* Connect PHx pins to FMC Alternate function */
   GPIOH->AFR[0]  = 0x00C0CC00;
   GPIOH->AFR[1]  = 0xCCCCCCCC;
-  /* Configure PHx pins in Alternate function mode */ 
+  /* Configure PHx pins in Alternate function mode */
   GPIOH->MODER   = 0xAAAA08A0;
-  /* Configure PHx pins speed to 50 MHz */ 
+  /* Configure PHx pins speed to 50 MHz */
   GPIOH->OSPEEDR = 0xAAAA08A0;
-  /* Configure PHx pins Output type to push-pull */  
+  /* Configure PHx pins Output type to push-pull */
   GPIOH->OTYPER  = 0x00000000;
-  /* No pull-up, pull-down for PHx pins */ 
+  /* No pull-up, pull-down for PHx pins */
   GPIOH->PUPDR   = 0x00000000;
   
   /* Connect PIx pins to FMC Alternate function */
   GPIOI->AFR[0]  = 0xCCCCCCCC;
   GPIOI->AFR[1]  = 0x00000CC0;
-  /* Configure PIx pins in Alternate function mode */ 
+  /* Configure PIx pins in Alternate function mode */
   GPIOI->MODER   = 0x0028AAAA;
-  /* Configure PIx pins speed to 50 MHz */ 
+  /* Configure PIx pins speed to 50 MHz */
   GPIOI->OSPEEDR = 0x0028AAAA;
-  /* Configure PIx pins Output type to push-pull */  
+  /* Configure PIx pins Output type to push-pull */
   GPIOI->OTYPER  = 0x00000000;
-  /* No pull-up, pull-down for PIx pins */ 
+  /* No pull-up, pull-down for PIx pins */
   GPIOI->PUPDR   = 0x00000000;
+#endif
+
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
+  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+
+  // GPIOC
+  GPIO_InitStructure.GPIO_Pin = (1 << 2);
+  SetAFBitmask(GPIOC, GPIO_InitStructure.GPIO_Pin);
+  GPIO_Init(GPIOC, &GPIO_InitStructure);
+  
+  // GPIOD
+  GPIO_InitStructure.GPIO_Pin = 
+    (1 << 0) | (1 << 1) | (1 << 8) | (1 << 9) |
+    (1 << 10) | (1 << 14) | (1 << 15);
+  SetAFBitmask(GPIOD, GPIO_InitStructure.GPIO_Pin);
+  GPIO_Init(GPIOD, &GPIO_InitStructure);
+  
+  // GPIOE
+  GPIO_InitStructure.GPIO_Pin = 
+    (1 << 0) | (1 << 1) | (1 << 7) | (1 << 8) | 
+    (1 << 9) | (1 << 10) | (1 << 11) | (1 << 12) | 
+    (1 << 13) | (1 << 14) | (1 << 15);
+  SetAFBitmask(GPIOE, GPIO_InitStructure.GPIO_Pin);
+  GPIO_Init(GPIOE, &GPIO_InitStructure);
+  
+  // GPIOF
+  GPIO_InitStructure.GPIO_Pin = 
+    (1 << 0) | (1 << 1) | (1 << 2) | (1 << 3) |
+    (1 << 4) | (1 << 5) | (1 << 11) | (1 << 12) |
+    (1 << 13) | (1 << 14) | (1 << 15);
+  SetAFBitmask(GPIOF, GPIO_InitStructure.GPIO_Pin);
+  GPIO_Init(GPIOF, &GPIO_InitStructure);
+  
+  // GPIOG
+  GPIO_InitStructure.GPIO_Pin = 
+    (1 << 0) | (1 << 1) | (1 << 4) | (1 << 5) | 
+    (1 << 8) | (1 << 15);
+  SetAFBitmask(GPIOG, GPIO_InitStructure.GPIO_Pin);
+  GPIO_Init(GPIOG, &GPIO_InitStructure);
+  
+  // GPIOH
+  GPIO_InitStructure.GPIO_Pin = 
+    (1 << 2) | (1 << 5);
+  SetAFBitmask(GPIOH, GPIO_InitStructure.GPIO_Pin);
+  GPIO_Init(GPIOH, &GPIO_InitStructure);
   
 /*-- FMC Configuration ------------------------------------------------------*/
   /* Enable the FMC interface clock */
   RCC->AHB3ENR |= 0x00000001;
   
   /* Configure and enable SDRAM bank1 */
-  FMC_Bank5_6->SDCR[0] = 0x000029D0;
-  FMC_Bank5_6->SDTR[0] = 0x01115351;      
+  FMC_Bank5_6->SDCR[0] = 0x00002DD4;  // 16-bit | 4 banks | 3 cycle CAS | SDCLK = 3 x HCLK | no burst read | read pipe = 1 cycle | 12 bits for row | 8 bits for column
+  FMC_Bank5_6->SDTR[0] = 0x01115351;  // timings
   
   /* SDRAM initialization sequence */
   /* Clock enable command */
@@ -552,12 +496,14 @@ void SystemInit_ExtMemCtl(void)
   }
  
   /* MRD register program */
-  FMC_Bank5_6->SDCMR = 0x00046014;
+  FMC_Bank5_6->SDCMR =
+    (GetSwizzledAddress(0x230) << 9) | // burst length = 1 | sequential | CAS# latency = 3 | no test | write burst length = single
+    0x14;  // Load Mode Register | Command issued to SDRAM Bank 1 | 
   timeout = 0xFFFF;
   while((tmpreg != 0) && (timeout-- > 0))
   {
     tmpreg = FMC_Bank5_6->SDSR & 0x00000020; 
-  } 
+  }
   
   /* Set refresh count */
   tmpreg = FMC_Bank5_6->SDRTR;

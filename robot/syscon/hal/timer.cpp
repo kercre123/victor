@@ -16,23 +16,34 @@ namespace Anki
   {
     namespace HAL
     {
-      u32 GetMicroCounter()
+      __asm void MicroWait(u32 microseconds)
       {
-        m_low = NRF_RTC1->COUNTER;
-        u32 ticks = ((u32)m_high << 24) | m_low;
-        
-        // TODO: This is really 30.517
-        return ticks * 30;
-      }
-      
-      void MicroWait(u32 microseconds)
-      {
-        u32 now = GetMicroCounter();
-        while ((GetMicroCounter() - now) < microseconds)
-          ;
+loop
+          SUBS r0, r0, #1
+          NOP
+          NOP
+          NOP
+          NOP
+          NOP
+          NOP
+          NOP
+          NOP
+          NOP
+          NOP
+          NOP
+          NOP
+          BNE loop
+          BX lr
       }
     }
   }
+}
+
+u32 GetCounter()
+{
+  // Each tick is 120 ns. However, we can't get that resolution with the RTC.
+  // This value only gets 120*256 ns of resolution: the bottom 8-bits are 0.
+  return NRF_RTC1->COUNTER << 8;
 }
 
 void TimerInit()
@@ -85,7 +96,7 @@ void TimerInit()
   NRF_RTC1->PRESCALER = 0;
   
   // Enable interrupts on RTC1 overflow
-  NRF_RTC1->INTENSET = RTC_INTENSET_OVRFLW_Msk;
+  //NRF_RTC1->INTENSET = RTC_INTENSET_OVRFLW_Msk;
   
   // Start the RTC
   NRF_RTC1->TASKS_START = 1;
@@ -99,7 +110,7 @@ void TimerInit()
 // because the value returned by COUNTER was occasionally less than m_low
 // when inside of MicroWait(). This means we read incorrect clock ticks with
 // that method.
-extern "C"
+/*extern "C"
 void RTC1_IRQHandler()
 {
   // Increment the high part of the timer
@@ -107,4 +118,4 @@ void RTC1_IRQHandler()
   
   // Clear the event/interrupt
   NRF_RTC1->EVENTS_OVRFLW = 0;
-}
+}*/

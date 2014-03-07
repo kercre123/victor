@@ -1,16 +1,13 @@
 #include "anki/cozmo/robot/hal.h"
 #include "motors.h"
+#include "timer.h"
 #include "nrf.h"
 #include "nrf_gpio.h"
 #include "nrf_gpiote.h"
-
-// 16 MHz timer with PWM running at 20kHz
-#define TIMER_TICKS_END ((16000000 / 20000) - 1)
+#include <limits.h>
 
 namespace
 {
-  const u32 IRQ_PRIORITY = 1;
-  
   struct EncoderData
   {
     u32 lastTick;
@@ -22,12 +19,20 @@ namespace
     const u8 forwardUpPin;
     const u8 backwardDownPin;
     const u8 encoderPins[2];
-    volatile u32* const pwm;  // This is a pointer to TIMERx->CC[0 or 1]
     
     s32 unitsPerTick;
     s32 position;
     EncoderData encoderData[2];
+    
+    volatile u16 nextPWM;
   };
+ 
+  const u32 IRQ_PRIORITY = 1;
+  
+  // 16 MHz timer with PWM running at 20kHz
+  const u32 TIMER_TICKS_END = (16000000 / 20000) - 1;
+  
+  const u32 PWM_DIVISOR = SHRT_MAX / TIMER_TICKS_END;
   
   const u8 LEFT_WHEEL_FORWARD_PIN = 3;
   const u8 LEFT_WHEEL_BACKWARD_PIN = 7;
@@ -47,6 +52,12 @@ namespace
   const u8 ENCODER_4B_PIN = 18;
   
   // TODO: Get real values and do 16.16 fixed point
+  
+  /* XXX: 
+      Wheel Drives: 283.5:1
+      Lift Drive: 729:1
+      Head Drive: 67.5:1
+  */
   
   // Given a gear ratio of 91.7:1 and 125.67mm wheel circumference, we compute
   // the mm per tick as (using 4 magnets):
@@ -71,40 +82,36 @@ namespace
       LEFT_WHEEL_BACKWARD_PIN,
       ENCODER_1_PIN,
       ENCODER_NONE,
-      &NRF_TIMER1->CC[0],
       MM_PER_TICK,
       0,
-      0, 0, 0, 0
+      0, 0, 0, 0, 0
     },
     {
       RIGHT_WHEEL_FORWARD_PIN,
       RIGHT_WHEEL_BACKWARD_PIN,
       ENCODER_2_PIN,
       ENCODER_NONE,
-      &NRF_TIMER1->CC[1],
       MM_PER_TICK,
       0,
-      0, 0, 0, 0
+      0, 0, 0, 0, 0
     },
     {
       LIFT_UP_PIN,
       LIFT_DOWN_PIN,
       ENCODER_3A_PIN,
       ENCODER_3B_PIN,
-      &NRF_TIMER2->CC[0],
       RADIANS_PER_LIFT_TICK,
       0,
-      0, 0, 0, 0
+      0, 0, 0, 0, 0
     },
     {
       HEAD_UP_PIN,
       HEAD_DOWN_PIN,
       ENCODER_4A_PIN,
       ENCODER_4B_PIN,
-      &NRF_TIMER2->CC[1],
       RADIANS_PER_LIFT_TICK,
       0,
-      0, 0, 0, 0
+      0, 0, 0, 0, 0
     },
   };
   
@@ -115,6 +122,12 @@ namespace
 
 static void ConfigureTimer(NRF_TIMER_Type* timer, const u8 taskChannel, const u8 ppiChannel)
 {
+  // TODO: There's a PAN about calling TASKS_STOP and TASKS_START in the same
+  // clock period.
+  
+  // Ensure the timer is stopped
+  timer->TASKS_STOP = 1;
+  
   // Configure the timer to be in 16-bit timer mode
   timer->MODE = TIMER_MODE_MODE_Timer;
   timer->BITMODE = TIMER_BITMODE_BITMODE_16Bit << TIMER_BITMODE_BITMODE_Pos;
@@ -128,18 +141,26 @@ static void ConfigureTimer(NRF_TIMER_Type* timer, const u8 taskChannel, const u8
   // for 799, just clamp to 798
   timer->CC[0] = 0;  // PWM n + 0, where n = taskChannel
   timer->CC[1] = 0;  // PWM n + 1
+  timer->CC[2] = TIMER_TICKS_END;    // Trigger on timer wrap-around at 800
   timer->CC[3] = TIMER_TICKS_END;    // Trigger on timer wrap-around at 800
   
   // Configure the timer to reset the count when it hits the period defined in compare[3]
-  timer->SHORTS = 1 << TIMER_SHORTS_COMPARE3_CLEAR_Pos;
+  timer->SHORTS = 
+    (1 << TIMER_SHORTS_COMPARE3_CLEAR_Pos) |
+    (1 << TIMER_SHORTS_COMPARE2_CLEAR_Pos);
+  
+  // TODO: Verify PAN 33: TIMER: One CC register is not able to generate an 
+  // event for the second of two subsequent counter/ timer values.
   
   // Configure PPI channels to toggle the output PWM pins on matching timer compare
+  // and toggle the GPIO for the selected duty cycle.
+  
   // Match compare[0] (PWM n + 0)
   NRF_PPI->CH[ppiChannel + 0].EEP = (u32)&timer->EVENTS_COMPARE[0];
   NRF_PPI->CH[ppiChannel + 0].TEP = (u32)&NRF_GPIOTE->TASKS_OUT[taskChannel + 0];
   
-  // Match compare[3] (timer wrap-around)
-  NRF_PPI->CH[ppiChannel + 1].EEP = (u32)&timer->EVENTS_COMPARE[3];
+  // Match compare[2] (timer wrap-around)
+  NRF_PPI->CH[ppiChannel + 1].EEP = (u32)&timer->EVENTS_COMPARE[2];
   NRF_PPI->CH[ppiChannel + 1].TEP = (u32)&NRF_GPIOTE->TASKS_OUT[taskChannel + 0];
   
   // Match compare[1] (PWM n + 1)
@@ -165,6 +186,27 @@ static void ConfigurePinSense(u8 pin, u32 pinState)
   }
 }
 
+static void ConfigureTask(Anki::Cozmo::HAL::MotorID motorID)
+{
+  MotorInfo* motorInfo = &m_motors[motorID];
+  u8 pinPWM;
+  u8 pinHigh;
+  if (motorInfo->unitsPerTick > 0)
+  {
+    pinPWM = motorInfo->forwardUpPin;
+    pinHigh = motorInfo->backwardDownPin;
+  } else {
+    pinPWM = motorInfo->backwardDownPin;
+    pinHigh = motorInfo->forwardUpPin;
+  }
+  
+  nrf_gpio_pin_set(pinHigh);
+  
+  // Reconfigure the task for the PWM pin
+  nrf_gpiote_task_config(motorID, pinPWM,
+    NRF_GPIOTE_POLARITY_TOGGLE, NRF_GPIOTE_INITIAL_VALUE_LOW);
+}
+
 void MotorsInit()
 {
   int i;
@@ -186,7 +228,7 @@ void MotorsInit()
   // Clear all GPIOTE interrupts
   NRF_GPIOTE->INTENCLR = 0xFFFFFFFF;
   
-  // Clear pending interrupts
+  // Clear pending interrupts and enable the GPIOTE interrupt
   NVIC_ClearPendingIRQ(GPIOTE_IRQn);
   NVIC_SetPriority(GPIOTE_IRQn, IRQ_PRIORITY);
   NVIC_EnableIRQ(GPIOTE_IRQn);
@@ -209,7 +251,7 @@ void MotorsInit()
     nrf_gpio_pin_set(motorInfo->backwardDownPin);
     nrf_gpio_cfg_output(motorInfo->backwardDownPin);
     nrf_gpio_cfg_output(motorInfo->forwardUpPin);
-  
+    
     // Enable sensing for each encoder pin
     ConfigurePinSense(motorInfo->encoderPins[0], state);
     if (motorInfo->encoderPins[1] != ENCODER_NONE)
@@ -226,8 +268,20 @@ void MotorsSetPower(Anki::Cozmo::HAL::MotorID motorID, s16 power)
   
   MotorInfo* motorInfo = &m_motors[motorID];
   
-  if (power == 0)
+  u32 value = power < 0 ? -power : power;
+    
+  // Scale from [0, SHRT_MAX] to [0, TIMER_TICKS_END-1]
+  value /= PWM_DIVISOR;
+  
+  // Clamp the PWM power
+  if (value >= TIMER_TICKS_END)
+    value = TIMER_TICKS_END - 1;
+  
+  // Anything under 25 just wastes current. Treat this range as stopped.
+  if (value < 25)
   {
+    // TODO: Also disable PPI channel for timer reset?
+    
     // Clear the PPI and GPIOTE channels from running and set the lines high (stopped)
     NRF_PPI->CHENCLR = channelMask;
     nrf_gpiote_unconfig(motorID);
@@ -235,12 +289,8 @@ void MotorsSetPower(Anki::Cozmo::HAL::MotorID motorID, s16 power)
     nrf_gpio_pin_set(motorInfo->backwardDownPin);
     nrf_gpio_pin_set(motorInfo->forwardUpPin);
   } else {
-    // Clamp the PWM power
-    u32 value = power < 0 ? -power : power;
-    if (value >= TIMER_TICKS_END)
-      value = TIMER_TICKS_END - 1;
-    
-    *motorInfo->pwm = value;
+    // Store the PWM value for the MotorsUpdate()
+    motorInfo->nextPWM = value;
     
     // Check the sign bit for the current direction (designated by unitsPerTick) and the new power
     bool isDifferentDirection = ((s32)motorInfo->unitsPerTick >> 31) != ((s32)power >> 31);
@@ -266,13 +316,52 @@ void MotorsSetPower(Anki::Cozmo::HAL::MotorID motorID, s16 power)
           motorInfo->unitsPerTick = -motorInfo->unitsPerTick;
         
         nrf_gpiote_task_config(motorID, motorInfo->forwardUpPin,
-          NRF_GPIOTE_POLARITY_TOGGLE, NRF_GPIOTE_INITIAL_VALUE_HIGH);
+          NRF_GPIOTE_POLARITY_TOGGLE, NRF_GPIOTE_INITIAL_VALUE_LOW);
         nrf_gpio_pin_set(motorInfo->backwardDownPin);
       }
       
       // Enable the PPI channel
       NRF_PPI->CHENSET = channelMask;
     }
+  }
+}
+
+void MotorsUpdate()
+{
+  using namespace Anki::Cozmo::HAL;
+  
+  // Stop the timer task and clear it, along with GPIO for the motors
+  if ((NRF_TIMER1->CC[0] != m_motors[0].nextPWM) ||
+      (NRF_TIMER1->CC[1] != m_motors[1].nextPWM))
+  {
+    NRF_TIMER1->TASKS_STOP = 1;
+    NRF_TIMER1->TASKS_CLEAR = 1;
+    
+    // Reconfigure the GPIOTE for the motors
+    ConfigureTask(MOTOR_LEFT_WHEEL);
+    ConfigureTask(MOTOR_RIGHT_WHEEL);
+    
+    // Update the PWM values
+    NRF_TIMER1->CC[0] = m_motors[0].nextPWM;
+    NRF_TIMER1->CC[1] = m_motors[1].nextPWM;
+    
+    // Restart the timer
+    NRF_TIMER1->TASKS_START = 1;
+  }
+  
+  if ((NRF_TIMER2->CC[0] != m_motors[2].nextPWM) ||
+      (NRF_TIMER2->CC[1] != m_motors[3].nextPWM))
+  {
+    NRF_TIMER2->TASKS_STOP = 1;
+    NRF_TIMER2->TASKS_CLEAR = 1;
+    
+    ConfigureTask(MOTOR_LIFT);
+    ConfigureTask(MOTOR_HEAD);
+    
+    NRF_TIMER2->CC[0] = m_motors[2].nextPWM;
+    NRF_TIMER2->CC[1] = m_motors[3].nextPWM;
+    
+    NRF_TIMER2->TASKS_START = 1;
   }
 }
 
@@ -297,7 +386,7 @@ static void HandlePinTransition(MotorInfo* motorInfo, u8 encoderIndex, u32 pinSt
       nrf_gpio_cfg_sense_input(pin, NRF_GPIO_PIN_NOPULL, NRF_GPIO_PIN_SENSE_LOW);
       m_pinsHigh |= mask;
       
-      u32 ticks = Anki::Cozmo::HAL::GetMicroCounter();
+      u32 ticks = GetCounter();
       if ((ticks - encoderData->lastTick) > DEBOUNCE_US)
       {
         encoderData->delta = ticks - encoderData->lastTick;

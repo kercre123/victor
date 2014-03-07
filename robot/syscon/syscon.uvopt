@@ -133,7 +133,7 @@
         <SetRegEntry>
           <Number>0</Number>
           <Key>DLGUARM</Key>
-          <Name></Name>
+          <Name>/</Name>
         </SetRegEntry>
         <SetRegEntry>
           <Number>0</Number>
@@ -195,9 +195,9 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>4</ColumnNumber>
+      <ColumnNumber>6</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>40</TopLine>
+      <TopLine>51</TopLine>
       <CurrentLine>87</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\hal\main.cpp</PathWithFileName>
@@ -211,10 +211,10 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>47</ColumnNumber>
+      <ColumnNumber>34</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>9</TopLine>
-      <CurrentLine>42</CurrentLine>
+      <TopLine>41</TopLine>
+      <CurrentLine>87</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\hal\spi.cpp</PathWithFileName>
       <FilenameWithoutPath>spi.cpp</FilenameWithoutPath>
@@ -227,10 +227,10 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>14</ColumnNumber>
+      <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>0</TopLine>
-      <CurrentLine>0</CurrentLine>
+      <TopLine>55</TopLine>
+      <CurrentLine>71</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\hal\uart.cpp</PathWithFileName>
       <FilenameWithoutPath>uart.cpp</FilenameWithoutPath>
@@ -243,10 +243,10 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>0</ColumnNumber>
+      <ColumnNumber>19</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>277</TopLine>
-      <CurrentLine>310</CurrentLine>
+      <TopLine>366</TopLine>
+      <CurrentLine>329</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\hal\motors.cpp</PathWithFileName>
       <FilenameWithoutPath>motors.cpp</FilenameWithoutPath>
@@ -259,10 +259,10 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>2</ColumnNumber>
+      <ColumnNumber>34</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
       <TopLine>45</TopLine>
-      <CurrentLine>73</CurrentLine>
+      <CurrentLine>55</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\hal\timer.cpp</PathWithFileName>
       <FilenameWithoutPath>timer.cpp</FilenameWithoutPath>
@@ -291,10 +291,10 @@
       <FileType>2</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>0</ColumnNumber>
+      <ColumnNumber>35</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>0</TopLine>
-      <CurrentLine>0</CurrentLine>
+      <TopLine>91</TopLine>
+      <CurrentLine>107</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\startup\startup_nrf51.s</PathWithFileName>
       <FilenameWithoutPath>startup_nrf51.s</FilenameWithoutPath>
