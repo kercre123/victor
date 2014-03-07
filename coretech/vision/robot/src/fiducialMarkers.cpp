@@ -334,6 +334,7 @@ namespace Anki
 
     Result VisionMarker::ComputeThreshold(const Array <u8> &image,
                                           const Array<f32> &homography,
+                                          const f32 minContrastRatio,
                                           u32& threshold)
     {
       using namespace VisionMarkerDecisionTree;
@@ -431,12 +432,21 @@ namespace Anki
         } // FOR each probe point
         
       } // FOR each probe
-      
-      // The accumulators now contain the _sum_ of all the bright and dark values
-      // To compute the threshold, I can average those sums and divide by N =
-      // numProbes * numPointsPerProbe, or equivalently, just compute the
-      // threshold as (sum(Dark) + sum(Bright)) / (2*N)
-      threshold = (darkAccumulator + brightAccumulator) / (NUM_PROBE_POINTS*NUM_THRESHOLD_PROBES*2);
+
+      // Is this correct?
+      if(static_cast<f32>(brightAccumulator) < static_cast<f32>(darkAccumulator)*minContrastRatio) {
+        // Not enough contrast, return threshold == u32::max()
+        // Note this is not a "failure" of the method though, so we should still
+        // return RESULT_OK
+        threshold = UINT32_MAX;
+      }
+      else {
+        // The accumulators now contain the _sum_ of all the bright and dark values
+        // To compute the threshold, I can average those sums and divide by N =
+        // numProbes * numPointsPerProbe, or equivalently, just compute the
+        // threshold as (sum(Dark) + sum(Bright)) / (2*N)
+        threshold = (darkAccumulator + brightAccumulator) / (NUM_PROBE_POINTS*NUM_THRESHOLD_PROBES*2);
+      }
       
       return lastResult;
       
@@ -452,57 +462,59 @@ namespace Anki
       this->isValid = false;
       
       BeginBenchmark("vme_threshold");
-      // TODO: Make this a function someday
       u32 threshold;
-      if((lastResult = ComputeThreshold(image, homography, threshold)) != RESULT_OK) {
+      if((lastResult = ComputeThreshold(image, homography, minContrastRatio, threshold)) != RESULT_OK) {
         return lastResult;
       }
       EndBenchmark("vme_threshold");
       
-      
-      BeginBenchmark("vme_classify");
-      
-      //s16 multiClassLabel = static_cast<s16>(MARKER_UNKNOWN);
-      
-      s32 tempLabel;
-      if((lastResult = VisionMarker::multiClassTree.Classify(image, homography,
-                                                             threshold, tempLabel)) != RESULT_OK) {
-        return lastResult;
-      }
-      
-      OrientedMarkerLabel multiClassLabel = static_cast<OrientedMarkerLabel>(tempLabel);
-      
-      EndBenchmark("vme_classify");
-      
-      if(multiClassLabel != MARKER_UNKNOWN) {
-        BeginBenchmark("vme_verify");
-        if((lastResult = VisionMarker::verificationTrees[multiClassLabel].Classify(image, homography,
-                                                                                   threshold, tempLabel)) != RESULT_OK)
-        {
+      // ComputeThreshold sets threshold to max u32 value if minContrastRatio was not met
+      if(threshold != UINT32_MAX)
+      {
+        BeginBenchmark("vme_classify");
+        
+        //s16 multiClassLabel = static_cast<s16>(MARKER_UNKNOWN);
+        
+        s32 tempLabel;
+        if((lastResult = VisionMarker::multiClassTree.Classify(image, homography,
+                                                               threshold, tempLabel)) != RESULT_OK) {
           return lastResult;
         }
-        EndBenchmark("vme_verify");
         
-        OrientedMarkerLabel verifyLabel = static_cast<OrientedMarkerLabel>(tempLabel);
-        if(verifyLabel == multiClassLabel)
-        {
-          // We have a valid, verified classification.
-          
-          // 1. Get the unoriented type
-          this->markerType = RemoveOrientationLUT[multiClassLabel];
-          
-          // 2. Reorder the original detected corners to the canonical ordering for
-          // this type
-          for(s32 i_corner=0; i_corner<4; ++i_corner)
+        OrientedMarkerLabel multiClassLabel = static_cast<OrientedMarkerLabel>(tempLabel);
+        
+        EndBenchmark("vme_classify");
+        
+        if(multiClassLabel != MARKER_UNKNOWN) {
+          BeginBenchmark("vme_verify");
+          if((lastResult = VisionMarker::verificationTrees[multiClassLabel].Classify(image, homography,
+                                                                                     threshold, tempLabel)) != RESULT_OK)
           {
-            this->corners[i_corner] = quad[CornerReorderLUT[multiClassLabel][i_corner]];
+            return lastResult;
           }
+          EndBenchmark("vme_verify");
           
-          // Mark this as a valid marker (note that reaching this point should
-          // be the only way isValid is true.
-          this->isValid = true;
+          OrientedMarkerLabel verifyLabel = static_cast<OrientedMarkerLabel>(tempLabel);
+          if(verifyLabel == multiClassLabel)
+          {
+            // We have a valid, verified classification.
+            
+            // 1. Get the unoriented type
+            this->markerType = RemoveOrientationLUT[multiClassLabel];
+            
+            // 2. Reorder the original detected corners to the canonical ordering for
+            // this type
+            for(s32 i_corner=0; i_corner<4; ++i_corner)
+            {
+              this->corners[i_corner] = quad[CornerReorderLUT[multiClassLabel][i_corner]];
+            }
+            
+            // Mark this as a valid marker (note that reaching this point should
+            // be the only way isValid is true.
+            this->isValid = true;
+          }
         }
-      }
+      } // IF threshld != u32::max()
 
       return lastResult;
       
