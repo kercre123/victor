@@ -29,6 +29,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "../../coretech/vision/blockImages/blockImage50_320x240.h"
 #include "../../coretech/vision/blockImages/blockImages00189_80x60.h"
 #include "../../coretech/vision/blockImages/blockImages00190_80x60.h"
+#include "../../coretech/vision/blockImages/newFiducials_320x240.h"
 #include "../../../systemTestImages/cozmo_2014_01_29_11_41_05_10_320x240.h"
 #include "../../../systemTestImages/cozmo_2014_01_29_11_41_05_12_320x240.h"
 
