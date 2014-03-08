@@ -35,7 +35,7 @@ namespace Anki {
     endPos_ = endPos;
     timeStep_ = fabs(timeStep);
 
-    assert(maxVel_ > fabs(endVel_));
+    assert(maxVel_ >= fabs(endVel_));
     assert(accel_ > 0);
     assert(timeStep_ > 0);
     
