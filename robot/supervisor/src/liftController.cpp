@@ -20,7 +20,7 @@ namespace Anki {
 #ifdef SIMULATOR
         #define OPEN_LOOP_LIFT_CONTROL 0
 #else
-        #define OPEN_LOOP_LIFT_CONTROL 1
+        #define OPEN_LOOP_LIFT_CONTROL 0 // Kevin (03/07/2014) - Disabling this for the new robot. Things should be working soon!
 #endif
         
         

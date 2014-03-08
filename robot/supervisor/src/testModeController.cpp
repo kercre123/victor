@@ -30,7 +30,7 @@ namespace Anki {
         
         
         //////// DriveTest /////////
-        #define TOGGLE_DIRECTION_TEST 0   // 0: Only drive forward
+        #define TOGGLE_DIRECTION_TEST 1   // 0: Only drive forward
                                           // 1: Switch between driving forward and reverse
         
         #define DIRECT_HAL_MOTOR_TEST 0   // 0: Test WheelController
@@ -75,7 +75,7 @@ namespace Anki {
         //////// HeadTest /////////
         // 0: Set power directly with MotorSetPower
         // 1: Command a desired head angle (i.e. use HeadController)
-        #define HEAD_POSITION_TEST 0
+        #define HEAD_POSITION_TEST 1
         
         const f32 HEAD_POWER_CMD = 0.3;
         const f32 HEAD_DES_HIGH_ANGLE = 0.5f;
@@ -626,6 +626,7 @@ namespace Anki {
       ReturnCode Init(TestMode mode)
       {
         ReturnCode ret = EXIT_SUCCESS;
+#if(!FREE_DRIVE_DUBINS_TEST)
         testMode_ = mode;
         
         switch(testMode_) {
@@ -679,7 +680,7 @@ namespace Anki {
             ret = EXIT_FAILURE;
             break;
         }
-        
+#endif
         return ret;
         
       }
@@ -687,12 +688,14 @@ namespace Anki {
       
       ReturnCode Update()
       {
+#if(!FREE_DRIVE_DUBINS_TEST)
         // Don't run Update until robot is finished initializing
         if (Robot::GetOperationMode() == Robot::WAITING) {
           if (updateFunc) {
             return updateFunc();
           }
         }
+#endif
         return EXIT_SUCCESS;
       }
       
