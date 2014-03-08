@@ -5,6 +5,8 @@
 #include "anki/cozmo/robot/visionSystem.h"
 #include "anki/cozmo/robot/pathFollower.h"
 #include "anki/cozmo/robot/speedController.h"
+#include "liftController.h"
+#include "headController.h"
 #include "dockingController.h"
 
 namespace Anki {
@@ -299,6 +301,17 @@ namespace Anki {
                                         0, 0);
       }
 
+      void ProcessMoveLiftMessage(const MoveLift& msg) {
+        LiftController::SetSpeedAndAccel(msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
+        LiftController::SetDesiredHeight(msg.height_mm);
+      }
+      
+      void ProcessMoveHeadMessage(const MoveHead& msg) {
+        HeadController::SetSpeedAndAccel(msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
+        HeadController::SetDesiredAngle(msg.angle_rad);
+      }
+      
+      
       
       
       // TODO: Fill these in once they are needed/used:

@@ -424,6 +424,30 @@ namespace Anki {
       return msgHandler_->SendMessage(ID_, m);
     }
     
+    ReturnCode Robot::SendMoveLift(const f32 height_mm,
+                                   const f32 max_speed_rad_per_sec,
+                                   const f32 accel_rad_per_sec2)
+    {
+      MessageMoveLift m;
+      m.height_mm = height_mm;
+      m.max_speed_rad_per_sec = max_speed_rad_per_sec;
+      m.accel_rad_per_sec2 = accel_rad_per_sec2;
+      
+      return msgHandler_->SendMessage(ID_,m);
+    }
+    
+    ReturnCode Robot::SendMoveHead(const f32 angle_rad,
+                                   const f32 max_speed_rad_per_sec,
+                                   const f32 accel_rad_per_sec2)
+    {
+      MessageMoveHead m;
+      m.angle_rad = angle_rad;
+      m.max_speed_rad_per_sec = max_speed_rad_per_sec;
+      m.accel_rad_per_sec2 = accel_rad_per_sec2;
+      
+      return msgHandler_->SendMessage(ID_,m);
+    }
+    
     
   } // namespace Cozmo
 } // namespace Anki

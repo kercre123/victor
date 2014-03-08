@@ -74,6 +74,10 @@ namespace Anki {
       
       // Sends a message to the robot to dock to the specified block
       ReturnCode SendDockWithBlock(const u8* blockCode, const f32 markerWidth_mm, const DockAction_t dockAction);
+
+      ReturnCode SendMoveLift(const f32 height_mm, const f32 max_speed_rad_per_sec, const f32 accel_rad_per_sec2);
+      
+      ReturnCode SendMoveHead(const f32 angle_rad, const f32 max_speed_rad_per_sec, const f32 accel_rad_per_sec2);
       
       
     protected:

@@ -384,7 +384,7 @@ namespace Anki {
             angleErrorSum_ = 0.f;
             
             // If desired angle is low position, let it fall through to recalibration
-            if (!RECALIBRATE_AT_LOW_HEIGHT || desiredAngle_.ToFloat() != LIFT_ANGLE_LOW) {
+            if (!(RECALIBRATE_AT_LOW_HEIGHT && desiredAngle_.ToFloat() == LIFT_ANGLE_LOW)) {
               power_ = 0.f;
               
               if (desiredAngle_ == currDesiredAngle_) {

@@ -60,6 +60,21 @@ ADD_MESSAGE_MEMBER(s16, curvatureRadius_mm)  // +ve: curves left, -ve: curves ri
                                              // ...turn right, 0: straight
 END_MESSAGE_DEFINITION(SetMotion)
 
+
+// MoveLift
+START_MESSAGE_DEFINITION(MoveLift, 1)
+ADD_MESSAGE_MEMBER(f32, height_mm)
+ADD_MESSAGE_MEMBER(f32, max_speed_rad_per_sec)
+ADD_MESSAGE_MEMBER(f32, accel_rad_per_sec2)
+END_MESSAGE_DEFINITION(MoveLift)
+
+// MoveHead
+START_MESSAGE_DEFINITION(MoveHead, 1)
+ADD_MESSAGE_MEMBER(f32, angle_rad)
+ADD_MESSAGE_MEMBER(f32, max_speed_rad_per_sec)
+ADD_MESSAGE_MEMBER(f32, accel_rad_per_sec2)
+END_MESSAGE_DEFINITION(MoveHead)
+
 // ClearPath
 START_MESSAGE_DEFINITION(ClearPath, 1)
 ADD_MESSAGE_MEMBER(u16, pathID)
