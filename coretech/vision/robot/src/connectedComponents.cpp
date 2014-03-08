@@ -717,7 +717,7 @@ namespace Anki
       return RESULT_OK;
     }
 
-    Result ConnectedComponents::InvalidateFilledCenterComponents(const s32 percentHorizontal, const s32 percentVertical, MemoryStack scratch)
+    Result ConnectedComponents::InvalidateFilledCenterComponents_shrunkRectangle(const s32 percentHorizontal, const s32 percentVertical, MemoryStack scratch)
     {
       const s32 numFractionalBitsForPercents = 8;
 
@@ -802,6 +802,103 @@ namespace Anki
           }
         }
       }
+
+      FindMaximumId();
+
+      this->isSortedInId = false;
+
+      return RESULT_OK;
+    }
+
+    Result ConnectedComponents::InvalidateFilledCenterComponents_hollowRows(const f32 minHollowRatio, MemoryStack scratch)
+    {
+      const s32 numComponents = components.get_size();
+
+      ConnectedComponentSegment * restrict pComponents = components.Pointer(0);
+
+      FixedLengthList<s32> maxCenterDistanceSum(maximumId+1, scratch, Flags::Buffer(false,false,true));
+
+      maxCenterDistanceSum.Set(0);
+
+      s32 * restrict pMaxCenterDistanceSum = maxCenterDistanceSum.Pointer(0);
+
+      // Compute the sum of the maximium x-distance for each row
+      {
+        PUSH_MEMORY_STACK(scratch);
+
+        FixedLengthList<s32> lastComponentY(maximumId+1, scratch, Flags::Buffer(false,false,true));
+        FixedLengthList<s32> lastComponentRightEdge(maximumId+1, scratch, Flags::Buffer(false,false,true));
+        FixedLengthList<s32> maxCenterDistance(maximumId+1, scratch, Flags::Buffer(false,false,true));
+
+        s32 * restrict pLastComponentY = lastComponentY.Pointer(0);
+        s32 * restrict pLastComponentRightEdge = lastComponentRightEdge.Pointer(0);
+        s32 * restrict pMaxCenterDistance = maxCenterDistance.Pointer(0);
+
+        lastComponentY.Set(-1);
+        maxCenterDistance.Set(0);
+
+        for(s32 iComponent=0; iComponent<numComponents; iComponent++) {
+          const u16 id = pComponents[iComponent].id;
+          const s16 xStart = pComponents[iComponent].xStart;
+          const s16 xEnd = pComponents[iComponent].xEnd;
+          const s16 y = pComponents[iComponent].y;
+
+          const s32 lastY = pLastComponentY[id];
+
+          if(y == lastY) {
+            const s32 lastXEnd = pLastComponentRightEdge[id];
+            const s32 xDistance = xStart - lastXEnd - 1;
+            AnkiAssert(xDistance > 0);
+            pMaxCenterDistance[id] = MAX(pMaxCenterDistance[id], xDistance);
+            pLastComponentRightEdge[id] = xEnd;
+          } else {
+            pMaxCenterDistanceSum[id] += pMaxCenterDistance[id];
+            pMaxCenterDistance[id] = 0;
+            pLastComponentY[id] = y;
+            pLastComponentRightEdge[id] = xEnd;
+          }
+        } // for(s32 iComponent=0; iComponent<numComponents; iComponent++)
+
+        for(s32 id=1; id<=maximumId; id++) {
+          pMaxCenterDistanceSum[id] += pMaxCenterDistance[id];
+        }
+      } // Compute the sum of the maximium x-distance for each row
+
+      FixedLengthList<bool> validComponents(maximumId+1, scratch, Flags::Buffer(false,false,true));
+      validComponents.Set(true);
+
+      bool * restrict pValidComponents = validComponents.Pointer(0);
+
+      // If the sum of maximum x-distances is too small, invalidate the component
+      {
+        FixedLengthList<s32> componentSizes(maximumId+1, scratch, Flags::Buffer(false,false,true));
+        const s32 * restrict pComponentSizes = componentSizes.Pointer(0);
+
+        this->ComputeComponentSizes(componentSizes);
+
+        for(s32 id=1; id<=maximumId; id++) {
+          const f32 curCenterSum = static_cast<f32>(pMaxCenterDistanceSum[id]);
+          const f32 curComponentSize = static_cast<f32>(pComponentSizes[id]);
+
+          // ratio should be greater-than-or-equal-to 0, and could be greater than 1.0
+          const f32 ratio = curCenterSum / curComponentSize;
+
+          if(ratio < minHollowRatio) {
+            pValidComponents[id] = false;
+          }
+        }
+      } // If the sum of maximum x-distances is too small, invalidate the component
+
+      // Set all invalid ComponentSegments to zero
+      {
+        for(s32 i=0; i<numComponents; i++) {
+          const u16 id = pComponents[i].id;
+
+          if(!pValidComponents[id]) {
+            pComponents[i].id = 0;
+          }
+        }
+      } // Set all invalid ComponentSegments to zero
 
       FindMaximumId();
 

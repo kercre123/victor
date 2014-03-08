@@ -14,15 +14,14 @@ component_minimumNumPixels = round(minSideLength*minSideLength - (0.8*minSideLen
 component_maximumNumPixels = round(maxSideLength*maxSideLength - (0.8*maxSideLength)*(0.8*maxSideLength));
 component_sparseMultiplyThreshold = 1000.0;
 component_solidMultiplyThreshold = 2.0;
-component_percentHorizontal = 0.5;
-component_percentVertical = 0.5;
+component_minHollowRatio = 1.0;
 quads_minQuadArea = 100 / 4;
 quads_quadSymmetryThreshold = 2.0;
 quads_minDistanceFromImageEdge = 2;
 decode_minContrastRatio = 1.25;
 returnInvalidMarkers = 0;
 
-[quads, markerTypes] = mexDetectFiducialMarkers(image, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_percentHorizontal, component_percentVertical, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, returnInvalidMarkers);
+[quads, markerTypes] = mexDetectFiducialMarkers(image, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, returnInvalidMarkers);
 
 
 % figure(1); hold off; imshow(image); hold on;

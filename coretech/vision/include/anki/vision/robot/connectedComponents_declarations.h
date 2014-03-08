@@ -151,7 +151,18 @@ namespace Anki
       //
       // For a ConnectedComponent that has a maximum id of N, this function requires 10N + 10 bytes
       // of scratch.
-      Result InvalidateFilledCenterComponents(const s32 percentHorizontal, const s32 percentVertical, MemoryStack scratch);
+      Result InvalidateFilledCenterComponents_shrunkRectangle(const s32 percentHorizontal, const s32 percentVertical, MemoryStack scratch);
+
+      // Go along each row of components. Find the maximum difference between the end of one
+      // component and the start of the next. The amount of space in the center of a component is
+      // approximated as the sum of the per-row max distances, divided by the number of filled pixels.
+      //
+      // For example:
+      // If minHollowRatio==0.5, this means that a component must have at least half as many interior as exterior pixels.
+      // If minHollowRatio==1.0, this means that a component must have at least an equal number of interior and exterior pixels.
+      // If minHollowRatio==2.0, this means that a component must have at least twice as many interior as exterior pixels.
+      // TODO: what is a reasonable value? 1.0?
+      Result InvalidateFilledCenterComponents_hollowRows(const f32 minHollowRatio, MemoryStack scratch);
 
       Result PushBack(const ConnectedComponentSegment &value);
 

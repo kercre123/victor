@@ -29,7 +29,7 @@ namespace Anki
       const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
       const s32 component_minimumNumPixels, const s32 component_maximumNumPixels,
       const s32 component_sparseMultiplyThreshold, const s32 component_solidMultiplyThreshold,
-      const s32 component_percentHorizontal, const s32 component_percentVertical,
+      const f32 component_minHollowRatio,
       const s32 quads_minQuadArea, const s32 quads_quadSymmetryThreshold, const s32 quads_minDistanceFromImageEdge,
       const f32 decode_minContrastRatio,
       const s32 maxConnectedComponentSegments,

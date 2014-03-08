@@ -1191,8 +1191,9 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
   const s32 component_sparseMultiplyThreshold = 1000 << 5;
   const s32 component_solidMultiplyThreshold = 2 << 5;
 
-  const s32 component_percentHorizontal = 1 << 7; // 0.5, in SQ 23.8
-  const s32 component_percentVertical = 1 << 7; // 0.5, in SQ 23.8
+  //const s32 component_percentHorizontal = 1 << 7; // 0.5, in SQ 23.8
+  //const s32 component_percentVertical = 1 << 7; // 0.5, in SQ 23.8
+  const f32 component_minHollowRatio = 1.0f;
 
   const s32 maxExtractedQuads = 1000/2;
   const s32 quads_minQuadArea = 100/4;
@@ -1242,7 +1243,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
       component1d_minComponentWidth, component1d_maxSkipDistance,
       component_minimumNumPixels, component_maximumNumPixels,
       component_sparseMultiplyThreshold, component_solidMultiplyThreshold,
-      component_percentHorizontal, component_percentVertical,
+      component_minHollowRatio,
       quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge,
       decode_minContrastRatio,
       maxConnectedComponentSegments,
@@ -1670,6 +1671,59 @@ GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids)
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids)
+
+GTEST_TEST(CoreTech_Vision, InvalidateFilledCenterComponents_hollowRows)
+{
+  const s32 numComponents = 10;
+  const f32 minHollowRatio = 0.7f;
+
+  MemoryStack ms(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(ms.IsValid());
+
+  ConnectedComponents components(numComponents, 640, ms);
+
+  const ConnectedComponentSegment component0 = ConnectedComponentSegment(0, 2, 5, 1);
+  const ConnectedComponentSegment component1 = ConnectedComponentSegment(4, 6, 5, 1);
+  const ConnectedComponentSegment component2 = ConnectedComponentSegment(0, 0, 6, 1);
+  const ConnectedComponentSegment component3 = ConnectedComponentSegment(6, 6, 6, 1);
+  const ConnectedComponentSegment component4 = ConnectedComponentSegment(0, 1, 7, 2);
+  const ConnectedComponentSegment component5 = ConnectedComponentSegment(3, 3, 7, 2);
+  const ConnectedComponentSegment component6 = ConnectedComponentSegment(5, 7, 7, 2);
+  const ConnectedComponentSegment component7 = ConnectedComponentSegment(0, 1, 8, 2);
+  const ConnectedComponentSegment component8 = ConnectedComponentSegment(5, 12, 8, 2);
+  const ConnectedComponentSegment component9 = ConnectedComponentSegment(0, 10, 12, 3);
+
+  components.PushBack(component0);
+  components.PushBack(component1);
+  components.PushBack(component2);
+  components.PushBack(component3);
+  components.PushBack(component4);
+  components.PushBack(component5);
+  components.PushBack(component6);
+  components.PushBack(component7);
+  components.PushBack(component8);
+  components.PushBack(component9);
+
+  {
+    const Result result = components.InvalidateFilledCenterComponents_hollowRows(minHollowRatio, ms);
+    ASSERT_TRUE(result == RESULT_OK);
+  }
+
+  //components.Print();
+
+  ASSERT_TRUE(components.Pointer(0)->id == 1);
+  ASSERT_TRUE(components.Pointer(1)->id == 1);
+  ASSERT_TRUE(components.Pointer(2)->id == 1);
+  ASSERT_TRUE(components.Pointer(3)->id == 1);
+  ASSERT_TRUE(components.Pointer(4)->id == 0);
+  ASSERT_TRUE(components.Pointer(5)->id == 0);
+  ASSERT_TRUE(components.Pointer(6)->id == 0);
+  ASSERT_TRUE(components.Pointer(7)->id == 0);
+  ASSERT_TRUE(components.Pointer(8)->id == 0);
+  ASSERT_TRUE(components.Pointer(9)->id == 0);
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Vision, InvalidateFilledCenterComponents_hollowRows)
 
 GTEST_TEST(CoreTech_Vision, InvalidateSolidOrSparseComponents)
 {
@@ -2202,6 +2256,7 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   CALL_GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary);
   CALL_GTEST_TEST(CoreTech_Vision, ComputeComponentBoundingBoxes);
   CALL_GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids);
+  CALL_GTEST_TEST(CoreTech_Vision, InvalidateFilledCenterComponents_hollowRows);
   CALL_GTEST_TEST(CoreTech_Vision, InvalidateSolidOrSparseComponents);
   CALL_GTEST_TEST(CoreTech_Vision, InvalidateSmallOrLargeComponents);
   CALL_GTEST_TEST(CoreTech_Vision, CompressComponentIds);

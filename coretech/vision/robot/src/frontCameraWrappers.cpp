@@ -18,7 +18,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/matlabInterface.h"
 
 //#define SEND_DRAWN_COMPONENTS
-//#define SHOW_DRAWN_COMPONENTS
+#define SHOW_DRAWN_COMPONENTS
 
 namespace Anki
 {
@@ -33,7 +33,7 @@ namespace Anki
       const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
       const s32 component_minimumNumPixels, const s32 component_maximumNumPixels,
       const s32 component_sparseMultiplyThreshold, const s32 component_solidMultiplyThreshold,
-      const s32 component_percentHorizontal, const s32 component_percentVertical,
+      const f32 component_minHollowRatio,
       const s32 quads_minQuadArea, const s32 quads_quadSymmetryThreshold, const s32 quads_minDistanceFromImageEdge,
       const f32 decode_minContrastRatio,
       const s32 maxConnectedComponentSegments,
@@ -126,10 +126,16 @@ namespace Anki
         extractedComponents.CompressConnectedComponentSegmentIds(scratchOnchip);
         EndBenchmark("CompressConnectedComponentSegmentIds3");
 
-        BeginBenchmark("InvalidateFilledCenterComponents");
-        if((lastResult = extractedComponents.InvalidateFilledCenterComponents(component_percentHorizontal, component_percentVertical, scratchOnchip)) != RESULT_OK)
+        // This doesn't work well for in-plane rotate components
+        //BeginBenchmark("InvalidateFilledCenterComponents_shrunkRectangle");
+        //if((lastResult = extractedComponents.InvalidateFilledCenterComponents_shrunkRectangle(component_percentHorizontal, component_percentVertical, scratchOnchip)) != RESULT_OK)
+        //  return lastResult;
+        //EndBenchmark("InvalidateFilledCenterComponents_shrunkRectangle");
+
+        BeginBenchmark("InvalidateFilledCenterComponents_hollowRows");
+        if((lastResult = extractedComponents.InvalidateFilledCenterComponents_hollowRows(component_minHollowRatio, scratchOnchip)) != RESULT_OK)
           return lastResult;
-        EndBenchmark("InvalidateFilledCenterComponents");
+        EndBenchmark("InvalidateFilledCenterComponents_hollowRows");
 
         BeginBenchmark("CompressConnectedComponentSegmentIds4");
         extractedComponents.CompressConnectedComponentSegmentIds(scratchOnchip);
