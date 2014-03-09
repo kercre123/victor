@@ -91,10 +91,10 @@ namespace Anki
       }
 
       // Add +1, so it matches the Matlab version
-      for(s32 i=0; i<4; i++) {
-        quadSwapped[i].x++;
-        quadSwapped[i].y++;
-      }
+      //for(s32 i=0; i<4; i++) {
+      //  quadSwapped[i].x++;
+      //  quadSwapped[i].y++;
+      //}
 
       return true;
     }

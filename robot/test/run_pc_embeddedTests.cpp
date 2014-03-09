@@ -32,8 +32,8 @@ int main()
 {
 #if ANKICORETECH_EMBEDDED_USE_GTEST
 
-  //char * filterString = "--gtest_filter=*"; // Run all tests
-  char * filterString = "--gtest_filter=*DetectFiducialMarkers*"; // Run only some tests
+  char * filterString = "--gtest_filter=*"; // Run all tests
+  //char * filterString = "--gtest_filter=*DetectFiducialMarkers*"; // Run only some tests
   //char * filterString = "--gtest_filter=*InvalidateFilledCenterComponents_hollowRows*"; // Run only some tests
 
   argc++;

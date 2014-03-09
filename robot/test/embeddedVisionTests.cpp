@@ -26,6 +26,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/binaryTracker.h"
 #include "anki/vision/robot/decisionTree_vision.h"
 
+#include "anki/vision/MarkerCodeDefinitions.h"
+
 #include "../../coretech/vision/blockImages/blockImage50_320x240.h"
 #include "../../coretech/vision/blockImages/blockImages00189_80x60.h"
 #include "../../coretech/vision/blockImages/blockImages00190_80x60.h"
@@ -50,7 +52,7 @@ GTEST_TEST(CoreTech_Vision, DecisionTreeVision)
   const s32 numProbeOffsets = 1;
   const s16 probeXOffsets[numProbeOffsets] = {0};
   const s16 probeYOffsets[numProbeOffsets] = {0};
-  u32 grayvalueThreshold = 128;
+  const u8 grayvalueThreshold = 128;
 
   treeData[0].probeXCenter = 0;
   treeData[0].probeYCenter = 0;
@@ -93,14 +95,14 @@ GTEST_TEST(CoreTech_Vision, DecisionTreeVision)
   Array<u8> image(1,3,scratchOnchip);
 
   image[0][0] = grayvalueThreshold; // black
-  image[0][2] = grayvalueThreshold + 1; // white
+  image[0][1] = grayvalueThreshold + 1; // white
 
   s32 label = -1;
   const Result result = tree.Classify(image, homography, grayvalueThreshold, label);
 
   ASSERT_TRUE(result == RESULT_OK);
 
-  ASSERT_TRUE(label == 5);
+  ASSERT_TRUE(label == 4);
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, DecisionTreeVision)
@@ -1217,6 +1219,8 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
   Array<u8> image(newFiducials_320x240_HEIGHT, newFiducials_320x240_WIDTH, scratchOffchip);
   image.Set(newFiducials_320x240, newFiducials_320x240_WIDTH*newFiducials_320x240_HEIGHT);
 
+  //image.Show("image", true);
+
   // TODO: Check that the image loaded correctly
   //ASSERT_TRUE(IsnewFiducials_320x240Valid(image.Pointer(0,0), false));
 
@@ -1265,23 +1269,54 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
 
   markers.Print("markers");
 
-  ASSERT_TRUE(markers.get_size() == 1);
-
-  // TODO: Add validation of marker.bits
-  //ASSERT_TRUE(markers[0].blockType == 15);
-  //ASSERT_TRUE(markers[0].faceType == 5);
-  //ASSERT_TRUE(markers[0].orientation == BlockMarker::ORIENTATION_LEFT);
+  //  [Type 3-MARKER_ANKILOGO]: (139,9) (127,88) (217,21) (205,100)]
+  //[Type 2-MARKER_ANGRYFACE]: (64,12) (8,41) (92,68) (37,97)]
+  //[Type 4-MARKER_BATTERIES]: (238,71) (238,148) (314,71) (314,148)]
+  //[Type 3-MARKER_ANKILOGO]: (83,116) (83,155) (122,116) (122,155)]
+  //[Type 4-MARKER_BATTERIES]: (17,123) (17,161) (54,123) (54,161)]
+  //[Type 5-MARKER_BULLSEYE]: (222,137) (151,137) (222,209) (151,210)]
+  //[Type 2-MARKER_ANGRYFACE]: (245,161) (245,224) (307,161) (307,224)]
+  //[Type 7-MARKER_SQUAREPLUSCORNERS]: (127,166) (89,166) (128,205) (88,205)]
+  //[Type 7-MARKER_SQUAREPLUSCORNERS]: (44,174) (15,201) (70,204) (41,230)]
 
   if(scaleImage_thresholdMultiplier == 65536) {
-    ASSERT_TRUE(markers[0].corners[0] == Point<s16>(105,131));
-    ASSERT_TRUE(markers[0].corners[1] == Point<s16>(103,167));
-    ASSERT_TRUE(markers[0].corners[2] == Point<s16>(141,133));
-    ASSERT_TRUE(markers[0].corners[3] == Point<s16>(139,169));
+    const s32 numMarkers_groundTruth = 9;
+
+    ASSERT_TRUE(markers.get_size() == numMarkers_groundTruth);
+
+    const s16 corners_groundTruth[numMarkers_groundTruth][4][2] = {
+      {{139,9},{127,88},{217,21},{205,100}},
+      {{64,12},{8,41},{92,68},{37,97}},
+      {{238,71},{238,148},{314,71},{314,148}},
+      {{83,116},{83,155},{122,116},{122,155}},
+      {{17,123},{17,161},{54,123},{54,161}},
+      {{222,137},{151,137},{222,209},{151,210}},
+      {{245,161},{245,224},{307,161},{307,224}},
+      {{127,166},{89,166},{128,205},{88,205}},
+      {{44,174},{15,201},{70,204},{41,230}}
+    };
+
+    const Anki::Vision::MarkerType markerTypes_groundTruth[numMarkers_groundTruth] = {
+      Anki::Vision::MARKER_ANKILOGO,
+      Anki::Vision::MARKER_ANGRYFACE,
+      Anki::Vision::MARKER_BATTERIES,
+      Anki::Vision::MARKER_ANKILOGO,
+      Anki::Vision::MARKER_BATTERIES,
+      Anki::Vision::MARKER_BULLSEYE,
+      Anki::Vision::MARKER_ANGRYFACE,
+      Anki::Vision::MARKER_SQUAREPLUSCORNERS,
+      Anki::Vision::MARKER_SQUAREPLUSCORNERS
+    };
+
+    for(s32 iMarker=0; iMarker<numMarkers_groundTruth; iMarker++) {
+      ASSERT_TRUE(markers[iMarker].isValid);
+      ASSERT_TRUE(markers[iMarker].markerType == markerTypes_groundTruth[iMarker]);
+      for(s32 iCorner=0; iCorner<4; iCorner++) {
+        ASSERT_TRUE(markers[iMarker].corners[iCorner] == Point<s16>(corners_groundTruth[iMarker][iCorner][0], corners_groundTruth[iMarker][iCorner][1]));
+      }
+    }
   } else {
-    ASSERT_TRUE(markers[0].corners[0] == Point<s16>(105,132));
-    ASSERT_TRUE(markers[0].corners[1] == Point<s16>(103,167));
-    ASSERT_TRUE(markers[0].corners[2] == Point<s16>(140,133));
-    ASSERT_TRUE(markers[0].corners[3] == Point<s16>(139,169));
+    ASSERT_TRUE(false);
   }
 
   GTEST_RETURN_HERE;
@@ -1303,8 +1338,8 @@ GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents)
 
   // TODO: check these by hand
   const Quadrilateral<s16> quads_groundTruth[] = {
-    Quadrilateral<s16>(Point<s16>(25,5), Point<s16>(11,5), Point<s16>(25,19), Point<s16>(11,19)) ,
-    Quadrilateral<s16>(Point<s16>(130,51),  Point<s16>(101,51), Point<s16>(130,80), Point<s16>(101,80)) };
+    Quadrilateral<s16>(Point<s16>(24,4), Point<s16>(10,4), Point<s16>(24,18), Point<s16>(10,18)) ,
+    Quadrilateral<s16>(Point<s16>(129,50),  Point<s16>(100,50), Point<s16>(129,79), Point<s16>(100,79)) };
 
   ConnectedComponents components(numComponents, imageWidth, ms);
 
