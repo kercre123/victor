@@ -17,6 +17,17 @@ For internal use only. No part of this code may be used without a signed non-dis
 // Compiler-specific configuration, with various defines that make different compilers work on the same code
 //
 
+// Section directives to allocate memory in specific places
+#ifdef ROBOT_HARDWARE  // STM32F4 version
+#define OFFCHIP __attribute__((section("OFFCHIP")))
+#define ONCHIP __attribute__((section("ANY")))      // This is the default!
+#define CCM __attribute__((section("CCM")))
+#else
+#define OFFCHIP
+#define ONCHIP
+#define CCM
+#endif
+
 #if defined(_MSC_VER) // We're using the MSVC compiler
 #pragma warning(disable: 4068) // Disable warning for unknown pragma
 #pragma warning(disable: 4127) // Disable warning for conditional expression is constant

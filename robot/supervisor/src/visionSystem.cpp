@@ -88,8 +88,8 @@ namespace Anki {
       const u32 LOOK_FOR_BLOCK_PERIOD_US = 200000;
       const u32 TRACK_BLOCK_PERIOD_US = 100000;
 #else
-      __attribute__((section(".cmx.bss"))) char cmxBuffer_[CMX_BUFFER_SIZE];
-      __attribute__((section(".ddr.bss"))) u8   ddrBuffer_[DDR_BUFFER_SIZE] ALIGNVARIABLE;
+      char cmxBuffer_[CMX_BUFFER_SIZE];
+      OFFCHIP   u8   ddrBuffer_[DDR_BUFFER_SIZE] ALIGNVARIABLE;
 #endif
 
       const u32 TRACKER_SCRATCH_SIZE   = 600000;

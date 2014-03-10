@@ -1,0 +1,28 @@
+; *************************************************************
+; *** Scatter-Loading File for Cozmo - do not edit
+; *************************************************************
+
+LR_IROM1 0x08000000 0x00200000  {    ; load region size_region
+  ER_IROM1 0x08000000 0x00200000  {  ; load address = execution address
+   *.o (RESET, +First)
+   *(InRoot$$Sections)
+   .ANY (+RO)
+  }
+
+; This is general-purpose on-chip RAM - default for most variables/stack/etc
+; Reserve 16KB for stack + 256 bytes for (unused) heap
+  RW_IRAM1 0x20004100 0x0002BF00  {
+   .ANY (+RW +ZI)
+  }
+
+; CCM is "Core Coupled Memory" - not available for DMA
+  RW_IRAM2 0x10000000 0x00010000  {
+   *(CCM)
+  }
+
+; This is off-chip RAM for debugging
+  RW_RAM1 0xC0000000 0x00800000  {
+   *(OFFCHIP)
+  }
+}
+
