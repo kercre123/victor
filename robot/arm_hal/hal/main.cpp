@@ -83,7 +83,7 @@ int main(void)
   
   UARTPutString("UART!\r\n");
   
-  SPIInit();
+  //SPIInit();
   
   UARTPutString("SPI!\r\n");
   
