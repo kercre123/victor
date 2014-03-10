@@ -37,16 +37,6 @@ namespace Anki
     {
       
       namespace {
-        // ======== Pre-processed path segment info =======
-        
-        // Line
-        f32 line_m_;  // slope of line
-        f32 line_b_;  // y-intersect of line
-        f32 line_dy_sign_; // 1 if endPt.y - startPt.y >= 0
-        Radians line_theta_; // angle of line
-        
-        f32 arc_angTraversed_;
-        // ===== End of pre-processed path segment info ===
         
         const f32 CONTINUITY_TOL_MM2 = 1;
         
@@ -157,29 +147,6 @@ namespace Anki
                                             final_straight_approach_length,
                                             path_length);
       }
-      
-      
-      void PreProcessPathSegment(const Planning::PathSegment &segment)
-      {
-        switch(segment.GetType()) {
-          case Planning::PST_LINE:
-          {
-            const Planning::PathSegmentDef::s_line* l = &(segment.GetDef().line);
-            line_m_ = (l->endPt_y - l->startPt_y) / (l->endPt_x - l->startPt_x);
-            line_b_ = l->startPt_y - line_m_ * l->startPt_x;
-            line_dy_sign_ = ((l->endPt_y - l->startPt_y) >= 0) ? 1.0 : -1.0;
-            line_theta_ = atan2_fast(l->endPt_y - l->startPt_y, l->endPt_x - l->startPt_x);
-            break;
-          }
-          case Planning::PST_ARC:
-            arc_angTraversed_ = 0;
-            break;
-          case Planning::PST_POINT_TURN:
-          default:
-            break;
-        }
-      }
-
 
       u8 GetClosestSegment(const f32 x, const f32 y, const f32 angle)
       {
@@ -244,8 +211,6 @@ namespace Anki
                 path_[currPathSegment_].GetAccel(),
                 path_[currPathSegment_].GetDecel());
 #endif
-          
-          PreProcessPathSegment(path_[currPathSegment_]);
 
           //Robot::SetOperationMode(Robot::FOLLOW_PATH);
           SteeringController::SetPathFollowMode();
@@ -417,8 +382,6 @@ namespace Anki
             PathComplete();
             return EXIT_SUCCESS;
           }
-          
-          PreProcessPathSegment(path_[currPathSegment_]);
           
           // Command new speed for segment
           SpeedController::SetUserCommandedDesiredVehicleSpeed( path_[currPathSegment_].GetTargetSpeed() );
