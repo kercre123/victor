@@ -54,11 +54,16 @@ namespace Anki {
       
       // The current speed according to the target speed and acceleration set by the user. [mm/sec]
       // This is our speed goal for the current iteration. This is what the PID controller will use
-      s16 userCommandedCurrentVehicleSpeed_ = 0;
+      f32 userCommandedCurrentVehicleSpeed_ = 0;
       
-      // The absolute value (max value) acceleration/deceleration the user commanded to the car [mm/sec^2]
-      const s16 DEFAULT_ACCEL_MMPS = 200;
-      s16 userCommandedAcceleration_ = MAX(Anki::Cozmo::ONE_OVER_CONTROL_DT, DEFAULT_ACCEL_MMPS);
+      // The acceleration the user commanded to the car [mm/sec^2]
+      const u16 DEFAULT_ACCEL_MMPS2 = 200;
+      u16 userCommandedAcceleration_ = DEFAULT_ACCEL_MMPS2;
+
+      // The deceleration the user commanded to the car [mm/sec^2]
+      const u16 DEFAULT_DECEL_MMPS2 = 1000;
+      u16 userCommandedDeceleration_ = DEFAULT_DECEL_MMPS2;
+
       
       // The controller needs to regulate the speed of the car "around" the user commanded speed [mm/sec]
       s16 controllerCommandedVehicleSpeed_ = 0;
@@ -80,7 +85,7 @@ namespace Anki {
     
     s16 GetUserCommandedCurrentVehicleSpeed(void)
     {
-      return userCommandedCurrentVehicleSpeed_;
+      return (s16)userCommandedCurrentVehicleSpeed_;
     }
     
     void SetUserCommandedDesiredVehicleSpeed(s16 ucspeed)
@@ -118,16 +123,25 @@ namespace Anki {
       userCommandedCurrentVehicleSpeed_ = ucspeed;
     }
     
-    void SetUserCommandedAcceleration(s16 ucAccel)
+    void SetUserCommandedAcceleration(u16 ucAccel)
     {
-      userCommandedAcceleration_ = MAX(ABS(ucAccel), ceilf(ONE_OVER_CONTROL_DT));
+      userCommandedAcceleration_ = ucAccel;
     }
     
-    s16 GetUserCommandedAcceleration(void)
+    u16 GetUserCommandedAcceleration(void)
     {
       return userCommandedAcceleration_;
     }
     
+    void SetUserCommandedDeceleration(u16 ucDecel)
+    {
+      userCommandedDeceleration_ = ucDecel;
+    }
+    
+    u16 GetUserCommandedDeceleration(void)
+    {
+      return userCommandedDeceleration_;
+    }
     
     void SetControllerCommandedVehicleSpeed(s16 ccspeed)
     {
@@ -154,13 +168,17 @@ namespace Anki {
     {
       if (userCommandedDesiredVehicleSpeed_ > userCommandedCurrentVehicleSpeed_) {
         // Go faster
-        userCommandedCurrentVehicleSpeed_ += userCommandedAcceleration_ * Cozmo::CONTROL_DT;
+        userCommandedCurrentVehicleSpeed_ += (f32)userCommandedAcceleration_ * Cozmo::CONTROL_DT;
         userCommandedCurrentVehicleSpeed_ = MIN(userCommandedDesiredVehicleSpeed_, userCommandedCurrentVehicleSpeed_);
       } else if (userCommandedDesiredVehicleSpeed_ < userCommandedCurrentVehicleSpeed_) {
         // Go slower
-        userCommandedCurrentVehicleSpeed_ -= userCommandedAcceleration_ * Cozmo::CONTROL_DT;
+        userCommandedCurrentVehicleSpeed_ -= (f32)userCommandedDeceleration_ * Cozmo::CONTROL_DT;
         userCommandedCurrentVehicleSpeed_ = MAX(userCommandedDesiredVehicleSpeed_, userCommandedCurrentVehicleSpeed_);
       }
+      
+      //PRINT("RunAccelUpdate: accel/decel = (%d,%d), commandedSpeed = %f, desiredSpeed = %d\n",
+      //      userCommandedAcceleration_, userCommandedDeceleration_,
+      //      userCommandedCurrentVehicleSpeed_, userCommandedDesiredVehicleSpeed_);
     }
     
     void Manage(void)
@@ -240,7 +258,7 @@ namespace Anki {
 #endif
       
 #if(DEBUG_SPEED_CONTROLLER)
-      PRINT(" SPEED_CTRL: userDesSpeed: %d, userCurrSpeed: %d, userAccel: %d, controllerSpeed: %d, currError: %d, errorSum: %d\n", userCommandedDesiredVehicleSpeed_, userCommandedCurrentVehicleSpeed_, userCommandedAcceleration_, controllerCommandedVehicleSpeed_, currerror, errorsum_);
+      PRINT(" SPEED_CTRL: userDesSpeed: %d, userCurrSpeed: %f, userAccel: %d, controllerSpeed: %d, currError: %d, errorSum: %d\n", userCommandedDesiredVehicleSpeed_, userCommandedCurrentVehicleSpeed_, userCommandedAcceleration_, controllerCommandedVehicleSpeed_, currerror, errorsum_);
 #endif
       
       Traces16(TRACE_VAR_VSC_DESIRED_SPEED, desVehicleSpeed, TRACE_MASK_MOTOR_CONTROLLER);

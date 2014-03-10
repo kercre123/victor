@@ -17,6 +17,9 @@
 #include "anki/vision/basestation/camera.h"
 #include "anki/vision/basestation/visionMarker.h"
 
+#include "anki/planning/shared/path.h"
+
+#include "anki/cozmo/cozmoTypes.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/messages.h"
 
@@ -25,6 +28,8 @@ namespace Anki {
     
     // Forward declarations:
     class BlockWorld;
+    class MessageHandler;
+    class PathPlanner;
     
     class Robot
     {
@@ -36,7 +41,7 @@ namespace Anki {
         DOCK
       };
       
-      Robot(const RobotID_t robotID, BlockWorld* world);
+      Robot(const RobotID_t robotID, MessageHandler* msgHandler, BlockWorld* world, PathPlanner* pathPlanner);
       
       void Update();
       
@@ -56,12 +61,37 @@ namespace Anki {
       
       void dockWithBlock(const Block& block);
       
+      ReturnCode GetPathToPose(const Pose3d& pose, Planning::Path& path);
+      ReturnCode ExecutePathToPose(const Pose3d& pose);
+      
+      ///////// Messaging ////////
+      
+      // Clears the path that the robot is executing which also stops the robot
+      ReturnCode SendClearPath();
+      
+      // Sends a path to the robot to be immediately executed
+      ReturnCode SendExecutePath(const Planning::Path& path);
+      
+      // Sends a message to the robot to dock to the specified block
+      ReturnCode SendDockWithBlock(const u8* blockCode, const f32 markerWidth_mm, const DockAction_t dockAction);
+
+      ReturnCode SendMoveLift(const f32 height_mm, const f32 max_speed_rad_per_sec, const f32 accel_rad_per_sec2);
+      
+      ReturnCode SendMoveHead(const f32 angle_rad, const f32 max_speed_rad_per_sec, const f32 accel_rad_per_sec2);
+      
+      
     protected:
       // The robot's identifier
       RobotID_t     ID_;
       
+      // A reference to the MessageHandler that the robot uses for outgoing comms
+      MessageHandler* msgHandler_;
+      
       // A reference to the BlockWorld the robot lives in
       BlockWorld*   world_;
+      
+      PathPlanner* pathPlanner_;
+      
       
       Pose3d pose;
       void updatePose();
@@ -127,6 +157,9 @@ namespace Anki {
 #else
       RobotManager();
 #endif
+
+      // Sets pointers to other managers
+      ReturnCode Init(MessageHandler* msgHandler, BlockWorld* blockWorld, PathPlanner* pathPlanner);
       
       // Get the list of known robot ID's
       std::vector<RobotID_t> const& GetRobotIDList() const;
@@ -138,7 +171,7 @@ namespace Anki {
       bool DoesRobotExist(const RobotID_t withID) const;
       
       // Add / remove robots
-      void AddRobot(const RobotID_t withID, BlockWorld* toWorld);
+      void AddRobot(const RobotID_t withID);
       void RemoveRobot(const RobotID_t withID);
       
       // Call each Robot's Update() function
@@ -155,6 +188,10 @@ namespace Anki {
       
       static RobotManager* singletonInstance_;
 #endif
+      
+      MessageHandler* msgHandler_;
+      BlockWorld* blockWorld_;
+      PathPlanner* pathPlanner_;
       
       std::map<RobotID_t,Robot*> robots_;
       std::vector<RobotID_t>     ids_;

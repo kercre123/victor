@@ -16,13 +16,19 @@
 #include <stdio.h>
 #include <string>
 
-#if(USE_WEBOTS_TXRX)
-#include <webots/Supervisor.hpp>
-#else
 #include "anki/messaging/shared/TcpServer.h"
 #include "anki/messaging/shared/UdpClient.h"
 #include "anki/messaging/shared/utilMessaging.h"
-#endif
+
+// For getting local host's IP address
+#define _GNU_SOURCE     /* To get defns of NI_MAXSERV and NI_MAXHOST */
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <ifaddrs.h>
+#include <stdlib.h>
+#include <unistd.h>
+
 
 namespace Anki {
   namespace Cozmo {
@@ -31,34 +37,27 @@ namespace Anki {
       const u16 RECV_BUFFER_SIZE = 1024;
       
       // For communications with basestation
-#if(USE_WEBOTS_TXRX)
-      webots::Emitter *tx_;
-      webots::Receiver *rx_;
-#else
       TcpServer server;
       UdpClient advRegClient;
-#endif
+
       u8 recvBuf_[RECV_BUFFER_SIZE];
       s32 recvBufSize_ = 0;
+      
+      RobotAdvertisementRegistration regMsg;
     }
 
     // Register robot with advertisement service
     void RegisterRobot()
     {
-      RobotAdvertisementRegistration regMsg;
-      regMsg.robotID = HAL::GetRobotID();
       regMsg.enableAdvertisement = 1;
-      regMsg.port = ROBOT_RADIO_BASE_PORT + regMsg.robotID;
       
-      PRINT("sim_radio: Sending registration for robot %d on port %d\n", regMsg.robotID, regMsg.port);
+      PRINT("sim_radio: Sending registration for robot %d at address %s on port %d\n", regMsg.robotID, regMsg.robotAddr, regMsg.port);
       advRegClient.Send((char*)&regMsg, sizeof(regMsg));
     }
     
     // Deregister robot with advertisement service
     void DeregisterRobot()
     {
-      RobotAdvertisementRegistration regMsg;
-      regMsg.robotID = HAL::GetRobotID();
       regMsg.enableAdvertisement = 0;
       
       PRINT("sim_radio: Sending deregistration for robot %d\n", regMsg.robotID);
@@ -66,33 +65,62 @@ namespace Anki {
     }
     
     
-#if(USE_WEBOTS_TXRX)
-    ReturnCode InitSimRadio(webots::Robot& webotRobot, s32 robotID)
-#else
     ReturnCode InitSimRadio(s32 robotID)
-#endif
     {
-#if(USE_WEBOTS_TXRX)
-      tx_ = webotRobot.getEmitter("radio_tx");
-      rx_ = webotRobot.getReceiver("radio_rx");
-      
-      if(tx_==NULL || rx_==NULL) {
-        return EXIT_FAILURE;
-      }
-      
-      rx_->enable(TIME_STEP);
-      rx_->setChannel(robotID);
-      tx_->setChannel(robotID);
-#else
       server.StartListening(ROBOT_RADIO_BASE_PORT + robotID);
       
       // Register with advertising service by sending IP and port info
       // NOTE: Since there is no ACK robot_advertisement_controller must be running before this happens!
+      //       We also assume that when working with simluated robots on Webots, the advertisement service is running on the same host.
       advRegClient.Connect("127.0.0.1", ROBOT_ADVERTISEMENT_REGISTRATION_PORT);
+      
+      // Get robot's IPv4 address.
+      // Looking for (and assuming there is only one) address that starts with 192.
+      struct ifaddrs *ifaddr, *ifa;
+      if (getifaddrs(&ifaddr) != 0) {
+        PRINT("getifaddrs failed\n");
+        assert(false);
+      }
+      
+      
+      int family, s, n;
+      char host[NI_MAXHOST];
+      for (ifa = ifaddr, n = 0; ifa != NULL; ifa = ifa->ifa_next, n++) {
+        if (ifa->ifa_addr == NULL)
+          continue;
+        
+        family = ifa->ifa_addr->sa_family;
+        
+        // Display IPv4 addresses only
+        if (family == AF_INET) {
+          s = getnameinfo(ifa->ifa_addr,
+                          (family == AF_INET) ? sizeof(struct sockaddr_in) :
+                          sizeof(struct sockaddr_in6),
+                          host, NI_MAXHOST,
+                          NULL, 0, NI_NUMERICHOST);
+          if (s != 0) {
+            PRINT("getnameinfo() failed\n");
+            assert(false);
+          }
+          
+          // Does address start with 192?
+          if (strncmp(host, "192.", 4) == 0)
+          {
+            PRINT("Local host IP: %s\n", host);
+            break;
+          }
+        }
+      }
+      freeifaddrs(ifaddr);
+      
+      
+      
+      // Fill in advertisement registration message
+      regMsg.robotID = (u8)HAL::GetRobotID();
+      regMsg.port = ROBOT_RADIO_BASE_PORT + regMsg.robotID;
+      memcpy(regMsg.robotAddr, host, sizeof(regMsg.robotAddr));
+      
       RegisterRobot();
-      
-#endif
-      
       recvBufSize_ = 0;
       
       return EXIT_SUCCESS;
@@ -103,7 +131,6 @@ namespace Anki {
       return server.HasClient();
     }
 
-#if(!USE_WEBOTS_TXRX)
     void DisconnectRadio(void)
     {
       server.DisconnectClient();
@@ -111,26 +138,10 @@ namespace Anki {
       
       RegisterRobot();
     }
-#endif
     
     bool HAL::RadioSendMessage(const Messages::ID msgID, const void *buffer, TimeStamp_t ts)
     {
       if (server.HasClient()) {
-#if(USE_WEBOTS_TXRX)
-        // Send the message header (0xBEEF + robotID + msgID)
-        const u8 HEADER_LENGTH = 4;
-        const u8 header[HEADER_LENGTH] = {
-          RADIO_PACKET_HEADER[0],
-          RADIO_PACKET_HEADER[1],
-          static_cast<u8>(msgID),
-          static_cast<u8>(HAL::GetRobotID())};
-        
-        // Send the actual message
-        const u8 size = Messages::GetSize(msgID);
-
-        tx_->send(header, HEADER_LENGTH);
-        tx_->send(buffer, size);
-#else
 
         // Send the message header (0xBEEF + timestamp + robotID + msgID)
         // For TCP comms, send timestamp immediately after the header.
@@ -172,7 +183,6 @@ namespace Anki {
         }
         printf("\n");
         */
-#endif
         
         return true;
       }
@@ -190,29 +200,6 @@ namespace Anki {
       // Check for incoming data and add it to receive buffer
       int dataSize;
       
-#if(USE_WEBOTS_TXRX)
-      const void* data;
-      
-      // Read receiver for as long as it is not empty.
-      while (rx_->getQueueLength() > 0) {
-        
-        // Get head packet
-        data = rx_->getData();
-        dataSize = rx_->getDataSize();
-        
-        if(recvBufSize_ + dataSize > RECV_BUFFER_SIZE) {
-          PRINT("Radio receive buffer full!");
-          return recvBufSize_;
-        }
-        
-        // Copy data to receive buffer
-        memcpy(&recvBuf_[recvBufSize_], data, dataSize);
-        recvBufSize_ += dataSize;
-        
-        // Delete processed packet from queue
-        rx_->nextPacket();
-      }
-#else
       // Read available data
       dataSize = server.Recv((char*)&recvBuf_[recvBufSize_], RECV_BUFFER_SIZE - recvBufSize_);
       if (dataSize > 0) {
@@ -221,7 +208,6 @@ namespace Anki {
         // Something went wrong
         DisconnectRadio();
       }
-#endif
       
       return recvBufSize_;
       
@@ -317,13 +303,11 @@ namespace Anki {
 
     void RadioUpdate()
     {
-#if(!USE_WEBOTS_TXRX)
       if(!server.HasClient()) {
         if (server.Accept()) {
           DeregisterRobot();
         }
       }
-#endif
     }
 
     

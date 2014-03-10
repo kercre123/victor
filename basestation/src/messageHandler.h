@@ -24,7 +24,7 @@
 #include "anki/common/types.h"
 
 #include "anki/cozmo/basestation/messages.h"
-#include "anki/cozmo/basestation/robot.h" 
+
 #include "anki/messaging/basestation/IComms.h"
 
 namespace Anki {
@@ -34,6 +34,10 @@ namespace Anki {
     
     
 #define USE_SINGLETON_MESSAGE_HANDLER 0
+    
+    class Robot;
+    class RobotManager;
+    class BlockWorld;
     
     // TODO: make singleton or not?
     class MessageHandler
@@ -79,14 +83,6 @@ namespace Anki {
       // Process a raw byte buffer as a message and send it to the specified
       // robot
       ReturnCode ProcessPacket(const Comms::MsgPacket& packet);
-      
-      // Create the enumerated message IDs from the MessageDefinitions file:
-      typedef enum {
-        NO_MESSAGE_ID = 0,
-#define MESSAGE_DEFINITION_MODE MESSAGE_ENUM_DEFINITION_MODE
-#include "anki/cozmo/MessageDefinitions.h"
-        NUM_MSG_IDS // Final entry without comma at end
-      } ID;
       
       // Auto-gen the ProcessBufferAs_MessageX() method prototypes using macros:
 #define MESSAGE_DEFINITION_MODE MESSAGE_PROCESS_METHODS_MODE

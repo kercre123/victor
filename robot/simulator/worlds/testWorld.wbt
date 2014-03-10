@@ -104,7 +104,6 @@ XYaxesDisplay {
 
 DEF Cozmo CozmoBot {
   name "CozmoBot_1"
-  commsChannel 1
   translation -0.100000 0.200000 0.020000
   rotation 0.000000 0.000000 1.000000 1.570796
   controller "cozmo_c_controller"

@@ -6,7 +6,7 @@
 #include "liftController.h"
 
 #include "anki/cozmo/robot/cozmoConfig.h"
-#include "anki/cozmo/robot/cozmoTypes.h"
+#include "anki/common/robot/geometry.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/localization.h"
 #include "anki/cozmo/robot/visionSystem.h"
@@ -37,13 +37,15 @@ namespace Anki {
         };
 
         // Turning radius of docking path
-        const f32 DOCK_PATH_START_RADIUS_M = 0.05;
-        const f32 DOCK_PATH_END_RADIUS_M = 0.12;
+        const f32 DOCK_PATH_START_RADIUS_MM = 50;
+        const f32 DOCK_PATH_END_RADIUS_MM = 120;
         
         // The length of the straight tail end of the dock path.
         // Should be roughly the length of the forks on the lift.
-        const f32 FINAL_APPROACH_STRAIGHT_SEGMENT_LENGTH_M = 0.06;
+        const f32 FINAL_APPROACH_STRAIGHT_SEGMENT_LENGTH_MM = 60;
 
+        const f32 FAR_DIST_TO_BLOCK_THRESH_MM = 100;
+        
         // Distance from block face at which robot should "dock"
         f32 dockOffsetDistX_ = 0.f;
         
@@ -59,6 +61,7 @@ namespace Anki {
         const u16 DOCK_APPROACH_SPEED_MMPS = 20;
         const u16 DOCK_FAR_APPROACH_SPEED_MMPS = 30;
         const u16 DOCK_APPROACH_ACCEL_MMPS2 = 200;
+        const u16 DOCK_APPROACH_DECEL_MMPS2 = 200;
         
         // Code of the VisionMarker we are trying to dock to
         VisionSystem::MarkerCode dockMarkerCode_;
@@ -205,11 +208,6 @@ namespace Anki {
       {
         lastDockingErrorSignalRecvdTime_ = HAL::GetMicroCounter();
         
-        // Convert to m
-        rel_x *= 0.001;
-        rel_y *= 0.001;
-        
-        
         if (mode_ == IDLE || success_) {
           // We already accomplished the dock. We're done!
           return;
@@ -315,9 +313,12 @@ namespace Anki {
                                                               dockPose_.x(),
                                                               dockPose_.y(),
                                                               dockPose_.angle.ToFloat(),
-                                                              DOCK_PATH_START_RADIUS_M,
-                                                              DOCK_PATH_END_RADIUS_M,
-                                                              FINAL_APPROACH_STRAIGHT_SEGMENT_LENGTH_M,
+                                                              DOCK_PATH_START_RADIUS_MM,
+                                                              DOCK_PATH_END_RADIUS_MM,
+                                                              DOCK_APPROACH_SPEED_MMPS,
+                                                              DOCK_APPROACH_ACCEL_MMPS2,
+                                                              DOCK_APPROACH_DECEL_MMPS2,
+                                                              FINAL_APPROACH_STRAIGHT_SEGMENT_LENGTH_MM,
                                                               &path_length);
 
         //PRINT("numPathSegments: %d, path_length: %f, distToBlock: %f, followBlockNormalPath: %d\n",
@@ -331,26 +332,27 @@ namespace Anki {
           
           // Compute new starting point for path
           // HACK: Feeling lazy, just multiplying path by some scalar so that it's likely to be behind the current robot pose.
-          f32 x_start_m = dockPose_.x() - 3 * distToBlock * cosf(dockPose_.angle.ToFloat());
-          f32 y_start_m = dockPose_.y() - 3 * distToBlock * sinf(dockPose_.angle.ToFloat());
+          f32 x_start_mm = dockPose_.x() - 3 * distToBlock * cosf(dockPose_.angle.ToFloat());
+          f32 y_start_mm = dockPose_.y() - 3 * distToBlock * sinf(dockPose_.angle.ToFloat());
           
           PathFollower::ClearPath();
-          PathFollower::AppendPathSegment_Line(0, x_start_m, y_start_m, dockPose_.x(), dockPose_.y());
+          PathFollower::AppendPathSegment_Line(0, x_start_mm, y_start_mm, dockPose_.x(), dockPose_.y(),
+                                               DOCK_APPROACH_SPEED_MMPS, DOCK_APPROACH_ACCEL_MMPS2, DOCK_APPROACH_DECEL_MMPS2);
           
           followingBlockNormalPath_ = true;
           //PRINT("Computing straight line path (%f, %f) to (%f, %f)\n", x_start_m, y_start_m, dockPose_.x(), dockPose_.y());
         }
 
-        
+        /*
         // Set speed
         // TODO: Add hysteresis
-        if (distToBlock < 0.10) {
+        if (distToBlock < FAR_DIST_TO_BLOCK_THRESH_MM) {
           SpeedController::SetUserCommandedDesiredVehicleSpeed( DOCK_APPROACH_SPEED_MMPS );
         } else {
           SpeedController::SetUserCommandedDesiredVehicleSpeed( DOCK_FAR_APPROACH_SPEED_MMPS );
         }
         SpeedController::SetUserCommandedAcceleration( DOCK_APPROACH_ACCEL_MMPS2 );
-
+        */
         
         // Start following path
         createdValidPath_ = PathFollower::StartPathTraversal();

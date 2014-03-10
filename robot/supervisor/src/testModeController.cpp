@@ -30,7 +30,7 @@ namespace Anki {
         
         
         //////// DriveTest /////////
-        #define TOGGLE_DIRECTION_TEST 0   // 0: Only drive forward
+        #define TOGGLE_DIRECTION_TEST 1   // 0: Only drive forward
                                           // 1: Switch between driving forward and reverse
         
         #define DIRECT_HAL_MOTOR_TEST 0   // 0: Test WheelController
@@ -75,7 +75,7 @@ namespace Anki {
         //////// HeadTest /////////
         // 0: Set power directly with MotorSetPower
         // 1: Command a desired head angle (i.e. use HeadController)
-        #define HEAD_POSITION_TEST 0
+        #define HEAD_POSITION_TEST 1
         
         const f32 HEAD_POWER_CMD = 0.3;
         const f32 HEAD_DES_HIGH_ANGLE = 0.5f;
@@ -95,7 +95,15 @@ namespace Anki {
         const f32 DOCK_PATH_TOGGLE_TIME_S = 3.f;
         
         ////// End of DockPathTest ////
-
+        
+        
+        //////// PathFollowTest /////////
+        const f32 PF_TARGET_SPEED_MMPS = 160;
+        const f32 PF_ACCEL_MMPS2 = 200;
+        const f32 PF_DECEL_MMPS2 = 500;
+        
+        ////// End of PathFollowTest ////
+        
         
         //////// PickAndPlaceTest /////////
         enum {
@@ -253,23 +261,26 @@ namespace Anki {
       {
         const u32 startDriveTime_us = 500000;
         if (!pathStarted_ && HAL::GetMicroCounter() > startDriveTime_us) {
-          SpeedController::SetUserCommandedAcceleration( MAX(ONE_OVER_CONTROL_DT + 1, 500) );  // This can't be smaller than 1/CONTROL_DT!
+          SpeedController::SetUserCommandedAcceleration( 100 ); 
           SpeedController::SetUserCommandedDesiredVehicleSpeed(160);
           PRINT("Speed commanded: %d mm/s\n",
                 SpeedController::GetUserCommandedDesiredVehicleSpeed() );
           
           // Create a path and follow it
-          PathFollower::AppendPathSegment_Line(0, 0.0, 0.0, 0.3, -0.3);
-          
-          //PathFollower::AppendPathSegment_PointTurn(0, 0.3, -0.3, -PIDIV2-0.05, PIDIV2, PIDIV2, PIDIV2);
-          
-          float arc1_radius = sqrt(0.005);  // Radius of sqrt(0.05^2 + 0.05^2)
-          PathFollower::AppendPathSegment_Arc(0, 0.35, -0.25, arc1_radius, -0.75*PI, 0.75*PI);
-          PathFollower::AppendPathSegment_Line(0, 0.35 + arc1_radius, -0.25, 0.35 + arc1_radius, 0.2);
-          float arc2_radius = sqrt(0.02); // Radius of sqrt(0.1^2 + 0.1^2)
+          PathFollower::AppendPathSegment_Line(0, 0.0, 0.0, 300, -300,
+                                               PF_TARGET_SPEED_MMPS, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
+          float arc1_radius = sqrt((float)5000);  // Radius of sqrt(50^2 + 50^2)
+          PathFollower::AppendPathSegment_Arc(0, 350, -250, arc1_radius, -0.75*PI, 0.75*PI,
+                                              PF_TARGET_SPEED_MMPS, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
+          PathFollower::AppendPathSegment_Line(0, 350 + arc1_radius, -250, 350 + arc1_radius, 200,
+                                               PF_TARGET_SPEED_MMPS, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
+          float arc2_radius = sqrt((float)20000); // Radius of sqrt(100^2 + 100^2)
           //PathFollower::AppendPathSegment_Arc(0, 0.35 + arc1_radius - arc2_radius, 0.2, arc2_radius, 0, PIDIV2);
-          PathFollower::AppendPathSegment_Arc(0, 0.35 + arc1_radius - arc2_radius, 0.2, arc2_radius, 0, 3*PIDIV2);
-          PathFollower::AppendPathSegment_Arc(0, 0.35 + arc1_radius - arc2_radius, 0.2 - 2*arc2_radius, arc2_radius, PIDIV2, -3.5*PIDIV2);
+          PathFollower::AppendPathSegment_Arc(0, 350 + arc1_radius - arc2_radius, 200, arc2_radius, 0, 3*PIDIV2,
+                                              PF_TARGET_SPEED_MMPS, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
+          PathFollower::AppendPathSegment_Arc(0, 350 + arc1_radius - arc2_radius, 200 - 2*arc2_radius, arc2_radius, PIDIV2, -3.5*PIDIV2,
+                                              PF_TARGET_SPEED_MMPS, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
+          
           PathFollower::StartPathTraversal();
           pathStarted_ = true;
         }
@@ -615,6 +626,7 @@ namespace Anki {
       ReturnCode Init(TestMode mode)
       {
         ReturnCode ret = EXIT_SUCCESS;
+#if(!FREE_DRIVE_DUBINS_TEST)
         testMode_ = mode;
         
         switch(testMode_) {
@@ -668,7 +680,7 @@ namespace Anki {
             ret = EXIT_FAILURE;
             break;
         }
-        
+#endif
         return ret;
         
       }
@@ -676,12 +688,14 @@ namespace Anki {
       
       ReturnCode Update()
       {
+#if(!FREE_DRIVE_DUBINS_TEST)
         // Don't run Update until robot is finished initializing
         if (Robot::GetOperationMode() == Robot::WAITING) {
           if (updateFunc) {
             return updateFunc();
           }
         }
+#endif
         return EXIT_SUCCESS;
       }
       
