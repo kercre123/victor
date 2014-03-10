@@ -9,6 +9,7 @@
 #include "anki/common/basestation/platformPathManager.h"
 
 #include "anki/cozmo/basestation/blockWorld.h"
+#include "anki/cozmo/basestation/robot.h"
 
 #include "anki/common/robot/matlabInterface.h"
 
@@ -52,7 +53,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
   ASSERT_TRUE(jsonParseResult);
 
   BlockWorld blockWorld;
-  Robot robot(0, &blockWorld);    // TODO: Support multiple robots
+  Robot robot(0, 0, &blockWorld, 0);    // TODO: Support multiple robots
 
   
   ASSERT_TRUE(jsonRoot.isMember("CameraCalibration"));

@@ -38,6 +38,7 @@ if(NOT WIN32)
     Cozmo_Basestation
     CoreTech_Common_Basestation
     CoreTech_Vision_Basestation
+    CoreTech_Planning_Basestation
     CoreTech_Messaging_Shared
     CppController # Webots C++ Controller
     jsoncpp

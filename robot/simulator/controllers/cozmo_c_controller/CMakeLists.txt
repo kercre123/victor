@@ -40,7 +40,7 @@ set(SOURCE_FILES
   ${SIMULATOR_HAL_DIR}/sim_uart.cpp
 
   ${SIMULATOR_SRC_DIR}/keyboardController.cpp
-  ${SIMULATOR_SRC_DIR}/sim_pathFollower.cpp
+  ${SIMULATOR_SRC_DIR}/sim_viz.cpp
   ${SIMULATOR_SRC_DIR}/sim_overlayDisplay.cpp
 
   ${COZMO_ROBOT_SUPERVISOR_SRC}
@@ -58,7 +58,7 @@ set(HEADER_FILES
  ${ROBOT_SRC_DIR}/testModeController.h
 
 	${SIMULATOR_SRC_DIR}/keyboardController.h
-  ${SIMULATOR_SRC_DIR}/sim_pathFollower.h
+  ${SIMULATOR_SRC_DIR}/sim_viz.h
   ${SIMULATOR_SRC_DIR}/sim_overlayDisplay.h
 	
 	${COZMO_ROBOT_HEADER_FILES}
@@ -73,7 +73,7 @@ if(NOT WIN32)
     CoreTech_Common_Robot
     CoreTech_Vision_Robot
     CoreTech_Messaging_Shared
-    CoreTech_Planning_Shared
+    CoreTech_Planning_Robot
     mx 
     eng
     ${ALL_EMBEDDED_LIBRARIES}

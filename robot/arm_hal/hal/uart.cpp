@@ -1,19 +1,21 @@
 #include "lib/stm32f4xx.h"
 #include "anki/cozmo/robot/hal.h"
+#include "portable.h"
 
 #define BAUDRATE 1000000
 
-#define GPIO_X        GPIOA
-#define RCC_GPIO      RCC_AHB1Periph_GPIOA
-#define RCC_UART      RCC_APB2Periph_USART1
-#define GPIO_AF       GPIO_AF_USART1
-#define UART          USART1
+#define RCC_GPIO        RCC_AHB1Periph_GPIOC
+#define RCC_DMA         RCC_AHB1Periph_DMA1
+#define RCC_UART        RCC_APB1Periph_UART4
+#define GPIO_AF         GPIO_AF_UART4
+#define UART            UART4
 
-#define SOURCE_TX     9
-#define SOURCE_RX     10
-#define PIN_TX        (1 << SOURCE_TX)
-#define PIN_RX        (1 << SOURCE_RX)
+#define DMA_STREAM_RX   DMA1_Stream2
+#define DMA_CHANNEL_RX  DMA_Channel_4
 
+#define DMA_STREAM_TX   DMA1_Stream4
+#define DMA_CHANNEL_TX  DMA_Channel_4
+#define DMA_IRQ_TX      DMA1_Stream4_IRQn
 
 namespace Anki
 {
@@ -21,22 +23,42 @@ namespace Anki
   {
     namespace HAL
     {
+      /////////////////////////////////////////////////////////////////////
+      // UART
+      //
+      const u32 WRITE_BUFFER_SIZE = 1024 * 1024 * 1;
+      const u32 READ_BUFFER_SIZE = 1024;
+      
+      u8 m_bufferWrite[WRITE_BUFFER_SIZE];
+      u8 m_bufferRead[READ_BUFFER_SIZE];
+      
+      u32 m_DMAWriteIndex = 0;
+      u32 m_DMAReadIndex = 0;
+      
       void UARTInit()
       {
+        GPIO_PIN_SOURCE(TX, GPIOC, 10);
+        GPIO_PIN_SOURCE(RX, GPIOC, 11);
+        
         // Clock configuration
         RCC_AHB1PeriphClockCmd(RCC_GPIO, ENABLE);
-        RCC_APB2PeriphClockCmd(RCC_UART, ENABLE);
+        RCC_AHB1PeriphClockCmd(RCC_DMA, ENABLE);
+        RCC_APB1PeriphClockCmd(RCC_UART, ENABLE);
 
         // Configure the pins for UART in AF mode
         GPIO_InitTypeDef GPIO_InitStructure;
-        GPIO_InitStructure.GPIO_Pin = PIN_TX | PIN_RX;
+        GPIO_InitStructure.GPIO_Pin = PIN_TX;
         GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
         GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
         GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
         GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
-        GPIO_Init(GPIO_X, &GPIO_InitStructure);
-        GPIO_PinAFConfig(GPIO_X, SOURCE_TX, GPIO_AF_USART1);
-        GPIO_PinAFConfig(GPIO_X, SOURCE_RX, GPIO_AF_USART1);
+        GPIO_Init(GPIO_TX, &GPIO_InitStructure);
+        
+        GPIO_InitStructure.GPIO_Pin = PIN_RX;
+        GPIO_Init(GPIO_RX, &GPIO_InitStructure);
+        
+        GPIO_PinAFConfig(GPIO_TX, SOURCE_TX, GPIO_AF);
+        GPIO_PinAFConfig(GPIO_RX, SOURCE_RX, GPIO_AF);
 
         // Configure the UART for the appropriate baudrate
         USART_InitTypeDef USART_InitStructure;
@@ -49,6 +71,54 @@ namespace Anki
         USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
         USART_Init(UART, &USART_InitStructure);
         USART_Cmd(UART, ENABLE);
+        
+        // Configure DMA for receiving
+        /*DMA_DeInit(DMA_STREAM_RX);
+  
+        DMA_InitTypeDef DMA_InitStructure;  
+        DMA_InitStructure.DMA_Channel = DMA_CHANNEL_RX;
+        DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)&UART->DR;
+        DMA_InitStructure.DMA_Memory0BaseAddr = (u32)m_bufferRead;
+        DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralToMemory;
+        DMA_InitStructure.DMA_BufferSize = sizeof(m_bufferRead);
+        DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
+        DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
+        DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
+        DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;
+        DMA_InitStructure.DMA_Mode = DMA_Mode_Circular;
+        DMA_InitStructure.DMA_Priority = DMA_Priority_VeryHigh;
+        DMA_InitStructure.DMA_FIFOMode = DMA_FIFOMode_Disable;
+        DMA_InitStructure.DMA_FIFOThreshold = DMA_FIFOThreshold_Full;
+        DMA_InitStructure.DMA_MemoryBurst = DMA_MemoryBurst_Single;
+        DMA_InitStructure.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;
+        DMA_Init(DMA_STREAM_RX, &DMA_InitStructure);
+        
+        // Enable DMA
+        USART_DMACmd(UART, USART_DMAReq_Rx, ENABLE);
+        DMA_Cmd(DMA_STREAM_RX, ENABLE);
+        
+        // Configure DMA For transmitting
+        DMA_DeInit(DMA_STREAM_TX);
+        
+        DMA_InitStructure.DMA_Channel = DMA_CHANNEL_TX;
+        DMA_InitStructure.DMA_Memory0BaseAddr = (u32)m_bufferWrite;
+        DMA_InitStructure.DMA_DIR = DMA_DIR_MemoryToPeripheral;
+        DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;
+        DMA_Init(DMA_STREAM_TX, &DMA_InitStructure);
+        
+        // Note: DMA is not enabled for TX here, because the buffer is empty.
+        // After main/long execution, DMA will be enabled for a specified
+        // length.
+        
+        // Enable interrupt on DMA transfer complete for TX
+        DMA_ITConfig(DMA_STREAM_TX, DMA_IT_TC, ENABLE);
+        
+        NVIC_InitTypeDef NVIC_InitStructure;
+        NVIC_InitStructure.NVIC_IRQChannel = DMA_IRQ_TX;
+        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+        NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+        NVIC_Init(&NVIC_InitStructure);*/
       }
 
       int UARTPutChar(int c)
@@ -71,6 +141,14 @@ namespace Anki
         UARTPutChar(hex[c >> 4]);
         UARTPutChar(hex[c & 0xF]);
       }
+      
+      void UARTPutHex32(u32 value)
+      {
+        UARTPutHex(value >> 24);
+        UARTPutHex(value >> 16);
+        UARTPutHex(value >> 8);
+        UARTPutHex(value);
+      }
 
       s32 UARTGetChar(u32 timeout)
       {
@@ -90,6 +168,39 @@ namespace Anki
         // No data, so return with an error
         return -1;
       }
+      
+      /////////////////////////////////////////////////////////////////////
+      // Fake USB
+      //
+      
+      /*void USBSendBuffer(const u8*buffer, const u32 size)
+      {
+      }
+      
+      u32 USBGetNumBytesToRead()
+      {
+        return 0;
+      }
+      
+      s32 USBGetChar(u32 timeout)
+      {
+        return -1;
+      }
+      
+      s32 USBPeekChar(u32 offset)
+      {
+        return -1;
+      }
+      
+      Messages::ID USBGetNextMessage(u8* buffer)
+      {
+        return (Messages::ID)0;
+      }
+      
+      int USBPutChar(int c)
+      {
+        return c;
+      }*/
     }
   }
 }
@@ -104,4 +215,11 @@ int std::fputc(int c, FILE* f)
 int std::fgetc(FILE* f)
 {
   return Anki::Cozmo::HAL::UARTGetChar();
+}
+
+// Interrupt for DMA transfer complete
+extern "C"
+void DMA1_Stream4_IRQHandler()
+{
+  // ...
 }

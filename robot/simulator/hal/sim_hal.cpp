@@ -7,7 +7,6 @@
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/messages.h"
 #include "anki/cozmo/robot/wheelController.h"
-#include "cozmo_physics.h"
 
 #include "sim_overlayDisplay.h"
 
@@ -87,10 +86,7 @@ namespace Anki {
       f32 motorPrevPositions_[HAL::MOTOR_COUNT];
       f32 motorSpeeds_[HAL::MOTOR_COUNT];
       f32 motorSpeedCoeffs_[HAL::MOTOR_COUNT];
-      
-      // For communications with basestation
-      webots::Emitter *tx_;
-      webots::Receiver *rx_;
+
       
 #pragma mark --- Simulated Hardware Interface "Private Methods" ---
       // Localization
@@ -193,11 +189,7 @@ namespace Anki {
 #pragma mark --- Simulated Hardware Method Implementations ---
     
     // Forward Declaration.  This is implemented in sim_radio.cpp
-#if(USE_WEBOTS_TXRX)
-    ReturnCode InitSimRadio(webots::Robot& webotRobot, s32 robotID);
-#else
     ReturnCode InitSimRadio(s32 robotID);
-#endif
    
     namespace HAL {
       // Forward Declaration.  This is implemented in sim_uart.cpp
@@ -228,10 +220,7 @@ namespace Anki {
       
       //matCam_->enable(VISION_TIME_STEP);
       headCam_->enable(VISION_TIME_STEP);
-      
-      tx_ = webotRobot_.getEmitter("radio_tx");
-      rx_ = webotRobot_.getReceiver("radio_rx");
-      
+
       
       // Set ID
       // Expected format of name is <SomeName>_<robotID>
@@ -261,7 +250,7 @@ namespace Anki {
       motors_[MOTOR_RIGHT_WHEEL] = rightWheelMotor_;
       motors_[MOTOR_HEAD] = headMotor_;
       motors_[MOTOR_LIFT] = liftMotor_;
-      motors_[MOTOR_GRIP] = NULL;
+      //motors_[MOTOR_GRIP] = NULL;
       
       // Initialize motor positions
       for (int i=0; i < MOTOR_COUNT; ++i) {
@@ -300,11 +289,7 @@ namespace Anki {
       gyro_ = webotRobot_.getGyro("gyro");
       gyro_->enable(TIME_STEP);
 
-#if(USE_WEBOTS_TXRX)
-      if(InitSimRadio(webotRobot_, robotID_) == EXIT_FAILURE) {
-#else
       if(InitSimRadio(robotID_) == EXIT_FAILURE) {
-#endif
         PRINT("Failed to initialize Simulated Radio.\n");
         return EXIT_FAILURE;
       }
@@ -322,9 +307,6 @@ namespace Anki {
       
       gps_->disable();
       compass_->disable();
-      
-      // Do we care about actually disabling this?  It lives in sim_radio.cpp now...
-      //rx_->disable();
 
     } // Destroy()
     
@@ -371,13 +353,13 @@ namespace Anki {
     
     
     
-    const f32* HAL::GyroGetSpeed()
-    {
-      gyroValues_[0] = (f32)(gyro_->getValues()[0]);
-      gyroValues_[1] = (f32)(gyro_->getValues()[1]);
-      gyroValues_[2] = (f32)(gyro_->getValues()[2]);
-      return gyroValues_;
-    }
+    //const f32* HAL::GyroGetSpeed()
+    //{
+    //  gyroValues_[0] = (f32)(gyro_->getValues()[0]);
+    //  gyroValues_[1] = (f32)(gyro_->getValues()[1]);
+    //  gyroValues_[2] = (f32)(gyro_->getValues()[2]);
+    //  return gyroValues_;
+    //}
     
     
     // Set the motor power in the unitless range [-1.0, 1.0]
@@ -441,9 +423,9 @@ namespace Anki {
           return motorSpeeds_[MOTOR_LIFT];
         }
           
-        case MOTOR_GRIP:
-          // TODO
-          break;
+        //case MOTOR_GRIP:
+        //  // TODO
+        //  break;
           
         case MOTOR_HEAD:
         {

@@ -2,36 +2,30 @@
 #include "anki/cozmo/robot/hal.h"
 #include "hal/portable.h"
 
-#define DCMI_TIMEOUT_MAX  (10000)
-
-#define OV2640_DEVICE_WRITE_ADDRESS    0x60
-#define OV2640_DEVICE_READ_ADDRESS     0x61
-
-#define I2C_ADDR OV2640_DEVICE_WRITE_ADDRESS
-
-GPIO_PIN_SOURCE(D0, GPIOC, 6);
-GPIO_PIN_SOURCE(D1, GPIOC, 7);
-GPIO_PIN_SOURCE(D2, GPIOC, 8);
-GPIO_PIN_SOURCE(D3, GPIOC, 9);
-GPIO_PIN_SOURCE(D4, GPIOC, 11);
-GPIO_PIN_SOURCE(D5, GPIOD, 3);
-GPIO_PIN_SOURCE(D6, GPIOB, 8);
-GPIO_PIN_SOURCE(D7, GPIOE, 6);
-//GPIO_PIN_SOURCE(D8, GPIOC, 10);
-//GPIO_PIN_SOURCE(D9, GPIOC, 12);
-//GPIO_PIN_SOURCE(D10, GPIOD, 6);
-//GPIO_PIN_SOURCE(D11, GPIOD, 2);
-GPIO_PIN_SOURCE(VSYNC, GPIOB, 7);
+GPIO_PIN_SOURCE(D0, GPIOA, 9);
+GPIO_PIN_SOURCE(D1, GPIOA, 10);
+GPIO_PIN_SOURCE(D2, GPIOG, 10);
+GPIO_PIN_SOURCE(D3, GPIOG, 11);
+GPIO_PIN_SOURCE(D4, GPIOE, 4);
+GPIO_PIN_SOURCE(D5, GPIOI, 4);
+GPIO_PIN_SOURCE(D6, GPIOI, 6);
+GPIO_PIN_SOURCE(D7, GPIOI, 7);
+GPIO_PIN_SOURCE(VSYNC, GPIOI, 5);
 GPIO_PIN_SOURCE(HSYNC, GPIOA, 4);
 GPIO_PIN_SOURCE(PCLK, GPIOA, 6);
-//GPIO_PIN_SOURCE(RESET, ...);  // No reset pin on the eval board, do software reset
+
+GPIO_PIN_SOURCE(XCLK, GPIOA, 3);
+GPIO_PIN_SOURCE(RESET_N, GPIOE, 3);
+GPIO_PIN_SOURCE(PWDN, GPIOE, 2);
 
 GPIO_PIN_SOURCE(SCL, GPIOB, 6);
-GPIO_PIN_SOURCE(SDA, GPIOB, 9);
+GPIO_PIN_SOURCE(SDA, GPIOB, 7);
 
 bool isEOF = false;
-u8 m_buffer1[320*240 * 4] __attribute__((align(32)));
-//static u8 m_buffer2[320*240*2];
+
+// DMA is limited to 256KB - 1
+const u32 BUFFER_SIZE = 320 * 240 * 2;
+u8 m_buffer1[BUFFER_SIZE];
 
 namespace Anki
 {
@@ -39,451 +33,77 @@ namespace Anki
   {
     namespace HAL
     {
-      const unsigned char OV2640_QVGA[][2]=
+      const u32 DCMI_TIMEOUT_MAX = 10000;
+      const u8 I2C_ADDR = 0x42;
+      
+      const u8 OV7725_VGA[][2] =
       {
-        // Switch to Bank 0
-        0xff, 0x00,
-        0x2c, 0xff,  // Reserved
-        0x2e, 0xdf,  // Reserved
-        
-        // Switch to Bank 1
-        0xff, 0x01,
-        0x3c, 0x32,  // Reserved
-        0x11, 0x00,  // CLRKC
-        0x09, 0x02,  // COM2 - Output drive = 2x
-        0x04, 0x28,  // REG04 - HREF bit[0] set
-        0x13, 0xe5,  // COM8 - Banding filter | AGC auto | Exposure auto
-        0x14, 0x48,  // COM9 - AGC gain ceiling
-        0x2c, 0x0c,  // Reserved
-        0x33, 0x78,  // Reserved
-        0x3a, 0x33,  // Reserved
-        0x3b, 0xfB,  // Reserved
-        0x3e, 0x00,  // Reserved
-        0x43, 0x11,  // Reserved
-        0x16, 0x10,  // Reserved
-        0x4a, 0x81,  // Reserved
-        0x21, 0x99,  // Reserved
-        0x24, 0x40,  // AEW
-        0x25, 0x38,  // AEB
-        0x26, 0x82,  // VV
-        0x5c, 0x00,  // Reserved
-        0x63, 0x00,  // Reserved
-        0x46, 0x3f,  // FLL - Frame Length LSBs
-        0x0c, 0x3c,  // COM3 - 50Hz | Auto set banding
-        0x61, 0x70,  // HISTO_LOW
-        0x62, 0x80,  // HISTO_HIGH
-        0x7c, 0x05,  // Reserved
-        0x20, 0x80,  // Reserved
-        0x28, 0x30,  // Reserved
-        0x6c, 0x00,  // Reserved
-        0x6d, 0x80,  // Reserved
-        0x6e, 0x00,  // Reserved
-        0x70, 0x02,  // Reserved
-        0x71, 0x94,  // Reserved
-        0x73, 0xc1,  // Reserved
-        0x3d, 0x34,  // Reserved
-        0x5a, 0x57,  // Reserved
-        0x12, 0x00,  // COM7 - UXGA
-        0x11, 0x00,  // CLKRC
-        0x17, 0x11,  // HREFST - bit[10:3]  == 0x8e == 148
-        0x18, 0x75,  // HREFEND - UXGA - bit[10:3], each LSB represents 2 pixels == 944 -> 796
-        0x19, 0x01,  // VSTRT - UXGA - bit[9:2] == 10?
-        0x1a, 0x97,  // VEND - bit[9:2] == 610 -> 600
-        0x32, 0x36,  // REG2 - bit[5:3] = HREFEND[2:0], bit[2:0] = HREFST[2:0]
-        0x03, 0x0f,  // COM1 - bit[3:2] = VEND[1:0], bit[1:0] = VSTRT[1:0]
-        0x37, 0x40,  // Reserved
-        0x4f, 0xbb,  // 50Hz Banding AEC 8 LSBs
-        0x50, 0x9c,  // 60Hz Banding AEC 8 LSBs
-        0x5a, 0x57,  // Reserved
-        0x6d, 0x80,  // Reserved
-        0x6d, 0x38,  // Reserved
-        0x39, 0x02,  // Reserved
-        0x35, 0x88,  // Reserved
-        0x22, 0x0a,  // Reserved
-        0x37, 0x40,  // Reserved
-        0x23, 0x00,  // Reserved
-        0x34, 0xa0,  // ARCOM2
-        0x36, 0x1a,  // Reserved
-        0x06, 0x02,  // Reserved
-        0x07, 0xc0,  // Reserved
-        0x0d, 0xb7,  // COM4 - Clock output power-down pin status
-        0x0e, 0x01,  // Reserved
-        0x4c, 0x00,  // Reserved
-        
-        0x15, 0x00,  // COM10 - HREF,VSYNC polarity options, etc
-        
-        // Switch to Bank 0
-        0xff, 0x00,
-        0xe5, 0x7f,  // Reserved
-        0xf9, 0xc0,  // MC_BIST - Microcontroller Reset | Boot ROM select
-        0x41, 0x24,  // Reserved
-        0xe0, 0x14,  // RESET - JPEG | DVP
-        0x76, 0xff,  // Reserved
-        0x33, 0xa0,  // Reserved
-        0x42, 0x20,  // Reserved
-        0x43, 0x18,  // Reserved
-        0x4c, 0x00,  // Reserved
-        0x87, 0xd0,  // CTRL3 - Module Enable: BPC | WPC
-        0x88, 0x3f,  // Reserved
-        0xd7, 0x03,  // Reserved
-        0xd9, 0x10,  // Reserved
-        0xd3, 0x82,  // R_DVP_SP - Auto mode | DVP PCLK = sysclk (48)/[6:0] (YUV0) or 48/(2**[6:0])
-        0xc8, 0x08,
-        0xc9, 0x80,
-        0x7d, 0x00,
-        0x7c, 0x03,
-        0x7d, 0x48,
-        0x7c, 0x08,
-        0x7d, 0x20,
-        0x7d, 0x10,
-        0x7d, 0x0e,
-        0x90, 0x00,
-        0x91, 0x0e,
-        0x91, 0x1a,
-        0x91, 0x31,
-        0x91, 0x5a,
-        0x91, 0x69,
-        0x91, 0x75,
-        0x91, 0x7e,
-        0x91, 0x88,
-        0x91, 0x8f,
-        0x91, 0x96,
-        0x91, 0xa3,
-        0x91, 0xaf,
-        0x91, 0xc4,
-        0x91, 0xd7,
-        0x91, 0xe8,
-        0x91, 0x20,
-        0x92, 0x00,
-        0x93, 0x06,
-        0x93, 0xe3,
-        0x93, 0x02,
-        0x93, 0x02,
-        0x93, 0x00,
-        0x93, 0x04,
-        0x93, 0x00,
-        0x93, 0x03,
-        0x93, 0x00,
-        0x93, 0x00,
-        0x93, 0x00,
-        0x93, 0x00,
-        0x93, 0x00,
-        0x93, 0x00,
-        0x93, 0x00,
-        0x96, 0x00,
-        0x97, 0x08,
-        0x97, 0x19,
-        0x97, 0x02,
-        0x97, 0x0c,
-        0x97, 0x24,
-        0x97, 0x30,
-        0x97, 0x28,
-        0x97, 0x26,
-        0x97, 0x02,
-        0x97, 0x98,
-        0x97, 0x80,
-        0x97, 0x00,
-        0x97, 0x00,
-        0xc3, 0xef,
-        
-        // Switch to Bank 0
-        0xff, 0x00,
-        0xba, 0xdc,
-        0xbb, 0x08,
-        0xb6, 0x24,
-        0xb8, 0x33,
-        0xb7, 0x20,
-        0xb9, 0x30,
-        0xb3, 0xb4,
-        0xb4, 0xca,
-        0xb5, 0x43,
-        0xb0, 0x5c,
-        0xb1, 0x4f,
-        0xb2, 0x06,
-        0xc7, 0x00,
-        0xc6, 0x51,
-        0xc5, 0x11,
-        0xc4, 0x9c,
-        0xbf, 0x00,
-        0xbc, 0x64,
-        0xa6, 0x00,
-        0xa7, 0x1e,
-        0xa7, 0x6b,
-        0xa7, 0x47,
-        0xa7, 0x33,
-        0xa7, 0x00,
-        0xa7, 0x23,
-        0xa7, 0x2e,
-        0xa7, 0x85,
-        0xa7, 0x42,
-        0xa7, 0x33,
-        0xa7, 0x00,
-        0xa7, 0x23,
-        0xa7, 0x1b,
-        0xa7, 0x74,
-        0xa7, 0x42,
-        0xa7, 0x33,
-        0xa7, 0x00,
-        0xa7, 0x23,
-        0xc0, 0xc8,
-        0xc1, 0x96,
-        0x8c, 0x00,
-        0x86, 0x3d,
-        0x50, 0x92,
-        0x51, 0x90,
-        0x52, 0x2c,
-        0x53, 0x00,
-        0x54, 0x00,
-        0x55, 0x88,
-        0x5a, 0x50,
-        0x5b, 0x3c,
-        0x5c, 0x00,
-        0xd3, 0x04,
-        0x7f, 0x00,
-        0xda, 0x00,
-        0xe5, 0x1f,
-        0xe1, 0x67,
-        0xe0, 0x00,
-        0xdd, 0x7f,
-        0x05, 0x00,
-        
-        // Switch to Bank 0
-        0xff, 0x00,
-        0xe0, 0x04,
-        0xc0, 0xc8,
-        0xc1, 0x96,
-        0x86, 0x3d,
-        0x50, 0x92,
-        0x51, 0x90,
-        0x52, 0x2c,
-        0x53, 0x00,
-        0x54, 0x00,
-        0x55, 0x88,
-        0x57, 0x00,
-        0x5a, 0x50,
-        0x5b, 0x3c,
-        0x5c, 0x00,
-        0xd3, 0x04,
-        0xe0, 0x00,
-        
-        // Switch to Bank 0
-        0xff, 0x00,
-        0x05, 0x00,
-        0xda, 0x00,  // IMAGE_MODE - YUV422
-        //0xda, 0x09,
-        0x98, 0x00,
-        0x99, 0x00,
-        0x00, 0x00, // */
-    
+        0x12, 0x80,
+        //0x3d, 0x03,
+        0x12, 0x40,  // QVGA | "YUV"/"Bayer"
+        0x17, 0x3f,
+        0x18, 0x50,
+        0x19, 0x03,
+        0x1a, 0x78,
+        0x32, 0x00,
+        0x29, 0x50,
+        0x2c, 0x78,
+        0x2a, 0x00,
+        0x11, 0x02,  // pre-scaler
 
+        0x15, 0x00,  // Change HREF to HSYNC
 
-/*        0xff, 0x00, 
-        0x2c, 0xff, 
-        0x2e, 0xdf, 
-        
-        0xff, 0x01, 
-        0x3c, 0x32, 
-        0x11, 0x00,  // CLKRC
-        0x09, 0x02, 
-        0x04, 0x28, 
-        0x13, 0xe5, 
-        0x14, 0x48, 
-        0x2c, 0xc, 
-        0x33, 0x78, 
-        0x3a, 0x33, 
-        0x3b, 0xfb, 
-        0x3e, 0x0, 
-        0x43, 0x11, 
-        0x16, 0x10, 
-        0x39, 0x2, 
-        0x35, 0x88, 
-
-        0x22, 0xa, 
-        0x37, 0x40, 
-        0x23, 0x0, 
-        0x34, 0xa0, 
-        0x6, 0x2, 
-        0x6, 0x88, 
-        0x7, 0xc0, 
-        0xd, 0xb7, 
-        0xe, 0x1, 
-        0x4c, 0x0, 
-        0x4a, 0x81, 
-        0x21, 0x99, 
-        0x24, 0x40, 
-        0x25, 0x38, 
-        0x26, 0x82, 
-        0x5c, 0x0, 
-        0x63, 0x0, 
-        0x46, 0x22, 
-        0xc, 0x3a, 
-        0x5d, 0x55, 
-        0x5e, 0x7d, 
-        0x5f, 0x7d, 
-        0x60, 0x55, 
-        0x61, 0x70, 
-        0x62, 0x80, 
-        0x7c, 0x5, 
-        0x20, 0x80, 
-        0x28, 0x30, 
-        0x6c, 0x0, 
-        0x6d, 0x80, 
-        0x6e, 0x0, 
-        0x70, 0x2, 
-        0x71, 0x94, 
-        0x73, 0xc1, 
-        0x3d, 0x34, 
-        0x12, 0x4, 
-        0x5a, 0x57, 
-        0x4f, 0xbb, 
-        0x50, 0x9c, 
-        
-        //0x15, 0x00,  // COM10
-        
-        0xff, 0x0, 
-        0xe5, 0x7f, 
-        0xf9, 0xc0, 
-        0x41, 0x24, 
-        0xe0, 0x14, 
-        0x76, 0xff, 
-        0x33, 0xa0, 
-        0x42, 0x20, 
-        0x43, 0x18, 
-        0x4c, 0x0, 
-        0x87, 0xd0, 
-        0x88, 0x3f, 
-        0xd7, 0x3, 
-        0xd9, 0x10, 
-        0xd3, 0x82, 
-        0xc8, 0x8, 
-        0xc9, 0x80, 
-        0x7c, 0x0, 
-        0x7d, 0x0, 
-        0x7c, 0x3, 
-        0x7d, 0x48, 
-        0x7d, 0x48, 
-        0x7c, 0x8, 
-        0x7d, 0x20, 
-        0x7d, 0x10, 
-        0x7d, 0xe, 
-        0x90, 0x0, 
-        0x91, 0xe, 
-        0x91, 0x1a, 
-        0x91, 0x31, 
-        0x91, 0x5a, 
-        0x91, 0x69, 
-        0x91, 0x75, 
-        0x91, 0x7e, 
-        0x91, 0x88, 
-        0x91, 0x8f, 
-        0x91, 0x96, 
-        0x91, 0xa3, 
-        0x91, 0xaf, 
-        0x91, 0xc4, 
-        0x91, 0xd7, 
-        0x91, 0xe8, 
-        0x91, 0x20, 
-        0x92, 0x0, 
-
-        0x93, 0x6, 
-        0x93, 0xe3, 
-        0x93, 0x3, 
-        0x93, 0x3, 
-        0x93, 0x0, 
-        0x93, 0x2, 
-        0x93, 0x0, 
-        0x93, 0x0, 
-        0x93, 0x0, 
-        0x93, 0x0, 
-        0x93, 0x0, 
-        0x93, 0x0, 
-        0x93, 0x0, 
-        0x96, 0x0, 
-        0x97, 0x8, 
-        0x97, 0x19, 
-        0x97, 0x2, 
-        0x97, 0xc, 
-        0x97, 0x24, 
-        0x97, 0x30, 
-        0x97, 0x28, 
-        0x97, 0x26, 
-        0x97, 0x2, 
-        0x97, 0x98, 
-        0x97, 0x80, 
-        0x97, 0x0, 
-        0x97, 0x0, 
-        0xa4, 0x0, 
-        0xa8, 0x0, 
-        0xc5, 0x11, 
-        0xc6, 0x51, 
-        0xbf, 0x80, 
-        0xc7, 0x10, 
-        0xb6, 0x66, 
-        0xb8, 0xa5, 
-        0xb7, 0x64, 
-        0xb9, 0x7c, 
-        0xb3, 0xaf, 
-        0xb4, 0x97, 
-        0xb5, 0xff, 
-        0xb0, 0xc5, 
-        0xb1, 0x94, 
-        0xb2, 0xf, 
-        0xc4, 0x5c, 
-        0xa6, 0x0, 
-        0xa7, 0x20, 
-        0xa7, 0xd8, 
-        0xa7, 0x1b, 
-        0xa7, 0x31, 
-        0xa7, 0x0, 
-        0xa7, 0x18, 
-        0xa7, 0x20, 
-        0xa7, 0xd8, 
-        0xa7, 0x19, 
-        0xa7, 0x31, 
-        0xa7, 0x0, 
-        0xa7, 0x18, 
-        0xa7, 0x20, 
-        0xa7, 0xd8, 
-        0xa7, 0x19, 
-        0xa7, 0x31, 
-        0xa7, 0x0, 
-        0xa7, 0x18, 
-        0x7f, 0x0, 
-        0xe5, 0x1f, 
-        0xe1, 0x77, 
-        0xdd, 0x7f, 
-        0xc2, 0xe, 
-        
-        0xff, 0x0, 
-        0xe0, 0x4, 
-        0xc0, 0xc8, 
-        0xc1, 0x96, 
-        0x86, 0x3d, 
-        0x51, 0x90, 
-        0x52, 0x2c, 
-        0x53, 0x0, 
-        0x54, 0x0, 
-        0x55, 0x88, 
-        0x57, 0x0, 
-        
-        0x50, 0x92, 
-        0x5a, 0x50, 
-        0x5b, 0x3c, 
-        0x5c, 0x00, 
-        0xd3, 0x04, 
-        0xe0, 0x00, 
-        
-        0xff, 0x0, 
-        0x05, 0x00, 
-        
-        0xda, 0x00, //0x08, 
-        0xd7, 0x3, 
-        0xe0, 0x0, 
-        
-        0x05, 0x00,   // Bypass DSP = off/on
-
-        
-        0xff,0xff, */
+        0x42, 0x7f,  // TGT_B
+        0x4d, 0x09,  // Analog fixed gain amplifier
+        0x63, 0xe0,  // AWB Control Byte 0
+        0x64, 0xff,  // DSP_Ctrl1
+        0x65, 0x20,  // DSP_Ctrl2
+        0x0c, 0x10,  // flip Y with UV
+        0x66, 0x00,  // DSP_Ctrl3
+        //0x67, 0x4a,  // DSP_Ctrl4 - Output Selection = RAW8
+        0x13, 0xf0,  // COM8 - gain control stuff... | AGC enable
+        0x0d, 0x72,  // PLL = 8x | AEC evaluate 1/4 window
+        0x0f, 0xc5,  // Reserved | auto window setting ON/OFF selection when format changes
+        0x14, 0x11,  // COM9 - Automatic Gain Ceiling | Reserved
+        0x22, 0xff,  // ff/7f/3f/1f for 60/30/15/7.5fps  -- banding filter
+        0x23, 0x01,  // 01/03/07/0f for 60/30/15/7.5fps
+        0x24, 0x40,  // AEW - AGC/AEC Stable Operation Region (Upper Limit)
+        0x25, 0x30,  // AEB - ^^^ (Lower Limit)
+        0x26, 0xa1,  // VPT - AGC/AEC Fast Mode Operating Region
+        0x2b, 0x00,  // Dummy bytes LSB
+        0x6b, 0xaa,  // AWB mode select - Simple AWB
+        0x13, 0xff,  // COM8 - AGC stuff... Enable all?
+        0x90, 0x05,  // Sharpness Control 1 - threshold detection
+        0x91, 0x01,  // Auto De-noise Threshold Control
+        0x92, 0x03,  // Sharpness Strength Upper Limit
+        0x93, 0x00,  // Sharpness Strength Lower Limit
+        0x94, 0xb0,  // MTX1 - Matrix Coefficient 1
+        0x95, 0x9d,
+        0x96, 0x13,
+        0x97, 0x16,
+        0x98, 0x7b,
+        0x99, 0x91,  // MTX6
+        0x9a, 0x1e,  // MTX_Ctrl (sign bits and stuff)
+        0x9b, 0x08,  // Brightness Control
+        0x9c, 0x20,  // Constain Gain == Gain * 0x20
+        0x9e, 0x81,  // Auto UV Adjust Control 0
+        0xa6, 0x04,  // Special Digital Effect Control - Contrast/Brightness enable
+        0x7e, 0x0c,
+        0x7f, 0x16,
+        0x80, 0x2a,
+        0x81, 0x4e,
+        0x82, 0x61,
+        0x83, 0x6f,
+        0x84, 0x7b,
+        0x85, 0x86,
+        0x86, 0x8e,
+        0x87, 0x97,
+        0x88, 0xa4,
+        0x89, 0xaf,
+        0x8a, 0xc5,
+        0x8b, 0xd7,
+        0x8c, 0xe8,
+        0x8d, 0x20,
       };
       
       // Soft I2C stack, borrowed from Arduino (BSD license)
@@ -510,7 +130,8 @@ namespace Anki
       // Read SDA bit by allowing it to float for a while
       // Make sure to start reading the bit before the clock edge that needs it
       static u8 ReadSDA(void)
-      {    
+      {
+        GPIO_SET(GPIO_SDA, PIN_SDA);
         MicroWait(10);
         return !!(GPIO_READ(GPIO_SDA) & PIN_SDA);
       }
@@ -559,8 +180,8 @@ namespace Anki
           DriveSDA(m & b);
           
           DriveSCL(1);
-          if (m == 1)
-            ReadSDA();  // Let SDA fall prior to last bit
+          //if (m == 1)
+          //  ReadSDA();  // Let SDA fall prior to last bit
           DriveSCL(0);
         }
         
@@ -600,14 +221,14 @@ namespace Anki
         return val;
       }
 
-      void OV2640Init()
+      void OV7725Init()
       {
         // Configure the camera interface
         DCMI_InitTypeDef DCMI_InitStructure;
-        DCMI_InitStructure.DCMI_CaptureMode = DCMI_CaptureMode_SnapShot;
+        DCMI_InitStructure.DCMI_CaptureMode = DCMI_CaptureMode_Continuous;
         DCMI_InitStructure.DCMI_SynchroMode = DCMI_SynchroMode_Hardware;
         DCMI_InitStructure.DCMI_PCKPolarity = DCMI_PCKPolarity_Rising;
-        DCMI_InitStructure.DCMI_VSPolarity = DCMI_VSPolarity_Low;
+        DCMI_InitStructure.DCMI_VSPolarity = DCMI_VSPolarity_High;
         DCMI_InitStructure.DCMI_HSPolarity = DCMI_HSPolarity_Low;
         DCMI_InitStructure.DCMI_CaptureRate = DCMI_CaptureRate_All_Frame;
         DCMI_InitStructure.DCMI_ExtendedDataMode = DCMI_ExtendedDataMode_8b;
@@ -620,12 +241,12 @@ namespace Anki
         DMA_InitStructure.DMA_PeripheralBaseAddr = (u32)&DCMI->DR;
         DMA_InitStructure.DMA_Memory0BaseAddr = (u32)m_buffer1;
         DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralToMemory;
-        DMA_InitStructure.DMA_BufferSize = 320*240 * 4;
+        DMA_InitStructure.DMA_BufferSize = BUFFER_SIZE;
         DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
         DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
         DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Word;
         DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Word;
-        DMA_InitStructure.DMA_Mode = DMA_Mode_Normal; //Circular;
+        DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;
         DMA_InitStructure.DMA_Priority = DMA_Priority_VeryHigh;
         DMA_InitStructure.DMA_FIFOMode = DMA_FIFOMode_Enable;
         DMA_InitStructure.DMA_FIFOThreshold = DMA_FIFOThreshold_Full;
@@ -633,19 +254,11 @@ namespace Anki
         DMA_InitStructure.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;
         DMA_Init(DMA2_Stream1, &DMA_InitStructure);
         
-        // Reset the camera
-        CamWrite(0xFF, 0x01);  // OV2640_DSP_RA_DLMT
-        CamWrite(0x12, 0x80);  // OV2640_SENSOR_COM7
-        MicroWait(2000);
-        
-        u8 val = CamRead(0x04);
-        printf("val == %02X\r\n", val);
-        
         // Write the configuration registers
-        for(u32 i = 0; i < (sizeof(OV2640_QVGA) / 2); i++)
+        for(u32 i = 0; i < (sizeof(OV7725_VGA) / 2); i++)
         {
-          CamWrite(OV2640_QVGA[i][0], OV2640_QVGA[i][1]);
-          MicroWait(2000);
+          CamWrite(OV7725_VGA[i][0], OV7725_VGA[i][1]);
+          MicroWait(100);
         }
         
         // Enable DMA
@@ -676,12 +289,38 @@ namespace Anki
         // Clock configuration
         RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
         RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
-        RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
-        RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
+        RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOG, ENABLE);
         RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOE, ENABLE);
+        RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOI, ENABLE);
         
         RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA2, ENABLE);
         RCC_AHB2PeriphClockCmd(RCC_AHB2Periph_DCMI, ENABLE);
+        RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM9, ENABLE);
+        
+        // Configure XCLK for 22.5 MHz (evenly divisible by 180 MHz)
+        TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
+        TIM_OCInitTypeDef  TIM_OCInitStructure;
+        
+        TIM_TimeBaseStructure.TIM_Prescaler = 0;
+        TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
+        TIM_TimeBaseStructure.TIM_ClockDivision = 0;
+        TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
+
+        TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
+        TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
+        TIM_OCInitStructure.TIM_OutputNState = TIM_OutputNState_Enable;
+        TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_Low;
+        TIM_OCInitStructure.TIM_OCNPolarity = TIM_OCNPolarity_High;
+        TIM_OCInitStructure.TIM_OCIdleState = TIM_OCIdleState_Set;
+        TIM_OCInitStructure.TIM_OCNIdleState = TIM_OCIdleState_Reset;
+        
+        TIM_TimeBaseStructure.TIM_Period = 31;   // 180MHz/N+1
+        TIM_OCInitStructure.TIM_Pulse = 16;   // Half of (period+1)
+        
+        TIM_TimeBaseInit(TIM9, &TIM_TimeBaseStructure);
+        TIM_OC2Init(TIM9, &TIM_OCInitStructure);
+        TIM_Cmd(TIM9, ENABLE);
+        TIM_CtrlPWMOutputs(TIM9, ENABLE);
         
         // Configure the pins for DCMI in AF mode
         GPIO_PinAFConfig(GPIO_D0, SOURCE_D0, GPIO_AF_DCMI);
@@ -695,27 +334,31 @@ namespace Anki
         GPIO_PinAFConfig(GPIO_VSYNC, SOURCE_VSYNC, GPIO_AF_DCMI);
         GPIO_PinAFConfig(GPIO_HSYNC, SOURCE_HSYNC, GPIO_AF_DCMI);
         GPIO_PinAFConfig(GPIO_PCLK, SOURCE_PCLK, GPIO_AF_DCMI);
+        GPIO_PinAFConfig(GPIO_XCLK, SOURCE_XCLK, GPIO_AF_TIM9);
         
         // Initialize the camera pins
         GPIO_InitTypeDef GPIO_InitStructure;
-        GPIO_InitStructure.GPIO_Pin = PIN_D0 | PIN_D1 | PIN_D2 | PIN_D3 | PIN_D4;
         GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
         GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
         GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
         GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
-        GPIO_Init((GPIO_TypeDef*)GPIO_D0, &GPIO_InitStructure);  // GPIOC
         
-        GPIO_InitStructure.GPIO_Pin = PIN_D5;
-        GPIO_Init((GPIO_TypeDef*)GPIO_D5, &GPIO_InitStructure);  // GPIOD
+        GPIO_InitStructure.GPIO_Pin = PIN_D0 | PIN_D1 | PIN_HSYNC | PIN_PCLK | PIN_XCLK;
+        GPIO_Init(GPIOA, &GPIO_InitStructure);
         
-        GPIO_InitStructure.GPIO_Pin = PIN_D6 | PIN_VSYNC;
-        GPIO_Init((GPIO_TypeDef*)GPIO_D6, &GPIO_InitStructure);  // GPIOB
+        GPIO_InitStructure.GPIO_Pin = PIN_D2 | PIN_D3;
+        GPIO_Init(GPIOG, &GPIO_InitStructure);
         
-        GPIO_InitStructure.GPIO_Pin = PIN_D7;
-        GPIO_Init((GPIO_TypeDef*)GPIO_D7, &GPIO_InitStructure);  // GPIOE
+        GPIO_InitStructure.GPIO_Pin = PIN_D4;
+        GPIO_Init(GPIOE, &GPIO_InitStructure);
         
-        GPIO_InitStructure.GPIO_Pin = PIN_HSYNC | PIN_PCLK;
-        GPIO_Init((GPIO_TypeDef*)GPIO_HSYNC, &GPIO_InitStructure);  // GPIOA
+        GPIO_InitStructure.GPIO_Pin = PIN_D5 | PIN_D6 | PIN_D7 | PIN_VSYNC;
+        GPIO_Init(GPIOI, &GPIO_InitStructure);
+        
+        // PWDN and RESET_N are normal GPIO
+        GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
+        GPIO_InitStructure.GPIO_Pin = PIN_PWDN | PIN_RESET_N;
+        GPIO_Init(GPIOE, &GPIO_InitStructure);
         
         // Initialize the I2C pins
         GPIO_SET(GPIO_SCL, PIN_SCL);
@@ -726,9 +369,16 @@ namespace Anki
         GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
         GPIO_InitStructure.GPIO_OType = GPIO_OType_OD;
         GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
-        GPIO_Init((GPIO_TypeDef*)GPIO_SCL, &GPIO_InitStructure);  // GPIOB
+        GPIO_Init(GPIOB, &GPIO_InitStructure);
         
-        OV2640Init();
+        // Reset the camera
+        GPIO_RESET(GPIO_RESET_N, PIN_RESET_N);
+        GPIO_RESET(GPIO_PWDN, PIN_PWDN);  // Make sure it's in normal mode
+        MicroWait(10000);
+        GPIO_SET(GPIO_RESET_N, PIN_RESET_N);
+        MicroWait(100000);
+        
+        OV7725Init();
       }
     }
   }
@@ -736,30 +386,38 @@ namespace Anki
 
 void StartFrame(void)
 {
+  using namespace Anki::Cozmo::HAL;
+  
   isEOF = false;
   
-  DMA_DeInit(DMA2_Stream1);
-  DMA_InitTypeDef DMA_InitStructure;
-  DMA_InitStructure.DMA_Channel = DMA_Channel_1;
-  DMA_InitStructure.DMA_PeripheralBaseAddr = (u32)&DCMI->DR;
-  DMA_InitStructure.DMA_Memory0BaseAddr = (u32)m_buffer1;
-  DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralToMemory;
-  DMA_InitStructure.DMA_BufferSize = 320*240 * 4;
-  DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
-  DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
-  DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Word;
-  DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Word;
-  DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;
-  DMA_InitStructure.DMA_Priority = DMA_Priority_VeryHigh;
-  DMA_InitStructure.DMA_FIFOMode = DMA_FIFOMode_Enable;
-  DMA_InitStructure.DMA_FIFOThreshold = DMA_FIFOThreshold_Full;
-  DMA_InitStructure.DMA_MemoryBurst = DMA_MemoryBurst_Single;
-  DMA_InitStructure.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;
-  DMA_Init(DMA2_Stream1, &DMA_InitStructure);
-  
-  DMA_Cmd(DMA2_Stream1, ENABLE);
-  
-  DCMI_CaptureCmd(ENABLE);
+  static bool started = 0;
+  if (!started)
+  {
+    DMA_DeInit(DMA2_Stream1);
+    DMA_InitTypeDef DMA_InitStructure;
+    DMA_InitStructure.DMA_Channel = DMA_Channel_1;
+    DMA_InitStructure.DMA_PeripheralBaseAddr = (u32)&DCMI->DR;
+    DMA_InitStructure.DMA_Memory0BaseAddr = (u32)m_buffer1;
+    DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralToMemory;
+    DMA_InitStructure.DMA_BufferSize = BUFFER_SIZE / 4;  // numBytes / sizeof(word)
+    DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
+    DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
+    DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Word;
+    DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Word;
+    DMA_InitStructure.DMA_Mode = DMA_Mode_Circular;
+    DMA_InitStructure.DMA_Priority = DMA_Priority_VeryHigh;
+    DMA_InitStructure.DMA_FIFOMode = DMA_FIFOMode_Enable;
+    DMA_InitStructure.DMA_FIFOThreshold = DMA_FIFOThreshold_Full;
+    DMA_InitStructure.DMA_MemoryBurst = DMA_MemoryBurst_Single;
+    DMA_InitStructure.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;
+    DMA_Init(DMA2_Stream1, &DMA_InitStructure);
+    
+    DMA_Cmd(DMA2_Stream1, ENABLE);
+    
+    DCMI_CaptureCmd(ENABLE);
+    
+    started = 1;
+  }
 }
 
 extern "C"

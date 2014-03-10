@@ -4,30 +4,11 @@
 #include "timer.h"
 #include "nrf.h"
 #include "nrf_gpio.h"
+#include "spiData.h"
 
-namespace Anki
-{
-  namespace Cozmo
-  {
-    namespace HAL
-    {
-      const u32 MAX_FAILED_TRANSFER_COUNT = 10;
-      GlobalDataToHead g_dataToHead;
-      GlobalDataToBody g_dataToBody;
-      
-      void PowerInit()
-      {
-        const u8 PIN_VINs_EN = 11;
-        nrf_gpio_cfg_output(PIN_VINs_EN);
-        nrf_gpio_pin_set(PIN_VINs_EN);
-        
-        const u8 PIN_VDDs_EN = 12;
-        nrf_gpio_cfg_output(PIN_VDDs_EN);
-        nrf_gpio_pin_clear(PIN_VDDs_EN);
-      }
-    }
-  }
-}
+const u32 MAX_FAILED_TRANSFER_COUNT = 10;
+GlobalDataToHead g_dataToHead;
+GlobalDataToBody g_dataToBody;
 
 extern "C"
 void SystemInit(void) 
@@ -46,17 +27,13 @@ void SystemInit(void)
 
 int main(void)
 {
-  using namespace Anki::Cozmo::HAL;
-  
-  s32 result;
   u32 failedTransferCount = 0;
   
   // Initialize the hardware peripherals
-  PowerInit();
   TimerInit();
   UARTInit();
-  SPIInit();
   MotorsInit();
+  SPIInit();
   
   UARTPutString("\r\nInitialized...\r\n");
   
@@ -64,13 +41,24 @@ int main(void)
   
   while (1)
   {
+    u32 timerStart = GetCounter();
     // Exchange data with the head board
-    result = SPITransmitReceive(
-      sizeof(GlobalDataToBody), 
+    SPITransmitReceive(
+      sizeof(GlobalDataToBody),
       (const u8*)&g_dataToHead,
       (u8*)&g_dataToBody);
+#if 0
+    u8* d = (u8*)&g_dataToBody;
+    for (int i = 0; i < 0x10; i++)
+    {
+      UARTPutHex(d[i]);
+      UARTPutChar(' ');
+    }
+    UARTPutChar('\n');
+#endif
     
-    if (result || g_dataToBody.common.source != SPI_SOURCE_HEAD)
+    // Verify the source
+    if (g_dataToBody.common.source != SPI_SOURCE_HEAD)
     {
       if(++failedTransferCount > MAX_FAILED_TRANSFER_COUNT)
       {
@@ -80,13 +68,21 @@ int main(void)
         NVIC_SystemReset();
       }
     } else {
-      // TODO:
-      // Update motors and such
-      // ...
+      failedTransferCount = 0;
+      
+      // Update motors
+      for (int i = 0; i < MOTOR_COUNT; i++)
+      {
+        MotorsSetPower(i, g_dataToBody.motorPWM[i]);
+      }
+      
+      MotorsUpdate();
     }
     
     // Update at 200Hz
-    MicroWait(5000);
+    // 41666 ticks * 120 ns is roughly 5ms
+    while ((GetCounter() - timerStart) < 41666)
+      ;
   }
   
   return 0;

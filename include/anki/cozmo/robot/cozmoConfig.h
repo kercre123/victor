@@ -58,12 +58,14 @@ namespace Anki {
     
     typedef struct {
       u16 port;                // Port that robot is accepting connections on
+      u8 robotAddr[18];        // IP address as null terminated string
       u8 robotID;
       u8 enableAdvertisement;  // 1 when robot wants to advertise, 0 otherwise.
     } RobotAdvertisementRegistration;
     
     typedef struct  {
       u16 port;
+      u8 robotAddr[17];        // IP address as null terminated string
       u8 robotID;
     } RobotAdvertisement;
     

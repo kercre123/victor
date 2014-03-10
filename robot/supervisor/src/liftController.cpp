@@ -20,7 +20,7 @@ namespace Anki {
 #ifdef SIMULATOR
         #define OPEN_LOOP_LIFT_CONTROL 0
 #else
-        #define OPEN_LOOP_LIFT_CONTROL 1
+        #define OPEN_LOOP_LIFT_CONTROL 0 // Kevin (03/07/2014) - Disabling this for the new robot. Things should be working soon!
 #endif
         
         
@@ -384,7 +384,7 @@ namespace Anki {
             angleErrorSum_ = 0.f;
             
             // If desired angle is low position, let it fall through to recalibration
-            if (!RECALIBRATE_AT_LOW_HEIGHT || desiredAngle_.ToFloat() != LIFT_ANGLE_LOW) {
+            if (!(RECALIBRATE_AT_LOW_HEIGHT && desiredAngle_.ToFloat() == LIFT_ANGLE_LOW)) {
               power_ = 0.f;
               
               if (desiredAngle_ == currDesiredAngle_) {

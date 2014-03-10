@@ -47,6 +47,18 @@ namespace Anki {
       
       return retVal;
     }
+    
+
+    ReturnCode MessageHandler::SendMessage(const RobotID_t robotID, const Message& msg)
+    {
+      Comms::MsgPacket p;
+      p.data[0] = msg.GetID();
+      msg.GetBytes(p.data+1);
+      p.dataLen = msg.GetSize() + 1;
+      p.destId = robotID;
+      
+      return comms_->Send(p) > 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+    }
 
     
     ReturnCode MessageHandler::ProcessPacket(const Comms::MsgPacket& packet)
@@ -169,13 +181,17 @@ namespace Anki {
     // STUBS:
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageClearPath const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageSetMotion const&){return EXIT_FAILURE;}
+    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageMoveLift const&){return EXIT_FAILURE;}
+    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageMoveHead const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageRobotState const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageRobotAvailable const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageMatMarkerObserved const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageRobotAddedToWorld const&){return EXIT_FAILURE;}
-    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageSetPathSegmentArc const&){return EXIT_FAILURE;}
+    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageAppendPathSegmentArc const&){return EXIT_FAILURE;}
+    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageExecutePath const&){return EXIT_FAILURE;}
+    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageDockWithBlock const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageDockingErrorSignal const&){return EXIT_FAILURE;}
-    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageSetPathSegmentLine const&){return EXIT_FAILURE;}
+    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageAppendPathSegmentLine const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageBlockMarkerObserved const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageTemplateInitialized const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageMatCameraCalibration const&){return EXIT_FAILURE;}

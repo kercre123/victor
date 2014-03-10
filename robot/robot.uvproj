@@ -141,7 +141,7 @@
             <RestoreTracepoints>0</RestoreTracepoints>
           </Target>
           <RunDebugAfterBuild>0</RunDebugAfterBuild>
-          <TargetSelection>11</TargetSelection>
+          <TargetSelection>1</TargetSelection>
           <SimDlls>
             <CpuDll></CpuDll>
             <CpuDllArguments></CpuDllArguments>
@@ -155,7 +155,7 @@
             <PeripheralDll></PeripheralDll>
             <PeripheralDllArguments></PeripheralDllArguments>
             <InitializationFile></InitializationFile>
-            <Driver>STLink\ST-LINKIII-KEIL_SWO.dll</Driver>
+            <Driver>BIN\UL2CM3.DLL</Driver>
           </TargetDlls>
         </DebugOption>
         <Utilities>
@@ -357,7 +357,7 @@
               <MiscControls>--asm</MiscControls>
               <Define>USE_STDPERIPH_DRIVER,STM32F429_439xx,USE_DEFAULT_TIMEOUT_CALLBACK,USE_EMBEDDED_PHY,USE_USB_OTG_FS,COZMO_ROBOT,ROBOT_HARDWARE,ANKICORETECH_EMBEDDED_USE_HEATSHRINK,</Define>
               <Undefine></Undefine>
-              <IncludePath>.\arm_hal;.\arm_hal\lib;..\include;..\coretech\common\include;..\coretech\messaging\include;..\coretech\planning\include;..\coretech\vision\include;.\supervisor\src;..\..\coretech-external\heatshrink;C:\Keil\ARM\Pack\ARM\CMSIS\3.20.4\Device\ARM\ARMCM4\Include</IncludePath>
+              <IncludePath>.\arm_hal;.\arm_hal\lib;..\include;..\coretech\common\include;..\coretech\messaging\include;..\coretech\planning\include;..\coretech\vision\include;.\supervisor\src;..\..\coretech-external\heatshrink;C:\Keil\ARM\Pack\ARM\CMSIS\3.20.4\Device\ARM\ARMCM4\Include;.\include</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -432,6 +432,11 @@
               <FileName>spi.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\spi.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>motors.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\motors.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -1242,7 +1247,7 @@
             <RestoreTracepoints>0</RestoreTracepoints>
           </Target>
           <RunDebugAfterBuild>0</RunDebugAfterBuild>
-          <TargetSelection>11</TargetSelection>
+          <TargetSelection>1</TargetSelection>
           <SimDlls>
             <CpuDll></CpuDll>
             <CpuDllArguments></CpuDllArguments>
@@ -1256,7 +1261,7 @@
             <PeripheralDll></PeripheralDll>
             <PeripheralDllArguments></PeripheralDllArguments>
             <InitializationFile></InitializationFile>
-            <Driver>STLink\ST-LINKIII-KEIL_SWO.dll</Driver>
+            <Driver>BIN\UL2CM3.DLL</Driver>
           </TargetDlls>
         </DebugOption>
         <Utilities>
@@ -1533,6 +1538,11 @@
               <FileName>spi.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\spi.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>motors.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\motors.cpp</FilePath>
             </File>
           </Files>
         </Group>

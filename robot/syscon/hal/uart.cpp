@@ -1,5 +1,4 @@
 #include "uart.h"
-#include "anki/cozmo/robot/hal.h"
 #include "nrf51.h"
 #include "nrf_gpio.h"
 
@@ -11,74 +10,6 @@ namespace
   const u8 PIN_TX = 17;
   
   bool m_isInitialized = false;
-}
-
-namespace Anki
-{
-  namespace Cozmo
-  {
-    namespace HAL
-    {
-      int UARTPrintf(const char* format, ...)
-      {
-        return 0;
-      }
-      
-      int UARTPutChar(int c)
-      {
-        if (!m_isInitialized)
-          return 0;
-        
-        NRF_UART0->TXD = (u8)c;
-
-        // Wait for the data to transmit
-        while (NRF_UART0->EVENTS_TXDRDY != 1)
-          ;
-        
-        NRF_UART0->EVENTS_TXDRDY = 0;
-  
-        return c;
-      }
-      
-      void UARTPutString(const char* s)
-      {
-        while (*s)
-          UARTPutChar(*s++);
-      }
-      
-      void UARTPutHex(u8 c)
-      {
-        static u8 hex[] = "0123456789ABCDEF";
-        UARTPutChar(hex[c >> 4]);
-        UARTPutChar(hex[c & 0xF]);
-      }
-      
-      void UARTPutHex32(u32 data)
-      {
-        UARTPutHex(data >> 24);
-        UARTPutHex(data >> 16);
-        UARTPutHex(data >> 8);
-        UARTPutHex(data);
-      }
-      
-      /*int UARTGetChar(u32 timeout)
-      {
-        u32 now = GetMicroCounter();
-        // Wait for data to be received
-        while (NRF_UART0->EVENTS_RXDRDY != 1)
-        {
-          // Check for timeout
-          if ((GetMicroCounter() - now) >= timeout)
-          {
-            return -1;
-          }
-        }
-        
-        NRF_UART0->EVENTS_RXDRDY = 0;
-        return (u8)NRF_UART0->RXD;
-      }*/
-    }
-  }
 }
 
 void UARTInit()
@@ -108,3 +39,55 @@ void UARTInit()
   
   m_isInitialized = true;
 }
+
+void UARTPutChar(u8 c)
+{
+  if (!m_isInitialized)
+    return;
+  
+  NRF_UART0->TXD = (u8)c;
+
+  // Wait for the data to transmit
+  while (NRF_UART0->EVENTS_TXDRDY != 1)
+    ;
+  
+  NRF_UART0->EVENTS_TXDRDY = 0;
+}
+
+void UARTPutString(const char* s)
+{
+  while (*s)
+    UARTPutChar(*s++);
+}
+
+void UARTPutHex(u8 c)
+{
+  static u8 hex[] = "0123456789ABCDEF";
+  UARTPutChar(hex[c >> 4]);
+  UARTPutChar(hex[c & 0xF]);
+}
+
+void UARTPutHex32(u32 value)
+{
+  UARTPutHex(value >> 24);
+  UARTPutHex(value >> 16);
+  UARTPutHex(value >> 8);
+  UARTPutHex(value);
+}
+
+/*int UARTGetChar(u32 timeout)
+{
+  u32 now = GetMicroCounter();
+  // Wait for data to be received
+  while (NRF_UART0->EVENTS_RXDRDY != 1)
+  {
+    // Check for timeout
+    if ((GetMicroCounter() - now) >= timeout)
+    {
+      return -1;
+    }
+  }
+  
+  NRF_UART0->EVENTS_RXDRDY = 0;
+  return (u8)NRF_UART0->RXD;
+}*/

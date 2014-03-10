@@ -47,9 +47,6 @@
 
 #define HAVE_ACTIVE_GRIPPER 0
 
-// Uncomment to use USB instead of UART
-//#define USE_USB
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -93,10 +90,6 @@ extern "C" {
   } \
 }
 
-// Whether or not to use TCP server (0) or Webots emitter/receiver (1)
-// as the BTLE channel. (TODO: Phase out webots emitter/receiver)
-#define USE_WEBOTS_TXRX 0
-
 #endif  // #elif defined(SIMULATOR)
 
 #define REG_WORD(x) *(volatile u32*)(x)
@@ -112,7 +105,6 @@ namespace Anki
       //
       // Parameters / Constants
       //
-      const f32 MOTOR_PWM_MAXVAL = 2400.f;
       const f32 MOTOR_MAX_POWER = 1.0f;
 
       ///////////////////
@@ -223,14 +215,11 @@ namespace Anki
       // Until a valid packet header is found and the entire packet is
       // available, NO_MESSAGE_ID will be returned.  Once a valid header
       // is found and returned, its MessageID is returned.
-      Messages::ID USBGetNextMessage(u8 *buffer);
+      Messages::ID USBGetNextMessage(u8* buffer);
 
       // Send a byte.
       // Prototype matches putc for printf.
       int USBPutChar(int c);
-
-// #pragma mark --- Sensors ---
-      const f32* GyroGetSpeed();
 
 // #pragma mark --- Motors ---
       /////////////////////////////////////////////////////////////////////
@@ -243,7 +232,7 @@ namespace Anki
         MOTOR_RIGHT_WHEEL,
         MOTOR_LIFT,
         MOTOR_HEAD,
-        MOTOR_GRIP,
+        //MOTOR_GRIP,
         MOTOR_COUNT
       };
 
@@ -426,12 +415,8 @@ namespace Anki
 
       const BirthCertificate& GetBirthCertificate();
 
-      // Interrupts
-      void IRQDisable();
-      void IRQEnable();
-
-	  // TODO: remove when interrupts don't cause problems
-	  void DisableCamera(CameraID cameraID);
+      // TODO: remove when interrupts don't cause problems
+      void DisableCamera(CameraID cameraID);
 
       // Put a byte into a send buffer to be sent by LongExecution()
       // (Using same prototype as putc / USBPutChar for printf.)
@@ -493,32 +478,6 @@ namespace Anki
       void SendMessageID(const char* name, const u8 msgID);
 
 #endif // if USE_OFFBOARD_VISION
-
-      // Definition of the data structures being transferred between SYSCON and
-      // the vision processor
-      enum SPISource
-      {
-        SPI_SOURCE_HEAD = 'H',
-        SPI_SOURCE_BODY = 'B'
-      };
-      
-      struct GlobalCommon
-      {
-        SPISource source;
-      };
-      
-      struct GlobalDataToHead
-      {
-        GlobalCommon common;
-        u8 padding[63];
-      };
-      
-      struct GlobalDataToBody
-      {
-        GlobalCommon common;
-        u8 padding[63];
-      };
-
     } // namespace HAL
   } // namespace Cozmo
 } // namespace Anki

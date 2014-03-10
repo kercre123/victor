@@ -37,7 +37,7 @@ namespace Anki {
       {
         if (power != gripperPower_) {
           gripperPower_ = power;
-          HAL::MotorSetPower(HAL::MOTOR_GRIP, gripperPower_);
+          //HAL::MotorSetPower(HAL::MOTOR_GRIP, gripperPower_);
           gripperPowerAppliedTime_ = HAL::GetMicroCounter();
           //PRINT(" grip power %f\n", gripperPower_);
         }

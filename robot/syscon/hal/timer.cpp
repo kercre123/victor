@@ -1,49 +1,23 @@
 #include "timer.h"
-#include "anki/cozmo/robot/hal.h"
 #include "nrf.h"
 
 namespace
 {
-  const u32 IRQ_PRIORITY = 1;
+  //const u32 IRQ_PRIORITY = 1;
   
-  u32 m_low = 0;
-  u8 m_high = 0;
-}
-
-namespace Anki
-{
-  namespace Cozmo
-  {
-    namespace HAL
-    {
-      u32 GetMicroCounter()
-      {
-        m_low = NRF_RTC1->COUNTER;
-        u32 ticks = ((u32)m_high << 24) | m_low;
-        
-        // TODO: This is really 30.517
-        return ticks * 30;
-      }
-      
-      void MicroWait(u32 microseconds)
-      {
-        u32 now = GetMicroCounter();
-        while ((GetMicroCounter() - now) < microseconds)
-          ;
-      }
-    }
-  }
+  //u32 m_low = 0;
+  //u8 m_high = 0;
 }
 
 void TimerInit()
 {
   // Clear all RTC1 interrupts
-  NRF_RTC1->INTENCLR = 0xFFFFFFFF;
+  //NRF_RTC1->INTENCLR = 0xFFFFFFFF;
   
   // Clear pending interrupts
-  NVIC_ClearPendingIRQ(RTC1_IRQn);
-  NVIC_SetPriority(RTC1_IRQn, IRQ_PRIORITY);
-  NVIC_EnableIRQ(RTC1_IRQn);
+  //NVIC_ClearPendingIRQ(RTC1_IRQn);
+  //NVIC_SetPriority(RTC1_IRQn, IRQ_PRIORITY);
+  //NVIC_EnableIRQ(RTC1_IRQn);
   
   // XXX: Keep this section commented until we figure out a fix for the
   // external oscillator. It doesn't seem to start up all the time.
@@ -78,17 +52,42 @@ void TimerInit()
   NRF_RTC1->TASKS_STOP = 1;
   NRF_RTC1->TASKS_CLEAR = 1;
   
-  m_low = m_high = 0;
-  
   // NOTE: When using the LFCLK with prescaler = 0, we only get 30.517 us
   // resolution. This should still provide enough for this chip/board.  
   NRF_RTC1->PRESCALER = 0;
   
   // Enable interrupts on RTC1 overflow
-  NRF_RTC1->INTENSET = RTC_INTENSET_OVRFLW_Msk;
+  //NRF_RTC1->INTENSET = RTC_INTENSET_OVRFLW_Msk;
   
   // Start the RTC
   NRF_RTC1->TASKS_START = 1;
+}
+
+__asm void MicroWait(u32 microseconds)
+{
+loop
+    SUBS r0, r0, #1
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    BNE loop
+    BX lr
+}
+
+u32 GetCounter()
+{
+  // Each tick is 120 ns. However, we can't get that resolution with the RTC.
+  // This value only gets 120*256 ns of resolution: the bottom 8-bits are 0.
+  return NRF_RTC1->COUNTER << 8;
 }
 
 // XXX:
@@ -99,7 +98,7 @@ void TimerInit()
 // because the value returned by COUNTER was occasionally less than m_low
 // when inside of MicroWait(). This means we read incorrect clock ticks with
 // that method.
-extern "C"
+/*extern "C"
 void RTC1_IRQHandler()
 {
   // Increment the high part of the timer
@@ -107,4 +106,4 @@ void RTC1_IRQHandler()
   
   // Clear the event/interrupt
   NRF_RTC1->EVENTS_OVRFLW = 0;
-}
+}*/

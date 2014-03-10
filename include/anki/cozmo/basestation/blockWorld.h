@@ -27,7 +27,6 @@
 
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/mat.h"
-#include "anki/cozmo/basestation/robot.h"
 
 
 namespace Anki
@@ -35,7 +34,8 @@ namespace Anki
   namespace Cozmo
   {
     // Forward declarations:
-    class Robot;    
+    class Robot;
+    class RobotManager;
     class MessageHandler;
     
     class BlockWorld

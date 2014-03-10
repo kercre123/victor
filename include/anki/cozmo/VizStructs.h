@@ -15,6 +15,13 @@ namespace Anki {
 
     const u32 DEFAULT_COLOR_ID = u32_MAX;
     
+    enum VizObjectTypes {
+      VIZ_ROBOT,
+      VIZ_CUBOID,
+      VIZ_RAMP
+    };
+    
+    
     // Define viz messages
 //#ifdef COZMO_ROBOT
     

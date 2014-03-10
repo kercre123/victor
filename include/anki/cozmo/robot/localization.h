@@ -1,7 +1,9 @@
 #ifndef LOCALIZATION_H
 #define LOCALIZATION_H
 
-#include "anki/cozmo/robot/cozmoTypes.h"
+#include "anki/common/shared/radians.h"
+#include "anki/common/types.h"
+
 
 namespace Anki {
   namespace Cozmo {

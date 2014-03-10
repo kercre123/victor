@@ -43,9 +43,9 @@ int main(int argc, char **argv)
   UdpServer regServer;
   UdpServer advertisingServer;
   
-  // Map of robot id to port number
-  typedef map<int, int>::iterator robotPortMapIt;
-  map<int, int> robotPortMap;
+  // Map of robot id to RobotAdvertisement message
+  typedef map<int, RobotAdvertisement>::iterator robotConnectionInfoMapIt;
+  map<int, RobotAdvertisement> robotConnectionInfoMap;
 
   // Main webots controller
   webots::Supervisor advertisementController;
@@ -58,10 +58,7 @@ int main(int argc, char **argv)
   // Message from robots that want to (de)register for advertising.
   RobotAdvertisementRegistration regMsg;
   
-  // Message to send to client basestations that want to know what robots are advertising.
-  RobotAdvertisement advMsg;
-  
-  robotPortMapIt it;
+  robotConnectionInfoMapIt it;
   
   double lastAdvertisingTime = 0;
   
@@ -76,12 +73,21 @@ int main(int argc, char **argv)
   
       if (bytes_recvd == sizeof(regMsg)) {
         if (regMsg.enableAdvertisement) {
-          std::cout << "Registering robot " << (int)regMsg.robotID << " on port " << regMsg.port << " with advertisement service\n";
-          robotPortMap[regMsg.robotID] = regMsg.port;
+          std::cout << "Registering robot " << (int)regMsg.robotID
+                    << " on host " << regMsg.robotAddr
+                    << " at port " << regMsg.port
+                    << " with advertisement service\n";
+          
+          robotConnectionInfoMap[regMsg.robotID].robotID = regMsg.robotID;
+          robotConnectionInfoMap[regMsg.robotID].port = regMsg.port;
+          memcpy(robotConnectionInfoMap[regMsg.robotID].robotAddr, regMsg.robotAddr, sizeof(RobotAdvertisement::robotAddr));
+          
         } else {
           std::cout << "Deregistering robot " << (int)regMsg.robotID << " from advertisement service\n";
-          robotPortMap.erase(regMsg.robotID);
+          robotConnectionInfoMap.erase(regMsg.robotID);
         }
+      } else if (bytes_recvd > 0){
+        printf("Recvd datagram with %d bytes. Expecting %d bytes.\n", bytes_recvd, (int)sizeof(regMsg));
       }
       
     } while (bytes_recvd > 0);
@@ -97,13 +103,15 @@ int main(int argc, char **argv)
     
     // Notify all clients
     if (advertisementController.getTime() - lastAdvertisingTime > ROBOT_ADVERTISING_PERIOD_S) {
-      if (advertisingServer.GetNumClients() > 0 && !robotPortMap.empty())
+      if (advertisingServer.GetNumClients() > 0 && !robotConnectionInfoMap.empty())
         std::cout << "Notifying " <<  advertisingServer.GetNumClients() << " clients of advertising robots\n";
       
-      for (it = robotPortMap.begin(); it != robotPortMap.end(); it++) {
-        advMsg.robotID = it->first;
-        advMsg.port = it->second;
-        advertisingServer.Send((char*)&advMsg, sizeof(advMsg));
+      for (it = robotConnectionInfoMap.begin(); it != robotConnectionInfoMap.end(); it++) {
+        //std::cout << "Advertising: Robot " << it->second.robotID
+        //          << " on host " << it->second.robotAddr
+        //          << " at port " << it->second.port
+        //          << "(size=" << sizeof(RobotAdvertisement) << ")\n";
+        advertisingServer.Send((char*)&(it->second), sizeof(RobotAdvertisement));
         
         lastAdvertisingTime = advertisementController.getTime();
       }

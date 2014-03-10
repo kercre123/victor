@@ -16,7 +16,6 @@ PROTO CozmoBot [
   field SFFloat liftAngle_lowLimit  0
   field SFFloat liftAngle_highLimit 1.047  # 60 degrees up
   
-  field SFInt32 commsChannel 1
   field SFInt32 usbChannel 88
   
   field SFString controller "cozmo_c_controller"
@@ -44,20 +43,7 @@ Supervisor {
     Emitter { 
       name "cozmo_physics_comms"
     }
-
-    # For simulated radio communications with basestation
-    # World must be running the CozmoSimWorldComms controller.
-    Emitter {
-      name "radio_tx"
-      type "radio"
-      channel IS commsChannel
-    }
-    Receiver {
-      name "radio_rx"
-      type "radio"
-      channel IS commsChannel
-    }
-    
+   
     # For simulated USB connection to do "offboard" vision
     # processing
     Emitter {

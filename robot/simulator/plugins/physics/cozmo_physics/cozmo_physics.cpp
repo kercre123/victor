@@ -3,10 +3,8 @@
  * Date:  09-25-2013        
  * Description: Webots physics plugin for drawing paths in the cozmo simulator. 
  *              Paths currently consist only of arcs and straights.
- *              This plugin receives messages from the CozmoBot class
- *              via an Emitter. For simplicity, a message is just an array of floats.
- *              The size of the array is determined by the message type.
- *              The message format is defined in cozmo_physics.h.
+ *              This plugin receives messages from the sim_viz methods
+ *              via an Emitter. See VizMsgDefs.h for message formats.
  *  
  * Author: Kevin Yoon       
  * Modifications: 
@@ -55,7 +53,7 @@ static UdpServer server;
 static bool drawPaths_ = true;
 
 // Default height offset of paths (m)
-static float heightOffset_ = 0.1;
+static float heightOffset_ = 0.045;
 
 // Default angular resolution of arc path segments (radians)
 static float arcRes_rad = 0.2;
@@ -93,7 +91,7 @@ namespace Anki {
     
     void ProcessVizObjectMessage(const VizObject& msg)
     {
-      PRINT("Processing SetVizObject %d %d (%f %f %f) (%f %f %f %f) %d \n",
+      PRINT("Processing DrawObject %d %d (%f %f %f) (%f %f %f %f) %d \n",
             msg.objectID,
             msg.objectTypeID,
             msg.x_trans_m, msg.y_trans_m, msg.z_trans_m,
@@ -245,156 +243,64 @@ void webots_physics_step() {
    *   ...
    */
 
-  // Process draw messages from CozmoBot
-  int msgSize;
-  float *msgBuf = (float*)dWebotsReceive(&msgSize);
-  float *msg = msgBuf;
-  int msgOffset = 0;
-  int robotID;
-  int pathID;
-  PathVertex_t pt;
-  pt.resize(3);
-
-
-  // Process messages from basestation
   int bytes_recvd = 0;
   const int MAX_RECV_BUF_SIZE = 1024;
   u8 recvBuf[MAX_RECV_BUF_SIZE];
-  while ((bytes_recvd = server.Recv((char*)recvBuf, MAX_RECV_BUF_SIZE)) > 0) {
-    int msgID = static_cast<Anki::Cozmo::VizMsgID>(recvBuf[0]);
-    PRINT( "CozmoPhysics: Got msg %d (%d bytes)\n", msgID, bytes_recvd);
-    
-    (*Anki::Cozmo::LookupTable_[msgID].dispatchFcn)(recvBuf + 1);
-  }
   
   
-  // TODO: Get rid of everything below here once sim_pathFollower has been converted to use the same messaging interface.
-  //       Also rename sim_pathFollower to VizController or something...
   
-  if (msgBuf) {
-    //dWebotsConsolePrintf("***** MSG RECVD: %d\n", msgSize);
-    while (msgOffset*SIZEOF_FLOAT < msgSize) {
+  //// Process draw messages from CozmoBot ////
+  // Since data isn't packetized, need to process multiple packets per read.
+  u8 *tmpBuf = (u8*)dWebotsReceive(&bytes_recvd);
+  static int recvBufSize = 0;
+  if (bytes_recvd > 0) {
+    memcpy(recvBuf + recvBufSize, tmpBuf, bytes_recvd);
+    recvBufSize += bytes_recvd;
+
+    // Process every whole message
+    int curr_byte = 0;
+    while (curr_byte < recvBufSize) {
+
+      int msgID = static_cast<Anki::Cozmo::VizMsgID>(recvBuf[curr_byte]);
+      int msgSize =  Anki::Cozmo::LookupTable_[msgID].size;
+      curr_byte += 1; // Skip the msgID byte
       
-      msg = msgBuf + msgOffset;
-      //dWebotsConsolePrintf("***** MSGOFFSET: %d (%x, %x)\n", msgOffset, msgBuf, msg);
-
-      switch ((int)msg[0]) {
+      PRINT( "Processing msgs from Webots: Got msg %d (%d bytes expected, %d bytes left)\n", msgID, msgSize, recvBufSize - curr_byte);
       
-      case PLUGIN_MSG_ERASE_PATH:
-        robotID = msg[PLUGIN_MSG_ROBOT_ID];
-        pathID = msg[PLUGIN_MSG_PATH_ID];
-        pathMap_[pathID].clear();
-        msgOffset += ERASE_PATH_MSG_SIZE;
-        //dWebotsConsolePrintf("***** ERASE RECVD\n");
-        break;
-
-      case PLUGIN_MSG_APPEND_LINE:
-        robotID = msg[PLUGIN_MSG_ROBOT_ID];
-        pathID = msg[PLUGIN_MSG_PATH_ID];
-        pt[0] = msg[LINE_START_X];
-        pt[1] = msg[LINE_START_Y];
-        pt[2] = heightOffset_;
-        pathMap_[pathID].push_back(pt);
-        pt[0] = msg[LINE_END_X];
-        pt[1] = msg[LINE_END_Y];
-        pt[2] = heightOffset_;
-        pathMap_[pathID].push_back(pt);
-        msgOffset += LINE_MSG_SIZE;
-        //dWebotsConsolePrintf("***** LINE RECVD (robot %d, path %d, totalPathPoints %d)\n", robotID, pathID, robotPathMap[robotID][pathID].size());
-        break;
-
-      case PLUGIN_MSG_APPEND_ARC:
-        {
-          
-          robotID = msg[PLUGIN_MSG_ROBOT_ID];
-          pathID = msg[PLUGIN_MSG_PATH_ID];
-
-          
-          float center_x = msg[ARC_CENTER_X];
-          float center_y = msg[ARC_CENTER_Y];
-          float center_z = heightOffset_;
-
-          float radius = msg[ARC_RADIUS];
-          float startRad = msg[ARC_START_RAD];
-          float sweepRad = msg[ARC_SWEEP_RAD];
-          float endRad = startRad + sweepRad;
-
-          float dir = (sweepRad > 0 ? 1 : -1);
-          
-          // Make endRad be between -PI and PI
-          while (endRad > PI) {
-            endRad -= 2*PI;
-          }
-          while (endRad < -PI) {
-            endRad += 2*PI;
-          }
-          
-         
-          if (dir == 1) {
-            // Make startRad < endRad
-            while (startRad > endRad) {
-              startRad -= 2*PI;
-            }
-          } else {
-            // Make startRad > endRad
-            while (startRad < endRad) {
-              startRad += 2*PI;
-            }
-          }
-          
-          // Add points along arc from startRad to endRad at arcRes_rad resolution
-          float currRad = startRad;
-          float dx,dy,cosCurrRad;
-          //dWebotsConsolePrintf("***** ARC rad %f (%f to %f), radius %f\n", currRad, startRad, endRad, radius);
-
-          while (currRad*dir < endRad*dir) {
-            cosCurrRad = cos(currRad);
-            dx = cos(currRad) * radius;
-            dy = sin(currRad) * radius;
-            pt[0] = center_x + dx;
-            pt[1] = center_y + dy;
-            pt[2] = center_z;
-            pathMap_[pathID].push_back(pt);
-            currRad += dir * arcRes_rad;
-          }
-           
-          msgOffset += ARC_MSG_SIZE;
-          break;
-        }
-
-      case PLUGIN_MSG_SHOW_PATH:
-        // Currently, this message applies globally
-        drawPaths_ = msg[SHOW_PATH];
-        msgOffset += SHOW_PATH_MSG_SIZE;
-        break;
-
-      case PLUGIN_MSG_SET_HEIGHT_OFFSET:
-        // Currently, this message applies globally
-        heightOffset_ = msg[HEIGHT_OFFSET];
-        msgOffset += SET_HEIGHT_OFFSET_MSG_SIZE;
-        break;
-
-      default:
-        // It's possible for this to receive messages that were sent to CHANNEL_BROADCAST
-        // so just ignore them.
-        //dWebotsConsolePrintf("***ERROR: UNKNOWN MSG RECVD BY PLUGIN %d\n", msgSize);
-        return;
+      if (recvBufSize - curr_byte >= msgSize) {
+        // There is a complete message in recvBuf. Process it.
+        (*Anki::Cozmo::LookupTable_[msgID].dispatchFcn)(recvBuf + curr_byte);
+        curr_byte += msgSize;
+      } else {
+        // There are not enough bytes in the buffer for a complete message.
+        // Move remaining bytes to front of buffer.
+        memmove(recvBuf, recvBuf + curr_byte, recvBufSize - curr_byte);
         break;
       }
     }
+    recvBufSize -= curr_byte;
+  }
+
+  
+  
+  ///// Process messages from basestation /////
+  while ((bytes_recvd = server.Recv((char*)recvBuf, MAX_RECV_BUF_SIZE)) > 0) {
+    int msgID = static_cast<Anki::Cozmo::VizMsgID>(recvBuf[0]);
+    PRINT( "Processing msgs from Basestation: Got msg %d (%d bytes)\n", msgID, bytes_recvd);
+    
+    (*Anki::Cozmo::LookupTable_[msgID].dispatchFcn)(recvBuf + 1);
   }
 
 }
 
 
-void draw_cuboid(float x, float y, float z)
+void draw_cuboid(float x_dim, float y_dim, float z_dim)
 {
   
    // Webots hack
-  float halfX = x*0.5;
-  float halfY = y*0.5;
-  float halfZ = z*0.5;
- 
+  float halfX = x_dim*0.5;
+  float halfY = y_dim*0.5;
+  float halfZ = z_dim*0.5;
   
   // TOP
   glBegin(GL_LINE_LOOP);
@@ -435,6 +341,57 @@ void draw_cuboid(float x, float y, float z)
 }
 
 
+void draw_ramp()
+{
+  dWebotsConsolePrintf("!!!! ERROR: draw_ramp() undefined !!!!!!\n");
+}
+
+
+
+void draw_robot()
+{
+  // Tetrahedron-y shape that represents robot's pose by pointing to the top of where the robot's head should be.
+  // Origin is at the the point between the front wheels at ground-level. x-axis points forward. y-axis points left.
+  
+  glBegin(GL_TRIANGLES);
+  
+  // Location of tip
+  float x = -0.013;
+  float y = 0;
+  float z = 0.068;
+  
+  // Dimensions of tetrahedon-h shape
+  float l = 0.03;      // along x-axis
+  float half_w = 0.01; // along y-axis
+  float h = 0.01;      // along z-axis
+  
+  // Bottom face
+  glVertex3f( x, y, z);
+  glVertex3f( x-l, y+half_w, z);
+  glVertex3f( x-l, y-half_w, z);
+  
+  // Left face
+  glVertex3f( x, y, z);
+  glVertex3f( x-l, y+half_w, z);
+  glVertex3f( x-l, y, z+h);
+  
+  // Right face
+  glVertex3f( x, y, z);
+  glVertex3f( x-l, y, z+h);
+  glVertex3f( x-l, y-half_w, z);
+  
+  // Back face
+  glVertex3f( x-l, y, z+h);
+  glVertex3f( x-l, y+half_w, z);
+  glVertex3f( x-l, y-half_w, z);
+  
+  glEnd();
+  
+}
+
+
+
+
 void webots_physics_draw(int pass, const char *view) {
  
   // Only draw in main 3D view (view == NULL) and not the camera views
@@ -466,7 +423,6 @@ void webots_physics_draw(int pass, const char *view) {
       glBegin(GL_LINE_STRIP);
       
       for (Path_t::iterator pathIt = pathMapIt->second.begin(); pathIt != pathMapIt->second.end(); pathIt++) {
-//        glVertex3f((*pathIt)[0],(*pathIt)[2],-(*pathIt)[1]); // Map to simulation world coords
         glVertex3f((*pathIt)[0],(*pathIt)[1],(*pathIt)[2] + heightOffset_);
       }
       glEnd();
@@ -495,20 +451,22 @@ void webots_physics_draw(int pass, const char *view) {
       glTranslatef(obj->x_trans_m, obj->y_trans_m, obj->z_trans_m);
       glRotatef(obj->rot_deg, obj->rot_axis_x, obj->rot_axis_y, obj->rot_axis_z);
 
-      // For now, all objects are just bounding boxes
-      draw_cuboid(obj->x_size_m, obj->y_size_m, obj->z_size_m);
       
-      // TODO: use objectType-specific drawing functions
-      /*
+      // Use objectType-specific drawing functions
       switch(obj->objectTypeID) {
-        case 0:
-          
+        case Anki::Cozmo::VIZ_ROBOT:
+          draw_robot();
+          break;
+        case Anki::Cozmo::VIZ_CUBOID:
+          draw_cuboid(obj->x_size_m, obj->y_size_m, obj->z_size_m);
+          break;
+        case Anki::Cozmo::VIZ_RAMP:
+          draw_ramp();
           break;
         default:
           PRINT("Unknown objectTypeID %d\n", obj->objectTypeID);
           break;
       }
-       */
       
       glPopMatrix();
       

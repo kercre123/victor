@@ -27,14 +27,24 @@ namespace Anki {
 #undef MESSAGE_DEFINITION_MODE
 #include "anki/cozmo/MessageDefinitions.h"
     
+    // Create the enumerated message IDs from the MessageDefinitions file:
+    typedef enum {
+      NO_MESSAGE_ID = 0,
+#define MESSAGE_DEFINITION_MODE MESSAGE_ENUM_DEFINITION_MODE
+#include "anki/cozmo/MessageDefinitions.h"
+      NUM_MSG_IDS // Final entry without comma at end
+    } ID;
+    
     // Base message class
     class Message
     {
     public:
       
+      virtual u8 GetID() const = 0;
+      
       virtual void GetBytes(u8* buffer) const = 0;
       
-      static u8 GetSize() { return 0; }
+      virtual u8 GetSize() const = 0; 
       
     }; // class Message
 

@@ -38,13 +38,10 @@ namespace Anki {
         
         // Parameters / Constants:
         
-#if(FREE_DRIVE_DUBINS_TEST)
-        const TestModeController::TestMode DEFAULT_TEST_MODE = TestModeController::TM_NONE;
-#else
         // TESTING
         // Change this value to run different test modes
         const TestModeController::TestMode DEFAULT_TEST_MODE = TestModeController::TM_NONE;
-#endif
+
         Robot::OperationMode mode_ = INIT_RADIO_CONNECTION;
         
       } // Robot private namespace

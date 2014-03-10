@@ -3,8 +3,11 @@
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/localization.h"
 #include "anki/cozmo/robot/visionSystem.h"
-
-#include "anki/common/shared/radians.h"
+#include "anki/cozmo/robot/pathFollower.h"
+#include "anki/cozmo/robot/speedController.h"
+#include "liftController.h"
+#include "headController.h"
+#include "dockingController.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -263,6 +266,46 @@ namespace Anki {
         }
         
       } // ProcessUARTMessages()
+
+      
+      void ProcessClearPathMessage(const ClearPath& msg) {
+        SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
+        PathFollower::ClearPath();
+        //SteeringController::ExecuteDirectDrive(0,0);
+      }
+
+      void ProcessAppendPathSegmentArcMessage(const AppendPathSegmentArc& msg) {
+        PathFollower::AppendPathSegment_Arc(0, msg.x_center_mm, msg.y_center_mm, msg.radius_mm, msg.startRad, msg.sweepRad,
+                                            msg.targetSpeed, msg.accel, msg.decel);
+      }
+      
+      void ProcessAppendPathSegmentLineMessage(const AppendPathSegmentLine& msg) {
+        PathFollower::AppendPathSegment_Line(0, msg.x_start_mm, msg.y_start_mm, msg.x_end_mm, msg.y_end_mm,
+                                             msg.targetSpeed, msg.accel, msg.decel);
+      }
+      
+      void ProcessExecutePathMessage(const ExecutePath& msg) {
+        PathFollower::StartPathTraversal();
+      }
+      
+      void ProcessDockWithBlockMessage(const DockWithBlock& msg) {
+        const VisionSystem::MarkerCode code(msg.blockCode);
+        DockingController::StartDocking(code,
+                                        msg.horizontalOffset_mm,
+                                        0, 0);
+      }
+
+      void ProcessMoveLiftMessage(const MoveLift& msg) {
+        LiftController::SetSpeedAndAccel(msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
+        LiftController::SetDesiredHeight(msg.height_mm);
+      }
+      
+      void ProcessMoveHeadMessage(const MoveHead& msg) {
+        HeadController::SetSpeedAndAccel(msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
+        HeadController::SetDesiredAngle(msg.angle_rad);
+      }
+      
+      
       
       
       // TODO: Fill these in once they are needed/used:
@@ -275,23 +318,12 @@ namespace Anki {
         PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
       }
       
-      void ProcessClearPathMessage(const ClearPath& msg) {
-        PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
-      }
       
       void ProcessSetMotionMessage(const SetMotion& msg) {
         PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
       }
       
       void ProcessRobotAvailableMessage(const RobotAvailable& msg) {
-        PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
-      }
-      
-      void ProcessSetPathSegmentArcMessage(const SetPathSegmentArc& msg) {
-        PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
-      }
-      
-      void ProcessSetPathSegmentLineMessage(const SetPathSegmentLine& msg) {
         PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
       }
       
