@@ -37,6 +37,10 @@ namespace Anki {
         const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_M = 0.0;
 
         Mode mode_ = IDLE;
+        
+        #warning set correctly
+        //Mode mode_ = IDLE;
+        
         Action action_ = DOCKING_LOW;
         
         Vision::MarkerType dockToMarker_;
