@@ -73,6 +73,7 @@ classdef VisionMarkerTrained
             Pose = [];
             Size = 1;
             UseSortedCorners = false;
+            UseSingleProbe = false;
                         
             parseVarargin(varargin{:});
             
@@ -114,9 +115,17 @@ classdef VisionMarkerTrained
                 if any(strcmp(this.codeName, {'UNKNOWN', 'ALL_WHITE', 'ALL_BLACK'}))
                     this.isValid = false;
                 else
-                    [verificationResult, verifiedID] = TestTree( ...
-                        VisionMarkerTrained.ProbeTree.verifiers(this.codeID), ...
-                        img, tform, threshold, VisionMarkerTrained.ProbePattern);
+                    if UseSingleProbe
+                        oneProbe.x = 0;
+                        oneProbe.y = 0;
+                        [verificationResult, verifiedID] = TestTree( ...
+                            VisionMarkerTrained.ProbeTree.verifiers(this.codeID), ...
+                            img, tform, threshold, oneProbe);
+                    else 
+                        [verificationResult, verifiedID] = TestTree( ...
+                            VisionMarkerTrained.ProbeTree.verifiers(this.codeID), ...
+                            img, tform, threshold, VisionMarkerTrained.ProbePattern);
+                    end
                     
                     this.isValid = verifiedID == 2;
                     if this.isValid

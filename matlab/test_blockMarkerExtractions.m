@@ -29,20 +29,20 @@ end
 
 markerLabels = {
     'MARKER_ALL_BLACK',
-    'MARKER_ALL_WHITE', 
-    'MARKER_ANGRYFACE', 
-    'MARKER_ANKILOGO', 
-    'MARKER_BATTERIES', 
-    'MARKER_BULLSEYE', 
-    'MARKER_FIRE', 
-    'MARKER_SQUAREPLUSCORNERS', 
+    'MARKER_ALL_WHITE',
+    'MARKER_ANGRYFACE',
+    'MARKER_ANKILOGO',
+    'MARKER_BATTERIES',
+    'MARKER_BULLSEYE',
+    'MARKER_FIRE',
+    'MARKER_SQUAREPLUSCORNERS',
     'MARKER_UNKNOWN'};
 
-figure(1); 
-hold off; 
+figure(1);
+hold off;
 imshow(image);
-hold on; 
-for i = 1:length(quads)     
+hold on;
+for i = 1:length(quads)
     plot(quads{i}([1:end,1],1),quads{i}([1:end,1],2));
     text(...
         mean(quads{i}(:,1)), mean(quads{i}(:,2)),...
@@ -52,11 +52,11 @@ end
 
 markers = simpleDetector(image);
 
-figure(2); 
-hold off; 
+figure(2);
+hold off;
 imshow(image);
-hold on; 
-for i = 1:length(markers)     
+hold on;
+for i = 1:length(markers)
     plot(markers{i}.corners([1:end,1],1),markers{i}.corners([1:end,1],2));
     text(...
         mean(markers{i}.corners(:,1)), mean(markers{i}.corners(:,2)),...
