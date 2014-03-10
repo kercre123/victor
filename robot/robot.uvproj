@@ -355,7 +355,7 @@
             <uSurpInc>1</uSurpInc>
             <VariousControls>
               <MiscControls>--asm</MiscControls>
-              <Define>USE_STDPERIPH_DRIVER,STM32F429_439xx,USE_DEFAULT_TIMEOUT_CALLBACK,USE_EMBEDDED_PHY,USE_USB_OTG_FS,COZMO_ROBOT,ROBOT_HARDWARE,ANKICORETECH_EMBEDDED_USE_HEATSHRINK,</Define>
+              <Define>USE_STDPERIPH_DRIVER,STM32F429_439xx,USE_DEFAULT_TIMEOUT_CALLBACK,USE_EMBEDDED_PHY,USE_USB_OTG_FS,COZMO_ROBOT,ROBOT_HARDWARE,ANKICORETECH_EMBEDDED_USE_HEATSHRINK,CORETECH_ROBOT</Define>
               <Undefine></Undefine>
               <IncludePath>.\arm_hal;.\arm_hal\lib;..\include;..\coretech\common\include;..\coretech\messaging\include;..\coretech\planning\include;..\coretech\vision\include;.\supervisor\src;..\..\coretech-external\heatshrink;C:\Keil\ARM\Pack\ARM\CMSIS\3.20.4\Device\ARM\ARMCM4\Include;.\include</IncludePath>
             </VariousControls>
@@ -437,6 +437,11 @@
               <FileName>motors.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\motors.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>usb_radio.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\usb_radio.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -922,6 +927,13 @@
         </Group>
         <Group>
           <GroupName>coretech-messaging</GroupName>
+          <Files>
+            <File>
+              <FileName>utilMessaging.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\coretech\messaging\shared\src\utilMessaging.c</FilePath>
+            </File>
+          </Files>
         </Group>
         <Group>
           <GroupName>coretech-planning</GroupName>
@@ -1544,6 +1556,11 @@
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\motors.cpp</FilePath>
             </File>
+            <File>
+              <FileName>usb_radio.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\usb_radio.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -2085,6 +2102,13 @@
         </Group>
         <Group>
           <GroupName>coretech-messaging</GroupName>
+          <Files>
+            <File>
+              <FileName>utilMessaging.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\coretech\messaging\shared\src\utilMessaging.c</FilePath>
+            </File>
+          </Files>
         </Group>
         <Group>
           <GroupName>coretech-planning</GroupName>
