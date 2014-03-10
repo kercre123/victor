@@ -85,7 +85,7 @@ namespace Anki
       void SetSpeedProfile(f32 targetSpeed, f32 accel, f32 decel);
       
       // Returns length of the segment
-      const f32 GetLength() const;
+      f32 GetLength() const;
       
       void GetStartPoint(f32 &x, f32 &y) const;
       void GetEndPoint(f32 &x, f32 &y) const;
@@ -95,12 +95,12 @@ namespace Anki
       SegmentRangeStatus GetDistToSegment(const f32 x, const f32 y, const f32 angle,
                                          f32 &shortestDistanceToPath, f32 &radDiff) const;
       
-      const PathSegmentType GetType() const {return type_;}
+      PathSegmentType GetType() const {return type_;}
       const PathSegmentDef& GetDef() const {return def_;}
       
-      const f32 GetTargetSpeed() const {return targetSpeed_;}
-      const f32 GetAccel() const {return accel_;}
-      const f32 GetDecel() const {return decel_;}
+      f32 GetTargetSpeed() const {return targetSpeed_;}
+      f32 GetAccel() const {return accel_;}
+      f32 GetDecel() const {return decel_;}
 
     private:
       SegmentRangeStatus GetDistToLineSegment(const f32 x, const f32 y, const f32 angle,

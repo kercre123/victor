@@ -10,7 +10,7 @@
 #include <float.h>
 #define ATAN2_FAST(y,x) atan2(y,x)
 #define ATAN2_ACC(y,x) atan2(y,x)
-#elif defined COZMO_ROBOT
+#elif defined CORETECH_ROBOT
 #include "anki/common/robot/utilities_c.h"
 #include "anki/common/robot/trig_fast.h"
 #define ATAN2_FAST(y,x) atan2_fast(y,x)
@@ -67,7 +67,7 @@ namespace Anki
       decel_ = decel;
     }
     
-    const f32 PathSegment::GetLength() const
+    f32 PathSegment::GetLength() const
     {
       switch(type_)
       {
@@ -81,6 +81,7 @@ namespace Anki
           printf("ERROR (Path::GetLength): Undefined segment %d\n", type_);
           assert(false);
       }
+      return 0;
     }
     
     
@@ -561,7 +562,7 @@ namespace Anki
       f32 n_x, n_y;          // Orthogonal vector to tangent line
       f32 v1_x, v1_y;        // Unit vector of V1
       f32 V1_mag;            // Magnitude of V1
-      f32 cosTanPtAngle, sinTanPtAngle, tanPtAngle;
+      f32 cosTanPtAngle, sinTanPtAngle;
       f32 segment_length;
       u8 num_segments = 0;
       PathSegment* ps;
@@ -627,8 +628,6 @@ namespace Anki
       n_x = v1_x * cosTanPtAngle - v1_y * sinTanPtAngle;
       n_y = v1_x * sinTanPtAngle + v1_y * cosTanPtAngle;
       
-      tanPtAngle = ATAN2_ACC(n_y, n_x);
-      
       // Compute tangent points
       p_t1_x = p_c1_x + n_x * r1 * sign1;
       p_t1_y = p_c1_y + n_y * r1 * sign1;
@@ -638,6 +637,7 @@ namespace Anki
       
       
 #if(DEBUG_PATH)
+       f32 tanPtAngle = ATAN2_ACC(n_y, n_x);
        PRINT("Dubins %d: \n"
        " p_c1 (%f, %f)\n"
        " p_c2 (%f, %f)\n"
