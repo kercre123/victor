@@ -168,7 +168,7 @@ namespace Anki {
                             const HAL::CameraMode outputResolution,
                             Embedded::MemoryStack scratch);
 
-#pragma mark --- VisionSystem Method Implementations ---
+//#pragma mark --- VisionSystem Method Implementations ---
 
 
       ReturnCode Init(void)

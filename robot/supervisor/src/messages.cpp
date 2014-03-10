@@ -139,7 +139,7 @@ namespace Anki {
       }
       
       
-#pragma --- Message Dispatch Functions ---
+//#pragma --- Message Dispatch Functions ---
       
       
       void ProcessRobotAddedToWorldMessage(const RobotAddedToWorld& msg)
@@ -289,10 +289,11 @@ namespace Anki {
       }
       
       void ProcessDockWithBlockMessage(const DockWithBlock& msg) {
-        const VisionSystem::MarkerCode code(msg.blockCode);
+        #warning Broken on M4
+        /*const VisionSystem::MarkerCode code(msg.blockCode);
         DockingController::StartDocking(code,
                                         msg.horizontalOffset_mm,
-                                        0, 0);
+                                        0, 0);*/
       }
 
       void ProcessMoveLiftMessage(const MoveLift& msg) {

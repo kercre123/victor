@@ -13,6 +13,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define _ANKICORETECHEMBEDDED_COMMON_POINT_H_
 
 #include "anki/common/robot/geometry_declarations.h"
+#include "anki/common/robot/memory.h"
+#include "anki/common/robot/matrix.h"
 
 namespace Anki
 {
