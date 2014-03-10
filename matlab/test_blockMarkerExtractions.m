@@ -23,8 +23,9 @@ returnInvalidMarkers = 0;
 
 [quads, markerTypes] = mexDetectFiducialMarkers(image, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, returnInvalidMarkers);
 
-
-% figure(1); hold off; imshow(image); hold on;
+for i = 1:length(quads)
+    quads{i} = quads{i} + 1;
+end
 
 markerLabels = {
     'MARKER_ALL_BLACK',

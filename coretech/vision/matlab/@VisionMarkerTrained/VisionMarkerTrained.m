@@ -72,7 +72,7 @@ classdef VisionMarkerTrained
             Corners = [];
             Pose = [];
             Size = 1;
-            UseSortedCorners = true;
+            UseSortedCorners = false;
                         
             parseVarargin(varargin{:});
             
