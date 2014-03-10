@@ -276,7 +276,7 @@ int main(int argc, char **argv)
       Cozmo::MessageVisionMarker msg;
       matlab.EvalStringEcho("marker = markers{%d}; "
                             "corners = marker.corners; "
-                            "byteArray = marker.byteArray; ", i_marker+1);
+                            "code = marker.codeID; ", i_marker+1);
 
       const double* x_corners = mxGetPr(matlab.GetArray("corners"));
       const double* y_corners = x_corners + 4;
@@ -294,10 +294,13 @@ int main(int argc, char **argv)
       msg.x_imgLowerRight = x_corners[3]-1.f;
       msg.y_imgLowerRight = y_corners[3]-1.f;
       
+      msg.markerType = static_cast<u16>(mxGetScalar(matlab.GetArray("code")));
+      /*
       mxArray* mxByteArray = matlab.GetArray("byteArray");
       CORETECH_ASSERT(mxGetNumberOfElements(mxByteArray) == VISION_MARKER_CODE_LENGTH);
       const u8* code = reinterpret_cast<const u8*>(mxGetData(mxByteArray));
       std::copy(code, code + VISION_MARKER_CODE_LENGTH, msg.code.begin());
+      */
       
       markers.emplace_back(msg);
       
@@ -313,16 +316,13 @@ int main(int argc, char **argv)
     for(auto & marker : markers) {
       Json::Value jsonMarker = marker.CreateJson();
       
-      fprintf(stdout, "Creating JSON for marker with corners (%.1f,%.1f), (%.1f,%.1f), "
-              "(%.1f,%.1f), (%.1f,%.1f), with code = [",
+      fprintf(stdout, "Creating JSON for marker type %d with corners (%.1f,%.1f), (%.1f,%.1f), "
+              "(%.1f,%.1f), (%.1f,%.1f)\n",
+              marker.markerType,
               marker.x_imgUpperLeft,  marker.y_imgUpperLeft,
               marker.x_imgLowerLeft,  marker.y_imgLowerLeft,
               marker.x_imgUpperRight, marker.y_imgUpperRight,
               marker.x_imgLowerRight, marker.y_imgLowerRight);
-      for(int i=0; i<VISION_MARKER_CODE_LENGTH; ++i) {
-        fprintf(stdout, "%d ", marker.code[i]);
-      }
-      fprintf(stdout, "\b]\n");
       
       currentPose["VisionMarkers"].append(jsonMarker);
       

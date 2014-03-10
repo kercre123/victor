@@ -36,7 +36,7 @@ classdef VisionMarkerTrained
         [squareWidth_pix, padding_pix] = GetFiducialPixelSize(imageSize, imageSizeType);
         corners = GetFiducialCorners(imageSize);
         threshold = ComputeThreshold(img, tform);
-        outputString = GenerateHeaderFile(varargin);
+        outputString = GenerateHeaderFiles(varargin);
     end % Static Methods
     
     methods(Static = true, Access = 'protected')
