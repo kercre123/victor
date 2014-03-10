@@ -73,7 +73,7 @@ namespace Anki
         USART_Cmd(UART, ENABLE);
         
         // Configure DMA for receiving
-        /*DMA_DeInit(DMA_STREAM_RX);
+        DMA_DeInit(DMA_STREAM_RX);
   
         DMA_InitTypeDef DMA_InitStructure;  
         DMA_InitStructure.DMA_Channel = DMA_CHANNEL_RX;
@@ -86,7 +86,7 @@ namespace Anki
         DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
         DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;
         DMA_InitStructure.DMA_Mode = DMA_Mode_Circular;
-        DMA_InitStructure.DMA_Priority = DMA_Priority_VeryHigh;
+        DMA_InitStructure.DMA_Priority = DMA_Priority_Medium;
         DMA_InitStructure.DMA_FIFOMode = DMA_FIFOMode_Disable;
         DMA_InitStructure.DMA_FIFOThreshold = DMA_FIFOThreshold_Full;
         DMA_InitStructure.DMA_MemoryBurst = DMA_MemoryBurst_Single;
@@ -98,7 +98,7 @@ namespace Anki
         DMA_Cmd(DMA_STREAM_RX, ENABLE);
         
         // Configure DMA For transmitting
-        DMA_DeInit(DMA_STREAM_TX);
+        /*DMA_DeInit(DMA_STREAM_TX);
         
         DMA_InitStructure.DMA_Channel = DMA_CHANNEL_TX;
         DMA_InitStructure.DMA_Memory0BaseAddr = (u32)m_bufferWrite;
@@ -155,12 +155,14 @@ namespace Anki
         u32 startTime = GetMicroCounter();
 
         do
-        {
+        {          
           // Make sure there's data in the FIFO
-          if (UART->SR & USART_SR_RXNE)
+          // NDTR counts down...
+          if (DMA_STREAM_RX->NDTR != sizeof(m_bufferRead) - m_DMAReadIndex)
           {
-            // Ensure there won't be sign-extension
-            return UART->DR & 0xff;
+            u8 value = m_bufferRead[m_DMAReadIndex];
+            m_DMAReadIndex = (m_DMAReadIndex + 1) % sizeof(m_bufferRead);  
+            return value;
           }
         }
         while ((GetMicroCounter() - startTime) < timeout);
@@ -168,39 +170,6 @@ namespace Anki
         // No data, so return with an error
         return -1;
       }
-      
-      /////////////////////////////////////////////////////////////////////
-      // Fake USB
-      //
-      
-      /*void USBSendBuffer(const u8*buffer, const u32 size)
-      {
-      }
-      
-      u32 USBGetNumBytesToRead()
-      {
-        return 0;
-      }
-      
-      s32 USBGetChar(u32 timeout)
-      {
-        return -1;
-      }
-      
-      s32 USBPeekChar(u32 offset)
-      {
-        return -1;
-      }
-      
-      Messages::ID USBGetNextMessage(u8* buffer)
-      {
-        return (Messages::ID)0;
-      }
-      
-      int USBPutChar(int c)
-      {
-        return c;
-      }*/
     }
   }
 }
