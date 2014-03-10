@@ -103,7 +103,6 @@ namespace Anki {
       const u32 LOOK_FOR_BLOCK_PERIOD_US = 200000;
       const u32 TRACK_BLOCK_PERIOD_US = 100000;
 #else
-      #warning Switch these attribues to a scatter file
       //static __attribute__((section(".ram1"), zero_init)) char offchipBuffer[OFFCHIP_BUFFER_SIZE];
       //static __attribute__((section(".ARM.__at_0x20004100"), zero_init)) char onchipBuffer[ONCHIP_BUFFER_SIZE];
       //static __attribute__((section(".ARM.__at_0x10000000"), zero_init)) char ccmBuffer[CCM_BUFFER_SIZE];
@@ -111,9 +110,9 @@ namespace Anki {
       //static __attribute__((section(".iram2"), zero_init)) char ccmBuffer[CCM_BUFFER_SIZE];
       //__attribute__((section(".RW_IRAM1"), zero_init)) char onchipBuffer[ONCHIP_BUFFER_SIZE];
       //__attribute__((section(".RW_IRAM2"), zero_init)) char ccmBuffer[CCM_BUFFER_SIZE];
-      static char offchipBuffer[OFFCHIP_BUFFER_SIZE];
-      static char onchipBuffer[ONCHIP_BUFFER_SIZE];
-      static char ccmBuffer[CCM_BUFFER_SIZE];
+      static OFFCHIP char offchipBuffer[OFFCHIP_BUFFER_SIZE];
+      static ONCHIP char onchipBuffer[ONCHIP_BUFFER_SIZE];
+      static CCM char ccmBuffer[CCM_BUFFER_SIZE];
 #endif
 
       static Embedded::MemoryStack offchipScratch_;
