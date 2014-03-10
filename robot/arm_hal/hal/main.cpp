@@ -126,8 +126,22 @@ int main(void)
   
   while (Anki::Cozmo::Robot::step_LongExecution() == EXIT_SUCCESS)
   {
+/*    UARTPutChar(0xbe);
+    UARTPutChar(0xef);
+    UARTPutChar(0xf0);
+    UARTPutChar(0xff);
+    UARTPutChar(0xbd);
+    
+    for (int y = 0; y < 240; y += 1)
+    {
+      for (int x = 0; x < 320; x += 1)
+      {
+        UARTPutChar(m_buffer1[y * 320*2 + x*2]);
+      }
+    }
+    */
+    StartFrame();
   }
-  
 #endif
   
   
