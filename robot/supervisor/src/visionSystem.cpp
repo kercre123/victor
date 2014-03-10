@@ -44,7 +44,7 @@ extern u8 m_buffer1[];
 // TODO: make nice
 extern bool isEOF;
 
-#warning remove these
+#warning remove
 #define USE_CAPTURE_IMAGES
 #define USE_STREAM_IMAGES
 
@@ -82,11 +82,11 @@ namespace Anki {
 
 #ifdef USE_CAPTURE_IMAGES
       const s32 PRINTF_BUFFER_SIZE = 10000;
-      u8 printfBufferRaw_[PRINTF_BUFFER_SIZE];
+      static OFFCHIP u8 printfBufferRaw_[PRINTF_BUFFER_SIZE];
       Embedded::SerializedBuffer printfBuffer_;
 
       const s32 CAPTURE_IMAGES_BUFFER_SIZE = 2000000;
-      u8 captureImagesBufferRaw_[CAPTURE_IMAGES_BUFFER_SIZE];
+      static OFFCHIP u8 captureImagesBufferRaw_[CAPTURE_IMAGES_BUFFER_SIZE];
       Embedded::SerializedBuffer captureImagesBuffer_;
 
       s32 numCapturedImages = -1;
@@ -559,7 +559,7 @@ namespace Anki {
   
               
               // Wait for the capture of the current frame to finish
-              while(!isEOF)
+              //while(!isEOF)
               {
               }
 

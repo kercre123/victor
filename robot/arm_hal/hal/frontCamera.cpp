@@ -25,7 +25,7 @@ bool isEOF = false;
 
 // DMA is limited to 256KB - 1
 const u32 BUFFER_SIZE = 320 * 240 * 2;
-u8 m_buffer1[BUFFER_SIZE];
+OFFCHIP u8 m_buffer1[BUFFER_SIZE];
 
 namespace Anki
 {

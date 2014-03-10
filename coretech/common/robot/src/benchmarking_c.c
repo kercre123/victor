@@ -19,7 +19,7 @@ extern u32 XXX_HACK_FOR_PETE(void);
 #endif
 
 #if defined(__EDG__) // MDK-ARM
-#define BENCHMARK_EVENTS_LOCATION __attribute__((section(".ram1"), zero_init))
+#define BENCHMARK_EVENTS_LOCATION __attribute__((section("OFFCHIP"), zero_init))
 #else
 #define BENCHMARK_EVENTS_LOCATION
 #endif
