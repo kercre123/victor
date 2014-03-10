@@ -1,4 +1,5 @@
 #include "anki/cozmo/robot/hal.h"
+#include "spiData.h"
 #include <limits.h>
 
 namespace Anki
@@ -9,6 +10,8 @@ namespace Anki
     {
       extern volatile GlobalDataToHead g_dataToHead;
       extern volatile GlobalDataToBody g_dataToBody;
+      
+      const f32 FIXED_TO_F32 = 65536.0f;
       
       void MotorSetPower(MotorID motor, f32 power)
       {
@@ -31,13 +34,13 @@ namespace Anki
       f32 MotorGetSpeed(MotorID motor)
       {
         // ASSERT(motor < MOTOR_COUNT);
-        return 0;
+        return g_dataToHead.speeds[motor] / FIXED_TO_F32;
       }
       
       f32 MotorGetPosition(MotorID motor)
       {
         // ASSERT(motor < MOTOR_COUNT);
-        return 0;
+        return g_dataToHead.positions[motor] / FIXED_TO_F32;
       }
       
       s32 MotorGetLoad()

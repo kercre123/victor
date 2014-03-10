@@ -419,12 +419,8 @@ namespace Anki
 
       const BirthCertificate& GetBirthCertificate();
 
-      // Interrupts
-      void IRQDisable();
-      void IRQEnable();
-
-	  // TODO: remove when interrupts don't cause problems
-	  void DisableCamera(CameraID cameraID);
+      // TODO: remove when interrupts don't cause problems
+      void DisableCamera(CameraID cameraID);
 
       // Put a byte into a send buffer to be sent by LongExecution()
       // (Using same prototype as putc / USBPutChar for printf.)
@@ -486,38 +482,6 @@ namespace Anki
       void SendMessageID(const char* name, const u8 msgID);
 
 #endif // if USE_OFFBOARD_VISION
-
-      // Definition of the data structures being transferred between SYSCON and
-      // the vision processor
-      enum SPISource
-      {
-        SPI_SOURCE_HEAD = 'H',
-        SPI_SOURCE_BODY = 'B'
-      };
-      
-      struct GlobalCommon
-      {
-        SPISource source;
-        u8 RESERVED[3];
-      };
-      
-      struct GlobalDataToHead
-      {
-        GlobalCommon common;
-        
-        u8 RESERVED[60];  // Pad out to 64 bytes
-      };
-      
-      // TODO: get static_assert to work so we can verify sizeof
-      
-      struct GlobalDataToBody
-      {
-        GlobalCommon common;
-        s16 motorPWM[MOTOR_COUNT];
-        
-        u8 reserved[52];  // Pad out to 64 bytes
-      };
-
     } // namespace HAL
   } // namespace Cozmo
 } // namespace Anki

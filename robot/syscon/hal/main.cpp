@@ -4,21 +4,11 @@
 #include "timer.h"
 #include "nrf.h"
 #include "nrf_gpio.h"
+#include "spiData.h"
 
-namespace Anki
-{
-  namespace Cozmo
-  {
-    namespace HAL
-    {
-      const u32 MAX_FAILED_TRANSFER_COUNT = 10;
-      GlobalDataToHead g_dataToHead;
-      GlobalDataToBody g_dataToBody;
-    }
-  }
-}
-
-void PowerInit();
+const u32 MAX_FAILED_TRANSFER_COUNT = 10;
+GlobalDataToHead g_dataToHead;
+GlobalDataToBody g_dataToBody;
 
 extern "C"
 void SystemInit(void) 
@@ -37,16 +27,12 @@ void SystemInit(void)
 
 int main(void)
 {
-  using namespace Anki::Cozmo::HAL;
-  
-  s32 result;
   u32 failedTransferCount = 0;
   
   // Initialize the hardware peripherals
   TimerInit();
   UARTInit();
   MotorsInit();
-  PowerInit();
   SPIInit();
   
   UARTPutString("\r\nInitialized...\r\n");
@@ -61,8 +47,7 @@ int main(void)
       sizeof(GlobalDataToBody),
       (const u8*)&g_dataToHead,
       (u8*)&g_dataToBody);
-
-#if 0      
+#if 0
     u8* d = (u8*)&g_dataToBody;
     for (int i = 0; i < 0x10; i++)
     {
@@ -88,14 +73,14 @@ int main(void)
       // Update motors
       for (int i = 0; i < MOTOR_COUNT; i++)
       {
-        MotorsSetPower((MotorID)i, g_dataToBody.motorPWM[i]);
+        MotorsSetPower(i, g_dataToBody.motorPWM[i]);
       }
       
       MotorsUpdate();
     }
     
     // Update at 200Hz
-    //MicroWait(5000);
+    // 41666 ticks * 120 ns is roughly 5ms
     while ((GetCounter() - timerStart) < 41666)
       ;
   }

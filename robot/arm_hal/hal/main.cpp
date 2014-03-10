@@ -2,6 +2,7 @@
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "hal/portable.h"
+#include "spiData.h"
 
 extern u8 m_buffer1[];
 
@@ -56,6 +57,21 @@ namespace Anki
 extern bool isEOF;
 extern void StartFrame();
 
+void Wait()
+{
+  using namespace Anki::Cozmo::HAL;
+  
+  u32 start = GetMicroCounter();
+  while ((GetMicroCounter() - start) < 500000)
+  {
+    printf("%.6f, %.6f  | %.6f, %.6f\n",
+      MotorGetPosition(MOTOR_LEFT_WHEEL),
+      MotorGetSpeed(MOTOR_LEFT_WHEEL),
+      MotorGetPosition(MOTOR_RIGHT_WHEEL),
+      MotorGetSpeed(MOTOR_RIGHT_WHEEL));
+  }
+}
+
 int main(void)
 {
   using namespace Anki::Cozmo::HAL;
@@ -77,29 +93,30 @@ int main(void)
   // Motor testing...
   while (1)
   {
-    MotorSetPower(MOTOR_LEFT_WHEEL, 0.3f);
-    MicroWait(500000);
-    MotorSetPower(MOTOR_LEFT_WHEEL, -0.3f);
-    MicroWait(500000);
+    MotorSetPower(MOTOR_LEFT_WHEEL, 0.6f);
+    Wait();
+    MotorSetPower(MOTOR_LEFT_WHEEL, -0.6f);
+    Wait();
     MotorSetPower(MOTOR_LEFT_WHEEL, 0.0f);
     
-    MotorSetPower(MOTOR_RIGHT_WHEEL, 0.3f);
-    MicroWait(500000);
-    MotorSetPower(MOTOR_RIGHT_WHEEL, -0.3f);
-    MicroWait(500000);
+    MotorSetPower(MOTOR_RIGHT_WHEEL, 0.6f);
+    Wait();
+    MotorSetPower(MOTOR_RIGHT_WHEEL, -0.6f);
+    Wait();
     MotorSetPower(MOTOR_RIGHT_WHEEL, 0.0f);
     
-    MotorSetPower(MOTOR_LIFT, 0.3f);
-    MicroWait(500000);
+    /*MotorSetPower(MOTOR_LIFT, 0.3f);
+    Wait();
     MotorSetPower(MOTOR_LIFT, -0.3f);
-    MicroWait(500000);
+    Wait();
     MotorSetPower(MOTOR_LIFT, 0.0f);
     
     MotorSetPower(MOTOR_HEAD, 0.3f);
-    MicroWait(500000);
+    Wait();
     MotorSetPower(MOTOR_HEAD, -0.3f);
-    MicroWait(500000);
-    MotorSetPower(MOTOR_HEAD, -0.0f);
+    Wait();
+    MotorSetPower(MOTOR_HEAD, -0.0f);*/
+    
     MicroWait(500000);
   }
   

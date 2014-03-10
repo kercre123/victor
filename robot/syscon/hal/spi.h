@@ -1,7 +1,7 @@
 #ifndef SPI_H
 #define SPI_H
 
-#include "anki/cozmo/robot/hal.h"
+#include "portable.h"
 
 // Initialize the SPI peripheral on the designated pins in the source file.
 void SPIInit();

@@ -3,7 +3,6 @@
 #include "nrf.h"
 #include "nrf_gpio.h"
 #include "spi_master.h"
-#include "anki/cozmo/robot/hal.h"
 
 namespace
 {
@@ -14,8 +13,6 @@ namespace
 
 void PowerInit()
 {
-  using namespace Anki::Cozmo::HAL;
-  
   // Ensure MOSI is low
   nrf_gpio_pin_clear(PIN_SPI_MOSI);
   nrf_gpio_cfg_output(PIN_SPI_MOSI);
@@ -46,7 +43,8 @@ void PowerInit()
 
 void SPIInit()
 {
-  using namespace Anki::Cozmo::HAL;
+  // Make sure the head board is alive and ready
+  PowerInit();
   
   // Configure the pins
   nrf_gpio_cfg_output(PIN_SPI_SCK);
