@@ -127,7 +127,6 @@ int main(void)
   StartFrame();
   
   while (Anki::Cozmo::Robot::step_LongExecution() == EXIT_SUCCESS)
-  //while(1)
   {
 /*   UARTPutChar(0xbe);
     UARTPutChar(0xef);

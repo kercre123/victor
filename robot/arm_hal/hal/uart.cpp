@@ -29,8 +29,9 @@ namespace Anki
       const u32 WRITE_BUFFER_SIZE = 1024 * 1024 * 1;
       const u32 READ_BUFFER_SIZE = 1024;
       
-      u8 m_bufferWrite[WRITE_BUFFER_SIZE];
-      u8 m_bufferRead[READ_BUFFER_SIZE];
+      #warning Did you really want a 1mb buffer?
+      OFFCHIP u8 m_bufferWrite[WRITE_BUFFER_SIZE];
+      OFFCHIP u8 m_bufferRead[READ_BUFFER_SIZE];
       
       u32 m_DMAWriteIndex = 0;
       u32 m_DMAReadIndex = 0;
