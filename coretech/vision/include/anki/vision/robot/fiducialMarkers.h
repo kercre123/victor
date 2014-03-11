@@ -72,7 +72,7 @@ namespace Anki
 
       void Print() const;
 
-      Result Serialize(const void* buffer, s32 &bufferLength) const;
+      Result Serialize(void * buffer, const s32 bufferLength) const;
       Result Deserialize(const void* buffer, const s32 bufferLength);
 
     protected:

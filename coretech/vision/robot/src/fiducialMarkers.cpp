@@ -501,30 +501,47 @@ namespace Anki
 
     void VisionMarker::Print() const
     {
+      const char * typeString = "??";
+      if(markerType <= Vision::NUM_MARKER_TYPES) {
+        typeString = Vision::MarkerTypeStrings[markerType];
+      }
+
       printf("[Type %d-%s]: (%d,%d) (%d,%d) (%d,%d) (%d,%d)] ",
-        markerType, Vision::MarkerTypeStrings[markerType],
+        markerType, typeString,
         corners[0].x, corners[0].y,
         corners[1].x, corners[1].y,
         corners[2].x, corners[2].y,
         corners[3].x, corners[3].y);
     } // VisionMarker::Print()
 
-    Result VisionMarker::Serialize(const void* buffer, s32 &bufferLength) const
+    Result VisionMarker::Serialize(void * buffer, const s32 bufferLength) const
     {
-      //buffer = reinterpret_cast<const void*>(&(this->corners));
-      buffer = this;
-      bufferLength = sizeof(this);
+      if(bufferLength < sizeof(VisionMarker)) {
+        return RESULT_FAIL;
+      }
+
+      char * bufferChar = reinterpret_cast<char*>(buffer);
+
+      memcpy(bufferChar, reinterpret_cast<const void*>(&this->corners), sizeof(this->corners));
+      bufferChar += sizeof(this->corners);
+      //memcpy(bufferChar, reinterpret_cast<const void*>(&this->markerType), sizeof(this->markerType));
+      const s32 markerTypeS32 = static_cast<s32>(this->markerType);
+      memcpy(bufferChar, reinterpret_cast<const void*>(&markerTypeS32), sizeof(s32));
+      //bufferChar += sizeof(this->markerType);
+      bufferChar += sizeof(s32);
+      memcpy(bufferChar, reinterpret_cast<const void*>(&this->isValid), sizeof(this->isValid));
 
       return RESULT_OK;
     }
 
     Result VisionMarker::Deserialize(const void* buffer, const s32 bufferLength)
     {
-      const VisionMarker * tmpMarker = reinterpret_cast<const VisionMarker*>(buffer);
-
-      this->corners = tmpMarker->corners;
-      this->markerType = tmpMarker->markerType;
-      this->isValid = tmpMarker->isValid;
+      const char * bufferChar = reinterpret_cast<const char*>(buffer);
+      this->corners = *reinterpret_cast<const Quadrilateral<s16>*>(bufferChar);
+      bufferChar += sizeof(this->corners);
+      this->markerType = static_cast<Vision::MarkerType>(*reinterpret_cast<const s32*>(bufferChar));
+      bufferChar += sizeof(this->markerType);
+      this->isValid = *reinterpret_cast<const bool*>(bufferChar);
 
       return RESULT_OK;
     }

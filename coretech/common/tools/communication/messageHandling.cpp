@@ -188,7 +188,8 @@ void ProcessRawBuffer(RawBuffer &buffer, const string outputFilenamePattern, con
         printf("Board>> %s", dataSegment);
       } else if(type == SerializedBuffer::DATA_TYPE_CUSTOM) {
         dataSegment[SerializedBuffer::CUSTOM_TYPE_STRING_LENGTH-1] = '\0';
-        if(strcmp(reinterpret_cast<const char*>(dataSegment), "VisionMarker")) {
+        printf(reinterpret_cast<const char*>(dataSegment));
+        if(strcmp(reinterpret_cast<const char*>(dataSegment), "VisionMarker") == 0) {
           dataSegment += SerializedBuffer::CUSTOM_TYPE_STRING_LENGTH;
           const s32 remainingDataLength = dataLength - SerializedBuffer::EncodedArray::CODE_SIZE * sizeof(u32);
 

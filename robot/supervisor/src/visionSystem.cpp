@@ -446,9 +446,11 @@ namespace Anki {
       {
         ReturnCode retVal = EXIT_SUCCESS;
         
-        PUSH_MEMORY_STACK(ccmScratch_);
+        InitializeScratchBuffers();
+        
+        PUSH_MEMORY_STACK(offchipScratch_);
         const s32 maxMarkers = 100;
-        Embedded::FixedLengthList<Embedded::VisionMarker> markers(maxMarkers, ccmScratch_);
+        Embedded::FixedLengthList<Embedded::VisionMarker> markers(maxMarkers, offchipScratch_);
         markers.set_size(maxMarkers);
         
         // NOTE: for now, we are always capturing at full resolution and
@@ -482,6 +484,7 @@ namespace Anki {
         // TODO: assign in the proper place
         mode_ = CAPTURE_IMAGES;
 #endif*/
+        //mode_ = IDLE;
 
         switch(mode_)
         {
@@ -575,8 +578,6 @@ namespace Anki {
           Init();
         }
         
-        InitializeScratchBuffers();
-
         if(!sentStartingMessage) {
           sentStartingMessage = true;
 
@@ -616,16 +617,20 @@ namespace Anki {
           YUVToGrayscaleHelper(frame, imageLarge);
           DownsampleHelper(imageLarge, imageSmall, ccmScratch_);
 
-          captureImagesBuffer_.PushBack(imageSmall);
+          //captureImagesBuffer_.PushBack(imageSmall);
           
           if(markers.get_size() != 0) {
+            PUSH_MEMORY_STACK(offchipScratch_);
+            
             const s32 numMarkers = markers.get_size();
             const Embedded::VisionMarker * pMarkers = markers.Pointer(0);
+            
+            void * restrict oneMarker = offchipScratch_.Allocate(sizeof(Embedded::VisionMarker));
+            const s32 oneMarkerLength = sizeof(Embedded::VisionMarker);
+            
             for(s32 i=0; i<numMarkers; i++) {
-              const void * markerBuffer;
-              s32 markerBufferLength;
-              pMarkers[i].Serialize(markerBuffer, markerBufferLength);
-              captureImagesBuffer_.PushBack("VisionMarker", markerBuffer, markerBufferLength);
+              pMarkers[i].Serialize(oneMarker, oneMarkerLength);
+              captureImagesBuffer_.PushBack("VisionMarker", oneMarker, oneMarkerLength);
             }
           }
 
