@@ -66,15 +66,19 @@ namespace Anki {
       ReturnCode retVal = EXIT_FAILURE;
       
       if(robotMgr_ == NULL) {
-        PRINT_NAMED_ERROR("MessageHandler:NullRobotManager",
+        PRINT_NAMED_ERROR("MessageHandler.NullRobotManager",
                           "RobotManager NULL when MessageHandler::ProcessPacket() called.");
       }
       else {
         const u8 msgID = packet.data[0];
         
         if(lookupTable_[msgID].size != packet.dataLen-1) {
-          PRINT_NAMED_ERROR("MessageBufferWrongSize",
-                            "Buffer's size does not match expected size for this message ID.");
+          PRINT_NAMED_ERROR("MessageHandler.MessageBufferWrongSize",
+                            "Buffer's size does not match expected size for this message ID. (Msg %d, expected %d, recvd %d)",
+                            msgID,
+                            lookupTable_[msgID].size,
+                            packet.dataLen - 1
+                            );
         }
         else {
           const RobotID_t robotID = packet.sourceId;
