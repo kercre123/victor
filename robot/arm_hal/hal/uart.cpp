@@ -170,6 +170,26 @@ namespace Anki
         // No data, so return with an error
         return -1;
       }
+      
+      void USBSendBuffer(const u8* buffer, const u32 size)
+      {
+        for (u32 i=0; i<size; ++i) {
+          UARTPutChar(buffer[i]);
+        }
+      }
+			
+      u32 USBRecvBuffer(u8* buffer, const u32 max_size)
+      {
+        u32 i;
+        for (i=0; i<max_size; ++i) {
+          s32 c = UARTGetChar(0);
+          if (c<0) {
+            return i;
+          }
+          buffer[i] = c;
+        }
+        return i;
+      }
     }
   }
 }

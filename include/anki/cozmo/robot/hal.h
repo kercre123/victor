@@ -197,6 +197,10 @@ namespace Anki
 
       // Send a variable length buffer
       void USBSendBuffer(const u8* buffer, const u32 size);
+      
+      // Receives as many as max_size bytes in buffer.
+      // Returns the number of bytes received.
+      u32 USBRecvBuffer(u8* buffer, const u32 max_size);
 
       // Returns the number of bytes that are in the serial buffer
       u32 USBGetNumBytesToRead();

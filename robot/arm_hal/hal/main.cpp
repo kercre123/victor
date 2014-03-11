@@ -24,7 +24,7 @@ namespace Anki
       s32 USBPeekChar(u32 offset){ return -1; }
       u32 USBGetNumBytesToRead(){ return 0; }
       int USBPutChar(int c){ return c; }
-      void USBSendBuffer(const u8* buffer, const u32 size){ }
+      //void USBSendBuffer(const u8* buffer, const u32 size){ }
       
       void CameraStartFrame(CameraID cameraID, u8* frame, CameraMode mode,
           CameraUpdateMode updateMode, u16 exposure, bool enableLight)
@@ -39,7 +39,7 @@ namespace Anki
       
       int GetRobotID(){ return 0; }
       void UpdateDisplay(){ }
-      bool RadioSendMessage(Anki::Cozmo::Messages::ID, const void*, u32){ return true; }
+      //bool RadioSendMessage(Anki::Cozmo::Messages::ID, const void*, u32){ return true; }
       
       ReturnCode Init(){ return 0; }
       ReturnCode Step(){ return 0; }
@@ -48,8 +48,8 @@ namespace Anki
       const CameraInfo* GetHeadCamInfo(){ return 0; }
       const CameraInfo* GetMatCamInfo(){ return 0; }
       
-      Messages::ID RadioGetNextMessage(u8* buffer){ return (Messages::ID)0; }
-      bool RadioIsConnected(){ return false; }
+      //Messages::ID RadioGetNextMessage(u8* buffer){ return (Messages::ID)0; }
+      //bool RadioIsConnected(){ return false; }
     }
   }
 }
