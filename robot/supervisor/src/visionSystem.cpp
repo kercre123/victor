@@ -617,7 +617,7 @@ namespace Anki {
           YUVToGrayscaleHelper(frame, imageLarge);
           DownsampleHelper(imageLarge, imageSmall, ccmScratch_);
 
-          //captureImagesBuffer_.PushBack(imageSmall);
+          captureImagesBuffer_.PushBack(imageSmall);
           
           if(markers.get_size() != 0) {
             PUSH_MEMORY_STACK(offchipScratch_);
