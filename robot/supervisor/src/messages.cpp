@@ -144,7 +144,7 @@ namespace Anki {
       }
       
       
-#pragma --- Message Dispatch Functions ---
+// #pragma --- Message Dispatch Functions ---
       
       
       void ProcessRobotAddedToWorldMessage(const RobotAddedToWorld& msg)

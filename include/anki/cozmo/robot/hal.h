@@ -47,6 +47,8 @@
 
 #define HAVE_ACTIVE_GRIPPER 0
 
+#define USING_UART_RADIO 1
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -64,6 +66,12 @@ extern "C" {
 
 #else // #ifdef USE_CAPTURE_IMAGES
 
+// TESTING: For serial robot don't print
+#if(USING_UART_RADIO)
+#define PRINT(...)
+#define PERIODIC_PRINT(num_calls_between_prints, ...)
+#else
+
 #define PRINT(...) printf(__VA_ARGS__)
 
 // Prints once every num_calls_between_prints times you call it
@@ -75,6 +83,9 @@ extern "C" {
     cnt = 0; \
   } \
 }
+
+#endif // if (USING_UART_RADIO)
+
 #endif // #ifdef USE_CAPTURE_IMAGES ... #else
 
 #elif defined(SIMULATOR) // #ifndef SIMULATOR

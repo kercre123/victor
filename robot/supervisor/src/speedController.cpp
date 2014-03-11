@@ -46,7 +46,7 @@ namespace Anki {
   namespace SpeedController {
     
     
-#pragma mark --- "Member Variables" ---
+// #pragma mark --- "Member Variables" ---
     namespace {
       // The target desired speed the user commanded to the car [mm/sec].
       // This is our eventual goal for the vehicle speed, given enough time for acceleration
@@ -72,7 +72,7 @@ namespace Anki {
       
     } // private namespace
     
-#pragma mark --- Method Implementations ---
+// #pragma mark --- Method Implementations ---
     
     // Forward declaration
     void Run(s16 desVehicleSpeed);
