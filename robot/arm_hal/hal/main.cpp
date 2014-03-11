@@ -123,10 +123,13 @@ int main(void)
 #else
   
   Anki::Cozmo::Robot::Init();
+    
+  StartFrame();
   
   while (Anki::Cozmo::Robot::step_LongExecution() == EXIT_SUCCESS)
+  //while(1)
   {
-/*    UARTPutChar(0xbe);
+/*   UARTPutChar(0xbe);
     UARTPutChar(0xef);
     UARTPutChar(0xf0);
     UARTPutChar(0xff);
@@ -138,9 +141,7 @@ int main(void)
       {
         UARTPutChar(m_buffer1[y * 320*2 + x*2]);
       }
-    }
-    */
-    StartFrame();
+    }*/
   }
 #endif
   

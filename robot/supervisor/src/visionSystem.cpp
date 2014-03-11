@@ -552,14 +552,17 @@ namespace Anki {
             
             {
               PUSH_MEMORY_STACK(offchipScratch_);
+              PUSH_MEMORY_STACK(ccmScratch_);
+              
               // Stream the images as they come
               const s32 imageHeight = HAL::CameraModeInfo[HAL::CAMERA_MODE_QVGA].height;
               const s32 imageWidth = HAL::CameraModeInfo[HAL::CAMERA_MODE_QVGA].width;
               Embedded::Array<u8> imageLarge(240, 320, offchipScratch_);
-              Embedded::Array<u8> imageSmall(120, 160, ccmScratch_);
+              Embedded::Array<u8> imageSmall(120, 160, offchipScratch_);
               
+              // TODO: why does this cause the crazy tear?
               // Wait for the capture of the current frame to finish
-              //while(!isEOF)
+              while(!isEOF)
               {
               }
 
@@ -569,28 +572,28 @@ namespace Anki {
               //Embedded::Array<u8> image(detectHeight, detectWidth, offchipScratch_);
               //YUVToGrayscaleHelper(frame, image);
               YUVToGrayscaleHelper(frame, imageLarge);
-              //DownsampleHelper(imageLarge, imageSmall, ccmScratch_);
+              DownsampleHelper(imageLarge, imageSmall, ccmScratch_);
 
-              captureImagesBuffer_.PushBack(imageLarge);
+              captureImagesBuffer_.PushBack(imageSmall);
+
+              s32 startIndex;
+              const u8 * bufferStart = reinterpret_cast<const u8*>(captureImagesBuffer_.get_memoryStack().get_validBufferStart(startIndex));
+              const s32 validUsedBytes = captureImagesBuffer_.get_memoryStack().get_usedBytes() - startIndex;
+
+              for(s32 i=0; i<Embedded::SERIALIZED_BUFFER_HEADER_LENGTH; i++) {
+                Anki::Cozmo::HAL::UARTPutChar(Embedded::SERIALIZED_BUFFER_HEADER[i]);
+              }
+
+              for(s32 i=0; i<validUsedBytes; i++) {
+                Anki::Cozmo::HAL::UARTPutChar(bufferStart[i]);
+              }
+              
+              for(s32 i=0; i<Embedded::SERIALIZED_BUFFER_FOOTER_LENGTH; i++) {
+                Anki::Cozmo::HAL::UARTPutChar(Embedded::SERIALIZED_BUFFER_FOOTER[i]);
+              }
             }
 
-            s32 startIndex;
-            const u8 * bufferStart = reinterpret_cast<const u8*>(captureImagesBuffer_.get_memoryStack().get_validBufferStart(startIndex));
-            const s32 validUsedBytes = captureImagesBuffer_.get_memoryStack().get_usedBytes() - startIndex;
-
-            for(s32 i=0; i<Embedded::SERIALIZED_BUFFER_HEADER_LENGTH; i++) {
-              Anki::Cozmo::HAL::UARTPutChar(Embedded::SERIALIZED_BUFFER_HEADER[i]);
-            }
-
-            for(s32 i=0; i<validUsedBytes; i++) {
-              Anki::Cozmo::HAL::UARTPutChar(bufferStart[i]);
-            }
-            
-            for(s32 i=0; i<Embedded::SERIALIZED_BUFFER_FOOTER_LENGTH; i++) {
-              Anki::Cozmo::HAL::UARTPutChar(Embedded::SERIALIZED_BUFFER_FOOTER[i]);
-            }
-
-            HAL::MicroWait(80000);
+            HAL::MicroWait(50000);
 
 #else // #ifdef USE_STREAM_IMAGES
             // Buffer a lot of images, and send them in one go
@@ -766,19 +769,20 @@ namespace Anki {
                             Embedded::MemoryStack scratch)
       {
         using namespace Embedded;
-
+         
         const s32 inWidth  = in.get_size(1);
         const s32 inHeight = in.get_size(0);
         
         const s32 outWidth  = out.get_size(1);
         const s32 outHeight = out.get_size(0);
 
-        const s32 downsamplePower = inWidth / outWidth;
+        const u32 downsampleFactor = inWidth / outWidth;
+          
+        const u32 downsamplePower = Log2u32(downsampleFactor);
 
         if(downsamplePower > 0)
         {
-          PRINT("Downsampling [%d x %d] frame by %d.\n",
-                inWidth, inHeight, (1 << downsamplePower));
+          //PRINT("Downsampling [%d x %d] frame by %d.\n", inWidth, inHeight, (1 << downsamplePower));
 
           ImageProcessing::DownsampleByPowerOfTwo<u8,u32,u8>(in,
                                                              downsamplePower,
