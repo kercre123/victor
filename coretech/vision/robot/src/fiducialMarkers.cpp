@@ -509,6 +509,26 @@ namespace Anki
         corners[3].x, corners[3].y);
     } // VisionMarker::Print()
 
+    Result VisionMarker::Serialize(const void* buffer, s32 &bufferLength) const
+    {
+      //buffer = reinterpret_cast<const void*>(&(this->corners));
+      buffer = this;
+      bufferLength = sizeof(this);
+
+      return RESULT_OK;
+    }
+
+    Result VisionMarker::Deserialize(const void* buffer, const s32 bufferLength)
+    {
+      const VisionMarker * tmpMarker = reinterpret_cast<const VisionMarker*>(buffer);
+
+      this->corners = tmpMarker->corners;
+      this->markerType = tmpMarker->markerType;
+      this->isValid = tmpMarker->isValid;
+
+      return RESULT_OK;
+    }
+
     void VisionMarker::Initialize()
     {
       if(VisionMarker::areTreesInitialized == false) {

@@ -72,6 +72,9 @@ namespace Anki
 
       void Print() const;
 
+      Result Serialize(const void* buffer, s32 &bufferLength) const;
+      Result Deserialize(const void* buffer, const s32 bufferLength);
+
     protected:
       // The constructor isn't always called, so initialize has to be checked in multiple places
       // TODO: make less hacky
