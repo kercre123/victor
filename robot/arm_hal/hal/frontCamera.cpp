@@ -21,7 +21,7 @@ GPIO_PIN_SOURCE(PWDN, GPIOE, 2);
 GPIO_PIN_SOURCE(SCL, GPIOB, 6);
 GPIO_PIN_SOURCE(SDA, GPIOB, 7);
 
-bool isEOF = false;
+volatile bool isEOF = false;
 
 // DMA is limited to 256KB - 1
 const u32 BUFFER_SIZE = 320 * 240 * 2;

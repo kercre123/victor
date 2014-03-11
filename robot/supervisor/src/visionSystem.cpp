@@ -42,7 +42,7 @@
 extern u8 m_buffer1[];
 
 // TODO: make nice
-extern bool isEOF;
+extern volatile bool isEOF;
 
 #warning remove
 #define USE_CAPTURE_IMAGES
@@ -555,8 +555,8 @@ namespace Anki {
               // Stream the images as they come
               const s32 imageHeight = HAL::CameraModeInfo[HAL::CAMERA_MODE_QVGA].height;
               const s32 imageWidth = HAL::CameraModeInfo[HAL::CAMERA_MODE_QVGA].width;
-              Embedded::Array<u8> image(imageHeight, imageWidth, offchipScratch_);
-  
+              Embedded::Array<u8> imageLarge(240, 320, offchipScratch_);
+              Embedded::Array<u8> imageSmall(120, 160, ccmScratch_);
               
               // Wait for the capture of the current frame to finish
               //while(!isEOF)
@@ -567,9 +567,11 @@ namespace Anki {
               //CameraSetIsEndOfFrame(HAL::CAMERA_FRONT, false);
 
               //Embedded::Array<u8> image(detectHeight, detectWidth, offchipScratch_);
-              YUVToGrayscaleHelper(frame, image);            
+              //YUVToGrayscaleHelper(frame, image);
+              YUVToGrayscaleHelper(frame, imageLarge);
+              //DownsampleHelper(imageLarge, imageSmall, ccmScratch_);
 
-              captureImagesBuffer_.PushBack(image);
+              captureImagesBuffer_.PushBack(imageLarge);
             }
 
             s32 startIndex;
@@ -588,7 +590,6 @@ namespace Anki {
               Anki::Cozmo::HAL::UARTPutChar(Embedded::SERIALIZED_BUFFER_FOOTER[i]);
             }
 
-            //SleepMs(80);
             HAL::MicroWait(80000);
 
 #else // #ifdef USE_STREAM_IMAGES

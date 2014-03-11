@@ -54,7 +54,7 @@ namespace Anki
   }
 }
 
-extern bool isEOF;
+extern volatile bool isEOF;
 extern void StartFrame();
 
 void Wait()
