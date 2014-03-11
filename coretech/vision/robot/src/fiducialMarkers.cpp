@@ -542,7 +542,7 @@ namespace Anki
       return RESULT_FAIL;
       }*/
 
-      // TODO: should something simple like thie work?
+      // TODO: should something simple like this work?
       /*const VisionMarker *tmpMarker = reinterpret_cast<const VisionMarker*>(buffer);
       this->corners = tmpMarker->corners;
       this->markerType = tmpMarker->markerType;
