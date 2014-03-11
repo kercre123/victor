@@ -27,7 +27,7 @@ _Check_return_opt_ _CRTIMP int __cdecl printf(_In_z_ _Printf_format_string_ cons
 
 using namespace std;
 
-const double secondsToWaitBeforeDisplayingABuffer = 0.05;
+const double secondsToWaitBeforeDisplayingABuffer = 0.1;
 
 const s32 outputFilenamePatternLength = 1024;
 char outputFilenamePattern[outputFilenamePatternLength] = "C:/datasets/cozmoShort/cozmo_%04d-%02d-%02d_%02d-%02d-%02d_%d.%s";
@@ -55,7 +55,7 @@ int main(int argc, char ** argv)
 {
   double lastUpdateTime;
   Serial serial;
-  const s32 USB_BUFFER_SIZE = 100000000;
+  const s32 USB_BUFFER_SIZE = 1000000;
   u8 *usbBuffer = reinterpret_cast<u8*>(malloc(USB_BUFFER_SIZE));
   s32 usbBufferIndex = 0;
 
