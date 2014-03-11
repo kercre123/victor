@@ -352,7 +352,7 @@ namespace Anki {
       
       // Get current desired wheel speeds
       f32 currLeftVel, currRightVel;
-      WheelController::GetDesiredWheelSpeeds(&currLeftVel, &currRightVel);
+      WheelController::GetDesiredWheelSpeeds(currLeftVel, currRightVel);
       
       targetLeftVel_ = left_vel;
       targetRightVel_ = right_vel;
@@ -370,7 +370,7 @@ namespace Anki {
     {
       // Get current desired wheel speeds
       f32 currLeftVel, currRightVel;
-      WheelController::GetDesiredWheelSpeeds(&currLeftVel, &currRightVel);
+      WheelController::GetDesiredWheelSpeeds(currLeftVel, currRightVel);
       
 //      PRINT("CURR: %f %f\n", targetLeftVel_, targetRightVel_);
      

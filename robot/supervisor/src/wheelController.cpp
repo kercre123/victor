@@ -236,20 +236,22 @@ namespace Anki {
       EncoderSpeedFilterIteration();
     }
     
-    void GetFilteredWheelSpeeds(f32 *left, f32 *right)
+    void GetFilteredWheelSpeeds(f32 &left, f32 &right)
     {
-      *left = filterWheelSpeedL_;
-      *right = filterWheelSpeedR_;
+      left = filterWheelSpeedL_;
+      right = filterWheelSpeedR_;
     }
     
     //Get the wheel speeds in mm/sec
-    void GetDesiredWheelSpeeds(f32 *leftws, f32 *rightws) {
-      *leftws  = desiredWheelSpeedL_;
-      *rightws = desiredWheelSpeedR_;
+    void GetDesiredWheelSpeeds(f32 &leftws, f32 &rightws)
+    {
+      leftws  = desiredWheelSpeedL_;
+      rightws = desiredWheelSpeedR_;
     }
     
     //Set the wheel speeds in mm/sec
-    void SetDesiredWheelSpeeds(f32 leftws, f32 rightws) {
+    void SetDesiredWheelSpeeds(f32 leftws, f32 rightws)
+    {
       desiredWheelSpeedL_ = leftws;
       desiredWheelSpeedR_ = rightws;
     }

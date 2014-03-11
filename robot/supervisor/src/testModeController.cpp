@@ -309,7 +309,7 @@ namespace Anki {
           f32 rSpeed = HAL::MotorGetSpeed(HAL::MOTOR_RIGHT_WHEEL);
           
           f32 lSpeed_filt, rSpeed_filt;
-          WheelController::GetFilteredWheelSpeeds(&lSpeed_filt,&rSpeed_filt);
+          WheelController::GetFilteredWheelSpeeds(lSpeed_filt,rSpeed_filt);
 
 
           if (firstSpeedCommanded){
