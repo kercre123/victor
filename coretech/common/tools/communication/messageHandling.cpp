@@ -13,6 +13,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/utilities.h"
 #include "anki/common/robot/serialize.h"
 
+#include "anki/vision/robot/fiducialMarkers.h"
+
 #include <ctime>
 
 using namespace Anki::Embedded;
@@ -184,6 +186,17 @@ void ProcessRawBuffer(RawBuffer &buffer, const string outputFilenamePattern, con
         }
       } else if(type == SerializedBuffer::DATA_TYPE_STRING) {
         printf("Board>> %s", dataSegment);
+      } else if(type == SerializedBuffer::DATA_TYPE_CUSTOM) {
+        dataSegment[SerializedBuffer::CUSTOM_TYPE_STRING_LENGTH-1] = '\0';
+        printf(reinterpret_cast<const char*>(dataSegment));
+        if(strcmp(reinterpret_cast<const char*>(dataSegment), "VisionMarker") == 0) {
+          dataSegment += SerializedBuffer::CUSTOM_TYPE_STRING_LENGTH;
+          const s32 remainingDataLength = dataLength - SerializedBuffer::EncodedArray::CODE_SIZE * sizeof(u32);
+
+          VisionMarker marker;
+          marker.Deserialize(dataSegment, remainingDataLength);
+          marker.Print();
+        }
       }
 
       printf("\n");

@@ -469,18 +469,20 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(scratch.IsValid(),
           RESULT_FAIL_INVALID_OBJECT, "ComputeHomographyFromQuad", "scratch is not valid");
 
+        Quadrilateral<s16> sortedQuad = quad.ComputeClockwiseCorners();
+
         FixedLengthList<Point<f32> > originalPoints(4, scratch);
         FixedLengthList<Point<f32> > transformedPoints(4, scratch);
 
         originalPoints.PushBack(Point<f32>(0,0));
         originalPoints.PushBack(Point<f32>(0,1));
-        originalPoints.PushBack(Point<f32>(1,0));
         originalPoints.PushBack(Point<f32>(1,1));
+        originalPoints.PushBack(Point<f32>(1,0));
 
-        transformedPoints.PushBack(Point<f32>(quad[0].x, quad[0].y));
-        transformedPoints.PushBack(Point<f32>(quad[1].x, quad[1].y));
-        transformedPoints.PushBack(Point<f32>(quad[2].x, quad[2].y));
-        transformedPoints.PushBack(Point<f32>(quad[3].x, quad[3].y));
+        transformedPoints.PushBack(Point<f32>(sortedQuad[0].x, sortedQuad[0].y));
+        transformedPoints.PushBack(Point<f32>(sortedQuad[1].x, sortedQuad[1].y));
+        transformedPoints.PushBack(Point<f32>(sortedQuad[2].x, sortedQuad[2].y));
+        transformedPoints.PushBack(Point<f32>(sortedQuad[3].x, sortedQuad[3].y));
 
         if((lastResult = Matrix::EstimateHomography(originalPoints, transformedPoints, homography, scratch)) != RESULT_OK)
           return lastResult;

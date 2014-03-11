@@ -148,7 +148,7 @@ namespace Anki {
         CORETECH_ASSERT(robot != NULL);
         
         const Vision::Camera& camera = robot->get_camHead();
-        Vision::ObservedMarker marker(&(msg.code[0]), corners, camera);
+        Vision::ObservedMarker marker(msg.markerType, corners, camera);
         
         // Give this vision marker to BlockWorld for processing
         blockWorld_->QueueObservedMarker(marker);

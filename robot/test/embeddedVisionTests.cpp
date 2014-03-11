@@ -26,9 +26,12 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/binaryTracker.h"
 #include "anki/vision/robot/decisionTree_vision.h"
 
+#include "anki/vision/MarkerCodeDefinitions.h"
+
 #include "../../coretech/vision/blockImages/blockImage50_320x240.h"
 #include "../../coretech/vision/blockImages/blockImages00189_80x60.h"
 #include "../../coretech/vision/blockImages/blockImages00190_80x60.h"
+#include "../../coretech/vision/blockImages/newFiducials_320x240.h"
 #include "../../../systemTestImages/cozmo_2014_01_29_11_41_05_10_320x240.h"
 #include "../../../systemTestImages/cozmo_2014_01_29_11_41_05_12_320x240.h"
 
@@ -49,7 +52,7 @@ GTEST_TEST(CoreTech_Vision, DecisionTreeVision)
   const s32 numProbeOffsets = 1;
   const s16 probeXOffsets[numProbeOffsets] = {0};
   const s16 probeYOffsets[numProbeOffsets] = {0};
-  u32 grayvalueThreshold = 128;
+  const u8 grayvalueThreshold = 128;
 
   treeData[0].probeXCenter = 0;
   treeData[0].probeYCenter = 0;
@@ -92,14 +95,14 @@ GTEST_TEST(CoreTech_Vision, DecisionTreeVision)
   Array<u8> image(1,3,scratchOnchip);
 
   image[0][0] = grayvalueThreshold; // black
-  image[0][2] = grayvalueThreshold + 1; // white
+  image[0][1] = grayvalueThreshold + 1; // white
 
   s32 label = -1;
   const Result result = tree.Classify(image, homography, grayvalueThreshold, label);
 
   ASSERT_TRUE(result == RESULT_OK);
 
-  ASSERT_TRUE(label == 5);
+  ASSERT_TRUE(label == 4);
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, DecisionTreeVision)
@@ -111,6 +114,9 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
   ASSERT_TRUE(scratchCcm.IsValid());
+
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(scratchOffchip.IsValid());
 
   Array<u8> templateImage(cozmo_2014_01_29_11_41_05_10_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_10_320x240_WIDTH, scratchOnchip);
   Array<u8> nextImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOnchip);
@@ -131,11 +137,12 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
   templateImage.Set(&cozmo_2014_01_29_11_41_05_10_320x240[0], cozmo_2014_01_29_11_41_05_10_320x240_WIDTH*cozmo_2014_01_29_11_41_05_10_320x240_HEIGHT);
   nextImage.Set(&cozmo_2014_01_29_11_41_05_12_320x240[0], cozmo_2014_01_29_11_41_05_12_320x240_WIDTH*cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT);
 
-  // Skip zero rows/columns
+  // Skip zero rows/columns (non-list)
   {
+    PUSH_MEMORY_STACK(scratchOffchip);
     PUSH_MEMORY_STACK(scratchOnchip);
 
-    printf("Skip 0\n");
+    printf("Skip 0 nonlist\n");
 
     InitBenchmarking();
 
@@ -158,16 +165,13 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     const Result result = tracker.UpdateTrack(nextImage,
       edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType, 1,
-      matching_maxTranslationDistance, matching_maxProjectiveDistance, verification_maxTranslationDistance, numMatches, scratchCcm);
+      matching_maxTranslationDistance, matching_maxProjectiveDistance, verification_maxTranslationDistance, false, numMatches, scratchCcm, scratchOffchip);
     EndBenchmark("BinaryTracker update fixed-float");
 
     ASSERT_TRUE(result == RESULT_OK);
 
     // TODO: verify this number manually
     ASSERT_TRUE(numMatches == 1161);
-
-    MemoryStack scratchOffchip(&onchipBuffer[0], OFFCHIP_BUFFER_SIZE);
-    ASSERT_TRUE(scratchOffchip.IsValid());
 
     //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
 
@@ -183,11 +187,12 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     PrintBenchmarkResults_OnlyTotals();
   }
 
-  // Skip one row/column
+  // Skip one row/column (non-list)
   {
+    PUSH_MEMORY_STACK(scratchOffchip);
     PUSH_MEMORY_STACK(scratchOnchip);
 
-    printf("\nSkip 1\n");
+    printf("\nSkip 1 nonlist\n");
 
     InitBenchmarking();
 
@@ -210,7 +215,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     const Result result = tracker.UpdateTrack(nextImage,
       edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType, 1,
-      matching_maxTranslationDistance, matching_maxProjectiveDistance, verification_maxTranslationDistance, numMatches, scratchCcm);
+      matching_maxTranslationDistance, matching_maxProjectiveDistance, verification_maxTranslationDistance, false, numMatches, scratchCcm, scratchOffchip);
     EndBenchmark("BinaryTracker update fixed-float");
 
     ASSERT_TRUE(result == RESULT_OK);
@@ -218,8 +223,105 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     // TODO: verify this number manually
     ASSERT_TRUE(numMatches == 581);
 
-    MemoryStack scratchOffchip(&onchipBuffer[0], OFFCHIP_BUFFER_SIZE);
-    ASSERT_TRUE(scratchOffchip.IsValid());
+    //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
+
+    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
+    transform_groundTruth[0][0] = 1.0681f;  transform_groundTruth[0][1] = 0.0f; transform_groundTruth[0][2] = 2.2348f;
+    transform_groundTruth[1][0] = -0.0008f;  transform_groundTruth[1][1] = 1.0607f; transform_groundTruth[1][2] = -4.1342f;
+    transform_groundTruth[2][0] = -0.0001f; transform_groundTruth[2][1] = 0.0f;    transform_groundTruth[2][2] = 1.0f;
+
+    //tracker.get_transformation().get_homography().Print("fixed-float 2");
+
+    ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
+
+    PrintBenchmarkResults_OnlyTotals();
+  }
+
+  // Skip zero rows/columns (with-list)
+  {
+    PUSH_MEMORY_STACK(scratchOffchip);
+    PUSH_MEMORY_STACK(scratchOnchip);
+
+    printf("\nSkip 0 list\n");
+
+    InitBenchmarking();
+
+    const s32 templateEdgeDetection_everyNLines = 1;
+
+    BeginBenchmark("BinaryTracker init");
+    TemplateTracker::BinaryTracker tracker(templateImage, templateQuad, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, templateEdgeDetection_maxDetectionsPerType, templateEdgeDetection_everyNLines, scratchOnchip);
+    EndBenchmark("BinaryTracker init");
+
+    const s32 numTemplatePixels = tracker.get_numTemplatePixels();
+
+    ASSERT_TRUE(numTemplatePixels == 1201);
+
+    //templateImage.Show("templateImage",false);
+    //nextImage.Show("nextImage",false);
+
+    BeginBenchmark("BinaryTracker update fixed-float");
+
+    s32 numMatches;
+
+    const Result result = tracker.UpdateTrack(nextImage,
+      edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType, 1,
+      matching_maxTranslationDistance, matching_maxProjectiveDistance, verification_maxTranslationDistance, true, numMatches, scratchCcm, scratchOffchip);
+    EndBenchmark("BinaryTracker update fixed-float");
+
+    ASSERT_TRUE(result == RESULT_OK);
+
+    // TODO: verify this number manually
+    ASSERT_TRUE(numMatches == 1161);
+
+    //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
+
+    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
+    transform_groundTruth[0][0] = 1.0693f;  transform_groundTruth[0][1] = 0.0008f; transform_groundTruth[0][2] = 2.2256f;
+    transform_groundTruth[1][0] = 0.0010f;  transform_groundTruth[1][1] = 1.0604f; transform_groundTruth[1][2] = -4.1188f;
+    transform_groundTruth[2][0] = -0.0001f; transform_groundTruth[2][1] = 0.0f;    transform_groundTruth[2][2] = 1.0f;
+
+    //tracker.get_transformation().get_homography().Print("fixed-float 1");
+
+    ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
+
+    PrintBenchmarkResults_OnlyTotals();
+  }
+
+  // Skip one row/column (with-list)
+  {
+    PUSH_MEMORY_STACK(scratchOffchip);
+    PUSH_MEMORY_STACK(scratchOnchip);
+
+    printf("\nSkip 1 list\n");
+
+    InitBenchmarking();
+
+    const s32 templateEdgeDetection_everyNLines = 2;
+
+    BeginBenchmark("BinaryTracker init");
+    TemplateTracker::BinaryTracker tracker(templateImage, templateQuad, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, templateEdgeDetection_maxDetectionsPerType, templateEdgeDetection_everyNLines, scratchOnchip);
+    EndBenchmark("BinaryTracker init");
+
+    const s32 numTemplatePixels = tracker.get_numTemplatePixels();
+
+    ASSERT_TRUE(numTemplatePixels == 599);
+
+    //templateImage.Show("templateImage",false);
+    //nextImage.Show("nextImage",false);
+
+    BeginBenchmark("BinaryTracker update fixed-float");
+
+    s32 numMatches;
+
+    const Result result = tracker.UpdateTrack(nextImage,
+      edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType, 1,
+      matching_maxTranslationDistance, matching_maxProjectiveDistance, verification_maxTranslationDistance, true, numMatches, scratchCcm, scratchOffchip);
+    EndBenchmark("BinaryTracker update fixed-float");
+
+    ASSERT_TRUE(result == RESULT_OK);
+
+    // TODO: verify this number manually
+    ASSERT_TRUE(numMatches == 581);
 
     //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
 
@@ -250,7 +352,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
   ASSERT_TRUE(result == RESULT_OK);
 
-  MemoryStack scratchOffchip(&onchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(scratchOffchip.IsValid());
 
   //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
@@ -1076,25 +1178,24 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageGeneration)
 
 GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
 {
-  // TODO: Check that the image loaded correctly
-  //ASSERT_TRUE(IsBlockImage50_320x240Valid(&blockImage50_320x240[0], imagesAreEndianSwapped));
-
-  const s32 scaleImage_thresholdMultiplier = 49152; // .75 * (2^16) = 49152
+  const s32 scaleImage_thresholdMultiplier = 65536; // 1.0*(2^16)=65536
+  //const s32 scaleImage_thresholdMultiplier = 49152; // .75*(2^16)=49152
   const s32 scaleImage_numPyramidLevels = 3;
 
   const s32 component1d_minComponentWidth = 0;
   const s32 component1d_maxSkipDistance = 0;
 
-  const f32 minSideLength = 0.03f*MAX(blockImage50_320x240_HEIGHT,blockImage50_320x240_WIDTH);
-  const f32 maxSideLength = 0.97f*MIN(blockImage50_320x240_HEIGHT,blockImage50_320x240_WIDTH);
+  const f32 minSideLength = 0.03f*MAX(newFiducials_320x240_HEIGHT,newFiducials_320x240_WIDTH);
+  const f32 maxSideLength = 0.97f*MIN(newFiducials_320x240_HEIGHT,newFiducials_320x240_WIDTH);
 
   const s32 component_minimumNumPixels = static_cast<s32>(Round(minSideLength*minSideLength - (0.8f*minSideLength)*(0.8f*minSideLength)));
   const s32 component_maximumNumPixels = static_cast<s32>(Round(maxSideLength*maxSideLength - (0.8f*maxSideLength)*(0.8f*maxSideLength)));
   const s32 component_sparseMultiplyThreshold = 1000 << 5;
   const s32 component_solidMultiplyThreshold = 2 << 5;
 
-  const s32 component_percentHorizontal = 1 << 7; // 0.5, in SQ 23.8
-  const s32 component_percentVertical = 1 << 7; // 0.5, in SQ 23.8
+  //const s32 component_percentHorizontal = 1 << 7; // 0.5, in SQ 23.8
+  //const s32 component_percentVertical = 1 << 7; // 0.5, in SQ 23.8
+  const f32 component_minHollowRatio = 1.0f;
 
   const s32 maxExtractedQuads = 1000/2;
   const s32 quads_minQuadArea = 100/4;
@@ -1104,7 +1205,8 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
   const f32 decode_minContrastRatio = 1.25;
 
   const s32 maxMarkers = 100;
-  const s32 maxConnectedComponentSegments = 5000; // 25000/4 = 6250
+  //const s32 maxConnectedComponentSegments = 5000; // 25000/4 = 6250
+  const s32 maxConnectedComponentSegments = 39000; // 322*240/2 = 38640
 
   MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
   MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
@@ -1114,19 +1216,22 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
   ASSERT_TRUE(scratchOnchip.IsValid());
   ASSERT_TRUE(scratchCcm.IsValid());
 
-  Array<u8> image(blockImage50_320x240_HEIGHT, blockImage50_320x240_WIDTH, scratchOffchip);
-  image.Set(blockImage50_320x240, blockImage50_320x240_WIDTH*blockImage50_320x240_HEIGHT);
+  Array<u8> image(newFiducials_320x240_HEIGHT, newFiducials_320x240_WIDTH, scratchOffchip);
+  image.Set(newFiducials_320x240, newFiducials_320x240_WIDTH*newFiducials_320x240_HEIGHT);
 
-  ASSERT_TRUE(IsBlockImage50_320x240Valid(image.Pointer(0,0), false));
+  //image.Show("image", true);
 
-  FixedLengthList<BlockMarker> markers(maxMarkers, scratchOnchip);
-  FixedLengthList<Array<f32> > homographies(maxMarkers, scratchOnchip);
+  // TODO: Check that the image loaded correctly
+  //ASSERT_TRUE(IsnewFiducials_320x240Valid(image.Pointer(0,0), false));
+
+  FixedLengthList<VisionMarker> markers(maxMarkers, scratchCcm);
+  FixedLengthList<Array<f32> > homographies(maxMarkers, scratchCcm);
 
   markers.set_size(maxMarkers);
   homographies.set_size(maxMarkers);
 
   for(s32 i=0; i<maxMarkers; i++) {
-    Array<f32> newArray(3, 3, scratchOnchip);
+    Array<f32> newArray(3, 3, scratchCcm);
     homographies[i] = newArray;
   } // for(s32 i=0; i<maximumSize; i++)
 
@@ -1142,34 +1247,77 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
       component1d_minComponentWidth, component1d_maxSkipDistance,
       component_minimumNumPixels, component_maximumNumPixels,
       component_sparseMultiplyThreshold, component_solidMultiplyThreshold,
-      component_percentHorizontal, component_percentVertical,
+      component_minHollowRatio,
       quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge,
       decode_minContrastRatio,
       maxConnectedComponentSegments,
       maxExtractedQuads,
+      //true, //< TODO: change back to false
+      false,
+      scratchOffchip,
       scratchOnchip,
       scratchCcm);
     const f64 time1 = GetTime();
 
     printf("totalTime: %dms\n", (s32)Round(1000*(time1-time0)));
 
-    PrintBenchmarkResults_All();
+    // TODO: add back
+    //PrintBenchmarkResults_All();
 
     ASSERT_TRUE(result == RESULT_OK);
   }
 
   markers.Print("markers");
 
-  ASSERT_TRUE(markers.get_size() == 1);
+  //  [Type 3-MARKER_ANKILOGO]: (139,9) (127,88) (217,21) (205,100)]
+  //[Type 2-MARKER_ANGRYFACE]: (64,12) (8,41) (92,68) (37,97)]
+  //[Type 4-MARKER_BATTERIES]: (238,71) (238,148) (314,71) (314,148)]
+  //[Type 3-MARKER_ANKILOGO]: (83,116) (83,155) (122,116) (122,155)]
+  //[Type 4-MARKER_BATTERIES]: (17,123) (17,161) (54,123) (54,161)]
+  //[Type 5-MARKER_BULLSEYE]: (222,137) (151,137) (222,209) (151,210)]
+  //[Type 2-MARKER_ANGRYFACE]: (245,161) (245,224) (307,161) (307,224)]
+  //[Type 7-MARKER_SQUAREPLUSCORNERS]: (127,166) (89,166) (128,205) (88,205)]
+  //[Type 7-MARKER_SQUAREPLUSCORNERS]: (44,174) (15,201) (70,204) (41,230)]
 
-  ASSERT_TRUE(markers[0].blockType == 15);
-  ASSERT_TRUE(markers[0].faceType == 5);
-  ASSERT_TRUE(markers[0].orientation == BlockMarker::ORIENTATION_LEFT);
+  if(scaleImage_thresholdMultiplier == 65536) {
+    const s32 numMarkers_groundTruth = 9;
 
-  ASSERT_TRUE(markers[0].corners[0] == Point<s16>(105,132));
-  ASSERT_TRUE(markers[0].corners[1] == Point<s16>(103,167));
-  ASSERT_TRUE(markers[0].corners[2] == Point<s16>(140,133));
-  ASSERT_TRUE(markers[0].corners[3] == Point<s16>(139,169));
+    ASSERT_TRUE(markers.get_size() == numMarkers_groundTruth);
+
+    const s16 corners_groundTruth[numMarkers_groundTruth][4][2] = {
+      {{139,9},{127,88},{217,21},{205,100}},
+      {{64,12},{8,41},{92,68},{37,97}},
+      {{238,71},{238,148},{314,71},{314,148}},
+      {{83,116},{83,155},{122,116},{122,155}},
+      {{17,123},{17,161},{54,123},{54,161}},
+      {{222,137},{151,137},{222,209},{151,210}},
+      {{245,161},{245,224},{307,161},{307,224}},
+      {{127,166},{89,166},{128,205},{88,205}},
+      {{44,174},{15,201},{70,204},{41,230}}
+    };
+
+    const Anki::Vision::MarkerType markerTypes_groundTruth[numMarkers_groundTruth] = {
+      Anki::Vision::MARKER_ANKILOGO,
+      Anki::Vision::MARKER_ANGRYFACE,
+      Anki::Vision::MARKER_BATTERIES,
+      Anki::Vision::MARKER_ANKILOGO,
+      Anki::Vision::MARKER_BATTERIES,
+      Anki::Vision::MARKER_BULLSEYE,
+      Anki::Vision::MARKER_ANGRYFACE,
+      Anki::Vision::MARKER_SQUAREPLUSCORNERS,
+      Anki::Vision::MARKER_SQUAREPLUSCORNERS
+    };
+
+    for(s32 iMarker=0; iMarker<numMarkers_groundTruth; iMarker++) {
+      ASSERT_TRUE(markers[iMarker].isValid);
+      ASSERT_TRUE(markers[iMarker].markerType == markerTypes_groundTruth[iMarker]);
+      for(s32 iCorner=0; iCorner<4; iCorner++) {
+        ASSERT_TRUE(markers[iMarker].corners[iCorner] == Point<s16>(corners_groundTruth[iMarker][iCorner][0], corners_groundTruth[iMarker][iCorner][1]));
+      }
+    }
+  } else {
+    ASSERT_TRUE(false);
+  }
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
@@ -1190,8 +1338,8 @@ GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents)
 
   // TODO: check these by hand
   const Quadrilateral<s16> quads_groundTruth[] = {
-    Quadrilateral<s16>(Point<s16>(25,5), Point<s16>(11,5), Point<s16>(25,19), Point<s16>(11,19)) ,
-    Quadrilateral<s16>(Point<s16>(130,51),  Point<s16>(101,51), Point<s16>(130,80), Point<s16>(101,80)) };
+    Quadrilateral<s16>(Point<s16>(24,4), Point<s16>(10,4), Point<s16>(24,18), Point<s16>(10,18)) ,
+    Quadrilateral<s16>(Point<s16>(129,50),  Point<s16>(100,50), Point<s16>(129,79), Point<s16>(100,79)) };
 
   ConnectedComponents components(numComponents, imageWidth, ms);
 
@@ -1558,6 +1706,59 @@ GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids)
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids)
+
+GTEST_TEST(CoreTech_Vision, InvalidateFilledCenterComponents_hollowRows)
+{
+  const s32 numComponents = 10;
+  const f32 minHollowRatio = 0.7f;
+
+  MemoryStack ms(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(ms.IsValid());
+
+  ConnectedComponents components(numComponents, 640, ms);
+
+  const ConnectedComponentSegment component0 = ConnectedComponentSegment(0, 2, 5, 1);
+  const ConnectedComponentSegment component1 = ConnectedComponentSegment(4, 6, 5, 1);
+  const ConnectedComponentSegment component2 = ConnectedComponentSegment(0, 0, 6, 1);
+  const ConnectedComponentSegment component3 = ConnectedComponentSegment(6, 6, 6, 1);
+  const ConnectedComponentSegment component4 = ConnectedComponentSegment(0, 1, 7, 2);
+  const ConnectedComponentSegment component5 = ConnectedComponentSegment(3, 3, 7, 2);
+  const ConnectedComponentSegment component6 = ConnectedComponentSegment(5, 7, 7, 2);
+  const ConnectedComponentSegment component7 = ConnectedComponentSegment(0, 1, 8, 2);
+  const ConnectedComponentSegment component8 = ConnectedComponentSegment(5, 12, 8, 2);
+  const ConnectedComponentSegment component9 = ConnectedComponentSegment(0, 10, 12, 3);
+
+  components.PushBack(component0);
+  components.PushBack(component1);
+  components.PushBack(component2);
+  components.PushBack(component3);
+  components.PushBack(component4);
+  components.PushBack(component5);
+  components.PushBack(component6);
+  components.PushBack(component7);
+  components.PushBack(component8);
+  components.PushBack(component9);
+
+  {
+    const Result result = components.InvalidateFilledCenterComponents_hollowRows(minHollowRatio, ms);
+    ASSERT_TRUE(result == RESULT_OK);
+  }
+
+  //components.Print();
+
+  ASSERT_TRUE(components.Pointer(0)->id == 1);
+  ASSERT_TRUE(components.Pointer(1)->id == 1);
+  ASSERT_TRUE(components.Pointer(2)->id == 1);
+  ASSERT_TRUE(components.Pointer(3)->id == 1);
+  ASSERT_TRUE(components.Pointer(4)->id == 0);
+  ASSERT_TRUE(components.Pointer(5)->id == 0);
+  ASSERT_TRUE(components.Pointer(6)->id == 0);
+  ASSERT_TRUE(components.Pointer(7)->id == 0);
+  ASSERT_TRUE(components.Pointer(8)->id == 0);
+  ASSERT_TRUE(components.Pointer(9)->id == 0);
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Vision, InvalidateFilledCenterComponents_hollowRows)
 
 GTEST_TEST(CoreTech_Vision, InvalidateSolidOrSparseComponents)
 {
@@ -2090,6 +2291,7 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   CALL_GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary);
   CALL_GTEST_TEST(CoreTech_Vision, ComputeComponentBoundingBoxes);
   CALL_GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids);
+  CALL_GTEST_TEST(CoreTech_Vision, InvalidateFilledCenterComponents_hollowRows);
   CALL_GTEST_TEST(CoreTech_Vision, InvalidateSolidOrSparseComponents);
   CALL_GTEST_TEST(CoreTech_Vision, InvalidateSmallOrLargeComponents);
   CALL_GTEST_TEST(CoreTech_Vision, CompressComponentIds);

@@ -64,7 +64,7 @@ namespace Anki {
         const u16 DOCK_APPROACH_DECEL_MMPS2 = 200;
         
         // Code of the VisionMarker we are trying to dock to
-        VisionSystem::MarkerCode dockMarkerCode_;
+        Vision::MarkerType dockMarker_;
         
         // TODO: set error tolerances in mm and convert to pixels based on camera resolution?
         const f32 VERTICAL_TARGET_ERROR_TOLERANCE = 1.f;   // in pixels
@@ -366,13 +366,13 @@ namespace Anki {
       }
       
       
-      void StartDocking(const VisionSystem::MarkerCode& dockingCode,
+      void StartDocking(const Vision::MarkerType& dockingMarker,
                         f32 dockOffsetDistX, f32 dockOffsetDistY, f32 dockOffsetAngle)
       {
-        dockMarkerCode_.Set(dockingCode);
+        dockMarker_ = dockingMarker;
         dockOffsetDistX_ = dockOffsetDistX;
         
-        VisionSystem::SetMarkerToTrack(dockMarkerCode_);
+        VisionSystem::SetMarkerToTrack(dockMarker_);
         lastDockingErrorSignalRecvdTime_ = HAL::GetMicroCounter();
         mode_ = LOOKING_FOR_BLOCK;
         

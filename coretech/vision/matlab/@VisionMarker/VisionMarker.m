@@ -148,5 +148,11 @@ classdef VisionMarker
         
     end % Public Methods
     
+    methods(Static = true)
+        
+        
+        outputString = GenerateEmbeddedMarkerDefinitionCode(varargin);
+        
+    end % Static Methods
     
 end % CLASSDEF Marker2D

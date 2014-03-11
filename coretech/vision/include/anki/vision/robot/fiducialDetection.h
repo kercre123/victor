@@ -22,29 +22,34 @@ namespace Anki
     // The primary wrapper function for detecting fiducial markers in an image
     Result DetectFiducialMarkers(
       const Array<u8> &image,
-      FixedLengthList<BlockMarker> &markers,
+      //FixedLengthList<BlockMarker> &markers,
+      FixedLengthList<VisionMarker> &markers,
       FixedLengthList<Array<f32> > &homographies,
       const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier,
       const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
       const s32 component_minimumNumPixels, const s32 component_maximumNumPixels,
       const s32 component_sparseMultiplyThreshold, const s32 component_solidMultiplyThreshold,
-      const s32 component_percentHorizontal, const s32 component_percentVertical,
+      const f32 component_minHollowRatio,
       const s32 quads_minQuadArea, const s32 quads_quadSymmetryThreshold, const s32 quads_minDistanceFromImageEdge,
       const f32 decode_minContrastRatio,
       const s32 maxConnectedComponentSegments,
       const s32 maxExtractedQuads,
+      const bool returnInvalidMarkers,
+      MemoryStack scratchOffChip,
       MemoryStack scratchOnchip,
       MemoryStack scratchCcm);
 
     // Used by DetectFiducialMarkers
     //
     // Compute characteristic scale, binary image, and extract connected components
+    // Warning: fastScratch and slowScratch cannot be the same object pointing to the same memory
     Result ExtractComponentsViaCharacteristicScale(
       const Array<u8> &image,
       const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier,
       const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
       ConnectedComponents &components,
-      MemoryStack scratch);
+      MemoryStack fastScratch,
+      MemoryStack slowScratch);
 
     // Used by DetectFiducialMarkers
     //

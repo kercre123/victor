@@ -29,29 +29,7 @@ namespace Anki {
     class Marker
     {
     public:
-      class Code
-      {
-      public:
-        static const u8 NUM_PROBES = 9;
-        static const u8 NUM_BYTES = static_cast<u8>(static_cast<f32>(NUM_PROBES*NUM_PROBES+4)/8.f + 0.5f);
-        
-        Code();
-        Code(const u8* bytes);
-        Code(std::initializer_list<u8> args);
-        
-        const u8* GetBytes() const;
-        
-        bool operator==(const Code& otherCode) const;
-        
-        // Required comparison object to use a Marker::Code in a STL container,
-        // e.g. as a key for an std::map
-        bool operator<(const Code& otherCode) const;
-        
-      protected:
-        
-        std::array<u8,NUM_BYTES> byteArray_;
-        
-      }; // class Marker::Code
+      typedef u16 Code; // TODO: this should be an Embedded::VisionMarkerType
 
       Marker(const Code& code);
       
@@ -69,7 +47,8 @@ namespace Anki {
     public:
       // Instantiate a Marker from a given code, seen by a given camera with
       // the corners observed at the specified image coordinates.
-      ObservedMarker(const Code& withCode, const Quad2f& corners, const Camera& seenBy);
+      ObservedMarker(const Code& type, const Quad2f& corners,
+                     const Camera& seenBy);
       
       // Accessors:
       inline const Quad2f& GetImageCorners() const;
@@ -86,7 +65,7 @@ namespace Anki {
     {
     public:
       
-      KnownMarker(const Code& withCode, const Pose3d& atPose, const f32 size_mm);
+      KnownMarker(const Code& type, const Pose3d& atPose, const f32 size_mm);
 
       Pose3d EstimateObservedPose(const ObservedMarker& obsMarker) const;
       

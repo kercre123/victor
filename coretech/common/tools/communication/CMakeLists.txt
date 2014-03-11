@@ -32,6 +32,7 @@ add_executable(run_pc_saveVideo
 
 target_link_libraries(run_pc_saveVideo
 	CoreTech_Common_Robot
+  CoreTech_Vision_Robot
 	${ALL_EMBEDDED_LIBRARIES})
 
 add_executable(run_pc_displayVideo
@@ -40,6 +41,7 @@ add_executable(run_pc_displayVideo
 
 target_link_libraries(run_pc_displayVideo
 	CoreTech_Common_Robot
+  CoreTech_Vision_Robot
 	${ALL_EMBEDDED_LIBRARIES})  
   
 add_executable(run_pc_terminal
@@ -48,4 +50,5 @@ add_executable(run_pc_terminal
 
 target_link_libraries(run_pc_terminal
 	CoreTech_Common_Robot
+  CoreTech_Vision_Robot
 	${ALL_EMBEDDED_LIBRARIES})

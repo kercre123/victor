@@ -180,6 +180,11 @@ namespace Anki
       return PushBack_Generic(type, header, headerLength, data, dataLength);
     }
 
+    void* SerializedBuffer::PushBack(const char * customTypeName, const void * data, s32 dataLength)
+    {
+      return PushBack_Generic(DATA_TYPE_CUSTOM, customTypeName, CUSTOM_TYPE_STRING_LENGTH, data, dataLength);
+    }
+
     void* SerializedBuffer::PushBack_Generic(const DataType type, const void * header, s32 headerLength, const void * data, s32 dataLength)
     {
       AnkiConditionalErrorAndReturnValue(headerLength >= 0,

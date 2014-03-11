@@ -54,7 +54,7 @@ namespace Anki
   }
 }
 
-extern bool isEOF;
+extern volatile bool isEOF;
 extern void StartFrame();
 
 void Wait()
@@ -83,7 +83,7 @@ int main(void)
   
   UARTPutString("UART!\r\n");
   
-  SPIInit();
+  //SPIInit();
   
   UARTPutString("SPI!\r\n");
   
@@ -123,11 +123,26 @@ int main(void)
 #else
   
   Anki::Cozmo::Robot::Init();
+    
+  StartFrame();
   
   while (Anki::Cozmo::Robot::step_LongExecution() == EXIT_SUCCESS)
+  //while(1)
   {
+/*   UARTPutChar(0xbe);
+    UARTPutChar(0xef);
+    UARTPutChar(0xf0);
+    UARTPutChar(0xff);
+    UARTPutChar(0xbd);
+    
+    for (int y = 0; y < 240; y += 1)
+    {
+      for (int x = 0; x < 320; x += 1)
+      {
+        UARTPutChar(m_buffer1[y * 320*2 + x*2]);
+      }
+    }*/
   }
-  
 #endif
   
   

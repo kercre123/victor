@@ -21,6 +21,8 @@ namespace Anki
 {
   namespace Embedded
   {
+    class VisionMarker;
+
     // #pragma mark --- Declarations ---
     // When transmitting a serialized buffer, the header and footer of the entire buffer are each 8 bytes
     // These just contain a validation pattern, not data
@@ -43,13 +45,17 @@ namespace Anki
       static const s32 SERIALIZED_SEGMENT_HEADER_LENGTH = 8;
       static const s32 SERIALIZED_SEGMENT_FOOTER_LENGTH = 4;
 
+      static const s32 CUSTOM_TYPE_STRING_LENGTH = 16;
+
       enum DataType
       {
         DATA_TYPE_UNKNOWN = 0,
         DATA_TYPE_RAW = 1,
         DATA_TYPE_BASIC_TYPE_BUFFER = 2,
         DATA_TYPE_ARRAY = 3,
-        DATA_TYPE_STRING = 4
+        DATA_TYPE_STRING = 4,
+        DATA_TYPE_LIST = 5,
+        DATA_TYPE_CUSTOM = 6 //< A custom type is defined by a unique 15-character string
       };
 
       // Stores the eight-byte code of a basic data type buffer (like a buffer of unsigned shorts)
@@ -68,6 +74,13 @@ namespace Anki
         u32 code[EncodedArray::CODE_SIZE];
       };
 
+      class EncodedCustomType
+      {
+      public:
+        const static s32 CODE_SIZE = 4;
+        u32 code[EncodedCustomType::CODE_SIZE]; //< Could be a 16 character string, or anything
+      };
+
       //
       // Various static functions for encoding and decoding serialized objects
       //
@@ -83,6 +96,10 @@ namespace Anki
       // Encode or decode the forty-byte code of an Array
       template<typename Type> static Result EncodeArrayType(const Array<Type> &in, EncodedArray &code);
       static Result DecodeArrayType(const bool swapEndian, const EncodedArray &code, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, u8 &basicType_size, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat);
+
+      //// Encode or decode the forty-byte code of an Array
+      //template<typename Type> static Result EncodeCustomType(const char * name, EncodedCustomType &code);
+      //static Result DecodeCustomType(const EncodedCustomType &code, const char * name);
 
       // Helper functions to serialize or deserialize an array
       template<typename Type> static Result SerializeArray(const Array<Type> &in, void * data, const s32 dataLength);
@@ -108,6 +125,10 @@ namespace Anki
       void* PushBack(const void * header, s32 headerLength, const void * data, s32 dataLength);
       void* PushBack(const DataType type, const void * header, s32 headerLength, const void * data, s32 dataLength);
 
+      // Push back a custom type, defined by a unique customTypeName string
+      // Could be made fancy and design patterns, if neccesary
+      void* PushBack(const char * customTypeName, const void * data, s32 dataLength);
+
       // Push back a null-terminated string. Works like printf().
       void* PushBackString(const char * format, ...);
 
@@ -117,6 +138,9 @@ namespace Anki
 
       // Push back an Array
       template<typename Type> void* PushBack(const Array<Type> &in);
+
+      // Push back a FixedLengthList
+      //template<typename Type> void* PushBack(const FixedLengthList<Type> &in);
 
       bool IsValid() const;
 
