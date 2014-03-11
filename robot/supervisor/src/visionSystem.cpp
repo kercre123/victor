@@ -416,74 +416,72 @@ namespace Anki {
 #endif // #ifdef SEND_DEBUG_STREAM
 
 #ifdef SEND_DEBUG_STREAM
-      /*
-      ReturnCode SendDebugStream_Detection(const Embedded::FixedLengthList<Embedded::VisionMarker> &markers, const FrameBuffer &frame)
+      /*ReturnCode SendDebugStream_Detection(const Embedded::FixedLengthList<Embedded::VisionMarker> &markers, const FrameBuffer &frame)
       {
-        printf("markers2: 0x%x\n", &markers);
-        // Pushing here at the top is neccesary, because of all the global variables
-        PUSH_MEMORY_STACK(offchipScratch_);
-        PUSH_MEMORY_STACK(ccmScratch_);
-        
-        printf("markers3: 0x%x\n", &markers);
+      printf("markers2: 0x%x\n", &markers);
+      // Pushing here at the top is neccesary, because of all the global variables
+      PUSH_MEMORY_STACK(offchipScratch_);
+      PUSH_MEMORY_STACK(ccmScratch_);
 
-        // Do no robot control, just capture a buffer of images and send it to the PC over USB
-        if(!isInitialized_) {
-          Init();
-        }
+      printf("markers3: 0x%x\n", &markers);
 
-        captureImagesBuffer_ = Embedded::SerializedBuffer(&captureImagesBufferRaw_[0], CAPTURE_IMAGES_BUFFER_SIZE);
+      // Do no robot control, just capture a buffer of images and send it to the PC over USB
+      if(!isInitialized_) {
+      Init();
+      }
 
-        printf("markers4: 0x%x\n", &markers);
-        
-        // Stream the images as they come
-        //const s32 imageHeight = HAL::CameraModeInfo[HAL::CAMERA_MODE_QVGA].height;
-        //const s32 imageWidth = HAL::CameraModeInfo[HAL::CAMERA_MODE_QVGA].width;
-        Embedded::Array<u8> imageLarge(240, 320, offchipScratch_);
-        Embedded::Array<u8> imageSmall(60, 80, offchipScratch_);
+      captureImagesBuffer_ = Embedded::SerializedBuffer(&captureImagesBufferRaw_[0], CAPTURE_IMAGES_BUFFER_SIZE);
 
-        YUVToGrayscaleHelper(frame, imageLarge);
-        DownsampleHelper(imageLarge, imageSmall, ccmScratch_);
+      printf("markers4: 0x%x\n", &markers);
 
-        captureImagesBuffer_.PushBack(imageSmall);
+      // Stream the images as they come
+      //const s32 imageHeight = HAL::CameraModeInfo[HAL::CAMERA_MODE_QVGA].height;
+      //const s32 imageWidth = HAL::CameraModeInfo[HAL::CAMERA_MODE_QVGA].width;
+      Embedded::Array<u8> imageLarge(240, 320, offchipScratch_);
+      Embedded::Array<u8> imageSmall(60, 80, offchipScratch_);
 
-        printf("markers5: 0x%x\n", &markers);
-        
-        if(markers.get_size() != 0) {
-          PUSH_MEMORY_STACK(offchipScratch_);
+      YUVToGrayscaleHelper(frame, imageLarge);
+      DownsampleHelper(imageLarge, imageSmall, ccmScratch_);
 
-          const s32 numMarkers = markers.get_size();
-          const Embedded::VisionMarker * pMarkers = markers.Pointer(0);
+      captureImagesBuffer_.PushBack(imageSmall);
 
-          void * restrict oneMarker = offchipScratch_.Allocate(sizeof(Embedded::VisionMarker));
-          const s32 oneMarkerLength = sizeof(Embedded::VisionMarker);
+      printf("markers5: 0x%x\n", &markers);
 
-          for(s32 i=0; i<numMarkers; i++) {
-            pMarkers[i].Serialize(oneMarker, oneMarkerLength);
-            captureImagesBuffer_.PushBack("VisionMarker", oneMarker, oneMarkerLength);
-          }
-        }
+      if(markers.get_size() != 0) {
+      PUSH_MEMORY_STACK(offchipScratch_);
 
-        s32 startIndex;
-        const u8 * bufferStart = reinterpret_cast<const u8*>(captureImagesBuffer_.get_memoryStack().get_validBufferStart(startIndex));
-        const s32 validUsedBytes = captureImagesBuffer_.get_memoryStack().get_usedBytes() - startIndex;
+      const s32 numMarkers = markers.get_size();
+      const Embedded::VisionMarker * pMarkers = markers.Pointer(0);
 
-        for(s32 i=0; i<Embedded::SERIALIZED_BUFFER_HEADER_LENGTH; i++) {
-          Anki::Cozmo::HAL::UARTPutChar(Embedded::SERIALIZED_BUFFER_HEADER[i]);
-        }
+      void * restrict oneMarker = offchipScratch_.Allocate(sizeof(Embedded::VisionMarker));
+      const s32 oneMarkerLength = sizeof(Embedded::VisionMarker);
 
-        for(s32 i=0; i<validUsedBytes; i++) {
-          Anki::Cozmo::HAL::UARTPutChar(bufferStart[i]);
-        }
+      for(s32 i=0; i<numMarkers; i++) {
+      pMarkers[i].Serialize(oneMarker, oneMarkerLength);
+      captureImagesBuffer_.PushBack("VisionMarker", oneMarker, oneMarkerLength);
+      }
+      }
 
-        for(s32 i=0; i<Embedded::SERIALIZED_BUFFER_FOOTER_LENGTH; i++) {
-          Anki::Cozmo::HAL::UARTPutChar(Embedded::SERIALIZED_BUFFER_FOOTER[i]);
-        }
+      s32 startIndex;
+      const u8 * bufferStart = reinterpret_cast<const u8*>(captureImagesBuffer_.get_memoryStack().get_validBufferStart(startIndex));
+      const s32 validUsedBytes = captureImagesBuffer_.get_memoryStack().get_usedBytes() - startIndex;
 
-        HAL::MicroWait(50000);
+      for(s32 i=0; i<Embedded::SERIALIZED_BUFFER_HEADER_LENGTH; i++) {
+      Anki::Cozmo::HAL::UARTPutChar(Embedded::SERIALIZED_BUFFER_HEADER[i]);
+      }
 
-        return EXIT_SUCCESS;
-      } // ReturnCode SendDebugStream_Detection()
-      */
+      for(s32 i=0; i<validUsedBytes; i++) {
+      Anki::Cozmo::HAL::UARTPutChar(bufferStart[i]);
+      }
+
+      for(s32 i=0; i<Embedded::SERIALIZED_BUFFER_FOOTER_LENGTH; i++) {
+      Anki::Cozmo::HAL::UARTPutChar(Embedded::SERIALIZED_BUFFER_FOOTER[i]);
+      }
+
+      HAL::MicroWait(50000);
+
+      return EXIT_SUCCESS;
+      } // ReturnCode SendDebugStream_Detection()*/
 #endif // #ifdef SEND_DEBUG_STREAM
 
       ReturnCode Update(void)
@@ -496,7 +494,7 @@ namespace Anki {
         const s32 maxMarkers = 100;
         Embedded::FixedLengthList<Embedded::VisionMarker> markers(maxMarkers, offchipScratch_);
         markers.set_size(maxMarkers);
-        
+
         FrameBuffer frame = {
           m_buffer1,
           HAL::CAMERA_MODE_QVGA
@@ -612,77 +610,11 @@ namespace Anki {
 
 #ifdef SEND_DEBUG_STREAM
         /*if(markers.get_size() != 0){
-          printf("");
+        printf("");
         }*/
-        
-        //printf("markers1: 0x%x\n", &markers);
-        
+
         //SendDebugStream_Detection(markers, frame);
-        {
-          //printf("markers2: 0x%x\n", &markers);
-          // Pushing here at the top is neccesary, because of all the global variables
-          PUSH_MEMORY_STACK(offchipScratch_);
-          PUSH_MEMORY_STACK(ccmScratch_);
-          
-          //printf("markers3: 0x%x\n", &markers);
 
-          // Do no robot control, just capture a buffer of images and send it to the PC over USB
-          if(!isInitialized_) {
-            Init();
-          }
-
-          captureImagesBuffer_ = Embedded::SerializedBuffer(&captureImagesBufferRaw_[0], CAPTURE_IMAGES_BUFFER_SIZE);
-
-          //printf("markers4: 0x%x\n", &markers);
-          
-          // Stream the images as they come
-          //const s32 imageHeight = HAL::CameraModeInfo[HAL::CAMERA_MODE_QVGA].height;
-          //const s32 imageWidth = HAL::CameraModeInfo[HAL::CAMERA_MODE_QVGA].width;
-          Embedded::Array<u8> imageLarge(240, 320, offchipScratch_);
-          Embedded::Array<u8> imageSmall(60, 80, offchipScratch_);
-
-          YUVToGrayscaleHelper(frame, imageLarge);
-          DownsampleHelper(imageLarge, imageSmall, ccmScratch_);
-
-          captureImagesBuffer_.PushBack(imageSmall);
-
-          //printf("markers5: 0x%x\n", &markers);
-          
-          if(markers.get_size() != 0) {
-            PUSH_MEMORY_STACK(offchipScratch_);
-
-            const s32 numMarkers = markers.get_size();
-            const Embedded::VisionMarker * pMarkers = markers.Pointer(0);
-
-            void * restrict oneMarker = offchipScratch_.Allocate(sizeof(Embedded::VisionMarker));
-            const s32 oneMarkerLength = sizeof(Embedded::VisionMarker);
-
-            for(s32 i=0; i<numMarkers; i++) {
-              pMarkers[i].Serialize(oneMarker, oneMarkerLength);
-              captureImagesBuffer_.PushBack("VisionMarker", oneMarker, oneMarkerLength);
-            }
-          }
-
-          s32 startIndex;
-          const u8 * bufferStart = reinterpret_cast<const u8*>(captureImagesBuffer_.get_memoryStack().get_validBufferStart(startIndex));
-          const s32 validUsedBytes = captureImagesBuffer_.get_memoryStack().get_usedBytes() - startIndex;
-
-          for(s32 i=0; i<Embedded::SERIALIZED_BUFFER_HEADER_LENGTH; i++) {
-            Anki::Cozmo::HAL::UARTPutChar(Embedded::SERIALIZED_BUFFER_HEADER[i]);
-          }
-
-          for(s32 i=0; i<validUsedBytes; i++) {
-            Anki::Cozmo::HAL::UARTPutChar(bufferStart[i]);
-          }
-
-          for(s32 i=0; i<Embedded::SERIALIZED_BUFFER_FOOTER_LENGTH; i++) {
-            Anki::Cozmo::HAL::UARTPutChar(Embedded::SERIALIZED_BUFFER_FOOTER[i]);
-          }
-
-          HAL::MicroWait(50000);
-        }
-        
-        /*
         {
           // Pushing here at the top is neccesary, because of all the global variables
           PUSH_MEMORY_STACK(offchipScratch_);
@@ -738,10 +670,7 @@ namespace Anki {
           }
 
           HAL::MicroWait(50000);
-
-          return EXIT_SUCCESS;
         } // ReturnCode SendDebugStream_Detection()
-        */
 #endif
 
         return retVal;
