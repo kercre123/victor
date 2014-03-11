@@ -177,13 +177,30 @@ namespace Anki {
       return EXIT_SUCCESS;
     }
     
+    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageRobotState const& msg)
+    {
+      /*
+      PRINT_NAMED_INFO("RobotStateMsgRecvd",
+                       "RobotStateMsg received \n"
+                       "  ID: %d\n"
+                       "  pose (%f,%f,%f,%f)\n"
+                       "  wheel speeds (l=%f, r=%f)\n"
+                       "  headAngle %f\n"
+                       "  liftHeight %f\n",
+                       robot->get_ID(),
+                       msg.pose_x, msg.pose_y, msg.pose_z, msg.pose_angle,
+                       msg.lwheel_speed_mmps, msg.rwheel_speed_mmps,
+                       msg.headAngle, msg.liftHeight);
+      */
+      return EXIT_SUCCESS;
+    }
+    
     
     // STUBS:
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageClearPath const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageSetMotion const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageMoveLift const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageMoveHead const&){return EXIT_FAILURE;}
-    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageRobotState const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageRobotAvailable const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageMatMarkerObserved const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageRobotAddedToWorld const&){return EXIT_FAILURE;}

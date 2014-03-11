@@ -45,9 +45,15 @@ END_MESSAGE_DEFINITION(Foo)
 #endif 
 
 START_TIMESTAMPED_MESSAGE_DEFINITION(RobotState, 1)
-ADD_MESSAGE_MEMBER(f32, headAngle) // TODO: make fixed point
-// ADD_MESSAGE_MEMBER(f32, liftHeight) // TODO: make fixed point
-// wheel speeds? position estimate? ...
+ADD_MESSAGE_MEMBER(f32, pose_x)
+ADD_MESSAGE_MEMBER(f32, pose_y)
+ADD_MESSAGE_MEMBER(f32, pose_z)
+ADD_MESSAGE_MEMBER(f32, pose_angle)
+ADD_MESSAGE_MEMBER(f32, lwheel_speed_mmps)
+ADD_MESSAGE_MEMBER(f32, rwheel_speed_mmps)
+ADD_MESSAGE_MEMBER(f32, headAngle)
+ADD_MESSAGE_MEMBER(f32, liftHeight)
+// ...
 END_MESSAGE_DEFINITION(RobotState)
 
 // SetMotion

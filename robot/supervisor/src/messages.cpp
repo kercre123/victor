@@ -5,6 +5,8 @@
 #include "anki/cozmo/robot/visionSystem.h"
 #include "anki/cozmo/robot/pathFollower.h"
 #include "anki/cozmo/robot/speedController.h"
+#include "anki/cozmo/robot/steeringController.h"
+#include "anki/cozmo/robot/wheelController.h"
 #include "liftController.h"
 #include "headController.h"
 #include "dockingController.h"
@@ -346,6 +348,29 @@ namespace Anki {
       void ProcessRobotStateMessage(const RobotState& msg) {
         PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
       }
+      
+      
+// ----------- Send messages -----------------
+      
+      
+      void SendRobotStateMsg()
+      {
+        Messages::RobotState m;
+        Radians poseAngle;
+        
+        Localization::GetCurrentMatPose(m.pose_x, m.pose_y, poseAngle);
+        m.pose_z = 0;
+        m.pose_angle = poseAngle.ToFloat();
+        
+        WheelController::GetFilteredWheelSpeeds(m.lwheel_speed_mmps, m.rwheel_speed_mmps);
+
+        m.headAngle = HeadController::GetAngleRad();
+        m.liftHeight = LiftController::GetHeightMM();
+
+        
+        HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RobotState), &m);
+      }
+      
       
       
       

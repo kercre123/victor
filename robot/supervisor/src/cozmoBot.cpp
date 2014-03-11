@@ -333,6 +333,8 @@ namespace Anki {
         // Feedback / Display
         //////////////////////////////////////////////////////////////
         
+        Messages::SendRobotStateMsg();
+        
         HAL::UpdateDisplay();
         
         
