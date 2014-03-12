@@ -29,7 +29,8 @@ namespace Anki
           u8 * restrict pGrayscaleImage = grayscaleImage.Pointer(y,0);
 
           for(s32 x=0; x<imageWidth; x++) {
-            pGrayscaleImage[x] = (pYuvFrame[x] & 0xFF00) >> 8;
+            //pGrayscaleImage[x] = (pYuvFrame[x] & 0xFF00) >> 8;
+            pGrayscaleImage[x] = pYuvFrame[x] & 0xFF;
           }
         }
 

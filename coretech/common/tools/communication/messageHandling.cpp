@@ -34,7 +34,7 @@ using namespace std;
 #error OpenCV is required
 #endif
 
-void ProcessRawBuffer(RawBuffer &buffer, const string outputFilenamePattern, const bool freeBuffer, const BufferAction action, const bool swapEndianForHeaders, const bool swapEndianForContents, const bool requireCRCmatch)
+void ProcessRawBuffer(RawBuffer &buffer, const string outputFilenamePattern, const bool freeBuffer, const BufferAction action, const bool requireCRCmatch)
 {
   const s32 outputFilenameLength = 1024;
   char outputFilename[outputFilenameLength];
@@ -80,6 +80,11 @@ void ProcessRawBuffer(RawBuffer &buffer, const string outputFilenamePattern, con
     if(usbMessageStartIndex < 0) {
       printf("Error: USB header is missing (%d,%d) with %d total bytes and %d bytes remaining, returning...\n", usbMessageStartIndex, usbMessageEndIndex, buffer.dataLength, buffer.dataLength-bufferDataOffset);
 
+      for(s32 i=0; i<15; i++) {
+        printf("%x ", *(buffer.data+bufferDataOffset+i));
+      }
+      printf("\n");
+
       if(freeBuffer) {
         buffer.data = NULL;
         free(bufferDataOriginal);
@@ -108,13 +113,6 @@ void ProcessRawBuffer(RawBuffer &buffer, const string outputFilenamePattern, con
     memcpy(shiftedBuffer, buffer.data+usbMessageStartIndex, messageLength);
     //buffer.data += bigBuffer_alignedStartIndex;
 
-    if(swapEndianForHeaders) {
-      for(s32 i=0; i<messageLength; i+=4) {
-        Swap(shiftedBuffer[i], shiftedBuffer[i^3]);
-        Swap(shiftedBuffer[(i+1)], shiftedBuffer[(i+1)^3]);
-      }
-    }
-
     SerializedBuffer serializedBuffer(shiftedBuffer, messageLength, Anki::Embedded::Flags::Buffer(false, true, true));
 
     SerializedBufferIterator iterator(serializedBuffer);
@@ -122,7 +120,7 @@ void ProcessRawBuffer(RawBuffer &buffer, const string outputFilenamePattern, con
     while(iterator.HasNext()) {
       s32 dataLength;
       SerializedBuffer::DataType type;
-      u8 * const dataSegmentStart = reinterpret_cast<u8*>(iterator.GetNext(swapEndianForHeaders, dataLength, type, requireCRCmatch));
+      u8 * const dataSegmentStart = reinterpret_cast<u8*>(iterator.GetNext(dataLength, type, requireCRCmatch));
       u8 * dataSegment = dataSegmentStart;
 
       if(!dataSegment) {
@@ -148,7 +146,7 @@ void ProcessRawBuffer(RawBuffer &buffer, const string outputFilenamePattern, con
         bool isSigned;
         bool isFloat;
         s32 numElements;
-        SerializedBuffer::DecodeBasicTypeBuffer(swapEndianForHeaders, code, size, isInteger, isSigned, isFloat, numElements);
+        SerializedBuffer::DecodeBasicTypeBuffer(code, size, isInteger, isSigned, isFloat, numElements);
 
         printf("Basic type buffer segment (%d, %d, %d, %d, %d): ", size, isInteger, isSigned, isFloat, numElements);
         for(s32 i=0; i<remainingDataLength; i++) {
@@ -170,13 +168,13 @@ void ProcessRawBuffer(RawBuffer &buffer, const string outputFilenamePattern, con
         bool basicType_isInteger;
         bool basicType_isSigned;
         bool basicType_isFloat;
-        SerializedBuffer::DecodeArrayType(swapEndianForHeaders, code, height, width, stride, flags, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat);
+        SerializedBuffer::DecodeArrayType(code, height, width, stride, flags, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat);
 
         printf("Array: (%d, %d, %d, %d, %d, %d, %d, %d) ", height, width, stride, flags, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat);
         //template<typename Type> static Result DeserializeArray(const void * data, const s32 dataLength, Array<Type> &out, MemoryStack &memory);
         if(basicType_size==1 && basicType_isInteger==1 && basicType_isSigned==0 && basicType_isFloat==0) {
           Array<u8> arr;
-          SerializedBuffer::DeserializeArray(swapEndianForHeaders, swapEndianForContents, dataSegmentStart, dataLength, arr, memory);
+          SerializedBuffer::DeserializeArray(dataSegmentStart, dataLength, arr, memory);
 
           snprintf(&outputFilename[0], outputFilenameLength, outputFilenamePattern.data(),
             currentTime->tm_year+1900, currentTime->tm_mon+1, currentTime->tm_mday,

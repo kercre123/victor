@@ -54,16 +54,12 @@ namespace Anki
       return RESULT_OK;
     }
 
-    Result SerializedBuffer::DecodeBasicTypeBuffer(const bool swapEndian, const EncodedBasicTypeBuffer &code, u8 &size, bool &isInteger, bool &isSigned, bool &isFloat, s32 &numElements)
+    Result SerializedBuffer::DecodeBasicTypeBuffer(const EncodedBasicTypeBuffer &code, u8 &size, bool &isInteger, bool &isSigned, bool &isFloat, s32 &numElements)
     {
       u32 swappedCode[SerializedBuffer::EncodedBasicTypeBuffer::CODE_SIZE];
 
       for(s32 i=0; i<SerializedBuffer::EncodedBasicTypeBuffer::CODE_SIZE; i++) {
-        if(swapEndian) {
-          swappedCode[i] = SwapEndianU32(code.code[i]);
-        } else {
-          swappedCode[i] = code.code[i];
-        }
+        swappedCode[i] = code.code[i];
       }
 
       SerializedBuffer::DecodeBasicType(swappedCode[0], size, isInteger, isSigned, isFloat);
@@ -72,16 +68,12 @@ namespace Anki
       return RESULT_OK;
     }
 
-    Result SerializedBuffer::DecodeArrayType(const bool swapEndian, const EncodedArray &code, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, u8 &basicType_size, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat)
+    Result SerializedBuffer::DecodeArrayType(const EncodedArray &code, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, u8 &basicType_size, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat)
     {
       u32 swappedCode[SerializedBuffer::EncodedArray::CODE_SIZE];
 
       for(s32 i=0; i<SerializedBuffer::EncodedArray::CODE_SIZE; i++) {
-        if(swapEndian) {
-          swappedCode[i] = SwapEndianU32(code.code[i]);
-        } else {
-          swappedCode[i] = code.code[i];
-        }
+        swappedCode[i] = code.code[i];
       }
 
       if(DecodeBasicType(swappedCode[0], basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat) != RESULT_OK)
@@ -359,7 +351,7 @@ namespace Anki
     {
     }
 
-    void * SerializedBufferIterator::GetNext(const bool swapEndian, s32 &dataLength, SerializedBuffer::DataType &type, const bool requireCRCmatch)
+    void * SerializedBufferIterator::GetNext(s32 &dataLength, SerializedBuffer::DataType &type, const bool requireCRCmatch)
     {
       // To avoid code duplication, we'll use the const version of GetNext(), though our MemoryStack is not const
 
@@ -367,13 +359,6 @@ namespace Anki
 
       AnkiConditionalErrorAndReturnValue(segment != NULL,
         NULL, "SerializedBufferIterator::GetNext", "segment is NULL");
-
-      if(swapEndian) {
-        for(s32 i=0; i<dataLength; i+=4) {
-          Swap(segment[i], segment[i^3]);
-          Swap(segment[(i+1)], segment[(i+1)^3]);
-        }
-      }
 
       return reinterpret_cast<void*>(segment);
     }

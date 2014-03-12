@@ -288,16 +288,18 @@ namespace DebugStream
     const u8 * bufferStart = reinterpret_cast<const u8*>(toSend.get_memoryStack().get_validBufferStart(startIndex));
     const s32 validUsedBytes = toSend.get_memoryStack().get_usedBytes() - startIndex;
 
-    for(s32 i=0; i<SERIALIZED_BUFFER_HEADER_LENGTH; i++) {
-      Anki::Cozmo::HAL::USBPutChar(SERIALIZED_BUFFER_HEADER[i]);
+    for(s32 i=0; i<Embedded::SERIALIZED_BUFFER_HEADER_LENGTH; i++) {
+      Anki::Cozmo::HAL::UARTPutChar(Embedded::SERIALIZED_BUFFER_HEADER[i]);
     }
 
-    HAL::USBSendBuffer(bufferStart, validUsedBytes);
-
-    for(s32 i=0; i<SERIALIZED_BUFFER_FOOTER_LENGTH; i++) {
-      Anki::Cozmo::HAL::USBPutChar(SERIALIZED_BUFFER_FOOTER[i]);
+    for(s32 i=0; i<validUsedBytes; i++) {
+      Anki::Cozmo::HAL::UARTPutChar(bufferStart[i]);
     }
 
+    for(s32 i=0; i<Embedded::SERIALIZED_BUFFER_FOOTER_LENGTH; i++) {
+      Anki::Cozmo::HAL::UARTPutChar(Embedded::SERIALIZED_BUFFER_FOOTER[i]);
+    }
+    
     HAL::MicroWait(50000);
 
     return EXIT_SUCCESS;
@@ -727,8 +729,8 @@ static ReturnCode LookForMarkers(
     offchipScratch, onchipScratch, ccmScratch);
 
   if(result == RESULT_OK) {
-    DebugStream::SendFiducialDetection();
-    grayscaleImage, markers,  ccmScratch, MemoryStack offchipScratch
+    DebugStream::SendFiducialDetection(grayscaleImage, markers, ccmScratch, offchipScratch);
+    
     for(s32 i_marker = 0; i_marker < markers.get_size(); ++i_marker) {
       const VisionMarker crntMarker = markers[i_marker];
 
