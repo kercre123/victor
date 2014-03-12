@@ -42,8 +42,10 @@ namespace Anki {
       void SetAngularVelocity(const f32 rad_per_sec);
       
       // Command the desired height of the lift
-      void SetDesiredHeight(const f32 height_mm);
+      void SetDesiredHeight(f32 height_mm);
       bool IsInPosition();
+
+      bool IsMoving();
       
       // Get current height of the lift
       f32 GetHeightMM();

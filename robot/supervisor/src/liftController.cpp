@@ -29,6 +29,13 @@ namespace Anki {
         f32 desiredHeight_;
         u32 liftStopTimeUS_;
 #endif
+      
+        // How long the lift needs to stop moving for before it is considered to be limited.
+#ifdef SIMULATOR
+        const u32 LIFT_STOP_TIME = 200000;
+#else
+        const u32 LIFT_STOP_TIME = 2000000;
+#endif
         
         // Re-calibrates lift position whenever LIFT_HEIGHT_LOW is commanded.
         #define RECALIBRATE_AT_LOW_HEIGHT 0
@@ -122,6 +129,15 @@ namespace Anki {
       }
       
       
+      void ResetLowAnglePosition()
+      {
+        currentAngle_ = LIFT_ANGLE_LOW;
+        HAL::MotorResetPosition(HAL::MOTOR_LIFT);
+        prevHalPos_ = HAL::MotorGetPosition(HAL::MOTOR_LIFT);
+        doCalib_ = false;
+        isCalibrated_ = true;
+      }
+      
       void StartCalibrationRoutine()
       {
         PRINT("Starting Lift calibration\n");
@@ -129,8 +145,7 @@ namespace Anki {
 #ifdef SIMULATOR
         // Skipping actual calibration routine in sim due to weird lift behavior when attempting to move it when
         // it's at the joint limit.  The arm flies off the robot!
-        isCalibrated_ = true;
-        SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
+        ResetLowAnglePosition();
 #else
         calState_ = LCS_LOWER_LIFT;
         isCalibrated_ = false;
@@ -142,14 +157,10 @@ namespace Anki {
         return isCalibrated_;
       }
       
-      
-      void ResetLowAnglePosition()
+
+      bool IsMoving()
       {
-        currentAngle_ = LIFT_ANGLE_LOW;
-        HAL::MotorResetPosition(HAL::MOTOR_LIFT);
-        prevHalPos_ = HAL::MotorGetPosition(HAL::MOTOR_LIFT);
-        doCalib_ = false;
-        isCalibrated_ = true;
+        return (ABS(radSpeed_) > MAX_LIFT_CONSIDERED_STOPPED_RAD_PER_SEC);
       }
       
       void CalibrationUpdate()
@@ -170,12 +181,8 @@ namespace Anki {
               
             case LCS_WAIT_FOR_STOP:
               // Check for when lift stops moving for 0.2 seconds
-              if (ABS(HAL::MotorGetSpeed(HAL::MOTOR_LIFT)) < MAX_LIFT_CONSIDERED_STOPPED_RAD_PER_SEC) {
-#ifdef SIMULATOR
-                const u32 LIFT_STOP_TIME = 200000;
-#else
-                const u32 LIFT_STOP_TIME = 2000000;
-#endif
+              if (!IsMoving()) {
+
                 if (HAL::GetMicroCounter() - lastLiftMovedTime_us > LIFT_STOP_TIME) {
                   // Turn off motor
                   power_ = 0.0;
@@ -195,6 +202,7 @@ namespace Anki {
             case LCS_SET_CURR_ANGLE:
               // Wait for motor to relax and then set angle
               if (HAL::GetMicroCounter() - lastLiftMovedTime_us > 200000) {
+                PRINT("LIFT Calibrated\n");
                 ResetLowAnglePosition();
                 calState_ = LCS_IDLE;
               }
@@ -254,7 +262,7 @@ namespace Anki {
       }
       
       
-      void SetDesiredHeight(const f32 height_mm)
+      void SetDesiredHeight(f32 height_mm)
       {
         
 #if(OPEN_LOOP_LIFT_CONTROL)
@@ -303,6 +311,10 @@ namespace Anki {
         return;
 #endif
         
+        // Do range check on height
+        height_mm = CLIP(height_mm, LIFT_HEIGHT_LOWDOCK, LIFT_HEIGHT_CARRY);
+        
+        
         // Convert desired height into the necessary angle:
 #if(DEBUG_LIFT_CONTROLLER)
         PRINT("LIFT DESIRED HEIGHT: %f mm (curr height %f mm)\n", height_mm, GetHeightMM());
@@ -333,8 +345,8 @@ namespace Anki {
                           CONTROL_DT);
 
 #if(DEBUG_LIFT_CONTROLLER)
-        PRINT("LIFT VPG: startVel %f, startPos %f, maxVel %f, endVel %f, endPos %f\n",
-              radSpeed_, currentAngle_.ToFloat(), maxSpeedRad_, approachSpeedRad_, desiredAngle_.ToFloat());
+        PRINT("LIFT VPG: startVel %f, startPos %f, maxVel %f, accel %f, endVel %f, endPos %f\n",
+              radSpeed_, currentAngle_.ToFloat(), maxSpeedRad_, accelRad_, approachSpeedRad_, desiredAngle_.ToFloat());
 #endif
         
       }
