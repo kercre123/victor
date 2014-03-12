@@ -265,10 +265,10 @@ namespace Anki {
       if (radius == 0) return;
       
       //if delta speed is positive, the left wheel is supposed to turn slower, it becomes the INNER wheel
-      float leftspeed =  (float)vspeed * (1.0f - SteeringController::WHEEL_DIST_HALF_MM / radius);
+      float leftspeed =  (float)vspeed * (1.0f - WHEEL_DIST_HALF_MM / radius);
       
       //if delta speed is positive, the right wheel is supposed to turn faster, it becomes the OUTER wheel
-      float rightspeed = (float)vspeed * (1.0f + SteeringController::WHEEL_DIST_HALF_MM / radius);
+      float rightspeed = (float)vspeed * (1.0f + WHEEL_DIST_HALF_MM / radius);
       
       //Set the computed speeds to the wheels
       SetDesiredWheelSpeeds( (s16)leftspeed, (s16)rightspeed);

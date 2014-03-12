@@ -196,6 +196,12 @@ namespace Anki {
                        msg.lwheel_speed_mmps, msg.rwheel_speed_mmps,
                        msg.headAngle, msg.liftHeight);
       */
+      
+      // Update robot pose
+      Vec3f axis(0,0,1);
+      Vec3f translation(msg.pose_x, msg.pose_y, msg.pose_z);
+      robot->set_pose(Pose3d(msg.pose_angle, axis, translation));
+      
       return EXIT_SUCCESS;
     }
     
