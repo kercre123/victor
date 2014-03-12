@@ -293,12 +293,16 @@ namespace Anki
 
       Result BinaryTracker::ComputeAllIndexLimits(const EdgeLists &imageEdges, AllIndexLimits &allLimits, MemoryStack &memory)
       {
-        allLimits.xDecreasing_yStartIndexes = Array<s32>(1, imageEdges.imageWidth+1, memory, Flags::Buffer(false,false,false));
-        allLimits.xIncreasing_yStartIndexes = Array<s32>(1, imageEdges.imageWidth+1, memory, Flags::Buffer(false,false,false));
-        allLimits.yDecreasing_xStartIndexes = Array<s32>(1, imageEdges.imageHeight+1, memory, Flags::Buffer(false,false,false));
-        allLimits.yIncreasing_xStartIndexes = Array<s32>(1, imageEdges.imageHeight+1, memory, Flags::Buffer(false,false,false));
+        allLimits.xDecreasing_yStartIndexes = Array<s32>(1, imageEdges.imageHeight+1, memory, Flags::Buffer(false,false,false));
+        allLimits.xIncreasing_yStartIndexes = Array<s32>(1, imageEdges.imageHeight+1, memory, Flags::Buffer(false,false,false));
+        allLimits.yDecreasing_xStartIndexes = Array<s32>(1, imageEdges.imageWidth+1, memory, Flags::Buffer(false,false,false));
+        allLimits.yIncreasing_xStartIndexes = Array<s32>(1, imageEdges.imageWidth+1, memory, Flags::Buffer(false,false,false));
 
-        AnkiConditionalErrorAndReturnValue(allLimits.yIncreasing_xStartIndexes.IsValid(),
+        AnkiConditionalErrorAndReturnValue(
+          allLimits.xDecreasing_yStartIndexes.IsValid() &&
+          allLimits.xIncreasing_yStartIndexes.IsValid() &&
+          allLimits.yDecreasing_xStartIndexes.IsValid() &&
+          allLimits.yIncreasing_xStartIndexes.IsValid(),
           RESULT_FAIL_OUT_OF_MEMORY, "BinaryTracker::ComputeAllIndexLimits", "Could not allocate local memory");
 
         ComputeIndexLimitsVertical(imageEdges.xDecreasing, allLimits.xDecreasing_yStartIndexes);
@@ -541,12 +545,12 @@ namespace Anki
           const s32 warpedXrounded = RoundS32_minusPointFive(warpedX + centerOffset.x);
           const s32 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
 
-          if(warpedYrounded >= 0 && warpedYrounded < imageHeight) {
+          if(warpedXrounded >= 0 && warpedXrounded < imageWidth) {
             const s32 minY = warpedYrounded - maxMatchingDistance;
             const s32 maxY = warpedYrounded + maxMatchingDistance;
 
-            s32 curIndex = pXStartIndexes[warpedYrounded];
-            const s32 endIndex = pXStartIndexes[warpedYrounded+1];
+            s32 curIndex = pXStartIndexes[warpedXrounded];
+            const s32 endIndex = pXStartIndexes[warpedXrounded+1];
 
             /*if(curIndex < 0 || curIndex > numNewPoints) {
             printf("");
@@ -625,12 +629,12 @@ namespace Anki
           const s32 warpedXrounded = RoundS32_minusPointFive(warpedX + centerOffset.x);
           const s32 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
 
-          if(warpedXrounded >= 0 && warpedXrounded < imageWidth) {
+          if(warpedYrounded >= 0 && warpedYrounded < imageHeight) {
             const s32 minX = warpedXrounded - maxMatchingDistance;
             const s32 maxX = warpedXrounded + maxMatchingDistance;
 
-            s32 curIndex = pYStartIndexes[warpedXrounded];
-            const s32 endIndex = pYStartIndexes[warpedXrounded+1];
+            s32 curIndex = pYStartIndexes[warpedYrounded];
+            const s32 endIndex = pYStartIndexes[warpedYrounded+1];
 
             /*if(curIndex < 0 || curIndex > numNewPoints) {
             printf("");
@@ -727,12 +731,12 @@ namespace Anki
           const s32 warpedXrounded = RoundS32_minusPointFive(warpedX + centerOffset.x);
           const s32 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
 
-          if(warpedYrounded >= 0 && warpedYrounded < imageHeight) {
+          if(warpedXrounded >= 0 && warpedXrounded < imageWidth) {
             const s32 minY = warpedYrounded - maxMatchingDistance;
             const s32 maxY = warpedYrounded + maxMatchingDistance;
 
-            s32 curIndex = pXStartIndexes[warpedYrounded];
-            const s32 endIndex = pXStartIndexes[warpedYrounded+1];
+            s32 curIndex = pXStartIndexes[warpedXrounded];
+            const s32 endIndex = pXStartIndexes[warpedXrounded+1];
 
             /*if(curIndex < 0 || curIndex > numNewPoints) {
             printf("");
@@ -884,12 +888,12 @@ namespace Anki
           const s32 warpedXrounded = RoundS32_minusPointFive(warpedX + centerOffset.x);
           const s32 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
 
-          if(warpedXrounded >= 0 && warpedXrounded < imageWidth) {
+          if(warpedYrounded >= 0 && warpedYrounded < imageHeight) {
             const s32 minX = warpedXrounded - maxMatchingDistance;
             const s32 maxX = warpedXrounded + maxMatchingDistance;
 
-            s32 curIndex = pYStartIndexes[warpedXrounded];
-            const s32 endIndex = pYStartIndexes[warpedXrounded+1];
+            s32 curIndex = pYStartIndexes[warpedYrounded];
+            const s32 endIndex = pYStartIndexes[warpedYrounded+1];
 
             /*if(curIndex < 0 || curIndex > numNewPoints) {
             printf("");
@@ -1023,12 +1027,12 @@ namespace Anki
           const s32 warpedXrounded = RoundS32_minusPointFive(warpedX + centerOffset.x);
           const s32 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
 
-          if(warpedYrounded >= 0 && warpedYrounded < imageHeight) {
+          if(warpedXrounded >= 0 && warpedXrounded < imageWidth) {
             const s32 minY = warpedYrounded - maxMatchingDistance;
             const s32 maxY = warpedYrounded + maxMatchingDistance;
 
-            s32 curIndex = pXStartIndexes[warpedYrounded];
-            const s32 endIndex = pXStartIndexes[warpedYrounded+1];
+            s32 curIndex = pXStartIndexes[warpedXrounded];
+            const s32 endIndex = pXStartIndexes[warpedXrounded+1];
 
             /*if(curIndex < 0 || curIndex > numNewPoints) {
             printf("");
@@ -1100,12 +1104,12 @@ namespace Anki
           const s32 warpedXrounded = RoundS32_minusPointFive(warpedX + centerOffset.x);
           const s32 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
 
-          if(warpedXrounded >= 0 && warpedXrounded < imageWidth) {
+          if(warpedYrounded >= 0 && warpedYrounded < imageHeight) {
             const s32 minX = warpedXrounded - maxMatchingDistance;
             const s32 maxX = warpedXrounded + maxMatchingDistance;
 
-            s32 curIndex = pYStartIndexes[warpedXrounded];
-            const s32 endIndex = pYStartIndexes[warpedXrounded+1];
+            s32 curIndex = pYStartIndexes[warpedYrounded];
+            const s32 endIndex = pYStartIndexes[warpedYrounded+1];
 
             /*if(curIndex < 0 || curIndex > numNewPoints) {
             printf("");
@@ -1180,12 +1184,12 @@ namespace Anki
           const s32 warpedXrounded = RoundS32_minusPointFive(warpedX + centerOffset.x);
           const s32 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
 
-          if(warpedYrounded >= 0 && warpedYrounded < imageHeight) {
+          if(warpedXrounded >= 0 && warpedXrounded < imageWidth) {
             const s32 minY = warpedYrounded - maxMatchingDistance;
             const s32 maxY = warpedYrounded + maxMatchingDistance;
 
-            s32 curIndex = pXStartIndexes[warpedYrounded];
-            const s32 endIndex = pXStartIndexes[warpedYrounded+1];
+            s32 curIndex = pXStartIndexes[warpedXrounded];
+            const s32 endIndex = pXStartIndexes[warpedXrounded+1];
 
             /*if(curIndex < 0 || curIndex > numNewPoints) {
             printf("");
@@ -1274,12 +1278,12 @@ namespace Anki
           const s32 warpedXrounded = RoundS32_minusPointFive(warpedX + centerOffset.x);
           const s32 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
 
-          if(warpedXrounded >= 0 && warpedXrounded < imageWidth) {
+          if(warpedYrounded >= 0 && warpedYrounded < imageHeight) {
             const s32 minX = warpedXrounded - maxMatchingDistance;
             const s32 maxX = warpedXrounded + maxMatchingDistance;
 
-            s32 curIndex = pYStartIndexes[warpedXrounded];
-            const s32 endIndex = pYStartIndexes[warpedXrounded+1];
+            s32 curIndex = pYStartIndexes[warpedYrounded];
+            const s32 endIndex = pYStartIndexes[warpedYrounded+1];
 
             /*if(curIndex < 0 || curIndex > numNewPoints) {
             printf("");
