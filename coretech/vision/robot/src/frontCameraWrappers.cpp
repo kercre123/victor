@@ -198,17 +198,13 @@ namespace Anki
         if((lastResult = parser.ExtractBlockMarker(image, currentQuad, currentHomography, decode_minContrastRatio, currentMarker, scratchOnchip)) != RESULT_OK)
         return lastResult;
         */
-        
-        VisionMarker currentMarker;
-        //VisionMarker &currentMarker = markers[iQuad];
+        VisionMarker &currentMarker = markers[iQuad];
 
         if((lastResult = currentMarker.Extract(image, currentQuad, currentHomography,
           decode_minContrastRatio)) != RESULT_OK)
         {
           return lastResult;
         }
-        
-        markers.PushBack(currentMarker);        
       }
 
       // Remove invalid markers from the list

@@ -90,9 +90,6 @@ namespace Anki
         // Set this object's transformType, centerOffset, initialCorners, and homography
         Result Set(const PlanarTransformation_f32 &newTransformation);
 
-        Result Serialize(void * buffer, const s32 bufferLength) const;
-        Result Deserialize(const void* buffer, const s32 bufferLength);
-
         Result set_transformType(const TransformType transformType);
         TransformType get_transformType() const;
 

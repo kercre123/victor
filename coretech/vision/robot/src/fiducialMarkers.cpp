@@ -524,14 +524,11 @@ namespace Anki
       //memcpy(buffer, reinterpret_cast<const void*>(this), sizeof(this));
 
       char * bufferChar = reinterpret_cast<char*>(buffer);
-
       memcpy(bufferChar, reinterpret_cast<const void*>(&this->corners), sizeof(this->corners));
       bufferChar += sizeof(this->corners);
-
       const s32 markerTypeS32 = static_cast<s32>(this->markerType);
       memcpy(bufferChar, reinterpret_cast<const void*>(&markerTypeS32), sizeof(s32));
       bufferChar += sizeof(s32);
-
       memcpy(bufferChar, reinterpret_cast<const void*>(&this->isValid), sizeof(this->isValid));
 
       return RESULT_OK;
@@ -552,13 +549,10 @@ namespace Anki
       this->isValid = tmpMarker->isValid;*/
 
       const char * bufferChar = reinterpret_cast<const char*>(buffer);
-
       this->corners = *reinterpret_cast<const Quadrilateral<s16>*>(bufferChar);
       bufferChar += sizeof(this->corners);
-
       this->markerType = static_cast<Vision::MarkerType>(*reinterpret_cast<const s32*>(bufferChar));
       bufferChar += sizeof(this->markerType);
-
       this->isValid = *reinterpret_cast<const bool*>(bufferChar);
 
       return RESULT_OK;

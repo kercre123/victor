@@ -55,8 +55,6 @@ void ProcessRawBuffer(RawBuffer &buffer, const string outputFilenamePattern, con
   // Used for displaying detected fiducials
   cv::Mat lastImage(0,0,CV_8U);
 
-  Transformations::PlanarTransformation_f32 lastPlanarTransformation(Transformations::TRANSFORM_PROJECTIVE, memory);
-
   std::vector<VisionMarker> visionMarkerList;
 
 #ifdef PRINTF_ALL_RECEIVED
@@ -202,23 +200,16 @@ void ProcessRawBuffer(RawBuffer &buffer, const string outputFilenamePattern, con
       } else if(type == SerializedBuffer::DATA_TYPE_STRING) {
         printf("Board>> %s", dataSegment);
       } else if(type == SerializedBuffer::DATA_TYPE_CUSTOM) {
-        dataSegment[SerializedBuffer::CUSTOM_TYPE_STRING_LENGTH-1] = '\0'; //< Sanitize the input
-
-        const char * customTypeName = reinterpret_cast<const char*>(dataSegment);
-
+        dataSegment[SerializedBuffer::CUSTOM_TYPE_STRING_LENGTH-1] = '\0';
         printf(reinterpret_cast<const char*>(dataSegment));
+        if(strcmp(reinterpret_cast<const char*>(dataSegment), "VisionMarker") == 0) {
+          dataSegment += SerializedBuffer::CUSTOM_TYPE_STRING_LENGTH;
+          const s32 remainingDataLength = dataLength - SerializedBuffer::EncodedArray::CODE_SIZE * sizeof(u32);
 
-        dataSegment += SerializedBuffer::CUSTOM_TYPE_STRING_LENGTH;
-        const s32 remainingDataLength = dataLength - SerializedBuffer::CUSTOM_TYPE_STRING_LENGTH;
-
-        if(strcmp(reinterpret_cast<const char*>(customTypeName), "VisionMarker") == 0) {
           VisionMarker marker;
           marker.Deserialize(dataSegment, remainingDataLength);
           marker.Print();
           visionMarkerList.push_back(marker);
-        } else if(strcmp(reinterpret_cast<const char*>(customTypeName), "TransformF32") == 0) {
-          lastPlanarTransformation.Deserialize(dataSegment, remainingDataLength);
-          lastPlanarTransformation.Print();
         }
       }
 
@@ -288,6 +279,13 @@ void ProcessRawBuffer(RawBuffer &buffer, const string outputFilenamePattern, con
 
         cv::putText(toShowImage, typeString, textStartPoint, cv::FONT_HERSHEY_PLAIN, 0.5, textColor);
       }
+
+      //fillPoly( img,
+      //  ppt,
+      //  npt,
+      //  1,
+      //  Scalar( 255, 255, 255 ),
+      //  lineType );
 
       cv::imshow("Robot Image", toShowImage);
       cv::waitKey(10);
