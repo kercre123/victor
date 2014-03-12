@@ -301,6 +301,56 @@ namespace Anki
         return RESULT_OK;
       }
 
+      Result PlanarTransformation_f32::Serialize(void * buffer, const s32 bufferLength) const
+      {
+        // TODO: make the correct length
+        if(bufferLength < 512) {
+          return RESULT_FAIL;
+        }
+
+        char * bufferChar = reinterpret_cast<char*>(buffer);
+
+        memcpy(bufferChar, reinterpret_cast<const void*>(&this->isValid), sizeof(this->isValid));
+        bufferChar += sizeof(this->isValid);
+
+        const s32 transformTypeS32 = static_cast<s32>(this->transformType);
+        memcpy(bufferChar, reinterpret_cast<const void*>(&transformTypeS32), sizeof(transformTypeS32));
+        bufferChar += sizeof(transformTypeS32);
+
+        const s32 numArrayBytes = this->homography.get_stride()*this->homography.get_size(0);
+        memcpy(bufferChar, reinterpret_cast<const void*>(this->homography.Pointer(0,0)), numArrayBytes);
+        bufferChar += numArrayBytes;
+
+        memcpy(bufferChar, reinterpret_cast<const void*>(&this->initialCorners), sizeof(this->initialCorners));
+        bufferChar += sizeof(this->initialCorners);
+
+        memcpy(bufferChar, reinterpret_cast<const void*>(&this->centerOffset), sizeof(this->centerOffset));
+
+        return RESULT_OK;
+      }
+
+      Result PlanarTransformation_f32::Deserialize(const void* buffer, const s32 bufferLength)
+      {
+        const char * bufferChar = reinterpret_cast<const char*>(buffer);
+
+        this->isValid = *reinterpret_cast<const bool*>(bufferChar);
+        bufferChar += sizeof(this->isValid);
+
+        this->transformType = static_cast<TransformType>(*reinterpret_cast<const s32*>(bufferChar));
+        bufferChar += sizeof(s32);
+
+        const s32 numArrayBytes = this->homography.get_stride()*this->homography.get_size(0);
+        memcpy(this->homography.Pointer(0,0), bufferChar, numArrayBytes);
+        bufferChar += numArrayBytes;
+
+        this->initialCorners = *reinterpret_cast<const Quadrilateral<f32>*>(bufferChar);
+        bufferChar += sizeof(this->initialCorners);
+
+        this->centerOffset = *reinterpret_cast<const Point<f32>*>(bufferChar);
+
+        return RESULT_OK;
+      }
+
       Result PlanarTransformation_f32::set_transformType(const TransformType transformType)
       {
         if(transformType == TRANSFORM_TRANSLATION || transformType == TRANSFORM_AFFINE || transformType == TRANSFORM_PROJECTIVE) {

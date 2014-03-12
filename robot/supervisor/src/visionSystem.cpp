@@ -41,7 +41,7 @@ extern u8 m_buffer1[];
 // TODO: make nice
 extern volatile bool isEOF;
 
-#warning remove
+// TODO: remove
 #define SEND_DEBUG_STREAM
 //#define RUN_SIMPLE_TRACKING_TEST
 

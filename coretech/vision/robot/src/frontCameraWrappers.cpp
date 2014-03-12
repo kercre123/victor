@@ -167,7 +167,6 @@ namespace Anki
 
       // 4b. Compute a homography for each extracted quadrilateral
       BeginBenchmark("ComputeHomographyFromQuad");
-      markers.set_size(extractedQuads.get_size());
       for(s32 iQuad=0; iQuad<extractedQuads.get_size(); iQuad++) {
         Array<f32> &currentHomography = homographies[iQuad];
 
@@ -189,6 +188,9 @@ namespace Anki
       //EndBenchmark("Copy Image To Onchip");
 
       BeginBenchmark("ExtractVisionMarker");
+
+      markers.set_size(extractedQuads.get_size());
+
       for(s32 iQuad=0; iQuad<extractedQuads.get_size(); iQuad++) {
         const Array<f32> &currentHomography = homographies[iQuad];
         const Quadrilateral<s16> &currentQuad = extractedQuads[iQuad];
@@ -198,6 +200,7 @@ namespace Anki
         if((lastResult = parser.ExtractBlockMarker(image, currentQuad, currentHomography, decode_minContrastRatio, currentMarker, scratchOnchip)) != RESULT_OK)
         return lastResult;
         */
+
         VisionMarker &currentMarker = markers[iQuad];
 
         if((lastResult = currentMarker.Extract(image, currentQuad, currentHomography,
