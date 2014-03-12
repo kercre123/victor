@@ -191,7 +191,7 @@ namespace Anki {
       ReturnCode YUVToGrayscaleHelper(const FrameBuffer& yuvFrame, Embedded::Array<u8>& grayscaleImage);
 
       // Warning, has side effects on local buffers
-      ReturnCode InitializeScratchBuffers();
+      ReturnCode InitializeScratchBuffers(bool forceReset);
 
       //#pragma mark --- VisionSystem Method Implementations ---
 
@@ -427,7 +427,7 @@ namespace Anki {
       {
         ReturnCode retVal = EXIT_SUCCESS;
 
-        InitializeScratchBuffers();
+        InitializeScratchBuffers(false);
 
         FrameBuffer frame = {
           m_buffer1,
@@ -666,9 +666,9 @@ namespace Anki {
         return EXIT_SUCCESS;
       } // void YUVToGrayscaleHelper(const FrameBuffer& yuvFrame, Embedded::Array<u8>& grayscaleImage)
 
-      ReturnCode InitializeScratchBuffers()
+      ReturnCode InitializeScratchBuffers(bool forceReset)
       {
-        if(!scratchInitialized_) {
+        if(forceReset || !scratchInitialized_) {
           //PRINT("Initializing scratch memory.\n");
 
           offchipScratch_ = Embedded::MemoryStack(offchipBuffer, OFFCHIP_BUFFER_SIZE);
@@ -710,7 +710,7 @@ namespace Anki {
         // For each block that's found, create a CozmoMsg_ObservedBlockMarkerMsg
         // and process it.
 
-        if(InitializeScratchBuffers() != EXIT_SUCCESS) {
+        if(InitializeScratchBuffers(true) != EXIT_SUCCESS) {
           return EXIT_FAILURE;
         }
 
@@ -721,6 +721,8 @@ namespace Anki {
           PUSH_MEMORY_STACK(offchipScratch_);
           //PUSH_MEMORY_STACK(onchipScratch_);
           PUSH_MEMORY_STACK(ccmScratch_);
+          
+          printf("Stacks usage: %d %d %d\n", offchipScratch_.get_usedBytes(), onchipScratch_.get_usedBytes(), ccmScratch_.get_usedBytes());
 
           const u16 detectWidth  = HAL::CameraModeInfo[DETECTION_RESOLUTION].width;
           const u16 detectHeight = HAL::CameraModeInfo[DETECTION_RESOLUTION].height;
@@ -840,6 +842,9 @@ namespace Anki {
               const u8 * bufferStart = reinterpret_cast<const u8*>(debugStreamBuffer_.get_memoryStack().get_validBufferStart(startIndex));
               const s32 validUsedBytes = debugStreamBuffer_.get_memoryStack().get_usedBytes() - startIndex;
 
+
+              //TODO: add back
+              /*
               for(s32 i=0; i<Embedded::SERIALIZED_BUFFER_HEADER_LENGTH; i++) {
                 Anki::Cozmo::HAL::UARTPutChar(Embedded::SERIALIZED_BUFFER_HEADER[i]);
               }
@@ -851,6 +856,7 @@ namespace Anki {
               for(s32 i=0; i<Embedded::SERIALIZED_BUFFER_FOOTER_LENGTH; i++) {
                 Anki::Cozmo::HAL::UARTPutChar(Embedded::SERIALIZED_BUFFER_FOOTER[i]);
               }
+              */
 
               HAL::MicroWait(50000);
             } // ReturnCode SendDebugStream_Detection()
@@ -981,7 +987,7 @@ namespace Anki {
         retVal = EXIT_SUCCESS;
 
 #else
-        if(InitializeScratchBuffers() != EXIT_SUCCESS) {
+        if(InitializeScratchBuffers(false) != EXIT_SUCCESS) {
           return EXIT_FAILURE;
         }
 

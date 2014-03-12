@@ -540,7 +540,6 @@ namespace Anki
           const s32 warpedXrounded = RoundS32_minusPointFive(warpedX + centerOffset.x);
           const s32 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
 
-          //if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance)) {
           if(warpedXrounded >= 0 && warpedXrounded < imageWidth) {
             const s32 minY = warpedYrounded - maxMatchingDistance;
             const s32 maxY = warpedYrounded + maxMatchingDistance;
@@ -562,7 +561,7 @@ namespace Anki
 
               curIndex++;
             }
-          } // if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance))
+          } // if(warpedXrounded >= 0 && warpedXrounded < imageWidth)
         } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
 
         numCorrespondences = RoundS32(numCorrespondencesF32);
@@ -620,7 +619,6 @@ namespace Anki
           const s32 warpedXrounded = RoundS32_minusPointFive(warpedX + centerOffset.x);
           const s32 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
 
-          //if(warpedXrounded >= maxMatchingDistance && warpedXrounded < (imageWidth-maxMatchingDistance)) {
           if(warpedYrounded >= 0 && warpedYrounded < imageHeight) {
             const s32 minX = warpedXrounded - maxMatchingDistance;
             const s32 maxX = warpedXrounded + maxMatchingDistance;
@@ -642,7 +640,7 @@ namespace Anki
 
               curIndex++;
             }
-          } // if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance))
+          } // if(warpedYrounded >= 0 && warpedYrounded < imageHeight)
         } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
 
         numCorrespondences = RoundS32(numCorrespondencesF32);
@@ -718,7 +716,7 @@ namespace Anki
           const s32 warpedXrounded = RoundS32_minusPointFive(warpedX + centerOffset.x);
           const s32 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
 
-          if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance)) {
+          if(warpedXrounded >= 0 && warpedXrounded < imageWidth) {
             const s32 minY = warpedYrounded - maxMatchingDistance;
             const s32 maxY = warpedYrounded + maxMatchingDistance;
 
@@ -779,7 +777,7 @@ namespace Anki
 
               curIndex++;
             }
-          } // if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance))
+          } // if(warpedXrounded >= 0 && warpedXrounded < imageWidth)
         } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
 
 #if !defined(USE_ARM_ACCELERATION) // natural C
@@ -870,7 +868,7 @@ namespace Anki
           const s32 warpedXrounded = RoundS32_minusPointFive(warpedX + centerOffset.x);
           const s32 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
 
-          if(warpedXrounded >= maxMatchingDistance && warpedXrounded < (imageWidth-maxMatchingDistance)) {
+          if(warpedYrounded >= 0 && warpedYrounded < imageHeight) {
             const s32 minX = warpedXrounded - maxMatchingDistance;
             const s32 maxX = warpedXrounded + maxMatchingDistance;
 
@@ -932,7 +930,7 @@ namespace Anki
 
               curIndex++;
             }
-          } // if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance))
+          } // if(warpedYrounded >= 0 && warpedYrounded < imageHeight)
         } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
 
 #if !defined(USE_ARM_ACCELERATION) // natural C
@@ -1004,7 +1002,6 @@ namespace Anki
           const s32 warpedXrounded = RoundS32_minusPointFive(warpedX + centerOffset.x);
           const s32 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
 
-          //if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance)) {
           if(warpedXrounded >= 0 && warpedXrounded < imageWidth) {
             const s32 minY = warpedYrounded - maxMatchingDistance;
             const s32 maxY = warpedYrounded + maxMatchingDistance;
@@ -1021,7 +1018,7 @@ namespace Anki
             if( (curIndex<endIndex) && (pNewPoints[curIndex].y<=maxY) ) {
               numTemplatePixelsMatchedF32 += 1.0f;
             }
-          } // if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance))
+          } // if(warpedXrounded >= 0 && warpedXrounded < imageWidth)
         } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
 
         numTemplatePixelsMatched = RoundS32(numTemplatePixelsMatchedF32);
@@ -1077,7 +1074,6 @@ namespace Anki
           const s32 warpedXrounded = RoundS32_minusPointFive(warpedX + centerOffset.x);
           const s32 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
 
-          //if(warpedXrounded >= maxMatchingDistance && warpedXrounded < (imageWidth-maxMatchingDistance)) {
           if(warpedYrounded >= 0 && warpedYrounded < imageHeight) {
             const s32 minX = warpedXrounded - maxMatchingDistance;
             const s32 maxX = warpedXrounded + maxMatchingDistance;
@@ -1094,7 +1090,7 @@ namespace Anki
             if( (curIndex<endIndex) && (pNewPoints[curIndex].x<=maxX) ) {
               numTemplatePixelsMatchedF32 += 1.0f;
             }
-          } // if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance))
+          } // if(warpedYrounded >= 0 && warpedYrounded < imageHeight)
         } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
 
         numTemplatePixelsMatched = RoundS32(numTemplatePixelsMatchedF32);
@@ -1153,7 +1149,6 @@ namespace Anki
           const s32 warpedXrounded = RoundS32_minusPointFive(warpedX + centerOffset.x);
           const s32 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
 
-          //if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance)) {
           if(warpedXrounded >= 0 && warpedXrounded < imageWidth) {
             const s32 minY = warpedYrounded - maxMatchingDistance;
             const s32 maxY = warpedYrounded + maxMatchingDistance;
@@ -1184,7 +1179,7 @@ namespace Anki
 
               curIndex++;
             }
-          } // if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance))
+          } // if(warpedXrounded >= 0 && warpedXrounded < imageWidth)
         } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
 
         matchingIndexes.set_size(numMatchingIndexes);
@@ -1243,7 +1238,6 @@ namespace Anki
           const s32 warpedXrounded = RoundS32_minusPointFive(warpedX + centerOffset.x);
           const s32 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
 
-          //if(warpedXrounded >= maxMatchingDistance && warpedXrounded < (imageWidth-maxMatchingDistance)) {
           if(warpedYrounded >= 0 && warpedYrounded < imageHeight) {
             const s32 minX = warpedXrounded - maxMatchingDistance;
             const s32 maxX = warpedXrounded + maxMatchingDistance;
@@ -1275,7 +1269,7 @@ namespace Anki
 
               curIndex++;
             }
-          } // if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance))
+          } // if(warpedYrounded >= 0 && warpedYrounded < imageHeight)
         } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
 
         matchingIndexes.set_size(numMatchingIndexes);
