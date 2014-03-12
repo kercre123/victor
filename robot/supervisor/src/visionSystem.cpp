@@ -43,7 +43,7 @@ extern volatile bool isEOF;
 
 // TODO: remove
 #define SEND_DEBUG_STREAM
-//#define RUN_SIMPLE_TRACKING_TEST
+#define RUN_SIMPLE_TRACKING_TEST
 
 namespace Anki {
   namespace Cozmo {
@@ -169,7 +169,7 @@ namespace Anki {
         TimeStamp_t  timestamp;
       } FrameBuffer;
 
-      ReturnCode CaptureHeadFrame(FrameBuffer &frame);
+      //ReturnCode CaptureHeadFrame(FrameBuffer &frame);
 
       ReturnCode LookForMarkers(const FrameBuffer &frame);
 
@@ -495,7 +495,7 @@ namespace Anki {
               retVal = EXIT_FAILURE;
             }
             else {
-              CaptureHeadFrame(frame);
+              //CaptureHeadFrame(frame);
 
 #ifdef SIMULATOR
               frameRdyTimeUS_ = HAL::GetMicroCounter() + TRACK_BLOCK_PERIOD_US;
@@ -545,7 +545,7 @@ namespace Anki {
         return retVal;
       } // Update()
 
-      ReturnCode CaptureHeadFrame(FrameBuffer &frame)
+/*      ReturnCode CaptureHeadFrame(FrameBuffer &frame)
       {
         // Only QQQVGA can be captured in SINGLE mode.
         // Other modes must be captured in CONTINUOUS mode otherwise you get weird
@@ -569,7 +569,7 @@ namespace Anki {
         frame.timestamp = HAL::GetTimeStamp();
 
         return EXIT_SUCCESS;
-      } // CaptureHeadFrame()
+      } // CaptureHeadFrame()*/
 
       void DownsampleHelper(const FrameBuffer& frame, Embedded::Array<u8>& image,
         const HAL::CameraMode outputResolution,
@@ -1136,6 +1136,11 @@ namespace Anki {
           if(percentMatchedPixels >= percentMatchedPixelsThreshold) {
             converged = true;
           }
+          
+          //tracker_.get_transformation().Print("tracker_");
+          printf("%f %f\n", *tracker_.get_transformation().get_homography().Pointer(0,2), *tracker_.get_transformation().get_homography().Pointer(1,2));
+          
+          //PRINT("percentMatchedPixels = %f\n", percentMatchedPixels);
 #endif
 
           if(trackerResult == Embedded::RESULT_OK)
