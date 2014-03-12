@@ -54,6 +54,14 @@ static bool isInitialized_ = false;
 #define DOCKING_BINARY_TRACKER        3 //< BinaryTracker
 #define DOCKING_ALGORITHM DOCKING_BINARY_TRACKER
 
+#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_FAST
+typedef TemplateTracker::LucasKanadeTrackerFast Tracker;
+#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_STANDARD
+typedef TemplateTracker::LucasKanadeTracker_f32 Tracker;
+#elif DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
+typedef TemplateTracker::BinaryTracker Tracker;
+#endif
+
 typedef enum {
   VISION_MODE_IDLE,
   VISION_MODE_LOOKING_FOR_MARKERS,
@@ -130,9 +138,15 @@ namespace DetectFiducialMarkersParameters
   }
 } // namespace DetectFiducialMarkersParameters
 
-namespace LucasKanadeParameters {
+#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_STANDARD || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_FAST
+
+namespace TrackerParameters {
   typedef struct Parameters
   {
+    s32 detectionWidth;
+    s32 detectionHeight;
+    s32 trackingImageHeight;
+    s32 trackingImageWidth;
     s32 numPyramidLevels;
     f32 ridgeWeight;
     s32 maxIterations;
@@ -141,6 +155,12 @@ namespace LucasKanadeParameters {
 
     Parameters()
     {
+      // TODO: set via HAL
+      detectionWidth  = 320;
+      detectionHeight = 240;
+      trackingImageHeight = 60;
+      trackingImageWidth = 80;
+
       numPyramidLevels = 2;
       ridgeWeight = 0.0f;
       maxIterations = 25;
@@ -149,20 +169,24 @@ namespace LucasKanadeParameters {
     } // Parameters
   } Parameters;
 
-  static LucasKanadeParameters::Parameters parameters_;
+  static TrackerParameters::Parameters parameters_;
 
   // Set the default parameters
   static ReturnCode Initialize()
   {
-    parameters_ = LucasKanadeParameters::Parameters();
+    parameters_ = TrackerParameters::Parameters();
 
     return EXIT_SUCCESS;
   }
 } // namespace LucasKanadeParameters
 
-namespace BinaryTrackerParameters {
+#else // #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_STANDARD || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_FAST
+
+namespace TrackerParameters {
   typedef struct Parameters
   {
+    s32 detectionWidth;
+    s32 detectionHeight;
     u8 edgeDetection_grayvalueThreshold;
     s32 edgeDetection_minComponentWidth;
     s32 edgeDetection_maxDetectionsPerType;
@@ -174,6 +198,9 @@ namespace BinaryTrackerParameters {
 
     Parameters()
     {
+      // TODO: set via HAL
+      detectionWidth  = 320;
+      detectionHeight = 240;
       edgeDetection_grayvalueThreshold = 128;
       edgeDetection_minComponentWidth = 2;
       edgeDetection_maxDetectionsPerType = 2500;
@@ -185,16 +212,18 @@ namespace BinaryTrackerParameters {
     }
   } Parameters;
 
-  static BinaryTrackerParameters::Parameters parameters_;
+  static TrackerParameters::Parameters parameters_;
 
   // Set the default parameters
   static ReturnCode Initialize()
   {
-    parameters_ = BinaryTrackerParameters::Parameters();
+    parameters_ = TrackerParameters::Parameters();
 
     return EXIT_SUCCESS;
   }
-} // namespace BinaryTrackerParameters
+} // namespace TrackerParameters
+
+#endif // #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_STANDARD || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_FAST
 
 namespace VisionMemory
 {
@@ -210,7 +239,8 @@ namespace VisionMemory
   static MemoryStack onchipScratch_;
   static MemoryStack ccmScratch_;
 
-  static ReturnCode Initialize()
+  // WARNING: ResetBuffers should be used with caution
+  static ReturnCode ResetBuffers()
   {
     offchipScratch_ = MemoryStack(offchipBuffer, OFFCHIP_BUFFER_SIZE);
     onchipScratch_ = MemoryStack(onchipBuffer, ONCHIP_BUFFER_SIZE);
@@ -222,6 +252,11 @@ namespace VisionMemory
     }
 
     return EXIT_SUCCESS;
+  }
+
+  static ReturnCode Initialize()
+  {
+    return ResetBuffers();
   }
 } // namespace VisionMemory
 
@@ -463,12 +498,12 @@ namespace MatlabVisualization
 #endif //#if USE_MATLAB_VISUALIZATION
 } // namespace MatlabVisualization
 
-namespace Offboard 
-{  
+namespace Offboard
+{
   static ReturnCode Initialize()
   {
 #if USE_OFFBOARD_VISION
-    PRINT("VisionSystem::Init(): Registering message IDs for offboard processing.\n");
+    PRINT("Offboard::Init(): Registering message IDs for offboard processing.\n");
 
     // Register all the message IDs we need with Matlab:
     HAL::SendMessageID("CozmoMsg_BlockMarkerObserved",
@@ -496,7 +531,7 @@ namespace Offboard
     //                   GET_MESSAGE_ID(Messages::HeadCameraCalibration));
 
     // TODO: Update this to send mat and head cam calibration separately
-    PRINT("VisionSystem::Init(): Sending head camera calibration to "
+    PRINT("Offboard::Init(): Sending head camera calibration to "
       "offoard vision processor.\n");
 
     // Create a camera calibration message and send it to the offboard
@@ -539,26 +574,21 @@ namespace Offboard
 #endif // USE_OFFBOARD_VISION
     return EXIT_SUCCESS;
   } // static ReturnCode Initialize()
-} // namespace Offboard {
+} // namespace Offboard
 
 namespace VisionState {
   static const s32 MAX_TRACKING_FAILURES = 5;
 
   static const Anki::Cozmo::HAL::CameraInfo* headCamInfo_;
-  
+
   static VisionSystemMode mode_;
-  
-  static Anki::Vision::MarkerType trackingMarker_;
-  static Quadrilateral<f32> trackingQuad_;  
+
+  static Anki::Vision::MarkerType markerTypeToTrack_;
+  static Quadrilateral<f32> trackingQuad_;
   static s32 numTrackFailures_ ; //< The tracker can fail to converge this many times before we give up and reset the docker
-  
-#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_FAST
-  static TemplateTracker::LucasKanadeTrackerFast tracker_;
-#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_STANDARD
-  static TemplateTracker::LucasKanadeTracker_f32 tracker_;
-#elif DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
-  static TemplateTracker::BinaryTracker tracker_;
-#endif
+  static bool isTemplateInitialized_;
+  static bool isTrackingMarkerFound_;
+  static Tracker tracker_;
 
   // TODO: what do these do?
   //bool isTrackingMarkerFound_ = false;
@@ -571,13 +601,14 @@ namespace VisionState {
   //  TimeStamp_t  timestamp;
   //} FrameBuffer;
 
-
   static ReturnCode Initialize()
   {
     mode_ = VISION_MODE_LOOKING_FOR_MARKERS;
     headCamInfo_ = NULL;
-    trackingMarker_ = Anki::Vision::MARKER_UNKNOWN;
+    markerTypeToTrack_ = Anki::Vision::MARKER_UNKNOWN;
     numTrackFailures_ = 0;
+    isTemplateInitialized_ = false;;
+    isTrackingMarkerFound_ = false;
 
 #if 0
     //headCamInfo_ = HAL::GetHeadCamInfo();
@@ -621,6 +652,36 @@ namespace VisionState {
 //#warning forceReset is a big hack. This file should be fixed in a principled way.
 //ReturnCode InitializeScratchBuffers(bool forceReset);
 
+static ReturnCode DownsampleHelper(
+  const Array<u8>& in,
+  Array<u8>& out,
+  MemoryStack scratch)
+{
+  const s32 inWidth  = in.get_size(1);
+  const s32 inHeight = in.get_size(0);
+
+  const s32 outWidth  = out.get_size(1);
+  const s32 outHeight = out.get_size(0);
+
+  const u32 downsampleFactor = inWidth / outWidth;
+
+  const u32 downsamplePower = Log2u32(downsampleFactor);
+
+  if(downsamplePower > 0) {
+    //PRINT("Downsampling [%d x %d] frame by %d.\n", inWidth, inHeight, (1 << downsamplePower));
+
+    ImageProcessing::DownsampleByPowerOfTwo<u8,u32,u8>(in,
+      downsamplePower,
+      out,
+      scratch);
+  } else {
+    // No need to downsample, just copy the buffer
+    out.Set(in);
+  }
+
+  return EXIT_SUCCESS;
+}
+
 static ReturnCode LookForMarkers(
   const Array<u16> &yuvImage,
   const DetectFiducialMarkersParameters::Parameters &parameters,
@@ -634,6 +695,8 @@ static ReturnCode LookForMarkers(
   //printf("Stacks usage: %d %d %d\n", offchipScratch_.get_usedBytes(), onchipScratch_.get_usedBytes(), ccmScratch_.get_usedBytes());
 
   Array<u8> grayscaleImage(parameters.detectionHeight, parameters.detectionWidth, offchipScratch);
+
+  ImageProcessing::YUVToGrayscale(yuvImage, grayscaleImage);
 
   FixedLengthList<VisionMarker> markers(parameters.maxMarkers, offchipScratch);
   FixedLengthList<Array<f32> > homographies(parameters.maxMarkers, ccmScratch);
@@ -669,6 +732,17 @@ static ReturnCode LookForMarkers(
   if(result == RESULT_OK) {
     DebugStream::SendFiducialDetection();
     for(s32 i_marker = 0; i_marker < markers.get_size(); ++i_marker) {
+      const VisionMarker crntMarker = markers[i_marker];
+
+#ifdef RUN_SIMPLE_TRACKING_TEST
+      // We're looking for the battery marker. If it is seen, start tracking it.
+      if(!isTrackingMarkerFound_) {
+        if(crntMarker.markerType == Vision::MARKER_BATTERIES) {
+          SetMarkerToTrack(markerTypeToTrack_);
+        }
+      }
+#endif
+
       MatlabVisualization::SendFiducialDetection();
     }
 
@@ -676,17 +750,6 @@ static ReturnCode LookForMarkers(
     //          {
     //            const VisionMarker crntMarker = markers[i_marker];
     //
-    //#ifdef RUN_SIMPLE_TRACKING_TEST
-    //            // We're looking for the battery marker. If it is seen, start tracking it.
-    //            if(!isTrackingMarkerFound_) {
-    //              if(crntMarker.markerType == Vision::MARKER_BATTERIES) {
-    //                trackingMarker_ = crntMarker.markerType;
-    //                SetMarkerToTrack(trackingMarker_);
-    //                isTrackingMarkerFound_ = true;
-    //                isTemplateInitialized_ = false;
-    //              }
-    //            }
-    //#endif
     //
     //            MatlabVisualization::SendFiducialDetection(crntMarker.corners);
     //
@@ -728,6 +791,70 @@ static ReturnCode LookForMarkers(
   return EXIT_SUCCESS;
 } // LookForMarkers()
 
+static ReturnCode InitTemplate(
+  const Array<u16> &yuvImage,
+  const Quadrilateral<f32> &templateQuad,
+  const TrackerParameters::Parameters &parameters,
+  Tracker &tracker,
+  MemoryStack offchipScratch,
+  MemoryStack &onchipScratch, //< NOTE: onchip is a reference
+  MemoryStack ccmScratch)
+{
+  Array<u8> grayscaleImage(parameters.detectionHeight, parameters.detectionWidth, offchipScratch);
+  ImageProcessing::YUVToGrayscale(yuvImage, grayscaleImage);
+
+#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_FAST || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_STANDARD
+  // TODO: At some point template initialization should happen at full detection resolution but for
+  //       now, we have to downsample to tracking resolution
+
+  Array<u8> grayscaleImageSmall(parameters.trackHeight, parameters.trackWidth, ccmScratch);
+  DownsampleHelper(grayscaleImage, grayscaleImageSmall, ccmScratch);
+
+  // Note that the templateRegion and the trackingQuad are both at DETECTION_RESOLUTION, not
+  // necessarily the resolution of the frame.
+  const s32 downsamplePower = static_cast<s32>(HAL::CameraModeInfo[TRACKING_RESOLUTION].downsamplePower[DETECTION_RESOLUTION]);
+  const f32 downsampleFactor = static_cast<f32>(1 << downsamplePower);
+
+  for(u8 i=0; i<4; ++i) {
+    templateQuad[i].x /= downsampleFactor;
+    templateQuad[i].y /= downsampleFactor;
+  }
+#endif // #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_FAST || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_STANDARD
+
+#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_FAST
+  tracker = TemplateTracker::LucasKanadeTrackerFast(
+    imageSmall,
+    templateQuad,
+    NUM_TRACKING_PYRAMID_LEVELS,
+    Transformations::TRANSFORM_AFFINE,
+    TRACKING_RIDGE_WEIGHT,
+    onchipScratch);
+#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_STANDARD
+  tracker = TemplateTracker::LucasKanadeTracker_f32(
+    imageSmall,
+    templateQuad,
+    NUM_TRACKING_PYRAMID_LEVELS,
+    Transformations::TRANSFORM_AFFINE,
+    TRACKING_RIDGE_WEIGHT,
+    onchipScratch);
+#elif DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
+  tracker = TemplateTracker::BinaryTracker(
+    grayscaleImage,
+    templateQuad,
+    parameters.edgeDetection_grayvalueThreshold,
+    parameters.edgeDetection_minComponentWidth,
+    parameters.edgeDetection_maxDetectionsPerType,
+    parameters.edgeDetection_everyNLines,
+    onchipScratch);
+#endif
+
+  if(!tracker.IsValid()) {
+    return EXIT_FAILURE;
+  }
+
+  return EXIT_SUCCESS;
+} // InitTemplate()
+
 namespace Anki {
   namespace Cozmo {
     namespace VisionSystem {
@@ -742,8 +869,7 @@ namespace Anki {
 
           DebugStream::Initialize();
           DetectFiducialMarkersParameters::Initialize();
-          LucasKanadeParameters::Initialize();
-          BinaryTrackerParameters::Initialize();
+          TrackerParameters::Initialize();
           SimulatorParameters::Initialize();
           MatlabVisualization::Initialize();
           Offboard::Initialize();
@@ -760,6 +886,9 @@ namespace Anki {
 
       ReturnCode SetMarkerToTrack(const Vision::MarkerType& markerToTrack)
       {
+        VisionState::markerTypeToTrack_ = markerToTrack;
+        isTemplateInitialized_ = false;
+        isTrackingMarkerFound_ = false;
         return EXIT_SUCCESS;
       }
 
@@ -877,7 +1006,7 @@ namespace Anki {
 
       //      ReturnCode SetMarkerToTrack(const Vision::MarkerType& markerToTrack)
       //      {
-      //        trackingMarker_ = markerToTrack;
+      //        markerTypeToTrack_ = markerToTrack;
       //
       //        isTrackingMarkerFound_ = false;
       //        isTemplateInitialized_ = false;
@@ -891,7 +1020,7 @@ namespace Anki {
       //        // same frame where it sees the block, instead of needing a second
       //        // USBSendFrame call.
       //        HAL::USBSendPacket(HAL::USB_VISION_COMMAND_SETTRACKMARKER,
-      //          &trackingMarker_, sizeof(trackingMarker_));
+      //          &markerTypeToTrack_, sizeof(markerTypeToTrack_));
       //#endif
       //        return EXIT_SUCCESS;
       //      }
@@ -899,7 +1028,7 @@ namespace Anki {
       //void CheckForTrackingMarker(const u16 inputMarker)
       //{
       //  // If we have a block to dock with set, see if this was it
-      //  if(trackingMarker_ == static_cast<Vision::MarkerType>(inputMarker))
+      //  if(markerTypeToTrack_ == static_cast<Vision::MarkerType>(inputMarker))
       //  {
       //    isTrackingMarkerFound_ = true;
       //  }
@@ -934,7 +1063,7 @@ namespace Anki {
       //    ++numTrackFailures_;
       //    if(numTrackFailures_ == MAX_TRACKING_FAILURES) {
       //      // This resets docking, puttings us back in VISION_MODE_LOOKING_FOR_MARKERS mode
-      //      SetMarkerToTrack(trackingMarker_);
+      //      SetMarkerToTrack(markerTypeToTrack_);
       //      numTrackFailures_ = 0;
       //    }
       //  }
@@ -977,151 +1106,6 @@ namespace Anki {
       //    image.Set(frame.data, outHeight*outWidth);
       //  }
       //} // DownsampleHelper()
-
-      //void DownsampleHelper(const Array<u8>& in,
-      //  Array<u8>& out,
-      //  MemoryStack scratch)
-      //{
-      //  using namespace Embedded;
-
-      //  const s32 inWidth  = in.get_size(1);
-      //  const s32 inHeight = in.get_size(0);
-
-      //  const s32 outWidth  = out.get_size(1);
-      //  const s32 outHeight = out.get_size(0);
-
-      //  const u32 downsampleFactor = inWidth / outWidth;
-
-      //  const u32 downsamplePower = Log2u32(downsampleFactor);
-
-      //  if(downsamplePower > 0)
-      //  {
-      //    //PRINT("Downsampling [%d x %d] frame by %d.\n", inWidth, inHeight, (1 << downsamplePower));
-
-      //    ImageProcessing::DownsampleByPowerOfTwo<u8,u32,u8>(in,
-      //      downsamplePower,
-      //      out,
-      //      scratch);
-      //  }
-      //  else {
-      //    // No need to downsample, just copy the buffer
-      //    out.Set(in);
-      //  }
-      //}
-
-      //ReturnCode YUVToGrayscaleHelper(const FrameBuffer& yuvFrame, Array<u8>& grayscaleImage)
-      //{
-      //  using namespace Embedded;
-
-      //  const s32 imageHeight = grayscaleImage.get_size(0);
-      //  const s32 imageWidth  = grayscaleImage.get_size(1);
-
-      //  const HAL::CameraModeInfo_t cameraInfo = HAL::CameraModeInfo[yuvFrame.resolution];
-
-      //  if(cameraInfo.height != imageHeight || cameraInfo.width != imageWidth) {
-      //    PRINT("Error: YUVToGrayscaleHelper\n");
-      //    return EXIT_FAILURE;
-      //  }
-
-      //  for(s32 y=0; y<imageHeight; y++) {
-      //    const u8 * restrict pYuvFrame = yuvFrame.data + y*imageWidth*2;
-      //    u8 * restrict pGrayscaleImage = grayscaleImage.Pointer(y,0);
-
-      //    for(s32 x=0; x<imageWidth; x++) {
-      //      pGrayscaleImage[x] = pYuvFrame[2*x];
-      //    }
-      //  }
-
-      //  return EXIT_SUCCESS;
-      //} // void YUVToGrayscaleHelper(const FrameBuffer& yuvFrame, Array<u8>& grayscaleImage)
-
-      //      ReturnCode InitTemplate(const FrameBuffer &frame,
-      //        Quadrilateral<f32> &templateQuad)
-      //      {
-      //        ReturnCode retVal = EXIT_FAILURE;
-      //        isTemplateInitialized_ = false;
-      //
-      //#if USE_OFFBOARD_VISION
-      //
-      //        // When using offboard vision processing, template initialization is
-      //        // rolled into looking for blocks, to ensure that the same frame in
-      //        // which a desired docking block was detected is also used to
-      //        // initialize the tracking template (without re-sending the frame
-      //        // over USB).
-      //
-      //        retVal = EXIT_SUCCESS;
-      //
-      //#else
-      //        if(InitializeScratchBuffers(false) != EXIT_SUCCESS) {
-      //          return EXIT_FAILURE;
-      //        }
-      //
-      //        {
-      //          PUSH_MEMORY_STACK(offchipScratch_);
-      //          //PUSH_MEMORY_STACK(onchipScratch_);
-      //          PUSH_MEMORY_STACK(ccmScratch_);
-      //
-      //          using namespace TemplateTracker;
-      //
-      //          const u16 detectionWidth  = HAL::CameraModeInfo[DETECTION_RESOLUTION].width;
-      //          const u16 detectionHeight = HAL::CameraModeInfo[DETECTION_RESOLUTION].height;
-      //
-      //          // NOTE: this image will sit in the MemoryStack until tracking fails
-      //          //       and we reconstruct the MemoryStack
-      //          Array<u8> imageLarge(detectionHeight, detectionWidth, offchipScratch_);
-      //          YUVToGrayscaleHelper(frame, imageLarge);
-      //
-      //#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_FAST || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_STANDARD
-      //          // TODO: At some point template initialization should happen at full detection resolution
-      //          //       but for now, we have to downsample to tracking resolution
-      //          const u16 trackHeight = HAL::CameraModeInfo[TRACKING_RESOLUTION].height;
-      //          const u16 trackWidth  = HAL::CameraModeInfo[TRACKING_RESOLUTION].width;
-      //
-      //          Array<u8> imageSmall(trackHeight, trackWidth, ccmScratch_);
-      //          DownsampleHelper(imageLarge, imageSmall, ccmScratch_);
-      //
-      //          // Note that the templateRegion and the trackingQuad are both at
-      //          // DETECTION_RESOLUTION, not necessarily the resolution of the frame.
-      //          const s32 downsamplePower = static_cast<s32>(HAL::CameraModeInfo[TRACKING_RESOLUTION].downsamplePower[DETECTION_RESOLUTION]);
-      //          const f32 downsampleFactor = static_cast<f32>(1 << downsamplePower);
-      //
-      //          for(u8 i=0; i<4; ++i) {
-      //            templateQuad[i].x /= downsampleFactor;
-      //            templateQuad[i].y /= downsampleFactor;
-      //          }
-      //#endif // #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_FAST || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_STANDARD
-      //
-      //#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_FAST
-      //          tracker_ = LucasKanadeTrackerFast(imageSmall, templateQuad,
-      //            NUM_TRACKING_PYRAMID_LEVELS,
-      //            Transformations::TRANSFORM_AFFINE,
-      //            TRACKING_RIDGE_WEIGHT,
-      //            onchipScratch_);
-      //#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_STANDARD
-      //          tracker_ = LucasKanadeTracker_f32(imageSmall, templateQuad,
-      //            NUM_TRACKING_PYRAMID_LEVELS,
-      //            Transformations::TRANSFORM_AFFINE,
-      //            TRACKING_RIDGE_WEIGHT,
-      //            onchipScratch_);
-      //#elif DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
-      //          tracker_ =  BinaryTracker(imageLarge, templateQuad,
-      //            edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, edgeDetection_maxDetectionsPerType, edgeDetection_everyNLines,
-      //            onchipScratch_);
-      //#endif
-      //
-      //          if(tracker_.IsValid()) {
-      //            retVal = EXIT_SUCCESS;
-      //          }
-      //        } // if trackerScratch is valid
-      //
-      //#endif // USE_OFFBOARD_VISION
-      //
-      //        if(retVal == EXIT_SUCCESS) {
-      //          isTemplateInitialized_ = true;
-      //        }
-      //
-      //        return retVal;
-      //      } // InitTemplate()
 
       //      ReturnCode TrackTemplate(const FrameBuffer &frame)
       //      {

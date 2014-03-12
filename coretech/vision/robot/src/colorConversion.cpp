@@ -16,7 +16,7 @@ namespace Anki
   {
     namespace ImageProcessing
     {
-      Result YUVToGrayscaleHelper(const Array<u16> &yuvImage, Array<u8> &grayscaleImage)
+      Result YUVToGrayscale(const Array<u16> &yuvImage, Array<u8> &grayscaleImage)
       {
         const s32 imageHeight = grayscaleImage.get_size(0);
         const s32 imageWidth  = grayscaleImage.get_size(1);
@@ -34,6 +34,7 @@ namespace Anki
         }
 
         return RESULT_OK;
-      } // namespace ImageProcessing
-    } // namespace Embedded
-  } // namespace Anki
+      }
+    } // namespace ImageProcessing
+  } // namespace Embedded
+} // namespace Anki

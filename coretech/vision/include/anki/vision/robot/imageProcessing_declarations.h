@@ -59,7 +59,7 @@ namespace Anki
       // Color processing
       //
 
-      Result YUVToGrayscaleHelper(const Array<u16> &yuvImage, Array<u8> &grayscaleImage);
+      Result YUVToGrayscale(const Array<u16> &yuvImage, Array<u8> &grayscaleImage);
     } // namespace ImageProcessing
   } // namespace Embedded
 } //namespace Anki
