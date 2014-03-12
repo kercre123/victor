@@ -22,12 +22,12 @@ namespace Anki {
     //                2) from TRANSITION_POWER at TRANSITION_SPEED to 1.0 power  with slope of HIGH_OPEN_LOOP_GAIN
     
     // Point at which open loop speed-power trendlines meet
-    const f32 TRANSITION_SPEED = 40.0f;  // mm/s
-    const f32 TRANSITION_POWER = 0.35f;  // wheel motor power
+    const f32 TRANSITION_SPEED = 25.0f;  // mm/s
+    const f32 TRANSITION_POWER = 0.30f;  // wheel motor power
     
     // Slope of power:speed in upper line.
     // Obtained from plotting average open loop response of both wheels.
-    const f32 HIGH_OPEN_LOOP_GAIN = 1.0 / 193.0;
+    const f32 HIGH_OPEN_LOOP_GAIN = 1.0 / 140.0;
     
     // Slope of power:speed in lower line
     const f32 LOW_OPEN_LOOP_GAIN = TRANSITION_POWER / TRANSITION_SPEED;

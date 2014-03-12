@@ -25,7 +25,6 @@ namespace Anki {
         
         // Some common vars that can be used across multiple tests
         u32 ticCnt_, ticCnt2_;   // Multi-purpose tic counters
-        u8 dir_;                 // Multi-purpose direction flag
         bool pathStarted_;       // Flag for whether or not we started to traverse a path
         
         
@@ -46,29 +45,29 @@ namespace Anki {
         // Measurements taken from a prototype cozmo.
         // Used to model open loop motor command in WheelController.
         //
-        // Power   LSpeed  RSpeed,  2x reduc (diff robot): LSpeed RSpeed  (approx,In-air speeds)
-        // 1.0     290     300    .......................  175    155
-        // 0.9     255     275
-        // 0.8     233     248    .......................
-        // 0.7     185     200
-        // 0.6     160     175    .......................  96     80
-        // 0.5     120     140
-        // 0.4     90      112    .......................  60     38
-        // 0.3     55      80     .......................  40     20
-        // 0.25    40      65
-        const f32 WHEEL_POWER_CMD = 0.4;
-        const f32 WHEEL_SPEED_CMD_MMPS = 100;
+        // Power   LSpeed  RSpeed (approx,In-air speeds)
+        // 1.0    120     125
+        // 0.9    110     115
+        // 0.8    100     100
+        // 0.7     84      88
+        // 0.6     65      68
+        // 0.5     52      55
+        // 0.4     38      39
+        // 0.3     25      25
+        // 0.25    -       -
+        const f32 WHEEL_POWER_CMD = 0.5;
+        const f32 WHEEL_SPEED_CMD_MMPS = 60;
         ////// End of DriveTest ////////
         
         
         /////// LiftTest /////////
         // 0: Set power directly with MotorSetPower
         // 1: Command a desired lift height (i.e. use LiftController)
-        #define LIFT_HEIGHT_TEST 1
+        #define LIFT_HEIGHT_TEST 0
         
-        const f32 LIFT_POWER_CMD = 0.3;
-        const f32 LIFT_DES_HIGH_HEIGHT = 50.f;
-        const f32 LIFT_DES_LOW_HEIGHT = 22.f;
+        const f32 LIFT_POWER_CMD = 0.7;
+        const f32 LIFT_DES_HIGH_HEIGHT = LIFT_HEIGHT_HIGHDOCK;
+        const f32 LIFT_DES_LOW_HEIGHT = LIFT_HEIGHT_LOWDOCK;
         //// End of LiftTest  //////
         
         
@@ -77,9 +76,9 @@ namespace Anki {
         // 1: Command a desired head angle (i.e. use HeadController)
         #define HEAD_POSITION_TEST 1
         
-        const f32 HEAD_POWER_CMD = 0.3;
-        const f32 HEAD_DES_HIGH_ANGLE = 0.5f;
-        const f32 HEAD_DES_LOW_ANGLE = -0.2f;
+        const f32 HEAD_POWER_CMD = 1.0;
+        const f32 HEAD_DES_HIGH_ANGLE = MAX_HEAD_ANGLE;
+        const f32 HEAD_DES_LOW_ANGLE = MIN_HEAD_ANGLE;
         //// End of HeadTest //////
         
         
@@ -361,9 +360,9 @@ namespace Anki {
       ReturnCode LiftTestInit()
       {
         PRINT("\n==== Starting LiftTest =====\n");
+        PRINT("!!! REMOVE JTAG CABLE !!!\n");
         ticCnt_ = 0;
         ticCnt2_ = 0;
-        dir_ = 0;
 #if(!LIFT_HEIGHT_TEST)
         LiftController::Disable();
 #endif
@@ -425,6 +424,7 @@ namespace Anki {
       ReturnCode LiftToggleTestInit()
       {
         PRINT("\n==== Starting LiftToggleTest =====\n");
+        PRINT("!!! REMOVE JTAG CABLE !!!\n");
         return EXIT_SUCCESS;
       }
       
