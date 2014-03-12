@@ -55,6 +55,8 @@ void ProcessRawBuffer(RawBuffer &buffer, const string outputFilenamePattern, con
   // Used for displaying detected fiducials
   cv::Mat lastImage(0,0,CV_8U);
 
+  Transformations::PlanarTransformation_f32 lastPlanarTransformation(Transformations::TRANSFORM_PROJECTIVE, memory);
+
   std::vector<VisionMarker> visionMarkerList;
 
 #ifdef PRINTF_ALL_RECEIVED
@@ -201,15 +203,20 @@ void ProcessRawBuffer(RawBuffer &buffer, const string outputFilenamePattern, con
         printf("Board>> %s", dataSegment);
       } else if(type == SerializedBuffer::DATA_TYPE_CUSTOM) {
         dataSegment[SerializedBuffer::CUSTOM_TYPE_STRING_LENGTH-1] = '\0';
-        printf(reinterpret_cast<const char*>(dataSegment));
-        if(strcmp(reinterpret_cast<const char*>(dataSegment), "VisionMarker") == 0) {
-          dataSegment += SerializedBuffer::CUSTOM_TYPE_STRING_LENGTH;
-          const s32 remainingDataLength = dataLength - SerializedBuffer::EncodedArray::CODE_SIZE * sizeof(u32);
+        const char * customTypeName = reinterpret_cast<const char*>(dataSegment);
+        printf(customTypeName);
 
+        dataSegment += SerializedBuffer::CUSTOM_TYPE_STRING_LENGTH;
+        const s32 remainingDataLength = dataLength - SerializedBuffer::EncodedArray::CODE_SIZE * sizeof(u32);
+
+        if(strcmp(customTypeName, "VisionMarker") == 0) {
           VisionMarker marker;
           marker.Deserialize(dataSegment, remainingDataLength);
           marker.Print();
           visionMarkerList.push_back(marker);
+        } else if(strcmp(reinterpret_cast<const char*>(customTypeName), "PlanarTransformation_f32") == 0) {
+          //lastPlanarTransformation.Deserialize(dataSegment, remainingDataLength);
+          //lastPlanarTransformation.Print();
         }
       }
 

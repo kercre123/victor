@@ -62,13 +62,14 @@ namespace Anki {
       // Private "Members" of the VisionSystem:
       namespace {
         // Constants / parameters:
+        
+#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_STANDARD || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_FAST
         const s32 NUM_TRACKING_PYRAMID_LEVELS = 2;
         const f32 TRACKING_RIDGE_WEIGHT = 0.f;
-
         const s32 TRACKING_MAX_ITERATIONS = 25;
         const f32 TRACKING_CONVERGENCE_TOLERANCE = .05f;
         const bool TRACKING_USE_WEIGHTS = true;
-
+#elif DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
         const u8 edgeDetection_grayvalueThreshold = 128; // TODO: extract from fiducial marker
         const s32 edgeDetection_minComponentWidth = 2;
         const s32 edgeDetection_maxDetectionsPerType = 2500;
@@ -78,6 +79,7 @@ namespace Anki {
         const s32 matching_maxProjectiveDistance = 7;
         const s32 verification_maxTranslationDistance = 1;
         const f32 percentMatchedPixelsThreshold = 0.5f; // TODO: pick a reasonable value
+#endif
 
         bool isInitialized_ = false;
 
@@ -94,9 +96,9 @@ namespace Anki {
         static OFFCHIP u8 printfBufferRaw_[PRINTF_BUFFER_SIZE];
         Embedded::SerializedBuffer printfBuffer_;
 
-        const s32 CAPTURE_IMAGES_BUFFER_SIZE = 2000000;
-        static OFFCHIP u8 captureImagesBufferRaw_[CAPTURE_IMAGES_BUFFER_SIZE];
-        Embedded::SerializedBuffer captureImagesBuffer_;
+        const s32 DEBUG_STREAM_BUFFER_SIZE = 2000000;
+        static OFFCHIP u8 debugStreamBufferRaw_[DEBUG_STREAM_BUFFER_SIZE];
+        Embedded::SerializedBuffer debugStreamBuffer_;
 #endif
 
 #ifdef SIMULATOR
@@ -303,7 +305,7 @@ namespace Anki {
 #endif
 
 #ifdef SEND_DEBUG_STREAM
-        captureImagesBuffer_ = Embedded::SerializedBuffer(&captureImagesBufferRaw_[0], CAPTURE_IMAGES_BUFFER_SIZE);
+        debugStreamBuffer_ = Embedded::SerializedBuffer(&debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
 #endif
 
         isInitialized_ = true;
@@ -430,7 +432,7 @@ namespace Anki {
       Init();
       }
 
-      captureImagesBuffer_ = Embedded::SerializedBuffer(&captureImagesBufferRaw_[0], CAPTURE_IMAGES_BUFFER_SIZE);
+      debugStreamBuffer_ = Embedded::SerializedBuffer(&debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
 
       printf("markers4: 0x%x\n", &markers);
 
@@ -443,7 +445,7 @@ namespace Anki {
       YUVToGrayscaleHelper(frame, imageLarge);
       DownsampleHelper(imageLarge, imageSmall, ccmScratch_);
 
-      captureImagesBuffer_.PushBack(imageSmall);
+      debugStreamBuffer_.PushBack(imageSmall);
 
       printf("markers5: 0x%x\n", &markers);
 
@@ -458,13 +460,13 @@ namespace Anki {
 
       for(s32 i=0; i<numMarkers; i++) {
       pMarkers[i].Serialize(oneMarker, oneMarkerLength);
-      captureImagesBuffer_.PushBack("VisionMarker", oneMarker, oneMarkerLength);
+      debugStreamBuffer_.PushBack("VisionMarker", oneMarker, oneMarkerLength);
       }
       }
 
       s32 startIndex;
-      const u8 * bufferStart = reinterpret_cast<const u8*>(captureImagesBuffer_.get_memoryStack().get_validBufferStart(startIndex));
-      const s32 validUsedBytes = captureImagesBuffer_.get_memoryStack().get_usedBytes() - startIndex;
+      const u8 * bufferStart = reinterpret_cast<const u8*>(debugStreamBuffer_.get_memoryStack().get_validBufferStart(startIndex));
+      const s32 validUsedBytes = debugStreamBuffer_.get_memoryStack().get_usedBytes() - startIndex;
 
       for(s32 i=0; i<Embedded::SERIALIZED_BUFFER_HEADER_LENGTH; i++) {
       Anki::Cozmo::HAL::UARTPutChar(Embedded::SERIALIZED_BUFFER_HEADER[i]);
@@ -528,7 +530,7 @@ namespace Anki {
 
         /*#ifdef SEND_DEBUG_STREAM
         // TODO: assign in the proper place
-        mode_ = CAPTURE_IMAGES;
+        mode_ = DEBUG_STREAM;
         #endif*/
         //mode_ = IDLE;
 
@@ -625,7 +627,7 @@ namespace Anki {
             Init();
           }
 
-          captureImagesBuffer_ = Embedded::SerializedBuffer(&captureImagesBufferRaw_[0], CAPTURE_IMAGES_BUFFER_SIZE);
+          debugStreamBuffer_ = Embedded::SerializedBuffer(&debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
 
           // Stream the images as they come
           //const s32 imageHeight = HAL::CameraModeInfo[HAL::CAMERA_MODE_QVGA].height;
@@ -636,7 +638,7 @@ namespace Anki {
           YUVToGrayscaleHelper(frame, imageLarge);
           DownsampleHelper(imageLarge, imageSmall, ccmScratch_);
 
-          captureImagesBuffer_.PushBack(imageSmall);
+          debugStreamBuffer_.PushBack(imageSmall);
 
           if(markers.get_size() != 0) {
             PUSH_MEMORY_STACK(offchipScratch_);
@@ -649,13 +651,13 @@ namespace Anki {
 
             for(s32 i=0; i<numMarkers; i++) {
               pMarkers[i].Serialize(oneMarker, oneMarkerLength);
-              captureImagesBuffer_.PushBack("VisionMarker", oneMarker, oneMarkerLength);
+              debugStreamBuffer_.PushBack("VisionMarker", oneMarker, oneMarkerLength);
             }
           }
 
           s32 startIndex;
-          const u8 * bufferStart = reinterpret_cast<const u8*>(captureImagesBuffer_.get_memoryStack().get_validBufferStart(startIndex));
-          const s32 validUsedBytes = captureImagesBuffer_.get_memoryStack().get_usedBytes() - startIndex;
+          const u8 * bufferStart = reinterpret_cast<const u8*>(debugStreamBuffer_.get_memoryStack().get_validBufferStart(startIndex));
+          const s32 validUsedBytes = debugStreamBuffer_.get_memoryStack().get_usedBytes() - startIndex;
 
           for(s32 i=0; i<Embedded::SERIALIZED_BUFFER_HEADER_LENGTH; i++) {
             Anki::Cozmo::HAL::UARTPutChar(Embedded::SERIALIZED_BUFFER_HEADER[i]);

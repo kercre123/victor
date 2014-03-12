@@ -45,7 +45,7 @@ namespace Anki
       static const s32 SERIALIZED_SEGMENT_HEADER_LENGTH = 8;
       static const s32 SERIALIZED_SEGMENT_FOOTER_LENGTH = 4;
 
-      static const s32 CUSTOM_TYPE_STRING_LENGTH = 16;
+      static const s32 CUSTOM_TYPE_STRING_LENGTH = 32;
 
       enum DataType
       {
@@ -55,7 +55,7 @@ namespace Anki
         DATA_TYPE_ARRAY = 3,
         DATA_TYPE_STRING = 4,
         DATA_TYPE_LIST = 5,
-        DATA_TYPE_CUSTOM = 6 //< A custom type is defined by a unique 15-character string
+        DATA_TYPE_CUSTOM = 6 //< A custom type is defined by a unique 31-character string
       };
 
       // Stores the eight-byte code of a basic data type buffer (like a buffer of unsigned shorts)
@@ -72,13 +72,6 @@ namespace Anki
       public:
         const static s32 CODE_SIZE = 5;
         u32 code[EncodedArray::CODE_SIZE];
-      };
-
-      class EncodedCustomType
-      {
-      public:
-        const static s32 CODE_SIZE = 4;
-        u32 code[EncodedCustomType::CODE_SIZE]; //< Could be a 16 character string, or anything
       };
 
       //
