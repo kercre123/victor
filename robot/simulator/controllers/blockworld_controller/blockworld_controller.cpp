@@ -12,6 +12,7 @@
 
 //#include "CozmoWorldComms.h"
 #include <webots/Supervisor.hpp>
+#include "basestationKeyboardController.h"
 
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/utils/timer.h"
@@ -29,13 +30,18 @@
 
 #include "anki/cozmo/basestation/tcpComms.h"
 
+// Enable this to turn on keyboard control of robot via basestation.
+// MAKE SURE ROBOT-SIDE KEYBOARD CONTROL (in cozmo_c_controller) IS DISABLED!!!
+#define ENABLE_BS_KEYBOARD_CONTROL 1
 
-webots::Supervisor basestationController;
 
-
-//
-// main()
-//
+namespace Anki {
+  namespace Cozmo {
+    namespace Sim {
+      webots::Supervisor basestationController;
+    }
+  }
+}
 
 using namespace Anki;
 using namespace Anki::Cozmo;
@@ -59,16 +65,19 @@ int main(int argc, char **argv)
   
   VizManager::getInstance()->Init();
   
-  basestationController.keyboardEnable(TIME_STEP);
+#if(ENABLE_BS_KEYBOARD_CONTROL)
+  Sim::BSKeyboardController::Init(&robotMgr);
+  Sim::BSKeyboardController::Enable();
+#endif
   
   //
   // Main Execution loop: step the world forward forever
   //
-  while (basestationController.step(TIME_STEP) != -1)
+  while (Sim::basestationController.step(TIME_STEP) != -1)
   {
     // Update time
     // (To be done from iOS eventually)
-    BaseStationTimer::getInstance()->UpdateTime(SEC_TO_NANOS(basestationController.getTime()));
+    BaseStationTimer::getInstance()->UpdateTime(SEC_TO_NANOS(Sim::basestationController.getTime()));
     
     // Read messages from all robots
     robotComms.Update();
@@ -81,8 +90,13 @@ int main(int argc, char **argv)
       if (robotComms.GetAdvertisingRobotIDs(advertisingRobotIDs) > 0) {
         for(auto robotID : advertisingRobotIDs) {
           printf("RobotComms connecting to robot %d.\n", robotID);
-          robotComms.ConnectToRobotByID(robotID);
-          robotMgr.AddRobot(robotID);
+          if (robotComms.ConnectToRobotByID(robotID)) {
+            printf("Connected to robot %d\n", robotID);
+            robotMgr.AddRobot(robotID);
+          } else {
+            printf("Failed to connect to robot %d\n", robotID);
+            return -1;
+          }
         }
       }
     }
@@ -121,6 +135,12 @@ int main(int argc, char **argv)
     // module(s) would do.  e.g. Some combination of game state, build planner,
     // personality planner, etc.
     behaviorMgr.Update();
+    
+
+    // Process keyboard input
+    if (Sim::BSKeyboardController::IsEnabled()) {
+      Sim::BSKeyboardController::ProcessKeystroke();
+    }
     
   } // while still stepping
 
