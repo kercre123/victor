@@ -215,8 +215,8 @@ void ProcessRawBuffer(RawBuffer &buffer, const string outputFilenamePattern, con
           marker.Print();
           visionMarkerList.push_back(marker);
         } else if(strcmp(reinterpret_cast<const char*>(customTypeName), "PlanarTransformation_f32") == 0) {
-          //lastPlanarTransformation.Deserialize(dataSegment, remainingDataLength);
-          //lastPlanarTransformation.Print();
+          lastPlanarTransformation.Deserialize(dataSegment, remainingDataLength);
+          lastPlanarTransformation.Print();
         }
       }
 

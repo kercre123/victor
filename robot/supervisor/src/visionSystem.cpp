@@ -191,6 +191,7 @@ namespace Anki {
       ReturnCode YUVToGrayscaleHelper(const FrameBuffer& yuvFrame, Embedded::Array<u8>& grayscaleImage);
 
       // Warning, has side effects on local buffers
+#warning forceReset is a big hack. This file should be fixed in a principled way.
       ReturnCode InitializeScratchBuffers(bool forceReset);
 
       //#pragma mark --- VisionSystem Method Implementations ---
@@ -545,30 +546,30 @@ namespace Anki {
         return retVal;
       } // Update()
 
-/*      ReturnCode CaptureHeadFrame(FrameBuffer &frame)
+      /*      ReturnCode CaptureHeadFrame(FrameBuffer &frame)
       {
-        // Only QQQVGA can be captured in SINGLE mode.
-        // Other modes must be captured in CONTINUOUS mode otherwise you get weird
-        // rolling sync effects.
-        // NB: CONTINUOUS mode contains tears that could affect vision algorithms
-        // if moving too fast.
-        const HAL::CameraUpdateMode updateMode = (frame.resolution == HAL::CAMERA_MODE_QQQVGA ?
-          HAL::CAMERA_UPDATE_SINGLE :
-        HAL::CAMERA_UPDATE_CONTINUOUS);
+      // Only QQQVGA can be captured in SINGLE mode.
+      // Other modes must be captured in CONTINUOUS mode otherwise you get weird
+      // rolling sync effects.
+      // NB: CONTINUOUS mode contains tears that could affect vision algorithms
+      // if moving too fast.
+      const HAL::CameraUpdateMode updateMode = (frame.resolution == HAL::CAMERA_MODE_QQQVGA ?
+      HAL::CAMERA_UPDATE_SINGLE :
+      HAL::CAMERA_UPDATE_CONTINUOUS);
 
-        CameraStartFrame(HAL::CAMERA_FRONT, frame.data, frame.resolution,
-          updateMode, 0, false);
+      CameraStartFrame(HAL::CAMERA_FRONT, frame.data, frame.resolution,
+      updateMode, 0, false);
 
-        while (!HAL::CameraIsEndOfFrame(HAL::CAMERA_FRONT))
-        {
-        }
+      while (!HAL::CameraIsEndOfFrame(HAL::CAMERA_FRONT))
+      {
+      }
 
-        // TODO: this will be set automatically at some point
-        CameraSetIsEndOfFrame(HAL::CAMERA_FRONT, false);
+      // TODO: this will be set automatically at some point
+      CameraSetIsEndOfFrame(HAL::CAMERA_FRONT, false);
 
-        frame.timestamp = HAL::GetTimeStamp();
+      frame.timestamp = HAL::GetTimeStamp();
 
-        return EXIT_SUCCESS;
+      return EXIT_SUCCESS;
       } // CaptureHeadFrame()*/
 
       void DownsampleHelper(const FrameBuffer& frame, Embedded::Array<u8>& image,
@@ -721,8 +722,8 @@ namespace Anki {
           PUSH_MEMORY_STACK(offchipScratch_);
           //PUSH_MEMORY_STACK(onchipScratch_);
           PUSH_MEMORY_STACK(ccmScratch_);
-          
-          printf("Stacks usage: %d %d %d\n", offchipScratch_.get_usedBytes(), onchipScratch_.get_usedBytes(), ccmScratch_.get_usedBytes());
+
+          //printf("Stacks usage: %d %d %d\n", offchipScratch_.get_usedBytes(), onchipScratch_.get_usedBytes(), ccmScratch_.get_usedBytes());
 
           const u16 detectWidth  = HAL::CameraModeInfo[DETECTION_RESOLUTION].width;
           const u16 detectHeight = HAL::CameraModeInfo[DETECTION_RESOLUTION].height;
@@ -801,11 +802,10 @@ namespace Anki {
           if(result == Embedded::RESULT_OK) {
 #ifdef SEND_DEBUG_STREAM
             {
-              // Pushing here at the top is neccesary, because of all the global variables
+              // Pushing here at the top is necessary, because of all the global variables
               PUSH_MEMORY_STACK(offchipScratch_);
               PUSH_MEMORY_STACK(ccmScratch_);
 
-              // Do no robot control, just capture a buffer of images and send it to the PC over USB
               if(!isInitialized_) {
                 Init();
               }
@@ -842,9 +842,6 @@ namespace Anki {
               const u8 * bufferStart = reinterpret_cast<const u8*>(debugStreamBuffer_.get_memoryStack().get_validBufferStart(startIndex));
               const s32 validUsedBytes = debugStreamBuffer_.get_memoryStack().get_usedBytes() - startIndex;
 
-
-              //TODO: add back
-              /*
               for(s32 i=0; i<Embedded::SERIALIZED_BUFFER_HEADER_LENGTH; i++) {
                 Anki::Cozmo::HAL::UARTPutChar(Embedded::SERIALIZED_BUFFER_HEADER[i]);
               }
@@ -856,7 +853,6 @@ namespace Anki {
               for(s32 i=0; i<Embedded::SERIALIZED_BUFFER_FOOTER_LENGTH; i++) {
                 Anki::Cozmo::HAL::UARTPutChar(Embedded::SERIALIZED_BUFFER_FOOTER[i]);
               }
-              */
 
               HAL::MicroWait(50000);
             } // ReturnCode SendDebugStream_Detection()
@@ -950,6 +946,8 @@ namespace Anki {
                   crntMarker.corners[2].y),
                   Point<f32>(crntMarker.corners[3].x,
                   crntMarker.corners[3].y));
+
+                //InitializeScratchBuffers(true);
 
                 if(InitTemplate(frame, trackingQuad_) == EXIT_SUCCESS)
                 {
@@ -1142,10 +1140,10 @@ namespace Anki {
           if(percentMatchedPixels >= percentMatchedPixelsThreshold) {
             converged = true;
           }
-          
+
           //tracker_.get_transformation().Print("tracker_");
-          printf("%f %f\n", *tracker_.get_transformation().get_homography().Pointer(0,2), *tracker_.get_transformation().get_homography().Pointer(1,2));
-          
+          //printf("%f %f\n", *tracker_.get_transformation().get_homography().Pointer(0,2), *tracker_.get_transformation().get_homography().Pointer(1,2));
+
           //PRINT("percentMatchedPixels = %f\n", percentMatchedPixels);
 #endif
 
@@ -1168,6 +1166,59 @@ namespace Anki {
                 dockErrMsg.y_horErr,
                 dockErrMsg.angleErr,
                 onchipScratch_);
+
+#ifdef SEND_DEBUG_STREAM
+              {
+                // Pushing here at the top is necessary, because of all the global variables
+                PUSH_MEMORY_STACK(offchipScratch_);
+                PUSH_MEMORY_STACK(ccmScratch_);
+
+                debugStreamBuffer_ = Embedded::SerializedBuffer(&debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
+
+                // Stream the images as they come
+                //const s32 imageHeight = HAL::CameraModeInfo[HAL::CAMERA_MODE_QVGA].height;
+                //const s32 imageWidth = HAL::CameraModeInfo[HAL::CAMERA_MODE_QVGA].width;
+                Embedded::Array<u8> imageLarge(240, 320, offchipScratch_);
+                Embedded::Array<u8> imageSmall(60, 80, offchipScratch_);
+
+                YUVToGrayscaleHelper(frame, imageLarge);
+                DownsampleHelper(imageLarge, imageSmall, ccmScratch_);
+
+                debugStreamBuffer_.PushBack(imageSmall);
+
+                {
+                  PUSH_MEMORY_STACK(offchipScratch_);
+
+                  // TODO: get the correct number
+                  //const s32 oneTransformationLength = sizeof(Embedded::Transformations::PlanarTransformation_f32);
+                  const s32 oneTransformationLength = 512;
+                  void * restrict oneTransformation = offchipScratch_.Allocate(oneTransformationLength);
+                  
+                  const Embedded::Transformations::PlanarTransformation_f32 transformation = tracker_.get_transformation();
+
+                  transformation.Serialize(oneTransformation, oneTransformationLength);
+                  debugStreamBuffer_.PushBack("PlanarTransformation_f32", oneTransformation, oneTransformationLength);
+                }
+
+                s32 startIndex;
+                const u8 * bufferStart = reinterpret_cast<const u8*>(debugStreamBuffer_.get_memoryStack().get_validBufferStart(startIndex));
+                const s32 validUsedBytes = debugStreamBuffer_.get_memoryStack().get_usedBytes() - startIndex;
+                
+                for(s32 i=0; i<Embedded::SERIALIZED_BUFFER_HEADER_LENGTH; i++) {
+                  Anki::Cozmo::HAL::UARTPutChar(Embedded::SERIALIZED_BUFFER_HEADER[i]);
+                }
+
+                for(s32 i=0; i<validUsedBytes; i++) {
+                  Anki::Cozmo::HAL::UARTPutChar(bufferStart[i]);
+                }
+
+                for(s32 i=0; i<Embedded::SERIALIZED_BUFFER_FOOTER_LENGTH; i++) {
+                  Anki::Cozmo::HAL::UARTPutChar(Embedded::SERIALIZED_BUFFER_FOOTER[i]);
+                }
+
+                HAL::MicroWait(50000);
+              }
+#endif
             } // IF converged
 
 #if USE_MATLAB_VISUALIZATION
