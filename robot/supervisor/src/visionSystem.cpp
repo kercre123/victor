@@ -28,7 +28,8 @@ using namespace Anki;
 using namespace Anki::Embedded;
 using namespace Anki::Cozmo;
 
-#if defined(SIMULATOR) && ANKICORETECH_EMBEDDED_USE_MATLAB && (!defined(USE_OFFBOARD_VISION) || !USE_OFFBOARD_VISION)
+//#if defined(SIMULATOR) && ANKICORETECH_EMBEDDED_USE_MATLAB && (!defined(USE_OFFBOARD_VISION) || !USE_OFFBOARD_VISION)
+#if defined(SIMULATOR) && ANKICORETECH_EMBEDDED_USE_MATLAB
 #define USE_MATLAB_VISUALIZATION 1
 #else
 #define USE_MATLAB_VISUALIZATION 0
@@ -498,83 +499,83 @@ namespace MatlabVisualization
 #endif //#if USE_MATLAB_VISUALIZATION
 } // namespace MatlabVisualization
 
-namespace Offboard
-{
-  static ReturnCode Initialize()
-  {
-#if USE_OFFBOARD_VISION
-    PRINT("Offboard::Init(): Registering message IDs for offboard processing.\n");
-
-    // Register all the message IDs we need with Matlab:
-    HAL::SendMessageID("CozmoMsg_BlockMarkerObserved",
-      GET_MESSAGE_ID(Messages::BlockMarkerObserved));
-
-    HAL::SendMessageID("CozmoMsg_TemplateInitialized",
-      GET_MESSAGE_ID(Messages::TemplateInitialized));
-
-    HAL::SendMessageID("CozmoMsg_TotalVisionMarkersSeen",
-      GET_MESSAGE_ID(Messages::TotalVisionMarkersSeen));
-
-    HAL::SendMessageID("CozmoMsg_DockingErrorSignal",
-      GET_MESSAGE_ID(Messages::DockingErrorSignal));
-
-    HAL::SendMessageID("CozmoMsg_VisionMarker",
-      GET_MESSAGE_ID(Messages::VisionMarker));
-
-    {
-      for(s32 i=0; i<Vision::NUM_MARKER_TYPES; ++i) {
-        HAL::SendMessageID(Vision::MarkerTypeStrings[i], i);
-      }
-    }
-
-    //HAL::SendMessageID("CozmoMsg_HeadCameraCalibration",
-    //                   GET_MESSAGE_ID(Messages::HeadCameraCalibration));
-
-    // TODO: Update this to send mat and head cam calibration separately
-    PRINT("Offboard::Init(): Sending head camera calibration to "
-      "offoard vision processor.\n");
-
-    // Create a camera calibration message and send it to the offboard
-    // vision processor
-    Messages::HeadCameraCalibration headCalibMsg = {
-      headCamInfo_->focalLength_x,
-      headCamInfo_->focalLength_y,
-      headCamInfo_->fov_ver,
-      headCamInfo_->center_x,
-      headCamInfo_->center_y,
-      headCamInfo_->skew,
-      headCamInfo_->nrows,
-      headCamInfo_->ncols
-    };
-
-    //HAL::USBSendMessage(&msg, GET_MESSAGE_ID(HeadCameraCalibration));
-    HAL::USBSendPacket(HAL::USB_VISION_COMMAND_HEAD_CALIBRATION,
-      &headCalibMsg, sizeof(Messages::HeadCameraCalibration));
-
-    /* Don't need entire calibration, just pixPerMM
-
-    Messages::MatCameraCalibration matCalibMsg = {
-    matCamInfo_->focalLength_x,
-    matCamInfo_->focalLength_y,
-    matCamInfo_->fov_ver,
-    matCamInfo_->center_x,
-    matCamInfo_->center_y,
-    matCamInfo_->skew,
-    matCamInfo_->nrows,
-    matCamInfo_->ncols
-    };
-
-    HAL::USBSendPacket(HAL::USB_VISION_COMMAND_MAT_CALIBRATION,
-    &matCalibMsg, sizeof(Messages::MatCameraCalibration));
-    */
-    /*
-    HAL::USBSendPacket(HAL::USB_VISION_COMMAND_MAT_CALIBRATION,
-    &matCamPixPerMM_, sizeof(matCamPixPerMM_));
-    */
-#endif // USE_OFFBOARD_VISION
-    return EXIT_SUCCESS;
-  } // static ReturnCode Initialize()
-} // namespace Offboard
+//namespace Offboard
+//{
+//  static ReturnCode Initialize()
+//  {
+//#if USE_OFFBOARD_VISION
+//    PRINT("Offboard::Init(): Registering message IDs for offboard processing.\n");
+//
+//    // Register all the message IDs we need with Matlab:
+//    HAL::SendMessageID("CozmoMsg_BlockMarkerObserved",
+//      GET_MESSAGE_ID(Messages::BlockMarkerObserved));
+//
+//    HAL::SendMessageID("CozmoMsg_TemplateInitialized",
+//      GET_MESSAGE_ID(Messages::TemplateInitialized));
+//
+//    HAL::SendMessageID("CozmoMsg_TotalVisionMarkersSeen",
+//      GET_MESSAGE_ID(Messages::TotalVisionMarkersSeen));
+//
+//    HAL::SendMessageID("CozmoMsg_DockingErrorSignal",
+//      GET_MESSAGE_ID(Messages::DockingErrorSignal));
+//
+//    HAL::SendMessageID("CozmoMsg_VisionMarker",
+//      GET_MESSAGE_ID(Messages::VisionMarker));
+//
+//    {
+//      for(s32 i=0; i<Vision::NUM_MARKER_TYPES; ++i) {
+//        HAL::SendMessageID(Vision::MarkerTypeStrings[i], i);
+//      }
+//    }
+//
+//    //HAL::SendMessageID("CozmoMsg_HeadCameraCalibration",
+//    //                   GET_MESSAGE_ID(Messages::HeadCameraCalibration));
+//
+//    // TODO: Update this to send mat and head cam calibration separately
+//    PRINT("Offboard::Init(): Sending head camera calibration to "
+//      "offoard vision processor.\n");
+//
+//    // Create a camera calibration message and send it to the offboard
+//    // vision processor
+//    Messages::HeadCameraCalibration headCalibMsg = {
+//      headCamInfo_->focalLength_x,
+//      headCamInfo_->focalLength_y,
+//      headCamInfo_->fov_ver,
+//      headCamInfo_->center_x,
+//      headCamInfo_->center_y,
+//      headCamInfo_->skew,
+//      headCamInfo_->nrows,
+//      headCamInfo_->ncols
+//    };
+//
+//    //HAL::USBSendMessage(&msg, GET_MESSAGE_ID(HeadCameraCalibration));
+//    HAL::USBSendPacket(HAL::USB_VISION_COMMAND_HEAD_CALIBRATION,
+//      &headCalibMsg, sizeof(Messages::HeadCameraCalibration));
+//
+//    /* Don't need entire calibration, just pixPerMM
+//
+//    Messages::MatCameraCalibration matCalibMsg = {
+//    matCamInfo_->focalLength_x,
+//    matCamInfo_->focalLength_y,
+//    matCamInfo_->fov_ver,
+//    matCamInfo_->center_x,
+//    matCamInfo_->center_y,
+//    matCamInfo_->skew,
+//    matCamInfo_->nrows,
+//    matCamInfo_->ncols
+//    };
+//
+//    HAL::USBSendPacket(HAL::USB_VISION_COMMAND_MAT_CALIBRATION,
+//    &matCalibMsg, sizeof(Messages::MatCameraCalibration));
+//    */
+//    /*
+//    HAL::USBSendPacket(HAL::USB_VISION_COMMAND_MAT_CALIBRATION,
+//    &matCamPixPerMM_, sizeof(matCamPixPerMM_));
+//    */
+//#endif // USE_OFFBOARD_VISION
+//    return EXIT_SUCCESS;
+//  } // static ReturnCode Initialize()
+//} // namespace Offboard
 
 namespace VisionState {
   static const s32 MAX_TRACKING_FAILURES = 5;
@@ -587,12 +588,8 @@ namespace VisionState {
   static Quadrilateral<f32> trackingQuad_;
   static s32 numTrackFailures_ ; //< The tracker can fail to converge this many times before we give up and reset the docker
   static bool isTemplateInitialized_;
-  static bool isTrackingMarkerFound_;
+  static bool isTrackingMarkerSpecified_;
   static Tracker tracker_;
-
-  // TODO: what do these do?
-  //bool isTrackingMarkerFound_ = false;
-  //bool isTemplateInitialized_ = false;
 
   //// Capture an entire frame using HAL commands and put it in the given frame buffer
   //typedef struct {
@@ -607,8 +604,12 @@ namespace VisionState {
     headCamInfo_ = NULL;
     markerTypeToTrack_ = Anki::Vision::MARKER_UNKNOWN;
     numTrackFailures_ = 0;
-    isTemplateInitialized_ = false;;
-    isTrackingMarkerFound_ = false;
+    isTemplateInitialized_ = false;
+    isTrackingMarkerSpecified_ = false;
+
+#ifdef RUN_SIMPLE_TRACKING_TEST
+    Anki::Cozmo::VisionSystem::SetMarkerToTrack(Vision::MARKER_BATTERIES);
+#endif
 
 #if 0
     //headCamInfo_ = HAL::GetHeadCamInfo();
@@ -733,15 +734,6 @@ static ReturnCode LookForMarkers(
     DebugStream::SendFiducialDetection();
     for(s32 i_marker = 0; i_marker < markers.get_size(); ++i_marker) {
       const VisionMarker crntMarker = markers[i_marker];
-
-#ifdef RUN_SIMPLE_TRACKING_TEST
-      // We're looking for the battery marker. If it is seen, start tracking it.
-      if(!isTrackingMarkerFound_) {
-        if(crntMarker.markerType == Vision::MARKER_BATTERIES) {
-          SetMarkerToTrack(markerTypeToTrack_);
-        }
-      }
-#endif
 
       MatlabVisualization::SendFiducialDetection();
     }
@@ -872,7 +864,7 @@ namespace Anki {
           TrackerParameters::Initialize();
           SimulatorParameters::Initialize();
           MatlabVisualization::Initialize();
-          Offboard::Initialize();
+          //Offboard::Initialize();
 
           isInitialized_ = true;
         }
@@ -887,8 +879,10 @@ namespace Anki {
       ReturnCode SetMarkerToTrack(const Vision::MarkerType& markerToTrack)
       {
         VisionState::markerTypeToTrack_ = markerToTrack;
-        isTemplateInitialized_ = false;
-        isTrackingMarkerFound_ = false;
+        VisionState::isTemplateInitialized_ = false;
+        VisionState::isTrackingMarkerSpecified_ = true;
+        VisionState::mode_ = VISION_MODE_LOOKING_FOR_MARKERS;
+
         return EXIT_SUCCESS;
       }
 
@@ -909,45 +903,45 @@ namespace Anki {
         VisionState::mode_ = VISION_MODE_IDLE;
       }
 
-      ReturnCode Update_Offboard()
-      {
-#if USE_OFFBOARD_VISION
-        //PRINT("VisionSystem::Update(): waiting for processing result.\n");
-        Messages::ProcessUARTMessages();
-        if(Messages::StillLookingForID()) {
-          // Still waiting, skip further vision processing below.
-          return EXIT_SUCCESS;
-        }
-
-        if(VisionState::mode_ == VISION_MODE_IDLE) {
-        } else if(VisionState::mode_ == LOOKING_FOR_MARKERS) {
-          // Send the offboard vision processor the frame, with the command to look for blocks in
-          // it. Note that if we previsouly sent the offboard processor a message to set the docking
-          // block type, it will also initialize a template tracker once that block type is seen
-          HAL::USBSendFrame(frame.data, frame.timestamp,
-            frame.resolution, DETECTION_RESOLUTION,
-            HAL::USB_VISION_COMMAND_DETECTBLOCKS);
-
-          Messages::LookForID( GET_MESSAGE_ID(Messages::TotalVisionMarkersSeen) );
-#ifdef SIMULATOR
-          frameRdyTimeUS_ = HAL::GetMicroCounter() + LOOK_FOR_BLOCK_PERIOD_US;
-#endif
-        } else if(VisionState::mode_ == VISION_MODE_TRACKING) {
-#ifdef SIMULATOR
-          frameRdyTimeUS_ = HAL::GetMicroCounter() + TRACK_BLOCK_PERIOD_US;
-#endif
-
-          if(TrackTemplate(frame) != EXIT_SUCCESS) {
-            PRINT("VisionSystem::Update(): TrackTemplate() failed.\n");
-            return EXIT_FAILURE;
-          }
-        } else {
-          PRINT("VisionSystem::Update(): reached default case in switch statement.");
-          return EXIT_FAILURE;
-        }
-#endif // USE_OFFBOARD_VISION
-        return EXIT_SUCCESS;
-      }// ReturnCode Update_Offboard()
+      //      ReturnCode Update_Offboard()
+      //      {
+      //#if USE_OFFBOARD_VISION
+      //        //PRINT("VisionSystem::Update(): waiting for processing result.\n");
+      //        Messages::ProcessUARTMessages();
+      //        if(Messages::StillLookingForID()) {
+      //          // Still waiting, skip further vision processing below.
+      //          return EXIT_SUCCESS;
+      //        }
+      //
+      //        if(VisionState::mode_ == VISION_MODE_IDLE) {
+      //        } else if(VisionState::mode_ == LOOKING_FOR_MARKERS) {
+      //          // Send the offboard vision processor the frame, with the command to look for blocks in
+      //          // it. Note that if we previsouly sent the offboard processor a message to set the docking
+      //          // block type, it will also initialize a template tracker once that block type is seen
+      //          HAL::USBSendFrame(frame.data, frame.timestamp,
+      //            frame.resolution, DETECTION_RESOLUTION,
+      //            HAL::USB_VISION_COMMAND_DETECTBLOCKS);
+      //
+      //          Messages::LookForID( GET_MESSAGE_ID(Messages::TotalVisionMarkersSeen) );
+      //#ifdef SIMULATOR
+      //          frameRdyTimeUS_ = HAL::GetMicroCounter() + LOOK_FOR_BLOCK_PERIOD_US;
+      //#endif
+      //        } else if(VisionState::mode_ == VISION_MODE_TRACKING) {
+      //#ifdef SIMULATOR
+      //          frameRdyTimeUS_ = HAL::GetMicroCounter() + TRACK_BLOCK_PERIOD_US;
+      //#endif
+      //
+      //          if(TrackTemplate(frame) != EXIT_SUCCESS) {
+      //            PRINT("VisionSystem::Update(): TrackTemplate() failed.\n");
+      //            return EXIT_FAILURE;
+      //          }
+      //        } else {
+      //          PRINT("VisionSystem::Update(): reached default case in switch statement.");
+      //          return EXIT_FAILURE;
+      //        }
+      //#endif // USE_OFFBOARD_VISION
+      //        return EXIT_SUCCESS;
+      //      }// ReturnCode Update_Offboard()
 
       ReturnCode Update()
       {
@@ -960,9 +954,9 @@ namespace Anki {
         }
 #endif
 
-#if USE_OFFBOARD_VISION
-        return Update_Offboard();
-#endif // USE_OFFBOARD_VISION
+        //#if USE_OFFBOARD_VISION
+        //        return Update_Offboard();
+        //#endif // USE_OFFBOARD_VISION
 
         // TODO: set size via HAL
         while(!isEOF)
