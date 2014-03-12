@@ -69,6 +69,11 @@ typedef enum {
   VISION_MODE_TRACKING
 } VisionSystemMode;
 
+static ReturnCode DownsampleHelper(
+  const Array<u8>& in,
+  Array<u8>& out,
+  MemoryStack scratch);
+
 namespace DetectFiducialMarkersParameters
 {
   typedef struct Parameters
@@ -273,7 +278,7 @@ namespace DebugStream
   static SerializedBuffer debugStreamBuffer_;
 
 #if !defined(SEND_DEBUG_STREAM)
-  static ReturnCode SendFiducialDetection() { return EXIT_SUCCESS; }
+  static ReturnCode SendFiducialDetection(const Array<u8> &image, const FixedLengthList<VisionMarker> &markers, MemoryStack ccmScratch, MemoryStack offchipScratch) { return EXIT_SUCCESS; }
   static ReturnCode SendTrackingUpdate() { return EXIT_SUCCESS; }
   static ReturnCode SendPrintf(const char * string) { return EXIT_SUCCESS; }
 #else
@@ -306,39 +311,30 @@ namespace DebugStream
     return SendBuffer(printfBuffer_);
   } // void SendPrintf(const char * string)
 
-  static ReturnCode SendFiducialDetection()
+  static ReturnCode SendFiducialDetection(const Array<u8> &image, const FixedLengthList<VisionMarker> &markers, MemoryStack ccmScratch, MemoryStack offchipScratch)
   {
-    //debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
+    debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
 
-    //// Stream the images as they come
-    ////const s32 imageHeight = HAL::CameraModeInfo[HAL::CAMERA_MODE_QVGA].height;
-    ////const s32 imageWidth = HAL::CameraModeInfo[HAL::CAMERA_MODE_QVGA].width;
-    //Array<u8> imageLarge(240, 320, offchipScratch_);
-    //Array<u8> imageSmall(60, 80, offchipScratch_);
+    Array<u8> imageSmall(60, 80, offchipScratch);
 
-    //YUVToGrayscaleHelper(frame, imageLarge);
-    //DownsampleHelper(imageLarge, imageSmall, ccmScratch_);
+    DownsampleHelper(image, imageSmall, ccmScratch);
 
-    //debugStreamBuffer_.PushBack(imageSmall);
+    debugStreamBuffer_.PushBack(imageSmall);
 
-    //if(markers.get_size() != 0) {
-    //  PUSH_MEMORY_STACK(offchipScratch_);
+    if(markers.get_size() != 0) {
+      const s32 numMarkers = markers.get_size();
+      const VisionMarker * pMarkers = markers.Pointer(0);
 
-    //  const s32 numMarkers = markers.get_size();
-    //  const VisionMarker * pMarkers = markers.Pointer(0);
+      void * restrict oneMarker = offchipScratch.Allocate(sizeof(VisionMarker));
+      const s32 oneMarkerLength = sizeof(VisionMarker);
 
-    //  void * restrict oneMarker = offchipScratch_.Allocate(sizeof(VisionMarker));
-    //  const s32 oneMarkerLength = sizeof(VisionMarker);
+      for(s32 i=0; i<numMarkers; i++) {
+        pMarkers[i].Serialize(oneMarker, oneMarkerLength);
+        debugStreamBuffer_.PushBack("VisionMarker", oneMarker, oneMarkerLength);
+      }
+    }
 
-    //  for(s32 i=0; i<numMarkers; i++) {
-    //    pMarkers[i].Serialize(oneMarker, oneMarkerLength);
-    //    debugStreamBuffer_.PushBack("VisionMarker", oneMarker, oneMarkerLength);
-    //  }
-    //}
-
-    //return SendBuffer(debugStreamBuffer_);
-
-    return EXIT_SUCCESS;
+    return SendBuffer(debugStreamBuffer_);
   } // ReturnCode SendDebugStream_Detection()
 
   static ReturnCode SendTrackingUpdate()
@@ -732,6 +728,7 @@ static ReturnCode LookForMarkers(
 
   if(result == RESULT_OK) {
     DebugStream::SendFiducialDetection();
+    grayscaleImage, markers,  ccmScratch, MemoryStack offchipScratch
     for(s32 i_marker = 0; i_marker < markers.get_size(); ++i_marker) {
       const VisionMarker crntMarker = markers[i_marker];
 
