@@ -355,6 +355,12 @@ namespace DebugStream
 } // namespace DebugStream
 
 namespace SimulatorParameters {
+#if !defined(SIMULATOR)
+  static ReturnCode Initialize()
+  {
+    return EXIT_SUCCESS;
+  }
+#else
   static const u32 LOOK_FOR_BLOCK_PERIOD_US = 200000;
   static const u32 TRACK_BLOCK_PERIOD_US = 100000;
 
@@ -366,6 +372,7 @@ namespace SimulatorParameters {
 
     return EXIT_SUCCESS;
   }
+#endif
 } // namespace SimulatorParameters
 
 namespace MatlabVisualization
@@ -373,7 +380,7 @@ namespace MatlabVisualization
 #if !USE_MATLAB_VISUALIZATION
   static ReturnCode Initialize() { return EXIT_SUCCESS; }
   static ReturnCode ResetFiducialDetection() { return EXIT_SUCCESS; }
-  static ReturnCode SendFiducialDetection(const Quadrilateral<s16> &corners) { return EXIT_SUCCESS; }
+  static ReturnCode SendFiducialDetection() { return EXIT_SUCCESS; }
   static ReturnCode SendDrawNow() { return EXIT_SUCCESS; }
   static ReturnCode SendTrack()  { return EXIT_SUCCESS; }
 #else
@@ -453,39 +460,12 @@ namespace MatlabVisualization
 
     return EXIT_SUCCESS;
   }
-
 #endif //#if USE_MATLAB_VISUALIZATION
 } // namespace MatlabVisualization
 
-namespace VisionState {
-  static const s32 MAX_TRACKING_FAILURES = 5;
-
-  static VisionSystemMode mode_;
-  static const Anki::Cozmo::HAL::CameraInfo* headCamInfo_;
-  static Anki::Vision::MarkerType trackingMarker_;
-  static s32 numTrackFailures_ ; //< The tracker can fail to converge this many times before we give up and reset the docker
-  static Quadrilateral<f32> trackingQuad_;
-
-#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_FAST
-  static TemplateTracker::LucasKanadeTrackerFast tracker_;
-#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_STANDARD
-  static TemplateTracker::LucasKanadeTracker_f32 tracker_;
-#elif DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
-  static TemplateTracker::BinaryTracker tracker_;
-#endif
-
-  // TODO: what do these do?
-  //bool isTrackingMarkerFound_ = false;
-  //bool isTemplateInitialized_ = false;
-
-  //// Capture an entire frame using HAL commands and put it in the given frame buffer
-  //typedef struct {
-  //  u8* data;
-  //  HAL::CameraMode resolution;
-  //  TimeStamp_t  timestamp;
-  //} FrameBuffer;
-
-  static ReturnCode SendOffboardInitialization()
+namespace Offboard 
+{  
+  static ReturnCode Initialize()
   {
 #if USE_OFFBOARD_VISION
     PRINT("VisionSystem::Init(): Registering message IDs for offboard processing.\n");
@@ -558,7 +538,39 @@ namespace VisionState {
     */
 #endif // USE_OFFBOARD_VISION
     return EXIT_SUCCESS;
-  }
+  } // static ReturnCode Initialize()
+} // namespace Offboard {
+
+namespace VisionState {
+  static const s32 MAX_TRACKING_FAILURES = 5;
+
+  static const Anki::Cozmo::HAL::CameraInfo* headCamInfo_;
+  
+  static VisionSystemMode mode_;
+  
+  static Anki::Vision::MarkerType trackingMarker_;
+  static Quadrilateral<f32> trackingQuad_;  
+  static s32 numTrackFailures_ ; //< The tracker can fail to converge this many times before we give up and reset the docker
+  
+#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_FAST
+  static TemplateTracker::LucasKanadeTrackerFast tracker_;
+#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_STANDARD
+  static TemplateTracker::LucasKanadeTracker_f32 tracker_;
+#elif DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
+  static TemplateTracker::BinaryTracker tracker_;
+#endif
+
+  // TODO: what do these do?
+  //bool isTrackingMarkerFound_ = false;
+  //bool isTemplateInitialized_ = false;
+
+  //// Capture an entire frame using HAL commands and put it in the given frame buffer
+  //typedef struct {
+  //  u8* data;
+  //  HAL::CameraMode resolution;
+  //  TimeStamp_t  timestamp;
+  //} FrameBuffer;
+
 
   static ReturnCode Initialize()
   {
@@ -579,8 +591,6 @@ namespace VisionState {
     //  tanf(matCamInfo_->fov_ver * .5f));
     //matCamPixPerMM_ = matCamHeightInPix / MAT_CAM_HEIGHT_FROM_GROUND_MM;
 #endif //#if 0
-
-    SendOffboardInitialization();
 
     return EXIT_SUCCESS;
   }
@@ -658,6 +668,9 @@ static ReturnCode LookForMarkers(
 
   if(result == RESULT_OK) {
     DebugStream::SendFiducialDetection();
+    for(s32 i_marker = 0; i_marker < markers.get_size(); ++i_marker) {
+      MatlabVisualization::SendFiducialDetection();
+    }
 
     //          for(s32 i_marker = 0; i_marker < markers.get_size(); ++i_marker)
     //          {
@@ -733,6 +746,7 @@ namespace Anki {
           BinaryTrackerParameters::Initialize();
           SimulatorParameters::Initialize();
           MatlabVisualization::Initialize();
+          Offboard::Initialize();
 
           isInitialized_ = true;
         }
