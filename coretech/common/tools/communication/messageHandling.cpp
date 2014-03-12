@@ -55,6 +55,7 @@ void ProcessRawBuffer(RawBuffer &buffer, const string outputFilenamePattern, con
   // Used for displaying detected fiducials
   cv::Mat lastImage(0,0,CV_8U);
 
+  bool isTracking = false;
   Transformations::PlanarTransformation_f32 lastPlanarTransformation(Transformations::TRANSFORM_PROJECTIVE, memory);
 
   std::vector<VisionMarker> visionMarkerList;
@@ -204,7 +205,7 @@ void ProcessRawBuffer(RawBuffer &buffer, const string outputFilenamePattern, con
       } else if(type == SerializedBuffer::DATA_TYPE_CUSTOM) {
         dataSegment[SerializedBuffer::CUSTOM_TYPE_STRING_LENGTH-1] = '\0';
         const char * customTypeName = reinterpret_cast<const char*>(dataSegment);
-        printf(customTypeName);
+        //printf(customTypeName);
 
         dataSegment += SerializedBuffer::CUSTOM_TYPE_STRING_LENGTH;
         const s32 remainingDataLength = dataLength - SerializedBuffer::EncodedArray::CODE_SIZE * sizeof(u32);
@@ -214,9 +215,11 @@ void ProcessRawBuffer(RawBuffer &buffer, const string outputFilenamePattern, con
           marker.Deserialize(dataSegment, remainingDataLength);
           marker.Print();
           visionMarkerList.push_back(marker);
+          isTracking = false;
         } else if(strcmp(reinterpret_cast<const char*>(customTypeName), "PlanarTransformation_f32") == 0) {
           lastPlanarTransformation.Deserialize(dataSegment, remainingDataLength);
-          lastPlanarTransformation.Print();
+          //lastPlanarTransformation.Print();
+          isTracking = true;
         }
       }
 
@@ -243,56 +246,63 @@ void ProcessRawBuffer(RawBuffer &buffer, const string outputFilenamePattern, con
       //Vision::MarkerType markerType;
       //bool isValid;
 
-      // Draw markers
-      for(s32 iMarker=0; iMarker<static_cast<s32>(visionMarkerList.size()); iMarker++) {
-        cv::Scalar boxColor, textColor;
-        if(visionMarkerList[iMarker].isValid) {
-          textColor = cv::Scalar(0,255,0);
-          boxColor = cv::Scalar(0,128,0);
-        } else {
-          textColor = cv::Scalar(0,0,255);
-          boxColor = cv::Scalar(0,0,128);
-        }
+      if(isTracking) {
+        const cv::Scalar textColor = cv::Scalar(0,255,0);
+        const cv::Scalar boxColor = cv::Scalar(0,128,0);
 
-        const Quadrilateral<s16> sortedCorners = visionMarkerList[iMarker].corners.ComputeClockwiseCorners();
+        const Quadrilateral<f32> transformedCorners = lastPlanarTransformation.get_transformedCorners(memory);
 
-        //const int numPoints = 4;
-        //cv::Point markerPoints[1][numPoints];
-
-        //for(s32 iCorner=0; iCorner<numPoints; iCorner++) {
-        //  markerPoints[0][iCorner] = cv::Point(visionMarkerList[iMarker].corners[iCorner].x, visionMarkerList[iMarker].corners[iCorner].y);
-        //}
-        //const cv::Point* pointArray[1] = {markerPoints[0]};
-        //cv::fillPoly(toShowImage, pointArray, &numPoints, 1, color);
+        const Quadrilateral<f32> sortedCorners = transformedCorners.ComputeClockwiseCorners();
 
         for(s32 iCorner=0; iCorner<4; iCorner++) {
           const s32 point1Index = iCorner;
           const s32 point2Index = (iCorner+1) % 4;
-          const cv::Point pt1(sortedCorners[point1Index].x, sortedCorners[point1Index].y);
-          const cv::Point pt2(sortedCorners[point2Index].x, sortedCorners[point2Index].y);
+          const cv::Point pt1(static_cast<s32>(sortedCorners[point1Index].x), static_cast<s32>(sortedCorners[point1Index].y));
+          const cv::Point pt2(static_cast<s32>(sortedCorners[point2Index].x), static_cast<s32>(sortedCorners[point2Index].y));
           cv::line(toShowImage, pt1, pt2, boxColor, 2);
         }
 
-        const Anki::Vision::MarkerType markerType = visionMarkerList[iMarker].markerType;
+        const Point<f32> center = sortedCorners.ComputeCenter();
+        const s32 textX = static_cast<s32>(MIN(MIN(MIN(sortedCorners.corners[0].x, sortedCorners.corners[1].x), sortedCorners.corners[2].x), sortedCorners.corners[3].x));
+        const cv::Point textStartPoint(textX, static_cast<s32>(center.y));
 
-        const char * typeString = "??";
-        if(static_cast<s32>(markerType) >=0 && static_cast<s32>(markerType) <= Anki::Vision::NUM_MARKER_TYPES) {
-          typeString = Anki::Vision::MarkerTypeStrings[markerType];
+        cv::putText(toShowImage, "Tracking", textStartPoint, cv::FONT_HERSHEY_PLAIN, 0.5, textColor);
+      } else {
+        // Draw markers
+        for(s32 iMarker=0; iMarker<static_cast<s32>(visionMarkerList.size()); iMarker++) {
+          cv::Scalar boxColor, textColor;
+          if(visionMarkerList[iMarker].isValid) {
+            textColor = cv::Scalar(0,255,0);
+            boxColor = cv::Scalar(0,128,0);
+          } else {
+            textColor = cv::Scalar(0,0,255);
+            boxColor = cv::Scalar(0,0,128);
+          }
+
+          const Quadrilateral<s16> sortedCorners = visionMarkerList[iMarker].corners.ComputeClockwiseCorners();
+
+          for(s32 iCorner=0; iCorner<4; iCorner++) {
+            const s32 point1Index = iCorner;
+            const s32 point2Index = (iCorner+1) % 4;
+            const cv::Point pt1(sortedCorners[point1Index].x, sortedCorners[point1Index].y);
+            const cv::Point pt2(sortedCorners[point2Index].x, sortedCorners[point2Index].y);
+            cv::line(toShowImage, pt1, pt2, boxColor, 2);
+          }
+
+          const Anki::Vision::MarkerType markerType = visionMarkerList[iMarker].markerType;
+
+          const char * typeString = "??";
+          if(static_cast<s32>(markerType) >=0 && static_cast<s32>(markerType) <= Anki::Vision::NUM_MARKER_TYPES) {
+            typeString = Anki::Vision::MarkerTypeStrings[markerType];
+          }
+
+          const Point<s16> center = visionMarkerList[iMarker].corners.ComputeCenter();
+          const s32 textX = MIN(MIN(MIN(visionMarkerList[iMarker].corners[0].x, visionMarkerList[iMarker].corners[1].x), visionMarkerList[iMarker].corners[2].x), visionMarkerList[iMarker].corners[3].x);
+          const cv::Point textStartPoint(textX, center.y);
+
+          cv::putText(toShowImage, typeString, textStartPoint, cv::FONT_HERSHEY_PLAIN, 0.5, textColor);
         }
-
-        const Point<s16> center = visionMarkerList[iMarker].corners.ComputeCenter();
-        const s32 textX = MIN(MIN(MIN(visionMarkerList[iMarker].corners[0].x, visionMarkerList[iMarker].corners[1].x), visionMarkerList[iMarker].corners[2].x), visionMarkerList[iMarker].corners[3].x);
-        const cv::Point textStartPoint(textX, center.y);
-
-        cv::putText(toShowImage, typeString, textStartPoint, cv::FONT_HERSHEY_PLAIN, 0.5, textColor);
       }
-
-      //fillPoly( img,
-      //  ppt,
-      //  npt,
-      //  1,
-      //  Scalar( 255, 255, 255 ),
-      //  lineType );
 
       cv::imshow("Robot Image", toShowImage);
       cv::waitKey(10);
