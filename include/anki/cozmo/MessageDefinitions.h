@@ -56,15 +56,21 @@ ADD_MESSAGE_MEMBER(f32, liftHeight)
 // ...
 END_MESSAGE_DEFINITION(RobotState)
 
-// SetMotion
-START_MESSAGE_DEFINITION(SetMotion, 1)
+// DriveWheels
+START_MESSAGE_DEFINITION(DriveWheels, 1)
+ADD_MESSAGE_MEMBER(f32, lwheel_speed_mmps)
+ADD_MESSAGE_MEMBER(f32, rwheel_speed_mmps)
+END_MESSAGE_DEFINITION(DriveWheels)
+
+// DriveWheelsCurvature
+START_MESSAGE_DEFINITION(DriveWheelsCurvature, 1)
 ADD_MESSAGE_MEMBER(s16, speed_mmPerSec)      // Commanded speed in mm/sec
 ADD_MESSAGE_MEMBER(u16, accel_mmPerSec2)     // Commanded max absolute value of...
 ADD_MESSAGE_MEMBER(u16, decel_mmPerSec2)     // ...acceleration/deceleration in mm/sec^2
 ADD_MESSAGE_MEMBER(s16, curvatureRadius_mm)  // +ve: curves left, -ve: curves right, ...
                                              // ...u16_MAX: point turn left, 16_MIN: point ...
                                              // ...turn right, 0: straight
-END_MESSAGE_DEFINITION(SetMotion)
+END_MESSAGE_DEFINITION(DriveWheelsCurvature)
 
 
 // MoveLift

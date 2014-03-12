@@ -303,6 +303,21 @@ namespace Anki {
                                         0, 0);
       }
 
+      void ProcessDriveWheelsMessage(const DriveWheels& msg) {
+        //PathFollower::ClearPath();
+        SteeringController::ExecuteDirectDrive(msg.lwheel_speed_mmps, msg.rwheel_speed_mmps);
+      }
+      
+      void ProcessDriveWheelsCurvatureMessage(const DriveWheelsCurvature& msg) {
+        /*
+        PathFollower::ClearPath();
+        
+        SpeedController::SetUserCommandedDesiredVehicleSpeed(msg.speed_mmPerSec);
+        SpeedController::SetUserCommandedAcceleration(msg.accel_mmPerSec2);
+        SpeedController::SetUserCommandedDeceleration(msg.decel_mmPerSec2);
+        */
+      }
+      
       void ProcessMoveLiftMessage(const MoveLift& msg) {
         LiftController::SetSpeedAndAccel(msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
         LiftController::SetDesiredHeight(msg.height_mm);
@@ -323,11 +338,6 @@ namespace Anki {
       }
       
       void ProcessMatMarkerObservedMessage(const MatMarkerObserved& msg) {
-        PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
-      }
-      
-      
-      void ProcessSetMotionMessage(const SetMotion& msg) {
         PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
       }
       
