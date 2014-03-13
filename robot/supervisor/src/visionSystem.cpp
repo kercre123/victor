@@ -53,7 +53,7 @@ static bool isInitialized_ = false;
 #define DOCKING_LUCAS_KANADE_STANDARD 1 //< LucasKanadeTracker_f32
 #define DOCKING_LUCAS_KANADE_FAST     2 //< LucasKanadeTrackerFast
 #define DOCKING_BINARY_TRACKER        3 //< BinaryTracker
-#define DOCKING_ALGORITHM DOCKING_LUCAS_KANADE_STANDARD
+#define DOCKING_ALGORITHM DOCKING_LUCAS_KANADE_FAST
 
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_STANDARD
 typedef TemplateTracker::LucasKanadeTracker_f32 Tracker;
@@ -164,8 +164,8 @@ namespace TrackerParameters {
       // TODO: set via HAL
       detectionWidth  = 320;
       detectionHeight = 240;
-      trackingImageHeight = 60;
       trackingImageWidth = 80;
+      trackingImageHeight = 60;
 
       numPyramidLevels = 2;
       ridgeWeight = 0.0f;
@@ -308,6 +308,7 @@ namespace DebugStream
   static ReturnCode SendFiducialDetection(const Array<u8> &image, const FixedLengthList<VisionMarker> &markers, MemoryStack ccmScratch, MemoryStack offchipScratch) { return EXIT_SUCCESS; }
   static ReturnCode SendTrackingUpdate(const Array<u8> &image, const Transformations::PlanarTransformation_f32 &transformation, MemoryStack ccmScratch, MemoryStack offchipScratch) { return EXIT_SUCCESS; }
   //static ReturnCode SendPrintf(const char * string) { return EXIT_SUCCESS; }
+  static ReturnCode SendArray(const Array<u8> &array) { return EXIT_SUCCESS; }
 #else
   static ReturnCode SendBuffer(const SerializedBuffer &toSend)
   {
@@ -315,6 +316,11 @@ namespace DebugStream
     const u8 * bufferStart = reinterpret_cast<const u8*>(toSend.get_memoryStack().get_validBufferStart(startIndex));
     const s32 validUsedBytes = toSend.get_memoryStack().get_usedBytes() - startIndex;
 
+    // TODO: does this help?
+    /*for(s32 i=0; i<256; i++) {
+      Anki::Cozmo::HAL::UARTPutChar('\0');
+    }*/
+    
     for(s32 i=0; i<Embedded::SERIALIZED_BUFFER_HEADER_LENGTH; i++) {
       Anki::Cozmo::HAL::UARTPutChar(Embedded::SERIALIZED_BUFFER_HEADER[i]);
     }
@@ -322,10 +328,15 @@ namespace DebugStream
     for(s32 i=0; i<validUsedBytes; i++) {
       Anki::Cozmo::HAL::UARTPutChar(bufferStart[i]);
     }
-
+    
     for(s32 i=0; i<Embedded::SERIALIZED_BUFFER_FOOTER_LENGTH; i++) {
       Anki::Cozmo::HAL::UARTPutChar(Embedded::SERIALIZED_BUFFER_FOOTER[i]);
     }
+          
+    // TODO: does this help?
+    /*for(s32 i=0; i<256; i++) {
+      Anki::Cozmo::HAL::UARTPutChar('\0');
+    }*/
 
     HAL::MicroWait(50000);
 
@@ -692,6 +703,9 @@ static ReturnCode LookForMarkers(
 
   ImageProcessing::YUVToGrayscale(yuvImage, grayscaleImage);
 
+  // TODO: remove
+  //DebugStream::SendArray(grayscaleImage);
+  
   FixedLengthList<Array<f32> > homographies(maxMarkers, ccmScratch);
 
   markers.set_size(maxMarkers);
@@ -723,7 +737,7 @@ static ReturnCode LookForMarkers(
     offchipScratch, onchipScratch, ccmScratch);
 
   if(result == RESULT_OK) {
-    DebugStream::SendFiducialDetection(grayscaleImage, markers, ccmScratch, offchipScratch);
+    //DebugStream::SendFiducialDetection(grayscaleImage, markers, ccmScratch, offchipScratch);
 
     for(s32 i_marker = 0; i_marker < markers.get_size(); ++i_marker) {
       const VisionMarker crntMarker = markers[i_marker];
@@ -833,6 +847,8 @@ static ReturnCode TrackTemplate(
   //       but for now, we have to downsample to tracking resolution
   Array<u8> grayscaleImageSmall(parameters.trackingImageHeight, parameters.trackingImageWidth, ccmScratch);
   DownsampleHelper(grayscaleImage, grayscaleImageSmall, ccmScratch);
+  
+  //DebugStream::SendArray(grayscaleImageSmall);
 #endif
 
   converged = false;
@@ -845,6 +861,7 @@ static ReturnCode TrackTemplate(
     parameters.useWeights,
     converged,
     onchipScratch);
+  
 #elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_FAST
   const Result trackerResult = tracker.UpdateTrack(
     grayscaleImageSmall, 
@@ -852,6 +869,8 @@ static ReturnCode TrackTemplate(
     parameters.convergenceTolerance,
     converged,
     onchipScratch);
+  
+  tracker.get_transformation().Print("track");
 
 #elif DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
   s32 numMatches = -1;
@@ -865,6 +884,8 @@ static ReturnCode TrackTemplate(
     numMatches,
     ccmScratch, offchipScratch);
 
+  tracker.get_transformation().Print("track");
+    
   const s32 numTemplatePixels = tracker.get_numTemplatePixels();
 
   const f32 percentMatchedPixels = static_cast<f32>(numMatches) / static_cast<f32>(numTemplatePixels);
@@ -891,7 +912,7 @@ static ReturnCode TrackTemplate(
       onchipScratch);
   }
 
-  DebugStream::SendTrackingUpdate(grayscaleImage, tracker.get_transformation(), ccmScratch, offchipScratch);
+  //DebugStream::SendTrackingUpdate(grayscaleImage, tracker.get_transformation(), ccmScratch, offchipScratch);
 
   MatlabVisualization::SendTrack();
 
@@ -962,8 +983,7 @@ namespace Anki {
 
           if(VisionState::numTrackFailures_ == VisionState::MAX_TRACKING_FAILURES) {
             // This resets docking, puttings us back in VISION_MODE_LOOKING_FOR_MARKERS mode
-            // TODO: add back
-            //SetMarkerToTrack(VisionState::markerTypeToTrack_);
+            SetMarkerToTrack(VisionState::markerTypeToTrack_);
           }
         }
       }
@@ -1129,7 +1149,8 @@ namespace Anki {
             return EXIT_FAILURE;
           }
           
-          UpdateTrackingStatus(converged);
+          // TODO: is this call needed?
+          //UpdateTrackingStatus(converged);
 
           Messages::ProcessDockingErrorSignalMessage(dockErrMsg);
         } else {
