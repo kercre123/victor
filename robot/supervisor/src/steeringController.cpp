@@ -253,7 +253,7 @@ namespace Anki {
       }
       
       f32 wheelSpeedDiff = *higherWheelSpeed - *lowerWheelSpeed;
-      f32 avgSpeed = (*higherWheelSpeed + *lowerWheelSpeed) * 0.5;
+      f32 avgSpeed = (*higherWheelSpeed + *lowerWheelSpeed) * 0.5f;
       
       // Center speeds on 0 if wheelSpeedDiff exceeds maximum achievable wheel speed
       if (wheelSpeedDiff > 2*WheelController::MAX_WHEEL_SPEED_MM_S) {

@@ -52,7 +52,10 @@ namespace Anki {
       VelocityProfileGenerator vpg_;
       
       // Whether or not to recalibrate the motors when they hard limit
-      #define RECALIBRATE_AT_LIMIT 0
+      const bool RECALIBRATE_AT_LIMIT = false;
+      
+      // If head comes within this distance to limit angle, trigger recalibration.
+      const f32 RECALIBRATE_LIMIT_ANGLE_THRESH = 0.1f;
       
       // Calibration parameters
       typedef enum {
@@ -63,7 +66,6 @@ namespace Anki {
       } HeadCalibState;
       
       HeadCalibState calState_ = HCS_IDLE;
-      bool doCalib_ = false;
       bool isCalibrated_ = false;
       bool limitingDetected_ = false;
       u32 lastHeadMovedTime_us = 0;
@@ -114,7 +116,6 @@ namespace Anki {
       currentAngle_ = MIN_HEAD_ANGLE;
       HAL::MotorResetPosition(HAL::MOTOR_HEAD);
       prevHalPos_ = HAL::MotorGetPosition(HAL::MOTOR_HEAD);
-      doCalib_ = false;
       isCalibrated_ = true;
     }
     
@@ -329,7 +330,7 @@ namespace Anki {
               ((power_ < 0)
                && (desiredAngle_.ToFloat() == MIN_HEAD_ANGLE)
                && (desiredAngle_.ToFloat() == currDesiredAngle_)
-               && (ABS(angleError_) < 0.1)
+               && (ABS(angleError_) < RECALIBRATE_LIMIT_ANGLE_THRESH)
                && NEAR_ZERO(HAL::MotorGetSpeed(HAL::MOTOR_HEAD)))) {
                 
           if (!limitingDetected_) {

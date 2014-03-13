@@ -35,8 +35,10 @@ namespace Anki {
         f32 currentMatX_=0.f, currentMatY_=0.f;  // mm
         Radians currentMatHeading_(0.f);
        
+#if(USE_OVERLAY_DISPLAY)
         f32 xTrue_, yTrue_, angleTrue_;
         f32 prev_xTrue_, prev_yTrue_, prev_angleTrue_;
+#endif
         
         f32 prevLeftWheelPos_ = 0;
         f32 prevRightWheelPos_ = 0;
@@ -147,7 +149,7 @@ namespace Anki {
             // in the circle defined by the turning radius as determined by the incremental wheel motion this tick.
             // The angle of this circle that this chord spans is cTheta.
             // The angle of the chord relative to the robot's previous trajectory is cTheta / 2.
-            f32 alpha = cTheta * 0.5;
+            f32 alpha = cTheta * 0.5f;
             
             // The chord length is 2 * cRadius * sin(cTheta / 2).
             f32 chord_length = ABS(2 * cRadius * sinf(alpha));

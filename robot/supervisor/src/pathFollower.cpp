@@ -156,7 +156,6 @@ namespace Anki
         f32 distToSegment, angError;
         
         u8 closestSegId = 0;
-        Planning::SegmentRangeStatus closestSegmentRangeStatus = Planning::OOR_NEAR_END;
         f32 distToClosestSegment = FLT_MAX;
         
         for (u8 i=0; i<path_.GetNumSegments(); ++i) {
@@ -167,7 +166,6 @@ namespace Anki
           if (ABS(distToSegment) < distToClosestSegment && (res == Planning::IN_SEGMENT_RANGE || res == Planning::OOR_NEAR_START)) {
             closestSegId = i;
             distToClosestSegment = ABS(distToSegment);
-            closestSegmentRangeStatus = res;
 #if(DEBUG_PATH_FOLLOWER)
             PRINT(" New closest seg: %d, distToSegment %f (res=%d)\n", i, distToSegment, res);
 #endif

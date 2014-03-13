@@ -269,7 +269,7 @@ namespace Anki {
           PathFollower::AppendPathSegment_Line(0, 0.0, 0.0, 300, -300,
                                                PF_TARGET_SPEED_MMPS, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
           float arc1_radius = sqrt((float)5000);  // Radius of sqrt(50^2 + 50^2)
-          PathFollower::AppendPathSegment_Arc(0, 350, -250, arc1_radius, -0.75*PI, 0.75*PI,
+          PathFollower::AppendPathSegment_Arc(0, 350, -250, arc1_radius, -0.75f*PI, 0.75f*PI,
                                               PF_TARGET_SPEED_MMPS, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
           PathFollower::AppendPathSegment_Line(0, 350 + arc1_radius, -250, 350 + arc1_radius, 200,
                                                PF_TARGET_SPEED_MMPS, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);

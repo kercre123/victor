@@ -38,7 +38,10 @@ namespace Anki {
 #endif
         
         // Re-calibrates lift position whenever LIFT_HEIGHT_LOW is commanded.
-        #define RECALIBRATE_AT_LOW_HEIGHT 0
+        const bool RECALIBRATE_AT_LOW_HEIGHT = false;
+        
+        // If lift comes within this distance to limit angle, trigger recalibration.
+        const f32 RECALIBRATE_LIMIT_ANGLE_THRESH = 0.1f;
         
         const f32 MAX_LIFT_CONSIDERED_STOPPED_RAD_PER_SEC = 0.001;
         
@@ -91,7 +94,6 @@ namespace Anki {
         } LiftCalibState;
         
         LiftCalibState calState_ = LCS_IDLE;
-        bool doCalib_ = false;
         bool isCalibrated_ = false;
         bool limitingDetected_ = false;
         u32 lastLiftMovedTime_us = 0;
@@ -134,7 +136,6 @@ namespace Anki {
         currentAngle_ = LIFT_ANGLE_LOW;
         HAL::MotorResetPosition(HAL::MOTOR_LIFT);
         prevHalPos_ = HAL::MotorGetPosition(HAL::MOTOR_LIFT);
-        doCalib_ = false;
         isCalibrated_ = true;
       }
       
@@ -434,7 +435,7 @@ namespace Anki {
               ((power_ < 0)
               && (desiredAngle_.ToFloat() == LIFT_ANGLE_LOW)
               && (desiredAngle_.ToFloat() == currDesiredAngle_)
-              && (ABS(angleError_) < 0.1)
+              && (ABS(angleError_) < RECALIBRATE_LIMIT_ANGLE_THRESH)
               && NEAR_ZERO(HAL::MotorGetSpeed(HAL::MOTOR_LIFT)))) {
             
             if (!limitingDetected_) {
