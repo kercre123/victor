@@ -113,8 +113,8 @@ end
 % image we actually care about.
 
 img = cat(3, img, ones(resamplingResolution), zeros(resamplingResolution));
-labelNames{end+1} = 'ALL_WHITE';
-labelNames{end+1} = 'ALL_BLACK';
+labelNames{end+1} = 'ALLWHITE';
+labelNames{end+1} = 'ALLBLACK';
 labels = [labels numLabels+1 numLabels+2];
 numLabels = numLabels + 2;
 numImages = numImages + 2;
@@ -198,65 +198,9 @@ for i_label = 1:numLabels
 end
 
 
-%% Create Verifiers
-% numVerificationProbes = 20;
-% verifiers = struct();
-% for i_label = 1:numLabels
-%     
-%     used = false(workingResolution);
-%     [mask_x,mask_y] = meshgrid(-ceil(probeRadius):ceil(probeRadius));
-%     
-%     probeIsOn = 1 - probeValues(:,labels==i_label);
-%     p_on = sum(probeIsOn,2)/size(probeIsOn,2);
-%     p_off = 1 - p_on;
-%     
-%     entropy = -(p_on.*log2(max(eps,p_on)) + p_off.*log2(max(eps,p_off)));
-% 
-%     % Choose the probes with the highest entropy, that are not all right on
-%     % top of each other
-%     [~,sortIndex]  = sort(entropy, 'ascend');
-%     i_probe = 1;
-%     verifiers(i_label).x = zeros(1,numVerificationProbes);
-%     verifiers(i_label).y = zeros(1,numVerificationProbes);
-%     verifiers(i_label).isOn = false(1, numVerificationProbes);
-%     for k = 1:numVerificationProbes
-%         
-%         while used(sortIndex(i_probe))
-%             i_probe = i_probe + 1;
-%             
-%             if i_probe > workingResolution^2
-%                 error('Ran out of verification probe options!');
-%             end
-%         end
-%         
-%         selectedProbe = sortIndex(i_probe);
-%         verifiers(i_label).x(k)    = xgrid(selectedProbe);
-%         verifiers(i_label).y(k)    = ygrid(selectedProbe);
-%         verifiers(i_label).isOn(k) = p_on(selectedProbe) > 0.5;
-%         
-%         [usedRow,usedCol] = ind2sub(workingResolution*[1 1], selectedProbe);
-%         used(max(1,min(workingResolution, usedRow + mask_y)), ...
-%             max(1,min(workingResolution, usedCol + mask_x))) = true;
-%         assert(used(selectedProbe))
-%     end
-%     
-%     for i =1:4
-%         subplot(1,4,i), hold off
-%         imagesc([-.1 1.1], [-.1 1.1], imrotate(img(:,:,find(labels==i_label,1)), (i-1)*90))
-%         axis image, hold on
-%         isOn = verifiers(i_label).isOn; 
-%         plot(verifiers(i_label).x(isOn),  verifiers(i_label).y(isOn), 'go'); 
-%         plot(verifiers(i_label).x(~isOn), verifiers(i_label).y(~isOn), 'ro'); 
-%     end
-%     
-%     
-% end
-% 
-% root.verifiers = verifiers;
-
 %% Test on Training Data
 
-fprintf('Testing on training images...');
+fprintf('Testing on %d training images...', numImages);
 if DEBUG_DISPLAY
     namedFigure('Sampled Test Results'); clf
     colormap(gray)
@@ -333,10 +277,13 @@ if sum(verified) ~= length(verified)
 end
 
 % Also test on original images
+fprintf('Testing on %d original images...', length(fnames));
 correct = false(1,length(fnames));
 verified = false(1,length(fnames));
 if DEBUG_DISPLAY
     namedFigure('Original Image Errors'), clf
+    numDisplayRows = floor(sqrt(length(fnames)));
+    numDisplayCols = ceil(length(fnames)/numDisplayRows);
 end
 for i = 1:length(fnames)    
     testImg = mean(im2double(imread(fullfile(markerImageDir, fnames{i}))),3);
@@ -358,7 +305,7 @@ for i = 1:length(fnames)
         correct(i) = strcmp(result, labelNames{labels(i)});
         
         if DEBUG_DISPLAY % && ~correct(i)
-            h_axes = subplot(2,ceil(length(fnames)/2),i);
+            h_axes = subplot(numDisplayRows,numDisplayCols,i);
             imagesc(testImg, 'Parent', h_axes); hold on
             axis(h_axes, 'image');
             TestTree(root, testImg, tform, 0.5, probePattern, true);
@@ -428,8 +375,7 @@ end
             %}
             
             % Find all probes with the max information gain and if there
-            % are more than one, choose the one furthest from the current
-            % set of probes (?)
+            % are more than one, choose a random one of them
             maxInfoGain = max(infoGain);
             
             if maxInfoGain < minInfoGain
