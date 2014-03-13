@@ -35,22 +35,11 @@ quads_minDistanceFromImageEdge = 2;
 decode_minContrastRatio = 1.25;
 returnInvalidMarkers = 0;
 
-[quads, markerTypes] = mexDetectFiducialMarkers(image, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, returnInvalidMarkers);
+[quads, markerTypes, markerNames] = mexDetectFiducialMarkers(image, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, returnInvalidMarkers);
 
 for i = 1:length(quads)
     quads{i} = quads{i} + 1;
 end
-
-markerLabels = {
-    'ALL_BLACK',
-    'ALL_WHITE',
-    'ANGRYFACE',
-    'ANKILOGO',
-    'BATTERIES',
-    'BULLSEYE',
-    'FIRE',
-    'SQUAREPLUSCORNERS',
-    'UNKNOWN'};
 
 order = [1 2 4 3 1];
 
@@ -65,7 +54,7 @@ for i = 1:length(quads)
     plot(quads{i}([1 3],1),quads{i}([1 3],2), 'g', 'LineWidth', 2);
     text(...
         mean(quads{i}(:,1)), mean(quads{i}(:,2)),...
-        markerLabels{markerTypes(i)+1},...
+        markerNames{i}, ...
         'HorizontalAlignment', 'center', 'BackgroundColor', [.7 .9 .7], ...
         'Interpreter', 'none');
 end
@@ -80,11 +69,12 @@ title('Matlab simpleDetector()')
 hold on;
 for i = 1:length(markers)
     if markers{i}.isValid
+        name = strrep(markers{i}.name, 'MARKER_', '');
         plot(markers{i}.corners(order,1),markers{i}.corners(order,2), 'r');
         plot(markers{i}.corners([1 3],1),markers{i}.corners([1 3],2), 'g', 'LineWidth', 2);
         text(...
             mean(markers{i}.corners(:,1)), mean(markers{i}.corners(:,2)),...
-            markers{i}.name,...
+            name,...
             'HorizontalAlignment', 'center', 'BackgroundColor', [.7 .9 .7], ...
             'Interpreter', 'none');
     else
