@@ -519,15 +519,17 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(scratch.IsValid(),
           RESULT_FAIL_INVALID_OBJECT, "ComputeHomographyFromQuad", "scratch is not valid");
 
-        Quadrilateral<s16> sortedQuad = quad.ComputeClockwiseCorners();
+        // TODO: I got rid of sorting, but now we have an extra copy here that can be removed.
+        //Quadrilateral<s16> sortedQuad = quad.ComputeClockwiseCorners();
+        Quadrilateral<s16> sortedQuad = quad;
 
         FixedLengthList<Point<f32> > originalPoints(4, scratch);
         FixedLengthList<Point<f32> > transformedPoints(4, scratch);
 
         originalPoints.PushBack(Point<f32>(0,0));
         originalPoints.PushBack(Point<f32>(0,1));
-        originalPoints.PushBack(Point<f32>(1,1));
         originalPoints.PushBack(Point<f32>(1,0));
+        originalPoints.PushBack(Point<f32>(1,1));
 
         transformedPoints.PushBack(Point<f32>(sortedQuad[0].x, sortedQuad[0].y));
         transformedPoints.PushBack(Point<f32>(sortedQuad[1].x, sortedQuad[1].y));
