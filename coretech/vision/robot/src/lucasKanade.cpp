@@ -90,7 +90,7 @@ namespace Anki
         templateWeights.set_size(numPyramidLevels);
 
         this->transformation = Transformations::PlanarTransformation_f32(transformType, templateQuad, memory);
-
+        
         this->isValid = true;
 
         BeginBenchmark("InitializeTemplate");
