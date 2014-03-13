@@ -156,6 +156,9 @@ namespace TrackerParameters {
     f32 convergenceTolerance;
     bool useWeights;
 
+    f32 blockMarkerWidthInMM;
+    f32 horizontalFocalLengthInMM;
+
     Parameters()
     {
       // TODO: set via HAL
@@ -169,6 +172,14 @@ namespace TrackerParameters {
       maxIterations = 25;
       convergenceTolerance = 0.05f;
       useWeights = true;
+
+      blockMarkerWidthInMM = 29.5f; // TODO: Get this from the docking command message from basestation
+
+      // TODO: Add CameraMode resolution to CameraInfo
+#warning set horizontalFocalLengthInMM correctly, by passing in a parameter or something
+      const f32 fxAdj = static_cast<f32>(detectionWidth) / static_cast<f32>(trackingImageWidth);
+      const f32 focalLength_x = -10e50f; //headCamInfo_->focalLength_x
+      horizontalFocalLengthInMM = focalLength_x / fxAdj;
     } // Parameters
   } Parameters;
 
@@ -190,6 +201,8 @@ namespace TrackerParameters {
   {
     s32 detectionWidth;
     s32 detectionHeight;
+    s32 trackingImageHeight;
+    s32 trackingImageWidth;
     u8 edgeDetection_grayvalueThreshold;
     s32 edgeDetection_minComponentWidth;
     s32 edgeDetection_maxDetectionsPerType;
@@ -198,6 +211,9 @@ namespace TrackerParameters {
     s32 matching_maxProjectiveDistance;
     s32 verification_maxTranslationDistance;
     f32 percentMatchedPixelsThreshold;
+
+    f32 blockMarkerWidthInMM;
+    f32 horizontalFocalLengthInMM;
 
     Parameters()
     {
@@ -212,6 +228,14 @@ namespace TrackerParameters {
       matching_maxProjectiveDistance = 7;
       verification_maxTranslationDistance = 1;
       percentMatchedPixelsThreshold = 0.5f; // TODO: pick a reasonable value
+
+      blockMarkerWidthInMM = 29.5f; // TODO: Get this from the docking command message from basestation
+
+      // TODO: Add CameraMode resolution to CameraInfo
+#warning set horizontalFocalLengthInMM correctly, by passing in a parameter or something
+      const f32 fxAdj = static_cast<f32>(detectionWidth) / static_cast<f32>(trackingImageWidth);
+      const f32 focalLength_x = -10e10f; //headCamInfo_->focalLength_x
+      horizontalFocalLengthInMM = focalLength_x / fxAdj;
     }
   } Parameters;
 
@@ -308,22 +332,21 @@ namespace DebugStream
     return EXIT_SUCCESS;
   }
 
-  static ReturnCode SendPrintf(const char * string)
-  {
-    printfBuffer_ = SerializedBuffer(&printfBufferRaw_[0], PRINTF_BUFFER_SIZE);
-    printfBuffer_.PushBackString(string);
+  // TODO: Commented out to prevent unused compiler warning. Add back if needed.
+  //static ReturnCode SendPrintf(const char * string)
+  //{
+  //  printfBuffer_ = SerializedBuffer(&printfBufferRaw_[0], PRINTF_BUFFER_SIZE);
+  //  printfBuffer_.PushBackString(string);
 
-    return SendBuffer(printfBuffer_);
-  } // void SendPrintf(const char * string)
+  //  return SendBuffer(printfBuffer_);
+  //} // void SendPrintf(const char * string)
 
   static ReturnCode SendFiducialDetection(const Array<u8> &image, const FixedLengthList<VisionMarker> &markers, MemoryStack ccmScratch, MemoryStack offchipScratch)
   {
     debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
 
     Array<u8> imageSmall(60, 80, offchipScratch);
-
     DownsampleHelper(image, imageSmall, ccmScratch);
-
     debugStreamBuffer_.PushBack(imageSmall);
 
     if(markers.get_size() != 0) {
@@ -342,43 +365,23 @@ namespace DebugStream
     return SendBuffer(debugStreamBuffer_);
   } // ReturnCode SendDebugStream_Detection()
 
-  static ReturnCode SendTrackingUpdate()
+  static ReturnCode SendTrackingUpdate(const Array<u8> &image, const Transformations::PlanarTransformation_f32 &transformation, MemoryStack ccmScratch, MemoryStack offchipScratch)
   {
-    //// Pushing here at the top is necessary, because of all the global variables
-    //PUSH_MEMORY_STACK(offchipScratch_);
-    //PUSH_MEMORY_STACK(ccmScratch_);
+    debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
 
-    //debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
+    Array<u8> imageSmall(60, 80, offchipScratch);
+    DownsampleHelper(image, imageSmall, ccmScratch);
+    debugStreamBuffer_.PushBack(imageSmall);
 
-    //// Stream the images as they come
-    ////const s32 imageHeight = HAL::CameraModeInfo[HAL::CAMERA_MODE_QVGA].height;
-    ////const s32 imageWidth = HAL::CameraModeInfo[HAL::CAMERA_MODE_QVGA].width;
-    //Array<u8> imageLarge(240, 320, offchipScratch_);
-    //Array<u8> imageSmall(60, 80, offchipScratch_);
+    // TODO: get the true length
+    const s32 oneTransformationLength = 512;
+    void * restrict oneTransformation = ccmScratch.Allocate(oneTransformationLength);
 
-    //YUVToGrayscaleHelper(frame, imageLarge);
-    //DownsampleHelper(imageLarge, imageSmall, ccmScratch_);
+    transformation.Serialize(oneTransformation, oneTransformationLength);
+    debugStreamBuffer_.PushBack("PlanarTransformation_f32", oneTransformation, oneTransformationLength);
 
-    //debugStreamBuffer_.PushBack(imageSmall);
-
-    //{
-    //  PUSH_MEMORY_STACK(offchipScratch_);
-
-    //  // TODO: get the correct number
-    //  //const s32 oneTransformationLength = sizeof(Transformations::PlanarTransformation_f32);
-    //  const s32 oneTransformationLength = 512;
-    //  void * restrict oneTransformation = offchipScratch_.Allocate(oneTransformationLength);
-
-    //  const Transformations::PlanarTransformation_f32 transformation = tracker_.get_transformation();
-
-    //  transformation.Serialize(oneTransformation, oneTransformationLength);
-    //  debugStreamBuffer_.PushBack("PlanarTransformation_f32", oneTransformation, oneTransformationLength);
-    //}
-
-    //return SendBuffer(debugStreamBuffer_);
-
-    return EXIT_SUCCESS;
-  }
+    return SendBuffer(debugStreamBuffer_);
+  } // static ReturnCode SendTrackingUpdate()
 #endif // #ifdef SEND_DEBUG_STREAM
 
   static ReturnCode Initialize()
@@ -721,7 +724,7 @@ static ReturnCode LookForMarkers(
 
 static ReturnCode InitTemplate(
   const Array<u16> &yuvImage,
-  const Quadrilateral<f32> &templateQuad,
+  const Quadrilateral<f32> &trackingQuad,
   const TrackerParameters::Parameters &parameters,
   Tracker &tracker,
   MemoryStack offchipScratch,
@@ -735,7 +738,7 @@ static ReturnCode InitTemplate(
   // TODO: At some point template initialization should happen at full detection resolution but for
   //       now, we have to downsample to tracking resolution
 
-  Array<u8> grayscaleImageSmall(parameters.trackHeight, parameters.trackWidth, ccmScratch);
+  Array<u8> grayscaleImageSmall(parameters.trackingImageHeight, parameters.trackingImageWidth, ccmScratch);
   DownsampleHelper(grayscaleImage, grayscaleImageSmall, ccmScratch);
 
   // Note that the templateRegion and the trackingQuad are both at DETECTION_RESOLUTION, not
@@ -744,15 +747,15 @@ static ReturnCode InitTemplate(
   const f32 downsampleFactor = static_cast<f32>(1 << downsamplePower);
 
   for(u8 i=0; i<4; ++i) {
-    templateQuad[i].x /= downsampleFactor;
-    templateQuad[i].y /= downsampleFactor;
+    trackingQuad[i].x /= downsampleFactor;
+    trackingQuad[i].y /= downsampleFactor;
   }
 #endif // #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_FAST || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_STANDARD
 
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_FAST
   tracker = TemplateTracker::LucasKanadeTrackerFast(
     imageSmall,
-    templateQuad,
+    trackingQuad,
     NUM_TRACKING_PYRAMID_LEVELS,
     Transformations::TRANSFORM_AFFINE,
     TRACKING_RIDGE_WEIGHT,
@@ -760,7 +763,7 @@ static ReturnCode InitTemplate(
 #elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_STANDARD
   tracker = TemplateTracker::LucasKanadeTracker_f32(
     imageSmall,
-    templateQuad,
+    trackingQuad,
     NUM_TRACKING_PYRAMID_LEVELS,
     Transformations::TRANSFORM_AFFINE,
     TRACKING_RIDGE_WEIGHT,
@@ -768,7 +771,7 @@ static ReturnCode InitTemplate(
 #elif DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
   tracker = TemplateTracker::BinaryTracker(
     grayscaleImage,
-    templateQuad,
+    trackingQuad,
     parameters.edgeDetection_grayvalueThreshold,
     parameters.edgeDetection_minComponentWidth,
     parameters.edgeDetection_maxDetectionsPerType,
@@ -785,10 +788,10 @@ static ReturnCode InitTemplate(
 
 static ReturnCode TrackTemplate(
   const Array<u16> &yuvImage,
-  const Quadrilateral<f32> &templateQuad,
+  const Quadrilateral<f32> &trackingQuad,
   const TrackerParameters::Parameters &parameters,
   Tracker &tracker,
-  bool &converged,
+  Messages::DockingErrorSignal &dockErrMsg,
   MemoryStack offchipScratch,
   MemoryStack onchipScratch,
   MemoryStack ccmScratch)
@@ -810,17 +813,19 @@ static ReturnCode TrackTemplate(
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_FAST || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_STANDARD
   // TODO: At some point template initialization should happen at full detection resolution
   //       but for now, we have to downsample to tracking resolution
-  Array<u8> grayscaleImageSmall(parameters.trackHeight, parameters.trackWidth, ccmScratch);
+  Array<u8> grayscaleImageSmall(parameters.trackingImageHeight, parameters.trackingImageWidth, ccmScratch);
   DownsampleHelper(grayscaleImage, grayscaleImageSmall, ccmScratch);
 #endif
 
+  bool converged = false;
+
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_FAST
-  const Result trackerResult = tracker_.UpdateTrack(imageSmall, TRACKING_MAX_ITERATIONS,
+  const Result trackerResult = tracker.UpdateTrack(imageSmall, TRACKING_MAX_ITERATIONS,
     TRACKING_CONVERGENCE_TOLERANCE,
     converged,
     onchipScratch);
 #elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_STANDARD
-  const Result trackerResult = tracker_.UpdateTrack(imageSmall, TRACKING_MAX_ITERATIONS,
+  const Result trackerResult = tracker.UpdateTrack(imageSmall, TRACKING_MAX_ITERATIONS,
     TRACKING_CONVERGENCE_TOLERANCE,
     TRACKING_USE_WEIGHTS,
     converged,
@@ -828,63 +833,47 @@ static ReturnCode TrackTemplate(
 #elif DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
   s32 numMatches = -1;
 
-  const Result trackerResult = tracker_.UpdateTrack(imageLarge,
-    edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, edgeDetection_maxDetectionsPerType, edgeDetection_everyNLines,
-    matching_maxTranslationDistance, matching_maxProjectiveDistance,
-    verification_maxTranslationDistance,
+  const Result trackerResult = tracker.UpdateTrack(
+    grayscaleImage,
+    parameters.edgeDetection_grayvalueThreshold, parameters.edgeDetection_minComponentWidth, parameters.edgeDetection_maxDetectionsPerType, parameters.edgeDetection_everyNLines,
+    parameters.matching_maxTranslationDistance, parameters.matching_maxProjectiveDistance,
+    parameters.verification_maxTranslationDistance,
     false,
     numMatches,
-    ccmScratch_, offchipScratch);
+    ccmScratch, offchipScratch);
 
-  const s32 numTemplatePixels = tracker_.get_numTemplatePixels();
+  const s32 numTemplatePixels = tracker.get_numTemplatePixels();
 
   const f32 percentMatchedPixels = static_cast<f32>(numMatches) / static_cast<f32>(numTemplatePixels);
 
-  if(percentMatchedPixels >= percentMatchedPixelsThreshold) {
+  if(percentMatchedPixels >= parameters.percentMatchedPixelsThreshold) {
     converged = true;
-  } else {
-    converged = false;
   }
 #endif
 
   if(trackerResult != RESULT_OK) {
-    converged = false;
     return EXIT_FAILURE;
   }
-
-  DebugStream::SendTrackingUpdate();
-
-  return EXIT_SUCCESS;
-} // TrackTemplate()
-
-static ReturnCode ComputeErrorSignal(
-  const Tracker &tracker,
-  const s32 trackWidth,
-  const bool trackingConverged,
-  Messages::DockingErrorSignal &dockErrMsg)
-{
-  // TODO: set dockErrMsg timestamp
 
   dockErrMsg.didTrackingSucceed = static_cast<u8>(converged);
 
   if(converged) {
-    // TODO: Add CameraMode resolution to CameraInfo
-    const f32 fxAdj = static_cast<f32>(headCamInfo_->ncols) / static_cast<f32>(trackWidth);
-
-    Docking::ComputeDockingErrorSignal(tracker_.get_transformation(),
-      trackWidth,
-      29.5f, // TODO: Get this from the docking command message from basestation
-      headCamInfo_->focalLength_x / fxAdj,
+    Docking::ComputeDockingErrorSignal(tracker.get_transformation(),
+      parameters.trackingImageWidth,
+      parameters.blockMarkerWidthInMM,
+      parameters.horizontalFocalLengthInMM,
       dockErrMsg.x_distErr,
       dockErrMsg.y_horErr,
       dockErrMsg.angleErr,
       onchipScratch);
-  } // IF converged
+  }
 
-  MatlabVisualization::SendTrack()
+  DebugStream::SendTrackingUpdate(grayscaleImage, tracker.get_transformation(), ccmScratch, offchipScratch);
 
-    return EXIT_SUCCESS;
-}
+  MatlabVisualization::SendTrack();
+
+  return EXIT_SUCCESS;
+} // TrackTemplate()
 
 //
 // These functions below should be the only ones to access global variables in a different namespace
@@ -934,10 +923,10 @@ namespace Anki {
         return EXIT_SUCCESS;
       }
 
-#warning isTemplateInitalize is ignored
+#warning isTemplateInitalized is ignored
       void SetTrackingMode(const bool isTemplateInitalized)
       {
-        VisionState::mode_ = VISION_MODE_IDLE;;
+        VisionState::mode_ = VISION_MODE_TRACKING;
       }
 
       void UpdateTrackingStatus(const bool didTrackingSucceed)
@@ -1094,14 +1083,16 @@ namespace Anki {
           frameRdyTimeUS_ = HAL::GetMicroCounter() + TRACK_BLOCK_PERIOD_US;
 #endif
 
-          bool converged = false;
+          Messages::DockingErrorSignal dockErrMsg;
+
+          // TODO: set dockErrMsg timestamp
 
           const ReturnCode result = TrackTemplate(
             yuvImage,
-            VisionState::templateQuad,
+            VisionState::trackingQuad_,
             TrackerParameters::parameters_,
             VisionState::tracker_,
-            converged,
+            dockErrMsg,
             VisionMemory::offchipScratch_,
             VisionMemory::onchipScratch_,
             VisionMemory::ccmScratch_);
@@ -1110,13 +1101,6 @@ namespace Anki {
             PRINT("VisionSystem::Update(): TrackTemplate() failed.\n");
             return EXIT_FAILURE;
           }
-
-          Messages::DockingErrorSignal dockErrMsg;
-
-          ComputeErrorSignal(
-            VisionState::tracker_,
-            converged,
-            dockErrMsg);
 
           Messages::ProcessDockingErrorSignalMessage(dockErrMsg);
         } else {
