@@ -33,14 +33,20 @@ namespace Anki
       
       f32 MotorGetSpeed(MotorID motor)
       {
+        // Convert motor output from m to mm
+        f32 multiplier = (motor == MOTOR_LEFT_WHEEL || motor == MOTOR_RIGHT_WHEEL) ? 1000.f : 1.f;
+				
         // ASSERT(motor < MOTOR_COUNT);
-        return g_dataToHead.speeds[motor] / FIXED_TO_F32;
+        return g_dataToHead.speeds[motor] / FIXED_TO_F32 * multiplier;
       }
       
       f32 MotorGetPosition(MotorID motor)
       {
+        // Convert motor output from m to mm
+        f32 multiplier = (motor == MOTOR_LEFT_WHEEL || motor == MOTOR_RIGHT_WHEEL) ? 1000.f : 1.f;
+				
         // ASSERT(motor < MOTOR_COUNT);
-        return g_dataToHead.positions[motor] / FIXED_TO_F32;
+        return g_dataToHead.positions[motor] / FIXED_TO_F32 * multiplier;
       }
       
       s32 MotorGetLoad()

@@ -46,7 +46,7 @@ namespace Anki {
   namespace SpeedController {
     
     
-#pragma mark --- "Member Variables" ---
+// #pragma mark --- "Member Variables" ---
     namespace {
       // The target desired speed the user commanded to the car [mm/sec].
       // This is our eventual goal for the vehicle speed, given enough time for acceleration
@@ -72,7 +72,7 @@ namespace Anki {
       
     } // private namespace
     
-#pragma mark --- Method Implementations ---
+// #pragma mark --- Method Implementations ---
     
     // Forward declaration
     void Run(s16 desVehicleSpeed);
@@ -157,8 +157,7 @@ namespace Anki {
     s16 GetCurrentMeasuredVehicleSpeed(void)
     {
       f32 filteredSpeedL, filteredSpeedR;
-      WheelController::GetFilteredWheelSpeeds(&filteredSpeedL,
-                                              &filteredSpeedR);
+      WheelController::GetFilteredWheelSpeeds(filteredSpeedL, filteredSpeedR);
       
       // TODO: are we sure this should be returned as s16?
       return static_cast<s16>(0.5f*(filteredSpeedL + filteredSpeedL));
@@ -196,7 +195,7 @@ namespace Anki {
     {
       //If the left and the right encoder are not moving (or moving REALLY slow), we are stopped
       f32 wheelSpeedL, wheelSpeedR;
-      WheelController::GetFilteredWheelSpeeds(&wheelSpeedL, &wheelSpeedR);
+      WheelController::GetFilteredWheelSpeeds(wheelSpeedL, wheelSpeedR);
       
       if(ABS(wheelSpeedL) < WheelController::WHEEL_SPEED_CONSIDER_STOPPED_MM_S &&
          ABS(wheelSpeedR) < WheelController::WHEEL_SPEED_CONSIDER_STOPPED_MM_S ) {

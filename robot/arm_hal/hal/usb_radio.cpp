@@ -45,7 +45,7 @@ namespace Anki {
     
     bool HAL::RadioSendMessage(const Messages::ID msgID, const void *buffer, TimeStamp_t ts)
     {
-
+#if(USING_UART_RADIO)
 
         // Send the message header (0xBEEF + timestamp + robotID + msgID)
         // For TCP comms, send timestamp immediately after the header.
@@ -92,7 +92,7 @@ namespace Anki {
         }
         printf("\n");
         */
-        
+#endif        
         return true;
       
     } // RadioSendMessage()
@@ -100,6 +100,7 @@ namespace Anki {
     
     u32 HAL::RadioGetNumBytesAvailable(void)
     {
+#if(USING_UART_RADIO)			
       // Check for incoming data and add it to receive buffer
       int dataSize;
       
@@ -113,7 +114,7 @@ namespace Anki {
         // Something went wrong
         DisconnectRadio();
       }
-      
+#endif      
       return recvBufSize_;
       
     } // RadioGetNumBytesAvailable()
@@ -125,7 +126,8 @@ namespace Anki {
     Messages::ID HAL::RadioGetNextMessage(u8 *buffer)
     {
       Messages::ID retVal = Messages::NO_MESSAGE_ID;
-      
+
+#if(USING_UART_RADIO)      
 //      if (server.HasClient()) {
         const u32 bytesAvailable = RadioGetNumBytesAvailable();
         if(bytesAvailable > 0) {
@@ -178,7 +180,7 @@ namespace Anki {
           
         } // if bytesAvailable > 0
 //      }
-      
+#endif      
       return retVal;
     } // RadioGetNextMessage()
     

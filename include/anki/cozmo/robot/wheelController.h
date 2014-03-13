@@ -22,12 +22,15 @@ namespace Anki {
     //                2) from TRANSITION_POWER at TRANSITION_SPEED to 1.0 power  with slope of HIGH_OPEN_LOOP_GAIN
     
     // Point at which open loop speed-power trendlines meet
-    const f32 TRANSITION_SPEED = 40.0f;  // mm/s
-    const f32 TRANSITION_POWER = 0.35f;  // wheel motor power
+    const f32 TRANSITION_SPEED = 25.0f;  // mm/s
+    const f32 TRANSITION_POWER = 0.30f;  // wheel motor power
+
+    //How fast (in mm/sec) can a wheel spin at max
+    const f32 MAX_WHEEL_SPEED_MM_S = 120.f;
     
     // Slope of power:speed in upper line.
     // Obtained from plotting average open loop response of both wheels.
-    const f32 HIGH_OPEN_LOOP_GAIN = 1.0 / 193.0;
+    const f32 HIGH_OPEN_LOOP_GAIN = (1.0f - TRANSITION_POWER) / (MAX_WHEEL_SPEED_MM_S - TRANSITION_SPEED);
     
     // Slope of power:speed in lower line
     const f32 LOW_OPEN_LOOP_GAIN = TRANSITION_POWER / TRANSITION_SPEED;
@@ -39,11 +42,7 @@ namespace Anki {
     const float DEFAULT_WHEEL_LOW_KP = 0.005f;
     const float DEFAULT_WHEEL_LOW_KI = 0.0001f;
     
-    
     const float WHEEL_SPEED_COMMAND_STOPPED_MM_S = 2.0;
-    
-    //How fast (in mm/sec) can a wheel spin at max
-    const f32 MAX_WHEEL_SPEED_MM_S = 1.0 / HIGH_OPEN_LOOP_GAIN;
     
     //If we drive slower than this, the vehicle is stopped
     const float WHEEL_SPEED_CONSIDER_STOPPED_MM_S = 2; // TODO: float or int?
@@ -64,10 +63,10 @@ namespace Anki {
     void Manage();
     
     //Sets/Gets the desired speeds for the wheels (in mm/sec forward speed)
-    void GetDesiredWheelSpeeds(f32 *leftws, f32 *rightws);
+    void GetDesiredWheelSpeeds(f32 &leftws, f32 &rightws);
     void SetDesiredWheelSpeeds(f32 leftws, f32 rightws);
     
-    void GetFilteredWheelSpeeds(f32 *left, f32 *right);
+    void GetFilteredWheelSpeeds(f32 &left, f32 &right);
     
     //This function will command a wheel speed to the left and right wheel so that the vehicle follows a trajectory
     //This will only work if the steering controller does not overwrite the values.

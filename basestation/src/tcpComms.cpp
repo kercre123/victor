@@ -270,7 +270,7 @@ namespace Cozmo {
     return connectedRobots_.size();
   }
   
-  int TCPComms::GetAdvertisingRobotIDs(vector<int> &robotIDs)
+  int TCPComms::GetAdvertisingRobotIDs(std::vector<int> &robotIDs)
   {
     robotIDs.clear();
     for (advertisingRobotsIt_t it = advertisingRobots_.begin(); it != advertisingRobots_.end(); it++)

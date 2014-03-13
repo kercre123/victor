@@ -12,6 +12,9 @@ namespace Anki {
     namespace {
     
       const Radians ANGLE_TOLERANCE = DEG_TO_RAD(0.5f);
+      
+      // Head angle on startup
+      const f32 HEAD_START_ANGLE = 0;   // Convenient for docking to set head angle at -15 degrees.
     
       // Minimum power required to move head
       const f32 MIN_POWER = 0.1;  // TODO: Measure what this actually is. approx is ok.
@@ -48,6 +51,28 @@ namespace Anki {
       // For generating position and speed profile
       VelocityProfileGenerator vpg_;
       
+      // Whether or not to recalibrate the motors when they hard limit
+      const bool RECALIBRATE_AT_LIMIT = false;
+      
+      // If head comes within this distance to limit angle, trigger recalibration.
+      const f32 RECALIBRATE_LIMIT_ANGLE_THRESH = 0.1f;
+      
+      // Calibration parameters
+      typedef enum {
+        HCS_IDLE,
+        HCS_LOWER_HEAD,
+        HCS_WAIT_FOR_STOP,
+        HCS_SET_CURR_ANGLE
+      } HeadCalibState;
+      
+      HeadCalibState calState_ = HCS_IDLE;
+      bool isCalibrated_ = false;
+      bool limitingDetected_ = false;
+      u32 lastHeadMovedTime_us = 0;
+      
+      const f32 MAX_HEAD_CONSIDERED_STOPPED_RAD_PER_SEC = 0.001;
+      
+      const u32 HEAD_STOP_TIME = 200000;  // usec
       
       bool enable_ = true;
       
@@ -63,7 +88,93 @@ namespace Anki {
     {
       enable_ = false;
     }
+    
 
+    void StartCalibrationRoutine()
+    {
+      PRINT("Starting Head calibration\n");
+      
+#ifdef SIMULATOR
+      // Skipping actual calibration routine in sim due to weird lift behavior when attempting to move it when
+      // it's at the joint limit.  The arm flies off the robot!
+      isCalibrated_ = true;
+      SetDesiredAngle(MIN_HEAD_ANGLE);
+#else
+      calState_ = HCS_LOWER_HEAD;
+      isCalibrated_ = false;
+#endif
+    }
+    
+    bool IsCalibrated()
+    {
+      return isCalibrated_;
+    }
+    
+    
+    void ResetLowAnglePosition()
+    {
+      currentAngle_ = MIN_HEAD_ANGLE;
+      HAL::MotorResetPosition(HAL::MOTOR_HEAD);
+      prevHalPos_ = HAL::MotorGetPosition(HAL::MOTOR_HEAD);
+      isCalibrated_ = true;
+    }
+    
+    bool IsMoving()
+    {
+      return (ABS(radSpeed_) > MAX_HEAD_CONSIDERED_STOPPED_RAD_PER_SEC);
+    }
+    
+    void CalibrationUpdate()
+    {
+      if (!isCalibrated_) {
+        
+        switch(calState_) {
+            
+          case HCS_IDLE:
+            break;
+            
+          case HCS_LOWER_HEAD:
+            power_ = -0.4;
+            HAL::MotorSetPower(HAL::MOTOR_HEAD, power_);
+            lastHeadMovedTime_us = HAL::GetMicroCounter();
+            calState_ = HCS_WAIT_FOR_STOP;
+            break;
+            
+          case HCS_WAIT_FOR_STOP:
+            // Check for when head stops moving for 0.2 seconds
+            if (!IsMoving()) {
+              
+              if (HAL::GetMicroCounter() - lastHeadMovedTime_us > HEAD_STOP_TIME) {
+                // Turn off motor
+                power_ = 0.0;
+                HAL::MotorSetPower(HAL::MOTOR_HEAD, power_);
+                
+                // Set timestamp to be used in next state to wait for motor to "relax"
+                lastHeadMovedTime_us = HAL::GetMicroCounter();
+                
+                // Go to next state
+                calState_ = HCS_SET_CURR_ANGLE;
+              }
+            } else {
+              lastHeadMovedTime_us = HAL::GetMicroCounter();
+            }
+            break;
+            
+          case HCS_SET_CURR_ANGLE:
+            // Wait for motor to relax and then set angle
+            if (HAL::GetMicroCounter() - lastHeadMovedTime_us > HEAD_STOP_TIME) {
+              PRINT("HEAD Calibrated\n");
+              ResetLowAnglePosition();
+              SetDesiredAngle(HEAD_START_ANGLE);
+              calState_ = HCS_IDLE;
+            }
+            break;
+        }
+      }
+      
+    }
+
+    
     f32 GetAngleRad()
     {
       return currentAngle_.ToFloat();
@@ -103,8 +214,12 @@ namespace Anki {
       accelRad_ = accel_rad_per_sec2;
     }
     
-    void SetDesiredAngle(const f32 angle)
+    void SetDesiredAngle(f32 angle)
     {
+      // Do range check on angle
+      angle = CLIP(angle, MIN_HEAD_ANGLE, MAX_HEAD_ANGLE);
+      
+      
 #if(DEBUG_HEAD_CONTROLLER)
       PRINT("HEAD: SetDesiredAngle %f rads\n", desiredAngle_.ToFloat());
 #endif
@@ -148,6 +263,8 @@ namespace Anki {
     
     ReturnCode Update()
     {
+      CalibrationUpdate();
+      
       PoseAndSpeedFilterUpdate();
       
       if (!enable_)
@@ -159,7 +276,7 @@ namespace Anki {
       // setting.
       if(not inPosition_) {
 
-        // Get the current desired lift angle
+        // Get the current desired head angle
         vpg_.Step(currDesiredRadVel_, currDesiredAngle_);
         
 #if(DEBUG_HEAD_CONTROLLER)
@@ -175,7 +292,7 @@ namespace Anki {
           angleErrorSum_ = 0.f;
           
           // If desired angle is low position, let it fall through to recalibration
-          //if (!(RECALIBRATE_AT_LIMIT && desiredAngle_.ToFloat() == LIFT_ANGLE_LOW)) {
+          if (!(RECALIBRATE_AT_LIMIT && desiredAngle_.ToFloat() == MIN_HEAD_ANGLE)) {
             power_ = 0.f;
             
             if (desiredAngle_ == currDesiredAngle_) {
@@ -184,7 +301,7 @@ namespace Anki {
               PRINT(" HEAD ANGLE REACHED (%f rad)\n", currentAngle_.ToFloat());
 #endif
             }
-          //}
+          }
         } else {
           power_ = minPower_ + (Kp_ * angleError_) + (Ki_ * angleErrorSum_);
           angleErrorSum_ += angleError_;
@@ -206,23 +323,23 @@ namespace Anki {
         
         power_ = CLIP(power_, -1.0, 1.0);
         
-/*
-        // If within 5 degrees of LIFT_HEIGHT_LOW and the lift isn't moving while downward power is applied,
+
+        // If within 5 degrees of MIN_HEAD_ANGLE and the head isn't moving while downward power is applied,
         // assume we've hit the limit and recalibrate.
         if (limitingDetected_ ||
               ((power_ < 0)
-               && (desiredAngle_.ToFloat() == LIFT_ANGLE_LOW)
+               && (desiredAngle_.ToFloat() == MIN_HEAD_ANGLE)
                && (desiredAngle_.ToFloat() == currDesiredAngle_)
-               && (ABS(angleError_) < 0.1)
-               && NEAR_ZERO(HAL::MotorGetSpeed(HAL::MOTOR_LIFT)))) {
+               && (ABS(angleError_) < RECALIBRATE_LIMIT_ANGLE_THRESH)
+               && NEAR_ZERO(HAL::MotorGetSpeed(HAL::MOTOR_HEAD)))) {
                 
           if (!limitingDetected_) {
 #if(DEBUG_LIFT_CONTROLLER)
-            PRINT("START RECAL LIFT\n");
+            PRINT("START RECAL HEAD\n");
 #endif
-            lastLiftMovedTime_us = HAL::GetMicroCounter();
+            lastHeadMovedTime_us = HAL::GetMicroCounter();
             limitingDetected_ = true;
-          } else if (HAL::GetMicroCounter() - lastLiftMovedTime_us > 200000) {
+          } else if (HAL::GetMicroCounter() - lastHeadMovedTime_us > HEAD_STOP_TIME) {
 #if(DEBUG_LIFT_CONTROLLER)
             PRINT("END RECAL LIFT\n");
 #endif
@@ -232,7 +349,7 @@ namespace Anki {
           power_ = 0.f;
             
         }
-*/
+
         
         HAL::MotorSetPower(HAL::MOTOR_HEAD, power_);
 

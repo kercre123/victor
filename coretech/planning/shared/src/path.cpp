@@ -360,7 +360,7 @@ namespace Anki
       // If the line is nearly vertical (within 0.5deg), approximate it
       // with true vertical so we don't take sqrts of -ve numbers.
       f32 x_intersect, y_intersect;
-      if (NEAR(ABS(theta_line.ToFloat()), PIDIV2, 0.01)) {
+      if (NEAR(ABS(theta_line.ToFloat()), PIDIV2, 0.01f)) {
         shortestDistanceToPath = ABS(dy) - r;
         x_intersect = x_center;
         y_intersect = y_center + r * (dx > 0 ? 1 : -1);
@@ -432,23 +432,23 @@ namespace Anki
       // Also check for transitions between -PI and +PI by checking if angDiff
       // ever exceeds a conservative half the distance if PI was approached from the opposite direction.
       f32 angDiff = (theta_line - startRad).ToFloat();
-      if ( (movingCCW && (angDiff > seg->sweepRad || angDiff < -0.5*(2*PI-seg->sweepRad))) ||
-          (!movingCCW && (angDiff < seg->sweepRad || angDiff >  0.5*(2*PI+seg->sweepRad))) ){
+      if ( (movingCCW && (angDiff > seg->sweepRad || angDiff < -0.5f*(2.f*PI-seg->sweepRad))) ||
+          (!movingCCW && (angDiff < seg->sweepRad || angDiff >  0.5f*(2.f*PI+seg->sweepRad))) ){
         return OOR_NEAR_END;
       }
 
       
       if (movingCCW) {
-        if (angDiff > seg->sweepRad || angDiff < -0.5*(2*PI-seg->sweepRad)) {
+        if (angDiff > seg->sweepRad || angDiff < -0.5f*(2.f*PI-seg->sweepRad)) {
           return OOR_NEAR_END;
-        } else if (angDiff < 0 && angDiff > -0.5*(2*PI-seg->sweepRad)) {
+        } else if (angDiff < 0 && angDiff > -0.5f*(2.f*PI-seg->sweepRad)) {
           return OOR_NEAR_START;
         }
           
       } else {
-        if (angDiff < seg->sweepRad || angDiff >  0.5*(2*PI+seg->sweepRad)) {
+        if (angDiff < seg->sweepRad || angDiff >  0.5f*(2.f*PI+seg->sweepRad)) {
           return OOR_NEAR_END;
-        } else if (angDiff > 0 && angDiff < 0.5*(2*PI-seg->sweepRad)) {
+        } else if (angDiff > 0 && angDiff < 0.5f*(2.f*PI-seg->sweepRad)) {
           return OOR_NEAR_START;
         }
       }
