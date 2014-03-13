@@ -40,9 +40,14 @@ using namespace Anki::Cozmo;
 #endif
 
 // m_buffer1 (aka Mr. Bufferly) is where the camera image is currently stored
+#if defined(SIMULATOR)
+u8 m_buffer1[640*480];
+bool isEOF = true;
+#else
 // TODO: make nice
 extern u8 m_buffer1[];
 extern volatile bool isEOF;
+#endif
 
 static bool isInitialized_ = false;
 
@@ -73,6 +78,11 @@ static ReturnCode DownsampleHelper(
   const Array<u8>& in,
   Array<u8>& out,
   MemoryStack scratch);
+
+
+#if 0
+#pragma mark --- DetectFiducialMarkersParameters ---
+#endif 
 
 namespace DetectFiducialMarkersParameters
 {
@@ -140,6 +150,11 @@ namespace DetectFiducialMarkersParameters
     return EXIT_SUCCESS;
   }
 } // namespace DetectFiducialMarkersParameters
+
+
+#if 0
+#pragma mark --- TrackerParameters ---
+#endif
 
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_STANDARD || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_FAST
 
@@ -252,6 +267,12 @@ namespace TrackerParameters {
 
 #endif // #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_STANDARD || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_FAST
 
+
+#if 0
+#pragma mark --- VisionMemory ---
+#endif
+
+
 namespace VisionMemory
 {
   static const s32 OFFCHIP_BUFFER_SIZE = 2000000;
@@ -292,6 +313,11 @@ namespace VisionMemory
     return ResetBuffers();
   }
 } // namespace VisionMemory
+
+
+#if 0
+#pragma mark --- DebugStream ---
+#endif
 
 namespace DebugStream
 {
@@ -420,6 +446,11 @@ namespace DebugStream
   }
 } // namespace DebugStream
 
+
+#if 0
+#pragma mark --- SimulatorParameters ---
+#endif
+
 namespace SimulatorParameters {
 #if !defined(SIMULATOR)
   static ReturnCode Initialize()
@@ -441,14 +472,28 @@ namespace SimulatorParameters {
 #endif
 } // namespace SimulatorParameters
 
+
+#if 0
+#pragma mark --- MatlabVisualization ---
+#endif
+
 namespace MatlabVisualization
 {
 #if !USE_MATLAB_VISUALIZATION
+  // Stubs (no-ops) that do nothing when visualization is disabled.
+  
   static ReturnCode Initialize() { return EXIT_SUCCESS; }
-  static ReturnCode ResetFiducialDetection() { return EXIT_SUCCESS; }
-  static ReturnCode SendFiducialDetection() { return EXIT_SUCCESS; }
+  
+  static ReturnCode ResetFiducialDetection(const Array<u8>& image) { return EXIT_SUCCESS; }
+  
+  static ReturnCode SendFiducialDetection(const Quadrilateral<s16> &corners) { return EXIT_SUCCESS; }
+  
   static ReturnCode SendDrawNow() { return EXIT_SUCCESS; }
-  static ReturnCode SendTrack()  { return EXIT_SUCCESS; }
+  
+  static ReturnCode SendTrack(const Array<u8>& image,
+                              const Messages::DockingErrorSignal& dockErrMsg,
+                              const Tracker& tracker,
+                              MemoryStack scratch)  { return EXIT_SUCCESS; }
 #else
   static Matlab matlabViz_;
 
@@ -468,7 +513,7 @@ namespace MatlabVisualization
     return EXIT_SUCCESS;
   }
 
-  static ReturnCode ResetFiducialDetection()
+  static ReturnCode ResetFiducialDetection(const Array<u8>& image)
   {
     matlabViz_.EvalStringEcho("delete(findobj(h_axes, 'Tag', 'DetectedQuad'));");
     matlabViz_.PutArray(image, "detectionImage");
@@ -481,7 +526,7 @@ namespace MatlabVisualization
 
   static ReturnCode SendFiducialDetection(const Quadrilateral<s16> &corners)
   {
-    matlabViz_.PutQuad(crntMarker.corners, "detectedQuad");
+    matlabViz_.PutQuad(corners, "detectedQuad");
     matlabViz_.EvalStringEcho("plot(detectedQuad([1 2 4 3 1],1)+1, "
       "     detectedQuad([1 2 4 3 1],2)+1, "
       "     'r', 'LineWidth', 2, "
@@ -498,7 +543,10 @@ namespace MatlabVisualization
     return EXIT_SUCCESS;
   }
 
-  static ReturnCode SendTrack()
+  static ReturnCode SendTrack(const Array<u8>& image,
+                              const Messages::DockingErrorSignal& dockErrMsg,
+                              const Tracker& tracker,
+                              MemoryStack scratch)
   {
     matlabViz_.PutArray(image, "trackingImage");
     //            matlabViz_.EvalStringExplicit("imwrite(trackingImage, "
@@ -510,7 +558,7 @@ namespace MatlabVisualization
 
     if(dockErrMsg.didTrackingSucceed)
     {
-      matlabViz_.PutQuad(tracker_.get_transformation().get_transformedCorners(trackerScratch_), "transformedQuad");
+      matlabViz_.PutQuad(tracker.get_transformation().get_transformedCorners(scratch), "transformedQuad");
       matlabViz_.EvalStringEcho("set(h_trackedQuad, 'Visible', 'on', "
         "    'XData', transformedQuad([1 2 4 3 1],1)+1, "
         "    'YData', transformedQuad([1 2 4 3 1],2)+1); "
@@ -607,6 +655,10 @@ namespace MatlabVisualization
 //  } // static ReturnCode Initialize()
 //} // namespace Offboard
 
+#if 0
+#pragma mark --- VisionState ---
+#endif
+
 namespace VisionState {
   static const s32 MAX_TRACKING_FAILURES = 5;
 
@@ -655,6 +707,12 @@ namespace VisionState {
     return EXIT_SUCCESS;
   }
 } // namespace VisionState
+
+
+#if 0
+#pragma mark --- Function Implementations ---
+#endif
+
 
 static ReturnCode DownsampleHelper(
   const Array<u8>& in,
@@ -716,7 +774,7 @@ static ReturnCode LookForMarkers(
     homographies[i] = newArray;
   }
 
-  MatlabVisualization::ResetFiducialDetection();
+  MatlabVisualization::ResetFiducialDetection(grayscaleImage);
 
   InitBenchmarking();
 
@@ -742,7 +800,7 @@ static ReturnCode LookForMarkers(
     for(s32 i_marker = 0; i_marker < markers.get_size(); ++i_marker) {
       const VisionMarker crntMarker = markers[i_marker];
 
-      MatlabVisualization::SendFiducialDetection();
+      MatlabVisualization::SendFiducialDetection(crntMarker.corners);
     }
 
     MatlabVisualization::SendDrawNow();
@@ -876,8 +934,7 @@ static ReturnCode TrackTemplate(
   s32 numMatches = -1;
 
   const Result trackerResult = tracker.UpdateTrack(
-    grayscaleImage,
-    parameters.edgeDetection_grayvalueThreshold, parameters.edgeDetection_minComponentWidth, parameters.edgeDetection_maxDetectionsPerType, parameters.edgeDetection_everyNLines,
+    grayscaleImage, parameters.edgeDetection_grayvalueThreshold, parameters.edgeDetection_minComponentWidth, parameters.edgeDetection_maxDetectionsPerType, parameters.edgeDetection_everyNLines,
     parameters.matching_maxTranslationDistance, parameters.matching_maxProjectiveDistance,
     parameters.verification_maxTranslationDistance,
     false,
@@ -901,6 +958,8 @@ static ReturnCode TrackTemplate(
 
   dockErrMsg.didTrackingSucceed = static_cast<u8>(converged);
 
+  MatlabVisualization::SendTrack(grayscaleImage, dockErrMsg, tracker, offchipScratch);
+  
   if(converged) {
     Docking::ComputeDockingErrorSignal(tracker.get_transformation(),
       parameters.trackingImageWidth,
@@ -913,8 +972,6 @@ static ReturnCode TrackTemplate(
   }
 
   //DebugStream::SendTrackingUpdate(grayscaleImage, tracker.get_transformation(), ccmScratch, offchipScratch);
-
-  MatlabVisualization::SendTrack();
 
   return EXIT_SUCCESS;
 } // TrackTemplate()
@@ -965,12 +1022,6 @@ namespace Anki {
         }
 
         return EXIT_SUCCESS;
-      }
-
-#warning isTemplateInitalized is ignored
-      void SetTrackingMode(const bool isTemplateInitalized)
-      {
-        VisionState::mode_ = VISION_MODE_TRACKING;
       }
 
       void UpdateTrackingStatus(const bool didTrackingSucceed)
@@ -1044,8 +1095,10 @@ namespace Anki {
         Init();
 
 #ifdef SIMULATOR
-        if (HAL::GetMicroCounter() < frameRdyTimeUS_) {
-          return retVal;
+        // TODO: Merge this into the isEOF functionality.  If we make isEOF a
+        //  HAL function, then sim_hal.cpp can implement using this while loop.
+        if (HAL::GetMicroCounter() < SimulatorParameters::frameRdyTimeUS_) {
+          return EXIT_SUCCESS;
         }
 #endif
 
@@ -1053,6 +1106,7 @@ namespace Anki {
         //        return Update_Offboard();
         //#endif // USE_OFFBOARD_VISION
 
+        // TODO: make this a function call that returns a bool?
         // TODO: set size via HAL
         while(!isEOF)
         {
@@ -1060,11 +1114,13 @@ namespace Anki {
 
         const Array<u16> yuvImage(240, 320, m_buffer1, 320*240*2, Flags::Buffer(false, false, true));
 
+        const TimeStamp_t imageTimeStamp = HAL::GetTimeStamp();
+        
         if(VisionState::mode_ == VISION_MODE_IDLE) {
           // Nothing to do!
         } else if(VisionState::mode_ == VISION_MODE_LOOKING_FOR_MARKERS) {
 #ifdef SIMULATOR
-          frameRdyTimeUS_ = HAL::GetMicroCounter() + LOOK_FOR_BLOCK_PERIOD_US;
+          SimulatorParameters::frameRdyTimeUS_ = HAL::GetMicroCounter() + SimulatorParameters::LOOK_FOR_BLOCK_PERIOD_US;
 #endif
 
           VisionMemory::ResetBuffers();
@@ -1081,57 +1137,82 @@ namespace Anki {
             return EXIT_FAILURE;
           }
 
-          // Was the desired marker found? If so, start tracking it.
-          if(VisionState::isTrackingMarkerSpecified_) {
-            s32 desiredMarkerIndex = -1;
-            const s32 numMarkers = VisionMemory::markers_.get_size();
-            for(s32 i_marker = 0; i_marker < numMarkers; ++i_marker) {
-              const VisionMarker crntMarker = VisionMemory::markers_[i_marker];
-              if(crntMarker.markerType == VisionState::markerTypeToTrack_) {
-                desiredMarkerIndex = i_marker;
-                break;
-              }
-            } // if(VisionState::isTrackingMarkerSpecified_)
-
-            if(desiredMarkerIndex != -1) {
-              const VisionMarker crntMarker = VisionMemory::markers_[desiredMarkerIndex];
-
+          const s32 numMarkers = VisionMemory::markers_.get_size();
+          bool isTrackingMarkerFound = false;
+          for(s32 i_marker = 0; i_marker < numMarkers; ++i_marker)
+          {
+            const VisionMarker& crntMarker = VisionMemory::markers_[i_marker];
+            
+            // Create a vision marker message and process it (which just queues it
+            // in the mailbox to be picked up and sent out by main execution)
+            {
+              Messages::VisionMarker msg;
+              msg.timestamp  = imageTimeStamp;
+              msg.markerType = crntMarker.markerType;
+              
+              msg.x_imgLowerLeft = crntMarker.corners[Quadrilateral<f32>::BottomLeft].x;
+              msg.y_imgLowerLeft = crntMarker.corners[Quadrilateral<f32>::BottomLeft].y;
+              
+              msg.x_imgUpperLeft = crntMarker.corners[Quadrilateral<f32>::TopLeft].x;
+              msg.y_imgUpperLeft = crntMarker.corners[Quadrilateral<f32>::TopLeft].y;
+              
+              msg.x_imgUpperRight = crntMarker.corners[Quadrilateral<f32>::TopRight].x;
+              msg.y_imgUpperRight = crntMarker.corners[Quadrilateral<f32>::TopRight].y;
+              
+              msg.x_imgLowerRight = crntMarker.corners[Quadrilateral<f32>::BottomRight].x;
+              msg.y_imgLowerRight = crntMarker.corners[Quadrilateral<f32>::BottomRight].y;
+              
+              Messages::ProcessVisionMarkerMessage(msg);
+            }
+            
+            // Was the desired marker found? If so, start tracking it.
+            if(VisionState::isTrackingMarkerSpecified_ && !isTrackingMarkerFound &&
+               crntMarker.markerType == VisionState::markerTypeToTrack_)
+            {
+              // We will start tracking the _first_ marker of the right type that
+              // we see.
+              // TODO: Something smarter to track the one closest to the image center or to the expected location provided by the basestation?
+              isTrackingMarkerFound = true;
+              
               // I'd rather only initialize trackingQuad_ if InitTemplate() succeeds, but
               // InitTemplate downsamples it for the time being, since we're still doing template
               // initialization at tracking resolution instead of the eventual goal of doing it at
               // full detection resolution.
               VisionState::trackingQuad_ = Quadrilateral<f32>(
-                Point<f32>(crntMarker.corners[0].x, crntMarker.corners[0].y),
-                Point<f32>(crntMarker.corners[1].x, crntMarker.corners[1].y),
-                Point<f32>(crntMarker.corners[2].x, crntMarker.corners[2].y),
-                Point<f32>(crntMarker.corners[3].x, crntMarker.corners[3].y));
-
+                                                              Point<f32>(crntMarker.corners[0].x, crntMarker.corners[0].y),
+                                                              Point<f32>(crntMarker.corners[1].x, crntMarker.corners[1].y),
+                                                              Point<f32>(crntMarker.corners[2].x, crntMarker.corners[2].y),
+                                                              Point<f32>(crntMarker.corners[3].x, crntMarker.corners[3].y));
+              
               const ReturnCode result = InitTemplate(
-                yuvImage,
-                VisionState::trackingQuad_,
-                TrackerParameters::parameters_,
-                VisionState::tracker_,
-                VisionMemory::offchipScratch_,
-                VisionMemory::onchipScratch_, //< NOTE: onchip is a reference
-                VisionMemory::ccmScratch_);
-
+                                                     yuvImage,
+                                                     VisionState::trackingQuad_,
+                                                     TrackerParameters::parameters_,
+                                                     VisionState::tracker_,
+                                                     VisionMemory::offchipScratch_,
+                                                     VisionMemory::onchipScratch_, //< NOTE: onchip is a reference
+                                                     VisionMemory::ccmScratch_);
+              
               if(result != EXIT_SUCCESS) {
                 return EXIT_FAILURE;
               }
-
-              SetTrackingMode(false);
-            } // if(desiredMarkerIndex != -1)
-          } // else if(VisionState::mode_ == VISION_MODE_LOOKING_FOR_MARKERS)
+              
+              // Template initialization succeeded, switch to tracking mode:
+              // TODO: Log or issue message?
+              VisionState::mode_ = VISION_MODE_TRACKING;
+              
+            } // if(isTrackingMarkerSpecified && !isTrackingMarkerFound && markerType == markerToTrack)
+          } // for(each marker)
+          
         } else if(VisionState::mode_ == VISION_MODE_TRACKING) {
 #ifdef SIMULATOR
-          frameRdyTimeUS_ = HAL::GetMicroCounter() + TRACK_BLOCK_PERIOD_US;
+          SimulatorParameters::frameRdyTimeUS_ = HAL::GetMicroCounter() + SimulatorParameters::TRACK_BLOCK_PERIOD_US;
 #endif
 
           Messages::DockingErrorSignal dockErrMsg;
+          dockErrMsg.timestamp = imageTimeStamp;
           
           bool converged;
-
-          // TODO: set dockErrMsg timestamp
 
           const ReturnCode result = TrackTemplate(
             yuvImage,
@@ -1148,11 +1229,9 @@ namespace Anki {
             PRINT("VisionSystem::Update(): TrackTemplate() failed.\n");
             return EXIT_FAILURE;
           }
-          
-          // TODO: is this call needed?
-          //UpdateTrackingStatus(converged);
 
           Messages::ProcessDockingErrorSignalMessage(dockErrMsg);
+          
         } else {
           PRINT("VisionSystem::Update(): reached default case in switch statement.");
           return EXIT_FAILURE;

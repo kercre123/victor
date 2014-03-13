@@ -242,13 +242,13 @@ for i_region = 1:numRegions
         
         corners = fliplr(boundary(index,:));
         
-        % Shift the corners out to the cracks (EXPERIMENTAL)
-        indexBefore = index-1; 
-        indexBefore(indexBefore==0) = size(boundary,1); 
-        indexAfter = index+1; 
-        indexAfter(indexAfter>size(boundary,1)) = 1;
-        deriv = fliplr((boundary(indexAfter,:) - 2*boundary(index,:) + boundary(indexBefore,:))/2);
-        corners = corners - deriv;
+        %         % Shift the corners out to the cracks (EXPERIMENTAL)
+        %         indexBefore = index-1;
+        %         indexBefore(indexBefore==0) = size(boundary,1);
+        %         indexAfter = index+1;
+        %         indexAfter(indexAfter>size(boundary,1)) = 1;
+        %         deriv = fliplr((boundary(indexAfter,:) - 2*boundary(index,:) + boundary(indexBefore,:))/2);
+        %         corners = corners - deriv;
         
         if DEBUG_DISPLAY
             plot(corners(:,1), corners(:,2), 'gx', 'Parent', h_initialAxes);

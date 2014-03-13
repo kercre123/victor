@@ -222,24 +222,10 @@ namespace Anki {
         PRINT("Processing VisionMarker message\n");
         
         visionMarkerMailbox_.putMessage(msg);
-                
-        VisionSystem::CheckForTrackingMarker(msg.markerType);
-      }
-      
-      void ProcessTotalVisionMarkersSeenMessage(const TotalVisionMarkersSeen& msg)
-      {
-        PRINT("Saw %d vision markers.\n", msg.numMarkers);
-      }
-      
-      void ProcessTemplateInitializedMessage(const TemplateInitialized& msg)
-      {
-        VisionSystem::SetTrackingMode(static_cast<bool>(msg.success));
       }
       
       void ProcessDockingErrorSignalMessage(const DockingErrorSignal& msg)
       {
-        VisionSystem::UpdateTrackingStatus(msg.didTrackingSucceed);
-        
         // Just pass the docking error signal along to the mainExecution to
         // deal with. Note that if the message indicates tracking failed,
         // the mainExecution thread should handle it, and put the vision
