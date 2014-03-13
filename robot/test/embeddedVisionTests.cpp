@@ -35,8 +35,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "../../../systemTestImages/cozmo_2014_01_29_11_41_05_10_320x240.h"
 #include "../../../systemTestImages/cozmo_2014_01_29_11_41_05_12_320x240.h"
 
-#include "../../coretech/vision/blockImages/templateImage.h"
-#include "../../coretech/vision/blockImages/nextImage.h"
+//#include "../../coretech/vision/blockImages/templateImage.h"
+//#include "../../coretech/vision/blockImages/nextImage.h"
 
 #include "embeddedTests.h"
 

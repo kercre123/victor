@@ -409,9 +409,19 @@
               <FilePath>.\arm_hal\hal\main.cpp</FilePath>
             </File>
             <File>
+              <FileName>motors.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\motors.cpp</FilePath>
+            </File>
+            <File>
               <FileName>retarget.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\retarget.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>spi.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\spi.cpp</FilePath>
             </File>
             <File>
               <FileName>startup.cpp</FileName>
@@ -427,16 +437,6 @@
               <FileName>uart.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\uart.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>spi.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\spi.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>motors.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\motors.cpp</FilePath>
             </File>
             <File>
               <FileName>usb_radio.cpp</FileName>
@@ -749,6 +749,11 @@
               <FilePath>.\supervisor\src\pathFollower.cpp</FilePath>
             </File>
             <File>
+              <FileName>pickAndPlaceController.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\pickAndPlaceController.cpp</FilePath>
+            </File>
+            <File>
               <FileName>speedController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\speedController.cpp</FilePath>
@@ -777,11 +782,6 @@
               <FileName>wheelController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\wheelController.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>pickAndPlaceController.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\pickAndPlaceController.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -954,6 +954,11 @@
               <FilePath>..\coretech\vision\robot\src\binaryTracker.cpp</FilePath>
             </File>
             <File>
+              <FileName>colorConversion.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\colorConversion.cpp</FilePath>
+            </File>
+            <File>
               <FileName>connectedComponents.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\connectedComponents.cpp</FilePath>
@@ -1019,9 +1024,19 @@
               <FilePath>..\coretech\vision\robot\src\laplacianPeaks.cpp</FilePath>
             </File>
             <File>
-              <FileName>lucasKanade.cpp</FileName>
+              <FileName>lucasKanade_Affine.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\lucasKanade.cpp</FilePath>
+              <FilePath>..\coretech\vision\robot\src\lucasKanade_Affine.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>lucasKanade_Projective.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\lucasKanade_Projective.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>lucasKanade_Slow.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\lucasKanade_Slow.cpp</FilePath>
             </File>
             <File>
               <FileName>traceBoundary.cpp</FileName>
@@ -1032,11 +1047,6 @@
               <FileName>transformations.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\transformations.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>colorConversion.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\colorConversion.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -1532,9 +1542,19 @@
               <FilePath>.\arm_hal\hal\main.cpp</FilePath>
             </File>
             <File>
+              <FileName>motors.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\motors.cpp</FilePath>
+            </File>
+            <File>
               <FileName>retarget.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\retarget.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>spi.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\spi.cpp</FilePath>
             </File>
             <File>
               <FileName>startup.cpp</FileName>
@@ -1550,16 +1570,6 @@
               <FileName>uart.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\uart.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>spi.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\spi.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>motors.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\motors.cpp</FilePath>
             </File>
             <File>
               <FileName>usb_radio.cpp</FileName>
@@ -1929,6 +1939,11 @@
               <FilePath>.\supervisor\src\pathFollower.cpp</FilePath>
             </File>
             <File>
+              <FileName>pickAndPlaceController.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\pickAndPlaceController.cpp</FilePath>
+            </File>
+            <File>
               <FileName>speedController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\speedController.cpp</FilePath>
@@ -1957,11 +1972,6 @@
               <FileName>wheelController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\wheelController.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>pickAndPlaceController.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\pickAndPlaceController.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -2134,6 +2144,11 @@
               <FilePath>..\coretech\vision\robot\src\binaryTracker.cpp</FilePath>
             </File>
             <File>
+              <FileName>colorConversion.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\colorConversion.cpp</FilePath>
+            </File>
+            <File>
               <FileName>connectedComponents.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\connectedComponents.cpp</FilePath>
@@ -2199,9 +2214,19 @@
               <FilePath>..\coretech\vision\robot\src\laplacianPeaks.cpp</FilePath>
             </File>
             <File>
-              <FileName>lucasKanade.cpp</FileName>
+              <FileName>lucasKanade_Affine.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\lucasKanade.cpp</FilePath>
+              <FilePath>..\coretech\vision\robot\src\lucasKanade_Affine.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>lucasKanade_Projective.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\lucasKanade_Projective.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>lucasKanade_Slow.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\lucasKanade_Slow.cpp</FilePath>
             </File>
             <File>
               <FileName>traceBoundary.cpp</FileName>
@@ -2212,11 +2237,6 @@
               <FileName>transformations.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\transformations.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>colorConversion.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\colorConversion.cpp</FilePath>
             </File>
           </Files>
         </Group>
