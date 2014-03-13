@@ -31,7 +31,7 @@
 #include "anki/cozmo/basestation/tcpComms.h"
 
 // Enable this to turn on keyboard control of robot via basestation.
-// MAKE SURE ROBOT-SIDE KEYBOARD CONTROL (in cozmo_c_controller) IS DISABLED!!!
+// If this is enabled, make sure robot-side keyboard control (see ENABLE_KEYBOARD_CONTROL) is disabled!!!
 #define ENABLE_BS_KEYBOARD_CONTROL 1
 
 

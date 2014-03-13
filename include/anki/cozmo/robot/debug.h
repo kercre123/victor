@@ -25,6 +25,8 @@
 
 
 #define FREE_DRIVE_DUBINS_TEST 0
+
+// If this is enabled here, it should be disabled in the basestation. (See ENABLE_BS_KEYBOARD_CONTROL.)
 #define ENABLE_KEYBOARD_CONTROL 0
 
 #endif
