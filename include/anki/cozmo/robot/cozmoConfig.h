@@ -123,22 +123,22 @@ namespace Anki {
     const f32 CONTROL_DT = TIME_STEP*0.001f;
     const f32 ONE_OVER_CONTROL_DT = 1.0f/CONTROL_DT;
     
-    // The height of the fork at various configurations
-    const f32 LIFT_HEIGHT_LOWDOCK  = 27.f;  // Actual limit in proto is closer to 20.4mm, but there is a weird
+    // The height of the lift at various configurations
+    const f32 LIFT_HEIGHT_LOWDOCK  = 30.f;  // Actual limit in proto is closer to 20.4mm, but there is a weird
     // issue with moving the lift when it is at a limit. The lift arm
     // flies off of the robot and comes back! So for now, we just don't
     // drive the lift down that far. We also skip calibration in sim.
-    const f32 LIFT_HEIGHT_HIGHDOCK = 100.f;
-    const f32 LIFT_HEIGHT_CARRY    = 105.f;
+    const f32 LIFT_HEIGHT_HIGHDOCK = 75.f;
+    const f32 LIFT_HEIGHT_CARRY    = 83.f;
     
-    // Height of main lift joint where the arm attaches to robot body
+    // Height of lift "shoulder" joint where the arm attaches to robot body
     const f32 LIFT_JOINT_HEIGHT = 41.7f;
     
-    // Distance between main lift joint and the joint where arm attaches to fork assembly
+    // Distance between the lift shoulder joint and the lift "wrist" joint where arm attaches to fork assembly
     const f32 LIFT_ARM_LENGTH = 61.f;
     
-    // Height of the actual fork relative to the joint where the lift arm attaches to the fork assembly
-    const f32 LIFT_FORK_HEIGHT_REL_TO_ARM_END = -12.8f;
+    // The lift height is defined as the height of the upper lift arm's wrist joint plus this offset.
+    const f32 LIFT_FORK_HEIGHT_REL_TO_ARM_END = 0;
     
     // TODO: convert to using these in degree form?
     const f32 MIN_HEAD_ANGLE = DEG_TO_RAD(-25.f);
