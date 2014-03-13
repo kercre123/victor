@@ -1,7 +1,21 @@
 
 % function test_blockMarkerExtractions()
+filename = 'testTrainedCodes.png';
+fullfilename = fullfile('C:\Anki\blockImages', filename);
+if ~exist(fullfilename, 'file')
+    fullfilename = fullfile('~/Box Sync/Cozmo SE/VisionMarkers', filename);
+    
+    if ~exist(fullfilename, 'file')
+        error('Cannot find test image "testTrainedCodes.png".');
+    end
+end
 
-image = imresize(rgb2gray(imread('C:\Anki\blockImages\testTrainedCodes.png')), [240,320]);
+image = imresize(rgb2gray(imread(fullfilename)), [240 320]);
+%image(:,114:end) = 255;
+%image(110:end,:) = 255;
+
+for i_orient = 1:4
+    
 imageSize = size(image);
 
 scaleImage_thresholdMultiplier = .75;
@@ -28,41 +42,57 @@ for i = 1:length(quads)
 end
 
 markerLabels = {
-    'MARKER_ALL_BLACK',
-    'MARKER_ALL_WHITE',
-    'MARKER_ANGRYFACE',
-    'MARKER_ANKILOGO',
-    'MARKER_BATTERIES',
-    'MARKER_BULLSEYE',
-    'MARKER_FIRE',
-    'MARKER_SQUAREPLUSCORNERS',
-    'MARKER_UNKNOWN'};
+    'ALL_BLACK',
+    'ALL_WHITE',
+    'ANGRYFACE',
+    'ANKILOGO',
+    'BATTERIES',
+    'BULLSEYE',
+    'FIRE',
+    'SQUAREPLUSCORNERS',
+    'UNKNOWN'};
 
-figure(1);
+order = [1 2 4 3 1];
+
+namedFigure(sprintf('test_blockMarkerExtractions %d', i_orient)); %: mexDetectFiducialMarkers()');
+subplot 121
 hold off;
-imshow(image);
+imshow(image); 
+title('mexDetectFiducialMarkers()')
 hold on;
 for i = 1:length(quads)
-    plot(quads{i}([1:end,1],1),quads{i}([1:end,1],2));
+    plot(quads{i}(order,1),quads{i}(order,2), 'r');
+    plot(quads{i}([1 3],1),quads{i}([1 3],2), 'g', 'LineWidth', 2);
     text(...
         mean(quads{i}(:,1)), mean(quads{i}(:,2)),...
         markerLabels{markerTypes(i)+1},...
-        'HorizontalAlignment', 'center', 'BackgroundColor', [.7 .9 .7]);
+        'HorizontalAlignment', 'center', 'BackgroundColor', [.7 .9 .7], ...
+        'Interpreter', 'none');
 end
 
-markers = simpleDetector(image);
+markers = simpleDetector(image, 'returnInvalid', true);
 
-figure(2);
+%namedFigure('test_blockMarkerExtractions: Matlab simpleDetector()');
+subplot 122
 hold off;
 imshow(image);
+title('Matlab simpleDetector()')
 hold on;
 for i = 1:length(markers)
-    plot(markers{i}.corners([1:end,1],1),markers{i}.corners([1:end,1],2));
-    text(...
-        mean(markers{i}.corners(:,1)), mean(markers{i}.corners(:,2)),...
-        markers{i}.name,...
-        'HorizontalAlignment', 'center', 'BackgroundColor', [.7 .9 .7]);
+    if markers{i}.isValid
+        plot(markers{i}.corners(order,1),markers{i}.corners(order,2), 'r');
+        plot(markers{i}.corners([1 3],1),markers{i}.corners([1 3],2), 'g', 'LineWidth', 2);
+        text(...
+            mean(markers{i}.corners(:,1)), mean(markers{i}.corners(:,2)),...
+            markers{i}.name,...
+            'HorizontalAlignment', 'center', 'BackgroundColor', [.7 .9 .7], ...
+            'Interpreter', 'none');
+    else
+        plot(markers{i}.corners(order,1),markers{i}.corners(order,2), 'b', 'LineWidth', 2);
+    end
 end
 
+image = imrotate(image, 90);
 
+end
 
