@@ -143,6 +143,15 @@ namespace Anki
     template<typename Type> class Quadrilateral
     {
     public:
+      enum CornerName {
+        FirstCorner = 0,
+        TopLeft     = 0,
+        BottomLeft  = 1,
+        TopRight    = 2,
+        BottomRight = 3,
+        NumCorners  = 4
+      };
+      
       Point<Type> corners[4];
 
       Quadrilateral();
