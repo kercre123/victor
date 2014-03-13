@@ -1063,26 +1063,6 @@ namespace Anki {
         return EXIT_SUCCESS;
       }
 
-      void UpdateTrackingStatus(const bool didTrackingSucceed)
-      {
-        if(didTrackingSucceed) {
-          // Reset the failure counter
-          VisionState::numTrackFailures_ = 0;
-        } else {
-          VisionState::numTrackFailures_ += 1;
-
-          if(VisionState::numTrackFailures_ == VisionState::MAX_TRACKING_FAILURES) {
-            // This resets docking, puttings us back in VISION_MODE_LOOKING_FOR_MARKERS mode
-            SetMarkerToTrack(VisionState::markerTypeToTrack_);
-          }
-        }
-      }
-
-#warning This function is unused?
-      void CheckForTrackingMarker(const u16 inputMarker)
-      {
-      }
-
       void StopTracking()
       {
         VisionState::mode_ = VISION_MODE_IDLE;
@@ -1139,6 +1119,9 @@ namespace Anki {
         if (HAL::GetMicroCounter() < SimulatorParameters::frameRdyTimeUS_) {
           return EXIT_SUCCESS;
         }
+        
+        // TODO: remove this once we have the new API for getting a camera image
+        HAL::CameraStartFrame(HAL::CAMERA_FRONT, m_buffer1, HAL::CAMERA_MODE_QVGA, HAL::CAMERA_UPDATE_SINGLE, 0, false);
 #endif
 
         //#if USE_OFFBOARD_VISION
