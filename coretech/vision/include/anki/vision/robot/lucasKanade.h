@@ -24,7 +24,7 @@ namespace Anki
     {
       const s32 NUM_PREVIOUS_QUADS_TO_COMPARE = 2;
 
-      class LucasKanadeTracker_f32
+      class LucasKanadeTracker_Slow
       {
         // The generic LucasKanadeTracker class can track a template with the Lucas-Kanade method,
         // either with translation-only, affine, or projective updates. The two main steps are
@@ -34,8 +34,8 @@ namespace Anki
         // This class uses a lot of memory (on the order of 600kb for an 80x60 input).
 
       public:
-        LucasKanadeTracker_f32();
-        LucasKanadeTracker_f32(const Array<u8> &templateImage, const Quadrilateral<f32> &templateRegion, const s32 numPyramidLevels, const Transformations::TransformType transformType, const f32 ridgeWeight, MemoryStack &memory);
+        LucasKanadeTracker_Slow();
+        LucasKanadeTracker_Slow(const Array<u8> &templateImage, const Quadrilateral<f32> &templateRegion, const s32 numPyramidLevels, const Transformations::TransformType transformType, const f32 ridgeWeight, MemoryStack &memory);
 
         Result UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, const bool useWeights, bool& converged, MemoryStack scratch);
 
@@ -80,16 +80,16 @@ namespace Anki
         Result InitializeTemplate(const Array<u8> &templateImage, MemoryStack &memory);
 
         Result IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const Transformations::TransformType curTransformType, const bool useWeights, bool &converged, MemoryStack scratch);
-      }; // class LucasKanadeTracker_f32
+      }; // class LucasKanadeTracker_Slow
 
-      class LucasKanadeTrackerFast
+      class LucasKanadeTracker_Affine
       {
         // An Translation-only or Affine-plus-translation LucasKanadeTracker. Unlike the general
         // LucasKanadeTracker, this version uses much less memory, and could be better optimized.
 
       public:
-        LucasKanadeTrackerFast();
-        LucasKanadeTrackerFast(const Array<u8> &templateImage, const Quadrilateral<f32> &templateQuad, const s32 numPyramidLevels, const Transformations::TransformType transformType, const f32 ridgeWeight, MemoryStack &memory);
+        LucasKanadeTracker_Affine();
+        LucasKanadeTracker_Affine(const Array<u8> &templateImage, const Quadrilateral<f32> &templateQuad, const s32 numPyramidLevels, const Transformations::TransformType transformType, MemoryStack &memory);
 
         Result UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, bool& converged, MemoryStack scratch);
 
@@ -118,7 +118,51 @@ namespace Anki
 
         Transformations::PlanarTransformation_f32 transformation;
 
-        f32 ridgeWeight;
+        Rectangle<f32> templateRegion;
+
+        bool isValid;
+
+        Result IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const Transformations::TransformType curTransformType, bool &converged, MemoryStack scratch);
+
+        Result IterativelyRefineTrack_Translation(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack scratch);
+        Result IterativelyRefineTrack_Affine(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack scratch);
+      }; // class LucasKanadeTracker_Affine
+
+      class LucasKanadeTracker_Projective
+      {
+        // A Projective-plus-translation LucasKanadeTracker. Unlike the general LucasKanadeTracker,
+        // this version uses much less memory, and could be better optimized.
+
+      public:
+        LucasKanadeTracker_Projective();
+        LucasKanadeTracker_Projective(const Array<u8> &templateImage, const Quadrilateral<f32> &templateQuad, const s32 numPyramidLevels, const Transformations::TransformType transformType, MemoryStack &memory);
+
+        Result UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, bool& converged, MemoryStack scratch);
+
+        bool IsValid() const;
+
+        Result set_transformation(const Transformations::PlanarTransformation_f32 &transformation);
+
+        Transformations::PlanarTransformation_f32 get_transformation() const;
+
+      protected:
+        FixedLengthList<Meshgrid<f32> > templateCoordinates;
+        FixedLengthList<Array<u8> > templateImagePyramid;
+        FixedLengthList<Array<s16> > templateImageXGradientPyramid;
+        FixedLengthList<Array<s16> > templateImageYGradientPyramid;
+
+        s32 numPyramidLevels;
+
+        // The templateImage sizes are the sizes of the image that contains the template
+        s32 templateImageHeight;
+        s32 templateImageWidth;
+
+        // The templateRegion sizes are the sizes of the part of the template image that will
+        // actually be tracked, so must be smaller or equal to the templateImage sizes
+        f32 templateRegionHeight;
+        f32 templateRegionWidth;
+
+        Transformations::PlanarTransformation_f32 transformation;
 
         Rectangle<f32> templateRegion;
 
@@ -128,7 +172,8 @@ namespace Anki
 
         Result IterativelyRefineTrack_Translation(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack scratch);
         Result IterativelyRefineTrack_Affine(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack scratch);
-      }; // class LucasKanadeTrackerFast
+        Result IterativelyRefineTrack_Projective(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack scratch);
+      }; // class LucasKanadeTracker_Projective
     } // namespace TemplateTracker
   } // namespace Embedded
 } //namespace Anki

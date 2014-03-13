@@ -30,7 +30,7 @@ namespace Anki {
       
       void StopTracking();
 
-      // Select a block type to look for to dock with.  Use 0 to disable.
+      // Select a block type to look for to dock with.  Use NUM_MARKER_TYPES to disable.
       // Next time the vision system sees a block of this type while looking
       // for blocks, it will initialize a template tracker and switch to
       // docking mode.
