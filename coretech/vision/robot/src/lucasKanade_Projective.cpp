@@ -47,8 +47,8 @@ namespace Anki
         AnkiConditionalErrorAndReturn(numPyramidLevels > 0,
           "LucasKanadeTracker_Projective::LucasKanadeTracker_Projective", "numPyramidLevels must be greater than zero");
 
-        AnkiConditionalErrorAndReturn(transformType==Transformations::TRANSFORM_TRANSLATION || transformType == Transformations::TRANSFORM_AFFINE,
-          "LucasKanadeTracker_Slow::LucasKanadeTracker_Slow", "Only Transformations::TRANSFORM_TRANSLATION or Transformations::TRANSFORM_AFFINE are supported");
+        AnkiConditionalErrorAndReturn(transformType==Transformations::TRANSFORM_TRANSLATION || transformType == Transformations::TRANSFORM_AFFINE || transformType == Transformations::TRANSFORM_PROJECTIVE,
+          "LucasKanadeTracker_Projective::LucasKanadeTracker_Projective", "Only TRANSFORM_TRANSLATION, TRANSFORM_AFFINE, and TRANSFORM_PROJECTIVE are supported");
 
         templateRegion = templateQuad.ComputeBoundingRectangle();
 

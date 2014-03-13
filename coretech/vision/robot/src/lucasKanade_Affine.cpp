@@ -48,7 +48,7 @@ namespace Anki
           "LucasKanadeTracker_Affine::LucasKanadeTracker_Affine", "numPyramidLevels must be greater than zero");
 
         AnkiConditionalErrorAndReturn(transformType==Transformations::TRANSFORM_TRANSLATION || transformType == Transformations::TRANSFORM_AFFINE,
-          "LucasKanadeTracker_Slow::LucasKanadeTracker_Slow", "Only Transformations::TRANSFORM_TRANSLATION or Transformations::TRANSFORM_AFFINE are supported");
+          "LucasKanadeTracker_Affine::LucasKanadeTracker_Affine", "Only Transformations::TRANSFORM_TRANSLATION or Transformations::TRANSFORM_AFFINE are supported");
 
         templateRegion = templateQuad.ComputeBoundingRectangle();
 
