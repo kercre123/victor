@@ -565,10 +565,10 @@ namespace Anki {
       }
     } //SetHeadCamMode()
     
-    void GetGrayscaleFrameHelper(webots::Camera* cam, u8* buffer)
+    void GetGrayscaleFrameHelper(webots::Camera* cam, u8* yuvBuffer)
     {
-      // Acquire grey image
-      // (Closest thing to Y channel?)
+      // Acquire grey image and stick in the first half of each two-byte pixel
+      // in the YUV buffer (since the real camera is now working in YUV this way)
       const u8* image = cam->getImage();
       if(image == NULL) {
         PRINT("GetGrayscaleFrameHelper(): no image captured!");
@@ -577,7 +577,7 @@ namespace Anki {
         u32 pixel = 0;
         for (int y=0; y < cam->getHeight(); y++ ) {
           for (int x=0; x < cam->getWidth(); x++ ) {
-            buffer[pixel++] = webots::Camera::imageGetGrey(image, cam->getWidth(), x, y);
+            yuvBuffer[pixel+=2] = webots::Camera::imageGetGrey(image, cam->getWidth(), x, y);
           }
         }
       }
@@ -585,7 +585,7 @@ namespace Anki {
     
     
     // Starts camera frame synchronization
-    void HAL::CameraStartFrame(CameraID cameraID, u8* frameBuffer,
+    void HAL::CameraStartFrame(CameraID cameraID, u8* yuvFrameBuffer,
                                CameraMode mode, CameraUpdateMode updateMode,
                                u16 exposure, bool enableLight)
     {
@@ -594,8 +594,8 @@ namespace Anki {
       switch(cameraID) {
         case CAMERA_FRONT:
         {
-          if (mode != CAMERA_MODE_VGA) {
-            PRINT("ERROR (CameraStartFrame): Head camera only supports VGA\n");
+          if (mode != CAMERA_MODE_QVGA) {
+            PRINT("ERROR (CameraStartFrame): Head camera only supports QVGA\n");
             return;
           }
           
@@ -605,7 +605,7 @@ namespace Anki {
           headCamStartCaptureTime_ = GetMicroCounter();
           */
           
-          GetGrayscaleFrameHelper(headCam_, frameBuffer);
+          GetGrayscaleFrameHelper(headCam_, yuvFrameBuffer);
 
           break;
         }
