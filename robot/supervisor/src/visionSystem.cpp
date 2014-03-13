@@ -53,7 +53,7 @@ static bool isInitialized_ = false;
 #define DOCKING_LUCAS_KANADE_STANDARD 1 //< LucasKanadeTracker_f32
 #define DOCKING_LUCAS_KANADE_FAST     2 //< LucasKanadeTrackerFast
 #define DOCKING_BINARY_TRACKER        3 //< BinaryTracker
-#define DOCKING_ALGORITHM DOCKING_BINARY_TRACKER
+#define DOCKING_ALGORITHM DOCKING_LUCAS_KANADE_STANDARD
 
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_STANDARD
 typedef TemplateTracker::LucasKanadeTracker_f32 Tracker;
@@ -167,7 +167,7 @@ namespace TrackerParameters {
       trackingImageHeight = 60;
       trackingImageWidth = 80;
 
-      numPyramidLevels = 1; //numPyramidLevels = 2;
+      numPyramidLevels = 2;
       ridgeWeight = 0.0f;
       maxIterations = 25;
       convergenceTolerance = 0.05f;
@@ -373,7 +373,13 @@ namespace DebugStream
     const s32 oneTransformationLength = 512;
     void * restrict oneTransformation = ccmScratch.Allocate(oneTransformationLength);
     
+#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_STANDARD || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_FAST
     transformation.Serialize(oneTransformation, oneTransformationLength);
+    // TODO: handle the upscaling
+#else
+    transformation.Serialize(oneTransformation, oneTransformationLength);
+#endif
+    
     debugStreamBuffer_.PushBack("PlanarTransformation_f32", oneTransformation, oneTransformationLength);
     
     Array<u8> imageSmall(60, 80, offchipScratch);
@@ -744,7 +750,7 @@ static ReturnCode InitTemplate(
   // Note that the templateRegion and the trackingQuad are both at DETECTION_RESOLUTION, not
   // necessarily the resolution of the frame.
   const u32 downsampleFactor = parameters.detectionWidth / parameters.trackingImageWidth;
-  const u32 downsamplePower = Log2u32(downsampleFactor);
+  //const u32 downsamplePower = Log2u32(downsampleFactor);
   
   Quadrilateral<f32> trackingQuadSmall;
   
@@ -759,7 +765,7 @@ static ReturnCode InitTemplate(
     grayscaleImageSmall,
     trackingQuadSmall,
     parameters.numPyramidLevels,
-    Transformations::TRANSFORM_AFFINE,
+    Transformations::TRANSFORM_TRANSLATION,
     parameters.ridgeWeight,
     onchipScratch);
 #elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_FAST
