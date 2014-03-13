@@ -74,14 +74,14 @@ extern "C" {
 
 #else // #ifdef USE_CAPTURE_IMAGES
 
-// TESTING: For serial robot don't print
 #if(USING_UART_RADIO)
 
 #if(DIVERT_PRINT_TO_RADIO)
 #define PRINT(...) Messages::SendText(__VA_ARGS__)
 #else
 #define PRINT(...)
-#endif
+#endif // #if(USING_UART_RADIO)
+
 #define PERIODIC_PRINT(num_calls_between_prints, ...)
 
 #else
@@ -104,6 +104,13 @@ extern "C" {
 
 #elif defined(SIMULATOR) // #ifndef SIMULATOR
 
+#if(USING_UART_RADIO && DIVERT_PRINT_TO_RADIO)
+
+#define PRINT(...) Messages::SendText(__VA_ARGS__)
+#define PERIODIC_PRINT(num_calls_between_prints, ...)
+
+#else
+
 #define PRINT(...) fprintf(stdout, __VA_ARGS__)
 
 #define PERIODIC_PRINT(num_calls_between_prints, ...)  \
@@ -114,6 +121,8 @@ extern "C" {
     cnt = 0; \
   } \
 }
+
+#endif // #if(USING_UART_RADIO && DIVERT_PRINT_TO_RADIO)
 
 #endif  // #elif defined(SIMULATOR)
 
