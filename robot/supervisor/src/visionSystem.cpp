@@ -388,6 +388,15 @@ namespace DebugStream
 
     return SendBuffer(debugStreamBuffer_);
   } // static ReturnCode SendTrackingUpdate()
+  
+  static ReturnCode SendArray(const Array<u8> &array)
+  {
+    debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
+    
+    debugStreamBuffer_.PushBack(array);
+    
+    return SendBuffer(debugStreamBuffer_);
+  }
 #endif // #ifdef SEND_DEBUG_STREAM
 
   static ReturnCode Initialize()

@@ -377,12 +377,6 @@ namespace Anki
           //this->get_transformation().Print("Translation");
 
           if(this->transformation.get_transformType() != Transformations::TRANSFORM_TRANSLATION) {
-            // TODO: remove
-            //Array<f32> newH = Eye<f32>(3,3,memory);
-            //newH[0][2] = -0.0490;
-            //newH[1][2] = -0.1352;
-            //this->transformation.set_homography(newH);
-
             BeginBenchmark("UpdateTrack.refineOther");
             if((lastResult = IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance, this->transformation.get_transformType(), useWeights, converged, scratch)) != RESULT_OK)
               return lastResult;

@@ -395,6 +395,13 @@ namespace Anki
         return this->initialCorners;
       }
 
+      Result PlanarTransformation_f32::set_centerOffset(const Point<f32> &centerOffset)
+      {
+        this->centerOffset = centerOffset;
+
+        return RESULT_OK;
+      }
+
       const Point<f32>& PlanarTransformation_f32::get_centerOffset() const
       {
         return this->centerOffset;
