@@ -19,7 +19,6 @@ link_directories( ${WEBOTS_LIB_DIR} )
 
 # Source files
 set(SOURCE_FILES
-#	CozmoWorldComms.cpp
 	blockworld_controller.cpp
 	${PROJECT_SOURCE_DIR}/robot/simulator/src/basestationKeyboardController.cpp
 	${COZMO_BASESTATION_SRC}
@@ -27,7 +26,6 @@ set(SOURCE_FILES
 )
 
 set(HEADER_FILES
-#	CozmoWorldComms.h
 	${PROJECT_SOURCE_DIR}/robot/simulator/src/basestationKeyboardController.h
 )
 

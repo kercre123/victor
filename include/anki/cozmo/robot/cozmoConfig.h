@@ -95,9 +95,6 @@ namespace Anki {
     // for robot messages bound for the basestation.
 #define BASESTATION_SIM_COMM_CHANNEL 100
     
-    // Port on which CozmoWorldComms is listening for a connection from basestation.
-#define COZMO_WORLD_LISTEN_PORT "5555"
-    
     ////////// End Simulator comms //////////
     
 #else // Real robot:
