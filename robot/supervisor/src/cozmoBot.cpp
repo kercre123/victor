@@ -63,16 +63,11 @@ namespace Anki {
       void StartMotorCalibrationRoutine()
       {
         LiftController::StartCalibrationRoutine();
+        HeadController::StartCalibrationRoutine();
 #if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
         GripController::DisengageGripper();
 #endif
         SteeringController::ExecuteDirectDrive(0,0);
-
-#ifdef SIMULATOR
-        // Convenient for docking to set head angle at -15 degrees.
-        // TODO: Move this somewhere else.
-        HeadController::SetDesiredAngle(-0.26);
-#endif
       }
       
       
@@ -82,7 +77,9 @@ namespace Anki {
       {
         bool isDone = false;
         
-        if(LiftController::IsCalibrated()) {
+        if(LiftController::IsCalibrated()
+           && HeadController::IsCalibrated()
+           ) {
           PRINT("Motors calibrated\n");
           isDone = true;
         }
@@ -332,6 +329,8 @@ namespace Anki {
         //////////////////////////////////////////////////////////////
         // Feedback / Display
         //////////////////////////////////////////////////////////////
+        
+        Messages::SendRobotStateMsg();
         
         HAL::UpdateDisplay();
         

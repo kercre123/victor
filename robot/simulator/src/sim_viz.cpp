@@ -71,6 +71,37 @@ namespace Anki {
           //PRINT("APPEND ARC: %d bytes\n", (int)sizeof(msg) + 1);
         }
         
+        
+        void DrawPath(s32 path_id, const Planning::Path& p) {
+
+          ErasePath(0);
+          for (u8 i=0; i<p.GetNumSegments(); ++i) {
+            const Planning::PathSegmentDef& ps = p[i].GetDef();
+            switch(p[i].GetType()) {
+              case Planning::PST_LINE:
+                AppendPathSegmentLine(0,
+                                      ps.line.startPt_x,
+                                      ps.line.startPt_y,
+                                      ps.line.endPt_x,
+                                      ps.line.endPt_y);
+                break;
+              case Planning::PST_ARC:
+                AppendPathSegmentArc(0,
+                                     ps.arc.centerPt_x,
+                                     ps.arc.centerPt_y,
+                                     ps.arc.radius,
+                                     ps.arc.startRad,
+                                     ps.arc.sweepRad);
+                break;
+              default:
+                break;
+            }
+          }
+
+        }
+
+        
+        
       } // namespace Viz
     } // namespace Sim
   } // namespace Cozmo

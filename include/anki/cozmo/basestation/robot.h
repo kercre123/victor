@@ -79,6 +79,7 @@ namespace Anki {
       
       ReturnCode SendMoveHead(const f32 angle_rad, const f32 max_speed_rad_per_sec, const f32 accel_rad_per_sec2);
       
+      ReturnCode SendDriveWheels(const f32 lwheel_speed_mmps, const f32 rwheel_speed_mmps);
       
     protected:
       // The robot's identifier

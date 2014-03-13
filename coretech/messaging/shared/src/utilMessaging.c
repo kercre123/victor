@@ -374,17 +374,17 @@ UtilMsgError UtilMsgPack(void *dst, unsigned int dstBytes, unsigned int *bytesPa
 UtilMsgError UtilMsgUnpack(const void *src, unsigned int srcBytes, unsigned int *bytesUnpacked, const char *packStr, ...)
 {
   unsigned long long l;
-  unsigned long long *pL;
+  unsigned long long *pL = 0;
   unsigned int i;    //4 bytes
-  unsigned int *pI;
+  unsigned int *pI = 0;
   float f;  //4 bytes
-  float *pF;
+  float *pF = 0;
   double d; //8 bytes
-  double *pD;
+  double *pD = 0;
   unsigned short h;  //2 bytes
-  unsigned short *pH;
+  unsigned short *pH = 0;
   unsigned char c;   //1 byte
-  unsigned char *pC;
+  unsigned char *pC = 0;
 
   int idx;
   int variableNum;

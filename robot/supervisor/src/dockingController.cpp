@@ -65,11 +65,6 @@ namespace Anki {
         
         // Code of the VisionMarker we are trying to dock to
         Vision::MarkerType dockMarker_;
-        
-        // TODO: set error tolerances in mm and convert to pixels based on camera resolution?
-        const f32 VERTICAL_TARGET_ERROR_TOLERANCE = 1.f;   // in pixels
-        const f32 HORIZONTAL_TARGET_ERROR_TOLERANCE = 1.f; // in pixels
-
 
         Mode mode_ = IDLE;
         

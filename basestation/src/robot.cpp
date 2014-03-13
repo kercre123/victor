@@ -448,6 +448,15 @@ namespace Anki {
       return msgHandler_->SendMessage(ID_,m);
     }
     
+    ReturnCode Robot::SendDriveWheels(const f32 lwheel_speed_mmps, const f32 rwheel_speed_mmps)
+    {
+      MessageDriveWheels m;
+      m.lwheel_speed_mmps = lwheel_speed_mmps;
+      m.rwheel_speed_mmps = rwheel_speed_mmps;
+      
+      return msgHandler_->SendMessage(ID_,m);
+    }
+    
     
   } // namespace Cozmo
 } // namespace Anki

@@ -66,15 +66,19 @@ namespace Anki {
       ReturnCode retVal = EXIT_FAILURE;
       
       if(robotMgr_ == NULL) {
-        PRINT_NAMED_ERROR("MessageHandler:NullRobotManager",
+        PRINT_NAMED_ERROR("MessageHandler.NullRobotManager",
                           "RobotManager NULL when MessageHandler::ProcessPacket() called.");
       }
       else {
         const u8 msgID = packet.data[0];
         
         if(lookupTable_[msgID].size != packet.dataLen-1) {
-          PRINT_NAMED_ERROR("MessageBufferWrongSize",
-                            "Buffer's size does not match expected size for this message ID.");
+          PRINT_NAMED_ERROR("MessageHandler.MessageBufferWrongSize",
+                            "Buffer's size does not match expected size for this message ID. (Msg %d, expected %d, recvd %d)",
+                            msgID,
+                            lookupTable_[msgID].size,
+                            packet.dataLen - 1
+                            );
         }
         else {
           const RobotID_t robotID = packet.sourceId;
@@ -177,13 +181,65 @@ namespace Anki {
       return EXIT_SUCCESS;
     }
     
+    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageRobotState const& msg)
+    {
+      /*
+      PRINT_NAMED_INFO("RobotStateMsgRecvd",
+                       "RobotStateMsg received \n"
+                       "  ID: %d\n"
+                       "  pose (%f,%f,%f,%f)\n"
+                       "  wheel speeds (l=%f, r=%f)\n"
+                       "  headAngle %f\n"
+                       "  liftHeight %f\n",
+                       robot->get_ID(),
+                       msg.pose_x, msg.pose_y, msg.pose_z, msg.pose_angle,
+                       msg.lwheel_speed_mmps, msg.rwheel_speed_mmps,
+                       msg.headAngle, msg.liftHeight);
+      */
+      
+      // Update robot pose
+      Vec3f axis(0,0,1);
+      Vec3f translation(msg.pose_x, msg.pose_y, msg.pose_z);
+      robot->set_pose(Pose3d(msg.pose_angle, axis, translation));
+      
+      return EXIT_SUCCESS;
+    }
+
+    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessagePrintText const& msg)
+    {
+      static char text[512];  // Local storage for large messages which may come across in multiple packets
+      static u32 textIdx = 0;
+
+      char *newText = (char*)&(msg.text.front());
+      
+      // If the last byte is 0, it means this is the last packet (possibly of a series of packets).
+      if (msg.text[PRINT_TEXT_MSG_LENGTH-1] == 0) {
+        // Text is ready to print
+        if (textIdx == 0) {
+          // This message is not a part of a longer message. Just print!
+          printf("ROBOT-PRINT: %s", newText);
+        } else {
+          // This message is part of a longer message. Copy to local buffer and print.
+          memcpy(text + textIdx, newText, strlen(newText)+1);
+          printf("ROBOT-PRINT: %s", text);
+          textIdx = 0;
+        }
+      } else {
+        // This message is part of a larger text. Copy to local buffer. There is more to come!
+        memcpy(text + textIdx, newText, PRINT_TEXT_MSG_LENGTH);
+        textIdx += PRINT_TEXT_MSG_LENGTH;
+      }
+
+      return EXIT_SUCCESS;
+    }
+    
     
     // STUBS:
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageClearPath const&){return EXIT_FAILURE;}
-    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageSetMotion const&){return EXIT_FAILURE;}
+    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageDriveWheels const&){return EXIT_FAILURE;}
+    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageDriveWheelsCurvature const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageMoveLift const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageMoveHead const&){return EXIT_FAILURE;}
-    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageRobotState const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageRobotAvailable const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageMatMarkerObserved const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageRobotAddedToWorld const&){return EXIT_FAILURE;}
