@@ -607,6 +607,7 @@ namespace Anki
 
           BeginBenchmark("IterativelyRefineTrack.updateTransformation");
           //this->transformation.Print("t1");
+          //b.Print("b");
           this->transformation.Update(b, scratch, curTransformType);
           //this->transformation.Print("t2");
           EndBenchmark("IterativelyRefineTrack.updateTransformation");

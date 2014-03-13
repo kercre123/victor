@@ -53,7 +53,8 @@ void ProcessRawBuffer(RawBuffer &buffer, const string outputFilenamePattern, con
   MemoryStack memory(bigBufferRaw2, BIG_BUFFER_SIZE, Flags::Buffer(false, true, false));
 
   // Used for displaying detected fiducials
-  cv::Mat lastImage(0,0,CV_8U);
+  cv::Mat lastImage(240,320,CV_8U);
+  lastImage.setTo(0);
 
   bool isTracking = false;
   Transformations::PlanarTransformation_f32 lastPlanarTransformation(Transformations::TRANSFORM_PROJECTIVE, memory);
