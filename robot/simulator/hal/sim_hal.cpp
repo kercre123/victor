@@ -53,13 +53,15 @@ namespace Anki {
       webots::Motor* motors_[HAL::MOTOR_COUNT];
       
       
+      
       // Gripper
       webots::Connector* con_;
       bool gripperEngaged_ = false;
       s32 unlockhysteresis_ = UNLOCK_HYSTERESIS;
       
+      
       // Cameras / Vision Processing
-      webots::Camera* matCam_;
+      //webots::Camera* matCam_;
       webots::Camera* headCam_;
       HAL::CameraInfo headCamInfo_;
       HAL::CameraInfo matCamInfo_;

@@ -231,6 +231,7 @@ ADD_MESSAGE_MEMBER(u32, robotID)
 // TODO: Add other members here?
 END_MESSAGE_DEFINITION(RobotAddedToWorld)
 
+/*
 // TemplateInitialized
 START_MESSAGE_DEFINITION(TemplateInitialized, 1)
 ADD_MESSAGE_MEMBER(u8, success)
@@ -240,7 +241,7 @@ END_MESSAGE_DEFINITION(TemplateInitialized)
 START_MESSAGE_DEFINITION(TotalVisionMarkersSeen, 1)
 ADD_MESSAGE_MEMBER(u8, numMarkers)
 END_MESSAGE_DEFINITION(TotalVisionMarkersSeen)
-
+*/
 
 // PrintText
 #define PRINT_TEXT_MSG_LENGTH 50
