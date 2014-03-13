@@ -11,26 +11,7 @@
 
 namespace Anki {
   namespace Vision{
-
-    Marker::Code::Code()
-    {
-      //memset(byteArray_,0,NUM_BYTES);
-      byteArray_.fill(0);
-    }
   
-    Marker::Code::Code(const u8* bytes)
-    {
-      //memcpy(byteArray_,bytes,NUM_BYTES);
-      std::copy(bytes, bytes+NUM_BYTES, byteArray_.begin());
-    }
-    
-    Marker::Code::Code(std::initializer_list<u8> args)
-    {
-      CORETECH_ASSERT(args.size() == NUM_BYTES);
-      std::copy(args.begin(), args.end(), byteArray_.begin());
-    }
-
-    
     
     Marker::Marker(const Code& withCode)
     : code_(withCode)
@@ -113,21 +94,6 @@ namespace Anki {
                                       this->corners3d_);
     }
     
-    
-    bool Marker::Code::operator==(const Code& otherCode) const
-    {
-      bool isSame = otherCode.byteArray_[0] == this->byteArray_[0];
-      for(u8 i=0; isSame && i<NUM_BYTES; ++i) {
-        isSame = otherCode.byteArray_[i] == this->byteArray_[i];
-      }
-      
-      return isSame;
-    }
-    
-    bool Marker::Code::operator<(const Code& otherCode) const
-    {
-      return this->byteArray_ < otherCode.byteArray_;
-    }
     
   } // namespace Vision
 } // namespace Anki

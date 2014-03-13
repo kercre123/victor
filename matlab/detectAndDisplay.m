@@ -30,17 +30,24 @@ end
 if numDetections > 0
     hold(h_axes, 'on')
     for i = 1:numDetections
-        if isempty(markerLibrary)
-            detections{i}.DrawProbes('Tag', 'BlockMarker2D', 'Parent', h_axes);
-        else
-            match = markerLibrary.IdentifyMarker(detections{i});
-            if isempty(match)
-                detections{i}.DrawProbes('Tag', 'BlockMarker2D', 'Parent', h_axes);
-            else
+        switch(class(detections{i}))
+            case 'VisionMarker'
+                if isempty(markerLibrary)
+                    detections{i}.DrawProbes('Tag', 'BlockMarker2D', 'Parent', h_axes);
+                else
+                    match = markerLibrary.IdentifyMarker(detections{i});
+                    if isempty(match)
+                        detections{i}.DrawProbes('Tag', 'BlockMarker2D', 'Parent', h_axes);
+                    else
+                        detections{i}.Draw('Tag', 'BlockMarker2D', 'Parent', h_axes);
+                    end
+                end
+                %draw(detections{i}, 'where', h_axes, 'drawTextLabels', 'short');
+            case 'VisionMarkerTrained'
                 detections{i}.Draw('Tag', 'BlockMarker2D', 'Parent', h_axes);
-            end
+            otherwise
+                error('Unrecognized detection type.');
         end
-        %draw(detections{i}, 'where', h_axes, 'drawTextLabels', 'short');
     end
     
     set(h_axes, 'XColor', 'g', 'YColor', 'g');

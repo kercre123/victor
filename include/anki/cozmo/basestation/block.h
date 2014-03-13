@@ -17,6 +17,8 @@
 
 #include "anki/cozmo/basestation/messages.h"
 
+#include "anki/vision/MarkerCodeDefinitions.h"
+
 namespace Anki {
   
   // Forward Declarations:

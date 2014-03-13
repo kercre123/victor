@@ -14,11 +14,6 @@
 namespace Anki {
   namespace Cozmo {
     namespace Messages {
-
-      // Create all the dispatch function prototypes (all implemented
-      // manually below).  We need the prototypes for the LUT below
-#define MESSAGE_DEFINITION_MODE MESSAGE_DISPATCH_DEFINITION_MODE
-#include "anki/cozmo/MessageDefinitions.h"
       
       namespace {
   
@@ -30,7 +25,7 @@ namespace Anki {
         } TableEntry;
         
         const size_t NUM_TABLE_ENTRIES = NUM_MSG_IDS + 1;
-        TableEntry LookupTable_[NUM_TABLE_ENTRIES] = {
+        const TableEntry LookupTable_[NUM_TABLE_ENTRIES] = {
           {0, 0, 0}, // Empty entry for NO_MESSAGE_ID
 #define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_MODE
 #include "anki/cozmo/MessageDefinitions.h"
@@ -227,9 +222,8 @@ namespace Anki {
         PRINT("Processing VisionMarker message\n");
         
         visionMarkerMailbox_.putMessage(msg);
-        
-        
-        VisionSystem::CheckForTrackingMarker(msg.code);
+                
+        VisionSystem::CheckForTrackingMarker(msg.markerType);
       }
       
       void ProcessTotalVisionMarkersSeenMessage(const TotalVisionMarkersSeen& msg)
@@ -297,10 +291,11 @@ namespace Anki {
       }
       
       void ProcessDockWithBlockMessage(const DockWithBlock& msg) {
-        const VisionSystem::MarkerCode code(msg.blockCode);
+        #warning Broken on M4
+        /*const VisionSystem::MarkerCode code(msg.blockCode);
         DockingController::StartDocking(code,
                                         msg.horizontalOffset_mm,
-                                        0, 0);
+                                        0, 0);*/
       }
 
       void ProcessDriveWheelsMessage(const DriveWheels& msg) {

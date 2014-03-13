@@ -47,6 +47,11 @@ namespace Anki {
       // Return the size of a message, given its ID
       u8 GetSize(const ID msgID);
       
+      // Create all the dispatch function prototypes (all implemented
+      // manually in messages.cpp).  
+#define MESSAGE_DEFINITION_MODE MESSAGE_DISPATCH_DEFINITION_MODE
+#include "anki/cozmo/MessageDefinitions.h"
+      
       void ProcessBTLEMessages();
       void ProcessUARTMessages();
       

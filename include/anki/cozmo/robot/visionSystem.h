@@ -3,40 +3,13 @@
 
 #include "anki/common/types.h"
 
+#include "anki/vision/robot/fiducialMarkers.h"
+
 
 namespace Anki {
   namespace Cozmo {
     namespace VisionSystem {
-    
-      // TODO: This is potentially dangerous since people can use a code without
-      //       realizing it is an array.  Change to a full-blown class?
-      //typedef u8 MarkerCode[VISION_MARKER_CODE_LENGTH];
-      
-      class MarkerCode
-      {
-      public:
-        static const u8 CODE_LENGTH_IN_BYTES = VISION_MARKER_CODE_LENGTH*sizeof(u8);
-        
-        MarkerCode();
-        MarkerCode(const u8* bits);
-        
-        const u8* GetBits() const;
-        
-        void Set(const MarkerCode& other);
-        //void Set(const u8* bits);
-        void Unset();
-        
-        bool IsSet() const;
-        
-        bool operator==(const u8* otherBits) const;
-        bool operator==(const MarkerCode& other) const;
-        
-      protected:
-        bool isSet_;
-        u8 bits_[VISION_MARKER_CODE_LENGTH];
-      };
-      
-      
+          
       //
       // Parameters / Constants:
       //
@@ -62,14 +35,15 @@ namespace Anki {
       // for blocks, it will initialize a template tracker and switch to
       // docking mode.
       // TODO: Something smarter about seeing the block in the expected place as well?
-      ReturnCode SetMarkerToTrack(const MarkerCode& codeToTrack);
+      //ReturnCode SetMarkerToTrack(const MarkerCode& codeToTrack);
+      ReturnCode SetMarkerToTrack(const Vision::MarkerType& markerToTrack);
       
       // NOTE: the following are provided as public API because they messaging
       //       system may call them.
       
       // Check to see if this is the blockType the vision system is looking for,
       // i.e., the one set by a prior call to SetDockingBlock() above.
-      void CheckForTrackingMarker(const u8* bits);
+      void CheckForTrackingMarker(const u16 bits);
       
       // Switch to docking mode if isTemplateInitialized is true, otherwise
       // stay in current mode.

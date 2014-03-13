@@ -11,6 +11,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/errorHandling.h"
 #include "anki/common/robot/utilities.h"
 
+//#define DISPLAY_USED_BYTES
+
 namespace Anki
 {
   namespace Embedded
@@ -97,6 +99,10 @@ namespace Anki
 
       if(flags.get_zeroAllocatedMemory())
         memset(segmentMemory, 0, numBytesRequestedRounded);
+
+#ifdef DISPLAY_USED_BYTES
+      printf("%d) Used %d bytes\n", id, usedBytes);
+#endif
 
       return segmentMemory;
     }

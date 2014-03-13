@@ -17,6 +17,11 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/vision/robot/connectedComponents.h"
 
+#include "anki/vision/robot/decisionTree_vision.h"
+
+#include "anki/vision/robot/visionMarkerDecisionTrees.h"
+
+// For old QR-style BlockMarkers
 #define MAX_FIDUCIAL_MARKER_BITS 25
 #define MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS 81
 
@@ -50,6 +55,38 @@ namespace Anki
 
       void Print() const;
     }; // class BlockMarker
+
+    // A VisionMarker is a location Quadrilateral, with a markerType.
+    class VisionMarker
+    {
+    public:
+
+      Quadrilateral<s16> corners; // SQ 15.0 (Though may be changed later)
+      Vision::MarkerType markerType;
+      bool isValid;
+
+      VisionMarker();
+
+      Result Extract(const Array<u8> &image, const Quadrilateral<s16> &quad,
+        const Array<f32> &homography, const f32 minContrastRatio);
+
+      void Print() const;
+
+      Result Serialize(void * buffer, const s32 bufferLength) const;
+      Result Deserialize(const void* buffer, const s32 bufferLength);
+
+    protected:
+      // The constructor isn't always called, so initialize has to be checked in multiple places
+      // TODO: make less hacky
+      void Initialize();
+
+      Result ComputeThreshold(const Array <u8> &image, const Array<f32> &homography,
+        const f32 minContrastRatio, bool &isHighContrast, u8 &meanGrayvalueThreshold);
+
+      static bool areTreesInitialized;
+      static FiducialMarkerDecisionTree multiClassTree;
+      static FiducialMarkerDecisionTree verificationTrees[VisionMarkerDecisionTree::NUM_MARKER_LABELS_ORIENTED];
+    }; // class VisionMarker
 
     // A FiducialMarkerParserBit object samples an input image, to determine if a given image
     // area is binary 0 or 1.

@@ -60,7 +60,7 @@ int main(int argc, char ** argv)
   u8 *usbBuffer = reinterpret_cast<u8*>(malloc(USB_BUFFER_SIZE));
   s32 usbBufferIndex = 0;
 
-  s32 comPort = 8;
+  s32 comPort = 11;
   s32 baudRate = 1000000;
 
   if(argc == 1) {

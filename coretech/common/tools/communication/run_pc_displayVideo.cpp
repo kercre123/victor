@@ -27,7 +27,7 @@ _Check_return_opt_ _CRTIMP int __cdecl printf(_In_z_ _Printf_format_string_ cons
 
 using namespace std;
 
-const double secondsToWaitBeforeDisplayingABuffer = 0.05;
+const double secondsToWaitBeforeDisplayingABuffer = 0.1;
 
 const s32 outputFilenamePatternLength = 1024;
 char outputFilenamePattern[outputFilenamePatternLength] = "C:/datasets/cozmoShort/cozmo_%04d-%02d-%02d_%02d-%02d-%02d_%d.%s";
@@ -55,11 +55,11 @@ int main(int argc, char ** argv)
 {
   double lastUpdateTime;
   Serial serial;
-  const s32 USB_BUFFER_SIZE = 100000000;
+  const s32 USB_BUFFER_SIZE = 1000000;
   u8 *usbBuffer = reinterpret_cast<u8*>(malloc(USB_BUFFER_SIZE));
   s32 usbBufferIndex = 0;
 
-  s32 comPort = 8;
+  s32 comPort = 11;
   s32 baudRate = 1000000;
 
   if(argc == 1) {
@@ -109,14 +109,14 @@ int main(int argc, char ** argv)
           /*
           DWORD threadId = -1;
           CreateThread(
-            NULL,        // default security attributes
-            0,           // use default stack size
-            DisplayBuffersThread, // thread function name
-            &rawBuffer,    // argument to thread function
-            0,           // use default creation flags
-            &threadId);  // returns the thread identifier
-            */
-          ProcessRawBuffer(rawBuffer, string(outputFilenamePattern), true, BUFFER_ACTION_DISPLAY, true, false, false);
+          NULL,        // default security attributes
+          0,           // use default stack size
+          DisplayBuffersThread, // thread function name
+          &rawBuffer,    // argument to thread function
+          0,           // use default creation flags
+          &threadId);  // returns the thread identifier
+          */
+          ProcessRawBuffer(rawBuffer, string(outputFilenamePattern), true, BUFFER_ACTION_DISPLAY, false, false, false);
 
           usbBuffer = reinterpret_cast<u8*>(malloc(USB_BUFFER_SIZE));
           usbBufferIndex = 0;

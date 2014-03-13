@@ -20,7 +20,7 @@ namespace Anki
 {
   namespace Embedded
   {
-// #pragma mark
+    // #pragma mark
 
     template<typename Type> Result SerializedBuffer::EncodeBasicType(u32 &code)
     {
@@ -181,7 +181,21 @@ namespace Anki
       return segment;
     }
 
-// #pragma mark --- Specializations ---
+    /*    template<typename Type> void* SerializedBuffer::PushBack(const FixedLengthList<Type> &in)
+    {
+    EncodedArray code;
+
+    if(EncodeArrayType<Type>(in.get_array(), code) != RESULT_OK)
+    return NULL;
+
+    void * segment = PushBack(SerializedBuffer::DATA_TYPE_LIST,
+    &code.code[0], EncodedArray::CODE_SIZE*sizeof(u32),
+    reinterpret_cast<const void*>(in.Pointer(0)), in.get_size());
+
+    return segment;
+    }*/
+
+    // #pragma mark --- Specializations ---
   } // namespace Embedded
 } //namespace Anki
 

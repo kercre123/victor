@@ -115,12 +115,8 @@ namespace Anki {
         
         //const u16 BLOCK_TO_PICK_UP = 60;
         //const u16 BLOCK_TO_PLACE_ON = 50;
-        const u8 BLOCK_TO_PICK_UP[VISION_MARKER_CODE_LENGTH] = {
-          115,  117,  167,  238,  206,  221,  156,  168,   58,  114,  118 // "FUEL"
-        };
-        const u8 BLOCK_TO_PLACE_ON[VISION_MARKER_CODE_LENGTH] = {
-          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 // TODO: fill in with another block
-        };
+        const Vision::MarkerType BLOCK_TO_PICK_UP = Vision::MARKER_BATTERIES;
+        const Vision::MarkerType BLOCK_TO_PLACE_ON = Vision::MARKER_BULLSEYE;
         ////// End of PickAndPlaceTest ////
         
         
@@ -162,16 +158,14 @@ namespace Anki {
         {
           case PAP_WAITING_FOR_PICKUP_BLOCK:
           {
-            VisionSystem::MarkerCode code(BLOCK_TO_PICK_UP);
-            PickAndPlaceController::PickUpBlock(code, 0);
+            PickAndPlaceController::PickUpBlock(BLOCK_TO_PICK_UP, 0);
             pickAndPlaceState_ = PAP_DOCKING;
             break;
           }
           case PAP_DOCKING:
             if (!PickAndPlaceController::IsBusy()) {
               if (PickAndPlaceController::DidLastActionSucceed()) {
-                VisionSystem::MarkerCode code(BLOCK_TO_PLACE_ON);
-                PickAndPlaceController::PlaceOnBlock(code, 0, 0);
+                PickAndPlaceController::PlaceOnBlock(BLOCK_TO_PLACE_ON, 0, 0);
                 pickAndPlaceState_ = PAP_PLACING;
               } else {
                 pickAndPlaceState_ = PAP_WAITING_FOR_PICKUP_BLOCK;

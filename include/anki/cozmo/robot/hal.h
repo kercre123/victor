@@ -42,7 +42,7 @@
 #include "anki/cozmo/robot/cozmoConfig.h"
 
 #ifndef USE_OFFBOARD_VISION
-#define USE_OFFBOARD_VISION 1
+#define USE_OFFBOARD_VISION 0
 #endif
 
 #define HAVE_ACTIVE_GRIPPER 0

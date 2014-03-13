@@ -13,6 +13,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/utilities.h"
 #include "anki/common/robot/serialize.h"
 
+#include "anki/vision/robot/fiducialMarkers.h"
+
 #include <ctime>
 
 using namespace Anki::Embedded;
@@ -45,6 +47,9 @@ void ProcessRawBuffer(RawBuffer &buffer, const string outputFilenamePattern, con
   s32 frameNumber = 0;
 
   MemoryStack memory(bigBufferRaw2, BIG_BUFFER_SIZE, Flags::Buffer(false, true, false));
+
+  // Used for displaying detected fiducials
+  cv::Mat lastImage(0,0,CV_8U);
 
 #ifdef PRINTF_ALL_RECEIVED
   printf("\n");
@@ -177,18 +182,40 @@ void ProcessRawBuffer(RawBuffer &buffer, const string outputFilenamePattern, con
             const cv::Mat_<u8> &mat = arr.get_CvMat_();
             cv::imwrite(outputFilename, mat);
           } else if(action == BUFFER_ACTION_DISPLAY) {
+            // Do the copy explicitly, to prevent OpenCV trying to be smart with memory
+            lastImage = cv::Mat(arr.get_size(0), arr.get_size(1), CV_8U);
             const cv::Mat_<u8> &mat = arr.get_CvMat_();
-            cv::imshow("Robot Image", mat);
-            cv::waitKey(10);
+            const s32 numBytes = mat.size().width * mat.size().height;
+            for(s32 i=0; i<numBytes; i++) {
+              lastImage.data[i] = mat.data[i];
+            }
           }
         }
       } else if(type == SerializedBuffer::DATA_TYPE_STRING) {
         printf("Board>> %s", dataSegment);
+      } else if(type == SerializedBuffer::DATA_TYPE_CUSTOM) {
+        dataSegment[SerializedBuffer::CUSTOM_TYPE_STRING_LENGTH-1] = '\0';
+        printf(reinterpret_cast<const char*>(dataSegment));
+        if(strcmp(reinterpret_cast<const char*>(dataSegment), "VisionMarker") == 0) {
+          dataSegment += SerializedBuffer::CUSTOM_TYPE_STRING_LENGTH;
+          const s32 remainingDataLength = dataLength - SerializedBuffer::EncodedArray::CODE_SIZE * sizeof(u32);
+
+          VisionMarker marker;
+          marker.Deserialize(dataSegment, remainingDataLength);
+          marker.Print();
+        }
       }
 
       printf("\n");
     } // while(iterator.HasNext())
   } // while(bufferDataOffset < buffer.dataLength)
+
+  if(action == BUFFER_ACTION_DISPLAY) {
+    if(lastImage.rows > 0) {
+      cv::imshow("Robot Image", lastImage);
+      cv::waitKey(10);
+    }
+  }
 
   if(freeBuffer) {
     buffer.data = NULL;
