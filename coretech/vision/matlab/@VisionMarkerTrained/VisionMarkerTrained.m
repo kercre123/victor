@@ -33,7 +33,7 @@ classdef VisionMarkerTrained
         
         img = AddFiducial(img, varargin);
         AddFiducialBatch(inputDir, outputDir, varargin);
-        TrainProbeTree(varargin);
+        probeTree = TrainProbeTree(varargin);
         [squareWidth_pix, padding_pix] = GetFiducialPixelSize(imageSize, imageSizeType);
         corners = GetFiducialCorners(imageSize);
         threshold = ComputeThreshold(img, tform);
