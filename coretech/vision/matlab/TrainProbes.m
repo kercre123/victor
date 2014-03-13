@@ -46,9 +46,6 @@ for i = 1:numImages
     
     [~,labelNames{i}] = fileparts(fnames{i});
     
-    % Remove underscores
-    labelNames{i} = strrep(labelNames{i}, '_', '');
-    
 end
 
 if ~numPerturbations
