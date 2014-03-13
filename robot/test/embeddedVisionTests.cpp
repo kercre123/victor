@@ -605,8 +605,6 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
 
   const s32 numPyramidLevels = 2;
 
-  const f32 ridgeWeight = 0.0f;
-
   const Rectangle<f32> templateRegion(13, 34, 22, 43);
   const Quadrilateral<f32> templateQuad(templateRegion);
 
@@ -641,7 +639,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
 
     const f64 time0 = GetTime();
 
-    TemplateTracker::LucasKanadeTracker_Affine tracker(image1, templateRegion, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, ridgeWeight, scratch1);
+    TemplateTracker::LucasKanadeTracker_Affine tracker(image1, templateRegion, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, scratch1);
 
     ASSERT_TRUE(tracker.IsValid());
 
@@ -674,7 +672,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
 
     const f64 time0 = GetTime();
 
-    TemplateTracker::LucasKanadeTracker_Affine tracker(image1, templateRegion, numPyramidLevels, Transformations::TRANSFORM_AFFINE, ridgeWeight, scratch1);
+    TemplateTracker::LucasKanadeTracker_Affine tracker(image1, templateRegion, numPyramidLevels, Transformations::TRANSFORM_AFFINE, scratch1);
 
     ASSERT_TRUE(tracker.IsValid());
 
