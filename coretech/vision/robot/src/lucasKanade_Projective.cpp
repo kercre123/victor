@@ -155,9 +155,6 @@ namespace Anki
 
       Result LucasKanadeTracker_Projective::IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const Transformations::TransformType curTransformType, bool &converged, MemoryStack scratch)
       {
-        // Unused, remove?
-        //const bool isOutColumnMajor = false; // TODO: change to false, which will probably be faster
-
         const s32 nextImageHeight = nextImage.get_size(0);
         const s32 nextImageWidth = nextImage.get_size(1);
 
@@ -179,15 +176,11 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(nextImageHeight == templateImageHeight && nextImageWidth == templateImageWidth,
           RESULT_FAIL_INVALID_SIZE, "LucasKanadeTracker_Projective::IterativelyRefineTrack", "nextImage must be the same size as the template");
 
-        //const Rectangle<s32> curTemplateRegion(
-        //  static_cast<s32>(Round(this->templateRegion.left / powf(2.0f,static_cast<f32>(whichScale)))),
-        //  static_cast<s32>(Round(this->templateRegion.right / powf(2.0f,static_cast<f32>(whichScale)))),
-        //  static_cast<s32>(Round(this->templateRegion.top / powf(2.0f,static_cast<f32>(whichScale)))),
-        //  static_cast<s32>(Round(this->templateRegion.bottom / powf(2.0f,static_cast<f32>(whichScale)))));
-
         if(curTransformType == Transformations::TRANSFORM_TRANSLATION) {
           return IterativelyRefineTrack_Translation(nextImage, maxIterations, whichScale, convergenceTolerance, converged, scratch);
         } else if(curTransformType == Transformations::TRANSFORM_AFFINE) {
+          return IterativelyRefineTrack_Affine(nextImage, maxIterations, whichScale, convergenceTolerance, converged, scratch);
+        } else if(curTransformType == Transformations::TRANSFORM_PROJECTIVE) {
           return IterativelyRefineTrack_Projective(nextImage, maxIterations, whichScale, convergenceTolerance, converged, scratch);
         }
 
@@ -206,7 +199,7 @@ namespace Anki
 
         f32 &AWAt00 = AWAt[0][0];
         f32 &AWAt01 = AWAt[0][1];
-        // Unused, remove?  f32 &AWAt10 = AWAt[1][0];
+        //f32 &AWAt10 = AWAt[1][0];
         f32 &AWAt11 = AWAt[1][1];
 
         f32 &b0 = b[0][0];
@@ -235,10 +228,6 @@ namespace Anki
           Linspace(-this->templateRegionWidth/2.0f, this->templateRegionWidth/2.0f, static_cast<s32>(FLT_FLOOR(this->templateRegionWidth/scale))),
           Linspace(-this->templateRegionHeight/2.0f, this->templateRegionHeight/2.0f, static_cast<s32>(FLT_FLOOR(this->templateRegionHeight/scale))));
 
-        // Unused, remove?
-        //const s32 outHeight = originalCoordinates.get_yGridVector().get_size();
-        //const s32 outWidth = originalCoordinates.get_xGridVector().get_size();
-
         const f32 xyReferenceMin = 0.0f;
         const f32 xReferenceMax = static_cast<f32>(nextImageWidth) - 1.0f;
         const f32 yReferenceMax = static_cast<f32>(nextImageHeight) - 1.0f;
@@ -259,9 +248,7 @@ namespace Anki
           const Array<f32> &homography = this->transformation.get_homography();
           const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
           const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
-
-          const f32 yTransformedDelta = h10 * yGridDelta;
-          const f32 xTransformedDelta = h00 * xGridDelta;
+          const f32 h20 = homography[2][0]; const f32 h21 = homography[2][1]; //const f32 h22 = 1.0f;
 
           AWAt.SetZero();
           b.SetZero();
@@ -279,11 +266,18 @@ namespace Anki
 
             f32 xOriginal = xGridStart;
 
-            // TODO: This could be strength-reduced further, but it wouldn't be much faster
-            f32 xTransformed = h00*xOriginal + h01*yOriginal + h02 + centerOffset.x;
-            f32 yTransformed = h10*xOriginal + h11*yOriginal + h12 + centerOffset.y;
-
             for(s32 x=0; x<xIterationMax; x++) {
+              // TODO: These two could be strength reduced
+              const f32 xTransformedRaw = h00*xOriginal + h01*yOriginal + h02;
+              const f32 yTransformedRaw = h10*xOriginal + h11*yOriginal + h12;
+
+              const f32 normalization = h20*xOriginal + h21*yOriginal + 1.0f;
+
+              const f32 xTransformed = (xTransformedRaw / normalization) + centerOffset.x;
+              const f32 yTransformed = (yTransformedRaw / normalization) + centerOffset.y;
+
+              xOriginal += xGridDelta;
+
               const f32 x0 = FLT_FLOOR(xTransformed);
               const f32 x1 = ceilf(xTransformed); // x0 + 1.0f;
 
@@ -292,10 +286,6 @@ namespace Anki
 
               // If out of bounds, continue
               if(x0 < xyReferenceMin || x1 > xReferenceMax || y0 < xyReferenceMin || y1 > yReferenceMax) {
-                // strength reduction for the affine transformation along this horizontal line
-                xTransformed += xTransformedDelta;
-                yTransformed += yTransformedDelta;
-                xOriginal += xGridDelta;
                 continue;
               }
 
@@ -340,11 +330,6 @@ namespace Anki
                 b0 += xGradientValue * tGradientValue;
                 b1 += yGradientValue * tGradientValue;
               }
-
-              // strength reduction for the affine transformation along this horizontal line
-              xTransformed += xTransformedDelta;
-              yTransformed += yTransformedDelta;
-              xOriginal += xGridDelta;
             } // for(s32 x=0; x<xIterationMax; x++)
 
             yOriginal += yGridDelta;
@@ -419,24 +404,15 @@ namespace Anki
         return RESULT_OK;
       } // Result LucasKanadeTracker_Projective::IterativelyRefineTrack_Translation()
 
-      Result LucasKanadeTracker_Affine::IterativelyRefineTrack_Affine(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack scratch)
+      Result LucasKanadeTracker_Projective::IterativelyRefineTrack_Affine(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack scratch)
       {
-        // This method is heavily based on Interp2_Affine
-        // The call would be like: Interp2_Affine<u8,u8>(nextImage, originalCoordinates, interpolationHomography, centerOffset, nextImageTransformed2d, INTERPOLATE_LINEAR, 0);
+        // This method is heavily based on Interp2_Projective
+        // The call would be like: Interp2_Projective<u8,u8>(nextImage, originalCoordinates, interpolationHomography, centerOffset, nextImageTransformed2d, INTERPOLATE_LINEAR, 0);
 
         Result lastResult;
 
         Array<f32> AWAt(6, 6, scratch);
         Array<f32> b(1, 6, scratch);
-
-        //f32 * restrict AWAt0 = AWAt[0];
-        //f32 * restrict AWAt1 = AWAt[1];
-        //f32 * restrict AWAt2 = AWAt[2];
-        //f32 * restrict AWAt3 = AWAt[3];
-        //f32 * restrict AWAt4 = AWAt[4];
-        //f32 * restrict AWAt5 = AWAt[5];
-
-        //f32 * restrict b = b[0];
 
         // These addresses should be known at compile time, so should be faster
         f32 AWAt_raw[6][6];
@@ -489,9 +465,7 @@ namespace Anki
           const Array<f32> &homography = this->transformation.get_homography();
           const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
           const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
-
-          const f32 yTransformedDelta = h10 * yGridDelta;
-          const f32 xTransformedDelta = h00 * xGridDelta;
+          const f32 h20 = homography[2][0]; const f32 h21 = homography[2][1]; //const f32 h22 = 1.0f;
 
           //AWAt.SetZero();
           //b.SetZero();
@@ -516,11 +490,18 @@ namespace Anki
 
             f32 xOriginal = xGridStart;
 
-            // TODO: This could be strength-reduced further, but it wouldn't be much faster
-            f32 xTransformed = h00*xOriginal + h01*yOriginal + h02 + centerOffset.x;
-            f32 yTransformed = h10*xOriginal + h11*yOriginal + h12 + centerOffset.y;
-
             for(s32 x=0; x<xIterationMax; x++) {
+              // TODO: These two could be strength reduced
+              const f32 xTransformedRaw = h00*xOriginal + h01*yOriginal + h02;
+              const f32 yTransformedRaw = h10*xOriginal + h11*yOriginal + h12;
+
+              const f32 normalization = h20*xOriginal + h21*yOriginal + 1.0f;
+
+              const f32 xTransformed = (xTransformedRaw / normalization) + centerOffset.x;
+              const f32 yTransformed = (yTransformedRaw / normalization) + centerOffset.y;
+
+              xOriginal += xGridDelta;
+
               const f32 x0 = FLT_FLOOR(xTransformed);
               const f32 x1 = ceilf(xTransformed); // x0 + 1.0f;
 
@@ -529,10 +510,6 @@ namespace Anki
 
               // If out of bounds, continue
               if(x0 < xyReferenceMin || x1 > xReferenceMax || y0 < xyReferenceMin || y1 > yReferenceMax) {
-                // strength reduction for the affine transformation along this horizontal line
-                xTransformed += xTransformedDelta;
-                yTransformed += yTransformedDelta;
-                xOriginal += xGridDelta;
                 continue;
               }
 
@@ -591,18 +568,13 @@ namespace Anki
                   b_raw[ia] += values[ia] * tGradientValue;
                 }
               }
-
-              // strength reduction for the affine transformation along this horizontal line
-              xTransformed += xTransformedDelta;
-              yTransformed += yTransformedDelta;
-              xOriginal += xGridDelta;
             } // for(s32 x=0; x<xIterationMax; x++)
 
             yOriginal += yGridDelta;
           } // for(s32 y=0; y<yIterationMax; y++)
 
           if(numInBounds < 16) {
-            AnkiWarn("LucasKanadeTracker_Affine::IterativelyRefineTrack_Translation", "Template drifted too far out of image.");
+            AnkiWarn("LucasKanadeTracker_Projective::IterativelyRefineTrack_Affine", "Template drifted too far out of image.");
             return RESULT_OK;
           }
 
@@ -624,7 +596,7 @@ namespace Anki
             return lastResult;
 
           if(numericalFailure){
-            AnkiWarn("LucasKanadeTracker_Affine::IterativelyRefineTrack_Affine", "numericalFailure");
+            AnkiWarn("LucasKanadeTracker_Projective::IterativelyRefineTrack_Affine", "numericalFailure");
             return RESULT_OK;
           }
 
@@ -677,7 +649,7 @@ namespace Anki
         } // for(s32 iteration=0; iteration<maxIterations; iteration++)
 
         return RESULT_OK;
-      } // Result LucasKanadeTracker_Affine::IterativelyRefineTrack_Affine()
+      } // Result LucasKanadeTracker_Projective::IterativelyRefineTrack_Affine()
 
       Result LucasKanadeTracker_Projective::IterativelyRefineTrack_Projective(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack scratch)
       {
@@ -686,21 +658,12 @@ namespace Anki
 
         Result lastResult;
 
-        Array<f32> AWAt(6, 6, scratch);
-        Array<f32> b(1, 6, scratch);
-
-        //f32 * restrict AWAt0 = AWAt[0];
-        //f32 * restrict AWAt1 = AWAt[1];
-        //f32 * restrict AWAt2 = AWAt[2];
-        //f32 * restrict AWAt3 = AWAt[3];
-        //f32 * restrict AWAt4 = AWAt[4];
-        //f32 * restrict AWAt5 = AWAt[5];
-
-        //f32 * restrict b = b[0];
+        Array<f32> AWAt(8, 8, scratch);
+        Array<f32> b(1, 8, scratch);
 
         // These addresses should be known at compile time, so should be faster
-        f32 AWAt_raw[6][6];
-        f32 b_raw[6];
+        f32 AWAt_raw[8][8];
+        f32 b_raw[8];
 
         converged = false;
 
@@ -749,15 +712,13 @@ namespace Anki
           const Array<f32> &homography = this->transformation.get_homography();
           const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
           const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
-
-          const f32 yTransformedDelta = h10 * yGridDelta;
-          const f32 xTransformedDelta = h00 * xGridDelta;
+          const f32 h20 = homography[2][0]; const f32 h21 = homography[2][1]; //const f32 h22 = 1.0f;
 
           //AWAt.SetZero();
           //b.SetZero();
 
-          for(s32 ia=0; ia<6; ia++) {
-            for(s32 ja=0; ja<6; ja++) {
+          for(s32 ia=0; ia<8; ia++) {
+            for(s32 ja=0; ja<8; ja++) {
               AWAt_raw[ia][ja] = 0;
             }
             b_raw[ia] = 0;
@@ -776,11 +737,18 @@ namespace Anki
 
             f32 xOriginal = xGridStart;
 
-            // TODO: This could be strength-reduced further, but it wouldn't be much faster
-            f32 xTransformed = h00*xOriginal + h01*yOriginal + h02 + centerOffset.x;
-            f32 yTransformed = h10*xOriginal + h11*yOriginal + h12 + centerOffset.y;
-
             for(s32 x=0; x<xIterationMax; x++) {
+              // TODO: These two could be strength reduced
+              const f32 xTransformedRaw = h00*xOriginal + h01*yOriginal + h02;
+              const f32 yTransformedRaw = h10*xOriginal + h11*yOriginal + h12;
+
+              const f32 normalization = h20*xOriginal + h21*yOriginal + 1.0f;
+
+              const f32 xTransformed = (xTransformedRaw / normalization) + centerOffset.x;
+              const f32 yTransformed = (yTransformedRaw / normalization) + centerOffset.y;
+
+              xOriginal += xGridDelta;
+
               const f32 x0 = FLT_FLOOR(xTransformed);
               const f32 x1 = ceilf(xTransformed); // x0 + 1.0f;
 
@@ -789,10 +757,6 @@ namespace Anki
 
               // If out of bounds, continue
               if(x0 < xyReferenceMin || x1 > xReferenceMax || y0 < xyReferenceMin || y1 > yReferenceMax) {
-                // strength reduction for the affine transformation along this horizontal line
-                xTransformed += xTransformedDelta;
-                yTransformed += yTransformedDelta;
-                xOriginal += xGridDelta;
                 continue;
               }
 
@@ -829,45 +793,36 @@ namespace Anki
                 const f32 tGradientValue = oneOverTwoFiftyFive * (interpolatedPixelF32 - templatePixelValue);
 
                 //printf("%f ", xOriginal);
-                const f32 values[6] = {
+
+                const f32 values[8] = {
                   xOriginal * xGradientValue,
                   yOriginal * xGradientValue,
                   xGradientValue,
                   xOriginal * yGradientValue,
                   yOriginal * yGradientValue,
-                  yGradientValue};
+                  yGradientValue,
+                  -xOriginal*xOriginal*xGradientValue - xOriginal*yOriginal*yGradientValue,
+                  -xOriginal*yOriginal*xGradientValue - yOriginal*yOriginal*yGradientValue};
 
-                //for(s32 ia=0; ia<6; ia++) {
-                //  printf("%f ", values[ia]);
-                //}
-                //printf("\n");
-
-                //f32 AWAt_raw[6][6];
-                //f32 b_raw[6];
-                for(s32 ia=0; ia<6; ia++) {
-                  for(s32 ja=ia; ja<6; ja++) {
+                for(s32 ia=0; ia<8; ia++) {
+                  for(s32 ja=ia; ja<8; ja++) {
                     AWAt_raw[ia][ja] += values[ia] * values[ja];
                   }
                   b_raw[ia] += values[ia] * tGradientValue;
                 }
               }
-
-              // strength reduction for the affine transformation along this horizontal line
-              xTransformed += xTransformedDelta;
-              yTransformed += yTransformedDelta;
-              xOriginal += xGridDelta;
             } // for(s32 x=0; x<xIterationMax; x++)
 
             yOriginal += yGridDelta;
           } // for(s32 y=0; y<yIterationMax; y++)
 
           if(numInBounds < 16) {
-            AnkiWarn("LucasKanadeTracker_Projective::IterativelyRefineTrack_Translation", "Template drifted too far out of image.");
+            AnkiWarn("LucasKanadeTracker_Projective::IterativelyRefineTrack_Projective", "Template drifted too far out of image.");
             return RESULT_OK;
           }
 
-          for(s32 ia=0; ia<6; ia++) {
-            for(s32 ja=ia; ja<6; ja++) {
+          for(s32 ia=0; ia<8; ia++) {
+            for(s32 ja=ia; ja<8; ja++) {
               AWAt[ia][ja] = AWAt_raw[ia][ja];
             }
             b[0][ia] = b_raw[ia];
@@ -890,7 +845,7 @@ namespace Anki
 
           //b.Print("New update");
 
-          this->transformation.Update(b, scratch, Transformations::TRANSFORM_AFFINE);
+          this->transformation.Update(b, scratch, Transformations::TRANSFORM_PROJECTIVE);
 
           //this->transformation.get_homography().Print("new transformation");
 

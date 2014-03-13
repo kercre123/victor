@@ -602,7 +602,7 @@ namespace Anki
           } // for(s32 y=0; y<yIterationMax; y++)
 
           if(numInBounds < 16) {
-            AnkiWarn("LucasKanadeTracker_Affine::IterativelyRefineTrack_Translation", "Template drifted too far out of image.");
+            AnkiWarn("LucasKanadeTracker_Affine::IterativelyRefineTrack_Affine", "Template drifted too far out of image.");
             return RESULT_OK;
           }
 
