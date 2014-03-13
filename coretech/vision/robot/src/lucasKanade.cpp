@@ -29,27 +29,27 @@ namespace Anki
   {
     namespace TemplateTracker
     {
-      LucasKanadeTracker_f32::LucasKanadeTracker_f32()
+      LucasKanadeTracker_Slow::LucasKanadeTracker_Slow()
         : isValid(false), isInitialized(false)
       {
       }
 
-      LucasKanadeTracker_f32::LucasKanadeTracker_f32(const Array<u8> &templateImage, const Quadrilateral<f32> &templateQuad, const s32 numPyramidLevels, const Transformations::TransformType transformType, const f32 ridgeWeight, MemoryStack &memory)
+      LucasKanadeTracker_Slow::LucasKanadeTracker_Slow(const Array<u8> &templateImage, const Quadrilateral<f32> &templateQuad, const s32 numPyramidLevels, const Transformations::TransformType transformType, const f32 ridgeWeight, MemoryStack &memory)
         : numPyramidLevels(numPyramidLevels), templateImageHeight(templateImage.get_size(0)), templateImageWidth(templateImage.get_size(1)), ridgeWeight(ridgeWeight), isValid(false), isInitialized(false)
       {
-        BeginBenchmark("LucasKanadeTracker_f32");
+        BeginBenchmark("LucasKanadeTracker_Slow");
 
         AnkiConditionalErrorAndReturn(templateImageHeight > 0 && templateImageWidth > 0,
-          "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "template widths and heights must be greater than zero, and multiples of %d", ANKI_VISION_IMAGE_WIDTH_MULTIPLE);
+          "LucasKanadeTracker_Slow::LucasKanadeTracker_Slow", "template widths and heights must be greater than zero, and multiples of %d", ANKI_VISION_IMAGE_WIDTH_MULTIPLE);
 
         AnkiConditionalErrorAndReturn(numPyramidLevels > 0,
-          "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "numPyramidLevels must be greater than zero");
+          "LucasKanadeTracker_Slow::LucasKanadeTracker_Slow", "numPyramidLevels must be greater than zero");
 
         AnkiConditionalErrorAndReturn(transformType==Transformations::TRANSFORM_TRANSLATION || transformType == Transformations::TRANSFORM_AFFINE || transformType==Transformations::TRANSFORM_PROJECTIVE,
-          "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "Only Transformations::TRANSFORM_TRANSLATION, Transformations::TRANSFORM_AFFINE, and Transformations::TRANSFORM_PROJECTIVE are supported");
+          "LucasKanadeTracker_Slow::LucasKanadeTracker_Slow", "Only Transformations::TRANSFORM_TRANSLATION, Transformations::TRANSFORM_AFFINE, and Transformations::TRANSFORM_PROJECTIVE are supported");
 
         AnkiConditionalErrorAndReturn(ridgeWeight >= 0.0f,
-          "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "ridgeWeight must be greater or equal to zero");
+          "LucasKanadeTracker_Slow::LucasKanadeTracker_Slow", "ridgeWeight must be greater or equal to zero");
 
         templateRegion = templateQuad.ComputeBoundingRectangle();
 
@@ -58,68 +58,68 @@ namespace Anki
           const s32 curTemplateWidth = templateImageWidth >> i;
 
           AnkiConditionalErrorAndReturn(!IsOdd(curTemplateHeight) && !IsOdd(curTemplateWidth),
-            "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "Template widths and height must divisible by 2^numPyramidLevels");
+            "LucasKanadeTracker_Slow::LucasKanadeTracker_Slow", "Template widths and height must divisible by 2^numPyramidLevels");
         }
 
         A_full = FixedLengthList<Array<f32> >(numPyramidLevels, memory);
 
         AnkiConditionalErrorAndReturn(A_full.IsValid(),
-          "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "Could not allocate A_full");
+          "LucasKanadeTracker_Slow::LucasKanadeTracker_Slow", "Could not allocate A_full");
 
         A_full.set_size(numPyramidLevels);
 
         templateCoordinates = FixedLengthList<Meshgrid<f32> >(numPyramidLevels, memory);
 
         AnkiConditionalErrorAndReturn(templateCoordinates.IsValid(),
-          "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "Could not allocate templateCoordinates");
+          "LucasKanadeTracker_Slow::LucasKanadeTracker_Slow", "Could not allocate templateCoordinates");
 
         templateCoordinates.set_size(numPyramidLevels);
 
         templateImagePyramid = FixedLengthList<Array<u8> >(numPyramidLevels, memory);
 
         AnkiConditionalErrorAndReturn(templateImagePyramid.IsValid(),
-          "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "Could not allocate templateImagePyramid");
+          "LucasKanadeTracker_Slow::LucasKanadeTracker_Slow", "Could not allocate templateImagePyramid");
 
         templateImagePyramid.set_size(numPyramidLevels);
 
         templateWeights = FixedLengthList<Array<f32> >(numPyramidLevels, memory);
 
         AnkiConditionalErrorAndReturn(templateWeights.IsValid(),
-          "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "Could not allocate templateWeights");
+          "LucasKanadeTracker_Slow::LucasKanadeTracker_Slow", "Could not allocate templateWeights");
 
         templateWeights.set_size(numPyramidLevels);
 
         this->transformation = Transformations::PlanarTransformation_f32(transformType, templateQuad, memory);
-        
+
         this->isValid = true;
 
         BeginBenchmark("InitializeTemplate");
-        if(LucasKanadeTracker_f32::InitializeTemplate(templateImage, memory) != RESULT_OK) {
+        if(LucasKanadeTracker_Slow::InitializeTemplate(templateImage, memory) != RESULT_OK) {
           this->isValid = false;
         }
         EndBenchmark("InitializeTemplate");
 
-        EndBenchmark("LucasKanadeTracker_f32");
+        EndBenchmark("LucasKanadeTracker_Slow");
       }
 
-      Result LucasKanadeTracker_f32::InitializeTemplate(const Array<u8> &templateImage, MemoryStack &memory)
+      Result LucasKanadeTracker_Slow::InitializeTemplate(const Array<u8> &templateImage, MemoryStack &memory)
       {
         const bool isOutColumnMajor = false; // TODO: change to false, which will probably be faster
 
         Result lastResult;
 
         AnkiConditionalErrorAndReturnValue(this->isValid,
-          RESULT_FAIL_INVALID_OBJECT, "LucasKanadeTracker_f32::InitializeTemplate", "This object's constructor failed, so it cannot be initialized");
+          RESULT_FAIL_INVALID_OBJECT, "LucasKanadeTracker_Slow::InitializeTemplate", "This object's constructor failed, so it cannot be initialized");
 
         AnkiConditionalErrorAndReturnValue(this->isInitialized == false,
-          RESULT_FAIL, "LucasKanadeTracker_f32::InitializeTemplate", "This object has already been initialized");
+          RESULT_FAIL, "LucasKanadeTracker_Slow::InitializeTemplate", "This object has already been initialized");
 
         AnkiConditionalErrorAndReturnValue(templateImageHeight == templateImage.get_size(0) && templateImageWidth == templateImage.get_size(1),
-          RESULT_FAIL_INVALID_SIZE, "LucasKanadeTracker_f32::InitializeTemplate", "template size doesn't match constructor");
+          RESULT_FAIL_INVALID_SIZE, "LucasKanadeTracker_Slow::InitializeTemplate", "template size doesn't match constructor");
 
         AnkiConditionalErrorAndReturnValue(templateRegion.left < templateRegion.right && templateRegion.left >=0 && templateRegion.right < templateImage.get_size(1) &&
           templateRegion.top < templateRegion.bottom && templateRegion.top >=0 && templateRegion.bottom < templateImage.get_size(0),
-          RESULT_FAIL, "LucasKanadeTracker_f32::InitializeTemplate", "template rectangle is invalid or out of bounds");
+          RESULT_FAIL, "LucasKanadeTracker_Slow::InitializeTemplate", "template rectangle is invalid or out of bounds");
 
         // We do this early, before any memory is allocated This way, an early return won't be able
         // to leak memory with multiple calls to this object
@@ -146,7 +146,7 @@ namespace Anki
 
           this->A_full[iScale] = Array<f32>(numTransformationParameters, numValidPoints, memory);
           AnkiConditionalErrorAndReturnValue(this->A_full[iScale].IsValid(),
-            RESULT_FAIL_INVALID_OBJECT, "LucasKanadeTracker_f32::InitializeTemplate", "Could not allocate A_full[iScale]");
+            RESULT_FAIL_INVALID_OBJECT, "LucasKanadeTracker_Slow::InitializeTemplate", "Could not allocate A_full[iScale]");
 
           const s32 numPointsY = templateCoordinates[iScale].get_yGridVector().get_size();
           const s32 numPointsX = templateCoordinates[iScale].get_xGridVector().get_size();
@@ -154,12 +154,12 @@ namespace Anki
           this->templateImagePyramid[iScale] = Array<u8>(numPointsY, numPointsX, memory);
 
           AnkiConditionalErrorAndReturnValue(this->templateImagePyramid[iScale].IsValid(),
-            RESULT_FAIL_INVALID_OBJECT, "LucasKanadeTracker_f32::InitializeTemplate", "Could not allocate templateImagePyramid[i]");
+            RESULT_FAIL_INVALID_OBJECT, "LucasKanadeTracker_Slow::InitializeTemplate", "Could not allocate templateImagePyramid[i]");
 
           this->templateWeights[iScale] = Array<f32>(1, numPointsY*numPointsX, memory);
 
           AnkiConditionalErrorAndReturnValue(this->templateWeights[iScale].IsValid(),
-            RESULT_FAIL_INVALID_OBJECT, "LucasKanadeTracker_f32::InitializeTemplate", "Could not allocate templateWeights[i]");
+            RESULT_FAIL_INVALID_OBJECT, "LucasKanadeTracker_Slow::InitializeTemplate", "Could not allocate templateWeights[i]");
 
           //templateImage.Show("templateImage", true);
         }
@@ -360,7 +360,7 @@ namespace Anki
         return RESULT_OK;
       }
 
-      Result LucasKanadeTracker_f32::UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, const bool useWeights, bool& converged, MemoryStack scratch)
+      Result LucasKanadeTracker_Slow::UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, const bool useWeights, bool& converged, MemoryStack scratch)
       {
         Result lastResult;
 
@@ -389,26 +389,26 @@ namespace Anki
         return RESULT_OK;
       }
 
-      Result LucasKanadeTracker_f32::IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const Transformations::TransformType curTransformType, const bool useWeights, bool &converged, MemoryStack scratch)
+      Result LucasKanadeTracker_Slow::IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const Transformations::TransformType curTransformType, const bool useWeights, bool &converged, MemoryStack scratch)
       {
         const bool isOutColumnMajor = false; // TODO: change to false, which will probably be faster
 
         Result lastResult;
 
         AnkiConditionalErrorAndReturnValue(this->isInitialized == true,
-          RESULT_FAIL, "LucasKanadeTracker_f32::IterativelyRefineTrack", "This object is not initialized");
+          RESULT_FAIL, "LucasKanadeTracker_Slow::IterativelyRefineTrack", "This object is not initialized");
 
         AnkiConditionalErrorAndReturnValue(nextImage.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "LucasKanadeTracker_f32::IterativelyRefineTrack", "nextImage is not valid");
+          RESULT_FAIL_INVALID_OBJECT, "LucasKanadeTracker_Slow::IterativelyRefineTrack", "nextImage is not valid");
 
         AnkiConditionalErrorAndReturnValue(maxIterations > 0 && maxIterations < 1000,
-          RESULT_FAIL_INVALID_PARAMETERS, "LucasKanadeTracker_f32::IterativelyRefineTrack", "maxIterations must be greater than zero and less than 1000");
+          RESULT_FAIL_INVALID_PARAMETERS, "LucasKanadeTracker_Slow::IterativelyRefineTrack", "maxIterations must be greater than zero and less than 1000");
 
         AnkiConditionalErrorAndReturnValue(whichScale >= 0 && whichScale < this->numPyramidLevels,
-          RESULT_FAIL_INVALID_PARAMETERS, "LucasKanadeTracker_f32::IterativelyRefineTrack", "whichScale is invalid");
+          RESULT_FAIL_INVALID_PARAMETERS, "LucasKanadeTracker_Slow::IterativelyRefineTrack", "whichScale is invalid");
 
         AnkiConditionalErrorAndReturnValue(convergenceTolerance > 0.0f,
-          RESULT_FAIL_INVALID_PARAMETERS, "LucasKanadeTracker_f32::IterativelyRefineTrack", "convergenceTolerance must be greater than zero");
+          RESULT_FAIL_INVALID_PARAMETERS, "LucasKanadeTracker_Slow::IterativelyRefineTrack", "convergenceTolerance must be greater than zero");
 
         const s32 numPointsY = templateCoordinates[whichScale].get_yGridVector().get_size();
         const s32 numPointsX = templateCoordinates[whichScale].get_xGridVector().get_size();
@@ -499,7 +499,7 @@ namespace Anki
           const s32 numInBounds = inBounds.get_numMatches();
 
           if(numInBounds < 16) {
-            AnkiWarn("LucasKanadeTracker_f32::IterativelyRefineTrack", "Template drifted too far out of image.");
+            AnkiWarn("LucasKanadeTracker_Slow::IterativelyRefineTrack", "Template drifted too far out of image.");
             break;
           }
           EndBenchmark("IterativelyRefineTrack.getNumMatches");
@@ -592,7 +592,7 @@ namespace Anki
             return lastResult;
 
           if(numericalFailure){
-            AnkiWarn("LucasKanadeTracker_f32::IterativelyRefineTrack", "numericalFailure");
+            AnkiWarn("LucasKanadeTracker_Slow::IterativelyRefineTrack", "numericalFailure");
             return RESULT_OK;
           }
           EndBenchmark("IterativelyRefineTrack.solveForUpdate");
@@ -662,9 +662,9 @@ namespace Anki
         } // for(s32 iteration=0; iteration<maxIterations; iteration++)
 
         return RESULT_OK;
-      } // Result LucasKanadeTracker_f32::IterativelyRefineTrack()
+      } // Result LucasKanadeTracker_Slow::IterativelyRefineTrack()
 
-      bool LucasKanadeTracker_f32::IsValid() const
+      bool LucasKanadeTracker_Slow::IsValid() const
       {
         if(!this->isValid)
           return false;
@@ -697,39 +697,39 @@ namespace Anki
         return true;
       }
 
-      Result LucasKanadeTracker_f32::set_transformation(const Transformations::PlanarTransformation_f32 &transformation)
+      Result LucasKanadeTracker_Slow::set_transformation(const Transformations::PlanarTransformation_f32 &transformation)
       {
         return this->transformation.Set(transformation);
       }
 
-      Transformations::PlanarTransformation_f32 LucasKanadeTracker_f32::get_transformation() const
+      Transformations::PlanarTransformation_f32 LucasKanadeTracker_Slow::get_transformation() const
       {
         return transformation;
       }
 
-      LucasKanadeTrackerFast::LucasKanadeTrackerFast()
+      LucasKanadeTracker_Affine::LucasKanadeTracker_Affine()
         : isValid(false)
       {
       }
 
-      LucasKanadeTrackerFast::LucasKanadeTrackerFast(const Array<u8> &templateImage, const Quadrilateral<f32> &templateQuad, const s32 numPyramidLevels, const Transformations::TransformType transformType, const f32 ridgeWeight, MemoryStack &scratch)
+      LucasKanadeTracker_Affine::LucasKanadeTracker_Affine(const Array<u8> &templateImage, const Quadrilateral<f32> &templateQuad, const s32 numPyramidLevels, const Transformations::TransformType transformType, const f32 ridgeWeight, MemoryStack &scratch)
         : numPyramidLevels(numPyramidLevels), templateImageHeight(templateImage.get_size(0)), templateImageWidth(templateImage.get_size(1)), ridgeWeight(ridgeWeight), isValid(false)
       {
         Result lastResult;
 
-        BeginBenchmark("LucasKanadeTrackerFast");
+        BeginBenchmark("LucasKanadeTracker_Affine");
 
         AnkiConditionalErrorAndReturn(templateImageHeight > 0 && templateImageWidth > 0,
-          "LucasKanadeTrackerFast::LucasKanadeTrackerFast", "template widths and heights must be greater than zero, and multiples of %d", ANKI_VISION_IMAGE_WIDTH_MULTIPLE);
+          "LucasKanadeTracker_Affine::LucasKanadeTracker_Affine", "template widths and heights must be greater than zero, and multiples of %d", ANKI_VISION_IMAGE_WIDTH_MULTIPLE);
 
         AnkiConditionalErrorAndReturn(numPyramidLevels > 0,
-          "LucasKanadeTrackerFast::LucasKanadeTrackerFast", "numPyramidLevels must be greater than zero");
+          "LucasKanadeTracker_Affine::LucasKanadeTracker_Affine", "numPyramidLevels must be greater than zero");
 
         AnkiConditionalErrorAndReturn(transformType==Transformations::TRANSFORM_TRANSLATION || transformType == Transformations::TRANSFORM_AFFINE,
-          "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "Only Transformations::TRANSFORM_TRANSLATION or Transformations::TRANSFORM_AFFINE are supported");
+          "LucasKanadeTracker_Slow::LucasKanadeTracker_Slow", "Only Transformations::TRANSFORM_TRANSLATION or Transformations::TRANSFORM_AFFINE are supported");
 
         AnkiConditionalErrorAndReturn(ridgeWeight >= 0.0f,
-          "LucasKanadeTrackerFast::LucasKanadeTrackerFast", "ridgeWeight must be greater or equal to zero");
+          "LucasKanadeTracker_Affine::LucasKanadeTracker_Affine", "ridgeWeight must be greater or equal to zero");
 
         templateRegion = templateQuad.ComputeBoundingRectangle();
 
@@ -739,7 +739,7 @@ namespace Anki
           const s32 curTemplateWidth = templateImageWidth >> i;
 
           AnkiConditionalErrorAndReturn(!IsOdd(curTemplateHeight) && !IsOdd(curTemplateWidth),
-            "LucasKanadeTrackerFast::LucasKanadeTrackerFast", "Template widths and height must divisible by 2^numPyramidLevels");
+            "LucasKanadeTracker_Affine::LucasKanadeTracker_Affine", "Template widths and height must divisible by 2^numPyramidLevels");
         }
 
         this->templateRegionHeight = templateRegion.bottom - templateRegion.top + 1.0f;
@@ -759,7 +759,7 @@ namespace Anki
         templateImageYGradientPyramid.set_size(numPyramidLevels);
 
         AnkiConditionalErrorAndReturn(templateImagePyramid.IsValid() && templateImageXGradientPyramid.IsValid() && templateImageYGradientPyramid.IsValid() && templateCoordinates.IsValid(),
-          "LucasKanadeTrackerFast::LucasKanadeTrackerFast", "Could not allocate pyramid lists");
+          "LucasKanadeTracker_Affine::LucasKanadeTracker_Affine", "Could not allocate pyramid lists");
 
         // Allocate the scratch for all the images
         for(s32 iScale=0; iScale<numPyramidLevels; iScale++) {
@@ -781,13 +781,13 @@ namespace Anki
           templateImageYGradientPyramid[iScale] = Array<s16>(numPointsY, numPointsX, scratch);
 
           AnkiConditionalErrorAndReturn(templateImagePyramid[iScale].IsValid() && templateImageXGradientPyramid[iScale].IsValid() && templateImageYGradientPyramid[iScale].IsValid(),
-            "LucasKanadeTrackerFast::LucasKanadeTrackerFast", "Could not allocate pyramid images");
+            "LucasKanadeTracker_Affine::LucasKanadeTracker_Affine", "Could not allocate pyramid images");
         }
 
         // Sample all levels of the pyramid images
         for(s32 iScale=0; iScale<numPyramidLevels; iScale++) {
           if((lastResult = Interp2_Affine<u8,u8>(templateImage, templateCoordinates[iScale], transformation.get_homography(), this->transformation.get_centerOffset(), this->templateImagePyramid[iScale], INTERPOLATE_LINEAR)) != RESULT_OK) {
-            AnkiError("LucasKanadeTrackerFast::LucasKanadeTrackerFast", "Interp2_Affine failed with code 0x%x", lastResult);
+            AnkiError("LucasKanadeTracker_Affine::LucasKanadeTracker_Affine", "Interp2_Affine failed with code 0x%x", lastResult);
             return;
           }
         }
@@ -796,22 +796,22 @@ namespace Anki
         // TODO: compute without borders?
         for(s32 i=0; i<numPyramidLevels; i++) {
           if((lastResult = ImageProcessing::ComputeXGradient<u8,s16,s16>(templateImagePyramid[i], templateImageXGradientPyramid[i])) != RESULT_OK) {
-            AnkiError("LucasKanadeTrackerFast::LucasKanadeTrackerFast", "ComputeXGradient failed with code 0x%x", lastResult);
+            AnkiError("LucasKanadeTracker_Affine::LucasKanadeTracker_Affine", "ComputeXGradient failed with code 0x%x", lastResult);
             return;
           }
 
           if((lastResult = ImageProcessing::ComputeYGradient<u8,s16,s16>(templateImagePyramid[i], templateImageYGradientPyramid[i])) != RESULT_OK) {
-            AnkiError("LucasKanadeTrackerFast::LucasKanadeTrackerFast", "ComputeYGradient failed with code 0x%x", lastResult);
+            AnkiError("LucasKanadeTracker_Affine::LucasKanadeTracker_Affine", "ComputeYGradient failed with code 0x%x", lastResult);
             return;
           }
         }
 
         this->isValid = true;
 
-        EndBenchmark("LucasKanadeTrackerFast");
+        EndBenchmark("LucasKanadeTracker_Affine");
       }
 
-      Result LucasKanadeTrackerFast::UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, bool& converged, MemoryStack scratch)
+      Result LucasKanadeTracker_Affine::UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, bool& converged, MemoryStack scratch)
       {
         Result lastResult;
 
@@ -834,7 +834,7 @@ namespace Anki
         return RESULT_OK;
       }
 
-      Result LucasKanadeTrackerFast::IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const Transformations::TransformType curTransformType, bool &converged, MemoryStack scratch)
+      Result LucasKanadeTracker_Affine::IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const Transformations::TransformType curTransformType, bool &converged, MemoryStack scratch)
       {
         // Unused, remove?
         //const bool isOutColumnMajor = false; // TODO: change to false, which will probably be faster
@@ -843,22 +843,22 @@ namespace Anki
         const s32 nextImageWidth = nextImage.get_size(1);
 
         AnkiConditionalErrorAndReturnValue(this->IsValid() == true,
-          RESULT_FAIL, "LucasKanadeTrackerFast::IterativelyRefineTrack", "This object is not initialized");
+          RESULT_FAIL, "LucasKanadeTracker_Affine::IterativelyRefineTrack", "This object is not initialized");
 
         AnkiConditionalErrorAndReturnValue(nextImage.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "LucasKanadeTrackerFast::IterativelyRefineTrack", "nextImage is not valid");
+          RESULT_FAIL_INVALID_OBJECT, "LucasKanadeTracker_Affine::IterativelyRefineTrack", "nextImage is not valid");
 
         AnkiConditionalErrorAndReturnValue(maxIterations > 0 && maxIterations < 1000,
-          RESULT_FAIL_INVALID_PARAMETERS, "LucasKanadeTrackerFast::IterativelyRefineTrack", "maxIterations must be greater than zero and less than 1000");
+          RESULT_FAIL_INVALID_PARAMETERS, "LucasKanadeTracker_Affine::IterativelyRefineTrack", "maxIterations must be greater than zero and less than 1000");
 
         AnkiConditionalErrorAndReturnValue(whichScale >= 0 && whichScale < this->numPyramidLevels,
-          RESULT_FAIL_INVALID_PARAMETERS, "LucasKanadeTrackerFast::IterativelyRefineTrack", "whichScale is invalid");
+          RESULT_FAIL_INVALID_PARAMETERS, "LucasKanadeTracker_Affine::IterativelyRefineTrack", "whichScale is invalid");
 
         AnkiConditionalErrorAndReturnValue(convergenceTolerance > 0.0f,
-          RESULT_FAIL_INVALID_PARAMETERS, "LucasKanadeTrackerFast::IterativelyRefineTrack", "convergenceTolerance must be greater than zero");
+          RESULT_FAIL_INVALID_PARAMETERS, "LucasKanadeTracker_Affine::IterativelyRefineTrack", "convergenceTolerance must be greater than zero");
 
         AnkiConditionalErrorAndReturnValue(nextImageHeight == templateImageHeight && nextImageWidth == templateImageWidth,
-          RESULT_FAIL_INVALID_SIZE, "LucasKanadeTrackerFast::IterativelyRefineTrack", "nextImage must be the same size as the template");
+          RESULT_FAIL_INVALID_SIZE, "LucasKanadeTracker_Affine::IterativelyRefineTrack", "nextImage must be the same size as the template");
 
         //const Rectangle<s32> curTemplateRegion(
         //  static_cast<s32>(Round(this->templateRegion.left / powf(2.0f,static_cast<f32>(whichScale)))),
@@ -873,9 +873,9 @@ namespace Anki
         }
 
         return RESULT_FAIL;
-      } // Result LucasKanadeTrackerFast::IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const TransformType curTransformType, bool &converged, MemoryStack scratch)
+      } // Result LucasKanadeTracker_Affine::IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const TransformType curTransformType, bool &converged, MemoryStack scratch)
 
-      Result LucasKanadeTrackerFast::IterativelyRefineTrack_Translation(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack scratch)
+      Result LucasKanadeTracker_Affine::IterativelyRefineTrack_Translation(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack scratch)
       {
         // This method is heavily based on Interp2_Affine
         // The call would be like: Interp2_Affine<u8,u8>(nextImage, originalCoordinates, interpolationHomography, centerOffset, nextImageTransformed2d, INTERPOLATE_LINEAR, 0);
@@ -1032,7 +1032,7 @@ namespace Anki
           } // for(s32 y=0; y<yIterationMax; y++)
 
           if(numInBounds < 16) {
-            AnkiWarn("LucasKanadeTrackerFast::IterativelyRefineTrack_Translation", "Template drifted too far out of image.");
+            AnkiWarn("LucasKanadeTracker_Affine::IterativelyRefineTrack_Translation", "Template drifted too far out of image.");
             return RESULT_OK;
           }
 
@@ -1047,7 +1047,7 @@ namespace Anki
             return lastResult;
 
           if(numericalFailure){
-            AnkiWarn("LucasKanadeTrackerFast::IterativelyRefineTrack_Translation", "numericalFailure");
+            AnkiWarn("LucasKanadeTracker_Affine::IterativelyRefineTrack_Translation", "numericalFailure");
             return RESULT_OK;
           }
 
@@ -1098,9 +1098,9 @@ namespace Anki
         } // for(s32 iteration=0; iteration<maxIterations; iteration++)
 
         return RESULT_OK;
-      } // Result LucasKanadeTrackerFast::IterativelyRefineTrack_Translation()
+      } // Result LucasKanadeTracker_Affine::IterativelyRefineTrack_Translation()
 
-      Result LucasKanadeTrackerFast::IterativelyRefineTrack_Affine(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack scratch)
+      Result LucasKanadeTracker_Affine::IterativelyRefineTrack_Affine(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack scratch)
       {
         // This method is heavily based on Interp2_Affine
         // The call would be like: Interp2_Affine<u8,u8>(nextImage, originalCoordinates, interpolationHomography, centerOffset, nextImageTransformed2d, INTERPOLATE_LINEAR, 0);
@@ -1283,7 +1283,7 @@ namespace Anki
           } // for(s32 y=0; y<yIterationMax; y++)
 
           if(numInBounds < 16) {
-            AnkiWarn("LucasKanadeTrackerFast::IterativelyRefineTrack_Translation", "Template drifted too far out of image.");
+            AnkiWarn("LucasKanadeTracker_Affine::IterativelyRefineTrack_Translation", "Template drifted too far out of image.");
             return RESULT_OK;
           }
 
@@ -1305,7 +1305,7 @@ namespace Anki
             return lastResult;
 
           if(numericalFailure){
-            AnkiWarn("LucasKanadeTrackerFast::IterativelyRefineTrack_Affine", "numericalFailure");
+            AnkiWarn("LucasKanadeTracker_Affine::IterativelyRefineTrack_Affine", "numericalFailure");
             return RESULT_OK;
           }
 
@@ -1358,9 +1358,9 @@ namespace Anki
         } // for(s32 iteration=0; iteration<maxIterations; iteration++)
 
         return RESULT_OK;
-      } // Result LucasKanadeTrackerFast::IterativelyRefineTrack_Affine()
+      } // Result LucasKanadeTracker_Affine::IterativelyRefineTrack_Affine()
 
-      bool LucasKanadeTrackerFast::IsValid() const
+      bool LucasKanadeTracker_Affine::IsValid() const
       {
         if(!this->isValid)
           return false;
@@ -1388,7 +1388,7 @@ namespace Anki
         return true;
       }
 
-      Result LucasKanadeTrackerFast::set_transformation(const Transformations::PlanarTransformation_f32 &transformation)
+      Result LucasKanadeTracker_Affine::set_transformation(const Transformations::PlanarTransformation_f32 &transformation)
       {
         Result lastResult;
 
@@ -1407,7 +1407,7 @@ namespace Anki
         return RESULT_OK;
       }
 
-      Transformations::PlanarTransformation_f32 LucasKanadeTrackerFast::get_transformation() const
+      Transformations::PlanarTransformation_f32 LucasKanadeTracker_Affine::get_transformation() const
       {
         return transformation;
       }

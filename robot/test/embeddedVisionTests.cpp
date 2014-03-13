@@ -598,7 +598,7 @@ GTEST_TEST(CoreTech_Vision, ComputeDockingErrorSignalAffine)
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, ComputeDockingErrorSignalAffine)
 
-GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerFast)
+GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
 {
   const s32 imageHeight = 60;
   const s32 imageWidth = 80;
@@ -641,7 +641,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerFast)
 
     const f64 time0 = GetTime();
 
-    TemplateTracker::LucasKanadeTrackerFast tracker(image1, templateRegion, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, ridgeWeight, scratch1);
+    TemplateTracker::LucasKanadeTracker_Affine tracker(image1, templateRegion, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, ridgeWeight, scratch1);
 
     ASSERT_TRUE(tracker.IsValid());
 
@@ -674,7 +674,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerFast)
 
     const f64 time0 = GetTime();
 
-    TemplateTracker::LucasKanadeTrackerFast tracker(image1, templateRegion, numPyramidLevels, Transformations::TRANSFORM_AFFINE, ridgeWeight, scratch1);
+    TemplateTracker::LucasKanadeTracker_Affine tracker(image1, templateRegion, numPyramidLevels, Transformations::TRANSFORM_AFFINE, ridgeWeight, scratch1);
 
     ASSERT_TRUE(tracker.IsValid());
 
@@ -702,7 +702,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerFast)
   }
 
   GTEST_RETURN_HERE;
-} // GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerFast)
+} // GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
 
 GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
 {
@@ -748,7 +748,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
 
     const f64 time0 = GetTime();
 
-    TemplateTracker::LucasKanadeTracker_f32 tracker(image1, templateRegion, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, ridgeWeight, scratch1);
+    TemplateTracker::LucasKanadeTracker_Slow tracker(image1, templateRegion, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, ridgeWeight, scratch1);
 
     ASSERT_TRUE(tracker.IsValid());
 
@@ -782,7 +782,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
 
     const f64 time0 = GetTime();
 
-    TemplateTracker::LucasKanadeTracker_f32 tracker(image1, templateRegion, numPyramidLevels, Transformations::TRANSFORM_AFFINE, ridgeWeight, scratch1);
+    TemplateTracker::LucasKanadeTracker_Slow tracker(image1, templateRegion, numPyramidLevels, Transformations::TRANSFORM_AFFINE, ridgeWeight, scratch1);
 
     ASSERT_TRUE(tracker.IsValid());
 
@@ -816,7 +816,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
 
     const f64 time0 = GetTime();
 
-    TemplateTracker::LucasKanadeTracker_f32 tracker(image1, templateRegion, numPyramidLevels, Transformations::TRANSFORM_PROJECTIVE, ridgeWeight, scratch1);
+    TemplateTracker::LucasKanadeTracker_Slow tracker(image1, templateRegion, numPyramidLevels, Transformations::TRANSFORM_PROJECTIVE, ridgeWeight, scratch1);
 
     ASSERT_TRUE(tracker.IsValid());
 
@@ -846,58 +846,58 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
 
-GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerTmp)
-{
-  const s32 imageTmpHeight = 240;
-  const s32 imageTmpWidth = 320;
-
-  const s32 imageHeight = 60;
-  const s32 imageWidth = 80;
-
-  const s32 numPyramidLevels = 2;
-
-  const f32 ridgeWeight = 0.0f;
-
-  //const Rectangle<f32> templateRegion(59, 149, 35, 125);
-  const Rectangle<f32> templateRegion(59.0f/4.0f, 149.0f/4.0f, 35.0f/4.0f, 125.0f/4.0f);
-
-  const s32 maxIterations = 25;
-  const f32 convergenceTolerance = .05f;
-
-  // TODO: add check that images were loaded correctly
-
-  const s32 bigBufferSize = 10000000;
-  char * bigBuffer = reinterpret_cast<char*>(malloc(bigBufferSize));
-
-  MemoryStack scratch1(bigBuffer, bigBufferSize);
-
-  ASSERT_TRUE(scratch1.IsValid());
-
-  Array<u8> image1Tmp(imageTmpHeight, imageTmpWidth, scratch1);
-  image1Tmp.Set(templateImage, imageTmpWidth*imageTmpHeight);
-
-  Array<u8> image2Tmp(imageTmpHeight, imageTmpWidth, scratch1);
-  image2Tmp.Set(nextImage, imageTmpWidth*imageTmpHeight);
-
-  Array<u8> image1(imageHeight, imageWidth, scratch1);
-  Array<u8> image2(imageHeight, imageWidth, scratch1);
-
-  ImageProcessing::DownsampleByPowerOfTwo<u8,u32,u8>(image1Tmp, 2, image1, scratch1);
-  ImageProcessing::DownsampleByPowerOfTwo<u8,u32,u8>(image2Tmp, 2, image2, scratch1);
-
-  TemplateTracker::LucasKanadeTracker_f32 tracker(image1, templateRegion, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, ridgeWeight, scratch1);
-
-  ASSERT_TRUE(tracker.IsValid());
-
-  bool converged = false;
-  ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, false, converged, scratch1) == RESULT_OK);
-
-  tracker.get_transformation().Print("Translation-only LK");
-
-  free(bigBuffer);
-
-  GTEST_RETURN_HERE;
-} // GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
+//GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerTmp)
+//{
+//  const s32 imageTmpHeight = 240;
+//  const s32 imageTmpWidth = 320;
+//
+//  const s32 imageHeight = 60;
+//  const s32 imageWidth = 80;
+//
+//  const s32 numPyramidLevels = 2;
+//
+//  const f32 ridgeWeight = 0.0f;
+//
+//  //const Rectangle<f32> templateRegion(59, 149, 35, 125);
+//  const Rectangle<f32> templateRegion(59.0f/4.0f, 149.0f/4.0f, 35.0f/4.0f, 125.0f/4.0f);
+//
+//  const s32 maxIterations = 25;
+//  const f32 convergenceTolerance = .05f;
+//
+//  // TODO: add check that images were loaded correctly
+//
+//  const s32 bigBufferSize = 10000000;
+//  char * bigBuffer = reinterpret_cast<char*>(malloc(bigBufferSize));
+//
+//  MemoryStack scratch1(bigBuffer, bigBufferSize);
+//
+//  ASSERT_TRUE(scratch1.IsValid());
+//
+//  Array<u8> image1Tmp(imageTmpHeight, imageTmpWidth, scratch1);
+//  image1Tmp.Set(templateImage, imageTmpWidth*imageTmpHeight);
+//
+//  Array<u8> image2Tmp(imageTmpHeight, imageTmpWidth, scratch1);
+//  image2Tmp.Set(nextImage, imageTmpWidth*imageTmpHeight);
+//
+//  Array<u8> image1(imageHeight, imageWidth, scratch1);
+//  Array<u8> image2(imageHeight, imageWidth, scratch1);
+//
+//  ImageProcessing::DownsampleByPowerOfTwo<u8,u32,u8>(image1Tmp, 2, image1, scratch1);
+//  ImageProcessing::DownsampleByPowerOfTwo<u8,u32,u8>(image2Tmp, 2, image2, scratch1);
+//
+//  TemplateTracker::LucasKanadeTracker_Slow tracker(image1, templateRegion, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, ridgeWeight, scratch1);
+//
+//  ASSERT_TRUE(tracker.IsValid());
+//
+//  bool converged = false;
+//  ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, false, converged, scratch1) == RESULT_OK);
+//
+//  tracker.get_transformation().Print("Translation-only LK");
+//
+//  free(bigBuffer);
+//
+//  GTEST_RETURN_HERE;
+//} // GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerTmp)
 
 GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering)
 {
@@ -2335,7 +2335,7 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   CALL_GTEST_TEST(CoreTech_Vision, DetectBlurredEdge);
   CALL_GTEST_TEST(CoreTech_Vision, DownsampleByPowerOfTwo);
   CALL_GTEST_TEST(CoreTech_Vision, ComputeDockingErrorSignalAffine);
-  CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerFast);
+  CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine);
   CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTracker);
   CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering);
   CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageGeneration);

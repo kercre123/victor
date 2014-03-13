@@ -25,8 +25,8 @@ namespace Anki
       class BinaryTracker
       {
         // A binary-image tracker. This is liable to be much faster than trackers like the standard
-        // LucasKanadeTracker or LucasKanadeTrackerFast, but is also liable to be less accurate and
-        // more jittery.
+        // LucasKanadeTracker_Slow or LucasKanadeTracker_Affine, but is also liable to be less
+        // accurate and more jittery.
 
       public:
         BinaryTracker();
