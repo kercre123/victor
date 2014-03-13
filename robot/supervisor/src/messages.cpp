@@ -358,7 +358,10 @@ namespace Anki {
       void ProcessRobotStateMessage(const RobotState& msg) {
         PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
       }
-      
+
+      void ProcessPrintTextMessage(const PrintText& msg) {
+        PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
+      }
       
 // ----------- Send messages -----------------
       
@@ -382,6 +385,33 @@ namespace Anki {
       }
       
       
+      void SendText(const char *format, ...)
+      {
+        #define MAX_SEND_TEXT_LENGTH 512
+        char text[MAX_SEND_TEXT_LENGTH];
+        memset(text, 0, MAX_SEND_TEXT_LENGTH);
+
+        // Create formatted text
+        va_list argptr;
+        va_start(argptr, format);
+        vsnprintf(text, MAX_SEND_TEXT_LENGTH, format, argptr);
+        va_end(argptr);
+        
+        // Breakup and send in multiple messages if necessary
+        Messages::PrintText m;
+        s32 bytesLeftToSend = strlen(text);
+        u8 numMsgs = 0;
+        while(bytesLeftToSend > 0) {
+          memset(m.text, 0, PRINT_TEXT_MSG_LENGTH);
+          u32 currPacketBytes = MIN(PRINT_TEXT_MSG_LENGTH, bytesLeftToSend);
+          memcpy(m.text, text + numMsgs*PRINT_TEXT_MSG_LENGTH, currPacketBytes);
+          
+          bytesLeftToSend -= PRINT_TEXT_MSG_LENGTH;
+          
+          HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::PrintText), &m);
+          numMsgs++;
+        }
+      }
       
       
 // #pragma mark --- VisionSystem::Mailbox Template Implementations ---

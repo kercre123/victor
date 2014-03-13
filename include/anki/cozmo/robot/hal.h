@@ -53,6 +53,10 @@
 // going out UART. printf will still do it and probably corrupt comms
 #define USING_UART_RADIO 1
 
+// Diverts PRINT() statements to radio.
+// USING_UART_RADIO must be 1 for this to work.
+#define DIVERT_PRINT_TO_RADIO 1
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -72,8 +76,14 @@ extern "C" {
 
 // TESTING: For serial robot don't print
 #if(USING_UART_RADIO)
+
+#if(DIVERT_PRINT_TO_RADIO)
+#define PRINT(...) Messages::SendText(__VA_ARGS__)
+#else
 #define PRINT(...)
+#endif
 #define PERIODIC_PRINT(num_calls_between_prints, ...)
+
 #else
 
 #define PRINT(...) printf(__VA_ARGS__)

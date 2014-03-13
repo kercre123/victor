@@ -60,6 +60,7 @@ namespace Anki {
       
       // Send messages
       void SendRobotStateMsg();
+      void SendText(const char *format, ...);
       
       
       // These return true if a mailbox messages was available, and they copy

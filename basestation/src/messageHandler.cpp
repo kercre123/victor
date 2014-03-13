@@ -204,6 +204,34 @@ namespace Anki {
       
       return EXIT_SUCCESS;
     }
+
+    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessagePrintText const& msg)
+    {
+      static char text[512];  // Local storage for large messages which may come across in multiple packets
+      static u32 textIdx = 0;
+
+      char *newText = (char*)&(msg.text.front());
+      
+      // If the last byte is 0, it means this is the last packet (possibly of a series of packets).
+      if (msg.text[PRINT_TEXT_MSG_LENGTH-1] == 0) {
+        // Text is ready to print
+        if (textIdx == 0) {
+          // This message is not a part of a longer message. Just print!
+          printf("ROBOT-PRINT: %s", newText);
+        } else {
+          // This message is part of a longer message. Copy to local buffer and print.
+          memcpy(text + textIdx, newText, strlen(newText)+1);
+          printf("ROBOT-PRINT: %s", text);
+          textIdx = 0;
+        }
+      } else {
+        // This message is part of a larger text. Copy to local buffer. There is more to come!
+        memcpy(text + textIdx, newText, PRINT_TEXT_MSG_LENGTH);
+        textIdx += PRINT_TEXT_MSG_LENGTH;
+      }
+
+      return EXIT_SUCCESS;
+    }
     
     
     // STUBS:
