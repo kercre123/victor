@@ -30,9 +30,7 @@ enum BufferAction {
 
 #define BIG_BUFFER_SIZE 100000000
 
-
-
 // Process the buffer using the BufferAction action. Optionally, free the buffer on completion.
-void ProcessRawBuffer(RawBuffer &buffer, const std::string outputFilenamePattern, const bool freeBuffer, const BufferAction action, const bool swapEndianForHeaders, const bool swapEndianForContents, const bool requireCRCmatch);
+void ProcessRawBuffer(RawBuffer &buffer, const std::string outputFilenamePattern, const bool freeBuffer, const BufferAction action, const bool requireCRCmatch);
 
 #endif // #ifndef _MESSAGE_HANDLING_H_

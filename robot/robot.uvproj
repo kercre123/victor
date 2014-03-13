@@ -1033,6 +1033,11 @@
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\transformations.cpp</FilePath>
             </File>
+            <File>
+              <FileName>colorConversion.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\colorConversion.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -2207,6 +2212,11 @@
               <FileName>transformations.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\transformations.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>colorConversion.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\colorConversion.cpp</FilePath>
             </File>
           </Files>
         </Group>

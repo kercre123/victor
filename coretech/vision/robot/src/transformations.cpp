@@ -184,7 +184,12 @@ namespace Anki
 
       Result PlanarTransformation_f32::Print(const char * const variableName)
       {
-        return this->homography.Print(variableName);
+        printf(variableName);
+        printf(": center");
+        this->centerOffset.Print();
+        printf("\n");
+
+        return this->homography.Print("homography");
       }
 
       Quadrilateral<f32> PlanarTransformation_f32::TransformQuadrilateral(const Quadrilateral<f32> &in, MemoryStack scratch, const f32 scale) const
@@ -393,6 +398,13 @@ namespace Anki
       const Quadrilateral<f32>& PlanarTransformation_f32::get_initialCorners() const
       {
         return this->initialCorners;
+      }
+
+      Result PlanarTransformation_f32::set_centerOffset(const Point<f32> &centerOffset)
+      {
+        this->centerOffset = centerOffset;
+
+        return RESULT_OK;
       }
 
       const Point<f32>& PlanarTransformation_f32::get_centerOffset() const

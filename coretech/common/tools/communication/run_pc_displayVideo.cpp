@@ -39,7 +39,7 @@ DWORD WINAPI DisplayBuffersThread(LPVOID lpParam)
 
   RawBuffer *buffer = (RawBuffer*)lpParam;
 
-  ProcessRawBuffer(*buffer, string(outputFilenamePattern), true, BUFFER_ACTION_DISPLAY, true, false, false);
+  ProcessRawBuffer(*buffer, string(outputFilenamePattern), true, BUFFER_ACTION_DISPLAY, false);
 
   return 0;
 } // DWORD WINAPI PrintfBuffers(LPVOID lpParam)
@@ -116,7 +116,7 @@ int main(int argc, char ** argv)
           0,           // use default creation flags
           &threadId);  // returns the thread identifier
           */
-          ProcessRawBuffer(rawBuffer, string(outputFilenamePattern), true, BUFFER_ACTION_DISPLAY, false, false, false);
+          ProcessRawBuffer(rawBuffer, string(outputFilenamePattern), true, BUFFER_ACTION_DISPLAY, false);
 
           usbBuffer = reinterpret_cast<u8*>(malloc(USB_BUFFER_SIZE));
           usbBufferIndex = 0;

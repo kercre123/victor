@@ -102,6 +102,7 @@ namespace Anki
         Result set_initialCorners(const Quadrilateral<f32> &initialCorners);
         const Quadrilateral<f32>& get_initialCorners() const;
 
+        Result set_centerOffset(const Point<f32> &centerOffset);
         const Point<f32>& get_centerOffset() const;
 
         // Transform this object's initialCorners, based on its current homography

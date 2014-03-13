@@ -90,7 +90,7 @@ namespace Anki
         templateWeights.set_size(numPyramidLevels);
 
         this->transformation = Transformations::PlanarTransformation_f32(transformType, templateQuad, memory);
-
+        
         this->isValid = true;
 
         BeginBenchmark("InitializeTemplate");
@@ -377,12 +377,6 @@ namespace Anki
           //this->get_transformation().Print("Translation");
 
           if(this->transformation.get_transformType() != Transformations::TRANSFORM_TRANSLATION) {
-            // TODO: remove
-            //Array<f32> newH = Eye<f32>(3,3,memory);
-            //newH[0][2] = -0.0490;
-            //newH[1][2] = -0.1352;
-            //this->transformation.set_homography(newH);
-
             BeginBenchmark("UpdateTrack.refineOther");
             if((lastResult = IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance, this->transformation.get_transformType(), useWeights, converged, scratch)) != RESULT_OK)
               return lastResult;
@@ -607,6 +601,7 @@ namespace Anki
 
           BeginBenchmark("IterativelyRefineTrack.updateTransformation");
           //this->transformation.Print("t1");
+          //b.Print("b");
           this->transformation.Update(b, scratch, curTransformType);
           //this->transformation.Print("t2");
           EndBenchmark("IterativelyRefineTrack.updateTransformation");
