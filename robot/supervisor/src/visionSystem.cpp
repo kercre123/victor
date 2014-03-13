@@ -665,7 +665,7 @@ namespace VisionState {
   static s32 numTrackFailures_ ; //< The tracker can fail to converge this many times before we give up and reset the docker
   static bool isTrackingMarkerSpecified_;
   static Tracker tracker_;
-  
+
   //// Capture an entire frame using HAL commands and put it in the given frame buffer
   //typedef struct {
   //  u8* data;
@@ -963,12 +963,12 @@ static ReturnCode TrackTemplate(
   if(trackerResult != RESULT_OK) {
     return EXIT_FAILURE;
   }
-  
+
   // Check for a super shrunk or super large template
   {
     // TODO: make not hacky
     const Array<f32> &homography = tracker.get_transformation().get_homography();
-     
+
     const s32 numValues = 4;
     const s32 numMaxValues = 2;
     f32 values[numValues] = {ABS(homography[0][0]), ABS(homography[0][1]), ABS(homography[1][0]), ABS(homography[1][1])};
@@ -978,21 +978,21 @@ static ReturnCode TrackTemplate(
         maxInds[0] = i;
       }
     }
-    
+
     for(s32 i=0; i<numValues; i++) {
       if(i == maxInds[0])
         continue;
-      
+
       if(values[i] > values[maxInds[1]]) {
         maxInds[1] = i;
       }
     }
-    
-    const f32 secondValue = values[maxInds[1]];    
-    
+
+    const f32 secondValue = values[maxInds[1]];
+
     if(secondValue < 0.1 || secondValue > 40.0) {
       converged = false;
-    }      
+    }
   }
 
   dockErrMsg.didTrackingSucceed = static_cast<u8>(converged);
@@ -1119,7 +1119,7 @@ namespace Anki {
         if (HAL::GetMicroCounter() < SimulatorParameters::frameRdyTimeUS_) {
           return EXIT_SUCCESS;
         }
-        
+
         // TODO: remove this once we have the new API for getting a camera image
         HAL::CameraStartFrame(HAL::CAMERA_FRONT, m_buffer1, HAL::CAMERA_MODE_QVGA, HAL::CAMERA_UPDATE_SINGLE, 0, false);
 #endif
@@ -1251,9 +1251,19 @@ namespace Anki {
           }
 
           Messages::ProcessDockingErrorSignalMessage(dockErrMsg);
-          
-          // TODO: remove?
-          UpdateTrackingStatus(converged);
+
+          // TODO: put somewhere else?
+          if(converged) {
+            // Reset the failure counter
+            VisionState::numTrackFailures_ = 0;
+          } else {
+            VisionState::numTrackFailures_ += 1;
+
+            if(VisionState::numTrackFailures_ == VisionState::MAX_TRACKING_FAILURES) {
+              // This resets docking, puttings us back in VISION_MODE_LOOKING_FOR_MARKERS mode
+              SetMarkerToTrack(VisionState::markerTypeToTrack_);
+            }
+          }
         } else {
           PRINT("VisionSystem::Update(): reached default case in switch statement.");
           return EXIT_FAILURE;
