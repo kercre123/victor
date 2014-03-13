@@ -97,7 +97,7 @@ namespace Anki {
         
         
         //////// PathFollowTest /////////
-        const f32 PF_TARGET_SPEED_MMPS = 160;
+        const f32 PF_TARGET_SPEED_MMPS = 100;
         const f32 PF_ACCEL_MMPS2 = 200;
         const f32 PF_DECEL_MMPS2 = 500;
         
@@ -260,10 +260,6 @@ namespace Anki {
       {
         const u32 startDriveTime_us = 500000;
         if (!pathStarted_ && HAL::GetMicroCounter() > startDriveTime_us) {
-          SpeedController::SetUserCommandedAcceleration( 100 ); 
-          SpeedController::SetUserCommandedDesiredVehicleSpeed(160);
-          PRINT("Speed commanded: %d mm/s\n",
-                SpeedController::GetUserCommandedDesiredVehicleSpeed() );
           
           // Create a path and follow it
           PathFollower::AppendPathSegment_Line(0, 0.0, 0.0, 300, -300,

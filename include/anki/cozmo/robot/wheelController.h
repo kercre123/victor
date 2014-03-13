@@ -24,10 +24,13 @@ namespace Anki {
     // Point at which open loop speed-power trendlines meet
     const f32 TRANSITION_SPEED = 25.0f;  // mm/s
     const f32 TRANSITION_POWER = 0.30f;  // wheel motor power
+
+    //How fast (in mm/sec) can a wheel spin at max
+    const f32 MAX_WHEEL_SPEED_MM_S = 120.f;
     
     // Slope of power:speed in upper line.
     // Obtained from plotting average open loop response of both wheels.
-    const f32 HIGH_OPEN_LOOP_GAIN = 1.0 / 140.0;
+    const f32 HIGH_OPEN_LOOP_GAIN = (1.0f - TRANSITION_POWER) / (MAX_WHEEL_SPEED_MM_S - TRANSITION_SPEED);
     
     // Slope of power:speed in lower line
     const f32 LOW_OPEN_LOOP_GAIN = TRANSITION_POWER / TRANSITION_SPEED;
@@ -39,11 +42,7 @@ namespace Anki {
     const float DEFAULT_WHEEL_LOW_KP = 0.005f;
     const float DEFAULT_WHEEL_LOW_KI = 0.0001f;
     
-    
     const float WHEEL_SPEED_COMMAND_STOPPED_MM_S = 2.0;
-    
-    //How fast (in mm/sec) can a wheel spin at max
-    const f32 MAX_WHEEL_SPEED_MM_S = 1.0 / HIGH_OPEN_LOOP_GAIN;
     
     //If we drive slower than this, the vehicle is stopped
     const float WHEEL_SPEED_CONSIDER_STOPPED_MM_S = 2; // TODO: float or int?
