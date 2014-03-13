@@ -86,7 +86,7 @@ int main(int argc, char **argv)
     // first one that becomes available.
     // TODO: Once we have a UI, we can select the one we want to connect to in a more reasonable way.
     if (robotComms.GetNumConnectedRobots() == 0) {
-      vector<int> advertisingRobotIDs;
+      std::vector<int> advertisingRobotIDs;
       if (robotComms.GetAdvertisingRobotIDs(advertisingRobotIDs) > 0) {
         for(auto robotID : advertisingRobotIDs) {
           printf("RobotComms connecting to robot %d.\n", robotID);
