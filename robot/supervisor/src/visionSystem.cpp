@@ -477,7 +477,8 @@ namespace MatlabVisualization
 
   static ReturnCode ResetFiducialDetection(const Array<u8>& image) { return EXIT_SUCCESS; }
 
-  static ReturnCode SendFiducialDetection(const Quadrilateral<s16> &corners) { return EXIT_SUCCESS; }
+  static ReturnCode SendFiducialDetection(const Quadrilateral<s16> &corners,
+                                          const Vision::MarkerType &markerType) { return EXIT_SUCCESS; }
 
   static ReturnCode SendDrawNow() { return EXIT_SUCCESS; }
 
@@ -515,7 +516,8 @@ namespace MatlabVisualization
     return EXIT_SUCCESS;
   }
 
-  static ReturnCode SendFiducialDetection(const Quadrilateral<s16> &corners)
+  static ReturnCode SendFiducialDetection(const Quadrilateral<s16> &corners,
+                                          const Vision::MarkerType &markerCode )
   {
     matlabViz_.PutQuad(corners, "detectedQuad");
     matlabViz_.EvalStringEcho("plot(detectedQuad([1 2 4 3 1],1)+1, "
@@ -527,7 +529,14 @@ namespace MatlabVisualization
                               "     detectedQuad([1 3],2)+1, "
                               "     'g', 'LineWidth', 2, "
                               "     'Parent', h_axes, "
-                              "     'Tag', 'DetectedQuad');");
+                              "     'Tag', 'DetectedQuad'); "
+                              "text(mean(detectedQuad(:,1))+1, "
+                              "     mean(detectedQuad(:,2))+1, "
+                              "     '%s', 'Hor', 'c', 'Color', 'y', "
+                              "     'FontSize', 16, 'FontWeight', 'b', "
+                              "     'Interpreter', 'none', "
+                              "     'Tag', 'DetectedQuad');",
+                              Vision::MarkerTypeStrings[markerCode]);
 
     return EXIT_SUCCESS;
   }
@@ -793,7 +802,7 @@ static ReturnCode LookForMarkers(
     for(s32 i_marker = 0; i_marker < markers.get_size(); ++i_marker) {
       const VisionMarker crntMarker = markers[i_marker];
 
-      MatlabVisualization::SendFiducialDetection(crntMarker.corners);
+      MatlabVisualization::SendFiducialDetection(crntMarker.corners, crntMarker.markerType);
     }
 
     MatlabVisualization::SendDrawNow();
