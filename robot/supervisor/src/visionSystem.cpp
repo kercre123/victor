@@ -53,7 +53,7 @@ static bool isInitialized_ = false;
 
 // TODO: remove
 #define SEND_DEBUG_STREAM
-#define RUN_SIMPLE_TRACKING_TEST
+//#define RUN_SIMPLE_TRACKING_TEST
 
 #define DOCKING_LUCAS_KANADE_SLOW       1 //< LucasKanadeTracker_Slow (doesn't seem to work?)
 #define DOCKING_LUCAS_KANADE_AFFINE     2 //< LucasKanadeTracker_Affine (With Translation + Affine option)
@@ -685,18 +685,16 @@ namespace VisionState {
     Anki::Cozmo::VisionSystem::SetMarkerToTrack(Vision::MARKER_BATTERIES);
 #endif
 
-#if 0
-    //headCamInfo_ = HAL::GetHeadCamInfo();
-    //if(headCamInfo_ == NULL) {
-    //  PRINT("VisionSystem::Init() - HeadCam Info pointer is NULL!\n");
-    //  return EXIT_FAILURE;
-    //}
+    headCamInfo_ = HAL::GetHeadCamInfo();
+    if(headCamInfo_ == NULL) {
+      PRINT("VisionState::Initialize() - HeadCam Info pointer is NULL!\n");
+      return EXIT_FAILURE;
+    }
 
     //// Compute the resolution of the mat camera from its FOV and height off the mat:
     //f32 matCamHeightInPix = ((static_cast<f32>(matCamInfo_->nrows)*.5f) /
     //  tanf(matCamInfo_->fov_ver * .5f));
     //matCamPixPerMM_ = matCamHeightInPix / MAT_CAM_HEIGHT_FROM_GROUND_MM;
-#endif //#if 0
 
     return EXIT_SUCCESS;
   }
