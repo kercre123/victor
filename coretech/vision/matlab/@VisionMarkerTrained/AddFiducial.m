@@ -1,30 +1,37 @@
-function imgNew = AddFiducial(img, varargin)
+function [imgNew, AlphaChannel] = AddFiducial(img, varargin)
 
 CropImage = true;
 OutputSize = 512;
 PadOutside = true;
+FiducialColor = [0 0 0];
+TransparentColor = [];
+TransparencyTolerance = 0.1;
 
 parseVarargin(varargin{:});
 
-img = mean(im2double(img),3);
+img = im2double(img);
+if size(img,3)==1
+    img = repmat(img,[1 1 3]);
+end
+%img = mean(im2double(img),3);
 
 if CropImage
-    [nrows,ncols] = size(img);
+    [nrows,ncols,~] = size(img);
     
-    row = any(img<1,1); 
+    row = any(any(img<1,3),1); 
     xmin = find(row, 1, 'first');
     xmax = find(row, 1, 'last');
     
-    col = any(img<1,2);
+    col = any(any(img<1,3),2);
     ymin = find(col, 1, 'first');
     ymax = find(col, 1, 'last');
     
-    imgDim = max(ymax-ymin+1, xmax-xmin+1);
+    %imgDim = max(ymax-ymin+1, xmax-xmin+1);
     
-    img = img(ymin:min(nrows,(ymin+imgDim-1)), xmin:min(ncols,(xmin+imgDim-1)));
+    img = img(ymin:ymax, xmin:xmax,:);
 end
 
-[nrows,ncols] = size(img);
+[nrows,ncols,~] = size(img);
 if nrows > ncols
     padding = nrows - ncols;
     if mod(padding,2)==0
@@ -44,7 +51,7 @@ elseif ncols > nrows
     img = padarray(padarray(img, [padding(1) 0], 1, 'pre'), [padding(2) 0], 1, 'post');
 end
 
-[nrows,ncols] = size(img);
+[nrows,ncols,~] = size(img);
 assert(nrows==ncols, 'By now, image should be square.');
 
 [squareWidth_pix, padding_pix] = VisionMarkerTrained.GetFiducialPixelSize(...
@@ -57,11 +64,13 @@ if PadOutside
     squareWidth_pix = round(squareWidth_pix);
     
     [nrows,ncols,~] = size(imgNew);
-    imgNew(padding_pix+(1:squareWidth_pix), (padding_pix+1):(ncols-padding_pix)) = 0;
-    imgNew((nrows-padding_pix-squareWidth_pix+1):(nrows-padding_pix), (padding_pix+1):(ncols-padding_pix)) = 0;
-    
-    imgNew((padding_pix+1):(nrows-padding_pix), padding_pix+(1:squareWidth_pix)) = 0;
-    imgNew((padding_pix+1):(nrows-padding_pix), (ncols-padding_pix-squareWidth_pix+1):(ncols-padding_pix)) = 0;
+    for i=1:3
+        imgNew(padding_pix+(1:squareWidth_pix), (padding_pix+1):(ncols-padding_pix),i) = FiducialColor(i);
+        imgNew((nrows-padding_pix-squareWidth_pix+1):(nrows-padding_pix), (padding_pix+1):(ncols-padding_pix),i) = FiducialColor(i);
+        
+        imgNew((padding_pix+1):(nrows-padding_pix), padding_pix+(1:squareWidth_pix),i) = FiducialColor(i);
+        imgNew((padding_pix+1):(nrows-padding_pix), (ncols-padding_pix-squareWidth_pix+1):(ncols-padding_pix),i) = FiducialColor(i);
+    end
 else
     imgNew = padarray(img, round(padding_pix+squareWidth_pix)*[1 1], 1, 'both'); %#ok<UNRCH>
     
@@ -69,8 +78,10 @@ else
     squareWidth_pix = round(squareWidth_pix);
     
     [nrows,ncols,~] = size(imgNew);
-    imgNew([1:squareWidth_pix (end-squareWidth_pix+1):end],:) = 0;
-    imgNew(:,[1:squareWidth_pix (end-squareWidth_pix+1):end]) = 0;
+    for i=1:3
+        imgNew([1:squareWidth_pix (end-squareWidth_pix+1):end],:,i) = FiducialColor(i);
+        imgNew(:,[1:squareWidth_pix (end-squareWidth_pix+1):end],i) = FiducialColor(i);
+    end
 end
 
 if nargout == 0
@@ -108,6 +119,14 @@ if nargout == 0
     colormap(gray)
 else
     imgNew = imresize(imgNew, OutputSize*[1 1]);
+end
+
+
+if ~isempty(TransparentColor)
+    transImg = repmat(reshape(TransparentColor, [1 1 3]), OutputSize*[1 1]);
+    AlphaChannel = double(any(abs(imgNew - transImg)>TransparencyTolerance,3));
+else
+    AlphaChannel = ones(OutputSize);
 end
 
 end
