@@ -16,14 +16,19 @@ saveTree = true;
 probeRegion = [VisionMarkerTrained.SquareWidthFraction+VisionMarkerTrained.FiducialPaddingFraction ...
     1-(VisionMarkerTrained.SquareWidthFraction+VisionMarkerTrained.FiducialPaddingFraction)];
 
-imageCoords = [-VisionMarkerTrained.FiducialPaddingFraction ...
-    1+VisionMarkerTrained.FiducialPaddingFraction];
+% Now using unpadded images to train
+%imageCoords = [-VisionMarkerTrained.FiducialPaddingFraction ...
+%    1+VisionMarkerTrained.FiducialPaddingFraction];
+imageCoords = [0 1];
 
 DEBUG_DISPLAY = true;
 DrawTrees = false;
 
 parseVarargin(varargin{:});
 
+if ~iscell(markerImageDir)
+    markerImageDir = {markerImageDir};
+end
 
 probePattern = VisionMarkerTrained.ProbePattern;
 
@@ -47,7 +52,13 @@ if ~saveTree && nargout==0
 end
 
 %% Load marker images
-fnames = getfnames(markerImageDir, 'images');
+numDirs = length(markerImageDir);
+fnames = cell(numDirs,1);
+for i_dir = 1:numDirs
+    fnames{i_dir} = getfnames(markerImageDir{i_dir}, 'images', 'useFullPath', true);
+end
+fnames = vertcat(fnames{:});
+
 %fnames = {'angryFace.png', 'ankiLogo.png', 'batteries3.png', ...
 %    'bullseye2.png', 'fire.png', 'squarePlusCorners.png'};
 
@@ -59,9 +70,10 @@ resamplingResolution = ceil(1/(probeRegion(2)-probeRegion(1))*workingResolution)
 %resamplingResolution = 4*workingResolution;
 
 for i = 1:numImages
-    img{i} = imread(fullfile(markerImageDir, fnames{i}));
-    img{i} = imresize(mean(im2double(img{i}),3), ...
-        resamplingResolution*[1 1], 'bilinear');
+    [img{i}, ~, alpha] = imread(fnames{i});
+    img{i} = mean(im2double(img{i}),3);
+    img{i}(alpha < .5) = 1;
+    img{i} = imresize(img{i}, resamplingResolution*[1 1], 'bilinear');
     
     [~,labelNames{i}] = fileparts(fnames{i});
     
@@ -306,8 +318,11 @@ if DEBUG_DISPLAY
     numDisplayRows = floor(sqrt(length(fnames)));
     numDisplayCols = ceil(length(fnames)/numDisplayRows);
 end
-for i = 1:length(fnames)    
-    testImg = mean(im2double(imread(fullfile(markerImageDir, fnames{i}))),3);
+for i = 1:length(fnames)   
+    [testImg,~,alpha] = imread(fnames{i});
+    testImg = mean(im2double(testImg),3);
+    testImg(alpha < .5) = 1;
+    
     % radius = probeRadius/workingResolution * size(testImg,1);
         
     %testImg = separable_filter(testImg, gaussian_kernel(radius/2), [], 'replicate');
