@@ -16,6 +16,14 @@ if ~iscell(images)
     [images{:}] = deal(img);
 end
 
+if isvector(FiducialColor)
+    FiducialColor = repmat(row(FiducialColor), [numel(xgrid) 3]);
+else
+    assert(isequal(size(FiducialColor), [size(xgrid) 3]), ...
+        'FiducialColor input is an expected size.');
+    FiducialColor = reshape(FiducialColor, [], 3);
+end
+
 if isscalar(angles)
     angles = angles*ones(size(images));
 end
@@ -72,13 +80,20 @@ for i = 1:numel(images)
     %         'AddPadding', false, ...
     %         'ForegroundColor', ForegroundColor, ...
     %         'BackgroundColor', BackgroundColor);
-    markerImg = VisionMarkerTrained.AddFiducial(images{i}, 'PadOutside', false, 'OutputSize', 512, 'FiducialColor', FiducialColor);
-    
-    if size(markerImg,3)==1
-        markerImg = markerImg(:,:,ones(1,3));
+    if ischar(images{i})
+        [markerImg, ~, alpha] = imread(images{i});
+        markerImg = imresize(markerImg, [512 512], 'bilinear');
+        alpha = imresize(alpha, [512 512], 'bilinear');
+    else
+        markerImg = VisionMarkerTrained.AddFiducial(images{i}, ...
+            'PadOutside', false, 'OutputSize', 512, 'FiducialColor', FiducialColor(i,:));
+        
+        if size(markerImg,3)==1
+            markerImg = markerImg(:,:,ones(1,3));
+        end
+        
+        markerImg = (1-markerImg).*FG + markerImg.*BG;
     end
-    
-    markerImg = (1-markerImg).*FG + markerImg.*BG;
 
     % Need this initial rotation b/c canonical VisionMarker orientation in
     % 3D is vertical, i.e. in the X-Z plane, for historical reasons.
@@ -99,7 +114,7 @@ for i = 1:numel(images)
         sizes(i));
         
     filename = sprintf('ankiMat%d.png', i);
-    imwrite(imresize(markerImg, [512 512]), fullfile(WorldDir, filename));
+    imwrite(markerImg, fullfile(WorldDir, filename), 'Alpha', alpha);
     
     fprintf(fid, '    Solid {\n');
     fprintf(fid, '	    translation %.4f %.4f 0.0025\n', xgrid(i)/1000, ygrid(i)/1000);
