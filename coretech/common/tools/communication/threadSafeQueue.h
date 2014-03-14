@@ -33,12 +33,12 @@ template<typename Type> Type ThreadSafeQueue<Type>::Pop()
   WaitForSingleObject(mutex, INFINITE);
 
   // TODO: figure out what to return on failure
-  //if(buffers.empty()) {
-  //  value = static_cast<Type>(0);
-  //} else {
-  value = buffers.front();
-  buffers.pop();
-  //}
+  if(buffers.empty()) {
+    //    value = static_cast<Type>(0);
+  } else {
+    value = buffers.front();
+    buffers.pop();
+  }
 
   ReleaseMutex(mutex);
 
