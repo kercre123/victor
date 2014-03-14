@@ -473,6 +473,24 @@ namespace Anki {
       } else {
         MotorUpdate();
         RadioUpdate();
+        
+        // Always display ground truth pose:
+        {
+          const double* position = gps_->getValues();
+          const double* northVector = compass_->getValues();
+          
+          const f32 rad = std::atan2(-northVector[1], northVector[0]);
+          
+          char buffer[256];
+          snprintf(buffer, 256, "Robot %d Pose: (%.1f,%.1f,%.1f), %.1fdeg@(0,0,1)",
+                   robotID_,
+                   M_TO_MM(position[0]), M_TO_MM(position[1]), M_TO_MM(position[2]),
+                   RAD_TO_DEG(rad));
+          
+          std::string poseString(buffer);
+          webotRobot_.setLabel(robotID_, poseString, 0.5, robotID_*.05, .05, 0xff0000, 0.);
+        }
+        
         return EXIT_SUCCESS;
       }
       

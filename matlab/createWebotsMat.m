@@ -1,4 +1,4 @@
-function createWebotsMat(images, numCorners, xgrid, ygrid, angles, sizes, markerLibrary, varargin)
+function createWebotsMat(images, numCorners, xgrid, ygrid, angles, sizes, names, varargin)
 
 ForegroundColor = [ 14 108 184]/255; % Anki light blue
 %BackgroundColor = [107 107 107]/255; % Anki light gray
@@ -57,15 +57,27 @@ fprintf(fid, '    }\n');
 
 set(gcf, 'Pos', [100 100 800 650]);
 
+FG = repmat(reshape(ForegroundColor, [1 1 3]), [512 512]);
+BG = repmat(reshape(BackgroundColor, [1 1 3]), [512 512]);
+
+codeString = cell(1,numel(images));
+
 for i = 1:numel(images)
         
-    markerImg = VisionMarker.DrawFiducial( ...
-        'Image', imrotate(images{i}, -angles(i)), ...
-        'NumCorners', numCorners(i), ...
-        'AddPadding', false, ...
-        'ForegroundColor', ForegroundColor, ...
-        'BackgroundColor', BackgroundColor);
+%     markerImg = VisionMarker.DrawFiducial( ...
+%         'Image', imrotate(images{i}, -angles(i)), ...
+%         'NumCorners', numCorners(i), ...
+%         'AddPadding', false, ...
+%         'ForegroundColor', ForegroundColor, ...
+%         'BackgroundColor', BackgroundColor);
+markerImg = VisionMarkerTrained.AddFiducial(images{i}, 'PadOutside', false, 'OutputSize', 512);
     
+if size(markerImg,3)==1
+    markerImg = markerImg(:,:,ones(1,3));
+end
+
+markerImg = (1-markerImg).*FG + markerImg.*BG;
+
     % Need this initial rotation b/c canonical VisionMarker orientation in
     % 3D is vertical, i.e. in the X-Z plane, for historical reasons.
     R_to_flat = rodrigues(-pi/2*[1 0 0]);
@@ -73,11 +85,16 @@ for i = 1:numel(images)
     pose = Pose(rodrigues(angles(i)*pi/180*[0 0 1])*R_to_flat, ...
         [xgrid(i) ygrid(i) -CozmoVisionProcessor.WHEEL_RADIUS]');
     
-    marker = VisionMarker(markerImg, 'Name', sprintf('ANKI-MAT-%d', i), ...
-        'Size', sizes(i), 'Pose', pose);
+axis = pose.axis;
+angle = pose.angle;
+T = pose.T;
+T(3)= 0;
+codeString{i} = sprintf(['mat->AddMarker(Vision::MARKER_%s,\n', ...
+    'Pose3d(%f, {%f,%f,%f}, {%f,%f,%f}),\n%f);\n'], ...
+    names{i}, angle, ...
+    axis(1), axis(2), axis(3), T(1), T(2), T(3), ...
+    sizes(i));
         
-    markerLibrary.AddMarker(marker);
-    
     filename = sprintf('ankiMat%d.png', i);
     imwrite(imresize(markerImg, [512 512]), fullfile(WorldDir, filename));
     
@@ -155,6 +172,11 @@ fprintf(fid, '    ]\n');
 fprintf(fid, '  }\n');
 fprintf(fid, '} # Solid\n\n');
 fprintf(fid, '} # Proto\n');
+
+% This will copy code to the clipboard that you can paste into BlockWorld 
+% constructor to create the markers for the mat with the correct pose
+clipboard('copy', [codeString{:}]);
+fprintf('\n\nCode copied to clipboard.\n\n');
 
 end % function createWebotsMat()
 
