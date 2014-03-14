@@ -3,6 +3,8 @@
 #include <cstdlib>
 
 // Our Includes
+#include "anki/common/robot/errorHandling.h"
+
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/messages.h"
@@ -70,8 +72,8 @@ namespace Anki {
       //u8* headCamBuffer_;
       //u8* matCamBuffer_;
       
-      HAL::CameraUpdateMode headCamUpdateMode_;
-      HAL::CameraUpdateMode matCamUpdateMode_;
+      //HAL::CameraUpdateMode headCamUpdateMode_;
+      //HAL::CameraUpdateMode matCamUpdateMode_;
       
       // For pose information
       webots::GPS* gps_;
@@ -473,6 +475,24 @@ namespace Anki {
       } else {
         MotorUpdate();
         RadioUpdate();
+        
+        // Always display ground truth pose:
+        {
+          const double* position = gps_->getValues();
+          const double* northVector = compass_->getValues();
+          
+          const f32 rad = std::atan2(-northVector[1], northVector[0]);
+          
+          char buffer[256];
+          snprintf(buffer, 256, "Robot %d Pose: (%.1f,%.1f,%.1f), %.1fdeg@(0,0,1)",
+                   robotID_,
+                   M_TO_MM(position[0]), M_TO_MM(position[1]), M_TO_MM(position[2]),
+                   RAD_TO_DEG(rad));
+          
+          std::string poseString(buffer);
+          webotRobot_.setLabel(robotID_, poseString, 0.5, robotID_*.05, .05, 0xff0000, 0.);
+        }
+        
         return EXIT_SUCCESS;
       }
       
@@ -523,18 +543,7 @@ namespace Anki {
       }
     }
     
-    const HAL::CameraInfo* HAL::GetMatCamInfo(void)
-    {
-      if(isInitialized) {
-        //FillCameraInfo(matCam_, matCamInfo_);
-        return &matCamInfo_;
-      }
-      else {
-        PRINT("MatCam calibration requested before HAL initialized.\n");
-        return NULL;
-      }
-    }
-    
+    /*
     HAL::CameraMode HAL::GetHeadCamMode(void)
     {
       return headCamMode_;
@@ -564,138 +573,59 @@ namespace Anki {
         PRINT("ERROR(SetCameraMode): Unknown frame res: %d", frameResHeader);
       }
     } //SetHeadCamMode()
-    
-    void GetGrayscaleFrameHelper(webots::Camera* cam, u8* yuvBuffer)
-    {
-      // Acquire grey image and stick in the first half of each two-byte pixel
-      // in the YUV buffer (since the real camera is now working in YUV this way)
-      const u8* image = cam->getImage();
-      if(image == NULL) {
-        PRINT("GetGrayscaleFrameHelper(): no image captured!");
-      }
-      else {
-        u32 pixel = 0;
-        for (int y=0; y < cam->getHeight(); y++ ) {
-          for (int x=0; x < cam->getWidth(); x++ ) {
-            yuvBuffer[pixel+=2] = webots::Camera::imageGetGrey(image, cam->getWidth(), x, y);
-          }
-        }
-      }
-    } // GetGrayscaleFrameHelper()
+    */
     
     
     // Starts camera frame synchronization
-    void HAL::CameraStartFrame(CameraID cameraID, u8* yuvFrameBuffer,
-                               CameraMode mode, CameraUpdateMode updateMode,
-                               u16 exposure, bool enableLight)
+    void HAL::CameraGetFrame(u8* frame, CameraMode mode, u16 exposure, bool enableLight)
     {
       // TODO: exposure? enableLight?
       
-      switch(cameraID) {
-        case CAMERA_FRONT:
+      const u8* image = headCam_->getImage();
+      if(image == NULL) {
+        PRINT("CameraGetFrame(): no image captured!");
+      }
+      else {
+        // Set the increment / windowsize for downsampling
+        AnkiAssert(headCamInfo_.nrows >= HAL::CameraModeInfo[mode].height);
+        const s32 inc = headCamInfo_.nrows / HAL::CameraModeInfo[mode].height;
+        s32 pixel = 0;
+        
+        // TODO: add averaging once we support it in hardware
+        const bool supportAveraging = false;
+        
+        if(!supportAveraging || inc == 1)
         {
-          if (mode != CAMERA_MODE_QVGA) {
-            PRINT("ERROR (CameraStartFrame): Head camera only supports QVGA\n");
-            return;
-          }
-          
-          headCamUpdateMode_ = updateMode;
-          /* Not trying to simulate capture time, so don't need this...
-          headCamCaptureTime_ = headCamUpdateMode_ == CAMERA_UPDATE_SINGLE ? CAMERA_SINGLE_CAPTURE_TIME_US : CAMERA_CONTINUOUS_CAPTURE_TIME_US;
-          headCamStartCaptureTime_ = GetMicroCounter();
-          */
-          
-          GetGrayscaleFrameHelper(headCam_, yuvFrameBuffer);
-
-          break;
-        }
-          
-        case CAMERA_MAT:
-        {
-          
-          if (mode != CAMERA_MODE_VGA) {
-            PRINT("ERROR (CameraStartFrame): Mat camera only supports VGA\n");
-            return;
-          }
-          
-          matCamUpdateMode_ = updateMode;
-          /* Not trying to simulate capture time, so don't need this...
-          matCamCaptureTime_ = matCamUpdateMode_ == CAMERA_UPDATE_SINGLE ? CAMERA_SINGLE_CAPTURE_TIME_US : CAMERA_CONTINUOUS_CAPTURE_TIME_US;
-          matCamStartCaptureTime_ = GetMicroCounter();
-           */
-
-          //GetGrayscaleFrameHelper(matCam_, frameBuffer);
-          
-          break;
-        }
-          
-        default:
-          PRINT("ERROR (CameraStartFrame): Invalid camera %d\n", cameraID);
-          break;
-      }
-    }
-    
-    // Get the number of lines received so far for the specified camera
-    u32 HAL::CameraGetReceivedLines(CameraID cameraID)
-    {
-      switch(cameraID) {
-        case CAMERA_FRONT:
-          return headCamInfo_.nrows;
-        case CAMERA_MAT:
-          return matCamInfo_.nrows;
-        default:
-          PRINT("ERROR (CameraGetReceivedLines): Invalid camera %d\n", cameraID);
-          return 0;
-      }
-
-    }
-    
-    // Returns whether or not the specfied camera has received a full frame
-    bool HAL::CameraIsEndOfFrame(CameraID cameraID)
-    {
-      // Simulated cameras return frames instantaneously. Yay.
-      return true;
-      
-      /* Don't try to be so fancy.
-      switch(cameraID) {
-        case CAMERA_FRONT:
-        
-          if (headCamStartCaptureTime_ != 0 && GetMicroCounter() - headCamStartCaptureTime_ > headCamCaptureTime_) {
-            if (headCamUpdateMode_ == CAMERA_UPDATE_CONTINUOUS) {
-              headCamStartCaptureTime_ = GetMicroCounter();
-              //CaptureHeadCamFrame();
-            } else { // Single mode
-              headCamStartCaptureTime_ = 0;
+          // No averaging
+          for (s32 y=0; y < headCamInfo_.nrows; y++) {
+            for (s32 x=0; x < headCamInfo_.ncols; x++) {
+              frame[pixel++] = webots::Camera::imageGetGrey(image, headCamInfo_.ncols, x, y);
             }
-            return true;
           }
-          break;
-        
-        case CAMERA_MAT:
-        
-          if (matCamStartCaptureTime_ != 0 && GetMicroCounter() - matCamStartCaptureTime_ > matCamCaptureTime_) {
-            if (matCamUpdateMode_ == CAMERA_UPDATE_CONTINUOUS) {
-              matCamStartCaptureTime_ = GetMicroCounter();
-              //CaptureMatCamFrame();
-            } else { // Single mode
-              matCamStartCaptureTime_ = 0;
+        } else {
+          // Average [inc x inc] windows
+          for (s32 y = 0; y < headCamInfo_.nrows; y += inc)
+          {
+            for (s32 x = 0; x < headCamInfo_.ncols; x += inc)
+            {
+              s32 sum = 0;
+              for (s32 y1 = y; y1 < y + inc; y1++)
+              {
+                for (s32 x1 = x; x1 < x + inc; x1++)
+                {
+                  //int index = x1 + y1 * headCamInfo_.ncols;
+                  //sum += frame[index];
+                  sum += webots::Camera::imageGetGrey(image, headCamInfo_.ncols, x1, y1);
+                }
+              }
+              frame[pixel++] = (sum / (inc * inc));
             }
-            return true;
           }
-          break;
+        } // if averaging or not
         
-        default:
-          PRINT("ERROR (CameraIsEndOfFrame): Invalid camera %d\n", cameraID);
-          break;
-      }
-      return false;
-       */
-    }
-    
-    void HAL::CameraSetIsEndOfFrame(CameraID cameraID, bool isEOF)
-    {
+      } // if image==NULL or not
       
-    }
+    } // CameraGetFrame()
     
     
     // Get the number of microseconds since boot

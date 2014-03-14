@@ -2,6 +2,8 @@
 #include "anki/cozmo/robot/hal.h"
 #include "hal/portable.h"
 
+#include "anki/cozmo/robot/cozmoConfig.h" // for calibration parameters
+
 GPIO_PIN_SOURCE(D0, GPIOA, 9);
 GPIO_PIN_SOURCE(D1, GPIOA, 10);
 GPIO_PIN_SOURCE(D2, GPIOG, 10);
@@ -458,6 +460,23 @@ namespace Anki
             frame[dataY * xRes + dataX] = m_buffer[y * 320 * 2 + x * 2];
           }
         }
+      }
+      
+      const CameraInfo* GetHeadCamInfo(void)
+      {
+        headCamInfo_ = {
+          HEAD_CAM_CALIB_FOCAL_LENGTH_X,
+          HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
+          ComputeVerticalFOV(HEAD_CAM_CALIB_HEIGHT,
+                             HEAD_CAM_CALIB_FOCAL_LENGTH_Y),
+          HEAD_CAM_CALIB_CENTER_X,
+          HEAD_CAM_CALIB_CENTER_Y,
+          0.f,
+          HEAD_CAM_CALIB_HEIGHT,
+          HEAD_CAM_CALIB_WIDTH
+        };
+
+        return &headCamInfo_;
       }
     }
   }

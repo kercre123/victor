@@ -1,6 +1,8 @@
 function imgNew = AddFiducial(img, varargin)
 
 CropImage = true;
+OutputSize = 512;
+PadOutside = true;
 
 parseVarargin(varargin{:});
 
@@ -9,7 +11,7 @@ img = mean(im2double(img),3);
 if CropImage
     [nrows,ncols] = size(img);
     
-    row = any(img<1,1); %#ok<UNRCH>
+    row = any(img<1,1); 
     xmin = find(row, 1, 'first');
     xmax = find(row, 1, 'last');
     
@@ -47,17 +49,29 @@ assert(nrows==ncols, 'By now, image should be square.');
 
 [squareWidth_pix, padding_pix] = VisionMarkerTrained.GetFiducialPixelSize(...
     nrows, 'CodeImageOnly');
-imgNew = padarray(img, round(2*padding_pix+squareWidth_pix)*[1 1], 1, 'both');
 
-padding_pix = round(padding_pix);
-squareWidth_pix = round(squareWidth_pix);
-
-[nrows,ncols,~] = size(imgNew);
-imgNew(padding_pix+(1:squareWidth_pix), (padding_pix+1):(ncols-padding_pix)) = 0;
-imgNew((nrows-padding_pix-squareWidth_pix+1):(nrows-padding_pix), (padding_pix+1):(ncols-padding_pix)) = 0;
-
-imgNew((padding_pix+1):(nrows-padding_pix), padding_pix+(1:squareWidth_pix)) = 0;
-imgNew((padding_pix+1):(nrows-padding_pix), (ncols-padding_pix-squareWidth_pix+1):(ncols-padding_pix)) = 0;
+if PadOutside
+    imgNew = padarray(img, round(2*padding_pix+squareWidth_pix)*[1 1], 1, 'both');
+    
+    padding_pix = round(padding_pix);
+    squareWidth_pix = round(squareWidth_pix);
+    
+    [nrows,ncols,~] = size(imgNew);
+    imgNew(padding_pix+(1:squareWidth_pix), (padding_pix+1):(ncols-padding_pix)) = 0;
+    imgNew((nrows-padding_pix-squareWidth_pix+1):(nrows-padding_pix), (padding_pix+1):(ncols-padding_pix)) = 0;
+    
+    imgNew((padding_pix+1):(nrows-padding_pix), padding_pix+(1:squareWidth_pix)) = 0;
+    imgNew((padding_pix+1):(nrows-padding_pix), (ncols-padding_pix-squareWidth_pix+1):(ncols-padding_pix)) = 0;
+else
+    imgNew = padarray(img, round(padding_pix+squareWidth_pix)*[1 1], 1, 'both'); %#ok<UNRCH>
+    
+    padding_pix = round(padding_pix);
+    squareWidth_pix = round(squareWidth_pix);
+    
+    [nrows,ncols,~] = size(imgNew);
+    imgNew([1:squareWidth_pix (end-squareWidth_pix+1):end],:) = 0;
+    imgNew(:,[1:squareWidth_pix (end-squareWidth_pix+1):end]) = 0;
+end
 
 if nargout == 0
     subplot 131, imagesc(img), axis image
@@ -65,19 +79,35 @@ if nargout == 0
     squareFrac = VisionMarkerTrained.SquareWidthFraction;
     paddingFrac = VisionMarkerTrained.FiducialPaddingFraction;
     
-    subplot 132, hold off, imagesc([-paddingFrac 1+paddingFrac], [-paddingFrac 1+paddingFrac], imgNew), axis image, hold on
-    rectangle('Pos', [(squareFrac+paddingFrac)*[1 1] (1-2*squareFrac-2*paddingFrac)*[1 1]], 'EdgeColor', 'r', 'LineStyle', '--');
-    plot([0 0 1 1], [0 1 0 1], 'y+');
-    
-    subplot 133, hold off, imagesc(imgNew), axis image, hold on
-    Corners = [padding_pix+1 padding_pix+1;
-        padding_pix+1 nrows-padding_pix-1;
-        ncols-padding_pix-1 padding_pix+1;
-        ncols-padding_pix-1 nrows-padding_pix+1];
-    plot(Corners(:,1), Corners(:,2), 'y+');
-    rectangle('Pos', [(squareWidth_pix+2*padding_pix)*[1 1] (nrows-2*squareWidth_pix-4*padding_pix)*[1 1]], 'EdgeColor', 'r', 'LineStyle', '--');
+    if PadOutside
+        subplot 132, hold off, imagesc([-paddingFrac 1+paddingFrac], [-paddingFrac 1+paddingFrac], imgNew), axis image, hold on
+        rectangle('Pos', [(squareFrac+paddingFrac)*[1 1] (1-2*squareFrac-2*paddingFrac)*[1 1]], 'EdgeColor', 'r', 'LineStyle', '--');
+        plot([0 0 1 1], [0 1 0 1], 'y+');
+        
+        subplot 133, hold off, imagesc(imgNew), axis image, hold on
+        Corners = [padding_pix+1 padding_pix+1;
+            padding_pix+1 nrows-padding_pix-1;
+            ncols-padding_pix-1 padding_pix+1;
+            ncols-padding_pix-1 nrows-padding_pix-1];
+        plot(Corners(:,1), Corners(:,2), 'y+');
+        rectangle('Pos', [(squareWidth_pix+2*padding_pix)*[1 1] (nrows-2*squareWidth_pix-4*padding_pix)*[1 1]], 'EdgeColor', 'r', 'LineStyle', '--');
+    else
+        subplot 132, hold off, imagesc([0 1], [0 1], imgNew), axis image, hold on
+        rectangle('Pos', [(squareFrac+paddingFrac)*[1 1] (1-2*squareFrac-2*paddingFrac)*[1 1]], 'EdgeColor', 'r', 'LineStyle', '--');
+        plot([0 0 1 1], [0 1 0 1], 'y+');
+        
+        subplot 133, hold off, imagesc(imgNew), axis image, hold on
+        Corners = [1 1;
+            1 nrows;
+            ncols 1;
+            ncols nrows];
+        plot(Corners(:,1), Corners(:,2), 'y+');
+        rectangle('Pos', [(squareWidth_pix+padding_pix)*[1 1] (nrows-2*squareWidth_pix-2*padding_pix)*[1 1]], 'EdgeColor', 'r', 'LineStyle', '--');
+    end
     
     colormap(gray)
+else
+    imgNew = imresize(imgNew, OutputSize*[1 1]);
 end
 
 end

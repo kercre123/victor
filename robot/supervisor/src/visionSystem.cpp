@@ -519,10 +519,15 @@ namespace MatlabVisualization
   {
     matlabViz_.PutQuad(corners, "detectedQuad");
     matlabViz_.EvalStringEcho("plot(detectedQuad([1 2 4 3 1],1)+1, "
-      "     detectedQuad([1 2 4 3 1],2)+1, "
-      "     'r', 'LineWidth', 2, "
-      "     'Parent', h_axes, "
-      "     'Tag', 'DetectedQuad');");
+                              "     detectedQuad([1 2 4 3 1],2)+1, "
+                              "     'r', 'LineWidth', 2, "
+                              "     'Parent', h_axes, "
+                              "     'Tag', 'DetectedQuad'); "
+                              "plot(detectedQuad([1 3],1)+1, "
+                              "     detectedQuad([1 3],2)+1, "
+                              "     'g', 'LineWidth', 2, "
+                              "     'Parent', h_axes, "
+                              "     'Tag', 'DetectedQuad');");
 
     return EXIT_SUCCESS;
   }
@@ -1112,7 +1117,6 @@ namespace Anki {
 #endif
         
         HAL::CameraGetFrame(reinterpret_cast<u8*>(VisionMemory::grayscaleImage_.get_rawDataPointer()), HAL::CAMERA_MODE_QVGA, 0, false);
-
 
         //#if USE_OFFBOARD_VISION
         //        return Update_Offboard();

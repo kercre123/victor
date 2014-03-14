@@ -50,6 +50,7 @@ namespace Anki {
       const Vision::Camera& get_camDown() const;
       const Vision::Camera& get_camHead() const;
       OperationMode get_operationMode() const;
+      const Radians get_headAngle() const;
       
       void set_pose(const Pose3d &newPose);
       void set_headAngle(const Radians& angle);
@@ -141,6 +142,8 @@ namespace Anki {
     inline bool Robot::hasOutgoingMessages() const
     { return not this->messagesOut.empty(); }
     
+    inline const Radians Robot::get_headAngle() const
+    { return this->camHead.get_pose().get_rotationAngle(); }
     
     //
     // RobotManager class for keeping up with available robots, by their ID
