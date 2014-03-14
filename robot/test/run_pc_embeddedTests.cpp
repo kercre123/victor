@@ -34,7 +34,7 @@ int main()
 
   //char * filterString = "--gtest_filter=*"; // Run all tests
   //char * filterString = "--gtest_filter=*DetectFiducialMarkers*"; // Run only some tests
-  char * filterString = "--gtest_filter=*LucasKanadeTrackerTmp"; // Run only some tests
+  char * filterString = "--gtest_filter=*Lucas*"; // Run only some tests
   //char * filterString = "--gtest_filter=*Binary*"; // Run only some tests
 
   argc++;
