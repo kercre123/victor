@@ -21,7 +21,6 @@
 #include "anki/messaging/shared/UdpClient.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 
-using namespace std;
 
 namespace Anki {
 namespace Cozmo {
@@ -89,7 +88,7 @@ namespace Cozmo {
     
     int GetNumAdvertisingRobots() const { return advertisingRobots_.size(); }
     
-    int GetAdvertisingRobotIDs(vector<int> &robotIDs);
+    int GetAdvertisingRobotIDs(std::vector<int> &robotIDs);
     
     // Clears the list of advertising robots.
     void ClearAdvertisingRobots();
@@ -105,15 +104,15 @@ namespace Cozmo {
     void PrintRecvBuf(int robotID);
     
     // Map of advertising robots (key: robot id)
-    typedef map<int, RobotConnectionInfo_t>::iterator advertisingRobotsIt_t;
-    map<int, RobotConnectionInfo_t> advertisingRobots_;
+    typedef std::map<int, RobotConnectionInfo_t>::iterator advertisingRobotsIt_t;
+    std::map<int, RobotConnectionInfo_t> advertisingRobots_;
     
     // Map of connected robots (key: robot id)
-    typedef map<int, ConnectedRobotInfo>::iterator connectedRobotsIt_t;
-    map<int, ConnectedRobotInfo> connectedRobots_;
+    typedef std::map<int, ConnectedRobotInfo>::iterator connectedRobotsIt_t;
+    std::map<int, ConnectedRobotInfo> connectedRobots_;
     
     // 'Queue' of received messages from all connected robots
-    multimap<TimeStamp_t, Comms::MsgPacket> recvdMsgPackets_;
+    std::multimap<TimeStamp_t, Comms::MsgPacket> recvdMsgPackets_;
     
   };
 

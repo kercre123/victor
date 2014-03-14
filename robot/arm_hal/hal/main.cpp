@@ -111,7 +111,6 @@ int main(void)
   Anki::Cozmo::Robot::Init();
   
   while (Anki::Cozmo::Robot::step_LongExecution() == EXIT_SUCCESS)
-  //while(1)
   {
     /*CameraGetFrame(buffer, CAMERA_MODE_QQVGA, 0, false);
     

@@ -47,6 +47,16 @@
 
 #define HAVE_ACTIVE_GRIPPER 0
 
+// Set to 0 if you want to read printf output in a terminal and you're not
+// using UART as radio. The radio is effectively disabled in this case.
+// Set to 1 if using UART as radio. This disables PRINT calls only from
+// going out UART. printf will still do it and probably corrupt comms
+#define USING_UART_RADIO 1
+
+// Diverts PRINT() statements to radio.
+// USING_UART_RADIO must be 1 for this to work.
+#define DIVERT_PRINT_TO_RADIO 1
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -64,6 +74,18 @@ extern "C" {
 
 #else // #ifdef USE_CAPTURE_IMAGES
 
+#if(USING_UART_RADIO)
+
+#if(DIVERT_PRINT_TO_RADIO)
+#define PRINT(...) Messages::SendText(__VA_ARGS__)
+#else
+#define PRINT(...)
+#endif // #if(USING_UART_RADIO)
+
+#define PERIODIC_PRINT(num_calls_between_prints, ...)
+
+#else
+
 #define PRINT(...) printf(__VA_ARGS__)
 
 // Prints once every num_calls_between_prints times you call it
@@ -75,9 +97,19 @@ extern "C" {
     cnt = 0; \
   } \
 }
+
+#endif // if (USING_UART_RADIO)
+
 #endif // #ifdef USE_CAPTURE_IMAGES ... #else
 
 #elif defined(SIMULATOR) // #ifndef SIMULATOR
+
+#if(USING_UART_RADIO && DIVERT_PRINT_TO_RADIO)
+
+#define PRINT(...) Messages::SendText(__VA_ARGS__)
+#define PERIODIC_PRINT(num_calls_between_prints, ...)
+
+#else
 
 #define PRINT(...) fprintf(stdout, __VA_ARGS__)
 
@@ -89,6 +121,8 @@ extern "C" {
     cnt = 0; \
   } \
 }
+
+#endif // #if(USING_UART_RADIO && DIVERT_PRINT_TO_RADIO)
 
 #endif  // #elif defined(SIMULATOR)
 

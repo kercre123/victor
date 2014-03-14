@@ -253,7 +253,7 @@ namespace Anki {
       }
       
       f32 wheelSpeedDiff = *higherWheelSpeed - *lowerWheelSpeed;
-      f32 avgSpeed = (*higherWheelSpeed + *lowerWheelSpeed) * 0.5;
+      f32 avgSpeed = (*higherWheelSpeed + *lowerWheelSpeed) * 0.5f;
       
       // Center speeds on 0 if wheelSpeedDiff exceeds maximum achievable wheel speed
       if (wheelSpeedDiff > 2*WheelController::MAX_WHEEL_SPEED_MM_S) {
@@ -352,7 +352,7 @@ namespace Anki {
       
       // Get current desired wheel speeds
       f32 currLeftVel, currRightVel;
-      WheelController::GetDesiredWheelSpeeds(&currLeftVel, &currRightVel);
+      WheelController::GetDesiredWheelSpeeds(currLeftVel, currRightVel);
       
       targetLeftVel_ = left_vel;
       targetRightVel_ = right_vel;
@@ -370,7 +370,7 @@ namespace Anki {
     {
       // Get current desired wheel speeds
       f32 currLeftVel, currRightVel;
-      WheelController::GetDesiredWheelSpeeds(&currLeftVel, &currRightVel);
+      WheelController::GetDesiredWheelSpeeds(currLeftVel, currRightVel);
       
 //      PRINT("CURR: %f %f\n", targetLeftVel_, targetRightVel_);
      

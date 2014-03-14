@@ -33,7 +33,7 @@ namespace Anki {
     
     void BehaviorManager::Update()
     {
-      Update_PickAndPlaceBlock();
+      //Update_PickAndPlaceBlock();
     }
     
     void BehaviorManager::Update_PickAndPlaceBlock()

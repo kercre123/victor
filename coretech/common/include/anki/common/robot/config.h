@@ -162,7 +162,7 @@ extern "C" {
 #define ANKI_VISION_IMAGE_WIDTH_MULTIPLE (1<<ANKI_VISION_IMAGE_WIDTH_SHIFT)
 
 // Which errors will be checked and reported?
-#define ANKI_DEBUG_MINIMAL 0 // Only check and output issue with explicit unit tests
+#define ANKI_DEBUG_MINIMAL 0 // Only check and output issues with explicit unit tests
 #define ANKI_DEBUG_ERRORS 10 // Check and output AnkiErrors and explicit unit tests
 #define ANKI_DEBUG_ERRORS_AND_WARNS 20 // Check and output AnkiErrors, AnkiWarns, and explicit unit tests
 #define ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS 30 // Check and output AnkiErrors, AnkiWarns, AnkiAsserts, and explicit unit tests

@@ -90,6 +90,9 @@ namespace Anki
         // Set this object's transformType, centerOffset, initialCorners, and homography
         Result Set(const PlanarTransformation_f32 &newTransformation);
 
+        Result Serialize(void * buffer, const s32 bufferLength) const;
+        Result Deserialize(const void* buffer, const s32 bufferLength);
+
         Result set_transformType(const TransformType transformType);
         TransformType get_transformType() const;
 
@@ -99,6 +102,7 @@ namespace Anki
         Result set_initialCorners(const Quadrilateral<f32> &initialCorners);
         const Quadrilateral<f32>& get_initialCorners() const;
 
+        Result set_centerOffset(const Point<f32> &centerOffset);
         const Point<f32>& get_centerOffset() const;
 
         // Transform this object's initialCorners, based on its current homography

@@ -184,7 +184,12 @@ namespace Anki
 
       Result PlanarTransformation_f32::Print(const char * const variableName)
       {
-        return this->homography.Print(variableName);
+        printf(variableName);
+        printf(": center");
+        this->centerOffset.Print();
+        printf("\n");
+
+        return this->homography.Print("homography");
       }
 
       Quadrilateral<f32> PlanarTransformation_f32::TransformQuadrilateral(const Quadrilateral<f32> &in, MemoryStack scratch, const f32 scale) const
@@ -301,6 +306,56 @@ namespace Anki
         return RESULT_OK;
       }
 
+      Result PlanarTransformation_f32::Serialize(void * buffer, const s32 bufferLength) const
+      {
+        // TODO: make the correct length
+        if(bufferLength < 512) {
+          return RESULT_FAIL;
+        }
+
+        char * bufferChar = reinterpret_cast<char*>(buffer);
+
+        memcpy(bufferChar, reinterpret_cast<const void*>(&this->isValid), sizeof(this->isValid));
+        bufferChar += sizeof(this->isValid);
+
+        const s32 transformTypeS32 = static_cast<s32>(this->transformType);
+        memcpy(bufferChar, reinterpret_cast<const void*>(&transformTypeS32), sizeof(transformTypeS32));
+        bufferChar += sizeof(transformTypeS32);
+
+        const s32 numArrayBytes = this->homography.get_stride()*this->homography.get_size(0);
+        memcpy(bufferChar, reinterpret_cast<const void*>(this->homography.Pointer(0,0)), numArrayBytes);
+        bufferChar += numArrayBytes;
+
+        memcpy(bufferChar, reinterpret_cast<const void*>(&this->initialCorners), sizeof(this->initialCorners));
+        bufferChar += sizeof(this->initialCorners);
+
+        memcpy(bufferChar, reinterpret_cast<const void*>(&this->centerOffset), sizeof(this->centerOffset));
+
+        return RESULT_OK;
+      }
+
+      Result PlanarTransformation_f32::Deserialize(const void* buffer, const s32 bufferLength)
+      {
+        const char * bufferChar = reinterpret_cast<const char*>(buffer);
+
+        this->isValid = *reinterpret_cast<const bool*>(bufferChar);
+        bufferChar += sizeof(this->isValid);
+
+        this->transformType = static_cast<TransformType>(*reinterpret_cast<const s32*>(bufferChar));
+        bufferChar += sizeof(s32);
+
+        const s32 numArrayBytes = this->homography.get_stride()*this->homography.get_size(0);
+        memcpy(this->homography.Pointer(0,0), bufferChar, numArrayBytes);
+        bufferChar += numArrayBytes;
+
+        this->initialCorners = *reinterpret_cast<const Quadrilateral<f32>*>(bufferChar);
+        bufferChar += sizeof(this->initialCorners);
+
+        this->centerOffset = *reinterpret_cast<const Point<f32>*>(bufferChar);
+
+        return RESULT_OK;
+      }
+
       Result PlanarTransformation_f32::set_transformType(const TransformType transformType)
       {
         if(transformType == TRANSFORM_TRANSLATION || transformType == TRANSFORM_AFFINE || transformType == TRANSFORM_PROJECTIVE) {
@@ -343,6 +398,13 @@ namespace Anki
       const Quadrilateral<f32>& PlanarTransformation_f32::get_initialCorners() const
       {
         return this->initialCorners;
+      }
+
+      Result PlanarTransformation_f32::set_centerOffset(const Point<f32> &centerOffset)
+      {
+        this->centerOffset = centerOffset;
+
+        return RESULT_OK;
       }
 
       const Point<f32>& PlanarTransformation_f32::get_centerOffset() const
@@ -469,15 +531,17 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(scratch.IsValid(),
           RESULT_FAIL_INVALID_OBJECT, "ComputeHomographyFromQuad", "scratch is not valid");
 
-        Quadrilateral<s16> sortedQuad = quad.ComputeClockwiseCorners();
+        // TODO: I got rid of sorting, but now we have an extra copy here that can be removed.
+        //Quadrilateral<s16> sortedQuad = quad.ComputeClockwiseCorners();
+        Quadrilateral<s16> sortedQuad = quad;
 
         FixedLengthList<Point<f32> > originalPoints(4, scratch);
         FixedLengthList<Point<f32> > transformedPoints(4, scratch);
 
         originalPoints.PushBack(Point<f32>(0,0));
         originalPoints.PushBack(Point<f32>(0,1));
-        originalPoints.PushBack(Point<f32>(1,1));
         originalPoints.PushBack(Point<f32>(1,0));
+        originalPoints.PushBack(Point<f32>(1,1));
 
         transformedPoints.PushBack(Point<f32>(sortedQuad[0].x, sortedQuad[0].y));
         transformedPoints.PushBack(Point<f32>(sortedQuad[1].x, sortedQuad[1].y));

@@ -155,7 +155,7 @@ namespace CozmoCommsTranslator
                 // Setup serial comms
                 SerialPort serialPort = new SerialPort();
                 serialPort.PortName = robotComPort;
-                serialPort.BaudRate = 1500000;
+                serialPort.BaudRate = 1000000;
                 serialPort.DataBits = 8;
                 serialPort.StopBits = StopBits.One;
                 serialPort.Handshake = Handshake.None;
@@ -231,7 +231,7 @@ namespace CozmoCommsTranslator
                         // Send data from basestation to robot
                         while (bsClient.Available > 0) {
                             bytesRead = bsStream.Read(bytes, 0, Math.Min(bsClient.Available, bytes.Length));
-                            Console.WriteLine("BS-READ (" + bytesRead + " bytes): " + ByteArrayToString(bytes));
+                            Console.WriteLine("BS-READ " + bytesRead + " bytes");
 
 #if (USE_SERIAL)
                             if (bytesRead > 0) {
@@ -248,6 +248,7 @@ namespace CozmoCommsTranslator
                         while (serialPort.BytesToRead > 0)
                         {
                             bytesRead = serialPort.Read(bytes, 0, Math.Min(serialPort.BytesToRead, bytes.Length));
+                            Console.WriteLine("ROBOT-READ " + bytesRead + " bytes ");
                             bsStream.Write(bytes, 0, bytesRead);
                         }
 #endif

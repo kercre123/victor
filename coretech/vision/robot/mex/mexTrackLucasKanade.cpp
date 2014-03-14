@@ -15,7 +15,7 @@ using namespace Anki::Embedded;
 // nextImage = uint8(rgb2gray(imresize(imread('C:\Anki\blockImages\blockImages00316.png'), [480,640]/8)));
 // templateRegionRectangle = [29,39,11,21]; % [left, right, top, bottom]
 // numPyramidLevels = 2;
-// transformType = bitshift(2,8);
+// transformType = bitshift(2,8); // translation
 // ridgeWeight = 1e-3;
 // maxIterations = 50;
 // convergenceTolerance = 0.05;
@@ -46,13 +46,16 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   AnkiConditionalErrorAndReturn(nextImage.IsValid(), "mexTrackLucasKanade", "Could not allocate nextImage");
   AnkiConditionalErrorAndReturn(homography_f64.IsValid(), "mexTrackLucasKanade", "Could not allocate homography_f64");
 
+  //templateImage.Show("templateImage", false);
+  //nextImage.Show("nextImage", true);
+
   Rectangle<f32> templateRegion(
     static_cast<f32>(templateRegionRectangle_array[0][0]),
     static_cast<f32>(templateRegionRectangle_array[0][1]),
     static_cast<f32>(templateRegionRectangle_array[0][2]),
     static_cast<f32>(templateRegionRectangle_array[0][3]));
 
-  TemplateTracker::LucasKanadeTracker_f32 tracker(templateImage, templateRegion, numPyramidLevels, transformType, ridgeWeight, memory);
+  TemplateTracker::LucasKanadeTracker_Slow tracker(templateImage, templateRegion, numPyramidLevels, transformType, ridgeWeight, memory);
 
   AnkiConditionalErrorAndReturn(tracker.IsValid(), "mexTrackLucasKanade", "Could not construct tracker");
 
@@ -62,6 +65,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   homography.SetCast<f64>(homography_f64);
 
   initialTransform.set_homography(homography);
+  initialTransform.set_centerOffset(tracker.get_transformation().get_centerOffset());
 
   if(tracker.set_transformation(initialTransform) != RESULT_OK) {
     AnkiError("mexTrackLucasKanade", "set_transformation");

@@ -2,8 +2,9 @@ classdef VisionMarkerTrained
         
     properties(Constant = true)
         
-        %TrainingImageDir = '~/Box Sync/Cozmo SE/VisionMarkers/lettersWithFiducials';
-        TrainingImageDir = '~/Box Sync/Cozmo SE/VisionMarkers/symbolsWithFiducials/rotated';
+        %TrainingImageDir = '~/Box Sync/Cozmo SE/VisionMarkers/lettersWithFiducials/rotated';
+        %TrainingImageDir = '~/Box Sync/Cozmo SE/VisionMarkers/symbolsWithFiducials/rotated';
+        TrainingImageDir = '~/Box Sync/Cozmo SE/VisionMarkers/symbolsAndLetters';
         
         ProbeParameters = struct( ...
             'Radius', 0.02, ...  % As a fraction of a canonical unit square 
@@ -32,11 +33,12 @@ classdef VisionMarkerTrained
         
         img = AddFiducial(img, varargin);
         AddFiducialBatch(inputDir, outputDir, varargin);
-        TrainProbeTree(varargin);
+        probeTree = TrainProbeTree(varargin);
         [squareWidth_pix, padding_pix] = GetFiducialPixelSize(imageSize, imageSizeType);
         corners = GetFiducialCorners(imageSize);
         threshold = ComputeThreshold(img, tform);
         outputString = GenerateHeaderFiles(varargin);
+        
     end % Static Methods
     
     methods(Static = true, Access = 'protected')
@@ -112,7 +114,7 @@ classdef VisionMarkerTrained
                     VisionMarkerTrained.ProbeTree, img, tform, threshold, ...
                     VisionMarkerTrained.ProbePattern);
                 
-                if any(strcmp(this.codeName, {'UNKNOWN', 'ALL_WHITE', 'ALL_BLACK'}))
+                if any(strcmp(this.codeName, {'UNKNOWN', 'ALLWHITE', 'ALLBLACK'}))
                     this.isValid = false;
                 else
                     if UseSingleProbe

@@ -138,10 +138,41 @@
         <SetRegEntry>
           <Number>0</Number>
           <Key>UL2CM3</Key>
+<<<<<<< HEAD
           <Name>-UV0918REE -O206 -S0 -C0 -P00 -N00("ARM CoreSight SW-DP") -D00(2BA01477) -L00(0) -TO18 -TC10000000 -TP21 -TDS8007 -TDT0 -TDC1F -TIEFFFFFFFF -TIP8 -FO15 -FD20000000 -FC1000 -FN1 -FF0STM32F4xx_2048.FLM -FS08000000 -FL0200000 -FP0($$Device:STM32F439NI$Flash\STM32F4xx_2048.FLM)</Name>
+=======
+          <Name>-UV0213REE -O206 -S0 -C0 -P00 -N00("ARM CoreSight SW-DP") -D00(2BA01477) -L00(0) -TO18 -TC10000000 -TP21 -TDS8007 -TDT0 -TDC1F -TIEFFFFFFFF -TIP8 -FO15 -FD20000000 -FC1000 -FN1 -FF0STM32F4xx_2048.FLM -FS08000000 -FL0200000 -FP0($$Device:STM32F439NI$Flash\STM32F4xx_2048.FLM)</Name>
+>>>>>>> cf3b15762dbf588dda2d5d57cef75b96dc70444e
         </SetRegEntry>
       </TargetDriverDllRegistry>
       <Breakpoint/>
+      <WatchWindow1>
+        <Ww>
+          <count>0</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>mode_</ItemText>
+        </Ww>
+        <Ww>
+          <count>1</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>VISION_MODE_IDLE</ItemText>
+        </Ww>
+        <Ww>
+          <count>2</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>markers_</ItemText>
+        </Ww>
+        <Ww>
+          <count>3</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>numMarkers</ItemText>
+        </Ww>
+        <Ww>
+          <count>4</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>secondValue</ItemText>
+        </Ww>
+      </WatchWindow1>
       <Tracepoint>
         <THDelay>0</THDelay>
       </Tracepoint>
@@ -163,9 +194,9 @@
         <aSer3>0</aSer3>
         <eProf>0</eProf>
         <aLa>0</aLa>
-        <aPa1>0</aPa1>
+        <aPa1>1</aPa1>
         <AscS4>0</AscS4>
-        <aSer4>0</aSer4>
+        <aSer4>1</aSer4>
         <StkLoc>0</StkLoc>
         <TrcWin>0</TrcWin>
         <newCpu>0</newCpu>
@@ -331,8 +362,13 @@
       <Focus>0</Focus>
       <ColumnNumber>8</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
+<<<<<<< HEAD
       <TopLine>415</TopLine>
       <CurrentLine>440</CurrentLine>
+=======
+      <TopLine>0</TopLine>
+      <CurrentLine>0</CurrentLine>
+>>>>>>> cf3b15762dbf588dda2d5d57cef75b96dc70444e
       <bDave2>0</bDave2>
       <PathWithFileName>.\arm_hal\hal\frontCamera.cpp</PathWithFileName>
       <FilenameWithoutPath>frontCamera.cpp</FilenameWithoutPath>
@@ -345,10 +381,17 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
+<<<<<<< HEAD
       <ColumnNumber>3</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
       <TopLine>93</TopLine>
       <CurrentLine>107</CurrentLine>
+=======
+      <ColumnNumber>7</ColumnNumber>
+      <tvExpOptDlg>0</tvExpOptDlg>
+      <TopLine>71</TopLine>
+      <CurrentLine>77</CurrentLine>
+>>>>>>> cf3b15762dbf588dda2d5d57cef75b96dc70444e
       <bDave2>0</bDave2>
       <PathWithFileName>.\arm_hal\hal\main.cpp</PathWithFileName>
       <FilenameWithoutPath>main.cpp</FilenameWithoutPath>
@@ -361,13 +404,13 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>0</ColumnNumber>
+      <ColumnNumber>6</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
       <TopLine>0</TopLine>
       <CurrentLine>0</CurrentLine>
       <bDave2>0</bDave2>
-      <PathWithFileName>.\arm_hal\hal\retarget.cpp</PathWithFileName>
-      <FilenameWithoutPath>retarget.cpp</FilenameWithoutPath>
+      <PathWithFileName>.\arm_hal\hal\motors.cpp</PathWithFileName>
+      <FilenameWithoutPath>motors.cpp</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -382,8 +425,8 @@
       <TopLine>1</TopLine>
       <CurrentLine>9</CurrentLine>
       <bDave2>0</bDave2>
-      <PathWithFileName>.\arm_hal\hal\startup.cpp</PathWithFileName>
-      <FilenameWithoutPath>startup.cpp</FilenameWithoutPath>
+      <PathWithFileName>.\arm_hal\hal\retarget.cpp</PathWithFileName>
+      <FilenameWithoutPath>retarget.cpp</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -393,13 +436,18 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>0</ColumnNumber>
+      <ColumnNumber>2</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
+<<<<<<< HEAD
       <TopLine>5</TopLine>
       <CurrentLine>29</CurrentLine>
+=======
+      <TopLine>0</TopLine>
+      <CurrentLine>0</CurrentLine>
+>>>>>>> cf3b15762dbf588dda2d5d57cef75b96dc70444e
       <bDave2>0</bDave2>
-      <PathWithFileName>.\arm_hal\hal\timer.cpp</PathWithFileName>
-      <FilenameWithoutPath>timer.cpp</FilenameWithoutPath>
+      <PathWithFileName>.\arm_hal\hal\spi.cpp</PathWithFileName>
+      <FilenameWithoutPath>spi.cpp</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -414,8 +462,8 @@
       <TopLine>148</TopLine>
       <CurrentLine>182</CurrentLine>
       <bDave2>0</bDave2>
-      <PathWithFileName>.\arm_hal\hal\uart.cpp</PathWithFileName>
-      <FilenameWithoutPath>uart.cpp</FilenameWithoutPath>
+      <PathWithFileName>.\arm_hal\hal\startup.cpp</PathWithFileName>
+      <FilenameWithoutPath>startup.cpp</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -425,13 +473,20 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
+<<<<<<< HEAD
       <ColumnNumber>42</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
       <TopLine>20</TopLine>
       <CurrentLine>38</CurrentLine>
+=======
+      <ColumnNumber>0</ColumnNumber>
+      <tvExpOptDlg>0</tvExpOptDlg>
+      <TopLine>0</TopLine>
+      <CurrentLine>0</CurrentLine>
+>>>>>>> cf3b15762dbf588dda2d5d57cef75b96dc70444e
       <bDave2>0</bDave2>
-      <PathWithFileName>.\arm_hal\hal\spi.cpp</PathWithFileName>
-      <FilenameWithoutPath>spi.cpp</FilenameWithoutPath>
+      <PathWithFileName>.\arm_hal\hal\timer.cpp</PathWithFileName>
+      <FilenameWithoutPath>timer.cpp</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -441,13 +496,20 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
+<<<<<<< HEAD
       <ColumnNumber>38</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
       <TopLine>1</TopLine>
       <CurrentLine>34</CurrentLine>
+=======
+      <ColumnNumber>1</ColumnNumber>
+      <tvExpOptDlg>0</tvExpOptDlg>
+      <TopLine>1</TopLine>
+      <CurrentLine>21</CurrentLine>
+>>>>>>> cf3b15762dbf588dda2d5d57cef75b96dc70444e
       <bDave2>0</bDave2>
-      <PathWithFileName>.\arm_hal\hal\motors.cpp</PathWithFileName>
-      <FilenameWithoutPath>motors.cpp</FilenameWithoutPath>
+      <PathWithFileName>.\arm_hal\hal\uart.cpp</PathWithFileName>
+      <FilenameWithoutPath>uart.cpp</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -739,8 +801,8 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>1</TopLine>
-      <CurrentLine>1</CurrentLine>
+      <TopLine>0</TopLine>
+      <CurrentLine>0</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\arm_hal\lib\stm32f4xx_gpio.c</PathWithFileName>
       <FilenameWithoutPath>stm32f4xx_gpio.c</FilenameWithoutPath>
@@ -867,8 +929,8 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>1</TopLine>
-      <CurrentLine>1</CurrentLine>
+      <TopLine>0</TopLine>
+      <CurrentLine>0</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\arm_hal\lib\stm32f4xx_rcc.c</PathWithFileName>
       <FilenameWithoutPath>stm32f4xx_rcc.c</FilenameWithoutPath>
@@ -1027,8 +1089,8 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>1</TopLine>
-      <CurrentLine>1</CurrentLine>
+      <TopLine>0</TopLine>
+      <CurrentLine>0</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\arm_hal\lib\system_stm32f4xx.c</PathWithFileName>
       <FilenameWithoutPath>system_stm32f4xx.c</FilenameWithoutPath>
@@ -1243,7 +1305,11 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
+<<<<<<< HEAD
       <TopLine>181</TopLine>
+=======
+      <TopLine>187</TopLine>
+>>>>>>> cf3b15762dbf588dda2d5d57cef75b96dc70444e
       <CurrentLine>192</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\arm_hal\startup\startup_stm32f429_439xx.s</PathWithFileName>
@@ -1283,8 +1349,8 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>0</TopLine>
-      <CurrentLine>0</CurrentLine>
+      <TopLine>323</TopLine>
+      <CurrentLine>355</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\supervisor\src\cozmoBot.cpp</PathWithFileName>
       <FilenameWithoutPath>cozmoBot.cpp</FilenameWithoutPath>
@@ -1379,8 +1445,8 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>0</TopLine>
-      <CurrentLine>0</CurrentLine>
+      <TopLine>233</TopLine>
+      <CurrentLine>234</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\supervisor\src\messages.cpp</PathWithFileName>
       <FilenameWithoutPath>messages.cpp</FilenameWithoutPath>
@@ -1430,6 +1496,22 @@
       <TopLine>0</TopLine>
       <CurrentLine>0</CurrentLine>
       <bDave2>0</bDave2>
+      <PathWithFileName>.\supervisor\src\pickAndPlaceController.cpp</PathWithFileName>
+      <FilenameWithoutPath>pickAndPlaceController.cpp</FilenameWithoutPath>
+      <RteFlg>0</RteFlg>
+      <bShared>0</bShared>
+    </File>
+    <File>
+      <GroupNumber>4</GroupNumber>
+      <FileNumber>69</FileNumber>
+      <FileType>8</FileType>
+      <tvExp>0</tvExp>
+      <Focus>0</Focus>
+      <ColumnNumber>0</ColumnNumber>
+      <tvExpOptDlg>0</tvExpOptDlg>
+      <TopLine>0</TopLine>
+      <CurrentLine>0</CurrentLine>
+      <bDave2>0</bDave2>
       <PathWithFileName>.\supervisor\src\speedController.cpp</PathWithFileName>
       <FilenameWithoutPath>speedController.cpp</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
@@ -1437,7 +1519,7 @@
     </File>
     <File>
       <GroupNumber>4</GroupNumber>
-      <FileNumber>69</FileNumber>
+      <FileNumber>70</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
@@ -1453,7 +1535,7 @@
     </File>
     <File>
       <GroupNumber>4</GroupNumber>
-      <FileNumber>70</FileNumber>
+      <FileNumber>71</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
@@ -1469,22 +1551,6 @@
     </File>
     <File>
       <GroupNumber>4</GroupNumber>
-      <FileNumber>71</FileNumber>
-      <FileType>8</FileType>
-      <tvExp>0</tvExp>
-      <Focus>0</Focus>
-      <ColumnNumber>0</ColumnNumber>
-      <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>1</TopLine>
-      <CurrentLine>1</CurrentLine>
-      <bDave2>0</bDave2>
-      <PathWithFileName>.\supervisor\src\usbPrint.cpp</PathWithFileName>
-      <FilenameWithoutPath>usbPrint.cpp</FilenameWithoutPath>
-      <RteFlg>0</RteFlg>
-      <bShared>0</bShared>
-    </File>
-    <File>
-      <GroupNumber>4</GroupNumber>
       <FileNumber>72</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
@@ -1494,8 +1560,8 @@
       <TopLine>1226</TopLine>
       <CurrentLine>725</CurrentLine>
       <bDave2>0</bDave2>
-      <PathWithFileName>.\supervisor\src\visionSystem.cpp</PathWithFileName>
-      <FilenameWithoutPath>visionSystem.cpp</FilenameWithoutPath>
+      <PathWithFileName>.\supervisor\src\usbPrint.cpp</PathWithFileName>
+      <FilenameWithoutPath>usbPrint.cpp</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -1505,13 +1571,13 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>0</ColumnNumber>
+      <ColumnNumber>34</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>0</TopLine>
-      <CurrentLine>0</CurrentLine>
+      <TopLine>54</TopLine>
+      <CurrentLine>61</CurrentLine>
       <bDave2>0</bDave2>
-      <PathWithFileName>.\supervisor\src\wheelController.cpp</PathWithFileName>
-      <FilenameWithoutPath>wheelController.cpp</FilenameWithoutPath>
+      <PathWithFileName>.\supervisor\src\visionSystem.cpp</PathWithFileName>
+      <FilenameWithoutPath>visionSystem.cpp</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -1526,8 +1592,8 @@
       <TopLine>0</TopLine>
       <CurrentLine>0</CurrentLine>
       <bDave2>0</bDave2>
-      <PathWithFileName>.\supervisor\src\pickAndPlaceController.cpp</PathWithFileName>
-      <FilenameWithoutPath>pickAndPlaceController.cpp</FilenameWithoutPath>
+      <PathWithFileName>.\supervisor\src\wheelController.cpp</PathWithFileName>
+      <FilenameWithoutPath>wheelController.cpp</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -1785,7 +1851,7 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>0</ColumnNumber>
+      <ColumnNumber>18</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
       <TopLine>0</TopLine>
       <CurrentLine>0</CurrentLine>
@@ -2015,7 +2081,7 @@
 
   <Group>
     <GroupName>coretech-vision</GroupName>
-    <tvExp>0</tvExp>
+    <tvExp>1</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>0</RteFlg>
@@ -2025,10 +2091,10 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>0</ColumnNumber>
+      <ColumnNumber>6</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>0</TopLine>
-      <CurrentLine>0</CurrentLine>
+      <TopLine>278</TopLine>
+      <CurrentLine>289</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>..\coretech\vision\robot\src\binaryTracker.cpp</PathWithFileName>
       <FilenameWithoutPath>binaryTracker.cpp</FilenameWithoutPath>
@@ -2043,8 +2109,24 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>0</TopLine>
-      <CurrentLine>0</CurrentLine>
+      <TopLine>8</TopLine>
+      <CurrentLine>33</CurrentLine>
+      <bDave2>0</bDave2>
+      <PathWithFileName>..\coretech\vision\robot\src\colorConversion.cpp</PathWithFileName>
+      <FilenameWithoutPath>colorConversion.cpp</FilenameWithoutPath>
+      <RteFlg>0</RteFlg>
+      <bShared>0</bShared>
+    </File>
+    <File>
+      <GroupNumber>9</GroupNumber>
+      <FileNumber>105</FileNumber>
+      <FileType>8</FileType>
+      <tvExp>0</tvExp>
+      <Focus>0</Focus>
+      <ColumnNumber>18</ColumnNumber>
+      <tvExpOptDlg>0</tvExpOptDlg>
+      <TopLine>608</TopLine>
+      <CurrentLine>628</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>..\coretech\vision\robot\src\connectedComponents.cpp</PathWithFileName>
       <FilenameWithoutPath>connectedComponents.cpp</FilenameWithoutPath>
@@ -2053,7 +2135,7 @@
     </File>
     <File>
       <GroupNumber>9</GroupNumber>
-      <FileNumber>105</FileNumber>
+      <FileNumber>106</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
@@ -2069,14 +2151,14 @@
     </File>
     <File>
       <GroupNumber>9</GroupNumber>
-      <FileNumber>106</FileNumber>
+      <FileNumber>107</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>0</TopLine>
-      <CurrentLine>0</CurrentLine>
+      <TopLine>9</TopLine>
+      <CurrentLine>73</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>..\coretech\vision\robot\src\computeCharacteristicScale.cpp</PathWithFileName>
       <FilenameWithoutPath>computeCharacteristicScale.cpp</FilenameWithoutPath>
@@ -2085,7 +2167,7 @@
     </File>
     <File>
       <GroupNumber>9</GroupNumber>
-      <FileNumber>107</FileNumber>
+      <FileNumber>108</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
@@ -2101,7 +2183,7 @@
     </File>
     <File>
       <GroupNumber>9</GroupNumber>
-      <FileNumber>108</FileNumber>
+      <FileNumber>109</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
@@ -2117,7 +2199,7 @@
     </File>
     <File>
       <GroupNumber>9</GroupNumber>
-      <FileNumber>109</FileNumber>
+      <FileNumber>110</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
@@ -2133,7 +2215,7 @@
     </File>
     <File>
       <GroupNumber>9</GroupNumber>
-      <FileNumber>110</FileNumber>
+      <FileNumber>111</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
@@ -2149,7 +2231,7 @@
     </File>
     <File>
       <GroupNumber>9</GroupNumber>
-      <FileNumber>111</FileNumber>
+      <FileNumber>112</FileNumber>
       <FileType>5</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
@@ -2165,7 +2247,7 @@
     </File>
     <File>
       <GroupNumber>9</GroupNumber>
-      <FileNumber>112</FileNumber>
+      <FileNumber>113</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
@@ -2181,14 +2263,14 @@
     </File>
     <File>
       <GroupNumber>9</GroupNumber>
-      <FileNumber>113</FileNumber>
+      <FileNumber>114</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>0</ColumnNumber>
+      <ColumnNumber>47</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>0</TopLine>
-      <CurrentLine>0</CurrentLine>
+      <TopLine>231</TopLine>
+      <CurrentLine>240</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>..\coretech\vision\robot\src\filtering.cpp</PathWithFileName>
       <FilenameWithoutPath>filtering.cpp</FilenameWithoutPath>
@@ -2197,7 +2279,7 @@
     </File>
     <File>
       <GroupNumber>9</GroupNumber>
-      <FileNumber>114</FileNumber>
+      <FileNumber>115</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
@@ -2213,14 +2295,14 @@
     </File>
     <File>
       <GroupNumber>9</GroupNumber>
-      <FileNumber>115</FileNumber>
+      <FileNumber>116</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>0</TopLine>
-      <CurrentLine>0</CurrentLine>
+      <TopLine>323</TopLine>
+      <CurrentLine>351</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>..\coretech\vision\robot\src\integralImage.cpp</PathWithFileName>
       <FilenameWithoutPath>integralImage.cpp</FilenameWithoutPath>
@@ -2229,7 +2311,7 @@
     </File>
     <File>
       <GroupNumber>9</GroupNumber>
-      <FileNumber>116</FileNumber>
+      <FileNumber>117</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
@@ -2245,7 +2327,23 @@
     </File>
     <File>
       <GroupNumber>9</GroupNumber>
-      <FileNumber>117</FileNumber>
+      <FileNumber>118</FileNumber>
+      <FileType>8</FileType>
+      <tvExp>0</tvExp>
+      <Focus>0</Focus>
+      <ColumnNumber>26</ColumnNumber>
+      <tvExpOptDlg>0</tvExpOptDlg>
+      <TopLine>25</TopLine>
+      <CurrentLine>40</CurrentLine>
+      <bDave2>0</bDave2>
+      <PathWithFileName>..\coretech\vision\robot\src\lucasKanade_Affine.cpp</PathWithFileName>
+      <FilenameWithoutPath>lucasKanade_Affine.cpp</FilenameWithoutPath>
+      <RteFlg>0</RteFlg>
+      <bShared>0</bShared>
+    </File>
+    <File>
+      <GroupNumber>9</GroupNumber>
+      <FileNumber>119</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
@@ -2254,14 +2352,30 @@
       <TopLine>0</TopLine>
       <CurrentLine>0</CurrentLine>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\coretech\vision\robot\src\lucasKanade.cpp</PathWithFileName>
-      <FilenameWithoutPath>lucasKanade.cpp</FilenameWithoutPath>
+      <PathWithFileName>..\coretech\vision\robot\src\lucasKanade_Projective.cpp</PathWithFileName>
+      <FilenameWithoutPath>lucasKanade_Projective.cpp</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
     <File>
       <GroupNumber>9</GroupNumber>
-      <FileNumber>118</FileNumber>
+      <FileNumber>120</FileNumber>
+      <FileType>8</FileType>
+      <tvExp>0</tvExp>
+      <Focus>0</Focus>
+      <ColumnNumber>0</ColumnNumber>
+      <tvExpOptDlg>0</tvExpOptDlg>
+      <TopLine>0</TopLine>
+      <CurrentLine>0</CurrentLine>
+      <bDave2>0</bDave2>
+      <PathWithFileName>..\coretech\vision\robot\src\lucasKanade_Slow.cpp</PathWithFileName>
+      <FilenameWithoutPath>lucasKanade_Slow.cpp</FilenameWithoutPath>
+      <RteFlg>0</RteFlg>
+      <bShared>0</bShared>
+    </File>
+    <File>
+      <GroupNumber>9</GroupNumber>
+      <FileNumber>121</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
@@ -2277,7 +2391,7 @@
     </File>
     <File>
       <GroupNumber>9</GroupNumber>
-      <FileNumber>119</FileNumber>
+      <FileNumber>122</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
@@ -2301,7 +2415,7 @@
     <RteFlg>0</RteFlg>
     <File>
       <GroupNumber>10</GroupNumber>
-      <FileNumber>120</FileNumber>
+      <FileNumber>123</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
@@ -2317,7 +2431,7 @@
     </File>
     <File>
       <GroupNumber>10</GroupNumber>
-      <FileNumber>121</FileNumber>
+      <FileNumber>124</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
@@ -2333,7 +2447,7 @@
     </File>
     <File>
       <GroupNumber>10</GroupNumber>
-      <FileNumber>122</FileNumber>
+      <FileNumber>125</FileNumber>
       <FileType>5</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
@@ -2349,7 +2463,7 @@
     </File>
     <File>
       <GroupNumber>10</GroupNumber>
-      <FileNumber>123</FileNumber>
+      <FileNumber>126</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
@@ -2365,7 +2479,7 @@
     </File>
     <File>
       <GroupNumber>10</GroupNumber>
-      <FileNumber>124</FileNumber>
+      <FileNumber>127</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>

@@ -45,7 +45,7 @@ namespace Anki
       static const s32 SERIALIZED_SEGMENT_HEADER_LENGTH = 8;
       static const s32 SERIALIZED_SEGMENT_FOOTER_LENGTH = 4;
 
-      static const s32 CUSTOM_TYPE_STRING_LENGTH = 16;
+      static const s32 CUSTOM_TYPE_STRING_LENGTH = 32;
 
       enum DataType
       {
@@ -55,7 +55,7 @@ namespace Anki
         DATA_TYPE_ARRAY = 3,
         DATA_TYPE_STRING = 4,
         DATA_TYPE_LIST = 5,
-        DATA_TYPE_CUSTOM = 6 //< A custom type is defined by a unique 15-character string
+        DATA_TYPE_CUSTOM = 6 //< A custom type is defined by a unique 31-character string
       };
 
       // Stores the eight-byte code of a basic data type buffer (like a buffer of unsigned shorts)
@@ -74,13 +74,6 @@ namespace Anki
         u32 code[EncodedArray::CODE_SIZE];
       };
 
-      class EncodedCustomType
-      {
-      public:
-        const static s32 CODE_SIZE = 4;
-        u32 code[EncodedCustomType::CODE_SIZE]; //< Could be a 16 character string, or anything
-      };
-
       //
       // Various static functions for encoding and decoding serialized objects
       //
@@ -91,11 +84,11 @@ namespace Anki
 
       // Encode or decode the eight-byte code of a basic data type buffer (like a buffer of unsigned shorts)
       template<typename Type> static Result EncodeBasicTypeBuffer(const s32 numElements, EncodedBasicTypeBuffer &code);
-      static Result DecodeBasicTypeBuffer(const bool swapEndian, const EncodedBasicTypeBuffer &code, u8 &size, bool &isInteger, bool &isSigned, bool &isFloat, s32 &numElements);
+      static Result DecodeBasicTypeBuffer(const EncodedBasicTypeBuffer &code, u8 &size, bool &isInteger, bool &isSigned, bool &isFloat, s32 &numElements);
 
       // Encode or decode the forty-byte code of an Array
       template<typename Type> static Result EncodeArrayType(const Array<Type> &in, EncodedArray &code);
-      static Result DecodeArrayType(const bool swapEndian, const EncodedArray &code, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, u8 &basicType_size, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat);
+      static Result DecodeArrayType(const EncodedArray &code, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, u8 &basicType_size, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat);
 
       //// Encode or decode the forty-byte code of an Array
       //template<typename Type> static Result EncodeCustomType(const char * name, EncodedCustomType &code);
@@ -103,7 +96,7 @@ namespace Anki
 
       // Helper functions to serialize or deserialize an array
       template<typename Type> static Result SerializeArray(const Array<Type> &in, void * data, const s32 dataLength);
-      template<typename Type> static Result DeserializeArray(const bool swapEndianForHeaders, const bool swapEndianForContents, const void * data, const s32 dataLength, Array<Type> &out, MemoryStack &memory);
+      template<typename Type> static Result DeserializeArray(const void * data, const s32 dataLength, Array<Type> &out, MemoryStack &memory);
 
       // Search rawBuffer for the 8-byte serialized buffer headers and footers.
       // startIndex is the location after the header, or -1 if one is not found
@@ -173,7 +166,7 @@ namespace Anki
       // Same as the standard MemoryStackIterator::GetNext(), plus:
       // 1. dataLength is the number of bytes of the returned buffer
       // 2. If requireCRCmatch==true, checks the CRC code and returns NULL if it fails
-      void * GetNext(const bool swapEndian, s32 &dataLength, SerializedBuffer::DataType &type, const bool requireCRCmatch=true);
+      void * GetNext(s32 &dataLength, SerializedBuffer::DataType &type, const bool requireCRCmatch=true);
     }; // class MemoryStackConstIterator
   } // namespace Embedded
 } //namespace Anki

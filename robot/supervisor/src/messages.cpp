@@ -5,6 +5,8 @@
 #include "anki/cozmo/robot/visionSystem.h"
 #include "anki/cozmo/robot/pathFollower.h"
 #include "anki/cozmo/robot/speedController.h"
+#include "anki/cozmo/robot/steeringController.h"
+#include "anki/cozmo/robot/wheelController.h"
 #include "liftController.h"
 #include "headController.h"
 #include "dockingController.h"
@@ -139,7 +141,7 @@ namespace Anki {
       }
       
       
-//#pragma --- Message Dispatch Functions ---
+// #pragma --- Message Dispatch Functions ---
       
       
       void ProcessRobotAddedToWorldMessage(const RobotAddedToWorld& msg)
@@ -203,24 +205,10 @@ namespace Anki {
         PRINT("Processing VisionMarker message\n");
         
         visionMarkerMailbox_.putMessage(msg);
-                
-        VisionSystem::CheckForTrackingMarker(msg.markerType);
-      }
-      
-      void ProcessTotalVisionMarkersSeenMessage(const TotalVisionMarkersSeen& msg)
-      {
-        PRINT("Saw %d vision markers.\n", msg.numMarkers);
-      }
-      
-      void ProcessTemplateInitializedMessage(const TemplateInitialized& msg)
-      {
-        VisionSystem::SetTrackingMode(static_cast<bool>(msg.success));
       }
       
       void ProcessDockingErrorSignalMessage(const DockingErrorSignal& msg)
       {
-        VisionSystem::UpdateTrackingStatus(msg.didTrackingSucceed);
-        
         // Just pass the docking error signal along to the mainExecution to
         // deal with. Note that if the message indicates tracking failed,
         // the mainExecution thread should handle it, and put the vision
@@ -279,6 +267,21 @@ namespace Anki {
                                         0, 0);*/
       }
 
+      void ProcessDriveWheelsMessage(const DriveWheels& msg) {
+        //PathFollower::ClearPath();
+        SteeringController::ExecuteDirectDrive(msg.lwheel_speed_mmps, msg.rwheel_speed_mmps);
+      }
+      
+      void ProcessDriveWheelsCurvatureMessage(const DriveWheelsCurvature& msg) {
+        /*
+        PathFollower::ClearPath();
+        
+        SpeedController::SetUserCommandedDesiredVehicleSpeed(msg.speed_mmPerSec);
+        SpeedController::SetUserCommandedAcceleration(msg.accel_mmPerSec2);
+        SpeedController::SetUserCommandedDeceleration(msg.decel_mmPerSec2);
+        */
+      }
+      
       void ProcessMoveLiftMessage(const MoveLift& msg) {
         LiftController::SetSpeedAndAccel(msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
         LiftController::SetDesiredHeight(msg.height_mm);
@@ -302,11 +305,6 @@ namespace Anki {
         PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
       }
       
-      
-      void ProcessSetMotionMessage(const SetMotion& msg) {
-        PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
-      }
-      
       void ProcessRobotAvailableMessage(const RobotAvailable& msg) {
         PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
       }
@@ -324,7 +322,60 @@ namespace Anki {
       void ProcessRobotStateMessage(const RobotState& msg) {
         PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
       }
+
+      void ProcessPrintTextMessage(const PrintText& msg) {
+        PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
+      }
       
+// ----------- Send messages -----------------
+      
+      
+      void SendRobotStateMsg()
+      {
+        Messages::RobotState m;
+        Radians poseAngle;
+        
+        Localization::GetCurrentMatPose(m.pose_x, m.pose_y, poseAngle);
+        m.pose_z = 0;
+        m.pose_angle = poseAngle.ToFloat();
+        
+        WheelController::GetFilteredWheelSpeeds(m.lwheel_speed_mmps, m.rwheel_speed_mmps);
+
+        m.headAngle = HeadController::GetAngleRad();
+        m.liftHeight = LiftController::GetHeightMM();
+
+        
+        HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RobotState), &m);
+      }
+      
+      
+      void SendText(const char *format, ...)
+      {
+        #define MAX_SEND_TEXT_LENGTH 512
+        char text[MAX_SEND_TEXT_LENGTH];
+        memset(text, 0, MAX_SEND_TEXT_LENGTH);
+
+        // Create formatted text
+        va_list argptr;
+        va_start(argptr, format);
+        vsnprintf(text, MAX_SEND_TEXT_LENGTH, format, argptr);
+        va_end(argptr);
+        
+        // Breakup and send in multiple messages if necessary
+        Messages::PrintText m;
+        s32 bytesLeftToSend = strlen(text);
+        u8 numMsgs = 0;
+        while(bytesLeftToSend > 0) {
+          memset(m.text, 0, PRINT_TEXT_MSG_LENGTH);
+          u32 currPacketBytes = MIN(PRINT_TEXT_MSG_LENGTH, bytesLeftToSend);
+          memcpy(m.text, text + numMsgs*PRINT_TEXT_MSG_LENGTH, currPacketBytes);
+          
+          bytesLeftToSend -= PRINT_TEXT_MSG_LENGTH;
+          
+          HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::PrintText), &m);
+          numMsgs++;
+        }
+      }
       
       
 // #pragma mark --- VisionSystem::Mailbox Template Implementations ---

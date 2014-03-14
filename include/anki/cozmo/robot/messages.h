@@ -63,6 +63,11 @@ namespace Anki {
       // Did we see the message ID we last set? (Or perhaps we timed out)
       bool StillLookingForID(void);
       
+      // Send messages
+      void SendRobotStateMsg();
+      void SendText(const char *format, ...);
+      
+      
       // These return true if a mailbox messages was available, and they copy
       // that message into the passed-in message struct.
       //bool CheckMailbox(BlockMarkerObserved& msg);

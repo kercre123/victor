@@ -16,6 +16,10 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/fiducialMarkers.h"
 
 #include <ctime>
+#include <vector>
+
+#include "opencv/cv.h"
+#include "opencv2/imgproc/imgproc.hpp"
 
 using namespace Anki::Embedded;
 using namespace std;
@@ -30,7 +34,7 @@ using namespace std;
 #error OpenCV is required
 #endif
 
-void ProcessRawBuffer(RawBuffer &buffer, const string outputFilenamePattern, const bool freeBuffer, const BufferAction action, const bool swapEndianForHeaders, const bool swapEndianForContents, const bool requireCRCmatch)
+void ProcessRawBuffer(RawBuffer &buffer, const string outputFilenamePattern, const bool freeBuffer, const BufferAction action, const bool requireCRCmatch)
 {
   const s32 outputFilenameLength = 1024;
   char outputFilename[outputFilenameLength];
@@ -49,7 +53,13 @@ void ProcessRawBuffer(RawBuffer &buffer, const string outputFilenamePattern, con
   MemoryStack memory(bigBufferRaw2, BIG_BUFFER_SIZE, Flags::Buffer(false, true, false));
 
   // Used for displaying detected fiducials
-  cv::Mat lastImage(0,0,CV_8U);
+  cv::Mat lastImage(240,320,CV_8U);
+  lastImage.setTo(0);
+
+  bool isTracking = false;
+  Transformations::PlanarTransformation_f32 lastPlanarTransformation(Transformations::TRANSFORM_PROJECTIVE, memory);
+
+  std::vector<VisionMarker> visionMarkerList;
 
 #ifdef PRINTF_ALL_RECEIVED
   printf("\n");
@@ -70,6 +80,11 @@ void ProcessRawBuffer(RawBuffer &buffer, const string outputFilenamePattern, con
 
     if(usbMessageStartIndex < 0) {
       printf("Error: USB header is missing (%d,%d) with %d total bytes and %d bytes remaining, returning...\n", usbMessageStartIndex, usbMessageEndIndex, buffer.dataLength, buffer.dataLength-bufferDataOffset);
+
+      for(s32 i=0; i<15; i++) {
+        printf("%x ", *(buffer.data+bufferDataOffset+i));
+      }
+      printf("\n");
 
       if(freeBuffer) {
         buffer.data = NULL;
@@ -99,13 +114,6 @@ void ProcessRawBuffer(RawBuffer &buffer, const string outputFilenamePattern, con
     memcpy(shiftedBuffer, buffer.data+usbMessageStartIndex, messageLength);
     //buffer.data += bigBuffer_alignedStartIndex;
 
-    if(swapEndianForHeaders) {
-      for(s32 i=0; i<messageLength; i+=4) {
-        Swap(shiftedBuffer[i], shiftedBuffer[i^3]);
-        Swap(shiftedBuffer[(i+1)], shiftedBuffer[(i+1)^3]);
-      }
-    }
-
     SerializedBuffer serializedBuffer(shiftedBuffer, messageLength, Anki::Embedded::Flags::Buffer(false, true, true));
 
     SerializedBufferIterator iterator(serializedBuffer);
@@ -113,7 +121,7 @@ void ProcessRawBuffer(RawBuffer &buffer, const string outputFilenamePattern, con
     while(iterator.HasNext()) {
       s32 dataLength;
       SerializedBuffer::DataType type;
-      u8 * const dataSegmentStart = reinterpret_cast<u8*>(iterator.GetNext(swapEndianForHeaders, dataLength, type, requireCRCmatch));
+      u8 * const dataSegmentStart = reinterpret_cast<u8*>(iterator.GetNext(dataLength, type, requireCRCmatch));
       u8 * dataSegment = dataSegmentStart;
 
       if(!dataSegment) {
@@ -139,7 +147,7 @@ void ProcessRawBuffer(RawBuffer &buffer, const string outputFilenamePattern, con
         bool isSigned;
         bool isFloat;
         s32 numElements;
-        SerializedBuffer::DecodeBasicTypeBuffer(swapEndianForHeaders, code, size, isInteger, isSigned, isFloat, numElements);
+        SerializedBuffer::DecodeBasicTypeBuffer(code, size, isInteger, isSigned, isFloat, numElements);
 
         printf("Basic type buffer segment (%d, %d, %d, %d, %d): ", size, isInteger, isSigned, isFloat, numElements);
         for(s32 i=0; i<remainingDataLength; i++) {
@@ -161,13 +169,13 @@ void ProcessRawBuffer(RawBuffer &buffer, const string outputFilenamePattern, con
         bool basicType_isInteger;
         bool basicType_isSigned;
         bool basicType_isFloat;
-        SerializedBuffer::DecodeArrayType(swapEndianForHeaders, code, height, width, stride, flags, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat);
+        SerializedBuffer::DecodeArrayType(code, height, width, stride, flags, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat);
 
         printf("Array: (%d, %d, %d, %d, %d, %d, %d, %d) ", height, width, stride, flags, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat);
         //template<typename Type> static Result DeserializeArray(const void * data, const s32 dataLength, Array<Type> &out, MemoryStack &memory);
         if(basicType_size==1 && basicType_isInteger==1 && basicType_isSigned==0 && basicType_isFloat==0) {
           Array<u8> arr;
-          SerializedBuffer::DeserializeArray(swapEndianForHeaders, swapEndianForContents, dataSegmentStart, dataLength, arr, memory);
+          SerializedBuffer::DeserializeArray(dataSegmentStart, dataLength, arr, memory);
 
           snprintf(&outputFilename[0], outputFilenameLength, outputFilenamePattern.data(),
             currentTime->tm_year+1900, currentTime->tm_mon+1, currentTime->tm_mday,
@@ -195,14 +203,22 @@ void ProcessRawBuffer(RawBuffer &buffer, const string outputFilenamePattern, con
         printf("Board>> %s", dataSegment);
       } else if(type == SerializedBuffer::DATA_TYPE_CUSTOM) {
         dataSegment[SerializedBuffer::CUSTOM_TYPE_STRING_LENGTH-1] = '\0';
-        printf(reinterpret_cast<const char*>(dataSegment));
-        if(strcmp(reinterpret_cast<const char*>(dataSegment), "VisionMarker") == 0) {
-          dataSegment += SerializedBuffer::CUSTOM_TYPE_STRING_LENGTH;
-          const s32 remainingDataLength = dataLength - SerializedBuffer::EncodedArray::CODE_SIZE * sizeof(u32);
+        const char * customTypeName = reinterpret_cast<const char*>(dataSegment);
+        //printf(customTypeName);
 
+        dataSegment += SerializedBuffer::CUSTOM_TYPE_STRING_LENGTH;
+        const s32 remainingDataLength = dataLength - SerializedBuffer::EncodedArray::CODE_SIZE * sizeof(u32);
+
+        if(strcmp(customTypeName, "VisionMarker") == 0) {
           VisionMarker marker;
           marker.Deserialize(dataSegment, remainingDataLength);
           marker.Print();
+          visionMarkerList.push_back(marker);
+          isTracking = false;
+        } else if(strcmp(reinterpret_cast<const char*>(customTypeName), "PlanarTransformation_f32") == 0) {
+          lastPlanarTransformation.Deserialize(dataSegment, remainingDataLength);
+          //lastPlanarTransformation.Print();
+          isTracking = true;
         }
       }
 
@@ -212,7 +228,82 @@ void ProcessRawBuffer(RawBuffer &buffer, const string outputFilenamePattern, con
 
   if(action == BUFFER_ACTION_DISPLAY) {
     if(lastImage.rows > 0) {
-      cv::imshow("Robot Image", lastImage);
+      cv::Mat largeLastImage(240, 320, CV_8U);
+      cv::Mat toShowImage(240, 320, CV_8UC3);
+
+      cv::resize(lastImage, largeLastImage, largeLastImage.size(), 0, 0, cv::INTER_NEAREST);
+
+      // Grayscale to RGB
+      vector<cv::Mat> channels;
+      channels.push_back(largeLastImage);
+      channels.push_back(largeLastImage);
+      channels.push_back(largeLastImage);
+      cv::merge(channels, toShowImage);
+
+      // std::queue<VisionMarker> visionMarkerList;
+      //Quadrilateral<s16> corners; // SQ 15.0 (Though may be changed later)
+      //Vision::MarkerType markerType;
+      //bool isValid;
+
+      if(isTracking) {
+        const cv::Scalar textColor = cv::Scalar(0,255,0);
+        const cv::Scalar boxColor = cv::Scalar(0,128,0);
+
+        const Quadrilateral<f32> transformedCorners = lastPlanarTransformation.get_transformedCorners(memory);
+
+        const Quadrilateral<f32> sortedCorners = transformedCorners.ComputeClockwiseCorners();
+
+        for(s32 iCorner=0; iCorner<4; iCorner++) {
+          const s32 point1Index = iCorner;
+          const s32 point2Index = (iCorner+1) % 4;
+          const cv::Point pt1(static_cast<s32>(sortedCorners[point1Index].x), static_cast<s32>(sortedCorners[point1Index].y));
+          const cv::Point pt2(static_cast<s32>(sortedCorners[point2Index].x), static_cast<s32>(sortedCorners[point2Index].y));
+          cv::line(toShowImage, pt1, pt2, boxColor, 2);
+        }
+
+        const Point<f32> center = sortedCorners.ComputeCenter();
+        const s32 textX = static_cast<s32>(MIN(MIN(MIN(sortedCorners.corners[0].x, sortedCorners.corners[1].x), sortedCorners.corners[2].x), sortedCorners.corners[3].x));
+        const cv::Point textStartPoint(textX, static_cast<s32>(center.y));
+
+        cv::putText(toShowImage, "Tracking", textStartPoint, cv::FONT_HERSHEY_PLAIN, 0.5, textColor);
+      } else {
+        // Draw markers
+        for(s32 iMarker=0; iMarker<static_cast<s32>(visionMarkerList.size()); iMarker++) {
+          cv::Scalar boxColor, textColor;
+          if(visionMarkerList[iMarker].isValid) {
+            textColor = cv::Scalar(0,255,0);
+            boxColor = cv::Scalar(0,128,0);
+          } else {
+            textColor = cv::Scalar(0,0,255);
+            boxColor = cv::Scalar(0,0,128);
+          }
+
+          const Quadrilateral<s16> sortedCorners = visionMarkerList[iMarker].corners.ComputeClockwiseCorners();
+
+          for(s32 iCorner=0; iCorner<4; iCorner++) {
+            const s32 point1Index = iCorner;
+            const s32 point2Index = (iCorner+1) % 4;
+            const cv::Point pt1(sortedCorners[point1Index].x, sortedCorners[point1Index].y);
+            const cv::Point pt2(sortedCorners[point2Index].x, sortedCorners[point2Index].y);
+            cv::line(toShowImage, pt1, pt2, boxColor, 2);
+          }
+
+          const Anki::Vision::MarkerType markerType = visionMarkerList[iMarker].markerType;
+
+          const char * typeString = "??";
+          if(static_cast<s32>(markerType) >=0 && static_cast<s32>(markerType) <= Anki::Vision::NUM_MARKER_TYPES) {
+            typeString = Anki::Vision::MarkerTypeStrings[markerType];
+          }
+
+          const Point<s16> center = visionMarkerList[iMarker].corners.ComputeCenter();
+          const s32 textX = MIN(MIN(MIN(visionMarkerList[iMarker].corners[0].x, visionMarkerList[iMarker].corners[1].x), visionMarkerList[iMarker].corners[2].x), visionMarkerList[iMarker].corners[3].x);
+          const cv::Point textStartPoint(textX, center.y);
+
+          cv::putText(toShowImage, typeString, textStartPoint, cv::FONT_HERSHEY_PLAIN, 0.5, textColor);
+        }
+      }
+
+      cv::imshow("Robot Image", toShowImage);
       cv::waitKey(10);
     }
   }

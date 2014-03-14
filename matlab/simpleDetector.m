@@ -16,6 +16,7 @@ thresholdFraction = 1; % fraction of local mean to use as threshold
 maxSmoothingFraction = 0.1; % fraction of max dim
 decodeMarkers = true;
 showComponents = false;
+returnInvalid = false;
 
 parseVarargin(varargin{:});
 
@@ -156,6 +157,12 @@ else % if strcmp(embeddedConversions.completeCImplementationType, 'c_DetectFiduc
     % Decode to find BlockMarker2D objects
     [markers, validQuads] = simpleDetector_step5_decodeMarkers(img_decode, quads_decode, quadTforms, minQuadArea, embeddedConversions, showTiming, DEBUG_DISPLAY);
 
+    if ~returnInvalid
+       keep = cellfun(@(m)m.isValid, markers);
+       markers = markers(keep);
+       validQuads = validQuads(keep);
+    end
+    
     % % Undo the downsampling so that the markers are relative to original
     % % resolution, if necessary.
     % if decodeDownsampleFactor > 1

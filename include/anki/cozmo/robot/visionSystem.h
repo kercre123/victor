@@ -30,27 +30,12 @@ namespace Anki {
       
       void StopTracking();
 
-      // Select a block type to look for to dock with.  Use 0 to disable.
+      // Select a block type to look for to dock with.  Use NUM_MARKER_TYPES to disable.
       // Next time the vision system sees a block of this type while looking
       // for blocks, it will initialize a template tracker and switch to
       // docking mode.
       // TODO: Something smarter about seeing the block in the expected place as well?
-      //ReturnCode SetMarkerToTrack(const MarkerCode& codeToTrack);
       ReturnCode SetMarkerToTrack(const Vision::MarkerType& markerToTrack);
-      
-      // NOTE: the following are provided as public API because they messaging
-      //       system may call them.
-      
-      // Check to see if this is the blockType the vision system is looking for,
-      // i.e., the one set by a prior call to SetDockingBlock() above.
-      void CheckForTrackingMarker(const u16 bits);
-      
-      // Switch to docking mode if isTemplateInitialized is true, otherwise
-      // stay in current mode.
-      void SetTrackingMode(const bool isTemplateInitalized);
-      
-      // Update internal state based on whether tracking succeeded
-      void UpdateTrackingStatus(const bool didTrackingSucceed);
       
     } // namespace VisionSystem
     

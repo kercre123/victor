@@ -45,20 +45,32 @@ END_MESSAGE_DEFINITION(Foo)
 #endif 
 
 START_TIMESTAMPED_MESSAGE_DEFINITION(RobotState, 1)
-ADD_MESSAGE_MEMBER(f32, headAngle) // TODO: make fixed point
-// ADD_MESSAGE_MEMBER(f32, liftHeight) // TODO: make fixed point
-// wheel speeds? position estimate? ...
+ADD_MESSAGE_MEMBER(f32, pose_x)
+ADD_MESSAGE_MEMBER(f32, pose_y)
+ADD_MESSAGE_MEMBER(f32, pose_z)
+ADD_MESSAGE_MEMBER(f32, pose_angle)
+ADD_MESSAGE_MEMBER(f32, lwheel_speed_mmps)
+ADD_MESSAGE_MEMBER(f32, rwheel_speed_mmps)
+ADD_MESSAGE_MEMBER(f32, headAngle)
+ADD_MESSAGE_MEMBER(f32, liftHeight)
+// ...
 END_MESSAGE_DEFINITION(RobotState)
 
-// SetMotion
-START_MESSAGE_DEFINITION(SetMotion, 1)
+// DriveWheels
+START_MESSAGE_DEFINITION(DriveWheels, 1)
+ADD_MESSAGE_MEMBER(f32, lwheel_speed_mmps)
+ADD_MESSAGE_MEMBER(f32, rwheel_speed_mmps)
+END_MESSAGE_DEFINITION(DriveWheels)
+
+// DriveWheelsCurvature
+START_MESSAGE_DEFINITION(DriveWheelsCurvature, 1)
 ADD_MESSAGE_MEMBER(s16, speed_mmPerSec)      // Commanded speed in mm/sec
 ADD_MESSAGE_MEMBER(u16, accel_mmPerSec2)     // Commanded max absolute value of...
 ADD_MESSAGE_MEMBER(u16, decel_mmPerSec2)     // ...acceleration/deceleration in mm/sec^2
 ADD_MESSAGE_MEMBER(s16, curvatureRadius_mm)  // +ve: curves left, -ve: curves right, ...
                                              // ...u16_MAX: point turn left, 16_MIN: point ...
                                              // ...turn right, 0: straight
-END_MESSAGE_DEFINITION(SetMotion)
+END_MESSAGE_DEFINITION(DriveWheelsCurvature)
 
 
 // MoveLift
@@ -219,6 +231,7 @@ ADD_MESSAGE_MEMBER(u32, robotID)
 // TODO: Add other members here?
 END_MESSAGE_DEFINITION(RobotAddedToWorld)
 
+/*
 // TemplateInitialized
 START_MESSAGE_DEFINITION(TemplateInitialized, 1)
 ADD_MESSAGE_MEMBER(u8, success)
@@ -228,6 +241,14 @@ END_MESSAGE_DEFINITION(TemplateInitialized)
 START_MESSAGE_DEFINITION(TotalVisionMarkersSeen, 1)
 ADD_MESSAGE_MEMBER(u8, numMarkers)
 END_MESSAGE_DEFINITION(TotalVisionMarkersSeen)
+*/
+
+// PrintText
+#define PRINT_TEXT_MSG_LENGTH 50
+START_MESSAGE_DEFINITION(PrintText, 1)
+ADD_MESSAGE_MEMBER_ARRAY(u8, text, PRINT_TEXT_MSG_LENGTH)
+END_MESSAGE_DEFINITION(PrintText)
+
 
 
 

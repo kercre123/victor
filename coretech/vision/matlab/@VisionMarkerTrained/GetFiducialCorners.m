@@ -5,6 +5,6 @@ function Corners = GetFiducialCorners(imageSize)
 Corners = [padding+1 padding+1;
     padding+1 imageSize-padding-1;
     imageSize-padding-1 padding+1;
-    imageSize-padding-1 imageSize-padding+1];
+    imageSize-padding-1 imageSize-padding-1];
     
 end

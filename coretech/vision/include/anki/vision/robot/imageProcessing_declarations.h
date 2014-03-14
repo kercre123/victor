@@ -54,6 +54,12 @@ namespace Anki
       // This function is safe if Array "in" is in DDR (I think)
       // Same output as Matlab's imresize, with 'Method'=='box'
       template<typename InType, typename IntermediateType, typename OutType> Result DownsampleByPowerOfTwo(const Array<InType> &in, const s32 downsamplePower, Array<OutType> &out, MemoryStack scratch);
+
+      //
+      // Color processing
+      //
+
+      Result YUVToGrayscale(const Array<u16> &yuvImage, Array<u8> &grayscaleImage);
     } // namespace ImageProcessing
   } // namespace Embedded
 } //namespace Anki

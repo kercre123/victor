@@ -4,8 +4,8 @@ PROTO CozmoBot [
   field SFRotation rotation 0 0 1 0
   field SFString name "Cozmo"
 
-  field SFInt32  cameraWidth  640
-  field SFInt32  cameraHeight 480
+  field SFInt32  cameraWidth  320
+  field SFInt32  cameraHeight 240
   field SFFloat fieldOfView   0.92
   
   field SFFloat headAngle 0 

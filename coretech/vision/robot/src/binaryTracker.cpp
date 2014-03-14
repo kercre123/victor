@@ -293,12 +293,16 @@ namespace Anki
 
       Result BinaryTracker::ComputeAllIndexLimits(const EdgeLists &imageEdges, AllIndexLimits &allLimits, MemoryStack &memory)
       {
-        allLimits.xDecreasing_yStartIndexes = Array<s32>(1, imageEdges.imageWidth+1, memory, Flags::Buffer(false,false,false));
-        allLimits.xIncreasing_yStartIndexes = Array<s32>(1, imageEdges.imageWidth+1, memory, Flags::Buffer(false,false,false));
-        allLimits.yDecreasing_xStartIndexes = Array<s32>(1, imageEdges.imageHeight+1, memory, Flags::Buffer(false,false,false));
-        allLimits.yIncreasing_xStartIndexes = Array<s32>(1, imageEdges.imageHeight+1, memory, Flags::Buffer(false,false,false));
+        allLimits.xDecreasing_yStartIndexes = Array<s32>(1, imageEdges.imageHeight+1, memory, Flags::Buffer(false,false,false));
+        allLimits.xIncreasing_yStartIndexes = Array<s32>(1, imageEdges.imageHeight+1, memory, Flags::Buffer(false,false,false));
+        allLimits.yDecreasing_xStartIndexes = Array<s32>(1, imageEdges.imageWidth+1, memory, Flags::Buffer(false,false,false));
+        allLimits.yIncreasing_xStartIndexes = Array<s32>(1, imageEdges.imageWidth+1, memory, Flags::Buffer(false,false,false));
 
-        AnkiConditionalErrorAndReturnValue(allLimits.yIncreasing_xStartIndexes.IsValid(),
+        AnkiConditionalErrorAndReturnValue(
+          allLimits.xDecreasing_yStartIndexes.IsValid() &&
+          allLimits.xIncreasing_yStartIndexes.IsValid() &&
+          allLimits.yDecreasing_xStartIndexes.IsValid() &&
+          allLimits.yIncreasing_xStartIndexes.IsValid(),
           RESULT_FAIL_OUT_OF_MEMORY, "BinaryTracker::ComputeAllIndexLimits", "Could not allocate local memory");
 
         ComputeIndexLimitsVertical(imageEdges.xDecreasing, allLimits.xDecreasing_yStartIndexes);
@@ -501,6 +505,7 @@ namespace Anki
         s32 &numCorrespondences)
       {
         const s32 numTemplatePoints = templatePoints.get_size();
+        const s32 numNewPoints = newPoints.get_size();
 
         const Array<f32> &homography = transformation.get_homography();
         const Point<f32> &centerOffset = transformation.get_centerOffset();
@@ -540,13 +545,16 @@ namespace Anki
           const s32 warpedXrounded = RoundS32_minusPointFive(warpedX + centerOffset.x);
           const s32 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
 
-          //if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance)) {
           if(warpedXrounded >= 0 && warpedXrounded < imageWidth) {
             const s32 minY = warpedYrounded - maxMatchingDistance;
             const s32 maxY = warpedYrounded + maxMatchingDistance;
 
             s32 curIndex = pXStartIndexes[warpedXrounded];
             const s32 endIndex = pXStartIndexes[warpedXrounded+1];
+
+            /*if(curIndex < 0 || curIndex > numNewPoints) {
+            printf("");
+            }*/
 
             // Find the start of the valid matches
             while( (curIndex<endIndex) && (pNewPoints[curIndex].y<minY) ) {
@@ -562,7 +570,7 @@ namespace Anki
 
               curIndex++;
             }
-          } // if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance))
+          } // if(warpedXrounded >= 0 && warpedXrounded < imageWidth)
         } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
 
         numCorrespondences = RoundS32(numCorrespondencesF32);
@@ -582,6 +590,7 @@ namespace Anki
         s32 &numCorrespondences)
       {
         const s32 numTemplatePoints = templatePoints.get_size();
+        const s32 numNewPoints = newPoints.get_size();
 
         const Array<f32> &homography = transformation.get_homography();
         const Point<f32> &centerOffset = transformation.get_centerOffset();
@@ -620,13 +629,16 @@ namespace Anki
           const s32 warpedXrounded = RoundS32_minusPointFive(warpedX + centerOffset.x);
           const s32 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
 
-          //if(warpedXrounded >= maxMatchingDistance && warpedXrounded < (imageWidth-maxMatchingDistance)) {
           if(warpedYrounded >= 0 && warpedYrounded < imageHeight) {
             const s32 minX = warpedXrounded - maxMatchingDistance;
             const s32 maxX = warpedXrounded + maxMatchingDistance;
 
             s32 curIndex = pYStartIndexes[warpedYrounded];
             const s32 endIndex = pYStartIndexes[warpedYrounded+1];
+
+            /*if(curIndex < 0 || curIndex > numNewPoints) {
+            printf("");
+            }*/
 
             // Find the start of the valid matches
             while( (curIndex<endIndex) && (pNewPoints[curIndex].x<minX) ) {
@@ -642,7 +654,7 @@ namespace Anki
 
               curIndex++;
             }
-          } // if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance))
+          } // if(warpedYrounded >= 0 && warpedYrounded < imageHeight)
         } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
 
         numCorrespondences = RoundS32(numCorrespondencesF32);
@@ -662,6 +674,7 @@ namespace Anki
         Array<f32> &Atb_t)
       {
         const s32 numTemplatePoints = templatePoints.get_size();
+        const s32 numNewPoints = newPoints.get_size();
 
         const Array<f32> &homography = transformation.get_homography();
         const Point<f32> &centerOffset = transformation.get_centerOffset();
@@ -718,12 +731,16 @@ namespace Anki
           const s32 warpedXrounded = RoundS32_minusPointFive(warpedX + centerOffset.x);
           const s32 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
 
-          if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance)) {
+          if(warpedXrounded >= 0 && warpedXrounded < imageWidth) {
             const s32 minY = warpedYrounded - maxMatchingDistance;
             const s32 maxY = warpedYrounded + maxMatchingDistance;
 
             s32 curIndex = pXStartIndexes[warpedXrounded];
             const s32 endIndex = pXStartIndexes[warpedXrounded+1];
+
+            /*if(curIndex < 0 || curIndex > numNewPoints) {
+            printf("");
+            }*/
 
             // Find the start of the valid matches
             while( (curIndex<endIndex) && (pNewPoints[curIndex].y<minY) ) {
@@ -779,7 +796,7 @@ namespace Anki
 
               curIndex++;
             }
-          } // if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance))
+          } // if(warpedXrounded >= 0 && warpedXrounded < imageWidth)
         } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
 
 #if !defined(USE_ARM_ACCELERATION) // natural C
@@ -814,6 +831,7 @@ namespace Anki
         Array<f32> &Atb_t)
       {
         const s32 numTemplatePoints = templatePoints.get_size();
+        const s32 numNewPoints = newPoints.get_size();
 
         const Array<f32> &homography = transformation.get_homography();
         const Point<f32> &centerOffset = transformation.get_centerOffset();
@@ -870,12 +888,16 @@ namespace Anki
           const s32 warpedXrounded = RoundS32_minusPointFive(warpedX + centerOffset.x);
           const s32 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
 
-          if(warpedXrounded >= maxMatchingDistance && warpedXrounded < (imageWidth-maxMatchingDistance)) {
+          if(warpedYrounded >= 0 && warpedYrounded < imageHeight) {
             const s32 minX = warpedXrounded - maxMatchingDistance;
             const s32 maxX = warpedXrounded + maxMatchingDistance;
 
             s32 curIndex = pYStartIndexes[warpedYrounded];
             const s32 endIndex = pYStartIndexes[warpedYrounded+1];
+
+            /*if(curIndex < 0 || curIndex > numNewPoints) {
+            printf("");
+            }*/
 
             // Find the start of the valid matches
             while( (curIndex<endIndex) && (pNewPoints[curIndex].x<minX) ) {
@@ -932,7 +954,7 @@ namespace Anki
 
               curIndex++;
             }
-          } // if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance))
+          } // if(warpedYrounded >= 0 && warpedYrounded < imageHeight)
         } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
 
 #if !defined(USE_ARM_ACCELERATION) // natural C
@@ -966,6 +988,7 @@ namespace Anki
         s32 &numTemplatePixelsMatched)
       {
         const s32 numTemplatePoints = templatePoints.get_size();
+        const s32 numNewPoints = newPoints.get_size();
 
         const Array<f32> &homography = transformation.get_homography();
         const Point<f32> &centerOffset = transformation.get_centerOffset();
@@ -1004,13 +1027,16 @@ namespace Anki
           const s32 warpedXrounded = RoundS32_minusPointFive(warpedX + centerOffset.x);
           const s32 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
 
-          //if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance)) {
           if(warpedXrounded >= 0 && warpedXrounded < imageWidth) {
             const s32 minY = warpedYrounded - maxMatchingDistance;
             const s32 maxY = warpedYrounded + maxMatchingDistance;
 
             s32 curIndex = pXStartIndexes[warpedXrounded];
             const s32 endIndex = pXStartIndexes[warpedXrounded+1];
+
+            /*if(curIndex < 0 || curIndex > numNewPoints) {
+            printf("");
+            }*/
 
             // Find the start of the valid matches
             while( (curIndex<endIndex) && (pNewPoints[curIndex].y<minY) ) {
@@ -1021,7 +1047,7 @@ namespace Anki
             if( (curIndex<endIndex) && (pNewPoints[curIndex].y<=maxY) ) {
               numTemplatePixelsMatchedF32 += 1.0f;
             }
-          } // if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance))
+          } // if(warpedXrounded >= 0 && warpedXrounded < imageWidth)
         } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
 
         numTemplatePixelsMatched = RoundS32(numTemplatePixelsMatchedF32);
@@ -1040,6 +1066,7 @@ namespace Anki
         s32 &numTemplatePixelsMatched)
       {
         const s32 numTemplatePoints = templatePoints.get_size();
+        const s32 numNewPoints = newPoints.get_size();
 
         const Array<f32> &homography = transformation.get_homography();
         const Point<f32> &centerOffset = transformation.get_centerOffset();
@@ -1077,13 +1104,16 @@ namespace Anki
           const s32 warpedXrounded = RoundS32_minusPointFive(warpedX + centerOffset.x);
           const s32 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
 
-          //if(warpedXrounded >= maxMatchingDistance && warpedXrounded < (imageWidth-maxMatchingDistance)) {
           if(warpedYrounded >= 0 && warpedYrounded < imageHeight) {
             const s32 minX = warpedXrounded - maxMatchingDistance;
             const s32 maxX = warpedXrounded + maxMatchingDistance;
 
             s32 curIndex = pYStartIndexes[warpedYrounded];
             const s32 endIndex = pYStartIndexes[warpedYrounded+1];
+
+            /*if(curIndex < 0 || curIndex > numNewPoints) {
+            printf("");
+            }*/
 
             // Find the start of the valid matches
             while( (curIndex<endIndex) && (pNewPoints[curIndex].x<minX) ) {
@@ -1094,7 +1124,7 @@ namespace Anki
             if( (curIndex<endIndex) && (pNewPoints[curIndex].x<=maxX) ) {
               numTemplatePixelsMatchedF32 += 1.0f;
             }
-          } // if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance))
+          } // if(warpedYrounded >= 0 && warpedYrounded < imageHeight)
         } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
 
         numTemplatePixelsMatched = RoundS32(numTemplatePixelsMatchedF32);
@@ -1113,6 +1143,7 @@ namespace Anki
         FixedLengthList<IndexCorrespondence> &matchingIndexes)
       {
         const s32 numTemplatePoints = templatePoints.get_size();
+        const s32 numNewPoints = newPoints.get_size();
 
         const Array<f32> &homography = transformation.get_homography();
         const Point<f32> &centerOffset = transformation.get_centerOffset();
@@ -1153,13 +1184,16 @@ namespace Anki
           const s32 warpedXrounded = RoundS32_minusPointFive(warpedX + centerOffset.x);
           const s32 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
 
-          //if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance)) {
           if(warpedXrounded >= 0 && warpedXrounded < imageWidth) {
             const s32 minY = warpedYrounded - maxMatchingDistance;
             const s32 maxY = warpedYrounded + maxMatchingDistance;
 
             s32 curIndex = pXStartIndexes[warpedXrounded];
             const s32 endIndex = pXStartIndexes[warpedXrounded+1];
+
+            /*if(curIndex < 0 || curIndex > numNewPoints) {
+            printf("");
+            }*/
 
             // Find the start of the valid matches
             while( (curIndex<endIndex) && (pNewPoints[curIndex].y<minY) ) {
@@ -1184,7 +1218,7 @@ namespace Anki
 
               curIndex++;
             }
-          } // if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance))
+          } // if(warpedXrounded >= 0 && warpedXrounded < imageWidth)
         } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
 
         matchingIndexes.set_size(numMatchingIndexes);
@@ -1204,6 +1238,7 @@ namespace Anki
         FixedLengthList<IndexCorrespondence> &matchingIndexes)
       {
         const s32 numTemplatePoints = templatePoints.get_size();
+        const s32 numNewPoints = newPoints.get_size();
 
         const Array<f32> &homography = transformation.get_homography();
         const Point<f32> &centerOffset = transformation.get_centerOffset();
@@ -1243,13 +1278,16 @@ namespace Anki
           const s32 warpedXrounded = RoundS32_minusPointFive(warpedX + centerOffset.x);
           const s32 warpedYrounded = RoundS32_minusPointFive(warpedY + centerOffset.y);
 
-          //if(warpedXrounded >= maxMatchingDistance && warpedXrounded < (imageWidth-maxMatchingDistance)) {
           if(warpedYrounded >= 0 && warpedYrounded < imageHeight) {
             const s32 minX = warpedXrounded - maxMatchingDistance;
             const s32 maxX = warpedXrounded + maxMatchingDistance;
 
             s32 curIndex = pYStartIndexes[warpedYrounded];
             const s32 endIndex = pYStartIndexes[warpedYrounded+1];
+
+            /*if(curIndex < 0 || curIndex > numNewPoints) {
+            printf("");
+            }*/
 
             // Find the start of the valid matches
             while( (curIndex<endIndex) && (pNewPoints[curIndex].x<minX) ) {
@@ -1275,7 +1313,7 @@ namespace Anki
 
               curIndex++;
             }
-          } // if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance))
+          } // if(warpedYrounded >= 0 && warpedYrounded < imageHeight)
         } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
 
         matchingIndexes.set_size(numMatchingIndexes);

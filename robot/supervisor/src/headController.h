@@ -31,6 +31,9 @@ namespace Anki {
       // TODO: Add if/when needed?
       // ReturnCode Init();
 
+      void StartCalibrationRoutine();
+      bool IsCalibrated();
+      
       // Enable/Disable HAL commands to head motor
       void Enable();
       void Disable();
@@ -42,8 +45,9 @@ namespace Anki {
       void SetSpeedAndAccel(f32 max_speed_rad_per_sec, f32 accel_rad_per_sec2);
       
       // Set the desired angle of head
-      void SetDesiredAngle(const f32 angle);
+      void SetDesiredAngle(f32 angle);
       bool IsInPosition();
+      bool IsMoving();
       
       // Get current head angle
       f32 GetAngleRad();

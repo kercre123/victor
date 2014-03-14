@@ -39,7 +39,7 @@ namespace Anki {
                                        targetPt.x(), targetPt.y(), targetAngle,
                                        DUBINS_START_RADIUS_MM, DUBINS_END_RADIUS_MM,
                                        DUBINS_TARGET_SPEED_MMPS, DUBINS_ACCEL_MMPS2, DUBINS_DECEL_MMPS2) == 0) {
-        PRINT_NAMED_INFO("No path found", "Could not generate Dubins path\n");
+        PRINT_NAMED_INFO("GetPlan.NoPathFound", "Could not generate Dubins path (startPose %f %f %f, targetPose %f %f %f)\n", startPt.x(), startPt.y(), startAngle, targetPt.x(), targetPt.y(), targetAngle);
         return EXIT_FAILURE;
       }
 

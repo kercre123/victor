@@ -520,7 +520,7 @@ namespace Anki
         return RESULT_FAIL;
       }
 
-      // TODO: should something simple like thie work?
+      // TODO: should something simple like this work?
       //memcpy(buffer, reinterpret_cast<const void*>(this), sizeof(this));
 
       char * bufferChar = reinterpret_cast<char*>(buffer);

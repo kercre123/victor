@@ -5,23 +5,26 @@
 #define ANKI_SIM_VIZ_H
 
 #include "anki/common/types.h"
+#include "anki/planning/shared/path.h"
 
 namespace Anki {
   namespace Cozmo { // TODO: Can PathFollower be made generic, put in coretech, and pulled out of Cozmo namespace?
     
     namespace Sim {
 
-			namespace Viz {
+      namespace Viz {
                 
-				void ErasePath(s32 path_id);
+        void ErasePath(s32 path_id);
         
-				void AppendPathSegmentLine(s32 path_id,
-																	 f32 x_start_mm, f32 y_start_mm,
-																	 f32 x_end_mm, f32 y_end_mm);
+        void AppendPathSegmentLine(s32 path_id,
+                                   f32 x_start_mm, f32 y_start_mm,
+                                   f32 x_end_mm, f32 y_end_mm);
         
-				void AppendPathSegmentArc(s32 path_id,
-																	f32 x_center_mm, f32 y_center_mm,
-																	f32 radius_mm, f32 startRad, f32 sweepRad);
+        void AppendPathSegmentArc(s32 path_id,
+                                  f32 x_center_mm, f32 y_center_mm,
+                                  f32 radius_mm, f32 startRad, f32 sweepRad);
+        
+        void DrawPath(s32 path_id, const Planning::Path& p);
         
       } // namespace Viz
       

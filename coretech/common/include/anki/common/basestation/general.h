@@ -30,7 +30,7 @@
 //#include <stdio.h>
 //#include <iostream>
 //#include <sys/types.h>
-//#include <errno.h>
+#include <errno.h>
 //#include <iostream>
 //#include <limits.h>
 //#include <float.h>
@@ -121,13 +121,13 @@ extern bool _errG;
 
 #else 
   
-#define PRINT_INFO(format, ...) do{ fprintf(stdout, format, __VA_ARGS__); }while(0)
-#define PRINT_DEBUG(format, ...)
+#define PRINT_INFO(format, ...) do{ fprintf(stdout, format, ##__VA_ARGS__); }while(0)
+#define PRINT_DEBUG(format, ...) do{ fprintf(stdout, format, ##__VA_ARGS__); }while(0)
 #define PRINT_DAS_BY_TYPE(type, format, ...)
-#define PRINT_NAMED_ERROR(name, format, ...)
-#define PRINT_NAMED_WARNING(name, format, ...)
-#define PRINT_NAMED_INFO(name, format, ...)
-#define PRINT_NAMED_DEBUG(name, format, ...)
+#define PRINT_NAMED_ERROR(name, format, ...) do{ fprintf(stdout, format, ##__VA_ARGS__); }while(0)
+#define PRINT_NAMED_WARNING(name, format, ...) do{ fprintf(stdout, format, ##__VA_ARGS__); }while(0)
+#define PRINT_NAMED_INFO(name, format, ...) do{ fprintf(stdout, format, ##__VA_ARGS__); }while(0)
+#define PRINT_NAMED_DEBUG(name, format, ...) do{ fprintf(stdout, format, ##__VA_ARGS__); }while(0)
   
 #endif // USE_REAL_DAS
 
