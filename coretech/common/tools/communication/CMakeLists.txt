@@ -5,13 +5,13 @@
 file(GLOB SOURCE_FILES_SAVE_VIDEO
   run_pc_saveVideo.cpp
   serial.cpp
-  messageHandling.cpp
+  messageHandling_save.cpp
 )
 
 file(GLOB SOURCE_FILES_DISPLAY_VIDEO
   run_pc_displayVideo.cpp
   serial.cpp
-  messageHandling.cpp
+  messageHandling_display.cpp
 )
 
 file(GLOB SOURCE_FILES_TERMINAL

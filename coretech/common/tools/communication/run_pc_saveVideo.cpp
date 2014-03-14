@@ -38,9 +38,9 @@ DWORD WINAPI SaveBuffersThread(LPVOID lpParam)
 {
   SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_BELOW_NORMAL);
 
-  RawBuffer *buffer = (RawBuffer*)lpParam;
+  /*RawBuffer *buffer = (RawBuffer*)lpParam;
 
-  ProcessRawBuffer(*buffer, string(outputFilenamePattern), true, BUFFER_ACTION_SAVE, true);
+  ProcessRawBuffer(*buffer, string(outputFilenamePattern), true, BUFFER_ACTION_SAVE, true);*/
 
   return 0;
 } // DWORD WINAPI PrintfBuffers(LPVOID lpParam)
@@ -119,7 +119,7 @@ int main(int argc, char ** argv)
           */
 
           // Just call the function
-          ProcessRawBuffer(rawBuffer, string(outputFilenamePattern), true, BUFFER_ACTION_SAVE, true);
+          ProcessRawBuffer_Save(rawBuffer, string(outputFilenamePattern), true, true);
 
           usbBuffer = reinterpret_cast<u8*>(malloc(USB_BUFFER_SIZE));
           usbBufferIndex = 0;
