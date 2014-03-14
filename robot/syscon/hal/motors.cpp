@@ -51,10 +51,10 @@ namespace
   
   const u8 LEFT_WHEEL_FORWARD_PIN = 3;
   const u8 LEFT_WHEEL_BACKWARD_PIN = 7;
-  const u8 RIGHT_WHEEL_FORWARD_PIN = 22;
-  const u8 RIGHT_WHEEL_BACKWARD_PIN = 23;
-  const u8 LIFT_UP_PIN = 25;
-  const u8 LIFT_DOWN_PIN = 24;
+  const u8 RIGHT_WHEEL_FORWARD_PIN = 23;
+  const u8 RIGHT_WHEEL_BACKWARD_PIN = 22;
+  const u8 LIFT_UP_PIN = 24;
+  const u8 LIFT_DOWN_PIN = 25;
   const u8 HEAD_UP_PIN = 9;
   const u8 HEAD_DOWN_PIN = 10;
   
@@ -205,6 +205,11 @@ static void ConfigureTask(u8 motorID)
     pinPWM = motorInfo->backwardDownPin;
     pinHigh = motorInfo->forwardUpPin;
   }
+  
+  nrf_gpiote_unconfig(motorID);
+  __NOP();
+  __NOP();
+  __NOP();
   
   nrf_gpio_pin_set(pinHigh);
   

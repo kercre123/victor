@@ -265,13 +265,6 @@ namespace Anki
 
       typedef enum
       {
-        CAMERA_FRONT = 0,
-        CAMERA_MAT,
-        CAMERA_COUNT
-      } CameraID;
-
-      typedef enum
-      {
         CAMERA_MODE_VGA = 0,
         CAMERA_MODE_QVGA,
         CAMERA_MODE_QQVGA,
@@ -281,35 +274,6 @@ namespace Anki
 
         CAMERA_MODE_NONE = CAMERA_MODE_COUNT
       } CameraMode;
-
-      typedef struct {
-        u8 header; // used to specify a frame's resolution in a packet
-        u16 width, height;
-        u8 downsamplePower[CAMERA_MODE_COUNT];
-      } CameraModeInfo_t;
-
-      const CameraModeInfo_t CameraModeInfo[CAMERA_MODE_COUNT] =
-      {
-        // VGA
-        { 0xBA, 640, 480, {0, 0, 0, 0, 0} },
-        // QVGA
-        { 0xBC, 320, 240, {1, 0, 0, 0, 0} },
-        // QQVGA
-        { 0xB8, 160, 120, {2, 1, 0, 0, 0} },
-        // QQQVGA
-        { 0xBD,  80,  60, {3, 2, 1, 0, 0} },
-        // QQQQVGA
-        { 0xB7,  40,  30, {4, 3, 2, 1, 0} }
-      };
-
-      enum CameraUpdateMode
-      {
-        CAMERA_UPDATE_CONTINUOUS = 0,
-        CAMERA_UPDATE_SINGLE
-      };
-
-      void MatCameraInit();
-      void FrontCameraInit();
 
       // Intrinsic calibration:
       // A struct for holding intrinsic camera calibration parameters
@@ -322,25 +286,24 @@ namespace Anki
       } CameraInfo;
 
       const CameraInfo* GetHeadCamInfo();
-      const CameraInfo* GetMatCamInfo() ;
 
       // Set the camera capture resolution with CAMERA_MODE_XXXXX_HEADER.
       void       SetHeadCamMode(const u8 frameResHeader);
       CameraMode GetHeadCamMode(void);
 
-      // Starts camera frame synchronization
-      void CameraStartFrame(CameraID cameraID, u8* frame, CameraMode mode,
-          CameraUpdateMode updateMode, u16 exposure, bool enableLight);
+      // Starts camera frame synchronization (blocking call)
+      void CameraGetFrame(u8* frame, CameraMode mode,
+          u16 exposure, bool enableLight);
 
       // Get the number of lines received so far for the specified camera
-      u32 CameraGetReceivedLines(CameraID cameraID);
+      //u32 CameraGetReceivedLines(CameraID cameraID);
 
       // Returns whether or not the specfied camera has received a full frame
-      bool CameraIsEndOfFrame(CameraID cameraID);
+      //bool CameraIsEndOfFrame(CameraID cameraID);
 
       // TODO: At some point, isEOF should be set automatically by the HAL,
       // but currently, the consumer has to set it
-      void CameraSetIsEndOfFrame(CameraID cameraID, bool isEOF);
+      //void CameraSetIsEndOfFrame(CameraID cameraID, bool isEOF);
 
 // #pragma mark --- Battery ---
       /////////////////////////////////////////////////////////////////////
@@ -420,7 +383,7 @@ namespace Anki
       const BirthCertificate& GetBirthCertificate();
 
       // TODO: remove when interrupts don't cause problems
-      void DisableCamera(CameraID cameraID);
+      //void DisableCamera(CameraID cameraID);
 
       // Put a byte into a send buffer to be sent by LongExecution()
       // (Using same prototype as putc / USBPutChar for printf.)
