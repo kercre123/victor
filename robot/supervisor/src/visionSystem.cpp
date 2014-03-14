@@ -262,7 +262,7 @@ namespace TrackerParameters {
 
 namespace VisionMemory
 {
-  static const s32 IMAGE_BUFFER_SIZE = (320*240 + 16);
+  static const s32 IMAGE_BUFFER_SIZE = (320*240 + 256);
   static const s32 OFFCHIP_BUFFER_SIZE = 2000000;
   static const s32 ONCHIP_BUFFER_SIZE = 170000; // The max here is somewhere between 175000 and 180000 bytes
   static const s32 CCM_BUFFER_SIZE = 50000; // The max here is probably 65536 (0x10000) bytes
@@ -1117,7 +1117,6 @@ namespace Anki {
 #endif
         
         HAL::CameraGetFrame(reinterpret_cast<u8*>(VisionMemory::grayscaleImage_.get_rawDataPointer()), HAL::CAMERA_MODE_QVGA, 0, false);
-
 
         //#if USE_OFFBOARD_VISION
         //        return Update_Offboard();
