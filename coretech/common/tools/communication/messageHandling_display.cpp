@@ -176,8 +176,9 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireFillPa
       for(s32 iCorner=0; iCorner<4; iCorner++) {
         const s32 point1Index = iCorner;
         const s32 point2Index = (iCorner+1) % 4;
-        const cv::Point pt1(static_cast<s32>(sortedCorners[point1Index].x), static_cast<s32>(sortedCorners[point1Index].y));
-        const cv::Point pt2(static_cast<s32>(sortedCorners[point2Index].x), static_cast<s32>(sortedCorners[point2Index].y));
+        // TODO: remove *4
+        const cv::Point pt1(static_cast<s32>(sortedCorners[point1Index].x*4), static_cast<s32>(sortedCorners[point1Index].y*4));
+        const cv::Point pt2(static_cast<s32>(sortedCorners[point2Index].x*4), static_cast<s32>(sortedCorners[point2Index].y*4));
         cv::line(toShowImage, pt1, pt2, boxColor, 2);
       }
 
