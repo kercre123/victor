@@ -787,8 +787,9 @@ static ReturnCode LookForMarkers(
     offchipScratch, onchipScratch, ccmScratch);
 
   if(result == RESULT_OK) {
+#ifndef SIMULATOR
     DebugStream::SendFiducialDetection(grayscaleImage, markers, ccmScratch, offchipScratch);
-
+#endif
     for(s32 i_marker = 0; i_marker < markers.get_size(); ++i_marker) {
       const VisionMarker crntMarker = markers[i_marker];
 
