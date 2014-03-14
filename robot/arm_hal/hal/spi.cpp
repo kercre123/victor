@@ -10,8 +10,9 @@ namespace Anki
   {
     namespace HAL
     {
-      volatile GlobalDataToHead g_dataToHead;
-      volatile GlobalDataToBody g_dataToBody;
+      // DMA does not work when these are in CCM.
+      ONCHIP volatile GlobalDataToHead g_dataToHead;
+      ONCHIP volatile GlobalDataToBody g_dataToBody;
       
       GPIO_PIN_SOURCE(SPI_SCK, GPIOB, 3);
       GPIO_PIN_SOURCE(SPI_MISO, GPIOB, 4);
@@ -50,6 +51,20 @@ namespace Anki
         g_dataToBody.common.source = SPI_SOURCE_HEAD;
       }
       
+      static void ConfigureIRQ()
+      {
+        // Enable interrupts on SPI RX complete
+        DMA_ITConfig(DMA2_Stream2, DMA_IT_TC, ENABLE);
+        DMA_ClearFlag(DMA2_Stream2, DMA_FLAG_TCIF2);
+        
+        NVIC_InitTypeDef NVIC_InitStructure;
+        NVIC_InitStructure.NVIC_IRQChannel = DMA2_Stream2_IRQn;
+        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+        NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+        NVIC_Init(&NVIC_InitStructure);
+      }
+      
       static void ConfigureDMA()
       {
         // Initialize DMA for SPI
@@ -82,6 +97,8 @@ namespace Anki
         DMA_InitStructure.DMA_Memory0BaseAddr = (u32)&g_dataToHead;
         DMA_Init(DMA2_Stream2, &DMA_InitStructure);
         
+        ConfigureIRQ();
+        
         // Enable DMA
         DMA_Cmd(DMA2_Stream5, ENABLE);
         DMA_Cmd(DMA2_Stream2, ENABLE);
@@ -89,19 +106,6 @@ namespace Anki
         // Enable DMA SPI requests
         SPI_I2S_DMACmd(SPI1, SPI_I2S_DMAReq_Tx, ENABLE);
         SPI_I2S_DMACmd(SPI1, SPI_I2S_DMAReq_Rx, ENABLE);
-      }
-      
-      static void ConfigureIRQ()
-      {
-        // Enable interrupts on SPI RX complete
-        DMA_ITConfig(DMA2_Stream2, DMA_IT_TC, ENABLE);
-        
-        NVIC_InitTypeDef NVIC_InitStructure;
-        NVIC_InitStructure.NVIC_IRQChannel = DMA2_Stream2_IRQn;
-        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
-        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
-        NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-        NVIC_Init(&NVIC_InitStructure);
       }
       
       void SPIInit()
@@ -113,7 +117,6 @@ namespace Anki
         
         ConfigurePins();
         ConfigureDMA();
-        ConfigureIRQ();
         
         SPI_Cmd(SPI1, ENABLE);
         
@@ -141,7 +144,7 @@ void DMA2_Stream2_IRQHandler(void)
   // Clear DMA Transfer Complete flag
   DMA_ClearFlag(DMA2_Stream2, DMA_FLAG_TCIF2);
 
-#if 0  
+#if 0
   volatile u8* d = (volatile u8*)&g_dataToHead;
   for (int i = 0; i < 0x10; i++)
   {

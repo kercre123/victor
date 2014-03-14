@@ -39,16 +39,6 @@ using namespace Anki::Cozmo;
 #include "anki/common/robot/matlabInterface.h"
 #endif
 
-// m_buffer1 (aka Mr. Bufferly) is where the camera image is currently stored
-#if defined(SIMULATOR)
-u8 m_buffer1[640*480];
-bool isEOF = true;
-#else
-// TODO: make nice
-extern u8 m_buffer1[];
-extern volatile bool isEOF;
-#endif
-
 static bool isInitialized_ = false;
 
 // TODO: remove
@@ -272,15 +262,18 @@ namespace TrackerParameters {
 
 namespace VisionMemory
 {
+  static const s32 IMAGE_BUFFER_SIZE = (320*240 + 16);
   static const s32 OFFCHIP_BUFFER_SIZE = 2000000;
   static const s32 ONCHIP_BUFFER_SIZE = 170000; // The max here is somewhere between 175000 and 180000 bytes
   static const s32 CCM_BUFFER_SIZE = 50000; // The max here is probably 65536 (0x10000) bytes
   static const s32 MAX_MARKERS = 100;
 
+  static OFFCHIP char imageBuffer[IMAGE_BUFFER_SIZE];
   static OFFCHIP char offchipBuffer[OFFCHIP_BUFFER_SIZE];
   static ONCHIP char onchipBuffer[ONCHIP_BUFFER_SIZE];
   static CCM char ccmBuffer[CCM_BUFFER_SIZE];
 
+  static MemoryStack imageScratch_;
   static MemoryStack offchipScratch_;
   static MemoryStack onchipScratch_;
   static MemoryStack ccmScratch_;
@@ -288,9 +281,12 @@ namespace VisionMemory
   // Markers is the one things that can move between functions, so it is always allocated in memory
   static FixedLengthList<VisionMarker> markers_;
 
+  static Array<u8> grayscaleImage_;
+  
   // WARNING: ResetBuffers should be used with caution
   static ReturnCode ResetBuffers()
   {
+    imageScratch_ = MemoryStack(imageBuffer, IMAGE_BUFFER_SIZE);
     offchipScratch_ = MemoryStack(offchipBuffer, OFFCHIP_BUFFER_SIZE);
     onchipScratch_ = MemoryStack(onchipBuffer, ONCHIP_BUFFER_SIZE);
     ccmScratch_ = MemoryStack(ccmBuffer, CCM_BUFFER_SIZE);
@@ -301,6 +297,7 @@ namespace VisionMemory
     }
 
     markers_ = FixedLengthList<VisionMarker>(VisionMemory::MAX_MARKERS, offchipScratch_);
+    grayscaleImage_ = Array<u8>(240, 320, imageScratch_, Flags::Buffer(false, false, false));
 
     return EXIT_SUCCESS;
   }
@@ -740,7 +737,7 @@ static ReturnCode DownsampleHelper(
 }
 
 static ReturnCode LookForMarkers(
-  const Array<u16> &yuvImage,
+  const Array<u8> &grayscaleImage,
   const DetectFiducialMarkersParameters::Parameters &parameters,
   FixedLengthList<VisionMarker> &markers,
   MemoryStack offchipScratch,
@@ -749,12 +746,12 @@ static ReturnCode LookForMarkers(
 {
   // TODO: Call embedded vision block detector for each block that's found, create a
   //       CozmoMsg_ObservedBlockMarkerMsg and process it.
-
+  
   const s32 maxMarkers = markers.get_maximumSize();
 
-  Array<u8> grayscaleImage(parameters.detectionHeight, parameters.detectionWidth, offchipScratch);
+  //Array<u8> grayscaleImage(parameters.detectionHeight, parameters.detectionWidth, offchipScratch);
 
-  ImageProcessing::YUVToGrayscale(yuvImage, grayscaleImage);
+  //ImageProcessing::YUVToGrayscale(yuvImage, grayscaleImage);
 
   // TODO: remove
   //DebugStream::SendArray(grayscaleImage);
@@ -805,7 +802,7 @@ static ReturnCode LookForMarkers(
 } // LookForMarkers()
 
 static ReturnCode InitTemplate(
-  const Array<u16> &yuvImage,
+  const Array<u8> &grayscaleImage,
   const Quadrilateral<f32> &trackingQuad,
   const TrackerParameters::Parameters &parameters,
   Tracker &tracker,
@@ -813,9 +810,7 @@ static ReturnCode InitTemplate(
   MemoryStack &onchipScratch, //< NOTE: onchip is a reference
   MemoryStack ccmScratch)
 {
-  Array<u8> grayscaleImage(parameters.detectionHeight, parameters.detectionWidth, offchipScratch);
-  ImageProcessing::YUVToGrayscale(yuvImage, grayscaleImage);
-
+  
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SLOW || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_AFFINE || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE
   // TODO: At some point template initialization should happen at full detection resolution but for
   //       now, we have to downsample to tracking resolution
@@ -877,7 +872,7 @@ static ReturnCode InitTemplate(
 } // InitTemplate()
 
 static ReturnCode TrackTemplate(
-  const Array<u16> &yuvImage,
+  const Array<u8> &grayscaleImage,
   const Quadrilateral<f32> &trackingQuad,
   const TrackerParameters::Parameters &parameters,
   Tracker &tracker,
@@ -897,9 +892,6 @@ static ReturnCode TrackTemplate(
   //
   //  return EXIT_SUCCESS;
   //#endif
-
-  Array<u8> grayscaleImage(parameters.detectionHeight, parameters.detectionWidth, offchipScratch);
-  ImageProcessing::YUVToGrayscale(yuvImage, grayscaleImage);
 
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SLOW || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_AFFINE || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE
   // TODO: At some point template initialization should happen at full detection resolution
@@ -1122,22 +1114,14 @@ namespace Anki {
         if (HAL::GetMicroCounter() < SimulatorParameters::frameRdyTimeUS_) {
           return EXIT_SUCCESS;
         }
-
-        // TODO: remove this once we have the new API for getting a camera image
-        HAL::CameraStartFrame(HAL::CAMERA_FRONT, m_buffer1, HAL::CAMERA_MODE_QVGA, HAL::CAMERA_UPDATE_SINGLE, 0, false);
 #endif
+        
+        HAL::CameraGetFrame(reinterpret_cast<u8*>(VisionMemory::grayscaleImage_.get_rawDataPointer()), HAL::CAMERA_MODE_QVGA, 0, false);
+
 
         //#if USE_OFFBOARD_VISION
         //        return Update_Offboard();
         //#endif // USE_OFFBOARD_VISION
-
-        // TODO: make this a function call that returns a bool?
-        // TODO: set size via HAL
-        while(!isEOF)
-        {
-        }
-
-        const Array<u16> yuvImage(240, 320, m_buffer1, 320*240*2, Flags::Buffer(false, false, true));
 
         const TimeStamp_t imageTimeStamp = HAL::GetTimeStamp();
 
@@ -1151,7 +1135,7 @@ namespace Anki {
           VisionMemory::ResetBuffers();
 
           const ReturnCode result = LookForMarkers(
-            yuvImage,
+            VisionMemory::grayscaleImage_,
             DetectFiducialMarkersParameters::parameters_,
             VisionMemory::markers_,
             VisionMemory::offchipScratch_,
@@ -1210,7 +1194,7 @@ namespace Anki {
                 Point<f32>(crntMarker.corners[3].x, crntMarker.corners[3].y));
 
               const ReturnCode result = InitTemplate(
-                yuvImage,
+                VisionMemory::grayscaleImage_,
                 VisionState::trackingQuad_,
                 TrackerParameters::parameters_,
                 VisionState::tracker_,
@@ -1238,7 +1222,7 @@ namespace Anki {
           bool converged;
 
           const ReturnCode result = TrackTemplate(
-            yuvImage,
+            VisionMemory::grayscaleImage_,
             VisionState::trackingQuad_,
             TrackerParameters::parameters_,
             VisionState::tracker_,

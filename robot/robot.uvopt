@@ -138,7 +138,11 @@
         <SetRegEntry>
           <Number>0</Number>
           <Key>UL2CM3</Key>
+<<<<<<< HEAD
+          <Name>-UV0918REE -O206 -S0 -C0 -P00 -N00("ARM CoreSight SW-DP") -D00(2BA01477) -L00(0) -TO18 -TC10000000 -TP21 -TDS8007 -TDT0 -TDC1F -TIEFFFFFFFF -TIP8 -FO15 -FD20000000 -FC1000 -FN1 -FF0STM32F4xx_2048.FLM -FS08000000 -FL0200000 -FP0($$Device:STM32F439NI$Flash\STM32F4xx_2048.FLM)</Name>
+=======
           <Name>-UV0213REE -O206 -S0 -C0 -P00 -N00("ARM CoreSight SW-DP") -D00(2BA01477) -L00(0) -TO18 -TC10000000 -TP21 -TDS8007 -TDT0 -TDC1F -TIEFFFFFFFF -TIP8 -FO15 -FD20000000 -FC1000 -FN1 -FF0STM32F4xx_2048.FLM -FS08000000 -FL0200000 -FP0($$Device:STM32F439NI$Flash\STM32F4xx_2048.FLM)</Name>
+>>>>>>> cf3b15762dbf588dda2d5d57cef75b96dc70444e
         </SetRegEntry>
       </TargetDriverDllRegistry>
       <Breakpoint/>
@@ -356,10 +360,15 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>0</ColumnNumber>
+      <ColumnNumber>8</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
+<<<<<<< HEAD
+      <TopLine>415</TopLine>
+      <CurrentLine>440</CurrentLine>
+=======
       <TopLine>0</TopLine>
       <CurrentLine>0</CurrentLine>
+>>>>>>> cf3b15762dbf588dda2d5d57cef75b96dc70444e
       <bDave2>0</bDave2>
       <PathWithFileName>.\arm_hal\hal\frontCamera.cpp</PathWithFileName>
       <FilenameWithoutPath>frontCamera.cpp</FilenameWithoutPath>
@@ -372,10 +381,17 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
+<<<<<<< HEAD
+      <ColumnNumber>3</ColumnNumber>
+      <tvExpOptDlg>0</tvExpOptDlg>
+      <TopLine>93</TopLine>
+      <CurrentLine>107</CurrentLine>
+=======
       <ColumnNumber>7</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
       <TopLine>71</TopLine>
       <CurrentLine>77</CurrentLine>
+>>>>>>> cf3b15762dbf588dda2d5d57cef75b96dc70444e
       <bDave2>0</bDave2>
       <PathWithFileName>.\arm_hal\hal\main.cpp</PathWithFileName>
       <FilenameWithoutPath>main.cpp</FilenameWithoutPath>
@@ -406,8 +422,8 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>0</TopLine>
-      <CurrentLine>0</CurrentLine>
+      <TopLine>1</TopLine>
+      <CurrentLine>9</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\arm_hal\hal\retarget.cpp</PathWithFileName>
       <FilenameWithoutPath>retarget.cpp</FilenameWithoutPath>
@@ -422,8 +438,13 @@
       <Focus>0</Focus>
       <ColumnNumber>2</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
+<<<<<<< HEAD
+      <TopLine>5</TopLine>
+      <CurrentLine>29</CurrentLine>
+=======
       <TopLine>0</TopLine>
       <CurrentLine>0</CurrentLine>
+>>>>>>> cf3b15762dbf588dda2d5d57cef75b96dc70444e
       <bDave2>0</bDave2>
       <PathWithFileName>.\arm_hal\hal\spi.cpp</PathWithFileName>
       <FilenameWithoutPath>spi.cpp</FilenameWithoutPath>
@@ -436,10 +457,10 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>0</ColumnNumber>
+      <ColumnNumber>7</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>0</TopLine>
-      <CurrentLine>0</CurrentLine>
+      <TopLine>148</TopLine>
+      <CurrentLine>182</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\arm_hal\hal\startup.cpp</PathWithFileName>
       <FilenameWithoutPath>startup.cpp</FilenameWithoutPath>
@@ -452,10 +473,17 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
+<<<<<<< HEAD
+      <ColumnNumber>42</ColumnNumber>
+      <tvExpOptDlg>0</tvExpOptDlg>
+      <TopLine>20</TopLine>
+      <CurrentLine>38</CurrentLine>
+=======
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
       <TopLine>0</TopLine>
       <CurrentLine>0</CurrentLine>
+>>>>>>> cf3b15762dbf588dda2d5d57cef75b96dc70444e
       <bDave2>0</bDave2>
       <PathWithFileName>.\arm_hal\hal\timer.cpp</PathWithFileName>
       <FilenameWithoutPath>timer.cpp</FilenameWithoutPath>
@@ -468,10 +496,17 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
+<<<<<<< HEAD
+      <ColumnNumber>38</ColumnNumber>
+      <tvExpOptDlg>0</tvExpOptDlg>
+      <TopLine>1</TopLine>
+      <CurrentLine>34</CurrentLine>
+=======
       <ColumnNumber>1</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
       <TopLine>1</TopLine>
       <CurrentLine>21</CurrentLine>
+>>>>>>> cf3b15762dbf588dda2d5d57cef75b96dc70444e
       <bDave2>0</bDave2>
       <PathWithFileName>.\arm_hal\hal\uart.cpp</PathWithFileName>
       <FilenameWithoutPath>uart.cpp</FilenameWithoutPath>
@@ -484,10 +519,10 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>0</ColumnNumber>
+      <ColumnNumber>4</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>0</TopLine>
-      <CurrentLine>0</CurrentLine>
+      <TopLine>31</TopLine>
+      <CurrentLine>45</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\arm_hal\hal\usb_radio.cpp</PathWithFileName>
       <FilenameWithoutPath>usb_radio.cpp</FilenameWithoutPath>
@@ -1270,7 +1305,11 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
+<<<<<<< HEAD
+      <TopLine>181</TopLine>
+=======
       <TopLine>187</TopLine>
+>>>>>>> cf3b15762dbf588dda2d5d57cef75b96dc70444e
       <CurrentLine>192</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\arm_hal\startup\startup_stm32f429_439xx.s</PathWithFileName>
@@ -1518,8 +1557,8 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>0</TopLine>
-      <CurrentLine>0</CurrentLine>
+      <TopLine>1226</TopLine>
+      <CurrentLine>725</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\supervisor\src\usbPrint.cpp</PathWithFileName>
       <FilenameWithoutPath>usbPrint.cpp</FilenameWithoutPath>
@@ -1926,8 +1965,8 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>0</TopLine>
-      <CurrentLine>0</CurrentLine>
+      <TopLine>129</TopLine>
+      <CurrentLine>83</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>..\coretech\common\robot\src\utilities_c.c</PathWithFileName>
       <FilenameWithoutPath>utilities_c.c</FilenameWithoutPath>
