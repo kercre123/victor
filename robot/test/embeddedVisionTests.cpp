@@ -1464,24 +1464,26 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
 
   markers.Print("markers");
 
-  //  [Type 3-MARKER_ANKILOGO]: (139,9) (127,88) (217,21) (205,100)]
-  //[Type 2-MARKER_ANGRYFACE]: (64,12) (8,41) (92,68) (37,97)]
-  //[Type 4-MARKER_BATTERIES]: (238,71) (238,148) (314,71) (314,148)]
-  //[Type 3-MARKER_ANKILOGO]: (83,116) (83,155) (122,116) (122,155)]
-  //[Type 4-MARKER_BATTERIES]: (17,123) (17,161) (54,123) (54,161)]
-  //[Type 5-MARKER_BULLSEYE]: (222,137) (151,137) (222,209) (151,210)]
-  //[Type 2-MARKER_ANGRYFACE]: (245,161) (245,224) (307,161) (307,224)]
-  //[Type 7-MARKER_SQUAREPLUSCORNERS]: (127,166) (89,166) (128,205) (88,205)]
-  //[Type 7-MARKER_SQUAREPLUSCORNERS]: (44,174) (15,201) (70,204) (41,230)]
+  //[Type 11-MARKER_ANKILOGO]: (139,9) (127,88) (217,21) (205,100)]
+  //[Type 10-MARKER_ANGRYFACE]: (8,41) (37,97) (64,12) (92,68)]
+  //[Type 19-MARKER_FIRE]: (247,12) (247,52) (287,12) (287,52)]
+  //[Type 13-MARKER_BATTERIES]: (238,71) (238,148) (314,71) (314,148)]
+  //[Type 11-MARKER_ANKILOGO]: (83,116) (83,155) (122,116) (122,155)]
+  //[Type 13-MARKER_BATTERIES]: (17,123) (17,161) (54,123) (54,161)]
+  //[Type 14-MARKER_BULLSEYE]: (222,137) (151,137) (222,209) (151,210)]
+  //[Type 10-MARKER_ANGRYFACE]: (245,161) (245,224) (307,161) (307,224)]
+  //[Type 30-MARKER_SQUAREPLUSCORNERS]: (127,166) (89,166) (128,205) (88,205)]
+  //[Type 30-MARKER_SQUAREPLUSCORNERS]: (44,174) (15,201) (70,204) (41,230)]
 
   if(scaleImage_thresholdMultiplier == 65536) {
-    const s32 numMarkers_groundTruth = 9;
+    const s32 numMarkers_groundTruth = 10;
 
     ASSERT_TRUE(markers.get_size() == numMarkers_groundTruth);
 
     const s16 corners_groundTruth[numMarkers_groundTruth][4][2] = {
       {{139,9},{127,88},{217,21},{205,100}},
-      {{64,12},{8,41},{92,68},{37,97}},
+      {{8,41},{37,97},{64,12},{92,68}},
+      {{247,12},{247,52},{287,12},{287,52}},
       {{238,71},{238,148},{314,71},{314,148}},
       {{83,116},{83,155},{122,116},{122,155}},
       {{17,123},{17,161},{54,123},{54,161}},
@@ -1494,6 +1496,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
     const Anki::Vision::MarkerType markerTypes_groundTruth[numMarkers_groundTruth] = {
       Anki::Vision::MARKER_ANKILOGO,
       Anki::Vision::MARKER_ANGRYFACE,
+      Anki::Vision::MARKER_FIRE,
       Anki::Vision::MARKER_BATTERIES,
       Anki::Vision::MARKER_ANKILOGO,
       Anki::Vision::MARKER_BATTERIES,

@@ -69,6 +69,9 @@ namespace Anki
       void* Allocate(const s32 numBytesRequested);
       void* Allocate(const s32 numBytesRequested, s32 &numBytesAllocated);
 
+      // Same as the above, but zeroAllocatedMemory is specified only for this segment
+      void* Allocate(const s32 numBytesRequested, const bool zeroAllocatedMemory, s32 &numBytesAllocated);
+
       // Reallocate will change the size of the last allocated memory segment. It only works on the
       // last segment. The return value is equal to memoryLocation, or NULL if there was an error.
       // The reallocated memory will not be cleared.

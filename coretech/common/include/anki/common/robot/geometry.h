@@ -288,6 +288,29 @@ namespace Anki
       return sortedQuad;
     }
 
+    template<typename Type> bool Quadrilateral<Type>::IsConvex() const
+    {
+      Quadrilateral<Type> sortedQuad = this->ComputeClockwiseCorners();
+
+      for(s32 iCorner=0; iCorner<4; iCorner++) {
+        const Point<Type> &corner1 = corners[iCorner];
+        const Point<Type> &corner2 = corners[(iCorner+1) % 4];
+        const Point<Type> &corner3 = corners[(iCorner+2) % 4];
+
+        const Type orientation =
+          ((corner2.y - corner1.y) * (corner3.x - corner2.x)) -
+          ((corner2.x - corner1.x) * (corner3.y - corner2.y));
+
+        // TODO: finish
+
+        if(orientation > 0) {
+          return false;
+        }
+      }
+
+      return true;
+    }
+
     template<typename Type> bool Quadrilateral<Type>::operator== (const Quadrilateral<Type> &quad2) const
     {
       for(s32 i=0; i<4; i++) {

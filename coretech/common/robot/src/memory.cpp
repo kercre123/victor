@@ -56,10 +56,15 @@ namespace Anki
     void* MemoryStack::Allocate(const s32 numBytesRequested)
     {
       s32 numBytesAllocated = -1;
-      return MemoryStack::Allocate(numBytesRequested, numBytesAllocated);
+      return this->Allocate(numBytesRequested, numBytesAllocated);
     }
 
     void* MemoryStack::Allocate(s32 numBytesRequested, s32 &numBytesAllocated)
+    {
+      return this->Allocate(numBytesRequested, this->get_flags().get_zeroAllocatedMemory(), numBytesAllocated);
+    }
+
+    void* MemoryStack::Allocate(const s32 numBytesRequested, const bool zeroAllocatedMemory, s32 &numBytesAllocated)
     {
       numBytesAllocated = 0;
 
@@ -97,7 +102,7 @@ namespace Anki
 
       numBytesAllocated = numBytesRequestedRounded;
 
-      if(flags.get_zeroAllocatedMemory())
+      if(zeroAllocatedMemory)
         memset(segmentMemory, 0, numBytesRequestedRounded);
 
 #ifdef DISPLAY_USED_BYTES
