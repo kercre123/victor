@@ -787,7 +787,7 @@ static ReturnCode LookForMarkers(
     offchipScratch, onchipScratch, ccmScratch);
 
   if(result == RESULT_OK) {
-    //DebugStream::SendFiducialDetection(grayscaleImage, markers, ccmScratch, offchipScratch);
+    DebugStream::SendFiducialDetection(grayscaleImage, markers, ccmScratch, offchipScratch);
 
     for(s32 i_marker = 0; i_marker < markers.get_size(); ++i_marker) {
       const VisionMarker crntMarker = markers[i_marker];
@@ -926,7 +926,7 @@ static ReturnCode TrackTemplate(
     converged,
     onchipScratch);
 
-  tracker.get_transformation().Print("track");
+  //tracker.get_transformation().Print("track");
 
 #elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE
   const Result trackerResult = tracker.UpdateTrack(
@@ -936,7 +936,7 @@ static ReturnCode TrackTemplate(
     converged,
     onchipScratch);
 
-  tracker.get_transformation().Print("track");
+  //tracker.get_transformation().Print("track");
 
 #elif DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
   s32 numMatches = -1;
@@ -949,7 +949,7 @@ static ReturnCode TrackTemplate(
     numMatches,
     ccmScratch, offchipScratch);
 
-  tracker.get_transformation().Print("track");
+  //tracker.get_transformation().Print("track");
 
   const s32 numTemplatePixels = tracker.get_numTemplatePixels();
 
@@ -1010,7 +1010,7 @@ static ReturnCode TrackTemplate(
       onchipScratch);
   }
 
-  //DebugStream::SendTrackingUpdate(grayscaleImage, tracker.get_transformation(), ccmScratch, offchipScratch);
+  DebugStream::SendTrackingUpdate(grayscaleImage, tracker.get_transformation(), ccmScratch, offchipScratch);
 
   return EXIT_SUCCESS;
 } // TrackTemplate()

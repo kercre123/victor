@@ -292,7 +292,7 @@ namespace Anki
         return false;
     }
 
-    const void * MemoryStackConstIterator::GetNext(s32 &segmentLength)
+    const void * MemoryStackConstIterator::GetNext(s32 &segmentLength, const bool requireFillPatternMatch)
     {
       segmentLength = 0;
 
@@ -315,13 +315,15 @@ namespace Anki
       // Check if the segment end is beyond the end of the buffer (NOTE: this is not conservative enough, though errors should be caught later)
       AnkiConditionalErrorAndReturnValue(segmentLength <= (memory.usedBytes-this->index-MemoryStack::HEADER_LENGTH-MemoryStack::FOOTER_LENGTH), NULL, "Anki.MemoryStackConstIterator.GetNext", "The segment end is beyond the end of the buffer. segmentLength=%d (0x%x) usedBytes=%d all=%d", segmentLength, segmentLength, memory.usedBytes, (memory.usedBytes-this->index-MemoryStack::HEADER_LENGTH-MemoryStack::FOOTER_LENGTH));
 
-      const u32 segmentHeader = reinterpret_cast<const u32*>(bufferCharStar+this->index)[1];
+      if(requireFillPatternMatch) {
+        const u32 segmentHeader = reinterpret_cast<const u32*>(bufferCharStar+this->index)[1];
 
-      AnkiConditionalErrorAndReturnValue(segmentHeader == MemoryStack::FILL_PATTERN_START, NULL, "Anki.MemoryStackConstIterator.GetNext", "segmentHeader == FILL_PATTERN_START (%x!=%x)", segmentHeader, MemoryStack::FILL_PATTERN_START);
+        AnkiConditionalErrorAndReturnValue(segmentHeader == MemoryStack::FILL_PATTERN_START, NULL, "Anki.MemoryStackConstIterator.GetNext", "segmentHeader == FILL_PATTERN_START (%x!=%x)", segmentHeader, MemoryStack::FILL_PATTERN_START);
 
-      const u32 segmentFooter = reinterpret_cast<const u32*>(bufferCharStar+this->index+MemoryStack::HEADER_LENGTH+segmentLength)[0];
+        const u32 segmentFooter = reinterpret_cast<const u32*>(bufferCharStar+this->index+MemoryStack::HEADER_LENGTH+segmentLength)[0];
 
-      AnkiConditionalErrorAndReturnValue(segmentFooter == MemoryStack::FILL_PATTERN_END, NULL, "Anki.MemoryStackConstIterator.GetNext", "segmentFooter == FILL_PATTERN_END (%x != %x)", segmentFooter, MemoryStack::FILL_PATTERN_END);
+        AnkiConditionalErrorAndReturnValue(segmentFooter == MemoryStack::FILL_PATTERN_END, NULL, "Anki.MemoryStackConstIterator.GetNext", "segmentFooter == FILL_PATTERN_END (%x != %x)", segmentFooter, MemoryStack::FILL_PATTERN_END);
+      }
 
       const void * segmentToReturn = reinterpret_cast<const void*>(bufferCharStar + this->index + MemoryStack::HEADER_LENGTH);
 
@@ -340,11 +342,11 @@ namespace Anki
     {
     }
 
-    void * MemoryStackIterator::GetNext(s32 &segmentLength)
+    void * MemoryStackIterator::GetNext(s32 &segmentLength, const bool requireFillPatternMatch)
     {
       // To avoid code duplication, we'll use the const version of GetNext(), though our MemoryStack is not const
 
-      const void * segment = MemoryStackConstIterator::GetNext(segmentLength);
+      const void * segment = MemoryStackConstIterator::GetNext(segmentLength, requireFillPatternMatch);
 
       return const_cast<void*>(segment);
     }

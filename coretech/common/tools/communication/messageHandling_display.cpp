@@ -37,7 +37,7 @@ using namespace std;
 static const s32 scratchSize = 1000000;
 static u8 scratchBuffer[scratchSize];
 
-void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireCRCmatch)
+void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireFillPatternMatch, const bool requireCRCmatch)
 {
   MemoryStack scratch(scratchBuffer, scratchSize, Flags::Buffer(false, true, false));
 
@@ -57,7 +57,7 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireCRCmat
   while(iterator.HasNext()) {
     s32 dataLength;
     SerializedBuffer::DataType type;
-    u8 * const dataSegmentStart = reinterpret_cast<u8*>(iterator.GetNext(dataLength, type, requireCRCmatch));
+    u8 * const dataSegmentStart = reinterpret_cast<u8*>(iterator.GetNext(dataLength, type, requireFillPatternMatch, requireCRCmatch));
     u8 * dataSegment = dataSegmentStart;
 
     if(!dataSegment) {

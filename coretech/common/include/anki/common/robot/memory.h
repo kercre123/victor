@@ -137,7 +137,7 @@ namespace Anki
       bool HasNext() const;
 
       // Returns NULL if there are no more segments
-      const void * GetNext(s32 &segmentLength);
+      const void * GetNext(s32 &segmentLength, const bool requireFillPatternMatch=true);
 
       const MemoryStack& get_memory() const;
 
@@ -152,7 +152,7 @@ namespace Anki
       MemoryStackIterator(MemoryStack &memory);
 
       // Returns NULL if there are no more segments
-      void * GetNext(s32 &segmentLength);
+      void * GetNext(s32 &segmentLength, const bool requireFillPatternMatch=true);
 
       MemoryStack& get_memory();
     }; // class MemoryStackIterator

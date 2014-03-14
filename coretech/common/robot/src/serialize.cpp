@@ -321,10 +321,10 @@ namespace Anki
     {
     }
 
-    const void * SerializedBufferConstIterator::GetNext(s32 &dataLength, SerializedBuffer::DataType &type, const bool requireCRCmatch)
+    const void * SerializedBufferConstIterator::GetNext(s32 &dataLength, SerializedBuffer::DataType &type, const bool requireFillPatternMatch, const bool requireCRCmatch)
     {
       s32 segmentLength = -1;
-      const void * segmentToReturn = MemoryStackConstIterator::GetNext(segmentLength);
+      const void * segmentToReturn = MemoryStackConstIterator::GetNext(segmentLength, requireFillPatternMatch);
 
       AnkiConditionalErrorAndReturnValue(segmentToReturn != NULL,
         NULL, "SerializedBufferConstIterator::GetNext", "segmentToReturn is NULL");
@@ -351,11 +351,11 @@ namespace Anki
     {
     }
 
-    void * SerializedBufferIterator::GetNext(s32 &dataLength, SerializedBuffer::DataType &type, const bool requireCRCmatch)
+    void * SerializedBufferIterator::GetNext(s32 &dataLength, SerializedBuffer::DataType &type, const bool requireFillPatternMatch, const bool requireCRCmatch)
     {
       // To avoid code duplication, we'll use the const version of GetNext(), though our MemoryStack is not const
 
-      u8 * segment = reinterpret_cast<u8*>(const_cast<void*>(SerializedBufferConstIterator::GetNext(dataLength, type, requireCRCmatch)));
+      u8 * segment = reinterpret_cast<u8*>(const_cast<void*>(SerializedBufferConstIterator::GetNext(dataLength, type, requireFillPatternMatch, requireCRCmatch)));
 
       AnkiConditionalErrorAndReturnValue(segment != NULL,
         NULL, "SerializedBufferIterator::GetNext", "segment is NULL");

@@ -60,6 +60,12 @@ static DisplayRawBuffer AllocateNewRawBuffer(const s32 bufferRawSize)
   rawBuffer.maxDataLength = bufferRawSize - (reinterpret_cast<size_t>(rawBuffer.data) - reinterpret_cast<size_t>(rawBuffer.rawDataPointer));
   rawBuffer.curDataLength = 0;
 
+  if(rawBuffer.rawDataPointer == NULL) {
+    printf("Could not allocate memory");
+    rawBuffer.data = NULL;
+    rawBuffer.maxDataLength = 0;
+  }
+
   return rawBuffer;
 }
 
@@ -106,7 +112,7 @@ int main(int argc, char ** argv)
     }
 
     DWORD bytesRead = 0;
-    if(serial.Read(usbBuffer, USB_BUFFER_SIZE-1, bytesRead) != RESULT_OK)
+    if(serial.Read(usbBuffer, USB_BUFFER_SIZE-2, bytesRead) != RESULT_OK)
       return -4;
 
     // Find the next SERIALIZED_BUFFER_HEADER
@@ -115,7 +121,7 @@ int main(int argc, char ** argv)
 
     // This method can only find one message per usbBuffer
     // TODO: support more
-    while(start_searchIndex < USB_BUFFER_SIZE) {
+    while(start_searchIndex < static_cast<s32>(bytesRead)) {
       if(start_state == SERIALIZED_BUFFER_HEADER_LENGTH) {
         start_foundIndex = start_searchIndex;
         start_state = 0;
@@ -136,18 +142,72 @@ int main(int argc, char ** argv)
     // If we found a start header, handle it
     if(start_foundIndex != -1) {
       if(atLeastOneStartFound) {
-        // TODO: send the message to the handler
+        const s32 numBytesToCopy = start_foundIndex;
+
+        if((nextMessage.curDataLength + numBytesToCopy + 16) > nextMessage.maxDataLength) {
+          nextMessage = AllocateNewRawBuffer(MESSAGE_BUFFER_SIZE);
+          printf("Buffer trashed\n");
+          continue;
+        }
+
+        memcpy(
+          nextMessage.data + nextMessage.curDataLength,
+          usbBuffer,
+          numBytesToCopy);
+
+        nextMessage.curDataLength += numBytesToCopy;
+
+        ProcessRawBuffer_Display(nextMessage, true, false);
 
         nextMessage = AllocateNewRawBuffer(MESSAGE_BUFFER_SIZE);
       } else {
         atLeastOneStartFound = true;
       }
 
+      const s32 numBytesToCopy = static_cast<s32>(bytesRead) - start_foundIndex;
+
+      // If we've filled up the buffer, just trash it
+      if((nextMessage.curDataLength + numBytesToCopy + 16) > nextMessage.maxDataLength) {
+        nextMessage = AllocateNewRawBuffer(MESSAGE_BUFFER_SIZE);
+        printf("Buffer trashed\n");
+        continue;
+      }
+
+      if(numBytesToCopy <= 0) {
+        printf("negative numBytesToCopy");
+        continue;
+      }
+
+      //for(s32 i=0; i<50; i++) {
+      //  printf("%d ", *(usbBuffer + start_foundIndex + i));
+      //}
+      //printf("\n");
+
       memcpy(
         nextMessage.data + nextMessage.curDataLength,
-        usbBuffer + start_foundIndex + SERIALIZED_BUFFER_HEADER_LENGTH,
-        bytesRead - start_foundIndex);
-    } // if(start_foundIndex != -1)
+        usbBuffer + start_foundIndex,
+        numBytesToCopy);
+
+      nextMessage.curDataLength += numBytesToCopy;
+    } else {// if(start_foundIndex != -1)
+      if(atLeastOneStartFound) {
+        const s32 numBytesToCopy = static_cast<s32>(bytesRead);
+
+        // If we've filled up the buffer, just trash it
+        if((nextMessage.curDataLength + numBytesToCopy + 16) > nextMessage.maxDataLength) {
+          nextMessage = AllocateNewRawBuffer(MESSAGE_BUFFER_SIZE);
+          printf("Buffer trashed\n");
+          continue;
+        }
+
+        memcpy(
+          nextMessage.data + nextMessage.curDataLength,
+          usbBuffer,
+          numBytesToCopy);
+
+        nextMessage.curDataLength += numBytesToCopy;
+      }
+    }
   } // while(true)
 
   if(serial.Close() != RESULT_OK)

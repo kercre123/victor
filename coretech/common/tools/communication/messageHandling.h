@@ -34,6 +34,6 @@ typedef struct {
 
 // Process the buffer using the BufferAction action. Optionally, free the buffer on completion.
 void ProcessRawBuffer_Save(RawBuffer &buffer, const std::string outputFilenamePattern, const bool freeBuffer, const bool requireCRCmatch);
-void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireCRCmatch);
+void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireFillPatternMatch, const bool requireCRCmatch);
 
 #endif // #ifndef _MESSAGE_HANDLING_H_
