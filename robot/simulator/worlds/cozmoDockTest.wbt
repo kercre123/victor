@@ -332,7 +332,7 @@ DEF FuelBlock Block1x1 {
   name "Block060_1"
   translation -5.40228e-19 -0.15 0.0299844
   rotation 1 1.82119e-13 -4.23988e-13 3.67483e-06
-  blockColor 0.5 0.1 0.75
+  blockColor 0.75 0.3 0.3
   facemarkerFront [
     "textures/batteries.png"
   ]
@@ -355,7 +355,7 @@ DEF FuelBlock Block1x1 {
 
 DEF Cozmo_1 CozmoBot {
   translation 0 0 .014
-  rotation 0 0 1 0
+  rotation 0 0 1 -1.5708
   name "CozmoBot_1"
   #headAngle -0.251457
   #liftAngle  0
