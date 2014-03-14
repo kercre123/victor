@@ -25,11 +25,13 @@ void PowerInit()
   nrf_gpio_pin_set(PIN_VDDs_EN);
   nrf_gpio_cfg_output(PIN_VDDs_EN);
   
+  MicroWait(50000);
+  
   nrf_gpio_pin_clear(PIN_VDDs_EN);
   nrf_gpio_pin_set(PIN_VINs_EN);
   
   // Wait for MISO to go high (signaled from the head board)
-  nrf_gpio_cfg_input(PIN_SPI_MISO, NRF_GPIO_PIN_PULLDOWN);
+  /*nrf_gpio_cfg_input(PIN_SPI_MISO, NRF_GPIO_PIN_PULLDOWN);
   MicroWait(10);  // Let pin settle
   while (!(NRF_GPIO->IN & (1 << PIN_SPI_MISO)))
     ;
@@ -38,7 +40,7 @@ void PowerInit()
   nrf_gpio_pin_set(PIN_SPI_MOSI);
   MicroWait(10);  // Let pin settle
   while (NRF_GPIO->IN & (1 << PIN_SPI_MISO))
-    ;
+    ;*/
 }
 
 void SPIInit()
@@ -60,7 +62,7 @@ void SPIInit()
   NRF_SPI0->PSELMOSI = PIN_SPI_MOSI;
   
   // Base frequency starts at 0x02000000
-  NRF_SPI0->FREQUENCY = (0x02000000 << Freq_4Mbps); //Freq_125Kbps); //Freq_1Mbps);
+  NRF_SPI0->FREQUENCY = (0x02000000 << Freq_4Mbps);
  
   // Configure for SPI_MODE0 with LSB-first transmission
   // NOTE: Header does not match docs on these bits. Tread with care.

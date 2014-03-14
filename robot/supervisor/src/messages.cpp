@@ -154,24 +154,7 @@ namespace Anki {
         
         PRINT("Robot received handshake from basestation, "
               "sending camera calibration.\n");
-        const HAL::CameraInfo *matCamInfo  = HAL::GetMatCamInfo();
         const HAL::CameraInfo *headCamInfo = HAL::GetHeadCamInfo();
-        
-        //
-        // Send mat camera calibration
-        //
-        //   TODO: do we send x or y focal length, or both?
-        MatCameraCalibration matCalibMsg = {
-          matCamInfo->focalLength_x,
-          matCamInfo->focalLength_y,
-          matCamInfo->fov_ver,
-          matCamInfo->center_x,
-          matCamInfo->center_y,
-          matCamInfo->skew,
-          matCamInfo->nrows,
-          matCamInfo->ncols};
-        
-        HAL::RadioSendMessage(GET_MESSAGE_ID(MatCameraCalibration), &matCalibMsg);
         
         //
         // Send head camera calibration
