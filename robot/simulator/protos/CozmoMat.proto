@@ -20,7 +20,7 @@ Solid {
     }
     Solid {
 	    translation -0.2500 0.2500 0.0025
-	    rotation 0 0 1 -1.570796
+	    rotation 0 0 1 0.000000
 	    children [
 		  Shape {
 		    appearance Appearance {
@@ -35,7 +35,7 @@ Solid {
     }
     Solid {
 	    translation 0.0000 0.2500 0.0025
-	    rotation 0 0 1 -3.141593
+	    rotation 0 0 1 0.000000
 	    children [
 		  Shape {
 		    appearance Appearance {
@@ -50,7 +50,7 @@ Solid {
     }
     Solid {
 	    translation 0.2500 0.2500 0.0025
-	    rotation 0 0 1 -3.141593
+	    rotation 0 0 1 0.000000
 	    children [
 		  Shape {
 		    appearance Appearance {
@@ -65,7 +65,7 @@ Solid {
     }
     Solid {
 	    translation -0.2500 0.0000 0.0025
-	    rotation 0 0 1 -1.570796
+	    rotation 0 0 1 0.000000
 	    children [
 		  Shape {
 		    appearance Appearance {
@@ -95,7 +95,7 @@ Solid {
     }
     Solid {
 	    translation 0.2500 0.0000 0.0025
-	    rotation 0 0 1 1.570796
+	    rotation 0 0 1 0.000000
 	    children [
 		  Shape {
 		    appearance Appearance {
@@ -140,7 +140,7 @@ Solid {
     }
     Solid {
 	    translation 0.2500 -0.2500 0.0025
-	    rotation 0 0 1 1.570796
+	    rotation 0 0 1 0.000000
 	    children [
 		  Shape {
 		    appearance Appearance {

@@ -31,13 +31,20 @@ int main(void)
   
   // Initialize the hardware peripherals
   TimerInit();
-  UARTInit();
   MotorsInit();
   SPIInit();
+  UARTInit();
+  nrf_gpio_pin_clear(17);
+  nrf_gpio_cfg_output(17);
   
   UARTPutString("\r\nInitialized...\r\n");
   
   g_dataToHead.common.source = SPI_SOURCE_BODY;
+  
+  /*g_dataToBody.motorPWM[0] = 0; //0x7fff * 0.5;
+  g_dataToBody.motorPWM[1] = 0; //0x7fff * 0.2;
+  g_dataToBody.motorPWM[2] = 0x7fff * 0.5;
+  g_dataToBody.motorPWM[3] = 0; //0x7fff * 0.1;*/
   
   while (1)
   {
@@ -60,7 +67,7 @@ int main(void)
     // Verify the source
     if (g_dataToBody.common.source != SPI_SOURCE_HEAD)
     {
-      if(++failedTransferCount > MAX_FAILED_TRANSFER_COUNT)
+      if(0 && ++failedTransferCount > MAX_FAILED_TRANSFER_COUNT)
       {
         UARTPutString("\r\nToo many failed transfers\r\n");
         
@@ -69,6 +76,12 @@ int main(void)
       }
     } else {
       failedTransferCount = 0;
+      
+      static u32 s = 0;
+      if ((++s % 10) == 0)
+      {
+        nrf_gpio_pin_toggle(17);
+      }
       
       // Update motors
       for (int i = 0; i < MOTOR_COUNT; i++)

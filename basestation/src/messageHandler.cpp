@@ -197,6 +197,10 @@ namespace Anki {
                        msg.headAngle, msg.liftHeight);
       */
       
+      // Update head angle
+      robot->set_headAngle(msg.headAngle);
+
+      
       // Update robot pose
       Vec3f axis(0,0,1);
       Vec3f translation(msg.pose_x, msg.pose_y, msg.pose_z);

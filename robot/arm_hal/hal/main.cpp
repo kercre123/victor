@@ -4,8 +4,6 @@
 #include "hal/portable.h"
 #include "spiData.h"
 
-extern u8 m_buffer1[];
-
 namespace Anki
 {
   namespace Cozmo
@@ -19,6 +17,7 @@ namespace Anki
       void SPIInit();
       void TimerInit();
       void UARTInit();
+      void FrontCameraInit();
       
       int USBGetChar(u32){ return -1; }
       s32 USBPeekChar(u32 offset){ return -1; }
@@ -26,16 +25,7 @@ namespace Anki
       int USBPutChar(int c){ return c; }
       //void USBSendBuffer(const u8* buffer, const u32 size){ }
       
-      void CameraStartFrame(CameraID cameraID, u8* frame, CameraMode mode,
-          CameraUpdateMode updateMode, u16 exposure, bool enableLight)
-      {
-      }
-      
-      bool CameraIsEndOfFrame(CameraID cameraID){ return false; }
-      void CameraSetIsEndOfFrame(CameraID, bool){ }
-      
-      typedef u32 TimeStamp;
-      TimeStamp GetTimeStamp(void){ return (TimeStamp)0; }
+      TimeStamp_t GetTimeStamp(void){ return (TimeStamp_t)0; }
       
       int GetRobotID(){ return 0; }
       void UpdateDisplay(){ }
@@ -54,9 +44,6 @@ namespace Anki
   }
 }
 
-extern volatile bool isEOF;
-extern void StartFrame();
-
 void Wait()
 {
   using namespace Anki::Cozmo::HAL;
@@ -64,11 +51,11 @@ void Wait()
   u32 start = GetMicroCounter();
   while ((GetMicroCounter() - start) < 500000)
   {
-    printf("%.6f, %.6f  | %.6f, %.6f\n",
+    /*printf("%.6f, %.6f  | %.6f, %.6f\n",
       MotorGetPosition(MOTOR_LEFT_WHEEL),
       MotorGetSpeed(MOTOR_LEFT_WHEEL),
       MotorGetPosition(MOTOR_RIGHT_WHEEL),
-      MotorGetSpeed(MOTOR_RIGHT_WHEEL));
+      MotorGetSpeed(MOTOR_RIGHT_WHEEL));*/
   }
 }
 
@@ -83,11 +70,10 @@ int main(void)
   
   UARTPutString("UART!\r\n");
   
-  SPIInit();
-  
-  UARTPutString("SPI!\r\n");
-  
   FrontCameraInit();
+  
+  SPIInit();
+  UARTPutString("SPI!\r\n");
   
 #if 0
   // Motor testing...
@@ -105,13 +91,13 @@ int main(void)
     Wait();
     MotorSetPower(MOTOR_RIGHT_WHEEL, 0.0f);
     
-    /*MotorSetPower(MOTOR_LIFT, 0.3f);
+    MotorSetPower(MOTOR_LIFT, 0.3f);
     Wait();
     MotorSetPower(MOTOR_LIFT, -0.3f);
     Wait();
     MotorSetPower(MOTOR_LIFT, 0.0f);
     
-    MotorSetPower(MOTOR_HEAD, 0.3f);
+    /*MotorSetPower(MOTOR_HEAD, 0.3f);
     Wait();
     MotorSetPower(MOTOR_HEAD, -0.3f);
     Wait();
@@ -123,57 +109,27 @@ int main(void)
 #else
   
   Anki::Cozmo::Robot::Init();
-    
-  StartFrame();
   
   while (Anki::Cozmo::Robot::step_LongExecution() == EXIT_SUCCESS)
   {
-/*   UARTPutChar(0xbe);
+    /*CameraGetFrame(buffer, CAMERA_MODE_QQVGA, 0, false);
+    
+    
+    UARTPutChar(0xbe);
     UARTPutChar(0xef);
     UARTPutChar(0xf0);
     UARTPutChar(0xff);
     UARTPutChar(0xbd);
     
-    for (int y = 0; y < 240; y += 1)
+    for (int y = 0; y < 120; y++)
     {
-      for (int x = 0; x < 320; x += 1)
+      for (int x = 0; x < 160; x++)
       {
-        UARTPutChar(m_buffer1[y * 320*2 + x*2]);
+        UARTPutChar(buffer[y * 160 + x]);
       }
     }*/
   }
 #endif
-  
-  
-  /*u32 startTime = GetMicroCounter();
-  
-  for (int i = 0; i < 320*240; i++)
-    m_buffer1[i] = 0;
-  
-  while (1)
-  {
-    //while (!isEOF) ;
-    
-    if (isEOF)
-    {
-      UARTPutChar(0xbe);
-      UARTPutChar(0xef);
-      UARTPutChar(0xf0);
-      UARTPutChar(0xff);
-      UARTPutChar(0xbd);
-      
-      for (int y = 0; y < 240; y += 1)
-      {
-        for (int x = 0; x < 320; x += 1)
-        {
-          UARTPutChar(m_buffer1[y * 320*2 + x*2]);
-        }
-      }
-      
-      StartFrame();
-    }
-  } */
-  
 }
 
 extern "C"
