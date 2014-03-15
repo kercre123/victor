@@ -461,9 +461,12 @@ namespace Anki
           }
         }
       }
-      
+
+#warning this is broken
+#if defined(SIMULATOR)      
       const CameraInfo* GetHeadCamInfo(void)
       {
+
         headCamInfo_ = {
           HEAD_CAM_CALIB_FOCAL_LENGTH_X,
           HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
@@ -478,6 +481,8 @@ namespace Anki
 
         return &headCamInfo_;
       }
+#endif
+      
     }
   }
 }
