@@ -64,7 +64,7 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireFillPa
       break;
     }
 
-    printf("Next segment is (%d,%d): ", dataLength, type);
+    //printf("Next segment is (%d,%d): ", dataLength, type);
     if(type == SerializedBuffer::DATA_TYPE_RAW) {
       printf("Raw segment: ");
       for(s32 i=0; i<dataLength; i++) {
@@ -107,7 +107,6 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireFillPa
       bool basicType_isFloat;
       SerializedBuffer::DecodeArrayType(code, height, width, stride, flags, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat);
 
-      printf("Array: (%d, %d, %d, %d, %d, %d, %d, %d) ", height, width, stride, flags, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat);
       //template<typename Type> static Result DeserializeArray(const void * data, const s32 dataLength, Array<Type> &out, MemoryStack &memory);
       if(basicType_size==1 && basicType_isInteger==1 && basicType_isSigned==0 && basicType_isFloat==0) {
         Array<u8> arr;
@@ -120,6 +119,8 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireFillPa
         for(s32 i=0; i<numBytes; i++) {
           lastImage.data[i] = mat.data[i];
         }
+      } else {
+        printf("Array: (%d, %d, %d, %d, %d, %d, %d, %d) ", height, width, stride, flags, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat);
       }
     } else if(type == SerializedBuffer::DATA_TYPE_STRING) {
       printf("Board>> %s", dataSegment);
@@ -144,7 +145,7 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireFillPa
       }
     }
 
-    printf("\n");
+    //printf("\n");
   } // while(iterator.HasNext())
 
   if(lastImage.rows > 0) {
