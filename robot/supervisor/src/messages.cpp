@@ -202,7 +202,9 @@ namespace Anki {
       
       void ProcessVisionMarkerMessage(const VisionMarker& msg)
       {
+#if defined(SIMULATOR)
         PRINT("Processing VisionMarker message\n");
+#endif
         
         visionMarkerMailbox_.putMessage(msg);
       }
