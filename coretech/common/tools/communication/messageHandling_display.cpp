@@ -54,6 +54,8 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireFillPa
 
   SerializedBufferIterator iterator(serializedBuffer);
 
+  bool aMessageAlreadyPrinted = false;
+
   while(iterator.HasNext()) {
     s32 dataLength;
     SerializedBuffer::DataType type;
@@ -135,7 +137,18 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireFillPa
       if(strcmp(customTypeName, "VisionMarker") == 0) {
         VisionMarker marker;
         marker.Deserialize(dataSegment, remainingDataLength);
+
+        if(!aMessageAlreadyPrinted) {
+          time_t rawtime;
+          time (&rawtime);
+          string timeString = string(ctime(&rawtime));
+          timeString[timeString.length()-6] = '\0';
+          printf("%s>> ", timeString.data());
+          aMessageAlreadyPrinted = true;
+        }
+
         marker.Print();
+        printf("\n");
         visionMarkerList.push_back(marker);
         isTracking = false;
       } else if(strcmp(reinterpret_cast<const char*>(customTypeName), "PlanarTransformation_f32") == 0) {
@@ -147,6 +160,10 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireFillPa
 
     //printf("\n");
   } // while(iterator.HasNext())
+
+  if(aMessageAlreadyPrinted) {
+    printf("\n");
+  }
 
   if(lastImage.rows > 0) {
     cv::Mat largeLastImage(240, 320, CV_8U);
