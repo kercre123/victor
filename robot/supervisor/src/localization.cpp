@@ -45,7 +45,7 @@ namespace Anki {
       }
 
       ReturnCode Init() {
-        SetCurrentMatPose(0,0,WHEEL_RAD_TO_MM);
+        SetCurrentMatPose(0,0,0);
         
         prevLeftWheelPos_ = HAL::MotorGetPosition(HAL::MOTOR_LEFT_WHEEL);
         prevRightWheelPos_ = HAL::MotorGetPosition(HAL::MOTOR_RIGHT_WHEEL);

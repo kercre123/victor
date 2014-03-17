@@ -109,7 +109,7 @@ RobotAdvertisementService {
 
 DEF Cozmo_1 CozmoBot {
   # In front of two green blocks:
-  translation 0.286003  0.0510032  0.021
+  translation 0.286003  0.0510032  0.0
   rotation 0 0 1 -0.7071  
   name "CozmoBot_1"
   usbChannel 10

@@ -84,7 +84,7 @@ namespace Anki {
     
     Robot::Robot(const RobotID_t robotID, MessageHandler* msgHandler, BlockWorld* world, PathPlanner* pathPlanner)
     : ID_(robotID), msgHandler_(msgHandler), world_(world), pathPlanner_(pathPlanner),
-      pose(-M_PI_2, Z_AXIS_3D, {{0.f, 0.f, WHEEL_RAD_TO_MM}}),
+      pose(-M_PI_2, Z_AXIS_3D, {{0.f, 0.f, 0.f}}),
       neckPose(0.f,Y_AXIS_3D, {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &pose),
       headCamPose({0,0,1,  -1,0,0,  0,-1,0},
                   {{HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}}, &neckPose),

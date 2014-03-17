@@ -354,7 +354,6 @@ DEF FuelBlock Block1x1 {
 }
 
 DEF Cozmo_1 CozmoBot {
-  translation 0 0 .014
   rotation 0 0 1 -1.5708
   name "CozmoBot_1"
   #headAngle -0.251457
