@@ -116,10 +116,6 @@ namespace Anki
       Flags::Buffer get_flags() const;
 
     protected:
-      // TODO: make these non-friends
-      friend class MemoryStackConstIterator;
-      friend class MemoryStackRawConstIterator;
-
       void * buffer;
       s32 totalBytes;
       s32 usedBytes;
