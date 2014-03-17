@@ -149,6 +149,9 @@ namespace Anki {
     const f32 LIFT_BASE_POSITION[3]  = {-40.0f, 0.f, 27.5f}; // relative to robot origin
     //const f32 MAT_CAM_POSITION[3]   =  {-25.0f, 0.f, -3.f}; // relative to robot origin
     
+    
+    const f32 PREDOCK_DISTANCE_MM = 100.f;
+    
     /*
     // This is the width of the *outside* of the square fiducial!
     // Note that these don't affect Matlab, meaning offboard vision!

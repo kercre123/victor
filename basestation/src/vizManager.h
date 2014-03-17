@@ -25,17 +25,19 @@ namespace Anki {
     
     // List of color IDs
     enum VIZ_COLOR_ID {
-      VIZ_COLOR_EXECUTED_PATH
+      VIZ_COLOR_EXECUTED_PATH,
+      VIZ_COLOR_PREDOCKPOSE
     };
     
     // === VizObject ID ranges ===
-    // [0, 999]: Robots
+    // [0,    999]:  Robots
     // [1000, 1099]: Cuboids
     // [1100, 1199]: Ramps
+    // [1200, 1299]: PreDockPoses
     const u32 ROBOT_ID_BASE = 0;
     const u32 CUBOID_ID_BASE = 1000;
     const u32 RAMP_ID_BASE = 1100;
-    
+    const u32 PREDOCKPOSE_ID_BASE = 1200;    
     
     
     // NOTE: this is a singleton class
@@ -64,6 +66,10 @@ namespace Anki {
                       const Point3f &size,
                       const Pose3d &pose,
                       const u32 colorID = DEFAULT_COLOR_ID);
+      
+      void DrawPreDockPose(const u32 preDockPoseID,
+                           const Pose3d &pose,
+                           const u32 colorID = DEFAULT_COLOR_ID);
       
       //void DrawRamp();
       

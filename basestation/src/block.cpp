@@ -6,6 +6,8 @@
 //  Copyright (c) 2013 Anki, Inc. All rights reserved.
 //
 
+#include "anki/common/basestation/general.h"
+
 #include "anki/vision/basestation/camera.h"
 
 #include "anki/cozmo/basestation/block.h"
@@ -26,10 +28,12 @@ namespace Anki {
                         const Vision::Marker::Code &code,
                         const float markerSize_mm)
     {
+      /* Still needed??
       if(whichFace >= NUM_FACES) {
         // Special case: macro-generated placeholder face 
         return;
       }
+       */
       
       Pose3d facePose;
       
@@ -78,7 +82,12 @@ namespace Anki {
           CORETECH_THROW("Unknown block face.\n");
       }
       
-      AddMarker(code, facePose, markerSize_mm);
+      Vision::KnownMarker const& marker = AddMarker(code, facePose, markerSize_mm);
+      
+      // Store a pointer to the marker on each face:
+      markersByFace_[whichFace] = &marker;
+      
+      //facesWithMarkerCode_[marker.GetCode()].push_back(whichFace);
       
     } // AddFace()
     
@@ -113,9 +122,14 @@ namespace Anki {
       blockCorners_[LEFT_BACK_BOTTOM]   = {-halfWidth, halfDepth,-halfHeight};
       blockCorners_[RIGHT_BACK_BOTTOM]  = { halfWidth, halfDepth,-halfHeight};
       
+      markersByFace_.fill(NULL);
+      
       for(auto face : BlockInfoLUT_[type_].faces) {
         AddFace(face.whichFace, face.code, face.size);
       }
+      
+      // Every block should at least have a front face defined in the BlockDefinitions file
+      CORETECH_ASSERT(markersByFace_[FRONT_FACE] != NULL);
       
     } // Constructor: Block(type)
     
@@ -132,6 +146,143 @@ namespace Anki {
     }
     */
    
+    const std::array<Point3f, 6> Block::CanonicalDockingPoints = {
+      {X_AXIS_3D, -X_AXIS_3D,
+       Y_AXIS_3D, -Y_AXIS_3D,
+       Z_AXIS_3D, -Z_AXIS_3D}
+    };
+    
+    bool GetPreDockPose(const Point3f& canonicalPoint,
+                        const float distance_mm,
+                        const Pose3d& blockPose,
+                        Pose3d& preDockPose)
+    {
+      bool dockingPointFound = false;
+      
+      // Compute this point's position at this distance according to this
+      // block's current pose
+      Point3f dockingPt(canonicalPoint);  // start with canonical point
+      dockingPt *= distance_mm;           // scale to specified distance
+      dockingPt =  blockPose * dockingPt; // transform to block's pose
+      
+      //
+      // Check if it's vertically oriented
+      //
+      const float DOT_TOLERANCE   = .05f;
+      const float ANGLE_TOLERANCE = DEG_TO_RAD(5);
+      
+      // Get vector, v, from center of block to this point
+      Point3f v(dockingPt);
+      v -= blockPose.get_translation();
+      
+      // Dot product of this vector with the z axis should be near zero
+      // TODO: make dot product tolerance in terms of an angle?
+      if( NEAR(dot(Z_AXIS_3D, v), 0.f,  distance_mm * DOT_TOLERANCE) ) {
+        
+        // Rotation of block around v should be a multiple of 90 degrees
+        RotationMatrix3d R(0, v);
+        const float angle = std::abs(R.GetAngleDiffFrom(blockPose.get_rotationMatrix()).ToFloat());
+        
+        if(NEAR(angle, 0.f,             ANGLE_TOLERANCE) ||
+           NEAR(angle, DEG_TO_RAD(90),  ANGLE_TOLERANCE) ||
+           NEAR(angle, DEG_TO_RAD(180), ANGLE_TOLERANCE) )
+        {
+          preDockPose.set_translation(dockingPt);
+          preDockPose.set_rotation(atan2f(-v.y(), -v.x()), Z_AXIS_3D);
+          dockingPointFound = true;
+        }
+      }
+      
+      return dockingPointFound;
+    }  // GetPreDockPose()
+    
+    
+    void Block::GetPreDockPoses(const float distance_mm,
+                                std::vector<Pose3d>& points) const
+    {
+      Pose3d preDockPose;
+      
+      for(auto & canonicalPoint : Block::CanonicalDockingPoints)
+      {
+        if(GetPreDockPose(canonicalPoint, distance_mm, this->pose_, preDockPose) == true) {
+          points.emplace_back(preDockPose);
+        }
+      } // for each canonical docking point
+      
+    } // Block::GetDockingPoses()
+    
+    
+    void Block::GetPreDockPoses(const Vision::Marker::Code& withCode,
+                                const float distance_mm,
+                                std::vector<Pose3d>& points) const
+    {
+      Pose3d preDockPose;
+      
+      for(FaceName i_face = FIRST_FACE; i_face < NUM_FACES; ++i_face)
+      {
+        if(GetMarker(i_face).GetCode() == withCode) {
+          if(GetPreDockPose(CanonicalDockingPoints[i_face], distance_mm, this->pose_, preDockPose) == true) {
+            points.emplace_back(preDockPose);
+          }
+        }
+      }
+    } // Block::GetDockingPoses()
+    
+    
+    const Block::FaceName Block::OppositeFaceLUT[Block::NUM_FACES] = {
+      Block::BACK_FACE,
+      Block::RIGHT_FACE,
+      Block::FRONT_FACE,
+      Block::LEFT_FACE,
+      Block::BOTTOM_FACE,
+      Block::TOP_FACE
+    };
+    
+    /*
+    Block::FaceName GetOppositeFace(Block::FaceName whichFace) {
+      switch(whichFace)
+      {
+        case Block::FRONT_FACE:
+          return Block::BACK_FACE;
+          
+        case Block::BACK_FACE:
+          return Block::FRONT_FACE;
+          
+        case Block::LEFT_FACE:
+          return Block::RIGHT_FACE;
+          
+        case Block::RIGHT_FACE:
+          return Block::LEFT_FACE;
+          
+        case Block::TOP_FACE:
+          return Block::BOTTOM_FACE;
+          
+        case Block::BOTTOM_FACE:
+          return Block::TOP_FACE;
+          
+        default:
+          CORETECH_THROW("Unknown Block::FaceName.");
+      }
+    }
+     */
+    
+    Vision::KnownMarker const& Block::GetMarker(FaceName onFace) const
+    {
+      const Vision::KnownMarker* markerPtr = markersByFace_[onFace];
+      
+      if(markerPtr == NULL) {
+        if(onFace == FRONT_FACE) {
+          CORETECH_THROW("A front face marker should be defined for every block.");
+        }
+        else if( (markerPtr = markersByFace_[OppositeFaceLUT[onFace] /*GetOppositeFace(onFace)*/]) == NULL) {
+            return GetMarker(FRONT_FACE);
+        }
+      }
+      
+      return *markerPtr;
+      
+    } // Block::GetMarker()
+    
 #pragma mark ---  Block_Cube1x1 Implementation ---
     
     //const ObjectType_t Block_Cube1x1::BlockType = Block::NumTypes++;

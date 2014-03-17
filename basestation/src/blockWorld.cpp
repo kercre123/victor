@@ -1,4 +1,7 @@
 
+// TODO: this include is shared b/w BS and Robot.  Move up a level.
+#include "anki/cozmo/robot/cozmoConfig.h"
+
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/mat.h"
@@ -255,7 +258,8 @@ namespace Anki
         if(matsSeen.size() > 1) {
           PRINT_NAMED_WARNING("MultipleMatPiecesObserved",
                               "Robot %d observed more than one mat pieces at "
-                              "the same time; will only use first for now.");
+                              "the same time; will only use first for now.",
+                              robot->get_ID());
         }
         
         // At this point the mat's pose should be relative to the robot's
@@ -360,7 +364,7 @@ namespace Anki
       // Update visualization:
       //
       
-      // Draw all blocks we know about
+      // Draw all blocks we know about (and their pre-dock poses)
       VizManager::getInstance()->EraseAllVizObjects();
       for(auto blocksByType : existingBlocks_) {
         for(auto blocksByID : blocksByType.second) {
@@ -370,6 +374,15 @@ namespace Anki
                                                 //block->GetType(),
                                                 block->GetSize(),
                                                 block->GetPose());
+          
+          std::vector<Pose3d> poses;
+          //block->GetPreDockPoses(PREDOCK_DISTANCE_MM, poses);
+          block->GetPreDockPoses(Vision::MARKER_BATTERIES, PREDOCK_DISTANCE_MM, poses);
+          u32 poseID = 0;
+          for(auto pose : poses) {
+            VizManager::getInstance()->DrawPreDockPose(6*block->GetID()+poseID++, pose, VIZ_COLOR_PREDOCKPOSE);
+            ++poseID;
+          }
 
         } // FOR each ID of this type
       } // FOR each type

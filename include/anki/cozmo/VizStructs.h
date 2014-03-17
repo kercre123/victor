@@ -18,7 +18,8 @@ namespace Anki {
     enum VizObjectTypes {
       VIZ_ROBOT,
       VIZ_CUBOID,
-      VIZ_RAMP
+      VIZ_RAMP,
+      VIZ_PREDOCKPOSE
     };
     
     
