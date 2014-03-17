@@ -34,6 +34,39 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 using namespace Anki::Embedded;
 
+GTEST_TEST(CoreTech_Common, IsConvex)
+{
+  Point<f32> p11(0.0f, 0.0f);
+  Point<f32> p12(3.0f, 0.0f);
+  Point<f32> p13(2.0f, 3.0f);
+  Point<f32> p14(0.0f, 2.0f);
+  Point<f32> p15(2.0f, 2.0f);
+
+  Point<f32> p21(0.0f, 0.0f);
+  Point<f32> p22(0.0f, 1.0f);
+  Point<f32> p23(0.0f, 2.0f);
+  Point<f32> p24(1.0f, 1.0f);
+
+  Point<f32> p31(0.0f, 0.0f);
+  Point<f32> p32(0.0f, 1.0f);
+  Point<f32> p33(0.0f, 2.0f);
+  Point<f32> p34(0.0f, 3.0f);
+
+  Quadrilateral<f32> quad11(p11, p12, p13, p14);
+  Quadrilateral<f32> quad12(p12, p13, p14, p15);
+
+  Quadrilateral<f32> quad21(p21, p22, p23, p24);
+
+  Quadrilateral<f32> quad31(p31, p32, p33, p34);
+
+  ASSERT_TRUE(quad11.IsConvex());
+  ASSERT_FALSE(quad12.IsConvex());
+  ASSERT_TRUE(quad21.IsConvex());
+  ASSERT_TRUE(quad31.IsConvex());
+
+  GTEST_RETURN_HERE;
+}
+
 GTEST_TEST(CoreTech_Common, RoundFloat)
 {
   const s32 numNumbers = 12;
@@ -3003,6 +3036,7 @@ s32 RUN_ALL_COMMON_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   numPassedTests = 0;
   numFailedTests = 0;
 
+  CALL_GTEST_TEST(CoreTech_Common, IsConvex);
   CALL_GTEST_TEST(CoreTech_Common, RoundFloat);
   CALL_GTEST_TEST(CoreTech_Common, CompressArray);
   CALL_GTEST_TEST(CoreTech_Common, Heatshrink);
