@@ -41,7 +41,7 @@ DWORD WINAPI DisplayBuffersThread(LPVOID lpParam)
 
     DisplayRawBuffer nextMessage = messageQueue->Pop();
 
-    ProcessRawBuffer_Display(nextMessage, true, false);
+    ProcessRawBuffer_Display(nextMessage, true);
   }
 
   return 0;
@@ -155,7 +155,7 @@ int main(int argc, char ** argv)
       }
 
       start_searchIndex++;
-    } // while(start_searchIndex < USB_BUFFER_SIZE)
+    } // while(start_searchIndex < static_cast<s32>(bytesRead))
 
     // If we found a start header, handle it
     if(start_foundIndex != -1) {

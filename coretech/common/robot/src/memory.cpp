@@ -360,5 +360,93 @@ namespace Anki
     {
       return const_cast<MemoryStack&>(memory);
     }
+
+    MemoryStackRawConstIterator::MemoryStackRawConstIterator(const MemoryStack &memory)
+      : memory(memory)
+    {
+      this->index = 0;
+    }
+
+    bool MemoryStackRawConstIterator::HasNext() const
+    {
+      s32 startIndex;
+      s32 endIndex;
+      s32 reportedLength;
+
+      return HasNext(startIndex, endIndex, reportedLength);
+    }
+
+    bool MemoryStackRawConstIterator::HasNext(s32 &startIndex, s32 &endIndex, s32 &reportedLength) const
+    {
+      const u8 * curBufferPointer = reinterpret_cast<const u8*>(memory.buffer) + this->index;
+      const s32 curBufferLength = memory.get_usedBytes() - this->index;
+
+      const u8 * fillPatternStart = reinterpret_cast<const u8*>(&MemoryStack::FILL_PATTERN_START);
+      const u8 * fillPatternEnd = reinterpret_cast<const u8*>(&MemoryStack::FILL_PATTERN_END);
+
+      startIndex = FindBytePattern(curBufferPointer, curBufferLength, fillPatternStart, sizeof(u32));
+      endIndex = FindBytePattern(curBufferPointer, curBufferLength, fillPatternEnd, sizeof(u32));
+
+      reportedLength = -1;
+
+      if(startIndex >= 0) {
+        reportedLength = *reinterpret_cast<const u32*>(curBufferPointer + startIndex - sizeof(u32));
+
+        startIndex += this->index + sizeof(u32);
+
+        if(endIndex > 0) {
+          endIndex += this->index - sizeof(u32);
+
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    const void * MemoryStackRawConstIterator::GetNext(s32 &trueSegmentLength, s32 &reportedSegmentLength)
+    {
+      s32 startIndex;
+      s32 endIndex;
+
+      const bool hasNext = HasNext(startIndex, endIndex, reportedSegmentLength);
+
+      if(!hasNext)
+        return NULL;
+
+      trueSegmentLength = endIndex - startIndex + 1;
+
+      const u8 * bufferCharStar = reinterpret_cast<const u8*>(this->memory.buffer);
+
+      const void * segmentToReturn = reinterpret_cast<const void*>(bufferCharStar + startIndex);
+
+      this->index = endIndex + sizeof(u32);
+
+      return segmentToReturn;
+    }
+
+    const MemoryStack& MemoryStackRawConstIterator::get_memory() const
+    {
+      return memory;
+    }
+
+    MemoryStackRawIterator::MemoryStackRawIterator(MemoryStack &memory)
+      : MemoryStackRawConstIterator(memory)
+    {
+    }
+
+    void * MemoryStackRawIterator::GetNext(s32 &trueSegmentLength, s32 &reportedSegmentLength)
+    {
+      // To avoid code duplication, we'll use the const version of GetNext(), though our MemoryStack is not const
+
+      const void * segment = MemoryStackRawConstIterator::GetNext(trueSegmentLength, reportedSegmentLength);
+
+      return const_cast<void*>(segment);
+    }
+
+    MemoryStack& MemoryStackRawIterator::get_memory()
+    {
+      return const_cast<MemoryStack&>(memory);
+    }
   } // namespace Embedded
 } // namespace Anki

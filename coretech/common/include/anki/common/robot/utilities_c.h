@@ -76,7 +76,7 @@ extern "C" {
   s32 IsOdd(const s32 x);
 
   // Get the current system time. Currently only implemented for MSVC and generic linux
-  f64 GetTime(void);
+  f32 GetTime(void);
 
   void explicitPrintf(int (*writeChar)(int), int reverseEachFourCharacters, const char *format, ...);
 

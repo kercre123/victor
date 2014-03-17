@@ -357,8 +357,51 @@ namespace Anki
 
       u8 * segment = reinterpret_cast<u8*>(const_cast<void*>(SerializedBufferConstIterator::GetNext(dataLength, type, requireFillPatternMatch, requireCRCmatch)));
 
-      AnkiConditionalErrorAndReturnValue(segment != NULL,
-        NULL, "SerializedBufferIterator::GetNext", "segment is NULL");
+      //AnkiConditionalErrorAndReturnValue(segment != NULL,
+      //  NULL, "SerializedBufferIterator::GetNext", "segment is NULL");
+
+      return reinterpret_cast<void*>(segment);
+    }
+
+    SerializedBufferRawConstIterator::SerializedBufferRawConstIterator(const SerializedBuffer &serializedBuffer)
+      : MemoryStackRawConstIterator(serializedBuffer.get_memoryStack())
+    {
+    }
+
+    const void * SerializedBufferRawConstIterator::GetNext(s32 &dataLength, SerializedBuffer::DataType &type, bool &isReportedSegmentLengthCorrect)
+    {
+      s32 trueSegmentLength;
+      s32 reportedSegmentLength;
+      const void * segmentToReturn = MemoryStackRawConstIterator::GetNext(trueSegmentLength, reportedSegmentLength);
+
+      if(trueSegmentLength == reportedSegmentLength) {
+        isReportedSegmentLengthCorrect = true;
+      } else {
+        isReportedSegmentLengthCorrect = false;
+      }
+
+      AnkiConditionalErrorAndReturnValue(segmentToReturn != NULL,
+        NULL, "SerializedBufferConstIterator::GetNext", "segmentToReturn is NULL");
+
+      dataLength = reinterpret_cast<const u32*>(segmentToReturn)[0];
+      type = static_cast<SerializedBuffer::DataType>(reinterpret_cast<const u32*>(segmentToReturn)[1]);
+
+      return reinterpret_cast<const u8*>(segmentToReturn) + SerializedBuffer::SERIALIZED_SEGMENT_HEADER_LENGTH;
+    }
+
+    SerializedBufferRawIterator::SerializedBufferRawIterator(SerializedBuffer &serializedBuffer)
+      : SerializedBufferRawConstIterator(serializedBuffer)
+    {
+    }
+
+    void * SerializedBufferRawIterator::GetNext(s32 &dataLength, SerializedBuffer::DataType &type, bool &isReportedSegmentLengthCorrect)
+    {
+      // To avoid code duplication, we'll use the const version of GetNext(), though our MemoryStack is not const
+
+      u8 * segment = reinterpret_cast<u8*>(const_cast<void*>(SerializedBufferRawConstIterator::GetNext(dataLength, type, isReportedSegmentLengthCorrect)));
+
+      //AnkiConditionalErrorAndReturnValue(segment != NULL,
+      //  NULL, "SerializedBufferIterator::GetNext", "segment is NULL");
 
       return reinterpret_cast<void*>(segment);
     }

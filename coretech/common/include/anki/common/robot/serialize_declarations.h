@@ -168,6 +168,24 @@ namespace Anki
       // 2. If requireCRCmatch==true, checks the CRC code and returns NULL if it fails
       void * GetNext(s32 &dataLength, SerializedBuffer::DataType &type, const bool requireFillPatternMatch=true, const bool requireCRCmatch=true);
     }; // class MemoryStackConstIterator
+
+    class SerializedBufferRawConstIterator : public MemoryStackRawConstIterator
+    {
+      // See MemoryStackRawConstIterator
+    public:
+      SerializedBufferRawConstIterator(const SerializedBuffer &serializedBuffer);
+
+      const void * GetNext(s32 &dataLength, SerializedBuffer::DataType &type, bool &isReportedSegmentLengthCorrect);
+    }; // class MemoryStackConstIterator
+
+    class SerializedBufferRawIterator : public SerializedBufferRawConstIterator
+    {
+      // See MemoryStackRawConstIterator
+    public:
+      SerializedBufferRawIterator(SerializedBuffer &serializedBuffer);
+
+      void * GetNext(s32 &dataLength, SerializedBuffer::DataType &type, bool &isReportedSegmentLengthCorrect);
+    }; // class MemoryStackConstIterator
   } // namespace Embedded
 } //namespace Anki
 

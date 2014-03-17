@@ -37,7 +37,7 @@ using namespace std;
 static const s32 scratchSize = 1000000;
 static u8 scratchBuffer[scratchSize];
 
-void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireFillPatternMatch, const bool requireCRCmatch)
+void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchingSegmentLengths)
 {
   MemoryStack scratch(scratchBuffer, scratchSize, Flags::Buffer(false, true, false));
 
@@ -52,18 +52,23 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireFillPa
 
   SerializedBuffer serializedBuffer(buffer.data, buffer.curDataLength, Anki::Embedded::Flags::Buffer(false, true, true));
 
-  SerializedBufferIterator iterator(serializedBuffer);
+  SerializedBufferRawIterator iterator(serializedBuffer);
 
   bool aMessageAlreadyPrinted = false;
 
   while(iterator.HasNext()) {
     s32 dataLength;
     SerializedBuffer::DataType type;
-    u8 * const dataSegmentStart = reinterpret_cast<u8*>(iterator.GetNext(dataLength, type, requireFillPatternMatch, requireCRCmatch));
+    bool isReportedSegmentLengthCorrect;
+    u8 * const dataSegmentStart = reinterpret_cast<u8*>(iterator.GetNext(dataLength, type, isReportedSegmentLengthCorrect));
     u8 * dataSegment = dataSegmentStart;
 
     if(!dataSegment) {
       break;
+    }
+
+    if(requireMatchingSegmentLengths && !isReportedSegmentLengthCorrect) {
+      continue;
     }
 
     //printf("Next segment is (%d,%d): ", dataLength, type);
