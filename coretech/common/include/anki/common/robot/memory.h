@@ -47,8 +47,8 @@ namespace Anki
     class MemoryStack
     {
     public:
-      static const u32 FILL_PATTERN_START = 0xFF01FF02;
-      static const u32 FILL_PATTERN_END = 0x03FF04FF;
+      static const u32 FILL_PATTERN_START = 0xFF01FE02;
+      static const u32 FILL_PATTERN_END = 0x03FF04FE;
 
       // The header contains the size of the allocated segment, and the fill pattern
       static const s32 HEADER_LENGTH = 8;
