@@ -207,6 +207,7 @@ namespace Anki {
         // are the "same" according to the object's matching function (which will
         // internally take symmetry ambiguities into account during matching
         // and adjust the known markers' poses accordingly)
+        /*
         if(seenOnlyBy == NULL) {
           // First put them all in a common World coordinate frame if multiple
           // observers are possible.  Otherwise they'll be clustered in the
@@ -215,6 +216,8 @@ namespace Anki {
             poseMatch.first = poseMatch.first.getWithRespectTo(Pose3d::World);
           }
         }
+         */
+        
         // TODO: make the distance/angle thresholds parameters or else object-type-specific
         std::vector<PoseCluster> poseClusters;
         ClusterObjectPoses(possiblePoses, libObject,
@@ -229,10 +232,22 @@ namespace Anki {
           // NOTE: this does nothing for singleton clusters
           poseCluster.RecomputePose();
           
+          // Add to list of objects seen -- using pose in World frame
           objectsSeen.push_back(libObject->Clone());
-          objectsSeen.back()->SetPose(poseCluster.GetPose());
+          objectsSeen.back()->SetPose(poseCluster.GetPose().getWithRespectTo(Pose3d::World));
           
         } // FOR each pose cluster
+        
+        /*
+        if(seenOnlyBy != NULL) {
+          // If there were (or could have been) multiple observers, we will put
+          // all poses in a common World coordinate frame *after* pose clustering,
+          // since that process takes the markers' observers into account.
+          for(auto & poseMatch : possiblePoses) {
+            poseMatch.first = poseMatch.first.getWithRespectTo(Pose3d::World);
+          }
+        }
+         */
         
       } // FOR each objectType
       
