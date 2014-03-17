@@ -176,6 +176,32 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
 
     cv::resize(lastImage, largeLastImage, largeLastImage.size(), 0, 0, cv::INTER_NEAREST);
 
+    const s32 blinkerWidth = 7;
+
+    static s32 frameNumber = 0;
+    frameNumber++;
+
+    if(frameNumber%2 == 0) {
+      for(s32 y=0; y<blinkerWidth; y++) {
+        for(s32 x=320-blinkerWidth; x<320; x++) {
+          largeLastImage.at<u8>(y,x) = 0;
+        }
+      }
+
+      for(s32 y=1; y<blinkerWidth-1; y++) {
+        for(s32 x=321-blinkerWidth; x<319; x++) {
+          largeLastImage.at<u8>(y,x) = 255;
+        }
+      }
+      //largeLastImage.at<u8>(blinkerHalfWidth,320-blinkerHalfWidth) = 255;
+    } else {
+      for(s32 y=0; y<blinkerWidth; y++) {
+        for(s32 x=320-blinkerWidth; x<320; x++) {
+          largeLastImage.at<u8>(y,x) = 0;
+        }
+      }
+    }
+
     // Grayscale to RGB
     vector<cv::Mat> channels;
     channels.push_back(largeLastImage);
