@@ -476,6 +476,7 @@ namespace Anki {
         MotorUpdate();
         RadioUpdate();
         
+        /*
         // Always display ground truth pose:
         {
           const double* position = gps_->getValues();
@@ -492,6 +493,7 @@ namespace Anki {
           std::string poseString(buffer);
           webotRobot_.setLabel(robotID_, poseString, 0.5, robotID_*.05, .05, 0xff0000, 0.);
         }
+         */
         
         return EXIT_SUCCESS;
       }

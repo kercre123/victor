@@ -18,7 +18,7 @@ matMarkerPath = '~/Box Sync/Cozmo SE/VisionMarkers/lettersWithFiducials/unpadded
 fnames = {'A', 'B', 'C', 'D';
     'E', 'F', 'G', 'J';
     'K', 'L', 'M', 'N';
-    'P', 'R', 'S', 'T'};
+    'P', 'R', 'T', 'Y'};
 fnames = cellfun(@(name)fullfile(matMarkerPath, [name '.png']), fnames, 'UniformOutput', false);
 angles = zeros(4);
 fidColors = zeros(1,3);
