@@ -369,7 +369,7 @@ namespace DebugStream
     Anki::Cozmo::HAL::UARTPutChar('\0');
     }*/
 
-    HAL::MicroWait(50000);
+    //HAL::MicroWait(50000);
 
     lastBenchmarkTime_algorithmsOnly = GetTime();
 
