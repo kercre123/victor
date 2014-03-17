@@ -416,6 +416,11 @@ namespace DebugStream
 
   static ReturnCode SendTrackingUpdate(const Array<u8> &image, const Transformations::PlanarTransformation_f32 &transformation, MemoryStack ccmScratch, MemoryStack offchipScratch)
   {
+    const f32 curTime = GetTime();
+    
+    // lastBenchmarkTime_algorithmsOnly is set again when the transmission is complete
+    lastBenchmarkDuration_algorithmsOnly = curTime - lastBenchmarkTime_algorithmsOnly;
+    
     debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
 
     // TODO: get the true length
