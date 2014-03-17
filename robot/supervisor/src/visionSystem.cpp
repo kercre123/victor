@@ -42,8 +42,8 @@ using namespace Anki::Cozmo;
 static bool isInitialized_ = false;
 
 // TODO: remove
-#define SEND_DEBUG_STREAM
-#define RUN_SIMPLE_TRACKING_TEST
+//#define SEND_DEBUG_STREAM
+//#define RUN_SIMPLE_TRACKING_TEST
 
 #if defined(SIMULATOR)
 #undef SEND_DEBUG_STREAM
@@ -1133,6 +1133,8 @@ namespace Anki {
 
         const TimeStamp_t imageTimeStamp = HAL::GetTimeStamp();
 
+        const f32 exposure = 0.1f;
+        
         if(VisionState::mode_ == VISION_MODE_IDLE) {
           // Nothing to do!
         } else if(VisionState::mode_ == VISION_MODE_LOOKING_FOR_MARKERS) {
@@ -1146,7 +1148,7 @@ namespace Anki {
 
           Array<u8> grayscaleImage(240, 320, offchipScratch_local, Flags::Buffer(false,false,false));
 
-          HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()), HAL::CAMERA_MODE_QVGA, 0, false);
+          HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()), HAL::CAMERA_MODE_QVGA, exposure, false);
 
           const ReturnCode result = LookForMarkers(
             grayscaleImage,
@@ -1237,7 +1239,7 @@ namespace Anki {
 
           Array<u8> grayscaleImage(240, 320, offchipScratch_local, Flags::Buffer(false,false,false));
 
-          HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()), HAL::CAMERA_MODE_QVGA, 0, false);
+          HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()), HAL::CAMERA_MODE_QVGA, exposure, false);
 
           bool converged;
 
