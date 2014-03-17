@@ -347,7 +347,7 @@ namespace Anki
 
       // Starts camera frame synchronization (blocking call)
       void CameraGetFrame(u8* frame, CameraMode mode,
-          u16 exposure, bool enableLight);
+          f32 exposure, bool enableLight);
 
       // Get the number of lines received so far for the specified camera
       //u32 CameraGetReceivedLines(CameraID cameraID);

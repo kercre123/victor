@@ -138,37 +138,10 @@
         <SetRegEntry>
           <Number>0</Number>
           <Key>UL2CM3</Key>
-          <Name>-UV0213REE -O206 -S0 -C0 -P00 -N00("ARM CoreSight SW-DP") -D00(2BA01477) -L00(0) -TO18 -TC10000000 -TP21 -TDS8007 -TDT0 -TDC1F -TIEFFFFFFFF -TIP8 -FO15 -FD20000000 -FC1000 -FN1 -FF0STM32F4xx_2048.FLM -FS08000000 -FL0200000 -FP0($$Device:STM32F439NI$Flash\STM32F4xx_2048.FLM)</Name>
+          <Name>-UV0918REE -O206 -S0 -C0 -P00 -N00("ARM CoreSight SW-DP") -D00(2BA01477) -L00(0) -TO18 -TC10000000 -TP21 -TDS8007 -TDT0 -TDC1F -TIEFFFFFFFF -TIP8 -FO15 -FD20000000 -FC1000 -FN1 -FF0STM32F4xx_2048.FLM -FS08000000 -FL0200000 -FP0($$Device:STM32F439NI$Flash\STM32F4xx_2048.FLM)</Name>
         </SetRegEntry>
       </TargetDriverDllRegistry>
       <Breakpoint/>
-      <WatchWindow1>
-        <Ww>
-          <count>0</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>mode_</ItemText>
-        </Ww>
-        <Ww>
-          <count>1</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>VISION_MODE_IDLE</ItemText>
-        </Ww>
-        <Ww>
-          <count>2</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>markers_</ItemText>
-        </Ww>
-        <Ww>
-          <count>3</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>numMarkers</ItemText>
-        </Ww>
-        <Ww>
-          <count>4</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>secondValue</ItemText>
-        </Ww>
-      </WatchWindow1>
       <Tracepoint>
         <THDelay>0</THDelay>
       </Tracepoint>
@@ -190,9 +163,9 @@
         <aSer3>0</aSer3>
         <eProf>0</eProf>
         <aLa>0</aLa>
-        <aPa1>1</aPa1>
+        <aPa1>0</aPa1>
         <AscS4>0</AscS4>
-        <aSer4>1</aSer4>
+        <aSer4>0</aSer4>
         <StkLoc>0</StkLoc>
         <TrcWin>0</TrcWin>
         <newCpu>0</newCpu>
@@ -210,7 +183,7 @@
     <TargetOption>
       <CLKADS>180000000</CLKADS>
       <OPTTT>
-        <gFlags>1</gFlags>
+        <gFlags>0</gFlags>
         <BeepAtEnd>1</BeepAtEnd>
         <RunSim>0</RunSim>
         <RunTarget>1</RunTarget>
@@ -306,7 +279,7 @@
         <SetRegEntry>
           <Number>0</Number>
           <Key>UL2CM3</Key>
-          <Name>-UV0213REE -O206 -S0 -C0 -P00 -TO18 -TC10000000 -TP21 -TDS8007 -TDT0 -TDC1F -TIEFFFFFFFF -TIP8 -FO7 -FD20000000 -FC1000 -FN1 -FF0STM32F4xx_2048.FLM -FS08000000 -FL0200000 -FP0($$Device:STM32F429NI$Flash\STM32F4xx_2048.FLM)</Name>
+          <Name>UL2CM3(-S0 -C0 -P0 -FD20000000 -FC1000 -FN1 -FF0STM32F4xx_2048 -FS08000000 -FL0200000 -FP0($$Device:STM32F429NI$Flash\STM32F4xx_2048.FLM))</Name>
         </SetRegEntry>
       </TargetDriverDllRegistry>
       <Breakpoint/>
@@ -356,10 +329,10 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>5</ColumnNumber>
+      <ColumnNumber>25</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>1</TopLine>
-      <CurrentLine>1</CurrentLine>
+      <TopLine>375</TopLine>
+      <CurrentLine>397</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\arm_hal\hal\frontCamera.cpp</PathWithFileName>
       <FilenameWithoutPath>frontCamera.cpp</FilenameWithoutPath>
@@ -372,10 +345,10 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>0</ColumnNumber>
+      <ColumnNumber>20</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>57</TopLine>
-      <CurrentLine>61</CurrentLine>
+      <TopLine>92</TopLine>
+      <CurrentLine>115</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\arm_hal\hal\main.cpp</PathWithFileName>
       <FilenameWithoutPath>main.cpp</FilenameWithoutPath>
@@ -388,7 +361,7 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>6</ColumnNumber>
+      <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
       <TopLine>0</TopLine>
       <CurrentLine>0</CurrentLine>
@@ -420,10 +393,10 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>0</ColumnNumber>
+      <ColumnNumber>2</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>110</TopLine>
-      <CurrentLine>125</CurrentLine>
+      <TopLine>116</TopLine>
+      <CurrentLine>168</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\arm_hal\hal\spi.cpp</PathWithFileName>
       <FilenameWithoutPath>spi.cpp</FilenameWithoutPath>
@@ -452,10 +425,10 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>14</ColumnNumber>
+      <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>33</TopLine>
-      <CurrentLine>48</CurrentLine>
+      <TopLine>15</TopLine>
+      <CurrentLine>40</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\arm_hal\hal\timer.cpp</PathWithFileName>
       <FilenameWithoutPath>timer.cpp</FilenameWithoutPath>
@@ -470,8 +443,8 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>126</TopLine>
-      <CurrentLine>127</CurrentLine>
+      <TopLine>0</TopLine>
+      <CurrentLine>0</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\arm_hal\hal\uart.cpp</PathWithFileName>
       <FilenameWithoutPath>uart.cpp</FilenameWithoutPath>
@@ -636,7 +609,7 @@
       <FileType>1</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>0</ColumnNumber>
+      <ColumnNumber>3</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
       <TopLine>0</TopLine>
       <CurrentLine>0</CurrentLine>
@@ -684,10 +657,10 @@
       <FileType>1</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>16</ColumnNumber>
+      <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>0</TopLine>
-      <CurrentLine>0</CurrentLine>
+      <TopLine>370</TopLine>
+      <CurrentLine>396</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\arm_hal\lib\stm32f4xx_dma.c</PathWithFileName>
       <FilenameWithoutPath>stm32f4xx_dma.c</FilenameWithoutPath>
@@ -700,10 +673,10 @@
       <FileType>1</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>0</ColumnNumber>
+      <ColumnNumber>28</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>0</TopLine>
-      <CurrentLine>0</CurrentLine>
+      <TopLine>100</TopLine>
+      <CurrentLine>122</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\arm_hal\lib\stm32f4xx_dma2d.c</PathWithFileName>
       <FilenameWithoutPath>stm32f4xx_dma2d.c</FilenameWithoutPath>
@@ -1270,7 +1243,7 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>187</TopLine>
+      <TopLine>182</TopLine>
       <CurrentLine>192</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\arm_hal\startup\startup_stm32f429_439xx.s</PathWithFileName>
@@ -1282,7 +1255,7 @@
 
   <Group>
     <GroupName>supervisor</GroupName>
-    <tvExp>1</tvExp>
+    <tvExp>0</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>0</RteFlg>
@@ -1308,7 +1281,7 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>0</ColumnNumber>
+      <ColumnNumber>8</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
       <TopLine>0</TopLine>
       <CurrentLine>0</CurrentLine>
@@ -1406,8 +1379,8 @@
       <Focus>0</Focus>
       <ColumnNumber>7</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>254</TopLine>
-      <CurrentLine>268</CurrentLine>
+      <TopLine>0</TopLine>
+      <CurrentLine>0</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\supervisor\src\messages.cpp</PathWithFileName>
       <FilenameWithoutPath>messages.cpp</FilenameWithoutPath>
@@ -1532,10 +1505,10 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>4</ColumnNumber>
+      <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>1</TopLine>
-      <CurrentLine>48</CurrentLine>
+      <TopLine>143</TopLine>
+      <CurrentLine>166</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\supervisor\src\visionSystem.cpp</PathWithFileName>
       <FilenameWithoutPath>visionSystem.cpp</FilenameWithoutPath>
@@ -1812,7 +1785,7 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>18</ColumnNumber>
+      <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
       <TopLine>0</TopLine>
       <CurrentLine>0</CurrentLine>
@@ -2042,7 +2015,7 @@
 
   <Group>
     <GroupName>coretech-vision</GroupName>
-    <tvExp>1</tvExp>
+    <tvExp>0</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>0</RteFlg>
@@ -2052,7 +2025,7 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>6</ColumnNumber>
+      <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
       <TopLine>0</TopLine>
       <CurrentLine>0</CurrentLine>
@@ -2068,10 +2041,10 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>11</ColumnNumber>
+      <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>5</TopLine>
-      <CurrentLine>34</CurrentLine>
+      <TopLine>0</TopLine>
+      <CurrentLine>0</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>..\coretech\vision\robot\src\colorConversion.cpp</PathWithFileName>
       <FilenameWithoutPath>colorConversion.cpp</FilenameWithoutPath>
@@ -2084,7 +2057,7 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>18</ColumnNumber>
+      <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
       <TopLine>0</TopLine>
       <CurrentLine>0</CurrentLine>
@@ -2228,7 +2201,7 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>47</ColumnNumber>
+      <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
       <TopLine>0</TopLine>
       <CurrentLine>0</CurrentLine>
@@ -2292,7 +2265,7 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>26</ColumnNumber>
+      <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
       <TopLine>0</TopLine>
       <CurrentLine>0</CurrentLine>
@@ -2308,10 +2281,10 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>15</ColumnNumber>
+      <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>794</TopLine>
-      <CurrentLine>795</CurrentLine>
+      <TopLine>0</TopLine>
+      <CurrentLine>0</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>..\coretech\vision\robot\src\lucasKanade_Projective.cpp</PathWithFileName>
       <FilenameWithoutPath>lucasKanade_Projective.cpp</FilenameWithoutPath>
