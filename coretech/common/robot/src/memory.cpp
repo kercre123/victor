@@ -389,19 +389,20 @@ namespace Anki
       const u8 * fillPatternEndU8p = reinterpret_cast<const u8*>(&fillPatternEndU32);
 
       startIndex = FindBytePattern(curBufferPointer, curBufferLength, fillPatternStartU8p, sizeof(u32));
-      endIndex = FindBytePattern(curBufferPointer, curBufferLength, fillPatternEndU8p, sizeof(u32));
+      endIndex = FindBytePattern(curBufferPointer+startIndex, curBufferLength, fillPatternEndU8p, sizeof(u32));
 
       reportedLength = -1;
 
       if(startIndex >= 0) {
         reportedLength = *reinterpret_cast<const u32*>(curBufferPointer + startIndex - sizeof(u32));
 
-        startIndex += this->index + sizeof(u32);
-
-        if(endIndex > 0) {
-          endIndex += this->index - sizeof(u32);
+        if(endIndex >= 0) {
+          endIndex += this->index - sizeof(u32) + startIndex;
+          startIndex += this->index + sizeof(u32);
 
           return true;
+        } else {
+          startIndex += this->index + sizeof(u32);
         }
       }
 
