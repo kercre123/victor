@@ -34,9 +34,9 @@ namespace Anki {
     // [1000, 1099]: Cuboids
     // [1100, 1199]: Ramps
     // [1200, 1299]: PreDockPoses
-    const u32 ROBOT_ID_BASE = 0;
-    const u32 CUBOID_ID_BASE = 1000;
-    const u32 RAMP_ID_BASE = 1100;
+    const u32 ROBOT_ID_BASE       = 0;
+    const u32 CUBOID_ID_BASE      = 1000;
+    const u32 RAMP_ID_BASE        = 1100;
     const u32 PREDOCKPOSE_ID_BASE = 1200;    
     
     

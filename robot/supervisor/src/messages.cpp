@@ -333,6 +333,8 @@ namespace Anki {
       void SendRobotStateMsg()
       {
         Messages::RobotState m;
+        m.timestamp = HAL::GetTimeStamp();
+        
         Radians poseAngle;
         
         Localization::GetCurrentMatPose(m.pose_x, m.pose_y, poseAngle);
@@ -341,7 +343,7 @@ namespace Anki {
         
         WheelController::GetFilteredWheelSpeeds(m.lwheel_speed_mmps, m.rwheel_speed_mmps);
 
-        m.headAngle = HeadController::GetAngleRad();
+        m.headAngle  = HeadController::GetAngleRad();
         m.liftHeight = LiftController::GetHeightMM();
 
         

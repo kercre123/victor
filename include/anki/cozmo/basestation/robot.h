@@ -143,7 +143,7 @@ namespace Anki {
     { return not this->messagesOut.empty(); }
     
     inline const Radians Robot::get_headAngle() const
-    { return this->camHead.get_pose().get_rotationAngle(); }
+    { return this->currentHeadAngle; }
     
     //
     // RobotManager class for keeping up with available robots, by their ID
