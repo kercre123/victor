@@ -41,7 +41,7 @@ DWORD WINAPI DisplayBuffersThread(LPVOID lpParam)
 
     DisplayRawBuffer nextMessage = messageQueue->Pop();
 
-    ProcessRawBuffer_Display(nextMessage, true);
+    ProcessRawBuffer_Display(nextMessage, false);
   }
 
   return 0;

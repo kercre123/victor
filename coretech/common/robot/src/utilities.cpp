@@ -73,7 +73,7 @@ namespace Anki
 
       while(curIndex < bufferLength) {
         if(numBytesInPatternFound == bytePatternLength) {
-          return curIndex - bytePatternLength + 1;
+          return curIndex - bytePatternLength;
         }
 
         if(bufferU8[curIndex] == bytePattern[numBytesInPatternFound]) {
