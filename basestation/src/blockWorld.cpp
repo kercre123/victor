@@ -202,6 +202,7 @@ namespace Anki
         
         //const float minDimSeen = objSeen->GetMinDim();
         
+        
         // Store pointers to any existing blocks that overlap with this one
         std::vector<Vision::ObservableObject*> overlappingObjects;
         FindOverlappingObjects(objSeen, objectsExisting, overlappingObjects);
@@ -261,12 +262,14 @@ namespace Anki
                               "the same time; will only use first for now.",
                               robot->get_ID());
         }
-        
+       /*
         // At this point the mat's pose should be relative to the robot's
         // camera's pose
         const Pose3d* matWrtCamera = &(matsSeen[0]->GetPose());
         CORETECH_ASSERT(matWrtCamera->get_parent() ==
                         &(robot->get_camHead().get_pose())); // MatPose's parent is camera
+        */
+        
         /*
          PRINT_INFO("Observed mat w.r.t. camera is (%f,%f,%f)\n",
          matWrtCamera->get_translation().x(),
@@ -274,26 +277,32 @@ namespace Anki
          matWrtCamera->get_translation().z());
          */
         
+        /*
         // Now get the pose of the robot relative to the mat, using the pose
         // tree
         CORETECH_ASSERT(matWrtCamera->get_parent()->get_parent()->get_parent() ==
                         &(robot->get_pose())); // Robot pose is just a couple more up the pose chain
         
         Pose3d newPose( robot->get_pose().getWithRespectTo(matWrtCamera) );
+        */
         
+        const Pose3d* matPose = &(matsSeen[0]->GetPose());
+        Pose3d newPose( robot->get_pose().getWithRespectTo(matPose) );
+        
+        /*
         Pose3d P_diff;
         CORETECH_ASSERT( newPose.IsSameAs((*(robot->get_camHead().get_pose().get_parent()) *
                                            robot->get_camHead().get_pose() *
-                                           (*matWrtCamera)).getInverse(),
+                                           (*matPose)).getInverse(),
                                           5.f, 5*M_PI/180.f, P_diff) );
-        
+        */
         
         /*
          Pose3d newPose( (*(robot->get_camHead().get_pose().get_parent()) *
          robot->get_camHead().get_pose() *
          (*matWrtCamera)).getInverse() );
          */
-        newPose.set_parent( Pose3d::World); // robot->get_pose().get_parent() );
+        newPose.set_parent(Pose3d::World); // robot->get_pose().get_parent() );
         robot->set_pose(newPose);
         wasPoseUpdated = true;
         
