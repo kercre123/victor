@@ -6,7 +6,7 @@
 
 #ifdef SIMULATOR
 // Whether or not to use simulator "ground truth" pose
-#define USE_SIM_GROUND_TRUTH_POSE 1
+#define USE_SIM_GROUND_TRUTH_POSE 0
 #define USE_OVERLAY_DISPLAY 1
 #else // else not simulator
 #define USE_SIM_GROUND_TRUTH_POSE 0
@@ -45,7 +45,7 @@ namespace Anki {
       }
 
       ReturnCode Init() {
-        SetCurrentMatPose(0,0,0);
+        SetCurrentMatPose(0,0,WHEEL_RAD_TO_MM);
         
         prevLeftWheelPos_ = HAL::MotorGetPosition(HAL::MOTOR_LEFT_WHEEL);
         prevRightWheelPos_ = HAL::MotorGetPosition(HAL::MOTOR_RIGHT_WHEEL);

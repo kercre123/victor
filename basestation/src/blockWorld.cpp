@@ -316,6 +316,8 @@ namespace Anki
                    robot->get_pose().get_rotationAxis().y(),
                    robot->get_pose().get_rotationAxis().z());
         
+        robot->SendAbsLocalizationUpdate();
+        
       } // IF any mat piece was seen
 
       return wasPoseUpdated;

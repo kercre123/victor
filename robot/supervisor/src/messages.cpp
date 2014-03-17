@@ -179,8 +179,10 @@ namespace Anki {
       {
         // TODO: Double-check that size matches expected size?
         
-        f32 currentMatX       = msg.xPosition * .001f; // store in meters
-        f32 currentMatY       = msg.yPosition * .001f; //     "
+        // TODO: take advantage of timestamp
+        
+        f32 currentMatX       = msg.xPosition;
+        f32 currentMatY       = msg.yPosition;
         Radians currentMatHeading = msg.headingAngle;
         Localization::SetCurrentMatPose(currentMatX, currentMatY, currentMatHeading);
         
@@ -338,7 +340,7 @@ namespace Anki {
         Radians poseAngle;
         
         Localization::GetCurrentMatPose(m.pose_x, m.pose_y, poseAngle);
-        m.pose_z = 0;
+        m.pose_z = WHEEL_RAD_TO_MM;
         m.pose_angle = poseAngle.ToFloat();
         
         WheelController::GetFilteredWheelSpeeds(m.lwheel_speed_mmps, m.rwheel_speed_mmps);

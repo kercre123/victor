@@ -89,7 +89,7 @@ namespace Anki {
       headCamPose({0,0,1,  -1,0,0,  0,-1,0},
                   {{HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}}, &neckPose),
       liftBasePose(0.f, Y_AXIS_3D, {{LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}}, &pose),
-      currentHeadAngle(DEG_TO_RAD(-14.4f)),
+      currentHeadAngle(0),
       isCarryingBlock(false)
     {
       this->set_headAngle(currentHeadAngle);
@@ -335,7 +335,7 @@ namespace Anki {
     // ============ Messaging ================
     
     // Clears the path that the robot is executing which also stops the robot
-    ReturnCode Robot::SendClearPath()
+    ReturnCode Robot::SendClearPath() const
     {
       MessageClearPath m;
       m.pathID = 0;
@@ -344,7 +344,7 @@ namespace Anki {
     }
     
     // Sends a path to the robot to be immediately executed
-    ReturnCode Robot::SendExecutePath(const Planning::Path& path)
+    ReturnCode Robot::SendExecutePath(const Planning::Path& path) const
     {
       // TODO: Clear currently executing path or write to buffered path?
       if (SendClearPath() == EXIT_FAILURE)
@@ -415,7 +415,7 @@ namespace Anki {
     }
     
     
-    ReturnCode Robot::SendDockWithBlock(const u8* blockCode, const f32 markerWidth_mm, const DockAction_t dockAction)
+    ReturnCode Robot::SendDockWithBlock(const u8* blockCode, const f32 markerWidth_mm, const DockAction_t dockAction) const
     {
       MessageDockWithBlock m;
       m.markerWidth_mm = markerWidth_mm;
@@ -426,7 +426,7 @@ namespace Anki {
     
     ReturnCode Robot::SendMoveLift(const f32 height_mm,
                                    const f32 max_speed_rad_per_sec,
-                                   const f32 accel_rad_per_sec2)
+                                   const f32 accel_rad_per_sec2) const
     {
       MessageMoveLift m;
       m.height_mm = height_mm;
@@ -438,7 +438,7 @@ namespace Anki {
     
     ReturnCode Robot::SendMoveHead(const f32 angle_rad,
                                    const f32 max_speed_rad_per_sec,
-                                   const f32 accel_rad_per_sec2)
+                                   const f32 accel_rad_per_sec2) const
     {
       MessageMoveHead m;
       m.angle_rad = angle_rad;
@@ -448,13 +448,30 @@ namespace Anki {
       return msgHandler_->SendMessage(ID_,m);
     }
     
-    ReturnCode Robot::SendDriveWheels(const f32 lwheel_speed_mmps, const f32 rwheel_speed_mmps)
+    ReturnCode Robot::SendDriveWheels(const f32 lwheel_speed_mmps, const f32 rwheel_speed_mmps) const
     {
       MessageDriveWheels m;
       m.lwheel_speed_mmps = lwheel_speed_mmps;
       m.rwheel_speed_mmps = rwheel_speed_mmps;
       
       return msgHandler_->SendMessage(ID_,m);
+    }
+    
+    ReturnCode Robot::SendAbsLocalizationUpdate() const
+    {
+      // TODO: Add z?
+      MessageAbsLocalizationUpdate m;
+      
+      // TODO: need sync'd timestamps!
+      m.timestamp = 0;
+      
+      m.xPosition = pose.get_translation().x();
+      m.yPosition = pose.get_translation().y();
+      
+      m.headingAngle = atan2(pose.get_rotationMatrix()(1,0),
+                             pose.get_rotationMatrix()(0,0));
+      
+      return msgHandler_->SendMessage(ID_, m);
     }
     
     
