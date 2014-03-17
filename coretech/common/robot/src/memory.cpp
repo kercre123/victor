@@ -416,16 +416,16 @@ namespace Anki
 
       const bool hasNext = HasNext(startIndex, endIndex, reportedSegmentLength);
 
+      trueSegmentLength = endIndex - startIndex + 1;
+
       if(!hasNext)
         return NULL;
-
-      trueSegmentLength = endIndex - startIndex + 1;
 
       const u8 * bufferCharStar = reinterpret_cast<const u8*>(this->memory.get_buffer());
 
       const void * segmentToReturn = reinterpret_cast<const void*>(bufferCharStar + startIndex);
 
-      this->index = endIndex + sizeof(u32);
+      this->index = endIndex + 2*sizeof(u32);
 
       return segmentToReturn;
     }

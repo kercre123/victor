@@ -48,6 +48,8 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
   bool isTracking = false;
   Transformations::PlanarTransformation_f32 lastPlanarTransformation(Transformations::TRANSFORM_PROJECTIVE, scratch);
 
+  f32 benchmarkTimes[2] = {-1.0f, -1.0f};
+
   std::vector<VisionMarker> visionMarkerList;
 
   SerializedBuffer serializedBuffer(buffer.data, buffer.curDataLength, Anki::Embedded::Flags::Buffer(false, true, true));
@@ -92,9 +94,19 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
       s32 numElements;
       SerializedBuffer::DecodeBasicTypeBuffer(code, size, isInteger, isSigned, isFloat, numElements);
 
-      printf("Basic type buffer segment (%d, %d, %d, %d, %d): ", size, isInteger, isSigned, isFloat, numElements);
-      for(s32 i=0; i<remainingDataLength; i++) {
-        printf("%x ", dataSegment[i]);
+      // Hack to detect a benchmarking pair
+      if(isFloat && size==4 && numElements==2) {
+        const f32 *times = reinterpret_cast<const f32*>(dataSegment);
+        for(s32 i=0; i<2; i++) {
+          benchmarkTimes[i] = times[i];
+        }
+
+        //printf("Times: %f %f\n", times[0], times[1]);
+      } else {
+        printf("Basic type buffer segment (%d, %d, %d, %d, %d): ", size, isInteger, isSigned, isFloat, numElements);
+        for(s32 i=0; i<remainingDataLength; i++) {
+          printf("%x ", dataSegment[i]);
+        }
       }
     } else if(type == SerializedBuffer::DATA_TYPE_ARRAY) {
       SerializedBuffer::EncodedArray code;
@@ -178,6 +190,7 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
 
     const s32 blinkerWidth = 7;
 
+    //Draw a blinky rectangle at the upper right
     static s32 frameNumber = 0;
     frameNumber++;
 
@@ -213,6 +226,14 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
     //Quadrilateral<s16> corners; // SQ 15.0 (Though may be changed later)
     //Vision::MarkerType markerType;
     //bool isValid;
+
+    // Print FPS
+    if(benchmarkTimes[0] > 0.0f) {
+      char benchmarkBuffer[1024];
+      snprintf(benchmarkBuffer, 1024, "Total:%dfps Algorithms:%dfps", RoundS32(1.0f/benchmarkTimes[1]), RoundS32(1.0f/benchmarkTimes[0]));
+
+      cv::putText(toShowImage, benchmarkBuffer, cv::Point(5,15), cv::FONT_HERSHEY_PLAIN, 1.0, cv::Scalar(0,255,0));
+    }
 
     if(isTracking) {
       const cv::Scalar textColor = cv::Scalar(0,255,0);
