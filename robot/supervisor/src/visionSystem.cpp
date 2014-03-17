@@ -986,7 +986,7 @@ static ReturnCode TrackTemplate(
 
     const f32 secondValue = values[maxInds[1]];
 
-    if(secondValue < 0.1 || secondValue > 40.0) {
+    if(secondValue < 0.1f || secondValue > 40.0f) {
       converged = false;
     }
   }
@@ -1117,7 +1117,7 @@ namespace Anki {
         }
 #endif
         
-        HAL::CameraGetFrame(reinterpret_cast<u8*>(VisionMemory::grayscaleImage_.get_rawDataPointer()), HAL::CAMERA_MODE_QVGA, 0, false);
+        HAL::CameraGetFrame(reinterpret_cast<u8*>(VisionMemory::grayscaleImage_.get_rawDataPointer()), HAL::CAMERA_MODE_QVGA, 1.0f, false);
 
         //#if USE_OFFBOARD_VISION
         //        return Update_Offboard();
