@@ -15,9 +15,9 @@ namespace Anki {
       //ID_ = ObservableObject::ObjectCounter++;
     }
     
-    void ObservableObject::AddMarker(const Marker::Code&  withCode,
-                                     const Pose3d&        atPose,
-                                     const f32            size_mm)
+    Vision::KnownMarker const& ObservableObject::AddMarker(const Marker::Code&  withCode,
+                                                           const Pose3d&        atPose,
+                                                           const f32            size_mm)
     {
       // Copy the pose and set this object's pose as its parent
       Pose3d poseCopy(atPose);
@@ -26,6 +26,8 @@ namespace Anki {
       // Construct a marker at that pose and store it keyed by its code
       markers_.emplace_back(withCode, poseCopy, size_mm);
       markersWithCode_[withCode].push_back(&markers_.back());
+      
+      return markers_.back();
     }
     
     std::vector<const KnownMarker*> const* ObservableObject::GetMarkersWithCode(const Marker::Code& withCode) const
