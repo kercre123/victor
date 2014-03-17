@@ -577,7 +577,7 @@ namespace Anki {
     
     
     // Starts camera frame synchronization
-    void HAL::CameraGetFrame(u8* frame, CameraMode mode, u16 exposure, bool enableLight)
+    void HAL::CameraGetFrame(u8* frame, CameraMode mode, f32 exposure, bool enableLight)
     {
       // TODO: exposure? enableLight?
       

@@ -42,9 +42,11 @@ int main(void)
   g_dataToHead.common.source = SPI_SOURCE_BODY;
   
   /*g_dataToBody.motorPWM[0] = 0; //0x7fff * 0.5;
-  g_dataToBody.motorPWM[1] = 0; //0x7fff * 0.2;
-  g_dataToBody.motorPWM[2] = 0x7fff * 0.5;
+  g_dataToBody.motorPWM[1] = 0x7fff * 0.2;
+  g_dataToBody.motorPWM[2] = 0; //0x7fff * 0.5;
   g_dataToBody.motorPWM[3] = 0; //0x7fff * 0.1;*/
+  
+  s16 a = 0, b = 0, c = 0, d = 0;
   
   while (1)
   {
@@ -69,8 +71,6 @@ int main(void)
     {
       if(0 && ++failedTransferCount > MAX_FAILED_TRANSFER_COUNT)
       {
-        UARTPutString("\r\nToo many failed transfers\r\n");
-        
         // Perform a full system reset in order to reinitialize the head board
         NVIC_SystemReset();
       }
