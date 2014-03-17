@@ -30,17 +30,17 @@ void PowerInit()
   nrf_gpio_pin_clear(PIN_VDDs_EN);
   nrf_gpio_pin_set(PIN_VINs_EN);
   
+  /*
   // Wait for MISO to go high (signaled from the head board)
-  /*nrf_gpio_cfg_input(PIN_SPI_MISO, NRF_GPIO_PIN_PULLDOWN);
+  nrf_gpio_cfg_input(PIN_SPI_MISO, NRF_GPIO_PIN_PULLDOWN);
   MicroWait(10);  // Let pin settle
   while (!(NRF_GPIO->IN & (1 << PIN_SPI_MISO)))
     ;
   
   // Acknowledge the head board
   nrf_gpio_pin_set(PIN_SPI_MOSI);
-  MicroWait(10);  // Let pin settle
-  while (NRF_GPIO->IN & (1 << PIN_SPI_MISO))
-    ;*/
+  MicroWait(1000);  // Give headboard time to enable SPI
+  */
 }
 
 void SPIInit()

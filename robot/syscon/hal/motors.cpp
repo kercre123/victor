@@ -197,25 +197,35 @@ static void ConfigureTask(u8 motorID)
   MotorInfo* motorInfo = &m_motors[motorID];
   u8 pinPWM;
   u8 pinHigh;
-  if (motorInfo->unitsPerTick > 0)
+  if (motorInfo->nextPWM > 0)
   {
+    if (motorInfo->unitsPerTick < 0)
+          motorInfo->unitsPerTick = -motorInfo->unitsPerTick;
+    
     pinPWM = motorInfo->forwardUpPin;
     pinHigh = motorInfo->backwardDownPin;
-  } else {
+    
+    nrf_gpio_pin_set(pinHigh);
+    nrf_gpiote_task_config(motorID, pinPWM,
+      NRF_GPIOTE_POLARITY_TOGGLE, NRF_GPIOTE_INITIAL_VALUE_LOW);
+  } else if (motorInfo->nextPWM < 0) {
+    if (motorInfo->unitsPerTick > 0)
+          motorInfo->unitsPerTick = -motorInfo->unitsPerTick;
+    
     pinPWM = motorInfo->backwardDownPin;
     pinHigh = motorInfo->forwardUpPin;
+    
+    nrf_gpio_pin_set(pinHigh);
+    nrf_gpiote_task_config(motorID, pinPWM,
+      NRF_GPIOTE_POLARITY_TOGGLE, NRF_GPIOTE_INITIAL_VALUE_LOW);
+  } else {
+    nrf_gpiote_unconfig(motorID);
+    __NOP();
+    __NOP();
+    __NOP();
+    nrf_gpio_pin_set(motorInfo->forwardUpPin);
+    nrf_gpio_pin_set(motorInfo->backwardDownPin);
   }
-  
-  nrf_gpiote_unconfig(motorID);
-  __NOP();
-  __NOP();
-  __NOP();
-  
-  nrf_gpio_pin_set(pinHigh);
-  
-  // Reconfigure the task for the PWM pin
-  nrf_gpiote_task_config(motorID, pinPWM,
-    NRF_GPIOTE_POLARITY_TOGGLE, NRF_GPIOTE_INITIAL_VALUE_LOW);
 }
 
 void MotorsInit()
@@ -226,11 +236,8 @@ void MotorsInit()
   ConfigureTimer(NRF_TIMER1, 0, 0);
   ConfigureTimer(NRF_TIMER2, 2, 4);
   
-  // Enable PPI channels for timer reset
-  NRF_PPI->CHEN = (1 << 1) | (1 << 3) | (1 << 5) | (1 << 7);
-  
-  // Disable PPI channels for PWM
-  NRF_PPI->CHENCLR = (1 << 0) | (1 << 2) | (1 << 4) | (1 << 6);
+  // Enable PPI channels for timer PWM and reset
+  NRF_PPI->CHEN = 0x0F;
   
   // Start the timers
   NRF_TIMER1->TASKS_START = 1;
@@ -270,11 +277,6 @@ void MotorsInit()
 
 void MotorsSetPower(u8 motorID, s16 power)
 {
-  // PPI channel[index * 2] contains the PWM timer capture-compare
-  u32 channelMask = 1 << ((u32)motorID << 1);
-  
-  MotorInfo* motorInfo = &m_motors[motorID];
-  
   // Scale from [0, SHRT_MAX] to [0, TIMER_TICKS_END-1]
   power /= PWM_DIVISOR;
   
@@ -283,55 +285,11 @@ void MotorsSetPower(u8 motorID, s16 power)
     power = TIMER_TICKS_END - 1;
   else if (power <= -TIMER_TICKS_END)
     power = -TIMER_TICKS_END + 1;
-  
-  // Is the motor stopped.
-  if (power == 0)
-  {
-    // TODO: Also disable PPI channel for timer reset?
-    
-    // Clear the PPI and GPIOTE channels from running and set the lines high (stopped)
-    NRF_PPI->CHENCLR = channelMask;
-    nrf_gpiote_unconfig(motorID);
-    
-    nrf_gpio_pin_set(motorInfo->backwardDownPin);
-    nrf_gpio_pin_set(motorInfo->forwardUpPin);
-  } else {
-    // Store the PWM value for the MotorsUpdate() and keep the sign
-    motorInfo->oldPWM = motorInfo->nextPWM;
-    motorInfo->nextPWM = power;
-    
-    // Check the sign bit for the current direction (designated by unitsPerTick) and the new power
-    bool isDifferentDirection = ((s32)motorInfo->unitsPerTick >> 31) != ((s32)power >> 31);
-    
-    // Make sure the PPI and GPIOTE channels for this PWM are enabled
-    if (!(NRF_PPI->CHEN & channelMask) || isDifferentDirection)
-    {
-      // Unconfigure the current GPIOTE setting and change it below.
-      // This also prevents glitching the PWM duty cycle via a race condition.
-      //nrf_gpiote_unconfig(motorID);
-      
-      if (power < 0)
-      {
-        if (motorInfo->unitsPerTick > 0)
-          motorInfo->unitsPerTick = -motorInfo->unitsPerTick;
-        
-        // Switch the task to the correct pin and disable the other direction
-        //nrf_gpiote_task_config(motorID, motorInfo->backwardDownPin,
-        //  NRF_GPIOTE_POLARITY_TOGGLE, NRF_GPIOTE_INITIAL_VALUE_LOW);
-        //nrf_gpio_pin_set(motorInfo->forwardUpPin);
-      } else {
-        if (motorInfo->unitsPerTick < 0)
-          motorInfo->unitsPerTick = -motorInfo->unitsPerTick;
-        
-        //nrf_gpiote_task_config(motorID, motorInfo->forwardUpPin,
-        //  NRF_GPIOTE_POLARITY_TOGGLE, NRF_GPIOTE_INITIAL_VALUE_LOW);
-        //nrf_gpio_pin_set(motorInfo->backwardDownPin);
-      }
-      
-      // Enable the PPI channel
-      NRF_PPI->CHENSET = channelMask;
-    }
-  }
+
+  // Store the PWM value for the MotorsUpdate() and keep the sign
+  MotorInfo* motorInfo = &m_motors[motorID];
+  motorInfo->oldPWM = motorInfo->nextPWM;
+  motorInfo->nextPWM = power;
 }
 
 Fixed MotorsGetSpeed(u8 motorID)
@@ -437,7 +395,9 @@ static void HandlePinTransition(MotorInfo* motorInfo, u32 pinState)
       if ((count - motorInfo->count) > DEBOUNCE_COUNT)
       {
         motorInfo->count = count;
-        u32 pin2 = motorInfo->encoderPins[1];
+        /*u32 pin2 = motorInfo->encoderPins[1];
+        
+        // Temporary wiring issue, so quadrature doesn't work.
         if (pin2 != ENCODER_NONE)
         {
           // Check quadrature encoder state for forward vs backward
@@ -445,7 +405,7 @@ static void HandlePinTransition(MotorInfo* motorInfo, u32 pinState)
             motorInfo->position += ABS(motorInfo->unitsPerTick);
           else
             motorInfo->position -= ABS(motorInfo->unitsPerTick);
-        } else {
+        } else*/ {
           motorInfo->position += motorInfo->unitsPerTick;
         }
       }

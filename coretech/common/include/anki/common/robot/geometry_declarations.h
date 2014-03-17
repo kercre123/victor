@@ -151,7 +151,7 @@ namespace Anki
         BottomRight = 3,
         NumCorners  = 4
       };
-      
+
       Point<Type> corners[4];
 
       Quadrilateral();
@@ -173,6 +173,8 @@ namespace Anki
       // Returns a copy of this Quadrilateral with sorted corners, so they are clockwise around the centroid
       // Warning: This may give weird results for non-convex quadrilaterals
       Quadrilateral<Type> ComputeClockwiseCorners() const;
+
+      bool IsConvex() const;
 
       bool operator== (const Quadrilateral<Type> &quad2) const;
 

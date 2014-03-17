@@ -59,7 +59,7 @@ namespace Anki
         
         NVIC_InitTypeDef NVIC_InitStructure;
         NVIC_InitStructure.NVIC_IRQChannel = DMA2_Stream2_IRQn;
-        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;  // MainExecution isn't THAT important...
         NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
         NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
         NVIC_Init(&NVIC_InitStructure);
@@ -114,21 +114,18 @@ namespace Anki
         RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
         RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA2, ENABLE);
         RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI1, ENABLE);
+
+        // Wait for body board to send a burst of data - SCK will go high
+        while (!(GPIO_READ(GPIO_SPI_SCK) & PIN_SPI_SCK))
+          ;
+        // After start of burst, wait 1ms to get into idle period
+        // XXX-NDM: This is dependent on the clock speed (4MHz right now)
+        MicroWait(1000);
         
+        // We know we are in idle period - safe to enable right now        
         ConfigurePins();
         ConfigureDMA();
-        
-        SPI_Cmd(SPI1, ENABLE);
-        
-        // This indicates to the body board that we're ready to receive
-        GPIO_SET(GPIO_SPI_MISO, PIN_SPI_MISO);
-        PIN_OUT(GPIO_SPI_MISO, SOURCE_SPI_MISO);
-        
-        // Wait for body board to acknowledge that we're ready
-        while (!(GPIO_READ(GPIO_SPI_MOSI) & PIN_SPI_MOSI))
-          ;
-        
-        PIN_AF(GPIO_SPI_MISO, SOURCE_SPI_MISO);
+        SPI_Cmd(SPI1, ENABLE);        
       }
     }
   }

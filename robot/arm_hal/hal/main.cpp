@@ -4,6 +4,8 @@
 #include "hal/portable.h"
 #include "spiData.h"
 
+//OFFCHIP u8 buffer[320*240];
+
 namespace Anki
 {
   namespace Cozmo
@@ -23,7 +25,6 @@ namespace Anki
       s32 USBPeekChar(u32 offset){ return -1; }
       u32 USBGetNumBytesToRead(){ return 0; }
       int USBPutChar(int c){ return c; }
-      //void USBSendBuffer(const u8* buffer, const u32 size){ }
       
       TimeStamp_t GetTimeStamp(void){ return (TimeStamp_t)0; }
       
@@ -35,8 +36,7 @@ namespace Anki
       ReturnCode Step(){ return 0; }
       void Destroy(){ }
       
-      const CameraInfo* GetHeadCamInfo(){ return 0; }
-      const CameraInfo* GetMatCamInfo(){ return 0; }
+      //const CameraInfo* GetHeadCamInfo(){ return 0; }
       
       //Messages::ID RadioGetNextMessage(u8* buffer){ return (Messages::ID)0; }
       //bool RadioIsConnected(){ return false; }
@@ -91,7 +91,7 @@ int main(void)
     Wait();
     MotorSetPower(MOTOR_RIGHT_WHEEL, 0.0f);
     
-    MotorSetPower(MOTOR_LIFT, 0.3f);
+    /*MotorSetPower(MOTOR_LIFT, 0.3f);
     Wait();
     MotorSetPower(MOTOR_LIFT, -0.3f);
     Wait();
@@ -101,9 +101,9 @@ int main(void)
     Wait();
     MotorSetPower(MOTOR_HEAD, -0.3f);
     Wait();
-    MotorSetPower(MOTOR_HEAD, -0.0f);*/
+    MotorSetPower(MOTOR_HEAD, -0.0f);
     
-    MicroWait(500000);
+    MicroWait(500000); */
   }
   
 #else
@@ -112,7 +112,7 @@ int main(void)
   
   while (Anki::Cozmo::Robot::step_LongExecution() == EXIT_SUCCESS)
   {
-    /*CameraGetFrame(buffer, CAMERA_MODE_QQVGA, 0, false);
+    /*CameraGetFrame(buffer, CAMERA_MODE_QQQVGA, 1.0f, false);
     
     
     UARTPutChar(0xbe);
@@ -121,13 +121,13 @@ int main(void)
     UARTPutChar(0xff);
     UARTPutChar(0xbd);
     
-    for (int y = 0; y < 120; y++)
+    for (int y = 0; y < 240/4; y++)
     {
-      for (int x = 0; x < 160; x++)
+      for (int x = 0; x < 320/4; x++)
       {
-        UARTPutChar(buffer[y * 160 + x]);
+        UARTPutChar(buffer[y * 320/4 + x]);
       }
-    }*/
+    } */
   }
 #endif
 }

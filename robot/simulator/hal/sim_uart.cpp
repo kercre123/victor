@@ -62,6 +62,12 @@ namespace Anki
         
       }
       
+      // TODO: should we have both USBPutChar and UARTPutChar?
+      int UARTPutChar(int c)
+      {
+        return USBPutChar(c);
+      }
+      
       int USBPutChar(int c)
       {
         // This just buffers chars until we call USBFlush()

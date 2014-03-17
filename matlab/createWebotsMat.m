@@ -1,6 +1,8 @@
 function createWebotsMat(images, numCorners, xgrid, ygrid, angles, sizes, names, varargin)
 
+
 ForegroundColor = [ 14 108 184]/255; % Anki light blue
+FiducialColor = zeros(1,3);
 %BackgroundColor = [107 107 107]/255; % Anki light gray
 BackgroundColor = [1 1 .7]; % Light yellow
 ProtoDir = fullfile(fileparts(mfilename('fullpath')), '../robot/simulator/protos');
@@ -64,19 +66,19 @@ codeString = cell(1,numel(images));
 
 for i = 1:numel(images)
         
-%     markerImg = VisionMarker.DrawFiducial( ...
-%         'Image', imrotate(images{i}, -angles(i)), ...
-%         'NumCorners', numCorners(i), ...
-%         'AddPadding', false, ...
-%         'ForegroundColor', ForegroundColor, ...
-%         'BackgroundColor', BackgroundColor);
-markerImg = VisionMarkerTrained.AddFiducial(images{i}, 'PadOutside', false, 'OutputSize', 512);
+    %     markerImg = VisionMarker.DrawFiducial( ...
+    %         'Image', imrotate(images{i}, -angles(i)), ...
+    %         'NumCorners', numCorners(i), ...
+    %         'AddPadding', false, ...
+    %         'ForegroundColor', ForegroundColor, ...
+    %         'BackgroundColor', BackgroundColor);
+    markerImg = VisionMarkerTrained.AddFiducial(images{i}, 'PadOutside', false, 'OutputSize', 512, 'FiducialColor', FiducialColor);
     
-if size(markerImg,3)==1
-    markerImg = markerImg(:,:,ones(1,3));
-end
-
-markerImg = (1-markerImg).*FG + markerImg.*BG;
+    if size(markerImg,3)==1
+        markerImg = markerImg(:,:,ones(1,3));
+    end
+    
+    markerImg = (1-markerImg).*FG + markerImg.*BG;
 
     % Need this initial rotation b/c canonical VisionMarker orientation in
     % 3D is vertical, i.e. in the X-Z plane, for historical reasons.
@@ -85,15 +87,16 @@ markerImg = (1-markerImg).*FG + markerImg.*BG;
     pose = Pose(rodrigues(angles(i)*pi/180*[0 0 1])*R_to_flat, ...
         [xgrid(i) ygrid(i) -CozmoVisionProcessor.WHEEL_RADIUS]');
     
-axis = pose.axis;
-angle = pose.angle;
-T = pose.T;
-T(3)= 0;
-codeString{i} = sprintf(['mat->AddMarker(Vision::MARKER_%s,\n', ...
-    'Pose3d(%f, {%f,%f,%f}, {%f,%f,%f}),\n%f);\n'], ...
-    names{i}, angle, ...
-    axis(1), axis(2), axis(3), T(1), T(2), T(3), ...
-    sizes(i));
+    axis = pose.axis;
+    angle = pose.angle;
+    T = pose.T;
+    T(3)= 0;
+    [~,nameNoExt,~] = fileparts(names{i});
+    codeString{i} = sprintf(['mat->AddMarker(Vision::MARKER_%s,\n', ...
+        'Pose3d(%f, {%f,%f,%f}, {%f,%f,%f}),\n%f);\n'], ...
+        nameNoExt, angle, ...
+        axis(1), axis(2), axis(3), T(1), T(2), T(3), ...
+        sizes(i));
         
     filename = sprintf('ankiMat%d.png', i);
     imwrite(imresize(markerImg, [512 512]), fullfile(WorldDir, filename));

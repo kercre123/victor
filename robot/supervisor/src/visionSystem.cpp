@@ -787,8 +787,9 @@ static ReturnCode LookForMarkers(
     offchipScratch, onchipScratch, ccmScratch);
 
   if(result == RESULT_OK) {
-    //DebugStream::SendFiducialDetection(grayscaleImage, markers, ccmScratch, offchipScratch);
-
+#ifndef SIMULATOR
+    DebugStream::SendFiducialDetection(grayscaleImage, markers, ccmScratch, offchipScratch);
+#endif
     for(s32 i_marker = 0; i_marker < markers.get_size(); ++i_marker) {
       const VisionMarker crntMarker = markers[i_marker];
 
@@ -921,7 +922,7 @@ static ReturnCode TrackTemplate(
     converged,
     onchipScratch);
 
-  tracker.get_transformation().Print("track");
+  //tracker.get_transformation().Print("track");
 
 #elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE
   const Result trackerResult = tracker.UpdateTrack(
@@ -931,7 +932,7 @@ static ReturnCode TrackTemplate(
     converged,
     onchipScratch);
 
-  tracker.get_transformation().Print("track");
+  //tracker.get_transformation().Print("track");
 
 #elif DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
   s32 numMatches = -1;
@@ -944,7 +945,7 @@ static ReturnCode TrackTemplate(
     numMatches,
     ccmScratch, offchipScratch);
 
-  tracker.get_transformation().Print("track");
+  //tracker.get_transformation().Print("track");
 
   const s32 numTemplatePixels = tracker.get_numTemplatePixels();
 
@@ -985,7 +986,7 @@ static ReturnCode TrackTemplate(
 
     const f32 secondValue = values[maxInds[1]];
 
-    if(secondValue < 0.1 || secondValue > 40.0) {
+    if(secondValue < 0.1f || secondValue > 40.0f) {
       converged = false;
     }
   }
@@ -1005,7 +1006,7 @@ static ReturnCode TrackTemplate(
       onchipScratch);
   }
 
-  //DebugStream::SendTrackingUpdate(grayscaleImage, tracker.get_transformation(), ccmScratch, offchipScratch);
+  DebugStream::SendTrackingUpdate(grayscaleImage, tracker.get_transformation(), ccmScratch, offchipScratch);
 
   return EXIT_SUCCESS;
 } // TrackTemplate()
@@ -1116,7 +1117,7 @@ namespace Anki {
         }
 #endif
         
-        HAL::CameraGetFrame(reinterpret_cast<u8*>(VisionMemory::grayscaleImage_.get_rawDataPointer()), HAL::CAMERA_MODE_QVGA, 0, false);
+        HAL::CameraGetFrame(reinterpret_cast<u8*>(VisionMemory::grayscaleImage_.get_rawDataPointer()), HAL::CAMERA_MODE_QVGA, 1.0f, false);
 
         //#if USE_OFFBOARD_VISION
         //        return Update_Offboard();

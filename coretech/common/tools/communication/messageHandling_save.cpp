@@ -1,5 +1,5 @@
 /**
-File: messageHandling.cpp
+File: messageHandling_save.cpp
 Author: Peter Barnum
 Created: 2013
 
@@ -34,7 +34,7 @@ using namespace std;
 #error OpenCV is required
 #endif
 
-void ProcessRawBuffer(RawBuffer &buffer, const string outputFilenamePattern, const bool freeBuffer, const BufferAction action, const bool requireCRCmatch)
+void ProcessRawBuffer_Save(RawBuffer &buffer, const string outputFilenamePattern, const bool freeBuffer, const bool requireCRCmatch)
 {
   const s32 outputFilenameLength = 1024;
   char outputFilename[outputFilenameLength];
@@ -185,19 +185,9 @@ void ProcessRawBuffer(RawBuffer &buffer, const string outputFilenamePattern, con
 
           frameNumber++;
 
-          if(action == BUFFER_ACTION_SAVE) {
-            printf("Saving to %s", outputFilename);
-            const cv::Mat_<u8> &mat = arr.get_CvMat_();
-            cv::imwrite(outputFilename, mat);
-          } else if(action == BUFFER_ACTION_DISPLAY) {
-            // Do the copy explicitly, to prevent OpenCV trying to be smart with memory
-            lastImage = cv::Mat(arr.get_size(0), arr.get_size(1), CV_8U);
-            const cv::Mat_<u8> &mat = arr.get_CvMat_();
-            const s32 numBytes = mat.size().width * mat.size().height;
-            for(s32 i=0; i<numBytes; i++) {
-              lastImage.data[i] = mat.data[i];
-            }
-          }
+          printf("Saving to %s", outputFilename);
+          const cv::Mat_<u8> &mat = arr.get_CvMat_();
+          cv::imwrite(outputFilename, mat);
         }
       } else if(type == SerializedBuffer::DATA_TYPE_STRING) {
         printf("Board>> %s", dataSegment);
@@ -225,88 +215,6 @@ void ProcessRawBuffer(RawBuffer &buffer, const string outputFilenamePattern, con
       printf("\n");
     } // while(iterator.HasNext())
   } // while(bufferDataOffset < buffer.dataLength)
-
-  if(action == BUFFER_ACTION_DISPLAY) {
-    if(lastImage.rows > 0) {
-      cv::Mat largeLastImage(240, 320, CV_8U);
-      cv::Mat toShowImage(240, 320, CV_8UC3);
-
-      cv::resize(lastImage, largeLastImage, largeLastImage.size(), 0, 0, cv::INTER_NEAREST);
-
-      // Grayscale to RGB
-      vector<cv::Mat> channels;
-      channels.push_back(largeLastImage);
-      channels.push_back(largeLastImage);
-      channels.push_back(largeLastImage);
-      cv::merge(channels, toShowImage);
-
-      // std::queue<VisionMarker> visionMarkerList;
-      //Quadrilateral<s16> corners; // SQ 15.0 (Though may be changed later)
-      //Vision::MarkerType markerType;
-      //bool isValid;
-
-      if(isTracking) {
-        const cv::Scalar textColor = cv::Scalar(0,255,0);
-        const cv::Scalar boxColor = cv::Scalar(0,128,0);
-
-        const Quadrilateral<f32> transformedCorners = lastPlanarTransformation.get_transformedCorners(memory);
-
-        const Quadrilateral<f32> sortedCorners = transformedCorners.ComputeClockwiseCorners();
-
-        for(s32 iCorner=0; iCorner<4; iCorner++) {
-          const s32 point1Index = iCorner;
-          const s32 point2Index = (iCorner+1) % 4;
-          const cv::Point pt1(static_cast<s32>(sortedCorners[point1Index].x), static_cast<s32>(sortedCorners[point1Index].y));
-          const cv::Point pt2(static_cast<s32>(sortedCorners[point2Index].x), static_cast<s32>(sortedCorners[point2Index].y));
-          cv::line(toShowImage, pt1, pt2, boxColor, 2);
-        }
-
-        const Point<f32> center = sortedCorners.ComputeCenter();
-        const s32 textX = static_cast<s32>(MIN(MIN(MIN(sortedCorners.corners[0].x, sortedCorners.corners[1].x), sortedCorners.corners[2].x), sortedCorners.corners[3].x));
-        const cv::Point textStartPoint(textX, static_cast<s32>(center.y));
-
-        cv::putText(toShowImage, "Tracking", textStartPoint, cv::FONT_HERSHEY_PLAIN, 0.5, textColor);
-      } else {
-        // Draw markers
-        for(s32 iMarker=0; iMarker<static_cast<s32>(visionMarkerList.size()); iMarker++) {
-          cv::Scalar boxColor, textColor;
-          if(visionMarkerList[iMarker].isValid) {
-            textColor = cv::Scalar(0,255,0);
-            boxColor = cv::Scalar(0,128,0);
-          } else {
-            textColor = cv::Scalar(0,0,255);
-            boxColor = cv::Scalar(0,0,128);
-          }
-
-          const Quadrilateral<s16> sortedCorners = visionMarkerList[iMarker].corners.ComputeClockwiseCorners();
-
-          for(s32 iCorner=0; iCorner<4; iCorner++) {
-            const s32 point1Index = iCorner;
-            const s32 point2Index = (iCorner+1) % 4;
-            const cv::Point pt1(sortedCorners[point1Index].x, sortedCorners[point1Index].y);
-            const cv::Point pt2(sortedCorners[point2Index].x, sortedCorners[point2Index].y);
-            cv::line(toShowImage, pt1, pt2, boxColor, 2);
-          }
-
-          const Anki::Vision::MarkerType markerType = visionMarkerList[iMarker].markerType;
-
-          const char * typeString = "??";
-          if(static_cast<s32>(markerType) >=0 && static_cast<s32>(markerType) <= Anki::Vision::NUM_MARKER_TYPES) {
-            typeString = Anki::Vision::MarkerTypeStrings[markerType];
-          }
-
-          const Point<s16> center = visionMarkerList[iMarker].corners.ComputeCenter();
-          const s32 textX = MIN(MIN(MIN(visionMarkerList[iMarker].corners[0].x, visionMarkerList[iMarker].corners[1].x), visionMarkerList[iMarker].corners[2].x), visionMarkerList[iMarker].corners[3].x);
-          const cv::Point textStartPoint(textX, center.y);
-
-          cv::putText(toShowImage, typeString, textStartPoint, cv::FONT_HERSHEY_PLAIN, 0.5, textColor);
-        }
-      }
-
-      cv::imshow("Robot Image", toShowImage);
-      cv::waitKey(10);
-    }
-  }
 
   if(freeBuffer) {
     buffer.data = NULL;

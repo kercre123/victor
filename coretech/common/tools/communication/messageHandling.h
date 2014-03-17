@@ -21,16 +21,19 @@ typedef struct {
   s32 dataLength;
 } RawBuffer;
 
-enum BufferAction {
-  BUFFER_ACTION_SAVE,
-  BUFFER_ACTION_DISPLAY
-};
+typedef struct {
+  u8 * data;
+  u8 * rawDataPointer; // Unaligned
+  s32 curDataLength;
+  s32 maxDataLength;
+} DisplayRawBuffer;
 
 //#define PRINTF_ALL_RECEIVED
 
 #define BIG_BUFFER_SIZE 100000000
 
 // Process the buffer using the BufferAction action. Optionally, free the buffer on completion.
-void ProcessRawBuffer(RawBuffer &buffer, const std::string outputFilenamePattern, const bool freeBuffer, const BufferAction action, const bool requireCRCmatch);
+void ProcessRawBuffer_Save(RawBuffer &buffer, const std::string outputFilenamePattern, const bool freeBuffer, const bool requireCRCmatch);
+void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireFillPatternMatch, const bool requireCRCmatch);
 
 #endif // #ifndef _MESSAGE_HANDLING_H_
