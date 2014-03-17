@@ -142,15 +142,19 @@ namespace Anki {
               break;
             }
               
-            case CKEY_HEAD_UP: //s-key: head fwd
+            case CKEY_HEAD_UP: //s-key: move head UP 1 degree from current position (or 5 degrees with shift)
             {
-
+              const Radians adjAngle((modifier_key == webots::Supervisor::KEYBOARD_SHIFT) ? DEG_TO_RAD(5) : DEG_TO_RAD(1));
+              robot_->SendMoveHead((robot_->get_headAngle() + adjAngle).ToFloat(),
+                                   HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
               break;
             }
               
-            case CKEY_HEAD_DOWN: //x-key: head down
+            case CKEY_HEAD_DOWN: //x-key: move head DOWN 1 degree from current position (or 5 degrees with shift)
             {
-
+              const Radians adjAngle((modifier_key == webots::Supervisor::KEYBOARD_SHIFT) ? DEG_TO_RAD(5) : DEG_TO_RAD(1));
+              robot_->SendMoveHead((robot_->get_headAngle() - adjAngle).ToFloat(),
+                                   HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
               break;
             }
               
@@ -184,19 +188,19 @@ namespace Anki {
               break;
             }
               
-            case '4': //set head to look down
+            case '4': //set head to look all the way down
             {
               robot_->SendMoveHead(MIN_HEAD_ANGLE, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
               break;
             }
 
-            case '5': //set head to look down
+            case '5': //set head to straight ahead
             {
               robot_->SendMoveHead(0, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
               break;
             }
               
-            case '6': //set head to look down
+            case '6': //set head to look all the way up
             {
               robot_->SendMoveHead(MAX_HEAD_ANGLE, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
               break;

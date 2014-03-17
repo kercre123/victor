@@ -98,6 +98,7 @@ namespace Anki {
     Point<N,T>& operator*= (const T value);
     Point<N,T>& operator+= (const Point<N,T> &other);
     Point<N,T>& operator-= (const Point<N,T> &other);
+    Point<N,T> operator-() const;
     
     // Math methods:
     
@@ -332,6 +333,16 @@ namespace Anki {
       this->data[i] -= other[i];
     }
     return *this;
+  }
+  
+  template<size_t N, typename T>
+  Point<N,T> Point<N,T>::operator-() const
+  {
+    Point<N,T> p;
+    for(size_t i=0; i<N; ++i) {
+      p[i] = -this->data[i];
+    }
+    return p;
   }
   
   template<size_t N, typename T>

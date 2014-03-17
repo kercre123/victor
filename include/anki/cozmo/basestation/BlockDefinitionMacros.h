@@ -41,7 +41,7 @@
 //#define SET_SIZE(_X_, _Y_, _Z_)                        ,.size = {_X_,_Y_,_Z_}
 //#define ADD_FACE_CODE(__WHICHFACE__, __SIZE__, ...)    ,.faces[__WHICHFACE__] = {.size = __SIZE__, .code = {__VA_ARGS__}}
 
-#define END_BLOCK_DEFINITION  {.whichFace = NUM_FACES} } }
+#define END_BLOCK_DEFINITION  } }
 
 #else
 #error Unknown BLOCK_DEFINITION_MODE!

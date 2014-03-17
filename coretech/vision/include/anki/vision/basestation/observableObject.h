@@ -32,8 +32,9 @@ namespace Anki {
       
       // Specify the extistence of a marker with the given code at the given
       // pose (relative to the object's origin), and the specfied size in mm
-      void AddMarker(const Marker::Code& withCode, const Pose3d& atPose,
-                     const f32 size_mm);
+      Vision::KnownMarker const& AddMarker(const Marker::Code& withCode,
+                                           const Pose3d&       atPose,
+                                           const f32           size_mm);
       
       std::list<KnownMarker> const& GetMarkers() const {return markers_;}
       
