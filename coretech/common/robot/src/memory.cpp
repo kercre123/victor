@@ -381,11 +381,15 @@ namespace Anki
       const u8 * curBufferPointer = reinterpret_cast<const u8*>(memory.buffer) + this->index;
       const s32 curBufferLength = memory.get_usedBytes() - this->index;
 
-      const u8 * fillPatternStart = reinterpret_cast<const u8*>(&MemoryStack::FILL_PATTERN_START);
-      const u8 * fillPatternEnd = reinterpret_cast<const u8*>(&MemoryStack::FILL_PATTERN_END);
+      // These must be copied, or the Keil compiler gets confused
+      u32 fillPatternStartU32 = MemoryStack::FILL_PATTERN_START;
+      u32 fillPatternEndU32 = MemoryStack::FILL_PATTERN_END;
+      
+      const u8 * fillPatternStartU8p = reinterpret_cast<const u8*>(&fillPatternStartU32);
+      const u8 * fillPatternEndU8p = reinterpret_cast<const u8*>(&fillPatternEndU32);
 
-      startIndex = FindBytePattern(curBufferPointer, curBufferLength, fillPatternStart, sizeof(u32));
-      endIndex = FindBytePattern(curBufferPointer, curBufferLength, fillPatternEnd, sizeof(u32));
+      startIndex = FindBytePattern(curBufferPointer, curBufferLength, fillPatternStartU8p, sizeof(u32));
+      endIndex = FindBytePattern(curBufferPointer, curBufferLength, fillPatternEndU8p, sizeof(u32));
 
       reportedLength = -1;
 
