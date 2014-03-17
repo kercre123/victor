@@ -60,7 +60,9 @@ GTEST_TEST(CoreTech_Common, IsConvex)
   Quadrilateral<f32> quad31(p31, p32, p33, p34);
 
   ASSERT_TRUE(quad11.IsConvex());
+
   ASSERT_FALSE(quad12.IsConvex());
+
   ASSERT_TRUE(quad21.IsConvex());
   ASSERT_TRUE(quad31.IsConvex());
 

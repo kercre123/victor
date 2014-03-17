@@ -329,29 +329,29 @@ namespace DebugStream
 #else
   static f32 lastBenchmarkTime_algorithmsOnly;
   static f32 lastBenchmarkDuration_algorithmsOnly;
-  
+
   static f32 lastBenchmarkTime_total;
-  static f32 lastBenchmarkDuration_total;  
-  
+  static f32 lastBenchmarkDuration_total;
+
   static ReturnCode SendBuffer(SerializedBuffer &toSend)
   {
+    const f32 curTime = GetTime();
+    lastBenchmarkDuration_total = curTime - lastBenchmarkTime_total;
+    lastBenchmarkTime_total = curTime;
+
+    const f32 benchmarkTimes[2] = {lastBenchmarkDuration_algorithmsOnly, lastBenchmarkDuration_total};
+
+    toSend.PushBack<f32>(&benchmarkTimes[0], 2*sizeof(f32));
+
     s32 startIndex;
     const u8 * bufferStart = reinterpret_cast<const u8*>(toSend.get_memoryStack().get_validBufferStart(startIndex));
     const s32 validUsedBytes = toSend.get_memoryStack().get_usedBytes() - startIndex;
 
-    const f32 curTime = GetTime();
-    lastBenchmarkDuration_total = curTime - lastBenchmarkTime_total;
-    lastBenchmarkTime_total = curTime;
-    
-    const f32 benchmarkTimes[2] = {lastBenchmarkDuration_algorithmsOnly, lastBenchmarkDuration_total};
-    
-    toSend.PushBack<f32>(&benchmarkTimes[0], 2*sizeof(f32));
-    
     // TODO: does this help?
     /*for(s32 i=0; i<256; i++) {
     Anki::Cozmo::HAL::UARTPutChar('\0');
     }*/
-    
+
     for(s32 i=0; i<Embedded::SERIALIZED_BUFFER_HEADER_LENGTH; i++) {
       Anki::Cozmo::HAL::UARTPutChar(Embedded::SERIALIZED_BUFFER_HEADER[i]);
     }
@@ -370,7 +370,7 @@ namespace DebugStream
     }*/
 
     HAL::MicroWait(50000);
-    
+
     lastBenchmarkTime_algorithmsOnly = GetTime();
 
     return EXIT_SUCCESS;
@@ -388,10 +388,10 @@ namespace DebugStream
   static ReturnCode SendFiducialDetection(const Array<u8> &image, const FixedLengthList<VisionMarker> &markers, MemoryStack ccmScratch, MemoryStack offchipScratch)
   {
     const f32 curTime = GetTime();
-    
+
     // lastBenchmarkTime_algorithmsOnly is set again when the transmission is complete
     lastBenchmarkDuration_algorithmsOnly = curTime - lastBenchmarkTime_algorithmsOnly;
-     
+
     debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
 
     if(markers.get_size() != 0) {
@@ -417,10 +417,10 @@ namespace DebugStream
   static ReturnCode SendTrackingUpdate(const Array<u8> &image, const Transformations::PlanarTransformation_f32 &transformation, MemoryStack ccmScratch, MemoryStack offchipScratch)
   {
     const f32 curTime = GetTime();
-    
+
     // lastBenchmarkTime_algorithmsOnly is set again when the transmission is complete
     lastBenchmarkDuration_algorithmsOnly = curTime - lastBenchmarkTime_algorithmsOnly;
-    
+
     debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
 
     // TODO: get the true length
@@ -443,12 +443,12 @@ namespace DebugStream
     return SendBuffer(debugStreamBuffer_);
   } // static ReturnCode SendTrackingUpdate()
 
-//  static ReturnCode SendArray(const Array<u8> &array)
-//  {
-//    debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
-//    debugStreamBuffer_.PushBack(array);
-//    return SendBuffer(debugStreamBuffer_);
-//  }
+  //  static ReturnCode SendArray(const Array<u8> &array)
+  //  {
+  //    debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
+  //    debugStreamBuffer_.PushBack(array);
+  //    return SendBuffer(debugStreamBuffer_);
+  //  }
 #endif // #ifdef SEND_DEBUG_STREAM
 
   static ReturnCode Initialize()
