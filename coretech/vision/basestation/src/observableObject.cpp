@@ -8,6 +8,7 @@ namespace Anki {
 #pragma mark --- ObservableObject Implementations ---
     
     //ObjectID_t ObservableObject::ObjectCounter = 0;
+    const std::vector<const KnownMarker*> ObservableObject::sEmptyMarkerVector(0);
     
     ObservableObject::ObservableObject(ObjectType_t objType)
     : type_(objType), ID_(0)
@@ -30,14 +31,14 @@ namespace Anki {
       return markers_.back();
     }
     
-    std::vector<const KnownMarker*> const* ObservableObject::GetMarkersWithCode(const Marker::Code& withCode) const
+    std::vector<const KnownMarker*> const& ObservableObject::GetMarkersWithCode(const Marker::Code& withCode) const
     {
       auto returnVec = markersWithCode_.find(withCode);
       if(returnVec != markersWithCode_.end()) {
-        return &(returnVec->second);
+        return returnVec->second;
       }
       else {
-        return 0;
+        return ObservableObject::sEmptyMarkerVector;
       }
     }
     
@@ -91,6 +92,8 @@ namespace Anki {
     
 #pragma mark --- ObservableObjectLibrary Implementations ---
     
+    const std::vector<const ObservableObject*> ObservableObjectLibrary::sEmptyObjectVector(0);
+    
     const ObservableObject* ObservableObjectLibrary::GetObjectWithType(const ObjectType_t type) const
     {
       auto obj = knownObjects_.find(type);
@@ -103,18 +106,18 @@ namespace Anki {
     }
     
     
-    std::vector<const ObservableObject*> const* ObservableObjectLibrary::GetObjectsWithCode(const Marker::Code& code) const
+    std::vector<const ObservableObject*> const& ObservableObjectLibrary::GetObjectsWithCode(const Marker::Code& code) const
     {
       auto temp = objectsWithCode_.find(code);
       if(temp != objectsWithCode_.end()) {
-        return &temp->second;
+        return temp->second;
       }
       else {
-        return NULL;
+        return ObservableObjectLibrary::sEmptyObjectVector;
       }
     }
     
-    std::vector<const ObservableObject*> const* ObservableObjectLibrary::GetObjectsWithMarker(const Marker& marker) const
+    std::vector<const ObservableObject*> const& ObservableObjectLibrary::GetObjectsWithMarker(const Marker& marker) const
     {
       return GetObjectsWithCode(marker.GetCode());
     }
@@ -148,12 +151,12 @@ namespace Anki {
         if(seenOnlyBy == NULL || &marker.GetSeenBy() == seenOnlyBy)
         {
           // Find all objects which use this marker...
-          std::vector<const ObservableObject*> const* objectsWithMarker = GetObjectsWithMarker(marker);
+          std::vector<const ObservableObject*> const& objectsWithMarker = GetObjectsWithMarker(marker);
           
           // ...if there are any, add this marker to the list of observed markers
           // that corresponds to this object type.
-          if(objectsWithMarker != NULL) {
-            if(objectsWithMarker->size() > 1) {
+          if(!objectsWithMarker.empty()) {
+            if(objectsWithMarker.size() > 1) {
               CORETECH_THROW("Having multiple objects in the library with the "
                              "same marker is not yet supported.");
               
@@ -163,7 +166,7 @@ namespace Anki {
                }
                */
             }
-            markersWithObjectType[objectsWithMarker->front()->GetType()].push_back(&marker);
+            markersWithObjectType[objectsWithMarker.front()->GetType()].push_back(&marker);
             used = true;
           } // IF objectsWithMarker != NULL
         } // IF seenOnlyBy
