@@ -517,7 +517,7 @@ namespace MatlabVisualization
 
   static ReturnCode Initialize()
   {
-    matlabViz_ = Matlab(false);
+    //matlabViz_ = Matlab(false);
     matlabViz_.EvalStringEcho("h_fig  = figure('Name', 'VisionSystem'); "
       "h_axes = axes('Pos', [.1 .1 .8 .8], 'Parent', h_fig); "
       "h_img  = imagesc(0, 'Parent', h_axes); "
