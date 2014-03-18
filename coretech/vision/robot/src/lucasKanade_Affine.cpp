@@ -372,7 +372,7 @@ namespace Anki
 
           //b.Print("New update");
 
-          this->transformation.Update(b, scratch, Transformations::TRANSFORM_TRANSLATION);
+          this->transformation.Update(b, 1.0f, scratch, Transformations::TRANSFORM_TRANSLATION);
 
           // Check if we're done with iterations
           {
@@ -630,7 +630,7 @@ namespace Anki
 
           //b.Print("New update");
 
-          this->transformation.Update(b, scratch, Transformations::TRANSFORM_AFFINE);
+          this->transformation.Update(b, 1.0f, scratch, Transformations::TRANSFORM_AFFINE);
 
           //this->transformation.get_homography().Print("new transformation");
 

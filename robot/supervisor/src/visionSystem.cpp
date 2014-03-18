@@ -42,8 +42,8 @@ using namespace Anki::Cozmo;
 static bool isInitialized_ = false;
 
 // TODO: remove
-//#define SEND_DEBUG_STREAM
-//#define RUN_SIMPLE_TRACKING_TEST
+#define SEND_DEBUG_STREAM
+#define RUN_SIMPLE_TRACKING_TEST
 
 #if defined(SIMULATOR)
 #undef SEND_DEBUG_STREAM

@@ -852,7 +852,8 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
 
   const f32 ridgeWeight = 0.0f;
 
-  const Rectangle<f32> templateRegion(13, 34, 22, 43);
+  const Rectangle<f32> templateRegion(13*4, 34*4, 22*4, 43*4);
+  //const Rectangle<f32> templateRegion(13, 34, 22, 43);
 
   const s32 maxIterations = 25;
   const f32 convergenceTolerance = .05f;

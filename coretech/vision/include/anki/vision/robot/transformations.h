@@ -40,6 +40,9 @@ namespace Anki
       // 1. Hold the current planar transformation, and optionally the initial extents of the quadrilateral
       // 2. Update the planar transformation with an update delta
       // 3. Transform a set of points, quadrilateral, or image to the new coordinate frame
+      //
+      // NOTE: All coordinates for images should be stored in the standard resolution
+      //       BASE_IMAGE_WIDTH X BASE_IMAGE_HEIGHT (currently, this is QVGA)
       class PlanarTransformation_f32
       {
       public:
@@ -70,7 +73,7 @@ namespace Anki
         // TRANSFORM_TRANSLATION: [-dx, -dy]
         // TRANSFORM_AFFINE: [h00, h01, h02, h10, h11, h12]
         // TRANSFORM_PROJECTIVE: [h00, h01, h02, h10, h11, h12, h20, h21]
-        Result Update(const Array<f32> &update, MemoryStack scratch, TransformType updateType=TRANSFORM_UNKNOWN);
+        Result Update(const Array<f32> &update, const f32 scale, MemoryStack scratch, TransformType updateType=TRANSFORM_UNKNOWN);
 
         Result Print(const char * const variableName = "Transformation");
 

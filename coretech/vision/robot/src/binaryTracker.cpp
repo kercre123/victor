@@ -1608,7 +1608,7 @@ namespace Anki
 
           //update.Print("update");
 
-          this->transformation.Update(update, scratch, Transformations::TRANSFORM_TRANSLATION);
+          this->transformation.Update(update, 1.0f, scratch, Transformations::TRANSFORM_TRANSLATION);
         }
 
         return RESULT_OK;

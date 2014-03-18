@@ -69,6 +69,8 @@ namespace Anki
 
         f32 templateWeightsSigma;
 
+        // Template region coordinates are scaled from the standard resolution
+        // by templateImage.get_size(1) / BASE_IMAGE_WIDTH
         Rectangle<f32> templateRegion;
 
         bool isValid;
@@ -118,6 +120,8 @@ namespace Anki
 
         Transformations::PlanarTransformation_f32 transformation;
 
+        // Template region coordinates are scaled from the standard resolution
+        // by templateImage.get_size(1) / BASE_IMAGE_WIDTH
         Rectangle<f32> templateRegion;
 
         bool isValid;
@@ -164,6 +168,8 @@ namespace Anki
 
         Transformations::PlanarTransformation_f32 transformation;
 
+        // Template region coordinates are scaled from the standard resolution
+        // by templateImage.get_size(1) / BASE_IMAGE_WIDTH
         Rectangle<f32> templateRegion;
 
         bool isValid;

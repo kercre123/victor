@@ -53,6 +53,14 @@ namespace Anki
 
         templateRegion = templateQuad.ComputeBoundingRectangle();
 
+        const s32 initialImageInverseScaleS32 = BASE_IMAGE_WIDTH / templateImage.get_size(1) ;
+        const f32 initialImageInverseScaleF32 = static_cast<f32>(initialImageInverseScaleS32); // TODO: check that this is integer
+
+        templateRegion.left /= initialImageInverseScaleF32;
+        templateRegion.right /= initialImageInverseScaleF32;
+        templateRegion.top /= initialImageInverseScaleF32;
+        templateRegion.bottom /= initialImageInverseScaleF32;
+
         for(s32 i=1; i<(numPyramidLevels-1); i++) {
           const s32 curTemplateHeight = templateImageHeight >> i;
           const s32 curTemplateWidth = templateImageWidth >> i;
@@ -125,6 +133,9 @@ namespace Anki
         // to leak memory with multiple calls to this object
         this->isInitialized = true;
         this->isValid = false;
+
+        const s32 initialImageInverseScaleS32 = BASE_IMAGE_WIDTH / templateImage.get_size(1) ;
+        const f32 initialImageInverseScaleF32 = static_cast<f32>(initialImageInverseScaleS32); // TODO: check that this is integer
 
         const s32 numTransformationParameters = transformation.get_transformType() >> 8;
 
@@ -201,7 +212,8 @@ namespace Anki
 
             BeginBenchmark("InitializeTemplate.transformPoints");
             // Compute the warped coordinates (for later)
-            if((lastResult = transformation.TransformPoints(xIn, yIn, scale, xTransformed, yTransformed)) != RESULT_OK)
+            //if((lastResult = transformation.TransformPoints(xIn, yIn, scale*initialImageInverseScaleF32, xTransformed, yTransformed)) != RESULT_OK)
+            if((lastResult = transformation.TransformPoints(xIn, yIn, initialImageInverseScaleF32, xTransformed, yTransformed)) != RESULT_OK)
               return lastResult;
             EndBenchmark("InitializeTemplate.transformPoints");
 
@@ -410,6 +422,9 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(convergenceTolerance > 0.0f,
           RESULT_FAIL_INVALID_PARAMETERS, "LucasKanadeTracker_Slow::IterativelyRefineTrack", "convergenceTolerance must be greater than zero");
 
+        const s32 initialImageInverseScaleS32 = BASE_IMAGE_WIDTH / nextImage.get_size(1) ;
+        const f32 initialImageInverseScaleF32 = static_cast<f32>(initialImageInverseScaleS32); // TODO: check that this is integer
+
         const s32 numPointsY = templateCoordinates[whichScale].get_yGridVector().get_size();
         const s32 numPointsX = templateCoordinates[whichScale].get_xGridVector().get_size();
 
@@ -472,7 +487,8 @@ namespace Anki
           Array<f32> yTransformed(1, numPointsY*numPointsX, scratch);
 
           BeginBenchmark("IterativelyRefineTrack.transformPoints");
-          if((lastResult = transformation.TransformPoints(xIn, yIn, scale, xTransformed, yTransformed)) != RESULT_OK)
+          //if((lastResult = transformation.TransformPoints(xIn, yIn, scale*initialImageInverseScaleF32, xTransformed, yTransformed)) != RESULT_OK)
+          if((lastResult = transformation.TransformPoints(xIn, yIn, initialImageInverseScaleF32, xTransformed, yTransformed)) != RESULT_OK)
             return lastResult;
           EndBenchmark("IterativelyRefineTrack.transformPoints");
 
@@ -601,8 +617,8 @@ namespace Anki
 
           BeginBenchmark("IterativelyRefineTrack.updateTransformation");
           //this->transformation.Print("t1");
-          //b.Print("b");
-          this->transformation.Update(b, scratch, curTransformType);
+          b.Print("b");
+          this->transformation.Update(b, initialImageInverseScaleF32, scratch, curTransformType);
           //this->transformation.Print("t2");
           EndBenchmark("IterativelyRefineTrack.updateTransformation");
 
