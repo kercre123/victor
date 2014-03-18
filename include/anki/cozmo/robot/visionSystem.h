@@ -9,13 +9,6 @@
 namespace Anki {
   namespace Cozmo {
     namespace VisionSystem {
-          
-      //
-      // Parameters / Constants:
-      //
-      
-      const HAL::CameraMode DETECTION_RESOLUTION = HAL::CAMERA_MODE_QVGA;
-      const HAL::CameraMode TRACKING_RESOLUTION  = HAL::CAMERA_MODE_QQQVGA;
       
       //
       // Methods
