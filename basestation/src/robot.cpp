@@ -90,7 +90,7 @@ namespace Anki {
                   {{HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}}, &neckPose),
       liftBasePose(0.f, Y_AXIS_3D, {{LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}}, &pose),
       currentHeadAngle(0),
-      isCarryingBlock(false)
+      isCarryingBlock_(false), isTraversingPath_(false)
     {
       this->set_headAngle(currentHeadAngle);
       

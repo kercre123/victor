@@ -65,6 +65,12 @@ namespace Anki {
       ReturnCode GetPathToPose(const Pose3d& pose, Planning::Path& path);
       ReturnCode ExecutePathToPose(const Pose3d& pose);
       
+      void SetTraversingPath(bool t) {isTraversingPath_ = t;}
+      bool IsTraversingPath() {return isTraversingPath_;}
+
+      void SetCarryingBlock(bool t) {isCarryingBlock_ = t;}
+      bool IsCarryingBlock() {return isCarryingBlock_;}
+      
       ///////// Messaging ////////
       
       // Clears the path that the robot is executing which also stops the robot
@@ -122,7 +128,9 @@ namespace Anki {
       
       OperationMode mode, nextMode;
       bool setOperationMode(OperationMode newMode);
-      bool isCarryingBlock;
+      bool isCarryingBlock_;
+      
+      bool isTraversingPath_;
       
       //std::vector<BlockMarker3d*>  visibleFaces;
       //std::vector<Block*>          visibleBlocks;

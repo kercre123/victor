@@ -206,6 +206,10 @@ namespace Anki {
       Vec3f translation(msg.pose_x, msg.pose_y, msg.pose_z);
       robot->set_pose(Pose3d(msg.pose_angle, axis, translation));
       
+      // Update other state vars
+      robot->SetTraversingPath( msg.isTraversingPath );
+      robot->SetCarryingBlock( msg.isCarryingBlock );
+      
       return EXIT_SUCCESS;
     }
 

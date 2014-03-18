@@ -10,6 +10,7 @@
 #include "liftController.h"
 #include "headController.h"
 #include "dockingController.h"
+#include "pickAndPlaceController.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -354,6 +355,8 @@ namespace Anki {
         m.headAngle  = HeadController::GetAngleRad();
         m.liftHeight = LiftController::GetHeightMM();
 
+        m.isTraversingPath = PathFollower::IsTraversingPath() ? 1 : 0;
+        m.isCarryingBlock = PickAndPlaceController::IsCarryingBlock() ? 1 : 0;
         
         HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RobotState), &m);
       }
