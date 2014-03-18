@@ -182,12 +182,11 @@ namespace TrackerParameters {
       convergenceTolerance = 0.05f;
       useWeights = true;
 
-      blockMarkerWidthInMM = 29.5f; // TODO: Get this from the docking command message from basestation
+      blockMarkerWidthInMM = 26.f; // TODO: Get this from the docking command message from basestation
 
-      // TODO: Add CameraMode resolution to CameraInfo
-#warning set horizontalFocalLengthInMM correctly, by passing in a parameter or something
       const f32 fxAdj = static_cast<f32>(detectionWidth) / static_cast<f32>(trackingImageWidth);
-      const f32 focalLength_x = -10e10f; //headCamInfo_->focalLength_x
+      const f32 focalLength_x = HAL::GetHeadCamInfo()->focalLength_x;
+      
       horizontalFocalLengthInMM = focalLength_x / fxAdj;
     } // Parameters
   } Parameters;
@@ -1012,8 +1011,13 @@ static ReturnCode TrackTemplate(
 
   dockErrMsg.didTrackingSucceed = static_cast<u8>(converged);
 
+#if DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
   MatlabVisualization::SendTrack(grayscaleImage, dockErrMsg, tracker, offchipScratch);
-
+#else
+  MatlabVisualization::SendTrack(grayscaleImageSmall, dockErrMsg, tracker, offchipScratch)
+  ;
+#endif
+  
   if(converged) {
     Docking::ComputeDockingErrorSignal(tracker.get_transformation(),
       parameters.trackingImageWidth,
