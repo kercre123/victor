@@ -415,12 +415,11 @@ namespace Anki {
     }
     
     
-    ReturnCode Robot::SendDockWithBlock(const u8* blockCode, const f32 markerWidth_mm, const DockAction_t dockAction) const
+    ReturnCode Robot::SendDockWithBlock(const u8 markerType, const f32 markerWidth_mm, const DockAction_t dockAction) const
     {
       MessageDockWithBlock m;
       m.markerWidth_mm = markerWidth_mm;
-      std::copy(blockCode, blockCode + m.blockCode.size(), m.blockCode.begin());
-      
+      m.markerType = markerType;
       return msgHandler_->SendMessage(ID_, m);
     }
     

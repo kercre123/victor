@@ -589,14 +589,20 @@ namespace Anki {
       }
       else {
         // Set the increment / windowsize for downsampling
-        AnkiAssert(headCamInfo_.nrows >= HAL::CameraModeInfo[mode].height);
-        const s32 inc = headCamInfo_.nrows / HAL::CameraModeInfo[mode].height;
+        s32 inc = 1;
         s32 pixel = 0;
         
         // TODO: add averaging once we support it in hardware
         const bool supportAveraging = false;
         
-        if(!supportAveraging || inc == 1)
+        if(supportAveraging) {
+          AnkiAssert(false);
+          // Need a way to get downsampling increment (LUT for resolution based on mode?)
+          //AnkiAssert(headCamInfo_.nrows >= HAL::CameraModeInfo[mode].height);
+          //inc = headCamInfo_.nrows / HAL::CameraModeInfo[mode].height;
+        }
+        
+        if(inc == 1)
         {
           // No averaging
           for (s32 y=0; y < headCamInfo_.nrows; y++) {

@@ -38,10 +38,10 @@ namespace Anki {
       
       std::list<KnownMarker> const& GetMarkers() const {return markers_;}
       
-      // Return a pointer to a vector all this object's Markers with the
-      // specified code. A NULL pointer is returned if there are no markers
+      // Return a const reference to a vector all this object's Markers with the
+      // specified code. The returned vector will be empty if there are no markers
       // with that code.
-      std::vector<const KnownMarker*> const* GetMarkersWithCode(const Marker::Code& whichCode) const;
+      std::vector<const KnownMarker*> const& GetMarkersWithCode(const Marker::Code& whichCode) const;
 
       // Add possible poses implied by seeing the observed marker to the list.
       // Each pose will be paired with a pointer to the known marker on this
@@ -81,6 +81,7 @@ namespace Anki {
     protected:
       
       //static const std::vector<RotationMatrix3d> rotationAmbiguities_;
+      static const std::vector<const KnownMarker*> sEmptyMarkerVector;
       
       ObjectType_t type_;
       ObjectID_t   ID_;
@@ -204,10 +205,12 @@ namespace Anki {
       // Return a pointer to a vector of pointers to known objects with at
       // least one of the specified markers or codes on it. If  there is no
       // object with that marker/code, a NULL pointer is returned.
-      std::vector<const ObservableObject*> const* GetObjectsWithMarker(const Marker& marker) const;
-      std::vector<const ObservableObject*> const* GetObjectsWithCode(const Marker::Code& code) const;
+      std::vector<const ObservableObject*> const& GetObjectsWithMarker(const Marker& marker) const;
+      std::vector<const ObservableObject*> const& GetObjectsWithCode(const Marker::Code& code) const;
       
     protected:
+      
+      static const std::vector<const ObservableObject*> sEmptyObjectVector;
       
       //std::list<const ObservableObject*> knownObjects_;
       std::map<ObjectType_t, const ObservableObject*> knownObjects_;
