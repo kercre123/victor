@@ -54,7 +54,7 @@ static bool isInitialized_ = false;
 #define DOCKING_LUCAS_KANADE_AFFINE     2 //< LucasKanadeTracker_Affine (With Translation + Affine option)
 #define DOCKING_LUCAS_KANADE_PROJECTIVE 3 //< LucasKanadeTracker_Projective (With Projective + Affine option)
 #define DOCKING_BINARY_TRACKER          4 //< BinaryTracker
-#define DOCKING_ALGORITHM DOCKING_LUCAS_KANADE_AFFINE
+#define DOCKING_ALGORITHM DOCKING_BINARY_TRACKER
 
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SLOW
 typedef TemplateTracker::LucasKanadeTracker_Slow Tracker;
@@ -85,6 +85,7 @@ namespace DetectFiducialMarkersParameters
 {
   typedef struct Parameters
   {
+    bool isInitialized;
     s32 detectionWidth;
     s32 detectionHeight;
     s32 scaleImage_thresholdMultiplier;
@@ -105,11 +106,12 @@ namespace DetectFiducialMarkersParameters
     f32 decode_minContrastRatio;
     s32 maxConnectedComponentSegments;
 
-    Parameters()
+    Parameters() : isInitialized(false) { }
+    
+    Parameters(s32 width, s32 height)
     {
-      // TODO: get from HAL
-      detectionWidth  = 320;
-      detectionHeight = 240;
+      detectionWidth  = width;
+      detectionHeight = height;
 
       scaleImage_thresholdMultiplier = 65536; // 1.0*(2^16)=65536
       scaleImage_numPyramidLevels = 3;
@@ -135,14 +137,17 @@ namespace DetectFiducialMarkersParameters
       decode_minContrastRatio = 1.25;
 
       maxConnectedComponentSegments = 39000; // 322*240/2 = 38640
+      
+      isInitialized = true;
     } // Parameters
   } Parameters;
 
   static DetectFiducialMarkersParameters::Parameters parameters_;
 
-  static ReturnCode Initialize()
+  static ReturnCode Initialize(s32 detectionWidth, s32 detectionHeight)
   {
-    parameters_ = DetectFiducialMarkersParameters::Parameters();
+    parameters_ = DetectFiducialMarkersParameters::Parameters(detectionWidth,
+                                                              detectionHeight);
 
     return EXIT_SUCCESS;
   }
@@ -152,16 +157,17 @@ namespace DetectFiducialMarkersParameters
 #pragma mark --- TrackerParameters ---
 #endif
 
-#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SLOW || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_AFFINE || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE
 
 namespace TrackerParameters {
+  
+  #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SLOW || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_AFFINE || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE
+  
   typedef struct Parameters
   {
     bool isInitialized;
-    s32 detectionWidth;
-    s32 detectionHeight;
     s32 trackingImageHeight;
     s32 trackingImageWidth;
+    u32 downsampleFactor;
     s32 numPyramidLevels;
     s32 maxIterations;
     f32 convergenceTolerance;
@@ -172,47 +178,32 @@ namespace TrackerParameters {
 
     Parameters() : isInitialized(false) { }
     
-    Parameters(const f32 focalLength_x)
+    Parameters(const s32 detectionWidth, const f32 detectionFocalLength)
     {
-      // TODO: set via HAL
-      detectionWidth  = 320;
-      detectionHeight = 240;
-      trackingImageWidth = 80;
-      trackingImageHeight = 60;
-
-      numPyramidLevels = 2;
-      maxIterations = 25;
+      // LK Trackers running at QQQVGA (80x60)
+      trackingImageWidth   = 80;
+      trackingImageHeight  = 60;
+      numPyramidLevels     = 2;
+      maxIterations        = 25;
       convergenceTolerance = 0.05f;
-      useWeights = true;
-
+      useWeights           = true;
       blockMarkerWidthInMM = 26.f; // TODO: Get this from the docking command message from basestation
-
+      downsampleFactor     = detectionWidth / trackingImageWidth;
+      
+      // Compute the effective focal length for tracking
       const f32 fxAdj = static_cast<f32>(detectionWidth) / static_cast<f32>(trackingImageWidth);
-      horizontalFocalLengthInMM = focalLength_x / fxAdj;
+      horizontalFocalLengthInMM = detectionFocalLength / fxAdj;
       
       isInitialized = true;
     } // Parameters
   } Parameters;
 
-  static TrackerParameters::Parameters parameters_;
-
-  // Set the default parameters
-  static ReturnCode Initialize(const f32 focalLength_x)
-  {
-    parameters_ = TrackerParameters::Parameters(focalLength_x);
-
-    return EXIT_SUCCESS;
-  }
-} // namespace LucasKanadeParameters
 
 #else // #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SLOW || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_AFFINE || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE
 
-namespace TrackerParameters {
   typedef struct Parameters
   {
     bool isInitialized;
-    s32 detectionWidth;
-    s32 detectionHeight;
     s32 trackingImageHeight;
     s32 trackingImageWidth;
     u8 edgeDetection_grayvalueThreshold;
@@ -229,41 +220,44 @@ namespace TrackerParameters {
 
     Parameters() : isInitialized(false) { }
     
-    Parameters(const f32 focalLength_x)
+    Parameters(const s32 detectionWidth, const f32 detectionFocalLength)
     {
-      // TODO: set via HAL
-      detectionWidth  = 320;
-      detectionHeight = 240;
-      edgeDetection_grayvalueThreshold = 128;
-      edgeDetection_minComponentWidth = 2;
-      edgeDetection_maxDetectionsPerType = 2500;
-      edgeDetection_everyNLines = 1;
-      matching_maxTranslationDistance = 5;
-      matching_maxProjectiveDistance = 5;
+      // Binary tracker works at QVGA (unlike LK)
+      trackingImageWidth  = 320;
+      trackingImageHeight = 240;
+
+      edgeDetection_grayvalueThreshold    = 128;
+      edgeDetection_minComponentWidth     = 2;
+      edgeDetection_maxDetectionsPerType  = 2500;
+      edgeDetection_everyNLines           = 1;
+      matching_maxTranslationDistance     = 5;
+      matching_maxProjectiveDistance      = 5;
       verification_maxTranslationDistance = 1;
-      percentMatchedPixelsThreshold = 0.5f; // TODO: pick a reasonable value
+      percentMatchedPixelsThreshold       = 0.5f; // TODO: pick a reasonable value
 
       blockMarkerWidthInMM = 26.f; // TODO: Get this from the docking command message from basestation
 
+      // Compute the effective focal length for tracking
       const f32 fxAdj = static_cast<f32>(detectionWidth) / static_cast<f32>(trackingImageWidth);
-      horizontalFocalLengthInMM = focalLength_x / fxAdj;
+      horizontalFocalLengthInMM = detectionFocalLength / fxAdj;
       
       isInitialized = true;
     }
   } Parameters;
 
+#endif // #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SLOW || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_AFFINE || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE
+
   static TrackerParameters::Parameters parameters_;
-
+  
   // Set the default parameters
-  static ReturnCode Initialize(const f32 focalLength_x)
+  static ReturnCode Initialize(const s32 detectionWidth, const f32 detectionFocalLength)
   {
-    parameters_ = TrackerParameters::Parameters(focalLength_x);
-
+    parameters_ = TrackerParameters::Parameters(detectionWidth, detectionFocalLength);
+    
     return EXIT_SUCCESS;
   }
-} // namespace TrackerParameters
-
-#endif // #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SLOW || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_AFFINE || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE
+} // namespace LucasKanadeParameters
+  
 
 #if 0
 #pragma mark --- VisionMemory ---
@@ -844,14 +838,14 @@ static ReturnCode InitTemplate(
 
   // Note that the templateRegion and the trackingQuad are both at DETECTION_RESOLUTION, not
   // necessarily the resolution of the frame.
-  const u32 downsampleFactor = parameters.detectionWidth / parameters.trackingImageWidth;
+  //const u32 downsampleFactor = parameters.detectionWidth / parameters.trackingImageWidth;
   //const u32 downsamplePower = Log2u32(downsampleFactor);
 
   Quadrilateral<f32> trackingQuadSmall;
 
   for(s32 i=0; i<4; ++i) {
-    trackingQuadSmall[i].x = trackingQuad[i].x / downsampleFactor;
-    trackingQuadSmall[i].y = trackingQuad[i].y / downsampleFactor;
+    trackingQuadSmall[i].x = trackingQuad[i].x / parameters.downsampleFactor;
+    trackingQuadSmall[i].y = trackingQuad[i].y / parameters.downsampleFactor;
   }
 #endif // #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SLOW || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_AFFINE || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE
 
@@ -961,8 +955,13 @@ static ReturnCode TrackTemplate(
   s32 numMatches = -1;
 
   const Result trackerResult = tracker.UpdateTrack(
-    grayscaleImage, parameters.edgeDetection_grayvalueThreshold, parameters.edgeDetection_minComponentWidth, parameters.edgeDetection_maxDetectionsPerType, parameters.edgeDetection_everyNLines,
-    parameters.matching_maxTranslationDistance, parameters.matching_maxProjectiveDistance,
+    grayscaleImage,
+    parameters.edgeDetection_grayvalueThreshold,
+    parameters.edgeDetection_minComponentWidth,
+    parameters.edgeDetection_maxDetectionsPerType,
+    parameters.edgeDetection_everyNLines,
+    parameters.matching_maxTranslationDistance,
+    parameters.matching_maxProjectiveDistance,
     parameters.verification_maxTranslationDistance,
     false,
     numMatches,
@@ -977,6 +976,9 @@ static ReturnCode TrackTemplate(
   if(percentMatchedPixels >= parameters.percentMatchedPixelsThreshold) {
     converged = true;
   }
+  
+#else
+#error Unknown DOCKING_ALGORITHM!
 #endif
 
   if(trackerResult != RESULT_OK) {
@@ -1051,15 +1053,25 @@ namespace Anki {
           // WARNING: the order of these initializations matter!
           // TODO: Figure out the intertwinedness
           // TODO: add error handling
-          VisionState::Initialize(); // FIRST!
+          VisionState::Initialize(); // FIRST! this initializes headCamInfo_
+          
           VisionMemory::Initialize();
 
           DebugStream::Initialize();
-          DetectFiducialMarkersParameters::Initialize();
-          TrackerParameters::Initialize(VisionState::headCamInfo_->focalLength_x);
+          
+          const s32 detectionWidth  = VisionState::headCamInfo_->ncols;
+          const s32 detectionHeight = VisionState::headCamInfo_->nrows;
+          
+          DetectFiducialMarkersParameters::Initialize(detectionWidth, detectionHeight);
+          
+          TrackerParameters::Initialize(detectionWidth, VisionState::headCamInfo_->focalLength_x);
+          
           SimulatorParameters::Initialize();
           MatlabVisualization::Initialize();
           //Offboard::Initialize();
+
+          AnkiAssert(DetectFiducialMarkersParameters::parameters_.isInitialized);
+          AnkiAssert(TrackerParameters::parameters_.isInitialized);
 
           isInitialized_ = true;
         }
