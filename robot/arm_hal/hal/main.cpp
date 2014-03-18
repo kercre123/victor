@@ -72,7 +72,7 @@ int main(void)
   
   FrontCameraInit();
   
-  //SPIInit();
+  SPIInit();
   UARTPutString("SPI!\r\n");
   
 #if 0
