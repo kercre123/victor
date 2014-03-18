@@ -42,8 +42,8 @@ namespace Anki {
         // Change this value to run different test modes
         const TestModeController::TestMode DEFAULT_TEST_MODE = TestModeController::TM_NONE;
 
-        Robot::OperationMode mode_ = INIT_RADIO_CONNECTION;
-        
+        Robot::OperationMode mode_ = INIT_MOTOR_CALIBRATION;
+        bool wasConnected_ = false;
       } // Robot private namespace
       
       
@@ -180,14 +180,9 @@ namespace Anki {
         // Start calibration
         StartMotorCalibrationRoutine();
 
-        // TestModeController only updates when in WAITING so skip
-        // waiting for a radio connection and just go.
-        if (DEFAULT_TEST_MODE != TestModeController::TM_NONE) {
-          mode_ = INIT_MOTOR_CALIBRATION;
-        } else {
-          mode_ = INIT_RADIO_CONNECTION;
-        }
-
+        // Set starting state
+        mode_ = INIT_MOTOR_CALIBRATION;
+        
         return EXIT_SUCCESS;
         
       } // Robot::Init()
@@ -227,6 +222,21 @@ namespace Anki {
         // Communications
         //////////////////////////////////////////////////////////////
 
+        // Check if there is a new or dropped connection to a basestation
+        if (HAL::RadioIsConnected() && !wasConnected_) {
+          PRINT("Robot %d's radio is connected.\n", HAL::GetRobotID());
+          
+          if(SendCameraCalibToBase() == EXIT_FAILURE) {
+            PRINT("Failed to send camera calibration to base.");
+            // TODO: die here or what?
+          } else {
+            wasConnected_ = true;
+          }
+        } else if (!HAL::RadioIsConnected() && wasConnected_) {
+          PRINT("Radio disconnected\n");
+          wasConnected_ = false;
+        }
+        
         // Process any messages from the basestation
         Messages::ProcessBTLEMessages();
 #ifndef USE_OFFBOARD_VISION
@@ -278,22 +288,6 @@ namespace Anki {
 
         switch(mode_)
         {
-          case INIT_RADIO_CONNECTION:
-          {
-            if(HAL::RadioIsConnected() ) {
-              PRINT("Robot %d's radio is connected.\n", HAL::GetRobotID());
-              
-              if(SendCameraCalibToBase() == EXIT_FAILURE) {
-                PRINT("Failed to send camera calibration to base.");
-                // TODO: die here or what?
-              }
-              
-              mode_ = INIT_MOTOR_CALIBRATION;
-            }
-            
-            break;
-          }
-        
           case INIT_MOTOR_CALIBRATION:
           {
             if(MotorCalibrationUpdate()) {
