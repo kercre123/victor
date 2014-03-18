@@ -131,8 +131,9 @@ namespace Anki {
         
         //const u16 BLOCK_TO_PICK_UP = 60;
         //const u16 BLOCK_TO_PLACE_ON = 50;
-        const Vision::MarkerType BLOCK_TO_PICK_UP = Vision::MARKER_BATTERIES;
-        const Vision::MarkerType BLOCK_TO_PLACE_ON = Vision::MARKER_BULLSEYE;
+        const Vision::MarkerType BLOCK_TO_PICK_UP = Vision::MARKER_FIRE;
+        const Vision::MarkerType BLOCK_TO_PLACE_ON = Vision::MARKER_SQUAREPLUSCORNERS;
+        const f32 BLOCK_MARKER_WIDTH = DEFAULT_BLOCK_MARKER_WIDTH_MM;
         ////// End of PickAndPlaceTest ////
         
         
@@ -174,7 +175,7 @@ namespace Anki {
         {
           case PAP_WAITING_FOR_PICKUP_BLOCK:
           {
-            PickAndPlaceController::PickUpBlock(BLOCK_TO_PICK_UP, 0);
+            PickAndPlaceController::PickUpBlock(BLOCK_TO_PICK_UP, BLOCK_MARKER_WIDTH, 0);
             pickAndPlaceState_ = PAP_DOCKING;
             break;
           }

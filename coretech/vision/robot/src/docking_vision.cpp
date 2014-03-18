@@ -34,6 +34,8 @@ namespace Anki
         f32& rel_x, f32& rel_y, f32& rel_rad,
         MemoryStack scratch)
       {
+        AnkiAssert(blockMarkerWidthInMM > 0.f);
+        
         // Set these now, so if there is an error, the robot will start driving in a circle
         rel_x = -1.0;
         rel_y = -1.0f;

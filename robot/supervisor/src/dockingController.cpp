@@ -362,12 +362,15 @@ namespace Anki {
       
       
       void StartDocking(const Vision::MarkerType& dockingMarker,
+                        const f32 markerWidth_mm,
                         f32 dockOffsetDistX, f32 dockOffsetDistY, f32 dockOffsetAngle)
       {
-        dockMarker_ = dockingMarker;
+        AnkiAssert(markerWidth_mm > 0.f);
+        
+        dockMarker_      = dockingMarker;
         dockOffsetDistX_ = dockOffsetDistX;
         
-        VisionSystem::SetMarkerToTrack(dockMarker_);
+        VisionSystem::SetMarkerToTrack(dockMarker_, markerWidth_mm);
         lastDockingErrorSignalRecvdTime_ = HAL::GetMicroCounter();
         mode_ = LOOKING_FOR_BLOCK;
         

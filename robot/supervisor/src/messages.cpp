@@ -263,12 +263,12 @@ namespace Anki {
         PathFollower::StartPathTraversal();
       }
       
-      void ProcessDockWithBlockMessage(const DockWithBlock& msg) {
-        #warning Broken on M4
-        /*const VisionSystem::MarkerCode code(msg.blockCode);
-        DockingController::StartDocking(code,
+      void ProcessDockWithBlockMessage(const DockWithBlock& msg)
+      {
+        DockingController::StartDocking(static_cast<Vision::MarkerType>(msg.markerType),
+                                        msg.markerWidth_mm,
                                         msg.horizontalOffset_mm,
-                                        0, 0);*/
+                                        0, 0);
       }
 
       void ProcessDriveWheelsMessage(const DriveWheels& msg) {
