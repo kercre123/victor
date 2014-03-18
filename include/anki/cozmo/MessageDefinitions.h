@@ -87,6 +87,10 @@ ADD_MESSAGE_MEMBER(f32, max_speed_rad_per_sec)
 ADD_MESSAGE_MEMBER(f32, accel_rad_per_sec2)
 END_MESSAGE_DEFINITION(MoveHead)
 
+// StopAllMotors
+START_MESSAGE_DEFINITION(StopAllMotors, 1)
+END_MESSAGE_DEFINITION(StopAllMotors)
+
 // ClearPath
 START_MESSAGE_DEFINITION(ClearPath, 1)
 ADD_MESSAGE_MEMBER(u16, pathID)

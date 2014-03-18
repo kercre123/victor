@@ -82,7 +82,7 @@ namespace Anki {
         //const s32 CKEY_HEAD_UPUP  = 87;  // w
         const s32 CKEY_HEAD_UP    = 83;  // s
         const s32 CKEY_HEAD_DOWN  = 88;  // x
-        //const s32 CKEY_UNLOCK     = 32;  // space
+        const s32 CKEY_UNLOCK     = 32;  // space
 
         // Get robot
         robot_ = NULL;
@@ -206,6 +206,12 @@ namespace Anki {
               break;
             }
 
+            case CKEY_UNLOCK: // Stop all motors
+            {
+              robot_->SendStopAllMotors();
+              break;
+            }
+ 
             default:
             {
               // Stop wheels

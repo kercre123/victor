@@ -296,7 +296,11 @@ namespace Anki {
         HeadController::SetDesiredAngle(msg.angle_rad);
       }
       
-      
+      void ProcessStopAllMotorsMessage(const StopAllMotors& msg) {
+        SteeringController::ExecuteDirectDrive(0,0);
+        LiftController::SetAngularVelocity(0);
+        HeadController::SetAngularVelocity(0);
+      }
       
       
       // TODO: Fill these in once they are needed/used:

@@ -456,6 +456,12 @@ namespace Anki {
       return msgHandler_->SendMessage(ID_,m);
     }
     
+    ReturnCode Robot::SendStopAllMotors() const
+    {
+      MessageStopAllMotors m;
+      return msgHandler_->SendMessage(ID_,m);
+    }
+    
     ReturnCode Robot::SendAbsLocalizationUpdate() const
     {
       // TODO: Add z?

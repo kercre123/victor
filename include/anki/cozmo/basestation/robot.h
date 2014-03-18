@@ -73,11 +73,13 @@ namespace Anki {
       // Sends a path to the robot to be immediately executed
       ReturnCode SendExecutePath(const Planning::Path& path) const;
       
-      // Sends a message to the robot to dock to the specified block
+      // Sends a message to the robot to dock with the specified block
+      // that it should currently be seeing.
       ReturnCode SendDockWithBlock(const u8 markerType,
                                    const f32 markerWidth_mm,
                                    const DockAction_t dockAction) const;
-
+      
+      // Sends a message to the robot to move the lift to the specified height
       ReturnCode SendMoveLift(const f32 height_mm,
                               const f32 max_speed_rad_per_sec,
                               const f32 accel_rad_per_sec2) const;
@@ -88,6 +90,8 @@ namespace Anki {
       
       ReturnCode SendDriveWheels(const f32 lwheel_speed_mmps,
                                  const f32 rwheel_speed_mmps) const;
+      
+      ReturnCode SendStopAllMotors() const;
       
       // Send's robot's current pose
       ReturnCode SendAbsLocalizationUpdate() const;
