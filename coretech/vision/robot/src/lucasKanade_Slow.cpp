@@ -617,7 +617,7 @@ namespace Anki
 
           BeginBenchmark("IterativelyRefineTrack.updateTransformation");
           //this->transformation.Print("t1");
-          b.Print("b");
+          //b.Print("b");
           this->transformation.Update(b, initialImageInverseScaleF32, scratch, curTransformType);
           //this->transformation.Print("t2");
           EndBenchmark("IterativelyRefineTrack.updateTransformation");
@@ -646,11 +646,14 @@ namespace Anki
 
             //Quadrilateral<f32> newCorners = transformation.TransformQuadrilateral(in, scratch, scale);
 
+            const f32 baseImageHalfWidth = static_cast<f32>(BASE_IMAGE_WIDTH) / 2.0f;
+            const f32 baseImageHalfHeight = static_cast<f32>(BASE_IMAGE_HEIGHT) / 2.0f;
+
             Quadrilateral<f32> in(
-              Point<f32>(0.0f,0.0f),
-              Point<f32>(static_cast<f32>(BASE_IMAGE_WIDTH),0.0f),
-              Point<f32>(static_cast<f32>(BASE_IMAGE_WIDTH),static_cast<f32>(BASE_IMAGE_HEIGHT)),
-              Point<f32>(0.0f,static_cast<f32>(BASE_IMAGE_HEIGHT)));
+              Point<f32>(-baseImageHalfWidth,-baseImageHalfHeight),
+              Point<f32>(baseImageHalfWidth,-baseImageHalfHeight),
+              Point<f32>(baseImageHalfWidth,baseImageHalfHeight),
+              Point<f32>(-baseImageHalfWidth,baseImageHalfHeight));
 
             Quadrilateral<f32> newCorners = transformation.TransformQuadrilateral(in, scratch, 1.0f);
 
