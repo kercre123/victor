@@ -146,16 +146,16 @@ namespace Anki
             AnkiConditionalErrorAndReturnValue(update.get_size(1) == TRANSFORM_AFFINE>>8,
               RESULT_FAIL_INVALID_SIZE, "PlanarTransformation_f32::Update", "update is the incorrect size");
 
-            updateArray[0][0] = 1.0f + pUpdate[0]; updateArray[0][1] = pUpdate[1];        updateArray[0][2] = pUpdate[2];
-            updateArray[1][0] = pUpdate[3];        updateArray[1][1] = 1.0f + pUpdate[4]; updateArray[1][2] = pUpdate[5];
+            updateArray[0][0] = 1.0f + pUpdate[0]; updateArray[0][1] = pUpdate[1];        updateArray[0][2] = scale*pUpdate[2];
+            updateArray[1][0] = pUpdate[3];        updateArray[1][1] = 1.0f + pUpdate[4]; updateArray[1][2] = scale*pUpdate[5];
             updateArray[2][0] = 0.0f;              updateArray[2][1] = 0.0f;              updateArray[2][2] = 1.0f;
           } else if(updateType == TRANSFORM_PROJECTIVE) {
             AnkiConditionalErrorAndReturnValue(update.get_size(1) == TRANSFORM_PROJECTIVE>>8,
               RESULT_FAIL_INVALID_SIZE, "PlanarTransformation_f32::Update", "update is the incorrect size");
 
             // tformUpdate = eye(3) + [update(1:3)'; update(4:6)'; update(7:8)' 0];
-            updateArray[0][0] = 1.0f + pUpdate[0]; updateArray[0][1] = pUpdate[1];        updateArray[0][2] = pUpdate[2];
-            updateArray[1][0] = pUpdate[3];        updateArray[1][1] = 1.0f + pUpdate[4]; updateArray[1][2] = pUpdate[5];
+            updateArray[0][0] = 1.0f + pUpdate[0]; updateArray[0][1] = pUpdate[1];        updateArray[0][2] = scale*pUpdate[2];
+            updateArray[1][0] = pUpdate[3];        updateArray[1][1] = 1.0f + pUpdate[4]; updateArray[1][2] = scale*pUpdate[5];
             updateArray[2][0] = pUpdate[6];        updateArray[2][1] = pUpdate[7];        updateArray[2][2] = 1.0f;
           } else {
             AnkiError("PlanarTransformation_f32::Update", "Unknown transformation type %d", updateType);
@@ -442,9 +442,9 @@ namespace Anki
         const s32 numPointsY = xIn.get_size(0);
         const s32 numPointsX = xIn.get_size(1);
 
-        const Point<f32> centerOffsetScaled(centerOffset.x / scale, centerOffset.y / scale);
-
         if(transformType == TRANSFORM_TRANSLATION) {
+          const Point<f32> centerOffsetScaled(centerOffset.x / scale, centerOffset.y / scale);
+
           const f32 dx = homography[0][2] / scale;
           const f32 dy = homography[1][2] / scale;
 
@@ -498,8 +498,8 @@ namespace Anki
                 const f32 yp = (h10*xIn + h11*yIn + h12);
 
                 // Restore center offset
-                pXOut[x] = (xp + centerOffsetScaled.x) / scale;
-                pYOut[x] = (yp + centerOffsetScaled.y) / scale;
+                pXOut[x] = (xp + centerOffset.x) / scale;
+                pYOut[x] = (yp + centerOffset.y) / scale;
               }
             } // if(FLT_NEAR(scale, 1.0f))
           }
@@ -549,8 +549,8 @@ namespace Anki
                 const f32 yp = (h10*xIn + h11*yIn + h12) * wpi;
 
                 // Restore center offset
-                pXOut[x] = (xp + centerOffsetScaled.x) / scale;
-                pYOut[x] = (yp + centerOffsetScaled.y) / scale;
+                pXOut[x] = (xp + centerOffset.x) / scale;
+                pYOut[x] = (yp + centerOffset.y) / scale;
               }
             } // if(FLT_NEAR(scale, 1.0f))
           }

@@ -881,72 +881,72 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
   image2.Print("image2");*/
 
   // Translation-only LK
-  {
-    PUSH_MEMORY_STACK(scratch1);
+  //{
+  //  PUSH_MEMORY_STACK(scratch1);
 
-    InitBenchmarking();
+  //  InitBenchmarking();
 
-    const f64 time0 = GetTime();
+  //  const f64 time0 = GetTime();
 
-    TemplateTracker::LucasKanadeTracker_Slow tracker(image1, templateRegion, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, ridgeWeight, scratch1);
+  //  TemplateTracker::LucasKanadeTracker_Slow tracker(image1, templateRegion, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, ridgeWeight, scratch1);
 
-    ASSERT_TRUE(tracker.IsValid());
+  //  ASSERT_TRUE(tracker.IsValid());
 
-    const f64 time1 = GetTime();
+  //  const f64 time1 = GetTime();
 
-    bool converged = false;
-    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, false, converged, scratch1) == RESULT_OK);
+  //  bool converged = false;
+  //  ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, false, converged, scratch1) == RESULT_OK);
 
-    ASSERT_TRUE(converged == true);
+  //  ASSERT_TRUE(converged == true);
 
-    const f64 time2 = GetTime();
+  //  const f64 time2 = GetTime();
 
-    printf("Translation-only LK totalTime:%dms initTime:%dms updateTrack:%dms\n", (s32)Round(1000*(time2-time0)), (s32)Round(1000*(time1-time0)), (s32)Round(1000*(time2-time1)));
-    PrintBenchmarkResults_All();
+  //  printf("Translation-only LK totalTime:%dms initTime:%dms updateTrack:%dms\n", (s32)Round(1000*(time2-time0)), (s32)Round(1000*(time1-time0)), (s32)Round(1000*(time2-time1)));
+  //  PrintBenchmarkResults_All();
 
-    tracker.get_transformation().Print("Translation-only LK");
+  //  tracker.get_transformation().Print("Translation-only LK");
 
-    // This ground truth is from the PC c++ version
-    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
-    transform_groundTruth[0][2] = -1.327f;
-    transform_groundTruth[1][2] = -0.954f;
+  //  // This ground truth is from the PC c++ version
+  //  Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
+  //  transform_groundTruth[0][2] = -1.327f;
+  //  transform_groundTruth[1][2] = -0.954f;
 
-    ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
-  }
+  //  ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
+  //}
 
   // Affine LK
-  {
-    PUSH_MEMORY_STACK(scratch1);
+  //{
+  //  PUSH_MEMORY_STACK(scratch1);
 
-    InitBenchmarking();
+  //  InitBenchmarking();
 
-    const f64 time0 = GetTime();
+  //  const f64 time0 = GetTime();
 
-    TemplateTracker::LucasKanadeTracker_Slow tracker(image1, templateRegion, numPyramidLevels, Transformations::TRANSFORM_AFFINE, ridgeWeight, scratch1);
+  //  TemplateTracker::LucasKanadeTracker_Slow tracker(image1, templateRegion, numPyramidLevels, Transformations::TRANSFORM_AFFINE, ridgeWeight, scratch1);
 
-    ASSERT_TRUE(tracker.IsValid());
+  //  ASSERT_TRUE(tracker.IsValid());
 
-    const f64 time1 = GetTime();
+  //  const f64 time1 = GetTime();
 
-    bool converged = false;
-    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, false, converged, scratch1) == RESULT_OK);
-    ASSERT_TRUE(converged == true);
+  //  bool converged = false;
+  //  ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, false, converged, scratch1) == RESULT_OK);
+  //  ASSERT_TRUE(converged == true);
 
-    const f64 time2 = GetTime();
+  //  const f64 time2 = GetTime();
 
-    printf("Affine LK totalTime:%dms initTime:%dms updateTrack:%dms\n", (s32)Round(1000*(time2-time0)), (s32)Round(1000*(time1-time0)), (s32)Round(1000*(time2-time1)));
-    PrintBenchmarkResults_All();
+  //  printf("Affine LK totalTime:%dms initTime:%dms updateTrack:%dms\n", (s32)Round(1000*(time2-time0)), (s32)Round(1000*(time1-time0)), (s32)Round(1000*(time2-time1)));
+  //  PrintBenchmarkResults_All();
 
-    tracker.get_transformation().Print("Affine LK");
+  //  tracker.get_transformation().Print("Affine LK");
 
-    // This ground truth is from the PC c++ version
-    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
-    transform_groundTruth[0][0] = 1.005f; transform_groundTruth[0][1] = 0.027f; transform_groundTruth[0][2] = -0.315f;
-    transform_groundTruth[1][0] = -0.033f; transform_groundTruth[1][1] = 0.993f; transform_groundTruth[1][2] = -0.230f;
-    transform_groundTruth[2][0] = 0.0f; transform_groundTruth[2][1] = 0.0f; transform_groundTruth[2][2] = 1.0f;
+  //  // This ground truth is from the PC c++ version
+  //  Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
+  //  transform_groundTruth[0][0] = 1.005f; transform_groundTruth[0][1] = 0.027f; transform_groundTruth[0][2] = -1.247f;
+  //  transform_groundTruth[1][0] = -0.033f; transform_groundTruth[1][1] = 0.993f; transform_groundTruth[1][2] = -0.913f;
+  //  transform_groundTruth[2][0] = 0.0f; transform_groundTruth[2][1] = 0.0f; transform_groundTruth[2][2] = 1.0f;
 
-    ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
-  }
+  //  ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
+  //}
 
   // Projective LK
   {
