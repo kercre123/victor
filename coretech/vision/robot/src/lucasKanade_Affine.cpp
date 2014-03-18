@@ -50,7 +50,19 @@ namespace Anki
         AnkiConditionalErrorAndReturn(transformType==Transformations::TRANSFORM_TRANSLATION || transformType == Transformations::TRANSFORM_AFFINE,
           "LucasKanadeTracker_Affine::LucasKanadeTracker_Affine", "Only Transformations::TRANSFORM_TRANSLATION or Transformations::TRANSFORM_AFFINE are supported");
 
+        const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / templateImage.get_size(1);
+        const s32 initialImagePowerS32 = Log2u32(static_cast<u32>(initialImageScaleS32));
+        const f32 initialImageScaleF32 = static_cast<f32>(initialImageScaleS32);
+
+        AnkiConditionalErrorAndReturn(((1<<initialImagePowerS32)*templateImage.get_size(1)) == BASE_IMAGE_WIDTH,
+          "LucasKanadeTracker_Affine::LucasKanadeTracker_Affine", "The templateImage must be a power of two smaller than BASE_IMAGE_WIDTH");
+
         templateRegion = templateQuad.ComputeBoundingRectangle();
+
+        templateRegion.left /= initialImageScaleF32;
+        templateRegion.right /= initialImageScaleF32;
+        templateRegion.top /= initialImageScaleF32;
+        templateRegion.bottom /= initialImageScaleF32;
 
         // All pyramid width except the last one must be divisible by two
         for(s32 i=0; i<(numPyramidLevels-1); i++) {
@@ -105,7 +117,7 @@ namespace Anki
 
         // Sample all levels of the pyramid images
         for(s32 iScale=0; iScale<numPyramidLevels; iScale++) {
-          if((lastResult = Interp2_Affine<u8,u8>(templateImage, templateCoordinates[iScale], transformation.get_homography(), this->transformation.get_centerOffset(), this->templateImagePyramid[iScale], INTERPOLATE_LINEAR)) != RESULT_OK) {
+          if((lastResult = Interp2_Affine<u8,u8>(templateImage, templateCoordinates[iScale], transformation.get_homography(), this->transformation.get_centerOffset(initialImageScaleF32), this->templateImagePyramid[iScale], INTERPOLATE_LINEAR)) != RESULT_OK) {
             AnkiError("LucasKanadeTracker_Affine::LucasKanadeTracker_Affine", "Interp2_Affine failed with code 0x%x", lastResult);
             return;
           }
@@ -179,11 +191,12 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(nextImageHeight == templateImageHeight && nextImageWidth == templateImageWidth,
           RESULT_FAIL_INVALID_SIZE, "LucasKanadeTracker_Affine::IterativelyRefineTrack", "nextImage must be the same size as the template");
 
-        //const Rectangle<s32> curTemplateRegion(
-        //  static_cast<s32>(Round(this->templateRegion.left / powf(2.0f,static_cast<f32>(whichScale)))),
-        //  static_cast<s32>(Round(this->templateRegion.right / powf(2.0f,static_cast<f32>(whichScale)))),
-        //  static_cast<s32>(Round(this->templateRegion.top / powf(2.0f,static_cast<f32>(whichScale)))),
-        //  static_cast<s32>(Round(this->templateRegion.bottom / powf(2.0f,static_cast<f32>(whichScale)))));
+        const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / nextImageWidth;
+        const s32 initialImagePowerS32 = Log2u32(static_cast<u32>(initialImageScaleS32));
+        const f32 initialImageScaleF32 = static_cast<f32>(initialImageScaleS32);
+
+        AnkiConditionalErrorAndReturnValue(((1<<initialImagePowerS32)*nextImageWidth) == BASE_IMAGE_WIDTH,
+          RESULT_FAIL_INVALID_SIZE, "LucasKanadeTracker_Affine::IterativelyRefineTrack", "The templateImage must be a power of two smaller than BASE_IMAGE_WIDTH");
 
         if(curTransformType == Transformations::TRANSFORM_TRANSLATION) {
           return IterativelyRefineTrack_Translation(nextImage, maxIterations, whichScale, convergenceTolerance, converged, scratch);
@@ -219,10 +232,14 @@ namespace Anki
 
         const f32 scale = static_cast<f32>(1 << whichScale);
 
+        const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / nextImageWidth;
+        const f32 initialImageScaleF32 = static_cast<f32>(initialImageScaleS32);
+
         const f32 oneOverTwoFiftyFive = 1.0f / 255.0f;
         const f32 scaleOverFiveTen = scale / (2.0f*255.0f);
 
-        const Point<f32>& centerOffset = this->transformation.get_centerOffset();
+        //const Point<f32>& centerOffset = this->transformation.get_centerOffset();
+        const Point<f32> centerOffsetScaled = this->transformation.get_centerOffset(initialImageScaleF32);
 
         // Initialize with some very extreme coordinates
         FixedLengthList<Quadrilateral<f32> > previousCorners(NUM_PREVIOUS_QUADS_TO_COMPARE, scratch);
@@ -257,8 +274,8 @@ namespace Anki
 
         for(s32 iteration=0; iteration<maxIterations; iteration++) {
           const Array<f32> &homography = this->transformation.get_homography();
-          const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
-          const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
+          const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2] / initialImageScaleF32;
+          const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2] / initialImageScaleF32;
 
           const f32 yTransformedDelta = h10 * yGridDelta;
           const f32 xTransformedDelta = h00 * xGridDelta;
@@ -280,8 +297,8 @@ namespace Anki
             f32 xOriginal = xGridStart;
 
             // TODO: This could be strength-reduced further, but it wouldn't be much faster
-            f32 xTransformed = h00*xOriginal + h01*yOriginal + h02 + centerOffset.x;
-            f32 yTransformed = h10*xOriginal + h11*yOriginal + h12 + centerOffset.y;
+            f32 xTransformed = h00*xOriginal + h01*yOriginal + h02 + centerOffsetScaled.x;
+            f32 yTransformed = h10*xOriginal + h11*yOriginal + h12 + centerOffsetScaled.y;
 
             for(s32 x=0; x<xIterationMax; x++) {
               const f32 x0 = FLT_FLOOR(xTransformed);
@@ -372,17 +389,20 @@ namespace Anki
 
           //b.Print("New update");
 
-          this->transformation.Update(b, 1.0f, scratch, Transformations::TRANSFORM_TRANSLATION);
+          this->transformation.Update(b, initialImageScaleF32, scratch, Transformations::TRANSFORM_TRANSLATION);
 
           // Check if we're done with iterations
           {
             PUSH_MEMORY_STACK(scratch);
 
+            const f32 baseImageHalfWidth = static_cast<f32>(BASE_IMAGE_WIDTH) / 2.0f;
+            const f32 baseImageHalfHeight = static_cast<f32>(BASE_IMAGE_HEIGHT) / 2.0f;
+
             Quadrilateral<f32> in(
-              Point<f32>(0.0f,0.0f),
-              Point<f32>(static_cast<f32>(nextImage.get_size(1)),0.0f),
-              Point<f32>(static_cast<f32>(nextImage.get_size(0)),static_cast<f32>(nextImage.get_size(1))),
-              Point<f32>(0.0f,static_cast<f32>(nextImage.get_size(1))));
+              Point<f32>(-baseImageHalfWidth,-baseImageHalfHeight),
+              Point<f32>(baseImageHalfWidth,-baseImageHalfHeight),
+              Point<f32>(baseImageHalfWidth,baseImageHalfHeight),
+              Point<f32>(-baseImageHalfWidth,baseImageHalfHeight));
 
             Quadrilateral<f32> newCorners = transformation.TransformQuadrilateral(in, scratch, scale);
 
@@ -404,7 +424,7 @@ namespace Anki
             //newCorners.Print();
             //printf("change: %f\n", change);
 
-            if(minChange < convergenceTolerance*scale) {
+            if(minChange < convergenceTolerance) {
               converged = true;
               return RESULT_OK;
             }
@@ -429,15 +449,6 @@ namespace Anki
         Array<f32> AWAt(6, 6, scratch);
         Array<f32> b(1, 6, scratch);
 
-        //f32 * restrict AWAt0 = AWAt[0];
-        //f32 * restrict AWAt1 = AWAt[1];
-        //f32 * restrict AWAt2 = AWAt[2];
-        //f32 * restrict AWAt3 = AWAt[3];
-        //f32 * restrict AWAt4 = AWAt[4];
-        //f32 * restrict AWAt5 = AWAt[5];
-
-        //f32 * restrict b = b[0];
-
         // These addresses should be known at compile time, so should be faster
         f32 AWAt_raw[6][6];
         f32 b_raw[6];
@@ -449,10 +460,14 @@ namespace Anki
 
         const f32 scale = static_cast<f32>(1 << whichScale);
 
+        const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / nextImageWidth;
+        const f32 initialImageScaleF32 = static_cast<f32>(initialImageScaleS32);
+
         const f32 oneOverTwoFiftyFive = 1.0f / 255.0f;
         const f32 scaleOverFiveTen = scale / (2.0f*255.0f);
 
-        const Point<f32>& centerOffset = this->transformation.get_centerOffset();
+        //const Point<f32>& centerOffset = this->transformation.get_centerOffset();
+        const Point<f32> centerOffsetScaled = this->transformation.get_centerOffset(initialImageScaleF32);
 
         // Initialize with some very extreme coordinates
         FixedLengthList<Quadrilateral<f32> > previousCorners(NUM_PREVIOUS_QUADS_TO_COMPARE, scratch);
@@ -487,8 +502,8 @@ namespace Anki
 
         for(s32 iteration=0; iteration<maxIterations; iteration++) {
           const Array<f32> &homography = this->transformation.get_homography();
-          const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
-          const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
+          const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2] / initialImageScaleF32;
+          const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2] / initialImageScaleF32;
 
           const f32 yTransformedDelta = h10 * yGridDelta;
           const f32 xTransformedDelta = h00 * xGridDelta;
@@ -517,8 +532,8 @@ namespace Anki
             f32 xOriginal = xGridStart;
 
             // TODO: This could be strength-reduced further, but it wouldn't be much faster
-            f32 xTransformed = h00*xOriginal + h01*yOriginal + h02 + centerOffset.x;
-            f32 yTransformed = h10*xOriginal + h11*yOriginal + h12 + centerOffset.y;
+            f32 xTransformed = h00*xOriginal + h01*yOriginal + h02 + centerOffsetScaled.x;
+            f32 yTransformed = h10*xOriginal + h11*yOriginal + h12 + centerOffsetScaled.y;
 
             for(s32 x=0; x<xIterationMax; x++) {
               const f32 x0 = FLT_FLOOR(xTransformed);
@@ -630,7 +645,7 @@ namespace Anki
 
           //b.Print("New update");
 
-          this->transformation.Update(b, 1.0f, scratch, Transformations::TRANSFORM_AFFINE);
+          this->transformation.Update(b, initialImageScaleF32, scratch, Transformations::TRANSFORM_AFFINE);
 
           //this->transformation.get_homography().Print("new transformation");
 
@@ -638,11 +653,14 @@ namespace Anki
           {
             PUSH_MEMORY_STACK(scratch);
 
+            const f32 baseImageHalfWidth = static_cast<f32>(BASE_IMAGE_WIDTH) / 2.0f;
+            const f32 baseImageHalfHeight = static_cast<f32>(BASE_IMAGE_HEIGHT) / 2.0f;
+
             Quadrilateral<f32> in(
-              Point<f32>(0.0f,0.0f),
-              Point<f32>(static_cast<f32>(nextImage.get_size(1)),0.0f),
-              Point<f32>(static_cast<f32>(nextImage.get_size(0)),static_cast<f32>(nextImage.get_size(1))),
-              Point<f32>(0.0f,static_cast<f32>(nextImage.get_size(1))));
+              Point<f32>(-baseImageHalfWidth,-baseImageHalfHeight),
+              Point<f32>(baseImageHalfWidth,-baseImageHalfHeight),
+              Point<f32>(baseImageHalfWidth,baseImageHalfHeight),
+              Point<f32>(-baseImageHalfWidth,baseImageHalfHeight));
 
             Quadrilateral<f32> newCorners = transformation.TransformQuadrilateral(in, scratch, scale);
 

@@ -299,7 +299,7 @@ namespace Anki
           return lastResult;
         }
 
-        this->centerOffset = newTransformation.get_centerOffset();
+        this->centerOffset = newTransformation.get_centerOffset(1.0f);
 
         this->initialCorners = initialCorners;
 
@@ -407,9 +407,14 @@ namespace Anki
         return RESULT_OK;
       }
 
-      const Point<f32>& PlanarTransformation_f32::get_centerOffset() const
+      Point<f32> PlanarTransformation_f32::get_centerOffset(const f32 scale) const
       {
-        return this->centerOffset;
+        if(FLT_NEAR(scale,1.0f)) {
+          return this->centerOffset;
+        } else {
+          const Point<f32> scaledOffset(this->centerOffset.x / scale, this->centerOffset.y / scale);
+          return scaledOffset;
+        }
       }
 
       Quadrilateral<f32> PlanarTransformation_f32::get_transformedCorners(MemoryStack scratch) const

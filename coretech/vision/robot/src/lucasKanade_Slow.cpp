@@ -51,15 +51,19 @@ namespace Anki
         AnkiConditionalErrorAndReturn(ridgeWeight >= 0.0f,
           "LucasKanadeTracker_Slow::LucasKanadeTracker_Slow", "ridgeWeight must be greater or equal to zero");
 
+        const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / templateImage.get_size(1);
+        const s32 initialImagePowerS32 = Log2u32(static_cast<u32>(initialImageScaleS32));
+        const f32 initialImageScaleF32 = static_cast<f32>(initialImageScaleS32);
+
+        AnkiConditionalErrorAndReturn(((1<<initialImagePowerS32)*templateImage.get_size(1)) == BASE_IMAGE_WIDTH,
+          "LucasKanadeTracker_Slow::LucasKanadeTracker_Slow", "The templateImage must be a power of two smaller than BASE_IMAGE_WIDTH");
+
         templateRegion = templateQuad.ComputeBoundingRectangle();
 
-        const s32 initialImageInverseScaleS32 = BASE_IMAGE_WIDTH / templateImage.get_size(1) ;
-        const f32 initialImageInverseScaleF32 = static_cast<f32>(initialImageInverseScaleS32); // TODO: check that this is integer
-
-        templateRegion.left /= initialImageInverseScaleF32;
-        templateRegion.right /= initialImageInverseScaleF32;
-        templateRegion.top /= initialImageInverseScaleF32;
-        templateRegion.bottom /= initialImageInverseScaleF32;
+        templateRegion.left /= initialImageScaleF32;
+        templateRegion.right /= initialImageScaleF32;
+        templateRegion.top /= initialImageScaleF32;
+        templateRegion.bottom /= initialImageScaleF32;
 
         for(s32 i=1; i<(numPyramidLevels-1); i++) {
           const s32 curTemplateHeight = templateImageHeight >> i;
@@ -134,8 +138,8 @@ namespace Anki
         this->isInitialized = true;
         this->isValid = false;
 
-        const s32 initialImageInverseScaleS32 = BASE_IMAGE_WIDTH / templateImage.get_size(1) ;
-        const f32 initialImageInverseScaleF32 = static_cast<f32>(initialImageInverseScaleS32); // TODO: check that this is integer
+        const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / templateImage.get_size(1) ;
+        const f32 initialImageScaleF32 = static_cast<f32>(initialImageScaleS32); // TODO: check that this is integer
 
         const s32 numTransformationParameters = transformation.get_transformType() >> 8;
 
@@ -212,8 +216,8 @@ namespace Anki
 
             BeginBenchmark("InitializeTemplate.transformPoints");
             // Compute the warped coordinates (for later)
-            //if((lastResult = transformation.TransformPoints(xIn, yIn, scale*initialImageInverseScaleF32, xTransformed, yTransformed)) != RESULT_OK)
-            if((lastResult = transformation.TransformPoints(xIn, yIn, initialImageInverseScaleF32, xTransformed, yTransformed)) != RESULT_OK)
+            //if((lastResult = transformation.TransformPoints(xIn, yIn, scale*initialImageScaleF32, xTransformed, yTransformed)) != RESULT_OK)
+            if((lastResult = transformation.TransformPoints(xIn, yIn, initialImageScaleF32, xTransformed, yTransformed)) != RESULT_OK)
               return lastResult;
             EndBenchmark("InitializeTemplate.transformPoints");
 
@@ -422,8 +426,8 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(convergenceTolerance > 0.0f,
           RESULT_FAIL_INVALID_PARAMETERS, "LucasKanadeTracker_Slow::IterativelyRefineTrack", "convergenceTolerance must be greater than zero");
 
-        const s32 initialImageInverseScaleS32 = BASE_IMAGE_WIDTH / nextImage.get_size(1) ;
-        const f32 initialImageInverseScaleF32 = static_cast<f32>(initialImageInverseScaleS32); // TODO: check that this is integer
+        const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / nextImage.get_size(1) ;
+        const f32 initialImageScaleF32 = static_cast<f32>(initialImageScaleS32); // TODO: check that this is integer
 
         const s32 numPointsY = templateCoordinates[whichScale].get_yGridVector().get_size();
         const s32 numPointsX = templateCoordinates[whichScale].get_xGridVector().get_size();
@@ -487,8 +491,8 @@ namespace Anki
           Array<f32> yTransformed(1, numPointsY*numPointsX, scratch);
 
           BeginBenchmark("IterativelyRefineTrack.transformPoints");
-          //if((lastResult = transformation.TransformPoints(xIn, yIn, scale*initialImageInverseScaleF32, xTransformed, yTransformed)) != RESULT_OK)
-          if((lastResult = transformation.TransformPoints(xIn, yIn, initialImageInverseScaleF32, xTransformed, yTransformed)) != RESULT_OK)
+          //if((lastResult = transformation.TransformPoints(xIn, yIn, scale*initialImageScaleF32, xTransformed, yTransformed)) != RESULT_OK)
+          if((lastResult = transformation.TransformPoints(xIn, yIn, initialImageScaleF32, xTransformed, yTransformed)) != RESULT_OK)
             return lastResult;
           EndBenchmark("IterativelyRefineTrack.transformPoints");
 
@@ -618,7 +622,7 @@ namespace Anki
           BeginBenchmark("IterativelyRefineTrack.updateTransformation");
           //this->transformation.Print("t1");
           //b.Print("b");
-          this->transformation.Update(b, initialImageInverseScaleF32, scratch, curTransformType);
+          this->transformation.Update(b, initialImageScaleF32, scratch, curTransformType);
           //this->transformation.Print("t2");
           EndBenchmark("IterativelyRefineTrack.updateTransformation");
 
@@ -675,8 +679,7 @@ namespace Anki
             //newCorners.Print();
             //printf("change: %f\n", change);
 
-            // TODO: remove *8
-            if(minChange < convergenceTolerance*8) {
+            if(minChange < convergenceTolerance) {
               converged = true;
               return RESULT_OK;
             }

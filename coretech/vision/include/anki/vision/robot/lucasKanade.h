@@ -60,6 +60,7 @@ namespace Anki
 
         // The templateRegion sizes are the sizes of the part of the template image that will
         // actually be tracked, so must be smaller or equal to the templateImage sizes
+        // NOTE: These are in the downsampled template coordinates
         f32 templateRegionHeight;
         f32 templateRegionWidth;
 
@@ -69,8 +70,7 @@ namespace Anki
 
         f32 templateWeightsSigma;
 
-        // Template region coordinates are scaled from the standard resolution
-        // by templateImage.get_size(1) / BASE_IMAGE_WIDTH
+        // NOTE: templateRegion is in the downsampled template coordinates
         Rectangle<f32> templateRegion;
 
         bool isValid;

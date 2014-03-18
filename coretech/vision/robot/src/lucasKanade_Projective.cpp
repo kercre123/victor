@@ -50,7 +50,19 @@ namespace Anki
         AnkiConditionalErrorAndReturn(transformType==Transformations::TRANSFORM_TRANSLATION || transformType == Transformations::TRANSFORM_AFFINE || transformType == Transformations::TRANSFORM_PROJECTIVE,
           "LucasKanadeTracker_Projective::LucasKanadeTracker_Projective", "Only TRANSFORM_TRANSLATION, TRANSFORM_AFFINE, and TRANSFORM_PROJECTIVE are supported");
 
+        const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / templateImage.get_size(1);
+        const s32 initialImagePowerS32 = Log2u32(static_cast<u32>(initialImageScaleS32));
+        const f32 initialImageScaleF32 = static_cast<f32>(initialImageScaleS32);
+
+        AnkiConditionalErrorAndReturn(((1<<initialImagePowerS32)*templateImage.get_size(1)) == BASE_IMAGE_WIDTH,
+          "LucasKanadeTracker_Projective::LucasKanadeTracker_Projective", "The templateImage must be a power of two smaller than BASE_IMAGE_WIDTH");
+
         templateRegion = templateQuad.ComputeBoundingRectangle();
+
+        templateRegion.left /= initialImageScaleF32;
+        templateRegion.right /= initialImageScaleF32;
+        templateRegion.top /= initialImageScaleF32;
+        templateRegion.bottom /= initialImageScaleF32;
 
         // All pyramid width except the last one must be divisible by two
         for(s32 i=0; i<(numPyramidLevels-1); i++) {
@@ -105,7 +117,7 @@ namespace Anki
 
         // Sample all levels of the pyramid images
         for(s32 iScale=0; iScale<numPyramidLevels; iScale++) {
-          if((lastResult = Interp2_Projective<u8,u8>(templateImage, templateCoordinates[iScale], transformation.get_homography(), this->transformation.get_centerOffset(), this->templateImagePyramid[iScale], INTERPOLATE_LINEAR)) != RESULT_OK) {
+          if((lastResult = Interp2_Projective<u8,u8>(templateImage, templateCoordinates[iScale], transformation.get_homography(), this->transformation.get_centerOffset(initialImageScaleF32), this->templateImagePyramid[iScale], INTERPOLATE_LINEAR)) != RESULT_OK) {
             AnkiError("LucasKanadeTracker_Projective::LucasKanadeTracker_Projective", "Interp2_Projective failed with code 0x%x", lastResult);
             return;
           }
@@ -176,6 +188,13 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(nextImageHeight == templateImageHeight && nextImageWidth == templateImageWidth,
           RESULT_FAIL_INVALID_SIZE, "LucasKanadeTracker_Projective::IterativelyRefineTrack", "nextImage must be the same size as the template");
 
+        const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / nextImageWidth;
+        const s32 initialImagePowerS32 = Log2u32(static_cast<u32>(initialImageScaleS32));
+        const f32 initialImageScaleF32 = static_cast<f32>(initialImageScaleS32);
+
+        AnkiConditionalErrorAndReturnValue(((1<<initialImagePowerS32)*nextImageWidth) == BASE_IMAGE_WIDTH,
+          RESULT_FAIL_INVALID_SIZE, "LucasKanadeTracker_Projective::IterativelyRefineTrack", "The templateImage must be a power of two smaller than BASE_IMAGE_WIDTH");
+
         if(curTransformType == Transformations::TRANSFORM_TRANSLATION) {
           return IterativelyRefineTrack_Translation(nextImage, maxIterations, whichScale, convergenceTolerance, converged, scratch);
         } else if(curTransformType == Transformations::TRANSFORM_AFFINE) {
@@ -197,6 +216,7 @@ namespace Anki
         Array<f32> AWAt(2, 2, scratch);
         Array<f32> b(1, 2, scratch);
 
+        // TODO: why are these references?
         f32 &AWAt00 = AWAt[0][0];
         f32 &AWAt01 = AWAt[0][1];
         //f32 &AWAt10 = AWAt[1][0];
@@ -212,10 +232,14 @@ namespace Anki
 
         const f32 scale = static_cast<f32>(1 << whichScale);
 
+        const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / nextImageWidth;
+        const f32 initialImageScaleF32 = static_cast<f32>(initialImageScaleS32);
+
         const f32 oneOverTwoFiftyFive = 1.0f / 255.0f;
         const f32 scaleOverFiveTen = scale / (2.0f*255.0f);
 
-        const Point<f32>& centerOffset = this->transformation.get_centerOffset();
+        //const Point<f32>& centerOffset = this->transformation.get_centerOffset();
+        const Point<f32> centerOffsetScaled = this->transformation.get_centerOffset(initialImageScaleF32);
 
         // Initialize with some very extreme coordinates
         FixedLengthList<Quadrilateral<f32> > previousCorners(NUM_PREVIOUS_QUADS_TO_COMPARE, scratch);
@@ -246,9 +270,9 @@ namespace Anki
 
         for(s32 iteration=0; iteration<maxIterations; iteration++) {
           const Array<f32> &homography = this->transformation.get_homography();
-          const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
-          const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
-          const f32 h20 = homography[2][0]; const f32 h21 = homography[2][1]; //const f32 h22 = 1.0f;
+          const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2] / initialImageScaleF32;
+          const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2] / initialImageScaleF32;
+          const f32 h20 = homography[2][0] * initialImageScaleF32; const f32 h21 = homography[2][1] * initialImageScaleF32; //const f32 h22 = 1.0f;
 
           AWAt.SetZero();
           b.SetZero();
@@ -273,8 +297,8 @@ namespace Anki
 
               const f32 normalization = h20*xOriginal + h21*yOriginal + 1.0f;
 
-              const f32 xTransformed = (xTransformedRaw / normalization) + centerOffset.x;
-              const f32 yTransformed = (yTransformedRaw / normalization) + centerOffset.y;
+              const f32 xTransformed = (xTransformedRaw / normalization) + centerOffsetScaled.x;
+              const f32 yTransformed = (yTransformedRaw / normalization) + centerOffsetScaled.y;
 
               xOriginal += xGridDelta;
 
@@ -357,17 +381,20 @@ namespace Anki
 
           //b.Print("New update");
 
-          this->transformation.Update(b, 1.0f, scratch, Transformations::TRANSFORM_TRANSLATION);
+          this->transformation.Update(b, initialImageScaleF32, scratch, Transformations::TRANSFORM_TRANSLATION);
 
           // Check if we're done with iterations
           {
             PUSH_MEMORY_STACK(scratch);
 
+            const f32 baseImageHalfWidth = static_cast<f32>(BASE_IMAGE_WIDTH) / 2.0f;
+            const f32 baseImageHalfHeight = static_cast<f32>(BASE_IMAGE_HEIGHT) / 2.0f;
+
             Quadrilateral<f32> in(
-              Point<f32>(0.0f,0.0f),
-              Point<f32>(static_cast<f32>(nextImage.get_size(1)),0.0f),
-              Point<f32>(static_cast<f32>(nextImage.get_size(0)),static_cast<f32>(nextImage.get_size(1))),
-              Point<f32>(0.0f,static_cast<f32>(nextImage.get_size(1))));
+              Point<f32>(-baseImageHalfWidth,-baseImageHalfHeight),
+              Point<f32>(baseImageHalfWidth,-baseImageHalfHeight),
+              Point<f32>(baseImageHalfWidth,baseImageHalfHeight),
+              Point<f32>(-baseImageHalfWidth,baseImageHalfHeight));
 
             Quadrilateral<f32> newCorners = transformation.TransformQuadrilateral(in, scratch, scale);
 
@@ -389,7 +416,7 @@ namespace Anki
             //newCorners.Print();
             //printf("change: %f\n", change);
 
-            if(minChange < convergenceTolerance*scale) {
+            if(minChange < convergenceTolerance) {
               converged = true;
               return RESULT_OK;
             }
@@ -425,10 +452,14 @@ namespace Anki
 
         const f32 scale = static_cast<f32>(1 << whichScale);
 
+        const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / nextImageWidth;
+        const f32 initialImageScaleF32 = static_cast<f32>(initialImageScaleS32);
+
         const f32 oneOverTwoFiftyFive = 1.0f / 255.0f;
         const f32 scaleOverFiveTen = scale / (2.0f*255.0f);
 
-        const Point<f32>& centerOffset = this->transformation.get_centerOffset();
+        //const Point<f32>& centerOffset = this->transformation.get_centerOffset();
+        const Point<f32> centerOffsetScaled = this->transformation.get_centerOffset(initialImageScaleF32);
 
         // Initialize with some very extreme coordinates
         FixedLengthList<Quadrilateral<f32> > previousCorners(NUM_PREVIOUS_QUADS_TO_COMPARE, scratch);
@@ -463,9 +494,9 @@ namespace Anki
 
         for(s32 iteration=0; iteration<maxIterations; iteration++) {
           const Array<f32> &homography = this->transformation.get_homography();
-          const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
-          const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
-          const f32 h20 = homography[2][0]; const f32 h21 = homography[2][1]; //const f32 h22 = 1.0f;
+          const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2] / initialImageScaleF32;
+          const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2] / initialImageScaleF32;
+          const f32 h20 = homography[2][0] * initialImageScaleF32; const f32 h21 = homography[2][1] * initialImageScaleF32; //const f32 h22 = 1.0f;
 
           //AWAt.SetZero();
           //b.SetZero();
@@ -497,8 +528,8 @@ namespace Anki
 
               const f32 normalization = h20*xOriginal + h21*yOriginal + 1.0f;
 
-              const f32 xTransformed = (xTransformedRaw / normalization) + centerOffset.x;
-              const f32 yTransformed = (yTransformedRaw / normalization) + centerOffset.y;
+              const f32 xTransformed = (xTransformedRaw / normalization) + centerOffsetScaled.x;
+              const f32 yTransformed = (yTransformedRaw / normalization) + centerOffsetScaled.y;
 
               xOriginal += xGridDelta;
 
@@ -602,7 +633,7 @@ namespace Anki
 
           //b.Print("New update");
 
-          this->transformation.Update(b, 1.0f, scratch, Transformations::TRANSFORM_AFFINE);
+          this->transformation.Update(b, initialImageScaleF32, scratch, Transformations::TRANSFORM_AFFINE);
 
           //this->transformation.get_homography().Print("new transformation");
 
@@ -610,11 +641,14 @@ namespace Anki
           {
             PUSH_MEMORY_STACK(scratch);
 
+            const f32 baseImageHalfWidth = static_cast<f32>(BASE_IMAGE_WIDTH) / 2.0f;
+            const f32 baseImageHalfHeight = static_cast<f32>(BASE_IMAGE_HEIGHT) / 2.0f;
+
             Quadrilateral<f32> in(
-              Point<f32>(0.0f,0.0f),
-              Point<f32>(static_cast<f32>(nextImage.get_size(1)),0.0f),
-              Point<f32>(static_cast<f32>(nextImage.get_size(0)),static_cast<f32>(nextImage.get_size(1))),
-              Point<f32>(0.0f,static_cast<f32>(nextImage.get_size(1))));
+              Point<f32>(-baseImageHalfWidth,-baseImageHalfHeight),
+              Point<f32>(baseImageHalfWidth,-baseImageHalfHeight),
+              Point<f32>(baseImageHalfWidth,baseImageHalfHeight),
+              Point<f32>(-baseImageHalfWidth,baseImageHalfHeight));
 
             Quadrilateral<f32> newCorners = transformation.TransformQuadrilateral(in, scratch, scale);
 
@@ -672,10 +706,14 @@ namespace Anki
 
         const f32 scale = static_cast<f32>(1 << whichScale);
 
+        const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / nextImageWidth;
+        const f32 initialImageScaleF32 = static_cast<f32>(initialImageScaleS32);
+
         const f32 oneOverTwoFiftyFive = 1.0f / 255.0f;
         const f32 scaleOverFiveTen = scale / (2.0f*255.0f);
 
-        const Point<f32>& centerOffset = this->transformation.get_centerOffset();
+        //const Point<f32>& centerOffset = this->transformation.get_centerOffset();
+        const Point<f32> centerOffsetScaled = this->transformation.get_centerOffset(initialImageScaleF32);
 
         // Initialize with some very extreme coordinates
         FixedLengthList<Quadrilateral<f32> > previousCorners(NUM_PREVIOUS_QUADS_TO_COMPARE, scratch);
@@ -710,9 +748,9 @@ namespace Anki
 
         for(s32 iteration=0; iteration<maxIterations; iteration++) {
           const Array<f32> &homography = this->transformation.get_homography();
-          const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
-          const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
-          const f32 h20 = homography[2][0]; const f32 h21 = homography[2][1]; //const f32 h22 = 1.0f;
+          const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2] / initialImageScaleF32;
+          const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2] / initialImageScaleF32;
+          const f32 h20 = homography[2][0] * initialImageScaleF32; const f32 h21 = homography[2][1] * initialImageScaleF32; //const f32 h22 = 1.0f;
 
           //AWAt.SetZero();
           //b.SetZero();
@@ -744,8 +782,8 @@ namespace Anki
 
               const f32 normalization = h20*xOriginal + h21*yOriginal + 1.0f;
 
-              const f32 xTransformed = (xTransformedRaw / normalization) + centerOffset.x;
-              const f32 yTransformed = (yTransformedRaw / normalization) + centerOffset.y;
+              const f32 xTransformed = (xTransformedRaw / normalization) + centerOffsetScaled.x;
+              const f32 yTransformed = (yTransformedRaw / normalization) + centerOffsetScaled.y;
 
               xOriginal += xGridDelta;
 
@@ -845,7 +883,7 @@ namespace Anki
 
           //b.Print("New update");
 
-          this->transformation.Update(b, 1.0f, scratch, Transformations::TRANSFORM_PROJECTIVE);
+          this->transformation.Update(b, initialImageScaleF32, scratch, Transformations::TRANSFORM_PROJECTIVE);
 
           //this->transformation.get_homography().Print("new transformation");
 
@@ -853,11 +891,14 @@ namespace Anki
           {
             PUSH_MEMORY_STACK(scratch);
 
+            const f32 baseImageHalfWidth = static_cast<f32>(BASE_IMAGE_WIDTH) / 2.0f;
+            const f32 baseImageHalfHeight = static_cast<f32>(BASE_IMAGE_HEIGHT) / 2.0f;
+
             Quadrilateral<f32> in(
-              Point<f32>(0.0f,0.0f),
-              Point<f32>(static_cast<f32>(nextImage.get_size(1)),0.0f),
-              Point<f32>(static_cast<f32>(nextImage.get_size(0)),static_cast<f32>(nextImage.get_size(1))),
-              Point<f32>(0.0f,static_cast<f32>(nextImage.get_size(1))));
+              Point<f32>(-baseImageHalfWidth,-baseImageHalfHeight),
+              Point<f32>(baseImageHalfWidth,-baseImageHalfHeight),
+              Point<f32>(baseImageHalfWidth,baseImageHalfHeight),
+              Point<f32>(-baseImageHalfWidth,baseImageHalfHeight));
 
             Quadrilateral<f32> newCorners = transformation.TransformQuadrilateral(in, scratch, scale);
 
