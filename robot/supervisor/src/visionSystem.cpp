@@ -333,6 +333,9 @@ namespace DebugStream
 
   static SerializedBuffer printfBuffer_;
   static SerializedBuffer debugStreamBuffer_;
+  
+  static const HAL::CameraMode debugStreamResolution_ = HAL::CAMERA_MODE_QQQVGA;
+  
 
 #if !defined(SEND_DEBUG_STREAM)
   static ReturnCode SendFiducialDetection(const Array<u8> &image, const FixedLengthList<VisionMarker> &markers, MemoryStack ccmScratch, MemoryStack offchipScratch) { return EXIT_SUCCESS; }
@@ -420,7 +423,10 @@ namespace DebugStream
       }
     }
 
-    Array<u8> imageSmall(60, 80, offchipScratch);
+    const s32 height = CameraModeInfo[debugStreamResolution_].height;
+    const s32 width  = CameraModeInfo[debugStreamResolution_].width;
+    
+    Array<u8> imageSmall(height, width, offchipScratch);
     DownsampleHelper(image, imageSmall, ccmScratch);
     debugStreamBuffer_.PushBack(imageSmall);
 
@@ -449,7 +455,10 @@ namespace DebugStream
 
     debugStreamBuffer_.PushBack("PlanarTransformation_f32", oneTransformation, oneTransformationLength);
 
-    Array<u8> imageSmall(60, 80, offchipScratch);
+    const s32 height = CameraModeInfo[debugStreamResolution_].height;
+    const s32 width  = CameraModeInfo[debugStreamResolution_].width;
+
+    Array<u8> imageSmall(height, width, offchipScratch);
     DownsampleHelper(image, imageSmall, ccmScratch);
     debugStreamBuffer_.PushBack(imageSmall);
 
@@ -1060,12 +1069,15 @@ namespace Anki {
       
       static DetectFiducialMarkersParameters detectionParameters_;
       static TrackerParameters               trackerParameters_;
+      static HAL::CameraMode                 captureResolution_;
       
       ReturnCode Init()
       {
         ReturnCode result = EXIT_SUCCESS;
         
         if(!isInitialized_) {
+          captureResolution_ = HAL::CAMERA_MODE_QVGA;
+          
           // WARNING: the order of these initializations matter!
           
           // TODO: Figure out the intertwinedness
@@ -1208,10 +1220,14 @@ namespace Anki {
 
           MemoryStack offchipScratch_local(VisionMemory::offchipScratch_);
 
-          Array<u8> grayscaleImage(240, 320, offchipScratch_local, Flags::Buffer(false,false,false));
+          const s32 captureHeight = CameraModeInfo[captureResolution_].height;
+          const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
+          
+          Array<u8> grayscaleImage(captureHeight, captureWidth,
+                                   offchipScratch_local, Flags::Buffer(false,false,false));
 
           HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
-                              HAL::CAMERA_MODE_QVGA, exposure, false);
+                              captureResolution_, exposure, false);
 
           const ReturnCode result = LookForMarkers(
             grayscaleImage,
@@ -1298,11 +1314,17 @@ namespace Anki {
           
           MemoryStack offchipScratch_local(VisionMemory::offchipScratch_);
 
-          Array<u8> grayscaleImage(240, 320, offchipScratch_local, Flags::Buffer(false,false,false));
+          const s32 captureHeight = CameraModeInfo[captureResolution_].height;
+          const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
+          
+          Array<u8> grayscaleImage(captureHeight, captureWidth,
+                                   offchipScratch_local, Flags::Buffer(false,false,false));
+          
+          HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
+                              captureResolution_, exposure, false);
 
-          HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()), HAL::CAMERA_MODE_QVGA, exposure, false);
-
-          bool converged;
+          // Set by TrackTemplate() call
+          bool converged = false;
           
           const ReturnCode result = TrackTemplate(
             grayscaleImage,
