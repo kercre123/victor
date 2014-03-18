@@ -132,7 +132,7 @@ START_MESSAGE_DEFINITION(DockWithBlock, 1)
 ADD_MESSAGE_MEMBER(f32, horizontalOffset_mm)  // Offset wrt to docking block. Don't know if this will work yet.
 ADD_MESSAGE_MEMBER(f32, markerWidth_mm)
 ADD_MESSAGE_MEMBER(u8, dockAction)  // See DockAction_t
-ADD_MESSAGE_MEMBER_ARRAY(u8, blockCode, VISION_MARKER_CODE_LENGTH)
+ADD_MESSAGE_MEMBER(u8, markerType)
 END_MESSAGE_DEFINITION(DockWithBlock)
 
 

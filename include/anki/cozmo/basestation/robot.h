@@ -74,7 +74,7 @@ namespace Anki {
       ReturnCode SendExecutePath(const Planning::Path& path) const;
       
       // Sends a message to the robot to dock to the specified block
-      ReturnCode SendDockWithBlock(const u8* blockCode,
+      ReturnCode SendDockWithBlock(const u8 markerType,
                                    const f32 markerWidth_mm,
                                    const DockAction_t dockAction) const;
 
