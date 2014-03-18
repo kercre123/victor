@@ -16,6 +16,8 @@
 #include "anki/cozmo/robot/wheelController.h"
 #include "anki/cozmo/robot/visionSystem.h"
 
+#include "anki/common/robot/trig_fast.h"
+
 namespace Anki {
   namespace Cozmo {
     namespace TestModeController {
@@ -41,7 +43,6 @@ namespace Anki {
         const f32 accel_mmps2 = 0;  // 0 for infinite acceleration.
                                     // Only works in WheelController mode (i.e. DIRECT_HAL_MOTOR_TEST == 0)
         
-        // COAST MODE
         // Measurements taken from a prototype cozmo.
         // Used to model open loop motor command in WheelController.
         //
@@ -63,11 +64,25 @@ namespace Anki {
         /////// LiftTest /////////
         // 0: Set power directly with MotorSetPower
         // 1: Command a desired lift height (i.e. use LiftController)
-        #define LIFT_HEIGHT_TEST 0
+        #define LIFT_HEIGHT_TEST 1
         
-        const f32 LIFT_POWER_CMD = 0.7;
-        const f32 LIFT_DES_HIGH_HEIGHT = LIFT_HEIGHT_HIGHDOCK;
-        const f32 LIFT_DES_LOW_HEIGHT = LIFT_HEIGHT_LOWDOCK;
+        // Open-loop lift speeds (unloaded)
+        //
+        // Power   UpSpeed (rad/s)  DownSpeed (rad/s)
+        // 0.2     0.3              0.5
+        // 0.3     0.7              0.9
+        // 0.4     1.1              1.3
+        // 0.5     1.5              1.7
+        // 0.6     2.0              2.2
+        // 0.7     2.4              2.6
+        // 0.8     2.8              3.0
+        // 0.9     3.2              3.4
+        // 1.0     3.6              3.8
+        
+        f32 liftPower_ = 1;
+        const f32 LIFT_POWER_CMD = 0.2;
+        const f32 LIFT_DES_HIGH_HEIGHT = LIFT_HEIGHT_HIGHDOCK-10;
+        const f32 LIFT_DES_LOW_HEIGHT = LIFT_HEIGHT_LOWDOCK+10;
         //// End of LiftTest  //////
         
         
@@ -97,6 +112,7 @@ namespace Anki {
         
         
         //////// PathFollowTest /////////
+        #define PATH_FOLLOW_ALIGNED_START 1
         const f32 PF_TARGET_SPEED_MMPS = 100;
         const f32 PF_ACCEL_MMPS2 = 200;
         const f32 PF_DECEL_MMPS2 = 500;
@@ -256,11 +272,30 @@ namespace Anki {
         if (!pathStarted_ && HAL::GetMicroCounter() > startDriveTime_us) {
           
           // Create a path and follow it
+#if(PATH_FOLLOW_ALIGNED_START)
+          float arc1_radius = sqrt((float)5000);  // Radius of sqrt(50^2 + 50^2)
+          f32 sweepAng = atan_fast((350-arc1_radius)/250);
+          
+          PathFollower::AppendPathSegment_Arc(0, arc1_radius, 0, arc1_radius, -PI, sweepAng,
+                                              PF_TARGET_SPEED_MMPS, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
+          
+          f32 firstConnectionPt_x = arc1_radius - arc1_radius*cos(sweepAng);
+          f32 firstConnectionPt_y = - arc1_radius*sin(sweepAng);
+          f32 secondConnectionPt_x = firstConnectionPt_x + (350 - arc1_radius);
+          f32 secondConnectionPt_y = firstConnectionPt_y - 250;
+          
+          PathFollower::AppendPathSegment_Line(0, firstConnectionPt_x, firstConnectionPt_y, secondConnectionPt_x, secondConnectionPt_y,
+                                               PF_TARGET_SPEED_MMPS, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
+          
+          PathFollower::AppendPathSegment_Arc(0, 350, -250, arc1_radius, -PI + sweepAng, PI - sweepAng,
+                                              PF_TARGET_SPEED_MMPS, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
+#else
           PathFollower::AppendPathSegment_Line(0, 0.0, 0.0, 300, -300,
                                                PF_TARGET_SPEED_MMPS, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
           float arc1_radius = sqrt((float)5000);  // Radius of sqrt(50^2 + 50^2)
           PathFollower::AppendPathSegment_Arc(0, 350, -250, arc1_radius, -0.75f*PI, 0.75f*PI,
                                               PF_TARGET_SPEED_MMPS, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
+#endif
           PathFollower::AppendPathSegment_Line(0, 350 + arc1_radius, -250, 350 + arc1_radius, 200,
                                                PF_TARGET_SPEED_MMPS, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
           float arc2_radius = sqrt((float)20000); // Radius of sqrt(100^2 + 100^2)
@@ -353,6 +388,7 @@ namespace Anki {
         PRINT("!!! REMOVE JTAG CABLE !!!\n");
         ticCnt_ = 0;
         ticCnt2_ = 0;
+        liftPower_ = LIFT_POWER_CMD;
 #if(!LIFT_HEIGHT_TEST)
         LiftController::Disable();
 #endif
@@ -365,7 +401,7 @@ namespace Anki {
         static bool up = false;
         
         // Change direction
-        if (ticCnt_++ >= 4000 / TIME_STEP) {
+        if (ticCnt_++ >= 3000 / TIME_STEP) {
           
 
 #if(LIFT_HEIGHT_TEST)
@@ -381,32 +417,38 @@ namespace Anki {
 #else
           up = !up;
           if (up) {
-            PRINT("Lift UP %f power\n", LIFT_POWER_CMD);
-            HAL::MotorSetPower(HAL::MOTOR_LIFT, LIFT_POWER_CMD);
+            PRINT("Lift UP %f power\n", liftPower_);
+            HAL::MotorSetPower(HAL::MOTOR_LIFT, liftPower_);
           } else {
-            PRINT("Lift DOWN %f power\n", -LIFT_POWER_CMD);
-            HAL::MotorSetPower(HAL::MOTOR_LIFT, -LIFT_POWER_CMD);
+            PRINT("Lift DOWN %f power\n", -liftPower_);
+            HAL::MotorSetPower(HAL::MOTOR_LIFT, -liftPower_);
           }
+          
+
+          // Cycle through different power levels
+          if (!up) {
+            liftPower_ += 0.1;
+            if (liftPower_ >=1.01f) {
+              liftPower_ = LIFT_POWER_CMD;
+            }
+          }
+
 #endif
           
           ticCnt_ = 0;
         }
         
+/*
         // Print speed
-        if (ticCnt2_++ >= 200 / TIME_STEP) {
-          // TODO: Unused. Remove?
-          /*
+        if (ticCnt2_++ >= 40 / TIME_STEP) {
           f32 lSpeed = HAL::MotorGetSpeed(HAL::MOTOR_LIFT);
           f32 lSpeed_filt = LiftController::GetAngularVelocity();
           f32 lPos = LiftController::GetAngleRad(); // HAL::MotorGetPosition(HAL::MOTOR_LIFT);
           f32 lHeight = LiftController::GetHeightMM();
-          */
-          //f32 lSpeed_filt;
-          //          WheelController::GetFilteredWheelSpeeds(&lSpeed_filt,&rSpeed_filt);
-          //PRINT("Lift speed %f rad/s, filt_speed %f rad/s, position %f rad, %f mm\n", lSpeed, lSpeed_filt, lPos, lHeight);
+          PRINT("Lift speed %f rad/s, filt_speed %f rad/s, position %f rad, %f mm\n", lSpeed, lSpeed_filt, lPos, lHeight);
           ticCnt2_ = 0;
         }
-        
+*/
         
         return EXIT_SUCCESS;
       }
@@ -441,6 +483,18 @@ namespace Anki {
             inPositionCycles = 0;
           }
         }
+
+        /*
+        // Print height and speed
+        if (ticCnt2_++ >= 200 / TIME_STEP) {
+          f32 lSpeed = HAL::MotorGetSpeed(HAL::MOTOR_LIFT);
+          f32 lPos = LiftController::GetHeightMM();
+          
+          PRINT("Lift speed %f rad/s, height %f mm\n", lSpeed, lPos);
+          ticCnt2_ = 0;
+        }
+         */
+
         
         return EXIT_SUCCESS;
       }

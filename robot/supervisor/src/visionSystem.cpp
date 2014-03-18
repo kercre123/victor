@@ -42,7 +42,7 @@ using namespace Anki::Cozmo;
 static bool isInitialized_ = false;
 
 // TODO: remove
-#define SEND_DEBUG_STREAM
+//#define SEND_DEBUG_STREAM
 //#define RUN_SIMPLE_TRACKING_TEST
 
 #define DOCKING_LUCAS_KANADE_SLOW       1 //< LucasKanadeTracker_Slow (doesn't seem to work?)
