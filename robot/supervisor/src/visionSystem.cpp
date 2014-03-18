@@ -157,6 +157,7 @@ namespace DetectFiducialMarkersParameters
 namespace TrackerParameters {
   typedef struct Parameters
   {
+    bool isInitialized;
     s32 detectionWidth;
     s32 detectionHeight;
     s32 trackingImageHeight;
@@ -169,7 +170,9 @@ namespace TrackerParameters {
     f32 blockMarkerWidthInMM;
     f32 horizontalFocalLengthInMM;
 
-    Parameters()
+    Parameters() : isInitialized(false) { }
+    
+    Parameters(const f32 focalLength_x)
     {
       // TODO: set via HAL
       detectionWidth  = 320;
@@ -185,18 +188,18 @@ namespace TrackerParameters {
       blockMarkerWidthInMM = 26.f; // TODO: Get this from the docking command message from basestation
 
       const f32 fxAdj = static_cast<f32>(detectionWidth) / static_cast<f32>(trackingImageWidth);
-      const f32 focalLength_x = HAL::GetHeadCamInfo()->focalLength_x;
-      
       horizontalFocalLengthInMM = focalLength_x / fxAdj;
+      
+      isInitialized = true;
     } // Parameters
   } Parameters;
 
   static TrackerParameters::Parameters parameters_;
 
   // Set the default parameters
-  static ReturnCode Initialize()
+  static ReturnCode Initialize(const f32 focalLength_x)
   {
-    parameters_ = TrackerParameters::Parameters();
+    parameters_ = TrackerParameters::Parameters(focalLength_x);
 
     return EXIT_SUCCESS;
   }
@@ -207,6 +210,7 @@ namespace TrackerParameters {
 namespace TrackerParameters {
   typedef struct Parameters
   {
+    bool isInitialized;
     s32 detectionWidth;
     s32 detectionHeight;
     s32 trackingImageHeight;
@@ -223,7 +227,9 @@ namespace TrackerParameters {
     f32 blockMarkerWidthInMM;
     f32 horizontalFocalLengthInMM;
 
-    Parameters()
+    Parameters() : isInitialized(false) { }
+    
+    Parameters(const f32 focalLength_x)
     {
       // TODO: set via HAL
       detectionWidth  = 320;
@@ -237,22 +243,21 @@ namespace TrackerParameters {
       verification_maxTranslationDistance = 1;
       percentMatchedPixelsThreshold = 0.5f; // TODO: pick a reasonable value
 
-      blockMarkerWidthInMM = 29.5f; // TODO: Get this from the docking command message from basestation
+      blockMarkerWidthInMM = 26.f; // TODO: Get this from the docking command message from basestation
 
-      // TODO: Add CameraMode resolution to CameraInfo
-#warning set horizontalFocalLengthInMM correctly, by passing in a parameter or something
       const f32 fxAdj = static_cast<f32>(detectionWidth) / static_cast<f32>(trackingImageWidth);
-      const f32 focalLength_x = -10e10f; //headCamInfo_->focalLength_x
       horizontalFocalLengthInMM = focalLength_x / fxAdj;
+      
+      isInitialized = true;
     }
   } Parameters;
 
   static TrackerParameters::Parameters parameters_;
 
   // Set the default parameters
-  static ReturnCode Initialize()
+  static ReturnCode Initialize(const f32 focalLength_x)
   {
-    parameters_ = TrackerParameters::Parameters();
+    parameters_ = TrackerParameters::Parameters(focalLength_x);
 
     return EXIT_SUCCESS;
   }
@@ -1046,12 +1051,12 @@ namespace Anki {
           // WARNING: the order of these initializations matter!
           // TODO: Figure out the intertwinedness
           // TODO: add error handling
-          VisionState::Initialize();
+          VisionState::Initialize(); // FIRST!
           VisionMemory::Initialize();
 
           DebugStream::Initialize();
           DetectFiducialMarkersParameters::Initialize();
-          TrackerParameters::Initialize();
+          TrackerParameters::Initialize(VisionState::headCamInfo_->focalLength_x);
           SimulatorParameters::Initialize();
           MatlabVisualization::Initialize();
           //Offboard::Initialize();
