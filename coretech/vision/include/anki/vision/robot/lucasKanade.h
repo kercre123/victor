@@ -24,6 +24,13 @@ namespace Anki
     {
       const s32 NUM_PREVIOUS_QUADS_TO_COMPARE = 2;
 
+      // Updates the previous corners with the new transformation
+      // and returns the minimum distance any corner moved
+      f32 UpdatePreviousCorners(
+        const Transformations::PlanarTransformation_f32 &transformation,
+        FixedLengthList<Quadrilateral<f32> > &previousCorners,
+        MemoryStack scratch);
+
       class LucasKanadeTracker_Slow
       {
         // The generic LucasKanadeTracker class can track a template with the Lucas-Kanade method,

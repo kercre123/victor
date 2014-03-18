@@ -392,48 +392,12 @@ namespace Anki
           this->transformation.Update(b, initialImageScaleF32, scratch, Transformations::TRANSFORM_TRANSLATION);
 
           // Check if we're done with iterations
-          {
-            PUSH_MEMORY_STACK(scratch);
+          const f32 minChange = UpdatePreviousCorners(transformation, previousCorners, scratch);
 
-            const f32 baseImageHalfWidth = static_cast<f32>(BASE_IMAGE_WIDTH) / 2.0f;
-            const f32 baseImageHalfHeight = static_cast<f32>(BASE_IMAGE_HEIGHT) / 2.0f;
-
-            Quadrilateral<f32> in(
-              Point<f32>(-baseImageHalfWidth,-baseImageHalfHeight),
-              Point<f32>(baseImageHalfWidth,-baseImageHalfHeight),
-              Point<f32>(baseImageHalfWidth,baseImageHalfHeight),
-              Point<f32>(-baseImageHalfWidth,baseImageHalfHeight));
-
-            Quadrilateral<f32> newCorners = transformation.TransformQuadrilateral(in, scratch, scale);
-
-            //const f32 change = sqrtf(Matrix::Mean<f32,f32>(tmp1));
-            f32 minChange = 1e10f;
-            for(s32 iPrevious=0; iPrevious<NUM_PREVIOUS_QUADS_TO_COMPARE; iPrevious++) {
-              f32 change = 0.0f;
-              for(s32 i=0; i<4; i++) {
-                const f32 dx = previousCorners[iPrevious][i].x - newCorners[i].x;
-                const f32 dy = previousCorners[iPrevious][i].y - newCorners[i].y;
-                change += sqrtf(dx*dx + dy*dy);
-              }
-              change /= 4;
-
-              minChange = MIN(minChange, change);
-            }
-
-            //printf("newCorners");
-            //newCorners.Print();
-            //printf("change: %f\n", change);
-
-            if(minChange < convergenceTolerance) {
-              converged = true;
-              return RESULT_OK;
-            }
-
-            for(s32 iPrevious=0; iPrevious<(NUM_PREVIOUS_QUADS_TO_COMPARE-1); iPrevious++) {
-              previousCorners[iPrevious] = previousCorners[iPrevious+1];
-            }
-            previousCorners[NUM_PREVIOUS_QUADS_TO_COMPARE-1] = newCorners;
-          } // PUSH_MEMORY_STACK(scratch);
+          if(minChange < convergenceTolerance) {
+            converged = true;
+            return RESULT_OK;
+          }
         } // for(s32 iteration=0; iteration<maxIterations; iteration++)
 
         return RESULT_OK;
@@ -650,48 +614,12 @@ namespace Anki
           //this->transformation.get_homography().Print("new transformation");
 
           // Check if we're done with iterations
-          {
-            PUSH_MEMORY_STACK(scratch);
+          const f32 minChange = UpdatePreviousCorners(transformation, previousCorners, scratch);
 
-            const f32 baseImageHalfWidth = static_cast<f32>(BASE_IMAGE_WIDTH) / 2.0f;
-            const f32 baseImageHalfHeight = static_cast<f32>(BASE_IMAGE_HEIGHT) / 2.0f;
-
-            Quadrilateral<f32> in(
-              Point<f32>(-baseImageHalfWidth,-baseImageHalfHeight),
-              Point<f32>(baseImageHalfWidth,-baseImageHalfHeight),
-              Point<f32>(baseImageHalfWidth,baseImageHalfHeight),
-              Point<f32>(-baseImageHalfWidth,baseImageHalfHeight));
-
-            Quadrilateral<f32> newCorners = transformation.TransformQuadrilateral(in, scratch, scale);
-
-            //const f32 change = sqrtf(Matrix::Mean<f32,f32>(tmp1));
-            f32 minChange = 1e10f;
-            for(s32 iPrevious=0; iPrevious<NUM_PREVIOUS_QUADS_TO_COMPARE; iPrevious++) {
-              f32 change = 0.0f;
-              for(s32 i=0; i<4; i++) {
-                const f32 dx = previousCorners[iPrevious][i].x - newCorners[i].x;
-                const f32 dy = previousCorners[iPrevious][i].y - newCorners[i].y;
-                change += sqrtf(dx*dx + dy*dy);
-              }
-              change /= 4;
-
-              minChange = MIN(minChange, change);
-            }
-
-            //printf("newCorners");
-            //newCorners.Print();
-            //printf("change: %f\n", change);
-
-            if(minChange < convergenceTolerance*scale) {
-              converged = true;
-              return RESULT_OK;
-            }
-
-            for(s32 iPrevious=0; iPrevious<(NUM_PREVIOUS_QUADS_TO_COMPARE-1); iPrevious++) {
-              previousCorners[iPrevious] = previousCorners[iPrevious+1];
-            }
-            previousCorners[NUM_PREVIOUS_QUADS_TO_COMPARE-1] = newCorners;
-          } // PUSH_MEMORY_STACK(scratch);
+          if(minChange < convergenceTolerance) {
+            converged = true;
+            return RESULT_OK;
+          }
         } // for(s32 iteration=0; iteration<maxIterations; iteration++)
 
         return RESULT_OK;
