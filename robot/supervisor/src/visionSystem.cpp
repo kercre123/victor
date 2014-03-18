@@ -892,12 +892,12 @@ static ReturnCode InitTemplate(
   //const u32 downsampleFactor = parameters.detectionWidth / parameters.trackingImageWidth;
   //const u32 downsamplePower = Log2u32(downsampleFactor);
 
-  Quadrilateral<f32> trackingQuadSmall;
+  /*Quadrilateral<f32> trackingQuadSmall;
 
   for(s32 i=0; i<4; ++i) {
     trackingQuadSmall[i].x = trackingQuad[i].x / downsampleFactor;
     trackingQuadSmall[i].y = trackingQuad[i].y / downsampleFactor;
-  }
+  }*/
   
   const Array<u8> *displayImage = &grayscaleImageSmall;
   
@@ -910,7 +910,7 @@ static ReturnCode InitTemplate(
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SLOW
   tracker = TemplateTracker::LucasKanadeTracker_Slow(
     grayscaleImageSmall,
-    trackingQuadSmall,
+    trackingQuad,
     parameters.numPyramidLevels,
     Transformations::TRANSFORM_TRANSLATION,
     0.0,
@@ -918,14 +918,14 @@ static ReturnCode InitTemplate(
 #elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_AFFINE
   tracker = TemplateTracker::LucasKanadeTracker_Affine(
     grayscaleImageSmall,
-    trackingQuadSmall,
+    trackingQuad,
     parameters.numPyramidLevels,
     Transformations::TRANSFORM_AFFINE,
     onchipScratch);
 #elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE
   tracker = TemplateTracker::LucasKanadeTracker_Projective(
     grayscaleImageSmall,
-    trackingQuadSmall,
+    trackingQuad,
     parameters.numPyramidLevels,
     Transformations::TRANSFORM_PROJECTIVE,
     onchipScratch);
