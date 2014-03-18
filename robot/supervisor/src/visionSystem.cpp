@@ -526,6 +526,10 @@ namespace MatlabVisualization
 
   static ReturnCode SendDrawNow() { return EXIT_SUCCESS; }
 
+  static ReturnCode SendTrackInit(const Array<u8> &image,
+                                  const Tracker& tracker,
+                                  MemoryStack scratch) { return EXIT_SUCCESS; }
+  
   static ReturnCode SendTrack(const Array<u8>& image,
                               const Tracker& tracker,
                               const bool converged,
@@ -592,6 +596,24 @@ namespace MatlabVisualization
     return EXIT_SUCCESS;
   }
 
+  static ReturnCode SendTrackInit(const Array<u8> &image,
+                                  const Tracker& tracker,
+                                  MemoryStack scratch)
+  {
+    matlabViz_.PutArray(image, "trackingImage");
+    matlabViz_.PutQuad(tracker.get_transformation().get_transformedCorners(scratch), "templateQuad");
+  
+    matlabViz_.EvalStringEcho("h_template = axes('Pos', [0 0 .33 .33], 'Tag', 'TemplateAxes'); "
+                              "imagesc(trackingImage, 'Parent', h_template); hold on; "
+                              "plot(templateQuad([1 2 4 3 1],1), "
+                              "     templateQuad([1 2 4 3 1],2), 'r', "
+                              "     'LineWidth', 2, "
+                              "     'Parent', h_template); "
+                              "set(h_template, 'XLim', [0.9*min(templateQuad(:,1)) 1.1*max(templateQuad(:,1))], "
+                              "                'YLim', [0.9*min(templateQuad(:,2)) 1.1*max(templateQuad(:,2))]);");
+    return EXIT_SUCCESS;
+  }
+  
   static ReturnCode SendTrack(const Array<u8>& image,
                               const Tracker& tracker,
                               const bool converged,
@@ -616,7 +638,8 @@ namespace MatlabVisualization
     else
     {
       matlabViz_.EvalStringEcho("set(h_trackedQuad, 'Visible', 'off'); "
-        "title(h_axes, 'Tracking Failed');");
+                                "title(h_axes, 'Tracking Failed'); "
+                                "delete(h_template);");
     }
 
     matlabViz_.EvalString("drawnow");
@@ -875,6 +898,13 @@ static ReturnCode InitTemplate(
     trackingQuadSmall[i].x = trackingQuad[i].x / downsampleFactor;
     trackingQuadSmall[i].y = trackingQuad[i].y / downsampleFactor;
   }
+  
+  const Array<u8> *displayImage = &grayscaleImageSmall;
+  
+#else
+  
+  const Array<u8> *displayImage = &grayscaleImage;
+  
 #endif // #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SLOW || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_AFFINE || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE
 
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SLOW
@@ -913,6 +943,8 @@ static ReturnCode InitTemplate(
   if(!tracker.IsValid()) {
     return EXIT_FAILURE;
   }
+  
+  MatlabVisualization::SendTrackInit(*displayImage, tracker, onchipScratch);
 
   return EXIT_SUCCESS;
 } // InitTemplate()
