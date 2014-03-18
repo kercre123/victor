@@ -54,7 +54,7 @@ static bool isInitialized_ = false;
 #define DOCKING_LUCAS_KANADE_AFFINE     2 //< LucasKanadeTracker_Affine (With Translation + Affine option)
 #define DOCKING_LUCAS_KANADE_PROJECTIVE 3 //< LucasKanadeTracker_Projective (With Projective + Affine option)
 #define DOCKING_BINARY_TRACKER          4 //< BinaryTracker
-#define DOCKING_ALGORITHM DOCKING_LUCAS_KANADE_PROJECTIVE
+#define DOCKING_ALGORITHM DOCKING_LUCAS_KANADE_AFFINE
 
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SLOW
 typedef TemplateTracker::LucasKanadeTracker_Slow Tracker;
