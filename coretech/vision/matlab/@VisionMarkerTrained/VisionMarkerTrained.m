@@ -4,7 +4,10 @@ classdef VisionMarkerTrained
         
         %TrainingImageDir = '~/Box Sync/Cozmo SE/VisionMarkers/lettersWithFiducials/rotated';
         %TrainingImageDir = '~/Box Sync/Cozmo SE/VisionMarkers/symbolsWithFiducials/rotated';
-        TrainingImageDir = '~/Box Sync/Cozmo SE/VisionMarkers/symbolsAndLetters';
+        
+        TrainingImageDir = { ...
+            '~/Box Sync/Cozmo SE/VisionMarkers/lettersWithFiducials/unpadded/rotated', ... '~/Box Sync/Cozmo SE/VisionMarkers/matWithFiducials/unpadded/rotated', ...
+            '~/Box Sync/Cozmo SE/VisionMarkers/symbolsWithFiducials/unpadded/rotated'};
         
         ProbeParameters = struct( ...
             'Radius', 0.02, ...  % As a fraction of a canonical unit square 
@@ -31,7 +34,7 @@ classdef VisionMarkerTrained
     
     methods(Static = true)
         
-        img = AddFiducial(img, varargin);
+        [img, alpha] = AddFiducial(img, varargin);
         AddFiducialBatch(inputDir, outputDir, varargin);
         probeTree = TrainProbeTree(varargin);
         [squareWidth_pix, padding_pix] = GetFiducialPixelSize(imageSize, imageSizeType);

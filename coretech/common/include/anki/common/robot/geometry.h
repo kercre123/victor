@@ -293,17 +293,15 @@ namespace Anki
       Quadrilateral<Type> sortedQuad = this->ComputeClockwiseCorners();
 
       for(s32 iCorner=0; iCorner<4; iCorner++) {
-        const Point<Type> &corner1 = corners[iCorner];
-        const Point<Type> &corner2 = corners[(iCorner+1) % 4];
-        const Point<Type> &corner3 = corners[(iCorner+2) % 4];
+        const Point<Type> &corner1 = sortedQuad[iCorner];
+        const Point<Type> &corner2 = sortedQuad[(iCorner+1) % 4];
+        const Point<Type> &corner3 = sortedQuad[(iCorner+2) % 4];
 
         const Type orientation =
           ((corner2.y - corner1.y) * (corner3.x - corner2.x)) -
           ((corner2.x - corner1.x) * (corner3.y - corner2.y));
 
-        // TODO: finish
-
-        if(orientation > 0) {
+        if((orientation - static_cast<Type>(0.001)) > 0) {
           return false;
         }
       }

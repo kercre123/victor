@@ -68,19 +68,29 @@ namespace Anki {
       ///////// Messaging ////////
       
       // Clears the path that the robot is executing which also stops the robot
-      ReturnCode SendClearPath();
+      ReturnCode SendClearPath() const;
       
       // Sends a path to the robot to be immediately executed
-      ReturnCode SendExecutePath(const Planning::Path& path);
+      ReturnCode SendExecutePath(const Planning::Path& path) const;
       
       // Sends a message to the robot to dock to the specified block
-      ReturnCode SendDockWithBlock(const u8 markerType, const f32 markerWidth_mm, const DockAction_t dockAction);
+      ReturnCode SendDockWithBlock(const u8 markerType,
+                                   const f32 markerWidth_mm,
+                                   const DockAction_t dockAction) const;
 
-      ReturnCode SendMoveLift(const f32 height_mm, const f32 max_speed_rad_per_sec, const f32 accel_rad_per_sec2);
+      ReturnCode SendMoveLift(const f32 height_mm,
+                              const f32 max_speed_rad_per_sec,
+                              const f32 accel_rad_per_sec2) const;
       
-      ReturnCode SendMoveHead(const f32 angle_rad, const f32 max_speed_rad_per_sec, const f32 accel_rad_per_sec2);
+      ReturnCode SendMoveHead(const f32 angle_rad,
+                              const f32 max_speed_rad_per_sec,
+                              const f32 accel_rad_per_sec2) const;
       
-      ReturnCode SendDriveWheels(const f32 lwheel_speed_mmps, const f32 rwheel_speed_mmps);
+      ReturnCode SendDriveWheels(const f32 lwheel_speed_mmps,
+                                 const f32 rwheel_speed_mmps) const;
+      
+      // Send's robot's current pose
+      ReturnCode SendAbsLocalizationUpdate() const;
       
     protected:
       // The robot's identifier
@@ -143,7 +153,7 @@ namespace Anki {
     { return not this->messagesOut.empty(); }
     
     inline const Radians Robot::get_headAngle() const
-    { return this->camHead.get_pose().get_rotationAngle(); }
+    { return this->currentHeadAngle; }
     
     //
     // RobotManager class for keeping up with available robots, by their ID

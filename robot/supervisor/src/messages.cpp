@@ -179,8 +179,10 @@ namespace Anki {
       {
         // TODO: Double-check that size matches expected size?
         
-        f32 currentMatX       = msg.xPosition * .001f; // store in meters
-        f32 currentMatY       = msg.yPosition * .001f; //     "
+        // TODO: take advantage of timestamp
+        
+        f32 currentMatX       = msg.xPosition;
+        f32 currentMatY       = msg.yPosition;
         Radians currentMatHeading = msg.headingAngle;
         Localization::SetCurrentMatPose(currentMatX, currentMatY, currentMatHeading);
         
@@ -202,7 +204,9 @@ namespace Anki {
       
       void ProcessVisionMarkerMessage(const VisionMarker& msg)
       {
+#if defined(SIMULATOR)
         PRINT("Processing VisionMarker message\n");
+#endif
         
         visionMarkerMailbox_.putMessage(msg);
       }
@@ -333,6 +337,8 @@ namespace Anki {
       void SendRobotStateMsg()
       {
         Messages::RobotState m;
+        m.timestamp = HAL::GetTimeStamp();
+        
         Radians poseAngle;
         
         Localization::GetCurrentMatPose(m.pose_x, m.pose_y, poseAngle);
@@ -341,7 +347,7 @@ namespace Anki {
         
         WheelController::GetFilteredWheelSpeeds(m.lwheel_speed_mmps, m.rwheel_speed_mmps);
 
-        m.headAngle = HeadController::GetAngleRad();
+        m.headAngle  = HeadController::GetAngleRad();
         m.liftHeight = LiftController::GetHeightMM();
 
         

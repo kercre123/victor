@@ -391,6 +391,13 @@ void draw_robot()
 
 
 
+void draw_predockpose()
+{
+  // Another tetrahedron-y shape like draw_robot that shows where the robot
+  // _would_ be if it were positioned at this pre-dock pose
+  
+  draw_robot();
+}
 
 void webots_physics_draw(int pass, const char *view) {
  
@@ -462,6 +469,9 @@ void webots_physics_draw(int pass, const char *view) {
           break;
         case Anki::Cozmo::VIZ_RAMP:
           draw_ramp();
+          break;
+        case Anki::Cozmo::VIZ_PREDOCKPOSE:
+          draw_predockpose();
           break;
         default:
           PRINT("Unknown objectTypeID %d\n", obj->objectTypeID);

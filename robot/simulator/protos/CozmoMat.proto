@@ -1,7 +1,7 @@
 #VRML_SIM V7.3.0 utf8
 
 PROTO CozmoMat [
-  field SFColor Color 1.0000 1.0000 0.7000
+  field SFColor Color 1.0000 1.0000 1.0000
 ]
 {
 Solid {

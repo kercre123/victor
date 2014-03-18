@@ -29,6 +29,7 @@ namespace Anki {
     
       // Define colors
       DefineColor(VIZ_COLOR_EXECUTED_PATH, 1.0, 0.0, 0.0, 1.0);
+      DefineColor(VIZ_COLOR_PREDOCKPOSE,   1.0, 0.0, 0.0, 0.75);
       
       return isInitialized_ ? EXIT_SUCCESS : EXIT_FAILURE;
     }
@@ -68,7 +69,19 @@ namespace Anki {
                  colorID);
     }
     
-    
+    void VizManager::DrawPreDockPose(const u32 preDockPoseID,
+                                     const Pose3d &pose,
+                                     const u32 colorID)
+    {
+      //CORETECH_ASSERT(preDockPoseID < ([[NEXT_OBJECT_ID_BASE]] - PREDOCKPOSE_ID_BASE));
+      
+      Anki::Point3f dims; // junk
+      DrawObject(PREDOCKPOSE_ID_BASE + preDockPoseID,
+                 VIZ_PREDOCKPOSE,
+                 dims,
+                 pose,
+                 colorID);
+    }
     
     
     // ================== Object drawing methods ====================
@@ -129,7 +142,6 @@ namespace Anki {
       memcpy(sendBuf + 1, &v, sizeof(v));
       vizClient_.Send(sendBuf, sizeof(v)+1);
     }
-    
     
     // ================== Path drawing methods ====================
     
