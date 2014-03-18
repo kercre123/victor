@@ -37,7 +37,7 @@ using namespace std;
 static const s32 scratchSize = 1000000;
 static u8 scratchBuffer[scratchSize];
 
-void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireFillPatternMatch, const bool requireCRCmatch)
+void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchingSegmentLengths)
 {
   MemoryStack scratch(scratchBuffer, scratchSize, Flags::Buffer(false, true, false));
 
@@ -48,23 +48,32 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireFillPa
   bool isTracking = false;
   Transformations::PlanarTransformation_f32 lastPlanarTransformation(Transformations::TRANSFORM_PROJECTIVE, scratch);
 
+  f32 benchmarkTimes[2] = {-1.0f, -1.0f};
+
   std::vector<VisionMarker> visionMarkerList;
 
   SerializedBuffer serializedBuffer(buffer.data, buffer.curDataLength, Anki::Embedded::Flags::Buffer(false, true, true));
 
-  SerializedBufferIterator iterator(serializedBuffer);
+  SerializedBufferRawIterator iterator(serializedBuffer);
+
+  bool aMessageAlreadyPrinted = false;
 
   while(iterator.HasNext()) {
     s32 dataLength;
     SerializedBuffer::DataType type;
-    u8 * const dataSegmentStart = reinterpret_cast<u8*>(iterator.GetNext(dataLength, type, requireFillPatternMatch, requireCRCmatch));
+    bool isReportedSegmentLengthCorrect;
+    u8 * const dataSegmentStart = reinterpret_cast<u8*>(iterator.GetNext(dataLength, type, isReportedSegmentLengthCorrect));
     u8 * dataSegment = dataSegmentStart;
 
     if(!dataSegment) {
       break;
     }
 
-    printf("Next segment is (%d,%d): ", dataLength, type);
+    if(requireMatchingSegmentLengths && !isReportedSegmentLengthCorrect) {
+      continue;
+    }
+
+    //printf("Next segment is (%d,%d): ", dataLength, type);
     if(type == SerializedBuffer::DATA_TYPE_RAW) {
       printf("Raw segment: ");
       for(s32 i=0; i<dataLength; i++) {
@@ -85,9 +94,19 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireFillPa
       s32 numElements;
       SerializedBuffer::DecodeBasicTypeBuffer(code, size, isInteger, isSigned, isFloat, numElements);
 
-      printf("Basic type buffer segment (%d, %d, %d, %d, %d): ", size, isInteger, isSigned, isFloat, numElements);
-      for(s32 i=0; i<remainingDataLength; i++) {
-        printf("%x ", dataSegment[i]);
+      // Hack to detect a benchmarking pair
+      if(isFloat && size==4 && numElements==2) {
+        const f32 *times = reinterpret_cast<const f32*>(dataSegment);
+        for(s32 i=0; i<2; i++) {
+          benchmarkTimes[i] = times[i];
+        }
+
+        //printf("Times: %f %f\n", times[0], times[1]);
+      } else {
+        printf("Basic type buffer segment (%d, %d, %d, %d, %d): ", size, isInteger, isSigned, isFloat, numElements);
+        for(s32 i=0; i<remainingDataLength; i++) {
+          printf("%x ", dataSegment[i]);
+        }
       }
     } else if(type == SerializedBuffer::DATA_TYPE_ARRAY) {
       SerializedBuffer::EncodedArray code;
@@ -107,7 +126,6 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireFillPa
       bool basicType_isFloat;
       SerializedBuffer::DecodeArrayType(code, height, width, stride, flags, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat);
 
-      printf("Array: (%d, %d, %d, %d, %d, %d, %d, %d) ", height, width, stride, flags, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat);
       //template<typename Type> static Result DeserializeArray(const void * data, const s32 dataLength, Array<Type> &out, MemoryStack &memory);
       if(basicType_size==1 && basicType_isInteger==1 && basicType_isSigned==0 && basicType_isFloat==0) {
         Array<u8> arr;
@@ -120,6 +138,8 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireFillPa
         for(s32 i=0; i<numBytes; i++) {
           lastImage.data[i] = mat.data[i];
         }
+      } else {
+        printf("Array: (%d, %d, %d, %d, %d, %d, %d, %d) ", height, width, stride, flags, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat);
       }
     } else if(type == SerializedBuffer::DATA_TYPE_STRING) {
       printf("Board>> %s", dataSegment);
@@ -134,7 +154,18 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireFillPa
       if(strcmp(customTypeName, "VisionMarker") == 0) {
         VisionMarker marker;
         marker.Deserialize(dataSegment, remainingDataLength);
+
+        if(!aMessageAlreadyPrinted) {
+          time_t rawtime;
+          time (&rawtime);
+          string timeString = string(ctime(&rawtime));
+          timeString[timeString.length()-6] = '\0';
+          printf("%s>> ", timeString.data());
+          aMessageAlreadyPrinted = true;
+        }
+
         marker.Print();
+        printf("\n");
         visionMarkerList.push_back(marker);
         isTracking = false;
       } else if(strcmp(reinterpret_cast<const char*>(customTypeName), "PlanarTransformation_f32") == 0) {
@@ -144,14 +175,45 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireFillPa
       }
     }
 
-    printf("\n");
+    //printf("\n");
   } // while(iterator.HasNext())
+
+  if(aMessageAlreadyPrinted) {
+    printf("\n");
+  }
 
   if(lastImage.rows > 0) {
     cv::Mat largeLastImage(240, 320, CV_8U);
     cv::Mat toShowImage(240, 320, CV_8UC3);
 
     cv::resize(lastImage, largeLastImage, largeLastImage.size(), 0, 0, cv::INTER_NEAREST);
+
+    const s32 blinkerWidth = 7;
+
+    //Draw a blinky rectangle at the upper right
+    static s32 frameNumber = 0;
+    frameNumber++;
+
+    if(frameNumber%2 == 0) {
+      for(s32 y=0; y<blinkerWidth; y++) {
+        for(s32 x=320-blinkerWidth; x<320; x++) {
+          largeLastImage.at<u8>(y,x) = 0;
+        }
+      }
+
+      for(s32 y=1; y<blinkerWidth-1; y++) {
+        for(s32 x=321-blinkerWidth; x<319; x++) {
+          largeLastImage.at<u8>(y,x) = 255;
+        }
+      }
+      //largeLastImage.at<u8>(blinkerHalfWidth,320-blinkerHalfWidth) = 255;
+    } else {
+      for(s32 y=0; y<blinkerWidth; y++) {
+        for(s32 x=320-blinkerWidth; x<320; x++) {
+          largeLastImage.at<u8>(y,x) = 0;
+        }
+      }
+    }
 
     // Grayscale to RGB
     vector<cv::Mat> channels;
@@ -164,6 +226,14 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireFillPa
     //Quadrilateral<s16> corners; // SQ 15.0 (Though may be changed later)
     //Vision::MarkerType markerType;
     //bool isValid;
+
+    // Print FPS
+    if(benchmarkTimes[0] > 0.0f) {
+      char benchmarkBuffer[1024];
+      snprintf(benchmarkBuffer, 1024, "Total:%dfps Algorithms:%dfps", RoundS32(1.0f/benchmarkTimes[1]), RoundS32(1.0f/benchmarkTimes[0]));
+
+      cv::putText(toShowImage, benchmarkBuffer, cv::Point(5,15), cv::FONT_HERSHEY_PLAIN, 1.0, cv::Scalar(0,255,0));
+    }
 
     if(isTracking) {
       const cv::Scalar textColor = cv::Scalar(0,255,0);

@@ -42,8 +42,13 @@ using namespace Anki::Cozmo;
 static bool isInitialized_ = false;
 
 // TODO: remove
-#define SEND_DEBUG_STREAM
+//#define SEND_DEBUG_STREAM
 //#define RUN_SIMPLE_TRACKING_TEST
+
+#if defined(SIMULATOR)
+#undef SEND_DEBUG_STREAM
+#undef RUN_SIMPLE_TRACKING_TEST
+#endif
 
 #define DOCKING_LUCAS_KANADE_SLOW       1 //< LucasKanadeTracker_Slow (doesn't seem to work?)
 #define DOCKING_LUCAS_KANADE_AFFINE     2 //< LucasKanadeTracker_Affine (With Translation + Affine option)
@@ -262,18 +267,15 @@ namespace TrackerParameters {
 
 namespace VisionMemory
 {
-  static const s32 IMAGE_BUFFER_SIZE = (320*240 + 256);
   static const s32 OFFCHIP_BUFFER_SIZE = 2000000;
   static const s32 ONCHIP_BUFFER_SIZE = 170000; // The max here is somewhere between 175000 and 180000 bytes
   static const s32 CCM_BUFFER_SIZE = 50000; // The max here is probably 65536 (0x10000) bytes
   static const s32 MAX_MARKERS = 100;
 
-  static OFFCHIP char imageBuffer[IMAGE_BUFFER_SIZE];
   static OFFCHIP char offchipBuffer[OFFCHIP_BUFFER_SIZE];
   static ONCHIP char onchipBuffer[ONCHIP_BUFFER_SIZE];
   static CCM char ccmBuffer[CCM_BUFFER_SIZE];
 
-  static MemoryStack imageScratch_;
   static MemoryStack offchipScratch_;
   static MemoryStack onchipScratch_;
   static MemoryStack ccmScratch_;
@@ -281,12 +283,9 @@ namespace VisionMemory
   // Markers is the one things that can move between functions, so it is always allocated in memory
   static FixedLengthList<VisionMarker> markers_;
 
-  static Array<u8> grayscaleImage_;
-  
   // WARNING: ResetBuffers should be used with caution
   static ReturnCode ResetBuffers()
   {
-    imageScratch_ = MemoryStack(imageBuffer, IMAGE_BUFFER_SIZE);
     offchipScratch_ = MemoryStack(offchipBuffer, OFFCHIP_BUFFER_SIZE);
     onchipScratch_ = MemoryStack(onchipBuffer, ONCHIP_BUFFER_SIZE);
     ccmScratch_ = MemoryStack(ccmBuffer, CCM_BUFFER_SIZE);
@@ -297,7 +296,6 @@ namespace VisionMemory
     }
 
     markers_ = FixedLengthList<VisionMarker>(VisionMemory::MAX_MARKERS, offchipScratch_);
-    grayscaleImage_ = Array<u8>(240, 320, imageScratch_, Flags::Buffer(false, false, false));
 
     return EXIT_SUCCESS;
   }
@@ -329,8 +327,22 @@ namespace DebugStream
   //static ReturnCode SendPrintf(const char * string) { return EXIT_SUCCESS; }
   static ReturnCode SendArray(const Array<u8> &array) { return EXIT_SUCCESS; }
 #else
-  static ReturnCode SendBuffer(const SerializedBuffer &toSend)
+  static f32 lastBenchmarkTime_algorithmsOnly;
+  static f32 lastBenchmarkDuration_algorithmsOnly;
+
+  static f32 lastBenchmarkTime_total;
+  static f32 lastBenchmarkDuration_total;
+
+  static ReturnCode SendBuffer(SerializedBuffer &toSend)
   {
+    const f32 curTime = GetTime();
+    lastBenchmarkDuration_total = curTime - lastBenchmarkTime_total;
+    lastBenchmarkTime_total = curTime;
+
+    const f32 benchmarkTimes[2] = {lastBenchmarkDuration_algorithmsOnly, lastBenchmarkDuration_total};
+
+    toSend.PushBack<f32>(&benchmarkTimes[0], 2*sizeof(f32));
+
     s32 startIndex;
     const u8 * bufferStart = reinterpret_cast<const u8*>(toSend.get_memoryStack().get_validBufferStart(startIndex));
     const s32 validUsedBytes = toSend.get_memoryStack().get_usedBytes() - startIndex;
@@ -357,7 +369,9 @@ namespace DebugStream
     Anki::Cozmo::HAL::UARTPutChar('\0');
     }*/
 
-    HAL::MicroWait(50000);
+    //HAL::MicroWait(50000);
+
+    lastBenchmarkTime_algorithmsOnly = GetTime();
 
     return EXIT_SUCCESS;
   }
@@ -373,6 +387,11 @@ namespace DebugStream
 
   static ReturnCode SendFiducialDetection(const Array<u8> &image, const FixedLengthList<VisionMarker> &markers, MemoryStack ccmScratch, MemoryStack offchipScratch)
   {
+    const f32 curTime = GetTime();
+
+    // lastBenchmarkTime_algorithmsOnly is set again when the transmission is complete
+    lastBenchmarkDuration_algorithmsOnly = curTime - lastBenchmarkTime_algorithmsOnly;
+
     debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
 
     if(markers.get_size() != 0) {
@@ -397,6 +416,11 @@ namespace DebugStream
 
   static ReturnCode SendTrackingUpdate(const Array<u8> &image, const Transformations::PlanarTransformation_f32 &transformation, MemoryStack ccmScratch, MemoryStack offchipScratch)
   {
+    const f32 curTime = GetTime();
+
+    // lastBenchmarkTime_algorithmsOnly is set again when the transmission is complete
+    lastBenchmarkDuration_algorithmsOnly = curTime - lastBenchmarkTime_algorithmsOnly;
+
     debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
 
     // TODO: get the true length
@@ -419,14 +443,12 @@ namespace DebugStream
     return SendBuffer(debugStreamBuffer_);
   } // static ReturnCode SendTrackingUpdate()
 
-  static ReturnCode SendArray(const Array<u8> &array)
-  {
-    debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
-
-    debugStreamBuffer_.PushBack(array);
-
-    return SendBuffer(debugStreamBuffer_);
-  }
+  //  static ReturnCode SendArray(const Array<u8> &array)
+  //  {
+  //    debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
+  //    debugStreamBuffer_.PushBack(array);
+  //    return SendBuffer(debugStreamBuffer_);
+  //  }
 #endif // #ifdef SEND_DEBUG_STREAM
 
   static ReturnCode Initialize()
@@ -753,17 +775,7 @@ static ReturnCode LookForMarkers(
   MemoryStack onchipScratch,
   MemoryStack ccmScratch)
 {
-  // TODO: Call embedded vision block detector for each block that's found, create a
-  //       CozmoMsg_ObservedBlockMarkerMsg and process it.
-  
   const s32 maxMarkers = markers.get_maximumSize();
-
-  //Array<u8> grayscaleImage(parameters.detectionHeight, parameters.detectionWidth, offchipScratch);
-
-  //ImageProcessing::YUVToGrayscale(yuvImage, grayscaleImage);
-
-  // TODO: remove
-  //DebugStream::SendArray(grayscaleImage);
 
   FixedLengthList<Array<f32> > homographies(maxMarkers, ccmScratch);
 
@@ -796,9 +808,8 @@ static ReturnCode LookForMarkers(
     offchipScratch, onchipScratch, ccmScratch);
 
   if(result == RESULT_OK) {
-#ifndef SIMULATOR
     DebugStream::SendFiducialDetection(grayscaleImage, markers, ccmScratch, offchipScratch);
-#endif
+
     for(s32 i_marker = 0; i_marker < markers.get_size(); ++i_marker) {
       const VisionMarker crntMarker = markers[i_marker];
 
@@ -820,7 +831,6 @@ static ReturnCode InitTemplate(
   MemoryStack &onchipScratch, //< NOTE: onchip is a reference
   MemoryStack ccmScratch)
 {
-  
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SLOW || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_AFFINE || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE
   // TODO: At some point template initialization should happen at full detection resolution but for
   //       now, we have to downsample to tracking resolution
@@ -1125,8 +1135,6 @@ namespace Anki {
           return EXIT_SUCCESS;
         }
 #endif
-        
-        HAL::CameraGetFrame(reinterpret_cast<u8*>(VisionMemory::grayscaleImage_.get_rawDataPointer()), HAL::CAMERA_MODE_QVGA, 1.0f, false);
 
         //#if USE_OFFBOARD_VISION
         //        return Update_Offboard();
@@ -1134,6 +1142,8 @@ namespace Anki {
 
         const TimeStamp_t imageTimeStamp = HAL::GetTimeStamp();
 
+        const f32 exposure = 0.1f;
+        
         if(VisionState::mode_ == VISION_MODE_IDLE) {
           // Nothing to do!
         } else if(VisionState::mode_ == VISION_MODE_LOOKING_FOR_MARKERS) {
@@ -1143,11 +1153,17 @@ namespace Anki {
 
           VisionMemory::ResetBuffers();
 
+          MemoryStack offchipScratch_local(VisionMemory::offchipScratch_);
+
+          Array<u8> grayscaleImage(240, 320, offchipScratch_local, Flags::Buffer(false,false,false));
+
+          HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()), HAL::CAMERA_MODE_QVGA, exposure, false);
+
           const ReturnCode result = LookForMarkers(
-            VisionMemory::grayscaleImage_,
+            grayscaleImage,
             DetectFiducialMarkersParameters::parameters_,
             VisionMemory::markers_,
-            VisionMemory::offchipScratch_,
+            offchipScratch_local,
             VisionMemory::onchipScratch_,
             VisionMemory::ccmScratch_);
 
@@ -1203,11 +1219,11 @@ namespace Anki {
                 Point<f32>(crntMarker.corners[3].x, crntMarker.corners[3].y));
 
               const ReturnCode result = InitTemplate(
-                VisionMemory::grayscaleImage_,
+                grayscaleImage,
                 VisionState::trackingQuad_,
                 TrackerParameters::parameters_,
                 VisionState::tracker_,
-                VisionMemory::offchipScratch_,
+                offchipScratch_local,
                 VisionMemory::onchipScratch_, //< NOTE: onchip is a reference
                 VisionMemory::ccmScratch_);
 
@@ -1228,16 +1244,22 @@ namespace Anki {
           Messages::DockingErrorSignal dockErrMsg;
           dockErrMsg.timestamp = imageTimeStamp;
 
+          MemoryStack offchipScratch_local(VisionMemory::offchipScratch_);
+
+          Array<u8> grayscaleImage(240, 320, offchipScratch_local, Flags::Buffer(false,false,false));
+
+          HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()), HAL::CAMERA_MODE_QVGA, exposure, false);
+
           bool converged;
 
           const ReturnCode result = TrackTemplate(
-            VisionMemory::grayscaleImage_,
+            grayscaleImage,
             VisionState::trackingQuad_,
             TrackerParameters::parameters_,
             VisionState::tracker_,
             dockErrMsg,
             converged,
-            VisionMemory::offchipScratch_,
+            offchipScratch_local,
             VisionMemory::onchipScratch_,
             VisionMemory::ccmScratch_);
 

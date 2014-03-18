@@ -27,19 +27,22 @@ _Check_return_opt_ _CRTIMP int __cdecl printf(_In_z_ _Printf_format_string_ cons
 
 using namespace std;
 
-const double secondsToWaitBeforeDisplayingABuffer = 0.1;
-
-const s32 outputFilenamePatternLength = 1024;
-char outputFilenamePattern[outputFilenamePatternLength] = "C:/datasets/cozmoShort/cozmo_%04d-%02d-%02d_%02d-%02d-%02d_%d.%s";
-
 // Based off example at http://msdn.microsoft.com/en-us/library/windows/desktop/ms682516(v=vs.85).aspx
 DWORD WINAPI DisplayBuffersThread(LPVOID lpParam)
 {
   SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_BELOW_NORMAL);
 
-  //RawBuffer *buffer = (RawBuffer*)lpParam;
+  ThreadSafeQueue<DisplayRawBuffer> *messageQueue = (ThreadSafeQueue<DisplayRawBuffer>*)lpParam;
 
-  //ProcessRawBuffer(*buffer, string(outputFilenamePattern), true, BUFFER_ACTION_DISPLAY, false);
+  while(true) {
+    while(messageQueue->IsEmpty()) {
+      Sleep(1);
+    }
+
+    DisplayRawBuffer nextMessage = messageQueue->Pop();
+
+    ProcessRawBuffer_Display(nextMessage, false);
+  }
 
   return 0;
 } // DWORD WINAPI PrintfBuffers(LPVOID lpParam)
@@ -73,12 +76,14 @@ int main(int argc, char ** argv)
 {
   double lastUpdateTime;
   Serial serial;
-  const s32 USB_BUFFER_SIZE = 1024;
+  const s32 USB_BUFFER_SIZE = 5000;
   const s32 MESSAGE_BUFFER_SIZE = 1000000;
 
   u8 *usbBuffer = reinterpret_cast<u8*>(malloc(USB_BUFFER_SIZE));
 
   DisplayRawBuffer nextMessage = AllocateNewRawBuffer(MESSAGE_BUFFER_SIZE);
+
+  ThreadSafeQueue<DisplayRawBuffer> messageQueue = ThreadSafeQueue<DisplayRawBuffer>();
 
   s32 comPort = 11;
   s32 baudRate = 1000000;
@@ -86,10 +91,9 @@ int main(int argc, char ** argv)
   if(argc == 1) {
     // just use defaults, but print the help anyway
     printUsage();
-  } else if(argc == 4) {
+  } else if(argc == 3) {
     sscanf(argv[1], "%d", &comPort);
     sscanf(argv[2], "%d", &baudRate);
-    strcpy(outputFilenamePattern, argv[3]);
   } else {
     printUsage();
     return -1;
@@ -101,6 +105,15 @@ int main(int argc, char ** argv)
   lastUpdateTime = GetTime() + 10e10;
 
   SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST); // THREAD_PRIORITY_ABOVE_NORMAL
+
+  DWORD threadId = -1;
+  CreateThread(
+    NULL,        // default security attributes
+    0,           // use default stack size
+    DisplayBuffersThread, // thread function name
+    &messageQueue,    // argument to thread function
+    0,           // use default creation flags
+    &threadId);  // returns the thread identifier
 
   bool atLeastOneStartFound = false;
   s32 start_state = 0;
@@ -114,6 +127,11 @@ int main(int argc, char ** argv)
     DWORD bytesRead = 0;
     if(serial.Read(usbBuffer, USB_BUFFER_SIZE-2, bytesRead) != RESULT_OK)
       return -4;
+
+    if(bytesRead == 0) {
+      Sleep(1);
+      continue;
+    }
 
     // Find the next SERIALIZED_BUFFER_HEADER
     s32 start_searchIndex = 0;
@@ -137,7 +155,7 @@ int main(int argc, char ** argv)
       }
 
       start_searchIndex++;
-    } // while(start_searchIndex < USB_BUFFER_SIZE)
+    } // while(start_searchIndex < static_cast<s32>(bytesRead))
 
     // If we found a start header, handle it
     if(start_foundIndex != -1) {
@@ -157,7 +175,8 @@ int main(int argc, char ** argv)
 
         nextMessage.curDataLength += numBytesToCopy;
 
-        ProcessRawBuffer_Display(nextMessage, true, false);
+        //ProcessRawBuffer_Display(nextMessage, true, false);
+        messageQueue.Push(nextMessage);
 
         nextMessage = AllocateNewRawBuffer(MESSAGE_BUFFER_SIZE);
       } else {

@@ -60,6 +60,10 @@ namespace Anki
     // Converts from typeid names to openCV types
     int ConvertToOpenCvType(const char *typeName, size_t byteDepth);
 #endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
+
+    // Returns the index of the first instance of bytePattern in buffer. If the pattern is not found, returns -1
+    // Warning: bytePattern must not contain repeated bytes
+    s32 FindBytePattern(const void * restrict buffer, const s32 bufferLength, const u8 * restrict bytePattern, const s32 bytePatternLength);
   } // namespace Embedded
 } // namespace Anki
 

@@ -48,5 +48,46 @@ namespace Anki
       return -1;
     }
 #endif //#if ANKICORETECH_EMBEDDED_USE_OPENCV
+
+    s32 FindBytePattern(const void * restrict buffer, const s32 bufferLength, const u8 * restrict bytePattern, const s32 bytePatternLength)
+    {
+      s32 curIndex = 0;
+      s32 numBytesInPatternFound = 0;
+
+      // Check if the bytePattern is valid
+#if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS
+      for(s32 i=0; i<bytePatternLength; i++) {
+        for(s32 j=0; j<bytePatternLength; j++) {
+          if(i == j)
+            continue;
+
+          if(bytePattern[i] == bytePattern[j]) {
+            AnkiError("FindBytePattern", "bytePattern is not unique");
+            return -1;
+          }
+        }
+      }
+#endif
+
+      const u8 * restrict bufferU8 = reinterpret_cast<const u8*>(buffer);
+
+      while(curIndex < bufferLength) {
+        if(numBytesInPatternFound == bytePatternLength) {
+          return curIndex - bytePatternLength;
+        }
+
+        if(bufferU8[curIndex] == bytePattern[numBytesInPatternFound]) {
+          numBytesInPatternFound++;
+        } else if(bufferU8[curIndex] == bytePattern[0]) {
+          numBytesInPatternFound = 1;
+        } else {
+          numBytesInPatternFound = 0;
+        }
+
+        curIndex++;
+      } // while(curIndex < bufferLength)
+
+      return -1;
+    }
   } // namespace Embedded
 } // namespace Anki
