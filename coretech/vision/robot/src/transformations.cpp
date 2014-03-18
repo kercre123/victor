@@ -137,8 +137,8 @@ namespace Anki
             RESULT_FAIL_INVALID_SIZE, "PlanarTransformation_f32::Update", "update is the incorrect size");
 
           // this.tform(1:2,3) = this.tform(1:2,3) - update;
-          homography[0][2] -= pUpdate[0];
-          homography[1][2] -= pUpdate[1];
+          homography[0][2] -= scale*pUpdate[0];
+          homography[1][2] -= scale*pUpdate[1];
         } else { // if(updateType == TRANSFORM_TRANSLATION)
           Array<f32> updateArray(3,3,scratch);
 

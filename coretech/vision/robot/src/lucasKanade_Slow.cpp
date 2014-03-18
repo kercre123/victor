@@ -638,13 +638,21 @@ namespace Anki
           {
             PUSH_MEMORY_STACK(scratch);
 
+            //Quadrilateral<f32> in(
+            //  Point<f32>(0.0f,0.0f),
+            //  Point<f32>(static_cast<f32>(nextImage.get_size(1)),0.0f),
+            //  Point<f32>(static_cast<f32>(nextImage.get_size(0)),static_cast<f32>(nextImage.get_size(1))),
+            //  Point<f32>(0.0f,static_cast<f32>(nextImage.get_size(1))));
+
+            //Quadrilateral<f32> newCorners = transformation.TransformQuadrilateral(in, scratch, scale);
+
             Quadrilateral<f32> in(
               Point<f32>(0.0f,0.0f),
-              Point<f32>(static_cast<f32>(nextImage.get_size(1)),0.0f),
-              Point<f32>(static_cast<f32>(nextImage.get_size(0)),static_cast<f32>(nextImage.get_size(1))),
-              Point<f32>(0.0f,static_cast<f32>(nextImage.get_size(1))));
+              Point<f32>(static_cast<f32>(BASE_IMAGE_WIDTH),0.0f),
+              Point<f32>(static_cast<f32>(BASE_IMAGE_WIDTH),static_cast<f32>(BASE_IMAGE_HEIGHT)),
+              Point<f32>(0.0f,static_cast<f32>(BASE_IMAGE_HEIGHT)));
 
-            Quadrilateral<f32> newCorners = transformation.TransformQuadrilateral(in, scratch, scale);
+            Quadrilateral<f32> newCorners = transformation.TransformQuadrilateral(in, scratch, 1.0f);
 
             //const f32 change = sqrtf(Matrix::Mean<f32,f32>(tmp1));
             f32 minChange = 1e10f;
@@ -664,7 +672,8 @@ namespace Anki
             //newCorners.Print();
             //printf("change: %f\n", change);
 
-            if(minChange < convergenceTolerance*scale) {
+            // TODO: remove *8
+            if(minChange < convergenceTolerance*8) {
               converged = true;
               return RESULT_OK;
             }

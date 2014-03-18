@@ -908,8 +908,8 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
 
     // This ground truth is from the PC c++ version
     Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
-    transform_groundTruth[0][2] = -0.334f;
-    transform_groundTruth[1][2] = -0.240f;
+    transform_groundTruth[0][2] = -1.327f;
+    transform_groundTruth[1][2] = -0.954f;
 
     ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
   }
