@@ -59,7 +59,7 @@ namespace Anki
         0x66, 0x00,  // DSP_Ctrl3
         //0x67, 0x4a,  // DSP_Ctrl4 - Output Selection = RAW8
         0x13, 0xf0,  // COM8 - gain control stuff... | AGC enable
-        0x0d, 0x72,  // PLL = 8x | AEC evaluate 1/4 window
+        0x0d, 0xf2,  // PLL = 8x | AEC evaluate 1/4 window
         0x0f, 0xc5,  // Reserved | auto window setting ON/OFF selection when format changes
         0x14, 0x11,  // COM9 - Automatic Gain Ceiling | Reserved
         0x22, 0xff,  // ff/7f/3f/1f for 60/30/15/7.5fps  -- banding filter
