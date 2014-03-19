@@ -225,11 +225,11 @@ namespace Anki {
         // Text is ready to print
         if (textIdx == 0) {
           // This message is not a part of a longer message. Just print!
-          printf("ROBOT-PRINT: %s", newText);
+          printf("ROBOT-PRINT (%d): %s", robot->get_ID(), newText);
         } else {
           // This message is part of a longer message. Copy to local buffer and print.
           memcpy(text + textIdx, newText, strlen(newText)+1);
-          printf("ROBOT-PRINT: %s", text);
+          printf("ROBOT-PRINT (%d): %s", robot->get_ID(), text);
           textIdx = 0;
         }
       } else {
@@ -259,6 +259,7 @@ namespace Anki {
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageAppendPathSegmentLine const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageBlockMarkerObserved const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageMatCameraCalibration const&){return EXIT_FAILURE;}
+    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageRequestCamCalib const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageAbsLocalizationUpdate const&){return EXIT_FAILURE;}
     
   } // namespace Cozmo

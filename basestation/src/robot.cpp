@@ -334,6 +334,12 @@ namespace Anki {
     
     // ============ Messaging ================
     
+    ReturnCode Robot::SendRequestCamCalib() const
+    {
+      MessageRequestCamCalib m;
+      return msgHandler_->SendMessage(ID_, m);
+    }
+    
     // Clears the path that the robot is executing which also stops the robot
     ReturnCode Robot::SendClearPath() const
     {
