@@ -158,6 +158,9 @@ namespace Anki {
     #define BLOCKMARKER3D_USE_OUTSIDE_SQUARE true
     const f32 BLOCK_MARKER_WIDTH_MM = 32.f;
     */
+    
+    const f32 DEFAULT_BLOCK_MARKER_WIDTH_MM = 26.f;
+    
   } // namespace Cozmo
 } // namespace Anki
 

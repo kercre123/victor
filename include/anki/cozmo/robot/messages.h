@@ -47,6 +47,9 @@ namespace Anki {
       // Return the size of a message, given its ID
       u8 GetSize(const ID msgID);
       
+      // Return a const reference to the current robot state message
+      RobotState const& GetRobotStateMsg();
+      
       // Create all the dispatch function prototypes (all implemented
       // manually in messages.cpp).  
 #define MESSAGE_DEFINITION_MODE MESSAGE_DISPATCH_DEFINITION_MODE
@@ -64,7 +67,7 @@ namespace Anki {
       bool StillLookingForID(void);
       
       // Send messages
-      void SendRobotStateMsg();
+      ReturnCode SendRobotStateMsg(); // populates and sends state message
       void SendText(const char *format, ...);
       
       

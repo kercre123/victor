@@ -40,12 +40,12 @@ namespace Anki {
         
         // TESTING
         // Change this value to run different test modes
-        const TestModeController::TestMode DEFAULT_TEST_MODE = TestModeController::TM_NONE;
+        const TestModeController::TestMode DEFAULT_TEST_MODE = TestModeController::TM_PICK_AND_PLACE;
 
         Robot::OperationMode mode_ = INIT_MOTOR_CALIBRATION;
         bool wasConnected_ = false;
+
       } // Robot private namespace
-      
       
       //
       // Accessors:
@@ -341,7 +341,10 @@ namespace Anki {
       {
         ReturnCode retVal = EXIT_SUCCESS;
         
-        retVal = VisionSystem::Update();
+        // IMPORTANT: The static robot state message is being passed in here
+        //   *by value*, NOT by reference.  This is because step_LongExecution()
+        //   can be interuppted by step_MainExecution().
+        retVal = VisionSystem::Update(Messages::GetRobotStateMsg());
         
         HAL::USBSendPrintBuffer();
         

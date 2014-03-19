@@ -26,14 +26,36 @@ namespace Anki
       /////////////////////////////////////////////////////////////////////
       // UART
       //
-      const u32 WRITE_BUFFER_SIZE = 1024;
+      const u32 WRITE_BUFFER_SIZE = 1024 * 1024 * 1;
       const u32 READ_BUFFER_SIZE = 1024;
       
-      ONCHIP u8 m_bufferWrite[WRITE_BUFFER_SIZE];
-      ONCHIP u8 m_bufferRead[READ_BUFFER_SIZE];
+      OFFCHIP u8 m_bufferWrite[WRITE_BUFFER_SIZE];
+      OFFCHIP u8 m_bufferRead[READ_BUFFER_SIZE];
       
-      u32 m_DMAWriteIndex = 0;
+      volatile s32 m_DMAWriteTail = 0;
+      volatile s32 m_DMAWriteHead = 0;
       u32 m_DMAReadIndex = 0;
+      
+      volatile bool m_isDMARunning = false;
+      
+      static void FlushDMA()
+      {
+        int length = m_DMAWriteHead - m_DMAWriteTail;
+        if (length < 0)
+          length = sizeof(m_bufferWrite) - m_DMAWriteTail;
+        if (length > 65535)
+          length = 65535;
+        
+        DMA_STREAM_TX->NDTR = length;                               // Buffer size
+        DMA_STREAM_TX->M0AR = (u32)&m_bufferWrite[m_DMAWriteTail];  // Buffer address
+        
+        m_DMAWriteTail += length;
+        if (m_DMAWriteTail >= sizeof(m_bufferWrite))
+          m_DMAWriteTail = 0;
+        
+        DMA_STREAM_TX->CR |= DMA_SxCR_EN; // Enable DMA
+        m_isDMARunning = true;
+      }
       
       void UARTInit()
       {
@@ -44,7 +66,7 @@ namespace Anki
         RCC_AHB1PeriphClockCmd(RCC_GPIO, ENABLE);
         RCC_AHB1PeriphClockCmd(RCC_DMA, ENABLE);
         RCC_APB1PeriphClockCmd(RCC_UART, ENABLE);
-
+        
         // Configure the pins for UART in AF mode
         GPIO_InitTypeDef GPIO_InitStructure;
         GPIO_InitStructure.GPIO_Pin = PIN_TX;
@@ -59,7 +81,7 @@ namespace Anki
         
         GPIO_PinAFConfig(GPIO_TX, SOURCE_TX, GPIO_AF);
         GPIO_PinAFConfig(GPIO_RX, SOURCE_RX, GPIO_AF);
-
+        
         // Configure the UART for the appropriate baudrate
         USART_InitTypeDef USART_InitStructure;
         USART_Cmd(UART, DISABLE);
@@ -75,7 +97,7 @@ namespace Anki
         // Configure DMA for receiving
         DMA_DeInit(DMA_STREAM_RX);
   
-        DMA_InitTypeDef DMA_InitStructure;  
+        DMA_InitTypeDef DMA_InitStructure;
         DMA_InitStructure.DMA_Channel = DMA_CHANNEL_RX;
         DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)&UART->DR;
         DMA_InitStructure.DMA_Memory0BaseAddr = (u32)m_bufferRead;
@@ -98,34 +120,68 @@ namespace Anki
         DMA_Cmd(DMA_STREAM_RX, ENABLE);
         
         // Configure DMA For transmitting
-        /*DMA_DeInit(DMA_STREAM_TX);
+        DMA_DeInit(DMA_STREAM_TX);
         
         DMA_InitStructure.DMA_Channel = DMA_CHANNEL_TX;
         DMA_InitStructure.DMA_Memory0BaseAddr = (u32)m_bufferWrite;
         DMA_InitStructure.DMA_DIR = DMA_DIR_MemoryToPeripheral;
         DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;
+        DMA_InitStructure.DMA_BufferSize = sizeof(m_bufferWrite);
+        DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
+        DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
+        DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
+        DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;  // Use in combination with FIFO to increase throughput? Needs to be divisible by 1, 1/4, 1/2 of FIFO size
+        DMA_InitStructure.DMA_Priority = DMA_Priority_Medium;
+        DMA_InitStructure.DMA_FIFOMode = DMA_FIFOMode_Disable;  // See comment above
+        DMA_InitStructure.DMA_FIFOThreshold = DMA_FIFOThreshold_Full;
+        DMA_InitStructure.DMA_MemoryBurst = DMA_MemoryBurst_Single;
+        DMA_InitStructure.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;
         DMA_Init(DMA_STREAM_TX, &DMA_InitStructure);
+        
+        // Enable UART DMA, but don't start the actual DMA engine
+        USART_DMACmd(UART, USART_DMAReq_Tx, ENABLE);
         
         // Note: DMA is not enabled for TX here, because the buffer is empty.
         // After main/long execution, DMA will be enabled for a specified
         // length.
         
-        // Enable interrupt on DMA transfer complete for TX
+        // Enable interrupt on DMA transfer complete for TX.
+        // This is mainly for LongExecution.
         DMA_ITConfig(DMA_STREAM_TX, DMA_IT_TC, ENABLE);
         
         NVIC_InitTypeDef NVIC_InitStructure;
         NVIC_InitStructure.NVIC_IRQChannel = DMA_IRQ_TX;
-        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 4;  // Don't want this to be a very high priority
         NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
         NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-        NVIC_Init(&NVIC_InitStructure);*/
+        NVIC_Init(&NVIC_InitStructure);
+        
+        m_DMAWriteHead = m_DMAWriteTail = m_DMAReadIndex = 0;
       }
 
       int UARTPutChar(int c)
       {
-        UART->DR = c;
-        while (!(UART->SR & USART_FLAG_TXE))
-          ;
+        //UART->DR = c;
+        //while (!(UART->SR & USART_FLAG_TXE))
+        //  ;
+        //return c;
+
+        __disable_irq();
+        m_bufferWrite[m_DMAWriteHead] = c;
+        m_DMAWriteHead++;
+        if (m_DMAWriteHead >= sizeof(m_bufferWrite))
+        {
+          m_DMAWriteHead = 0;
+        }
+      
+        // Check if DMA is running by looking at the data count
+        if (!m_isDMARunning)
+        {
+          FlushDMA();
+        }
+        
+        __enable_irq();
+        
         return c;
       }
 
@@ -155,7 +211,7 @@ namespace Anki
         u32 startTime = GetMicroCounter();
 
         do
-        {          
+        {
           // Make sure there's data in the FIFO
           // NDTR counts down...
           if (DMA_STREAM_RX->NDTR != sizeof(m_bufferRead) - m_DMAReadIndex)
@@ -197,8 +253,7 @@ namespace Anki
 // Override fputc and fgetc for our own UART methods
 int std::fputc(int c, FILE* f)
 {
-  Anki::Cozmo::HAL::UARTPutChar(c);
-  return c;
+  return Anki::Cozmo::HAL::UARTPutChar(c);
 }
 
 int std::fgetc(FILE* f)
@@ -206,9 +261,21 @@ int std::fgetc(FILE* f)
   return Anki::Cozmo::HAL::UARTGetChar();
 }
 
-// Interrupt for DMA transfer complete
 extern "C"
 void DMA1_Stream4_IRQHandler()
 {
-  // ...
+  using namespace Anki::Cozmo::HAL;
+  
+  // Clear DMA Transfer Complete flag
+  DMA_ClearFlag(DMA1_Stream4, DMA_FLAG_TCIF4);
+  
+  // Check if there's more data to be transferred
+  if ((m_DMAWriteHead - m_DMAWriteTail) > 0)
+  {
+    FlushDMA();
+  } else {
+    //if (DMA_STREAM_TX->NDTR)
+    //  DMA_STREAM_TX->CR |= DMA_SxCR_EN;
+    m_isDMARunning = false;
+  }
 }

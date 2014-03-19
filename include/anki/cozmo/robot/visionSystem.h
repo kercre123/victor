@@ -19,7 +19,10 @@ namespace Anki {
       
       void Destroy();
       
-      ReturnCode Update(void);
+      // NOTE: It is important the passed-in robot state message be passed by
+      //   value and NOT by reference, since the vision system can be interrupted
+      //   by main execution (which updates the state).
+      ReturnCode Update(const Messages::RobotState robotState);
       
       void StopTracking();
 
@@ -28,7 +31,8 @@ namespace Anki {
       // for blocks, it will initialize a template tracker and switch to
       // docking mode.
       // TODO: Something smarter about seeing the block in the expected place as well?
-      ReturnCode SetMarkerToTrack(const Vision::MarkerType& markerToTrack);
+      ReturnCode SetMarkerToTrack(const Vision::MarkerType& markerToTrack,
+                                  const f32 markerWidth_mm);
       
     } // namespace VisionSystem
     

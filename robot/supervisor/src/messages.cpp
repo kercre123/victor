@@ -94,6 +94,9 @@ namespace Anki {
         MultiMailbox<Messages::VisionMarker, MAX_MARKER_MESSAGES> visionMarkerMailbox_;
         Mailbox<Messages::DockingErrorSignal>   dockingMailbox_;
         
+
+        static RobotState robotState_;
+        
       } // private namespace
       
 
@@ -139,6 +142,10 @@ namespace Anki {
         
         return true;
         
+      }
+      
+      RobotState const& GetRobotStateMsg() {
+        return robotState_;
       }
       
       
@@ -264,12 +271,12 @@ namespace Anki {
         PathFollower::StartPathTraversal();
       }
       
-      void ProcessDockWithBlockMessage(const DockWithBlock& msg) {
-        #warning Broken on M4
-        /*const VisionSystem::MarkerCode code(msg.blockCode);
-        DockingController::StartDocking(code,
+      void ProcessDockWithBlockMessage(const DockWithBlock& msg)
+      {
+        DockingController::StartDocking(static_cast<Vision::MarkerType>(msg.markerType),
+                                        msg.markerWidth_mm,
                                         msg.horizontalOffset_mm,
-                                        0, 0);*/
+                                        0, 0);
       }
 
       void ProcessDriveWheelsMessage(const DriveWheels& msg) {
@@ -339,26 +346,29 @@ namespace Anki {
 // ----------- Send messages -----------------
       
       
-      void SendRobotStateMsg()
+      ReturnCode SendRobotStateMsg()
       {
-        Messages::RobotState m;
-        m.timestamp = HAL::GetTimeStamp();
+        robotState_.timestamp = HAL::GetTimeStamp();
         
         Radians poseAngle;
         
-        Localization::GetCurrentMatPose(m.pose_x, m.pose_y, poseAngle);
-        m.pose_z = 0;
-        m.pose_angle = poseAngle.ToFloat();
+        Localization::GetCurrentMatPose(robotState_.pose_x, robotState_.pose_y, poseAngle);
+        robotState_.pose_z = 0;
+        robotState_.pose_angle = poseAngle.ToFloat();
         
-        WheelController::GetFilteredWheelSpeeds(m.lwheel_speed_mmps, m.rwheel_speed_mmps);
+        WheelController::GetFilteredWheelSpeeds(robotState_.lwheel_speed_mmps, robotState_.rwheel_speed_mmps);
 
-        m.headAngle  = HeadController::GetAngleRad();
-        m.liftHeight = LiftController::GetHeightMM();
+        robotState_.headAngle  = HeadController::GetAngleRad();
+        robotState_.liftHeight = LiftController::GetHeightMM();
 
-        m.isTraversingPath = PathFollower::IsTraversingPath() ? 1 : 0;
-        m.isCarryingBlock = PickAndPlaceController::IsCarryingBlock() ? 1 : 0;
+        robotState_.isTraversingPath = PathFollower::IsTraversingPath() ? 1 : 0;
+        robotState_.isCarryingBlock = PickAndPlaceController::IsCarryingBlock() ? 1 : 0;
         
-        HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RobotState), &m);
+        if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RobotState), &robotState_) == true) {
+          return EXIT_SUCCESS;
+        } else {
+          return EXIT_FAILURE;
+        }
       }
       
       
