@@ -181,7 +181,7 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
         isTracking = false;
       } else if(strcmp(reinterpret_cast<const char*>(customTypeName), "PlanarTransformation_f32") == 0) {
         lastPlanarTransformation.Deserialize(dataSegment, remainingDataLength);
-        //lastPlanarTransformation.Print();
+        lastPlanarTransformation.Print();
         isTracking = true;
       }
     }
@@ -306,7 +306,9 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
 
     cv::imshow("Robot Image", toShowImage);
     cv::waitKey(10);
-  } // if(lastImage.rows > 0)
+  } else { // if(lastImage.rows > 0)
+    cv::waitKey(1);
+  }
 
   free(buffer.rawDataPointer);
   buffer.rawDataPointer = NULL;
