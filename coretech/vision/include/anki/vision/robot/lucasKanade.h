@@ -24,6 +24,13 @@ namespace Anki
     {
       const s32 NUM_PREVIOUS_QUADS_TO_COMPARE = 2;
 
+      // Updates the previous corners with the new transformation
+      // and returns the minimum distance any corner moved
+      f32 UpdatePreviousCorners(
+        const Transformations::PlanarTransformation_f32 &transformation,
+        FixedLengthList<Quadrilateral<f32> > &previousCorners,
+        MemoryStack scratch);
+
       class LucasKanadeTracker_Slow
       {
         // The generic LucasKanadeTracker class can track a template with the Lucas-Kanade method,
@@ -60,6 +67,7 @@ namespace Anki
 
         // The templateRegion sizes are the sizes of the part of the template image that will
         // actually be tracked, so must be smaller or equal to the templateImage sizes
+        // NOTE: These are in the downsampled template coordinates
         f32 templateRegionHeight;
         f32 templateRegionWidth;
 
@@ -69,6 +77,7 @@ namespace Anki
 
         f32 templateWeightsSigma;
 
+        // NOTE: templateRegion is in the downsampled template coordinates
         Rectangle<f32> templateRegion;
 
         bool isValid;
@@ -118,6 +127,8 @@ namespace Anki
 
         Transformations::PlanarTransformation_f32 transformation;
 
+        // Template region coordinates are scaled from the standard resolution
+        // by templateImage.get_size(1) / BASE_IMAGE_WIDTH
         Rectangle<f32> templateRegion;
 
         bool isValid;
@@ -164,6 +175,8 @@ namespace Anki
 
         Transformations::PlanarTransformation_f32 transformation;
 
+        // Template region coordinates are scaled from the standard resolution
+        // by templateImage.get_size(1) / BASE_IMAGE_WIDTH
         Rectangle<f32> templateRegion;
 
         bool isValid;

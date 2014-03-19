@@ -65,7 +65,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   homography.SetCast<f64>(homography_f64);
 
   initialTransform.set_homography(homography);
-  initialTransform.set_centerOffset(tracker.get_transformation().get_centerOffset());
+  initialTransform.set_centerOffset(tracker.get_transformation().get_centerOffset(1.0f));
 
   if(tracker.set_transformation(initialTransform) != RESULT_OK) {
     AnkiError("mexTrackLucasKanade", "set_transformation");

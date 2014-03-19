@@ -51,7 +51,19 @@ namespace Anki
         AnkiConditionalErrorAndReturn(ridgeWeight >= 0.0f,
           "LucasKanadeTracker_Slow::LucasKanadeTracker_Slow", "ridgeWeight must be greater or equal to zero");
 
+        const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / templateImage.get_size(1);
+        const s32 initialImagePowerS32 = Log2u32(static_cast<u32>(initialImageScaleS32));
+        const f32 initialImageScaleF32 = static_cast<f32>(initialImageScaleS32);
+
+        AnkiConditionalErrorAndReturn(((1<<initialImagePowerS32)*templateImage.get_size(1)) == BASE_IMAGE_WIDTH,
+          "LucasKanadeTracker_Slow::LucasKanadeTracker_Slow", "The templateImage must be a power of two smaller than BASE_IMAGE_WIDTH");
+
         templateRegion = templateQuad.ComputeBoundingRectangle();
+
+        templateRegion.left /= initialImageScaleF32;
+        templateRegion.right /= initialImageScaleF32;
+        templateRegion.top /= initialImageScaleF32;
+        templateRegion.bottom /= initialImageScaleF32;
 
         for(s32 i=1; i<(numPyramidLevels-1); i++) {
           const s32 curTemplateHeight = templateImageHeight >> i;
@@ -125,6 +137,9 @@ namespace Anki
         // to leak memory with multiple calls to this object
         this->isInitialized = true;
         this->isValid = false;
+
+        const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / templateImage.get_size(1) ;
+        const f32 initialImageScaleF32 = static_cast<f32>(initialImageScaleS32); // TODO: check that this is integer
 
         const s32 numTransformationParameters = transformation.get_transformType() >> 8;
 
@@ -201,7 +216,8 @@ namespace Anki
 
             BeginBenchmark("InitializeTemplate.transformPoints");
             // Compute the warped coordinates (for later)
-            if((lastResult = transformation.TransformPoints(xIn, yIn, scale, xTransformed, yTransformed)) != RESULT_OK)
+            //if((lastResult = transformation.TransformPoints(xIn, yIn, scale*initialImageScaleF32, xTransformed, yTransformed)) != RESULT_OK)
+            if((lastResult = transformation.TransformPoints(xIn, yIn, initialImageScaleF32, xTransformed, yTransformed)) != RESULT_OK)
               return lastResult;
             EndBenchmark("InitializeTemplate.transformPoints");
 
@@ -410,6 +426,9 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(convergenceTolerance > 0.0f,
           RESULT_FAIL_INVALID_PARAMETERS, "LucasKanadeTracker_Slow::IterativelyRefineTrack", "convergenceTolerance must be greater than zero");
 
+        const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / nextImage.get_size(1) ;
+        const f32 initialImageScaleF32 = static_cast<f32>(initialImageScaleS32); // TODO: check that this is integer
+
         const s32 numPointsY = templateCoordinates[whichScale].get_yGridVector().get_size();
         const s32 numPointsX = templateCoordinates[whichScale].get_xGridVector().get_size();
 
@@ -472,7 +491,8 @@ namespace Anki
           Array<f32> yTransformed(1, numPointsY*numPointsX, scratch);
 
           BeginBenchmark("IterativelyRefineTrack.transformPoints");
-          if((lastResult = transformation.TransformPoints(xIn, yIn, scale, xTransformed, yTransformed)) != RESULT_OK)
+          //if((lastResult = transformation.TransformPoints(xIn, yIn, scale*initialImageScaleF32, xTransformed, yTransformed)) != RESULT_OK)
+          if((lastResult = transformation.TransformPoints(xIn, yIn, initialImageScaleF32, xTransformed, yTransformed)) != RESULT_OK)
             return lastResult;
           EndBenchmark("IterativelyRefineTrack.transformPoints");
 
@@ -602,7 +622,7 @@ namespace Anki
           BeginBenchmark("IterativelyRefineTrack.updateTransformation");
           //this->transformation.Print("t1");
           //b.Print("b");
-          this->transformation.Update(b, scratch, curTransformType);
+          this->transformation.Update(b, initialImageScaleF32, scratch, curTransformType);
           //this->transformation.Print("t2");
           EndBenchmark("IterativelyRefineTrack.updateTransformation");
 
@@ -618,46 +638,15 @@ namespace Anki
           //}
 
           BeginBenchmark("IterativelyRefineTrack.checkForCompletion");
+
           // Check if we're done with iterations
-          {
-            PUSH_MEMORY_STACK(scratch);
+          const f32 minChange = UpdatePreviousCorners(transformation, previousCorners, scratch);
 
-            Quadrilateral<f32> in(
-              Point<f32>(0.0f,0.0f),
-              Point<f32>(static_cast<f32>(nextImage.get_size(1)),0.0f),
-              Point<f32>(static_cast<f32>(nextImage.get_size(0)),static_cast<f32>(nextImage.get_size(1))),
-              Point<f32>(0.0f,static_cast<f32>(nextImage.get_size(1))));
+          if(minChange < convergenceTolerance) {
+            converged = true;
+            return RESULT_OK;
+          }
 
-            Quadrilateral<f32> newCorners = transformation.TransformQuadrilateral(in, scratch, scale);
-
-            //const f32 change = sqrtf(Matrix::Mean<f32,f32>(tmp1));
-            f32 minChange = 1e10f;
-            for(s32 iPrevious=0; iPrevious<NUM_PREVIOUS_QUADS_TO_COMPARE; iPrevious++) {
-              f32 change = 0.0f;
-              for(s32 i=0; i<4; i++) {
-                const f32 dx = previousCorners[iPrevious][i].x - newCorners[i].x;
-                const f32 dy = previousCorners[iPrevious][i].y - newCorners[i].y;
-                change += sqrtf(dx*dx + dy*dy);
-              }
-              change /= 4;
-
-              minChange = MIN(minChange, change);
-            }
-
-            //printf("newCorners");
-            //newCorners.Print();
-            //printf("change: %f\n", change);
-
-            if(minChange < convergenceTolerance*scale) {
-              converged = true;
-              return RESULT_OK;
-            }
-
-            for(s32 iPrevious=0; iPrevious<(NUM_PREVIOUS_QUADS_TO_COMPARE-1); iPrevious++) {
-              previousCorners[iPrevious] = previousCorners[iPrevious+1];
-            }
-            previousCorners[NUM_PREVIOUS_QUADS_TO_COMPARE-1] = newCorners;
-          } // PUSH_MEMORY_STACK(scratch);
           EndBenchmark("IterativelyRefineTrack.checkForCompletion");
         } // for(s32 iteration=0; iteration<maxIterations; iteration++)
 

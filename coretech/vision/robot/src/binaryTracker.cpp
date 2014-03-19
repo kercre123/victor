@@ -508,7 +508,7 @@ namespace Anki
         const s32 numNewPoints = newPoints.get_size();
 
         const Array<f32> &homography = transformation.get_homography();
-        const Point<f32> &centerOffset = transformation.get_centerOffset();
+        const Point<f32> &centerOffset = transformation.get_centerOffset(1.0f);
 
         // TODO: if the homography is just translation, we can do this faster (just slightly, as most of the cost is the search)
         const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
@@ -593,7 +593,7 @@ namespace Anki
         const s32 numNewPoints = newPoints.get_size();
 
         const Array<f32> &homography = transformation.get_homography();
-        const Point<f32> &centerOffset = transformation.get_centerOffset();
+        const Point<f32> &centerOffset = transformation.get_centerOffset(1.0f);
 
         const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
         const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
@@ -677,7 +677,7 @@ namespace Anki
         const s32 numNewPoints = newPoints.get_size();
 
         const Array<f32> &homography = transformation.get_homography();
-        const Point<f32> &centerOffset = transformation.get_centerOffset();
+        const Point<f32> &centerOffset = transformation.get_centerOffset(1.0f);
 
         const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
         const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
@@ -834,7 +834,7 @@ namespace Anki
         const s32 numNewPoints = newPoints.get_size();
 
         const Array<f32> &homography = transformation.get_homography();
-        const Point<f32> &centerOffset = transformation.get_centerOffset();
+        const Point<f32> &centerOffset = transformation.get_centerOffset(1.0f);
 
         const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
         const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
@@ -991,7 +991,7 @@ namespace Anki
         const s32 numNewPoints = newPoints.get_size();
 
         const Array<f32> &homography = transformation.get_homography();
-        const Point<f32> &centerOffset = transformation.get_centerOffset();
+        const Point<f32> &centerOffset = transformation.get_centerOffset(1.0f);
 
         // TODO: if the homography is just translation, we can do this faster (just slightly, as most of the cost is the search)
         const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
@@ -1069,7 +1069,7 @@ namespace Anki
         const s32 numNewPoints = newPoints.get_size();
 
         const Array<f32> &homography = transformation.get_homography();
-        const Point<f32> &centerOffset = transformation.get_centerOffset();
+        const Point<f32> &centerOffset = transformation.get_centerOffset(1.0f);
 
         const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
         const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
@@ -1146,7 +1146,7 @@ namespace Anki
         const s32 numNewPoints = newPoints.get_size();
 
         const Array<f32> &homography = transformation.get_homography();
-        const Point<f32> &centerOffset = transformation.get_centerOffset();
+        const Point<f32> &centerOffset = transformation.get_centerOffset(1.0f);
 
         // TODO: if the homography is just translation, we can do this faster (just slightly, as most of the cost is the search)
         const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
@@ -1241,7 +1241,7 @@ namespace Anki
         const s32 numNewPoints = newPoints.get_size();
 
         const Array<f32> &homography = transformation.get_homography();
-        const Point<f32> &centerOffset = transformation.get_centerOffset();
+        const Point<f32> &centerOffset = transformation.get_centerOffset(1.0f);
 
         const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
         const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
@@ -1608,7 +1608,7 @@ namespace Anki
 
           //update.Print("update");
 
-          this->transformation.Update(update, scratch, Transformations::TRANSFORM_TRANSLATION);
+          this->transformation.Update(update, 1.0f, scratch, Transformations::TRANSFORM_TRANSLATION);
         }
 
         return RESULT_OK;

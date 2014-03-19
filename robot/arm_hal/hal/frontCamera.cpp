@@ -416,8 +416,13 @@ namespace Anki
         // and we support resolution changes in the actual hardware
         
         // Copy the Y-channel into frame
-        u32 xRes = CameraModeInfo[mode].width;
-        u32 yRes = CameraModeInfo[mode].height;
+#warning This is broken
+        /*u32 xRes = CameraModeInfo[mode].width;
+        u32 yRes = CameraModeInfo[mode].height;*/
+        
+        u32 xRes = 320;
+        u32 yRes = 240;
+        
         u32 xSkip = 320 / xRes;
         u32 ySkip = 240 / yRes;
         
