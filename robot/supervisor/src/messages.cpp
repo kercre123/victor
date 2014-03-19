@@ -229,7 +229,7 @@ namespace Anki {
           };
           
           
-          if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::HeadCameraCalibration),
+          if(!HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::HeadCameraCalibration),
                                    &headCalibMsg))
           {
             PRINT("Failed to send camera calibration message.\n");
