@@ -57,8 +57,8 @@ namespace
   const u8 RIGHT_WHEEL_BACKWARD_PIN = 22;
   const u8 LIFT_UP_PIN = 24;
   const u8 LIFT_DOWN_PIN = 25;
-  const u8 HEAD_UP_PIN = 9;
-  const u8 HEAD_DOWN_PIN = 10;
+  const u8 HEAD_UP_PIN = 10;
+  const u8 HEAD_DOWN_PIN = 9;
   
   const u8 ENCODER_NONE = 0xFF;
   const u8 ENCODER_1_PIN = 4;
