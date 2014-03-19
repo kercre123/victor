@@ -174,7 +174,7 @@ namespace Anki {
 
                 if (HAL::GetMicroCounter() - lastLiftMovedTime_us > LIFT_STOP_TIME) {
                   // Turn off motor
-                  power_ = 0.2;  // Not strong enough to lift motor, but just enough to unwind backlash. Not sure if this is actually helping.
+                  power_ = 0;  // Not strong enough to lift motor, but just enough to unwind backlash. Not sure if this is actually helping.
                   HAL::MotorSetPower(HAL::MOTOR_LIFT, power_);
                   
                   // Set timestamp to be used in next state to wait for motor to "relax"

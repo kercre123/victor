@@ -18,10 +18,10 @@ namespace Anki {
       // Private memers:
       namespace {
         // Constants for Webots:
-        const f32 DRIVE_VELOCITY_FAST = 70.f; // mm/s
-        const f32 DRIVE_VELOCITY_SLOW = 30.f; // mm/s
+        const f32 DRIVE_VELOCITY_FAST = 60.f; // mm/s
+        const f32 DRIVE_VELOCITY_SLOW = 20.f; // mm/s
         
-        const f32 LIFT_SPEED_RAD_PER_SEC = 0.5f;
+        const f32 LIFT_SPEED_RAD_PER_SEC = 2.f;
         const f32 LIFT_ACCEL_RAD_PER_SEC2 = 10.f;
 
         const f32 HEAD_SPEED_RAD_PER_SEC = 0.5f;
