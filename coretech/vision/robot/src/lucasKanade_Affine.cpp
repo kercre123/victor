@@ -64,9 +64,6 @@ namespace Anki
 
       Result LucasKanadeTracker_Affine::IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const Transformations::TransformType curTransformType, bool &converged, MemoryStack scratch)
       {
-        // Unused, remove?
-        //const bool isOutColumnMajor = false; // TODO: change to false, which will probably be faster
-
         const s32 nextImageHeight = nextImage.get_size(0);
         const s32 nextImageWidth = nextImage.get_size(1);
 
@@ -90,7 +87,6 @@ namespace Anki
 
         const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / nextImageWidth;
         const s32 initialImagePowerS32 = Log2u32(static_cast<u32>(initialImageScaleS32));
-        const f32 initialImageScaleF32 = static_cast<f32>(initialImageScaleS32);
 
         AnkiConditionalErrorAndReturnValue(((1<<initialImagePowerS32)*nextImageWidth) == BASE_IMAGE_WIDTH,
           RESULT_FAIL_INVALID_SIZE, "LucasKanadeTracker_Affine::IterativelyRefineTrack", "The templateImage must be a power of two smaller than BASE_IMAGE_WIDTH");

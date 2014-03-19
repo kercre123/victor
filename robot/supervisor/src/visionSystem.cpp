@@ -308,6 +308,7 @@ namespace VisionMemory
 
 namespace DebugStream
 {
+#if !defined(SEND_DEBUG_STREAM)
   static const s32 PRINTF_BUFFER_SIZE = 10000;
   static const s32 DEBUG_STREAM_BUFFER_SIZE = 2000000;
 
@@ -315,17 +316,15 @@ namespace DebugStream
   static OFFCHIP u8 debugStreamBufferRaw_[DEBUG_STREAM_BUFFER_SIZE];
 
   static SerializedBuffer printfBuffer_;
-  static SerializedBuffer debugStreamBuffer_;
-  
-  static const HAL::CameraMode debugStreamResolution_ = HAL::CAMERA_MODE_QQQVGA;
-  
+  static SerializedBuffer debugStreamBuffer_;  
 
-#if !defined(SEND_DEBUG_STREAM)
   static ReturnCode SendFiducialDetection(const Array<u8> &image, const FixedLengthList<VisionMarker> &markers, MemoryStack ccmScratch, MemoryStack onchipScratch, MemoryStack offchipScratch) { return EXIT_SUCCESS; }
   static ReturnCode SendTrackingUpdate(const Array<u8> &image, const Transformations::PlanarTransformation_f32 &transformation, MemoryStack ccmScratch, MemoryStack onchipScratch, MemoryStack offchipScratch) { return EXIT_SUCCESS; }
   //static ReturnCode SendPrintf(const char * string) { return EXIT_SUCCESS; }
-  static ReturnCode SendArray(const Array<u8> &array) { return EXIT_SUCCESS; }
+  //static ReturnCode SendArray(const Array<u8> &array) { return EXIT_SUCCESS; }
 #else
+  static const HAL::CameraMode debugStreamResolution_ = HAL::CAMERA_MODE_QQQVGA;
+  
   static f32 lastBenchmarkTime_algorithmsOnly;
   static f32 lastBenchmarkDuration_algorithmsOnly;
 

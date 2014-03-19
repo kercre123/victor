@@ -484,7 +484,7 @@ namespace Anki
         for(s32 iteration=0; iteration<maxIterations; iteration++) {
           PUSH_MEMORY_STACK(scratch);
 
-          const f32 scale = static_cast<f32>(1 << whichScale);
+          //const f32 scale = static_cast<f32>(1 << whichScale);
 
           // [xi, yi] = this.getImagePoints(i_scale);
           Array<f32> xTransformed(1, numPointsY*numPointsX, scratch);

@@ -87,7 +87,6 @@ namespace Anki
 
         const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / nextImageWidth;
         const s32 initialImagePowerS32 = Log2u32(static_cast<u32>(initialImageScaleS32));
-        const f32 initialImageScaleF32 = static_cast<f32>(initialImageScaleS32);
 
         AnkiConditionalErrorAndReturnValue(((1<<initialImagePowerS32)*nextImageWidth) == BASE_IMAGE_WIDTH,
           RESULT_FAIL_INVALID_SIZE, "LucasKanadeTracker_Projective::IterativelyRefineTrack", "The templateImage must be a power of two smaller than BASE_IMAGE_WIDTH");
