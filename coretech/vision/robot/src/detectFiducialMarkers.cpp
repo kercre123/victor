@@ -1,5 +1,5 @@
 /**
-File: frontCameraWrappers.cpp
+File: detectFiducialMarkers.cpp
 Author: Peter Barnum
 Created: 2013
 
@@ -26,7 +26,6 @@ namespace Anki
   {
     Result DetectFiducialMarkers(
       const Array<u8> &image,
-      //FixedLengthList<BlockMarker> &markers,
       FixedLengthList<VisionMarker> &markers,
       FixedLengthList<Array<f32> > &homographies,
       const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier,
@@ -64,7 +63,6 @@ namespace Anki
 
       BeginBenchmark("ExtractComponentsViaCharacteristicScale");
 
-      //ConnectedComponents extractedComponents = ConnectedComponents(maxConnectedComponentSegments, imageWidth, scratchCcm);
       ConnectedComponents extractedComponents = ConnectedComponents(maxConnectedComponentSegments, imageWidth, scratchOffChip);
 
       AnkiConditionalErrorAndReturnValue(extractedComponents.IsValid(),
@@ -126,12 +124,6 @@ namespace Anki
         extractedComponents.CompressConnectedComponentSegmentIds(scratchOnchip);
         EndBenchmark("CompressConnectedComponentSegmentIds3");
 
-        // This doesn't work well for in-plane rotate components
-        //BeginBenchmark("InvalidateFilledCenterComponents_shrunkRectangle");
-        //if((lastResult = extractedComponents.InvalidateFilledCenterComponents_shrunkRectangle(component_percentHorizontal, component_percentVertical, scratchOnchip)) != RESULT_OK)
-        //  return lastResult;
-        //EndBenchmark("InvalidateFilledCenterComponents_shrunkRectangle");
-
         BeginBenchmark("InvalidateFilledCenterComponents_hollowRows");
         if((lastResult = extractedComponents.InvalidateFilledCenterComponents_hollowRows(component_minHollowRatio, scratchOnchip)) != RESULT_OK)
           return lastResult;
@@ -178,14 +170,6 @@ namespace Anki
       EndBenchmark("ComputeHomographyFromQuad");
 
       // 5. Decode fiducial markers from the candidate quadrilaterals
-      //const FiducialMarkerParser parser = FiducialMarkerParser(scratchOnchip);
-
-      //BeginBenchmark("Copy Image To Onchip");
-      //// Random access to off-chip is extremely slow, so copy the whole image to on-chip first
-      //// TODO: use a DMA call a few steps ago
-      //Array<u8> imageOnChip(imageHeight, imageWidth, scratchOnchip);
-      //imageOnChip.Set(image);
-      //EndBenchmark("Copy Image To Onchip");
 
       BeginBenchmark("ExtractVisionMarker");
 
@@ -194,12 +178,6 @@ namespace Anki
       for(s32 iQuad=0; iQuad<extractedQuads.get_size(); iQuad++) {
         const Array<f32> &currentHomography = homographies[iQuad];
         const Quadrilateral<s16> &currentQuad = extractedQuads[iQuad];
-        /*
-        BlockMarker &currentMarker = markers[iQuad];
-
-        if((lastResult = parser.ExtractBlockMarker(image, currentQuad, currentHomography, decode_minContrastRatio, currentMarker, scratchOnchip)) != RESULT_OK)
-        return lastResult;
-        */
 
         VisionMarker &currentMarker = markers[iQuad];
 

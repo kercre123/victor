@@ -979,6 +979,11 @@
               <FilePath>..\coretech\vision\robot\src\decisionTree_vision.cpp</FilePath>
             </File>
             <File>
+              <FileName>detectFiducialMarkers.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\detectFiducialMarkers.cpp</FilePath>
+            </File>
+            <File>
               <FileName>docking_vision.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\docking_vision.cpp</FilePath>
@@ -1009,11 +1014,6 @@
               <FilePath>..\coretech\vision\robot\src\filtering.cpp</FilePath>
             </File>
             <File>
-              <FileName>frontCameraWrappers.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\frontCameraWrappers.cpp</FilePath>
-            </File>
-            <File>
               <FileName>integralImage.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\integralImage.cpp</FilePath>
@@ -1027,6 +1027,11 @@
               <FileName>lucasKanade_Affine.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\lucasKanade_Affine.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>lucasKanade_General.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\lucasKanade_General.cpp</FilePath>
             </File>
             <File>
               <FileName>lucasKanade_Projective.cpp</FileName>
@@ -2169,6 +2174,11 @@
               <FilePath>..\coretech\vision\robot\src\decisionTree_vision.cpp</FilePath>
             </File>
             <File>
+              <FileName>detectFiducialMarkers.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\detectFiducialMarkers.cpp</FilePath>
+            </File>
+            <File>
               <FileName>docking_vision.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\docking_vision.cpp</FilePath>
@@ -2199,11 +2209,6 @@
               <FilePath>..\coretech\vision\robot\src\filtering.cpp</FilePath>
             </File>
             <File>
-              <FileName>frontCameraWrappers.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\frontCameraWrappers.cpp</FilePath>
-            </File>
-            <File>
               <FileName>integralImage.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\integralImage.cpp</FilePath>
@@ -2217,6 +2222,11 @@
               <FileName>lucasKanade_Affine.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\lucasKanade_Affine.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>lucasKanade_General.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\lucasKanade_General.cpp</FilePath>
             </File>
             <File>
               <FileName>lucasKanade_Projective.cpp</FileName>

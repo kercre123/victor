@@ -319,26 +319,6 @@ namespace Anki
         f32 distortionCoeffs[NUM_RADIAL_DISTORTION_COEFFS];
       } CameraInfo;
       
-      typedef struct {
-        u8  headerByte; // used to specify a frame's resolution in a packet if transmitting
-        u16 width, height;
-        //u8 downsamplePower[HAL::CAMERA_MODE_COUNT];
-      } CameraModeInfo_t;
-      
-      const CameraModeInfo_t CameraModeInfo[HAL::CAMERA_MODE_COUNT] =
-      {
-        // VGA
-        { 0xBA, 640, 480 }, // {0, 0, 0, 0, 0} },
-        // QVGA
-        { 0xBC, 320, 240 }, // {1, 0, 0, 0, 0} },
-        // QQVGA
-        { 0xB8, 160, 120 }, // {2, 1, 0, 0, 0} },
-        // QQQVGA
-        { 0xBD,  80,  60 }, // {3, 2, 1, 0, 0} },
-        // QQQQVGA
-        { 0xB7,  40,  30 }, // {4, 3, 2, 1, 0} }
-      };
-
       const CameraInfo* GetHeadCamInfo();
 
       // Set the camera capture resolution with CAMERA_MODE_XXXXX_HEADER.

@@ -605,7 +605,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
 
   const s32 numPyramidLevels = 2;
 
-  const Rectangle<f32> templateRegion(13, 34, 22, 43);
+  const Rectangle<f32> templateRegion(13*4, 34*4, 22*4, 43*4);
   const Quadrilateral<f32> templateQuad(templateRegion);
 
   const s32 maxIterations = 25;
@@ -661,8 +661,8 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
 
     // This ground truth is from the PC c++ version
     Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
-    transform_groundTruth[0][2] = -0.334f;
-    transform_groundTruth[1][2] = -0.240f;
+    transform_groundTruth[0][2] = -1.359f;
+    transform_groundTruth[1][2] = -0.971f;
 
     ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
   }
@@ -694,8 +694,8 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
 
     // This ground truth is from the PC c++ version
     Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
-    transform_groundTruth[0][0] = 1.005f; transform_groundTruth[0][1] = 0.027f; transform_groundTruth[0][2] = -0.315f;
-    transform_groundTruth[1][0] = -0.033f; transform_groundTruth[1][1] = 0.993f; transform_groundTruth[1][2] = -0.230f;
+    transform_groundTruth[0][0] = 1.005f; transform_groundTruth[0][1] = 0.027f; transform_groundTruth[0][2] = -1.249f;
+    transform_groundTruth[1][0] = -0.033f; transform_groundTruth[1][1] = 0.993f; transform_groundTruth[1][2] = -0.912f;
     transform_groundTruth[2][0] = 0.0f; transform_groundTruth[2][1] = 0.0f; transform_groundTruth[2][2] = 1.0f;
 
     ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
@@ -729,9 +729,9 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
 
     // This ground truth is from the PC c++ version
     Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
-    transform_groundTruth[0][0] = 1.008f; transform_groundTruth[0][1] = 0.027f; transform_groundTruth[0][2] = -0.360f;
-    transform_groundTruth[1][0] = -0.034f; transform_groundTruth[1][1] = 0.992f; transform_groundTruth[1][2] = -0.270f;
-    transform_groundTruth[2][0] = -0.001f; transform_groundTruth[2][1] = -0.001f; transform_groundTruth[2][2] = 1.0f;
+    transform_groundTruth[0][0] = 1.007f;  transform_groundTruth[0][1] = 0.027f; transform_groundTruth[0][2] = -1.427f;
+    transform_groundTruth[1][0] = -0.034f; transform_groundTruth[1][1] = 0.992f; transform_groundTruth[1][2] = -1.072f;
+    transform_groundTruth[2][0] = 0.0f;    transform_groundTruth[2][1] = 0.0f;   transform_groundTruth[2][2] = 1.0f;
 
     ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
   }
@@ -746,7 +746,8 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
 
   const s32 numPyramidLevels = 2;
 
-  const Rectangle<f32> templateRegion(13, 34, 22, 43);
+  //const Rectangle<f32> templateRegion(13, 34, 22, 43);
+  const Rectangle<f32> templateRegion(13*4, 34*4, 22*4, 43*4);
   const Quadrilateral<f32> templateQuad(templateRegion);
 
   const s32 maxIterations = 25;
@@ -795,12 +796,12 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
     printf("Translation-only FAST-LK totalTime:%dms initTime:%dms updateTrack:%dms\n", (s32)Round(1000*(time2-time0)), (s32)Round(1000*(time1-time0)), (s32)Round(1000*(time2-time1)));
     PrintBenchmarkResults_All();
 
-    //tracker.get_transformation().Print("Translation-only LK_Affine");
+    tracker.get_transformation().Print("Translation-only LK_Affine");
 
     // This ground truth is from the PC c++ version
     Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
-    transform_groundTruth[0][2] = -0.334f;
-    transform_groundTruth[1][2] = -0.240f;
+    transform_groundTruth[0][2] = -1.359f;
+    transform_groundTruth[1][2] = -0.971f;
 
     ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
   }
@@ -829,12 +830,12 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
     printf("Affine FAST-LK totalTime:%dms initTime:%dms updateTrack:%dms\n", (s32)Round(1000*(time2-time0)), (s32)Round(1000*(time1-time0)), (s32)Round(1000*(time2-time1)));
     PrintBenchmarkResults_All();
 
-    //tracker.get_transformation().Print("Affine LK_Affine");
+    tracker.get_transformation().Print("Affine LK_Affine");
 
     // This ground truth is from the PC c++ version
     Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
-    transform_groundTruth[0][0] = 1.005f; transform_groundTruth[0][1] = 0.027f; transform_groundTruth[0][2] = -0.315f;
-    transform_groundTruth[1][0] = -0.033f; transform_groundTruth[1][1] = 0.993f; transform_groundTruth[1][2] = -0.230f;
+    transform_groundTruth[0][0] = 1.005f; transform_groundTruth[0][1] = 0.027f; transform_groundTruth[0][2] = -1.249f;
+    transform_groundTruth[1][0] = -0.033f; transform_groundTruth[1][1] = 0.993f; transform_groundTruth[1][2] = -0.912f;
     transform_groundTruth[2][0] = 0.0f; transform_groundTruth[2][1] = 0.0f; transform_groundTruth[2][2] = 1.0f;
 
     ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
@@ -852,7 +853,8 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
 
   const f32 ridgeWeight = 0.0f;
 
-  const Rectangle<f32> templateRegion(13, 34, 22, 43);
+  const Rectangle<f32> templateRegion(13*4, 34*4, 22*4, 43*4);
+  //const Rectangle<f32> templateRegion(13, 34, 22, 43);
 
   const s32 maxIterations = 25;
   const f32 convergenceTolerance = .05f;
@@ -907,8 +909,8 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
 
     // This ground truth is from the PC c++ version
     Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
-    transform_groundTruth[0][2] = -0.334f;
-    transform_groundTruth[1][2] = -0.240f;
+    transform_groundTruth[0][2] = -1.364f;
+    transform_groundTruth[1][2] = -0.980f;
 
     ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
   }
@@ -940,8 +942,8 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
 
     // This ground truth is from the PC c++ version
     Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
-    transform_groundTruth[0][0] = 1.005f; transform_groundTruth[0][1] = 0.027f; transform_groundTruth[0][2] = -0.315f;
-    transform_groundTruth[1][0] = -0.033f; transform_groundTruth[1][1] = 0.993f; transform_groundTruth[1][2] = -0.230f;
+    transform_groundTruth[0][0] = 1.005f; transform_groundTruth[0][1] = 0.027f; transform_groundTruth[0][2] = -1.249f;
+    transform_groundTruth[1][0] = -0.033f; transform_groundTruth[1][1] = 0.993f; transform_groundTruth[1][2] = -0.912f;
     transform_groundTruth[2][0] = 0.0f; transform_groundTruth[2][1] = 0.0f; transform_groundTruth[2][2] = 1.0f;
 
     ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
@@ -975,9 +977,9 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
 
     // This ground truth is from the PC c++ version
     Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
-    transform_groundTruth[0][0] = 1.008f; transform_groundTruth[0][1] = 0.027f; transform_groundTruth[0][2] = -0.360f;
-    transform_groundTruth[1][0] = -0.034f; transform_groundTruth[1][1] = 0.992f; transform_groundTruth[1][2] = -0.270f;
-    transform_groundTruth[2][0] = -0.001f; transform_groundTruth[2][1] = -0.001f; transform_groundTruth[2][2] = 1.0f;
+    transform_groundTruth[0][0] = 1.008f; transform_groundTruth[0][1] = 0.027f; transform_groundTruth[0][2] = -1.433f;
+    transform_groundTruth[1][0] = -0.034f; transform_groundTruth[1][1] = 0.992f; transform_groundTruth[1][2] = -1.080f;
+    transform_groundTruth[2][0] = 0.0f; transform_groundTruth[2][1] = 0.0f; transform_groundTruth[2][2] = 1.0f;
 
     ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
   }

@@ -72,19 +72,42 @@ typedef enum {
   VISION_MODE_TRACKING
 } VisionSystemMode;
 
-static ReturnCode DownsampleHelper(
+static u32 DownsampleHelper(
   const Array<u8>& in,
   Array<u8>& out,
   MemoryStack scratch);
+
+typedef struct {
+  u8  headerByte; // used to specify a frame's resolution in a packet if transmitting
+  u16 width, height;
+  u8 downsamplePower[HAL::CAMERA_MODE_COUNT];
+} CameraModeInfo_t;
+
+// NOTE: To get the downsampling power to go from resoution "FROM" to
+//       resolution "TO", use:
+//       u8 power = CameraModeInfo[FROM].downsamplePower[TO];
+const CameraModeInfo_t CameraModeInfo[HAL::CAMERA_MODE_COUNT] =
+{
+  // VGA
+  { 0xBA, 640, 480, {0, 1, 2, 3, 4} },
+  // QVGA
+  { 0xBC, 320, 240, {0, 0, 1, 2, 3} },
+  // QQVGA
+  { 0xB8, 160, 120, {0, 0, 0, 1, 2} },
+  // QQQVGA
+  { 0xBD,  80,  60, {0, 0, 0, 0, 1} },
+  // QQQQVGA
+  { 0xB7,  40,  30, {0, 0, 0, 0, 0} }
+};
 
 #if 0
 #pragma mark --- DetectFiducialMarkersParameters ---
 #endif
 
-namespace DetectFiducialMarkersParameters
+struct DetectFiducialMarkersParameters
 {
-  typedef struct Parameters
-  {
+    bool isInitialized;
+    HAL::CameraMode detectionResolution;
     s32 detectionWidth;
     s32 detectionHeight;
     s32 scaleImage_thresholdMultiplier;
@@ -105,11 +128,15 @@ namespace DetectFiducialMarkersParameters
     f32 decode_minContrastRatio;
     s32 maxConnectedComponentSegments;
 
-    Parameters()
+    //Parameters() : isInitialized(false) { }
+    
+  DetectFiducialMarkersParameters() : isInitialized(false) { }
+  
+    void Initialize()
     {
-      // TODO: get from HAL
-      detectionWidth  = 320;
-      detectionHeight = 240;
+      detectionResolution = HAL::CAMERA_MODE_QVGA;
+      detectionWidth  = CameraModeInfo[detectionResolution].width;
+      detectionHeight = CameraModeInfo[detectionResolution].height;
 
       scaleImage_thresholdMultiplier = 65536; // 1.0*(2^16)=65536
       scaleImage_numPyramidLevels = 3;
@@ -135,10 +162,15 @@ namespace DetectFiducialMarkersParameters
       decode_minContrastRatio = 1.25;
 
       maxConnectedComponentSegments = 39000; // 322*240/2 = 38640
-    } // Parameters
-  } Parameters;
+      
+      isInitialized = true;
+      
+    } // DetectFiducialMarkersParameters()
+  
+  }; // struct DetectFiducialMarkersParameters
 
-  static DetectFiducialMarkersParameters::Parameters parameters_;
+/*
+  static DetectFiducialMarkersParameters parameters_;
 
   static ReturnCode Initialize()
   {
@@ -146,124 +178,101 @@ namespace DetectFiducialMarkersParameters
 
     return EXIT_SUCCESS;
   }
-} // namespace DetectFiducialMarkersParameters
+ */
 
 #if 0
 #pragma mark --- TrackerParameters ---
 #endif
 
+
+struct TrackerParameters {
+  
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SLOW || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_AFFINE || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE
-
-namespace TrackerParameters {
-  typedef struct Parameters
+  
+  bool isInitialized;
+  HAL::CameraMode trackingResolution;
+  s32 trackingImageHeight;
+  s32 trackingImageWidth;
+  //u32 downsampleFactor;
+  s32 numPyramidLevels;
+  s32 maxIterations;
+  f32 convergenceTolerance;
+  bool useWeights;
+  
+  f32 blockMarkerWidthInMM;
+  //f32 horizontalFocalLengthInMM;
+  
+  void Initialize()
   {
-    bool isInitialized;
-    s32 detectionWidth;
-    s32 detectionHeight;
-    s32 trackingImageHeight;
-    s32 trackingImageWidth;
-    s32 numPyramidLevels;
-    s32 maxIterations;
-    f32 convergenceTolerance;
-    bool useWeights;
-
-    f32 blockMarkerWidthInMM;
-    f32 horizontalFocalLengthInMM;
-
-    Parameters() : isInitialized(false) { }
+    // LK Trackers running at QQQVGA (80x60)
+    trackingResolution   = HAL::CAMERA_MODE_QQQVGA; // 80x60
     
-    Parameters(const f32 focalLength_x)
-    {
-      // TODO: set via HAL
-      detectionWidth  = 320;
-      detectionHeight = 240;
-      trackingImageWidth = 80;
-      trackingImageHeight = 60;
-
-      numPyramidLevels = 2;
-      maxIterations = 25;
-      convergenceTolerance = 0.05f;
-      useWeights = true;
-
-      blockMarkerWidthInMM = 26.f; // TODO: Get this from the docking command message from basestation
-
-      const f32 fxAdj = static_cast<f32>(detectionWidth) / static_cast<f32>(trackingImageWidth);
-      horizontalFocalLengthInMM = focalLength_x / fxAdj;
-      
-      isInitialized = true;
-    } // Parameters
-  } Parameters;
-
-  static TrackerParameters::Parameters parameters_;
-
-  // Set the default parameters
-  static ReturnCode Initialize(const f32 focalLength_x)
-  {
-    parameters_ = TrackerParameters::Parameters(focalLength_x);
-
-    return EXIT_SUCCESS;
-  }
-} // namespace LucasKanadeParameters
-
+    trackingImageWidth   = CameraModeInfo[trackingResolution].width;
+    trackingImageHeight  = CameraModeInfo[trackingResolution].height;
+    numPyramidLevels     = 2;
+    maxIterations        = 25;
+    convergenceTolerance = 0.05f;
+    useWeights           = true;
+    blockMarkerWidthInMM = 26.f; // TODO: Get this from the docking command message from basestation
+    
+    // Compute the effective focal length for tracking
+    //downsampleFactor = (1 << HAL::CameraModeInfo[detectionResolution].downsamplePower[trackingResolution]);
+    //horizontalFocalLengthInMM = detectionFocalLength / static_cast<f32>(downsampleFactor);
+    
+    isInitialized = true;
+  } // TrackerParameters()
+  
+  
 #else // #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SLOW || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_AFFINE || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE
-
-namespace TrackerParameters {
-  typedef struct Parameters
+  
+  bool isInitialized;
+  s32 trackingImageHeight;
+  s32 trackingImageWidth;
+  //u32 downsampleFactor;
+  u8  edgeDetection_grayvalueThreshold;
+  s32 edgeDetection_minComponentWidth;
+  s32 edgeDetection_maxDetectionsPerType;
+  s32 edgeDetection_everyNLines;
+  s32 matching_maxTranslationDistance;
+  s32 matching_maxProjectiveDistance;
+  s32 verification_maxTranslationDistance;
+  f32 percentMatchedPixelsThreshold;
+  
+  f32 blockMarkerWidthInMM;
+  //f32 horizontalFocalLengthInMM;
+  
+  void Initialize() //const HAL::CameraMode detectionResolution, const f32 detectionFocalLength)
   {
-    bool isInitialized;
-    s32 detectionWidth;
-    s32 detectionHeight;
-    s32 trackingImageHeight;
-    s32 trackingImageWidth;
-    u8 edgeDetection_grayvalueThreshold;
-    s32 edgeDetection_minComponentWidth;
-    s32 edgeDetection_maxDetectionsPerType;
-    s32 edgeDetection_everyNLines;
-    s32 matching_maxTranslationDistance;
-    s32 matching_maxProjectiveDistance;
-    s32 verification_maxTranslationDistance;
-    f32 percentMatchedPixelsThreshold;
-
-    f32 blockMarkerWidthInMM;
-    f32 horizontalFocalLengthInMM;
-
-    Parameters() : isInitialized(false) { }
+    // Binary tracker works at QVGA (unlike LK)
+    const HAL::CameraMode trackingResolution = HAL::CAMERA_MODE_QVGA;
     
-    Parameters(const f32 focalLength_x)
-    {
-      // TODO: set via HAL
-      detectionWidth  = 320;
-      detectionHeight = 240;
-      edgeDetection_grayvalueThreshold = 128;
-      edgeDetection_minComponentWidth = 2;
-      edgeDetection_maxDetectionsPerType = 2500;
-      edgeDetection_everyNLines = 1;
-      matching_maxTranslationDistance = 5;
-      matching_maxProjectiveDistance = 5;
-      verification_maxTranslationDistance = 1;
-      percentMatchedPixelsThreshold = 0.5f; // TODO: pick a reasonable value
-
-      blockMarkerWidthInMM = 26.f; // TODO: Get this from the docking command message from basestation
-
-      const f32 fxAdj = static_cast<f32>(detectionWidth) / static_cast<f32>(trackingImageWidth);
-      horizontalFocalLengthInMM = focalLength_x / fxAdj;
-      
-      isInitialized = true;
-    }
-  } Parameters;
-
-  static TrackerParameters::Parameters parameters_;
-
-  // Set the default parameters
-  static ReturnCode Initialize(const f32 focalLength_x)
-  {
-    parameters_ = TrackerParameters::Parameters(focalLength_x);
-
-    return EXIT_SUCCESS;
-  }
-} // namespace TrackerParameters
-
+    trackingImageWidth   = HAL::CameraModeInfo[trackingResolution].width;
+    trackingImageHeight  = HAL::CameraModeInfo[trackingResolution].height;
+    
+    edgeDetection_grayvalueThreshold    = 128;
+    edgeDetection_minComponentWidth     = 2;
+    edgeDetection_maxDetectionsPerType  = 2500;
+    edgeDetection_everyNLines           = 1;
+    matching_maxTranslationDistance     = 5;
+    matching_maxProjectiveDistance      = 5;
+    verification_maxTranslationDistance = 1;
+    percentMatchedPixelsThreshold       = 0.5f; // TODO: pick a reasonable value
+    
+    blockMarkerWidthInMM = 26.f; // TODO: Get this from the docking command message from basestation
+    
+    // Compute the effective focal length for tracking
+    //downsampleFactor = (1 << HAL::CameraModeInfo[detectionResolution].downsamplePower[trackingResolution]);
+    //horizontalFocalLengthInMM = detectionFocalLength / static_cast<f32>(downsampleFactor);
+    
+    isInitialized = true;
+  } // TrackerParameters();
+  
 #endif // #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SLOW || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_AFFINE || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE
+  
+  TrackerParameters() : isInitialized(false) { }
+  
+}; // struct TrackerParameters
+
 
 #if 0
 #pragma mark --- VisionMemory ---
@@ -324,6 +333,9 @@ namespace DebugStream
 
   static SerializedBuffer printfBuffer_;
   static SerializedBuffer debugStreamBuffer_;
+  
+  static const HAL::CameraMode debugStreamResolution_ = HAL::CAMERA_MODE_QQQVGA;
+  
 
 #if !defined(SEND_DEBUG_STREAM)
   static ReturnCode SendFiducialDetection(const Array<u8> &image, const FixedLengthList<VisionMarker> &markers, MemoryStack ccmScratch, MemoryStack offchipScratch) { return EXIT_SUCCESS; }
@@ -411,7 +423,10 @@ namespace DebugStream
       }
     }
 
-    Array<u8> imageSmall(60, 80, offchipScratch);
+    const s32 height = CameraModeInfo[debugStreamResolution_].height;
+    const s32 width  = CameraModeInfo[debugStreamResolution_].width;
+    
+    Array<u8> imageSmall(height, width, offchipScratch);
     DownsampleHelper(image, imageSmall, ccmScratch);
     debugStreamBuffer_.PushBack(imageSmall);
 
@@ -440,7 +455,10 @@ namespace DebugStream
 
     debugStreamBuffer_.PushBack("PlanarTransformation_f32", oneTransformation, oneTransformationLength);
 
-    Array<u8> imageSmall(60, 80, offchipScratch);
+    const s32 height = CameraModeInfo[debugStreamResolution_].height;
+    const s32 width  = CameraModeInfo[debugStreamResolution_].width;
+
+    Array<u8> imageSmall(height, width, offchipScratch);
     DownsampleHelper(image, imageSmall, ccmScratch);
     debugStreamBuffer_.PushBack(imageSmall);
 
@@ -508,10 +526,14 @@ namespace MatlabVisualization
 
   static ReturnCode SendDrawNow() { return EXIT_SUCCESS; }
 
+  static ReturnCode SendTrackInit(const Array<u8> &image,
+                                  const Tracker& tracker,
+                                  MemoryStack scratch) { return EXIT_SUCCESS; }
+  
   static ReturnCode SendTrack(const Array<u8>& image,
-    const Messages::DockingErrorSignal& dockErrMsg,
-    const Tracker& tracker,
-    MemoryStack scratch)  { return EXIT_SUCCESS; }
+                              const Tracker& tracker,
+                              const bool converged,
+                              MemoryStack scratch)  { return EXIT_SUCCESS; }
 #else
   static Matlab matlabViz_;
 
@@ -574,10 +596,28 @@ namespace MatlabVisualization
     return EXIT_SUCCESS;
   }
 
+  static ReturnCode SendTrackInit(const Array<u8> &image,
+                                  const Tracker& tracker,
+                                  MemoryStack scratch)
+  {
+    matlabViz_.PutArray(image, "trackingImage");
+    matlabViz_.PutQuad(tracker.get_transformation().get_transformedCorners(scratch), "templateQuad");
+  
+    matlabViz_.EvalStringEcho("h_template = axes('Pos', [0 0 .33 .33], 'Tag', 'TemplateAxes'); "
+                              "imagesc(trackingImage, 'Parent', h_template); hold on; "
+                              "plot(templateQuad([1 2 4 3 1],1), "
+                              "     templateQuad([1 2 4 3 1],2), 'r', "
+                              "     'LineWidth', 2, "
+                              "     'Parent', h_template); "
+                              "set(h_template, 'XLim', [0.9*min(templateQuad(:,1)) 1.1*max(templateQuad(:,1))], "
+                              "                'YLim', [0.9*min(templateQuad(:,2)) 1.1*max(templateQuad(:,2))]);");
+    return EXIT_SUCCESS;
+  }
+  
   static ReturnCode SendTrack(const Array<u8>& image,
-    const Messages::DockingErrorSignal& dockErrMsg,
-    const Tracker& tracker,
-    MemoryStack scratch)
+                              const Tracker& tracker,
+                              const bool converged,
+                              MemoryStack scratch)
   {
     matlabViz_.PutArray(image, "trackingImage");
     //            matlabViz_.EvalStringExplicit("imwrite(trackingImage, "
@@ -587,7 +627,7 @@ namespace MatlabVisualization
       "set(h_axes, 'XLim', [.5 size(trackingImage,2)+.5], "
       "            'YLim', [.5 size(trackingImage,1)+.5]);");
 
-    if(dockErrMsg.didTrackingSucceed)
+    if(converged)
     {
       matlabViz_.PutQuad(tracker.get_transformation().get_transformedCorners(scratch), "transformedQuad");
       matlabViz_.EvalStringEcho("set(h_trackedQuad, 'Visible', 'on', "
@@ -598,7 +638,8 @@ namespace MatlabVisualization
     else
     {
       matlabViz_.EvalStringEcho("set(h_trackedQuad, 'Visible', 'off'); "
-        "title(h_axes, 'Tracking Failed');");
+                                "title(h_axes, 'Tracking Failed'); "
+                                "delete(h_template);");
     }
 
     matlabViz_.EvalString("drawnow");
@@ -741,10 +782,9 @@ namespace VisionState {
 #pragma mark --- Function Implementations ---
 #endif
 
-static ReturnCode DownsampleHelper(
-  const Array<u8>& in,
-  Array<u8>& out,
-  MemoryStack scratch)
+static u32 DownsampleHelper(const Array<u8>& in,
+                                   Array<u8>& out,
+                                   MemoryStack scratch)
 {
   const s32 inWidth  = in.get_size(1);
   const s32 inHeight = in.get_size(0);
@@ -768,17 +808,19 @@ static ReturnCode DownsampleHelper(
     out.Set(in);
   }
 
-  return EXIT_SUCCESS;
+  return downsampleFactor;
 }
 
 static ReturnCode LookForMarkers(
   const Array<u8> &grayscaleImage,
-  const DetectFiducialMarkersParameters::Parameters &parameters,
+  const DetectFiducialMarkersParameters &parameters,
   FixedLengthList<VisionMarker> &markers,
   MemoryStack offchipScratch,
   MemoryStack onchipScratch,
   MemoryStack ccmScratch)
 {
+  AnkiAssert(parameters.isInitialized);
+  
   const s32 maxMarkers = markers.get_maximumSize();
 
   FixedLengthList<Array<f32> > homographies(maxMarkers, ccmScratch);
@@ -829,36 +871,46 @@ static ReturnCode LookForMarkers(
 static ReturnCode InitTemplate(
   const Array<u8> &grayscaleImage,
   const Quadrilateral<f32> &trackingQuad,
-  const TrackerParameters::Parameters &parameters,
+  const TrackerParameters &parameters,
   Tracker &tracker,
   MemoryStack offchipScratch,
   MemoryStack &onchipScratch, //< NOTE: onchip is a reference
   MemoryStack ccmScratch)
 {
+  AnkiAssert(parameters.isInitialized);
+  
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SLOW || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_AFFINE || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE
   // TODO: At some point template initialization should happen at full detection resolution but for
   //       now, we have to downsample to tracking resolution
 
   Array<u8> grayscaleImageSmall(parameters.trackingImageHeight, parameters.trackingImageWidth, ccmScratch);
-  DownsampleHelper(grayscaleImage, grayscaleImageSmall, ccmScratch);
+  u32 downsampleFactor = DownsampleHelper(grayscaleImage, grayscaleImageSmall, ccmScratch);
 
+  AnkiAssert(downsampleFactor > 0);
   // Note that the templateRegion and the trackingQuad are both at DETECTION_RESOLUTION, not
   // necessarily the resolution of the frame.
-  const u32 downsampleFactor = parameters.detectionWidth / parameters.trackingImageWidth;
+  //const u32 downsampleFactor = parameters.detectionWidth / parameters.trackingImageWidth;
   //const u32 downsamplePower = Log2u32(downsampleFactor);
 
-  Quadrilateral<f32> trackingQuadSmall;
+  /*Quadrilateral<f32> trackingQuadSmall;
 
   for(s32 i=0; i<4; ++i) {
     trackingQuadSmall[i].x = trackingQuad[i].x / downsampleFactor;
     trackingQuadSmall[i].y = trackingQuad[i].y / downsampleFactor;
-  }
+  }*/
+  
+  const Array<u8> *displayImage = &grayscaleImageSmall;
+  
+#else
+  
+  const Array<u8> *displayImage = &grayscaleImage;
+  
 #endif // #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SLOW || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_AFFINE || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE
 
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SLOW
   tracker = TemplateTracker::LucasKanadeTracker_Slow(
     grayscaleImageSmall,
-    trackingQuadSmall,
+    trackingQuad,
     parameters.numPyramidLevels,
     Transformations::TRANSFORM_TRANSLATION,
     0.0,
@@ -866,14 +918,14 @@ static ReturnCode InitTemplate(
 #elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_AFFINE
   tracker = TemplateTracker::LucasKanadeTracker_Affine(
     grayscaleImageSmall,
-    trackingQuadSmall,
+    trackingQuad,
     parameters.numPyramidLevels,
     Transformations::TRANSFORM_AFFINE,
     onchipScratch);
 #elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE
   tracker = TemplateTracker::LucasKanadeTracker_Projective(
     grayscaleImageSmall,
-    trackingQuadSmall,
+    trackingQuad,
     parameters.numPyramidLevels,
     Transformations::TRANSFORM_PROJECTIVE,
     onchipScratch);
@@ -891,6 +943,8 @@ static ReturnCode InitTemplate(
   if(!tracker.IsValid()) {
     return EXIT_FAILURE;
   }
+  
+  MatlabVisualization::SendTrackInit(*displayImage, tracker, onchipScratch);
 
   return EXIT_SUCCESS;
 } // InitTemplate()
@@ -898,14 +952,15 @@ static ReturnCode InitTemplate(
 static ReturnCode TrackTemplate(
   const Array<u8> &grayscaleImage,
   const Quadrilateral<f32> &trackingQuad,
-  const TrackerParameters::Parameters &parameters,
+  const TrackerParameters &parameters,
   Tracker &tracker,
-  Messages::DockingErrorSignal &dockErrMsg,
   bool &converged,
   MemoryStack offchipScratch,
   MemoryStack onchipScratch,
   MemoryStack ccmScratch)
 {
+  AnkiAssert(parameters.isInitialized);
+  
   //#if USE_OFFBOARD_VISION
   //  // Send the message out for tracking
   //  HAL::USBSendFrame(frame.data, frame.timestamp,
@@ -961,8 +1016,13 @@ static ReturnCode TrackTemplate(
   s32 numMatches = -1;
 
   const Result trackerResult = tracker.UpdateTrack(
-    grayscaleImage, parameters.edgeDetection_grayvalueThreshold, parameters.edgeDetection_minComponentWidth, parameters.edgeDetection_maxDetectionsPerType, parameters.edgeDetection_everyNLines,
-    parameters.matching_maxTranslationDistance, parameters.matching_maxProjectiveDistance,
+    grayscaleImage,
+    parameters.edgeDetection_grayvalueThreshold,
+    parameters.edgeDetection_minComponentWidth,
+    parameters.edgeDetection_maxDetectionsPerType,
+    parameters.edgeDetection_everyNLines,
+    parameters.matching_maxTranslationDistance,
+    parameters.matching_maxProjectiveDistance,
     parameters.verification_maxTranslationDistance,
     false,
     numMatches,
@@ -977,6 +1037,9 @@ static ReturnCode TrackTemplate(
   if(percentMatchedPixels >= parameters.percentMatchedPixelsThreshold) {
     converged = true;
   }
+  
+#else
+#error Unknown DOCKING_ALGORITHM!
 #endif
 
   if(trackerResult != RESULT_OK) {
@@ -1014,27 +1077,17 @@ static ReturnCode TrackTemplate(
     }
   }
 
-  dockErrMsg.didTrackingSucceed = static_cast<u8>(converged);
-
+  {
 #if DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
-  MatlabVisualization::SendTrack(grayscaleImage, dockErrMsg, tracker, offchipScratch);
+    const Array<u8>* displayImage = &grayscaleImage;
 #else
-  MatlabVisualization::SendTrack(grayscaleImageSmall, dockErrMsg, tracker, offchipScratch)
-  ;
+    const Array<u8>* displayImage = &grayscaleImageSmall;
 #endif
-  
-  if(converged) {
-    Docking::ComputeDockingErrorSignal(tracker.get_transformation(),
-      parameters.trackingImageWidth,
-      parameters.blockMarkerWidthInMM,
-      parameters.horizontalFocalLengthInMM,
-      dockErrMsg.x_distErr,
-      dockErrMsg.y_horErr,
-      dockErrMsg.angleErr,
-      onchipScratch);
+    MatlabVisualization::SendTrack(*displayImage, tracker, converged, offchipScratch);
   }
-
-  DebugStream::SendTrackingUpdate(grayscaleImage, tracker.get_transformation(), ccmScratch, offchipScratch);
+  
+  DebugStream::SendTrackingUpdate(grayscaleImage, tracker.get_transformation(),
+                                  ccmScratch, offchipScratch);
 
   return EXIT_SUCCESS;
 } // TrackTemplate()
@@ -1045,26 +1098,60 @@ static ReturnCode TrackTemplate(
 namespace Anki {
   namespace Cozmo {
     namespace VisionSystem {
+      
+      static DetectFiducialMarkersParameters detectionParameters_;
+      static TrackerParameters               trackerParameters_;
+      static HAL::CameraMode                 captureResolution_;
+      
       ReturnCode Init()
       {
+        ReturnCode result = EXIT_SUCCESS;
+        
         if(!isInitialized_) {
+          captureResolution_ = HAL::CAMERA_MODE_QVGA;
+          
           // WARNING: the order of these initializations matter!
+          
           // TODO: Figure out the intertwinedness
-          // TODO: add error handling
-          VisionState::Initialize(); // FIRST!
-          VisionMemory::Initialize();
+          
+          // Do this one FIRST! this initializes headCamInfo_
+          result = VisionState::Initialize();
+          if(result != EXIT_SUCCESS) { return result; }
+          
+          result = VisionMemory::Initialize();
+          if(result != EXIT_SUCCESS) { return result; }
 
-          DebugStream::Initialize();
-          DetectFiducialMarkersParameters::Initialize();
-          TrackerParameters::Initialize(VisionState::headCamInfo_->focalLength_x);
-          SimulatorParameters::Initialize();
-          MatlabVisualization::Initialize();
-          //Offboard::Initialize();
+          result = DebugStream::Initialize();
+          if(result != EXIT_SUCCESS) { return result; }
+          
+          AnkiAssert(VisionState::headCamInfo_ != NULL);
+          
+          detectionParameters_.Initialize();
+          trackerParameters_.Initialize();
+          
+          //result = DetectFiducialMarkersParameters::Initialize();
+          //if(result != EXIT_SUCCESS) { return result; }
+          
+          //result = TrackerParameters::Initialize(detectionParameters_.detectionResolution,
+          //                                       VisionState::headCamInfo_->focalLength_x);
+          //if(result != EXIT_SUCCESS) { return result; }
+          
+          result = SimulatorParameters::Initialize();
+          if(result != EXIT_SUCCESS) { return result; }
+          
+          result = MatlabVisualization::Initialize();
+          if(result != EXIT_SUCCESS) { return result; }
+          
+          //result = Offboard::Initialize();
+          //if(result != EXIT_SUCCESS) { return result; }
+
+          AnkiAssert(detectionParameters_.isInitialized);
+          AnkiAssert(trackerParameters_.isInitialized);
 
           isInitialized_ = true;
         }
 
-        return EXIT_SUCCESS;
+        return result;
       }
 
       void Destroy()
@@ -1155,7 +1242,8 @@ namespace Anki {
         
         if(VisionState::mode_ == VISION_MODE_IDLE) {
           // Nothing to do!
-        } else if(VisionState::mode_ == VISION_MODE_LOOKING_FOR_MARKERS) {
+        }
+        else if(VisionState::mode_ == VISION_MODE_LOOKING_FOR_MARKERS) {
 #ifdef SIMULATOR
           SimulatorParameters::frameRdyTimeUS_ = HAL::GetMicroCounter() + SimulatorParameters::LOOK_FOR_BLOCK_PERIOD_US;
 #endif
@@ -1164,13 +1252,18 @@ namespace Anki {
 
           MemoryStack offchipScratch_local(VisionMemory::offchipScratch_);
 
-          Array<u8> grayscaleImage(240, 320, offchipScratch_local, Flags::Buffer(false,false,false));
+          const s32 captureHeight = CameraModeInfo[captureResolution_].height;
+          const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
+          
+          Array<u8> grayscaleImage(captureHeight, captureWidth,
+                                   offchipScratch_local, Flags::Buffer(false,false,false));
 
-          HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()), HAL::CAMERA_MODE_QVGA, exposure, false);
+          HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
+                              captureResolution_, exposure, false);
 
           const ReturnCode result = LookForMarkers(
             grayscaleImage,
-            DetectFiducialMarkersParameters::parameters_,
+            detectionParameters_,
             VisionMemory::markers_,
             offchipScratch_local,
             VisionMemory::onchipScratch_,
@@ -1230,7 +1323,7 @@ namespace Anki {
               const ReturnCode result = InitTemplate(
                 grayscaleImage,
                 VisionState::trackingQuad_,
-                TrackerParameters::parameters_,
+                trackerParameters_,
                 VisionState::tracker_,
                 offchipScratch_local,
                 VisionMemory::onchipScratch_, //< NOTE: onchip is a reference
@@ -1250,23 +1343,26 @@ namespace Anki {
           SimulatorParameters::frameRdyTimeUS_ = HAL::GetMicroCounter() + SimulatorParameters::TRACK_BLOCK_PERIOD_US;
 #endif
 
-          Messages::DockingErrorSignal dockErrMsg;
-          dockErrMsg.timestamp = imageTimeStamp;
-
+          
           MemoryStack offchipScratch_local(VisionMemory::offchipScratch_);
 
-          Array<u8> grayscaleImage(240, 320, offchipScratch_local, Flags::Buffer(false,false,false));
+          const s32 captureHeight = CameraModeInfo[captureResolution_].height;
+          const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
+          
+          Array<u8> grayscaleImage(captureHeight, captureWidth,
+                                   offchipScratch_local, Flags::Buffer(false,false,false));
+          
+          HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
+                              captureResolution_, exposure, false);
 
-          HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()), HAL::CAMERA_MODE_QVGA, exposure, false);
-
-          bool converged;
-
+          // Set by TrackTemplate() call
+          bool converged = false;
+          
           const ReturnCode result = TrackTemplate(
             grayscaleImage,
             VisionState::trackingQuad_,
-            TrackerParameters::parameters_,
+            trackerParameters_,
             VisionState::tracker_,
-            dockErrMsg,
             converged,
             offchipScratch_local,
             VisionMemory::onchipScratch_,
@@ -1276,8 +1372,30 @@ namespace Anki {
             PRINT("VisionSystem::Update(): TrackTemplate() failed.\n");
             return EXIT_FAILURE;
           }
+          
+          Messages::DockingErrorSignal dockErrMsg;
+          dockErrMsg.timestamp = imageTimeStamp;
+          dockErrMsg.didTrackingSucceed = static_cast<u8>(converged);
+          
+          if(converged)
+          {
+            // Compute the effective focal length for tracking
+            const u32 downsampleFactor = (1 << CameraModeInfo[detectionParameters_.detectionResolution].downsamplePower[trackerParameters_.trackingResolution]);
+            
+            const f32 horizontalFocalLengthInMM = VisionState::headCamInfo_->focalLength_x / static_cast<f32>(downsampleFactor);
+            
+            Docking::ComputeDockingErrorSignal(VisionState::tracker_.get_transformation(),
+                                               trackerParameters_.trackingImageWidth,
+                                               trackerParameters_.blockMarkerWidthInMM,
+                                               horizontalFocalLengthInMM,
+                                               dockErrMsg.x_distErr,
+                                               dockErrMsg.y_horErr,
+                                               dockErrMsg.angleErr,
+                                               VisionMemory::onchipScratch_);
+          }
 
           Messages::ProcessDockingErrorSignalMessage(dockErrMsg);
+          
 
           // TODO: put somewhere else?
           if(converged) {
