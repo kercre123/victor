@@ -135,28 +135,34 @@ namespace Anki {
                           "BlockWorld NULL when MessageHandler::ProcessMessage(VisionMarker) called.");
       }
       else {
-        Quad2f corners;
-        
-        corners[Quad::TopLeft].x()     = msg.x_imgUpperLeft;
-        corners[Quad::TopLeft].y()     = msg.y_imgUpperLeft;
-        
-        corners[Quad::BottomLeft].x()  = msg.x_imgLowerLeft;
-        corners[Quad::BottomLeft].y()  = msg.y_imgLowerLeft;
-        
-        corners[Quad::TopRight].x()    = msg.x_imgUpperRight;
-        corners[Quad::TopRight].y()    = msg.y_imgUpperRight;
-        
-        corners[Quad::BottomRight].x() = msg.x_imgLowerRight;
-        corners[Quad::BottomRight].y() = msg.y_imgLowerRight;
-        
         CORETECH_ASSERT(robot != NULL);
-        
         const Vision::Camera& camera = robot->get_camHead();
-        Vision::ObservedMarker marker(msg.markerType, corners, camera);
         
-        // Give this vision marker to BlockWorld for processing
-        blockWorld_->QueueObservedMarker(marker);
-        
+        if(camera.isCalibrated()) {
+          Quad2f corners;
+          
+          corners[Quad::TopLeft].x()     = msg.x_imgUpperLeft;
+          corners[Quad::TopLeft].y()     = msg.y_imgUpperLeft;
+          
+          corners[Quad::BottomLeft].x()  = msg.x_imgLowerLeft;
+          corners[Quad::BottomLeft].y()  = msg.y_imgLowerLeft;
+          
+          corners[Quad::TopRight].x()    = msg.x_imgUpperRight;
+          corners[Quad::TopRight].y()    = msg.y_imgUpperRight;
+          
+          corners[Quad::BottomRight].x() = msg.x_imgLowerRight;
+          corners[Quad::BottomRight].y() = msg.y_imgLowerRight;
+          
+          Vision::ObservedMarker marker(msg.markerType, corners, camera);
+          
+          // Give this vision marker to BlockWorld for processing
+          blockWorld_->QueueObservedMarker(marker);
+        }
+        else {
+          PRINT_NAMED_WARNING("MessageHandler::CalibrationNotSet",
+                              "Received VisionMarker message from robot before "
+                              "camera calibration was set on Basestation.");
+        }
         retVal = EXIT_SUCCESS;
       }
       
@@ -225,11 +231,11 @@ namespace Anki {
         // Text is ready to print
         if (textIdx == 0) {
           // This message is not a part of a longer message. Just print!
-          printf("ROBOT-PRINT: %s", newText);
+          printf("ROBOT-PRINT (%d): %s", robot->get_ID(), newText);
         } else {
           // This message is part of a longer message. Copy to local buffer and print.
           memcpy(text + textIdx, newText, strlen(newText)+1);
-          printf("ROBOT-PRINT: %s", text);
+          printf("ROBOT-PRINT (%d): %s", robot->get_ID(), text);
           textIdx = 0;
         }
       } else {
@@ -259,6 +265,7 @@ namespace Anki {
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageAppendPathSegmentLine const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageBlockMarkerObserved const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageMatCameraCalibration const&){return EXIT_FAILURE;}
+    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageRequestCamCalib const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageAbsLocalizationUpdate const&){return EXIT_FAILURE;}
     
   } // namespace Cozmo

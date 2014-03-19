@@ -201,6 +201,9 @@ ADD_MESSAGE_MEMBER(f32, yPosition)
 ADD_MESSAGE_MEMBER(f32, headingAngle)
 END_MESSAGE_DEFINITION(AbsLocalizationUpdate)
 
+// RequestCamCalib
+START_TIMESTAMPED_MESSAGE_DEFINITION(RequestCamCalib, 1)
+END_MESSAGE_DEFINITION(RequestCamCalib)
 
 // Common Camera Calibration Message Members:
 // TODO: Remove fov?  (it can be computed from focal length)

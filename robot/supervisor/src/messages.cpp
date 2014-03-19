@@ -210,6 +210,35 @@ namespace Anki {
       } // ProcessAbsLocalizationUpdateMessage()
       
       
+      void ProcessRequestCamCalibMessage(const RequestCamCalib& msg)
+      {
+        const HAL::CameraInfo* headCamInfo = HAL::GetHeadCamInfo();
+        if(headCamInfo == NULL) {
+          PRINT("NULL HeadCamInfo retrieved from HAL.\n");
+        }
+        else {
+          Messages::HeadCameraCalibration headCalibMsg = {
+            headCamInfo->focalLength_x,
+            headCamInfo->focalLength_y,
+            headCamInfo->fov_ver,
+            headCamInfo->center_x,
+            headCamInfo->center_y,
+            headCamInfo->skew,
+            headCamInfo->nrows,
+            headCamInfo->ncols
+          };
+          
+          
+          if(!HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::HeadCameraCalibration),
+                                   &headCalibMsg))
+          {
+            PRINT("Failed to send camera calibration message.\n");
+          }
+        }
+
+      }
+      
+      
       void ProcessVisionMarkerMessage(const VisionMarker& msg)
       {
 #if defined(SIMULATOR)

@@ -73,6 +73,9 @@ namespace Anki {
       
       ///////// Messaging ////////
       
+      // Request camera calibration from robot
+      ReturnCode SendRequestCamCalib() const;
+      
       // Clears the path that the robot is executing which also stops the robot
       ReturnCode SendClearPath() const;
       

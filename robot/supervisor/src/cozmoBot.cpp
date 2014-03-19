@@ -88,36 +88,6 @@ namespace Anki {
         return isDone;
       }
       
-      ReturnCode SendCameraCalibToBase()
-      {
-        ReturnCode retVal = EXIT_FAILURE;
-        
-        const HAL::CameraInfo* headCamInfo = HAL::GetHeadCamInfo();
-        if(headCamInfo == NULL) {
-          PRINT("NULL HeadCamInfo retrieved from HAL.\n");
-        }
-        else {
-          Messages::HeadCameraCalibration headCalibMsg = {
-            headCamInfo->focalLength_x,
-            headCamInfo->focalLength_y,
-            headCamInfo->fov_ver,
-            headCamInfo->center_x,
-            headCamInfo->center_y,
-            headCamInfo->skew,
-            headCamInfo->nrows,
-            headCamInfo->ncols
-          };
-          
-          PRINT("Robot sending camera calibration message.\n");
-          if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::HeadCameraCalibration),
-                                   &headCalibMsg))
-          {
-            retVal = EXIT_SUCCESS;
-          }
-        }
-        
-        return retVal;
-      }
       
       ReturnCode Init(void)
       {
@@ -225,18 +195,12 @@ namespace Anki {
         // Check if there is a new or dropped connection to a basestation
         if (HAL::RadioIsConnected() && !wasConnected_) {
           PRINT("Robot %d's radio is connected.\n", HAL::GetRobotID());
-          
-          if(SendCameraCalibToBase() == EXIT_FAILURE) {
-            PRINT("Failed to send camera calibration to base.");
-            // TODO: die here or what?
-          } else {
-            wasConnected_ = true;
-          }
+          wasConnected_ = true;
         } else if (!HAL::RadioIsConnected() && wasConnected_) {
           PRINT("Radio disconnected\n");
           wasConnected_ = false;
         }
-        
+
         // Process any messages from the basestation
         Messages::ProcessBTLEMessages();
 #ifndef USE_OFFBOARD_VISION
