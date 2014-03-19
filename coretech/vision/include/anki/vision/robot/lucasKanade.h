@@ -91,7 +91,49 @@ namespace Anki
         Result IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const Transformations::TransformType curTransformType, const bool useWeights, bool &converged, MemoryStack scratch);
       }; // class LucasKanadeTracker_Slow
 
-      class LucasKanadeTracker_Affine
+      class LucasKanadeTracker_Fast
+      {
+      public:
+        LucasKanadeTracker_Fast(const Transformations::TransformType maxSupportedTransformType);
+        LucasKanadeTracker_Fast(const Transformations::TransformType maxSupportedTransformType, const Array<u8> &templateImage, const Quadrilateral<f32> &templateQuad, const s32 numPyramidLevels, const Transformations::TransformType transformType, MemoryStack &memory);
+
+        bool IsValid() const;
+
+        Result set_transformation(const Transformations::PlanarTransformation_f32 &transformation);
+
+        Transformations::PlanarTransformation_f32 get_transformation() const;
+
+      protected:
+        Transformations::TransformType maxSupportedTransformType;
+
+        FixedLengthList<Meshgrid<f32> > templateCoordinates;
+        FixedLengthList<Array<u8> > templateImagePyramid;
+        FixedLengthList<Array<s16> > templateImageXGradientPyramid;
+        FixedLengthList<Array<s16> > templateImageYGradientPyramid;
+
+        s32 numPyramidLevels;
+
+        // The templateImage sizes are the sizes of the image that contains the template
+        s32 templateImageHeight;
+        s32 templateImageWidth;
+
+        // The templateRegion sizes are the sizes of the part of the template image that will
+        // actually be tracked, so must be smaller or equal to the templateImage sizes
+        f32 templateRegionHeight;
+        f32 templateRegionWidth;
+
+        Transformations::PlanarTransformation_f32 transformation;
+
+        // Template region coordinates are scaled from the standard resolution
+        // by templateImage.get_size(1) / BASE_IMAGE_WIDTH
+        Rectangle<f32> templateRegion;
+
+        bool isValid;
+
+        //Result Initialize(const Transformations::TransformType maxSupportedTransformType, const Array<u8> &templateImage, const Quadrilateral<f32> &templateQuad, const s32 numPyramidLevels, const Transformations::TransformType transformType, MemoryStack &memory);
+      }; // class LucasKanadeTracker_Fast
+
+      class LucasKanadeTracker_Affine : public LucasKanadeTracker_Fast
       {
         // An Translation-only or Affine-plus-translation LucasKanadeTracker. Unlike the general
         // LucasKanadeTracker, this version uses much less memory, and could be better optimized.
@@ -102,44 +144,14 @@ namespace Anki
 
         Result UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, bool& converged, MemoryStack scratch);
 
-        bool IsValid() const;
-
-        Result set_transformation(const Transformations::PlanarTransformation_f32 &transformation);
-
-        Transformations::PlanarTransformation_f32 get_transformation() const;
-
       protected:
-        FixedLengthList<Meshgrid<f32> > templateCoordinates;
-        FixedLengthList<Array<u8> > templateImagePyramid;
-        FixedLengthList<Array<s16> > templateImageXGradientPyramid;
-        FixedLengthList<Array<s16> > templateImageYGradientPyramid;
-
-        s32 numPyramidLevels;
-
-        // The templateImage sizes are the sizes of the image that contains the template
-        s32 templateImageHeight;
-        s32 templateImageWidth;
-
-        // The templateRegion sizes are the sizes of the part of the template image that will
-        // actually be tracked, so must be smaller or equal to the templateImage sizes
-        f32 templateRegionHeight;
-        f32 templateRegionWidth;
-
-        Transformations::PlanarTransformation_f32 transformation;
-
-        // Template region coordinates are scaled from the standard resolution
-        // by templateImage.get_size(1) / BASE_IMAGE_WIDTH
-        Rectangle<f32> templateRegion;
-
-        bool isValid;
-
         Result IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const Transformations::TransformType curTransformType, bool &converged, MemoryStack scratch);
 
         Result IterativelyRefineTrack_Translation(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack scratch);
         Result IterativelyRefineTrack_Affine(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack scratch);
       }; // class LucasKanadeTracker_Affine
 
-      class LucasKanadeTracker_Projective
+      class LucasKanadeTracker_Projective : public LucasKanadeTracker_Fast
       {
         // A Projective-plus-translation LucasKanadeTracker. Unlike the general LucasKanadeTracker,
         // this version uses much less memory, and could be better optimized.
@@ -150,37 +162,7 @@ namespace Anki
 
         Result UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, bool& converged, MemoryStack scratch);
 
-        bool IsValid() const;
-
-        Result set_transformation(const Transformations::PlanarTransformation_f32 &transformation);
-
-        Transformations::PlanarTransformation_f32 get_transformation() const;
-
       protected:
-        FixedLengthList<Meshgrid<f32> > templateCoordinates;
-        FixedLengthList<Array<u8> > templateImagePyramid;
-        FixedLengthList<Array<s16> > templateImageXGradientPyramid;
-        FixedLengthList<Array<s16> > templateImageYGradientPyramid;
-
-        s32 numPyramidLevels;
-
-        // The templateImage sizes are the sizes of the image that contains the template
-        s32 templateImageHeight;
-        s32 templateImageWidth;
-
-        // The templateRegion sizes are the sizes of the part of the template image that will
-        // actually be tracked, so must be smaller or equal to the templateImage sizes
-        f32 templateRegionHeight;
-        f32 templateRegionWidth;
-
-        Transformations::PlanarTransformation_f32 transformation;
-
-        // Template region coordinates are scaled from the standard resolution
-        // by templateImage.get_size(1) / BASE_IMAGE_WIDTH
-        Rectangle<f32> templateRegion;
-
-        bool isValid;
-
         Result IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const Transformations::TransformType curTransformType, bool &converged, MemoryStack scratch);
 
         Result IterativelyRefineTrack_Translation(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack scratch);
