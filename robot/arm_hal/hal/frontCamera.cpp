@@ -33,6 +33,15 @@ namespace Anki
       const u32 DCMI_TIMEOUT_MAX = 10000;
       const u8 I2C_ADDR = 0x42;
       
+      const u32 RESOLUTIONS[CAMERA_MODE_COUNT][2] = 
+      {
+        {640, 480},
+        {320, 240},
+        {160, 120},
+        {80, 60},
+        {40, 30}
+      };
+      
       const u8 OV7725_VGA[][2] =
       {
         0x12, 0x80,
@@ -55,7 +64,7 @@ namespace Anki
         0x63, 0xe0,  // AWB Control Byte 0
         0x64, 0xff,  // DSP_Ctrl1
         0x65, 0x20,  // DSP_Ctrl2
-        0x0c, 0x10,  // flip Y with UV
+        0x0c, 0xd0,  // Vertical flip | horizontal mirror | flip Y with UV
         0x66, 0x00,  // DSP_Ctrl3
         //0x67, 0x4a,  // DSP_Ctrl4 - Output Selection = RAW8
         0x13, 0xf0,  // COM8 - gain control stuff... | AGC enable
@@ -416,21 +425,18 @@ namespace Anki
         // and we support resolution changes in the actual hardware
         
         // Copy the Y-channel into frame
-#warning This is broken
-        /*u32 xRes = CameraModeInfo[mode].width;
-        u32 yRes = CameraModeInfo[mode].height;*/
-        
-        u32 xRes = 320;
-        u32 yRes = 240;
+
+        u32 xRes = RESOLUTIONS[mode][0];
+        u32 yRes = RESOLUTIONS[mode][1];
         
         u32 xSkip = 320 / xRes;
         u32 ySkip = 240 / yRes;
         
-        u32 dataY = yRes - 1;
-        for (u32 y = 0; y < 240; y += ySkip, dataY--)
+        u32 dataY = 0;
+        for (u32 y = 0; y < 240; y += ySkip, dataY++)
         {
-          u32 dataX = xRes - 1;
-          for (u32 x = 0; x < 320; x += xSkip, dataX--)
+          u32 dataX = 0;
+          for (u32 x = 0; x < 320; x += xSkip, dataX++)
           {
             frame[dataY * xRes + dataX] = m_buffer[y * 320 * 2 + x * 2];
           }
