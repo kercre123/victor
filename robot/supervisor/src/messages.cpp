@@ -10,6 +10,7 @@
 #include "liftController.h"
 #include "headController.h"
 #include "dockingController.h"
+#include "pickAndPlaceController.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -93,6 +94,9 @@ namespace Anki {
         MultiMailbox<Messages::VisionMarker, MAX_MARKER_MESSAGES> visionMarkerMailbox_;
         Mailbox<Messages::DockingErrorSignal>   dockingMailbox_;
         
+
+        static RobotState robotState_;
+        
       } // private namespace
       
 
@@ -138,6 +142,10 @@ namespace Anki {
         
         return true;
         
+      }
+      
+      RobotState const& GetRobotStateMsg() {
+        return robotState_;
       }
       
       
@@ -296,7 +304,11 @@ namespace Anki {
         HeadController::SetDesiredAngle(msg.angle_rad);
       }
       
-      
+      void ProcessStopAllMotorsMessage(const StopAllMotors& msg) {
+        SteeringController::ExecuteDirectDrive(0,0);
+        LiftController::SetAngularVelocity(0);
+        HeadController::SetAngularVelocity(0);
+      }
       
       
       // TODO: Fill these in once they are needed/used:
@@ -332,6 +344,32 @@ namespace Anki {
       }
       
 // ----------- Send messages -----------------
+      
+      
+      ReturnCode SendRobotStateMsg()
+      {
+        robotState_.timestamp = HAL::GetTimeStamp();
+        
+        Radians poseAngle;
+        
+        Localization::GetCurrentMatPose(robotState_.pose_x, robotState_.pose_y, poseAngle);
+        robotState_.pose_z = 0;
+        robotState_.pose_angle = poseAngle.ToFloat();
+        
+        WheelController::GetFilteredWheelSpeeds(robotState_.lwheel_speed_mmps, robotState_.rwheel_speed_mmps);
+
+        robotState_.headAngle  = HeadController::GetAngleRad();
+        robotState_.liftHeight = LiftController::GetHeightMM();
+
+        robotState_.isTraversingPath = PathFollower::IsTraversingPath() ? 1 : 0;
+        robotState_.isCarryingBlock = PickAndPlaceController::IsCarryingBlock() ? 1 : 0;
+        
+        if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RobotState), &robotState_) == true) {
+          return EXIT_SUCCESS;
+        } else {
+          return EXIT_FAILURE;
+        }
+      }
       
       
       void SendText(const char *format, ...)

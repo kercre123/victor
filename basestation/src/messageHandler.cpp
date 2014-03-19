@@ -206,6 +206,10 @@ namespace Anki {
       Vec3f translation(msg.pose_x, msg.pose_y, msg.pose_z);
       robot->set_pose(Pose3d(msg.pose_angle, axis, translation));
       
+      // Update other state vars
+      robot->SetTraversingPath( msg.isTraversingPath );
+      robot->SetCarryingBlock( msg.isCarryingBlock );
+      
       return EXIT_SUCCESS;
     }
 
@@ -244,6 +248,7 @@ namespace Anki {
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageDriveWheelsCurvature const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageMoveLift const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageMoveHead const&){return EXIT_FAILURE;}
+    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageStopAllMotors const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageRobotAvailable const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageMatMarkerObserved const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageRobotAddedToWorld const&){return EXIT_FAILURE;}

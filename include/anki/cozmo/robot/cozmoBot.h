@@ -30,7 +30,6 @@ namespace Anki {
       // State Machine Operation Modes
       //
       enum OperationMode {
-        INIT_RADIO_CONNECTION,
         INIT_MOTOR_CALIBRATION,
         WAITING,
         PICK_UP_BLOCK,

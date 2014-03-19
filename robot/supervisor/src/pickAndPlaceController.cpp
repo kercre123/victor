@@ -46,7 +46,7 @@ namespace Anki {
         f32 dockOffsetDistY_ = 0;
         f32 dockOffsetAng_ = 0;
         
-        
+        bool isCarryingBlock_ = false;
         bool lastActionSucceeded_ = false;
         
         // When to transition to the next state. Only some states use this.
@@ -143,6 +143,7 @@ namespace Anki {
                 case DOCKING_HIGH:
                   mode_ = IDLE;
                   lastActionSucceeded_ = true;
+                  isCarryingBlock_ = true;
                   break;
                 case PLACING_HIGH:
                   SteeringController::ExecuteDirectDrive(BACKOUT_SPEED_MMPS, BACKOUT_SPEED_MMPS);
@@ -158,18 +159,16 @@ namespace Anki {
             if (HAL::GetMicroCounter() > transitionTime_) {
               PRINT("PAP: LOWERING LIFT\n");
               SteeringController::ExecuteDirectDrive(0,0);
-              HAL::MotorSetPower(HAL::MOTOR_LIFT, -0.3);
-              transitionTime_ = HAL::GetMicroCounter() + LIFT_MOTION_TIME_US;
+              LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
               mode_ = LOWER_LIFT;
             }
             break;
           case LOWER_LIFT:
-            if (HAL::GetMicroCounter() > transitionTime_) {
+            if (LiftController::IsInPosition()) {
               PRINT("PAP: IDLE\n");
-              HAL::MotorSetPower(HAL::MOTOR_LIFT, 0);
-              //SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
               mode_ = IDLE;
               lastActionSucceeded_ = true;
+              isCarryingBlock_ = false;
             }
             break;
             
@@ -191,6 +190,11 @@ namespace Anki {
       bool IsBusy()
       {
         return mode_ != IDLE;
+      }
+
+      bool IsCarryingBlock()
+      {
+        return isCarryingBlock_;
       }
                 
       void PickUpBlock(const Vision::MarkerType blockMarker, const f32 markerWidth_mm, const u8 level)

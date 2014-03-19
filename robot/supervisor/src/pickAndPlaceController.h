@@ -53,7 +53,7 @@ namespace Anki {
       Mode GetMode();
       
       bool IsBusy();
-
+      bool IsCarryingBlock();
       bool DidLastActionSucceed();
 
       // level: 0 = block is at same height as robot (i.e. robot floor height)

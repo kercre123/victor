@@ -201,11 +201,12 @@ struct TrackerParameters {
   void Initialize()
   {
     // LK Trackers running at QQQVGA (80x60)
-    trackingResolution   = HAL::CAMERA_MODE_QQQVGA; // 80x60
+    //trackingResolution   = HAL::CAMERA_MODE_QQQVGA; // 80x60
+    trackingResolution   = HAL::CAMERA_MODE_QQVGA; // 80x60
     
     trackingImageWidth   = CameraModeInfo[trackingResolution].width;
     trackingImageHeight  = CameraModeInfo[trackingResolution].height;
-    numPyramidLevels     = 2;
+    numPyramidLevels     = 4;
     maxIterations        = 25;
     convergenceTolerance = 0.05f;
     useWeights           = true;
@@ -217,6 +218,7 @@ struct TrackerParameters {
 #else // #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SLOW || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_AFFINE || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE
   
   bool isInitialized;
+  HAL::CameraMode trackingResolution;
   s32 trackingImageHeight;
   s32 trackingImageWidth;
   u8  edgeDetection_grayvalueThreshold;
@@ -231,17 +233,17 @@ struct TrackerParameters {
   void Initialize() //const HAL::CameraMode detectionResolution, const f32 detectionFocalLength)
   {
     // Binary tracker works at QVGA (unlike LK)
-    const HAL::CameraMode trackingResolution = HAL::CAMERA_MODE_QVGA;
+    trackingResolution = HAL::CAMERA_MODE_QVGA;
     
-    trackingImageWidth   = HAL::CameraModeInfo[trackingResolution].width;
-    trackingImageHeight  = HAL::CameraModeInfo[trackingResolution].height;
+    trackingImageWidth  = CameraModeInfo[trackingResolution].width;
+    trackingImageHeight = CameraModeInfo[trackingResolution].height;
     
     edgeDetection_grayvalueThreshold    = 128;
     edgeDetection_minComponentWidth     = 2;
     edgeDetection_maxDetectionsPerType  = 2500;
     edgeDetection_everyNLines           = 1;
-    matching_maxTranslationDistance     = 5;
-    matching_maxProjectiveDistance      = 5;
+    matching_maxTranslationDistance     = 7;
+    matching_maxProjectiveDistance      = 7;
     verification_maxTranslationDistance = 1;
     percentMatchedPixelsThreshold       = 0.5f; // TODO: pick a reasonable value
         
@@ -319,8 +321,8 @@ namespace DebugStream
   
 
 #if !defined(SEND_DEBUG_STREAM)
-  static ReturnCode SendFiducialDetection(const Array<u8> &image, const FixedLengthList<VisionMarker> &markers, MemoryStack ccmScratch, MemoryStack offchipScratch) { return EXIT_SUCCESS; }
-  static ReturnCode SendTrackingUpdate(const Array<u8> &image, const Transformations::PlanarTransformation_f32 &transformation, MemoryStack ccmScratch, MemoryStack offchipScratch) { return EXIT_SUCCESS; }
+  static ReturnCode SendFiducialDetection(const Array<u8> &image, const FixedLengthList<VisionMarker> &markers, MemoryStack ccmScratch, MemoryStack onchipScratch, MemoryStack offchipScratch) { return EXIT_SUCCESS; }
+  static ReturnCode SendTrackingUpdate(const Array<u8> &image, const Transformations::PlanarTransformation_f32 &transformation, MemoryStack ccmScratch, MemoryStack onchipScratch, MemoryStack offchipScratch) { return EXIT_SUCCESS; }
   //static ReturnCode SendPrintf(const char * string) { return EXIT_SUCCESS; }
   static ReturnCode SendArray(const Array<u8> &array) { return EXIT_SUCCESS; }
 #else
@@ -382,7 +384,7 @@ namespace DebugStream
   //  return SendBuffer(printfBuffer_);
   //} // void SendPrintf(const char * string)
 
-  static ReturnCode SendFiducialDetection(const Array<u8> &image, const FixedLengthList<VisionMarker> &markers, MemoryStack ccmScratch, MemoryStack offchipScratch)
+  static ReturnCode SendFiducialDetection(const Array<u8> &image, const FixedLengthList<VisionMarker> &markers, MemoryStack ccmScratch, MemoryStack onchipScratch, MemoryStack offchipScratch)
   {
     const f32 curTime = GetTime();
 
@@ -414,30 +416,36 @@ namespace DebugStream
     return SendBuffer(debugStreamBuffer_);
   } // ReturnCode SendDebugStream_Detection()
 
-  static ReturnCode SendTrackingUpdate(const Array<u8> &image, const Transformations::PlanarTransformation_f32 &transformation, MemoryStack ccmScratch, MemoryStack offchipScratch)
+  static ReturnCode SendTrackingUpdate(const Array<u8> &image, const Transformations::PlanarTransformation_f32 &transformation, MemoryStack ccmScratch, MemoryStack onchipScratch, MemoryStack offchipScratch)
   {
     const f32 curTime = GetTime();
 
     // lastBenchmarkTime_algorithmsOnly is set again when the transmission is complete
     lastBenchmarkDuration_algorithmsOnly = curTime - lastBenchmarkTime_algorithmsOnly;
 
-    debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
+    const s32 height = CameraModeInfo[debugStreamResolution_].height;
+    const s32 width  = CameraModeInfo[debugStreamResolution_].width;
+    
+    // TODO: compute max allocation correctly
+    const s32 requiredBytes = height*width + 1024;
+    
+    if(ccmScratch.ComputeLargestPossibleAllocation() >= requiredBytes) {
+      void * buffer = ccmScratch.Allocate(requiredBytes);
+      debugStreamBuffer_ = SerializedBuffer(buffer, requiredBytes);
+    } else if(onchipScratch.ComputeLargestPossibleAllocation() >= requiredBytes) {
+      void * buffer = onchipScratch.Allocate(requiredBytes);
+      debugStreamBuffer_ = SerializedBuffer(buffer, requiredBytes);
+    } else {
+      debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
+    }
 
     // TODO: get the true length
     const s32 oneTransformationLength = 512;
     void * restrict oneTransformation = ccmScratch.Allocate(oneTransformationLength);
 
-#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SLOW || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_AFFINE || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE
     transformation.Serialize(oneTransformation, oneTransformationLength);
-    // TODO: handle the upscaling
-#else
-    transformation.Serialize(oneTransformation, oneTransformationLength);
-#endif
 
     debugStreamBuffer_.PushBack("PlanarTransformation_f32", oneTransformation, oneTransformationLength);
-
-    const s32 height = CameraModeInfo[debugStreamResolution_].height;
-    const s32 width  = CameraModeInfo[debugStreamResolution_].width;
 
     Array<u8> imageSmall(height, width, offchipScratch);
     DownsampleHelper(image, imageSmall, ccmScratch);
@@ -520,7 +528,7 @@ namespace MatlabVisualization
 
   static ReturnCode Initialize()
   {
-    matlabViz_ = Matlab(false);
+    //matlabViz_ = Matlab(false);
     matlabViz_.EvalStringEcho("h_fig  = figure('Name', 'VisionSystem'); "
       "h_axes = axes('Pos', [.1 .1 .8 .8], 'Parent', h_fig); "
       "h_img  = imagesc(0, 'Parent', h_axes); "
@@ -868,7 +876,7 @@ static ReturnCode LookForMarkers(
     offchipScratch, onchipScratch, ccmScratch);
 
   if(result == RESULT_OK) {
-    DebugStream::SendFiducialDetection(grayscaleImage, markers, ccmScratch, offchipScratch);
+    DebugStream::SendFiducialDetection(grayscaleImage, markers, ccmScratch, onchipScratch, offchipScratch);
 
     for(s32 i_marker = 0; i_marker < markers.get_size(); ++i_marker) {
       const VisionMarker crntMarker = markers[i_marker];
@@ -1089,7 +1097,7 @@ static ReturnCode TrackTemplate(
   MatlabVisualization::SendTrack(grayscaleImage, tracker, converged, offchipScratch);
   
   DebugStream::SendTrackingUpdate(grayscaleImage, tracker.get_transformation(),
-                                  ccmScratch, offchipScratch);
+                                  ccmScratch, onchipScratch, offchipScratch);
 
   return EXIT_SUCCESS;
 } // TrackTemplate()
@@ -1354,12 +1362,13 @@ namespace Anki {
           //
           
           MemoryStack offchipScratch_local(VisionMemory::offchipScratch_);
+          MemoryStack onchipScratch_local(VisionMemory::onchipScratch_);
 
           const s32 captureHeight = CameraModeInfo[captureResolution_].height;
           const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
           
           Array<u8> grayscaleImage(captureHeight, captureWidth,
-                                   offchipScratch_local, Flags::Buffer(false,false,false));
+                                   onchipScratch_local, Flags::Buffer(false,false,false));
           
           HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
                               captureResolution_, exposure, false);

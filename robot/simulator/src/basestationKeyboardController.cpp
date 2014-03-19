@@ -18,10 +18,10 @@ namespace Anki {
       // Private memers:
       namespace {
         // Constants for Webots:
-        const f32 DRIVE_VELOCITY_FAST = 70.f; // mm/s
-        const f32 DRIVE_VELOCITY_SLOW = 30.f; // mm/s
+        const f32 DRIVE_VELOCITY_FAST = 60.f; // mm/s
+        const f32 DRIVE_VELOCITY_SLOW = 20.f; // mm/s
         
-        const f32 LIFT_SPEED_RAD_PER_SEC = 0.5f;
+        const f32 LIFT_SPEED_RAD_PER_SEC = 2.f;
         const f32 LIFT_ACCEL_RAD_PER_SEC2 = 10.f;
 
         const f32 HEAD_SPEED_RAD_PER_SEC = 0.5f;
@@ -82,7 +82,7 @@ namespace Anki {
         //const s32 CKEY_HEAD_UPUP  = 87;  // w
         const s32 CKEY_HEAD_UP    = 83;  // s
         const s32 CKEY_HEAD_DOWN  = 88;  // x
-        //const s32 CKEY_UNLOCK     = 32;  // space
+        const s32 CKEY_UNLOCK     = 32;  // space
 
         // Get robot
         robot_ = NULL;
@@ -206,6 +206,12 @@ namespace Anki {
               break;
             }
 
+            case CKEY_UNLOCK: // Stop all motors
+            {
+              robot_->SendStopAllMotors();
+              break;
+            }
+ 
             default:
             {
               // Stop wheels

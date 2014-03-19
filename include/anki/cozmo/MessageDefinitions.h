@@ -53,6 +53,8 @@ ADD_MESSAGE_MEMBER(f32, lwheel_speed_mmps)
 ADD_MESSAGE_MEMBER(f32, rwheel_speed_mmps)
 ADD_MESSAGE_MEMBER(f32, headAngle)
 ADD_MESSAGE_MEMBER(f32, liftHeight)
+ADD_MESSAGE_MEMBER(u8, isTraversingPath)
+ADD_MESSAGE_MEMBER(u8, isCarryingBlock)
 // ...
 END_MESSAGE_DEFINITION(RobotState)
 
@@ -86,6 +88,10 @@ ADD_MESSAGE_MEMBER(f32, angle_rad)
 ADD_MESSAGE_MEMBER(f32, max_speed_rad_per_sec)
 ADD_MESSAGE_MEMBER(f32, accel_rad_per_sec2)
 END_MESSAGE_DEFINITION(MoveHead)
+
+// StopAllMotors
+START_MESSAGE_DEFINITION(StopAllMotors, 1)
+END_MESSAGE_DEFINITION(StopAllMotors)
 
 // ClearPath
 START_MESSAGE_DEFINITION(ClearPath, 1)

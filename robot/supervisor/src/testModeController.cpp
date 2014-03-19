@@ -122,12 +122,14 @@ namespace Anki {
         
         //////// PickAndPlaceTest /////////
         enum {
+          PAP_SET_HEAD_ANGLE,
           PAP_WAITING_FOR_PICKUP_BLOCK,
           PAP_WAITING_FOR_PLACEMENT_BLOCK,
           PAP_DOCKING,
           PAP_PLACING
         };
-        u8 pickAndPlaceState_ = PAP_WAITING_FOR_PICKUP_BLOCK;
+        u8 pickAndPlaceState_ = PAP_SET_HEAD_ANGLE;
+        const f32 DOCKING_HEAD_ANGLE = DEG_TO_RAD(-15);
         
         //const u16 BLOCK_TO_PICK_UP = 60;
         //const u16 BLOCK_TO_PLACE_ON = 50;
@@ -173,10 +175,18 @@ namespace Anki {
       {
         switch(pickAndPlaceState_)
         {
+          case PAP_SET_HEAD_ANGLE:
+          {
+            HeadController::SetDesiredAngle(DOCKING_HEAD_ANGLE);
+            pickAndPlaceState_ = PAP_WAITING_FOR_PICKUP_BLOCK;
+            break;
+          }
           case PAP_WAITING_FOR_PICKUP_BLOCK:
           {
-            PickAndPlaceController::PickUpBlock(BLOCK_TO_PICK_UP, BLOCK_MARKER_WIDTH, 0);
-            pickAndPlaceState_ = PAP_DOCKING;
+            if (HeadController::IsInPosition()) {
+              PickAndPlaceController::PickUpBlock(BLOCK_TO_PICK_UP, BLOCK_MARKER_WIDTH, 0);
+              pickAndPlaceState_ = PAP_DOCKING;
+            }
             break;
           }
           case PAP_DOCKING:
