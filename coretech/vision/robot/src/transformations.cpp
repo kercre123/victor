@@ -187,6 +187,8 @@ namespace Anki
         printf(variableName);
         printf(": center");
         this->centerOffset.Print();
+        printf(" initialCorners");
+        this->initialCorners.Print();
         printf("\n");
 
         return this->homography.Print("homography");
