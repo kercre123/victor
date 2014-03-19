@@ -35,15 +35,17 @@ namespace Anki
         MemoryStack scratch)
       {
         AnkiAssert(blockMarkerWidthInMM > 0.f);
-        
+
         // Set these now, so if there is an error, the robot will start driving in a circle
         rel_x = -1.0;
         rel_y = -1.0f;
         rel_rad = -1.0f;
 
-        if(transform.get_transformType() == Transformations::TRANSFORM_AFFINE)
+        // NOTE: ComputeDockingErrorSignal_Affine will work for affine or projective
+        if(transform.get_transformType() >= Transformations::TRANSFORM_AFFINE)
         {
           Quadrilateral<f32> transformedQuad = transform.get_transformedCorners(scratch);
+
           return ComputeDockingErrorSignal_Affine(transformedQuad,
             horizontalTrackingResolution,
             blockMarkerWidthInMM,

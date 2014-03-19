@@ -217,7 +217,7 @@ namespace Anki
             BeginBenchmark("InitializeTemplate.transformPoints");
             // Compute the warped coordinates (for later)
             //if((lastResult = transformation.TransformPoints(xIn, yIn, scale*initialImageScaleF32, xTransformed, yTransformed)) != RESULT_OK)
-            if((lastResult = transformation.TransformPoints(xIn, yIn, initialImageScaleF32, xTransformed, yTransformed)) != RESULT_OK)
+            if((lastResult = transformation.TransformPoints(xIn, yIn, initialImageScaleF32, true, false, xTransformed, yTransformed)) != RESULT_OK)
               return lastResult;
             EndBenchmark("InitializeTemplate.transformPoints");
 
@@ -492,7 +492,7 @@ namespace Anki
 
           BeginBenchmark("IterativelyRefineTrack.transformPoints");
           //if((lastResult = transformation.TransformPoints(xIn, yIn, scale*initialImageScaleF32, xTransformed, yTransformed)) != RESULT_OK)
-          if((lastResult = transformation.TransformPoints(xIn, yIn, initialImageScaleF32, xTransformed, yTransformed)) != RESULT_OK)
+          if((lastResult = transformation.TransformPoints(xIn, yIn, initialImageScaleF32, true, false, xTransformed, yTransformed)) != RESULT_OK)
             return lastResult;
           EndBenchmark("IterativelyRefineTrack.transformPoints");
 

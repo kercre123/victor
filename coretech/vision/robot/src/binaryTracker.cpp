@@ -85,6 +85,7 @@ namespace Anki
         AnkiConditionalErrorAndReturn(templateImage.IsValid(),
           "BinaryTracker::BinaryTracker", "templateImage is not valid");
 
+        // TODO: make this work for non-qvga resolution
         Point<f32> centerOffset((templateImage.get_size(1)-1) / 2.0f, (templateImage.get_size(0)-1) / 2.0f);
         this->transformation = Transformations::PlanarTransformation_f32(Transformations::TRANSFORM_PROJECTIVE, templateQuad, centerOffset, memory);
 

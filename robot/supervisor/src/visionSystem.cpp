@@ -421,10 +421,6 @@ namespace DebugStream
     // TODO: compute max allocation correctly
     const s32 requiredBytes = height*width + 1024;
 
-    /*if(ccmScratch.ComputeLargestPossibleAllocation() >= requiredBytes) {
-    void * buffer = ccmScratch.Allocate(requiredBytes);
-    debugStreamBuffer_ = SerializedBuffer(buffer, requiredBytes);
-    } else */
     if(onchipScratch.ComputeLargestPossibleAllocation() >= requiredBytes) {
       void * buffer = onchipScratch.Allocate(requiredBytes);
       debugStreamBuffer_ = SerializedBuffer(buffer, requiredBytes);
@@ -436,6 +432,8 @@ namespace DebugStream
     const s32 oneTransformationLength = 512;
     void * restrict oneTransformation = ccmScratch.Allocate(oneTransformationLength);
 
+    //transformation.Print();
+    
     transformation.Serialize(oneTransformation, oneTransformationLength);
 
     debugStreamBuffer_.PushBack("PlanarTransformation_f32", oneTransformation, oneTransformationLength);
@@ -1321,10 +1319,7 @@ namespace Anki {
                 Point<f32>(crntMarker.corners[1].x, crntMarker.corners[1].y),
                 Point<f32>(crntMarker.corners[2].x, crntMarker.corners[2].y),
                 Point<f32>(crntMarker.corners[3].x, crntMarker.corners[3].y));
-
-              //VisionState::trackingQuad_.Print();
-              //printf("\n");
-
+              
               const ReturnCode result = InitTemplate(
                 grayscaleImage,
                 VisionState::trackingQuad_,
@@ -1337,6 +1332,10 @@ namespace Anki {
               if(result != EXIT_SUCCESS) {
                 return EXIT_FAILURE;
               }
+              
+              //printf("2:\n");
+              //VisionState::trackingQuad_.Print();
+              //printf("\n");
 
               // Template initialization succeeded, switch to tracking mode:
               // TODO: Log or issue message?
@@ -1376,14 +1375,14 @@ namespace Anki {
           update[0][0] = -horizontalShift;
           update[0][1] = 0.0f;
           VisionState::tracker_.UpdateTransformation(update, 1.0f, onchipScratch_local, Transformations::TRANSFORM_TRANSLATION);
-
+          
           /*const Transformations::PlanarTransformation_f32& oldTransformation = VisionState::tracker_.get_transformation();
           Array<f32> H = oldTransformation.get_homography();
           H[0][2] += horizontalShift; // Adjst the x-translation component of the homography
-          //PRINT("Adjusting transformation by %.3f pixels for %.3fdeg rotation\n", horizontalShift, theta.getDegrees());
+         //PRINT("Adjusting transformation by %.3f pixels for %.3fdeg rotation\n", horizontalShift, theta.getDegrees());
           Transformations::PlanarTransformation_f32 newTransformation(oldTransformation.get_transformType(),
-          oldTransformation.get_initialCorners(),
-          H, VisionMemory::onchipScratch_);
+            oldTransformation.get_initialCorners(),
+            H, VisionMemory::onchipScratch_);
           VisionState::tracker_.set_transformation(newTransformation);*/
 
           //
@@ -1392,6 +1391,10 @@ namespace Anki {
 
           // Set by TrackTemplate() call
           bool converged = false;
+
+          //printf("3:\n");
+          //VisionState::trackingQuad_.Print();
+          //printf("\n");
 
           const ReturnCode result = TrackTemplate(
             grayscaleImage,
@@ -1408,6 +1411,10 @@ namespace Anki {
             return EXIT_FAILURE;
           }
 
+          //printf("4:\n");
+          //VisionState::trackingQuad_.Print();
+          //printf("\n");
+          
           //
           // Create docking error signal from tracker
           //
@@ -1445,6 +1452,10 @@ namespace Anki {
           PRINT("VisionSystem::Update(): reached default case in switch statement.");
           return EXIT_FAILURE;
         }
+        
+        //printf("5:\n");
+        //VisionState::trackingQuad_.Print();
+        //printf("\n");
 
         return EXIT_SUCCESS;
       } // Update()

@@ -67,7 +67,10 @@ namespace Anki
         // Requires at least N*sizeof(f32) bytes of scratch
         Result TransformPoints(
           const Array<f32> &xIn, const Array<f32> &yIn,
-          const f32 scale, Array<f32> &xOut, Array<f32> &yOut) const;
+          const f32 scale,
+          const bool inputPointsAreZeroCentered,
+          const bool outputPointsAreZeroCentered,
+          Array<f32> &xOut, Array<f32> &yOut) const;
 
         // Update the transformation. The format of the update should be as follows:
         // TRANSFORM_TRANSLATION: [-dx, -dy]
@@ -75,7 +78,7 @@ namespace Anki
         // TRANSFORM_PROJECTIVE: [h00, h01, h02, h10, h11, h12, h20, h21]
         Result Update(const Array<f32> &update, const f32 scale, MemoryStack scratch, TransformType updateType=TRANSFORM_UNKNOWN);
 
-        Result Print(const char * const variableName = "Transformation");
+        Result Print(const char * const variableName = "Transformation") const;
 
         // Transform the input Quadrilateral, using this object's transformation
         Quadrilateral<f32> TransformQuadrilateral(const Quadrilateral<f32> &in,
@@ -130,9 +133,11 @@ namespace Anki
           const Array<f32> &xIn, const Array<f32> &yIn,
           const f32 scale,
           const Point<f32>& centerOffset,
-          Array<f32> &xOut, Array<f32> &yOut,
           const TransformType transformType,
-          const Array<f32> &homography);
+          const Array<f32> &homography,
+          const bool inputPointsAreZeroCentered,
+          const bool outputPointsAreZeroCentered,
+          Array<f32> &xOut, Array<f32> &yOut);
 
         Result Init(const TransformType transformType, const Quadrilateral<f32> &initialCorners, const Array<f32> &initialHomography, const Point<f32> &centerOffset, MemoryStack &memory);
       };

@@ -74,12 +74,6 @@ namespace Anki
         this->centerOffset = centerOffset;
         this->initialCorners = initialCorners;
 
-        // Store the initial quad recentered around the centerOffset.
-        // get_transformedCorners() will add it back
-        for(s32 iPoint=0; iPoint<4; iPoint++) {
-          this->initialCorners[iPoint] -= this->centerOffset;
-        }
-
         this->homography = Eye<f32>(3, 3, memory);
 
         if(initialHomography.IsValid()) {
@@ -99,9 +93,16 @@ namespace Anki
       Result PlanarTransformation_f32::TransformPoints(
         const Array<f32> &xIn, const Array<f32> &yIn,
         const f32 scale,
+        const bool inputPointsAreZeroCentered,
+        const bool outputPointsAreZeroCentered,
         Array<f32> &xOut, Array<f32> &yOut) const
       {
-        return TransformPointsStatic(xIn, yIn, scale, this->centerOffset, xOut, yOut, this->get_transformType(), this->get_homography());
+        return TransformPointsStatic(
+          xIn, yIn,
+          scale,
+          this->centerOffset, this->get_transformType(), this->get_homography(),
+          inputPointsAreZeroCentered, outputPointsAreZeroCentered,
+          xOut, yOut);
       }
 
       Result PlanarTransformation_f32::Update(const Array<f32> &update, const f32 scale, MemoryStack scratch, TransformType updateType)
@@ -186,7 +187,7 @@ namespace Anki
         return RESULT_OK;
       }
 
-      Result PlanarTransformation_f32::Print(const char * const variableName)
+      Result PlanarTransformation_f32::Print(const char * const variableName) const
       {
         printf(variableName);
         printf(": center");
@@ -210,7 +211,7 @@ namespace Anki
           yIn[0][i] = in.corners[i].y;
         }
 
-        TransformPoints(xIn, yIn, scale, xOut, yOut);
+        TransformPoints(xIn, yIn, scale, false, false, xOut, yOut);
 
         Quadrilateral<f32> out;
 
@@ -259,12 +260,17 @@ namespace Anki
           f32 * restrict pYIn = yIn.Pointer(y,0);
 
           for(s32 x=0; x<arrWidth; x++) {
-            pXIn[x] = static_cast<f32>(x) - this->centerOffset.x;
-            pYIn[x] = static_cast<f32>(y) - this->centerOffset.y;
+            pXIn[x] = static_cast<f32>(x);
+            pYIn[x] = static_cast<f32>(y);
           }
         }
 
-        TransformPointsStatic(xIn, yIn, scale, this->centerOffset, xTransformed, yTransformed, this->get_transformType(), homographyInv);
+        TransformPointsStatic(
+          xIn, yIn, scale,
+          this->centerOffset,
+          this->get_transformType(), homographyInv,
+          false, true,
+          xTransformed, yTransformed);
 
         /*xIn.Print("xIn", 0,10,0,10);
         yIn.Print("yIn", 0,10,0,10);
@@ -431,10 +437,12 @@ namespace Anki
       Result PlanarTransformation_f32::TransformPointsStatic(
         const Array<f32> &xIn, const Array<f32> &yIn,
         const f32 scale,
-        const Point<f32> &centerOffset,
-        Array<f32> &xOut, Array<f32> &yOut,
+        const Point<f32>& centerOffset,
         const TransformType transformType,
-        const Array<f32> &homography)
+        const Array<f32> &homography,
+        const bool inputPointsAreZeroCentered,
+        const bool outputPointsAreZeroCentered,
+        Array<f32> &xOut, Array<f32> &yOut)
       {
         AnkiConditionalErrorAndReturnValue(homography.IsValid(),
           RESULT_FAIL_INVALID_OBJECT, "PlanarTransformation_f32::TransformPoints", "homography is not valid");
@@ -453,11 +461,13 @@ namespace Anki
         const s32 numPointsY = xIn.get_size(0);
         const s32 numPointsX = xIn.get_size(1);
 
-        if(transformType == TRANSFORM_TRANSLATION) {
-          const Point<f32> centerOffsetScaled(centerOffset.x / scale, centerOffset.y / scale);
+        // If the inputs or outputs should be shifted, set the offset appropriately
+        const Point<f32> inputCenterOffset = inputPointsAreZeroCentered ? Point<f32>(0.0f, 0.0f) : Point<f32>(centerOffset.x, centerOffset.y);
+        const Point<f32> outputCenterOffset = outputPointsAreZeroCentered ? Point<f32>(0.0f, 0.0f) : Point<f32>(centerOffset.x, centerOffset.y);
 
-          const f32 dx = homography[0][2] / scale;
-          const f32 dy = homography[1][2] / scale;
+        if(transformType == TRANSFORM_TRANSLATION) {
+          const f32 dx = (homography[0][2] - inputCenterOffset.x + outputCenterOffset.x) / scale;
+          const f32 dy = (homography[1][2] - inputCenterOffset.y + outputCenterOffset.y) / scale;
 
           for(s32 y=0; y<numPointsY; y++) {
             const f32 * restrict pXIn = xIn.Pointer(y,0);
@@ -466,8 +476,8 @@ namespace Anki
             f32 * restrict pYOut = yOut.Pointer(y,0);
 
             for(s32 x=0; x<numPointsX; x++) {
-              pXOut[x] = pXIn[x] + dx + centerOffsetScaled.x;
-              pYOut[x] = pYIn[x] + dy + centerOffsetScaled.y;
+              pXOut[x] = pXIn[x] + dx;
+              pYOut[x] = pYIn[x] + dy;
             }
           }
         } else if(transformType == TRANSFORM_AFFINE) {
@@ -489,28 +499,32 @@ namespace Anki
                 const f32 xIn = pXIn[x];
                 const f32 yIn = pYIn[x];
 
-                const f32 xp = (h00*xIn + h01*yIn + h02);
-                const f32 yp = (h10*xIn + h11*yIn + h12);
+                // Remove center offset (offset may be zero)
+                const f32 xc = xIn - inputCenterOffset.x;
+                const f32 yc = yIn - inputCenterOffset.y;
 
-                // Restore center offset
-                pXOut[x] = xp + centerOffset.x;
-                pYOut[x] = yp + centerOffset.y;
+                const f32 xp = (h00*xc + h01*yc + h02);
+                const f32 yp = (h10*xc + h11*yc + h12);
+
+                // Restore center offset (offset may be zero)
+                pXOut[x] = xp + outputCenterOffset.x;
+                pYOut[x] = yp + outputCenterOffset.y;
               }
             } else {
               for(s32 x=0; x<numPointsX; x++) {
                 const f32 xIn = pXIn[x] * scale;
                 const f32 yIn = pYIn[x] * scale;
 
-                //// Remove center offset
-                //const f32 xc = pXIn[x] - centerOffset.x;
-                //const f32 yc = pYIn[x] - centerOffset.y;
+                // Remove center offset (offset may be zero)
+                const f32 xc = xIn - inputCenterOffset.x;
+                const f32 yc = yIn - inputCenterOffset.y;
 
-                const f32 xp = (h00*xIn + h01*yIn + h02);
-                const f32 yp = (h10*xIn + h11*yIn + h12);
+                const f32 xp = (h00*xc + h01*yc + h02);
+                const f32 yp = (h10*xc + h11*yc + h12);
 
-                // Restore center offset
-                pXOut[x] = (xp + centerOffset.x) / scale;
-                pYOut[x] = (yp + centerOffset.y) / scale;
+                // Restore center offset (offset may be zero)
+                pXOut[x] = (xp + outputCenterOffset.x) / scale;
+                pYOut[x] = (yp + outputCenterOffset.y) / scale;
               }
             } // if(FLT_NEAR(scale, 1.0f))
           }
@@ -532,36 +546,36 @@ namespace Anki
                 const f32 xIn = pXIn[x];
                 const f32 yIn = pYIn[x];
 
-                const f32 wpi = 1.0f / (h20*xIn + h21*yIn + h22);
+                // Remove center offset (offset may be zero)
+                const f32 xc = xIn - inputCenterOffset.x;
+                const f32 yc = yIn - inputCenterOffset.y;
 
-                //// Remove center offset
-                //const f32 xc = xIn - centerOffset.x;
-                //const f32 yc = yIn - centerOffset.y;
+                const f32 wpi = 1.0f / (h20*xc + h21*yc + h22);
 
-                const f32 xp = (h00*xIn + h01*yIn + h02) * wpi;
-                const f32 yp = (h10*xIn + h11*yIn + h12) * wpi;
+                const f32 xp = (h00*xc + h01*yc + h02) * wpi;
+                const f32 yp = (h10*xc + h11*yc + h12) * wpi;
 
-                // Restore center offset
-                pXOut[x] = xp + centerOffset.x;
-                pYOut[x] = yp + centerOffset.y;
+                // Restore center offset (offset may be zero)
+                pXOut[x] = xp + outputCenterOffset.x;
+                pYOut[x] = yp + outputCenterOffset.y;
               }
             } else {
               for(s32 x=0; x<numPointsX; x++) {
                 const f32 xIn = pXIn[x] * scale;
                 const f32 yIn = pYIn[x] * scale;
 
-                const f32 wpi = 1.0f / (h20*xIn + h21*yIn + h22);
+                // Remove center offset (offset may be zero)
+                const f32 xc = xIn - inputCenterOffset.x;
+                const f32 yc = yIn - inputCenterOffset.y;
 
-                //// Remove center offset
-                //const f32 xc = xIn - centerOffset.x;
-                //const f32 yc = yIn - centerOffset.y;
+                const f32 wpi = 1.0f / (h20*xc + h21*yc + h22);
 
-                const f32 xp = (h00*xIn + h01*yIn + h02) * wpi;
-                const f32 yp = (h10*xIn + h11*yIn + h12) * wpi;
+                const f32 xp = (h00*xc + h01*yc + h02) * wpi;
+                const f32 yp = (h10*xc + h11*yc + h12) * wpi;
 
-                // Restore center offset
-                pXOut[x] = (xp + centerOffset.x) / scale;
-                pYOut[x] = (yp + centerOffset.y) / scale;
+                // Restore center offset (offset may be zero)
+                pXOut[x] = (xp + outputCenterOffset.x) / scale;
+                pYOut[x] = (yp + outputCenterOffset.y) / scale;
               }
             } // if(FLT_NEAR(scale, 1.0f))
           }
