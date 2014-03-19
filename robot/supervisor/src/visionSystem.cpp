@@ -421,10 +421,11 @@ namespace DebugStream
     // TODO: compute max allocation correctly
     const s32 requiredBytes = height*width + 1024;
 
-    if(ccmScratch.ComputeLargestPossibleAllocation() >= requiredBytes) {
-      void * buffer = ccmScratch.Allocate(requiredBytes);
-      debugStreamBuffer_ = SerializedBuffer(buffer, requiredBytes);
-    } else if(onchipScratch.ComputeLargestPossibleAllocation() >= requiredBytes) {
+    /*if(ccmScratch.ComputeLargestPossibleAllocation() >= requiredBytes) {
+    void * buffer = ccmScratch.Allocate(requiredBytes);
+    debugStreamBuffer_ = SerializedBuffer(buffer, requiredBytes);
+    } else */
+    if(onchipScratch.ComputeLargestPossibleAllocation() >= requiredBytes) {
       void * buffer = onchipScratch.Allocate(requiredBytes);
       debugStreamBuffer_ = SerializedBuffer(buffer, requiredBytes);
     } else {
@@ -1085,8 +1086,7 @@ static ReturnCode TrackTemplate(
 
   MatlabVisualization::SendTrack(grayscaleImage, tracker, converged, offchipScratch);
 
-  DebugStream::SendTrackingUpdate(grayscaleImage, tracker.get_transformation(),
-    ccmScratch, onchipScratch, offchipScratch);
+  DebugStream::SendTrackingUpdate(grayscaleImage, tracker.get_transformation(), ccmScratch, onchipScratch, offchipScratch);
 
   return EXIT_SUCCESS;
 } // TrackTemplate()
@@ -1322,6 +1322,9 @@ namespace Anki {
                 Point<f32>(crntMarker.corners[2].x, crntMarker.corners[2].y),
                 Point<f32>(crntMarker.corners[3].x, crntMarker.corners[3].y));
 
+              //VisionState::trackingQuad_.Print();
+              //printf("\n");
+
               const ReturnCode result = InitTemplate(
                 grayscaleImage,
                 VisionState::trackingQuad_,
@@ -1369,14 +1372,19 @@ namespace Anki {
           const Radians theta = VisionState::GetHeadingChange();
           f32 horizontalShift = static_cast<f32>(VisionState::headCamInfo_->nrows/2) * theta.ToFloat() / VisionState::headCamInfo_->fov_ver;
 
-          const Transformations::PlanarTransformation_f32& oldTransformation = VisionState::tracker_.get_transformation();
+          Array<f32> update(1,2,onchipScratch_local);
+          update[0][0] = -horizontalShift;
+          update[0][1] = 0.0f;
+          VisionState::tracker_.UpdateTransformation(update, 1.0f, onchipScratch_local, Transformations::TRANSFORM_TRANSLATION);
+
+          /*const Transformations::PlanarTransformation_f32& oldTransformation = VisionState::tracker_.get_transformation();
           Array<f32> H = oldTransformation.get_homography();
           H[0][2] += horizontalShift; // Adjst the x-translation component of the homography
-          PRINT("Adjusting transformation by %.3f pixels for %.3fdeg rotation\n", horizontalShift, theta.getDegrees());
+          //PRINT("Adjusting transformation by %.3f pixels for %.3fdeg rotation\n", horizontalShift, theta.getDegrees());
           Transformations::PlanarTransformation_f32 newTransformation(oldTransformation.get_transformType(),
-            oldTransformation.get_initialCorners(),
-            H, VisionMemory::onchipScratch_);
-          VisionState::tracker_.set_transformation(newTransformation);
+          oldTransformation.get_initialCorners(),
+          H, VisionMemory::onchipScratch_);
+          VisionState::tracker_.set_transformation(newTransformation);*/
 
           //
           // Update the tracker transformation using this image
@@ -1392,7 +1400,7 @@ namespace Anki {
             VisionState::tracker_,
             converged,
             offchipScratch_local,
-            VisionMemory::onchipScratch_,
+            onchipScratch_local,
             VisionMemory::ccmScratch_);
 
           if(result != EXIT_SUCCESS) {

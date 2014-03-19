@@ -48,6 +48,12 @@ namespace Anki
 
         bool IsValid() const;
 
+        // Update the transformation. The format of the update should be as follows:
+        // TRANSFORM_TRANSLATION: [-dx, -dy]
+        // TRANSFORM_AFFINE: [h00, h01, h02, h10, h11, h12]
+        // TRANSFORM_PROJECTIVE: [h00, h01, h02, h10, h11, h12, h20, h21]
+        Result UpdateTransformation(const Array<f32> &update, const f32 scale, MemoryStack scratch, Transformations::TransformType updateType=Transformations::TRANSFORM_UNKNOWN);
+
         Result set_transformation(const Transformations::PlanarTransformation_f32 &transformation);
 
         Transformations::PlanarTransformation_f32 get_transformation() const;
@@ -98,6 +104,12 @@ namespace Anki
         LucasKanadeTracker_Fast(const Transformations::TransformType maxSupportedTransformType, const Array<u8> &templateImage, const Quadrilateral<f32> &templateQuad, const s32 numPyramidLevels, const Transformations::TransformType transformType, MemoryStack &memory);
 
         bool IsValid() const;
+
+        // Update the transformation. The format of the update should be as follows:
+        // TRANSFORM_TRANSLATION: [-dx, -dy]
+        // TRANSFORM_AFFINE: [h00, h01, h02, h10, h11, h12]
+        // TRANSFORM_PROJECTIVE: [h00, h01, h02, h10, h11, h12, h20, h21]
+        Result UpdateTransformation(const Array<f32> &update, const f32 scale, MemoryStack scratch, Transformations::TransformType updateType=Transformations::TRANSFORM_UNKNOWN);
 
         Result set_transformation(const Transformations::PlanarTransformation_f32 &transformation);
 

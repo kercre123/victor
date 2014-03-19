@@ -55,6 +55,12 @@ namespace Anki
 
         Result ShowTemplate(const bool waitForKeypress, const bool fitImageToWindow) const;
 
+        // Update the transformation. The format of the update should be as follows:
+        // TRANSFORM_TRANSLATION: [-dx, -dy]
+        // TRANSFORM_AFFINE: [h00, h01, h02, h10, h11, h12]
+        // TRANSFORM_PROJECTIVE: [h00, h01, h02, h10, h11, h12, h20, h21]
+        Result UpdateTransformation(const Array<f32> &update, const f32 scale, MemoryStack scratch, Transformations::TransformType updateType=Transformations::TRANSFORM_UNKNOWN);
+
         s32 get_numTemplatePixels() const;
 
         Result set_transformation(const Transformations::PlanarTransformation_f32 &transformation);

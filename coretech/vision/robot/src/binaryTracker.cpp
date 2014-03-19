@@ -273,6 +273,11 @@ namespace Anki
         return true;
       } // bool BinaryTracker::IsValid()
 
+      Result BinaryTracker::UpdateTransformation(const Array<f32> &update, const f32 scale, MemoryStack scratch, Transformations::TransformType updateType)
+      {
+        return this->transformation.Update(update, scale, scratch, updateType);
+      }
+
       s32 BinaryTracker::get_numTemplatePixels() const
       {
         return this->templateEdges.xDecreasing.get_size() +

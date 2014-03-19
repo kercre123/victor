@@ -686,6 +686,11 @@ namespace Anki
         return true;
       }
 
+      Result LucasKanadeTracker_Slow::UpdateTransformation(const Array<f32> &update, const f32 scale, MemoryStack scratch, Transformations::TransformType updateType)
+      {
+        return this->transformation.Update(update, scale, scratch, updateType);
+      }
+
       Result LucasKanadeTracker_Slow::set_transformation(const Transformations::PlanarTransformation_f32 &transformation)
       {
         return this->transformation.Set(transformation);
