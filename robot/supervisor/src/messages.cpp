@@ -334,27 +334,6 @@ namespace Anki {
 // ----------- Send messages -----------------
       
       
-      void SendRobotStateMsg()
-      {
-        Messages::RobotState m;
-        m.timestamp = HAL::GetTimeStamp();
-        
-        Radians poseAngle;
-        
-        Localization::GetCurrentMatPose(m.pose_x, m.pose_y, poseAngle);
-        m.pose_z = 0;
-        m.pose_angle = poseAngle.ToFloat();
-        
-        WheelController::GetFilteredWheelSpeeds(m.lwheel_speed_mmps, m.rwheel_speed_mmps);
-
-        m.headAngle  = HeadController::GetAngleRad();
-        m.liftHeight = LiftController::GetHeightMM();
-
-        
-        HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RobotState), &m);
-      }
-      
-      
       void SendText(const char *format, ...)
       {
         #define MAX_SEND_TEXT_LENGTH 512

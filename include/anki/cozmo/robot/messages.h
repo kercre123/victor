@@ -64,7 +64,6 @@ namespace Anki {
       bool StillLookingForID(void);
       
       // Send messages
-      void SendRobotStateMsg();
       void SendText(const char *format, ...);
       
       

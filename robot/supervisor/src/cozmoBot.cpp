@@ -44,6 +44,8 @@ namespace Anki {
 
         Robot::OperationMode mode_ = INIT_RADIO_CONNECTION;
         
+        static Messages::RobotState robotState_;
+        
       } // Robot private namespace
       
       
@@ -199,6 +201,27 @@ namespace Anki {
         HAL::Destroy();
       }
       
+      // Fills in static RobotState message and sends it
+      void SendRobotStateMsg()
+      {
+        robotState_.timestamp = HAL::GetTimeStamp();
+        
+        Radians poseAngle;
+        
+        Localization::GetCurrentMatPose(robotState_.pose_x, robotState_.pose_y, poseAngle);
+        robotState_.pose_z = 0;
+        robotState_.pose_angle = poseAngle.ToFloat();
+        
+        WheelController::GetFilteredWheelSpeeds(robotState_.lwheel_speed_mmps, robotState_.rwheel_speed_mmps);
+        
+        robotState_.headAngle  = HeadController::GetAngleRad();
+        robotState_.liftHeight = LiftController::GetHeightMM();
+        
+        
+        HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RobotState), &robotState_);
+      }
+
+      
       
       ReturnCode step_MainExecution()
       {
@@ -331,7 +354,7 @@ namespace Anki {
         // Feedback / Display
         //////////////////////////////////////////////////////////////
         
-        Messages::SendRobotStateMsg();
+        SendRobotStateMsg();
         
         HAL::UpdateDisplay();
         
@@ -347,7 +370,10 @@ namespace Anki {
       {
         ReturnCode retVal = EXIT_SUCCESS;
         
-        retVal = VisionSystem::Update();
+        // IMPORTANT: The static robot state message is being passed in here
+        //   *by value*, NOT by reference.  This is because step_LongExecution()
+        //   can be interuppted by step_MainExecution().
+        retVal = VisionSystem::Update(robotState_);
         
         HAL::USBSendPrintBuffer();
         
