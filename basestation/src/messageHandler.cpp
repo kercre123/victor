@@ -135,28 +135,34 @@ namespace Anki {
                           "BlockWorld NULL when MessageHandler::ProcessMessage(VisionMarker) called.");
       }
       else {
-        Quad2f corners;
-        
-        corners[Quad::TopLeft].x()     = msg.x_imgUpperLeft;
-        corners[Quad::TopLeft].y()     = msg.y_imgUpperLeft;
-        
-        corners[Quad::BottomLeft].x()  = msg.x_imgLowerLeft;
-        corners[Quad::BottomLeft].y()  = msg.y_imgLowerLeft;
-        
-        corners[Quad::TopRight].x()    = msg.x_imgUpperRight;
-        corners[Quad::TopRight].y()    = msg.y_imgUpperRight;
-        
-        corners[Quad::BottomRight].x() = msg.x_imgLowerRight;
-        corners[Quad::BottomRight].y() = msg.y_imgLowerRight;
-        
         CORETECH_ASSERT(robot != NULL);
-        
         const Vision::Camera& camera = robot->get_camHead();
-        Vision::ObservedMarker marker(msg.markerType, corners, camera);
         
-        // Give this vision marker to BlockWorld for processing
-        blockWorld_->QueueObservedMarker(marker);
-        
+        if(camera.isCalibrated()) {
+          Quad2f corners;
+          
+          corners[Quad::TopLeft].x()     = msg.x_imgUpperLeft;
+          corners[Quad::TopLeft].y()     = msg.y_imgUpperLeft;
+          
+          corners[Quad::BottomLeft].x()  = msg.x_imgLowerLeft;
+          corners[Quad::BottomLeft].y()  = msg.y_imgLowerLeft;
+          
+          corners[Quad::TopRight].x()    = msg.x_imgUpperRight;
+          corners[Quad::TopRight].y()    = msg.y_imgUpperRight;
+          
+          corners[Quad::BottomRight].x() = msg.x_imgLowerRight;
+          corners[Quad::BottomRight].y() = msg.y_imgLowerRight;
+          
+          Vision::ObservedMarker marker(msg.markerType, corners, camera);
+          
+          // Give this vision marker to BlockWorld for processing
+          blockWorld_->QueueObservedMarker(marker);
+        }
+        else {
+          PRINT_NAMED_WARNING("MessageHandler::CalibrationNotSet",
+                              "Received VisionMarker message from robot before "
+                              "camera calibration was set on Basestation.");
+        }
         retVal = EXIT_SUCCESS;
       }
       
