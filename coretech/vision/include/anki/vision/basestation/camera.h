@@ -128,6 +128,8 @@ namespace Anki {
       void set_pose(const Pose3d& newPose);
       void set_calibration(const CameraCalibration& calib);
       
+      bool isCalibrated() const;
+      
       //
       // Methods:
       //
@@ -206,6 +208,10 @@ namespace Anki {
               projectedPoint.x() >= 0.f && projectedPoint.y() >= 0.f &&
               projectedPoint.x() < this->calibration.get_ncols() &&
               projectedPoint.y() < this->calibration.get_nrows());
+    }
+    
+    inline bool Camera::isCalibrated() const {
+      return this->isCalibrationSet;
     }
     
   } // namesapce Vision

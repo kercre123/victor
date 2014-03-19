@@ -427,10 +427,10 @@ namespace Anki
         u32 ySkip = 240 / yRes;
         
         u32 dataY = 0;
-        for (u32 y = 0; y < 240; y += ySkip, dataY++)
+        for (u32 y = 239; y >= 0; y -= ySkip, dataY++)
         {
           u32 dataX = 0;
-          for (u32 x = 0; x < 320; x += xSkip, dataX++)
+          for (u32 x = 319; x >= 0; x -= xSkip, dataX++)
           {
             frame[dataY * xRes + dataX] = m_buffer[y * 320 * 2 + x * 2];
           }
