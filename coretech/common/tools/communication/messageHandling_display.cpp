@@ -131,12 +131,23 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
         Array<u8> arr;
         SerializedBuffer::DeserializeArray(dataSegmentStart, dataLength, arr, scratch);
 
+        const s32 arrHeight = arr.get_size(0);
+        const s32 arrWidth = arr.get_size(1);
+
         // Do the copy explicitly, to prevent OpenCV trying to be smart with memory
-        lastImage = cv::Mat(arr.get_size(0), arr.get_size(1), CV_8U);
-        const cv::Mat_<u8> &mat = arr.get_CvMat_();
-        const s32 numBytes = mat.size().width * mat.size().height;
-        for(s32 i=0; i<numBytes; i++) {
-          lastImage.data[i] = mat.data[i];
+        lastImage = cv::Mat(arrHeight, arrWidth, CV_8U);
+        //const cv::Mat_<u8> &mat = arr.get_CvMat_();
+        //const s32 numBytes = mat.size().width * mat.size().height;
+        /*for(s32 i=0; i<numBytes; i++) {
+        lastImage.data[i] = mat.data[i];
+        }*/
+        s32 cLastImage = 0;
+        for(s32 y=0; y<arrHeight; y++) {
+          const u8 * restrict pArr = arr.Pointer(y,0);
+          for(s32 x=0; x<arrWidth; x++) {
+            lastImage.data[cLastImage] = pArr[x];
+            cLastImage++;
+          }
         }
       } else {
         printf("Array: (%d, %d, %d, %d, %d, %d, %d, %d) ", height, width, stride, flags, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat);
