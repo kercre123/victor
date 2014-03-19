@@ -102,22 +102,14 @@ namespace Anki {
     // TODO: Get these from calibration somehow
     const u16 HEAD_CAM_CALIB_WIDTH  = 320;
     const u16 HEAD_CAM_CALIB_HEIGHT = 240;
-    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 315.6995f;
-    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 316.8701f;
-    const f32 HEAD_CAM_CALIB_CENTER_X = 169.6225f;
-    const f32 HEAD_CAM_CALIB_CENTER_Y = 119.5692f;
-    const f32 HEAD_CAM_CALIB_DISTORTION[NUM_RADIAL_DISTORTION_COEFFS] =
-    {0.0265995f, -0.1683574f, -0.0009116f, 0.0061439f};
     
-    // TODO: Get real mat camera calibration params: (currently just copies of head cam's)
-    const u16 MAT_CAM_CALIB_WIDTH  = 320;
-    const u16 MAT_CAM_CALIB_HEIGHT = 240;
-    const f32 MAT_CAM_CALIB_FOCAL_LENGTH_X = 315.6995f;
-    const f32 MAT_CAM_CALIB_FOCAL_LENGTH_Y = 316.8701f;
-    const f32 MAT_CAM_CALIB_CENTER_X = 169.6225f;
-    const f32 MAT_CAM_CALIB_CENTER_Y = 119.5692f;
-    const f32 MAT_CAM_CALIB_DISTORTION[NUM_RADIAL_DISTORTION_COEFFS] = {0.f, 0.f, 0.f, 0.f};
-
+    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 317.23763f;
+    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 318.38113f;
+    const f32 HEAD_CAM_CALIB_CENTER_X       = 151.88373f;
+    const f32 HEAD_CAM_CALIB_CENTER_Y       = 129.03379f;
+    const f32 HEAD_CAM_CALIB_DISTORTION[NUM_RADIAL_DISTORTION_COEFFS] =
+    {0.02656f,   -0.15748f,   0.00326f,   -0.00128f};
+  
 #endif // #ifdef SIMULATOR
     
     const f32 CONTROL_DT = TIME_STEP*0.001f;

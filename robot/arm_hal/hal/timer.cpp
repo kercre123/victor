@@ -18,7 +18,7 @@ namespace Anki
 
         // Initialize the 1 microsecond timer
         RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM6, ENABLE);
-        TIM_TimeBaseStructure.TIM_Prescaler = CORE_CLOCK_MHZ - 1;
+        TIM_TimeBaseStructure.TIM_Prescaler = (CORE_CLOCK_MHZ >> 1) - 1;  // APB1 clock is not system clock
         TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
         TIM_TimeBaseStructure.TIM_Period = 0xffff;
         TIM_TimeBaseStructure.TIM_ClockDivision = 0;
