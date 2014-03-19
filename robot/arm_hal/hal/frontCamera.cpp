@@ -33,6 +33,15 @@ namespace Anki
       const u32 DCMI_TIMEOUT_MAX = 10000;
       const u8 I2C_ADDR = 0x42;
       
+      const u32 RESOLUTIONS[CAMERA_MODE_COUNT][2] = 
+      {
+        {640, 480},
+        {320, 240},
+        {160, 120},
+        {80, 60},
+        {40, 30}
+      };
+      
       const u8 OV7725_VGA[][2] =
       {
         0x12, 0x80,
@@ -55,7 +64,7 @@ namespace Anki
         0x63, 0xe0,  // AWB Control Byte 0
         0x64, 0xff,  // DSP_Ctrl1
         0x65, 0x20,  // DSP_Ctrl2
-        0x0c, 0x10,  // flip Y with UV
+        0x0c, 0xd0,  // Vertical flip | horizontal mirror | flip Y with UV
         0x66, 0x00,  // DSP_Ctrl3
         //0x67, 0x4a,  // DSP_Ctrl4 - Output Selection = RAW8
         0x13, 0xf0,  // COM8 - gain control stuff... | AGC enable
@@ -306,7 +315,7 @@ namespace Anki
         RCC_AHB2PeriphClockCmd(RCC_AHB2Periph_DCMI, ENABLE);
         RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM9, ENABLE);
         
-        // Configure XCLK for 22.5 MHz (evenly divisible by 180 MHz)
+        // Configure XCLK for 12.85 MHz (evenly divisible by 180 MHz)
         TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
         TIM_OCInitTypeDef  TIM_OCInitStructure;
         
@@ -314,7 +323,7 @@ namespace Anki
         TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
         TIM_TimeBaseStructure.TIM_ClockDivision = 0;
         TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
-
+        
         TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
         TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
         TIM_OCInitStructure.TIM_OutputNState = TIM_OutputNState_Enable;
@@ -323,8 +332,8 @@ namespace Anki
         TIM_OCInitStructure.TIM_OCIdleState = TIM_OCIdleState_Set;
         TIM_OCInitStructure.TIM_OCNIdleState = TIM_OCIdleState_Reset;
         
-        TIM_TimeBaseStructure.TIM_Period = 31;   // 180MHz/N+1
-        TIM_OCInitStructure.TIM_Pulse = 16;   // Half of (period+1)
+        TIM_TimeBaseStructure.TIM_Period = 13;  // 180MHz/N+1
+        TIM_OCInitStructure.TIM_Pulse = 7;     // Half of (period+1)
         
         TIM_TimeBaseInit(TIM9, &TIM_TimeBaseStructure);
         TIM_OC2Init(TIM9, &TIM_OCInitStructure);
@@ -416,23 +425,56 @@ namespace Anki
         // and we support resolution changes in the actual hardware
         
         // Copy the Y-channel into frame
-#warning This is broken
-        /*u32 xRes = CameraModeInfo[mode].width;
-        u32 yRes = CameraModeInfo[mode].height;*/
-        
-        u32 xRes = 320;
-        u32 yRes = 240;
+
+        u32 xRes = RESOLUTIONS[mode][0];
+        u32 yRes = RESOLUTIONS[mode][1];
         
         u32 xSkip = 320 / xRes;
         u32 ySkip = 240 / yRes;
         
-        u32 dataY = yRes - 1;
-        for (u32 y = 0; y < 240; y += ySkip, dataY--)
-        {
-          u32 dataX = xRes - 1;
-          for (u32 x = 0; x < 320; x += xSkip, dataX--)
+        if(xSkip == 1 && ySkip == 1) {
+          // Fast (one load and one store per output pixel)
+          /*
+          const u32 numPixels = 320*240;
+          for(u32 iOut=0; iOut<numPixels; iOut++) {
+            frame[iOut] = m_buffer[iOut*2];
+          }*/
+          
+          // Faster (32 -> 16) (one load and one store per 2 output pixels)
+          /*const u32 numPixels2 = (320*240) >> 1;
+          
+          const u32 * restrict pMBufferU32 = reinterpret_cast<u32*>(m_buffer);
+          u16 * restrict pFrameU16 = reinterpret_cast<u16*>(frame);
+                              
+          for(u32 iPixel=0; iPixel<numPixels2; iPixel++) {
+            const u32 inPixel = pMBufferU32[iPixel];
+            // const u16 outPixel = ((inPixel & 0x00FF)>>8) | ((inPixel & 0xFF000000) >> 24);
+            const u32 outPixel = (inPixel & 0xFF) | ((inPixel & 0xFF0000) >> 8);
+            pFrameU16[iPixel] = outPixel & 0xFFFF;
+          }*/
+          
+          // Fastest (64 -> 32) (two loads and one store per 4 output pixels)
+          const u32 numPixels4 = (320*240) >> 2;
+          
+          const u32 * restrict pMBufferU32 = reinterpret_cast<u32*>(m_buffer);
+          u32 * restrict pFrameU32 = reinterpret_cast<u32*>(frame);
+                              
+          for(u32 iPixel=0; iPixel<numPixels4; iPixel++) {
+            const u32 inPixel1 = pMBufferU32[2*iPixel];
+            const u32 inPixel2 = pMBufferU32[2*(iPixel+1)];
+            
+            const u32 outPixel = (inPixel1 & 0xFF) | ((inPixel1 & 0xFF0000) >> 8) | ((inPixel2 & 0xFF)<<16) | ((inPixel2 & 0xFF0000) << 8);
+            pFrameU32[iPixel] = outPixel;
+          }
+        } else {
+          u32 dataY = 0;
+          for (u32 y = 0; y < 240; y += ySkip, dataY++)
           {
-            frame[dataY * xRes + dataX] = m_buffer[y * 320 * 2 + x * 2];
+            u32 dataX = 0;
+            for (u32 x = 0; x < 320; x += xSkip, dataX++)
+            {
+              frame[dataY * xRes + dataX] = m_buffer[y * 320 * 2 + x * 2];
+            }
           }
         }
       }
