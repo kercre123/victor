@@ -92,7 +92,7 @@ Background {
 
 DirectionalLight {
   ambientIntensity 0.75
-  direction -1 -1 -2
+  direction 1 -.5 -2
   castShadows TRUE
 }
 
@@ -327,34 +327,32 @@ XYaxesDisplay {
 }
 
 DEF FuelBlock Block1x1 {
-  hidden linearVelocity_0 4.504e-18 -1.94584e-11 -2.2883e-16
-  hidden angularVelocity_0 4.0155e-16 3.20475e-31 -1.39815e-17
   name "Block060_1"
-  translation -5.40228e-19 -0.15 0.0299844
-  rotation 1 1.82119e-13 -4.23988e-13 3.67483e-06
-  blockColor 0.75 0.3 0.3
+  translation 0.15 -8.81876e-08 0.0219929
+  rotation 1 1.28832e-12 -1.28131e-11 3.67408e-06
+
+  blockColor 0.85 0.5 0.5
   facemarkerFront [
-    "textures/batteries.png"
+    "textures/fire.png"
   ]
   facemarkerBack [
-    "textures/batteries.png"
+    "textures/fire.png"
   ]
   facemarkerLeft [
-    "textures/batteries.png"
+    "textures/fire.png"
   ]
   facemarkerRight [
-    "textures/batteries.png"
+    "textures/fire.png"
   ]
   facemarkerTop [
-    "textures/batteries.png"
+    "textures/fire.png"
   ]
   facemarkerBottom [
-    "textures/batteries.png"
+    "textures/fire.png"
   ]
 }
 
 DEF Cozmo_1 CozmoBot {
-  rotation 0 0 1 -1.5708
   name "CozmoBot_1"
   #headAngle -0.251457
   #liftAngle  0
