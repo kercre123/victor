@@ -685,7 +685,7 @@ namespace MatlabVisualization
       AnkiAssert(beforeCalled_ = true);
       Quadrilateral<f32> quad = tracker.get_transformation().get_transformedCorners(scratch);
       matlabViz_.PutQuad(quad, "quad");
-      SendTrackerPrediction_Helper(2, "After Tracking");
+      SendTrackerPrediction_Helper(3, "After Tracking");
       beforeCalled_ = false;
     }
     return EXIT_SUCCESS;
@@ -845,27 +845,26 @@ namespace VisionState {
 
     return EXIT_SUCCESS;
   } // VisionState::UpdateRobotState()
-
-  static Radians GetHeadingChange()
-  {
-    AnkiAssert(havePreviousRobotState_);
-
-    return robotState_.pose_angle - prevRobotState_.pose_angle;
-  }
   
-  static f32 GetTxChange()
+  static void GetPoseChange(f32& xChange, f32& yChange, Radians& angleChange)
   {
     AnkiAssert(havePreviousRobotState_);
     
-    return robotState_.pose_x - prevRobotState_.pose_x;
-  }
-  
-  static f32 GetTyChange()
-  {
-    AnkiAssert(havePreviousRobotState_);
+    angleChange = Radians(robotState_.pose_angle) - Radians(prevRobotState_.pose_angle);
     
-    return robotState_.pose_y - prevRobotState_.pose_y;
-  }
+    // Position change in world (mat) coordinates
+    const f32 dx = robotState_.pose_x - prevRobotState_.pose_x;
+    const f32 dy = robotState_.pose_y - prevRobotState_.pose_y;
+    
+    // Get change in robot coordinates
+    const f32 cosAngle = cosf(-prevRobotState_.pose_angle);
+    const f32 sinAngle = sinf(-prevRobotState_.pose_angle);
+    xChange = dx*cosAngle - dy*sinAngle;
+    yChange = dx*sinAngle + dy*cosAngle;
+    
+  } // GetPoseChange()
+
+
   
 } // namespace VisionState
 
@@ -1259,6 +1258,94 @@ namespace Anki {
         VisionState::mode_ = VISION_MODE_IDLE;
       }
 
+      
+      //
+      // Tracker Prediction
+      //
+      // Adjust the tracker transformation by approximately how much we
+      // think we've moved since the last tracking call.
+      //
+      ReturnCode TrackerPredictionUpdate(MemoryStack scratch)
+      {
+        // 1. Approximate the distance from the average of the distances predicted
+        //    by the observed height and width of the marker
+        const Quadrilateral<f32> currentQuad = VisionState::tracker_.get_transformation().get_transformedCorners(scratch);
+        const Quadrilateral<f32> sortedQuad  = currentQuad.ComputeClockwiseCorners();
+        
+        f32 dx = sortedQuad[3].x - sortedQuad[0].x;
+        f32 dy = sortedQuad[3].y - sortedQuad[0].y;
+        const f32 observedVerticalSize_pix = sqrtf( dx*dx + dy*dy );
+        
+        dx = sortedQuad[1].x - sortedQuad[0].x;
+        dy = sortedQuad[1].y - sortedQuad[0].y;
+        const f32 observedHorizontalSize_pix = sqrtf( dx*dx + dy*dy );
+        
+        const f32 dx_approx_mm = 0.5f* ((VisionState::trackingMarkerWidth_mm*VisionState::headCamInfo_->focalLength_y /
+                                         observedVerticalSize_pix) +
+                                        (VisionState::trackingMarkerWidth_mm*VisionState::headCamInfo_->focalLength_x /
+                                         observedHorizontalSize_pix));
+        
+        // Ask VisionState how much we've moved since last call (in robot coordinates)
+        Radians theta;
+        f32 tx, ty;
+        VisionState::GetPoseChange(tx, ty, theta);
+        
+        // 2. Horizontal Shift
+        // This is approximated by comparing the rotational change angle to the FOV
+        // angle of the image, and taking the same fraction of the dimension
+        // of the image to get the amount of pixel movement, plus any shift
+        // induced by horizontal movement.  Note that a shift left in robot
+        // coordinates is POSITIVE ty, which induces a right shift in whatever
+        // we are tracking, which is POSITIVE x in image coordinates.
+        f32 horizontalShift_pix = (static_cast<f32>(VisionState::headCamInfo_->nrows/2) * theta.ToFloat() /
+                                   VisionState::headCamInfo_->fov_ver) + (ty*VisionState::headCamInfo_->focalLength_x/dx_approx_mm);
+        
+        // 3. Scale Change
+        // This is approxmiated by comparing the distance to the object before
+        // and after forward motion
+        const f32 scaleChange = dx_approx_mm / (dx_approx_mm - tx);
+        
+        // TODO: Take head angle into account and predict vertical shift as well?
+        
+        PRINT("Adjusting transformation: %.3fpix shift for %.3fdeg rotation, %.3f scaling for %.3f translation forward\n",
+              horizontalShift_pix, theta.getDegrees(), scaleChange, tx);
+        
+        // 4. Adjust the Transformation
+        if(VisionState::tracker_.get_transformation().get_transformType() == Transformations::TRANSFORM_TRANSLATION) {
+          Array<f32> update(1,2,scratch);
+          update[0][0] = -horizontalShift_pix;
+          update[0][1] = 0.0f;
+          VisionState::tracker_.UpdateTransformation(update, 1.0f, scratch, Transformations::TRANSFORM_TRANSLATION);
+        }
+        else {
+          // TODO: It may be possible to use a 6-parameter affine update for both affine and projective trackers...
+          s32 updateSize = -1;
+          if(VisionState::tracker_.get_transformation().get_transformType() == Transformations::TRANSFORM_AFFINE) {
+            updateSize = 6;
+          }
+          else {
+            AnkiAssert(VisionState::tracker_.get_transformation().get_transformType() == Transformations::TRANSFORM_PROJECTIVE);
+            updateSize = 8;
+          }
+          
+          Array<f32> update(1,updateSize,scratch);
+          update.Set(0.f);
+          // Note 1: UpdateTransformation is doing inverse composition (thus using the negatives)
+          // Note 2: UpdateTransformation adds 1.0 to the diagonal scale terms
+          update[0][0] = -scaleChange + 1.f;  // first row, first col
+          update[0][2] = -(scaleChange*horizontalShift_pix);    // first row, last col
+          update[0][4] = -scaleChange + 1.f;  // second row, second col
+          VisionState::tracker_.UpdateTransformation(update, 1.f, scratch,
+                                                     VisionState::tracker_.get_transformation().get_transformType());
+        }
+        
+        MatlabVisualization::SendTrackerPrediction_After(VisionState::tracker_, scratch);
+        
+        return RESULT_OK;
+        
+      } // TrackerPredictionUpdate()
+      
+      
       //      ReturnCode Update_Offboard()
       //      {
       //#if USE_OFFBOARD_VISION
@@ -1446,75 +1533,16 @@ namespace Anki {
           // think we've moved since the last tracking call.
           //
           
-          // 1. Compute the distance from the average of the distances predicted
-          //    by the observed height and width of the marker
-          const Quadrilateral<f32> currentQuad = VisionState::tracker_.get_transformation().get_transformedCorners(onchipScratch_local);
-          const Quadrilateral<f32> sortedQuad  = currentQuad.ComputeClockwiseCorners();
+          MatlabVisualization::SendTrackerPrediction_Before(grayscaleImage,
+                                                            VisionState::tracker_,
+                                                            onchipScratch_local);
           
-          f32 dx = sortedQuad[3].x - sortedQuad[0].x;
-          f32 dy = sortedQuad[3].y - sortedQuad[0].y;
-          const f32 observedVerticalSize_pix = sqrtf( dx*dx + dy*dy );
+          ReturnCode predictionResult = TrackerPredictionUpdate(onchipScratch_local);
           
-          dx = sortedQuad[1].x - sortedQuad[0].x;
-          dy = sortedQuad[1].y - sortedQuad[0].y;
-          const f32 observedHorizontalSize_pix = sqrtf( dx*dx + dy*dy );
-          
-          const f32 dx_approx_mm = 0.5f* ((VisionState::trackingMarkerWidth_mm*VisionState::headCamInfo_->focalLength_y /
-                                           observedVerticalSize_pix) +
-                                          (VisionState::trackingMarkerWidth_mm*VisionState::headCamInfo_->focalLength_x /
-                                           observedHorizontalSize_pix));
-          
-          const Radians theta = VisionState::GetHeadingChange();
-          const f32 tx = VisionState::GetTxChange();
-          const f32 ty = VisionState::GetTyChange();
-          
-          // 2. Horizontal Shift
-          // This is approximated by comparing the rotational change angle to the FOV
-          // angle of the image, and taking the same fraction of the dimension
-          // of the image to get the amount of pixel movement, plus any shift
-          // induced by horizontal movement.
-          f32 horizontalShift_pix = (static_cast<f32>(VisionState::headCamInfo_->nrows/2) * theta.ToFloat() /
-                                 VisionState::headCamInfo_->fov_ver) - (ty*VisionState::headCamInfo_->focalLength_x/dx_approx_mm);
-
-          // 3. Scale Change
-          // This is approxmiated by comparing the distance to the object before
-          // and after forward motion
-          const f32 scaleChange = dx_approx_mm / (dx_approx_mm - tx);
-          
-          PRINT("Adjusting transformation: %.3fpix shift for %.3fdeg rotation, %.3f scaling for %.3f translation forward\n",
-                horizontalShift_pix, theta.getDegrees(), scaleChange, tx);
-          
-          
-          
-          // 4. Adjust the Transformation
-          if(VisionState::tracker_.get_transformation().get_transformType() == Transformations::TRANSFORM_TRANSLATION) {
-            Array<f32> update(1,2,onchipScratch_local);
-            update[0][0] = -horizontalShift_pix;
-            update[0][1] = 0.0f;
-            VisionState::tracker_.UpdateTransformation(update, 1.0f, onchipScratch_local, Transformations::TRANSFORM_TRANSLATION);
+          if(predictionResult != EXIT_SUCCESS) {
+            PRINT("VisionSystem::Update(): TrackTemplate() failed.\n");
+            return EXIT_FAILURE;
           }
-          else {
-            // TODO: It may be possible to use a 6-parameter affine update for both affine and projective trackers...
-            s32 updateSize = -1;
-            if(VisionState::tracker_.get_transformation().get_transformType() == Transformations::TRANSFORM_AFFINE) {
-              updateSize = 6;
-            }
-            else {
-              AnkiAssert(VisionState::tracker_.get_transformation().get_transformType() == Transformations::TRANSFORM_PROJECTIVE);
-              updateSize = 8;
-            }
-            
-            Array<f32> update(1,updateSize,onchipScratch_local);
-            update.Set(0.f);
-            update[0][0] = -scaleChange + 1.f;  // first row, first col
-            update[0][2] = -(scaleChange*horizontalShift_pix);    // first row, last col
-            update[0][4] = -scaleChange + 1.f;  // second row, second col
-            VisionState::tracker_.UpdateTransformation(update, 1.f, onchipScratch_local,
-                                                       VisionState::tracker_.get_transformation().get_transformType());
-          }
-          
-          
-          MatlabVisualization::SendTrackerPrediction_After(VisionState::tracker_, onchipScratch_local);
           
 
           //
@@ -1524,7 +1552,7 @@ namespace Anki {
           // Set by TrackTemplate() call
           bool converged = false;
 
-          const ReturnCode result = TrackTemplate(
+          const ReturnCode trackResult = TrackTemplate(
             grayscaleImage,
             VisionState::trackingQuad_,
             trackerParameters_,
@@ -1534,7 +1562,7 @@ namespace Anki {
             onchipScratch_local,
             VisionMemory::ccmScratch_);
 
-          if(result != EXIT_SUCCESS) {
+          if(trackResult != EXIT_SUCCESS) {
             PRINT("VisionSystem::Update(): TrackTemplate() failed.\n");
             return EXIT_FAILURE;
           }
