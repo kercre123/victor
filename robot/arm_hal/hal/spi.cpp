@@ -165,5 +165,5 @@ void DMA2_Stream2_IRQHandler(void)
   s_failedTransferCount = 0;
   
   // Run MainExecution
-  Anki::Cozmo::Robot::step_MainExecution();
+  //Anki::Cozmo::Robot::step_MainExecution();
 }

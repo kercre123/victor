@@ -161,10 +161,10 @@ namespace Anki
 
       int UARTPutChar(int c)
       {
-        //UART->DR = c;
-        //while (!(UART->SR & USART_FLAG_TXE))
-        //  ;
-        //return c;
+        UART->DR = c;
+        while (!(UART->SR & USART_FLAG_TXE))
+          ;
+        return c;
 
         __disable_irq();
         m_bufferWrite[m_DMAWriteHead] = c;
