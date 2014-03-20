@@ -1267,8 +1267,7 @@ namespace Anki {
       //
       ReturnCode TrackerPredictionUpdate(MemoryStack scratch)
       {
-        // 1. Approximate the distance from the average of the distances predicted
-        //    by the observed height and width of the marker
+        // Get the observed vertical size of the marker
         const Quadrilateral<f32> currentQuad = VisionState::tracker_.get_transformation().get_transformedCorners(scratch);
         const Quadrilateral<f32> sortedQuad  = currentQuad.ComputeClockwiseCorners();
         
@@ -1276,45 +1275,52 @@ namespace Anki {
         f32 dy = sortedQuad[3].y - sortedQuad[0].y;
         const f32 observedVerticalSize_pix = sqrtf( dx*dx + dy*dy );
         
-        dx = sortedQuad[1].x - sortedQuad[0].x;
-        dy = sortedQuad[1].y - sortedQuad[0].y;
-        const f32 observedHorizontalSize_pix = sqrtf( dx*dx + dy*dy );
-        
-        const f32 dx_approx_mm = 0.5f* ((VisionState::trackingMarkerWidth_mm*VisionState::headCamInfo_->focalLength_y /
-                                         observedVerticalSize_pix) +
-                                        (VisionState::trackingMarkerWidth_mm*VisionState::headCamInfo_->focalLength_x /
-                                         observedHorizontalSize_pix));
+        // Compare observed vertical size to actual block marker size (projected
+        // to be orthogonal to optical axis, using head angle) to approximate the
+        // distance to the marker along the camera's optical axis
+        const f32 cosHeadAngle = cosf(VisionState::robotState_.headAngle);
+        const f32 sinHeadAngle = sinf(VisionState::robotState_.headAngle);
+        const f32 d = (VisionState::trackingMarkerWidth_mm* cosHeadAngle *
+                       VisionState::headCamInfo_->focalLength_y /
+                       observedVerticalSize_pix);
         
         // Ask VisionState how much we've moved since last call (in robot coordinates)
         Radians theta;
-        f32 tx, ty;
-        VisionState::GetPoseChange(tx, ty, theta);
-        
-        // 2. Horizontal Shift
-        // This is approximated by comparing the rotational change angle to the FOV
-        // angle of the image, and taking the same fraction of the dimension
-        // of the image to get the amount of pixel movement, plus any shift
-        // induced by horizontal movement.  Note that a shift left in robot
-        // coordinates is POSITIVE ty, which induces a right shift in whatever
-        // we are tracking, which is POSITIVE x in image coordinates.
+        f32 T_fwd_robot, T_hor_robot;
+        VisionState::GetPoseChange(T_fwd_robot, T_hor_robot, theta);
+
+        // Convert to how much we've moved along (and orthogonal to) the camera's optical axis
+        const f32 T_fwd_cam =  T_fwd_robot*cosHeadAngle;
+        const f32 T_ver_cam = -T_fwd_robot*sinHeadAngle;
+
+        // Predict approximate horizontal shift from two things:
+        // 1. The rotation fo the robot
+        //    Compute pixel-per-degree of the camera and multiply by degrees rotated
+        // 2. Convert horizontal shift of the robot to pixel shift, using
+        //    focal length
         f32 horizontalShift_pix = (static_cast<f32>(VisionState::headCamInfo_->nrows/2) * theta.ToFloat() /
-                                   VisionState::headCamInfo_->fov_ver) + (ty*VisionState::headCamInfo_->focalLength_x/dx_approx_mm);
+                                   VisionState::headCamInfo_->fov_ver) + (T_hor_robot*VisionState::headCamInfo_->focalLength_x/d);
         
-        // 3. Scale Change
-        // This is approxmiated by comparing the distance to the object before
-        // and after forward motion
-        const f32 scaleChange = dx_approx_mm / (dx_approx_mm - tx);
+        // Predict approximate scale change by comparing the distance to the
+        // object before and after forward motion
+        const f32 scaleChange = d / (d - T_fwd_cam);
         
-        // TODO: Take head angle into account and predict vertical shift as well?
+        // Predict approximate vertical shift in the camera plane by comparing
+        // vertical motion (orthogonal to camera's optical axis) to the focal
+        // length
+        const f32 verticalShift_pix = T_ver_cam * VisionState::headCamInfo_->focalLength_y/d;
         
-        PRINT("Adjusting transformation: %.3fpix shift for %.3fdeg rotation, %.3f scaling for %.3f translation forward\n",
-              horizontalShift_pix, theta.getDegrees(), scaleChange, tx);
+        PRINT("Adjusting transformation: %.3fpix H shift for %.3fdeg rotation, "
+              "%.3f scaling and %.3f V shift for %.3f translation forward (%.3f cam)\n",
+              horizontalShift_pix, theta.getDegrees(), scaleChange,
+              verticalShift_pix, T_fwd_robot, T_fwd_cam);
         
-        // 4. Adjust the Transformation
+        // Adjust the Transformation
+        // Note: UpdateTransformation is doing *inverse* composition (thus using the negatives)
         if(VisionState::tracker_.get_transformation().get_transformType() == Transformations::TRANSFORM_TRANSLATION) {
           Array<f32> update(1,2,scratch);
           update[0][0] = -horizontalShift_pix;
-          update[0][1] = 0.0f;
+          update[0][1] = -verticalShift_pix;
           VisionState::tracker_.UpdateTransformation(update, 1.0f, scratch, Transformations::TRANSFORM_TRANSLATION);
         }
         else {
@@ -1328,13 +1334,23 @@ namespace Anki {
             updateSize = 8;
           }
           
+          // Inverse update we are composing is:
+          //
+          //   [s 0 0]^(-1)     [0 0 h_shift]^(-1)
+          //   [0 s 0]       *  [0 0 v_shift]
+          //   [0 0 1]          [0 0    1   ]
+          //
+          //      [1/s  0  -h_shift/s]
+          //   =  [ 0  1/2 -v_shift/s]
+          //      [ 0   0      1     ]
+          //
+          // Note: UpdateTransformation adds 1.0 to the diagonal scale terms
           Array<f32> update(1,updateSize,scratch);
           update.Set(0.f);
-          // Note 1: UpdateTransformation is doing inverse composition (thus using the negatives)
-          // Note 2: UpdateTransformation adds 1.0 to the diagonal scale terms
-          update[0][0] = -scaleChange + 1.f;  // first row, first col
-          update[0][2] = -(scaleChange*horizontalShift_pix);    // first row, last col
-          update[0][4] = -scaleChange + 1.f;  // second row, second col
+          update[0][0] = 1.f/scaleChange - 1.f;               // first row, first col
+          update[0][2] = -horizontalShift_pix/scaleChange;    // first row, last col
+          update[0][4] = 1.f/scaleChange - 1.f;               // second row, second col
+          update[0][5] = -verticalShift_pix/scaleChange;      // second row, last col
           VisionState::tracker_.UpdateTransformation(update, 1.f, scratch,
                                                      VisionState::tracker_.get_transformation().get_transformType());
         }
