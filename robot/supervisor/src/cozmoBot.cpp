@@ -63,7 +63,7 @@ namespace Anki {
       void StartMotorCalibrationRoutine()
       {
         LiftController::StartCalibrationRoutine();
-        //HeadController::StartCalibrationRoutine();
+        HeadController::StartCalibrationRoutine();
 #if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
         GripController::DisengageGripper();
 #endif
@@ -79,7 +79,7 @@ namespace Anki {
         
         if(
            LiftController::IsCalibrated()
-           //&& HeadController::IsCalibrated()
+           && HeadController::IsCalibrated()
            ) {
           PRINT("Motors calibrated\n");
           isDone = true;
