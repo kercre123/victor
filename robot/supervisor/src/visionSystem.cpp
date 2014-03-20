@@ -622,24 +622,24 @@ namespace MatlabVisualization
     //                                          "sprintf('~/temp/trackingImage%.3d.png', imageCtr)); "
     //                                          "imageCtr = imageCtr + 1;");
     matlabViz_.EvalStringEcho("set(h_img, 'CData', trackingImage); "
-      "set(h_axes, 'XLim', [.5 size(trackingImage,2)+.5], "
-      "            'YLim', [.5 size(trackingImage,1)+.5]);");
-
+                              "set(h_axes, 'XLim', [.5 size(trackingImage,2)+.5], "
+                              "            'YLim', [.5 size(trackingImage,1)+.5]);");
+    
+    
+    matlabViz_.PutQuad(tracker.get_transformation().get_transformedCorners(scratch), "transformedQuad");
+    matlabViz_.EvalStringEcho("set(h_trackedQuad, 'Visible', 'on', "
+                              "    'XData', transformedQuad([1 2 4 3 1],1)+1, "
+                              "    'YData', transformedQuad([1 2 4 3 1],2)+1); ");
+    
     if(converged)
     {
-      matlabViz_.PutQuad(tracker.get_transformation().get_transformedCorners(scratch), "transformedQuad");
-      matlabViz_.EvalStringEcho("set(h_trackedQuad, 'Visible', 'on', "
-        "    'XData', transformedQuad([1 2 4 3 1],1)+1, "
-        "    'YData', transformedQuad([1 2 4 3 1],2)+1); "
-        "title(h_axes, 'Tracking Succeeded');");
+      matlabViz_.EvalStringEcho("title(h_axes, 'Tracking Succeeded', 'FontSize', 16);");
+    } else  {
+      matlabViz_.EvalStringEcho( //"set(h_trackedQuad, 'Visible', 'off'); "
+                                "title(h_axes, 'Tracking Failed', 'FontSize', 15); ");
+      //        "delete(findobj(0, 'Tag', 'TemplateAxes'));");
     }
-    else
-    {
-      matlabViz_.EvalStringEcho("set(h_trackedQuad, 'Visible', 'off'); "
-        "title(h_axes, 'Tracking Failed'); "
-        "delete(findobj(0, 'Tag', 'TemplateAxes'));");
-    }
-
+    
     matlabViz_.EvalString("drawnow");
 
     return EXIT_SUCCESS;
