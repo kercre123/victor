@@ -778,7 +778,7 @@ namespace MatlabVisualization
 #endif
 
 namespace VisionState {
-  static const s32 MAX_TRACKING_FAILURES = 5;
+  static const s32 MAX_TRACKING_FAILURES = 1;
 
   static const Anki::Cozmo::HAL::CameraInfo* headCamInfo_;
 
