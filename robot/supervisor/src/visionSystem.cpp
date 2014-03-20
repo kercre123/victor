@@ -1324,35 +1324,24 @@ namespace Anki {
           VisionState::tracker_.UpdateTransformation(update, 1.0f, scratch, Transformations::TRANSFORM_TRANSLATION);
         }
         else {
-          // TODO: It may be possible to use a 6-parameter affine update for both affine and projective trackers...
-          s32 updateSize = -1;
-          if(VisionState::tracker_.get_transformation().get_transformType() == Transformations::TRANSFORM_AFFINE) {
-            updateSize = 6;
-          }
-          else {
-            AnkiAssert(VisionState::tracker_.get_transformation().get_transformType() == Transformations::TRANSFORM_PROJECTIVE);
-            updateSize = 8;
-          }
-          
           // Inverse update we are composing is:
           //
-          //   [s 0 0]^(-1)     [0 0 h_shift]^(-1)
-          //   [0 s 0]       *  [0 0 v_shift]
-          //   [0 0 1]          [0 0    1   ]
+          //                  [s 0 0]^(-1)     [0 0 h_shift]^(-1)
+          //   updateMatrix = [0 s 0]       *  [0 0 v_shift]
+          //                  [0 0 1]          [0 0    1   ]
           //
-          //      [1/s  0  -h_shift/s]
-          //   =  [ 0  1/2 -v_shift/s]
-          //      [ 0   0      1     ]
+          //      [1/s  0  -h_shift/s]   [ update_0  update_1  update_2 ]
+          //   =  [ 0  1/2 -v_shift/s] = [ update_3  update_4  update_5 ]
+          //      [ 0   0      1     ]   [    0         0         1     ]
           //
           // Note: UpdateTransformation adds 1.0 to the diagonal scale terms
-          Array<f32> update(1,updateSize,scratch);
+          Array<f32> update(1,6,scratch);
           update.Set(0.f);
           update[0][0] = 1.f/scaleChange - 1.f;               // first row, first col
           update[0][2] = -horizontalShift_pix/scaleChange;    // first row, last col
           update[0][4] = 1.f/scaleChange - 1.f;               // second row, second col
           update[0][5] = -verticalShift_pix/scaleChange;      // second row, last col
-          VisionState::tracker_.UpdateTransformation(update, 1.f, scratch,
-                                                     VisionState::tracker_.get_transformation().get_transformType());
+          VisionState::tracker_.UpdateTransformation(update, 1.f, scratch, Transformations::TRANSFORM_AFFINE);
         }
         
         MatlabVisualization::SendTrackerPrediction_After(VisionState::tracker_, scratch);
