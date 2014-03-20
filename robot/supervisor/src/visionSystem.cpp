@@ -542,9 +542,12 @@ namespace MatlabVisualization
                               "colormap(h_fig, gray); "
                               "h_trackedQuad = plot(nan, nan, 'b', 'LineWidth', 2, "
                               "                     'Parent', h_axes); "
-                              "imageCtr = 0; "
-                              "h_fig_tform = figure('Name', 'TransformAdjust'); "
-                              "colormap(h_fig_tform, gray);");
+                              "imageCtr = 0; ");
+    
+    if(SHOW_TRACKER_PREDICTION) {
+      matlabViz_.EvalStringEcho("h_fig_tform = figure('Name', 'TransformAdjust'); "
+                                "colormap(h_fig_tform, gray);");
+    }
 
     beforeCalled_ = false;
     
