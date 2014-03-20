@@ -5,8 +5,6 @@
 
 #include "anki/cozmo/robot/cozmoConfig.h" // for calibration parameters
 
-#define USE_60HZ_CAMERA
-
 namespace Anki
 {
   namespace Cozmo
@@ -70,13 +68,7 @@ namespace Anki
         0x66, 0x00,  // DSP_Ctrl3
         //0x67, 0x4a,  // DSP_Ctrl4 - Output Selection = RAW8
         0x13, 0xf0,  // COM8 - gain control stuff... | AGC enable
-        
-#ifdef USE_60HZ_CAMERA        
         0x0d, 0xf2,  // PLL = 8x | AEC evaluate 1/4 window
-#else
-        0x0d, 0x72,  // PLL = ?? | AEC evaluate ?? window
-#endif
-
         0x0f, 0xc5,  // Reserved | auto window setting ON/OFF selection when format changes
         0x14, 0x11,  // COM9 - Automatic Gain Ceiling | Reserved
         0x22, 0xff,  // ff/7f/3f/1f for 60/30/15/7.5fps  -- banding filter
@@ -442,11 +434,11 @@ namespace Anki
         
         if(xSkip == 1 && ySkip == 1) {
           // Fast (one load and one store per output pixel)
-          
+          /*
           const u32 numPixels = 320*240;
           for(u32 iOut=0; iOut<numPixels; iOut++) {
             frame[iOut] = m_buffer[iOut*2];
-          }
+          }*/
           
           // Faster (32 -> 16) (one load and one store per 2 output pixels)
           /*const u32 numPixels2 = (320*240) >> 1;
@@ -462,7 +454,7 @@ namespace Anki
           }*/
           
           // Fastest (64 -> 32) (two loads and one store per 4 output pixels)
-          /*const u32 numPixels4 = (320*240) >> 2;
+          const u32 numPixels4 = (320*240) >> 2;
           
           const u32 * restrict pMBufferU32 = reinterpret_cast<u32*>(m_buffer);
           u32 * restrict pFrameU32 = reinterpret_cast<u32*>(frame);
@@ -473,7 +465,7 @@ namespace Anki
             
             const u32 outPixel = (inPixel1 & 0xFF) | ((inPixel1 & 0xFF0000) >> 8) | ((inPixel2 & 0xFF)<<16) | ((inPixel2 & 0xFF0000) << 8);
             pFrameU32[iPixel] = outPixel;
-          }*/
+          }
         } else {
           u32 dataY = 0;
           for (u32 y = 0; y < 240; y += ySkip, dataY++)

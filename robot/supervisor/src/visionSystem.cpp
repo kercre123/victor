@@ -24,8 +24,6 @@
 
 #include "headController.h"
 
-#include <cstdlib>
-
 using namespace Anki;
 using namespace Anki::Embedded;
 using namespace Anki::Cozmo;
@@ -44,8 +42,8 @@ using namespace Anki::Cozmo;
 static bool isInitialized_ = false;
 
 // TODO: remove
-#define SEND_DEBUG_STREAM
-#define RUN_SIMPLE_TRACKING_TEST
+//#define SEND_DEBUG_STREAM
+//#define RUN_SIMPLE_TRACKING_TEST
 
 #if defined(SIMULATOR)
 #undef SEND_DEBUG_STREAM
@@ -56,7 +54,7 @@ static bool isInitialized_ = false;
 #define DOCKING_LUCAS_KANADE_AFFINE     2 //< LucasKanadeTracker_Affine (With Translation + Affine option)
 #define DOCKING_LUCAS_KANADE_PROJECTIVE 3 //< LucasKanadeTracker_Projective (With Projective + Affine option)
 #define DOCKING_BINARY_TRACKER          4 //< BinaryTracker
-#define DOCKING_ALGORITHM DOCKING_BINARY_TRACKER
+#define DOCKING_ALGORITHM DOCKING_LUCAS_KANADE_AFFINE
 
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SLOW
 typedef TemplateTracker::LucasKanadeTracker_Slow Tracker;
@@ -316,7 +314,7 @@ namespace DebugStream
   static ReturnCode SendFiducialDetection(const Array<u8> &image, const FixedLengthList<VisionMarker> &markers, MemoryStack ccmScratch, MemoryStack onchipScratch, MemoryStack offchipScratch) { return EXIT_SUCCESS; }
   static ReturnCode SendTrackingUpdate(const Array<u8> &image, const Transformations::PlanarTransformation_f32 &transformation, MemoryStack ccmScratch, MemoryStack onchipScratch, MemoryStack offchipScratch) { return EXIT_SUCCESS; }
   //static ReturnCode SendPrintf(const char * string) { return EXIT_SUCCESS; }
-  static ReturnCode SendArray(const Array<u8> &array) { return EXIT_SUCCESS; }
+  //static ReturnCode SendArray(const Array<u8> &array) { return EXIT_SUCCESS; }
 #else
   static const HAL::CameraMode debugStreamResolution_ = HAL::CAMERA_MODE_QQQVGA;
 
@@ -447,12 +445,12 @@ namespace DebugStream
     return SendBuffer(debugStreamBuffer_);
   } // static ReturnCode SendTrackingUpdate()
 
-  static ReturnCode SendArray(const Array<u8> &array)
-  {
-    debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
-    debugStreamBuffer_.PushBack(array);
-    return SendBuffer(debugStreamBuffer_);
-  }
+  //  static ReturnCode SendArray(const Array<u8> &array)
+  //  {
+  //    debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
+  //    debugStreamBuffer_.PushBack(array);
+  //    return SendBuffer(debugStreamBuffer_);
+  //  }
 #endif // #ifdef SEND_DEBUG_STREAM
 
   static ReturnCode Initialize()
@@ -849,10 +847,8 @@ static ReturnCode LookForMarkers(
   MatlabVisualization::ResetFiducialDetection(grayscaleImage);
 
   InitBenchmarking();
-  
-  printf("%d-", grayscaleImage[0][0]);
-  
-  /*const Result result = DetectFiducialMarkers(
+
+  const Result result = DetectFiducialMarkers(
     grayscaleImage,
     markers,
     homographies,
@@ -866,19 +862,10 @@ static ReturnCode LookForMarkers(
     parameters.maxConnectedComponentSegments,
     parameters.maxExtractedQuads,
     false,
-    offchipScratch, onchipScratch, ccmScratch);*/
-    
-    s32 waitTime = rand() % 100000;
-    
-    HAL::MicroWait(waitTime);
-        
-    printf("%d ", grayscaleImage[0][0]);
-    
-  //DebugStream::SendArray(grayscaleImage);
-  return EXIT_SUCCESS;      
+    offchipScratch, onchipScratch, ccmScratch);
 
-/*  if(result == RESULT_OK) {
-    //DebugStream::SendFiducialDetection(grayscaleImage, markers, ccmScratch, onchipScratch, offchipScratch);
+  if(result == RESULT_OK) {
+    DebugStream::SendFiducialDetection(grayscaleImage, markers, ccmScratch, onchipScratch, offchipScratch);
 
     for(s32 i_marker = 0; i_marker < markers.get_size(); ++i_marker) {
       const VisionMarker crntMarker = markers[i_marker];
@@ -888,7 +875,7 @@ static ReturnCode LookForMarkers(
 
     MatlabVisualization::SendDrawNow();
   } // if(result == RESULT_OK)
-*/
+
   return EXIT_SUCCESS;
 } // LookForMarkers()
 
@@ -1255,17 +1242,6 @@ namespace Anki {
 
         if(VisionState::mode_ == VISION_MODE_IDLE) {
           // Nothing to do!
-          
-          MemoryStack onchipScratch_local(VisionMemory::onchipScratch_);
-
-          const s32 captureHeight = CameraModeInfo[captureResolution_].height;
-          const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
-
-          Array<u8> grayscaleImage(captureHeight, captureWidth, onchipScratch_local, Flags::Buffer(false,false,false));
-          
-          HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()), captureResolution_, exposure, false);
-          
-          DebugStream::SendArray(grayscaleImage);
         }
         else if(VisionState::mode_ == VISION_MODE_LOOKING_FOR_MARKERS) {
 #ifdef SIMULATOR
@@ -1284,7 +1260,7 @@ namespace Anki {
 
           HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
             captureResolution_, exposure, false);
-          
+
           const ReturnCode result = LookForMarkers(
             grayscaleImage,
             detectionParameters_,
@@ -1296,8 +1272,6 @@ namespace Anki {
           if(result != EXIT_SUCCESS) {
             return EXIT_FAILURE;
           }
-                    
-          return EXIT_SUCCESS;
 
           const s32 numMarkers = VisionMemory::markers_.get_size();
           bool isTrackingMarkerFound = false;

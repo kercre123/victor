@@ -111,10 +111,9 @@ int main(void)
   Anki::Cozmo::Robot::Init();
   
   while (Anki::Cozmo::Robot::step_LongExecution() == EXIT_SUCCESS)
-  //while(true)
   {
-    /*
-    CameraGetFrame(buffer, CAMERA_MODE_QVGA, 0.25f, false);
+    
+    /*CameraGetFrame(buffer, CAMERA_MODE_QQQVGA, 0.25f, false);
     
     UARTPutChar(0xbe);
     UARTPutChar(0xef);
@@ -123,17 +122,17 @@ int main(void)
     UARTPutChar(0xbd);
     
     // Revert to the old method if the  buffer is full
-    //if (!UARTPutBuffer(buffer, 320 * 240))
+    if (!UARTPutBuffer(buffer, 320/4 * 240/4))
     {
-      for (int y = 0; y < 240; y++)
+      for (int y = 0; y < 240/4; y++)
       {
-        for (int x = 0; x < 320; x++)
+        for (int x = 0; x < 320/4; x++)
         {
-          UARTPutChar(buffer[y * 320 + x]);
+          UARTPutChar(buffer[y * 320/4 + x]);
         }
       }
-    }
-   */ 
+    }*/
+    
   }
 #endif
 }
