@@ -81,12 +81,14 @@ namespace Anki
         Result Print(const char * const variableName = "Transformation") const;
 
         // Transform the input Quadrilateral, using this object's transformation
-        Quadrilateral<f32> TransformQuadrilateral(const Quadrilateral<f32> &in,
+        Quadrilateral<f32> TransformQuadrilateral(
+          const Quadrilateral<f32> &in,
           MemoryStack scratch,
           const f32 scale=1.0f) const;
 
         // Transform an array (like an image)
-        Result TransformArray(const Array<u8> &in,
+        Result TransformArray(
+          const Array<u8> &in,
           Array<u8> &out,
           MemoryStack scratch,
           const f32 scale=1.0f) const;

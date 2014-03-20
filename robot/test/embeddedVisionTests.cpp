@@ -135,6 +135,8 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
   const s32 matching_maxTranslationDistance = 7;
   const s32 matching_maxProjectiveDistance = 7;
 
+  const f32 scaleTemplateRegionPercent = 1.05f;
+
   const s32 verification_maxTranslationDistance = 1;
 
   templateImage.Set(&cozmo_2014_01_29_11_41_05_10_320x240[0], cozmo_2014_01_29_11_41_05_10_320x240_WIDTH*cozmo_2014_01_29_11_41_05_10_320x240_HEIGHT);
@@ -152,15 +154,16 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     const s32 templateEdgeDetection_everyNLines = 1;
 
     BeginBenchmark("BinaryTracker init");
-    TemplateTracker::BinaryTracker tracker(templateImage, templateQuad, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, templateEdgeDetection_maxDetectionsPerType, templateEdgeDetection_everyNLines, scratchOnchip);
+    TemplateTracker::BinaryTracker tracker(templateImage, templateQuad, scaleTemplateRegionPercent, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, templateEdgeDetection_maxDetectionsPerType, templateEdgeDetection_everyNLines, scratchOnchip);
     EndBenchmark("BinaryTracker init");
-
-    const s32 numTemplatePixels = tracker.get_numTemplatePixels();
-
-    ASSERT_TRUE(numTemplatePixels == 1201);
 
     //templateImage.Show("templateImage",false);
     //nextImage.Show("nextImage",false);
+    //tracker.ShowTemplate(true, false);
+
+    const s32 numTemplatePixels = tracker.get_numTemplatePixels();
+
+    ASSERT_TRUE(numTemplatePixels == 1292);
 
     BeginBenchmark("BinaryTracker update fixed-float");
 
@@ -174,14 +177,14 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     ASSERT_TRUE(result == RESULT_OK);
 
     // TODO: verify this number manually
-    ASSERT_TRUE(numMatches == 1161);
+    ASSERT_TRUE(numMatches == 1240);
 
     //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
 
     Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
-    transform_groundTruth[0][0] = 1.0693f;  transform_groundTruth[0][1] = 0.0008f; transform_groundTruth[0][2] = 2.2256f;
-    transform_groundTruth[1][0] = 0.0010f;  transform_groundTruth[1][1] = 1.0604f; transform_groundTruth[1][2] = -4.1188f;
-    transform_groundTruth[2][0] = -0.0001f; transform_groundTruth[2][1] = 0.0f;    transform_groundTruth[2][2] = 1.0f;
+    transform_groundTruth[0][0] = 1.068f; transform_groundTruth[0][1] = 0.0f;   transform_groundTruth[0][2] = 2.369f;
+    transform_groundTruth[1][0] = 0.002f; transform_groundTruth[1][1] = 1.061f; transform_groundTruth[1][2] = -4.051f;
+    transform_groundTruth[2][0] = 0.0f;   transform_groundTruth[2][1] = 0.0f;   transform_groundTruth[2][2] = 1.0f;
 
     //tracker.get_transformation().get_homography().Print("fixed-float 1");
 
@@ -202,12 +205,12 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     const s32 templateEdgeDetection_everyNLines = 2;
 
     BeginBenchmark("BinaryTracker init");
-    TemplateTracker::BinaryTracker tracker(templateImage, templateQuad, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, templateEdgeDetection_maxDetectionsPerType, templateEdgeDetection_everyNLines, scratchOnchip);
+    TemplateTracker::BinaryTracker tracker(templateImage, templateQuad, scaleTemplateRegionPercent, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, templateEdgeDetection_maxDetectionsPerType, templateEdgeDetection_everyNLines, scratchOnchip);
     EndBenchmark("BinaryTracker init");
 
     const s32 numTemplatePixels = tracker.get_numTemplatePixels();
 
-    ASSERT_TRUE(numTemplatePixels == 599);
+    ASSERT_TRUE(numTemplatePixels == 648);
 
     //templateImage.Show("templateImage",false);
     //nextImage.Show("nextImage",false);
@@ -224,14 +227,14 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     ASSERT_TRUE(result == RESULT_OK);
 
     // TODO: verify this number manually
-    ASSERT_TRUE(numMatches == 581);
+    ASSERT_TRUE(numMatches == 622);
 
     //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
 
     Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
-    transform_groundTruth[0][0] = 1.0681f;  transform_groundTruth[0][1] = 0.0f; transform_groundTruth[0][2] = 2.2348f;
-    transform_groundTruth[1][0] = -0.0008f;  transform_groundTruth[1][1] = 1.0607f; transform_groundTruth[1][2] = -4.1342f;
-    transform_groundTruth[2][0] = -0.0001f; transform_groundTruth[2][1] = 0.0f;    transform_groundTruth[2][2] = 1.0f;
+    transform_groundTruth[0][0] = 1.069f; transform_groundTruth[0][1] = 0.001f; transform_groundTruth[0][2] = 2.366f;
+    transform_groundTruth[1][0] = 0.005f; transform_groundTruth[1][1] = 1.060f; transform_groundTruth[1][2] = -4.029f;
+    transform_groundTruth[2][0] = 0.0f;   transform_groundTruth[2][1] = 0.0f;   transform_groundTruth[2][2] = 1.0f;
 
     //tracker.get_transformation().get_homography().Print("fixed-float 2");
 
@@ -252,12 +255,12 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     const s32 templateEdgeDetection_everyNLines = 1;
 
     BeginBenchmark("BinaryTracker init");
-    TemplateTracker::BinaryTracker tracker(templateImage, templateQuad, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, templateEdgeDetection_maxDetectionsPerType, templateEdgeDetection_everyNLines, scratchOnchip);
+    TemplateTracker::BinaryTracker tracker(templateImage, templateQuad, scaleTemplateRegionPercent, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, templateEdgeDetection_maxDetectionsPerType, templateEdgeDetection_everyNLines, scratchOnchip);
     EndBenchmark("BinaryTracker init");
 
     const s32 numTemplatePixels = tracker.get_numTemplatePixels();
 
-    ASSERT_TRUE(numTemplatePixels == 1201);
+    ASSERT_TRUE(numTemplatePixels == 1292);
 
     //templateImage.Show("templateImage",false);
     //nextImage.Show("nextImage",false);
@@ -274,14 +277,14 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     ASSERT_TRUE(result == RESULT_OK);
 
     // TODO: verify this number manually
-    ASSERT_TRUE(numMatches == 1161);
+    ASSERT_TRUE(numMatches == 1240);
 
     //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
 
     Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
-    transform_groundTruth[0][0] = 1.0693f;  transform_groundTruth[0][1] = 0.0008f; transform_groundTruth[0][2] = 2.2256f;
-    transform_groundTruth[1][0] = 0.0010f;  transform_groundTruth[1][1] = 1.0604f; transform_groundTruth[1][2] = -4.1188f;
-    transform_groundTruth[2][0] = -0.0001f; transform_groundTruth[2][1] = 0.0f;    transform_groundTruth[2][2] = 1.0f;
+    transform_groundTruth[0][0] = 1.068f; transform_groundTruth[0][1] = 0.0f;   transform_groundTruth[0][2] = 2.369f;
+    transform_groundTruth[1][0] = 0.002f; transform_groundTruth[1][1] = 1.061f; transform_groundTruth[1][2] = -4.051f;
+    transform_groundTruth[2][0] = 0.0f;   transform_groundTruth[2][1] = 0.0f;   transform_groundTruth[2][2] = 1.0f;
 
     //tracker.get_transformation().get_homography().Print("fixed-float 1");
 
@@ -302,12 +305,12 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     const s32 templateEdgeDetection_everyNLines = 2;
 
     BeginBenchmark("BinaryTracker init");
-    TemplateTracker::BinaryTracker tracker(templateImage, templateQuad, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, templateEdgeDetection_maxDetectionsPerType, templateEdgeDetection_everyNLines, scratchOnchip);
+    TemplateTracker::BinaryTracker tracker(templateImage, templateQuad, scaleTemplateRegionPercent, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, templateEdgeDetection_maxDetectionsPerType, templateEdgeDetection_everyNLines, scratchOnchip);
     EndBenchmark("BinaryTracker init");
 
     const s32 numTemplatePixels = tracker.get_numTemplatePixels();
 
-    ASSERT_TRUE(numTemplatePixels == 599);
+    ASSERT_TRUE(numTemplatePixels == 648);
 
     //templateImage.Show("templateImage",false);
     //nextImage.Show("nextImage",false);
@@ -324,14 +327,14 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     ASSERT_TRUE(result == RESULT_OK);
 
     // TODO: verify this number manually
-    ASSERT_TRUE(numMatches == 581);
+    ASSERT_TRUE(numMatches == 622);
 
     //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
 
     Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
-    transform_groundTruth[0][0] = 1.0681f;  transform_groundTruth[0][1] = 0.0f; transform_groundTruth[0][2] = 2.2348f;
-    transform_groundTruth[1][0] = -0.0008f;  transform_groundTruth[1][1] = 1.0607f; transform_groundTruth[1][2] = -4.1342f;
-    transform_groundTruth[2][0] = -0.0001f; transform_groundTruth[2][1] = 0.0f;    transform_groundTruth[2][2] = 1.0f;
+    transform_groundTruth[0][0] = 1.069f; transform_groundTruth[0][1] = 0.001f; transform_groundTruth[0][2] = 2.366f;
+    transform_groundTruth[1][0] = 0.005f; transform_groundTruth[1][1] = 1.060f; transform_groundTruth[1][2] = -4.029f;
+    transform_groundTruth[2][0] = 0.0f;   transform_groundTruth[2][1] = 0.0f;   transform_groundTruth[2][2] = 1.0f;
 
     //tracker.get_transformation().get_homography().Print("fixed-float 2");
 
@@ -611,6 +614,8 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
   const s32 maxIterations = 25;
   const f32 convergenceTolerance = .05f;
 
+  const f32 scaleTemplateRegionPercent = 1.05f;
+
   // TODO: add check that images were loaded correctly
 
   //MemoryStack scratch0(&ddrBuffer[0], 80*60*2 + 256);
@@ -641,7 +646,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
 
     const f64 time0 = GetTime();
 
-    TemplateTracker::LucasKanadeTracker_Projective tracker(image1, templateQuad, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, scratch1);
+    TemplateTracker::LucasKanadeTracker_Projective tracker(image1, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, scratch1);
 
     ASSERT_TRUE(tracker.IsValid());
 
@@ -661,8 +666,8 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
 
     // This ground truth is from the PC c++ version
     Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
-    transform_groundTruth[0][2] = -1.359f;
-    transform_groundTruth[1][2] = -0.971f;
+    transform_groundTruth[0][2] = -1.368f;
+    transform_groundTruth[1][2] = -1.041f;
 
     ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
   }
@@ -675,7 +680,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
 
     const f64 time0 = GetTime();
 
-    TemplateTracker::LucasKanadeTracker_Projective tracker(image1, templateQuad, numPyramidLevels, Transformations::TRANSFORM_AFFINE, scratch1);
+    TemplateTracker::LucasKanadeTracker_Projective tracker(image1, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_AFFINE, scratch1);
 
     ASSERT_TRUE(tracker.IsValid());
 
@@ -694,9 +699,9 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
 
     // This ground truth is from the PC c++ version
     Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
-    transform_groundTruth[0][0] = 1.005f; transform_groundTruth[0][1] = 0.027f; transform_groundTruth[0][2] = -1.249f;
-    transform_groundTruth[1][0] = -0.033f; transform_groundTruth[1][1] = 0.993f; transform_groundTruth[1][2] = -0.912f;
-    transform_groundTruth[2][0] = 0.0f; transform_groundTruth[2][1] = 0.0f; transform_groundTruth[2][2] = 1.0f;
+    transform_groundTruth[0][0] = 1.013f;  transform_groundTruth[0][1] = 0.032f; transform_groundTruth[0][2] = -1.301f;
+    transform_groundTruth[1][0] = -0.036f; transform_groundTruth[1][1] = 1.0f;   transform_groundTruth[1][2] = -1.101f;
+    transform_groundTruth[2][0] = 0.0f;    transform_groundTruth[2][1] = 0.0f;   transform_groundTruth[2][2] = 1.0f;
 
     ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
   }
@@ -709,7 +714,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
 
     const f64 time0 = GetTime();
 
-    TemplateTracker::LucasKanadeTracker_Projective tracker(image1, templateQuad, numPyramidLevels, Transformations::TRANSFORM_PROJECTIVE, scratch1);
+    TemplateTracker::LucasKanadeTracker_Projective tracker(image1, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_PROJECTIVE, scratch1);
 
     ASSERT_TRUE(tracker.IsValid());
 
@@ -729,8 +734,8 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
 
     // This ground truth is from the PC c++ version
     Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
-    transform_groundTruth[0][0] = 1.007f;  transform_groundTruth[0][1] = 0.027f; transform_groundTruth[0][2] = -1.427f;
-    transform_groundTruth[1][0] = -0.034f; transform_groundTruth[1][1] = 0.992f; transform_groundTruth[1][2] = -1.072f;
+    transform_groundTruth[0][0] = 1.013f;  transform_groundTruth[0][1] = 0.032f; transform_groundTruth[0][2] = -1.342f;
+    transform_groundTruth[1][0] = -0.036f; transform_groundTruth[1][1] = 1.0f;   transform_groundTruth[1][2] = -1.044f;
     transform_groundTruth[2][0] = 0.0f;    transform_groundTruth[2][1] = 0.0f;   transform_groundTruth[2][2] = 1.0f;
 
     ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
@@ -752,6 +757,8 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
 
   const s32 maxIterations = 25;
   const f32 convergenceTolerance = .05f;
+
+  const f32 scaleTemplateRegionPercent = 1.05f;
 
   // TODO: add check that images were loaded correctly
 
@@ -781,7 +788,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
 
     const f64 time0 = GetTime();
 
-    TemplateTracker::LucasKanadeTracker_Affine tracker(image1, templateRegion, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, scratch1);
+    TemplateTracker::LucasKanadeTracker_Affine tracker(image1, templateRegion, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, scratch1);
 
     ASSERT_TRUE(tracker.IsValid());
 
@@ -800,8 +807,8 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
 
     // This ground truth is from the PC c++ version
     Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
-    transform_groundTruth[0][2] = -1.359f;
-    transform_groundTruth[1][2] = -0.971f;
+    transform_groundTruth[0][2] = -1.368f;
+    transform_groundTruth[1][2] = -1.041f;
 
     ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
   }
@@ -814,7 +821,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
 
     const f64 time0 = GetTime();
 
-    TemplateTracker::LucasKanadeTracker_Affine tracker(image1, templateRegion, numPyramidLevels, Transformations::TRANSFORM_AFFINE, scratch1);
+    TemplateTracker::LucasKanadeTracker_Affine tracker(image1, templateRegion, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_AFFINE, scratch1);
 
     ASSERT_TRUE(tracker.IsValid());
 
@@ -834,9 +841,9 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
 
     // This ground truth is from the PC c++ version
     Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
-    transform_groundTruth[0][0] = 1.005f; transform_groundTruth[0][1] = 0.027f; transform_groundTruth[0][2] = -1.249f;
-    transform_groundTruth[1][0] = -0.033f; transform_groundTruth[1][1] = 0.993f; transform_groundTruth[1][2] = -0.912f;
-    transform_groundTruth[2][0] = 0.0f; transform_groundTruth[2][1] = 0.0f; transform_groundTruth[2][2] = 1.0f;
+    transform_groundTruth[0][0] = 1.013f;  transform_groundTruth[0][1] = 0.032f; transform_groundTruth[0][2] = -1.299f;
+    transform_groundTruth[1][0] = -0.036f; transform_groundTruth[1][1] = 1.0f;   transform_groundTruth[1][2] = -1.104f;
+    transform_groundTruth[2][0] = 0.0f;    transform_groundTruth[2][1] = 0.0f;   transform_groundTruth[2][2] = 1.0f;
 
     ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
   }
@@ -858,6 +865,8 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
 
   const s32 maxIterations = 25;
   const f32 convergenceTolerance = .05f;
+
+  const f32 scaleTemplateRegionPercent = 1.05f;
 
   // TODO: add check that images were loaded correctly
 
@@ -889,7 +898,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
 
     const f64 time0 = GetTime();
 
-    TemplateTracker::LucasKanadeTracker_Slow tracker(image1, templateRegion, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, ridgeWeight, scratch1);
+    TemplateTracker::LucasKanadeTracker_Slow tracker(image1, templateRegion, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, ridgeWeight, scratch1);
 
     ASSERT_TRUE(tracker.IsValid());
 
@@ -909,8 +918,8 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
 
     // This ground truth is from the PC c++ version
     Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
-    transform_groundTruth[0][2] = -1.364f;
-    transform_groundTruth[1][2] = -0.980f;
+    transform_groundTruth[0][2] = -1.368f;
+    transform_groundTruth[1][2] = -1.041f;
 
     ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
   }
@@ -923,7 +932,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
 
     const f64 time0 = GetTime();
 
-    TemplateTracker::LucasKanadeTracker_Slow tracker(image1, templateRegion, numPyramidLevels, Transformations::TRANSFORM_AFFINE, ridgeWeight, scratch1);
+    TemplateTracker::LucasKanadeTracker_Slow tracker(image1, templateRegion, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_AFFINE, ridgeWeight, scratch1);
 
     ASSERT_TRUE(tracker.IsValid());
 
@@ -942,9 +951,9 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
 
     // This ground truth is from the PC c++ version
     Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
-    transform_groundTruth[0][0] = 1.005f; transform_groundTruth[0][1] = 0.027f; transform_groundTruth[0][2] = -1.249f;
-    transform_groundTruth[1][0] = -0.033f; transform_groundTruth[1][1] = 0.993f; transform_groundTruth[1][2] = -0.912f;
-    transform_groundTruth[2][0] = 0.0f; transform_groundTruth[2][1] = 0.0f; transform_groundTruth[2][2] = 1.0f;
+    transform_groundTruth[0][0] = 1.013f;  transform_groundTruth[0][1] = 0.032f; transform_groundTruth[0][2] = -1.299f;
+    transform_groundTruth[1][0] = -0.036f; transform_groundTruth[1][1] = 1.0f;   transform_groundTruth[1][2] = -1.104f;
+    transform_groundTruth[2][0] = 0.0f;    transform_groundTruth[2][1] = 0.0f;   transform_groundTruth[2][2] = 1.0f;
 
     ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
   }
@@ -957,7 +966,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
 
     const f64 time0 = GetTime();
 
-    TemplateTracker::LucasKanadeTracker_Slow tracker(image1, templateRegion, numPyramidLevels, Transformations::TRANSFORM_PROJECTIVE, ridgeWeight, scratch1);
+    TemplateTracker::LucasKanadeTracker_Slow tracker(image1, templateRegion, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_PROJECTIVE, ridgeWeight, scratch1);
 
     ASSERT_TRUE(tracker.IsValid());
 
@@ -977,9 +986,9 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
 
     // This ground truth is from the PC c++ version
     Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
-    transform_groundTruth[0][0] = 1.008f; transform_groundTruth[0][1] = 0.027f; transform_groundTruth[0][2] = -1.433f;
-    transform_groundTruth[1][0] = -0.034f; transform_groundTruth[1][1] = 0.992f; transform_groundTruth[1][2] = -1.080f;
-    transform_groundTruth[2][0] = 0.0f; transform_groundTruth[2][1] = 0.0f; transform_groundTruth[2][2] = 1.0f;
+    transform_groundTruth[0][0] = 1.013f;  transform_groundTruth[0][1] = 0.032f; transform_groundTruth[0][2] = -1.339f;
+    transform_groundTruth[1][0] = -0.036f; transform_groundTruth[1][1] = 1.0f;   transform_groundTruth[1][2] = -1.042f;
+    transform_groundTruth[2][0] = 0.0f;    transform_groundTruth[2][1] = 0.0f;   transform_groundTruth[2][2] = 1.0f;
 
     ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
   }

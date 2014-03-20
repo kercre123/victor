@@ -42,7 +42,14 @@ namespace Anki
 
       public:
         LucasKanadeTracker_Slow();
-        LucasKanadeTracker_Slow(const Array<u8> &templateImage, const Quadrilateral<f32> &templateRegion, const s32 numPyramidLevels, const Transformations::TransformType transformType, const f32 ridgeWeight, MemoryStack &memory);
+        LucasKanadeTracker_Slow(
+          const Array<u8> &templateImage,
+          const Quadrilateral<f32> &templateRegion,
+          const f32 scaleTemplateRegionPercent, //< Shrinks the region if less-than 1.0, expands the region if greater-than 1.0
+          const s32 numPyramidLevels,
+          const Transformations::TransformType transformType,
+          const f32 ridgeWeight,
+          MemoryStack &memory);
 
         Result UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, const bool useWeights, bool& converged, MemoryStack scratch);
 
@@ -101,7 +108,14 @@ namespace Anki
       {
       public:
         LucasKanadeTracker_Fast(const Transformations::TransformType maxSupportedTransformType);
-        LucasKanadeTracker_Fast(const Transformations::TransformType maxSupportedTransformType, const Array<u8> &templateImage, const Quadrilateral<f32> &templateQuad, const s32 numPyramidLevels, const Transformations::TransformType transformType, MemoryStack &memory);
+        LucasKanadeTracker_Fast(
+          const Transformations::TransformType maxSupportedTransformType,
+          const Array<u8> &templateImage,
+          const Quadrilateral<f32> &templateQuad,
+          const f32 scaleTemplateRegionPercent, //< Shrinks the region if less-than 1.0, expands the region if greater-than 1.0
+          const s32 numPyramidLevels,
+          const Transformations::TransformType transformType,
+          MemoryStack &memory);
 
         bool IsValid() const;
 
@@ -152,7 +166,13 @@ namespace Anki
 
       public:
         LucasKanadeTracker_Affine();
-        LucasKanadeTracker_Affine(const Array<u8> &templateImage, const Quadrilateral<f32> &templateQuad, const s32 numPyramidLevels, const Transformations::TransformType transformType, MemoryStack &memory);
+        LucasKanadeTracker_Affine(
+          const Array<u8> &templateImage,
+          const Quadrilateral<f32> &templateQuad,
+          const f32 scaleTemplateRegionPercent, //< Shrinks the region if less-than 1.0, expands the region if greater-than 1.0
+          const s32 numPyramidLevels,
+          const Transformations::TransformType transformType,
+          MemoryStack &memory);
 
         Result UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, bool& converged, MemoryStack scratch);
 
@@ -170,7 +190,13 @@ namespace Anki
 
       public:
         LucasKanadeTracker_Projective();
-        LucasKanadeTracker_Projective(const Array<u8> &templateImage, const Quadrilateral<f32> &templateQuad, const s32 numPyramidLevels, const Transformations::TransformType transformType, MemoryStack &memory);
+        LucasKanadeTracker_Projective(
+          const Array<u8> &templateImage,
+          const Quadrilateral<f32> &templateQuad,
+          const f32 scaleTemplateRegionPercent, //< Shrinks the region if less-than 1.0, expands the region if greater-than 1.0
+          const s32 numPyramidLevels,
+          const Transformations::TransformType transformType,
+          MemoryStack &memory);
 
         Result UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, bool& converged, MemoryStack scratch);
 

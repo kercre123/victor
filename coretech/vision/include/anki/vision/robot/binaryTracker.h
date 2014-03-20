@@ -33,8 +33,13 @@ namespace Anki
 
         // the real max number of edge pixels is maxEdgePixelsPerType*4, for each of the four edge types
         BinaryTracker(
-          const Array<u8> &templateImage, const Quadrilateral<f32> &templateQuad,
-          const u8 edgeDetection_grayvalueThreshold, const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
+          const Array<u8> &templateImage,
+          const Quadrilateral<f32> &templateQuad,
+          const f32 scaleTemplateRegionPercent, //< Shrinks the region if less-than 1.0, expands the region if greater-than 1.0
+          const u8 edgeDetection_grayvalueThreshold,
+          const s32 edgeDetection_minComponentWidth,
+          const s32 edgeDetection_maxDetectionsPerType,
+          const s32 edgeDetection_everyNLines,
           MemoryStack &memory);
 
         // Runs one iteration each of translation and projective

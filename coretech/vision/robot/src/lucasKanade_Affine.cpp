@@ -34,8 +34,14 @@ namespace Anki
       {
       }
 
-      LucasKanadeTracker_Affine::LucasKanadeTracker_Affine(const Array<u8> &templateImage, const Quadrilateral<f32> &templateQuad, const s32 numPyramidLevels, const Transformations::TransformType transformType, MemoryStack &scratch)
-        : LucasKanadeTracker_Fast(Transformations::TRANSFORM_AFFINE, templateImage, templateQuad, numPyramidLevels, transformType, scratch)
+      LucasKanadeTracker_Affine::LucasKanadeTracker_Affine(
+        const Array<u8> &templateImage,
+        const Quadrilateral<f32> &templateQuad,
+        const f32 scaleTemplateRegionPercent,
+        const s32 numPyramidLevels,
+        const Transformations::TransformType transformType,
+        MemoryStack &memory)
+        : LucasKanadeTracker_Fast(Transformations::TRANSFORM_AFFINE, templateImage, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, transformType, memory)
       {
       }
 

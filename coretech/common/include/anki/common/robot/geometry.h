@@ -140,6 +140,28 @@ namespace Anki
       return center;
     }
 
+    template<typename Type> Rectangle<Type> Rectangle<Type>::ComputeScaledRectangle(const f32 scalePercent) const
+    {
+      // TODO: should be done differently for int vs float?
+
+      const f32 width = static_cast<f32>(this->get_width());
+      const f32 height = static_cast<f32>(this->get_height());
+
+      const f32 scaledWidth = width * scalePercent;
+      const f32 scaledHeight = height * scalePercent;
+
+      const f32 dx2 = (scaledWidth - width) / 2.0f;
+      const f32 dy2 = (scaledHeight - height) / 2.0f;
+
+      Rectangle<Type> scaledRect(
+        this->left - dx2,
+        this->right + dx2,
+        this->top - dy2,
+        this->bottom + dy2);
+
+      return scaledRect;
+    }
+
     template<typename Type> bool Rectangle<Type>::operator== (const Rectangle<Type> &rectangle2) const
     {
       if(this->left == rectangle2.left && this->top == rectangle2.top && this->right == rectangle2.right && this->bottom == rectangle2.bottom)

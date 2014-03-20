@@ -71,8 +71,13 @@ namespace Anki
       }
 
       BinaryTracker::BinaryTracker(
-        const Array<u8> &templateImage, const Quadrilateral<f32> &templateQuad,
-        const u8 edgeDetection_grayvalueThreshold, const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
+        const Array<u8> &templateImage,
+        const Quadrilateral<f32> &templateQuad,
+        const f32 scaleTemplateRegionPercent,
+        const u8 edgeDetection_grayvalueThreshold,
+        const s32 edgeDetection_minComponentWidth,
+        const s32 edgeDetection_maxDetectionsPerType,
+        const s32 edgeDetection_everyNLines,
         MemoryStack &memory)
         : isValid(false)
       {
@@ -104,7 +109,7 @@ namespace Anki
           this->templateEdges.yDecreasing.IsValid() && this->templateEdges.yIncreasing.IsValid(),
           "BinaryTracker::BinaryTracker", "Could not allocate local memory");
 
-        const Rectangle<f32> templateRectRaw = templateQuad.ComputeBoundingRectangle();
+        const Rectangle<f32> templateRectRaw = templateQuad.ComputeBoundingRectangle().ComputeScaledRectangle(scaleTemplateRegionPercent);
         const Rectangle<s32> templateRect(static_cast<s32>(templateRectRaw.left), static_cast<s32>(templateRectRaw.right), static_cast<s32>(templateRectRaw.top), static_cast<s32>(templateRectRaw.bottom));
 
         const Result result = DetectBlurredEdges(templateImage, templateRect, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, edgeDetection_everyNLines, this->templateEdges);
