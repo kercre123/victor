@@ -132,7 +132,7 @@ namespace Anki {
               
               // Start dock
               PRINT_INFO("Picking up block with marker %d\n", PICKUP_BLOCK_TYPE);
-              robot_->SendDockWithBlock(PICKUP_BLOCK_TYPE, markerWidth, DA_PICKUP_LOW_BLOCK);
+              robot_->SendDockWithBlock(PICKUP_BLOCK_TYPE, markerWidth, DA_PICKUP_LOW);
               state_ = EXECUTING_DOCK;
               
             } else {

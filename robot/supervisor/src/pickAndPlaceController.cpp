@@ -4,6 +4,7 @@
 #include "headController.h"
 #include "liftController.h"
 
+#include "anki/cozmo/cozmoTypes.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/speedController.h"
@@ -18,27 +19,19 @@ namespace Anki {
       namespace {
         
         // Constants
-        enum Action {
-          DOCKING_LOW,   // Docking to block at level 0
-          DOCKING_HIGH,  // Docking to block at level 1
-          PLACING_HIGH   // Placing block atop another block at level 0
-        };
         
-        // HACK: Only using these because lift controller encoders not working.
-        const u32 PRE_PLACEMENT_WAIT_TIME_US = 2000000;
-        const u32 LIFT_MOTION_TIME_US = 5000000;
-        const u32 LIFT_PLACEMENT_ADJUST_TIME_US = 150000;
-        const u32 BACKOUT_TIME = 3000000;
+        // TODO: Need to be able to specify wheel motion by distance
+        const u32 BACKOUT_TIME = 1500000;
         const f32 BACKOUT_SPEED_MMPS = -30;
         
         // Distance between the robot origin and the distance along the robot's x-axis
         // to the lift when it is in the low docking position.
-        const f32 ORIGIN_TO_LOW_LIFT_DIST_M = 0.035;
-        const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_M = 0.0;
+        const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 34.f;
+        const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 30.f;
 
         Mode mode_ = IDLE;
         
-        Action action_ = DOCKING_LOW;
+        DockAction_t action_ = DA_PICKUP_LOW;
         
         Vision::MarkerType dockToMarker_;
         f32 markerWidth_ = 0;
@@ -74,13 +67,13 @@ namespace Anki {
             PRINT("PAP: SETTING LIFT PREDOCK\n");
             mode_ = MOVING_LIFT_PREDOCK;
             switch(action_) {
-              case DOCKING_LOW:
+              case DA_PICKUP_LOW:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
                 break;
-              case DOCKING_HIGH:
+              case DA_PICKUP_HIGH:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_HIGHDOCK);
                 break;
-              case PLACING_HIGH:
+              case DA_PLACE_HIGH:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
                 break;
               default:
@@ -121,11 +114,11 @@ namespace Anki {
             PRINT("PAP: SETTING LIFT POSTDOCK\n");
             mode_ = MOVING_LIFT_POSTDOCK;
             switch(action_) {
-              case DOCKING_LOW:
-              case DOCKING_HIGH:
+              case DA_PICKUP_LOW:
+              case DA_PICKUP_HIGH:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
                 break;
-              case PLACING_HIGH:
+              case DA_PLACE_HIGH:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_HIGHDOCK);
                 break;
               default:
@@ -139,13 +132,13 @@ namespace Anki {
           case MOVING_LIFT_POSTDOCK:
             if (LiftController::IsInPosition()) {
               switch(action_) {
-                case DOCKING_LOW:
-                case DOCKING_HIGH:
+                case DA_PICKUP_LOW:
+                case DA_PICKUP_HIGH:
                   mode_ = IDLE;
                   lastActionSucceeded_ = true;
                   isCarryingBlock_ = true;
                   break;
-                case PLACING_HIGH:
+                case DA_PLACE_HIGH:
                   SteeringController::ExecuteDirectDrive(BACKOUT_SPEED_MMPS, BACKOUT_SPEED_MMPS);
                   transitionTime_ = HAL::GetMicroCounter() + BACKOUT_TIME;
                   mode_ = BACKOUT;
@@ -208,11 +201,11 @@ namespace Anki {
         PRINT("PAP: PICKING UP BLOCK\n");
         
         if (level == 0) {
-          action_ = DOCKING_LOW;
-          dockOffsetDistX_ = ORIGIN_TO_LOW_LIFT_DIST_M;
+          action_ = DA_PICKUP_LOW;
+          dockOffsetDistX_ = ORIGIN_TO_LOW_LIFT_DIST_MM;
         } else {
-          action_ = DOCKING_HIGH;
-          dockOffsetDistX_ = ORIGIN_TO_HIGH_PLACEMENT_DIST_M;
+          action_ = DA_PICKUP_HIGH;
+          dockOffsetDistX_ = ORIGIN_TO_HIGH_PLACEMENT_DIST_MM;
         }
         
         dockToMarker_ = blockMarker;
@@ -231,7 +224,7 @@ namespace Anki {
 
         PRINT("PAP: PLACING BLOCK\n");
         
-        action_ = PLACING_HIGH;
+        action_ = DA_PLACE_HIGH;
         dockToMarker_ = blockMarker;
         mode_ = SET_LIFT_PREDOCK;
         lastActionSucceeded_ = false;        
