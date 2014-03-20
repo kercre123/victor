@@ -173,8 +173,8 @@ namespace Anki
         {
           m_DMAWriteHead = 0;
         }
-      
-        // Check if DMA is running by looking at the data count
+        
+        // Enable DMA if it's not already running
         if (!m_isDMARunning)
         {
           FlushDMA();
@@ -183,6 +183,33 @@ namespace Anki
         __enable_irq();
         
         return c;
+      }
+      
+      bool UARTPutBuffer(u8* buffer, u32 length)
+      {
+        bool result = false;
+        
+        __disable_irq();
+        if ((m_DMAWriteHead + length) <= sizeof(m_bufferWrite))
+        {
+          result = true;
+          memcpy(&m_bufferWrite[m_DMAWriteHead], buffer, length);
+          m_DMAWriteHead += length;
+          
+          if (m_DMAWriteHead >= sizeof(m_bufferWrite))
+          {
+            m_DMAWriteHead = 0;
+          }
+          
+          // Enable DMA if it's not already running
+          if (!m_isDMARunning)
+          {
+            FlushDMA();
+          }
+        }
+        __enable_irq();
+        
+        return result;
       }
 
       void UARTPutString(const char* s)
