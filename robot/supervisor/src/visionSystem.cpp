@@ -515,11 +515,15 @@ namespace MatlabVisualization
     const bool converged,
     MemoryStack scratch)  { return EXIT_SUCCESS; }
   
-  static ReturnCode SendTrackerPrediction_Before(const Array<u8>& image, const Quadrilateral<f32>& quad) { return EXIT_SUCCESS; }
+  static ReturnCode SendTrackerPrediction_Before(const Array<u8>& image,
+                                                 const Tracker& tracker,
+                                                 MemoryStack scratch) { return EXIT_SUCCESS; }
   
-  static ReturnCode SendTrackerPrediction_After(const Quadrilateral<f32>& quad) { return EXIT_SUCCESS; }
+  static ReturnCode SendTrackerPrediction_After(const Tracker& tracker,
+                                                MemoryStack scratch) { return EXIT_SUCCESS; }
   
-  static ReturnCode SendTrackerPrediction_Compare(const Quadrilateral<f32>& quad) { return EXIT_SUCCESS; }
+  static ReturnCode SendTrackerPrediction_Compare(const Tracker& tracker,
+                                                  MemoryStack scratch) { return EXIT_SUCCESS; }
   
 #else
   static Matlab matlabViz_;
@@ -649,9 +653,12 @@ namespace MatlabVisualization
                               "title(h, '%s');", subplotNum, titleStr);
   }
   
-  static ReturnCode SendTrackerPrediction_Before(const Array<u8>& image, const Quadrilateral<f32>& quad)
+  static ReturnCode SendTrackerPrediction_Before(const Array<u8>& image,
+                                                 const Tracker& tracker,
+                                                 MemoryStack scratch)
   {
     if(SHOW_TRACKER_PREDICTION) {
+      Quadrilateral<f32> quad = tracker.get_transformation().get_transformedCorners(scratch);
       matlabViz_.PutArray(image, "img");
       matlabViz_.PutQuad(quad, "quad");
       SendTrackerPrediction_Helper(1, "Before Prediction");
@@ -661,20 +668,22 @@ namespace MatlabVisualization
   }
 
   
-  static ReturnCode SendTrackerPrediction_After(const Quadrilateral<f32>& quad)
+  static ReturnCode SendTrackerPrediction_After(const Tracker& tracker, MemoryStack scratch)
   {
     if(SHOW_TRACKER_PREDICTION) {
       AnkiAssert(beforeCalled_ = true);
+      Quadrilateral<f32> quad = tracker.get_transformation().get_transformedCorners(scratch);
       matlabViz_.PutQuad(quad, "quad");
       SendTrackerPrediction_Helper(2, "After Prediction");
     }
     return EXIT_SUCCESS;
   }
   
-  static ReturnCode SendTrackerPrediction_Compare(const Quadrilateral<f32>& quad)
+  static ReturnCode SendTrackerPrediction_Compare(const Tracker& tracker, MemoryStack scratch)
   {
     if(SHOW_TRACKER_PREDICTION) {
       AnkiAssert(beforeCalled_ = true);
+      Quadrilateral<f32> quad = tracker.get_transformation().get_transformedCorners(scratch);
       matlabViz_.PutQuad(quad, "quad");
       SendTrackerPrediction_Helper(2, "After Tracking");
       beforeCalled_ = false;
@@ -1475,8 +1484,7 @@ namespace Anki {
           PRINT("Adjusting transformation: %.3fpix shift for %.3fdeg rotation, %.3f scaling for %.3f translation forward\n",
                 horizontalShift_pix, theta.getDegrees(), scaleChange, tx);
           
-          MatlabVisualization::SendTrackerPrediction_Before(grayscaleImage,
-                                                            VisionState::tracker_.get_transformation().get_transformedCorners(onchipScratch_local));
+          
           
           // 4. Adjust the Transformation
           if(VisionState::tracker_.get_transformation().get_transformType() == Transformations::TRANSFORM_TRANSLATION) {
@@ -1506,7 +1514,7 @@ namespace Anki {
           }
           
           
-          MatlabVisualization::SendTrackerPrediction_After(VisionState::tracker_.get_transformation().get_transformedCorners(onchipScratch_local));
+          MatlabVisualization::SendTrackerPrediction_After(VisionState::tracker_, onchipScratch_local);
           
 
           //
@@ -1531,7 +1539,7 @@ namespace Anki {
             return EXIT_FAILURE;
           }
 
-          MatlabVisualization::SendTrackerPrediction_Compare(VisionState::tracker_.get_transformation().get_transformedCorners(onchipScratch_local));
+          MatlabVisualization::SendTrackerPrediction_Compare(VisionState::tracker_, onchipScratch_local);
           
           //
           // Create docking error signal from tracker
