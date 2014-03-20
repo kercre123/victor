@@ -12,6 +12,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/opencvLight.h"
 #include "anki/common/robot/arrayPatterns.h"
 #include "anki/common/robot/interpolate.h"
+#include "anki/common/robot/serialize.h"
 
 namespace Anki
 {
@@ -318,14 +319,25 @@ namespace Anki
         return RESULT_OK;
       }
 
-      Result PlanarTransformation_f32::Serialize(void * buffer, const s32 bufferLength) const
+      Result PlanarTransformation_f32::Serialize(SerializedBuffer &buffer) const
       {
+        const s32 maxBufferLength = buffer.get_memoryStack().ComputeLargestPossibleAllocation() - 64;
+
         // TODO: make the correct length
-        if(bufferLength < 512) {
+        const s32 requiredBytes = 512;
+
+        if(maxBufferLength < requiredBytes) {
           return RESULT_FAIL;
         }
 
-        char * bufferChar = reinterpret_cast<char*>(buffer);
+        void *afterHeader;
+        const void* segmentStart = buffer.PushBack("PlanarTransformation_f32", requiredBytes, &afterHeader);
+
+        if(segmentStart == NULL) {
+          return RESULT_FAIL;
+        }
+
+        char * bufferChar = reinterpret_cast<char*>(afterHeader);
 
         memcpy(bufferChar, reinterpret_cast<const void*>(&this->isValid), sizeof(this->isValid));
         bufferChar += sizeof(this->isValid);

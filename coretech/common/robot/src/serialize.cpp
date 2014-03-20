@@ -87,6 +87,30 @@ namespace Anki
       return RESULT_OK;
     }
 
+    Result SerializedBuffer::DecodeArraySliceType(const EncodedArraySlice &code, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, s32 &ySlice_start, s32 &ySlice_increment, s32 &ySlice_end, s32 &xSlice_start, s32 &xSlice_increment, s32 &xSlice_end, u8 &basicType_size, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat)
+    {
+      // The first part of the code is the same as an Array
+      EncodedArray arrayCode;
+
+      for(s32 i=0; i<5; i++) {
+        arrayCode.code[i] = code.code[i];
+      }
+
+      const Result result = SerializedBuffer::DecodeArrayType(arrayCode, height, width, stride, flags, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat);
+
+      if(result != RESULT_OK)
+        return result;
+
+      ySlice_start = *reinterpret_cast<const s32*>(&code.code[5]);
+      ySlice_increment = *reinterpret_cast<const s32*>(&code.code[6]);
+      ySlice_end = *reinterpret_cast<const s32*>(&code.code[7]);
+      xSlice_start = *reinterpret_cast<const s32*>(&code.code[8]);
+      xSlice_increment = *reinterpret_cast<const s32*>(&code.code[9]);
+      xSlice_end = *reinterpret_cast<const s32*>(&code.code[10]);
+
+      return RESULT_OK;
+    }
+
     Result SerializedBuffer::FindSerializedBuffer(const void * rawBuffer, const s32 rawBufferLength, s32 &startIndex, s32 &endIndex)
     {
       startIndex = -1;
@@ -154,30 +178,30 @@ namespace Anki
 
     void* SerializedBuffer::PushBack(const void * data, const s32 dataLength)
     {
-      return PushBack_Generic(DATA_TYPE_RAW, NULL, 0, data, dataLength);
+      return PushBack_Generic(DATA_TYPE_RAW, NULL, 0, data, dataLength, NULL);
     }
 
     void* SerializedBuffer::PushBack(const DataType type, const void * data, s32 dataLength)
     {
-      return PushBack_Generic(type, NULL, 0, data, dataLength);
+      return PushBack_Generic(type, NULL, 0, data, dataLength, NULL);
     }
 
     void* SerializedBuffer::PushBack(const void * header, s32 headerLength, const void * data, s32 dataLength)
     {
-      return PushBack_Generic(DATA_TYPE_RAW, header, headerLength, data, dataLength);
+      return PushBack_Generic(DATA_TYPE_RAW, header, headerLength, data, dataLength, NULL);
     }
 
     void* SerializedBuffer::PushBack(const DataType type, const void * header, s32 headerLength, const void * data, s32 dataLength)
     {
-      return PushBack_Generic(type, header, headerLength, data, dataLength);
+      return PushBack_Generic(type, header, headerLength, data, dataLength, NULL);
     }
 
-    void* SerializedBuffer::PushBack(const char * customTypeName, const void * data, s32 dataLength)
+    void* SerializedBuffer::PushBack(const char * customTypeName, const s32 dataLength, void ** afterHeader)
     {
-      return PushBack_Generic(DATA_TYPE_CUSTOM, customTypeName, CUSTOM_TYPE_STRING_LENGTH, data, dataLength);
+      return PushBack_Generic(DATA_TYPE_CUSTOM, customTypeName, CUSTOM_TYPE_STRING_LENGTH, NULL, dataLength, afterHeader);
     }
 
-    void* SerializedBuffer::PushBack_Generic(const DataType type, const void * header, s32 headerLength, const void * data, s32 dataLength)
+    void* SerializedBuffer::PushBack_Generic(const DataType type, const void * header, s32 headerLength, const void * data, s32 dataLength, void ** afterHeader)
     {
       AnkiConditionalErrorAndReturnValue(headerLength >= 0,
         NULL, "SerializedBuffer::PushBack", "headerLength must be >= 0");
@@ -185,15 +209,16 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(headerLength%4 == 0,
         NULL, "SerializedBuffer::PushBack", "headerLength must be a multiple of 4");
 
-      if(header != NULL) {
-        AnkiConditionalErrorAndReturnValue(reinterpret_cast<size_t>(header)%4 == 0,
-          NULL, "SerializedBuffer::PushBack", "header must be 4-byte aligned");
-      }
+      // TODO: are the alignment restrictions still required for the M4?
+      //if(header != NULL) {
+      //  AnkiConditionalErrorAndReturnValue(reinterpret_cast<size_t>(header)%4 == 0,
+      //    NULL, "SerializedBuffer::PushBack", "header must be 4-byte aligned");
+      //}
 
-      if(data != NULL) {
-        AnkiConditionalErrorAndReturnValue(reinterpret_cast<size_t>(data)%4 == 0,
-          NULL, "SerializedBuffer::PushBack", "data must be 4-byte aligned");
-      }
+      //if(data != NULL) {
+      //  AnkiConditionalErrorAndReturnValue(reinterpret_cast<size_t>(data)%4 == 0,
+      //    NULL, "SerializedBuffer::PushBack", "data must be 4-byte aligned");
+      //}
 
       const s32 totalLength = RoundUp<s32>(dataLength, 4) + headerLength;
 
@@ -230,6 +255,10 @@ namespace Anki
       } // if(header != NULL)
 
       segmentU32 += (headerLength>>2);
+
+      if(afterHeader != NULL) {
+        *afterHeader = reinterpret_cast<void*>(segmentU32);
+      }
 
       if(data != NULL) {
         // Endian-safe copy (it may copy a little extra)

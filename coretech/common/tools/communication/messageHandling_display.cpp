@@ -184,6 +184,8 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
         //lastPlanarTransformation.Print();
         isTracking = true;
       }
+    } else {
+      printf("Unknown Type %d\n", type);
     }
 
     //printf("\n");

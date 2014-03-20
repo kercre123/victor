@@ -11,6 +11,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/common/robot/benchmarking_c.h"
 #include "anki/common/robot/matlabInterface.h"
+#include "anki/common/robot/serialize.h"
 
 #include "anki/vision/robot/fiducialDetection.h"
 #include "anki/vision/robot/draw_vision.h"
@@ -514,16 +515,26 @@ namespace Anki
         corners[3].x, corners[3].y);
     } // VisionMarker::Print()
 
-    Result VisionMarker::Serialize(void * buffer, const s32 bufferLength) const
+    Result VisionMarker::Serialize(SerializedBuffer &buffer) const
     {
-      if(bufferLength < sizeof(VisionMarker)) {
+      const s32 maxBufferLength = buffer.get_memoryStack().ComputeLargestPossibleAllocation() - 64;
+
+      // TODO: make the correct length
+      const s32 requiredBytes = 16;
+
+      if(maxBufferLength < requiredBytes) {
         return RESULT_FAIL;
       }
 
-      // TODO: should something simple like this work?
-      //memcpy(buffer, reinterpret_cast<const void*>(this), sizeof(this));
+      void *afterHeader;
+      const void* segmentStart = buffer.PushBack("VisionMarker", requiredBytes, &afterHeader);
 
-      char * bufferChar = reinterpret_cast<char*>(buffer);
+      if(segmentStart == NULL) {
+        return RESULT_FAIL;
+      }
+
+      char * bufferChar = reinterpret_cast<char*>(afterHeader);
+
       memcpy(bufferChar, reinterpret_cast<const void*>(&this->corners), sizeof(this->corners));
       bufferChar += sizeof(this->corners);
       const s32 markerTypeS32 = static_cast<s32>(this->markerType);

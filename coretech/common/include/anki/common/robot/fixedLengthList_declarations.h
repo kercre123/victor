@@ -20,6 +20,8 @@ namespace Anki
 {
   namespace Embedded
   {
+    class SerializedBuffer;
+
     // A FixedLengthList is a list with a fixed maximum size, which is allocated at construction.
     template<typename Type> class FixedLengthList : public ArraySlice<Type>
     {
@@ -80,6 +82,8 @@ namespace Anki
       s32 set_size(s32 newSize);
 
     protected:
+      friend SerializedBuffer;
+
       // For speed, this is a direct pointer to the Array's protected data
       Type * arrayData;
     }; // class FixedLengthList

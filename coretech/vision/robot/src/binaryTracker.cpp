@@ -94,7 +94,7 @@ namespace Anki
         Point<f32> centerOffset((templateImage.get_size(1)-1) / 2.0f, (templateImage.get_size(0)-1) / 2.0f);
         this->transformation = Transformations::PlanarTransformation_f32(Transformations::TRANSFORM_PROJECTIVE, templateQuad, centerOffset, memory);
 
-        this->templateQuad = templateQuad;
+        //this->templateQuad = templateQuad;
 
         this->templateImageHeight = templateImage.get_size(0);
         this->templateImageWidth = templateImage.get_size(1);
@@ -282,6 +282,27 @@ namespace Anki
       Result BinaryTracker::UpdateTransformation(const Array<f32> &update, const f32 scale, MemoryStack scratch, Transformations::TransformType updateType)
       {
         return this->transformation.Update(update, scale, scratch, updateType);
+      }
+
+      Result BinaryTracker::Serialize(SerializedBuffer &buffer) const
+      {
+        const s32 numTemplatePixels =
+          RoundUp<size_t>(this->templateEdges.xDecreasing.get_size(), MEMORY_ALIGNMENT) +
+          RoundUp<size_t>(this->templateEdges.xIncreasing.get_size(), MEMORY_ALIGNMENT) +
+          RoundUp<size_t>(this->templateEdges.yDecreasing.get_size(), MEMORY_ALIGNMENT) +
+          RoundUp<size_t>(this->templateEdges.yIncreasing.get_size(), MEMORY_ALIGNMENT);
+
+        const s32 requiredBytes = 512 + numTemplatePixels*sizeof(Point<s16>);
+
+        // TODO: serialize
+
+        return RESULT_FAIL;
+      }
+
+      Result BinaryTracker::Deserialize(const void* buffer, const s32 bufferLength)
+      {
+        // TODO: deserialize
+        return RESULT_FAIL;
       }
 
       s32 BinaryTracker::get_numTemplatePixels() const

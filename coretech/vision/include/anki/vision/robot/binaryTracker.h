@@ -66,6 +66,9 @@ namespace Anki
         // TRANSFORM_PROJECTIVE: [h00, h01, h02, h10, h11, h12, h20, h21]
         Result UpdateTransformation(const Array<f32> &update, const f32 scale, MemoryStack scratch, Transformations::TransformType updateType=Transformations::TRANSFORM_UNKNOWN);
 
+        Result Serialize(SerializedBuffer &buffer) const;
+        Result Deserialize(const void* buffer, const s32 bufferLength);
+
         s32 get_numTemplatePixels() const;
 
         Result set_transformation(const Transformations::PlanarTransformation_f32 &transformation);
@@ -91,7 +94,7 @@ namespace Anki
         //Array<u8> templateImage;
         s32 templateImageHeight;
         s32 templateImageWidth;
-        Quadrilateral<f32> templateQuad;
+        //Quadrilateral<f32> templateQuad;
 
         // The indexes of the detected edges
         EdgeLists templateEdges;
