@@ -204,7 +204,8 @@ struct TrackerParameters {
     trackingImageHeight  = CameraModeInfo[trackingResolution].height;
     numPyramidLevels     = 3;
     maxIterations        = 25;
-    convergenceTolerance = 0.05f;
+    //convergenceTolerance = 0.05f;
+    convergenceTolerance = 1.f;
     useWeights           = true;
 
     isInitialized = true;
