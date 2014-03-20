@@ -198,11 +198,11 @@ struct TrackerParameters {
   {
     // LK Trackers running at QQQVGA (80x60)
     //trackingResolution   = HAL::CAMERA_MODE_QQQVGA; // 80x60
-    trackingResolution   = HAL::CAMERA_MODE_QQVGA; // 80x60
+    trackingResolution   = HAL::CAMERA_MODE_QQVGA; // 160x120
 
     trackingImageWidth   = CameraModeInfo[trackingResolution].width;
     trackingImageHeight  = CameraModeInfo[trackingResolution].height;
-    numPyramidLevels     = 4;
+    numPyramidLevels     = 3;
     maxIterations        = 25;
     convergenceTolerance = 0.05f;
     useWeights           = true;
@@ -514,22 +514,35 @@ namespace MatlabVisualization
     const Tracker& tracker,
     const bool converged,
     MemoryStack scratch)  { return EXIT_SUCCESS; }
+  
+  static ReturnCode SendTrackerPrediction_Before(const Array<u8>& image, const Quadrilateral<f32>& quad) { return EXIT_SUCCESS; }
+  
+  static ReturnCode SendTrackerPrediction_After(const Quadrilateral<f32>& quad) { return EXIT_SUCCESS; }
+  
+  static ReturnCode SendTrackerPrediction_Compare(const Quadrilateral<f32>& quad) { return EXIT_SUCCESS; }
+  
 #else
   static Matlab matlabViz_;
+  static bool beforeCalled_;
+  static const bool SHOW_TRACKER_PREDICTION = true;
 
   static ReturnCode Initialize()
   {
     //matlabViz_ = Matlab(false);
     matlabViz_.EvalStringEcho("h_fig  = figure('Name', 'VisionSystem'); "
-      "h_axes = axes('Pos', [.1 .1 .8 .8], 'Parent', h_fig); "
-      "h_img  = imagesc(0, 'Parent', h_axes); "
-      "axis(h_axes, 'image', 'off'); "
-      "hold(h_axes, 'on'); "
-      "colormap(h_fig, gray); "
-      "h_trackedQuad = plot(nan, nan, 'b', 'LineWidth', 2, "
-      "                     'Parent', h_axes); "
-      "imageCtr = 0;");
+                              "h_axes = axes('Pos', [.1 .1 .8 .8], 'Parent', h_fig); "
+                              "h_img  = imagesc(0, 'Parent', h_axes); "
+                              "axis(h_axes, 'image', 'off'); "
+                              "hold(h_axes, 'on'); "
+                              "colormap(h_fig, gray); "
+                              "h_trackedQuad = plot(nan, nan, 'b', 'LineWidth', 2, "
+                              "                     'Parent', h_axes); "
+                              "imageCtr = 0; "
+                              "h_fig_tform = figure('Name', 'TransformAdjust'); "
+                              "colormap(h_fig_tform, gray);");
 
+    beforeCalled_ = false;
+    
     return EXIT_SUCCESS;
   }
 
@@ -627,6 +640,49 @@ namespace MatlabVisualization
 
     return EXIT_SUCCESS;
   }
+  
+  static void SendTrackerPrediction_Helper(s32 subplotNum, const char *titleStr)
+  {
+    matlabViz_.EvalStringEcho("h = subplot(1,3,%d, 'Parent', h_fig_tform), "
+                              "hold(h, 'off'), imagesc(img, 'Parent', h), axis(h, 'image'), hold(h, 'on'), "
+                              "plot(quad([1 2 4 3 1],1), quad([1 2 4 3 1],2), 'r', 'LineWidth', 2, 'Parent', h); "
+                              "title(h, '%s');", subplotNum, titleStr);
+  }
+  
+  static ReturnCode SendTrackerPrediction_Before(const Array<u8>& image, const Quadrilateral<f32>& quad)
+  {
+    if(SHOW_TRACKER_PREDICTION) {
+      matlabViz_.PutArray(image, "img");
+      matlabViz_.PutQuad(quad, "quad");
+      SendTrackerPrediction_Helper(1, "Before Prediction");
+      beforeCalled_ = true;
+    }
+    return EXIT_SUCCESS;
+  }
+
+  
+  static ReturnCode SendTrackerPrediction_After(const Quadrilateral<f32>& quad)
+  {
+    if(SHOW_TRACKER_PREDICTION) {
+      AnkiAssert(beforeCalled_ = true);
+      matlabViz_.PutQuad(quad, "quad");
+      SendTrackerPrediction_Helper(2, "After Prediction");
+    }
+    return EXIT_SUCCESS;
+  }
+  
+  static ReturnCode SendTrackerPrediction_Compare(const Quadrilateral<f32>& quad)
+  {
+    if(SHOW_TRACKER_PREDICTION) {
+      AnkiAssert(beforeCalled_ = true);
+      matlabViz_.PutQuad(quad, "quad");
+      SendTrackerPrediction_Helper(2, "After Tracking");
+      beforeCalled_ = false;
+    }
+    return EXIT_SUCCESS;
+  }
+  
+  
 #endif //#if USE_MATLAB_VISUALIZATION
 } // namespace MatlabVisualization
 
@@ -787,6 +843,21 @@ namespace VisionState {
 
     return robotState_.pose_angle - prevRobotState_.pose_angle;
   }
+  
+  static f32 GetTxChange()
+  {
+    AnkiAssert(havePreviousRobotState_);
+    
+    return robotState_.pose_x - prevRobotState_.pose_x;
+  }
+  
+  static f32 GetTyChange()
+  {
+    AnkiAssert(havePreviousRobotState_);
+    
+    return robotState_.pose_y - prevRobotState_.pose_y;
+  }
+  
 } // namespace VisionState
 
 #if 0
@@ -1359,27 +1430,84 @@ namespace Anki {
           HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
             captureResolution_, exposure, false);
 
+          //
+          // Tracker Prediction
+          //
           // Adjust the tracker transformation by approximately how much we
-          // think we've moved (horizontally) since the last tracking call.
-          // This is computed by comparing the rotational change angle to the FOV
-          // angle of the image, and taking the same fraction of the dimension
-          // of the image to get the amount of pixel movement.
+          // think we've moved since the last tracking call.
+          //
+          
+          // 1. Compute the distance from the average of the distances predicted
+          //    by the observed height and width of the marker
+          const Quadrilateral<f32> currentQuad = VisionState::tracker_.get_transformation().get_transformedCorners(onchipScratch_local);
+          const Quadrilateral<f32> sortedQuad  = currentQuad.ComputeClockwiseCorners();
+          
+          f32 dx = sortedQuad[3].x - sortedQuad[0].x;
+          f32 dy = sortedQuad[3].y - sortedQuad[0].y;
+          const f32 observedVerticalSize_pix = sqrtf( dx*dx + dy*dy );
+          
+          dx = sortedQuad[1].x - sortedQuad[0].x;
+          dy = sortedQuad[1].y - sortedQuad[0].y;
+          const f32 observedHorizontalSize_pix = sqrtf( dx*dx + dy*dy );
+          
+          const f32 dx_approx_mm = 0.5f* ((VisionState::trackingMarkerWidth_mm*VisionState::headCamInfo_->focalLength_y /
+                                           observedVerticalSize_pix) +
+                                          (VisionState::trackingMarkerWidth_mm*VisionState::headCamInfo_->focalLength_x /
+                                           observedHorizontalSize_pix));
+          
           const Radians theta = VisionState::GetHeadingChange();
-          f32 horizontalShift = static_cast<f32>(VisionState::headCamInfo_->nrows/2) * theta.ToFloat() / VisionState::headCamInfo_->fov_ver;
+          const f32 tx = VisionState::GetTxChange();
+          const f32 ty = VisionState::GetTyChange();
+          
+          // 2. Horizontal Shift
+          // This is approximated by comparing the rotational change angle to the FOV
+          // angle of the image, and taking the same fraction of the dimension
+          // of the image to get the amount of pixel movement, plus any shift
+          // induced by horizontal movement.
+          f32 horizontalShift_pix = (static_cast<f32>(VisionState::headCamInfo_->nrows/2) * theta.ToFloat() /
+                                 VisionState::headCamInfo_->fov_ver) - (ty*VisionState::headCamInfo_->focalLength_x/dx_approx_mm);
 
-          Array<f32> update(1,2,onchipScratch_local);
-          update[0][0] = -horizontalShift;
-          update[0][1] = 0.0f;
-          VisionState::tracker_.UpdateTransformation(update, 1.0f, onchipScratch_local, Transformations::TRANSFORM_TRANSLATION);
-
-          /*const Transformations::PlanarTransformation_f32& oldTransformation = VisionState::tracker_.get_transformation();
-          Array<f32> H = oldTransformation.get_homography();
-          H[0][2] += horizontalShift; // Adjst the x-translation component of the homography
-          //PRINT("Adjusting transformation by %.3f pixels for %.3fdeg rotation\n", horizontalShift, theta.getDegrees());
-          Transformations::PlanarTransformation_f32 newTransformation(oldTransformation.get_transformType(),
-          oldTransformation.get_initialCorners(),
-          H, VisionMemory::onchipScratch_);
-          VisionState::tracker_.set_transformation(newTransformation);*/
+          // 3. Scale Change
+          // This is approxmiated by comparing the distance to the object before
+          // and after forward motion
+          const f32 scaleChange = dx_approx_mm / (dx_approx_mm - tx);
+          
+          PRINT("Adjusting transformation: %.3fpix shift for %.3fdeg rotation, %.3f scaling for %.3f translation forward\n",
+                horizontalShift_pix, theta.getDegrees(), scaleChange, tx);
+          
+          MatlabVisualization::SendTrackerPrediction_Before(grayscaleImage,
+                                                            VisionState::tracker_.get_transformation().get_transformedCorners(onchipScratch_local));
+          
+          // 4. Adjust the Transformation
+          if(VisionState::tracker_.get_transformation().get_transformType() == Transformations::TRANSFORM_TRANSLATION) {
+            Array<f32> update(1,2,onchipScratch_local);
+            update[0][0] = -horizontalShift_pix;
+            update[0][1] = 0.0f;
+            VisionState::tracker_.UpdateTransformation(update, 1.0f, onchipScratch_local, Transformations::TRANSFORM_TRANSLATION);
+          }
+          else {
+            // TODO: It may be possible to use a 6-parameter affine update for both affine and projective trackers...
+            s32 updateSize = -1;
+            if(VisionState::tracker_.get_transformation().get_transformType() == Transformations::TRANSFORM_AFFINE) {
+              updateSize = 6;
+            }
+            else {
+              AnkiAssert(VisionState::tracker_.get_transformation().get_transformType() == Transformations::TRANSFORM_PROJECTIVE);
+              updateSize = 8;
+            }
+            
+            Array<f32> update(1,updateSize,onchipScratch_local);
+            update.Set(0.f);
+            update[0][0] = -scaleChange + 1.f;  // first row, first col
+            update[0][2] = -(scaleChange*horizontalShift_pix);    // first row, last col
+            update[0][4] = -scaleChange + 1.f;  // second row, second col
+            VisionState::tracker_.UpdateTransformation(update, 1.f, onchipScratch_local,
+                                                       VisionState::tracker_.get_transformation().get_transformType());
+          }
+          
+          
+          MatlabVisualization::SendTrackerPrediction_After(VisionState::tracker_.get_transformation().get_transformedCorners(onchipScratch_local));
+          
 
           //
           // Update the tracker transformation using this image
@@ -1403,6 +1531,8 @@ namespace Anki {
             return EXIT_FAILURE;
           }
 
+          MatlabVisualization::SendTrackerPrediction_Compare(VisionState::tracker_.get_transformation().get_transformedCorners(onchipScratch_local));
+          
           //
           // Create docking error signal from tracker
           //
