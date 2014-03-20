@@ -40,7 +40,9 @@ namespace Anki {
       bool DidLastDockSucceed();
 
       // Tells the docker what the relative position of the block is.
-      // TODO: Move this to private namespace. Currently, this is only used in one of the test modes.
+      // rel_x: Distance to center of block along robot's x-axis
+      // rel_y: Distance to center of block along robot's y-axis
+      // rel_rad: Angle of block normal relative to robot's x-axis. 
       void SetRelDockPose(f32 rel_x, f32 rel_y, f32 rel_rad);
       
       // Resets state machine and configures VisionSystem to track
