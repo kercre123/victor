@@ -224,10 +224,6 @@ namespace Anki
 
       int UARTPrintf(const char* format, ...);
       int UARTPutChar(int c);
-      
-      // Returns false if there's not enough room to fit buffer in memory
-      bool UARTPutBuffer(u8* buffer, u32 length);
-      
       void UARTPutHex(u8 c);
       void UARTPutHex32(u32 data);
       void UARTPutString(const char* s);

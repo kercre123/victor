@@ -68,7 +68,7 @@ namespace Anki
         0x66, 0x00,  // DSP_Ctrl3
         //0x67, 0x4a,  // DSP_Ctrl4 - Output Selection = RAW8
         0x13, 0xf0,  // COM8 - gain control stuff... | AGC enable
-        0x0d, 0xf2,  // PLL = 8x | AEC evaluate 1/4 window
+        0x0d, 0x72,  // PLL = 8x | AEC evaluate 1/4 window
         0x0f, 0xc5,  // Reserved | auto window setting ON/OFF selection when format changes
         0x14, 0x11,  // COM9 - Automatic Gain Ceiling | Reserved
         0x22, 0xff,  // ff/7f/3f/1f for 60/30/15/7.5fps  -- banding filter
@@ -315,7 +315,7 @@ namespace Anki
         RCC_AHB2PeriphClockCmd(RCC_AHB2Periph_DCMI, ENABLE);
         RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM9, ENABLE);
         
-        // Configure XCLK for 12.85 MHz (evenly divisible by 180 MHz)
+        // Configure XCLK for 22.5 MHz (evenly divisible by 180 MHz)
         TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
         TIM_OCInitTypeDef  TIM_OCInitStructure;
         
@@ -323,7 +323,7 @@ namespace Anki
         TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
         TIM_TimeBaseStructure.TIM_ClockDivision = 0;
         TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
-        
+
         TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
         TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
         TIM_OCInitStructure.TIM_OutputNState = TIM_OutputNState_Enable;
@@ -332,8 +332,8 @@ namespace Anki
         TIM_OCInitStructure.TIM_OCIdleState = TIM_OCIdleState_Set;
         TIM_OCInitStructure.TIM_OCNIdleState = TIM_OCIdleState_Reset;
         
-        TIM_TimeBaseStructure.TIM_Period = 13;  // 180MHz/N+1
-        TIM_OCInitStructure.TIM_Pulse = 7;     // Half of (period+1)
+        TIM_TimeBaseStructure.TIM_Period = 31;   // 180MHz/N+1
+        TIM_OCInitStructure.TIM_Pulse = 16;   // Half of (period+1)
         
         TIM_TimeBaseInit(TIM9, &TIM_TimeBaseStructure);
         TIM_OC2Init(TIM9, &TIM_OCInitStructure);

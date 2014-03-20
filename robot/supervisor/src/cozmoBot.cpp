@@ -167,7 +167,7 @@ namespace Anki {
       
       ReturnCode step_MainExecution()
       {
-
+        return EXIT_SUCCESS;
 
 //#if(DEBUG_ANY && defined(SIMULATOR))
 //        PRINT("\n==== FRAME START (time = %d us) ====\n", HAL::GetMicroCounter() );
