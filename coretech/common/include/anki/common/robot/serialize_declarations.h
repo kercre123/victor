@@ -133,7 +133,7 @@ namespace Anki
       // If the void* buffer is already allocated, use flags = Flags::Buffer(false,true,true)
       SerializedBuffer(void *buffer, const s32 bufferLength, const Flags::Buffer flags=Flags::Buffer(false,true,false));
 
-      // Push back some raw data and/or a header
+      // Push back some data and/or a header
       void* PushBack(const void * data, s32 dataLength);
       void* PushBack(const DataType type, const void * data, s32 dataLength);
       void* PushBack(const void * header, s32 headerLength, const void * data, s32 dataLength);

@@ -358,7 +358,7 @@ namespace Anki
         return RESULT_OK;
       }
 
-      Result PlanarTransformation_f32::Deserialize(const void* buffer, const s32 bufferLength)
+      const void* PlanarTransformation_f32::Deserialize(const void* buffer, const s32 bufferLength)
       {
         const char * bufferChar = reinterpret_cast<const char*>(buffer);
 
@@ -376,8 +376,9 @@ namespace Anki
         bufferChar += sizeof(this->initialCorners);
 
         this->centerOffset = *reinterpret_cast<const Point<f32>*>(bufferChar);
+        bufferChar += sizeof(this->centerOffset);
 
-        return RESULT_OK;
+        return reinterpret_cast<const void*>(bufferChar);
       }
 
       Result PlanarTransformation_f32::set_transformType(const TransformType transformType)

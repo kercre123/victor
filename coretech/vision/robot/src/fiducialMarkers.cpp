@@ -545,28 +545,20 @@ namespace Anki
       return RESULT_OK;
     }
 
-    Result VisionMarker::Deserialize(const void* buffer, const s32 bufferLength)
+    const void* VisionMarker::Deserialize(const void* buffer, const s32 bufferLength)
     {
-      // TODO: why doesn't this work?
-      //if(bufferLength < sizeof(VisionMarker)) {
-      /*if(bufferLength < (sizeof(Quadrilateral<s16>) + sizeof(s32) + sizeof(bool))) {
-      return RESULT_FAIL;
-      }*/
-
-      // TODO: should something simple like this work?
-      /*const VisionMarker *tmpMarker = reinterpret_cast<const VisionMarker*>(buffer);
-      this->corners = tmpMarker->corners;
-      this->markerType = tmpMarker->markerType;
-      this->isValid = tmpMarker->isValid;*/
-
       const char * bufferChar = reinterpret_cast<const char*>(buffer);
+
       this->corners = *reinterpret_cast<const Quadrilateral<s16>*>(bufferChar);
       bufferChar += sizeof(this->corners);
+
       this->markerType = static_cast<Vision::MarkerType>(*reinterpret_cast<const s32*>(bufferChar));
       bufferChar += sizeof(this->markerType);
-      this->isValid = *reinterpret_cast<const bool*>(bufferChar);
 
-      return RESULT_OK;
+      this->isValid = *reinterpret_cast<const bool*>(bufferChar);
+      bufferChar += sizeof(this->isValid);
+
+      return reinterpret_cast<const void*>(bufferChar);
     }
 
     void VisionMarker::Initialize()

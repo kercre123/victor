@@ -14,6 +14,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/serialize.h"
 
 #include "anki/vision/robot/fiducialMarkers.h"
+#include "anki/vision/robot/binaryTracker.h"
 
 #include <ctime>
 #include <vector>
@@ -183,6 +184,10 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
         lastPlanarTransformation.Deserialize(dataSegment, remainingDataLength);
         //lastPlanarTransformation.Print();
         isTracking = true;
+      } else if(strcmp(reinterpret_cast<const char*>(customTypeName), "BinaryTracker") == 0) {
+        TemplateTracker::BinaryTracker bt;
+        bt.Deserialize(dataSegment, remainingDataLength);
+        bt.ShowTemplate("BinaryTracker Template", false, false);
       }
     } else {
       printf("Unknown Type %d\n", type);

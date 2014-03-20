@@ -101,7 +101,7 @@ namespace Anki
         Result Set(const PlanarTransformation_f32 &newTransformation);
 
         Result Serialize(SerializedBuffer &buffer) const;
-        Result Deserialize(const void* buffer, const s32 bufferLength);
+        const void* Deserialize(const void* buffer, const s32 bufferLength);
 
         Result set_transformType(const TransformType transformType);
         TransformType get_transformType() const;

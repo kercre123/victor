@@ -15,6 +15,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/benchmarking_c.h"
 #include "anki/common/robot/draw.h"
 #include "anki/common/robot/comparisons.h"
+#include "anki/common/robot/serialize.h"
 
 #include "anki/vision/robot/fiducialDetection.h"
 #include "anki/vision/robot/imageProcessing.h"
@@ -163,15 +164,13 @@ namespace Anki
         this->isValid = true;
       } // BinaryTracker::BinaryTracker()
 
-      Result BinaryTracker::ShowTemplate(const bool waitForKeypress, const bool fitImageToWindow) const
+      Result BinaryTracker::ShowTemplate(const char * windowName, const bool waitForKeypress, const bool fitImageToWindow) const
       {
 #ifndef ANKICORETECH_EMBEDDED_USE_OPENCV
         return RESULT_FAIL;
 #else
         if(!this->IsValid())
           return RESULT_FAIL;
-
-        const char * windowName = "BinaryTracker Template";
 
         cv::Mat toShow = BinaryTracker::DrawIndexes(
           templateImageHeight, templateImageWidth,
@@ -286,23 +285,151 @@ namespace Anki
 
       Result BinaryTracker::Serialize(SerializedBuffer &buffer) const
       {
+        const s32 maxBufferLength = buffer.get_memoryStack().ComputeLargestPossibleAllocation() - 64;
+
+        const s32 xDecreasingUsed = this->templateEdges.xDecreasing.get_size();
+        const s32 xIncreasingUsed = this->templateEdges.xIncreasing.get_size();
+        const s32 yDecreasingUsed = this->templateEdges.yDecreasing.get_size();
+        const s32 yIncreasingUsed = this->templateEdges.yIncreasing.get_size();
+
         const s32 numTemplatePixels =
-          RoundUp<size_t>(this->templateEdges.xDecreasing.get_size(), MEMORY_ALIGNMENT) +
-          RoundUp<size_t>(this->templateEdges.xIncreasing.get_size(), MEMORY_ALIGNMENT) +
-          RoundUp<size_t>(this->templateEdges.yDecreasing.get_size(), MEMORY_ALIGNMENT) +
-          RoundUp<size_t>(this->templateEdges.yIncreasing.get_size(), MEMORY_ALIGNMENT);
+          RoundUp<size_t>(xDecreasingUsed, MEMORY_ALIGNMENT) +
+          RoundUp<size_t>(xIncreasingUsed, MEMORY_ALIGNMENT) +
+          RoundUp<size_t>(yDecreasingUsed, MEMORY_ALIGNMENT) +
+          RoundUp<size_t>(yIncreasingUsed, MEMORY_ALIGNMENT);
 
         const s32 requiredBytes = 512 + numTemplatePixels*sizeof(Point<s16>);
 
-        // TODO: serialize
+        if(maxBufferLength < requiredBytes) {
+          return RESULT_FAIL;
+        }
 
-        return RESULT_FAIL;
+        void *afterHeader;
+        const void* segmentStart = buffer.PushBack("BinaryTracker", requiredBytes, &afterHeader);
+
+        if(segmentStart == NULL) {
+          return RESULT_FAIL;
+        }
+
+        char * bufferChar = reinterpret_cast<char*>(afterHeader);
+
+        // TODO: make not hacky
+
+        // First, serialize the transformation
+
+        memcpy(bufferChar, reinterpret_cast<const void*>(&this->isValid), sizeof(this->isValid));
+        bufferChar += sizeof(this->isValid);
+
+        const Transformations::PlanarTransformation_f32 &transform = this->get_transformation();
+
+        const s32 transformTypeS32 = static_cast<s32>(transform.get_transformType());
+        memcpy(bufferChar, reinterpret_cast<const void*>(&transformTypeS32), sizeof(transformTypeS32));
+        bufferChar += sizeof(transformTypeS32);
+
+        const s32 numArrayBytes = transform.get_homography().get_stride()*transform.get_homography().get_size(0);
+        memcpy(bufferChar, reinterpret_cast<const void*>(transform.get_homography().Pointer(0,0)), numArrayBytes);
+        bufferChar += numArrayBytes;
+
+        const Quadrilateral<f32> initialCorners = transform.get_initialCorners();
+        memcpy(bufferChar, reinterpret_cast<const void*>(&initialCorners), sizeof(initialCorners));
+        bufferChar += sizeof(initialCorners);
+
+        const Point<f32> centerOffset = transform.get_centerOffset(1.0f);
+        memcpy(bufferChar, reinterpret_cast<const void*>(&centerOffset), sizeof(centerOffset));
+        bufferChar += sizeof(centerOffset);
+
+        // Next, serialize the template lists
+
+        memcpy(bufferChar, reinterpret_cast<const void*>(&xDecreasingUsed), sizeof(xDecreasingUsed));
+        bufferChar += sizeof(xDecreasingUsed);
+        memcpy(bufferChar, reinterpret_cast<const void*>(&xIncreasingUsed), sizeof(xIncreasingUsed));
+        bufferChar += sizeof(xIncreasingUsed);
+        memcpy(bufferChar, reinterpret_cast<const void*>(&yDecreasingUsed), sizeof(yDecreasingUsed));
+        bufferChar += sizeof(yDecreasingUsed);
+        memcpy(bufferChar, reinterpret_cast<const void*>(&yIncreasingUsed), sizeof(yIncreasingUsed));
+        bufferChar += sizeof(yIncreasingUsed);
+
+        {
+          const s32 numArrayBytes = xDecreasingUsed * sizeof(s32);
+          memcpy(bufferChar, reinterpret_cast<const void*>(this->templateEdges.xDecreasing.Pointer(0)), numArrayBytes);
+          bufferChar += numArrayBytes;
+        }
+
+        {
+          const s32 numArrayBytes = xIncreasingUsed * sizeof(s32);
+          memcpy(bufferChar, reinterpret_cast<const void*>(this->templateEdges.xIncreasing.Pointer(0)), numArrayBytes);
+          bufferChar += numArrayBytes;
+        }
+
+        {
+          const s32 numArrayBytes = yDecreasingUsed * sizeof(s32);
+          memcpy(bufferChar, reinterpret_cast<const void*>(this->templateEdges.yDecreasing.Pointer(0)), numArrayBytes);
+          bufferChar += numArrayBytes;
+        }
+
+        {
+          const s32 numArrayBytes = yIncreasingUsed * sizeof(s32);
+          memcpy(bufferChar, reinterpret_cast<const void*>(this->templateEdges.yIncreasing.Pointer(0)), numArrayBytes);
+          bufferChar += numArrayBytes;
+        }
+
+        return RESULT_OK;
       }
 
-      Result BinaryTracker::Deserialize(const void* buffer, const s32 bufferLength)
+      const void* BinaryTracker::Deserialize(const void* buffer, const s32 bufferLength)
       {
-        // TODO: deserialize
-        return RESULT_FAIL;
+        // First, deserialize the transformation
+
+        buffer = this->transformation.Deserialize(buffer, bufferLength);
+
+        // Next, deserialize the template lists
+
+        const char * bufferChar = reinterpret_cast<const char*>(buffer);
+
+        s32 xDecreasingUsed;
+        s32 xIncreasingUsed;
+        s32 yDecreasingUsed;
+        s32 yIncreasingUsed;
+
+        memcpy(reinterpret_cast<void*>(&xDecreasingUsed), bufferChar, sizeof(xDecreasingUsed));
+        bufferChar += sizeof(xDecreasingUsed);
+        memcpy(reinterpret_cast<void*>(&xIncreasingUsed), bufferChar, sizeof(xIncreasingUsed));
+        bufferChar += sizeof(xIncreasingUsed);
+        memcpy(reinterpret_cast<void*>(&yDecreasingUsed), bufferChar, sizeof(yDecreasingUsed));
+        bufferChar += sizeof(yDecreasingUsed);
+        memcpy(reinterpret_cast<void*>(&yIncreasingUsed), bufferChar, sizeof(yIncreasingUsed));
+        bufferChar += sizeof(yIncreasingUsed);
+
+        this->templateEdges.xDecreasing.set_size(xDecreasingUsed);
+        this->templateEdges.xIncreasing.set_size(xIncreasingUsed);
+        this->templateEdges.yDecreasing.set_size(yDecreasingUsed);
+        this->templateEdges.yIncreasing.set_size(yIncreasingUsed);
+
+        {
+          const s32 numArrayBytes = xDecreasingUsed * sizeof(s32);
+          memcpy(reinterpret_cast<void*>(this->templateEdges.xDecreasing.Pointer(0)), bufferChar, numArrayBytes);
+          bufferChar += numArrayBytes;
+        }
+
+        {
+          const s32 numArrayBytes = xIncreasingUsed * sizeof(s32);
+          memcpy(reinterpret_cast<void*>(this->templateEdges.xIncreasing.Pointer(0)), bufferChar, numArrayBytes);
+          bufferChar += numArrayBytes;
+        }
+
+        {
+          const s32 numArrayBytes = yDecreasingUsed * sizeof(s32);
+          memcpy(reinterpret_cast<void*>(this->templateEdges.yDecreasing.Pointer(0)), bufferChar, numArrayBytes);
+          bufferChar += numArrayBytes;
+        }
+
+        {
+          const s32 numArrayBytes = yIncreasingUsed * sizeof(s32);
+          memcpy(reinterpret_cast<void*>(this->templateEdges.yIncreasing.Pointer(0)), bufferChar, numArrayBytes);
+          bufferChar += numArrayBytes;
+        }
+
+        return reinterpret_cast<const void*>(bufferChar);
       }
 
       s32 BinaryTracker::get_numTemplatePixels() const

@@ -222,7 +222,7 @@ namespace Anki
 
       const s32 totalLength = RoundUp<s32>(dataLength, 4) + headerLength;
 
-      const s32 bytesRequired = totalLength+SERIALIZED_SEGMENT_HEADER_LENGTH+SERIALIZED_SEGMENT_FOOTER_LENGTH;
+      const s32 bytesRequired = totalLength + SERIALIZED_SEGMENT_HEADER_LENGTH + SERIALIZED_SEGMENT_FOOTER_LENGTH;
 
       s32 numBytesAllocated = -1;
       u8 * const segmentStart = reinterpret_cast<u8*>( memoryStack.Allocate(bytesRequired, numBytesAllocated) );

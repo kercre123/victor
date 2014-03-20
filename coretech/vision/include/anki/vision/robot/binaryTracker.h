@@ -58,7 +58,7 @@ namespace Anki
 
         bool IsValid() const;
 
-        Result ShowTemplate(const bool waitForKeypress, const bool fitImageToWindow) const;
+        Result ShowTemplate(const char * windowName="BinaryTracker Template", const bool waitForKeypress=false, const bool fitImageToWindow=false) const;
 
         // Update the transformation. The format of the update should be as follows:
         // TRANSFORM_TRANSLATION: [-dx, -dy]
@@ -67,7 +67,7 @@ namespace Anki
         Result UpdateTransformation(const Array<f32> &update, const f32 scale, MemoryStack scratch, Transformations::TransformType updateType=Transformations::TRANSFORM_UNKNOWN);
 
         Result Serialize(SerializedBuffer &buffer) const;
-        Result Deserialize(const void* buffer, const s32 bufferLength);
+        const void* Deserialize(const void* buffer, const s32 bufferLength);
 
         s32 get_numTemplatePixels() const;
 
