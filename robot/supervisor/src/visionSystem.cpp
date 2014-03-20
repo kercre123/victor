@@ -137,7 +137,7 @@ struct DetectFiducialMarkersParameters
     detectionResolution = HAL::CAMERA_MODE_QVGA;
     detectionWidth  = CameraModeInfo[detectionResolution].width;
     detectionHeight = CameraModeInfo[detectionResolution].height;
-
+    
     scaleImage_thresholdMultiplier = 65536; // 1.0*(2^16)=65536
     scaleImage_numPyramidLevels = 3;
 
@@ -189,6 +189,7 @@ struct TrackerParameters {
   HAL::CameraMode trackingResolution;
   s32 trackingImageHeight;
   s32 trackingImageWidth;
+  f32 scaleTemplateRegionPercent;
   s32 numPyramidLevels;
   s32 maxIterations;
   f32 convergenceTolerance;
@@ -198,10 +199,11 @@ struct TrackerParameters {
   {
     // LK Trackers running at QQQVGA (80x60)
     //trackingResolution   = HAL::CAMERA_MODE_QQQVGA; // 80x60
-    trackingResolution   = HAL::CAMERA_MODE_QQVGA; // 80x60
+    trackingResolution   = HAL::CAMERA_MODE_QQVGA; // 160x120
 
     trackingImageWidth   = CameraModeInfo[trackingResolution].width;
     trackingImageHeight  = CameraModeInfo[trackingResolution].height;
+    scaleTemplateRegionPercent = 1.05f;    
     numPyramidLevels     = 4;
     maxIterations        = 25;
     convergenceTolerance = 0.05f;
@@ -847,7 +849,7 @@ static ReturnCode LookForMarkers(
   MatlabVisualization::ResetFiducialDetection(grayscaleImage);
 
   InitBenchmarking();
-
+  
   const Result result = DetectFiducialMarkers(
     grayscaleImage,
     markers,
@@ -916,6 +918,7 @@ static ReturnCode InitTemplate(
   tracker = TemplateTracker::LucasKanadeTracker_Slow(
     grayscaleImageSmall,
     trackingQuad,
+    parameters.scaleTemplateRegionPercent,
     parameters.numPyramidLevels,
     Transformations::TRANSFORM_TRANSLATION,
     0.0,
@@ -924,6 +927,7 @@ static ReturnCode InitTemplate(
   tracker = TemplateTracker::LucasKanadeTracker_Affine(
     grayscaleImageSmall,
     trackingQuad,
+    parameters.scaleTemplateRegionPercent,
     parameters.numPyramidLevels,
     Transformations::TRANSFORM_AFFINE,
     onchipScratch);
@@ -931,6 +935,7 @@ static ReturnCode InitTemplate(
   tracker = TemplateTracker::LucasKanadeTracker_Projective(
     grayscaleImageSmall,
     trackingQuad,
+    parameters.scaleTemplateRegionPercent,
     parameters.numPyramidLevels,
     Transformations::TRANSFORM_PROJECTIVE,
     onchipScratch);
@@ -938,6 +943,7 @@ static ReturnCode InitTemplate(
   tracker = TemplateTracker::BinaryTracker(
     grayscaleImage,
     trackingQuad,
+    parameters.scaleTemplateRegionPercent,
     parameters.edgeDetection_grayvalueThreshold,
     parameters.edgeDetection_minComponentWidth,
     parameters.edgeDetection_maxDetectionsPerType,
