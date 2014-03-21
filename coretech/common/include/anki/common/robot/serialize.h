@@ -369,7 +369,7 @@ namespace Anki
 
       const s32 numRequiredBytes = height*stride + EncodedArraySlice::CODE_SIZE*sizeof(u32);
 
-      AnkiConditionalErrorAndReturnValue(inLength >= numRequiredBytes,
+      AnkiConditionalErrorAndReturnValue(bufferLength >= numRequiredBytes,
         RESULT_FAIL, "SerializedBuffer::SerializeRaw", "buffer needs at least %d bytes", numRequiredBytes);
 
       EncodedArraySlice code;
@@ -411,7 +411,7 @@ namespace Anki
 
     template<typename Type> Result SerializedBuffer::SerializeRaw(const FixedLengthList<Type> &in, void ** buffer, s32 &bufferLength)
     {
-      return SerializeRaw(*static_cast<ArraySlice<Type>*>(&in), data, dataLength);
+      return SerializeRaw(*static_cast<ArraySlice<Type>*>(&in), buffer, bufferLength);
     }
 
     template<typename Type> Type SerializedBuffer::DeserializeRaw(void ** buffer, s32 &bufferLength)
@@ -514,9 +514,9 @@ namespace Anki
       s32 iData = 0;
 
       for(s32 y=ySlice_start; y<=ySlice_end; y+=ySlice_increment) {
-        Type * restrict pOutData = out.Pointer(y, 0);
+        Type * restrict pArrayData = array.Pointer(y, 0);
         for(s32 x=xSlice_start; x<=xSlice_end; x+=xSlice_increment) {
-          pOutData[x] = pDataType[iData];
+          pArrayData[x] = pDataType[iData];
           iData++;
         }
       }
@@ -524,7 +524,7 @@ namespace Anki
       const LinearSequence<s32> ySlice(ySlice_start, ySlice_increment, ySlice_end);
       const LinearSequence<s32> xSlice(xSlice_start, xSlice_increment, xSlice_end);
 
-      out = ArraySlice<Type>(array, ySlice, xSlice);
+      ArraySlice<Type> out = ArraySlice<Type>(array, ySlice, xSlice);
 
       *buffer = reinterpret_cast<u8*>(*buffer) + height*stride;
       bufferLength -= height*stride;
@@ -541,7 +541,7 @@ namespace Anki
       if(result != RESULT_OK)
         return result;
 
-      out = FixedLengthList<Type>();
+      ArraySlice<Type> out = FixedLengthList<Type>();
 
       out.ySlice = arraySlice.get_ySlice();
       out.xSlice = arraySlice.get_xSlice();
