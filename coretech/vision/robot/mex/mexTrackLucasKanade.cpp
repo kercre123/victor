@@ -55,7 +55,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     static_cast<f32>(templateRegionRectangle_array[0][2]),
     static_cast<f32>(templateRegionRectangle_array[0][3]));
 
-  TemplateTracker::LucasKanadeTracker_Slow tracker(templateImage, templateRegion, numPyramidLevels, transformType, ridgeWeight, memory);
+  TemplateTracker::LucasKanadeTracker_Slow tracker(templateImage, templateRegion, 1.0f, numPyramidLevels, transformType, ridgeWeight, memory);
 
   AnkiConditionalErrorAndReturn(tracker.IsValid(), "mexTrackLucasKanade", "Could not construct tracker");
 

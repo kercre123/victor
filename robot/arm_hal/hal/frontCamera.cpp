@@ -332,8 +332,8 @@ namespace Anki
         TIM_OCInitStructure.TIM_OCIdleState = TIM_OCIdleState_Set;
         TIM_OCInitStructure.TIM_OCNIdleState = TIM_OCIdleState_Reset;
         
-        TIM_TimeBaseStructure.TIM_Period = 13;  // 180MHz/N+1
-        TIM_OCInitStructure.TIM_Pulse = 7;     // Half of (period+1)
+        TIM_TimeBaseStructure.TIM_Period = 31;  // 180MHz/N+1
+        TIM_OCInitStructure.TIM_Pulse = 16;     // Half of (period+1)
         
         TIM_TimeBaseInit(TIM9, &TIM_TimeBaseStructure);
         TIM_OC2Init(TIM9, &TIM_OCInitStructure);

@@ -167,7 +167,9 @@ namespace Anki {
       
       ReturnCode step_MainExecution()
       {
-
+#ifdef THIS_IS_PETES_BOARD      
+        return EXIT_SUCCESS;
+#endif
 
 //#if(DEBUG_ANY && defined(SIMULATOR))
 //        PRINT("\n==== FRAME START (time = %d us) ====\n", HAL::GetMicroCounter() );

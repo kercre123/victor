@@ -53,9 +53,10 @@ namespace Anki
         DATA_TYPE_RAW = 1,
         DATA_TYPE_BASIC_TYPE_BUFFER = 2,
         DATA_TYPE_ARRAY = 3,
-        DATA_TYPE_STRING = 4,
-        DATA_TYPE_LIST = 5,
-        DATA_TYPE_CUSTOM = 6 //< A custom type is defined by a unique 31-character string
+        DATA_TYPE_ARRAYSLICE = 4,
+        DATA_TYPE_STRING = 5,
+        DATA_TYPE_LIST = 6,
+        DATA_TYPE_CUSTOM = 7 //< A custom type is defined by a unique 31-character string
       };
 
       // Stores the eight-byte code of a basic data type buffer (like a buffer of unsigned shorts)
@@ -74,21 +75,33 @@ namespace Anki
         u32 code[EncodedArray::CODE_SIZE];
       };
 
+      // Stores the ??-byte code for an ArraySlice
+      class EncodedArraySlice
+      {
+      public:
+        const static s32 CODE_SIZE = 11;
+        u32 code[EncodedArraySlice::CODE_SIZE];
+      };
+
       //
       // Various static functions for encoding and decoding serialized objects
       //
 
       // Encode or decode the four-byte code of a basic data type (like a single unsigned shorts)
       template<typename Type> static Result EncodeBasicType(u32 &code);
-      static Result DecodeBasicType(const u32 code, u8 &size, bool &isInteger, bool &isSigned, bool &isFloat);
+      static Result DecodeBasicType(const u32 code, u16 &size, bool &isBasicType, bool &isInteger, bool &isSigned, bool &isFloat);
 
       // Encode or decode the eight-byte code of a basic data type buffer (like a buffer of unsigned shorts)
       template<typename Type> static Result EncodeBasicTypeBuffer(const s32 numElements, EncodedBasicTypeBuffer &code);
-      static Result DecodeBasicTypeBuffer(const EncodedBasicTypeBuffer &code, u8 &size, bool &isInteger, bool &isSigned, bool &isFloat, s32 &numElements);
+      static Result DecodeBasicTypeBuffer(const EncodedBasicTypeBuffer &code, u16 &size, bool &isBasicType, bool &isInteger, bool &isSigned, bool &isFloat, s32 &numElements);
 
       // Encode or decode the forty-byte code of an Array
       template<typename Type> static Result EncodeArrayType(const Array<Type> &in, EncodedArray &code);
-      static Result DecodeArrayType(const EncodedArray &code, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, u8 &basicType_size, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat);
+      static Result DecodeArrayType(const EncodedArray &code, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, u16 &basicType_size, bool &basicType_isBasicType, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat);
+
+      // Encode or decode the ??-byte code of an ArraySlice
+      template<typename Type> static Result EncodeArraySliceType(const ConstArraySlice<Type> &in, EncodedArraySlice &code);
+      static Result DecodeArraySliceType(const EncodedArraySlice &code, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, s32 &ySlice_start, s32 &ySlice_increment, s32 &ySlice_end, s32 &xSlice_start, s32 &xSlice_increment, s32 &xSlice_end, u16 &basicType_size, bool &basicType_isBasicType, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat);
 
       //// Encode or decode the forty-byte code of an Array
       //template<typename Type> static Result EncodeCustomType(const char * name, EncodedCustomType &code);
@@ -98,10 +111,32 @@ namespace Anki
       template<typename Type> static Result SerializeArray(const Array<Type> &in, void * data, const s32 dataLength);
       template<typename Type> static Result DeserializeArray(const void * data, const s32 dataLength, Array<Type> &out, MemoryStack &memory);
 
+      // Helper functions to serialize or deserialize an array slice
+      template<typename Type> static Result SerializeArraySlice(const ArraySlice<Type> &in, void * data, const s32 dataLength);
+      template<typename Type> static Result DeserializeArraySlice(const void * data, const s32 dataLength, ArraySlice<Type> &out, MemoryStack &memory);
+
+      // Helper functions to serialize or deserialize an FixedLengthList (which is just a type of ArraySlice)
+      template<typename Type> static Result SerializeFixedLengthList(const FixedLengthList<Type> &in, void * data, const s32 dataLength);
+      template<typename Type> static Result DeserializeFixedLengthList(const void * data, const s32 dataLength, FixedLengthList<Type> &out, MemoryStack &memory);
+
       // Search rawBuffer for the 8-byte serialized buffer headers and footers.
       // startIndex is the location after the header, or -1 if one is not found
       // endIndex is the location before the footer, or -1 if one is not found
       static Result FindSerializedBuffer(const void * rawBuffer, const s32 rawBufferLength, s32 &startIndex, s32 &endIndex);
+
+      // Warning: Complex structures or classes require an explicit specialization
+      // Updates the buffer pointer and length before returning
+      template<typename Type> static Result SerializeRaw(               const Type &in,                  void ** buffer, s32 &bufferLength);
+      template<typename Type> static Result SerializeRawArray(          const Array<Type> &in,           void ** buffer, s32 &bufferLength);
+      template<typename Type> static Result SerializeRawArraySlice(     const ConstArraySlice<Type> &in, void ** buffer, s32 &bufferLength);
+      template<typename Type> static Result SerializeRawFixedLengthList(const FixedLengthList<Type> &in, void ** buffer, s32 &bufferLength);
+
+      // Warning: Complex structures or classes require an explicit specialization
+      // Updates the buffer pointer and length before returning
+      template<typename Type> static Type                  DeserializeRaw(               void ** buffer, s32 &bufferLength);
+      template<typename Type> static Array<Type>           DeserializeRawArray(          void ** buffer, s32 &bufferLength, MemoryStack &memory);
+      template<typename Type> static ArraySlice<Type>      DeserializeRawArraySlice(     void ** buffer, s32 &bufferLength, MemoryStack &memory);
+      template<typename Type> static FixedLengthList<Type> DeserializeRawFixedLengthList(void ** buffer, s32 &bufferLength, MemoryStack &memory);
 
       //
       // Non-static functions
@@ -112,7 +147,10 @@ namespace Anki
       // If the void* buffer is already allocated, use flags = Flags::Buffer(false,true,true)
       SerializedBuffer(void *buffer, const s32 bufferLength, const Flags::Buffer flags=Flags::Buffer(false,true,false));
 
-      // Push back some raw data and/or a header
+      // Don't allocate any headers or footers
+      void* PushBackRaw(const void * data, const s32 dataLength);
+
+      // Push back some data and/or a header
       void* PushBack(const void * data, s32 dataLength);
       void* PushBack(const DataType type, const void * data, s32 dataLength);
       void* PushBack(const void * header, s32 headerLength, const void * data, s32 dataLength);
@@ -120,7 +158,12 @@ namespace Anki
 
       // Push back a custom type, defined by a unique customTypeName string
       // Could be made fancy and design patterns, if neccesary
-      void* PushBack(const char * customTypeName, const void * data, s32 dataLength);
+      //
+      // WARNING: CRC broken
+      //
+      // The returned pointer is the location of the start of the allocated buffer
+      // afterHeader is a pointer to the start of the data buffer, after the header (add your custom payload here)
+      void* PushBack(const char * customTypeName, const s32 dataLength, void ** afterHeader);
 
       // Push back a null-terminated string. Works like printf().
       void* PushBackString(const char * format, ...);
@@ -131,6 +174,10 @@ namespace Anki
 
       // Push back an Array
       template<typename Type> void* PushBack(const Array<Type> &in);
+
+      // Push back an ArraySlice
+      // WARNING: CRC code generation is broken
+      template<typename Type> void* PushBack(const ArraySlice<Type> &in);
 
       // Push back a FixedLengthList
       //template<typename Type> void* PushBack(const FixedLengthList<Type> &in);
@@ -144,7 +191,9 @@ namespace Anki
     protected:
       MemoryStack memoryStack;
 
-      void* PushBack_Generic(const SerializedBuffer::DataType type, const void * header, s32 headerLength, const void * data, s32 dataLength);
+      // The returned pointer is the location of the start of the allocated buffer
+      // afterHeader is a pointer to the start of the data buffer, after the header
+      void* PushBack_Generic(const SerializedBuffer::DataType type, const void * header, s32 headerLength, const void * data, s32 dataLength, void ** afterHeader);
     }; // class SerializedBuffer
 
     class SerializedBufferConstIterator : public MemoryStackConstIterator

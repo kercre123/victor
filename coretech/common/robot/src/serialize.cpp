@@ -32,57 +32,74 @@ namespace Anki
       this->memoryStack = MemoryStack(buffer, bufferLength, flags);
     }
 
-    Result SerializedBuffer::DecodeBasicType(const u32 code, u8 &size, bool &isInteger, bool &isSigned, bool &isFloat)
+    Result SerializedBuffer::DecodeBasicType(const u32 code, u16 &size, bool &isBasicType, bool &isInteger, bool &isSigned, bool &isFloat)
     {
-      if(code & 0xFF)
+      if(code & 1)
+        isBasicType = true;
+      else
+        isBasicType = false;
+
+      if(code & 2)
         isInteger = true;
       else
         isInteger = false;
 
-      if(code & 0xFF00)
+      if(code & 4)
         isSigned = true;
       else
         isSigned = false;
 
-      if(code & 0xFF0000)
+      if(code & 8)
         isFloat = true;
       else
         isFloat = false;
 
-      size = (code & 0xFF000000) >> 24;
+      size = (code & 0xFFFF0000) >> 16;
 
       return RESULT_OK;
     }
 
-    Result SerializedBuffer::DecodeBasicTypeBuffer(const EncodedBasicTypeBuffer &code, u8 &size, bool &isInteger, bool &isSigned, bool &isFloat, s32 &numElements)
+    Result SerializedBuffer::DecodeBasicTypeBuffer(const EncodedBasicTypeBuffer &code, u16 &size, bool &isBasicType, bool &isInteger, bool &isSigned, bool &isFloat, s32 &numElements)
     {
-      u32 swappedCode[SerializedBuffer::EncodedBasicTypeBuffer::CODE_SIZE];
-
-      for(s32 i=0; i<SerializedBuffer::EncodedBasicTypeBuffer::CODE_SIZE; i++) {
-        swappedCode[i] = code.code[i];
-      }
-
-      SerializedBuffer::DecodeBasicType(swappedCode[0], size, isInteger, isSigned, isFloat);
-      numElements = swappedCode[1];
+      SerializedBuffer::DecodeBasicType(code.code[0], size, isBasicType, isInteger, isSigned, isFloat);
+      numElements = code.code[1];
 
       return RESULT_OK;
     }
 
-    Result SerializedBuffer::DecodeArrayType(const EncodedArray &code, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, u8 &basicType_size, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat)
+    Result SerializedBuffer::DecodeArrayType(const EncodedArray &code, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, u16 &basicType_size, bool &basicType_isBasicType, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat)
     {
-      u32 swappedCode[SerializedBuffer::EncodedArray::CODE_SIZE];
-
-      for(s32 i=0; i<SerializedBuffer::EncodedArray::CODE_SIZE; i++) {
-        swappedCode[i] = code.code[i];
-      }
-
-      if(DecodeBasicType(swappedCode[0], basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat) != RESULT_OK)
+      if(DecodeBasicType(code.code[0], basicType_size, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat) != RESULT_OK)
         return RESULT_FAIL;
 
-      height = swappedCode[1];
-      width = swappedCode[2];
-      stride = swappedCode[3];
-      flags.set_rawFlags(swappedCode[4]);
+      height = code.code[1];
+      width = code.code[2];
+      stride = code.code[3];
+      flags.set_rawFlags(code.code[4]);
+
+      return RESULT_OK;
+    }
+
+    Result SerializedBuffer::DecodeArraySliceType(const EncodedArraySlice &code, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, s32 &ySlice_start, s32 &ySlice_increment, s32 &ySlice_end, s32 &xSlice_start, s32 &xSlice_increment, s32 &xSlice_end, u16 &basicType_size, bool &basicType_isBasicType, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat)
+    {
+      // The first part of the code is the same as an Array
+      EncodedArray arrayCode;
+
+      for(s32 i=0; i<5; i++) {
+        arrayCode.code[i] = code.code[i];
+      }
+
+      const Result result = SerializedBuffer::DecodeArrayType(arrayCode, height, width, stride, flags, basicType_size, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat);
+
+      if(result != RESULT_OK)
+        return result;
+
+      ySlice_start = *reinterpret_cast<const s32*>(&code.code[5]);
+      ySlice_increment = *reinterpret_cast<const s32*>(&code.code[6]);
+      ySlice_end = *reinterpret_cast<const s32*>(&code.code[7]);
+      xSlice_start = *reinterpret_cast<const s32*>(&code.code[8]);
+      xSlice_increment = *reinterpret_cast<const s32*>(&code.code[9]);
+      xSlice_end = *reinterpret_cast<const s32*>(&code.code[10]);
 
       return RESULT_OK;
     }
@@ -152,32 +169,46 @@ namespace Anki
       return RESULT_OK;
     } // void FindSerializedBuffer(const void * rawBuffer, s32 &startIndex, s32 &endIndex)
 
+    void* SerializedBuffer::PushBackRaw(const void * data, const s32 dataLength)
+    {
+      void* dataSegment = reinterpret_cast<u8*>(memoryStack.get_buffer()) + memoryStack.get_usedBytes();
+
+      // Warning: this is dangerous
+      memoryStack.usedBytes += dataLength;
+
+      if(data != NULL) {
+        memcpy(dataSegment, data, dataLength);
+      }
+
+      return dataSegment;
+    }
+
     void* SerializedBuffer::PushBack(const void * data, const s32 dataLength)
     {
-      return PushBack_Generic(DATA_TYPE_RAW, NULL, 0, data, dataLength);
+      return PushBack_Generic(DATA_TYPE_RAW, NULL, 0, data, dataLength, NULL);
     }
 
     void* SerializedBuffer::PushBack(const DataType type, const void * data, s32 dataLength)
     {
-      return PushBack_Generic(type, NULL, 0, data, dataLength);
+      return PushBack_Generic(type, NULL, 0, data, dataLength, NULL);
     }
 
     void* SerializedBuffer::PushBack(const void * header, s32 headerLength, const void * data, s32 dataLength)
     {
-      return PushBack_Generic(DATA_TYPE_RAW, header, headerLength, data, dataLength);
+      return PushBack_Generic(DATA_TYPE_RAW, header, headerLength, data, dataLength, NULL);
     }
 
     void* SerializedBuffer::PushBack(const DataType type, const void * header, s32 headerLength, const void * data, s32 dataLength)
     {
-      return PushBack_Generic(type, header, headerLength, data, dataLength);
+      return PushBack_Generic(type, header, headerLength, data, dataLength, NULL);
     }
 
-    void* SerializedBuffer::PushBack(const char * customTypeName, const void * data, s32 dataLength)
+    void* SerializedBuffer::PushBack(const char * customTypeName, const s32 dataLength, void ** afterHeader)
     {
-      return PushBack_Generic(DATA_TYPE_CUSTOM, customTypeName, CUSTOM_TYPE_STRING_LENGTH, data, dataLength);
+      return PushBack_Generic(DATA_TYPE_CUSTOM, customTypeName, CUSTOM_TYPE_STRING_LENGTH, NULL, dataLength, afterHeader);
     }
 
-    void* SerializedBuffer::PushBack_Generic(const DataType type, const void * header, s32 headerLength, const void * data, s32 dataLength)
+    void* SerializedBuffer::PushBack_Generic(const DataType type, const void * header, s32 headerLength, const void * data, s32 dataLength, void ** afterHeader)
     {
       AnkiConditionalErrorAndReturnValue(headerLength >= 0,
         NULL, "SerializedBuffer::PushBack", "headerLength must be >= 0");
@@ -185,19 +216,20 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(headerLength%4 == 0,
         NULL, "SerializedBuffer::PushBack", "headerLength must be a multiple of 4");
 
-      if(header != NULL) {
-        AnkiConditionalErrorAndReturnValue(reinterpret_cast<size_t>(header)%4 == 0,
-          NULL, "SerializedBuffer::PushBack", "header must be 4-byte aligned");
-      }
+      // TODO: are the alignment restrictions still required for the M4?
+      //if(header != NULL) {
+      //  AnkiConditionalErrorAndReturnValue(reinterpret_cast<size_t>(header)%4 == 0,
+      //    NULL, "SerializedBuffer::PushBack", "header must be 4-byte aligned");
+      //}
 
-      if(data != NULL) {
-        AnkiConditionalErrorAndReturnValue(reinterpret_cast<size_t>(data)%4 == 0,
-          NULL, "SerializedBuffer::PushBack", "data must be 4-byte aligned");
-      }
+      //if(data != NULL) {
+      //  AnkiConditionalErrorAndReturnValue(reinterpret_cast<size_t>(data)%4 == 0,
+      //    NULL, "SerializedBuffer::PushBack", "data must be 4-byte aligned");
+      //}
 
       const s32 totalLength = RoundUp<s32>(dataLength, 4) + headerLength;
 
-      const s32 bytesRequired = totalLength+SERIALIZED_SEGMENT_HEADER_LENGTH+SERIALIZED_SEGMENT_FOOTER_LENGTH;
+      const s32 bytesRequired = totalLength + SERIALIZED_SEGMENT_HEADER_LENGTH + SERIALIZED_SEGMENT_FOOTER_LENGTH;
 
       s32 numBytesAllocated = -1;
       u8 * const segmentStart = reinterpret_cast<u8*>( memoryStack.Allocate(bytesRequired, numBytesAllocated) );
@@ -230,6 +262,10 @@ namespace Anki
       } // if(header != NULL)
 
       segmentU32 += (headerLength>>2);
+
+      if(afterHeader != NULL) {
+        *afterHeader = reinterpret_cast<void*>(segmentU32);
+      }
 
       if(data != NULL) {
         // Endian-safe copy (it may copy a little extra)

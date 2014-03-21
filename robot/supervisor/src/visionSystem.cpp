@@ -41,13 +41,9 @@ using namespace Anki::Cozmo;
 
 static bool isInitialized_ = false;
 
-// TODO: remove
-//#define SEND_DEBUG_STREAM
-//#define RUN_SIMPLE_TRACKING_TEST
-
-#if defined(SIMULATOR)
-#undef SEND_DEBUG_STREAM
-#undef RUN_SIMPLE_TRACKING_TEST
+#ifdef THIS_IS_PETES_BOARD      
+#define SEND_DEBUG_STREAM
+#define RUN_SIMPLE_TRACKING_TEST
 #endif
 
 #define DOCKING_LUCAS_KANADE_SLOW       1 //< LucasKanadeTracker_Slow (doesn't seem to work?)
@@ -137,7 +133,7 @@ struct DetectFiducialMarkersParameters
     detectionResolution = HAL::CAMERA_MODE_QVGA;
     detectionWidth  = CameraModeInfo[detectionResolution].width;
     detectionHeight = CameraModeInfo[detectionResolution].height;
-
+    
     scaleImage_thresholdMultiplier = 65536; // 1.0*(2^16)=65536
     scaleImage_numPyramidLevels = 3;
 
@@ -189,6 +185,7 @@ struct TrackerParameters {
   HAL::CameraMode trackingResolution;
   s32 trackingImageHeight;
   s32 trackingImageWidth;
+  f32 scaleTemplateRegionPercent;
   s32 numPyramidLevels;
   s32 maxIterations;
   f32 convergenceTolerance;
@@ -196,12 +193,12 @@ struct TrackerParameters {
 
   void Initialize()
   {
-    // LK Trackers running at QQQVGA (80x60)
     //trackingResolution   = HAL::CAMERA_MODE_QQQVGA; // 80x60
     trackingResolution   = HAL::CAMERA_MODE_QQVGA; // 160x120
 
     trackingImageWidth   = CameraModeInfo[trackingResolution].width;
     trackingImageHeight  = CameraModeInfo[trackingResolution].height;
+    scaleTemplateRegionPercent = 1.1f;    
     numPyramidLevels     = 3;
     maxIterations        = 25;
     //convergenceTolerance = 0.05f;
@@ -217,6 +214,7 @@ struct TrackerParameters {
   HAL::CameraMode trackingResolution;
   s32 trackingImageHeight;
   s32 trackingImageWidth;
+  f32 scaleTemplateRegionPercent;
   u8  edgeDetection_grayvalueThreshold;
   s32 edgeDetection_minComponentWidth;
   s32 edgeDetection_maxDetectionsPerType;
@@ -233,7 +231,7 @@ struct TrackerParameters {
 
     trackingImageWidth  = CameraModeInfo[trackingResolution].width;
     trackingImageHeight = CameraModeInfo[trackingResolution].height;
-
+    scaleTemplateRegionPercent = 1.1f;    
     edgeDetection_grayvalueThreshold    = 128;
     edgeDetection_minComponentWidth     = 2;
     edgeDetection_maxDetectionsPerType  = 2500;
@@ -390,12 +388,18 @@ namespace DebugStream
       const s32 numMarkers = markers.get_size();
       const VisionMarker * pMarkers = markers.Pointer(0);
 
+      /*
       void * restrict oneMarker = offchipScratch.Allocate(sizeof(VisionMarker));
       const s32 oneMarkerLength = sizeof(VisionMarker);
 
       for(s32 i=0; i<numMarkers; i++) {
         pMarkers[i].Serialize(oneMarker, oneMarkerLength);
         debugStreamBuffer_.PushBack("VisionMarker", oneMarker, oneMarkerLength);
+      }
+      */
+      
+      for(s32 i=0; i<numMarkers; i++) {
+        pMarkers[i].Serialize(debugStreamBuffer_);
       }
     }
 
@@ -429,15 +433,9 @@ namespace DebugStream
       debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
     }
 
-    // TODO: get the true length
-    const s32 oneTransformationLength = 512;
-    void * restrict oneTransformation = ccmScratch.Allocate(oneTransformationLength);
-
     //transformation.Print();
 
-    transformation.Serialize(oneTransformation, oneTransformationLength);
-
-    debugStreamBuffer_.PushBack("PlanarTransformation_f32", oneTransformation, oneTransformationLength);
+    transformation.Serialize(debugStreamBuffer_);
 
     Array<u8> imageSmall(height, width, offchipScratch);
     DownsampleHelper(image, imageSmall, ccmScratch);
@@ -446,6 +444,26 @@ namespace DebugStream
     return SendBuffer(debugStreamBuffer_);
   } // static ReturnCode SendTrackingUpdate()
 
+  
+#if DOCKING_ALGORITHM ==  DOCKING_BINARY_TRACKER
+  static ReturnCode SendBinaryTracker(const TemplateTracker::BinaryTracker &tracker, MemoryStack ccmScratch, MemoryStack onchipScratch, MemoryStack offchipScratch) 
+  { 
+    // TODO: compute max allocation correctly
+    const s32 requiredBytes = 48000;
+
+    if(onchipScratch.ComputeLargestPossibleAllocation() >= requiredBytes) {
+      void * buffer = onchipScratch.Allocate(requiredBytes);
+      debugStreamBuffer_ = SerializedBuffer(buffer, requiredBytes);
+    } else {
+      debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
+    }
+    
+    tracker.Serialize(debugStreamBuffer_);
+    
+    return SendBuffer(debugStreamBuffer_);
+  }
+#endif
+  
   //  static ReturnCode SendArray(const Array<u8> &array)
   //  {
   //    debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
@@ -542,9 +560,12 @@ namespace MatlabVisualization
                               "colormap(h_fig, gray); "
                               "h_trackedQuad = plot(nan, nan, 'b', 'LineWidth', 2, "
                               "                     'Parent', h_axes); "
-                              "imageCtr = 0; "
-                              "h_fig_tform = figure('Name', 'TransformAdjust'); "
-                              "colormap(h_fig_tform, gray);");
+                              "imageCtr = 0; ");
+    
+    if(SHOW_TRACKER_PREDICTION) {
+      matlabViz_.EvalStringEcho("h_fig_tform = figure('Name', 'TransformAdjust'); "
+                                "colormap(h_fig_tform, gray);");
+    }
 
     beforeCalled_ = false;
     
@@ -927,7 +948,7 @@ static ReturnCode LookForMarkers(
   MatlabVisualization::ResetFiducialDetection(grayscaleImage);
 
   InitBenchmarking();
-
+  
   const Result result = DetectFiducialMarkers(
     grayscaleImage,
     markers,
@@ -996,6 +1017,7 @@ static ReturnCode InitTemplate(
   tracker = TemplateTracker::LucasKanadeTracker_Slow(
     grayscaleImageSmall,
     trackingQuad,
+    parameters.scaleTemplateRegionPercent,
     parameters.numPyramidLevels,
     Transformations::TRANSFORM_TRANSLATION,
     0.0,
@@ -1004,6 +1026,7 @@ static ReturnCode InitTemplate(
   tracker = TemplateTracker::LucasKanadeTracker_Affine(
     grayscaleImageSmall,
     trackingQuad,
+    parameters.scaleTemplateRegionPercent,
     parameters.numPyramidLevels,
     Transformations::TRANSFORM_AFFINE,
     onchipScratch);
@@ -1011,6 +1034,7 @@ static ReturnCode InitTemplate(
   tracker = TemplateTracker::LucasKanadeTracker_Projective(
     grayscaleImageSmall,
     trackingQuad,
+    parameters.scaleTemplateRegionPercent,
     parameters.numPyramidLevels,
     Transformations::TRANSFORM_PROJECTIVE,
     onchipScratch);
@@ -1018,6 +1042,7 @@ static ReturnCode InitTemplate(
   tracker = TemplateTracker::BinaryTracker(
     grayscaleImage,
     trackingQuad,
+    parameters.scaleTemplateRegionPercent,
     parameters.edgeDetection_grayvalueThreshold,
     parameters.edgeDetection_minComponentWidth,
     parameters.edgeDetection_maxDetectionsPerType,
@@ -1030,6 +1055,11 @@ static ReturnCode InitTemplate(
   }
 
   MatlabVisualization::SendTrackInit(grayscaleImage, tracker, onchipScratch);
+
+  
+#if DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER  
+  DebugStream::SendBinaryTracker(tracker, ccmScratch, onchipScratch, offchipScratch);
+#endif
 
   return EXIT_SUCCESS;
 } // InitTemplate()
