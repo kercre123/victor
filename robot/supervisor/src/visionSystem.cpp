@@ -779,7 +779,7 @@ namespace MatlabVisionProcessor {
   } // MatlabVisionProcess::Initialize()
   
   void InitTemplate(const Array<u8>& img,
-                           const Quadrilateral<f32>& trackingQuad)
+                    const Quadrilateral<f32>& trackingQuad)
   {
     
     AnkiAssert(isInitialized_);
@@ -788,9 +788,9 @@ namespace MatlabVisionProcessor {
     
     matlabProc_.EvalStringEcho("LKtracker = LucasKanadeTracker(img, "
                                "  initTrackingQuad + 1, "
-                               "  'Type', '%s', 'RidgeWeight', 1e-3, "
+                               "  'Type', '%s', 'RidgeWeight', 0, "
                                "  'DebugDisplay', false, 'UseBlurring', false, "
-                               "  'UseNormalization', true, "
+                               "  'UseNormalization', false, "
                                "  'TrackingResolution', [%d %d], "
                                "  'SampleNearEdges', false);",
                                (transformType_ == Transformations::TRANSFORM_AFFINE ? "affine" : "homography"),
