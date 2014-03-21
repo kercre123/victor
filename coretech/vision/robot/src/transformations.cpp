@@ -343,7 +343,7 @@ namespace Anki
       {
         SerializedBuffer::SerializeRaw<bool>(this->isValid, buffer, bufferLength);
         SerializedBuffer::SerializeRaw<s32>(this->transformType, buffer, bufferLength);
-        SerializedBuffer::SerializeRaw<f32>(this->homography, buffer, bufferLength);
+        SerializedBuffer::SerializeRawArray<f32>(this->homography, buffer, bufferLength);
         SerializedBuffer::SerializeRaw<Quadrilateral<f32> >(this->initialCorners, buffer, bufferLength);
         SerializedBuffer::SerializeRaw<Point<f32> >(this->centerOffset, buffer, bufferLength);
 

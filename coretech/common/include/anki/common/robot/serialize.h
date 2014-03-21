@@ -71,7 +71,7 @@ namespace Anki
       return RESULT_OK;
     }
 
-    template<typename Type> Result SerializedBuffer::EncodeArraySliceType(const ArraySlice<Type> &in, EncodedArraySlice &code)
+    template<typename Type> Result SerializedBuffer::EncodeArraySliceType(const ConstArraySlice<Type> &in, EncodedArraySlice &code)
     {
       // The first part of the code is the same as an Array
       EncodedArray arrayCode;
@@ -332,7 +332,7 @@ namespace Anki
       return RESULT_OK;
     }
 
-    template<typename Type> Result SerializedBuffer::SerializeRaw(const Array<Type> &in, void ** buffer, s32 &bufferLength)
+    template<typename Type> Result SerializedBuffer::SerializeRawArray(const Array<Type> &in, void ** buffer, s32 &bufferLength)
     {
       EncodedArray code;
 
@@ -352,10 +352,10 @@ namespace Anki
       return RESULT_OK;
     }
 
-    template<typename Type> Result SerializedBuffer::SerializeRaw(const ArraySlice<Type> &in, void ** buffer, s32 &bufferLength)
+    template<typename Type> Result SerializedBuffer::SerializeRawArraySlice(const ConstArraySlice<Type> &in, void ** buffer, s32 &bufferLength)
     {
-      AnkiConditionalErrorAndReturnValue(in.IsValid(),
-        RESULT_FAIL, "SerializedBuffer::SerializeRaw", "in ArraySlice is not Valid");
+      AnkiConditionalErrorAndReturnValue(in.get_array().IsValid(),
+        RESULT_FAIL, "SerializedBuffer::SerializeRawArraySlice", "in ArraySlice is not Valid");
 
       // TODO: are the alignment restrictions still required for the M4?
       //AnkiConditionalErrorAndReturnValue(reinterpret_cast<size_t>(in)%4 == 0,
@@ -365,12 +365,11 @@ namespace Anki
       const u32 height = in.get_ySlice().get_size();
       const u32 width = in.get_xSlice().get_size();
       const u32 stride = width*sizeof(Type);
-      const u32 flags = in.get_flags().get_rawFlags();
 
       const s32 numRequiredBytes = height*stride + EncodedArraySlice::CODE_SIZE*sizeof(u32);
 
       AnkiConditionalErrorAndReturnValue(bufferLength >= numRequiredBytes,
-        RESULT_FAIL, "SerializedBuffer::SerializeRaw", "buffer needs at least %d bytes", numRequiredBytes);
+        RESULT_FAIL, "SerializedBuffer::SerializeRawArraySlice", "buffer needs at least %d bytes", numRequiredBytes);
 
       EncodedArraySlice code;
       SerializedBuffer::EncodeArraySliceType(in, code);
@@ -396,7 +395,7 @@ namespace Anki
       const s32 xEnd = xSlice.get_end();
 
       for(s32 y=yStart; y<=yEnd; y+=yIncrement) {
-        Type * restrict pInData = in.Pointer(y, 0);
+        const Type * restrict pInData = in.get_array().Pointer(y, 0);
         for(s32 x=xStart; x<=xEnd; x+=xIncrement) {
           pDataType[iData] = pInData[x];
           iData++;
@@ -409,9 +408,10 @@ namespace Anki
       return RESULT_OK;
     }
 
-    template<typename Type> Result SerializedBuffer::SerializeRaw(const FixedLengthList<Type> &in, void ** buffer, s32 &bufferLength)
+    template<typename Type> Result SerializedBuffer::SerializeRawFixedLengthList(const FixedLengthList<Type> &in, void ** buffer, s32 &bufferLength)
     {
-      return SerializeRaw(*static_cast<ArraySlice<Type>*>(&in), buffer, bufferLength);
+      const ArraySlice<Type> slice = *static_cast<const ArraySlice<Type>*>(&in);
+      return SerializeRawArraySlice<Type>(slice, buffer, bufferLength);
     }
 
     template<typename Type> Type SerializedBuffer::DeserializeRaw(void ** buffer, s32 &bufferLength)
@@ -452,10 +452,10 @@ namespace Anki
       bufferLength -= (EncodedArray::CODE_SIZE * sizeof(u32));
 
       AnkiConditionalErrorAndReturnValue(stride == RoundUp(width*sizeof(Type), MEMORY_ALIGNMENT),
-        Array<Type>(), "SerializedBuffer::DeserializeRaw", "Parsed stride is not reasonable");
+        Array<Type>(), "SerializedBuffer::DeserializeRawArray", "Parsed stride is not reasonable");
 
       AnkiConditionalErrorAndReturnValue(bufferLength >= (height*stride),
-        Array<Type>(), "SerializedBuffer::DeserializeRaw", "Not enought bytes left to set the array");
+        Array<Type>(), "SerializedBuffer::DeserializeRawArray", "Not enought bytes left to set the array");
 
       Array<Type> out = Array<Type> (height, width, memory);
 
@@ -501,10 +501,10 @@ namespace Anki
       bufferLength -= (EncodedArraySlice::CODE_SIZE * sizeof(u32));
 
       AnkiConditionalErrorAndReturnValue(stride == RoundUp(width*sizeof(Type), MEMORY_ALIGNMENT),
-        RESULT_FAIL, "SerializedBuffer::DeserializeRawArraySlice", "Parsed stride is not reasonable");
+        ArraySlice<Type>(), "SerializedBuffer::DeserializeRawArraySlice", "Parsed stride is not reasonable");
 
       AnkiConditionalErrorAndReturnValue(bufferLength >= (height*stride),
-        RESULT_FAIL, "SerializedBuffer::DeserializeRawArraySlice", "Not enought bytes left to set the array");
+        ArraySlice<Type>(), "SerializedBuffer::DeserializeRawArraySlice", "Not enought bytes left to set the array");
 
       Array<Type> array(height, width, memory);
 
@@ -529,26 +529,24 @@ namespace Anki
       *buffer = reinterpret_cast<u8*>(*buffer) + height*stride;
       bufferLength -= height*stride;
 
-      return RESULT_OK;
+      return out;
     }
 
     template<typename Type> FixedLengthList<Type> SerializedBuffer::DeserializeRawFixedLengthList(void ** buffer, s32 &bufferLength, MemoryStack &memory)
     {
-      ArraySlice<Type> arraySlice;
+      ArraySlice<Type> arraySlice = SerializedBuffer::DeserializeRawArraySlice<Type>(buffer, bufferLength, memory);
 
-      const Result result = SerializedBuffer::DeserializeRawArraySlice(buffer, bufferLength, arraySlice, memory);
+      if(!arraySlice.get_array().IsValid())
+        return FixedLengthList<Type>();
 
-      if(result != RESULT_OK)
-        return result;
-
-      ArraySlice<Type> out = FixedLengthList<Type>();
+      FixedLengthList<Type> out;
 
       out.ySlice = arraySlice.get_ySlice();
       out.xSlice = arraySlice.get_xSlice();
       out.array = arraySlice.get_array();
       out.arrayData = out.array.Pointer(0,0);;
 
-      return RESULT_OK;
+      return out;
     }
 
     template<typename Type> Type* SerializedBuffer::PushBack(const Type *data, const s32 dataLength)
@@ -594,7 +592,6 @@ namespace Anki
       const u32 height = ySlice.get_size();
       const u32 width = xSlice.get_size();
       const u32 stride = width*sizeof(Type);
-      const u32 flags = in.get_flags().get_rawFlags();
 
       const s32 numRequiredDataBytes = height*stride;
 

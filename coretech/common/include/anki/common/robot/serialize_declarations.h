@@ -100,7 +100,7 @@ namespace Anki
       static Result DecodeArrayType(const EncodedArray &code, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, u8 &basicType_size, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat);
 
       // Encode or decode the ??-byte code of an ArraySlice
-      template<typename Type> static Result EncodeArraySliceType(const ArraySlice<Type> &in, EncodedArraySlice &code);
+      template<typename Type> static Result EncodeArraySliceType(const ConstArraySlice<Type> &in, EncodedArraySlice &code);
       static Result DecodeArraySliceType(const EncodedArraySlice &code, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, s32 &ySlice_start, s32 &ySlice_increment, s32 &ySlice_end, s32 &xSlice_start, s32 &xSlice_increment, s32 &xSlice_end, u8 &basicType_size, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat);
 
       //// Encode or decode the forty-byte code of an Array
@@ -126,10 +126,10 @@ namespace Anki
 
       // Warning: Complex structures or classes require an explicit specialization
       // Updates the buffer pointer and length before returning
-      template<typename Type> static Result SerializeRaw(const Type &in,                  void ** buffer, s32 &bufferLength);
-      template<typename Type> static Result SerializeRaw(const Array<Type> &in,           void ** buffer, s32 &bufferLength);
-      template<typename Type> static Result SerializeRaw(const ArraySlice<Type> &in,      void ** buffer, s32 &bufferLength);
-      template<typename Type> static Result SerializeRaw(const FixedLengthList<Type> &in, void ** buffer, s32 &bufferLength);
+      template<typename Type> static Result SerializeRaw(               const Type &in,                  void ** buffer, s32 &bufferLength);
+      template<typename Type> static Result SerializeRawArray(          const Array<Type> &in,           void ** buffer, s32 &bufferLength);
+      template<typename Type> static Result SerializeRawArraySlice(     const ConstArraySlice<Type> &in, void ** buffer, s32 &bufferLength);
+      template<typename Type> static Result SerializeRawFixedLengthList(const FixedLengthList<Type> &in, void ** buffer, s32 &bufferLength);
 
       // Warning: Complex structures or classes require an explicit specialization
       // Updates the buffer pointer and length before returning
