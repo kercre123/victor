@@ -764,15 +764,19 @@ namespace MatlabVisionProcessor {
   
   static Matlab matlabProc_(false);
   static bool isInitialized_ = false;
-
   static bool haveTemplate_;
-  
-  static Transformations::TransformType transformType_ = Transformations::TRANSFORM_PROJECTIVE;
-  static HAL::CameraMode trackingResolution_;
   static bool initTrackerAtFullRes_;
   
-  static s32 maxIterations_;
-  static f32 convergenceTolerance_;
+  static TrackerParameters trackerParameters_;
+  
+  static Transformations::TransformType transformType_ = Transformations::TRANSFORM_AFFINE;
+
+  // Now coming from trackerParameters_
+  //static HAL::CameraMode trackingResolution_;
+  //static f32 scaleTemplateRegionPercent_;
+  //static s32 maxIterations_;
+  //static f32 convergenceTolerance_;
+  
   static f32 errorTolerance_;
   static s32 scaleFactor_;
   
@@ -781,16 +785,19 @@ namespace MatlabVisionProcessor {
     if(!isInitialized_) {
       
       matlabProc_.EvalStringEcho("run(fullfile('..','..','..','..','matlab','initCozmoPath'));");
-      
-      trackingResolution_ = HAL::CAMERA_MODE_QQVGA;
+
+      trackerParameters_.Initialize();
       
       initTrackerAtFullRes_ = false;
       
-      scaleFactor_ = (1<<CameraModeInfo[HAL::CAMERA_MODE_QVGA].downsamplePower[trackingResolution_]);
+      scaleFactor_ = (1<<CameraModeInfo[HAL::CAMERA_MODE_QVGA].downsamplePower[trackerParameters_.trackingResolution]);
       haveTemplate_ = false;
       
-      maxIterations_ = 25;
-      convergenceTolerance_ = 1.f;
+
+      //scaleTemplateRegionPercent_ = 0.1f;
+      //maxIterations_ = 25;
+      //convergenceTolerance_ = 1.f;
+      
       errorTolerance_ = 0.5f;
       
       isInitialized_ = true;
@@ -813,8 +820,8 @@ namespace MatlabVisionProcessor {
       matlabProc_.PutArray(imgFull, "img");
     }
     else {
-      Array<u8> imgSmall(CameraModeInfo[trackingResolution_].height,
-                         CameraModeInfo[trackingResolution_].width,
+      Array<u8> imgSmall(trackerParameters_.trackingImageHeight,
+                         trackerParameters_.trackingImageWidth,
                          scratch);
       
       DownsampleHelper(imgFull, imgSmall, scratch);
@@ -829,10 +836,14 @@ namespace MatlabVisionProcessor {
                                "  'DebugDisplay', false, 'UseBlurring', false, "
                                "  'UseNormalization', false, "
                                "  'TrackingResolution', [%d %d], "
-                               "  'SampleNearEdges', false);",
+                               "  'TemplateRegionPaddingFraction', %f, "
+                               "  'SampleNearEdges', false, "
+                               "  'NumScales', %d);",
                                (transformType_ == Transformations::TRANSFORM_AFFINE ? "affine" : "homography"),
-                               CameraModeInfo[trackingResolution_].width,
-                               CameraModeInfo[trackingResolution_].height);
+                               trackerParameters_.trackingImageWidth,
+                               trackerParameters_.trackingImageHeight,
+                               trackerParameters_.scaleTemplateRegionPercent - 1.f,
+                               trackerParameters_.numPyramidLevels);
     
     haveTemplate_ = true;
     
@@ -889,8 +900,8 @@ namespace MatlabVisionProcessor {
   ReturnCode TrackTemplate(const Array<u8>& imgFull, bool& converged, MemoryStack scratch)
   {
     
-    Array<u8> img(CameraModeInfo[trackingResolution_].height,
-                  CameraModeInfo[trackingResolution_].width,
+    Array<u8> img(trackerParameters_.trackingImageHeight,
+                  trackerParameters_.trackingImageWidth,
                   scratch);
     
     DownsampleHelper(imgFull, img, scratch);
@@ -909,8 +920,8 @@ namespace MatlabVisionProcessor {
                                "   'ConvergenceTolerance', %f, "
                                "   'ErrorTolerance', %f); "
                                "corners = %d*(double(LKtracker.corners) - 1);",
-                               maxIterations_,
-                               convergenceTolerance_,
+                               trackerParameters_.maxIterations,
+                               trackerParameters_.convergenceTolerance,
                                errorTolerance_,
                                scaleFactor_);
     
