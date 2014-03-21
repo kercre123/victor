@@ -121,6 +121,9 @@ namespace Anki {
       // Erases all paths
       void EraseAllPaths();
     
+      // ==== Text functions =====
+      void SetText(const u32 labelID, const u32 colorID, const char* format, ...);
+      
       
       // ==== Color functions =====
       
@@ -130,8 +133,11 @@ namespace Anki {
                        const f32 alpha);
       
       //void ClearAllColors();
+
       
-    
+      // ==== Misc. Debug functions =====
+      void SetDockingError(const f32 x_dist, const f32 y_dist, const f32 angle);
+      
       
     protected:
       

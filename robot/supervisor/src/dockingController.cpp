@@ -122,7 +122,7 @@ namespace Anki {
         {
           if(dockMsg.didTrackingSucceed) {
             
-            PRINT("ErrSignal %d (msgTime %d)\n", HAL::GetMicroCounter(), dockMsg.timestamp);
+            //PRINT("ErrSignal %d (msgTime %d)\n", HAL::GetMicroCounter(), dockMsg.timestamp);
             
             // Convert from camera coordinates to robot coordinates
             // (Note that y and angle don't change)
@@ -133,6 +133,9 @@ namespace Anki {
                   RAD_TO_DEG_F32(dockMsg.angleErr));
             
             SetRelDockPose(dockMsg.x_distErr, dockMsg.y_horErr, dockMsg.angleErr);
+            
+            // Send to basestation for visualization
+            HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::DockingErrorSignal), &dockMsg);
           } else {
             SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
             //PathFollower::ClearPath();

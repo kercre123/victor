@@ -202,6 +202,12 @@ namespace Anki {
       colorMap_[msg.colorID] = msg;
     }
     
+    
+    // Stubs
+    // These messages are handled by cozmo_viz_controller
+    void ProcessVizSetLabelMessage(const VizSetLabel& msg){};
+    void ProcessVizDockingErrorSignalMessage(const VizDockingErrorSignal& msg){};
+    
   } // namespace Cozmo
 } // namespace Anki
 
@@ -231,7 +237,7 @@ void webots_physics_init(dWorldID world, dSpaceID space, dJointGroupID contactJo
    *   ...
    */
   
-  server.StartListening(Anki::Cozmo::VIZ_SERVER_PORT);
+  server.StartListening(Anki::Cozmo::PHYSICS_PLUGIN_SERVER_PORT);
   
   pathMap_.clear();
 }
@@ -248,7 +254,7 @@ void webots_physics_step() {
   u8 recvBuf[MAX_RECV_BUF_SIZE];
   
   
-  
+  /*
   //// Process draw messages from CozmoBot ////
   // Since data isn't packetized, need to process multiple packets per read.
   u8 *tmpBuf = (u8*)dWebotsReceive(&bytes_recvd);
@@ -280,7 +286,7 @@ void webots_physics_step() {
     }
     recvBufSize -= curr_byte;
   }
-
+   */
   
   
   ///// Process messages from basestation /////
@@ -350,13 +356,13 @@ void draw_ramp()
 
 void draw_robot()
 {
-  // Tetrahedron-y shape that represents robot's pose by pointing to the top of where the robot's head should be.
+  // Tetrahedron-y shape that represents robot's pose by pointing to the robot's origin at head height.
   // Origin is at the the point between the front wheels at ground-level. x-axis points forward. y-axis points left.
   
   glBegin(GL_TRIANGLES);
   
   // Location of tip
-  float x = -0.013;
+  float x = 0;
   float y = 0;
   float z = 0.068;
   
