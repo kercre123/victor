@@ -51,7 +51,7 @@ namespace Anki
           const f32 ridgeWeight,
           MemoryStack &memory);
 
-        Result UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, const bool useWeights, bool& converged, MemoryStack scratch);
+        Result UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, const bool useWeights, bool& verify_converged, MemoryStack scratch);
 
         bool IsValid() const;
 
@@ -129,6 +129,8 @@ namespace Anki
 
         Transformations::PlanarTransformation_f32 get_transformation() const;
 
+        s32 get_numTemplatePixels() const;
+
       protected:
         Transformations::TransformType maxSupportedTransformType;
 
@@ -154,6 +156,14 @@ namespace Anki
         // by templateImage.get_size(1) / BASE_IMAGE_WIDTH
         Rectangle<f32> templateRegion;
 
+        Result VerifyTrack_Projective(
+          const Array<u8> &nextImage,
+          const u8 verify_maxPixelDifference,
+          s32 &verify_meanAbsoluteDifference,
+          s32 &verify_numInBounds,
+          s32 &verify_numSimilarPixels,
+          MemoryStack scratch) const;
+
         bool isValid;
 
         //Result Initialize(const Transformations::TransformType maxSupportedTransformType, const Array<u8> &templateImage, const Quadrilateral<f32> &templateQuad, const s32 numPyramidLevels, const Transformations::TransformType transformType, MemoryStack &memory);
@@ -174,7 +184,16 @@ namespace Anki
           const Transformations::TransformType transformType,
           MemoryStack &memory);
 
-        Result UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, bool& converged, MemoryStack scratch);
+        Result UpdateTrack(
+          const Array<u8> &nextImage,
+          const s32 maxIterations,
+          const f32 convergenceTolerance,
+          const u8 verify_maxPixelDifference,
+          bool& verify_converged,
+          s32 &verify_meanAbsoluteDifference, //< For all pixels in the template, compute the mean difference between the template and the final warped template
+          s32 &verify_numInBounds, //< How many template pixels are in the image, after the template is warped?
+          s32 &verify_numSimilarPixels, //< For all pixels in the template, how many are within verifyMaxPixelDifference grayvalues? Use in conjunction with get_numTemplatePixels() or numInBounds for a percentage.
+          MemoryStack scratch);
 
       protected:
         Result IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const Transformations::TransformType curTransformType, bool &converged, MemoryStack scratch);
@@ -198,7 +217,16 @@ namespace Anki
           const Transformations::TransformType transformType,
           MemoryStack &memory);
 
-        Result UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, bool& converged, MemoryStack scratch);
+        Result UpdateTrack(
+          const Array<u8> &nextImage,
+          const s32 maxIterations,
+          const f32 convergenceTolerance,
+          const u8 verify_maxPixelDifference,
+          bool& verify_converged,
+          s32 &verify_meanAbsoluteDifference, //< For all pixels in the template, compute the mean difference between the template and the final warped template
+          s32 &verify_numInBounds, //< How many template pixels are in the image, after the template is warped?
+          s32 &verify_numSimilarPixels, //< For all pixels in the template, how many are within verifyMaxPixelDifference grayvalues? Use in conjunction with get_numTemplatePixels() or numInBounds for a percentage.
+          MemoryStack scratch);
 
       protected:
         Result IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const Transformations::TransformType curTransformType, bool &converged, MemoryStack scratch);
