@@ -41,7 +41,7 @@ while iteration < this.maxIterations
         break;
     end
     
-    this.err = mean(abs(It(inBounds)));
+    %this.err = mean(abs(It(inBounds)));
     
     
     %namedFigure('It')
@@ -163,7 +163,7 @@ while iteration < this.maxIterations
     
 end % WHILE not converged
 
-if ~converged
+if ~converged && i_scale > 1
     this.tform = tform_orig;
 end
 
