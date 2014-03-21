@@ -142,12 +142,13 @@ void ProcessRawBuffer_Save(RawBuffer &buffer, const string outputFilenamePattern
         dataSegment += SerializedBuffer::EncodedBasicTypeBuffer::CODE_SIZE * sizeof(u32);
         const s32 remainingDataLength = dataLength - SerializedBuffer::EncodedBasicTypeBuffer::CODE_SIZE * sizeof(u32);
 
-        u8 size;
+        u16 size;
+        bool isBasicType;
         bool isInteger;
         bool isSigned;
         bool isFloat;
         s32 numElements;
-        SerializedBuffer::DecodeBasicTypeBuffer(code, size, isInteger, isSigned, isFloat, numElements);
+        SerializedBuffer::DecodeBasicTypeBuffer(code, size, isBasicType, isInteger, isSigned, isFloat, numElements);
 
         printf("Basic type buffer segment (%d, %d, %d, %d, %d): ", size, isInteger, isSigned, isFloat, numElements);
         for(s32 i=0; i<remainingDataLength; i++) {
@@ -165,11 +166,12 @@ void ProcessRawBuffer_Save(RawBuffer &buffer, const string outputFilenamePattern
         s32 width;
         s32 stride;
         Flags::Buffer flags;
-        u8 basicType_size;
+        u16 basicType_size;
+        bool basicType_isBasicType;
         bool basicType_isInteger;
         bool basicType_isSigned;
         bool basicType_isFloat;
-        SerializedBuffer::DecodeArrayType(code, height, width, stride, flags, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat);
+        SerializedBuffer::DecodeArrayType(code, height, width, stride, flags, basicType_size, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat);
 
         printf("Array: (%d, %d, %d, %d, %d, %d, %d, %d) ", height, width, stride, flags, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat);
         //template<typename Type> static Result DeserializeArray(const void * data, const s32 dataLength, Array<Type> &out, MemoryStack &memory);

@@ -89,19 +89,19 @@ namespace Anki
 
       // Encode or decode the four-byte code of a basic data type (like a single unsigned shorts)
       template<typename Type> static Result EncodeBasicType(u32 &code);
-      static Result DecodeBasicType(const u32 code, u8 &size, bool &isInteger, bool &isSigned, bool &isFloat);
+      static Result DecodeBasicType(const u32 code, u16 &size, bool &isBasicType, bool &isInteger, bool &isSigned, bool &isFloat);
 
       // Encode or decode the eight-byte code of a basic data type buffer (like a buffer of unsigned shorts)
       template<typename Type> static Result EncodeBasicTypeBuffer(const s32 numElements, EncodedBasicTypeBuffer &code);
-      static Result DecodeBasicTypeBuffer(const EncodedBasicTypeBuffer &code, u8 &size, bool &isInteger, bool &isSigned, bool &isFloat, s32 &numElements);
+      static Result DecodeBasicTypeBuffer(const EncodedBasicTypeBuffer &code, u16 &size, bool &isBasicType, bool &isInteger, bool &isSigned, bool &isFloat, s32 &numElements);
 
       // Encode or decode the forty-byte code of an Array
       template<typename Type> static Result EncodeArrayType(const Array<Type> &in, EncodedArray &code);
-      static Result DecodeArrayType(const EncodedArray &code, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, u8 &basicType_size, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat);
+      static Result DecodeArrayType(const EncodedArray &code, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, u16 &basicType_size, bool &basicType_isBasicType, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat);
 
       // Encode or decode the ??-byte code of an ArraySlice
       template<typename Type> static Result EncodeArraySliceType(const ConstArraySlice<Type> &in, EncodedArraySlice &code);
-      static Result DecodeArraySliceType(const EncodedArraySlice &code, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, s32 &ySlice_start, s32 &ySlice_increment, s32 &ySlice_end, s32 &xSlice_start, s32 &xSlice_increment, s32 &xSlice_end, u8 &basicType_size, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat);
+      static Result DecodeArraySliceType(const EncodedArraySlice &code, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, s32 &ySlice_start, s32 &ySlice_increment, s32 &ySlice_end, s32 &xSlice_start, s32 &xSlice_increment, s32 &xSlice_end, u16 &basicType_size, bool &basicType_isBasicType, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat);
 
       //// Encode or decode the forty-byte code of an Array
       //template<typename Type> static Result EncodeCustomType(const char * name, EncodedCustomType &code);

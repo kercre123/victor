@@ -26,23 +26,28 @@ namespace Anki
     {
       code = 0;
 
-      if(!Flags::TypeCharacteristics<Type>::isBasicType) {
-        return RESULT_FAIL;
+      // TODO: should non-basic types be handled?
+      //if(!Flags::TypeCharacteristics<Type>::isBasicType) {
+      //  return RESULT_FAIL;
+      //}
+
+      if(Flags::TypeCharacteristics<Type>::isBasicType) {
+        code |= 1;
       }
 
       if(Flags::TypeCharacteristics<Type>::isInteger) {
-        code |= 0xFF;
+        code |= 2;
       }
 
       if(Flags::TypeCharacteristics<Type>::isSigned) {
-        code |= 0xFF00;
+        code |= 4;
       }
 
       if(Flags::TypeCharacteristics<Type>::isFloat) {
-        code |= 0xFF0000;
+        code |= 8;
       }
 
-      code |= sizeof(Type) << 24;
+      code |= sizeof(Type) << 16;
 
       return RESULT_OK;
     }
@@ -60,8 +65,12 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(in.IsValid(),
         RESULT_FAIL, "SerializedBuffer::EncodeArray", "in Array is invalid");
 
-      if(SerializedBuffer::EncodeBasicType<Type>(code.code[0]) != RESULT_OK)
-        return RESULT_FAIL;
+      // TODO: should non-basic types be handled?
+
+      //if(SerializedBuffer::EncodeBasicType<Type>(code.code[0]) != RESULT_OK)
+      //        return RESULT_FAIL;
+
+      SerializedBuffer::EncodeBasicType<Type>(code.code[0]);
 
       code.code[1] = in.get_size(0);
       code.code[2] = in.get_size(1);
@@ -161,11 +170,12 @@ namespace Anki
       s32 width;
       s32 stride;
       Flags::Buffer flags;
-      u8 basicType_size;
+      u16 basicType_size;
+      bool basicType_isBasicType;
       bool basicType_isInteger;
       bool basicType_isSigned;
       bool basicType_isFloat;
-      if(SerializedBuffer::DecodeArrayType(code, height, width, stride, flags, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat) != RESULT_OK)
+      if(SerializedBuffer::DecodeArrayType(code, height, width, stride, flags, basicType_size, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat) != RESULT_OK)
         return RESULT_FAIL;
 
       const s32 bytesLeft = dataLength - (EncodedArray::CODE_SIZE * sizeof(u32));
@@ -259,7 +269,7 @@ namespace Anki
       s32 xSlice_start;
       s32 xSlice_increment;
       s32 xSlice_end;
-      u8 basicType_size;
+      u16 basicType_size;
       bool basicType_isInteger;
       bool basicType_isSigned;
       bool basicType_isFloat;
@@ -410,8 +420,7 @@ namespace Anki
 
     template<typename Type> Result SerializedBuffer::SerializeRawFixedLengthList(const FixedLengthList<Type> &in, void ** buffer, s32 &bufferLength)
     {
-      const ArraySlice<Type> slice = *static_cast<const ArraySlice<Type>*>(&in);
-      return SerializeRawArraySlice<Type>(slice, buffer, bufferLength);
+      return SerializeRawArraySlice<Type>(*static_cast<const ConstArraySlice<Type>*>(&in), buffer, bufferLength);
     }
 
     template<typename Type> Type SerializedBuffer::DeserializeRaw(void ** buffer, s32 &bufferLength)
@@ -430,7 +439,8 @@ namespace Anki
       s32 width;
       s32 stride;
       Flags::Buffer flags;
-      u8 basicType_size;
+      u16 basicType_size;
+      bool basicType_isBasicType;
       bool basicType_isInteger;
       bool basicType_isSigned;
       bool basicType_isFloat;
@@ -444,7 +454,7 @@ namespace Anki
           code.code[i] = bufferU32[i];
         }
 
-        if(SerializedBuffer::DecodeArrayType(code, height, width, stride, flags, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat) != RESULT_OK)
+        if(SerializedBuffer::DecodeArrayType(code, height, width, stride, flags, basicType_size, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat) != RESULT_OK)
           return Array<Type>();
       }
 
@@ -479,7 +489,8 @@ namespace Anki
       s32 xSlice_start;
       s32 xSlice_increment;
       s32 xSlice_end;
-      u8 basicType_size;
+      u16 basicType_size;
+      bool basicType_isBasicType;
       bool basicType_isInteger;
       bool basicType_isSigned;
       bool basicType_isFloat;
@@ -493,7 +504,7 @@ namespace Anki
           code.code[i] = bufferU32[i];
         }
 
-        if(SerializedBuffer::DecodeArraySliceType(code, height, width, stride, flags, ySlice_start, ySlice_increment, ySlice_end, xSlice_start, xSlice_increment, xSlice_end, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat) != RESULT_OK)
+        if(SerializedBuffer::DecodeArraySliceType(code, height, width, stride, flags, ySlice_start, ySlice_increment, ySlice_end, xSlice_start, xSlice_increment, xSlice_end, basicType_size, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat) != RESULT_OK)
           return ArraySlice<Type>();
       }
 

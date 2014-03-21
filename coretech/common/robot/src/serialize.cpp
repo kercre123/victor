@@ -32,29 +32,34 @@ namespace Anki
       this->memoryStack = MemoryStack(buffer, bufferLength, flags);
     }
 
-    Result SerializedBuffer::DecodeBasicType(const u32 code, u8 &size, bool &isInteger, bool &isSigned, bool &isFloat)
+    Result SerializedBuffer::DecodeBasicType(const u32 code, u16 &size, bool &isBasicType, bool &isInteger, bool &isSigned, bool &isFloat)
     {
-      if(code & 0xFF)
+      if(code & 1)
+        isBasicType = true;
+      else
+        isBasicType = false;
+
+      if(code & 2)
         isInteger = true;
       else
         isInteger = false;
 
-      if(code & 0xFF00)
+      if(code & 4)
         isSigned = true;
       else
         isSigned = false;
 
-      if(code & 0xFF0000)
+      if(code & 8)
         isFloat = true;
       else
         isFloat = false;
 
-      size = (code & 0xFF000000) >> 24;
+      size = (code & 0xFFFF0000) >> 16;
 
       return RESULT_OK;
     }
 
-    Result SerializedBuffer::DecodeBasicTypeBuffer(const EncodedBasicTypeBuffer &code, u8 &size, bool &isInteger, bool &isSigned, bool &isFloat, s32 &numElements)
+    Result SerializedBuffer::DecodeBasicTypeBuffer(const EncodedBasicTypeBuffer &code, u16 &size, bool &isBasicType, bool &isInteger, bool &isSigned, bool &isFloat, s32 &numElements)
     {
       u32 swappedCode[SerializedBuffer::EncodedBasicTypeBuffer::CODE_SIZE];
 
@@ -62,13 +67,13 @@ namespace Anki
         swappedCode[i] = code.code[i];
       }
 
-      SerializedBuffer::DecodeBasicType(swappedCode[0], size, isInteger, isSigned, isFloat);
+      SerializedBuffer::DecodeBasicType(swappedCode[0], size, isBasicType, isInteger, isSigned, isFloat);
       numElements = swappedCode[1];
 
       return RESULT_OK;
     }
 
-    Result SerializedBuffer::DecodeArrayType(const EncodedArray &code, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, u8 &basicType_size, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat)
+    Result SerializedBuffer::DecodeArrayType(const EncodedArray &code, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, u16 &basicType_size, bool &basicType_isBasicType, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat)
     {
       u32 swappedCode[SerializedBuffer::EncodedArray::CODE_SIZE];
 
@@ -76,7 +81,7 @@ namespace Anki
         swappedCode[i] = code.code[i];
       }
 
-      if(DecodeBasicType(swappedCode[0], basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat) != RESULT_OK)
+      if(DecodeBasicType(swappedCode[0], basicType_size, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat) != RESULT_OK)
         return RESULT_FAIL;
 
       height = swappedCode[1];
@@ -87,7 +92,7 @@ namespace Anki
       return RESULT_OK;
     }
 
-    Result SerializedBuffer::DecodeArraySliceType(const EncodedArraySlice &code, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, s32 &ySlice_start, s32 &ySlice_increment, s32 &ySlice_end, s32 &xSlice_start, s32 &xSlice_increment, s32 &xSlice_end, u8 &basicType_size, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat)
+    Result SerializedBuffer::DecodeArraySliceType(const EncodedArraySlice &code, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, s32 &ySlice_start, s32 &ySlice_increment, s32 &ySlice_end, s32 &xSlice_start, s32 &xSlice_increment, s32 &xSlice_end, u16 &basicType_size, bool &basicType_isBasicType, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat)
     {
       // The first part of the code is the same as an Array
       EncodedArray arrayCode;
@@ -96,7 +101,7 @@ namespace Anki
         arrayCode.code[i] = code.code[i];
       }
 
-      const Result result = SerializedBuffer::DecodeArrayType(arrayCode, height, width, stride, flags, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat);
+      const Result result = SerializedBuffer::DecodeArrayType(arrayCode, height, width, stride, flags, basicType_size, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat);
 
       if(result != RESULT_OK)
         return result;

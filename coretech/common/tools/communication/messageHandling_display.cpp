@@ -88,12 +88,13 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
       dataSegment += SerializedBuffer::EncodedBasicTypeBuffer::CODE_SIZE * sizeof(u32);
       const s32 remainingDataLength = dataLength - SerializedBuffer::EncodedBasicTypeBuffer::CODE_SIZE * sizeof(u32);
 
-      u8 size;
+      u16 size;
+      bool isBasicType;
       bool isInteger;
       bool isSigned;
       bool isFloat;
       s32 numElements;
-      SerializedBuffer::DecodeBasicTypeBuffer(code, size, isInteger, isSigned, isFloat, numElements);
+      SerializedBuffer::DecodeBasicTypeBuffer(code, size, isBasicType, isInteger, isSigned, isFloat, numElements);
 
       // Hack to detect a benchmarking pair
       if(isFloat && size==4 && numElements==2) {
@@ -121,11 +122,12 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
       s32 width;
       s32 stride;
       Flags::Buffer flags;
-      u8 basicType_size;
+      u16 basicType_size;
+      bool basicType_isBasicType;
       bool basicType_isInteger;
       bool basicType_isSigned;
       bool basicType_isFloat;
-      SerializedBuffer::DecodeArrayType(code, height, width, stride, flags, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat);
+      SerializedBuffer::DecodeArrayType(code, height, width, stride, flags, basicType_size, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat);
 
       //template<typename Type> static Result DeserializeArray(const void * data, const s32 dataLength, Array<Type> &out, MemoryStack &memory);
       if(basicType_size==1 && basicType_isInteger==1 && basicType_isSigned==0 && basicType_isFloat==0) {
