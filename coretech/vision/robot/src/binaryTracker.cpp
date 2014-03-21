@@ -169,8 +169,8 @@ namespace Anki
 #ifndef ANKICORETECH_EMBEDDED_USE_OPENCV
         return RESULT_FAIL;
 #else
-        if(!this->IsValid())
-          return RESULT_FAIL;
+        //if(!this->IsValid())
+        //  return RESULT_FAIL;
 
         cv::Mat toShow = BinaryTracker::DrawIndexes(
           templateImageHeight, templateImageWidth,
@@ -401,6 +401,9 @@ namespace Anki
         bufferChar += sizeof(this->templateEdges.imageHeight);
         memcpy(reinterpret_cast<void*>(&this->templateEdges.imageWidth), bufferChar, sizeof(this->templateEdges.imageWidth));
         bufferChar += sizeof(this->templateEdges.imageWidth);
+
+        this->templateImageHeight = this->templateEdges.imageHeight;
+        this->templateImageWidth = this->templateEdges.imageWidth;
 
         memcpy(reinterpret_cast<void*>(&xDecreasingUsed), bufferChar, sizeof(xDecreasingUsed));
         bufferChar += sizeof(xDecreasingUsed);
