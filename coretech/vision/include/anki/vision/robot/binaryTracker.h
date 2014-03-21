@@ -74,6 +74,8 @@ namespace Anki
         Result set_transformation(const Transformations::PlanarTransformation_f32 &transformation);
         Transformations::PlanarTransformation_f32 get_transformation() const;
 
+        s32 get_SerializationSize() const;
+
       protected:
         typedef struct
         {
@@ -256,8 +258,6 @@ namespace Anki
           const s32 matching_maxDistance,
           s32 &numTemplatePixelsMatched,
           MemoryStack scratch);
-
-        s32 get_SerializationSize() const;
       }; // class BinaryTracker
     } // namespace TemplateTracker
   } // namespace Embedded

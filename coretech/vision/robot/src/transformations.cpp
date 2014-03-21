@@ -342,7 +342,7 @@ namespace Anki
       Result PlanarTransformation_f32::SerializeRaw(void ** buffer, s32 &bufferLength) const
       {
         SerializedBuffer::SerializeRaw<bool>(this->isValid, buffer, bufferLength);
-        SerializedBuffer::SerializeRaw<Transformations::TransformType>(this->transformType, buffer, bufferLength);
+        SerializedBuffer::SerializeRaw<s32>(this->transformType, buffer, bufferLength);
         SerializedBuffer::SerializeRaw<f32>(this->homography, buffer, bufferLength);
         SerializedBuffer::SerializeRaw<Quadrilateral<f32> >(this->initialCorners, buffer, bufferLength);
         SerializedBuffer::SerializeRaw<Point<f32> >(this->centerOffset, buffer, bufferLength);
@@ -353,7 +353,7 @@ namespace Anki
       Result PlanarTransformation_f32::Deserialize(void** buffer, s32 &bufferLength, MemoryStack scratch)
       {
         this->isValid = SerializedBuffer::DeserializeRaw<bool>(buffer, bufferLength);
-        this->transformType = SerializedBuffer::DeserializeRaw<Transformations::TransformType>(buffer, bufferLength);
+        this->transformType = static_cast<Transformations::TransformType>(SerializedBuffer::DeserializeRaw<s32>(buffer, bufferLength));
 
         Array<f32> tmpHomography = SerializedBuffer::DeserializeRaw<f32>(buffer, bufferLength, scratch);
         this->homography.Set(tmpHomography);

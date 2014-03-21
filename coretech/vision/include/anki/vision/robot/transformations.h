@@ -119,6 +119,8 @@ namespace Anki
         // Transform this object's initialCorners, based on its current homography
         Quadrilateral<f32> get_transformedCorners(MemoryStack scratch) const;
 
+        s32 get_SerializationSize() const;
+
       protected:
 
         bool isValid;
@@ -146,8 +148,6 @@ namespace Anki
           Array<f32> &xOut, Array<f32> &yOut);
 
         Result Init(const TransformType transformType, const Quadrilateral<f32> &initialCorners, const Array<f32> &initialHomography, const Point<f32> &centerOffset, MemoryStack &memory);
-
-        s32 get_SerializationSize() const;
       };
     } // namespace Transformations
   } // namespace Embedded
