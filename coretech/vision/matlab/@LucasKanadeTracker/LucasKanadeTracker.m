@@ -123,6 +123,20 @@ classdef LucasKanadeTracker < handle
             this.height = ymax - ymin + 1;
             this.width  = xmax - xmin + 1;
             
+            QuadPaddingFraction = 0.05;
+            if QuadPaddingFraction > 0
+               this.height = this.height * (1 + QuadPaddingFraction);
+               this.width  = this.width  * (1 + QuadPaddingFraction);
+               
+               xmid = (xmax+xmin)/2;
+               xmin = xmid - this.width/2;
+               xmax = xmid + this.width/2;
+               
+               ymid = (ymax+ymin)/2;
+               ymin = ymid - this.height/2;
+               ymax = ymid + this.height/2;
+            end
+            
             maskBBox = [xmin ymin xmax-xmin ymax-ymin];
             
             targetMask = false(nrows,ncols);
