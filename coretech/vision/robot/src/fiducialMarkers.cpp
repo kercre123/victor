@@ -547,7 +547,7 @@ namespace Anki
 
     Result VisionMarker::Deserialize(void** buffer, s32 &bufferLength)
     {
-      const char * bufferChar = reinterpret_cast<const char*>(buffer);
+      const char * bufferChar = reinterpret_cast<const char*>(*buffer);
 
       this->corners = *reinterpret_cast<const Quadrilateral<s16>*>(bufferChar);
       bufferChar += sizeof(this->corners);

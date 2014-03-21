@@ -126,8 +126,6 @@ namespace Anki
         Quadrilateral<f32> get_transformedCorners(MemoryStack scratch) const;
 
       protected:
-        // TODO: make the correct length
-        static const s32 SERIALIZATION_SIZE = 512;
 
         bool isValid;
 

@@ -384,7 +384,7 @@ namespace Anki
 
         // Next, deserialize the template lists
 
-        const char * bufferChar = reinterpret_cast<const char*>(buffer);
+        const char * bufferChar = reinterpret_cast<const char*>(*buffer);
 
         s32 xDecreasingUsed;
         s32 xIncreasingUsed;

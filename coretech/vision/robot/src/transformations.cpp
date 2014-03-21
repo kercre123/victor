@@ -323,7 +323,7 @@ namespace Anki
       {
         const s32 maxBufferLength = buffer.get_memoryStack().ComputeLargestPossibleAllocation() - 64;
 
-        s32 requiredBytes = SERIALIZATION_SIZE;
+        s32 requiredBytes = this->get_SerializationSize();
 
         if(maxBufferLength < requiredBytes) {
           return RESULT_FAIL;
@@ -361,7 +361,7 @@ namespace Anki
       {
         const s32 maxBufferLength = buffer.get_memoryStack().ComputeLargestPossibleAllocation() - 64;
 
-        s32 requiredBytes = SERIALIZATION_SIZE;
+        s32 requiredBytes = this->get_SerializationSize();
 
         if(maxBufferLength < requiredBytes) {
           return RESULT_FAIL;
@@ -393,15 +393,15 @@ namespace Anki
         memcpy(bufferChar, reinterpret_cast<const void*>(&this->centerOffset), sizeof(this->centerOffset));
         bufferChar += sizeof(this->centerOffset);
 
-        *buffer = reinterpret_cast<u8*>(*buffer) + SERIALIZATION_SIZE;
-        bufferLength -= SERIALIZATION_SIZE;
+        *buffer = reinterpret_cast<u8*>(*buffer) + this->get_SerializationSize();
+        bufferLength -= this->get_SerializationSize();
 
         return RESULT_OK;
       }
 
       Result PlanarTransformation_f32::Deserialize(void** buffer, s32 &bufferLength)
       {
-        const char * bufferChar = reinterpret_cast<const char*>(buffer);
+        const char * bufferChar = reinterpret_cast<const char*>(*buffer);
 
         this->isValid = *reinterpret_cast<const bool*>(bufferChar);
         bufferChar += sizeof(this->isValid);
@@ -419,8 +419,8 @@ namespace Anki
         this->centerOffset = *reinterpret_cast<const Point<f32>*>(bufferChar);
         bufferChar += sizeof(this->centerOffset);
 
-        *buffer = reinterpret_cast<u8*>(*buffer) + SERIALIZATION_SIZE;
-        bufferLength -= SERIALIZATION_SIZE;
+        *buffer = reinterpret_cast<u8*>(*buffer) + this->get_SerializationSize();
+        bufferLength -= this->get_SerializationSize();
 
         return RESULT_OK;
       }
