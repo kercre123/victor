@@ -46,8 +46,6 @@ int main(void)
   g_dataToBody.motorPWM[2] = 0; //0x7fff * 0.5;
   g_dataToBody.motorPWM[3] = 0; //0x7fff * 0.1;*/
   
-  s16 a = 0, b = 0, c = 0, d = 0;
-  
   while (1)
   {
     u32 timerStart = GetCounter();

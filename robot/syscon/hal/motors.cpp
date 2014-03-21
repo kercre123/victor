@@ -6,6 +6,8 @@
 #include "nrf_gpiote.h"
 #include <limits.h>
 
+#include "uart.h"
+
 #define TO_FIXED(x) ((x) * 65536)
 #define FIXED_MUL(x, y) ((s32)(((s64)(x) * (s64)(y)) >> 16))
 #define FIXED_DIV(x, y) ((s32)(((s64)(x) << 16) / (y)))
@@ -82,7 +84,7 @@ namespace
   const u32 ENCODER_TIMEOUT_COUNT = 200000 * US_PER_COUNT;
 
   // Set the debounce to reject all noise above it (100 us)
-  const u32 DEBOUNCE_COUNT = 100 * US_PER_COUNT;
+  const u32 DEBOUNCE_COUNT = 2 * US_PER_COUNT;
   
   // NOTE: Do NOT re-order the MotorID enum, because this depends on it
   MotorInfo m_motors[MOTOR_COUNT] =
@@ -123,7 +125,7 @@ namespace
   
   //const u32 MOTOR_COUNT = sizeof(m_motors) / sizeof(MotorInfo);
   
-  u32 m_pinsHigh = 0;
+  u32 m_lastState = 0;
 }
 
 static void ConfigureTimer(NRF_TIMER_Type* timer, const u8 taskChannel, const u8 ppiChannel)
@@ -186,7 +188,7 @@ static void ConfigurePinSense(u8 pin, u32 pinState)
   if (pinState & mask)
   {
     nrf_gpio_cfg_sense_input(pin, NRF_GPIO_PIN_NOPULL, NRF_GPIO_PIN_SENSE_LOW);
-    m_pinsHigh |= mask;
+    m_lastState |= mask;
   } else {
     nrf_gpio_cfg_sense_input(pin, NRF_GPIO_PIN_NOPULL, NRF_GPIO_PIN_SENSE_HIGH);
   }
@@ -237,7 +239,7 @@ void MotorsInit()
   ConfigureTimer(NRF_TIMER2, 2, 4);
   
   // Enable PPI channels for timer PWM and reset
-  NRF_PPI->CHEN = 0x0F;
+  NRF_PPI->CHEN = 0xFF;
   
   // Start the timers
   NRF_TIMER1->TASKS_START = 1;
@@ -272,6 +274,10 @@ void MotorsInit()
     
     // Enable sensing for each encoder pin (only one per quadrature encoder)
     ConfigurePinSense(motorInfo->encoderPins[0], state);
+    if (motorInfo->encoderPins[1] != ENCODER_NONE)
+    {
+      nrf_gpio_cfg_input(motorInfo->encoderPins[1], NRF_GPIO_PIN_NOPULL);
+    }
   }
 }
 
@@ -368,16 +374,19 @@ void MotorsUpdate()
   g_dataToHead.positions[1] = m_motors[1].position;
   g_dataToHead.positions[2] = m_motors[2].position;
   g_dataToHead.positions[3] = m_motors[3].position;
+  
+  /*UARTPutHex32(g_dataToHead.speeds[3]);
+  UARTPutChar(' ');
+  UARTPutHex32(g_dataToHead.positions[3]);
+  UARTPutChar('\n');*/
 }
 
-static void HandlePinTransition(MotorInfo* motorInfo, u32 pinState)
+static void HandlePinTransition(MotorInfo* motorInfo, u32 pinState, u32 count)
 {
-  u32 count = GetCounter();
-  
   u32 pin = motorInfo->encoderPins[0];
   u32 mask = 1 << pin;
   
-  u32 transition = (pinState ^ m_pinsHigh) & mask;
+  u32 transition = (pinState ^ m_lastState) & mask;
   
   // Toggle the sense level (for whack-a-mole)
   if (transition)
@@ -385,30 +394,30 @@ static void HandlePinTransition(MotorInfo* motorInfo, u32 pinState)
     // Check for high to low transition and invert the sensing
     if (!(pinState & mask))
     {
+      // NOTE: Using this edge because of the orientation of the encoder.
+      // If the encoder was rotated 180 degrees, then the other edge should be used.
       nrf_gpio_cfg_sense_input(pin, NRF_GPIO_PIN_NOPULL, NRF_GPIO_PIN_SENSE_HIGH);
-      m_pinsHigh &= ~mask;
-    } else {
-      // Handle low to high transition
-      nrf_gpio_cfg_sense_input(pin, NRF_GPIO_PIN_NOPULL, NRF_GPIO_PIN_SENSE_LOW);
-      m_pinsHigh |= mask;
       
       if ((count - motorInfo->count) > DEBOUNCE_COUNT)
       {
         motorInfo->count = count;
-        /*u32 pin2 = motorInfo->encoderPins[1];
+        u32 pin2 = motorInfo->encoderPins[1];
         
-        // Temporary wiring issue, so quadrature doesn't work.
         if (pin2 != ENCODER_NONE)
         {
           // Check quadrature encoder state for forward vs backward
-          if (NRF_GPIO->IN & (1 << pin2))
+          if (pinState & (1 << pin2))
             motorInfo->position += ABS(motorInfo->unitsPerTick);
           else
             motorInfo->position -= ABS(motorInfo->unitsPerTick);
-        } else*/ {
+        } else {
           motorInfo->position += motorInfo->unitsPerTick;
         }
       }
+      
+    } else {
+      // Handle low to high transition
+      nrf_gpio_cfg_sense_input(pin, NRF_GPIO_PIN_NOPULL, NRF_GPIO_PIN_SENSE_LOW);
     }
   }
 }
@@ -416,16 +425,19 @@ static void HandlePinTransition(MotorInfo* motorInfo, u32 pinState)
 extern "C"
 void GPIOTE_IRQHandler()
 {
-  // Grab the current state of the input pins
-  u32 state = NRF_GPIO->IN;
-  
   // Clear the event/interrupt
   NRF_GPIOTE->EVENTS_PORT = 0;
+  // Note:  IN could have already changed - but if it did, it would be a glitch anyway
+  // Grab the current state of the input pins
+  u32 state = NRF_GPIO->IN;
+
+  u32 count = GetCounter();
   
   for (int i = 0; i < MOTOR_COUNT; i++)
   {
-    MotorInfo* motorInfo = &m_motors[i];
-    
-    HandlePinTransition(motorInfo, state);
+    MotorInfo* motorInfo = &m_motors[i];    
+    HandlePinTransition(motorInfo, state, count);
   }
+  
+  m_lastState = state;
 }
