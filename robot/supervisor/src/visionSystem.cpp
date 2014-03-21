@@ -767,8 +767,9 @@ namespace MatlabVisionProcessor {
 
   static bool haveTemplate_;
   
-  static Transformations::TransformType transformType_ = Transformations::TRANSFORM_AFFINE;
+  static Transformations::TransformType transformType_ = Transformations::TRANSFORM_PROJECTIVE;
   static HAL::CameraMode trackingResolution_;
+  static bool initTrackerAtFullRes_;
   
   static s32 maxIterations_;
   static f32 convergenceTolerance_;
@@ -783,6 +784,8 @@ namespace MatlabVisionProcessor {
       
       trackingResolution_ = HAL::CAMERA_MODE_QQVGA;
       
+      initTrackerAtFullRes_ = false;
+      
       scaleFactor_ = (1<<CameraModeInfo[HAL::CAMERA_MODE_QVGA].downsamplePower[trackingResolution_]);
       haveTemplate_ = false;
       
@@ -796,13 +799,29 @@ namespace MatlabVisionProcessor {
     return EXIT_SUCCESS;
   } // MatlabVisionProcess::Initialize()
   
-  void InitTemplate(const Array<u8>& img,
-                    const Quadrilateral<f32>& trackingQuad)
+  ReturnCode InitTemplate(const Array<u8>& imgFull,
+                          const Quadrilateral<f32>& trackingQuad,
+                          MemoryStack scratch)
   {
+    if(!isInitialized_) {
+      return EXIT_FAILURE;
+    }
     
-    AnkiAssert(isInitialized_);
-    matlabProc_.PutArray(img, "img");
     matlabProc_.PutQuad(trackingQuad, "initTrackingQuad");
+    
+    if(initTrackerAtFullRes_) {
+      matlabProc_.PutArray(imgFull, "img");
+    }
+    else {
+      Array<u8> imgSmall(CameraModeInfo[trackingResolution_].height,
+                         CameraModeInfo[trackingResolution_].width,
+                         scratch);
+      
+      DownsampleHelper(imgFull, imgSmall, scratch);
+      matlabProc_.PutArray(imgSmall, "img");
+      matlabProc_.EvalStringEcho("initTrackingQuad = initTrackingQuad / %d;",
+                                 scaleFactor_);
+    }
     
     matlabProc_.EvalStringEcho("LKtracker = LucasKanadeTracker(img, "
                                "  initTrackingQuad + 1, "
@@ -817,7 +836,9 @@ namespace MatlabVisionProcessor {
     
     haveTemplate_ = true;
     
-    MatlabVisualization::SendTrackInit(img, trackingQuad);
+    MatlabVisualization::SendTrackInit(imgFull, trackingQuad);
+    
+    return EXIT_SUCCESS;
     
   } // MatlabVisionProcessor::InitTemplate()
   
@@ -859,6 +880,7 @@ namespace MatlabVisionProcessor {
                                "transform = S*double(LKtracker.tform)*inv(S); "
                                "newTform = transform / update; " // transform * inv(update)
                                "newTform = inv(S) * newTform * S; "
+                               "newTform = newTform / newTform(3,3); "
                                "LKtracker.set_tform(newTform);",
                                scaleFactor_, scaleFactor_);
     
@@ -909,6 +931,7 @@ namespace MatlabVisionProcessor {
     
     matlabProc_.EvalStringEcho("S = [%d 0 0; 0 %d 0; 0 0 1]; "
                                "transform = S*double(LKtracker.tform)*inv(S); "
+                               "transform = transform / transform(3,3); "
                                "corners = %d*(double(LKtracker.corners) - 1); "
                                "xcen = %d*(double(LKtracker.xcen) - 1); "
                                "ycen = %d*(double(LKtracker.ycen) - 1);",
@@ -1222,13 +1245,6 @@ static ReturnCode InitTemplate(
   MemoryStack &onchipScratch, //< NOTE: onchip is a reference
   MemoryStack ccmScratch)
 {
-  
-#if USE_MATLAB_TRACKER
-  MatlabVisionProcessor::InitTemplate(grayscaleImage, trackingQuad);
-  
-  return EXIT_SUCCESS;
-#endif
-  
   AnkiAssert(parameters.isInitialized);
 
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SLOW || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_AFFINE || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE
@@ -1797,15 +1813,21 @@ namespace Anki {
                 Point<f32>(crntMarker.corners[2].x, crntMarker.corners[2].y),
                 Point<f32>(crntMarker.corners[3].x, crntMarker.corners[3].y));
 
-              const ReturnCode result = InitTemplate(
-                grayscaleImage,
-                VisionState::trackingQuad_,
-                trackerParameters_,
-                VisionState::tracker_,
-                offchipScratch_local,
-                VisionMemory::onchipScratch_, //< NOTE: onchip is a reference
-                VisionMemory::ccmScratch_);
-
+              
+#if USE_MATLAB_TRACKER
+              const ReturnCode result = MatlabVisionProcessor::InitTemplate(grayscaleImage,
+                                                                            VisionState::trackingQuad_,
+                                                                            VisionMemory::ccmScratch_);
+#else
+              const ReturnCode result = InitTemplate(grayscaleImage,
+                                                     VisionState::trackingQuad_,
+                                                     trackerParameters_,
+                                                     VisionState::tracker_,
+                                                     offchipScratch_local,
+                                                     VisionMemory::onchipScratch_, //< NOTE: onchip is a reference
+                                                     VisionMemory::ccmScratch_);
+#endif
+              
               if(result != EXIT_SUCCESS) {
                 return EXIT_FAILURE;
               }
