@@ -29,6 +29,8 @@ namespace Anki
     class MemoryStackRawIterator;
     class MemoryStackRawConstIterator;
 
+    class SerializedBuffer;
+
     // A MemoryStack keeps track of an external memory buffer, by using the system stack. It is not
     // thread safe. Data that is allocated with Allocate() will be MEMORY_ALIGNMENT bytes-aligned.
     // Allocate() data has fill patterns at the beginning and end, to ensure that buffers did not
@@ -116,6 +118,8 @@ namespace Anki
       Flags::Buffer get_flags() const;
 
     protected:
+      friend SerializedBuffer;
+
       void * buffer;
       s32 totalBytes;
       s32 usedBytes;

@@ -12,6 +12,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/opencvLight.h"
 #include "anki/common/robot/arrayPatterns.h"
 #include "anki/common/robot/interpolate.h"
+#include "anki/common/robot/serialize.h"
 
 namespace Anki
 {
@@ -318,52 +319,44 @@ namespace Anki
         return RESULT_OK;
       }
 
-      Result PlanarTransformation_f32::Serialize(void * buffer, const s32 bufferLength) const
+      Result PlanarTransformation_f32::Serialize(SerializedBuffer &buffer) const
       {
-        // TODO: make the correct length
-        if(bufferLength < 512) {
+        const s32 maxBufferLength = buffer.get_memoryStack().ComputeLargestPossibleAllocation() - 64;
+
+        s32 requiredBytes = this->get_SerializationSize();
+
+        if(maxBufferLength < requiredBytes) {
           return RESULT_FAIL;
         }
 
-        char * bufferChar = reinterpret_cast<char*>(buffer);
+        void *afterHeader;
+        const void* segmentStart = buffer.PushBack("PlanarTransformation_f32", requiredBytes, &afterHeader);
 
-        memcpy(bufferChar, reinterpret_cast<const void*>(&this->isValid), sizeof(this->isValid));
-        bufferChar += sizeof(this->isValid);
+        if(segmentStart == NULL) {
+          return RESULT_FAIL;
+        }
 
-        const s32 transformTypeS32 = static_cast<s32>(this->transformType);
-        memcpy(bufferChar, reinterpret_cast<const void*>(&transformTypeS32), sizeof(transformTypeS32));
-        bufferChar += sizeof(transformTypeS32);
+        return SerializeRaw(&afterHeader, requiredBytes);
+      }
 
-        const s32 numArrayBytes = this->homography.get_stride()*this->homography.get_size(0);
-        memcpy(bufferChar, reinterpret_cast<const void*>(this->homography.Pointer(0,0)), numArrayBytes);
-        bufferChar += numArrayBytes;
-
-        memcpy(bufferChar, reinterpret_cast<const void*>(&this->initialCorners), sizeof(this->initialCorners));
-        bufferChar += sizeof(this->initialCorners);
-
-        memcpy(bufferChar, reinterpret_cast<const void*>(&this->centerOffset), sizeof(this->centerOffset));
+      Result PlanarTransformation_f32::SerializeRaw(void ** buffer, s32 &bufferLength) const
+      {
+        SerializedBuffer::SerializeRaw<bool>(this->isValid, buffer, bufferLength);
+        SerializedBuffer::SerializeRaw<s32>(this->transformType, buffer, bufferLength);
+        SerializedBuffer::SerializeRawArray<f32>(this->homography, buffer, bufferLength);
+        SerializedBuffer::SerializeRaw<Quadrilateral<f32> >(this->initialCorners, buffer, bufferLength);
+        SerializedBuffer::SerializeRaw<Point<f32> >(this->centerOffset, buffer, bufferLength);
 
         return RESULT_OK;
       }
 
-      Result PlanarTransformation_f32::Deserialize(const void* buffer, const s32 bufferLength)
+      Result PlanarTransformation_f32::Deserialize(void** buffer, s32 &bufferLength, MemoryStack &memory)
       {
-        const char * bufferChar = reinterpret_cast<const char*>(buffer);
-
-        this->isValid = *reinterpret_cast<const bool*>(bufferChar);
-        bufferChar += sizeof(this->isValid);
-
-        this->transformType = static_cast<TransformType>(*reinterpret_cast<const s32*>(bufferChar));
-        bufferChar += sizeof(s32);
-
-        const s32 numArrayBytes = this->homography.get_stride()*this->homography.get_size(0);
-        memcpy(this->homography.Pointer(0,0), bufferChar, numArrayBytes);
-        bufferChar += numArrayBytes;
-
-        this->initialCorners = *reinterpret_cast<const Quadrilateral<f32>*>(bufferChar);
-        bufferChar += sizeof(this->initialCorners);
-
-        this->centerOffset = *reinterpret_cast<const Point<f32>*>(bufferChar);
+        this->isValid = SerializedBuffer::DeserializeRaw<bool>(buffer, bufferLength);
+        this->transformType = static_cast<Transformations::TransformType>(SerializedBuffer::DeserializeRaw<s32>(buffer, bufferLength));
+        this->homography = SerializedBuffer::DeserializeRawArray<f32>(buffer, bufferLength, memory);
+        this->initialCorners = SerializedBuffer::DeserializeRaw<Quadrilateral<f32> >(buffer, bufferLength);
+        this->centerOffset = SerializedBuffer::DeserializeRaw<Point<f32> >(buffer, bufferLength);
 
         return RESULT_OK;
       }
@@ -586,6 +579,12 @@ namespace Anki
         }
 
         return RESULT_OK;
+      }
+
+      s32 PlanarTransformation_f32::get_SerializationSize() const
+      {
+        // TODO: make the correct length
+        return 512;
       }
 
       Result ComputeHomographyFromQuad(const Quadrilateral<s16> &quad, Array<f32> &homography, MemoryStack scratch)

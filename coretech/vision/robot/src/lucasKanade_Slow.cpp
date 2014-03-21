@@ -34,7 +34,7 @@ namespace Anki
       {
       }
 
-      LucasKanadeTracker_Slow::LucasKanadeTracker_Slow(const Array<u8> &templateImage, const Quadrilateral<f32> &templateQuad, const s32 numPyramidLevels, const Transformations::TransformType transformType, const f32 ridgeWeight, MemoryStack &memory)
+      LucasKanadeTracker_Slow::LucasKanadeTracker_Slow(const Array<u8> &templateImage, const Quadrilateral<f32> &templateQuad, const f32 scaleTemplateRegionPercent, const s32 numPyramidLevels, const Transformations::TransformType transformType, const f32 ridgeWeight, MemoryStack &memory)
         : numPyramidLevels(numPyramidLevels), templateImageHeight(templateImage.get_size(0)), templateImageWidth(templateImage.get_size(1)), ridgeWeight(ridgeWeight), isValid(false), isInitialized(false)
       {
         BeginBenchmark("LucasKanadeTracker_Slow");
@@ -58,7 +58,7 @@ namespace Anki
         AnkiConditionalErrorAndReturn(((1<<initialImagePowerS32)*templateImage.get_size(1)) == BASE_IMAGE_WIDTH,
           "LucasKanadeTracker_Slow::LucasKanadeTracker_Slow", "The templateImage must be a power of two smaller than BASE_IMAGE_WIDTH");
 
-        templateRegion = templateQuad.ComputeBoundingRectangle();
+        templateRegion = templateQuad.ComputeBoundingRectangle().ComputeScaledRectangle(scaleTemplateRegionPercent);
 
         templateRegion.left /= initialImageScaleF32;
         templateRegion.right /= initialImageScaleF32;

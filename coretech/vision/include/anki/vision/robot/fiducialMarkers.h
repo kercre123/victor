@@ -72,8 +72,11 @@ namespace Anki
 
       void Print() const;
 
-      Result Serialize(void * buffer, const s32 bufferLength) const;
-      Result Deserialize(const void* buffer, const s32 bufferLength);
+      Result Serialize(SerializedBuffer &buffer) const;
+      Result SerializeRaw(void ** buffer, s32 &bufferLength) const; // Updates the buffer pointer and length before returning
+      Result Deserialize(void** buffer, s32 &bufferLength); // Updates the buffer pointer and length before returning
+
+      s32 get_SerializationSize() const;
 
     protected:
       // The constructor isn't always called, so initialize has to be checked in multiple places

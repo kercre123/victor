@@ -15,6 +15,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/benchmarking_c.h"
 #include "anki/common/robot/draw.h"
 #include "anki/common/robot/comparisons.h"
+#include "anki/common/robot/serialize.h"
 
 #include "anki/vision/robot/fiducialDetection.h"
 #include "anki/vision/robot/imageProcessing.h"
@@ -71,8 +72,13 @@ namespace Anki
       }
 
       BinaryTracker::BinaryTracker(
-        const Array<u8> &templateImage, const Quadrilateral<f32> &templateQuad,
-        const u8 edgeDetection_grayvalueThreshold, const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
+        const Array<u8> &templateImage,
+        const Quadrilateral<f32> &templateQuad,
+        const f32 scaleTemplateRegionPercent,
+        const u8 edgeDetection_grayvalueThreshold,
+        const s32 edgeDetection_minComponentWidth,
+        const s32 edgeDetection_maxDetectionsPerType,
+        const s32 edgeDetection_everyNLines,
         MemoryStack &memory)
         : isValid(false)
       {
@@ -89,7 +95,7 @@ namespace Anki
         Point<f32> centerOffset((templateImage.get_size(1)-1) / 2.0f, (templateImage.get_size(0)-1) / 2.0f);
         this->transformation = Transformations::PlanarTransformation_f32(Transformations::TRANSFORM_PROJECTIVE, templateQuad, centerOffset, memory);
 
-        this->templateQuad = templateQuad;
+        //this->templateQuad = templateQuad;
 
         this->templateImageHeight = templateImage.get_size(0);
         this->templateImageWidth = templateImage.get_size(1);
@@ -104,7 +110,7 @@ namespace Anki
           this->templateEdges.yDecreasing.IsValid() && this->templateEdges.yIncreasing.IsValid(),
           "BinaryTracker::BinaryTracker", "Could not allocate local memory");
 
-        const Rectangle<f32> templateRectRaw = templateQuad.ComputeBoundingRectangle();
+        const Rectangle<f32> templateRectRaw = templateQuad.ComputeBoundingRectangle().ComputeScaledRectangle(scaleTemplateRegionPercent);
         const Rectangle<s32> templateRect(static_cast<s32>(templateRectRaw.left), static_cast<s32>(templateRectRaw.right), static_cast<s32>(templateRectRaw.top), static_cast<s32>(templateRectRaw.bottom));
 
         const Result result = DetectBlurredEdges(templateImage, templateRect, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, edgeDetection_everyNLines, this->templateEdges);
@@ -158,15 +164,13 @@ namespace Anki
         this->isValid = true;
       } // BinaryTracker::BinaryTracker()
 
-      Result BinaryTracker::ShowTemplate(const bool waitForKeypress, const bool fitImageToWindow) const
+      Result BinaryTracker::ShowTemplate(const char * windowName, const bool waitForKeypress, const bool fitImageToWindow) const
       {
 #ifndef ANKICORETECH_EMBEDDED_USE_OPENCV
         return RESULT_FAIL;
 #else
-        if(!this->IsValid())
-          return RESULT_FAIL;
-
-        const char * windowName = "BinaryTracker Template";
+        //if(!this->IsValid())
+        //  return RESULT_FAIL;
 
         cv::Mat toShow = BinaryTracker::DrawIndexes(
           templateImageHeight, templateImageWidth,
@@ -277,6 +281,57 @@ namespace Anki
       Result BinaryTracker::UpdateTransformation(const Array<f32> &update, const f32 scale, MemoryStack scratch, Transformations::TransformType updateType)
       {
         return this->transformation.Update(update, scale, scratch, updateType);
+      }
+
+      Result BinaryTracker::Serialize(SerializedBuffer &buffer) const
+      {
+        const s32 maxBufferLength = buffer.get_memoryStack().ComputeLargestPossibleAllocation() - 64;
+
+        s32 requiredBytes = this->get_SerializationSize();
+
+        if(maxBufferLength < requiredBytes) {
+          return RESULT_FAIL;
+        }
+
+        void *afterHeader;
+        const void* segmentStart = buffer.PushBack("BinaryTracker", requiredBytes, &afterHeader);
+
+        if(segmentStart == NULL) {
+          return RESULT_FAIL;
+        }
+
+        // First, serialize the transformation
+        this->transformation.SerializeRaw(&afterHeader, requiredBytes);
+
+        // Next, serialize the template lists
+        SerializedBuffer::SerializeRaw<s32>(this->templateEdges.imageHeight, &afterHeader, requiredBytes);
+        SerializedBuffer::SerializeRaw<s32>(this->templateEdges.imageWidth, &afterHeader, requiredBytes);
+        SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >(this->templateEdges.xDecreasing, &afterHeader, requiredBytes);
+        SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >(this->templateEdges.xIncreasing, &afterHeader, requiredBytes);
+        SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >(this->templateEdges.yDecreasing, &afterHeader, requiredBytes);
+        SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >(this->templateEdges.yIncreasing, &afterHeader, requiredBytes);
+
+        return RESULT_OK;
+      }
+
+      Result BinaryTracker::Deserialize(void** buffer, s32 &bufferLength, MemoryStack &memory)
+      {
+        // First, deserialize the transformation
+        //this->transformation = Transformations::PlanarTransformation_f32(Transformations::TRANSFORM_PROJECTIVE, memory);
+        this->transformation.Deserialize(buffer, bufferLength, memory);
+
+        // Next, deserialize the template lists
+        this->templateEdges.imageHeight = SerializedBuffer::DeserializeRaw<s32>(buffer, bufferLength);
+        this->templateEdges.imageWidth = SerializedBuffer::DeserializeRaw<s32>(buffer, bufferLength);
+        this->templateEdges.xDecreasing = SerializedBuffer::DeserializeRawFixedLengthList<Point<s16> >(buffer, bufferLength, memory);
+        this->templateEdges.xIncreasing = SerializedBuffer::DeserializeRawFixedLengthList<Point<s16> >(buffer, bufferLength, memory);
+        this->templateEdges.yDecreasing = SerializedBuffer::DeserializeRawFixedLengthList<Point<s16> >(buffer, bufferLength, memory);
+        this->templateEdges.yIncreasing = SerializedBuffer::DeserializeRawFixedLengthList<Point<s16> >(buffer, bufferLength, memory);
+
+        this->templateImageHeight = this->templateEdges.imageHeight;
+        this->templateImageWidth = this->templateEdges.imageWidth;
+
+        return RESULT_OK;
       }
 
       s32 BinaryTracker::get_numTemplatePixels() const
@@ -1921,6 +1976,26 @@ namespace Anki
         numTemplatePixelsMatched = numTemplatePixelsMatched_xDecreasing + numTemplatePixelsMatched_xIncreasing + numTemplatePixelsMatched_yDecreasing + numTemplatePixelsMatched_yIncreasing;
 
         return RESULT_OK;
+      }
+
+      s32 BinaryTracker::get_SerializationSize() const
+      {
+        // TODO: make the correct length
+
+        const s32 xDecreasingUsed = this->templateEdges.xDecreasing.get_size();
+        const s32 xIncreasingUsed = this->templateEdges.xIncreasing.get_size();
+        const s32 yDecreasingUsed = this->templateEdges.yDecreasing.get_size();
+        const s32 yIncreasingUsed = this->templateEdges.yIncreasing.get_size();
+
+        const s32 numTemplatePixels =
+          RoundUp<size_t>(xDecreasingUsed, MEMORY_ALIGNMENT) +
+          RoundUp<size_t>(xIncreasingUsed, MEMORY_ALIGNMENT) +
+          RoundUp<size_t>(yDecreasingUsed, MEMORY_ALIGNMENT) +
+          RoundUp<size_t>(yIncreasingUsed, MEMORY_ALIGNMENT);
+
+        const s32 requiredBytes = 512 + numTemplatePixels*sizeof(Point<s16>);
+
+        return requiredBytes;
       }
     } // namespace TemplateTracker
   } // namespace Embedded

@@ -11,6 +11,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/common/robot/benchmarking_c.h"
 #include "anki/common/robot/matlabInterface.h"
+#include "anki/common/robot/serialize.h"
 
 #include "anki/vision/robot/fiducialDetection.h"
 #include "anki/vision/robot/draw_vision.h"
@@ -514,46 +515,41 @@ namespace Anki
         corners[3].x, corners[3].y);
     } // VisionMarker::Print()
 
-    Result VisionMarker::Serialize(void * buffer, const s32 bufferLength) const
+    Result VisionMarker::Serialize(SerializedBuffer &buffer) const
     {
-      if(bufferLength < sizeof(VisionMarker)) {
+      const s32 maxBufferLength = buffer.get_memoryStack().ComputeLargestPossibleAllocation() - 64;
+
+      // TODO: make the correct length
+      s32 requiredBytes = this->get_SerializationSize();
+
+      if(maxBufferLength < requiredBytes) {
         return RESULT_FAIL;
       }
 
-      // TODO: should something simple like this work?
-      //memcpy(buffer, reinterpret_cast<const void*>(this), sizeof(this));
+      void *afterHeader;
+      const void* segmentStart = buffer.PushBack("VisionMarker", requiredBytes, &afterHeader);
 
-      char * bufferChar = reinterpret_cast<char*>(buffer);
-      memcpy(bufferChar, reinterpret_cast<const void*>(&this->corners), sizeof(this->corners));
-      bufferChar += sizeof(this->corners);
-      const s32 markerTypeS32 = static_cast<s32>(this->markerType);
-      memcpy(bufferChar, reinterpret_cast<const void*>(&markerTypeS32), sizeof(s32));
-      bufferChar += sizeof(s32);
-      memcpy(bufferChar, reinterpret_cast<const void*>(&this->isValid), sizeof(this->isValid));
+      if(segmentStart == NULL) {
+        return RESULT_FAIL;
+      }
+
+      return SerializeRaw(&afterHeader, requiredBytes);
+    }
+
+    Result VisionMarker::SerializeRaw(void ** buffer, s32 &bufferLength) const
+    {
+      SerializedBuffer::SerializeRaw<Quadrilateral<s16> >(this->corners, buffer, bufferLength);
+      SerializedBuffer::SerializeRaw<s32>(this->markerType, buffer, bufferLength);
+      SerializedBuffer::SerializeRaw<bool>(this->isValid, buffer, bufferLength);
 
       return RESULT_OK;
     }
 
-    Result VisionMarker::Deserialize(const void* buffer, const s32 bufferLength)
+    Result VisionMarker::Deserialize(void** buffer, s32 &bufferLength)
     {
-      // TODO: why doesn't this work?
-      //if(bufferLength < sizeof(VisionMarker)) {
-      /*if(bufferLength < (sizeof(Quadrilateral<s16>) + sizeof(s32) + sizeof(bool))) {
-      return RESULT_FAIL;
-      }*/
-
-      // TODO: should something simple like this work?
-      /*const VisionMarker *tmpMarker = reinterpret_cast<const VisionMarker*>(buffer);
-      this->corners = tmpMarker->corners;
-      this->markerType = tmpMarker->markerType;
-      this->isValid = tmpMarker->isValid;*/
-
-      const char * bufferChar = reinterpret_cast<const char*>(buffer);
-      this->corners = *reinterpret_cast<const Quadrilateral<s16>*>(bufferChar);
-      bufferChar += sizeof(this->corners);
-      this->markerType = static_cast<Vision::MarkerType>(*reinterpret_cast<const s32*>(bufferChar));
-      bufferChar += sizeof(this->markerType);
-      this->isValid = *reinterpret_cast<const bool*>(bufferChar);
+      this->corners = SerializedBuffer::DeserializeRaw<Quadrilateral<s16> >(buffer, bufferLength);
+      this->markerType = static_cast<Vision::MarkerType>(SerializedBuffer::DeserializeRaw<s32>(buffer, bufferLength));
+      this->isValid = SerializedBuffer::DeserializeRaw<bool>(buffer, bufferLength);
 
       return RESULT_OK;
     }
@@ -788,5 +784,11 @@ namespace Anki
 
       return lastResult;
     } // VisionMarker::Extract()
+
+    s32 VisionMarker::get_SerializationSize() const
+    {
+      // TODO: make the correct length
+      return 16;
+    }
   } // namespace Embedded
 } // namespace Anki
