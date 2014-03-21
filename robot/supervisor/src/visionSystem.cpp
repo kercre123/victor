@@ -189,6 +189,7 @@ struct TrackerParameters {
   s32 numPyramidLevels;
   s32 maxIterations;
   f32 convergenceTolerance;
+  u8 verify_maxPixelDifference;
   bool useWeights;
 
   void Initialize()
@@ -203,6 +204,7 @@ struct TrackerParameters {
     maxIterations        = 25;
     //convergenceTolerance = 0.05f;
     convergenceTolerance = 1.f;
+    verify_maxPixelDifference = 30;
     useWeights           = true;
 
     isInitialized = true;
@@ -1097,6 +1099,9 @@ static ReturnCode TrackTemplate(
 #endif
 
   converged = false;
+  s32 verify_meanAbsoluteDifference;
+  s32 verify_numInBounds;
+  s32 verify_numSimilarPixels;
 
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SLOW
   const Result trackerResult = tracker.UpdateTrack(
@@ -1112,7 +1117,11 @@ static ReturnCode TrackTemplate(
     grayscaleImageSmall,
     parameters.maxIterations,
     parameters.convergenceTolerance,
+    parameters.verify_maxPixelDifference,
     converged,
+    verify_meanAbsoluteDifference,
+    verify_numInBounds,
+    verify_numSimilarPixels,
     onchipScratch);
 
   //tracker.get_transformation().Print("track");
@@ -1122,7 +1131,11 @@ static ReturnCode TrackTemplate(
     grayscaleImageSmall,
     parameters.maxIterations,
     parameters.convergenceTolerance,
+    parameters.verify_maxPixelDifference,
     converged,
+    verify_meanAbsoluteDifference,
+    verify_numInBounds,
+    verify_numSimilarPixels,
     onchipScratch);
 
   //tracker.get_transformation().Print("track");
