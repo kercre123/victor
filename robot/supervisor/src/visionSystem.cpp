@@ -35,7 +35,11 @@ using namespace Anki::Cozmo;
 #define USE_MATLAB_VISUALIZATION 0
 #endif
 
-#if USE_MATLAB_VISUALIZATION
+#define USE_MATLAB_TRACKER  0 
+#define USE_MATLAB_DETECTOR 0
+
+
+#if USE_MATLAB_VISUALIZATION || USE_MATLAB_TRACKER || USE_MATLAB_DETECTOR
 #include "anki/common/robot/matlabInterface.h"
 #endif
 
@@ -597,13 +601,11 @@ namespace MatlabVisualization
     return EXIT_SUCCESS;
   }
 
-  static ReturnCode SendTrackInit(const Array<u8> &image,
-    const Tracker& tracker,
-    MemoryStack scratch)
+  static ReturnCode SendTrackInit(const Array<u8> &image, const Quadrilateral<f32>& quad)
   {
     ResetFiducialDetection(image);
 
-    matlabViz_.PutQuad(tracker.get_transformation().get_transformedCorners(scratch), "templateQuad");
+    matlabViz_.PutQuad(quad, "templateQuad");
 
     matlabViz_.EvalStringEcho("h_template = axes('Pos', [0 0 .33 .33], 'Tag', 'TemplateAxes'); "
       "imagesc(detectionImage, 'Parent', h_template); hold on; "
@@ -615,25 +617,31 @@ namespace MatlabVisualization
       "                'YLim', [0.9*min(templateQuad(:,2)) 1.1*max(templateQuad(:,2))]);");
     return EXIT_SUCCESS;
   }
-
+  
+  static ReturnCode SendTrackInit(const Array<u8> &image,
+                                  const Tracker& tracker,
+                                  MemoryStack scratch)
+  {
+    return SendTrackInit(image, tracker.get_transformation().get_transformedCorners(scratch));
+  }
+  
+  
   static ReturnCode SendTrack(const Array<u8>& image,
-    const Tracker& tracker,
-    const bool converged,
-    MemoryStack scratch)
+                              const Quadrilateral<f32>& quad,
+                              const bool converged)
   {
     matlabViz_.PutArray(image, "trackingImage");
+    matlabViz_.PutQuad(quad, "transformedQuad");
+    
     //            matlabViz_.EvalStringExplicit("imwrite(trackingImage, "
     //                                          "sprintf('~/temp/trackingImage%.3d.png', imageCtr)); "
     //                                          "imageCtr = imageCtr + 1;");
     matlabViz_.EvalStringEcho("set(h_img, 'CData', trackingImage); "
                               "set(h_axes, 'XLim', [.5 size(trackingImage,2)+.5], "
-                              "            'YLim', [.5 size(trackingImage,1)+.5]);");
-    
-    
-    matlabViz_.PutQuad(tracker.get_transformation().get_transformedCorners(scratch), "transformedQuad");
-    matlabViz_.EvalStringEcho("set(h_trackedQuad, 'Visible', 'on', "
-                              "    'XData', transformedQuad([1 2 4 3 1],1)+1, "
-                              "    'YData', transformedQuad([1 2 4 3 1],2)+1); ");
+                              "            'YLim', [.5 size(trackingImage,1)+.5]);"
+                              "set(h_trackedQuad, 'Visible', 'on', "
+                              "            'XData', transformedQuad([1 2 4 3 1],1)+1, "
+                              "            'YData', transformedQuad([1 2 4 3 1],2)+1); ");
     
     if(converged)
     {
@@ -648,6 +656,16 @@ namespace MatlabVisualization
 
     return EXIT_SUCCESS;
   }
+  
+  
+  static ReturnCode SendTrack(const Array<u8>& image,
+                              const Tracker& tracker,
+                              const bool converged,
+                              MemoryStack scratch)
+  {
+    return SendTrack(image, tracker.get_transformation().get_transformedCorners(scratch), converged);
+  }
+  
   
   static void SendTrackerPrediction_Helper(s32 subplotNum, const char *titleStr)
   {
@@ -698,6 +716,154 @@ namespace MatlabVisualization
   
 #endif //#if USE_MATLAB_VISUALIZATION
 } // namespace MatlabVisualization
+
+
+#if 0
+#pragma mark --- MatlabVisionProcessor ---
+#endif
+
+namespace MatlabVisionProcessor {
+
+#if USE_MATLAB_TRACKER || USE_MATLAB_DETECTOR
+  
+#ifndef SIMULATOR
+#error Matlab vision processing currently only available in simulation.
+#endif
+  
+  static Matlab matlabProc_(false);
+  static bool isInitialized_ = false;
+
+  static bool haveTemplate_;
+  
+  static Transformations::TransformType transformType_ = Transformations::TRANSFORM_AFFINE;
+  static HAL::CameraMode trackingResolution_;
+  
+  static s32 maxIterations_;
+  static f32 convergenceTolerance_;
+  static f32 errorTolerance_;
+  static s32 scaleFactor_;
+  
+  ReturnCode Initialize()
+  {
+    if(!isInitialized_) {
+      
+      matlabProc_.EvalStringEcho("run(fullfile('..','..','..','..','matlab','initCozmoPath'));");
+      
+      trackingResolution_ = HAL::CAMERA_MODE_QQVGA;
+      
+      scaleFactor_ = (1<<CameraModeInfo[HAL::CAMERA_MODE_QVGA].downsamplePower[trackingResolution_]);
+      haveTemplate_ = false;
+      
+      maxIterations_ = 25;
+      convergenceTolerance_ = 0.25f;
+      errorTolerance_ = 0.5f;
+      
+      isInitialized_ = true;
+    }
+    
+    return EXIT_SUCCESS;
+  } // MatlabVisionProcess::Initialize()
+  
+  void InitTrackerTemplate(const Array<u8>& img,
+                           const Quadrilateral<f32>& trackingQuad)
+  {
+    
+    AnkiAssert(isInitialized_);
+    matlabProc_.PutArray(img, "img");
+    matlabProc_.PutQuad(trackingQuad, "initTrackingQuad");
+    
+    matlabProc_.EvalStringEcho("LKtracker = LucasKanadeTracker(img, "
+                               "  initTrackingQuad + 1, "
+                               "  'Type', '%s', 'RidgeWeight', 1e-3, "
+                               "  'DebugDisplay', false, 'UseBlurring', false, "
+                               "  'UseNormalization', true, "
+                               "  'TrackingResolution', [%d %d], "
+                               "  'SampleNearEdges', false);",
+                               (transformType_ == Transformations::TRANSFORM_AFFINE ? "affine" : "homography"),
+                               CameraModeInfo[trackingResolution_].width,
+                               CameraModeInfo[trackingResolution_].height);
+    
+    haveTemplate_ = true;
+    
+    MatlabVisualization::SendTrackInit(img, trackingQuad);
+    
+  } // MatlabVisionProcessor::InitTrackerTemplate()
+  
+  
+  // TODO: Add a way to use prediction
+  
+  void TrackTemplate(const Array<u8>& img, bool& converged)
+  {
+    AnkiAssert(haveTemplate_);
+    AnkiAssert(img.get_size(0) == CameraModeInfo[trackingResolution_].height &&
+               img.get_size(1) == CameraModeInfo[trackingResolution_].width);
+    
+    matlabProc_.PutArray(img, "img");
+    
+    matlabProc_.EvalStringEcho(//"desktop, keyboard; "
+                               "converged = LKtracker.track(img, "
+                               "   'MaxIterations', %d, "
+                               "   'ConvergenceTolerance', %f, "
+                               "   'ErrorTolerance', %f); "
+                               "corners = (double(LKtracker.corners) - 1);",
+                               maxIterations_,
+                               convergenceTolerance_,
+                               errorTolerance_);
+    
+    converged = mxIsLogicalScalarTrue(matlabProc_.GetArray("converged"));
+    
+    Quadrilateral<f32> quad = matlabProc_.GetQuad<f32>("corners");
+    
+    MatlabVisualization::SendTrack(img, quad, converged);
+    
+  } // MatlabVisionProcessor::TrackTemplate()
+  
+  Transformations::PlanarTransformation_f32 GetTrackerTransform(MemoryStack& memory)
+  {
+    Array<f32> homography = Array<f32>(3,3,memory);
+    
+    matlabProc_.EvalStringEcho("S = [%d 0 0; 0 %d 0; 0 0 1]; "
+                               "transform = S*double(LKtracker.tform)*inv(S); "
+                               "corners = %d*(double(LKtracker.corners) - 1); "
+                               "xcen = %d*(double(LKtracker.xcen) - 1); "
+                               "ycen = %d*(double(LKtracker.ycen) - 1);",
+                               scaleFactor_, scaleFactor_, scaleFactor_, scaleFactor_, scaleFactor_);
+    
+    Quadrilateral<f32> quad = matlabProc_.GetQuad<f32>("corners");
+    const mxArray* mxTform = matlabProc_.GetArray("transform");
+    
+    AnkiAssert(mxTform != NULL && mxGetM(mxTform) == 3 && mxGetN(mxTform)==3);
+    
+    const double* mxTformData = mxGetPr(mxTform);
+    
+    homography[0][0] = mxTformData[0];
+    homography[1][0] = mxTformData[1];
+    homography[2][0] = mxTformData[2];
+    
+    homography[0][1] = mxTformData[3];
+    homography[1][1] = mxTformData[4];
+    homography[2][1] = mxTformData[5];
+    
+    homography[0][2] = mxTformData[6];
+    homography[1][2] = mxTformData[7];
+    homography[2][2] = mxTformData[8];
+    
+    const Point2f centerOffset(mxGetScalar(matlabProc_.GetArray("xcen")),
+                               mxGetScalar(matlabProc_.GetArray("ycen")) );
+    
+    return Transformations::PlanarTransformation_f32(transformType_, quad, homography, centerOffset, memory);
+    
+  } // MatlabVisionProcessor::GetTrackerTransform()
+  
+#else
+  
+  ReturnCode Initialize() { return EXIT_SUCCESS; }
+  
+#endif // USE_MATLAB_TRACKER || USE_MATLAB_DETECTOR
+  
+} // namespace MatlabVisionProcessor
+
+
 
 //namespace Offboard
 //{
@@ -971,6 +1137,13 @@ static ReturnCode InitTemplate(
   MemoryStack &onchipScratch, //< NOTE: onchip is a reference
   MemoryStack ccmScratch)
 {
+  
+#if USE_MATLAB_TRACKER
+  MatlabVisionProcessor::InitTrackerTemplate(grayscaleImage, trackingQuad);
+  
+  return EXIT_SUCCESS;
+#endif
+  
   AnkiAssert(parameters.isInitialized);
 
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SLOW || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_AFFINE || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE
@@ -1067,6 +1240,13 @@ static ReturnCode TrackTemplate(
   DownsampleHelper(grayscaleImage, grayscaleImageSmall, ccmScratch);
 
   //DebugStream::SendArray(grayscaleImageSmall);
+#endif
+  
+#if USE_MATLAB_TRACKER
+  
+  MatlabVisionProcessor::TrackTemplate(grayscaleImageSmall, converged);
+  
+  return EXIT_SUCCESS;
 #endif
 
   converged = false;
@@ -1166,7 +1346,8 @@ static ReturnCode TrackTemplate(
   }
 
   MatlabVisualization::SendTrack(grayscaleImage, tracker, converged, offchipScratch);
-
+  MatlabVisualization::SendTrackerPrediction_Compare(tracker, offchipScratch);
+  
   DebugStream::SendTrackingUpdate(grayscaleImage, tracker.get_transformation(), ccmScratch, onchipScratch, offchipScratch);
 
   return EXIT_SUCCESS;
@@ -1219,6 +1400,9 @@ namespace Anki {
           if(result != EXIT_SUCCESS) { return result; }
 
           result = MatlabVisualization::Initialize();
+          if(result != EXIT_SUCCESS) { return result; }
+          
+          result = MatlabVisionProcessor::Initialize();
           if(result != EXIT_SUCCESS) { return result; }
 
           //result = Offboard::Initialize();
@@ -1542,6 +1726,8 @@ namespace Anki {
           // think we've moved since the last tracking call.
           //
           
+          // TODO: Enable tracker prediction for matlab
+#if !USE_MATLAB_TRACKER
           MatlabVisualization::SendTrackerPrediction_Before(grayscaleImage,
                                                             VisionState::tracker_,
                                                             onchipScratch_local);
@@ -1552,6 +1738,7 @@ namespace Anki {
             PRINT("VisionSystem::Update(): TrackTemplate() failed.\n");
             return EXIT_FAILURE;
           }
+#endif
           
 
           //
@@ -1576,7 +1763,6 @@ namespace Anki {
             return EXIT_FAILURE;
           }
 
-          MatlabVisualization::SendTrackerPrediction_Compare(VisionState::tracker_, onchipScratch_local);
           
           //
           // Create docking error signal from tracker
@@ -1588,7 +1774,14 @@ namespace Anki {
 
           if(converged)
           {
-            Docking::ComputeDockingErrorSignal(VisionState::tracker_.get_transformation(),
+            
+#if USE_MATLAB_TRACKER
+            Transformations::PlanarTransformation_f32 transform = MatlabVisionProcessor::GetTrackerTransform(VisionMemory::onchipScratch_);
+#else
+            const Transformations::PlanarTransformation_f32& transform = VisionState::tracker_.get_transformation();
+#endif
+            
+            Docking::ComputeDockingErrorSignal(transform,
               detectionParameters_.detectionWidth,
               VisionState::trackingMarkerWidth_mm,
               VisionState::headCamInfo_->focalLength_x,
@@ -1596,7 +1789,7 @@ namespace Anki {
               dockErrMsg.y_horErr,
               dockErrMsg.angleErr,
               VisionMemory::onchipScratch_);
-
+            
             // Reset the failure counter
             VisionState::numTrackFailures_ = 0;
           }
