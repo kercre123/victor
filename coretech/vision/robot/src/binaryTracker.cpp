@@ -172,9 +172,7 @@ namespace Anki
         //if(!this->IsValid())
         //  return RESULT_FAIL;
 
-        cv::Mat toShow = BinaryTracker::DrawIndexes(
-          templateImageHeight, templateImageWidth,
-          templateEdges.xDecreasing, templateEdges.xIncreasing, templateEdges.yDecreasing, templateEdges.yIncreasing);
+        cv::Mat toShow = this->templateEdges.DrawIndexes();
 
         if(fitImageToWindow) {
           cv::namedWindow(windowName, CV_WINDOW_NORMAL);
@@ -190,73 +188,6 @@ namespace Anki
         return RESULT_OK;
 #endif // #ifndef ANKICORETECH_EMBEDDED_USE_OPENCV ... #else
       } // Result BinaryTracker::ShowTemplate()
-
-#ifdef ANKICORETECH_EMBEDDED_USE_OPENCV
-      // Allocates the returned cv::Mat on the heap
-      cv::Mat BinaryTracker::DrawIndexes(
-        const s32 imageHeight, const s32 imageWidth,
-        const FixedLengthList<Point<s16> > &indexPoints1,
-        const FixedLengthList<Point<s16> > &indexPoints2,
-        const FixedLengthList<Point<s16> > &indexPoints3,
-        const FixedLengthList<Point<s16> > &indexPoints4)
-      {
-        const u8 colors[4][3] = {
-          {128,0,0},
-          {0,128,0},
-          {0,0,128},
-          {128,128,0}};
-
-        const s32 scratchSize = 10000000;
-        MemoryStack scratch(malloc(scratchSize), scratchSize);
-
-        Array<u8> image1(imageHeight, imageWidth, scratch);
-        Array<u8> image2(imageHeight, imageWidth, scratch);
-        Array<u8> image3(imageHeight, imageWidth, scratch);
-        Array<u8> image4(imageHeight, imageWidth, scratch);
-
-        DrawPoints(indexPoints1, 1, image1);
-        DrawPoints(indexPoints2, 2, image2);
-        DrawPoints(indexPoints3, 3, image3);
-        DrawPoints(indexPoints4, 4, image4);
-
-        cv::Mat totalImage(imageHeight, imageWidth, CV_8UC3);
-        totalImage.setTo(0);
-
-        for(s32 y=0; y<imageHeight; y++) {
-          for(s32 x=0; x<imageWidth; x++) {
-            u8* pTotalImage = totalImage.ptr<u8>(y,x);
-
-            if(image1[y][x] != 0) {
-              for(s32 c=0; c<3; c++) {
-                pTotalImage[c] += colors[0][c];
-              }
-            }
-
-            if(image2[y][x] != 0) {
-              for(s32 c=0; c<3; c++) {
-                pTotalImage[c] += colors[1][c];
-              }
-            }
-
-            if(image3[y][x] != 0) {
-              for(s32 c=0; c<3; c++) {
-                pTotalImage[c] += colors[2][c];
-              }
-            }
-
-            if(image4[y][x] != 0) {
-              for(s32 c=0; c<3; c++) {
-                pTotalImage[c] += colors[3][c];
-              }
-            }
-          }
-        }
-
-        free(scratch.get_buffer());
-
-        return totalImage;
-      } // cv::Mat BinaryTracker::DrawIndexes()
-#endif // #ifdef ANKICORETECH_EMBEDDED_USE_OPENCV
 
       bool BinaryTracker::IsValid() const
       {

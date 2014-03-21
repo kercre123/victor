@@ -9,6 +9,9 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/vision/robot/edgeDetection.h"
 
+#include "anki/common/robot/serialize.h"
+#include "anki/common/robot/draw.h"
+
 namespace Anki
 {
   namespace Embedded
@@ -314,5 +317,137 @@ namespace Anki
       edgeLists.yDecreasing.set_size(yDecreasingSize);
       edgeLists.yIncreasing.set_size(yIncreasingSize);
     } // DetectBlurredEdges_vertical()
+
+    Result EdgeLists::Serialize(SerializedBuffer &buffer) const
+    {
+      const s32 maxBufferLength = buffer.get_memoryStack().ComputeLargestPossibleAllocation() - 64;
+
+      s32 requiredBytes = this->get_SerializationSize();
+
+      if(maxBufferLength < requiredBytes) {
+        return RESULT_FAIL;
+      }
+
+      void *afterHeader;
+      const void* segmentStart = buffer.PushBack("EdgeLists", requiredBytes, &afterHeader);
+
+      if(segmentStart == NULL) {
+        return RESULT_FAIL;
+      }
+
+      // Serialize the template lists
+      SerializedBuffer::SerializeRaw<s32>(this->imageHeight, &afterHeader, requiredBytes);
+      SerializedBuffer::SerializeRaw<s32>(this->imageWidth, &afterHeader, requiredBytes);
+      SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >(this->xDecreasing, &afterHeader, requiredBytes);
+      SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >(this->xIncreasing, &afterHeader, requiredBytes);
+      SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >(this->yDecreasing, &afterHeader, requiredBytes);
+      SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >(this->yIncreasing, &afterHeader, requiredBytes);
+
+      return RESULT_OK;
+    }
+
+    Result EdgeLists::Deserialize(void** buffer, s32 &bufferLength, MemoryStack &memory)
+    {
+      this->imageHeight = SerializedBuffer::DeserializeRaw<s32>(buffer, bufferLength);
+      this->imageWidth = SerializedBuffer::DeserializeRaw<s32>(buffer, bufferLength);
+      this->xDecreasing = SerializedBuffer::DeserializeRawFixedLengthList<Point<s16> >(buffer, bufferLength, memory);
+      this->xIncreasing = SerializedBuffer::DeserializeRawFixedLengthList<Point<s16> >(buffer, bufferLength, memory);
+      this->yDecreasing = SerializedBuffer::DeserializeRawFixedLengthList<Point<s16> >(buffer, bufferLength, memory);
+      this->yIncreasing = SerializedBuffer::DeserializeRawFixedLengthList<Point<s16> >(buffer, bufferLength, memory);
+
+      return RESULT_OK;
+    }
+
+    s32 EdgeLists::get_SerializationSize() const
+    {
+      // TODO: make the correct length
+
+      const s32 xDecreasingUsed = this->xDecreasing.get_size();
+      const s32 xIncreasingUsed = this->xIncreasing.get_size();
+      const s32 yDecreasingUsed = this->yDecreasing.get_size();
+      const s32 yIncreasingUsed = this->yIncreasing.get_size();
+
+      const s32 numTemplatePixels =
+        RoundUp<size_t>(xDecreasingUsed, MEMORY_ALIGNMENT) +
+        RoundUp<size_t>(xIncreasingUsed, MEMORY_ALIGNMENT) +
+        RoundUp<size_t>(yDecreasingUsed, MEMORY_ALIGNMENT) +
+        RoundUp<size_t>(yIncreasingUsed, MEMORY_ALIGNMENT);
+
+      const s32 requiredBytes = 512 + numTemplatePixels*sizeof(Point<s16>);
+
+      return requiredBytes;
+    }
+
+#ifdef ANKICORETECH_EMBEDDED_USE_OPENCV
+    cv::Mat EdgeLists::DrawIndexes() const
+    {
+      return DrawIndexes(this->imageHeight, this->imageWidth, this->xDecreasing, this->xIncreasing, this->yDecreasing, this->yIncreasing);
+    }
+
+    cv::Mat EdgeLists::DrawIndexes(
+      const s32 imageHeight, const s32 imageWidth,
+      const FixedLengthList<Point<s16> > &indexPoints1,
+      const FixedLengthList<Point<s16> > &indexPoints2,
+      const FixedLengthList<Point<s16> > &indexPoints3,
+      const FixedLengthList<Point<s16> > &indexPoints4)
+    {
+      const u8 colors[4][3] = {
+        {128,0,0},
+        {0,128,0},
+        {0,0,128},
+        {128,128,0}};
+
+      const s32 scratchSize = 10000000;
+      MemoryStack scratch(malloc(scratchSize), scratchSize);
+
+      Array<u8> image1(imageHeight, imageWidth, scratch);
+      Array<u8> image2(imageHeight, imageWidth, scratch);
+      Array<u8> image3(imageHeight, imageWidth, scratch);
+      Array<u8> image4(imageHeight, imageWidth, scratch);
+
+      DrawPoints(indexPoints1, 1, image1);
+      DrawPoints(indexPoints2, 2, image2);
+      DrawPoints(indexPoints3, 3, image3);
+      DrawPoints(indexPoints4, 4, image4);
+
+      cv::Mat totalImage(imageHeight, imageWidth, CV_8UC3);
+      totalImage.setTo(0);
+
+      for(s32 y=0; y<imageHeight; y++) {
+        for(s32 x=0; x<imageWidth; x++) {
+          u8* pTotalImage = totalImage.ptr<u8>(y,x);
+
+          if(image1[y][x] != 0) {
+            for(s32 c=0; c<3; c++) {
+              pTotalImage[c] += colors[0][c];
+            }
+          }
+
+          if(image2[y][x] != 0) {
+            for(s32 c=0; c<3; c++) {
+              pTotalImage[c] += colors[1][c];
+            }
+          }
+
+          if(image3[y][x] != 0) {
+            for(s32 c=0; c<3; c++) {
+              pTotalImage[c] += colors[2][c];
+            }
+          }
+
+          if(image4[y][x] != 0) {
+            for(s32 c=0; c<3; c++) {
+              pTotalImage[c] += colors[3][c];
+            }
+          }
+        }
+      }
+
+      free(scratch.get_buffer());
+
+      return totalImage;
+    }
+
+#endif // #ifdef ANKICORETECH_EMBEDDED_USE_OPENCV
   } // namespace Embedded
 } // namespace Anki
