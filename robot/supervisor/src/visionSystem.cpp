@@ -432,7 +432,7 @@ namespace DebugStream
     transformation.Serialize(debugStreamBuffer_);
 
 #if DOCKING_ALGORITHM ==  DOCKING_BINARY_TRACKER
-    EdgeLists edgeLists
+    EdgeLists edgeLists;
     
     edgeLists.imageHeight = image.get_size(0);
     edgeLists.imageWidth = image.get_size(1);

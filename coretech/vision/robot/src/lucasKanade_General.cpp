@@ -240,8 +240,8 @@ namespace Anki
         const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / nextImageWidth;
         const f32 initialImageScaleF32 = static_cast<f32>(initialImageScaleS32);
 
-        const f32 oneOverTwoFiftyFive = 1.0f / 255.0f;
-        const f32 scaleOverFiveTen = scale / (2.0f*255.0f);
+        //const f32 oneOverTwoFiftyFive = 1.0f / 255.0f;
+        //const f32 scaleOverFiveTen = scale / (2.0f*255.0f);
 
         //const Point<f32>& centerOffset = this->transformation.get_centerOffset();
         const Point<f32> centerOffsetScaled = this->transformation.get_centerOffset(initialImageScaleF32);
