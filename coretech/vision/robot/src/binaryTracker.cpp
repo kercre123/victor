@@ -305,8 +305,9 @@ namespace Anki
         // TODO: make not hacky
 
         // First, serialize the transformation
+        this->transformation.SerializeRaw(reinterpret_cast<void**>(&bufferChar), requiredBytes);
 
-        memcpy(bufferChar, reinterpret_cast<const void*>(&this->isValid), sizeof(this->isValid));
+        /*memcpy(bufferChar, reinterpret_cast<const void*>(&this->isValid), sizeof(this->isValid));
         bufferChar += sizeof(this->isValid);
 
         const Transformations::PlanarTransformation_f32 &transform = this->get_transformation();
@@ -325,7 +326,7 @@ namespace Anki
 
         const Point<f32> centerOffset = transform.get_centerOffset(1.0f);
         memcpy(bufferChar, reinterpret_cast<const void*>(&centerOffset), sizeof(centerOffset));
-        bufferChar += sizeof(centerOffset);
+        bufferChar += sizeof(centerOffset);*/
 
         // Next, serialize the template lists
 
