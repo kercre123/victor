@@ -270,10 +270,11 @@ namespace Anki
       s32 xSlice_increment;
       s32 xSlice_end;
       u16 basicType_size;
+      bool basicType_isBasicType;
       bool basicType_isInteger;
       bool basicType_isSigned;
       bool basicType_isFloat;
-      if(SerializedBuffer::DecodeArraySliceType(code, height, width, stride, flags, ySlice_start, ySlice_increment, ySlice_end, xSlice_start, xSlice_increment, xSlice_end, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat) != RESULT_OK)
+      if(SerializedBuffer::DecodeArraySliceType(code, height, width, stride, flags, ySlice_start, ySlice_increment, ySlice_end, xSlice_start, xSlice_increment, xSlice_end, basicType_size, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat) != RESULT_OK)
         return RESULT_FAIL;
 
       const s32 bytesLeft = dataLength - (EncodedArraySlice::CODE_SIZE * sizeof(u32));
