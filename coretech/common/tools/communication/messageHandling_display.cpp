@@ -185,8 +185,9 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
         //lastPlanarTransformation.Print();
         isTracking = true;
       } else if(strcmp(reinterpret_cast<const char*>(customTypeName), "BinaryTracker") == 0) {
+        PUSH_MEMORY_STACK(scratch);
         TemplateTracker::BinaryTracker bt;
-        bt.Deserialize(dataSegment, remainingDataLength);
+        bt.Deserialize(dataSegment, remainingDataLength, scratch);
         bt.ShowTemplate("BinaryTracker Template", false, false);
       }
     } else {

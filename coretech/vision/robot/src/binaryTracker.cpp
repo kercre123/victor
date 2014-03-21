@@ -340,6 +340,11 @@ namespace Anki
 
         // Next, serialize the template lists
 
+        memcpy(bufferChar, reinterpret_cast<const void*>(&this->templateEdges.imageHeight), sizeof(this->templateEdges.imageHeight));
+        bufferChar += sizeof(this->templateEdges.imageHeight);
+        memcpy(bufferChar, reinterpret_cast<const void*>(&this->templateEdges.imageWidth), sizeof(this->templateEdges.imageWidth));
+        bufferChar += sizeof(this->templateEdges.imageWidth);
+
         memcpy(bufferChar, reinterpret_cast<const void*>(&xDecreasingUsed), sizeof(xDecreasingUsed));
         bufferChar += sizeof(xDecreasingUsed);
         memcpy(bufferChar, reinterpret_cast<const void*>(&xIncreasingUsed), sizeof(xIncreasingUsed));
@@ -376,10 +381,11 @@ namespace Anki
         return RESULT_OK;
       }
 
-      const void* BinaryTracker::Deserialize(const void* buffer, const s32 bufferLength)
+      const void* BinaryTracker::Deserialize(const void* buffer, const s32 bufferLength, MemoryStack &memory)
       {
         // First, deserialize the transformation
 
+        this->transformation = Transformations::PlanarTransformation_f32(Transformations::TRANSFORM_PROJECTIVE, memory);
         buffer = this->transformation.Deserialize(buffer, bufferLength);
 
         // Next, deserialize the template lists
@@ -391,6 +397,11 @@ namespace Anki
         s32 yDecreasingUsed;
         s32 yIncreasingUsed;
 
+        memcpy(reinterpret_cast<void*>(&this->templateEdges.imageHeight), bufferChar, sizeof(this->templateEdges.imageHeight));
+        bufferChar += sizeof(this->templateEdges.imageHeight);
+        memcpy(reinterpret_cast<void*>(&this->templateEdges.imageWidth), bufferChar, sizeof(this->templateEdges.imageWidth));
+        bufferChar += sizeof(this->templateEdges.imageWidth);
+
         memcpy(reinterpret_cast<void*>(&xDecreasingUsed), bufferChar, sizeof(xDecreasingUsed));
         bufferChar += sizeof(xDecreasingUsed);
         memcpy(reinterpret_cast<void*>(&xIncreasingUsed), bufferChar, sizeof(xIncreasingUsed));
@@ -399,6 +410,11 @@ namespace Anki
         bufferChar += sizeof(yDecreasingUsed);
         memcpy(reinterpret_cast<void*>(&yIncreasingUsed), bufferChar, sizeof(yIncreasingUsed));
         bufferChar += sizeof(yIncreasingUsed);
+
+        this->templateEdges.xDecreasing = FixedLengthList<Point<s16> >(xDecreasingUsed, memory);
+        this->templateEdges.xIncreasing = FixedLengthList<Point<s16> >(xIncreasingUsed, memory);
+        this->templateEdges.yDecreasing = FixedLengthList<Point<s16> >(yDecreasingUsed, memory);
+        this->templateEdges.yIncreasing = FixedLengthList<Point<s16> >(yIncreasingUsed, memory);
 
         this->templateEdges.xDecreasing.set_size(xDecreasingUsed);
         this->templateEdges.xIncreasing.set_size(xIncreasingUsed);

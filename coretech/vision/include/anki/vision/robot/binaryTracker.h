@@ -67,7 +67,7 @@ namespace Anki
         Result UpdateTransformation(const Array<f32> &update, const f32 scale, MemoryStack scratch, Transformations::TransformType updateType=Transformations::TRANSFORM_UNKNOWN);
 
         Result Serialize(SerializedBuffer &buffer) const;
-        const void* Deserialize(const void* buffer, const s32 bufferLength);
+        const void* Deserialize(const void* buffer, const s32 bufferLength, MemoryStack &memory);
 
         s32 get_numTemplatePixels() const;
 
