@@ -69,6 +69,7 @@ classdef LucasKanadeTracker < handle
             UseNormalization = false;
             RidgeWeight = 0;
             TrackingResolution = [size(firstImg,2), size(firstImg,1)];
+            TemplateRegionPaddingFraction = 0;
             ErrorTolerance = [];
             ApproximateGradientMargins = true;
             SampleNearEdges = false;
@@ -122,11 +123,10 @@ classdef LucasKanadeTracker < handle
             
             this.height = ymax - ymin + 1;
             this.width  = xmax - xmin + 1;
-            
-            QuadPaddingFraction = 0.05;
-            if QuadPaddingFraction > 0
-               this.height = this.height * (1 + QuadPaddingFraction);
-               this.width  = this.width  * (1 + QuadPaddingFraction);
+           
+            if TemplateRegionPaddingFraction > 0
+               this.height = this.height * (1 + TemplateRegionPaddingFraction);
+               this.width  = this.width  * (1 + TemplateRegionPaddingFraction);
                
                xmid = (xmax+xmin)/2;
                xmin = xmid - this.width/2;
