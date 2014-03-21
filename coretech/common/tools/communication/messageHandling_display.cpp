@@ -47,7 +47,7 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
   lastImage.setTo(0);
 
   bool isTracking = false;
-  Transformations::PlanarTransformation_f32 lastPlanarTransformation(Transformations::TRANSFORM_PROJECTIVE, scratch);
+  Transformations::PlanarTransformation_f32 lastPlanarTransformation = Transformations::PlanarTransformation_f32(); //(Transformations::TRANSFORM_PROJECTIVE, scratch);
 
   f32 benchmarkTimes[2] = {-1.0f, -1.0f};
 

@@ -126,13 +126,17 @@ namespace Anki
 
       // Warning: Complex structures or classes require an explicit specialization
       // Updates the buffer pointer and length before returning
-      template<typename Type> static Result SerializeRaw(const Type &data,        void ** buffer, s32 &bufferLength);
-      template<typename Type> static Result SerializeRaw(const Array<Type> &data, void ** buffer, s32 &bufferLength);
+      template<typename Type> static Result SerializeRaw(const Type &in,                  void ** buffer, s32 &bufferLength);
+      template<typename Type> static Result SerializeRaw(const Array<Type> &in,           void ** buffer, s32 &bufferLength);
+      template<typename Type> static Result SerializeRaw(const ArraySlice<Type> &in,      void ** buffer, s32 &bufferLength);
+      template<typename Type> static Result SerializeRaw(const FixedLengthList<Type> &in, void ** buffer, s32 &bufferLength);
 
       // Warning: Complex structures or classes require an explicit specialization
       // Updates the buffer pointer and length before returning
-      template<typename Type> static Type        DeserializeRaw(void ** buffer, s32 &bufferLength);
-      template<typename Type> static Array<Type> DeserializeRaw(void ** buffer, s32 &bufferLength, MemoryStack &memory);
+      template<typename Type> static Type                  DeserializeRaw(               void ** buffer, s32 &bufferLength);
+      template<typename Type> static Array<Type>           DeserializeRawArray(          void ** buffer, s32 &bufferLength, MemoryStack &memory);
+      template<typename Type> static ArraySlice<Type>      DeserializeRawArraySlice(     void ** buffer, s32 &bufferLength, MemoryStack &memory);
+      template<typename Type> static FixedLengthList<Type> DeserializeRawFixedLengthList(void ** buffer, s32 &bufferLength, MemoryStack &memory);
 
       //
       // Non-static functions

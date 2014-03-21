@@ -300,78 +300,16 @@ namespace Anki
           return RESULT_FAIL;
         }
 
-        char * bufferChar = reinterpret_cast<char*>(afterHeader);
-
-        // TODO: make not hacky
-
         // First, serialize the transformation
-        this->transformation.SerializeRaw(reinterpret_cast<void**>(&bufferChar), requiredBytes);
-
-        /*memcpy(bufferChar, reinterpret_cast<const void*>(&this->isValid), sizeof(this->isValid));
-        bufferChar += sizeof(this->isValid);
-
-        const Transformations::PlanarTransformation_f32 &transform = this->get_transformation();
-
-        const s32 transformTypeS32 = static_cast<s32>(transform.get_transformType());
-        memcpy(bufferChar, reinterpret_cast<const void*>(&transformTypeS32), sizeof(transformTypeS32));
-        bufferChar += sizeof(transformTypeS32);
-
-        const s32 numArrayBytes = transform.get_homography().get_stride()*transform.get_homography().get_size(0);
-        memcpy(bufferChar, reinterpret_cast<const void*>(transform.get_homography().Pointer(0,0)), numArrayBytes);
-        bufferChar += numArrayBytes;
-
-        const Quadrilateral<f32> initialCorners = transform.get_initialCorners();
-        memcpy(bufferChar, reinterpret_cast<const void*>(&initialCorners), sizeof(initialCorners));
-        bufferChar += sizeof(initialCorners);
-
-        const Point<f32> centerOffset = transform.get_centerOffset(1.0f);
-        memcpy(bufferChar, reinterpret_cast<const void*>(&centerOffset), sizeof(centerOffset));
-        bufferChar += sizeof(centerOffset);*/
+        this->transformation.SerializeRaw(&afterHeader, requiredBytes);
 
         // Next, serialize the template lists
-
-        memcpy(bufferChar, reinterpret_cast<const void*>(&this->templateEdges.imageHeight), sizeof(this->templateEdges.imageHeight));
-        bufferChar += sizeof(this->templateEdges.imageHeight);
-        memcpy(bufferChar, reinterpret_cast<const void*>(&this->templateEdges.imageWidth), sizeof(this->templateEdges.imageWidth));
-        bufferChar += sizeof(this->templateEdges.imageWidth);
-
-        const s32 xDecreasingUsed = this->templateEdges.xDecreasing.get_size();
-        const s32 xIncreasingUsed = this->templateEdges.xIncreasing.get_size();
-        const s32 yDecreasingUsed = this->templateEdges.yDecreasing.get_size();
-        const s32 yIncreasingUsed = this->templateEdges.yIncreasing.get_size();
-
-        memcpy(bufferChar, reinterpret_cast<const void*>(&xDecreasingUsed), sizeof(xDecreasingUsed));
-        bufferChar += sizeof(xDecreasingUsed);
-        memcpy(bufferChar, reinterpret_cast<const void*>(&xIncreasingUsed), sizeof(xIncreasingUsed));
-        bufferChar += sizeof(xIncreasingUsed);
-        memcpy(bufferChar, reinterpret_cast<const void*>(&yDecreasingUsed), sizeof(yDecreasingUsed));
-        bufferChar += sizeof(yDecreasingUsed);
-        memcpy(bufferChar, reinterpret_cast<const void*>(&yIncreasingUsed), sizeof(yIncreasingUsed));
-        bufferChar += sizeof(yIncreasingUsed);
-
-        {
-          const s32 numArrayBytes = xDecreasingUsed * sizeof(s32);
-          memcpy(bufferChar, reinterpret_cast<const void*>(this->templateEdges.xDecreasing.Pointer(0)), numArrayBytes);
-          bufferChar += numArrayBytes;
-        }
-
-        {
-          const s32 numArrayBytes = xIncreasingUsed * sizeof(s32);
-          memcpy(bufferChar, reinterpret_cast<const void*>(this->templateEdges.xIncreasing.Pointer(0)), numArrayBytes);
-          bufferChar += numArrayBytes;
-        }
-
-        {
-          const s32 numArrayBytes = yDecreasingUsed * sizeof(s32);
-          memcpy(bufferChar, reinterpret_cast<const void*>(this->templateEdges.yDecreasing.Pointer(0)), numArrayBytes);
-          bufferChar += numArrayBytes;
-        }
-
-        {
-          const s32 numArrayBytes = yIncreasingUsed * sizeof(s32);
-          memcpy(bufferChar, reinterpret_cast<const void*>(this->templateEdges.yIncreasing.Pointer(0)), numArrayBytes);
-          bufferChar += numArrayBytes;
-        }
+        SerializedBuffer::SerializeRaw<s32>(this->templateEdges.imageHeight, &afterHeader, requiredBytes);
+        SerializedBuffer::SerializeRaw<s32>(this->templateEdges.imageWidth, &afterHeader, requiredBytes);
+        SerializedBuffer::SerializeRaw<FixedLengthList<Point<s16> > >(this->templateEdges.xDecreasing, &afterHeader, requiredBytes);
+        SerializedBuffer::SerializeRaw<FixedLengthList<Point<s16> > >(this->templateEdges.xIncreasing, &afterHeader, requiredBytes);
+        SerializedBuffer::SerializeRaw<FixedLengthList<Point<s16> > >(this->templateEdges.yDecreasing, &afterHeader, requiredBytes);
+        SerializedBuffer::SerializeRaw<FixedLengthList<Point<s16> > >(this->templateEdges.yIncreasing, &afterHeader, requiredBytes);
 
         return RESULT_OK;
       }
@@ -379,72 +317,19 @@ namespace Anki
       Result BinaryTracker::Deserialize(void** buffer, s32 &bufferLength, MemoryStack &memory)
       {
         // First, deserialize the transformation
-
         this->transformation = Transformations::PlanarTransformation_f32(Transformations::TRANSFORM_PROJECTIVE, memory);
         this->transformation.Deserialize(buffer, bufferLength, memory);
 
         // Next, deserialize the template lists
-
-        const char * bufferChar = reinterpret_cast<const char*>(*buffer);
-
-        s32 xDecreasingUsed;
-        s32 xIncreasingUsed;
-        s32 yDecreasingUsed;
-        s32 yIncreasingUsed;
-
-        memcpy(reinterpret_cast<void*>(&this->templateEdges.imageHeight), bufferChar, sizeof(this->templateEdges.imageHeight));
-        bufferChar += sizeof(this->templateEdges.imageHeight);
-        memcpy(reinterpret_cast<void*>(&this->templateEdges.imageWidth), bufferChar, sizeof(this->templateEdges.imageWidth));
-        bufferChar += sizeof(this->templateEdges.imageWidth);
+        this->templateEdges.imageHeight = SerializedBuffer::DeserializeRaw<s32>(buffer, bufferLength);
+        this->templateEdges.imageWidth = SerializedBuffer::DeserializeRaw<s32>(buffer, bufferLength);
+        this->templateEdges.xDecreasing = SerializedBuffer::DeserializeRaw<FixedLengthList<Point<s16> > >(buffer, bufferLength);
+        this->templateEdges.xIncreasing = SerializedBuffer::DeserializeRaw<FixedLengthList<Point<s16> > >(buffer, bufferLength);
+        this->templateEdges.yDecreasing = SerializedBuffer::DeserializeRaw<FixedLengthList<Point<s16> > >(buffer, bufferLength);
+        this->templateEdges.yIncreasing = SerializedBuffer::DeserializeRaw<FixedLengthList<Point<s16> > >(buffer, bufferLength);
 
         this->templateImageHeight = this->templateEdges.imageHeight;
         this->templateImageWidth = this->templateEdges.imageWidth;
-
-        memcpy(reinterpret_cast<void*>(&xDecreasingUsed), bufferChar, sizeof(xDecreasingUsed));
-        bufferChar += sizeof(xDecreasingUsed);
-        memcpy(reinterpret_cast<void*>(&xIncreasingUsed), bufferChar, sizeof(xIncreasingUsed));
-        bufferChar += sizeof(xIncreasingUsed);
-        memcpy(reinterpret_cast<void*>(&yDecreasingUsed), bufferChar, sizeof(yDecreasingUsed));
-        bufferChar += sizeof(yDecreasingUsed);
-        memcpy(reinterpret_cast<void*>(&yIncreasingUsed), bufferChar, sizeof(yIncreasingUsed));
-        bufferChar += sizeof(yIncreasingUsed);
-
-        this->templateEdges.xDecreasing = FixedLengthList<Point<s16> >(xDecreasingUsed, memory);
-        this->templateEdges.xIncreasing = FixedLengthList<Point<s16> >(xIncreasingUsed, memory);
-        this->templateEdges.yDecreasing = FixedLengthList<Point<s16> >(yDecreasingUsed, memory);
-        this->templateEdges.yIncreasing = FixedLengthList<Point<s16> >(yIncreasingUsed, memory);
-
-        this->templateEdges.xDecreasing.set_size(xDecreasingUsed);
-        this->templateEdges.xIncreasing.set_size(xIncreasingUsed);
-        this->templateEdges.yDecreasing.set_size(yDecreasingUsed);
-        this->templateEdges.yIncreasing.set_size(yIncreasingUsed);
-
-        {
-          const s32 numArrayBytes = xDecreasingUsed * sizeof(s32);
-          memcpy(reinterpret_cast<void*>(this->templateEdges.xDecreasing.Pointer(0)), bufferChar, numArrayBytes);
-          bufferChar += numArrayBytes;
-        }
-
-        {
-          const s32 numArrayBytes = xIncreasingUsed * sizeof(s32);
-          memcpy(reinterpret_cast<void*>(this->templateEdges.xIncreasing.Pointer(0)), bufferChar, numArrayBytes);
-          bufferChar += numArrayBytes;
-        }
-
-        {
-          const s32 numArrayBytes = yDecreasingUsed * sizeof(s32);
-          memcpy(reinterpret_cast<void*>(this->templateEdges.yDecreasing.Pointer(0)), bufferChar, numArrayBytes);
-          bufferChar += numArrayBytes;
-        }
-
-        {
-          const s32 numArrayBytes = yIncreasingUsed * sizeof(s32);
-          memcpy(reinterpret_cast<void*>(this->templateEdges.yIncreasing.Pointer(0)), bufferChar, numArrayBytes);
-          bufferChar += numArrayBytes;
-        }
-
-        *buffer = reinterpret_cast<u8*>(*buffer) + this->get_SerializationSize();
-        bufferLength -= this->get_SerializationSize();
 
         return RESULT_OK;
       }

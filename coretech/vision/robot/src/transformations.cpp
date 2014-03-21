@@ -350,14 +350,11 @@ namespace Anki
         return RESULT_OK;
       }
 
-      Result PlanarTransformation_f32::Deserialize(void** buffer, s32 &bufferLength, MemoryStack scratch)
+      Result PlanarTransformation_f32::Deserialize(void** buffer, s32 &bufferLength, MemoryStack &memory)
       {
         this->isValid = SerializedBuffer::DeserializeRaw<bool>(buffer, bufferLength);
         this->transformType = static_cast<Transformations::TransformType>(SerializedBuffer::DeserializeRaw<s32>(buffer, bufferLength));
-
-        Array<f32> tmpHomography = SerializedBuffer::DeserializeRaw<f32>(buffer, bufferLength, scratch);
-        this->homography.Set(tmpHomography);
-
+        this->homography = SerializedBuffer::DeserializeRawArray<f32>(buffer, bufferLength, memory);
         this->initialCorners = SerializedBuffer::DeserializeRaw<Quadrilateral<f32> >(buffer, bufferLength);
         this->centerOffset = SerializedBuffer::DeserializeRaw<Point<f32> >(buffer, bufferLength);
 
