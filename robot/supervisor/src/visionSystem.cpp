@@ -41,13 +41,9 @@ using namespace Anki::Cozmo;
 
 static bool isInitialized_ = false;
 
-// TODO: remove
-//#define SEND_DEBUG_STREAM
-//#define RUN_SIMPLE_TRACKING_TEST
-
-#if defined(SIMULATOR)
-#undef SEND_DEBUG_STREAM
-#undef RUN_SIMPLE_TRACKING_TEST
+#ifdef THIS_IS_PETES_BOARD      
+#define SEND_DEBUG_STREAM
+#define RUN_SIMPLE_TRACKING_TEST
 #endif
 
 #define DOCKING_LUCAS_KANADE_SLOW       1 //< LucasKanadeTracker_Slow (doesn't seem to work?)
