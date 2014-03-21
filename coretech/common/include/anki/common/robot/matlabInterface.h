@@ -131,6 +131,9 @@ namespace Anki
       template<typename Type> Result Put(const Type * values, s32 nValues, const std::string name);
 
       template<typename Type> Type* Get(const std::string name);
+      
+      template<typename Type> Quadrilateral<Type> GetQuad(const std::string name);
+      
     }; // class Matlab
 
     // #pragma mark --- Implementations ---
@@ -280,6 +283,31 @@ namespace Anki
       return val;
     } // template<typename Type> T* Matlab::Get(const std::string name)
 
+    template<typename Type> Quadrilateral<Type> Matlab::GetQuad(const std::string name)
+    {
+      AnkiConditionalErrorAndReturnValue(this->ep, Quadrilateral<Type>(),
+                                         "Anki.Get", "Matlab engine is not started/connected");
+
+      const mxArray* mxQuad = GetArray(name);
+      
+      AnkiConditionalErrorAndReturnValue(mxQuad != NULL, Quadrilateral<Type>(),
+                                         "Anki.GetQuad", "No variable named '%s' found.", name.c_str());
+      AnkiConditionalErrorAndReturnValue(mxGetM(mxQuad)==4 && mxGetN(mxQuad)==2, Quadrilateral<Type>(),
+                                    "Anki.GetQuad", "Variable '%s' is not 4x2 in size.", name.c_str());
+      AnkiConditionalErrorAndReturnValue(mxGetClassID(mxQuad)==mxDOUBLE_CLASS, Quadrilateral<Type>(),
+                                    "Anki.GetQuad", "Variable '%s' must be DOUBLE to get as quad.", name.c_str());
+      
+      const double* x = mxGetPr(mxQuad);
+      const double* y = x + 4;
+      
+      return Quadrilateral<Type>(Point<Type>(static_cast<Type>(x[0]), static_cast<Type>(y[0])),
+                                 Point<Type>(static_cast<Type>(x[1]), static_cast<Type>(y[1])),
+                                 Point<Type>(static_cast<Type>(x[2]), static_cast<Type>(y[2])),
+                                 Point<Type>(static_cast<Type>(x[3]), static_cast<Type>(y[3])));
+      
+    }
+    
+    
     template<> Result Matlab::Put<Point<s16> >(const Point<s16> * values, s32 nValues, const std::string name);
 
     // #pragma mark --- Specializations ---
