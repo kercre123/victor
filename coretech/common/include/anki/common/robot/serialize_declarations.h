@@ -124,6 +124,16 @@ namespace Anki
       // endIndex is the location before the footer, or -1 if one is not found
       static Result FindSerializedBuffer(const void * rawBuffer, const s32 rawBufferLength, s32 &startIndex, s32 &endIndex);
 
+      // Warning: Complex structures or classes require an explicit specialization
+      // Updates the buffer pointer and length before returning
+      template<typename Type> static Result SerializeRaw(const Type &data,        void ** buffer, s32 &bufferLength);
+      template<typename Type> static Result SerializeRaw(const Array<Type> &data, void ** buffer, s32 &bufferLength);
+
+      // Warning: Complex structures or classes require an explicit specialization
+      // Updates the buffer pointer and length before returning
+      template<typename Type> static Type        DeserializeRaw(void ** buffer, s32 &bufferLength);
+      template<typename Type> static Array<Type> DeserializeRaw(void ** buffer, s32 &bufferLength, MemoryStack &memory);
+
       //
       // Non-static functions
       //

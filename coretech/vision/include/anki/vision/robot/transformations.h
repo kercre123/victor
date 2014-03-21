@@ -108,7 +108,7 @@ namespace Anki
         // Updates the buffer pointer and length before returning
         Result SerializeRaw(void ** buffer, s32 &bufferLength) const;
 
-        Result Deserialize(void** buffer, s32 &bufferLength);
+        Result Deserialize(void** buffer, s32 &bufferLength, MemoryStack scratch);
 
         Result set_transformType(const TransformType transformType);
         TransformType get_transformType() const;

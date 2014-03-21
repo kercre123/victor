@@ -206,7 +206,7 @@ void ProcessRawBuffer_Save(RawBuffer &buffer, const string outputFilenamePattern
           visionMarkerList.push_back(marker);
           isTracking = false;
         } else if(strcmp(reinterpret_cast<const char*>(customTypeName), "PlanarTransformation_f32") == 0) {
-          lastPlanarTransformation.Deserialize(reinterpret_cast<void**>(&dataSegment), remainingDataLength);
+          lastPlanarTransformation.Deserialize(reinterpret_cast<void**>(&dataSegment), remainingDataLength, memory);
           //lastPlanarTransformation.Print();
           isTracking = true;
         }

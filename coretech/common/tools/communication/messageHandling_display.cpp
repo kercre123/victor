@@ -181,7 +181,7 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
         visionMarkerList.push_back(marker);
         isTracking = false;
       } else if(strcmp(reinterpret_cast<const char*>(customTypeName), "PlanarTransformation_f32") == 0) {
-        lastPlanarTransformation.Deserialize(reinterpret_cast<void**>(&dataSegment), remainingDataLength);
+        lastPlanarTransformation.Deserialize(reinterpret_cast<void**>(&dataSegment), remainingDataLength, scratch);
         //lastPlanarTransformation.Print();
         isTracking = true;
       } else if(strcmp(reinterpret_cast<const char*>(customTypeName), "BinaryTracker") == 0) {
