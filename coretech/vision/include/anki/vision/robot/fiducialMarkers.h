@@ -73,7 +73,7 @@ namespace Anki
       void Print() const;
 
       Result Serialize(SerializedBuffer &buffer) const;
-      const void* Deserialize(const void* buffer, const s32 bufferLength);
+      Result Deserialize(void** buffer, s32 &bufferLength);
 
     protected:
       // The constructor isn't always called, so initialize has to be checked in multiple places
@@ -86,6 +86,8 @@ namespace Anki
       static bool areTreesInitialized;
       static FiducialMarkerDecisionTree multiClassTree;
       static FiducialMarkerDecisionTree verificationTrees[VisionMarkerDecisionTree::NUM_MARKER_LABELS_ORIENTED];
+
+      s32 get_SerializationSize() const;
     }; // class VisionMarker
 
     // A FiducialMarkerParserBit object samples an input image, to determine if a given image

@@ -323,8 +323,7 @@ namespace Anki
       {
         const s32 maxBufferLength = buffer.get_memoryStack().ComputeLargestPossibleAllocation() - 64;
 
-        // TODO: make the correct length
-        const s32 requiredBytes = 512;
+        s32 requiredBytes = SERIALIZATION_SIZE;
 
         if(maxBufferLength < requiredBytes) {
           return RESULT_FAIL;
@@ -337,7 +336,45 @@ namespace Anki
           return RESULT_FAIL;
         }
 
-        char * bufferChar = reinterpret_cast<char*>(afterHeader);
+        /*char * bufferChar = reinterpret_cast<char*>(afterHeader);
+
+        memcpy(bufferChar, reinterpret_cast<const void*>(&this->isValid), sizeof(this->isValid));
+        bufferChar += sizeof(this->isValid);
+
+        const s32 transformTypeS32 = static_cast<s32>(this->transformType);
+        memcpy(bufferChar, reinterpret_cast<const void*>(&transformTypeS32), sizeof(transformTypeS32));
+        bufferChar += sizeof(transformTypeS32);
+
+        const s32 numArrayBytes = this->homography.get_stride()*this->homography.get_size(0);
+        memcpy(bufferChar, reinterpret_cast<const void*>(this->homography.Pointer(0,0)), numArrayBytes);
+        bufferChar += numArrayBytes;
+
+        memcpy(bufferChar, reinterpret_cast<const void*>(&this->initialCorners), sizeof(this->initialCorners));
+        bufferChar += sizeof(this->initialCorners);
+
+        memcpy(bufferChar, reinterpret_cast<const void*>(&this->centerOffset), sizeof(this->centerOffset));*/
+
+        return SerializeRaw(&afterHeader, requiredBytes);
+      }
+
+      Result PlanarTransformation_f32::SerializeRaw(SerializedBuffer &buffer) const
+      {
+        const s32 maxBufferLength = buffer.get_memoryStack().ComputeLargestPossibleAllocation() - 64;
+
+        s32 requiredBytes = SERIALIZATION_SIZE;
+
+        if(maxBufferLength < requiredBytes) {
+          return RESULT_FAIL;
+        }
+
+        void* segmentStart = buffer.PushBackRaw(NULL, requiredBytes);
+
+        return SerializeRaw(&segmentStart, requiredBytes);
+      }
+
+      Result PlanarTransformation_f32::SerializeRaw(void ** buffer, s32 &bufferLength) const
+      {
+        char * bufferChar = reinterpret_cast<char*>(*buffer);
 
         memcpy(bufferChar, reinterpret_cast<const void*>(&this->isValid), sizeof(this->isValid));
         bufferChar += sizeof(this->isValid);
@@ -354,11 +391,15 @@ namespace Anki
         bufferChar += sizeof(this->initialCorners);
 
         memcpy(bufferChar, reinterpret_cast<const void*>(&this->centerOffset), sizeof(this->centerOffset));
+        bufferChar += sizeof(this->centerOffset);
+
+        *buffer = reinterpret_cast<u8*>(*buffer) + SERIALIZATION_SIZE;
+        bufferLength -= SERIALIZATION_SIZE;
 
         return RESULT_OK;
       }
 
-      const void* PlanarTransformation_f32::Deserialize(const void* buffer, const s32 bufferLength)
+      Result PlanarTransformation_f32::Deserialize(void** buffer, s32 &bufferLength)
       {
         const char * bufferChar = reinterpret_cast<const char*>(buffer);
 
@@ -378,7 +419,10 @@ namespace Anki
         this->centerOffset = *reinterpret_cast<const Point<f32>*>(bufferChar);
         bufferChar += sizeof(this->centerOffset);
 
-        return reinterpret_cast<const void*>(bufferChar);
+        *buffer = reinterpret_cast<u8*>(*buffer) + SERIALIZATION_SIZE;
+        bufferLength -= SERIALIZATION_SIZE;
+
+        return RESULT_OK;
       }
 
       Result PlanarTransformation_f32::set_transformType(const TransformType transformType)
@@ -599,6 +643,12 @@ namespace Anki
         }
 
         return RESULT_OK;
+      }
+
+      s32 PlanarTransformation_f32::get_SerializationSize() const
+      {
+        // TODO: make the correct length
+        return 512;
       }
 
       Result ComputeHomographyFromQuad(const Quadrilateral<s16> &quad, Array<f32> &homography, MemoryStack scratch)

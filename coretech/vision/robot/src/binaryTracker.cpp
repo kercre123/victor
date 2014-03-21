@@ -287,18 +287,7 @@ namespace Anki
       {
         const s32 maxBufferLength = buffer.get_memoryStack().ComputeLargestPossibleAllocation() - 64;
 
-        const s32 xDecreasingUsed = this->templateEdges.xDecreasing.get_size();
-        const s32 xIncreasingUsed = this->templateEdges.xIncreasing.get_size();
-        const s32 yDecreasingUsed = this->templateEdges.yDecreasing.get_size();
-        const s32 yIncreasingUsed = this->templateEdges.yIncreasing.get_size();
-
-        const s32 numTemplatePixels =
-          RoundUp<size_t>(xDecreasingUsed, MEMORY_ALIGNMENT) +
-          RoundUp<size_t>(xIncreasingUsed, MEMORY_ALIGNMENT) +
-          RoundUp<size_t>(yDecreasingUsed, MEMORY_ALIGNMENT) +
-          RoundUp<size_t>(yIncreasingUsed, MEMORY_ALIGNMENT);
-
-        const s32 requiredBytes = 512 + numTemplatePixels*sizeof(Point<s16>);
+        s32 requiredBytes = this->get_SerializationSize();
 
         if(maxBufferLength < requiredBytes) {
           return RESULT_FAIL;
@@ -345,6 +334,11 @@ namespace Anki
         memcpy(bufferChar, reinterpret_cast<const void*>(&this->templateEdges.imageWidth), sizeof(this->templateEdges.imageWidth));
         bufferChar += sizeof(this->templateEdges.imageWidth);
 
+        const s32 xDecreasingUsed = this->templateEdges.xDecreasing.get_size();
+        const s32 xIncreasingUsed = this->templateEdges.xIncreasing.get_size();
+        const s32 yDecreasingUsed = this->templateEdges.yDecreasing.get_size();
+        const s32 yIncreasingUsed = this->templateEdges.yIncreasing.get_size();
+
         memcpy(bufferChar, reinterpret_cast<const void*>(&xDecreasingUsed), sizeof(xDecreasingUsed));
         bufferChar += sizeof(xDecreasingUsed);
         memcpy(bufferChar, reinterpret_cast<const void*>(&xIncreasingUsed), sizeof(xIncreasingUsed));
@@ -381,12 +375,12 @@ namespace Anki
         return RESULT_OK;
       }
 
-      const void* BinaryTracker::Deserialize(const void* buffer, const s32 bufferLength, MemoryStack &memory)
+      Result BinaryTracker::Deserialize(void** buffer, s32 &bufferLength, MemoryStack &memory)
       {
         // First, deserialize the transformation
 
         this->transformation = Transformations::PlanarTransformation_f32(Transformations::TRANSFORM_PROJECTIVE, memory);
-        buffer = this->transformation.Deserialize(buffer, bufferLength);
+        this->transformation.Deserialize(buffer, bufferLength);
 
         // Next, deserialize the template lists
 
@@ -448,7 +442,10 @@ namespace Anki
           bufferChar += numArrayBytes;
         }
 
-        return reinterpret_cast<const void*>(bufferChar);
+        *buffer = reinterpret_cast<u8*>(*buffer) + this->get_SerializationSize();
+        bufferLength -= this->get_SerializationSize();
+
+        return RESULT_OK;
       }
 
       s32 BinaryTracker::get_numTemplatePixels() const
@@ -2093,6 +2090,26 @@ namespace Anki
         numTemplatePixelsMatched = numTemplatePixelsMatched_xDecreasing + numTemplatePixelsMatched_xIncreasing + numTemplatePixelsMatched_yDecreasing + numTemplatePixelsMatched_yIncreasing;
 
         return RESULT_OK;
+      }
+
+      s32 BinaryTracker::get_SerializationSize() const
+      {
+        // TODO: make the correct length
+
+        const s32 xDecreasingUsed = this->templateEdges.xDecreasing.get_size();
+        const s32 xIncreasingUsed = this->templateEdges.xIncreasing.get_size();
+        const s32 yDecreasingUsed = this->templateEdges.yDecreasing.get_size();
+        const s32 yIncreasingUsed = this->templateEdges.yIncreasing.get_size();
+
+        const s32 numTemplatePixels =
+          RoundUp<size_t>(xDecreasingUsed, MEMORY_ALIGNMENT) +
+          RoundUp<size_t>(xIncreasingUsed, MEMORY_ALIGNMENT) +
+          RoundUp<size_t>(yDecreasingUsed, MEMORY_ALIGNMENT) +
+          RoundUp<size_t>(yIncreasingUsed, MEMORY_ALIGNMENT);
+
+        const s32 requiredBytes = 512 + numTemplatePixels*sizeof(Point<s16>);
+
+        return requiredBytes;
       }
     } // namespace TemplateTracker
   } // namespace Embedded

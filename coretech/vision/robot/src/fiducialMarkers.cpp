@@ -520,7 +520,7 @@ namespace Anki
       const s32 maxBufferLength = buffer.get_memoryStack().ComputeLargestPossibleAllocation() - 64;
 
       // TODO: make the correct length
-      const s32 requiredBytes = 16;
+      s32 requiredBytes = this->get_SerializationSize();
 
       if(maxBufferLength < requiredBytes) {
         return RESULT_FAIL;
@@ -545,7 +545,7 @@ namespace Anki
       return RESULT_OK;
     }
 
-    const void* VisionMarker::Deserialize(const void* buffer, const s32 bufferLength)
+    Result VisionMarker::Deserialize(void** buffer, s32 &bufferLength)
     {
       const char * bufferChar = reinterpret_cast<const char*>(buffer);
 
@@ -558,7 +558,10 @@ namespace Anki
       this->isValid = *reinterpret_cast<const bool*>(bufferChar);
       bufferChar += sizeof(this->isValid);
 
-      return reinterpret_cast<const void*>(bufferChar);
+      *buffer = reinterpret_cast<u8*>(*buffer) + this->get_SerializationSize();
+      bufferLength -= this->get_SerializationSize();
+
+      return RESULT_OK;
     }
 
     void VisionMarker::Initialize()
@@ -791,5 +794,11 @@ namespace Anki
 
       return lastResult;
     } // VisionMarker::Extract()
+
+    s32 VisionMarker::get_SerializationSize() const
+    {
+      // TODO: make the correct length
+      return 16;
+    }
   } // namespace Embedded
 } // namespace Anki

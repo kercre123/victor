@@ -176,6 +176,20 @@ namespace Anki
       return RESULT_OK;
     } // void FindSerializedBuffer(const void * rawBuffer, s32 &startIndex, s32 &endIndex)
 
+    void* SerializedBuffer::PushBackRaw(const void * data, const s32 dataLength)
+    {
+      void* dataSegment = reinterpret_cast<u8*>(memoryStack.get_buffer()) + memoryStack.get_usedBytes();
+
+      // Warning: this is dangerous
+      memoryStack.usedBytes += dataLength;
+
+      if(data != NULL) {
+        memcpy(dataSegment, data, dataLength);
+      }
+
+      return dataSegment;
+    }
+
     void* SerializedBuffer::PushBack(const void * data, const s32 dataLength)
     {
       return PushBack_Generic(DATA_TYPE_RAW, NULL, 0, data, dataLength, NULL);

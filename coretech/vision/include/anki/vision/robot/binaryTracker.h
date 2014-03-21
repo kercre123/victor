@@ -67,7 +67,7 @@ namespace Anki
         Result UpdateTransformation(const Array<f32> &update, const f32 scale, MemoryStack scratch, Transformations::TransformType updateType=Transformations::TRANSFORM_UNKNOWN);
 
         Result Serialize(SerializedBuffer &buffer) const;
-        const void* Deserialize(const void* buffer, const s32 bufferLength, MemoryStack &memory);
+        Result Deserialize(void** buffer, s32 &bufferLength, MemoryStack &memory);
 
         s32 get_numTemplatePixels() const;
 
@@ -256,6 +256,8 @@ namespace Anki
           const s32 matching_maxDistance,
           s32 &numTemplatePixelsMatched,
           MemoryStack scratch);
+
+        s32 get_SerializationSize() const;
       }; // class BinaryTracker
     } // namespace TemplateTracker
   } // namespace Embedded

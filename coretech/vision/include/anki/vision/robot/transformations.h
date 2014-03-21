@@ -101,7 +101,14 @@ namespace Anki
         Result Set(const PlanarTransformation_f32 &newTransformation);
 
         Result Serialize(SerializedBuffer &buffer) const;
-        const void* Deserialize(const void* buffer, const s32 bufferLength);
+
+        // SerializeRaw doesn't allocate headers or footers from buffer
+        Result SerializeRaw(SerializedBuffer &buffer) const;
+
+        // Updates the buffer pointer and length before returning
+        Result SerializeRaw(void ** buffer, s32 &bufferLength) const;
+
+        Result Deserialize(void** buffer, s32 &bufferLength);
 
         Result set_transformType(const TransformType transformType);
         TransformType get_transformType() const;
@@ -119,6 +126,9 @@ namespace Anki
         Quadrilateral<f32> get_transformedCorners(MemoryStack scratch) const;
 
       protected:
+        // TODO: make the correct length
+        static const s32 SERIALIZATION_SIZE = 512;
+
         bool isValid;
 
         TransformType transformType;
@@ -144,6 +154,8 @@ namespace Anki
           Array<f32> &xOut, Array<f32> &yOut);
 
         Result Init(const TransformType transformType, const Quadrilateral<f32> &initialCorners, const Array<f32> &initialHomography, const Point<f32> &centerOffset, MemoryStack &memory);
+
+        s32 get_SerializationSize() const;
       };
     } // namespace Transformations
   } // namespace Embedded
