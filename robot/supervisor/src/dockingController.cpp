@@ -128,9 +128,11 @@ namespace Anki {
             // (Note that y and angle don't change)
             dockMsg.x_distErr += HEAD_CAM_POSITION[0]*cosf(HeadController::GetAngleRad()) + NECK_JOINT_POSITION[0];
             
+#if(DEBUG_DOCK_CONTROLLER)
             PRINT("Received docking error signal: x_distErr=%f, y_horErr=%f, "
                   "angleErr=%fdeg\n", dockMsg.x_distErr, dockMsg.y_horErr,
                   RAD_TO_DEG_F32(dockMsg.angleErr));
+#endif
             
             SetRelDockPose(dockMsg.x_distErr, dockMsg.y_horErr, dockMsg.angleErr);
             
@@ -159,7 +161,9 @@ namespace Anki {
           case LOOKING_FOR_BLOCK:
             if (HAL::GetMicroCounter() - lastDockingErrorSignalRecvdTime_ > GIVEUP_DOCKING_TIMEOUT_US) {
               ResetDocker();
+#if(DEBUG_DOCK_CONTROLLER)
               PRINT("Too long without block pose (currTime %d, lastErrSignal %d). Giving up.\n", HAL::GetMicroCounter(), lastDockingErrorSignalRecvdTime_);
+#endif
             }
             break;
           case APPROACH_FOR_DOCK:
@@ -169,13 +173,17 @@ namespace Anki {
               PathFollower::ClearPath();
               SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
               mode_ = LOOKING_FOR_BLOCK;
+#if(DEBUG_DOCK_CONTROLLER)
               PRINT("Too long without block pose (currTime %d, lastErrSignal %d). Looking for block...\n", HAL::GetMicroCounter(), lastDockingErrorSignalRecvdTime_);
+#endif
               break;
             }
             
             // If finished traversing path
             if (createdValidPath_ && !PathFollower::IsTraversingPath()) {
+#if(DEBUG_DOCK_CONTROLLER)
               PRINT("*** DOCKING SUCCESS ***\n");
+#endif
               ResetDocker();
               success_ = true;
               break;
