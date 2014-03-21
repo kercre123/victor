@@ -52,7 +52,7 @@ namespace Anki {
         u32 lastDockingErrorSignalRecvdTime_ = 0;
         
         // If error signal not received in this amount of time, tracking is considered to have failed.
-        const u32 STOPPED_TRACKING_TIMEOUT_US = 200000;
+        const u32 STOPPED_TRACKING_TIMEOUT_US = 400000;
         
         // If an initial track cannot start for this amount of time, block is considered to be out of
         // view and docking is aborted.
@@ -60,8 +60,11 @@ namespace Anki {
         
         const u16 DOCK_APPROACH_SPEED_MMPS = 20;
         const u16 DOCK_FAR_APPROACH_SPEED_MMPS = 30;
-        const u16 DOCK_APPROACH_ACCEL_MMPS2 = 200;
+        const u16 DOCK_APPROACH_ACCEL_MMPS2 = 60;
         const u16 DOCK_APPROACH_DECEL_MMPS2 = 200;
+        
+        // Lateral tolerance at dock pose
+        const u16 LATERAL_DOCK_TOLERANCE_AT_DOCK_MM = 2;
         
         // Code of the VisionMarker we are trying to dock to
         Vision::MarkerType dockMarker_;
@@ -134,20 +137,29 @@ namespace Anki {
                   RAD_TO_DEG_F32(dockMsg.angleErr));
 #endif
             
-            SetRelDockPose(dockMsg.x_distErr, dockMsg.y_horErr, dockMsg.angleErr);
-            
-            // Send to basestation for visualization
-            HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::DockingErrorSignal), &dockMsg);
-          } else {
-            SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
-            //PathFollower::ClearPath();
-            SteeringController::ExecuteDirectDrive(0,0);
-            if (mode_ != IDLE) {
-              mode_ = LOOKING_FOR_BLOCK;
+            // Check that error signal is plausible
+            // If not, treat as if tracking failed.
+            // TODO: Get tracker to detect these situations and not even send the error message here.
+            if (dockMsg.x_distErr > 0 && ABS(dockMsg.angleErr) < 0.75*PIDIV2_F) {
+              
+              SetRelDockPose(dockMsg.x_distErr, dockMsg.y_horErr, dockMsg.angleErr);
+              
+              // Send to basestation for visualization
+              HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::DockingErrorSignal), &dockMsg);
+              continue;
             }
 
+          }  // IF tracking succeeded
+          
+          SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
+          //PathFollower::ClearPath();
+          SteeringController::ExecuteDirectDrive(0,0);
+          if (mode_ != IDLE) {
+            mode_ = LOOKING_FOR_BLOCK;
+          }
+
             
-          } // IF tracking succeeded
+          
           
         } // while dockErrSignalMailbox has mail
 
@@ -212,6 +224,14 @@ namespace Anki {
       
       void SetRelDockPose(f32 rel_x, f32 rel_y, f32 rel_rad)
       {
+        // Check for readings that we do not expect to get
+        if (rel_x < 0 || ABS(rel_rad) > 0.75*PIDIV2_F
+            ) {
+          PRINT("WARN: Ignoring out of range docking error signal (%f, %f, %f)\n", rel_x, rel_y, rel_rad);
+          return;
+        }
+      
+        
         lastDockingErrorSignalRecvdTime_ = HAL::GetMicroCounter();
         
         if (mode_ == IDLE || success_) {
@@ -271,8 +291,10 @@ namespace Anki {
         //              +ve y-axis
         
         
-        if (rel_x <= -0.0f) {
-          //PRINT("DOCK POSE REACHED\n");
+        if (rel_x <= dockOffsetDistX_ && ABS(rel_y) < LATERAL_DOCK_TOLERANCE_AT_DOCK_MM) {
+#if(DEBUG_DOCK_CONTROLLER)
+          PRINT("DOCK POSE REACHED\n");
+#endif
           return;
         }
         
