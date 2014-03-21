@@ -61,33 +61,21 @@ namespace Anki
 
     Result SerializedBuffer::DecodeBasicTypeBuffer(const EncodedBasicTypeBuffer &code, u16 &size, bool &isBasicType, bool &isInteger, bool &isSigned, bool &isFloat, s32 &numElements)
     {
-      u32 swappedCode[SerializedBuffer::EncodedBasicTypeBuffer::CODE_SIZE];
-
-      for(s32 i=0; i<SerializedBuffer::EncodedBasicTypeBuffer::CODE_SIZE; i++) {
-        swappedCode[i] = code.code[i];
-      }
-
-      SerializedBuffer::DecodeBasicType(swappedCode[0], size, isBasicType, isInteger, isSigned, isFloat);
-      numElements = swappedCode[1];
+      SerializedBuffer::DecodeBasicType(code.code[0], size, isBasicType, isInteger, isSigned, isFloat);
+      numElements = code.code[1];
 
       return RESULT_OK;
     }
 
     Result SerializedBuffer::DecodeArrayType(const EncodedArray &code, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, u16 &basicType_size, bool &basicType_isBasicType, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat)
     {
-      u32 swappedCode[SerializedBuffer::EncodedArray::CODE_SIZE];
-
-      for(s32 i=0; i<SerializedBuffer::EncodedArray::CODE_SIZE; i++) {
-        swappedCode[i] = code.code[i];
-      }
-
-      if(DecodeBasicType(swappedCode[0], basicType_size, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat) != RESULT_OK)
+      if(DecodeBasicType(code.code[0], basicType_size, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat) != RESULT_OK)
         return RESULT_FAIL;
 
-      height = swappedCode[1];
-      width = swappedCode[2];
-      stride = swappedCode[3];
-      flags.set_rawFlags(swappedCode[4]);
+      height = code.code[1];
+      width = code.code[2];
+      stride = code.code[3];
+      flags.set_rawFlags(code.code[4]);
 
       return RESULT_OK;
     }

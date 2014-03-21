@@ -413,6 +413,8 @@ namespace Anki
         }
       }
 
+      AnkiAssert(iData == stride*height);
+
       *buffer = reinterpret_cast<u8*>(*buffer) + stride*height;
       bufferLength -= stride*height;
 
@@ -497,7 +499,7 @@ namespace Anki
       bool basicType_isFloat;
 
       {
-        const u32 * bufferU32 = reinterpret_cast<const u32*>(buffer);
+        const u32 * bufferU32 = reinterpret_cast<const u32*>(*buffer);
 
         EncodedArraySlice code;
 
@@ -509,13 +511,16 @@ namespace Anki
           return ArraySlice<Type>();
       }
 
+      const LinearSequence<s32> ySlice(ySlice_start, ySlice_increment, ySlice_end);
+      const LinearSequence<s32> xSlice(xSlice_start, xSlice_increment, xSlice_end);
+
       *buffer = reinterpret_cast<u8*>(*buffer) + (EncodedArraySlice::CODE_SIZE * sizeof(u32));
       bufferLength -= (EncodedArraySlice::CODE_SIZE * sizeof(u32));
 
       AnkiConditionalErrorAndReturnValue(stride == RoundUp(width*sizeof(Type), MEMORY_ALIGNMENT),
         ArraySlice<Type>(), "SerializedBuffer::DeserializeRawArraySlice", "Parsed stride is not reasonable");
 
-      AnkiConditionalErrorAndReturnValue(bufferLength >= (height*stride),
+      AnkiConditionalErrorAndReturnValue(bufferLength >= static_cast<s32>(xSlice.get_size()*ySlice.get_size()*sizeof(Type)),
         ArraySlice<Type>(), "SerializedBuffer::DeserializeRawArraySlice", "Not enought bytes left to set the array");
 
       Array<Type> array(height, width, memory);
@@ -533,13 +538,14 @@ namespace Anki
         }
       }
 
-      const LinearSequence<s32> ySlice(ySlice_start, ySlice_increment, ySlice_end);
-      const LinearSequence<s32> xSlice(xSlice_start, xSlice_increment, xSlice_end);
+      const s32 numElements = xSlice.get_size()*ySlice.get_size();
+
+      AnkiAssert(iData == numElements);
 
       ArraySlice<Type> out = ArraySlice<Type>(array, ySlice, xSlice);
 
-      *buffer = reinterpret_cast<u8*>(*buffer) + height*stride;
-      bufferLength -= height*stride;
+      *buffer = reinterpret_cast<u8*>(*buffer) + numElements*sizeof(Type);
+      bufferLength -= numElements*sizeof(Type);
 
       return out;
     }

@@ -317,7 +317,7 @@ namespace Anki
       Result BinaryTracker::Deserialize(void** buffer, s32 &bufferLength, MemoryStack &memory)
       {
         // First, deserialize the transformation
-        this->transformation = Transformations::PlanarTransformation_f32(Transformations::TRANSFORM_PROJECTIVE, memory);
+        //this->transformation = Transformations::PlanarTransformation_f32(Transformations::TRANSFORM_PROJECTIVE, memory);
         this->transformation.Deserialize(buffer, bufferLength, memory);
 
         // Next, deserialize the template lists
