@@ -79,7 +79,7 @@ namespace Anki {
       const int baseYOffset = 60;
       const int rectW = 130;
       const int rectH = 130;
-      const int blockFaceLength = 40;
+      const int halfBlockFaceLength = 20;
       
       const f32 MM_PER_PIXEL = 2.f;
 
@@ -105,8 +105,8 @@ namespace Anki {
       int blockFaceCenterY = rectH - msg.x_dist / MM_PER_PIXEL;
       
       // Check that center is within display area
-      if (blockFaceCenterX < 0 || blockFaceCenterX > rectW ||
-          blockFaceCenterY < 0 || blockFaceCenterY > rectH ) {
+      if (blockFaceCenterX < halfBlockFaceLength || (blockFaceCenterX > rectW - halfBlockFaceLength) ||
+          blockFaceCenterY < halfBlockFaceLength || (blockFaceCenterY > rectH - halfBlockFaceLength) ) {
         return;
       }
       
@@ -114,8 +114,8 @@ namespace Anki {
       blockFaceCenterY += baseYOffset;
       
       // Draw line representing the block face
-      int dx = 0.5 * blockFaceLength * cosf(msg.angle);
-      int dy = -0.5 * blockFaceLength * sinf(msg.angle);
+      int dx = halfBlockFaceLength * cosf(msg.angle);
+      int dy = -halfBlockFaceLength * sinf(msg.angle);
       disp->drawLine(blockFaceCenterX + dx, blockFaceCenterY + dy, blockFaceCenterX - dx, blockFaceCenterY - dy);
       disp->drawOval(blockFaceCenterX, blockFaceCenterY, 2, 2);
       
