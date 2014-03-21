@@ -40,6 +40,10 @@ static u8 scratchBuffer[scratchSize];
 
 void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchingSegmentLengths)
 {
+  const s32 bigHeight = 480;
+  const s32 bigWidth = 640;
+  const f32 scale = bigWidth / 320.0f;
+
   MemoryStack scratch(scratchBuffer, scratchSize, Flags::Buffer(false, true, false));
 
   // Used for displaying detected fiducials
@@ -191,6 +195,18 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
         TemplateTracker::BinaryTracker bt;
         bt.Deserialize(reinterpret_cast<void**>(&dataSegment), remainingDataLength, scratch);
         bt.ShowTemplate("BinaryTracker Template", false, false);
+      } else if(strcmp(reinterpret_cast<const char*>(customTypeName), "EdgeLists") == 0) {
+        PUSH_MEMORY_STACK(scratch);
+        EdgeLists edges;
+        edges.Deserialize(reinterpret_cast<void**>(&dataSegment), remainingDataLength, scratch);
+
+        cv::Mat toShow = edges.DrawIndexes();
+
+        cv::Mat toShowLarge(bigHeight, bigWidth, CV_8UC3);
+
+        cv::resize(toShow, toShowLarge, toShowLarge.size(), 0, 0, cv::INTER_NEAREST);
+
+        cv::imshow("Detected Binary Edges", toShowLarge);
       }
     } else {
       printf("Unknown Type %d\n", type);
@@ -204,10 +220,6 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
   }
 
   if(lastImage.rows > 0) {
-    const s32 bigHeight = 480;
-    const s32 bigWidth = 640;
-    const f32 scale = bigWidth / 320.0f;
-
     cv::Mat largeLastImage(bigHeight, bigWidth, CV_8U);
     cv::Mat toShowImage(bigHeight, bigWidth, CV_8UC3);
 

@@ -339,29 +339,21 @@ namespace DebugStream
     const u8 * bufferStart = reinterpret_cast<const u8*>(toSend.get_memoryStack().get_validBufferStart(startIndex));
     const s32 validUsedBytes = toSend.get_memoryStack().get_usedBytes() - startIndex;
 
-    // TODO: does this help?
-    /*for(s32 i=0; i<256; i++) {
-    Anki::Cozmo::HAL::UARTPutChar('\0');
-    }*/
-
-    for(s32 i=0; i<Embedded::SERIALIZED_BUFFER_HEADER_LENGTH; i++) {
+    Anki::Cozmo::HAL::UARTPutBuffer(const_cast<u8*>(Embedded::SERIALIZED_BUFFER_HEADER), SERIALIZED_BUFFER_HEADER_LENGTH);
+    Anki::Cozmo::HAL::UARTPutBuffer(const_cast<u8*>(bufferStart), validUsedBytes);
+    Anki::Cozmo::HAL::UARTPutBuffer(const_cast<u8*>(Embedded::SERIALIZED_BUFFER_FOOTER), SERIALIZED_BUFFER_FOOTER_LENGTH);
+    
+    /*for(s32 i=0; i<Embedded::SERIALIZED_BUFFER_HEADER_LENGTH; i++) {
       Anki::Cozmo::HAL::UARTPutChar(Embedded::SERIALIZED_BUFFER_HEADER[i]);
     }
-
+    
     for(s32 i=0; i<validUsedBytes; i++) {
       Anki::Cozmo::HAL::UARTPutChar(bufferStart[i]);
     }
 
     for(s32 i=0; i<Embedded::SERIALIZED_BUFFER_FOOTER_LENGTH; i++) {
       Anki::Cozmo::HAL::UARTPutChar(Embedded::SERIALIZED_BUFFER_FOOTER[i]);
-    }
-
-    // TODO: does this help?
-    /*for(s32 i=0; i<256; i++) {
-    Anki::Cozmo::HAL::UARTPutChar('\0');
     }*/
-
-    //HAL::MicroWait(50000);
 
     lastBenchmarkTime_algorithmsOnly = GetTime();
 
@@ -415,7 +407,7 @@ namespace DebugStream
     return SendBuffer(debugStreamBuffer_);
   } // ReturnCode SendDebugStream_Detection()
 
-  static ReturnCode SendTrackingUpdate(const Array<u8> &image, const Transformations::PlanarTransformation_f32 &transformation, MemoryStack ccmScratch, MemoryStack onchipScratch, MemoryStack offchipScratch)
+  static ReturnCode SendTrackingUpdate(const Array<u8> &image, const Transformations::PlanarTransformation_f32 &transformation, const TrackerParameters &parameters, MemoryStack ccmScratch, MemoryStack onchipScratch, MemoryStack offchipScratch)
   {
     const f32 curTime = GetTime();
 
@@ -439,9 +431,25 @@ namespace DebugStream
 
     transformation.Serialize(debugStreamBuffer_);
 
+#if DOCKING_ALGORITHM ==  DOCKING_BINARY_TRACKER
+    EdgeLists edgeLists;
+    
+    edgeLists.imageHeight = image.get_size(0);
+    edgeLists.imageWidth = image.get_size(1);
+    
+    edgeLists.xDecreasing = FixedLengthList<Point<s16> >(parameters.edgeDetection_maxDetectionsPerType, offchipScratch);
+    edgeLists.xIncreasing = FixedLengthList<Point<s16> >(parameters.edgeDetection_maxDetectionsPerType, offchipScratch);
+    edgeLists.yDecreasing = FixedLengthList<Point<s16> >(parameters.edgeDetection_maxDetectionsPerType, offchipScratch);
+    edgeLists.yIncreasing = FixedLengthList<Point<s16> >(parameters.edgeDetection_maxDetectionsPerType, offchipScratch);
+        
+    DetectBlurredEdges(image, parameters.edgeDetection_grayvalueThreshold, parameters.edgeDetection_minComponentWidth, parameters.edgeDetection_everyNLines, edgeLists);
+    
+    edgeLists.Serialize(debugStreamBuffer_);
+#else    
     Array<u8> imageSmall(height, width, offchipScratch);
     DownsampleHelper(image, imageSmall, ccmScratch);
     debugStreamBuffer_.PushBack(imageSmall);
+#endif
 
     return SendBuffer(debugStreamBuffer_);
   } // static ReturnCode SendTrackingUpdate()
@@ -1207,7 +1215,7 @@ static ReturnCode TrackTemplate(
 
   MatlabVisualization::SendTrack(grayscaleImage, tracker, converged, offchipScratch);
 
-  DebugStream::SendTrackingUpdate(grayscaleImage, tracker.get_transformation(), ccmScratch, onchipScratch, offchipScratch);
+  DebugStream::SendTrackingUpdate(grayscaleImage, tracker.get_transformation(), parameters, ccmScratch, onchipScratch, offchipScratch);
 
   return EXIT_SUCCESS;
 } // TrackTemplate()
