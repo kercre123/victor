@@ -539,7 +539,7 @@ namespace Anki
     Result VisionMarker::SerializeRaw(void ** buffer, s32 &bufferLength) const
     {
       SerializedBuffer::SerializeRaw<Quadrilateral<s16> >(this->corners, buffer, bufferLength);
-      SerializedBuffer::SerializeRaw<Vision::MarkerType>(this->markerType, buffer, bufferLength);
+      SerializedBuffer::SerializeRaw<s32>(this->markerType, buffer, bufferLength);
       SerializedBuffer::SerializeRaw<bool>(this->isValid, buffer, bufferLength);
 
       return RESULT_OK;
@@ -548,7 +548,7 @@ namespace Anki
     Result VisionMarker::Deserialize(void** buffer, s32 &bufferLength)
     {
       this->corners = SerializedBuffer::DeserializeRaw<Quadrilateral<s16> >(buffer, bufferLength);
-      this->markerType = SerializedBuffer::DeserializeRaw<Vision::MarkerType>(buffer, bufferLength);
+      this->markerType = static_cast<Vision::MarkerType>(SerializedBuffer::DeserializeRaw<s32>(buffer, bufferLength));
       this->isValid = SerializedBuffer::DeserializeRaw<bool>(buffer, bufferLength);
 
       return RESULT_OK;
