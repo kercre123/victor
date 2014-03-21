@@ -533,33 +533,23 @@ namespace Anki
         return RESULT_FAIL;
       }
 
-      char * bufferChar = reinterpret_cast<char*>(afterHeader);
+      return SerializeRaw(&afterHeader, requiredBytes);
+    }
 
-      memcpy(bufferChar, reinterpret_cast<const void*>(&this->corners), sizeof(this->corners));
-      bufferChar += sizeof(this->corners);
-      const s32 markerTypeS32 = static_cast<s32>(this->markerType);
-      memcpy(bufferChar, reinterpret_cast<const void*>(&markerTypeS32), sizeof(s32));
-      bufferChar += sizeof(s32);
-      memcpy(bufferChar, reinterpret_cast<const void*>(&this->isValid), sizeof(this->isValid));
+    Result VisionMarker::SerializeRaw(void ** buffer, s32 &bufferLength) const
+    {
+      SerializedBuffer::SerializeRaw<Quadrilateral<s16> >(this->corners, buffer, bufferLength);
+      SerializedBuffer::SerializeRaw<Vision::MarkerType>(this->markerType, buffer, bufferLength);
+      SerializedBuffer::SerializeRaw<bool>(this->isValid, buffer, bufferLength);
 
       return RESULT_OK;
     }
 
     Result VisionMarker::Deserialize(void** buffer, s32 &bufferLength)
     {
-      const char * bufferChar = reinterpret_cast<const char*>(*buffer);
-
-      this->corners = *reinterpret_cast<const Quadrilateral<s16>*>(bufferChar);
-      bufferChar += sizeof(this->corners);
-
-      this->markerType = static_cast<Vision::MarkerType>(*reinterpret_cast<const s32*>(bufferChar));
-      bufferChar += sizeof(this->markerType);
-
-      this->isValid = *reinterpret_cast<const bool*>(bufferChar);
-      bufferChar += sizeof(this->isValid);
-
-      *buffer = reinterpret_cast<u8*>(*buffer) + this->get_SerializationSize();
-      bufferLength -= this->get_SerializationSize();
+      this->corners = SerializedBuffer::DeserializeRaw<Quadrilateral<s16> >(buffer, bufferLength);
+      this->markerType = SerializedBuffer::DeserializeRaw<Vision::MarkerType>(buffer, bufferLength);
+      this->isValid = SerializedBuffer::DeserializeRaw<bool>(buffer, bufferLength);
 
       return RESULT_OK;
     }

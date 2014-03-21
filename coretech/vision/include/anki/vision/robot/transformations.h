@@ -101,14 +101,8 @@ namespace Anki
         Result Set(const PlanarTransformation_f32 &newTransformation);
 
         Result Serialize(SerializedBuffer &buffer) const;
-
-        // SerializeRaw doesn't allocate headers or footers from buffer
-        Result SerializeRaw(SerializedBuffer &buffer) const;
-
-        // Updates the buffer pointer and length before returning
-        Result SerializeRaw(void ** buffer, s32 &bufferLength) const;
-
-        Result Deserialize(void** buffer, s32 &bufferLength, MemoryStack scratch);
+        Result SerializeRaw(void ** buffer, s32 &bufferLength) const; // Updates the buffer pointer and length before returning
+        Result Deserialize(void** buffer, s32 &bufferLength, MemoryStack scratch); // Updates the buffer pointer and length before returning
 
         Result set_transformType(const TransformType transformType);
         TransformType get_transformType() const;

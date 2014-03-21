@@ -284,7 +284,7 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
       const s32 textX = RoundS32(MIN(MIN(MIN(sortedCorners.corners[0].x*scale, sortedCorners.corners[1].x*scale), sortedCorners.corners[2].x*scale), sortedCorners.corners[3].x*scale));
       const cv::Point textStartPoint(textX, RoundS32(center.y*scale));
 
-      cv::putText(toShowImage, "Tracking", textStartPoint, cv::FONT_HERSHEY_PLAIN, 0.5, textColor);
+      cv::putText(toShowImage, "Tracking", textStartPoint, cv::FONT_HERSHEY_PLAIN, 1.0, textColor);
     } else { // if(isTracking)
       // Draw markers
       for(s32 iMarker=0; iMarker<static_cast<s32>(visionMarkerList.size()); iMarker++) {
@@ -318,7 +318,7 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
         const s32 textX = RoundS32(MIN(MIN(MIN(visionMarkerList[iMarker].corners[0].x*scale, visionMarkerList[iMarker].corners[1].x*scale), visionMarkerList[iMarker].corners[2].x*scale), visionMarkerList[iMarker].corners[3].x*scale));
         const cv::Point textStartPoint(textX, RoundS32(center.y*scale));
 
-        cv::putText(toShowImage, typeString, textStartPoint, cv::FONT_HERSHEY_PLAIN, 0.5, textColor);
+        cv::putText(toShowImage, typeString, textStartPoint, cv::FONT_HERSHEY_PLAIN, 1.0, textColor);
       }
     } // if(isTracking) ... else
 
