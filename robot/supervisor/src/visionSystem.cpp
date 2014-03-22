@@ -316,7 +316,12 @@ namespace DebugStream
   static ReturnCode SendTrackingUpdate(const Array<u8> &image, const Transformations::PlanarTransformation_f32 &transformation, MemoryStack ccmScratch, MemoryStack onchipScratch, MemoryStack offchipScratch) { return EXIT_SUCCESS; }
   //static ReturnCode SendPrintf(const char * string) { return EXIT_SUCCESS; }
   //static ReturnCode SendArray(const Array<u8> &array) { return EXIT_SUCCESS; }
-#else
+  
+#if DOCKING_ALGORITHM ==  DOCKING_BINARY_TRACKER
+static ReturnCode SendBinaryTracker(const TemplateTracker::BinaryTracker &tracker, MemoryStack ccmScratch, MemoryStack onchipScratch, MemoryStack offchipScratch) { return EXIT_SUCCESS; }
+#endif
+    
+#else // #if !defined(SEND_DEBUG_STREAM)
   static const HAL::CameraMode debugStreamResolution_ = HAL::CAMERA_MODE_QQQVGA;
 
   static f32 lastBenchmarkTime_algorithmsOnly;
