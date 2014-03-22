@@ -208,7 +208,7 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
 
         cv::resize(drawnEdges, toShowImage, toShowImage.size(), 0, 0, cv::INTER_NEAREST);
 
-        //cv::imshow("Detected Binary Edges", toShowLarge);
+        cv::imshow("Detected Binary Edges", toShowImage);
       }
     } else {
       printf("Unknown Type %d\n", type);
@@ -302,10 +302,13 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
         cv::LineIterator it(annotationsImage, pt1, pt2, 8);
         for(s32 i = 0; i < it.count; i++,it++)
         {
-          if (i%9 == 0) {
-            (*it)[0]     = static_cast<u8>(RoundS32(boxColor[0]));
-            (*it + 1)[0] = static_cast<u8>(RoundS32(boxColor[1]));
-            (*it + 2)[0] = static_cast<u8>(RoundS32(boxColor[2]));
+          if (i%3 == 0) {
+            //(*it)[0]     = static_cast<u8>(RoundS32(boxColor[0]));
+            //(*it + 1)[0] = static_cast<u8>(RoundS32(boxColor[1]));
+            //(*it + 2)[0] = static_cast<u8>(RoundS32(boxColor[2]));
+            (*it)[0]     = 255;
+            (*it + 1)[0] = 255;
+            (*it + 2)[0] = 255;
           }
         }
       }
