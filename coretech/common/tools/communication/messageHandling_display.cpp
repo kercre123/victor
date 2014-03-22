@@ -277,14 +277,15 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
       const f32 receivedDelta = curTime - lastTime;
       lastTime = GetTime();
 
-      snprintf(benchmarkBuffer, 1024, "Total:%dfps Algorithms:%dfps Received:%dfps", RoundS32(1.0f/benchmarkTimes[1]), RoundS32(1.0f/benchmarkTimes[0]), RoundS32(1.0f/receivedDelta));
+      //snprintf(benchmarkBuffer, 1024, "Total:%dfps Algorithms:%dfps Received:%dfps", RoundS32(1.0f/benchmarkTimes[1]), RoundS32(1.0f/benchmarkTimes[0]), RoundS32(1.0f/receivedDelta));
+      snprintf(benchmarkBuffer, 1024, "Total:%dfps Algorithms:%dfps", RoundS32(1.0f/benchmarkTimes[1]), RoundS32(1.0f/benchmarkTimes[0]));
 
       cv::putText(annotationsImage, benchmarkBuffer, cv::Point(5,15), cv::FONT_HERSHEY_PLAIN, 1.0, cv::Scalar(0,255,0));
     }
 
     if(isTracking) {
       const cv::Scalar textColor = cv::Scalar(0,255,0);
-      const cv::Scalar boxColor = cv::Scalar(0,128,0);
+      const cv::Scalar boxColor = cv::Scalar(0,196,0);
 
       const Quadrilateral<f32> transformedCorners = lastPlanarTransformation.get_transformedCorners(scratch);
 
@@ -295,7 +296,18 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
         const s32 point2Index = (iCorner+1) % 4;
         const cv::Point pt1(static_cast<s32>(sortedCorners[point1Index].x*scale), static_cast<s32>(sortedCorners[point1Index].y*scale));
         const cv::Point pt2(static_cast<s32>(sortedCorners[point2Index].x*scale), static_cast<s32>(sortedCorners[point2Index].y*scale));
-        cv::line(annotationsImage, pt1, pt2, boxColor, 2);
+
+        //cv::line(annotationsImage, pt1, pt2, boxColor, 2);
+
+        cv::LineIterator it(annotationsImage, pt1, pt2, 8);
+        for(s32 i = 0; i < it.count; i++,it++)
+        {
+          if (i%9 == 0) {
+            (*it)[0]     = static_cast<u8>(RoundS32(boxColor[0]));
+            (*it + 1)[0] = static_cast<u8>(RoundS32(boxColor[1]));
+            (*it + 2)[0] = static_cast<u8>(RoundS32(boxColor[2]));
+          }
+        }
       }
 
       const Point<f32> center = sortedCorners.ComputeCenter();
@@ -345,7 +357,8 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
     u8 * restrict ptoShowImage = toShowImage.data;
 
     for(s32 iPixel=0; iPixel<numColorPixels; iPixel++) {
-      ptoShowImage[iPixel] = MAX(ptoShowImage[iPixel], pAnnotationsImage[iPixel]);
+      //ptoShowImage[iPixel] = MAX(ptoShowImage[iPixel], pAnnotationsImage[iPixel]);
+      ptoShowImage[iPixel] += pAnnotationsImage[iPixel];
     }
 
     cv::imshow("Robot Image", toShowImage);

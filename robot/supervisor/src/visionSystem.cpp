@@ -50,7 +50,7 @@ static bool isInitialized_ = false;
 #define DOCKING_LUCAS_KANADE_AFFINE     2 //< LucasKanadeTracker_Affine (With Translation + Affine option)
 #define DOCKING_LUCAS_KANADE_PROJECTIVE 3 //< LucasKanadeTracker_Projective (With Projective + Affine option)
 #define DOCKING_BINARY_TRACKER          4 //< BinaryTracker
-#define DOCKING_ALGORITHM DOCKING_LUCAS_KANADE_AFFINE
+#define DOCKING_ALGORITHM DOCKING_BINARY_TRACKER
 
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SLOW
 typedef TemplateTracker::LucasKanadeTracker_Slow Tracker;
@@ -425,18 +425,18 @@ static ReturnCode SendBinaryTracker(const TemplateTracker::BinaryTracker &tracke
     // TODO: compute max allocation correctly
     const s32 requiredBytes = height*width + 1024;
 
-    if(onchipScratch.ComputeLargestPossibleAllocation() >= requiredBytes) {
+    /*if(onchipScratch.ComputeLargestPossibleAllocation() >= requiredBytes) {
       void * buffer = onchipScratch.Allocate(requiredBytes);
       debugStreamBuffer_ = SerializedBuffer(buffer, requiredBytes);
-    } else {
+    } else {*/
       debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
-    }
+    //}
 
     //transformation.Print();
 
     transformation.Serialize(debugStreamBuffer_);
 
-#if DOCKING_ALGORITHM ==  DOCKING_BINARY_TRACKER
+#if DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
     EdgeLists edgeLists;
     
     edgeLists.imageHeight = image.get_size(0);
