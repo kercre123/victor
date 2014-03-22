@@ -194,6 +194,7 @@ struct TrackerParameters {
   s32 maxIterations;
   f32 convergenceTolerance;
   bool useWeights;
+  s32 numSamples;
 
   void Initialize()
   {
@@ -208,6 +209,7 @@ struct TrackerParameters {
     //convergenceTolerance = 0.05f;
     convergenceTolerance = 1.f;
     useWeights           = true;
+    numSamples           = 1000; // currently only used by Matlab
 
     isInitialized = true;
   } // TrackerParameters()
@@ -552,7 +554,8 @@ namespace MatlabVisualization
   static Matlab matlabViz_;
   static bool beforeCalled_;
   static const bool SHOW_TRACKER_PREDICTION = false;
-
+  static const bool saveTrackingResults_ = false;
+  
   static ReturnCode Initialize()
   {
     //matlabViz_ = Matlab(false);
@@ -633,6 +636,36 @@ namespace MatlabVisualization
       "     'Parent', h_template); "
       "set(h_template, 'XLim', [0.9*min(templateQuad(:,1)) 1.1*max(templateQuad(:,1))], "
       "                'YLim', [0.9*min(templateQuad(:,2)) 1.1*max(templateQuad(:,2))]);");
+    
+    if(saveTrackingResults_) {
+#if USE_MATLAB_TRACKER
+      const char* fnameStr1 = "matlab";
+#else // not matlab tracker:
+      const char* fnameStr1 = "embedded";
+#endif
+#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_AFFINE
+      const char* fnameStr2 = "affine";
+#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE
+      const char* fnameStr2 = "projective";
+#else
+      const char* fnameStr2 = "unknown";
+#endif
+      
+      matlabViz_.EvalStringEcho("saveDir = fullfile('~', 'temp', '%s', '%s'); "
+                                "if ~isdir(saveDir), mkdir(saveDir); end, "
+                                "fid = fopen(fullfile(saveDir, 'quads.txt'), 'wt'); saveCtr = 0; "
+                                "fileCloser = onCleanup(@()fclose(fid)); "
+                                "imwrite(detectionImage, fullfile(saveDir, sprintf('image_%%.5d.png', saveCtr))); "
+                                "fprintf(fid, '[%%d] (%%f,%%f) (%%f,%%f) (%%f,%%f) (%%f,%%f)\\n', "
+                                "        saveCtr, "
+                                "        templateQuad(1,1), templateQuad(1,2), "
+                                "        templateQuad(2,1), templateQuad(2,2), "
+                                "        templateQuad(3,1), templateQuad(3,2), "
+                                "        templateQuad(4,1), templateQuad(4,2));",
+                                fnameStr1, fnameStr2);
+    }
+    
+    
     return EXIT_SUCCESS;
   }
   
@@ -661,6 +694,17 @@ namespace MatlabVisualization
                               "            'XData', transformedQuad([1 2 4 3 1],1)+1, "
                               "            'YData', transformedQuad([1 2 4 3 1],2)+1); ");
     
+    if(saveTrackingResults_) {
+      matlabViz_.EvalStringEcho("saveCtr = saveCtr + 1; "
+                                "imwrite(trackingImage, fullfile(saveDir, sprintf('image_%%.5d.png', saveCtr))); "
+                                "fprintf(fid, '[%%d] (%%f,%%f) (%%f,%%f) (%%f,%%f) (%%f,%%f)\\n', "
+                                "        saveCtr, "
+                                "        transformedQuad(1,1), transformedQuad(1,2), "
+                                "        transformedQuad(2,1), transformedQuad(2,2), "
+                                "        transformedQuad(3,1), transformedQuad(3,2), "
+                                "        transformedQuad(4,1), transformedQuad(4,2));");
+    }
+    
     if(converged)
     {
       matlabViz_.EvalStringEcho("title(h_axes, 'Tracking Succeeded', 'FontSize', 16);");
@@ -668,6 +712,10 @@ namespace MatlabVisualization
       matlabViz_.EvalStringEcho( //"set(h_trackedQuad, 'Visible', 'off'); "
                                 "title(h_axes, 'Tracking Failed', 'FontSize', 15); ");
       //        "delete(findobj(0, 'Tag', 'TemplateAxes'));");
+      
+      if(saveTrackingResults_) {
+        matlabViz_.EvalStringEcho("fclose(fid);");
+      }
     }
     
     matlabViz_.EvalString("drawnow");
@@ -816,7 +864,9 @@ namespace MatlabVisionProcessor {
     
     matlabProc_.PutQuad(trackingQuad, "initTrackingQuad");
     
-    if(initTrackerAtFullRes_) {
+    if(initTrackerAtFullRes_ || (imgFull.get_size(0) == trackerParameters_.trackingImageHeight &&
+                                 imgFull.get_size(1) == trackerParameters_.trackingImageWidth))
+    {
       matlabProc_.PutArray(imgFull, "img");
     }
     else {
@@ -837,13 +887,14 @@ namespace MatlabVisionProcessor {
                                "  'UseNormalization', false, "
                                "  'TrackingResolution', [%d %d], "
                                "  'TemplateRegionPaddingFraction', %f, "
-                               "  'SampleNearEdges', false, "
-                               "  'NumScales', %d);",
+                               "  'NumScales', %d, "
+                               "  'NumSamples', %d);",
                                (transformType_ == Transformations::TRANSFORM_AFFINE ? "affine" : "homography"),
                                trackerParameters_.trackingImageWidth,
                                trackerParameters_.trackingImageHeight,
                                trackerParameters_.scaleTemplateRegionPercent - 1.f,
-                               trackerParameters_.numPyramidLevels);
+                               trackerParameters_.numPyramidLevels,
+                               trackerParameters_.numSamples);
     
     haveTemplate_ = true;
     
@@ -899,20 +950,25 @@ namespace MatlabVisionProcessor {
   
   ReturnCode TrackTemplate(const Array<u8>& imgFull, bool& converged, MemoryStack scratch)
   {
-    
-    Array<u8> img(trackerParameters_.trackingImageHeight,
-                  trackerParameters_.trackingImageWidth,
-                  scratch);
-    
-    DownsampleHelper(imgFull, img, scratch);
-    
     if(!haveTemplate_) {
       AnkiWarn("MatlabVisionProcess::TrackTemplate",
                "TrackTemplate called before tracker initialized.");
       return EXIT_FAILURE;
     }
-        
-    matlabProc_.PutArray(img, "img");
+    
+    if(imgFull.get_size(0) == trackerParameters_.trackingImageHeight &&
+       imgFull.get_size(1) == trackerParameters_.trackingImageWidth)
+    {
+      matlabProc_.PutArray(imgFull, "img");
+    }
+    else {
+      Array<u8> img(trackerParameters_.trackingImageHeight,
+                    trackerParameters_.trackingImageWidth,
+                    scratch);
+      
+      DownsampleHelper(imgFull, img, scratch);
+      matlabProc_.PutArray(img, "img");
+    }
     
     matlabProc_.EvalStringEcho(//"desktop, keyboard; "
                                "converged = LKtracker.track(img, "
@@ -1956,7 +2012,7 @@ namespace Anki {
         } else {
           PRINT("VisionSystem::Update(): reached default case in switch statement.");
           return EXIT_FAILURE;
-        }
+        } // if(converged)
 
         return EXIT_SUCCESS;
       } // Update()
