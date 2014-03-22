@@ -3,6 +3,7 @@ function trackDemo(varargin)
 TrackerType = 'affine';
 Calibration = [];
 Downsample = 1;
+NumSamples = 0;
 
 CamCaptureArgs = parseVarargin(varargin{:});
 
@@ -23,6 +24,7 @@ end
 LKtracker = [];
 
 h_target = [];
+h_samples = [];
 h_3d = [];
 h_cam = [];
 marker3d = [];
@@ -70,10 +72,20 @@ CameraCapture('processFcn', @trackHelper, ...
             h_target = plot(corners(order,1), corners(order,2), 'r', ...
                 'LineWidth', 2, 'Tag', 'TrackRect', 'Parent', h_axes);
             
+            if NumSamples > 0
+                h_samples = plot(nan, nan, 'g.', 'MarkerSize', 10, ...
+                    'Tag', 'TrackSamples', 'Parent', h_axes);
+            end
+            
+            %LKtracker = LucasKanadeTracker(img, corners, ...
+            %    'Type', TrackerType, 'RidgeWeight', 1e-3, ...
+            %    'DebugDisplay', false, 'UseBlurring', false, ...
+            %    'UseNormalization', true, 'TrackingResolution', Downsample);
+            
             LKtracker = LucasKanadeTracker(img, corners, ...
-                'Type', TrackerType, 'RidgeWeight', 1e-3, ...
-                'DebugDisplay', false, 'UseBlurring', false, ...
-                'UseNormalization', true, 'TrackingResolution', Downsample);
+               'Type', TrackerType, 'RidgeWeight', 0, ...
+               'DebugDisplay', false, 'UseBlurring', false, ...
+               'UseNormalization', false, 'NumSamples', NumSamples);
             
             
             if strcmp(TrackerType, 'homography') && ~isempty(calibration)
@@ -118,7 +130,7 @@ CameraCapture('processFcn', @trackHelper, ...
             end
             
             %t = tic;
-            converged = LKtracker.track(img, 'MaxIterations', 50, 'ConvergenceTolerance', .25);
+            converged = LKtracker.track(img, 'MaxIterations', 25, 'ConvergenceTolerance', 0.25, 'ErrorTolerance', 0.25);
             %fprintf('Tracking took %.2f seconds.\n', toc(t));
             
             if ~converged 
@@ -126,6 +138,9 @@ CameraCapture('processFcn', @trackHelper, ...
                 LKtracker = [];
                 h_cam = [];
                 delete(h_target)
+                if NumSamples > 0
+                    delete(h_samples)
+                end
                 return
             end
             
@@ -147,6 +162,11 @@ CameraCapture('processFcn', @trackHelper, ...
            
             set(h_target, 'XData', crntCorners([1 2 4 3 1],1), ...
                 'YData', crntCorners([1 2 4 3 1],2));
+            
+            if NumSamples > 0
+                [xsamples,ysamples] = LKtracker.getImagePoints(1);
+                set(h_samples, 'XData', xsamples, 'YData', ysamples);
+            end
                      
             if strcmp(TrackerType, 'homography') && ~isempty(calibration)
 
