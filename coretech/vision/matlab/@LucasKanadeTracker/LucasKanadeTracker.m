@@ -8,6 +8,9 @@ classdef LucasKanadeTracker < handle
         tform;
         xcen;
         ycen;
+                
+        xgrid;
+        ygrid;
         
         initCorners;
         
@@ -19,9 +22,7 @@ classdef LucasKanadeTracker < handle
     properties(GetAccess = 'protected', SetAccess = 'protected')
         
         tformType;
-        
-        xgrid;
-        ygrid;
+
         %initCorners;
         
         width;
@@ -72,7 +73,8 @@ classdef LucasKanadeTracker < handle
             TemplateRegionPaddingFraction = 0;
             ErrorTolerance = [];
             ApproximateGradientMargins = true;
-            SampleNearEdges = false;
+            %SampleNearEdges = false;
+            NumSamples = [];
             
             parseVarargin(varargin{:});
             
@@ -268,34 +270,43 @@ classdef LucasKanadeTracker < handle
                     this.ygrid{i_scale} = this.ygrid{i_scale}/Downsample;
                 end
                 
-                if SampleNearEdges 
+                if ~isempty(NumSamples) && NumSamples > 0
                     
                     % Compute the gradient magnitude and then choose pixels
                     % which are "edges", i.e. that have non-trivial
                     % gradient magnitude and are local maxima when
                     % comparing to neighbors in the +/- direction of that
                     % gradient.
-                    mag = sqrt(Ix.^2 + Iy.^2);
+                    numSamplesCurrent = round(NumSamples/spacing);
+                    
+                    if numSamplesCurrent < numel(this.xgrid{i_scale})
+                        
+                        mag = sqrt(Ix.^2 + Iy.^2);
+                        %{
                     Ix_norm = Ix./max(eps,mag);
                     Iy_norm = Iy./max(eps,mag);
                     left  = interp2(xi, yi, mag, xi+spacing*Ix_norm, yi+spacing*Iy_norm, 'nearest', 0);
                     right = interp2(xi, yi, mag, xi-spacing*Ix_norm, yi-spacing*Iy_norm, 'nearest', 0);
                     sampleIndex = mag > left & mag > right & mag > 0.01;
                     %sampleIndex = imdilate(sampleIndex, [0 1 0; 1 1 1; 0 1 0]);
-                    
-                    this.xgrid{i_scale} = this.xgrid{i_scale}(sampleIndex);
-                    this.ygrid{i_scale} = this.ygrid{i_scale}(sampleIndex);
-                    
-                    Ix = Ix(sampleIndex);
-                    Iy = Iy(sampleIndex);
-                    
-                    this.target{i_scale} = this.target{i_scale}(sampleIndex);
-                    
-                    this.W{i_scale} = this.W{i_scale}(sampleIndex);
-                    
-                    fprintf('Sampled %.1f%% of the template pixels at scale %d.\n', ...
-                        sum(sampleIndex(:))/length(sampleIndex(:))*100, i_scale);
+                        %}
                         
+                        [~,sortIndex] = sort(mag(:), 'descend');
+                        sampleIndex = sortIndex(1:numSamplesCurrent);
+                        
+                        this.xgrid{i_scale} = this.xgrid{i_scale}(sampleIndex);
+                        this.ygrid{i_scale} = this.ygrid{i_scale}(sampleIndex);
+                        
+                        Ix = Ix(sampleIndex);
+                        Iy = Iy(sampleIndex);
+                        
+                        this.target{i_scale} = this.target{i_scale}(sampleIndex);
+                        
+                        this.W{i_scale} = this.W{i_scale}(sampleIndex);
+                        
+                        %fprintf('Sampled %.1f%% of the template pixels at scale %d.\n', ...
+                        %    sum(sampleIndex(:))/length(sampleIndex(:))*100, i_scale);
+                    end
                 end
                 
                 % System of Equations for Translation Only
