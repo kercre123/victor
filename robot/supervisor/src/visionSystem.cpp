@@ -499,9 +499,11 @@ namespace SimulatorParameters {
     return EXIT_SUCCESS;
   }
 #else
-  static const u32 LOOK_FOR_BLOCK_PERIOD_US = 200000;
-  static const u32 TRACK_BLOCK_PERIOD_US = 100000;
+  static const u32 LOOK_FOR_BLOCK_PERIOD_US = 200000; // 5Hz
 
+  static const u32 TRACKING_ALGORITHM_SPEED_HZ = 10;
+  static const u32 TRACK_BLOCK_PERIOD_US = 1e6 / TRACKING_ALGORITHM_SPEED_HZ;
+  
   static u32 frameRdyTimeUS_;
 
   static ReturnCode Initialize()
