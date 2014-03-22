@@ -2,6 +2,8 @@
 
 # CoreTech_Common Tests
 if(NOT WIN32)        
+  add_definitions(-DCORETECH_BASESTATION)
+
   add_executable(run_coreTechCommonTests 
     run_coreTechCommonTests.cpp 
     testMatrix.cpp
