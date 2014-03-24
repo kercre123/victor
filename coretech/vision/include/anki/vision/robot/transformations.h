@@ -19,6 +19,8 @@ namespace Anki
 {
   namespace Embedded
   {
+    class SerializedBuffer;
+
     namespace Transformations
     {
       // The type of transformation.
@@ -81,12 +83,14 @@ namespace Anki
         Result Print(const char * const variableName = "Transformation") const;
 
         // Transform the input Quadrilateral, using this object's transformation
-        Quadrilateral<f32> TransformQuadrilateral(const Quadrilateral<f32> &in,
+        Quadrilateral<f32> TransformQuadrilateral(
+          const Quadrilateral<f32> &in,
           MemoryStack scratch,
           const f32 scale=1.0f) const;
 
         // Transform an array (like an image)
-        Result TransformArray(const Array<u8> &in,
+        Result TransformArray(
+          const Array<u8> &in,
           Array<u8> &out,
           MemoryStack scratch,
           const f32 scale=1.0f) const;
@@ -96,8 +100,9 @@ namespace Anki
         // Set this object's transformType, centerOffset, initialCorners, and homography
         Result Set(const PlanarTransformation_f32 &newTransformation);
 
-        Result Serialize(void * buffer, const s32 bufferLength) const;
-        Result Deserialize(const void* buffer, const s32 bufferLength);
+        Result Serialize(SerializedBuffer &buffer) const;
+        Result SerializeRaw(void ** buffer, s32 &bufferLength) const; // Updates the buffer pointer and length before returning
+        Result Deserialize(void** buffer, s32 &bufferLength, MemoryStack &memory); // Updates the buffer pointer and length before returning
 
         Result set_transformType(const TransformType transformType);
         TransformType get_transformType() const;
@@ -114,7 +119,10 @@ namespace Anki
         // Transform this object's initialCorners, based on its current homography
         Quadrilateral<f32> get_transformedCorners(MemoryStack scratch) const;
 
+        s32 get_SerializationSize() const;
+
       protected:
+
         bool isValid;
 
         TransformType transformType;

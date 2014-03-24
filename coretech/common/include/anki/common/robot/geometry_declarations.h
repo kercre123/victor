@@ -88,6 +88,10 @@ namespace Anki
 
       Point<Type> ComputeCenter() const;
 
+      // If scalePercent is less-than 1.0, the rectangle is shrunk around its center
+      // If scalePercent is greater-than 1.0, the rectangle is expanded around its center
+      Rectangle<Type> ComputeScaledRectangle(const f32 scalePercent) const;
+
       bool operator== (const Rectangle<Type> &rect2) const;
 
       Rectangle<Type> operator+ (const Rectangle<Type> &rect2) const;

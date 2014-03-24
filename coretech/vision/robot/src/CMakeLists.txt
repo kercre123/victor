@@ -2,6 +2,8 @@
 
 # Robot Vision Library
 
+add_definitions(-DCORETECH_ROBOT)
+
 file(GLOB SOURCE_FILES *.c *.cpp)
 
 file(GLOB HEADER_FILES 

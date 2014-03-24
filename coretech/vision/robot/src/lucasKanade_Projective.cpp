@@ -34,35 +34,52 @@ namespace Anki
       {
       }
 
-      LucasKanadeTracker_Projective::LucasKanadeTracker_Projective(const Array<u8> &templateImage, const Quadrilateral<f32> &templateQuad, const s32 numPyramidLevels, const Transformations::TransformType transformType, MemoryStack &scratch)
-        : LucasKanadeTracker_Fast(Transformations::TRANSFORM_PROJECTIVE, templateImage, templateQuad, numPyramidLevels, transformType, scratch)
+      LucasKanadeTracker_Projective::LucasKanadeTracker_Projective(
+        const Array<u8> &templateImage,
+        const Quadrilateral<f32> &templateQuad,
+        const f32 scaleTemplateRegionPercent,
+        const s32 numPyramidLevels,
+        const Transformations::TransformType transformType,
+        MemoryStack &memory)
+        : LucasKanadeTracker_Fast(Transformations::TRANSFORM_PROJECTIVE, templateImage, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, transformType, memory)
       {
       }
 
-      Result LucasKanadeTracker_Projective::UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, bool& converged, MemoryStack scratch)
+      Result LucasKanadeTracker_Projective::UpdateTrack(
+        const Array<u8> &nextImage,
+        const s32 maxIterations,
+        const f32 convergenceTolerance,
+        const u8 verify_maxPixelDifference,
+        bool& verify_converged,
+        s32 &verify_meanAbsoluteDifference,
+        s32 &verify_numInBounds,
+        s32 &verify_numSimilarPixels,
+        MemoryStack scratch)
       {
         Result lastResult;
 
         for(s32 iScale=numPyramidLevels-1; iScale>=0; iScale--) {
-          converged = false;
+          verify_converged = false;
 
           BeginBenchmark("UpdateTrack.refineTranslation");
-          if((lastResult = IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance, Transformations::TRANSFORM_TRANSLATION, converged, scratch)) != RESULT_OK)
+          if((lastResult = IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance, Transformations::TRANSFORM_TRANSLATION, verify_converged, scratch)) != RESULT_OK)
             return lastResult;
           EndBenchmark("UpdateTrack.refineTranslation");
 
           if(this->transformation.get_transformType() != Transformations::TRANSFORM_TRANSLATION) {
             BeginBenchmark("UpdateTrack.refineOther");
-            if((lastResult = IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance, this->transformation.get_transformType(), converged, scratch)) != RESULT_OK)
+            if((lastResult = IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance, this->transformation.get_transformType(), verify_converged, scratch)) != RESULT_OK)
               return lastResult;
             EndBenchmark("UpdateTrack.refineOther");
           }
         } // for(s32 iScale=numPyramidLevels; iScale>=0; iScale--)
 
-        return RESULT_OK;
+        lastResult = this->VerifyTrack_Projective(nextImage, verify_maxPixelDifference, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels, scratch);
+
+        return lastResult;
       }
 
-      Result LucasKanadeTracker_Projective::IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const Transformations::TransformType curTransformType, bool &converged, MemoryStack scratch)
+      Result LucasKanadeTracker_Projective::IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const Transformations::TransformType curTransformType, bool &verify_converged, MemoryStack scratch)
       {
         const s32 nextImageHeight = nextImage.get_size(0);
         const s32 nextImageWidth = nextImage.get_size(1);
@@ -92,17 +109,17 @@ namespace Anki
           RESULT_FAIL_INVALID_SIZE, "LucasKanadeTracker_Projective::IterativelyRefineTrack", "The templateImage must be a power of two smaller than BASE_IMAGE_WIDTH");
 
         if(curTransformType == Transformations::TRANSFORM_TRANSLATION) {
-          return IterativelyRefineTrack_Translation(nextImage, maxIterations, whichScale, convergenceTolerance, converged, scratch);
+          return IterativelyRefineTrack_Translation(nextImage, maxIterations, whichScale, convergenceTolerance, verify_converged, scratch);
         } else if(curTransformType == Transformations::TRANSFORM_AFFINE) {
-          return IterativelyRefineTrack_Affine(nextImage, maxIterations, whichScale, convergenceTolerance, converged, scratch);
+          return IterativelyRefineTrack_Affine(nextImage, maxIterations, whichScale, convergenceTolerance, verify_converged, scratch);
         } else if(curTransformType == Transformations::TRANSFORM_PROJECTIVE) {
-          return IterativelyRefineTrack_Projective(nextImage, maxIterations, whichScale, convergenceTolerance, converged, scratch);
+          return IterativelyRefineTrack_Projective(nextImage, maxIterations, whichScale, convergenceTolerance, verify_converged, scratch);
         }
 
         return RESULT_FAIL;
-      } // Result LucasKanadeTracker_Projective::IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const TransformType curTransformType, bool &converged, MemoryStack scratch)
+      } // Result LucasKanadeTracker_Projective::IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const TransformType curTransformType, bool &verify_converged, MemoryStack scratch)
 
-      Result LucasKanadeTracker_Projective::IterativelyRefineTrack_Translation(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack scratch)
+      Result LucasKanadeTracker_Projective::IterativelyRefineTrack_Translation(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &verify_converged, MemoryStack scratch)
       {
         // This method is heavily based on Interp2_Projective
         // The call would be like: Interp2_Projective<u8,u8>(nextImage, originalCoordinates, interpolationHomography, centerOffset, nextImageTransformed2d, INTERPOLATE_LINEAR, 0);
@@ -121,7 +138,7 @@ namespace Anki
         f32 &b0 = b[0][0];
         f32 &b1 = b[0][1];
 
-        converged = false;
+        verify_converged = false;
 
         const s32 nextImageHeight = nextImage.get_size(0);
         const s32 nextImageWidth = nextImage.get_size(1);
@@ -283,7 +300,7 @@ namespace Anki
           const f32 minChange = UpdatePreviousCorners(transformation, previousCorners, scratch);
 
           if(minChange < convergenceTolerance) {
-            converged = true;
+            verify_converged = true;
             return RESULT_OK;
           }
         } // for(s32 iteration=0; iteration<maxIterations; iteration++)
@@ -291,7 +308,7 @@ namespace Anki
         return RESULT_OK;
       } // Result LucasKanadeTracker_Projective::IterativelyRefineTrack_Translation()
 
-      Result LucasKanadeTracker_Projective::IterativelyRefineTrack_Affine(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack scratch)
+      Result LucasKanadeTracker_Projective::IterativelyRefineTrack_Affine(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &verify_converged, MemoryStack scratch)
       {
         // This method is heavily based on Interp2_Projective
         // The call would be like: Interp2_Projective<u8,u8>(nextImage, originalCoordinates, interpolationHomography, centerOffset, nextImageTransformed2d, INTERPOLATE_LINEAR, 0);
@@ -305,7 +322,7 @@ namespace Anki
         f32 AWAt_raw[6][6];
         f32 b_raw[6];
 
-        converged = false;
+        verify_converged = false;
 
         const s32 nextImageHeight = nextImage.get_size(0);
         const s32 nextImageWidth = nextImage.get_size(1);
@@ -501,7 +518,7 @@ namespace Anki
           const f32 minChange = UpdatePreviousCorners(transformation, previousCorners, scratch);
 
           if(minChange < convergenceTolerance) {
-            converged = true;
+            verify_converged = true;
             return RESULT_OK;
           }
         } // for(s32 iteration=0; iteration<maxIterations; iteration++)
@@ -509,7 +526,7 @@ namespace Anki
         return RESULT_OK;
       } // Result LucasKanadeTracker_Projective::IterativelyRefineTrack_Affine()
 
-      Result LucasKanadeTracker_Projective::IterativelyRefineTrack_Projective(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack scratch)
+      Result LucasKanadeTracker_Projective::IterativelyRefineTrack_Projective(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &verify_converged, MemoryStack scratch)
       {
         // This method is heavily based on Interp2_Projective
         // The call would be like: Interp2_Projective<u8,u8>(nextImage, originalCoordinates, interpolationHomography, centerOffset, nextImageTransformed2d, INTERPOLATE_LINEAR, 0);
@@ -523,7 +540,7 @@ namespace Anki
         f32 AWAt_raw[8][8];
         f32 b_raw[8];
 
-        converged = false;
+        verify_converged = false;
 
         const s32 nextImageHeight = nextImage.get_size(0);
         const s32 nextImageWidth = nextImage.get_size(1);
@@ -716,7 +733,7 @@ namespace Anki
           const f32 minChange = UpdatePreviousCorners(transformation, previousCorners, scratch);
 
           if(minChange < convergenceTolerance) {
-            converged = true;
+            verify_converged = true;
             return RESULT_OK;
           }
         } // for(s32 iteration=0; iteration<maxIterations; iteration++)

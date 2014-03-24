@@ -134,7 +134,7 @@ namespace Anki {
     
     // TODO: convert to using these in degree form?
     const f32 MIN_HEAD_ANGLE = DEG_TO_RAD(-25.f);
-    const f32 MAX_HEAD_ANGLE = DEG_TO_RAD( 30.f);
+    const f32 MAX_HEAD_ANGLE = DEG_TO_RAD( 35.f);
     
     const f32 NECK_JOINT_POSITION[3] = {-13.f, 0.f, 33.5f + WHEEL_RAD_TO_MM}; // relative to robot origin
     const f32 HEAD_CAM_POSITION[3]   = {11.45f, 0.f, -6.f}; // relative to neck joint

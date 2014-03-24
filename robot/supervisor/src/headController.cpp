@@ -11,14 +11,10 @@ namespace Anki {
 
     namespace {
     
-      const Radians ANGLE_TOLERANCE = DEG_TO_RAD(0.5f);
+      const Radians ANGLE_TOLERANCE = DEG_TO_RAD(3.f);
       
       // Head angle on startup
       const f32 HEAD_START_ANGLE = 0;   // Convenient for docking to set head angle at -15 degrees.
-    
-      // Minimum power required to move head
-      const f32 MIN_POWER = 0.1;  // TODO: Measure what this actually is. approx is ok.
-      f32 minPower_ = 0.f;
       
       // Currently applied power
       f32 power_ = 0;
@@ -40,6 +36,13 @@ namespace Anki {
       const f32 Ki_ = 0.001f; // integral control constant
       const f32 MAX_ERROR_SUM = 200.f;
      
+      // Open loop gain
+      // power_open_loop = SPEED_TO_POWER_OL_GAIN * desiredSpeed + BASE_POWER
+      // TODO: Measure this when the head is working! These numbers are completely made up.
+      const f32 SPEED_TO_POWER_OL_GAIN = 0.1;
+      const f32 BASE_POWER_UP = 0.1;
+      const f32 BASE_POWER_DOWN = -0.1;
+      
       // Current speed
       f32 radSpeed_ = 0.f;
       
@@ -72,7 +75,7 @@ namespace Anki {
       
       const f32 MAX_HEAD_CONSIDERED_STOPPED_RAD_PER_SEC = 0.001;
       
-      const u32 HEAD_STOP_TIME = 200000;  // usec
+      const u32 HEAD_STOP_TIME = 500000;  // usec
       
       bool enable_ = true;
       
@@ -134,7 +137,7 @@ namespace Anki {
             break;
             
           case HCS_LOWER_HEAD:
-            power_ = -0.4;
+            power_ = -0.7;
             HAL::MotorSetPower(HAL::MOTOR_HEAD, power_);
             lastHeadMovedTime_us = HAL::GetMicroCounter();
             calState_ = HCS_WAIT_FOR_STOP;
@@ -165,7 +168,7 @@ namespace Anki {
             if (HAL::GetMicroCounter() - lastHeadMovedTime_us > HEAD_STOP_TIME) {
               PRINT("HEAD Calibrated\n");
               ResetLowAnglePosition();
-              SetDesiredAngle(HEAD_START_ANGLE);
+              //SetDesiredAngle(HEAD_START_ANGLE);
               calState_ = HCS_IDLE;
             }
             break;
@@ -227,13 +230,6 @@ namespace Anki {
       desiredAngle_ = angle;
       angleError_ = desiredAngle_.ToFloat() - currentAngle_.ToFloat();
       angleErrorSum_ = 0.f;
-
-      // Minimum power required to move the head
-      minPower_ = MIN_POWER;
-      if (angleError_ < 0) {
-        minPower_ = -MIN_POWER;
-      }
-
       
       inPosition_ = false;
 
@@ -279,14 +275,35 @@ namespace Anki {
         // Get the current desired head angle
         vpg_.Step(currDesiredRadVel_, currDesiredAngle_);
         
-#if(DEBUG_HEAD_CONTROLLER)
-        PRINT("HEAD: currAngle %f, error %f\n", currentAngle_.ToFloat(), angleError_);
-#endif
-        
         // Compute current angle error
         angleError_ = currDesiredAngle_ - currentAngle_.ToFloat();
         
         
+        // Open loop value to drive at desired speed
+        power_ = currDesiredRadVel_ * SPEED_TO_POWER_OL_GAIN;
+        
+        // Compute corrective value
+        f32 power_corr = (Kp_ * angleError_) + (Ki_ * angleErrorSum_);
+        
+        // Add base power in the direction of corrective value
+        power_ += power_corr + ((power_corr > 0) ? BASE_POWER_UP : BASE_POWER_DOWN);
+        
+        // Update angle error sum
+        angleErrorSum_ += angleError_;
+        angleErrorSum_ = CLIP(angleErrorSum_, -MAX_ERROR_SUM, MAX_ERROR_SUM);
+        
+        // If accurately tracking current desired angle...
+        if((ABS(angleError_) < ANGLE_TOLERANCE && desiredAngle_ == currDesiredAngle_)
+           || ABS(currentAngle_ - desiredAngle_) < ANGLE_TOLERANCE) {
+          power_ = 0.f;
+          inPosition_ = true;
+#if(DEBUG_HEAD_CONTROLLER)
+          PRINT(" HEAD HEIGHT REACHED (%f mm)\n", GetHeightMM());
+#endif
+        }
+        
+        
+        /*
         // Convert angleError_ to power
         if(ABS(angleError_) < ANGLE_TOLERANCE) {
           angleErrorSum_ = 0.f;
@@ -308,6 +325,7 @@ namespace Anki {
           angleErrorSum_ = CLIP(angleErrorSum_, -MAX_ERROR_SUM, MAX_ERROR_SUM);
           inPosition_ = false;
         }
+         */
         
 #if(DEBUG_HEAD_CONTROLLER)
         PERIODIC_PRINT(100, "HEAD: currA %f, curDesA %f, desA %f, err %f, errSum %f, pwr %f, spd %f\n",
@@ -323,7 +341,7 @@ namespace Anki {
         
         power_ = CLIP(power_, -1.0, 1.0);
         
-
+/*
         // If within 5 degrees of MIN_HEAD_ANGLE and the head isn't moving while downward power is applied,
         // assume we've hit the limit and recalibrate.
         if (limitingDetected_ ||
@@ -341,7 +359,7 @@ namespace Anki {
             limitingDetected_ = true;
           } else if (HAL::GetMicroCounter() - lastHeadMovedTime_us > HEAD_STOP_TIME) {
 #if(DEBUG_LIFT_CONTROLLER)
-            PRINT("END RECAL LIFT\n");
+            PRINT("END RECAL HEAD\n");
 #endif
             ResetLowAnglePosition();
             inPosition_ = true;
@@ -349,7 +367,7 @@ namespace Anki {
           power_ = 0.f;
             
         }
-
+*/
         
         HAL::MotorSetPower(HAL::MOTOR_HEAD, power_);
 

@@ -332,8 +332,8 @@ namespace Anki
         TIM_OCInitStructure.TIM_OCIdleState = TIM_OCIdleState_Set;
         TIM_OCInitStructure.TIM_OCNIdleState = TIM_OCIdleState_Reset;
         
-        TIM_TimeBaseStructure.TIM_Period = 13;  // 180MHz/N+1
-        TIM_OCInitStructure.TIM_Pulse = 7;     // Half of (period+1)
+        TIM_TimeBaseStructure.TIM_Period = 31;  // 180MHz/N+1
+        TIM_OCInitStructure.TIM_Pulse = 16;     // Half of (period+1)
         
         TIM_TimeBaseInit(TIM9, &TIM_TimeBaseStructure);
         TIM_OC2Init(TIM9, &TIM_OCInitStructure);
@@ -432,13 +432,49 @@ namespace Anki
         u32 xSkip = 320 / xRes;
         u32 ySkip = 240 / yRes;
         
-        u32 dataY = 0;
-        for (u32 y = 0; y < 240; y += ySkip, dataY++)
-        {
-          u32 dataX = 0;
-          for (u32 x = 0; x < 320; x += xSkip, dataX++)
+        if(xSkip == 1 && ySkip == 1) {
+          // Fast (one load and one store per output pixel)
+          /*
+          const u32 numPixels = 320*240;
+          for(u32 iOut=0; iOut<numPixels; iOut++) {
+            frame[iOut] = m_buffer[iOut*2];
+          }*/
+          
+          // Faster (32 -> 16) (one load and one store per 2 output pixels)
+          /*const u32 numPixels2 = (320*240) >> 1;
+          
+          const u32 * restrict pMBufferU32 = reinterpret_cast<u32*>(m_buffer);
+          u16 * restrict pFrameU16 = reinterpret_cast<u16*>(frame);
+                              
+          for(u32 iPixel=0; iPixel<numPixels2; iPixel++) {
+            const u32 inPixel = pMBufferU32[iPixel];
+            // const u16 outPixel = ((inPixel & 0x00FF)>>8) | ((inPixel & 0xFF000000) >> 24);
+            const u32 outPixel = (inPixel & 0xFF) | ((inPixel & 0xFF0000) >> 8);
+            pFrameU16[iPixel] = outPixel & 0xFFFF;
+          }*/
+          
+          // Fastest (64 -> 32) (two loads and one store per 4 output pixels)
+          const u32 numPixels4 = (320*240) >> 2;
+          
+          const u32 * restrict pMBufferU32 = reinterpret_cast<u32*>(m_buffer);
+          u32 * restrict pFrameU32 = reinterpret_cast<u32*>(frame);
+                              
+          for(u32 iPixel=0; iPixel<numPixels4; iPixel++) {
+            const u32 inPixel1 = pMBufferU32[2*iPixel];
+            const u32 inPixel2 = pMBufferU32[2*(iPixel+1)];
+            
+            const u32 outPixel = (inPixel1 & 0xFF) | ((inPixel1 & 0xFF0000) >> 8) | ((inPixel2 & 0xFF)<<16) | ((inPixel2 & 0xFF0000) << 8);
+            pFrameU32[iPixel] = outPixel;
+          }
+        } else {
+          u32 dataY = 0;
+          for (u32 y = 0; y < 240; y += ySkip, dataY++)
           {
-            frame[dataY * xRes + dataX] = m_buffer[y * 320 * 2 + x * 2];
+            u32 dataX = 0;
+            for (u32 x = 0; x < 320; x += xSkip, dataX++)
+            {
+              frame[dataY * xRes + dataX] = m_buffer[y * 320 * 2 + x * 2];
+            }
           }
         }
       }

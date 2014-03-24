@@ -33,8 +33,13 @@ namespace Anki
 
         // the real max number of edge pixels is maxEdgePixelsPerType*4, for each of the four edge types
         BinaryTracker(
-          const Array<u8> &templateImage, const Quadrilateral<f32> &templateQuad,
-          const u8 edgeDetection_grayvalueThreshold, const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
+          const Array<u8> &templateImage,
+          const Quadrilateral<f32> &templateQuad,
+          const f32 scaleTemplateRegionPercent, //< Shrinks the region if less-than 1.0, expands the region if greater-than 1.0
+          const u8 edgeDetection_grayvalueThreshold,
+          const s32 edgeDetection_minComponentWidth,
+          const s32 edgeDetection_maxDetectionsPerType,
+          const s32 edgeDetection_everyNLines,
           MemoryStack &memory);
 
         // Runs one iteration each of translation and projective
@@ -53,7 +58,7 @@ namespace Anki
 
         bool IsValid() const;
 
-        Result ShowTemplate(const bool waitForKeypress, const bool fitImageToWindow) const;
+        Result ShowTemplate(const char * windowName="BinaryTracker Template", const bool waitForKeypress=false, const bool fitImageToWindow=false) const;
 
         // Update the transformation. The format of the update should be as follows:
         // TRANSFORM_TRANSLATION: [-dx, -dy]
@@ -61,10 +66,15 @@ namespace Anki
         // TRANSFORM_PROJECTIVE: [h00, h01, h02, h10, h11, h12, h20, h21]
         Result UpdateTransformation(const Array<f32> &update, const f32 scale, MemoryStack scratch, Transformations::TransformType updateType=Transformations::TRANSFORM_UNKNOWN);
 
+        Result Serialize(SerializedBuffer &buffer) const;
+        Result Deserialize(void** buffer, s32 &bufferLength, MemoryStack &memory);
+
         s32 get_numTemplatePixels() const;
 
         Result set_transformation(const Transformations::PlanarTransformation_f32 &transformation);
         Transformations::PlanarTransformation_f32 get_transformation() const;
+
+        s32 get_SerializationSize() const;
 
       protected:
         typedef struct
@@ -86,7 +96,7 @@ namespace Anki
         //Array<u8> templateImage;
         s32 templateImageHeight;
         s32 templateImageWidth;
-        Quadrilateral<f32> templateQuad;
+        //Quadrilateral<f32> templateQuad;
 
         // The indexes of the detected edges
         EdgeLists templateEdges;
@@ -101,16 +111,6 @@ namespace Anki
         Transformations::PlanarTransformation_f32 transformation;
 
         bool isValid;
-
-#if defined(ANKICORETECH_EMBEDDED_USE_OPENCV) && ANKICORETECH_EMBEDDED_USE_OPENCV
-        // Allocates the returned cv::Mat on the heap
-        static cv::Mat DrawIndexes(
-          const s32 imageHeight, const s32 imageWidth,
-          const FixedLengthList<Point<s16> > &indexPoints1,
-          const FixedLengthList<Point<s16> > &indexPoints2,
-          const FixedLengthList<Point<s16> > &indexPoints3,
-          const FixedLengthList<Point<s16> > &indexPoints4);
-#endif
 
         // Find the min and max indexes of point with a given Y location
         // The list of points must be sorted in Y, from low to high

@@ -14,6 +14,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/serialize.h"
 
 #include "anki/vision/robot/fiducialMarkers.h"
+#include "anki/vision/robot/binaryTracker.h"
 
 #include <ctime>
 #include <vector>
@@ -39,6 +40,10 @@ static u8 scratchBuffer[scratchSize];
 
 void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchingSegmentLengths)
 {
+  const s32 bigHeight = 480;
+  const s32 bigWidth = 640;
+  const f32 scale = bigWidth / 320.0f;
+
   MemoryStack scratch(scratchBuffer, scratchSize, Flags::Buffer(false, true, false));
 
   // Used for displaying detected fiducials
@@ -46,7 +51,7 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
   lastImage.setTo(0);
 
   bool isTracking = false;
-  Transformations::PlanarTransformation_f32 lastPlanarTransformation(Transformations::TRANSFORM_PROJECTIVE, scratch);
+  Transformations::PlanarTransformation_f32 lastPlanarTransformation = Transformations::PlanarTransformation_f32(); //(Transformations::TRANSFORM_PROJECTIVE, scratch);
 
   f32 benchmarkTimes[2] = {-1.0f, -1.0f};
 
@@ -87,12 +92,13 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
       dataSegment += SerializedBuffer::EncodedBasicTypeBuffer::CODE_SIZE * sizeof(u32);
       const s32 remainingDataLength = dataLength - SerializedBuffer::EncodedBasicTypeBuffer::CODE_SIZE * sizeof(u32);
 
-      u8 size;
+      u16 size;
+      bool isBasicType;
       bool isInteger;
       bool isSigned;
       bool isFloat;
       s32 numElements;
-      SerializedBuffer::DecodeBasicTypeBuffer(code, size, isInteger, isSigned, isFloat, numElements);
+      SerializedBuffer::DecodeBasicTypeBuffer(code, size, isBasicType, isInteger, isSigned, isFloat, numElements);
 
       // Hack to detect a benchmarking pair
       if(isFloat && size==4 && numElements==2) {
@@ -120,11 +126,12 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
       s32 width;
       s32 stride;
       Flags::Buffer flags;
-      u8 basicType_size;
+      u16 basicType_size;
+      bool basicType_isBasicType;
       bool basicType_isInteger;
       bool basicType_isSigned;
       bool basicType_isFloat;
-      SerializedBuffer::DecodeArrayType(code, height, width, stride, flags, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat);
+      SerializedBuffer::DecodeArrayType(code, height, width, stride, flags, basicType_size, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat);
 
       //template<typename Type> static Result DeserializeArray(const void * data, const s32 dataLength, Array<Type> &out, MemoryStack &memory);
       if(basicType_size==1 && basicType_isInteger==1 && basicType_isSigned==0 && basicType_isFloat==0) {
@@ -160,11 +167,11 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
       //printf(customTypeName);
 
       dataSegment += SerializedBuffer::CUSTOM_TYPE_STRING_LENGTH;
-      const s32 remainingDataLength = dataLength - SerializedBuffer::EncodedArray::CODE_SIZE * sizeof(u32);
+      s32 remainingDataLength = dataLength - SerializedBuffer::EncodedArray::CODE_SIZE * sizeof(u32);
 
       if(strcmp(customTypeName, "VisionMarker") == 0) {
         VisionMarker marker;
-        marker.Deserialize(dataSegment, remainingDataLength);
+        marker.Deserialize(reinterpret_cast<void**>(&dataSegment), remainingDataLength);
 
         if(!aMessageAlreadyPrinted) {
           time_t rawtime;
@@ -180,10 +187,29 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
         visionMarkerList.push_back(marker);
         isTracking = false;
       } else if(strcmp(reinterpret_cast<const char*>(customTypeName), "PlanarTransformation_f32") == 0) {
-        lastPlanarTransformation.Deserialize(dataSegment, remainingDataLength);
-        lastPlanarTransformation.Print();
+        lastPlanarTransformation.Deserialize(reinterpret_cast<void**>(&dataSegment), remainingDataLength, scratch);
+        //lastPlanarTransformation.Print();
         isTracking = true;
+      } else if(strcmp(reinterpret_cast<const char*>(customTypeName), "BinaryTracker") == 0) {
+        PUSH_MEMORY_STACK(scratch);
+        TemplateTracker::BinaryTracker bt;
+        bt.Deserialize(reinterpret_cast<void**>(&dataSegment), remainingDataLength, scratch);
+        bt.ShowTemplate("BinaryTracker Template", false, false);
+      } else if(strcmp(reinterpret_cast<const char*>(customTypeName), "EdgeLists") == 0) {
+        PUSH_MEMORY_STACK(scratch);
+        EdgeLists edges;
+        edges.Deserialize(reinterpret_cast<void**>(&dataSegment), remainingDataLength, scratch);
+
+        cv::Mat toShow = edges.DrawIndexes();
+
+        cv::Mat toShowLarge(bigHeight, bigWidth, CV_8UC3);
+
+        cv::resize(toShow, toShowLarge, toShowLarge.size(), 0, 0, cv::INTER_NEAREST);
+
+        cv::imshow("Detected Binary Edges", toShowLarge);
       }
+    } else {
+      printf("Unknown Type %d\n", type);
     }
 
     //printf("\n");
@@ -194,8 +220,8 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
   }
 
   if(lastImage.rows > 0) {
-    cv::Mat largeLastImage(240, 320, CV_8U);
-    cv::Mat toShowImage(240, 320, CV_8UC3);
+    cv::Mat largeLastImage(bigHeight, bigWidth, CV_8U);
+    cv::Mat toShowImage(bigHeight, bigWidth, CV_8UC3);
 
     cv::resize(lastImage, largeLastImage, largeLastImage.size(), 0, 0, cv::INTER_NEAREST);
 
@@ -207,20 +233,20 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
 
     if(frameNumber%2 == 0) {
       for(s32 y=0; y<blinkerWidth; y++) {
-        for(s32 x=320-blinkerWidth; x<320; x++) {
+        for(s32 x=bigWidth-blinkerWidth; x<bigWidth; x++) {
           largeLastImage.at<u8>(y,x) = 0;
         }
       }
 
       for(s32 y=1; y<blinkerWidth-1; y++) {
-        for(s32 x=321-blinkerWidth; x<319; x++) {
+        for(s32 x=bigWidth+1-blinkerWidth; x<(bigWidth-1); x++) {
           largeLastImage.at<u8>(y,x) = 255;
         }
       }
       //largeLastImage.at<u8>(blinkerHalfWidth,320-blinkerHalfWidth) = 255;
     } else {
       for(s32 y=0; y<blinkerWidth; y++) {
-        for(s32 x=320-blinkerWidth; x<320; x++) {
+        for(s32 x=bigWidth-blinkerWidth; x<bigWidth; x++) {
           largeLastImage.at<u8>(y,x) = 0;
         }
       }
@@ -241,7 +267,13 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
     // Print FPS
     if(benchmarkTimes[0] > 0.0f) {
       char benchmarkBuffer[1024];
-      snprintf(benchmarkBuffer, 1024, "Total:%dfps Algorithms:%dfps", RoundS32(1.0f/benchmarkTimes[1]), RoundS32(1.0f/benchmarkTimes[0]));
+
+      static f32 lastTime;
+      const f32 curTime = GetTime();
+      const f32 receivedDelta = curTime - lastTime;
+      lastTime = GetTime();
+
+      snprintf(benchmarkBuffer, 1024, "Total:%dfps Algorithms:%dfps Received:%dfps", RoundS32(1.0f/benchmarkTimes[1]), RoundS32(1.0f/benchmarkTimes[0]), RoundS32(1.0f/receivedDelta));
 
       cv::putText(toShowImage, benchmarkBuffer, cv::Point(5,15), cv::FONT_HERSHEY_PLAIN, 1.0, cv::Scalar(0,255,0));
     }
@@ -257,16 +289,16 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
       for(s32 iCorner=0; iCorner<4; iCorner++) {
         const s32 point1Index = iCorner;
         const s32 point2Index = (iCorner+1) % 4;
-        const cv::Point pt1(static_cast<s32>(sortedCorners[point1Index].x), static_cast<s32>(sortedCorners[point1Index].y));
-        const cv::Point pt2(static_cast<s32>(sortedCorners[point2Index].x), static_cast<s32>(sortedCorners[point2Index].y));
+        const cv::Point pt1(static_cast<s32>(sortedCorners[point1Index].x*scale), static_cast<s32>(sortedCorners[point1Index].y*scale));
+        const cv::Point pt2(static_cast<s32>(sortedCorners[point2Index].x*scale), static_cast<s32>(sortedCorners[point2Index].y*scale));
         cv::line(toShowImage, pt1, pt2, boxColor, 2);
       }
 
       const Point<f32> center = sortedCorners.ComputeCenter();
-      const s32 textX = static_cast<s32>(MIN(MIN(MIN(sortedCorners.corners[0].x, sortedCorners.corners[1].x), sortedCorners.corners[2].x), sortedCorners.corners[3].x));
-      const cv::Point textStartPoint(textX, static_cast<s32>(center.y));
+      const s32 textX = RoundS32(MIN(MIN(MIN(sortedCorners.corners[0].x*scale, sortedCorners.corners[1].x*scale), sortedCorners.corners[2].x*scale), sortedCorners.corners[3].x*scale));
+      const cv::Point textStartPoint(textX, RoundS32(center.y*scale));
 
-      cv::putText(toShowImage, "Tracking", textStartPoint, cv::FONT_HERSHEY_PLAIN, 0.5, textColor);
+      cv::putText(toShowImage, "Tracking", textStartPoint, cv::FONT_HERSHEY_PLAIN, 1.0, textColor);
     } else { // if(isTracking)
       // Draw markers
       for(s32 iMarker=0; iMarker<static_cast<s32>(visionMarkerList.size()); iMarker++) {
@@ -284,8 +316,8 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
         for(s32 iCorner=0; iCorner<4; iCorner++) {
           const s32 point1Index = iCorner;
           const s32 point2Index = (iCorner+1) % 4;
-          const cv::Point pt1(sortedCorners[point1Index].x, sortedCorners[point1Index].y);
-          const cv::Point pt2(sortedCorners[point2Index].x, sortedCorners[point2Index].y);
+          const cv::Point pt1(RoundS32(sortedCorners[point1Index].x*scale), RoundS32(sortedCorners[point1Index].y*scale));
+          const cv::Point pt2(RoundS32(sortedCorners[point2Index].x*scale), RoundS32(sortedCorners[point2Index].y*scale));
           cv::line(toShowImage, pt1, pt2, boxColor, 2);
         }
 
@@ -297,10 +329,10 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
         }
 
         const Point<s16> center = visionMarkerList[iMarker].corners.ComputeCenter();
-        const s32 textX = MIN(MIN(MIN(visionMarkerList[iMarker].corners[0].x, visionMarkerList[iMarker].corners[1].x), visionMarkerList[iMarker].corners[2].x), visionMarkerList[iMarker].corners[3].x);
-        const cv::Point textStartPoint(textX, center.y);
+        const s32 textX = RoundS32(MIN(MIN(MIN(visionMarkerList[iMarker].corners[0].x*scale, visionMarkerList[iMarker].corners[1].x*scale), visionMarkerList[iMarker].corners[2].x*scale), visionMarkerList[iMarker].corners[3].x*scale));
+        const cv::Point textStartPoint(textX, RoundS32(center.y*scale));
 
-        cv::putText(toShowImage, typeString, textStartPoint, cv::FONT_HERSHEY_PLAIN, 0.5, textColor);
+        cv::putText(toShowImage, typeString, textStartPoint, cv::FONT_HERSHEY_PLAIN, 1.0, textColor);
       }
     } // if(isTracking) ... else
 

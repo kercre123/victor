@@ -42,6 +42,8 @@ namespace Anki
                             f32 final_straight_approach_length = 0,
                             f32 *path_length = 0);
       
+      // shortestDistanceToPath_mm: Shortest distance from robot to path
+      // radDiff: The amount that the robot must turn in order to be aligned with the tangent of the closest point on the path.
       bool GetPathError(f32 &shortestDistanceToPath_mm, f32 &radDiff);
       
       bool StartPathTraversal(void);

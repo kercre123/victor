@@ -579,7 +579,7 @@ namespace Anki
       } else {
         this->data = reinterpret_cast<Type*>( reinterpret_cast<char*>(rawData) + extraAlignmentBytes );
       }
-      
+
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
       cvMatMirror = cv::Mat_<Type>(size[0], size[1], data, stride);
 #endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV

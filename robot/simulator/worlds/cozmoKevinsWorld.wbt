@@ -1,4 +1,4 @@
-#VRML_SIM V6.0 utf8
+#VRML_SIM V7.3.0 utf8
 WorldInfo {
   info [
     "Cozmo test world. All rights reserved. Copyright (c) Anki, Inc."
@@ -7,9 +7,9 @@ WorldInfo {
     "Date: 02 Aug 2013"
     ""
   ]
+  gravity 0 0 -9.81
   physics "cozmo_physics"
   basicTimeStep 5
-  gravity 0 0 -9.81
   contactProperties [
     DEF FLOOR_FRONTWHEEL ContactProperties {
       material1 "cmat_floor"
@@ -77,13 +77,10 @@ WorldInfo {
       bounce 0.001
     }
   ]
-
 }
-
 Viewpoint {
-  fieldOfView 0.785398
-  orientation 0.225533 0.521621 0.822828 2.45799
-  position 1.37409 1.36507 0.903049
+  orientation 9.30526e-05 0.029996 0.99955 3.1354
+  position 0.0519597 0.0411428 0.825851
 }
 Background {
   skyColor [
@@ -92,27 +89,63 @@ Background {
 }
 DirectionalLight {
   ambientIntensity 0.75
-  direction -1 -1 -2
+  direction 1 1 -2
   castShadows TRUE
 }
-
 CozmoMat {
-
 }
-
 XYaxesDisplay {
-
 }
-
+Block1x1 {
+  translation 0.15 0.01 0.022
+  facemarkerFront [
+    "textures/fire.png"
+  ]
+  facemarkerBack [
+    "textures/fire.png"
+  ]
+  facemarkerLeft [
+    "textures/fire.png"
+  ]
+  facemarkerRight [
+    "textures/fire.png"
+  ]
+  facemarkerTop [
+    "textures/fire.png"
+  ]
+  facemarkerBottom [
+    "textures/fire.png"
+  ]
+}
+Block1x1 {
+  translation 0.2 0.2 0.022
+  facemarkerFront [
+    "textures/squarePlusCorners.png"
+  ]
+  facemarkerBack [
+    "textures/squarePlusCorners.png"
+  ]
+  facemarkerLeft [
+    "textures/squarePlusCorners.png"
+  ]
+  facemarkerRight [
+    "textures/squarePlusCorners.png"
+  ]
+  facemarkerTop [
+    "textures/squarePlusCorners.png"
+  ]
+  facemarkerBottom [
+    "textures/squarePlusCorners.png"
+  ]
+}
 Block2x1 {
   name "Block075_1"
   translation 0 -0.2 0.022
-  rotation 0 0 1 0
   blockColor 0.5 0.1 0.75
-  facemarkerTop [
+  facemarkerFront [
     "textures/bullseye.png"
   ]
-  facemarkerBottom [
+  facemarkerBack [
     "textures/bullseye.png"
   ]
   facemarkerLeft [
@@ -121,33 +154,20 @@ Block2x1 {
   facemarkerRight [
     "textures/bullseye.png"
   ]
-  facemarkerFront [
+  facemarkerTop [
     "textures/bullseye.png"
   ]
-  facemarkerBack [
+  facemarkerBottom [
     "textures/bullseye.png"
   ]
 }
-
 DEF Cozmo_1 CozmoBot {
   name "CozmoBot_1"
-  rotation 0 0 1 -1.5708
-  cameraWidth 320
-  cameraHeight 240
-#  controller "cozmo_matlab"
-  controller "cozmo_c_controller"
+  controller ""
 }
-
-
 RobotAdvertisementService {
-
 }
-
 DEF WorldComms BlockWorldComms {
-
 }
-
-#OverlayDisplay {
-#
-#}
-
+CozmoVizDisplay{
+}

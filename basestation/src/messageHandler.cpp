@@ -13,6 +13,7 @@
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "messageHandler.h"
+#include "vizManager.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -247,6 +248,13 @@ namespace Anki {
       return EXIT_SUCCESS;
     }
     
+    // For visualization of docking error signal
+    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageDockingErrorSignal const& msg)
+    {
+      VizManager::getInstance()->SetDockingError(msg.x_distErr, msg.y_horErr, msg.angleErr);
+      return EXIT_SUCCESS;
+    }
+    
     
     // STUBS:
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageClearPath const&){return EXIT_FAILURE;}
@@ -261,7 +269,6 @@ namespace Anki {
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageAppendPathSegmentArc const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageExecutePath const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageDockWithBlock const&){return EXIT_FAILURE;}
-    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageDockingErrorSignal const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageAppendPathSegmentLine const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageBlockMarkerObserved const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageMatCameraCalibration const&){return EXIT_FAILURE;}

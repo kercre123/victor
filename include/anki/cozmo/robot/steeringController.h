@@ -48,6 +48,10 @@ namespace Anki {
     //Heading tracking gain K1, Crosstrack approach rate K2
     const float DEFAULT_STEERING_K1 = 0.0001f;
     const float DEFAULT_STEERING_K2 = 10.f; //5.0f; //2.0f
+
+    // Set maximum rotation speed
+    void SetRotationSpeedLimit(f32 rad_per_s);
+    void DisableRotationSpeedLimit();
     
     //This manages at a high level what the steering controller needs to do (steer, use open loop, etc.)
     void Manage();

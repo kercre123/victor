@@ -1,26 +1,33 @@
 #include <cstdlib>
-
+#include "anki/messaging/shared/UdpClient.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/VizStructs.h"
 #include "sim_viz.h"
-
-#include <webots/Supervisor.hpp>
 
 namespace Anki {
   namespace Cozmo {
     
     namespace Sim {
-      extern webots::Supervisor* CozmoBot;
 
       namespace Viz {
         
         namespace {
           // For communications with the cozmo_physics plugin used for drawing
-          // paths with OpenGL.  Note that plugin comms uses channel 0.
-          webots::Emitter *physicsComms_ = Sim::CozmoBot->getEmitter("cozmo_physics_comms");
+          // paths with OpenGL.
+          UdpClient physicsClient_;
           
           static const u32 MAX_SIZE_SEND_BUF = 128;
           char sendBuf[MAX_SIZE_SEND_BUF];
+        }
+        
+        void Init()
+        {
+          physicsClient_.Connect(Anki::Cozmo::HAL::GetLocalIP(), Anki::Cozmo::VIZ_SERVER_PORT);
+        }
+        
+        s32 SendMsg(const char* buf, u32 size)
+        {
+          return physicsClient_.Send(buf, size);
         }
         
         void ErasePath(s32 path_id)
@@ -30,7 +37,7 @@ namespace Anki {
           
           sendBuf[0] = VizErasePath_ID;
           memcpy(sendBuf + 1, &msg, sizeof(msg));
-          physicsComms_->send(sendBuf, sizeof(msg)+1);
+          SendMsg(sendBuf, sizeof(msg)+1);
           
           //PRINT("ERASE PATH: %d bytes\n", (int)sizeof(msg) + 1);
 
@@ -49,7 +56,7 @@ namespace Anki {
           
           sendBuf[0] = VizAppendPathSegmentLine_ID;
           memcpy(sendBuf + 1, &msg, sizeof(msg));
-          physicsComms_->send(sendBuf, sizeof(msg)+1);
+          SendMsg(sendBuf, sizeof(msg)+1);
           
           //PRINT("APPEND LINE: %d bytes\n", (int)sizeof(msg) + 1);
         }
@@ -66,7 +73,7 @@ namespace Anki {
           
           sendBuf[0] = VizAppendPathSegmentArc_ID;
           memcpy(sendBuf + 1, &msg, sizeof(msg));
-          physicsComms_->send(sendBuf, sizeof(msg)+1);
+          SendMsg(sendBuf, sizeof(msg)+1);
           
           //PRINT("APPEND ARC: %d bytes\n", (int)sizeof(msg) + 1);
         }
@@ -100,6 +107,21 @@ namespace Anki {
 
         }
 
+        void SetLabel(s32 label_id, const char* format, ...)
+        {
+          VizSetLabel msg;
+          msg.labelID = label_id;
+          msg.colorID = 0xffffff;
+          
+          va_list argptr;
+          va_start(argptr, format);
+          vsnprintf((char*)msg.text, sizeof(msg.text), format, argptr);
+          va_end(argptr);
+
+          sendBuf[0] = VizSetLabel_ID;
+          memcpy(sendBuf + 1, &msg, sizeof(msg));
+          SendMsg(sendBuf, sizeof(msg)+1);
+        }
         
         
       } // namespace Viz

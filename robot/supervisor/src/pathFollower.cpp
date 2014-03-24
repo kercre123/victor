@@ -181,7 +181,9 @@ namespace Anki
         // Set first path segment
         if (path_.GetNumSegments() > 0) {
           
+#if(DEBUG_PATH_FOLLOWER)
           path_.PrintPath();
+#endif
           
           if (!path_.CheckContinuity(CONTINUITY_TOL_MM2)) {
             PRINT("ERROR: Path is discontinuous\n");
@@ -230,19 +232,38 @@ namespace Anki
       Planning::SegmentRangeStatus ProcessPathSegment(f32 &shortestDistanceToPath_mm, f32 &radDiff)
       {
         // Get current robot pose
-        f32 x, y;
+        f32 x, y, lookaheadX, lookaheadY;
         Radians angle;
         Localization::GetCurrentMatPose(x, y, angle);
         
+        lookaheadX = x;
+        lookaheadY = y;
 
+        bool checkRobotOriginStatus = false;
+        Planning::PathSegmentType currType = path_[currPathSegment_].GetType();
+        
         // Compute lookahead position
-        if (LOOK_AHEAD_DIST_MM != 0) {
-          x += LOOK_AHEAD_DIST_MM * cosf(angle.ToFloat());
-          y += LOOK_AHEAD_DIST_MM * sinf(angle.ToFloat());
+        if (LOOK_AHEAD_DIST_MM != 0 && (currType == Planning::PST_LINE || currType == Planning::PST_ARC) ) {
+          lookaheadX += LOOK_AHEAD_DIST_MM * cosf(angle.ToFloat());
+          lookaheadY += LOOK_AHEAD_DIST_MM * sinf(angle.ToFloat());
+          checkRobotOriginStatus = true;
         }
         
-      
-        return path_[currPathSegment_].GetDistToSegment(x,y,angle.ToFloat(),shortestDistanceToPath_mm,radDiff);
+        Planning::SegmentRangeStatus status = path_[currPathSegment_].GetDistToSegment(lookaheadX,lookaheadY,angle.ToFloat(),shortestDistanceToPath_mm,radDiff);
+        
+        // If this is the last piece or the next piece is a point turn
+        // check if the robot origin is out of range.
+        if (status == Planning::OOR_NEAR_END &&
+            checkRobotOriginStatus &&
+            ((currPathSegment_ == path_.GetNumSegments() - 1)
+             || (path_[currPathSegment_+1].GetType() == Planning::PST_POINT_TURN))
+            ) {
+          
+          f32 junk_mm, junk_rad;
+          status = path_[currPathSegment_].GetDistToSegment(x,y,angle.ToFloat(),junk_mm, junk_rad);
+        }
+        
+        return status;
       }
       
       

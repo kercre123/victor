@@ -70,7 +70,14 @@ namespace Anki
       {
       }
 
-      LucasKanadeTracker_Fast::LucasKanadeTracker_Fast(const Transformations::TransformType maxSupportedTransformType, const Array<u8> &templateImage, const Quadrilateral<f32> &templateQuad, const s32 numPyramidLevels, const Transformations::TransformType transformType, MemoryStack &memory)
+      LucasKanadeTracker_Fast::LucasKanadeTracker_Fast(
+        const Transformations::TransformType maxSupportedTransformType,
+        const Array<u8> &templateImage,
+        const Quadrilateral<f32> &templateQuad,
+        const f32 scaleTemplateRegionPercent,
+        const s32 numPyramidLevels,
+        const Transformations::TransformType transformType,
+        MemoryStack &memory)
         : maxSupportedTransformType(maxSupportedTransformType), numPyramidLevels(numPyramidLevels), templateImageHeight(templateImage.get_size(0)), templateImageWidth(templateImage.get_size(1)), isValid(false)
       {
         Result lastResult;
@@ -93,7 +100,7 @@ namespace Anki
         AnkiConditionalErrorAndReturn(((1<<initialImagePowerS32)*templateImage.get_size(1)) == BASE_IMAGE_WIDTH,
           "LucasKanadeTracker_Fast::LucasKanadeTracker_Fast", "The templateImage must be a power of two smaller than BASE_IMAGE_WIDTH");
 
-        templateRegion = templateQuad.ComputeBoundingRectangle();
+        templateRegion = templateQuad.ComputeBoundingRectangle().ComputeScaledRectangle(scaleTemplateRegionPercent);
 
         templateRegion.left /= initialImageScaleF32;
         templateRegion.right /= initialImageScaleF32;
@@ -211,6 +218,147 @@ namespace Anki
         return this->transformation.Update(update, scale, scratch, updateType);
       }
 
+      Result LucasKanadeTracker_Fast::VerifyTrack_Projective(
+        const Array<u8> &nextImage,
+        const u8 verify_maxPixelDifference,
+        s32 &verify_meanAbsoluteDifference,
+        s32 &verify_numInBounds,
+        s32 &verify_numSimilarPixels,
+        MemoryStack scratch) const
+      {
+        // This method is heavily based on Interp2_Projective
+        // The call would be like: Interp2_Projective<u8,u8>(nextImage, originalCoordinates, interpolationHomography, centerOffset, nextImageTransformed2d, INTERPOLATE_LINEAR, 0);
+
+        const s32 verify_maxPixelDifferenceS32 = verify_maxPixelDifference;
+
+        const s32 nextImageHeight = nextImage.get_size(0);
+        const s32 nextImageWidth = nextImage.get_size(1);
+
+        const s32 whichScale = 1;
+        const f32 scale = static_cast<f32>(1 << whichScale);
+
+        const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / nextImageWidth;
+        const f32 initialImageScaleF32 = static_cast<f32>(initialImageScaleS32);
+
+        //const f32 oneOverTwoFiftyFive = 1.0f / 255.0f;
+        //const f32 scaleOverFiveTen = scale / (2.0f*255.0f);
+
+        //const Point<f32>& centerOffset = this->transformation.get_centerOffset();
+        const Point<f32> centerOffsetScaled = this->transformation.get_centerOffset(initialImageScaleF32);
+
+        // Initialize with some very extreme coordinates
+        FixedLengthList<Quadrilateral<f32> > previousCorners(NUM_PREVIOUS_QUADS_TO_COMPARE, scratch);
+
+        for(s32 i=0; i<NUM_PREVIOUS_QUADS_TO_COMPARE; i++) {
+          previousCorners[i] = Quadrilateral<f32>(Point<f32>(-1e10f,-1e10f), Point<f32>(-1e10f,-1e10f), Point<f32>(-1e10f,-1e10f), Point<f32>(-1e10f,-1e10f));
+        }
+
+        Meshgrid<f32> originalCoordinates(
+          Linspace(-this->templateRegionWidth/2.0f, this->templateRegionWidth/2.0f, static_cast<s32>(FLT_FLOOR(this->templateRegionWidth/scale))),
+          Linspace(-this->templateRegionHeight/2.0f, this->templateRegionHeight/2.0f, static_cast<s32>(FLT_FLOOR(this->templateRegionHeight/scale))));
+
+        // Unused, remove?
+        //const s32 outHeight = originalCoordinates.get_yGridVector().get_size();
+        //const s32 outWidth = originalCoordinates.get_xGridVector().get_size();
+
+        const f32 xyReferenceMin = 0.0f;
+        const f32 xReferenceMax = static_cast<f32>(nextImageWidth) - 1.0f;
+        const f32 yReferenceMax = static_cast<f32>(nextImageHeight) - 1.0f;
+
+        const LinearSequence<f32> &yGridVector = originalCoordinates.get_yGridVector();
+        const LinearSequence<f32> &xGridVector = originalCoordinates.get_xGridVector();
+
+        const f32 yGridStart = yGridVector.get_start();
+        const f32 xGridStart = xGridVector.get_start();
+
+        const f32 yGridDelta = yGridVector.get_increment();
+        const f32 xGridDelta = xGridVector.get_increment();
+
+        const s32 yIterationMax = yGridVector.get_size();
+        const s32 xIterationMax = xGridVector.get_size();
+
+        const Array<f32> &homography = this->transformation.get_homography();
+        const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2] / initialImageScaleF32;
+        const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2] / initialImageScaleF32;
+        const f32 h20 = homography[2][0] * initialImageScaleF32; const f32 h21 = homography[2][1] * initialImageScaleF32; //const f32 h22 = 1.0f;
+
+        verify_numInBounds = 0;
+        verify_numSimilarPixels = 0;
+        s32 totalGrayvalueDifference = 0;
+
+        // TODO: make the x and y limits from 1 to end-2
+
+        f32 yOriginal = yGridStart;
+        for(s32 y=0; y<yIterationMax; y++) {
+          const u8 * restrict pTemplateImage = this->templateImagePyramid[whichScale].Pointer(y, 0);
+
+          const s16 * restrict pTemplateImageXGradient = this->templateImageXGradientPyramid[whichScale].Pointer(y, 0);
+          const s16 * restrict pTemplateImageYGradient = this->templateImageYGradientPyramid[whichScale].Pointer(y, 0);
+
+          f32 xOriginal = xGridStart;
+
+          for(s32 x=0; x<xIterationMax; x++) {
+            // TODO: These two could be strength reduced
+            const f32 xTransformedRaw = h00*xOriginal + h01*yOriginal + h02;
+            const f32 yTransformedRaw = h10*xOriginal + h11*yOriginal + h12;
+
+            const f32 normalization = h20*xOriginal + h21*yOriginal + 1.0f;
+
+            const f32 xTransformed = (xTransformedRaw / normalization) + centerOffsetScaled.x;
+            const f32 yTransformed = (yTransformedRaw / normalization) + centerOffsetScaled.y;
+
+            xOriginal += xGridDelta;
+
+            const f32 x0 = FLT_FLOOR(xTransformed);
+            const f32 x1 = ceilf(xTransformed); // x0 + 1.0f;
+
+            const f32 y0 = FLT_FLOOR(yTransformed);
+            const f32 y1 = ceilf(yTransformed); // y0 + 1.0f;
+
+            // If out of bounds, continue
+            if(x0 < xyReferenceMin || x1 > xReferenceMax || y0 < xyReferenceMin || y1 > yReferenceMax) {
+              continue;
+            }
+
+            verify_numInBounds++;
+
+            const f32 alphaX = xTransformed - x0;
+            const f32 alphaXinverse = 1 - alphaX;
+
+            const f32 alphaY = yTransformed - y0;
+            const f32 alphaYinverse = 1.0f - alphaY;
+
+            const s32 y0S32 = static_cast<s32>(Round(y0));
+            const s32 y1S32 = static_cast<s32>(Round(y1));
+            const s32 x0S32 = static_cast<s32>(Round(x0));
+
+            const u8 * restrict pReference_y0 = nextImage.Pointer(y0S32, x0S32);
+            const u8 * restrict pReference_y1 = nextImage.Pointer(y1S32, x0S32);
+
+            const f32 pixelTL = *pReference_y0;
+            const f32 pixelTR = *(pReference_y0+1);
+            const f32 pixelBL = *pReference_y1;
+            const f32 pixelBR = *(pReference_y1+1);
+
+            const s32 interpolatedPixelValue = RoundS32(InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse));
+            const s32 templatePixelValue = pTemplateImage[x];
+            const s32 grayvalueDifference = ABS(interpolatedPixelValue - templatePixelValue);
+
+            totalGrayvalueDifference += grayvalueDifference;
+
+            if(grayvalueDifference <= verify_maxPixelDifferenceS32) {
+              verify_numSimilarPixels++;
+            }
+          } // for(s32 x=0; x<xIterationMax; x++)
+
+          yOriginal += yGridDelta;
+        } // for(s32 y=0; y<yIterationMax; y++)
+
+        verify_meanAbsoluteDifference = totalGrayvalueDifference / verify_numInBounds;
+
+        return RESULT_OK;
+      } // Result LucasKanadeTracker_Projective::IterativelyRefineTrack_Projective()
+
       Result LucasKanadeTracker_Fast::set_transformation(const Transformations::PlanarTransformation_f32 &transformation)
       {
         Result lastResult;
@@ -233,6 +381,11 @@ namespace Anki
       Transformations::PlanarTransformation_f32 LucasKanadeTracker_Fast::get_transformation() const
       {
         return transformation;
+      }
+
+      s32 LucasKanadeTracker_Fast::get_numTemplatePixels() const
+      {
+        return RoundS32(templateRegionHeight * templateRegionWidth);
       }
     } // namespace TemplateTracker
   } // namespace Embedded

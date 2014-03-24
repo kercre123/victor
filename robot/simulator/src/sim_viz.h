@@ -13,7 +13,9 @@ namespace Anki {
     namespace Sim {
 
       namespace Viz {
-                
+
+        void Init();
+        
         void ErasePath(s32 path_id);
         
         void AppendPathSegmentLine(s32 path_id,
@@ -25,6 +27,8 @@ namespace Anki {
                                   f32 radius_mm, f32 startRad, f32 sweepRad);
         
         void DrawPath(s32 path_id, const Planning::Path& p);
+        
+        void SetLabel(s32 label_id, const char* format, ...);
         
       } // namespace Viz
       
