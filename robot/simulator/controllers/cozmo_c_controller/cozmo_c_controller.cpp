@@ -17,7 +17,7 @@
 #include "testModeController.h"
 #include "keyboardController.h"
 #include "sim_overlayDisplay.h"
-
+#include "sim_viz.h"
 #include "anki/cozmo/robot/hal.h"
 
 
@@ -41,6 +41,7 @@ int main(int argc, char **argv)
 #endif
   
   Sim::OverlayDisplay::Init();
+  Sim::Viz::Init();
   
   while(Robot::step_MainExecution() == EXIT_SUCCESS)
   {

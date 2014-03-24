@@ -112,16 +112,6 @@ namespace Anki
 
         bool isValid;
 
-#if defined(ANKICORETECH_EMBEDDED_USE_OPENCV) && ANKICORETECH_EMBEDDED_USE_OPENCV
-        // Allocates the returned cv::Mat on the heap
-        static cv::Mat DrawIndexes(
-          const s32 imageHeight, const s32 imageWidth,
-          const FixedLengthList<Point<s16> > &indexPoints1,
-          const FixedLengthList<Point<s16> > &indexPoints2,
-          const FixedLengthList<Point<s16> > &indexPoints3,
-          const FixedLengthList<Point<s16> > &indexPoints4);
-#endif
-
         // Find the min and max indexes of point with a given Y location
         // The list of points must be sorted in Y, from low to high
         static Result ComputeIndexLimitsVertical(const FixedLengthList<Point<s16> > &points, Array<s32> &yStartIndexes);

@@ -273,7 +273,9 @@ namespace Anki {
         
         if (FLT_NEAR(angleError_,0.f)) {
           inPosition_ = true;
+#if(DEBUG_LIFT_CONTROLLER)
           PRINT("Lift: Already at desired position\n");
+#endif          
           return;
         }
 

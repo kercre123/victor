@@ -616,6 +616,8 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
 
   const f32 scaleTemplateRegionPercent = 1.05f;
 
+  const u8 verify_maxPixelDifference = 30;
+
   // TODO: add check that images were loaded correctly
 
   //MemoryStack scratch0(&ddrBuffer[0], 80*60*2 + 256);
@@ -652,10 +654,17 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
 
     const f64 time1 = GetTime();
 
-    bool converged = false;
-    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, converged, scratch1) == RESULT_OK);
+    bool verify_converged = false;
+    s32 verify_meanAbsoluteDifference;
+    s32 verify_numInBounds;
+    s32 verify_numSimilarPixels;
 
-    ASSERT_TRUE(converged == true);
+    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, verify_maxPixelDifference, verify_converged, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels, scratch1) == RESULT_OK);
+
+    ASSERT_TRUE(verify_converged == true);
+    ASSERT_TRUE(verify_meanAbsoluteDifference == 10);
+    ASSERT_TRUE(verify_numInBounds == 121);
+    ASSERT_TRUE(verify_numSimilarPixels == 115);
 
     const f64 time2 = GetTime();
 
@@ -686,9 +695,17 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
 
     const f64 time1 = GetTime();
 
-    bool converged = false;
-    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, converged, scratch1) == RESULT_OK);
-    ASSERT_TRUE(converged == true);
+    bool verify_converged = false;
+    s32 verify_meanAbsoluteDifference;
+    s32 verify_numInBounds;
+    s32 verify_numSimilarPixels;
+
+    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, verify_maxPixelDifference, verify_converged, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels, scratch1) == RESULT_OK);
+
+    ASSERT_TRUE(verify_converged == true);
+    ASSERT_TRUE(verify_meanAbsoluteDifference == 8);
+    ASSERT_TRUE(verify_numInBounds == 121);
+    ASSERT_TRUE(verify_numSimilarPixels == 119);
 
     const f64 time2 = GetTime();
 
@@ -720,10 +737,17 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
 
     const f64 time1 = GetTime();
 
-    bool converged = false;
-    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, converged, scratch1) == RESULT_OK);
+    bool verify_converged = false;
+    s32 verify_meanAbsoluteDifference;
+    s32 verify_numInBounds;
+    s32 verify_numSimilarPixels;
 
-    ASSERT_TRUE(converged == true);
+    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, verify_maxPixelDifference, verify_converged, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels, scratch1) == RESULT_OK);
+
+    ASSERT_TRUE(verify_converged == true);
+    ASSERT_TRUE(verify_meanAbsoluteDifference == 8);
+    ASSERT_TRUE(verify_numInBounds == 121);
+    ASSERT_TRUE(verify_numSimilarPixels == 119);
 
     const f64 time2 = GetTime();
 
@@ -760,6 +784,8 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
 
   const f32 scaleTemplateRegionPercent = 1.05f;
 
+  const u8 verify_maxPixelDifference = 30;
+
   // TODO: add check that images were loaded correctly
 
   MemoryStack scratch1(&offchipBuffer[0], 600000);
@@ -794,9 +820,17 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
 
     const f64 time1 = GetTime();
 
-    bool converged = false;
-    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, converged, scratch1) == RESULT_OK);
-    ASSERT_TRUE(converged == true);
+    bool verify_converged = false;
+    s32 verify_meanAbsoluteDifference;
+    s32 verify_numInBounds;
+    s32 verify_numSimilarPixels;
+
+    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, verify_maxPixelDifference, verify_converged, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels, scratch1) == RESULT_OK);
+
+    ASSERT_TRUE(verify_converged == true);
+    ASSERT_TRUE(verify_meanAbsoluteDifference == 10);
+    ASSERT_TRUE(verify_numInBounds == 121);
+    ASSERT_TRUE(verify_numSimilarPixels == 115);
 
     const f64 time2 = GetTime();
 
@@ -827,10 +861,16 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
 
     const f64 time1 = GetTime();
 
-    bool converged = false;
-    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, converged, scratch1) == RESULT_OK);
+    bool verify_converged = false;
+    s32 verify_meanAbsoluteDifference;
+    s32 verify_numInBounds;
+    s32 verify_numSimilarPixels;
+    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, verify_maxPixelDifference, verify_converged, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels, scratch1) == RESULT_OK);
 
-    ASSERT_TRUE(converged);
+    ASSERT_TRUE(verify_converged);
+    ASSERT_TRUE(verify_meanAbsoluteDifference == 8);
+    ASSERT_TRUE(verify_numInBounds == 121);
+    ASSERT_TRUE(verify_numSimilarPixels == 119);
 
     const f64 time2 = GetTime();
 
@@ -904,10 +944,10 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
 
     const f64 time1 = GetTime();
 
-    bool converged = false;
-    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, false, converged, scratch1) == RESULT_OK);
+    bool verify_converged = false;
+    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, false, verify_converged, scratch1) == RESULT_OK);
 
-    ASSERT_TRUE(converged == true);
+    ASSERT_TRUE(verify_converged == true);
 
     const f64 time2 = GetTime();
 
@@ -938,9 +978,9 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
 
     const f64 time1 = GetTime();
 
-    bool converged = false;
-    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, false, converged, scratch1) == RESULT_OK);
-    ASSERT_TRUE(converged == true);
+    bool verify_converged = false;
+    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, false, verify_converged, scratch1) == RESULT_OK);
+    ASSERT_TRUE(verify_converged == true);
 
     const f64 time2 = GetTime();
 
@@ -972,10 +1012,10 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
 
     const f64 time1 = GetTime();
 
-    bool converged = false;
-    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, true, converged, scratch1) == RESULT_OK);
+    bool verify_converged = false;
+    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, true, verify_converged, scratch1) == RESULT_OK);
 
-    ASSERT_TRUE(converged == true);
+    ASSERT_TRUE(verify_converged == true);
 
     const f64 time2 = GetTime();
 
@@ -1039,8 +1079,8 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
 //
 //  ASSERT_TRUE(tracker.IsValid());
 //
-//  bool converged = false;
-//  ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, false, converged, scratch1) == RESULT_OK);
+//  bool verify_converged = false;
+//  ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, false, verify_converged, scratch1) == RESULT_OK);
 //
 //  tracker.get_transformation().Print("Translation-only LK");
 //

@@ -1,6 +1,8 @@
 # coretech/common/basestation/src/CMakeLists.txt
 
 if(NOT WIN32)
+  add_definitions(-DCORETECH_BASESTATION)
+
   file(GLOB SOURCE_FILES *.cpp math/*.cpp utils/*.cpp ../../shared/src/*.cpp)
 
   file(GLOB HEADER_FILES 

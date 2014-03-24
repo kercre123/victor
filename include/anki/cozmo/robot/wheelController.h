@@ -32,6 +32,9 @@ namespace Anki {
     // Obtained from plotting average open loop response of both wheels.
     const f32 HIGH_OPEN_LOOP_GAIN = (1.0f - TRANSITION_POWER) / (MAX_WHEEL_SPEED_MM_S - TRANSITION_SPEED);
     
+    // open loop power = speed * HIGH_OPEN_LOOP_GAIN + HIGH_OPEN_LOOP_OFFSET
+    const f32 HIGH_OPEN_LOOP_OFFSET = TRANSITION_POWER - (TRANSITION_SPEED * HIGH_OPEN_LOOP_GAIN);
+    
     // Slope of power:speed in lower line
     const f32 LOW_OPEN_LOOP_GAIN = TRANSITION_POWER / TRANSITION_SPEED;
     

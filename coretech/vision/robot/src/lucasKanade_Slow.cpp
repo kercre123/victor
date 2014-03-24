@@ -376,17 +376,17 @@ namespace Anki
         return RESULT_OK;
       }
 
-      Result LucasKanadeTracker_Slow::UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, const bool useWeights, bool& converged, MemoryStack scratch)
+      Result LucasKanadeTracker_Slow::UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, const bool useWeights, bool& verify_converged, MemoryStack scratch)
       {
         Result lastResult;
 
         for(s32 iScale=numPyramidLevels-1; iScale>=0; iScale--) {
           // TODO: remove
           //for(s32 iScale=0; iScale>=0; iScale--) {
-          converged = false;
+          verify_converged = false;
 
           BeginBenchmark("UpdateTrack.refineTranslation");
-          if((lastResult = IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance, Transformations::TRANSFORM_TRANSLATION, useWeights, converged, scratch)) != RESULT_OK)
+          if((lastResult = IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance, Transformations::TRANSFORM_TRANSLATION, useWeights, verify_converged, scratch)) != RESULT_OK)
             return lastResult;
           EndBenchmark("UpdateTrack.refineTranslation");
 
@@ -394,7 +394,7 @@ namespace Anki
 
           if(this->transformation.get_transformType() != Transformations::TRANSFORM_TRANSLATION) {
             BeginBenchmark("UpdateTrack.refineOther");
-            if((lastResult = IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance, this->transformation.get_transformType(), useWeights, converged, scratch)) != RESULT_OK)
+            if((lastResult = IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance, this->transformation.get_transformType(), useWeights, verify_converged, scratch)) != RESULT_OK)
               return lastResult;
             EndBenchmark("UpdateTrack.refineOther");
 
@@ -405,7 +405,7 @@ namespace Anki
         return RESULT_OK;
       }
 
-      Result LucasKanadeTracker_Slow::IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const Transformations::TransformType curTransformType, const bool useWeights, bool &converged, MemoryStack scratch)
+      Result LucasKanadeTracker_Slow::IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const Transformations::TransformType curTransformType, const bool useWeights, bool &verify_converged, MemoryStack scratch)
       {
         const bool isOutColumnMajor = false; // TODO: change to false, which will probably be faster
 
@@ -479,7 +479,7 @@ namespace Anki
         } // PUSH_MEMORY_STACK(scratch);
         EndBenchmark("IterativelyRefineTrack.vectorizeXin");
 
-        converged = false;
+        verify_converged = false;
 
         for(s32 iteration=0; iteration<maxIterations; iteration++) {
           PUSH_MEMORY_STACK(scratch);
@@ -643,7 +643,7 @@ namespace Anki
           const f32 minChange = UpdatePreviousCorners(transformation, previousCorners, scratch);
 
           if(minChange < convergenceTolerance) {
-            converged = true;
+            verify_converged = true;
             return RESULT_OK;
           }
 

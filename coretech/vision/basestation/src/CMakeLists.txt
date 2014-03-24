@@ -2,6 +2,8 @@
 
 # Basestation Vision Library
 
+add_definitions(-DCORETECH_BASESTATION)
+
 file(GLOB SOURCE_FILES "*.cpp")
 
 file(GLOB HEADER_FILES 

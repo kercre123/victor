@@ -388,6 +388,11 @@ namespace Anki
       // Returns true if the message has been sent to the basestation
       bool RadioSendMessage(const Messages::ID msgID, const void *buffer, TimeStamp_t ts = HAL::GetTimeStamp());
 
+#ifdef SIMULATOR
+      // Returns pointer to IPv4 address
+      const char* const GetLocalIP();
+#endif
+      
       /////////////////////////////////////////////////////////////////////
       // POWER MANAGEMENT
       //

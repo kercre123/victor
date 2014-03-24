@@ -113,8 +113,8 @@ namespace Anki {
         Tracefloat(TRACE_VAR_ERROR_L, error_sumL_, TRACE_MASK_MOTOR_CONTROLLER);
         Tracefloat(TRACE_VAR_ERROR_R, error_sumR_, TRACE_MASK_MOTOR_CONTROLLER);
     
-        f32 dirL = desiredWheelSpeedL_ >= 0 ? -1 : 1;
-        f32 dirR = desiredWheelSpeedR_ >= 0 ? -1 : 1;
+        f32 dirL = desiredWheelSpeedL_ >= 0 ? 1 : -1;
+        f32 dirR = desiredWheelSpeedR_ >= 0 ? 1 : -1;
         
         f32 outl_ol = 0, outr_ol = 0;
         f32 outl_corr = 0, outr_corr = 0;
@@ -122,7 +122,7 @@ namespace Anki {
     
         // Compute open loop component and error correction component of wheel motor command
         if (ABS(desiredWheelSpeedL_) >= TRANSITION_SPEED) {
-          outl_ol = (desiredWheelSpeedL_ + (dirL * TRANSITION_SPEED)) * HIGH_OPEN_LOOP_GAIN + TRANSITION_POWER;
+          outl_ol = (desiredWheelSpeedL_ * HIGH_OPEN_LOOP_GAIN) + dirL * HIGH_OPEN_LOOP_OFFSET;
           outl_corr = ( (Kp_ * errorL) + (error_sumL_ * Ki_) );
         } else {
           outl_ol = (desiredWheelSpeedL_) * LOW_OPEN_LOOP_GAIN;
@@ -131,7 +131,7 @@ namespace Anki {
         outl = outl_ol + outl_corr;
 
         if (ABS(desiredWheelSpeedR_) >= TRANSITION_SPEED) {
-          outr_ol = (desiredWheelSpeedR_ + (dirR * TRANSITION_SPEED)) * HIGH_OPEN_LOOP_GAIN + TRANSITION_POWER;
+          outr_ol = (desiredWheelSpeedR_ * HIGH_OPEN_LOOP_GAIN) + dirR * HIGH_OPEN_LOOP_OFFSET;
           outr_corr = ( (Kp_ * errorR) + (error_sumR_ * Ki_) );
         } else {
           outr_ol = (desiredWheelSpeedR_) * LOW_OPEN_LOOP_GAIN;
