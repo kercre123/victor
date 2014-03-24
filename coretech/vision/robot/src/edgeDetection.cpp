@@ -11,6 +11,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/common/robot/serialize.h"
 #include "anki/common/robot/draw.h"
+#include "anki/vision/robot/histogram.h"
 
 namespace Anki
 {
@@ -449,5 +450,24 @@ namespace Anki
     }
 
 #endif // #ifdef ANKICORETECH_EMBEDDED_USE_OPENCV
+
+    u8 ComputeGrayvalueThrehold(
+      const Array<u8> &image,
+      const Rectangle<s32> &imageRegionOfInterest,
+      const s32 yIncrement,
+      const s32 xIncrement,
+      const f32 blackPercentile,
+      const f32 whitePercentile,
+      MemoryStack scratch)
+    {
+      const Histogram histogram = ComputeHistogram(image, imageRegionOfInterest, yIncrement, xIncrement, scratch);
+
+      const s32 grayvalueBlack = ComputePercentile(histogram, blackPercentile);
+      const s32 grayvalueWhite = ComputePercentile(histogram, whitePercentile);
+
+      const u8 grayvalueThreshold = static_cast<u8>( (grayvalueBlack + grayvalueWhite) / 2 );
+
+      return grayvalueThreshold;
+    }
   } // namespace Embedded
 } // namespace Anki

@@ -74,11 +74,16 @@ namespace Anki
       BinaryTracker::BinaryTracker(
         const Array<u8> &templateImage,
         const Quadrilateral<f32> &templateQuad,
-        const f32 scaleTemplateRegionPercent,
-        const u8 edgeDetection_grayvalueThreshold,
-        const s32 edgeDetection_minComponentWidth,
-        const s32 edgeDetection_maxDetectionsPerType,
-        const s32 edgeDetection_everyNLines,
+        const f32 scaleTemplateRegionPercent, //< Shrinks the region if less-than 1.0, expands the region if greater-than 1.0
+        //const u8 edgeDetection_grayvalueThreshold,
+        const s32 edgeDetection_threshold_yIncrement, //< How many pixels to use in the y direction (4 is a good value?)
+        const s32 edgeDetection_threshold_xIncrement, //< How many pixels to use in the x direction (4 is a good value?)
+        const f32 edgeDetection_threshold_blackPercentile, //< What percentile of histogram energy is black? (.1 is a good value)
+        const f32 edgeDetection_threshold_whitePercentile, //< What percentile of histogram energy is white? (.9 is a good value)
+        const f32 edgeDetection_threshold_scaleRegionPercent, //< How much to scale template bounding box (.8 is a good value)
+        const s32 edgeDetection_minComponentWidth, //< The smallest horizontal size of a component (1 to 4 is good)
+        const s32 edgeDetection_maxDetectionsPerType, //< As many as you have memory and time for
+        const s32 edgeDetection_everyNLines, //< As many as you have time for
         MemoryStack &memory)
         : isValid(false)
       {
@@ -110,10 +115,24 @@ namespace Anki
           this->templateEdges.yDecreasing.IsValid() && this->templateEdges.yIncreasing.IsValid(),
           "BinaryTracker::BinaryTracker", "Could not allocate local memory");
 
+        const Rectangle<f32> edgeDetection_imageRegionOfInterestRaw = templateQuad.ComputeBoundingRectangle().ComputeScaledRectangle(edgeDetection_threshold_scaleRegionPercent);
+        const Rectangle<s32> edgeDetection_imageRegionOfInterest(static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.left), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.right), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.top), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.bottom));
+
+        this->lastGrayvalueThreshold = ComputeGrayvalueThrehold(
+          templateImage,
+          edgeDetection_imageRegionOfInterest,
+          edgeDetection_threshold_yIncrement,
+          edgeDetection_threshold_xIncrement,
+          edgeDetection_threshold_blackPercentile,
+          edgeDetection_threshold_whitePercentile,
+          memory);
+
         const Rectangle<f32> templateRectRaw = templateQuad.ComputeBoundingRectangle().ComputeScaledRectangle(scaleTemplateRegionPercent);
         const Rectangle<s32> templateRect(static_cast<s32>(templateRectRaw.left), static_cast<s32>(templateRectRaw.right), static_cast<s32>(templateRectRaw.top), static_cast<s32>(templateRectRaw.bottom));
 
-        const Result result = DetectBlurredEdges(templateImage, templateRect, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, edgeDetection_everyNLines, this->templateEdges);
+        const Result result = DetectBlurredEdges(templateImage, templateRect, this->lastGrayvalueThreshold, edgeDetection_minComponentWidth, edgeDetection_everyNLines, this->templateEdges);
+
+        this->lastUsedGrayvalueThreshold = this->lastGrayvalueThreshold;
 
         AnkiConditionalErrorAndReturn(result == RESULT_OK,
           "BinaryTracker::BinaryTracker", "DetectBlurredEdge failed");
@@ -310,7 +329,12 @@ namespace Anki
 
       Result BinaryTracker::UpdateTrack(
         const Array<u8> &nextImage,
-        const u8 edgeDetection_grayvalueThreshold, const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
+        const s32 edgeDetection_threshold_yIncrement,
+        const s32 edgeDetection_threshold_xIncrement,
+        const f32 edgeDetection_threshold_blackPercentile,
+        const f32 edgeDetection_threshold_whitePercentile,
+        const f32 edgeDetection_threshold_scaleRegionPercent,
+        const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
         const s32 matching_maxTranslationDistance, const s32 matching_maxProjectiveDistance,
         const s32 verification_maxTranslationDistance,
         const bool useList, //< using a list is liable to be slower
@@ -367,7 +391,8 @@ namespace Anki
 
         BeginBenchmark("ut_DetectEdges");
 
-        lastResult = DetectBlurredEdges(nextImage, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, edgeDetection_everyNLines, nextImageEdges);
+        lastResult = DetectBlurredEdges(nextImage, this->lastGrayvalueThreshold, edgeDetection_minComponentWidth, edgeDetection_everyNLines, nextImageEdges);
+        this->lastUsedGrayvalueThreshold = this->lastGrayvalueThreshold;
 
         EndBenchmark("ut_DetectEdges");
 
@@ -417,6 +442,24 @@ namespace Anki
 
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
           lastResult, "BinaryTracker::UpdateTrack", "VerifyTrack failed");
+
+        BeginBenchmark("ut_grayvalueThreshold");
+
+        const Quadrilateral<f32> curWarpedCorners = this->get_transformation().get_transformedCorners(fastScratch);
+
+        const Rectangle<f32> edgeDetection_imageRegionOfInterestRaw = curWarpedCorners.ComputeBoundingRectangle().ComputeScaledRectangle(edgeDetection_threshold_scaleRegionPercent);
+        const Rectangle<s32> edgeDetection_imageRegionOfInterest(static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.left), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.right), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.top), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.bottom));
+
+        this->lastGrayvalueThreshold = ComputeGrayvalueThrehold(
+          nextImage,
+          edgeDetection_imageRegionOfInterest,
+          edgeDetection_threshold_yIncrement,
+          edgeDetection_threshold_xIncrement,
+          edgeDetection_threshold_blackPercentile,
+          edgeDetection_threshold_whitePercentile,
+          fastScratch);
+
+        EndBenchmark("ut_grayvalueThreshold");
 
         return RESULT_OK;
       } // Result BinaryTracker::UpdateTrack()
@@ -1927,6 +1970,16 @@ namespace Anki
         const s32 requiredBytes = 512 + numTemplatePixels*sizeof(Point<s16>);
 
         return requiredBytes;
+      }
+
+      s32 BinaryTracker::get_lastUsedGrayvalueThrehold() const
+      {
+        return this->lastUsedGrayvalueThreshold;
+      }
+
+      s32 BinaryTracker::get_lastGrayvalueThreshold() const
+      {
+        return this->lastGrayvalueThreshold;
       }
     } // namespace TemplateTracker
   } // namespace Embedded

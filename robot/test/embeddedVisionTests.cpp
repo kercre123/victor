@@ -125,8 +125,14 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
   Array<u8> nextImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOnchip);
 
   const Quadrilateral<f32> templateQuad(Point<f32>(128,78), Point<f32>(220,74), Point<f32>(229,167), Point<f32>(127,171));
-  const u8 edgeDetection_grayvalueThreshold = 100;
+  //const u8 edgeDetection_grayvalueThreshold = 100;
   const s32 edgeDetection_minComponentWidth = 2;
+
+  const s32 edgeDetection_threshold_yIncrement = 4;
+  const s32 edgeDetection_threshold_xIncrement = 4;
+  const f32 edgeDetection_threshold_blackPercentile = 0.1f;
+  const f32 edgeDetection_threshold_whitePercentile = 0.9f;
+  const f32 edgeDetection_threshold_scaleRegionPercent = 0.8f;
 
   const s32 templateEdgeDetection_maxDetectionsPerType = 500;
 
@@ -154,7 +160,8 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     const s32 templateEdgeDetection_everyNLines = 1;
 
     BeginBenchmark("BinaryTracker init");
-    TemplateTracker::BinaryTracker tracker(templateImage, templateQuad, scaleTemplateRegionPercent, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, templateEdgeDetection_maxDetectionsPerType, templateEdgeDetection_everyNLines, scratchOnchip);
+
+    TemplateTracker::BinaryTracker tracker(templateImage, templateQuad, scaleTemplateRegionPercent, edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent, edgeDetection_minComponentWidth, templateEdgeDetection_maxDetectionsPerType, templateEdgeDetection_everyNLines, scratchOnchip);
     EndBenchmark("BinaryTracker init");
 
     //templateImage.Show("templateImage",false);
@@ -169,9 +176,14 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     s32 numMatches;
 
-    const Result result = tracker.UpdateTrack(nextImage,
-      edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType, 1,
-      matching_maxTranslationDistance, matching_maxProjectiveDistance, verification_maxTranslationDistance, false, numMatches, scratchCcm, scratchOffchip);
+    const Result result = tracker.UpdateTrack(
+      nextImage,
+      edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent,
+      edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType,
+      1,
+      matching_maxTranslationDistance, matching_maxProjectiveDistance,
+      verification_maxTranslationDistance,
+      false, numMatches, scratchCcm, scratchOffchip);
     EndBenchmark("BinaryTracker update fixed-float");
 
     ASSERT_TRUE(result == RESULT_OK);
@@ -205,7 +217,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     const s32 templateEdgeDetection_everyNLines = 2;
 
     BeginBenchmark("BinaryTracker init");
-    TemplateTracker::BinaryTracker tracker(templateImage, templateQuad, scaleTemplateRegionPercent, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, templateEdgeDetection_maxDetectionsPerType, templateEdgeDetection_everyNLines, scratchOnchip);
+    TemplateTracker::BinaryTracker tracker(templateImage, templateQuad, scaleTemplateRegionPercent, edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent, edgeDetection_minComponentWidth, templateEdgeDetection_maxDetectionsPerType, templateEdgeDetection_everyNLines, scratchOnchip);
     EndBenchmark("BinaryTracker init");
 
     const s32 numTemplatePixels = tracker.get_numTemplatePixels();
@@ -219,9 +231,14 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     s32 numMatches;
 
-    const Result result = tracker.UpdateTrack(nextImage,
-      edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType, 1,
-      matching_maxTranslationDistance, matching_maxProjectiveDistance, verification_maxTranslationDistance, false, numMatches, scratchCcm, scratchOffchip);
+    const Result result = tracker.UpdateTrack(
+      nextImage,
+      edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent,
+      edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType,
+      1,
+      matching_maxTranslationDistance, matching_maxProjectiveDistance,
+      verification_maxTranslationDistance,
+      false, numMatches, scratchCcm, scratchOffchip);
     EndBenchmark("BinaryTracker update fixed-float");
 
     ASSERT_TRUE(result == RESULT_OK);
@@ -255,7 +272,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     const s32 templateEdgeDetection_everyNLines = 1;
 
     BeginBenchmark("BinaryTracker init");
-    TemplateTracker::BinaryTracker tracker(templateImage, templateQuad, scaleTemplateRegionPercent, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, templateEdgeDetection_maxDetectionsPerType, templateEdgeDetection_everyNLines, scratchOnchip);
+    TemplateTracker::BinaryTracker tracker(templateImage, templateQuad, scaleTemplateRegionPercent, edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent, edgeDetection_minComponentWidth, templateEdgeDetection_maxDetectionsPerType, templateEdgeDetection_everyNLines, scratchOnchip);
     EndBenchmark("BinaryTracker init");
 
     const s32 numTemplatePixels = tracker.get_numTemplatePixels();
@@ -269,9 +286,14 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     s32 numMatches;
 
-    const Result result = tracker.UpdateTrack(nextImage,
-      edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType, 1,
-      matching_maxTranslationDistance, matching_maxProjectiveDistance, verification_maxTranslationDistance, true, numMatches, scratchCcm, scratchOffchip);
+    const Result result = tracker.UpdateTrack(
+      nextImage,
+      edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent,
+      edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType,
+      1,
+      matching_maxTranslationDistance, matching_maxProjectiveDistance,
+      verification_maxTranslationDistance,
+      false, numMatches, scratchCcm, scratchOffchip);
     EndBenchmark("BinaryTracker update fixed-float");
 
     ASSERT_TRUE(result == RESULT_OK);
@@ -305,7 +327,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     const s32 templateEdgeDetection_everyNLines = 2;
 
     BeginBenchmark("BinaryTracker init");
-    TemplateTracker::BinaryTracker tracker(templateImage, templateQuad, scaleTemplateRegionPercent, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, templateEdgeDetection_maxDetectionsPerType, templateEdgeDetection_everyNLines, scratchOnchip);
+    TemplateTracker::BinaryTracker tracker(templateImage, templateQuad, scaleTemplateRegionPercent, edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent, edgeDetection_minComponentWidth, templateEdgeDetection_maxDetectionsPerType, templateEdgeDetection_everyNLines, scratchOnchip);
     EndBenchmark("BinaryTracker init");
 
     const s32 numTemplatePixels = tracker.get_numTemplatePixels();
@@ -319,9 +341,14 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     s32 numMatches;
 
-    const Result result = tracker.UpdateTrack(nextImage,
-      edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType, 1,
-      matching_maxTranslationDistance, matching_maxProjectiveDistance, verification_maxTranslationDistance, true, numMatches, scratchCcm, scratchOffchip);
+    const Result result = tracker.UpdateTrack(
+      nextImage,
+      edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent,
+      edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType,
+      1,
+      matching_maxTranslationDistance, matching_maxProjectiveDistance,
+      verification_maxTranslationDistance,
+      false, numMatches, scratchCcm, scratchOffchip);
     EndBenchmark("BinaryTracker update fixed-float");
 
     ASSERT_TRUE(result == RESULT_OK);
