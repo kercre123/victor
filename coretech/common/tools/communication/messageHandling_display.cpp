@@ -48,8 +48,11 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
 
   // Used for displaying detected fiducials
   cv::Mat lastImage(240,320,CV_8U);
-  cv::Mat toShowImage(bigHeight, bigWidth, CV_8UC1);
+  cv::Mat largeLastImage(bigHeight, bigWidth, CV_8U);
+  cv::Mat toShowImage(bigHeight, bigWidth, CV_8UC3);
+
   lastImage.setTo(0);
+  largeLastImage.setTo(0);
   toShowImage.setTo(0);
 
   bool isTracking = false;
@@ -202,12 +205,13 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
         EdgeLists edges;
         edges.Deserialize(reinterpret_cast<void**>(&dataSegment), remainingDataLength, scratch);
 
-        cv::Mat drawnEdges = edges.DrawIndexes();
+        cv::Mat toShow = edges.DrawIndexes();
 
-        toShowImage = cv::Mat(bigHeight, bigWidth, CV_8UC3);
+        //cv::Mat toShowLarge(bigHeight, bigWidth, CV_8UC3);
+        //cv::resize(toShow, toShowLarge, toShowLarge.size(), 0, 0, cv::INTER_NEAREST);
+        //cv::imshow("Detected Binary Edges", toShowLarge);
 
-        cv::resize(drawnEdges, toShowImage, toShowImage.size(), 0, 0, cv::INTER_NEAREST);
-
+        cv::resize(toShow, toShowImage, toShowImage.size(), 0, 0, cv::INTER_NEAREST);
         cv::imshow("Detected Binary Edges", toShowImage);
       }
     } else {
@@ -222,47 +226,6 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
   }
 
   if(lastImage.rows > 0) {
-    cv::Mat largeLastImage(bigHeight, bigWidth, CV_8U);
-    cv::Mat annotationsImage(bigHeight, bigWidth, CV_8UC3);
-
-    cv::resize(lastImage, largeLastImage, largeLastImage.size(), 0, 0, cv::INTER_NEAREST);
-
-    const s32 blinkerWidth = 7;
-
-    //Draw a blinky rectangle at the upper right
-    static s32 frameNumber = 0;
-    frameNumber++;
-
-    if(frameNumber%2 == 0) {
-      for(s32 y=0; y<blinkerWidth; y++) {
-        for(s32 x=bigWidth-blinkerWidth; x<bigWidth; x++) {
-          largeLastImage.at<u8>(y,x) = 0;
-        }
-      }
-
-      for(s32 y=1; y<blinkerWidth-1; y++) {
-        for(s32 x=bigWidth+1-blinkerWidth; x<(bigWidth-1); x++) {
-          largeLastImage.at<u8>(y,x) = 255;
-        }
-      }
-      //largeLastImage.at<u8>(blinkerHalfWidth,320-blinkerHalfWidth) = 255;
-    } else {
-      for(s32 y=0; y<blinkerWidth; y++) {
-        for(s32 x=bigWidth-blinkerWidth; x<bigWidth; x++) {
-          largeLastImage.at<u8>(y,x) = 0;
-        }
-      }
-    }
-
-    if(toShowImage.channels() == 1) {
-      // Grayscale to RGB
-      vector<cv::Mat> channels;
-      channels.push_back(largeLastImage);
-      channels.push_back(largeLastImage);
-      channels.push_back(largeLastImage);
-      cv::merge(channels, toShowImage);
-    }
-
     // std::queue<VisionMarker> visionMarkerList;
     //Quadrilateral<s16> corners; // SQ 15.0 (Though may be changed later)
     //Vision::MarkerType markerType;
@@ -280,12 +243,17 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
       //snprintf(benchmarkBuffer, 1024, "Total:%dfps Algorithms:%dfps Received:%dfps", RoundS32(1.0f/benchmarkTimes[1]), RoundS32(1.0f/benchmarkTimes[0]), RoundS32(1.0f/receivedDelta));
       snprintf(benchmarkBuffer, 1024, "Total:%dfps Algorithms:%dfps", RoundS32(1.0f/benchmarkTimes[1]), RoundS32(1.0f/benchmarkTimes[0]));
 
-      cv::putText(annotationsImage, benchmarkBuffer, cv::Point(5,15), cv::FONT_HERSHEY_PLAIN, 1.0, cv::Scalar(0,255,0));
+      cv::putText(toShowImage, benchmarkBuffer, cv::Point(5,15), cv::FONT_HERSHEY_PLAIN, 1.0, cv::Scalar(0,255,0));
     }
 
     if(isTracking) {
+      cv::Mat trackingBoxImage(bigHeight, bigWidth, CV_8UC3);
+
+      trackingBoxImage.setTo(0);
+
       const cv::Scalar textColor = cv::Scalar(0,255,0);
-      const cv::Scalar boxColor = cv::Scalar(0,196,0);
+      //const cv::Scalar boxColor = cv::Scalar(0,128,0);
+      const cv::Scalar boxColor = cv::Scalar(48,48,48);
 
       const Quadrilateral<f32> transformedCorners = lastPlanarTransformation.get_transformedCorners(scratch);
 
@@ -296,29 +264,57 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
         const s32 point2Index = (iCorner+1) % 4;
         const cv::Point pt1(static_cast<s32>(sortedCorners[point1Index].x*scale), static_cast<s32>(sortedCorners[point1Index].y*scale));
         const cv::Point pt2(static_cast<s32>(sortedCorners[point2Index].x*scale), static_cast<s32>(sortedCorners[point2Index].y*scale));
-
-        //cv::line(annotationsImage, pt1, pt2, boxColor, 2);
-
-        cv::LineIterator it(annotationsImage, pt1, pt2, 8);
-        for(s32 i = 0; i < it.count; i++,it++)
-        {
-          if (i%3 == 0) {
-            //(*it)[0]     = static_cast<u8>(RoundS32(boxColor[0]));
-            //(*it + 1)[0] = static_cast<u8>(RoundS32(boxColor[1]));
-            //(*it + 2)[0] = static_cast<u8>(RoundS32(boxColor[2]));
-            (*it)[0]     = 255;
-            (*it + 1)[0] = 255;
-            (*it + 2)[0] = 255;
-          }
-        }
+        cv::line(trackingBoxImage, pt1, pt2, boxColor, 7);
       }
 
       const Point<f32> center = sortedCorners.ComputeCenter();
       const s32 textX = RoundS32(MIN(MIN(MIN(sortedCorners.corners[0].x*scale, sortedCorners.corners[1].x*scale), sortedCorners.corners[2].x*scale), sortedCorners.corners[3].x*scale));
       const cv::Point textStartPoint(textX, RoundS32(center.y*scale));
 
-      cv::putText(annotationsImage, "Tracking", textStartPoint, cv::FONT_HERSHEY_PLAIN, 1.0, textColor);
+      cv::putText(trackingBoxImage, "Tracking", textStartPoint, cv::FONT_HERSHEY_PLAIN, 1.0, textColor);
+
+      const s32 numPixels = bigHeight * bigWidth * 3;
+
+      for(s32 iPixel=0; iPixel<numPixels; iPixel++) {
+        toShowImage.data[iPixel] += trackingBoxImage.data[iPixel];
+      }
     } else { // if(isTracking)
+      cv::resize(lastImage, largeLastImage, largeLastImage.size(), 0, 0, cv::INTER_NEAREST);
+
+      const s32 blinkerWidth = 7;
+
+      //Draw a blinky rectangle at the upper right
+      static s32 frameNumber = 0;
+      frameNumber++;
+
+      if(frameNumber%2 == 0) {
+        for(s32 y=0; y<blinkerWidth; y++) {
+          for(s32 x=bigWidth-blinkerWidth; x<bigWidth; x++) {
+            largeLastImage.at<u8>(y,x) = 0;
+          }
+        }
+
+        for(s32 y=1; y<blinkerWidth-1; y++) {
+          for(s32 x=bigWidth+1-blinkerWidth; x<(bigWidth-1); x++) {
+            largeLastImage.at<u8>(y,x) = 255;
+          }
+        }
+        //largeLastImage.at<u8>(blinkerHalfWidth,320-blinkerHalfWidth) = 255;
+      } else {
+        for(s32 y=0; y<blinkerWidth; y++) {
+          for(s32 x=bigWidth-blinkerWidth; x<bigWidth; x++) {
+            largeLastImage.at<u8>(y,x) = 0;
+          }
+        }
+      }
+
+      // Grayscale to RGB
+      vector<cv::Mat> channels;
+      channels.push_back(largeLastImage);
+      channels.push_back(largeLastImage);
+      channels.push_back(largeLastImage);
+      cv::merge(channels, toShowImage);
+
       // Draw markers
       for(s32 iMarker=0; iMarker<static_cast<s32>(visionMarkerList.size()); iMarker++) {
         cv::Scalar boxColor, textColor;
@@ -337,7 +333,7 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
           const s32 point2Index = (iCorner+1) % 4;
           const cv::Point pt1(RoundS32(sortedCorners[point1Index].x*scale), RoundS32(sortedCorners[point1Index].y*scale));
           const cv::Point pt2(RoundS32(sortedCorners[point2Index].x*scale), RoundS32(sortedCorners[point2Index].y*scale));
-          cv::line(annotationsImage, pt1, pt2, boxColor, 2);
+          cv::line(toShowImage, pt1, pt2, boxColor, 2);
         }
 
         const Anki::Vision::MarkerType markerType = visionMarkerList[iMarker].markerType;
@@ -351,20 +347,13 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
         const s32 textX = RoundS32(MIN(MIN(MIN(visionMarkerList[iMarker].corners[0].x*scale, visionMarkerList[iMarker].corners[1].x*scale), visionMarkerList[iMarker].corners[2].x*scale), visionMarkerList[iMarker].corners[3].x*scale));
         const cv::Point textStartPoint(textX, RoundS32(center.y*scale));
 
-        cv::putText(annotationsImage, typeString, textStartPoint, cv::FONT_HERSHEY_PLAIN, 1.0, textColor);
+        cv::putText(toShowImage, typeString, textStartPoint, cv::FONT_HERSHEY_PLAIN, 1.0, textColor);
       }
     } // if(isTracking) ... else
 
-    const s32 numColorPixels = bigHeight * bigWidth * 3;
-    const u8 * restrict pAnnotationsImage = annotationsImage.data;
-    u8 * restrict ptoShowImage = toShowImage.data;
-
-    for(s32 iPixel=0; iPixel<numColorPixels; iPixel++) {
-      //ptoShowImage[iPixel] = MAX(ptoShowImage[iPixel], pAnnotationsImage[iPixel]);
-      ptoShowImage[iPixel] += pAnnotationsImage[iPixel];
-    }
-
     cv::imshow("Robot Image", toShowImage);
+    cv::waitKey(10);
+  } else { // if(lastImage.rows > 0)
     cv::waitKey(1);
   }
 
