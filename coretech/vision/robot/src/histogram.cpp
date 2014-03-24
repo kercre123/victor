@@ -26,14 +26,23 @@ namespace Anki
 
     Histogram ComputeHistogram(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const s32 yIncrement, const s32 xIncrement, MemoryStack &memory)
     {
+      const s32 imageHeight = image.get_size(0);
+      const s32 imageWidth = image.get_size(1);
+      
       Histogram histogram(256, memory);
 
       s32 * restrict pHistogram = histogram.counts.Pointer(0);
+      
+      const Rectangle<s32> imageRegionOfInterestClipped(
+        MAX(0, MIN(imageWidth-1, imageRegionOfInterest.left)),
+        MAX(0, MIN(imageWidth-1, imageRegionOfInterest.right)),
+        MAX(0, MIN(imageHeight-1, imageRegionOfInterest.top)),
+        MAX(0, MIN(imageHeight-1, imageRegionOfInterest.bottom)));
 
-      for(s32 y=imageRegionOfInterest.top; y<=imageRegionOfInterest.bottom; y+=yIncrement) {
+      for(s32 y=imageRegionOfInterestClipped.top; y<=imageRegionOfInterestClipped.bottom; y+=yIncrement) {
         const u8 * restrict pImage = image.Pointer(y,0);
 
-        for(s32 x=imageRegionOfInterest.left; x<=imageRegionOfInterest.right; x+=xIncrement) {
+        for(s32 x=imageRegionOfInterestClipped.left; x<=imageRegionOfInterestClipped.right; x+=xIncrement) {
           const u8 curImage = pImage[x];
           pHistogram[curImage]++;
         }

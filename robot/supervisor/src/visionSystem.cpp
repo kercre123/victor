@@ -250,8 +250,8 @@ struct TrackerParameters {
     edgeDetection_everyNLines           = 1;
     matching_maxTranslationDistance     = 7;
     matching_maxProjectiveDistance      = 7;
-    verification_maxTranslationDistance = 1;
-    percentMatchedPixelsThreshold       = 0.5f; // TODO: pick a reasonable value
+    verification_maxTranslationDistance = 2;
+    percentMatchedPixelsThreshold       = 0.02f; // TODO: pick a reasonable value
 
     isInitialized = true;
   } // TrackerParameters();
@@ -314,12 +314,21 @@ namespace DebugStream
 {
   static const s32 PRINTF_BUFFER_SIZE = 10000;
   static const s32 DEBUG_STREAM_BUFFER_SIZE = 2000000;
+  
+  static const s32 MAX_BYTES_PER_SECOND = 500000;
+  
+  static const s32 BINARY_SEND_EVERY_N_FRAMES = 5;
 
   static OFFCHIP u8 printfBufferRaw_[PRINTF_BUFFER_SIZE];
   static OFFCHIP u8 debugStreamBufferRaw_[DEBUG_STREAM_BUFFER_SIZE];
 
   static SerializedBuffer printfBuffer_;
   static SerializedBuffer debugStreamBuffer_;
+  
+  static s32 lastSecond;
+  static s32 bytesSinceLastSecond;
+  
+  static s32 binaryFrameNumber = 0;
 
 #if !defined(SEND_DEBUG_STREAM)
   static ReturnCode SendFiducialDetection(const Array<u8> &image, const FixedLengthList<VisionMarker> &markers, MemoryStack ccmScratch, MemoryStack onchipScratch, MemoryStack offchipScratch) { return EXIT_SUCCESS; }
@@ -343,9 +352,21 @@ namespace DebugStream
   static ReturnCode SendBuffer(SerializedBuffer &toSend)
   {
     const f32 curTime = GetTime();
-    lastBenchmarkDuration_total = curTime - lastBenchmarkTime_total;
-    lastBenchmarkTime_total = curTime;
-
+    const s32 curSecond = RoundS32(curTime);
+    
+    // Hack, to prevent overwhelming the send buffer
+    if(curSecond != lastSecond) {
+      bytesSinceLastSecond = 0;
+      lastSecond = curSecond;
+    } else {
+      if(bytesSinceLastSecond > MAX_BYTES_PER_SECOND) {
+        lastBenchmarkTime_algorithmsOnly = GetTime();
+        return EXIT_SUCCESS;
+      } else {
+        bytesSinceLastSecond += toSend.get_memoryStack().get_usedBytes();
+      }
+    }
+    
     const f32 benchmarkTimes[2] = {lastBenchmarkDuration_algorithmsOnly, lastBenchmarkDuration_total};
 
     toSend.PushBack<f32>(&benchmarkTimes[0], 2*sizeof(f32));
@@ -390,6 +411,9 @@ namespace DebugStream
 
     // lastBenchmarkTime_algorithmsOnly is set again when the transmission is complete
     lastBenchmarkDuration_algorithmsOnly = curTime - lastBenchmarkTime_algorithmsOnly;
+    
+    lastBenchmarkDuration_total = curTime - lastBenchmarkTime_total;
+    lastBenchmarkTime_total = curTime;
 
     debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
 
@@ -418,7 +442,7 @@ namespace DebugStream
     Array<u8> imageSmall(height, width, offchipScratch);
     DownsampleHelper(image, imageSmall, ccmScratch);
     debugStreamBuffer_.PushBack(imageSmall);
-
+    
     return SendBuffer(debugStreamBuffer_);
   } // ReturnCode SendDebugStream_Detection()
 
@@ -428,7 +452,10 @@ namespace DebugStream
 
     // lastBenchmarkTime_algorithmsOnly is set again when the transmission is complete
     lastBenchmarkDuration_algorithmsOnly = curTime - lastBenchmarkTime_algorithmsOnly;
-
+    
+    lastBenchmarkDuration_total = curTime - lastBenchmarkTime_total;
+    lastBenchmarkTime_total = curTime;    
+    
     //const s32 height = CameraModeInfo[debugStreamResolution_].height;
     //const s32 width  = CameraModeInfo[debugStreamResolution_].width;
 
@@ -447,6 +474,12 @@ namespace DebugStream
     tracker.get_transformation().Serialize(debugStreamBuffer_);
 
 #if DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
+    binaryFrameNumber++;
+    
+    if(binaryFrameNumber % BINARY_SEND_EVERY_N_FRAMES != 0) {
+      return EXIT_SUCCESS;
+    }
+
     EdgeLists edgeLists;
 
     edgeLists.imageHeight = image.get_size(0);
@@ -470,6 +503,7 @@ namespace DebugStream
     debugStreamBuffer_.PushBack(imageSmall);
 #endif
 
+
     return SendBuffer(debugStreamBuffer_);
   } // static ReturnCode SendTrackingUpdate()
 
@@ -487,7 +521,7 @@ namespace DebugStream
     }
 
     tracker.Serialize(debugStreamBuffer_);
-
+    
     return SendBuffer(debugStreamBuffer_);
   }
 #endif
@@ -1192,6 +1226,8 @@ static ReturnCode TrackTemplate(
 
   if(percentMatchedPixels >= parameters.percentMatchedPixelsThreshold) {
     converged = true;
+  } else {
+    converged = false;
   }
 
 #else
