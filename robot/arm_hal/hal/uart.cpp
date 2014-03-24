@@ -26,35 +26,41 @@ namespace Anki
       /////////////////////////////////////////////////////////////////////
       // UART
       //
-      const u32 WRITE_BUFFER_SIZE = 1024 * 1024 * 1;
-      const u32 READ_BUFFER_SIZE = 1024;
-      
-      OFFCHIP u8 m_bufferWrite[WRITE_BUFFER_SIZE];
-      OFFCHIP u8 m_bufferRead[READ_BUFFER_SIZE];
+      OFFCHIP u8 m_bufferWrite[1024 * 1024 * 1];
+      OFFCHIP u8 m_bufferRead[1024];
       
       volatile s32 m_DMAWriteTail = 0;
       volatile s32 m_DMAWriteHead = 0;
+      volatile s32 m_DMAWriteLength = 0;
       u32 m_DMAReadIndex = 0;
       
       volatile bool m_isDMARunning = false;
       
       static void FlushDMA()
       {
-        int length = m_DMAWriteHead - m_DMAWriteTail;
+        int tail = m_DMAWriteTail;
+        int length = m_DMAWriteHead - tail;
         if (length < 0)
-          length = sizeof(m_bufferWrite) - m_DMAWriteTail;
+          length = sizeof(m_bufferWrite) - tail;
         if (length > 65535)
           length = 65535;
         
-        DMA_STREAM_TX->NDTR = length;                               // Buffer size
-        DMA_STREAM_TX->M0AR = (u32)&m_bufferWrite[m_DMAWriteTail];  // Buffer address
+        DMA_STREAM_TX->NDTR = length;                     // Buffer size
+        DMA_STREAM_TX->M0AR = (u32)&m_bufferWrite[tail];  // Buffer address
         
-        m_DMAWriteTail += length;
-        if (m_DMAWriteTail >= sizeof(m_bufferWrite))
-          m_DMAWriteTail = 0;
+        m_DMAWriteLength = length;
+        m_isDMARunning = true;
         
         DMA_STREAM_TX->CR |= DMA_SxCR_EN; // Enable DMA
-        m_isDMARunning = true;
+      }
+      
+      int UARTGetFreeSpace()
+      {
+        int tail = m_DMAWriteTail;
+        if (m_DMAWriteHead < tail)
+          return tail - m_DMAWriteHead;
+        else
+          return sizeof(m_bufferWrite) - (m_DMAWriteHead - tail);
       }
       
       void UARTInit()
@@ -96,7 +102,7 @@ namespace Anki
         
         // Configure DMA for receiving
         DMA_DeInit(DMA_STREAM_RX);
-  
+        
         DMA_InitTypeDef DMA_InitStructure;
         DMA_InitStructure.DMA_Channel = DMA_CHANNEL_RX;
         DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)&UART->DR;
@@ -151,7 +157,7 @@ namespace Anki
         
         NVIC_InitTypeDef NVIC_InitStructure;
         NVIC_InitStructure.NVIC_IRQChannel = DMA_IRQ_TX;
-        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 4;  // Don't want this to be a very high priority
+        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;  // Don't want this to be a very high priority
         NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
         NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
         NVIC_Init(&NVIC_InitStructure);
@@ -166,6 +172,10 @@ namespace Anki
         //  ;
         //return c;
 
+        // Leave one guard byte in the buffer
+        while (UARTGetFreeSpace() <= 2)
+          ;
+        
         __disable_irq();
         m_bufferWrite[m_DMAWriteHead] = c;
         m_DMAWriteHead++;
@@ -190,15 +200,32 @@ namespace Anki
         bool result = false;
         
         __disable_irq();
-        if ((m_DMAWriteHead + length) <= sizeof(m_bufferWrite))
+        int bytesLeft = UARTGetFreeSpace();
+        
+        // Leave one guard byte
+        if (bytesLeft > (length + 1))
         {
           result = true;
-          memcpy(&m_bufferWrite[m_DMAWriteHead], buffer, length);
-          m_DMAWriteHead += length;
           
-          if (m_DMAWriteHead >= sizeof(m_bufferWrite))
+          bytesLeft = sizeof(m_bufferWrite) - m_DMAWriteHead;
+          if (length <= bytesLeft)
           {
-            m_DMAWriteHead = 0;
+            memcpy(&m_bufferWrite[m_DMAWriteHead], buffer, length);
+            m_DMAWriteHead += length;
+            
+            if (m_DMAWriteHead == sizeof(m_bufferWrite))
+            {
+              m_DMAWriteHead = 0;
+            }
+          } else {
+            // Copy to the end of the buffer, then wrap around for the rest
+            int lengthFirst = bytesLeft;
+            memcpy(&m_bufferWrite[m_DMAWriteHead], buffer, lengthFirst);
+            
+            bytesLeft = length - lengthFirst;
+            memcpy(m_bufferWrite, &buffer[lengthFirst], bytesLeft);
+            
+            m_DMAWriteHead = bytesLeft;
           }
           
           // Enable DMA if it's not already running
@@ -296,13 +323,15 @@ void DMA1_Stream4_IRQHandler()
   // Clear DMA Transfer Complete flag
   DMA_ClearFlag(DMA1_Stream4, DMA_FLAG_TCIF4);
   
+  m_DMAWriteTail += m_DMAWriteLength;
+  if (m_DMAWriteTail >= sizeof(m_bufferWrite))
+    m_DMAWriteTail = 0;
+  
   // Check if there's more data to be transferred
-  if ((m_DMAWriteHead - m_DMAWriteTail) > 0)
+  if (m_DMAWriteHead != m_DMAWriteTail)
   {
     FlushDMA();
   } else {
-    //if (DMA_STREAM_TX->NDTR)
-    //  DMA_STREAM_TX->CR |= DMA_SxCR_EN;
     m_isDMARunning = false;
   }
 }

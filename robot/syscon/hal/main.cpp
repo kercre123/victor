@@ -54,7 +54,9 @@ int main(void)
       sizeof(GlobalDataToBody),
       (const u8*)&g_dataToHead,
       (u8*)&g_dataToBody);
-#if 0
+    
+#if 1
+    NRF_UART0->PSELTXD = 17;
     u8* d = (u8*)&g_dataToBody;
     for (int i = 0; i < 0x10; i++)
     {
@@ -63,6 +65,7 @@ int main(void)
     }
     UARTPutChar('\n');
 #endif
+    
     
     // Verify the source
     if (g_dataToBody.common.source != SPI_SOURCE_HEAD)
@@ -76,9 +79,12 @@ int main(void)
       failedTransferCount = 0;
       
       static u32 s = 0;
-      if ((++s % 10) == 0)
+      if (++s < 10)
       {
-        nrf_gpio_pin_toggle(17);
+        NRF_UART0->PSELTXD = 0xffffffff;
+        //nrf_gpio_pin_toggle(17);
+      } else if (++s > 20) {
+        s = 0;
       }
       
       // Update motors
@@ -89,7 +95,7 @@ int main(void)
       
       MotorsUpdate();
     }
-    
+
     // Update at 200Hz
     // 41666 ticks * 120 ns is roughly 5ms
     while ((GetCounter() - timerStart) < 41666)
