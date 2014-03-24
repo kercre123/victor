@@ -161,6 +161,44 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
             cLastImage++;
           }
         }
+
+        cv::resize(lastImage, largeLastImage, largeLastImage.size(), 0, 0, cv::INTER_NEAREST);
+
+        const s32 blinkerWidth = 7;
+
+        //Draw a blinky rectangle at the upper right
+        static s32 frameNumber = 0;
+        frameNumber++;
+
+        if(frameNumber%2 == 0) {
+          for(s32 y=0; y<blinkerWidth; y++) {
+            for(s32 x=bigWidth-blinkerWidth; x<bigWidth; x++) {
+              largeLastImage.at<u8>(y,x) = 0;
+            }
+          }
+
+          for(s32 y=1; y<blinkerWidth-1; y++) {
+            for(s32 x=bigWidth+1-blinkerWidth; x<(bigWidth-1); x++) {
+              largeLastImage.at<u8>(y,x) = 255;
+            }
+          }
+          //largeLastImage.at<u8>(blinkerHalfWidth,320-blinkerHalfWidth) = 255;
+        } else {
+          for(s32 y=0; y<blinkerWidth; y++) {
+            for(s32 x=bigWidth-blinkerWidth; x<bigWidth; x++) {
+              largeLastImage.at<u8>(y,x) = 0;
+            }
+          }
+        }
+
+        // Grayscale to RGB
+        vector<cv::Mat> channels;
+        channels.push_back(largeLastImage);
+        channels.push_back(largeLastImage);
+        channels.push_back(largeLastImage);
+        cv::merge(channels, toShowImage);
+
+        //cv::resize(toShowImage, toShowLarge, toShowLargeTmp.size(), 0, 0, cv::INTER_NEAREST);
       } else {
         printf("Array: (%d, %d, %d, %d, %d, %d, %d, %d) ", height, width, stride, flags, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat);
       }
@@ -207,12 +245,12 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
 
         cv::Mat toShow = edges.DrawIndexes();
 
-        //cv::Mat toShowLarge(bigHeight, bigWidth, CV_8UC3);
-        //cv::resize(toShow, toShowLarge, toShowLarge.size(), 0, 0, cv::INTER_NEAREST);
-        //cv::imshow("Detected Binary Edges", toShowLarge);
+        cv::Mat toShowLargeTmp(bigHeight, bigWidth, CV_8UC3);
+        cv::resize(toShow, toShowLargeTmp, toShowLargeTmp.size(), 0, 0, cv::INTER_NEAREST);
+        cv::imshow("Detected Binary Edges", toShowLargeTmp);
 
-        cv::resize(toShow, toShowImage, toShowImage.size(), 0, 0, cv::INTER_NEAREST);
-        cv::imshow("Detected Binary Edges", toShowImage);
+        //cv::resize(toShow, toShowImage, toShowImage.size(), 0, 0, cv::INTER_NEAREST);
+        //cv::imshow("Detected Binary Edges", toShowImage);
       }
     } else {
       printf("Unknown Type %d\n", type);
@@ -279,42 +317,6 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
         toShowImage.data[iPixel] += trackingBoxImage.data[iPixel];
       }
     } else { // if(isTracking)
-      cv::resize(lastImage, largeLastImage, largeLastImage.size(), 0, 0, cv::INTER_NEAREST);
-
-      const s32 blinkerWidth = 7;
-
-      //Draw a blinky rectangle at the upper right
-      static s32 frameNumber = 0;
-      frameNumber++;
-
-      if(frameNumber%2 == 0) {
-        for(s32 y=0; y<blinkerWidth; y++) {
-          for(s32 x=bigWidth-blinkerWidth; x<bigWidth; x++) {
-            largeLastImage.at<u8>(y,x) = 0;
-          }
-        }
-
-        for(s32 y=1; y<blinkerWidth-1; y++) {
-          for(s32 x=bigWidth+1-blinkerWidth; x<(bigWidth-1); x++) {
-            largeLastImage.at<u8>(y,x) = 255;
-          }
-        }
-        //largeLastImage.at<u8>(blinkerHalfWidth,320-blinkerHalfWidth) = 255;
-      } else {
-        for(s32 y=0; y<blinkerWidth; y++) {
-          for(s32 x=bigWidth-blinkerWidth; x<bigWidth; x++) {
-            largeLastImage.at<u8>(y,x) = 0;
-          }
-        }
-      }
-
-      // Grayscale to RGB
-      vector<cv::Mat> channels;
-      channels.push_back(largeLastImage);
-      channels.push_back(largeLastImage);
-      channels.push_back(largeLastImage);
-      cv::merge(channels, toShowImage);
-
       // Draw markers
       for(s32 iMarker=0; iMarker<static_cast<s32>(visionMarkerList.size()); iMarker++) {
         cv::Scalar boxColor, textColor;
