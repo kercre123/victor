@@ -365,3 +365,6 @@ DEF Cozmo_1 CozmoBot {
 
 BlockWorldComms {
 }
+
+CozmoVizDisplay{
+}
