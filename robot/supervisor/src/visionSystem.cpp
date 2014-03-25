@@ -456,8 +456,8 @@ namespace DebugStream
     lastBenchmarkDuration_total = curTime - lastBenchmarkTime_total;
     lastBenchmarkTime_total = curTime;    
     
-    //const s32 height = CameraModeInfo[debugStreamResolution_].height;
-    //const s32 width  = CameraModeInfo[debugStreamResolution_].width;
+    const s32 height = CameraModeInfo[debugStreamResolution_].height;
+    const s32 width  = CameraModeInfo[debugStreamResolution_].width;
 
     // TODO: compute max allocation correctly
     //const s32 requiredBytes = height*width + 1024;
@@ -497,12 +497,15 @@ namespace DebugStream
       edgeLists);
 
     edgeLists.Serialize(debugStreamBuffer_);
+    
+    Array<u8> imageSmall(height, width, offchipScratch);
+    DownsampleHelper(image, imageSmall, ccmScratch);
+    debugStreamBuffer_.PushBack(imageSmall);
 #else
     Array<u8> imageSmall(height, width, offchipScratch);
     DownsampleHelper(image, imageSmall, ccmScratch);
     debugStreamBuffer_.PushBack(imageSmall);
 #endif
-
 
     return SendBuffer(debugStreamBuffer_);
   } // static ReturnCode SendTrackingUpdate()
