@@ -2008,21 +2008,27 @@ namespace Anki {
 
           if(converged)
           {
-            
 #if USE_MATLAB_TRACKER
             Transformations::PlanarTransformation_f32 transform = MatlabVisionProcessor::GetTrackerTransform(VisionMemory::onchipScratch_);
 #else
             const Transformations::PlanarTransformation_f32& transform = VisionState::tracker_.get_transformation();
 #endif
+
+            const HAL::CameraInfo* headCam = HAL::GetHeadCamInfo();
+            const f32 calibData[4] = {
+              headCam->focalLength_x, headCam->focalLength_y,
+              headCam->center_x, headCam->center_y
+            };
             
             Docking::ComputeDockingErrorSignal(transform,
-              detectionParameters_.detectionWidth,
-              VisionState::trackingMarkerWidth_mm,
-              VisionState::headCamInfo_->focalLength_x,
-              dockErrMsg.x_distErr,
-              dockErrMsg.y_horErr,
-              dockErrMsg.angleErr,
-              VisionMemory::onchipScratch_);
+                                               detectionParameters_.detectionWidth,
+                                               VisionState::trackingMarkerWidth_mm,
+                                               VisionState::headCamInfo_->focalLength_x,
+                                               dockErrMsg.x_distErr,
+                                               dockErrMsg.y_horErr,
+                                               dockErrMsg.angleErr,
+                                               VisionMemory::onchipScratch_,
+                                               calibData);
             
             // Reset the failure counter
             VisionState::numTrackFailures_ = 0;
