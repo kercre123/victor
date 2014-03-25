@@ -443,6 +443,11 @@
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\usb_radio.cpp</FilePath>
             </File>
+            <File>
+              <FileName>imu.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\imu.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1626,6 +1631,11 @@
                   </Cads>
                 </FileArmAds>
               </FileOption>
+            </File>
+            <File>
+              <FileName>imu.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\imu.cpp</FilePath>
             </File>
           </Files>
         </Group>

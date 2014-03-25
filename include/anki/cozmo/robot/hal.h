@@ -217,6 +217,28 @@ namespace Anki
       void FlashWrite(u32 page, u8 data[FLASH_PAGE_SIZE]);
       void FlashRead(u32 page, u8 data[FLASH_PAGE_SIZE]);
 
+// #pragma mark --- IMU ---
+      /////////////////////////////////////////////////////////////////////
+
+      // IMU_DataStructure contains 3-axis acceleration and 3-axis gyro data
+      struct IMU_DataStructure
+      {
+        f32 acc_x;      // mm/s/s    
+        f32 acc_y;
+        f32 acc_z;
+        f32 rate_x;     // rad/s
+        f32 rate_y;
+        f32 rate_z;
+      };
+      
+      // Set up IMU (including SPI communication channel)
+      void IMUInit();
+
+      // Read acceleration and rate
+      void IMUReadData(IMU_DataStructure &IMUData);
+
+
+
 // #pragma mark --- USB / UART ---
       /////////////////////////////////////////////////////////////////////
       // USB / UART
