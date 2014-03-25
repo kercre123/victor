@@ -328,8 +328,8 @@
               </OCR_RVCT8>
               <OCR_RVCT9>
                 <Type>0</Type>
-                <StartAddress>0x20000000</StartAddress>
-                <Size>0x30000</Size>
+                <StartAddress>0x20004100</StartAddress>
+                <Size>0x2bf00</Size>
               </OCR_RVCT9>
               <OCR_RVCT10>
                 <Type>0</Type>
@@ -355,9 +355,9 @@
             <uSurpInc>1</uSurpInc>
             <VariousControls>
               <MiscControls>--asm</MiscControls>
-              <Define>USE_STDPERIPH_DRIVER,STM32F429_439xx,USE_DEFAULT_TIMEOUT_CALLBACK,USE_EMBEDDED_PHY,USE_USB_OTG_FS,COZMO_ROBOT,ROBOT_HARDWARE,ANKICORETECH_EMBEDDED_USE_HEATSHRINK,</Define>
+              <Define>USE_STDPERIPH_DRIVER,STM32F429_439xx,USE_DEFAULT_TIMEOUT_CALLBACK,USE_EMBEDDED_PHY,USE_USB_OTG_FS,COZMO_ROBOT,ROBOT_HARDWARE,ANKICORETECH_EMBEDDED_USE_HEATSHRINK,CORETECH_ROBOT</Define>
               <Undefine></Undefine>
-              <IncludePath>.\arm_hal;.\arm_hal\lib;..\include;..\coretech\common\include;..\coretech\messaging\include;..\coretech\planning\include;..\coretech\vision\include;.\supervisor\src;..\..\coretech-external\heatshrink;C:\Keil\ARM\Pack\ARM\CMSIS\3.20.4\Device\ARM\ARMCM4\Include</IncludePath>
+              <IncludePath>.\arm_hal;.\arm_hal\lib;..\include;..\coretech\common\include;..\coretech\messaging\include;..\coretech\planning\include;..\coretech\vision\include;.\supervisor\src;..\..\coretech-external\heatshrink;C:\Keil\ARM\Pack\ARM\CMSIS\3.20.4\Device\ARM\ARMCM4\Include;.\include</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -377,7 +377,7 @@
             </VariousControls>
           </Aads>
           <LDads>
-            <umfTarg>1</umfTarg>
+            <umfTarg>0</umfTarg>
             <Ropi>0</Ropi>
             <Rwpi>0</Rwpi>
             <noStLib>0</noStLib>
@@ -385,7 +385,7 @@
             <useFile>0</useFile>
             <TextAddressRange>0x08000000</TextAddressRange>
             <DataAddressRange>0x20000000</DataAddressRange>
-            <ScatterFile></ScatterFile>
+            <ScatterFile>.\robot.sct</ScatterFile>
             <IncludeLibs></IncludeLibs>
             <IncludeLibsPath></IncludeLibsPath>
             <Misc></Misc>
@@ -409,9 +409,19 @@
               <FilePath>.\arm_hal\hal\main.cpp</FilePath>
             </File>
             <File>
+              <FileName>motors.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\motors.cpp</FilePath>
+            </File>
+            <File>
               <FileName>retarget.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\retarget.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>spi.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\spi.cpp</FilePath>
             </File>
             <File>
               <FileName>startup.cpp</FileName>
@@ -429,14 +439,9 @@
               <FilePath>.\arm_hal\hal\uart.cpp</FilePath>
             </File>
             <File>
-              <FileName>spi.cpp</FileName>
+              <FileName>usb_radio.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\spi.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>motors.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\motors.cpp</FilePath>
+              <FilePath>.\arm_hal\hal\usb_radio.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -744,6 +749,11 @@
               <FilePath>.\supervisor\src\pathFollower.cpp</FilePath>
             </File>
             <File>
+              <FileName>pickAndPlaceController.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\pickAndPlaceController.cpp</FilePath>
+            </File>
+            <File>
               <FileName>speedController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\speedController.cpp</FilePath>
@@ -772,11 +782,6 @@
               <FileName>wheelController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\wheelController.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>pickAndPlaceController.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\pickAndPlaceController.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -922,6 +927,13 @@
         </Group>
         <Group>
           <GroupName>coretech-messaging</GroupName>
+          <Files>
+            <File>
+              <FileName>utilMessaging.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\coretech\messaging\shared\src\utilMessaging.c</FilePath>
+            </File>
+          </Files>
         </Group>
         <Group>
           <GroupName>coretech-planning</GroupName>
@@ -942,6 +954,11 @@
               <FilePath>..\coretech\vision\robot\src\binaryTracker.cpp</FilePath>
             </File>
             <File>
+              <FileName>colorConversion.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\colorConversion.cpp</FilePath>
+            </File>
+            <File>
               <FileName>connectedComponents.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\connectedComponents.cpp</FilePath>
@@ -960,6 +977,11 @@
               <FileName>decisionTree_vision.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\decisionTree_vision.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>detectFiducialMarkers.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\detectFiducialMarkers.cpp</FilePath>
             </File>
             <File>
               <FileName>docking_vision.cpp</FileName>
@@ -992,9 +1014,9 @@
               <FilePath>..\coretech\vision\robot\src\filtering.cpp</FilePath>
             </File>
             <File>
-              <FileName>frontCameraWrappers.cpp</FileName>
+              <FileName>histogram.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\frontCameraWrappers.cpp</FilePath>
+              <FilePath>..\coretech\vision\robot\src\histogram.cpp</FilePath>
             </File>
             <File>
               <FileName>integralImage.cpp</FileName>
@@ -1007,9 +1029,24 @@
               <FilePath>..\coretech\vision\robot\src\laplacianPeaks.cpp</FilePath>
             </File>
             <File>
-              <FileName>lucasKanade.cpp</FileName>
+              <FileName>lucasKanade_Affine.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\lucasKanade.cpp</FilePath>
+              <FilePath>..\coretech\vision\robot\src\lucasKanade_Affine.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>lucasKanade_General.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\lucasKanade_General.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>lucasKanade_Projective.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\lucasKanade_Projective.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>lucasKanade_Slow.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\lucasKanade_Slow.cpp</FilePath>
             </File>
             <File>
               <FileName>traceBoundary.cpp</FileName>
@@ -1461,9 +1498,9 @@
             <uSurpInc>1</uSurpInc>
             <VariousControls>
               <MiscControls>--asm</MiscControls>
-              <Define>USE_STDPERIPH_DRIVER,STM32F429_439xx,USE_DEFAULT_TIMEOUT_CALLBACK,COZMO_ROBOT,ROBOT_HARDWARE,ANKICORETECH_EMBEDDED_USE_HEATSHRINK</Define>
+              <Define>USE_STDPERIPH_DRIVER,STM32F429_439xx,USE_DEFAULT_TIMEOUT_CALLBACK,USE_EMBEDDED_PHY,USE_USB_OTG_FS,COZMO_ROBOT,ROBOT_HARDWARE,ANKICORETECH_EMBEDDED_USE_HEATSHRINK,CORETECH_ROBOT</Define>
               <Undefine></Undefine>
-              <IncludePath>.\arm_hal;.\arm_hal\lib;..\include;..\coretech\common\include;..\coretech\messaging\include;..\coretech\planning\include;..\coretech\vision\include;.\supervisor\src;..\..\coretech-external\heatshrink;C:\Keil\ARM\Pack\ARM\CMSIS\3.20.4\Device\ARM\ARMCM4\Include</IncludePath>
+              <IncludePath>.\arm_hal;.\arm_hal\lib;..\include;..\coretech\common\include;..\coretech\messaging\include;..\coretech\planning\include;..\coretech\vision\include;.\supervisor\src;..\..\coretech-external\heatshrink;C:\Keil\ARM\Pack\ARM\CMSIS\3.20.4\Device\ARM\ARMCM4\Include;.\include</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -1515,9 +1552,19 @@
               <FilePath>.\arm_hal\hal\main.cpp</FilePath>
             </File>
             <File>
+              <FileName>motors.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\motors.cpp</FilePath>
+            </File>
+            <File>
               <FileName>retarget.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\retarget.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>spi.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\spi.cpp</FilePath>
             </File>
             <File>
               <FileName>startup.cpp</FileName>
@@ -1535,14 +1582,50 @@
               <FilePath>.\arm_hal\hal\uart.cpp</FilePath>
             </File>
             <File>
-              <FileName>spi.cpp</FileName>
+              <FileName>usb_radio.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\spi.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>motors.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\motors.cpp</FilePath>
+              <FilePath>.\arm_hal\hal\usb_radio.cpp</FilePath>
+              <FileOption>
+                <CommonProperty>
+                  <UseCPPCompiler>2</UseCPPCompiler>
+                  <RVCTCodeConst>0</RVCTCodeConst>
+                  <RVCTZI>0</RVCTZI>
+                  <RVCTOtherData>0</RVCTOtherData>
+                  <ModuleSelection>0</ModuleSelection>
+                  <IncludeInBuild>0</IncludeInBuild>
+                  <AlwaysBuild>2</AlwaysBuild>
+                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
+                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
+                  <PublicsOnly>2</PublicsOnly>
+                  <StopOnExitCode>11</StopOnExitCode>
+                  <CustomArgument></CustomArgument>
+                  <IncludeLibraryModules></IncludeLibraryModules>
+                  <ComprImg>1</ComprImg>
+                </CommonProperty>
+                <FileArmAds>
+                  <Cads>
+                    <interw>2</interw>
+                    <Optim>0</Optim>
+                    <oTime>2</oTime>
+                    <SplitLS>2</SplitLS>
+                    <OneElfS>2</OneElfS>
+                    <Strict>2</Strict>
+                    <EnumInt>2</EnumInt>
+                    <PlainCh>2</PlainCh>
+                    <Ropi>2</Ropi>
+                    <Rwpi>2</Rwpi>
+                    <wLevel>0</wLevel>
+                    <uThumb>2</uThumb>
+                    <uSurpInc>2</uSurpInc>
+                    <VariousControls>
+                      <MiscControls></MiscControls>
+                      <Define></Define>
+                      <Undefine></Undefine>
+                      <IncludePath></IncludePath>
+                    </VariousControls>
+                  </Cads>
+                </FileArmAds>
+              </FileOption>
             </File>
           </Files>
         </Group>
@@ -1907,6 +1990,11 @@
               <FilePath>.\supervisor\src\pathFollower.cpp</FilePath>
             </File>
             <File>
+              <FileName>pickAndPlaceController.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\pickAndPlaceController.cpp</FilePath>
+            </File>
+            <File>
               <FileName>speedController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\speedController.cpp</FilePath>
@@ -1935,11 +2023,6 @@
               <FileName>wheelController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\wheelController.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>pickAndPlaceController.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\pickAndPlaceController.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -2085,9 +2168,73 @@
         </Group>
         <Group>
           <GroupName>coretech-messaging</GroupName>
+          <Files>
+            <File>
+              <FileName>utilMessaging.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\coretech\messaging\shared\src\utilMessaging.c</FilePath>
+            </File>
+          </Files>
         </Group>
         <Group>
           <GroupName>coretech-planning</GroupName>
+          <GroupOption>
+            <CommonProperty>
+              <UseCPPCompiler>0</UseCPPCompiler>
+              <RVCTCodeConst>0</RVCTCodeConst>
+              <RVCTZI>0</RVCTZI>
+              <RVCTOtherData>0</RVCTOtherData>
+              <ModuleSelection>0</ModuleSelection>
+              <IncludeInBuild>0</IncludeInBuild>
+              <AlwaysBuild>2</AlwaysBuild>
+              <GenerateAssemblyFile>2</GenerateAssemblyFile>
+              <AssembleAssemblyFile>2</AssembleAssemblyFile>
+              <PublicsOnly>2</PublicsOnly>
+              <StopOnExitCode>11</StopOnExitCode>
+              <CustomArgument></CustomArgument>
+              <IncludeLibraryModules></IncludeLibraryModules>
+              <ComprImg>1</ComprImg>
+            </CommonProperty>
+            <GroupArmAds>
+              <Cads>
+                <interw>2</interw>
+                <Optim>0</Optim>
+                <oTime>2</oTime>
+                <SplitLS>2</SplitLS>
+                <OneElfS>2</OneElfS>
+                <Strict>2</Strict>
+                <EnumInt>2</EnumInt>
+                <PlainCh>2</PlainCh>
+                <Ropi>2</Ropi>
+                <Rwpi>2</Rwpi>
+                <wLevel>0</wLevel>
+                <uThumb>2</uThumb>
+                <uSurpInc>2</uSurpInc>
+                <VariousControls>
+                  <MiscControls></MiscControls>
+                  <Define></Define>
+                  <Undefine></Undefine>
+                  <IncludePath></IncludePath>
+                </VariousControls>
+              </Cads>
+              <Aads>
+                <interw>2</interw>
+                <Ropi>2</Ropi>
+                <Rwpi>2</Rwpi>
+                <thumb>2</thumb>
+                <SplitLS>2</SplitLS>
+                <SwStkChk>2</SwStkChk>
+                <NoWarn>2</NoWarn>
+                <uSurpInc>2</uSurpInc>
+                <VariousControls>
+                  <MiscControls></MiscControls>
+                  <Define></Define>
+                  <Undefine></Undefine>
+                  <IncludePath></IncludePath>
+                </VariousControls>
+              </Aads>
+            </GroupArmAds>
+          </GroupOption>
           <Files>
             <File>
               <FileName>path.cpp</FileName>
@@ -2103,6 +2250,11 @@
               <FileName>binaryTracker.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\binaryTracker.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>colorConversion.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\colorConversion.cpp</FilePath>
             </File>
             <File>
               <FileName>connectedComponents.cpp</FileName>
@@ -2123,6 +2275,11 @@
               <FileName>decisionTree_vision.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\decisionTree_vision.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>detectFiducialMarkers.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\detectFiducialMarkers.cpp</FilePath>
             </File>
             <File>
               <FileName>docking_vision.cpp</FileName>
@@ -2155,9 +2312,9 @@
               <FilePath>..\coretech\vision\robot\src\filtering.cpp</FilePath>
             </File>
             <File>
-              <FileName>frontCameraWrappers.cpp</FileName>
+              <FileName>histogram.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\frontCameraWrappers.cpp</FilePath>
+              <FilePath>..\coretech\vision\robot\src\histogram.cpp</FilePath>
             </File>
             <File>
               <FileName>integralImage.cpp</FileName>
@@ -2170,9 +2327,24 @@
               <FilePath>..\coretech\vision\robot\src\laplacianPeaks.cpp</FilePath>
             </File>
             <File>
-              <FileName>lucasKanade.cpp</FileName>
+              <FileName>lucasKanade_Affine.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\lucasKanade.cpp</FilePath>
+              <FilePath>..\coretech\vision\robot\src\lucasKanade_Affine.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>lucasKanade_General.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\lucasKanade_General.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>lucasKanade_Projective.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\lucasKanade_Projective.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>lucasKanade_Slow.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\lucasKanade_Slow.cpp</FilePath>
             </File>
             <File>
               <FileName>traceBoundary.cpp</FileName>

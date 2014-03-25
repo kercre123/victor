@@ -521,7 +521,7 @@ namespace Anki
       if(reAllocate) {
         return memory.Reallocate(this->rawDataPointer, numBytesRequested, numBytesAllocated);
       } else {
-        return memory.Allocate(numBytesRequested, numBytesAllocated);
+        return memory.Allocate(numBytesRequested, flags.get_zeroAllocatedMemory(), numBytesAllocated);
       }
     }
 
@@ -579,10 +579,6 @@ namespace Anki
       } else {
         this->data = reinterpret_cast<Type*>( reinterpret_cast<char*>(rawData) + extraAlignmentBytes );
       }
-
-      // Zero out the entire buffer
-      if(flags.get_zeroAllocatedMemory())
-        this->SetZero();
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
       cvMatMirror = cv::Mat_<Type>(size[0], size[1], data, stride);

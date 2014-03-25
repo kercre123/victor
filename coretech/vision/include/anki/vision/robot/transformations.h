@@ -19,6 +19,8 @@ namespace Anki
 {
   namespace Embedded
   {
+    class SerializedBuffer;
+
     namespace Transformations
     {
       // The type of transformation.
@@ -40,6 +42,9 @@ namespace Anki
       // 1. Hold the current planar transformation, and optionally the initial extents of the quadrilateral
       // 2. Update the planar transformation with an update delta
       // 3. Transform a set of points, quadrilateral, or image to the new coordinate frame
+      //
+      // NOTE: All coordinates for images should be stored in the standard resolution
+      //       BASE_IMAGE_WIDTH X BASE_IMAGE_HEIGHT (currently, this is QVGA)
       class PlanarTransformation_f32
       {
       public:
@@ -64,23 +69,28 @@ namespace Anki
         // Requires at least N*sizeof(f32) bytes of scratch
         Result TransformPoints(
           const Array<f32> &xIn, const Array<f32> &yIn,
-          const f32 scale, Array<f32> &xOut, Array<f32> &yOut) const;
+          const f32 scale,
+          const bool inputPointsAreZeroCentered,
+          const bool outputPointsAreZeroCentered,
+          Array<f32> &xOut, Array<f32> &yOut) const;
 
         // Update the transformation. The format of the update should be as follows:
         // TRANSFORM_TRANSLATION: [-dx, -dy]
         // TRANSFORM_AFFINE: [h00, h01, h02, h10, h11, h12]
         // TRANSFORM_PROJECTIVE: [h00, h01, h02, h10, h11, h12, h20, h21]
-        Result Update(const Array<f32> &update, MemoryStack scratch, TransformType updateType=TRANSFORM_UNKNOWN);
+        Result Update(const Array<f32> &update, const f32 scale, MemoryStack scratch, TransformType updateType=TRANSFORM_UNKNOWN);
 
-        Result Print(const char * const variableName = "Transformation");
+        Result Print(const char * const variableName = "Transformation") const;
 
         // Transform the input Quadrilateral, using this object's transformation
-        Quadrilateral<f32> TransformQuadrilateral(const Quadrilateral<f32> &in,
+        Quadrilateral<f32> TransformQuadrilateral(
+          const Quadrilateral<f32> &in,
           MemoryStack scratch,
           const f32 scale=1.0f) const;
 
         // Transform an array (like an image)
-        Result TransformArray(const Array<u8> &in,
+        Result TransformArray(
+          const Array<u8> &in,
           Array<u8> &out,
           MemoryStack scratch,
           const f32 scale=1.0f) const;
@@ -89,6 +99,10 @@ namespace Anki
 
         // Set this object's transformType, centerOffset, initialCorners, and homography
         Result Set(const PlanarTransformation_f32 &newTransformation);
+
+        Result Serialize(SerializedBuffer &buffer) const;
+        Result SerializeRaw(void ** buffer, s32 &bufferLength) const; // Updates the buffer pointer and length before returning
+        Result Deserialize(void** buffer, s32 &bufferLength, MemoryStack &memory); // Updates the buffer pointer and length before returning
 
         Result set_transformType(const TransformType transformType);
         TransformType get_transformType() const;
@@ -99,12 +113,16 @@ namespace Anki
         Result set_initialCorners(const Quadrilateral<f32> &initialCorners);
         const Quadrilateral<f32>& get_initialCorners() const;
 
-        const Point<f32>& get_centerOffset() const;
+        Result set_centerOffset(const Point<f32> &centerOffset);
+        Point<f32> get_centerOffset(const f32 scale) const;
 
         // Transform this object's initialCorners, based on its current homography
         Quadrilateral<f32> get_transformedCorners(MemoryStack scratch) const;
 
+        s32 get_SerializationSize() const;
+
       protected:
+
         bool isValid;
 
         TransformType transformType;
@@ -123,9 +141,11 @@ namespace Anki
           const Array<f32> &xIn, const Array<f32> &yIn,
           const f32 scale,
           const Point<f32>& centerOffset,
-          Array<f32> &xOut, Array<f32> &yOut,
           const TransformType transformType,
-          const Array<f32> &homography);
+          const Array<f32> &homography,
+          const bool inputPointsAreZeroCentered,
+          const bool outputPointsAreZeroCentered,
+          Array<f32> &xOut, Array<f32> &yOut);
 
         Result Init(const TransformType transformType, const Quadrilateral<f32> &initialCorners, const Array<f32> &initialHomography, const Point<f32> &centerOffset, MemoryStack &memory);
       };

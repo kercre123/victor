@@ -1,0 +1,132 @@
+function [imgNew, AlphaChannel] = AddFiducial(img, varargin)
+
+CropImage = true;
+OutputSize = 512;
+PadOutside = true;
+FiducialColor = [0 0 0];
+TransparentColor = [];
+TransparencyTolerance = 0.1;
+
+parseVarargin(varargin{:});
+
+img = im2double(img);
+if size(img,3)==1
+    img = repmat(img,[1 1 3]);
+end
+%img = mean(im2double(img),3);
+
+if CropImage
+    [nrows,ncols,~] = size(img);
+    
+    row = any(any(img<1,3),1); 
+    xmin = find(row, 1, 'first');
+    xmax = find(row, 1, 'last');
+    
+    col = any(any(img<1,3),2);
+    ymin = find(col, 1, 'first');
+    ymax = find(col, 1, 'last');
+    
+    %imgDim = max(ymax-ymin+1, xmax-xmin+1);
+    
+    img = img(ymin:ymax, xmin:xmax,:);
+end
+
+[nrows,ncols,~] = size(img);
+if nrows > ncols
+    padding = nrows - ncols;
+    if mod(padding,2)==0
+        padding = padding*[0.5 0.5];
+    else
+        padding = [floor(padding/2) ceil(padding/2)];
+    end
+    img = padarray(padarray(img, [0 padding(1)], 1, 'pre'), [0 padding(2)], 1, 'post');
+    
+elseif ncols > nrows
+    padding = ncols - nrows;
+    if mod(padding,2)==0
+        padding = padding*[0.5 0.5];
+    else
+        padding = [floor(padding/2) ceil(padding/2)];
+    end
+    img = padarray(padarray(img, [padding(1) 0], 1, 'pre'), [padding(2) 0], 1, 'post');
+end
+
+[nrows,ncols,~] = size(img);
+assert(nrows==ncols, 'By now, image should be square.');
+
+[squareWidth_pix, padding_pix] = VisionMarkerTrained.GetFiducialPixelSize(...
+    nrows, 'CodeImageOnly');
+
+if PadOutside
+    imgNew = padarray(img, round(2*padding_pix+squareWidth_pix)*[1 1], 1, 'both');
+    
+    padding_pix = round(padding_pix);
+    squareWidth_pix = round(squareWidth_pix);
+    
+    [nrows,ncols,~] = size(imgNew);
+    for i=1:3
+        imgNew(padding_pix+(1:squareWidth_pix), (padding_pix+1):(ncols-padding_pix),i) = FiducialColor(i);
+        imgNew((nrows-padding_pix-squareWidth_pix+1):(nrows-padding_pix), (padding_pix+1):(ncols-padding_pix),i) = FiducialColor(i);
+        
+        imgNew((padding_pix+1):(nrows-padding_pix), padding_pix+(1:squareWidth_pix),i) = FiducialColor(i);
+        imgNew((padding_pix+1):(nrows-padding_pix), (ncols-padding_pix-squareWidth_pix+1):(ncols-padding_pix),i) = FiducialColor(i);
+    end
+else
+    imgNew = padarray(img, round(padding_pix+squareWidth_pix)*[1 1], 1, 'both'); %#ok<UNRCH>
+    
+    padding_pix = round(padding_pix);
+    squareWidth_pix = round(squareWidth_pix);
+    
+    [nrows,ncols,~] = size(imgNew);
+    for i=1:3
+        imgNew([1:squareWidth_pix (end-squareWidth_pix+1):end],:,i) = FiducialColor(i);
+        imgNew(:,[1:squareWidth_pix (end-squareWidth_pix+1):end],i) = FiducialColor(i);
+    end
+end
+
+if nargout == 0
+    subplot 131, imagesc(img), axis image
+    
+    squareFrac = VisionMarkerTrained.SquareWidthFraction;
+    paddingFrac = VisionMarkerTrained.FiducialPaddingFraction;
+    
+    if PadOutside
+        subplot 132, hold off, imagesc([-paddingFrac 1+paddingFrac], [-paddingFrac 1+paddingFrac], imgNew), axis image, hold on
+        rectangle('Pos', [(squareFrac+paddingFrac)*[1 1] (1-2*squareFrac-2*paddingFrac)*[1 1]], 'EdgeColor', 'r', 'LineStyle', '--');
+        plot([0 0 1 1], [0 1 0 1], 'y+');
+        
+        subplot 133, hold off, imagesc(imgNew), axis image, hold on
+        Corners = [padding_pix+1 padding_pix+1;
+            padding_pix+1 nrows-padding_pix-1;
+            ncols-padding_pix-1 padding_pix+1;
+            ncols-padding_pix-1 nrows-padding_pix-1];
+        plot(Corners(:,1), Corners(:,2), 'y+');
+        rectangle('Pos', [(squareWidth_pix+2*padding_pix)*[1 1] (nrows-2*squareWidth_pix-4*padding_pix)*[1 1]], 'EdgeColor', 'r', 'LineStyle', '--');
+    else
+        subplot 132, hold off, imagesc([0 1], [0 1], imgNew), axis image, hold on
+        rectangle('Pos', [(squareFrac+paddingFrac)*[1 1] (1-2*squareFrac-2*paddingFrac)*[1 1]], 'EdgeColor', 'r', 'LineStyle', '--');
+        plot([0 0 1 1], [0 1 0 1], 'y+');
+        
+        subplot 133, hold off, imagesc(imgNew), axis image, hold on
+        Corners = [1 1;
+            1 nrows;
+            ncols 1;
+            ncols nrows];
+        plot(Corners(:,1), Corners(:,2), 'y+');
+        rectangle('Pos', [(squareWidth_pix+padding_pix)*[1 1] (nrows-2*squareWidth_pix-2*padding_pix)*[1 1]], 'EdgeColor', 'r', 'LineStyle', '--');
+    end
+    
+    colormap(gray)
+else
+    imgNew = imresize(imgNew, OutputSize*[1 1]);
+end
+
+
+if ~isempty(TransparentColor)
+    transImg = repmat(reshape(TransparentColor, [1 1 3]), OutputSize*[1 1]);
+    AlphaChannel = double(any(abs(imgNew - transImg)>TransparencyTolerance,3));
+else
+    AlphaChannel = ones(OutputSize);
+end
+
+end

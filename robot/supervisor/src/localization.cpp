@@ -1,12 +1,12 @@
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/localization.h"
-
+#include "anki/common/robot/geometry.h"
 
 
 #ifdef SIMULATOR
 // Whether or not to use simulator "ground truth" pose
-#define USE_SIM_GROUND_TRUTH_POSE 1
+#define USE_SIM_GROUND_TRUTH_POSE 0
 #define USE_OVERLAY_DISPLAY 1
 #else // else not simulator
 #define USE_SIM_GROUND_TRUTH_POSE 0
@@ -35,8 +35,10 @@ namespace Anki {
         f32 currentMatX_=0.f, currentMatY_=0.f;  // mm
         Radians currentMatHeading_(0.f);
        
+#if(USE_OVERLAY_DISPLAY)
         f32 xTrue_, yTrue_, angleTrue_;
         f32 prev_xTrue_, prev_yTrue_, prev_angleTrue_;
+#endif
         
         f32 prevLeftWheelPos_ = 0;
         f32 prevRightWheelPos_ = 0;
@@ -99,12 +101,12 @@ namespace Anki {
           
       
           // lDist / lRadius = rDist / rRadius = theta
-          // rRadius - lRadius = wheel_base  => rRadius = wheel_base + lRadius
+          // rRadius - lRadius = wheel_dist  => rRadius = wheel_dist + lRadius
           
-          // lDist / lRadius = rDist / (wheel_base + lRadius)
-          // (wheel_base + lRadius) / lRadius = rDist / lDist
-          // wheel_base / lRadius = rDist / lDist - 1
-          // lRadius = wheel_base / (rDist / lDist - 1)
+          // lDist / lRadius = rDist / (wheel_dist + lRadius)
+          // (wheel_dist + lRadius) / lRadius = rDist / lDist
+          // wheel_dist / lRadius = rDist / lDist - 1
+          // lRadius = wheel_dist / (rDist / lDist - 1)
 
           if (FLT_NEAR(lDist, rDist)) {
             lRadius = BIG_RADIUS;
@@ -116,16 +118,16 @@ namespace Anki {
             if (FLT_NEAR(lDist,0)) {
               lRadius = 0;
             } else {
-              lRadius = WHEEL_BASE / (rDist / lDist - 1);
+              lRadius = WHEEL_DIST_MM / (rDist / lDist - 1);
             }
-            rRadius = WHEEL_BASE + lRadius;
+            rRadius = WHEEL_DIST_MM + lRadius;
             if (ABS(rRadius) > ABS(lRadius)) {
               cTheta = rDist / rRadius;
             } else {
               cTheta = lDist / lRadius;
             }
-            cDist = 0.5*(lDist + rDist);
-            cRadius = lRadius + 0.5*WHEEL_BASE;
+            cDist = 0.5f*(lDist + rDist);
+            cRadius = lRadius + WHEEL_DIST_HALF_MM;
           }
 
 #if(DEBUG_LOCALIZATION)
@@ -147,7 +149,7 @@ namespace Anki {
             // in the circle defined by the turning radius as determined by the incremental wheel motion this tick.
             // The angle of this circle that this chord spans is cTheta.
             // The angle of the chord relative to the robot's previous trajectory is cTheta / 2.
-            f32 alpha = cTheta * 0.5;
+            f32 alpha = cTheta * 0.5f;
             
             // The chord length is 2 * cRadius * sin(cTheta / 2).
             f32 chord_length = ABS(2 * cRadius * sinf(alpha));
@@ -215,16 +217,16 @@ namespace Anki {
 
       void SetCurrentMatPose(f32  x, f32  y, Radians  angle)
       {
-        currentMatX_ = x * 1000;  // convert to mm
-        currentMatY_ = y * 1000;  // convert to mm
+        currentMatX_ = x;
+        currentMatY_ = y;
         currentMatHeading_ = angle;
 
       } // SetCurrentMatPose()
       
       void GetCurrentMatPose(f32& x, f32& y, Radians& angle)
       {
-        x = currentMatX_ * 0.001; // convert to m
-        y = currentMatY_ * 0.001; // convert to m
+        x = currentMatX_;
+        y = currentMatY_;
         angle = currentMatHeading_;
       } // GetCurrentMatPose()
       

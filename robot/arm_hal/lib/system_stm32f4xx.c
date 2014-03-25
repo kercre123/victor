@@ -76,7 +76,6 @@ static u16 GetSwizzledAddress(u16 a)
     (BIT(a, 10) << 10) |  // Unchanged
     (BIT(a, 11) << 9);
 }
-  
 
 void SystemInit(void)
 {
@@ -464,7 +463,7 @@ void SystemInit_ExtMemCtl(void)
   RCC->AHB3ENR |= 0x00000001;
   
   /* Configure and enable SDRAM bank1 */
-  FMC_Bank5_6->SDCR[0] = 0x00002DD4;  // 16-bit | 4 banks | 3 cycle CAS | SDCLK = 3 x HCLK | no burst read | read pipe = 1 cycle | 12 bits for row | 8 bits for column
+  FMC_Bank5_6->SDCR[0] = 0x00002954;  // 16-bit | 4 banks | 2 cycle CAS | SDCLK = 2 x HCLK | no burst read | read pipe = 1 cycle | 12 bits for row | 8 bits for column
   FMC_Bank5_6->SDTR[0] = 0x01115351;  // timings
   
   /* SDRAM initialization sequence */
@@ -497,8 +496,8 @@ void SystemInit_ExtMemCtl(void)
  
   /* MRD register program */
   FMC_Bank5_6->SDCMR =
-    (GetSwizzledAddress(0x230) << 9) | // burst length = 1 | sequential | CAS# latency = 3 | no test | write burst length = single
-    0x14;  // Load Mode Register | Command issued to SDRAM Bank 1 | 
+    (GetSwizzledAddress(0x220) << 9) | // Burst length = 1 | Sequential | CAS# latency = 2 | No test | Write burst length = single
+    0x14;  // Load Mode Register | Command issued to SDRAM Bank 1
   timeout = 0xFFFF;
   while((tmpreg != 0) && (timeout-- > 0))
   {

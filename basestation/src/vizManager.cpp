@@ -12,6 +12,7 @@
 
 #include "vizManager.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/common/basestation/general.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -22,8 +23,13 @@ namespace Anki {
     {
       
       if (!vizClient_.Connect(ROBOT_SIM_WORLD_HOST, VIZ_SERVER_PORT)) {
+        PRINT_INFO("Failed to init VizManager client (%s:%d)\n", ROBOT_SIM_WORLD_HOST, VIZ_SERVER_PORT);
         isInitialized_ = false;
       }
+    
+      // Define colors
+      DefineColor(VIZ_COLOR_EXECUTED_PATH, 1.0, 0.0, 0.0, 1.0);
+      DefineColor(VIZ_COLOR_PREDOCKPOSE,   1.0, 0.0, 0.0, 0.75);
       
       return isInitialized_ ? EXIT_SUCCESS : EXIT_FAILURE;
     }
@@ -32,10 +38,59 @@ namespace Anki {
     {
       isInitialized_ = false;
     }
+
+    // ===== Convenience object draw functions for specific object types ====
     
-    void VizManager::SetVizObject(u32 objectID, u32 objectTypeID,
-                                  const Anki::Point3f &size_mm,
-                                  const Anki::Pose3d &pose, u32 colorID)
+    void VizManager::DrawRobot(const u32 robotID,
+                               const Pose3d &pose,
+                               const u32 colorID)
+    {
+      CORETECH_ASSERT(robotID < CUBOID_ID_BASE);
+      
+      Anki::Point3f dims; // junk
+      DrawObject(ROBOT_ID_BASE + robotID,
+                 VIZ_ROBOT,
+                 dims,
+                 pose,
+                 colorID);
+    }
+    
+    void VizManager::DrawCuboid(const u32 blockID,
+                                const Point3f &size,
+                                const Pose3d &pose,
+                                const u32 colorID)
+    {
+      CORETECH_ASSERT(blockID < (RAMP_ID_BASE - CUBOID_ID_BASE));
+      
+      DrawObject(CUBOID_ID_BASE + blockID,
+                 VIZ_CUBOID,
+                 size,
+                 pose,
+                 colorID);
+    }
+    
+    void VizManager::DrawPreDockPose(const u32 preDockPoseID,
+                                     const Pose3d &pose,
+                                     const u32 colorID)
+    {
+      //CORETECH_ASSERT(preDockPoseID < ([[NEXT_OBJECT_ID_BASE]] - PREDOCKPOSE_ID_BASE));
+      
+      Anki::Point3f dims; // junk
+      DrawObject(PREDOCKPOSE_ID_BASE + preDockPoseID,
+                 VIZ_PREDOCKPOSE,
+                 dims,
+                 pose,
+                 colorID);
+    }
+    
+    
+    // ================== Object drawing methods ====================
+    
+    void VizManager::DrawObject(const u32 objectID,
+                                const u32 objectTypeID,
+                                const Anki::Point3f &size_mm,
+                                const Anki::Pose3d &pose,
+                                const u32 colorID)
     {
       VizObject v;
       v.objectID = objectID;
@@ -67,7 +122,7 @@ namespace Anki {
     }
     
     
-    void VizManager::EraseVizObject(u32 objectID)
+    void VizManager::EraseVizObject(const u32 objectID)
     {
       VizEraseObject v;
       v.objectID = objectID;
@@ -88,12 +143,41 @@ namespace Anki {
       vizClient_.Send(sendBuf, sizeof(v)+1);
     }
     
+    // ================== Path drawing methods ====================
+    
+    void VizManager::DrawPath(const u32 pathID,
+                              const Planning::Path& p,
+                              const u32 colorID)
+    {
+      ErasePath(pathID);
+      
+      for (int s=0; s < p.GetNumSegments(); ++s) {
+        const Planning::PathSegmentDef& seg = p[s].GetDef();
+        switch(p[s].GetType()) {
+          case Planning::PST_LINE:
+            AppendPathSegmentLine(pathID,
+                                  seg.line.startPt_x, seg.line.startPt_y,
+                                  seg.line.endPt_x, seg.line.endPt_y);
+            break;
+          case Planning::PST_ARC:
+            AppendPathSegmentArc(pathID,
+                                 seg.arc.centerPt_x, seg.arc.centerPt_y,
+                                 seg.arc.radius,
+                                 seg.arc.startRad,
+                                 seg.arc.sweepRad);
+            break;
+          default:
+            break;
+        }
+      }
+      
+      SetPathColor(pathID, colorID);
+    }
     
     
-    
-    void VizManager::AppendPathSegmentLine(u32 pathID,
-                                           f32 x_start_mm, f32 y_start_mm,
-                                           f32 x_end_mm, f32 y_end_mm)
+    void VizManager::AppendPathSegmentLine(const u32 pathID,
+                                           const f32 x_start_mm, const f32 y_start_mm,
+                                           const f32 x_end_mm, const f32 y_end_mm)
     {
       VizAppendPathSegmentLine v;
       v.pathID = pathID;
@@ -109,9 +193,9 @@ namespace Anki {
       vizClient_.Send(sendBuf, sizeof(v)+1);
     }
     
-    void VizManager::AppendPathSegmentArc(u32 pathID,
-                                          f32 x_center_mm, f32 y_center_mm,
-                                          f32 radius_mm, f32 startRad, f32 sweepRad)
+    void VizManager::AppendPathSegmentArc(const u32 pathID,
+                                          const f32 x_center_mm, const f32 y_center_mm,
+                                          const f32 radius_mm, const f32 startRad, const f32 sweepRad)
     {
       VizAppendPathSegmentArc v;
       v.pathID = pathID;
@@ -128,7 +212,7 @@ namespace Anki {
     }
     
 
-    void VizManager::ErasePath(u32 pathID)
+    void VizManager::ErasePath(const u32 pathID)
     {
       VizErasePath v;
       v.pathID = pathID;
@@ -149,7 +233,69 @@ namespace Anki {
       vizClient_.Send(sendBuf, sizeof(v)+1);
     }
 
+
+    void VizManager::SetPathColor(const u32 pathID, const u32 colorID)
+    {
+      VizSetPathColor v;
+      v.pathID = pathID;
+      v.colorID = colorID;
+      
+      sendBuf[0] = VizSetPathColor_ID;
+      memcpy(sendBuf + 1, &v, sizeof(v));
+      vizClient_.Send(sendBuf, sizeof(v)+1);
+    }
     
+    // =============== Text methods ==================
+
+    void VizManager::SetText(const u32 labelID, const u32 colorID, const char* format, ...)
+    {
+      VizSetLabel v;
+      v.labelID = labelID;
+      v.colorID = colorID;
+      
+      va_list argptr;
+      va_start(argptr, format);
+      vsnprintf((char*)v.text, sizeof(v.text), format, argptr);
+      va_end(argptr);
+      
+      sendBuf[0] = VizSetLabel_ID;
+      memcpy(sendBuf + 1, &v, sizeof(v));
+      vizClient_.Send(sendBuf, sizeof(v)+1);
+    }
+    
+    
+    // ================== Color methods ====================
+    
+    // Sets the index colorID to correspond to the specified color vector
+    void VizManager::DefineColor(const u32 colorID,
+                                 const f32 red, const f32 green, const f32 blue,
+                                 const f32 alpha)
+    {
+      VizDefineColor v;
+      v.colorID = colorID;
+      v.r = red;
+      v.g = green;
+      v.b = blue;
+      v.alpha = alpha;
+      
+      sendBuf[0] = VizDefineColor_ID;
+      memcpy(sendBuf + 1, &v, sizeof(v));
+      vizClient_.Send(sendBuf, sizeof(v)+1);
+    }
+    
+    
+    // ============== Misc. Debug methods =================
+    void VizManager::SetDockingError(const f32 x_dist, const f32 y_dist, const f32 angle)
+    {
+      VizDockingErrorSignal v;
+      v.x_dist = x_dist;
+      v.y_dist = y_dist;
+      v.angle = angle;
+      
+      sendBuf[0] = VizDockingErrorSignal_ID;
+      memcpy(sendBuf + 1, &v, sizeof(v));
+      vizClient_.Send(sendBuf, sizeof(v)+1);
+    }
     
     
   } // namespace Cozmo

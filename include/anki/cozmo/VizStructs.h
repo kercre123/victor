@@ -9,11 +9,23 @@ namespace Anki {
     
     // Port to connect to for sending visualization messages
     const u32 VIZ_SERVER_PORT = 5252;
+    
+    // Only cozmo_viz_controller (aka CozmoVizDisplay) should connect to the
+    // cozmo_physics plugin. Basestation or robot can draw via cozmo_viz_controller.
+    const u32 PHYSICS_PLUGIN_SERVER_PORT = 5253;
 
     const u32 ALL_PATH_IDs = u32_MAX;
     const u32 ALL_OBJECT_IDs = u32_MAX;
 
     const u32 DEFAULT_COLOR_ID = u32_MAX;
+    
+    enum VizObjectTypes {
+      VIZ_ROBOT,
+      VIZ_CUBOID,
+      VIZ_RAMP,
+      VIZ_PREDOCKPOSE
+    };
+    
     
     // Define viz messages
 //#ifdef COZMO_ROBOT

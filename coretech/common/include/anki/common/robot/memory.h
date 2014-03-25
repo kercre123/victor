@@ -26,6 +26,10 @@ namespace Anki
     class MemoryStack;
     class MemoryStackIterator;
     class MemoryStackConstIterator;
+    class MemoryStackRawIterator;
+    class MemoryStackRawConstIterator;
+
+    class SerializedBuffer;
 
     // A MemoryStack keeps track of an external memory buffer, by using the system stack. It is not
     // thread safe. Data that is allocated with Allocate() will be MEMORY_ALIGNMENT bytes-aligned.
@@ -45,8 +49,8 @@ namespace Anki
     class MemoryStack
     {
     public:
-      static const u32 FILL_PATTERN_START = 0xFF01FF02;
-      static const u32 FILL_PATTERN_END = 0x03FF04FF;
+      static const u32 FILL_PATTERN_START = 0xFF01FE02;
+      static const u32 FILL_PATTERN_END = 0x03FF04FE;
 
       // The header contains the size of the allocated segment, and the fill pattern
       static const s32 HEADER_LENGTH = 8;
@@ -68,6 +72,9 @@ namespace Anki
       // once it is allocated, making Allocate more like calloc() than malloc()
       void* Allocate(const s32 numBytesRequested);
       void* Allocate(const s32 numBytesRequested, s32 &numBytesAllocated);
+
+      // Same as the above, but zeroAllocatedMemory is specified only for this segment
+      void* Allocate(const s32 numBytesRequested, const bool zeroAllocatedMemory, s32 &numBytesAllocated);
 
       // Reallocate will change the size of the last allocated memory segment. It only works on the
       // last segment. The return value is equal to memoryLocation, or NULL if there was an error.
@@ -111,7 +118,7 @@ namespace Anki
       Flags::Buffer get_flags() const;
 
     protected:
-      friend class MemoryStackConstIterator;
+      friend SerializedBuffer;
 
       void * buffer;
       s32 totalBytes;
@@ -137,7 +144,7 @@ namespace Anki
       bool HasNext() const;
 
       // Returns NULL if there are no more segments
-      const void * GetNext(s32 &segmentLength);
+      const void * GetNext(s32 &segmentLength, const bool requireFillPatternMatch=true);
 
       const MemoryStack& get_memory() const;
 
@@ -152,10 +159,43 @@ namespace Anki
       MemoryStackIterator(MemoryStack &memory);
 
       // Returns NULL if there are no more segments
-      void * GetNext(s32 &segmentLength);
+      void * GetNext(s32 &segmentLength, const bool requireFillPatternMatch=true);
 
       MemoryStack& get_memory();
     }; // class MemoryStackIterator
+
+    class MemoryStackRawConstIterator
+    {
+      // A Raw Iterator doesn't use the reported segment length to find the next segment. Instead,
+      // it searches through every byte of the buffer, to find matching begin/end fill patterns. As
+      // a result, it is more tolerant to missing data, but will also be slower.
+    public:
+      MemoryStackRawConstIterator(const MemoryStack &memory);
+
+      bool HasNext() const;
+      bool HasNext(s32 &startIndex, s32 &endIndex, s32 &reportedLength) const;
+
+      // Returns NULL if there are no more segments
+      const void * GetNext(s32 &trueSegmentLength, s32 &reportedSegmentLength);
+
+      const MemoryStack& get_memory() const;
+
+    protected:
+      s32 index;
+      const MemoryStack &memory;
+    }; // class MemoryStackRawConstIterator
+
+    class MemoryStackRawIterator : public MemoryStackRawConstIterator
+    {
+      // See MemoryStackRawConstIterator
+    public:
+      MemoryStackRawIterator(MemoryStack &memory);
+
+      // Returns NULL if there are no more segments
+      void * GetNext(s32 &trueSegmentLength, s32 &reportedSegmentLength);
+
+      MemoryStack& get_memory();
+    }; // class MemoryStackRawIterator
   } // namespace Embedded
 } // namespace Anki
 

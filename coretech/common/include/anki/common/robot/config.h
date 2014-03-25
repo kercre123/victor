@@ -17,6 +17,18 @@ For internal use only. No part of this code may be used without a signed non-dis
 // Compiler-specific configuration, with various defines that make different compilers work on the same code
 //
 
+// Section directives to allocate memory in specific places
+#ifdef ROBOT_HARDWARE  // STM32F4 version
+// NOTE: If you don't define a location, read-only will go to IROM, and read-write will go to RW_IRAM2 (Core-coupled memory)
+#define OFFCHIP __attribute__((section("OFFCHIP")))
+#define ONCHIP __attribute__((section("ONCHIP")))
+#define CCM __attribute__((section("CCM")))
+#else
+#define OFFCHIP
+#define ONCHIP
+#define CCM
+#endif
+
 #if defined(_MSC_VER) // We're using the MSVC compiler
 #pragma warning(disable: 4068) // Disable warning for unknown pragma
 #pragma warning(disable: 4127) // Disable warning for conditional expression is constant
@@ -149,8 +161,12 @@ extern "C" {
 #define ANKI_VISION_IMAGE_WIDTH_SHIFT 4
 #define ANKI_VISION_IMAGE_WIDTH_MULTIPLE (1<<ANKI_VISION_IMAGE_WIDTH_SHIFT)
 
+// All scales will be relative to this base image width
+#define BASE_IMAGE_WIDTH 320
+#define BASE_IMAGE_HEIGHT 240
+
 // Which errors will be checked and reported?
-#define ANKI_DEBUG_MINIMAL 0 // Only check and output issue with explicit unit tests
+#define ANKI_DEBUG_MINIMAL 0 // Only check and output issues with explicit unit tests
 #define ANKI_DEBUG_ERRORS 10 // Check and output AnkiErrors and explicit unit tests
 #define ANKI_DEBUG_ERRORS_AND_WARNS 20 // Check and output AnkiErrors, AnkiWarns, and explicit unit tests
 #define ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS 30 // Check and output AnkiErrors, AnkiWarns, AnkiAsserts, and explicit unit tests

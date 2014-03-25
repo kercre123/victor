@@ -30,17 +30,17 @@ using namespace std;
 const double secondsToWaitBeforeSavingABuffer = 1.0;
 
 const s32 outputFilenamePatternLength = 1024;
-//char outputFilenamePattern[outputFilenamePatternLength] = "C:/datasets/cozmoShort/cozmo_%04d-%02d-%02d_%02d-%02d-%02d_%d.%s";
-char outputFilenamePattern[outputFilenamePatternLength] = "C:/datasets/cozmoShort/cozmo_date%04d_%02d_%02d_time%02d_%02d_%02d_frame%d.%s";
+//char outputFilenamePattern[outputFilenamePatternLength] = "C:/datasets/systemTestImages/cozmo_%04d-%02d-%02d_%02d-%02d-%02d_%d.%s";
+char outputFilenamePattern[outputFilenamePatternLength] = "C:/datasets/systemTestImages/cozmo_date%04d_%02d_%02d_time%02d_%02d_%02d_frame%d.%s";
 
 // Based off example at http://msdn.microsoft.com/en-us/library/windows/desktop/ms682516(v=vs.85).aspx
 DWORD WINAPI SaveBuffersThread(LPVOID lpParam)
 {
   SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_BELOW_NORMAL);
 
-  RawBuffer *buffer = (RawBuffer*)lpParam;
+  /*RawBuffer *buffer = (RawBuffer*)lpParam;
 
-  ProcessRawBuffer(*buffer, string(outputFilenamePattern), true, BUFFER_ACTION_SAVE, true, true, true);
+  ProcessRawBuffer(*buffer, string(outputFilenamePattern), true, BUFFER_ACTION_SAVE, true);*/
 
   return 0;
 } // DWORD WINAPI PrintfBuffers(LPVOID lpParam)
@@ -49,7 +49,7 @@ void printUsage()
 {
   printf(
     "usage: saveVideo <comPort> <baudRate> <outputPatternString>\n"
-    "example: saveVideo 8 1000000 C:/datasets/cozmoShort/cozmo_%%04d-%%02d-%%02d_%%02d-%%02d-%%02d_%%d.%%s\n");
+    "example: saveVideo 8 1000000 C:/datasets/systemTestImages/cozmo_%%04d-%%02d-%%02d_%%02d-%%02d-%%02d_%%d.%%s\n");
 } // void printUsage()
 
 int main(int argc, char ** argv)
@@ -60,7 +60,7 @@ int main(int argc, char ** argv)
   u8 *usbBuffer = reinterpret_cast<u8*>(malloc(USB_BUFFER_SIZE));
   s32 usbBufferIndex = 0;
 
-  s32 comPort = 8;
+  s32 comPort = 11;
   s32 baudRate = 1000000;
 
   if(argc == 1) {
@@ -119,7 +119,7 @@ int main(int argc, char ** argv)
           */
 
           // Just call the function
-          ProcessRawBuffer(rawBuffer, string(outputFilenamePattern), true, BUFFER_ACTION_SAVE, true, true, true);
+          ProcessRawBuffer_Save(rawBuffer, string(outputFilenamePattern), true, true);
 
           usbBuffer = reinterpret_cast<u8*>(malloc(USB_BUFFER_SIZE));
           usbBufferIndex = 0;

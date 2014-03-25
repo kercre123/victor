@@ -13,6 +13,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define _ANKICORETECHEMBEDDED_COMMON_POINT_H_
 
 #include "anki/common/robot/geometry_declarations.h"
+#include "anki/common/robot/memory.h"
+#include "anki/common/robot/matrix.h"
 
 namespace Anki
 {
@@ -138,6 +140,28 @@ namespace Anki
       return center;
     }
 
+    template<typename Type> Rectangle<Type> Rectangle<Type>::ComputeScaledRectangle(const f32 scalePercent) const
+    {
+      // TODO: should be done differently for int vs float?
+
+      const f32 width = static_cast<f32>(this->get_width());
+      const f32 height = static_cast<f32>(this->get_height());
+
+      const f32 scaledWidth = width * scalePercent;
+      const f32 scaledHeight = height * scalePercent;
+
+      const f32 dx2 = (scaledWidth - width) / 2.0f;
+      const f32 dy2 = (scaledHeight - height) / 2.0f;
+
+      Rectangle<Type> scaledRect(
+        this->left - dx2,
+        this->right + dx2,
+        this->top - dy2,
+        this->bottom + dy2);
+
+      return scaledRect;
+    }
+
     template<typename Type> bool Rectangle<Type>::operator== (const Rectangle<Type> &rectangle2) const
     {
       if(this->left == rectangle2.left && this->top == rectangle2.top && this->right == rectangle2.right && this->bottom == rectangle2.bottom)
@@ -259,6 +283,52 @@ namespace Anki
       }
 
       return boundingBox;
+    }
+
+    template<typename Type> Quadrilateral<Type> Quadrilateral<Type>::ComputeClockwiseCorners() const
+    {
+      char tmpBuffer[128];
+      MemoryStack scratch(tmpBuffer, 128);
+
+      Array<f32> thetas(1,4,scratch);
+      Array<s32> indexes(1,4,scratch);
+      Point<Type> center = this->ComputeCenter();
+
+      for(s32 i=0; i<4; i++) {
+        f32 rho = 0.0f;
+
+        Cart2Pol<f32>(
+          static_cast<f32>(this->corners[i].x - center.x),
+          static_cast<f32>(this->corners[i].y - center.y),
+          rho, thetas[0][i]);
+      }
+
+      Matrix::Sort(thetas, indexes, 1);
+
+      const Quadrilateral<Type> sortedQuad(this->corners[indexes[0][0]], this->corners[indexes[0][1]], this->corners[indexes[0][2]], this->corners[indexes[0][3]]);
+
+      return sortedQuad;
+    }
+
+    template<typename Type> bool Quadrilateral<Type>::IsConvex() const
+    {
+      Quadrilateral<Type> sortedQuad = this->ComputeClockwiseCorners();
+
+      for(s32 iCorner=0; iCorner<4; iCorner++) {
+        const Point<Type> &corner1 = sortedQuad[iCorner];
+        const Point<Type> &corner2 = sortedQuad[(iCorner+1) % 4];
+        const Point<Type> &corner3 = sortedQuad[(iCorner+2) % 4];
+
+        const Type orientation =
+          ((corner2.y - corner1.y) * (corner3.x - corner2.x)) -
+          ((corner2.x - corner1.x) * (corner3.y - corner2.y));
+
+        if((orientation - static_cast<Type>(0.001)) > 0) {
+          return false;
+        }
+      }
+
+      return true;
     }
 
     template<typename Type> bool Quadrilateral<Type>::operator== (const Quadrilateral<Type> &quad2) const

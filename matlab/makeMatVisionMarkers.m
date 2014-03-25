@@ -1,48 +1,48 @@
-markerLibrary = VisionMarkerLibrary.Load();
 
-numCorners = [3 2 3; 
-              2 1 2; 
-              3 2 3];
-          
-angles = [-90   -180   -180;    
-          -90     0      90;
-            0     0      90];
+% markerLibrary = VisionMarkerLibrary.Load();
+%
+%         numCorners = [3 2 3;
+%             2 1 2;
+%             3 2 3];
+%         
+%         angles = [-90   -180   -180;
+%             -90     0      90;
+%             0     0      90];
+%         
+%         anki = imread('~/Box Sync/Cozmo SE/VisionMarkers/ankiLogo.png');
+     
+markerSize_mm = 65;
+
+% Letters:
+matMarkerPath = '~/Box Sync/Cozmo SE/VisionMarkers/lettersWithFiducials/unpadded';
+fnames = {'A', 'B', 'C', 'D';
+    'E', 'F', 'G', 'J';
+    'K', 'L', 'M', 'N';
+    'P', 'R', 'T', 'Y'};
+fnames = cellfun(@(name)fullfile(matMarkerPath, [name '.png']), fnames, 'UniformOutput', false);
+angles = zeros(4);
+fidColors = zeros(1,3);
+
+% % Cozmo/Anki Logos
+% matMarkerPath = '~/Box Sync/Cozmo SE/VisionMarkers/matWithFiducials/unpadded'; 
+% fnames = getfnames(matMarkerPath, '*.png', 'useFullPath', true);
+% fnames = fnames([1:2:end 2:2:end]);
+% angles = [zeros(2,4); 180*ones(2,4)];
+% fidColors = permute(reshape(repmat([78 82 89; 27 130 193]/255, [8 1]), [4 4 3]), [2 1 3]);
+
+numImages = numel(fnames);
+assert(numImages == 16, 'Expecting to find 16 images.');
+images = fnames; %cell(4,4);
+% for i = 1:numImages
+%     images{i} = imread(fullfile(matMarkerPath, fnames{i}));
+% end
+
+[xgrid,ygrid] = meshgrid(linspace(-200,200,4));
+numCorners = zeros(4,4); % TODO: remove
         
-xgrid  = [-250 0 250;
-          -250 0 250;
-          -250 0 250];
-      
-ygrid  = [ 250  250  250;
-             0    0    0;
-          -250 -250 -250];
-        
-%[xgrid, ygrid] = meshgrid([-250 0 250]);
+createWebotsMat(images, numCorners', xgrid', ygrid', angles', ...
+    markerSize_mm, fnames,'FiducialColor', fidColors, ...
+    'ForegroundColor', zeros(1,3), 'BackgroundColor', ones(1,3));
 
-anki = imread('~/Box Sync/Cozmo SE/VisionMarkers/ankiLogo.png');
+%markerLibrary.Save();
 
-createWebotsMat(anki, numCorners', xgrid', ygrid', angles', 75, markerLibrary);
-
-markerLibrary.Save();
-
-%% 
-% This will display code you can paste into BlockWorld constructor to
-% create the markers for the mat with the correct pose
-
-for i = 1:9
-    name = sprintf('ANKI-MAT-%d',i);
-    code = markerLibrary.GetMarkerByName(name).byteArray;
-    
-    fprintf('mat->AddMarker({%d', code(1));
-    for j = 2:length(code)
-        fprintf(', %d', code(j));
-    end
-    fprintf('},\n')
-    
-    axis = markerLibrary.GetMarkerByName(name).pose.axis;
-    angle = markerLibrary.GetMarkerByName(name).pose.angle;
-    T = markerLibrary.GetMarkerByName(name).pose.T;
-    T(3)= 0;
-    fprintf('Pose3d(%f, {%f,%f,%f}, {%f,%f,%f}),\n%f);\n', angle, ...
-        axis(1), axis(2), axis(3), T(1), T(2), T(3), ...
-        markerLibrary.GetMarkerByName(name).size);
-end

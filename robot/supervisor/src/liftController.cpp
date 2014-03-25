@@ -15,39 +15,37 @@ namespace Anki {
       
       namespace {
         
-        // HACK: For use on robots with no position sensors.
-        // Tuned for physical robot only, not simulation robot.
+        // How long the lift needs to stop moving for before it is considered to be limited.
 #ifdef SIMULATOR
-        #define OPEN_LOOP_LIFT_CONTROL 0
+        const u32 LIFT_STOP_TIME = 200000;
 #else
-        #define OPEN_LOOP_LIFT_CONTROL 1
-#endif
-        
-        
-#if(OPEN_LOOP_LIFT_CONTROL)
-        f32 currHeight_ = LIFT_HEIGHT_LOWDOCK;
-        f32 desiredHeight_;
-        u32 liftStopTimeUS_;
+        const u32 LIFT_STOP_TIME = 2000000;
 #endif
         
         // Re-calibrates lift position whenever LIFT_HEIGHT_LOW is commanded.
-        #define RECALIBRATE_AT_LOW_HEIGHT 0
+        const bool RECALIBRATE_AT_LOW_HEIGHT = false;
+        
+        // If lift comes within this distance to limit angle, trigger recalibration.
+        const f32 RECALIBRATE_LIMIT_ANGLE_THRESH = 0.1f;
         
         const f32 MAX_LIFT_CONSIDERED_STOPPED_RAD_PER_SEC = 0.001;
         
         const f32 SPEED_FILTERING_COEFF = 0.9f;
         
+        
         const f32 Kp_ = 0.5f; // proportional control constant
-        const f32 Ki_ = 0.001f; // integral control constant
+        const f32 Ki_ = 0.02f; // integral control constant
         f32 angleErrorSum_ = 0.f;
         const f32 MAX_ERROR_SUM = 200.f;
         
         const f32 ANGLE_TOLERANCE = DEG_TO_RAD(0.5f);
         f32 LIFT_ANGLE_LOW; // Initialize in Init()
-        
-        // Minimum power required to move lift (no load)
-        const f32 MIN_POWER = 0.3;
-        f32 minPower_ = 0.f;
+
+        // Open loop gain
+        // power_open_loop = SPEED_TO_POWER_OL_GAIN * desiredSpeed + BASE_POWER
+        const f32 SPEED_TO_POWER_OL_GAIN = 0.2399;
+        const f32 BASE_POWER_UP = 0.1309;
+        const f32 BASE_POWER_DOWN = -0.0829;
         
         // Angle of the main lift arm.
         // On the real robot, this is the angle between the lower lift joint on the robot body
@@ -63,7 +61,7 @@ namespace Anki {
         // Speed and acceleration params
         f32 maxSpeedRad_ = 1.0f;
         f32 accelRad_ = 2.0f;
-        f32 approachSpeedRad_ = 0.1f;
+        f32 approachSpeedRad_ = 0.2f;
         
         // For generating position and speed profile
         VelocityProfileGenerator vpg_;
@@ -84,7 +82,6 @@ namespace Anki {
         } LiftCalibState;
         
         LiftCalibState calState_ = LCS_IDLE;
-        bool doCalib_ = false;
         bool isCalibrated_ = false;
         bool limitingDetected_ = false;
         u32 lastLiftMovedTime_us = 0;
@@ -122,6 +119,14 @@ namespace Anki {
       }
       
       
+      void ResetLowAnglePosition()
+      {
+        currentAngle_ = LIFT_ANGLE_LOW;
+        HAL::MotorResetPosition(HAL::MOTOR_LIFT);
+        prevHalPos_ = HAL::MotorGetPosition(HAL::MOTOR_LIFT);
+        isCalibrated_ = true;
+      }
+      
       void StartCalibrationRoutine()
       {
         PRINT("Starting Lift calibration\n");
@@ -129,8 +134,7 @@ namespace Anki {
 #ifdef SIMULATOR
         // Skipping actual calibration routine in sim due to weird lift behavior when attempting to move it when
         // it's at the joint limit.  The arm flies off the robot!
-        isCalibrated_ = true;
-        SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
+        ResetLowAnglePosition();
 #else
         calState_ = LCS_LOWER_LIFT;
         isCalibrated_ = false;
@@ -142,14 +146,10 @@ namespace Anki {
         return isCalibrated_;
       }
       
-      
-      void ResetLowAnglePosition()
+
+      bool IsMoving()
       {
-        currentAngle_ = LIFT_ANGLE_LOW;
-        HAL::MotorResetPosition(HAL::MOTOR_LIFT);
-        prevHalPos_ = HAL::MotorGetPosition(HAL::MOTOR_LIFT);
-        doCalib_ = false;
-        isCalibrated_ = true;
+        return (ABS(radSpeed_) > MAX_LIFT_CONSIDERED_STOPPED_RAD_PER_SEC);
       }
       
       void CalibrationUpdate()
@@ -162,7 +162,7 @@ namespace Anki {
               break;
               
             case LCS_LOWER_LIFT:
-              power_ = -0.4;
+              power_ = -0.3;
               HAL::MotorSetPower(HAL::MOTOR_LIFT, power_);
               lastLiftMovedTime_us = HAL::GetMicroCounter();
               calState_ = LCS_WAIT_FOR_STOP;
@@ -170,15 +170,11 @@ namespace Anki {
               
             case LCS_WAIT_FOR_STOP:
               // Check for when lift stops moving for 0.2 seconds
-              if (ABS(HAL::MotorGetSpeed(HAL::MOTOR_LIFT)) < MAX_LIFT_CONSIDERED_STOPPED_RAD_PER_SEC) {
-#ifdef SIMULATOR
-                const u32 LIFT_STOP_TIME = 200000;
-#else
-                const u32 LIFT_STOP_TIME = 2000000;
-#endif
+              if (!IsMoving()) {
+
                 if (HAL::GetMicroCounter() - lastLiftMovedTime_us > LIFT_STOP_TIME) {
                   // Turn off motor
-                  power_ = 0.0;
+                  power_ = 0;  // Not strong enough to lift motor, but just enough to unwind backlash. Not sure if this is actually helping.
                   HAL::MotorSetPower(HAL::MOTOR_LIFT, power_);
                   
                   // Set timestamp to be used in next state to wait for motor to "relax"
@@ -195,6 +191,9 @@ namespace Anki {
             case LCS_SET_CURR_ANGLE:
               // Wait for motor to relax and then set angle
               if (HAL::GetMicroCounter() - lastLiftMovedTime_us > 200000) {
+                PRINT("LIFT Calibrated\n");
+                power_ = 0;
+                HAL::MotorSetPower(HAL::MOTOR_LIFT, power_);
                 ResetLowAnglePosition();
                 calState_ = LCS_IDLE;
               }
@@ -254,54 +253,12 @@ namespace Anki {
       }
       
       
-      void SetDesiredHeight(const f32 height_mm)
+      void SetDesiredHeight(f32 height_mm)
       {
         
-#if(OPEN_LOOP_LIFT_CONTROL)
-        desiredHeight_ = height_mm;
-        inPosition_ = false;
-        power_ = 0.f;
-        f32 liftMotionTime = 0;
+        // Do range check on height
+        height_mm = CLIP(height_mm, LIFT_HEIGHT_LOWDOCK, LIFT_HEIGHT_CARRY);
         
-        if (currHeight_ == LIFT_HEIGHT_LOWDOCK) {
-          if (desiredHeight_ == LIFT_HEIGHT_CARRY) {
-            liftMotionTime = 2.8;      // with block on lift
-            power_ = 0.5;
-          } else if (desiredHeight_ == LIFT_HEIGHT_HIGHDOCK) {
-            liftMotionTime = 2.5;
-            power_ = 0.5;
-          } else {
-            inPosition_ = true;
-          }
-        }
-        else if (currHeight_ == LIFT_HEIGHT_HIGHDOCK) {
-          if (desiredHeight_ == LIFT_HEIGHT_CARRY) {
-            liftMotionTime = 0.5; // with block on lift
-            power_ = 0.5;
-          } else if (desiredHeight_ == LIFT_HEIGHT_LOWDOCK) {
-            liftMotionTime = 2;
-            power_ = -0.3;
-          } else {
-            inPosition_ = true;
-          }
-        }
-        else if (currHeight_ == LIFT_HEIGHT_CARRY) {
-          if (desiredHeight_ == LIFT_HEIGHT_LOWDOCK) {
-            liftMotionTime = 3;
-            power_ = -0.3;
-          } else if (desiredHeight_ == LIFT_HEIGHT_HIGHDOCK) {
-            liftMotionTime = 0.33;  // with block on lift
-            power_ = -0.3;
-          } else {
-            inPosition_ = true;
-          }
-        }
-        
-        liftStopTimeUS_ = HAL::GetMicroCounter() + liftMotionTime * 1000000;
-        HAL::MotorSetPower(HAL::MOTOR_LIFT, power_);
-        PRINT("LIFT MOVING (POWER = %f, TIME = %f s)\n", power_, liftMotionTime);
-        return;
-#endif
         
         // Convert desired height into the necessary angle:
 #if(DEBUG_LIFT_CONTROLLER)
@@ -310,19 +267,15 @@ namespace Anki {
         desiredAngle_ = Height2Rad(height_mm);
         angleError_ = desiredAngle_.ToFloat() - currentAngle_.ToFloat();
         angleErrorSum_ = 0.f;
-
-        // Minimum power required to move the lift
-        minPower_ = MIN_POWER;
-        if (angleError_ < 0) {
-          minPower_ = -MIN_POWER;
-        }
         
         limitingDetected_ = false;
         inPosition_ = false;
         
         if (FLT_NEAR(angleError_,0.f)) {
           inPosition_ = true;
+#if(DEBUG_LIFT_CONTROLLER)
           PRINT("Lift: Already at desired position\n");
+#endif          
           return;
         }
 
@@ -333,8 +286,8 @@ namespace Anki {
                           CONTROL_DT);
 
 #if(DEBUG_LIFT_CONTROLLER)
-        PRINT("LIFT VPG: startVel %f, startPos %f, maxVel %f, endVel %f, endPos %f\n",
-              radSpeed_, currentAngle_.ToFloat(), maxSpeedRad_, approachSpeedRad_, desiredAngle_.ToFloat());
+        PRINT("LIFT VPG: startVel %f, startPos %f, maxVel %f, accel %f, endVel %f, endPos %f\n",
+              radSpeed_, currentAngle_.ToFloat(), maxSpeedRad_, accelRad_, approachSpeedRad_, desiredAngle_.ToFloat());
 #endif
         
       }
@@ -357,34 +310,46 @@ namespace Anki {
         
         if(not inPosition_) {
           
-#if(OPEN_LOOP_LIFT_CONTROL)
-          if (HAL::GetMicroCounter() > liftStopTimeUS_) {
-            PRINT("STOPPING LIFT\n");
-            currHeight_ = desiredHeight_;
-            power_ = 0;
-            HAL::MotorSetPower(HAL::MOTOR_LIFT, 0);
-            inPosition_ = true;
-          }
-          return EXIT_SUCCESS;
-#endif
-          
           // Get the current desired lift angle
           vpg_.Step(currDesiredRadVel_, currDesiredAngle_);
-#if(DEBUG_LIFT_CONTROLLER)
-          PRINT("LIFT desVel: %f, desAng: %f, currAng: %f\n",
-                currDesiredRadVel_, currDesiredAngle_, currentAngle_.ToFloat());
-#endif
           
-          // Simple proportional control for now
-          // TODO: better controller?
+          // Compute position error
           angleError_ = currDesiredAngle_ - currentAngle_.ToFloat();
           
-          // TODO: convert angleError_ to power / speed in some reasonable way
+          // Open loop value to drive at desired speed
+          power_ = currDesiredRadVel_ * SPEED_TO_POWER_OL_GAIN;
+          
+          // Compute corrective value
+          f32 power_corr = (Kp_ * angleError_) + (Ki_ * angleErrorSum_);
+          
+          // Add base power in the direction of corrective value
+          power_ += power_corr + ((power_corr > 0) ? BASE_POWER_UP : BASE_POWER_DOWN);
+          
+          // Update angle error sum
+          angleErrorSum_ += angleError_;
+          angleErrorSum_ = CLIP(angleErrorSum_, -MAX_ERROR_SUM, MAX_ERROR_SUM);
+
+          // If accurately tracking current desired angle...
+          if((ABS(angleError_) < ANGLE_TOLERANCE && desiredAngle_ == currDesiredAngle_)
+             || ABS(currentAngle_ - desiredAngle_) < ANGLE_TOLERANCE) {
+              power_ = 0.f;
+              inPosition_ = true;
+              #if(DEBUG_LIFT_CONTROLLER)
+              PRINT(" LIFT HEIGHT REACHED (%f mm)\n", GetHeightMM());
+              #endif
+          }
+          
+          
+          // TODO: Incomplete calibration code.
+          //       If quadrature is good, we don't need this!
+          /*
+          // If accurately tracking current desired angle...
           if(ABS(angleError_) < ANGLE_TOLERANCE) {
             angleErrorSum_ = 0.f;
             
-            // If desired angle is low position, let it fall through to recalibration
-            if (!RECALIBRATE_AT_LOW_HEIGHT || desiredAngle_.ToFloat() != LIFT_ANGLE_LOW) {
+            // If desired angle is low position, let it fall through to recalibration.
+            // Otherwise, if desired angle has been reached, set inPosition=true;
+            if (!(RECALIBRATE_AT_LOW_HEIGHT && desiredAngle_.ToFloat() == LIFT_ANGLE_LOW)) {
               power_ = 0.f;
               
               if (desiredAngle_ == currDesiredAngle_) {
@@ -394,35 +359,33 @@ namespace Anki {
 #endif
               }
             }
-          } else {
-            power_ = minPower_ + (Kp_ * angleError_) + (Ki_ * angleErrorSum_);
-            angleErrorSum_ += angleError_;
-            angleErrorSum_ = CLIP(angleErrorSum_, -MAX_ERROR_SUM, MAX_ERROR_SUM);
-            inPosition_ = false;
           }
+          */
+
 
 #if(DEBUG_LIFT_CONTROLLER)
-          PERIODIC_PRINT(100, "LIFT: currA %f, curDesA %f, desA %f, err %f, errSum %f, pwr %f, spd %f\n",
+          PERIODIC_PRINT(100, "LIFT: currA %f, curDesA %f, currVel %f, curDesVel %f, desA %f, err %f, errSum %f, pwr %f\n",
                          currentAngle_.ToFloat(),
                          currDesiredAngle_,
+                         radSpeed_,
+                         currDesiredRadVel_,
                          desiredAngle_.ToFloat(),
                          angleError_,
                          angleErrorSum_,
-                         power_,
-                         radSpeed_);
+                         power_);
           PERIODIC_PRINT(100, "  POWER terms: %f  %f\n", (Kp_ * angleError_), (Ki_ * angleErrorSum_))
 #endif
           
           power_ = CLIP(power_, -1.0, 1.0);
           
-          
+/*
           // If within 5 degrees of LIFT_HEIGHT_LOW and the lift isn't moving while downward power is applied,
           // assume we've hit the limit and recalibrate.
           if (limitingDetected_ ||
               ((power_ < 0)
               && (desiredAngle_.ToFloat() == LIFT_ANGLE_LOW)
-              && (desiredAngle_.ToFloat() == currDesiredAngle_)
-              && (ABS(angleError_) < 0.1)
+              && (LIFT_ANGLE_LOW == currDesiredAngle_)
+              && (ABS(angleError_) < RECALIBRATE_LIMIT_ANGLE_THRESH)
               && NEAR_ZERO(HAL::MotorGetSpeed(HAL::MOTOR_LIFT)))) {
             
             if (!limitingDetected_) {
@@ -441,7 +404,7 @@ namespace Anki {
             power_ = 0.f;
             
           }
-          
+*/
           HAL::MotorSetPower(HAL::MOTOR_LIFT, power_);
           
         } // if not in position

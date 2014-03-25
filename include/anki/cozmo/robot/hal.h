@@ -42,10 +42,20 @@
 #include "anki/cozmo/robot/cozmoConfig.h"
 
 #ifndef USE_OFFBOARD_VISION
-#define USE_OFFBOARD_VISION 1
+#define USE_OFFBOARD_VISION 0
 #endif
 
 #define HAVE_ACTIVE_GRIPPER 0
+
+// Set to 0 if you want to read printf output in a terminal and you're not
+// using UART as radio. The radio is effectively disabled in this case.
+// Set to 1 if using UART as radio. This disables PRINT calls only from
+// going out UART. printf will still do it and probably corrupt comms
+#define USING_UART_RADIO 1
+
+// Diverts PRINT() statements to radio.
+// USING_UART_RADIO must be 1 for this to work.
+#define DIVERT_PRINT_TO_RADIO 1
 
 #ifdef __cplusplus
 extern "C" {
@@ -64,6 +74,18 @@ extern "C" {
 
 #else // #ifdef USE_CAPTURE_IMAGES
 
+#if(USING_UART_RADIO)
+
+#if(DIVERT_PRINT_TO_RADIO)
+#define PRINT(...) Messages::SendText(__VA_ARGS__)
+#else
+#define PRINT(...)
+#endif // #if(USING_UART_RADIO)
+
+#define PERIODIC_PRINT(num_calls_between_prints, ...)
+
+#else
+
 #define PRINT(...) printf(__VA_ARGS__)
 
 // Prints once every num_calls_between_prints times you call it
@@ -75,9 +97,19 @@ extern "C" {
     cnt = 0; \
   } \
 }
+
+#endif // if (USING_UART_RADIO)
+
 #endif // #ifdef USE_CAPTURE_IMAGES ... #else
 
 #elif defined(SIMULATOR) // #ifndef SIMULATOR
+
+#if(USING_UART_RADIO && DIVERT_PRINT_TO_RADIO)
+
+#define PRINT(...) Messages::SendText(__VA_ARGS__)
+#define PERIODIC_PRINT(num_calls_between_prints, ...)
+
+#else
 
 #define PRINT(...) fprintf(stdout, __VA_ARGS__)
 
@@ -90,9 +122,7 @@ extern "C" {
   } \
 }
 
-// Whether or not to use TCP server (0) or Webots emitter/receiver (1)
-// as the BTLE channel. (TODO: Phase out webots emitter/receiver)
-#define USE_WEBOTS_TXRX 0
+#endif // #if(USING_UART_RADIO && DIVERT_PRINT_TO_RADIO)
 
 #endif  // #elif defined(SIMULATOR)
 
@@ -194,6 +224,10 @@ namespace Anki
 
       int UARTPrintf(const char* format, ...);
       int UARTPutChar(int c);
+      
+      // Returns false if there's not enough room to fit buffer in memory
+      bool UARTPutBuffer(u8* buffer, u32 length);
+      
       void UARTPutHex(u8 c);
       void UARTPutHex32(u32 data);
       void UARTPutString(const char* s);
@@ -201,6 +235,10 @@ namespace Anki
 
       // Send a variable length buffer
       void USBSendBuffer(const u8* buffer, const u32 size);
+      
+      // Receives as many as max_size bytes in buffer.
+      // Returns the number of bytes received.
+      u32 USBRecvBuffer(u8* buffer, const u32 max_size);
 
       // Returns the number of bytes that are in the serial buffer
       u32 USBGetNumBytesToRead();
@@ -265,13 +303,6 @@ namespace Anki
 
       typedef enum
       {
-        CAMERA_FRONT = 0,
-        CAMERA_MAT,
-        CAMERA_COUNT
-      } CameraID;
-
-      typedef enum
-      {
         CAMERA_MODE_VGA = 0,
         CAMERA_MODE_QVGA,
         CAMERA_MODE_QQVGA,
@@ -282,35 +313,6 @@ namespace Anki
         CAMERA_MODE_NONE = CAMERA_MODE_COUNT
       } CameraMode;
 
-      typedef struct {
-        u8 header; // used to specify a frame's resolution in a packet
-        u16 width, height;
-        u8 downsamplePower[CAMERA_MODE_COUNT];
-      } CameraModeInfo_t;
-
-      const CameraModeInfo_t CameraModeInfo[CAMERA_MODE_COUNT] =
-      {
-        // VGA
-        { 0xBA, 640, 480, {0, 0, 0, 0, 0} },
-        // QVGA
-        { 0xBC, 320, 240, {1, 0, 0, 0, 0} },
-        // QQVGA
-        { 0xB8, 160, 120, {2, 1, 0, 0, 0} },
-        // QQQVGA
-        { 0xBD,  80,  60, {3, 2, 1, 0, 0} },
-        // QQQQVGA
-        { 0xB7,  40,  30, {4, 3, 2, 1, 0} }
-      };
-
-      enum CameraUpdateMode
-      {
-        CAMERA_UPDATE_CONTINUOUS = 0,
-        CAMERA_UPDATE_SINGLE
-      };
-
-      void MatCameraInit();
-      void FrontCameraInit();
-
       // Intrinsic calibration:
       // A struct for holding intrinsic camera calibration parameters
       typedef struct {
@@ -320,27 +322,26 @@ namespace Anki
         u16 nrows, ncols;
         f32 distortionCoeffs[NUM_RADIAL_DISTORTION_COEFFS];
       } CameraInfo;
-
+      
       const CameraInfo* GetHeadCamInfo();
-      const CameraInfo* GetMatCamInfo() ;
 
       // Set the camera capture resolution with CAMERA_MODE_XXXXX_HEADER.
-      void       SetHeadCamMode(const u8 frameResHeader);
-      CameraMode GetHeadCamMode(void);
+      //void       SetHeadCamMode(const u8 frameResHeader);
+      //CameraMode GetHeadCamMode(void);
 
-      // Starts camera frame synchronization
-      void CameraStartFrame(CameraID cameraID, u8* frame, CameraMode mode,
-          CameraUpdateMode updateMode, u16 exposure, bool enableLight);
+      // Starts camera frame synchronization (blocking call)
+      void CameraGetFrame(u8* frame, CameraMode mode,
+          f32 exposure, bool enableLight);
 
       // Get the number of lines received so far for the specified camera
-      u32 CameraGetReceivedLines(CameraID cameraID);
+      //u32 CameraGetReceivedLines(CameraID cameraID);
 
       // Returns whether or not the specfied camera has received a full frame
-      bool CameraIsEndOfFrame(CameraID cameraID);
+      //bool CameraIsEndOfFrame(CameraID cameraID);
 
       // TODO: At some point, isEOF should be set automatically by the HAL,
       // but currently, the consumer has to set it
-      void CameraSetIsEndOfFrame(CameraID cameraID, bool isEOF);
+      //void CameraSetIsEndOfFrame(CameraID cameraID, bool isEOF);
 
 // #pragma mark --- Battery ---
       /////////////////////////////////////////////////////////////////////
@@ -387,6 +388,11 @@ namespace Anki
       // Returns true if the message has been sent to the basestation
       bool RadioSendMessage(const Messages::ID msgID, const void *buffer, TimeStamp_t ts = HAL::GetTimeStamp());
 
+#ifdef SIMULATOR
+      // Returns pointer to IPv4 address
+      const char* const GetLocalIP();
+#endif
+      
       /////////////////////////////////////////////////////////////////////
       // POWER MANAGEMENT
       //
@@ -419,12 +425,8 @@ namespace Anki
 
       const BirthCertificate& GetBirthCertificate();
 
-      // Interrupts
-      void IRQDisable();
-      void IRQEnable();
-
-	  // TODO: remove when interrupts don't cause problems
-	  void DisableCamera(CameraID cameraID);
+      // TODO: remove when interrupts don't cause problems
+      //void DisableCamera(CameraID cameraID);
 
       // Put a byte into a send buffer to be sent by LongExecution()
       // (Using same prototype as putc / USBPutChar for printf.)
@@ -486,38 +488,6 @@ namespace Anki
       void SendMessageID(const char* name, const u8 msgID);
 
 #endif // if USE_OFFBOARD_VISION
-
-      // Definition of the data structures being transferred between SYSCON and
-      // the vision processor
-      enum SPISource
-      {
-        SPI_SOURCE_HEAD = 'H',
-        SPI_SOURCE_BODY = 'B'
-      };
-      
-      struct GlobalCommon
-      {
-        SPISource source;
-        u8 RESERVED[3];
-      };
-      
-      struct GlobalDataToHead
-      {
-        GlobalCommon common;
-        
-        u8 RESERVED[60];  // Pad out to 64 bytes
-      };
-      
-      // TODO: get static_assert to work so we can verify sizeof
-      
-      struct GlobalDataToBody
-      {
-        GlobalCommon common;
-        s16 motorPWM[MOTOR_COUNT];
-        
-        u8 reserved[52];  // Pad out to 64 bytes
-      };
-
     } // namespace HAL
   } // namespace Cozmo
 } // namespace Anki

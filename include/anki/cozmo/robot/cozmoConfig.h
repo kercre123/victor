@@ -11,7 +11,8 @@ namespace Anki {
     const f32 WHEEL_DIAMETER_MM = 28.4f;  // This should be in sync with the CozmoBot proto file
     const f32 HALF_WHEEL_CIRCUM = WHEEL_DIAMETER_MM * M_PI_2;
     const f32 WHEEL_RAD_TO_MM = WHEEL_DIAMETER_MM / 2.f;  // or HALF_WHEEL_CIRCUM / PI;
-    const f32 WHEEL_BASE = 30.f; // distance b/w the axles
+    const f32 WHEEL_DIST_MM = 47.7f; // distance b/w the front wheels
+    const f32 WHEEL_DIST_HALF_MM = WHEEL_DIST_MM / 2.f;
     
     //const f32 MAT_CAM_HEIGHT_FROM_GROUND_MM = (0.5f*WHEEL_DIAMETER_MM) - 3.f;
 
@@ -58,12 +59,14 @@ namespace Anki {
     
     typedef struct {
       u16 port;                // Port that robot is accepting connections on
+      u8 robotAddr[18];        // IP address as null terminated string
       u8 robotID;
       u8 enableAdvertisement;  // 1 when robot wants to advertise, 0 otherwise.
     } RobotAdvertisementRegistration;
     
     typedef struct  {
       u16 port;
+      u8 robotAddr[17];        // IP address as null terminated string
       u8 robotID;
     } RobotAdvertisement;
     
@@ -92,9 +95,6 @@ namespace Anki {
     // for robot messages bound for the basestation.
 #define BASESTATION_SIM_COMM_CHANNEL 100
     
-    // Port on which CozmoWorldComms is listening for a connection from basestation.
-#define COZMO_WORLD_LISTEN_PORT "5555"
-    
     ////////// End Simulator comms //////////
     
 #else // Real robot:
@@ -102,52 +102,47 @@ namespace Anki {
     // TODO: Get these from calibration somehow
     const u16 HEAD_CAM_CALIB_WIDTH  = 320;
     const u16 HEAD_CAM_CALIB_HEIGHT = 240;
-    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 315.6995f;
-    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 316.8701f;
-    const f32 HEAD_CAM_CALIB_CENTER_X = 169.6225f;
-    const f32 HEAD_CAM_CALIB_CENTER_Y = 119.5692f;
-    const f32 HEAD_CAM_CALIB_DISTORTION[NUM_RADIAL_DISTORTION_COEFFS] =
-    {0.0265995f, -0.1683574f, -0.0009116f, 0.0061439f};
     
-    // TODO: Get real mat camera calibration params: (currently just copies of head cam's)
-    const u16 MAT_CAM_CALIB_WIDTH  = 320;
-    const u16 MAT_CAM_CALIB_HEIGHT = 240;
-    const f32 MAT_CAM_CALIB_FOCAL_LENGTH_X = 315.6995f;
-    const f32 MAT_CAM_CALIB_FOCAL_LENGTH_Y = 316.8701f;
-    const f32 MAT_CAM_CALIB_CENTER_X = 169.6225f;
-    const f32 MAT_CAM_CALIB_CENTER_Y = 119.5692f;
-    const f32 MAT_CAM_CALIB_DISTORTION[NUM_RADIAL_DISTORTION_COEFFS] = {0.f, 0.f, 0.f, 0.f};
-
+    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 317.23763f;
+    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 318.38113f;
+    const f32 HEAD_CAM_CALIB_CENTER_X       = 151.88373f;
+    const f32 HEAD_CAM_CALIB_CENTER_Y       = 129.03379f;
+    const f32 HEAD_CAM_CALIB_DISTORTION[NUM_RADIAL_DISTORTION_COEFFS] =
+    {0.02656f,   -0.15748f,   0.00326f,   -0.00128f};
+  
 #endif // #ifdef SIMULATOR
     
     const f32 CONTROL_DT = TIME_STEP*0.001f;
     const f32 ONE_OVER_CONTROL_DT = 1.0f/CONTROL_DT;
     
-    // The height of the fork at various configurations
-    const f32 LIFT_HEIGHT_LOWDOCK  = 27.f;  // Actual limit in proto is closer to 20.4mm, but there is a weird
+    // The height of the lift at various configurations
+    const f32 LIFT_HEIGHT_LOWDOCK  = 30.f;  // Actual limit in proto is closer to 20.4mm, but there is a weird
     // issue with moving the lift when it is at a limit. The lift arm
     // flies off of the robot and comes back! So for now, we just don't
     // drive the lift down that far. We also skip calibration in sim.
-    const f32 LIFT_HEIGHT_HIGHDOCK = 100.f;
-    const f32 LIFT_HEIGHT_CARRY    = 105.f;
+    const f32 LIFT_HEIGHT_HIGHDOCK = 74.f;
+    const f32 LIFT_HEIGHT_CARRY    = 88.f;
     
-    // Height of main lift joint where the arm attaches to robot body
+    // Height of lift "shoulder" joint where the arm attaches to robot body
     const f32 LIFT_JOINT_HEIGHT = 41.7f;
     
-    // Distance between main lift joint and the joint where arm attaches to fork assembly
+    // Distance between the lift shoulder joint and the lift "wrist" joint where arm attaches to fork assembly
     const f32 LIFT_ARM_LENGTH = 61.f;
     
-    // Height of the actual fork relative to the joint where the lift arm attaches to the fork assembly
-    const f32 LIFT_FORK_HEIGHT_REL_TO_ARM_END = -12.8f;
+    // The lift height is defined as the height of the upper lift arm's wrist joint plus this offset.
+    const f32 LIFT_FORK_HEIGHT_REL_TO_ARM_END = 0;
     
     // TODO: convert to using these in degree form?
     const f32 MIN_HEAD_ANGLE = DEG_TO_RAD(-25.f);
-    const f32 MAX_HEAD_ANGLE = DEG_TO_RAD( 30.f);
+    const f32 MAX_HEAD_ANGLE = DEG_TO_RAD( 35.f);
     
-    const f32 NECK_JOINT_POSITION[3] = {-13.f, 0.f, 33.5f}; // relative to robot origin
+    const f32 NECK_JOINT_POSITION[3] = {-13.f, 0.f, 33.5f + WHEEL_RAD_TO_MM}; // relative to robot origin
     const f32 HEAD_CAM_POSITION[3]   = {11.45f, 0.f, -6.f}; // relative to neck joint
-    const f32 LIFT_BASE_POSITION[3]  = {-40.0f, 0.f, 27.5f}; // relative to robot origin
+    const f32 LIFT_BASE_POSITION[3]  = {-40.0f, 0.f, 27.5f + WHEEL_RAD_TO_MM}; // relative to robot origin
     //const f32 MAT_CAM_POSITION[3]   =  {-25.0f, 0.f, -3.f}; // relative to robot origin
+    
+    
+    const f32 PREDOCK_DISTANCE_MM = 100.f;
     
     /*
     // This is the width of the *outside* of the square fiducial!
@@ -155,6 +150,9 @@ namespace Anki {
     #define BLOCKMARKER3D_USE_OUTSIDE_SQUARE true
     const f32 BLOCK_MARKER_WIDTH_MM = 32.f;
     */
+    
+    const f32 DEFAULT_BLOCK_MARKER_WIDTH_MM = 26.f;
+    
   } // namespace Cozmo
 } // namespace Anki
 

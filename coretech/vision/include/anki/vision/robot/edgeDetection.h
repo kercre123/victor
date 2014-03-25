@@ -32,6 +32,23 @@ namespace Anki
       // These will be set by DetectBlurredEdges
       s32 imageHeight;
       s32 imageWidth;
+
+      Result Serialize(SerializedBuffer &buffer) const;
+      Result Deserialize(void** buffer, s32 &bufferLength, MemoryStack &memory); // Updates the buffer pointer and length before returning
+
+      s32 get_SerializationSize() const;
+
+#if defined(ANKICORETECH_EMBEDDED_USE_OPENCV) && ANKICORETECH_EMBEDDED_USE_OPENCV
+      // Allocates the returned cv::Mat on the heap
+      cv::Mat DrawIndexes()  const;
+
+      static cv::Mat DrawIndexes(
+        const s32 imageHeight, const s32 imageWidth,
+        const FixedLengthList<Point<s16> > &indexPoints1,
+        const FixedLengthList<Point<s16> > &indexPoints2,
+        const FixedLengthList<Point<s16> > &indexPoints3,
+        const FixedLengthList<Point<s16> > &indexPoints4);
+#endif
     } EdgeLists;
 
     // Calculate local extrema (edges) in an image. Returns four list for the four directions of change.

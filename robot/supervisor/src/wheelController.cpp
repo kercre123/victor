@@ -122,7 +122,7 @@ namespace Anki {
     
         // Compute open loop component and error correction component of wheel motor command
         if (ABS(desiredWheelSpeedL_) >= TRANSITION_SPEED) {
-          outl_ol = (desiredWheelSpeedL_ + (dirL * TRANSITION_POWER)) * HIGH_OPEN_LOOP_GAIN;
+          outl_ol = (desiredWheelSpeedL_ * HIGH_OPEN_LOOP_GAIN) + dirL * HIGH_OPEN_LOOP_OFFSET;
           outl_corr = ( (Kp_ * errorL) + (error_sumL_ * Ki_) );
         } else {
           outl_ol = (desiredWheelSpeedL_) * LOW_OPEN_LOOP_GAIN;
@@ -131,7 +131,7 @@ namespace Anki {
         outl = outl_ol + outl_corr;
 
         if (ABS(desiredWheelSpeedR_) >= TRANSITION_SPEED) {
-          outr_ol = (desiredWheelSpeedR_ + (dirR * TRANSITION_POWER)) * HIGH_OPEN_LOOP_GAIN;
+          outr_ol = (desiredWheelSpeedR_ * HIGH_OPEN_LOOP_GAIN) + dirR * HIGH_OPEN_LOOP_OFFSET;
           outr_corr = ( (Kp_ * errorR) + (error_sumR_ * Ki_) );
         } else {
           outr_ol = (desiredWheelSpeedR_) * LOW_OPEN_LOOP_GAIN;
@@ -236,20 +236,22 @@ namespace Anki {
       EncoderSpeedFilterIteration();
     }
     
-    void GetFilteredWheelSpeeds(f32 *left, f32 *right)
+    void GetFilteredWheelSpeeds(f32 &left, f32 &right)
     {
-      *left = filterWheelSpeedL_;
-      *right = filterWheelSpeedR_;
+      left = filterWheelSpeedL_;
+      right = filterWheelSpeedR_;
     }
     
     //Get the wheel speeds in mm/sec
-    void GetDesiredWheelSpeeds(f32 *leftws, f32 *rightws) {
-      *leftws  = desiredWheelSpeedL_;
-      *rightws = desiredWheelSpeedR_;
+    void GetDesiredWheelSpeeds(f32 &leftws, f32 &rightws)
+    {
+      leftws  = desiredWheelSpeedL_;
+      rightws = desiredWheelSpeedR_;
     }
     
     //Set the wheel speeds in mm/sec
-    void SetDesiredWheelSpeeds(f32 leftws, f32 rightws) {
+    void SetDesiredWheelSpeeds(f32 leftws, f32 rightws)
+    {
       desiredWheelSpeedL_ = leftws;
       desiredWheelSpeedR_ = rightws;
     }
@@ -263,10 +265,10 @@ namespace Anki {
       if (radius == 0) return;
       
       //if delta speed is positive, the left wheel is supposed to turn slower, it becomes the INNER wheel
-      float leftspeed =  (float)vspeed * (1.0f - SteeringController::WHEEL_DIST_HALF_MM / radius);
+      float leftspeed =  (float)vspeed * (1.0f - WHEEL_DIST_HALF_MM / radius);
       
       //if delta speed is positive, the right wheel is supposed to turn faster, it becomes the OUTER wheel
-      float rightspeed = (float)vspeed * (1.0f + SteeringController::WHEEL_DIST_HALF_MM / radius);
+      float rightspeed = (float)vspeed * (1.0f + WHEEL_DIST_HALF_MM / radius);
       
       //Set the computed speeds to the wheels
       SetDesiredWheelSpeeds( (s16)leftspeed, (s16)rightspeed);

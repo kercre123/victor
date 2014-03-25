@@ -7,7 +7,7 @@
 #define START_BLOCK_DEFINITION(__NAME__, __SIZE__, __COLOR__)
 //#define SET_COLOR(_R_, _G_, _B_)
 //#define SET_SIZE(_X_, _Y_, _Z_)
-#define ADD_FACE_CODE(__WHICHFACE__, __SIZE__, ...)
+#define ADD_FACE_CODE(__WHICHFACE__, __SIZE__, __CODE__)
 #define END_BLOCK_DEFINITION
 
 #else
@@ -23,7 +23,7 @@
 #define START_BLOCK_DEFINITION(__NAME__, __SIZE__, __COLOR__) __NAME__##_BLOCK_TYPE,
 //#define SET_COLOR(_R_, _G_, _B_)
 //#define SET_SIZE(_X_, _Y_, _Z_)
-#define ADD_FACE_CODE(__WHICHFACE__, __SIZE__, ...)
+#define ADD_FACE_CODE(__WHICHFACE__, __SIZE__, __CODE__)
 //#define SET_FACE_SIZE(__FACE_NUM__, __SIZE__)
 #define END_BLOCK_DEFINITION
 
@@ -34,14 +34,14 @@
 #define START_BLOCK_DEFINITION(__NAME__, __SIZE__, __COLOR__) \
 ,{.name = QUOTE(__NAME__), .color = {UNWRAP __COLOR__}, .size = {UNWRAP __SIZE__}, .faces = {
 
-#define ADD_FACE_CODE(__WHICHFACE__, __SIZE__, ...) \
-{.whichFace = __WHICHFACE__, .size = __SIZE__, .code = {__VA_ARGS__}},
+#define ADD_FACE_CODE(__WHICHFACE__, __SIZE__, __CODE__) \
+{.whichFace = __WHICHFACE__, .size = __SIZE__, .code = __CODE__},
 
 //#define SET_COLOR(_R_, _G_, _B_)                       ,.color = {_R_,_G_,_B_}
 //#define SET_SIZE(_X_, _Y_, _Z_)                        ,.size = {_X_,_Y_,_Z_}
 //#define ADD_FACE_CODE(__WHICHFACE__, __SIZE__, ...)    ,.faces[__WHICHFACE__] = {.size = __SIZE__, .code = {__VA_ARGS__}}
 
-#define END_BLOCK_DEFINITION  {.whichFace = NUM_FACES} } }
+#define END_BLOCK_DEFINITION  } }
 
 #else
 #error Unknown BLOCK_DEFINITION_MODE!

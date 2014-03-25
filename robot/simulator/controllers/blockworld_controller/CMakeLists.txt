@@ -7,6 +7,7 @@ add_definitions(-DCOZMO_BASESTATION)
   include_directories(
   ${WEBOTS_CPP_INCLUDE_DIR}
   ${PROJECT_SOURCE_DIR}/basestation/src
+  ${PROJECT_SOURCE_DIR}/robot/simulator/src
 )
 
 file(GLOB COZMO_BASESTATION_SRC ${PROJECT_SOURCE_DIR}/basestation/src/*.c*)
@@ -18,14 +19,14 @@ link_directories( ${WEBOTS_LIB_DIR} )
 
 # Source files
 set(SOURCE_FILES
-#	CozmoWorldComms.cpp
 	blockworld_controller.cpp
+	${PROJECT_SOURCE_DIR}/robot/simulator/src/basestationKeyboardController.cpp
 	${COZMO_BASESTATION_SRC}
 #  ${PROJECT_SOURCE_DIR}/basestation/src/messages.cpp
 )
 
 set(HEADER_FILES
-#	CozmoWorldComms.h
+	${PROJECT_SOURCE_DIR}/robot/simulator/src/basestationKeyboardController.h
 )
 
 if(NOT WIN32)
@@ -38,6 +39,7 @@ if(NOT WIN32)
     Cozmo_Basestation
     CoreTech_Common_Basestation
     CoreTech_Vision_Basestation
+    CoreTech_Planning_Basestation
     CoreTech_Messaging_Shared
     CppController # Webots C++ Controller
     jsoncpp

@@ -1,6 +1,8 @@
-function createWebotsMat(images, numCorners, xgrid, ygrid, angles, sizes, markerLibrary, varargin)
+function createWebotsMat(images, numCorners, xgrid, ygrid, angles, sizes, names, varargin)
+
 
 ForegroundColor = [ 14 108 184]/255; % Anki light blue
+FiducialColor = zeros(1,3);
 %BackgroundColor = [107 107 107]/255; % Anki light gray
 BackgroundColor = [1 1 .7]; % Light yellow
 ProtoDir = fullfile(fileparts(mfilename('fullpath')), '../robot/simulator/protos');
@@ -12,6 +14,14 @@ if ~iscell(images)
     img = images;
     images = cell(size(xgrid));
     [images{:}] = deal(img);
+end
+
+if isvector(FiducialColor)
+    FiducialColor = repmat(row(FiducialColor), [numel(xgrid) 3]);
+else
+    assert(isequal(size(FiducialColor), [size(xgrid) 3]), ...
+        'FiducialColor input is an expected size.');
+    FiducialColor = reshape(FiducialColor, [], 3);
 end
 
 if isscalar(angles)
@@ -57,15 +67,34 @@ fprintf(fid, '    }\n');
 
 set(gcf, 'Pos', [100 100 800 650]);
 
+FG = repmat(reshape(ForegroundColor, [1 1 3]), [512 512]);
+BG = repmat(reshape(BackgroundColor, [1 1 3]), [512 512]);
+
+codeString = cell(1,numel(images));
+
 for i = 1:numel(images)
         
-    markerImg = VisionMarker.DrawFiducial( ...
-        'Image', imrotate(images{i}, -angles(i)), ...
-        'NumCorners', numCorners(i), ...
-        'AddPadding', false, ...
-        'ForegroundColor', ForegroundColor, ...
-        'BackgroundColor', BackgroundColor);
-    
+    %     markerImg = VisionMarker.DrawFiducial( ...
+    %         'Image', imrotate(images{i}, -angles(i)), ...
+    %         'NumCorners', numCorners(i), ...
+    %         'AddPadding', false, ...
+    %         'ForegroundColor', ForegroundColor, ...
+    %         'BackgroundColor', BackgroundColor);
+    if ischar(images{i})
+        [markerImg, ~, alpha] = imread(images{i});
+        markerImg = imresize(markerImg, [512 512], 'bilinear');
+        alpha = imresize(alpha, [512 512], 'bilinear');
+    else
+        markerImg = VisionMarkerTrained.AddFiducial(images{i}, ...
+            'PadOutside', false, 'OutputSize', 512, 'FiducialColor', FiducialColor(i,:));
+        
+        if size(markerImg,3)==1
+            markerImg = markerImg(:,:,ones(1,3));
+        end
+        
+        markerImg = (1-markerImg).*FG + markerImg.*BG;
+    end
+
     % Need this initial rotation b/c canonical VisionMarker orientation in
     % 3D is vertical, i.e. in the X-Z plane, for historical reasons.
     R_to_flat = rodrigues(-pi/2*[1 0 0]);
@@ -73,13 +102,19 @@ for i = 1:numel(images)
     pose = Pose(rodrigues(angles(i)*pi/180*[0 0 1])*R_to_flat, ...
         [xgrid(i) ygrid(i) -CozmoVisionProcessor.WHEEL_RADIUS]');
     
-    marker = VisionMarker(markerImg, 'Name', sprintf('ANKI-MAT-%d', i), ...
-        'Size', sizes(i), 'Pose', pose);
+    axis = pose.axis;
+    angle = pose.angle;
+    T = pose.T;
+    T(3)= 0;
+    [~,nameNoExt,~] = fileparts(names{i});
+    codeString{i} = sprintf(['mat->AddMarker(Vision::MARKER_%s,\n', ...
+        'Pose3d(%f, {%f,%f,%f}, {%f,%f,%f}),\n%f);\n'], ...
+        nameNoExt, angle, ...
+        axis(1), axis(2), axis(3), T(1), T(2), T(3), ...
+        sizes(i));
         
-    markerLibrary.AddMarker(marker);
-    
     filename = sprintf('ankiMat%d.png', i);
-    imwrite(imresize(markerImg, [512 512]), fullfile(WorldDir, filename));
+    imwrite(markerImg, fullfile(WorldDir, filename), 'Alpha', alpha);
     
     fprintf(fid, '    Solid {\n');
     fprintf(fid, '	    translation %.4f %.4f 0.0025\n', xgrid(i)/1000, ygrid(i)/1000);
@@ -155,6 +190,11 @@ fprintf(fid, '    ]\n');
 fprintf(fid, '  }\n');
 fprintf(fid, '} # Solid\n\n');
 fprintf(fid, '} # Proto\n');
+
+% This will copy code to the clipboard that you can paste into BlockWorld 
+% constructor to create the markers for the mat with the correct pose
+clipboard('copy', [codeString{:}]);
+fprintf('\n\nCode copied to clipboard.\n\n');
 
 end % function createWebotsMat()
 

@@ -88,6 +88,10 @@ namespace Anki
 
       Point<Type> ComputeCenter() const;
 
+      // If scalePercent is less-than 1.0, the rectangle is shrunk around its center
+      // If scalePercent is greater-than 1.0, the rectangle is expanded around its center
+      Rectangle<Type> ComputeScaledRectangle(const f32 scalePercent) const;
+
       bool operator== (const Rectangle<Type> &rect2) const;
 
       Rectangle<Type> operator+ (const Rectangle<Type> &rect2) const;
@@ -104,49 +108,54 @@ namespace Anki
       // The width and height of a floating point Rectangle is different than that of an integer rectangle.
       Type get_height() const;
     }; // class Rectangle<Type>
-    
+
     typedef Point<float> Point2f;
 
-    
     // #pragma mark --- Pose2d Class Declaration ---
 
-		class Pose2d
-		{
-		public:
-			// Constructors:
-			Pose2d() : coord(0,0), angle(0) {}
-			Pose2d(const float x, const float y, const Radians angle) : coord(x,y), angle(angle) {};
-			Pose2d(const Pose2d &other) {
-				*this = other;
-			}
-      
-			// Accessors:
-			float   get_x()     const {return coord.x;}
-			float   get_y()     const {return coord.y;}
-			Point2f get_xy()    const {return coord;}
-			Radians get_angle() const {return angle;}
-      
-			float& x() {return coord.x;}
-			float& y() {return coord.y;}
-      
-			void operator=(const Pose2d &other) {
-				this->coord = other.coord;
-				this->angle = other.angle;
-			}
-      
-			Point2f coord;
-			Radians angle;
-      
-		}; // class Pose2d
+    class Pose2d
+    {
+    public:
+      // Constructors:
+      Pose2d() : coord(0,0), angle(0) {}
+      Pose2d(const float x, const float y, const Radians angle) : coord(x,y), angle(angle) {};
+      Pose2d(const Pose2d &other) {
+        *this = other;
+      }
 
-    
-    
+      // Accessors:
+      float   get_x()     const {return coord.x;}
+      float   get_y()     const {return coord.y;}
+      Point2f get_xy()    const {return coord;}
+      Radians get_angle() const {return angle;}
+
+      float& x() {return coord.x;}
+      float& y() {return coord.y;}
+
+      void operator=(const Pose2d &other) {
+        this->coord = other.coord;
+        this->angle = other.angle;
+      }
+
+      Point2f coord;
+      Radians angle;
+    }; // class Pose2d
+
     // #pragma mark --- Quadrilateral Class Declaration ---
 
     // A Quadrilateral is defined by four Point objects
     template<typename Type> class Quadrilateral
     {
     public:
+      enum CornerName {
+        FirstCorner = 0,
+        TopLeft     = 0,
+        BottomLeft  = 1,
+        TopRight    = 2,
+        BottomRight = 3,
+        NumCorners  = 4
+      };
+
       Point<Type> corners[4];
 
       Quadrilateral();
@@ -164,6 +173,12 @@ namespace Anki
       // WARNING:
       // The width and height of a floating point Rectangle is different than that of an integer rectangle.
       Rectangle<Type> ComputeBoundingRectangle() const;
+
+      // Returns a copy of this Quadrilateral with sorted corners, so they are clockwise around the centroid
+      // Warning: This may give weird results for non-convex quadrilaterals
+      Quadrilateral<Type> ComputeClockwiseCorners() const;
+
+      bool IsConvex() const;
 
       bool operator== (const Quadrilateral<Type> &quad2) const;
 

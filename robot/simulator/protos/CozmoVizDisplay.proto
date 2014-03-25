@@ -1,0 +1,37 @@
+#VRML_SIM V7.3.0 utf8
+
+PROTO CozmoVizDisplay [ ]
+{
+Supervisor {
+  
+  children [
+    DEF DISPLAY_PLANE Display {
+      # Hide display plane far away
+      translation 1000 0.1 0
+
+      children [
+        DEF SHAPE Shape {
+          appearance Appearance {
+            material Material {
+              diffuseColor 1 1 1
+              specularColor 0 0 0
+              transparency 0.6
+            }
+          }
+          geometry Plane {
+	    size 1 1
+          }
+        }
+      ]
+      name "cozmo_viz_display"
+      width 300
+      height 200
+      windowPosition 1 1
+      pixelSize 1
+    }
+  ]
+
+  controller "cozmo_viz_controller"
+} # Supervisor
+
+} # PROTO

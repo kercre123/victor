@@ -1,0 +1,194 @@
+/*
+ * usb_radio.cpp
+ *
+ *   Implemenation of HAL radio functionality that actually uses UART.
+ *   To be used in conjunction with CozmoCommsTranslator.
+ *
+ *   Use this OR radio.cpp. Not both!
+ *
+ *   Author: Kevin Yoon
+ *
+ */
+
+#include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/robot/hal.h"
+#include <stdio.h>
+#include <string>
+
+#include "anki/messaging/shared/utilMessaging.h"
+
+namespace Anki {
+  namespace Cozmo {
+    
+    namespace { // "Private members"
+      const u16 RECV_BUFFER_SIZE = 1024;
+      
+      u8 recvBuf_[RECV_BUFFER_SIZE];
+      s32 recvBufSize_ = 0;
+    }
+    
+    ReturnCode InitSimRadio(s32 robotID)
+    {
+      return EXIT_SUCCESS;
+    }
+    
+    bool HAL::RadioIsConnected(void)
+    {
+      // Always assumes radio is connected
+      return true;
+    }
+
+    void DisconnectRadio(void)
+    {
+      recvBufSize_ = 0;
+    }
+    
+    bool HAL::RadioSendMessage(const Messages::ID msgID, const void *buffer, TimeStamp_t ts)
+    {
+#if(USING_UART_RADIO)
+
+        // Send the message header (0xBEEF + timestamp + robotID + msgID)
+        // For TCP comms, send timestamp immediately after the header.
+        // This is needed on the basestation side to properly order messages.
+        const u8 HEADER_LENGTH = 7;
+        u8 header[HEADER_LENGTH];
+        UtilMsgError packRes = UtilMsgPack(header, HEADER_LENGTH, NULL, "ccic",
+                    RADIO_PACKET_HEADER[0],
+                    RADIO_PACKET_HEADER[1],
+                    ts,
+                    msgID);
+        
+        assert (packRes == UTILMSG_OK);
+        
+        // Send header and message content
+        const u8 size = Messages::GetSize(msgID);
+        //server.Send((char*)header, HEADER_LENGTH);
+        USBSendBuffer(header, HEADER_LENGTH);
+        //server.Send((char*)buffer, size);
+        USBSendBuffer((u8*)buffer, size);
+        
+        // Send footer
+      /*
+        if (server.Send((char*)RADIO_PACKET_FOOTER, sizeof(RADIO_PACKET_FOOTER)) < 0 ) {
+          DisconnectRadio();
+          return false;
+        }
+       */
+        USBSendBuffer(RADIO_PACKET_FOOTER, sizeof(RADIO_PACKET_FOOTER));
+
+        /*
+        printf("SENT: ");
+        for (int i=0; i<HEADER_LENGTH;i++){
+          u8 t = header[i];
+          printf("0x%x ", t);
+        }
+        for (int i=0; i<size;i++){
+          u8 t = ((char*)buffer)[i];
+          printf("0x%x ", t);
+        }
+        for (int i=0; i<sizeof(RADIO_PACKET_FOOTER);i++){
+          u8 t = RADIO_PACKET_FOOTER[i];
+          printf("0x%x ", t);
+        }
+        printf("\n");
+        */
+#endif        
+        return true;
+      
+    } // RadioSendMessage()
+    
+    
+    u32 HAL::RadioGetNumBytesAvailable(void)
+    {
+#if(USING_UART_RADIO)			
+      // Check for incoming data and add it to receive buffer
+      int dataSize;
+      
+      // Read available data
+      //dataSize = server.Recv((char*)&recvBuf_[recvBufSize_], RECV_BUFFER_SIZE - recvBufSize_);
+      dataSize = USBRecvBuffer(&recvBuf_[recvBufSize_], RECV_BUFFER_SIZE - recvBufSize_);
+      
+      if (dataSize > 0) {
+        recvBufSize_ += dataSize;
+      } else if (dataSize < 0) {
+        // Something went wrong
+        DisconnectRadio();
+      }
+#endif      
+      return recvBufSize_;
+      
+    } // RadioGetNumBytesAvailable()
+    
+    
+    // TODO: would be nice to implement this in a way that is not specific to
+    //       hardware vs. simulated radio receivers, and just calls lower-level
+    //       radio functions.
+    Messages::ID HAL::RadioGetNextMessage(u8 *buffer)
+    {
+      Messages::ID retVal = Messages::NO_MESSAGE_ID;
+
+#if(USING_UART_RADIO)      
+//      if (server.HasClient()) {
+        const u32 bytesAvailable = RadioGetNumBytesAvailable();
+        if(bytesAvailable > 0) {
+    
+          const int headerSize = sizeof(RADIO_PACKET_HEADER);
+          const int footerSize = sizeof(RADIO_PACKET_FOOTER);
+          
+          // Look for valid header
+          std::string strBuf(recvBuf_, recvBuf_ + recvBufSize_);  // TODO: Just make recvBuf a string
+          std::size_t n = strBuf.find((char*)RADIO_PACKET_HEADER, 0, headerSize);
+          if (n == std::string::npos) {
+            // Header not found at all
+            // Delete everything
+            recvBufSize_ = 0;
+            return retVal;
+          } else if (n != 0) {
+            // Header was not found at the beginning.
+            // Delete everything up until the header.
+            strBuf = strBuf.substr(n);
+            memcpy(recvBuf_, strBuf.c_str(), strBuf.length());
+            recvBufSize_ = strBuf.length();
+          }
+          
+          
+          // Look for footer
+          n = strBuf.find((char*)RADIO_PACKET_FOOTER, 0, footerSize);
+          if (n == std::string::npos) {
+            // Footer not found at all
+            return retVal;
+          } else {
+            // Footer was found
+            
+            // Check that message size is correct
+            Messages::ID msgID = static_cast<Messages::ID>(recvBuf_[headerSize]);
+            const u8 size = Messages::GetSize(msgID);
+            int msgLen = n - headerSize - 1;  // Doesn't include msgID
+            
+            if (msgLen != size) {
+              PRINT("WARNING: Message size mismatch: ID %d, expected %d bytes, but got %d bytes\n", msgID, size, msgLen);
+            }
+            
+            // Copy message contents to buffer
+            std::memcpy((void*)buffer, recvBuf_ + headerSize + 1, msgLen);
+            retVal = msgID;
+            
+            // Shift recvBuf contents down
+            memcpy(recvBuf_, recvBuf_ + n + footerSize, recvBufSize_ - 1 - msgLen - headerSize - footerSize);
+            recvBufSize_ -= headerSize + 1 + msgLen + footerSize;
+          }
+          
+        } // if bytesAvailable > 0
+//      }
+#endif      
+      return retVal;
+    } // RadioGetNextMessage()
+    
+
+    void RadioUpdate()
+    {
+    }
+
+    
+  } // namespace Cozmo
+} // namespace Anki

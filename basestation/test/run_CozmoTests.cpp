@@ -9,6 +9,7 @@
 #include "anki/common/basestation/platformPathManager.h"
 
 #include "anki/cozmo/basestation/blockWorld.h"
+#include "anki/cozmo/basestation/robot.h"
 
 #include "anki/common/robot/matlabInterface.h"
 
@@ -52,7 +53,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
   ASSERT_TRUE(jsonParseResult);
 
   BlockWorld blockWorld;
-  Robot robot(0, &blockWorld);    // TODO: Support multiple robots
+  Robot robot(0, 0, &blockWorld, 0);    // TODO: Support multiple robots
 
   
   ASSERT_TRUE(jsonRoot.isMember("CameraCalibration"));
@@ -112,7 +113,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
       
       // TODO: get the camera of the robot corresponding to the one that saw this VisionMarker
       const Vision::Camera& camera = robot.get_camHead();
-      Vision::ObservedMarker marker(&(msg.code[0]), corners, camera);
+      Vision::ObservedMarker marker(msg.markerType, corners, camera);
       
       // Give this vision marker to BlockWorld for processing
       blockWorld.QueueObservedMarker(marker);

@@ -8,6 +8,7 @@ namespace Anki {
 #pragma mark --- ObservableObject Implementations ---
     
     //ObjectID_t ObservableObject::ObjectCounter = 0;
+    const std::vector<const KnownMarker*> ObservableObject::sEmptyMarkerVector(0);
     
     ObservableObject::ObservableObject(ObjectType_t objType)
     : type_(objType), ID_(0)
@@ -15,9 +16,9 @@ namespace Anki {
       //ID_ = ObservableObject::ObjectCounter++;
     }
     
-    void ObservableObject::AddMarker(const Marker::Code&  withCode,
-                                     const Pose3d&        atPose,
-                                     const f32            size_mm)
+    Vision::KnownMarker const& ObservableObject::AddMarker(const Marker::Code&  withCode,
+                                                           const Pose3d&        atPose,
+                                                           const f32            size_mm)
     {
       // Copy the pose and set this object's pose as its parent
       Pose3d poseCopy(atPose);
@@ -26,16 +27,18 @@ namespace Anki {
       // Construct a marker at that pose and store it keyed by its code
       markers_.emplace_back(withCode, poseCopy, size_mm);
       markersWithCode_[withCode].push_back(&markers_.back());
+      
+      return markers_.back();
     }
     
-    std::vector<const KnownMarker*> const* ObservableObject::GetMarkersWithCode(const Marker::Code& withCode) const
+    std::vector<const KnownMarker*> const& ObservableObject::GetMarkersWithCode(const Marker::Code& withCode) const
     {
       auto returnVec = markersWithCode_.find(withCode);
       if(returnVec != markersWithCode_.end()) {
-        return &(returnVec->second);
+        return returnVec->second;
       }
       else {
-        return 0;
+        return ObservableObject::sEmptyMarkerVector;
       }
     }
     
@@ -89,6 +92,8 @@ namespace Anki {
     
 #pragma mark --- ObservableObjectLibrary Implementations ---
     
+    const std::vector<const ObservableObject*> ObservableObjectLibrary::sEmptyObjectVector(0);
+    
     const ObservableObject* ObservableObjectLibrary::GetObjectWithType(const ObjectType_t type) const
     {
       auto obj = knownObjects_.find(type);
@@ -101,18 +106,18 @@ namespace Anki {
     }
     
     
-    std::vector<const ObservableObject*> const* ObservableObjectLibrary::GetObjectsWithCode(const Marker::Code& code) const
+    std::vector<const ObservableObject*> const& ObservableObjectLibrary::GetObjectsWithCode(const Marker::Code& code) const
     {
       auto temp = objectsWithCode_.find(code);
       if(temp != objectsWithCode_.end()) {
-        return &temp->second;
+        return temp->second;
       }
       else {
-        return NULL;
+        return ObservableObjectLibrary::sEmptyObjectVector;
       }
     }
     
-    std::vector<const ObservableObject*> const* ObservableObjectLibrary::GetObjectsWithMarker(const Marker& marker) const
+    std::vector<const ObservableObject*> const& ObservableObjectLibrary::GetObjectsWithMarker(const Marker& marker) const
     {
       return GetObjectsWithCode(marker.GetCode());
     }
@@ -146,12 +151,12 @@ namespace Anki {
         if(seenOnlyBy == NULL || &marker.GetSeenBy() == seenOnlyBy)
         {
           // Find all objects which use this marker...
-          std::vector<const ObservableObject*> const* objectsWithMarker = GetObjectsWithMarker(marker);
+          std::vector<const ObservableObject*> const& objectsWithMarker = GetObjectsWithMarker(marker);
           
           // ...if there are any, add this marker to the list of observed markers
           // that corresponds to this object type.
-          if(objectsWithMarker != NULL) {
-            if(objectsWithMarker->size() > 1) {
+          if(!objectsWithMarker.empty()) {
+            if(objectsWithMarker.size() > 1) {
               CORETECH_THROW("Having multiple objects in the library with the "
                              "same marker is not yet supported.");
               
@@ -161,7 +166,7 @@ namespace Anki {
                }
                */
             }
-            markersWithObjectType[objectsWithMarker->front()->GetType()].push_back(&marker);
+            markersWithObjectType[objectsWithMarker.front()->GetType()].push_back(&marker);
             used = true;
           } // IF objectsWithMarker != NULL
         } // IF seenOnlyBy
@@ -205,6 +210,7 @@ namespace Anki {
         // are the "same" according to the object's matching function (which will
         // internally take symmetry ambiguities into account during matching
         // and adjust the known markers' poses accordingly)
+        /*
         if(seenOnlyBy == NULL) {
           // First put them all in a common World coordinate frame if multiple
           // observers are possible.  Otherwise they'll be clustered in the
@@ -213,6 +219,8 @@ namespace Anki {
             poseMatch.first = poseMatch.first.getWithRespectTo(Pose3d::World);
           }
         }
+         */
+        
         // TODO: make the distance/angle thresholds parameters or else object-type-specific
         std::vector<PoseCluster> poseClusters;
         ClusterObjectPoses(possiblePoses, libObject,
@@ -227,10 +235,22 @@ namespace Anki {
           // NOTE: this does nothing for singleton clusters
           poseCluster.RecomputePose();
           
+          // Add to list of objects seen -- using pose in World frame
           objectsSeen.push_back(libObject->Clone());
-          objectsSeen.back()->SetPose(poseCluster.GetPose());
+          objectsSeen.back()->SetPose(poseCluster.GetPose().getWithRespectTo(Pose3d::World));
           
         } // FOR each pose cluster
+        
+        /*
+        if(seenOnlyBy != NULL) {
+          // If there were (or could have been) multiple observers, we will put
+          // all poses in a common World coordinate frame *after* pose clustering,
+          // since that process takes the markers' observers into account.
+          for(auto & poseMatch : possiblePoses) {
+            poseMatch.first = poseMatch.first.getWithRespectTo(Pose3d::World);
+          }
+        }
+         */
         
       } // FOR each objectType
       

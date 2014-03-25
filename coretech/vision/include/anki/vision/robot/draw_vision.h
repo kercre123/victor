@@ -23,7 +23,7 @@ namespace Anki
 {
   namespace Embedded
   {
-// #pragma mark --- Definitions ---
+    // #pragma mark --- Definitions ---
 
     template<typename Type> Result DrawComponents(Array<Type> &image, ConnectedComponents &components, Type minValue, Type maxValue)
     {
@@ -33,12 +33,14 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(components.IsValid(),
         RESULT_FAIL_INVALID_OBJECT, "DrawComponents", "components is not valid");
 
-      const f64 numComponents = components.get_maximumId();
+      const f64 numComponentIds = components.get_maximumId();
       const f64 minValueD = static_cast<f64>(minValue);
       const f64 maxValueD = static_cast<f64>(maxValue);
-      const f64 step = (numComponents==1) ? 0.0 : ((maxValueD - minValueD) / (numComponents-1));
+      const f64 step = (numComponentIds==1) ? 0.0 : ((maxValueD - minValueD) / (numComponentIds-1));
 
       const bool doScaling = (minValue == maxValue) ? false : true;
+
+      const f64 numComponents = components.get_size();
 
       for(s32 iComponent=0; iComponent<numComponents; iComponent++) {
         const u16 id = components[iComponent].id;

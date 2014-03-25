@@ -1,31 +1,9 @@
 #include "lib/stm32f4xx.h"
 #include "anki/cozmo/robot/hal.h"
+#include "anki/common/robot/trig_fast.h"
 #include "hal/portable.h"
 
-GPIO_PIN_SOURCE(D0, GPIOA, 9);
-GPIO_PIN_SOURCE(D1, GPIOA, 10);
-GPIO_PIN_SOURCE(D2, GPIOG, 10);
-GPIO_PIN_SOURCE(D3, GPIOG, 11);
-GPIO_PIN_SOURCE(D4, GPIOE, 4);
-GPIO_PIN_SOURCE(D5, GPIOI, 4);
-GPIO_PIN_SOURCE(D6, GPIOI, 6);
-GPIO_PIN_SOURCE(D7, GPIOI, 7);
-GPIO_PIN_SOURCE(VSYNC, GPIOI, 5);
-GPIO_PIN_SOURCE(HSYNC, GPIOA, 4);
-GPIO_PIN_SOURCE(PCLK, GPIOA, 6);
-
-GPIO_PIN_SOURCE(XCLK, GPIOA, 3);
-GPIO_PIN_SOURCE(RESET_N, GPIOE, 3);
-GPIO_PIN_SOURCE(PWDN, GPIOE, 2);
-
-GPIO_PIN_SOURCE(SCL, GPIOB, 6);
-GPIO_PIN_SOURCE(SDA, GPIOB, 7);
-
-bool isEOF = false;
-
-// DMA is limited to 256KB - 1
-const u32 BUFFER_SIZE = 320 * 240 * 2;
-u8 m_buffer1[BUFFER_SIZE];
+#include "anki/cozmo/robot/cozmoConfig.h" // for calibration parameters
 
 namespace Anki
 {
@@ -33,8 +11,36 @@ namespace Anki
   {
     namespace HAL
     {
+      GPIO_PIN_SOURCE(D0, GPIOA, 9);
+      GPIO_PIN_SOURCE(D1, GPIOA, 10);
+      GPIO_PIN_SOURCE(D2, GPIOG, 10);
+      GPIO_PIN_SOURCE(D3, GPIOG, 11);
+      GPIO_PIN_SOURCE(D4, GPIOE, 4);
+      GPIO_PIN_SOURCE(D5, GPIOI, 4);
+      GPIO_PIN_SOURCE(D6, GPIOI, 6);
+      GPIO_PIN_SOURCE(D7, GPIOI, 7);
+      GPIO_PIN_SOURCE(VSYNC, GPIOI, 5);
+      GPIO_PIN_SOURCE(HSYNC, GPIOA, 4);
+      GPIO_PIN_SOURCE(PCLK, GPIOA, 6);
+
+      GPIO_PIN_SOURCE(XCLK, GPIOA, 3);
+      GPIO_PIN_SOURCE(RESET_N, GPIOE, 3);
+      GPIO_PIN_SOURCE(PWDN, GPIOE, 2);
+
+      GPIO_PIN_SOURCE(SCL, GPIOB, 6);
+      GPIO_PIN_SOURCE(SDA, GPIOB, 7);
+      
       const u32 DCMI_TIMEOUT_MAX = 10000;
       const u8 I2C_ADDR = 0x42;
+      
+      const u32 RESOLUTIONS[CAMERA_MODE_COUNT][2] = 
+      {
+        {640, 480},
+        {320, 240},
+        {160, 120},
+        {80, 60},
+        {40, 30}
+      };
       
       const u8 OV7725_VGA[][2] =
       {
@@ -58,11 +64,11 @@ namespace Anki
         0x63, 0xe0,  // AWB Control Byte 0
         0x64, 0xff,  // DSP_Ctrl1
         0x65, 0x20,  // DSP_Ctrl2
-        0x0c, 0x10,  // flip Y with UV
+        0x0c, 0xd0,  // Vertical flip | horizontal mirror | flip Y with UV
         0x66, 0x00,  // DSP_Ctrl3
         //0x67, 0x4a,  // DSP_Ctrl4 - Output Selection = RAW8
         0x13, 0xf0,  // COM8 - gain control stuff... | AGC enable
-        0x0d, 0x72,  // PLL = 8x | AEC evaluate 1/4 window
+        0x0d, 0xf2,  // PLL = 8x | AEC evaluate 1/4 window
         0x0f, 0xc5,  // Reserved | auto window setting ON/OFF selection when format changes
         0x14, 0x11,  // COM9 - Automatic Gain Ceiling | Reserved
         0x22, 0xff,  // ff/7f/3f/1f for 60/30/15/7.5fps  -- banding filter
@@ -72,7 +78,7 @@ namespace Anki
         0x26, 0xa1,  // VPT - AGC/AEC Fast Mode Operating Region
         0x2b, 0x00,  // Dummy bytes LSB
         0x6b, 0xaa,  // AWB mode select - Simple AWB
-        0x13, 0xff,  // COM8 - AGC stuff... Enable all?
+        0x13, 0xe6,  // COM8 - AGC stuff... Enable all but AEC
         0x90, 0x05,  // Sharpness Control 1 - threshold detection
         0x91, 0x01,  // Auto De-noise Threshold Control
         0x92, 0x03,  // Sharpness Strength Upper Limit
@@ -87,7 +93,9 @@ namespace Anki
         0x9b, 0x08,  // Brightness Control
         0x9c, 0x20,  // Constain Gain == Gain * 0x20
         0x9e, 0x81,  // Auto UV Adjust Control 0
+        
         0xa6, 0x04,  // Special Digital Effect Control - Contrast/Brightness enable
+        
         0x7e, 0x0c,
         0x7f, 0x16,
         0x80, 0x2a,
@@ -105,6 +113,16 @@ namespace Anki
         0x8c, 0xe8,
         0x8d, 0x20,
       };
+      
+      // Set by the DMA Transfer Complete interrupt
+      volatile bool m_isEOF = false;
+      
+      // Camera exposure value
+      u16 m_exposure;
+      
+      // DMA is limited to 256KB - 1
+      const u32 BUFFER_SIZE = 320 * 240 * 2;
+      OFFCHIP u8 m_buffer[BUFFER_SIZE];
       
       // Soft I2C stack, borrowed from Arduino (BSD license)
       static void DriveSCL(u8 bit)
@@ -223,6 +241,8 @@ namespace Anki
 
       void OV7725Init()
       {
+        m_exposure = 0;
+        
         // Configure the camera interface
         DCMI_InitTypeDef DCMI_InitStructure;
         DCMI_InitStructure.DCMI_CaptureMode = DCMI_CaptureMode_Continuous;
@@ -234,26 +254,6 @@ namespace Anki
         DCMI_InitStructure.DCMI_ExtendedDataMode = DCMI_ExtendedDataMode_8b;
         DCMI_Init(&DCMI_InitStructure);
         
-        // Configure DMA2_Stream1 channel 1 for DMA from DCMI->DR to RAM
-        DMA_DeInit(DMA2_Stream1);
-        DMA_InitTypeDef DMA_InitStructure;
-        DMA_InitStructure.DMA_Channel = DMA_Channel_1;
-        DMA_InitStructure.DMA_PeripheralBaseAddr = (u32)&DCMI->DR;
-        DMA_InitStructure.DMA_Memory0BaseAddr = (u32)m_buffer1;
-        DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralToMemory;
-        DMA_InitStructure.DMA_BufferSize = BUFFER_SIZE;
-        DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
-        DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
-        DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Word;
-        DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Word;
-        DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;
-        DMA_InitStructure.DMA_Priority = DMA_Priority_VeryHigh;
-        DMA_InitStructure.DMA_FIFOMode = DMA_FIFOMode_Enable;
-        DMA_InitStructure.DMA_FIFOThreshold = DMA_FIFOThreshold_Full;
-        DMA_InitStructure.DMA_MemoryBurst = DMA_MemoryBurst_Single;
-        DMA_InitStructure.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;
-        DMA_Init(DMA2_Stream1, &DMA_InitStructure);
-        
         // Write the configuration registers
         for(u32 i = 0; i < (sizeof(OV7725_VGA) / 2); i++)
         {
@@ -261,24 +261,42 @@ namespace Anki
           MicroWait(100);
         }
         
-        // Enable DMA
-        DMA_Cmd(DMA2_Stream1, ENABLE);
+        // Configure DMA2_Stream1 channel 1 for DMA from DCMI->DR to RAM
+        DMA_DeInit(DMA2_Stream1);
+        DMA_InitTypeDef DMA_InitStructure;
+        DMA_InitStructure.DMA_Channel = DMA_Channel_1;
+        DMA_InitStructure.DMA_PeripheralBaseAddr = (u32)&DCMI->DR;
+        DMA_InitStructure.DMA_Memory0BaseAddr = (u32)m_buffer;
+        DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralToMemory;
+        DMA_InitStructure.DMA_BufferSize = BUFFER_SIZE / 4;  // numBytes / sizeof(word)
+        DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
+        DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
+        DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Word;
+        DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Word;
+        DMA_InitStructure.DMA_Mode = DMA_Mode_Circular;
+        DMA_InitStructure.DMA_Priority = DMA_Priority_VeryHigh;
+        DMA_InitStructure.DMA_FIFOMode = DMA_FIFOMode_Enable;
+        DMA_InitStructure.DMA_FIFOThreshold = DMA_FIFOThreshold_Full;
+        DMA_InitStructure.DMA_MemoryBurst = DMA_MemoryBurst_Single;
+        DMA_InitStructure.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;
+        DMA_Init(DMA2_Stream1, &DMA_InitStructure);
         
-        // Enable the DCMI interrupt for the end of frame
-        DCMI_ITConfig(DCMI_IT_FRAME, ENABLE);
+        // Enable the DMA interrupt for transfer complete to give enough time
+        // between frames to do some extra work
+        DMA_ITConfig(DMA2_Stream1, DMA_IT_TC, ENABLE);
         
         NVIC_InitTypeDef NVIC_InitStructure;
-        NVIC_InitStructure.NVIC_IRQChannel = DCMI_IRQn;
+        NVIC_InitStructure.NVIC_IRQChannel = DMA2_Stream1_IRQn;
         NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
         NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
         NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
         NVIC_Init(&NVIC_InitStructure);
         
+        // Enable DMA
+        DMA_Cmd(DMA2_Stream1, ENABLE);
+        
         // Enable DCMI
         DCMI_Cmd(ENABLE);
-        
-        // Wait 200ms
-        MicroWait(200000);
         
         // Enable the DCMI peripheral to capture frames from vsync
         DCMI_CaptureCmd(ENABLE);
@@ -297,7 +315,7 @@ namespace Anki
         RCC_AHB2PeriphClockCmd(RCC_AHB2Periph_DCMI, ENABLE);
         RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM9, ENABLE);
         
-        // Configure XCLK for 22.5 MHz (evenly divisible by 180 MHz)
+        // Configure XCLK for 12.85 MHz (evenly divisible by 180 MHz)
         TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
         TIM_OCInitTypeDef  TIM_OCInitStructure;
         
@@ -305,7 +323,7 @@ namespace Anki
         TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
         TIM_TimeBaseStructure.TIM_ClockDivision = 0;
         TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
-
+        
         TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
         TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
         TIM_OCInitStructure.TIM_OutputNState = TIM_OutputNState_Enable;
@@ -314,8 +332,8 @@ namespace Anki
         TIM_OCInitStructure.TIM_OCIdleState = TIM_OCIdleState_Set;
         TIM_OCInitStructure.TIM_OCNIdleState = TIM_OCIdleState_Reset;
         
-        TIM_TimeBaseStructure.TIM_Period = 31;   // 180MHz/N+1
-        TIM_OCInitStructure.TIM_Pulse = 16;   // Half of (period+1)
+        TIM_TimeBaseStructure.TIM_Period = 31;  // 180MHz/N+1
+        TIM_OCInitStructure.TIM_Pulse = 16;     // Half of (period+1)
         
         TIM_TimeBaseInit(TIM9, &TIM_TimeBaseStructure);
         TIM_OC2Init(TIM9, &TIM_OCInitStructure);
@@ -380,66 +398,131 @@ namespace Anki
         
         OV7725Init();
       }
+      
+      void CameraGetFrame(u8* frame, CameraMode mode, f32 exposure, bool enableLight)
+      {
+        // Update the exposure
+        u16 exp = (u16)(exposure * 0xFF);
+        if (exp > 0xFFFF)
+          exp = 0xFFFF;
+        if (m_exposure != exp)
+        {
+          m_exposure = exp;
+          
+          //CamWrite(0x08, (exposure >> 8));  // AEC[15:8]
+          //MicroWait(100);
+          CamWrite(0x10, m_exposure);  // AEC[7:0]
+        }
+        
+        m_isEOF = false;
+        
+        // Wait until the frame has completed (based on DMA_FLAG_TCIF1)
+        while (!m_isEOF)
+        {
+        }
+        
+        // TODO: Change this to DMA mem-to-mem when we have a different camera
+        // and we support resolution changes in the actual hardware
+        
+        // Copy the Y-channel into frame
+
+        u32 xRes = RESOLUTIONS[mode][0];
+        u32 yRes = RESOLUTIONS[mode][1];
+        
+        u32 xSkip = 320 / xRes;
+        u32 ySkip = 240 / yRes;
+        
+        if(xSkip == 1 && ySkip == 1) {
+          // Fast (one load and one store per output pixel)
+          /*
+          const u32 numPixels = 320*240;
+          for(u32 iOut=0; iOut<numPixels; iOut++) {
+            frame[iOut] = m_buffer[iOut*2];
+          }*/
+          
+          // Faster (32 -> 16) (one load and one store per 2 output pixels)
+          /*const u32 numPixels2 = (320*240) >> 1;
+          
+          const u32 * restrict pMBufferU32 = reinterpret_cast<u32*>(m_buffer);
+          u16 * restrict pFrameU16 = reinterpret_cast<u16*>(frame);
+                              
+          for(u32 iPixel=0; iPixel<numPixels2; iPixel++) {
+            const u32 inPixel = pMBufferU32[iPixel];
+            // const u16 outPixel = ((inPixel & 0x00FF)>>8) | ((inPixel & 0xFF000000) >> 24);
+            const u32 outPixel = (inPixel & 0xFF) | ((inPixel & 0xFF0000) >> 8);
+            pFrameU16[iPixel] = outPixel & 0xFFFF;
+          }*/
+          
+          // Fastest (64 -> 32) (two loads and one store per 4 output pixels)
+          const u32 numPixels4 = (320*240) >> 2;
+          
+          const u32 * restrict pMBufferU32 = reinterpret_cast<u32*>(m_buffer);
+          u32 * restrict pFrameU32 = reinterpret_cast<u32*>(frame);
+                              
+          for(u32 iPixel=0; iPixel<numPixels4; iPixel++) {
+            const u32 inPixel1 = pMBufferU32[2*iPixel];
+            const u32 inPixel2 = pMBufferU32[2*(iPixel+1)];
+            
+            const u32 outPixel = (inPixel1 & 0xFF) | ((inPixel1 & 0xFF0000) >> 8) | ((inPixel2 & 0xFF)<<16) | ((inPixel2 & 0xFF0000) << 8);
+            pFrameU32[iPixel] = outPixel;
+          }
+        } else {
+          u32 dataY = 0;
+          for (u32 y = 0; y < 240; y += ySkip, dataY++)
+          {
+            u32 dataX = 0;
+            for (u32 x = 0; x < 320; x += xSkip, dataX++)
+            {
+              frame[dataY * xRes + dataX] = m_buffer[y * 320 * 2 + x * 2];
+            }
+          }
+        }
+      }
+      
+      inline f32 ComputeVerticalFOV(const u16 height, const f32 fy)
+      {
+        return 2.f * atan_fast(static_cast<f32>(height) / (2.f * fy));
+      }
+      
+      const CameraInfo* GetHeadCamInfo(void)
+      {
+        static CameraInfo s_headCamInfo = {
+          HEAD_CAM_CALIB_FOCAL_LENGTH_X,
+          HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
+          ComputeVerticalFOV(HEAD_CAM_CALIB_HEIGHT,
+                             HEAD_CAM_CALIB_FOCAL_LENGTH_Y),
+          HEAD_CAM_CALIB_CENTER_X,
+          HEAD_CAM_CALIB_CENTER_Y,
+          0.f,
+          HEAD_CAM_CALIB_HEIGHT,
+          HEAD_CAM_CALIB_WIDTH
+        };
+
+        return &s_headCamInfo;
+      }
     }
   }
 }
 
-void StartFrame(void)
+extern "C"
+void DMA2_Stream1_IRQHandler(void)
 {
   using namespace Anki::Cozmo::HAL;
   
-  isEOF = false;
+  // Clear the DMA Transfer Complete flag
+  //DMA_ClearFlag(DMA2_Stream1, DMA_FLAG_TCIF1);
+  DMA2->LIFCR = DMA_FLAG_TCIF1 & 0x0F7D0F7D;  // Direct version of call above
   
-  static bool started = 0;
-  if (!started)
-  {
-    DMA_DeInit(DMA2_Stream1);
-    DMA_InitTypeDef DMA_InitStructure;
-    DMA_InitStructure.DMA_Channel = DMA_Channel_1;
-    DMA_InitStructure.DMA_PeripheralBaseAddr = (u32)&DCMI->DR;
-    DMA_InitStructure.DMA_Memory0BaseAddr = (u32)m_buffer1;
-    DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralToMemory;
-    DMA_InitStructure.DMA_BufferSize = BUFFER_SIZE / 4;  // numBytes / sizeof(word)
-    DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
-    DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
-    DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Word;
-    DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Word;
-    DMA_InitStructure.DMA_Mode = DMA_Mode_Circular;
-    DMA_InitStructure.DMA_Priority = DMA_Priority_VeryHigh;
-    DMA_InitStructure.DMA_FIFOMode = DMA_FIFOMode_Enable;
-    DMA_InitStructure.DMA_FIFOThreshold = DMA_FIFOThreshold_Full;
-    DMA_InitStructure.DMA_MemoryBurst = DMA_MemoryBurst_Single;
-    DMA_InitStructure.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;
-    DMA_Init(DMA2_Stream1, &DMA_InitStructure);
-    
-    DMA_Cmd(DMA2_Stream1, ENABLE);
-    
-    DCMI_CaptureCmd(ENABLE);
-    
-    started = 1;
-  }
+  m_isEOF = true;
 }
 
-extern "C"
+/*extern "C"
 void DCMI_IRQHandler(void)
 {
-  /*static u32 x = 0;
-  if (x++ >= 100)
-  {
-    DMA_DeInit(DMA2_Stream1);
-    
-    NVIC_InitTypeDef NVIC_InitStructure;
-    NVIC_InitStructure.NVIC_IRQChannel = DCMI_IRQn;
-    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
-    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
-    NVIC_InitStructure.NVIC_IRQChannelCmd = DISABLE;
-    NVIC_Init(&NVIC_InitStructure);
-  }*/
+  using namespace Anki::Cozmo::HAL;
   
-  //printf("FRAME\r\n")
-  
-  isEOF = true;
+  //m_isEOF = true;
   
   // Clear all interrupts (5-bits)
   DCMI->ICR = 0x1f;
-}
+}*/

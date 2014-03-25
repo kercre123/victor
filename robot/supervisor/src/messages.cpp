@@ -3,17 +3,18 @@
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/localization.h"
 #include "anki/cozmo/robot/visionSystem.h"
-
-#include "anki/common/shared/radians.h"
+#include "anki/cozmo/robot/pathFollower.h"
+#include "anki/cozmo/robot/speedController.h"
+#include "anki/cozmo/robot/steeringController.h"
+#include "anki/cozmo/robot/wheelController.h"
+#include "liftController.h"
+#include "headController.h"
+#include "dockingController.h"
+#include "pickAndPlaceController.h"
 
 namespace Anki {
   namespace Cozmo {
     namespace Messages {
-
-      // Create all the dispatch function prototypes (all implemented
-      // manually below).  We need the prototypes for the LUT below
-#define MESSAGE_DEFINITION_MODE MESSAGE_DISPATCH_DEFINITION_MODE
-#include "anki/cozmo/MessageDefinitions.h"
       
       namespace {
   
@@ -25,7 +26,7 @@ namespace Anki {
         } TableEntry;
         
         const size_t NUM_TABLE_ENTRIES = NUM_MSG_IDS + 1;
-        TableEntry LookupTable_[NUM_TABLE_ENTRIES] = {
+        const TableEntry LookupTable_[NUM_TABLE_ENTRIES] = {
           {0, 0, 0}, // Empty entry for NO_MESSAGE_ID
 #define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_MODE
 #include "anki/cozmo/MessageDefinitions.h"
@@ -93,6 +94,9 @@ namespace Anki {
         MultiMailbox<Messages::VisionMarker, MAX_MARKER_MESSAGES> visionMarkerMailbox_;
         Mailbox<Messages::DockingErrorSignal>   dockingMailbox_;
         
+
+        static RobotState robotState_;
+        
       } // private namespace
       
 
@@ -140,8 +144,12 @@ namespace Anki {
         
       }
       
+      RobotState const& GetRobotStateMsg() {
+        return robotState_;
+      }
       
-#pragma --- Message Dispatch Functions ---
+      
+// #pragma --- Message Dispatch Functions ---
       
       
       void ProcessRobotAddedToWorldMessage(const RobotAddedToWorld& msg)
@@ -154,24 +162,7 @@ namespace Anki {
         
         PRINT("Robot received handshake from basestation, "
               "sending camera calibration.\n");
-        const HAL::CameraInfo *matCamInfo  = HAL::GetMatCamInfo();
         const HAL::CameraInfo *headCamInfo = HAL::GetHeadCamInfo();
-        
-        //
-        // Send mat camera calibration
-        //
-        //   TODO: do we send x or y focal length, or both?
-        MatCameraCalibration matCalibMsg = {
-          matCamInfo->focalLength_x,
-          matCamInfo->focalLength_y,
-          matCamInfo->fov_ver,
-          matCamInfo->center_x,
-          matCamInfo->center_y,
-          matCamInfo->skew,
-          matCamInfo->nrows,
-          matCamInfo->ncols};
-        
-        HAL::RadioSendMessage(GET_MESSAGE_ID(MatCameraCalibration), &matCalibMsg);
         
         //
         // Send head camera calibration
@@ -196,8 +187,10 @@ namespace Anki {
       {
         // TODO: Double-check that size matches expected size?
         
-        f32 currentMatX       = msg.xPosition * .001f; // store in meters
-        f32 currentMatY       = msg.yPosition * .001f; //     "
+        // TODO: take advantage of timestamp
+        
+        f32 currentMatX       = msg.xPosition;
+        f32 currentMatY       = msg.yPosition;
         Radians currentMatHeading = msg.headingAngle;
         Localization::SetCurrentMatPose(currentMatX, currentMatY, currentMatHeading);
         
@@ -217,30 +210,46 @@ namespace Anki {
       } // ProcessAbsLocalizationUpdateMessage()
       
       
+      void ProcessRequestCamCalibMessage(const RequestCamCalib& msg)
+      {
+        const HAL::CameraInfo* headCamInfo = HAL::GetHeadCamInfo();
+        if(headCamInfo == NULL) {
+          PRINT("NULL HeadCamInfo retrieved from HAL.\n");
+        }
+        else {
+          Messages::HeadCameraCalibration headCalibMsg = {
+            headCamInfo->focalLength_x,
+            headCamInfo->focalLength_y,
+            headCamInfo->fov_ver,
+            headCamInfo->center_x,
+            headCamInfo->center_y,
+            headCamInfo->skew,
+            headCamInfo->nrows,
+            headCamInfo->ncols
+          };
+          
+          
+          if(!HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::HeadCameraCalibration),
+                                   &headCalibMsg))
+          {
+            PRINT("Failed to send camera calibration message.\n");
+          }
+        }
+
+      }
+      
+      
       void ProcessVisionMarkerMessage(const VisionMarker& msg)
       {
+#if defined(SIMULATOR)
         PRINT("Processing VisionMarker message\n");
+#endif
         
         visionMarkerMailbox_.putMessage(msg);
-        
-        
-        VisionSystem::CheckForTrackingMarker(msg.code);
-      }
-      
-      void ProcessTotalVisionMarkersSeenMessage(const TotalVisionMarkersSeen& msg)
-      {
-        PRINT("Saw %d vision markers.\n", msg.numMarkers);
-      }
-      
-      void ProcessTemplateInitializedMessage(const TemplateInitialized& msg)
-      {
-        VisionSystem::SetTrackingMode(static_cast<bool>(msg.success));
       }
       
       void ProcessDockingErrorSignalMessage(const DockingErrorSignal& msg)
       {
-        VisionSystem::UpdateTrackingStatus(msg.didTrackingSucceed);
-        
         // Just pass the docking error signal along to the mainExecution to
         // deal with. Note that if the message indicates tracking failed,
         // the mainExecution thread should handle it, and put the vision
@@ -269,6 +278,66 @@ namespace Anki {
         }
         
       } // ProcessUARTMessages()
+
+      
+      void ProcessClearPathMessage(const ClearPath& msg) {
+        SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
+        PathFollower::ClearPath();
+        //SteeringController::ExecuteDirectDrive(0,0);
+      }
+
+      void ProcessAppendPathSegmentArcMessage(const AppendPathSegmentArc& msg) {
+        PathFollower::AppendPathSegment_Arc(0, msg.x_center_mm, msg.y_center_mm, msg.radius_mm, msg.startRad, msg.sweepRad,
+                                            msg.targetSpeed, msg.accel, msg.decel);
+      }
+      
+      void ProcessAppendPathSegmentLineMessage(const AppendPathSegmentLine& msg) {
+        PathFollower::AppendPathSegment_Line(0, msg.x_start_mm, msg.y_start_mm, msg.x_end_mm, msg.y_end_mm,
+                                             msg.targetSpeed, msg.accel, msg.decel);
+      }
+      
+      void ProcessExecutePathMessage(const ExecutePath& msg) {
+        PathFollower::StartPathTraversal();
+      }
+      
+      void ProcessDockWithBlockMessage(const DockWithBlock& msg)
+      {
+        DockingController::StartDocking(static_cast<Vision::MarkerType>(msg.markerType),
+                                        msg.markerWidth_mm,
+                                        msg.horizontalOffset_mm,
+                                        0, 0);
+      }
+
+      void ProcessDriveWheelsMessage(const DriveWheels& msg) {
+        //PathFollower::ClearPath();
+        SteeringController::ExecuteDirectDrive(msg.lwheel_speed_mmps, msg.rwheel_speed_mmps);
+      }
+      
+      void ProcessDriveWheelsCurvatureMessage(const DriveWheelsCurvature& msg) {
+        /*
+        PathFollower::ClearPath();
+        
+        SpeedController::SetUserCommandedDesiredVehicleSpeed(msg.speed_mmPerSec);
+        SpeedController::SetUserCommandedAcceleration(msg.accel_mmPerSec2);
+        SpeedController::SetUserCommandedDeceleration(msg.decel_mmPerSec2);
+        */
+      }
+      
+      void ProcessMoveLiftMessage(const MoveLift& msg) {
+        LiftController::SetSpeedAndAccel(msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
+        LiftController::SetDesiredHeight(msg.height_mm);
+      }
+      
+      void ProcessMoveHeadMessage(const MoveHead& msg) {
+        HeadController::SetSpeedAndAccel(msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
+        HeadController::SetDesiredAngle(msg.angle_rad);
+      }
+      
+      void ProcessStopAllMotorsMessage(const StopAllMotors& msg) {
+        SteeringController::ExecuteDirectDrive(0,0);
+        LiftController::SetAngularVelocity(0);
+        HeadController::SetAngularVelocity(0);
+      }
       
       
       // TODO: Fill these in once they are needed/used:
@@ -281,23 +350,7 @@ namespace Anki {
         PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
       }
       
-      void ProcessClearPathMessage(const ClearPath& msg) {
-        PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
-      }
-      
-      void ProcessSetMotionMessage(const SetMotion& msg) {
-        PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
-      }
-      
       void ProcessRobotAvailableMessage(const RobotAvailable& msg) {
-        PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
-      }
-      
-      void ProcessSetPathSegmentArcMessage(const SetPathSegmentArc& msg) {
-        PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
-      }
-      
-      void ProcessSetPathSegmentLineMessage(const SetPathSegmentLine& msg) {
         PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
       }
       
@@ -314,7 +367,67 @@ namespace Anki {
       void ProcessRobotStateMessage(const RobotState& msg) {
         PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
       }
+
+      void ProcessPrintTextMessage(const PrintText& msg) {
+        PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
+      }
       
+// ----------- Send messages -----------------
+      
+      
+      ReturnCode SendRobotStateMsg()
+      {
+        robotState_.timestamp = HAL::GetTimeStamp();
+        
+        Radians poseAngle;
+        
+        Localization::GetCurrentMatPose(robotState_.pose_x, robotState_.pose_y, poseAngle);
+        robotState_.pose_z = 0;
+        robotState_.pose_angle = poseAngle.ToFloat();
+        
+        WheelController::GetFilteredWheelSpeeds(robotState_.lwheel_speed_mmps, robotState_.rwheel_speed_mmps);
+
+        robotState_.headAngle  = HeadController::GetAngleRad();
+        robotState_.liftHeight = LiftController::GetHeightMM();
+
+        robotState_.isTraversingPath = PathFollower::IsTraversingPath() ? 1 : 0;
+        robotState_.isCarryingBlock = PickAndPlaceController::IsCarryingBlock() ? 1 : 0;
+        
+        if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RobotState), &robotState_) == true) {
+          return EXIT_SUCCESS;
+        } else {
+          return EXIT_FAILURE;
+        }
+      }
+      
+      
+      void SendText(const char *format, ...)
+      {
+        #define MAX_SEND_TEXT_LENGTH 512
+        char text[MAX_SEND_TEXT_LENGTH];
+        memset(text, 0, MAX_SEND_TEXT_LENGTH);
+
+        // Create formatted text
+        va_list argptr;
+        va_start(argptr, format);
+        vsnprintf(text, MAX_SEND_TEXT_LENGTH, format, argptr);
+        va_end(argptr);
+        
+        // Breakup and send in multiple messages if necessary
+        Messages::PrintText m;
+        s32 bytesLeftToSend = strlen(text);
+        u8 numMsgs = 0;
+        while(bytesLeftToSend > 0) {
+          memset(m.text, 0, PRINT_TEXT_MSG_LENGTH);
+          u32 currPacketBytes = MIN(PRINT_TEXT_MSG_LENGTH, bytesLeftToSend);
+          memcpy(m.text, text + numMsgs*PRINT_TEXT_MSG_LENGTH, currPacketBytes);
+          
+          bytesLeftToSend -= PRINT_TEXT_MSG_LENGTH;
+          
+          HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::PrintText), &m);
+          numMsgs++;
+        }
+      }
       
       
 // #pragma mark --- VisionSystem::Mailbox Template Implementations ---

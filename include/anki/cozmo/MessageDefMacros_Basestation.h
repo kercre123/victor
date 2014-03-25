@@ -34,6 +34,7 @@
 // Define the available modes
 #undef MESSAGE_CLASS_DEFINITION_MODE
 #undef MESSAGE_CLASS_BUFFER_CONSTRUCTOR_MODE
+#undef MESSAGE_CLASS_GETID_MODE
 #undef MESSAGE_CLASS_GETSIZE_MODE
 #undef MESSAGE_CLASS_GETBYTES_MODE
 #undef MESSAGE_TABLE_DEFINITION_MODE
@@ -44,13 +45,14 @@
 
 #define MESSAGE_CLASS_DEFINITION_MODE         0
 #define MESSAGE_CLASS_BUFFER_CONSTRUCTOR_MODE 1
-#define MESSAGE_CLASS_GETSIZE_MODE            2
-#define MESSAGE_CLASS_GETBYTES_MODE           3
-#define MESSAGE_TABLE_DEFINITION_MODE         4
-#define MESSAGE_ENUM_DEFINITION_MODE          5
-#define MESSAGE_PROCESS_METHODS_MODE          6
-#define MESSAGE_CREATE_JSON_MODE              7
-#define MESSAGE_CLASS_JSON_CONSTRUCTOR_MODE   8
+#define MESSAGE_CLASS_GETID_MODE              2
+#define MESSAGE_CLASS_GETSIZE_MODE            3
+#define MESSAGE_CLASS_GETBYTES_MODE           4
+#define MESSAGE_TABLE_DEFINITION_MODE         5
+#define MESSAGE_ENUM_DEFINITION_MODE          6
+#define MESSAGE_PROCESS_METHODS_MODE          7
+#define MESSAGE_CREATE_JSON_MODE              8
+#define MESSAGE_CLASS_JSON_CONSTRUCTOR_MODE   9
 
 #define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__)
 #define START_TIMESTAMPED_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__)
@@ -126,7 +128,8 @@ public: \
   GET_MESSAGE_CLASSNAME(__MSG_TYPE__)() { } \
   GET_MESSAGE_CLASSNAME(__MSG_TYPE__)(const u8* buffer); \
   GET_MESSAGE_CLASSNAME(__MSG_TYPE__)(const Json::Value& root); \
-  static u8 GetSize(); \
+  virtual u8 GetID() const; \
+  virtual u8 GetSize() const; \
   virtual void GetBytes(u8* buffer) const; \
   virtual Json::Value CreateJson() const;
 
@@ -181,6 +184,25 @@ buffer += __LENGTH__*sizeof(__TYPE__);
 
 
 //
+// Define Message GetID() method
+//
+// For example:
+//
+//   u8 MessageFooBar::GetID() const {
+//     return FooBar_ID; // via GET_MESSAGE_ID()
+//   }
+//
+#elif MESSAGE_DEFINITION_MODE == MESSAGE_CLASS_GETID_MODE
+
+#define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
+u8 GET_MESSAGE_CLASSNAME(__MSG_TYPE__)::GetID() const { \
+  return GET_MESSAGE_ID(__MSG_TYPE__); \
+}
+#define END_MESSAGE_DEFINITION(__MSG_TYPE__)
+#define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__)
+#define ADD_MESSAGE_MEMBER_ARRAY(__TYPE__, __NAME__, __LENGTH__)
+
+//
 // Define Message GetSize() method
 //
 // For example:
@@ -192,7 +214,7 @@ buffer += __LENGTH__*sizeof(__TYPE__);
 #elif MESSAGE_DEFINITION_MODE == MESSAGE_CLASS_GETSIZE_MODE
 
 #define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
-u8 GET_MESSAGE_CLASSNAME(__MSG_TYPE__)::GetSize() { \
+u8 GET_MESSAGE_CLASSNAME(__MSG_TYPE__)::GetSize() const { \
 return
 
 #define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__) sizeof(__TYPE__) +
@@ -237,10 +259,13 @@ buffer += __LENGTH__*sizeof(__TYPE__);
 #elif MESSAGE_DEFINITION_MODE == MESSAGE_TABLE_DEFINITION_MODE
 
 #define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
-{__PRIORITY__, GET_MESSAGE_CLASSNAME(__MSG_TYPE__)::GetSize(), &MessageHandler::GET_DISPATCH_FCN_NAME(__MSG_TYPE__)},
-#define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__)
-#define ADD_MESSAGE_MEMBER_ARRAY(__TYPE__, __NAME__, __LENGTH__)
-#define END_MESSAGE_DEFINITION(__MSG_TYPE__)
+{__PRIORITY__, //GET_MESSAGE_CLASSNAME(__MSG_TYPE__)::GetSize(), &MessageHandler::GET_DISPATCH_FCN_NAME(__MSG_TYPE__)},
+#define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__) sizeof(__TYPE__) +
+#define ADD_MESSAGE_MEMBER_ARRAY(__TYPE__, __NAME__, __LENGTH__) __LENGTH__*sizeof(__TYPE__) +
+#define END_MESSAGE_DEFINITION(__MSG_TYPE__) 0, &MessageHandler::GET_DISPATCH_FCN_NAME(__MSG_TYPE__)},
+//#define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__)
+//#define ADD_MESSAGE_MEMBER_ARRAY(__TYPE__, __NAME__, __LENGTH__)
+//#define END_MESSAGE_DEFINITION(__MSG_TYPE__)
 
 //
 // Define enumerated message ID

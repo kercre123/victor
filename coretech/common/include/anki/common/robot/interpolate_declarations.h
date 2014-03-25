@@ -56,6 +56,9 @@ namespace Anki
     // Same as Interp2, but uses an affine homography to compute the lookup coordinates
     template<typename TypeIn, typename TypeOut> Result Interp2_Affine(const Array<TypeIn> &reference, const Meshgrid<f32> &originalCoordinates, const Array<f32> &homography, const Point<f32> &centerOffset, Array<TypeOut> &out, const InterpolationType interpolationType=INTERPOLATE_LINEAR, const TypeOut invalidValue=static_cast<TypeOut>(0));
 
+    // Same as Interp2, but uses an projective homography to compute the lookup coordinates
+    template<typename TypeIn, typename TypeOut> Result Interp2_Projective(const Array<TypeIn> &reference, const Meshgrid<f32> &originalCoordinates, const Array<f32> &homography, const Point<f32> &centerOffset, Array<TypeOut> &out, const InterpolationType interpolationType=INTERPOLATE_LINEAR, const TypeOut invalidValue=static_cast<TypeOut>(0));
+
     // T = Top, B = Bottom, L = Left, R = Right
     template<typename Type> inline Type InterpolateBilinear2d(const Type pixelTL, const Type pixelTR, const Type pixelBL, const Type pixelBR, const Type alphaY, const Type alphaYinverse, const Type alphaX, const Type alphaXinverse);
 

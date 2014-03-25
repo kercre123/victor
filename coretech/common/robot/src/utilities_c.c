@@ -398,22 +398,22 @@ void PrintU32Hex(int (*writeChar)(int), u32 value)
   return;
 } // void printInt(s32 value)
 
-f64 GetTime(void)
+f32 GetTime(void)
 {
 #if defined(_MSC_VER)
-  f64 timeInSeconds;
+  f32 timeInSeconds;
   LARGE_INTEGER frequency, counter;
   QueryPerformanceCounter(&counter);
   QueryPerformanceFrequency(&frequency);
-  timeInSeconds = (double)(counter.QuadPart)/(double)(frequency.QuadPart);
+  timeInSeconds = (f32)(counter.QuadPart)/(f32)(frequency.QuadPart);
 #elif defined(__APPLE_CC__)
-  const f64 timeInSeconds = 0.0; // TODO: implement
+  const f32 timeInSeconds = 0.0f; // TODO: implement
 #elif defined(__EDG__)  // ARM-MDK
-  const f64 timeInSeconds = XXX_HACK_FOR_PETE() / 1000000.0;
+  const f32 timeInSeconds = XXX_HACK_FOR_PETE() / 1000000.0f;
 #else // Generic Unix
   timespec ts;
   clock_gettime(CLOCK_MONOTONIC, &ts);
-  const f64 timeInSeconds = (double)(ts.tv_sec) + (double)(ts.tv_nsec)/1000000000.0;
+  const f32 timeInSeconds = (f32)(ts.tv_sec) + (f32)(ts.tv_nsec)/1000000000.0f;
 #endif
 
   return timeInSeconds;

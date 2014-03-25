@@ -6,7 +6,7 @@
 #include "liftController.h"
 
 #include "anki/cozmo/robot/cozmoConfig.h"
-#include "anki/cozmo/robot/cozmoTypes.h"
+#include "anki/common/robot/geometry.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/localization.h"
 #include "anki/cozmo/robot/visionSystem.h"
@@ -37,20 +37,22 @@ namespace Anki {
         };
 
         // Turning radius of docking path
-        const f32 DOCK_PATH_START_RADIUS_M = 0.05;
-        const f32 DOCK_PATH_END_RADIUS_M = 0.12;
+        const f32 DOCK_PATH_START_RADIUS_MM = 50;
+        const f32 DOCK_PATH_END_RADIUS_MM = 120;
         
         // The length of the straight tail end of the dock path.
         // Should be roughly the length of the forks on the lift.
-        const f32 FINAL_APPROACH_STRAIGHT_SEGMENT_LENGTH_M = 0.06;
+        const f32 FINAL_APPROACH_STRAIGHT_SEGMENT_LENGTH_MM = 60;
 
+        const f32 FAR_DIST_TO_BLOCK_THRESH_MM = 100;
+        
         // Distance from block face at which robot should "dock"
         f32 dockOffsetDistX_ = 0.f;
         
         u32 lastDockingErrorSignalRecvdTime_ = 0;
         
         // If error signal not received in this amount of time, tracking is considered to have failed.
-        const u32 STOPPED_TRACKING_TIMEOUT_US = 200000;
+        const u32 STOPPED_TRACKING_TIMEOUT_US = 400000;
         
         // If an initial track cannot start for this amount of time, block is considered to be out of
         // view and docking is aborted.
@@ -58,15 +60,14 @@ namespace Anki {
         
         const u16 DOCK_APPROACH_SPEED_MMPS = 20;
         const u16 DOCK_FAR_APPROACH_SPEED_MMPS = 30;
-        const u16 DOCK_APPROACH_ACCEL_MMPS2 = 200;
+        const u16 DOCK_APPROACH_ACCEL_MMPS2 = 60;
+        const u16 DOCK_APPROACH_DECEL_MMPS2 = 200;
+        
+        // Lateral tolerance at dock pose
+        const u16 LATERAL_DOCK_TOLERANCE_AT_DOCK_MM = 2;
         
         // Code of the VisionMarker we are trying to dock to
-        VisionSystem::MarkerCode dockMarkerCode_;
-        
-        // TODO: set error tolerances in mm and convert to pixels based on camera resolution?
-        const f32 VERTICAL_TARGET_ERROR_TOLERANCE = 1.f;   // in pixels
-        const f32 HORIZONTAL_TARGET_ERROR_TOLERANCE = 1.f; // in pixels
-
+        Vision::MarkerType dockMarker_;
 
         Mode mode_ = IDLE;
         
@@ -124,27 +125,41 @@ namespace Anki {
         {
           if(dockMsg.didTrackingSucceed) {
             
-            PRINT("ErrSignal %d (msgTime %d)\n", HAL::GetMicroCounter(), dockMsg.timestamp);
+            //PRINT("ErrSignal %d (msgTime %d)\n", HAL::GetMicroCounter(), dockMsg.timestamp);
             
             // Convert from camera coordinates to robot coordinates
             // (Note that y and angle don't change)
             dockMsg.x_distErr += HEAD_CAM_POSITION[0]*cosf(HeadController::GetAngleRad()) + NECK_JOINT_POSITION[0];
             
+#if(DEBUG_DOCK_CONTROLLER)
             PRINT("Received docking error signal: x_distErr=%f, y_horErr=%f, "
                   "angleErr=%fdeg\n", dockMsg.x_distErr, dockMsg.y_horErr,
                   RAD_TO_DEG_F32(dockMsg.angleErr));
+#endif
             
-            SetRelDockPose(dockMsg.x_distErr, dockMsg.y_horErr, dockMsg.angleErr);
-          } else {
-            SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
-            //PathFollower::ClearPath();
-            SteeringController::ExecuteDirectDrive(0,0);
-            if (mode_ != IDLE) {
-              mode_ = LOOKING_FOR_BLOCK;
+            // Check that error signal is plausible
+            // If not, treat as if tracking failed.
+            // TODO: Get tracker to detect these situations and not even send the error message here.
+            if (dockMsg.x_distErr > 0 && ABS(dockMsg.angleErr) < 0.75*PIDIV2_F) {
+              
+              SetRelDockPose(dockMsg.x_distErr, dockMsg.y_horErr, dockMsg.angleErr);
+              
+              // Send to basestation for visualization
+              HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::DockingErrorSignal), &dockMsg);
+              continue;
             }
 
+          }  // IF tracking succeeded
+          
+          SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
+          //PathFollower::ClearPath();
+          SteeringController::ExecuteDirectDrive(0,0);
+          if (mode_ != IDLE) {
+            mode_ = LOOKING_FOR_BLOCK;
+          }
+
             
-          } // IF tracking succeeded
+          
           
         } // while dockErrSignalMailbox has mail
 
@@ -158,7 +173,9 @@ namespace Anki {
           case LOOKING_FOR_BLOCK:
             if (HAL::GetMicroCounter() - lastDockingErrorSignalRecvdTime_ > GIVEUP_DOCKING_TIMEOUT_US) {
               ResetDocker();
+#if(DEBUG_DOCK_CONTROLLER)
               PRINT("Too long without block pose (currTime %d, lastErrSignal %d). Giving up.\n", HAL::GetMicroCounter(), lastDockingErrorSignalRecvdTime_);
+#endif
             }
             break;
           case APPROACH_FOR_DOCK:
@@ -168,13 +185,17 @@ namespace Anki {
               PathFollower::ClearPath();
               SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
               mode_ = LOOKING_FOR_BLOCK;
+#if(DEBUG_DOCK_CONTROLLER)
               PRINT("Too long without block pose (currTime %d, lastErrSignal %d). Looking for block...\n", HAL::GetMicroCounter(), lastDockingErrorSignalRecvdTime_);
+#endif
               break;
             }
             
             // If finished traversing path
             if (createdValidPath_ && !PathFollower::IsTraversingPath()) {
+#if(DEBUG_DOCK_CONTROLLER)
               PRINT("*** DOCKING SUCCESS ***\n");
+#endif
               ResetDocker();
               success_ = true;
               break;
@@ -203,12 +224,15 @@ namespace Anki {
       
       void SetRelDockPose(f32 rel_x, f32 rel_y, f32 rel_rad)
       {
+        // Check for readings that we do not expect to get
+        if (rel_x < 0 || ABS(rel_rad) > 0.75*PIDIV2_F
+            ) {
+          PRINT("WARN: Ignoring out of range docking error signal (%f, %f, %f)\n", rel_x, rel_y, rel_rad);
+          return;
+        }
+      
+        
         lastDockingErrorSignalRecvdTime_ = HAL::GetMicroCounter();
-        
-        // Convert to m
-        rel_x *= 0.001;
-        rel_y *= 0.001;
-        
         
         if (mode_ == IDLE || success_) {
           // We already accomplished the dock. We're done!
@@ -267,8 +291,10 @@ namespace Anki {
         //              +ve y-axis
         
         
-        if (rel_x <= -0.0f) {
-          //PRINT("DOCK POSE REACHED\n");
+        if (rel_x <= dockOffsetDistX_ && ABS(rel_y) < LATERAL_DOCK_TOLERANCE_AT_DOCK_MM) {
+#if(DEBUG_DOCK_CONTROLLER)
+          PRINT("DOCK POSE REACHED\n");
+#endif
           return;
         }
         
@@ -315,9 +341,12 @@ namespace Anki {
                                                               dockPose_.x(),
                                                               dockPose_.y(),
                                                               dockPose_.angle.ToFloat(),
-                                                              DOCK_PATH_START_RADIUS_M,
-                                                              DOCK_PATH_END_RADIUS_M,
-                                                              FINAL_APPROACH_STRAIGHT_SEGMENT_LENGTH_M,
+                                                              DOCK_PATH_START_RADIUS_MM,
+                                                              DOCK_PATH_END_RADIUS_MM,
+                                                              DOCK_APPROACH_SPEED_MMPS,
+                                                              DOCK_APPROACH_ACCEL_MMPS2,
+                                                              DOCK_APPROACH_DECEL_MMPS2,
+                                                              FINAL_APPROACH_STRAIGHT_SEGMENT_LENGTH_MM,
                                                               &path_length);
 
         //PRINT("numPathSegments: %d, path_length: %f, distToBlock: %f, followBlockNormalPath: %d\n",
@@ -331,26 +360,27 @@ namespace Anki {
           
           // Compute new starting point for path
           // HACK: Feeling lazy, just multiplying path by some scalar so that it's likely to be behind the current robot pose.
-          f32 x_start_m = dockPose_.x() - 3 * distToBlock * cosf(dockPose_.angle.ToFloat());
-          f32 y_start_m = dockPose_.y() - 3 * distToBlock * sinf(dockPose_.angle.ToFloat());
+          f32 x_start_mm = dockPose_.x() - 3 * distToBlock * cosf(dockPose_.angle.ToFloat());
+          f32 y_start_mm = dockPose_.y() - 3 * distToBlock * sinf(dockPose_.angle.ToFloat());
           
           PathFollower::ClearPath();
-          PathFollower::AppendPathSegment_Line(0, x_start_m, y_start_m, dockPose_.x(), dockPose_.y());
+          PathFollower::AppendPathSegment_Line(0, x_start_mm, y_start_mm, dockPose_.x(), dockPose_.y(),
+                                               DOCK_APPROACH_SPEED_MMPS, DOCK_APPROACH_ACCEL_MMPS2, DOCK_APPROACH_DECEL_MMPS2);
           
           followingBlockNormalPath_ = true;
           //PRINT("Computing straight line path (%f, %f) to (%f, %f)\n", x_start_m, y_start_m, dockPose_.x(), dockPose_.y());
         }
 
-        
+        /*
         // Set speed
         // TODO: Add hysteresis
-        if (distToBlock < 0.10) {
+        if (distToBlock < FAR_DIST_TO_BLOCK_THRESH_MM) {
           SpeedController::SetUserCommandedDesiredVehicleSpeed( DOCK_APPROACH_SPEED_MMPS );
         } else {
           SpeedController::SetUserCommandedDesiredVehicleSpeed( DOCK_FAR_APPROACH_SPEED_MMPS );
         }
         SpeedController::SetUserCommandedAcceleration( DOCK_APPROACH_ACCEL_MMPS2 );
-
+        */
         
         // Start following path
         createdValidPath_ = PathFollower::StartPathTraversal();
@@ -364,13 +394,16 @@ namespace Anki {
       }
       
       
-      void StartDocking(const VisionSystem::MarkerCode& dockingCode,
+      void StartDocking(const Vision::MarkerType& dockingMarker,
+                        const f32 markerWidth_mm,
                         f32 dockOffsetDistX, f32 dockOffsetDistY, f32 dockOffsetAngle)
       {
-        dockMarkerCode_.Set(dockingCode);
+        AnkiAssert(markerWidth_mm > 0.f);
+        
+        dockMarker_      = dockingMarker;
         dockOffsetDistX_ = dockOffsetDistX;
         
-        VisionSystem::SetMarkerToTrack(dockMarkerCode_);
+        VisionSystem::SetMarkerToTrack(dockMarker_, markerWidth_mm);
         lastDockingErrorSignalRecvdTime_ = HAL::GetMicroCounter();
         mode_ = LOOKING_FOR_BLOCK;
         

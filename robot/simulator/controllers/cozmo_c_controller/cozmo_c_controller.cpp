@@ -11,18 +11,13 @@
  * <webots/differential_wheels.h>, etc.
  */
 #include <stdio.h>
-#include <ctype.h>
-#include <string.h>
 
 #include "anki/cozmo/robot/cozmoBot.h"
-#include "anki/cozmo/robot/cozmoConfig.h"
-#include "anki/cozmo/robot/hal.h"
-#include "anki/cozmo/robot/localization.h"
 #include "anki/cozmo/robot/debug.h"
-
+#include "testModeController.h"
 #include "keyboardController.h"
 #include "sim_overlayDisplay.h"
-
+#include "sim_viz.h"
 #include "anki/cozmo/robot/hal.h"
 
 
@@ -46,6 +41,7 @@ int main(int argc, char **argv)
 #endif
   
   Sim::OverlayDisplay::Init();
+  Sim::Viz::Init();
   
   while(Robot::step_MainExecution() == EXIT_SUCCESS)
   {
@@ -54,7 +50,7 @@ int main(int argc, char **argv)
       break;
     }
       
-    if(Sim::KeyboardController::IsEnabled() ) {
+    if(Sim::KeyboardController::IsEnabled() && TestModeController::GetMode() == TestModeController::TM_NONE) {
       Sim::KeyboardController::ProcessKeystroke();
     }      
   }

@@ -32,7 +32,16 @@ int main()
 {
 #if ANKICORETECH_EMBEDDED_USE_GTEST
 
+  char * filterString = "--gtest_filter=*"; // Run all tests
+  //char * filterString = "--gtest_filter=*Lucas*"; // Run only some tests
+  //char * filterString = "--gtest_filter=*IsConvex*"; // Run only some tests
+  //char * filterString = "--gtest_filter=*Binary*"; // Run only some tests
+
+  argc++;
+  argv[argc-1] = filterString;
+
   ::testing::InitGoogleTest(&argc, argv);
+
   const int result = RUN_ALL_TESTS();
 
 #else // #if ANKICORETECH_EMBEDDED_USE_GTEST

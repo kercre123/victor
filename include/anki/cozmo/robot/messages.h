@@ -47,6 +47,14 @@ namespace Anki {
       // Return the size of a message, given its ID
       u8 GetSize(const ID msgID);
       
+      // Return a const reference to the current robot state message
+      RobotState const& GetRobotStateMsg();
+      
+      // Create all the dispatch function prototypes (all implemented
+      // manually in messages.cpp).  
+#define MESSAGE_DEFINITION_MODE MESSAGE_DISPATCH_DEFINITION_MODE
+#include "anki/cozmo/MessageDefinitions.h"
+      
       void ProcessBTLEMessages();
       void ProcessUARTMessages();
       
@@ -57,6 +65,11 @@ namespace Anki {
       
       // Did we see the message ID we last set? (Or perhaps we timed out)
       bool StillLookingForID(void);
+      
+      // Send messages
+      ReturnCode SendRobotStateMsg(); // populates and sends state message
+      void SendText(const char *format, ...);
+      
       
       // These return true if a mailbox messages was available, and they copy
       // that message into the passed-in message struct.

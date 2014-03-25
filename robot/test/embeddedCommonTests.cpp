@@ -34,6 +34,41 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 using namespace Anki::Embedded;
 
+GTEST_TEST(CoreTech_Common, IsConvex)
+{
+  Point<f32> p11(0.0f, 0.0f);
+  Point<f32> p12(3.0f, 0.0f);
+  Point<f32> p13(2.0f, 3.0f);
+  Point<f32> p14(0.0f, 2.0f);
+  Point<f32> p15(2.0f, 2.0f);
+
+  Point<f32> p21(0.0f, 0.0f);
+  Point<f32> p22(0.0f, 1.0f);
+  Point<f32> p23(0.0f, 2.0f);
+  Point<f32> p24(1.0f, 1.0f);
+
+  Point<f32> p31(0.0f, 0.0f);
+  Point<f32> p32(0.0f, 1.0f);
+  Point<f32> p33(0.0f, 2.0f);
+  Point<f32> p34(0.0f, 3.0f);
+
+  Quadrilateral<f32> quad11(p11, p12, p13, p14);
+  Quadrilateral<f32> quad12(p12, p13, p14, p15);
+
+  Quadrilateral<f32> quad21(p21, p22, p23, p24);
+
+  Quadrilateral<f32> quad31(p31, p32, p33, p34);
+
+  ASSERT_TRUE(quad11.IsConvex());
+
+  ASSERT_FALSE(quad12.IsConvex());
+
+  ASSERT_TRUE(quad21.IsConvex());
+  ASSERT_TRUE(quad31.IsConvex());
+
+  GTEST_RETURN_HERE;
+}
+
 GTEST_TEST(CoreTech_Common, RoundFloat)
 {
   const s32 numNumbers = 12;
@@ -858,6 +893,116 @@ GTEST_TEST(CoreTech_Common, ArrayPatterns)
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Common, ArrayPatterns)
+
+GTEST_TEST(CoreTech_Common, Interp2_Projective_oneDimensional)
+{
+  ASSERT_TRUE(offchipBuffer != NULL);
+  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(ms.IsValid());
+
+  Array<u8> reference(3,5,ms);
+
+  // reference = [1:5; 11:15; 21:25];
+  reference(0,0,0,-1).Set(LinearSequence<u8>(1,5));
+  reference(1,1,0,-1).Set(LinearSequence<u8>(11,15));
+  reference(2,2,0,-1).Set(LinearSequence<u8>(21,25));
+
+  // [xGridVector, yGridVector] = meshgrid((-0.9:0.9:6), (-1:1:4));
+  Meshgrid<f32> mesh(LinearSequence<f32>(-0.9f,0.9f,6.0f), LinearSequence<f32>(-1.0f,1.0f,4.0f));
+
+  Array<f32> homography = Eye<f32>(3,3,ms);
+  homography[0][0] = 1.5f;
+  homography[1][2] = 1.0f;
+  homography[2][0] = 0.05f;
+  homography[2][1] = 0.09f;
+  // homography = [1.5, 0, 0.0; 0.0, 1.0, 1.0; 0.05, 0.09, 1.0];
+
+  // points = [xGridVector(:), yGridVector(:), ones(48,1)]';
+  // warpedPoints = homography*points;
+  // warpedPoints = warpedPoints ./ repmat(warpedPoints(3,:), [3,1]);
+  // warpedPoints = warpedPoints(1:2, :);
+
+  // warpedXGridVector = reshape(warpedPoints(1,:), [6,8]);
+  // warpedYGridVector = reshape(warpedPoints(2,:), [6,8]);
+
+  // result = round(interp2(reference, 1+warpedXGridVector, 1+warpedYGridVector)); result(isnan(result)) = 0;
+  // r = result'; r(:)'
+
+  const Point<f32> centerOffset(0.0f, 0.0f);
+
+  const s32 numElements = mesh.get_yGridVector().get_size() * mesh.get_xGridVector().get_size();
+  Array<u8> result(1, numElements, ms);
+  const Result lastResult = Interp2_Projective<u8,u8>(reference, mesh, homography, centerOffset, result);
+  ASSERT_TRUE(lastResult == RESULT_OK);
+
+  const u8 result_groundTruth[48] = {0, 1, 2, 4, 5, 0, 0, 0, 0, 11, 12, 13, 13, 0, 0, 0, 0, 19, 20, 20, 21, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+  //result.Print("result");
+
+  for(s32 i=0; i<48; i++) {
+    ASSERT_TRUE(result[0][i] == result_groundTruth[i]);
+  }
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Common, Interp2_Projective_oneDimensional)
+
+GTEST_TEST(CoreTech_Common, Interp2_Projective_twoDimensional)
+{
+  ASSERT_TRUE(offchipBuffer != NULL);
+  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(ms.IsValid());
+
+  Array<u8> reference(3,5,ms);
+
+  // reference = [1:5; 11:15; 21:25];
+  reference(0,0,0,-1).Set(LinearSequence<u8>(1,5));
+  reference(1,1,0,-1).Set(LinearSequence<u8>(11,15));
+  reference(2,2,0,-1).Set(LinearSequence<u8>(21,25));
+
+  // [xGridVector, yGridVector] = meshgrid((-0.9:0.9:6), (-1:1:4));
+  Meshgrid<f32> mesh(LinearSequence<f32>(-0.9f,0.9f,6.0f), LinearSequence<f32>(-1.0f,1.0f,4.0f));
+
+  Array<f32> homography = Eye<f32>(3,3,ms);
+  homography[0][0] = 1.5f;
+  homography[1][2] = 1.0f;
+  homography[2][0] = 0.05f;
+  homography[2][1] = 0.09f;
+  // homography = [1.5, 0, 0.0; 0.0, 1.0, 1.0; 0.05, 0.09, 1.0];
+
+  // points = [xGridVector(:), yGridVector(:), ones(48,1)]';
+  // warpedPoints = homography*points;
+  // warpedPoints = warpedPoints ./ repmat(warpedPoints(3,:), [3,1]);
+  // warpedPoints = warpedPoints(1:2, :);
+
+  // warpedXGridVector = reshape(warpedPoints(1,:), [6,8]);
+  // warpedYGridVector = reshape(warpedPoints(2,:), [6,8]);
+
+  // result = round(interp2(reference, 1+warpedXGridVector, 1+warpedYGridVector)); result(isnan(result)) = 0
+
+  const Point<f32> centerOffset(0.0f, 0.0f);
+
+  Array<u8> result(mesh.get_yGridVector().get_size(), mesh.get_xGridVector().get_size(), ms);
+  const Result lastResult = Interp2_Projective<u8,u8>(reference, mesh, homography, centerOffset, result);
+  ASSERT_TRUE(lastResult == RESULT_OK);
+
+  const u8 result_groundTruth[6][8] = {
+    {0, 1, 2, 4, 5, 0, 0, 0},
+    {0, 11, 12, 13, 13, 0, 0, 0},
+    {0, 19, 20, 20, 21, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0},};
+
+  //result.Print("result");
+
+  for(s32 y=0; y<6; y++) {
+    for(s32 x=0; x<8; x++) {
+      ASSERT_TRUE(result[y][x] == result_groundTruth[y][x]);
+    }
+  }
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Common, Interp2_Projective_twoDimensional)
 
 GTEST_TEST(CoreTech_Common, Interp2_Affine_twoDimensional)
 {
@@ -2893,6 +3038,7 @@ s32 RUN_ALL_COMMON_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   numPassedTests = 0;
   numFailedTests = 0;
 
+  CALL_GTEST_TEST(CoreTech_Common, IsConvex);
   CALL_GTEST_TEST(CoreTech_Common, RoundFloat);
   CALL_GTEST_TEST(CoreTech_Common, CompressArray);
   CALL_GTEST_TEST(CoreTech_Common, Heatshrink);

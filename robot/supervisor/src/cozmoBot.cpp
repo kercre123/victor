@@ -38,17 +38,14 @@ namespace Anki {
         
         // Parameters / Constants:
         
-#if(FREE_DRIVE_DUBINS_TEST)
-        const TestModeController::TestMode DEFAULT_TEST_MODE = TestModeController::TM_NONE;
-#else
         // TESTING
         // Change this value to run different test modes
-        const TestModeController::TestMode DEFAULT_TEST_MODE = TestModeController::TM_NONE;
-#endif
-        Robot::OperationMode mode_ = INIT_RADIO_CONNECTION;
-        
+        const TestModeController::TestMode DEFAULT_TEST_MODE = TestModeController::TM_PICK_AND_PLACE;
+
+        Robot::OperationMode mode_ = INIT_MOTOR_CALIBRATION;
+        bool wasConnected_ = false;
+
       } // Robot private namespace
-      
       
       //
       // Accessors:
@@ -66,16 +63,11 @@ namespace Anki {
       void StartMotorCalibrationRoutine()
       {
         LiftController::StartCalibrationRoutine();
+        HeadController::StartCalibrationRoutine();
 #if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
         GripController::DisengageGripper();
 #endif
         SteeringController::ExecuteDirectDrive(0,0);
-
-#ifdef SIMULATOR
-        // Convenient for docking to set head angle at -15 degrees.
-        // TODO: Move this somewhere else.
-        HeadController::SetDesiredAngle(-0.26);
-#endif
       }
       
       
@@ -85,7 +77,10 @@ namespace Anki {
       {
         bool isDone = false;
         
-        if(LiftController::IsCalibrated()) {
+        if(
+           LiftController::IsCalibrated()
+           && HeadController::IsCalibrated()
+           ) {
           PRINT("Motors calibrated\n");
           isDone = true;
         }
@@ -93,36 +88,6 @@ namespace Anki {
         return isDone;
       }
       
-      ReturnCode SendCameraCalibToBase()
-      {
-        ReturnCode retVal = EXIT_FAILURE;
-        
-        const HAL::CameraInfo* headCamInfo = HAL::GetHeadCamInfo();
-        if(headCamInfo == NULL) {
-          PRINT("NULL HeadCamInfo retrieved from HAL.\n");
-        }
-        else {
-          Messages::HeadCameraCalibration headCalibMsg = {
-            headCamInfo->focalLength_x,
-            headCamInfo->focalLength_y,
-            headCamInfo->fov_ver,
-            headCamInfo->center_x,
-            headCamInfo->center_y,
-            headCamInfo->skew,
-            headCamInfo->nrows,
-            headCamInfo->ncols
-          };
-          
-          PRINT("Robot sending camera calibration message.\n");
-          if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::HeadCameraCalibration),
-                                   &headCalibMsg))
-          {
-            retVal = EXIT_SUCCESS;
-          }
-        }
-        
-        return retVal;
-      }
       
       ReturnCode Init(void)
       {
@@ -185,14 +150,9 @@ namespace Anki {
         // Start calibration
         StartMotorCalibrationRoutine();
 
-        // TestModeController only updates when in WAITING so skip
-        // waiting for a radio connection and just go.
-        if (DEFAULT_TEST_MODE != TestModeController::TM_NONE) {
-          mode_ = INIT_MOTOR_CALIBRATION;
-        } else {
-          mode_ = INIT_RADIO_CONNECTION;
-        }
-
+        // Set starting state
+        mode_ = INIT_MOTOR_CALIBRATION;
+        
         return EXIT_SUCCESS;
         
       } // Robot::Init()
@@ -207,7 +167,9 @@ namespace Anki {
       
       ReturnCode step_MainExecution()
       {
-
+#ifdef THIS_IS_PETES_BOARD      
+        return EXIT_SUCCESS;
+#endif
 
 //#if(DEBUG_ANY && defined(SIMULATOR))
 //        PRINT("\n==== FRAME START (time = %d us) ====\n", HAL::GetMicroCounter() );
@@ -231,6 +193,15 @@ namespace Anki {
         //////////////////////////////////////////////////////////////
         // Communications
         //////////////////////////////////////////////////////////////
+
+        // Check if there is a new or dropped connection to a basestation
+        if (HAL::RadioIsConnected() && !wasConnected_) {
+          PRINT("Robot %d's radio is connected.\n", HAL::GetRobotID());
+          wasConnected_ = true;
+        } else if (!HAL::RadioIsConnected() && wasConnected_) {
+          PRINT("Radio disconnected\n");
+          wasConnected_ = false;
+        }
 
         // Process any messages from the basestation
         Messages::ProcessBTLEMessages();
@@ -283,22 +254,6 @@ namespace Anki {
 
         switch(mode_)
         {
-          case INIT_RADIO_CONNECTION:
-          {
-            if(HAL::RadioIsConnected() ) {
-              PRINT("Robot %d's radio is connected.\n", HAL::GetRobotID());
-              
-              if(SendCameraCalibToBase() == EXIT_FAILURE) {
-                PRINT("Failed to send camera calibration to base.");
-                // TODO: die here or what?
-              }
-              
-              mode_ = INIT_MOTOR_CALIBRATION;
-            }
-            
-            break;
-          }
-        
           case INIT_MOTOR_CALIBRATION:
           {
             if(MotorCalibrationUpdate()) {
@@ -336,6 +291,8 @@ namespace Anki {
         // Feedback / Display
         //////////////////////////////////////////////////////////////
         
+        Messages::SendRobotStateMsg();
+        
         HAL::UpdateDisplay();
         
         
@@ -350,7 +307,10 @@ namespace Anki {
       {
         ReturnCode retVal = EXIT_SUCCESS;
         
-        retVal = VisionSystem::Update();
+        // IMPORTANT: The static robot state message is being passed in here
+        //   *by value*, NOT by reference.  This is because step_LongExecution()
+        //   can be interuppted by step_MainExecution().
+        retVal = VisionSystem::Update(Messages::GetRobotStateMsg());
         
         HAL::USBSendPrintBuffer();
         

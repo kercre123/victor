@@ -21,13 +21,11 @@
 
 #include "anki/cozmo/robot/messages.h"
 
+#include "anki/vision/MarkerCodeDefinitions.h"
+
 namespace Anki {
+  
   namespace Cozmo {
-    
-    // Forward declaration
-    namespace VisionSystem {
-      class MarkerCode;
-    }
     
     namespace DockingController {
 
@@ -42,7 +40,9 @@ namespace Anki {
       bool DidLastDockSucceed();
 
       // Tells the docker what the relative position of the block is.
-      // TODO: Move this to private namespace. Currently, this is only used in one of the test modes.
+      // rel_x: Distance to center of block along robot's x-axis
+      // rel_y: Distance to center of block along robot's y-axis
+      // rel_rad: Angle of block normal relative to robot's x-axis. 
       void SetRelDockPose(f32 rel_x, f32 rel_y, f32 rel_rad);
       
       // Resets state machine and configures VisionSystem to track
@@ -58,7 +58,8 @@ namespace Anki {
       //                  e.g. To place a block on top of two other blocks, the robot would need to "dock" to
       //                       one of the blocks at some horizontal offset.
       // dockOffsetAngle: Docking offset angle. +ve means block is facing robot's right side.
-      void StartDocking(const VisionSystem::MarkerCode& codeToDockWith,
+      void StartDocking(const Vision::MarkerType& codeToDockWith,
+                        const f32 markerWidth_mm,
                         f32 dockOffsetDistX, f32 dockOffsetDistY = 0, f32 dockOffsetAngle = 0);
       
     } // namespace DockingController

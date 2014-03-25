@@ -81,6 +81,11 @@ bool UdpClient::Disconnect()
 
 int UdpClient::Send(const char* data, int size)
 {
+  if (socketfd < 0) {
+    DEBUG_UDP_CLIENT("UdpClient (WARN): Socket undefined. Skipping Send().\n");
+    return 0;
+  }
+  
   DEBUG_UDP_CLIENT("UdpClient: sending " << size << " bytes: " << data << "\n");
 
   int bytes_sent = sendto(socketfd, data, size, 0,
@@ -100,7 +105,11 @@ int UdpClient::Send(const char* data, int size)
 
 int UdpClient::Recv(char* data, int maxSize)
 {
-
+    if (socketfd < 0) {
+      DEBUG_UDP_CLIENT("UdpClient (WARN): Socket undefined. Skipping Recv().\n");
+      return 0;
+    }
+  
     DEBUG_UDP_CLIENT( "UdpClient: Waiting to receive data...\n");
 
     assert(data != NULL);

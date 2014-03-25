@@ -12,6 +12,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/opencvLight.h"
 #include "anki/common/robot/arrayPatterns.h"
 #include "anki/common/robot/interpolate.h"
+#include "anki/common/robot/serialize.h"
 
 namespace Anki
 {
@@ -74,12 +75,6 @@ namespace Anki
         this->centerOffset = centerOffset;
         this->initialCorners = initialCorners;
 
-        // Store the initial quad recentered around the centerOffset.
-        // get_transformedCorners() will add it back
-        for(s32 iPoint=0; iPoint<4; iPoint++) {
-          this->initialCorners[iPoint] -= this->centerOffset;
-        }
-
         this->homography = Eye<f32>(3, 3, memory);
 
         if(initialHomography.IsValid()) {
@@ -99,12 +94,19 @@ namespace Anki
       Result PlanarTransformation_f32::TransformPoints(
         const Array<f32> &xIn, const Array<f32> &yIn,
         const f32 scale,
+        const bool inputPointsAreZeroCentered,
+        const bool outputPointsAreZeroCentered,
         Array<f32> &xOut, Array<f32> &yOut) const
       {
-        return TransformPointsStatic(xIn, yIn, scale, this->centerOffset, xOut, yOut, this->get_transformType(), this->get_homography());
+        return TransformPointsStatic(
+          xIn, yIn,
+          scale,
+          this->centerOffset, this->get_transformType(), this->get_homography(),
+          inputPointsAreZeroCentered, outputPointsAreZeroCentered,
+          xOut, yOut);
       }
 
-      Result PlanarTransformation_f32::Update(const Array<f32> &update, MemoryStack scratch, TransformType updateType)
+      Result PlanarTransformation_f32::Update(const Array<f32> &update, const f32 scale, MemoryStack scratch, TransformType updateType)
       {
         AnkiConditionalErrorAndReturnValue(update.IsValid(),
           RESULT_FAIL_INVALID_OBJECT, "PlanarTransformation_f32::Update", "update is not valid");
@@ -137,8 +139,8 @@ namespace Anki
             RESULT_FAIL_INVALID_SIZE, "PlanarTransformation_f32::Update", "update is the incorrect size");
 
           // this.tform(1:2,3) = this.tform(1:2,3) - update;
-          homography[0][2] -= pUpdate[0];
-          homography[1][2] -= pUpdate[1];
+          homography[0][2] -= scale*pUpdate[0];
+          homography[1][2] -= scale*pUpdate[1];
         } else { // if(updateType == TRANSFORM_TRANSLATION)
           Array<f32> updateArray(3,3,scratch);
 
@@ -146,17 +148,21 @@ namespace Anki
             AnkiConditionalErrorAndReturnValue(update.get_size(1) == TRANSFORM_AFFINE>>8,
               RESULT_FAIL_INVALID_SIZE, "PlanarTransformation_f32::Update", "update is the incorrect size");
 
-            updateArray[0][0] = 1.0f + pUpdate[0]; updateArray[0][1] = pUpdate[1];        updateArray[0][2] = pUpdate[2];
-            updateArray[1][0] = pUpdate[3];        updateArray[1][1] = 1.0f + pUpdate[4]; updateArray[1][2] = pUpdate[5];
+            // TODO: does this work with projective?
+
+            updateArray[0][0] = 1.0f + pUpdate[0]; updateArray[0][1] = pUpdate[1];        updateArray[0][2] = pUpdate[2]*scale;
+            updateArray[1][0] = pUpdate[3];        updateArray[1][1] = 1.0f + pUpdate[4]; updateArray[1][2] = pUpdate[5]*scale;
             updateArray[2][0] = 0.0f;              updateArray[2][1] = 0.0f;              updateArray[2][2] = 1.0f;
           } else if(updateType == TRANSFORM_PROJECTIVE) {
             AnkiConditionalErrorAndReturnValue(update.get_size(1) == TRANSFORM_PROJECTIVE>>8,
               RESULT_FAIL_INVALID_SIZE, "PlanarTransformation_f32::Update", "update is the incorrect size");
 
+            // TODO: does this work with affine?
+
             // tformUpdate = eye(3) + [update(1:3)'; update(4:6)'; update(7:8)' 0];
-            updateArray[0][0] = 1.0f + pUpdate[0]; updateArray[0][1] = pUpdate[1];        updateArray[0][2] = pUpdate[2];
-            updateArray[1][0] = pUpdate[3];        updateArray[1][1] = 1.0f + pUpdate[4]; updateArray[1][2] = pUpdate[5];
-            updateArray[2][0] = pUpdate[6];        updateArray[2][1] = pUpdate[7];        updateArray[2][2] = 1.0f;
+            updateArray[0][0] = 1.0f + pUpdate[0]; updateArray[0][1] = pUpdate[1];        updateArray[0][2] = pUpdate[2]*scale;
+            updateArray[1][0] = pUpdate[3];        updateArray[1][1] = 1.0f + pUpdate[4]; updateArray[1][2] = pUpdate[5]*scale;
+            updateArray[2][0] = pUpdate[6]/scale;  updateArray[2][1] = pUpdate[7]/scale;  updateArray[2][2] = 1.0f;
           } else {
             AnkiError("PlanarTransformation_f32::Update", "Unknown transformation type %d", updateType);
             return RESULT_FAIL_INVALID_PARAMETERS;
@@ -182,9 +188,16 @@ namespace Anki
         return RESULT_OK;
       }
 
-      Result PlanarTransformation_f32::Print(const char * const variableName)
+      Result PlanarTransformation_f32::Print(const char * const variableName) const
       {
-        return this->homography.Print(variableName);
+        printf(variableName);
+        printf(": center");
+        this->centerOffset.Print();
+        printf(" initialCorners");
+        this->initialCorners.Print();
+        printf("\n");
+
+        return this->homography.Print("homography");
       }
 
       Quadrilateral<f32> PlanarTransformation_f32::TransformQuadrilateral(const Quadrilateral<f32> &in, MemoryStack scratch, const f32 scale) const
@@ -199,7 +212,7 @@ namespace Anki
           yIn[0][i] = in.corners[i].y;
         }
 
-        TransformPoints(xIn, yIn, scale, xOut, yOut);
+        TransformPoints(xIn, yIn, scale, false, false, xOut, yOut);
 
         Quadrilateral<f32> out;
 
@@ -248,12 +261,17 @@ namespace Anki
           f32 * restrict pYIn = yIn.Pointer(y,0);
 
           for(s32 x=0; x<arrWidth; x++) {
-            pXIn[x] = static_cast<f32>(x) - this->centerOffset.x;
-            pYIn[x] = static_cast<f32>(y) - this->centerOffset.y;
+            pXIn[x] = static_cast<f32>(x);
+            pYIn[x] = static_cast<f32>(y);
           }
         }
 
-        TransformPointsStatic(xIn, yIn, scale, this->centerOffset, xTransformed, yTransformed, this->get_transformType(), homographyInv);
+        TransformPointsStatic(
+          xIn, yIn, scale,
+          this->centerOffset,
+          this->get_transformType(), homographyInv,
+          false, true,
+          xTransformed, yTransformed);
 
         /*xIn.Print("xIn", 0,10,0,10);
         yIn.Print("yIn", 0,10,0,10);
@@ -294,9 +312,51 @@ namespace Anki
           return lastResult;
         }
 
-        this->centerOffset = newTransformation.get_centerOffset();
+        this->centerOffset = newTransformation.get_centerOffset(1.0f);
 
         this->initialCorners = initialCorners;
+
+        return RESULT_OK;
+      }
+
+      Result PlanarTransformation_f32::Serialize(SerializedBuffer &buffer) const
+      {
+        const s32 maxBufferLength = buffer.get_memoryStack().ComputeLargestPossibleAllocation() - 64;
+
+        s32 requiredBytes = this->get_SerializationSize();
+
+        if(maxBufferLength < requiredBytes) {
+          return RESULT_FAIL;
+        }
+
+        void *afterHeader;
+        const void* segmentStart = buffer.PushBack("PlanarTransformation_f32", requiredBytes, &afterHeader);
+
+        if(segmentStart == NULL) {
+          return RESULT_FAIL;
+        }
+
+        return SerializeRaw(&afterHeader, requiredBytes);
+      }
+
+      Result PlanarTransformation_f32::SerializeRaw(void ** buffer, s32 &bufferLength) const
+      {
+        SerializedBuffer::SerializeRaw<bool>(this->isValid, buffer, bufferLength);
+        SerializedBuffer::SerializeRaw<s32>(this->transformType, buffer, bufferLength);
+        SerializedBuffer::SerializeRawArray<f32>(this->homography, buffer, bufferLength);
+        SerializedBuffer::SerializeRaw<Quadrilateral<f32> >(this->initialCorners, buffer, bufferLength);
+        SerializedBuffer::SerializeRaw<Point<f32> >(this->centerOffset, buffer, bufferLength);
+
+        return RESULT_OK;
+      }
+
+      Result PlanarTransformation_f32::Deserialize(void** buffer, s32 &bufferLength, MemoryStack &memory)
+      {
+        this->isValid = SerializedBuffer::DeserializeRaw<bool>(buffer, bufferLength);
+        this->transformType = static_cast<Transformations::TransformType>(SerializedBuffer::DeserializeRaw<s32>(buffer, bufferLength));
+        this->homography = SerializedBuffer::DeserializeRawArray<f32>(buffer, bufferLength, memory);
+        this->initialCorners = SerializedBuffer::DeserializeRaw<Quadrilateral<f32> >(buffer, bufferLength);
+        this->centerOffset = SerializedBuffer::DeserializeRaw<Point<f32> >(buffer, bufferLength);
 
         return RESULT_OK;
       }
@@ -345,9 +405,21 @@ namespace Anki
         return this->initialCorners;
       }
 
-      const Point<f32>& PlanarTransformation_f32::get_centerOffset() const
+      Result PlanarTransformation_f32::set_centerOffset(const Point<f32> &centerOffset)
       {
-        return this->centerOffset;
+        this->centerOffset = centerOffset;
+
+        return RESULT_OK;
+      }
+
+      Point<f32> PlanarTransformation_f32::get_centerOffset(const f32 scale) const
+      {
+        if(FLT_NEAR(scale,1.0f)) {
+          return this->centerOffset;
+        } else {
+          const Point<f32> scaledOffset(this->centerOffset.x / scale, this->centerOffset.y / scale);
+          return scaledOffset;
+        }
       }
 
       Quadrilateral<f32> PlanarTransformation_f32::get_transformedCorners(MemoryStack scratch) const
@@ -358,10 +430,12 @@ namespace Anki
       Result PlanarTransformation_f32::TransformPointsStatic(
         const Array<f32> &xIn, const Array<f32> &yIn,
         const f32 scale,
-        const Point<f32> &centerOffset,
-        Array<f32> &xOut, Array<f32> &yOut,
+        const Point<f32>& centerOffset,
         const TransformType transformType,
-        const Array<f32> &homography)
+        const Array<f32> &homography,
+        const bool inputPointsAreZeroCentered,
+        const bool outputPointsAreZeroCentered,
+        Array<f32> &xOut, Array<f32> &yOut)
       {
         AnkiConditionalErrorAndReturnValue(homography.IsValid(),
           RESULT_FAIL_INVALID_OBJECT, "PlanarTransformation_f32::TransformPoints", "homography is not valid");
@@ -380,9 +454,13 @@ namespace Anki
         const s32 numPointsY = xIn.get_size(0);
         const s32 numPointsX = xIn.get_size(1);
 
+        // If the inputs or outputs should be shifted, set the offset appropriately
+        const Point<f32> inputCenterOffset = inputPointsAreZeroCentered ? Point<f32>(0.0f, 0.0f) : Point<f32>(centerOffset.x, centerOffset.y);
+        const Point<f32> outputCenterOffset = outputPointsAreZeroCentered ? Point<f32>(0.0f, 0.0f) : Point<f32>(centerOffset.x, centerOffset.y);
+
         if(transformType == TRANSFORM_TRANSLATION) {
-          const f32 dx = homography[0][2];
-          const f32 dy = homography[1][2];
+          const f32 dx = (homography[0][2] - inputCenterOffset.x + outputCenterOffset.x) / scale;
+          const f32 dy = (homography[1][2] - inputCenterOffset.y + outputCenterOffset.y) / scale;
 
           for(s32 y=0; y<numPointsY; y++) {
             const f32 * restrict pXIn = xIn.Pointer(y,0);
@@ -391,8 +469,8 @@ namespace Anki
             f32 * restrict pYOut = yOut.Pointer(y,0);
 
             for(s32 x=0; x<numPointsX; x++) {
-              pXOut[x] = pXIn[x] + dx + centerOffset.x;
-              pYOut[x] = pYIn[x] + dy + centerOffset.y;
+              pXOut[x] = pXIn[x] + dx;
+              pYOut[x] = pYIn[x] + dy;
             }
           }
         } else if(transformType == TRANSFORM_AFFINE) {
@@ -409,18 +487,39 @@ namespace Anki
             f32 * restrict pXOut = xOut.Pointer(y,0);
             f32 * restrict pYOut = yOut.Pointer(y,0);
 
-            for(s32 x=0; x<numPointsX; x++) {
-              //// Remove center offset
-              //const f32 xc = pXIn[x] - centerOffset.x;
-              //const f32 yc = pYIn[x] - centerOffset.y;
+            if(FLT_NEAR(scale, 1.0f)) {
+              for(s32 x=0; x<numPointsX; x++) {
+                const f32 xIn = pXIn[x];
+                const f32 yIn = pYIn[x];
 
-              const f32 xp = (h00*pXIn[x] + h01*pYIn[x] + h02);
-              const f32 yp = (h10*pXIn[x] + h11*pYIn[x] + h12);
+                // Remove center offset (offset may be zero)
+                const f32 xc = xIn - inputCenterOffset.x;
+                const f32 yc = yIn - inputCenterOffset.y;
 
-              // Restore center offset
-              pXOut[x] = xp + centerOffset.x;
-              pYOut[x] = yp + centerOffset.y;
-            }
+                const f32 xp = (h00*xc + h01*yc + h02);
+                const f32 yp = (h10*xc + h11*yc + h12);
+
+                // Restore center offset (offset may be zero)
+                pXOut[x] = xp + outputCenterOffset.x;
+                pYOut[x] = yp + outputCenterOffset.y;
+              }
+            } else {
+              for(s32 x=0; x<numPointsX; x++) {
+                const f32 xIn = pXIn[x] * scale;
+                const f32 yIn = pYIn[x] * scale;
+
+                // Remove center offset (offset may be zero)
+                const f32 xc = xIn - inputCenterOffset.x;
+                const f32 yc = yIn - inputCenterOffset.y;
+
+                const f32 xp = (h00*xc + h01*yc + h02);
+                const f32 yp = (h10*xc + h11*yc + h12);
+
+                // Restore center offset (offset may be zero)
+                pXOut[x] = (xp + outputCenterOffset.x) / scale;
+                pYOut[x] = (yp + outputCenterOffset.y) / scale;
+              }
+            } // if(FLT_NEAR(scale, 1.0f))
           }
         } else if(transformType == TRANSFORM_PROJECTIVE) {
           const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
@@ -435,20 +534,43 @@ namespace Anki
             f32 * restrict pXOut = xOut.Pointer(y,0);
             f32 * restrict pYOut = yOut.Pointer(y,0);
 
-            for(s32 x=0; x<numPointsX; x++) {
-              const f32 wpi = 1.0f / (h20*pXIn[x] + h21*pYIn[x] + h22);
+            if(FLT_NEAR(scale, 1.0f)) {
+              for(s32 x=0; x<numPointsX; x++) {
+                const f32 xIn = pXIn[x];
+                const f32 yIn = pYIn[x];
 
-              //// Remove center offset
-              //const f32 xc = pXIn[x] - centerOffset.x;
-              //const f32 yc = pYIn[x] - centerOffset.y;
+                // Remove center offset (offset may be zero)
+                const f32 xc = xIn - inputCenterOffset.x;
+                const f32 yc = yIn - inputCenterOffset.y;
 
-              const f32 xp = (h00*pXIn[x] + h01*pYIn[x] + h02) * wpi;
-              const f32 yp = (h10*pXIn[x] + h11*pYIn[x] + h12) * wpi;
+                const f32 wpi = 1.0f / (h20*xc + h21*yc + h22);
 
-              // Restore center offset
-              pXOut[x] = xp + centerOffset.x;
-              pYOut[x] = yp + centerOffset.y;
-            }
+                const f32 xp = (h00*xc + h01*yc + h02) * wpi;
+                const f32 yp = (h10*xc + h11*yc + h12) * wpi;
+
+                // Restore center offset (offset may be zero)
+                pXOut[x] = xp + outputCenterOffset.x;
+                pYOut[x] = yp + outputCenterOffset.y;
+              }
+            } else {
+              for(s32 x=0; x<numPointsX; x++) {
+                const f32 xIn = pXIn[x] * scale;
+                const f32 yIn = pYIn[x] * scale;
+
+                // Remove center offset (offset may be zero)
+                const f32 xc = xIn - inputCenterOffset.x;
+                const f32 yc = yIn - inputCenterOffset.y;
+
+                const f32 wpi = 1.0f / (h20*xc + h21*yc + h22);
+
+                const f32 xp = (h00*xc + h01*yc + h02) * wpi;
+                const f32 yp = (h10*xc + h11*yc + h12) * wpi;
+
+                // Restore center offset (offset may be zero)
+                pXOut[x] = (xp + outputCenterOffset.x) / scale;
+                pYOut[x] = (yp + outputCenterOffset.y) / scale;
+              }
+            } // if(FLT_NEAR(scale, 1.0f))
           }
         } else {
           // Should be checked earlier
@@ -457,6 +579,12 @@ namespace Anki
         }
 
         return RESULT_OK;
+      }
+
+      s32 PlanarTransformation_f32::get_SerializationSize() const
+      {
+        // TODO: make the correct length
+        return 512;
       }
 
       Result ComputeHomographyFromQuad(const Quadrilateral<s16> &quad, Array<f32> &homography, MemoryStack scratch)
@@ -469,6 +597,10 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(scratch.IsValid(),
           RESULT_FAIL_INVALID_OBJECT, "ComputeHomographyFromQuad", "scratch is not valid");
 
+        // TODO: I got rid of sorting, but now we have an extra copy here that can be removed.
+        //Quadrilateral<s16> sortedQuad = quad.ComputeClockwiseCorners();
+        Quadrilateral<s16> sortedQuad = quad;
+
         FixedLengthList<Point<f32> > originalPoints(4, scratch);
         FixedLengthList<Point<f32> > transformedPoints(4, scratch);
 
@@ -477,10 +609,10 @@ namespace Anki
         originalPoints.PushBack(Point<f32>(1,0));
         originalPoints.PushBack(Point<f32>(1,1));
 
-        transformedPoints.PushBack(Point<f32>(quad[0].x, quad[0].y));
-        transformedPoints.PushBack(Point<f32>(quad[1].x, quad[1].y));
-        transformedPoints.PushBack(Point<f32>(quad[2].x, quad[2].y));
-        transformedPoints.PushBack(Point<f32>(quad[3].x, quad[3].y));
+        transformedPoints.PushBack(Point<f32>(sortedQuad[0].x, sortedQuad[0].y));
+        transformedPoints.PushBack(Point<f32>(sortedQuad[1].x, sortedQuad[1].y));
+        transformedPoints.PushBack(Point<f32>(sortedQuad[2].x, sortedQuad[2].y));
+        transformedPoints.PushBack(Point<f32>(sortedQuad[3].x, sortedQuad[3].y));
 
         if((lastResult = Matrix::EstimateHomography(originalPoints, transformedPoints, homography, scratch)) != RESULT_OK)
           return lastResult;

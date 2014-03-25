@@ -17,6 +17,8 @@
 
 #include "anki/cozmo/basestation/messages.h"
 
+#include "anki/vision/MarkerCodeDefinitions.h"
+
 namespace Anki {
   
   // Forward Declarations:
@@ -50,7 +52,10 @@ namespace Anki {
         NUM_BLOCK_TYPES
       };
       
+      // NOTE: if the ordering of these is modified, you must also update
+      //       the static OppositeFaceLUT.
       enum FaceName {
+        FIRST_FACE  = 0,
         FRONT_FACE  = 0,
         LEFT_FACE   = 1,
         BACK_FACE   = 2,
@@ -82,12 +87,11 @@ namespace Anki {
       
       // Accessors:
       Point3f const& GetSize() const;
-      float      GetWidth()  const;
-      float      GetHeight() const;
-      float      GetDepth()  const;
+      float          GetWidth()  const;
+      float          GetHeight() const;
+      float          GetDepth()  const;
       //virtual float GetMinDim() const;
       //using Vision::ObservableObjectBase<Block>::GetMinDim;
-
 
       void SetSize(const float width, const float height, const float depth);
       void SetColor(const float red, const float green, const float blue);
@@ -99,12 +103,42 @@ namespace Anki {
       
       static Type GetBlockTypeByName(const std::string& name);
       
+      // Return a reference to the marker on a particular face of the block.
+      // Symmetry convention: if no marker was set for the requested face, the
+      // one on the opposite face is returned.  If none is defined for the
+      // opposite face either, the front marker is returned.  Not having
+      // a marker defined for at least the front the block is an error, (which
+      // should be caught in the constructor).
+      Vision::KnownMarker const& GetMarker(FaceName onFace) const;
+      
+      // Get possible poses to start docking/tracking procedure. These will e
+      // a point a given distance away from each vertical face that has the
+      // specified code, in the direction orthogonal to that face.  The points
+      // will be in the world frame, with the Z coordinate at the height of the
+      // center of the block.
+      void GetPreDockPoses(const Vision::Marker::Code& code,
+                           const float distance_mm,
+                           std::vector<Pose3d>& poses) const;
+      
+      // Same as above, except no code is specified, and all docking points are
+      // returned.
+      void GetPreDockPoses(const float distance_mm,
+                           std::vector<Pose3d>& poses) const;
+      
     protected:
+      
+      static const FaceName OppositeFaceLUT[NUM_FACES];
       
       //static ObjectType_t NumTypes;
       
       // Make this protected so we have to use public AddFace() method
       using Vision::ObservableObject::AddMarker;
+      
+      //std::map<Vision::Marker::Code, std::vector<FaceName> > facesWithCode;
+      
+      // LUT of the marker on each face, NULL if none specified.
+
+      std::array<const Vision::KnownMarker*, NUM_FACES> markersByFace_;
       
       // Static const lookup table for all block specs, by block ID, auto-
       // generated from the BlockDefinitions.h file using macros
@@ -124,6 +158,7 @@ namespace Anki {
       static const BlockInfoTableEntry_t BlockInfoLUT_[NUM_BLOCK_TYPES];
       static const std::map<std::string, Type> BlockNameToTypeMap;
       
+      static const std::array<Point3f,NUM_FACES> CanonicalDockingPoints;
       
       Color       color_;
       Point3f     size_;
@@ -133,10 +168,11 @@ namespace Anki {
       
     }; // class Block
     
-    
+    // A cubical block with the same marker on all sides.
     class Block_Cube1x1 : public Block
     {
     public:
+      
       Block_Cube1x1(Type type);
       
       virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const;
@@ -155,7 +191,7 @@ namespace Anki {
     
     // Long dimension is along the x axis (so one unique face has x axis
     // sticking out of it, the other unique face type has y and z axes sticking
-    // out of it)
+    // out of it).  One marker on
     class Block_2x1 : public Block
     {
     public:

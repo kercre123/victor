@@ -18,12 +18,6 @@ extern u32 XXX_HACK_FOR_PETE(void);
 #include <sys/time.h>
 #endif
 
-#if defined(__EDG__) // MDK-ARM
-#define BENCHMARK_EVENTS_LOCATION __attribute__((section(".ram1"), zero_init))
-#else
-#define BENCHMARK_EVENTS_LOCATION
-#endif
-
 typedef enum
 {
   BENCHMARK_EVENT_BEGIN,
@@ -44,19 +38,19 @@ typedef enum
 } BenchmarkPrintType;
 
 // A big array, full of events
-BENCHMARK_EVENTS_LOCATION static BenchmarkEvent benchmarkEvents[MAX_BENCHMARK_EVENTS];
+OFFCHIP static BenchmarkEvent benchmarkEvents[MAX_BENCHMARK_EVENTS];
 
 // The index of the next place to record a benchmark event
 static int numBenchmarkEvents;
 
-BENCHMARK_EVENTS_LOCATION static const char * eventNames[MAX_BENCHMARK_EVENTS];
+OFFCHIP static const char * eventNames[MAX_BENCHMARK_EVENTS];
 static volatile int numEventNames;
 
-BENCHMARK_EVENTS_LOCATION static double totalTimes[MAX_BENCHMARK_EVENTS];
-BENCHMARK_EVENTS_LOCATION static double minTimes[MAX_BENCHMARK_EVENTS];
-BENCHMARK_EVENTS_LOCATION static double maxTimes[MAX_BENCHMARK_EVENTS];
-BENCHMARK_EVENTS_LOCATION static unsigned int numEvents[MAX_BENCHMARK_EVENTS];
-BENCHMARK_EVENTS_LOCATION static int lastBeginIndex[MAX_BENCHMARK_EVENTS];
+OFFCHIP static double totalTimes[MAX_BENCHMARK_EVENTS];
+OFFCHIP static double minTimes[MAX_BENCHMARK_EVENTS];
+OFFCHIP static double maxTimes[MAX_BENCHMARK_EVENTS];
+OFFCHIP static unsigned int numEvents[MAX_BENCHMARK_EVENTS];
+OFFCHIP static int lastBeginIndex[MAX_BENCHMARK_EVENTS];
 
 staticInline void AddBenchmarkEvent(const char *name, unsigned long long time, BenchmarkEventType type);
 

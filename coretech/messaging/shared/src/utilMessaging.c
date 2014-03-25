@@ -182,7 +182,12 @@ UtilMsgError UtilMsgPack(void *dst, unsigned int dstBytes, unsigned int *bytesPa
   short h;  //2 bytes
   char c;   //1 byte
 
-  
+  int idx;
+  int variableNum;
+  char *temp = (char *) dst;
+  va_list arglist;
+  UtilMsgError error = UTILMSG_OK;
+	
   // Always set this first.  We want this to be valid even if we fail.
   if ( bytesPacked ) {
     *bytesPacked = 0;
@@ -198,13 +203,8 @@ UtilMsgError UtilMsgPack(void *dst, unsigned int dstBytes, unsigned int *bytesPa
     return UTILMSG_ZEROBUFFER;
   }
   
-  char *temp = (char *) dst;
-  
-  va_list arglist;
   va_start(arglist, packStr);
-  
-  UtilMsgError error = UTILMSG_OK;
-  for(int idx = 0; (packStr[idx] != '\0') && (error == UTILMSG_OK); ++idx) {
+  for(idx = 0; (packStr[idx] != '\0') && (error == UTILMSG_OK); ++idx) {
     
     // If we're writing an array, the variable corresponding to the 'a'
     // character contains the number we will write, and the character at the
@@ -234,7 +234,7 @@ UtilMsgError UtilMsgPack(void *dst, unsigned int dstBytes, unsigned int *bytesPa
     }
     
     // Write each variable (1 or for each one in array)
-    for(int variableNum = 0; variableNum < numVariablesToWrite; variableNum++) {
+    for(variableNum = 0; variableNum < numVariablesToWrite; variableNum++) {
       
       // floats promoted to double and chars and shorts promoted to int
       switch(packStr[idx]) {   // Type to expect.
@@ -374,17 +374,23 @@ UtilMsgError UtilMsgPack(void *dst, unsigned int dstBytes, unsigned int *bytesPa
 UtilMsgError UtilMsgUnpack(const void *src, unsigned int srcBytes, unsigned int *bytesUnpacked, const char *packStr, ...)
 {
   unsigned long long l;
-  unsigned long long *pL;
+  unsigned long long *pL = 0;
   unsigned int i;    //4 bytes
-  unsigned int *pI;
+  unsigned int *pI = 0;
   float f;  //4 bytes
-  float *pF;
+  float *pF = 0;
   double d; //8 bytes
-  double *pD;
+  double *pD = 0;
   unsigned short h;  //2 bytes
-  unsigned short *pH;
+  unsigned short *pH = 0;
   unsigned char c;   //1 byte
-  unsigned char *pC;
+  unsigned char *pC = 0;
+
+  int idx;
+  int variableNum;
+  va_list arglist;
+  char *temp = (char *) src;
+  UtilMsgError error = UTILMSG_OK;
   
   if ( bytesUnpacked ) {
     *bytesUnpacked = 0;
@@ -399,14 +405,11 @@ UtilMsgError UtilMsgUnpack(const void *src, unsigned int srcBytes, unsigned int 
     
     return UTILMSG_ZEROBUFFER;
   }
+ 
   
-  char *temp = (char *) src;
-  
-  va_list arglist;
   va_start(arglist, packStr);
   
-  UtilMsgError error = UTILMSG_OK;
-  for(int idx = 0; (packStr[idx] != '\0') && (error == UTILMSG_OK); ++idx) {
+  for(idx = 0; (packStr[idx] != '\0') && (error == UTILMSG_OK); ++idx) {
     
     // If we're reading an array, the variable corresponding to the 'a'
     // character contains the number we will read, and the character at
@@ -432,7 +435,7 @@ UtilMsgError UtilMsgUnpack(const void *src, unsigned int srcBytes, unsigned int 
     }
     
     // Write each variable (1 or for each one in array)
-    for(int variableNum = 0; variableNum < numVariablesToRead; variableNum++) {
+    for(variableNum = 0; variableNum < numVariablesToRead; variableNum++) {
       
       // floats promoted to double and chars and shorts promoted to int
       switch(packStr[idx]) {   // Type to expect.

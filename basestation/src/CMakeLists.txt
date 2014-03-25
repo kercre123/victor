@@ -18,7 +18,6 @@ if(NOT WIN32)
     CoreTech_Common_Basestation 
     CoreTech_Vision_Basestation 
     CoreTech_Planning_Basestation
-    CoreTech_Planning_Shared
     ${ZLIB_LIBRARY}
   )
 endif()

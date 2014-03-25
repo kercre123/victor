@@ -13,6 +13,7 @@
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "messageHandler.h"
+#include "vizManager.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -47,6 +48,18 @@ namespace Anki {
       
       return retVal;
     }
+    
+
+    ReturnCode MessageHandler::SendMessage(const RobotID_t robotID, const Message& msg)
+    {
+      Comms::MsgPacket p;
+      p.data[0] = msg.GetID();
+      msg.GetBytes(p.data+1);
+      p.dataLen = msg.GetSize() + 1;
+      p.destId = robotID;
+      
+      return comms_->Send(p) > 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+    }
 
     
     ReturnCode MessageHandler::ProcessPacket(const Comms::MsgPacket& packet)
@@ -54,15 +67,19 @@ namespace Anki {
       ReturnCode retVal = EXIT_FAILURE;
       
       if(robotMgr_ == NULL) {
-        PRINT_NAMED_ERROR("MessageHandler:NullRobotManager",
+        PRINT_NAMED_ERROR("MessageHandler.NullRobotManager",
                           "RobotManager NULL when MessageHandler::ProcessPacket() called.");
       }
       else {
         const u8 msgID = packet.data[0];
         
         if(lookupTable_[msgID].size != packet.dataLen-1) {
-          PRINT_NAMED_ERROR("MessageBufferWrongSize",
-                            "Buffer's size does not match expected size for this message ID.");
+          PRINT_NAMED_ERROR("MessageHandler.MessageBufferWrongSize",
+                            "Buffer's size does not match expected size for this message ID. (Msg %d, expected %d, recvd %d)",
+                            msgID,
+                            lookupTable_[msgID].size,
+                            packet.dataLen - 1
+                            );
         }
         else {
           const RobotID_t robotID = packet.sourceId;
@@ -119,28 +136,34 @@ namespace Anki {
                           "BlockWorld NULL when MessageHandler::ProcessMessage(VisionMarker) called.");
       }
       else {
-        Quad2f corners;
-        
-        corners[Quad::TopLeft].x()     = msg.x_imgUpperLeft;
-        corners[Quad::TopLeft].y()     = msg.y_imgUpperLeft;
-        
-        corners[Quad::BottomLeft].x()  = msg.x_imgLowerLeft;
-        corners[Quad::BottomLeft].y()  = msg.y_imgLowerLeft;
-        
-        corners[Quad::TopRight].x()    = msg.x_imgUpperRight;
-        corners[Quad::TopRight].y()    = msg.y_imgUpperRight;
-        
-        corners[Quad::BottomRight].x() = msg.x_imgLowerRight;
-        corners[Quad::BottomRight].y() = msg.y_imgLowerRight;
-        
         CORETECH_ASSERT(robot != NULL);
-        
         const Vision::Camera& camera = robot->get_camHead();
-        Vision::ObservedMarker marker(&(msg.code[0]), corners, camera);
         
-        // Give this vision marker to BlockWorld for processing
-        blockWorld_->QueueObservedMarker(marker);
-        
+        if(camera.isCalibrated()) {
+          Quad2f corners;
+          
+          corners[Quad::TopLeft].x()     = msg.x_imgUpperLeft;
+          corners[Quad::TopLeft].y()     = msg.y_imgUpperLeft;
+          
+          corners[Quad::BottomLeft].x()  = msg.x_imgLowerLeft;
+          corners[Quad::BottomLeft].y()  = msg.y_imgLowerLeft;
+          
+          corners[Quad::TopRight].x()    = msg.x_imgUpperRight;
+          corners[Quad::TopRight].y()    = msg.y_imgUpperRight;
+          
+          corners[Quad::BottomRight].x() = msg.x_imgLowerRight;
+          corners[Quad::BottomRight].y() = msg.y_imgLowerRight;
+          
+          Vision::ObservedMarker marker(msg.markerType, corners, camera);
+          
+          // Give this vision marker to BlockWorld for processing
+          blockWorld_->QueueObservedMarker(marker);
+        }
+        else {
+          PRINT_NAMED_WARNING("MessageHandler::CalibrationNotSet",
+                              "Received VisionMarker message from robot before "
+                              "camera calibration was set on Basestation.");
+        }
         retVal = EXIT_SUCCESS;
       }
       
@@ -165,22 +188,92 @@ namespace Anki {
       return EXIT_SUCCESS;
     }
     
+    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageRobotState const& msg)
+    {
+      /*
+      PRINT_NAMED_INFO("RobotStateMsgRecvd",
+                       "RobotStateMsg received \n"
+                       "  ID: %d\n"
+                       "  pose (%f,%f,%f,%f)\n"
+                       "  wheel speeds (l=%f, r=%f)\n"
+                       "  headAngle %f\n"
+                       "  liftHeight %f\n",
+                       robot->get_ID(),
+                       msg.pose_x, msg.pose_y, msg.pose_z, msg.pose_angle,
+                       msg.lwheel_speed_mmps, msg.rwheel_speed_mmps,
+                       msg.headAngle, msg.liftHeight);
+      */
+      
+      // Update head angle
+      robot->set_headAngle(msg.headAngle);
+
+      
+      // Update robot pose
+      Vec3f axis(0,0,1);
+      Vec3f translation(msg.pose_x, msg.pose_y, msg.pose_z);
+      robot->set_pose(Pose3d(msg.pose_angle, axis, translation));
+      
+      // Update other state vars
+      robot->SetTraversingPath( msg.isTraversingPath );
+      robot->SetCarryingBlock( msg.isCarryingBlock );
+      
+      return EXIT_SUCCESS;
+    }
+
+    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessagePrintText const& msg)
+    {
+      static char text[512];  // Local storage for large messages which may come across in multiple packets
+      static u32 textIdx = 0;
+
+      char *newText = (char*)&(msg.text.front());
+      
+      // If the last byte is 0, it means this is the last packet (possibly of a series of packets).
+      if (msg.text[PRINT_TEXT_MSG_LENGTH-1] == 0) {
+        // Text is ready to print
+        if (textIdx == 0) {
+          // This message is not a part of a longer message. Just print!
+          printf("ROBOT-PRINT (%d): %s", robot->get_ID(), newText);
+        } else {
+          // This message is part of a longer message. Copy to local buffer and print.
+          memcpy(text + textIdx, newText, strlen(newText)+1);
+          printf("ROBOT-PRINT (%d): %s", robot->get_ID(), text);
+          textIdx = 0;
+        }
+      } else {
+        // This message is part of a larger text. Copy to local buffer. There is more to come!
+        memcpy(text + textIdx, newText, PRINT_TEXT_MSG_LENGTH);
+        textIdx += PRINT_TEXT_MSG_LENGTH;
+      }
+
+      return EXIT_SUCCESS;
+    }
+    
+    // For visualization of docking error signal
+    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageDockingErrorSignal const& msg)
+    {
+      VizManager::getInstance()->SetDockingError(msg.x_distErr, msg.y_horErr, msg.angleErr);
+      return EXIT_SUCCESS;
+    }
+    
     
     // STUBS:
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageClearPath const&){return EXIT_FAILURE;}
-    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageSetMotion const&){return EXIT_FAILURE;}
-    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageRobotState const&){return EXIT_FAILURE;}
+    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageDriveWheels const&){return EXIT_FAILURE;}
+    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageDriveWheelsCurvature const&){return EXIT_FAILURE;}
+    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageMoveLift const&){return EXIT_FAILURE;}
+    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageMoveHead const&){return EXIT_FAILURE;}
+    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageStopAllMotors const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageRobotAvailable const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageMatMarkerObserved const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageRobotAddedToWorld const&){return EXIT_FAILURE;}
-    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageSetPathSegmentArc const&){return EXIT_FAILURE;}
-    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageDockingErrorSignal const&){return EXIT_FAILURE;}
-    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageSetPathSegmentLine const&){return EXIT_FAILURE;}
+    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageAppendPathSegmentArc const&){return EXIT_FAILURE;}
+    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageExecutePath const&){return EXIT_FAILURE;}
+    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageDockWithBlock const&){return EXIT_FAILURE;}
+    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageAppendPathSegmentLine const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageBlockMarkerObserved const&){return EXIT_FAILURE;}
-    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageTemplateInitialized const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageMatCameraCalibration const&){return EXIT_FAILURE;}
+    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageRequestCamCalib const&){return EXIT_FAILURE;}
     ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageAbsLocalizationUpdate const&){return EXIT_FAILURE;}
-    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageTotalVisionMarkersSeen const&){return EXIT_FAILURE;}
     
   } // namespace Cozmo
 } // namespace Anki

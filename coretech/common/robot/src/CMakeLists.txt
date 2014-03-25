@@ -1,5 +1,7 @@
 # coretech/common/robot/src/CMakeLists.txt
 
+add_definitions(-DCORETECH_ROBOT)
+
 file(GLOB SOURCE_FILES *.c *.cpp ../../shared/src/*.cpp)
 
 file(GLOB HEADER_FILES 

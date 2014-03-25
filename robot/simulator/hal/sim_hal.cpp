@@ -3,11 +3,12 @@
 #include <cstdlib>
 
 // Our Includes
+#include "anki/common/robot/errorHandling.h"
+
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/messages.h"
 #include "anki/cozmo/robot/wheelController.h"
-#include "cozmo_physics.h"
 
 #include "sim_overlayDisplay.h"
 
@@ -54,13 +55,15 @@ namespace Anki {
       webots::Motor* motors_[HAL::MOTOR_COUNT];
       
       
+      
       // Gripper
       webots::Connector* con_;
       bool gripperEngaged_ = false;
       s32 unlockhysteresis_ = UNLOCK_HYSTERESIS;
       
+      
       // Cameras / Vision Processing
-      webots::Camera* matCam_;
+      //webots::Camera* matCam_;
       webots::Camera* headCam_;
       HAL::CameraInfo headCamInfo_;
       HAL::CameraInfo matCamInfo_;
@@ -69,8 +72,8 @@ namespace Anki {
       //u8* headCamBuffer_;
       //u8* matCamBuffer_;
       
-      HAL::CameraUpdateMode headCamUpdateMode_;
-      HAL::CameraUpdateMode matCamUpdateMode_;
+      //HAL::CameraUpdateMode headCamUpdateMode_;
+      //HAL::CameraUpdateMode matCamUpdateMode_;
       
       // For pose information
       webots::GPS* gps_;
@@ -87,10 +90,7 @@ namespace Anki {
       f32 motorPrevPositions_[HAL::MOTOR_COUNT];
       f32 motorSpeeds_[HAL::MOTOR_COUNT];
       f32 motorSpeedCoeffs_[HAL::MOTOR_COUNT];
-      
-      // For communications with basestation
-      webots::Emitter *tx_;
-      webots::Receiver *rx_;
+
       
 #pragma mark --- Simulated Hardware Interface "Private Methods" ---
       // Localization
@@ -193,11 +193,7 @@ namespace Anki {
 #pragma mark --- Simulated Hardware Method Implementations ---
     
     // Forward Declaration.  This is implemented in sim_radio.cpp
-#if(USE_WEBOTS_TXRX)
-    ReturnCode InitSimRadio(webots::Robot& webotRobot, s32 robotID);
-#else
     ReturnCode InitSimRadio(s32 robotID);
-#endif
    
     namespace HAL {
       // Forward Declaration.  This is implemented in sim_uart.cpp
@@ -228,10 +224,7 @@ namespace Anki {
       
       //matCam_->enable(VISION_TIME_STEP);
       headCam_->enable(VISION_TIME_STEP);
-      
-      tx_ = webotRobot_.getEmitter("radio_tx");
-      rx_ = webotRobot_.getReceiver("radio_rx");
-      
+
       
       // Set ID
       // Expected format of name is <SomeName>_<robotID>
@@ -261,7 +254,7 @@ namespace Anki {
       motors_[MOTOR_RIGHT_WHEEL] = rightWheelMotor_;
       motors_[MOTOR_HEAD] = headMotor_;
       motors_[MOTOR_LIFT] = liftMotor_;
-      motors_[MOTOR_GRIP] = NULL;
+      //motors_[MOTOR_GRIP] = NULL;
       
       // Initialize motor positions
       for (int i=0; i < MOTOR_COUNT; ++i) {
@@ -300,11 +293,7 @@ namespace Anki {
       gyro_ = webotRobot_.getGyro("gyro");
       gyro_->enable(TIME_STEP);
 
-#if(USE_WEBOTS_TXRX)
-      if(InitSimRadio(webotRobot_, robotID_) == EXIT_FAILURE) {
-#else
       if(InitSimRadio(robotID_) == EXIT_FAILURE) {
-#endif
         PRINT("Failed to initialize Simulated Radio.\n");
         return EXIT_FAILURE;
       }
@@ -322,9 +311,6 @@ namespace Anki {
       
       gps_->disable();
       compass_->disable();
-      
-      // Do we care about actually disabling this?  It lives in sim_radio.cpp now...
-      //rx_->disable();
 
     } // Destroy()
     
@@ -371,13 +357,13 @@ namespace Anki {
     
     
     
-    const f32* HAL::GyroGetSpeed()
-    {
-      gyroValues_[0] = (f32)(gyro_->getValues()[0]);
-      gyroValues_[1] = (f32)(gyro_->getValues()[1]);
-      gyroValues_[2] = (f32)(gyro_->getValues()[2]);
-      return gyroValues_;
-    }
+    //const f32* HAL::GyroGetSpeed()
+    //{
+    //  gyroValues_[0] = (f32)(gyro_->getValues()[0]);
+    //  gyroValues_[1] = (f32)(gyro_->getValues()[1]);
+    //  gyroValues_[2] = (f32)(gyro_->getValues()[2]);
+    //  return gyroValues_;
+    //}
     
     
     // Set the motor power in the unitless range [-1.0, 1.0]
@@ -441,9 +427,9 @@ namespace Anki {
           return motorSpeeds_[MOTOR_LIFT];
         }
           
-        case MOTOR_GRIP:
-          // TODO
-          break;
+        //case MOTOR_GRIP:
+        //  // TODO
+        //  break;
           
         case MOTOR_HEAD:
         {
@@ -489,6 +475,26 @@ namespace Anki {
       } else {
         MotorUpdate();
         RadioUpdate();
+        
+        /*
+        // Always display ground truth pose:
+        {
+          const double* position = gps_->getValues();
+          const double* northVector = compass_->getValues();
+          
+          const f32 rad = std::atan2(-northVector[1], northVector[0]);
+          
+          char buffer[256];
+          snprintf(buffer, 256, "Robot %d Pose: (%.1f,%.1f,%.1f), %.1fdeg@(0,0,1)",
+                   robotID_,
+                   M_TO_MM(position[0]), M_TO_MM(position[1]), M_TO_MM(position[2]),
+                   RAD_TO_DEG(rad));
+          
+          std::string poseString(buffer);
+          webotRobot_.setLabel(robotID_, poseString, 0.5, robotID_*.05, .05, 0xff0000, 0.);
+        }
+         */
+        
         return EXIT_SUCCESS;
       }
       
@@ -539,18 +545,7 @@ namespace Anki {
       }
     }
     
-    const HAL::CameraInfo* HAL::GetMatCamInfo(void)
-    {
-      if(isInitialized) {
-        //FillCameraInfo(matCam_, matCamInfo_);
-        return &matCamInfo_;
-      }
-      else {
-        PRINT("MatCam calibration requested before HAL initialized.\n");
-        return NULL;
-      }
-    }
-    
+    /*
     HAL::CameraMode HAL::GetHeadCamMode(void)
     {
       return headCamMode_;
@@ -580,138 +575,65 @@ namespace Anki {
         PRINT("ERROR(SetCameraMode): Unknown frame res: %d", frameResHeader);
       }
     } //SetHeadCamMode()
-    
-    void GetGrayscaleFrameHelper(webots::Camera* cam, u8* buffer)
-    {
-      // Acquire grey image
-      // (Closest thing to Y channel?)
-      const u8* image = cam->getImage();
-      if(image == NULL) {
-        PRINT("GetGrayscaleFrameHelper(): no image captured!");
-      }
-      else {
-        u32 pixel = 0;
-        for (int y=0; y < cam->getHeight(); y++ ) {
-          for (int x=0; x < cam->getWidth(); x++ ) {
-            buffer[pixel++] = webots::Camera::imageGetGrey(image, cam->getWidth(), x, y);
-          }
-        }
-      }
-    } // GetGrayscaleFrameHelper()
+    */
     
     
     // Starts camera frame synchronization
-    void HAL::CameraStartFrame(CameraID cameraID, u8* frameBuffer,
-                               CameraMode mode, CameraUpdateMode updateMode,
-                               u16 exposure, bool enableLight)
+    void HAL::CameraGetFrame(u8* frame, CameraMode mode, f32 exposure, bool enableLight)
     {
       // TODO: exposure? enableLight?
       
-      switch(cameraID) {
-        case CAMERA_FRONT:
-        {
-          if (mode != CAMERA_MODE_VGA) {
-            PRINT("ERROR (CameraStartFrame): Head camera only supports VGA\n");
-            return;
-          }
-          
-          headCamUpdateMode_ = updateMode;
-          /* Not trying to simulate capture time, so don't need this...
-          headCamCaptureTime_ = headCamUpdateMode_ == CAMERA_UPDATE_SINGLE ? CAMERA_SINGLE_CAPTURE_TIME_US : CAMERA_CONTINUOUS_CAPTURE_TIME_US;
-          headCamStartCaptureTime_ = GetMicroCounter();
-          */
-          
-          GetGrayscaleFrameHelper(headCam_, frameBuffer);
-
-          break;
+      const u8* image = headCam_->getImage();
+      if(image == NULL) {
+        PRINT("CameraGetFrame(): no image captured!");
+      }
+      else {
+        // Set the increment / windowsize for downsampling
+        s32 inc = 1;
+        s32 pixel = 0;
+        
+        // TODO: add averaging once we support it in hardware
+        const bool supportAveraging = false;
+        
+        if(supportAveraging) {
+          AnkiAssert(false);
+          // Need a way to get downsampling increment (LUT for resolution based on mode?)
+          //AnkiAssert(headCamInfo_.nrows >= HAL::CameraModeInfo[mode].height);
+          //inc = headCamInfo_.nrows / HAL::CameraModeInfo[mode].height;
         }
-          
-        case CAMERA_MAT:
+        
+        if(inc == 1)
         {
-          
-          if (mode != CAMERA_MODE_VGA) {
-            PRINT("ERROR (CameraStartFrame): Mat camera only supports VGA\n");
-            return;
-          }
-          
-          matCamUpdateMode_ = updateMode;
-          /* Not trying to simulate capture time, so don't need this...
-          matCamCaptureTime_ = matCamUpdateMode_ == CAMERA_UPDATE_SINGLE ? CAMERA_SINGLE_CAPTURE_TIME_US : CAMERA_CONTINUOUS_CAPTURE_TIME_US;
-          matCamStartCaptureTime_ = GetMicroCounter();
-           */
-
-          //GetGrayscaleFrameHelper(matCam_, frameBuffer);
-          
-          break;
-        }
-          
-        default:
-          PRINT("ERROR (CameraStartFrame): Invalid camera %d\n", cameraID);
-          break;
-      }
-    }
-    
-    // Get the number of lines received so far for the specified camera
-    u32 HAL::CameraGetReceivedLines(CameraID cameraID)
-    {
-      switch(cameraID) {
-        case CAMERA_FRONT:
-          return headCamInfo_.nrows;
-        case CAMERA_MAT:
-          return matCamInfo_.nrows;
-        default:
-          PRINT("ERROR (CameraGetReceivedLines): Invalid camera %d\n", cameraID);
-          return 0;
-      }
-
-    }
-    
-    // Returns whether or not the specfied camera has received a full frame
-    bool HAL::CameraIsEndOfFrame(CameraID cameraID)
-    {
-      // Simulated cameras return frames instantaneously. Yay.
-      return true;
-      
-      /* Don't try to be so fancy.
-      switch(cameraID) {
-        case CAMERA_FRONT:
-        
-          if (headCamStartCaptureTime_ != 0 && GetMicroCounter() - headCamStartCaptureTime_ > headCamCaptureTime_) {
-            if (headCamUpdateMode_ == CAMERA_UPDATE_CONTINUOUS) {
-              headCamStartCaptureTime_ = GetMicroCounter();
-              //CaptureHeadCamFrame();
-            } else { // Single mode
-              headCamStartCaptureTime_ = 0;
+          // No averaging
+          for (s32 y=0; y < headCamInfo_.nrows; y++) {
+            for (s32 x=0; x < headCamInfo_.ncols; x++) {
+              frame[pixel++] = webots::Camera::imageGetGrey(image, headCamInfo_.ncols, x, y);
             }
-            return true;
           }
-          break;
-        
-        case CAMERA_MAT:
-        
-          if (matCamStartCaptureTime_ != 0 && GetMicroCounter() - matCamStartCaptureTime_ > matCamCaptureTime_) {
-            if (matCamUpdateMode_ == CAMERA_UPDATE_CONTINUOUS) {
-              matCamStartCaptureTime_ = GetMicroCounter();
-              //CaptureMatCamFrame();
-            } else { // Single mode
-              matCamStartCaptureTime_ = 0;
+        } else {
+          // Average [inc x inc] windows
+          for (s32 y = 0; y < headCamInfo_.nrows; y += inc)
+          {
+            for (s32 x = 0; x < headCamInfo_.ncols; x += inc)
+            {
+              s32 sum = 0;
+              for (s32 y1 = y; y1 < y + inc; y1++)
+              {
+                for (s32 x1 = x; x1 < x + inc; x1++)
+                {
+                  //int index = x1 + y1 * headCamInfo_.ncols;
+                  //sum += frame[index];
+                  sum += webots::Camera::imageGetGrey(image, headCamInfo_.ncols, x1, y1);
+                }
+              }
+              frame[pixel++] = (sum / (inc * inc));
             }
-            return true;
           }
-          break;
+        } // if averaging or not
         
-        default:
-          PRINT("ERROR (CameraIsEndOfFrame): Invalid camera %d\n", cameraID);
-          break;
-      }
-      return false;
-       */
-    }
-    
-    void HAL::CameraSetIsEndOfFrame(CameraID cameraID, bool isEOF)
-    {
+      } // if image==NULL or not
       
-    }
+    } // CameraGetFrame()
     
     
     // Get the number of microseconds since boot

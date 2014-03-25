@@ -109,10 +109,9 @@ RobotAdvertisementService {
 
 DEF Cozmo_1 CozmoBot {
   # In front of two green blocks:
-  translation 0.286003  0.0510032  0.021
+  translation 0.286003  0.0510032  0.0
   rotation 0 0 1 -0.7071  
   name "CozmoBot_1"
-  commsChannel 1
   usbChannel 10
   controller "cozmo_c_controller"
   # In front of 2x1 purple block
@@ -227,27 +226,33 @@ Block1x1 {
   
   facemarkerFront [
     #"textures/Block060_Face01.png"
-    "textures/batteryMarker.png"
+    #"textures/batteryMarker.png"
+    "textures/batteries.png"
   ]
   facemarkerBack [
     #"textures/Block060_Face02.png"
-    "textures/batteryMarker.png"
+    #"textures/batteryMarker.png"
+    "textures/batteries.png"
   ]
   facemarkerLeft [
     #"textures/Block060_Face03.png"
-    "textures/batteryMarker.png"
+    #"textures/batteryMarker.png"
+    "textures/batteries.png"
   ]
   facemarkerRight [
     #"textures/Block060_Face04.png"
-    "textures/batteryMarker.png"
+    #"textures/batteryMarker.png"
+    "textures/batteries.png"
   ]
   facemarkerTop [
     #"textures/Block060_Face05.png"
-    "textures/batteryMarker.png"
+    #"textures/batteryMarker.png"
+    "textures/batteries.png"
   ]
   facemarkerBottom [
     #"textures/Block060_Face06.png"
-    "textures/batteryMarker.png"
+    #"textures/batteryMarker.png"
+    "textures/batteries.png"
   ]
 }
 
