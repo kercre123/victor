@@ -270,7 +270,7 @@ namespace Anki
           xIn, yIn, scale,
           this->centerOffset,
           this->get_transformType(), homographyInv,
-          false, true,
+          false, false,
           xTransformed, yTransformed);
 
         /*xIn.Print("xIn", 0,10,0,10);
