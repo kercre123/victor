@@ -829,7 +829,13 @@ namespace MatlabVisionProcessor {
   
   static TrackerParameters trackerParameters_;
   
+#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_AFFINE
   static Transformations::TransformType transformType_ = Transformations::TRANSFORM_AFFINE;
+#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE
+  static Transformations::TransformType transformType_ = Transformations::TRANSFORM_PROJECTIVE;
+#else
+#error Can't use Matlab tracker with anything other than affine or projective.
+#endif
 
   // Now coming from trackerParameters_
   //static HAL::CameraMode trackingResolution_;
