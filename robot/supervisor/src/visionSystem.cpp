@@ -1017,12 +1017,12 @@ namespace MatlabVisionProcessor {
     matlabProc_.EvalStringEcho("S = [%d 0 0; 0 %d 0; 0 0 1]; "
                                "transform = S*double(LKtracker.tform)*inv(S); "
                                "transform = transform / transform(3,3); "
-                               "corners = %d*(double(LKtracker.corners) - 1); "
+                               "initCorners = %d*(double(LKtracker.initCorners) - 1); "
                                "xcen = %d*(double(LKtracker.xcen) - 1); "
                                "ycen = %d*(double(LKtracker.ycen) - 1);",
                                scaleFactor_, scaleFactor_, scaleFactor_, scaleFactor_, scaleFactor_);
     
-    Quadrilateral<f32> quad = matlabProc_.GetQuad<f32>("corners");
+    Quadrilateral<f32> quad = matlabProc_.GetQuad<f32>("initCorners");
     const mxArray* mxTform = matlabProc_.GetArray("transform");
     
     AnkiAssert(mxTform != NULL && mxGetM(mxTform) == 3 && mxGetN(mxTform)==3);
