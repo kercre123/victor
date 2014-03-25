@@ -9,7 +9,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/vision/robot/docking_vision.h"
 
-#define USE_MATLAB_FOR_PROJECTIVE_ERROR_SIGNAL 1
+#define USE_MATLAB_FOR_PROJECTIVE_ERROR_SIGNAL 0
 
 #if USE_MATLAB_FOR_PROJECTIVE_ERROR_SIGNAL
 #include "anki/common/robot/matlabInterface.h"
