@@ -294,15 +294,17 @@ namespace Anki
 
         Result ShowTemplate(const char * windowName="SampledProjective Template", const bool waitForKeypress=false, const bool fitImageToWindow=false) const;
 
-        s32 get_numTemplatePixels() const;
+        s32 get_numTemplatePixels(const s32 whichScale) const;
 
       protected:
+        // TODO: verify that there's no alignment padding
         typedef struct TemplateSample
         {
           f32 xCoordinate;
           f32 yCoordinate;
           f32 xGradient;
           f32 yGradient;
+          f32 grayvalue;
         } TemplateSample;
 
         FixedLengthList<FixedLengthList<TemplateSample> > templateSamplePyramid;

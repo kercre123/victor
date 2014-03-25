@@ -674,21 +674,21 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
 
     ASSERT_TRUE(tracker.IsValid());
 
-    tracker.ShowTemplate("tracker", true, true);
+    //tracker.ShowTemplate("tracker", true, true);
 
     const f64 time1 = GetTime();
-    /*
+
     bool verify_converged = false;
     s32 verify_meanAbsoluteDifference;
     s32 verify_numInBounds;
     s32 verify_numSimilarPixels;
 
-    ASSERT_TRUE(tracker.UpdateTrack(nextImage, maxIterations, convergenceTolerance, verify_maxPixelDifference, verify_converged, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels, scratchCcm, scratchOffchip) == RESULT_OK);
+    ASSERT_TRUE(tracker.UpdateTrack(nextImage, maxIterations, convergenceTolerance, verify_maxPixelDifference, verify_converged, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels, scratchCcm) == RESULT_OK);
 
-    ASSERT_TRUE(verify_converged == true);
+    /*ASSERT_TRUE(verify_converged == true);
     ASSERT_TRUE(verify_meanAbsoluteDifference == 10);
     ASSERT_TRUE(verify_numInBounds == 121);
-    ASSERT_TRUE(verify_numSimilarPixels == 115);
+    ASSERT_TRUE(verify_numSimilarPixels == 115);*/
 
     const f64 time2 = GetTime();
 
@@ -703,8 +703,8 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
     transform_groundTruth[1][2] = -1.041f;
 
     ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
-    */
   }
+
   /*
   // Affine LK_SampledProjective
   {
