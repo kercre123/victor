@@ -275,7 +275,9 @@ namespace Anki
           const f32 scaleTemplateRegionPercent, //< Shrinks the region if less-than 1.0, expands the region if greater-than 1.0
           const s32 numPyramidLevels,
           const Transformations::TransformType transformType,
-          MemoryStack &memory);
+          const s32 maxSamplesAtBaseLevel,
+          MemoryStack &fastMemory,
+          MemoryStack slowScratch);
 
         Result UpdateTrack(
           const Array<u8> &nextImage,
@@ -290,6 +292,8 @@ namespace Anki
 
         bool IsValid() const;
 
+        Result ShowTemplate(const char * windowName="SampledProjective Template", const bool waitForKeypress=false, const bool fitImageToWindow=false) const;
+
         s32 get_numTemplatePixels() const;
 
       protected:
@@ -303,21 +307,6 @@ namespace Anki
 
         FixedLengthList<FixedLengthList<TemplateSample> > templateSamplePyramid;
 
-        // The templateImage sizes are the sizes of the image that contains the template
-        s32 templateImageHeight;
-        s32 templateImageWidth;
-
-        // The templateRegion sizes are the sizes of the part of the template image that will
-        // actually be tracked, so must be smaller or equal to the templateImage sizes
-        //f32 templateRegionHeight;
-        //f32 templateRegionWidth;
-
-        Transformations::PlanarTransformation_f32 transformation;
-
-        // Template region coordinates are scaled from the standard resolution
-        // by templateImage.get_size(1) / BASE_IMAGE_WIDTH
-        Rectangle<f32> templateRegion;
-
         Result VerifyTrack_Projective(
           const Array<u8> &nextImage,
           const u8 verify_maxPixelDifference,
@@ -325,8 +314,6 @@ namespace Anki
           s32 &verify_numInBounds,
           s32 &verify_numSimilarPixels,
           MemoryStack scratch) const;
-
-        bool isValid;
 
         Result IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const Transformations::TransformType curTransformType, bool &converged, MemoryStack scratch);
 
