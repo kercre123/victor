@@ -216,7 +216,7 @@ struct TrackerParameters {
     convergenceTolerance = 1.f;
     verify_maxPixelDifference = 30;
     useWeights           = true;
-    maxSamplesAtBaseLevel = 2000;
+    maxSamplesAtBaseLevel = 500;
 #else
     //trackingResolution   = HAL::CAMERA_MODE_QQQVGA; // 80x60
     trackingResolution   = HAL::CAMERA_MODE_QQVGA; // 160x120
@@ -343,7 +343,7 @@ namespace DebugStream
 
   static const s32 MAX_BYTES_PER_SECOND = 500000;
 
-  static const s32 BINARY_SEND_EVERY_N_FRAMES = 5;
+  static const s32 SEND_EVERY_N_FRAMES = 5;
 
   static OFFCHIP u8 printfBufferRaw_[PRINTF_BUFFER_SIZE];
   static OFFCHIP u8 debugStreamBufferRaw_[DEBUG_STREAM_BUFFER_SIZE];
@@ -354,7 +354,7 @@ namespace DebugStream
   static s32 lastSecond;
   static s32 bytesSinceLastSecond;
 
-  static s32 binaryFrameNumber = 0;
+  static s32 frameNumber = 0;
 
 #if !defined(SEND_DEBUG_STREAM)
   static ReturnCode SendFiducialDetection(const Array<u8> &image, const FixedLengthList<VisionMarker> &markers, MemoryStack ccmScratch, MemoryStack onchipScratch, MemoryStack offchipScratch) { return EXIT_SUCCESS; }
@@ -499,13 +499,13 @@ namespace DebugStream
 
     tracker.get_transformation().Serialize(debugStreamBuffer_);
 
-#if DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
-    binaryFrameNumber++;
+    frameNumber++;
 
-    if(binaryFrameNumber % BINARY_SEND_EVERY_N_FRAMES != 0) {
+    if(frameNumber % SEND_EVERY_N_FRAMES != 0) {
       return EXIT_SUCCESS;
     }
 
+#if DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
     EdgeLists edgeLists;
 
     edgeLists.imageHeight = image.get_size(0);
@@ -1322,9 +1322,9 @@ static ReturnCode LookForMarkers(
   const Array<u8> &grayscaleImage,
   const DetectFiducialMarkersParameters &parameters,
   FixedLengthList<VisionMarker> &markers,
-  MemoryStack offchipScratch,
+  MemoryStack ccmScratch,
   MemoryStack onchipScratch,
-  MemoryStack ccmScratch)
+  MemoryStack offchipScratch)
 {
   AnkiAssert(parameters.isInitialized);
 
@@ -1358,7 +1358,7 @@ static ReturnCode LookForMarkers(
     parameters.maxConnectedComponentSegments,
     parameters.maxExtractedQuads,
     false,
-    offchipScratch, onchipScratch, ccmScratch);
+    ccmScratch, onchipScratch, offchipScratch);
 
   if(result == RESULT_OK) {
     DebugStream::SendFiducialDetection(grayscaleImage, markers, ccmScratch, onchipScratch, offchipScratch);
@@ -1380,9 +1380,9 @@ static ReturnCode InitTemplate(
   const Quadrilateral<f32> &trackingQuad,
   const TrackerParameters &parameters,
   Tracker &tracker,
-  MemoryStack offchipScratch,
+  MemoryStack ccmScratch,
   MemoryStack &onchipScratch, //< NOTE: onchip is a reference
-  MemoryStack ccmScratch)
+  MemoryStack offchipScratch)
 {
   AnkiAssert(parameters.isInitialized);
 
@@ -1441,6 +1441,7 @@ static ReturnCode InitTemplate(
     parameters.numPyramidLevels,
     Transformations::TRANSFORM_PROJECTIVE,
     parameters.maxSamplesAtBaseLevel,
+    ccmScratch,
     onchipScratch,
     offchipScratch);
 #elif DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
@@ -1479,9 +1480,9 @@ static ReturnCode TrackTemplate(
   const TrackerParameters &parameters,
   Tracker &tracker,
   bool &converged,
+  MemoryStack ccmScratch,
   MemoryStack offchipScratch,
-  MemoryStack onchipScratch,
-  MemoryStack ccmScratch)
+  MemoryStack onchipScratch)
 {
   AnkiAssert(parameters.isInitialized);
 
@@ -1795,10 +1796,12 @@ namespace Anki {
         // length
         const f32 verticalShift_pix = T_ver_cam * VisionState::headCamInfo_->focalLength_y/d;
 
+#ifndef THIS_IS_PETES_BOARD
         PRINT("Adjusting transformation: %.3fpix H shift for %.3fdeg rotation, "
           "%.3f scaling and %.3f V shift for %.3f translation forward (%.3f cam)\n",
           horizontalShift_pix, theta.getDegrees(), scaleChange,
           verticalShift_pix, T_fwd_robot, T_fwd_cam);
+#endif
 
         // Adjust the Transformation
         // Note: UpdateTransformation is doing *inverse* composition (thus using the negatives)
@@ -1940,9 +1943,9 @@ namespace Anki {
             grayscaleImage,
             detectionParameters_,
             VisionMemory::markers_,
-            offchipScratch_local,
+            VisionMemory::ccmScratch_,
             VisionMemory::onchipScratch_,
-            VisionMemory::ccmScratch_);
+            offchipScratch_local);
 
           if(result != EXIT_SUCCESS) {
             return EXIT_FAILURE;
@@ -2004,9 +2007,9 @@ namespace Anki {
                 VisionState::trackingQuad_,
                 trackerParameters_,
                 VisionState::tracker_,
-                offchipScratch_local,
+                VisionMemory::ccmScratch_,
                 VisionMemory::onchipScratch_, //< NOTE: onchip is a reference
-                VisionMemory::ccmScratch_);
+                offchipScratch_local);
 #endif
 
               if(result != EXIT_SUCCESS) {
@@ -2071,9 +2074,9 @@ namespace Anki {
             trackerParameters_,
             VisionState::tracker_,
             converged,
-            offchipScratch_local,
+            VisionMemory::ccmScratch_,
             onchipScratch_local,
-            VisionMemory::ccmScratch_);
+            offchipScratch_local);
 #endif
 
           if(trackResult != EXIT_SUCCESS) {

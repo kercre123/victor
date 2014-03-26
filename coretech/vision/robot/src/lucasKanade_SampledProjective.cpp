@@ -41,9 +41,10 @@ namespace Anki
         const s32 numPyramidLevels,
         const Transformations::TransformType transformType,
         const s32 maxSamplesAtBaseLevel,
-        MemoryStack &fastMemory,
-        MemoryStack slowScratch)
-        : LucasKanadeTracker_Generic(Transformations::TRANSFORM_PROJECTIVE, templateImage, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, transformType, fastMemory)
+        MemoryStack ccmMemory,
+        MemoryStack &onchipScratch,
+        MemoryStack offchipScratch)
+        : LucasKanadeTracker_Generic(Transformations::TRANSFORM_PROJECTIVE, templateImage, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, transformType, onchipScratch)
       {
         const s32 numSelectBins = 20;
 
@@ -51,7 +52,7 @@ namespace Anki
 
         BeginBenchmark("LucasKanadeTracker_SampledProjective");
 
-        this->templateSamplePyramid = FixedLengthList<FixedLengthList<TemplateSample> >(numPyramidLevels, fastMemory);
+        this->templateSamplePyramid = FixedLengthList<FixedLengthList<TemplateSample> >(numPyramidLevels, onchipScratch);
 
         for(s32 iScale=0; iScale<numPyramidLevels; iScale++) {
           const f32 scale = static_cast<f32>(1 << iScale);
@@ -64,7 +65,7 @@ namespace Anki
           const s32 maxPossibleLocations = curTemplateCoordinates.get_numElements();
           const s32 curMaxSamples = MIN(maxPossibleLocations, maxSamplesAtBaseLevel >> iScale);
 
-          this->templateSamplePyramid[iScale] = FixedLengthList<TemplateSample>(curMaxSamples, fastMemory);
+          this->templateSamplePyramid[iScale] = FixedLengthList<TemplateSample>(curMaxSamples, onchipScratch);
           this->templateSamplePyramid[iScale].set_size(curMaxSamples);
         }
 
@@ -72,15 +73,13 @@ namespace Anki
         // Temporary allocations below this point
         //
         {
-          PUSH_MEMORY_STACK(fastMemory);
-
           // This section is based off lucasKanade_Fast, except uses f32 in offchip instead of integer types in onchip
 
-          FixedLengthList<Meshgrid<f32> > templateCoordinates = FixedLengthList<Meshgrid<f32> >(numPyramidLevels, fastMemory);
-          FixedLengthList<Array<f32> > templateImagePyramid = FixedLengthList<Array<f32> >(numPyramidLevels, slowScratch);
-          FixedLengthList<Array<f32> > templateImageXGradientPyramid = FixedLengthList<Array<f32> >(numPyramidLevels, slowScratch);
-          FixedLengthList<Array<f32> > templateImageYGradientPyramid = FixedLengthList<Array<f32> >(numPyramidLevels, slowScratch);
-          FixedLengthList<Array<f32> > templateImageSquaredGradientMagnitudePyramid = FixedLengthList<Array<f32> >(numPyramidLevels, slowScratch);
+          FixedLengthList<Meshgrid<f32> > templateCoordinates = FixedLengthList<Meshgrid<f32> >(numPyramidLevels, onchipScratch);
+          FixedLengthList<Array<f32> > templateImagePyramid = FixedLengthList<Array<f32> >(numPyramidLevels, offchipScratch);
+          FixedLengthList<Array<f32> > templateImageXGradientPyramid = FixedLengthList<Array<f32> >(numPyramidLevels, offchipScratch);
+          FixedLengthList<Array<f32> > templateImageYGradientPyramid = FixedLengthList<Array<f32> >(numPyramidLevels, offchipScratch);
+          FixedLengthList<Array<f32> > templateImageSquaredGradientMagnitudePyramid = FixedLengthList<Array<f32> >(numPyramidLevels, offchipScratch);
 
           templateCoordinates.set_size(numPyramidLevels);
           templateImagePyramid.set_size(numPyramidLevels);
@@ -102,10 +101,10 @@ namespace Anki
             const s32 numPointsY = templateCoordinates[iScale].get_yGridVector().get_size();
             const s32 numPointsX = templateCoordinates[iScale].get_xGridVector().get_size();
 
-            templateImagePyramid[iScale] = Array<f32>(numPointsY, numPointsX, slowScratch);
-            templateImageXGradientPyramid[iScale] = Array<f32>(numPointsY, numPointsX, slowScratch);
-            templateImageYGradientPyramid[iScale] = Array<f32>(numPointsY, numPointsX, slowScratch);
-            templateImageSquaredGradientMagnitudePyramid[iScale] = Array<f32>(numPointsY, numPointsX, slowScratch);
+            templateImagePyramid[iScale] = Array<f32>(numPointsY, numPointsX, offchipScratch);
+            templateImageXGradientPyramid[iScale] = Array<f32>(numPointsY, numPointsX, offchipScratch);
+            templateImageYGradientPyramid[iScale] = Array<f32>(numPointsY, numPointsX, offchipScratch);
+            templateImageSquaredGradientMagnitudePyramid[iScale] = Array<f32>(numPointsY, numPointsX, offchipScratch);
 
             AnkiConditionalErrorAndReturn(templateImagePyramid[iScale].IsValid() && templateImageXGradientPyramid[iScale].IsValid() && templateImageYGradientPyramid[iScale].IsValid() && templateImageSquaredGradientMagnitudePyramid[iScale].IsValid(),
               "LucasKanadeTracker_SampledProjective::LucasKanadeTracker_SampledProjective", "Could not allocate pyramid images");
@@ -122,8 +121,8 @@ namespace Anki
           // Compute the spatial derivatives
           // TODO: compute without borders?
           for(s32 iScale=0; iScale<numPyramidLevels; iScale++) {
-            PUSH_MEMORY_STACK(slowScratch);
-            PUSH_MEMORY_STACK(fastMemory);
+            PUSH_MEMORY_STACK(offchipScratch);
+            PUSH_MEMORY_STACK(onchipScratch);
 
             const s32 numPointsY = templateCoordinates[iScale].get_yGridVector().get_size();
             const s32 numPointsX = templateCoordinates[iScale].get_xGridVector().get_size();
@@ -140,7 +139,7 @@ namespace Anki
 
             // Using the computed gradients, find a set of the max values, and store them
 
-            Array<f32> tmpMagnitude(numPointsY, numPointsX, slowScratch);
+            Array<f32> tmpMagnitude(numPointsY, numPointsX, offchipScratch);
 
             Matrix::DotMultiply<f32,f32,f32>(templateImageXGradientPyramid[iScale], templateImageXGradientPyramid[iScale], tmpMagnitude);
             Matrix::DotMultiply<f32,f32,f32>(templateImageYGradientPyramid[iScale], templateImageYGradientPyramid[iScale], templateImageSquaredGradientMagnitudePyramid[iScale]);
@@ -148,8 +147,8 @@ namespace Anki
 
             //Matrix::Sqrt<f32,f32,f32>(templateImageSquaredGradientMagnitudePyramid[iScale], templateImageSquaredGradientMagnitudePyramid[iScale]);
 
-            Array<f32> magnitudeVector = Matrix::Vectorize<f32,f32>(false, templateImageSquaredGradientMagnitudePyramid[iScale], fastMemory);
-            Array<s32> magnitudeIndexes = Array<s32>(1, numPointsY*numPointsX, fastMemory);
+            Array<f32> magnitudeVector = Matrix::Vectorize<f32,f32>(false, templateImageSquaredGradientMagnitudePyramid[iScale], offchipScratch);
+            Array<u16> magnitudeIndexes = Array<u16>(1, numPointsY*numPointsX, offchipScratch);
 
             AnkiConditionalErrorAndReturn(magnitudeVector.IsValid() && magnitudeIndexes.IsValid(),
               "LucasKanadeTracker_SampledProjective::LucasKanadeTracker_SampledProjective", "Out of memory");
@@ -176,22 +175,19 @@ namespace Anki
             //  matlab.PutArray(magnitudeIndexes, "magnitudeIndexes");
             //}
 
-            //Array<f32> yCoordinatesVector = Matrix::Vectorize<f32,f32>(false, templateCoordinates[iScale].get_yGridVector().Evaluate(slowScratch), slowScratch);
-            //Array<f32> xCoordinatesVector = Matrix::Vectorize<f32,f32>(false, templateCoordinates[iScale].get_xGridVector().Evaluate(slowScratch), slowScratch);
+            Array<f32> yCoordinatesVector = templateCoordinates[iScale].EvaluateY1(false, offchipScratch);
+            Array<f32> xCoordinatesVector = templateCoordinates[iScale].EvaluateX1(false, offchipScratch);
 
-            Array<f32> yCoordinatesVector = templateCoordinates[iScale].EvaluateY1(false, slowScratch);
-            Array<f32> xCoordinatesVector = templateCoordinates[iScale].EvaluateX1(false, slowScratch);
-
-            Array<f32> yGradientVector = Matrix::Vectorize<f32,f32>(false, templateImageYGradientPyramid[iScale], slowScratch);
-            Array<f32> xGradientVector = Matrix::Vectorize<f32,f32>(false, templateImageXGradientPyramid[iScale], slowScratch);
-            Array<f32> grayscaleVector = Matrix::Vectorize<f32,f32>(false, templateImagePyramid[iScale], slowScratch);
+            Array<f32> yGradientVector = Matrix::Vectorize<f32,f32>(false, templateImageYGradientPyramid[iScale], offchipScratch);
+            Array<f32> xGradientVector = Matrix::Vectorize<f32,f32>(false, templateImageXGradientPyramid[iScale], offchipScratch);
+            Array<f32> grayscaleVector = Matrix::Vectorize<f32,f32>(false, templateImagePyramid[iScale], offchipScratch);
 
             const f32 * restrict pYCoordinates = yCoordinatesVector.Pointer(0,0);
             const f32 * restrict pXCoordinates = xCoordinatesVector.Pointer(0,0);
             const f32 * restrict pYGradientVector = yGradientVector.Pointer(0,0);
             const f32 * restrict pXGradientVector = xGradientVector.Pointer(0,0);
             const f32 * restrict pGrayscaleVector = grayscaleVector.Pointer(0,0);
-            const s32 * restrict pMagnitudeIndexes = magnitudeIndexes.Pointer(0,0);
+            const u16 * restrict pMagnitudeIndexes = magnitudeIndexes.Pointer(0,0);
 
             TemplateSample * restrict pTemplateSamplePyramid = this->templateSamplePyramid[iScale].Pointer(0);
 
@@ -1013,7 +1009,7 @@ namespace Anki
         return RESULT_OK;
       }
 
-      Result LucasKanadeTracker_SampledProjective::ApproximateSelect(const Array<f32> &magnitudeVector, const s32 numBins, const s32 numToSelect, s32 &numSelected, Array<s32> &magnitudeIndexes)
+      Result LucasKanadeTracker_SampledProjective::ApproximateSelect(const Array<f32> &magnitudeVector, const s32 numBins, const s32 numToSelect, s32 &numSelected, Array<u16> &magnitudeIndexes)
       {
         const f32 maxMagnitude = Matrix::Max<f32>(magnitudeVector);
 
@@ -1049,11 +1045,11 @@ namespace Anki
           return RESULT_OK;
         }
 
-        s32 * restrict pMagnitudeIndexes = magnitudeIndexes.Pointer(0,0);
+        u16 * restrict pMagnitudeIndexes = magnitudeIndexes.Pointer(0,0);
 
         for(s32 i=0; i<numMagnitudes; i++) {
           if(pMagnitudeVector[i] > foundThreshold) {
-            pMagnitudeIndexes[numSelected] = i;
+            pMagnitudeIndexes[numSelected] = static_cast<u16>(i);
             numSelected++;
           }
         }

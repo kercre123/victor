@@ -640,12 +640,11 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
   ASSERT_TRUE(scratchOffchip.IsValid());
 
   Array<u8> templateImage(cozmo_2014_01_29_11_41_05_10_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_10_320x240_WIDTH, scratchOffchip);
-  Array<u8> nextImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
+  Array<u8> nextImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOnchip);
 
   const Quadrilateral<f32> templateQuad(Point<f32>(128,78), Point<f32>(220,74), Point<f32>(229,167), Point<f32>(127,171));
 
-  //const s32 numPyramidLevels = 4;
-  const s32 numPyramidLevels = 2;
+  const s32 numPyramidLevels = 4;
 
   const s32 maxIterations = 25;
   const f32 convergenceTolerance = .05f;
@@ -671,7 +670,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
 
     const f64 time0 = GetTime();
 
-    TemplateTracker::LucasKanadeTracker_SampledProjective tracker(templateImage, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, maxSamplesAtBaseLevel, scratchOnchip, scratchOffchip);
+    TemplateTracker::LucasKanadeTracker_SampledProjective tracker(templateImage, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, maxSamplesAtBaseLevel, scratchCcm, scratchOnchip, scratchOffchip);
 
     ASSERT_TRUE(tracker.IsValid());
 
@@ -721,7 +720,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
 
     const f64 time0 = GetTime();
 
-    TemplateTracker::LucasKanadeTracker_SampledProjective tracker(templateImage, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_AFFINE, maxSamplesAtBaseLevel, scratchOnchip, scratchOffchip);
+    TemplateTracker::LucasKanadeTracker_SampledProjective tracker(templateImage, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_AFFINE, maxSamplesAtBaseLevel, scratchCcm, scratchOnchip, scratchOffchip);
 
     ASSERT_TRUE(tracker.IsValid());
 
@@ -770,7 +769,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
 
     const f64 time0 = GetTime();
 
-    TemplateTracker::LucasKanadeTracker_SampledProjective tracker(templateImage, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_PROJECTIVE, maxSamplesAtBaseLevel, scratchOnchip, scratchOffchip);
+    TemplateTracker::LucasKanadeTracker_SampledProjective tracker(templateImage, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_PROJECTIVE, maxSamplesAtBaseLevel, scratchCcm, scratchOnchip, scratchOffchip);
 
     ASSERT_TRUE(tracker.IsValid());
 
@@ -1711,9 +1710,9 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
       maxExtractedQuads,
       //true, //< TODO: change back to false
       false,
-      scratchOffchip,
+      scratchCcm,
       scratchOnchip,
-      scratchCcm);
+      scratchOffchip);
     const f64 time1 = GetTime();
 
     printf("totalTime: %dms\n", (s32)Round(1000*(time1-time0)));

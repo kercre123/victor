@@ -276,8 +276,9 @@ namespace Anki
           const s32 numPyramidLevels,
           const Transformations::TransformType transformType,
           const s32 maxSamplesAtBaseLevel,
-          MemoryStack &fastMemory,
-          MemoryStack slowScratch);
+          MemoryStack ccmMemory,
+          MemoryStack &onchipScratch,
+          MemoryStack offchipScratch);
 
         Result UpdateTrack(
           const Array<u8> &nextImage,
@@ -323,7 +324,7 @@ namespace Anki
         Result IterativelyRefineTrack_Affine(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack scratch);
         Result IterativelyRefineTrack_Projective(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack scratch);
 
-        static Result ApproximateSelect(const Array<f32> &magnitudeVector, const s32 numBins, const s32 numToSelect, s32 &numSelected, Array<s32> &magnitudeIndexes);
+        static Result ApproximateSelect(const Array<f32> &magnitudeVector, const s32 numBins, const s32 numToSelect, s32 &numSelected, Array<u16> &magnitudeIndexes);
       }; // class LucasKanadeTracker_SampledProjective
     } // namespace TemplateTracker
   } // namespace Embedded
