@@ -1481,8 +1481,8 @@ static ReturnCode TrackTemplate(
   Tracker &tracker,
   bool &converged,
   MemoryStack ccmScratch,
-  MemoryStack offchipScratch,
-  MemoryStack onchipScratch)
+  MemoryStack onchipScratch,
+  MemoryStack offchipScratch)
 {
   AnkiAssert(parameters.isInitialized);
 
