@@ -47,6 +47,7 @@ static bool isInitialized_ = false;
 #ifdef THIS_IS_PETES_BOARD
 #define SEND_DEBUG_STREAM
 #define RUN_SIMPLE_TRACKING_TEST
+#define SEND_IMAGE_ONLY
 #endif
 
 #define DOCKING_LUCAS_KANADE_SLOW               1 //< LucasKanadeTracker_Slow (doesn't seem to work?)
@@ -360,14 +361,15 @@ namespace DebugStream
   static ReturnCode SendFiducialDetection(const Array<u8> &image, const FixedLengthList<VisionMarker> &markers, MemoryStack ccmScratch, MemoryStack onchipScratch, MemoryStack offchipScratch) { return EXIT_SUCCESS; }
   static ReturnCode SendTrackingUpdate(const Array<u8> &image, const Transformations::PlanarTransformation_f32 &transformation, const TrackerParameters &parameters, MemoryStack ccmScratch, MemoryStack onchipScratch, MemoryStack offchipScratch) { return EXIT_SUCCESS; }
   //static ReturnCode SendPrintf(const char * string) { return EXIT_SUCCESS; }
-  //static ReturnCode SendArray(const Array<u8> &array) { return EXIT_SUCCESS; }
+  static ReturnCode SendArray(const Array<u8> &array) { return EXIT_SUCCESS; }
 
 #if DOCKING_ALGORITHM ==  DOCKING_BINARY_TRACKER
   static ReturnCode SendBinaryTracker(const TemplateTracker::BinaryTracker &tracker, MemoryStack ccmScratch, MemoryStack onchipScratch, MemoryStack offchipScratch) { return EXIT_SUCCESS; }
 #endif
 
 #else // #if !defined(SEND_DEBUG_STREAM)
-  static const HAL::CameraMode debugStreamResolution_ = HAL::CAMERA_MODE_QQQVGA;
+  //static const HAL::CameraMode debugStreamResolution_ = HAL::CAMERA_MODE_QQQVGA;
+  static const HAL::CameraMode debugStreamResolution_ = HAL::CAMERA_MODE_QVGA;
 
   static f32 lastBenchmarkTime_algorithmsOnly;
   static f32 lastBenchmarkDuration_algorithmsOnly;
@@ -469,7 +471,14 @@ namespace DebugStream
     DownsampleHelper(image, imageSmall, ccmScratch);
     debugStreamBuffer_.PushBack(imageSmall);
 
-    return SendBuffer(debugStreamBuffer_);
+    const ReturnCode result = SendBuffer(debugStreamBuffer_);
+
+    // The UART can't handle this at full rate, so wait a bit between each frame
+    if(debugStreamResolution_ == HAL::CAMERA_MODE_QVGA) {
+      HAL::MicroWait(1000000);
+    }
+    
+    return result;
   } // ReturnCode SendDebugStream_Detection()
 
   static ReturnCode SendTrackingUpdate(const Array<u8> &image, const Tracker &tracker, const TrackerParameters &parameters, MemoryStack ccmScratch, MemoryStack onchipScratch, MemoryStack offchipScratch)
@@ -533,7 +542,15 @@ namespace DebugStream
     debugStreamBuffer_.PushBack(imageSmall);
 #endif
 
-    return SendBuffer(debugStreamBuffer_);
+    const ReturnCode result = SendBuffer(debugStreamBuffer_);
+
+    // The UART can't handle this at full rate, so wait a bit between each frame
+    if(debugStreamResolution_ == HAL::CAMERA_MODE_QVGA) {
+      HAL::MicroWait(5000000);
+    }
+    
+    return result;
+    
   } // static ReturnCode SendTrackingUpdate()
 
 #if DOCKING_ALGORITHM ==  DOCKING_BINARY_TRACKER
@@ -555,12 +572,12 @@ namespace DebugStream
   }
 #endif
 
-  //  static ReturnCode SendArray(const Array<u8> &array)
-  //  {
-  //    debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
-  //    debugStreamBuffer_.PushBack(array);
-  //    return SendBuffer(debugStreamBuffer_);
-  //  }
+  static ReturnCode SendArray(const Array<u8> &array)
+  {
+    debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
+    debugStreamBuffer_.PushBack(array);
+    return SendBuffer(debugStreamBuffer_);
+  }
 #endif // #ifdef SEND_DEBUG_STREAM
 
   static ReturnCode Initialize()
@@ -1899,6 +1916,8 @@ namespace Anki {
 
       ReturnCode Update(const Messages::RobotState robotState)
       {
+        const f32 exposure = 0.1f;
+        
         // This should be called from elsewhere first, but calling it again won't hurt
         Init();
 
@@ -1906,6 +1925,30 @@ namespace Anki {
         if (HAL::GetMicroCounter() < SimulatorParameters::frameRdyTimeUS_) {
           return EXIT_SUCCESS;
         }
+#endif
+        
+#ifdef SEND_IMAGE_ONLY
+        VisionMemory::ResetBuffers();
+
+        const s32 captureHeight = CameraModeInfo[captureResolution_].height;
+        const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
+
+        Array<u8> grayscaleImage(captureHeight, captureWidth,
+          VisionMemory::onchipScratch_, Flags::Buffer(false,false,false));
+
+        HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
+          captureResolution_, exposure, false);
+        
+        //Array<u8> imageSmall(60, 80, VisionMemory::onchipScratch_);
+        //DownsampleHelper(grayscaleImage, imageSmall, VisionMemory::onchipScratch_);
+            
+        DebugStream::SendArray(grayscaleImage);
+        //DebugStream::SendArray(imageSmall);
+        
+        // The UART can't handle this at full rate, so wait a bit between each frame
+        HAL::MicroWait(1000000);
+                
+        return EXIT_SUCCESS;
 #endif
 
         VisionState::UpdateRobotState(robotState);
@@ -1915,8 +1958,6 @@ namespace Anki {
         //#endif // USE_OFFBOARD_VISION
 
         const TimeStamp_t imageTimeStamp = HAL::GetTimeStamp();
-
-        const f32 exposure = 0.1f;
 
         if(VisionState::mode_ == VISION_MODE_IDLE) {
           // Nothing to do!
