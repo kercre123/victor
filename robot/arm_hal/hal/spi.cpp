@@ -59,7 +59,7 @@ namespace Anki
         
         NVIC_InitTypeDef NVIC_InitStructure;
         NVIC_InitStructure.NVIC_IRQChannel = DMA2_Stream2_IRQn;
-        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;  // MainExecution isn't THAT important...
+        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 3;  // MainExecution isn't THAT important...
         NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
         NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
         NVIC_Init(&NVIC_InitStructure);
@@ -119,8 +119,8 @@ namespace Anki
         while (!(GPIO_READ(GPIO_SPI_SCK) & PIN_SPI_SCK))
           ;
         // After start of burst, wait 1ms to get into idle period
-        // XXX-NDM: This is dependent on the clock speed (4MHz right now)
-        MicroWait(1000);
+        // XXX-NDM: This is dependent on the SPI clock speed (4MHz right now)
+        MicroWait(2000);
         
         // We know we are in idle period - safe to enable right now        
         ConfigurePins();

@@ -245,6 +245,24 @@ namespace Anki {
       vizClient_.Send(sendBuf, sizeof(v)+1);
     }
     
+    // =============== Text methods ==================
+
+    void VizManager::SetText(const u32 labelID, const u32 colorID, const char* format, ...)
+    {
+      VizSetLabel v;
+      v.labelID = labelID;
+      v.colorID = colorID;
+      
+      va_list argptr;
+      va_start(argptr, format);
+      vsnprintf((char*)v.text, sizeof(v.text), format, argptr);
+      va_end(argptr);
+      
+      sendBuf[0] = VizSetLabel_ID;
+      memcpy(sendBuf + 1, &v, sizeof(v));
+      vizClient_.Send(sendBuf, sizeof(v)+1);
+    }
+    
     
     // ================== Color methods ====================
     
@@ -261,6 +279,20 @@ namespace Anki {
       v.alpha = alpha;
       
       sendBuf[0] = VizDefineColor_ID;
+      memcpy(sendBuf + 1, &v, sizeof(v));
+      vizClient_.Send(sendBuf, sizeof(v)+1);
+    }
+    
+    
+    // ============== Misc. Debug methods =================
+    void VizManager::SetDockingError(const f32 x_dist, const f32 y_dist, const f32 angle)
+    {
+      VizDockingErrorSignal v;
+      v.x_dist = x_dist;
+      v.y_dist = y_dist;
+      v.angle = angle;
+      
+      sendBuf[0] = VizDockingErrorSignal_ID;
       memcpy(sendBuf + 1, &v, sizeof(v));
       vizClient_.Send(sendBuf, sizeof(v)+1);
     }

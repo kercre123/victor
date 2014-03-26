@@ -210,7 +210,7 @@ namespace Anki {
     // Adjusts contollerCommandedVehicleSpeed according to given desiredVehicleSpeed.
     void Run(s16 desVehicleSpeed)
     {
-#if (1)
+#if (0)
       s32 currspeed = GetCurrentMeasuredVehicleSpeed();
       
       // Get the current error
@@ -253,11 +253,12 @@ namespace Anki {
 #else
       // KEVIN 2012_12_18: Disabled integral vehicle controller per Gabe's recommendations.
       // He says increasing Ki of wheel speed controller is sufficient.
-      controllerCommandedVehicleSpeed = desVehicleSpeed;
+      controllerCommandedVehicleSpeed_ = desVehicleSpeed;
+      s32 currerror = 0;
 #endif
       
 #if(DEBUG_SPEED_CONTROLLER)
-      PRINT(" SPEED_CTRL: userDesSpeed: %d, userCurrSpeed: %f, userAccel: %d, controllerSpeed: %d, currError: %d, errorSum: %d\n", userCommandedDesiredVehicleSpeed_, userCommandedCurrentVehicleSpeed_, userCommandedAcceleration_, controllerCommandedVehicleSpeed_, currerror, errorsum_);
+      PRINT(" SPEED_CTRL: userDesSpeed: %d, userCurrSpeed: %f, measSpeed: %d, userAccel: %d, controllerSpeed: %d, currError: %d, errorSum: %d\n", userCommandedDesiredVehicleSpeed_, userCommandedCurrentVehicleSpeed_, GetCurrentMeasuredVehicleSpeed(), userCommandedAcceleration_, controllerCommandedVehicleSpeed_, currerror, errorsum_);
 #endif
       
       Traces16(TRACE_VAR_VSC_DESIRED_SPEED, desVehicleSpeed, TRACE_MASK_MOTOR_CONTROLLER);

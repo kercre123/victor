@@ -38,7 +38,7 @@ namespace Anki
         const f32 blockMarkerWidthInMM,
         const f32 horizontalFocalLengthInMM,
         f32& rel_x, f32& rel_y, f32& rel_rad,
-        MemoryStack scratch);
+        MemoryStack scratch, const f32* calib = NULL);
     } // namespace Docking
   } // namespace Embedded
 } // namespace Anki

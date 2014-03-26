@@ -154,7 +154,7 @@ namespace Anki
         const s32 nextImageHeight = nextImage.get_size(0);
         const s32 nextImageWidth = nextImage.get_size(1);
 
-        const s32 whichScale = 1;
+        const s32 whichScale = 0;
         const f32 scale = static_cast<f32>(1 << whichScale);
 
         const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / nextImageWidth;

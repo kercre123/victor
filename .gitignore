@@ -98,3 +98,4 @@ robot/robot_embedded-tests.dep
 *.ini
 robot/syscon/JLinkLog.txt
 robot/chipSimulator/robot_chipSimulator.uvguix.anki
+cozmo_viz_controller

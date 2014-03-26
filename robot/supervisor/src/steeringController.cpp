@@ -57,6 +57,9 @@ namespace Anki {
       
       // If distance to target is less than this, point turn is considered to be complete.
       const float POINT_TURN_TARGET_DIST_STOP_RAD = 0.05;
+
+      // Maximum rotation speed of robot
+      f32 maxRotationWheelSpeedDiff = 0.f;
       
     } // Private namespace
     
@@ -110,6 +113,74 @@ namespace Anki {
       
     }
     
+    
+    void SetRotationSpeedLimit(f32 rad_per_s)
+    {
+      maxRotationWheelSpeedDiff = rad_per_s * WHEEL_DIST_MM;
+    }
+    
+    void DisableRotationSpeedLimit()
+    {
+      maxRotationWheelSpeedDiff = 0.f;
+    }
+    
+    
+    // 1) If either wheel is going faster than possible, shift both speeds down by an offset to preserve curvature.
+    // 2) If wheel speeds will cause robot to turn faster than permitted, shift both wheel speed towards each other.
+    void CheckWheelSpeedLimits(f32& lSpeed, f32& rSpeed)
+    {
+      
+      // Do any of the speeds exceed max?
+      // If so, then shift both speeds to be within range by the same amount
+      // so that desired curvature is still achieved.
+      // If we're in path following mode, maintaining proper curvature
+      // is probably more important than maintaining speed.
+      f32 *lowerWheelSpeed = &lSpeed;
+      f32 *higherWheelSpeed = &rSpeed;
+      if (lSpeed > rSpeed) {
+        lowerWheelSpeed = &rSpeed;
+        higherWheelSpeed = &lSpeed;
+      }
+      
+      f32 wheelSpeedDiff = *higherWheelSpeed - *lowerWheelSpeed;
+      f32 avgSpeed = (*higherWheelSpeed + *lowerWheelSpeed) * 0.5f;
+      
+      // Center speeds on 0 if wheelSpeedDiff exceeds maximum achievable wheel speed
+      if (wheelSpeedDiff > 2*WheelController::MAX_WHEEL_SPEED_MM_S) {
+        *higherWheelSpeed -= avgSpeed;
+        *lowerWheelSpeed -= avgSpeed;
+      }
+      
+      // If higherWheelSpeed exceeds max, decrease both wheel speeds
+      if (*higherWheelSpeed > WheelController::MAX_WHEEL_SPEED_MM_S) {
+        *lowerWheelSpeed -= *higherWheelSpeed - WheelController::MAX_WHEEL_SPEED_MM_S;
+        *higherWheelSpeed -= *higherWheelSpeed - WheelController::MAX_WHEEL_SPEED_MM_S;
+      }
+      
+      // If lowerWheelSpeed is faster than negative max, increase both wheel speeds
+      if (*lowerWheelSpeed < -WheelController::MAX_WHEEL_SPEED_MM_S) {
+        *higherWheelSpeed -= *lowerWheelSpeed + WheelController::MAX_WHEEL_SPEED_MM_S;
+        *lowerWheelSpeed -= *lowerWheelSpeed + WheelController::MAX_WHEEL_SPEED_MM_S;
+      }
+      
+      // TODO: Should we also make sure that neither the left or right wheel is
+      // driving at a speed that is less than the minimum wheel speed?
+      // What's the point of commanding unreachable desired speeds?
+      // ...
+      
+      
+      // Check turning speed limit
+      if (maxRotationWheelSpeedDiff > 0) {
+        wheelSpeedDiff = *higherWheelSpeed - *lowerWheelSpeed;
+        if (wheelSpeedDiff > maxRotationWheelSpeedDiff) {
+          f32 speedAdjust = 0.5*(wheelSpeedDiff - maxRotationWheelSpeedDiff);
+          *higherWheelSpeed -= speedAdjust;
+          *lowerWheelSpeed += speedAdjust;
+          PRINT("  Wheel speed adjust: (%f, %f), adjustment %f\n", *higherWheelSpeed, *lowerWheelSpeed, speedAdjust);
+        }
+      }
+      
+    }
     
     
     /**
@@ -240,44 +311,8 @@ namespace Anki {
       float rightspeed = (float)desspeed + WHEEL_DIST_HALF_MM * curvature * desspeed;
       
       
-      // Do any of the speeds exceed max?
-      // If so, then shift both speeds to be within range by the same amount
-      // so that desired curvature is still achieved.
-      // If we're in path following mode, maintaining proper curvature
-      // is probably more important than maintaining speed.
-      f32 *lowerWheelSpeed = &leftspeed;
-      f32 *higherWheelSpeed = &rightspeed;
-      if (leftspeed > rightspeed) {
-        lowerWheelSpeed = &rightspeed;
-        higherWheelSpeed = &leftspeed;
-      }
-      
-      f32 wheelSpeedDiff = *higherWheelSpeed - *lowerWheelSpeed;
-      f32 avgSpeed = (*higherWheelSpeed + *lowerWheelSpeed) * 0.5f;
-      
-      // Center speeds on 0 if wheelSpeedDiff exceeds maximum achievable wheel speed
-      if (wheelSpeedDiff > 2*WheelController::MAX_WHEEL_SPEED_MM_S) {
-        *higherWheelSpeed -= avgSpeed;
-        *lowerWheelSpeed -= avgSpeed;
-      }
-      
-      // If higherWheelSpeed exceeds max, decrease both wheel speeds
-      if (*higherWheelSpeed > WheelController::MAX_WHEEL_SPEED_MM_S) {
-        *lowerWheelSpeed -= *higherWheelSpeed - WheelController::MAX_WHEEL_SPEED_MM_S;
-        *higherWheelSpeed -= *higherWheelSpeed - WheelController::MAX_WHEEL_SPEED_MM_S;
-      }
-      
-      // If lowerWheelSpeed is faster than negative max, increase both wheel speeds
-      if (*lowerWheelSpeed < -WheelController::MAX_WHEEL_SPEED_MM_S) {
-        *higherWheelSpeed -= *lowerWheelSpeed + WheelController::MAX_WHEEL_SPEED_MM_S;
-        *lowerWheelSpeed -= *lowerWheelSpeed + WheelController::MAX_WHEEL_SPEED_MM_S;
-      }
-      
-      // TODO: Should we also make sure that neither the left or right wheel is
-      // driving at a speed that is less than the minimum wheel speed?
-      // What's the point of commanding unreachable desired speeds?
-      // ...
-      
+      CheckWheelSpeedLimits(leftspeed, rightspeed);
+          
       s16 wleft = (s16)CLIP(leftspeed,s16_MIN,s16_MAX);
       s16 wright = (s16)CLIP(rightspeed,s16_MIN,s16_MAX);
       

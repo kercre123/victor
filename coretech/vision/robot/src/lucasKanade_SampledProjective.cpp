@@ -158,12 +158,6 @@ namespace Anki
           Array<f32> xGradientVector = Matrix::Vectorize<f32,f32>(false, templateImageXGradientPyramid[iScale], slowScratch);
           Array<f32> grayscaleVector = Matrix::Vectorize<f32,f32>(false, templateImagePyramid[iScale], slowScratch);
 
-          {
-            Matlab matlab(false);
-            matlab.PutArray(yCoordinatesVector, "yCoordinatesVector");
-            matlab.PutArray(xCoordinatesVector, "xCoordinatesVector");
-          }
-
           const s32 numSamples = this->templateSamplePyramid[iScale].get_size();
 
           const f32 * restrict pYCoordinates = yCoordinatesVector.Pointer(0,0);
@@ -898,8 +892,7 @@ namespace Anki
         const s32 nextImageHeight = nextImage.get_size(0);
         const s32 nextImageWidth = nextImage.get_size(1);
 
-        const s32 whichScale = 1;
-        const f32 scale = static_cast<f32>(1 << whichScale);
+        const s32 whichScale = 0;
 
         const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / nextImageWidth;
         const f32 initialImageScaleF32 = static_cast<f32>(initialImageScaleS32);

@@ -64,16 +64,8 @@ namespace Anki {
       advRegClient.Send((char*)&regMsg, sizeof(regMsg));
     }
     
-    
-    ReturnCode InitSimRadio(s32 robotID)
+    const char* const HAL::GetLocalIP()
     {
-      server.StartListening(ROBOT_RADIO_BASE_PORT + robotID);
-      
-      // Register with advertising service by sending IP and port info
-      // NOTE: Since there is no ACK robot_advertisement_controller must be running before this happens!
-      //       We also assume that when working with simluated robots on Webots, the advertisement service is running on the same host.
-      advRegClient.Connect("127.0.0.1", ROBOT_ADVERTISEMENT_REGISTRATION_PORT);
-      
       // Get robot's IPv4 address.
       // Looking for (and assuming there is only one) address that starts with 192.
       struct ifaddrs *ifaddr, *ifa;
@@ -82,9 +74,8 @@ namespace Anki {
         assert(false);
       }
       
-      
       int family, s, n;
-      char host[NI_MAXHOST];
+      static char host[NI_MAXHOST];
       for (ifa = ifaddr, n = 0; ifa != NULL; ifa = ifa->ifa_next, n++) {
         if (ifa->ifa_addr == NULL)
           continue;
@@ -113,12 +104,24 @@ namespace Anki {
       }
       freeifaddrs(ifaddr);
       
+      return host;
+    }
+    
+    
+    ReturnCode InitSimRadio(s32 robotID)
+    {
+      server.StartListening(ROBOT_RADIO_BASE_PORT + robotID);
       
+      // Register with advertising service by sending IP and port info
+      // NOTE: Since there is no ACK robot_advertisement_controller must be running before this happens!
+      //       We also assume that when working with simluated robots on Webots, the advertisement service is running on the same host.
+      advRegClient.Connect("127.0.0.1", ROBOT_ADVERTISEMENT_REGISTRATION_PORT);
+
       
       // Fill in advertisement registration message
       regMsg.robotID = (u8)HAL::GetRobotID();
       regMsg.port = ROBOT_RADIO_BASE_PORT + regMsg.robotID;
-      memcpy(regMsg.robotAddr, host, sizeof(regMsg.robotAddr));
+      memcpy(regMsg.robotAddr, HAL::GetLocalIP(), sizeof(regMsg.robotAddr));
       
       RegisterRobot();
       recvBufSize_ = 0;

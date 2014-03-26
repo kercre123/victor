@@ -11,17 +11,7 @@
 #define DEBUG_LIFT_CONTROLLER 0
 #define DEBUG_HEAD_CONTROLLER 0
 #define DEBUG_DOCK_CONTROLLER 0
-
-
-#define DEBUG_ANY (DEBUG_MAIN_EXECUTION \
-                || DEBUG_WHEEL_CONTROLLER \
-                || DEBUG_STEERING_CONTROLLER \
-                || DEBUG_SPEED_CONTROLLER \
-                || DEBUG_PATH_FOLLOWER \
-                || DEBUG_LOCALIZATION \
-                || DEBUG_LIFT_CONTROLLER \
-                || DEBUG_HEAD_CONTROLLER \
-                || DEBUG_DOCK_CONTROLLER)
+#define DEBUG_PAP_CONTROLLER 0
 
 
 #define FREE_DRIVE_DUBINS_TEST 0
