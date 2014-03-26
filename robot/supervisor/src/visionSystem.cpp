@@ -49,11 +49,12 @@ static bool isInitialized_ = false;
 #define RUN_SIMPLE_TRACKING_TEST
 #endif
 
-#define DOCKING_LUCAS_KANADE_SLOW       1 //< LucasKanadeTracker_Slow (doesn't seem to work?)
-#define DOCKING_LUCAS_KANADE_AFFINE     2 //< LucasKanadeTracker_Affine (With Translation + Affine option)
-#define DOCKING_LUCAS_KANADE_PROJECTIVE 3 //< LucasKanadeTracker_Projective (With Projective + Affine option)
-#define DOCKING_BINARY_TRACKER          4 //< BinaryTracker
-#define DOCKING_ALGORITHM DOCKING_BINARY_TRACKER
+#define DOCKING_LUCAS_KANADE_SLOW               1 //< LucasKanadeTracker_Slow (doesn't seem to work?)
+#define DOCKING_LUCAS_KANADE_AFFINE             2 //< LucasKanadeTracker_Affine (With Translation + Affine option)
+#define DOCKING_LUCAS_KANADE_PROJECTIVE         3 //< LucasKanadeTracker_Projective (With Projective + Affine option)
+#define DOCKING_LUCAS_KANADE_SAMPLED_PROJECTIVE 4 //< BinaryTracker
+#define DOCKING_BINARY_TRACKER                  5 //< BinaryTracker
+#define DOCKING_ALGORITHM DOCKING_LUCAS_KANADE_SAMPLED_PROJECTIVE
 
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SLOW
 typedef TemplateTracker::LucasKanadeTracker_Slow Tracker;
@@ -61,6 +62,8 @@ typedef TemplateTracker::LucasKanadeTracker_Slow Tracker;
 typedef TemplateTracker::LucasKanadeTracker_Affine Tracker;
 #elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE
 typedef TemplateTracker::LucasKanadeTracker_Projective Tracker;
+#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PROJECTIVE
+typedef TemplateTracker::LucasKanadeTracker_SampledProjective Tracker;
 #elif DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
 typedef TemplateTracker::BinaryTracker Tracker;
 #endif
@@ -182,7 +185,7 @@ return EXIT_SUCCESS;
 #endif
 
 struct TrackerParameters {
-#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SLOW || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_AFFINE || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE
+#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SLOW || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_AFFINE || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PROJECTIVE
 
   bool isInitialized;
   HAL::CameraMode trackingResolution;
@@ -196,8 +199,24 @@ struct TrackerParameters {
   bool useWeights;
   s32 numSamples;
 
+#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PROJECTIVE
+  s32 maxSamplesAtBaseLevel;
+#endif
+
   void Initialize()
   {
+#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PROJECTIVE
+    trackingResolution   = HAL::CAMERA_MODE_QVGA; // 320x240
+
+    trackingImageWidth   = CameraModeInfo[trackingResolution].width;
+    trackingImageHeight  = CameraModeInfo[trackingResolution].height;
+    scaleTemplateRegionPercent = 1.1f;
+    numPyramidLevels     = 4;
+    maxIterations        = 25;
+    convergenceTolerance = 1.f;
+    verify_maxPixelDifference = 30;
+    useWeights           = true;
+#else
     //trackingResolution   = HAL::CAMERA_MODE_QQQVGA; // 80x60
     trackingResolution   = HAL::CAMERA_MODE_QQVGA; // 160x120
 
@@ -211,6 +230,7 @@ struct TrackerParameters {
     verify_maxPixelDifference = 30;
     useWeights           = true;
     numSamples           = 1000; // currently only used by Matlab
+#endif
 
     isInitialized = true;
   } // TrackerParameters()
@@ -713,6 +733,8 @@ namespace MatlabVisualization
       const char* fnameStr2 = "affine";
 #elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE
       const char* fnameStr2 = "projective";
+#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PROJECTIVE
+      const char* fnameStr2 = "sampledProjective";
 #else
       const char* fnameStr2 = "unknown";
 #endif
@@ -877,7 +899,7 @@ namespace MatlabVisionProcessor {
 
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_AFFINE
   static Transformations::TransformType transformType_ = Transformations::TRANSFORM_AFFINE;
-#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE
+#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PROJECTIVE
   static Transformations::TransformType transformType_ = Transformations::TRANSFORM_PROJECTIVE;
 #else
 #error Can't use Matlab tracker with anything other than affine or projective.
@@ -1410,6 +1432,16 @@ static ReturnCode InitTemplate(
     parameters.numPyramidLevels,
     Transformations::TRANSFORM_PROJECTIVE,
     onchipScratch);
+#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PROJECTIVE
+  tracker = TemplateTracker::LucasKanadeTracker_SampledProjective(
+    grayscaleImage,
+    trackingQuad,
+    parameters.scaleTemplateRegionPercent,
+    parameters.numPyramidLevels,
+    Transformations::TRANSFORM_PROJECTIVE,
+    parameters.maxSamplesAtBaseLevel,
+    onchipScratch,
+    offchipScratch);
 #elif DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
   tracker = TemplateTracker::BinaryTracker(
     grayscaleImage,
@@ -1503,6 +1535,20 @@ static ReturnCode TrackTemplate(
 #elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE
   const Result trackerResult = tracker.UpdateTrack(
     grayscaleImageSmall,
+    parameters.maxIterations,
+    parameters.convergenceTolerance,
+    parameters.verify_maxPixelDifference,
+    converged,
+    verify_meanAbsoluteDifference,
+    verify_numInBounds,
+    verify_numSimilarPixels,
+    onchipScratch);
+
+  //tracker.get_transformation().Print("track");
+
+#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PROJECTIVE
+  const Result trackerResult = tracker.UpdateTrack(
+    grayscaleImage,
     parameters.maxIterations,
     parameters.convergenceTolerance,
     parameters.verify_maxPixelDifference,
