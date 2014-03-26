@@ -216,6 +216,7 @@ struct TrackerParameters {
     convergenceTolerance = 1.f;
     verify_maxPixelDifference = 30;
     useWeights           = true;
+    maxSamplesAtBaseLevel = 2000;
 #else
     //trackingResolution   = HAL::CAMERA_MODE_QQQVGA; // 80x60
     trackingResolution   = HAL::CAMERA_MODE_QQVGA; // 160x120

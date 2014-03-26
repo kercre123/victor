@@ -675,7 +675,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
 
     ASSERT_TRUE(tracker.IsValid());
 
-    tracker.ShowTemplate("tracker", true, true);
+    //tracker.ShowTemplate("tracker", true, true);
 
     const f64 time1 = GetTime();
 
@@ -705,8 +705,8 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
 
     Array<u8> warpedImage(cozmo_2014_01_29_11_41_05_10_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_10_320x240_WIDTH, scratchOffchip);
     tracker.get_transformation().TransformArray(templateImage, warpedImage, scratchOffchip);
-    warpedImage.Show("translationWarped", false, false, false);
-    nextImage.Show("nextImage", true, false, false);
+    //warpedImage.Show("translationWarped", false, false, false);
+    //nextImage.Show("nextImage", true, false, false);
 
     ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
   }
@@ -748,8 +748,8 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
 
     Array<u8> warpedImage(cozmo_2014_01_29_11_41_05_10_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_10_320x240_WIDTH, scratchOffchip);
     tracker.get_transformation().TransformArray(templateImage, warpedImage, scratchOffchip);
-    warpedImage.Show("affineWarped", false, false, false);
-    nextImage.Show("nextImage", true, false, false);
+    //warpedImage.Show("affineWarped", false, false, false);
+    //nextImage.Show("nextImage", true, false, false);
 
     // This ground truth is from the PC c++ version
     Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
@@ -797,8 +797,8 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
 
     Array<u8> warpedImage(cozmo_2014_01_29_11_41_05_10_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_10_320x240_WIDTH, scratchOffchip);
     tracker.get_transformation().TransformArray(templateImage, warpedImage, scratchOffchip);
-    warpedImage.Show("projectiveWarped", false, false, false);
-    nextImage.Show("nextImage", true, false, false);
+    //warpedImage.Show("projectiveWarped", false, false, false);
+    //nextImage.Show("nextImage", true, false, false);
 
     // This ground truth is from the PC c++ version
     Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
@@ -873,9 +873,9 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
     ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, verify_maxPixelDifference, verify_converged, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels, scratch1) == RESULT_OK);
 
     ASSERT_TRUE(verify_converged == true);
-    ASSERT_TRUE(verify_meanAbsoluteDifference == 10);
-    ASSERT_TRUE(verify_numInBounds == 121);
-    ASSERT_TRUE(verify_numSimilarPixels == 115);
+    ASSERT_TRUE(verify_meanAbsoluteDifference == 13);
+    ASSERT_TRUE(verify_numInBounds == 529);
+    ASSERT_TRUE(verify_numSimilarPixels == 474);
 
     const f64 time2 = GetTime();
 
@@ -915,8 +915,8 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
 
     ASSERT_TRUE(verify_converged == true);
     ASSERT_TRUE(verify_meanAbsoluteDifference == 8);
-    ASSERT_TRUE(verify_numInBounds == 121);
-    ASSERT_TRUE(verify_numSimilarPixels == 119);
+    ASSERT_TRUE(verify_numInBounds == 529);
+    ASSERT_TRUE(verify_numSimilarPixels == 521);
 
     const f64 time2 = GetTime();
 
@@ -957,8 +957,8 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
 
     ASSERT_TRUE(verify_converged == true);
     ASSERT_TRUE(verify_meanAbsoluteDifference == 8);
-    ASSERT_TRUE(verify_numInBounds == 121);
-    ASSERT_TRUE(verify_numSimilarPixels == 119);
+    ASSERT_TRUE(verify_numInBounds == 529);
+    ASSERT_TRUE(verify_numSimilarPixels == 521);
 
     const f64 time2 = GetTime();
 
@@ -1039,9 +1039,9 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
     ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, verify_maxPixelDifference, verify_converged, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels, scratch1) == RESULT_OK);
 
     ASSERT_TRUE(verify_converged == true);
-    ASSERT_TRUE(verify_meanAbsoluteDifference == 10);
-    ASSERT_TRUE(verify_numInBounds == 121);
-    ASSERT_TRUE(verify_numSimilarPixels == 115);
+    ASSERT_TRUE(verify_meanAbsoluteDifference == 13);
+    ASSERT_TRUE(verify_numInBounds == 529);
+    ASSERT_TRUE(verify_numSimilarPixels == 474);
 
     const f64 time2 = GetTime();
 
@@ -1080,8 +1080,8 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
 
     ASSERT_TRUE(verify_converged);
     ASSERT_TRUE(verify_meanAbsoluteDifference == 8);
-    ASSERT_TRUE(verify_numInBounds == 121);
-    ASSERT_TRUE(verify_numSimilarPixels == 119);
+    ASSERT_TRUE(verify_numInBounds == 529);
+    ASSERT_TRUE(verify_numSimilarPixels == 521);
 
     const f64 time2 = GetTime();
 
