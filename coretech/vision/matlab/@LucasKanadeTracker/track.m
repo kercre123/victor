@@ -70,9 +70,9 @@ if isnan(this.err) || (~isempty(this.errorTolerance) && this.err > this.errorTol
     converged = false;
 end
 
-if converged && strcmp(this.tformType, 'planar6dof')
-    this.plotPose();    
-end
+% if converged && strcmp(this.tformType, 'planar6dof')
+%     this.plotPose();    
+% end
 
 if this.debugDisplay
     hold(this.h_axes, 'off')

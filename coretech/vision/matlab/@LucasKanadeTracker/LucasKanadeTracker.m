@@ -2,6 +2,7 @@ classdef LucasKanadeTracker < handle
     
     properties(SetAccess = 'protected', Dependent = true)
         corners;
+        poseString;
     end
     
     properties(GetAccess = 'public', SetAccess = 'protected')
@@ -211,20 +212,20 @@ classdef LucasKanadeTracker < handle
                 
                 this.initCorners = Marker3D(:,1:2);
                 
-                % DEBUG DISPLAY
-                order = [1 2 4 3 1];
-                h_fig = namedFigure('PoseDisplay');
-                h_poseAxes = subplot(1,1,1, 'Parent', h_fig);
-                hold(h_poseAxes, 'off')
-                plot3(Marker3D(order,1), Marker3D(order,2), Marker3D(order,3), ...
-                    'r', 'LineWidth', 2, 'Parent', h_poseAxes);
-                hold(h_poseAxes, 'on')
-                this.h_pose(1) = plot3(nan, nan, nan, 'r', 'Parent', h_poseAxes);
-                this.h_pose(2) = plot3(nan, nan, nan, 'g', 'Parent', h_poseAxes);
-                this.h_pose(3) = plot3(nan, nan, nan, 'b', 'Parent', h_poseAxes);
-                
-                axis(h_poseAxes, 'equal')
-                grid(h_poseAxes, 'on')
+                %                 % DEBUG DISPLAY
+                %                 order = [1 2 4 3 1];
+                %                 h_fig = namedFigure('PoseDisplay');
+                %                 h_poseAxes = subplot(1,1,1, 'Parent', h_fig);
+                %                 hold(h_poseAxes, 'off')
+                %                 plot3(Marker3D(order,1), Marker3D(order,2), Marker3D(order,3), ...
+                %                     'r', 'LineWidth', 2, 'Parent', h_poseAxes);
+                %                 hold(h_poseAxes, 'on')
+                %                 this.h_pose(1) = plot3(nan, nan, nan, 'r', 'Parent', h_poseAxes);
+                %                 this.h_pose(2) = plot3(nan, nan, nan, 'g', 'Parent', h_poseAxes);
+                %                 this.h_pose(3) = plot3(nan, nan, nan, 'b', 'Parent', h_poseAxes);
+                %
+                %                 axis(h_poseAxes, 'equal')
+                %                 grid(h_poseAxes, 'on')
                     
             else
                 this.initCorners = [x y];
@@ -567,6 +568,13 @@ classdef LucasKanadeTracker < handle
            assert(isequal(size(tformIn), [3 3]), 'Transformation must be 3x3.');
            this.tform = tformIn;
         end
+        
+        function str = get.poseString(this)
+            str = sprintf('\\theta_x = %.1f, \\theta_y = %.1f, \\theta_z = %.1f, t_x = %.3f, t_y = %.3f, t_z = %.3f', ...
+                this.theta_x*180/pi, this.theta_y*180/pi, this.theta_z*180/pi, ...
+                this.tx, this.ty, this.tz);
+        end
+        
     end % public methods
     
     methods(Access = 'protected')
@@ -623,10 +631,7 @@ classdef LucasKanadeTracker < handle
             set(this.h_pose(2), 'XData', P(1,[1 3]), 'YData', P(2,[1 3]), 'ZData', P(3,[1 3]));
             set(this.h_pose(3), 'XData', P(1,[1 4]), 'YData', P(2,[1 4]), 'ZData', P(3,[1 4]));
             
-            set(get(get(this.h_pose(1), 'Parent'), 'Title'), 'String', ...
-                sprintf('\\theta_x = %.1f, \\theta_y = %.1f, \\theta_z = %.1f, t_x = %.3f, t_y = %.3f, t_z = %.3f', ...
-                this.theta_x*180/pi, this.theta_y*180/pi, this.theta_z*180/pi, ...
-                this.tx, this.ty, this.tz));
+            set(get(get(this.h_pose(1), 'Parent'), 'Title'), 'String', this.poseString);
             
             drawnow
         end
