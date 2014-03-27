@@ -369,7 +369,7 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
         0,
         "png");
 
-      printf("Saving to %s", outputFilename);
+      printf("Saving to %s\n", outputFilename);
       cv::imwrite(outputFilename, lastImage);
     }
   } else { // if(lastImage.rows > 0)
