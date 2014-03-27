@@ -121,8 +121,8 @@ void ProcessRawBuffer_Save(RawBuffer &buffer, const string outputFilenamePattern
     while(iterator.HasNext()) {
       s32 dataLength;
       SerializedBuffer::DataType type;
-      u8 * const dataSegmentStart = reinterpret_cast<u8*>(iterator.GetNext(dataLength, type, requireCRCmatch));
-      u8 * dataSegment = dataSegmentStart;
+      void * dataSegmentStart = reinterpret_cast<u8*>(iterator.GetNext(dataLength, type, requireCRCmatch));
+      u8 * dataSegment = reinterpret_cast<u8*>(dataSegmentStart);
 
       if(!dataSegment) {
         break;
@@ -176,8 +176,7 @@ void ProcessRawBuffer_Save(RawBuffer &buffer, const string outputFilenamePattern
         printf("Array: (%d, %d, %d, %d, %d, %d, %d, %d) ", height, width, stride, flags, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat);
         //template<typename Type> static Result DeserializeArray(const void * data, const s32 dataLength, Array<Type> &out, MemoryStack &memory);
         if(basicType_size==1 && basicType_isInteger==1 && basicType_isSigned==0 && basicType_isFloat==0) {
-          Array<u8> arr;
-          SerializedBuffer::DeserializeArray(dataSegmentStart, dataLength, arr, memory);
+          Array<u8> arr = SerializedBuffer::DeserializeRawArray<u8>(NULL, &dataSegmentStart, dataLength, memory);
 
           snprintf(&outputFilename[0], outputFilenameLength, outputFilenamePattern.data(),
             currentTime->tm_year+1900, currentTime->tm_mon+1, currentTime->tm_mday,
@@ -194,21 +193,21 @@ void ProcessRawBuffer_Save(RawBuffer &buffer, const string outputFilenamePattern
       } else if(type == SerializedBuffer::DATA_TYPE_STRING) {
         printf("Board>> %s", dataSegment);
       } else if(type == SerializedBuffer::DATA_TYPE_CUSTOM) {
-        dataSegment[SerializedBuffer::CUSTOM_TYPE_STRING_LENGTH-1] = '\0';
+        dataSegment[SerializedBuffer::DESCRIPTION_STRING_LENGTH-1] = '\0';
         const char * customTypeName = reinterpret_cast<const char*>(dataSegment);
         //printf(customTypeName);
 
-        dataSegment += SerializedBuffer::CUSTOM_TYPE_STRING_LENGTH;
+        dataSegment += SerializedBuffer::DESCRIPTION_STRING_LENGTH;
         s32 remainingDataLength = dataLength - SerializedBuffer::EncodedArray::CODE_SIZE * sizeof(u32);
 
         if(strcmp(customTypeName, "VisionMarker") == 0) {
           VisionMarker marker;
-          marker.Deserialize(reinterpret_cast<void**>(&dataSegment), remainingDataLength);
+          marker.Deserialize(NULL, reinterpret_cast<void**>(&dataSegment), remainingDataLength);
           marker.Print();
           visionMarkerList.push_back(marker);
           isTracking = false;
         } else if(strcmp(reinterpret_cast<const char*>(customTypeName), "PlanarTransformation_f32") == 0) {
-          lastPlanarTransformation.Deserialize(reinterpret_cast<void**>(&dataSegment), remainingDataLength, memory);
+          lastPlanarTransformation.Deserialize(NULL, reinterpret_cast<void**>(&dataSegment), remainingDataLength, memory);
           //lastPlanarTransformation.Print();
           isTracking = true;
         }

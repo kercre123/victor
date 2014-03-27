@@ -325,7 +325,7 @@ namespace Anki
         return RESULT_OK;
       }
 
-      Result PlanarTransformation_f32::Serialize(SerializedBuffer &buffer) const
+      Result PlanarTransformation_f32::Serialize(const char *objectName, SerializedBuffer &buffer) const
       {
         const s32 maxBufferLength = buffer.get_memoryStack().ComputeLargestPossibleAllocation() - 64;
 
@@ -336,33 +336,33 @@ namespace Anki
         }
 
         void *afterHeader;
-        const void* segmentStart = buffer.PushBack("PlanarTransformation_f32", requiredBytes, &afterHeader);
+        const void* segmentStart = buffer.PushBack(objectName, "PlanarTransformation_f32", requiredBytes, &afterHeader);
 
         if(segmentStart == NULL) {
           return RESULT_FAIL;
         }
 
-        return SerializeRaw(&afterHeader, requiredBytes);
+        return SerializeRaw(objectName, &afterHeader, requiredBytes);
       }
 
-      Result PlanarTransformation_f32::SerializeRaw(void ** buffer, s32 &bufferLength) const
+      Result PlanarTransformation_f32::SerializeRaw(const char *objectName, void ** buffer, s32 &bufferLength) const
       {
-        SerializedBuffer::SerializeRaw<bool>(this->isValid, buffer, bufferLength);
-        SerializedBuffer::SerializeRaw<s32>(this->transformType, buffer, bufferLength);
-        SerializedBuffer::SerializeRawArray<f32>(this->homography, buffer, bufferLength);
-        SerializedBuffer::SerializeRaw<Quadrilateral<f32> >(this->initialCorners, buffer, bufferLength);
-        SerializedBuffer::SerializeRaw<Point<f32> >(this->centerOffset, buffer, bufferLength);
+        SerializedBuffer::SerializeRaw<bool>("isValid", this->isValid, buffer, bufferLength);
+        SerializedBuffer::SerializeRaw<s32>("transformType", this->transformType, buffer, bufferLength);
+        SerializedBuffer::SerializeRawArray<f32>("homography", this->homography, buffer, bufferLength);
+        SerializedBuffer::SerializeRaw<Quadrilateral<f32> >("initialCorners", this->initialCorners, buffer, bufferLength);
+        SerializedBuffer::SerializeRaw<Point<f32> >("centerOffset", this->centerOffset, buffer, bufferLength);
 
         return RESULT_OK;
       }
 
-      Result PlanarTransformation_f32::Deserialize(void** buffer, s32 &bufferLength, MemoryStack &memory)
+      Result PlanarTransformation_f32::Deserialize(char *objectName, void** buffer, s32 &bufferLength, MemoryStack &memory)
       {
-        this->isValid = SerializedBuffer::DeserializeRaw<bool>(buffer, bufferLength);
-        this->transformType = static_cast<Transformations::TransformType>(SerializedBuffer::DeserializeRaw<s32>(buffer, bufferLength));
-        this->homography = SerializedBuffer::DeserializeRawArray<f32>(buffer, bufferLength, memory);
-        this->initialCorners = SerializedBuffer::DeserializeRaw<Quadrilateral<f32> >(buffer, bufferLength);
-        this->centerOffset = SerializedBuffer::DeserializeRaw<Point<f32> >(buffer, bufferLength);
+        this->isValid = SerializedBuffer::DeserializeRaw<bool>(NULL, buffer, bufferLength);
+        this->transformType = static_cast<Transformations::TransformType>(SerializedBuffer::DeserializeRaw<s32>(NULL, buffer, bufferLength));
+        this->homography = SerializedBuffer::DeserializeRawArray<f32>(NULL, buffer, bufferLength, memory);
+        this->initialCorners = SerializedBuffer::DeserializeRaw<Quadrilateral<f32> >(NULL, buffer, bufferLength);
+        this->centerOffset = SerializedBuffer::DeserializeRaw<Point<f32> >(NULL, buffer, bufferLength);
 
         return RESULT_OK;
       }

@@ -515,7 +515,7 @@ namespace Anki
         corners[3].x, corners[3].y);
     } // VisionMarker::Print()
 
-    Result VisionMarker::Serialize(SerializedBuffer &buffer) const
+    Result VisionMarker::Serialize(const char *objectName, SerializedBuffer &buffer) const
     {
       const s32 maxBufferLength = buffer.get_memoryStack().ComputeLargestPossibleAllocation() - 64;
 
@@ -527,29 +527,29 @@ namespace Anki
       }
 
       void *afterHeader;
-      const void* segmentStart = buffer.PushBack("VisionMarker", requiredBytes, &afterHeader);
+      const void* segmentStart = buffer.PushBack(objectName, "VisionMarker", requiredBytes, &afterHeader);
 
       if(segmentStart == NULL) {
         return RESULT_FAIL;
       }
 
-      return SerializeRaw(&afterHeader, requiredBytes);
+      return SerializeRaw(objectName, &afterHeader, requiredBytes);
     }
 
-    Result VisionMarker::SerializeRaw(void ** buffer, s32 &bufferLength) const
+    Result VisionMarker::SerializeRaw(const char * objectName, void ** buffer, s32 &bufferLength) const
     {
-      SerializedBuffer::SerializeRaw<Quadrilateral<s16> >(this->corners, buffer, bufferLength);
-      SerializedBuffer::SerializeRaw<s32>(this->markerType, buffer, bufferLength);
-      SerializedBuffer::SerializeRaw<bool>(this->isValid, buffer, bufferLength);
+      SerializedBuffer::SerializeRaw<Quadrilateral<s16> >("corners", this->corners, buffer, bufferLength);
+      SerializedBuffer::SerializeRaw<s32>("markerType", this->markerType, buffer, bufferLength);
+      SerializedBuffer::SerializeRaw<bool>("isValid", this->isValid, buffer, bufferLength);
 
       return RESULT_OK;
     }
 
-    Result VisionMarker::Deserialize(void** buffer, s32 &bufferLength)
+    Result VisionMarker::Deserialize(char *objectName, void** buffer, s32 &bufferLength)
     {
-      this->corners = SerializedBuffer::DeserializeRaw<Quadrilateral<s16> >(buffer, bufferLength);
-      this->markerType = static_cast<Vision::MarkerType>(SerializedBuffer::DeserializeRaw<s32>(buffer, bufferLength));
-      this->isValid = SerializedBuffer::DeserializeRaw<bool>(buffer, bufferLength);
+      this->corners = SerializedBuffer::DeserializeRaw<Quadrilateral<s16> >(NULL, buffer, bufferLength);
+      this->markerType = static_cast<Vision::MarkerType>(SerializedBuffer::DeserializeRaw<s32>(NULL, buffer, bufferLength));
+      this->isValid = SerializedBuffer::DeserializeRaw<bool>(NULL, buffer, bufferLength);
 
       return RESULT_OK;
     }

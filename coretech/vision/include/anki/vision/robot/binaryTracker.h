@@ -76,8 +76,8 @@ namespace Anki
         // TRANSFORM_PROJECTIVE: [h00, h01, h02, h10, h11, h12, h20, h21]
         Result UpdateTransformation(const Array<f32> &update, const f32 scale, MemoryStack scratch, Transformations::TransformType updateType=Transformations::TRANSFORM_UNKNOWN);
 
-        Result Serialize(SerializedBuffer &buffer) const;
-        Result Deserialize(void** buffer, s32 &bufferLength, MemoryStack &memory);
+        Result Serialize(const char *objectName, SerializedBuffer &buffer) const;
+        Result Deserialize(char *objectName, void** buffer, s32 &bufferLength, MemoryStack &memory);
 
         s32 get_numTemplatePixels() const;
 

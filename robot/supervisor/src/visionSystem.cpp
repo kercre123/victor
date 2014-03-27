@@ -479,7 +479,7 @@ namespace DebugStream
     if(debugStreamResolution_ == HAL::CAMERA_MODE_QVGA) {
       HAL::MicroWait(1000000);
     }
-    
+
     return result;
   } // ReturnCode SendDebugStream_Detection()
 
@@ -550,9 +550,8 @@ namespace DebugStream
     if(debugStreamResolution_ == HAL::CAMERA_MODE_QVGA) {
       HAL::MicroWait(1000000);
     }
-    
+
     return result;
-    
   } // static ReturnCode SendTrackingUpdate()
 
 #if DOCKING_ALGORITHM ==  DOCKING_BINARY_TRACKER
@@ -580,11 +579,11 @@ namespace DebugStream
     debugStreamBuffer_.PushBack(array);
     return SendBuffer(debugStreamBuffer_);
   }
-  
+
   static ReturnCode SendBinaryImage(const Array<u8> &grayscaleImage, const Tracker &tracker, const TrackerParameters &parameters, MemoryStack ccmScratch, MemoryStack onchipScratch, MemoryStack offchipScratch)
   {
     DebugStream::debugStreamBuffer_ = SerializedBuffer(&DebugStream::debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
-    
+
     EdgeLists edgeLists;
 
     edgeLists.imageHeight = grayscaleImage.get_size(0);
@@ -605,15 +604,15 @@ namespace DebugStream
 
     const s32 height = CameraModeInfo[debugStreamResolution_].height;
     const s32 width  = CameraModeInfo[debugStreamResolution_].width;
-    
+
     Array<u8> imageSmall(height, width, offchipScratch);
-    
+
     DownsampleHelper(grayscaleImage, imageSmall, ccmScratch);
-    
+
     debugStreamBuffer_.PushBack(imageSmall);
-    
+
     const ReturnCode result = SendBuffer(debugStreamBuffer_);
-        
+
     return result;
   }
 #endif // #ifdef SEND_DEBUG_STREAM
@@ -1955,7 +1954,7 @@ namespace Anki {
       ReturnCode Update(const Messages::RobotState robotState)
       {
         const f32 exposure = 0.1f;
-        
+
         // This should be called from elsewhere first, but calling it again won't hurt
         Init();
 
@@ -1964,7 +1963,7 @@ namespace Anki {
           return EXIT_SUCCESS;
         }
 #endif
-        
+
 #ifdef SEND_IMAGE_ONLY
         VisionMemory::ResetBuffers();
 
@@ -1976,15 +1975,15 @@ namespace Anki {
 
         HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
           captureResolution_, exposure, false);
-        
+
 #ifdef SEND_BINARY_IMAGE_ONLY
-        DebugStream::SendBinaryImage(grayscaleImage, VisionState::tracker_, trackerParameters_, VisionMemory::ccmScratch_, VisionMemory::onchipScratch_, VisionMemory::offchipScratch_);            
+        DebugStream::SendBinaryImage(grayscaleImage, VisionState::tracker_, trackerParameters_, VisionMemory::ccmScratch_, VisionMemory::onchipScratch_, VisionMemory::offchipScratch_);
         HAL::MicroWait(250000);
 #else
         DebugStream::SendArray(grayscaleImage);
         HAL::MicroWait(1000000);
 #endif
-                        
+
         return EXIT_SUCCESS;
 #endif
 

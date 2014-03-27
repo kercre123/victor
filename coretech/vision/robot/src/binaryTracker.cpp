@@ -233,7 +233,7 @@ namespace Anki
         return this->transformation.Update(update, scale, scratch, updateType);
       }
 
-      Result BinaryTracker::Serialize(SerializedBuffer &buffer) const
+      Result BinaryTracker::Serialize(const char *objectName, SerializedBuffer &buffer) const
       {
         const s32 maxBufferLength = buffer.get_memoryStack().ComputeLargestPossibleAllocation() - 64;
 
@@ -244,39 +244,39 @@ namespace Anki
         }
 
         void *afterHeader;
-        const void* segmentStart = buffer.PushBack("BinaryTracker", requiredBytes, &afterHeader);
+        const void* segmentStart = buffer.PushBack(objectName, "BinaryTracker", requiredBytes, &afterHeader);
 
         if(segmentStart == NULL) {
           return RESULT_FAIL;
         }
 
         // First, serialize the transformation
-        this->transformation.SerializeRaw(&afterHeader, requiredBytes);
+        this->transformation.SerializeRaw( "transformation", &afterHeader, requiredBytes);
 
         // Next, serialize the template lists
-        SerializedBuffer::SerializeRaw<s32>(this->templateEdges.imageHeight, &afterHeader, requiredBytes);
-        SerializedBuffer::SerializeRaw<s32>(this->templateEdges.imageWidth, &afterHeader, requiredBytes);
-        SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >(this->templateEdges.xDecreasing, &afterHeader, requiredBytes);
-        SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >(this->templateEdges.xIncreasing, &afterHeader, requiredBytes);
-        SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >(this->templateEdges.yDecreasing, &afterHeader, requiredBytes);
-        SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >(this->templateEdges.yIncreasing, &afterHeader, requiredBytes);
+        SerializedBuffer::SerializeRaw<s32>("templateEdges.imageHeight", this->templateEdges.imageHeight, &afterHeader, requiredBytes);
+        SerializedBuffer::SerializeRaw<s32>("templateEdges.imageWidth", this->templateEdges.imageWidth, &afterHeader, requiredBytes);
+        SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("templateEdges.xDecreasing", this->templateEdges.xDecreasing, &afterHeader, requiredBytes);
+        SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("templateEdges.xIncreasing", this->templateEdges.xIncreasing, &afterHeader, requiredBytes);
+        SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("templateEdges.yDecreasing", this->templateEdges.yDecreasing, &afterHeader, requiredBytes);
+        SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("templateEdges.yIncreasing", this->templateEdges.yIncreasing, &afterHeader, requiredBytes);
 
         return RESULT_OK;
       }
 
-      Result BinaryTracker::Deserialize(void** buffer, s32 &bufferLength, MemoryStack &memory)
+      Result BinaryTracker::Deserialize(char *objectName, void** buffer, s32 &bufferLength, MemoryStack &memory)
       {
         // First, deserialize the transformation
         //this->transformation = Transformations::PlanarTransformation_f32(Transformations::TRANSFORM_PROJECTIVE, memory);
-        this->transformation.Deserialize(buffer, bufferLength, memory);
+        this->transformation.Deserialize(objectName, buffer, bufferLength, memory);
 
         // Next, deserialize the template lists
-        this->templateEdges.imageHeight = SerializedBuffer::DeserializeRaw<s32>(buffer, bufferLength);
-        this->templateEdges.imageWidth = SerializedBuffer::DeserializeRaw<s32>(buffer, bufferLength);
-        this->templateEdges.xDecreasing = SerializedBuffer::DeserializeRawFixedLengthList<Point<s16> >(buffer, bufferLength, memory);
-        this->templateEdges.xIncreasing = SerializedBuffer::DeserializeRawFixedLengthList<Point<s16> >(buffer, bufferLength, memory);
-        this->templateEdges.yDecreasing = SerializedBuffer::DeserializeRawFixedLengthList<Point<s16> >(buffer, bufferLength, memory);
-        this->templateEdges.yIncreasing = SerializedBuffer::DeserializeRawFixedLengthList<Point<s16> >(buffer, bufferLength, memory);
+        this->templateEdges.imageHeight = SerializedBuffer::DeserializeRaw<s32>(NULL, buffer, bufferLength);
+        this->templateEdges.imageWidth = SerializedBuffer::DeserializeRaw<s32>(NULL, buffer, bufferLength);
+        this->templateEdges.xDecreasing = SerializedBuffer::DeserializeRawFixedLengthList<Point<s16> >(NULL, buffer, bufferLength, memory);
+        this->templateEdges.xIncreasing = SerializedBuffer::DeserializeRawFixedLengthList<Point<s16> >(NULL, buffer, bufferLength, memory);
+        this->templateEdges.yDecreasing = SerializedBuffer::DeserializeRawFixedLengthList<Point<s16> >(NULL, buffer, bufferLength, memory);
+        this->templateEdges.yIncreasing = SerializedBuffer::DeserializeRawFixedLengthList<Point<s16> >(NULL, buffer, bufferLength, memory);
 
         this->templateImageHeight = this->templateEdges.imageHeight;
         this->templateImageWidth = this->templateEdges.imageWidth;
