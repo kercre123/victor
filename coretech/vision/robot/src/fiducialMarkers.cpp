@@ -526,10 +526,9 @@ namespace Anki
         return RESULT_FAIL;
       }
 
-      void *afterHeader;
-      const void* segmentStart = buffer.PushBack(objectName, "VisionMarker", requiredBytes, &afterHeader);
+      void *afterHeader = buffer.Allocate(objectName, "VisionMarker", requiredBytes);
 
-      if(segmentStart == NULL) {
+      if(afterHeader == NULL) {
         return RESULT_FAIL;
       }
 

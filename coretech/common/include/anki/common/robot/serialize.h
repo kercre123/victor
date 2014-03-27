@@ -589,8 +589,11 @@ namespace Anki
       if(SerializedBuffer::EncodeBasicTypeBuffer<Type>(dataLength/sizeof(Type), code) != RESULT_OK)
         return NULL;
 
-      void * segment = PushBack(SerializedBuffer::DATA_TYPE_BASIC_TYPE_BUFFER,
-        &code.code[0], EncodedBasicTypeBuffer::CODE_SIZE*sizeof(u32),
+      void * segment = PushBack(
+        objectName,
+        SerializedBuffer::DATA_TYPE_BASIC_TYPE_BUFFER,
+        &code.code[0],
+        EncodedBasicTypeBuffer::CODE_SIZE*sizeof(u32),
         reinterpret_cast<const void*>(data), dataLength);
 
       return reinterpret_cast<Type*>(segment);

@@ -212,9 +212,9 @@ GTEST_TEST(CoreTech_Common, SerializedBuffer)
   SerializedBuffer serialized(offchipBuffer+5000, 6000);
   ASSERT_TRUE(serialized.IsValid());
 
-  void * segment1b = serialized.PushBack("segment1", segment1, segment1Length);
-  void * segment2b = serialized.PushBack("segment2", segment2, segment2Length);
-  void * segment3b = serialized.PushBack("segment3", segment3, segment3Length);
+  void * segment1b = serialized.PushBack("segment1", SerializedBuffer::DATA_TYPE_RAW, NULL, 0, segment1, segment1Length);
+  void * segment2b = serialized.PushBack("segment2", SerializedBuffer::DATA_TYPE_RAW, NULL, 0, segment2, segment2Length);
+  void * segment3b = serialized.PushBack("segment3", SerializedBuffer::DATA_TYPE_RAW, NULL, 0, segment3, segment3Length);
 
   ASSERT_TRUE(segment1b != NULL);
   ASSERT_TRUE(segment2b != NULL);

@@ -243,10 +243,9 @@ namespace Anki
           return RESULT_FAIL;
         }
 
-        void *afterHeader;
-        const void* segmentStart = buffer.PushBack(objectName, "BinaryTracker", requiredBytes, &afterHeader);
+        void *afterHeader = buffer.Allocate(objectName, "BinaryTracker", requiredBytes);
 
-        if(segmentStart == NULL) {
+        if(afterHeader == NULL) {
           return RESULT_FAIL;
         }
 

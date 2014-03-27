@@ -225,43 +225,19 @@ namespace Anki
       return RESULT_OK;
     }
 
-    void* SerializedBuffer::PushBackRaw(const void * data, const s32 dataLength)
+    void* SerializedBuffer::Allocate(const char *objectName, const char * customTypeName, const s32 dataLength)
     {
-      void* dataSegment = reinterpret_cast<u8*>(memoryStack.get_buffer()) + memoryStack.get_usedBytes();
+      void *afterHeader = NULL;
 
-      // Warning: this is dangerous
-      memoryStack.usedBytes += dataLength;
+      if(PushBack_Generic(DATA_TYPE_CUSTOM, objectName, customTypeName, DESCRIPTION_STRING_LENGTH, NULL, dataLength, &afterHeader) == NULL)
+        return NULL;
 
-      if(data != NULL) {
-        memcpy(dataSegment, data, dataLength);
-      }
-
-      return dataSegment;
-    }
-
-    void* SerializedBuffer::PushBack(const char *objectName, const void * data, const s32 dataLength)
-    {
-      return PushBack_Generic(DATA_TYPE_RAW, objectName, NULL, 0, data, dataLength, NULL);
-    }
-
-    void* SerializedBuffer::PushBack(const char *objectName, const DataType type, const void * data, s32 dataLength)
-    {
-      return PushBack_Generic(type, objectName, NULL, 0, data, dataLength, NULL);
-    }
-
-    void* SerializedBuffer::PushBack(const char *objectName, const void * header, s32 headerLength, const void * data, s32 dataLength)
-    {
-      return PushBack_Generic(DATA_TYPE_RAW, objectName, header, headerLength, data, dataLength, NULL);
+      return afterHeader;
     }
 
     void* SerializedBuffer::PushBack(const char *objectName, const DataType type, const void * header, s32 headerLength, const void * data, s32 dataLength)
     {
       return PushBack_Generic(type, objectName, header, headerLength, data, dataLength, NULL);
-    }
-
-    void* SerializedBuffer::PushBack(const char *objectName, const char * customTypeName, const s32 dataLength, void ** afterHeader)
-    {
-      return PushBack_Generic(DATA_TYPE_CUSTOM, objectName, customTypeName, DESCRIPTION_STRING_LENGTH, NULL, dataLength, afterHeader);
     }
 
     void* SerializedBuffer::PushBack_Generic(const DataType type, const char *objectName, const void * header, s32 headerLength, const void * data, s32 dataLength, void ** afterHeader)
@@ -396,7 +372,7 @@ namespace Anki
       if(usedLength == -1)
         return NULL;
 
-      return PushBack("String", DATA_TYPE_STRING, format, usedLength);
+      return PushBack("String", DATA_TYPE_STRING, NULL, 0, format, usedLength);
 #endif
     }
 

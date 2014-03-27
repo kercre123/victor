@@ -335,10 +335,9 @@ namespace Anki
           return RESULT_FAIL;
         }
 
-        void *afterHeader;
-        const void* segmentStart = buffer.PushBack(objectName, "PlanarTransformation_f32", requiredBytes, &afterHeader);
+        void *afterHeader = buffer.Allocate(objectName, "PlanarTransformation_f32", requiredBytes);
 
-        if(segmentStart == NULL) {
+        if(afterHeader == NULL) {
           return RESULT_FAIL;
         }
 
