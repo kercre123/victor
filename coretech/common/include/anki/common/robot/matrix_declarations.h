@@ -67,6 +67,9 @@ namespace Anki
       // Elementwise exponential on an array
       template<typename InType, typename IntermediateType, typename OutType> Result Exp(const ConstArraySliceExpression<InType> &in, ArraySlice<OutType> out);
 
+      // Elementwise square root on an array
+      template<typename InType, typename IntermediateType, typename OutType> Result Sqrt(const ConstArraySliceExpression<InType> &in, ArraySlice<OutType> out);
+
       //
       // Standard matrix operations
       //
@@ -185,6 +188,11 @@ namespace Anki
         template<typename InType, typename IntermediateType, typename OutType> class Exp {
         public:
           static inline OutType BinaryElementwiseOperation(const InType value1, const InType value2) {return static_cast<OutType>(expf(static_cast<IntermediateType>(value1)));}
+        };
+
+        template<typename InType, typename IntermediateType, typename OutType> class Sqrt {
+        public:
+          static inline OutType BinaryElementwiseOperation(const InType value1, const InType value2) {return static_cast<OutType>(sqrtf(static_cast<IntermediateType>(value1)));}
         };
 
         template<typename InType, typename Operator, typename OutType> Result ApplyOperation(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);

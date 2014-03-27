@@ -461,7 +461,7 @@ namespace Anki
                               
           for(u32 iPixel=0; iPixel<numPixels4; iPixel++) {
             const u32 inPixel1 = pMBufferU32[2*iPixel];
-            const u32 inPixel2 = pMBufferU32[2*(iPixel+1)];
+            const u32 inPixel2 = pMBufferU32[2*iPixel+1];
             
             const u32 outPixel = (inPixel1 & 0xFF) | ((inPixel1 & 0xFF0000) >> 8) | ((inPixel2 & 0xFF)<<16) | ((inPixel2 & 0xFF0000) << 8);
             pFrameU32[iPixel] = outPixel;

@@ -43,6 +43,7 @@ namespace Anki
         MemoryStack &memory)
         : LucasKanadeTracker_Fast(Transformations::TRANSFORM_PROJECTIVE, templateImage, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, transformType, memory)
       {
+        this->isValid = true;
       }
 
       Result LucasKanadeTracker_Projective::UpdateTrack(
@@ -129,7 +130,6 @@ namespace Anki
         Array<f32> AWAt(2, 2, scratch);
         Array<f32> b(1, 2, scratch);
 
-        // TODO: why are these references?
         f32 &AWAt00 = AWAt[0][0];
         f32 &AWAt01 = AWAt[0][1];
         //f32 &AWAt10 = AWAt[1][0];

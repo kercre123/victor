@@ -248,6 +248,12 @@ namespace Anki
           homographyInv[1][0], homographyInv[1][1], homographyInv[1][2],
           homographyInv[2][0], homographyInv[2][1], homographyInv[2][2]);
 
+        for(s32 y=0; y<3; y++) {
+          for(s32 x=0; x<3; x++) {
+            homographyInv[y][x] /= homographyInv[2][2];
+          }
+        }
+
         //const s32 numPoints = in.get_size(0) * in.get_size(1);
 
         Array<f32> xIn(arrHeight,arrWidth,scratch);
@@ -270,7 +276,7 @@ namespace Anki
           xIn, yIn, scale,
           this->centerOffset,
           this->get_transformType(), homographyInv,
-          false, true,
+          false, false,
           xTransformed, yTransformed);
 
         /*xIn.Print("xIn", 0,10,0,10);

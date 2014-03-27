@@ -167,6 +167,11 @@ namespace Anki
         return Elementwise::ApplyOperation<InType, Elementwise::Exp<InType, IntermediateType, OutType>, OutType>(in, in, out);
       } // template<typename Type> Result Exp(const ConstArraySliceExpression<InType> &in, ArraySlice<OutType> out)
 
+      template<typename InType, typename IntermediateType, typename OutType> Result Sqrt(const ConstArraySliceExpression<InType> &in, ArraySlice<OutType> out)
+      {
+        return Elementwise::ApplyOperation<InType, Elementwise::Sqrt<InType, IntermediateType, OutType>, OutType>(in, in, out);
+      }
+
       template<typename InType, typename OutType> Result Multiply(const Array<InType> &in1, const Array<InType> &in2, Array<OutType> &out)
       {
         const s32 in1Height = in1.get_size(0);
@@ -935,7 +940,7 @@ namespace Anki
               limits.OuterIncrementBottom();
             }
           } else { // if(limits.isSimpleIteration)
-            // If either input is transposed is allowed, then we will do an inefficent loop iteration
+            // If either input is transposed, then we will do an inefficent loop iteration
 
             for(s32 y=0; y<limits.ySize; y++) {
               OutType * const pOut1 = out1Array.Pointer(limits.out1Y, 0);

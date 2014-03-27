@@ -1039,6 +1039,11 @@
               <FilePath>..\coretech\vision\robot\src\lucasKanade_Affine.cpp</FilePath>
             </File>
             <File>
+              <FileName>lucasKanade_Fast.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\lucasKanade_Fast.cpp</FilePath>
+            </File>
+            <File>
               <FileName>lucasKanade_General.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\lucasKanade_General.cpp</FilePath>
@@ -1047,6 +1052,11 @@
               <FileName>lucasKanade_Projective.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\lucasKanade_Projective.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>lucasKanade_SampledProjective.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\lucasKanade_SampledProjective.cpp</FilePath>
             </File>
             <File>
               <FileName>lucasKanade_Slow.cpp</FileName>
@@ -2342,6 +2352,11 @@
               <FilePath>..\coretech\vision\robot\src\lucasKanade_Affine.cpp</FilePath>
             </File>
             <File>
+              <FileName>lucasKanade_Fast.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\lucasKanade_Fast.cpp</FilePath>
+            </File>
+            <File>
               <FileName>lucasKanade_General.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\lucasKanade_General.cpp</FilePath>
@@ -2350,6 +2365,11 @@
               <FileName>lucasKanade_Projective.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\lucasKanade_Projective.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>lucasKanade_SampledProjective.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\lucasKanade_SampledProjective.cpp</FilePath>
             </File>
             <File>
               <FileName>lucasKanade_Slow.cpp</FileName>

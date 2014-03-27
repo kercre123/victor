@@ -4,7 +4,11 @@
 #include "hal/portable.h"
 #include "spiData.h"
 
-//OFFCHIP u8 buffer[320*240 + 5];
+//#define SEND_IMAGE_ONLY
+
+#ifdef SEND_IMAGE_ONLY
+OFFCHIP u8 buffer[320*240 + 5]; // +5 for beeffoodfd
+#endif
 
 namespace Anki
 {
@@ -112,10 +116,13 @@ int main(void)
   
   Anki::Cozmo::Robot::Init();
   
+#ifndef SEND_IMAGE_ONLY
   while (Anki::Cozmo::Robot::step_LongExecution() == EXIT_SUCCESS)
   {
-    
-    /*
+  }
+#else
+  while(true)
+  {
     buffer[0] = 0xbe;
     buffer[1] = 0xef;
     buffer[2] = 0xf0;
@@ -124,22 +131,31 @@ int main(void)
     
     CameraGetFrame(&buffer[5], CAMERA_MODE_QVGA, 0.25f, false);
     
+    UARTPutChar(buffer[0]);
+    UARTPutChar(buffer[1]);
+    UARTPutChar(buffer[2]);
+    UARTPutChar(buffer[3]);
+    UARTPutChar(buffer[4]);
+    
     for (int y = 0; y < 240; y++)
     {
       for (int x = 0; x < 320; x++)
       {
-        //buffer[y*320 + x + 5] = (buffer[y*320 + x + 5] * ((x & 255) ^ y)) >> 8;
-        //UARTPutChar((x & 255) ^ y);
+        buffer[y*320 + x + 5] = (buffer[y*320 + x + 5] * ((x & 255) ^ y)) >> 8;
+        UARTPutChar((x & 255) ^ y);
       }
     }
     
     //MicroWait(2000000);
     
+    
     // 
-    if (!UARTPutBuffer(buffer, 320 * 240 + 5))
+    /*if (!UARTPutBuffer(buffer, 320 * 240 + 5))
     {
     }*/
   }
+#endif // #ifdef SEND_IMAGE_ONLY
+  
 #endif
 }
 

@@ -48,7 +48,12 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
 
   // Used for displaying detected fiducials
   cv::Mat lastImage(240,320,CV_8U);
+  cv::Mat largeLastImage(bigHeight, bigWidth, CV_8U);
+  cv::Mat toShowImage(bigHeight, bigWidth, CV_8UC3);
+
   lastImage.setTo(0);
+  largeLastImage.setTo(0);
+  toShowImage.setTo(0);
 
   bool isTracking = false;
   Transformations::PlanarTransformation_f32 lastPlanarTransformation = Transformations::PlanarTransformation_f32(); //(Transformations::TRANSFORM_PROJECTIVE, scratch);
@@ -156,6 +161,44 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
             cLastImage++;
           }
         }
+
+        cv::resize(lastImage, largeLastImage, largeLastImage.size(), 0, 0, cv::INTER_NEAREST);
+
+        const s32 blinkerWidth = 7;
+
+        //Draw a blinky rectangle at the upper right
+        static s32 frameNumber = 0;
+        frameNumber++;
+
+        if(frameNumber%2 == 0) {
+          for(s32 y=0; y<blinkerWidth; y++) {
+            for(s32 x=bigWidth-blinkerWidth; x<bigWidth; x++) {
+              largeLastImage.at<u8>(y,x) = 0;
+            }
+          }
+
+          for(s32 y=1; y<blinkerWidth-1; y++) {
+            for(s32 x=bigWidth+1-blinkerWidth; x<(bigWidth-1); x++) {
+              largeLastImage.at<u8>(y,x) = 255;
+            }
+          }
+          //largeLastImage.at<u8>(blinkerHalfWidth,320-blinkerHalfWidth) = 255;
+        } else {
+          for(s32 y=0; y<blinkerWidth; y++) {
+            for(s32 x=bigWidth-blinkerWidth; x<bigWidth; x++) {
+              largeLastImage.at<u8>(y,x) = 0;
+            }
+          }
+        }
+
+        // Grayscale to RGB
+        vector<cv::Mat> channels;
+        channels.push_back(largeLastImage);
+        channels.push_back(largeLastImage);
+        channels.push_back(largeLastImage);
+        cv::merge(channels, toShowImage);
+
+        //cv::resize(toShowImage, toShowLarge, toShowLargeTmp.size(), 0, 0, cv::INTER_NEAREST);
       } else {
         printf("Array: (%d, %d, %d, %d, %d, %d, %d, %d) ", height, width, stride, flags, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat);
       }
@@ -202,11 +245,12 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
 
         cv::Mat toShow = edges.DrawIndexes();
 
-        cv::Mat toShowLarge(bigHeight, bigWidth, CV_8UC3);
+        cv::Mat toShowLargeTmp(bigHeight, bigWidth, CV_8UC3);
+        cv::resize(toShow, toShowLargeTmp, toShowLargeTmp.size(), 0, 0, cv::INTER_NEAREST);
+        cv::imshow("Detected Binary Edges", toShowLargeTmp);
 
-        cv::resize(toShow, toShowLarge, toShowLarge.size(), 0, 0, cv::INTER_NEAREST);
-
-        cv::imshow("Detected Binary Edges", toShowLarge);
+        //cv::resize(toShow, toShowImage, toShowImage.size(), 0, 0, cv::INTER_NEAREST);
+        //cv::imshow("Detected Binary Edges", toShowImage);
       }
     } else {
       printf("Unknown Type %d\n", type);
@@ -220,45 +264,6 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
   }
 
   if(lastImage.rows > 0) {
-    cv::Mat largeLastImage(bigHeight, bigWidth, CV_8U);
-    cv::Mat toShowImage(bigHeight, bigWidth, CV_8UC3);
-
-    cv::resize(lastImage, largeLastImage, largeLastImage.size(), 0, 0, cv::INTER_NEAREST);
-
-    const s32 blinkerWidth = 7;
-
-    //Draw a blinky rectangle at the upper right
-    static s32 frameNumber = 0;
-    frameNumber++;
-
-    if(frameNumber%2 == 0) {
-      for(s32 y=0; y<blinkerWidth; y++) {
-        for(s32 x=bigWidth-blinkerWidth; x<bigWidth; x++) {
-          largeLastImage.at<u8>(y,x) = 0;
-        }
-      }
-
-      for(s32 y=1; y<blinkerWidth-1; y++) {
-        for(s32 x=bigWidth+1-blinkerWidth; x<(bigWidth-1); x++) {
-          largeLastImage.at<u8>(y,x) = 255;
-        }
-      }
-      //largeLastImage.at<u8>(blinkerHalfWidth,320-blinkerHalfWidth) = 255;
-    } else {
-      for(s32 y=0; y<blinkerWidth; y++) {
-        for(s32 x=bigWidth-blinkerWidth; x<bigWidth; x++) {
-          largeLastImage.at<u8>(y,x) = 0;
-        }
-      }
-    }
-
-    // Grayscale to RGB
-    vector<cv::Mat> channels;
-    channels.push_back(largeLastImage);
-    channels.push_back(largeLastImage);
-    channels.push_back(largeLastImage);
-    cv::merge(channels, toShowImage);
-
     // std::queue<VisionMarker> visionMarkerList;
     //Quadrilateral<s16> corners; // SQ 15.0 (Though may be changed later)
     //Vision::MarkerType markerType;
@@ -273,14 +278,20 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
       const f32 receivedDelta = curTime - lastTime;
       lastTime = GetTime();
 
-      snprintf(benchmarkBuffer, 1024, "Total:%dfps Algorithms:%dfps Received:%dfps", RoundS32(1.0f/benchmarkTimes[1]), RoundS32(1.0f/benchmarkTimes[0]), RoundS32(1.0f/receivedDelta));
+      //snprintf(benchmarkBuffer, 1024, "Total:%dfps Algorithms:%dfps Received:%dfps", RoundS32(1.0f/benchmarkTimes[1]), RoundS32(1.0f/benchmarkTimes[0]), RoundS32(1.0f/receivedDelta));
+      snprintf(benchmarkBuffer, 1024, "Total:%dfps Algorithms:%dfps", RoundS32(1.0f/benchmarkTimes[1]), RoundS32(1.0f/benchmarkTimes[0]));
 
       cv::putText(toShowImage, benchmarkBuffer, cv::Point(5,15), cv::FONT_HERSHEY_PLAIN, 1.0, cv::Scalar(0,255,0));
     }
 
     if(isTracking) {
+      cv::Mat trackingBoxImage(bigHeight, bigWidth, CV_8UC3);
+
+      trackingBoxImage.setTo(0);
+
       const cv::Scalar textColor = cv::Scalar(0,255,0);
-      const cv::Scalar boxColor = cv::Scalar(0,128,0);
+      //const cv::Scalar boxColor = cv::Scalar(0,128,0);
+      const cv::Scalar boxColor = cv::Scalar(48,48,48);
 
       const Quadrilateral<f32> transformedCorners = lastPlanarTransformation.get_transformedCorners(scratch);
 
@@ -291,14 +302,20 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
         const s32 point2Index = (iCorner+1) % 4;
         const cv::Point pt1(static_cast<s32>(sortedCorners[point1Index].x*scale), static_cast<s32>(sortedCorners[point1Index].y*scale));
         const cv::Point pt2(static_cast<s32>(sortedCorners[point2Index].x*scale), static_cast<s32>(sortedCorners[point2Index].y*scale));
-        cv::line(toShowImage, pt1, pt2, boxColor, 2);
+        cv::line(trackingBoxImage, pt1, pt2, boxColor, 7);
       }
 
       const Point<f32> center = sortedCorners.ComputeCenter();
       const s32 textX = RoundS32(MIN(MIN(MIN(sortedCorners.corners[0].x*scale, sortedCorners.corners[1].x*scale), sortedCorners.corners[2].x*scale), sortedCorners.corners[3].x*scale));
       const cv::Point textStartPoint(textX, RoundS32(center.y*scale));
 
-      cv::putText(toShowImage, "Tracking", textStartPoint, cv::FONT_HERSHEY_PLAIN, 1.0, textColor);
+      cv::putText(trackingBoxImage, "Tracking", textStartPoint, cv::FONT_HERSHEY_PLAIN, 1.0, textColor);
+
+      const s32 numPixels = bigHeight * bigWidth * 3;
+
+      for(s32 iPixel=0; iPixel<numPixels; iPixel++) {
+        toShowImage.data[iPixel] += trackingBoxImage.data[iPixel];
+      }
     } else { // if(isTracking)
       // Draw markers
       for(s32 iMarker=0; iMarker<static_cast<s32>(visionMarkerList.size()); iMarker++) {
