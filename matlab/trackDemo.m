@@ -158,7 +158,11 @@ CameraCapture('processFcn', @trackHelper, ...
             end
             set(h_img, 'CData', img);
             
-            title(h_axes, sprintf('Error: %.3f', LKtracker.err));
+            if strcmp(TrackerType, 'planar6dof')
+                title(h_axes, sprintf('Pose: %s', LKtracker.poseString), 'FontSize', 12);
+            else
+                title(h_axes, sprintf('Error: %.3f', LKtracker.err));
+            end
             if LKtracker.err < 0.3
                 set(h_axes, 'XColor', 'g', 'YColor', 'g');
             else
