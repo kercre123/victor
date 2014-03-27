@@ -4,6 +4,11 @@ TrackerType = 'affine';
 Calibration = [];
 Downsample = 1;
 NumSamples = 0;
+CalibrationMatrix = [];
+MarkerWidth = [];
+ConvergenceTolerance = 0.25;
+MaxIterations = 25;
+ErrorTolerance = .25;
 
 CamCaptureArgs = parseVarargin(varargin{:});
 
@@ -83,9 +88,10 @@ CameraCapture('processFcn', @trackHelper, ...
             %    'UseNormalization', true, 'TrackingResolution', Downsample);
             
             LKtracker = LucasKanadeTracker(img, corners, ...
-               'Type', TrackerType, 'RidgeWeight', 0, ...
+               'Type', TrackerType, 'RidgeWeight', 0.5, ...
                'DebugDisplay', false, 'UseBlurring', false, ...
-               'UseNormalization', false, 'NumSamples', NumSamples);
+               'UseNormalization', false, 'NumSamples', NumSamples, ...
+               'MarkerWidth', MarkerWidth, 'CalibrationMatrix', CalibrationMatrix);
             
             
             if strcmp(TrackerType, 'homography') && ~isempty(calibration)
@@ -130,7 +136,10 @@ CameraCapture('processFcn', @trackHelper, ...
             end
             
             %t = tic;
-            converged = LKtracker.track(img, 'MaxIterations', 25, 'ConvergenceTolerance', 0.25, 'ErrorTolerance', 0.25);
+            converged = LKtracker.track(img, ...
+                'MaxIterations', MaxIterations, ...
+                'ConvergenceTolerance', ConvergenceTolerance, ...
+                'ErrorTolerance', ErrorTolerance);
             %fprintf('Tracking took %.2f seconds.\n', toc(t));
             
             if ~converged 
