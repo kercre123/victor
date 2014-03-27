@@ -39,12 +39,16 @@ for i_scale = this.numScales:-1:this.finestScale
     %imgBlur = separable_filter(imgBlur, gaussian_kernel(spacing/3));
     %imgBlur = mexGaussianBlur(nextImg, spacing/3, 2);
     
-    % Translation only
-    converged = this.trackHelper(imgBlur{i_scale}, i_scale, false);
-    
-    if converged && ~strcmp(this.tformType, 'translation')
-        % Affine OR Translation + Scale
+    if strcmp(this.tformType, 'planar6dof')
         converged = this.trackHelper(imgBlur{i_scale}, i_scale, true);
+    else
+        % First do translation only
+        converged = this.trackHelper(imgBlur{i_scale}, i_scale, false);
+        
+        if converged && ~strcmp(this.tformType, 'translation')
+            % Non-translation-only trackers
+            converged = this.trackHelper(imgBlur{i_scale}, i_scale, true);
+        end
     end
     
 end % FOR each scale
@@ -66,6 +70,9 @@ if isnan(this.err) || (~isempty(this.errorTolerance) && this.err > this.errorTol
     converged = false;
 end
 
+if converged && strcmp(this.tformType, 'planar6dof')
+    this.plotPose();    
+end
 
 if this.debugDisplay
     hold(this.h_axes, 'off')

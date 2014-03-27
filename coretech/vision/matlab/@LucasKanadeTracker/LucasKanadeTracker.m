@@ -38,7 +38,14 @@ classdef LucasKanadeTracker < handle
         % Full transformation (depending on tformType)
         A_full;
         
-        ridgeWeight = 1e-6;
+        ridgeWeight;
+        
+        % for planar6dof tracker
+        K; % calibration matrix
+        H_init;
+        theta_x; theta_y; theta_z;
+        tx; ty; tz;
+        h_pose;
         
         % Parameters
         minSize;
@@ -75,6 +82,8 @@ classdef LucasKanadeTracker < handle
             ApproximateGradientMargins = true;
             %SampleNearEdges = false;
             NumSamples = [];
+            MarkerWidth = [];
+            CalibrationMatrix = [];
             
             parseVarargin(varargin{:});
             
@@ -85,7 +94,7 @@ classdef LucasKanadeTracker < handle
             
             this.debugDisplay = DebugDisplay;
             this.tformType = Type;
-            
+           
             this.useBlurring = UseBlurring;
             
             this.approximateGradientMargins = ApproximateGradientMargins;
@@ -119,7 +128,110 @@ classdef LucasKanadeTracker < handle
                 y = [ymin ymax ymin ymax]';
             end
                        
-            this.initCorners = [x y];
+                        
+            if strcmp(this.tformType, 'planar6dof')
+                assert(~isempty(CalibrationMatrix), 'Calibration is required when using Planar6DoF tracking.');
+                assert(~isempty(MarkerWidth), 'Marker3D is required when using Planar6DoF tracking.');
+                
+                % Defining canonical 3D marker in camera coordinates:
+                Marker3D = (MarkerWidth/2)*[-1 -1 0; -1 1 0; 1 -1 0; 1 1 0];
+                
+                camera = Camera('calibration', struct( ...
+                    'fc', [CalibrationMatrix(1,1) CalibrationMatrix(2,2)], ...
+                    'cc', [0 0], ...
+                    'alpha_c', 0, ...
+                    'kc', zeros(5,1)));
+                
+                this.K = CalibrationMatrix;
+                
+                % Compute the initial homography mapping the 3D points to
+                % the image plane
+                pose = camera.computeExtrinsics([x-this.K(1,3) y-this.K(2,3)], Marker3D);
+                
+                % Compute Euler angles from R
+                R = pose.Rmat;
+                if abs(1-R(3,1)) < 1e-6 
+                    this.theta_z = 0;
+                    if R(3,1) == 1
+                        this.theta_y = pi/2;
+                        this.theta_x = atan2(R(1,2), R(2,2));
+                    else
+                        this.theta_y = -pi/2;
+                        this.theta_x = atan2(-R(1,2), R(2,2));
+                    end
+                else
+                    this.theta_y = asin(R(3,1));
+                    cy = cos(this.theta_y);
+                    this.theta_x = atan2(-R(3,2)/cy, R(3,3)/cy);
+                    this.theta_z = atan2(-R(2,1)/cy, R(1,1)/cy);
+                end
+                
+                % Pre-compute some repeatedly-used trig values
+                cx = cos(this.theta_x); cy = cos(this.theta_y); cz = cos(this.theta_z);
+                sx = sin(this.theta_x); sy = sin(this.theta_y); sz = sin(this.theta_z);
+                                
+                % Sanity check that Euler angle extraction worked:
+                Rcheck = [cy*cz cx*sz+sx*sy*cz sx*sz-cx*sy*cz; -cy*sz cx*cz-sx*sy*sz sx*cz+cx*sy*sz; sy -sx*cy cx*cy];
+                if any(abs(R(:)-Rcheck(:)) > 1e-2)
+                    warning('Possibly inaccurate RotationMatrix->EulerAngle conversion (Note cos(theta_y)=%f).', cy);
+                end
+                
+                % The translation parameters are just straight from the
+                % pose
+                this.tx = pose.T(1);
+                this.ty = pose.T(2);
+                this.tz = pose.T(3);
+                
+                % Need the partial derivatives at the initial conditions of
+                % the rotation parameters
+                dr11_dthetaX = 0;
+                dr12_dthetaX = -sx*sz + cx*sy*cz;
+                dr21_dthetaX = 0;
+                dr22_dthetaX = -sx*cz - cx*sy*sz;
+                dr31_dthetaX = 0;
+                dr32_dthetaX = -cx*cy;
+                
+                dr11_dthetaY = -sy*cz;
+                dr12_dthetaY = sx*cy*cz;
+                dr21_dthetaY = sy*sz;
+                dr22_dthetaY = -sx*cy*sz;
+                dr31_dthetaY = cy;
+                dr32_dthetaY = sx*sy;
+                
+                dr11_dthetaZ = -cy*sz;
+                dr12_dthetaZ = cx*cz - sx*sy*sz;
+                dr21_dthetaZ = -cy*cz;
+                dr22_dthetaZ = -cx*sz - sx*sy*cz;
+                dr31_dthetaZ = 0;
+                dr32_dthetaZ = 0;
+                
+                % Compute the initial transform (i.e. homography) from the
+                % initial 6DoF parameters
+                this.tform = this.Compute6dofTform();
+                
+                this.initCorners = Marker3D(:,1:2);
+                
+                % DEBUG DISPLAY
+                order = [1 2 4 3 1];
+                h_fig = namedFigure('PoseDisplay');
+                h_poseAxes = subplot(1,1,1, 'Parent', h_fig);
+                hold(h_poseAxes, 'off')
+                plot3(Marker3D(order,1), Marker3D(order,2), Marker3D(order,3), ...
+                    'r', 'LineWidth', 2, 'Parent', h_poseAxes);
+                hold(h_poseAxes, 'on')
+                this.h_pose(1) = plot3(nan, nan, nan, 'r', 'Parent', h_poseAxes);
+                this.h_pose(2) = plot3(nan, nan, nan, 'g', 'Parent', h_poseAxes);
+                this.h_pose(3) = plot3(nan, nan, nan, 'b', 'Parent', h_poseAxes);
+                
+                axis(h_poseAxes, 'equal')
+                grid(h_poseAxes, 'on')
+                    
+            else
+                this.initCorners = [x y];
+            
+                this.tform = eye(3);
+            end
+            
             xmin = floor(min(x)); xmax = ceil(max(x));
             ymin = floor(min(y)); ymax = ceil(max(y));
             
@@ -188,8 +300,13 @@ classdef LucasKanadeTracker < handle
                 
             end % IF TrackingResolution not empty
                         
-            this.xcen = (xmax + xmin)/2;
-            this.ycen = (ymax + ymin)/2;
+            if strcmp(this.tformType, 'planar6dof')
+                this.xcen = this.K(1,3);
+                this.ycen = this.K(2,3);
+            else
+                this.xcen = (xmax + xmin)/2;
+                this.ycen = (ymax + ymin)/2;
+            end
             
             W_sigma = sqrt(this.width^2 + this.height^2)/2;
                         
@@ -203,15 +320,20 @@ classdef LucasKanadeTracker < handle
             this.AtWA_scale = cell(1, this.numScales);
             %}
             
-            this.tform = eye(3);
-            
             for i_scale = this.finestScale:this.numScales
                 
                 spacing = 2^(i_scale-1);
                 
-                [this.xgrid{i_scale}, this.ygrid{i_scale}] = meshgrid( ...
-                    linspace(-this.width/2,  this.width/2,  this.width/spacing), ...
-                    linspace(-this.height/2, this.height/2, this.height/spacing));
+                if strcmp(this.tformType, 'planar6dof')
+                    % Coordinates are 3D plane coordinates
+                    [this.xgrid{i_scale}, this.ygrid{i_scale}] = meshgrid( ...
+                        linspace(-MarkerWidth/2, MarkerWidth/2, this.width/spacing), ...
+                        linspace(-MarkerWidth/2, MarkerWidth/2, this.height/spacing));
+                else
+                    [this.xgrid{i_scale}, this.ygrid{i_scale}] = meshgrid( ...
+                        linspace(-this.width/2,  this.width/2,  this.width/spacing), ...
+                        linspace(-this.height/2, this.height/2, this.height/spacing));
+                end
                 
                 if this.useBlurring
                     imgBlur = separable_filter(firstImg, gaussian_kernel(spacing/3));
@@ -260,6 +382,9 @@ classdef LucasKanadeTracker < handle
                 this.W{i_scale} = W_(:);
                 
                 if Downsample ~= 1
+                    assert(~strcmp(this.tformType, 'planar6dof'), ...
+                        'Planar6DoF tracking and downsampling don''t really make sense...');
+                    
                     % Adjust the target coordinates from original
                     % resolution to tracking resolution. Note that we don't
                     % have to scale around (1,1) here because these
@@ -345,6 +470,66 @@ classdef LucasKanadeTracker < handle
                             X.*Iy(:) Y.*Iy(:) Iy(:) ...
                             -X.^2.*Ix(:)-X.*Y.*Iy(:) -X.*Y.*Ix(:)-Y.^2.*Iy(:)];
                         
+                    case 'planar6dof'
+                        % For whatever reason, the canonical 3D plane is 
+                        % defined in the X-Z plane rather than X-Y
+                        % Params ordered as:
+                        % [thetaX thetaY thetaZ tX tY tZ]
+                        
+                        % Map the image coordinates into 3D coordinates for
+                        % computing the template Jacobian
+                        X = this.xgrid{i_scale}(:);
+                        Y = this.ygrid{i_scale}(:);
+                        
+                        % three components of the projection (this is Nx3)
+                        p = (this.tform*[X Y ones(length(X),1)]')';
+                        assert(~any(p(:,3)==0));
+                        
+                        denomSq = p(:,3).^2;
+                        
+                        fx = CalibrationMatrix(1,1);
+                        fy = CalibrationMatrix(2,2);
+                        
+                        % Compute all the partial derivatives for computing
+                        % the Jacobian w.r.t. each parameter
+                        
+                        dWu_dtx = fx./p(:,3);
+                        dWu_dty = 0;
+                        dWu_dtz = -p(:,1) ./ denomSq;
+                        
+                        dWv_dtx = 0;
+                        dWv_dty = fy./p(:,3);
+                        dWv_dtz = -p(:,2) ./ denomSq;
+                        
+                        dWu_dthetaX = (fx*p(:,3).*(dr11_dthetaX*X + dr12_dthetaX*Y) - ...
+                            (dr31_dthetaX*X + dr32_dthetaX*Y).*p(:,1)) ./ denomSq;
+                        
+                        dWu_dthetaY = (fx*p(:,3).*(dr11_dthetaY*X + dr12_dthetaY*Y) - ...
+                            (dr31_dthetaY*X + dr32_dthetaY*Y).*p(:,1)) ./ denomSq;
+                        
+                        dWu_dthetaZ = (fx*p(:,3).*(dr11_dthetaZ*X + dr12_dthetaZ*Y) - ...
+                            (dr31_dthetaZ*X + dr32_dthetaZ*Y).*p(:,1)) ./ denomSq;
+                        
+                        dWv_dthetaX = (fy*p(:,3).*(dr21_dthetaX*X + dr22_dthetaX*Y) - ...
+                            (dr31_dthetaX*X + dr32_dthetaX*Y).*p(:,2)) ./ denomSq;
+                        
+                        dWv_dthetaY = (fy*p(:,3).*(dr21_dthetaY*X + dr22_dthetaY*Y) - ...
+                            (dr31_dthetaY*X + dr32_dthetaY*Y).*p(:,2)) ./ denomSq;
+                        
+                        dWv_dthetaZ = (fy*p(:,3).*(dr21_dthetaZ*X + dr22_dthetaZ*Y) - ...
+                            (dr31_dthetaZ*X + dr32_dthetaZ*Y).*p(:,2)) ./ denomSq;
+                                               
+                        Ix = Ix(:); 
+                        Iy = Iy(:);
+                        
+                        this.A_full{i_scale} = [ ...
+                            Ix.*dWu_dthetaX + Iy.*dWv_dthetaX ...
+                            Ix.*dWu_dthetaY + Iy.*dWv_dthetaY ...
+                            Ix.*dWu_dthetaZ + Iy.*dWv_dthetaZ ...
+                            Ix.*dWu_dtx + Iy.*dWv_dtx ...
+                            Ix.*dWu_dty + Iy.*dWv_dty ...
+                            Ix.*dWu_dtz + Iy.*dWv_dtz ];
+                        
                     otherwise
                         error('Unecognized transformation type "%s".', ...
                             this.tformType);
@@ -387,6 +572,64 @@ classdef LucasKanadeTracker < handle
     methods(Access = 'protected')
         
         converged = trackHelper(this, img, i_scale, translationDone);           
+        
+        function tform = Compute6dofTform(this)
+            cx = cos(this.theta_x);
+            cy = cos(this.theta_y);
+            cz = cos(this.theta_z);
+            
+            sx = sin(this.theta_x);
+            sy = sin(this.theta_y);
+            sz = sin(this.theta_z);
+            
+            r11 = cy*cz;
+            r12 = cx*sz + sx*sy*cz;
+            %r13 = sx*sz - cx*sy*cz;
+            r21 = -cy*sz;
+            r22 = cx*cz - sx*sy*sz;
+            %r23 = sx*cz + cx*sy*sz;
+            r31 = sy;
+            r32 = -sx*cy;
+            %r33 = cx*cy;
+           
+            tform = [this.K(1,1)*[r11 r12 this.tx];
+                     this.K(2,2)*[r21 r22 this.ty];
+                                 [r31 r32 this.tz]];
+                             
+        end % Compute6dofTform()
+        
+        function plotPose(this)
+            
+            poseSize = 10;
+            
+            Pbase = [0 1 0 0;
+                0 0 1 0;
+                0 0 0 1] * poseSize;
+            
+            cx = cos(this.theta_x);
+            cy = cos(this.theta_y);
+            cz = cos(this.theta_z);
+            
+            sx = sin(this.theta_x);
+            sy = sin(this.theta_y);
+            sz = sin(this.theta_z);
+            R = [cy*cz cx*sz+sx*sy*cz sx*sz-cx*sy*cz; ...
+                -cy*sz cx*cz-sx*sy*sz sx*cz+cx*sy*sz; ...
+                sy -sx*cy cx*cy];
+            
+            P = R*Pbase + [this.tx; this.ty; this.tz]*ones(1,4);
+            
+            set(this.h_pose(1), 'XData', P(1,[1 2]), 'YData', P(2,[1 2]), 'ZData', P(3,[1 2]));
+            set(this.h_pose(2), 'XData', P(1,[1 3]), 'YData', P(2,[1 3]), 'ZData', P(3,[1 3]));
+            set(this.h_pose(3), 'XData', P(1,[1 4]), 'YData', P(2,[1 4]), 'ZData', P(3,[1 4]));
+            
+            set(get(get(this.h_pose(1), 'Parent'), 'Title'), 'String', ...
+                sprintf('\\theta_x = %.1f, \\theta_y = %.1f, \\theta_z = %.1f, t_x = %.3f, t_y = %.3f, t_z = %.3f', ...
+                this.theta_x*180/pi, this.theta_y*180/pi, this.theta_z*180/pi, ...
+                this.tx, this.ty, this.tz));
+            
+            drawnow
+        end
         
     end % protected methods
     

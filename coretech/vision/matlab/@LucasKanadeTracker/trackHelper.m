@@ -14,12 +14,14 @@ while iteration < this.maxIterations
     
     [xi, yi] = this.getImagePoints(i_scale);
     
-    % RMS error between pixel locations according to current
-    % transformation and previous locations.
-    change = sqrt(mean((xPrev(:)-xi(:)).^2 + (yPrev(:)-yi(:)).^2));
-    if change < this.convergenceTolerance*spacing
-        converged = true;
-        break;
+    if ~strcmp(this.tformType, 'planar6dof')
+        % RMS error between pixel locations according to current
+        % transformation and previous locations.
+        change = sqrt(mean((xPrev(:)-xi(:)).^2 + (yPrev(:)-yi(:)).^2));
+        if change < this.convergenceTolerance*spacing
+            converged = true;
+            break;
+        end
     end
     
     imgi = interp2(img, xi(:), yi(:), 'linear');
@@ -100,6 +102,31 @@ while iteration < this.maxIterations
     % Compose the update with the current transformation
     if translationDone
         
+        if strcmp(this.tformType, 'planar6dof')
+            
+            % Check to see if parameters have converged
+            % (convergence tolerance is percentage change of the
+            % parameters)
+            if all(abs(update(1:3)) < this.convergenceTolerance.angle) && ...
+                    all(abs(update(4:6)) < this.convergenceTolerance.distance)
+                converged = true;
+                break;
+            end
+            
+            
+            % Subtracting the update because we're using inverse
+            % composition (?)
+            this.theta_x = this.theta_x - update(1);
+            this.theta_y = this.theta_y - update(2);
+            this.theta_z = this.theta_z - update(3);
+            
+            this.tx = this.tx - update(4);
+            this.ty = this.ty - update(5);
+            this.tz = this.tz - update(6);
+                
+            this.tform = this.Compute6dofTform();
+        else
+            
         switch(this.tformType)
             case 'rotation'
                 cosTheta = cos(update(3));
@@ -126,6 +153,9 @@ while iteration < this.maxIterations
         % TODO: hardcode this inverse
         %this.tform = this.tform*inv(tformUpdate);
         this.tform = this.tform / tformUpdate;
+        
+        end % if planar6dof or not
+        
     else
         %this.tx = this.tx + update(1);
         %this.ty = this.ty + update(2);
