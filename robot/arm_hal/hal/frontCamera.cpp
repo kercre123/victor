@@ -44,11 +44,7 @@ namespace Anki
       };
       
       const u8 OV7725_VGA[][2] =
-      {
-#ifdef THIS_IS_PETES_BOARD
-        0xac, 0x0f, // DSP Auto Function ON/OFF Control
-#endif        
-        
+      {       
         0x12, 0x80,
         //0x3d, 0x03,        
         0x12, 0x40,  // QVGA | "YUV"/"Bayer"     
@@ -69,6 +65,7 @@ namespace Anki
         0x63, 0xe0,  // AWB Control Byte 0       
         
 #ifdef THIS_IS_PETES_BOARD
+        //0xac, 0x0f, // DSP Auto Function ON/OFF Control
         0x64, 0xfb,  // DSP_Ctrl1
 #else
         0x64, 0xff,  // DSP_Ctrl1
@@ -98,6 +95,17 @@ namespace Anki
         0x13, 0xe6,  // COM8 - AGC stuff... Enable all but AEC
         0x90, 0x05,  // Sharpness Control 1 - threshold detection
         0x91, 0x01,  // Auto De-noise Threshold Control
+        
+#ifdef THIS_IS_PETES_BOARD       
+        // Lens correction control
+        0x46, 0x01, // on/off and RGB
+        0x47, 0x00, // x center
+        0x48, 0x00, // y center
+        0x49, 0x20, // RGB (or G) coefficient
+        0x4a, 0x27, // radius
+//        0x4b, 0x70, // B coefficient
+        //0x4c, 0x70, // R coefficient
+#endif        
         
 #ifdef THIS_IS_PETES_BOARD               
         0x92, 0x00,  // Sharpness Strength Upper Limit

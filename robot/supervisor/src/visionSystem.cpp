@@ -47,8 +47,8 @@ static bool isInitialized_ = false;
 #ifdef THIS_IS_PETES_BOARD
 #define SEND_DEBUG_STREAM
 #define RUN_SIMPLE_TRACKING_TEST
-#define SEND_IMAGE_ONLY
-#define SEND_BINARY_IMAGE_ONLY
+//#define SEND_IMAGE_ONLY
+//#define SEND_BINARY_IMAGE_ONLY
 #endif
 
 #define DOCKING_LUCAS_KANADE_SLOW               1 //< LucasKanadeTracker_Slow (doesn't seem to work?)
@@ -270,8 +270,8 @@ struct TrackerParameters {
     //edgeDetection_grayvalueThreshold    = 128;
     edgeDetection_threshold_yIncrement = 4;
     edgeDetection_threshold_xIncrement = 4;
-    edgeDetection_threshold_blackPercentile = 0.1f;
-    edgeDetection_threshold_whitePercentile = 0.9f;
+    edgeDetection_threshold_blackPercentile = 0.20f;
+    edgeDetection_threshold_whitePercentile = 0.80f;
     edgeDetection_threshold_scaleRegionPercent = 0.8f;
     edgeDetection_minComponentWidth     = 2;
     edgeDetection_maxDetectionsPerType  = 2500;
@@ -1979,13 +1979,12 @@ namespace Anki {
         
 #ifdef SEND_BINARY_IMAGE_ONLY
         DebugStream::SendBinaryImage(grayscaleImage, VisionState::tracker_, trackerParameters_, VisionMemory::ccmScratch_, VisionMemory::onchipScratch_, VisionMemory::offchipScratch_);            
+        HAL::MicroWait(250000);
 #else
         DebugStream::SendArray(grayscaleImage);
+        HAL::MicroWait(1000000);
 #endif
-                
-        // The UART can't handle this at full rate, so wait a bit between each frame
-        HAL::MicroWait(100000);
-                
+                        
         return EXIT_SUCCESS;
 #endif
 
