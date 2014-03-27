@@ -38,6 +38,9 @@ using namespace std;
 static const s32 scratchSize = 1000000;
 static u8 scratchBuffer[scratchSize];
 
+const s32 outputFilenamePatternLength = 1024;
+char outputFilenamePattern[outputFilenamePatternLength] = "C:/Users/Pete/Box Sync/Cozmo SE/systemTestImages/cozmo_date%04d_%02d_%02d_time%02d_%02d_%02d_frame%d.%s";
+
 void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchingSegmentLengths)
 {
   const s32 bigHeight = 480;
@@ -354,7 +357,21 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
     } // if(isTracking) ... else
 
     cv::imshow("Robot Image", toShowImage);
-    cv::waitKey(10);
+    s32 pressedKey = cv::waitKey(10);
+    //printf("%d\n", pressedKey);
+    if(pressedKey == 99) { // c
+      const time_t t = time(0);   // get time now
+      const struct tm * currentTime = localtime(&t);
+      char outputFilename[1024];
+      snprintf(&outputFilename[0], 1024, outputFilenamePattern,
+        currentTime->tm_year+1900, currentTime->tm_mon+1, currentTime->tm_mday,
+        currentTime->tm_hour, currentTime->tm_min, currentTime->tm_sec,
+        0,
+        "png");
+
+      printf("Saving to %s", outputFilename);
+      cv::imwrite(outputFilename, lastImage);
+    }
   } else { // if(lastImage.rows > 0)
     cv::waitKey(1);
   }
