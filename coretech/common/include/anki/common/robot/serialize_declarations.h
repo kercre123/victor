@@ -125,6 +125,11 @@ namespace Anki
       // endIndex is the location before the footer, or -1 if one is not found
       static Result FindSerializedBuffer(const void * rawBuffer, const s32 rawBufferLength, s32 &startIndex, s32 &endIndex);
 
+      // The first part of an object, after the header, is its 0-31 character name
+      // The objectName can either be null, or a buffer of at least 32 bytes
+      static Result SerializeRawObjectName(const char *objectName, void ** buffer, s32 &bufferLength);
+      static Result DeserializeRawObjectName(    char *objectName, void ** buffer, s32 &bufferLength);
+
       // Warning: Complex structures or classes require an explicit specialization
       // Updates the buffer pointer and length before returning
       template<typename Type> static Result SerializeRaw(               const char *objectName, const Type &in,                  void ** buffer, s32 &bufferLength);

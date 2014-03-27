@@ -169,6 +169,62 @@ namespace Anki
       return RESULT_OK;
     } // void FindSerializedBuffer(const void * rawBuffer, s32 &startIndex, s32 &endIndex)
 
+    Result SerializedBuffer::SerializeRawObjectName(const char *objectName, void ** buffer, s32 &bufferLength)
+    {
+      if(bufferLength < DESCRIPTION_STRING_LENGTH) {
+        return RESULT_FAIL_OUT_OF_MEMORY;
+      }
+
+      u8 * bufferU8 = *reinterpret_cast<u8**>(buffer);
+
+      s32 iChar = 0;
+
+      // If objectName is not NULL, copy it
+      if(objectName) {
+        for(iChar=0; iChar<(DESCRIPTION_STRING_LENGTH-1); iChar++) {
+          if(objectName[iChar] == '\0') {
+            break;
+          }
+
+          bufferU8[iChar] = objectName[iChar];
+        }
+      } // if(objectName)
+
+      bufferU8[iChar] = '\0';
+
+      *reinterpret_cast<u8**>(buffer) += DESCRIPTION_STRING_LENGTH;
+      bufferLength -= DESCRIPTION_STRING_LENGTH;
+
+      return RESULT_OK;
+    }
+
+    Result SerializedBuffer::DeserializeRawObjectName(char *objectName, void ** buffer, s32 &bufferLength)
+    {
+      if(bufferLength < DESCRIPTION_STRING_LENGTH) {
+        return RESULT_FAIL_OUT_OF_MEMORY;
+      }
+
+      if(objectName) {
+        u8 * bufferU8 = *reinterpret_cast<u8**>(buffer);
+        s32 iChar = 0;
+
+        for(iChar=0; iChar<(DESCRIPTION_STRING_LENGTH-1); iChar++) {
+          if(bufferU8[iChar] == '\0') {
+            break;
+          }
+
+          objectName[iChar] = bufferU8[iChar];
+        }
+
+        objectName[iChar] = '\0';
+      }
+
+      *reinterpret_cast<u8**>(buffer) += DESCRIPTION_STRING_LENGTH;
+      bufferLength -= DESCRIPTION_STRING_LENGTH;
+
+      return RESULT_OK;
+    }
+
     void* SerializedBuffer::PushBackRaw(const void * data, const s32 dataLength)
     {
       void* dataSegment = reinterpret_cast<u8*>(memoryStack.get_buffer()) + memoryStack.get_usedBytes();
@@ -227,7 +283,7 @@ namespace Anki
       //    NULL, "SerializedBuffer::PushBack", "data must be 4-byte aligned");
       //}
 
-      const s32 totalLength = RoundUp<s32>(dataLength, 4) + headerLength;
+      const s32 totalLength = RoundUp<s32>(dataLength, 4) + headerLength + DESCRIPTION_STRING_LENGTH;
 
       const s32 bytesRequired = totalLength + SERIALIZED_SEGMENT_HEADER_LENGTH + SERIALIZED_SEGMENT_FOOTER_LENGTH;
 
@@ -247,6 +303,13 @@ namespace Anki
       crc =  ComputeCRC32(segmentU32, SERIALIZED_SEGMENT_HEADER_LENGTH, crc);
 
       segmentU32 += (SERIALIZED_SEGMENT_HEADER_LENGTH>>2);
+
+      // Serialize the object name before the type header
+      {
+        s32 bufferLength = totalLength;
+        if(SerializeRawObjectName(objectName, reinterpret_cast<void**>(&segmentU32), bufferLength) != RESULT_OK)
+          return NULL;
+      }
 
       if(header != NULL) {
         // Endian-safe copy (it may copy a little extra)

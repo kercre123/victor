@@ -349,6 +349,9 @@ namespace Anki
 
     Result EdgeLists::Deserialize(char *objectName, void** buffer, s32 &bufferLength, MemoryStack &memory)
     {
+      if(SerializedBuffer::DeserializeRawObjectName(objectName, buffer, bufferLength) != RESULT_OK)
+        return RESULT_FAIL;
+
       this->imageHeight = SerializedBuffer::DeserializeRaw<s32>(NULL, buffer, bufferLength);
       this->imageWidth = SerializedBuffer::DeserializeRaw<s32>(NULL, buffer, bufferLength);
       this->xDecreasing = SerializedBuffer::DeserializeRawFixedLengthList<Point<s16> >(NULL, buffer, bufferLength, memory);

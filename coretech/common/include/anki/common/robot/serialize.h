@@ -335,6 +335,9 @@ namespace Anki
 
     template<typename Type> Result SerializedBuffer::SerializeRaw(const char *objectName, const Type &in, void ** buffer, s32 &bufferLength)
     {
+      if(SerializeRawObjectName(objectName, buffer, bufferLength) != RESULT_OK)
+        return RESULT_FAIL;
+
       memcpy(*buffer, &in, sizeof(Type));
 
       *buffer = reinterpret_cast<u8*>(*buffer) + sizeof(Type);
@@ -345,6 +348,9 @@ namespace Anki
 
     template<typename Type> Result SerializedBuffer::SerializeRawArray(const char *objectName, const Array<Type> &in, void ** buffer, s32 &bufferLength)
     {
+      if(SerializeRawObjectName(objectName, buffer, bufferLength) != RESULT_OK)
+        return RESULT_FAIL;
+
       EncodedArray code;
 
       if(EncodeArrayType<Type>(in, code) != RESULT_OK)
@@ -367,6 +373,9 @@ namespace Anki
     {
       AnkiConditionalErrorAndReturnValue(in.get_array().IsValid(),
         RESULT_FAIL, "SerializedBuffer::SerializeRawArraySlice", "in ArraySlice is not Valid");
+
+      if(SerializeRawObjectName(objectName, buffer, bufferLength) != RESULT_OK)
+        return RESULT_FAIL;
 
       // TODO: are the alignment restrictions still required for the M4?
       //AnkiConditionalErrorAndReturnValue(reinterpret_cast<size_t>(in)%4 == 0,
@@ -428,6 +437,8 @@ namespace Anki
 
     template<typename Type> Type SerializedBuffer::DeserializeRaw(char *objectName, void ** buffer, s32 &bufferLength)
     {
+      DeserializeRawObjectName(objectName, buffer, bufferLength);
+
       const Type var = *reinterpret_cast<Type*>(*buffer);
 
       *buffer = reinterpret_cast<u8*>(*buffer) + sizeof(Type);
@@ -447,6 +458,8 @@ namespace Anki
       bool basicType_isInteger;
       bool basicType_isSigned;
       bool basicType_isFloat;
+
+      DeserializeRawObjectName(objectName, buffer, bufferLength);
 
       {
         const u32 * bufferU32 = reinterpret_cast<const u32*>(*buffer);
@@ -497,6 +510,8 @@ namespace Anki
       bool basicType_isInteger;
       bool basicType_isSigned;
       bool basicType_isFloat;
+
+      DeserializeRawObjectName(objectName, buffer, bufferLength);
 
       {
         const u32 * bufferU32 = reinterpret_cast<const u32*>(*buffer);

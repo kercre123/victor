@@ -347,6 +347,9 @@ namespace Anki
 
       Result PlanarTransformation_f32::SerializeRaw(const char *objectName, void ** buffer, s32 &bufferLength) const
       {
+        if(SerializedBuffer::SerializeRawObjectName(objectName, buffer, bufferLength) != RESULT_OK)
+          return RESULT_FAIL;
+
         SerializedBuffer::SerializeRaw<bool>("isValid", this->isValid, buffer, bufferLength);
         SerializedBuffer::SerializeRaw<s32>("transformType", this->transformType, buffer, bufferLength);
         SerializedBuffer::SerializeRawArray<f32>("homography", this->homography, buffer, bufferLength);
@@ -358,6 +361,9 @@ namespace Anki
 
       Result PlanarTransformation_f32::Deserialize(char *objectName, void** buffer, s32 &bufferLength, MemoryStack &memory)
       {
+        if(SerializedBuffer::DeserializeRawObjectName(objectName, buffer, bufferLength) != RESULT_OK)
+          return RESULT_FAIL;
+
         this->isValid = SerializedBuffer::DeserializeRaw<bool>(NULL, buffer, bufferLength);
         this->transformType = static_cast<Transformations::TransformType>(SerializedBuffer::DeserializeRaw<s32>(NULL, buffer, bufferLength));
         this->homography = SerializedBuffer::DeserializeRawArray<f32>(NULL, buffer, bufferLength, memory);

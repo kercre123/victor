@@ -536,8 +536,11 @@ namespace Anki
       return SerializeRaw(objectName, &afterHeader, requiredBytes);
     }
 
-    Result VisionMarker::SerializeRaw(const char * objectName, void ** buffer, s32 &bufferLength) const
+    Result VisionMarker::SerializeRaw(const char *objectName, void ** buffer, s32 &bufferLength) const
     {
+      if(SerializedBuffer::SerializeRawObjectName(objectName, buffer, bufferLength) != RESULT_OK)
+        return RESULT_FAIL;
+
       SerializedBuffer::SerializeRaw<Quadrilateral<s16> >("corners", this->corners, buffer, bufferLength);
       SerializedBuffer::SerializeRaw<s32>("markerType", this->markerType, buffer, bufferLength);
       SerializedBuffer::SerializeRaw<bool>("isValid", this->isValid, buffer, bufferLength);
@@ -547,6 +550,9 @@ namespace Anki
 
     Result VisionMarker::Deserialize(char *objectName, void** buffer, s32 &bufferLength)
     {
+      if(SerializedBuffer::DeserializeRawObjectName(objectName, buffer, bufferLength) != RESULT_OK)
+        return RESULT_FAIL;
+
       this->corners = SerializedBuffer::DeserializeRaw<Quadrilateral<s16> >(NULL, buffer, bufferLength);
       this->markerType = static_cast<Vision::MarkerType>(SerializedBuffer::DeserializeRaw<s32>(NULL, buffer, bufferLength));
       this->isValid = SerializedBuffer::DeserializeRaw<bool>(NULL, buffer, bufferLength);

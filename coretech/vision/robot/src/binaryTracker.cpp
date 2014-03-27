@@ -266,6 +266,9 @@ namespace Anki
 
       Result BinaryTracker::Deserialize(char *objectName, void** buffer, s32 &bufferLength, MemoryStack &memory)
       {
+        if(SerializedBuffer::DeserializeRawObjectName(objectName, buffer, bufferLength) != RESULT_OK)
+          return RESULT_FAIL;
+
         // First, deserialize the transformation
         //this->transformation = Transformations::PlanarTransformation_f32(Transformations::TRANSFORM_PROJECTIVE, memory);
         this->transformation.Deserialize(objectName, buffer, bufferLength, memory);
