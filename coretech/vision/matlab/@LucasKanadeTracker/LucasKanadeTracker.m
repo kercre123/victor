@@ -244,12 +244,12 @@ classdef LucasKanadeTracker < handle
                this.width  = this.width  * (1 + TemplateRegionPaddingFraction);
                
                xmid = (xmax+xmin)/2;
-               xmin = xmid - this.width/2;
-               xmax = xmid + this.width/2;
+               xmin = round(xmid - this.width/2);
+               xmax = round(xmid + this.width/2);
                
                ymid = (ymax+ymin)/2;
-               ymin = ymid - this.height/2;
-               ymax = ymid + this.height/2;
+               ymin = round(ymid - this.height/2);
+               ymax = round(ymid + this.height/2);
             end
             
             maskBBox = [xmin ymin xmax-xmin ymax-ymin];
@@ -327,9 +327,10 @@ classdef LucasKanadeTracker < handle
                 
                 if strcmp(this.tformType, 'planar6dof')
                     % Coordinates are 3D plane coordinates
+                    M = (1 + TemplateRegionPaddingFraction)*MarkerWidth/2;
                     [this.xgrid{i_scale}, this.ygrid{i_scale}] = meshgrid( ...
-                        linspace(-MarkerWidth/2, MarkerWidth/2, this.width/spacing), ...
-                        linspace(-MarkerWidth/2, MarkerWidth/2, this.height/spacing));
+                        linspace(-M, M, this.width/spacing), ...
+                        linspace(-M, M, this.height/spacing));
                 else
                     [this.xgrid{i_scale}, this.ygrid{i_scale}] = meshgrid( ...
                         linspace(-this.width/2,  this.width/2,  this.width/spacing), ...
