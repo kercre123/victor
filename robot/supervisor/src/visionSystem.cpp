@@ -48,6 +48,7 @@ static bool isInitialized_ = false;
 #define SEND_DEBUG_STREAM
 #define RUN_SIMPLE_TRACKING_TEST
 #define SEND_IMAGE_ONLY
+#define SEND_BINARY_IMAGE_ONLY
 #endif
 
 #define DOCKING_LUCAS_KANADE_SLOW               1 //< LucasKanadeTracker_Slow (doesn't seem to work?)
@@ -55,7 +56,7 @@ static bool isInitialized_ = false;
 #define DOCKING_LUCAS_KANADE_PROJECTIVE         3 //< LucasKanadeTracker_Projective (With Projective + Affine option)
 #define DOCKING_LUCAS_KANADE_SAMPLED_PROJECTIVE 4 //< BinaryTracker
 #define DOCKING_BINARY_TRACKER                  5 //< BinaryTracker
-#define DOCKING_ALGORITHM DOCKING_LUCAS_KANADE_SAMPLED_PROJECTIVE
+#define DOCKING_ALGORITHM DOCKING_BINARY_TRACKER
 
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SLOW
 typedef TemplateTracker::LucasKanadeTracker_Slow Tracker;
@@ -362,14 +363,15 @@ namespace DebugStream
   static ReturnCode SendTrackingUpdate(const Array<u8> &image, const Transformations::PlanarTransformation_f32 &transformation, const TrackerParameters &parameters, MemoryStack ccmScratch, MemoryStack onchipScratch, MemoryStack offchipScratch) { return EXIT_SUCCESS; }
   //static ReturnCode SendPrintf(const char * string) { return EXIT_SUCCESS; }
   static ReturnCode SendArray(const Array<u8> &array) { return EXIT_SUCCESS; }
+  static ReturnCode SendBinaryImage(const Array<u8> &grayscaleImage, const Tracker &tracker, const TrackerParameters &parameters, MemoryStack ccmScratch, MemoryStack onchipScratch, MemoryStack offchipScratch) { return EXIT_SUCCESS; }
 
 #if DOCKING_ALGORITHM ==  DOCKING_BINARY_TRACKER
   static ReturnCode SendBinaryTracker(const TemplateTracker::BinaryTracker &tracker, MemoryStack ccmScratch, MemoryStack onchipScratch, MemoryStack offchipScratch) { return EXIT_SUCCESS; }
 #endif
 
 #else // #if !defined(SEND_DEBUG_STREAM)
-  //static const HAL::CameraMode debugStreamResolution_ = HAL::CAMERA_MODE_QQQVGA;
-  static const HAL::CameraMode debugStreamResolution_ = HAL::CAMERA_MODE_QVGA;
+  static const HAL::CameraMode debugStreamResolution_ = HAL::CAMERA_MODE_QQQVGA;
+  //static const HAL::CameraMode debugStreamResolution_ = HAL::CAMERA_MODE_QVGA;
 
   static f32 lastBenchmarkTime_algorithmsOnly;
   static f32 lastBenchmarkDuration_algorithmsOnly;
@@ -546,7 +548,7 @@ namespace DebugStream
 
     // The UART can't handle this at full rate, so wait a bit between each frame
     if(debugStreamResolution_ == HAL::CAMERA_MODE_QVGA) {
-      HAL::MicroWait(5000000);
+      HAL::MicroWait(1000000);
     }
     
     return result;
@@ -577,6 +579,42 @@ namespace DebugStream
     debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
     debugStreamBuffer_.PushBack(array);
     return SendBuffer(debugStreamBuffer_);
+  }
+  
+  static ReturnCode SendBinaryImage(const Array<u8> &grayscaleImage, const Tracker &tracker, const TrackerParameters &parameters, MemoryStack ccmScratch, MemoryStack onchipScratch, MemoryStack offchipScratch)
+  {
+    DebugStream::debugStreamBuffer_ = SerializedBuffer(&DebugStream::debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
+    
+    EdgeLists edgeLists;
+
+    edgeLists.imageHeight = grayscaleImage.get_size(0);
+    edgeLists.imageWidth = grayscaleImage.get_size(1);
+
+    edgeLists.xDecreasing = FixedLengthList<Point<s16> >(parameters.edgeDetection_maxDetectionsPerType, offchipScratch);
+    edgeLists.xIncreasing = FixedLengthList<Point<s16> >(parameters.edgeDetection_maxDetectionsPerType, offchipScratch);
+    edgeLists.yDecreasing = FixedLengthList<Point<s16> >(parameters.edgeDetection_maxDetectionsPerType, offchipScratch);
+    edgeLists.yIncreasing = FixedLengthList<Point<s16> >(parameters.edgeDetection_maxDetectionsPerType, offchipScratch);
+
+    DetectBlurredEdges(
+      grayscaleImage,
+      60,
+      parameters.edgeDetection_minComponentWidth, parameters.edgeDetection_everyNLines,
+      edgeLists);
+
+    edgeLists.Serialize(debugStreamBuffer_);
+
+    const s32 height = CameraModeInfo[debugStreamResolution_].height;
+    const s32 width  = CameraModeInfo[debugStreamResolution_].width;
+    
+    Array<u8> imageSmall(height, width, offchipScratch);
+    
+    DownsampleHelper(grayscaleImage, imageSmall, ccmScratch);
+    
+    debugStreamBuffer_.PushBack(imageSmall);
+    
+    const ReturnCode result = SendBuffer(debugStreamBuffer_);
+        
+    return result;
   }
 #endif // #ifdef SEND_DEBUG_STREAM
 
@@ -1939,14 +1977,14 @@ namespace Anki {
         HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
           captureResolution_, exposure, false);
         
-        //Array<u8> imageSmall(60, 80, VisionMemory::onchipScratch_);
-        //DownsampleHelper(grayscaleImage, imageSmall, VisionMemory::onchipScratch_);
-            
+#ifdef SEND_BINARY_IMAGE_ONLY
+        DebugStream::SendBinaryImage(grayscaleImage, VisionState::tracker_, trackerParameters_, VisionMemory::ccmScratch_, VisionMemory::onchipScratch_, VisionMemory::offchipScratch_);            
+#else
         DebugStream::SendArray(grayscaleImage);
-        //DebugStream::SendArray(imageSmall);
-        
+#endif
+                
         // The UART can't handle this at full rate, so wait a bit between each frame
-        HAL::MicroWait(1000000);
+        HAL::MicroWait(100000);
                 
         return EXIT_SUCCESS;
 #endif
