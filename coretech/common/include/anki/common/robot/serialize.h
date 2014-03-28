@@ -358,7 +358,7 @@ namespace Anki
 
       SerializedBuffer::EncodedBasicTypeBuffer::Serialize<Type>(true, inLength/sizeof(Type), buffer, bufferLength);
 
-      memcpy(*buffer, in, inLength);
+      memcpy(*buffer, in, inLength*sizeof(Type));
 
       *buffer = reinterpret_cast<u8*>(*buffer) + inLength;
       bufferLength -= inLength;

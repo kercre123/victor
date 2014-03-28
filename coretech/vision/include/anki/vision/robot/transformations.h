@@ -119,7 +119,7 @@ namespace Anki
         // Transform this object's initialCorners, based on its current homography
         Quadrilateral<f32> get_transformedCorners(MemoryStack scratch) const;
 
-        s32 get_SerializationSize() const;
+        static s32 get_serializationSize();
 
       protected:
 

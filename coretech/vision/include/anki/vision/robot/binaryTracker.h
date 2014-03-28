@@ -84,7 +84,7 @@ namespace Anki
         Result set_transformation(const Transformations::PlanarTransformation_f32 &transformation);
         Transformations::PlanarTransformation_f32 get_transformation() const;
 
-        s32 get_SerializationSize() const;
+        s32 get_serializationSize() const;
 
         // The last used threshold is the last threshold that was used to binarize an image
         // The last threshold is the value computed on the last image, that will be used for the next image

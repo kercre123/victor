@@ -36,7 +36,7 @@ namespace Anki
       Result Serialize(const char *objectName, SerializedBuffer &buffer) const;
       Result Deserialize(char *objectName, void** buffer, s32 &bufferLength, MemoryStack &memory); // Updates the buffer pointer and length before returning
 
-      s32 get_SerializationSize() const;
+      s32 get_serializationSize() const;
 
 #if defined(ANKICORETECH_EMBEDDED_USE_OPENCV) && ANKICORETECH_EMBEDDED_USE_OPENCV
       // Allocates the returned cv::Mat on the heap

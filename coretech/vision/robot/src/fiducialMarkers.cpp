@@ -517,7 +517,7 @@ namespace Anki
 
     Result VisionMarker::Serialize(const char *objectName, SerializedBuffer &buffer) const
     {
-      s32 totalDataLength = this->get_SerializationSize();
+      s32 totalDataLength = this->get_serializationSize();
 
       void *segment = buffer.Allocate("VisionMarker", objectName, totalDataLength);
 
@@ -530,7 +530,7 @@ namespace Anki
 
     Result VisionMarker::SerializeRaw(const char *objectName, void ** buffer, s32 &bufferLength) const
     {
-      if(SerializedBuffer::SerializeDescriptionStrings("VisionMarker", objectName, reinterpret_cast<void**>(&buffer), bufferLength) != RESULT_OK)
+      if(SerializedBuffer::SerializeDescriptionStrings("VisionMarker", objectName, buffer, bufferLength) != RESULT_OK)
         return RESULT_FAIL;
 
       SerializedBuffer::SerializeRawBasicType<Quadrilateral<s16> >("corners", this->corners, buffer, bufferLength);
@@ -784,10 +784,10 @@ namespace Anki
       return lastResult;
     } // VisionMarker::Extract()
 
-    s32 VisionMarker::get_SerializationSize() const
+    s32 VisionMarker::get_serializationSize() const
     {
       // TODO: make the correct length
-      return 16 + 2*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
+      return 64 + 8*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
     }
   } // namespace Embedded
 } // namespace Anki

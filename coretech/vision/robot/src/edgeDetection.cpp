@@ -321,7 +321,7 @@ namespace Anki
 
     Result EdgeLists::Serialize(const char *objectName, SerializedBuffer &buffer) const
     {
-      s32 totalDataLength = this->get_SerializationSize();
+      s32 totalDataLength = this->get_serializationSize();
 
       void *segment = buffer.Allocate("EdgeLists", objectName, totalDataLength);
 
@@ -359,7 +359,7 @@ namespace Anki
       return RESULT_OK;
     }
 
-    s32 EdgeLists::get_SerializationSize() const
+    s32 EdgeLists::get_serializationSize() const
     {
       // TODO: make the correct length
 
@@ -374,7 +374,7 @@ namespace Anki
         RoundUp<size_t>(yDecreasingUsed, MEMORY_ALIGNMENT) +
         RoundUp<size_t>(yIncreasingUsed, MEMORY_ALIGNMENT);
 
-      const s32 requiredBytes = 512 + numTemplatePixels*sizeof(Point<s16>) + 2*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
+      const s32 requiredBytes = 512 + numTemplatePixels*sizeof(Point<s16>) + 14*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
 
       return requiredBytes;
     }

@@ -327,7 +327,7 @@ namespace Anki
 
       Result PlanarTransformation_f32::Serialize(const char *objectName, SerializedBuffer &buffer) const
       {
-        s32 totalDataLength = this->get_SerializationSize();
+        s32 totalDataLength = this->get_serializationSize();
 
         void *segment = buffer.Allocate("PlanarTransformation_f32", objectName, totalDataLength);
 
@@ -340,7 +340,7 @@ namespace Anki
 
       Result PlanarTransformation_f32::SerializeRaw(const char *objectName, void ** buffer, s32 &bufferLength) const
       {
-        if(SerializedBuffer::SerializeDescriptionStrings("PlanarTransformation_f32", objectName, reinterpret_cast<void**>(&buffer), bufferLength) != RESULT_OK)
+        if(SerializedBuffer::SerializeDescriptionStrings("PlanarTransformation_f32", objectName, buffer, bufferLength) != RESULT_OK)
           return RESULT_FAIL;
 
         SerializedBuffer::SerializeRawBasicType<bool>("isValid", this->isValid, buffer, bufferLength);
@@ -587,10 +587,10 @@ namespace Anki
         return RESULT_OK;
       }
 
-      s32 PlanarTransformation_f32::get_SerializationSize() const
+      s32 PlanarTransformation_f32::get_serializationSize()
       {
         // TODO: make the correct length
-        return 512 + 2*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
+        return 512 + 14*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
       }
 
       Result ComputeHomographyFromQuad(const Quadrilateral<s16> &quad, Array<f32> &homography, MemoryStack scratch)
