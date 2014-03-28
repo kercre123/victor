@@ -235,37 +235,31 @@ namespace Anki
 
       Result BinaryTracker::Serialize(const char *objectName, SerializedBuffer &buffer) const
       {
-        const s32 maxBufferLength = buffer.get_memoryStack().ComputeLargestPossibleAllocation() - 64;
+        s32 totalDataLength = this->get_SerializationSize();
 
-        s32 requiredBytes = this->get_SerializationSize();
+        void *segment = buffer.Allocate("BinaryTracker", objectName, totalDataLength);
 
-        if(maxBufferLength < requiredBytes) {
-          return RESULT_FAIL;
-        }
-
-        void *afterHeader = buffer.Allocate(objectName, "BinaryTracker", requiredBytes);
-
-        if(afterHeader == NULL) {
+        if(segment == NULL) {
           return RESULT_FAIL;
         }
 
         // First, serialize the transformation
-        this->transformation.SerializeRaw( "transformation", &afterHeader, requiredBytes);
+        this->transformation.SerializeRaw("transformation", &segment, totalDataLength);
 
         // Next, serialize the template lists
-        SerializedBuffer::SerializeRaw<s32>("templateEdges.imageHeight", this->templateEdges.imageHeight, &afterHeader, requiredBytes);
-        SerializedBuffer::SerializeRaw<s32>("templateEdges.imageWidth", this->templateEdges.imageWidth, &afterHeader, requiredBytes);
-        SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("templateEdges.xDecreasing", this->templateEdges.xDecreasing, &afterHeader, requiredBytes);
-        SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("templateEdges.xIncreasing", this->templateEdges.xIncreasing, &afterHeader, requiredBytes);
-        SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("templateEdges.yDecreasing", this->templateEdges.yDecreasing, &afterHeader, requiredBytes);
-        SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("templateEdges.yIncreasing", this->templateEdges.yIncreasing, &afterHeader, requiredBytes);
+        SerializedBuffer::SerializeRaw<s32>("templateEdges.imageHeight", this->templateEdges.imageHeight, &segment, totalDataLength);
+        SerializedBuffer::SerializeRaw<s32>("templateEdges.imageWidth", this->templateEdges.imageWidth, &segment, totalDataLength);
+        SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("templateEdges.xDecreasing", this->templateEdges.xDecreasing, &segment, totalDataLength);
+        SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("templateEdges.xIncreasing", this->templateEdges.xIncreasing, &segment, totalDataLength);
+        SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("templateEdges.yDecreasing", this->templateEdges.yDecreasing, &segment, totalDataLength);
+        SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("templateEdges.yIncreasing", this->templateEdges.yIncreasing, &segment, totalDataLength);
 
         return RESULT_OK;
       }
 
       Result BinaryTracker::Deserialize(char *objectName, void** buffer, s32 &bufferLength, MemoryStack &memory)
       {
-        if(SerializedBuffer::DeserializeRawObjectName(objectName, buffer, bufferLength) != RESULT_OK)
+        if(SerializedBuffer::DeserializeDescriptionString(objectName, buffer, bufferLength) != RESULT_OK)
           return RESULT_FAIL;
 
         // First, deserialize the transformation
@@ -1969,7 +1963,7 @@ namespace Anki
           RoundUp<size_t>(yDecreasingUsed, MEMORY_ALIGNMENT) +
           RoundUp<size_t>(yIncreasingUsed, MEMORY_ALIGNMENT);
 
-        const s32 requiredBytes = 512 + numTemplatePixels*sizeof(Point<s16>);
+        const s32 requiredBytes = 512 + numTemplatePixels*sizeof(Point<s16>) + 2*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
 
         return requiredBytes;
       }

@@ -26,8 +26,8 @@ namespace Anki
     class MemoryStack;
     class MemoryStackIterator;
     class MemoryStackConstIterator;
-    class MemoryStackRawIterator;
-    class MemoryStackRawConstIterator;
+    class MemoryStackReconstructingIterator;
+    class MemoryStackReconstructingConstIterator;
 
     class SerializedBuffer;
 
@@ -164,13 +164,13 @@ namespace Anki
       MemoryStack& get_memory();
     }; // class MemoryStackIterator
 
-    class MemoryStackRawConstIterator
+    class MemoryStackReconstructingConstIterator
     {
       // A Raw Iterator doesn't use the reported segment length to find the next segment. Instead,
       // it searches through every byte of the buffer, to find matching begin/end fill patterns. As
       // a result, it is more tolerant to missing data, but will also be slower.
     public:
-      MemoryStackRawConstIterator(const MemoryStack &memory);
+      MemoryStackReconstructingConstIterator(const MemoryStack &memory);
 
       bool HasNext() const;
       bool HasNext(s32 &startIndex, s32 &endIndex, s32 &reportedLength) const;
@@ -183,19 +183,19 @@ namespace Anki
     protected:
       s32 index;
       const MemoryStack &memory;
-    }; // class MemoryStackRawConstIterator
+    }; // class MemoryStackReconstructingConstIterator
 
-    class MemoryStackRawIterator : public MemoryStackRawConstIterator
+    class MemoryStackReconstructingIterator : public MemoryStackReconstructingConstIterator
     {
-      // See MemoryStackRawConstIterator
+      // See MemoryStackReconstructingConstIterator
     public:
-      MemoryStackRawIterator(MemoryStack &memory);
+      MemoryStackReconstructingIterator(MemoryStack &memory);
 
       // Returns NULL if there are no more segments
       void * GetNext(s32 &trueSegmentLength, s32 &reportedSegmentLength);
 
       MemoryStack& get_memory();
-    }; // class MemoryStackRawIterator
+    }; // class MemoryStackReconstructingIterator
   } // namespace Embedded
 } // namespace Anki
 

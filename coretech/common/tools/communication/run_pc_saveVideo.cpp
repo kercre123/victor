@@ -119,7 +119,7 @@ int main(int argc, char ** argv)
           */
 
           // Just call the function
-          ProcessRawBuffer_Save(rawBuffer, string(outputFilenamePattern), true, true);
+          ProcessRawBuffer_Save(rawBuffer, string(outputFilenamePattern), true);
 
           usbBuffer = reinterpret_cast<u8*>(malloc(USB_BUFFER_SIZE));
           usbBufferIndex = 0;

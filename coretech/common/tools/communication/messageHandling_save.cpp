@@ -34,7 +34,7 @@ using namespace std;
 #error OpenCV is required
 #endif
 
-void ProcessRawBuffer_Save(RawBuffer &buffer, const string outputFilenamePattern, const bool freeBuffer, const bool requireCRCmatch)
+void ProcessRawBuffer_Save(RawBuffer &buffer, const string outputFilenamePattern, const bool freeBuffer)
 {
   const s32 outputFilenameLength = 1024;
   char outputFilename[outputFilenameLength];
@@ -120,21 +120,17 @@ void ProcessRawBuffer_Save(RawBuffer &buffer, const string outputFilenamePattern
 
     while(iterator.HasNext()) {
       s32 dataLength;
-      SerializedBuffer::DataType type;
-      void * dataSegmentStart = reinterpret_cast<u8*>(iterator.GetNext(dataLength, type, requireCRCmatch));
+      const char * typeName = NULL;
+      const char * objectName = NULL;
+      void * dataSegmentStart = reinterpret_cast<u8*>(iterator.GetNext(&typeName, &objectName, dataLength));
       u8 * dataSegment = reinterpret_cast<u8*>(dataSegmentStart);
 
       if(!dataSegment) {
         break;
       }
 
-      printf("Next segment is (%d,%d): ", dataLength, type);
-      if(type == SerializedBuffer::DATA_TYPE_RAW) {
-        printf("Raw segment: ");
-        for(s32 i=0; i<dataLength; i++) {
-          printf("%x ", dataSegment[i]);
-        }
-      } else if(type == SerializedBuffer::DATA_TYPE_BASIC_TYPE_BUFFER) {
+      printf("Next segment is (%d,%s,%s): ", dataLength, typeName, objectName);
+      if(strcmp(typeName, "Basic Type Buffer") == 0) {
         SerializedBuffer::EncodedBasicTypeBuffer code;
         for(s32 i=0; i<SerializedBuffer::EncodedBasicTypeBuffer::CODE_SIZE; i++) {
           code.code[i] = reinterpret_cast<const u32*>(dataSegment)[i];
@@ -154,7 +150,7 @@ void ProcessRawBuffer_Save(RawBuffer &buffer, const string outputFilenamePattern
         for(s32 i=0; i<remainingDataLength; i++) {
           printf("%x ", dataSegment[i]);
         }
-      } else if(type == SerializedBuffer::DATA_TYPE_ARRAY) {
+      } else if(strcmp(typeName, "Array") == 0) {
         SerializedBuffer::EncodedArray code;
         for(s32 i=0; i<SerializedBuffer::EncodedArray::CODE_SIZE; i++) {
           code.code[i] = reinterpret_cast<const u32*>(dataSegment)[i];
@@ -190,27 +186,18 @@ void ProcessRawBuffer_Save(RawBuffer &buffer, const string outputFilenamePattern
           const cv::Mat_<u8> &mat = arr.get_CvMat_();
           cv::imwrite(outputFilename, mat);
         }
-      } else if(type == SerializedBuffer::DATA_TYPE_STRING) {
+      } else if(strcmp(typeName, "String") == 0) {
         printf("Board>> %s", dataSegment);
-      } else if(type == SerializedBuffer::DATA_TYPE_CUSTOM) {
-        dataSegment[SerializedBuffer::DESCRIPTION_STRING_LENGTH-1] = '\0';
-        const char * customTypeName = reinterpret_cast<const char*>(dataSegment);
-        //printf(customTypeName);
-
-        dataSegment += SerializedBuffer::DESCRIPTION_STRING_LENGTH;
-        s32 remainingDataLength = dataLength - SerializedBuffer::EncodedArray::CODE_SIZE * sizeof(u32);
-
-        if(strcmp(customTypeName, "VisionMarker") == 0) {
-          VisionMarker marker;
-          marker.Deserialize(NULL, reinterpret_cast<void**>(&dataSegment), remainingDataLength);
-          marker.Print();
-          visionMarkerList.push_back(marker);
-          isTracking = false;
-        } else if(strcmp(reinterpret_cast<const char*>(customTypeName), "PlanarTransformation_f32") == 0) {
-          lastPlanarTransformation.Deserialize(NULL, reinterpret_cast<void**>(&dataSegment), remainingDataLength, memory);
-          //lastPlanarTransformation.Print();
-          isTracking = true;
-        }
+      } else if(strcmp(typeName, "VisionMarker") == 0) {
+        VisionMarker marker;
+        marker.Deserialize(NULL, reinterpret_cast<void**>(&dataSegment), dataLength);
+        marker.Print();
+        visionMarkerList.push_back(marker);
+        isTracking = false;
+      } else if(strcmp(typeName, "PlanarTransformation_f32") == 0) {
+        lastPlanarTransformation.Deserialize(NULL, reinterpret_cast<void**>(&dataSegment), dataLength, memory);
+        //lastPlanarTransformation.Print();
+        isTracking = true;
       }
 
       printf("\n");

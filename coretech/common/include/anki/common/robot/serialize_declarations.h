@@ -39,26 +39,8 @@ namespace Anki
     class SerializedBuffer
     {
     public:
-
-      // The header and footer for individual segments within a SerializedBuffer
-      // These only contain data and CRCs
-      static const s32 SERIALIZED_SEGMENT_HEADER_LENGTH = 8;
-      static const s32 SERIALIZED_SEGMENT_FOOTER_LENGTH = 4;
-
       // This is the string length for both an object name, and a custom type name
       static const s32 DESCRIPTION_STRING_LENGTH = 32;
-
-      enum DataType
-      {
-        DATA_TYPE_UNKNOWN = 0,
-        DATA_TYPE_RAW = 1,
-        DATA_TYPE_BASIC_TYPE_BUFFER = 2,
-        DATA_TYPE_ARRAY = 3,
-        DATA_TYPE_ARRAYSLICE = 4,
-        DATA_TYPE_STRING = 5,
-        DATA_TYPE_LIST = 6,
-        DATA_TYPE_CUSTOM = 7 //< A custom type is defined by a unique 31-character string
-      };
 
       // Stores the eight-byte code of a basic data type buffer (like a buffer of unsigned shorts)
       class EncodedBasicTypeBuffer
@@ -111,8 +93,8 @@ namespace Anki
 
       // The first part of an object, after the header, is its 0-31 character name
       // The objectName can either be null, or a buffer of at least 32 bytes
-      static Result SerializeRawObjectName(const char *objectName, void ** buffer, s32 &bufferLength);
-      static Result DeserializeRawObjectName(    char *objectName, void ** buffer, s32 &bufferLength);
+      static Result SerializeDescriptionString(const char *objectName, void ** buffer, s32 &bufferLength);
+      static Result DeserializeDescriptionString(    char *objectName, void ** buffer, s32 &bufferLength);
 
       // Warning: Complex structures or classes require an explicit specialization
       // Updates the buffer pointer and length before returning
@@ -137,16 +119,13 @@ namespace Anki
       // If the void* buffer is already allocated, use flags = Flags::Buffer(false,true,true)
       SerializedBuffer(void *buffer, const s32 bufferLength, const Flags::Buffer flags=Flags::Buffer(false,true,false));
 
-      // Allocate memory for a custom type, defined by a unique customTypeName string
-      //
-      // WARNING: CRC broken
-      //
-      // The returned pointer is the location after the header (add your custom payload here)
-      void* Allocate(const char *objectName, const char * customTypeName, const s32 dataLength);
+      // Allocate memory (dataLength must include the memory to store the objectName and typeName)
+      // Only use this for hierarchical structures
+      void* AllocateRaw(const s32 dataLength);
 
-      // Push back some data and a header. Either data or header may be null.
-      // The name is a null-terminated string, of no more than 31 characters
-      void* PushBack(const char *objectName, const DataType type, const void * header, s32 headerLength, const void * data, s32 dataLength);
+      // objectName and typeName may each be up to 31 characters
+      // Allocates dataLength + 2*DESCRIPTION_STRING_LENGTH bytes
+      void* Allocate(const char *typeName, const char *objectName, const s32 dataLength);
 
       // Note that dataLength should be numel(data)*sizeof(Type)
       // This is to make this call compatible with the standard void* PushBack()
@@ -173,10 +152,6 @@ namespace Anki
 
     protected:
       MemoryStack memoryStack;
-
-      // The returned pointer is the location of the start of the allocated buffer
-      // afterHeader is a pointer to the start of the data buffer, after the header
-      void* PushBack_Generic(const SerializedBuffer::DataType type, const char *objectName, const void * header, s32 headerLength, const void * data, s32 dataLength, void ** afterHeader);
     }; // class SerializedBuffer
 
     class SerializedBufferConstIterator : public MemoryStackConstIterator
@@ -187,7 +162,7 @@ namespace Anki
       // Same as the standard MemoryStackConstIterator::GetNext(), plus:
       // 1. dataLength is the number of bytes of the returned buffer
       // 2. If requireCRCmatch==true, checks the CRC code and returns NULL if it fails
-      const void * GetNext(s32 &dataLength, SerializedBuffer::DataType &type, const bool requireFillPatternMatch=true, const bool requireCRCmatch=true);
+      const void * GetNext(const char ** typeName, const char ** objectName, s32 &dataLength, const bool requireFillPatternMatch=true);
     }; // class MemoryStackConstIterator
 
     class SerializedBufferIterator : public SerializedBufferConstIterator
@@ -198,26 +173,26 @@ namespace Anki
       // Same as the standard MemoryStackIterator::GetNext(), plus:
       // 1. dataLength is the number of bytes of the returned buffer
       // 2. If requireCRCmatch==true, checks the CRC code and returns NULL if it fails
-      void * GetNext(s32 &dataLength, SerializedBuffer::DataType &type, const bool requireFillPatternMatch=true, const bool requireCRCmatch=true);
+      void * GetNext(const char **typeName, const char **objectName, s32 &dataLength, const bool requireFillPatternMatch=true);
     }; // class MemoryStackConstIterator
 
-    class SerializedBufferRawConstIterator : public MemoryStackRawConstIterator
+    class SerializedBufferReconstructingConstIterator : public MemoryStackReconstructingConstIterator
     {
-      // See MemoryStackRawConstIterator
+      // See MemoryStackReconstructingConstIterator
     public:
-      SerializedBufferRawConstIterator(const SerializedBuffer &serializedBuffer);
+      SerializedBufferReconstructingConstIterator(const SerializedBuffer &serializedBuffer);
 
-      const void * GetNext(s32 &dataLength, SerializedBuffer::DataType &type, bool &isReportedSegmentLengthCorrect);
+      const void * GetNext(const char ** typeName, const char ** objectName, s32 &dataLength, bool &isReportedSegmentLengthCorrect);
     }; // class MemoryStackConstIterator
 
-    class SerializedBufferRawIterator : public SerializedBufferRawConstIterator
+    class SerializedBufferReconstructingIterator : public SerializedBufferReconstructingConstIterator
     {
-      // See MemoryStackRawConstIterator
+      // See MemoryStackReconstructingConstIterator
     public:
-      SerializedBufferRawIterator(SerializedBuffer &serializedBuffer);
+      SerializedBufferReconstructingIterator(SerializedBuffer &serializedBuffer);
 
-      void * GetNext(s32 &dataLength, SerializedBuffer::DataType &type, bool &isReportedSegmentLengthCorrect);
-    }; // class MemoryStackConstIterator
+      void * GetNext(const char ** typeName, const char ** objectName, s32 &dataLength, bool &isReportedSegmentLengthCorrect);
+    };
   } // namespace Embedded
 } //namespace Anki
 

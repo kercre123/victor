@@ -321,34 +321,28 @@ namespace Anki
 
     Result EdgeLists::Serialize(const char *objectName, SerializedBuffer &buffer) const
     {
-      const s32 maxBufferLength = buffer.get_memoryStack().ComputeLargestPossibleAllocation() - 64;
+      s32 totalDataLength = this->get_SerializationSize();
 
-      s32 requiredBytes = this->get_SerializationSize();
+      void *segment = buffer.Allocate("EdgeLists", objectName, totalDataLength);
 
-      if(maxBufferLength < requiredBytes) {
-        return RESULT_FAIL;
-      }
-
-      void *afterHeader = buffer.Allocate(objectName, "EdgeLists", requiredBytes);
-
-      if(afterHeader == NULL) {
+      if(segment == NULL) {
         return RESULT_FAIL;
       }
 
       // Serialize the template lists
-      SerializedBuffer::SerializeRaw<s32>("imageHeight", this->imageHeight, &afterHeader, requiredBytes);
-      SerializedBuffer::SerializeRaw<s32>("imageWidth", this->imageWidth, &afterHeader, requiredBytes);
-      SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("xDecreasing", this->xDecreasing, &afterHeader, requiredBytes);
-      SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("xIncreasing", this->xIncreasing, &afterHeader, requiredBytes);
-      SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("yDecreasing", this->yDecreasing, &afterHeader, requiredBytes);
-      SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("yIncreasing", this->yIncreasing, &afterHeader, requiredBytes);
+      SerializedBuffer::SerializeRaw<s32>("imageHeight", this->imageHeight, &segment, totalDataLength);
+      SerializedBuffer::SerializeRaw<s32>("imageWidth", this->imageWidth, &segment, totalDataLength);
+      SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("xDecreasing", this->xDecreasing, &segment, totalDataLength);
+      SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("xIncreasing", this->xIncreasing, &segment, totalDataLength);
+      SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("yDecreasing", this->yDecreasing, &segment, totalDataLength);
+      SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("yIncreasing", this->yIncreasing, &segment, totalDataLength);
 
       return RESULT_OK;
     }
 
     Result EdgeLists::Deserialize(char *objectName, void** buffer, s32 &bufferLength, MemoryStack &memory)
     {
-      if(SerializedBuffer::DeserializeRawObjectName(objectName, buffer, bufferLength) != RESULT_OK)
+      if(SerializedBuffer::DeserializeDescriptionString(objectName, buffer, bufferLength) != RESULT_OK)
         return RESULT_FAIL;
 
       this->imageHeight = SerializedBuffer::DeserializeRaw<s32>(NULL, buffer, bufferLength);
@@ -376,7 +370,7 @@ namespace Anki
         RoundUp<size_t>(yDecreasingUsed, MEMORY_ALIGNMENT) +
         RoundUp<size_t>(yIncreasingUsed, MEMORY_ALIGNMENT);
 
-      const s32 requiredBytes = 512 + numTemplatePixels*sizeof(Point<s16>);
+      const s32 requiredBytes = 512 + numTemplatePixels*sizeof(Point<s16>) + 2*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
 
       return requiredBytes;
     }

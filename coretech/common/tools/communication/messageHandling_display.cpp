@@ -49,6 +49,8 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
 
   MemoryStack scratch(scratchBuffer, scratchSize, Flags::Buffer(false, true, false));
 
+  char *innerObjectName = reinterpret_cast<char*>( scratch.Allocate(SerializedBuffer::DESCRIPTION_STRING_LENGTH + 1) );
+
   // Used for displaying detected fiducials
   cv::Mat lastImage(240,320,CV_8U);
   cv::Mat largeLastImage(bigHeight, bigWidth, CV_8U);
@@ -67,16 +69,17 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
 
   SerializedBuffer serializedBuffer(buffer.data, buffer.curDataLength, Anki::Embedded::Flags::Buffer(false, true, true));
 
-  SerializedBufferRawIterator iterator(serializedBuffer);
+  SerializedBufferReconstructingIterator iterator(serializedBuffer);
 
   bool aMessageAlreadyPrinted = false;
 
   while(iterator.HasNext()) {
     s32 dataLength;
-    SerializedBuffer::DataType type;
+    const char * typeName = NULL;
+    const char * objectName = NULL;
     bool isReportedSegmentLengthCorrect;
-    u8 * const dataSegmentStart = reinterpret_cast<u8*>(iterator.GetNext(dataLength, type, isReportedSegmentLengthCorrect));
-    u8 * dataSegment = dataSegmentStart;
+    void * dataSegmentStart = reinterpret_cast<u8*>(iterator.GetNext(&typeName, &objectName, dataLength, isReportedSegmentLengthCorrect));
+    u8 * dataSegment = reinterpret_cast<u8*>(dataSegmentStart);
 
     if(!dataSegment) {
       break;
@@ -87,12 +90,7 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
     }
 
     //printf("Next segment is (%d,%d): ", dataLength, type);
-    if(type == SerializedBuffer::DATA_TYPE_RAW) {
-      printf("Raw segment: ");
-      for(s32 i=0; i<dataLength; i++) {
-        printf("%x ", dataSegment[i]);
-      }
-    } else if(type == SerializedBuffer::DATA_TYPE_BASIC_TYPE_BUFFER) {
+    if(strcmp(typeName, "Basic Type Buffer") == 0) {
       SerializedBuffer::EncodedBasicTypeBuffer code;
       for(s32 i=0; i<SerializedBuffer::EncodedBasicTypeBuffer::CODE_SIZE; i++) {
         code.code[i] = reinterpret_cast<const u32*>(dataSegment)[i];
@@ -122,7 +120,7 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
           printf("%x ", dataSegment[i]);
         }
       }
-    } else if(type == SerializedBuffer::DATA_TYPE_ARRAY) {
+    } else if(strcmp(typeName, "Array") == 0) {
       SerializedBuffer::EncodedArray code;
       for(s32 i=0; i<SerializedBuffer::EncodedArray::CODE_SIZE; i++) {
         code.code[i] = reinterpret_cast<const u32*>(dataSegment)[i];
@@ -143,8 +141,7 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
 
       //template<typename Type> static Result DeserializeArray(const void * data, const s32 dataLength, Array<Type> &out, MemoryStack &memory);
       if(basicType_size==1 && basicType_isInteger==1 && basicType_isSigned==0 && basicType_isFloat==0) {
-        Array<u8> arr;
-        SerializedBuffer::DeserializeArray(dataSegmentStart, dataLength, arr, scratch);
+        Array<u8> arr = SerializedBuffer::DeserializeRawArray<u8>(NULL, &dataSegmentStart, dataLength, scratch);
 
         const s32 arrHeight = arr.get_size(0);
         const s32 arrWidth = arr.get_size(1);
@@ -205,58 +202,50 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
       } else {
         printf("Array: (%d, %d, %d, %d, %d, %d, %d, %d) ", height, width, stride, flags, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat);
       }
-    } else if(type == SerializedBuffer::DATA_TYPE_STRING) {
+    } else if(strcmp(typeName, "String") == 0) {
       printf("Board>> %s", dataSegment);
-    } else if(type == SerializedBuffer::DATA_TYPE_CUSTOM) {
-      dataSegment[SerializedBuffer::CUSTOM_TYPE_STRING_LENGTH-1] = '\0';
-      const char * customTypeName = reinterpret_cast<const char*>(dataSegment);
-      //printf(customTypeName);
+    } else if(strcmp(typeName, "VisionMarker") == 0) {
+      VisionMarker marker;
 
-      dataSegment += SerializedBuffer::CUSTOM_TYPE_STRING_LENGTH;
-      s32 remainingDataLength = dataLength - SerializedBuffer::EncodedArray::CODE_SIZE * sizeof(u32);
+      marker.Deserialize(innerObjectName, reinterpret_cast<void**>(&dataSegment), dataLength);
 
-      if(strcmp(customTypeName, "VisionMarker") == 0) {
-        VisionMarker marker;
-        marker.Deserialize(reinterpret_cast<void**>(&dataSegment), remainingDataLength);
-
-        if(!aMessageAlreadyPrinted) {
-          time_t rawtime;
-          time (&rawtime);
-          string timeString = string(ctime(&rawtime));
-          timeString[timeString.length()-6] = '\0';
-          printf("%s>> ", timeString.data());
-          aMessageAlreadyPrinted = true;
-        }
-
-        marker.Print();
-        printf("\n");
-        visionMarkerList.push_back(marker);
-        isTracking = false;
-      } else if(strcmp(reinterpret_cast<const char*>(customTypeName), "PlanarTransformation_f32") == 0) {
-        lastPlanarTransformation.Deserialize(reinterpret_cast<void**>(&dataSegment), remainingDataLength, scratch);
-        //lastPlanarTransformation.Print();
-        isTracking = true;
-      } else if(strcmp(reinterpret_cast<const char*>(customTypeName), "BinaryTracker") == 0) {
-        PUSH_MEMORY_STACK(scratch);
-        TemplateTracker::BinaryTracker bt;
-        bt.Deserialize(reinterpret_cast<void**>(&dataSegment), remainingDataLength, scratch);
-        bt.ShowTemplate("BinaryTracker Template", false, false);
-      } else if(strcmp(reinterpret_cast<const char*>(customTypeName), "EdgeLists") == 0) {
-        PUSH_MEMORY_STACK(scratch);
-        EdgeLists edges;
-        edges.Deserialize(reinterpret_cast<void**>(&dataSegment), remainingDataLength, scratch);
-
-        cv::Mat toShow = edges.DrawIndexes();
-
-        cv::Mat toShowLargeTmp(bigHeight, bigWidth, CV_8UC3);
-        cv::resize(toShow, toShowLargeTmp, toShowLargeTmp.size(), 0, 0, cv::INTER_NEAREST);
-        cv::imshow("Detected Binary Edges", toShowLargeTmp);
-
-        //cv::resize(toShow, toShowImage, toShowImage.size(), 0, 0, cv::INTER_NEAREST);
-        //cv::imshow("Detected Binary Edges", toShowImage);
+      if(!aMessageAlreadyPrinted) {
+        time_t rawtime;
+        time (&rawtime);
+        string timeString = string(ctime(&rawtime));
+        timeString[timeString.length()-6] = '\0';
+        printf("%s>> ", timeString.data());
+        aMessageAlreadyPrinted = true;
       }
+
+      marker.Print();
+      printf("\n");
+      visionMarkerList.push_back(marker);
+      isTracking = false;
+    } else if(strcmp(typeName, "PlanarTransformation_f32") == 0) {
+      lastPlanarTransformation.Deserialize(innerObjectName, reinterpret_cast<void**>(&dataSegment), dataLength, scratch);
+      //lastPlanarTransformation.Print();
+      isTracking = true;
+    } else if(strcmp(typeName, "BinaryTracker") == 0) {
+      PUSH_MEMORY_STACK(scratch);
+      TemplateTracker::BinaryTracker bt;
+      bt.Deserialize(innerObjectName, reinterpret_cast<void**>(&dataSegment), dataLength, scratch);
+      bt.ShowTemplate("BinaryTracker Template", false, false);
+    } else if(strcmp(typeName, "EdgeLists") == 0) {
+      PUSH_MEMORY_STACK(scratch);
+      EdgeLists edges;
+      edges.Deserialize(innerObjectName, reinterpret_cast<void**>(&dataSegment), dataLength, scratch);
+
+      cv::Mat toShow = edges.DrawIndexes();
+
+      cv::Mat toShowLargeTmp(bigHeight, bigWidth, CV_8UC3);
+      cv::resize(toShow, toShowLargeTmp, toShowLargeTmp.size(), 0, 0, cv::INTER_NEAREST);
+      cv::imshow("Detected Binary Edges", toShowLargeTmp);
+
+      //cv::resize(toShow, toShowImage, toShowImage.size(), 0, 0, cv::INTER_NEAREST);
+      //cv::imshow("Detected Binary Edges", toShowImage);
     } else {
-      printf("Unknown Type %d\n", type);
+      printf("Unknown Type %s\n", *typeName);
     }
 
     //printf("\n");

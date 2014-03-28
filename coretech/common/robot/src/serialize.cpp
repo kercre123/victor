@@ -169,7 +169,7 @@ namespace Anki
       return RESULT_OK;
     } // void FindSerializedBuffer(const void * rawBuffer, s32 &startIndex, s32 &endIndex)
 
-    Result SerializedBuffer::SerializeRawObjectName(const char *objectName, void ** buffer, s32 &bufferLength)
+    Result SerializedBuffer::SerializeDescriptionString(const char *objectName, void ** buffer, s32 &bufferLength)
     {
       if(bufferLength < DESCRIPTION_STRING_LENGTH) {
         return RESULT_FAIL_OUT_OF_MEMORY;
@@ -198,7 +198,7 @@ namespace Anki
       return RESULT_OK;
     }
 
-    Result SerializedBuffer::DeserializeRawObjectName(char *objectName, void ** buffer, s32 &bufferLength)
+    Result SerializedBuffer::DeserializeDescriptionString(char *objectName, void ** buffer, s32 &bufferLength)
     {
       if(bufferLength < DESCRIPTION_STRING_LENGTH) {
         return RESULT_FAIL_OUT_OF_MEMORY;
@@ -225,113 +225,36 @@ namespace Anki
       return RESULT_OK;
     }
 
-    void* SerializedBuffer::Allocate(const char *objectName, const char * customTypeName, const s32 dataLength)
+    void* SerializedBuffer::AllocateRaw(const s32 dataLength)
     {
-      void *afterHeader = NULL;
+      const s32 bytesRequired = RoundUp<s32>(dataLength, 4);
 
-      if(PushBack_Generic(DATA_TYPE_CUSTOM, objectName, customTypeName, DESCRIPTION_STRING_LENGTH, NULL, dataLength, &afterHeader) == NULL)
+      s32 numBytesAllocated;
+
+      u8 * segment = reinterpret_cast<u8*>( memoryStack.Allocate(bytesRequired, numBytesAllocated) );
+
+      AnkiConditionalErrorAndReturnValue(segment != NULL,
+        NULL, "SerializedBuffer::AllocateRaw", "Could not add data");
+
+      return segment;
+    } // static void* PushBack(const SerializedBuffer::DataType type, const void * header, s32 headerLength, const void * data, s32 dataLength, MemoryStack *scratch)
+
+    void* SerializedBuffer::Allocate(const char *typeName, const char *objectName, const s32 dataLength)
+    {
+      s32 totalLength = dataLength + 2*DESCRIPTION_STRING_LENGTH;
+      void *segment = AllocateRaw(totalLength);
+
+      AnkiConditionalErrorAndReturnValue(segment != NULL,
+        NULL, "SerializedBuffer::Allocate", "Could not add data");
+
+      if(SerializeDescriptionString(typeName, reinterpret_cast<void**>(&segment), totalLength) != RESULT_OK)
         return NULL;
 
-      return afterHeader;
+      if(SerializeDescriptionString(objectName, reinterpret_cast<void**>(&segment), totalLength) != RESULT_OK)
+        return NULL;
+
+      return segment;
     }
-
-    void* SerializedBuffer::PushBack(const char *objectName, const DataType type, const void * header, s32 headerLength, const void * data, s32 dataLength)
-    {
-      return PushBack_Generic(type, objectName, header, headerLength, data, dataLength, NULL);
-    }
-
-    void* SerializedBuffer::PushBack_Generic(const DataType type, const char *objectName, const void * header, s32 headerLength, const void * data, s32 dataLength, void ** afterHeader)
-    {
-      AnkiConditionalErrorAndReturnValue(headerLength >= 0,
-        NULL, "SerializedBuffer::PushBack", "headerLength must be >= 0");
-
-      AnkiConditionalErrorAndReturnValue(headerLength%4 == 0,
-        NULL, "SerializedBuffer::PushBack", "headerLength must be a multiple of 4");
-
-      // TODO: are the alignment restrictions still required for the M4?
-      //if(header != NULL) {
-      //  AnkiConditionalErrorAndReturnValue(reinterpret_cast<size_t>(header)%4 == 0,
-      //    NULL, "SerializedBuffer::PushBack", "header must be 4-byte aligned");
-      //}
-
-      //if(data != NULL) {
-      //  AnkiConditionalErrorAndReturnValue(reinterpret_cast<size_t>(data)%4 == 0,
-      //    NULL, "SerializedBuffer::PushBack", "data must be 4-byte aligned");
-      //}
-
-      const s32 totalLength = RoundUp<s32>(dataLength, 4) + headerLength + DESCRIPTION_STRING_LENGTH;
-
-      const s32 bytesRequired = totalLength + SERIALIZED_SEGMENT_HEADER_LENGTH + SERIALIZED_SEGMENT_FOOTER_LENGTH;
-
-      s32 numBytesAllocated = -1;
-      u8 * const segmentStart = reinterpret_cast<u8*>( memoryStack.Allocate(bytesRequired, numBytesAllocated) );
-      u32 * segmentU32 = reinterpret_cast<u32*>(segmentStart);
-
-      AnkiConditionalErrorAndReturnValue(segmentU32 != NULL,
-        NULL, "SerializedBuffer::PushBack", "Could not add data");
-
-      u32 crc = 0xFFFFFFFF;
-
-      segmentU32[0] = static_cast<u32>(totalLength);
-      segmentU32[1] = static_cast<u32>(type);
-
-      // TODO: decide if the CRC should be computed on the length (png doesn't do this)
-      crc =  ComputeCRC32(segmentU32, SERIALIZED_SEGMENT_HEADER_LENGTH, crc);
-
-      segmentU32 += (SERIALIZED_SEGMENT_HEADER_LENGTH>>2);
-
-      // Serialize the object name before the type header
-      {
-        s32 bufferLength = totalLength;
-        if(SerializeRawObjectName(objectName, reinterpret_cast<void**>(&segmentU32), bufferLength) != RESULT_OK)
-          return NULL;
-      }
-
-      if(header != NULL) {
-        // Endian-safe copy (it may copy a little extra)
-
-        const s32 headerLength4 = headerLength >> 2;
-        const u32 * headerU32 = reinterpret_cast<const u32*>(header);
-        for(s32 i=0; i<headerLength4; i++)
-        {
-          segmentU32[i] = headerU32[i];
-        }
-
-        crc =  ComputeCRC32(segmentU32, headerLength, crc);
-      } // if(header != NULL)
-
-      segmentU32 += (headerLength>>2);
-
-      if(afterHeader != NULL) {
-        *afterHeader = reinterpret_cast<void*>(segmentU32);
-      }
-
-      if(data != NULL) {
-        // Endian-safe copy (it may copy a little extra)
-
-        const s32 dataLength4 = (dataLength + 3) >> 2;
-        const u32 * dataU32 = reinterpret_cast<const u32*>(data);
-
-        for(s32 i=0; i<dataLength4; i++)
-        {
-          segmentU32[i] = dataU32[i];
-        }
-
-        const s32 numBytesToCrc = numBytesAllocated-headerLength-SERIALIZED_SEGMENT_HEADER_LENGTH-SERIALIZED_SEGMENT_FOOTER_LENGTH;
-
-        crc =  ComputeCRC32(segmentU32, numBytesToCrc, crc);
-
-        // Add a CRC code computed from the header and data
-        //const u32 crc2 =  ComputeCRC32(segmentStart, numBytesAllocated - SERIALIZED_SEGMENT_FOOTER_LENGTH, 0xFFFFFFFF);
-        reinterpret_cast<u32*>(segmentStart + numBytesAllocated - SERIALIZED_SEGMENT_FOOTER_LENGTH)[0] = crc;
-        //printf("crc: 0x%x\n", crc);
-      } // if(data != NULL)
-
-      //printf("%d %d\n", reinterpret_cast<u32*>(segmentStart)[0], reinterpret_cast<u32*>(segmentStart)[1]);
-      //printf("%d %d %d %d %d %d %d %d\n", segmentStart[0], segmentStart[1], segmentStart[2], segmentStart[3], segmentStart[4], segmentStart[5], segmentStart[6], segmentStart[7]);
-
-      return segmentStart;
-    } // static void* PushBack(const SerializedBuffer::DataType type, const void * header, s32 headerLength, const void * data, s32 dataLength, MemoryStack *scratch)
 
     void* SerializedBuffer::PushBackString(const char * format, ...)
     {
@@ -372,7 +295,14 @@ namespace Anki
       if(usedLength == -1)
         return NULL;
 
-      return PushBack("String", DATA_TYPE_STRING, NULL, 0, format, usedLength);
+      void* segment = Allocate("String", "String", usedLength);
+
+      AnkiConditionalErrorAndReturnValue(segment != NULL,
+        NULL, "SerializedBuffer::PushBackString", "Could not add data");
+
+      memcpy(segment, format, usedLength);
+
+      return segment;
 #endif
     }
 
@@ -396,29 +326,23 @@ namespace Anki
     {
     }
 
-    const void * SerializedBufferConstIterator::GetNext(s32 &dataLength, SerializedBuffer::DataType &type, const bool requireFillPatternMatch, const bool requireCRCmatch)
+    const void * SerializedBufferConstIterator::GetNext(const char ** typeName, const char ** objectName, s32 &dataLength, const bool requireFillPatternMatch)
     {
-      s32 segmentLength = -1;
-      const void * segmentToReturn = MemoryStackConstIterator::GetNext(segmentLength, requireFillPatternMatch);
+      dataLength = -1;
+      const char * segment = reinterpret_cast<const char*>( MemoryStackConstIterator::GetNext(dataLength, requireFillPatternMatch) );
 
-      AnkiConditionalErrorAndReturnValue(segmentToReturn != NULL,
+      AnkiConditionalErrorAndReturnValue(segment != NULL,
         NULL, "SerializedBufferConstIterator::GetNext", "segmentToReturn is NULL");
 
-      segmentLength -= SerializedBuffer::SERIALIZED_SEGMENT_FOOTER_LENGTH;
+      *typeName = segment;
+      segment += SerializedBuffer::DESCRIPTION_STRING_LENGTH;
+      dataLength -= SerializedBuffer::DESCRIPTION_STRING_LENGTH;
 
-      if(requireCRCmatch) {
-        const u32 expectedCRC = reinterpret_cast<const u32*>(reinterpret_cast<const u8*>(segmentToReturn)+segmentLength)[0];
+      *objectName = segment;
+      segment += SerializedBuffer::DESCRIPTION_STRING_LENGTH;
+      dataLength -= SerializedBuffer::DESCRIPTION_STRING_LENGTH;
 
-        const u32 computedCrc =  ComputeCRC32(segmentToReturn, segmentLength, 0xFFFFFFFF);
-
-        AnkiConditionalErrorAndReturnValue(expectedCRC == computedCrc,
-          NULL, "SerializedBufferConstIterator::GetNext", "CRCs don't match (%x != %x)", expectedCRC, computedCrc);
-      } // if(requireCRCmatch)
-
-      dataLength = reinterpret_cast<const u32*>(segmentToReturn)[0];
-      type = static_cast<SerializedBuffer::DataType>(reinterpret_cast<const u32*>(segmentToReturn)[1]);
-
-      return reinterpret_cast<const u8*>(segmentToReturn) + SerializedBuffer::SERIALIZED_SEGMENT_HEADER_LENGTH;
+      return segment;
     }
 
     SerializedBufferIterator::SerializedBufferIterator(SerializedBuffer &serializedBuffer)
@@ -426,28 +350,24 @@ namespace Anki
     {
     }
 
-    void * SerializedBufferIterator::GetNext(s32 &dataLength, SerializedBuffer::DataType &type, const bool requireFillPatternMatch, const bool requireCRCmatch)
+    void * SerializedBufferIterator::GetNext(const char **typeName, const char **objectName, s32 &dataLength, const bool requireFillPatternMatch)
     {
       // To avoid code duplication, we'll use the const version of GetNext(), though our MemoryStack is not const
+      void * segment = const_cast<void*>(SerializedBufferConstIterator::GetNext(typeName, objectName, dataLength, requireFillPatternMatch));
 
-      u8 * segment = reinterpret_cast<u8*>(const_cast<void*>(SerializedBufferConstIterator::GetNext(dataLength, type, requireFillPatternMatch, requireCRCmatch)));
-
-      //AnkiConditionalErrorAndReturnValue(segment != NULL,
-      //  NULL, "SerializedBufferIterator::GetNext", "segment is NULL");
-
-      return reinterpret_cast<void*>(segment);
+      return segment;
     }
 
-    SerializedBufferRawConstIterator::SerializedBufferRawConstIterator(const SerializedBuffer &serializedBuffer)
-      : MemoryStackRawConstIterator(serializedBuffer.get_memoryStack())
+    SerializedBufferReconstructingConstIterator::SerializedBufferReconstructingConstIterator(const SerializedBuffer &serializedBuffer)
+      : MemoryStackReconstructingConstIterator(serializedBuffer.get_memoryStack())
     {
     }
 
-    const void * SerializedBufferRawConstIterator::GetNext(s32 &dataLength, SerializedBuffer::DataType &type, bool &isReportedSegmentLengthCorrect)
+    const void * SerializedBufferReconstructingConstIterator::GetNext(const char ** typeName, const char ** objectName, s32 &dataLength, bool &isReportedSegmentLengthCorrect)
     {
       s32 trueSegmentLength;
       s32 reportedSegmentLength;
-      const void * segmentToReturn = MemoryStackRawConstIterator::GetNext(trueSegmentLength, reportedSegmentLength);
+      const char * segment = reinterpret_cast<const char*>( MemoryStackReconstructingConstIterator::GetNext(trueSegmentLength, reportedSegmentLength) );
 
       if(trueSegmentLength == reportedSegmentLength) {
         isReportedSegmentLengthCorrect = true;
@@ -455,30 +375,32 @@ namespace Anki
         isReportedSegmentLengthCorrect = false;
       }
 
-      AnkiConditionalErrorAndReturnValue(segmentToReturn != NULL,
+      AnkiConditionalErrorAndReturnValue(segment != NULL,
         NULL, "SerializedBufferConstIterator::GetNext", "segmentToReturn is NULL");
 
-      dataLength = reinterpret_cast<const u32*>(segmentToReturn)[0];
-      type = static_cast<SerializedBuffer::DataType>(reinterpret_cast<const u32*>(segmentToReturn)[1]);
+      *typeName = segment;
+      segment += SerializedBuffer::DESCRIPTION_STRING_LENGTH;
 
-      return reinterpret_cast<const u8*>(segmentToReturn) + SerializedBuffer::SERIALIZED_SEGMENT_HEADER_LENGTH;
+      *objectName = segment;
+      segment += SerializedBuffer::DESCRIPTION_STRING_LENGTH;
+
+      dataLength = reinterpret_cast<const u32*>(segment)[0];
+      segment += sizeof(u32);
+
+      return segment;
     }
 
-    SerializedBufferRawIterator::SerializedBufferRawIterator(SerializedBuffer &serializedBuffer)
-      : SerializedBufferRawConstIterator(serializedBuffer)
+    SerializedBufferReconstructingIterator::SerializedBufferReconstructingIterator(SerializedBuffer &serializedBuffer)
+      : SerializedBufferReconstructingConstIterator(serializedBuffer)
     {
     }
 
-    void * SerializedBufferRawIterator::GetNext(s32 &dataLength, SerializedBuffer::DataType &type, bool &isReportedSegmentLengthCorrect)
+    void * SerializedBufferReconstructingIterator::GetNext(const char ** typeName, const char ** objectName, s32 &dataLength, bool &isReportedSegmentLengthCorrect)
     {
       // To avoid code duplication, we'll use the const version of GetNext(), though our MemoryStack is not const
+      void * segment = const_cast<void*>(SerializedBufferReconstructingConstIterator::GetNext(typeName, objectName, dataLength, isReportedSegmentLengthCorrect));
 
-      u8 * segment = reinterpret_cast<u8*>(const_cast<void*>(SerializedBufferRawConstIterator::GetNext(dataLength, type, isReportedSegmentLengthCorrect)));
-
-      //AnkiConditionalErrorAndReturnValue(segment != NULL,
-      //  NULL, "SerializedBufferIterator::GetNext", "segment is NULL");
-
-      return reinterpret_cast<void*>(segment);
+      return segment;
     }
   } // namespace Embedded
 } // namespace Anki

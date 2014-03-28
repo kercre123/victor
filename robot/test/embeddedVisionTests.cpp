@@ -189,16 +189,16 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     ASSERT_TRUE(result == RESULT_OK);
 
     // TODO: verify this number manually
-    ASSERT_TRUE(numMatches == 1240);
+    ASSERT_TRUE(numMatches == 1241);
 
     //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
 
     Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
-    transform_groundTruth[0][0] = 1.068f; transform_groundTruth[0][1] = 0.0f;   transform_groundTruth[0][2] = 2.369f;
-    transform_groundTruth[1][0] = 0.002f; transform_groundTruth[1][1] = 1.061f; transform_groundTruth[1][2] = -4.051f;
+    transform_groundTruth[0][0] = 1.069f; transform_groundTruth[0][1] = -0.001f;   transform_groundTruth[0][2] = 2.376f;
+    transform_groundTruth[1][0] = 0.003f; transform_groundTruth[1][1] = 1.061f; transform_groundTruth[1][2] = -4.109f;
     transform_groundTruth[2][0] = 0.0f;   transform_groundTruth[2][1] = 0.0f;   transform_groundTruth[2][2] = 1.0f;
 
-    //tracker.get_transformation().get_homography().Print("fixed-float 1");
+    tracker.get_transformation().get_homography().Print("fixed-float 1");
 
     ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
 
@@ -222,7 +222,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     const s32 numTemplatePixels = tracker.get_numTemplatePixels();
 
-    ASSERT_TRUE(numTemplatePixels == 648);
+    ASSERT_TRUE(numTemplatePixels == 647);
 
     //templateImage.Show("templateImage",false);
     //nextImage.Show("nextImage",false);
@@ -249,11 +249,11 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
 
     Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
-    transform_groundTruth[0][0] = 1.069f; transform_groundTruth[0][1] = 0.001f; transform_groundTruth[0][2] = 2.366f;
-    transform_groundTruth[1][0] = 0.005f; transform_groundTruth[1][1] = 1.060f; transform_groundTruth[1][2] = -4.029f;
+    transform_groundTruth[0][0] = 1.069f; transform_groundTruth[0][1] = -0.001f; transform_groundTruth[0][2] = 2.440f;
+    transform_groundTruth[1][0] = 0.005f; transform_groundTruth[1][1] = 1.061f; transform_groundTruth[1][2] = -4.100f;
     transform_groundTruth[2][0] = 0.0f;   transform_groundTruth[2][1] = 0.0f;   transform_groundTruth[2][2] = 1.0f;
 
-    //tracker.get_transformation().get_homography().Print("fixed-float 2");
+    tracker.get_transformation().get_homography().Print("fixed-float 2");
 
     ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
 
@@ -299,16 +299,16 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     ASSERT_TRUE(result == RESULT_OK);
 
     // TODO: verify this number manually
-    ASSERT_TRUE(numMatches == 1240);
+    ASSERT_TRUE(numMatches == 1241);
 
     //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
 
     Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
-    transform_groundTruth[0][0] = 1.068f; transform_groundTruth[0][1] = 0.0f;   transform_groundTruth[0][2] = 2.369f;
-    transform_groundTruth[1][0] = 0.002f; transform_groundTruth[1][1] = 1.061f; transform_groundTruth[1][2] = -4.051f;
+    transform_groundTruth[0][0] = 1.068f; transform_groundTruth[0][1] = -0.001f;   transform_groundTruth[0][2] = 2.376f;
+    transform_groundTruth[1][0] = 0.003f; transform_groundTruth[1][1] = 1.061f; transform_groundTruth[1][2] = -4.109f;
     transform_groundTruth[2][0] = 0.0f;   transform_groundTruth[2][1] = 0.0f;   transform_groundTruth[2][2] = 1.0f;
 
-    //tracker.get_transformation().get_homography().Print("fixed-float 1");
+    tracker.get_transformation().get_homography().Print("fixed-float 1");
 
     ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
 
@@ -332,7 +332,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     const s32 numTemplatePixels = tracker.get_numTemplatePixels();
 
-    ASSERT_TRUE(numTemplatePixels == 648);
+    ASSERT_TRUE(numTemplatePixels == 647);
 
     //templateImage.Show("templateImage",false);
     //nextImage.Show("nextImage",false);
@@ -359,11 +359,11 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
 
     Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
-    transform_groundTruth[0][0] = 1.069f; transform_groundTruth[0][1] = 0.001f; transform_groundTruth[0][2] = 2.366f;
-    transform_groundTruth[1][0] = 0.005f; transform_groundTruth[1][1] = 1.060f; transform_groundTruth[1][2] = -4.029f;
+    transform_groundTruth[0][0] = 1.069f; transform_groundTruth[0][1] = -0.001f; transform_groundTruth[0][2] = 2.440f;
+    transform_groundTruth[1][0] = 0.005f; transform_groundTruth[1][1] = 1.060f; transform_groundTruth[1][2] = -4.100f;
     transform_groundTruth[2][0] = 0.0f;   transform_groundTruth[2][1] = 0.0f;   transform_groundTruth[2][2] = 1.0f;
 
-    //tracker.get_transformation().get_homography().Print("fixed-float 2");
+    tracker.get_transformation().get_homography().Print("fixed-float 2");
 
     ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
 

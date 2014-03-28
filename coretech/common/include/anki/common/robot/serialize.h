@@ -335,7 +335,7 @@ namespace Anki
 
     template<typename Type> Result SerializedBuffer::SerializeRaw(const char *objectName, const Type &in, void ** buffer, s32 &bufferLength)
     {
-      if(SerializeRawObjectName(objectName, buffer, bufferLength) != RESULT_OK)
+      if(SerializeDescriptionString(objectName, buffer, bufferLength) != RESULT_OK)
         return RESULT_FAIL;
 
       memcpy(*buffer, &in, sizeof(Type));
@@ -348,7 +348,7 @@ namespace Anki
 
     template<typename Type> Result SerializedBuffer::SerializeRawArray(const char *objectName, const Array<Type> &in, void ** buffer, s32 &bufferLength)
     {
-      if(SerializeRawObjectName(objectName, buffer, bufferLength) != RESULT_OK)
+      if(SerializeDescriptionString(objectName, buffer, bufferLength) != RESULT_OK)
         return RESULT_FAIL;
 
       EncodedArray code;
@@ -374,7 +374,7 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(in.get_array().IsValid(),
         RESULT_FAIL, "SerializedBuffer::SerializeRawArraySlice", "in ArraySlice is not Valid");
 
-      if(SerializeRawObjectName(objectName, buffer, bufferLength) != RESULT_OK)
+      if(SerializeDescriptionString(objectName, buffer, bufferLength) != RESULT_OK)
         return RESULT_FAIL;
 
       // TODO: are the alignment restrictions still required for the M4?
@@ -437,7 +437,7 @@ namespace Anki
 
     template<typename Type> Type SerializedBuffer::DeserializeRaw(char *objectName, void ** buffer, s32 &bufferLength)
     {
-      DeserializeRawObjectName(objectName, buffer, bufferLength);
+      DeserializeDescriptionString(objectName, buffer, bufferLength);
 
       const Type var = *reinterpret_cast<Type*>(*buffer);
 
@@ -459,7 +459,7 @@ namespace Anki
       bool basicType_isSigned;
       bool basicType_isFloat;
 
-      DeserializeRawObjectName(objectName, buffer, bufferLength);
+      DeserializeDescriptionString(objectName, buffer, bufferLength);
 
       {
         const u32 * bufferU32 = reinterpret_cast<const u32*>(*buffer);
@@ -511,7 +511,7 @@ namespace Anki
       bool basicType_isSigned;
       bool basicType_isFloat;
 
-      DeserializeRawObjectName(objectName, buffer, bufferLength);
+      DeserializeDescriptionString(objectName, buffer, bufferLength);
 
       {
         const u32 * bufferU32 = reinterpret_cast<const u32*>(*buffer);
@@ -584,80 +584,54 @@ namespace Anki
 
     template<typename Type> Type* SerializedBuffer::PushBack(const char *objectName, const Type *data, const s32 dataLength)
     {
+      s32 totalDataLength = dataLength + EncodedBasicTypeBuffer::CODE_SIZE*sizeof(u32);
+
+      void * const segmentStart = Allocate("Basic Type Buffer", objectName, totalDataLength);
+      u8 * segment = reinterpret_cast<u8*>(segmentStart);
+
+      AnkiConditionalErrorAndReturnValue(segment != NULL,
+        NULL, "SerializedBuffer::PushBack", "Could not add data");
+
       EncodedBasicTypeBuffer code;
 
       if(SerializedBuffer::EncodeBasicTypeBuffer<Type>(dataLength/sizeof(Type), code) != RESULT_OK)
         return NULL;
 
-      void * segment = PushBack(
-        objectName,
-        SerializedBuffer::DATA_TYPE_BASIC_TYPE_BUFFER,
-        &code.code[0],
-        EncodedBasicTypeBuffer::CODE_SIZE*sizeof(u32),
-        reinterpret_cast<const void*>(data), dataLength);
+      memcpy(segment, &code.code[0], EncodedBasicTypeBuffer::CODE_SIZE*sizeof(u32));
+      segment += EncodedBasicTypeBuffer::CODE_SIZE*sizeof(u32);
 
-      return reinterpret_cast<Type*>(segment);
+      memcpy(segment, data, dataLength);
+      segment += dataLength;
+
+      return reinterpret_cast<Type*>(segmentStart);
     }
 
     template<typename Type> void* SerializedBuffer::PushBack(const char *objectName, const Array<Type> &in)
     {
-      EncodedArray code;
+      s32 totalDataLength = in.get_stride() * in.get_size(1) + EncodedArray::CODE_SIZE*sizeof(u32);
 
-      if(EncodeArrayType<Type>(in, code) != RESULT_OK)
-        return NULL;
+      void * segment = Allocate("Array", objectName, totalDataLength);
 
-      void * segment = PushBack(
-        SerializedBuffer::DATA_TYPE_ARRAY,
-        &code.code[0], EncodedArray::CODE_SIZE*sizeof(u32),
-        reinterpret_cast<const void*>(in.Pointer(0,0)), in.get_stride()*in.get_size(0));
+      AnkiConditionalErrorAndReturnValue(segment != NULL,
+        NULL, "SerializedBuffer::PushBack", "Could not add data");
+
+      SerializeRawArray(objectName, in, segment, totalDataLength);
 
       return segment;
     }
 
     template<typename Type> void* SerializedBuffer::PushBack(const char *objectName, const ArraySlice<Type> &in)
     {
-      EncodedArraySlice code;
+      s32 totalDataLength = in.get_stride() * in.get_size(1) + EncodedArraySlice::CODE_SIZE*sizeof(u32);
 
-      if(EncodeArraySliceType<Type>(in, code) != RESULT_OK)
-        return NULL;
+      void * segment = Allocate("ArraySlice", objectName, totalDataLength);
 
-      const LinearSequence<s32>& ySlice = in.get_ySlice();
-      const LinearSequence<s32>& xSlice = in.get_xSlice();
+      AnkiConditionalErrorAndReturnValue(segment != NULL,
+        NULL, "SerializedBuffer::PushBack", "Could not add data");
 
-      // NOTE: these parameters are the size that will be transmitted, not the original size
-      const u32 height = ySlice.get_size();
-      const u32 width = xSlice.get_size();
-      const u32 stride = width*sizeof(Type);
+      SerializeRawArray(objectName, in, &segment, totalDataLength);
 
-      const s32 numRequiredDataBytes = height*stride;
-
-      // WARNING: This copying breaks the CRC code generation
-      void * segment = PushBack(
-        SerializedBuffer::DATA_TYPE_ARRAYSLICE,
-        &code.code[0], EncodedArraySlice::CODE_SIZE*sizeof(u32),
-        NULL, numRequiredDataBytes);
-
-      // TODO: this could be done more efficiently
-      Type * restrict shiftedSegmentType = reinterpret_cast<Type*>( reinterpret_cast<u8*>(segment) + EncodedArraySlice::CODE_SIZE*sizeof(u32) );
-      s32 iData = 0;
-
-      const s32 yStart = ySlice.get_start();
-      const s32 yIncrement = ySlice.get_increment();
-      const s32 yEnd = ySlice.get_end();
-
-      const s32 xStart = xSlice.get_start();
-      const s32 xIncrement = xSlice.get_increment();
-      const s32 xEnd = xSlice.get_end();
-
-      for(s32 y=yStart; y<=yEnd; y+=yIncrement) {
-        Type * restrict pInData = in.Pointer(y, 0);
-        for(s32 x=xStart; x<=xEnd; x+=xIncrement) {
-          shiftedSegmentType[iData] = pInData[x];
-          iData++;
-        }
-      }
-
-      return segment;
+      return segmentStart;
     }
   } // namespace Embedded
 } //namespace Anki
