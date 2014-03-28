@@ -78,8 +78,7 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
     const char * typeName = NULL;
     const char * objectName = NULL;
     bool isReportedSegmentLengthCorrect;
-    void * dataSegmentStart = reinterpret_cast<u8*>(iterator.GetNext(&typeName, &objectName, dataLength, isReportedSegmentLengthCorrect));
-    u8 * dataSegment = reinterpret_cast<u8*>(dataSegmentStart);
+    void * dataSegment = reinterpret_cast<u8*>(iterator.GetNext(&typeName, &objectName, dataLength, isReportedSegmentLengthCorrect));
 
     if(!dataSegment) {
       break;
@@ -91,44 +90,30 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
 
     //printf("Next segment is (%d,%d): ", dataLength, type);
     if(strcmp(typeName, "Basic Type Buffer") == 0) {
-      SerializedBuffer::EncodedBasicTypeBuffer code;
-      for(s32 i=0; i<SerializedBuffer::EncodedBasicTypeBuffer::CODE_SIZE; i++) {
-        code.code[i] = reinterpret_cast<const u32*>(dataSegment)[i];
-      }
-      dataSegment += SerializedBuffer::EncodedBasicTypeBuffer::CODE_SIZE * sizeof(u32);
-      const s32 remainingDataLength = dataLength - SerializedBuffer::EncodedBasicTypeBuffer::CODE_SIZE * sizeof(u32);
-
       u16 size;
       bool isBasicType;
       bool isInteger;
       bool isSigned;
       bool isFloat;
       s32 numElements;
-      SerializedBuffer::DecodeBasicTypeBuffer(code, size, isBasicType, isInteger, isSigned, isFloat, numElements);
+      SerializedBuffer::EncodedBasicTypeBuffer::Deserialize(false, size, isBasicType, isInteger, isSigned, isFloat, numElements, &dataSegment, dataLength);
 
       // Hack to detect a benchmarking pair
       if(isFloat && size==4 && numElements==2) {
-        const f32 *times = reinterpret_cast<const f32*>(dataSegment);
+        PUSH_MEMORY_STACK(scratch);
+        f32* tmpBuffer = SerializedBuffer::DeserializeRawBasicType<f32>(innerObjectName, &dataSegment, dataLength, scratch);
         for(s32 i=0; i<2; i++) {
-          benchmarkTimes[i] = times[i];
+          benchmarkTimes[i] = tmpBuffer[i];
         }
-
         //printf("Times: %f %f\n", times[0], times[1]);
       } else {
         printf("Basic type buffer segment (%d, %d, %d, %d, %d): ", size, isInteger, isSigned, isFloat, numElements);
-        for(s32 i=0; i<remainingDataLength; i++) {
-          printf("%x ", dataSegment[i]);
-        }
+        /*for(s32 i=0; i<remainingDataLength; i++) {
+        printf("%x ", dataSegment[i]);
+        }*/
       }
     } else if(strcmp(typeName, "Array") == 0) {
-      dataSegment += 2*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
-
-      SerializedBuffer::EncodedArray code;
-      for(s32 i=0; i<SerializedBuffer::EncodedArray::CODE_SIZE; i++) {
-        code.code[i] = reinterpret_cast<const u32*>(dataSegment)[i];
-      }
-      dataSegment += SerializedBuffer::EncodedArray::CODE_SIZE * sizeof(u32);
-      const s32 remainingDataLength = dataLength - SerializedBuffer::EncodedArray::CODE_SIZE * sizeof(u32);
+      dataSegment = reinterpret_cast<u8*>(dataSegment) + 2*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
 
       s32 height;
       s32 width;
@@ -139,11 +124,12 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
       bool basicType_isInteger;
       bool basicType_isSigned;
       bool basicType_isFloat;
-      SerializedBuffer::DecodeArrayType(code, height, width, stride, flags, basicType_size, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat);
+      s32 basicType_numElements;
+      SerializedBuffer::EncodedArray::Deserialize(false, height, width, stride, flags, basicType_size, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_numElements, &dataSegment, dataLength);
 
       //template<typename Type> static Result DeserializeArray(const void * data, const s32 dataLength, Array<Type> &out, MemoryStack &memory);
       if(basicType_size==1 && basicType_isInteger==1 && basicType_isSigned==0 && basicType_isFloat==0) {
-        Array<u8> arr = SerializedBuffer::DeserializeRawArray<u8>(NULL, &dataSegmentStart, dataLength, scratch);
+        Array<u8> arr = SerializedBuffer::DeserializeRawArray<u8>(NULL, &dataSegment, dataLength, scratch);
 
         if(!arr.IsValid()) {
           continue;

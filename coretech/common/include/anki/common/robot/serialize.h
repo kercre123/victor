@@ -605,12 +605,12 @@ namespace Anki
       s32 totalDataLength = dataLength + EncodedBasicTypeBuffer::CODE_LENGTH;
 
       void * const segmentStart = Allocate("Basic Type Buffer", objectName, totalDataLength);
-      u8 * segment = reinterpret_cast<u8*>(segmentStart);
+      void * segment = reinterpret_cast<u8*>(segmentStart);
 
       AnkiConditionalErrorAndReturnValue(segment != NULL,
         NULL, "SerializedBuffer::PushBack", "Could not add data");
 
-      SerializeRawBasicType(objectName, data, dataLength, &segment, totalDataLength);
+      SerializeRawBasicType<Type>(objectName, data, dataLength, &segment, totalDataLength);
 
       return reinterpret_cast<Type*>(segmentStart);
     }
@@ -619,7 +619,8 @@ namespace Anki
     {
       s32 totalDataLength = in.get_stride() * in.get_size(1) + EncodedArray::CODE_LENGTH;
 
-      void * segment = Allocate("Array", objectName, totalDataLength);
+      void * const segmentStart = Allocate("Array", objectName, totalDataLength);
+      void * segment = segmentStart;
 
       AnkiConditionalErrorAndReturnValue(segment != NULL,
         NULL, "SerializedBuffer::PushBack", "Could not add data");
