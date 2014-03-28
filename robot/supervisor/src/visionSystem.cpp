@@ -399,7 +399,7 @@ namespace DebugStream
 
     const f32 benchmarkTimes[2] = {lastBenchmarkDuration_algorithmsOnly, lastBenchmarkDuration_total};
 
-    toSend.PushBack<f32>("Benchmark Times", &benchmarkTimes[0], 2*sizeof(f32));
+    toSend.PushBack<f32>("Benchmark Times", &benchmarkTimes[0], 2);
 
     s32 startIndex;
     const u8 * bufferStart = reinterpret_cast<const u8*>(toSend.get_memoryStack().get_validBufferStart(startIndex));
