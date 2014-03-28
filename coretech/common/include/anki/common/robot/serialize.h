@@ -476,6 +476,9 @@ namespace Anki
       s32 numElements;
       EncodedBasicTypeBuffer::Deserialize(true, size, isBasicType, isInteger, isSigned, isFloat, numElements, buffer, bufferLength);
 
+      AnkiConditionalErrorAndReturnValue(numElements > 0 && numElements < 1000000,
+        NULL, "SerializedBuffer::DeserializeRawBasicType", "numElements is not reasonable");
+
       const s32 numBytes = numElements*sizeof(Type);
       Type *var = reinterpret_cast<Type*>( memory.Allocate(numBytes) );
 
