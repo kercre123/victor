@@ -22,78 +22,80 @@ namespace Anki
   {
     // #pragma mark
 
-    template<typename Type> Result SerializedBuffer::EncodeBasicType(u32 &code)
+    template<typename Type> Result SerializedBuffer::EncodedBasicTypeBuffer::Serialize(const bool updateBufferPointer, const s32 numElements, void ** buffer, s32 &bufferLength)
     {
-      code = 0;
+      if(bufferLength < EncodedBasicTypeBuffer::CODE_LENGTH) {
+        return RESULT_FAIL_OUT_OF_MEMORY;
+      }
 
-      // TODO: should non-basic types be handled?
-      //if(!Flags::TypeCharacteristics<Type>::isBasicType) {
-      //  return RESULT_FAIL;
-      //}
+      u32 *bufferU32 = reinterpret_cast<u32*>(*buffer);
+
+      bufferU32[0] = 0;
 
       if(Flags::TypeCharacteristics<Type>::isBasicType) {
-        code |= 1;
+        bufferU32[0] |= 1;
       }
 
       if(Flags::TypeCharacteristics<Type>::isInteger) {
-        code |= 2;
+        bufferU32[0] |= 2;
       }
 
       if(Flags::TypeCharacteristics<Type>::isSigned) {
-        code |= 4;
+        bufferU32[0] |= 4;
       }
 
       if(Flags::TypeCharacteristics<Type>::isFloat) {
-        code |= 8;
+        bufferU32[0] |= 8;
       }
 
-      code |= sizeof(Type) << 16;
+      bufferU32[0] |= sizeof(Type) << 16;
+
+      bufferU32[1] = numElements;
+
+      if(updateBufferPointer) {
+        *buffer = reinterpret_cast<u8*>(*buffer) + EncodedBasicTypeBuffer::CODE_LENGTH;
+        bufferLength -= EncodedBasicTypeBuffer::CODE_LENGTH;;
+      }
 
       return RESULT_OK;
     }
 
-    template<typename Type> Result SerializedBuffer::EncodeBasicTypeBuffer(const s32 numElements, EncodedBasicTypeBuffer &code)
+    template<typename Type> Result SerializedBuffer::EncodedArray::Serialize(const bool updateBufferPointer, const Array<Type> &in, void ** buffer, s32 &bufferLength)
     {
-      SerializedBuffer::EncodeBasicType<Type>(code.code[0]);
-      code.code[1] = numElements;
+      if(bufferLength < EncodedArray::CODE_LENGTH) {
+        return RESULT_FAIL_OUT_OF_MEMORY;
+      }
 
-      return RESULT_OK;
-    }
-
-    template<typename Type> Result SerializedBuffer::EncodeArrayType(const Array<Type> &in, EncodedArray &code)
-    {
       AnkiConditionalErrorAndReturnValue(in.IsValid(),
-        RESULT_FAIL, "SerializedBuffer::EncodeArray", "in Array is invalid");
+        RESULT_FAIL, "SerializedBuffer::EncodedArray", "in Array is invalid");
 
-      // TODO: should non-basic types be handled?
+      u32 *bufferU32 = reinterpret_cast<u32*>(*buffer);
 
-      //if(SerializedBuffer::EncodeBasicType<Type>(code.code[0]) != RESULT_OK)
-      //        return RESULT_FAIL;
+      const s32 numElements = in.get_size(1) * in.get_stride();
 
-      SerializedBuffer::EncodeBasicType<Type>(code.code[0]);
+      EncodedBasicTypeBuffer::Serialize<Type>(false, numElements, buffer, bufferLength);
 
-      code.code[1] = in.get_size(0);
-      code.code[2] = in.get_size(1);
-      code.code[3] = in.get_stride();
-      code.code[4] = in.get_flags().get_rawFlags();
+      bufferU32[2] = in.get_size(0);
+      bufferU32[3] = in.get_size(1);
+      bufferU32[4] = in.get_stride();
+      bufferU32[5] = in.get_flags().get_rawFlags();
+
+      if(updateBufferPointer) {
+        *buffer = reinterpret_cast<u8*>(*buffer) + EncodedArray::CODE_LENGTH;
+        bufferLength -= EncodedArray::CODE_LENGTH;
+      }
 
       return RESULT_OK;
     }
 
-    template<typename Type> Result SerializedBuffer::EncodeArraySliceType(const ConstArraySlice<Type> &in, EncodedArraySlice &code)
+    template<typename Type> Result SerializedBuffer::EncodedArraySlice::Serialize(const bool updateBufferPointer, const ConstArraySlice<Type> &in, void ** buffer, s32 &bufferLength)
     {
-      // The first part of the code is the same as an Array
-      EncodedArray arrayCode;
-      const Result result = SerializedBuffer::EncodeArrayType(in.get_array(), arrayCode);
-
-      if(result != RESULT_OK)
-        return result;
-
-      for(s32 i=0; i<5; i++) {
-        code.code[i] = arrayCode.code[i];
+      if(bufferLength < EncodedArraySlice::CODE_LENGTH) {
+        return RESULT_FAIL_OUT_OF_MEMORY;
       }
 
-      // The second part is the properties of the slice
+      AnkiConditionalErrorAndReturnValue(in.get_array().IsValid(),
+        RESULT_FAIL, "SerializedBuffer::EncodedArraySlice", "in Array is invalid");
 
       const LinearSequence<s32>& ySlice = in.get_ySlice();
       const LinearSequence<s32>& xSlice = in.get_xSlice();
@@ -101,18 +103,31 @@ namespace Anki
       const s32 yStart = ySlice.get_start();
       const s32 yIncrement = ySlice.get_increment();
       const s32 yEnd = ySlice.get_end();
+      const s32 ySize = ySlice.get_size();
 
       const s32 xStart = xSlice.get_start();
       const s32 xIncrement = xSlice.get_increment();
       const s32 xEnd = xSlice.get_end();
+      const s32 xSize = xSlice.get_size();
 
-      code.code[5] = *reinterpret_cast<const u32*>(&yStart);
-      code.code[6] = *reinterpret_cast<const u32*>(&yIncrement);
-      code.code[7] = *reinterpret_cast<const u32*>(&yEnd);
+      const s32 numElements = ySize * xSize * sizeof(Type);
 
-      code.code[8] = *reinterpret_cast<const u32*>(&xStart);
-      code.code[9] = *reinterpret_cast<const u32*>(&xIncrement);
-      code.code[10]= *reinterpret_cast<const u32*>(&xEnd);
+      EncodedArray::Serialize<Type>(false, in.get_array(), buffer, bufferLength);
+
+      u32 *bufferU32 = reinterpret_cast<u32*>(*buffer);
+
+      bufferU32[6] = *reinterpret_cast<const u32*>(&yStart);
+      bufferU32[7] = *reinterpret_cast<const u32*>(&yIncrement);
+      bufferU32[8] = *reinterpret_cast<const u32*>(&yEnd);
+
+      bufferU32[9] = *reinterpret_cast<const u32*>(&xStart);
+      bufferU32[10] = *reinterpret_cast<const u32*>(&xIncrement);
+      bufferU32[11]= *reinterpret_cast<const u32*>(&xEnd);
+
+      if(updateBufferPointer) {
+        *buffer = reinterpret_cast<u8*>(*buffer) + EncodedArraySlice::CODE_LENGTH;
+        bufferLength -= EncodedArraySlice::CODE_LENGTH;
+      }
 
       return RESULT_OK;
     }
@@ -133,7 +148,7 @@ namespace Anki
     //  const u32 stride = in.get_stride();
     //  const u32 flags = in.get_flags().get_rawFlags();
 
-    //  const s32 numRequiredBytes = height*stride + EncodedArray::CODE_SIZE*sizeof(u32);
+    //  const s32 numRequiredBytes = height*stride + EncodedArray::CODE_LENGTH;
     //  AnkiConditionalErrorAndReturnValue(dataLength >= numRequiredBytes,
     //    RESULT_FAIL, "SerializedBuffer::SerializeArray", "data needs at least %d bytes", numRequiredBytes);
 
@@ -210,7 +225,7 @@ namespace Anki
     //  const u32 stride = width*sizeof(Type);
     //  const u32 flags = in.get_flags().get_rawFlags();
 
-    //  const s32 numRequiredBytes = height*stride + EncodedArraySlice::CODE_SIZE*sizeof(u32);
+    //  const s32 numRequiredBytes = height*stride + EncodedArraySlice::CODE_LENGTH;
     //  AnkiConditionalErrorAndReturnValue(dataLength >= numRequiredBytes,
     //    RESULT_FAIL, "SerializedBuffer::SerializeArraySlice", "data needs at least %d bytes", numRequiredBytes);
 
@@ -333,36 +348,35 @@ namespace Anki
     //  return RESULT_OK;
     //}
 
-    template<typename Type> Result SerializedBuffer::SerializeRaw(const char *objectName, const Type &in, void ** buffer, s32 &bufferLength)
+    template<typename Type> Result SerializedBuffer::SerializeRawBasicType(const char *objectName, const Type &in, void ** buffer, s32 &bufferLength)
     {
-      if(SerializeDescriptionString(objectName, buffer, bufferLength) != RESULT_OK)
+      return SerializeRawBasicType(objectName, &in, 1, buffer, bufferLength);
+    }
+
+    template<typename Type> Result SerializedBuffer::SerializeRawBasicType(const char *objectName, const Type *in, const s32 inLength, void ** buffer, s32 &bufferLength)
+    {
+      if(SerializeDescriptionStrings("Basic Type Buffer", objectName, buffer, bufferLength) != RESULT_OK)
         return RESULT_FAIL;
 
-      memcpy(*buffer, &in, sizeof(Type));
+      SerializedBuffer::EncodedBasicTypeBuffer::Serialize<Type>(true, inLength/sizeof(Type), buffer, bufferLength);
 
-      *buffer = reinterpret_cast<u8*>(*buffer) + sizeof(Type);
-      bufferLength -= sizeof(Type);
+      memcpy(*buffer, in, inLength);
+
+      *buffer = reinterpret_cast<u8*>(*buffer) + inLength;
+      bufferLength -= inLength;
 
       return RESULT_OK;
     }
 
     template<typename Type> Result SerializedBuffer::SerializeRawArray(const char *objectName, const Array<Type> &in, void ** buffer, s32 &bufferLength)
     {
-      if(SerializeDescriptionString("Array", buffer, bufferLength) != RESULT_OK)
+      AnkiConditionalErrorAndReturnValue(in.IsValid(),
+        RESULT_FAIL, "SerializedBuffer::SerializeRawArraySlice", "in ArraySlice is not Valid");
+
+      if(SerializeDescriptionStrings("Array", objectName, buffer, bufferLength) != RESULT_OK)
         return RESULT_FAIL;
 
-      if(SerializeDescriptionString(objectName, buffer, bufferLength) != RESULT_OK)
-        return RESULT_FAIL;
-
-      EncodedArray code;
-
-      if(EncodeArrayType<Type>(in, code) != RESULT_OK)
-        return RESULT_FAIL;
-
-      memcpy(*buffer, &code.code[0], EncodedArray::CODE_SIZE*sizeof(u32));
-
-      *buffer = reinterpret_cast<u8*>(*buffer) + EncodedArray::CODE_SIZE*sizeof(u32);
-      bufferLength -= EncodedArray::CODE_SIZE*sizeof(u32);
+      SerializedBuffer::EncodedArray::Serialize<Type>(true, in, buffer, bufferLength);
 
       memcpy(*buffer, in.Pointer(0,0), in.get_stride()*in.get_size(0));
 
@@ -377,33 +391,20 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(in.get_array().IsValid(),
         RESULT_FAIL, "SerializedBuffer::SerializeRawArraySlice", "in ArraySlice is not Valid");
 
-      if(SerializeDescriptionString("ArraySlice", buffer, bufferLength) != RESULT_OK)
+      if(SerializeDescriptionStrings("ArraySlice", objectName, buffer, bufferLength) != RESULT_OK)
         return RESULT_FAIL;
-
-      if(SerializeDescriptionString(objectName, buffer, bufferLength) != RESULT_OK)
-        return RESULT_FAIL;
-
-      // TODO: are the alignment restrictions still required for the M4?
-      //AnkiConditionalErrorAndReturnValue(reinterpret_cast<size_t>(in)%4 == 0,
-      //  RESULT_FAIL, "SerializedBuffer::SerializeArraySlice", "in is not 4-byte aligned");
 
       // NOTE: these parameters are the size that will be transmitted, not the original size
       const u32 height = in.get_ySlice().get_size();
       const u32 width = in.get_xSlice().get_size();
       const u32 stride = width*sizeof(Type);
 
-      const s32 numRequiredBytes = height*stride + EncodedArraySlice::CODE_SIZE*sizeof(u32);
+      const s32 numRequiredBytes = height*stride + EncodedArraySlice::CODE_LENGTH;
 
       AnkiConditionalErrorAndReturnValue(bufferLength >= numRequiredBytes,
         RESULT_FAIL, "SerializedBuffer::SerializeRawArraySlice", "buffer needs at least %d bytes", numRequiredBytes);
 
-      EncodedArraySlice code;
-      SerializedBuffer::EncodeArraySliceType(in, code);
-
-      memcpy(*buffer, &code.code[0], EncodedArraySlice::CODE_SIZE*sizeof(u32));
-
-      *buffer = reinterpret_cast<u8*>(*buffer) + EncodedArraySlice::CODE_SIZE*sizeof(u32);
-      bufferLength -= EncodedArraySlice::CODE_SIZE*sizeof(u32);
+      SerializedBuffer::EncodedArraySlice::Serialize<Type>(true, in, buffer, bufferLength);
 
       // TODO: this could be done more efficiently
       Type * restrict pDataType = reinterpret_cast<Type*>(*buffer);
@@ -441,9 +442,19 @@ namespace Anki
       return SerializeRawArraySlice<Type>(objectName, *static_cast<const ConstArraySlice<Type>*>(&in), buffer, bufferLength);
     }
 
-    template<typename Type> Type SerializedBuffer::DeserializeRaw(char *objectName, void ** buffer, s32 &bufferLength)
+    template<typename Type> Type SerializedBuffer::DeserializeRawBasicType(char *objectName, void ** buffer, s32 &bufferLength)
     {
-      DeserializeDescriptionString(objectName, buffer, bufferLength);
+      // TODO: check if description is valid
+      DeserializeDescriptionStrings(NULL, objectName, buffer, bufferLength);
+
+      // TODO: check if encoded type is valid
+      u16 size;
+      bool isBasicType;
+      bool isInteger;
+      bool isSigned;
+      bool isFloat;
+      s32 numElements;
+      EncodedBasicTypeBuffer::Deserialize(true, size, isBasicType, isInteger, isSigned, isFloat, numElements, buffer, bufferLength);
 
       const Type var = *reinterpret_cast<Type*>(*buffer);
 
@@ -453,8 +464,37 @@ namespace Anki
       return var;
     }
 
+    template<typename Type> Type* SerializedBuffer::DeserializeRawBasicType(char *objectName, void ** buffer, s32 &bufferLength, MemoryStack &memory)
+    {
+      // TODO: check if description is valid
+      DeserializeDescriptionStrings(NULL, objectName, buffer, bufferLength);
+
+      // TODO: check if encoded type is valid
+      u16 size;
+      bool isBasicType;
+      bool isInteger;
+      bool isSigned;
+      bool isFloat;
+      s32 numElements;
+      EncodedBasicTypeBuffer::Deserialize(true, size, isBasicType, isInteger, isSigned, isFloat, numElements, buffer, bufferLength);
+
+      const s32 numBytes = numElements*sizeof(Type);
+      Type *var = reinterpret_cast<Type*>( memory.Allocate(numBytes) );
+
+      memcpy(var, *buffer, numBytes);
+
+      *buffer = reinterpret_cast<u8*>(*buffer) + numBytes;
+      bufferLength -= numBytes;
+
+      return var;
+    }
+
     template<typename Type> Array<Type> SerializedBuffer::DeserializeRawArray(char *objectName, void ** buffer, s32 &bufferLength, MemoryStack &memory)
     {
+      // TODO: check if description is valid
+      DeserializeDescriptionStrings(NULL, objectName, buffer, bufferLength);
+
+      // TODO: check if encoded type is valid
       s32 height;
       s32 width;
       s32 stride;
@@ -464,24 +504,8 @@ namespace Anki
       bool basicType_isInteger;
       bool basicType_isSigned;
       bool basicType_isFloat;
-
-      DeserializeDescriptionString(objectName, buffer, bufferLength);
-
-      {
-        const u32 * bufferU32 = reinterpret_cast<const u32*>(*buffer);
-
-        EncodedArray code;
-
-        for(s32 i=0; i<EncodedArray::CODE_SIZE; i++) {
-          code.code[i] = bufferU32[i];
-        }
-
-        if(SerializedBuffer::DecodeArrayType(code, height, width, stride, flags, basicType_size, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat) != RESULT_OK)
-          return Array<Type>();
-      }
-
-      *buffer = reinterpret_cast<u8*>(*buffer) + (EncodedArray::CODE_SIZE * sizeof(u32));
-      bufferLength -= (EncodedArray::CODE_SIZE * sizeof(u32));
+      s32 basicType_numElements;
+      EncodedArray::Deserialize(true, height, width, stride, flags, basicType_size, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_numElements, buffer, bufferLength);
 
       AnkiConditionalErrorAndReturnValue(stride == RoundUp(width*sizeof(Type), MEMORY_ALIGNMENT),
         Array<Type>(), "SerializedBuffer::DeserializeRawArray", "Parsed stride is not reasonable");
@@ -489,7 +513,7 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(bufferLength >= (height*stride),
         Array<Type>(), "SerializedBuffer::DeserializeRawArray", "Not enought bytes left to set the array");
 
-      Array<Type> out = Array<Type> (height, width, memory);
+      Array<Type> out = Array<Type>(height, width, memory);
 
       memcpy(out.Pointer(0,0), *buffer, height*stride);
 
@@ -501,6 +525,10 @@ namespace Anki
 
     template<typename Type> ArraySlice<Type> SerializedBuffer::DeserializeRawArraySlice(char *objectName, void ** buffer, s32 &bufferLength, MemoryStack &memory)
     {
+      // TODO: check if description is valid
+      DeserializeDescriptionStrings(NULL, objectName, buffer, bufferLength);
+
+      // TODO: check if encoded type is valid
       s32 height;
       s32 width;
       s32 stride;
@@ -516,27 +544,11 @@ namespace Anki
       bool basicType_isInteger;
       bool basicType_isSigned;
       bool basicType_isFloat;
-
-      DeserializeDescriptionString(objectName, buffer, bufferLength);
-
-      {
-        const u32 * bufferU32 = reinterpret_cast<const u32*>(*buffer);
-
-        EncodedArraySlice code;
-
-        for(s32 i=0; i<EncodedArraySlice::CODE_SIZE; i++) {
-          code.code[i] = bufferU32[i];
-        }
-
-        if(SerializedBuffer::DecodeArraySliceType(code, height, width, stride, flags, ySlice_start, ySlice_increment, ySlice_end, xSlice_start, xSlice_increment, xSlice_end, basicType_size, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat) != RESULT_OK)
-          return ArraySlice<Type>();
-      }
+      s32 basicType_numElements;
+      EncodedArraySlice::Deserialize(true, height, width, stride, flags, ySlice_start, ySlice_increment, ySlice_end, xSlice_start, xSlice_increment, xSlice_end, basicType_size, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_numElements, buffer, bufferLength);
 
       const LinearSequence<s32> ySlice(ySlice_start, ySlice_increment, ySlice_end);
       const LinearSequence<s32> xSlice(xSlice_start, xSlice_increment, xSlice_end);
-
-      *buffer = reinterpret_cast<u8*>(*buffer) + (EncodedArraySlice::CODE_SIZE * sizeof(u32));
-      bufferLength -= (EncodedArraySlice::CODE_SIZE * sizeof(u32));
 
       AnkiConditionalErrorAndReturnValue(stride == RoundUp(width*sizeof(Type), MEMORY_ALIGNMENT),
         ArraySlice<Type>(), "SerializedBuffer::DeserializeRawArraySlice", "Parsed stride is not reasonable");
@@ -590,7 +602,7 @@ namespace Anki
 
     template<typename Type> Type* SerializedBuffer::PushBack(const char *objectName, const Type *data, const s32 dataLength)
     {
-      s32 totalDataLength = dataLength + EncodedBasicTypeBuffer::CODE_SIZE*sizeof(u32);
+      s32 totalDataLength = dataLength + EncodedBasicTypeBuffer::CODE_LENGTH;
 
       void * const segmentStart = Allocate("Basic Type Buffer", objectName, totalDataLength);
       u8 * segment = reinterpret_cast<u8*>(segmentStart);
@@ -598,23 +610,14 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(segment != NULL,
         NULL, "SerializedBuffer::PushBack", "Could not add data");
 
-      EncodedBasicTypeBuffer code;
-
-      if(SerializedBuffer::EncodeBasicTypeBuffer<Type>(dataLength/sizeof(Type), code) != RESULT_OK)
-        return NULL;
-
-      memcpy(segment, &code.code[0], EncodedBasicTypeBuffer::CODE_SIZE*sizeof(u32));
-      segment += EncodedBasicTypeBuffer::CODE_SIZE*sizeof(u32);
-
-      memcpy(segment, data, dataLength);
-      segment += dataLength;
+      SerializeRawBasicType(objectName, data, dataLength, &segment, totalDataLength);
 
       return reinterpret_cast<Type*>(segmentStart);
     }
 
     template<typename Type> void* SerializedBuffer::PushBack(const char *objectName, const Array<Type> &in)
     {
-      s32 totalDataLength = in.get_stride() * in.get_size(1) + EncodedArray::CODE_SIZE*sizeof(u32);
+      s32 totalDataLength = in.get_stride() * in.get_size(1) + EncodedArray::CODE_LENGTH;
 
       void * segment = Allocate("Array", objectName, totalDataLength);
 
@@ -628,11 +631,11 @@ namespace Anki
 
     template<typename Type> void* SerializedBuffer::PushBack(const char *objectName, const ArraySlice<Type> &in)
     {
-      s32 totalDataLength = in.get_stride() * in.get_size(1) + EncodedArraySlice::CODE_SIZE*sizeof(u32);
+      s32 totalDataLength = in.get_stride() * in.get_size(1) + EncodedArraySlice::CODE_LENGTH;
 
       void * const segmentStart = Allocate("ArraySlice", objectName, totalDataLength);
       void * segment = segmentStart;
-      
+
       AnkiConditionalErrorAndReturnValue(segment != NULL,
         NULL, "SerializedBuffer::PushBack", "Could not add data");
 

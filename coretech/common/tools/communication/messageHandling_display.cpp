@@ -145,6 +145,10 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
       if(basicType_size==1 && basicType_isInteger==1 && basicType_isSigned==0 && basicType_isFloat==0) {
         Array<u8> arr = SerializedBuffer::DeserializeRawArray<u8>(NULL, &dataSegmentStart, dataLength, scratch);
 
+        if(!arr.IsValid()) {
+          continue;
+        }
+
         const s32 arrHeight = arr.get_size(0);
         const s32 arrWidth = arr.get_size(1);
 

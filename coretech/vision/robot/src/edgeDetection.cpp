@@ -329,9 +329,12 @@ namespace Anki
         return RESULT_FAIL;
       }
 
+      if(SerializedBuffer::SerializeDescriptionStrings("EdgeLists", objectName, reinterpret_cast<void**>(&segment), totalDataLength) != RESULT_OK)
+        return RESULT_FAIL;
+
       // Serialize the template lists
-      SerializedBuffer::SerializeRaw<s32>("imageHeight", this->imageHeight, &segment, totalDataLength);
-      SerializedBuffer::SerializeRaw<s32>("imageWidth", this->imageWidth, &segment, totalDataLength);
+      SerializedBuffer::SerializeRawBasicType<s32>("imageHeight", this->imageHeight, &segment, totalDataLength);
+      SerializedBuffer::SerializeRawBasicType<s32>("imageWidth", this->imageWidth, &segment, totalDataLength);
       SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("xDecreasing", this->xDecreasing, &segment, totalDataLength);
       SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("xIncreasing", this->xIncreasing, &segment, totalDataLength);
       SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("yDecreasing", this->yDecreasing, &segment, totalDataLength);
@@ -343,14 +346,11 @@ namespace Anki
     Result EdgeLists::Deserialize(char *objectName, void** buffer, s32 &bufferLength, MemoryStack &memory)
     {
       // TODO: check if the name is correct
-      if(SerializedBuffer::DeserializeDescriptionString(objectName, buffer, bufferLength) != RESULT_OK)
+      if(SerializedBuffer::DeserializeDescriptionStrings(NULL, objectName, buffer, bufferLength) != RESULT_OK)
         return RESULT_FAIL;
 
-      if(SerializedBuffer::DeserializeDescriptionString(objectName, buffer, bufferLength) != RESULT_OK)
-        return RESULT_FAIL;
-
-      this->imageHeight = SerializedBuffer::DeserializeRaw<s32>(NULL, buffer, bufferLength);
-      this->imageWidth = SerializedBuffer::DeserializeRaw<s32>(NULL, buffer, bufferLength);
+      this->imageHeight = SerializedBuffer::DeserializeRawBasicType<s32>(NULL, buffer, bufferLength);
+      this->imageWidth  = SerializedBuffer::DeserializeRawBasicType<s32>(NULL, buffer, bufferLength);
       this->xDecreasing = SerializedBuffer::DeserializeRawFixedLengthList<Point<s16> >(NULL, buffer, bufferLength, memory);
       this->xIncreasing = SerializedBuffer::DeserializeRawFixedLengthList<Point<s16> >(NULL, buffer, bufferLength, memory);
       this->yDecreasing = SerializedBuffer::DeserializeRawFixedLengthList<Point<s16> >(NULL, buffer, bufferLength, memory);

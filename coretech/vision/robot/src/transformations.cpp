@@ -340,17 +340,14 @@ namespace Anki
 
       Result PlanarTransformation_f32::SerializeRaw(const char *objectName, void ** buffer, s32 &bufferLength) const
       {
-        if(SerializedBuffer::SerializeDescriptionString("PlanarTransformation_f32", buffer, bufferLength) != RESULT_OK)
+        if(SerializedBuffer::SerializeDescriptionStrings("PlanarTransformation_f32", objectName, reinterpret_cast<void**>(&buffer), bufferLength) != RESULT_OK)
           return RESULT_FAIL;
 
-        if(SerializedBuffer::SerializeDescriptionString(objectName, buffer, bufferLength) != RESULT_OK)
-          return RESULT_FAIL;
-
-        SerializedBuffer::SerializeRaw<bool>("isValid", this->isValid, buffer, bufferLength);
-        SerializedBuffer::SerializeRaw<s32>("transformType", this->transformType, buffer, bufferLength);
+        SerializedBuffer::SerializeRawBasicType<bool>("isValid", this->isValid, buffer, bufferLength);
+        SerializedBuffer::SerializeRawBasicType<s32>("transformType", this->transformType, buffer, bufferLength);
         SerializedBuffer::SerializeRawArray<f32>("homography", this->homography, buffer, bufferLength);
-        SerializedBuffer::SerializeRaw<Quadrilateral<f32> >("initialCorners", this->initialCorners, buffer, bufferLength);
-        SerializedBuffer::SerializeRaw<Point<f32> >("centerOffset", this->centerOffset, buffer, bufferLength);
+        SerializedBuffer::SerializeRawBasicType<Quadrilateral<f32> >("initialCorners", this->initialCorners, buffer, bufferLength);
+        SerializedBuffer::SerializeRawBasicType<Point<f32> >("centerOffset", this->centerOffset, buffer, bufferLength);
 
         return RESULT_OK;
       }
@@ -358,17 +355,14 @@ namespace Anki
       Result PlanarTransformation_f32::Deserialize(char *objectName, void** buffer, s32 &bufferLength, MemoryStack &memory)
       {
         // TODO: check if the name is correct
-        if(SerializedBuffer::DeserializeDescriptionString(objectName, buffer, bufferLength) != RESULT_OK)
+        if(SerializedBuffer::DeserializeDescriptionStrings(NULL, objectName, buffer, bufferLength) != RESULT_OK)
           return RESULT_FAIL;
 
-        if(SerializedBuffer::DeserializeDescriptionString(objectName, buffer, bufferLength) != RESULT_OK)
-          return RESULT_FAIL;
-
-        this->isValid = SerializedBuffer::DeserializeRaw<bool>(NULL, buffer, bufferLength);
-        this->transformType = static_cast<Transformations::TransformType>(SerializedBuffer::DeserializeRaw<s32>(NULL, buffer, bufferLength));
+        this->isValid = SerializedBuffer::DeserializeRawBasicType<bool>(NULL, buffer, bufferLength);
+        this->transformType = static_cast<Transformations::TransformType>(SerializedBuffer::DeserializeRawBasicType<s32>(NULL, buffer, bufferLength));
         this->homography = SerializedBuffer::DeserializeRawArray<f32>(NULL, buffer, bufferLength, memory);
-        this->initialCorners = SerializedBuffer::DeserializeRaw<Quadrilateral<f32> >(NULL, buffer, bufferLength);
-        this->centerOffset = SerializedBuffer::DeserializeRaw<Point<f32> >(NULL, buffer, bufferLength);
+        this->initialCorners = SerializedBuffer::DeserializeRawBasicType<Quadrilateral<f32> >(NULL, buffer, bufferLength);
+        this->centerOffset = SerializedBuffer::DeserializeRawBasicType<Point<f32> >(NULL, buffer, bufferLength);
 
         return RESULT_OK;
       }

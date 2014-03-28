@@ -32,74 +32,92 @@ namespace Anki
       this->memoryStack = MemoryStack(buffer, bufferLength, flags);
     }
 
-    Result SerializedBuffer::DecodeBasicType(const u32 code, u16 &size, bool &isBasicType, bool &isInteger, bool &isSigned, bool &isFloat)
+    Result SerializedBuffer::EncodedBasicTypeBuffer::Deserialize(const bool updateBufferPointer, u16 &size, bool &isBasicType, bool &isInteger, bool &isSigned, bool &isFloat, s32 &numElements, void** buffer, s32 &bufferLength)
     {
-      if(code & 1)
+      if(bufferLength < EncodedBasicTypeBuffer::CODE_LENGTH) {
+        return RESULT_FAIL_OUT_OF_MEMORY;
+      }
+
+      const u32 *bufferU32 = reinterpret_cast<u32*>(*buffer);
+
+      if(bufferU32[0] & 1)
         isBasicType = true;
       else
         isBasicType = false;
 
-      if(code & 2)
+      if(bufferU32[0] & 2)
         isInteger = true;
       else
         isInteger = false;
 
-      if(code & 4)
+      if(bufferU32[0] & 4)
         isSigned = true;
       else
         isSigned = false;
 
-      if(code & 8)
+      if(bufferU32[0] & 8)
         isFloat = true;
       else
         isFloat = false;
 
-      size = (code & 0xFFFF0000) >> 16;
+      size = (bufferU32[0] & 0xFFFF0000) >> 16;
 
-      return RESULT_OK;
-    }
+      numElements = static_cast<s32>(bufferU32[1]);
 
-    Result SerializedBuffer::DecodeBasicTypeBuffer(const EncodedBasicTypeBuffer &code, u16 &size, bool &isBasicType, bool &isInteger, bool &isSigned, bool &isFloat, s32 &numElements)
-    {
-      SerializedBuffer::DecodeBasicType(code.code[0], size, isBasicType, isInteger, isSigned, isFloat);
-      numElements = code.code[1];
-
-      return RESULT_OK;
-    }
-
-    Result SerializedBuffer::DecodeArrayType(const EncodedArray &code, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, u16 &basicType_size, bool &basicType_isBasicType, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat)
-    {
-      if(DecodeBasicType(code.code[0], basicType_size, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat) != RESULT_OK)
-        return RESULT_FAIL;
-
-      height = code.code[1];
-      width = code.code[2];
-      stride = code.code[3];
-      flags.set_rawFlags(code.code[4]);
-
-      return RESULT_OK;
-    }
-
-    Result SerializedBuffer::DecodeArraySliceType(const EncodedArraySlice &code, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, s32 &ySlice_start, s32 &ySlice_increment, s32 &ySlice_end, s32 &xSlice_start, s32 &xSlice_increment, s32 &xSlice_end, u16 &basicType_size, bool &basicType_isBasicType, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat)
-    {
-      // The first part of the code is the same as an Array
-      EncodedArray arrayCode;
-
-      for(s32 i=0; i<5; i++) {
-        arrayCode.code[i] = code.code[i];
+      if(updateBufferPointer) {
+        *buffer = reinterpret_cast<u8*>(*buffer) + EncodedBasicTypeBuffer::CODE_LENGTH;
+        bufferLength -= EncodedBasicTypeBuffer::CODE_LENGTH;
       }
 
-      const Result result = SerializedBuffer::DecodeArrayType(arrayCode, height, width, stride, flags, basicType_size, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat);
+      return RESULT_OK;
+    }
 
-      if(result != RESULT_OK)
-        return result;
+    Result SerializedBuffer::EncodedArray::Deserialize(const bool updateBufferPointer, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, u16 &basicType_size, bool &basicType_isBasicType, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat, s32 &basicType_numElements, void** buffer, s32 &bufferLength)
+    {
+      if(bufferLength < EncodedArray::CODE_LENGTH) {
+        return RESULT_FAIL_OUT_OF_MEMORY;
+      }
 
-      ySlice_start = *reinterpret_cast<const s32*>(&code.code[5]);
-      ySlice_increment = *reinterpret_cast<const s32*>(&code.code[6]);
-      ySlice_end = *reinterpret_cast<const s32*>(&code.code[7]);
-      xSlice_start = *reinterpret_cast<const s32*>(&code.code[8]);
-      xSlice_increment = *reinterpret_cast<const s32*>(&code.code[9]);
-      xSlice_end = *reinterpret_cast<const s32*>(&code.code[10]);
+      if(SerializedBuffer::EncodedBasicTypeBuffer::Deserialize(false, basicType_size, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_numElements, buffer, bufferLength) != RESULT_OK)
+        return RESULT_FAIL;
+
+      const u32 *bufferU32 = reinterpret_cast<u32*>(*buffer);
+
+      height = bufferU32[2];
+      width = bufferU32[3];
+      stride = bufferU32[4];
+      flags.set_rawFlags(bufferU32[5]);
+
+      if(updateBufferPointer) {
+        *buffer = reinterpret_cast<u8*>(*buffer) + EncodedArray::CODE_LENGTH;
+        bufferLength -= EncodedArray::CODE_LENGTH;
+      }
+
+      return RESULT_OK;
+    }
+
+    Result SerializedBuffer::EncodedArraySlice::Deserialize(const bool updateBufferPointer, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, s32 &ySlice_start, s32 &ySlice_increment, s32 &ySlice_end, s32 &xSlice_start, s32 &xSlice_increment, s32 &xSlice_end, u16 &basicType_size, bool &basicType_isBasicType, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat, s32 &basicType_numElements, void** buffer, s32 &bufferLength)
+    {
+      if(bufferLength < EncodedArraySlice::CODE_LENGTH) {
+        return RESULT_FAIL_OUT_OF_MEMORY;
+      }
+
+      if(SerializedBuffer::EncodedArray::Deserialize(false, height, width, stride, flags, basicType_size, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_numElements, buffer, bufferLength) != RESULT_OK)
+        return RESULT_FAIL;
+
+      const s32 *bufferU32 = reinterpret_cast<s32*>(*buffer);
+
+      ySlice_start = bufferU32[6];
+      ySlice_increment = bufferU32[7];
+      ySlice_end = bufferU32[8];
+      xSlice_start = bufferU32[9];
+      xSlice_increment = bufferU32[10];
+      xSlice_end = bufferU32[11];
+
+      if(updateBufferPointer) {
+        *buffer = reinterpret_cast<u8*>(*buffer) + EncodedArraySlice::CODE_LENGTH;
+        bufferLength -= EncodedArraySlice::CODE_LENGTH;
+      }
 
       return RESULT_OK;
     }
@@ -169,7 +187,7 @@ namespace Anki
       return RESULT_OK;
     } // void FindSerializedBuffer(const void * rawBuffer, s32 &startIndex, s32 &endIndex)
 
-    Result SerializedBuffer::SerializeDescriptionString(const char *objectName, void ** buffer, s32 &bufferLength)
+    Result SerializedBuffer::SerializeOneDescriptionString(const char *description, void ** buffer, s32 &bufferLength)
     {
       if(bufferLength < DESCRIPTION_STRING_LENGTH) {
         return RESULT_FAIL_OUT_OF_MEMORY;
@@ -180,13 +198,13 @@ namespace Anki
       s32 iChar = 0;
 
       // If objectName is not NULL, copy it
-      if(objectName) {
+      if(description) {
         for(iChar=0; iChar<(DESCRIPTION_STRING_LENGTH-1); iChar++) {
-          if(objectName[iChar] == '\0') {
+          if(description[iChar] == '\0') {
             break;
           }
 
-          bufferU8[iChar] = objectName[iChar];
+          bufferU8[iChar] = description[iChar];
         }
       } // if(objectName)
 
@@ -198,13 +216,13 @@ namespace Anki
       return RESULT_OK;
     }
 
-    Result SerializedBuffer::DeserializeDescriptionString(char *objectName, void ** buffer, s32 &bufferLength)
+    Result SerializedBuffer::DeserializeOneDescriptionString(char *description, void ** buffer, s32 &bufferLength)
     {
       if(bufferLength < DESCRIPTION_STRING_LENGTH) {
         return RESULT_FAIL_OUT_OF_MEMORY;
       }
 
-      if(objectName) {
+      if(description) {
         u8 * bufferU8 = *reinterpret_cast<u8**>(buffer);
         s32 iChar = 0;
 
@@ -213,14 +231,30 @@ namespace Anki
             break;
           }
 
-          objectName[iChar] = bufferU8[iChar];
+          description[iChar] = bufferU8[iChar];
         }
 
-        objectName[iChar] = '\0';
+        description[iChar] = '\0';
       }
 
       *reinterpret_cast<u8**>(buffer) += DESCRIPTION_STRING_LENGTH;
       bufferLength -= DESCRIPTION_STRING_LENGTH;
+
+      return RESULT_OK;
+    }
+
+    Result SerializedBuffer::SerializeDescriptionStrings(const char *typeName, const char *objectName, void ** buffer, s32 &bufferLength)
+    {
+      SerializeOneDescriptionString(typeName, buffer, bufferLength);
+      SerializeOneDescriptionString(objectName, buffer, bufferLength);
+
+      return RESULT_OK;
+    }
+
+    Result SerializedBuffer::DeserializeDescriptionStrings(char *typeName, char *objectName, void ** buffer, s32 &bufferLength)
+    {
+      DeserializeOneDescriptionString(typeName, buffer, bufferLength);
+      DeserializeOneDescriptionString(objectName, buffer, bufferLength);
 
       return RESULT_OK;
     }
@@ -247,10 +281,7 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(segment != NULL,
         NULL, "SerializedBuffer::Allocate", "Could not add data");
 
-      if(SerializeDescriptionString(typeName, reinterpret_cast<void**>(&segment), totalLength) != RESULT_OK)
-        return NULL;
-
-      if(SerializeDescriptionString(objectName, reinterpret_cast<void**>(&segment), totalLength) != RESULT_OK)
+      if(SerializeDescriptionStrings(typeName, objectName, reinterpret_cast<void**>(&segment), totalLength) != RESULT_OK)
         return NULL;
 
       return segment;
