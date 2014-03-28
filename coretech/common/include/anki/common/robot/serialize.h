@@ -454,6 +454,8 @@ namespace Anki
       s32 numElements;
       EncodedBasicTypeBuffer::Deserialize(true, size, isBasicType, isInteger, isSigned, isFloat, numElements, buffer, bufferLength);
 
+      AnkiAssert(size < 256 && numElements > 0 && numElements < 1000000);
+
       const Type var = *reinterpret_cast<Type*>(*buffer);
 
       *buffer = reinterpret_cast<u8*>(*buffer) + sizeof(Type)*numElements;
