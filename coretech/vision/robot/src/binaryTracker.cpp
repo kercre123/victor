@@ -193,6 +193,9 @@ namespace Anki
 
         cv::Mat toShow = this->templateEdges.DrawIndexes();
 
+        if(toShow.cols == 0)
+          return RESULT_FAIL;
+
         if(fitImageToWindow) {
           cv::namedWindow(windowName, CV_WINDOW_NORMAL);
         } else {

@@ -378,6 +378,9 @@ namespace Anki
 #ifdef ANKICORETECH_EMBEDDED_USE_OPENCV
     cv::Mat EdgeLists::DrawIndexes() const
     {
+      AnkiConditionalErrorAndReturnValue(this->imageHeight > 16 && this->imageHeight < 2000 && this->imageWidth > 16 && this->imageWidth < 2000,
+        cv::Mat(), "EdgeLists::DrawIndexes", "This object is invalid");
+
       return DrawIndexes(this->imageHeight, this->imageWidth, this->xDecreasing, this->xIncreasing, this->yDecreasing, this->yIncreasing);
     }
 

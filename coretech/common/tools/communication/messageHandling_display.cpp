@@ -238,6 +238,9 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
 
       cv::Mat toShow = edges.DrawIndexes();
 
+      if(toShow.cols == 0)
+        continue;
+
       cv::Mat toShowLargeTmp(bigHeight, bigWidth, CV_8UC3);
       cv::resize(toShow, toShowLargeTmp, toShowLargeTmp.size(), 0, 0, cv::INTER_NEAREST);
       cv::imshow("Detected Binary Edges", toShowLargeTmp);
@@ -245,7 +248,7 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
       //cv::resize(toShow, toShowImage, toShowImage.size(), 0, 0, cv::INTER_NEAREST);
       //cv::imshow("Detected Binary Edges", toShowImage);
     } else {
-      printf("Unknown Type %s\n", *typeName);
+      printf("Unknown Type %s\n", typeName);
     }
 
     //printf("\n");
