@@ -1067,6 +1067,11 @@ namespace VisionState {
     yChange = dx*sinAngle + dy*cosAngle;
   } // GetPoseChange()
   
+  static Radians GetCurrentHeadAngle()
+  {
+    return robotState_.headAngle;
+  }
+  
   // This will return the camera's pose adjustment, in camera coordinates.
   // So x/y are in the image plane, with x pointing right and y pointing down.
   // z points out of the camera along the optical axis.
@@ -1846,10 +1851,6 @@ namespace Anki {
       //
       ReturnCode TrackerPredictionUpdate(const Array<u8>& grayscaleImage, MemoryStack scratch)
       {
-#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PLANAR6DOF
-        // TODO: Remove this and create prediction for this tracker!
-        return EXIT_SUCCESS;
-#endif
         
         // Get the observed vertical size of the marker
 #if USE_MATLAB_TRACKER
@@ -1859,9 +1860,21 @@ namespace Anki {
 #else
         const Quadrilateral<f32> currentQuad = VisionState::tracker_.get_transformation().get_transformedCorners(scratch);
 #endif
-
+        
         MatlabVisualization::SendTrackerPrediction_Before(grayscaleImage, currentQuad);
+        
+        
+#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PLANAR6DOF
+        Radians theta_robot;
+        f32 T_fwd_robot, T_hor_robot;
 
+        VisionState::GetPoseChange(T_fwd_robot, T_hor_robot, theta_robot);
+        Radians theta_head = VisionState::GetCurrentHeadAngle();
+        
+        MatlabVisionProcessor::matlabProc_.EvalStringEcho("LKtracker.UpdatePoseFromRobotMotion(%f, %f, %f, %f);",
+                                                          T_fwd_robot, T_hor_robot, theta_robot.ToFloat(), theta_head.ToFloat());
+        
+#else
         const Quadrilateral<f32> sortedQuad  = currentQuad.ComputeClockwiseCorners();
 
         f32 dx = sortedQuad[3].x - sortedQuad[0].x;
@@ -1951,6 +1964,8 @@ namespace Anki {
 #endif
         } // if(tracker transformation type == TRANSLATION...)
 
+#endif // if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PLANAR6DOF
+        
 #if USE_MATLAB_TRACKER
         // TODO: Tidy this up
         MatlabVisionProcessor::matlabProc_.EvalStringEcho("predictedQuad = %d*(double(LKtracker.corners)-1);", MatlabVisionProcessor::scaleFactor_);
