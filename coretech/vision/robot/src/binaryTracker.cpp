@@ -246,19 +246,31 @@ namespace Anki
           return RESULT_FAIL;
         }
 
-        if(SerializedBuffer::SerializeDescriptionStrings("BinaryTracker", objectName, reinterpret_cast<void**>(&segment), totalDataLength) != RESULT_OK)
+        if(SerializedBuffer::SerializeDescriptionStrings("BinaryTracker", objectName, &segment, totalDataLength) != RESULT_OK)
           return RESULT_FAIL;
 
         // First, serialize the transformation
-        this->transformation.SerializeRaw("transformation", &segment, totalDataLength);
+        if(this->transformation.SerializeRaw("transformation", &segment, totalDataLength) != RESULT_OK)
+          return RESULT_FAIL;
 
         // Next, serialize the template lists
-        SerializedBuffer::SerializeRawBasicType<s32>("templateEdges.imageHeight", this->templateEdges.imageHeight, &segment, totalDataLength);
-        SerializedBuffer::SerializeRawBasicType<s32>("templateEdges.imageWidth", this->templateEdges.imageWidth, &segment, totalDataLength);
-        SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("templateEdges.xDecreasing", this->templateEdges.xDecreasing, &segment, totalDataLength);
-        SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("templateEdges.xIncreasing", this->templateEdges.xIncreasing, &segment, totalDataLength);
-        SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("templateEdges.yDecreasing", this->templateEdges.yDecreasing, &segment, totalDataLength);
-        SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("templateEdges.yIncreasing", this->templateEdges.yIncreasing, &segment, totalDataLength);
+        if(SerializedBuffer::SerializeRawBasicType<s32>("templateEdges.imageHeight", this->templateEdges.imageHeight, &segment, totalDataLength) != RESULT_OK)
+          return RESULT_FAIL;
+        
+        if(SerializedBuffer::SerializeRawBasicType<s32>("templateEdges.imageWidth", this->templateEdges.imageWidth, &segment, totalDataLength) != RESULT_OK)
+          return RESULT_FAIL;
+        
+        if(SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("templateEdges.xDecreasing", this->templateEdges.xDecreasing, &segment, totalDataLength) != RESULT_OK)
+          return RESULT_FAIL;
+        
+        if(SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("templateEdges.xIncreasing", this->templateEdges.xIncreasing, &segment, totalDataLength) != RESULT_OK)
+          return RESULT_FAIL;
+        
+        if(SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("templateEdges.yDecreasing", this->templateEdges.yDecreasing, &segment, totalDataLength) != RESULT_OK)
+          return RESULT_FAIL;
+        
+        if(SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("templateEdges.yIncreasing", this->templateEdges.yIncreasing, &segment, totalDataLength) != RESULT_OK)
+          return RESULT_FAIL;
 
         return RESULT_OK;
       }

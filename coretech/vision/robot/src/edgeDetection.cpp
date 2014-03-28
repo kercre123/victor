@@ -329,7 +329,7 @@ namespace Anki
         return RESULT_FAIL;
       }
 
-      if(SerializedBuffer::SerializeDescriptionStrings("EdgeLists", objectName, reinterpret_cast<void**>(&segment), totalDataLength) != RESULT_OK)
+      if(SerializedBuffer::SerializeDescriptionStrings("EdgeLists", objectName, &segment, totalDataLength) != RESULT_OK)
         return RESULT_FAIL;
 
       // Serialize the template lists

@@ -34,7 +34,7 @@ namespace Anki
 
     Result SerializedBuffer::EncodedBasicTypeBuffer::Deserialize(const bool updateBufferPointer, u16 &size, bool &isBasicType, bool &isInteger, bool &isSigned, bool &isFloat, s32 &numElements, void** buffer, s32 &bufferLength)
     {
-      if(bufferLength < EncodedBasicTypeBuffer::CODE_LENGTH) {
+      if(bufferLength < SerializedBuffer::EncodedBasicTypeBuffer::CODE_LENGTH) {
         return RESULT_FAIL_OUT_OF_MEMORY;
       }
 
@@ -65,8 +65,8 @@ namespace Anki
       numElements = static_cast<s32>(bufferU32[1]);
 
       if(updateBufferPointer) {
-        *buffer = reinterpret_cast<u8*>(*buffer) + EncodedBasicTypeBuffer::CODE_LENGTH;
-        bufferLength -= EncodedBasicTypeBuffer::CODE_LENGTH;
+        *buffer = reinterpret_cast<u8*>(*buffer) + SerializedBuffer::EncodedBasicTypeBuffer::CODE_LENGTH;
+        bufferLength -= SerializedBuffer::EncodedBasicTypeBuffer::CODE_LENGTH;
       }
 
       return RESULT_OK;
@@ -74,7 +74,7 @@ namespace Anki
 
     Result SerializedBuffer::EncodedArray::Deserialize(const bool updateBufferPointer, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, u16 &basicType_size, bool &basicType_isBasicType, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat, s32 &basicType_numElements, void** buffer, s32 &bufferLength)
     {
-      if(bufferLength < EncodedArray::CODE_LENGTH) {
+      if(bufferLength < SerializedBuffer::EncodedArray::CODE_LENGTH) {
         return RESULT_FAIL_OUT_OF_MEMORY;
       }
 
@@ -89,8 +89,8 @@ namespace Anki
       flags.set_rawFlags(bufferU32[5]);
 
       if(updateBufferPointer) {
-        *buffer = reinterpret_cast<u8*>(*buffer) + EncodedArray::CODE_LENGTH;
-        bufferLength -= EncodedArray::CODE_LENGTH;
+        *buffer = reinterpret_cast<u8*>(*buffer) + SerializedBuffer::EncodedArray::CODE_LENGTH;
+        bufferLength -= SerializedBuffer::EncodedArray::CODE_LENGTH;
       }
 
       return RESULT_OK;
@@ -98,7 +98,7 @@ namespace Anki
 
     Result SerializedBuffer::EncodedArraySlice::Deserialize(const bool updateBufferPointer, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, s32 &ySlice_start, s32 &ySlice_increment, s32 &ySlice_end, s32 &xSlice_start, s32 &xSlice_increment, s32 &xSlice_end, u16 &basicType_size, bool &basicType_isBasicType, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat, s32 &basicType_numElements, void** buffer, s32 &bufferLength)
     {
-      if(bufferLength < EncodedArraySlice::CODE_LENGTH) {
+      if(bufferLength < SerializedBuffer::EncodedArraySlice::CODE_LENGTH) {
         return RESULT_FAIL_OUT_OF_MEMORY;
       }
 
@@ -115,8 +115,8 @@ namespace Anki
       xSlice_end = bufferU32[11];
 
       if(updateBufferPointer) {
-        *buffer = reinterpret_cast<u8*>(*buffer) + EncodedArraySlice::CODE_LENGTH;
-        bufferLength -= EncodedArraySlice::CODE_LENGTH;
+        *buffer = reinterpret_cast<u8*>(*buffer) + SerializedBuffer::EncodedArraySlice::CODE_LENGTH;
+        bufferLength -= SerializedBuffer::EncodedArraySlice::CODE_LENGTH;
       }
 
       return RESULT_OK;
@@ -281,7 +281,7 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(segment != NULL,
         NULL, "SerializedBuffer::Allocate", "Could not add data");
 
-      if(SerializeDescriptionStrings(typeName, objectName, reinterpret_cast<void**>(&segment), totalLength) != RESULT_OK)
+      if(SerializeDescriptionStrings(typeName, objectName, &segment, totalLength) != RESULT_OK)
         return NULL;
 
       return segment;

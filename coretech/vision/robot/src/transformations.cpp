@@ -343,11 +343,20 @@ namespace Anki
         if(SerializedBuffer::SerializeDescriptionStrings("PlanarTransformation_f32", objectName, buffer, bufferLength) != RESULT_OK)
           return RESULT_FAIL;
 
-        SerializedBuffer::SerializeRawBasicType<bool>("isValid", this->isValid, buffer, bufferLength);
-        SerializedBuffer::SerializeRawBasicType<s32>("transformType", this->transformType, buffer, bufferLength);
-        SerializedBuffer::SerializeRawArray<f32>("homography", this->homography, buffer, bufferLength);
-        SerializedBuffer::SerializeRawBasicType<Quadrilateral<f32> >("initialCorners", this->initialCorners, buffer, bufferLength);
-        SerializedBuffer::SerializeRawBasicType<Point<f32> >("centerOffset", this->centerOffset, buffer, bufferLength);
+        if(SerializedBuffer::SerializeRawBasicType<bool>("isValid", this->isValid, buffer, bufferLength) != RESULT_OK)
+          return RESULT_FAIL;
+        
+        if(SerializedBuffer::SerializeRawBasicType<s32>("transformType", this->transformType, buffer, bufferLength) != RESULT_OK)
+          return RESULT_FAIL;
+        
+        if(SerializedBuffer::SerializeRawArray<f32>("homography", this->homography, buffer, bufferLength) != RESULT_OK)
+          return RESULT_FAIL;
+        
+        if(SerializedBuffer::SerializeRawBasicType<Quadrilateral<f32> >("initialCorners", this->initialCorners, buffer, bufferLength) != RESULT_OK)
+          return RESULT_FAIL;
+          
+        if(SerializedBuffer::SerializeRawBasicType<Point<f32> >("centerOffset", this->centerOffset, buffer, bufferLength) != RESULT_OK)
+          return RESULT_FAIL;
 
         return RESULT_OK;
       }
