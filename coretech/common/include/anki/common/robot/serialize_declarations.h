@@ -91,11 +91,11 @@ namespace Anki
 
       // Warning: Complex structures or classes require an explicit specialization
       // Updates the buffer pointer and length before returning
-      template<typename Type> static Result SerializeRawBasicType(      const char *objectName, const Type &in,                     void ** buffer, s32 &bufferLength);
-      template<typename Type> static Result SerializeRawBasicType(      const char *objectName, const Type *in, const s32 inLength, void ** buffer, s32 &bufferLength);
-      template<typename Type> static Result SerializeRawArray(          const char *objectName, const Array<Type> &in,              void ** buffer, s32 &bufferLength);
-      template<typename Type> static Result SerializeRawArraySlice(     const char *objectName, const ConstArraySlice<Type> &in,    void ** buffer, s32 &bufferLength);
-      template<typename Type> static Result SerializeRawFixedLengthList(const char *objectName, const FixedLengthList<Type> &in,    void ** buffer, s32 &bufferLength);
+      template<typename Type> static Result SerializeRawBasicType(      const char *objectName, const Type &in,                        void ** buffer, s32 &bufferLength);
+      template<typename Type> static Result SerializeRawBasicType(      const char *objectName, const Type *in, const s32 numElements, void ** buffer, s32 &bufferLength);
+      template<typename Type> static Result SerializeRawArray(          const char *objectName, const Array<Type> &in,                 void ** buffer, s32 &bufferLength);
+      template<typename Type> static Result SerializeRawArraySlice(     const char *objectName, const ConstArraySlice<Type> &in,       void ** buffer, s32 &bufferLength);
+      template<typename Type> static Result SerializeRawFixedLengthList(const char *objectName, const FixedLengthList<Type> &in,       void ** buffer, s32 &bufferLength);
 
       // Warning: Complex structures or classes require an explicit specialization
       // Updates the buffer pointer and length before returning
@@ -118,9 +118,7 @@ namespace Anki
       // Allocates dataLength + 2*DESCRIPTION_STRING_LENGTH bytes
       void* Allocate(const char *typeName, const char *objectName, const s32 dataLength);
 
-      // Note that dataLength should be numel(data)*sizeof(Type)
-      // This is to make this call compatible with the standard void* PushBack()
-      template<typename Type> void* PushBack(const char *objectName, const Type *data, const s32 dataLength);
+      template<typename Type> void* PushBack(const char *objectName, const Type *data, const s32 numElements);
 
       // Push back an Array
       template<typename Type> void* PushBack(const char *objectName, const Array<Type> &in);

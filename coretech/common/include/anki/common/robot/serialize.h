@@ -71,7 +71,7 @@ namespace Anki
 
       u32 *bufferU32 = reinterpret_cast<u32*>(*buffer);
 
-      const s32 numElements = in.get_size(1) * in.get_stride();
+      const s32 numElements = in.get_size(0) * in.get_size(1);
 
       EncodedBasicTypeBuffer::Serialize<Type>(false, numElements, buffer, bufferLength);
 
@@ -351,17 +351,17 @@ namespace Anki
       return SerializeRawBasicType(objectName, &in, 1, buffer, bufferLength);
     }
 
-    template<typename Type> Result SerializedBuffer::SerializeRawBasicType(const char *objectName, const Type *in, const s32 inLength, void ** buffer, s32 &bufferLength)
+    template<typename Type> Result SerializedBuffer::SerializeRawBasicType(const char *objectName, const Type *in, const s32 numElements, void ** buffer, s32 &bufferLength)
     {
       if(SerializeDescriptionStrings("Basic Type Buffer", objectName, buffer, bufferLength) != RESULT_OK)
         return RESULT_FAIL;
 
-      SerializedBuffer::EncodedBasicTypeBuffer::Serialize<Type>(true, inLength/sizeof(Type), buffer, bufferLength);
+      SerializedBuffer::EncodedBasicTypeBuffer::Serialize<Type>(true, numElements, buffer, bufferLength);
 
-      memcpy(*buffer, in, inLength*sizeof(Type));
+      memcpy(*buffer, in, numElements*sizeof(Type));
 
-      *buffer = reinterpret_cast<u8*>(*buffer) + inLength*sizeof(Type);
-      bufferLength -= inLength*sizeof(Type);
+      *buffer = reinterpret_cast<u8*>(*buffer) + numElements*sizeof(Type);
+      bufferLength -= numElements*sizeof(Type);
 
       return RESULT_OK;
     }
@@ -601,9 +601,9 @@ namespace Anki
       return out;
     }
 
-    template<typename Type> void* SerializedBuffer::PushBack(const char *objectName, const Type *data, const s32 dataLength)
+    template<typename Type> void* SerializedBuffer::PushBack(const char *objectName, const Type *data, const s32 numElements)
     {
-      s32 totalDataLength = dataLength + EncodedBasicTypeBuffer::CODE_LENGTH + 2*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
+      s32 totalDataLength = numElements*sizeof(Type) + EncodedBasicTypeBuffer::CODE_LENGTH + 2*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
 
       void * const segmentStart = Allocate("Basic Type Buffer", objectName, totalDataLength);
       void * segment = reinterpret_cast<u8*>(segmentStart);
@@ -611,7 +611,7 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(segment != NULL,
         NULL, "SerializedBuffer::PushBack", "Could not add data");
 
-      SerializeRawBasicType<Type>(objectName, data, dataLength, &segment, totalDataLength);
+      SerializeRawBasicType<Type>(objectName, data, numElements, &segment, totalDataLength);
 
       return segmentStart;
     }
