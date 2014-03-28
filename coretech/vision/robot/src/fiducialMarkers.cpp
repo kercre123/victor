@@ -519,7 +519,7 @@ namespace Anki
     {
       s32 totalDataLength = this->get_SerializationSize();
 
-      void *segment = buffer.AllocateRaw(totalDataLength);
+      void *segment = buffer.Allocate("VisionMarker", objectName, totalDataLength);
 
       if(segment == NULL) {
         return RESULT_FAIL;

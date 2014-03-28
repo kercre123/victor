@@ -119,10 +119,6 @@ namespace Anki
       // If the void* buffer is already allocated, use flags = Flags::Buffer(false,true,true)
       SerializedBuffer(void *buffer, const s32 bufferLength, const Flags::Buffer flags=Flags::Buffer(false,true,false));
 
-      // Allocate memory (dataLength must include the memory to store the objectName and typeName)
-      // Only use this for hierarchical structures
-      void* AllocateRaw(const s32 dataLength);
-
       // objectName and typeName may each be up to 31 characters
       // Allocates dataLength + 2*DESCRIPTION_STRING_LENGTH bytes
       void* Allocate(const char *typeName, const char *objectName, const s32 dataLength);
@@ -152,6 +148,10 @@ namespace Anki
 
     protected:
       MemoryStack memoryStack;
+
+      // Allocate memory (dataLength must include the memory to store the objectName and typeName)
+      // Only use this for hierarchical structures
+      void* AllocateRaw(const s32 dataLength);
     }; // class SerializedBuffer
 
     class SerializedBufferConstIterator : public MemoryStackConstIterator

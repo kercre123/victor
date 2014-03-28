@@ -329,7 +329,7 @@ namespace Anki
       {
         s32 totalDataLength = this->get_SerializationSize();
 
-        void *segment = buffer.AllocateRaw(totalDataLength);
+        void *segment = buffer.Allocate("PlanarTransformation_f32", objectName, totalDataLength);
 
         if(segment == NULL) {
           return RESULT_FAIL;
