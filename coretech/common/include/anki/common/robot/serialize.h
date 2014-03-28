@@ -110,8 +110,6 @@ namespace Anki
       const s32 xEnd = xSlice.get_end();
       const s32 xSize = xSlice.get_size();
 
-      const s32 numElements = ySize * xSize * sizeof(Type);
-
       EncodedArray::Serialize<Type>(false, in.get_array(), buffer, bufferLength);
 
       u32 *bufferU32 = reinterpret_cast<u32*>(*buffer);
@@ -600,9 +598,9 @@ namespace Anki
       return out;
     }
 
-    template<typename Type> Type* SerializedBuffer::PushBack(const char *objectName, const Type *data, const s32 dataLength)
+    template<typename Type> void* SerializedBuffer::PushBack(const char *objectName, const Type *data, const s32 dataLength)
     {
-      s32 totalDataLength = dataLength + EncodedBasicTypeBuffer::CODE_LENGTH;
+      s32 totalDataLength = dataLength + EncodedBasicTypeBuffer::CODE_LENGTH + 2*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
 
       void * const segmentStart = Allocate("Basic Type Buffer", objectName, totalDataLength);
       void * segment = reinterpret_cast<u8*>(segmentStart);
@@ -612,12 +610,12 @@ namespace Anki
 
       SerializeRawBasicType<Type>(objectName, data, dataLength, &segment, totalDataLength);
 
-      return reinterpret_cast<Type*>(segmentStart);
+      return segmentStart;
     }
 
     template<typename Type> void* SerializedBuffer::PushBack(const char *objectName, const Array<Type> &in)
     {
-      s32 totalDataLength = in.get_stride() * in.get_size(1) + EncodedArray::CODE_LENGTH;
+      s32 totalDataLength = in.get_stride() * in.get_size(1) + EncodedArray::CODE_LENGTH + 2*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
 
       void * const segmentStart = Allocate("Array", objectName, totalDataLength);
       void * segment = segmentStart;
@@ -627,12 +625,16 @@ namespace Anki
 
       SerializeRawArray<Type>(objectName, in, &segment, totalDataLength);
 
-      return segment;
+      return segmentStart;
     }
 
     template<typename Type> void* SerializedBuffer::PushBack(const char *objectName, const ArraySlice<Type> &in)
     {
-      s32 totalDataLength = in.get_stride() * in.get_size(1) + EncodedArraySlice::CODE_LENGTH;
+      const u32 height = in.get_ySlice().get_size();
+      const u32 width = in.get_xSlice().get_size();
+      const u32 stride = width*sizeof(Type);
+
+      s32 totalDataLength = height * stride + EncodedArraySlice::CODE_LENGTH + 2*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
 
       void * const segmentStart = Allocate("ArraySlice", objectName, totalDataLength);
       void * segment = segmentStart;

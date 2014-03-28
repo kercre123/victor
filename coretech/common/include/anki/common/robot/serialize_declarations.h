@@ -120,7 +120,7 @@ namespace Anki
 
       // Note that dataLength should be numel(data)*sizeof(Type)
       // This is to make this call compatible with the standard void* PushBack()
-      template<typename Type> Type* PushBack(const char *objectName, const Type *data, const s32 dataLength);
+      template<typename Type> void* PushBack(const char *objectName, const Type *data, const s32 dataLength);
 
       // Push back an Array
       template<typename Type> void* PushBack(const char *objectName, const Array<Type> &in);
