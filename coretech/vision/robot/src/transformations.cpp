@@ -340,7 +340,7 @@ namespace Anki
 
       Result PlanarTransformation_f32::SerializeRaw(const char *objectName, void ** buffer, s32 &bufferLength) const
       {
-        if(SerializedBuffer::SerializeDescriptionString("PlanarTransformation_f32", reinterpret_cast<void**>(&buffer), bufferLength) != RESULT_OK)
+        if(SerializedBuffer::SerializeDescriptionString("PlanarTransformation_f32", buffer, bufferLength) != RESULT_OK)
           return RESULT_FAIL;
 
         if(SerializedBuffer::SerializeDescriptionString(objectName, buffer, bufferLength) != RESULT_OK)

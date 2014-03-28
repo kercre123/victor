@@ -530,7 +530,7 @@ namespace Anki
 
     Result VisionMarker::SerializeRaw(const char *objectName, void ** buffer, s32 &bufferLength) const
     {
-      if(SerializedBuffer::SerializeDescriptionString("VisionMarker", reinterpret_cast<void**>(&buffer), bufferLength) != RESULT_OK)
+      if(SerializedBuffer::SerializeDescriptionString("VisionMarker", buffer, bufferLength) != RESULT_OK)
         return RESULT_FAIL;
 
       if(SerializedBuffer::SerializeDescriptionString(objectName, buffer, bufferLength) != RESULT_OK)
