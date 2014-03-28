@@ -101,7 +101,8 @@ namespace Anki
                                   "   'fc', calib(1:2), 'cc', calib(3:4), "
                                   "   'kc', zeros(5,1), 'alpha_c', 0)); " //, "
                                   //"   'pose', headPose); "
-                                  "marker3d = (26/2)*[-1 0 1; -1 0 -1; 1 0 1; 1 0 -1];");
+                                  "marker3d = (%f/2)*[-1 0 1; -1 0 -1; 1 0 1; 1 0 -1];",
+                                  blockMarkerWidthInMM);
             
             matlabInit = true;
           }
