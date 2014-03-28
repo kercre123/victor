@@ -357,6 +357,10 @@ namespace Anki
 
       Result PlanarTransformation_f32::Deserialize(char *objectName, void** buffer, s32 &bufferLength, MemoryStack &memory)
       {
+        // TODO: check if the name is correct
+        if(SerializedBuffer::DeserializeDescriptionString(objectName, buffer, bufferLength) != RESULT_OK)
+          return RESULT_FAIL;
+
         if(SerializedBuffer::DeserializeDescriptionString(objectName, buffer, bufferLength) != RESULT_OK)
           return RESULT_FAIL;
 

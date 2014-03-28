@@ -384,8 +384,8 @@ namespace Anki
       *objectName = segment;
       segment += SerializedBuffer::DESCRIPTION_STRING_LENGTH;
 
-      dataLength = reinterpret_cast<const u32*>(segment)[0];
-      segment += sizeof(u32);
+      // TODO: return true, or reported?
+      dataLength = trueSegmentLength;
 
       return segment;
     }

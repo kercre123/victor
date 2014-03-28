@@ -348,6 +348,9 @@ namespace Anki
 
     template<typename Type> Result SerializedBuffer::SerializeRawArray(const char *objectName, const Array<Type> &in, void ** buffer, s32 &bufferLength)
     {
+      if(SerializeDescriptionString("Array", buffer, bufferLength) != RESULT_OK)
+        return RESULT_FAIL;
+
       if(SerializeDescriptionString(objectName, buffer, bufferLength) != RESULT_OK)
         return RESULT_FAIL;
 
@@ -373,6 +376,9 @@ namespace Anki
     {
       AnkiConditionalErrorAndReturnValue(in.get_array().IsValid(),
         RESULT_FAIL, "SerializedBuffer::SerializeRawArraySlice", "in ArraySlice is not Valid");
+
+      if(SerializeDescriptionString("ArraySlice", buffer, bufferLength) != RESULT_OK)
+        return RESULT_FAIL;
 
       if(SerializeDescriptionString(objectName, buffer, bufferLength) != RESULT_OK)
         return RESULT_FAIL;

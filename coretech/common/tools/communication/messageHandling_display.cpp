@@ -121,6 +121,8 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
         }
       }
     } else if(strcmp(typeName, "Array") == 0) {
+      dataSegment += 2*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
+
       SerializedBuffer::EncodedArray code;
       for(s32 i=0; i<SerializedBuffer::EncodedArray::CODE_SIZE; i++) {
         code.code[i] = reinterpret_cast<const u32*>(dataSegment)[i];
