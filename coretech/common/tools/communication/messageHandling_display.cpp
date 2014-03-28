@@ -103,6 +103,10 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
       if(isFloat && size==4 && numElements==2) {
         PUSH_MEMORY_STACK(scratch);
         f32* tmpBuffer = SerializedBuffer::DeserializeRawBasicType<f32>(innerObjectName, &dataSegment, dataLength, scratch);
+
+        if(!tmpBuffer)
+          continue;
+
         for(s32 i=0; i<2; i++) {
           benchmarkTimes[i] = tmpBuffer[i];
         }
@@ -201,6 +205,9 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
 
       marker.Deserialize(innerObjectName, reinterpret_cast<void**>(&dataSegment), dataLength);
 
+      if(!marker.isValid)
+        continue;
+
       if(!aMessageAlreadyPrinted) {
         time_t rawtime;
         time (&rawtime);
@@ -222,6 +229,10 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
       PUSH_MEMORY_STACK(scratch);
       TemplateTracker::BinaryTracker bt;
       bt.Deserialize(innerObjectName, reinterpret_cast<void**>(&dataSegment), dataLength, scratch);
+
+      if(!bt.IsValid())
+        continue;
+
       bt.ShowTemplate("BinaryTracker Template", false, false);
     } else if(strcmp(typeName, "EdgeLists") == 0) {
       PUSH_MEMORY_STACK(scratch);

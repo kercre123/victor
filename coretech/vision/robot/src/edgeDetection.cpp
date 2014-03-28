@@ -401,6 +401,11 @@ namespace Anki
         {0,0,128},
         {128,128,0}};
 
+      AnkiConditionalErrorAndReturnValue(
+        imageHeight > 0 && imageHeight < 2000 && imageWidth > 0 && imageWidth < 2000 &&
+        indexPoints1.IsValid() && indexPoints2.IsValid() && indexPoints3.IsValid() && indexPoints4.IsValid(),
+        cv::Mat(), "EdgeLists::DrawIndexes", "inputs are not valid",);
+
       const s32 scratchSize = 10000000;
       MemoryStack scratch(malloc(scratchSize), scratchSize);
 
