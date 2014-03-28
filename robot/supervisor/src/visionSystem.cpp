@@ -399,7 +399,7 @@ namespace DebugStream
 
     const f32 benchmarkTimes[2] = {lastBenchmarkDuration_algorithmsOnly, lastBenchmarkDuration_total};
 
-    toSend.PushBack<f32>(&benchmarkTimes[0], 2*sizeof(f32));
+    toSend.PushBack<f32>("Benchmark Times", &benchmarkTimes[0], 2*sizeof(f32));
 
     s32 startIndex;
     const u8 * bufferStart = reinterpret_cast<const u8*>(toSend.get_memoryStack().get_validBufferStart(startIndex));
@@ -461,8 +461,10 @@ namespace DebugStream
       }
       */
 
+      char objectName[64];
       for(s32 i=0; i<numMarkers; i++) {
-        pMarkers[i].Serialize(debugStreamBuffer_);
+        snprintf(objectName, 64, "Marker%d", i);
+        pMarkers[i].Serialize(objectName, debugStreamBuffer_);
       }
     }
 
@@ -471,7 +473,7 @@ namespace DebugStream
 
     Array<u8> imageSmall(height, width, offchipScratch);
     DownsampleHelper(image, imageSmall, ccmScratch);
-    debugStreamBuffer_.PushBack(imageSmall);
+    debugStreamBuffer_.PushBack("Robot Image", imageSmall);
 
     const ReturnCode result = SendBuffer(debugStreamBuffer_);
 
@@ -508,7 +510,7 @@ namespace DebugStream
 
     //transformation.Print();
 
-    tracker.get_transformation().Serialize(debugStreamBuffer_);
+    tracker.get_transformation().Serialize("Transformation", debugStreamBuffer_);
 
     frameNumber++;
 
@@ -533,11 +535,11 @@ namespace DebugStream
       parameters.edgeDetection_minComponentWidth, parameters.edgeDetection_everyNLines,
       edgeLists);
 
-    edgeLists.Serialize(debugStreamBuffer_);
+    edgeLists.Serialize("Edge List", debugStreamBuffer_);
 
     Array<u8> imageSmall(height, width, offchipScratch);
     DownsampleHelper(image, imageSmall, ccmScratch);
-    debugStreamBuffer_.PushBack(imageSmall);
+    debugStreamBuffer_.PushBack("Robot Image", imageSmall);
 #else
     Array<u8> imageSmall(height, width, offchipScratch);
     DownsampleHelper(image, imageSmall, ccmScratch);
@@ -567,7 +569,7 @@ namespace DebugStream
       debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
     }
 
-    tracker.Serialize(debugStreamBuffer_);
+    tracker.Serialize("Binary Tracker", debugStreamBuffer_);
 
     return SendBuffer(debugStreamBuffer_);
   }
@@ -576,7 +578,7 @@ namespace DebugStream
   static ReturnCode SendArray(const Array<u8> &array)
   {
     debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
-    debugStreamBuffer_.PushBack(array);
+    debugStreamBuffer_.PushBack("Array", array);
     return SendBuffer(debugStreamBuffer_);
   }
 
@@ -600,7 +602,7 @@ namespace DebugStream
       parameters.edgeDetection_minComponentWidth, parameters.edgeDetection_everyNLines,
       edgeLists);
 
-    edgeLists.Serialize(debugStreamBuffer_);
+    edgeLists.Serialize("Edge List", debugStreamBuffer_);
 
     const s32 height = CameraModeInfo[debugStreamResolution_].height;
     const s32 width  = CameraModeInfo[debugStreamResolution_].width;
@@ -609,7 +611,7 @@ namespace DebugStream
 
     DownsampleHelper(grayscaleImage, imageSmall, ccmScratch);
 
-    debugStreamBuffer_.PushBack(imageSmall);
+    debugStreamBuffer_.PushBack("Robot Image", imageSmall);
 
     const ReturnCode result = SendBuffer(debugStreamBuffer_);
 

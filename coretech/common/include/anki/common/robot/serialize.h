@@ -615,7 +615,7 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(segment != NULL,
         NULL, "SerializedBuffer::PushBack", "Could not add data");
 
-      SerializeRawArray(objectName, in, segment, totalDataLength);
+      SerializeRawArray<Type>(objectName, in, &segment, totalDataLength);
 
       return segment;
     }
@@ -624,12 +624,13 @@ namespace Anki
     {
       s32 totalDataLength = in.get_stride() * in.get_size(1) + EncodedArraySlice::CODE_SIZE*sizeof(u32);
 
-      void * segment = Allocate("ArraySlice", objectName, totalDataLength);
-
+      void * const segmentStart = Allocate("ArraySlice", objectName, totalDataLength);
+      void * segment = segmentStart;
+      
       AnkiConditionalErrorAndReturnValue(segment != NULL,
         NULL, "SerializedBuffer::PushBack", "Could not add data");
 
-      SerializeRawArray(objectName, in, &segment, totalDataLength);
+      SerializeRawArraySlice<Type>(objectName, in, &segment, totalDataLength);
 
       return segmentStart;
     }
