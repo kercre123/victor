@@ -360,8 +360,8 @@ namespace Anki
 
       memcpy(*buffer, in, inLength*sizeof(Type));
 
-      *buffer = reinterpret_cast<u8*>(*buffer) + inLength;
-      bufferLength -= inLength;
+      *buffer = reinterpret_cast<u8*>(*buffer) + inLength*sizeof(Type);
+      bufferLength -= inLength*sizeof(Type);
 
       return RESULT_OK;
     }
@@ -456,8 +456,8 @@ namespace Anki
 
       const Type var = *reinterpret_cast<Type*>(*buffer);
 
-      *buffer = reinterpret_cast<u8*>(*buffer) + sizeof(Type);
-      bufferLength -= sizeof(Type);
+      *buffer = reinterpret_cast<u8*>(*buffer) + sizeof(Type)*numElements;
+      bufferLength -= sizeof(Type)*numElements;
 
       return var;
     }
