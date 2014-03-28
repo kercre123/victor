@@ -18,6 +18,10 @@ classdef LucasKanadeTracker < handle
         err = Inf;
         target;
         finestScale;
+        
+        % Available in planar6dof mode
+        theta_x; theta_y; theta_z;
+        tx; ty; tz;
     end
     
     properties(GetAccess = 'protected', SetAccess = 'protected')
@@ -43,9 +47,6 @@ classdef LucasKanadeTracker < handle
         
         % for planar6dof tracker
         K; % calibration matrix
-        H_init;
-        theta_x; theta_y; theta_z;
-        tx; ty; tz;
         h_pose;
         
         % Parameters
@@ -580,7 +581,7 @@ classdef LucasKanadeTracker < handle
     
     methods(Access = 'protected')
         
-        converged = trackHelper(this, img, i_scale, translationDone);           
+        [converged, numIterations] = trackHelper(this, img, i_scale, translationDone);           
         
         function tform = Compute6dofTform(this)
             cx = cos(this.theta_x);
