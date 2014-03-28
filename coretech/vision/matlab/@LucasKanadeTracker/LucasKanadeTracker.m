@@ -5,6 +5,11 @@ classdef LucasKanadeTracker < handle
         poseString;
     end
     
+    properties(Dependent = true)
+        rotationMatrix;
+        translation;
+    end
+    
     properties(GetAccess = 'public', SetAccess = 'protected')
         tform;
         xcen;
@@ -48,7 +53,10 @@ classdef LucasKanadeTracker < handle
         % for planar6dof tracker
         K; % calibration matrix
         h_pose;
-        
+        headPosition;
+        headRotation;
+        neckPosition;
+                
         % Parameters
         minSize;
         numScales;
@@ -86,6 +94,9 @@ classdef LucasKanadeTracker < handle
             NumSamples = [];
             MarkerWidth = [];
             CalibrationMatrix = [];
+            HeadPosition = [11.45 0 -6]'; % relative to neck
+            HeadRotation = [0 0 1; -1 0 0; 0 -1 0]; % relative to neck
+            NeckPosition = [-13 0 33.5+14.2]; % relative to robot origin (which is on the ground)
             
             parseVarargin(varargin{:});
             
@@ -135,6 +146,10 @@ classdef LucasKanadeTracker < handle
                 assert(~isempty(CalibrationMatrix), 'Calibration is required when using Planar6DoF tracking.');
                 assert(~isempty(MarkerWidth), 'Marker3D is required when using Planar6DoF tracking.');
                 
+                this.headPosition = HeadPosition;
+                this.headRotation = HeadRotation;
+                this.neckPosition = NeckPosition;
+                
                 % Defining canonical 3D marker in camera coordinates:
                 Marker3D = (MarkerWidth/2)*[-1 -1 0; -1 1 0; 1 -1 0; 1 1 0];
                 
@@ -151,30 +166,15 @@ classdef LucasKanadeTracker < handle
                 pose = camera.computeExtrinsics([x-this.K(1,3) y-this.K(2,3)], Marker3D);
                 
                 % Compute Euler angles from R
-                R = pose.Rmat;
-                if abs(1-R(3,1)) < 1e-6 
-                    this.theta_z = 0;
-                    if R(3,1) == 1
-                        this.theta_y = pi/2;
-                        this.theta_x = atan2(R(1,2), R(2,2));
-                    else
-                        this.theta_y = -pi/2;
-                        this.theta_x = atan2(-R(1,2), R(2,2));
-                    end
-                else
-                    this.theta_y = asin(R(3,1));
-                    cy = cos(this.theta_y);
-                    this.theta_x = atan2(-R(3,2)/cy, R(3,3)/cy);
-                    this.theta_z = atan2(-R(2,1)/cy, R(1,1)/cy);
-                end
-                
+                this.rotationMatrix = pose.Rmat;
+                                
                 % Pre-compute some repeatedly-used trig values
                 cx = cos(this.theta_x); cy = cos(this.theta_y); cz = cos(this.theta_z);
                 sx = sin(this.theta_x); sy = sin(this.theta_y); sz = sin(this.theta_z);
                                 
                 % Sanity check that Euler angle extraction worked:
                 Rcheck = [cy*cz cx*sz+sx*sy*cz sx*sz-cx*sy*cz; -cy*sz cx*cz-sx*sy*sz sx*cz+cx*sy*sz; sy -sx*cy cx*cy];
-                if any(abs(R(:)-Rcheck(:)) > 1e-2)
+                if any(abs(pose.Rmat(:)-Rcheck(:)) > 1e-2)
                     warning('Possibly inaccurate RotationMatrix->EulerAngle conversion (Note cos(theta_y)=%f).', cy);
                 end
                 
@@ -561,6 +561,14 @@ classdef LucasKanadeTracker < handle
             
         end % CONSTRUCTOR
         
+        UpdatePose(this, varargin);
+        
+        UpdatePoseFromRobotMotion(this, robotTx, robotTy, robotTheta, headAngle);
+        
+        
+        %
+        % Set / Get Methods for Dependent Properties
+        %
         function c = get.corners(this)
             [x,y] = this.getImagePoints(this.initCorners(:,1), this.initCorners(:,2));
             c = [x y];
@@ -577,45 +585,7 @@ classdef LucasKanadeTracker < handle
                 this.tx, this.ty, this.tz);
         end
         
-    end % public methods
-    
-    methods(Access = 'protected')
-        
-        [converged, numIterations] = trackHelper(this, img, i_scale, translationDone);           
-        
-        function tform = Compute6dofTform(this)
-            cx = cos(this.theta_x);
-            cy = cos(this.theta_y);
-            cz = cos(this.theta_z);
-            
-            sx = sin(this.theta_x);
-            sy = sin(this.theta_y);
-            sz = sin(this.theta_z);
-            
-            r11 = cy*cz;
-            r12 = cx*sz + sx*sy*cz;
-            %r13 = sx*sz - cx*sy*cz;
-            r21 = -cy*sz;
-            r22 = cx*cz - sx*sy*sz;
-            %r23 = sx*cz + cx*sy*sz;
-            r31 = sy;
-            r32 = -sx*cy;
-            %r33 = cx*cy;
-           
-            tform = [this.K(1,1)*[r11 r12 this.tx];
-                     this.K(2,2)*[r21 r22 this.ty];
-                                 [r31 r32 this.tz]];
-                             
-        end % Compute6dofTform()
-        
-        function plotPose(this)
-            
-            poseSize = 10;
-            
-            Pbase = [0 1 0 0;
-                0 0 1 0;
-                0 0 0 1] * poseSize;
-            
+        function R = get.rotationMatrix(this)
             cx = cos(this.theta_x);
             cy = cos(this.theta_y);
             cz = cos(this.theta_z);
@@ -626,17 +596,46 @@ classdef LucasKanadeTracker < handle
             R = [cy*cz cx*sz+sx*sy*cz sx*sz-cx*sy*cz; ...
                 -cy*sz cx*cz-sx*sy*sz sx*cz+cx*sy*sz; ...
                 sy -sx*cy cx*cy];
-            
-            P = R*Pbase + [this.tx; this.ty; this.tz]*ones(1,4);
-            
-            set(this.h_pose(1), 'XData', P(1,[1 2]), 'YData', P(2,[1 2]), 'ZData', P(3,[1 2]));
-            set(this.h_pose(2), 'XData', P(1,[1 3]), 'YData', P(2,[1 3]), 'ZData', P(3,[1 3]));
-            set(this.h_pose(3), 'XData', P(1,[1 4]), 'YData', P(2,[1 4]), 'ZData', P(3,[1 4]));
-            
-            set(get(get(this.h_pose(1), 'Parent'), 'Title'), 'String', this.poseString);
-            
-            drawnow
         end
+        
+        % Set the rotation parameters from a given rotation matrix
+        function set.rotationMatrix(this, R)
+            if abs(1-R(3,1)) < 1e-6
+                this.theta_z = 0;
+                if R(3,1) == 1
+                    this.theta_y = pi/2;
+                    this.theta_x = atan2(R(1,2), R(2,2));
+                else
+                    this.theta_y = -pi/2;
+                    this.theta_x = atan2(-R(1,2), R(2,2));
+                end
+            else
+                this.theta_y = asin(R(3,1));
+                cy = cos(this.theta_y);
+                this.theta_x = atan2(-R(3,2)/cy, R(3,3)/cy);
+                this.theta_z = atan2(-R(2,1)/cy, R(1,1)/cy);
+            end
+        end
+        
+        function T = get.translation(this)
+            T = [this.tx; this.ty; this.tz];
+        end
+        
+        function set.translation(this, T) 
+            this.tx = T(1);
+            this.ty = T(2);
+            this.tz = T(3);
+        end
+        
+    end % public methods
+    
+    methods(Access = 'protected')
+        
+        [converged, numIterations] = trackHelper(this, img, i_scale, translationDone);           
+        
+        tform = Compute6dofTform(this, R);
+        
+        plotPose(this);
         
     end % protected methods
     
