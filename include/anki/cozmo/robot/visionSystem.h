@@ -58,47 +58,7 @@ namespace Anki {
 #endif
       
       
-      // Define the tracker parameters, depending on the tracking algorithm
-      struct TrackerParameters
-      {
-        bool isInitialized;
-        HAL::CameraMode trackingResolution;
-        s32 trackingImageHeight;
-        s32 trackingImageWidth;
-        
-#if DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
- 
-        f32 scaleTemplateRegionPercent;
-        //u8  edgeDetection_grayvalueThreshold;
-        s32 edgeDetection_threshold_yIncrement;
-        s32 edgeDetection_threshold_xIncrement;
-        f32 edgeDetection_threshold_blackPercentile;
-        f32 edgeDetection_threshold_whitePercentile;
-        f32 edgeDetection_threshold_scaleRegionPercent;
-        s32 edgeDetection_minComponentWidth;
-        s32 edgeDetection_maxDetectionsPerType;
-        s32 edgeDetection_everyNLines;
-        s32 matching_maxTranslationDistance;
-        s32 matching_maxProjectiveDistance;
-        s32 verification_maxTranslationDistance;
-        f32 percentMatchedPixelsThreshold;
-        
-#else 
-        // LK Trackers:
-        f32 scaleTemplateRegionPercent;
-        s32 numPyramidLevels;
-        s32 maxIterations;
-        f32 convergenceTolerance;
-        u8 verify_maxPixelDifference;
-        bool useWeights;
-        s32 maxSamplesAtBaseLevel;
-        
-#endif // if DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
-        
-        TrackerParameters();
-        void Initialize();
-        
-      }; // struct TrackerParameters
+      
       
       typedef struct {
         u8  headerByte; // used to specify a frame's resolution in a packet if transmitting

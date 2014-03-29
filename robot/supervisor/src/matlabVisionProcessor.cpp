@@ -9,6 +9,7 @@
 
 #include "matlabVisionProcessor.h"
 #include "matlabVisualization.h"
+#include "visionParameters.h"
 
 #ifndef DOCKING_ALGORITHM
 #error DOCKING_ALGORITHM should be defined to use matlabVisionProcessor.cpp!
