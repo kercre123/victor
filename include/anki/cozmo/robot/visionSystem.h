@@ -1,3 +1,16 @@
+/**
+ * File: visionSystem.h
+ *
+ * Author: Andrew Stein
+ * Date:   (various)
+ *
+ * Description: High-level module that controls the vision system and switches
+ *              between fiducial detection and tracking and feeds results to 
+ *              main execution thread via message mailboxes.
+ *
+ * Copyright: Anki, Inc. 2014
+ **/
+
 #ifndef ANKI_COZMO_ROBOT_VISIONSYSTEM_H
 #define ANKI_COZMO_ROBOT_VISIONSYSTEM_H
 
@@ -45,12 +58,12 @@ namespace Anki {
       ReturnCode Init(void);
       bool IsInitialized();
       
-      void Destroy();
-      
       // Accessors
       const HAL::CameraInfo* GetCameraCalibration();
       f32 GetTrackingMarkerWidth();
       
+      // This is main Update() call to be called in a loop from above.
+      //
       // NOTE: It is important the passed-in robot state message be passed by
       //   value and NOT by reference, since the vision system can be interrupted
       //   by main execution (which updates the state).
@@ -58,7 +71,7 @@ namespace Anki {
       
       void StopTracking();
 
-      // Select a block type to look for to dock with.  Use NUM_MARKER_TYPES to disable.
+      // Select a block type to look for to dock with.  Use MARKER_UNKNOWN to disable.
       // Next time the vision system sees a block of this type while looking
       // for blocks, it will initialize a template tracker and switch to
       // docking mode.

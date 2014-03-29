@@ -1,3 +1,14 @@
+/**
+ * File: matlabVisionProcessor.cpp
+ *
+ * Author: Andrew Stein
+ * Date:   3/28/2014
+ *
+ * Description: For testing vision algorithms implemented in Matlab.
+ *
+ * Copyright: Anki, Inc. 2014
+ **/
+
 #include "anki/cozmo/robot/visionSystem.h"
 
 #if USE_MATLAB_TRACKER || USE_MATLAB_DETECTOR
@@ -165,11 +176,11 @@ namespace Anki {
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PLANAR6DOF
         matlabProc_.EvalStringEcho("LKtracker.UpdatePoseFromRobotMotion(%f, %f, %f, %f);",
                                    T_fwd_robot, T_hor_robot, theta_robot.ToFloat(), theta_head.ToFloat());
-      }
 #else
       // This call is only valid for for planar6dof tracker
       AnkiAssert(false);
 #endif // DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PLANAR6DOF
+      }
       
       void UpdateTracker(const Array<f32>& predictionUpdate)
       {

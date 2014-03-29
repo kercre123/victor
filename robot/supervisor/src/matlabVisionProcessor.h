@@ -1,3 +1,14 @@
+/**
+ * File: matlabVisionProcessor.h
+ *
+ * Author: Andrew Stein
+ * Date:   3/28/2014
+ *
+ * Description: For testing vision algorithms implemented in Matlab.
+ *
+ * Copyright: Anki, Inc. 2014
+ **/
+
 #ifndef ANKI_COZMO_MATLABVISIONPROCESSOR_H
 #define ANKI_COZMO_MATLABVISIONPROCESSOR_H
 

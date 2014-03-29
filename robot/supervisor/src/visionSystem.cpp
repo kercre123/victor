@@ -1,3 +1,16 @@
+/**
+ * File: visionSystem.cpp
+ *
+ * Author: Andrew Stein
+ * Date:   (various)
+ *
+ * Description: High-level module that controls the vision system and switches
+ *              between fiducial detection and tracking and feeds results to
+ *              main execution thread via message mailboxes.
+ *
+ * Copyright: Anki, Inc. 2014
+ **/
+
 #include "anki/common/robot/config.h"
 #include "anki/common/robot/memory.h"
 
@@ -91,193 +104,127 @@ namespace Anki {
         }
       } // namespace VisionMemory
       
-#if 0
-#pragma mark --- DebugStream ---
-#endif
       
-      
-      
+      // This private namespace stores all the "member" or "state" variables
+      // with scope restricted to this file. There should be no globals
+      // defined outside this namespace.
+      // TODO: I don't think we really need _both_ a private namespace and static
+      namespace {
 
-      
-      
-      
-#if 0
-#pragma mark --- VisionState ---
-#endif
-      
-      namespace VisionState {
+        // The tracker can fail to converge this many times before we give up
+        // and reset the docker
         static const s32 MAX_TRACKING_FAILURES = 1;
         
         static const Anki::Cozmo::HAL::CameraInfo* headCamInfo_;
         
         static VisionSystemMode mode_;
         
+        // Tracking markers
         static Anki::Vision::MarkerType markerTypeToTrack_;
         static Quadrilateral<f32> trackingQuad_;
-        static s32 numTrackFailures_ ; //< The tracker can fail to converge this many times before we give up and reset the docker
+        static s32 numTrackFailures_ ;
         static bool isTrackingMarkerSpecified_;
         static Tracker tracker_;
         static f32 trackingMarkerWidth_mm;
         
+        // Snapshots of robot state
         static bool wasCalledOnce_, havePreviousRobotState_;
         static Messages::RobotState robotState_, prevRobotState_;
         
-        //// Capture an entire frame using HAL commands and put it in the given frame buffer
-        //typedef struct {
-        //  u8* data;
-        //  HAL::CameraMode resolution;
-        //  TimeStamp_t  timestamp;
-        //} FrameBuffer;
+        // Parameters defined in visionParameters.h
+        static DetectFiducialMarkersParameters detectionParameters_;
+        static TrackerParameters               trackerParameters_;
+        static HAL::CameraMode                 captureResolution_;
         
-        static ReturnCode Initialize()
-        {
-          mode_ = VISION_MODE_LOOKING_FOR_MARKERS;
-          headCamInfo_ = NULL;
-          markerTypeToTrack_ = Anki::Vision::MARKER_UNKNOWN;
-          numTrackFailures_ = 0;
-          isTrackingMarkerSpecified_ = false;
-          trackingMarkerWidth_mm = 0;
-          
-          wasCalledOnce_ = false;
-          havePreviousRobotState_ = false;
-          
-#ifdef RUN_SIMPLE_TRACKING_TEST
-          Anki::Cozmo::VisionSystem::SetMarkerToTrack(Vision::MARKER_BATTERIES,
-                                                      DEFAULT_BLOCK_MARKER_WIDTH_MM);
+#ifdef SIMULATOR
+        static SimulatorParameters             simulatorParameters_;
 #endif
-          
-          headCamInfo_ = HAL::GetHeadCamInfo();
-          if(headCamInfo_ == NULL) {
-            PRINT("VisionState::Initialize() - HeadCam Info pointer is NULL!\n");
-            return EXIT_FAILURE;
-          }
-          
-          //// Compute the resolution of the mat camera from its FOV and height off the mat:
-          //f32 matCamHeightInPix = ((static_cast<f32>(matCamInfo_->nrows)*.5f) /
-          //  tanf(matCamInfo_->fov_ver * .5f));
-          //matCamPixPerMM_ = matCamHeightInPix / MAT_CAM_HEIGHT_FROM_GROUND_MM;
-          
-          return EXIT_SUCCESS;
-        } // VisionState::Initialize()
-        
-        static Quadrilateral<f32> GetTrackerQuad(MemoryStack scratch)
-        {
-#if USE_MATLAB_TRACKER
-          return MatlabVisionProcessor::GetTrackerQuad();
-#else
-          return tracker_.get_transformation().get_transformedCorners(scratch);
-#endif
-        } // GetTrackerQuad()
-        
-        static ReturnCode UpdateRobotState(const Messages::RobotState newRobotState)
-        {
-          prevRobotState_ = robotState_;
-          robotState_     = newRobotState;
-          
-          if(wasCalledOnce_) {
-            havePreviousRobotState_ = true;
-          } else {
-            wasCalledOnce_ = true;
-          }
-          
-          return EXIT_SUCCESS;
-        } // VisionState::UpdateRobotState()
-        
-        static void GetPoseChange(f32& xChange, f32& yChange, Radians& angleChange)
-        {
-          AnkiAssert(havePreviousRobotState_);
-          
-          angleChange = Radians(robotState_.pose_angle) - Radians(prevRobotState_.pose_angle);
-          
-          // Position change in world (mat) coordinates
-          const f32 dx = robotState_.pose_x - prevRobotState_.pose_x;
-          const f32 dy = robotState_.pose_y - prevRobotState_.pose_y;
-          
-          // Get change in robot coordinates
-          const f32 cosAngle = cosf(-prevRobotState_.pose_angle);
-          const f32 sinAngle = sinf(-prevRobotState_.pose_angle);
-          xChange = dx*cosAngle - dy*sinAngle;
-          yChange = dx*sinAngle + dy*cosAngle;
-        } // GetPoseChange()
-        
-        static Radians GetCurrentHeadAngle()
-        {
-          return robotState_.headAngle;
-        }
-        
-        // This will return the camera's pose adjustment, in camera coordinates.
-        // So x/y are in the image plane, with x pointing right and y pointing down.
-        // z points out of the camera along the optical axis.
-        // Rmat will be allocated as a 3x3 rotation matrix, using given memory.
-        static void GetCameraPoseChange(f32& xChange, f32& yChange, f32& zChange,
-                                        Array<f32>& Rmat, MemoryStack memory)
-        {
-          // Horizontal robot movement (robot_y) corresponds to -x_camera
-          // (positive is left for robot and right for camera)
-          xChange = prevRobotState_.pose_y - robotState_.pose_y;
-          
-          /*
-           //"robotPose = Pose([0 0 0], [0 0 0]); "
-           //"neckPose = Pose([0 0 0], [-13 0 33.5+14.2]); "
-           //"neckPose.parent = robotPose; "
-           //"HEAD_ANGLE = -10; " // degrees
-           //"Rpitch = rodrigues(-HEAD_ANGLE*pi/180*[0 1 0]); "
-           //"headPose = Pose(Rpitch * [0 0 1; -1 0 0; 0 -1 0], "
-           //"                Rpitch * [11.45 0 -6]'); "
-           //"headPose.parent = neckPose; "
-           "camera = Camera('calibration', struct("
-           "   'fc', calib(1:2), 'cc', calib(3:4), "
-           "   'kc', zeros(5,1), 'alpha_c', 0
-           */
-          
-        } // GetCameraPoseChange()
-        
-        
-        
-      } // namespace VisionState
-      
+      } // private namespace for VisionSystem state
       
 #if 0
-#pragma mark --- Function Implementations ---
+#pragma mark --- Simulator-Related Definitions ---
 #endif
-      
-      u32 DownsampleHelper(const Array<u8>& in,
-                           Array<u8>& out,
-                           MemoryStack scratch)
-      {
-        const s32 inWidth  = in.get_size(1);
-        const s32 inHeight = in.get_size(0);
+      // This little namespace is just for simulated processing time for
+      // tracking and detection (since those run far faster in simulation on
+      // a PC than they do on embedded hardware. Basically, this is used by
+      // Update() below to wait until a frame is ready before proceeding.
+      namespace Simulator {
+#ifdef SIMULATOR
+        static u32 frameReadyTime_;
         
-        const s32 outWidth  = out.get_size(1);
-        const s32 outHeight = out.get_size(0);
-        
-        const u32 downsampleFactor = inWidth / outWidth;
-        
-        const u32 downsamplePower = Log2u32(downsampleFactor);
-        
-        if(downsamplePower > 0) {
-          //PRINT("Downsampling [%d x %d] frame by %d.\n", inWidth, inHeight, (1 << downsamplePower));
-          
-          ImageProcessing::DownsampleByPowerOfTwo<u8,u32,u8>(in,
-                                                             downsamplePower,
-                                                             out,
-                                                             scratch);
-        } else {
-          // No need to downsample, just copy the buffer
-          out.Set(in);
+        static ReturnCode Initialize() {
+          frameReadyTime_ = 0;
+          return EXIT_SUCCESS;
         }
         
-        return downsampleFactor;
-      }
+        // Returns true if we are past the last set time for simulated processing
+        static bool IsFrameReady() {
+          return (HAL::GetMicroCounter() >= frameReadyTime_);
+        }
+        
+        static void SetDetectionReadyTime() {
+          frameReadyTime_ = HAL::GetMicroCounter() + SimulatorParameters::FIDUCIAL_DETECTION_PERIOD_US;
+        }
+        static void SetTrackingReadyTime() {
+          frameReadyTime_ = HAL::GetMicroCounter() + SimulatorParameters::TRACK_BLOCK_PERIOD_US;
+        }
+#else
+        static ReturnCode Initialize() { return EXIT_SUCCESS; }
+        static bool IsFrameReady() { return true; }
+        static void SetDetectionReadyTime() { }
+        static void SetTrackingReadyTime() { }
+#endif
+      } // namespace Simulator
       
-      const HAL::CameraInfo* GetCameraCalibration() {
-        // TODO: is just returning the pointer to HAL's camera info struct kosher?
-        return VisionState::headCamInfo_;
-      }
+#if 0
+#pragma mark --- Private (Static) Helper Function Implementations ---
+#endif
       
-      f32 GetTrackingMarkerWidth() {
-        return VisionState::trackingMarkerWidth_mm;
+      static Quadrilateral<f32> GetTrackerQuad(MemoryStack scratch)
+      {
+#if USE_MATLAB_TRACKER
+        return MatlabVisionProcessor::GetTrackerQuad();
+#else
+        return tracker_.get_transformation().get_transformedCorners(scratch);
+#endif
+      } // GetTrackerQuad()
+      
+      static ReturnCode UpdateRobotState(const Messages::RobotState newRobotState)
+      {
+        prevRobotState_ = robotState_;
+        robotState_     = newRobotState;
+        
+        if(wasCalledOnce_) {
+          havePreviousRobotState_ = true;
+        } else {
+          wasCalledOnce_ = true;
+        }
+        
+        return EXIT_SUCCESS;
+      } // UpdateRobotState()
+      
+      static void GetPoseChange(f32& xChange, f32& yChange, Radians& angleChange)
+      {
+        AnkiAssert(havePreviousRobotState_);
+        
+        angleChange = Radians(robotState_.pose_angle) - Radians(prevRobotState_.pose_angle);
+        
+        // Position change in world (mat) coordinates
+        const f32 dx = robotState_.pose_x - prevRobotState_.pose_x;
+        const f32 dy = robotState_.pose_y - prevRobotState_.pose_y;
+        
+        // Get change in robot coordinates
+        const f32 cosAngle = cosf(-prevRobotState_.pose_angle);
+        const f32 sinAngle = sinf(-prevRobotState_.pose_angle);
+        xChange = dx*cosAngle - dy*sinAngle;
+        yChange = dx*sinAngle + dy*cosAngle;
+      } // GetPoseChange()
+      
+      static Radians GetCurrentHeadAngle()
+      {
+        return robotState_.headAngle;
       }
+ 
       
       static ReturnCode LookForMarkers(
                                        const Array<u8> &grayscaleImage,
@@ -606,114 +553,15 @@ namespace Anki {
         return EXIT_SUCCESS;
       } // TrackTemplate()
       
-      
-      
-      
-      static DetectFiducialMarkersParameters detectionParameters_;
-      static TrackerParameters               trackerParameters_;
-      static HAL::CameraMode                 captureResolution_;
-      
-#ifdef SIMULATOR
-      static SimulatorParameters             simulatorParameters_;
-#endif
-      
-      ReturnCode Init()
-      {
-        ReturnCode result = EXIT_SUCCESS;
-        
-        if(!isInitialized_) {
-          
-          captureResolution_ = HAL::CAMERA_MODE_QVGA;
-          
-          // WARNING: the order of these initializations matter!
-          
-          // TODO: Figure out the intertwinedness
-          
-          // Do this one FIRST! this initializes headCamInfo_
-          result = VisionState::Initialize();
-          if(result != EXIT_SUCCESS) { return result; }
-          
-          result = VisionMemory::Initialize();
-          if(result != EXIT_SUCCESS) { return result; }
-          
-          result = DebugStream::Initialize();
-          if(result != EXIT_SUCCESS) { return result; }
-          
-          AnkiAssert(VisionState::headCamInfo_ != NULL);
-          
-          detectionParameters_.Initialize();
-          trackerParameters_.Initialize();
-          
-          //result = DetectFiducialMarkersParameters::Initialize();
-          //if(result != EXIT_SUCCESS) { return result; }
-          
-          //result = TrackerParameters::Initialize(detectionParameters_.detectionResolution,
-          //                                       VisionState::headCamInfo_->focalLength_x);
-          //if(result != EXIT_SUCCESS) { return result; }
-          
-#ifdef SIMULATOR
-          result = simulatorParameters_.Initialize();
-          if(result != EXIT_SUCCESS) { return result; }
-#endif
-          
-          result = MatlabVisualization::Initialize();
-          if(result != EXIT_SUCCESS) { return result; }
-          
-#if USE_MATLAB_TRACKER || USE_MATLAB_DETECTOR
-          result = MatlabVisionProcessor::Initialize();
-          if(result != EXIT_SUCCESS) { return result; }
-#endif
-          
-          //result = Offboard::Initialize();
-          //if(result != EXIT_SUCCESS) { return result; }
-          
-          AnkiAssert(detectionParameters_.isInitialized);
-          AnkiAssert(trackerParameters_.isInitialized);
-          
-          isInitialized_ = true;
-        }
-        
-        return result;
-      }
-      
-      void Destroy()
-      {
-      }
-      
-      ReturnCode SetMarkerToTrack(const Vision::MarkerType& markerToTrack,
-                                  const f32 markerWidth_mm)
-      {
-        VisionState::markerTypeToTrack_ = markerToTrack;
-        VisionState::trackingMarkerWidth_mm = markerWidth_mm;
-        VisionState::mode_ = VISION_MODE_LOOKING_FOR_MARKERS;
-        VisionState::numTrackFailures_ = 0;
-        
-        // If the marker type is valid, start looking for it
-        if(markerToTrack < Vision::NUM_MARKER_TYPES &&
-           markerWidth_mm > 0.f)
-        {
-          VisionState::isTrackingMarkerSpecified_ = true;
-        } else {
-          VisionState::isTrackingMarkerSpecified_ = false;
-        }
-        
-        return EXIT_SUCCESS;
-      }
-      
-      void StopTracking()
-      {
-        VisionState::mode_ = VISION_MODE_IDLE;
-      }
-      
       //
       // Tracker Prediction
       //
       // Adjust the tracker transformation by approximately how much we
       // think we've moved since the last tracking call.
       //
-      ReturnCode TrackerPredictionUpdate(const Array<u8>& grayscaleImage, MemoryStack scratch)
+      static ReturnCode TrackerPredictionUpdate(const Array<u8>& grayscaleImage, MemoryStack scratch)
       {
-        const Quadrilateral<f32> currentQuad = VisionState::GetTrackerQuad(scratch);
+        const Quadrilateral<f32> currentQuad = GetTrackerQuad(scratch);
         
         MatlabVisualization::SendTrackerPrediction_Before(grayscaleImage, currentQuad);
         
@@ -721,8 +569,8 @@ namespace Anki {
         Radians theta_robot;
         f32 T_fwd_robot, T_hor_robot;
         
-        VisionState::GetPoseChange(T_fwd_robot, T_hor_robot, theta_robot);
-        Radians theta_head = VisionState::GetCurrentHeadAngle();
+        GetPoseChange(T_fwd_robot, T_hor_robot, theta_robot);
+        Radians theta_head = GetCurrentHeadAngle();
         
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PLANAR6DOF
         
@@ -741,8 +589,8 @@ namespace Anki {
         // distance to the marker along the camera's optical axis
         const f32 cosHeadAngle = cosf(theta_head.ToFloat());
         const f32 sinHeadAngle = sinf(theta_head.ToFloat());
-        const f32 d = (VisionState::trackingMarkerWidth_mm* cosHeadAngle *
-                       VisionState::headCamInfo_->focalLength_y /
+        const f32 d = (trackingMarkerWidth_mm* cosHeadAngle *
+                       headCamInfo_->focalLength_y /
                        observedVerticalSize_pix);
         
         // Convert to how much we've moved along (and orthogonal to) the camera's optical axis
@@ -754,8 +602,8 @@ namespace Anki {
         //    Compute pixel-per-degree of the camera and multiply by degrees rotated
         // 2. Convert horizontal shift of the robot to pixel shift, using
         //    focal length
-        f32 horizontalShift_pix = (static_cast<f32>(VisionState::headCamInfo_->nrows/2) * theta_robot.ToFloat() /
-                                   VisionState::headCamInfo_->fov_ver) + (T_hor_robot*VisionState::headCamInfo_->focalLength_x/d);
+        f32 horizontalShift_pix = (static_cast<f32>(headCamInfo_->nrows/2) * theta_robot.ToFloat() /
+                                   headCamInfo_->fov_ver) + (T_hor_robot*headCamInfo_->focalLength_x/d);
         
         // Predict approximate scale change by comparing the distance to the
         // object before and after forward motion
@@ -764,7 +612,7 @@ namespace Anki {
         // Predict approximate vertical shift in the camera plane by comparing
         // vertical motion (orthogonal to camera's optical axis) to the focal
         // length
-        const f32 verticalShift_pix = T_ver_cam * VisionState::headCamInfo_->focalLength_y/d;
+        const f32 verticalShift_pix = T_ver_cam * headCamInfo_->focalLength_y/d;
         
 #ifndef THIS_IS_PETES_BOARD
         PRINT("Adjusting transformation: %.3fpix H shift for %.3fdeg rotation, "
@@ -775,7 +623,7 @@ namespace Anki {
         
         // Adjust the Transformation
         // Note: UpdateTransformation is doing *inverse* composition (thus using the negatives)
-        if(VisionState::tracker_.get_transformation().get_transformType() == Transformations::TRANSFORM_TRANSLATION) {
+        if(tracker_.get_transformation().get_transformType() == Transformations::TRANSFORM_TRANSLATION) {
           Array<f32> update(1,2,scratch);
           update[0][0] = -horizontalShift_pix;
           update[0][1] = -verticalShift_pix;
@@ -783,7 +631,7 @@ namespace Anki {
 #if USE_MATLAB_TRACKER
           MatlabVisionProcessor::UpdateTracker(update);
 #else
-          VisionState::tracker_.UpdateTransformation(update, 1.f, scratch,
+          tracker_.UpdateTransformation(update, 1.f, scratch,
                                                      Transformations::TRANSFORM_TRANSLATION);
 #endif
         }
@@ -809,58 +657,18 @@ namespace Anki {
 #if USE_MATLAB_TRACKER
           MatlabVisionProcessor::UpdateTracker(update);
 #else
-          VisionState::tracker_.UpdateTransformation(update, 1.f, scratch,
+          tracker_.UpdateTransformation(update, 1.f, scratch,
                                                      Transformations::TRANSFORM_AFFINE);
 #endif
         } // if(tracker transformation type == TRANSLATION...)
         
 #endif // if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PLANAR6DOF
         
-        MatlabVisualization::SendTrackerPrediction_After(VisionState::GetTrackerQuad(scratch));
+        MatlabVisualization::SendTrackerPrediction_After(GetTrackerQuad(scratch));
         
         return EXIT_SUCCESS;
       } // TrackerPredictionUpdate()
       
-      
-      //      ReturnCode Update_Offboard()
-      //      {
-      //#if USE_OFFBOARD_VISION
-      //        //PRINT("VisionSystem::Update(): waiting for processing result.\n");
-      //        Messages::ProcessUARTMessages();
-      //        if(Messages::StillLookingForID()) {
-      //          // Still waiting, skip further vision processing below.
-      //          return EXIT_SUCCESS;
-      //        }
-      //
-      //        if(VisionState::mode_ == VISION_MODE_IDLE) {
-      //        } else if(VisionState::mode_ == LOOKING_FOR_MARKERS) {
-      //          // Send the offboard vision processor the frame, with the command to look for blocks in
-      //          // it. Note that if we previsouly sent the offboard processor a message to set the docking
-      //          // block type, it will also initialize a template tracker once that block type is seen
-      //          HAL::USBSendFrame(frame.data, frame.timestamp,
-      //            frame.resolution, DETECTION_RESOLUTION,
-      //            HAL::USB_VISION_COMMAND_DETECTBLOCKS);
-      //
-      //          Messages::LookForID( GET_MESSAGE_ID(Messages::TotalVisionMarkersSeen) );
-      //#ifdef SIMULATOR
-      //          frameRdyTimeUS_ = HAL::GetMicroCounter() + LOOK_FOR_BLOCK_PERIOD_US;
-      //#endif
-      //        } else if(VisionState::mode_ == VISION_MODE_TRACKING) {
-      //#ifdef SIMULATOR
-      //          frameRdyTimeUS_ = HAL::GetMicroCounter() + TRACK_BLOCK_PERIOD_US;
-      //#endif
-      //
-      //          if(TrackTemplate(frame) != EXIT_SUCCESS) {
-      //            PRINT("VisionSystem::Update(): TrackTemplate() failed.\n");
-      //            return EXIT_FAILURE;
-      //          }
-      //        } else {
-      //          PRINT("VisionSystem::Update(): reached default case in switch statement.");
-      //          return EXIT_FAILURE;
-      //        }
-      //#endif // USE_OFFBOARD_VISION
-      //        return EXIT_SUCCESS;
-      //      }// ReturnCode Update_Offboard()
       
       static void FillDockErrMsg(const Quadrilateral<f32>& currentQuad,
                                  Messages::DockingErrorSignal& dockErrMsg)
@@ -868,7 +676,7 @@ namespace Anki {
         
 #if USE_APPROXIMATE_DOCKING_ERROR_SIGNAL
         const bool useTopBar = false; // TODO: pass in? make a docker parameter?
-        const f32 focalLength_x = VisionState::headCamInfo_->focalLength_x;
+        const f32 focalLength_x = headCamInfo_->focalLength_x;
         const f32 imageResolutionWidth_pix = detectionParameters_.detectionWidth;
         
         Quadrilateral<f32> sortedQuad = currentQuad.ComputeClockwiseCorners();
@@ -890,7 +698,7 @@ namespace Anki {
         const f32 angleError = -asinf( (lineRight.y-lineLeft.y) / lineLength) * 4;  // Multiply by scalar which makes angleError a little more accurate.  TODO: Something smarter than this.
         
         //currentDistance = BlockMarker3D.ReferenceWidth * this.calibration.fc(1) / L;
-        const f32 distanceError = VisionState::trackingMarkerWidth_mm * focalLength_x / lineLength;
+        const f32 distanceError = trackingMarkerWidth_mm * focalLength_x / lineLength;
         
         //ANS: now returning error in terms of camera. mainExecution converts to robot coords
         // //distError = currentDistance - CozmoDocker.LIFT_DISTANCE;
@@ -922,8 +730,170 @@ namespace Anki {
         
 #endif // if USE_APPROXIMATE_DOCKING_ERROR_SIGNAL
         
+      } // FillDockErrMsg()
+
+      
+#if 0
+#pragma mark --- Public VisionSystem API Implementations ---
+#endif
+      
+      u32 DownsampleHelper(const Array<u8>& in,
+                           Array<u8>& out,
+                           MemoryStack scratch)
+      {
+        const s32 inWidth  = in.get_size(1);
+        //const s32 inHeight = in.get_size(0);
+        
+        const s32 outWidth  = out.get_size(1);
+        //const s32 outHeight = out.get_size(0);
+        
+        const u32 downsampleFactor = inWidth / outWidth;
+        
+        const u32 downsamplePower = Log2u32(downsampleFactor);
+        
+        if(downsamplePower > 0) {
+          //PRINT("Downsampling [%d x %d] frame by %d.\n", inWidth, inHeight, (1 << downsamplePower));
+          
+          ImageProcessing::DownsampleByPowerOfTwo<u8,u32,u8>(in,
+                                                             downsamplePower,
+                                                             out,
+                                                             scratch);
+        } else {
+          // No need to downsample, just copy the buffer
+          out.Set(in);
+        }
+        
+        return downsampleFactor;
       }
       
+      const HAL::CameraInfo* GetCameraCalibration() {
+        // TODO: is just returning the pointer to HAL's camera info struct kosher?
+        return headCamInfo_;
+      }
+      
+      f32 GetTrackingMarkerWidth() {
+        return trackingMarkerWidth_mm;
+      }
+      
+      ReturnCode Init()
+      {
+        ReturnCode result = EXIT_SUCCESS;
+        
+        if(!isInitialized_) {
+          
+          captureResolution_ = HAL::CAMERA_MODE_QVGA;
+          
+          // WARNING: the order of these initializations matter!
+
+          //
+          // Initialize the VisionSystem's state (i.e. its "private member variables")
+          //
+          
+          mode_                      = VISION_MODE_LOOKING_FOR_MARKERS;
+          markerTypeToTrack_         = Anki::Vision::MARKER_UNKNOWN;
+          numTrackFailures_          = 0;
+          isTrackingMarkerSpecified_ = false;
+          trackingMarkerWidth_mm     = 0;
+          
+          wasCalledOnce_             = false;
+          havePreviousRobotState_    = false;
+
+          headCamInfo_ = HAL::GetHeadCamInfo();
+          if(headCamInfo_ == NULL) {
+            PRINT("Initialize() - HeadCam Info pointer is NULL!\n");
+            return EXIT_FAILURE;
+          }
+          
+          detectionParameters_.Initialize();
+          trackerParameters_.Initialize();
+          
+          Simulator::Initialize();
+
+#ifdef RUN_SIMPLE_TRACKING_TEST
+          Anki::Cozmo::VisionSystem::SetMarkerToTrack(Vision::MARKER_BATTERIES,
+                                                      DEFAULT_BLOCK_MARKER_WIDTH_MM);
+#endif
+          
+          result = VisionMemory::Initialize();
+          if(result != EXIT_SUCCESS) { return result; }
+          
+          result = DebugStream::Initialize();
+          if(result != EXIT_SUCCESS) { return result; }
+          
+          result = MatlabVisualization::Initialize();
+          if(result != EXIT_SUCCESS) { return result; }
+          
+#if USE_MATLAB_TRACKER || USE_MATLAB_DETECTOR
+          result = MatlabVisionProcessor::Initialize();
+          if(result != EXIT_SUCCESS) { return result; }
+#endif
+          
+          isInitialized_ = true;
+        }
+        
+        return result;
+      }
+      
+      ReturnCode SetMarkerToTrack(const Vision::MarkerType& markerToTrack,
+                                  const f32 markerWidth_mm)
+      {
+        markerTypeToTrack_     = markerToTrack;
+        trackingMarkerWidth_mm = markerWidth_mm;
+        mode_                  = VISION_MODE_LOOKING_FOR_MARKERS;
+        numTrackFailures_      = 0;
+        
+        // If the marker type is valid, start looking for it
+        if(markerToTrack != Vision::MARKER_UNKNOWN &&
+           markerWidth_mm > 0.f)
+        {
+          isTrackingMarkerSpecified_ = true;
+        } else {
+          isTrackingMarkerSpecified_ = false;
+        }
+        
+        return EXIT_SUCCESS;
+        
+      } // SetMarkerToTrack()
+      
+      void StopTracking()
+      {
+        mode_ = VISION_MODE_IDLE;
+      }
+      
+      
+      
+#ifdef SEND_IMAGE_ONLY
+      // In SEND_IMAGE_ONLY mode, just create a special version of update
+      
+      ReturnCode Update(const Messages::RobotState robotState)
+      {
+      VisionMemory::ResetBuffers();
+      
+      const s32 captureHeight = CameraModeInfo[captureResolution_].height;
+      const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
+      
+      Array<u8> grayscaleImage(captureHeight, captureWidth,
+                               VisionMemory::onchipScratch_, Flags::Buffer(false,false,false));
+      
+      HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
+                          captureResolution_, exposure, false);
+      
+#ifdef SEND_BINARY_IMAGE_ONLY
+      DebugStream::SendBinaryImage(grayscaleImage, tracker_, trackerParameters_, VisionMemory::ccmScratch_, VisionMemory::onchipScratch_, VisionMemory::offchipScratch_);
+      HAL::MicroWait(250000);
+#else
+      DebugStream::SendArray(grayscaleImage);
+      HAL::MicroWait(1000000);
+#endif
+      
+      return EXIT_SUCCESS;
+    } // Update() [SEND_IMAGE_ONLY]
+    
+    
+#else // #ifdef SEND_IMAGE_ONLY
+    
+      
+      // This is the regular Update() call
       ReturnCode Update(const Messages::RobotState robotState)
       {
         const f32 exposure = 0.1f;
@@ -931,50 +901,20 @@ namespace Anki {
         // This should be called from elsewhere first, but calling it again won't hurt
         Init();
         
-#ifdef SIMULATOR
-        if (HAL::GetMicroCounter() < simulatorParameters_.frameRdyTimeUS_) {
+        // no-op on real hardware
+        if(!Simulator::IsFrameReady()) {
           return EXIT_SUCCESS;
         }
-#endif
         
-#ifdef SEND_IMAGE_ONLY
-        VisionMemory::ResetBuffers();
-        
-        const s32 captureHeight = CameraModeInfo[captureResolution_].height;
-        const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
-        
-        Array<u8> grayscaleImage(captureHeight, captureWidth,
-                                 VisionMemory::onchipScratch_, Flags::Buffer(false,false,false));
-        
-        HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
-                            captureResolution_, exposure, false);
-        
-#ifdef SEND_BINARY_IMAGE_ONLY
-        DebugStream::SendBinaryImage(grayscaleImage, VisionState::tracker_, trackerParameters_, VisionMemory::ccmScratch_, VisionMemory::onchipScratch_, VisionMemory::offchipScratch_);
-        HAL::MicroWait(250000);
-#else
-        DebugStream::SendArray(grayscaleImage);
-        HAL::MicroWait(1000000);
-#endif
-        
-        return EXIT_SUCCESS;
-#endif
-        
-        VisionState::UpdateRobotState(robotState);
-        
-        //#if USE_OFFBOARD_VISION
-        //        return Update_Offboard();
-        //#endif // USE_OFFBOARD_VISION
+        UpdateRobotState(robotState);
         
         const TimeStamp_t imageTimeStamp = HAL::GetTimeStamp();
         
-        if(VisionState::mode_ == VISION_MODE_IDLE) {
+        if(mode_ == VISION_MODE_IDLE) {
           // Nothing to do!
         }
-        else if(VisionState::mode_ == VISION_MODE_LOOKING_FOR_MARKERS) {
-#ifdef SIMULATOR
-          simulatorParameters_.frameRdyTimeUS_ = HAL::GetMicroCounter() + SimulatorParameters::LOOK_FOR_BLOCK_PERIOD_US;
-#endif
+        else if(mode_ == VISION_MODE_LOOKING_FOR_MARKERS) {
+          Simulator::SetDetectionReadyTime(); // no-op on real hardware
           
           VisionMemory::ResetBuffers();
           
@@ -1030,8 +970,8 @@ namespace Anki {
             }
             
             // Was the desired marker found? If so, start tracking it.
-            if(VisionState::isTrackingMarkerSpecified_ && !isTrackingMarkerFound &&
-               crntMarker.markerType == VisionState::markerTypeToTrack_)
+            if(isTrackingMarkerSpecified_ && !isTrackingMarkerFound &&
+               crntMarker.markerType == markerTypeToTrack_)
             {
               // We will start tracking the _first_ marker of the right type that
               // we see.
@@ -1042,16 +982,16 @@ namespace Anki {
               // InitTemplate downsamples it for the time being, since we're still doing template
               // initialization at tracking resolution instead of the eventual goal of doing it at
               // full detection resolution.
-              VisionState::trackingQuad_ = Quadrilateral<f32>(
+              trackingQuad_ = Quadrilateral<f32>(
                                                               Point<f32>(crntMarker.corners[0].x, crntMarker.corners[0].y),
                                                               Point<f32>(crntMarker.corners[1].x, crntMarker.corners[1].y),
                                                               Point<f32>(crntMarker.corners[2].x, crntMarker.corners[2].y),
                                                               Point<f32>(crntMarker.corners[3].x, crntMarker.corners[3].y));
               
               const ReturnCode result = InitTemplate(grayscaleImage,
-                                                     VisionState::trackingQuad_,
+                                                     trackingQuad_,
                                                      trackerParameters_,
-                                                     VisionState::tracker_,
+                                                     tracker_,
                                                      VisionMemory::ccmScratch_,
                                                      VisionMemory::onchipScratch_, //< NOTE: onchip is a reference
                                                      offchipScratch_local);
@@ -1062,13 +1002,12 @@ namespace Anki {
               
               // Template initialization succeeded, switch to tracking mode:
               // TODO: Log or issue message?
-              VisionState::mode_ = VISION_MODE_TRACKING;
+              mode_ = VISION_MODE_TRACKING;
             } // if(isTrackingMarkerSpecified && !isTrackingMarkerFound && markerType == markerToTrack)
           } // for(each marker)
-        } else if(VisionState::mode_ == VISION_MODE_TRACKING) {
-#ifdef SIMULATOR
-          simulatorParameters_.frameRdyTimeUS_ = HAL::GetMicroCounter() + SimulatorParameters::TRACK_BLOCK_PERIOD_US;
-#endif
+        } else if(mode_ == VISION_MODE_TRACKING) {
+          
+          Simulator::SetTrackingReadyTime(); // no-op on real hardware
           
           //
           // Capture image for tracking
@@ -1109,9 +1048,9 @@ namespace Anki {
           
           const ReturnCode trackResult = TrackTemplate(
                                                        grayscaleImage,
-                                                       VisionState::trackingQuad_,
+                                                       trackingQuad_,
                                                        trackerParameters_,
-                                                       VisionState::tracker_,
+                                                       tracker_,
                                                        converged,
                                                        VisionMemory::ccmScratch_,
                                                        onchipScratch_local,
@@ -1132,19 +1071,19 @@ namespace Anki {
           
           if(converged)
           {
-            Quadrilateral<f32> currentQuad = VisionState::GetTrackerQuad(VisionMemory::onchipScratch_);
+            Quadrilateral<f32> currentQuad = GetTrackerQuad(VisionMemory::onchipScratch_);
             FillDockErrMsg(currentQuad, dockErrMsg);
             
             // Reset the failure counter
-            VisionState::numTrackFailures_ = 0;
+            numTrackFailures_ = 0;
           }
           else {
-            VisionState::numTrackFailures_ += 1;
+            numTrackFailures_ += 1;
             
-            if(VisionState::numTrackFailures_ == VisionState::MAX_TRACKING_FAILURES) {
+            if(numTrackFailures_ == MAX_TRACKING_FAILURES) {
               // This resets docking, puttings us back in VISION_MODE_LOOKING_FOR_MARKERS mode
-              SetMarkerToTrack(VisionState::markerTypeToTrack_,
-                               VisionState::trackingMarkerWidth_mm);
+              SetMarkerToTrack(markerTypeToTrack_,
+                               trackingMarkerWidth_mm);
             }
           }
           
@@ -1155,7 +1094,11 @@ namespace Anki {
         } // if(converged)
         
         return EXIT_SUCCESS;
-      } // Update()
+        
+      } // Update() [Real]
+      
+#endif // #ifdef SEND_IMAGE_ONLY
+      
     } // namespace VisionSystem
   } // namespace Cozmo
 } // namespace Anki

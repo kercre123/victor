@@ -1,3 +1,14 @@
+/**
+ * File: visionParameters.h
+ *
+ * Author: Andrew Stein
+ * Date:   3/28/2014
+ *
+ * Description: High-level vision system parameter definitions, including the
+ *              type of tracker to use.
+ *
+ * Copyright: Anki, Inc. 2014
+ **/
 
 #ifndef ANKI_VISIONPARAMETERS_H
 #define ANKI_VISIONPARAMETERS_H
@@ -26,14 +37,14 @@ namespace Anki {
 #define DOCKING_LUCAS_KANADE_PLANAR6DOF         6 //< Currently only implemented in Matlab (USE_MATLAB_TRACKER = 1)
       
       // Set the docker here:
-#define DOCKING_ALGORITHM DOCKING_LUCAS_KANADE_PLANAR6DOF
+#define DOCKING_ALGORITHM DOCKING_LUCAS_KANADE_PROJECTIVE
       
       // Set to 1 to use the top (or bottom) bar of the tracked marker to approximate
       // the pose of the block relative to the camera for docking.
-      // NOTE: This will be forced to 1 if an affine tracker is selected.
+      // NOTE: This *must* be set to 1 if using an affine tracker.
 #define USE_APPROXIMATE_DOCKING_ERROR_SIGNAL 1
       
-#define USE_MATLAB_TRACKER  1
+#define USE_MATLAB_TRACKER  0
 #define USE_MATLAB_DETECTOR 0
 
 #ifdef THIS_IS_PETES_BOARD
@@ -127,17 +138,13 @@ namespace Anki {
       // Simulator
       //
       struct SimulatorParameters {
-
 #ifdef SIMULATOR
-        static const u32 LOOK_FOR_BLOCK_PERIOD_US = 200000; // 5Hz
+        static const u32 FIDUCIAL_DETECTION_SPEED_HZ = 5;
         static const u32 TRACKING_ALGORITHM_SPEED_HZ = 10;
+        
         static const u32 TRACK_BLOCK_PERIOD_US = 1e6 / TRACKING_ALGORITHM_SPEED_HZ;
-        
-        u32 frameRdyTimeUS_;
+        static const u32 FIDUCIAL_DETECTION_PERIOD_US = 1e6 / FIDUCIAL_DETECTION_SPEED_HZ;
 #endif
-        
-        ReturnCode Initialize();
-        
       }; // struct SimulatorParameters
       
       

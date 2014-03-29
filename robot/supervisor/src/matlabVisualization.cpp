@@ -1,3 +1,14 @@
+/**
+ * File: matlabVisualization.cpp
+ *
+ * Author: Andrew Stein
+ * Date:   3/28/2014
+ *
+ * Description: Code for visualizing the VisionSystem's tracking and detection
+ *              status using a Matlab Engine.
+ *
+ * Copyright: Anki, Inc. 2014
+ **/
 
 #include "matlabVisualization.h"
 

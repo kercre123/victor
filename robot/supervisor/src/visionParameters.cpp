@@ -1,3 +1,15 @@
+/**
+ * File: visionParameters.cpp
+ *
+ * Author: Andrew Stein
+ * Date:   3/28/2014
+ *
+ * Description: High-level vision system parameter definitions, including the
+ *              type of tracker to use.
+ *
+ * Copyright: Anki, Inc. 2014
+ **/
+
 #include "visionParameters.h"
 
 #include "anki/common/robot/utilities.h"
@@ -124,19 +136,6 @@ namespace Anki {
         isInitialized = true;
       }
       
-      
-#if 0
-#pragma mark --- SimulatorParameters ---
-#endif
-      
-
-      ReturnCode SimulatorParameters::Initialize()
-      {
-#ifdef SIMULATOR
-        frameRdyTimeUS_ = 0;
-#endif
-        return EXIT_SUCCESS;
-      }
       
 
     } // namespace VisionSystem
