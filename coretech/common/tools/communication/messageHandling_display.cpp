@@ -112,7 +112,7 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
         }
         //printf("Times: %f %f\n", times[0], times[1]);
       } else {
-        printf("Basic type buffer segment (%d, %d, %d, %d, %d): ", size, isInteger, isSigned, isFloat, numElements);
+        printf("Basic type buffer segment \"%s\" (%d, %d, %d, %d, %d)\n", objectName, size, isInteger, isSigned, isFloat, numElements);
         /*for(s32 i=0; i<remainingDataLength; i++) {
         printf("%x ", dataSegment[i]);
         }*/
@@ -196,7 +196,7 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
 
         //cv::resize(toShowImage, toShowLarge, toShowLargeTmp.size(), 0, 0, cv::INTER_NEAREST);
       } else {
-        printf("Array: (%d, %d, %d, %d, %d, %d, %d, %d) ", height, width, stride, flags, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat);
+        printf("Array \"%s\": (%d, %d, %d, %d, %d, %d, %d, %d)\n", objectName, height, width, stride, flags, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat);
       }
     } else if(strcmp(typeName, "String") == 0) {
       printf("Board>> %s", dataSegment);
@@ -251,7 +251,15 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
       //cv::resize(toShow, toShowImage, toShowImage.size(), 0, 0, cv::INTER_NEAREST);
       //cv::imshow("Detected Binary Edges", toShowImage);
     } else {
-      printf("Unknown Type %s\n", typeName);
+      char toPrint[32];
+
+      memcpy(toPrint, typeName, 31);
+      toPrint[31] = '\0';
+      printf("Unknown Type \"%s\"", toPrint);
+
+      memcpy(toPrint, objectName, 31);
+      toPrint[31] = '\0';
+      printf(" \"%s\"\n", toPrint);
     }
 
     //printf("\n");

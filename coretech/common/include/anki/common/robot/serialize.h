@@ -28,8 +28,6 @@ namespace Anki
         return RESULT_FAIL_OUT_OF_MEMORY;
       }
 
-      //u32 *bufferU32 = reinterpret_cast<u32*>(*buffer);
-
       u32 firstElement = 0;
 
       if(Flags::TypeCharacteristics<Type>::isBasicType) {
@@ -50,9 +48,6 @@ namespace Anki
 
       firstElement |= sizeof(Type) << 16;
 
-      //bufferU32[0] = firstElement;
-      //bufferU32[1] = numElements;
-
       reinterpret_cast<u32*>(*buffer)[0] = firstElement;
       reinterpret_cast<u32*>(*buffer)[1] = numElements;
 
@@ -72,8 +67,6 @@ namespace Anki
 
       AnkiConditionalErrorAndReturnValue(in.IsValid(),
         RESULT_FAIL, "SerializedBuffer::EncodedArray", "in Array is invalid");
-
-      //u32 *bufferU32 = reinterpret_cast<u32*>(*buffer);
 
       const s32 numElements = in.get_size(0) * in.get_size(1);
 
@@ -115,8 +108,6 @@ namespace Anki
       const s32 xSize = xSlice.get_size();
 
       EncodedArray::Serialize<Type>(false, in.get_array(), buffer, bufferLength);
-
-      //u32 *bufferU32 = reinterpret_cast<u32*>(*buffer);
 
       reinterpret_cast<u32*>(*buffer)[6] = *reinterpret_cast<const u32*>(&yStart);
       reinterpret_cast<u32*>(*buffer)[7] = *reinterpret_cast<const u32*>(&yIncrement);
@@ -242,9 +233,12 @@ namespace Anki
       s32 numElements;
       EncodedBasicTypeBuffer::Deserialize(true, size, isBasicType, isInteger, isSigned, isFloat, numElements, buffer, bufferLength);
 
-      AnkiAssert(size < 256 && numElements > 0 && numElements < 1000000);
-
       const Type var = *reinterpret_cast<Type*>(*buffer);
+
+      // Hack, to prevent corrupted input from causing a memory access error
+      if(size > 256 || numElements <= 0 || numElements >= 1000000) {
+        return var;
+      }
 
       *buffer = reinterpret_cast<u8*>(*buffer) + sizeof(Type)*numElements;
       bufferLength -= sizeof(Type)*numElements;

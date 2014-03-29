@@ -38,31 +38,29 @@ namespace Anki
         return RESULT_FAIL_OUT_OF_MEMORY;
       }
 
-      const u32 *bufferU32 = reinterpret_cast<u32*>(*buffer);
-
-      if(bufferU32[0] & 1)
+      if(reinterpret_cast<u32*>(*buffer)[0] & 1)
         isBasicType = true;
       else
         isBasicType = false;
 
-      if(bufferU32[0] & 2)
+      if(reinterpret_cast<u32*>(*buffer)[0] & 2)
         isInteger = true;
       else
         isInteger = false;
 
-      if(bufferU32[0] & 4)
+      if(reinterpret_cast<u32*>(*buffer)[0] & 4)
         isSigned = true;
       else
         isSigned = false;
 
-      if(bufferU32[0] & 8)
+      if(reinterpret_cast<u32*>(*buffer)[0] & 8)
         isFloat = true;
       else
         isFloat = false;
 
-      size = (bufferU32[0] & 0xFFFF0000) >> 16;
+      size = (reinterpret_cast<u32*>(*buffer)[0] & 0xFFFF0000) >> 16;
 
-      numElements = static_cast<s32>(bufferU32[1]);
+      numElements = static_cast<s32>(reinterpret_cast<u32*>(*buffer)[1]);
 
       if(updateBufferPointer) {
         *buffer = reinterpret_cast<u8*>(*buffer) + SerializedBuffer::EncodedBasicTypeBuffer::CODE_LENGTH;
@@ -81,12 +79,10 @@ namespace Anki
       if(SerializedBuffer::EncodedBasicTypeBuffer::Deserialize(false, basicType_size, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_numElements, buffer, bufferLength) != RESULT_OK)
         return RESULT_FAIL;
 
-      const u32 *bufferU32 = reinterpret_cast<u32*>(*buffer);
-
-      height = bufferU32[2];
-      width = bufferU32[3];
-      stride = bufferU32[4];
-      flags.set_rawFlags(bufferU32[5]);
+      height = reinterpret_cast<u32*>(*buffer)[2];
+      width = reinterpret_cast<u32*>(*buffer)[3];
+      stride = reinterpret_cast<u32*>(*buffer)[4];
+      flags.set_rawFlags(reinterpret_cast<u32*>(*buffer)[5]);
 
       if(updateBufferPointer) {
         *buffer = reinterpret_cast<u8*>(*buffer) + SerializedBuffer::EncodedArray::CODE_LENGTH;
@@ -105,14 +101,12 @@ namespace Anki
       if(SerializedBuffer::EncodedArray::Deserialize(false, height, width, stride, flags, basicType_size, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_numElements, buffer, bufferLength) != RESULT_OK)
         return RESULT_FAIL;
 
-      const s32 *bufferU32 = reinterpret_cast<s32*>(*buffer);
-
-      ySlice_start = bufferU32[6];
-      ySlice_increment = bufferU32[7];
-      ySlice_end = bufferU32[8];
-      xSlice_start = bufferU32[9];
-      xSlice_increment = bufferU32[10];
-      xSlice_end = bufferU32[11];
+      ySlice_start = reinterpret_cast<u32*>(*buffer)[6];
+      ySlice_increment = reinterpret_cast<u32*>(*buffer)[7];
+      ySlice_end = reinterpret_cast<u32*>(*buffer)[8];
+      xSlice_start = reinterpret_cast<u32*>(*buffer)[9];
+      xSlice_increment = reinterpret_cast<u32*>(*buffer)[10];
+      xSlice_end = reinterpret_cast<u32*>(*buffer)[11];
 
       if(updateBufferPointer) {
         *buffer = reinterpret_cast<u8*>(*buffer) + SerializedBuffer::EncodedArraySlice::CODE_LENGTH;
@@ -136,8 +130,6 @@ namespace Anki
       if(rawBufferLength == 0)
         return RESULT_OK;
 
-      const u8 * rawBufferU8 = reinterpret_cast<const u8*>(rawBuffer);
-
       s32 state = 0;
       s32 index = 0;
 
@@ -148,9 +140,9 @@ namespace Anki
           break;
         }
 
-        if(rawBufferU8[index] == SERIALIZED_BUFFER_HEADER[state]) {
+        if(reinterpret_cast<const u8*>(rawBuffer)[index] == SERIALIZED_BUFFER_HEADER[state]) {
           state++;
-        } else if(rawBufferU8[index] == SERIALIZED_BUFFER_HEADER[0]) {
+        } else if(reinterpret_cast<const u8*>(rawBuffer)[index] == SERIALIZED_BUFFER_HEADER[0]) {
           state = 1;
         } else {
           state = 0;
@@ -169,9 +161,9 @@ namespace Anki
 
         //printf("%d) %d %x %x\n", index, state, rawBufferU8[index], SERIALIZED_BUFFER_FOOTER[state]);
 
-        if(rawBufferU8[index] == SERIALIZED_BUFFER_FOOTER[state]) {
+        if(reinterpret_cast<const u8*>(rawBuffer)[index] == SERIALIZED_BUFFER_FOOTER[state]) {
           state++;
-        } else if(rawBufferU8[index] == SERIALIZED_BUFFER_FOOTER[0]) {
+        } else if(reinterpret_cast<const u8*>(rawBuffer)[index] == SERIALIZED_BUFFER_FOOTER[0]) {
           state = 1;
         } else {
           state = 0;
@@ -193,8 +185,6 @@ namespace Anki
         return RESULT_FAIL_OUT_OF_MEMORY;
       }
 
-      u8 * bufferU8 = *reinterpret_cast<u8**>(buffer);
-
       s32 iChar = 0;
 
       // If objectName is not NULL, copy it
@@ -204,13 +194,13 @@ namespace Anki
             break;
           }
 
-          bufferU8[iChar] = description[iChar];
+          reinterpret_cast<u8*>(*buffer)[iChar] = description[iChar];
         }
       } // if(objectName)
 
-      bufferU8[iChar] = '\0';
+      reinterpret_cast<u8*>(*buffer)[iChar] = '\0';
 
-      *reinterpret_cast<u8**>(buffer) += DESCRIPTION_STRING_LENGTH;
+      *buffer = reinterpret_cast<u8*>(*buffer) + DESCRIPTION_STRING_LENGTH;
       bufferLength -= DESCRIPTION_STRING_LENGTH;
 
       return RESULT_OK;
@@ -223,21 +213,20 @@ namespace Anki
       }
 
       if(description) {
-        u8 * bufferU8 = *reinterpret_cast<u8**>(buffer);
         s32 iChar = 0;
 
         for(iChar=0; iChar<(DESCRIPTION_STRING_LENGTH-1); iChar++) {
-          if(bufferU8[iChar] == '\0') {
+          if(reinterpret_cast<u8*>(*buffer)[iChar] == '\0') {
             break;
           }
 
-          description[iChar] = bufferU8[iChar];
+          description[iChar] = reinterpret_cast<u8*>(*buffer)[iChar];
         }
 
         description[iChar] = '\0';
       }
 
-      *reinterpret_cast<u8**>(buffer) += DESCRIPTION_STRING_LENGTH;
+      *buffer = reinterpret_cast<u8*>(*buffer) + DESCRIPTION_STRING_LENGTH;
       bufferLength -= DESCRIPTION_STRING_LENGTH;
 
       return RESULT_OK;
@@ -416,7 +405,7 @@ namespace Anki
       segment += SerializedBuffer::DESCRIPTION_STRING_LENGTH;
 
       // TODO: return true, or reported?
-      dataLength = trueSegmentLength;
+      dataLength = reportedSegmentLength;
 
       return segment;
     }
