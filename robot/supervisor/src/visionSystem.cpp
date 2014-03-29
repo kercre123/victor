@@ -345,7 +345,7 @@ namespace DebugStream
 
   static const s32 MAX_BYTES_PER_SECOND = 500000;
 
-  static const s32 SEND_EVERY_N_FRAMES = 5;
+  static const s32 SEND_EVERY_N_FRAMES = 7;
 
   static OFFCHIP u8 printfBufferRaw_[PRINTF_BUFFER_SIZE];
   static OFFCHIP u8 debugStreamBufferRaw_[DEBUG_STREAM_BUFFER_SIZE];
@@ -400,7 +400,11 @@ namespace DebugStream
     const f32 benchmarkTimes[2] = {lastBenchmarkDuration_algorithmsOnly, lastBenchmarkDuration_total};
 
     toSend.PushBack<f32>("Benchmark Times", &benchmarkTimes[0], 2);
-
+    
+    const s32 nothing[8] = {0,0,0,0,0,0,0,0};
+    toSend.PushBack<s32>("Nothing", &nothing[0], 8);
+    toSend.PushBack<s32>("Nothing", &nothing[0], 8);
+    
     s32 startIndex;
     const u8 * bufferStart = reinterpret_cast<const u8*>(toSend.get_memoryStack().get_validBufferStart(startIndex));
     const s32 validUsedBytes = toSend.get_memoryStack().get_usedBytes() - startIndex;
