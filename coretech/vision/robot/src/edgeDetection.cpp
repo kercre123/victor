@@ -319,47 +319,47 @@ namespace Anki
       edgeLists.yIncreasing.set_size(yIncreasingSize);
     } // DetectBlurredEdges_vertical()
 
-    Result EdgeLists::Serialize(SerializedBuffer &buffer) const
+    Result EdgeLists::Serialize(const char *objectName, SerializedBuffer &buffer) const
     {
-      const s32 maxBufferLength = buffer.get_memoryStack().ComputeLargestPossibleAllocation() - 64;
+      s32 totalDataLength = this->get_serializationSize();
 
-      s32 requiredBytes = this->get_SerializationSize();
+      void *segment = buffer.Allocate("EdgeLists", objectName, totalDataLength);
 
-      if(maxBufferLength < requiredBytes) {
+      if(segment == NULL) {
         return RESULT_FAIL;
       }
 
-      void *afterHeader;
-      const void* segmentStart = buffer.PushBack("EdgeLists", requiredBytes, &afterHeader);
-
-      if(segmentStart == NULL) {
+      if(SerializedBuffer::SerializeDescriptionStrings("EdgeLists", objectName, &segment, totalDataLength) != RESULT_OK)
         return RESULT_FAIL;
-      }
 
       // Serialize the template lists
-      SerializedBuffer::SerializeRaw<s32>(this->imageHeight, &afterHeader, requiredBytes);
-      SerializedBuffer::SerializeRaw<s32>(this->imageWidth, &afterHeader, requiredBytes);
-      SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >(this->xDecreasing, &afterHeader, requiredBytes);
-      SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >(this->xIncreasing, &afterHeader, requiredBytes);
-      SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >(this->yDecreasing, &afterHeader, requiredBytes);
-      SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >(this->yIncreasing, &afterHeader, requiredBytes);
+      SerializedBuffer::SerializeRawBasicType<s32>("imageHeight", this->imageHeight, &segment, totalDataLength);
+      SerializedBuffer::SerializeRawBasicType<s32>("imageWidth", this->imageWidth, &segment, totalDataLength);
+      SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("xDecreasing", this->xDecreasing, &segment, totalDataLength);
+      SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("xIncreasing", this->xIncreasing, &segment, totalDataLength);
+      SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("yDecreasing", this->yDecreasing, &segment, totalDataLength);
+      SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("yIncreasing", this->yIncreasing, &segment, totalDataLength);
 
       return RESULT_OK;
     }
 
-    Result EdgeLists::Deserialize(void** buffer, s32 &bufferLength, MemoryStack &memory)
+    Result EdgeLists::Deserialize(char *objectName, void** buffer, s32 &bufferLength, MemoryStack &memory)
     {
-      this->imageHeight = SerializedBuffer::DeserializeRaw<s32>(buffer, bufferLength);
-      this->imageWidth = SerializedBuffer::DeserializeRaw<s32>(buffer, bufferLength);
-      this->xDecreasing = SerializedBuffer::DeserializeRawFixedLengthList<Point<s16> >(buffer, bufferLength, memory);
-      this->xIncreasing = SerializedBuffer::DeserializeRawFixedLengthList<Point<s16> >(buffer, bufferLength, memory);
-      this->yDecreasing = SerializedBuffer::DeserializeRawFixedLengthList<Point<s16> >(buffer, bufferLength, memory);
-      this->yIncreasing = SerializedBuffer::DeserializeRawFixedLengthList<Point<s16> >(buffer, bufferLength, memory);
+      // TODO: check if the name is correct
+      if(SerializedBuffer::DeserializeDescriptionStrings(NULL, objectName, buffer, bufferLength) != RESULT_OK)
+        return RESULT_FAIL;
+
+      this->imageHeight = SerializedBuffer::DeserializeRawBasicType<s32>(NULL, buffer, bufferLength);
+      this->imageWidth  = SerializedBuffer::DeserializeRawBasicType<s32>(NULL, buffer, bufferLength);
+      this->xDecreasing = SerializedBuffer::DeserializeRawFixedLengthList<Point<s16> >(NULL, buffer, bufferLength, memory);
+      this->xIncreasing = SerializedBuffer::DeserializeRawFixedLengthList<Point<s16> >(NULL, buffer, bufferLength, memory);
+      this->yDecreasing = SerializedBuffer::DeserializeRawFixedLengthList<Point<s16> >(NULL, buffer, bufferLength, memory);
+      this->yIncreasing = SerializedBuffer::DeserializeRawFixedLengthList<Point<s16> >(NULL, buffer, bufferLength, memory);
 
       return RESULT_OK;
     }
 
-    s32 EdgeLists::get_SerializationSize() const
+    s32 EdgeLists::get_serializationSize() const
     {
       // TODO: make the correct length
 
@@ -374,7 +374,7 @@ namespace Anki
         RoundUp<size_t>(yDecreasingUsed, MEMORY_ALIGNMENT) +
         RoundUp<size_t>(yIncreasingUsed, MEMORY_ALIGNMENT);
 
-      const s32 requiredBytes = 512 + numTemplatePixels*sizeof(Point<s16>);
+      const s32 requiredBytes = 512 + numTemplatePixels*sizeof(Point<s16>) + 14*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
 
       return requiredBytes;
     }
@@ -382,6 +382,9 @@ namespace Anki
 #ifdef ANKICORETECH_EMBEDDED_USE_OPENCV
     cv::Mat EdgeLists::DrawIndexes() const
     {
+      AnkiConditionalErrorAndReturnValue(this->imageHeight > 16 && this->imageHeight < 2000 && this->imageWidth > 16 && this->imageWidth < 2000,
+        cv::Mat(), "EdgeLists::DrawIndexes", "This object is invalid");
+
       return DrawIndexes(this->imageHeight, this->imageWidth, this->xDecreasing, this->xIncreasing, this->yDecreasing, this->yIncreasing);
     }
 
@@ -397,6 +400,11 @@ namespace Anki
         {0,128,0},
         {0,0,128},
         {128,128,0}};
+
+      AnkiConditionalErrorAndReturnValue(
+        imageHeight > 0 && imageHeight < 2000 && imageWidth > 0 && imageWidth < 2000 &&
+        indexPoints1.IsValid() && indexPoints2.IsValid() && indexPoints3.IsValid() && indexPoints4.IsValid(),
+        cv::Mat(), "EdgeLists::DrawIndexes", "inputs are not valid");
 
       const s32 scratchSize = 10000000;
       MemoryStack scratch(malloc(scratchSize), scratchSize);

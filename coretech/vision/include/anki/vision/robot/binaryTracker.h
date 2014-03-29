@@ -76,15 +76,15 @@ namespace Anki
         // TRANSFORM_PROJECTIVE: [h00, h01, h02, h10, h11, h12, h20, h21]
         Result UpdateTransformation(const Array<f32> &update, const f32 scale, MemoryStack scratch, Transformations::TransformType updateType=Transformations::TRANSFORM_UNKNOWN);
 
-        Result Serialize(SerializedBuffer &buffer) const;
-        Result Deserialize(void** buffer, s32 &bufferLength, MemoryStack &memory);
+        Result Serialize(const char *objectName, SerializedBuffer &buffer) const;
+        Result Deserialize(char *objectName, void** buffer, s32 &bufferLength, MemoryStack &memory);
 
         s32 get_numTemplatePixels() const;
 
         Result set_transformation(const Transformations::PlanarTransformation_f32 &transformation);
         Transformations::PlanarTransformation_f32 get_transformation() const;
 
-        s32 get_SerializationSize() const;
+        s32 get_serializationSize() const;
 
         // The last used threshold is the last threshold that was used to binarize an image
         // The last threshold is the value computed on the last image, that will be used for the next image

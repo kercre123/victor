@@ -38,19 +38,25 @@ namespace Anki
         MAX(0, MIN(imageWidth-1, imageRegionOfInterest.right)),
         MAX(0, MIN(imageHeight-1, imageRegionOfInterest.top)),
         MAX(0, MIN(imageHeight-1, imageRegionOfInterest.bottom)));
-
+      
+      histogram.numElements = 0;
+      
       for(s32 y=imageRegionOfInterestClipped.top; y<=imageRegionOfInterestClipped.bottom; y+=yIncrement) {
         const u8 * restrict pImage = image.Pointer(y,0);
 
         for(s32 x=imageRegionOfInterestClipped.left; x<=imageRegionOfInterestClipped.right; x+=xIncrement) {
           const u8 curImage = pImage[x];
           pHistogram[curImage]++;
+          histogram.numElements++;
         }
       }
 
-      const s32 numY = (imageRegionOfInterest.bottom - imageRegionOfInterest.top + 1) / yIncrement;
-      const s32 numX = (imageRegionOfInterest.right - imageRegionOfInterest.left + 1) / xIncrement;
+      // TODO: fix for speed
+      /*const s32 numY = ((imageRegionOfInterest.bottom - imageRegionOfInterest.top) / yIncrement) + 1;
+      const s32 numX = ((imageRegionOfInterest.right - imageRegionOfInterest.left) / xIncrement) + 1;
       histogram.numElements = numY * numX;
+      
+      printf("%d %d", histogram.numElements, numPoints);*/
 
       return histogram;
     }
@@ -70,7 +76,7 @@ namespace Anki
 
       count += pHistogram[0];
 
-      while(count < numBelow && binIndex < numBins) {
+      while(count < numBelow && binIndex < (numBins-1)) {
         binIndex++;
         count += pHistogram[binIndex];
       }

@@ -38,6 +38,9 @@ using namespace std;
 static const s32 scratchSize = 1000000;
 static u8 scratchBuffer[scratchSize];
 
+const s32 outputFilenamePatternLength = 1024;
+char outputFilenamePattern[outputFilenamePatternLength] = "C:/Users/Pete/Box Sync/Cozmo SE/systemTestImages/cozmo_date%04d_%02d_%02d_time%02d_%02d_%02d_frame%d.%s";
+
 void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchingSegmentLengths)
 {
   const s32 bigHeight = 480;
@@ -45,6 +48,8 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
   const f32 scale = bigWidth / 320.0f;
 
   MemoryStack scratch(scratchBuffer, scratchSize, Flags::Buffer(false, true, false));
+
+  char *innerObjectName = reinterpret_cast<char*>( scratch.Allocate(SerializedBuffer::DESCRIPTION_STRING_LENGTH + 1) );
 
   // Used for displaying detected fiducials
   cv::Mat lastImage(240,320,CV_8U);
@@ -64,16 +69,16 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
 
   SerializedBuffer serializedBuffer(buffer.data, buffer.curDataLength, Anki::Embedded::Flags::Buffer(false, true, true));
 
-  SerializedBufferRawIterator iterator(serializedBuffer);
+  SerializedBufferReconstructingIterator iterator(serializedBuffer);
 
   bool aMessageAlreadyPrinted = false;
 
   while(iterator.HasNext()) {
     s32 dataLength;
-    SerializedBuffer::DataType type;
+    const char * typeName = NULL;
+    const char * objectName = NULL;
     bool isReportedSegmentLengthCorrect;
-    u8 * const dataSegmentStart = reinterpret_cast<u8*>(iterator.GetNext(dataLength, type, isReportedSegmentLengthCorrect));
-    u8 * dataSegment = dataSegmentStart;
+    void * dataSegment = reinterpret_cast<u8*>(iterator.GetNext(&typeName, &objectName, dataLength, isReportedSegmentLengthCorrect));
 
     if(!dataSegment) {
       break;
@@ -84,49 +89,35 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
     }
 
     //printf("Next segment is (%d,%d): ", dataLength, type);
-    if(type == SerializedBuffer::DATA_TYPE_RAW) {
-      printf("Raw segment: ");
-      for(s32 i=0; i<dataLength; i++) {
-        printf("%x ", dataSegment[i]);
-      }
-    } else if(type == SerializedBuffer::DATA_TYPE_BASIC_TYPE_BUFFER) {
-      SerializedBuffer::EncodedBasicTypeBuffer code;
-      for(s32 i=0; i<SerializedBuffer::EncodedBasicTypeBuffer::CODE_SIZE; i++) {
-        code.code[i] = reinterpret_cast<const u32*>(dataSegment)[i];
-      }
-      dataSegment += SerializedBuffer::EncodedBasicTypeBuffer::CODE_SIZE * sizeof(u32);
-      const s32 remainingDataLength = dataLength - SerializedBuffer::EncodedBasicTypeBuffer::CODE_SIZE * sizeof(u32);
-
+    if(strcmp(typeName, "Basic Type Buffer") == 0) {
       u16 size;
       bool isBasicType;
       bool isInteger;
       bool isSigned;
       bool isFloat;
       s32 numElements;
-      SerializedBuffer::DecodeBasicTypeBuffer(code, size, isBasicType, isInteger, isSigned, isFloat, numElements);
+      void * tmpDataSegment = reinterpret_cast<u8*>(dataSegment) + 2*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
+      SerializedBuffer::EncodedBasicTypeBuffer::Deserialize(false, size, isBasicType, isInteger, isSigned, isFloat, numElements, &tmpDataSegment, dataLength);
 
       // Hack to detect a benchmarking pair
       if(isFloat && size==4 && numElements==2) {
-        const f32 *times = reinterpret_cast<const f32*>(dataSegment);
-        for(s32 i=0; i<2; i++) {
-          benchmarkTimes[i] = times[i];
-        }
+        PUSH_MEMORY_STACK(scratch);
+        f32* tmpBuffer = SerializedBuffer::DeserializeRawBasicType<f32>(innerObjectName, &dataSegment, dataLength, scratch);
 
+        if(!tmpBuffer)
+          continue;
+
+        for(s32 i=0; i<2; i++) {
+          benchmarkTimes[i] = tmpBuffer[i];
+        }
         //printf("Times: %f %f\n", times[0], times[1]);
       } else {
-        printf("Basic type buffer segment (%d, %d, %d, %d, %d): ", size, isInteger, isSigned, isFloat, numElements);
-        for(s32 i=0; i<remainingDataLength; i++) {
-          printf("%x ", dataSegment[i]);
-        }
+        printf("Basic type buffer segment \"%s\" (%d, %d, %d, %d, %d)\n", objectName, size, isInteger, isSigned, isFloat, numElements);
+        /*for(s32 i=0; i<remainingDataLength; i++) {
+        printf("%x ", dataSegment[i]);
+        }*/
       }
-    } else if(type == SerializedBuffer::DATA_TYPE_ARRAY) {
-      SerializedBuffer::EncodedArray code;
-      for(s32 i=0; i<SerializedBuffer::EncodedArray::CODE_SIZE; i++) {
-        code.code[i] = reinterpret_cast<const u32*>(dataSegment)[i];
-      }
-      dataSegment += SerializedBuffer::EncodedArray::CODE_SIZE * sizeof(u32);
-      const s32 remainingDataLength = dataLength - SerializedBuffer::EncodedArray::CODE_SIZE * sizeof(u32);
-
+    } else if(strcmp(typeName, "Array") == 0) {
       s32 height;
       s32 width;
       s32 stride;
@@ -136,12 +127,17 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
       bool basicType_isInteger;
       bool basicType_isSigned;
       bool basicType_isFloat;
-      SerializedBuffer::DecodeArrayType(code, height, width, stride, flags, basicType_size, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat);
+      s32 basicType_numElements;
+      void * tmpDataSegment = reinterpret_cast<u8*>(dataSegment) + 2*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
+      SerializedBuffer::EncodedArray::Deserialize(false, height, width, stride, flags, basicType_size, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_numElements, &tmpDataSegment, dataLength);
 
       //template<typename Type> static Result DeserializeArray(const void * data, const s32 dataLength, Array<Type> &out, MemoryStack &memory);
       if(basicType_size==1 && basicType_isInteger==1 && basicType_isSigned==0 && basicType_isFloat==0) {
-        Array<u8> arr;
-        SerializedBuffer::DeserializeArray(dataSegmentStart, dataLength, arr, scratch);
+        Array<u8> arr = SerializedBuffer::DeserializeRawArray<u8>(NULL, &dataSegment, dataLength, scratch);
+
+        if(!arr.IsValid()) {
+          continue;
+        }
 
         const s32 arrHeight = arr.get_size(0);
         const s32 arrWidth = arr.get_size(1);
@@ -200,60 +196,70 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
 
         //cv::resize(toShowImage, toShowLarge, toShowLargeTmp.size(), 0, 0, cv::INTER_NEAREST);
       } else {
-        printf("Array: (%d, %d, %d, %d, %d, %d, %d, %d) ", height, width, stride, flags, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat);
+        printf("Array \"%s\": (%d, %d, %d, %d, %d, %d, %d, %d)\n", objectName, height, width, stride, flags, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat);
       }
-    } else if(type == SerializedBuffer::DATA_TYPE_STRING) {
+    } else if(strcmp(typeName, "String") == 0) {
       printf("Board>> %s", dataSegment);
-    } else if(type == SerializedBuffer::DATA_TYPE_CUSTOM) {
-      dataSegment[SerializedBuffer::CUSTOM_TYPE_STRING_LENGTH-1] = '\0';
-      const char * customTypeName = reinterpret_cast<const char*>(dataSegment);
-      //printf(customTypeName);
+    } else if(strcmp(typeName, "VisionMarker") == 0) {
+      VisionMarker marker;
 
-      dataSegment += SerializedBuffer::CUSTOM_TYPE_STRING_LENGTH;
-      s32 remainingDataLength = dataLength - SerializedBuffer::EncodedArray::CODE_SIZE * sizeof(u32);
+      marker.Deserialize(innerObjectName, reinterpret_cast<void**>(&dataSegment), dataLength);
 
-      if(strcmp(customTypeName, "VisionMarker") == 0) {
-        VisionMarker marker;
-        marker.Deserialize(reinterpret_cast<void**>(&dataSegment), remainingDataLength);
+      if(!marker.isValid)
+        continue;
 
-        if(!aMessageAlreadyPrinted) {
-          time_t rawtime;
-          time (&rawtime);
-          string timeString = string(ctime(&rawtime));
-          timeString[timeString.length()-6] = '\0';
-          printf("%s>> ", timeString.data());
-          aMessageAlreadyPrinted = true;
-        }
-
-        marker.Print();
-        printf("\n");
-        visionMarkerList.push_back(marker);
-        isTracking = false;
-      } else if(strcmp(reinterpret_cast<const char*>(customTypeName), "PlanarTransformation_f32") == 0) {
-        lastPlanarTransformation.Deserialize(reinterpret_cast<void**>(&dataSegment), remainingDataLength, scratch);
-        //lastPlanarTransformation.Print();
-        isTracking = true;
-      } else if(strcmp(reinterpret_cast<const char*>(customTypeName), "BinaryTracker") == 0) {
-        PUSH_MEMORY_STACK(scratch);
-        TemplateTracker::BinaryTracker bt;
-        bt.Deserialize(reinterpret_cast<void**>(&dataSegment), remainingDataLength, scratch);
-        bt.ShowTemplate("BinaryTracker Template", false, false);
-      } else if(strcmp(reinterpret_cast<const char*>(customTypeName), "EdgeLists") == 0) {
-        PUSH_MEMORY_STACK(scratch);
-        EdgeLists edges;
-        edges.Deserialize(reinterpret_cast<void**>(&dataSegment), remainingDataLength, scratch);
-
-        cv::Mat toShow = edges.DrawIndexes();
-
-        cv::Mat toShowLargeTmp(bigHeight, bigWidth, CV_8UC3);
-        cv::resize(toShow, toShowLargeTmp, toShowLargeTmp.size(), 0, 0, cv::INTER_NEAREST);
-        cv::imshow("Detected Binary Edges", toShowLargeTmp);
-
-        //cv::resize(toShow, toShowImage, toShowImage.size(), 0, 0, cv::INTER_NEAREST);
-        //cv::imshow("Detected Binary Edges", toShowImage);
+      if(!aMessageAlreadyPrinted) {
+        time_t rawtime;
+        time (&rawtime);
+        string timeString = string(ctime(&rawtime));
+        timeString[timeString.length()-6] = '\0';
+        printf("%s>> ", timeString.data());
+        aMessageAlreadyPrinted = true;
       }
+
+      marker.Print();
+      printf("\n");
+      visionMarkerList.push_back(marker);
+      isTracking = false;
+    } else if(strcmp(typeName, "PlanarTransformation_f32") == 0) {
+      lastPlanarTransformation.Deserialize(innerObjectName, reinterpret_cast<void**>(&dataSegment), dataLength, scratch);
+      //lastPlanarTransformation.Print();
+      isTracking = true;
+    } else if(strcmp(typeName, "BinaryTracker") == 0) {
+      PUSH_MEMORY_STACK(scratch);
+      TemplateTracker::BinaryTracker bt;
+      bt.Deserialize(innerObjectName, reinterpret_cast<void**>(&dataSegment), dataLength, scratch);
+
+      if(!bt.IsValid())
+        continue;
+
+      bt.ShowTemplate("BinaryTracker Template", false, false);
+    } else if(strcmp(typeName, "EdgeLists") == 0) {
+      PUSH_MEMORY_STACK(scratch);
+      EdgeLists edges;
+      edges.Deserialize(innerObjectName, reinterpret_cast<void**>(&dataSegment), dataLength, scratch);
+
+      cv::Mat toShow = edges.DrawIndexes();
+
+      if(toShow.cols == 0)
+        continue;
+
+      cv::Mat toShowLargeTmp(bigHeight, bigWidth, CV_8UC3);
+      cv::resize(toShow, toShowLargeTmp, toShowLargeTmp.size(), 0, 0, cv::INTER_NEAREST);
+      cv::imshow("Detected Binary Edges", toShowLargeTmp);
+
+      //cv::resize(toShow, toShowImage, toShowImage.size(), 0, 0, cv::INTER_NEAREST);
+      //cv::imshow("Detected Binary Edges", toShowImage);
     } else {
-      printf("Unknown Type %d\n", type);
+      char toPrint[32];
+
+      memcpy(toPrint, typeName, 31);
+      toPrint[31] = '\0';
+      printf("Unknown Type \"%s\"", toPrint);
+
+      memcpy(toPrint, objectName, 31);
+      toPrint[31] = '\0';
+      printf(" \"%s\"\n", toPrint);
     }
 
     //printf("\n");
@@ -354,7 +360,21 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
     } // if(isTracking) ... else
 
     cv::imshow("Robot Image", toShowImage);
-    cv::waitKey(10);
+    s32 pressedKey = cv::waitKey(10);
+    //printf("%d\n", pressedKey);
+    if(pressedKey == 99) { // c
+      const time_t t = time(0);   // get time now
+      const struct tm * currentTime = localtime(&t);
+      char outputFilename[1024];
+      snprintf(&outputFilename[0], 1024, outputFilenamePattern,
+        currentTime->tm_year+1900, currentTime->tm_mon+1, currentTime->tm_mday,
+        currentTime->tm_hour, currentTime->tm_min, currentTime->tm_sec,
+        0,
+        "png");
+
+      printf("Saving to %s\n", outputFilename);
+      cv::imwrite(outputFilename, lastImage);
+    }
   } else { // if(lastImage.rows > 0)
     cv::waitKey(1);
   }

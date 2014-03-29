@@ -361,13 +361,13 @@ namespace Anki
       return const_cast<MemoryStack&>(memory);
     }
 
-    MemoryStackRawConstIterator::MemoryStackRawConstIterator(const MemoryStack &memory)
+    MemoryStackReconstructingConstIterator::MemoryStackReconstructingConstIterator(const MemoryStack &memory)
       : memory(memory)
     {
       this->index = 0;
     }
 
-    bool MemoryStackRawConstIterator::HasNext() const
+    bool MemoryStackReconstructingConstIterator::HasNext() const
     {
       s32 startIndex;
       s32 endIndex;
@@ -376,7 +376,7 @@ namespace Anki
       return HasNext(startIndex, endIndex, reportedLength);
     }
 
-    bool MemoryStackRawConstIterator::HasNext(s32 &startIndex, s32 &endIndex, s32 &reportedLength) const
+    bool MemoryStackReconstructingConstIterator::HasNext(s32 &startIndex, s32 &endIndex, s32 &reportedLength) const
     {
       const u8 * curBufferPointer = reinterpret_cast<const u8*>(memory.get_buffer()) + this->index;
       const s32 curBufferLength = memory.get_usedBytes() - this->index;
@@ -409,7 +409,7 @@ namespace Anki
       return false;
     }
 
-    const void * MemoryStackRawConstIterator::GetNext(s32 &trueSegmentLength, s32 &reportedSegmentLength)
+    const void * MemoryStackReconstructingConstIterator::GetNext(s32 &trueSegmentLength, s32 &reportedSegmentLength)
     {
       s32 startIndex;
       s32 endIndex;
@@ -430,26 +430,26 @@ namespace Anki
       return segmentToReturn;
     }
 
-    const MemoryStack& MemoryStackRawConstIterator::get_memory() const
+    const MemoryStack& MemoryStackReconstructingConstIterator::get_memory() const
     {
       return memory;
     }
 
-    MemoryStackRawIterator::MemoryStackRawIterator(MemoryStack &memory)
-      : MemoryStackRawConstIterator(memory)
+    MemoryStackReconstructingIterator::MemoryStackReconstructingIterator(MemoryStack &memory)
+      : MemoryStackReconstructingConstIterator(memory)
     {
     }
 
-    void * MemoryStackRawIterator::GetNext(s32 &trueSegmentLength, s32 &reportedSegmentLength)
+    void * MemoryStackReconstructingIterator::GetNext(s32 &trueSegmentLength, s32 &reportedSegmentLength)
     {
       // To avoid code duplication, we'll use the const version of GetNext(), though our MemoryStack is not const
 
-      const void * segment = MemoryStackRawConstIterator::GetNext(trueSegmentLength, reportedSegmentLength);
+      const void * segment = MemoryStackReconstructingConstIterator::GetNext(trueSegmentLength, reportedSegmentLength);
 
       return const_cast<void*>(segment);
     }
 
-    MemoryStack& MemoryStackRawIterator::get_memory()
+    MemoryStack& MemoryStackReconstructingIterator::get_memory()
     {
       return const_cast<MemoryStack&>(memory);
     }

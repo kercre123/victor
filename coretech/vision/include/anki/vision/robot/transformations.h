@@ -100,9 +100,9 @@ namespace Anki
         // Set this object's transformType, centerOffset, initialCorners, and homography
         Result Set(const PlanarTransformation_f32 &newTransformation);
 
-        Result Serialize(SerializedBuffer &buffer) const;
-        Result SerializeRaw(void ** buffer, s32 &bufferLength) const; // Updates the buffer pointer and length before returning
-        Result Deserialize(void** buffer, s32 &bufferLength, MemoryStack &memory); // Updates the buffer pointer and length before returning
+        Result Serialize(const char *objectName, SerializedBuffer &buffer) const;
+        Result SerializeRaw(const char *objectName, void ** buffer, s32 &bufferLength) const; // Updates the buffer pointer and length before returning
+        Result Deserialize(char *objectName, void** buffer, s32 &bufferLength, MemoryStack &memory); // Updates the buffer pointer and length before returning
 
         Result set_transformType(const TransformType transformType);
         TransformType get_transformType() const;
@@ -119,7 +119,7 @@ namespace Anki
         // Transform this object's initialCorners, based on its current homography
         Quadrilateral<f32> get_transformedCorners(MemoryStack scratch) const;
 
-        s32 get_SerializationSize() const;
+        static s32 get_serializationSize();
 
       protected:
 

@@ -188,167 +188,77 @@ GTEST_TEST(CoreTech_Common, SerializedBuffer)
   MemoryStack ms(offchipBuffer, 5000);
   ASSERT_TRUE(ms.IsValid());
 
-  void * segment1 = ms.Allocate(segment1Length);
-  void * segment2 = ms.Allocate(segment2Length);
-  void * segment3 = ms.Allocate(segment3Length);
+  u8 * segment1 = reinterpret_cast<u8*>( ms.Allocate(segment1Length) );
+  u8 * segment2 = reinterpret_cast<u8*>( ms.Allocate(segment2Length) );
+  u8 * segment3 = reinterpret_cast<u8*>( ms.Allocate(segment3Length) );
 
   ASSERT_TRUE(segment1 != NULL);
   ASSERT_TRUE(segment2 != NULL);
   ASSERT_TRUE(segment3 != NULL);
 
   for(s32 i=0; i<segment1Length; i++) {
-    reinterpret_cast<u8*>(segment1)[i] = i + 1;
+    segment1[i] = i + 1;
   }
 
   for(s32 i=0; i<segment2Length; i++) {
-    reinterpret_cast<u8*>(segment2)[i] = 2*i + 1;
+    segment2[i] = 2*i + 1;
   }
 
   for(s32 i=0; i<segment3Length; i++) {
-    reinterpret_cast<u8*>(segment3)[i] = 3*i + 1;
+    segment3[i] = 3*i + 1;
   }
 
   ASSERT_TRUE(offchipBuffer != NULL);
   SerializedBuffer serialized(offchipBuffer+5000, 6000);
   ASSERT_TRUE(serialized.IsValid());
 
-  void * segment1b = serialized.PushBack(segment1, segment1Length);
-  void * segment2b = serialized.PushBack(segment2, segment2Length);
-  void * segment3b = serialized.PushBack(segment3, segment3Length);
+  void * segment1b = serialized.PushBack("segment1", segment1, segment1Length);
+  void * segment2b = serialized.PushBack("segment2", segment2, segment2Length);
+  void * segment3b = serialized.PushBack("segment3", segment3, segment3Length);
 
   ASSERT_TRUE(segment1b != NULL);
   ASSERT_TRUE(segment2b != NULL);
   ASSERT_TRUE(segment3b != NULL);
 
-  // Test with uncorrupted data
+  SerializedBufferConstIterator iterator(serialized);
+
   {
-    SerializedBufferConstIterator iterator(serialized);
-
-    {
-      s32 segment1LengthB = -1;
-      SerializedBuffer::DataType segment1Type;
-      ASSERT_TRUE(iterator.HasNext());
-      const void * segment1c = iterator.GetNext(segment1LengthB, segment1Type);
-      ASSERT_TRUE(segment1LengthB == segment1Length);
-      ASSERT_TRUE(reinterpret_cast<size_t>(segment1b) == reinterpret_cast<size_t>(segment1c)-SerializedBuffer::SERIALIZED_SEGMENT_HEADER_LENGTH);
-      ASSERT_TRUE(segment1Type == SerializedBuffer::DATA_TYPE_RAW);
-    }
-
-    {
-      s32 segment2LengthB = -1;
-      SerializedBuffer::DataType segment2Type;
-      ASSERT_TRUE(iterator.HasNext());
-      const void * segment2c = iterator.GetNext(segment2LengthB, segment2Type);
-      ASSERT_TRUE(segment2LengthB == segment2Length);
-      ASSERT_TRUE(reinterpret_cast<size_t>(segment2b) == reinterpret_cast<size_t>(segment2c)-SerializedBuffer::SERIALIZED_SEGMENT_HEADER_LENGTH);
-      ASSERT_TRUE(segment2Type == SerializedBuffer::DATA_TYPE_RAW);
-    }
-
-    {
-      s32 segment3LengthB = -1;
-      SerializedBuffer::DataType segment3Type;
-      ASSERT_TRUE(iterator.HasNext());
-      const void * segment3c = iterator.GetNext(segment3LengthB, segment3Type);
-      ASSERT_TRUE(segment3LengthB == segment3Length);
-      ASSERT_TRUE(reinterpret_cast<size_t>(segment3b) == reinterpret_cast<size_t>(segment3c)-SerializedBuffer::SERIALIZED_SEGMENT_HEADER_LENGTH);
-      ASSERT_TRUE(segment3Type == SerializedBuffer::DATA_TYPE_RAW);
-    }
-
-    ASSERT_FALSE(iterator.HasNext());
+    s32 segment1LengthB = -1;
+    const char * typeName = NULL;
+    const char * objectName = NULL;
+    ASSERT_TRUE(iterator.HasNext());
+    const void * segment1c = iterator.GetNext(&typeName, &objectName, segment1LengthB, true);
+    ASSERT_TRUE(segment1LengthB == 48);
+    ASSERT_TRUE(reinterpret_cast<size_t>(segment1b) == reinterpret_cast<size_t>(segment1c));
+    ASSERT_TRUE(strcmp(typeName, "Basic Type Buffer") == 0);
+    ASSERT_TRUE(strcmp(objectName, "segment1") == 0);
   }
 
-  // Corrupt piece 1
   {
-    SerializedBufferConstIterator iterator(serialized);
-
-    char * buffer = reinterpret_cast<char*>(serialized.get_memoryStack().get_buffer());
-
-    buffer[16]++;
-
-    {
-      s32 segment1LengthB = -1;
-      SerializedBuffer::DataType segment1Type;
-      ASSERT_TRUE(iterator.HasNext());
-      const void * segment1c = iterator.GetNext(segment1LengthB, segment1Type);
-      ASSERT_TRUE(segment1c == NULL);
-    }
-
-    buffer[16]--;
+    s32 segment2LengthB = -1;
+    const char * typeName = NULL;
+    const char * objectName = NULL;
+    ASSERT_TRUE(iterator.HasNext());
+    const void * segment2c = iterator.GetNext(&typeName, &objectName, segment2LengthB, true);
+    ASSERT_TRUE(segment2LengthB == 80);
+    ASSERT_TRUE(reinterpret_cast<size_t>(segment2b) == reinterpret_cast<size_t>(segment2c));
+    ASSERT_TRUE(strcmp(typeName, "Basic Type Buffer") == 0);
+    ASSERT_TRUE(strcmp(objectName, "segment2") == 0);
   }
 
-  // Corrupt piece 2
   {
-    SerializedBufferConstIterator iterator(serialized);
-
-    //s32 segment1LengthB = -1;
-    //s32 segment2LengthB = -1;
-    //s32 segment3LengthB = -1;
-
-    char * buffer = reinterpret_cast<char*>(serialized.get_memoryStack().get_buffer());
-
-    buffer[80]++;
-
-    {
-      s32 segment1LengthB = -1;
-      SerializedBuffer::DataType segment1Type;
-      ASSERT_TRUE(iterator.HasNext());
-      const void * segment1c = iterator.GetNext(segment1LengthB, segment1Type);
-      ASSERT_TRUE(segment1LengthB == segment1Length);
-      ASSERT_TRUE(reinterpret_cast<size_t>(segment1b) == reinterpret_cast<size_t>(segment1c)-SerializedBuffer::SERIALIZED_SEGMENT_HEADER_LENGTH);
-      ASSERT_TRUE(segment1Type == SerializedBuffer::DATA_TYPE_RAW);
-    }
-
-    {
-      s32 segment2LengthB = -1;
-      SerializedBuffer::DataType segment2Type;
-      ASSERT_TRUE(iterator.HasNext());
-      const void * segment2c = iterator.GetNext(segment2LengthB, segment2Type);
-      ASSERT_TRUE(segment2c == NULL);
-    }
-
-    buffer[80]--;
+    s32 segment3LengthB = -1;
+    const char * typeName = NULL;
+    const char * objectName = NULL;
+    ASSERT_TRUE(iterator.HasNext());
+    const void * segment3c = iterator.GetNext(&typeName, &objectName, segment3LengthB, true);
+    ASSERT_TRUE(segment3LengthB == 144);
+    ASSERT_TRUE(reinterpret_cast<size_t>(segment3b) == reinterpret_cast<size_t>(segment3c));
+    ASSERT_TRUE(strcmp(typeName, "Basic Type Buffer") == 0);
+    ASSERT_TRUE(strcmp(objectName, "segment3") == 0);
   }
 
-  // Corrupt piece 3
-  {
-    SerializedBufferConstIterator iterator(serialized);
-
-    char * buffer = reinterpret_cast<char*>(serialized.get_memoryStack().get_buffer());
-
-    buffer[200]++;
-
-    {
-      s32 segment1LengthB = -1;
-      SerializedBuffer::DataType segment1Type;
-      ASSERT_TRUE(iterator.HasNext());
-      const void * segment1c = iterator.GetNext(segment1LengthB, segment1Type);
-      ASSERT_TRUE(segment1LengthB == segment1Length);
-      ASSERT_TRUE(reinterpret_cast<size_t>(segment1b) == reinterpret_cast<size_t>(segment1c)-SerializedBuffer::SERIALIZED_SEGMENT_HEADER_LENGTH);
-      ASSERT_TRUE(segment1Type == SerializedBuffer::DATA_TYPE_RAW);
-    }
-
-    {
-      s32 segment2LengthB = -1;
-      SerializedBuffer::DataType segment2Type;
-      ASSERT_TRUE(iterator.HasNext());
-      const void * segment2c = iterator.GetNext(segment2LengthB, segment2Type);
-      ASSERT_TRUE(segment2LengthB == segment2Length);
-      ASSERT_TRUE(reinterpret_cast<size_t>(segment2b) == reinterpret_cast<size_t>(segment2c)-SerializedBuffer::SERIALIZED_SEGMENT_HEADER_LENGTH);
-      ASSERT_TRUE(segment2Type == SerializedBuffer::DATA_TYPE_RAW);
-    }
-
-    {
-      s32 segment3LengthB = -1;
-      SerializedBuffer::DataType segment3Type;
-      ASSERT_TRUE(iterator.HasNext());
-      const void * segment3c = iterator.GetNext(segment3LengthB, segment3Type);
-      ASSERT_TRUE(segment3c == NULL);
-    }
-
-    ASSERT_FALSE(iterator.HasNext());
-
-    buffer[200]--;
-  }
+  ASSERT_FALSE(iterator.HasNext());
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Common, SerializedBuffer)
