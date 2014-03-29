@@ -3,12 +3,47 @@
 #define ANKI_VISIONPARAMETERS_H
 
 #include "anki/common/types.h"
+
+#include "anki/vision/robot/binaryTracker.h"
+#include "anki/vision/robot/lucasKanade.h"
+
 #include "anki/cozmo/robot/hal.h"
-#include "anki/cozmo/robot/visionSystem.h"
 
 namespace Anki {
   namespace Cozmo {
     namespace VisionSystem {
+
+      //
+      // Preprocessor directives
+      //
+      
+      // Available trackers for docking:
+#define DOCKING_LUCAS_KANADE_SLOW               1 //< LucasKanadeTracker_Slow (doesn't seem to work?)
+#define DOCKING_LUCAS_KANADE_AFFINE             2 //< LucasKanadeTracker_Affine (With Translation + Affine option)
+#define DOCKING_LUCAS_KANADE_PROJECTIVE         3 //< LucasKanadeTracker_Projective (With Projective + Affine option)
+#define DOCKING_LUCAS_KANADE_SAMPLED_PROJECTIVE 4 //<
+#define DOCKING_BINARY_TRACKER                  5 //< BinaryTracker
+#define DOCKING_LUCAS_KANADE_PLANAR6DOF         6 //< Currently only implemented in Matlab (USE_MATLAB_TRACKER = 1)
+      
+      // Set the docker here:
+#define DOCKING_ALGORITHM DOCKING_LUCAS_KANADE_PLANAR6DOF
+      
+      // Set to 1 to use the top (or bottom) bar of the tracked marker to approximate
+      // the pose of the block relative to the camera for docking.
+      // NOTE: This will be forced to 1 if an affine tracker is selected.
+#define USE_APPROXIMATE_DOCKING_ERROR_SIGNAL 1
+      
+#define USE_MATLAB_TRACKER  1
+#define USE_MATLAB_DETECTOR 0
+
+#ifdef THIS_IS_PETES_BOARD
+      #define SEND_DEBUG_STREAM 1
+      #define RUN_SIMPLE_TRACKING_TEST
+      //#define SEND_IMAGE_ONLY
+      //#define SEND_BINARY_IMAGE_ONLY
+#else
+      #define SEND_DEBUG_STREAM 0
+#endif
       
      
       //
@@ -104,6 +139,31 @@ namespace Anki {
         ReturnCode Initialize();
         
       }; // struct SimulatorParameters
+      
+      
+      //
+      // Tracker Typedef
+      //
+      // Define the tracker type depending on DOCKING_ALGORITHM:
+#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SLOW
+      typedef Embedded::TemplateTracker::LucasKanadeTracker_Slow Tracker;
+#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_AFFINE
+      typedef Embedded::TemplateTracker::LucasKanadeTracker_Affine Tracker;
+#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE
+      typedef Embedded::TemplateTracker::LucasKanadeTracker_Projective Tracker;
+#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PROJECTIVE
+      typedef Embedded::TemplateTracker::LucasKanadeTracker_SampledProjective Tracker;
+#elif DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
+      typedef Embedded::TemplateTracker::BinaryTracker Tracker;
+#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PLANAR6DOF
+#if !USE_MATLAB_TRACKER
+#error Planar 6DoF tracker is currently only available using Matlab.
+#endif
+      typedef Embedded::TemplateTracker::LucasKanadeTracker_Projective Tracker; // just to keep compilation happening
+#else
+#error Unknown DOCKING_ALGORITHM
+#endif
+      
       
     } // namespace VisionSystem
   } // namespace Cozmo

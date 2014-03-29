@@ -2,6 +2,7 @@
 
 #include "anki/common/robot/utilities.h"
 
+#include "anki/cozmo/robot/visionSystem.h"
 
 #if 0
 #pragma mark --- DetectFiducialMarkersParameters ---

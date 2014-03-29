@@ -58,6 +58,8 @@ set(HEADER_FILES
  ${ROBOT_SRC_DIR}/testModeController.h
  ${ROBOT_SRC_DIR}/matlabVisionProcessor.h
  ${ROBOT_SRC_DIR}/matlabVisualization.h
+ ${ROBOT_SRC_DIR}/visionParameters.h
+ ${ROBOT_SRC_DIR}/visionDebugStream.h
 
 	${SIMULATOR_SRC_DIR}/keyboardController.h
   ${SIMULATOR_SRC_DIR}/sim_viz.h
