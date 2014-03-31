@@ -37,7 +37,7 @@ namespace Anki {
 #define DOCKING_LUCAS_KANADE_PLANAR6DOF         6 //< Currently only implemented in Matlab (USE_MATLAB_TRACKER = 1)
       
       // Set the docker here:
-#define DOCKING_ALGORITHM DOCKING_LUCAS_KANADE_PROJECTIVE
+#define DOCKING_ALGORITHM DOCKING_BINARY_TRACKER
       
       // Set to 1 to use the top (or bottom) bar of the tracked marker to approximate
       // the pose of the block relative to the camera for docking.

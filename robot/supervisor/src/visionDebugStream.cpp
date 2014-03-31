@@ -224,7 +224,7 @@ namespace Anki {
 #else
           Array<u8> imageSmall(height, width, offchipScratch);
           DownsampleHelper(image, imageSmall, ccmScratch);
-          debugStreamBuffer_.PushBack(imageSmall);
+          debugStreamBuffer_.PushBack("Robot Image", imageSmall);
 #endif
           
           result = SendBuffer(debugStreamBuffer_);
@@ -277,7 +277,7 @@ namespace Anki {
         ReturnCode SendBinaryImage(const Array<u8> &grayscaleImage, const Tracker &tracker, const TrackerParameters &parameters, MemoryStack ccmScratch, MemoryStack onchipScratch, MemoryStack offchipScratch)
         {
           ReturnCode result = EXIT_SUCCESS;
-#if SEND_DEBUG_STREAM
+#if SEND_DEBUG_STREAM && DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
           DebugStream::debugStreamBuffer_ = SerializedBuffer(&DebugStream::debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
           
           EdgeLists edgeLists;

@@ -31,11 +31,13 @@ namespace Anki {
   namespace Cozmo {
     
     namespace MatlabVisualization {
-      
-      static Matlab matlabViz_;
+
+#if USE_MATLAB_VISUALIZATION      
+      static Matlab matlabViz_;     
       static bool beforeCalled_;
       static const bool SHOW_TRACKER_PREDICTION = true;
       static const bool saveTrackingResults_ = false;
+#endif      
       
       ReturnCode Initialize()
       {
@@ -216,15 +218,21 @@ namespace Anki {
                            const bool converged,
                            MemoryStack scratch)
       {
+#if USE_MATLAB_VISUALIZATION        
         return SendTrack(image, tracker.get_transformation().get_transformedCorners(scratch), converged);
+#else
+        return EXIT_SUCCESS;
+#endif        
       }
       
       void SendTrackerPrediction_Helper(s32 subplotNum, const char *titleStr)
       {
+#if USE_MATLAB_VISUALIZATION        
         matlabViz_.EvalStringEcho("h = subplot(1,2,%d, 'Parent', h_fig_tform), "
                                   "hold(h, 'off'), imagesc(img, 'Parent', h), axis(h, 'image'), hold(h, 'on'), "
                                   "plot(quad([1 2 4 3 1],1), quad([1 2 4 3 1],2), 'r', 'LineWidth', 2, 'Parent', h); "
                                   "title(h, '%s');", subplotNum, titleStr);
+#endif        
       }
       
       ReturnCode SendTrackerPrediction_Before(const Array<u8>& image,
