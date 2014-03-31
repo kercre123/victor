@@ -24,6 +24,12 @@ namespace Anki {
       NumCorners  = 4
     };
     
+    // prefix operator (++cname)
+    CornerName& operator++(CornerName& cname);
+
+    // postfix operator (cname++)
+    CornerName operator++(CornerName& cname, int);   
+    
   } // namespace Quad
   
   template<size_t N, typename T>
