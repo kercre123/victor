@@ -43,6 +43,7 @@ namespace Anki
         MemoryStack &memory)
         : LucasKanadeTracker_Fast(Transformations::TRANSFORM_AFFINE, templateImage, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, transformType, memory)
       {
+        this->isValid = true;
       }
 
       Result LucasKanadeTracker_Affine::UpdateTrack(

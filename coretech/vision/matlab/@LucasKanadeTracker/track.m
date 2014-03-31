@@ -1,4 +1,4 @@
-function converged = track(this, nextImg, varargin)
+function [converged, reason] = track(this, nextImg, varargin)
 % Update the tracker position using the next image.
 
 MaxIterations = 25;
@@ -6,6 +6,8 @@ ConvergenceTolerance = 1e-3;
 ErrorTolerance = [];
 
 parseVarargin(varargin{:});
+
+reason = '';
 
 this.maxIterations = MaxIterations;
 this.convergenceTolerance = ConvergenceTolerance;
@@ -39,12 +41,16 @@ for i_scale = this.numScales:-1:this.finestScale
     %imgBlur = separable_filter(imgBlur, gaussian_kernel(spacing/3));
     %imgBlur = mexGaussianBlur(nextImg, spacing/3, 2);
     
-    % Translation only
-    converged = this.trackHelper(imgBlur{i_scale}, i_scale, false);
-    
-    if converged && ~strcmp(this.tformType, 'translation')
-        % Affine OR Translation + Scale
-        converged = this.trackHelper(imgBlur{i_scale}, i_scale, true);
+    if strcmp(this.tformType, 'planar6dof')
+        [converged, numIterations] = this.trackHelper(imgBlur{i_scale}, i_scale, true);
+    else
+        % First do translation only
+        [converged, numIterations] = this.trackHelper(imgBlur{i_scale}, i_scale, false);
+        
+        if converged && ~strcmp(this.tformType, 'translation')
+            % Non-translation-only trackers
+            [converged, numIterations] = this.trackHelper(imgBlur{i_scale}, i_scale, true);
+        end
     end
     
 end % FOR each scale
@@ -62,10 +68,18 @@ It = this.target{this.finestScale}(:) - imgi;
 
 this.err = mean(abs(It(inBounds)));
 
-if isnan(this.err) || (~isempty(this.errorTolerance) && this.err > this.errorTolerance)
+if ~converged
+    reason = 'Tracker failed to converge due to parameter/quad change.';
+elseif isnan(this.err) || (~isempty(this.errorTolerance) && this.err > this.errorTolerance)
+    reason = 'Tracker failed to converge due to intensity error.';
     converged = false;
+else
+    reason = sprintf('Tracker converged in %d iterations.', numIterations);
 end
 
+% if converged && strcmp(this.tformType, 'planar6dof')
+%     this.plotPose();    
+% end
 
 if this.debugDisplay
     hold(this.h_axes, 'off')

@@ -104,11 +104,13 @@ namespace Anki
         Result IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const Transformations::TransformType curTransformType, const bool useWeights, bool &converged, MemoryStack scratch);
       }; // class LucasKanadeTracker_Slow
 
-      class LucasKanadeTracker_Fast
+      // LucasKanadeTracker_Generic handles the transformation-only parts of an LK tracker
+      class LucasKanadeTracker_Generic
       {
       public:
-        LucasKanadeTracker_Fast(const Transformations::TransformType maxSupportedTransformType);
-        LucasKanadeTracker_Fast(
+        LucasKanadeTracker_Generic(const Transformations::TransformType maxSupportedTransformType);
+
+        LucasKanadeTracker_Generic(
           const Transformations::TransformType maxSupportedTransformType,
           const Array<u8> &templateImage,
           const Quadrilateral<f32> &templateQuad,
@@ -125,19 +127,14 @@ namespace Anki
         // TRANSFORM_PROJECTIVE: [h00, h01, h02, h10, h11, h12, h20, h21]
         Result UpdateTransformation(const Array<f32> &update, const f32 scale, MemoryStack scratch, Transformations::TransformType updateType=Transformations::TRANSFORM_UNKNOWN);
 
+        s32 get_numPyramidLevels() const;
+
         Result set_transformation(const Transformations::PlanarTransformation_f32 &transformation);
 
         Transformations::PlanarTransformation_f32 get_transformation() const;
 
-        s32 get_numTemplatePixels() const;
-
       protected:
         Transformations::TransformType maxSupportedTransformType;
-
-        FixedLengthList<Meshgrid<f32> > templateCoordinates;
-        FixedLengthList<Array<u8> > templateImagePyramid;
-        FixedLengthList<Array<s16> > templateImageXGradientPyramid;
-        FixedLengthList<Array<s16> > templateImageYGradientPyramid;
 
         s32 numPyramidLevels;
 
@@ -156,6 +153,36 @@ namespace Anki
         // by templateImage.get_size(1) / BASE_IMAGE_WIDTH
         Rectangle<f32> templateRegion;
 
+        f32 initialImageScaleF32;
+
+        bool isValid;
+      }; // class LucasKanadeTracker_Generic
+
+      // LucasKanadeTracker_Fast handles the basic memory of the Fast Affine and Projective trackers (but not the sampled)
+      class LucasKanadeTracker_Fast : public LucasKanadeTracker_Generic
+      {
+      public:
+        LucasKanadeTracker_Fast(const Transformations::TransformType maxSupportedTransformType);
+
+        LucasKanadeTracker_Fast(
+          const Transformations::TransformType maxSupportedTransformType,
+          const Array<u8> &templateImage,
+          const Quadrilateral<f32> &templateQuad,
+          const f32 scaleTemplateRegionPercent, //< Shrinks the region if less-than 1.0, expands the region if greater-than 1.0
+          const s32 numPyramidLevels,
+          const Transformations::TransformType transformType,
+          MemoryStack &memory);
+
+        bool IsValid() const;
+
+        s32 get_numTemplatePixels() const;
+
+      protected:
+        FixedLengthList<Meshgrid<f32> > templateCoordinates;
+        FixedLengthList<Array<u8> > templateImagePyramid;
+        FixedLengthList<Array<s16> > templateImageXGradientPyramid;
+        FixedLengthList<Array<s16> > templateImageYGradientPyramid;
+
         Result VerifyTrack_Projective(
           const Array<u8> &nextImage,
           const u8 verify_maxPixelDifference,
@@ -163,10 +190,6 @@ namespace Anki
           s32 &verify_numInBounds,
           s32 &verify_numSimilarPixels,
           MemoryStack scratch) const;
-
-        bool isValid;
-
-        //Result Initialize(const Transformations::TransformType maxSupportedTransformType, const Array<u8> &templateImage, const Quadrilateral<f32> &templateQuad, const s32 numPyramidLevels, const Transformations::TransformType transformType, MemoryStack &memory);
       }; // class LucasKanadeTracker_Fast
 
       class LucasKanadeTracker_Affine : public LucasKanadeTracker_Fast
@@ -176,6 +199,7 @@ namespace Anki
 
       public:
         LucasKanadeTracker_Affine();
+
         LucasKanadeTracker_Affine(
           const Array<u8> &templateImage,
           const Quadrilateral<f32> &templateQuad,
@@ -209,6 +233,7 @@ namespace Anki
 
       public:
         LucasKanadeTracker_Projective();
+
         LucasKanadeTracker_Projective(
           const Array<u8> &templateImage,
           const Quadrilateral<f32> &templateQuad,
@@ -235,6 +260,72 @@ namespace Anki
         Result IterativelyRefineTrack_Affine(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack scratch);
         Result IterativelyRefineTrack_Projective(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack scratch);
       }; // class LucasKanadeTracker_Projective
+
+      class LucasKanadeTracker_SampledProjective : public LucasKanadeTracker_Generic
+      {
+        // A Projective-plus-translation LucasKanadeTracker. Unlike the general LucasKanadeTracker,
+        // this version uses much less memory, and could be better optimized.
+
+      public:
+        LucasKanadeTracker_SampledProjective();
+
+        LucasKanadeTracker_SampledProjective(
+          const Array<u8> &templateImage,
+          const Quadrilateral<f32> &templateQuad,
+          const f32 scaleTemplateRegionPercent, //< Shrinks the region if less-than 1.0, expands the region if greater-than 1.0
+          const s32 numPyramidLevels,
+          const Transformations::TransformType transformType,
+          const s32 maxSamplesAtBaseLevel,
+          MemoryStack ccmMemory,
+          MemoryStack &onchipScratch,
+          MemoryStack offchipScratch);
+
+        Result UpdateTrack(
+          const Array<u8> &nextImage,
+          const s32 maxIterations,
+          const f32 convergenceTolerance,
+          const u8 verify_maxPixelDifference,
+          bool& verify_converged,
+          s32 &verify_meanAbsoluteDifference, //< For all pixels in the template, compute the mean difference between the template and the final warped template
+          s32 &verify_numInBounds, //< How many template pixels are in the image, after the template is warped?
+          s32 &verify_numSimilarPixels, //< For all pixels in the template, how many are within verifyMaxPixelDifference grayvalues? Use in conjunction with get_numTemplatePixels() or numInBounds for a percentage.
+          MemoryStack scratch);
+
+        bool IsValid() const;
+
+        Result ShowTemplate(const char * windowName="SampledProjective Template", const bool waitForKeypress=false, const bool fitImageToWindow=false) const;
+
+        s32 get_numTemplatePixels(const s32 whichScale) const;
+
+      protected:
+        // TODO: verify that there's no alignment padding
+        typedef struct TemplateSample
+        {
+          f32 xCoordinate;
+          f32 yCoordinate;
+          f32 xGradient;
+          f32 yGradient;
+          f32 grayvalue;
+        } TemplateSample;
+
+        FixedLengthList<FixedLengthList<TemplateSample> > templateSamplePyramid;
+
+        Result VerifyTrack_Projective(
+          const Array<u8> &nextImage,
+          const u8 verify_maxPixelDifference,
+          s32 &verify_meanAbsoluteDifference,
+          s32 &verify_numInBounds,
+          s32 &verify_numSimilarPixels,
+          MemoryStack scratch) const;
+
+        Result IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const Transformations::TransformType curTransformType, bool &converged, MemoryStack scratch);
+
+        Result IterativelyRefineTrack_Translation(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack scratch);
+        Result IterativelyRefineTrack_Affine(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack scratch);
+        Result IterativelyRefineTrack_Projective(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack scratch);
+
+        static Result ApproximateSelect(const Array<f32> &magnitudeVector, const s32 numBins, const s32 numToSelect, s32 &numSelected, Array<u16> &magnitudeIndexes);
+      }; // class LucasKanadeTracker_SampledProjective
     } // namespace TemplateTracker
   } // namespace Embedded
 } //namespace Anki

@@ -37,6 +37,7 @@ DWORD WINAPI DisplayBuffersThread(LPVOID lpParam)
   while(true) {
     while(messageQueue->IsEmpty()) {
       Sleep(1);
+      cv::waitKey(1);
     }
 
     DisplayRawBuffer nextMessage = messageQueue->Pop();

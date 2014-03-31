@@ -12,20 +12,29 @@ if nargin==2
     
     x = this.xgrid{i_scale};
     y = this.ygrid{i_scale};
+
+elseif nargin == 3
+    
+    if strcmp(this.tformType, 'planar6dof')
+        x = varargin{1};
+        y = varargin{2};
+    else
+        x = varargin{1} - this.xcen;
+        y = varargin{2} - this.ycen;
+    end
+    
 else
-    assert(nargin==3, 'Expecting i_scale or (x,y).');
-    x = varargin{1} - this.xcen;
-    y = varargin{2} - this.ycen;
+    error('Expecting i_scale or (x,y).');
 end
 
 xi = this.tform(1,1)*x + this.tform(1,2)*y + this.tform(1,3);
 
 yi = this.tform(2,1)*x + this.tform(2,2)*y + this.tform(2,3);
 
-if strcmp(this.tformType, 'homography')
+if any(strcmp(this.tformType, {'homography', 'planar6dof'}))
     zi = this.tform(3,1)*x + this.tform(3,2)*y + this.tform(3,3);
     xi = xi ./ zi;
-    yi = yi ./ zi;
+    yi = yi ./ zi;    
 end
 
 xi = xi + this.xcen;

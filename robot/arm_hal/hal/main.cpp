@@ -4,7 +4,11 @@
 #include "hal/portable.h"
 #include "spiData.h"
 
-//OFFCHIP u8 buffer[320*240];
+//#define SEND_IMAGE_ONLY
+
+#ifdef SEND_IMAGE_ONLY
+OFFCHIP u8 buffer[320*240 + 5]; // +5 for beeffoodfd
+#endif
 
 namespace Anki
 {
@@ -35,6 +39,8 @@ namespace Anki
       ReturnCode Init(){ return 0; }
       ReturnCode Step(){ return 0; }
       void Destroy(){ }
+      
+      int UARTGetFreeSpace();
       
       //const CameraInfo* GetHeadCamInfo(){ return 0; }
       
@@ -97,7 +103,7 @@ int main(void)
     Wait();
     MotorSetPower(MOTOR_LIFT, 0.0f);
     
-    /*MotorSetPower(MOTOR_HEAD, 0.3f);
+    MotorSetPower(MOTOR_HEAD, 0.3f);
     Wait();
     MotorSetPower(MOTOR_HEAD, -0.3f);
     Wait();
@@ -110,30 +116,46 @@ int main(void)
   
   Anki::Cozmo::Robot::Init();
   
+#ifndef SEND_IMAGE_ONLY
   while (Anki::Cozmo::Robot::step_LongExecution() == EXIT_SUCCESS)
   {
-    
-    /*CameraGetFrame(buffer, CAMERA_MODE_QQQVGA, 0.25f, false);
-    
-    UARTPutChar(0xbe);
-    UARTPutChar(0xef);
-    UARTPutChar(0xf0);
-    UARTPutChar(0xff);
-    UARTPutChar(0xbd);
-    
-    // Revert to the old method if the  buffer is full
-    if (!UARTPutBuffer(buffer, 320/4 * 240/4))
-    {
-      for (int y = 0; y < 240/4; y++)
-      {
-        for (int x = 0; x < 320/4; x++)
-        {
-          UARTPutChar(buffer[y * 320/4 + x]);
-        }
-      }
-    }*/
-    
   }
+#else
+  while(true)
+  {
+    buffer[0] = 0xbe;
+    buffer[1] = 0xef;
+    buffer[2] = 0xf0;
+    buffer[3] = 0xff;
+    buffer[4] = 0xbd;
+    
+    CameraGetFrame(&buffer[5], CAMERA_MODE_QVGA, 0.25f, false);
+    
+    UARTPutChar(buffer[0]);
+    UARTPutChar(buffer[1]);
+    UARTPutChar(buffer[2]);
+    UARTPutChar(buffer[3]);
+    UARTPutChar(buffer[4]);
+    
+    for (int y = 0; y < 240; y++)
+    {
+      for (int x = 0; x < 320; x++)
+      {
+        buffer[y*320 + x + 5] = (buffer[y*320 + x + 5] * ((x & 255) ^ y)) >> 8;
+        UARTPutChar((x & 255) ^ y);
+      }
+    }
+    
+    //MicroWait(2000000);
+    
+    
+    // 
+    /*if (!UARTPutBuffer(buffer, 320 * 240 + 5))
+    {
+    }*/
+  }
+#endif // #ifdef SEND_IMAGE_ONLY
+  
 #endif
 }
 

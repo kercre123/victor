@@ -33,10 +33,10 @@ namespace Anki
       s32 imageHeight;
       s32 imageWidth;
 
-      Result Serialize(SerializedBuffer &buffer) const;
-      Result Deserialize(void** buffer, s32 &bufferLength, MemoryStack &memory); // Updates the buffer pointer and length before returning
+      Result Serialize(const char *objectName, SerializedBuffer &buffer) const;
+      Result Deserialize(char *objectName, void** buffer, s32 &bufferLength, MemoryStack &memory); // Updates the buffer pointer and length before returning
 
-      s32 get_SerializationSize() const;
+      s32 get_serializationSize() const;
 
 #if defined(ANKICORETECH_EMBEDDED_USE_OPENCV) && ANKICORETECH_EMBEDDED_USE_OPENCV
       // Allocates the returned cv::Mat on the heap
@@ -54,6 +54,15 @@ namespace Anki
     // Calculate local extrema (edges) in an image. Returns four list for the four directions of change.
     Result DetectBlurredEdges(const Array<u8> &image, const u8 grayvalueThreshold, const s32 minComponentWidth, const s32 everyNLines, EdgeLists &edgeLists);
     Result DetectBlurredEdges(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const u8 grayvalueThreshold, const s32 minComponentWidth, const s32 everyNLines, EdgeLists &edgeLists);
+
+    u8 ComputeGrayvalueThrehold(
+      const Array<u8> &image,
+      const Rectangle<s32> &imageRegionOfInterest,
+      const s32 yIncrement,
+      const s32 xIncrement,
+      const f32 blackPercentile, //< What percentile of histogram energy is black? (.1 is a good value)
+      const f32 whitePercentile, //< What percentile of histogram energy is white? (.9 is a good value)
+      MemoryStack scratch);
   } // namespace Embedded
 } //namespace Anki
 

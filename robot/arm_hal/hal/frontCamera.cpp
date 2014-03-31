@@ -4,6 +4,7 @@
 #include "hal/portable.h"
 
 #include "anki/cozmo/robot/cozmoConfig.h" // for calibration parameters
+#include "anki/common/robot/config.h"
 
 namespace Anki
 {
@@ -43,10 +44,10 @@ namespace Anki
       };
       
       const u8 OV7725_VGA[][2] =
-      {
+      {       
         0x12, 0x80,
-        //0x3d, 0x03,
-        0x12, 0x40,  // QVGA | "YUV"/"Bayer"
+        //0x3d, 0x03,        
+        0x12, 0x40,  // QVGA | "YUV"/"Bayer"     
         0x17, 0x3f,
         0x18, 0x50,
         0x19, 0x03,
@@ -61,13 +62,26 @@ namespace Anki
 
         0x42, 0x7f,  // TGT_B
         0x4d, 0x09,  // Analog fixed gain amplifier
-        0x63, 0xe0,  // AWB Control Byte 0
+        0x63, 0xe0,  // AWB Control Byte 0       
+        
+#ifdef THIS_IS_PETES_BOARD
+        //0xac, 0x0f, // DSP Auto Function ON/OFF Control
+        0x64, 0xfb,  // DSP_Ctrl1
+#else
         0x64, 0xff,  // DSP_Ctrl1
+#endif        
+        
         0x65, 0x20,  // DSP_Ctrl2
         0x0c, 0xd0,  // Vertical flip | horizontal mirror | flip Y with UV
         0x66, 0x00,  // DSP_Ctrl3
         //0x67, 0x4a,  // DSP_Ctrl4 - Output Selection = RAW8
+        
+#ifdef THIS_IS_PETES_BOARD        
         0x13, 0xf0,  // COM8 - gain control stuff... | AGC enable
+#else
+        0x13, 0xf0,  // COM8 - gain control stuff... | AGC enable
+#endif        
+        
         0x0d, 0xf2,  // PLL = 8x | AEC evaluate 1/4 window
         0x0f, 0xc5,  // Reserved | auto window setting ON/OFF selection when format changes
         0x14, 0x11,  // COM9 - Automatic Gain Ceiling | Reserved
@@ -81,8 +95,25 @@ namespace Anki
         0x13, 0xe6,  // COM8 - AGC stuff... Enable all but AEC
         0x90, 0x05,  // Sharpness Control 1 - threshold detection
         0x91, 0x01,  // Auto De-noise Threshold Control
+        
+#ifdef THIS_IS_PETES_BOARD       
+        // Lens correction control
+        0x46, 0x01, // on/off and RGB
+        0x47, 0x00, // x center
+        0x48, 0x00, // y center
+        0x49, 0x20, // RGB (or G) coefficient
+        0x4a, 0x27, // radius
+//        0x4b, 0x70, // B coefficient
+        //0x4c, 0x70, // R coefficient
+#endif        
+        
+#ifdef THIS_IS_PETES_BOARD               
+        0x92, 0x00,  // Sharpness Strength Upper Limit
+        0x93, 0x00,  // Sharpness Strength Lower Limit
+#else
         0x92, 0x03,  // Sharpness Strength Upper Limit
         0x93, 0x00,  // Sharpness Strength Lower Limit
+#endif        
         0x94, 0xb0,  // MTX1 - Matrix Coefficient 1
         0x95, 0x9d,
         0x96, 0x13,
@@ -461,7 +492,7 @@ namespace Anki
                               
           for(u32 iPixel=0; iPixel<numPixels4; iPixel++) {
             const u32 inPixel1 = pMBufferU32[2*iPixel];
-            const u32 inPixel2 = pMBufferU32[2*(iPixel+1)];
+            const u32 inPixel2 = pMBufferU32[2*iPixel+1];
             
             const u32 outPixel = (inPixel1 & 0xFF) | ((inPixel1 & 0xFF0000) >> 8) | ((inPixel2 & 0xFF)<<16) | ((inPixel2 & 0xFF0000) << 8);
             pFrameU32[iPixel] = outPixel;

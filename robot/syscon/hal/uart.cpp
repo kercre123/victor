@@ -22,7 +22,7 @@ void UARTInit()
   NRF_UART0->POWER = 1;
   
   // Configure the peripheral for the physical pins are being used for UART
-  NRF_UART0->PSELTXD = 0xFFFFffff; //PIN_TX;
+  NRF_UART0->PSELTXD = PIN_TX;
   NRF_UART0->PSELRXD = 0xFFFFffff;  // Disconnect RX
 
   // Initialize the UART for the specified baudrate

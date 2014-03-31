@@ -160,7 +160,6 @@ namespace Anki {
       
       void Destroy()
       {
-        VisionSystem::Destroy();
         HAL::Destroy();
       }
       

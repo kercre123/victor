@@ -36,10 +36,15 @@ namespace Anki
           const Array<u8> &templateImage,
           const Quadrilateral<f32> &templateQuad,
           const f32 scaleTemplateRegionPercent, //< Shrinks the region if less-than 1.0, expands the region if greater-than 1.0
-          const u8 edgeDetection_grayvalueThreshold,
-          const s32 edgeDetection_minComponentWidth,
-          const s32 edgeDetection_maxDetectionsPerType,
-          const s32 edgeDetection_everyNLines,
+          //const u8 edgeDetection_grayvalueThreshold,
+          const s32 edgeDetection_threshold_yIncrement, //< How many pixels to use in the y direction (4 is a good value?)
+          const s32 edgeDetection_threshold_xIncrement, //< How many pixels to use in the x direction (4 is a good value?)
+          const f32 edgeDetection_threshold_blackPercentile, //< What percentile of histogram energy is black? (.1 is a good value)
+          const f32 edgeDetection_threshold_whitePercentile, //< What percentile of histogram energy is white? (.9 is a good value)
+          const f32 edgeDetection_threshold_scaleRegionPercent, //< How much to scale template bounding box (.8 is a good value)
+          const s32 edgeDetection_minComponentWidth, //< The smallest horizontal size of a component (1 to 4 is good)
+          const s32 edgeDetection_maxDetectionsPerType, //< As many as you have memory and time for
+          const s32 edgeDetection_everyNLines, //< As many as you have time for
           MemoryStack &memory);
 
         // Runs one iteration each of translation and projective
@@ -48,7 +53,12 @@ namespace Anki
         // To check is the update is reasonable, numMatches / this->get_numTemplatePixels() will give the percentage of matches
         Result UpdateTrack(
           const Array<u8> &nextImage,
-          const u8 edgeDetection_grayvalueThreshold, const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
+          const s32 edgeDetection_threshold_yIncrement, //< How many pixels to use in the y direction (4 is a good value?)
+          const s32 edgeDetection_threshold_xIncrement, //< How many pixels to use in the x direction (4 is a good value?)
+          const f32 edgeDetection_threshold_blackPercentile, //< What percentile of histogram energy is black? (.1 is a good value)
+          const f32 edgeDetection_threshold_whitePercentile, //< What percentile of histogram energy is white? (.9 is a good value)
+          const f32 edgeDetection_threshold_scaleRegionPercent, //< How much to scale template bounding box (.8 is a good value)
+          const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
           const s32 matching_maxTranslationDistance, const s32 matching_maxProjectiveDistance,
           const s32 verification_maxTranslationDistance,
           const bool useList, //< using a list is liable to be slower
@@ -66,15 +76,20 @@ namespace Anki
         // TRANSFORM_PROJECTIVE: [h00, h01, h02, h10, h11, h12, h20, h21]
         Result UpdateTransformation(const Array<f32> &update, const f32 scale, MemoryStack scratch, Transformations::TransformType updateType=Transformations::TRANSFORM_UNKNOWN);
 
-        Result Serialize(SerializedBuffer &buffer) const;
-        Result Deserialize(void** buffer, s32 &bufferLength, MemoryStack &memory);
+        Result Serialize(const char *objectName, SerializedBuffer &buffer) const;
+        Result Deserialize(char *objectName, void** buffer, s32 &bufferLength, MemoryStack &memory);
 
         s32 get_numTemplatePixels() const;
 
         Result set_transformation(const Transformations::PlanarTransformation_f32 &transformation);
         Transformations::PlanarTransformation_f32 get_transformation() const;
 
-        s32 get_SerializationSize() const;
+        s32 get_serializationSize() const;
+
+        // The last used threshold is the last threshold that was used to binarize an image
+        // The last threshold is the value computed on the last image, that will be used for the next image
+        s32 get_lastUsedGrayvalueThrehold() const;
+        s32 get_lastGrayvalueThreshold() const;
 
       protected:
         typedef struct
@@ -109,6 +124,11 @@ namespace Anki
         Array<f32> yGrid;
 
         Transformations::PlanarTransformation_f32 transformation;
+
+        // The last used threshold is the last threshold that was used to binarize an image
+        // The last threshold is the value computed on the last image, that will be used for the next image
+        u8 lastUsedGrayvalueThreshold;
+        u8 lastGrayvalueThreshold;
 
         bool isValid;
 

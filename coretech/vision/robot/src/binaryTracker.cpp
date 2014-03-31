@@ -74,11 +74,16 @@ namespace Anki
       BinaryTracker::BinaryTracker(
         const Array<u8> &templateImage,
         const Quadrilateral<f32> &templateQuad,
-        const f32 scaleTemplateRegionPercent,
-        const u8 edgeDetection_grayvalueThreshold,
-        const s32 edgeDetection_minComponentWidth,
-        const s32 edgeDetection_maxDetectionsPerType,
-        const s32 edgeDetection_everyNLines,
+        const f32 scaleTemplateRegionPercent, //< Shrinks the region if less-than 1.0, expands the region if greater-than 1.0
+        //const u8 edgeDetection_grayvalueThreshold,
+        const s32 edgeDetection_threshold_yIncrement, //< How many pixels to use in the y direction (4 is a good value?)
+        const s32 edgeDetection_threshold_xIncrement, //< How many pixels to use in the x direction (4 is a good value?)
+        const f32 edgeDetection_threshold_blackPercentile, //< What percentile of histogram energy is black? (.1 is a good value)
+        const f32 edgeDetection_threshold_whitePercentile, //< What percentile of histogram energy is white? (.9 is a good value)
+        const f32 edgeDetection_threshold_scaleRegionPercent, //< How much to scale template bounding box (.8 is a good value)
+        const s32 edgeDetection_minComponentWidth, //< The smallest horizontal size of a component (1 to 4 is good)
+        const s32 edgeDetection_maxDetectionsPerType, //< As many as you have memory and time for
+        const s32 edgeDetection_everyNLines, //< As many as you have time for
         MemoryStack &memory)
         : isValid(false)
       {
@@ -110,10 +115,24 @@ namespace Anki
           this->templateEdges.yDecreasing.IsValid() && this->templateEdges.yIncreasing.IsValid(),
           "BinaryTracker::BinaryTracker", "Could not allocate local memory");
 
+        const Rectangle<f32> edgeDetection_imageRegionOfInterestRaw = templateQuad.ComputeBoundingRectangle().ComputeScaledRectangle(edgeDetection_threshold_scaleRegionPercent);
+        const Rectangle<s32> edgeDetection_imageRegionOfInterest(static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.left), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.right), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.top), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.bottom));
+
+        this->lastGrayvalueThreshold = ComputeGrayvalueThrehold(
+          templateImage,
+          edgeDetection_imageRegionOfInterest,
+          edgeDetection_threshold_yIncrement,
+          edgeDetection_threshold_xIncrement,
+          edgeDetection_threshold_blackPercentile,
+          edgeDetection_threshold_whitePercentile,
+          memory);
+
         const Rectangle<f32> templateRectRaw = templateQuad.ComputeBoundingRectangle().ComputeScaledRectangle(scaleTemplateRegionPercent);
         const Rectangle<s32> templateRect(static_cast<s32>(templateRectRaw.left), static_cast<s32>(templateRectRaw.right), static_cast<s32>(templateRectRaw.top), static_cast<s32>(templateRectRaw.bottom));
 
-        const Result result = DetectBlurredEdges(templateImage, templateRect, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, edgeDetection_everyNLines, this->templateEdges);
+        const Result result = DetectBlurredEdges(templateImage, templateRect, this->lastGrayvalueThreshold, edgeDetection_minComponentWidth, edgeDetection_everyNLines, this->templateEdges);
+
+        this->lastUsedGrayvalueThreshold = this->lastGrayvalueThreshold;
 
         AnkiConditionalErrorAndReturn(result == RESULT_OK,
           "BinaryTracker::BinaryTracker", "DetectBlurredEdge failed");
@@ -174,6 +193,9 @@ namespace Anki
 
         cv::Mat toShow = this->templateEdges.DrawIndexes();
 
+        if(toShow.cols == 0)
+          return RESULT_FAIL;
+
         if(fitImageToWindow) {
           cv::namedWindow(windowName, CV_WINDOW_NORMAL);
         } else {
@@ -214,50 +236,62 @@ namespace Anki
         return this->transformation.Update(update, scale, scratch, updateType);
       }
 
-      Result BinaryTracker::Serialize(SerializedBuffer &buffer) const
+      Result BinaryTracker::Serialize(const char *objectName, SerializedBuffer &buffer) const
       {
-        const s32 maxBufferLength = buffer.get_memoryStack().ComputeLargestPossibleAllocation() - 64;
+        s32 totalDataLength = this->get_serializationSize();
 
-        s32 requiredBytes = this->get_SerializationSize();
+        void *segment = buffer.Allocate("BinaryTracker", objectName, totalDataLength);
 
-        if(maxBufferLength < requiredBytes) {
+        if(segment == NULL) {
           return RESULT_FAIL;
         }
 
-        void *afterHeader;
-        const void* segmentStart = buffer.PushBack("BinaryTracker", requiredBytes, &afterHeader);
-
-        if(segmentStart == NULL) {
+        if(SerializedBuffer::SerializeDescriptionStrings("BinaryTracker", objectName, &segment, totalDataLength) != RESULT_OK)
           return RESULT_FAIL;
-        }
 
         // First, serialize the transformation
-        this->transformation.SerializeRaw(&afterHeader, requiredBytes);
+        if(this->transformation.SerializeRaw("transformation", &segment, totalDataLength) != RESULT_OK)
+          return RESULT_FAIL;
 
         // Next, serialize the template lists
-        SerializedBuffer::SerializeRaw<s32>(this->templateEdges.imageHeight, &afterHeader, requiredBytes);
-        SerializedBuffer::SerializeRaw<s32>(this->templateEdges.imageWidth, &afterHeader, requiredBytes);
-        SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >(this->templateEdges.xDecreasing, &afterHeader, requiredBytes);
-        SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >(this->templateEdges.xIncreasing, &afterHeader, requiredBytes);
-        SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >(this->templateEdges.yDecreasing, &afterHeader, requiredBytes);
-        SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >(this->templateEdges.yIncreasing, &afterHeader, requiredBytes);
+        if(SerializedBuffer::SerializeRawBasicType<s32>("templateEdges.imageHeight", this->templateEdges.imageHeight, &segment, totalDataLength) != RESULT_OK)
+          return RESULT_FAIL;
+        
+        if(SerializedBuffer::SerializeRawBasicType<s32>("templateEdges.imageWidth", this->templateEdges.imageWidth, &segment, totalDataLength) != RESULT_OK)
+          return RESULT_FAIL;
+        
+        if(SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("templateEdges.xDecreasing", this->templateEdges.xDecreasing, &segment, totalDataLength) != RESULT_OK)
+          return RESULT_FAIL;
+        
+        if(SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("templateEdges.xIncreasing", this->templateEdges.xIncreasing, &segment, totalDataLength) != RESULT_OK)
+          return RESULT_FAIL;
+        
+        if(SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("templateEdges.yDecreasing", this->templateEdges.yDecreasing, &segment, totalDataLength) != RESULT_OK)
+          return RESULT_FAIL;
+        
+        if(SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("templateEdges.yIncreasing", this->templateEdges.yIncreasing, &segment, totalDataLength) != RESULT_OK)
+          return RESULT_FAIL;
 
         return RESULT_OK;
       }
 
-      Result BinaryTracker::Deserialize(void** buffer, s32 &bufferLength, MemoryStack &memory)
+      Result BinaryTracker::Deserialize(char *objectName, void** buffer, s32 &bufferLength, MemoryStack &memory)
       {
+        // TODO: check if the name is correct
+        if(SerializedBuffer::DeserializeDescriptionStrings(NULL, objectName, buffer, bufferLength) != RESULT_OK)
+          return RESULT_FAIL;
+
         // First, deserialize the transformation
         //this->transformation = Transformations::PlanarTransformation_f32(Transformations::TRANSFORM_PROJECTIVE, memory);
-        this->transformation.Deserialize(buffer, bufferLength, memory);
+        this->transformation.Deserialize(objectName, buffer, bufferLength, memory);
 
         // Next, deserialize the template lists
-        this->templateEdges.imageHeight = SerializedBuffer::DeserializeRaw<s32>(buffer, bufferLength);
-        this->templateEdges.imageWidth = SerializedBuffer::DeserializeRaw<s32>(buffer, bufferLength);
-        this->templateEdges.xDecreasing = SerializedBuffer::DeserializeRawFixedLengthList<Point<s16> >(buffer, bufferLength, memory);
-        this->templateEdges.xIncreasing = SerializedBuffer::DeserializeRawFixedLengthList<Point<s16> >(buffer, bufferLength, memory);
-        this->templateEdges.yDecreasing = SerializedBuffer::DeserializeRawFixedLengthList<Point<s16> >(buffer, bufferLength, memory);
-        this->templateEdges.yIncreasing = SerializedBuffer::DeserializeRawFixedLengthList<Point<s16> >(buffer, bufferLength, memory);
+        this->templateEdges.imageHeight = SerializedBuffer::DeserializeRawBasicType<s32>(NULL, buffer, bufferLength);
+        this->templateEdges.imageWidth  = SerializedBuffer::DeserializeRawBasicType<s32>(NULL, buffer, bufferLength);
+        this->templateEdges.xDecreasing = SerializedBuffer::DeserializeRawFixedLengthList<Point<s16> >(NULL, buffer, bufferLength, memory);
+        this->templateEdges.xIncreasing = SerializedBuffer::DeserializeRawFixedLengthList<Point<s16> >(NULL, buffer, bufferLength, memory);
+        this->templateEdges.yDecreasing = SerializedBuffer::DeserializeRawFixedLengthList<Point<s16> >(NULL, buffer, bufferLength, memory);
+        this->templateEdges.yIncreasing = SerializedBuffer::DeserializeRawFixedLengthList<Point<s16> >(NULL, buffer, bufferLength, memory);
 
         this->templateImageHeight = this->templateEdges.imageHeight;
         this->templateImageWidth = this->templateEdges.imageWidth;
@@ -310,7 +344,12 @@ namespace Anki
 
       Result BinaryTracker::UpdateTrack(
         const Array<u8> &nextImage,
-        const u8 edgeDetection_grayvalueThreshold, const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
+        const s32 edgeDetection_threshold_yIncrement,
+        const s32 edgeDetection_threshold_xIncrement,
+        const f32 edgeDetection_threshold_blackPercentile,
+        const f32 edgeDetection_threshold_whitePercentile,
+        const f32 edgeDetection_threshold_scaleRegionPercent,
+        const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
         const s32 matching_maxTranslationDistance, const s32 matching_maxProjectiveDistance,
         const s32 verification_maxTranslationDistance,
         const bool useList, //< using a list is liable to be slower
@@ -367,7 +406,8 @@ namespace Anki
 
         BeginBenchmark("ut_DetectEdges");
 
-        lastResult = DetectBlurredEdges(nextImage, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, edgeDetection_everyNLines, nextImageEdges);
+        lastResult = DetectBlurredEdges(nextImage, this->lastGrayvalueThreshold, edgeDetection_minComponentWidth, edgeDetection_everyNLines, nextImageEdges);
+        this->lastUsedGrayvalueThreshold = this->lastGrayvalueThreshold;
 
         EndBenchmark("ut_DetectEdges");
 
@@ -417,6 +457,24 @@ namespace Anki
 
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
           lastResult, "BinaryTracker::UpdateTrack", "VerifyTrack failed");
+
+        BeginBenchmark("ut_grayvalueThreshold");
+
+        const Quadrilateral<f32> curWarpedCorners = this->get_transformation().get_transformedCorners(fastScratch);
+
+        const Rectangle<f32> edgeDetection_imageRegionOfInterestRaw = curWarpedCorners.ComputeBoundingRectangle().ComputeScaledRectangle(edgeDetection_threshold_scaleRegionPercent);
+        const Rectangle<s32> edgeDetection_imageRegionOfInterest(static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.left), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.right), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.top), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.bottom));
+
+        this->lastGrayvalueThreshold = ComputeGrayvalueThrehold(
+          nextImage,
+          edgeDetection_imageRegionOfInterest,
+          edgeDetection_threshold_yIncrement,
+          edgeDetection_threshold_xIncrement,
+          edgeDetection_threshold_blackPercentile,
+          edgeDetection_threshold_whitePercentile,
+          fastScratch);
+
+        EndBenchmark("ut_grayvalueThreshold");
 
         return RESULT_OK;
       } // Result BinaryTracker::UpdateTrack()
@@ -1909,7 +1967,7 @@ namespace Anki
         return RESULT_OK;
       }
 
-      s32 BinaryTracker::get_SerializationSize() const
+      s32 BinaryTracker::get_serializationSize() const
       {
         // TODO: make the correct length
 
@@ -1924,9 +1982,19 @@ namespace Anki
           RoundUp<size_t>(yDecreasingUsed, MEMORY_ALIGNMENT) +
           RoundUp<size_t>(yIncreasingUsed, MEMORY_ALIGNMENT);
 
-        const s32 requiredBytes = 512 + numTemplatePixels*sizeof(Point<s16>);
+        const s32 requiredBytes = 512 + numTemplatePixels*sizeof(Point<s16>) + Transformations::PlanarTransformation_f32::get_serializationSize() + 14*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
 
         return requiredBytes;
+      }
+
+      s32 BinaryTracker::get_lastUsedGrayvalueThrehold() const
+      {
+        return this->lastUsedGrayvalueThreshold;
+      }
+
+      s32 BinaryTracker::get_lastGrayvalueThreshold() const
+      {
+        return this->lastGrayvalueThreshold;
       }
     } // namespace TemplateTracker
   } // namespace Embedded
