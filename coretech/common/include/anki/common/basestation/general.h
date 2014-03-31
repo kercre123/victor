@@ -99,6 +99,12 @@ extern bool _errG;
 // DAS MACROS
 //////////////////////////////////////////////////////////////////
 
+//   DEBUG: For general debugging. Does not go to DAS.
+//    INFO: What's the diff with DEBUG?
+//   EVENT: For general info that does go to DAS.
+// WARNING: For things that shouldn't happen, but might and we don't want to stop the app because of it. Goes to DAS.
+//   ERROR: For things that definitely shouldn't happen. Goes to DAS.
+  
 #ifdef USE_REAL_DAS
   
 // Print error message to stderr. First flushes stdout to make sure print order
