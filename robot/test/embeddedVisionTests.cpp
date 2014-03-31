@@ -20,7 +20,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/integralImage.h"
 #include "anki/vision/robot/draw_vision.h"
 #include "anki/vision/robot/lucasKanade.h"
-#include "anki/vision/robot/docking_vision.h"
+
 #include "anki/vision/robot/imageProcessing.h"
 #include "anki/vision/robot/transformations.h"
 #include "anki/vision/robot/binaryTracker.h"
@@ -602,6 +602,10 @@ bool IsBlockImage50_320x240Valid(const u8 * const imageBuffer, const bool isBigE
   return true;
 } // bool IsBlockImage50_320x240Valid()
 
+/* TODO: Update this to test FillDockErrMsg() in visionSystem.cpp
+  This will require exposing more of the internal state of the vision system
+  or changing the function's API to pass these things in.
+ 
 GTEST_TEST(CoreTech_Vision, ComputeDockingErrorSignalAffine)
 {
   // TODO: make these the real values
@@ -627,6 +631,7 @@ GTEST_TEST(CoreTech_Vision, ComputeDockingErrorSignalAffine)
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, ComputeDockingErrorSignalAffine)
+*/
 
 GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
 {
