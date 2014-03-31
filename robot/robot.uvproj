@@ -794,6 +794,11 @@
               <FilePath>.\supervisor\src\visionDebugStream.cpp</FilePath>
             </File>
             <File>
+              <FileName>visionParameters.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\supervisor\src\visionParameters.h</FilePath>
+            </File>
+            <File>
               <FileName>visionParameters.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\visionParameters.cpp</FilePath>
@@ -2068,6 +2073,11 @@
               <FileName>visionDebugStream.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\visionDebugStream.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>visionParameters.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\supervisor\src\visionParameters.h</FilePath>
             </File>
             <File>
               <FileName>visionParameters.cpp</FileName>

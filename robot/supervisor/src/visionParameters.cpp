@@ -116,8 +116,7 @@ namespace Anki {
         numPyramidLevels     = 4;
 #else
         //trackingResolution   = HAL::CAMERA_MODE_QQQVGA; // 80x60
-        //trackingResolution   = HAL::CAMERA_MODE_QQVGA; // 160x120
-        trackingResolution   = HAL::CAMERA_MODE_QVGA; // 320x240
+        trackingResolution   = HAL::CAMERA_MODE_QQVGA; // 160x120        
         numPyramidLevels     = 3;
 #endif // DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PROJECTIVE
         
