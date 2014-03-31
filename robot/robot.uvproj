@@ -739,6 +739,16 @@
               <FilePath>.\supervisor\src\localization.cpp</FilePath>
             </File>
             <File>
+              <FileName>matlabVisionProcessor.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\matlabVisionProcessor.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>matlabVisualization.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\matlabVisualization.cpp</FilePath>
+            </File>
+            <File>
               <FileName>messages.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\messages.cpp</FilePath>
@@ -777,6 +787,16 @@
               <FileName>usbPrint.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\usbPrint.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>visionDebugStream.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\visionDebugStream.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>visionParameters.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\visionParameters.cpp</FilePath>
             </File>
             <File>
               <FileName>visionSystem.cpp</FileName>
@@ -1995,6 +2015,16 @@
               <FilePath>.\supervisor\src\localization.cpp</FilePath>
             </File>
             <File>
+              <FileName>matlabVisionProcessor.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\matlabVisionProcessor.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>matlabVisualization.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\matlabVisualization.cpp</FilePath>
+            </File>
+            <File>
               <FileName>messages.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\messages.cpp</FilePath>
@@ -2033,6 +2063,16 @@
               <FileName>usbPrint.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\usbPrint.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>visionDebugStream.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\visionDebugStream.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>visionParameters.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\visionParameters.cpp</FilePath>
             </File>
             <File>
               <FileName>visionSystem.cpp</FileName>
