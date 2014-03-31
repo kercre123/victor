@@ -238,6 +238,20 @@ namespace Anki {
       Block::TOP_FACE
     };
     
+    // prefix operator (++fname)
+    Block::FaceName& operator++(Block::FaceName& fname) {
+      fname = (fname < Block::NUM_FACES) ? static_cast<Block::FaceName>( static_cast<int>(fname) + 1 ) : Block::NUM_FACES;
+      return fname;
+    }
+    
+    // postfix operator (fname++)
+    Block::FaceName operator++(Block::FaceName& fname, int) {
+      Block::FaceName newFname = fname;
+      ++newFname;
+      return newFname;
+    }
+
+    
     /*
     Block::FaceName GetOppositeFace(Block::FaceName whichFace) {
       switch(whichFace)

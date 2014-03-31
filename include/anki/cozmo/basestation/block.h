@@ -94,7 +94,7 @@ namespace Anki {
       //using Vision::ObservableObjectBase<Block>::GetMinDim;
 
       void SetSize(const float width, const float height, const float depth);
-      void SetColor(const float red, const float green, const float blue);
+      void SetColor(const unsigned char red, const unsigned char green, const unsigned char blue);
       void SetName(const std::string name);
       
       void AddFace(const FaceName whichFace,
@@ -167,6 +167,15 @@ namespace Anki {
       std::vector<Point3f> blockCorners_;
       
     }; // class Block
+    
+    
+    // prefix operator (++fname)
+    Block::FaceName& operator++(Block::FaceName& fname);
+    
+    // postfix operator (fname++)
+    Block::FaceName operator++(Block::FaceName& fname, int);
+    
+    
     
     // A cubical block with the same marker on all sides.
     class Block_Cube1x1 : public Block
@@ -248,9 +257,9 @@ namespace Anki {
       this->size_ = {width, height, depth};
     }
     
-    inline void Block::SetColor(const float red,
-                                const float green,
-                                const float blue)
+    inline void Block::SetColor(const unsigned char red,
+                                const unsigned char green,
+                                const unsigned char blue)
     {
       this->color_ = {red, green, blue};
     }
