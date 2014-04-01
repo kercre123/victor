@@ -470,7 +470,7 @@ namespace Anki {
 #elif DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
         s32 numMatches = -1;
         
-        const Result trackerResult = tracker.UpdateTrack(
+        const Result trackerResult = tracker.UpdateTrack_Normal(
                                                          grayscaleImage,
                                                          //parameters.edgeDetection_grayvalueThreshold,
                                                          parameters.edgeDetection_threshold_yIncrement,
@@ -484,7 +484,6 @@ namespace Anki {
                                                          parameters.matching_maxTranslationDistance,
                                                          parameters.matching_maxProjectiveDistance,
                                                          parameters.verification_maxTranslationDistance,
-                                                         false,
                                                          numMatches,
                                                          ccmScratch, offchipScratch);
         
