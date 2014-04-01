@@ -155,7 +155,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     printf("Skip 0 nonlist\n");
 
-    InitBenchmarking();
+    InitBenchmarking(); 
 
     const s32 templateEdgeDetection_everyNLines = 1;
 
