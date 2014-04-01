@@ -15,6 +15,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "opencv2/core/core.hpp"
 #endif
 
+#include <cstdlib>
+
 #define PrintfOneArray_FORMAT_STRING_2 "%d %d "
 #define PrintfOneArray_FORMAT_STRING_1 "%d "
 
@@ -88,6 +90,13 @@ namespace Anki
       } // while(curIndex < bufferLength)
 
       return -1;
+    }
+
+    s32 RandS32(const s32 minLimit, const s32 maxLimit)
+    {
+      const s32 num = (rand() % (maxLimit - minLimit + 1)) + minLimit;
+
+      return num;
     }
   } // namespace Embedded
 } // namespace Anki

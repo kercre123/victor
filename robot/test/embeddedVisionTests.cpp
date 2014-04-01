@@ -138,12 +138,18 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
   const s32 updateEdgeDetection_maxDetectionsPerType = 2500;
 
-  const s32 matching_maxTranslationDistance = 7;
-  const s32 matching_maxProjectiveDistance = 7;
+  const s32 normal_matching_maxTranslationDistance = 7;
+  const s32 normal_matching_maxProjectiveDistance = 7;
 
   const f32 scaleTemplateRegionPercent = 1.05f;
 
   const s32 verification_maxTranslationDistance = 1;
+
+  const s32 ransac_matching_maxProjectiveDistance = normal_matching_maxProjectiveDistance;
+
+  const s32 ransac_maxIterations = 20;
+  const s32 ransac_numSamplesPerType = 8;
+  const s32 ransac_inlinerDistance = verification_maxTranslationDistance;
 
   templateImage.Set(&cozmo_2014_01_29_11_41_05_10_320x240[0], cozmo_2014_01_29_11_41_05_10_320x240_WIDTH*cozmo_2014_01_29_11_41_05_10_320x240_HEIGHT);
   nextImage.Set(&cozmo_2014_01_29_11_41_05_12_320x240[0], cozmo_2014_01_29_11_41_05_12_320x240_WIDTH*cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT);
@@ -177,14 +183,14 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     s32 numMatches;
 
-    const Result result = tracker.UpdateTrack(
+    const Result result = tracker.UpdateTrack_Normal(
       nextImage,
       edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent,
       edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType,
       1,
-      matching_maxTranslationDistance, matching_maxProjectiveDistance,
+      normal_matching_maxTranslationDistance, normal_matching_maxProjectiveDistance,
       verification_maxTranslationDistance,
-      false, numMatches, scratchCcm, scratchOffchip);
+      numMatches, scratchCcm, scratchOffchip);
     EndBenchmark("BinaryTracker update fixed-float");
 
     ASSERT_TRUE(result == RESULT_OK);
@@ -204,7 +210,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
 
     PrintBenchmarkResults_OnlyTotals();
-  }
+  } // Skip zero rows/columns (non-list)
 
   // Skip one row/column (non-list)
   {
@@ -238,14 +244,14 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     s32 numMatches;
 
-    const Result result = tracker.UpdateTrack(
+    const Result result = tracker.UpdateTrack_Normal(
       nextImage,
       edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent,
       edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType,
       1,
-      matching_maxTranslationDistance, matching_maxProjectiveDistance,
+      normal_matching_maxTranslationDistance, normal_matching_maxProjectiveDistance,
       verification_maxTranslationDistance,
-      false, numMatches, scratchCcm, scratchOffchip);
+      numMatches, scratchCcm, scratchOffchip);
     EndBenchmark("BinaryTracker update fixed-float");
 
     ASSERT_TRUE(result == RESULT_OK);
@@ -265,7 +271,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
 
     PrintBenchmarkResults_OnlyTotals();
-  }
+  } // Skip one row/column (non-list)
 
   // Skip zero rows/columns (with-list)
   {
@@ -299,14 +305,14 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     s32 numMatches;
 
-    const Result result = tracker.UpdateTrack(
+    const Result result = tracker.UpdateTrack_List(
       nextImage,
       edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent,
       edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType,
       1,
-      matching_maxTranslationDistance, matching_maxProjectiveDistance,
+      normal_matching_maxTranslationDistance, normal_matching_maxProjectiveDistance,
       verification_maxTranslationDistance,
-      true, numMatches, scratchCcm, scratchOffchip);
+      numMatches, scratchCcm, scratchOffchip);
     EndBenchmark("BinaryTracker update fixed-float");
 
     ASSERT_TRUE(result == RESULT_OK);
@@ -326,7 +332,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
 
     PrintBenchmarkResults_OnlyTotals();
-  }
+  } // Skip zero rows/columns (with-list)
 
   // Skip one row/column (with-list)
   {
@@ -360,14 +366,14 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     s32 numMatches;
 
-    const Result result = tracker.UpdateTrack(
+    const Result result = tracker.UpdateTrack_List(
       nextImage,
       edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent,
       edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType,
       1,
-      matching_maxTranslationDistance, matching_maxProjectiveDistance,
+      normal_matching_maxTranslationDistance, normal_matching_maxProjectiveDistance,
       verification_maxTranslationDistance,
-      true, numMatches, scratchCcm, scratchOffchip);
+      numMatches, scratchCcm, scratchOffchip);
     EndBenchmark("BinaryTracker update fixed-float");
 
     ASSERT_TRUE(result == RESULT_OK);
@@ -387,7 +393,135 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
 
     PrintBenchmarkResults_OnlyTotals();
-  }
+  } // Skip one row/column (with-list)
+
+  // Skip zero rows/columns (with-ransac)
+  {
+    PUSH_MEMORY_STACK(scratchCcm);
+    PUSH_MEMORY_STACK(scratchOnchip);
+    PUSH_MEMORY_STACK(scratchOffchip);
+
+    printf("\nSkip 0 ransac\n");
+
+    InitBenchmarking();
+
+    const s32 templateEdgeDetection_everyNLines = 1;
+
+    BeginBenchmark("BinaryTracker init");
+    TemplateTracker::BinaryTracker tracker(
+      templateImage, templateQuad,
+      scaleTemplateRegionPercent,
+      edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent, edgeDetection_minComponentWidth,
+      templateEdgeDetection_maxDetectionsPerType, templateEdgeDetection_everyNLines,
+      scratchOnchip);
+    EndBenchmark("BinaryTracker init");
+
+    const s32 numTemplatePixels = tracker.get_numTemplatePixels();
+
+    //ASSERT_TRUE(numTemplatePixels == );
+
+    //templateImage.Show("templateImage",false);
+    //nextImage.Show("nextImage",false);
+
+    BeginBenchmark("BinaryTracker update fixed-float");
+
+    s32 numMatches;
+
+    const Result result = tracker.UpdateTrack_Ransac(
+      nextImage,
+      edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent,
+      edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType,
+      1,
+      ransac_matching_maxProjectiveDistance,
+      verification_maxTranslationDistance,
+      ransac_maxIterations, ransac_numSamplesPerType, ransac_inlinerDistance,
+      numMatches, scratchCcm, scratchOffchip);
+    EndBenchmark("BinaryTracker update fixed-float");
+
+    ASSERT_TRUE(result == RESULT_OK);
+
+    printf("numMatches = %d / %d\n", numMatches, numTemplatePixels);
+
+    // TODO: verify this number manually
+    //ASSERT_TRUE(numMatches == );
+
+    //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
+
+    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
+    transform_groundTruth[0][0] = 1.068f; transform_groundTruth[0][1] = -0.001f;   transform_groundTruth[0][2] = 2.376f;
+    transform_groundTruth[1][0] = 0.003f; transform_groundTruth[1][1] = 1.061f; transform_groundTruth[1][2] = -4.109f;
+    transform_groundTruth[2][0] = 0.0f;   transform_groundTruth[2][1] = 0.0f;   transform_groundTruth[2][2] = 1.0f;
+
+    tracker.get_transformation().get_homography().Print("fixed-float 1");
+
+    //ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
+
+    PrintBenchmarkResults_OnlyTotals();
+  } // Skip zero rows/columns (with-ransac)
+
+  // Skip one row/column (with-ransac)
+  {
+    PUSH_MEMORY_STACK(scratchCcm);
+    PUSH_MEMORY_STACK(scratchOnchip);
+    PUSH_MEMORY_STACK(scratchOffchip);
+
+    printf("\nSkip 1 ransac\n");
+
+    InitBenchmarking();
+
+    const s32 templateEdgeDetection_everyNLines = 2;
+
+    BeginBenchmark("BinaryTracker init");
+    TemplateTracker::BinaryTracker tracker(
+      templateImage, templateQuad,
+      scaleTemplateRegionPercent,
+      edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent, edgeDetection_minComponentWidth,
+      templateEdgeDetection_maxDetectionsPerType, templateEdgeDetection_everyNLines,
+      scratchOnchip);
+    EndBenchmark("BinaryTracker init");
+
+    const s32 numTemplatePixels = tracker.get_numTemplatePixels();
+
+    //ASSERT_TRUE(numTemplatePixels == );
+
+    //templateImage.Show("templateImage",false);
+    //nextImage.Show("nextImage",false);
+
+    BeginBenchmark("BinaryTracker update fixed-float");
+
+    s32 numMatches;
+
+    const Result result = tracker.UpdateTrack_Ransac(
+      nextImage,
+      edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent,
+      edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType,
+      1,
+      ransac_matching_maxProjectiveDistance,
+      verification_maxTranslationDistance,
+      ransac_maxIterations, ransac_numSamplesPerType, ransac_inlinerDistance,
+      numMatches, scratchCcm, scratchOffchip);
+    EndBenchmark("BinaryTracker update fixed-float");
+
+    ASSERT_TRUE(result == RESULT_OK);
+
+    printf("numMatches = %d / %d\n", numMatches, numTemplatePixels);
+
+    // TODO: verify this number manually
+    //ASSERT_TRUE(numMatches == );
+
+    //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
+
+    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
+    transform_groundTruth[0][0] = 1.069f; transform_groundTruth[0][1] = -0.001f; transform_groundTruth[0][2] = 2.440f;
+    transform_groundTruth[1][0] = 0.005f; transform_groundTruth[1][1] = 1.060f; transform_groundTruth[1][2] = -4.100f;
+    transform_groundTruth[2][0] = 0.0f;   transform_groundTruth[2][1] = 0.0f;   transform_groundTruth[2][2] = 1.0f;
+
+    tracker.get_transformation().get_homography().Print("fixed-float 2");
+
+    //ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
+
+    PrintBenchmarkResults_OnlyTotals();
+  } // Skip one row/column (with-ransac)
 
   //tracker.get_transformation().TransformArray(templateImage, warpedTemplateImage, scratchOffchip, 1.0f);
 
