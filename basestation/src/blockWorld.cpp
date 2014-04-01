@@ -63,7 +63,7 @@ namespace Anki
         block->AddFace(Block::LEFT_FACE,
                        {32, 115, 117, 167, 238, 206, 221, 156, 168,  58, 114, 118},
                        32.f);
-        block->SetColor(0.f, 0.f, 1.f);
+        block->SetColor(0, 0, 0xff);
         block->SetSize(120.f, 60.f, 60.f);
         block->SetName("TEMP2x1");
         blockLibrary_.AddObject(block);
