@@ -112,11 +112,11 @@ GTEST_TEST(CoreTech_Vision, DecisionTreeVision)
 
 GTEST_TEST(CoreTech_Vision, BinaryTracker)
 {
-  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(scratchOnchip.IsValid());
-
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
   ASSERT_TRUE(scratchCcm.IsValid());
+
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(scratchOnchip.IsValid());
 
   MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(scratchOffchip.IsValid());
@@ -150,12 +150,13 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
   // Skip zero rows/columns (non-list)
   {
-    PUSH_MEMORY_STACK(scratchOffchip);
+    PUSH_MEMORY_STACK(scratchCcm);
     PUSH_MEMORY_STACK(scratchOnchip);
+    PUSH_MEMORY_STACK(scratchOffchip);
 
     printf("Skip 0 nonlist\n");
 
-    InitBenchmarking(); 
+    InitBenchmarking();
 
     const s32 templateEdgeDetection_everyNLines = 1;
 
@@ -207,8 +208,9 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
   // Skip one row/column (non-list)
   {
-    PUSH_MEMORY_STACK(scratchOffchip);
+    PUSH_MEMORY_STACK(scratchCcm);
     PUSH_MEMORY_STACK(scratchOnchip);
+    PUSH_MEMORY_STACK(scratchOffchip);
 
     printf("\nSkip 1 nonlist\n");
 
@@ -217,7 +219,12 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     const s32 templateEdgeDetection_everyNLines = 2;
 
     BeginBenchmark("BinaryTracker init");
-    TemplateTracker::BinaryTracker tracker(templateImage, templateQuad, scaleTemplateRegionPercent, edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent, edgeDetection_minComponentWidth, templateEdgeDetection_maxDetectionsPerType, templateEdgeDetection_everyNLines, scratchOnchip);
+    TemplateTracker::BinaryTracker tracker(
+      templateImage, templateQuad,
+      scaleTemplateRegionPercent,
+      edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent, edgeDetection_minComponentWidth,
+      templateEdgeDetection_maxDetectionsPerType, templateEdgeDetection_everyNLines,
+      scratchOnchip);
     EndBenchmark("BinaryTracker init");
 
     const s32 numTemplatePixels = tracker.get_numTemplatePixels();
@@ -262,8 +269,9 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
   // Skip zero rows/columns (with-list)
   {
-    PUSH_MEMORY_STACK(scratchOffchip);
+    PUSH_MEMORY_STACK(scratchCcm);
     PUSH_MEMORY_STACK(scratchOnchip);
+    PUSH_MEMORY_STACK(scratchOffchip);
 
     printf("\nSkip 0 list\n");
 
@@ -272,7 +280,12 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     const s32 templateEdgeDetection_everyNLines = 1;
 
     BeginBenchmark("BinaryTracker init");
-    TemplateTracker::BinaryTracker tracker(templateImage, templateQuad, scaleTemplateRegionPercent, edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent, edgeDetection_minComponentWidth, templateEdgeDetection_maxDetectionsPerType, templateEdgeDetection_everyNLines, scratchOnchip);
+    TemplateTracker::BinaryTracker tracker(
+      templateImage, templateQuad,
+      scaleTemplateRegionPercent,
+      edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent, edgeDetection_minComponentWidth,
+      templateEdgeDetection_maxDetectionsPerType, templateEdgeDetection_everyNLines,
+      scratchOnchip);
     EndBenchmark("BinaryTracker init");
 
     const s32 numTemplatePixels = tracker.get_numTemplatePixels();
@@ -293,7 +306,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
       1,
       matching_maxTranslationDistance, matching_maxProjectiveDistance,
       verification_maxTranslationDistance,
-      false, numMatches, scratchCcm, scratchOffchip);
+      true, numMatches, scratchCcm, scratchOffchip);
     EndBenchmark("BinaryTracker update fixed-float");
 
     ASSERT_TRUE(result == RESULT_OK);
@@ -317,8 +330,9 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
   // Skip one row/column (with-list)
   {
-    PUSH_MEMORY_STACK(scratchOffchip);
+    PUSH_MEMORY_STACK(scratchCcm);
     PUSH_MEMORY_STACK(scratchOnchip);
+    PUSH_MEMORY_STACK(scratchOffchip);
 
     printf("\nSkip 1 list\n");
 
@@ -327,7 +341,12 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     const s32 templateEdgeDetection_everyNLines = 2;
 
     BeginBenchmark("BinaryTracker init");
-    TemplateTracker::BinaryTracker tracker(templateImage, templateQuad, scaleTemplateRegionPercent, edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent, edgeDetection_minComponentWidth, templateEdgeDetection_maxDetectionsPerType, templateEdgeDetection_everyNLines, scratchOnchip);
+    TemplateTracker::BinaryTracker tracker(
+      templateImage, templateQuad,
+      scaleTemplateRegionPercent,
+      edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent, edgeDetection_minComponentWidth,
+      templateEdgeDetection_maxDetectionsPerType, templateEdgeDetection_everyNLines,
+      scratchOnchip);
     EndBenchmark("BinaryTracker init");
 
     const s32 numTemplatePixels = tracker.get_numTemplatePixels();
@@ -348,7 +367,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
       1,
       matching_maxTranslationDistance, matching_maxProjectiveDistance,
       verification_maxTranslationDistance,
-      false, numMatches, scratchCcm, scratchOffchip);
+      true, numMatches, scratchCcm, scratchOffchip);
     EndBenchmark("BinaryTracker update fixed-float");
 
     ASSERT_TRUE(result == RESULT_OK);
@@ -369,37 +388,6 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     PrintBenchmarkResults_OnlyTotals();
   }
-
-  // fixed translation, fixed projective
-  /*
-  {
-  PUSH_MEMORY_STACK(scratchOnchip);
-
-  TemplateTracker::BinaryTracker tracker(templateImage, templateQuad, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, templateEdgeDetection_maxDetectionsPerType, scratchOnchip);
-
-  BeginBenchmark("BinaryTracker update fixed-fixed");
-  const Result result = tracker.UpdateTrack(nextImage,
-  edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType,
-  matching_maxDistance, matching_maxCorrespondences, true, scratchCcm);
-  EndBenchmark("BinaryTracker update fixed-fixed");
-
-  ASSERT_TRUE(result == RESULT_OK);
-
-  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(scratchOffchip.IsValid());
-
-  //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
-
-  Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
-  transform_groundTruth[0][0] = 1.0527f; transform_groundTruth[0][1] = -0.0006f; transform_groundTruth[0][2] = 2.3852f;
-  transform_groundTruth[1][0] = 0.0002f; transform_groundTruth[1][1] = 1.0437f;  transform_groundTruth[1][2] = -4.0982f;
-  transform_groundTruth[2][0] = -0.0001f;    transform_groundTruth[2][1] = 0.0f;     transform_groundTruth[2][2] = 1.0f;
-
-  tracker.get_transformation().get_homography().Print("fixed-fixed");
-
-  //ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
-  }
-  */
 
   //tracker.get_transformation().TransformArray(templateImage, warpedTemplateImage, scratchOffchip, 1.0f);
 
@@ -2733,9 +2721,9 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   numPassedTests = 0;
   numFailedTests = 0;
 
-  CALL_GTEST_TEST(CoreTech_Vision, DecisionTreeVision);
+  //CALL_GTEST_TEST(CoreTech_Vision, DecisionTreeVision);
   CALL_GTEST_TEST(CoreTech_Vision, BinaryTracker);
-  CALL_GTEST_TEST(CoreTech_Vision, DetectBlurredEdge);
+  /*CALL_GTEST_TEST(CoreTech_Vision, DetectBlurredEdge);
   CALL_GTEST_TEST(CoreTech_Vision, DownsampleByPowerOfTwo);
   CALL_GTEST_TEST(CoreTech_Vision, ComputeDockingErrorSignalAffine);
   CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective);
@@ -2761,7 +2749,7 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   CALL_GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d);
   CALL_GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d);
   CALL_GTEST_TEST(CoreTech_Vision, BinomialFilter);
-  CALL_GTEST_TEST(CoreTech_Vision, DownsampleByFactor);
+  CALL_GTEST_TEST(CoreTech_Vision, DownsampleByFactor);*/
 
   return numFailedTests;
 } // int RUN_ALL_VISION_TESTS()
