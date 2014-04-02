@@ -64,6 +64,9 @@ namespace Anki
     // Returns the index of the first instance of bytePattern in buffer. If the pattern is not found, returns -1
     // Warning: bytePattern must not contain repeated bytes
     s32 FindBytePattern(const void * restrict buffer, const s32 bufferLength, const u8 * restrict bytePattern, const s32 bytePatternLength);
+
+    // Returns a number [minLimit, maxLimit]
+    s32 RandS32(const s32 minLimit, const s32 maxLimit);
   } // namespace Embedded
 } // namespace Anki
 

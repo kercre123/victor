@@ -51,7 +51,7 @@ namespace Anki
         //
         // numMatches returns the number of template pixels within verification_maxTranslationDistance of a point in nextImage
         // To check is the update is reasonable, numMatches / this->get_numTemplatePixels() will give the percentage of matches
-        Result UpdateTrack(
+        Result UpdateTrack_Normal(
           const Array<u8> &nextImage,
           const s32 edgeDetection_threshold_yIncrement, //< How many pixels to use in the y direction (4 is a good value?)
           const s32 edgeDetection_threshold_xIncrement, //< How many pixels to use in the x direction (4 is a good value?)
@@ -61,7 +61,38 @@ namespace Anki
           const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
           const s32 matching_maxTranslationDistance, const s32 matching_maxProjectiveDistance,
           const s32 verification_maxTranslationDistance,
-          const bool useList, //< using a list is liable to be slower
+          s32 &numMatches,
+          MemoryStack fastScratch,
+          MemoryStack slowScratch);
+
+        // WARNING: using a list is liable to be slower than normal, and not be more accurate
+        Result UpdateTrack_List(
+          const Array<u8> &nextImage,
+          const s32 edgeDetection_threshold_yIncrement, //< How many pixels to use in the y direction (4 is a good value?)
+          const s32 edgeDetection_threshold_xIncrement, //< How many pixels to use in the x direction (4 is a good value?)
+          const f32 edgeDetection_threshold_blackPercentile, //< What percentile of histogram energy is black? (.1 is a good value)
+          const f32 edgeDetection_threshold_whitePercentile, //< What percentile of histogram energy is white? (.9 is a good value)
+          const f32 edgeDetection_threshold_scaleRegionPercent, //< How much to scale template bounding box (.8 is a good value)
+          const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
+          const s32 matching_maxTranslationDistance, const s32 matching_maxProjectiveDistance,
+          const s32 verification_maxTranslationDistance,
+          s32 &numMatches,
+          MemoryStack fastScratch,
+          MemoryStack slowScratch);
+
+        Result UpdateTrack_Ransac(
+          const Array<u8> &nextImage,
+          const s32 edgeDetection_threshold_yIncrement, //< How many pixels to use in the y direction (4 is a good value?)
+          const s32 edgeDetection_threshold_xIncrement, //< How many pixels to use in the x direction (4 is a good value?)
+          const f32 edgeDetection_threshold_blackPercentile, //< What percentile of histogram energy is black? (.1 is a good value)
+          const f32 edgeDetection_threshold_whitePercentile, //< What percentile of histogram energy is white? (.9 is a good value)
+          const f32 edgeDetection_threshold_scaleRegionPercent, //< How much to scale template bounding box (.8 is a good value)
+          const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
+          const s32 matching_maxProjectiveDistance,
+          const s32 verification_maxTranslationDistance,
+          const s32 ransac_maxIterations,
+          const s32 ransac_numSamplesPerType, //< for four types
+          const s32 ransac_inlinerDistance,
           s32 &numMatches,
           MemoryStack fastScratch,
           MemoryStack slowScratch);
@@ -107,6 +138,13 @@ namespace Anki
           Point<f32> templatePoint;
           Point<f32> matchedPoint;
         } IndexCorrespondence;
+
+        enum UpdateVersion
+        {
+          UPDATE_VERSION_NORMAL = 1,
+          UPDATE_VERSION_LIST = 2,
+          UPDATE_VERSION_RANSAC = 3
+        };
 
         //Array<u8> templateImage;
         s32 templateImageHeight;
@@ -251,12 +289,24 @@ namespace Anki
           const s32 matching_maxDistance,
           MemoryStack scratch);
 
-        // WARNING: Probably List projective is slower than non-list
-        Result IterativelyRefineTrack_List_Projective(
+        // WARNING: List projective is slower than non-list, but is useful for RANSAC-type algorithms
+        Result IterativelyRefineTrack_Projective_List(
           const EdgeLists &nextImageEdges,
           const AllIndexLimits &allLimits,
           const s32 matching_maxDistance,
           const s32 maxMatchesPerType,
+          MemoryStack fastScratch,
+          MemoryStack slowScratch);
+
+        Result IterativelyRefineTrack_Projective_Ransac(
+          const EdgeLists &nextImageEdges,
+          const AllIndexLimits &allLimits,
+          const s32 matching_maxDistance,
+          const s32 maxMatchesPerType,
+          const s32 ransac_maxIterations,
+          const s32 ransac_numSamplesPerType, //< for four types
+          const s32 ransac_inlinerDistance,
+          s32 &bestNumInliers,
           MemoryStack fastScratch,
           MemoryStack slowScratch);
 
@@ -266,8 +316,25 @@ namespace Anki
           const EdgeLists &nextImageEdges,
           const AllIndexLimits &allLimits,
           const s32 matching_maxDistance,
-          s32 &numTemplatePixelsMatched,
-          MemoryStack scratch);
+          s32 &numTemplatePixelsMatched);
+
+        Result UpdateTrack_Generic(
+          const UpdateVersion version,
+          const Array<u8> &nextImage,
+          const s32 edgeDetection_threshold_yIncrement, //< How many pixels to use in the y direction (4 is a good value?)
+          const s32 edgeDetection_threshold_xIncrement, //< How many pixels to use in the x direction (4 is a good value?)
+          const f32 edgeDetection_threshold_blackPercentile, //< What percentile of histogram energy is black? (.1 is a good value)
+          const f32 edgeDetection_threshold_whitePercentile, //< What percentile of histogram energy is white? (.9 is a good value)
+          const f32 edgeDetection_threshold_scaleRegionPercent, //< How much to scale template bounding box (.8 is a good value)
+          const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
+          const s32 matching_maxTranslationDistance, const s32 matching_maxProjectiveDistance,
+          const s32 verification_maxTranslationDistance,
+          const s32 ransac_maxIterations,
+          const s32 ransac_numSamplesPerType, //< for four types
+          const s32 ransac_inlinerDistance,
+          s32 &numMatches,
+          MemoryStack fastScratch,
+          MemoryStack slowScratch);
       }; // class BinaryTracker
     } // namespace TemplateTracker
   } // namespace Embedded

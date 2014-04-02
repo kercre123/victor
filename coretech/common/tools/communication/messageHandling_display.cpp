@@ -41,7 +41,7 @@ static u8 scratchBuffer[scratchSize];
 const s32 outputFilenamePatternLength = 1024;
 char outputFilenamePattern[outputFilenamePatternLength] = "C:/Users/Pete/Box Sync/Cozmo SE/systemTestImages/cozmo_date%04d_%02d_%02d_time%02d_%02d_%02d_frame%d.%s";
 
-void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchingSegmentLengths)
+void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchingSegmentLengths, bool &pausePressed)
 {
   const s32 bigHeight = 480;
   const s32 bigWidth = 640;
@@ -72,6 +72,8 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
   SerializedBufferReconstructingIterator iterator(serializedBuffer);
 
   bool aMessageAlreadyPrinted = false;
+
+  pausePressed = false;
 
   while(iterator.HasNext()) {
     s32 dataLength;
@@ -360,9 +362,9 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
     } // if(isTracking) ... else
 
     cv::imshow("Robot Image", toShowImage);
-    s32 pressedKey = cv::waitKey(10);
+    const s32 pressedKey = cv::waitKey(50);
     //printf("%d\n", pressedKey);
-    if(pressedKey == 99) { // c
+    if(pressedKey == 'c') {
       const time_t t = time(0);   // get time now
       const struct tm * currentTime = localtime(&t);
       char outputFilename[1024];
@@ -374,6 +376,9 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
 
       printf("Saving to %s\n", outputFilename);
       cv::imwrite(outputFilename, lastImage);
+    } else if(pressedKey == 'p') {
+      pausePressed = true;
+      printf("Paused\n");
     }
   } else { // if(lastImage.rows > 0)
     cv::waitKey(1);

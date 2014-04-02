@@ -34,15 +34,28 @@ DWORD WINAPI DisplayBuffersThread(LPVOID lpParam)
 
   ThreadSafeQueue<DisplayRawBuffer> *messageQueue = (ThreadSafeQueue<DisplayRawBuffer>*)lpParam;
 
+  bool pausePressed = false;
+
   while(true) {
     while(messageQueue->IsEmpty()) {
       Sleep(1);
-      cv::waitKey(1);
+
+      if(pausePressed) {
+        const s32 pressedKey = cv::waitKey(1000);
+        if(pressedKey == 'p') {
+          pausePressed = false;
+          printf("Unpaused\n");
+        }
+      } else  {
+        cv::waitKey(1);
+      }
     }
 
     DisplayRawBuffer nextMessage = messageQueue->Pop();
 
-    ProcessRawBuffer_Display(nextMessage, false);
+    if(!pausePressed) {
+      ProcessRawBuffer_Display(nextMessage, false, pausePressed);
+    }
   }
 
   return 0;

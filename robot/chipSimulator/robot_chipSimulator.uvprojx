@@ -518,6 +518,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\coretech\common\robot\src\utilities_c.c</FilePath>
             </File>
+            <File>
+              <FileName>decisionTree.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\..\coretech\common\robot\src\decisionTree.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -574,11 +579,6 @@
               <FilePath>..\..\coretech\vision\robot\src\edgeDetection.cpp</FilePath>
             </File>
             <File>
-              <FileName>fiducialMarkerDefinitionType0.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\..\coretech\vision\robot\src\fiducialMarkerDefinitionType0.h</FilePath>
-            </File>
-            <File>
               <FileName>fiducialMarkers.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\..\coretech\vision\robot\src\fiducialMarkers.cpp</FilePath>
@@ -587,11 +587,6 @@
               <FileName>filtering.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\..\coretech\vision\robot\src\filtering.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>frontCameraWrappers.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\..\coretech\vision\robot\src\frontCameraWrappers.cpp</FilePath>
             </File>
             <File>
               <FileName>integralImage.cpp</FileName>
@@ -604,11 +599,6 @@
               <FilePath>..\..\coretech\vision\robot\src\laplacianPeaks.cpp</FilePath>
             </File>
             <File>
-              <FileName>lucasKanade.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\..\coretech\vision\robot\src\lucasKanade.cpp</FilePath>
-            </File>
-            <File>
               <FileName>traceBoundary.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\..\coretech\vision\robot\src\traceBoundary.cpp</FilePath>
@@ -617,6 +607,56 @@
               <FileName>transformations.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\..\coretech\vision\robot\src\transformations.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>colorConversion.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\..\coretech\vision\robot\src\colorConversion.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>decisionTree_vision.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\..\coretech\vision\robot\src\decisionTree_vision.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>detectFiducialMarkers.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\..\coretech\vision\robot\src\detectFiducialMarkers.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>histogram.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\..\coretech\vision\robot\src\histogram.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>lucasKanade_Affine.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\..\coretech\vision\robot\src\lucasKanade_Affine.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>lucasKanade_Fast.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\..\coretech\vision\robot\src\lucasKanade_Fast.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>lucasKanade_General.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\..\coretech\vision\robot\src\lucasKanade_General.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>lucasKanade_Projective.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\..\coretech\vision\robot\src\lucasKanade_Projective.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>lucasKanade_SampledProjective.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\..\coretech\vision\robot\src\lucasKanade_SampledProjective.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>lucasKanade_Slow.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\..\coretech\vision\robot\src\lucasKanade_Slow.cpp</FilePath>
             </File>
           </Files>
         </Group>

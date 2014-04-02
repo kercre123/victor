@@ -256,19 +256,19 @@ namespace Anki
         // Next, serialize the template lists
         if(SerializedBuffer::SerializeRawBasicType<s32>("templateEdges.imageHeight", this->templateEdges.imageHeight, &segment, totalDataLength) != RESULT_OK)
           return RESULT_FAIL;
-        
+
         if(SerializedBuffer::SerializeRawBasicType<s32>("templateEdges.imageWidth", this->templateEdges.imageWidth, &segment, totalDataLength) != RESULT_OK)
           return RESULT_FAIL;
-        
+
         if(SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("templateEdges.xDecreasing", this->templateEdges.xDecreasing, &segment, totalDataLength) != RESULT_OK)
           return RESULT_FAIL;
-        
+
         if(SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("templateEdges.xIncreasing", this->templateEdges.xIncreasing, &segment, totalDataLength) != RESULT_OK)
           return RESULT_FAIL;
-        
+
         if(SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("templateEdges.yDecreasing", this->templateEdges.yDecreasing, &segment, totalDataLength) != RESULT_OK)
           return RESULT_FAIL;
-        
+
         if(SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("templateEdges.yIncreasing", this->templateEdges.yIncreasing, &segment, totalDataLength) != RESULT_OK)
           return RESULT_FAIL;
 
@@ -342,17 +342,105 @@ namespace Anki
         return RESULT_OK;
       } // BinaryTracker::ComputeAllIndexLimits()
 
-      Result BinaryTracker::UpdateTrack(
+      Result BinaryTracker::UpdateTrack_Normal(
         const Array<u8> &nextImage,
-        const s32 edgeDetection_threshold_yIncrement,
-        const s32 edgeDetection_threshold_xIncrement,
-        const f32 edgeDetection_threshold_blackPercentile,
-        const f32 edgeDetection_threshold_whitePercentile,
-        const f32 edgeDetection_threshold_scaleRegionPercent,
+        const s32 edgeDetection_threshold_yIncrement, //< How many pixels to use in the y direction (4 is a good value?)
+        const s32 edgeDetection_threshold_xIncrement, //< How many pixels to use in the x direction (4 is a good value?)
+        const f32 edgeDetection_threshold_blackPercentile, //< What percentile of histogram energy is black? (.1 is a good value)
+        const f32 edgeDetection_threshold_whitePercentile, //< What percentile of histogram energy is white? (.9 is a good value)
+        const f32 edgeDetection_threshold_scaleRegionPercent, //< How much to scale template bounding box (.8 is a good value)
         const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
         const s32 matching_maxTranslationDistance, const s32 matching_maxProjectiveDistance,
         const s32 verification_maxTranslationDistance,
-        const bool useList, //< using a list is liable to be slower
+        s32 &numMatches,
+        MemoryStack fastScratch,
+        MemoryStack slowScratch)
+      {
+        return UpdateTrack_Generic(
+          UPDATE_VERSION_NORMAL,
+          nextImage,
+          edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent,
+          edgeDetection_minComponentWidth, edgeDetection_maxDetectionsPerType, edgeDetection_everyNLines,
+          matching_maxTranslationDistance, matching_maxProjectiveDistance,
+          verification_maxTranslationDistance,
+          0, 0, 0,
+          numMatches,
+          fastScratch,
+          slowScratch);
+      }
+
+      // WARNING: using a list is liable to be slower than normal, and not be more accurate
+      Result BinaryTracker::UpdateTrack_List(
+        const Array<u8> &nextImage,
+        const s32 edgeDetection_threshold_yIncrement, //< How many pixels to use in the y direction (4 is a good value?)
+        const s32 edgeDetection_threshold_xIncrement, //< How many pixels to use in the x direction (4 is a good value?)
+        const f32 edgeDetection_threshold_blackPercentile, //< What percentile of histogram energy is black? (.1 is a good value)
+        const f32 edgeDetection_threshold_whitePercentile, //< What percentile of histogram energy is white? (.9 is a good value)
+        const f32 edgeDetection_threshold_scaleRegionPercent, //< How much to scale template bounding box (.8 is a good value)
+        const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
+        const s32 matching_maxTranslationDistance, const s32 matching_maxProjectiveDistance,
+        const s32 verification_maxTranslationDistance,
+        s32 &numMatches,
+        MemoryStack fastScratch,
+        MemoryStack slowScratch)
+      {
+        return UpdateTrack_Generic(
+          UPDATE_VERSION_LIST,
+          nextImage,
+          edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent,
+          edgeDetection_minComponentWidth, edgeDetection_maxDetectionsPerType, edgeDetection_everyNLines,
+          matching_maxTranslationDistance, matching_maxProjectiveDistance,
+          verification_maxTranslationDistance,
+          0, 0, 0,
+          numMatches,
+          fastScratch,
+          slowScratch);
+      }
+
+      Result BinaryTracker::UpdateTrack_Ransac(
+        const Array<u8> &nextImage,
+        const s32 edgeDetection_threshold_yIncrement, //< How many pixels to use in the y direction (4 is a good value?)
+        const s32 edgeDetection_threshold_xIncrement, //< How many pixels to use in the x direction (4 is a good value?)
+        const f32 edgeDetection_threshold_blackPercentile, //< What percentile of histogram energy is black? (.1 is a good value)
+        const f32 edgeDetection_threshold_whitePercentile, //< What percentile of histogram energy is white? (.9 is a good value)
+        const f32 edgeDetection_threshold_scaleRegionPercent, //< How much to scale template bounding box (.8 is a good value)
+        const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
+        const s32 matching_maxProjectiveDistance,
+        const s32 verification_maxTranslationDistance,
+        const s32 ransac_maxIterations,
+        const s32 ransac_numSamplesPerType, //< for four types
+        const s32 ransac_inlinerDistance,
+        s32 &numMatches,
+        MemoryStack fastScratch,
+        MemoryStack slowScratch)
+      {
+        return UpdateTrack_Generic(
+          UPDATE_VERSION_RANSAC,
+          nextImage,
+          edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent,
+          edgeDetection_minComponentWidth, edgeDetection_maxDetectionsPerType, edgeDetection_everyNLines,
+          0, matching_maxProjectiveDistance,
+          verification_maxTranslationDistance,
+          ransac_maxIterations, ransac_numSamplesPerType, ransac_inlinerDistance,
+          numMatches,
+          fastScratch,
+          slowScratch);
+      }
+
+      Result BinaryTracker::UpdateTrack_Generic(
+        const UpdateVersion version,
+        const Array<u8> &nextImage,
+        const s32 edgeDetection_threshold_yIncrement, //< How many pixels to use in the y direction (4 is a good value?)
+        const s32 edgeDetection_threshold_xIncrement, //< How many pixels to use in the x direction (4 is a good value?)
+        const f32 edgeDetection_threshold_blackPercentile, //< What percentile of histogram energy is black? (.1 is a good value)
+        const f32 edgeDetection_threshold_whitePercentile, //< What percentile of histogram energy is white? (.9 is a good value)
+        const f32 edgeDetection_threshold_scaleRegionPercent, //< How much to scale template bounding box (.8 is a good value)
+        const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
+        const s32 matching_maxTranslationDistance, const s32 matching_maxProjectiveDistance,
+        const s32 verification_maxTranslationDistance,
+        const s32 ransac_maxIterations,
+        const s32 ransac_numSamplesPerType, //< for four types
+        const s32 ransac_inlinerDistance,
         s32 &numMatches,
         MemoryStack fastScratch,
         MemoryStack slowScratch)
@@ -426,37 +514,52 @@ namespace Anki
 
         // Second, compute the actual correspondence and refine the homography
 
-        BeginBenchmark("ut_translation");
+        const s32 maxMatchesPerType = 4000;
 
-        lastResult = IterativelyRefineTrack_Translation(nextImageEdges, allLimits, matching_maxTranslationDistance, fastScratch);
+        // The ransac version is different because:
+        // 1. It doesn't do a translation step
+        // 2. It does a verify step automatically, but the others need to do one after running
+        if(version == UPDATE_VERSION_RANSAC) {
+          BeginBenchmark("ut_projective_ransac");
+          lastResult = IterativelyRefineTrack_Projective_Ransac(nextImageEdges, allLimits, matching_maxProjectiveDistance, maxMatchesPerType, ransac_maxIterations, ransac_numSamplesPerType, ransac_inlinerDistance, numMatches, fastScratch, slowScratch);
+          EndBenchmark("ut_projective_ransac");
 
-        EndBenchmark("ut_translation");
+          AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+            lastResult, "BinaryTracker::UpdateTrack", "IterativelyRefineTrack_Projective failed");
+        } else { // if(version == UPDATE_VERSION_RANSAC) {
+          BeginBenchmark("ut_translation");
 
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
-          lastResult, "BinaryTracker::UpdateTrack", "IterativelyRefineTrack_Translation failed");
+          lastResult = IterativelyRefineTrack_Translation(nextImageEdges, allLimits, matching_maxTranslationDistance, fastScratch);
 
-        BeginBenchmark("ut_projective");
+          EndBenchmark("ut_translation");
 
-        if(useList) {
-          const s32 maxMatchesPerType = 2000;
-          lastResult = IterativelyRefineTrack_List_Projective(nextImageEdges, allLimits, matching_maxProjectiveDistance, maxMatchesPerType, fastScratch, slowScratch);
-        } else {
-          lastResult = IterativelyRefineTrack_Projective(nextImageEdges, allLimits, matching_maxProjectiveDistance, fastScratch);
-        }
+          AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+            lastResult, "BinaryTracker::UpdateTrack", "IterativelyRefineTrack_Translation failed");
 
-        EndBenchmark("ut_projective");
+          if(version == UPDATE_VERSION_NORMAL) {
+            BeginBenchmark("ut_projective_normal");
+            lastResult = IterativelyRefineTrack_Projective(nextImageEdges, allLimits, matching_maxProjectiveDistance, fastScratch);
+            EndBenchmark("ut_projective_normal");
+          } else if(version == UPDATE_VERSION_LIST) {
+            BeginBenchmark("ut_projective_list");
+            lastResult = IterativelyRefineTrack_Projective_List(nextImageEdges, allLimits, matching_maxProjectiveDistance, maxMatchesPerType, fastScratch, slowScratch);
+            EndBenchmark("ut_projective_list");
+          } else {
+            return RESULT_FAIL;
+          }
 
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
-          lastResult, "BinaryTracker::UpdateTrack", "IterativelyRefineTrack_Projective failed");
+          AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+            lastResult, "BinaryTracker::UpdateTrack", "IterativelyRefineTrack_Projective failed");
 
-        BeginBenchmark("ut_verify");
+          BeginBenchmark("ut_verify");
 
-        lastResult = VerifyTrack(nextImageEdges, allLimits, verification_maxTranslationDistance, numMatches, fastScratch);
+          lastResult = VerifyTrack(nextImageEdges, allLimits, verification_maxTranslationDistance, numMatches);
 
-        EndBenchmark("ut_verify");
+          EndBenchmark("ut_verify");
 
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
-          lastResult, "BinaryTracker::UpdateTrack", "VerifyTrack failed");
+          AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+            lastResult, "BinaryTracker::UpdateTrack", "VerifyTrack failed");
+        } // if(version == UPDATE_VERSION_RANSAC) ... else
 
         BeginBenchmark("ut_grayvalueThreshold");
 
@@ -1744,10 +1847,10 @@ namespace Anki
           //Atb_t.Print("result");
 
           AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
-            lastResult, "BinaryTracker::UpdateTransformation", "SolveLeastSquaresWithCholesky failed");
+            lastResult, "BinaryTracker::IterativelyRefineTrack_Projective", "SolveLeastSquaresWithCholesky failed");
 
           if(numericalFailure){
-            AnkiWarn("BinaryTracker::UpdateTransformation", "numericalFailure");
+            AnkiWarn("BinaryTracker::IterativelyRefineTrack_Projective", "numericalFailure");
             return RESULT_OK;
           }
 
@@ -1765,7 +1868,7 @@ namespace Anki
         return RESULT_OK;
       } // Result BinaryTracker::IterativelyRefineTrack_Projective()
 
-      Result BinaryTracker::IterativelyRefineTrack_List_Projective(
+      Result BinaryTracker::IterativelyRefineTrack_Projective_List(
         const EdgeLists &nextImageEdges,
         const AllIndexLimits &allLimits,
         const s32 matching_maxDistance,
@@ -1872,10 +1975,10 @@ namespace Anki
           //Atb_t.Print("result");
 
           AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
-            lastResult, "BinaryTracker::UpdateTransformation", "SolveLeastSquaresWithCholesky failed");
+            lastResult, "BinaryTracker::IterativelyRefineTrack_List_Projective", "SolveLeastSquaresWithCholesky failed");
 
           if(numericalFailure){
-            AnkiWarn("BinaryTracker::UpdateTransformation", "numericalFailure");
+            AnkiWarn("BinaryTracker::IterativelyRefineTrack_List_Projective", "numericalFailure");
             return RESULT_OK;
           }
 
@@ -1893,12 +1996,222 @@ namespace Anki
         return RESULT_OK;
       }
 
+      Result BinaryTracker::IterativelyRefineTrack_Projective_Ransac(
+        const EdgeLists &nextImageEdges,
+        const AllIndexLimits &allLimits,
+        const s32 matching_maxDistance,
+        const s32 maxMatchesPerType,
+        const s32 ransac_maxIterations,
+        const s32 ransac_numSamplesPerType,
+        const s32 ransac_inlinerDistance,
+        s32 &bestNumInliers,
+        MemoryStack fastScratch,
+        MemoryStack slowScratch)
+      {
+        Result lastResult;
+
+        Array<f32> AtA_xDecreasing(8,8,fastScratch);
+        Array<f32> AtA_xIncreasing(8,8,fastScratch);
+        Array<f32> AtA_yDecreasing(8,8,fastScratch);
+        Array<f32> AtA_yIncreasing(8,8,fastScratch);
+
+        Array<f32> Atb_t_xDecreasing(1,8,fastScratch);
+        Array<f32> Atb_t_xIncreasing(1,8,fastScratch);
+        Array<f32> Atb_t_yDecreasing(1,8,fastScratch);
+        Array<f32> Atb_t_yIncreasing(1,8,fastScratch);
+
+        Array<f32> originalHomography(3,3,slowScratch);
+        originalHomography.Set(this->transformation.get_homography());
+
+        Array<f32> bestHomography = Eye<f32>(3,3,slowScratch);
+        bestNumInliers = -1;
+
+        FixedLengthList<IndexCorrespondence> matchingIndexes_xDecreasing(maxMatchesPerType, slowScratch);
+        FixedLengthList<IndexCorrespondence> matchingIndexes_xIncreasing(maxMatchesPerType, slowScratch);
+        FixedLengthList<IndexCorrespondence> matchingIndexes_yDecreasing(maxMatchesPerType, slowScratch);
+        FixedLengthList<IndexCorrespondence> matchingIndexes_yIncreasing(maxMatchesPerType, slowScratch);
+
+        lastResult = BinaryTracker::FindHorizontalCorrespondences_List(
+          matching_maxDistance, this->transformation,
+          this->templateEdges.xDecreasing, nextImageEdges.xDecreasing,
+          nextImageEdges.imageHeight, nextImageEdges.imageWidth,
+          allLimits.xDecreasing_yStartIndexes, matchingIndexes_xDecreasing);
+
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+          lastResult, "BinaryTracker::IterativelyRefineTrack_Projective_Ransac", "FindHorizontalCorrespondences_List 1 failed");
+
+        lastResult = BinaryTracker::FindHorizontalCorrespondences_List(
+          matching_maxDistance, this->transformation,
+          this->templateEdges.xIncreasing, nextImageEdges.xIncreasing,
+          nextImageEdges.imageHeight, nextImageEdges.imageWidth,
+          allLimits.xIncreasing_yStartIndexes, matchingIndexes_xIncreasing);
+
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+          lastResult, "BinaryTracker::IterativelyRefineTrack_Projective_Ransac", "FindHorizontalCorrespondences_List 2 failed");
+
+        lastResult = BinaryTracker::FindVerticalCorrespondences_List(
+          matching_maxDistance, this->transformation,
+          this->templateEdges.yDecreasing, nextImageEdges.yDecreasing,
+          nextImageEdges.imageHeight, nextImageEdges.imageWidth,
+          allLimits.yDecreasing_xStartIndexes, matchingIndexes_yDecreasing);
+
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+          lastResult, "BinaryTracker::IterativelyRefineTrack_Projective_Ransac", "FindVerticalCorrespondences_List 1 failed");
+
+        lastResult = BinaryTracker::FindVerticalCorrespondences_List(
+          matching_maxDistance, this->transformation,
+          this->templateEdges.yIncreasing, nextImageEdges.yIncreasing,
+          nextImageEdges.imageHeight, nextImageEdges.imageWidth,
+          allLimits.yIncreasing_xStartIndexes, matchingIndexes_yIncreasing);
+
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+          lastResult, "BinaryTracker::IterativelyRefineTrack_Projective_Ransac", "FindVerticalCorrespondences_List 2 failed");
+
+        // First, try a match with all the data
+
+        // TODO: implement this, perhaps with a different search distance. Or perhaps just call the normal function
+
+        // Second, do ransac iterations to try to get a better match
+
+        const s32 num_xDecreasing = matchingIndexes_xDecreasing.get_size();
+        const s32 num_xIncreasing = matchingIndexes_xIncreasing.get_size();
+        const s32 num_yDecreasing = matchingIndexes_yDecreasing.get_size();
+        const s32 num_yIncreasing = matchingIndexes_yIncreasing.get_size();
+
+        FixedLengthList<IndexCorrespondence> sampledMatchingIndexes_xDecreasing(ransac_numSamplesPerType, fastScratch);
+        FixedLengthList<IndexCorrespondence> sampledMatchingIndexes_xIncreasing(ransac_numSamplesPerType, fastScratch);
+        FixedLengthList<IndexCorrespondence> sampledMatchingIndexes_yDecreasing(ransac_numSamplesPerType, fastScratch);
+        FixedLengthList<IndexCorrespondence> sampledMatchingIndexes_yIncreasing(ransac_numSamplesPerType, fastScratch);
+
+        sampledMatchingIndexes_xDecreasing.set_size(ransac_numSamplesPerType);
+        sampledMatchingIndexes_xIncreasing.set_size(ransac_numSamplesPerType);
+        sampledMatchingIndexes_yDecreasing.set_size(ransac_numSamplesPerType);
+        sampledMatchingIndexes_yIncreasing.set_size(ransac_numSamplesPerType);
+
+        const IndexCorrespondence * restrict pMatchingIndexes_xDecreasing = matchingIndexes_xDecreasing.Pointer(0);
+        const IndexCorrespondence * restrict pMatchingIndexes_xIncreasing = matchingIndexes_xIncreasing.Pointer(0);
+        const IndexCorrespondence * restrict pMatchingIndexes_yDecreasing = matchingIndexes_yDecreasing.Pointer(0);
+        const IndexCorrespondence * restrict pMatchingIndexes_yIncreasing = matchingIndexes_yIncreasing.Pointer(0);
+
+        IndexCorrespondence * restrict pSampledMatchingIndexes_xDecreasing = sampledMatchingIndexes_xDecreasing.Pointer(0);
+        IndexCorrespondence * restrict pSampledMatchingIndexes_xIncreasing = sampledMatchingIndexes_xIncreasing.Pointer(0);
+        IndexCorrespondence * restrict pSampledMatchingIndexes_yDecreasing = sampledMatchingIndexes_yDecreasing.Pointer(0);
+        IndexCorrespondence * restrict pSampledMatchingIndexes_yIncreasing = sampledMatchingIndexes_yIncreasing.Pointer(0);
+
+        for(s32 iteration=0; iteration<ransac_maxIterations; iteration++) {
+          for(s32 iSample=0; iSample<ransac_numSamplesPerType; iSample++) {
+            const s32 index_xDecreasing = RandS32(0, num_xDecreasing);
+            const s32 index_xIncreasing = RandS32(0, num_xIncreasing);
+            const s32 index_yDecreasing = RandS32(0, num_yDecreasing);
+            const s32 index_yIncreasing = RandS32(0, num_yIncreasing);
+
+            //printf("Samples: %d %d %d %d\n", index_xDecreasing, index_xIncreasing, index_yDecreasing, index_yIncreasing);
+
+            pSampledMatchingIndexes_xDecreasing[iSample] = pMatchingIndexes_xDecreasing[index_xDecreasing];
+            pSampledMatchingIndexes_xIncreasing[iSample] = pMatchingIndexes_xIncreasing[index_xIncreasing];
+            pSampledMatchingIndexes_yDecreasing[iSample] = pMatchingIndexes_yDecreasing[index_yDecreasing];
+            pSampledMatchingIndexes_yIncreasing[iSample] = pMatchingIndexes_yIncreasing[index_yIncreasing];
+          }
+
+          AtA_xDecreasing.SetZero();
+          AtA_xIncreasing.SetZero();
+          AtA_yDecreasing.SetZero();
+          AtA_yIncreasing.SetZero();
+
+          Atb_t_xDecreasing.SetZero();
+          Atb_t_xIncreasing.SetZero();
+          Atb_t_yDecreasing.SetZero();
+          Atb_t_yIncreasing.SetZero();
+
+          lastResult = BinaryTracker::ApplyHorizontalCorrespondenceList_Projective(sampledMatchingIndexes_xDecreasing, AtA_xDecreasing, Atb_t_xDecreasing);
+
+          AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+            lastResult, "BinaryTracker::IterativelyRefineTrack_Projective_Ransac", "ApplyHorizontalCorrespondenceList_Projective 1 failed");
+
+          lastResult = BinaryTracker::ApplyHorizontalCorrespondenceList_Projective(sampledMatchingIndexes_xIncreasing, AtA_xIncreasing, Atb_t_xIncreasing);
+
+          AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+            lastResult, "BinaryTracker::IterativelyRefineTrack_Projective_Ransac", "ApplyHorizontalCorrespondenceList_Projective 2 failed");
+
+          lastResult = BinaryTracker::ApplyVerticalCorrespondenceList_Projective(sampledMatchingIndexes_yDecreasing, AtA_yDecreasing, Atb_t_yDecreasing);
+
+          AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+            lastResult, "BinaryTracker::IterativelyRefineTrack_Projective_Ransac", "ApplyVerticalCorrespondenceList_Projective 1 failed");
+
+          lastResult = BinaryTracker::ApplyVerticalCorrespondenceList_Projective(sampledMatchingIndexes_yIncreasing, AtA_yIncreasing, Atb_t_yIncreasing);
+
+          AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+            lastResult, "BinaryTracker::IterativelyRefineTrack_Projective_Ransac", "ApplyVerticalCorrespondenceList_Projective 2 failed");
+
+          // Update the transformation, and count the number of inliers
+          {
+            PUSH_MEMORY_STACK(fastScratch);
+
+            Array<f32> newHomography(3, 3, fastScratch);
+
+            Array<f32> AtA(8,8,fastScratch);
+            Array<f32> Atb_t(1,8,fastScratch);
+
+            // The total AtA and Atb matrices are just the elementwise sums of their partial versions
+            for(s32 y=0; y<8; y++) {
+              for(s32 x=0; x<8; x++) {
+                AtA[y][x] = AtA_xDecreasing[y][x] + AtA_xIncreasing[y][x] + AtA_yDecreasing[y][x] + AtA_yIncreasing[y][x];
+              }
+
+              Atb_t[0][y] = Atb_t_xDecreasing[0][y] + Atb_t_xIncreasing[0][y] + Atb_t_yDecreasing[0][y] + Atb_t_yIncreasing[0][y];
+            }
+
+            Matrix::MakeSymmetric(AtA, false);
+
+            //AtA.Print("AtA");
+            //Atb_t.Print("Atb_t");
+            bool numericalFailure;
+            lastResult = Matrix::SolveLeastSquaresWithCholesky<f32>(AtA, Atb_t, false, numericalFailure);
+
+            //Atb_t.Print("result");
+
+            AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+              lastResult, "BinaryTracker::IterativelyRefineTrack_Projective_Ransac", "SolveLeastSquaresWithCholesky failed");
+
+            if(!numericalFailure) {
+              const f32 * restrict pAtb_t = Atb_t.Pointer(0,0);
+
+              newHomography[0][0] = pAtb_t[0]; newHomography[0][1] = pAtb_t[1]; newHomography[0][2] = pAtb_t[2];
+              newHomography[1][0] = pAtb_t[3]; newHomography[1][1] = pAtb_t[4]; newHomography[1][2] = pAtb_t[5];
+              newHomography[2][0] = pAtb_t[6]; newHomography[2][1] = pAtb_t[7]; newHomography[2][2] = 1.0f;
+
+              //newHomography.Print("newHomography");
+
+              this->transformation.set_homography(newHomography);
+
+              s32 numInliers;
+              lastResult = VerifyTrack(nextImageEdges, allLimits, ransac_inlinerDistance, numInliers);
+
+              AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+                lastResult, "BinaryTracker::IterativelyRefineTrack_Projective_Ransac", "VerifyTrack failed");
+
+              if(numInliers > bestNumInliers) {
+                bestNumInliers = numInliers;
+                bestHomography.Set(this->transformation.get_homography());
+                //printf("inliers: %d\n", numInliers);
+                //bestHomography.Print("bestHomography");
+              }
+            } // if(!numericalFailure)
+
+            this->transformation.set_homography(originalHomography);
+          } // Update the transformation, and count the number of inliers
+        } // for(s32 iteration=0; iteration<ransac_maxIterations; iteration++)
+
+        this->transformation.set_homography(bestHomography);
+
+        return RESULT_OK;
+      }
+
       Result BinaryTracker::VerifyTrack(
         const EdgeLists &nextImageEdges,
         const AllIndexLimits &allLimits,
         const s32 matching_maxDistance,
-        s32 &numTemplatePixelsMatched,
-        MemoryStack scratch)
+        s32 &numTemplatePixelsMatched)
       {
         Result lastResult;
 
