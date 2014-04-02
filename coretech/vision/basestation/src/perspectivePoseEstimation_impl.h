@@ -333,7 +333,7 @@ namespace Anki {
         // Turn the three image points into unit vectors corresponding to rays
         // in the direction of the image points
         const SmallSquareMatrix<3,WORKING_PRECISION> invK = calib.get_invCalibrationMatrix<WORKING_PRECISION>();
-        const SmallSquareMatrix<3,float> K = calib.get_calibrationMatrix<float>();
+        const SmallSquareMatrix<3,WORKING_PRECISION> K    = calib.get_calibrationMatrix<WORKING_PRECISION>();
         
         Quadrilateral<3, WORKING_PRECISION> imgRays, worldPoints;
 
@@ -357,7 +357,7 @@ namespace Anki {
         
         // Compute best pose from each subset of three corners, keeping the one
         // with the lowest error
-        float minErrorOuter = std::numeric_limits<float>::max();
+        INPUT_PRECISION minErrorOuter = std::numeric_limits<INPUT_PRECISION>::max();
         for(Quad::CornerName i_validate=Quad::FirstCorner; i_validate < Quad::NumCorners; ++i_validate)
         {
           // Create the list of three points to use for estimation (all but
@@ -383,27 +383,20 @@ namespace Anki {
                                imgRays[estimateIndex[2]],
                                possiblePoses);
           
-          // Find the pose with the least reprojection error of the 4th
+          // Find the pose with the least reprojection error for the 4th
           // validation corner (which was not used in estimating the pose)
           s32 bestSolution = -1;
-          float minErrorInner = std::numeric_limits<float>::max();
-          
-          // Note that Pose3d stores float internally, so validation points should be float
-          Point3f worldValidationPoint(static_cast<float>(worldQuad[i_validate].x()),
-                                       static_cast<float>(worldQuad[i_validate].y()),
-                                       static_cast<float>(worldQuad[i_validate].z()));
-          
-          Point2f imageValidationPoint(static_cast<float>(imgQuad[i_validate].x()),
-                                       static_cast<float>(imgQuad[i_validate].y()));
+          INPUT_PRECISION minErrorInner = std::numeric_limits<INPUT_PRECISION>::max();
           
           for(s32 i_solution=0; i_solution<4; ++i_solution)
           {
-            Point3f projectedPoint3d = K * (possiblePoses[i_solution]*worldValidationPoint);
+            //Point3f projectedPoint3d = K * (possiblePoses[i_solution]*worldValidationPoint);
+            Point<3,WORKING_PRECISION> projectedPoint3d = K * (possiblePoses[i_solution]*worldQuad[i_validate]);
             
-            Point2f projectedPoint2d(projectedPoint3d.x() / projectedPoint3d.z(),
-                                     projectedPoint3d.y() / projectedPoint3d.z());
+            Point<2,INPUT_PRECISION> projectedPoint2d(static_cast<INPUT_PRECISION>(projectedPoint3d.x() / projectedPoint3d.z()),
+                                                      static_cast<INPUT_PRECISION>(projectedPoint3d.y() / projectedPoint3d.z()));
             
-            float error = (projectedPoint2d - imageValidationPoint).length();
+            INPUT_PRECISION error = (projectedPoint2d - imgQuad[i_validate]).length();
             
             if(error < minErrorInner) {
               minErrorInner = error;
@@ -414,6 +407,8 @@ namespace Anki {
           
           CORETECH_ASSERT(bestSolution >= 0);
 
+          // If the pose using this validation corner is better than the
+          // best so far, keep it
           if(minErrorInner < minErrorOuter) {
             minErrorOuter = minErrorInner;
             pose = possiblePoses[bestSolution];
