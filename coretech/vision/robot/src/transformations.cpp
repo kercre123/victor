@@ -13,6 +13,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/arrayPatterns.h"
 #include "anki/common/robot/interpolate.h"
 #include "anki/common/robot/serialize.h"
+#include "anki/common/robot/matlabInterface.h"
 
 namespace Anki
 {
@@ -646,6 +647,28 @@ namespace Anki
         s32 &verify_numSimilarPixels,
         MemoryStack scratch) const
       {
+        const Rectangle<f32> templateRegionOfInterest(0, static_cast<f32>(templateImage.get_size(1)), 0, static_cast<f32>(templateImage.get_size(0)));
+
+        return VerifyTransformation_Projective(
+          templateImage, templateRegionOfInterest,
+          nextImage,
+          templateRegionHeight, templateRegionWidth,
+          verify_maxPixelDifference, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels,
+          scratch);
+      }
+
+      Result PlanarTransformation_f32::VerifyTransformation_Projective(
+        const Array<u8> &templateImage,
+        const Rectangle<f32> &templateRegionOfInterest,
+        const Array<u8> &nextImage,
+        const f32 templateRegionHeight,
+        const f32 templateRegionWidth,
+        const u8 verify_maxPixelDifference,
+        s32 &verify_meanAbsoluteDifference,
+        s32 &verify_numInBounds,
+        s32 &verify_numSimilarPixels,
+        MemoryStack scratch) const
+      {
         // This method is heavily based on Interp2_Projective
         // The call would be like: Interp2_Projective<u8,u8>(nextImage, originalCoordinates, interpolationHomography, centerOffset, nextImageTransformed2d, INTERPOLATE_LINEAR, 0);
 
@@ -665,9 +688,14 @@ namespace Anki
 
         const Point<f32> centerOffsetScaled = this->get_centerOffset(initialImageScaleF32);
 
+        const f32 roi_minX = templateRegionOfInterest.left - templateRegionWidth/2.0f;
+        const f32 roi_maxX = templateRegionOfInterest.right - templateRegionWidth/2.0f;
+        const f32 roi_minY = templateRegionOfInterest.top - templateRegionHeight/2.0f;
+        const f32 roi_maxY = templateRegionOfInterest.bottom - templateRegionHeight/2.0f;
+
         Meshgrid<f32> originalCoordinates(
-          Linspace(-templateRegionWidth/2.0f, templateRegionWidth/2.0f, static_cast<s32>(FLT_FLOOR(templateRegionWidth/scale))),
-          Linspace(-templateRegionHeight/2.0f, templateRegionHeight/2.0f, static_cast<s32>(FLT_FLOOR(templateRegionHeight/scale))));
+          Linspace(roi_minX, roi_maxX, static_cast<s32>(FLT_FLOOR((roi_maxX-roi_minX+1)/scale))),
+          Linspace(roi_minY, roi_maxY, static_cast<s32>(FLT_FLOOR((roi_maxY-roi_minY+1)/scale))));
 
         // Unused, remove?
         //const s32 outHeight = originalCoordinates.get_yGridVector().get_size();
@@ -700,9 +728,13 @@ namespace Anki
 
         // TODO: make the x and y limits from 1 to end-2
 
+        //Matlab matlab(false);
+        //matlab.EvalString("template = zeros(240,320);");
+        //matlab.EvalString("warped = zeros(240,320);");
+
         f32 yOriginal = yGridStart;
         for(s32 y=0; y<yIterationMax; y++) {
-          const u8 * restrict pTemplateImage = templateImage.Pointer(y, 0);
+          const u8 * restrict pTemplateImage = templateImage.Pointer(y+templateRegionOfInterest.top, templateRegionOfInterest.left);
 
           f32 xOriginal = xGridStart;
 
@@ -752,6 +784,8 @@ namespace Anki
             const s32 interpolatedPixelValue = RoundS32(InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse));
             const s32 templatePixelValue = pTemplateImage[x];
             const s32 grayvalueDifference = ABS(interpolatedPixelValue - templatePixelValue);
+
+            //matlab.EvalString("template(%d,%d) = %d; warped(%d,%d) = %d;", RoundS32(y0), RoundS32(x0), templatePixelValue, RoundS32(y0), RoundS32(x0), interpolatedPixelValue);
 
             totalGrayvalueDifference += grayvalueDifference;
 

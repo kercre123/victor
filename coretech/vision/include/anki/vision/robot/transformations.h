@@ -97,6 +97,19 @@ namespace Anki
 
         Result VerifyTransformation_Projective(
           const Array<u8> &templateImage,
+          const Rectangle<f32> &templateRegionOfInterest,
+          const Array<u8> &nextImage,
+          const f32 templateRegionHeight,
+          const f32 templateRegionWidth,
+          const u8 verify_maxPixelDifference,
+          s32 &verify_meanAbsoluteDifference,
+          s32 &verify_numInBounds,
+          s32 &verify_numSimilarPixels,
+          MemoryStack scratch) const;
+
+        // With no region of interest
+        Result VerifyTransformation_Projective(
+          const Array<u8> &templateImage,
           const Array<u8> &nextImage,
           const f32 templateRegionHeight,
           const f32 templateRegionWidth,

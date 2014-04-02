@@ -101,7 +101,10 @@ namespace Anki
         Point<f32> centerOffset((templateImage.get_size(1)-1) / 2.0f, (templateImage.get_size(0)-1) / 2.0f);
         this->transformation = Transformations::PlanarTransformation_f32(Transformations::TRANSFORM_PROJECTIVE, templateQuad, centerOffset, slowMemory);
 
-        //this->templateQuad = templateQuad;
+        this->templateQuad = templateQuad;
+
+        this->templateImage = Array<u8>(templateImageHeight, templateImageWidth, slowMemory);
+        this->templateImage.Set(templateImage);
 
         this->templateImageHeight = templateImage.get_size(0);
         this->templateImageWidth = templateImage.get_size(1);
@@ -171,12 +174,12 @@ namespace Anki
         }
 #endif // #ifdef SEND_BINARY_IMAGES_TO_MATLAB
 
-        this->homographyOffsetX = (static_cast<f32>(templateImageWidth)-1.0f) / 2.0f;
-        this->homographyOffsetY = (static_cast<f32>(templateImageHeight)-1.0f) / 2.0f;
+        //this->homographyOffsetX = (static_cast<f32>(templateImageWidth)-1.0f) / 2.0f;
+        //this->homographyOffsetY = (static_cast<f32>(templateImageHeight)-1.0f) / 2.0f;
 
-        this->grid = Meshgrid<f32>(
-          Linspace(-homographyOffsetX, homographyOffsetX, static_cast<s32>(FLT_FLOOR(templateImageWidth))),
-          Linspace(-homographyOffsetY, homographyOffsetY, static_cast<s32>(FLT_FLOOR(templateImageHeight))));
+        //this->grid = Meshgrid<f32>(
+        //  Linspace(-homographyOffsetX, homographyOffsetX, static_cast<s32>(FLT_FLOOR(templateImageWidth))),
+        //  Linspace(-homographyOffsetY, homographyOffsetY, static_cast<s32>(FLT_FLOOR(templateImageHeight))));
 
         //this->xGrid = this->grid.get_xGridVector().Evaluate(fastMemory);
         //this->yGrid = this->grid.get_yGridVector().Evaluate(fastMemory);
@@ -598,7 +601,20 @@ namespace Anki
 
         EndBenchmark("ut_grayvalueThreshold");
 
-        return RESULT_OK;
+        BeginBenchmark("ut_verifyTransformation");
+
+        const f32 templateRegionHeight = static_cast<f32>(templateImageHeight);
+        const f32 templateRegionWidth = static_cast<f32>(templateImageWidth);
+
+        lastResult = this->transformation.VerifyTransformation_Projective(
+          templateImage, this->templateQuad.ComputeBoundingRectangle(),
+          nextImage,
+          templateRegionHeight, templateRegionWidth,
+          verify_maxPixelDifference, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels,
+          fastScratch);
+        EndBenchmark("ut_verifyTransformation");
+
+        return lastResult;
       } // Result BinaryTracker::UpdateTrack()
 
       Result BinaryTracker::ComputeIndexLimitsVertical(const FixedLengthList<Point<s16> > &points, Array<s32> &yStartIndexes)
@@ -724,10 +740,6 @@ namespace Anki
             s32 curIndex = pXStartIndexes[warpedXrounded];
             const s32 endIndex = pXStartIndexes[warpedXrounded+1];
 
-            /*if(curIndex < 0 || curIndex > numNewPoints) {
-            printf("");
-            }*/
-
             // Find the start of the valid matches
             while( (curIndex<endIndex) && (pNewPoints[curIndex].y<minY) ) {
               curIndex++;
@@ -807,10 +819,6 @@ namespace Anki
 
             s32 curIndex = pYStartIndexes[warpedYrounded];
             const s32 endIndex = pYStartIndexes[warpedYrounded+1];
-
-            /*if(curIndex < 0 || curIndex > numNewPoints) {
-            printf("");
-            }*/
 
             // Find the start of the valid matches
             while( (curIndex<endIndex) && (pNewPoints[curIndex].x<minX) ) {
@@ -909,10 +917,6 @@ namespace Anki
 
             s32 curIndex = pXStartIndexes[warpedXrounded];
             const s32 endIndex = pXStartIndexes[warpedXrounded+1];
-
-            /*if(curIndex < 0 || curIndex > numNewPoints) {
-            printf("");
-            }*/
 
             // Find the start of the valid matches
             while( (curIndex<endIndex) && (pNewPoints[curIndex].y<minY) ) {
@@ -1067,10 +1071,6 @@ namespace Anki
             s32 curIndex = pYStartIndexes[warpedYrounded];
             const s32 endIndex = pYStartIndexes[warpedYrounded+1];
 
-            /*if(curIndex < 0 || curIndex > numNewPoints) {
-            printf("");
-            }*/
-
             // Find the start of the valid matches
             while( (curIndex<endIndex) && (pNewPoints[curIndex].x<minX) ) {
               curIndex++;
@@ -1206,10 +1206,6 @@ namespace Anki
             s32 curIndex = pXStartIndexes[warpedXrounded];
             const s32 endIndex = pXStartIndexes[warpedXrounded+1];
 
-            /*if(curIndex < 0 || curIndex > numNewPoints) {
-            printf("");
-            }*/
-
             // Find the start of the valid matches
             while( (curIndex<endIndex) && (pNewPoints[curIndex].y<minY) ) {
               curIndex++;
@@ -1282,10 +1278,6 @@ namespace Anki
 
             s32 curIndex = pYStartIndexes[warpedYrounded];
             const s32 endIndex = pYStartIndexes[warpedYrounded+1];
-
-            /*if(curIndex < 0 || curIndex > numNewPoints) {
-            printf("");
-            }*/
 
             // Find the start of the valid matches
             while( (curIndex<endIndex) && (pNewPoints[curIndex].x<minX) ) {
@@ -1362,10 +1354,6 @@ namespace Anki
 
             s32 curIndex = pXStartIndexes[warpedXrounded];
             const s32 endIndex = pXStartIndexes[warpedXrounded+1];
-
-            /*if(curIndex < 0 || curIndex > numNewPoints) {
-            printf("");
-            }*/
 
             // Find the start of the valid matches
             while( (curIndex<endIndex) && (pNewPoints[curIndex].y<minY) ) {
@@ -1456,10 +1444,6 @@ namespace Anki
 
             s32 curIndex = pYStartIndexes[warpedYrounded];
             const s32 endIndex = pYStartIndexes[warpedYrounded+1];
-
-            /*if(curIndex < 0 || curIndex > numNewPoints) {
-            printf("");
-            }*/
 
             // Find the start of the valid matches
             while( (curIndex<endIndex) && (pNewPoints[curIndex].x<minX) ) {

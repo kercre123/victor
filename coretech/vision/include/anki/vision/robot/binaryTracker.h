@@ -146,8 +146,6 @@ namespace Anki
 
         typedef struct
         {
-          //u16 templateIndex;
-          //u16 matchedIndex;
           Point<f32> templatePoint;
           Point<f32> matchedPoint;
         } IndexCorrespondence;
@@ -159,18 +157,18 @@ namespace Anki
           UPDATE_VERSION_RANSAC = 3
         };
 
-        //Array<u8> templateImage;
+        Array<u8> templateImage;
         s32 templateImageHeight;
         s32 templateImageWidth;
-        //Quadrilateral<f32> templateQuad;
+        Quadrilateral<f32> templateQuad;
 
         // The indexes of the detected edges
         EdgeLists templateEdges;
 
-        f32 homographyOffsetX;
-        f32 homographyOffsetY;
+        //f32 homographyOffsetX;
+        //f32 homographyOffsetY;
 
-        Meshgrid<f32> grid;
+        //Meshgrid<f32> grid;
         //Array<f32> xGrid;
         //Array<f32> yGrid;
 

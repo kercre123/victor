@@ -208,6 +208,9 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     // TODO: verify this number manually
     ASSERT_TRUE(verify_numMatches == 1241);
+    ASSERT_TRUE(verify_meanAbsoluteDifference == 2);
+    ASSERT_TRUE(verify_numInBounds == 10094);
+    ASSERT_TRUE(verify_numSimilarPixels == 10094);
 
     //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
 
@@ -273,6 +276,9 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     // TODO: verify this number manually
     ASSERT_TRUE(verify_numMatches == 622);
+    ASSERT_TRUE(verify_meanAbsoluteDifference == 2);
+    ASSERT_TRUE(verify_numInBounds == 10094);
+    ASSERT_TRUE(verify_numSimilarPixels == 10094);
 
     //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
 
@@ -338,6 +344,9 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     // TODO: verify this number manually
     ASSERT_TRUE(verify_numMatches == 1241);
+    ASSERT_TRUE(verify_meanAbsoluteDifference == 2);
+    ASSERT_TRUE(verify_numInBounds == 10094);
+    ASSERT_TRUE(verify_numSimilarPixels == 10094);
 
     //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
 
@@ -403,6 +412,9 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     // TODO: verify this number manually
     ASSERT_TRUE(verify_numMatches == 622);
+    ASSERT_TRUE(verify_meanAbsoluteDifference == 2);
+    ASSERT_TRUE(verify_numInBounds == 10094);
+    ASSERT_TRUE(verify_numSimilarPixels == 10094);
 
     //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
 
