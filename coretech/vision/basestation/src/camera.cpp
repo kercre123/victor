@@ -171,7 +171,6 @@ namespace Anki {
       // Turn the three image points into unit vectors corresponding to rays
       // in the direction of the image points
       const SmallSquareMatrix<3,WORKING_PRECISION> invK = this->get_calibration().get_invCalibrationMatrix<WORKING_PRECISION>();
-      const SmallSquareMatrix<3,WORKING_PRECISION> K    = this->get_calibration().get_calibrationMatrix<WORKING_PRECISION>();
       
       Quadrilateral<3, WORKING_PRECISION> imgRays, worldPoints;
       
@@ -255,8 +254,10 @@ namespace Anki {
         
       } // for each validation corner
       
-      return pose;
+      // Make sure to make the returned pose w.r.t. the camera!
+      pose.set_parent(&this->pose);
       
+      return pose;
     } // computeObjectPose(from quads)
  
     
