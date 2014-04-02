@@ -96,8 +96,14 @@ namespace Anki {
     // Constructors:
     SmallMatrix();
     SmallMatrix(const T* vals); // *assumes* vals is NROWS*NCOLS long
-    SmallMatrix(std::initializer_list<T>);
+    
+    SmallMatrix(std::initializer_list<T> valsList);
+    SmallMatrix(std::initializer_list<Point<NROWS,T> > colsList);
+    
     SmallMatrix(const SmallMatrix<NROWS,NCOLS,T> &M);
+    
+    //    template<typename T_other>
+    //    SmallMatrix(const SmallMatrix<NROWS,NCOLS,T_other> &M);
     
     //SmallMatrix<NROWS,NCOLS,T>& operator=(const SmallMatrix& other);
     
@@ -162,6 +168,23 @@ namespace Anki {
   template<size_t NROWS, size_t NCOLS, typename T>
   SmallMatrix<NROWS,NCOLS,T> abs(const SmallMatrix<NROWS,NCOLS,T>& M);
   
+  // Generic ND matrix-point multiplication
+  template<size_t NROWS, size_t NCOLS, typename T>
+  Point<NROWS,T> operator*(const SmallMatrix<NROWS,NCOLS,T> &M,
+                           const Point<NCOLS,T> &p)
+  {
+    Point<NROWS,T> result;
+    for(unsigned int i=0; i<NROWS; ++i) {
+      result[i] = M(i,0) * p[0];
+      for(unsigned int j=1; j<NCOLS; ++j) {
+        result[i] += M(i,j)*p[j];
+      }
+    }
+    
+    return result;
+  }
+  
+  
   // An extension of the SmallMatrix class for square matrices
   template<size_t DIM, typename T>
   class SmallSquareMatrix : public SmallMatrix<DIM,DIM,T>
@@ -169,6 +192,7 @@ namespace Anki {
   public:
     SmallSquareMatrix();
     SmallSquareMatrix(const SmallMatrix<DIM,DIM,T> &M);
+    SmallSquareMatrix(std::initializer_list<Point<DIM,T> > colsList); // list of columns
     
     using SmallMatrix<DIM,DIM,T>::operator();
     
@@ -220,7 +244,8 @@ namespace Anki {
     return result;
   }
   
-  // Generic ND matrix-point multiplication
+  /*
+  // Generic ND square-matrix by point multiplication
   template<size_t DIM, typename T>
   Point<DIM,T> operator*(const SmallSquareMatrix<DIM,T> &M,
                          const Point<DIM,T> &p)
@@ -235,6 +260,7 @@ namespace Anki {
     
     return result;
   }
+   */
   
   template<size_t DIM, typename T>
   T SmallSquareMatrix<DIM,T>::Trace() const
@@ -436,23 +462,49 @@ namespace Anki {
 #endif
   }
   
+  // call std::array-based constructor, which will compile-time check number of arguments
   template<size_t NROWS, size_t NCOLS, typename T>
   SmallMatrix<NROWS,NCOLS,T>::SmallMatrix(std::initializer_list<T> valsList)
   {
     CORETECH_ASSERT(valsList.size() == NROWS*NCOLS);
     
-#if ANKICORETECH_USE_OPENCV
     T vals[NROWS*NCOLS];
     size_t i=0;
     for(auto listItem = valsList.begin(); i<NROWS*NCOLS; ++listItem, ++i ) {
       vals[i] = *listItem;
     }
-    *this = cv::Matx<T,NROWS,NCOLS>(vals);
-#else
-    assert(false);
-    // TODO: Define our own opencv-free constructor?
-#endif
+    *this = SmallMatrix<NROWS,NCOLS,T>(vals);
   }
+ 
+  // call std::array-based constructor, which will compile-time check number of arguments
+  template<size_t NROWS, size_t NCOLS, typename T>
+  SmallMatrix<NROWS,NCOLS,T>::SmallMatrix(std::initializer_list<Point<NROWS,T> > colsList)
+  {
+    CORETECH_ASSERT(colsList.size() == NCOLS);
+    
+    size_t j=0;
+    for(auto col = colsList.begin(); j<NCOLS; ++col, ++j)
+    {
+      for(size_t i=0; i<NROWS; ++i) {
+        this->operator()(i,j) = (*col)[i];
+      }
+    }
+  }
+  
+  
+  /*
+  template<size_t NROWS, size_t NCOLS>
+  SmallMatrix<NROWS,NCOLS,float>::SmallMatrix(const SmallMatrix<NROWS,NCOLS,float> &M)
+  {
+    // TODO: Is there a better way to do this than looping and casting each element?
+    for(size_t i=0; i<NROWS; ++i) {
+      for(size_t j=0; j<NCOLS; ++j) {
+        this->operator()(i,j) = static_cast<float>(M(i,j));
+      }
+    }
+  }
+   */
+  
   
   template<size_t NROWS, size_t NCOLS, typename T>
   SmallMatrix<NROWS,NCOLS,T>::SmallMatrix(const SmallMatrix<NROWS,NCOLS,T> &M)
@@ -465,7 +517,7 @@ namespace Anki {
     // TODO: Define our own opencv-free copy constructor?
 #endif
   }
-
+  
   
   template<size_t NROWS, size_t NCOLS, typename T>
   SmallMatrix<NROWS,NCOLS,T>::SmallMatrix(const cv::Matx<T,NROWS,NCOLS> &cvMatrix)
@@ -694,6 +746,13 @@ namespace Anki {
   template<size_t DIM, typename T>
   SmallSquareMatrix<DIM,T>::SmallSquareMatrix(const SmallMatrix<DIM,DIM,T> &M)
   : SmallMatrix<DIM,DIM,T>(M)
+  {
+    
+  }
+  
+  template<size_t DIM, typename T>
+  SmallSquareMatrix<DIM,T>::SmallSquareMatrix(std::initializer_list<Point<DIM,T> > colsList)
+  : SmallMatrix<DIM,DIM,T>(colsList)
   {
     
   }
