@@ -207,6 +207,9 @@ namespace Anki {
         // corner. Use the remaining three to estimate the pose.
         const Quad::CornerName i_validate = cornerList[0];
         
+        //printf("Validating with %d, estimating with %d, %d, %d\n",
+        //       i_validate, cornerList[1], cornerList[2], cornerList[3]);
+        
         std::array<Pose3d,4> possiblePoses;
         P3P::computePossiblePoses(worldPoints[cornerList[1]],
                                   worldPoints[cornerList[2]],
