@@ -286,7 +286,7 @@ namespace Anki
         const s32 maxIterations,
         const f32 convergenceTolerance,
         const u8 verify_maxPixelDifference,
-        bool& verify_converged,
+        bool &verify_converged,
         s32 &verify_meanAbsoluteDifference,
         s32 &verify_numInBounds,
         s32 &verify_numSimilarPixels,

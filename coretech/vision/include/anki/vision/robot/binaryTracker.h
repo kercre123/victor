@@ -45,11 +45,12 @@ namespace Anki
           const s32 edgeDetection_minComponentWidth, //< The smallest horizontal size of a component (1 to 4 is good)
           const s32 edgeDetection_maxDetectionsPerType, //< As many as you have memory and time for
           const s32 edgeDetection_everyNLines, //< As many as you have time for
-          MemoryStack &memory);
+          MemoryStack &fastMemory,
+          MemoryStack &slowMemory);
 
         // Runs one iteration each of translation and projective
         //
-        // numMatches returns the number of template pixels within verification_maxTranslationDistance of a point in nextImage
+        // numMatches returns the number of template pixels within verify_maxTranslationDistance of a point in nextImage
         // To check is the update is reasonable, numMatches / this->get_numTemplatePixels() will give the percentage of matches
         Result UpdateTrack_Normal(
           const Array<u8> &nextImage,
@@ -60,8 +61,12 @@ namespace Anki
           const f32 edgeDetection_threshold_scaleRegionPercent, //< How much to scale template bounding box (.8 is a good value)
           const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
           const s32 matching_maxTranslationDistance, const s32 matching_maxProjectiveDistance,
-          const s32 verification_maxTranslationDistance,
+          const s32 verify_maxTranslationDistance,
+          const u8 verify_maxPixelDifference,
           s32 &numMatches,
+          s32 &verify_meanAbsoluteDifference, //< For all pixels in the template, compute the mean difference between the template and the final warped template
+          s32 &verify_numInBounds, //< How many template pixels are in the image, after the template is warped?
+          s32 &verify_numSimilarPixels, //< For all pixels in the template, how many are within verifyMaxPixelDifference grayvalues? Use in conjunction with get_numTemplatePixels() or numInBounds for a percentage.
           MemoryStack fastScratch,
           MemoryStack slowScratch);
 
@@ -75,8 +80,12 @@ namespace Anki
           const f32 edgeDetection_threshold_scaleRegionPercent, //< How much to scale template bounding box (.8 is a good value)
           const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
           const s32 matching_maxTranslationDistance, const s32 matching_maxProjectiveDistance,
-          const s32 verification_maxTranslationDistance,
+          const s32 verify_maxTranslationDistance,
+          const u8 verify_maxPixelDifference,
           s32 &numMatches,
+          s32 &verify_meanAbsoluteDifference, //< For all pixels in the template, compute the mean difference between the template and the final warped template
+          s32 &verify_numInBounds, //< How many template pixels are in the image, after the template is warped?
+          s32 &verify_numSimilarPixels, //< For all pixels in the template, how many are within verifyMaxPixelDifference grayvalues? Use in conjunction with get_numTemplatePixels() or numInBounds for a percentage.
           MemoryStack fastScratch,
           MemoryStack slowScratch);
 
@@ -89,11 +98,15 @@ namespace Anki
           const f32 edgeDetection_threshold_scaleRegionPercent, //< How much to scale template bounding box (.8 is a good value)
           const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
           const s32 matching_maxProjectiveDistance,
-          const s32 verification_maxTranslationDistance,
+          const s32 verify_maxTranslationDistance,
           const s32 ransac_maxIterations,
           const s32 ransac_numSamplesPerType, //< for four types
           const s32 ransac_inlinerDistance,
+          const u8 verify_maxPixelDifference,
           s32 &numMatches,
+          s32 &verify_meanAbsoluteDifference, //< For all pixels in the template, compute the mean difference between the template and the final warped template
+          s32 &verify_numInBounds, //< How many template pixels are in the image, after the template is warped?
+          s32 &verify_numSimilarPixels, //< For all pixels in the template, how many are within verifyMaxPixelDifference grayvalues? Use in conjunction with get_numTemplatePixels() or numInBounds for a percentage.
           MemoryStack fastScratch,
           MemoryStack slowScratch);
 
@@ -158,8 +171,8 @@ namespace Anki
         f32 homographyOffsetY;
 
         Meshgrid<f32> grid;
-        Array<f32> xGrid;
-        Array<f32> yGrid;
+        //Array<f32> xGrid;
+        //Array<f32> yGrid;
 
         Transformations::PlanarTransformation_f32 transformation;
 
@@ -328,11 +341,14 @@ namespace Anki
           const f32 edgeDetection_threshold_scaleRegionPercent, //< How much to scale template bounding box (.8 is a good value)
           const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
           const s32 matching_maxTranslationDistance, const s32 matching_maxProjectiveDistance,
-          const s32 verification_maxTranslationDistance,
+          const s32 verify_maxTranslationDistance, const u8 verify_maxPixelDifference,
           const s32 ransac_maxIterations,
           const s32 ransac_numSamplesPerType, //< for four types
           const s32 ransac_inlinerDistance,
           s32 &numMatches,
+          s32 &verify_meanAbsoluteDifference, //< For all pixels in the template, compute the mean difference between the template and the final warped template
+          s32 &verify_numInBounds, //< How many template pixels are in the image, after the template is warped?
+          s32 &verify_numSimilarPixels, //< For all pixels in the template, how many are within verifyMaxPixelDifference grayvalues? Use in conjunction with get_numTemplatePixels() or numInBounds for a percentage.
           MemoryStack fastScratch,
           MemoryStack slowScratch);
       }; // class BinaryTracker

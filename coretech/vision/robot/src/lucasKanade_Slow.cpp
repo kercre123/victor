@@ -376,7 +376,7 @@ namespace Anki
         return RESULT_OK;
       }
 
-      Result LucasKanadeTracker_Slow::UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, const bool useWeights, bool& verify_converged, MemoryStack scratch)
+      Result LucasKanadeTracker_Slow::UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, const bool useWeights, bool &verify_converged, MemoryStack scratch)
       {
         Result lastResult;
 

@@ -51,7 +51,7 @@ namespace Anki
         const s32 maxIterations,
         const f32 convergenceTolerance,
         const u8 verify_maxPixelDifference,
-        bool& verify_converged,
+        bool &verify_converged,
         s32 &verify_meanAbsoluteDifference, //< For all pixels in the template, compute the mean difference between the template and the final warped template
         s32 &verify_numInBounds, // How many template pixels are in the image, after the template is warped?
         s32 &verify_numSimilarPixels, //< For all pixels in the template, how many are within verifyMaxPixelDifference grayvalues? Use in conjunction with get_numTemplatePixels() for a percentage.

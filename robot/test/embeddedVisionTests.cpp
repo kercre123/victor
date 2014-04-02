@@ -143,13 +143,15 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
   const f32 scaleTemplateRegionPercent = 1.05f;
 
-  const s32 verification_maxTranslationDistance = 1;
+  const s32 verify_maxTranslationDistance = 1;
+
+  const u8 verify_maxPixelDifference = 30;
 
   const s32 ransac_matching_maxProjectiveDistance = normal_matching_maxProjectiveDistance;
 
   const s32 ransac_maxIterations = 20;
   const s32 ransac_numSamplesPerType = 8;
-  const s32 ransac_inlinerDistance = verification_maxTranslationDistance;
+  const s32 ransac_inlinerDistance = verify_maxTranslationDistance;
 
   templateImage.Set(&cozmo_2014_01_29_11_41_05_10_320x240[0], cozmo_2014_01_29_11_41_05_10_320x240_WIDTH*cozmo_2014_01_29_11_41_05_10_320x240_HEIGHT);
   nextImage.Set(&cozmo_2014_01_29_11_41_05_12_320x240[0], cozmo_2014_01_29_11_41_05_12_320x240_WIDTH*cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT);
@@ -168,7 +170,12 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     BeginBenchmark("BinaryTracker init");
 
-    TemplateTracker::BinaryTracker tracker(templateImage, templateQuad, scaleTemplateRegionPercent, edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent, edgeDetection_minComponentWidth, templateEdgeDetection_maxDetectionsPerType, templateEdgeDetection_everyNLines, scratchOnchip);
+    TemplateTracker::BinaryTracker tracker(
+      templateImage, templateQuad,
+      scaleTemplateRegionPercent,
+      edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent, edgeDetection_minComponentWidth,
+      templateEdgeDetection_maxDetectionsPerType, templateEdgeDetection_everyNLines,
+      scratchOnchip, scratchOffchip);
     EndBenchmark("BinaryTracker init");
 
     //templateImage.Show("templateImage",false);
@@ -181,7 +188,10 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     BeginBenchmark("BinaryTracker update fixed-float");
 
-    s32 numMatches;
+    s32 verify_numMatches;
+    s32 verify_meanAbsoluteDifference;
+    s32 verify_numInBounds;
+    s32 verify_numSimilarPixels;
 
     const Result result = tracker.UpdateTrack_Normal(
       nextImage,
@@ -189,14 +199,15 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
       edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType,
       1,
       normal_matching_maxTranslationDistance, normal_matching_maxProjectiveDistance,
-      verification_maxTranslationDistance,
-      numMatches, scratchCcm, scratchOffchip);
+      verify_maxTranslationDistance, verify_maxPixelDifference,
+      verify_numMatches, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels,
+      scratchCcm, scratchOffchip);
     EndBenchmark("BinaryTracker update fixed-float");
 
     ASSERT_TRUE(result == RESULT_OK);
 
     // TODO: verify this number manually
-    ASSERT_TRUE(numMatches == 1241);
+    ASSERT_TRUE(verify_numMatches == 1241);
 
     //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
 
@@ -230,7 +241,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
       scaleTemplateRegionPercent,
       edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent, edgeDetection_minComponentWidth,
       templateEdgeDetection_maxDetectionsPerType, templateEdgeDetection_everyNLines,
-      scratchOnchip);
+      scratchOnchip, scratchOffchip);
     EndBenchmark("BinaryTracker init");
 
     const s32 numTemplatePixels = tracker.get_numTemplatePixels();
@@ -242,7 +253,10 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     BeginBenchmark("BinaryTracker update fixed-float");
 
-    s32 numMatches;
+    s32 verify_numMatches;
+    s32 verify_meanAbsoluteDifference;
+    s32 verify_numInBounds;
+    s32 verify_numSimilarPixels;
 
     const Result result = tracker.UpdateTrack_Normal(
       nextImage,
@@ -250,14 +264,15 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
       edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType,
       1,
       normal_matching_maxTranslationDistance, normal_matching_maxProjectiveDistance,
-      verification_maxTranslationDistance,
-      numMatches, scratchCcm, scratchOffchip);
+      verify_maxTranslationDistance, verify_maxPixelDifference,
+      verify_numMatches, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels,
+      scratchCcm, scratchOffchip);
     EndBenchmark("BinaryTracker update fixed-float");
 
     ASSERT_TRUE(result == RESULT_OK);
 
     // TODO: verify this number manually
-    ASSERT_TRUE(numMatches == 622);
+    ASSERT_TRUE(verify_numMatches == 622);
 
     //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
 
@@ -291,7 +306,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
       scaleTemplateRegionPercent,
       edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent, edgeDetection_minComponentWidth,
       templateEdgeDetection_maxDetectionsPerType, templateEdgeDetection_everyNLines,
-      scratchOnchip);
+      scratchOnchip, scratchOffchip);
     EndBenchmark("BinaryTracker init");
 
     const s32 numTemplatePixels = tracker.get_numTemplatePixels();
@@ -303,7 +318,10 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     BeginBenchmark("BinaryTracker update fixed-float");
 
-    s32 numMatches;
+    s32 verify_numMatches;
+    s32 verify_meanAbsoluteDifference;
+    s32 verify_numInBounds;
+    s32 verify_numSimilarPixels;
 
     const Result result = tracker.UpdateTrack_List(
       nextImage,
@@ -311,14 +329,15 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
       edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType,
       1,
       normal_matching_maxTranslationDistance, normal_matching_maxProjectiveDistance,
-      verification_maxTranslationDistance,
-      numMatches, scratchCcm, scratchOffchip);
+      verify_maxTranslationDistance, verify_maxPixelDifference,
+      verify_numMatches, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels,
+      scratchCcm, scratchOffchip);
     EndBenchmark("BinaryTracker update fixed-float");
 
     ASSERT_TRUE(result == RESULT_OK);
 
     // TODO: verify this number manually
-    ASSERT_TRUE(numMatches == 1241);
+    ASSERT_TRUE(verify_numMatches == 1241);
 
     //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
 
@@ -352,7 +371,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
       scaleTemplateRegionPercent,
       edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent, edgeDetection_minComponentWidth,
       templateEdgeDetection_maxDetectionsPerType, templateEdgeDetection_everyNLines,
-      scratchOnchip);
+      scratchOnchip, scratchOffchip);
     EndBenchmark("BinaryTracker init");
 
     const s32 numTemplatePixels = tracker.get_numTemplatePixels();
@@ -364,7 +383,10 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     BeginBenchmark("BinaryTracker update fixed-float");
 
-    s32 numMatches;
+    s32 verify_numMatches;
+    s32 verify_meanAbsoluteDifference;
+    s32 verify_numInBounds;
+    s32 verify_numSimilarPixels;
 
     const Result result = tracker.UpdateTrack_List(
       nextImage,
@@ -372,14 +394,15 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
       edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType,
       1,
       normal_matching_maxTranslationDistance, normal_matching_maxProjectiveDistance,
-      verification_maxTranslationDistance,
-      numMatches, scratchCcm, scratchOffchip);
+      verify_maxTranslationDistance, verify_maxPixelDifference,
+      verify_numMatches, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels,
+      scratchCcm, scratchOffchip);
     EndBenchmark("BinaryTracker update fixed-float");
 
     ASSERT_TRUE(result == RESULT_OK);
 
     // TODO: verify this number manually
-    ASSERT_TRUE(numMatches == 622);
+    ASSERT_TRUE(verify_numMatches == 622);
 
     //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
 
@@ -413,7 +436,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
       scaleTemplateRegionPercent,
       edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent, edgeDetection_minComponentWidth,
       templateEdgeDetection_maxDetectionsPerType, templateEdgeDetection_everyNLines,
-      scratchOnchip);
+      scratchOnchip, scratchOffchip);
     EndBenchmark("BinaryTracker init");
 
     const s32 numTemplatePixels = tracker.get_numTemplatePixels();
@@ -425,7 +448,10 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     BeginBenchmark("BinaryTracker update fixed-float");
 
-    s32 numMatches;
+    s32 verify_numMatches;
+    s32 verify_meanAbsoluteDifference;
+    s32 verify_numInBounds;
+    s32 verify_numSimilarPixels;
 
     const Result result = tracker.UpdateTrack_Ransac(
       nextImage,
@@ -433,17 +459,18 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
       edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType,
       1,
       ransac_matching_maxProjectiveDistance,
-      verification_maxTranslationDistance,
+      verify_maxTranslationDistance, verify_maxPixelDifference,
       ransac_maxIterations, ransac_numSamplesPerType, ransac_inlinerDistance,
-      numMatches, scratchCcm, scratchOffchip);
+      verify_numMatches, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels,
+      scratchCcm, scratchOffchip);
     EndBenchmark("BinaryTracker update fixed-float");
 
     ASSERT_TRUE(result == RESULT_OK);
 
-    printf("numMatches = %d / %d\n", numMatches, numTemplatePixels);
+    printf("numMatches = %d / %d\n", verify_numMatches, numTemplatePixels);
 
     // TODO: verify this number manually
-    //ASSERT_TRUE(numMatches == );
+    //ASSERT_TRUE(verify_numMatches == );
 
     //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
 
@@ -477,7 +504,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
       scaleTemplateRegionPercent,
       edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent, edgeDetection_minComponentWidth,
       templateEdgeDetection_maxDetectionsPerType, templateEdgeDetection_everyNLines,
-      scratchOnchip);
+      scratchOnchip, scratchOffchip);
     EndBenchmark("BinaryTracker init");
 
     const s32 numTemplatePixels = tracker.get_numTemplatePixels();
@@ -489,7 +516,10 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     BeginBenchmark("BinaryTracker update fixed-float");
 
-    s32 numMatches;
+    s32 verify_numMatches;
+    s32 verify_meanAbsoluteDifference;
+    s32 verify_numInBounds;
+    s32 verify_numSimilarPixels;
 
     const Result result = tracker.UpdateTrack_Ransac(
       nextImage,
@@ -497,17 +527,18 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
       edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType,
       1,
       ransac_matching_maxProjectiveDistance,
-      verification_maxTranslationDistance,
+      verify_maxTranslationDistance, verify_maxPixelDifference,
       ransac_maxIterations, ransac_numSamplesPerType, ransac_inlinerDistance,
-      numMatches, scratchCcm, scratchOffchip);
+      verify_numMatches, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels,
+      scratchCcm, scratchOffchip);
     EndBenchmark("BinaryTracker update fixed-float");
 
     ASSERT_TRUE(result == RESULT_OK);
 
-    printf("numMatches = %d / %d\n", numMatches, numTemplatePixels);
+    printf("numMatches = %d / %d\n", verify_numMatches, numTemplatePixels);
 
     // TODO: verify this number manually
-    //ASSERT_TRUE(numMatches == );
+    //ASSERT_TRUE(verify_numMatches == );
 
     //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
 
