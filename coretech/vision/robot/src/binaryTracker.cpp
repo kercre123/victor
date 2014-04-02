@@ -122,6 +122,7 @@ namespace Anki
         const Rectangle<f32> edgeDetection_imageRegionOfInterestRaw = templateQuad.ComputeBoundingRectangle().ComputeScaledRectangle(edgeDetection_threshold_scaleRegionPercent);
         const Rectangle<s32> edgeDetection_imageRegionOfInterest(static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.left), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.right), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.top), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.bottom));
 
+        //templateHistogram
         this->lastGrayvalueThreshold = ComputeGrayvalueThrehold(
           templateImage,
           edgeDetection_imageRegionOfInterest,
@@ -129,7 +130,10 @@ namespace Anki
           edgeDetection_threshold_xIncrement,
           edgeDetection_threshold_blackPercentile,
           edgeDetection_threshold_whitePercentile,
+          this->templateHistogram,
           fastMemory);
+
+        this->lastImageHistogram = this->templateHistogram;
 
         const Rectangle<f32> templateRectRaw = templateQuad.ComputeBoundingRectangle().ComputeScaledRectangle(scaleTemplateRegionPercent);
         const Rectangle<s32> templateRect(static_cast<s32>(templateRectRaw.left), static_cast<s32>(templateRectRaw.right), static_cast<s32>(templateRectRaw.top), static_cast<s32>(templateRectRaw.bottom));
@@ -597,6 +601,7 @@ namespace Anki
           edgeDetection_threshold_xIncrement,
           edgeDetection_threshold_blackPercentile,
           edgeDetection_threshold_whitePercentile,
+          lastImageHistogram,
           fastScratch);
 
         EndBenchmark("ut_grayvalueThreshold");
@@ -609,8 +614,8 @@ namespace Anki
 
           //lastResult = this->transformation.VerifyTransformation_Projective_LinearInterpolate(
           lastResult = this->transformation.VerifyTransformation_Projective_NearestNeighbor(
-            templateImage, this->templateQuad.ComputeBoundingRectangle(),
-            nextImage,
+            templateImage, this->templateHistogram, this->templateQuad.ComputeBoundingRectangle(),
+            nextImage, this->lastImageHistogram,
             templateRegionHeight, templateRegionWidth, 2,
             verify_maxPixelDifference, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels,
             fastScratch);

@@ -22,10 +22,17 @@ namespace Anki
     typedef struct Histogram
     {
       FixedLengthList<s32> counts;
+
+      // Automatically compute some statistics when computing the histogram
       s32 numElements;
+      s32 sum; // The sum of all values of all elements
+      f32 mean; // The mean of all values of all elements
+      f32 standardDeviation; // The unbiased standard deviation of all values of all elements
 
       Histogram();
       Histogram(const s32 numBins, MemoryStack &memory);
+
+      s32 get_numBins() const;
     } Histogram;
 
     // Counts the number of pixels for each 0-255 grayvalue, and returns a list of the counts

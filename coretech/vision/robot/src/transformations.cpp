@@ -9,6 +9,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/vision/robot/transformations.h"
 #include "anki/vision/robot/fiducialDetection.h"
+#include "anki/vision/robot/histogram.h"
+
 #include "anki/common/robot/opencvLight.h"
 #include "anki/common/robot/arrayPatterns.h"
 #include "anki/common/robot/interpolate.h"
@@ -659,8 +661,10 @@ namespace Anki
 
       Result PlanarTransformation_f32::VerifyTransformation_Projective_NearestNeighbor(
         const Array<u8> &templateImage,
+        const Histogram &templateHistogram,
         const Rectangle<f32> &templateRegionOfInterest,
         const Array<u8> &nextImage,
+        const Histogram &nextImageHistogram,
         const f32 templateRegionHeight,
         const f32 templateRegionWidth,
         const s32 templateCoordinateIncrement,
@@ -670,6 +674,8 @@ namespace Anki
         s32 &numSimilarPixels,
         MemoryStack scratch) const
       {
+        const s32 numStatisticsFractionalBits = 8;
+
         AnkiConditionalErrorAndReturnValue(templateImage.get_size(0) == nextImage.get_size(0) && templateImage.get_size(1) == nextImage.get_size(1),
           RESULT_FAIL_INVALID_SIZE, "PlanarTransformation_f32::VerifyTransformation_Projective", "input images must be the same size");
 
@@ -718,6 +724,12 @@ namespace Anki
         const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2] / initialImageScaleF32;
         const f32 h20 = homography[2][0] * initialImageScaleF32; const f32 h21 = homography[2][1] * initialImageScaleF32; //const f32 h22 = 1.0f;
 
+        const s32 templateMeanS32 = RoundS32(templateHistogram.mean);
+        const s32 nextImageMeanS32 = RoundS32(nextImageHistogram.mean);
+
+        const s32 templateStdDivisor = RoundS32(static_cast<f32>((1 << numStatisticsFractionalBits)) / templateHistogram.standardDeviation);
+        const s32 nextImageStdDivisor = RoundS32(static_cast<f32>((1 << numStatisticsFractionalBits)) / nextImageHistogram.standardDeviation);
+
         numInBounds = 0;
         numSimilarPixels = 0;
         s32 totalGrayvalueDifference = 0;
@@ -754,8 +766,12 @@ namespace Anki
 
             numInBounds++;
 
-            const s32 nearestPixelValue = *nextImage.Pointer(yTransformedS32, xTransformedS32);
-            const s32 templatePixelValue = pTemplateImage[x];
+            const s32 nearestPixelValueRaw = *nextImage.Pointer(yTransformedS32, xTransformedS32);
+            const s32 templatePixelValueRaw = pTemplateImage[x];
+
+            const s32 nearestPixelValue  = (nearestPixelValueRaw - nextImageMeanS32) * nextImageStdDivisor;
+            const s32 templatePixelValue = (templatePixelValueRaw - templateMeanS32) * templateStdDivisor;
+
             const s32 grayvalueDifference = ABS(nearestPixelValue - templatePixelValue);
 
 #if !defined(__EDG__)

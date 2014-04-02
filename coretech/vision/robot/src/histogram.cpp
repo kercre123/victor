@@ -13,6 +13,29 @@ namespace Anki
 {
   namespace Embedded
   {
+    static void UpdateHistogramStatistics_UnsignedInt(Histogram &histogram)
+    {
+      const s32 numBins = histogram.get_numBins();
+
+      const s32 * restrict pHistogram = histogram.counts.Pointer(0);
+
+      histogram.sum = 0;
+      for(s32 i=0; i<numBins; i++) {
+        histogram.sum += i * pHistogram[i];
+      }
+
+      histogram.mean = static_cast<f32>(histogram.sum) / static_cast<f32>(histogram.numElements);
+
+      f32 sumOfSquaredDifferences = 0;
+      for(s32 i=0; i<numBins; i++) {
+        const f32 diff = static_cast<f32>(i) - histogram.mean;
+        sumOfSquaredDifferences += static_cast<f32>(pHistogram[i]) * (diff*diff);
+      }
+
+      // Unbiased standard deviation
+      histogram.standardDeviation = sqrtf( sumOfSquaredDifferences / static_cast<f32>(histogram.numElements - 1) );
+    }
+
     Histogram::Histogram()
       : counts(FixedLengthList<s32>()), numElements(-1)
     {
@@ -24,23 +47,28 @@ namespace Anki
       this->counts.set_size(numBins);
     }
 
+    s32 Histogram::get_numBins() const
+    {
+      return this->counts.get_size();
+    }
+
     Histogram ComputeHistogram(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const s32 yIncrement, const s32 xIncrement, MemoryStack &memory)
     {
       const s32 imageHeight = image.get_size(0);
       const s32 imageWidth = image.get_size(1);
-      
+
       Histogram histogram(256, memory);
 
       s32 * restrict pHistogram = histogram.counts.Pointer(0);
-      
+
       const Rectangle<s32> imageRegionOfInterestClipped(
         MAX(0, MIN(imageWidth-1, imageRegionOfInterest.left)),
         MAX(0, MIN(imageWidth-1, imageRegionOfInterest.right)),
         MAX(0, MIN(imageHeight-1, imageRegionOfInterest.top)),
         MAX(0, MIN(imageHeight-1, imageRegionOfInterest.bottom)));
-      
+
       histogram.numElements = 0;
-      
+
       for(s32 y=imageRegionOfInterestClipped.top; y<=imageRegionOfInterestClipped.bottom; y+=yIncrement) {
         const u8 * restrict pImage = image.Pointer(y,0);
 
@@ -55,8 +83,10 @@ namespace Anki
       /*const s32 numY = ((imageRegionOfInterest.bottom - imageRegionOfInterest.top) / yIncrement) + 1;
       const s32 numX = ((imageRegionOfInterest.right - imageRegionOfInterest.left) / xIncrement) + 1;
       histogram.numElements = numY * numX;
-      
+
       printf("%d %d", histogram.numElements, numPoints);*/
+
+      UpdateHistogramStatistics_UnsignedInt(histogram);
 
       return histogram;
     }
@@ -68,7 +98,7 @@ namespace Anki
       s32 binIndex = 0;
       s32 count = 0;
 
-      const s32 numBins = histogram.counts.get_maximumSize();
+      const s32 numBins = histogram.get_numBins();
 
       const s32 * restrict pHistogram = histogram.counts.Pointer(0);
 

@@ -14,6 +14,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/common/robot/config.h"
 #include "anki/common/robot/array2d.h"
+#include "anki/vision/robot/histogram.h"
 
 namespace Anki
 {
@@ -97,8 +98,10 @@ namespace Anki
 
         Result VerifyTransformation_Projective_NearestNeighbor(
           const Array<u8> &templateImage,
+          const Histogram &templateHistogram,
           const Rectangle<f32> &templateRegionOfInterest,
           const Array<u8> &nextImage,
+          const Histogram &nextImageHistogram,
           const f32 templateRegionHeight,
           const f32 templateRegionWidth,
           const s32 templateCoordinateIncrement,

@@ -466,9 +466,10 @@ namespace Anki
       const s32 xIncrement,
       const f32 blackPercentile,
       const f32 whitePercentile,
+      Histogram &histogram,
       MemoryStack scratch)
     {
-      const Histogram histogram = ComputeHistogram(image, imageRegionOfInterest, yIncrement, xIncrement, scratch);
+      histogram = ComputeHistogram(image, imageRegionOfInterest, yIncrement, xIncrement, scratch);
 
       const s32 grayvalueBlack = ComputePercentile(histogram, blackPercentile);
       const s32 grayvalueWhite = ComputePercentile(histogram, whitePercentile);

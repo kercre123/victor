@@ -17,6 +17,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/fixedLengthList.h"
 #include "anki/common/robot/geometry.h"
 
+#include "anki/vision/robot/histogram.h"
+
 namespace Anki
 {
   namespace Embedded
@@ -62,6 +64,7 @@ namespace Anki
       const s32 xIncrement,
       const f32 blackPercentile, //< What percentile of histogram energy is black? (.1 is a good value)
       const f32 whitePercentile, //< What percentile of histogram energy is white? (.9 is a good value)
+      Histogram &histogram, //< Histogram is computed as a byproduct
       MemoryStack scratch);
   } // namespace Embedded
 } //namespace Anki

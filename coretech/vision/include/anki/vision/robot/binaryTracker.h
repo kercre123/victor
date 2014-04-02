@@ -15,6 +15,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/config.h"
 #include "anki/vision/robot/edgeDetection.h"
 #include "anki/vision/robot/transformations.h"
+#include "anki/vision/robot/histogram.h"
 
 namespace Anki
 {
@@ -161,6 +162,7 @@ namespace Anki
         s32 templateImageHeight;
         s32 templateImageWidth;
         Quadrilateral<f32> templateQuad;
+        Histogram templateHistogram;
 
         // The indexes of the detected edges
         EdgeLists templateEdges;
@@ -178,6 +180,7 @@ namespace Anki
         // The last threshold is the value computed on the last image, that will be used for the next image
         u8 lastUsedGrayvalueThreshold;
         u8 lastGrayvalueThreshold;
+        Histogram lastImageHistogram;
 
         bool isValid;
 
