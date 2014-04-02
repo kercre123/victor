@@ -728,9 +728,9 @@ namespace Anki
 
         // TODO: make the x and y limits from 1 to end-2
 
-        //Matlab matlab(false);
-        //matlab.EvalString("template = zeros(240,320);");
-        //matlab.EvalString("warped = zeros(240,320);");
+        /*Matlab matlab(false);
+        matlab.EvalString("template = zeros(240,320);");
+        matlab.EvalString("warped = zeros(240,320);");*/
 
         f32 yOriginal = yGridStart;
         for(s32 y=0; y<yIterationMax; y++) {
@@ -743,18 +743,18 @@ namespace Anki
             const f32 xTransformedRaw = h00*xOriginal + h01*yOriginal + h02;
             const f32 yTransformedRaw = h10*xOriginal + h11*yOriginal + h12;
 
-            const f32 normalization = h20*xOriginal + h21*yOriginal + 1.0f;
+            const f32 normalization = 1.0f / (h20*xOriginal + h21*yOriginal + 1.0f);
 
-            const f32 xTransformed = (xTransformedRaw / normalization) + centerOffsetScaled.x;
-            const f32 yTransformed = (yTransformedRaw / normalization) + centerOffsetScaled.y;
+            const f32 xTransformed = (xTransformedRaw * normalization) + centerOffsetScaled.x;
+            const f32 yTransformed = (yTransformedRaw * normalization) + centerOffsetScaled.y;
 
             xOriginal += xGridDelta;
 
             const f32 x0 = FLT_FLOOR(xTransformed);
-            const f32 x1 = ceilf(xTransformed); // x0 + 1.0f;
+            const f32 x1 = x0 + 1.0f; // ceilf(xTransformed);
 
             const f32 y0 = FLT_FLOOR(yTransformed);
-            const f32 y1 = ceilf(yTransformed); // y0 + 1.0f;
+            const f32 y1 = y0 + 1.0f; // ceilf(yTransformed);
 
             // If out of bounds, continue
             if(x0 < xyReferenceMin || x1 > xReferenceMax || y0 < xyReferenceMin || y1 > yReferenceMax) {
