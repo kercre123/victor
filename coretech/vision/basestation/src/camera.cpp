@@ -156,51 +156,112 @@ namespace Anki {
       
     } // computeObjectPose(from std::vectors)
     
-    
-    Pose3d Camera::computeObjectPose(const Quad2f& imgPoints,
-                                     const Quad3f& objPoints) const
+    template<typename WORKING_PRECISION>
+    Pose3d Camera::computeObjectPose(const Quad2f& imgQuad,
+                                     const Quad3f& worldQuad) const
     {
       if(not isCalibrationSet) {
         CORETECH_THROW("Camera::computeObjectPose() called before calibration set.");
       }
       
-      /*
-       #if ANKICORETECH_USE_OPENCV
-       std::vector<cv::Point2f> cvImagePoints;
-       std::vector<cv::Point3f> cvObjPoints;
-       
-       cvImagePoints.emplace_back(imgPoints[Quad::TopLeft].get_CvPoint_());
-       cvImagePoints.emplace_back(imgPoints[Quad::BottomLeft].get_CvPoint_());
-       cvImagePoints.emplace_back(imgPoints[Quad::TopRight].get_CvPoint_());
-       cvImagePoints.emplace_back(imgPoints[Quad::BottomRight].get_CvPoint_());
-       
-       cvObjPoints.emplace_back(objPoints[Quad::TopLeft].get_CvPoint3_());
-       cvObjPoints.emplace_back(objPoints[Quad::BottomLeft].get_CvPoint3_());
-       cvObjPoints.emplace_back(objPoints[Quad::TopRight].get_CvPoint3_());
-       cvObjPoints.emplace_back(objPoints[Quad::BottomRight].get_CvPoint3_());
-       
-       return computeObjectPoseHelper(cvImagePoints, cvObjPoints);
-       
-       #else
-       // TODO: Implement our own non-opencv version?
-       CORETECH_THROW("Unimplemented!")
-       return Pose3d();
-       #endif
-       */
-      
-      // For now, just use three of the four points in the quadrilateral to
-      // estimate the posssible poses according to P3P. Use the fourth to
-      // pick which of the four possible solutions returned is valid.
-      
-      // TODO: consider computing using all sets of three corners and keeping
-      // the one with the least reprojection error of all corners
-      
       Pose3d pose;
-      P3P::computePose<float,double>(imgPoints, objPoints, this->get_calibration(), pose);
+      
+      
+      // Turn the three image points into unit vectors corresponding to rays
+      // in the direction of the image points
+      const SmallSquareMatrix<3,WORKING_PRECISION> invK = this->get_calibration().get_invCalibrationMatrix<WORKING_PRECISION>();
+      const SmallSquareMatrix<3,WORKING_PRECISION> K    = this->get_calibration().get_calibrationMatrix<WORKING_PRECISION>();
+      
+      Quadrilateral<3, WORKING_PRECISION> imgRays, worldPoints;
+      
+      for(Quad::CornerName i_corner=Quad::FirstCorner; i_corner < Quad::NumCorners; ++i_corner)
+      {
+        // Get unit vector pointing along each image ray
+        //   imgRay = K^(-1) * [u v 1]^T
+        imgRays[i_corner].x() = static_cast<WORKING_PRECISION>(imgQuad[i_corner].x());
+        imgRays[i_corner].y() = static_cast<WORKING_PRECISION>(imgQuad[i_corner].y());
+        imgRays[i_corner].z() = WORKING_PRECISION(1);
+        
+        imgRays[i_corner] = invK * imgRays[i_corner];
+        imgRays[i_corner].makeUnitLength();
+        
+        // cast each world quad into working precision quad
+        worldPoints[i_corner].x() = static_cast<WORKING_PRECISION>(worldQuad[i_corner].x());
+        worldPoints[i_corner].y() = static_cast<WORKING_PRECISION>(worldQuad[i_corner].y());
+        worldPoints[i_corner].z() = static_cast<WORKING_PRECISION>(worldQuad[i_corner].z());
+      }
+      
+      
+      // Compute best pose from each subset of three corners, keeping the one
+      // with the lowest error
+      float minErrorOuter = std::numeric_limits<float>::max();
+      for(Quad::CornerName i_validate=Quad::FirstCorner; i_validate < Quad::NumCorners; ++i_validate)
+      {
+        // Create the list of three points to use for estimation (all but
+        // the current validation point)
+        std::vector<Quad::CornerName> estimateIndex;
+        estimateIndex.reserve(3);
+        
+        for(Quad::CornerName i_corner=Quad::FirstCorner; i_corner < Quad::NumCorners; ++i_corner) {
+          if(i_corner != i_validate) {
+            estimateIndex.push_back(i_corner);
+          }
+        }
+        
+        CORETECH_ASSERT(estimateIndex.size() == 3);
+        
+        // Use those three points to get four possible poses
+        std::array<Pose3d,4> possiblePoses;
+        P3P::computePossiblePoses(worldPoints[estimateIndex[0]],
+                                  worldPoints[estimateIndex[1]],
+                                  worldPoints[estimateIndex[2]],
+                                  imgRays[estimateIndex[0]],
+                                  imgRays[estimateIndex[1]],
+                                  imgRays[estimateIndex[2]],
+                                  possiblePoses);
+        
+        // Find the pose with the least reprojection error for the 4th
+        // validation corner (which was not used in estimating the pose)
+        s32 bestSolution = -1;
+        float minErrorInner = std::numeric_limits<float>::max();
+        
+        for(s32 i_solution=0; i_solution<4; ++i_solution)
+        {
+          Point2f projectedPoint;
+          this->project3dPoint(possiblePoses[i_solution]*worldQuad[i_validate], projectedPoint);
+          
+          float error = (projectedPoint - imgQuad[i_validate]).length();
+          
+          if(error < minErrorInner) {
+            minErrorInner = error;
+            bestSolution = i_solution;
+          }
+          
+        } // for each solution
+        
+        CORETECH_ASSERT(bestSolution >= 0);
+        
+        // If the pose using this validation corner is better than the
+        // best so far, keep it
+        if(minErrorInner < minErrorOuter) {
+          minErrorOuter = minErrorInner;
+          pose = possiblePoses[bestSolution];
+        }
+        
+      } // for each validation corner
       
       return pose;
       
     } // computeObjectPose(from quads)
+ 
+    
+    // Explicit instantiation for single and double precision
+    template Pose3d Camera::computeObjectPose<float>(const Quad2f& imgQuad,
+                                                     const Quad3f& worldQuad) const;
+
+    template Pose3d Camera::computeObjectPose<double>(const Quad2f& imgQuad,
+                                                      const Quad3f& worldQuad) const;
+
     
     void  Camera::project3dPoint(const Point3f& objPoint,
                                  Point2f&       imgPoint) const

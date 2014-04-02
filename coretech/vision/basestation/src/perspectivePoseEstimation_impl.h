@@ -97,28 +97,28 @@ namespace Anki {
         
         std::complex<PRECISION> P (-alpha_pw2/12-gamma,0);
         std::complex<PRECISION> Q (-alpha_pw3/108+alpha*gamma/3-beta*beta/8,0);
-        std::complex<PRECISION> R = -Q/2.0+sqrt(pow(Q,2.0)/4.0+pow(P,3.0)/27.0);
+        std::complex<PRECISION> R = -Q/PRECISION(2)+sqrt(pow(Q,PRECISION(2))/PRECISION(4)+pow(P,PRECISION(3))/PRECISION(27));
         
-        std::complex<PRECISION> U = pow(R,(1.0/3.0));
+        std::complex<PRECISION> U = pow(R,PRECISION(1.0/3.0));
         std::complex<PRECISION> y;
         
         if (U.real() == 0) {
-          y = -5.0*alpha/6.0-pow(Q,(1.0/3.0));
+          y = -PRECISION(5)*alpha/PRECISION(6)-pow(Q,PRECISION(1.0/3.0));
         } else {
-          y = -5.0*alpha/6.0-P/(3.0*U)+U;
+          y = -PRECISION(5)*alpha/PRECISION(6)-P/(PRECISION(3)*U)+U;
         }
         
-        std::complex<PRECISION> w = sqrt(alpha+2.0*y);
+        std::complex<PRECISION> w = sqrt(alpha+PRECISION(2)*y);
         
         std::complex<PRECISION> temp;
         
-        temp = -B/(4.0*A) + 0.5*(w+sqrt(-(3.0*alpha+2.0*y+2.0*beta/w)));
+        temp = -B/(PRECISION(4)*A) + PRECISION(0.5)*(w+sqrt(-(PRECISION(3)*alpha+PRECISION(2)*y+PRECISION(2)*beta/w)));
         realRoots[0] = temp.real();
-        temp = -B/(4.0*A) + 0.5*(w-sqrt(-(3.0*alpha+2.0*y+2.0*beta/w)));
+        temp = -B/(PRECISION(4)*A) + PRECISION(0.5)*(w-sqrt(-(PRECISION(3)*alpha+PRECISION(2)*y+PRECISION(2)*beta/w)));
         realRoots[1] = temp.real();
-        temp = -B/(4.0*A) + 0.5*(-w+sqrt(-(3.0*alpha+2.0*y-2.0*beta/w)));
+        temp = -B/(PRECISION(4)*A) + PRECISION(0.5)*(-w+sqrt(-(PRECISION(3)*alpha+PRECISION(2)*y-PRECISION(2)*beta/w)));
         realRoots[2] = temp.real();
-        temp = -B/(4.0*A) + 0.5*(-w-sqrt(-(3.0*alpha+2.0*y-2.0*beta/w)));
+        temp = -B/(PRECISION(4)*A) + PRECISION(0.5)*(-w-sqrt(-(PRECISION(3)*alpha+PRECISION(2)*y-PRECISION(2)*beta/w)));
         realRoots[3] = temp.real();
         
         return EXIT_SUCCESS;
@@ -323,102 +323,6 @@ namespace Anki {
                                     poses);
       } // computePossiblePoses(from std::arrays)
       
-      
-      template<typename INPUT_PRECISION, typename WORKING_PRECISION>
-      ReturnCode computePose(const Quadrilateral<2,INPUT_PRECISION>& imgQuad,
-                             const Quadrilateral<3,INPUT_PRECISION>& worldQuad,
-                             const CameraCalibration&                calib,
-                             Pose3d& pose)
-      {
-        // Turn the three image points into unit vectors corresponding to rays
-        // in the direction of the image points
-        const SmallSquareMatrix<3,WORKING_PRECISION> invK = calib.get_invCalibrationMatrix<WORKING_PRECISION>();
-        const SmallSquareMatrix<3,WORKING_PRECISION> K    = calib.get_calibrationMatrix<WORKING_PRECISION>();
-        
-        Quadrilateral<3, WORKING_PRECISION> imgRays, worldPoints;
-
-        for(Quad::CornerName i_corner=Quad::FirstCorner; i_corner < Quad::NumCorners; ++i_corner)
-        {
-          // Get unit vector pointing along each image ray
-          //   imgRay = K^(-1) * [u v 1]^T
-          imgRays[i_corner].x() = static_cast<WORKING_PRECISION>(imgQuad[i_corner].x());
-          imgRays[i_corner].y() = static_cast<WORKING_PRECISION>(imgQuad[i_corner].y());
-          imgRays[i_corner].z() = WORKING_PRECISION(1);
-          
-          imgRays[i_corner] = invK * imgRays[i_corner];
-          imgRays[i_corner].makeUnitLength();
-          
-          // cast each world quad into working precision quad
-          worldPoints[i_corner].x() = static_cast<WORKING_PRECISION>(worldQuad[i_corner].x());
-          worldPoints[i_corner].y() = static_cast<WORKING_PRECISION>(worldQuad[i_corner].y());
-          worldPoints[i_corner].z() = static_cast<WORKING_PRECISION>(worldQuad[i_corner].z());
-        }
-        
-        
-        // Compute best pose from each subset of three corners, keeping the one
-        // with the lowest error
-        INPUT_PRECISION minErrorOuter = std::numeric_limits<INPUT_PRECISION>::max();
-        for(Quad::CornerName i_validate=Quad::FirstCorner; i_validate < Quad::NumCorners; ++i_validate)
-        {
-          // Create the list of three points to use for estimation (all but
-          // the current validation point)
-          std::vector<Quad::CornerName> estimateIndex;
-          estimateIndex.reserve(3);
-
-          for(Quad::CornerName i_corner=Quad::FirstCorner; i_corner < Quad::NumCorners; ++i_corner) {
-            if(i_corner != i_validate) {
-              estimateIndex.push_back(i_corner);
-            }
-          }
-          
-          CORETECH_ASSERT(estimateIndex.size() == 3);
-          
-          // Use those three points to get four possible poses
-          std::array<Pose3d,4> possiblePoses;
-          computePossiblePoses(worldPoints[estimateIndex[0]],
-                               worldPoints[estimateIndex[1]],
-                               worldPoints[estimateIndex[2]],
-                               imgRays[estimateIndex[0]],
-                               imgRays[estimateIndex[1]],
-                               imgRays[estimateIndex[2]],
-                               possiblePoses);
-          
-          // Find the pose with the least reprojection error for the 4th
-          // validation corner (which was not used in estimating the pose)
-          s32 bestSolution = -1;
-          INPUT_PRECISION minErrorInner = std::numeric_limits<INPUT_PRECISION>::max();
-          
-          for(s32 i_solution=0; i_solution<4; ++i_solution)
-          {
-            //Point3f projectedPoint3d = K * (possiblePoses[i_solution]*worldValidationPoint);
-            Point<3,WORKING_PRECISION> projectedPoint3d = K * (possiblePoses[i_solution]*worldQuad[i_validate]);
-            
-            Point<2,INPUT_PRECISION> projectedPoint2d(static_cast<INPUT_PRECISION>(projectedPoint3d.x() / projectedPoint3d.z()),
-                                                      static_cast<INPUT_PRECISION>(projectedPoint3d.y() / projectedPoint3d.z()));
-            
-            INPUT_PRECISION error = (projectedPoint2d - imgQuad[i_validate]).length();
-            
-            if(error < minErrorInner) {
-              minErrorInner = error;
-              bestSolution = i_solution;
-            }
-            
-          } // for each solution
-          
-          CORETECH_ASSERT(bestSolution >= 0);
-
-          // If the pose using this validation corner is better than the
-          // best so far, keep it
-          if(minErrorInner < minErrorOuter) {
-            minErrorOuter = minErrorInner;
-            pose = possiblePoses[bestSolution];
-          }
-          
-        } // for each validation corner
-        
-        return EXIT_SUCCESS;
-        
-      } // computePose()
       
     } // namespace P3P
   } // namespace Vision

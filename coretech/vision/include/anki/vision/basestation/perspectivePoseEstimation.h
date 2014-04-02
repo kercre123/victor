@@ -18,8 +18,6 @@
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/math/quad.h"
 
-#include "anki/vision/basestation/camera.h"
-
 namespace Anki {
   namespace Vision {
     namespace P3P {
@@ -44,16 +42,15 @@ namespace Anki {
                                       const std::array<Point<3,PRECISION>,3>& imageRays,
                                       std::array<Pose3d,4>& poses);
       
-      // Use three points of a quadrilateral and the algorithm above to compute
-      // possible camera poses, then use the fourth point to choose the valid
-      // pose. Do this four times (once using each corner as the validation
-      // point) and choose the best.  The templating allows the internal working
-      // precision to differ from the precision of the input quadrilaterals.
-      template<typename INPUT_PRECISION, typename WORKING_PRECISION>
-      ReturnCode computePose(const Quadrilateral<2,INPUT_PRECISION>& imgQuad,
-                             const Quadrilateral<3,INPUT_PRECISION>& worldQuad,
-                             const CameraCalibration&                calib,
-                             Pose3d& pose);
+      
+      template<typename PRECISION>
+      ReturnCode computePossiblePoses(const Point<3,PRECISION>& worldPoint1,
+                                      const Point<3,PRECISION>& worldPoint2,
+                                      const Point<3,PRECISION>& worldPoint3,
+                                      const Point<3,PRECISION>& imageRay1,
+                                      const Point<3,PRECISION>& imageRay2,
+                                      const Point<3,PRECISION>& imageRay3,
+                                      std::array<Pose3d,4>& poses);
       
       
     } // namespace P3P
