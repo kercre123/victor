@@ -46,8 +46,9 @@ namespace Anki {
       
       // Use three points of a quadrilateral and the algorithm above to compute
       // possible camera poses, then use the fourth point to choose the valid
-      // pose. The templating allows the internal working precision to differ
-      // from the precision of the input quadrilaterals.
+      // pose. Do this four times (once using each corner as the validation
+      // point) and choose the best.  The templating allows the internal working
+      // precision to differ from the precision of the input quadrilaterals.
       template<typename INPUT_PRECISION, typename WORKING_PRECISION>
       ReturnCode computePose(const Quadrilateral<2,INPUT_PRECISION>& imgQuad,
                              const Quadrilateral<3,INPUT_PRECISION>& worldQuad,
