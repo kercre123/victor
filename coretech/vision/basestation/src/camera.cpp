@@ -7,6 +7,7 @@
 //
 
 #include <algorithm>
+#include <list>
 
 #include "anki/common/basestation/jsonTools.h"
 
@@ -195,29 +196,24 @@ namespace Anki {
       // Compute best pose from each subset of three corners, keeping the one
       // with the lowest error
       float minErrorOuter = std::numeric_limits<float>::max();
-      for(Quad::CornerName i_validate=Quad::FirstCorner; i_validate < Quad::NumCorners; ++i_validate)
+    
+      std::array<Quad::CornerName,4> cornerList = {
+        {Quad::TopLeft, Quad::BottomLeft, Quad::TopRight, Quad::BottomRight}
+      };
+  
+      for(s32 i=0; i<4; ++i)
       {
-        // Create the list of three points to use for estimation (all but
-        // the current validation point)
-        std::vector<Quad::CornerName> estimateIndex;
-        estimateIndex.reserve(3);
+        // Use the first corner in the current corner list as the validation
+        // corner. Use the remaining three to estimate the pose.
+        const Quad::CornerName i_validate = cornerList[0];
         
-        for(Quad::CornerName i_corner=Quad::FirstCorner; i_corner < Quad::NumCorners; ++i_corner) {
-          if(i_corner != i_validate) {
-            estimateIndex.push_back(i_corner);
-          }
-        }
-        
-        CORETECH_ASSERT(estimateIndex.size() == 3);
-        
-        // Use those three points to get four possible poses
         std::array<Pose3d,4> possiblePoses;
-        P3P::computePossiblePoses(worldPoints[estimateIndex[0]],
-                                  worldPoints[estimateIndex[1]],
-                                  worldPoints[estimateIndex[2]],
-                                  imgRays[estimateIndex[0]],
-                                  imgRays[estimateIndex[1]],
-                                  imgRays[estimateIndex[2]],
+        P3P::computePossiblePoses(worldPoints[cornerList[1]],
+                                  worldPoints[cornerList[2]],
+                                  worldPoints[cornerList[3]],
+                                  imgRays[cornerList[1]],
+                                  imgRays[cornerList[2]],
+                                  imgRays[cornerList[3]],
                                   possiblePoses);
         
         // Find the pose with the least reprojection error for the 4th
@@ -246,6 +242,12 @@ namespace Anki {
         if(minErrorInner < minErrorOuter) {
           minErrorOuter = minErrorInner;
           pose = possiblePoses[bestSolution];
+        }
+        
+        if(i<4) {
+          // Rearrange corner list for next loop, to get a different
+          // validation corner each time
+          std::swap(cornerList[0], cornerList[i_validate+1]);
         }
         
       } // for each validation corner

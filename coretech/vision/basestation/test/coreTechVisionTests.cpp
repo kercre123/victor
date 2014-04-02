@@ -70,7 +70,8 @@ GTEST_TEST(TestPoseEstimation, FromQuads)
   proj += projNoise;
   
   // Make sure all the corners projected within the image
-  for(Quad::CornerName i_corner=Quad::FirstCorner; i_corner<Quad::NumCorners; ++i_corner) {
+  for(Quad::CornerName i_corner=Quad::FirstCorner; i_corner<Quad::NumCorners; ++i_corner)
+  {
     ASSERT_TRUE(not std::isnan(proj[i_corner].x()));
     ASSERT_TRUE(not std::isnan(proj[i_corner].y()));
     ASSERT_GE(proj[i_corner].x(), 0.f);
@@ -83,7 +84,15 @@ GTEST_TEST(TestPoseEstimation, FromQuads)
   Pose3d poseEst = camera.computeObjectPose(proj, marker3d);
   
   // Check if the estimated pose matches the true pose
-  printf("Angular difference is %f\n", poseEst.get_rotationMatrix().GetAngleDiffFrom(poseTrue.get_rotationMatrix()).getDegrees());
+  printf("Angular difference is %f degrees (threshold = %f degrees)\n",
+         poseEst.get_rotationMatrix().GetAngleDiffFrom(poseTrue.get_rotationMatrix()).getDegrees(),
+         angleThreshold.getDegrees());
+  printf("Translation difference is (%f, %f, %f), threshold = %f\n",
+         poseEst.get_translation().x() - poseTrue.get_translation().x(),
+         poseEst.get_translation().y() - poseTrue.get_translation().y(),
+         poseEst.get_translation().z() - poseTrue.get_translation().z(),
+         distThreshold);
+  
   EXPECT_TRUE(poseEst.IsSameAs(poseTrue, distThreshold, angleThreshold));
   
   // Check if the reprojected points match the originals
