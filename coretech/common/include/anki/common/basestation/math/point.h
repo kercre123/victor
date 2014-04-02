@@ -101,9 +101,10 @@ namespace Anki {
     Point<N,T>& operator+= (const T value);
     Point<N,T>& operator-= (const T value);
     Point<N,T>& operator*= (const T value);
+    Point<N,T>& operator/= (const T value);
     Point<N,T>& operator+= (const Point<N,T> &other);
     Point<N,T>& operator-= (const Point<N,T> &other);
-    Point<N,T> operator-() const;
+    Point<N,T>  operator-() const;
     
     // Math methods:
     
@@ -320,6 +321,15 @@ namespace Anki {
   {
     for(PointDimType i=0; i<N; ++i) {
       this->data[i] -= value;
+    }
+    return *this;
+  }
+  
+  template<PointDimType N, typename T>
+  Point<N,T>& Point<N,T>::operator/= (const T value)
+  {
+    for(PointDimType i=0; i<N; ++i) {
+      this->data[i] /= value;
     }
     return *this;
   }
