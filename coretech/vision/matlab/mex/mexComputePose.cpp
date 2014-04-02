@@ -1,5 +1,7 @@
 #include <mex.h>
 
+#include "anki/vision/basestation/camera.h"
+
 #include "../../basestation/src/perspectivePoseEstimation_impl.h"
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
@@ -54,18 +56,19 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                                   static_cast<f32>(mxCenter[0]),
                                   static_cast<f32>(mxCenter[1]));
 
-  Quadrilateral<2, double> imgQuad(Point<2,double>(mxImgCorners[0],mxImgCorners[4]),
-                                   Point<2,double>(mxImgCorners[1],mxImgCorners[5]),
-                                   Point<2,double>(mxImgCorners[2],mxImgCorners[6]),
-                                   Point<2,double>(mxImgCorners[3],mxImgCorners[7]));
+  Quad2f imgQuad(Point2f(mxImgCorners[0],mxImgCorners[4]),
+                 Point2f(mxImgCorners[1],mxImgCorners[5]),
+                 Point2f(mxImgCorners[2],mxImgCorners[6]),
+                 Point2f(mxImgCorners[3],mxImgCorners[7]));
   
-  Quadrilateral<3, double> worldQuad(Point<3,double>(mxWorldCorners[0],mxWorldCorners[4],mxWorldCorners[8]),
-                                     Point<3,double>(mxWorldCorners[1],mxWorldCorners[5],mxWorldCorners[9]),
-                                     Point<3,double>(mxWorldCorners[2],mxWorldCorners[6],mxWorldCorners[10]),
-                                     Point<3,double>(mxWorldCorners[3],mxWorldCorners[7],mxWorldCorners[11]));
+  Quad3f worldQuad(Point3f(mxWorldCorners[0],mxWorldCorners[4],mxWorldCorners[8]),
+                   Point3f(mxWorldCorners[1],mxWorldCorners[5],mxWorldCorners[9]),
+                   Point3f(mxWorldCorners[2],mxWorldCorners[6],mxWorldCorners[10]),
+                   Point3f(mxWorldCorners[3],mxWorldCorners[7],mxWorldCorners[11]));
   
-  Pose3d pose;
-  Vision::P3P::computePose<double,double>(imgQuad, worldQuad, calib, pose);
+  Vision::Camera camera;
+  camera.set_calibration(calib);
+  Pose3d pose = camera.computeObjectPose<double>(imgQuad, worldQuad);
   
   
   plhs[0] = mxCreateDoubleMatrix(3, 3, mxREAL);
