@@ -95,6 +95,17 @@ namespace Anki
           MemoryStack scratch,
           const f32 scale=1.0f) const;
 
+        Result VerifyTransformation_Projective(
+          const Array<u8> &templateImage,
+          const Array<u8> &nextImage,
+          const f32 templateRegionHeight,
+          const f32 templateRegionWidth,
+          const u8 verify_maxPixelDifference,
+          s32 &verify_meanAbsoluteDifference,
+          s32 &verify_numInBounds,
+          s32 &verify_numSimilarPixels,
+          MemoryStack scratch) const;
+
         bool IsValid() const;
 
         // Set this object's transformType, centerOffset, initialCorners, and homography

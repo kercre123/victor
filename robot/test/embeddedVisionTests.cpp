@@ -1797,8 +1797,8 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
   const f32 minSideLength = 0.03f*MAX(newFiducials_320x240_HEIGHT,newFiducials_320x240_WIDTH);
   const f32 maxSideLength = 0.97f*MIN(newFiducials_320x240_HEIGHT,newFiducials_320x240_WIDTH);
 
-  const s32 component_minimumNumPixels = static_cast<s32>(Round(minSideLength*minSideLength - (0.8f*minSideLength)*(0.8f*minSideLength)));
-  const s32 component_maximumNumPixels = static_cast<s32>(Round(maxSideLength*maxSideLength - (0.8f*maxSideLength)*(0.8f*maxSideLength)));
+  const s32 component_minimumNumPixels = RoundS32(minSideLength*minSideLength - (0.8f*minSideLength)*(0.8f*minSideLength));
+  const s32 component_maximumNumPixels = RoundS32(maxSideLength*maxSideLength - (0.8f*maxSideLength)*(0.8f*maxSideLength));
   const s32 component_sparseMultiplyThreshold = 1000 << 5;
   const s32 component_solidMultiplyThreshold = 2 << 5;
 
