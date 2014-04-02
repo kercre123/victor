@@ -603,15 +603,36 @@ namespace Anki
 
         BeginBenchmark("ut_verifyTransformation");
 
-        const f32 templateRegionHeight = static_cast<f32>(templateImageHeight);
-        const f32 templateRegionWidth = static_cast<f32>(templateImageWidth);
+        {
+          const f32 templateRegionHeight = static_cast<f32>(templateImageHeight);
+          const f32 templateRegionWidth = static_cast<f32>(templateImageWidth);
 
-        lastResult = this->transformation.VerifyTransformation_Projective(
-          templateImage, this->templateQuad.ComputeBoundingRectangle(),
-          nextImage,
-          templateRegionHeight, templateRegionWidth,
-          verify_maxPixelDifference, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels,
-          fastScratch);
+          lastResult = this->transformation.VerifyTransformation_Projective(
+            templateImage, this->templateQuad.ComputeBoundingRectangle(),
+            nextImage,
+            templateRegionHeight, templateRegionWidth, 2,
+            verify_maxPixelDifference, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels,
+            fastScratch);
+
+          //Array<u8> downsampledTemplate(templateImageHeight/8, templateImageWidth/8, fastScratch);
+          //Array<u8> downsampledNext(templateImageHeight/8, templateImageWidth/8, fastScratch);
+
+          //Rectangle<f32> boundingRect = this->templateQuad.ComputeBoundingRectangle();
+          //Rectangle<f32> downsampledRect(boundingRect.left/8, boundingRect.right/8, boundingRect.top/8, boundingRect.bottom/8);
+
+          //ImageProcessing::DownsampleByPowerOfTwo<u8,u32,u8>(templateImage, 3, downsampledTemplate, fastScratch);
+          //ImageProcessing::DownsampleByPowerOfTwo<u8,u32,u8>(nextImage, 3, downsampledNext, fastScratch);
+
+          //const f32 templateRegionHeight = static_cast<f32>(templateImageHeight/8);
+          //const f32 templateRegionWidth = static_cast<f32>(templateImageWidth/8);
+
+          //lastResult = this->transformation.VerifyTransformation_Projective(
+          //  downsampledTemplate, downsampledRect,
+          //  downsampledNext,
+          //  templateRegionHeight, templateRegionWidth,
+          //  verify_maxPixelDifference, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels,
+          //  fastScratch);
+        }
         EndBenchmark("ut_verifyTransformation");
 
         return lastResult;

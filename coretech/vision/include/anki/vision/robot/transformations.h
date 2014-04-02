@@ -101,10 +101,11 @@ namespace Anki
           const Array<u8> &nextImage,
           const f32 templateRegionHeight,
           const f32 templateRegionWidth,
-          const u8 verify_maxPixelDifference,
-          s32 &verify_meanAbsoluteDifference,
-          s32 &verify_numInBounds,
-          s32 &verify_numSimilarPixels,
+          const s32 templateCoordinateIncrement,
+          const u8 maxPixelDifference,
+          s32 &meanAbsoluteDifference,
+          s32 &numInBounds,
+          s32 &numSimilarPixels,
           MemoryStack scratch) const;
 
         // With no region of interest
@@ -113,10 +114,10 @@ namespace Anki
           const Array<u8> &nextImage,
           const f32 templateRegionHeight,
           const f32 templateRegionWidth,
-          const u8 verify_maxPixelDifference,
-          s32 &verify_meanAbsoluteDifference,
-          s32 &verify_numInBounds,
-          s32 &verify_numSimilarPixels,
+          const u8 maxPixelDifference,
+          s32 &meanAbsoluteDifference,
+          s32 &numInBounds,
+          s32 &numSimilarPixels,
           MemoryStack scratch) const;
 
         bool IsValid() const;

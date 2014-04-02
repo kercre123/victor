@@ -641,10 +641,10 @@ namespace Anki
         const Array<u8> &nextImage,
         const f32 templateRegionHeight,
         const f32 templateRegionWidth,
-        const u8 verify_maxPixelDifference,
-        s32 &verify_meanAbsoluteDifference,
-        s32 &verify_numInBounds,
-        s32 &verify_numSimilarPixels,
+        const u8 maxPixelDifference,
+        s32 &meanAbsoluteDifference,
+        s32 &numInBounds,
+        s32 &numSimilarPixels,
         MemoryStack scratch) const
       {
         const Rectangle<f32> templateRegionOfInterest(0, static_cast<f32>(templateImage.get_size(1)), 0, static_cast<f32>(templateImage.get_size(0)));
@@ -652,8 +652,8 @@ namespace Anki
         return VerifyTransformation_Projective(
           templateImage, templateRegionOfInterest,
           nextImage,
-          templateRegionHeight, templateRegionWidth,
-          verify_maxPixelDifference, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels,
+          templateRegionHeight, templateRegionWidth, 1,
+          maxPixelDifference, meanAbsoluteDifference, numInBounds, numSimilarPixels,
           scratch);
       }
 
@@ -663,10 +663,11 @@ namespace Anki
         const Array<u8> &nextImage,
         const f32 templateRegionHeight,
         const f32 templateRegionWidth,
-        const u8 verify_maxPixelDifference,
-        s32 &verify_meanAbsoluteDifference,
-        s32 &verify_numInBounds,
-        s32 &verify_numSimilarPixels,
+        const s32 templateCoordinateIncrement,
+        const u8 maxPixelDifference,
+        s32 &meanAbsoluteDifference,
+        s32 &numInBounds,
+        s32 &numSimilarPixels,
         MemoryStack scratch) const
       {
         // This method is heavily based on Interp2_Projective
@@ -675,7 +676,7 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(templateImage.get_size(0) == nextImage.get_size(0) && templateImage.get_size(1) == nextImage.get_size(1),
           RESULT_FAIL_INVALID_SIZE, "PlanarTransformation_f32::VerifyTransformation_Projective", "input images must be the same size");
 
-        const s32 verify_maxPixelDifferenceS32 = verify_maxPixelDifference;
+        const s32 maxPixelDifferenceS32 = maxPixelDifference;
 
         const s32 nextImageHeight = nextImage.get_size(0);
         const s32 nextImageWidth = nextImage.get_size(1);
@@ -694,8 +695,8 @@ namespace Anki
         const f32 roi_maxY = templateRegionOfInterest.bottom - templateRegionHeight/2.0f;
 
         Meshgrid<f32> originalCoordinates(
-          Linspace(roi_minX, roi_maxX, static_cast<s32>(FLT_FLOOR((roi_maxX-roi_minX+1)/scale))),
-          Linspace(roi_minY, roi_maxY, static_cast<s32>(FLT_FLOOR((roi_maxY-roi_minY+1)/scale))));
+          Linspace(roi_minX, roi_maxX, static_cast<s32>(FLT_FLOOR((roi_maxX-roi_minX+1)/(scale)))),
+          Linspace(roi_minY, roi_maxY, static_cast<s32>(FLT_FLOOR((roi_maxY-roi_minY+1)/(scale)))));
 
         // Unused, remove?
         //const s32 outHeight = originalCoordinates.get_yGridVector().get_size();
@@ -722,23 +723,23 @@ namespace Anki
         const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2] / initialImageScaleF32;
         const f32 h20 = homography[2][0] * initialImageScaleF32; const f32 h21 = homography[2][1] * initialImageScaleF32; //const f32 h22 = 1.0f;
 
-        verify_numInBounds = 0;
-        verify_numSimilarPixels = 0;
+        numInBounds = 0;
+        numSimilarPixels = 0;
         s32 totalGrayvalueDifference = 0;
 
         // TODO: make the x and y limits from 1 to end-2
 
-        /*Matlab matlab(false);
-        matlab.EvalString("template = zeros(240,320);");
-        matlab.EvalString("warped = zeros(240,320);");*/
+        //Matlab matlab(false);
+        //matlab.EvalString("template = zeros(240,320);");
+        //matlab.EvalString("warped = zeros(240,320);");
 
         f32 yOriginal = yGridStart;
-        for(s32 y=0; y<yIterationMax; y++) {
-          const u8 * restrict pTemplateImage = templateImage.Pointer(y+templateRegionOfInterest.top, templateRegionOfInterest.left);
+        for(s32 y=0; y<yIterationMax; y+=templateCoordinateIncrement) {
+          const u8 * restrict pTemplateImage = templateImage.Pointer(RoundS32(y+templateRegionOfInterest.top), RoundS32(templateRegionOfInterest.left));
 
           f32 xOriginal = xGridStart;
 
-          for(s32 x=0; x<xIterationMax; x++) {
+          for(s32 x=0; x<xIterationMax; x+=templateCoordinateIncrement) {
             // TODO: These two could be strength reduced
             const f32 xTransformedRaw = h00*xOriginal + h01*yOriginal + h02;
             const f32 yTransformedRaw = h10*xOriginal + h11*yOriginal + h12;
@@ -748,7 +749,7 @@ namespace Anki
             const f32 xTransformed = (xTransformedRaw * normalization) + centerOffsetScaled.x;
             const f32 yTransformed = (yTransformedRaw * normalization) + centerOffsetScaled.y;
 
-            xOriginal += xGridDelta;
+            xOriginal += xGridDelta * templateCoordinateIncrement;
 
             const f32 x0 = FLT_FLOOR(xTransformed);
             const f32 x1 = x0 + 1.0f; // ceilf(xTransformed);
@@ -761,7 +762,7 @@ namespace Anki
               continue;
             }
 
-            verify_numInBounds++;
+            numInBounds++;
 
             const f32 alphaX = xTransformed - x0;
             const f32 alphaXinverse = 1 - alphaX;
@@ -789,15 +790,15 @@ namespace Anki
 
             totalGrayvalueDifference += grayvalueDifference;
 
-            if(grayvalueDifference <= verify_maxPixelDifferenceS32) {
-              verify_numSimilarPixels++;
+            if(grayvalueDifference <= maxPixelDifferenceS32) {
+              numSimilarPixels++;
             }
           } // for(s32 x=0; x<xIterationMax; x++)
 
-          yOriginal += yGridDelta;
+          yOriginal += yGridDelta * templateCoordinateIncrement;
         } // for(s32 y=0; y<yIterationMax; y++)
 
-        verify_meanAbsoluteDifference = totalGrayvalueDifference / verify_numInBounds;
+        meanAbsoluteDifference = totalGrayvalueDifference / numInBounds;
 
         return RESULT_OK;
       } // Result PlanarTransformation_f32::VerifyTransformation_Projective()
