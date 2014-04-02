@@ -95,7 +95,20 @@ namespace Anki
           MemoryStack scratch,
           const f32 scale=1.0f) const;
 
-        Result VerifyTransformation_Projective(
+        Result VerifyTransformation_Projective_NearestNeighbor(
+          const Array<u8> &templateImage,
+          const Rectangle<f32> &templateRegionOfInterest,
+          const Array<u8> &nextImage,
+          const f32 templateRegionHeight,
+          const f32 templateRegionWidth,
+          const s32 templateCoordinateIncrement,
+          const u8 maxPixelDifference,
+          s32 &meanAbsoluteDifference,
+          s32 &numInBounds,
+          s32 &numSimilarPixels,
+          MemoryStack scratch) const;
+
+        Result VerifyTransformation_Projective_LinearInterpolate(
           const Array<u8> &templateImage,
           const Rectangle<f32> &templateRegionOfInterest,
           const Array<u8> &nextImage,
@@ -109,7 +122,7 @@ namespace Anki
           MemoryStack scratch) const;
 
         // With no region of interest
-        Result VerifyTransformation_Projective(
+        Result VerifyTransformation_Projective_LinearInterpolate(
           const Array<u8> &templateImage,
           const Array<u8> &nextImage,
           const f32 templateRegionHeight,

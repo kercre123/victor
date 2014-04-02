@@ -607,7 +607,8 @@ namespace Anki
           const f32 templateRegionHeight = static_cast<f32>(templateImageHeight);
           const f32 templateRegionWidth = static_cast<f32>(templateImageWidth);
 
-          lastResult = this->transformation.VerifyTransformation_Projective(
+          //lastResult = this->transformation.VerifyTransformation_Projective_LinearInterpolate(
+          lastResult = this->transformation.VerifyTransformation_Projective_NearestNeighbor(
             templateImage, this->templateQuad.ComputeBoundingRectangle(),
             nextImage,
             templateRegionHeight, templateRegionWidth, 2,
@@ -626,7 +627,7 @@ namespace Anki
           //const f32 templateRegionHeight = static_cast<f32>(templateImageHeight/8);
           //const f32 templateRegionWidth = static_cast<f32>(templateImageWidth/8);
 
-          //lastResult = this->transformation.VerifyTransformation_Projective(
+          //lastResult = this->transformation.VerifyTransformation_Projective_LinearInterpolate(
           //  downsampledTemplate, downsampledRect,
           //  downsampledNext,
           //  templateRegionHeight, templateRegionWidth,

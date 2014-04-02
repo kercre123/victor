@@ -75,7 +75,7 @@ namespace Anki
           }
         } // for(s32 iScale=numPyramidLevels; iScale>=0; iScale--)
 
-        lastResult = this->transformation.VerifyTransformation_Projective(
+        lastResult = this->transformation.VerifyTransformation_Projective_LinearInterpolate(
           this->templateImagePyramid[0],
           nextImage,
           this->templateRegionHeight,
