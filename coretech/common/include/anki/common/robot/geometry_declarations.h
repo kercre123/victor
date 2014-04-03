@@ -60,6 +60,8 @@ namespace Anki
 
       Point<Type> operator- (const Point<Type> &point2) const;
 
+      Point<Type> operator- () const;
+
       Point<Type>& operator*= (const Type value);
       Point<Type>& operator-= (const Type value);
       Point<Type>& operator-= (const Point<Type> &point2);
@@ -68,6 +70,9 @@ namespace Anki
 
       // The L2 (Euclidian) distance between this point and an input point.
       f32 Dist(const Point<Type> &point2) const;
+      
+      f32 Length() const;
+      
     }; // class Point<Type>
     
     
@@ -103,6 +108,8 @@ namespace Anki
       
       Point3<Type> operator- (const Point3<Type> &point2) const;
       
+      Point3<Type> operator- () const;
+      
       Point3<Type>& operator*= (const Type value);
       Point3<Type>& operator-= (const Type value);
       Point3<Type>& operator-= (const Point3<Type> &point2);
@@ -113,7 +120,12 @@ namespace Anki
       f32 Dist(const Point3<Type> &point2) const;
       
       f32 Length() const;
-            
+      
+      // Normalize to be unit length (divide each element by Length())
+      // The original Length is returned and if it was 0, the Point will
+      // remain unchanged.
+      f32 MakeUnitLength();
+      
     }; // class Point3<Type>
     
     

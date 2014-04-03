@@ -75,6 +75,11 @@ namespace Anki
     {
       return Point<Type>(this->x-point2.x, this->y-point2.y);
     }
+    
+    template<typename Type> Point<Type> Point<Type>::operator- () const
+    {
+      return Point<Type>(-this->x, -this->y);
+    }
 
     template<typename Type> Point<Type>& Point<Type>::operator*= (const Type value)
     {
@@ -110,6 +115,11 @@ namespace Anki
       return (f32)sqrt((this->x - point2.x)*(this->x - point2.x) + (this->y - point2.y)*(this->y - point2.y));
     }
 
+    template<typename Type> f32 Point<Type>::Length() const
+    {
+      return (f32)sqrt((f32)((this->x*this->x) + (this->y*this->y)));
+    }
+    
     // #pragma mark --- Point Specializations ---
     template<> void Point<f32>::Print() const;
     template<> void Point<f64>::Print() const;
@@ -172,6 +182,11 @@ namespace Anki
       return Point3<Type>(this->x-point2.x, this->y-point2.y, this->z-point2.z);
     }
     
+    template<typename Type> Point3<Type> Point3<Type>::operator- () const
+    {
+      return Point3<Type>(-this->x, -this->y, -this->z);
+    }
+    
     template<typename Type> Point3<Type>& Point3<Type>::operator*= (const Type value)
     {
       this->x *= value;
@@ -216,6 +231,14 @@ namespace Anki
       return (f32)sqrt((f32)((this->x*this->x) + (this->y*this->y) + (this->z*this->z)));
     }
     
+    template<typename Type> f32 Point3<Type>::MakeUnitLength()
+    {
+      const f32 L = this->Length();
+      if(L != 0) {
+        this->operator*=(1.f / L);
+      }
+      return L;
+    }
     
     template<typename Type>
     Type DotProduct(const Point3<Type>& point1, const Point3<Type>& point2)
