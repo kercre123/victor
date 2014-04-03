@@ -63,6 +63,8 @@ namespace Anki {
                              const Point3<PRECISION> worldPoint2,
                              const Point3<PRECISION> worldPoint3,
                              const Point3<PRECISION> worldPoint4,
+                             const f32 focalLength_x, const f32 focalLength_y,
+                             const f32 camCenter_x,   const f32 camCenter_y,
                              Array<PRECISION>& R, Point3<PRECISION>& T,
                              MemoryStack memory);
       
