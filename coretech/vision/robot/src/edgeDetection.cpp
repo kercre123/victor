@@ -345,15 +345,29 @@ namespace Anki
 
     Result EdgeLists::Deserialize(char *objectName, void** buffer, s32 &bufferLength, MemoryStack &memory)
     {
+      if(bufferLength <= 0) return RESULT_FAIL;
+
       // TODO: check if the name is correct
       if(SerializedBuffer::DeserializeDescriptionStrings(NULL, objectName, buffer, bufferLength) != RESULT_OK)
         return RESULT_FAIL;
 
+      if(bufferLength <= 0) return RESULT_FAIL;
+
       this->imageHeight = SerializedBuffer::DeserializeRawBasicType<s32>(NULL, buffer, bufferLength);
+      if(bufferLength <= 0) return RESULT_FAIL;
+
       this->imageWidth  = SerializedBuffer::DeserializeRawBasicType<s32>(NULL, buffer, bufferLength);
+      if(bufferLength <= 0) return RESULT_FAIL;
+
       this->xDecreasing = SerializedBuffer::DeserializeRawFixedLengthList<Point<s16> >(NULL, buffer, bufferLength, memory);
+      if(bufferLength <= 0) return RESULT_FAIL;
+
       this->xIncreasing = SerializedBuffer::DeserializeRawFixedLengthList<Point<s16> >(NULL, buffer, bufferLength, memory);
+      if(bufferLength <= 0) return RESULT_FAIL;
+
       this->yDecreasing = SerializedBuffer::DeserializeRawFixedLengthList<Point<s16> >(NULL, buffer, bufferLength, memory);
+      if(bufferLength <= 0) return RESULT_FAIL;
+
       this->yIncreasing = SerializedBuffer::DeserializeRawFixedLengthList<Point<s16> >(NULL, buffer, bufferLength, memory);
 
       return RESULT_OK;

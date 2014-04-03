@@ -745,11 +745,11 @@ namespace Anki
         s32 totalGrayvalueDifference = 0;
 
         // TODO: make the x and y limits from 1 to end-2
-#if !defined(__EDG__)
-        Matlab matlab(false);
-        matlab.EvalString("template = zeros(240,320);");
-        matlab.EvalString("warped = zeros(240,320);");
-#endif
+        //#if !defined(__EDG__)
+        //        Matlab matlab(false);
+        //        matlab.EvalString("template = zeros(240,320);");
+        //        matlab.EvalString("warped = zeros(240,320);");
+        //#endif
 
         f32 yOriginal = yGridStart;
         for(s32 y=0; y<yIterationMax; y+=templateCoordinateIncrement) {
@@ -784,9 +784,9 @@ namespace Anki
 
             const s32 grayvalueDifference = ABS(nearestPixelValue - templatePixelValue);
 
-#if !defined(__EDG__)
-            matlab.EvalString("template(%d,%d) = %d; warped(%d,%d) = %d;", yTransformedS32, xTransformedS32, templatePixelValue, yTransformedS32, xTransformedS32, nearestPixelValue);
-#endif
+            //#if !defined(__EDG__)
+            //            matlab.EvalString("template(%d,%d) = %d; warped(%d,%d) = %d;", yTransformedS32, xTransformedS32, templatePixelValue, yTransformedS32, xTransformedS32, nearestPixelValue);
+            //#endif
 
             totalGrayvalueDifference += grayvalueDifference;
 
