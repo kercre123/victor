@@ -147,6 +147,8 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
   const u8 verify_maxPixelDifference = 30;
 
+  const s32 verify_coordinateIncrement = 3;
+
   const s32 ransac_matching_maxProjectiveDistance = normal_matching_maxProjectiveDistance;
 
   const s32 ransac_maxIterations = 20;
@@ -199,7 +201,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
       edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType,
       1,
       normal_matching_maxTranslationDistance, normal_matching_maxProjectiveDistance,
-      verify_maxTranslationDistance, verify_maxPixelDifference,
+      verify_maxTranslationDistance, verify_maxPixelDifference, verify_coordinateIncrement,
       verify_numMatches, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels,
       scratchCcm, scratchOffchip);
     EndBenchmark("BinaryTracker update fixed-float");
@@ -208,9 +210,9 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     // TODO: verify this number manually
     /*ASSERT_TRUE(verify_numMatches == 1241);
-    ASSERT_TRUE(verify_meanAbsoluteDifference == 2);
-    ASSERT_TRUE(verify_numInBounds == 10094);
-    ASSERT_TRUE(verify_numSimilarPixels == 10094);*/
+    ASSERT_TRUE(verify_meanAbsoluteDifference == 6);
+    ASSERT_TRUE(verify_numInBounds == 1155);
+    ASSERT_TRUE(verify_numSimilarPixels == 1137);*/
 
     //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
 
@@ -267,7 +269,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
       edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType,
       1,
       normal_matching_maxTranslationDistance, normal_matching_maxProjectiveDistance,
-      verify_maxTranslationDistance, verify_maxPixelDifference,
+      verify_maxTranslationDistance, verify_maxPixelDifference, verify_coordinateIncrement,
       verify_numMatches, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels,
       scratchCcm, scratchOffchip);
     EndBenchmark("BinaryTracker update fixed-float");
@@ -276,9 +278,9 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     // TODO: verify this number manually
     /*ASSERT_TRUE(verify_numMatches == 622);
-    ASSERT_TRUE(verify_meanAbsoluteDifference == 2);
-    ASSERT_TRUE(verify_numInBounds == 10094);
-    ASSERT_TRUE(verify_numSimilarPixels == 10094);*/
+    ASSERT_TRUE(verify_meanAbsoluteDifference == 6);
+    ASSERT_TRUE(verify_numInBounds == 1155);
+    ASSERT_TRUE(verify_numSimilarPixels == 1143);*/
 
     //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
 
@@ -335,7 +337,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
       edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType,
       1,
       normal_matching_maxTranslationDistance, normal_matching_maxProjectiveDistance,
-      verify_maxTranslationDistance, verify_maxPixelDifference,
+      verify_maxTranslationDistance, verify_maxPixelDifference, verify_coordinateIncrement,
       verify_numMatches, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels,
       scratchCcm, scratchOffchip);
     EndBenchmark("BinaryTracker update fixed-float");
@@ -344,9 +346,9 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     // TODO: verify this number manually
     /*ASSERT_TRUE(verify_numMatches == 1241);
-    ASSERT_TRUE(verify_meanAbsoluteDifference == 2);
-    ASSERT_TRUE(verify_numInBounds == 10094);
-    ASSERT_TRUE(verify_numSimilarPixels == 10094);*/
+    ASSERT_TRUE(verify_meanAbsoluteDifference == 6);
+    ASSERT_TRUE(verify_numInBounds == 1155);
+    ASSERT_TRUE(verify_numSimilarPixels == 1137);*/
 
     //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
 
@@ -403,7 +405,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
       edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType,
       1,
       normal_matching_maxTranslationDistance, normal_matching_maxProjectiveDistance,
-      verify_maxTranslationDistance, verify_maxPixelDifference,
+      verify_maxTranslationDistance, verify_maxPixelDifference, verify_coordinateIncrement,
       verify_numMatches, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels,
       scratchCcm, scratchOffchip);
     EndBenchmark("BinaryTracker update fixed-float");
@@ -412,9 +414,9 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     // TODO: verify this number manually
     /*ASSERT_TRUE(verify_numMatches == 622);
-    ASSERT_TRUE(verify_meanAbsoluteDifference == 2);
-    ASSERT_TRUE(verify_numInBounds == 10094);
-    ASSERT_TRUE(verify_numSimilarPixels == 10094);*/
+    ASSERT_TRUE(verify_meanAbsoluteDifference == 6);
+    ASSERT_TRUE(verify_numInBounds == 1155);
+    ASSERT_TRUE(verify_numSimilarPixels == 1143);*/
 
     //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
 
@@ -471,7 +473,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
       edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType,
       1,
       ransac_matching_maxProjectiveDistance,
-      verify_maxTranslationDistance, verify_maxPixelDifference,
+      verify_maxTranslationDistance, verify_maxPixelDifference, verify_coordinateIncrement,
       ransac_maxIterations, ransac_numSamplesPerType, ransac_inlinerDistance,
       verify_numMatches, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels,
       scratchCcm, scratchOffchip);
@@ -539,7 +541,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
       edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType,
       1,
       ransac_matching_maxProjectiveDistance,
-      verify_maxTranslationDistance, verify_maxPixelDifference,
+      verify_maxTranslationDistance, verify_maxPixelDifference, verify_coordinateIncrement,
       ransac_maxIterations, ransac_numSamplesPerType, ransac_inlinerDistance,
       verify_numMatches, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels,
       scratchCcm, scratchOffchip);

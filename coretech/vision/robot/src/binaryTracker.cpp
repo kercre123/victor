@@ -359,8 +359,7 @@ namespace Anki
         const f32 edgeDetection_threshold_scaleRegionPercent, //< How much to scale template bounding box (.8 is a good value)
         const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
         const s32 matching_maxTranslationDistance, const s32 matching_maxProjectiveDistance,
-        const s32 verify_maxTranslationDistance,
-        const u8 verify_maxPixelDifference,
+        const s32 verify_maxTranslationDistance, const u8 verify_maxPixelDifference, const s32 verify_coordinateIncrement,
         s32 &numMatches,
         s32 &verify_meanAbsoluteDifference, //< For all pixels in the template, compute the mean difference between the template and the final warped template
         s32 &verify_numInBounds, //< How many template pixels are in the image, after the template is warped?
@@ -374,7 +373,7 @@ namespace Anki
           edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent,
           edgeDetection_minComponentWidth, edgeDetection_maxDetectionsPerType, edgeDetection_everyNLines,
           matching_maxTranslationDistance, matching_maxProjectiveDistance,
-          verify_maxTranslationDistance, verify_maxPixelDifference,
+          verify_maxTranslationDistance, verify_maxPixelDifference, verify_coordinateIncrement,
           0, 0, 0,
           numMatches,
           verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels,
@@ -392,8 +391,7 @@ namespace Anki
         const f32 edgeDetection_threshold_scaleRegionPercent, //< How much to scale template bounding box (.8 is a good value)
         const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
         const s32 matching_maxTranslationDistance, const s32 matching_maxProjectiveDistance,
-        const s32 verify_maxTranslationDistance,
-        const u8 verify_maxPixelDifference,
+        const s32 verify_maxTranslationDistance, const u8 verify_maxPixelDifference, const s32 verify_coordinateIncrement,
         s32 &numMatches,
         s32 &verify_meanAbsoluteDifference, //< For all pixels in the template, compute the mean difference between the template and the final warped template
         s32 &verify_numInBounds, //< How many template pixels are in the image, after the template is warped?
@@ -407,7 +405,7 @@ namespace Anki
           edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent,
           edgeDetection_minComponentWidth, edgeDetection_maxDetectionsPerType, edgeDetection_everyNLines,
           matching_maxTranslationDistance, matching_maxProjectiveDistance,
-          verify_maxTranslationDistance, verify_maxPixelDifference,
+          verify_maxTranslationDistance, verify_maxPixelDifference, verify_coordinateIncrement,
           0, 0, 0,
           numMatches,
           verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels,
@@ -424,11 +422,10 @@ namespace Anki
         const f32 edgeDetection_threshold_scaleRegionPercent, //< How much to scale template bounding box (.8 is a good value)
         const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
         const s32 matching_maxProjectiveDistance,
-        const s32 verify_maxTranslationDistance,
+        const s32 verify_maxTranslationDistance, const u8 verify_maxPixelDifference, const s32 verify_coordinateIncrement,
         const s32 ransac_maxIterations,
         const s32 ransac_numSamplesPerType, //< for four types
         const s32 ransac_inlinerDistance,
-        const u8 verify_maxPixelDifference,
         s32 &numMatches,
         s32 &verify_meanAbsoluteDifference, //< For all pixels in the template, compute the mean difference between the template and the final warped template
         s32 &verify_numInBounds, //< How many template pixels are in the image, after the template is warped?
@@ -442,7 +439,7 @@ namespace Anki
           edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent,
           edgeDetection_minComponentWidth, edgeDetection_maxDetectionsPerType, edgeDetection_everyNLines,
           0, matching_maxProjectiveDistance,
-          verify_maxTranslationDistance, verify_maxPixelDifference,
+          verify_maxTranslationDistance, verify_maxPixelDifference, verify_coordinateIncrement,
           ransac_maxIterations, ransac_numSamplesPerType, ransac_inlinerDistance,
           numMatches,
           verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels,
@@ -460,7 +457,7 @@ namespace Anki
         const f32 edgeDetection_threshold_scaleRegionPercent, //< How much to scale template bounding box (.8 is a good value)
         const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
         const s32 matching_maxTranslationDistance, const s32 matching_maxProjectiveDistance,
-        const s32 verify_maxTranslationDistance, const u8 verify_maxPixelDifference,
+        const s32 verify_maxTranslationDistance, const u8 verify_maxPixelDifference, const s32 verify_coordinateIncrement,
         const s32 ransac_maxIterations,
         const s32 ransac_numSamplesPerType, //< for four types
         const s32 ransac_inlinerDistance,
@@ -616,7 +613,7 @@ namespace Anki
           lastResult = this->transformation.VerifyTransformation_Projective_NearestNeighbor(
             templateImage, this->templateHistogram, this->templateQuad.ComputeBoundingRectangle(),
             nextImage, this->lastImageHistogram,
-            templateRegionHeight, templateRegionWidth, 2,
+            templateRegionHeight, templateRegionWidth, verify_coordinateIncrement,
             verify_maxPixelDifference, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels,
             fastScratch);
 

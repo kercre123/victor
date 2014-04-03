@@ -62,8 +62,9 @@ namespace Anki
           const f32 edgeDetection_threshold_scaleRegionPercent, //< How much to scale template bounding box (.8 is a good value)
           const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
           const s32 matching_maxTranslationDistance, const s32 matching_maxProjectiveDistance,
-          const s32 verify_maxTranslationDistance,
-          const u8 verify_maxPixelDifference,
+          const s32 verify_maxTranslationDistance, //< How close does a template pixel have to be to an edge to count as a match?
+          const u8 verify_maxPixelDifference, //< See verify_numSimilarPixels
+          const s32 verify_coordinateIncrement, //< Check every nth row and column (1 is the minimum, 2 is 4x faster, 3 is 9x faster, etc).
           s32 &numMatches,
           s32 &verify_meanAbsoluteDifference, //< For all pixels in the template, compute the mean difference between the template and the final warped template
           s32 &verify_numInBounds, //< How many template pixels are in the image, after the template is warped?
@@ -81,8 +82,9 @@ namespace Anki
           const f32 edgeDetection_threshold_scaleRegionPercent, //< How much to scale template bounding box (.8 is a good value)
           const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
           const s32 matching_maxTranslationDistance, const s32 matching_maxProjectiveDistance,
-          const s32 verify_maxTranslationDistance,
-          const u8 verify_maxPixelDifference,
+          const s32 verify_maxTranslationDistance, //< How close does a template pixel have to be to an edge to count as a match?
+          const u8 verify_maxPixelDifference, //< See verify_numSimilarPixels
+          const s32 verify_coordinateIncrement, //< Check every nth row and column (1 is the minimum, 2 is 4x faster, 3 is 9x faster, etc).
           s32 &numMatches,
           s32 &verify_meanAbsoluteDifference, //< For all pixels in the template, compute the mean difference between the template and the final warped template
           s32 &verify_numInBounds, //< How many template pixels are in the image, after the template is warped?
@@ -99,11 +101,12 @@ namespace Anki
           const f32 edgeDetection_threshold_scaleRegionPercent, //< How much to scale template bounding box (.8 is a good value)
           const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
           const s32 matching_maxProjectiveDistance,
-          const s32 verify_maxTranslationDistance,
+          const s32 verify_maxTranslationDistance, //< How close does a template pixel have to be to an edge to count as a match?
+          const u8 verify_maxPixelDifference, //< See verify_numSimilarPixels
+          const s32 verify_coordinateIncrement, //< Check every nth row and column (1 is the minimum, 2 is 4x faster, 3 is 9x faster, etc).
           const s32 ransac_maxIterations,
           const s32 ransac_numSamplesPerType, //< for four types
           const s32 ransac_inlinerDistance,
-          const u8 verify_maxPixelDifference,
           s32 &numMatches,
           s32 &verify_meanAbsoluteDifference, //< For all pixels in the template, compute the mean difference between the template and the final warped template
           s32 &verify_numInBounds, //< How many template pixels are in the image, after the template is warped?
@@ -342,7 +345,7 @@ namespace Anki
           const f32 edgeDetection_threshold_scaleRegionPercent, //< How much to scale template bounding box (.8 is a good value)
           const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
           const s32 matching_maxTranslationDistance, const s32 matching_maxProjectiveDistance,
-          const s32 verify_maxTranslationDistance, const u8 verify_maxPixelDifference,
+          const s32 verify_maxTranslationDistance, const u8 verify_maxPixelDifference, const s32 verify_coordinateIncrement,
           const s32 ransac_maxIterations,
           const s32 ransac_numSamplesPerType, //< for four types
           const s32 ransac_inlinerDistance,
