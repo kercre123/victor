@@ -25,6 +25,8 @@ namespace Anki
 
       // Automatically compute some statistics when computing the histogram
       s32 numElements;
+      s32 min;
+      s32 max;
       s32 sum; // The sum of all values of all elements
       f32 mean; // The mean of all values of all elements
       f32 standardDeviation; // The unbiased standard deviation of all values of all elements

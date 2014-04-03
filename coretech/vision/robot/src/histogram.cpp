@@ -34,6 +34,20 @@ namespace Anki
 
       // Unbiased standard deviation
       histogram.standardDeviation = sqrtf( sumOfSquaredDifferences / static_cast<f32>(histogram.numElements - 1) );
+
+      for(s32 i=0; i<numBins; i++) {
+        if(pHistogram[i] > 0) {
+          histogram.min = i;
+          break;
+        };
+      }
+
+      for(s32 i=numBins-1; i>=0; i--) {
+        if(pHistogram[i] > 0) {
+          histogram.max = i;
+          break;
+        };
+      }
     }
 
     Histogram::Histogram()

@@ -674,7 +674,9 @@ namespace Anki
         s32 &numSimilarPixels,
         MemoryStack scratch) const
       {
-        const s32 numStatisticsFractionalBits = 8;
+        const s32 numStatisticsFractionalBits = 14;
+        //const f32 lowPercentile = 0.1f;
+        const f32 highPercentile = 0.95f;
 
         AnkiConditionalErrorAndReturnValue(templateImage.get_size(0) == nextImage.get_size(0) && templateImage.get_size(1) == nextImage.get_size(1),
           RESULT_FAIL_INVALID_SIZE, "PlanarTransformation_f32::VerifyTransformation_Projective", "input images must be the same size");
@@ -724,11 +726,19 @@ namespace Anki
         const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2] / initialImageScaleF32;
         const f32 h20 = homography[2][0] * initialImageScaleF32; const f32 h21 = homography[2][1] * initialImageScaleF32; //const f32 h22 = 1.0f;
 
-        const s32 templateMeanS32 = RoundS32(templateHistogram.mean);
-        const s32 nextImageMeanS32 = RoundS32(nextImageHistogram.mean);
+        //const s32 templateMeanS32 = RoundS32(templateHistogram.mean);
+        //const s32 nextImageMeanS32 = RoundS32(nextImageHistogram.mean);
 
-        const s32 templateStdDivisor = RoundS32(static_cast<f32>((1 << numStatisticsFractionalBits)) / templateHistogram.standardDeviation);
-        const s32 nextImageStdDivisor = RoundS32(static_cast<f32>((1 << numStatisticsFractionalBits)) / nextImageHistogram.standardDeviation);
+        //const s32 templateStdDivisor = RoundS32(static_cast<f32>((1 << numStatisticsFractionalBits)) / templateHistogram.standardDeviation);
+        //const s32 nextImageStdDivisor = RoundS32(static_cast<f32>((1 << numStatisticsFractionalBits)) / nextImageHistogram.standardDeviation);
+
+        //const s32 templateLowS32 = ComputePercentile(templateHistogram, lowPercentile);
+        const s32 templateHighS32 = ComputePercentile(templateHistogram, highPercentile);
+        const s32 templateHighDivisorS32 = 255*RoundS32(static_cast<f32>(1 << numStatisticsFractionalBits) / static_cast<f32>(templateHighS32));
+
+        //const s32 nextImageLowS32 = ComputePercentile(nextImageHistogram, lowPercentile);
+        const s32 nextImageHighS32 = ComputePercentile(nextImageHistogram, highPercentile);
+        const s32 nextImageHighDivisorS32 = 255*RoundS32(static_cast<f32>(1 << numStatisticsFractionalBits) / static_cast<f32>(nextImageHighS32));
 
         numInBounds = 0;
         numSimilarPixels = 0;
@@ -766,11 +776,14 @@ namespace Anki
 
             numInBounds++;
 
-            const s32 nearestPixelValueRaw = *nextImage.Pointer(yTransformedS32, xTransformedS32);
+            const s32 nextImagePixelValueRaw = *nextImage.Pointer(yTransformedS32, xTransformedS32);
             const s32 templatePixelValueRaw = pTemplateImage[x];
 
-            const s32 nearestPixelValue  = (nearestPixelValueRaw - nextImageMeanS32) * nextImageStdDivisor;
-            const s32 templatePixelValue = (templatePixelValueRaw - templateMeanS32) * templateStdDivisor;
+            //const s32 nearestPixelValue  = (nextImagePixelValueRaw * nextImageHighDivisorS32) >> numStatisticsFractionalBits;
+            //const s32 templatePixelValue = (templatePixelValueRaw * templateHighDivisorS32) >> numStatisticsFractionalBits;
+
+            const s32 nearestPixelValue  = nextImagePixelValueRaw;
+            const s32 templatePixelValue = templatePixelValueRaw;
 
             const s32 grayvalueDifference = ABS(nearestPixelValue - templatePixelValue);
 
