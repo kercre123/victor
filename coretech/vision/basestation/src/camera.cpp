@@ -16,8 +16,7 @@
 #endif
 
 #include "anki/vision/basestation/camera.h"
-
-#include "perspectivePoseEstimation_impl.h"
+#include "anki/vision/basestation/perspectivePoseEstimation.h"
 
 namespace Anki {
   

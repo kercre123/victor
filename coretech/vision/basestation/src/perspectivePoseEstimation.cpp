@@ -1,5 +1,5 @@
 /**
- * File: perspectivePoseEstimation_impl.h
+ * File: perspectivePoseEstimation.cpp
  *
  * Author: Andrew Stein
  * Date:   04-01-2014
@@ -323,6 +323,16 @@ namespace Anki {
                                     poses);
       } // computePossiblePoses(from std::arrays)
       
+      
+      // Explicit instantiation for float and double
+      template ReturnCode computePossiblePoses<float>(const std::array<Point<3,float>,3>& worldPoints,
+                                                      const std::array<Point<3,float>,3>& imageRays,
+                                                      std::array<Pose3d,4>& poses);
+      
+      template ReturnCode computePossiblePoses<double>(const std::array<Point<3,double>,3>& worldPoints,
+                                                       const std::array<Point<3,double>,3>& imageRays,
+                                                       std::array<Pose3d,4>& poses);
+
       
     } // namespace P3P
   } // namespace Vision
