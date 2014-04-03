@@ -34,6 +34,40 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 using namespace Anki::Embedded;
 
+GTEST_TEST(CoreTech_Common, RunLengthEncode)
+{
+  const s32 arrayHeight = 7;
+  const s32 arrayWidth = 16;
+  const s32 maxCompressedLength = arrayHeight * arrayWidth;
+
+  ASSERT_TRUE(offchipBuffer != NULL);
+  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(ms.IsValid());
+
+  Array<u8> original(arrayHeight, arrayWidth, ms);
+  u8 * compressed = reinterpret_cast<u8*>( ms.Allocate(maxCompressedLength) );
+
+  original(1,3,1,5).Set(1);
+  original(2,2,8,10).Set(1);
+  original(2,2,13,13).Set(1);
+  original(6,6,13,15).Set(1);
+
+  s32 compressedLength;
+  const Result result = EncodeRunLengthBinary<u8>(original, compressed, maxCompressedLength, compressedLength);
+
+  ASSERT_TRUE(result == RESULT_OK);
+  ASSERT_TRUE(compressedLength == 12);
+
+  Array<u8> uncompressed = DecodeRunLengthBinary<u8>(
+    compressed, compressedLength,
+    arrayHeight, arrayWidth, Flags::Buffer(false,false,false),
+    ms);
+
+  ASSERT_TRUE(AreElementwiseEqual<u8>(original, uncompressed));
+
+  GTEST_RETURN_HERE;
+}
+
 GTEST_TEST(CoreTech_Common, IsConvex)
 {
   Point<f32> p11(0.0f, 0.0f);
@@ -2948,6 +2982,7 @@ s32 RUN_ALL_COMMON_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   numPassedTests = 0;
   numFailedTests = 0;
 
+  CALL_GTEST_TEST(CoreTech_Common, RunLengthEncode);
   CALL_GTEST_TEST(CoreTech_Common, IsConvex);
   CALL_GTEST_TEST(CoreTech_Common, RoundFloat);
   CALL_GTEST_TEST(CoreTech_Common, CompressArray);
