@@ -113,7 +113,7 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
           continue;
 
         lastMeanError = tmpBuffer[0];
-      } else if(strcmp(objectName, "lastPercentMatchingGrayvalues") == 0) {
+      } else if(strcmp(objectName, "percentMatchingGrayvalues") == 0) {
         f32* tmpBuffer = SerializedBuffer::DeserializeRawBasicType<f32>(innerObjectName, &dataSegment, dataLength, scratch);
 
         if(!tmpBuffer)
