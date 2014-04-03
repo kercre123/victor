@@ -23,6 +23,10 @@ namespace Anki
 {
   namespace Embedded
   {
+    
+    // Forward declaration of Array class (for Matrix x Point multiplication)
+    template<typename Type> class Array;
+
 #if 0
 #pragma mark --- 2D Point Class Declaration ---
 #endif
@@ -107,8 +111,21 @@ namespace Anki
       
       // The L2 (Euclidian) distance between this point and an input point.
       f32 Dist(const Point3<Type> &point2) const;
+      
+      f32 Length() const;
+            
     }; // class Point3<Type>
     
+    
+    template<typename Type>
+    Type DotProduct(const Point3<Type>& point1, const Point3<Type>& point2);
+    
+    template<typename Type>
+    Point3<Type> CrossProduct(const Point3<Type>& point1, const Point3<Type>& point2);
+    
+    // Matrix x Point multiplication.  Input matrix M must be 3x3!
+    template<typename Type>
+    Point3<Type> operator* (const Array<Type>& M, const Point3<Type>& p);
     
 #if 0
 #pragma mark --- Rectangle Class Declaration ---

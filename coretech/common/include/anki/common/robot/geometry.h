@@ -12,6 +12,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #ifndef _ANKICORETECHEMBEDDED_COMMON_POINT_H_
 #define _ANKICORETECHEMBEDDED_COMMON_POINT_H_
 
+#include "anki/common/robot/array2d_declarations.h"
 #include "anki/common/robot/geometry_declarations.h"
 #include "anki/common/robot/memory.h"
 #include "anki/common/robot/matrix.h"
@@ -208,6 +209,37 @@ namespace Anki
       return (f32)sqrt((this->x - point2.x)*(this->x - point2.x) +
                        (this->y - point2.y)*(this->y - point2.y) +
                        (this->z - point2.y)*(this->z - point2.z));
+    }
+    
+    template<typename Type> f32 Point3<Type>::Length() const
+    {
+      return (f32)sqrt((f32)((this->x*this->x) + (this->y*this->y) + (this->z*this->z)));
+    }
+    
+    
+    template<typename Type>
+    Type DotProduct(const Point3<Type>& point1, const Point3<Type>& point2)
+    {
+      return (point1.x*point2.x) + (point1.y*point2.y) + (point1.z*point2.z);
+    }
+    
+    template<typename Type>
+    Point3<Type> CrossProduct(const Point3<Type>& point1, const Point3<Type>& point2)
+    {
+      return Point3<Type>(-point2.y*point1.z + point1.y*point2.z,
+                           point2.x*point1.z - point1.x*point2.z,
+                          -point2.x*point1.y + point1.x*point2.y);
+    }
+    
+    template<typename Type>
+    Point3<Type> operator* (const Array<Type>& M, const Point3<Type>& p)
+    {
+      // Matrix M must be 3x3
+      AnkiAssert(M.get_size(0) == 3 && M.get_size(1) == 3);
+      
+      return Point3<Type>(M[0][0]*p.x + M[0][1]*p.y + M[0][2]*p.z,
+                          M[1][0]*p.x + M[1][1]*p.y + M[1][2]*p.z,
+                          M[2][0]*p.x + M[2][1]*p.y + M[2][2]*p.z);
     }
     
     // #pragma mark --- Point Specializations ---
