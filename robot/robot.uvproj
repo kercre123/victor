@@ -1014,11 +1014,6 @@
               <FilePath>..\coretech\vision\robot\src\detectFiducialMarkers.cpp</FilePath>
             </File>
             <File>
-              <FileName>docking_vision.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\docking_vision.cpp</FilePath>
-            </File>
-            <File>
               <FileName>draw_vision.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\draw_vision.cpp</FilePath>
@@ -2350,11 +2345,6 @@
               <FileName>detectFiducialMarkers.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\detectFiducialMarkers.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>docking_vision.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\docking_vision.cpp</FilePath>
             </File>
             <File>
               <FileName>draw_vision.cpp</FileName>
