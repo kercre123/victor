@@ -361,7 +361,6 @@ namespace Anki {
                                                  grayscaleImage,
                                                  trackingQuad,
                                                  parameters.scaleTemplateRegionPercent,
-                                                 //parameters.edgeDetection_grayvalueThreshold,
                                                  parameters.edgeDetection_threshold_yIncrement,
                                                  parameters.edgeDetection_threshold_xIncrement,
                                                  parameters.edgeDetection_threshold_blackPercentile,
@@ -552,7 +551,7 @@ namespace Anki {
         
         //MatlabVisualization::SendTrackerPrediction_Compare(tracker, offchipScratch);
         
-        DebugStream::SendTrackingUpdate(grayscaleImage, tracker, parameters, verify_meanAbsoluteDifference, ccmScratch, onchipScratch, offchipScratch);
+        DebugStream::SendTrackingUpdate(grayscaleImage, tracker, parameters, verify_meanAbsoluteDifference, static_cast<f32>(verify_numSimilarPixels) / static_cast<f32>(verify_numInBounds), ccmScratch, onchipScratch, offchipScratch);
         
         return EXIT_SUCCESS;
       } // TrackTemplate()

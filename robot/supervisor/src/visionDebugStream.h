@@ -28,6 +28,7 @@ namespace Anki {
                                       const Tracker &tracker,
                                       const TrackerParameters &parameters,
                                       const u8 meanGrayvalueError,
+                                      const f32 percentMatchingGrayvalues,
                                       MemoryStack ccmScratch,
                                       MemoryStack onchipScratch,
                                       MemoryStack offchipScratch);

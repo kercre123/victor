@@ -163,7 +163,15 @@ namespace Anki {
           return result;
         } // ReturnCode SendDebugStream_Detection()
         
-        ReturnCode SendTrackingUpdate(const Array<u8> &image, const Tracker &tracker, const TrackerParameters &parameters, const u8 meanGrayvalueError, MemoryStack ccmScratch, MemoryStack onchipScratch, MemoryStack offchipScratch)
+        ReturnCode SendTrackingUpdate(
+          const Array<u8> &image, 
+          const Tracker &tracker, 
+          const TrackerParameters &parameters, 
+          const u8 meanGrayvalueError,
+          const f32 percentMatchingGrayvalues,
+          MemoryStack ccmScratch, 
+          MemoryStack onchipScratch, 
+          MemoryStack offchipScratch)
         {
           ReturnCode result = EXIT_SUCCESS;
           
@@ -193,7 +201,9 @@ namespace Anki {
           
           tracker.get_transformation().Serialize("Transformation", debugStreamBuffer_);
           
-          debugStreamBuffer_.PushBack<u8>("Mean Grayvalue Error", &meanGrayvalueError, 1);
+          debugStreamBuffer_.PushBack<u8>("meanGrayvalueError", &meanGrayvalueError, 1);
+          
+          debugStreamBuffer_.PushBack<f32>("percentMatchingGrayvalues", &percentMatchingGrayvalues, 1);
           
           frameNumber++;
           
