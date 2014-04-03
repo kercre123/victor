@@ -606,7 +606,7 @@ namespace Anki
 
         BeginBenchmark("ut_verifyTransformation");
 
-        {
+        { 
           const f32 templateRegionHeight = static_cast<f32>(templateImageHeight);
           const f32 templateRegionWidth = static_cast<f32>(templateImageWidth);
 
