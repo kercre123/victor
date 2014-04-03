@@ -23,7 +23,9 @@ namespace Anki
 {
   namespace Embedded
   {
-    // #pragma mark --- Point Class Declaration ---
+#if 0
+#pragma mark --- 2D Point Class Declaration ---
+#endif
     // 2D Point Class
     //
     // WARNING:
@@ -63,9 +65,55 @@ namespace Anki
       // The L2 (Euclidian) distance between this point and an input point.
       f32 Dist(const Point<Type> &point2) const;
     }; // class Point<Type>
-
-    // #pragma mark --- Rectangle Class Declaration ---
-
+    
+    
+#if 0
+#pragma mark --- 2D Point Class Declaration ---
+#endif
+    // 3D Point Class
+    //
+    template<typename Type> class Point3
+    {
+    public:
+      Type x;
+      Type y;
+      Type z;
+      
+      Point3();
+      
+      Point3(const Type x, const Type y, const Type z);
+      
+      Point3(const Point3<Type>& pt);
+      
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
+      Point3(const cv::Point3_<Type>& pt);
+      
+      cv::Point3_<Type> get_CvPoint_();
+#endif
+      
+      void Print() const;
+      
+      bool operator== (const Point3<Type> &point2) const;
+      
+      Point3<Type> operator+ (const Point3<Type> &point2) const;
+      
+      Point3<Type> operator- (const Point3<Type> &point2) const;
+      
+      Point3<Type>& operator*= (const Type value);
+      Point3<Type>& operator-= (const Type value);
+      Point3<Type>& operator-= (const Point3<Type> &point2);
+      
+      inline Point3<Type>& operator= (const Point3<Type> &point2);
+      
+      // The L2 (Euclidian) distance between this point and an input point.
+      f32 Dist(const Point3<Type> &point2) const;
+    }; // class Point3<Type>
+    
+    
+#if 0
+#pragma mark --- Rectangle Class Declaration ---
+#endif
+    
     // A rectangle is bounded by a left, right, top, and bottom
     //
     // WARNING:
@@ -111,8 +159,9 @@ namespace Anki
 
     typedef Point<float> Point2f;
 
-    // #pragma mark --- Pose2d Class Declaration ---
-
+#if 0
+#pragma mark --- Pose2d Class Declaration ---
+#endif
     class Pose2d
     {
     public:
@@ -141,8 +190,9 @@ namespace Anki
       Radians angle;
     }; // class Pose2d
 
-    // #pragma mark --- Quadrilateral Class Declaration ---
-
+#if 0
+#pragma mark --- Quadrilateral Class Declaration ---
+#endif
     // A Quadrilateral is defined by four Point objects
     template<typename Type> class Quadrilateral
     {

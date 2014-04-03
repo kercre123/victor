@@ -24,6 +24,16 @@ namespace Anki
     {
       printf("(%f,%f) ", this->x, this->y);
     }
+    
+    template<> void Point3<f32>::Print() const
+    {
+      printf("(%f,%f,%f) ", this->x, this->y, this->z);
+    }
+    
+    template<> void Point3<f64>::Print() const
+    {
+      printf("(%f,%f,%f) ", this->x, this->y, this->z);
+    }
 
     template<> void Rectangle<f32>::Print() const
     {

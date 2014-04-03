@@ -20,8 +20,9 @@ namespace Anki
 {
   namespace Embedded
   {
-    // #pragma mark --- Point Definitions ---
-
+#if 0
+#pragma mark --- 2D Point Implementations ---
+#endif
     template<typename Type> Point<Type>::Point()
       : x(static_cast<Type>(0)), y(static_cast<Type>(0))
     {
@@ -112,7 +113,111 @@ namespace Anki
     template<> void Point<f32>::Print() const;
     template<> void Point<f64>::Print() const;
 
-    // #pragma mark --- Rectangle Definitions ---
+    
+#if 0
+#pragma mark --- 3D Point Implementations ---
+#endif
+    
+    template<typename Type> Point3<Type>::Point3()
+    : x(static_cast<Type>(0)), y(static_cast<Type>(0)), z(static_cast<Type>(0))
+    {
+    }
+    
+    template<typename Type> Point3<Type>::Point3(const Type x, const Type y, const Type z)
+    : x(x), y(y), z(z)
+    {
+    }
+    
+    template<typename Type> Point3<Type>::Point3(const Point3<Type>& pt)
+    : x(pt.x), y(pt.y), z(pt.z)
+    {
+    }
+    
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
+    template<typename Type> Point3<Type>::Point3(const cv::Point3_<Type>& pt)
+    : x(pt.x), y(pt.y), z(pt.z)
+    {
+      
+    }
+#endif
+    
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
+    template<typename Type> cv::Point3_<Type> Point3<Type>::get_CvPoint_()
+    {
+      return cv::Point3_<Type>(x,y,z);
+    }
+#endif
+    
+    template<typename Type> void Point3<Type>::Print() const
+    {
+      printf("(%d,%d,%d) ", this->x, this->y, this->z);
+    }
+    
+    template<typename Type> bool Point3<Type>::operator== (const Point3<Type> &point2) const
+    {
+      if(this->x == point2.x && this->y == point2.y && this->z == point2.z)
+        return true;
+      
+      return false;
+    }
+    
+    template<typename Type> Point3<Type> Point3<Type>::operator+ (const Point3<Type> &point2) const
+    {
+      return Point3<Type>(this->x+point2.x, this->y+point2.y, this->z+point2.z);
+    }
+    
+    template<typename Type> Point3<Type> Point3<Type>::operator- (const Point3<Type> &point2) const
+    {
+      return Point3<Type>(this->x-point2.x, this->y-point2.y, this->z-point2.z);
+    }
+    
+    template<typename Type> Point3<Type>& Point3<Type>::operator*= (const Type value)
+    {
+      this->x *= value;
+      this->y *= value;
+      this->z *= value;
+      return *this;
+    }
+    
+    template<typename Type> Point3<Type>& Point3<Type>::operator-= (const Type value)
+    {
+      this->x -= value;
+      this->y -= value;
+      this->z -= value;
+      return *this;
+    }
+    
+    template<typename Type> Point3<Type>& Point3<Type>::operator-= (const Point3<Type> &point2)
+    {
+      this->x -= point2.x;
+      this->y -= point2.y;
+      this->z -= point2.z;
+      return *this;
+    }
+    
+    template<typename Type> inline Point3<Type>& Point3<Type>::operator= (const Point3<Type> &point2)
+    {
+      this->x = point2.x;
+      this->y = point2.y;
+      this->z = point2.z;
+      return *this;
+    }
+    
+    template<typename Type> f32 Point3<Type>::Dist(const Point3<Type> &point2) const
+    {
+      return (f32)sqrt((this->x - point2.x)*(this->x - point2.x) +
+                       (this->y - point2.y)*(this->y - point2.y) +
+                       (this->z - point2.y)*(this->z - point2.z));
+    }
+    
+    // #pragma mark --- Point Specializations ---
+    template<> void Point3<f32>::Print() const;
+    template<> void Point3<f64>::Print() const;
+    
+    
+#if 0
+#pragma mark --- Rectangle Implementations ---
+#endif
 
     template<typename Type> Rectangle<Type>::Rectangle()
       : left(static_cast<Type>(0)), right(static_cast<Type>(0)), top(static_cast<Type>(0)), bottom(static_cast<Type>(0))
