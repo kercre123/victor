@@ -12,32 +12,34 @@
  **/
 
 #include "anki/common/robot/config.h"
-#include "anki/common/robot/memory.h"
-
+// Coretech Vision Includes
+#include "anki/vision/MarkerCodeDefinitions.h"
 #include "anki/vision/robot/fiducialDetection.h"
 #include "anki/vision/robot/fiducialMarkers.h"
 #include "anki/vision/robot/imageProcessing.h"
+#include "anki/vision/robot/perspectivePoseEstimation.h"
 
+// CoreTech Common Includes
 #include "anki/common/shared/radians.h"
-#include "anki/common/robot/utilities.h"
 #include "anki/common/robot/benchmarking_c.h"
+#include "anki/common/robot/memory.h"
+#include "anki/common/robot/utilities.h"
 
+// Cozmo-Specific Library Includes
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/messages.h"
 #include "anki/cozmo/robot/visionSystem.h"
 
-// TODO: make it so we don't have to include this entire file to get just the enums
-#include "anki/vision/robot/visionMarkerDecisionTrees.h"
-
+// Local Cozmo Includes
 #include "headController.h"
 #include "matlabVisualization.h"
 #include "visionDebugStream.h"
 
-//#if USE_MATLAB_TRACKER || USE_MATLAB_DETECTOR
+#if USE_MATLAB_TRACKER || USE_MATLAB_DETECTOR
 #include "matlabVisionProcessor.h"
-//#endif
+#endif
 
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_AFFINE && !USE_APPROXIMATE_DOCKING_ERROR_SIGNAL
 #error Affine tracker requires that USE_APPROXIMATE_DOCKING_ERROR_SIGNAL = 1.
