@@ -300,8 +300,8 @@ namespace Anki {
           poses[i].set_rotation(R_float);
           
           // Assign this solution's translation vector to the output
-          POINT translation = R_temp * (P1 + Nt*C);
-          translation *= -PRECISION(1);
+          POINT translation = -(R_temp * (P1 + Nt*C));
+
           Point<3,float> t_float(static_cast<float>(translation.x()),
                                  static_cast<float>(translation.y()),
                                  static_cast<float>(translation.z()));
