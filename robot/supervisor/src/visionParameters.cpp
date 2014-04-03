@@ -97,8 +97,8 @@ namespace Anki {
         //edgeDetection_grayvalueThreshold    = 128;
         edgeDetection_threshold_yIncrement = 4;
         edgeDetection_threshold_xIncrement = 4;
-        edgeDetection_threshold_blackPercentile = 0.20f;
-        edgeDetection_threshold_whitePercentile = 0.80f;
+        edgeDetection_threshold_blackPercentile = 0.10f;
+        edgeDetection_threshold_whitePercentile = 0.90f;
         edgeDetection_threshold_scaleRegionPercent = 0.8f;
         edgeDetection_minComponentWidth     = 2;
         edgeDetection_maxDetectionsPerType  = 2500;

@@ -459,17 +459,19 @@ namespace Anki
 
 #endif // #ifdef ANKICORETECH_EMBEDDED_USE_OPENCV
 
-    u8 ComputeGrayvalueThrehold(
+    u8 ComputeGrayvalueThreshold(
       const Array<u8> &image,
       const Rectangle<s32> &imageRegionOfInterest,
       const s32 yIncrement,
       const s32 xIncrement,
       const f32 blackPercentile,
       const f32 whitePercentile,
-      Histogram &histogram,
-      MemoryStack scratch)
+      Histogram &histogram)
     {
-      histogram = ComputeHistogram(image, imageRegionOfInterest, yIncrement, xIncrement, scratch);
+      AnkiConditionalErrorAndReturnValue(histogram.get_numBins() == 256,
+        0, "ComputeGrayvalueThreshold", "Wrong number of bins");
+
+      ComputeHistogram(image, imageRegionOfInterest, yIncrement, xIncrement, histogram);
 
       const s32 grayvalueBlack = ComputePercentile(histogram, blackPercentile);
       const s32 grayvalueWhite = ComputePercentile(histogram, whitePercentile);

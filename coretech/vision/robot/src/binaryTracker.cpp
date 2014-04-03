@@ -123,17 +123,19 @@ namespace Anki
         const Rectangle<s32> edgeDetection_imageRegionOfInterest(static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.left), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.right), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.top), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.bottom));
 
         //templateHistogram
-        this->lastGrayvalueThreshold = ComputeGrayvalueThrehold(
+        this->templateHistogram = Histogram(256, fastMemory);
+        this->lastImageHistogram = Histogram(256, fastMemory);
+
+        this->lastGrayvalueThreshold = ComputeGrayvalueThreshold(
           templateImage,
           edgeDetection_imageRegionOfInterest,
           edgeDetection_threshold_yIncrement,
           edgeDetection_threshold_xIncrement,
           edgeDetection_threshold_blackPercentile,
           edgeDetection_threshold_whitePercentile,
-          this->templateHistogram,
-          fastMemory);
+          this->templateHistogram);
 
-        this->lastImageHistogram = this->templateHistogram;
+        this->lastImageHistogram.Set(this->templateHistogram);
 
         const Rectangle<f32> templateRectRaw = templateQuad.ComputeBoundingRectangle().ComputeScaledRectangle(scaleTemplateRegionPercent);
         const Rectangle<s32> templateRect(static_cast<s32>(templateRectRaw.left), static_cast<s32>(templateRectRaw.right), static_cast<s32>(templateRectRaw.top), static_cast<s32>(templateRectRaw.bottom));
@@ -591,15 +593,14 @@ namespace Anki
         const Rectangle<f32> edgeDetection_imageRegionOfInterestRaw = curWarpedCorners.ComputeBoundingRectangle().ComputeScaledRectangle(edgeDetection_threshold_scaleRegionPercent);
         const Rectangle<s32> edgeDetection_imageRegionOfInterest(static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.left), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.right), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.top), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.bottom));
 
-        this->lastGrayvalueThreshold = ComputeGrayvalueThrehold(
+        this->lastGrayvalueThreshold = ComputeGrayvalueThreshold(
           nextImage,
           edgeDetection_imageRegionOfInterest,
           edgeDetection_threshold_yIncrement,
           edgeDetection_threshold_xIncrement,
           edgeDetection_threshold_blackPercentile,
           edgeDetection_threshold_whitePercentile,
-          lastImageHistogram,
-          fastScratch);
+          lastImageHistogram);
 
         EndBenchmark("ut_grayvalueThreshold");
 

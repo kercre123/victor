@@ -34,10 +34,15 @@ namespace Anki
       Histogram();
       Histogram(const s32 numBins, MemoryStack &memory);
 
+      void Reset();
+
+      Result Set(const Histogram &in);
+
       s32 get_numBins() const;
     } Histogram;
 
     // Counts the number of pixels for each 0-255 grayvalue, and returns a list of the counts
+    Result ComputeHistogram(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const s32 yIncrement, const s32 xIncrement, Histogram &histogram);
     Histogram ComputeHistogram(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const s32 yIncrement, const s32 xIncrement, MemoryStack &memory);
 
     // Based on an input histogram, what is the bin index of a percentile [0,1]

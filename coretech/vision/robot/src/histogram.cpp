@@ -61,6 +61,33 @@ namespace Anki
       this->counts.set_size(numBins);
     }
 
+    void Histogram::Reset()
+    {
+      this->counts.SetZero();
+      this->max = 0;
+      this->mean = 0;
+      this->min = 0;
+      this->numElements = 0;
+      this->standardDeviation = 0;
+      this->sum = 0;
+    }
+
+    Result Histogram::Set(const Histogram &in)
+    {
+      AnkiConditionalErrorAndReturnValue(in.counts.get_size() == this->counts.get_size(),
+        RESULT_FAIL, "Histogram::Set", "counts must be allocated");
+
+      this->counts.Set(in.counts);
+      this->max = in.max;
+      this->mean = in.mean;
+      this->min = in.min;
+      this->numElements = in.numElements;
+      this->standardDeviation = in.standardDeviation;
+      this->sum = in.sum;
+
+      return RESULT_OK;
+    }
+
     s32 Histogram::get_numBins() const
     {
       return this->counts.get_size();
@@ -68,10 +95,22 @@ namespace Anki
 
     Histogram ComputeHistogram(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const s32 yIncrement, const s32 xIncrement, MemoryStack &memory)
     {
+      Histogram histogram(256, memory);
+
+      ComputeHistogram(image, imageRegionOfInterest, yIncrement, xIncrement, histogram);
+
+      return histogram;
+    }
+
+    Result ComputeHistogram(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const s32 yIncrement, const s32 xIncrement, Histogram &histogram)
+    {
+      AnkiConditionalErrorAndReturnValue(histogram.get_numBins() == 256,
+        RESULT_FAIL, "ComputeHistogram", "Wrong number of bins");
+
       const s32 imageHeight = image.get_size(0);
       const s32 imageWidth = image.get_size(1);
 
-      Histogram histogram(256, memory);
+      histogram.Reset();
 
       s32 * restrict pHistogram = histogram.counts.Pointer(0);
 
@@ -102,7 +141,7 @@ namespace Anki
 
       UpdateHistogramStatistics_UnsignedInt(histogram);
 
-      return histogram;
+      return RESULT_OK;
     }
 
     s32 ComputePercentile(const Histogram &histogram, const f32 percentile)
