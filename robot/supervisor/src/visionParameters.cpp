@@ -105,7 +105,9 @@ namespace Anki {
         edgeDetection_everyNLines           = 1;
         matching_maxTranslationDistance     = 7;
         matching_maxProjectiveDistance      = 7;
-        verification_maxTranslationDistance = 2;
+        verify_maxTranslationDistance = 2;
+        verify_maxPixelDifference = 30;
+        verify_coordinateIncrement = 3;
         percentMatchedPixelsThreshold       = 0.02f; // TODO: pick a reasonable value
         
 #else
