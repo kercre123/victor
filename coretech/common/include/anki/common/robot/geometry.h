@@ -95,6 +95,13 @@ namespace Anki
       return *this;
     }
 
+    template<typename Type> Point<Type>& Point<Type>::operator+= (const Point<Type> &point2)
+    {
+      this->x += point2.x;
+      this->y += point2.y;
+      return *this;
+    }
+    
     template<typename Type> Point<Type>& Point<Type>::operator-= (const Point<Type> &point2)
     {
       this->x -= point2.x;
