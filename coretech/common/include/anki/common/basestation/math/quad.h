@@ -32,7 +32,9 @@ namespace Anki {
     
   } // namespace Quad
   
-  template<size_t N, typename T>
+  typedef size_t QuadDimType;
+  
+  template<QuadDimType N, typename T>
   class Quadrilateral : public std::array<Point<N,T>, 4>
   {
   public:
@@ -55,10 +57,11 @@ namespace Anki {
     Quadrilateral<N,T>  operator- (const Quadrilateral<N,T> &quad2) const;
     Quadrilateral<N,T>& operator+=(const Quadrilateral<N,T> &quad2);
     Quadrilateral<N,T>& operator-=(const Quadrilateral<N,T> &quad2);
+    Quadrilateral<N,T>& operator*=(const T value);
     
-    // Scale around center:
-    Quadrilateral<N,T>  operator* (const T scaleFactor) const;
-    Quadrilateral<N,T>& operator*=(const T scaleFactor);
+    // Scale around centroid:
+    Quadrilateral<N,T>  getScaled(const T scaleFactor) const;
+    Quadrilateral<N,T>& scale(const T scaleFactor); // in place
     
     // Compute the centroid of the four points
     Point<N,T> computeCentroid(void) const;
@@ -90,13 +93,13 @@ namespace Anki {
   
 #pragma mark --- Quadrilateral Implementations ---
   
-  template<size_t N, typename T>
+  template<QuadDimType N, typename T>
   Quadrilateral<N,T>::Quadrilateral()
   {
     
   }
   
-  template<size_t N, typename T>
+  template<QuadDimType N, typename T>
   Quadrilateral<N,T>::Quadrilateral(const Point<N,T> &cornerTopLeft,
                                     const Point<N,T> &cornerBottomLeft,
                                     const Point<N,T> &cornerTopRight,
@@ -108,14 +111,14 @@ namespace Anki {
     (*this)[Quad::BottomRight] = cornerBottomRight;
   }
   
-  template<size_t N, typename T>
+  template<QuadDimType N, typename T>
   Quadrilateral<N,T>::Quadrilateral(const Quadrilateral<N,T>& quad)
   : std::array<Point<N,T>,4>(quad)
   {
   
   }
   
-  template<size_t N, typename T>
+  template<QuadDimType N, typename T>
   inline Quadrilateral<N,T> Quadrilateral<N,T>::operator+
   (const Quadrilateral<N,T> &quad2) const
   {
@@ -124,7 +127,7 @@ namespace Anki {
     return newQuad;
   }
   
-  template<size_t N, typename T>
+  template<QuadDimType N, typename T>
   inline Quadrilateral<N,T> Quadrilateral<N,T>::operator-
   (const Quadrilateral<N,T> &quad2) const
   {
@@ -133,33 +136,45 @@ namespace Anki {
     return newQuad;
   }
   
-  template<size_t N, typename T>
+  template<QuadDimType N, typename T>
   inline Quadrilateral<N,T>& Quadrilateral<N,T>::operator+= (const Quadrilateral<N,T> &quad2)
   {
-    for(int i=0; i<4; ++i) {
+    using namespace Quad;
+    for(CornerName i=FirstCorner; i<NumCorners; ++i) {
       (*this)[i] += quad2[i];
     }
     return *this;
   }
   
-  template<size_t N, typename T>
+  template<QuadDimType N, typename T>
   inline Quadrilateral<N,T>& Quadrilateral<N,T>::operator-= (const Quadrilateral<N,T> &quad2)
   {
-    for(int i=0; i<4; ++i) {
+    using namespace Quad;
+    for(CornerName i=FirstCorner; i<NumCorners; ++i) {
       (*this)[i] -= quad2[i];
     }
     return *this;
   }
   
-  template<size_t N, typename T>
-  Quadrilateral<N,T>  Quadrilateral<N,T>::operator* (const T scaleFactor) const
+  template<QuadDimType N, typename T>
+  inline Quadrilateral<N,T>&  Quadrilateral<N,T>::operator*=(const T value)
+  {
+    using namespace Quad;
+    for(CornerName i=FirstCorner; i<NumCorners; ++i) {
+      (*this)[i] *= value;
+    }
+    return *this;
+  }
+  
+  template<QuadDimType N, typename T>
+  Quadrilateral<N,T>  Quadrilateral<N,T>::getScaled(const T scaleFactor) const
   {
     Quadrilateral<N,T> scaledQuad(*this);
     scaledQuad *= scaleFactor;
     return scaledQuad;
   }
   
-  template<size_t N, typename T>
+  template<QuadDimType N, typename T>
   inline T Quadrilateral<N,T>::get_minX(void) const
   {
     using namespace Quad;
@@ -168,7 +183,7 @@ namespace Anki {
                    MIN((*this)[BottomLeft].x(), (*this)[BottomRight].x())));
   }
   
-  template<size_t N, typename T>
+  template<QuadDimType N, typename T>
   inline T Quadrilateral<N,T>::get_minY(void) const
   {
     using namespace Quad;
@@ -177,7 +192,7 @@ namespace Anki {
                    MIN((*this)[BottomLeft].y(), (*this)[BottomRight].y())));
   }
   
-  template<size_t N, typename T>
+  template<QuadDimType N, typename T>
   inline T Quadrilateral<N,T>::get_maxX(void) const
   {
     using namespace Quad;
@@ -186,7 +201,7 @@ namespace Anki {
                    MAX((*this)[BottomLeft].x(), (*this)[BottomRight].x())));
   }
   
-  template<size_t N, typename T>
+  template<QuadDimType N, typename T>
   inline T Quadrilateral<N,T>::get_maxY(void) const
   {
     using namespace Quad;
@@ -195,7 +210,7 @@ namespace Anki {
                    MAX((*this)[BottomLeft].y(), (*this)[BottomRight].y())));
   }
   
-  template<size_t N, typename T>
+  template<QuadDimType N, typename T>
   Point<N,T> Quadrilateral<N,T>::computeCentroid(void) const
   {
     using namespace Quad;
@@ -204,13 +219,13 @@ namespace Anki {
     centroid += (*this)[TopRight];
     centroid += (*this)[BottomLeft];
     centroid += (*this)[BottomRight];
-    centroid *= 0.25f; // This might do weird things if T is not float/double
+    centroid /= T(4);
 
     return centroid;
   }
   
-  template<size_t N, typename T>
-  Quadrilateral<N,T>& Quadrilateral<N,T>::operator*=(const T scaleFactor)
+  template<QuadDimType N, typename T>
+  Quadrilateral<N,T>& Quadrilateral<N,T>::scale(const T scaleFactor)
   {
     using namespace Quad;
     
@@ -229,7 +244,7 @@ namespace Anki {
     return *this;
   } // operator*=
   
-  template<size_t N, typename T>
+  template<QuadDimType N, typename T>
   inline const Point<N,T>& Quadrilateral<N,T>::operator[] (const Quad::CornerName whichCorner) const
   {
     //return this->corners[whichCorner];
@@ -237,7 +252,7 @@ namespace Anki {
   }
 
   
-  template<size_t N, typename T>
+  template<QuadDimType N, typename T>
   inline Point<N,T>& Quadrilateral<N,T>::operator[] (const Quad::CornerName whichCorner)
   {
     //return this->corners[whichCorner];
@@ -245,7 +260,7 @@ namespace Anki {
   }
   
   /*
-  template<size_t N, typename T>
+  template<QuadDimType N, typename T>
   inline const std::vector<Point<N,T> >& Quadrilateral<N,T>::get_corners() const
   {
     return this->corners;

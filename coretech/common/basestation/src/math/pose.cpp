@@ -193,52 +193,6 @@ namespace Anki {
     this->translation += other.translation;
   }
   
-  Point3f Pose3d::operator*(const Point3f &pointIn) const
-  {
-    Point3f pointOut( this->rotationMatrix * pointIn );
-    pointOut += this->translation;
-    
-    return pointOut;
-  }
-  
-  void Pose3d::applyTo(const Quad3f &quadIn,
-                       Quad3f &quadOut) const
-  {
-    using namespace Quad;
-    quadOut[TopLeft]     = (*this) * quadIn[TopLeft];
-    quadOut[TopRight]    = (*this) * quadIn[TopRight];
-    quadOut[BottomLeft]  = (*this) * quadIn[BottomLeft];
-    quadOut[BottomRight] = (*this) * quadIn[BottomRight];
-  }
-  
-  void Pose3d::applyTo(const std::vector<Point3f> &pointsIn,
-                       std::vector<Point3f>       &pointsOut) const
-  {
-    const size_t numPoints = pointsIn.size();
-    
-    if(pointsOut.size() == numPoints)
-    {
-      // The output vector already has the right number of points
-      // in it.  No need to construct a new vector full of (0,0,0)
-      // points with resize; just replace what's there.
-      for(size_t i=0; i<numPoints; ++i)
-      {
-        pointsOut[i] = (*this) * pointsIn[i];
-      }
-      
-    } else {
-      // Clear the output vector, and use push_back to add newly-
-      // constructed points. Again, this avoids first creating a
-      // bunch of (0,0,0) points via resize and then immediately
-      // overwriting them.
-      pointsOut.clear();
-
-      for(const Point3f& x : pointsIn)
-      {
-        pointsOut.emplace_back( (*this) * x );
-      }
-    }
-  } // applyTo()
   
 #pragma mark --- Member Methods ---
   Pose3d Pose3d::getInverse(void) const

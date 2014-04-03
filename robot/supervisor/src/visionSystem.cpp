@@ -14,7 +14,6 @@
 #include "anki/common/robot/config.h"
 #include "anki/common/robot/memory.h"
 
-#include "anki/vision/robot/docking_vision.h"
 #include "anki/vision/robot/fiducialDetection.h"
 #include "anki/vision/robot/fiducialMarkers.h"
 #include "anki/vision/robot/imageProcessing.h"
