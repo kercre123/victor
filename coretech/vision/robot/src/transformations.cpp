@@ -779,11 +779,8 @@ namespace Anki
             const s32 nextImagePixelValueRaw = *nextImage.Pointer(yTransformedS32, xTransformedS32);
             const s32 templatePixelValueRaw = pTemplateImage[x];
 
-            //const s32 nearestPixelValue  = (nextImagePixelValueRaw * nextImageHighDivisorS32) >> numStatisticsFractionalBits;
-            //const s32 templatePixelValue = (templatePixelValueRaw * templateHighDivisorS32) >> numStatisticsFractionalBits;
-
-            const s32 nearestPixelValue  = nextImagePixelValueRaw;
-            const s32 templatePixelValue = templatePixelValueRaw;
+            const s32 nearestPixelValue  = (nextImagePixelValueRaw * nextImageHighDivisorS32) >> numStatisticsFractionalBits;
+            const s32 templatePixelValue = (templatePixelValueRaw * templateHighDivisorS32) >> numStatisticsFractionalBits;
 
             const s32 grayvalueDifference = ABS(nearestPixelValue - templatePixelValue);
 
