@@ -43,7 +43,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
+#include "anki/common/robot/array2d.h"
 
 #include "anki/vision/robot/perspectivePoseEstimation.h"
 
@@ -59,7 +59,7 @@ namespace Anki {
       {
         Point3<PRECISION> e1 = f1;
         Point3<PRECISION> e3 = CrossProduct(f1, f2);
-        e3 *= PRECISION(1) / (PRECISION) e3.Length();
+        if(e3.MakeUnitLength() == 0) { return EXIT_FAILURE; }
         Point3<PRECISION> e2 = CrossProduct(e3, e1);
        
         // The e vectors are the rows of the T matrix (and T should already be allocated)
@@ -101,6 +101,7 @@ namespace Anki {
         PRECISION alpha_pw2 = alpha*alpha;
         PRECISION alpha_pw3 = alpha_pw2*alpha;
         
+        // TODO: is std::complex kosher on embedded?
         std::complex<PRECISION> P (-alpha_pw2/12-gamma,0);
         std::complex<PRECISION> Q (-alpha_pw3/108+alpha*gamma/3-beta*beta/8,0);
         std::complex<PRECISION> R = -Q/PRECISION(2)+sqrt(pow(Q,PRECISION(2))/PRECISION(4)+pow(P,PRECISION(3))/PRECISION(27));
@@ -165,7 +166,9 @@ namespace Anki {
         MATRIX T = MATRIX(3,3,memory);
         
         // Create intermediate camera frame
-        createIntermediateCameraFrameHelper(f1, f2, f3, T);
+        if(createIntermediateCameraFrameHelper(f1, f2, f3, T) != EXIT_SUCCESS) {
+          return EXIT_FAILURE;
+        }
         
         // Reinforce that f3[2] > 0 for theta in [0,pi]
         if(f3.z > 0)
@@ -174,7 +177,9 @@ namespace Anki {
           f2 = imageRay1;
           f3 = imageRay3;
           
-          createIntermediateCameraFrameHelper(f1, f2, f3, T);
+          if(createIntermediateCameraFrameHelper(f1, f2, f3, T) != EXIT_SUCCESS) {
+            return EXIT_FAILURE;
+          }
           
           P1 = worldPoint2;
           P2 = worldPoint1;
@@ -183,10 +188,10 @@ namespace Anki {
         
         // Creation of intermediate world frame
         POINT n1 = P2 - P1;
-        n1 *= PRECISION(1) / (PRECISION) n1.Length();
+        if(n1.MakeUnitLength() == 0) { return EXIT_FAILURE; }
         
         POINT n3(CrossProduct(n1, (P3-P1)));
-        n3 *= PRECISION(1) / (PRECISION) n3.Length();
+        if(n3.MakeUnitLength() == 0) { return EXIT_FAILURE; }
         
         POINT n2(CrossProduct(n3,n1));
         
@@ -307,6 +312,7 @@ namespace Anki {
 
           // Assign this solution's rotation matrix to the output
           //  Rout[i] = Tt * R * N;
+          AnkiAssert(Rout[i]->get_size(0) == 3 && Rout[i]->get_size(1) == 3);
           Matrix::Multiply(Tt, R, temp);
           Matrix::Multiply(temp, N, *Rout[i]);
 
@@ -315,8 +321,7 @@ namespace Anki {
                   sin_theta*d_12*sin_alpha*(sin_alpha*b+cos_alpha));
           
           // Assign this solution's translation vector to the output
-          *Tout[i] = *Rout[i] * (P1 + Nt*C);
-          *Tout[i] *= -PRECISION(1);
+          *Tout[i] = -(*Rout[i] * (P1 + Nt*C));
           
         }
         
@@ -348,6 +353,163 @@ namespace Anki {
                                                        Array<double>& R3, Point3<double>& T3,
                                                        Array<double>& R4, Point3<double>& T4,
                                                        MemoryStack memory);
+      
+      
+      
+      template<typename PRECISION>
+      ReturnCode computePose(const Quadrilateral<PRECISION>& imgQuad,
+                             const Point3<PRECISION> worldPoint1,
+                             const Point3<PRECISION> worldPoint2,
+                             const Point3<PRECISION> worldPoint3,
+                             const Point3<PRECISION> worldPoint4,
+                             const f32 focalLength_x, const f32 focalLength_y,
+                             const f32 camCenter_x, const f32 camCenter_y,
+                             Array<PRECISION>& R, Point3<PRECISION>& T,
+                             MemoryStack memory)
+      {
+        // Output rotation should already be allocated
+        AnkiAssert(R.get_size(0) == 3 && R.get_size(1) == 3);
+        
+        // Put the four world points into an array so we can loop over them
+        // easily
+        const Point3<PRECISION>* worldPoints[4] = {
+          &worldPoint1, &worldPoint2, &worldPoint3, &worldPoint4
+        };
+
+        
+        // Turn the three image points into unit vectors corresponding to rays
+        // in the direction of the image points
+        Point3<PRECISION> imgRays[4]; // TODO: ok just to declare this on the stack?
+        
+        const PRECISION invFx = PRECISION(1) / (PRECISION) focalLength_x;
+        const PRECISION invFy = PRECISION(1) / (PRECISION) focalLength_y;
+        
+        for(s32 i_corner = 0; i_corner < 4; ++i_corner)
+        {
+          // Get unit vector pointing along each image ray
+          //   imgRay = K^(-1) * [u v 1]^T
+          imgRays[i_corner].x = invFx * (imgQuad[i_corner].x - camCenter_x);
+          imgRays[i_corner].y = invFy * (imgQuad[i_corner].y - camCenter_y);
+          imgRays[i_corner].z = PRECISION(1);
+          
+          imgRays[i_corner].MakeUnitLength();
+        }
+        
+        
+        // Compute best pose from each subset of three corners, keeping the one
+        // with the lowest error
+        f32 minErrorOuter = FLT_MAX; // std::numeric_limits<float>::max();
+        
+        s32 cornerList[4] = {0, 1, 2, 3};
+
+        Array<PRECISION> possibleR[4];
+        for(s32 i=0; i<4; ++i) {
+          possibleR[i] = Array<PRECISION>(3,3,memory);
+        }
+        
+        Point3<PRECISION> possibleT[4]; // TODO: Kosher to create array of Point3's?
+        
+        for(s32 i=0; i<4; ++i)
+        {
+          // Use the first corner in the current corner list as the validation
+          // corner. Use the remaining three to estimate the pose.
+          const s32 i_validate = cornerList[0];
+          
+          //printf("Validating with %d, estimating with %d, %d, %d\n",
+          //       i_validate, cornerList[1], cornerList[2], cornerList[3]);
+          
+          if(P3P::computePossiblePoses(*worldPoints[cornerList[1]],
+                                       *worldPoints[cornerList[2]],
+                                       *worldPoints[cornerList[3]],
+                                       imgRays[cornerList[1]],
+                                       imgRays[cornerList[2]],
+                                       imgRays[cornerList[3]],
+                                       possibleR[0], possibleT[0],
+                                       possibleR[1], possibleT[1],
+                                       possibleR[2], possibleT[2],
+                                       possibleR[3], possibleT[3],
+                                       memory) != EXIT_SUCCESS)
+          {
+            return EXIT_FAILURE;
+          }
+          
+          // Find the pose with the least reprojection error for the 4th
+          // validation corner (which was not used in estimating the pose)
+          s32 bestSolution = -1;
+          float minErrorInner = FLT_MAX;
+          
+          for(s32 i_solution=0; i_solution<4; ++i_solution)
+          {
+            // Project the validation world point into the image using each
+            // possible pose
+            //   proj = K*[R T]*[worldX; worldY; worldZ; 1]
+            //   u = projX/projZ;
+            //   v = projY/projZ;
+            //
+            // NOTE: this does not take radial distortion into account, if/when
+            //       we have that for the camera
+
+            Point3<PRECISION> projectedPoint3 = (possibleR[i_solution] * (*worldPoints[i_validate])) + possibleT[i_solution];
+            
+            Point<PRECISION> projectedPoint(projectedPoint3.x/projectedPoint3.z,
+                                            projectedPoint3.y/projectedPoint3.z);
+            
+            // Compare to the validation image point
+            float error = (projectedPoint - imgQuad[i_validate]).Length();
+            
+            if(error < minErrorInner) {
+              minErrorInner = error;
+              bestSolution = i_solution;
+            }
+            
+          } // for each solution
+          
+          AnkiAssert(bestSolution >= 0);
+          
+          // If the pose using this validation corner is better than the
+          // best so far, keep it
+          if(minErrorInner < minErrorOuter) {
+            minErrorOuter = minErrorInner;
+            R = possibleR[bestSolution];
+            T = possibleT[bestSolution];
+          }
+          
+          if(i<4) {
+            // Rearrange corner list for next loop, to get a different
+            // validation corner each time
+            std::swap(cornerList[0], cornerList[i_validate+1]); // TODO: std::swap kosher in embedded?
+          }
+          
+        } // for each validation corner
+        
+        return EXIT_SUCCESS;
+      } // computePose()
+      
+      
+      // Explicit instantiation for single and double precision
+      // NOTE: this in turn will effectively explicitly instantiate
+      //       computePossiblePoses() for each as well
+      // TODO: Once we decide which we actually need, we could only instantiate that one
+
+      template ReturnCode computePose<f32>(const Quadrilateral<f32>& imgQuad,
+                                           const Point3<f32> worldPoint1,
+                                           const Point3<f32> worldPoint2,
+                                           const Point3<f32> worldPoint3,
+                                           const Point3<f32> worldPoint4,
+                                           const f32 focalLength_x, const f32 focalLength_y,
+                                           const f32 camCenter_x, const f32 camCenter_y,
+                                           Array<f32>& R, Point3<f32>& T,
+                                           MemoryStack memory);
+      
+      template ReturnCode computePose<f64>(const Quadrilateral<f64>& imgQuad,
+                                           const Point3<f64> worldPoint1,
+                                           const Point3<f64> worldPoint2,
+                                           const Point3<f64> worldPoint3,
+                                           const Point3<f64> worldPoint4,
+                                           const f32 focalLength_x, const f32 focalLength_y,
+                                           const f32 camCenter_x, const f32 camCenter_y,
+                                           Array<f64>& R, Point3<f64>& T,
+                                           MemoryStack memory);
       
       
 /*

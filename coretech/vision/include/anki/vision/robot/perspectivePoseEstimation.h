@@ -15,7 +15,7 @@
 #define ANKI_EMBEDDEDVISION_PERSPECTIVEPOSEESTIMATION_H
 
 #include "anki/common/robot/geometry_declarations.h"
-#include "anki/common/robot/array2d.h"
+#include "anki/common/robot/array2d_declarations.h"
 
 namespace Anki {
   namespace Embedded {
@@ -36,14 +36,8 @@ namespace Anki {
       //    a Direct Computation of Absolute Camera Position and Orientation"
       //   by Kneip et al.
       //
-      
-      /*
-      template<typename PRECISION>
-      ReturnCode computePossiblePoses(const std::array<Point<3,PRECISION>,3>& worldPoints,
-                                      const std::array<Point<3,PRECISION>,3>& imageRays,
-                                      std::array<Pose3d,4>& poses);
-      */
-      
+      // NOTE: R1,R2,R3,R4 should all already be allocated to be 3x3.
+      //
       template<typename PRECISION>
       ReturnCode computePossiblePoses(const Point3<PRECISION>& worldPoint1,
                                       const Point3<PRECISION>& worldPoint2,
@@ -51,16 +45,30 @@ namespace Anki {
                                       const Point3<PRECISION>& imageRay1,
                                       const Point3<PRECISION>& imageRay2,
                                       const Point3<PRECISION>& imageRay3,
-                                      Array<PRECISION>& R1, Array<PRECISION>& T1,
-                                      Array<PRECISION>& R2, Array<PRECISION>& T2,
-                                      Array<PRECISION>& R3, Array<PRECISION>& T3,
-                                      Array<PRECISION>& R4, Array<PRECISION>& T4,
+                                      Array<PRECISION>& R1, Point3<PRECISION>& T1,
+                                      Array<PRECISION>& R2, Point3<PRECISION>& T2,
+                                      Array<PRECISION>& R3, Point3<PRECISION>& T3,
+                                      Array<PRECISION>& R4, Point3<PRECISION>& T4,
                                       MemoryStack memory);
       
+      // Use three points of a quadrilateral and the P3P algorithm above to
+      // compute possible camera poses, then use the fourth point to choose the
+      // valid pose. Do this four times (once using each corner as the validation
+      // point) and choose the best pose overall, which is returned in R and T.
+      // NOTE: R should already be allocated to be 3x3.
+      // TODO: Make a Quadrilateral3 class to store 4 world points?
+      template<typename PRECISION>
+      ReturnCode computePose(const Quadrilateral<PRECISION>& imgQuad,
+                             const Point3<PRECISION> worldPoint1,
+                             const Point3<PRECISION> worldPoint2,
+                             const Point3<PRECISION> worldPoint3,
+                             const Point3<PRECISION> worldPoint4,
+                             Array<PRECISION>& R, Point3<PRECISION>& T,
+                             MemoryStack memory);
       
     } // namespace P3P
   } // namespace Embedded
 } // namespace Anki
 
 
-#endif // ANKI_VISION_PERSPECTIVEPOSEESTIMATION_H
+#endif // ANKI_EMBEDDEDVISION_PERSPECTIVEPOSEESTIMATION_H
