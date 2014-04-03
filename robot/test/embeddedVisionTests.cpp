@@ -20,11 +20,11 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/integralImage.h"
 #include "anki/vision/robot/draw_vision.h"
 #include "anki/vision/robot/lucasKanade.h"
-
 #include "anki/vision/robot/imageProcessing.h"
 #include "anki/vision/robot/transformations.h"
 #include "anki/vision/robot/binaryTracker.h"
 #include "anki/vision/robot/decisionTree_vision.h"
+#include "anki/vision/robot/perspectivePoseEstimation.h"
 
 #include "anki/vision/MarkerCodeDefinitions.h"
 
@@ -2853,6 +2853,129 @@ GTEST_TEST(CoreTech_Vision, DownsampleByFactor)
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, DownsampleByFactor)
+
+
+GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation)
+{
+  // Allocate memory from the heap, for the memory allocator
+  // TODO: How much memory do i need here?
+  const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 1000);
+  
+  // TODO: is onchipbBuffer the right one to use here?
+  MemoryStack memory(&onchipBuffer[0], numBytes);
+
+  
+  // Parameters
+  Array<f32> Rtrue = Array<f32>(3,3,memory);
+  // rodrigues(3*pi/180*[0 0 1])*rodrigues(4*pi/180*[0 1 0])*rodrigues(-10*pi/180*[1 0 0])
+  Rtrue[0][0] =  0.9962;  Rtrue[0][1] =   -0.0636;  Rtrue[0][1] =    0.0595;
+  Rtrue[1][0] =  0.0522;  Rtrue[1][1] =    0.9828;  Rtrue[1][2] =    0.1770;
+  Rtrue[2][0] = -0.0698;  Rtrue[2][1] =   -0.1732;  Rtrue[2][2] =    0.9824;
+  const Point3<f32> Ttrue(10.f, 12.f, 120.f);
+  
+  const f32 markerSize = 26.f;
+  
+  const f32 focalLength_x = 317.2f;
+  const f32 focalLength_y = 318.4f;
+  const f32 camCenter_x   = 151.9f;
+  const f32 camCenter_y   = 129.0f;
+  const u16 camNumRows    = 240;
+  const u16 camNumCols    = 320;
+  
+  const Quadrilateral<f32> projNoise(Point2f(-0.0310f,    0.1679f),
+                                     Point2f( 0.3724f,   -0.3019f),
+                                     Point2f( 0.3523f,    0.1793f),
+                                     Point2f( 0.3543f,    0.4076f));
+  
+  const f32 distThreshold      = 2.f;
+  const f32 angleThreshold     = DEG_TO_RAD(1);
+  const f32 pixelErrThreshold  = 1.f;
+  
+  // Create the 3D marker and put it in the specified pose relative to the camera
+  Point3<f32> marker3d[4];
+  marker3d[0] = Point3<f32>(-markerSize, -markerSize, 0.f);
+  marker3d[1] = Point3<f32>(-markerSize,  markerSize, 0.f);
+  marker3d[2] = Point3<f32>( markerSize, -markerSize, 0.f);
+  marker3d[3] = Point3<f32>( markerSize,  markerSize, 0.f);
+  
+  // Compute the ground truth projection of the marker in the image
+  // NOTE: No radial distortion!
+  Quadrilateral<f32> proj;
+  for(s32 i=0; i<4; ++i) {
+    Point3<f32> proj3 = Rtrue*marker3d[i] + Ttrue;
+    proj3.x = focalLength_x*proj3.x + camCenter_x*proj3.z;
+    proj3.y = focalLength_x*proj3.y + camCenter_y*proj3.z;
+    proj[i].x = proj3.x / proj3.z;
+    proj[i].y = proj3.y / proj3.z;
+
+    // Add noise
+    proj[i] += projNoise[i];
+  }
+  
+  
+  // Make sure all the corners projected within the image
+  for(s32 i_corner=0; i_corner<4; ++i_corner)
+  {
+    ASSERT_TRUE(not std::isnan(proj[i_corner].x));
+    ASSERT_TRUE(not std::isnan(proj[i_corner].y));
+    ASSERT_GE(proj[i_corner].x, 0.f);
+    ASSERT_LT(proj[i_corner].x, camNumCols);
+    ASSERT_GE(proj[i_corner].y, 0.f);
+    ASSERT_LT(proj[i_corner].y, camNumRows);
+  }
+  
+  // Compute the pose of the marker w.r.t. camera from the noisy projection
+  Array<f32> R = Array<f32>(3,3,memory);
+  Point3<f32> T;
+  ASSERT_TRUE(P3P::computePose(proj,
+                               marker3d[0], marker3d[1], marker3d[2], marker3d[3],
+                               focalLength_x, focalLength_y,
+                               camCenter_x, camCenter_y,
+                               R, T, memory) == EXIT_SUCCESS);
+  
+  // Check if the estimated pose matches the true pose
+  /*
+  printf("Angular difference is %f degrees (threshold = %f degrees)\n",
+         poseEst.get_rotationMatrix().GetAngleDiffFrom(poseTrue.get_rotationMatrix()).getDegrees(),
+         angleThreshold.getDegrees());
+  printf("Translation difference is (%f, %f, %f), threshold = %f\n",
+         poseEst.get_translation().x() - poseTrue.get_translation().x(),
+         poseEst.get_translation().y() - poseTrue.get_translation().y(),
+         poseEst.get_translation().z() - poseTrue.get_translation().z(),
+         distThreshold);
+  */
+  
+  // Compute angular difference between the two rotation matrices
+  // TODO: make this a utility function somewhere?
+  // R = R_this * R_other^T
+  Array<f32> Rt = Array<f32>(3,3,memory);
+  Matrix::Transpose(R, Rt);
+  Array<f32> Rcheck = Array<f32>(3,3,memory);
+  Matrix::Multiply(Rtrue, Rt, Rcheck);
+  
+  const f32 trace = Rcheck[0][0] + Rcheck[1][1] + Rcheck[2][2];
+  const f32 angleDiff = std::acos(0.5f*(trace - 1.f));
+
+  EXPECT_LE(angleDiff, angleThreshold);
+  
+  // Check the translational difference between the two poses
+  EXPECT_LE(T.Dist(Ttrue), distThreshold);
+
+  // Check if the reprojected points match the originals
+  for(s32 i_corner=0; i_corner<4; ++i_corner) {
+
+    Point3<f32> marker3d_est = R*marker3d[i_corner] + T;
+    Point<f32>  reproj(focalLength_x*marker3d_est.x + camCenter_x*marker3d_est.z,
+                       focalLength_y*marker3d_est.y + camCenter_y*marker3d_est.z);
+    
+    reproj *= 1.f / marker3d_est.z;
+    
+    EXPECT_NEAR(reproj.x, proj[i_corner].x, pixelErrThreshold);
+    EXPECT_NEAR(reproj.y, proj[i_corner].y, pixelErrThreshold);
+  }
+  
+} // GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation)
+
 
 #if !ANKICORETECH_EMBEDDED_USE_GTEST
 s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
