@@ -18,6 +18,11 @@
 #include "anki/vision/basestation/camera.h"
 #include "anki/vision/basestation/perspectivePoseEstimation.h"
 
+// Set to 1 to use OpenCV's iterative pose estimation for quads.
+// Otherwise, the closed form P3P solution is used.
+// NOTE: this currently only affects the computeObjectPose() that takes in quads.
+#define USE_ITERATIVE_QUAD_POSE_ESTIMATION 0
+
 namespace Anki {
   
   namespace Vision {
@@ -164,6 +169,25 @@ namespace Anki {
         CORETECH_THROW("Camera::computeObjectPose() called before calibration set.");
       }
       
+#if USE_ITERATIVE_QUAD_POSE_ESTIMATION
+      
+      std::vector<cv::Point2f> cvImagePoints;
+      std::vector<cv::Point3f> cvObjPoints;
+      
+      cvImagePoints.emplace_back(imgQuad[Quad::TopLeft].get_CvPoint_());
+      cvImagePoints.emplace_back(imgQuad[Quad::BottomLeft].get_CvPoint_());
+      cvImagePoints.emplace_back(imgQuad[Quad::TopRight].get_CvPoint_());
+      cvImagePoints.emplace_back(imgQuad[Quad::BottomRight].get_CvPoint_());
+      
+      cvObjPoints.emplace_back(worldQuad[Quad::TopLeft].get_CvPoint3_());
+      cvObjPoints.emplace_back(worldQuad[Quad::BottomLeft].get_CvPoint3_());
+      cvObjPoints.emplace_back(worldQuad[Quad::TopRight].get_CvPoint3_());
+      cvObjPoints.emplace_back(worldQuad[Quad::BottomRight].get_CvPoint3_());
+      
+      return computeObjectPoseHelper(cvImagePoints, cvObjPoints);
+
+#else
+      
       Pose3d pose;
       
       
@@ -257,6 +281,9 @@ namespace Anki {
       pose.set_parent(&this->pose);
       
       return pose;
+      
+#endif // #if USE_ITERATIVE_QUAD_POSE_ESTIMATION
+      
     } // computeObjectPose(from quads)
  
     
