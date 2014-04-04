@@ -110,6 +110,134 @@ GTEST_TEST(CoreTech_Vision, DecisionTreeVision)
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, DecisionTreeVision)
 
+GTEST_TEST(CoreTech_Vision, BinaryTrackerHeaderTemplate)
+{
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  ASSERT_TRUE(scratchCcm.IsValid());
+
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(scratchOnchip.IsValid());
+
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(scratchOffchip.IsValid());
+
+  Array<u8> templateImage(cozmo_2014_01_29_11_41_05_10_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_10_320x240_WIDTH, scratchOnchip);
+  Array<u8> nextImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOnchip);
+
+  const Quadrilateral<f32> templateQuad(Point<f32>(128,78), Point<f32>(220,74), Point<f32>(229,167), Point<f32>(127,171));
+  //const u8 edgeDetection_grayvalueThreshold = 100;
+  const s32 edgeDetection_minComponentWidth = 2;
+
+  const s32 edgeDetection_threshold_yIncrement = 4;
+  const s32 edgeDetection_threshold_xIncrement = 4;
+  const f32 edgeDetection_threshold_blackPercentile = 0.1f;
+  const f32 edgeDetection_threshold_whitePercentile = 0.9f;
+  const f32 edgeDetection_threshold_scaleRegionPercent = 0.8f;
+
+  const s32 templateEdgeDetection_maxDetectionsPerType = 500;
+
+  const s32 updateEdgeDetection_maxDetectionsPerType = 2500;
+
+  const s32 normal_matching_maxTranslationDistance = 7;
+  const s32 normal_matching_maxProjectiveDistance = 7;
+
+  const f32 scaleTemplateRegionPercent = 1.05f;
+
+  const s32 verify_maxTranslationDistance = 1;
+
+  const u8 verify_maxPixelDifference = 30;
+
+  const s32 verify_coordinateIncrement = 3;
+
+  const s32 ransac_matching_maxProjectiveDistance = normal_matching_maxProjectiveDistance;
+
+  const s32 ransac_maxIterations = 20;
+  const s32 ransac_numSamplesPerType = 8;
+  const s32 ransac_inlinerDistance = verify_maxTranslationDistance;
+
+  templateImage.Set(&cozmo_2014_01_29_11_41_05_10_320x240[0], cozmo_2014_01_29_11_41_05_10_320x240_WIDTH*cozmo_2014_01_29_11_41_05_10_320x240_HEIGHT);
+  nextImage.Set(&cozmo_2014_01_29_11_41_05_12_320x240[0], cozmo_2014_01_29_11_41_05_12_320x240_WIDTH*cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT);
+
+  // Skip zero rows/columns (non-list)
+  {
+    PUSH_MEMORY_STACK(scratchCcm);
+    PUSH_MEMORY_STACK(scratchOnchip);
+    PUSH_MEMORY_STACK(scratchOffchip);
+
+    printf("Skip 0 nonlist\n");
+
+    InitBenchmarking();
+
+    const s32 templateEdgeDetection_everyNLines = 1;
+
+    BeginBenchmark("BinaryTracker init");
+
+    const Quadrilateral<f32> templateQuad(Point<f32>(139,9),Point<f32>(127,88),Point<f32>(217,21),Point<f32>(205,100));
+
+    TemplateTracker::BinaryTracker tracker(
+      Anki::Vision::MARKER_BATTERIES,
+      0.0f,
+      240, 320,
+      templateQuad,
+      scaleTemplateRegionPercent,
+      edgeDetection_minComponentWidth,
+      templateEdgeDetection_maxDetectionsPerType,
+      1,
+      scratchOnchip, scratchOffchip);
+
+    EndBenchmark("BinaryTracker init");
+
+    //templateImage.Show("templateImage",false);
+    //nextImage.Show("nextImage",false);
+    //tracker.ShowTemplate(true, false);
+
+    const s32 numTemplatePixels = tracker.get_numTemplatePixels();
+
+    ASSERT_TRUE(numTemplatePixels == 1292);
+
+    BeginBenchmark("BinaryTracker update fixed-float");
+
+    s32 verify_numMatches;
+    s32 verify_meanAbsoluteDifference;
+    s32 verify_numInBounds;
+    s32 verify_numSimilarPixels;
+
+    const Result result = tracker.UpdateTrack_Normal(
+      nextImage,
+      edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent,
+      edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType,
+      1,
+      normal_matching_maxTranslationDistance, normal_matching_maxProjectiveDistance,
+      verify_maxTranslationDistance, verify_maxPixelDifference, verify_coordinateIncrement,
+      verify_numMatches, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels,
+      scratchCcm, scratchOffchip);
+    EndBenchmark("BinaryTracker update fixed-float");
+
+    ASSERT_TRUE(result == RESULT_OK);
+
+    // TODO: verify this number manually
+    /*ASSERT_TRUE(verify_numMatches == 1241);
+    ASSERT_TRUE(verify_meanAbsoluteDifference == 6);
+    ASSERT_TRUE(verify_numInBounds == 1155);
+    ASSERT_TRUE(verify_numSimilarPixels == 1137);*/
+
+    //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
+
+    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
+    transform_groundTruth[0][0] = 1.069f; transform_groundTruth[0][1] = -0.001f;   transform_groundTruth[0][2] = 2.376f;
+    transform_groundTruth[1][0] = 0.003f; transform_groundTruth[1][1] = 1.061f; transform_groundTruth[1][2] = -4.109f;
+    transform_groundTruth[2][0] = 0.0f;   transform_groundTruth[2][1] = 0.0f;   transform_groundTruth[2][2] = 1.0f;
+
+    tracker.get_transformation().get_homography().Print("fixed-float 1");
+
+    ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
+
+    PrintBenchmarkResults_OnlyTotals();
+  } // Skip zero rows/columns (non-list)
+
+  GTEST_RETURN_HERE;
+}
+
 GTEST_TEST(CoreTech_Vision, BinaryTracker)
 {
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
@@ -770,33 +898,33 @@ bool IsBlockImage50_320x240Valid(const u8 * const imageBuffer, const bool isBigE
 } // bool IsBlockImage50_320x240Valid()
 
 /* TODO: Update this to test FillDockErrMsg() in visionSystem.cpp
-  This will require exposing more of the internal state of the vision system
-  or changing the function's API to pass these things in.
- 
+This will require exposing more of the internal state of the vision system
+or changing the function's API to pass these things in.
+
 GTEST_TEST(CoreTech_Vision, ComputeDockingErrorSignalAffine)
 {
-  // TODO: make these the real values
-  const s32 horizontalTrackingResolution = 80;
-  const f32 blockMarkerWidthInMM = 50.0f;
-  const f32 horizontalFocalLengthInMM = 5.0f;
+// TODO: make these the real values
+const s32 horizontalTrackingResolution = 80;
+const f32 blockMarkerWidthInMM = 50.0f;
+const f32 horizontalFocalLengthInMM = 5.0f;
 
-  MemoryStack ms(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+MemoryStack ms(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+ASSERT_TRUE(ms.IsValid());
 
-  const Quadrilateral<f32> initialCorners(Point<f32>(5.0f,5.0f), Point<f32>(100.0f,100.0f), Point<f32>(50.0f,20.0f), Point<f32>(10.0f,80.0f));
-  const Transformations::PlanarTransformation_f32 transform(Transformations::TRANSFORM_AFFINE, initialCorners, ms);
+const Quadrilateral<f32> initialCorners(Point<f32>(5.0f,5.0f), Point<f32>(100.0f,100.0f), Point<f32>(50.0f,20.0f), Point<f32>(10.0f,80.0f));
+const Transformations::PlanarTransformation_f32 transform(Transformations::TRANSFORM_AFFINE, initialCorners, ms);
 
-  f32 rel_x, rel_y, rel_rad;
-  ASSERT_TRUE(Docking::ComputeDockingErrorSignal(transform,
-    horizontalTrackingResolution, blockMarkerWidthInMM, horizontalFocalLengthInMM,
-    rel_x, rel_y, rel_rad, ms) == RESULT_OK);
+f32 rel_x, rel_y, rel_rad;
+ASSERT_TRUE(Docking::ComputeDockingErrorSignal(transform,
+horizontalTrackingResolution, blockMarkerWidthInMM, horizontalFocalLengthInMM,
+rel_x, rel_y, rel_rad, ms) == RESULT_OK);
 
-  // TODO: manually compute the correct output
-  ASSERT_TRUE(FLT_NEAR(rel_x,2.7116308f));
-  ASSERT_TRUE(NEAR(rel_y,-8.1348925f, 0.1f)); // The Myriad inexact floating point mode is imprecise here
-  ASSERT_TRUE(FLT_NEAR(rel_rad,-0.87467581f));
+// TODO: manually compute the correct output
+ASSERT_TRUE(FLT_NEAR(rel_x,2.7116308f));
+ASSERT_TRUE(NEAR(rel_y,-8.1348925f, 0.1f)); // The Myriad inexact floating point mode is imprecise here
+ASSERT_TRUE(FLT_NEAR(rel_rad,-0.87467581f));
 
-  GTEST_RETURN_HERE;
+GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, ComputeDockingErrorSignalAffine)
 */
 

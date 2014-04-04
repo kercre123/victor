@@ -16,6 +16,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/edgeDetection.h"
 #include "anki/vision/robot/transformations.h"
 #include "anki/vision/robot/histogram.h"
+#include "anki/vision/MarkerCodeDefinitions.h"
 
 namespace Anki
 {
@@ -43,6 +44,20 @@ namespace Anki
           const f32 edgeDetection_threshold_blackPercentile, //< What percentile of histogram energy is black? (.1 is a good value)
           const f32 edgeDetection_threshold_whitePercentile, //< What percentile of histogram energy is white? (.9 is a good value)
           const f32 edgeDetection_threshold_scaleRegionPercent, //< How much to scale template bounding box (.8 is a good value)
+          const s32 edgeDetection_minComponentWidth, //< The smallest horizontal size of a component (1 to 4 is good)
+          const s32 edgeDetection_maxDetectionsPerType, //< As many as you have memory and time for
+          const s32 edgeDetection_everyNLines, //< As many as you have time for
+          MemoryStack &fastMemory,
+          MemoryStack &slowMemory);
+
+        // Similar to the other constructor, but computes the actual template edges from a reference binary image from a header file if one is available
+        BinaryTracker(
+          const Anki::Vision::MarkerType markerType,
+          const f32 markerOrientationAngle,
+          const s32 templateImageHeight,
+          const s32 templateImageWidth,
+          const Quadrilateral<f32> &templateQuad,
+          const f32 scaleTemplateRegionPercent, //< Shrinks the region if less-than 1.0, expands the region if greater-than 1.0
           const s32 edgeDetection_minComponentWidth, //< The smallest horizontal size of a component (1 to 4 is good)
           const s32 edgeDetection_maxDetectionsPerType, //< As many as you have memory and time for
           const s32 edgeDetection_everyNLines, //< As many as you have time for
