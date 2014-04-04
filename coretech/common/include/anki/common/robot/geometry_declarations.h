@@ -220,6 +220,17 @@ namespace Anki
       Radians angle;
     }; // class Pose2d
 
+    
+    // Compute the difference between two 3D poses (Rotations+Translations)
+    // All R matrices should be 3x3.
+    //    [R2 T2] = [Rdiff Tdiff] * [R1 T1]
+    // I.e., the diff pose is the one that takes pose 1 to pose 2.
+    template<typename Type>
+    ReturnCode ComputePoseDiff(const Array<Type>& R1, const Point3<Type>& T1,
+                               const Array<Type>& R2, const Point3<Type>& T2,
+                               Array<Type>& Rdiff, Point3<Type>& Tdiff,
+                               MemoryStack memory);
+    
 #if 0
 #pragma mark --- Quadrilateral Class Declaration ---
 #endif

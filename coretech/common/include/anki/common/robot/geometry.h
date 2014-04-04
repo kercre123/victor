@@ -276,6 +276,31 @@ namespace Anki
     template<> void Point3<f32>::Print() const;
     template<> void Point3<f64>::Print() const;
     
+#if 0
+#pragma mark --- Pose Implementations ---
+#endif
+    
+    template<typename Type>
+    ReturnCode ComputePoseDiff(const Array<Type>& R1, const Point3<Type>& T1,
+                                     const Array<Type>& R2, const Point3<Type>& T2,
+                                     Array<Type>& Rdiff, Point3<Type>& Tdiff,
+                                     MemoryStack memory)
+    {
+      // All the rotation matrices should be 3x3
+      AnkiAssert(R1.get_size(0)    == 3 && R1.get_size(1)    == 3);
+      AnkiAssert(R2.get_size(0)    == 3 && R2.get_size(1)    == 3);
+      AnkiAssert(Rdiff.get_size(0) == 3 && Rdiff.get_size(1) == 3);
+      
+      Array<Type> invR1 = Array<Type>(3,3,memory);
+      Matrix::Transpose(R1, invR1);
+      
+      //Point3<Type> invT1 = -invR1*T1;
+      
+      Matrix::Multiply(R2, invR1, Rdiff);
+      Tdiff = T2 - (Rdiff * T1);
+      
+      return EXIT_SUCCESS;
+    }
     
 #if 0
 #pragma mark --- Rectangle Implementations ---
