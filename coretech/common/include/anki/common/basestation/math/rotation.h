@@ -87,6 +87,10 @@ namespace Anki {
     //Radians  get_angle() const;
     //Vec3f    get_axis()  const;
     
+    // Return total angular rotation from the identity (no rotation)
+    Radians GetAngle() const;
+    
+    // Return angular rotation difference from another rotation matrix
     Radians GetAngleDiffFrom(const RotationMatrix3d &other) const;
     
     /*
