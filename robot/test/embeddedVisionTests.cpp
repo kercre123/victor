@@ -2900,23 +2900,50 @@ GTEST_TEST(CoreTech_Vision, DownsampleByFactor)
 } // GTEST_TEST(CoreTech_Vision, DownsampleByFactor)
 
 
+GTEST_TEST(CoreTech_Vision, SolveQuartic)
+{
+#define PRECISION f32
+  
+  const PRECISION factors[5] = {
+    -3593989.0, -33048.973667, 316991.744900, 33048.734165, -235.623396
+  };
+  
+  const PRECISION roots_groundTruth[4] = {
+    0.334683441970975, 0.006699578943935, -0.136720934135068, -0.213857711381642
+  };
+  
+  PRECISION roots_computed[4];
+  EXPECT_TRUE(P3P::solveQuartic(factors, roots_computed) == EXIT_SUCCESS);
+  
+  for(s32 i=0; i<4; ++i) {
+    EXPECT_NEAR(roots_groundTruth[i], roots_computed[i], 1e-6f);
+  }
+  
+#undef PRECISION
+} // GTEST_TEST(PoseEstimation, SolveQuartic)
+
+
+
+
 GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation)
 {
+#define PRECISION f64
+  
   // Allocate memory from the heap, for the memory allocator
   // TODO: How much memory do i need here?
-  const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 1000);
+  const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 250*sizeof(PRECISION));
   
   // TODO: is onchipbBuffer the right one to use here?
   MemoryStack memory(&onchipBuffer[0], numBytes);
 
   
   // Parameters
-  Array<f32> Rtrue = Array<f32>(3,3,memory);
+  Array<PRECISION> Rtrue = Array<PRECISION>(3,3,memory);
   // rodrigues(3*pi/180*[0 0 1])*rodrigues(4*pi/180*[0 1 0])*rodrigues(-10*pi/180*[1 0 0])
-  Rtrue[0][0] =  0.9962;  Rtrue[0][1] =   -0.0636;  Rtrue[0][1] =    0.0595;
+  Rtrue[0][0] =  0.9962;  Rtrue[0][1] =   -0.0636;  Rtrue[0][2] =    0.0595;
   Rtrue[1][0] =  0.0522;  Rtrue[1][1] =    0.9828;  Rtrue[1][2] =    0.1770;
   Rtrue[2][0] = -0.0698;  Rtrue[2][1] =   -0.1732;  Rtrue[2][2] =    0.9824;
-  const Point3<f32> Ttrue(10.f, 12.f, 120.f);
+  const Point3<PRECISION> Ttrue(10.f, 15.f, 100.f);
   
   const f32 markerSize = 26.f;
   
@@ -2927,29 +2954,29 @@ GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation)
   const u16 camNumRows    = 240;
   const u16 camNumCols    = 320;
   
-  const Quadrilateral<f32> projNoise(Point2f(-0.0310f,    0.1679f),
-                                     Point2f( 0.3724f,   -0.3019f),
-                                     Point2f( 0.3523f,    0.1793f),
-                                     Point2f( 0.3543f,    0.4076f));
+  const Quadrilateral<PRECISION> projNoise(Point<PRECISION>(0.1740,    0.0116),
+                                           Point<PRECISION>(0.0041,    0.0073),
+                                           Point<PRECISION>(0.0381,    0.1436),
+                                           Point<PRECISION>(0.2249,    0.0851));
   
-  const f32 distThreshold      = 2.f;
-  const f32 angleThreshold     = DEG_TO_RAD(1);
+  const f32 distThreshold      = 3.f;
+  const f32 angleThreshold     = DEG_TO_RAD(2);
   const f32 pixelErrThreshold  = 1.f;
   
   // Create the 3D marker and put it in the specified pose relative to the camera
-  Point3<f32> marker3d[4];
-  marker3d[0] = Point3<f32>(-markerSize, -markerSize, 0.f);
-  marker3d[1] = Point3<f32>(-markerSize,  markerSize, 0.f);
-  marker3d[2] = Point3<f32>( markerSize, -markerSize, 0.f);
-  marker3d[3] = Point3<f32>( markerSize,  markerSize, 0.f);
+  Point3<PRECISION> marker3d[4];
+  marker3d[0] = Point3<PRECISION>(-markerSize/2.f, -markerSize/2.f, 0.f);
+  marker3d[1] = Point3<PRECISION>(-markerSize/2.f,  markerSize/2.f, 0.f);
+  marker3d[2] = Point3<PRECISION>( markerSize/2.f, -markerSize/2.f, 0.f);
+  marker3d[3] = Point3<PRECISION>( markerSize/2.f,  markerSize/2.f, 0.f);
   
   // Compute the ground truth projection of the marker in the image
   // NOTE: No radial distortion!
-  Quadrilateral<f32> proj;
+  Quadrilateral<PRECISION> proj;
   for(s32 i=0; i<4; ++i) {
-    Point3<f32> proj3 = Rtrue*marker3d[i] + Ttrue;
+    Point3<PRECISION> proj3 = Rtrue*marker3d[i] + Ttrue;
     proj3.x = focalLength_x*proj3.x + camCenter_x*proj3.z;
-    proj3.y = focalLength_x*proj3.y + camCenter_y*proj3.z;
+    proj3.y = focalLength_y*proj3.y + camCenter_y*proj3.z;
     proj[i].x = proj3.x / proj3.z;
     proj[i].y = proj3.y / proj3.z;
 
@@ -2970,55 +2997,47 @@ GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation)
   }
   
   // Compute the pose of the marker w.r.t. camera from the noisy projection
-  Array<f32> R = Array<f32>(3,3,memory);
-  Point3<f32> T;
+  Array<PRECISION> R = Array<PRECISION>(3,3,memory);
+  Point3<PRECISION> T;
   ASSERT_TRUE(P3P::computePose(proj,
                                marker3d[0], marker3d[1], marker3d[2], marker3d[3],
                                focalLength_x, focalLength_y,
                                camCenter_x, camCenter_y,
                                R, T, memory) == EXIT_SUCCESS);
   
+  //
   // Check if the estimated pose matches the true pose
-  /*
-  printf("Angular difference is %f degrees (threshold = %f degrees)\n",
-         poseEst.get_rotationMatrix().GetAngleDiffFrom(poseTrue.get_rotationMatrix()).getDegrees(),
-         angleThreshold.getDegrees());
-  printf("Translation difference is (%f, %f, %f), threshold = %f\n",
-         poseEst.get_translation().x() - poseTrue.get_translation().x(),
-         poseEst.get_translation().y() - poseTrue.get_translation().y(),
-         poseEst.get_translation().z() - poseTrue.get_translation().z(),
-         distThreshold);
-  */
+  //
   
-  // Compute angular difference between the two rotation matrices
+  // 1. Compute angular difference between the two rotation matrices
   // TODO: make this a utility function somewhere?
   // R = R_this * R_other^T
-  Array<f32> Rt = Array<f32>(3,3,memory);
-  Matrix::Transpose(R, Rt);
-  Array<f32> Rcheck = Array<f32>(3,3,memory);
-  Matrix::Multiply(Rtrue, Rt, Rcheck);
+  Array<PRECISION> Rdiff = Array<PRECISION>(3,3,memory);
+  Point3<PRECISION> Tdiff;
+  ComputePoseDiff(R, T, Rtrue, Ttrue, Rdiff, Tdiff, memory);
   
-  const f32 trace = Rcheck[0][0] + Rcheck[1][1] + Rcheck[2][2];
+  const f32 trace = Rdiff[0][0] + Rdiff[1][1] + Rdiff[2][2];
   const f32 angleDiff = std::acos(0.5f*(trace - 1.f));
 
   EXPECT_LE(angleDiff, angleThreshold);
   
-  // Check the translational difference between the two poses
-  EXPECT_LE(T.Dist(Ttrue), distThreshold);
+  // 2. Check the translational difference between the two poses
+  EXPECT_LE(Tdiff.Length(), distThreshold);
 
   // Check if the reprojected points match the originals
-  for(s32 i_corner=0; i_corner<4; ++i_corner) {
+  for(s32 i_corner=0; i_corner<4; ++i_corner)
+  {
+    Point3<PRECISION> proj3 = R*marker3d[i_corner] + T;
+    proj3.x = focalLength_x*proj3.x + camCenter_x*proj3.z;
+    proj3.y = focalLength_y*proj3.y + camCenter_y*proj3.z;
 
-    Point3<f32> marker3d_est = R*marker3d[i_corner] + T;
-    Point<f32>  reproj(focalLength_x*marker3d_est.x + camCenter_x*marker3d_est.z,
-                       focalLength_y*marker3d_est.y + camCenter_y*marker3d_est.z);
-    
-    reproj *= 1.f / marker3d_est.z;
+    Point<PRECISION> reproj(proj3.x / proj3.z, proj3.y / proj3.z);
     
     EXPECT_NEAR(reproj.x, proj[i_corner].x, pixelErrThreshold);
     EXPECT_NEAR(reproj.y, proj[i_corner].y, pixelErrThreshold);
   }
   
+#undef PRECISION
 } // GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation)
 
 
