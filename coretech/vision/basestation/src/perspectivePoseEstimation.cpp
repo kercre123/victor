@@ -121,6 +121,14 @@ namespace Anki {
         temp = -B/(PRECISION(4)*A) + PRECISION(0.5)*(-w-sqrt(-(PRECISION(3)*alpha+PRECISION(2)*y-PRECISION(2)*beta/w)));
         realRoots[3] = temp.real();
         
+        /*
+        printf("factors = %f, %f, %f, %f, %f\n",
+               factors[0], factors[1], factors[2], factors[3], factors[4]);
+        
+        printf("realRoots = %f, %f, %f, %f\n",
+               realRoots[0], realRoots[1], realRoots[2], realRoots[3]);
+        */
+        
         return EXIT_SUCCESS;
         
       } // solveQuartic()
@@ -138,6 +146,16 @@ namespace Anki {
         // Typedef the templated classes for brevity below
         typedef Point<3,PRECISION>              POINT;
         typedef SmallSquareMatrix<3,PRECISION>  MATRIX;
+        
+        /*
+        printf("  worldPoint1 = (%f, %f, %f)\n", worldPoint1.x(), worldPoint1.y(), worldPoint1.z());
+        printf("  worldPoint2 = (%f, %f, %f)\n", worldPoint2.x(), worldPoint2.y(), worldPoint2.z());
+        printf("  worldPoint3 = (%f, %f, %f)\n", worldPoint3.x(), worldPoint3.y(), worldPoint3.z());
+        
+        printf("  imageRay1 = (%f, %f, %f)\n", imageRay1.x(), imageRay1.y(), imageRay1.z());
+        printf("  imageRay2 = (%f, %f, %f)\n", imageRay2.x(), imageRay2.y(), imageRay2.z());
+        printf("  imageRay3 = (%f, %f, %f)\n", imageRay3.x(), imageRay3.y(), imageRay3.z());
+        */
         
         POINT P1(worldPoint1);
         POINT P2(worldPoint2);
@@ -332,8 +350,7 @@ namespace Anki {
       template ReturnCode computePossiblePoses<double>(const std::array<Point<3,double>,3>& worldPoints,
                                                        const std::array<Point<3,double>,3>& imageRays,
                                                        std::array<Pose3d,4>& poses);
-
       
     } // namespace P3P
   } // namespace Vision
-} // namespace Ank
+} // namespace Anki

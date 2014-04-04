@@ -128,6 +128,14 @@ namespace Anki {
         temp = -B/(PRECISION(4)*A) + PRECISION(0.5)*(-w-sqrt(-(PRECISION(3)*alpha+PRECISION(2)*y-PRECISION(2)*beta/w)));
         realRoots[3] = temp.real();
         
+        /*
+        printf("factors = %f, %f, %f, %f, %f\n",
+               factors[0], factors[1], factors[2], factors[3], factors[4]);
+        
+        printf("realRoots = %f, %f, %f, %f\n",
+               realRoots[0], realRoots[1], realRoots[2], realRoots[3]);
+        */
+        
         return EXIT_SUCCESS;
         
       } // solveQuartic()
@@ -150,6 +158,16 @@ namespace Anki {
         typedef Point3<PRECISION> POINT;
         typedef Array<PRECISION>  MATRIX;
         
+        /*
+        printf("  worldPoint1 = (%f, %f, %f)\n", worldPoint1.x, worldPoint1.y, worldPoint1.z);
+        printf("  worldPoint2 = (%f, %f, %f)\n", worldPoint2.x, worldPoint2.y, worldPoint2.z);
+        printf("  worldPoint3 = (%f, %f, %f)\n", worldPoint3.x, worldPoint3.y, worldPoint3.z);
+        
+        printf("  imageRay1 = (%f, %f, %f)\n", imageRay1.x, imageRay1.y, imageRay1.z);
+        printf("  imageRay2 = (%f, %f, %f)\n", imageRay2.x, imageRay2.y, imageRay2.z);
+        printf("  imageRay3 = (%f, %f, %f)\n", imageRay3.x, imageRay3.y, imageRay3.z);
+        */
+        
         POINT P1(worldPoint1);
         POINT P2(worldPoint2);
         POINT P3(worldPoint3);
@@ -162,6 +180,11 @@ namespace Anki {
         POINT f1(imageRay1);
         POINT f2(imageRay2);
         POINT f3(imageRay3);
+        
+        // Rays should be unit length:
+        AnkiAssert(NEAR(f1.Length(), 1.f, 1e-6f));
+        AnkiAssert(NEAR(f2.Length(), 1.f, 1e-6f));
+        AnkiAssert(NEAR(f3.Length(), 1.f, 1e-6f));
         
         MATRIX T = MATRIX(3,3,memory);
         
@@ -392,7 +415,18 @@ namespace Anki {
           imgRays[i_corner].y = invFy * (imgQuad[i_corner].y - camCenter_y);
           imgRays[i_corner].z = PRECISION(1);
           
+          /*
+          printf("point %d (%f, %f) became ray (%f, %f, %f) ",
+                 i_corner,
+                 imgQuad[i_corner].x, imgQuad[i_corner].y,
+                 imgRays[i_corner].x, imgRays[i_corner].y, imgRays[i_corner].z);
+          */
+          
           imgRays[i_corner].MakeUnitLength();
+          
+          //printf(" which normalized to (%f, %f, %f)\n",
+          //       imgRays[i_corner].x, imgRays[i_corner].y, imgRays[i_corner].z);
+
         }
         
         
@@ -450,12 +484,17 @@ namespace Anki {
             //       we have that for the camera
 
             Point3<PRECISION> projectedPoint3 = (possibleR[i_solution] * (*worldPoints[i_validate])) + possibleT[i_solution];
+            projectedPoint3.x = focalLength_x*projectedPoint3.x + camCenter_x*projectedPoint3.z;
+            projectedPoint3.y = focalLength_y*projectedPoint3.y + camCenter_y*projectedPoint3.z;
             
             Point<PRECISION> projectedPoint(projectedPoint3.x/projectedPoint3.z,
                                             projectedPoint3.y/projectedPoint3.z);
             
             // Compare to the validation image point
             float error = (projectedPoint - imgQuad[i_validate]).Length();
+            
+            //printf("Solution %d reprojection error when validating with corner %d = %f\n",
+            //        i_solution, i_validate, error);
             
             if(error < minErrorInner) {
               minErrorInner = error;
@@ -466,21 +505,27 @@ namespace Anki {
           
           AnkiAssert(bestSolution >= 0);
           
+          //printf("Best solution when validating with corner %d was %d with error %f\n",
+          //       i_validate, bestSolution, minErrorInner);
+
+          
           // If the pose using this validation corner is better than the
           // best so far, keep it
           if(minErrorInner < minErrorOuter) {
             minErrorOuter = minErrorInner;
-            R = possibleR[bestSolution];
+            R.Set(possibleR[bestSolution]); // Don't use =, which is shallow copy!!
             T = possibleT[bestSolution];
           }
           
-          if(i<4) {
+          if(i<3) {
             // Rearrange corner list for next loop, to get a different
             // validation corner each time
-            std::swap(cornerList[0], cornerList[i_validate+1]); // TODO: std::swap kosher in embedded?
+            std::swap(cornerList[0], cornerList[i+1]); // TODO: std::swap kosher in embedded?
           }
           
         } // for each validation corner
+        
+        //printf("Best solution had error of %f\n", minErrorOuter);
         
         return EXIT_SUCCESS;
       } // computePose()

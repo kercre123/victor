@@ -68,6 +68,14 @@ namespace Anki {
                              Array<PRECISION>& R, Point3<PRECISION>& T,
                              MemoryStack memory);
       
+      
+      // Find the real parts of the four rootes of a quartic (4th order polynomial)
+      // factors must point to a 5-element array, and realRoots must point to
+      // a 4-element array.  (I.e. allocation is caller's responsibility.)
+      // NOTE: Really only exposed for testing
+      template<typename PRECISION>
+      ReturnCode solveQuartic(const PRECISION* factors, PRECISION* realRoots);
+      
     } // namespace P3P
   } // namespace Embedded
 } // namespace Anki

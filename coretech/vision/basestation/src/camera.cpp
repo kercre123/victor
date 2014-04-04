@@ -206,7 +206,18 @@ namespace Anki {
         imgRays[i_corner].z() = WORKING_PRECISION(1);
         
         imgRays[i_corner] = invK * imgRays[i_corner];
+        
+        /*
+        printf("point %d (%f, %f) became ray (%f, %f, %f) ",
+               i_corner,
+               imgQuad[i_corner].x(), imgQuad[i_corner].y(),
+               imgRays[i_corner].x(), imgRays[i_corner].y(), imgRays[i_corner].z());
+        */
+        
         imgRays[i_corner].makeUnitLength();
+        
+        //printf(" which normalized to (%f, %f, %f)\n",
+        //       imgRays[i_corner].x(), imgRays[i_corner].y(), imgRays[i_corner].z());
         
         // cast each world quad into working precision quad
         worldPoints[i_corner].x() = static_cast<WORKING_PRECISION>(worldQuad[i_corner].x());
@@ -269,10 +280,10 @@ namespace Anki {
           pose = possiblePoses[bestSolution];
         }
         
-        if(i<4) {
+        if(i<3) {
           // Rearrange corner list for next loop, to get a different
           // validation corner each time
-          std::swap(cornerList[0], cornerList[i_validate+1]);
+          std::swap(cornerList[0], cornerList[i+1]);
         }
         
       } // for each validation corner
