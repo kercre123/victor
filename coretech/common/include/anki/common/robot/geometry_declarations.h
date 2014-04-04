@@ -78,7 +78,7 @@ namespace Anki
     
     
 #if 0
-#pragma mark --- 2D Point Class Declaration ---
+#pragma mark --- 3D Point Class Declaration ---
 #endif
     // 3D Point Class
     //
