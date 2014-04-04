@@ -17,6 +17,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/fixedLengthList.h"
 #include "anki/common/robot/geometry.h"
 
+#include "anki/vision/robot/histogram.h"
+
 namespace Anki
 {
   namespace Embedded
@@ -55,14 +57,15 @@ namespace Anki
     Result DetectBlurredEdges(const Array<u8> &image, const u8 grayvalueThreshold, const s32 minComponentWidth, const s32 everyNLines, EdgeLists &edgeLists);
     Result DetectBlurredEdges(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const u8 grayvalueThreshold, const s32 minComponentWidth, const s32 everyNLines, EdgeLists &edgeLists);
 
-    u8 ComputeGrayvalueThrehold(
+    u8 ComputeGrayvalueThreshold(
       const Array<u8> &image,
       const Rectangle<s32> &imageRegionOfInterest,
       const s32 yIncrement,
       const s32 xIncrement,
       const f32 blackPercentile, //< What percentile of histogram energy is black? (.1 is a good value)
       const f32 whitePercentile, //< What percentile of histogram energy is white? (.9 is a good value)
-      MemoryStack scratch);
+      Histogram &histogram //< Histogram is computed as a byproduct
+      );
   } // namespace Embedded
 } //namespace Anki
 

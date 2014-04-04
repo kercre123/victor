@@ -754,6 +754,9 @@ namespace Anki
             {
               this->corners[i_corner] = quad[CornerReorderLUT[multiClassLabel][i_corner]];
             }
+            
+            // 3. Keep track of what the original orientation was
+            this->observedOrientation = ObservedOrientationLUT[multiClassLabel];
 
             // Mark this as a valid marker (note that reaching this point should
             // be the only way isValid is true.

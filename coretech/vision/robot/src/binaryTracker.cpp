@@ -84,7 +84,8 @@ namespace Anki
         const s32 edgeDetection_minComponentWidth, //< The smallest horizontal size of a component (1 to 4 is good)
         const s32 edgeDetection_maxDetectionsPerType, //< As many as you have memory and time for
         const s32 edgeDetection_everyNLines, //< As many as you have time for
-        MemoryStack &memory)
+        MemoryStack &fastMemory,
+        MemoryStack &slowMemory)
         : isValid(false)
       {
         const s32 templateImageHeight = templateImage.get_size(0);
@@ -98,17 +99,20 @@ namespace Anki
 
         // TODO: make this work for non-qvga resolution
         Point<f32> centerOffset((templateImage.get_size(1)-1) / 2.0f, (templateImage.get_size(0)-1) / 2.0f);
-        this->transformation = Transformations::PlanarTransformation_f32(Transformations::TRANSFORM_PROJECTIVE, templateQuad, centerOffset, memory);
+        this->transformation = Transformations::PlanarTransformation_f32(Transformations::TRANSFORM_PROJECTIVE, templateQuad, centerOffset, slowMemory);
 
-        //this->templateQuad = templateQuad;
+        this->templateQuad = templateQuad;
+
+        this->templateImage = Array<u8>(templateImageHeight, templateImageWidth, slowMemory);
+        this->templateImage.Set(templateImage);
 
         this->templateImageHeight = templateImage.get_size(0);
         this->templateImageWidth = templateImage.get_size(1);
 
-        this->templateEdges.xDecreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, memory);
-        this->templateEdges.xIncreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, memory);
-        this->templateEdges.yDecreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, memory);
-        this->templateEdges.yIncreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, memory);
+        this->templateEdges.xDecreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, fastMemory);
+        this->templateEdges.xIncreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, fastMemory);
+        this->templateEdges.yDecreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, fastMemory);
+        this->templateEdges.yIncreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, fastMemory);
 
         AnkiConditionalErrorAndReturn(
           this->templateEdges.xDecreasing.IsValid() && this->templateEdges.xIncreasing.IsValid() &&
@@ -118,14 +122,20 @@ namespace Anki
         const Rectangle<f32> edgeDetection_imageRegionOfInterestRaw = templateQuad.ComputeBoundingRectangle().ComputeScaledRectangle(edgeDetection_threshold_scaleRegionPercent);
         const Rectangle<s32> edgeDetection_imageRegionOfInterest(static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.left), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.right), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.top), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.bottom));
 
-        this->lastGrayvalueThreshold = ComputeGrayvalueThrehold(
+        //templateHistogram
+        this->templateHistogram = Histogram(256, fastMemory);
+        this->lastImageHistogram = Histogram(256, fastMemory);
+
+        this->lastGrayvalueThreshold = ComputeGrayvalueThreshold(
           templateImage,
           edgeDetection_imageRegionOfInterest,
           edgeDetection_threshold_yIncrement,
           edgeDetection_threshold_xIncrement,
           edgeDetection_threshold_blackPercentile,
           edgeDetection_threshold_whitePercentile,
-          memory);
+          this->templateHistogram);
+
+        this->lastImageHistogram.Set(this->templateHistogram);
 
         const Rectangle<f32> templateRectRaw = templateQuad.ComputeBoundingRectangle().ComputeScaledRectangle(scaleTemplateRegionPercent);
         const Rectangle<s32> templateRect(static_cast<s32>(templateRectRaw.left), static_cast<s32>(templateRectRaw.right), static_cast<s32>(templateRectRaw.top), static_cast<s32>(templateRectRaw.bottom));
@@ -170,15 +180,15 @@ namespace Anki
         }
 #endif // #ifdef SEND_BINARY_IMAGES_TO_MATLAB
 
-        this->homographyOffsetX = (static_cast<f32>(templateImageWidth)-1.0f) / 2.0f;
-        this->homographyOffsetY = (static_cast<f32>(templateImageHeight)-1.0f) / 2.0f;
+        //this->homographyOffsetX = (static_cast<f32>(templateImageWidth)-1.0f) / 2.0f;
+        //this->homographyOffsetY = (static_cast<f32>(templateImageHeight)-1.0f) / 2.0f;
 
-        this->grid = Meshgrid<f32>(
-          Linspace(-homographyOffsetX, homographyOffsetX, static_cast<s32>(FLT_FLOOR(templateImageWidth))),
-          Linspace(-homographyOffsetY, homographyOffsetY, static_cast<s32>(FLT_FLOOR(templateImageHeight))));
+        //this->grid = Meshgrid<f32>(
+        //  Linspace(-homographyOffsetX, homographyOffsetX, static_cast<s32>(FLT_FLOOR(templateImageWidth))),
+        //  Linspace(-homographyOffsetY, homographyOffsetY, static_cast<s32>(FLT_FLOOR(templateImageHeight))));
 
-        this->xGrid = this->grid.get_xGridVector().Evaluate(memory);
-        this->yGrid = this->grid.get_yGridVector().Evaluate(memory);
+        //this->xGrid = this->grid.get_xGridVector().Evaluate(fastMemory);
+        //this->yGrid = this->grid.get_yGridVector().Evaluate(fastMemory);
 
         this->isValid = true;
       } // BinaryTracker::BinaryTracker()
@@ -351,8 +361,11 @@ namespace Anki
         const f32 edgeDetection_threshold_scaleRegionPercent, //< How much to scale template bounding box (.8 is a good value)
         const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
         const s32 matching_maxTranslationDistance, const s32 matching_maxProjectiveDistance,
-        const s32 verification_maxTranslationDistance,
+        const s32 verify_maxTranslationDistance, const u8 verify_maxPixelDifference, const s32 verify_coordinateIncrement,
         s32 &numMatches,
+        s32 &verify_meanAbsoluteDifference, //< For all pixels in the template, compute the mean difference between the template and the final warped template
+        s32 &verify_numInBounds, //< How many template pixels are in the image, after the template is warped?
+        s32 &verify_numSimilarPixels, //< For all pixels in the template, how many are within verifyMaxPixelDifference grayvalues? Use in conjunction with get_numTemplatePixels() or numInBounds for a percentage.
         MemoryStack fastScratch,
         MemoryStack slowScratch)
       {
@@ -362,9 +375,10 @@ namespace Anki
           edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent,
           edgeDetection_minComponentWidth, edgeDetection_maxDetectionsPerType, edgeDetection_everyNLines,
           matching_maxTranslationDistance, matching_maxProjectiveDistance,
-          verification_maxTranslationDistance,
+          verify_maxTranslationDistance, verify_maxPixelDifference, verify_coordinateIncrement,
           0, 0, 0,
           numMatches,
+          verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels,
           fastScratch,
           slowScratch);
       }
@@ -379,8 +393,11 @@ namespace Anki
         const f32 edgeDetection_threshold_scaleRegionPercent, //< How much to scale template bounding box (.8 is a good value)
         const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
         const s32 matching_maxTranslationDistance, const s32 matching_maxProjectiveDistance,
-        const s32 verification_maxTranslationDistance,
+        const s32 verify_maxTranslationDistance, const u8 verify_maxPixelDifference, const s32 verify_coordinateIncrement,
         s32 &numMatches,
+        s32 &verify_meanAbsoluteDifference, //< For all pixels in the template, compute the mean difference between the template and the final warped template
+        s32 &verify_numInBounds, //< How many template pixels are in the image, after the template is warped?
+        s32 &verify_numSimilarPixels, //< For all pixels in the template, how many are within verifyMaxPixelDifference grayvalues? Use in conjunction with get_numTemplatePixels() or numInBounds for a percentage.
         MemoryStack fastScratch,
         MemoryStack slowScratch)
       {
@@ -390,9 +407,10 @@ namespace Anki
           edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent,
           edgeDetection_minComponentWidth, edgeDetection_maxDetectionsPerType, edgeDetection_everyNLines,
           matching_maxTranslationDistance, matching_maxProjectiveDistance,
-          verification_maxTranslationDistance,
+          verify_maxTranslationDistance, verify_maxPixelDifference, verify_coordinateIncrement,
           0, 0, 0,
           numMatches,
+          verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels,
           fastScratch,
           slowScratch);
       }
@@ -406,11 +424,14 @@ namespace Anki
         const f32 edgeDetection_threshold_scaleRegionPercent, //< How much to scale template bounding box (.8 is a good value)
         const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
         const s32 matching_maxProjectiveDistance,
-        const s32 verification_maxTranslationDistance,
+        const s32 verify_maxTranslationDistance, const u8 verify_maxPixelDifference, const s32 verify_coordinateIncrement,
         const s32 ransac_maxIterations,
         const s32 ransac_numSamplesPerType, //< for four types
         const s32 ransac_inlinerDistance,
         s32 &numMatches,
+        s32 &verify_meanAbsoluteDifference, //< For all pixels in the template, compute the mean difference between the template and the final warped template
+        s32 &verify_numInBounds, //< How many template pixels are in the image, after the template is warped?
+        s32 &verify_numSimilarPixels, //< For all pixels in the template, how many are within verifyMaxPixelDifference grayvalues? Use in conjunction with get_numTemplatePixels() or numInBounds for a percentage.
         MemoryStack fastScratch,
         MemoryStack slowScratch)
       {
@@ -420,9 +441,10 @@ namespace Anki
           edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent,
           edgeDetection_minComponentWidth, edgeDetection_maxDetectionsPerType, edgeDetection_everyNLines,
           0, matching_maxProjectiveDistance,
-          verification_maxTranslationDistance,
+          verify_maxTranslationDistance, verify_maxPixelDifference, verify_coordinateIncrement,
           ransac_maxIterations, ransac_numSamplesPerType, ransac_inlinerDistance,
           numMatches,
+          verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels,
           fastScratch,
           slowScratch);
       }
@@ -437,11 +459,14 @@ namespace Anki
         const f32 edgeDetection_threshold_scaleRegionPercent, //< How much to scale template bounding box (.8 is a good value)
         const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
         const s32 matching_maxTranslationDistance, const s32 matching_maxProjectiveDistance,
-        const s32 verification_maxTranslationDistance,
+        const s32 verify_maxTranslationDistance, const u8 verify_maxPixelDifference, const s32 verify_coordinateIncrement,
         const s32 ransac_maxIterations,
         const s32 ransac_numSamplesPerType, //< for four types
         const s32 ransac_inlinerDistance,
         s32 &numMatches,
+        s32 &verify_meanAbsoluteDifference, //< For all pixels in the template, compute the mean difference between the template and the final warped template
+        s32 &verify_numInBounds, //< How many template pixels are in the image, after the template is warped?
+        s32 &verify_numSimilarPixels, //< For all pixels in the template, how many are within verifyMaxPixelDifference grayvalues? Use in conjunction with get_numTemplatePixels() or numInBounds for a percentage.
         MemoryStack fastScratch,
         MemoryStack slowScratch)
       {
@@ -553,7 +578,7 @@ namespace Anki
 
           BeginBenchmark("ut_verify");
 
-          lastResult = VerifyTrack(nextImageEdges, allLimits, verification_maxTranslationDistance, numMatches);
+          lastResult = VerifyTrack(nextImageEdges, allLimits, verify_maxTranslationDistance, numMatches);
 
           EndBenchmark("ut_verify");
 
@@ -568,18 +593,53 @@ namespace Anki
         const Rectangle<f32> edgeDetection_imageRegionOfInterestRaw = curWarpedCorners.ComputeBoundingRectangle().ComputeScaledRectangle(edgeDetection_threshold_scaleRegionPercent);
         const Rectangle<s32> edgeDetection_imageRegionOfInterest(static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.left), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.right), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.top), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.bottom));
 
-        this->lastGrayvalueThreshold = ComputeGrayvalueThrehold(
+        this->lastGrayvalueThreshold = ComputeGrayvalueThreshold(
           nextImage,
           edgeDetection_imageRegionOfInterest,
           edgeDetection_threshold_yIncrement,
           edgeDetection_threshold_xIncrement,
           edgeDetection_threshold_blackPercentile,
           edgeDetection_threshold_whitePercentile,
-          fastScratch);
+          lastImageHistogram);
 
         EndBenchmark("ut_grayvalueThreshold");
 
-        return RESULT_OK;
+        BeginBenchmark("ut_verifyTransformation");
+
+        { 
+          const f32 templateRegionHeight = static_cast<f32>(templateImageHeight);
+          const f32 templateRegionWidth = static_cast<f32>(templateImageWidth);
+
+          //lastResult = this->transformation.VerifyTransformation_Projective_LinearInterpolate(
+          lastResult = this->transformation.VerifyTransformation_Projective_NearestNeighbor(
+            templateImage, this->templateHistogram, this->templateQuad.ComputeBoundingRectangle(),
+            nextImage, this->lastImageHistogram,
+            templateRegionHeight, templateRegionWidth, verify_coordinateIncrement,
+            verify_maxPixelDifference, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels,
+            fastScratch);
+
+          //Array<u8> downsampledTemplate(templateImageHeight/8, templateImageWidth/8, fastScratch);
+          //Array<u8> downsampledNext(templateImageHeight/8, templateImageWidth/8, fastScratch);
+
+          //Rectangle<f32> boundingRect = this->templateQuad.ComputeBoundingRectangle();
+          //Rectangle<f32> downsampledRect(boundingRect.left/8, boundingRect.right/8, boundingRect.top/8, boundingRect.bottom/8);
+
+          //ImageProcessing::DownsampleByPowerOfTwo<u8,u32,u8>(templateImage, 3, downsampledTemplate, fastScratch);
+          //ImageProcessing::DownsampleByPowerOfTwo<u8,u32,u8>(nextImage, 3, downsampledNext, fastScratch);
+
+          //const f32 templateRegionHeight = static_cast<f32>(templateImageHeight/8);
+          //const f32 templateRegionWidth = static_cast<f32>(templateImageWidth/8);
+
+          //lastResult = this->transformation.VerifyTransformation_Projective_LinearInterpolate(
+          //  downsampledTemplate, downsampledRect,
+          //  downsampledNext,
+          //  templateRegionHeight, templateRegionWidth,
+          //  verify_maxPixelDifference, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels,
+          //  fastScratch);
+        }
+        EndBenchmark("ut_verifyTransformation");
+
+        return lastResult;
       } // Result BinaryTracker::UpdateTrack()
 
       Result BinaryTracker::ComputeIndexLimitsVertical(const FixedLengthList<Point<s16> > &points, Array<s32> &yStartIndexes)
@@ -705,10 +765,6 @@ namespace Anki
             s32 curIndex = pXStartIndexes[warpedXrounded];
             const s32 endIndex = pXStartIndexes[warpedXrounded+1];
 
-            /*if(curIndex < 0 || curIndex > numNewPoints) {
-            printf("");
-            }*/
-
             // Find the start of the valid matches
             while( (curIndex<endIndex) && (pNewPoints[curIndex].y<minY) ) {
               curIndex++;
@@ -788,10 +844,6 @@ namespace Anki
 
             s32 curIndex = pYStartIndexes[warpedYrounded];
             const s32 endIndex = pYStartIndexes[warpedYrounded+1];
-
-            /*if(curIndex < 0 || curIndex > numNewPoints) {
-            printf("");
-            }*/
 
             // Find the start of the valid matches
             while( (curIndex<endIndex) && (pNewPoints[curIndex].x<minX) ) {
@@ -890,10 +942,6 @@ namespace Anki
 
             s32 curIndex = pXStartIndexes[warpedXrounded];
             const s32 endIndex = pXStartIndexes[warpedXrounded+1];
-
-            /*if(curIndex < 0 || curIndex > numNewPoints) {
-            printf("");
-            }*/
 
             // Find the start of the valid matches
             while( (curIndex<endIndex) && (pNewPoints[curIndex].y<minY) ) {
@@ -1048,10 +1096,6 @@ namespace Anki
             s32 curIndex = pYStartIndexes[warpedYrounded];
             const s32 endIndex = pYStartIndexes[warpedYrounded+1];
 
-            /*if(curIndex < 0 || curIndex > numNewPoints) {
-            printf("");
-            }*/
-
             // Find the start of the valid matches
             while( (curIndex<endIndex) && (pNewPoints[curIndex].x<minX) ) {
               curIndex++;
@@ -1187,10 +1231,6 @@ namespace Anki
             s32 curIndex = pXStartIndexes[warpedXrounded];
             const s32 endIndex = pXStartIndexes[warpedXrounded+1];
 
-            /*if(curIndex < 0 || curIndex > numNewPoints) {
-            printf("");
-            }*/
-
             // Find the start of the valid matches
             while( (curIndex<endIndex) && (pNewPoints[curIndex].y<minY) ) {
               curIndex++;
@@ -1263,10 +1303,6 @@ namespace Anki
 
             s32 curIndex = pYStartIndexes[warpedYrounded];
             const s32 endIndex = pYStartIndexes[warpedYrounded+1];
-
-            /*if(curIndex < 0 || curIndex > numNewPoints) {
-            printf("");
-            }*/
 
             // Find the start of the valid matches
             while( (curIndex<endIndex) && (pNewPoints[curIndex].x<minX) ) {
@@ -1343,10 +1379,6 @@ namespace Anki
 
             s32 curIndex = pXStartIndexes[warpedXrounded];
             const s32 endIndex = pXStartIndexes[warpedXrounded+1];
-
-            /*if(curIndex < 0 || curIndex > numNewPoints) {
-            printf("");
-            }*/
 
             // Find the start of the valid matches
             while( (curIndex<endIndex) && (pNewPoints[curIndex].y<minY) ) {
@@ -1437,10 +1469,6 @@ namespace Anki
 
             s32 curIndex = pYStartIndexes[warpedYrounded];
             const s32 endIndex = pYStartIndexes[warpedYrounded+1];
-
-            /*if(curIndex < 0 || curIndex > numNewPoints) {
-            printf("");
-            }*/
 
             // Find the start of the valid matches
             while( (curIndex<endIndex) && (pNewPoints[curIndex].x<minX) ) {

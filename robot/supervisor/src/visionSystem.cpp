@@ -362,7 +362,6 @@ namespace Anki {
                                                  grayscaleImage,
                                                  trackingQuad,
                                                  parameters.scaleTemplateRegionPercent,
-                                                 //parameters.edgeDetection_grayvalueThreshold,
                                                  parameters.edgeDetection_threshold_yIncrement,
                                                  parameters.edgeDetection_threshold_xIncrement,
                                                  parameters.edgeDetection_threshold_blackPercentile,
@@ -371,7 +370,8 @@ namespace Anki {
                                                  parameters.edgeDetection_minComponentWidth,
                                                  parameters.edgeDetection_maxDetectionsPerType,
                                                  parameters.edgeDetection_everyNLines,
-                                                 onchipScratch);
+                                                 onchipScratch,
+                                                 offchipScratch);
 #endif
         
         if(!tracker.IsValid()) {
@@ -473,7 +473,6 @@ namespace Anki {
         
         const Result trackerResult = tracker.UpdateTrack_Normal(
                                                          grayscaleImage,
-                                                         //parameters.edgeDetection_grayvalueThreshold,
                                                          parameters.edgeDetection_threshold_yIncrement,
                                                          parameters.edgeDetection_threshold_xIncrement,
                                                          parameters.edgeDetection_threshold_blackPercentile,
@@ -484,10 +483,15 @@ namespace Anki {
                                                          parameters.edgeDetection_everyNLines,
                                                          parameters.matching_maxTranslationDistance,
                                                          parameters.matching_maxProjectiveDistance,
-                                                         parameters.verification_maxTranslationDistance,
+                                                         parameters.verify_maxTranslationDistance,
+                                                         parameters.verify_maxPixelDifference,
+                                                         parameters.verify_coordinateIncrement,
                                                          numMatches,
+                                                         verify_meanAbsoluteDifference,
+                                                         verify_numInBounds,
+                                                         verify_numSimilarPixels,
                                                          ccmScratch, offchipScratch);
-        
+                
         //tracker.get_transformation().Print("track");
         
         const s32 numTemplatePixels = tracker.get_numTemplatePixels();
@@ -548,7 +552,7 @@ namespace Anki {
         
         //MatlabVisualization::SendTrackerPrediction_Compare(tracker, offchipScratch);
         
-        DebugStream::SendTrackingUpdate(grayscaleImage, tracker, parameters, ccmScratch, onchipScratch, offchipScratch);
+        DebugStream::SendTrackingUpdate(grayscaleImage, tracker, parameters, verify_meanAbsoluteDifference, static_cast<f32>(verify_numSimilarPixels) / static_cast<f32>(verify_numInBounds), ccmScratch, onchipScratch, offchipScratch);
         
         return EXIT_SUCCESS;
       } // TrackTemplate()

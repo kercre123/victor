@@ -113,7 +113,9 @@ namespace Anki {
         s32 edgeDetection_everyNLines;
         s32 matching_maxTranslationDistance;
         s32 matching_maxProjectiveDistance;
-        s32 verification_maxTranslationDistance;
+        s32 verify_maxTranslationDistance;
+        u8 verify_maxPixelDifference;
+        s32 verify_coordinateIncrement;
         f32 percentMatchedPixelsThreshold;
         
 #else

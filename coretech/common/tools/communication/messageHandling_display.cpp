@@ -56,6 +56,9 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
   cv::Mat largeLastImage(bigHeight, bigWidth, CV_8U);
   cv::Mat toShowImage(bigHeight, bigWidth, CV_8UC3);
 
+  u8 lastMeanError = 0;
+  f32 lastPercentMatchingGrayvalues = 0;
+
   lastImage.setTo(0);
   largeLastImage.setTo(0);
   toShowImage.setTo(0);
@@ -92,17 +95,7 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
 
     //printf("Next segment is (%d,%d): ", dataLength, type);
     if(strcmp(typeName, "Basic Type Buffer") == 0) {
-      u16 size;
-      bool isBasicType;
-      bool isInteger;
-      bool isSigned;
-      bool isFloat;
-      s32 numElements;
-      void * tmpDataSegment = reinterpret_cast<u8*>(dataSegment) + 2*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
-      SerializedBuffer::EncodedBasicTypeBuffer::Deserialize(false, size, isBasicType, isInteger, isSigned, isFloat, numElements, &tmpDataSegment, dataLength);
-
-      // Hack to detect a benchmarking pair
-      if(isFloat && size==4 && numElements==2) {
+      if(strcmp(objectName, "Benchmark Times") == 0) {
         PUSH_MEMORY_STACK(scratch);
         f32* tmpBuffer = SerializedBuffer::DeserializeRawBasicType<f32>(innerObjectName, &dataSegment, dataLength, scratch);
 
@@ -113,11 +106,31 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
           benchmarkTimes[i] = tmpBuffer[i];
         }
         //printf("Times: %f %f\n", times[0], times[1]);
+      } else if(strcmp(objectName, "meanGrayvalueError") == 0) {
+        u8* tmpBuffer = SerializedBuffer::DeserializeRawBasicType<u8>(innerObjectName, &dataSegment, dataLength, scratch);
+
+        if(!tmpBuffer)
+          continue;
+
+        lastMeanError = tmpBuffer[0];
+      } else if(strcmp(objectName, "percentMatchingGrayvalues") == 0) {
+        f32* tmpBuffer = SerializedBuffer::DeserializeRawBasicType<f32>(innerObjectName, &dataSegment, dataLength, scratch);
+
+        if(!tmpBuffer)
+          continue;
+
+        lastPercentMatchingGrayvalues = tmpBuffer[0];
       } else {
+        u16 size;
+        bool isBasicType;
+        bool isInteger;
+        bool isSigned;
+        bool isFloat;
+        s32 numElements;
+
+        SerializedBuffer::EncodedBasicTypeBuffer::Deserialize(false, size, isBasicType, isInteger, isSigned, isFloat, numElements, &dataSegment, dataLength);
+
         printf("Basic type buffer segment \"%s\" (%d, %d, %d, %d, %d)\n", objectName, size, isInteger, isSigned, isFloat, numElements);
-        /*for(s32 i=0; i<remainingDataLength; i++) {
-        printf("%x ", dataSegment[i]);
-        }*/
       }
     } else if(strcmp(typeName, "Array") == 0) {
       s32 height;
@@ -287,7 +300,7 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
       lastTime = GetTime();
 
       //snprintf(benchmarkBuffer, 1024, "Total:%dfps Algorithms:%dfps Received:%dfps", RoundS32(1.0f/benchmarkTimes[1]), RoundS32(1.0f/benchmarkTimes[0]), RoundS32(1.0f/receivedDelta));
-      snprintf(benchmarkBuffer, 1024, "Total:%dfps Algorithms:%dfps", RoundS32(1.0f/benchmarkTimes[1]), RoundS32(1.0f/benchmarkTimes[0]));
+      snprintf(benchmarkBuffer, 1024, "Total:%dfps Algorithms:%dfps   GrayvalueError:%d %f", RoundS32(1.0f/benchmarkTimes[1]), RoundS32(1.0f/benchmarkTimes[0]), lastMeanError, lastPercentMatchingGrayvalues);
 
       cv::putText(toShowImage, benchmarkBuffer, cv::Point(5,15), cv::FONT_HERSHEY_PLAIN, 1.0, cv::Scalar(0,255,0));
     }

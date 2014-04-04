@@ -27,6 +27,8 @@ namespace Anki {
         ReturnCode SendTrackingUpdate(const Array<u8> &image,
                                       const Tracker &tracker,
                                       const TrackerParameters &parameters,
+                                      const u8 meanGrayvalueError,
+                                      const f32 percentMatchingGrayvalues,
                                       MemoryStack ccmScratch,
                                       MemoryStack onchipScratch,
                                       MemoryStack offchipScratch);

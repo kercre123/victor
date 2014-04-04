@@ -9,10 +9,13 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/vision/robot/transformations.h"
 #include "anki/vision/robot/fiducialDetection.h"
+#include "anki/vision/robot/histogram.h"
+
 #include "anki/common/robot/opencvLight.h"
 #include "anki/common/robot/arrayPatterns.h"
 #include "anki/common/robot/interpolate.h"
 #include "anki/common/robot/serialize.h"
+#include "anki/common/robot/matlabInterface.h"
 
 namespace Anki
 {
@@ -345,16 +348,16 @@ namespace Anki
 
         if(SerializedBuffer::SerializeRawBasicType<bool>("isValid", this->isValid, buffer, bufferLength) != RESULT_OK)
           return RESULT_FAIL;
-        
+
         if(SerializedBuffer::SerializeRawBasicType<s32>("transformType", this->transformType, buffer, bufferLength) != RESULT_OK)
           return RESULT_FAIL;
-        
+
         if(SerializedBuffer::SerializeRawArray<f32>("homography", this->homography, buffer, bufferLength) != RESULT_OK)
           return RESULT_FAIL;
-        
+
         if(SerializedBuffer::SerializeRawBasicType<Quadrilateral<f32> >("initialCorners", this->initialCorners, buffer, bufferLength) != RESULT_OK)
           return RESULT_FAIL;
-          
+
         if(SerializedBuffer::SerializeRawBasicType<Point<f32> >("centerOffset", this->centerOffset, buffer, bufferLength) != RESULT_OK)
           return RESULT_FAIL;
 
@@ -634,6 +637,317 @@ namespace Anki
 
         return RESULT_OK;
       } // Result ComputeHomographyFromQuad(FixedLengthList<Quadrilateral<s16> > quads, FixedLengthList<Array<f32> > &homographies, MemoryStack scratch)
+
+      Result PlanarTransformation_f32::VerifyTransformation_Projective_LinearInterpolate(
+        const Array<u8> &templateImage,
+        const Array<u8> &nextImage,
+        const f32 templateRegionHeight,
+        const f32 templateRegionWidth,
+        const u8 maxPixelDifference,
+        s32 &meanAbsoluteDifference,
+        s32 &numInBounds,
+        s32 &numSimilarPixels,
+        MemoryStack scratch) const
+      {
+        const Rectangle<f32> templateRegionOfInterest(0, static_cast<f32>(templateImage.get_size(1)), 0, static_cast<f32>(templateImage.get_size(0)));
+
+        return VerifyTransformation_Projective_LinearInterpolate(
+          templateImage, templateRegionOfInterest,
+          nextImage,
+          templateRegionHeight, templateRegionWidth, 1,
+          maxPixelDifference, meanAbsoluteDifference, numInBounds, numSimilarPixels,
+          scratch);
+      }
+
+      Result PlanarTransformation_f32::VerifyTransformation_Projective_NearestNeighbor(
+        const Array<u8> &templateImage,
+        const Histogram &templateHistogram,
+        const Rectangle<f32> &templateRegionOfInterest,
+        const Array<u8> &nextImage,
+        const Histogram &nextImageHistogram,
+        const f32 templateRegionHeight,
+        const f32 templateRegionWidth,
+        const s32 templateCoordinateIncrement,
+        const u8 maxPixelDifference,
+        s32 &meanAbsoluteDifference,
+        s32 &numInBounds,
+        s32 &numSimilarPixels,
+        MemoryStack scratch) const
+      {
+        const s32 numStatisticsFractionalBits = 14;
+        //const f32 lowPercentile = 0.1f;
+        const f32 highPercentile = 0.95f;
+
+        AnkiConditionalErrorAndReturnValue(templateImage.get_size(0) == nextImage.get_size(0) && templateImage.get_size(1) == nextImage.get_size(1),
+          RESULT_FAIL_INVALID_SIZE, "PlanarTransformation_f32::VerifyTransformation_Projective", "input images must be the same size");
+
+        const s32 maxPixelDifferenceS32 = maxPixelDifference;
+
+        const s32 nextImageHeight = nextImage.get_size(0);
+        const s32 nextImageWidth = nextImage.get_size(1);
+
+        const s32 whichScale = 0;
+        const f32 scale = static_cast<f32>(1 << whichScale);
+
+        const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / nextImageWidth;
+        const f32 initialImageScaleF32 = static_cast<f32>(initialImageScaleS32);
+
+        const Point<f32> centerOffsetScaled = this->get_centerOffset(initialImageScaleF32);
+
+        const f32 roi_minX = templateRegionOfInterest.left - templateRegionWidth/2.0f;
+        const f32 roi_maxX = templateRegionOfInterest.right - templateRegionWidth/2.0f;
+        const f32 roi_minY = templateRegionOfInterest.top - templateRegionHeight/2.0f;
+        const f32 roi_maxY = templateRegionOfInterest.bottom - templateRegionHeight/2.0f;
+
+        Meshgrid<f32> originalCoordinates(
+          Linspace(roi_minX, roi_maxX, static_cast<s32>(FLT_FLOOR((roi_maxX-roi_minX+1)/(scale)))),
+          Linspace(roi_minY, roi_maxY, static_cast<s32>(FLT_FLOOR((roi_maxY-roi_minY+1)/(scale)))));
+
+        const f32 templateCoordinateIncrementF32 = static_cast<f32>(templateCoordinateIncrement);
+
+        const s32 xyReferenceMin = 0;
+        const s32 xReferenceMax = nextImageWidth;
+        const s32 yReferenceMax = nextImageHeight;
+
+        const LinearSequence<f32> &yGridVector = originalCoordinates.get_yGridVector();
+        const LinearSequence<f32> &xGridVector = originalCoordinates.get_xGridVector();
+
+        const f32 yGridStart = yGridVector.get_start();
+        const f32 xGridStart = xGridVector.get_start();
+
+        const f32 yGridDelta = yGridVector.get_increment() * templateCoordinateIncrementF32;
+        const f32 xGridDelta = xGridVector.get_increment() * templateCoordinateIncrementF32;
+
+        const s32 yIterationMax = yGridVector.get_size();
+        const s32 xIterationMax = xGridVector.get_size();
+
+        const Array<f32> &homography = this->get_homography();
+        const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2] / initialImageScaleF32;
+        const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2] / initialImageScaleF32;
+        const f32 h20 = homography[2][0] * initialImageScaleF32; const f32 h21 = homography[2][1] * initialImageScaleF32; //const f32 h22 = 1.0f;
+
+        //const s32 templateMeanS32 = RoundS32(templateHistogram.mean);
+        //const s32 nextImageMeanS32 = RoundS32(nextImageHistogram.mean);
+
+        //const s32 templateStdDivisor = RoundS32(static_cast<f32>((1 << numStatisticsFractionalBits)) / templateHistogram.standardDeviation);
+        //const s32 nextImageStdDivisor = RoundS32(static_cast<f32>((1 << numStatisticsFractionalBits)) / nextImageHistogram.standardDeviation);
+
+        //const s32 templateLowS32 = ComputePercentile(templateHistogram, lowPercentile);
+        const s32 templateHighS32 = ComputePercentile(templateHistogram, highPercentile);
+        const s32 templateHighDivisorS32 = 255*RoundS32(static_cast<f32>(1 << numStatisticsFractionalBits) / static_cast<f32>(templateHighS32));
+
+        //const s32 nextImageLowS32 = ComputePercentile(nextImageHistogram, lowPercentile);
+        const s32 nextImageHighS32 = ComputePercentile(nextImageHistogram, highPercentile);
+        const s32 nextImageHighDivisorS32 = 255*RoundS32(static_cast<f32>(1 << numStatisticsFractionalBits) / static_cast<f32>(nextImageHighS32));
+
+        numInBounds = 0;
+        numSimilarPixels = 0;
+        s32 totalGrayvalueDifference = 0;
+
+        // TODO: make the x and y limits from 1 to end-2
+        //#if !defined(__EDG__)
+        //        Matlab matlab(false);
+        //        matlab.EvalString("template = zeros(240,320);");
+        //        matlab.EvalString("warped = zeros(240,320);");
+        //#endif
+
+        f32 yOriginal = yGridStart;
+        for(s32 y=0; y<yIterationMax; y+=templateCoordinateIncrement) {
+          const u8 * restrict pTemplateImage = templateImage.Pointer(RoundS32(y+templateRegionOfInterest.top), RoundS32(templateRegionOfInterest.left));
+
+          f32 xOriginal = xGridStart;
+
+          for(s32 x=0; x<xIterationMax; x+=templateCoordinateIncrement) {
+            // TODO: These two could be strength reduced
+            const f32 xTransformedRaw = h00*xOriginal + h01*yOriginal + h02;
+            const f32 yTransformedRaw = h10*xOriginal + h11*yOriginal + h12;
+
+            const f32 normalization = 1.0f / (h20*xOriginal + h21*yOriginal + 1.0f);
+
+            const s32 xTransformedS32 = RoundS32( (xTransformedRaw * normalization) + centerOffsetScaled.x );
+            const s32 yTransformedS32 = RoundS32( (yTransformedRaw * normalization) + centerOffsetScaled.y );
+
+            xOriginal += xGridDelta;
+
+            // If out of bounds, continue
+            if(xTransformedS32 < xyReferenceMin || xTransformedS32 > xReferenceMax || yTransformedS32 < xyReferenceMin || yTransformedS32 > yReferenceMax) {
+              continue;
+            }
+
+            numInBounds++;
+
+            const s32 nextImagePixelValueRaw = *nextImage.Pointer(yTransformedS32, xTransformedS32);
+            const s32 templatePixelValueRaw = pTemplateImage[x];
+
+            const s32 nearestPixelValue  = (nextImagePixelValueRaw * nextImageHighDivisorS32) >> numStatisticsFractionalBits;
+            const s32 templatePixelValue = (templatePixelValueRaw * templateHighDivisorS32) >> numStatisticsFractionalBits;
+
+            const s32 grayvalueDifference = ABS(nearestPixelValue - templatePixelValue);
+
+            //#if !defined(__EDG__)
+            //            matlab.EvalString("template(%d,%d) = %d; warped(%d,%d) = %d;", yTransformedS32, xTransformedS32, templatePixelValue, yTransformedS32, xTransformedS32, nearestPixelValue);
+            //#endif
+
+            totalGrayvalueDifference += grayvalueDifference;
+
+            if(grayvalueDifference <= maxPixelDifferenceS32) {
+              numSimilarPixels++;
+            }
+          } // for(s32 x=0; x<xIterationMax; x++)
+
+          yOriginal += yGridDelta;
+        } // for(s32 y=0; y<yIterationMax; y++)
+
+        meanAbsoluteDifference = totalGrayvalueDifference / numInBounds;
+
+        return RESULT_OK;
+      }
+
+      Result PlanarTransformation_f32::VerifyTransformation_Projective_LinearInterpolate(
+        const Array<u8> &templateImage,
+        const Rectangle<f32> &templateRegionOfInterest,
+        const Array<u8> &nextImage,
+        const f32 templateRegionHeight,
+        const f32 templateRegionWidth,
+        const s32 templateCoordinateIncrement,
+        const u8 maxPixelDifference,
+        s32 &meanAbsoluteDifference,
+        s32 &numInBounds,
+        s32 &numSimilarPixels,
+        MemoryStack scratch) const
+      {
+        // This method is heavily based on Interp2_Projective
+        // The call would be like: Interp2_Projective<u8,u8>(nextImage, originalCoordinates, interpolationHomography, centerOffset, nextImageTransformed2d, INTERPOLATE_LINEAR, 0);
+
+        AnkiConditionalErrorAndReturnValue(templateImage.get_size(0) == nextImage.get_size(0) && templateImage.get_size(1) == nextImage.get_size(1),
+          RESULT_FAIL_INVALID_SIZE, "PlanarTransformation_f32::VerifyTransformation_Projective", "input images must be the same size");
+
+        const s32 maxPixelDifferenceS32 = maxPixelDifference;
+
+        const s32 nextImageHeight = nextImage.get_size(0);
+        const s32 nextImageWidth = nextImage.get_size(1);
+
+        const s32 whichScale = 0;
+        const f32 scale = static_cast<f32>(1 << whichScale);
+
+        const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / nextImageWidth;
+        const f32 initialImageScaleF32 = static_cast<f32>(initialImageScaleS32);
+
+        const Point<f32> centerOffsetScaled = this->get_centerOffset(initialImageScaleF32);
+
+        const f32 roi_minX = templateRegionOfInterest.left - templateRegionWidth/2.0f;
+        const f32 roi_maxX = templateRegionOfInterest.right - templateRegionWidth/2.0f;
+        const f32 roi_minY = templateRegionOfInterest.top - templateRegionHeight/2.0f;
+        const f32 roi_maxY = templateRegionOfInterest.bottom - templateRegionHeight/2.0f;
+
+        Meshgrid<f32> originalCoordinates(
+          Linspace(roi_minX, roi_maxX, static_cast<s32>(FLT_FLOOR((roi_maxX-roi_minX+1)/(scale)))),
+          Linspace(roi_minY, roi_maxY, static_cast<s32>(FLT_FLOOR((roi_maxY-roi_minY+1)/(scale)))));
+
+        // Unused, remove?
+        //const s32 outHeight = originalCoordinates.get_yGridVector().get_size();
+        //const s32 outWidth = originalCoordinates.get_xGridVector().get_size();
+
+        const f32 xyReferenceMin = 0.0f;
+        const f32 xReferenceMax = static_cast<f32>(nextImageWidth) - 1.0f;
+        const f32 yReferenceMax = static_cast<f32>(nextImageHeight) - 1.0f;
+
+        const LinearSequence<f32> &yGridVector = originalCoordinates.get_yGridVector();
+        const LinearSequence<f32> &xGridVector = originalCoordinates.get_xGridVector();
+
+        const f32 yGridStart = yGridVector.get_start();
+        const f32 xGridStart = xGridVector.get_start();
+
+        const f32 yGridDelta = yGridVector.get_increment();
+        const f32 xGridDelta = xGridVector.get_increment();
+
+        const s32 yIterationMax = yGridVector.get_size();
+        const s32 xIterationMax = xGridVector.get_size();
+
+        const Array<f32> &homography = this->get_homography();
+        const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2] / initialImageScaleF32;
+        const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2] / initialImageScaleF32;
+        const f32 h20 = homography[2][0] * initialImageScaleF32; const f32 h21 = homography[2][1] * initialImageScaleF32; //const f32 h22 = 1.0f;
+
+        numInBounds = 0;
+        numSimilarPixels = 0;
+        s32 totalGrayvalueDifference = 0;
+
+        // TODO: make the x and y limits from 1 to end-2
+
+        //Matlab matlab(false);
+        //matlab.EvalString("template = zeros(240,320);");
+        //matlab.EvalString("warped = zeros(240,320);");
+
+        f32 yOriginal = yGridStart;
+        for(s32 y=0; y<yIterationMax; y+=templateCoordinateIncrement) {
+          const u8 * restrict pTemplateImage = templateImage.Pointer(RoundS32(y+templateRegionOfInterest.top), RoundS32(templateRegionOfInterest.left));
+
+          f32 xOriginal = xGridStart;
+
+          for(s32 x=0; x<xIterationMax; x+=templateCoordinateIncrement) {
+            // TODO: These two could be strength reduced
+            const f32 xTransformedRaw = h00*xOriginal + h01*yOriginal + h02;
+            const f32 yTransformedRaw = h10*xOriginal + h11*yOriginal + h12;
+
+            const f32 normalization = 1.0f / (h20*xOriginal + h21*yOriginal + 1.0f);
+
+            const f32 xTransformed = (xTransformedRaw * normalization) + centerOffsetScaled.x;
+            const f32 yTransformed = (yTransformedRaw * normalization) + centerOffsetScaled.y;
+
+            xOriginal += xGridDelta * templateCoordinateIncrement;
+
+            const f32 x0 = FLT_FLOOR(xTransformed);
+            const f32 x1 = x0 + 1.0f; // ceilf(xTransformed);
+
+            const f32 y0 = FLT_FLOOR(yTransformed);
+            const f32 y1 = y0 + 1.0f; // ceilf(yTransformed);
+
+            // If out of bounds, continue
+            if(x0 < xyReferenceMin || x1 > xReferenceMax || y0 < xyReferenceMin || y1 > yReferenceMax) {
+              continue;
+            }
+
+            numInBounds++;
+
+            const f32 alphaX = xTransformed - x0;
+            const f32 alphaXinverse = 1 - alphaX;
+
+            const f32 alphaY = yTransformed - y0;
+            const f32 alphaYinverse = 1.0f - alphaY;
+
+            const s32 y0S32 = RoundS32(y0);
+            const s32 y1S32 = RoundS32(y1);
+            const s32 x0S32 = RoundS32(x0);
+
+            const u8 * restrict pReference_y0 = nextImage.Pointer(y0S32, x0S32);
+            const u8 * restrict pReference_y1 = nextImage.Pointer(y1S32, x0S32);
+
+            const f32 pixelTL = *pReference_y0;
+            const f32 pixelTR = *(pReference_y0+1);
+            const f32 pixelBL = *pReference_y1;
+            const f32 pixelBR = *(pReference_y1+1);
+
+            const s32 interpolatedPixelValue = RoundS32(InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse));
+            const s32 templatePixelValue = pTemplateImage[x];
+            const s32 grayvalueDifference = ABS(interpolatedPixelValue - templatePixelValue);
+
+            //matlab.EvalString("template(%d,%d) = %d; warped(%d,%d) = %d;", RoundS32(y0), RoundS32(x0), templatePixelValue, RoundS32(y0), RoundS32(x0), interpolatedPixelValue);
+
+            totalGrayvalueDifference += grayvalueDifference;
+
+            if(grayvalueDifference <= maxPixelDifferenceS32) {
+              numSimilarPixels++;
+            }
+          } // for(s32 x=0; x<xIterationMax; x++)
+
+          yOriginal += yGridDelta * templateCoordinateIncrement;
+        } // for(s32 y=0; y<yIterationMax; y++)
+
+        meanAbsoluteDifference = totalGrayvalueDifference / numInBounds;
+
+        return RESULT_OK;
+      } // Result PlanarTransformation_f32::VerifyTransformation_Projective_LinearInterpolate()
     } // namespace Transformations
   } // namespace Embedded
 } // namespace Anki
