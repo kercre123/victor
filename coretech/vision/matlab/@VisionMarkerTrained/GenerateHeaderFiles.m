@@ -115,6 +115,7 @@ reorderingString    = cell(1, numLabels);
 maxDepthString      = cell(1, numLabels);
 numNodesString      = cell(1, numLabels);
 treePtrString       = cell(1, numLabels);
+orientationString   = cell(1, numLabels);
 
 for i_label = 1:numLabels
     
@@ -147,7 +148,8 @@ for i_label = 1:numLabels
     % Reorient the corners accroding to the orientation.  Using this will
     % result in the first and third corners being the top side.
     reorder = [1 3; 2 4]; % canonical corner ordering
-    switch(enumName_oriented((underscoreIndex+1):end))
+    orientationAngleStr = enumName_oriented((underscoreIndex+1):end);
+    switch(orientationAngleStr)
         case '000'
             % nothing to do
         case '090'
@@ -162,6 +164,8 @@ for i_label = 1:numLabels
             error('Unrecognized angle string "%s"', angleStr);
     end
     reorderingString{i_label} = sprintf('  {%d,%d,%d,%d},\n', reorder(:)-1);
+    
+    orientationString{i_label} = sprintf('    %f,\n', str2double(orientationAngleStr));
     
     maxDepthString{i_label} = sprintf('  MAX_DEPTH_VERIFY_%d,\n', i_label-1);
 
@@ -293,10 +297,16 @@ decisionTreeString = [decisionTreeString sprintf([ ...
     '};\n\n'], [enumMappingString{:}])];
 
 decisionTreeString = [decisionTreeString sprintf([ ...
+    'const f32 ObservedOrientationLUT[NUM_MARKER_LABELS_ORIENTED] = {\n' ...
+    '%s' ...
+    '};\n\n'], [orientationString{:}])];
+
+decisionTreeString = [decisionTreeString sprintf([ ...
     '} // namespace VisionMarkerDecisionTree\n' ...
     '} // namespace Embedded\n' ...
     '} // namespace Anki\n\n' ...
     '#endif // _ANKICORETECHEMBEDDED_VISION_FIDUCIAL_MARKER_DECISION_TREE_H_\n'])];
+
 
 
 if writeFiles 
