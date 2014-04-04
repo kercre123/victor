@@ -230,7 +230,7 @@ namespace Anki
     {
       return (f32)sqrt((this->x - point2.x)*(this->x - point2.x) +
                        (this->y - point2.y)*(this->y - point2.y) +
-                       (this->z - point2.y)*(this->z - point2.z));
+                       (this->z - point2.z)*(this->z - point2.z));
     }
     
     template<typename Type> f32 Point3<Type>::Length() const
