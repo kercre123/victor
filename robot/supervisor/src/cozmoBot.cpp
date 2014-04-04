@@ -5,6 +5,7 @@
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h" // simulated or real!
+#include "imuFilter.h"
 #include "pickAndPlaceController.h"
 #include "dockingController.h"
 #include "gripController.h"
@@ -232,6 +233,12 @@ namespace Anki {
           
         } // while blockMarkerMailbox has mail
         */      
+
+        //////////////////////////////////////////////////////////////
+        // Sensor updates
+        //////////////////////////////////////////////////////////////
+        IMUFilter::Update();
+        
         
         //////////////////////////////////////////////////////////////
         // Head & Lift Position Updates

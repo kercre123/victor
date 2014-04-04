@@ -142,6 +142,8 @@ namespace Anki {
     //const f32 MAT_CAM_POSITION[3]   =  {-25.0f, 0.f, -3.f}; // relative to robot origin
     
     
+    const f32 IMU_POSITION[3] = {5.8f, 0.f, -13.5f};  // relative to neck joint
+    
     const f32 PREDOCK_DISTANCE_MM = 100.f;
     
     /*

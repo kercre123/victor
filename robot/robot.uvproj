@@ -813,6 +813,11 @@
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\wheelController.cpp</FilePath>
             </File>
+            <File>
+              <FileName>imuFilter.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\imuFilter.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -2093,6 +2098,11 @@
               <FileName>wheelController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\wheelController.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>imuFilter.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\imuFilter.cpp</FilePath>
             </File>
           </Files>
         </Group>

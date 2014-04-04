@@ -81,6 +81,8 @@ int main(void)
   SPIInit();
   UARTPutString("SPI!\r\n");
   
+  IMUInit();
+	
 #if 0
   // Motor testing...
   while (1)

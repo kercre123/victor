@@ -114,7 +114,7 @@
 
 // Accelerometer Constants
 // 12 bits, +/- 2g   4g/2^12 = 4*9.81 m/s^2 / 4096 ~= 0.958 mm/s^2 / LSB
-#define RANGE_CONST_2G      0.958f
+#define RANGE_CONST_2G      9.58f
 
 // Gyro Register Map
 #define GYRO_CHIP_ID        0x00
