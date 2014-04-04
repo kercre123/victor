@@ -2913,7 +2913,7 @@ GTEST_TEST(CoreTech_Vision, SolveQuartic)
   };
   
   PRECISION roots_computed[4];
-  EXPECT_TRUE(P3P::solveQuartic(factors, roots_computed) == EXIT_SUCCESS);
+  ASSERT_TRUE(P3P::solveQuartic(factors, roots_computed) == EXIT_SUCCESS);
   
   for(s32 i=0; i<4; ++i) {
     EXPECT_NEAR(roots_groundTruth[i], roots_computed[i], 1e-6f);
@@ -2934,7 +2934,7 @@ GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation)
   const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 250*sizeof(PRECISION));
   
   // TODO: is onchipbBuffer the right one to use here?
-  MemoryStack memory(&onchipBuffer[0], numBytes);
+  MemoryStack memory(&offchipBuffer[0], numBytes);
 
   
   // Parameters
@@ -3016,6 +3016,7 @@ GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation)
   Point3<PRECISION> Tdiff;
   ComputePoseDiff(R, T, Rtrue, Ttrue, Rdiff, Tdiff, memory);
   
+  // This is computing angular rotation vs. identity matrix
   const f32 trace = Rdiff[0][0] + Rdiff[1][1] + Rdiff[2][2];
   const f32 angleDiff = std::acos(0.5f*(trace - 1.f));
 
@@ -3075,7 +3076,10 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   CALL_GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d);
   CALL_GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d);
   CALL_GTEST_TEST(CoreTech_Vision, BinomialFilter);
-  CALL_GTEST_TEST(CoreTech_Vision, DownsampleByFactor);*/
+  CALL_GTEST_TEST(CoreTech_Vision, DownsampleByFactor);
+  CALL_GTEST_TEST(CoreTech_Vision, SolveQuartic);
+  CALL_GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation);
+   */
 
   return numFailedTests;
 } // int RUN_ALL_VISION_TESTS()
