@@ -171,9 +171,6 @@ namespace Anki {
         return EXIT_SUCCESS;
 #endif
 
-//#if(DEBUG_ANY && defined(SIMULATOR))
-//        PRINT("\n==== FRAME START (time = %d us) ====\n", HAL::GetMicroCounter() );
-//#endif
         // If the hardware interface needs to be advanced (as in the case of
         // a Webots simulation), do that first.
         HAL::Step();

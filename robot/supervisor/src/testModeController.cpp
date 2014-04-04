@@ -6,6 +6,7 @@
 #include "gripController.h"
 #include "headController.h"
 #include "liftController.h"
+#include "imuFilter.h"
 #include "testModeController.h"
 #include "anki/cozmo/robot/debug.h"
 #include "anki/cozmo/robot/localization.h"
@@ -80,9 +81,9 @@ namespace Anki {
         // 1.0     3.6              3.8
         
         f32 liftPower_ = 1;
-        const f32 LIFT_POWER_CMD = 0.2;
-        const f32 LIFT_DES_HIGH_HEIGHT = LIFT_HEIGHT_HIGHDOCK-10;
-        const f32 LIFT_DES_LOW_HEIGHT = LIFT_HEIGHT_LOWDOCK+10;
+        const f32 LIFT_POWER_CMD = 0.2f;
+        const f32 LIFT_DES_HIGH_HEIGHT = LIFT_HEIGHT_CARRY - 10;
+        const f32 LIFT_DES_LOW_HEIGHT = LIFT_HEIGHT_LOWDOCK + 10;
         //// End of LiftTest  //////
         
         
@@ -91,7 +92,8 @@ namespace Anki {
         // 1: Command a desired head angle (i.e. use HeadController)
         #define HEAD_POSITION_TEST 1
         
-        const f32 HEAD_POWER_CMD = 1.0;
+        f32 headPower_ = 0;
+        const f32 HEAD_POWER_CMD = 0.2;
         const f32 HEAD_DES_HIGH_ANGLE = MAX_HEAD_ANGLE;
         const f32 HEAD_DES_LOW_ANGLE = MIN_HEAD_ANGLE;
         //// End of HeadTest //////
@@ -516,6 +518,7 @@ namespace Anki {
         PRINT("\n==== Starting HeadTest =====\n");
         ticCnt_ = 0;
         ticCnt2_ = 0;
+        headPower_ = HEAD_POWER_CMD;
 #if(!HEAD_POSITION_TEST)
         HeadController::Disable();
 #endif
@@ -528,7 +531,7 @@ namespace Anki {
         static bool up = false;
         
         // Change direction
-        if (ticCnt_++ >= 4000 / TIME_STEP) {
+        if (ticCnt_++ >= 3000 / TIME_STEP) {
           
           
 #if(HEAD_POSITION_TEST)
@@ -543,12 +546,21 @@ namespace Anki {
 #else
           up = !up;
           if (up) {
-            PRINT("Head UP %f power\n", HEAD_POWER_CMD);
-            HAL::MotorSetPower(HAL::MOTOR_HEAD, HEAD_POWER_CMD);
+            PRINT("Head UP %f power\n", headPower_);
+            HAL::MotorSetPower(HAL::MOTOR_HEAD, headPower_);
           } else {
-            PRINT("Head DOWN %f power\n", -HEAD_POWER_CMD);
-            HAL::MotorSetPower(HAL::MOTOR_HEAD, -HEAD_POWER_CMD);
+            PRINT("Head DOWN %f power\n", -headPower_);
+            HAL::MotorSetPower(HAL::MOTOR_HEAD, -headPower_);
           }
+          
+          // Cycle through different power levels
+          if (!up) {
+            headPower_ += 0.1;
+            if (headPower_ >=1.01f) {
+              headPower_ = HEAD_POWER_CMD;
+            }
+          }
+
 #endif
           
           ticCnt_ = 0;
@@ -566,6 +578,40 @@ namespace Anki {
         
         return EXIT_SUCCESS;
       }
+      
+      ReturnCode IMUTestInit()
+      {
+        PRINT("\n==== Starting IMUTest =====\n");
+        ticCnt_ = 0;
+        return EXIT_SUCCESS;
+      }
+      
+      ReturnCode IMUTestUpdate()
+      {
+
+        // Print gyro readings
+        if (++ticCnt_ >= 200 / TIME_STEP) {
+          
+          // Raw HAL readings
+          HAL::IMU_DataStructure data;
+          HAL::IMUReadData(data);
+          
+          // IMUFilter readings
+          Radians orientation = IMUFilter::GetOrientation();
+          
+          PRINT("Gyro (%f,%f,%f) rad/s, (%f,%f,%f) g, orientation %f deg\n",
+                data.rate_x, data.rate_y, data.rate_z,
+                data.acc_x, data.acc_y, data.acc_z,
+                RAD_TO_DEG(orientation.ToFloat()));
+          
+          
+          
+          ticCnt_ = 0;
+        }
+
+        return EXIT_SUCCESS;
+      }
+      
       
       ReturnCode GripperTestInit()
       {
@@ -715,6 +761,10 @@ namespace Anki {
           case TM_HEAD:
             ret = HeadTestInit();
             updateFunc = HeadTestUpdate;
+            break;
+          case TM_IMU:
+            ret = IMUTestInit();
+            updateFunc = IMUTestUpdate;
             break;
 #if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
           case TM_GRIPPER:
