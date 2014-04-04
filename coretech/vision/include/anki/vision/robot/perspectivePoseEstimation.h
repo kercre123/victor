@@ -49,7 +49,7 @@ namespace Anki {
                                       Array<PRECISION>& R2, Point3<PRECISION>& T2,
                                       Array<PRECISION>& R3, Point3<PRECISION>& T3,
                                       Array<PRECISION>& R4, Point3<PRECISION>& T4,
-                                      MemoryStack memory);
+                                      MemoryStack scratch);
       
       // Use three points of a quadrilateral and the P3P algorithm above to
       // compute possible camera poses, then use the fourth point to choose the
@@ -59,14 +59,14 @@ namespace Anki {
       // TODO: Make a Quadrilateral3 class to store 4 world points?
       template<typename PRECISION>
       ReturnCode computePose(const Quadrilateral<PRECISION>& imgQuad,
-                             const Point3<PRECISION> worldPoint1,
-                             const Point3<PRECISION> worldPoint2,
-                             const Point3<PRECISION> worldPoint3,
-                             const Point3<PRECISION> worldPoint4,
+                             const Point3<PRECISION>& worldPoint1,
+                             const Point3<PRECISION>& worldPoint2,
+                             const Point3<PRECISION>& worldPoint3,
+                             const Point3<PRECISION>& worldPoint4,
                              const f32 focalLength_x, const f32 focalLength_y,
                              const f32 camCenter_x,   const f32 camCenter_y,
                              Array<PRECISION>& R, Point3<PRECISION>& T,
-                             MemoryStack memory);
+                             MemoryStack scratch);
       
       
       // Find the real parts of the four rootes of a quartic (4th order polynomial)

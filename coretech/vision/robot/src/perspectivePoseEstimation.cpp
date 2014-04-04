@@ -381,10 +381,10 @@ namespace Anki {
       
       template<typename PRECISION>
       ReturnCode computePose(const Quadrilateral<PRECISION>& imgQuad,
-                             const Point3<PRECISION> worldPoint1,
-                             const Point3<PRECISION> worldPoint2,
-                             const Point3<PRECISION> worldPoint3,
-                             const Point3<PRECISION> worldPoint4,
+                             const Point3<PRECISION>& worldPoint1,
+                             const Point3<PRECISION>& worldPoint2,
+                             const Point3<PRECISION>& worldPoint3,
+                             const Point3<PRECISION>& worldPoint4,
                              const f32 focalLength_x, const f32 focalLength_y,
                              const f32 camCenter_x,   const f32 camCenter_y,
                              Array<PRECISION>& R, Point3<PRECISION>& T,
@@ -402,7 +402,7 @@ namespace Anki {
         
         // Turn the three image points into unit vectors corresponding to rays
         // in the direction of the image points
-        Point3<PRECISION> imgRays[4]; // TODO: ok just to declare this on the stack?
+        Point3<PRECISION> imgRays[4];
         
         const PRECISION invFx = PRECISION(1) / (PRECISION) focalLength_x;
         const PRECISION invFy = PRECISION(1) / (PRECISION) focalLength_y;
@@ -491,7 +491,7 @@ namespace Anki {
                                             projectedPoint3.y/projectedPoint3.z);
             
             // Compare to the validation image point
-            float error = (projectedPoint - imgQuad[i_validate]).Length();
+            float error = projectedPoint.Dist(imgQuad[i_validate]);
             
             //printf("Solution %d reprojection error when validating with corner %d = %f\n",
             //        i_solution, i_validate, error);
@@ -520,7 +520,7 @@ namespace Anki {
           if(i<3) {
             // Rearrange corner list for next loop, to get a different
             // validation corner each time
-            std::swap(cornerList[0], cornerList[i+1]); // TODO: std::swap kosher in embedded?
+            Swap(cornerList[0], cornerList[i+1]);
           }
           
         } // for each validation corner
@@ -537,20 +537,20 @@ namespace Anki {
       // TODO: Once we decide which we actually need, we could only instantiate that one
 
       template ReturnCode computePose<f32>(const Quadrilateral<f32>& imgQuad,
-                                           const Point3<f32> worldPoint1,
-                                           const Point3<f32> worldPoint2,
-                                           const Point3<f32> worldPoint3,
-                                           const Point3<f32> worldPoint4,
+                                           const Point3<f32>& worldPoint1,
+                                           const Point3<f32>& worldPoint2,
+                                           const Point3<f32>& worldPoint3,
+                                           const Point3<f32>& worldPoint4,
                                            const f32 focalLength_x, const f32 focalLength_y,
                                            const f32 camCenter_x, const f32 camCenter_y,
                                            Array<f32>& R, Point3<f32>& T,
                                            MemoryStack memory);
       
       template ReturnCode computePose<f64>(const Quadrilateral<f64>& imgQuad,
-                                           const Point3<f64> worldPoint1,
-                                           const Point3<f64> worldPoint2,
-                                           const Point3<f64> worldPoint3,
-                                           const Point3<f64> worldPoint4,
+                                           const Point3<f64>& worldPoint1,
+                                           const Point3<f64>& worldPoint2,
+                                           const Point3<f64>& worldPoint3,
+                                           const Point3<f64>& worldPoint4,
                                            const f32 focalLength_x, const f32 focalLength_y,
                                            const f32 camCenter_x, const f32 camCenter_y,
                                            Array<f64>& R, Point3<f64>& T,
