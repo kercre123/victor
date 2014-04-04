@@ -177,7 +177,6 @@ Supervisor {
 				  Gyro {
 				  	name "gyro"
 					translation 0.0058 -0.0135 0
-					rotation 1 1 1 2.0944
 
 					# +/- 500 deg/s range expressed by 16-bits
 					# resolution 0.0002663
@@ -185,7 +184,6 @@ Supervisor {
 				  Accelerometer {
 					name "accel"
 					translation 0.0058 -0.0135 0
-					rotation 1 1 1 2.0944
 
 					# +/-2g (+/- 19.62m/s^2) range expressed by 12-bits
 					# resolution 0.00958

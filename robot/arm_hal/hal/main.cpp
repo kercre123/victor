@@ -24,6 +24,7 @@ namespace Anki
       void TimerInit();
       void UARTInit();
       void FrontCameraInit();
+      void IMUInit();
       
       int USBGetChar(u32){ return -1; }
       s32 USBPeekChar(u32 offset){ return -1; }

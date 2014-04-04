@@ -230,9 +230,6 @@ namespace Anki
         f32 rate_y;
         f32 rate_z;
       };
-      
-      // Set up IMU (including SPI communication channel)
-      void IMUInit();
 
       // Read acceleration and rate
       void IMUReadData(IMU_DataStructure &IMUData);
