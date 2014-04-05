@@ -3,7 +3,7 @@ classdef VisionMarkerTrained
     properties(Constant = true)
         
         %TrainingImageDir = '~/Box Sync/Cozmo SE/VisionMarkers/lettersWithFiducials/rotated';
-        %TrainingImageDir = '~/Box Sync/Cozmo SE/VisionMarkers/symbolsWithFiducials/rotated';
+        %TrainingImageDir = '~/Box Sync/Cozmo SE/VisionMarkers/symbolsWithFiducials/unpadded/rotated';
         
         TrainingImageDir = { ...
             '~/Box Sync/Cozmo SE/VisionMarkers/lettersWithFiducials/unpadded/rotated', ... '~/Box Sync/Cozmo SE/VisionMarkers/matWithFiducials/unpadded/rotated', ...
@@ -38,7 +38,8 @@ classdef VisionMarkerTrained
         AddFiducialBatch(inputDir, outputDir, varargin);
         probeTree = TrainProbeTree(varargin);
         [squareWidth_pix, padding_pix] = GetFiducialPixelSize(imageSize, imageSizeType);
-        corners = GetFiducialCorners(imageSize);
+        %Corners = GetMarkerCorners(imageSize, isPadded);
+        corners = GetFiducialCorners(imageSize, isPadded);
         threshold = ComputeThreshold(img, tform);
         outputString = GenerateHeaderFiles(varargin);
         
@@ -84,8 +85,15 @@ classdef VisionMarkerTrained
             
             assert(~isempty(VisionMarkerTrained.ProbeTree), 'No probe tree loaded.');
             
+            if ischar(img)
+                [img, ~, alpha] = imread(img);
+                img = mean(im2double(img),3);
+                img(alpha < .5) = 1;
+            end
+            
             if isempty(Corners)
-                Corners = [0 0; 0 1; 1 0; 1 1];
+                %Corners = [0 0; 0 1; 1 0; 1 1];
+                Corners = VisionMarkerTrained.GetFiducialCorners(size(img,1), false);
             end
             
             this.corners = Corners;
@@ -132,7 +140,7 @@ classdef VisionMarkerTrained
                             img, tform, threshold, VisionMarkerTrained.ProbePattern);
                     end
                     
-                    this.isValid = verifiedID == 2;
+                    this.isValid = verifiedID ~= 1;
                     if this.isValid
                         assert(strcmp(verificationResult, this.codeName));
                         
