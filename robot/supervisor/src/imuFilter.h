@@ -31,7 +31,8 @@ namespace Anki {
       ReturnCode Update();
 
       
-      Radians GetOrientation();
+      f32 GetRotation();
+      f32 GetRotationSpeed();
       
     } // namespace IMUFilter
   } // namespace Cozmo

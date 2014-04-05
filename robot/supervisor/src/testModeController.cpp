@@ -596,15 +596,17 @@ namespace Anki {
           HAL::IMU_DataStructure data;
           HAL::IMUReadData(data);
           
-          // IMUFilter readings
-          Radians orientation = IMUFilter::GetOrientation();
-          
-          PRINT("Gyro (%f,%f,%f) rad/s, (%f,%f,%f) g, orientation %f deg\n",
+          PRINT("Gyro (%f,%f,%f) rad/s, (%f,%f,%f) mm/s^2\n",
                 data.rate_x, data.rate_y, data.rate_z,
-                data.acc_x, data.acc_y, data.acc_z,
-                RAD_TO_DEG(orientation.ToFloat()));
+                data.acc_x, data.acc_y, data.acc_z);
           
           
+          // IMUFilter readings
+          f32 rot_imu = IMUFilter::GetRotation();
+          f32 rot_enc = Localization::GetCurrentMatOrientation().ToFloat();
+          PRINT("Rot(IMU): %f deg,  Rot(Encoders): %f deg\n",
+                RAD_TO_DEG_F32(rot_imu),
+                RAD_TO_DEG_F32(rot_enc));
           
           ticCnt_ = 0;
         }
