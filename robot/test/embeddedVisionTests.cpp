@@ -3022,7 +3022,7 @@ GTEST_TEST(CoreTech_Vision, SolveQuartic)
 
 GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation)
 {
-#define PRECISION f64
+#define PRECISION f32
 
   // Allocate memory from the heap, for the memory allocator
   // TODO: How much memory do i need here?
