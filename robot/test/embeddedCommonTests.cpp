@@ -262,7 +262,7 @@ GTEST_TEST(CoreTech_Common, SerializedBuffer)
     const char * objectName = NULL;
     ASSERT_TRUE(iterator.HasNext());
     const void * segment1c = iterator.GetNext(&typeName, &objectName, segment1LengthB, true);
-    ASSERT_TRUE(segment1LengthB == 48);
+    ASSERT_TRUE(segment1LengthB == 48+64);
     ASSERT_TRUE(reinterpret_cast<size_t>(segment1b) == reinterpret_cast<size_t>(segment1c));
     ASSERT_TRUE(strcmp(typeName, "Basic Type Buffer") == 0);
     ASSERT_TRUE(strcmp(objectName, "segment1") == 0);
@@ -274,7 +274,7 @@ GTEST_TEST(CoreTech_Common, SerializedBuffer)
     const char * objectName = NULL;
     ASSERT_TRUE(iterator.HasNext());
     const void * segment2c = iterator.GetNext(&typeName, &objectName, segment2LengthB, true);
-    ASSERT_TRUE(segment2LengthB == 80);
+    ASSERT_TRUE(segment2LengthB == 80+64);
     ASSERT_TRUE(reinterpret_cast<size_t>(segment2b) == reinterpret_cast<size_t>(segment2c));
     ASSERT_TRUE(strcmp(typeName, "Basic Type Buffer") == 0);
     ASSERT_TRUE(strcmp(objectName, "segment2") == 0);
@@ -286,7 +286,7 @@ GTEST_TEST(CoreTech_Common, SerializedBuffer)
     const char * objectName = NULL;
     ASSERT_TRUE(iterator.HasNext());
     const void * segment3c = iterator.GetNext(&typeName, &objectName, segment3LengthB, true);
-    ASSERT_TRUE(segment3LengthB == 144);
+    ASSERT_TRUE(segment3LengthB == 144+64);
     ASSERT_TRUE(reinterpret_cast<size_t>(segment3b) == reinterpret_cast<size_t>(segment3c));
     ASSERT_TRUE(strcmp(typeName, "Basic Type Buffer") == 0);
     ASSERT_TRUE(strcmp(objectName, "segment3") == 0);
