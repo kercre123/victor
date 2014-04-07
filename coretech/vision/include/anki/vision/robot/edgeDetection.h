@@ -18,6 +18,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/geometry.h"
 
 #include "anki/vision/robot/histogram.h"
+#include "anki/vision/robot/transformations.h"
 
 namespace Anki
 {

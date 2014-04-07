@@ -50,7 +50,7 @@ namespace Anki {
 #ifdef THIS_IS_PETES_BOARD
       #define SEND_DEBUG_STREAM 1
       #define RUN_SIMPLE_TRACKING_TEST
-      //#define SEND_IMAGE_ONLY
+      #define SEND_IMAGE_ONLY
       //#define SEND_BINARY_IMAGE_ONLY
 #else
       #define SEND_DEBUG_STREAM 0

@@ -203,7 +203,7 @@ namespace Anki
         return this->homography.Print("homography");
       }
 
-      Quadrilateral<f32> PlanarTransformation_f32::TransformQuadrilateral(const Quadrilateral<f32> &in, MemoryStack scratch, const f32 scale) const
+      Quadrilateral<f32> PlanarTransformation_f32::Transform(const Quadrilateral<f32> &in, MemoryStack scratch, const f32 scale) const
       {
         Array<f32> xIn(1,4,scratch);
         Array<f32> yIn(1,4,scratch);
@@ -227,7 +227,8 @@ namespace Anki
         return out;
       }
 
-      Result PlanarTransformation_f32::TransformArray(const Array<u8> &in,
+      Result PlanarTransformation_f32::Transform(
+        const Array<u8> &in,
         Array<u8> &out,
         MemoryStack scratch,
         const f32 scale) const
@@ -235,10 +236,13 @@ namespace Anki
         Result lastResult;
 
         AnkiConditionalErrorAndReturnValue(in.IsValid() && out.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "PlanarTransformation_f32::TransformArray", "inputs are not valid");
+          RESULT_FAIL_INVALID_OBJECT, "PlanarTransformation_f32::Transform", "inputs are not valid");
 
         AnkiConditionalErrorAndReturnValue(in.get_size(0) == out.get_size(0) && in.get_size(1) == out.get_size(1),
-          RESULT_FAIL_INVALID_SIZE, "PlanarTransformation_f32::TransformArray", "input and output are different sizes");
+          RESULT_FAIL_INVALID_SIZE, "PlanarTransformation_f32::Transform", "input and output are different sizes");
+
+        AnkiConditionalErrorAndReturnValue(in.get_rawDataPointer() != out.get_rawDataPointer(),
+          RESULT_FAIL_ALIASED_MEMORY, "PlanarTransformation_f32::Transform", "in and out cannot be the same");
 
         const s32 arrHeight = in.get_size(0);
         const s32 arrWidth = in.get_size(1);
@@ -290,6 +294,51 @@ namespace Anki
 
         if((lastResult = Interp2<u8,u8>(in, xTransformed, yTransformed, out, INTERPOLATE_LINEAR, 0)) != RESULT_OK)
           return lastResult;
+
+        return RESULT_OK;
+      }
+
+      Result PlanarTransformation_f32::Transform(
+        const FixedLengthList<Point<s16> > &in,
+        FixedLengthList<Point<s16> > &out,
+        MemoryStack scratch,
+        const f32 scale
+        ) const
+      {
+        AnkiConditionalErrorAndReturnValue(in.IsValid() && out.IsValid(),
+          RESULT_FAIL_INVALID_OBJECT, "PlanarTransformation_f32::Transform", "inputs are not valid");
+
+        AnkiConditionalErrorAndReturnValue(in.get_size() == out.get_size(),
+          RESULT_FAIL_INVALID_SIZE, "PlanarTransformation_f32::Transform", "input and output are different sizes");
+
+        const s32 numPoints = in.get_size();
+
+        Array<f32> xIn(1,numPoints,scratch,Flags::Buffer(false,false,false));
+        Array<f32> yIn(1,numPoints,scratch,Flags::Buffer(false,false,false));
+        Array<f32> xOut(1,numPoints,scratch,Flags::Buffer(false,false,false));
+        Array<f32> yOut(1,numPoints,scratch,Flags::Buffer(false,false,false));
+
+        const Point<s16> * restrict pIn = in.Pointer(0);
+
+        f32 * restrict pXIn  = xIn.Pointer(0,0);
+        f32 * restrict pYIn  = yIn.Pointer(0,0);
+
+        for(s32 i=0; i<numPoints; i++) {
+          pXIn[i] = pIn[i].x;
+          pYIn[i] = pIn[i].y;
+        }
+
+        TransformPoints(xIn, yIn, scale, false, false, xOut, yOut);
+
+        const f32 * restrict pXOut = xOut.Pointer(0,0);
+        const f32 * restrict pYOut = yOut.Pointer(0,0);
+
+        Point<s16> * restrict pOut = out.Pointer(0);
+
+        for(s32 i=0; i<numPoints; i++) {
+          pOut[i].x = static_cast<s16>(RoundS32(pXOut[i]));
+          pOut[i].y = static_cast<s16>(RoundS32(pYOut[i]));
+        }
 
         return RESULT_OK;
       }
@@ -442,7 +491,7 @@ namespace Anki
 
       Quadrilateral<f32> PlanarTransformation_f32::get_transformedCorners(MemoryStack scratch) const
       {
-        return this->TransformQuadrilateral(this->get_initialCorners(), scratch);
+        return this->Transform(this->get_initialCorners(), scratch);
       }
 
       Result PlanarTransformation_f32::TransformPointsStatic(

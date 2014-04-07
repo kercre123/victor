@@ -51,16 +51,20 @@ namespace Anki
           MemoryStack &slowMemory);
 
         // Similar to the other constructor, but computes the actual template edges from a reference binary image from a header file if one is available
+        // NOTE: All the edgeDetection_threshold_* parameters are not for template extraction. They are just for computing the grayvalue for the next extraction
         BinaryTracker(
           const Anki::Vision::MarkerType markerType,
-          const f32 markerOrientationAngle,
-          const s32 templateImageHeight,
-          const s32 templateImageWidth,
+          const Array<u8> &templateImage,
           const Quadrilateral<f32> &templateQuad,
-          const f32 scaleTemplateRegionPercent, //< Shrinks the region if less-than 1.0, expands the region if greater-than 1.0
-          const s32 edgeDetection_minComponentWidth, //< The smallest horizontal size of a component (1 to 4 is good)
-          const s32 edgeDetection_maxDetectionsPerType, //< As many as you have memory and time for
-          const s32 edgeDetection_everyNLines, //< As many as you have time for
+          const f32 scaleTemplateRegionPercent,
+          const s32 edgeDetection_threshold_yIncrement,
+          const s32 edgeDetection_threshold_xIncrement,
+          const f32 edgeDetection_threshold_blackPercentile,
+          const f32 edgeDetection_threshold_whitePercentile,
+          const f32 edgeDetection_threshold_scaleRegionPercent,
+          const s32 edgeDetection_minComponentWidth,
+          const s32 edgeDetection_maxDetectionsPerType,
+          const s32 edgeDetection_everyNLines,
           MemoryStack &fastMemory,
           MemoryStack &slowMemory);
 

@@ -149,20 +149,25 @@ namespace Anki
 
       BinaryTracker::BinaryTracker(
         const Anki::Vision::MarkerType markerType,
-        const f32 markerOrientationAngle,
-        const s32 templateImageHeight,
-        const s32 templateImageWidth,
+        const Array<u8> &templateImage,
         const Quadrilateral<f32> &templateQuad,
-        const f32 scaleTemplateRegionPercent, //< Shrinks the region if less-than 1.0, expands the region if greater-than 1.0
-        const s32 edgeDetection_minComponentWidth, //< The smallest horizontal size of a component (1 to 4 is good)
-        const s32 edgeDetection_maxDetectionsPerType, //< As many as you have memory and time for
-        const s32 edgeDetection_everyNLines, //< As many as you have time for
+        const f32 scaleTemplateRegionPercent,
+        const s32 edgeDetection_threshold_yIncrement,
+        const s32 edgeDetection_threshold_xIncrement,
+        const f32 edgeDetection_threshold_blackPercentile,
+        const f32 edgeDetection_threshold_whitePercentile,
+        const f32 edgeDetection_threshold_scaleRegionPercent,
+        const s32 edgeDetection_minComponentWidth,
+        const s32 edgeDetection_maxDetectionsPerType,
+        const s32 edgeDetection_everyNLines,
         MemoryStack &fastMemory,
         MemoryStack &slowMemory)
         : isValid(false)
       {
-        this->templateImageHeight = templateImageHeight;
-        this->templateImageWidth = templateImageWidth;
+        const bool useRealTemplateImage = true;
+
+        this->templateImageHeight = templateImage.get_size(0);
+        this->templateImageWidth = templateImage.get_size(1);
 
         // Only a few markers are currently supported
         AnkiConditionalErrorAndReturn(markerType == Anki::Vision::MARKER_BATTERIES,
@@ -187,11 +192,23 @@ namespace Anki
 
         this->templateImage = Array<u8>(templateImageHeight, templateImageWidth, slowMemory);
 
+        AnkiConditionalErrorAndReturn(
+          this->templateEdges.xDecreasing.IsValid() && this->templateEdges.xIncreasing.IsValid() &&
+          this->templateEdges.yDecreasing.IsValid() && this->templateEdges.yIncreasing.IsValid() &&
+          this->templateHistogram.IsValid() && this->lastImageHistogram.IsValid() && this->templateImage.IsValid(),
+          "BinaryTracker::BinaryTracker", "Could not allocate local memory");
+
+        this->templateImage.Set(templateImage);
+
         // Place the header image in the templateImage
         {
           PUSH_MEMORY_STACK(slowMemory);
 
           const s32 borderWidth = edgeDetection_minComponentWidth + 2;
+
+          //
+          // Decode the compressed binary image to an uncompressed image
+          //
 
           Array<u8> binaryTemplate;
 
@@ -202,14 +219,25 @@ namespace Anki
               slowMemory);
           }
 
+          AnkiConditionalErrorAndReturn(binaryTemplate.IsValid(),
+            "BinaryTracker::BinaryTracker", "Could not allocate local memory");
+
           Matrix::DotMultiply<u8,u8,u8>(binaryTemplate, 255, binaryTemplate);
 
           const s32 binaryTemplateHeight = binaryTemplate.get_size(0);
           const s32 binaryTemplateWidth = binaryTemplate.get_size(1);
 
+          //
+          // Create a padded version of the binary template
+          //
+
           const s32 binaryTemplateWithBorderHeight = binaryTemplateHeight + 2*borderWidth;
           const s32 binaryTemplateWithBorderWidth = binaryTemplateWidth + 2*borderWidth;
           Array<u8> binaryTemplateWithBorder(binaryTemplateWithBorderHeight, binaryTemplateWithBorderWidth, slowMemory, Flags::Buffer(false,false,false));
+
+          AnkiConditionalErrorAndReturn(binaryTemplateWithBorder.IsValid(),
+            "BinaryTracker::BinaryTracker", "Could not allocate local memory");
+
           binaryTemplateWithBorder.Set(255);
 
           for(s32 y=0; y<binaryTemplateHeight; y++) {
@@ -219,15 +247,19 @@ namespace Anki
             memcpy(pBinaryTemplateWithBorder, pBinaryTemplate, binaryTemplateWidth);
           }
 
+          //
+          // Compute the warp between the binary header and fiducial detection
+          //
+
           const f32 binaryTemplateHeightF32 = static_cast<f32>(binaryTemplate.get_size(0));
           const f32 binaryTemplateWidthF32 = static_cast<f32>(binaryTemplate.get_size(1));
 
           FixedLengthList<Point<f32> > binaryCorners(4, slowMemory);
           binaryCorners.set_size(4);
-          binaryCorners[0] = Point<f32>(0.5f, 0.5f);
-          binaryCorners[1] = Point<f32>(binaryTemplateHeightF32-0.5f, 0.5f);
-          binaryCorners[2] = Point<f32>(0.5f, binaryTemplateWidthF32-0.5f);
-          binaryCorners[3] = Point<f32>(binaryTemplateHeightF32-0.5f, binaryTemplateWidthF32-0.5f);
+          binaryCorners[0] = Point<f32>(0.5f+borderWidth,                        0.5f+borderWidth);
+          binaryCorners[1] = Point<f32>(0.5f+borderWidth,                        binaryTemplateHeightF32-0.5f+borderWidth);
+          binaryCorners[2] = Point<f32>(binaryTemplateWidthF32-0.5f+borderWidth, 0.5f+borderWidth);
+          binaryCorners[3] = Point<f32>(binaryTemplateWidthF32-0.5f+borderWidth, binaryTemplateHeightF32-0.5f+borderWidth);
 
           FixedLengthList<Point<f32> > templateCorners(4, slowMemory);
           templateCorners.set_size(4);
@@ -236,61 +268,67 @@ namespace Anki
           templateCorners[2] = templateQuad[2];
           templateCorners[3] = templateQuad[3];
 
-          Array<f32> homography(3, 3, slowMemory);
-          Matrix::EstimateHomography(templateCorners, binaryCorners, homography, slowMemory);
+          Array<f32> binaryTemplateHomography(3, 3, slowMemory);
+          Matrix::EstimateHomography(binaryCorners, templateCorners, binaryTemplateHomography, slowMemory);
 
-          const Point<f32> centerOffset(0.0f, 0.0f);
-          Meshgrid<f32> originalCoordinates( LinearSequence<f32>(0.5f, 1.0f, templateImageWidth-0.5f), LinearSequence<f32>(0.5f, 1.0f, templateImageHeight-0.5f));
+          // Extract the edges, and transform them to the actual fiducial detection location
+          // TODO: add subpixel
+          const Rectangle<s32> templateRect(0, binaryTemplateWithBorderWidth-1, 0, binaryTemplateWithBorderHeight-1);
+          const Result result = DetectBlurredEdges(binaryTemplateWithBorder, templateRect, 128, edgeDetection_minComponentWidth, edgeDetection_everyNLines, this->templateEdges);
 
-          Interp2_Projective<u8,u8>(binaryTemplate, originalCoordinates, homography, centerOffset, this->templateImage, INTERPOLATE_LINEAR, 255);
+          this->templateEdges.imageHeight = templateImageHeight;
+          this->templateEdges.imageWidth = templateImageWidth;
 
-          Matlab matlab(false);
+          AnkiConditionalErrorAndReturn(result == RESULT_OK,
+            "BinaryTracker::BinaryTracker", "DetectBlurredEdge failed");
 
-          matlab.PutArray(binaryTemplate, "binaryTemplate");
-          matlab.PutArray(binaryTemplateWithBorder, "binaryTemplateWithBorder");
-          matlab.PutArray(this->templateImage, "templateImage");
+          Transformations::PlanarTransformation_f32 binaryTemplateTransform(
+            Transformations::TRANSFORM_PROJECTIVE,
+            Quadrilateral<f32>(binaryCorners[0], binaryCorners[1], binaryCorners[2], binaryCorners[3]),
+            binaryTemplateHomography,
+            Point<f32>(0.0f,0.0f),
+            slowMemory);
 
-          printf("\n");
+          binaryTemplateTransform.Transform(this->templateEdges.xDecreasing, this->templateEdges.xDecreasing, slowMemory);
+          binaryTemplateTransform.Transform(this->templateEdges.xIncreasing, this->templateEdges.xIncreasing, slowMemory);
+          binaryTemplateTransform.Transform(this->templateEdges.yDecreasing, this->templateEdges.yDecreasing, slowMemory);
+          binaryTemplateTransform.Transform(this->templateEdges.yIncreasing, this->templateEdges.yIncreasing, slowMemory);
 
-          /*const s32 markerOrientationAngleS32 = RoundS32(markerOrientationAngle);
+          //this->templateImage.Show("template real", false, false, true);
+          //this->ShowTemplate("Template", false, true);
 
-          if(markerOrientationAngleS32 == 0) {
-          } else if(markerOrientationAngleS32 == 90) {
-          } else if(markerOrientationAngleS32 == 180) {
-          } else if(markerOrientationAngleS32 == 270) {
-          }*/
+          if(!useRealTemplateImage) {
+            // Just warp the binary header image to the template image
+            Matrix::EstimateHomography(templateCorners, binaryCorners, binaryTemplateHomography, slowMemory);
+            const Point<f32> centerOffset(0.0f, 0.0f);
+            Meshgrid<f32> originalCoordinates( LinearSequence<f32>(0.5f, 1.0f, templateImageWidth-0.5f), LinearSequence<f32>(0.5f, 1.0f, templateImageHeight-0.5f));
+
+            Interp2_Projective<u8,u8>(binaryTemplateWithBorder, originalCoordinates, binaryTemplateHomography, centerOffset, this->templateImage, INTERPOLATE_LINEAR, 255);
+          }
+
+          //this->templateImage.Show("template binary", true, false, true);
+
+          //Matlab matlab(false);
+
+          //matlab.PutArray(binaryTemplate, "binaryTemplate");
+          //matlab.PutArray(binaryTemplateWithBorder, "binaryTemplateWithBorder");
+          //matlab.PutArray(this->templateImage, "templateImage");
         }
 
-        this->templateImage.Set(templateImage);
+        const Rectangle<f32> edgeDetection_imageRegionOfInterestRaw = templateQuad.ComputeBoundingRectangle().ComputeScaledRectangle(edgeDetection_threshold_scaleRegionPercent);
+        const Rectangle<s32> edgeDetection_imageRegionOfInterest(static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.left), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.right), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.top), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.bottom));
 
-        AnkiConditionalErrorAndReturn(
-          this->templateEdges.xDecreasing.IsValid() && this->templateEdges.xIncreasing.IsValid() &&
-          this->templateEdges.yDecreasing.IsValid() && this->templateEdges.yIncreasing.IsValid(),
-          "BinaryTracker::BinaryTracker", "Could not allocate local memory");
+        this->lastGrayvalueThreshold = ComputeGrayvalueThreshold(
+          templateImage,
+          edgeDetection_imageRegionOfInterest,
+          edgeDetection_threshold_yIncrement,
+          edgeDetection_threshold_xIncrement,
+          edgeDetection_threshold_blackPercentile,
+          edgeDetection_threshold_whitePercentile,
+          this->templateHistogram);
 
-        //const Rectangle<f32> edgeDetection_imageRegionOfInterestRaw = templateQuad.ComputeBoundingRectangle().ComputeScaledRectangle(edgeDetection_threshold_scaleRegionPercent);
-        //const Rectangle<s32> edgeDetection_imageRegionOfInterest(static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.left), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.right), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.top), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.bottom));
-
-        //this->lastGrayvalueThreshold = ComputeGrayvalueThreshold(
-        //  templateImage,
-        //  edgeDetection_imageRegionOfInterest,
-        //  edgeDetection_threshold_yIncrement,
-        //  edgeDetection_threshold_xIncrement,
-        //  edgeDetection_threshold_blackPercentile,
-        //  edgeDetection_threshold_whitePercentile,
-        //  this->templateHistogram);
-
-        //this->lastImageHistogram.Set(this->templateHistogram);
-
-        //const Rectangle<f32> templateRectRaw = templateQuad.ComputeBoundingRectangle().ComputeScaledRectangle(scaleTemplateRegionPercent);
-        //const Rectangle<s32> templateRect(static_cast<s32>(templateRectRaw.left), static_cast<s32>(templateRectRaw.right), static_cast<s32>(templateRectRaw.top), static_cast<s32>(templateRectRaw.bottom));
-
-        //const Result result = DetectBlurredEdges(templateImage, templateRect, this->lastGrayvalueThreshold, edgeDetection_minComponentWidth, edgeDetection_everyNLines, this->templateEdges);
-
-        //this->lastUsedGrayvalueThreshold = this->lastGrayvalueThreshold;
-
-        //AnkiConditionalErrorAndReturn(result == RESULT_OK,
-        //  "BinaryTracker::BinaryTracker", "DetectBlurredEdge failed");
+        this->lastImageHistogram.Set(this->templateHistogram);
+        this->lastUsedGrayvalueThreshold = this->lastGrayvalueThreshold;
 
         this->isValid = true;
       }

@@ -878,14 +878,14 @@ namespace Anki {
                                VisionMemory::onchipScratch_, Flags::Buffer(false,false,false));
       
       HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
-                          captureResolution_, exposure, false);
+                          captureResolution_, 0.1f, false);
       
 #ifdef SEND_BINARY_IMAGE_ONLY
       DebugStream::SendBinaryImage(grayscaleImage, tracker_, trackerParameters_, VisionMemory::ccmScratch_, VisionMemory::onchipScratch_, VisionMemory::offchipScratch_);
       HAL::MicroWait(250000);
 #else
       DebugStream::SendArray(grayscaleImage);
-      HAL::MicroWait(1000000);
+      HAL::MicroWait(1500000);
 #endif
       
       return EXIT_SUCCESS;

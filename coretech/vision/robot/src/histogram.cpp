@@ -88,6 +88,11 @@ namespace Anki
       return RESULT_OK;
     }
 
+    bool Histogram::IsValid() const
+    {
+      return counts.IsValid();
+    }
+
     s32 Histogram::get_numBins() const
     {
       return this->counts.get_size();

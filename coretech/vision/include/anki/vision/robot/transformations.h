@@ -84,17 +84,25 @@ namespace Anki
         Result Print(const char * const variableName = "Transformation") const;
 
         // Transform the input Quadrilateral, using this object's transformation
-        Quadrilateral<f32> TransformQuadrilateral(
+        Quadrilateral<f32> Transform(
           const Quadrilateral<f32> &in,
           MemoryStack scratch,
           const f32 scale=1.0f) const;
 
         // Transform an array (like an image)
-        Result TransformArray(
+        Result Transform(
           const Array<u8> &in,
           Array<u8> &out,
           MemoryStack scratch,
           const f32 scale=1.0f) const;
+
+        // In and out can point to the same location in memory
+        Result Transform(
+          const FixedLengthList<Point<s16> > &in,
+          FixedLengthList<Point<s16> > &out,
+          MemoryStack scratch,
+          const f32 scale=1.0f
+          ) const;
 
         Result VerifyTransformation_Projective_NearestNeighbor(
           const Array<u8> &templateImage,

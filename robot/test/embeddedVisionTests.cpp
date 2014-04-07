@@ -34,9 +34,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "../../coretech/vision/blockImages/newFiducials_320x240.h"
 #include "../../../systemTestImages/cozmo_2014_01_29_11_41_05_10_320x240.h"
 #include "../../../systemTestImages/cozmo_2014_01_29_11_41_05_12_320x240.h"
-
-//#include "../../coretech/vision/blockImages/templateImage.h"
-//#include "../../coretech/vision/blockImages/nextImage.h"
+#include "../../../systemTestImages/cozmo_date2014_04_04_time17_40_08_frame0.h"
 
 #include "embeddedTests.h"
 
@@ -112,6 +110,9 @@ GTEST_TEST(CoreTech_Vision, DecisionTreeVision)
 
 GTEST_TEST(CoreTech_Vision, BinaryTrackerHeaderTemplate)
 {
+  const s32 imageHeight = 240;
+  const s32 imageWidth = 320;
+
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
   ASSERT_TRUE(scratchCcm.IsValid());
 
@@ -121,11 +122,14 @@ GTEST_TEST(CoreTech_Vision, BinaryTrackerHeaderTemplate)
   MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(scratchOffchip.IsValid());
 
-  Array<u8> templateImage(cozmo_2014_01_29_11_41_05_10_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_10_320x240_WIDTH, scratchOnchip);
-  Array<u8> nextImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOnchip);
+  Array<u8> templateImage(imageHeight, imageWidth, scratchOnchip);
 
-  const Quadrilateral<f32> templateQuad(Point<f32>(128,78), Point<f32>(220,74), Point<f32>(229,167), Point<f32>(127,171));
-  //const u8 edgeDetection_grayvalueThreshold = 100;
+  const Quadrilateral<f32> templateQuad(
+    Point<f32>(90, 100),
+    Point<f32>(91, 228),
+    Point<f32>(218, 100),
+    Point<f32>(217, 227));
+
   const s32 edgeDetection_minComponentWidth = 2;
 
   const s32 edgeDetection_threshold_yIncrement = 4;
@@ -155,8 +159,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTrackerHeaderTemplate)
   const s32 ransac_numSamplesPerType = 8;
   const s32 ransac_inlinerDistance = verify_maxTranslationDistance;
 
-  templateImage.Set(&cozmo_2014_01_29_11_41_05_10_320x240[0], cozmo_2014_01_29_11_41_05_10_320x240_WIDTH*cozmo_2014_01_29_11_41_05_10_320x240_HEIGHT);
-  nextImage.Set(&cozmo_2014_01_29_11_41_05_12_320x240[0], cozmo_2014_01_29_11_41_05_12_320x240_WIDTH*cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT);
+  templateImage.Set(&cozmo_date2014_04_04_time17_40_08_frame0[0], imageHeight*imageWidth);
 
   // Skip zero rows/columns (non-list)
   {
@@ -172,14 +175,15 @@ GTEST_TEST(CoreTech_Vision, BinaryTrackerHeaderTemplate)
 
     BeginBenchmark("BinaryTracker init");
 
-    const Quadrilateral<f32> templateQuad(Point<f32>(139,9),Point<f32>(127,88),Point<f32>(217,21),Point<f32>(205,100));
-
     TemplateTracker::BinaryTracker tracker(
       Anki::Vision::MARKER_BATTERIES,
-      0.0f,
-      240, 320,
-      templateQuad,
+      templateImage, templateQuad,
       scaleTemplateRegionPercent,
+      edgeDetection_threshold_yIncrement,
+      edgeDetection_threshold_xIncrement,
+      edgeDetection_threshold_blackPercentile,
+      edgeDetection_threshold_whitePercentile,
+      edgeDetection_threshold_scaleRegionPercent,
       edgeDetection_minComponentWidth,
       templateEdgeDetection_maxDetectionsPerType,
       1,
@@ -193,44 +197,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTrackerHeaderTemplate)
 
     const s32 numTemplatePixels = tracker.get_numTemplatePixels();
 
-    ASSERT_TRUE(numTemplatePixels == 1292);
-
-    BeginBenchmark("BinaryTracker update fixed-float");
-
-    s32 verify_numMatches;
-    s32 verify_meanAbsoluteDifference;
-    s32 verify_numInBounds;
-    s32 verify_numSimilarPixels;
-
-    const Result result = tracker.UpdateTrack_Normal(
-      nextImage,
-      edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent,
-      edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType,
-      1,
-      normal_matching_maxTranslationDistance, normal_matching_maxProjectiveDistance,
-      verify_maxTranslationDistance, verify_maxPixelDifference, verify_coordinateIncrement,
-      verify_numMatches, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels,
-      scratchCcm, scratchOffchip);
-    EndBenchmark("BinaryTracker update fixed-float");
-
-    ASSERT_TRUE(result == RESULT_OK);
-
-    // TODO: verify this number manually
-    /*ASSERT_TRUE(verify_numMatches == 1241);
-    ASSERT_TRUE(verify_meanAbsoluteDifference == 6);
-    ASSERT_TRUE(verify_numInBounds == 1155);
-    ASSERT_TRUE(verify_numSimilarPixels == 1137);*/
-
-    //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
-
-    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
-    transform_groundTruth[0][0] = 1.069f; transform_groundTruth[0][1] = -0.001f;   transform_groundTruth[0][2] = 2.376f;
-    transform_groundTruth[1][0] = 0.003f; transform_groundTruth[1][1] = 1.061f; transform_groundTruth[1][2] = -4.109f;
-    transform_groundTruth[2][0] = 0.0f;   transform_groundTruth[2][1] = 0.0f;   transform_groundTruth[2][2] = 1.0f;
-
-    tracker.get_transformation().get_homography().Print("fixed-float 1");
-
-    ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
+    ASSERT_TRUE(numTemplatePixels == 1588);
 
     PrintBenchmarkResults_OnlyTotals();
   } // Skip zero rows/columns (non-list)
@@ -696,7 +663,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     PrintBenchmarkResults_OnlyTotals();
   } // Skip one row/column (with-ransac)
 
-  //tracker.get_transformation().TransformArray(templateImage, warpedTemplateImage, scratchOffchip, 1.0f);
+  //tracker.get_transformation().Transform(templateImage, warpedTemplateImage, scratchOffchip, 1.0f);
 
   //templateImage.Show("templateImage", false, false, true);
   //nextImage.Show("nextImage", false, false, true);
@@ -1003,7 +970,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
     transform_groundTruth[1][2] = -4.952f;
 
     Array<u8> warpedImage(cozmo_2014_01_29_11_41_05_10_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_10_320x240_WIDTH, scratchOffchip);
-    tracker.get_transformation().TransformArray(templateImage, warpedImage, scratchOffchip);
+    tracker.get_transformation().Transform(templateImage, warpedImage, scratchOffchip);
     //warpedImage.Show("translationWarped", false, false, false);
     //nextImage.Show("nextImage", true, false, false);
 
@@ -1046,7 +1013,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
     tracker.get_transformation().Print("Affine LK_SampledProjective");
 
     Array<u8> warpedImage(cozmo_2014_01_29_11_41_05_10_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_10_320x240_WIDTH, scratchOffchip);
-    tracker.get_transformation().TransformArray(templateImage, warpedImage, scratchOffchip);
+    tracker.get_transformation().Transform(templateImage, warpedImage, scratchOffchip);
     //warpedImage.Show("affineWarped", false, false, false);
     //nextImage.Show("nextImage", true, false, false);
 
@@ -1095,7 +1062,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
     tracker.get_transformation().Print("Projective LK_SampledProjective");
 
     Array<u8> warpedImage(cozmo_2014_01_29_11_41_05_10_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_10_320x240_WIDTH, scratchOffchip);
-    tracker.get_transformation().TransformArray(templateImage, warpedImage, scratchOffchip);
+    tracker.get_transformation().Transform(templateImage, warpedImage, scratchOffchip);
     //warpedImage.Show("projectiveWarped", false, false, false);
     //nextImage.Show("nextImage", true, false, false);
 
