@@ -3092,11 +3092,18 @@ GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation)
   // Compute the pose of the marker w.r.t. camera from the noisy projection
   Array<PRECISION> R = Array<PRECISION>(3,3,memory);
   Point3<PRECISION> T;
+
+  const f32 t0 = GetTime();
+
   ASSERT_TRUE(P3P::computePose(proj,
     marker3d[0], marker3d[1], marker3d[2], marker3d[3],
     focalLength_x, focalLength_y,
     camCenter_x, camCenter_y,
     R, T, memory) == EXIT_SUCCESS);
+
+  const f32 t1 = GetTime();
+
+  printf("P3P::computePose took %f seconds\n", t1-t0);
 
   //
   // Check if the estimated pose matches the true pose
@@ -3132,7 +3139,7 @@ GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation)
   }
 
 #undef PRECISION
-  
+
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation)
 
