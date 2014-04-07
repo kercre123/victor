@@ -1084,6 +1084,11 @@
               <FilePath>..\coretech\vision\robot\src\lucasKanade_Slow.cpp</FilePath>
             </File>
             <File>
+              <FileName>perspectivePoseEstimation.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\perspectivePoseEstimation.cpp</FilePath>
+            </File>
+            <File>
               <FileName>traceBoundary.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\traceBoundary.cpp</FilePath>
@@ -2415,6 +2420,11 @@
               <FileName>lucasKanade_Slow.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\lucasKanade_Slow.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>perspectivePoseEstimation.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\perspectivePoseEstimation.cpp</FilePath>
             </File>
             <File>
               <FileName>traceBoundary.cpp</FileName>

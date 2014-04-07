@@ -47,6 +47,8 @@
 
 #include "anki/vision/robot/perspectivePoseEstimation.h"
 
+#include <complex>
+
 namespace Anki {
   namespace Embedded {
     namespace P3P {
