@@ -318,6 +318,113 @@ namespace Anki
 
         static Result ApproximateSelect(const Array<f32> &magnitudeVector, const s32 numBins, const s32 numToSelect, s32 &numSelected, Array<u16> &magnitudeIndexes);
       }; // class LucasKanadeTracker_SampledProjective
+      
+      
+      class LucasKanadeTracker_SampledPlanar6dof : public LucasKanadeTracker_Generic
+      {
+        // A Projective-plus-translation LucasKanadeTracker. Unlike the general LucasKanadeTracker,
+        // this version uses much less memory, and could be better optimized.
+        
+      public:
+        LucasKanadeTracker_SampledPlanar6dof();
+        
+        LucasKanadeTracker_SampledPlanar6dof(
+                                             const Array<u8> &templateImage,
+                                             const Quadrilateral<f32> &templateQuad,
+                                             const f32 scaleTemplateRegionPercent, //< Shrinks the region if less-than 1.0, expands the region if greater-than 1.0
+                                             const s32 numPyramidLevels,
+                                             const Transformations::TransformType transformType,
+                                             const s32 maxSamplesAtBaseLevel,
+                                             const f32 focalLength_x,
+                                             const f32 focalLength_y,
+                                             const f32 camCenter_x,
+                                             const f32 camCenter_y,
+                                             const f32 templateWidth_mm, // actual physical size of the template
+                                             MemoryStack ccmMemory,
+                                             MemoryStack &onchipScratch,
+                                             MemoryStack offchipScratch);
+        
+        Result UpdateTrack(
+                           const Array<u8> &nextImage,
+                           const s32 maxIterations,
+                           const f32 convergenceTolerance,
+                           const u8 verify_maxPixelDifference,
+                           bool &verify_converged,
+                           s32 &verify_meanAbsoluteDifference, //< For all pixels in the template, compute the mean difference between the template and the final warped template
+                           s32 &verify_numInBounds, //< How many template pixels are in the image, after the template is warped?
+                           s32 &verify_numSimilarPixels, //< For all pixels in the template, how many are within verifyMaxPixelDifference grayvalues? Use in conjunction with get_numTemplatePixels() or numInBounds for a percentage.
+                           MemoryStack scratch);
+        
+        bool IsValid() const;
+        
+        Result ShowTemplate(const char * windowName="SampledPlanar6dof Template", const bool waitForKeypress=false, const bool fitImageToWindow=false) const;
+        
+        s32 get_numTemplatePixels(const s32 whichScale) const;
+        
+      protected:
+        // TODO: verify that there's no alignment padding
+        typedef struct TemplateSample
+        {
+          f32 xCoordinate;
+          f32 yCoordinate;
+          f32 xGradient;
+          f32 yGradient;
+          f32 grayvalue;
+        } TemplateSample;
+        
+        // Calibration data:
+        f32 focalLength_x;
+        f32 focalLength_y;
+        f32 camCenter_x;
+        f32 camCenter_y;
+        
+        // 6DoF Parameters
+        typedef struct
+        {
+          f32 angle_x, angle_y, angle_z;  // rotation
+          //f32 tx, ty, tz;                 // translation
+          Point3<f32> translation;
+        } Parameters6DoF;
+        
+        // The initial homography
+        // (Need to store this for re-computing partial derivatives
+        //  inside the tracking loop.  If those partials can be stored
+        //  up front, then this could go away.
+        Array<f32> initialHomography;
+        
+        // Partial derivatives
+        f32 dr11_dthetaX, dr11_dthetaY, dr11_dthetaZ;
+        f32 dr12_dthetaX, dr12_dthetaY, dr12_dthetaZ;
+        f32 dr21_dthetaX, dr21_dthetaY, dr21_dthetaZ;
+        f32 dr22_dthetaX, dr22_dthetaY, dr22_dthetaZ;
+        f32 dr31_dthetaX, dr31_dthetaY, dr31_dthetaZ;
+        f32 dr32_dthetaX, dr32_dthetaY, dr32_dthetaZ;
+        
+        Parameters6DoF params6DoF;
+        
+        static Result SetTransformationFromParams(const Parameters6DoF& params,
+                                                  Transformations::PlanarTransformation_f32& transformation);
+        
+        FixedLengthList<FixedLengthList<TemplateSample> > templateSamplePyramid;
+        
+        Result VerifyTrack_Projective(
+                                      const Array<u8> &nextImage,
+                                      const u8 verify_maxPixelDifference,
+                                      s32 &verify_meanAbsoluteDifference,
+                                      s32 &verify_numInBounds,
+                                      s32 &verify_numSimilarPixels,
+                                      MemoryStack scratch) const;
+        
+        Result IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const Transformations::TransformType curTransformType, bool &converged, MemoryStack scratch);
+        
+        Result IterativelyRefineTrack_Translation(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack scratch);
+        Result IterativelyRefineTrack_Affine(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack scratch);
+        Result IterativelyRefineTrack_Projective(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack scratch);
+        
+        static Result ApproximateSelect(const Array<f32> &magnitudeVector, const s32 numBins, const s32 numToSelect, s32 &numSelected, Array<u16> &magnitudeIndexes);
+      }; // class LucasKanadeTracker_SampledPlanar6dof
+      
+      
     } // namespace TemplateTracker
   } // namespace Embedded
 } //namespace Anki
