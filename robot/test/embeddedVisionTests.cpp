@@ -3022,7 +3022,9 @@ GTEST_TEST(CoreTech_Vision, SolveQuartic)
 
 GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation)
 {
-#define PRECISION f32
+#define PRECISION f64
+
+  InitBenchmarking();
 
   // Allocate memory from the heap, for the memory allocator
   // TODO: How much memory do i need here?
@@ -3093,7 +3095,7 @@ GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation)
   Array<PRECISION> R = Array<PRECISION>(3,3,memory);
   Point3<PRECISION> T;
 
-  const f32 t0 = GetTime();
+  BeginBenchmark("P3P::computePose");
 
   ASSERT_TRUE(P3P::computePose(proj,
     marker3d[0], marker3d[1], marker3d[2], marker3d[3],
@@ -3101,9 +3103,9 @@ GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation)
     camCenter_x, camCenter_y,
     R, T, memory) == EXIT_SUCCESS);
 
-  const f32 t1 = GetTime();
+  EndBenchmark("P3P::computePose");
 
-  printf("P3P::computePose took %f seconds\n", t1-t0);
+  PrintBenchmarkResults_All();
 
   //
   // Check if the estimated pose matches the true pose
