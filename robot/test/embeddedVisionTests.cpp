@@ -20,11 +20,11 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/integralImage.h"
 #include "anki/vision/robot/draw_vision.h"
 #include "anki/vision/robot/lucasKanade.h"
-
 #include "anki/vision/robot/imageProcessing.h"
 #include "anki/vision/robot/transformations.h"
 #include "anki/vision/robot/binaryTracker.h"
 #include "anki/vision/robot/decisionTree_vision.h"
+#include "anki/vision/robot/perspectivePoseEstimation.h"
 
 #include "anki/vision/MarkerCodeDefinitions.h"
 
@@ -2994,6 +2994,149 @@ GTEST_TEST(CoreTech_Vision, DownsampleByFactor)
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, DownsampleByFactor)
 
+
+GTEST_TEST(CoreTech_Vision, SolveQuartic)
+{
+#define PRECISION f32
+  
+  const PRECISION factors[5] = {
+    -3593989.0, -33048.973667, 316991.744900, 33048.734165, -235.623396
+  };
+  
+  const PRECISION roots_groundTruth[4] = {
+    0.334683441970975, 0.006699578943935, -0.136720934135068, -0.213857711381642
+  };
+  
+  PRECISION roots_computed[4];
+  ASSERT_TRUE(P3P::solveQuartic(factors, roots_computed) == EXIT_SUCCESS);
+  
+  for(s32 i=0; i<4; ++i) {
+    EXPECT_NEAR(roots_groundTruth[i], roots_computed[i], 1e-6f);
+  }
+  
+#undef PRECISION
+} // GTEST_TEST(PoseEstimation, SolveQuartic)
+
+
+
+
+GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation)
+{
+#define PRECISION f64
+  
+  // Allocate memory from the heap, for the memory allocator
+  // TODO: How much memory do i need here?
+  const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 250*sizeof(PRECISION));
+  
+  // TODO: is onchipbBuffer the right one to use here?
+  MemoryStack memory(&offchipBuffer[0], numBytes);
+
+  
+  // Parameters
+  Array<PRECISION> Rtrue = Array<PRECISION>(3,3,memory);
+  // rodrigues(3*pi/180*[0 0 1])*rodrigues(4*pi/180*[0 1 0])*rodrigues(-10*pi/180*[1 0 0])
+  Rtrue[0][0] =  0.9962;  Rtrue[0][1] =   -0.0636;  Rtrue[0][2] =    0.0595;
+  Rtrue[1][0] =  0.0522;  Rtrue[1][1] =    0.9828;  Rtrue[1][2] =    0.1770;
+  Rtrue[2][0] = -0.0698;  Rtrue[2][1] =   -0.1732;  Rtrue[2][2] =    0.9824;
+  const Point3<PRECISION> Ttrue(10.f, 15.f, 100.f);
+  
+  const f32 markerSize = 26.f;
+  
+  const f32 focalLength_x = 317.2f;
+  const f32 focalLength_y = 318.4f;
+  const f32 camCenter_x   = 151.9f;
+  const f32 camCenter_y   = 129.0f;
+  const u16 camNumRows    = 240;
+  const u16 camNumCols    = 320;
+  
+  const Quadrilateral<PRECISION> projNoise(Point<PRECISION>(0.1740,    0.0116),
+                                           Point<PRECISION>(0.0041,    0.0073),
+                                           Point<PRECISION>(0.0381,    0.1436),
+                                           Point<PRECISION>(0.2249,    0.0851));
+  
+  const f32 distThreshold      = 3.f;
+  const f32 angleThreshold     = DEG_TO_RAD(2);
+  const f32 pixelErrThreshold  = 1.f;
+  
+  // Create the 3D marker and put it in the specified pose relative to the camera
+  Point3<PRECISION> marker3d[4];
+  marker3d[0] = Point3<PRECISION>(-markerSize/2.f, -markerSize/2.f, 0.f);
+  marker3d[1] = Point3<PRECISION>(-markerSize/2.f,  markerSize/2.f, 0.f);
+  marker3d[2] = Point3<PRECISION>( markerSize/2.f, -markerSize/2.f, 0.f);
+  marker3d[3] = Point3<PRECISION>( markerSize/2.f,  markerSize/2.f, 0.f);
+  
+  // Compute the ground truth projection of the marker in the image
+  // NOTE: No radial distortion!
+  Quadrilateral<PRECISION> proj;
+  for(s32 i=0; i<4; ++i) {
+    Point3<PRECISION> proj3 = Rtrue*marker3d[i] + Ttrue;
+    proj3.x = focalLength_x*proj3.x + camCenter_x*proj3.z;
+    proj3.y = focalLength_y*proj3.y + camCenter_y*proj3.z;
+    proj[i].x = proj3.x / proj3.z;
+    proj[i].y = proj3.y / proj3.z;
+
+    // Add noise
+    proj[i] += projNoise[i];
+  }
+  
+  
+  // Make sure all the corners projected within the image
+  for(s32 i_corner=0; i_corner<4; ++i_corner)
+  {
+    ASSERT_TRUE(not std::isnan(proj[i_corner].x));
+    ASSERT_TRUE(not std::isnan(proj[i_corner].y));
+    ASSERT_GE(proj[i_corner].x, 0.f);
+    ASSERT_LT(proj[i_corner].x, camNumCols);
+    ASSERT_GE(proj[i_corner].y, 0.f);
+    ASSERT_LT(proj[i_corner].y, camNumRows);
+  }
+  
+  // Compute the pose of the marker w.r.t. camera from the noisy projection
+  Array<PRECISION> R = Array<PRECISION>(3,3,memory);
+  Point3<PRECISION> T;
+  ASSERT_TRUE(P3P::computePose(proj,
+                               marker3d[0], marker3d[1], marker3d[2], marker3d[3],
+                               focalLength_x, focalLength_y,
+                               camCenter_x, camCenter_y,
+                               R, T, memory) == EXIT_SUCCESS);
+  
+  //
+  // Check if the estimated pose matches the true pose
+  //
+  
+  // 1. Compute angular difference between the two rotation matrices
+  // TODO: make this a utility function somewhere?
+  // R = R_this * R_other^T
+  Array<PRECISION> Rdiff = Array<PRECISION>(3,3,memory);
+  Point3<PRECISION> Tdiff;
+  ComputePoseDiff(R, T, Rtrue, Ttrue, Rdiff, Tdiff, memory);
+  
+  // This is computing angular rotation vs. identity matrix
+  const f32 trace = Rdiff[0][0] + Rdiff[1][1] + Rdiff[2][2];
+  const f32 angleDiff = std::acos(0.5f*(trace - 1.f));
+
+  EXPECT_LE(angleDiff, angleThreshold);
+  
+  // 2. Check the translational difference between the two poses
+  EXPECT_LE(Tdiff.Length(), distThreshold);
+
+  // Check if the reprojected points match the originals
+  for(s32 i_corner=0; i_corner<4; ++i_corner)
+  {
+    Point3<PRECISION> proj3 = R*marker3d[i_corner] + T;
+    proj3.x = focalLength_x*proj3.x + camCenter_x*proj3.z;
+    proj3.y = focalLength_y*proj3.y + camCenter_y*proj3.z;
+
+    Point<PRECISION> reproj(proj3.x / proj3.z, proj3.y / proj3.z);
+    
+    EXPECT_NEAR(reproj.x, proj[i_corner].x, pixelErrThreshold);
+    EXPECT_NEAR(reproj.y, proj[i_corner].y, pixelErrThreshold);
+  }
+  
+#undef PRECISION
+} // GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation)
+
+
 #if !ANKICORETECH_EMBEDDED_USE_GTEST
 s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
 {
@@ -3028,7 +3171,10 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   CALL_GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d);
   CALL_GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d);
   CALL_GTEST_TEST(CoreTech_Vision, BinomialFilter);
-  CALL_GTEST_TEST(CoreTech_Vision, DownsampleByFactor);*/
+  CALL_GTEST_TEST(CoreTech_Vision, DownsampleByFactor);
+  CALL_GTEST_TEST(CoreTech_Vision, SolveQuartic);
+  CALL_GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation);
+   */
 
   return numFailedTests;
 } // int RUN_ALL_VISION_TESTS()

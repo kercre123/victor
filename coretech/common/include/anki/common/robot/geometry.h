@@ -12,6 +12,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #ifndef _ANKICORETECHEMBEDDED_COMMON_POINT_H_
 #define _ANKICORETECHEMBEDDED_COMMON_POINT_H_
 
+#include "anki/common/robot/array2d_declarations.h"
 #include "anki/common/robot/geometry_declarations.h"
 #include "anki/common/robot/memory.h"
 #include "anki/common/robot/matrix.h"
@@ -20,8 +21,9 @@ namespace Anki
 {
   namespace Embedded
   {
-    // #pragma mark --- Point Definitions ---
-
+#if 0
+#pragma mark --- 2D Point Implementations ---
+#endif
     template<typename Type> Point<Type>::Point()
       : x(static_cast<Type>(0)), y(static_cast<Type>(0))
     {
@@ -73,6 +75,11 @@ namespace Anki
     {
       return Point<Type>(this->x-point2.x, this->y-point2.y);
     }
+    
+    template<typename Type> Point<Type> Point<Type>::operator- () const
+    {
+      return Point<Type>(-this->x, -this->y);
+    }
 
     template<typename Type> Point<Type>& Point<Type>::operator*= (const Type value)
     {
@@ -88,6 +95,13 @@ namespace Anki
       return *this;
     }
 
+    template<typename Type> Point<Type>& Point<Type>::operator+= (const Point<Type> &point2)
+    {
+      this->x += point2.x;
+      this->y += point2.y;
+      return *this;
+    }
+    
     template<typename Type> Point<Type>& Point<Type>::operator-= (const Point<Type> &point2)
     {
       this->x -= point2.x;
@@ -108,11 +122,189 @@ namespace Anki
       return (f32)sqrt((this->x - point2.x)*(this->x - point2.x) + (this->y - point2.y)*(this->y - point2.y));
     }
 
+    template<typename Type> f32 Point<Type>::Length() const
+    {
+      return (f32)sqrt((f32)((this->x*this->x) + (this->y*this->y)));
+    }
+    
     // #pragma mark --- Point Specializations ---
     template<> void Point<f32>::Print() const;
     template<> void Point<f64>::Print() const;
 
-    // #pragma mark --- Rectangle Definitions ---
+    
+#if 0
+#pragma mark --- 3D Point Implementations ---
+#endif
+    
+    template<typename Type> Point3<Type>::Point3()
+    : x(static_cast<Type>(0)), y(static_cast<Type>(0)), z(static_cast<Type>(0))
+    {
+    }
+    
+    template<typename Type> Point3<Type>::Point3(const Type x, const Type y, const Type z)
+    : x(x), y(y), z(z)
+    {
+    }
+    
+    template<typename Type> Point3<Type>::Point3(const Point3<Type>& pt)
+    : x(pt.x), y(pt.y), z(pt.z)
+    {
+    }
+    
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
+    template<typename Type> Point3<Type>::Point3(const cv::Point3_<Type>& pt)
+    : x(pt.x), y(pt.y), z(pt.z)
+    {
+      
+    }
+#endif
+    
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
+    template<typename Type> cv::Point3_<Type> Point3<Type>::get_CvPoint_()
+    {
+      return cv::Point3_<Type>(x,y,z);
+    }
+#endif
+    
+    template<typename Type> void Point3<Type>::Print() const
+    {
+      printf("(%d,%d,%d) ", this->x, this->y, this->z);
+    }
+    
+    template<typename Type> bool Point3<Type>::operator== (const Point3<Type> &point2) const
+    {
+      if(this->x == point2.x && this->y == point2.y && this->z == point2.z)
+        return true;
+      
+      return false;
+    }
+    
+    template<typename Type> Point3<Type> Point3<Type>::operator+ (const Point3<Type> &point2) const
+    {
+      return Point3<Type>(this->x+point2.x, this->y+point2.y, this->z+point2.z);
+    }
+    
+    template<typename Type> Point3<Type> Point3<Type>::operator- (const Point3<Type> &point2) const
+    {
+      return Point3<Type>(this->x-point2.x, this->y-point2.y, this->z-point2.z);
+    }
+    
+    template<typename Type> Point3<Type> Point3<Type>::operator- () const
+    {
+      return Point3<Type>(-this->x, -this->y, -this->z);
+    }
+    
+    template<typename Type> Point3<Type>& Point3<Type>::operator*= (const Type value)
+    {
+      this->x *= value;
+      this->y *= value;
+      this->z *= value;
+      return *this;
+    }
+    
+    template<typename Type> Point3<Type>& Point3<Type>::operator-= (const Type value)
+    {
+      this->x -= value;
+      this->y -= value;
+      this->z -= value;
+      return *this;
+    }
+    
+    template<typename Type> Point3<Type>& Point3<Type>::operator-= (const Point3<Type> &point2)
+    {
+      this->x -= point2.x;
+      this->y -= point2.y;
+      this->z -= point2.z;
+      return *this;
+    }
+    
+    template<typename Type> inline Point3<Type>& Point3<Type>::operator= (const Point3<Type> &point2)
+    {
+      this->x = point2.x;
+      this->y = point2.y;
+      this->z = point2.z;
+      return *this;
+    }
+    
+    template<typename Type> f32 Point3<Type>::Dist(const Point3<Type> &point2) const
+    {
+      return (f32)sqrt((this->x - point2.x)*(this->x - point2.x) +
+                       (this->y - point2.y)*(this->y - point2.y) +
+                       (this->z - point2.z)*(this->z - point2.z));
+    }
+    
+    template<typename Type> f32 Point3<Type>::Length() const
+    {
+      return (f32)sqrt((f32)((this->x*this->x) + (this->y*this->y) + (this->z*this->z)));
+    }
+    
+    template<typename Type> f32 Point3<Type>::MakeUnitLength()
+    {
+      const f32 L = this->Length();
+      if(L != 0) {
+        this->operator*=(1.f / L);
+      }
+      return L;
+    }
+    
+    template<typename Type>
+    Type DotProduct(const Point3<Type>& point1, const Point3<Type>& point2)
+    {
+      return (point1.x*point2.x) + (point1.y*point2.y) + (point1.z*point2.z);
+    }
+    
+    template<typename Type>
+    Point3<Type> CrossProduct(const Point3<Type>& point1, const Point3<Type>& point2)
+    {
+      return Point3<Type>(-point2.y*point1.z + point1.y*point2.z,
+                           point2.x*point1.z - point1.x*point2.z,
+                          -point2.x*point1.y + point1.x*point2.y);
+    }
+    
+    template<typename Type>
+    Point3<Type> operator* (const Array<Type>& M, const Point3<Type>& p)
+    {
+      // Matrix M must be 3x3
+      AnkiAssert(M.get_size(0) == 3 && M.get_size(1) == 3);
+      
+      return Point3<Type>(M[0][0]*p.x + M[0][1]*p.y + M[0][2]*p.z,
+                          M[1][0]*p.x + M[1][1]*p.y + M[1][2]*p.z,
+                          M[2][0]*p.x + M[2][1]*p.y + M[2][2]*p.z);
+    }
+    
+    // #pragma mark --- Point Specializations ---
+    template<> void Point3<f32>::Print() const;
+    template<> void Point3<f64>::Print() const;
+    
+#if 0
+#pragma mark --- Pose Implementations ---
+#endif
+    
+    template<typename Type>
+    ReturnCode ComputePoseDiff(const Array<Type>& R1, const Point3<Type>& T1,
+                                     const Array<Type>& R2, const Point3<Type>& T2,
+                                     Array<Type>& Rdiff, Point3<Type>& Tdiff,
+                                     MemoryStack memory)
+    {
+      // All the rotation matrices should be 3x3
+      AnkiAssert(R1.get_size(0)    == 3 && R1.get_size(1)    == 3);
+      AnkiAssert(R2.get_size(0)    == 3 && R2.get_size(1)    == 3);
+      AnkiAssert(Rdiff.get_size(0) == 3 && Rdiff.get_size(1) == 3);
+      
+      Array<Type> invR1 = Array<Type>(3,3,memory);
+      Matrix::Transpose(R1, invR1);
+      
+      //Point3<Type> invT1 = -invR1*T1;
+      
+      Matrix::Multiply(R2, invR1, Rdiff);
+      Tdiff = T2 - (Rdiff * T1);
+      
+      return EXIT_SUCCESS;
+    }
+    
+#if 0
+#pragma mark --- Rectangle Implementations ---
+#endif
 
     template<typename Type> Rectangle<Type>::Rectangle()
       : left(static_cast<Type>(0)), right(static_cast<Type>(0)), top(static_cast<Type>(0)), bottom(static_cast<Type>(0))

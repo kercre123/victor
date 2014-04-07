@@ -6,7 +6,7 @@
 
 #include "anki/vision/basestation/camera.h"
 
-#include "../../basestation/src/perspectivePoseEstimation_impl.h"
+#include "anki/vision/basestation/perspectivePoseEstimation.h"
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {

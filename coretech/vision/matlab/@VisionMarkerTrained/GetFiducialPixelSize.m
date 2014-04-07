@@ -10,6 +10,10 @@ switch(imageSizeType)
         
         %padding_pix     = VisionMarkerTrained.FiducialPaddingFraction*squareWidth_pix;
         
+    case 'WithUnpaddedFiducial'
+        
+        fiducialWidth_pix = imageSize;
+        
     case 'WithPaddedFiducial'
         
         fiducialWidth_pix = imageSize / (1 + 2*VisionMarkerTrained.FiducialPaddingFraction);

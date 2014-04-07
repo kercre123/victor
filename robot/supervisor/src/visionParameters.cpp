@@ -16,10 +16,6 @@
 
 #include "anki/cozmo/robot/visionSystem.h"
 
-#if 0
-#pragma mark --- DetectFiducialMarkersParameters ---
-#endif
-
 namespace Anki {
   namespace Cozmo {
     namespace VisionSystem {
@@ -28,7 +24,7 @@ namespace Anki {
       
       
 #if 0
-#pragma mark --- DetectorParameters ---
+#pragma mark --- DetectFiducialMarkersParameters ---
 #endif
 
       

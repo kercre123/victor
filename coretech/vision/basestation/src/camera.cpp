@@ -16,8 +16,12 @@
 #endif
 
 #include "anki/vision/basestation/camera.h"
+#include "anki/vision/basestation/perspectivePoseEstimation.h"
 
-#include "perspectivePoseEstimation_impl.h"
+// Set to 1 to use OpenCV's iterative pose estimation for quads.
+// Otherwise, the closed form P3P solution is used.
+// NOTE: this currently only affects the computeObjectPose() that takes in quads.
+#define USE_ITERATIVE_QUAD_POSE_ESTIMATION 0
 
 namespace Anki {
   
@@ -165,6 +169,25 @@ namespace Anki {
         CORETECH_THROW("Camera::computeObjectPose() called before calibration set.");
       }
       
+#if USE_ITERATIVE_QUAD_POSE_ESTIMATION
+      
+      std::vector<cv::Point2f> cvImagePoints;
+      std::vector<cv::Point3f> cvObjPoints;
+      
+      cvImagePoints.emplace_back(imgQuad[Quad::TopLeft].get_CvPoint_());
+      cvImagePoints.emplace_back(imgQuad[Quad::BottomLeft].get_CvPoint_());
+      cvImagePoints.emplace_back(imgQuad[Quad::TopRight].get_CvPoint_());
+      cvImagePoints.emplace_back(imgQuad[Quad::BottomRight].get_CvPoint_());
+      
+      cvObjPoints.emplace_back(worldQuad[Quad::TopLeft].get_CvPoint3_());
+      cvObjPoints.emplace_back(worldQuad[Quad::BottomLeft].get_CvPoint3_());
+      cvObjPoints.emplace_back(worldQuad[Quad::TopRight].get_CvPoint3_());
+      cvObjPoints.emplace_back(worldQuad[Quad::BottomRight].get_CvPoint3_());
+      
+      return computeObjectPoseHelper(cvImagePoints, cvObjPoints);
+
+#else
+      
       Pose3d pose;
       
       
@@ -183,7 +206,18 @@ namespace Anki {
         imgRays[i_corner].z() = WORKING_PRECISION(1);
         
         imgRays[i_corner] = invK * imgRays[i_corner];
+        
+        /*
+        printf("point %d (%f, %f) became ray (%f, %f, %f) ",
+               i_corner,
+               imgQuad[i_corner].x(), imgQuad[i_corner].y(),
+               imgRays[i_corner].x(), imgRays[i_corner].y(), imgRays[i_corner].z());
+        */
+        
         imgRays[i_corner].makeUnitLength();
+        
+        //printf(" which normalized to (%f, %f, %f)\n",
+        //       imgRays[i_corner].x(), imgRays[i_corner].y(), imgRays[i_corner].z());
         
         // cast each world quad into working precision quad
         worldPoints[i_corner].x() = static_cast<WORKING_PRECISION>(worldQuad[i_corner].x());
@@ -246,10 +280,10 @@ namespace Anki {
           pose = possiblePoses[bestSolution];
         }
         
-        if(i<4) {
+        if(i<3) {
           // Rearrange corner list for next loop, to get a different
           // validation corner each time
-          std::swap(cornerList[0], cornerList[i_validate+1]);
+          std::swap(cornerList[0], cornerList[i+1]);
         }
         
       } // for each validation corner
@@ -258,6 +292,9 @@ namespace Anki {
       pose.set_parent(&this->pose);
       
       return pose;
+      
+#endif // #if USE_ITERATIVE_QUAD_POSE_ESTIMATION
+      
     } // computeObjectPose(from quads)
  
     

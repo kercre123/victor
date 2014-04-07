@@ -59,6 +59,12 @@ for i_dir = 1:numDirs
 end
 fnames = vertcat(fnames{:});
 
+if isempty(fnames)
+    error('No image files found.');
+end
+
+fprintf('Found %d total image files to train on.\n', length(fnames));
+
 %fnames = {'angryFace.png', 'ankiLogo.png', 'batteries3.png', ...
 %    'bullseye2.png', 'fire.png', 'squarePlusCorners.png'};
 
@@ -164,7 +170,7 @@ Y = probePattern.y(ones(workingResolution^2,1),:) + ygrid(:)*ones(1,length(probe
 assert(isequal(size(img(:,:,1)), resamplingResolution*[1 1]))
 % Note working resolution is the resoultion of the code image, without the
 % fiducial, which is what the GetFiducialPixelSize function expects
-Corners = VisionMarkerTrained.GetFiducialCorners(resamplingResolution);
+Corners = VisionMarkerTrained.GetFiducialCorners(resamplingResolution, false);
 tform = cp2tform([0 0 1 1; 0 1 0 1]', Corners, 'projective');
 [xi,yi] = tformfwd(tform, X, Y);
 for i = 1:numImages
@@ -248,9 +254,8 @@ for i_rand = 1:numImages
    
     testImg = img(:,:,i);
     
-    Corners = VisionMarkerTrained.GetFiducialCorners(size(testImg,1));
-    tform = cp2tform([0 0 1 1; 0 1 0 1]', Corners, 'projective');
-    
+    Corners = VisionMarkerTrained.GetFiducialCorners(size(testImg,1), false);
+    %Corners = VisionMarkerTrained.GetMarkerCorners(size(testImg,1), false);
     if i_rand <= maxDisplay
         subplot(6, maxDisplay/6, i_rand), hold off
         imagesc(testImg), axis image, hold on
@@ -326,7 +331,8 @@ for i = 1:length(fnames)
     % radius = probeRadius/workingResolution * size(testImg,1);
         
     %testImg = separable_filter(testImg, gaussian_kernel(radius/2), [], 'replicate');
-    Corners = VisionMarkerTrained.GetFiducialCorners(size(testImg,1));
+    Corners = VisionMarkerTrained.GetFiducialCorners(size(testImg,1), false);
+    %Corners = VisionMarkerTrained.GetMarkerCorners(size(testImg,1), false);
     tform = cp2tform([0 0 1 1; 0 1 0 1]', Corners, 'projective');
     
     [result, labelID] = TestTree(probeTree, testImg, tform, 0.5, probePattern);
