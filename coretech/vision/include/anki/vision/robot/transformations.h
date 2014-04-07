@@ -132,18 +132,6 @@ namespace Anki
           s32 &numSimilarPixels,
           MemoryStack scratch) const;
 
-        // With no region of interest
-        Result VerifyTransformation_Projective_LinearInterpolate(
-          const Array<u8> &templateImage,
-          const Array<u8> &nextImage,
-          const f32 templateRegionHeight,
-          const f32 templateRegionWidth,
-          const u8 maxPixelDifference,
-          s32 &meanAbsoluteDifference,
-          s32 &numInBounds,
-          s32 &numSimilarPixels,
-          MemoryStack scratch) const;
-
         bool IsValid() const;
 
         // Set this object's transformType, centerOffset, initialCorners, and homography

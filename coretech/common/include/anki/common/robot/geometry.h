@@ -289,7 +289,7 @@ namespace Anki
       AnkiAssert(R2.get_size(0)    == 3 && R2.get_size(1)    == 3);
       AnkiAssert(Rdiff.get_size(0) == 3 && Rdiff.get_size(1) == 3);
 
-      Array<Type> invR1 = Array<Type>(3,3,memory);
+      Array<Type> invR1 = Array<Type>(3,3,scratch);
       Matrix::Transpose(R1, invR1);
 
       //Point3<Type> invT1 = -invR1*T1;

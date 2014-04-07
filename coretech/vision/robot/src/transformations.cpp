@@ -687,27 +687,6 @@ namespace Anki
         return RESULT_OK;
       } // Result ComputeHomographyFromQuad(FixedLengthList<Quadrilateral<s16> > quads, FixedLengthList<Array<f32> > &homographies, MemoryStack scratch)
 
-      Result PlanarTransformation_f32::VerifyTransformation_Projective_LinearInterpolate(
-        const Array<u8> &templateImage,
-        const Array<u8> &nextImage,
-        const f32 templateRegionHeight,
-        const f32 templateRegionWidth,
-        const u8 maxPixelDifference,
-        s32 &meanAbsoluteDifference,
-        s32 &numInBounds,
-        s32 &numSimilarPixels,
-        MemoryStack scratch) const
-      {
-        const Rectangle<f32> templateRegionOfInterest(0, static_cast<f32>(templateImage.get_size(1)), 0, static_cast<f32>(templateImage.get_size(0)));
-
-        return VerifyTransformation_Projective_LinearInterpolate(
-          templateImage, templateRegionOfInterest,
-          nextImage,
-          templateRegionHeight, templateRegionWidth, 1,
-          maxPixelDifference, meanAbsoluteDifference, numInBounds, numSimilarPixels,
-          scratch);
-      }
-
       Result PlanarTransformation_f32::VerifyTransformation_Projective_NearestNeighbor(
         const Array<u8> &templateImage,
         const Histogram &templateHistogram,

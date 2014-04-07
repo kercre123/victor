@@ -183,7 +183,7 @@ namespace Anki {
         AnkiAssert(NEAR(f2.Length(), 1.f, 1e-6f));
         AnkiAssert(NEAR(f3.Length(), 1.f, 1e-6f));
 
-        MATRIX T = MATRIX(3,3,memory);
+        MATRIX T = MATRIX(3,3,scratch);
 
         // Create intermediate camera frame
         if(createIntermediateCameraFrameHelper(f1, f2, f3, T) != EXIT_SUCCESS) {
@@ -216,7 +216,7 @@ namespace Anki {
         POINT n2(CrossProduct(n3,n1));
 
         // the n vectors are the rows of the N matrix
-        MATRIX N = MATRIX(3,3,memory);
+        MATRIX N = MATRIX(3,3,scratch);
         N[0][0] = n1.x; N[0][1] = n1.y; N[0][2] = n1.z;
         N[1][0] = n2.x; N[1][1] = n2.y; N[1][2] = n2.z;
         N[2][0] = n3.x; N[2][1] = n3.y; N[2][2] = n3.z;
@@ -302,14 +302,14 @@ namespace Anki {
         Array<PRECISION>*  Rout[4] = {&R1, &R2, &R3, &R4};
         Point3<PRECISION>* Tout[4] = {&T1, &T2, &T3, &T4};
 
-        MATRIX Tt = MATRIX(3,3,memory);
+        MATRIX Tt = MATRIX(3,3,scratch);
         Matrix::Transpose(T, Tt);
 
-        MATRIX Nt = MATRIX(3,3,memory);
+        MATRIX Nt = MATRIX(3,3,scratch);
         Matrix::Transpose(N, Nt);
 
-        MATRIX R = MATRIX(3,3,memory);
-        MATRIX temp = MATRIX(3,3,memory);
+        MATRIX R = MATRIX(3,3,scratch);
+        MATRIX temp = MATRIX(3,3,scratch);
 
         for(s32 i=0; i<4; i++)
         {
@@ -427,7 +427,7 @@ namespace Anki {
 
         Array<PRECISION> possibleR[4];
         for(s32 i=0; i<4; ++i) {
-          possibleR[i] = Array<PRECISION>(3,3,memory);
+          possibleR[i] = Array<PRECISION>(3,3,scratch);
         }
 
         Point3<PRECISION> possibleT[4]; // TODO: Kosher to create array of Point3's?
@@ -451,7 +451,7 @@ namespace Anki {
             possibleR[1], possibleT[1],
             possibleR[2], possibleT[2],
             possibleR[3], possibleT[3],
-            memory) != EXIT_SUCCESS)
+            scratch) != EXIT_SUCCESS)
           {
             return EXIT_FAILURE;
           }

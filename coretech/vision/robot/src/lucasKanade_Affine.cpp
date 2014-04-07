@@ -77,11 +77,8 @@ namespace Anki
 
         //lastResult = this->VerifyTrack_Projective(nextImage, verify_maxPixelDifference, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels, scratch);
 
-        lastResult = this->transformation.VerifyTransformation_Projective_LinearInterpolate(
-          this->templateImagePyramid[0],
+        lastResult = this->VerifyTrack_Projective(
           nextImage,
-          this->templateRegionHeight,
-          this->templateRegionWidth,
           verify_maxPixelDifference,
           verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels,
           scratch);

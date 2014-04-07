@@ -175,6 +175,14 @@ namespace Anki
 
         bool IsValid() const;
 
+        Result VerifyTrack_Projective(
+          const Array<u8> &nextImage,
+          const u8 verify_maxPixelDifference,
+          s32 &verify_meanAbsoluteDifference,
+          s32 &verify_numInBounds,
+          s32 &verify_numSimilarPixels,
+          MemoryStack scratch) const;
+
         s32 get_numTemplatePixels() const;
 
       protected:
