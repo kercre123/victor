@@ -45,7 +45,17 @@ namespace Anki {
       void SetDesiredHeight(f32 height_mm);
       bool IsInPosition();
 
+      // Whether or not the lift is moving.
+      // False if speed is 0 for more than LIFT_STOP_TIME.
       bool IsMoving();
+      
+      // Whether or not the lift motor is limiting at the low or high
+      // end of its range. If limitAngle is non-null, it will be made to
+      // point to the angle at which it is limiting.
+      bool IsLimiting(f32* limitAngle = 0);
+      
+      // True if the lift has not had power applied to it for more than LIFT_RELAX_TIME
+      bool IsRelaxed();
       
       // Get current height of the lift
       f32 GetHeightMM();

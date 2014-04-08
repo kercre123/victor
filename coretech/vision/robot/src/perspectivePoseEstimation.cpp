@@ -43,6 +43,7 @@
 */
 
 #include "anki/common/robot/array2d.h"
+#include "anki/common/robot/benchmarking_c.h"
 
 #include "anki/vision/robot/perspectivePoseEstimation.h"
 
@@ -154,6 +155,8 @@ namespace Anki {
         // Typedef the templated classes for brevity below
         typedef Point3<PRECISION> POINT;
         typedef Array<PRECISION>  MATRIX;
+
+        BeginBenchmark("cpml_init");
 
         /*
         printf("  worldPoint1 = (%f, %f, %f)\n", worldPoint1.x, worldPoint1.y, worldPoint1.z);
@@ -311,8 +314,12 @@ namespace Anki {
         MATRIX R = MATRIX(3,3,scratch);
         MATRIX temp = MATRIX(3,3,scratch);
 
+        EndBenchmark("cpml_init");
+
         for(s32 i=0; i<4; i++)
         {
+          BeginBenchmark("cpml_mainLoop");
+
           PRECISION cot_alpha = (-f_1*p_1/f_2-realRoots[i]*p_2+d_12*b)/(-f_1*realRoots[i]*p_2/f_2+p_1-d_12);
 
           PRECISION cos_theta = realRoots[i];
@@ -341,6 +348,8 @@ namespace Anki {
 
           // Assign this solution's translation vector to the output
           *Tout[i] = -(*Rout[i] * (P1 + Nt*C));
+
+          EndBenchmark("cpml_mainLoop");
         }
 
         return EXIT_SUCCESS;
@@ -384,6 +393,8 @@ namespace Anki {
       {
         // Output rotation should already be allocated
         AnkiAssert(R.get_size(0) == 3 && R.get_size(1) == 3);
+
+        BeginBenchmark("computePose_init");
 
         // Put the four world points into an array so we can loop over them
         // easily
@@ -430,10 +441,14 @@ namespace Anki {
           possibleR[i] = Array<PRECISION>(3,3,scratch);
         }
 
+        EndBenchmark("computePose_init");
+
         Point3<PRECISION> possibleT[4]; // TODO: Kosher to create array of Point3's?
 
         for(s32 i=0; i<4; ++i)
         {
+          BeginBenchmark("computePose_mainLoop");
+
           // Use the first corner in the current corner list as the validation
           // corner. Use the remaining three to estimate the pose.
           const s32 i_validate = cornerList[0];
@@ -511,6 +526,8 @@ namespace Anki {
             // validation corner each time
             Swap(cornerList[0], cornerList[i+1]);
           }
+
+          EndBenchmark("computePose_mainLoop");
         } // for each validation corner
 
         //printf("Best solution had error of %f\n", minErrorOuter);

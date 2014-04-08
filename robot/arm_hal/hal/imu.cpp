@@ -114,7 +114,7 @@
 
 // Accelerometer Constants
 // 12 bits, +/- 2g   4g/2^12 = 4*9.81 m/s^2 / 4096 ~= 0.958 mm/s^2 / LSB
-#define RANGE_CONST_2G      0.958f
+#define RANGE_CONST_2G      9.58f
 
 // Gyro Register Map
 #define GYRO_CHIP_ID        0x00
@@ -444,8 +444,10 @@ namespace Anki
         // Combine and convert to signed
         temp_data = (temp_data_msb << 8) | (temp_data_lsb & ACC_LSB_MASK);
         temp_data = temp_data >> 4;  // signed extension shift to 12 bits
+				
         // Put values into IMU Data Struct
-        IMUData.acc_x  = RANGE_CONST_2G * temp_data;  // m/s^2    
+        // With head facing forward, x-axis points along robot y-axis. Putting x value into y.
+        IMUData.acc_y  = RANGE_CONST_2G * temp_data;  // m/s^2    
         
         temp_data_lsb = IMUWriteReadPipelined(0x00);  // ACC_ACCD_Z_LSB
         temp_data_msb = IMUWriteReadPipelined(0x00);  // ACC_ACCD_Z_MSB
@@ -453,8 +455,10 @@ namespace Anki
         // Combine and convert to signed
         temp_data = (temp_data_msb << 8) | (temp_data_lsb & ACC_LSB_MASK);
         temp_data = temp_data >> 4; // Signed extension shift to 12 bits
+				
         // Put values into IMU Data Struct
-        IMUData.acc_y  = RANGE_CONST_2G * temp_data;      // m/s^2    
+        // With head facing forward, y-axis points along robot z-axis. Putting y value into z.
+        IMUData.acc_z  = RANGE_CONST_2G * temp_data;      // m/s^2    
         
         temp_data_lsb = IMUWriteReadPipelined(0x00);    
         temp_data_msb = IMUWriteReadPipelined();
@@ -462,8 +466,10 @@ namespace Anki
         // Combine and convert to signed
         temp_data = (temp_data_msb << 8) | (temp_data_lsb & ACC_LSB_MASK);
         temp_data = temp_data >> 4;  // Signed extension shift to 12 bits
+				
         // Put values into IMU Data Struct
-        IMUData.acc_z  = RANGE_CONST_2G * temp_data;  // m/s^2    
+        // With head facing forward, z-axis points along robot x-axis. Putting z value into x.
+        IMUData.acc_x  = RANGE_CONST_2G * temp_data;  // m/s^2    
         
         // Select gyro (accelerometer automatically deselected)
         IMUSelectDevice(IMU_GYRO);
@@ -477,24 +483,30 @@ namespace Anki
         
         // Combine
         temp_data = (temp_data_msb << 8) | (temp_data_lsb ); 
+				
         // Put values into IMU Data Struct
-        IMUData.rate_x  = RANGE_CONST_500D * temp_data;  // rad/s    
+        // With head facing forward, x-axis points along robot y-axis. Putting x value into y.
+        IMUData.rate_y  = RANGE_CONST_500D * temp_data;  // rad/s    
         
         temp_data_lsb = IMUWriteReadPipelined(0x00);  // GYRO_RATE_Z_LSB
         temp_data_msb = IMUWriteReadPipelined(0x00);  // GYRO_RATE_Z_MSB
 
         // Combine
         temp_data = (temp_data_msb << 8) | (temp_data_lsb ); 
+				
         // Put values into IMU Data Struct
-        IMUData.rate_y  = RANGE_CONST_500D * temp_data;  // rad/s    
+        // With head facing forward, y-axis points along robot z-axis. Putting y value into z.
+        IMUData.rate_z  = RANGE_CONST_500D * temp_data;  // rad/s    
   
         temp_data_lsb = IMUWriteReadPipelined(0x00);    
         temp_data_msb = IMUWriteReadPipelined();
 
         // Combine
         temp_data = (temp_data_msb << 8) | (temp_data_lsb ); 
+				
         // Put values into IMU Data Struct
-        IMUData.rate_z  = RANGE_CONST_500D * temp_data;  // rad/s    
+        // With head facing forward, z-axis points along robot x-axis. Putting z value into x.
+        IMUData.rate_x  = RANGE_CONST_500D * temp_data;  // rad/s    
                   
         // Deselect gyro
         IMUDeselectAll();
