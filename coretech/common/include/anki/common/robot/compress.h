@@ -103,6 +103,36 @@ namespace Anki
         memory);
     }
 
+    template<typename Type> Result EncodeRunLengthBinary(
+      const Array<Type> &in,
+      u8 * restrict out, const s32 outMaxLength, s32 &outCompressedLength)
+    {
+      return EncodeRunLengthBinary(in.Pointer(0,0), in.get_size(0)*in.get_stride(),
+        out, outMaxLength, outCompressedLength);
+    }
+
+    template<typename Type> Array<Type> DecodeRunLengthBinary(
+      const u8 * restrict in, const s32 inLength,
+      const s32 arrayHeight, const s32 arrayWidth, const Flags::Buffer &arrayFlags,
+      MemoryStack &memory)
+    {
+      Flags::Buffer correctedFlags = arrayFlags;
+      correctedFlags.set_zeroAllocatedMemory(false);
+
+      Array<Type> out = Array<Type>(arrayHeight, arrayWidth, memory, correctedFlags);
+
+      s32 outUncompressedLength;
+
+      const Result result = DecodeRunLengthBinary(
+        in, inLength,
+        reinterpret_cast<u8*>(out.Pointer(0,0)), out.get_size(0)*out.get_stride(), outUncompressedLength);
+
+      AnkiConditionalErrorAndReturnValue(result == RESULT_OK,
+        Array<Type>(), "DecodeRunLengthBinary", "DecodeRunLengthBinary failed");
+
+      return out;
+    }
+
     template<typename Type> CompressedArray<Type>::CompressedArray()
       : compressedBuffer(NULL), compressedBufferMaxLength(-1), compressedBufferUsedLength(-1)
     {

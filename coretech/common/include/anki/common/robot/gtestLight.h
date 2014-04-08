@@ -43,6 +43,21 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define ASSERT_EQ(term1, term2)\
   ASSERT_TRUE((term1) == (term2))
 
+#define ASSERT_LT(term1, term2)\
+  ASSERT_TRUE((term1) < (term2))
+
+#define ASSERT_LE(term1, term2)\
+  ASSERT_TRUE((term1) <= (term2))
+
+#define ASSERT_GT(term1, term2)\
+  ASSERT_TRUE((term1) > (term2))
+
+#define ASSERT_GE(term1, term2)\
+  ASSERT_TRUE((term1) >= (term2))
+
+#define ASSERT_NEAR(term1, term2, maxAbsoluteDifference)\
+  ASSERT_TRUE( (term1 >= term2) ? (term1-term2) <= maxAbsoluteDifference : (term2-term1) <= maxAbsoluteDifference) // Handles unsigned comparisons
+
 // Call a GTEST_TEST, and increment the variable numPassedTests if the test passed, and  the variable numFailedTests if the test failed.
 #define CALL_GTEST_TEST(test_case_name, test_name)\
   if(test_case_name ## __ ## test_name() == 0) {\

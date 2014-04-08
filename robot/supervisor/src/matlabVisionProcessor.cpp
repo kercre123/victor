@@ -348,7 +348,7 @@ namespace Anki {
         matlabProc_.PutQuad(transformedQuad, "transformedQuad");
         
         matlabProc_.EvalStringEcho("blockPose = camera.computeExtrinsics(transformedQuad, marker3d); "
-                              "angleErr = -atan2(blockPose.Rmat(1,1), blockPose.Rmat(3,1)) + pi/2; " // why + pi/2 ??
+                              "angleErr = asin(blockPose.Rmat(3,1)); "
                               "distErr  = blockPose.T(3); "
                               "horErr   = -blockPose.T(1); ");
         

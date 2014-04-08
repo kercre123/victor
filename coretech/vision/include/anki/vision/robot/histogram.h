@@ -38,6 +38,8 @@ namespace Anki
 
       Result Set(const Histogram &in);
 
+      bool IsValid() const;
+
       s32 get_numBins() const;
     } Histogram;
 

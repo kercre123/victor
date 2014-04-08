@@ -34,6 +34,40 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 using namespace Anki::Embedded;
 
+GTEST_TEST(CoreTech_Common, RunLengthEncode)
+{
+  const s32 arrayHeight = 7;
+  const s32 arrayWidth = 16;
+  const s32 maxCompressedLength = arrayHeight * arrayWidth;
+
+  ASSERT_TRUE(offchipBuffer != NULL);
+  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(ms.IsValid());
+
+  Array<u8> original(arrayHeight, arrayWidth, ms);
+  u8 * compressed = reinterpret_cast<u8*>( ms.Allocate(maxCompressedLength) );
+
+  original(1,3,1,5).Set(1);
+  original(2,2,8,10).Set(1);
+  original(2,2,13,13).Set(1);
+  original(6,6,13,15).Set(1);
+
+  s32 compressedLength;
+  const Result result = EncodeRunLengthBinary<u8>(original, compressed, maxCompressedLength, compressedLength);
+
+  ASSERT_TRUE(result == RESULT_OK);
+  ASSERT_TRUE(compressedLength == 12);
+
+  Array<u8> uncompressed = DecodeRunLengthBinary<u8>(
+    compressed, compressedLength,
+    arrayHeight, arrayWidth, Flags::Buffer(false,false,false),
+    ms);
+
+  ASSERT_TRUE(AreElementwiseEqual<u8>(original, uncompressed));
+
+  GTEST_RETURN_HERE;
+}
+
 GTEST_TEST(CoreTech_Common, IsConvex)
 {
   Point<f32> p11(0.0f, 0.0f);
@@ -228,7 +262,7 @@ GTEST_TEST(CoreTech_Common, SerializedBuffer)
     const char * objectName = NULL;
     ASSERT_TRUE(iterator.HasNext());
     const void * segment1c = iterator.GetNext(&typeName, &objectName, segment1LengthB, true);
-    ASSERT_TRUE(segment1LengthB == 48);
+    ASSERT_TRUE(segment1LengthB == 48+64);
     ASSERT_TRUE(reinterpret_cast<size_t>(segment1b) == reinterpret_cast<size_t>(segment1c));
     ASSERT_TRUE(strcmp(typeName, "Basic Type Buffer") == 0);
     ASSERT_TRUE(strcmp(objectName, "segment1") == 0);
@@ -240,7 +274,7 @@ GTEST_TEST(CoreTech_Common, SerializedBuffer)
     const char * objectName = NULL;
     ASSERT_TRUE(iterator.HasNext());
     const void * segment2c = iterator.GetNext(&typeName, &objectName, segment2LengthB, true);
-    ASSERT_TRUE(segment2LengthB == 80);
+    ASSERT_TRUE(segment2LengthB == 80+64);
     ASSERT_TRUE(reinterpret_cast<size_t>(segment2b) == reinterpret_cast<size_t>(segment2c));
     ASSERT_TRUE(strcmp(typeName, "Basic Type Buffer") == 0);
     ASSERT_TRUE(strcmp(objectName, "segment2") == 0);
@@ -252,7 +286,7 @@ GTEST_TEST(CoreTech_Common, SerializedBuffer)
     const char * objectName = NULL;
     ASSERT_TRUE(iterator.HasNext());
     const void * segment3c = iterator.GetNext(&typeName, &objectName, segment3LengthB, true);
-    ASSERT_TRUE(segment3LengthB == 144);
+    ASSERT_TRUE(segment3LengthB == 144+64);
     ASSERT_TRUE(reinterpret_cast<size_t>(segment3b) == reinterpret_cast<size_t>(segment3c));
     ASSERT_TRUE(strcmp(typeName, "Basic Type Buffer") == 0);
     ASSERT_TRUE(strcmp(objectName, "segment3") == 0);
@@ -2948,6 +2982,7 @@ s32 RUN_ALL_COMMON_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   numPassedTests = 0;
   numFailedTests = 0;
 
+  CALL_GTEST_TEST(CoreTech_Common, RunLengthEncode);
   CALL_GTEST_TEST(CoreTech_Common, IsConvex);
   CALL_GTEST_TEST(CoreTech_Common, RoundFloat);
   CALL_GTEST_TEST(CoreTech_Common, CompressArray);

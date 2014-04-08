@@ -23,7 +23,6 @@ namespace Anki
 {
   namespace Embedded
   {
-    
     // Forward declaration of Array class (for Matrix x Point multiplication)
     template<typename Type> class Array;
 
@@ -71,12 +70,10 @@ namespace Anki
 
       // The L2 (Euclidian) distance between this point and an input point.
       f32 Dist(const Point<Type> &point2) const;
-      
+
       f32 Length() const;
-      
     }; // class Point<Type>
-    
-    
+
 #if 0
 #pragma mark --- 3D Point Class Declaration ---
 #endif
@@ -88,62 +85,60 @@ namespace Anki
       Type x;
       Type y;
       Type z;
-      
+
       Point3();
-      
+
       Point3(const Type x, const Type y, const Type z);
-      
+
       Point3(const Point3<Type>& pt);
-      
+
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
       Point3(const cv::Point3_<Type>& pt);
-      
+
       cv::Point3_<Type> get_CvPoint_();
 #endif
-      
+
       void Print() const;
-      
+
       bool operator== (const Point3<Type> &point2) const;
-      
+
       Point3<Type> operator+ (const Point3<Type> &point2) const;
-      
+
       Point3<Type> operator- (const Point3<Type> &point2) const;
-      
+
       Point3<Type> operator- () const;
-      
+
       Point3<Type>& operator*= (const Type value);
       Point3<Type>& operator-= (const Type value);
       Point3<Type>& operator-= (const Point3<Type> &point2);
-      
+
       inline Point3<Type>& operator= (const Point3<Type> &point2);
-      
+
       // The L2 (Euclidian) distance between this point and an input point.
       f32 Dist(const Point3<Type> &point2) const;
-      
+
       f32 Length() const;
-      
+
       // Normalize to be unit length (divide each element by Length())
       // The original Length is returned and if it was 0, the Point will
       // remain unchanged.
       f32 MakeUnitLength();
-      
     }; // class Point3<Type>
-    
-    
+
     template<typename Type>
     Type DotProduct(const Point3<Type>& point1, const Point3<Type>& point2);
-    
+
     template<typename Type>
     Point3<Type> CrossProduct(const Point3<Type>& point1, const Point3<Type>& point2);
-    
+
     // Matrix x Point multiplication.  Input matrix M must be 3x3!
     template<typename Type>
     Point3<Type> operator* (const Array<Type>& M, const Point3<Type>& p);
-    
+
 #if 0
 #pragma mark --- Rectangle Class Declaration ---
 #endif
-    
+
     // A rectangle is bounded by a left, right, top, and bottom
     //
     // WARNING:
@@ -220,17 +215,16 @@ namespace Anki
       Radians angle;
     }; // class Pose2d
 
-    
     // Compute the difference between two 3D poses (Rotations+Translations)
     // All R matrices should be 3x3.
     //    [R2 T2] = [Rdiff Tdiff] * [R1 T1]
     // I.e., the diff pose is the one that takes pose 1 to pose 2.
     template<typename Type>
     ReturnCode ComputePoseDiff(const Array<Type>& R1, const Point3<Type>& T1,
-                               const Array<Type>& R2, const Point3<Type>& T2,
-                               Array<Type>& Rdiff, Point3<Type>& Tdiff,
-                               MemoryStack memory);
-    
+      const Array<Type>& R2, const Point3<Type>& T2,
+      Array<Type>& Rdiff, Point3<Type>& Tdiff,
+      MemoryStack scratch);
+
 #if 0
 #pragma mark --- Quadrilateral Class Declaration ---
 #endif
