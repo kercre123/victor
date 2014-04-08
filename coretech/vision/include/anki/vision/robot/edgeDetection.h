@@ -43,14 +43,15 @@ namespace Anki
 
 #if defined(ANKICORETECH_EMBEDDED_USE_OPENCV) && ANKICORETECH_EMBEDDED_USE_OPENCV
       // Allocates the returned cv::Mat on the heap
-      cv::Mat DrawIndexes()  const;
+      cv::Mat DrawIndexes(const f32 scale=1.0f)  const;
 
       static cv::Mat DrawIndexes(
         const s32 imageHeight, const s32 imageWidth,
         const FixedLengthList<Point<s16> > &indexPoints1,
         const FixedLengthList<Point<s16> > &indexPoints2,
         const FixedLengthList<Point<s16> > &indexPoints3,
-        const FixedLengthList<Point<s16> > &indexPoints4);
+        const FixedLengthList<Point<s16> > &indexPoints4,
+        const f32 scale=1.0f);
 #endif
     } EdgeLists;
 

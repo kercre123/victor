@@ -135,7 +135,7 @@ namespace Anki
 
         bool IsValid() const;
 
-        Result ShowTemplate(const char * windowName="BinaryTracker Template", const bool waitForKeypress=false, const bool fitImageToWindow=false) const;
+        Result ShowTemplate(const char * windowName="BinaryTracker Template", const bool waitForKeypress=false, const bool fitImageToWindow=false, const f32 displayScale=1.0f) const;
 
         // Update the transformation. The format of the update should be as follows:
         // TRANSFORM_TRANSLATION: [-dx, -dy]

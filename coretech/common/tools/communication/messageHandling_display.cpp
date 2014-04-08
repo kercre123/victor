@@ -248,7 +248,7 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
       if(!bt.IsValid())
         continue;
 
-      bt.ShowTemplate("BinaryTracker Template", false, false);
+      bt.ShowTemplate("BinaryTracker Template", false, false, 2.0f);
     } else if(strcmp(typeName, "EdgeLists") == 0) {
       PUSH_MEMORY_STACK(scratch);
       EdgeLists edges;
@@ -375,7 +375,7 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
     } // if(isTracking) ... else
 
     cv::imshow("Robot Image", toShowImage);
-    const s32 pressedKey = cv::waitKey(50);
+    const s32 pressedKey = cv::waitKey(10);
     //printf("%d\n", pressedKey);
     if(pressedKey == 'c') {
       const time_t t = time(0);   // get time now

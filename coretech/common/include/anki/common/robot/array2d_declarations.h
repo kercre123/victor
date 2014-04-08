@@ -23,6 +23,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
 #include "opencv2/core/core.hpp"
 #include "opencv2/highgui/highgui.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
 #endif
 
 namespace Anki

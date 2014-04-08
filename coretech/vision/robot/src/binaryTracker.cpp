@@ -333,7 +333,7 @@ namespace Anki
         this->isValid = true;
       }
 
-      Result BinaryTracker::ShowTemplate(const char * windowName, const bool waitForKeypress, const bool fitImageToWindow) const
+      Result BinaryTracker::ShowTemplate(const char * windowName, const bool waitForKeypress, const bool fitImageToWindow, const f32 displayScale) const
       {
 #ifndef ANKICORETECH_EMBEDDED_USE_OPENCV
         return RESULT_FAIL;
@@ -341,7 +341,7 @@ namespace Anki
         //if(!this->IsValid())
         //  return RESULT_FAIL;
 
-        cv::Mat toShow = this->templateEdges.DrawIndexes();
+        cv::Mat toShow = this->templateEdges.DrawIndexes(displayScale);
 
         if(toShow.cols == 0)
           return RESULT_FAIL;
@@ -445,6 +445,8 @@ namespace Anki
 
         this->templateImageHeight = this->templateEdges.imageHeight;
         this->templateImageWidth = this->templateEdges.imageWidth;
+
+        this->isValid = true;
 
         return RESULT_OK;
       }

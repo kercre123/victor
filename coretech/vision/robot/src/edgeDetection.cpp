@@ -394,12 +394,12 @@ namespace Anki
     }
 
 #ifdef ANKICORETECH_EMBEDDED_USE_OPENCV
-    cv::Mat EdgeLists::DrawIndexes() const
+    cv::Mat EdgeLists::DrawIndexes(const f32 scale) const
     {
       AnkiConditionalErrorAndReturnValue(this->imageHeight > 16 && this->imageHeight < 2000 && this->imageWidth > 16 && this->imageWidth < 2000,
         cv::Mat(), "EdgeLists::DrawIndexes", "This object is invalid");
 
-      return DrawIndexes(this->imageHeight, this->imageWidth, this->xDecreasing, this->xIncreasing, this->yDecreasing, this->yIncreasing);
+      return DrawIndexes(this->imageHeight, this->imageWidth, this->xDecreasing, this->xIncreasing, this->yDecreasing, this->yIncreasing, scale);
     }
 
     cv::Mat EdgeLists::DrawIndexes(
@@ -407,7 +407,8 @@ namespace Anki
       const FixedLengthList<Point<s16> > &indexPoints1,
       const FixedLengthList<Point<s16> > &indexPoints2,
       const FixedLengthList<Point<s16> > &indexPoints3,
-      const FixedLengthList<Point<s16> > &indexPoints4)
+      const FixedLengthList<Point<s16> > &indexPoints4,
+      const f32 scale)
     {
       const u8 colors[4][3] = {
         {128,0,0},
@@ -467,6 +468,13 @@ namespace Anki
       }
 
       free(scratch.get_buffer());
+
+      if(!FLT_NEAR(scale, 1.0f)) {
+        cv::Mat totalImageLarge(RoundS32(imageHeight*scale), RoundS32(imageWidth*scale), CV_8UC3);
+        cv::resize(totalImage, totalImageLarge, totalImageLarge.size(), 0, 0, cv::INTER_NEAREST);
+
+        return totalImageLarge;
+      }
 
       return totalImage;
     }
