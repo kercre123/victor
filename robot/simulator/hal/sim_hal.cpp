@@ -520,7 +520,7 @@ namespace Anki {
       
       info.focalLength_x = fy;
       info.focalLength_y = fy;
-      info.fov_ver       = fov_ver;
+      //info.fov_ver       = fov_ver;
       info.center_x      = 0.5f*width;
       info.center_y      = 0.5f*height;
       info.skew          = 0.f;

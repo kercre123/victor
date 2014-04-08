@@ -117,6 +117,7 @@ namespace Anki {
         static const s32 MAX_TRACKING_FAILURES = 1;
         
         static const Anki::Cozmo::HAL::CameraInfo* headCamInfo_;
+        static f32 headCamFOV_;
         
         static VisionSystemMode mode_;
         
@@ -226,7 +227,6 @@ namespace Anki {
       {
         return robotState_.headAngle;
       }
- 
       
       static ReturnCode LookForMarkers(
                                        const Array<u8> &grayscaleImage,
@@ -608,7 +608,7 @@ namespace Anki {
         // 2. Convert horizontal shift of the robot to pixel shift, using
         //    focal length
         f32 horizontalShift_pix = (static_cast<f32>(headCamInfo_->nrows/2) * theta_robot.ToFloat() /
-                                   headCamInfo_->fov_ver) + (T_hor_robot*headCamInfo_->focalLength_x/d);
+                                   headCamFOV_) + (T_hor_robot*headCamInfo_->focalLength_x/d);
         
         // Predict approximate scale change by comparing the distance to the
         // object before and after forward motion
@@ -845,6 +845,10 @@ namespace Anki {
             PRINT("Initialize() - HeadCam Info pointer is NULL!\n");
             return EXIT_FAILURE;
           }
+          
+          // Compute FOV from focal length (currently used for tracker prediciton)
+          headCamFOV_ = 2.f * atan_fast(static_cast<f32>(headCamInfo_->nrows) /
+                                        (2.f * headCamInfo_->focalLength_y));
           
           detectionParameters_.Initialize();
           trackerParameters_.Initialize();

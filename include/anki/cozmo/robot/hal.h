@@ -338,7 +338,7 @@ namespace Anki
       // Intrinsic calibration:
       // A struct for holding intrinsic camera calibration parameters
       typedef struct {
-        f32 focalLength_x, focalLength_y, fov_ver;
+        f32 focalLength_x, focalLength_y;
         f32 center_x, center_y;
         f32 skew;
         u16 nrows, ncols;
