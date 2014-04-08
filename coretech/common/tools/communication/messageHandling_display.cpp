@@ -351,7 +351,8 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
         topLineColor = cv::Scalar(128,0,0);
 
         const f32 observedOrientation = visionMarkerList[iMarker].observedOrientation;
-        const Quadrilateral<f32> orientedCorners = visionMarkerList[iMarker].corners.ComputeRotatedCorners<f32>(-observedOrientation*PI/180);
+        //const Quadrilateral<f32> orientedCorners = visionMarkerList[iMarker].corners.ComputeRotatedCorners<f32>(observedOrientation*PI/180);
+        const Quadrilateral<f32> orientedCorners = visionMarkerList[iMarker].corners.ComputeRotatedCorners<f32>(0.0f);
 
         const s32 cornerOrder[5] = {0,2,3,1,0};
 
