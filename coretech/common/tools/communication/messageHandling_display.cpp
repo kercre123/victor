@@ -310,24 +310,35 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
 
       trackingBoxImage.setTo(0);
 
-      const cv::Scalar textColor = cv::Scalar(0,255,0);
+      const cv::Scalar textColor    = cv::Scalar(0,255,0);
       //const cv::Scalar boxColor = cv::Scalar(0,128,0);
-      const cv::Scalar boxColor = cv::Scalar(48,48,48);
+      const cv::Scalar boxColor     = cv::Scalar(0,48,0);
+      const cv::Scalar topLineColor = cv::Scalar(48,0,0);
 
-      const Quadrilateral<f32> transformedCorners = lastPlanarTransformation.get_transformedCorners(scratch);
+      //const Quadrilateral<f32> transformedCorners = lastPlanarTransformation.get_transformedCorners(scratch);
+      //const Quadrilateral<f32> sortedCorners = transformedCorners.ComputeClockwiseCorners<f32>();
 
-      const Quadrilateral<f32> sortedCorners = transformedCorners.ComputeClockwiseCorners<f32>();
+      const Quadrilateral<f32> orientedCorners = lastPlanarTransformation.get_transformedCorners(scratch).ComputeRotatedCorners<f32>(0.0f);
+
+      const s32 cornerOrder[5] = {
+        Quadrilateral<f32>::TopLeft,
+        Quadrilateral<f32>::TopRight,
+        Quadrilateral<f32>::BottomRight,
+        Quadrilateral<f32>::BottomLeft,
+        Quadrilateral<f32>::TopLeft};
 
       for(s32 iCorner=0; iCorner<4; iCorner++) {
-        const s32 point1Index = iCorner;
-        const s32 point2Index = (iCorner+1) % 4;
-        const cv::Point pt1(static_cast<s32>(sortedCorners[point1Index].x*scale), static_cast<s32>(sortedCorners[point1Index].y*scale));
-        const cv::Point pt2(static_cast<s32>(sortedCorners[point2Index].x*scale), static_cast<s32>(sortedCorners[point2Index].y*scale));
-        cv::line(trackingBoxImage, pt1, pt2, boxColor, 7);
+        const s32 point1Index = cornerOrder[iCorner];
+        const s32 point2Index = cornerOrder[iCorner+1];
+        const cv::Point pt1(RoundS32(orientedCorners[point1Index].x*scale), RoundS32(orientedCorners[point1Index].y*scale));
+        const cv::Point pt2(RoundS32(orientedCorners[point2Index].x*scale), RoundS32(orientedCorners[point2Index].y*scale));
+
+        cv::Scalar thisLineColor = (iCorner==0) ? topLineColor : boxColor;
+        cv::line(toShowImage, pt1, pt2, thisLineColor, 2);
       }
 
-      const Point<f32> center = sortedCorners.ComputeCenter<f32>();
-      const s32 textX = RoundS32(MIN(MIN(MIN(sortedCorners.corners[0].x*scale, sortedCorners.corners[1].x*scale), sortedCorners.corners[2].x*scale), sortedCorners.corners[3].x*scale));
+      const Point<f32> center = orientedCorners.ComputeCenter<f32>();
+      const s32 textX = RoundS32(MIN(MIN(MIN(orientedCorners.corners[0].x*scale, orientedCorners.corners[1].x*scale), orientedCorners.corners[2].x*scale), orientedCorners.corners[3].x*scale));
       const cv::Point textStartPoint(textX, RoundS32(center.y*scale));
 
       cv::putText(trackingBoxImage, "Tracking", textStartPoint, cv::FONT_HERSHEY_PLAIN, 1.0, textColor);
@@ -354,7 +365,12 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
         //const Quadrilateral<f32> orientedCorners = visionMarkerList[iMarker].corners.ComputeRotatedCorners<f32>(observedOrientation*PI/180);
         const Quadrilateral<f32> orientedCorners = visionMarkerList[iMarker].corners.ComputeRotatedCorners<f32>(0.0f);
 
-        const s32 cornerOrder[5] = {0,2,3,1,0};
+        const s32 cornerOrder[5] = {
+          Quadrilateral<f32>::TopLeft,
+          Quadrilateral<f32>::TopRight,
+          Quadrilateral<f32>::BottomRight,
+          Quadrilateral<f32>::BottomLeft,
+          Quadrilateral<f32>::TopLeft};
 
         for(s32 iCorner=0; iCorner<4; iCorner++) {
           const s32 point1Index = cornerOrder[iCorner];

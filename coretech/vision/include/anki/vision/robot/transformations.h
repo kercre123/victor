@@ -156,6 +156,9 @@ namespace Anki
         // Transform this object's initialCorners, based on its current homography
         Quadrilateral<f32> get_transformedCorners(MemoryStack scratch) const;
 
+        // Orientation is [0,-pi] for counter-clockwise rotation, and [0,pi] for clockwise rotation
+        f32 get_transformedOrientation(MemoryStack scratch) const;
+
         static s32 get_serializationSize();
 
       protected:

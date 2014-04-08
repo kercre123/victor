@@ -494,6 +494,24 @@ namespace Anki
         return this->Transform(this->get_initialCorners(), scratch);
       }
 
+      f32 PlanarTransformation_f32::get_transformedOrientation(MemoryStack scratch) const
+      {
+        const Quadrilateral<f32> transformedCorners = this->Transform(this->get_initialCorners(), scratch);
+
+        const Point<f32> transformedCenter = transformedCorners.ComputeCenter<f32>();
+
+        const Point<f32> upperMidpoint = Point<f32>(
+          (transformedCorners[Quadrilateral<f32>::TopLeft].x + transformedCorners[Quadrilateral<f32>::TopRight].x) / 2,
+          (transformedCorners[Quadrilateral<f32>::TopLeft].y + transformedCorners[Quadrilateral<f32>::TopRight].y) / 2);
+
+        const f32 dy = transformedCenter.y - upperMidpoint.y;
+        const f32 dx = transformedCenter.x - upperMidpoint.x;
+
+        const f32 orientation = atan2_acc(dy, dx);
+
+        return orientation;
+      }
+
       Result PlanarTransformation_f32::TransformPointsStatic(
         const Array<f32> &xIn, const Array<f32> &yIn,
         const f32 scale,
