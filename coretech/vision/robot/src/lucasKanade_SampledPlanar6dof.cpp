@@ -97,17 +97,18 @@ namespace Anki
       
         // Initialize the homography from the 6DoF params
         this->initialHomography = Array<f32>(3,3,onchipScratch); // TODO: on-chip b/c this is permanent, right?
-        this->initialHomography[0][0] = this->focalLength_x*R[0][0];
-        this->initialHomography[0][1] = this->focalLength_x*R[0][1];
-        this->initialHomography[0][2] = this->focalLength_x*this->params6DoF.translation.x;
+        const f32 makeH22one = 1.f / this->params6DoF.translation.z;;
+        this->initialHomography[0][0] = this->focalLength_x*R[0][0] * makeH22one;
+        this->initialHomography[0][1] = this->focalLength_x*R[0][1] * makeH22one;
+        this->initialHomography[0][2] = this->focalLength_x*this->params6DoF.translation.x * makeH22one;
         
-        this->initialHomography[1][0] = this->focalLength_y*R[1][0];
-        this->initialHomography[1][1] = this->focalLength_y*R[1][1];
-        this->initialHomography[1][2] = this->focalLength_y*this->params6DoF.translation.y;
+        this->initialHomography[1][0] = this->focalLength_y*R[1][0] * makeH22one;
+        this->initialHomography[1][1] = this->focalLength_y*R[1][1] * makeH22one;
+        this->initialHomography[1][2] = this->focalLength_y*this->params6DoF.translation.y * makeH22one;
         
-        this->initialHomography[2][0] = R[2][0];
-        this->initialHomography[2][1] = R[2][1];
-        this->initialHomography[2][2] = this->params6DoF.translation.z;
+        this->initialHomography[2][0] = R[2][0] * makeH22one;
+        this->initialHomography[2][1] = R[2][1] * makeH22one;
+        this->initialHomography[2][2] = 1.f;
         
         // Note the center for this tracker is the camera's calibrated center
         Point<f32> centerOffset(this->camCenter_x, this->camCenter_y);
@@ -123,6 +124,14 @@ namespace Anki
         this->transformation = Transformations::PlanarTransformation_f32(Transformations::TRANSFORM_PROJECTIVE,
                                                                          initCorners, this->initialHomography, centerOffset,
                                                                          onchipScratch); // TODO: which scratch?
+        
+        // Important: we have to tell the transformation object that the input
+        // points (the canonical 3D model corners) should remain zero-centered
+        // and do not need to be recentered every time we apply the current
+        // transformation to get the current quad.  This is unlike the other
+        // trackers which are generally doing image-to-image transformations
+        // instead of 3D-model-to-image transformations.
+        this->transformation.set_initialPointsAreZeroCentered(true);
         
         // Need the partial derivatives at the initial conditions of
         // the rotation parameters:
@@ -206,6 +215,9 @@ namespace Anki
           for(s32 iScale=0; iScale<numPyramidLevels; iScale++) {
             const f32 scale = static_cast<f32>(1 << iScale);
             
+            // Note that template coordinates for this tracker are actually
+            // coordinates on the 3d template, which get mapped into the image
+            // by the homography
             const f32 halfWidth = scaleTemplateRegionPercent*templateHalfWidth;
             templateCoordinates[iScale] = Meshgrid<f32>(
                                                         Linspace(-halfWidth, halfWidth,
@@ -415,10 +427,13 @@ namespace Anki
         for(s32 iScale=numPyramidLevels-1; iScale>=0; iScale--) {
           verify_converged = false;
           
+          // TODO: Add back translation update
+          /*
           BeginBenchmark("UpdateTrack.refineTranslation");
           if((lastResult = IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance, Transformations::TRANSFORM_TRANSLATION, verify_converged, scratch)) != RESULT_OK)
             return lastResult;
           EndBenchmark("UpdateTrack.refineTranslation");
+          */
           
           if(this->transformation.get_transformType() != Transformations::TRANSFORM_TRANSLATION) {
             BeginBenchmark("UpdateTrack.refineOther");
@@ -527,7 +542,7 @@ namespace Anki
           const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2] / initialImageScaleF32;
           const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2] / initialImageScaleF32;
           const f32 h20 = homography[2][0] * initialImageScaleF32; const f32 h21 = homography[2][1] * initialImageScaleF32;
-          const f32 h22 = homography[2][2] * initialImageScaleF32; // TODO: unlike other trackers (not 1.0), correct?
+          const f32 h22 = 1.f; //const f32 h22 = homography[2][2]; // TODO: unlike other trackers (not 1.0), correct?
           
           AWAt.SetZero();
           b.SetZero();
@@ -693,7 +708,7 @@ namespace Anki
           const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2] / initialImageScaleF32;
           const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2] / initialImageScaleF32;
           const f32 h20 = homography[2][0] * initialImageScaleF32; const f32 h21 = homography[2][1] * initialImageScaleF32;
-          const f32 h22 = homography[2][2] * initialImageScaleF32;
+          const f32 h22 = homography[2][2];
           
           //AWAt.SetZero();
           //b.SetZero();
@@ -885,7 +900,7 @@ namespace Anki
           const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2] / initialImageScaleF32;
           const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2] / initialImageScaleF32;
           const f32 h20 = homography[2][0] * initialImageScaleF32; const f32 h21 = homography[2][1] * initialImageScaleF32;
-          const f32 h22 = homography[2][2] * initialImageScaleF32;
+          const f32 h22 = homography[2][2];
           
           //AWAt.SetZero();
           //b.SetZero();
@@ -979,7 +994,7 @@ namespace Anki
               
               const f32 h20_init = this->initialHomography[2][0] * initialImageScaleF32;
               const f32 h21_init = this->initialHomography[2][1] * initialImageScaleF32;
-              const f32 h22_init = this->initialHomography[2][2] * initialImageScaleF32;
+              const f32 h22_init = this->initialHomography[2][2];
               
               // TODO: These two could be strength reduced
               const f32 xTransformedRawInit = h00_init*xOriginal + h01_init*yOriginal + h02_init;
@@ -992,31 +1007,42 @@ namespace Anki
               
               const f32 dWu_dtx = this->focalLength_x * invNorm;
               const f32 dWu_dty = 0.f; // TODO: optimize out since it's zero
-              const f32 dWu_dtz = -xTransformedRaw * invNormSq;
+              const f32 dWu_dtz = -xTransformedRawInit * invNormSq;
               
               const f32 dWv_dtx = 0.f; // TODO: optimize out since it's zero
               const f32 dWv_dty = this->focalLength_y * invNorm;
-              const f32 dWv_dtz = -yTransformedRaw * invNormSq;
+              const f32 dWv_dtz = -yTransformedRawInit * invNormSq;
 
-            
-              const f32 dWu_dthetaX = (this->focalLength_x*normalizationInit*(this->dr11_dthetaX*xOriginal + this->dr12_dthetaX*yOriginal) -
-                                       (this->dr31_dthetaX*xOriginal + this->dr32_dthetaX*yOriginal)*xTransformedRawInit) * invNormSq;
+              const f32 r1thetaXterm = this->dr11_dthetaX*xOriginal + this->dr12_dthetaX*yOriginal;
+              const f32 r1thetaYterm = this->dr11_dthetaY*xOriginal + this->dr12_dthetaY*yOriginal;
+              const f32 r1thetaZterm = this->dr11_dthetaZ*xOriginal + this->dr12_dthetaZ*yOriginal;
               
-              const f32 dWu_dthetaY = (this->focalLength_x*normalizationInit*(this->dr11_dthetaY*xOriginal + this->dr12_dthetaY*yOriginal) -
-                                       (this->dr31_dthetaY*xOriginal + this->dr32_dthetaY*yOriginal)*xTransformedRawInit) * invNormSq;
+              const f32 r2thetaXterm = this->dr21_dthetaX*xOriginal + this->dr22_dthetaX*yOriginal;
+              const f32 r2thetaYterm = this->dr21_dthetaY*xOriginal + this->dr22_dthetaY*yOriginal;
+              const f32 r2thetaZterm = this->dr21_dthetaZ*xOriginal + this->dr22_dthetaZ*yOriginal;
               
-              const f32 dWu_dthetaZ = (this->focalLength_x*normalizationInit*(this->dr11_dthetaZ*xOriginal + this->dr12_dthetaZ*yOriginal) -
-                                       (this->dr31_dthetaZ*xOriginal + this->dr32_dthetaZ*yOriginal)*xTransformedRawInit) * invNormSq;
+              const f32 r3thetaXterm = this->dr31_dthetaX*xOriginal + this->dr32_dthetaX*yOriginal;
+              const f32 r3thetaYterm = this->dr31_dthetaY*xOriginal + this->dr32_dthetaY*yOriginal;
+              const f32 r3thetaZterm = this->dr31_dthetaZ*xOriginal + this->dr32_dthetaZ*yOriginal;
+              
+              const f32 dWu_dthetaX = (this->focalLength_x*normalizationInit*r1thetaXterm -
+                                       r3thetaXterm*xTransformedRawInit) * invNormSq;
+              
+              const f32 dWu_dthetaY = (this->focalLength_x*normalizationInit*r1thetaYterm -
+                                       r3thetaYterm*xTransformedRawInit) * invNormSq;
+              
+              const f32 dWu_dthetaZ = (this->focalLength_x*normalizationInit*r1thetaZterm -
+                                       r3thetaZterm*xTransformedRawInit) * invNormSq;
               
               
-              const f32 dWv_dthetaX = (this->focalLength_y*normalizationInit*(this->dr21_dthetaX*xOriginal + this->dr22_dthetaX*yOriginal) -
-                                       (this->dr31_dthetaX*xOriginal + this->dr32_dthetaX*yOriginal)*yTransformedRawInit) * invNormSq;
+              const f32 dWv_dthetaX = (this->focalLength_y*normalizationInit*r2thetaXterm -
+                                       r3thetaXterm*yTransformedRawInit) * invNormSq;
                
-              const f32 dWv_dthetaY = (this->focalLength_y*normalizationInit*(this->dr21_dthetaY*xOriginal + this->dr22_dthetaY*yOriginal) -
-                                       (this->dr31_dthetaY*xOriginal + this->dr32_dthetaY*yOriginal)*yTransformedRawInit) * invNormSq;
+              const f32 dWv_dthetaY = (this->focalLength_y*normalizationInit*r2thetaYterm -
+                                       r3thetaYterm*yTransformedRawInit) * invNormSq;
               
-              const f32 dWv_dthetaZ = (this->focalLength_y*normalizationInit*(this->dr21_dthetaZ*xOriginal + this->dr22_dthetaZ*yOriginal) -
-                                       (this->dr31_dthetaZ*xOriginal + this->dr32_dthetaZ*yOriginal)*yTransformedRawInit) *invNormSq;
+              const f32 dWv_dthetaZ = (this->focalLength_y*normalizationInit*r2thetaZterm -
+                                       r3thetaZterm*yTransformedRawInit) * invNormSq;
               
               const f32 values[6] = {
                 xGradientValue*dWu_dthetaX + yGradientValue*dWv_dthetaX,
@@ -1068,6 +1094,17 @@ namespace Anki
           // Update the 6DoF parameters
           // Note: we are subtracting the update because we're using an _inverse_
           // compositional LK tracking scheme.
+          printf("Angle update = (%f,%f,%f) degrees, Translation udpate = (%f,%f,%f)\n",
+                 RAD_TO_DEG(b[0][0]), RAD_TO_DEG(b[0][1]), RAD_TO_DEG(b[0][2]),
+                 b[0][3], b[0][4], b[0][5]);
+          /*
+          RAD_TO_DEG(this->params6DoF.angle_x),
+                 RAD_TO_DEG(this->params6DoF.angle_y),
+                 RAD_TO_DEG(this->params6DoF.angle_z),
+                 this->params6DoF.translation.x,
+                 this->params6DoF.translation.y,
+                 this->params6DoF.translation.z);
+            */
           this->params6DoF.angle_x -= b[0][0];
           this->params6DoF.angle_y -= b[0][1];
           this->params6DoF.angle_z -= b[0][2];
@@ -1115,14 +1152,25 @@ namespace Anki
           //this->transformation.get_homography().Print("new transformation");
           
           // Check if we're done with iterations
-          // Check if we're done with iterations
           const f32 minChange = UpdatePreviousCorners(transformation, previousCorners, scratch);
           
           if(minChange < convergenceTolerance) {
+            
+            printf("Final params converged at scale %d: angles = (%f,%f,%f) degrees, translation = (%f,%f,%f)\n",
+                   whichScale,
+                   RAD_TO_DEG(this->params6DoF.angle_x),
+                   RAD_TO_DEG(this->params6DoF.angle_y),
+                   RAD_TO_DEG(this->params6DoF.angle_z),
+                   this->params6DoF.translation.x,
+                   this->params6DoF.translation.y,
+                   this->params6DoF.translation.z);
+
+            
             verify_converged = true;
             return RESULT_OK;
           }
         } // for(s32 iteration=0; iteration<maxIterations; iteration++)
+        
         
         return RESULT_OK;
       } // Result LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack_Projective()
@@ -1168,7 +1216,7 @@ namespace Anki
         const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2] / initialImageScaleF32;
         const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2] / initialImageScaleF32;
         const f32 h20 = homography[2][0] * initialImageScaleF32; const f32 h21 = homography[2][1] * initialImageScaleF32;
-        const f32 h22 = homography[2][2] * initialImageScaleF32; // TODO: multiply by initialImageScale?
+        const f32 h22 = homography[2][2];
         
         verify_numInBounds = 0;
         verify_numSimilarPixels = 0;
