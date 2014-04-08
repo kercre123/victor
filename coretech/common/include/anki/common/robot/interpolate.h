@@ -320,8 +320,8 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(reference.get_rawDataPointer() != out.get_rawDataPointer(),
         RESULT_FAIL_ALIASED_MEMORY, "Interp2_Projective", "reference cannot be the same as out");
 
-      AnkiConditionalErrorAndReturnValue(FLT_NEAR(homography[2][2], 1.0f),
-        RESULT_FAIL_INVALID_PARAMETERS, "Interp2_Projective", "homography[2][2] should be 1.0");
+      //AnkiConditionalErrorAndReturnValue(FLT_NEAR(homography[2][2], 1.0f),
+      //  RESULT_FAIL_INVALID_PARAMETERS, "Interp2_Projective", "homography[2][2] should be 1.0");
 
       const s32 referenceHeight = reference.get_size(0);
       const s32 referenceWidth = reference.get_size(1);
@@ -337,8 +337,8 @@ namespace Anki
 
       const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
       const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
-      const f32 h20 = homography[2][0]; const f32 h21 = homography[2][1]; //const f32 h22 = 1.0f;
-
+      const f32 h20 = homography[2][0]; const f32 h21 = homography[2][1]; const f32 h22 = homography[2][2];
+      
       const LinearSequence<f32> &yGridVector = originalCoordinates.get_yGridVector();
       const LinearSequence<f32> &xGridVector = originalCoordinates.get_xGridVector();
 
@@ -394,7 +394,7 @@ namespace Anki
           const f32 xTransformedRaw = h00*xOriginal + h01*yOriginal + h02;
           const f32 yTransformedRaw = h10*xOriginal + h11*yOriginal + h12;
 
-          const f32 normalization = h20*xOriginal + h21*yOriginal + 1.0f;
+          const f32 normalization = h20*xOriginal + h21*yOriginal + h22;
 
           const f32 xTransformed = (xTransformedRaw / normalization) + centerOffset.x;
           const f32 yTransformed = (yTransformedRaw / normalization) + centerOffset.y;

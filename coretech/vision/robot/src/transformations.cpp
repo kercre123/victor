@@ -401,7 +401,9 @@ namespace Anki
         if(this->homography.Set(in) != 9)
           return RESULT_FAIL_INVALID_SIZE;
 
-        AnkiAssert(FLT_NEAR(in[2][2], 1.0f));
+        if(this->transformType != Transformations::TRANSFORM_PROJECTIVE) {
+          AnkiAssert(FLT_NEAR(in[2][2], 1.0f));
+        }
 
         return RESULT_OK;
       }
@@ -542,9 +544,9 @@ namespace Anki
         } else if(transformType == TRANSFORM_PROJECTIVE) {
           const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
           const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
-          const f32 h20 = homography[2][0]; const f32 h21 = homography[2][1]; const f32 h22 = 1.0f;
-
-          AnkiAssert(FLT_NEAR(homography[2][2], 1.0f));
+          const f32 h20 = homography[2][0]; const f32 h21 = homography[2][1]; const f32 h22 = homography[2][2];
+          
+          //AnkiAssert(FLT_NEAR(homography[2][2], 1.0f));
 
           for(s32 y=0; y<numPointsY; y++) {
             const f32 * restrict pXIn = xIn.Pointer(y,0);

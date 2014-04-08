@@ -227,10 +227,13 @@ namespace Anki
           
           // Sample all levels of the pyramid images
           for(s32 iScale=0; iScale<numPyramidLevels; iScale++) {
-            if((lastResult = Interp2_Affine<u8,f32>(templateImage, templateCoordinates[iScale], transformation.get_homography(), this->transformation.get_centerOffset(initialImageScaleF32), templateImagePyramid[iScale], INTERPOLATE_LINEAR)) != RESULT_OK) {
-              AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "Interp2_Affine failed with code 0x%x", lastResult);
+            if((lastResult = Interp2_Projective<u8,f32>(templateImage, templateCoordinates[iScale], transformation.get_homography(), this->transformation.get_centerOffset(initialImageScaleF32), templateImagePyramid[iScale], INTERPOLATE_LINEAR)) != RESULT_OK) {
+              AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "Interp2_Projective failed with code 0x%x", lastResult);
               return;
             }
+            
+            //cv::imshow("templateImagePyramid[iScale]", templateImagePyramid[iScale].get_CvMat_());
+            //cv::waitKey();
           }
           
           // Compute the spatial derivatives
@@ -1164,7 +1167,8 @@ namespace Anki
         const Array<f32> &homography = this->transformation.get_homography();
         const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2] / initialImageScaleF32;
         const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2] / initialImageScaleF32;
-        const f32 h20 = homography[2][0] * initialImageScaleF32; const f32 h21 = homography[2][1] * initialImageScaleF32; //const f32 h22 = 1.0f;
+        const f32 h20 = homography[2][0] * initialImageScaleF32; const f32 h21 = homography[2][1] * initialImageScaleF32;
+        const f32 h22 = homography[2][2] * initialImageScaleF32; // TODO: multiply by initialImageScale?
         
         verify_numInBounds = 0;
         verify_numSimilarPixels = 0;
@@ -1181,7 +1185,7 @@ namespace Anki
           const f32 xTransformedRaw = h00*xOriginal + h01*yOriginal + h02;
           const f32 yTransformedRaw = h10*xOriginal + h11*yOriginal + h12;
           
-          const f32 normalization = h20*xOriginal + h21*yOriginal + 1.0f;
+          const f32 normalization = h20*xOriginal + h21*yOriginal + h22;
           
           const f32 xTransformed = (xTransformedRaw / normalization) + centerOffsetScaled.x;
           const f32 yTransformed = (yTransformedRaw / normalization) + centerOffsetScaled.y;
