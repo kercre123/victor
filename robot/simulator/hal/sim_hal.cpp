@@ -81,9 +81,9 @@ namespace Anki {
       //webots::Node* estPose_;
       //char locStr[MAX_TEXT_DISPLAY_LENGTH];
       
-      // Gyro
+      // IMU
       webots::Gyro* gyro_;
-      f32 gyroValues_[3];
+      webots::Accelerometer* accel_;
       
       // For tracking wheel distance travelled
       f32 motorPositions_[HAL::MOTOR_COUNT];
@@ -292,7 +292,11 @@ namespace Anki {
       // Gyro
       gyro_ = webotRobot_.getGyro("gyro");
       gyro_->enable(TIME_STEP);
-
+      
+      // Accelerometer
+      accel_ = webotRobot_.getAccelerometer("accel");
+      accel_->enable(TIME_STEP);
+      
       if(InitSimRadio(robotID_) == EXIT_FAILURE) {
         PRINT("Failed to initialize Simulated Radio.\n");
         return EXIT_FAILURE;
@@ -357,13 +361,18 @@ namespace Anki {
     
     
     
-    //const f32* HAL::GyroGetSpeed()
-    //{
-    //  gyroValues_[0] = (f32)(gyro_->getValues()[0]);
-    //  gyroValues_[1] = (f32)(gyro_->getValues()[1]);
-    //  gyroValues_[2] = (f32)(gyro_->getValues()[2]);
-    //  return gyroValues_;
-    //}
+    void HAL::IMUReadData(HAL::IMU_DataStructure &IMUData)
+    {
+      const double* vals = gyro_->getValues();  // rad/s
+      IMUData.rate_x = (f32)(vals[0]);
+      IMUData.rate_y = (f32)(vals[1]);
+      IMUData.rate_z = (f32)(vals[2]);
+      
+      vals = accel_->getValues();   // m/s^2
+      IMUData.acc_x = (f32)(vals[0] * 1000);  // convert to mm/s^2
+      IMUData.acc_y = (f32)(vals[1] * 1000);
+      IMUData.acc_z = (f32)(vals[2] * 1000);
+    }
     
     
     // Set the motor power in the unitless range [-1.0, 1.0]
