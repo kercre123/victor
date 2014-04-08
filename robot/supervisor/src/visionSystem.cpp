@@ -358,20 +358,30 @@ namespace Anki {
                                                                         onchipScratch,
                                                                         offchipScratch);
 #elif DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
+#ifdef USE_HEADER_TEMPLATE
+        tracker = TemplateTracker::BinaryTracker(
+                                                Vision::MARKER_BATTERIES,
+                                                grayscaleImage,
+                                                trackingQuad,
+                                                parameters.scaleTemplateRegionPercent,
+                                                parameters.edgeDetection_threshold_yIncrement, parameters.edgeDetection_threshold_xIncrement,
+                                                parameters.edgeDetection_threshold_blackPercentile, parameters.edgeDetection_threshold_whitePercentile,
+                                                parameters.edgeDetection_threshold_scaleRegionPercent,
+                                                parameters.edgeDetection_minComponentWidth, parameters.edgeDetection_maxDetectionsPerType,
+                                                parameters.edgeDetection_everyNLines,
+                                                onchipScratch, offchipScratch);
+#else // #ifdef USE_HEADER_TEMPLATE
         tracker = TemplateTracker::BinaryTracker(
                                                  grayscaleImage,
                                                  trackingQuad,
                                                  parameters.scaleTemplateRegionPercent,
-                                                 parameters.edgeDetection_threshold_yIncrement,
-                                                 parameters.edgeDetection_threshold_xIncrement,
-                                                 parameters.edgeDetection_threshold_blackPercentile,
-                                                 parameters.edgeDetection_threshold_whitePercentile,
+                                                 parameters.edgeDetection_threshold_yIncrement, parameters.edgeDetection_threshold_xIncrement,
+                                                 parameters.edgeDetection_threshold_blackPercentile, parameters.edgeDetection_threshold_whitePercentile,
                                                  parameters.edgeDetection_threshold_scaleRegionPercent,
-                                                 parameters.edgeDetection_minComponentWidth,
-                                                 parameters.edgeDetection_maxDetectionsPerType,
+                                                 parameters.edgeDetection_minComponentWidth, parameters.edgeDetection_maxDetectionsPerType,
                                                  parameters.edgeDetection_everyNLines,
-                                                 onchipScratch,
-                                                 offchipScratch);
+                                                 onchipScratch, offchipScratch);
+#endif // #ifdef USE_HEADER_TEMPLATE ... #else                                               
 #endif
         
         if(!tracker.IsValid()) {
@@ -582,7 +592,7 @@ namespace Anki {
                                              theta_robot, theta_head);
         
 #else
-        const Quadrilateral<f32> sortedQuad  = currentQuad.ComputeClockwiseCorners();
+        const Quadrilateral<f32> sortedQuad  = currentQuad.ComputeClockwiseCorners<f32>();
         
         f32 dx = sortedQuad[3].x - sortedQuad[0].x;
         f32 dy = sortedQuad[3].y - sortedQuad[0].y;
@@ -683,7 +693,7 @@ namespace Anki {
         const f32 focalLength_x = headCamInfo_->focalLength_x;
         const f32 imageResolutionWidth_pix = detectionParameters_.detectionWidth;
         
-        Quadrilateral<f32> sortedQuad = currentQuad.ComputeClockwiseCorners();
+        Quadrilateral<f32> sortedQuad = currentQuad.ComputeClockwiseCorners<f32>();
         const Point<f32>& lineLeft  = (useTopBar ? sortedQuad[0] : sortedQuad[3]); // topLeft  or bottomLeft
         const Point<f32>& lineRight = (useTopBar ? sortedQuad[1] : sortedQuad[2]); // topRight or bottomRight
         

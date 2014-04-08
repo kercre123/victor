@@ -53,6 +53,12 @@ namespace Anki
     }
 #endif
 
+    template<typename Type> template<typename InType> void Point<Type>::SetCast(const Point<InType> &in)
+    {
+      this->x == static_cast<Type>(in.x);
+      this->y == static_cast<Type>(in.y);
+    }
+
     template<typename Type> void Point<Type>::Print() const
     {
       printf("(%d,%d) ", this->x, this->y);
@@ -324,13 +330,16 @@ namespace Anki
       printf("(%d,%d)->(%d,%d) ", this->left, this->top, this->right, this->bottom);
     }
 
-    template<typename Type> Point<Type> Rectangle<Type>::ComputeCenter() const
+    template<typename Type> template<typename OutType> Point<OutType> Rectangle<Type>::ComputeCenter() const
     {
-      Point<Type> center((this->left+this->right)/2, (this->top+this->bottom)/2);
+      Point<OutType> center(
+        (static_cast<OutType>(this->left) + static_cast<OutType>(this->right)) / 2,
+        (static_cast<OutType>(this->top) + static_cast<OutType>(this->bottom)) / 2);
+
       return center;
     }
 
-    template<typename Type> Rectangle<Type> Rectangle<Type>::ComputeScaledRectangle(const f32 scalePercent) const
+    template<typename Type> template<typename OutType> Rectangle<OutType> Rectangle<Type>::ComputeScaledRectangle(const f32 scalePercent) const
     {
       // TODO: should be done differently for int vs float?
 
@@ -343,11 +352,11 @@ namespace Anki
       const f32 dx2 = (scaledWidth - width) / 2.0f;
       const f32 dy2 = (scaledHeight - height) / 2.0f;
 
-      Rectangle<Type> scaledRect(
-        this->left - dx2,
-        this->right + dx2,
-        this->top - dy2,
-        this->bottom + dy2);
+      Rectangle<OutType> scaledRect(
+        static_cast<OutType>( static_cast<f32>(this->left)   - dx2 ),
+        static_cast<OutType>( static_cast<f32>(this->right)  + dx2 ),
+        static_cast<OutType>( static_cast<f32>(this->top)    - dy2 ),
+        static_cast<OutType>( static_cast<f32>(this->bottom) + dy2 ));
 
       return scaledRect;
     }
@@ -441,13 +450,13 @@ namespace Anki
         this->corners[3].x, this->corners[3].y);
     }
 
-    template<typename Type> Point<Type> Quadrilateral<Type>::ComputeCenter() const
+    template<typename Type> template<typename OutType> Point<OutType> Quadrilateral<Type>::ComputeCenter() const
     {
-      Point<Type> center(0, 0);
+      Point<OutType> center(0, 0);
 
       for(s32 i=0; i<4; i++) {
-        center.x += this->corners[i].x;
-        center.y += this->corners[i].y;
+        center.x += static_cast<OutType>(this->corners[i].x);
+        center.y += static_cast<OutType>(this->corners[i].y);
       }
 
       center.x /= 4;
@@ -456,53 +465,86 @@ namespace Anki
       return center;
     }
 
-    template<typename Type> Rectangle<Type> Quadrilateral<Type>::ComputeBoundingRectangle() const
+    template<typename Type> template<typename OutType> Rectangle<OutType> Quadrilateral<Type>::ComputeBoundingRectangle() const
     {
-      Rectangle<Type> boundingBox(this->corners[0].x,
-        this->corners[0].x,
-        this->corners[0].y,
-        this->corners[0].y);
+      Rectangle<OutType> boundingRect(
+        static_cast<OutType>(this->corners[0].x),
+        static_cast<OutType>(this->corners[0].x),
+        static_cast<OutType>(this->corners[0].y),
+        static_cast<OutType>(this->corners[0].y));
 
       // Initialize the template rectangle to the bounding box of the given
       // quadrilateral
       for(s32 i=1; i<4; ++i) {
-        boundingBox.left   = MIN(boundingBox.left,   this->corners[i].x);
-        boundingBox.right  = MAX(boundingBox.right,  this->corners[i].x);
-        boundingBox.top    = MIN(boundingBox.top,    this->corners[i].y);
-        boundingBox.bottom = MAX(boundingBox.bottom, this->corners[i].y);
+        boundingRect.left   = MIN(boundingRect.left,   static_cast<OutType>(this->corners[i].x));
+        boundingRect.right  = MAX(boundingRect.right,  static_cast<OutType>(this->corners[i].x));
+        boundingRect.top    = MIN(boundingRect.top,    static_cast<OutType>(this->corners[i].y));
+        boundingRect.bottom = MAX(boundingRect.bottom, static_cast<OutType>(this->corners[i].y));
       }
 
-      return boundingBox;
+      return boundingRect;
     }
 
-    template<typename Type> Quadrilateral<Type> Quadrilateral<Type>::ComputeClockwiseCorners() const
+    template<typename Type> template<typename OutType> Quadrilateral<OutType> Quadrilateral<Type>::ComputeClockwiseCorners() const
     {
       char tmpBuffer[128];
       MemoryStack scratch(tmpBuffer, 128);
 
       Array<f32> thetas(1,4,scratch);
       Array<s32> indexes(1,4,scratch);
-      Point<Type> center = this->ComputeCenter();
+      Point<f32> center = this->ComputeCenter<f32>();
 
       for(s32 i=0; i<4; i++) {
         f32 rho = 0.0f;
 
         Cart2Pol<f32>(
-          static_cast<f32>(this->corners[i].x - center.x),
-          static_cast<f32>(this->corners[i].y - center.y),
+          static_cast<f32>(this->corners[i].x) - center.x,
+          static_cast<f32>(this->corners[i].y) - center.y,
           rho, thetas[0][i]);
       }
 
       Matrix::Sort(thetas, indexes, 1);
 
-      const Quadrilateral<Type> sortedQuad(this->corners[indexes[0][0]], this->corners[indexes[0][1]], this->corners[indexes[0][2]], this->corners[indexes[0][3]]);
+      const Quadrilateral<OutType> sortedQuad(
+        Point<OutType>(static_cast<OutType>(this->corners[indexes[0][0]].x), static_cast<OutType>(this->corners[indexes[0][0]].y)),
+        Point<OutType>(static_cast<OutType>(this->corners[indexes[0][1]].x), static_cast<OutType>(this->corners[indexes[0][1]].y)),
+        Point<OutType>(static_cast<OutType>(this->corners[indexes[0][2]].x), static_cast<OutType>(this->corners[indexes[0][2]].y)),
+        Point<OutType>(static_cast<OutType>(this->corners[indexes[0][3]].x), static_cast<OutType>(this->corners[indexes[0][3]].y)));
 
       return sortedQuad;
     }
 
+    template<typename Type> template<typename OutType> Quadrilateral<OutType> Quadrilateral<Type>::ComputeRotatedCorners(const f32 radians) const
+    {
+      Point<f32> center = this->ComputeCenter<f32>();
+
+      Quadrilateral<OutType> rotatedQuad;
+
+      for(s32 i=0; i<4; i++) {
+        f32 rho;
+        f32 theta;
+
+        Cart2Pol<f32>(
+          static_cast<f32>(this->corners[i].x) - center.x,
+          static_cast<f32>(this->corners[i].y) - center.y,
+          rho, theta);
+
+        f32 newX;
+        f32 newY;
+
+        Pol2Cart<f32>(
+          rho, theta + radians,
+          newX, newY);
+
+        rotatedQuad[i] = Point<OutType>(static_cast<OutType>(newX + center.x), static_cast<OutType>(newY + center.y));
+      }
+
+      return rotatedQuad;
+    }
+
     template<typename Type> bool Quadrilateral<Type>::IsConvex() const
     {
-      Quadrilateral<Type> sortedQuad = this->ComputeClockwiseCorners();
+      Quadrilateral<Type> sortedQuad = this->ComputeClockwiseCorners<Type>();
 
       for(s32 iCorner=0; iCorner<4; iCorner++) {
         const Point<Type> &corner1 = sortedQuad[iCorner];

@@ -25,7 +25,7 @@ namespace Anki
     {
       PlanarTransformation_f32::PlanarTransformation_f32(const TransformType transformType, const Quadrilateral<f32> &initialCorners, const Array<f32> &initialHomography, MemoryStack &memory)
       {
-        this->centerOffset = initialCorners.ComputeCenter();
+        this->centerOffset = initialCorners.ComputeCenter<f32>();
 
         this->Init(transformType, initialCorners, initialHomography, centerOffset, memory);
       }
@@ -33,7 +33,7 @@ namespace Anki
       PlanarTransformation_f32::PlanarTransformation_f32(const TransformType transformType, const Quadrilateral<f32> &initialCorners, MemoryStack &memory)
       {
         this->homography = Array<f32>();
-        this->centerOffset = initialCorners.ComputeCenter();
+        this->centerOffset = initialCorners.ComputeCenter<f32>();
 
         this->Init(transformType, initialCorners, homography, centerOffset, memory);
       }
@@ -42,7 +42,7 @@ namespace Anki
       {
         this->homography = Array<f32>();
         this->initialCorners = Quadrilateral<f32>(Point<f32>(0.0f,0.0f), Point<f32>(0.0f,0.0f), Point<f32>(0.0f,0.0f), Point<f32>(0.0f,0.0f));
-        this->centerOffset = initialCorners.ComputeCenter();
+        this->centerOffset = initialCorners.ComputeCenter<f32>();
 
         this->Init(transformType, initialCorners, homography, centerOffset, memory);
       }

@@ -130,8 +130,14 @@ namespace Anki
 
     template<typename Type> void Cart2Pol(const Type x, const Type y, Type &rho, Type &theta)
     {
-      theta = atan2_fast(y, x);
+      theta = atan2_acc(y, x);
       rho = sqrtf(x*x + y*y);
+    }
+
+    template<typename Type> void Pol2Cart(const Type rho, const Type theta, Type &x, Type &y)
+    {
+      x = rho * cosf(theta);
+      y = rho * sinf(theta);
     }
 
     inline f32 Round(f32 x)

@@ -39,6 +39,8 @@ namespace Anki {
       // Set the docker here:
 #define DOCKING_ALGORITHM DOCKING_BINARY_TRACKER
       
+#define USE_HEADER_TEMPLATE //< Currently only supported for binary tracker and battery marker
+      
       // Set to 1 to use the top (or bottom) bar of the tracked marker to approximate
       // the pose of the block relative to the camera for docking.
       // NOTE: This *must* be set to 1 if using an affine tracker.
@@ -50,7 +52,7 @@ namespace Anki {
 #ifdef THIS_IS_PETES_BOARD
       #define SEND_DEBUG_STREAM 1
       #define RUN_SIMPLE_TRACKING_TEST
-      #define SEND_IMAGE_ONLY
+      //#define SEND_IMAGE_ONLY
       //#define SEND_BINARY_IMAGE_ONLY
 #else
       #define SEND_DEBUG_STREAM 0

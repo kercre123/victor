@@ -120,8 +120,7 @@ namespace Anki
           this->templateEdges.yDecreasing.IsValid() && this->templateEdges.yIncreasing.IsValid(),
           "BinaryTracker::BinaryTracker", "Could not allocate local memory");
 
-        const Rectangle<f32> edgeDetection_imageRegionOfInterestRaw = templateQuad.ComputeBoundingRectangle().ComputeScaledRectangle(edgeDetection_threshold_scaleRegionPercent);
-        const Rectangle<s32> edgeDetection_imageRegionOfInterest(static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.left), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.right), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.top), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.bottom));
+        const Rectangle<s32> edgeDetection_imageRegionOfInterest = templateQuad.ComputeBoundingRectangle<s32>().ComputeScaledRectangle<s32>(edgeDetection_threshold_scaleRegionPercent);
 
         this->lastGrayvalueThreshold = ComputeGrayvalueThreshold(
           templateImage,
@@ -134,8 +133,7 @@ namespace Anki
 
         this->lastImageHistogram.Set(this->templateHistogram);
 
-        const Rectangle<f32> templateRectRaw = templateQuad.ComputeBoundingRectangle().ComputeScaledRectangle(scaleTemplateRegionPercent);
-        const Rectangle<s32> templateRect(static_cast<s32>(templateRectRaw.left), static_cast<s32>(templateRectRaw.right), static_cast<s32>(templateRectRaw.top), static_cast<s32>(templateRectRaw.bottom));
+        const Rectangle<s32> templateRect = templateQuad.ComputeBoundingRectangle<s32>().ComputeScaledRectangle<s32>(scaleTemplateRegionPercent);
 
         const Result result = DetectBlurredEdges(templateImage, templateRect, this->lastGrayvalueThreshold, edgeDetection_minComponentWidth, edgeDetection_everyNLines, this->templateEdges);
 
@@ -315,8 +313,7 @@ namespace Anki
           //matlab.PutArray(this->templateImage, "templateImage");
         }
 
-        const Rectangle<f32> edgeDetection_imageRegionOfInterestRaw = templateQuad.ComputeBoundingRectangle().ComputeScaledRectangle(edgeDetection_threshold_scaleRegionPercent);
-        const Rectangle<s32> edgeDetection_imageRegionOfInterest(static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.left), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.right), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.top), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.bottom));
+        const Rectangle<s32> edgeDetection_imageRegionOfInterest = templateQuad.ComputeBoundingRectangle<s32>().ComputeScaledRectangle<s32>(edgeDetection_threshold_scaleRegionPercent);
 
         this->lastGrayvalueThreshold = ComputeGrayvalueThreshold(
           templateImage,
@@ -399,6 +396,9 @@ namespace Anki
         if(SerializedBuffer::SerializeDescriptionStrings("BinaryTracker", objectName, &segment, totalDataLength) != RESULT_OK)
           return RESULT_FAIL;
 
+        if(SerializedBuffer::SerializeRawBasicType<bool>("templateEdges.isValid", this->isValid, &segment, totalDataLength) != RESULT_OK)
+          return RESULT_FAIL;
+
         // First, serialize the transformation
         if(this->transformation.SerializeRaw("transformation", &segment, totalDataLength) != RESULT_OK)
           return RESULT_FAIL;
@@ -430,6 +430,8 @@ namespace Anki
         // TODO: check if the name is correct
         if(SerializedBuffer::DeserializeDescriptionStrings(NULL, objectName, buffer, bufferLength) != RESULT_OK)
           return RESULT_FAIL;
+
+        this->isValid = SerializedBuffer::DeserializeRawBasicType<bool>(NULL, buffer, bufferLength);
 
         // First, deserialize the transformation
         //this->transformation = Transformations::PlanarTransformation_f32(Transformations::TRANSFORM_PROJECTIVE, memory);
@@ -697,8 +699,7 @@ namespace Anki
 
         const Quadrilateral<f32> curWarpedCorners = this->get_transformation().get_transformedCorners(fastScratch);
 
-        const Rectangle<f32> edgeDetection_imageRegionOfInterestRaw = curWarpedCorners.ComputeBoundingRectangle().ComputeScaledRectangle(edgeDetection_threshold_scaleRegionPercent);
-        const Rectangle<s32> edgeDetection_imageRegionOfInterest(static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.left), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.right), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.top), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.bottom));
+        const Rectangle<s32> edgeDetection_imageRegionOfInterest = curWarpedCorners.ComputeBoundingRectangle<s32>().ComputeScaledRectangle<s32>(edgeDetection_threshold_scaleRegionPercent);
 
         this->lastGrayvalueThreshold = ComputeGrayvalueThreshold(
           nextImage,
@@ -719,7 +720,7 @@ namespace Anki
 
           //lastResult = this->transformation.VerifyTransformation_Projective_LinearInterpolate(
           lastResult = this->transformation.VerifyTransformation_Projective_NearestNeighbor(
-            templateImage, this->templateHistogram, this->templateQuad.ComputeBoundingRectangle(),
+            templateImage, this->templateHistogram, this->templateQuad.ComputeBoundingRectangle<f32>(),
             nextImage, this->lastImageHistogram,
             templateRegionHeight, templateRegionWidth, verify_coordinateIncrement,
             verify_maxPixelDifference, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels,
@@ -2430,7 +2431,7 @@ namespace Anki
           RoundUp<size_t>(yDecreasingUsed, MEMORY_ALIGNMENT) +
           RoundUp<size_t>(yIncreasingUsed, MEMORY_ALIGNMENT);
 
-        const s32 requiredBytes = 512 + numTemplatePixels*sizeof(Point<s16>) + Transformations::PlanarTransformation_f32::get_serializationSize() + 14*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
+        const s32 requiredBytes = 512 + numTemplatePixels*sizeof(Point<s16>) + Transformations::PlanarTransformation_f32::get_serializationSize() + 16*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
 
         return requiredBytes;
       }

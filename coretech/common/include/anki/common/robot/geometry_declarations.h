@@ -51,6 +51,12 @@ namespace Anki
       cv::Point_<Type> get_CvPoint_();
 #endif
 
+      // Read in the input, then cast it to this object's type
+      //
+      // WARNING:
+      // This should be kept explicit, to prevent accidental casting between different datatypes.
+      template<typename InType> void SetCast(const Point<InType> &in);
+
       void Print() const;
 
       bool operator== (const Point<Type> &point2) const;
@@ -159,11 +165,11 @@ namespace Anki
 
       void Print() const;
 
-      Point<Type> ComputeCenter() const;
+      template<typename OutType> Point<OutType> ComputeCenter() const;
 
       // If scalePercent is less-than 1.0, the rectangle is shrunk around its center
       // If scalePercent is greater-than 1.0, the rectangle is expanded around its center
-      Rectangle<Type> ComputeScaledRectangle(const f32 scalePercent) const;
+      template<typename OutType> Rectangle<OutType> ComputeScaledRectangle(const f32 scalePercent) const;
 
       bool operator== (const Rectangle<Type> &rect2) const;
 
@@ -253,15 +259,17 @@ namespace Anki
 
       void Print() const;
 
-      Point<Type> ComputeCenter() const;
+      template<typename OutType> Point<OutType> ComputeCenter() const;
 
       // WARNING:
       // The width and height of a floating point Rectangle is different than that of an integer rectangle.
-      Rectangle<Type> ComputeBoundingRectangle() const;
+      template<typename OutType> Rectangle<OutType> ComputeBoundingRectangle() const;
 
       // Returns a copy of this Quadrilateral with sorted corners, so they are clockwise around the centroid
       // Warning: This may give weird results for non-convex quadrilaterals
-      Quadrilateral<Type> ComputeClockwiseCorners() const;
+      template<typename OutType> Quadrilateral<OutType> ComputeClockwiseCorners() const;
+
+      template<typename OutType> Quadrilateral<OutType> ComputeRotatedCorners(const f32 radians) const;
 
       bool IsConvex() const;
 

@@ -55,6 +55,7 @@ namespace Anki
 
     // Cartesian coordinates to Polar coordinates
     template<typename Type> void Cart2Pol(const Type x, const Type y, Type &rho, Type &theta);
+    template<typename Type> void Pol2Cart(const Type rho, const Type theta, Type &x, Type &y);
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
     // Converts from typeid names to openCV types
