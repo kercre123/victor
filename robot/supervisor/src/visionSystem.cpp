@@ -372,6 +372,26 @@ namespace Anki {
                                                  parameters.edgeDetection_everyNLines,
                                                  onchipScratch,
                                                  offchipScratch);
+        
+#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
+        
+        tracker = TemplateTracker::LucasKanadeTracker_SampledPlanar6dof(grayscaleImage,
+                                                                        trackingQuad,
+                                                                        parameters.scaleTemplateRegionPercent,
+                                                                        parameters.numPyramidLevels,
+                                                                        Transformations::TRANSFORM_PROJECTIVE,
+                                                                        parameters.maxSamplesAtBaseLevel,
+                                                                        headCamInfo_->focalLength_x,
+                                                                        headCamInfo_->focalLength_y,
+                                                                        headCamInfo_->center_x,
+                                                                        headCamInfo_->center_y,
+                                                                        trackingMarkerWidth_mm,
+                                                                        ccmScratch,
+                                                                        onchipScratch,
+                                                                        offchipScratch);
+        
+#else
+#error Unknown DOCKING_ALGORITHM.
 #endif
         
         if(!tracker.IsValid()) {
@@ -504,10 +524,17 @@ namespace Anki {
           converged = false;
         }
         
-#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PLANAR6DOF
+#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
         
-        // Nothing to do until this is implemented in embedded code!
-        const Result trackerResult = RESULT_OK;
+        const Result trackerResult = tracker.UpdateTrack(grayscaleImage,
+                                                         parameters.maxIterations,
+                                                         parameters.convergenceTolerance,
+                                                         parameters.verify_maxPixelDifference,
+                                                         converged,
+                                                         verify_meanAbsoluteDifference,
+                                                         verify_numInBounds,
+                                                         verify_numSimilarPixels,
+                                                         onchipScratch); // TODO: onchip scratch?
         
 #else
 #error Unknown DOCKING_ALGORITHM!

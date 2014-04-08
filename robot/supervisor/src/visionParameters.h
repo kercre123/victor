@@ -34,7 +34,7 @@ namespace Anki {
 #define DOCKING_LUCAS_KANADE_PROJECTIVE         3 //< LucasKanadeTracker_Projective (With Projective + Affine option)
 #define DOCKING_LUCAS_KANADE_SAMPLED_PROJECTIVE 4 //<
 #define DOCKING_BINARY_TRACKER                  5 //< BinaryTracker
-#define DOCKING_LUCAS_KANADE_PLANAR6DOF         6 //< Currently only implemented in Matlab (USE_MATLAB_TRACKER = 1)
+#define DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF 6 //< Currently only implemented in Matlab (USE_MATLAB_TRACKER = 1)
       
       // Set the docker here:
 #define DOCKING_ALGORITHM DOCKING_BINARY_TRACKER
@@ -164,11 +164,8 @@ namespace Anki {
       typedef Embedded::TemplateTracker::LucasKanadeTracker_SampledProjective Tracker;
 #elif DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
       typedef Embedded::TemplateTracker::BinaryTracker Tracker;
-#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PLANAR6DOF
-#if !USE_MATLAB_TRACKER
-#error Planar 6DoF tracker is currently only available using Matlab.
-#endif
-      typedef Embedded::TemplateTracker::LucasKanadeTracker_Projective Tracker; // just to keep compilation happening
+#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
+      typedef Embedded::TemplateTracker::LucasKanadeTracker_SampledPlanar6dof Tracker;
 #else
 #error Unknown DOCKING_ALGORITHM
 #endif
