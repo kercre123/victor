@@ -83,6 +83,7 @@ namespace Anki {
            && HeadController::IsCalibrated()
            ) {
           PRINT("Motors calibrated\n");
+          IMUFilter::Reset();
           isDone = true;
         }
         
