@@ -14,9 +14,16 @@ namespace Anki {
         f32 rot_ = 0;   // radians
         f32 rotSpeed_ = 0; // rad/s
         
+        // Angle of accelerometer wrt gravity horizontal
+        f32 pitch_ = 0;
+        
         f32 gyro_filt[3];
         f32 gyro_robot_frame_filt[3];
         const f32 RATE_FILT_COEFF = 0.9f;
+
+        f32 accel_filt[3];
+        f32 accel_robot_frame_filt[3];
+        const f32 ACCEL_FILT_COEFF = 0.4f;
         
       } // "private" namespace
       
@@ -34,6 +41,9 @@ namespace Anki {
         // Get IMU data
         HAL::IMU_DataStructure imu_data;
         HAL::IMUReadData(imu_data);
+        
+        
+        ////// Gyro Update //////
         
         // Filter rotation speeds
         // TODO: Do this in hardware?
@@ -76,6 +86,17 @@ namespace Anki {
         f32 dAngle = rotSpeed_ * CONTROL_DT;
         rot_ += dAngle;
         
+        
+        
+        ///// Accelerometer update /////
+        accel_filt[0] = imu_data.acc_x * ACCEL_FILT_COEFF + accel_filt[0] * (1.f-ACCEL_FILT_COEFF);
+        accel_filt[1] = imu_data.acc_y * ACCEL_FILT_COEFF + accel_filt[1] * (1.f-ACCEL_FILT_COEFF);
+        accel_filt[2] = imu_data.acc_z * ACCEL_FILT_COEFF + accel_filt[2] * (1.f-ACCEL_FILT_COEFF);
+        
+        pitch_ = atan2(accel_filt[0], accel_filt[2]);
+        
+        //PERIODIC_PRINT(50, "Pitch %f\n", RAD_TO_DEG_F32(pitch_));
+        
         return retVal;
         
       } // Update()
@@ -89,6 +110,11 @@ namespace Anki {
       f32 GetRotationSpeed()
       {
         return rotSpeed_;
+      }
+      
+      f32 GetPitch()
+      {
+        return pitch_;
       }
       
 

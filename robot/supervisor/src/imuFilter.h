@@ -30,9 +30,12 @@ namespace Anki {
       // ReturnCode Init();
       ReturnCode Update();
 
-      
+      // Rotation (or "yaw"). Turning left is positive.
       f32 GetRotation();
       f32 GetRotationSpeed();
+      
+      // Angle above gravity horizontal
+      f32 GetPitch();
       
     } // namespace IMUFilter
   } // namespace Cozmo
