@@ -298,7 +298,7 @@ namespace Anki {
           power_ = 0.f;
           inPosition_ = true;
 #if(DEBUG_HEAD_CONTROLLER)
-          PRINT(" HEAD HEIGHT REACHED (%f mm)\n", GetHeightMM());
+          PRINT(" HEAD ANGLE REACHED (%f rad)\n", GetAngleRad() );
 #endif
         }
         
