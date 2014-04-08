@@ -545,7 +545,9 @@ namespace Anki {
           return EXIT_FAILURE;
         }
         
+#if DOCKING_ALGORITHM != DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
         // Check for a super shrunk or super large template
+        // (I don't think this works for planar 6dof homographies?  Try dividing by h22?)
         {
           // TODO: make not hacky
           const Array<f32> &homography = tracker.get_transformation().get_homography();
@@ -575,6 +577,7 @@ namespace Anki {
             converged = false;
           }
         }
+#endif // #if DOCKING_ALGORITHM != DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
         
         MatlabVisualization::SendTrack(grayscaleImage, tracker, converged, offchipScratch);
         
@@ -604,7 +607,7 @@ namespace Anki {
         GetPoseChange(T_fwd_robot, T_hor_robot, theta_robot);
         Radians theta_head = GetCurrentHeadAngle();
         
-#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PLANAR6DOF
+#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF && USE_MATLAB_TRACKER
         
         MatlabVisionProcessor::UpdateTracker(T_fwd_robot, T_hor_robot,
                                              theta_robot, theta_head);
@@ -694,7 +697,7 @@ namespace Anki {
 #endif
         } // if(tracker transformation type == TRANSLATION...)
         
-#endif // if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PLANAR6DOF
+#endif // if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
         
         MatlabVisualization::SendTrackerPrediction_After(GetTrackerQuad(scratch));
         
@@ -750,7 +753,7 @@ namespace Anki {
         dockErrMsg.y_horErr  = midpointError;
         dockErrMsg.angleErr  = angleError;
         
-#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PLANAR6DOF
+#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
         
 #if USE_MATLAB_TRACKER
         MatlabVisionProcessor::ComputeProjectiveDockingSignal(currentQuad,
@@ -766,7 +769,7 @@ namespace Anki {
 #elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PROJECTIVE || DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
 
         
-#if 0 && USE_MATLAB_TRACKER
+#if USE_MATLAB_TRACKER
         MatlabVisionProcessor::ComputeProjectiveDockingSignal(currentQuad,
                                                               dockErrMsg.x_distErr,
                                                               dockErrMsg.y_horErr,
