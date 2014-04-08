@@ -41,7 +41,7 @@ namespace Anki
           Point<f32>(baseImageHalfWidth,baseImageHalfHeight),
           Point<f32>(-baseImageHalfWidth,baseImageHalfHeight));
 
-        Quadrilateral<f32> newCorners = transformation.TransformQuadrilateral(in, scratch, 1.0f);
+        Quadrilateral<f32> newCorners = transformation.Transform(in, scratch, 1.0f);
 
         //const f32 change = sqrtf(Matrix::Mean<f32,f32>(tmp1));
         f32 minChange = 1e10f;

@@ -50,7 +50,7 @@ namespace Anki {
 #ifdef THIS_IS_PETES_BOARD
       #define SEND_DEBUG_STREAM 1
       #define RUN_SIMPLE_TRACKING_TEST
-      //#define SEND_IMAGE_ONLY
+      #define SEND_IMAGE_ONLY
       //#define SEND_BINARY_IMAGE_ONLY
 #else
       #define SEND_DEBUG_STREAM 0
@@ -113,7 +113,9 @@ namespace Anki {
         s32 edgeDetection_everyNLines;
         s32 matching_maxTranslationDistance;
         s32 matching_maxProjectiveDistance;
-        s32 verification_maxTranslationDistance;
+        s32 verify_maxTranslationDistance;
+        u8 verify_maxPixelDifference;
+        s32 verify_coordinateIncrement;
         f32 percentMatchedPixelsThreshold;
         
 #else

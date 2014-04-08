@@ -155,11 +155,14 @@ namespace Anki {
     RotationMatrix3d R(other.getTranspose());
     R.preMultiplyBy(*this);
     
-    const Radians angleDiff( std::acos(0.5f*(R.Trace() - 1.f)) );
-    
-    return angleDiff;
+    //const Radians angleDiff( std::acos(0.5f*(R.Trace() - 1.f)) );
+    return R.GetAngle();
   }
   
+  Radians RotationMatrix3d::GetAngle() const
+  {
+    return Radians( std::acos(0.5f*(this->Trace() - 1.f)) );
+  }
   
   void Rodrigues(const RotationVector3d &Rvec_in,
                  RotationMatrix3d &Rmat_out)

@@ -82,9 +82,12 @@ namespace Anki {
     
   }; // class Matrix
 
+  // The type for representing matrix dimensions
+  // (Should this be something else? unsigned int? uchar? int?)
+  typedef size_t MatDimType;
   
   // A class for small matrices, whose size is known at compile time
-  template<size_t NROWS, size_t NCOLS, typename T>
+  template<MatDimType NROWS, MatDimType NCOLS, typename T>
   class SmallMatrix
 #if ANKICORETECH_USE_OPENCV
   : private cv::Matx<T,NROWS,NCOLS> // private inheritance from cv::Matx
@@ -96,23 +99,29 @@ namespace Anki {
     // Constructors:
     SmallMatrix();
     SmallMatrix(const T* vals); // *assumes* vals is NROWS*NCOLS long
-    SmallMatrix(std::initializer_list<T>);
+    
+    SmallMatrix(std::initializer_list<T> valsList);
+    SmallMatrix(std::initializer_list<Point<NROWS,T> > colsList);
+    
     SmallMatrix(const SmallMatrix<NROWS,NCOLS,T> &M);
+    
+    //    template<typename T_other>
+    //    SmallMatrix(const SmallMatrix<NROWS,NCOLS,T_other> &M);
     
     //SmallMatrix<NROWS,NCOLS,T>& operator=(const SmallMatrix& other);
     
     // Matrix element access:
-    T&       operator() (unsigned int i, unsigned int j);
-    const T& operator() (unsigned int i, unsigned int j) const;
+    T&       operator() (MatDimType i, MatDimType j);
+    const T& operator() (MatDimType i, MatDimType j) const;
 
     // Extract a single row or column as a point
-    Point<NCOLS,T> getRow(const unsigned int i) const;
-    Point<NROWS,T> getColumn(const unsigned int j) const;
+    Point<NCOLS,T> getRow(const MatDimType i) const;
+    Point<NROWS,T> getColumn(const MatDimType j) const;
     
     // Matrix multiplication:
     // Matrix[MxN] * Matrix[NxK] = Matrix[MxK]
-    template<size_t KCOLS>
-    SmallMatrix<NROWS,KCOLS,T> operator* (const SmallMatrix<NCOLS,KCOLS,T> &other) const;
+    template<size_t KCOLS, typename T_other, typename T_work=T>
+    SmallMatrix<NROWS,KCOLS,T_work> operator* (const SmallMatrix<NCOLS,KCOLS,T_other> &other) const;
     
     // Matrix transpose:
     SmallMatrix<NCOLS,NROWS,T> getTranspose(void) const;
@@ -123,8 +132,8 @@ namespace Anki {
     // TODO: Add explicit pseudo-inverse? (inv(A'A)*A')
     // SmallMatrix<T,NCOLS,NROWS> getPsuedoInverse(void) const;
     
-    unsigned int numRows() const;
-    unsigned int numCols() const;
+    MatDimType numRows() const;
+    MatDimType numCols() const;
     
 #if ANKICORETECH_USE_OPENCV
   public:
@@ -149,34 +158,55 @@ namespace Anki {
   }; // class SmallMatrix
   
   // Comparisons for equality and near-equality:
-  template<size_t NROWS, size_t NCOLS, typename T>
+  template<MatDimType NROWS, MatDimType NCOLS, typename T>
   bool operator==(const SmallMatrix<NROWS,NCOLS,T> &M1,
                   const SmallMatrix<NROWS,NCOLS,T> &M2);
   
-  template<size_t NROWS, size_t NCOLS, typename T>
+  template<MatDimType NROWS, MatDimType NCOLS, typename T>
   bool nearlyEqual(const SmallMatrix<NROWS,NCOLS,T> &M1,
                    const SmallMatrix<NROWS,NCOLS,T> &M2,
                    const T eps = std::numeric_limits<T>::epsilon());
   
   // Absolute value of all elements
-  template<size_t NROWS, size_t NCOLS, typename T>
+  template<MatDimType NROWS, MatDimType NCOLS, typename T>
   SmallMatrix<NROWS,NCOLS,T> abs(const SmallMatrix<NROWS,NCOLS,T>& M);
   
+  // Generic ND matrix-point multiplication
+  // Working (and output) precision (type) is Twork
+  template<MatDimType NROWS, MatDimType NCOLS, typename Tmat, typename Tpt, typename Twork=Tpt>
+  Point<NROWS,Twork> operator*(const SmallMatrix<NROWS,NCOLS,Tmat> &M,
+                              const Point<NCOLS,Tpt> &p)
+  {
+    Point<NROWS,Twork> result;
+    for(MatDimType i=0; i<NROWS; ++i) {
+      result[i] = static_cast<Twork>(M(i,0)) * static_cast<Twork>(p[0]);
+      for(MatDimType j=1; j<NCOLS; ++j) {
+        result[i] += static_cast<Twork>(M(i,j)) * static_cast<Twork>(p[j]);
+      }
+    }
+    
+    return result;
+  }
+  
+  
   // An extension of the SmallMatrix class for square matrices
-  template<size_t DIM, typename T>
+  template<MatDimType DIM, typename T>
   class SmallSquareMatrix : public SmallMatrix<DIM,DIM,T>
   {
   public:
     SmallSquareMatrix();
     SmallSquareMatrix(const SmallMatrix<DIM,DIM,T> &M);
+    SmallSquareMatrix(std::initializer_list<Point<DIM,T> > colsList); // list of columns
     
     using SmallMatrix<DIM,DIM,T>::operator();
     
     // Matrix multiplication in place...
     // ... this = this * other;
-    void operator*=(const SmallSquareMatrix<DIM,T> &other);
+    template<typename T_other>
+    void operator*=(const SmallSquareMatrix<DIM,T_other> &other);
     // ... this = other * this;
-    void preMultiplyBy(const SmallSquareMatrix<DIM,T> &other);
+    template<typename T_other>
+    void preMultiplyBy(const SmallSquareMatrix<DIM,T_other> &other);
        
     // Transpose: (Note that we can transpose square matrices in place)
     using SmallMatrix<DIM,DIM,T>::getTranspose;
@@ -198,49 +228,41 @@ namespace Anki {
   typedef SmallMatrix<3,4,float> Matrix_3x4f;
   
   // Common 2D matrix-point multiplication:
-  template<typename T>
-  Point2<T> operator*(const SmallSquareMatrix<2,T> &M,
-                      const Point2<T> &p)
+  template<typename Tmat, typename Tpt, typename Twork=Tpt>
+  Point2<Twork> operator*(const SmallSquareMatrix<2,Tmat> &M,
+                          const Point2<Tpt> &p)
   {
-    Point2<T> result(M(0,0)*p.x() + M(0,1)*p.y(),
-                     M(1,0)*p.x() + M(1,1)*p.y());
+    const Twork px = static_cast<Twork>(p.x());
+    const Twork py = static_cast<Twork>(p.y());
+    
+    Point2<Twork> result(static_cast<Twork>(M(0,0))*px + static_cast<Twork>(M(0,1))*py,
+                         static_cast<Twork>(M(1,0))*px + static_cast<Twork>(M(1,1))*py);
     
     return result;
   }
   
   // Common 3D matrix-point multiplication:
-  template<typename T>
-  Point3<T> operator*(const SmallSquareMatrix<3,T> &M,
-                      const Point3<T> &p)
+  template<typename Tmat, typename Tpt, typename Twork=Tpt>
+  Point3<Twork> operator*(const SmallSquareMatrix<3,Tmat> &M,
+                          const Point3<Tpt> &p)
   {
-    Point3<T> result(M(0,0)*p.x() + M(0,1)*p.y() + M(0,2)*p.z(),
-                     M(1,0)*p.x() + M(1,1)*p.y() + M(1,2)*p.z(),
-                     M(2,0)*p.x() + M(2,1)*p.y() + M(2,2)*p.z());
+    const Twork px = static_cast<Twork>(p.x());
+    const Twork py = static_cast<Twork>(p.y());
+    const Twork pz = static_cast<Twork>(p.z());
+    
+    Point3<Twork> result(static_cast<Twork>(M(0,0))*px + static_cast<Twork>(M(0,1))*py + static_cast<Twork>(M(0,2))*pz,
+                         static_cast<Twork>(M(1,0))*px + static_cast<Twork>(M(1,1))*py + static_cast<Twork>(M(1,2))*pz,
+                         static_cast<Twork>(M(2,0))*px + static_cast<Twork>(M(2,1))*py + static_cast<Twork>(M(2,2))*pz);
     
     return result;
   }
   
-  // Generic ND matrix-point multiplication
-  template<size_t DIM, typename T>
-  Point<DIM,T> operator*(const SmallSquareMatrix<DIM,T> &M,
-                         const Point<DIM,T> &p)
-  {
-    Point<DIM,T> result;
-    for(unsigned int i=0; i<DIM; ++i) {
-      result[i] = M(i,0) * p[0];
-      for(unsigned int j=1; j<DIM; ++j) {
-        result[i] += M(i,j)*p[j];
-      }
-    }
-    
-    return result;
-  }
   
-  template<size_t DIM, typename T>
+  template<MatDimType DIM, typename T>
   T SmallSquareMatrix<DIM,T>::Trace() const
   {
     T trace = (*this)(0,0);
-    for(size_t i=1; i<DIM; ++i) {
+    for(MatDimType i=1; i<DIM; ++i) {
       trace += (*this)(i,i);
     }
     return trace;
@@ -306,7 +328,7 @@ namespace Anki {
     // For now (?), rely on OpenCV for matrix multiplication:
     Matrix<T> result( this->get_CvMat_() * other.get_CvMat_() );
 #else
-    assert(false);
+    CORETECH_ASSERT(false);
     // TODO: Implement our own matrix multiplication.
 #endif
     
@@ -325,7 +347,7 @@ namespace Anki {
     // For now (?), rely on OpenCV for matrix multiplication:
     *this = this->get_CvMat_() * other.get_CvMat_();
 #else
-    assert(false);
+    CORETECH_ASSERT(false);
     // TODO: Implement our own matrix multiplication.
 #endif
     
@@ -343,7 +365,7 @@ namespace Anki {
     // For now (?), rely on OpenCV for matrix inversion:
     *this = (Matrix<T>)this->get_CvMat_().inv();
 #else
-    assert(false);
+    CORETECH_ASSERT(false);
     // TODO: Define our own opencv-free inverse?
 #endif
   } // Matrix<T>::Invert()
@@ -357,7 +379,7 @@ namespace Anki {
     // For now (?), rely on OpenCV for matrix inversion:
     Matrix<T> result(this->get_CvMat_().inv());
 #else
-    assert(false);
+    CORETECH_ASSERT(false);
     // TODO: Define our own opencv-free transpose?
 #endif
     
@@ -374,7 +396,7 @@ namespace Anki {
     Matrix<T> result;
     cv::transpose(this->get_CvMat_(), result.get_CvMat_());
 #else
-    assert(false);
+    CORETECH_ASSERT(false);
     // TODO: Define our own opencv-free tranpose?
 #endif
     
@@ -389,7 +411,7 @@ namespace Anki {
 #if ANKICORETECH_USE_OPENCV
     cv::transpose(this->get_CvMat_(), this->get_CvMat_());
 #else
-    assert(false);
+    CORETECH_ASSERT(false);
     // TODO: Define our own opencv-free tranpose?
 #endif
   } // Matrix<T>::Tranpose()
@@ -411,120 +433,154 @@ namespace Anki {
 #pragma mark --- SmallMatrix Implementations ---
   
   
-  template<size_t NROWS, size_t NCOLS, typename T>
+  template<MatDimType NROWS, MatDimType NCOLS, typename T>
   SmallMatrix<NROWS,NCOLS,T>::SmallMatrix()
 #if ANKICORETECH_USE_OPENCV
   : cv::Matx<T,NROWS,NCOLS>()
 #endif
   {
 #if (!defined(ANKICORETECH_USE_OPENCV))
-    assert(false);
+    CORETECH_ASSERT(false);
     // TODO: Define our own opencv-free constructor?
 #endif
   }
   
   
-  template<size_t NROWS, size_t NCOLS, typename T>
+  template<MatDimType NROWS, MatDimType NCOLS, typename T>
   SmallMatrix<NROWS,NCOLS,T>::SmallMatrix(const T* vals)
 #if ANKICORETECH_USE_OPENCV
   : cv::Matx<T,NROWS,NCOLS>(vals)
 #endif
   {
 #if !defined(ANKICORETECH_USE_OPENCV)
-    assert(false);
+    CORETECH_ASSERT(false);
     // TODO: Define our own opencv-free constructor?
 #endif
   }
   
-  template<size_t NROWS, size_t NCOLS, typename T>
+  template<MatDimType NROWS, MatDimType NCOLS, typename T>
   SmallMatrix<NROWS,NCOLS,T>::SmallMatrix(std::initializer_list<T> valsList)
   {
     CORETECH_ASSERT(valsList.size() == NROWS*NCOLS);
     
-#if ANKICORETECH_USE_OPENCV
     T vals[NROWS*NCOLS];
-    size_t i=0;
+    MatDimType i=0;
     for(auto listItem = valsList.begin(); i<NROWS*NCOLS; ++listItem, ++i ) {
       vals[i] = *listItem;
     }
-    *this = cv::Matx<T,NROWS,NCOLS>(vals);
-#else
-    assert(false);
-    // TODO: Define our own opencv-free constructor?
-#endif
+    *this = SmallMatrix<NROWS,NCOLS,T>(vals);
+  }
+ 
+  template<MatDimType NROWS, MatDimType NCOLS, typename T>
+  SmallMatrix<NROWS,NCOLS,T>::SmallMatrix(std::initializer_list<Point<NROWS,T> > colsList)
+  {
+    CORETECH_ASSERT(colsList.size() == NCOLS);
+    
+    MatDimType j=0;
+    for(auto col = colsList.begin(); j<NCOLS; ++col, ++j)
+    {
+      for(MatDimType i=0; i<NROWS; ++i) {
+        this->operator()(i,j) = (*col)[i];
+      }
+    }
   }
   
-  template<size_t NROWS, size_t NCOLS, typename T>
+  
+  /*
+  template<DimType NROWS, DimType NCOLS>
+  SmallMatrix<NROWS,NCOLS,float>::SmallMatrix(const SmallMatrix<NROWS,NCOLS,float> &M)
+  {
+    // TODO: Is there a better way to do this than looping and casting each element?
+    for(size_t i=0; i<NROWS; ++i) {
+      for(size_t j=0; j<NCOLS; ++j) {
+        this->operator()(i,j) = static_cast<float>(M(i,j));
+      }
+    }
+  }
+   */
+  
+  
+  template<MatDimType NROWS, MatDimType NCOLS, typename T>
   SmallMatrix<NROWS,NCOLS,T>::SmallMatrix(const SmallMatrix<NROWS,NCOLS,T> &M)
 #if ANKICORETECH_USE_OPENCV
   : cv::Matx<T,NROWS,NCOLS>(M)
 #endif
   {
 #if !defined(ANKICORETECH_USE_OPENCV)
-    assert(false);
+    CORETECH_ASSERT(false);
     // TODO: Define our own opencv-free copy constructor?
 #endif
   }
-
   
-  template<size_t NROWS, size_t NCOLS, typename T>
+  
+  template<MatDimType NROWS, MatDimType NCOLS, typename T>
   SmallMatrix<NROWS,NCOLS,T>::SmallMatrix(const cv::Matx<T,NROWS,NCOLS> &cvMatrix)
 #if ANKICORETECH_USE_OPENCV
   : cv::Matx<T,NROWS,NCOLS>(cvMatrix)
 #endif
   {
 #if !defined(ANKICORETECH_USE_OPENCV)
-    assert(false);
+    CORETECH_ASSERT(false);
     // TODO: Define our own opencv-free constructor?
 #endif
   }
 
   // Matrix element access:
-  template<size_t NROWS, size_t NCOLS, typename T>
-  T&  SmallMatrix<NROWS,NCOLS,T>::operator() (unsigned int i, unsigned int j)
+  template<MatDimType NROWS, MatDimType NCOLS, typename T>
+  T&  SmallMatrix<NROWS,NCOLS,T>::operator() (const MatDimType i, const MatDimType j)
   {
     CORETECH_THROW_IF(i >= NROWS || j >= NCOLS);
-      
+#if ANKICORETECH_USE_OPENCV
     return cv::Matx<T,NROWS,NCOLS>::operator()(i,j);
+#else
+    CORETECH_ASSERT(false);
+    // TODO: Define our own opencv-free (i,j) accessor?
+    return T(0);
+#endif
   }
   
-  template<size_t NROWS, size_t NCOLS, typename T>
-  const T& SmallMatrix<NROWS,NCOLS,T>::operator() (unsigned int i, unsigned int j) const
+  template<MatDimType NROWS, MatDimType NCOLS, typename T>
+  const T& SmallMatrix<NROWS,NCOLS,T>::operator() (const MatDimType i, const MatDimType j) const
   {
     CORETECH_THROW_IF(i >= NROWS || j >= NCOLS);
-    
+#if ANKICORETECH_USE_OPENCV
     return cv::Matx<T,NROWS,NCOLS>::operator()(i,j);
+#else
+    CORETECH_ASSERT(false);
+    // TODO: Define our own opencv-free const (i,j) accessor?
+    return T(0);
+#endif
   }
 
   
-  template<size_t NROWS, size_t NCOLS, typename T>
-  Point<NCOLS,T> SmallMatrix<NROWS,NCOLS,T>::getRow(const unsigned int i) const
+  template<MatDimType NROWS, MatDimType NCOLS, typename T>
+  Point<NCOLS,T> SmallMatrix<NROWS,NCOLS,T>::getRow(const MatDimType i) const
   {
     CORETECH_THROW_IF(i >= NROWS);
     
     Point<NCOLS,T> row;
-    for(unsigned int j=0; j<NCOLS; ++j) {
-      row[j] = cv::Matx<T,NROWS,NCOLS>::operator()(i,j);
+    for(MatDimType j=0; j<NCOLS; ++j) {
+      row[j] = this->operator()(i,j);
     }
     
     return row;
   }
   
-  template<size_t NROWS, size_t NCOLS, typename T>
-  Point<NROWS,T> SmallMatrix<NROWS,NCOLS,T>::getColumn(const unsigned int j) const
+  template<MatDimType NROWS, MatDimType NCOLS, typename T>
+  Point<NROWS,T> SmallMatrix<NROWS,NCOLS,T>::getColumn(const MatDimType j) const
   {
     CORETECH_THROW_IF(j >= NCOLS);
     
     Point<NROWS,T> column;
     for(unsigned int i=0; i<NROWS; ++i) {
-      column[i] = cv::Matx<T,NROWS,NCOLS>::operator()(i,j);
+      column[i] = this->operator()(i,j);
     }
     
     return column;
   }
   
   /*
-  template<size_t NROWS, size_t NCOLS, typename T>
+  template<DimType NROWS, DimType NCOLS, typename T>
   SmallMatrix<NROWS,NCOLS,T>& SmallMatrix<NROWS,NCOLS,T>::operator=(const SmallMatrix& other)
   {
     if(this != &other) {
@@ -536,35 +592,42 @@ namespace Anki {
 
   // Matrix multiplication:
   // Matrix[MxN] * Matrix[NxK] = Matrix[MxK]
-  template<size_t NROWS, size_t NCOLS, typename T>
-  template<size_t KCOLS>
-  SmallMatrix<NROWS,KCOLS,T> SmallMatrix<NROWS,NCOLS,T>::operator* (const SmallMatrix<NCOLS,KCOLS,T> &other) const
+  template<MatDimType NROWS, MatDimType NCOLS, typename T>
+  template<size_t KCOLS, typename T_other, typename T_work>
+  SmallMatrix<NROWS,KCOLS,T_work> SmallMatrix<NROWS,NCOLS,T>::operator* (const SmallMatrix<NCOLS,KCOLS,T_other> &other) const
   {
+    SmallMatrix<NROWS,KCOLS,T_work> res;
 #if ANKICORETECH_USE_OPENCV
-    SmallMatrix<NROWS,KCOLS,T> res;
-    res = this->get_CvMatx_() * other.get_CvMatx_();
-    return res;
+    res = cv::Matx<T_work,NROWS,NCOLS>(this->get_CvMatx_()) * cv::Matx<T_work,NCOLS,KCOLS>(other.get_CvMatx_());
 #else
-    assert(false);
-    // TODO: Define our own opencv-free multiplication?
+    // TODO: This could probably be made more efficient by avoiding so many operator(i,j) calls
+    for(MatDimType iThis=0; iThis<NROWS; ++iThis) {
+      for(MatDimType jOther=0; jOther<KCOLS; ++jOther) {
+        res(iThis,jOther) = T(0);
+        for(MatDimType jThis=0; jThis<NCOLS; ++jThis) {
+          res(iThis,jOther) += static_cast<T>(this->operator()(iThis,jThis)*other(jThis,jOther));
+        }
+      }
+    }
 #endif
+    return res;
   }
   
   
   
   // Matrix transpose:
-  template<size_t NROWS, size_t NCOLS, typename T>
+  template<MatDimType NROWS, MatDimType NCOLS, typename T>
   SmallMatrix<NCOLS,NROWS,T> SmallMatrix<NROWS,NCOLS,T>::getTranspose(void) const
   {
 #if ANKICORETECH_USE_OPENCV
     return this->t();
 #else
-    assert(false);
+    CORETECH_ASSERT(false);
     // TODO: Define our own opencv-free tranpose?
 #endif
   }
   
-  template<size_t NROWS, size_t NCOLS, typename T>
+  template<MatDimType NROWS, MatDimType NCOLS, typename T>
   SmallMatrix<NROWS,NCOLS,T>& SmallMatrix<NROWS,NCOLS,T>::abs()
   {
     for(size_t i=0; i<NROWS; ++i) {
@@ -575,19 +638,19 @@ namespace Anki {
     return *this;
   }
   
-  template<size_t NROWS, size_t NCOLS, typename T>
-  unsigned int SmallMatrix<NROWS,NCOLS,T>::numRows() const
+  template<MatDimType NROWS, MatDimType NCOLS, typename T>
+  MatDimType SmallMatrix<NROWS,NCOLS,T>::numRows() const
   {
     return NROWS;
   }
   
-  template<size_t NROWS, size_t NCOLS, typename T>
-  unsigned int SmallMatrix<NROWS,NCOLS,T>::numCols() const
+  template<MatDimType NROWS, MatDimType NCOLS, typename T>
+  MatDimType SmallMatrix<NROWS,NCOLS,T>::numCols() const
   {
     return NCOLS;
   }
   
-  template<size_t NROWS, size_t NCOLS, typename T>
+  template<MatDimType NROWS, MatDimType NCOLS, typename T>
   bool operator==(const SmallMatrix<NROWS,NCOLS,T> &M1,
                   const SmallMatrix<NROWS,NCOLS,T> &M2)
   {
@@ -603,7 +666,7 @@ namespace Anki {
   } // operator==(SmallMatrix,SmallMatrix)
   
   
-  template<size_t NROWS, size_t NCOLS, typename T>
+  template<MatDimType NROWS, MatDimType NCOLS, typename T>
   bool nearlyEqual(const SmallMatrix<NROWS,NCOLS,T> &M1,
                    const SmallMatrix<NROWS,NCOLS,T> &M2,
                    const T eps)
@@ -620,7 +683,7 @@ namespace Anki {
   } // nearlyEqual(SmallMatrix,SmallMatrix)
   
   
-  template<size_t NROWS, size_t NCOLS, typename T>
+  template<MatDimType NROWS, MatDimType NCOLS, typename T>
   SmallMatrix<NROWS,NCOLS,T> abs(const SmallMatrix<NROWS,NCOLS,T>& M)
   {
     SmallMatrix<NROWS,NCOLS,T> Mcopy(M);
@@ -628,13 +691,13 @@ namespace Anki {
   } // abs()
   
 #if ANKICORETECH_USE_OPENCV
-  template<size_t NROWS, size_t NCOLS, typename T>
+  template<MatDimType NROWS, MatDimType NCOLS, typename T>
   cv::Matx<T,NROWS,NCOLS>& SmallMatrix<NROWS,NCOLS,T>::get_CvMatx_()
   {
     return (*this);
   }
   
-  template<size_t NROWS, size_t NCOLS, typename T>
+  template<MatDimType NROWS, MatDimType NCOLS, typename T>
   const cv::Matx<T,NROWS,NCOLS>& SmallMatrix<NROWS,NCOLS,T>::get_CvMatx_() const
   {
     return (*this);
@@ -642,7 +705,7 @@ namespace Anki {
   
 #endif
   
-  template<size_t NROWS, size_t NCOLS, typename T>
+  template<MatDimType NROWS, MatDimType NCOLS, typename T>
   std::ostream& operator<<(std::ostream& out, const SmallMatrix<NROWS,NCOLS,T>& m)
   {
     for (int i=0; i<NROWS; ++i) {
@@ -655,26 +718,26 @@ namespace Anki {
   }
   
   // Matrix inversion:
-  template<size_t NROWS, size_t NCOLS, typename T>
+  template<MatDimType NROWS, MatDimType NCOLS, typename T>
   void SmallMatrix<NROWS,NCOLS,T>::Invert(void)
   {
 #if ANKICORETECH_USE_OPENCV
     (*this) = this->inv();
 #else
-    assert(false);
+    CORETECH_ASSERT(false);
     // TODO: Define our own opencv-free inverse?
 #endif
     
   }
   
-  template<size_t NROWS, size_t NCOLS, typename T>
+  template<MatDimType NROWS, MatDimType NCOLS, typename T>
   SmallMatrix<NROWS,NCOLS,T> SmallMatrix<NROWS,NCOLS,T>::getInverse(void) const
   {
 #if ANKICORETECH_USE_OPENCV
     SmallMatrix<NROWS,NCOLS,T> res(this->inv());
     return res;
 #else
-    assert(false);
+    CORETECH_ASSERT(false);
     // TODO: Define our own opencv-free inverse?
 #endif
     
@@ -684,34 +747,37 @@ namespace Anki {
   
 #pragma mark --- SmallSquareMatrix Implementations
   
-  template<size_t DIM, typename T>
+  template<MatDimType DIM, typename T>
   SmallSquareMatrix<DIM,T>::SmallSquareMatrix(void)
   : SmallMatrix<DIM,DIM,T>()
   {
     
   }
 
-  template<size_t DIM, typename T>
+  template<MatDimType DIM, typename T>
   SmallSquareMatrix<DIM,T>::SmallSquareMatrix(const SmallMatrix<DIM,DIM,T> &M)
   : SmallMatrix<DIM,DIM,T>(M)
   {
     
   }
   
-  template<size_t DIM, typename T>
-  void SmallSquareMatrix<DIM,T>::operator*=(const SmallSquareMatrix<DIM,T> &other)
+  template<MatDimType DIM, typename T>
+  SmallSquareMatrix<DIM,T>::SmallSquareMatrix(std::initializer_list<Point<DIM,T> > colsList)
+  : SmallMatrix<DIM,DIM,T>(colsList)
   {
-#if ANKICORETECH_USE_OPENCV
-    (*this) = (*this) * other;
-#else
-    assert(false);
-    // TODO: Define our own opencv-free in-place multiplication?
-#endif
     
   }
+  
+  template<MatDimType DIM, typename T>
+  template<typename T_other>
+  void SmallSquareMatrix<DIM,T>::operator*=(const SmallSquareMatrix<DIM,T_other> &other)
+  {
+    (*this) = (*this) * other;
+  }
 
-  template<size_t DIM, typename T>
-  void SmallSquareMatrix<DIM,T>::preMultiplyBy(const SmallSquareMatrix<DIM,T> &other)
+  template<MatDimType DIM, typename T>
+  template<typename T_other>
+  void SmallSquareMatrix<DIM,T>::preMultiplyBy(const SmallSquareMatrix<DIM,T_other> &other)
   {
     // TODO: Come up with our own in-place, super-awesome pre-multiplcation
     // method (since opencv doesn't give us one, and this causes a copy)
@@ -720,11 +786,11 @@ namespace Anki {
     *this = otherCopy;
   }
   
-  template<size_t DIM, typename T>
+  template<MatDimType DIM, typename T>
   SmallSquareMatrix<DIM,T>&  SmallSquareMatrix<DIM,T>::Transpose(void)
   {
-    for(unsigned int i=0; i<DIM; ++i) {
-      for(unsigned int j=(i+1); j<DIM; ++j) {
+    for(MatDimType i=0; i<DIM; ++i) {
+      for(MatDimType j=(i+1); j<DIM; ++j) {
         std::swap((*this)(i,j), (*this)(j,i));
       }
     }
@@ -733,13 +799,13 @@ namespace Anki {
   } // SmallSquareMatrix::Tranpose()
    
   // Matrix inversion:
-  template<size_t DIM, typename T>
+  template<MatDimType DIM, typename T>
   void SmallSquareMatrix<DIM,T>::Invert(void)
   {
     this->SmallMatrix<DIM,DIM,T>::Invert();
   }
   
-  template<size_t DIM, typename T>
+  template<MatDimType DIM, typename T>
   SmallSquareMatrix<DIM,T> SmallSquareMatrix<DIM,T>::getInverse(void) const
   {
     return this->SmallMatrix<DIM,DIM,T>::getInverse();

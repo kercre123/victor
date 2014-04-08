@@ -22,13 +22,29 @@ namespace Anki
     typedef struct Histogram
     {
       FixedLengthList<s32> counts;
-      s32 numElements;
+
+      // Automatically compute some statistics when computing the histogram
+      s32 numElements; //< The sum of all bins
+      s32 min; //< The absolute min (0th percentile)
+      s32 max; //< The absolute max (100th percentile)
+      s32 sum; //< The sum of the values of all elements
+      f32 mean; //< The mean of the values of all elements
+      f32 standardDeviation; //< The unbiased standard deviation of the values of all elements
 
       Histogram();
       Histogram(const s32 numBins, MemoryStack &memory);
+
+      void Reset();
+
+      Result Set(const Histogram &in);
+
+      bool IsValid() const;
+
+      s32 get_numBins() const;
     } Histogram;
 
     // Counts the number of pixels for each 0-255 grayvalue, and returns a list of the counts
+    Result ComputeHistogram(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const s32 yIncrement, const s32 xIncrement, Histogram &histogram);
     Histogram ComputeHistogram(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const s32 yIncrement, const s32 xIncrement, MemoryStack &memory);
 
     // Based on an input histogram, what is the bin index of a percentile [0,1]

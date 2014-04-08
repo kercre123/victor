@@ -20,7 +20,7 @@ namespace Anki
   {
     namespace Flags
     {
-// #pragma mark --- Declarations ---
+      // #pragma mark --- Declarations ---
 
       class Buffer
       {
@@ -31,16 +31,16 @@ namespace Anki
         Buffer();
         Buffer(bool zeroAllocatedMemory, bool useBoundaryFillPatterns, bool isFullyAllocated);
 
-        void set_zeroAllocatedMemory(bool value);
+        Buffer& set_zeroAllocatedMemory(bool value);
         bool get_zeroAllocatedMemory() const;
 
-        void set_useBoundaryFillPatterns(bool value);
+        Buffer& set_useBoundaryFillPatterns(bool value);
         bool get_useBoundaryFillPatterns() const;
 
-        void set_isFullyAllocated(bool value);
+        Buffer& set_isFullyAllocated(bool value);
         bool get_isFullyAllocated() const;
 
-        void set_rawFlags(u32 rawFlags);
+        Buffer& set_rawFlags(u32 rawFlags);
         u32 get_rawFlags() const;
 
       protected:
@@ -70,7 +70,7 @@ namespace Anki
         static inline Type epsilon() { return 0; }
       };
 
-// #pragma mark --- Declaration Specializations ---
+      // #pragma mark --- Declaration Specializations ---
       template<> class TypeCharacteristics<bool>
       {
       public:

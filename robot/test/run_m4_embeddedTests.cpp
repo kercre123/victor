@@ -27,7 +27,7 @@ namespace Anki
 
         s32 numPassedTests_common = 0;
         s32 numFailedTests_common = 0;
-        //RUN_ALL_COMMON_TESTS(numPassedTests_common, numFailedTests_common);
+        RUN_ALL_COMMON_TESTS(numPassedTests_common, numFailedTests_common);
         
 				s32 numPassedTests_vision = 0;
         s32 numFailedTests_vision = 0;

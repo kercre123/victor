@@ -635,11 +635,7 @@ Supervisor {
 								Transform {
 								  translation 0 0.017 -0.005
 								  children [
-									DEF GRIPPER_SIDE Shape {
-									  geometry Box {
-										size 0.003 0.006 0.02
-									  }
-									}
+								    USE GRIPPER_SIDE
 								  ]
 								}
 								Transform {
@@ -654,6 +650,57 @@ Supervisor {
 								}
 							   ]
 							 }
+							DEF CALIBRATION_RIG Group {
+							  children [
+							    Transform {
+							      translation 0 -.0125 -0.0135
+							      children [
+							        DEF CALIBRATION_TAB Group {
+							          children [
+							            Shape {
+							              geometry Box {
+							                size .003 .003 .003
+							              }
+							            }
+							            Transform {
+							              translation -.0015 0 0
+							              children [
+							                Shape {
+							                  geometry Box {
+							                    size .0002 .0029 .0029
+							                  }
+							                  appearance Appearance {
+               						            texture ImageTexture {
+					                              url "textures/calibrationDot.png"
+                						        }
+                						      }
+                						    }
+                						  ] # Transform children
+                						} # Transform
+                					  ] # CALIBRATION_TAB Group Children
+              						} # CALIBRATION_TAB Group   
+							      ] # Transform Children
+							    } # Transform
+							    Transform {
+							      translation 0 .0125 -0.0135
+							      children [
+							        USE CALIBRATION_TAB
+							      ]
+							    }
+							    Transform {
+							      translation 0 .0125 0.0035
+							      children [
+							        USE CALIBRATION_TAB
+							      ]
+							    }
+							    Transform {
+							      translation 0 -.0125 0.0035
+							      children [
+							        USE CALIBRATION_TAB
+							      ]
+							    }
+							  ] # CALIBRATION_RIG children
+							} # CALIBRATION_RIG Group
 						  ]
 						  boundingObject USE LIFTER_SHAPE
 						  #physics Physics {

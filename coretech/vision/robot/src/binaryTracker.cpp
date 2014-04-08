@@ -16,14 +16,15 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/draw.h"
 #include "anki/common/robot/comparisons.h"
 #include "anki/common/robot/serialize.h"
+#include "anki/common/robot/compress.h"
 
 #include "anki/vision/robot/fiducialDetection.h"
 #include "anki/vision/robot/imageProcessing.h"
 #include "anki/vision/robot/transformations.h"
 
-#include <math.h>
+#include "anki/vision/robot/marker_battery.h"
 
-//#define SEND_BINARY_IMAGES_TO_MATLAB
+#include <math.h>
 
 #define USE_ARM_ACCELERATION
 
@@ -84,11 +85,12 @@ namespace Anki
         const s32 edgeDetection_minComponentWidth, //< The smallest horizontal size of a component (1 to 4 is good)
         const s32 edgeDetection_maxDetectionsPerType, //< As many as you have memory and time for
         const s32 edgeDetection_everyNLines, //< As many as you have time for
-        MemoryStack &memory)
+        MemoryStack &fastMemory,
+        MemoryStack &slowMemory)
         : isValid(false)
       {
-        const s32 templateImageHeight = templateImage.get_size(0);
-        const s32 templateImageWidth = templateImage.get_size(1);
+        this->templateImageHeight = templateImage.get_size(0);
+        this->templateImageWidth = templateImage.get_size(1);
 
         AnkiConditionalErrorAndReturn(templateImageHeight > 0 && templateImageWidth > 0,
           "BinaryTracker::BinaryTracker", "template widths and heights must be greater than zero");
@@ -97,18 +99,21 @@ namespace Anki
           "BinaryTracker::BinaryTracker", "templateImage is not valid");
 
         // TODO: make this work for non-qvga resolution
-        Point<f32> centerOffset((templateImage.get_size(1)-1) / 2.0f, (templateImage.get_size(0)-1) / 2.0f);
-        this->transformation = Transformations::PlanarTransformation_f32(Transformations::TRANSFORM_PROJECTIVE, templateQuad, centerOffset, memory);
+        Point<f32> centerOffset((templateImageWidth-1) / 2.0f, (templateImageHeight-1) / 2.0f);
+        this->transformation = Transformations::PlanarTransformation_f32(Transformations::TRANSFORM_PROJECTIVE, templateQuad, centerOffset, slowMemory);
 
-        //this->templateQuad = templateQuad;
+        this->templateQuad = templateQuad;
 
-        this->templateImageHeight = templateImage.get_size(0);
-        this->templateImageWidth = templateImage.get_size(1);
+        this->templateEdges.xDecreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, fastMemory);
+        this->templateEdges.xIncreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, fastMemory);
+        this->templateEdges.yDecreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, fastMemory);
+        this->templateEdges.yIncreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, fastMemory);
 
-        this->templateEdges.xDecreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, memory);
-        this->templateEdges.xIncreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, memory);
-        this->templateEdges.yDecreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, memory);
-        this->templateEdges.yIncreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, memory);
+        this->templateHistogram = Histogram(256, fastMemory);
+        this->lastImageHistogram = Histogram(256, fastMemory);
+
+        this->templateImage = Array<u8>(templateImageHeight, templateImageWidth, slowMemory);
+        this->templateImage.Set(templateImage);
 
         AnkiConditionalErrorAndReturn(
           this->templateEdges.xDecreasing.IsValid() && this->templateEdges.xIncreasing.IsValid() &&
@@ -118,14 +123,16 @@ namespace Anki
         const Rectangle<f32> edgeDetection_imageRegionOfInterestRaw = templateQuad.ComputeBoundingRectangle().ComputeScaledRectangle(edgeDetection_threshold_scaleRegionPercent);
         const Rectangle<s32> edgeDetection_imageRegionOfInterest(static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.left), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.right), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.top), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.bottom));
 
-        this->lastGrayvalueThreshold = ComputeGrayvalueThrehold(
+        this->lastGrayvalueThreshold = ComputeGrayvalueThreshold(
           templateImage,
           edgeDetection_imageRegionOfInterest,
           edgeDetection_threshold_yIncrement,
           edgeDetection_threshold_xIncrement,
           edgeDetection_threshold_blackPercentile,
           edgeDetection_threshold_whitePercentile,
-          memory);
+          this->templateHistogram);
+
+        this->lastImageHistogram.Set(this->templateHistogram);
 
         const Rectangle<f32> templateRectRaw = templateQuad.ComputeBoundingRectangle().ComputeScaledRectangle(scaleTemplateRegionPercent);
         const Rectangle<s32> templateRect(static_cast<s32>(templateRectRaw.left), static_cast<s32>(templateRectRaw.right), static_cast<s32>(templateRectRaw.top), static_cast<s32>(templateRectRaw.bottom));
@@ -137,51 +144,194 @@ namespace Anki
         AnkiConditionalErrorAndReturn(result == RESULT_OK,
           "BinaryTracker::BinaryTracker", "DetectBlurredEdge failed");
 
-#ifdef SEND_BINARY_IMAGES_TO_MATLAB
-        {
-          MemoryStack matlabScratch(malloc(1000000),1000000);
-
-          cv::Mat drawn = DrawIndexes(this->templateImageHeight, this->templateImageWidth, this->templateEdges.xDecreasing, this->templateEdges.xIncreasing, this->templateEdges.yDecreasing, this->templateEdges.yIncreasing);
-
-          cv::imshow("binary template", drawn);
-          cv::waitKey();
-
-          Matlab matlab(false);
-
-          Array<u8> rendered(templateImageHeight, templateImageWidth, matlabScratch);
-
-          rendered.SetZero();
-          DrawPoints(this->templateEdges.xDecreasing, 1, rendered);
-          matlab.PutArray(rendered, "templateEdges.xDecreasing");
-
-          rendered.SetZero();
-          DrawPoints(this->templateEdges.xIncreasing, 1, rendered);
-          matlab.PutArray(rendered, "templateEdges.xIncreasing");
-
-          rendered.SetZero();
-          DrawPoints(this->templateEdges.yDecreasing, 1, rendered);
-          matlab.PutArray(rendered, "templateEdges.yDecreasing");
-
-          rendered.SetZero();
-          DrawPoints(this->templateEdges.yIncreasing, 1, rendered);
-          matlab.PutArray(rendered, "templateEdges.yIncreasing");
-
-          free(matlabScratch.get_buffer());
-        }
-#endif // #ifdef SEND_BINARY_IMAGES_TO_MATLAB
-
-        this->homographyOffsetX = (static_cast<f32>(templateImageWidth)-1.0f) / 2.0f;
-        this->homographyOffsetY = (static_cast<f32>(templateImageHeight)-1.0f) / 2.0f;
-
-        this->grid = Meshgrid<f32>(
-          Linspace(-homographyOffsetX, homographyOffsetX, static_cast<s32>(FLT_FLOOR(templateImageWidth))),
-          Linspace(-homographyOffsetY, homographyOffsetY, static_cast<s32>(FLT_FLOOR(templateImageHeight))));
-
-        this->xGrid = this->grid.get_xGridVector().Evaluate(memory);
-        this->yGrid = this->grid.get_yGridVector().Evaluate(memory);
-
         this->isValid = true;
       } // BinaryTracker::BinaryTracker()
+
+      BinaryTracker::BinaryTracker(
+        const Anki::Vision::MarkerType markerType,
+        const Array<u8> &templateImage,
+        const Quadrilateral<f32> &templateQuad,
+        const f32 scaleTemplateRegionPercent,
+        const s32 edgeDetection_threshold_yIncrement,
+        const s32 edgeDetection_threshold_xIncrement,
+        const f32 edgeDetection_threshold_blackPercentile,
+        const f32 edgeDetection_threshold_whitePercentile,
+        const f32 edgeDetection_threshold_scaleRegionPercent,
+        const s32 edgeDetection_minComponentWidth,
+        const s32 edgeDetection_maxDetectionsPerType,
+        const s32 edgeDetection_everyNLines,
+        MemoryStack &fastMemory,
+        MemoryStack &slowMemory)
+        : isValid(false)
+      {
+        const bool useRealTemplateImage = true;
+
+        this->templateImageHeight = templateImage.get_size(0);
+        this->templateImageWidth = templateImage.get_size(1);
+
+        // Only a few markers are currently supported
+        AnkiConditionalErrorAndReturn(markerType == Anki::Vision::MARKER_BATTERIES,
+          "BinaryTracker::BinaryTracker", "markerType %d is not supported for header initialization", markerType);
+
+        AnkiConditionalErrorAndReturn(templateImageHeight > 0 && templateImageWidth > 0,
+          "BinaryTracker::BinaryTracker", "template widths and heights must be greater than zero");
+
+        // TODO: make this work for non-qvga resolution
+        Point<f32> centerOffset((templateImageWidth-1) / 2.0f, (templateImageHeight-1) / 2.0f);
+        this->transformation = Transformations::PlanarTransformation_f32(Transformations::TRANSFORM_PROJECTIVE, templateQuad, centerOffset, slowMemory);
+
+        this->templateQuad = templateQuad;
+
+        this->templateEdges.xDecreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, fastMemory);
+        this->templateEdges.xIncreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, fastMemory);
+        this->templateEdges.yDecreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, fastMemory);
+        this->templateEdges.yIncreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, fastMemory);
+
+        this->templateHistogram = Histogram(256, fastMemory);
+        this->lastImageHistogram = Histogram(256, fastMemory);
+
+        this->templateImage = Array<u8>(templateImageHeight, templateImageWidth, slowMemory);
+
+        AnkiConditionalErrorAndReturn(
+          this->templateEdges.xDecreasing.IsValid() && this->templateEdges.xIncreasing.IsValid() &&
+          this->templateEdges.yDecreasing.IsValid() && this->templateEdges.yIncreasing.IsValid() &&
+          this->templateHistogram.IsValid() && this->lastImageHistogram.IsValid() && this->templateImage.IsValid(),
+          "BinaryTracker::BinaryTracker", "Could not allocate local memory");
+
+        this->templateImage.Set(templateImage);
+
+        // Place the header image in the templateImage
+        {
+          PUSH_MEMORY_STACK(slowMemory);
+
+          const s32 borderWidth = edgeDetection_minComponentWidth + 2;
+
+          //
+          // Decode the compressed binary image to an uncompressed image
+          //
+
+          Array<u8> binaryTemplate;
+
+          if(markerType == Anki::Vision::MARKER_BATTERIES) {
+            binaryTemplate = DecodeRunLengthBinary<u8>(
+              &battery[0], battery_WIDTH,
+              battery_ORIGINAL_HEIGHT, battery_ORIGINAL_WIDTH, Flags::Buffer(false,false,false),
+              slowMemory);
+          }
+
+          AnkiConditionalErrorAndReturn(binaryTemplate.IsValid(),
+            "BinaryTracker::BinaryTracker", "Could not allocate local memory");
+
+          Matrix::DotMultiply<u8,u8,u8>(binaryTemplate, 255, binaryTemplate);
+
+          const s32 binaryTemplateHeight = binaryTemplate.get_size(0);
+          const s32 binaryTemplateWidth = binaryTemplate.get_size(1);
+
+          //
+          // Create a padded version of the binary template
+          //
+
+          const s32 binaryTemplateWithBorderHeight = binaryTemplateHeight + 2*borderWidth;
+          const s32 binaryTemplateWithBorderWidth = binaryTemplateWidth + 2*borderWidth;
+          Array<u8> binaryTemplateWithBorder(binaryTemplateWithBorderHeight, binaryTemplateWithBorderWidth, slowMemory, Flags::Buffer(false,false,false));
+
+          AnkiConditionalErrorAndReturn(binaryTemplateWithBorder.IsValid(),
+            "BinaryTracker::BinaryTracker", "Could not allocate local memory");
+
+          binaryTemplateWithBorder.Set(255);
+
+          for(s32 y=0; y<binaryTemplateHeight; y++) {
+            const u8 * restrict pBinaryTemplate = binaryTemplate.Pointer(y,0);
+            u8 * restrict pBinaryTemplateWithBorder = binaryTemplateWithBorder.Pointer(y+borderWidth,borderWidth);
+
+            memcpy(pBinaryTemplateWithBorder, pBinaryTemplate, binaryTemplateWidth);
+          }
+
+          //
+          // Compute the warp between the binary header and fiducial detection
+          //
+
+          const f32 binaryTemplateHeightF32 = static_cast<f32>(binaryTemplate.get_size(0));
+          const f32 binaryTemplateWidthF32 = static_cast<f32>(binaryTemplate.get_size(1));
+
+          FixedLengthList<Point<f32> > binaryCorners(4, slowMemory);
+          binaryCorners.set_size(4);
+          binaryCorners[0] = Point<f32>(0.5f+borderWidth,                        0.5f+borderWidth);
+          binaryCorners[1] = Point<f32>(0.5f+borderWidth,                        binaryTemplateHeightF32-0.5f+borderWidth);
+          binaryCorners[2] = Point<f32>(binaryTemplateWidthF32-0.5f+borderWidth, 0.5f+borderWidth);
+          binaryCorners[3] = Point<f32>(binaryTemplateWidthF32-0.5f+borderWidth, binaryTemplateHeightF32-0.5f+borderWidth);
+
+          FixedLengthList<Point<f32> > templateCorners(4, slowMemory);
+          templateCorners.set_size(4);
+          templateCorners[0] = templateQuad[0];
+          templateCorners[1] = templateQuad[1];
+          templateCorners[2] = templateQuad[2];
+          templateCorners[3] = templateQuad[3];
+
+          Array<f32> binaryTemplateHomography(3, 3, slowMemory);
+          Matrix::EstimateHomography(binaryCorners, templateCorners, binaryTemplateHomography, slowMemory);
+
+          // Extract the edges, and transform them to the actual fiducial detection location
+          // TODO: add subpixel
+          const Rectangle<s32> templateRect(0, binaryTemplateWithBorderWidth-1, 0, binaryTemplateWithBorderHeight-1);
+          const Result result = DetectBlurredEdges(binaryTemplateWithBorder, templateRect, 128, edgeDetection_minComponentWidth, edgeDetection_everyNLines, this->templateEdges);
+
+          this->templateEdges.imageHeight = templateImageHeight;
+          this->templateEdges.imageWidth = templateImageWidth;
+
+          AnkiConditionalErrorAndReturn(result == RESULT_OK,
+            "BinaryTracker::BinaryTracker", "DetectBlurredEdge failed");
+
+          Transformations::PlanarTransformation_f32 binaryTemplateTransform(
+            Transformations::TRANSFORM_PROJECTIVE,
+            Quadrilateral<f32>(binaryCorners[0], binaryCorners[1], binaryCorners[2], binaryCorners[3]),
+            binaryTemplateHomography,
+            Point<f32>(0.0f,0.0f),
+            slowMemory);
+
+          binaryTemplateTransform.Transform(this->templateEdges.xDecreasing, this->templateEdges.xDecreasing, slowMemory);
+          binaryTemplateTransform.Transform(this->templateEdges.xIncreasing, this->templateEdges.xIncreasing, slowMemory);
+          binaryTemplateTransform.Transform(this->templateEdges.yDecreasing, this->templateEdges.yDecreasing, slowMemory);
+          binaryTemplateTransform.Transform(this->templateEdges.yIncreasing, this->templateEdges.yIncreasing, slowMemory);
+
+          //this->templateImage.Show("template real", false, false, true);
+          //this->ShowTemplate("Template", false, true);
+
+          if(!useRealTemplateImage) {
+            // Just warp the binary header image to the template image
+            Matrix::EstimateHomography(templateCorners, binaryCorners, binaryTemplateHomography, slowMemory);
+            const Point<f32> centerOffset(0.0f, 0.0f);
+            Meshgrid<f32> originalCoordinates( LinearSequence<f32>(0.5f, 1.0f, templateImageWidth-0.5f), LinearSequence<f32>(0.5f, 1.0f, templateImageHeight-0.5f));
+
+            Interp2_Projective<u8,u8>(binaryTemplateWithBorder, originalCoordinates, binaryTemplateHomography, centerOffset, this->templateImage, INTERPOLATE_LINEAR, 255);
+          }
+
+          //this->templateImage.Show("template binary", true, false, true);
+
+          //Matlab matlab(false);
+
+          //matlab.PutArray(binaryTemplate, "binaryTemplate");
+          //matlab.PutArray(binaryTemplateWithBorder, "binaryTemplateWithBorder");
+          //matlab.PutArray(this->templateImage, "templateImage");
+        }
+
+        const Rectangle<f32> edgeDetection_imageRegionOfInterestRaw = templateQuad.ComputeBoundingRectangle().ComputeScaledRectangle(edgeDetection_threshold_scaleRegionPercent);
+        const Rectangle<s32> edgeDetection_imageRegionOfInterest(static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.left), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.right), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.top), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.bottom));
+
+        this->lastGrayvalueThreshold = ComputeGrayvalueThreshold(
+          templateImage,
+          edgeDetection_imageRegionOfInterest,
+          edgeDetection_threshold_yIncrement,
+          edgeDetection_threshold_xIncrement,
+          edgeDetection_threshold_blackPercentile,
+          edgeDetection_threshold_whitePercentile,
+          this->templateHistogram);
+
+        this->lastImageHistogram.Set(this->templateHistogram);
+        this->lastUsedGrayvalueThreshold = this->lastGrayvalueThreshold;
+
+        this->isValid = true;
+      }
 
       Result BinaryTracker::ShowTemplate(const char * windowName, const bool waitForKeypress, const bool fitImageToWindow) const
       {
@@ -256,19 +406,19 @@ namespace Anki
         // Next, serialize the template lists
         if(SerializedBuffer::SerializeRawBasicType<s32>("templateEdges.imageHeight", this->templateEdges.imageHeight, &segment, totalDataLength) != RESULT_OK)
           return RESULT_FAIL;
-        
+
         if(SerializedBuffer::SerializeRawBasicType<s32>("templateEdges.imageWidth", this->templateEdges.imageWidth, &segment, totalDataLength) != RESULT_OK)
           return RESULT_FAIL;
-        
+
         if(SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("templateEdges.xDecreasing", this->templateEdges.xDecreasing, &segment, totalDataLength) != RESULT_OK)
           return RESULT_FAIL;
-        
+
         if(SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("templateEdges.xIncreasing", this->templateEdges.xIncreasing, &segment, totalDataLength) != RESULT_OK)
           return RESULT_FAIL;
-        
+
         if(SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("templateEdges.yDecreasing", this->templateEdges.yDecreasing, &segment, totalDataLength) != RESULT_OK)
           return RESULT_FAIL;
-        
+
         if(SerializedBuffer::SerializeRawFixedLengthList<Point<s16> >("templateEdges.yIncreasing", this->templateEdges.yIncreasing, &segment, totalDataLength) != RESULT_OK)
           return RESULT_FAIL;
 
@@ -342,18 +492,121 @@ namespace Anki
         return RESULT_OK;
       } // BinaryTracker::ComputeAllIndexLimits()
 
-      Result BinaryTracker::UpdateTrack(
+      Result BinaryTracker::UpdateTrack_Normal(
         const Array<u8> &nextImage,
-        const s32 edgeDetection_threshold_yIncrement,
-        const s32 edgeDetection_threshold_xIncrement,
-        const f32 edgeDetection_threshold_blackPercentile,
-        const f32 edgeDetection_threshold_whitePercentile,
-        const f32 edgeDetection_threshold_scaleRegionPercent,
+        const s32 edgeDetection_threshold_yIncrement, //< How many pixels to use in the y direction (4 is a good value?)
+        const s32 edgeDetection_threshold_xIncrement, //< How many pixels to use in the x direction (4 is a good value?)
+        const f32 edgeDetection_threshold_blackPercentile, //< What percentile of histogram energy is black? (.1 is a good value)
+        const f32 edgeDetection_threshold_whitePercentile, //< What percentile of histogram energy is white? (.9 is a good value)
+        const f32 edgeDetection_threshold_scaleRegionPercent, //< How much to scale template bounding box (.8 is a good value)
         const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
         const s32 matching_maxTranslationDistance, const s32 matching_maxProjectiveDistance,
-        const s32 verification_maxTranslationDistance,
-        const bool useList, //< using a list is liable to be slower
+        const s32 verify_maxTranslationDistance, const u8 verify_maxPixelDifference, const s32 verify_coordinateIncrement,
         s32 &numMatches,
+        s32 &verify_meanAbsoluteDifference, //< For all pixels in the template, compute the mean difference between the template and the final warped template
+        s32 &verify_numInBounds, //< How many template pixels are in the image, after the template is warped?
+        s32 &verify_numSimilarPixels, //< For all pixels in the template, how many are within verifyMaxPixelDifference grayvalues? Use in conjunction with get_numTemplatePixels() or numInBounds for a percentage.
+        MemoryStack fastScratch,
+        MemoryStack slowScratch)
+      {
+        return UpdateTrack_Generic(
+          UPDATE_VERSION_NORMAL,
+          nextImage,
+          edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent,
+          edgeDetection_minComponentWidth, edgeDetection_maxDetectionsPerType, edgeDetection_everyNLines,
+          matching_maxTranslationDistance, matching_maxProjectiveDistance,
+          verify_maxTranslationDistance, verify_maxPixelDifference, verify_coordinateIncrement,
+          0, 0, 0,
+          numMatches,
+          verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels,
+          fastScratch,
+          slowScratch);
+      }
+
+      // WARNING: using a list is liable to be slower than normal, and not be more accurate
+      Result BinaryTracker::UpdateTrack_List(
+        const Array<u8> &nextImage,
+        const s32 edgeDetection_threshold_yIncrement, //< How many pixels to use in the y direction (4 is a good value?)
+        const s32 edgeDetection_threshold_xIncrement, //< How many pixels to use in the x direction (4 is a good value?)
+        const f32 edgeDetection_threshold_blackPercentile, //< What percentile of histogram energy is black? (.1 is a good value)
+        const f32 edgeDetection_threshold_whitePercentile, //< What percentile of histogram energy is white? (.9 is a good value)
+        const f32 edgeDetection_threshold_scaleRegionPercent, //< How much to scale template bounding box (.8 is a good value)
+        const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
+        const s32 matching_maxTranslationDistance, const s32 matching_maxProjectiveDistance,
+        const s32 verify_maxTranslationDistance, const u8 verify_maxPixelDifference, const s32 verify_coordinateIncrement,
+        s32 &numMatches,
+        s32 &verify_meanAbsoluteDifference, //< For all pixels in the template, compute the mean difference between the template and the final warped template
+        s32 &verify_numInBounds, //< How many template pixels are in the image, after the template is warped?
+        s32 &verify_numSimilarPixels, //< For all pixels in the template, how many are within verifyMaxPixelDifference grayvalues? Use in conjunction with get_numTemplatePixels() or numInBounds for a percentage.
+        MemoryStack fastScratch,
+        MemoryStack slowScratch)
+      {
+        return UpdateTrack_Generic(
+          UPDATE_VERSION_LIST,
+          nextImage,
+          edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent,
+          edgeDetection_minComponentWidth, edgeDetection_maxDetectionsPerType, edgeDetection_everyNLines,
+          matching_maxTranslationDistance, matching_maxProjectiveDistance,
+          verify_maxTranslationDistance, verify_maxPixelDifference, verify_coordinateIncrement,
+          0, 0, 0,
+          numMatches,
+          verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels,
+          fastScratch,
+          slowScratch);
+      }
+
+      Result BinaryTracker::UpdateTrack_Ransac(
+        const Array<u8> &nextImage,
+        const s32 edgeDetection_threshold_yIncrement, //< How many pixels to use in the y direction (4 is a good value?)
+        const s32 edgeDetection_threshold_xIncrement, //< How many pixels to use in the x direction (4 is a good value?)
+        const f32 edgeDetection_threshold_blackPercentile, //< What percentile of histogram energy is black? (.1 is a good value)
+        const f32 edgeDetection_threshold_whitePercentile, //< What percentile of histogram energy is white? (.9 is a good value)
+        const f32 edgeDetection_threshold_scaleRegionPercent, //< How much to scale template bounding box (.8 is a good value)
+        const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
+        const s32 matching_maxProjectiveDistance,
+        const s32 verify_maxTranslationDistance, const u8 verify_maxPixelDifference, const s32 verify_coordinateIncrement,
+        const s32 ransac_maxIterations,
+        const s32 ransac_numSamplesPerType, //< for four types
+        const s32 ransac_inlinerDistance,
+        s32 &numMatches,
+        s32 &verify_meanAbsoluteDifference, //< For all pixels in the template, compute the mean difference between the template and the final warped template
+        s32 &verify_numInBounds, //< How many template pixels are in the image, after the template is warped?
+        s32 &verify_numSimilarPixels, //< For all pixels in the template, how many are within verifyMaxPixelDifference grayvalues? Use in conjunction with get_numTemplatePixels() or numInBounds for a percentage.
+        MemoryStack fastScratch,
+        MemoryStack slowScratch)
+      {
+        return UpdateTrack_Generic(
+          UPDATE_VERSION_RANSAC,
+          nextImage,
+          edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent,
+          edgeDetection_minComponentWidth, edgeDetection_maxDetectionsPerType, edgeDetection_everyNLines,
+          0, matching_maxProjectiveDistance,
+          verify_maxTranslationDistance, verify_maxPixelDifference, verify_coordinateIncrement,
+          ransac_maxIterations, ransac_numSamplesPerType, ransac_inlinerDistance,
+          numMatches,
+          verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels,
+          fastScratch,
+          slowScratch);
+      }
+
+      Result BinaryTracker::UpdateTrack_Generic(
+        const UpdateVersion version,
+        const Array<u8> &nextImage,
+        const s32 edgeDetection_threshold_yIncrement, //< How many pixels to use in the y direction (4 is a good value?)
+        const s32 edgeDetection_threshold_xIncrement, //< How many pixels to use in the x direction (4 is a good value?)
+        const f32 edgeDetection_threshold_blackPercentile, //< What percentile of histogram energy is black? (.1 is a good value)
+        const f32 edgeDetection_threshold_whitePercentile, //< What percentile of histogram energy is white? (.9 is a good value)
+        const f32 edgeDetection_threshold_scaleRegionPercent, //< How much to scale template bounding box (.8 is a good value)
+        const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
+        const s32 matching_maxTranslationDistance, const s32 matching_maxProjectiveDistance,
+        const s32 verify_maxTranslationDistance, const u8 verify_maxPixelDifference, const s32 verify_coordinateIncrement,
+        const s32 ransac_maxIterations,
+        const s32 ransac_numSamplesPerType, //< for four types
+        const s32 ransac_inlinerDistance,
+        s32 &numMatches,
+        s32 &verify_meanAbsoluteDifference, //< For all pixels in the template, compute the mean difference between the template and the final warped template
+        s32 &verify_numInBounds, //< How many template pixels are in the image, after the template is warped?
+        s32 &verify_numSimilarPixels, //< For all pixels in the template, how many are within verifyMaxPixelDifference grayvalues? Use in conjunction with get_numTemplatePixels() or numInBounds for a percentage.
         MemoryStack fastScratch,
         MemoryStack slowScratch)
       {
@@ -368,41 +621,6 @@ namespace Anki
 
         AnkiConditionalErrorAndReturnValue(nextImageEdges.xDecreasing.IsValid() && nextImageEdges.xIncreasing.IsValid() && nextImageEdges.yDecreasing.IsValid() && nextImageEdges.yIncreasing.IsValid(),
           RESULT_FAIL_OUT_OF_MEMORY, "BinaryTracker::UpdateTrack", "Could not allocate local scratch");
-
-#ifdef SEND_BINARY_IMAGES_TO_MATLAB
-        {
-          MemoryStack matlabScratch(malloc(1000000),1000000);
-
-          Matlab matlab(false);
-
-          cv::Mat drawn = DrawIndexes(this->templateImageHeight, this->templateImageWidth, nextImageEdges.xDecreasing, nextImageEdges.xIncreasing, nextImageEdges.yDecreasing, nextImageEdges.yIncreasing);
-
-          cv::imshow("binary next", drawn);
-          cv::waitKey();
-
-          Array<u8> rendered(nextImageEdges.imageHeight, nextImageEdges.imageWidth, matlabScratch);
-
-          rendered.SetZero();
-          DrawPoints(nextImageEdges.xDecreasing, 1, rendered);
-          matlab.PutArray(rendered, "nextImageEdges.xDecreasing");
-
-          rendered.SetZero();
-          DrawPoints(nextImageEdges.xIncreasing, 1, rendered);
-          matlab.PutArray(rendered, "nextImageEdges.xIncreasing");
-
-          rendered.SetZero();
-          DrawPoints(nextImageEdges.yDecreasing, 1, rendered);
-          matlab.PutArray(rendered, "nextImageEdges.yDecreasing");
-
-          rendered.SetZero();
-          DrawPoints(nextImageEdges.yIncreasing, 1, rendered);
-          matlab.PutArray(rendered, "nextImageEdges.yIncreasing");
-
-          matlab.EvalStringEcho("");
-
-          free(matlabScratch.get_buffer());
-        }
-#endif // #ifdef SEND_BINARY_IMAGES_TO_MATLAB
 
         BeginBenchmark("ut_DetectEdges");
 
@@ -426,37 +644,52 @@ namespace Anki
 
         // Second, compute the actual correspondence and refine the homography
 
-        BeginBenchmark("ut_translation");
+        const s32 maxMatchesPerType = 4000;
 
-        lastResult = IterativelyRefineTrack_Translation(nextImageEdges, allLimits, matching_maxTranslationDistance, fastScratch);
+        // The ransac version is different because:
+        // 1. It doesn't do a translation step
+        // 2. It does a verify step automatically, but the others need to do one after running
+        if(version == UPDATE_VERSION_RANSAC) {
+          BeginBenchmark("ut_projective_ransac");
+          lastResult = IterativelyRefineTrack_Projective_Ransac(nextImageEdges, allLimits, matching_maxProjectiveDistance, maxMatchesPerType, ransac_maxIterations, ransac_numSamplesPerType, ransac_inlinerDistance, numMatches, fastScratch, slowScratch);
+          EndBenchmark("ut_projective_ransac");
 
-        EndBenchmark("ut_translation");
+          AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+            lastResult, "BinaryTracker::UpdateTrack", "IterativelyRefineTrack_Projective failed");
+        } else { // if(version == UPDATE_VERSION_RANSAC) {
+          BeginBenchmark("ut_translation");
 
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
-          lastResult, "BinaryTracker::UpdateTrack", "IterativelyRefineTrack_Translation failed");
+          lastResult = IterativelyRefineTrack_Translation(nextImageEdges, allLimits, matching_maxTranslationDistance, fastScratch);
 
-        BeginBenchmark("ut_projective");
+          EndBenchmark("ut_translation");
 
-        if(useList) {
-          const s32 maxMatchesPerType = 2000;
-          lastResult = IterativelyRefineTrack_List_Projective(nextImageEdges, allLimits, matching_maxProjectiveDistance, maxMatchesPerType, fastScratch, slowScratch);
-        } else {
-          lastResult = IterativelyRefineTrack_Projective(nextImageEdges, allLimits, matching_maxProjectiveDistance, fastScratch);
-        }
+          AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+            lastResult, "BinaryTracker::UpdateTrack", "IterativelyRefineTrack_Translation failed");
 
-        EndBenchmark("ut_projective");
+          if(version == UPDATE_VERSION_NORMAL) {
+            BeginBenchmark("ut_projective_normal");
+            lastResult = IterativelyRefineTrack_Projective(nextImageEdges, allLimits, matching_maxProjectiveDistance, fastScratch);
+            EndBenchmark("ut_projective_normal");
+          } else if(version == UPDATE_VERSION_LIST) {
+            BeginBenchmark("ut_projective_list");
+            lastResult = IterativelyRefineTrack_Projective_List(nextImageEdges, allLimits, matching_maxProjectiveDistance, maxMatchesPerType, fastScratch, slowScratch);
+            EndBenchmark("ut_projective_list");
+          } else {
+            return RESULT_FAIL;
+          }
 
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
-          lastResult, "BinaryTracker::UpdateTrack", "IterativelyRefineTrack_Projective failed");
+          AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+            lastResult, "BinaryTracker::UpdateTrack", "IterativelyRefineTrack_Projective failed");
 
-        BeginBenchmark("ut_verify");
+          BeginBenchmark("ut_verify");
 
-        lastResult = VerifyTrack(nextImageEdges, allLimits, verification_maxTranslationDistance, numMatches, fastScratch);
+          lastResult = VerifyTrack(nextImageEdges, allLimits, verify_maxTranslationDistance, numMatches);
 
-        EndBenchmark("ut_verify");
+          EndBenchmark("ut_verify");
 
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
-          lastResult, "BinaryTracker::UpdateTrack", "VerifyTrack failed");
+          AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+            lastResult, "BinaryTracker::UpdateTrack", "VerifyTrack failed");
+        } // if(version == UPDATE_VERSION_RANSAC) ... else
 
         BeginBenchmark("ut_grayvalueThreshold");
 
@@ -465,18 +698,53 @@ namespace Anki
         const Rectangle<f32> edgeDetection_imageRegionOfInterestRaw = curWarpedCorners.ComputeBoundingRectangle().ComputeScaledRectangle(edgeDetection_threshold_scaleRegionPercent);
         const Rectangle<s32> edgeDetection_imageRegionOfInterest(static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.left), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.right), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.top), static_cast<s32>(edgeDetection_imageRegionOfInterestRaw.bottom));
 
-        this->lastGrayvalueThreshold = ComputeGrayvalueThrehold(
+        this->lastGrayvalueThreshold = ComputeGrayvalueThreshold(
           nextImage,
           edgeDetection_imageRegionOfInterest,
           edgeDetection_threshold_yIncrement,
           edgeDetection_threshold_xIncrement,
           edgeDetection_threshold_blackPercentile,
           edgeDetection_threshold_whitePercentile,
-          fastScratch);
+          lastImageHistogram);
 
         EndBenchmark("ut_grayvalueThreshold");
 
-        return RESULT_OK;
+        BeginBenchmark("ut_verifyTransformation");
+
+        {
+          const f32 templateRegionHeight = static_cast<f32>(templateImageHeight);
+          const f32 templateRegionWidth = static_cast<f32>(templateImageWidth);
+
+          //lastResult = this->transformation.VerifyTransformation_Projective_LinearInterpolate(
+          lastResult = this->transformation.VerifyTransformation_Projective_NearestNeighbor(
+            templateImage, this->templateHistogram, this->templateQuad.ComputeBoundingRectangle(),
+            nextImage, this->lastImageHistogram,
+            templateRegionHeight, templateRegionWidth, verify_coordinateIncrement,
+            verify_maxPixelDifference, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels,
+            fastScratch);
+
+          //Array<u8> downsampledTemplate(templateImageHeight/8, templateImageWidth/8, fastScratch);
+          //Array<u8> downsampledNext(templateImageHeight/8, templateImageWidth/8, fastScratch);
+
+          //Rectangle<f32> boundingRect = this->templateQuad.ComputeBoundingRectangle();
+          //Rectangle<f32> downsampledRect(boundingRect.left/8, boundingRect.right/8, boundingRect.top/8, boundingRect.bottom/8);
+
+          //ImageProcessing::DownsampleByPowerOfTwo<u8,u32,u8>(templateImage, 3, downsampledTemplate, fastScratch);
+          //ImageProcessing::DownsampleByPowerOfTwo<u8,u32,u8>(nextImage, 3, downsampledNext, fastScratch);
+
+          //const f32 templateRegionHeight = static_cast<f32>(templateImageHeight/8);
+          //const f32 templateRegionWidth = static_cast<f32>(templateImageWidth/8);
+
+          //lastResult = this->transformation.VerifyTransformation_Projective_LinearInterpolate(
+          //  downsampledTemplate, downsampledRect,
+          //  downsampledNext,
+          //  templateRegionHeight, templateRegionWidth,
+          //  verify_maxPixelDifference, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels,
+          //  fastScratch);
+        }
+        EndBenchmark("ut_verifyTransformation");
+
+        return lastResult;
       } // Result BinaryTracker::UpdateTrack()
 
       Result BinaryTracker::ComputeIndexLimitsVertical(const FixedLengthList<Point<s16> > &points, Array<s32> &yStartIndexes)
@@ -602,10 +870,6 @@ namespace Anki
             s32 curIndex = pXStartIndexes[warpedXrounded];
             const s32 endIndex = pXStartIndexes[warpedXrounded+1];
 
-            /*if(curIndex < 0 || curIndex > numNewPoints) {
-            printf("");
-            }*/
-
             // Find the start of the valid matches
             while( (curIndex<endIndex) && (pNewPoints[curIndex].y<minY) ) {
               curIndex++;
@@ -685,10 +949,6 @@ namespace Anki
 
             s32 curIndex = pYStartIndexes[warpedYrounded];
             const s32 endIndex = pYStartIndexes[warpedYrounded+1];
-
-            /*if(curIndex < 0 || curIndex > numNewPoints) {
-            printf("");
-            }*/
 
             // Find the start of the valid matches
             while( (curIndex<endIndex) && (pNewPoints[curIndex].x<minX) ) {
@@ -787,10 +1047,6 @@ namespace Anki
 
             s32 curIndex = pXStartIndexes[warpedXrounded];
             const s32 endIndex = pXStartIndexes[warpedXrounded+1];
-
-            /*if(curIndex < 0 || curIndex > numNewPoints) {
-            printf("");
-            }*/
 
             // Find the start of the valid matches
             while( (curIndex<endIndex) && (pNewPoints[curIndex].y<minY) ) {
@@ -945,10 +1201,6 @@ namespace Anki
             s32 curIndex = pYStartIndexes[warpedYrounded];
             const s32 endIndex = pYStartIndexes[warpedYrounded+1];
 
-            /*if(curIndex < 0 || curIndex > numNewPoints) {
-            printf("");
-            }*/
-
             // Find the start of the valid matches
             while( (curIndex<endIndex) && (pNewPoints[curIndex].x<minX) ) {
               curIndex++;
@@ -1084,10 +1336,6 @@ namespace Anki
             s32 curIndex = pXStartIndexes[warpedXrounded];
             const s32 endIndex = pXStartIndexes[warpedXrounded+1];
 
-            /*if(curIndex < 0 || curIndex > numNewPoints) {
-            printf("");
-            }*/
-
             // Find the start of the valid matches
             while( (curIndex<endIndex) && (pNewPoints[curIndex].y<minY) ) {
               curIndex++;
@@ -1160,10 +1408,6 @@ namespace Anki
 
             s32 curIndex = pYStartIndexes[warpedYrounded];
             const s32 endIndex = pYStartIndexes[warpedYrounded+1];
-
-            /*if(curIndex < 0 || curIndex > numNewPoints) {
-            printf("");
-            }*/
 
             // Find the start of the valid matches
             while( (curIndex<endIndex) && (pNewPoints[curIndex].x<minX) ) {
@@ -1240,10 +1484,6 @@ namespace Anki
 
             s32 curIndex = pXStartIndexes[warpedXrounded];
             const s32 endIndex = pXStartIndexes[warpedXrounded+1];
-
-            /*if(curIndex < 0 || curIndex > numNewPoints) {
-            printf("");
-            }*/
 
             // Find the start of the valid matches
             while( (curIndex<endIndex) && (pNewPoints[curIndex].y<minY) ) {
@@ -1334,10 +1574,6 @@ namespace Anki
 
             s32 curIndex = pYStartIndexes[warpedYrounded];
             const s32 endIndex = pYStartIndexes[warpedYrounded+1];
-
-            /*if(curIndex < 0 || curIndex > numNewPoints) {
-            printf("");
-            }*/
 
             // Find the start of the valid matches
             while( (curIndex<endIndex) && (pNewPoints[curIndex].x<minX) ) {
@@ -1744,10 +1980,10 @@ namespace Anki
           //Atb_t.Print("result");
 
           AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
-            lastResult, "BinaryTracker::UpdateTransformation", "SolveLeastSquaresWithCholesky failed");
+            lastResult, "BinaryTracker::IterativelyRefineTrack_Projective", "SolveLeastSquaresWithCholesky failed");
 
           if(numericalFailure){
-            AnkiWarn("BinaryTracker::UpdateTransformation", "numericalFailure");
+            AnkiWarn("BinaryTracker::IterativelyRefineTrack_Projective", "numericalFailure");
             return RESULT_OK;
           }
 
@@ -1765,7 +2001,7 @@ namespace Anki
         return RESULT_OK;
       } // Result BinaryTracker::IterativelyRefineTrack_Projective()
 
-      Result BinaryTracker::IterativelyRefineTrack_List_Projective(
+      Result BinaryTracker::IterativelyRefineTrack_Projective_List(
         const EdgeLists &nextImageEdges,
         const AllIndexLimits &allLimits,
         const s32 matching_maxDistance,
@@ -1872,10 +2108,10 @@ namespace Anki
           //Atb_t.Print("result");
 
           AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
-            lastResult, "BinaryTracker::UpdateTransformation", "SolveLeastSquaresWithCholesky failed");
+            lastResult, "BinaryTracker::IterativelyRefineTrack_List_Projective", "SolveLeastSquaresWithCholesky failed");
 
           if(numericalFailure){
-            AnkiWarn("BinaryTracker::UpdateTransformation", "numericalFailure");
+            AnkiWarn("BinaryTracker::IterativelyRefineTrack_List_Projective", "numericalFailure");
             return RESULT_OK;
           }
 
@@ -1893,12 +2129,222 @@ namespace Anki
         return RESULT_OK;
       }
 
+      Result BinaryTracker::IterativelyRefineTrack_Projective_Ransac(
+        const EdgeLists &nextImageEdges,
+        const AllIndexLimits &allLimits,
+        const s32 matching_maxDistance,
+        const s32 maxMatchesPerType,
+        const s32 ransac_maxIterations,
+        const s32 ransac_numSamplesPerType,
+        const s32 ransac_inlinerDistance,
+        s32 &bestNumInliers,
+        MemoryStack fastScratch,
+        MemoryStack slowScratch)
+      {
+        Result lastResult;
+
+        Array<f32> AtA_xDecreasing(8,8,fastScratch);
+        Array<f32> AtA_xIncreasing(8,8,fastScratch);
+        Array<f32> AtA_yDecreasing(8,8,fastScratch);
+        Array<f32> AtA_yIncreasing(8,8,fastScratch);
+
+        Array<f32> Atb_t_xDecreasing(1,8,fastScratch);
+        Array<f32> Atb_t_xIncreasing(1,8,fastScratch);
+        Array<f32> Atb_t_yDecreasing(1,8,fastScratch);
+        Array<f32> Atb_t_yIncreasing(1,8,fastScratch);
+
+        Array<f32> originalHomography(3,3,slowScratch);
+        originalHomography.Set(this->transformation.get_homography());
+
+        Array<f32> bestHomography = Eye<f32>(3,3,slowScratch);
+        bestNumInliers = -1;
+
+        FixedLengthList<IndexCorrespondence> matchingIndexes_xDecreasing(maxMatchesPerType, slowScratch);
+        FixedLengthList<IndexCorrespondence> matchingIndexes_xIncreasing(maxMatchesPerType, slowScratch);
+        FixedLengthList<IndexCorrespondence> matchingIndexes_yDecreasing(maxMatchesPerType, slowScratch);
+        FixedLengthList<IndexCorrespondence> matchingIndexes_yIncreasing(maxMatchesPerType, slowScratch);
+
+        lastResult = BinaryTracker::FindHorizontalCorrespondences_List(
+          matching_maxDistance, this->transformation,
+          this->templateEdges.xDecreasing, nextImageEdges.xDecreasing,
+          nextImageEdges.imageHeight, nextImageEdges.imageWidth,
+          allLimits.xDecreasing_yStartIndexes, matchingIndexes_xDecreasing);
+
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+          lastResult, "BinaryTracker::IterativelyRefineTrack_Projective_Ransac", "FindHorizontalCorrespondences_List 1 failed");
+
+        lastResult = BinaryTracker::FindHorizontalCorrespondences_List(
+          matching_maxDistance, this->transformation,
+          this->templateEdges.xIncreasing, nextImageEdges.xIncreasing,
+          nextImageEdges.imageHeight, nextImageEdges.imageWidth,
+          allLimits.xIncreasing_yStartIndexes, matchingIndexes_xIncreasing);
+
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+          lastResult, "BinaryTracker::IterativelyRefineTrack_Projective_Ransac", "FindHorizontalCorrespondences_List 2 failed");
+
+        lastResult = BinaryTracker::FindVerticalCorrespondences_List(
+          matching_maxDistance, this->transformation,
+          this->templateEdges.yDecreasing, nextImageEdges.yDecreasing,
+          nextImageEdges.imageHeight, nextImageEdges.imageWidth,
+          allLimits.yDecreasing_xStartIndexes, matchingIndexes_yDecreasing);
+
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+          lastResult, "BinaryTracker::IterativelyRefineTrack_Projective_Ransac", "FindVerticalCorrespondences_List 1 failed");
+
+        lastResult = BinaryTracker::FindVerticalCorrespondences_List(
+          matching_maxDistance, this->transformation,
+          this->templateEdges.yIncreasing, nextImageEdges.yIncreasing,
+          nextImageEdges.imageHeight, nextImageEdges.imageWidth,
+          allLimits.yIncreasing_xStartIndexes, matchingIndexes_yIncreasing);
+
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+          lastResult, "BinaryTracker::IterativelyRefineTrack_Projective_Ransac", "FindVerticalCorrespondences_List 2 failed");
+
+        // First, try a match with all the data
+
+        // TODO: implement this, perhaps with a different search distance. Or perhaps just call the normal function
+
+        // Second, do ransac iterations to try to get a better match
+
+        const s32 num_xDecreasing = matchingIndexes_xDecreasing.get_size();
+        const s32 num_xIncreasing = matchingIndexes_xIncreasing.get_size();
+        const s32 num_yDecreasing = matchingIndexes_yDecreasing.get_size();
+        const s32 num_yIncreasing = matchingIndexes_yIncreasing.get_size();
+
+        FixedLengthList<IndexCorrespondence> sampledMatchingIndexes_xDecreasing(ransac_numSamplesPerType, fastScratch);
+        FixedLengthList<IndexCorrespondence> sampledMatchingIndexes_xIncreasing(ransac_numSamplesPerType, fastScratch);
+        FixedLengthList<IndexCorrespondence> sampledMatchingIndexes_yDecreasing(ransac_numSamplesPerType, fastScratch);
+        FixedLengthList<IndexCorrespondence> sampledMatchingIndexes_yIncreasing(ransac_numSamplesPerType, fastScratch);
+
+        sampledMatchingIndexes_xDecreasing.set_size(ransac_numSamplesPerType);
+        sampledMatchingIndexes_xIncreasing.set_size(ransac_numSamplesPerType);
+        sampledMatchingIndexes_yDecreasing.set_size(ransac_numSamplesPerType);
+        sampledMatchingIndexes_yIncreasing.set_size(ransac_numSamplesPerType);
+
+        const IndexCorrespondence * restrict pMatchingIndexes_xDecreasing = matchingIndexes_xDecreasing.Pointer(0);
+        const IndexCorrespondence * restrict pMatchingIndexes_xIncreasing = matchingIndexes_xIncreasing.Pointer(0);
+        const IndexCorrespondence * restrict pMatchingIndexes_yDecreasing = matchingIndexes_yDecreasing.Pointer(0);
+        const IndexCorrespondence * restrict pMatchingIndexes_yIncreasing = matchingIndexes_yIncreasing.Pointer(0);
+
+        IndexCorrespondence * restrict pSampledMatchingIndexes_xDecreasing = sampledMatchingIndexes_xDecreasing.Pointer(0);
+        IndexCorrespondence * restrict pSampledMatchingIndexes_xIncreasing = sampledMatchingIndexes_xIncreasing.Pointer(0);
+        IndexCorrespondence * restrict pSampledMatchingIndexes_yDecreasing = sampledMatchingIndexes_yDecreasing.Pointer(0);
+        IndexCorrespondence * restrict pSampledMatchingIndexes_yIncreasing = sampledMatchingIndexes_yIncreasing.Pointer(0);
+
+        for(s32 iteration=0; iteration<ransac_maxIterations; iteration++) {
+          for(s32 iSample=0; iSample<ransac_numSamplesPerType; iSample++) {
+            const s32 index_xDecreasing = RandS32(0, num_xDecreasing);
+            const s32 index_xIncreasing = RandS32(0, num_xIncreasing);
+            const s32 index_yDecreasing = RandS32(0, num_yDecreasing);
+            const s32 index_yIncreasing = RandS32(0, num_yIncreasing);
+
+            //printf("Samples: %d %d %d %d\n", index_xDecreasing, index_xIncreasing, index_yDecreasing, index_yIncreasing);
+
+            pSampledMatchingIndexes_xDecreasing[iSample] = pMatchingIndexes_xDecreasing[index_xDecreasing];
+            pSampledMatchingIndexes_xIncreasing[iSample] = pMatchingIndexes_xIncreasing[index_xIncreasing];
+            pSampledMatchingIndexes_yDecreasing[iSample] = pMatchingIndexes_yDecreasing[index_yDecreasing];
+            pSampledMatchingIndexes_yIncreasing[iSample] = pMatchingIndexes_yIncreasing[index_yIncreasing];
+          }
+
+          AtA_xDecreasing.SetZero();
+          AtA_xIncreasing.SetZero();
+          AtA_yDecreasing.SetZero();
+          AtA_yIncreasing.SetZero();
+
+          Atb_t_xDecreasing.SetZero();
+          Atb_t_xIncreasing.SetZero();
+          Atb_t_yDecreasing.SetZero();
+          Atb_t_yIncreasing.SetZero();
+
+          lastResult = BinaryTracker::ApplyHorizontalCorrespondenceList_Projective(sampledMatchingIndexes_xDecreasing, AtA_xDecreasing, Atb_t_xDecreasing);
+
+          AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+            lastResult, "BinaryTracker::IterativelyRefineTrack_Projective_Ransac", "ApplyHorizontalCorrespondenceList_Projective 1 failed");
+
+          lastResult = BinaryTracker::ApplyHorizontalCorrespondenceList_Projective(sampledMatchingIndexes_xIncreasing, AtA_xIncreasing, Atb_t_xIncreasing);
+
+          AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+            lastResult, "BinaryTracker::IterativelyRefineTrack_Projective_Ransac", "ApplyHorizontalCorrespondenceList_Projective 2 failed");
+
+          lastResult = BinaryTracker::ApplyVerticalCorrespondenceList_Projective(sampledMatchingIndexes_yDecreasing, AtA_yDecreasing, Atb_t_yDecreasing);
+
+          AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+            lastResult, "BinaryTracker::IterativelyRefineTrack_Projective_Ransac", "ApplyVerticalCorrespondenceList_Projective 1 failed");
+
+          lastResult = BinaryTracker::ApplyVerticalCorrespondenceList_Projective(sampledMatchingIndexes_yIncreasing, AtA_yIncreasing, Atb_t_yIncreasing);
+
+          AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+            lastResult, "BinaryTracker::IterativelyRefineTrack_Projective_Ransac", "ApplyVerticalCorrespondenceList_Projective 2 failed");
+
+          // Update the transformation, and count the number of inliers
+          {
+            PUSH_MEMORY_STACK(fastScratch);
+
+            Array<f32> newHomography(3, 3, fastScratch);
+
+            Array<f32> AtA(8,8,fastScratch);
+            Array<f32> Atb_t(1,8,fastScratch);
+
+            // The total AtA and Atb matrices are just the elementwise sums of their partial versions
+            for(s32 y=0; y<8; y++) {
+              for(s32 x=0; x<8; x++) {
+                AtA[y][x] = AtA_xDecreasing[y][x] + AtA_xIncreasing[y][x] + AtA_yDecreasing[y][x] + AtA_yIncreasing[y][x];
+              }
+
+              Atb_t[0][y] = Atb_t_xDecreasing[0][y] + Atb_t_xIncreasing[0][y] + Atb_t_yDecreasing[0][y] + Atb_t_yIncreasing[0][y];
+            }
+
+            Matrix::MakeSymmetric(AtA, false);
+
+            //AtA.Print("AtA");
+            //Atb_t.Print("Atb_t");
+            bool numericalFailure;
+            lastResult = Matrix::SolveLeastSquaresWithCholesky<f32>(AtA, Atb_t, false, numericalFailure);
+
+            //Atb_t.Print("result");
+
+            AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+              lastResult, "BinaryTracker::IterativelyRefineTrack_Projective_Ransac", "SolveLeastSquaresWithCholesky failed");
+
+            if(!numericalFailure) {
+              const f32 * restrict pAtb_t = Atb_t.Pointer(0,0);
+
+              newHomography[0][0] = pAtb_t[0]; newHomography[0][1] = pAtb_t[1]; newHomography[0][2] = pAtb_t[2];
+              newHomography[1][0] = pAtb_t[3]; newHomography[1][1] = pAtb_t[4]; newHomography[1][2] = pAtb_t[5];
+              newHomography[2][0] = pAtb_t[6]; newHomography[2][1] = pAtb_t[7]; newHomography[2][2] = 1.0f;
+
+              //newHomography.Print("newHomography");
+
+              this->transformation.set_homography(newHomography);
+
+              s32 numInliers;
+              lastResult = VerifyTrack(nextImageEdges, allLimits, ransac_inlinerDistance, numInliers);
+
+              AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+                lastResult, "BinaryTracker::IterativelyRefineTrack_Projective_Ransac", "VerifyTrack failed");
+
+              if(numInliers > bestNumInliers) {
+                bestNumInliers = numInliers;
+                bestHomography.Set(this->transformation.get_homography());
+                //printf("inliers: %d\n", numInliers);
+                //bestHomography.Print("bestHomography");
+              }
+            } // if(!numericalFailure)
+
+            this->transformation.set_homography(originalHomography);
+          } // Update the transformation, and count the number of inliers
+        } // for(s32 iteration=0; iteration<ransac_maxIterations; iteration++)
+
+        this->transformation.set_homography(bestHomography);
+
+        return RESULT_OK;
+      }
+
       Result BinaryTracker::VerifyTrack(
         const EdgeLists &nextImageEdges,
         const AllIndexLimits &allLimits,
         const s32 matching_maxDistance,
-        s32 &numTemplatePixelsMatched,
-        MemoryStack scratch)
+        s32 &numTemplatePixelsMatched)
       {
         Result lastResult;
 

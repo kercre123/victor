@@ -68,7 +68,13 @@ namespace Anki {
       // [fx   skew*fx   center_x;
       //   0      fy     center_y;
       //   0       0         1    ]
-      Matrix_3x3f get_calibrationMatrix() const;
+      template<typename PRECISION = float>
+      SmallSquareMatrix<3,PRECISION> get_calibrationMatrix() const;
+      
+      // Returns the inverse calibration matrix (e.g. for computing
+      // image rays)
+      template<typename PRECISION = float>
+      SmallSquareMatrix<3,PRECISION> get_invCalibrationMatrix() const;
       
       void CreateJson(Json::Value& jsonNode) const;
       
@@ -108,6 +114,31 @@ namespace Anki {
     inline f32  CameraCalibration::get_skew() const
     { return this->skew; }
     
+    template<typename PRECISION>
+    SmallSquareMatrix<3,PRECISION> CameraCalibration::get_calibrationMatrix() const
+    {
+      const PRECISION K_data[9] = {
+        static_cast<PRECISION>(focalLength_x), static_cast<PRECISION>(focalLength_x*skew), static_cast<PRECISION>(center.x()),
+        PRECISION(0),                          static_cast<PRECISION>(focalLength_y),      static_cast<PRECISION>(center.y()),
+        PRECISION(0),                          PRECISION(0),                               PRECISION(1)};
+      
+      return SmallSquareMatrix<3,PRECISION>(K_data);
+    } // get_calibrationMatrix()
+    
+    template<typename PRECISION>
+    SmallSquareMatrix<3,PRECISION> CameraCalibration::get_invCalibrationMatrix() const
+    {
+      const PRECISION invK_data[9] = {
+        static_cast<PRECISION>(1.f/focalLength_x),
+        static_cast<PRECISION>(-skew/focalLength_y),
+        static_cast<PRECISION>(center.y()*skew/focalLength_y - center.x()/focalLength_x),
+        PRECISION(0),    static_cast<PRECISION>(1.f/focalLength_y),    static_cast<PRECISION>(-center.y()/focalLength_y),
+        PRECISION(0),    PRECISION(0),                                 PRECISION(1)
+      };
+      
+      return SmallSquareMatrix<3,PRECISION>(invK_data);
+    }
+    
     /*
      inline const std::array<float,5>& CameraCalibration::get_distortionCoeffs() const
      { return this->distortionCoeffs; }
@@ -141,6 +172,11 @@ namespace Anki {
       Pose3d computeObjectPose(const std::vector<Point2f> &imgPoints,
                                const std::vector<Point3f> &objPoints) const;
       
+      // Use three points of a quadrilateral and the P3P algorithm  to compute
+      // possible camera poses, then use the fourth point to choose the valid
+      // pose. Do this four times (once using each corner as the validation
+      // point) and choose the best.  
+      template<typename WORKING_PRECISION=double> // TODO: Make default float?
       Pose3d computeObjectPose(const Quad2f &imgPoints,
                                const Quad3f &objPoints) const;
       

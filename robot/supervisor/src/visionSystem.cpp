@@ -12,33 +12,34 @@
  **/
 
 #include "anki/common/robot/config.h"
-#include "anki/common/robot/memory.h"
-
-#include "anki/vision/robot/docking_vision.h"
+// Coretech Vision Includes
+#include "anki/vision/MarkerCodeDefinitions.h"
 #include "anki/vision/robot/fiducialDetection.h"
 #include "anki/vision/robot/fiducialMarkers.h"
 #include "anki/vision/robot/imageProcessing.h"
+#include "anki/vision/robot/perspectivePoseEstimation.h"
 
+// CoreTech Common Includes
 #include "anki/common/shared/radians.h"
-#include "anki/common/robot/utilities.h"
 #include "anki/common/robot/benchmarking_c.h"
+#include "anki/common/robot/memory.h"
+#include "anki/common/robot/utilities.h"
 
+// Cozmo-Specific Library Includes
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/messages.h"
 #include "anki/cozmo/robot/visionSystem.h"
 
-// TODO: make it so we don't have to include this entire file to get just the enums
-#include "anki/vision/robot/visionMarkerDecisionTrees.h"
-
+// Local Cozmo Includes
 #include "headController.h"
 #include "matlabVisualization.h"
 #include "visionDebugStream.h"
 
-//#if USE_MATLAB_TRACKER || USE_MATLAB_DETECTOR
+#if USE_MATLAB_TRACKER || USE_MATLAB_DETECTOR
 #include "matlabVisionProcessor.h"
-//#endif
+#endif
 
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_AFFINE && !USE_APPROXIMATE_DOCKING_ERROR_SIGNAL
 #error Affine tracker requires that USE_APPROXIMATE_DOCKING_ERROR_SIGNAL = 1.
@@ -361,7 +362,6 @@ namespace Anki {
                                                  grayscaleImage,
                                                  trackingQuad,
                                                  parameters.scaleTemplateRegionPercent,
-                                                 //parameters.edgeDetection_grayvalueThreshold,
                                                  parameters.edgeDetection_threshold_yIncrement,
                                                  parameters.edgeDetection_threshold_xIncrement,
                                                  parameters.edgeDetection_threshold_blackPercentile,
@@ -370,7 +370,8 @@ namespace Anki {
                                                  parameters.edgeDetection_minComponentWidth,
                                                  parameters.edgeDetection_maxDetectionsPerType,
                                                  parameters.edgeDetection_everyNLines,
-                                                 onchipScratch);
+                                                 onchipScratch,
+                                                 offchipScratch);
 #endif
         
         if(!tracker.IsValid()) {
@@ -470,9 +471,8 @@ namespace Anki {
 #elif DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
         s32 numMatches = -1;
         
-        const Result trackerResult = tracker.UpdateTrack(
+        const Result trackerResult = tracker.UpdateTrack_Normal(
                                                          grayscaleImage,
-                                                         //parameters.edgeDetection_grayvalueThreshold,
                                                          parameters.edgeDetection_threshold_yIncrement,
                                                          parameters.edgeDetection_threshold_xIncrement,
                                                          parameters.edgeDetection_threshold_blackPercentile,
@@ -483,11 +483,15 @@ namespace Anki {
                                                          parameters.edgeDetection_everyNLines,
                                                          parameters.matching_maxTranslationDistance,
                                                          parameters.matching_maxProjectiveDistance,
-                                                         parameters.verification_maxTranslationDistance,
-                                                         false,
+                                                         parameters.verify_maxTranslationDistance,
+                                                         parameters.verify_maxPixelDifference,
+                                                         parameters.verify_coordinateIncrement,
                                                          numMatches,
+                                                         verify_meanAbsoluteDifference,
+                                                         verify_numInBounds,
+                                                         verify_numSimilarPixels,
                                                          ccmScratch, offchipScratch);
-        
+                
         //tracker.get_transformation().Print("track");
         
         const s32 numTemplatePixels = tracker.get_numTemplatePixels();
@@ -548,7 +552,7 @@ namespace Anki {
         
         //MatlabVisualization::SendTrackerPrediction_Compare(tracker, offchipScratch);
         
-        DebugStream::SendTrackingUpdate(grayscaleImage, tracker, parameters, ccmScratch, onchipScratch, offchipScratch);
+        DebugStream::SendTrackingUpdate(grayscaleImage, tracker, parameters, verify_meanAbsoluteDifference, static_cast<f32>(verify_numSimilarPixels) / static_cast<f32>(verify_numInBounds), ccmScratch, onchipScratch, offchipScratch);
         
         return EXIT_SUCCESS;
       } // TrackTemplate()
@@ -876,14 +880,14 @@ namespace Anki {
                                VisionMemory::onchipScratch_, Flags::Buffer(false,false,false));
       
       HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
-                          captureResolution_, exposure, false);
+                          captureResolution_, 0.1f, false);
       
 #ifdef SEND_BINARY_IMAGE_ONLY
       DebugStream::SendBinaryImage(grayscaleImage, tracker_, trackerParameters_, VisionMemory::ccmScratch_, VisionMemory::onchipScratch_, VisionMemory::offchipScratch_);
       HAL::MicroWait(250000);
 #else
       DebugStream::SendArray(grayscaleImage);
-      HAL::MicroWait(1000000);
+      HAL::MicroWait(1500000);
 #endif
       
       return EXIT_SUCCESS;

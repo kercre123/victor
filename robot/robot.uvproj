@@ -233,13 +233,13 @@
             <Ro1Chk>0</Ro1Chk>
             <Ro2Chk>0</Ro2Chk>
             <Ro3Chk>0</Ro3Chk>
-            <Ir1Chk>1</Ir1Chk>
+            <Ir1Chk>0</Ir1Chk>
             <Ir2Chk>0</Ir2Chk>
-            <Ra1Chk>1</Ra1Chk>
+            <Ra1Chk>0</Ra1Chk>
             <Ra2Chk>0</Ra2Chk>
             <Ra3Chk>0</Ra3Chk>
-            <Im1Chk>1</Im1Chk>
-            <Im2Chk>1</Im2Chk>
+            <Im1Chk>0</Im1Chk>
+            <Im2Chk>0</Im2Chk>
             <OnChipMemories>
               <Ocm1>
                 <Type>0</Type>
@@ -303,8 +303,8 @@
               </OCR_RVCT3>
               <OCR_RVCT4>
                 <Type>1</Type>
-                <StartAddress>0x8000000</StartAddress>
-                <Size>0x200000</Size>
+                <StartAddress>0x0</StartAddress>
+                <Size>0xa</Size>
               </OCR_RVCT4>
               <OCR_RVCT5>
                 <Type>1</Type>
@@ -313,8 +313,8 @@
               </OCR_RVCT5>
               <OCR_RVCT6>
                 <Type>0</Type>
-                <StartAddress>0xc0000000</StartAddress>
-                <Size>0x800000</Size>
+                <StartAddress>0x0</StartAddress>
+                <Size>0x0</Size>
               </OCR_RVCT6>
               <OCR_RVCT7>
                 <Type>0</Type>
@@ -328,8 +328,8 @@
               </OCR_RVCT8>
               <OCR_RVCT9>
                 <Type>0</Type>
-                <StartAddress>0x20004100</StartAddress>
-                <Size>0x2bf00</Size>
+                <StartAddress>0x20000000</StartAddress>
+                <Size>0x30000</Size>
               </OCR_RVCT9>
               <OCR_RVCT10>
                 <Type>0</Type>
@@ -1019,11 +1019,6 @@
               <FilePath>..\coretech\vision\robot\src\detectFiducialMarkers.cpp</FilePath>
             </File>
             <File>
-              <FileName>docking_vision.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\docking_vision.cpp</FilePath>
-            </File>
-            <File>
               <FileName>draw_vision.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\draw_vision.cpp</FilePath>
@@ -1092,6 +1087,11 @@
               <FileName>lucasKanade_Slow.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\lucasKanade_Slow.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>perspectivePoseEstimation.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\perspectivePoseEstimation.cpp</FilePath>
             </File>
             <File>
               <FileName>traceBoundary.cpp</FileName>
@@ -1423,11 +1423,11 @@
             <Ro3Chk>0</Ro3Chk>
             <Ir1Chk>1</Ir1Chk>
             <Ir2Chk>0</Ir2Chk>
-            <Ra1Chk>1</Ra1Chk>
+            <Ra1Chk>0</Ra1Chk>
             <Ra2Chk>0</Ra2Chk>
             <Ra3Chk>0</Ra3Chk>
-            <Im1Chk>1</Im1Chk>
-            <Im2Chk>1</Im2Chk>
+            <Im1Chk>0</Im1Chk>
+            <Im2Chk>0</Im2Chk>
             <OnChipMemories>
               <Ocm1>
                 <Type>0</Type>
@@ -1491,8 +1491,8 @@
               </OCR_RVCT3>
               <OCR_RVCT4>
                 <Type>1</Type>
-                <StartAddress>0x8000000</StartAddress>
-                <Size>0x100000</Size>
+                <StartAddress>0x0</StartAddress>
+                <Size>0xa</Size>
               </OCR_RVCT4>
               <OCR_RVCT5>
                 <Type>1</Type>
@@ -1501,8 +1501,8 @@
               </OCR_RVCT5>
               <OCR_RVCT6>
                 <Type>0</Type>
-                <StartAddress>0xc0000000</StartAddress>
-                <Size>0x400000</Size>
+                <StartAddress>0x0</StartAddress>
+                <Size>0x0</Size>
               </OCR_RVCT6>
               <OCR_RVCT7>
                 <Type>0</Type>
@@ -1516,7 +1516,7 @@
               </OCR_RVCT8>
               <OCR_RVCT9>
                 <Type>0</Type>
-                <StartAddress>0x20004100</StartAddress>
+                <StartAddress>0x20000000</StartAddress>
                 <Size>0x30000</Size>
               </OCR_RVCT9>
               <OCR_RVCT10>
@@ -1565,7 +1565,7 @@
             </VariousControls>
           </Aads>
           <LDads>
-            <umfTarg>1</umfTarg>
+            <umfTarg>0</umfTarg>
             <Ropi>0</Ropi>
             <Rwpi>0</Rwpi>
             <noStLib>0</noStLib>
@@ -1573,7 +1573,7 @@
             <useFile>0</useFile>
             <TextAddressRange>0x08000000</TextAddressRange>
             <DataAddressRange>0x20000000</DataAddressRange>
-            <ScatterFile></ScatterFile>
+            <ScatterFile>.\robot.sct</ScatterFile>
             <IncludeLibs></IncludeLibs>
             <IncludeLibsPath></IncludeLibsPath>
             <Misc></Misc>
@@ -2362,11 +2362,6 @@
               <FilePath>..\coretech\vision\robot\src\detectFiducialMarkers.cpp</FilePath>
             </File>
             <File>
-              <FileName>docking_vision.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\docking_vision.cpp</FilePath>
-            </File>
-            <File>
               <FileName>draw_vision.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\draw_vision.cpp</FilePath>
@@ -2435,6 +2430,11 @@
               <FileName>lucasKanade_Slow.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\lucasKanade_Slow.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>perspectivePoseEstimation.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\perspectivePoseEstimation.cpp</FilePath>
             </File>
             <File>
               <FileName>traceBoundary.cpp</FileName>

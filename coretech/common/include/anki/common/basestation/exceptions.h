@@ -7,9 +7,17 @@
 #include <sstream>
 #include <cassert>
 
+#ifdef ANKI_MEX_BUILD
+// Safe to be called from matlab
+#include <mex.h>
+#define CORETECH_ASSERT(x) mxAssert(x, #x);
+#define CORETECH_THROW(msg) mexErrMsgTxt(msg);
+#define CORETECH_THROW_IF(x) {if(x) {mexErrMsgTxt(#x);} else {}}
+#else
 #define CORETECH_ASSERT(x) assert(x);
 #define CORETECH_THROW(msg) throw CoreTechException(msg, __FILE__, __LINE__);
 #define CORETECH_THROW_IF(x) {if(x) {throw CoreTechException(#x, __FILE__, __LINE__);} else {}}
+#endif
 
 namespace Anki {
   

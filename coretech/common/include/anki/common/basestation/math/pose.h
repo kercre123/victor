@@ -197,11 +197,16 @@ namespace Anki {
     void rotateBy(const RotationMatrix3d& Rmat);
     
     // "Apply" Pose to 3D point(s) (i.e. transform that point by this Pose)
-    Point3f operator*(const Point3f &point) const;
-    void    applyTo(const std::vector<Point3f> &pointsIn,
-                    std::vector<Point3f>       &pointsOut) const;
-    void    applyTo(const Quad3f &quadIn,
-                    Quad3f &quadOut) const;
+    template<typename T>
+    Point<3,T> operator*(const Point<3,T> &point) const;
+    
+    template<typename T>
+    void applyTo(const std::vector<Point<3,T> > &pointsIn,
+                 std::vector<Point<3,T> >       &pointsOut) const;
+
+    template<typename T>
+    void applyTo(const Quadrilateral<3,T> &quadIn,
+                 Quadrilateral<3,T>       &quadOut) const;
     
     Pose3d  getInverse(void) const;
     Pose3d& Invert(void); // in place?
@@ -361,6 +366,56 @@ namespace Anki {
     return this->IsSameAs(P_other, distThreshold, angleThreshold,
                           P_diff_temp);
   }
+  
+  template<typename T>
+  Point<3,T> Pose3d::operator*(const Point<3,T> &pointIn) const
+  {
+    Point3f pointOut( this->rotationMatrix * pointIn );
+    pointOut += this->translation;
+    
+    return pointOut;
+  }
+  
+  template<typename T>
+  void Pose3d::applyTo(const Quadrilateral<3,T> &quadIn,
+                       Quadrilateral<3,T>       &quadOut) const
+  {
+    using namespace Quad;
+    quadOut[TopLeft]     = (*this) * quadIn[TopLeft];
+    quadOut[TopRight]    = (*this) * quadIn[TopRight];
+    quadOut[BottomLeft]  = (*this) * quadIn[BottomLeft];
+    quadOut[BottomRight] = (*this) * quadIn[BottomRight];
+  }
+  
+  template<typename T>
+  void Pose3d::applyTo(const std::vector<Point<3,T> > &pointsIn,
+                       std::vector<Point<3,T> >       &pointsOut) const
+  {
+    const size_t numPoints = pointsIn.size();
+    
+    if(pointsOut.size() == numPoints)
+    {
+      // The output vector already has the right number of points
+      // in it.  No need to construct a new vector full of (0,0,0)
+      // points with resize; just replace what's there.
+      for(size_t i=0; i<numPoints; ++i)
+      {
+        pointsOut[i] = (*this) * pointsIn[i];
+      }
+      
+    } else {
+      // Clear the output vector, and use push_back to add newly-
+      // constructed points. Again, this avoids first creating a
+      // bunch of (0,0,0) points via resize and then immediately
+      // overwriting them.
+      pointsOut.clear();
+      
+      for(const Point3f& x : pointsIn)
+      {
+        pointsOut.emplace_back( (*this) * x );
+      }
+    }
+  } // applyTo()
   
 } // namespace Anki
 

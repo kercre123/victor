@@ -65,6 +65,9 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define ANKI_DEBUG_LEVEL ANKI_DEBUG_ERRORS
 #endif
 
+// Warning: High levels of compiler optimization could cause this test to not work
+#define isnan(a) ((a) != (a))
+
 // Hack, because __EDG__ is used to detect the ARM compiler
 #undef __EDG__
 

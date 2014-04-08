@@ -16,10 +16,6 @@
 
 #include "anki/cozmo/robot/visionSystem.h"
 
-#if 0
-#pragma mark --- DetectFiducialMarkersParameters ---
-#endif
-
 namespace Anki {
   namespace Cozmo {
     namespace VisionSystem {
@@ -28,7 +24,7 @@ namespace Anki {
       
       
 #if 0
-#pragma mark --- DetectorParameters ---
+#pragma mark --- DetectFiducialMarkersParameters ---
 #endif
 
       
@@ -97,15 +93,17 @@ namespace Anki {
         //edgeDetection_grayvalueThreshold    = 128;
         edgeDetection_threshold_yIncrement = 4;
         edgeDetection_threshold_xIncrement = 4;
-        edgeDetection_threshold_blackPercentile = 0.20f;
-        edgeDetection_threshold_whitePercentile = 0.80f;
+        edgeDetection_threshold_blackPercentile = 0.10f;
+        edgeDetection_threshold_whitePercentile = 0.90f;
         edgeDetection_threshold_scaleRegionPercent = 0.8f;
         edgeDetection_minComponentWidth     = 2;
         edgeDetection_maxDetectionsPerType  = 2500;
         edgeDetection_everyNLines           = 1;
         matching_maxTranslationDistance     = 7;
         matching_maxProjectiveDistance      = 7;
-        verification_maxTranslationDistance = 2;
+        verify_maxTranslationDistance = 2;
+        verify_maxPixelDifference = 50;
+        verify_coordinateIncrement = 3;
         percentMatchedPixelsThreshold       = 0.02f; // TODO: pick a reasonable value
         
 #else

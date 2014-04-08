@@ -51,7 +51,7 @@ namespace Anki
           const f32 ridgeWeight,
           MemoryStack &memory);
 
-        Result UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, const bool useWeights, bool& verify_converged, MemoryStack scratch);
+        Result UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, const bool useWeights, bool &verify_converged, MemoryStack scratch);
 
         bool IsValid() const;
 
@@ -175,14 +175,6 @@ namespace Anki
 
         bool IsValid() const;
 
-        s32 get_numTemplatePixels() const;
-
-      protected:
-        FixedLengthList<Meshgrid<f32> > templateCoordinates;
-        FixedLengthList<Array<u8> > templateImagePyramid;
-        FixedLengthList<Array<s16> > templateImageXGradientPyramid;
-        FixedLengthList<Array<s16> > templateImageYGradientPyramid;
-
         Result VerifyTrack_Projective(
           const Array<u8> &nextImage,
           const u8 verify_maxPixelDifference,
@@ -190,6 +182,14 @@ namespace Anki
           s32 &verify_numInBounds,
           s32 &verify_numSimilarPixels,
           MemoryStack scratch) const;
+
+        s32 get_numTemplatePixels() const;
+
+      protected:
+        FixedLengthList<Meshgrid<f32> > templateCoordinates;
+        FixedLengthList<Array<u8> > templateImagePyramid;
+        FixedLengthList<Array<s16> > templateImageXGradientPyramid;
+        FixedLengthList<Array<s16> > templateImageYGradientPyramid;
       }; // class LucasKanadeTracker_Fast
 
       class LucasKanadeTracker_Affine : public LucasKanadeTracker_Fast
@@ -213,7 +213,7 @@ namespace Anki
           const s32 maxIterations,
           const f32 convergenceTolerance,
           const u8 verify_maxPixelDifference,
-          bool& verify_converged,
+          bool &verify_converged,
           s32 &verify_meanAbsoluteDifference, //< For all pixels in the template, compute the mean difference between the template and the final warped template
           s32 &verify_numInBounds, //< How many template pixels are in the image, after the template is warped?
           s32 &verify_numSimilarPixels, //< For all pixels in the template, how many are within verifyMaxPixelDifference grayvalues? Use in conjunction with get_numTemplatePixels() or numInBounds for a percentage.
@@ -247,7 +247,7 @@ namespace Anki
           const s32 maxIterations,
           const f32 convergenceTolerance,
           const u8 verify_maxPixelDifference,
-          bool& verify_converged,
+          bool &verify_converged,
           s32 &verify_meanAbsoluteDifference, //< For all pixels in the template, compute the mean difference between the template and the final warped template
           s32 &verify_numInBounds, //< How many template pixels are in the image, after the template is warped?
           s32 &verify_numSimilarPixels, //< For all pixels in the template, how many are within verifyMaxPixelDifference grayvalues? Use in conjunction with get_numTemplatePixels() or numInBounds for a percentage.
@@ -285,7 +285,7 @@ namespace Anki
           const s32 maxIterations,
           const f32 convergenceTolerance,
           const u8 verify_maxPixelDifference,
-          bool& verify_converged,
+          bool &verify_converged,
           s32 &verify_meanAbsoluteDifference, //< For all pixels in the template, compute the mean difference between the template and the final warped template
           s32 &verify_numInBounds, //< How many template pixels are in the image, after the template is warped?
           s32 &verify_numSimilarPixels, //< For all pixels in the template, how many are within verifyMaxPixelDifference grayvalues? Use in conjunction with get_numTemplatePixels() or numInBounds for a percentage.

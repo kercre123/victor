@@ -51,7 +51,7 @@ namespace Anki
         const s32 maxIterations,
         const f32 convergenceTolerance,
         const u8 verify_maxPixelDifference,
-        bool& verify_converged,
+        bool &verify_converged,
         s32 &verify_meanAbsoluteDifference, //< For all pixels in the template, compute the mean difference between the template and the final warped template
         s32 &verify_numInBounds, // How many template pixels are in the image, after the template is warped?
         s32 &verify_numSimilarPixels, //< For all pixels in the template, how many are within verifyMaxPixelDifference grayvalues? Use in conjunction with get_numTemplatePixels() for a percentage.
@@ -75,7 +75,13 @@ namespace Anki
           }
         } // for(s32 iScale=numPyramidLevels; iScale>=0; iScale--)
 
-        lastResult = this->VerifyTrack_Projective(nextImage, verify_maxPixelDifference, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels, scratch);
+        //lastResult = this->VerifyTrack_Projective(nextImage, verify_maxPixelDifference, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels, scratch);
+
+        lastResult = this->VerifyTrack_Projective(
+          nextImage,
+          verify_maxPixelDifference,
+          verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels,
+          scratch);
 
         return lastResult;
       }
@@ -235,9 +241,9 @@ namespace Anki
               const f32 alphaY = yTransformed - y0;
               const f32 alphaYinverse = 1.0f - alphaY;
 
-              const s32 y0S32 = static_cast<s32>(Round(y0));
-              const s32 y1S32 = static_cast<s32>(Round(y1));
-              const s32 x0S32 = static_cast<s32>(Round(x0));
+              const s32 y0S32 = RoundS32(y0);
+              const s32 y1S32 = RoundS32(y1);
+              const s32 x0S32 = RoundS32(x0);
 
               const u8 * restrict pReference_y0 = nextImage.Pointer(y0S32, x0S32);
               const u8 * restrict pReference_y1 = nextImage.Pointer(y1S32, x0S32);
@@ -434,9 +440,9 @@ namespace Anki
               const f32 alphaY = yTransformed - y0;
               const f32 alphaYinverse = 1.0f - alphaY;
 
-              const s32 y0S32 = static_cast<s32>(Round(y0));
-              const s32 y1S32 = static_cast<s32>(Round(y1));
-              const s32 x0S32 = static_cast<s32>(Round(x0));
+              const s32 y0S32 = RoundS32(y0);
+              const s32 y1S32 = RoundS32(y1);
+              const s32 x0S32 = RoundS32(x0);
 
               const u8 * restrict pReference_y0 = nextImage.Pointer(y0S32, x0S32);
               const u8 * restrict pReference_y1 = nextImage.Pointer(y1S32, x0S32);
