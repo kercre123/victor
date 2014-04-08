@@ -491,6 +491,8 @@ namespace Anki {
             projectedPoint3.x = focalLength_x*projectedPoint3.x + camCenter_x*projectedPoint3.z;
             projectedPoint3.y = focalLength_y*projectedPoint3.y + camCenter_y*projectedPoint3.z;
 
+            AnkiAssert(fabs(projectedPoint3.z) > 1e-6);
+            
             Point<PRECISION> projectedPoint(projectedPoint3.x/projectedPoint3.z,
               projectedPoint3.y/projectedPoint3.z);
 

@@ -21,7 +21,7 @@
 // Set to 1 to use OpenCV's iterative pose estimation for quads.
 // Otherwise, the closed form P3P solution is used.
 // NOTE: this currently only affects the computeObjectPose() that takes in quads.
-#define USE_ITERATIVE_QUAD_POSE_ESTIMATION 0
+#define USE_ITERATIVE_QUAD_POSE_ESTIMATION 1
 
 namespace Anki {
   

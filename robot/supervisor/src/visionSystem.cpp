@@ -117,16 +117,18 @@ namespace Anki {
         static const s32 MAX_TRACKING_FAILURES = 1;
         
         static const Anki::Cozmo::HAL::CameraInfo* headCamInfo_;
+        static f32 headCamFOV_;
         
         static VisionSystemMode mode_;
         
-        // Tracking markers
+        // Tracking marker related members
         static Anki::Vision::MarkerType markerTypeToTrack_;
         static Quadrilateral<f32> trackingQuad_;
         static s32 numTrackFailures_ ;
         static bool isTrackingMarkerSpecified_;
         static Tracker tracker_;
         static f32 trackingMarkerWidth_mm;
+        static Point3<P3P_PRECISION> canonicalMarker3d_[4];
         
         // Snapshots of robot state
         static bool wasCalledOnce_, havePreviousRobotState_;
@@ -225,7 +227,6 @@ namespace Anki {
       {
         return robotState_.headAngle;
       }
- 
       
       static ReturnCode LookForMarkers(
                                        const Array<u8> &grayscaleImage,
@@ -617,7 +618,7 @@ namespace Anki {
         // 2. Convert horizontal shift of the robot to pixel shift, using
         //    focal length
         f32 horizontalShift_pix = (static_cast<f32>(headCamInfo_->nrows/2) * theta_robot.ToFloat() /
-                                   headCamInfo_->fov_ver) + (T_hor_robot*headCamInfo_->focalLength_x/d);
+                                   headCamFOV_) + (T_hor_robot*headCamInfo_->focalLength_x/d);
         
         // Predict approximate scale change by comparing the distance to the
         // object before and after forward motion
@@ -685,8 +686,10 @@ namespace Anki {
       
       
       static void FillDockErrMsg(const Quadrilateral<f32>& currentQuad,
-                                 Messages::DockingErrorSignal& dockErrMsg)
+                                 Messages::DockingErrorSignal& dockErrMsg,
+                                 MemoryStack scratch)
       {
+        
         
 #if USE_APPROXIMATE_DOCKING_ERROR_SIGNAL
         const bool useTopBar = false; // TODO: pass in? make a docker parameter?
@@ -730,7 +733,7 @@ namespace Anki {
         dockErrMsg.y_horErr  = midpointError;
         dockErrMsg.angleErr  = angleError;
         
-#else // Use projective-pose error signal
+#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PLANAR6DOF
         
 #if USE_MATLAB_TRACKER
         MatlabVisionProcessor::ComputeProjectiveDockingSignal(currentQuad,
@@ -738,9 +741,44 @@ namespace Anki {
                                                               dockErrMsg.y_horErr,
                                                               dockErrMsg.angleErr);
 #else
-#error Projective-pose docking error signal not yet implemented outside of Matlab.
+#error Projective-pose docking error signal with Planar 6DoF tracker not yet implemented outside of Matlab.
         // TODO: Implement projective-pose docking error signal.
 #endif // if USE_MATLAB_TRACKER
+
+        
+#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PROJECTIVE || DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
+
+        
+#if 0 && USE_MATLAB_TRACKER
+        MatlabVisionProcessor::ComputeProjectiveDockingSignal(currentQuad,
+                                                              dockErrMsg.x_distErr,
+                                                              dockErrMsg.y_horErr,
+                                                              dockErrMsg.angleErr);
+#else
+        
+        // Compute the current pose of the block relative to the camera:
+        Array<P3P_PRECISION> R = Array<P3P_PRECISION>(3,3, scratch);
+        Point3<P3P_PRECISION> T;
+        Quadrilateral<P3P_PRECISION> currentQuad_atPrecision(Point<P3P_PRECISION>(currentQuad[0].x, currentQuad[0].y),
+                                                             Point<P3P_PRECISION>(currentQuad[1].x, currentQuad[1].y),
+                                                             Point<P3P_PRECISION>(currentQuad[2].x, currentQuad[2].y),
+                                                             Point<P3P_PRECISION>(currentQuad[3].x, currentQuad[3].y));
+        
+        P3P::computePose(currentQuad_atPrecision,
+                         canonicalMarker3d_[0], canonicalMarker3d_[1],
+                         canonicalMarker3d_[2], canonicalMarker3d_[3],
+                         headCamInfo_->focalLength_x, headCamInfo_->focalLength_y,
+                         headCamInfo_->center_x, headCamInfo_->center_y,
+                         R, T, scratch);
+        
+        // Extract what we need for the docking error signal from the block's pose:
+        dockErrMsg.x_distErr = T.z;
+        dockErrMsg.y_horErr  = -T.x;
+        dockErrMsg.angleErr  = asinf(R[2][0]);
+        
+
+#endif // if USE_MATLAB_TRACKER
+        
         
 #endif // if USE_APPROXIMATE_DOCKING_ERROR_SIGNAL
         
@@ -818,6 +856,10 @@ namespace Anki {
             return EXIT_FAILURE;
           }
           
+          // Compute FOV from focal length (currently used for tracker prediciton)
+          headCamFOV_ = 2.f * atan_fast(static_cast<f32>(headCamInfo_->nrows) /
+                                        (2.f * headCamInfo_->focalLength_y));
+          
           detectionParameters_.Initialize();
           trackerParameters_.Initialize();
           
@@ -861,6 +903,14 @@ namespace Anki {
            markerWidth_mm > 0.f)
         {
           isTrackingMarkerSpecified_ = true;
+          
+          // Set canonical 3D marker's corner coordinates
+          const P3P_PRECISION markerHalfWidth = trackingMarkerWidth_mm * P3P_PRECISION(0.5);
+          canonicalMarker3d_[0] = Point3<P3P_PRECISION>(-markerHalfWidth, -markerHalfWidth, 0);
+          canonicalMarker3d_[1] = Point3<P3P_PRECISION>(-markerHalfWidth,  markerHalfWidth, 0);
+          canonicalMarker3d_[2] = Point3<P3P_PRECISION>( markerHalfWidth, -markerHalfWidth, 0);
+          canonicalMarker3d_[3] = Point3<P3P_PRECISION>( markerHalfWidth,  markerHalfWidth, 0);
+
         } else {
           isTrackingMarkerSpecified_ = false;
         }
@@ -1086,7 +1136,7 @@ namespace Anki {
           if(converged)
           {
             Quadrilateral<f32> currentQuad = GetTrackerQuad(VisionMemory::onchipScratch_);
-            FillDockErrMsg(currentQuad, dockErrMsg);
+            FillDockErrMsg(currentQuad, dockErrMsg, VisionMemory::onchipScratch_);
             
             // Reset the failure counter
             numTrackFailures_ = 0;
