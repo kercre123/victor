@@ -2,7 +2,7 @@
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/localization.h"
 #include "anki/common/robot/geometry.h"
-
+#include "imuFilter.h"
 
 #ifdef SIMULATOR
 // Whether or not to use simulator "ground truth" pose
@@ -12,6 +12,10 @@
 #define USE_SIM_GROUND_TRUTH_POSE 0
 #define USE_OVERLAY_DISPLAY 0
 #endif // #ifdef SIMULATOR
+
+
+// Whether or not to use the orientation given by the gyro
+#define USE_GYRO_ORIENTATION 1
 
 
 #if(USE_OVERLAY_DISPLAY)
@@ -25,7 +29,7 @@ namespace Anki {
       
       namespace {
         
-        const f32 BIG_RADIUS = 10000;
+        const f32 BIG_RADIUS = 5000;
         
         // private members
         ::Anki::Embedded::Pose2d currMatPose;
@@ -42,6 +46,9 @@ namespace Anki {
         
         f32 prevLeftWheelPos_ = 0;
         f32 prevRightWheelPos_ = 0;
+        
+        f32 prevGyroRot_ = 0;
+        f32 gyroRotOffset_ = 0;
       }
 
       ReturnCode Init() {
@@ -50,6 +57,8 @@ namespace Anki {
         prevLeftWheelPos_ = HAL::MotorGetPosition(HAL::MOTOR_LEFT_WHEEL);
         prevRightWheelPos_ = HAL::MotorGetPosition(HAL::MOTOR_RIGHT_WHEEL);
 
+        gyroRotOffset_ =  -IMUFilter::GetRotation();
+        
         return EXIT_SUCCESS;
       }
 /*
@@ -85,6 +94,13 @@ namespace Anki {
         f32 rDist = currRightWheelPos - prevRightWheelPos_;
         
         
+#if(USE_GYRO_ORIENTATION)
+        // Compute the current tick's rotation based on gyro
+        f32 currGyroRot = IMUFilter::GetRotation();
+        f32 dTheta_gyro = currGyroRot - prevGyroRot_;
+        prevGyroRot_ = currGyroRot;
+#endif
+        
         // Compute new pose based on encoders and gyros, but only if there was any motion.
         movement = (!FLT_NEAR(rDist, 0) || !FLT_NEAR(lDist,0));
         if (movement ) {
@@ -108,7 +124,8 @@ namespace Anki {
           // wheel_dist / lRadius = rDist / lDist - 1
           // lRadius = wheel_dist / (rDist / lDist - 1)
 
-          if (FLT_NEAR(lDist, rDist)) {
+          if ((rDist != 0) && (lDist / rDist) < 1.01f && (lDist / rDist) > 0.99f) {
+//          if (FLT_NEAR(lDist, rDist)) {
             lRadius = BIG_RADIUS;
             rRadius = BIG_RADIUS;
             cRadius = BIG_RADIUS;
@@ -129,6 +146,14 @@ namespace Anki {
             cDist = 0.5f*(lDist + rDist);
             cRadius = lRadius + WHEEL_DIST_HALF_MM;
           }
+          
+#if(USE_GYRO_ORIENTATION)
+          // Overwrite expected rotation with measured rotation
+          cTheta = dTheta_gyro;
+          
+//          PRINT("dTheta_gyro: %f, cDist: %f, cTheta %f, cRadius %f, wRadius %f %f, wDist %f %f\n", dTheta_gyro, cDist, cTheta, cRadius, lRadius, rRadius, lDist, rDist);
+#endif
+          
 
 #if(DEBUG_LOCALIZATION)
           PRINT("lRadius %f, rRadius %f, lDist %f, rDist %f, cTheta %f, cDist %f, cRadius %f\n",
@@ -137,7 +162,7 @@ namespace Anki {
           PRINT("oldPose: %f %f %f\n", currentMatX_, currentMatY_, currentMatHeading_.ToFloat());
 #endif
           
-          if (cRadius == BIG_RADIUS) {
+          if (ABS(cRadius) >= BIG_RADIUS) {
             currentMatX_ += cDist * cosf(currentMatHeading_.ToFloat());
             currentMatY_ += cDist * sinf(currentMatHeading_.ToFloat());
             
@@ -171,6 +196,12 @@ namespace Anki {
 #endif
        
         }
+
+        
+#if(USE_GYRO_ORIENTATION)
+        // Set orientation according to gyro
+        currentMatHeading_ = IMUFilter::GetRotation() + gyroRotOffset_;
+#endif
         
         prevLeftWheelPos_ = HAL::MotorGetPosition(HAL::MOTOR_LEFT_WHEEL);
         prevRightWheelPos_ = HAL::MotorGetPosition(HAL::MOTOR_RIGHT_WHEEL);
@@ -220,7 +251,7 @@ namespace Anki {
         currentMatX_ = x;
         currentMatY_ = y;
         currentMatHeading_ = angle;
-
+        gyroRotOffset_ = angle.ToFloat() - IMUFilter::GetRotation();
       } // SetCurrentMatPose()
       
       void GetCurrentMatPose(f32& x, f32& y, Radians& angle)
