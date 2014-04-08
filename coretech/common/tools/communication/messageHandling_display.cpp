@@ -312,8 +312,8 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
 
       const cv::Scalar textColor    = cv::Scalar(0,255,0);
       //const cv::Scalar boxColor = cv::Scalar(0,128,0);
-      const cv::Scalar boxColor     = cv::Scalar(0,48,0);
-      const cv::Scalar topLineColor = cv::Scalar(48,0,0);
+      const cv::Scalar boxColor     = cv::Scalar(0,16,0);
+      const cv::Scalar topLineColor = cv::Scalar(16,0,0);
 
       //const Quadrilateral<f32> transformedCorners = lastPlanarTransformation.get_transformedCorners(scratch);
       //const Quadrilateral<f32> sortedCorners = transformedCorners.ComputeClockwiseCorners<f32>();
@@ -334,7 +334,7 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
         const cv::Point pt2(RoundS32(orientedCorners[point2Index].x*scale), RoundS32(orientedCorners[point2Index].y*scale));
 
         cv::Scalar thisLineColor = (iCorner==0) ? topLineColor : boxColor;
-        cv::line(toShowImage, pt1, pt2, thisLineColor, 2);
+        cv::line(trackingBoxImage, pt1, pt2, thisLineColor, 15);
       }
 
       const Point<f32> center = orientedCorners.ComputeCenter<f32>();
