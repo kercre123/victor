@@ -382,7 +382,6 @@ namespace Anki
         typedef struct
         {
           f32 angle_x, angle_y, angle_z;  // rotation
-          //f32 tx, ty, tz;                 // translation
           Point3<f32> translation;
         } Parameters6DoF;
         
@@ -402,8 +401,7 @@ namespace Anki
         
         Parameters6DoF params6DoF;
         
-        static Result SetTransformationFromParams(const Parameters6DoF& params,
-                                                  Transformations::PlanarTransformation_f32& transformation);
+        //Result SetHomographyFrom6DofParams(Array<f32> &H);
         
         FixedLengthList<FixedLengthList<TemplateSample> > templateSamplePyramid;
         

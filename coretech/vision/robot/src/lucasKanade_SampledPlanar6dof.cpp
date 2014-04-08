@@ -637,8 +637,11 @@ namespace Anki
         return RESULT_OK;
       } // Result LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack_Translation()
       
+      
       Result LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack_Affine(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &verify_converged, MemoryStack scratch)
       {
+        /* Not sure this makes sense for the Planar6dof tracker
+       
         // This method is heavily based on Interp2_Projective
         // The call would be like: Interp2_Projective<u8,u8>(nextImage, originalCoordinates, interpolationHomography, centerOffset, nextImageTransformed2d, INTERPOLATE_LINEAR, 0);
         
@@ -824,9 +827,10 @@ namespace Anki
             return RESULT_OK;
           }
         } // for(s32 iteration=0; iteration<maxIterations; iteration++)
-        
-        return RESULT_OK;
+        */
+        return RESULT_FAIL;
       } // Result LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack_Affine()
+      
       
       Result LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack_Projective(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &verify_converged, MemoryStack scratch)
       {
@@ -922,7 +926,7 @@ namespace Anki
             numInBounds++;
             
             const f32 alphaX = xTransformed - x0;
-            const f32 alphaXinverse = 1 - alphaX;
+            const f32 alphaXinverse = 1.0f - alphaX;
             
             const f32 alphaY = yTransformed - y0;
             const f32 alphaYinverse = 1.0f - alphaY;
@@ -956,11 +960,31 @@ namespace Anki
               // This is where we incorporate the 6DoF terms into the
               // Jacobians for the A matrix.  Note that the partials are
               // evaluated at the initial conditions of the tracker's params.
+              // (Thus the use of this->initialHomography instead of the current
+              //  homography in this->transformation.)
               // So technically all this could be computed up front and stored
               // but it may be faster to recompute each time since we can't
-              // store all this for all the sampled points in memory
+              // store all this for all the sampled points in memory (?)
+              // TODO: do i actually want to divide/multiply by initialImageScale here?
+              const f32 h00_init = this->initialHomography[0][0];
+              const f32 h01_init = this->initialHomography[0][1];
+              const f32 h02_init = this->initialHomography[0][2] / initialImageScaleF32;
               
-              const f32 invNorm = 1.f / normalization;
+              const f32 h10_init = this->initialHomography[1][0];
+              const f32 h11_init = this->initialHomography[1][1];
+              const f32 h12_init = this->initialHomography[1][2] / initialImageScaleF32;
+              
+              const f32 h20_init = this->initialHomography[2][0] * initialImageScaleF32;
+              const f32 h21_init = this->initialHomography[2][1] * initialImageScaleF32;
+              const f32 h22_init = this->initialHomography[2][2] * initialImageScaleF32;
+              
+              // TODO: These two could be strength reduced
+              const f32 xTransformedRawInit = h00_init*xOriginal + h01_init*yOriginal + h02_init;
+              const f32 yTransformedRawInit = h10_init*xOriginal + h11_init*yOriginal + h12_init;
+      
+              const f32 normalizationInit = h20_init*xOriginal + h21_init*yOriginal + h22_init;
+
+              const f32 invNorm = 1.f / normalizationInit;
               const f32 invNormSq = invNorm *invNorm;
               
               const f32 dWu_dtx = this->focalLength_x * invNorm;
@@ -972,24 +996,24 @@ namespace Anki
               const f32 dWv_dtz = -yTransformedRaw * invNormSq;
 
             
-              const f32 dWu_dthetaX = (this->focalLength_x*normalization*(this->dr11_dthetaX*xOriginal + this->dr12_dthetaX*yOriginal) -
-                                       (this->dr31_dthetaX*xOriginal + this->dr32_dthetaX*yOriginal)*xTransformedRaw) * invNormSq;
+              const f32 dWu_dthetaX = (this->focalLength_x*normalizationInit*(this->dr11_dthetaX*xOriginal + this->dr12_dthetaX*yOriginal) -
+                                       (this->dr31_dthetaX*xOriginal + this->dr32_dthetaX*yOriginal)*xTransformedRawInit) * invNormSq;
               
-              const f32 dWu_dthetaY = (this->focalLength_x*normalization*(this->dr11_dthetaY*xOriginal + this->dr12_dthetaY*yOriginal) -
-                                       (this->dr31_dthetaY*xOriginal + this->dr32_dthetaY*yOriginal)*xTransformedRaw) * invNormSq;
+              const f32 dWu_dthetaY = (this->focalLength_x*normalizationInit*(this->dr11_dthetaY*xOriginal + this->dr12_dthetaY*yOriginal) -
+                                       (this->dr31_dthetaY*xOriginal + this->dr32_dthetaY*yOriginal)*xTransformedRawInit) * invNormSq;
               
-              const f32 dWu_dthetaZ = (this->focalLength_x*normalization*(this->dr11_dthetaZ*xOriginal + this->dr12_dthetaZ*yOriginal) -
-                                       (this->dr31_dthetaZ*xOriginal + this->dr32_dthetaZ*yOriginal)*xTransformedRaw) * invNormSq;
+              const f32 dWu_dthetaZ = (this->focalLength_x*normalizationInit*(this->dr11_dthetaZ*xOriginal + this->dr12_dthetaZ*yOriginal) -
+                                       (this->dr31_dthetaZ*xOriginal + this->dr32_dthetaZ*yOriginal)*xTransformedRawInit) * invNormSq;
               
               
-              const f32 dWv_dthetaX = (this->focalLength_y*normalization*(this->dr21_dthetaX*xOriginal + this->dr22_dthetaX*yOriginal) -
-                                       (this->dr31_dthetaX*xOriginal + this->dr32_dthetaX*yOriginal)*yTransformedRaw) * invNormSq;
+              const f32 dWv_dthetaX = (this->focalLength_y*normalizationInit*(this->dr21_dthetaX*xOriginal + this->dr22_dthetaX*yOriginal) -
+                                       (this->dr31_dthetaX*xOriginal + this->dr32_dthetaX*yOriginal)*yTransformedRawInit) * invNormSq;
                
-              const f32 dWv_dthetaY = (this->focalLength_y*normalization*(this->dr21_dthetaY*xOriginal + this->dr22_dthetaY*yOriginal) -
-                                       (this->dr31_dthetaY*xOriginal + this->dr32_dthetaY*yOriginal)*yTransformedRaw) * invNormSq;
+              const f32 dWv_dthetaY = (this->focalLength_y*normalizationInit*(this->dr21_dthetaY*xOriginal + this->dr22_dthetaY*yOriginal) -
+                                       (this->dr31_dthetaY*xOriginal + this->dr32_dthetaY*yOriginal)*yTransformedRawInit) * invNormSq;
               
-              const f32 dWv_dthetaZ = (this->focalLength_y*normalization*(this->dr21_dthetaZ*xOriginal + this->dr22_dthetaZ*yOriginal) -
-                                       (this->dr31_dthetaZ*xOriginal + this->dr32_dthetaZ*yOriginal)*yTransformedRaw) *invNormSq;
+              const f32 dWv_dthetaZ = (this->focalLength_y*normalizationInit*(this->dr21_dthetaZ*xOriginal + this->dr22_dthetaZ*yOriginal) -
+                                       (this->dr31_dthetaZ*xOriginal + this->dr32_dthetaZ*yOriginal)*yTransformedRawInit) *invNormSq;
               
               const f32 values[6] = {
                 xGradientValue*dWu_dthetaX + yGradientValue*dWv_dthetaX,
@@ -1038,7 +1062,52 @@ namespace Anki
           
           //b.Print("New update");
           
-          this->transformation.Update(b, initialImageScaleF32, scratch, Transformations::TRANSFORM_PROJECTIVE);
+          // Update the 6DoF parameters
+          // Note: we are subtracting the update because we're using an _inverse_
+          // compositional LK tracking scheme.
+          this->params6DoF.angle_x -= b[0][0];
+          this->params6DoF.angle_y -= b[0][1];
+          this->params6DoF.angle_z -= b[0][2];
+          
+          this->params6DoF.translation.x -= b[0][3];
+          this->params6DoF.translation.y -= b[0][4];
+          this->params6DoF.translation.z -= b[0][5];
+          
+          
+          //this->transformation.Update(b, initialImageScaleF32, scratch, Transformations::TRANSFORM_PROJECTIVE);
+          
+          // Compute entries of the rotation matrix that we will need for the
+          // homography update, using the new 6DoF parameters
+          const f32 cx = cosf(this->params6DoF.angle_x);
+          const f32 cy = cosf(this->params6DoF.angle_y);
+          const f32 cz = cosf(this->params6DoF.angle_z);
+          const f32 sx = sinf(this->params6DoF.angle_x);
+          const f32 sy = sinf(this->params6DoF.angle_y);
+          const f32 sz = sinf(this->params6DoF.angle_z);
+          
+          const f32 R00 = cy*cz;
+          const f32 R01 = cx*sz+sx*sy*cz;
+          const f32 R10 = -cy*sz;
+          const f32 R11 = cx*cz-sx*sy*sz;
+          const f32 R20 = sy;
+          const f32 R21 = -sx*cy;
+          
+          // Compute the new homography from the new 6DoF parameters, and
+          // update the transformation object
+          Array<f32> newHomography = Array<f32>(3,3,scratch);
+          newHomography[0][0] = this->focalLength_x*R00;
+          newHomography[0][1] = this->focalLength_x*R01;
+          newHomography[0][2] = this->focalLength_x*this->params6DoF.translation.x;
+          
+          newHomography[1][0] = this->focalLength_y*R10;
+          newHomography[1][1] = this->focalLength_y*R11;
+          newHomography[1][2] = this->focalLength_y*this->params6DoF.translation.y;
+          
+          newHomography[2][0] = R20;
+          newHomography[2][1] = R21;
+          newHomography[2][2] = this->params6DoF.translation.z;
+          this->transformation.set_homography(newHomography);
+          
           
           //this->transformation.get_homography().Print("new transformation");
           
