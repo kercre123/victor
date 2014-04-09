@@ -447,7 +447,7 @@ namespace Anki
         return RESULT_OK;
       }
 
-      template<typename TypeIn, typename TypeOut> Result Reshape(const bool isColumnMajor, const Array<TypeIn> &in, Array<TypeOut> &out)
+      template<typename InType, typename OutType> Result Reshape(const bool isColumnMajor, const Array<InType> &in, Array<OutType> &out)
       {
         const s32 inHeight = in.get_size(0);
         const s32 inWidth = in.get_size(1);
@@ -464,12 +464,12 @@ namespace Anki
         if(isColumnMajor) {
           for(s32 y = 0; y < outHeight; y++)
           {
-            TypeOut * const pOut = out.Pointer(y,0);
+            OutType * const pOut = out.Pointer(y,0);
 
             for(s32 x = 0; x < outWidth; x++) {
-              const TypeIn curIn = *in.Pointer(inIndexY,inIndexX);
+              const InType curIn = *in.Pointer(inIndexY,inIndexX);
 
-              pOut[x] = static_cast<TypeOut>(curIn);
+              pOut[x] = static_cast<OutType>(curIn);
 
               inIndexY++;
               if(inIndexY >= inHeight) {
@@ -481,12 +481,12 @@ namespace Anki
         } else { // if(isColumnMajor)
           for(s32 y = 0; y < outHeight; y++)
           {
-            TypeOut * const pOut = out.Pointer(y,0);
+            OutType * const pOut = out.Pointer(y,0);
 
             for(s32 x = 0; x < outWidth; x++) {
-              const TypeIn curIn = *in.Pointer(inIndexY,inIndexX);
+              const InType curIn = *in.Pointer(inIndexY,inIndexX);
 
-              pOut[x] = static_cast<TypeOut>(curIn);
+              pOut[x] = static_cast<OutType>(curIn);
 
               inIndexX++;
               if(inIndexX >= inWidth) {
@@ -500,36 +500,36 @@ namespace Anki
         return RESULT_OK;
       }
 
-      template<typename TypeIn, typename TypeOut> Array<TypeOut> Reshape(const bool isColumnMajor, const Array<TypeIn> &in, const s32 newHeight, const s32 newWidth, MemoryStack &memory)
+      template<typename InType, typename OutType> Array<OutType> Reshape(const bool isColumnMajor, const Array<InType> &in, const s32 newHeight, const s32 newWidth, MemoryStack &memory)
       {
-        Array<TypeOut> out(newHeight, newWidth, memory);
+        Array<OutType> out(newHeight, newWidth, memory);
 
-        Reshape<TypeIn, TypeOut>(isColumnMajor, in, out);
+        Reshape<InType, OutType>(isColumnMajor, in, out);
 
         return out;
       }
 
-      template<typename TypeIn, typename TypeOut> Result Vectorize(const bool isColumnMajor, const Array<TypeIn> &in, Array<TypeOut> &out)
+      template<typename InType, typename OutType> Result Vectorize(const bool isColumnMajor, const Array<InType> &in, Array<OutType> &out)
       {
         AnkiConditionalErrorAndReturnValue(out.get_size(0) == 1,
           RESULT_FAIL_INVALID_SIZE, "Vectorize", "Output is not 1xN");
 
-        return Reshape<TypeIn, TypeOut>(isColumnMajor, in, out);
+        return Reshape<InType, OutType>(isColumnMajor, in, out);
       }
 
-      template<typename TypeIn, typename TypeOut> Array<TypeOut> Vectorize(const bool isColumnMajor, const Array<TypeIn> &in, MemoryStack &memory)
+      template<typename InType, typename OutType> Array<OutType> Vectorize(const bool isColumnMajor, const Array<InType> &in, MemoryStack &memory)
       {
         const s32 inHeight = in.get_size(0);
         const s32 inWidth = in.get_size(1);
 
-        Array<TypeOut> out(1, inHeight*inWidth, memory);
+        Array<OutType> out(1, inHeight*inWidth, memory);
 
-        Vectorize<TypeIn, TypeOut>(isColumnMajor, in, out);
+        Vectorize<InType, OutType>(isColumnMajor, in, out);
 
         return out;
       }
 
-      template<typename TypeIn, typename TypeOut> Result Transpose(const Array<TypeIn> &in, Array<TypeOut> &out)
+      template<typename InType, typename OutType> Result Transpose(const Array<InType> &in, Array<OutType> &out)
       {
         const s32 inHeight = in.get_size(0);
         const s32 inWidth = in.get_size(1);
@@ -541,15 +541,20 @@ namespace Anki
           RESULT_FAIL_INVALID_OBJECT, "Transpose", "out is not valid");
 
         AnkiConditionalErrorAndReturnValue(out.get_size(0) == inWidth && out.get_size(1) == inHeight,
-          RESULT_FAIL_INVALID_SIZE, "Transpose", "Output is not the correct size");
+          RESULT_FAIL_INVALID_SIZE, "Transpose", "out is not the correct size");
 
         AnkiConditionalErrorAndReturnValue(in.get_rawDataPointer() != out.get_rawDataPointer(),
           RESULT_FAIL_ALIASED_MEMORY, "Transpose", "in and out cannot be the same array");
 
         for(s32 yIn=0; yIn<inHeight; yIn++) {
-          const TypeIn * restrict pIn = in.Pointer(yIn, 0);
+          const InType * restrict pIn = in.Pointer(yIn, 0);
           for(s32 xIn=0; xIn<inWidth; xIn++) {
-            out[xIn][yIn] = static_cast<TypeOut>(pIn[xIn]);
+            out[xIn][yIn] = static_cast<OutType>(pIn[xIn]);
+          }
+        }
+
+        return RESULT_OK;
+      }
           }
         }
 

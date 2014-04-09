@@ -67,7 +67,7 @@ namespace Anki
       return interpolatedPixel;
     }
 
-    template<typename TypeIn, typename TypeOut> Result Interp2(const Array<TypeIn> &reference, const Array<f32> &xCoordinates, const Array<f32> &yCoordinates, Array<TypeOut> &out, const InterpolationType interpolationType, const TypeOut invalidValue)
+    template<typename InType, typename OutType> Result Interp2(const Array<InType> &reference, const Array<f32> &xCoordinates, const Array<f32> &yCoordinates, Array<OutType> &out, const InterpolationType interpolationType, const OutType invalidValue)
     {
       AnkiConditionalErrorAndReturnValue(interpolationType == INTERPOLATE_LINEAR,
         RESULT_FAIL_INVALID_PARAMETERS, "Interp2", "Only INTERPOLATE_LINEAR is supported");
@@ -124,7 +124,7 @@ namespace Anki
         const f32 * restrict pXCoordinates = xCoordinates.Pointer(y,0);
         const f32 * restrict pYCoordinates = yCoordinates.Pointer(y,0);
 
-        TypeOut * restrict pOut = out.Pointer(y,0);
+        OutType * restrict pOut = out.Pointer(y,0);
 
         for(s32 x=0; x<xIterationMax; x++) {
           const f32 curX = pXCoordinates[x];
@@ -152,8 +152,8 @@ namespace Anki
           const s32 y1S32 = RoundS32(y1);
           const s32 x0S32 = RoundS32(x0);
 
-          const TypeIn * restrict pReference_y0 = reference.Pointer(y0S32, x0S32);
-          const TypeIn * restrict pReference_y1 = reference.Pointer(y1S32, x0S32);
+          const InType * restrict pReference_y0 = reference.Pointer(y0S32, x0S32);
+          const InType * restrict pReference_y1 = reference.Pointer(y1S32, x0S32);
 
           const f32 pixelTL = *pReference_y0;
           const f32 pixelTR = *(pReference_y0+1);
@@ -162,7 +162,7 @@ namespace Anki
 
           const f32 interpolatedPixelF32 = InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse);
 
-          const TypeOut interpolatedPixel = static_cast<TypeOut>(interpolatedPixelF32);
+          const OutType interpolatedPixel = static_cast<OutType>(interpolatedPixelF32);
 
           pOut[x] = interpolatedPixel;
         } // for(s32 x=0; x<xIterationMax; x++)
@@ -171,7 +171,7 @@ namespace Anki
       return RESULT_OK;
     } // Interp2
 
-    template<typename TypeIn, typename TypeOut> Result Interp2_Affine(const Array<TypeIn> &reference, const Meshgrid<f32> &originalCoordinates, const Array<f32> &homography, const Point<f32> &centerOffset, Array<TypeOut> &out, const InterpolationType interpolationType, const TypeOut invalidValue)
+    template<typename InType, typename OutType> Result Interp2_Affine(const Array<InType> &reference, const Meshgrid<f32> &originalCoordinates, const Array<f32> &homography, const Point<f32> &centerOffset, Array<OutType> &out, const InterpolationType interpolationType, const OutType invalidValue)
     {
       AnkiConditionalErrorAndReturnValue(interpolationType == INTERPOLATE_LINEAR,
         RESULT_FAIL_INVALID_PARAMETERS, "Interp2_Affine", "Only INTERPOLATE_LINEAR is supported");
@@ -231,7 +231,7 @@ namespace Anki
           RESULT_FAIL_INVALID_SIZE, "Interp2_Affine", "originalCoordinates is the wrong size");
       }
 
-      TypeOut * restrict pOut = out.Pointer(0,0);
+      OutType * restrict pOut = out.Pointer(0,0);
 
       if(isOutputOneDimensional) {
         // pOut is incremented at the top of the loop, so decrement it here
@@ -281,8 +281,8 @@ namespace Anki
           const s32 y1S32 = RoundS32(y1);
           const s32 x0S32 = RoundS32(x0);
 
-          const TypeIn * restrict pReference_y0 = reference.Pointer(y0S32, x0S32);
-          const TypeIn * restrict pReference_y1 = reference.Pointer(y1S32, x0S32);
+          const InType * restrict pReference_y0 = reference.Pointer(y0S32, x0S32);
+          const InType * restrict pReference_y1 = reference.Pointer(y1S32, x0S32);
 
           const f32 pixelTL = *pReference_y0;
           const f32 pixelTR = *(pReference_y0+1);
@@ -291,7 +291,7 @@ namespace Anki
 
           const f32 interpolatedPixelF32 = InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse);
 
-          const TypeOut interpolatedPixel = static_cast<TypeOut>(interpolatedPixelF32);
+          const OutType interpolatedPixel = static_cast<OutType>(interpolatedPixelF32);
 
           pOut[x] = interpolatedPixel;
 
@@ -306,7 +306,7 @@ namespace Anki
       return RESULT_OK;
     } // Interp2_Affine
 
-    template<typename TypeIn, typename TypeOut> Result Interp2_Projective(const Array<TypeIn> &reference, const Meshgrid<f32> &originalCoordinates, const Array<f32> &homography, const Point<f32> &centerOffset, Array<TypeOut> &out, const InterpolationType interpolationType, const TypeOut invalidValue)
+    template<typename InType, typename OutType> Result Interp2_Projective(const Array<InType> &reference, const Meshgrid<f32> &originalCoordinates, const Array<f32> &homography, const Point<f32> &centerOffset, Array<OutType> &out, const InterpolationType interpolationType, const OutType invalidValue)
     {
       AnkiConditionalErrorAndReturnValue(interpolationType == INTERPOLATE_LINEAR,
         RESULT_FAIL_INVALID_PARAMETERS, "Interp2_Projective", "Only INTERPOLATE_LINEAR is supported");
@@ -370,7 +370,7 @@ namespace Anki
           RESULT_FAIL_INVALID_SIZE, "Interp2_Projective", "originalCoordinates is the wrong size");
       }
 
-      TypeOut * restrict pOut = out.Pointer(0,0);
+      OutType * restrict pOut = out.Pointer(0,0);
 
       if(isOutputOneDimensional) {
         // pOut is incremented at the top of the loop, so decrement it here
@@ -423,8 +423,8 @@ namespace Anki
           const s32 y1S32 = RoundS32(y1);
           const s32 x0S32 = RoundS32(x0);
 
-          const TypeIn * restrict pReference_y0 = reference.Pointer(y0S32, x0S32);
-          const TypeIn * restrict pReference_y1 = reference.Pointer(y1S32, x0S32);
+          const InType * restrict pReference_y0 = reference.Pointer(y0S32, x0S32);
+          const InType * restrict pReference_y1 = reference.Pointer(y1S32, x0S32);
 
           const f32 pixelTL = *pReference_y0;
           const f32 pixelTR = *(pReference_y0+1);
@@ -433,7 +433,7 @@ namespace Anki
 
           const f32 interpolatedPixelF32 = InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse);
 
-          const TypeOut interpolatedPixel = static_cast<TypeOut>(interpolatedPixelF32);
+          const OutType interpolatedPixel = static_cast<OutType>(interpolatedPixelF32);
 
           pOut[x] = interpolatedPixel;
         } // for(s32 x=0; x<xIterationMax; x++)
