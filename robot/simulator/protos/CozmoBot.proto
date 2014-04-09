@@ -206,7 +206,7 @@ Supervisor {
 					  }
 					]
 				  }
-				  Shape {
+				  DEF HEAD_SPHERE Shape {
 					appearance Appearance {
 					  material Material {
 						diffuseColor IS bodyColor
@@ -219,6 +219,7 @@ Supervisor {
 				  }
 				]
 				name "head"
+				boundingObject USE HEAD_SPHERE
 				physics Physics {
 					density 100
 				}
