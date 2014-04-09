@@ -34,6 +34,64 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 using namespace Anki::Embedded;
 
+GTEST_TEST(CoreTech_Common, Rotate90)
+{
+  const s32 arrayHeight = 4;
+
+  ASSERT_TRUE(offchipBuffer != NULL);
+  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(ms.IsValid());
+
+  Array<s16> in(arrayHeight, arrayHeight, ms);
+  Array<s16> out(arrayHeight, arrayHeight, ms);
+  Array<s16> out90_groundTruth(arrayHeight, arrayHeight, ms);
+  Array<s16> out180_groundTruth(arrayHeight, arrayHeight, ms);
+  Array<s16> out270_groundTruth(arrayHeight, arrayHeight, ms);
+
+  in[0][0] = 0;  in[0][1] = 0;  in[0][2] = 2;  in[0][3] = 3;
+  in[1][0] = 4;  in[1][1] = 5;  in[1][2] = 0;  in[1][3] = 7;
+  in[2][0] = 8;  in[2][1] = 9;  in[2][2] = 10; in[2][3] = 0;
+  in[3][0] = 12; in[3][1] = 13; in[3][2] = 14; in[3][3] = 15;
+
+  out90_groundTruth[0][0] = 12; out90_groundTruth[0][1] = 8;  out90_groundTruth[0][2] = 4; out90_groundTruth[0][3] = 0;
+  out90_groundTruth[1][0] = 13; out90_groundTruth[1][1] = 9;  out90_groundTruth[1][2] = 5; out90_groundTruth[1][3] = 0;
+  out90_groundTruth[2][0] = 14; out90_groundTruth[2][1] = 10; out90_groundTruth[2][2] = 0; out90_groundTruth[2][3] = 2;
+  out90_groundTruth[3][0] = 15; out90_groundTruth[3][1] = 0;  out90_groundTruth[3][2] = 7; out90_groundTruth[3][3] = 3;
+
+  out180_groundTruth[0][0] = 15; out180_groundTruth[0][1] = 14; out180_groundTruth[0][2] = 13; out180_groundTruth[0][3] = 12;
+  out180_groundTruth[1][0] = 0;  out180_groundTruth[1][1] = 10; out180_groundTruth[1][2] = 9;  out180_groundTruth[1][3] = 8;
+  out180_groundTruth[2][0] = 7;  out180_groundTruth[2][1] = 0;  out180_groundTruth[2][2] = 5;  out180_groundTruth[2][3] = 4;
+  out180_groundTruth[3][0] = 3;  out180_groundTruth[3][1] = 2;  out180_groundTruth[3][2] = 0;  out180_groundTruth[3][3] = 0;
+
+  out270_groundTruth[0][0] = 3; out270_groundTruth[0][1] = 7; out270_groundTruth[0][2] = 0;  out270_groundTruth[0][3] = 15;
+  out270_groundTruth[1][0] = 2; out270_groundTruth[1][1] = 0; out270_groundTruth[1][2] = 10; out270_groundTruth[1][3] = 14;
+  out270_groundTruth[2][0] = 0; out270_groundTruth[2][1] = 5; out270_groundTruth[2][2] = 9;  out270_groundTruth[2][3] = 13;
+  out270_groundTruth[3][0] = 0; out270_groundTruth[3][1] = 4; out270_groundTruth[3][2] = 8;  out270_groundTruth[3][3] = 12;
+
+  {
+    const Result result = Matrix::Rotate90(in, out);
+
+    ASSERT_TRUE(result == RESULT_OK);
+    ASSERT_TRUE(AreElementwiseEqual<s16>(out, out90_groundTruth));
+  }
+
+  {
+    const Result result = Matrix::Rotate180(in, out);
+
+    ASSERT_TRUE(result == RESULT_OK);
+    ASSERT_TRUE(AreElementwiseEqual<s16>(out, out180_groundTruth));
+  }
+
+  {
+    const Result result = Matrix::Rotate270(in, out);
+
+    ASSERT_TRUE(result == RESULT_OK);
+    ASSERT_TRUE(AreElementwiseEqual<s16>(out, out270_groundTruth));
+  }
+
+  GTEST_RETURN_HERE;
+}
+
 GTEST_TEST(CoreTech_Common, RunLengthEncode)
 {
   const s32 arrayHeight = 7;

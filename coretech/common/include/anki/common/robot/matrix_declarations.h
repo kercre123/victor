@@ -142,6 +142,13 @@ namespace Anki
       // in and out must be different Array objects
       template<typename InType, typename OutType> Result Transpose(const Array<InType> &in, Array<OutType> &out);
 
+      // Rotate an array clockwise by 90, 180, or 270 degrees.
+      // NOTE: Only works for a square matrix.
+      // NOTE: In and out must be different arrays (unlike the interview question)
+      template<typename InType, typename OutType> Result Rotate90( const Array<InType> &in, Array<OutType> &out);
+      template<typename InType, typename OutType> Result Rotate180(const Array<InType> &in, Array<OutType> &out);
+      template<typename InType, typename OutType> Result Rotate270(const Array<InType> &in, Array<OutType> &out);
+
       //
       // Misc matrix operations
       //

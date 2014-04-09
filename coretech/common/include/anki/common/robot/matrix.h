@@ -555,6 +555,102 @@ namespace Anki
 
         return RESULT_OK;
       }
+
+      template<typename InType, typename OutType> Result Rotate90(const Array<InType> &in, Array<OutType> &out)
+      {
+        const s32 arrWidth = in.get_size(1);
+
+        AnkiConditionalErrorAndReturnValue(in.IsValid(),
+          RESULT_FAIL_INVALID_OBJECT, "Rotate90", "in is not valid");
+
+        AnkiConditionalErrorAndReturnValue(out.IsValid(),
+          RESULT_FAIL_INVALID_OBJECT, "Rotate90", "out is not valid");
+
+        AnkiConditionalErrorAndReturnValue(in.get_size(0) == in.get_size(1),
+          RESULT_FAIL_INVALID_SIZE, "Rotate90", "in and out must be square");
+
+        AnkiConditionalErrorAndReturnValue(out.get_size(0) == arrWidth && out.get_size(1) == arrWidth,
+          RESULT_FAIL_INVALID_SIZE, "Rotate90", "in and out must be square");
+
+        AnkiConditionalErrorAndReturnValue(in.get_rawDataPointer() != out.get_rawDataPointer(),
+          RESULT_FAIL_ALIASED_MEMORY, "Rotate90", "in and out cannot be the same array");
+
+        const s32 outStride = out.get_stride();
+
+        for(s32 yIn=0; yIn<arrWidth; yIn++) {
+          const InType * restrict pIn = in.Pointer(yIn, 0);
+          u8 * restrict pOut = reinterpret_cast<u8*>(out.Pointer(0, arrWidth-yIn-1));
+
+          for(s32 xIn=0; xIn<arrWidth; xIn++) {
+            (reinterpret_cast<OutType * restrict>(pOut))[0] = static_cast<OutType>(pIn[xIn]);
+
+            pOut += outStride;
+          }
+        }
+
+        return RESULT_OK;
+      }
+
+      template<typename InType, typename OutType> Result Rotate180(const Array<InType> &in, Array<OutType> &out)
+      {
+        const s32 arrWidth = in.get_size(1);
+
+        AnkiConditionalErrorAndReturnValue(in.IsValid(),
+          RESULT_FAIL_INVALID_OBJECT, "Rotate180", "in is not valid");
+
+        AnkiConditionalErrorAndReturnValue(out.IsValid(),
+          RESULT_FAIL_INVALID_OBJECT, "Rotate180", "out is not valid");
+
+        AnkiConditionalErrorAndReturnValue(in.get_size(0) == in.get_size(1),
+          RESULT_FAIL_INVALID_SIZE, "Rotate180", "in and out must be square");
+
+        AnkiConditionalErrorAndReturnValue(out.get_size(0) == arrWidth && out.get_size(1) == arrWidth,
+          RESULT_FAIL_INVALID_SIZE, "Rotate180", "in and out must be square");
+
+        AnkiConditionalErrorAndReturnValue(in.get_rawDataPointer() != out.get_rawDataPointer(),
+          RESULT_FAIL_ALIASED_MEMORY, "Rotate180", "in and out cannot be the same array");
+
+        for(s32 yIn=0; yIn<arrWidth; yIn++) {
+          const InType * restrict pIn = in.Pointer(yIn, 0);
+          OutType * restrict pOut = out.Pointer(arrWidth-yIn-1, 0);
+
+          for(s32 xIn=0; xIn<arrWidth; xIn++) {
+            pOut[arrWidth-xIn-1] = static_cast<OutType>(pIn[xIn]);
+          }
+        }
+
+        return RESULT_OK;
+      }
+
+      template<typename InType, typename OutType> Result Rotate270(const Array<InType> &in, Array<OutType> &out)
+      {
+        const s32 arrWidth = in.get_size(1);
+
+        AnkiConditionalErrorAndReturnValue(in.IsValid(),
+          RESULT_FAIL_INVALID_OBJECT, "Rotate270", "in is not valid");
+
+        AnkiConditionalErrorAndReturnValue(out.IsValid(),
+          RESULT_FAIL_INVALID_OBJECT, "Rotate270", "out is not valid");
+
+        AnkiConditionalErrorAndReturnValue(in.get_size(0) == in.get_size(1),
+          RESULT_FAIL_INVALID_SIZE, "Rotate270", "in and out must be square");
+
+        AnkiConditionalErrorAndReturnValue(out.get_size(0) == arrWidth && out.get_size(1) == arrWidth,
+          RESULT_FAIL_INVALID_SIZE, "Rotate270", "in and out must be square");
+
+        AnkiConditionalErrorAndReturnValue(in.get_rawDataPointer() != out.get_rawDataPointer(),
+          RESULT_FAIL_ALIASED_MEMORY, "Rotate270", "in and out cannot be the same array");
+
+        const s32 outStride = out.get_stride();
+
+        for(s32 yIn=0; yIn<arrWidth; yIn++) {
+          const InType * restrict pIn = in.Pointer(yIn, 0);
+          u8 * restrict pOut = reinterpret_cast<u8*>(out.Pointer(arrWidth-1, yIn));
+
+          for(s32 xIn=0; xIn<arrWidth; xIn++) {
+            (reinterpret_cast<OutType * restrict>(pOut))[0] = static_cast<OutType>(pIn[xIn]);
+
+            pOut -= outStride;
           }
         }
 
