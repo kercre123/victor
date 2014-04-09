@@ -109,7 +109,7 @@ namespace Anki {
 #else
         // LK tracker parameter initialization
         
-#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PROJECTIVE
+#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PROJECTIVE || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
         trackingResolution   = HAL::CAMERA_MODE_QVGA; // 320x240
         numPyramidLevels     = 4;
 #else

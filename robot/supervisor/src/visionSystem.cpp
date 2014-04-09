@@ -137,10 +137,12 @@ namespace Anki {
         static DetectFiducialMarkersParameters detectionParameters_;
         static TrackerParameters               trackerParameters_;
         static HAL::CameraMode                 captureResolution_;
-        
+
+        /* Only using static members of SimulatorParameters now
 #ifdef SIMULATOR
         static SimulatorParameters             simulatorParameters_;
 #endif
+         */
       } // private namespace for VisionSystem state
       
 #if 0
@@ -596,6 +598,8 @@ namespace Anki {
       //
       static ReturnCode TrackerPredictionUpdate(const Array<u8>& grayscaleImage, MemoryStack scratch)
       {
+        ReturnCode result = EXIT_SUCCESS;
+        
         const Quadrilateral<f32> currentQuad = GetTrackerQuad(scratch);
         
         MatlabVisualization::SendTrackerPrediction_Before(grayscaleImage, currentQuad);
@@ -607,10 +611,53 @@ namespace Anki {
         GetPoseChange(T_fwd_robot, T_hor_robot, theta_robot);
         Radians theta_head = GetCurrentHeadAngle();
         
-#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF && USE_MATLAB_TRACKER
+#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
         
+#if USE_MATLAB_TRACKER
         MatlabVisionProcessor::UpdateTracker(T_fwd_robot, T_hor_robot,
                                              theta_robot, theta_head);
+#else
+
+        const f32 cH = cosf(theta_head.ToFloat());
+        const f32 sH = sinf(theta_head.ToFloat());
+        
+        const f32 cR = cosf(theta_robot.ToFloat());
+        const f32 sR = sinf(theta_robot.ToFloat());
+     
+        // NOTE: these "geometry" entries were computed symbolically with Sage
+        // In the derivation, it was assumed the head and neck positions' Y
+        // components are zero.
+        AnkiAssert(HEAD_CAM_POSITION[1] == 0.f && NECK_JOINT_POSITION[1] == 0.f);
+        Array<f32> R_geometry = Array<f32>(3,3,scratch);
+        R_geometry[0][0] = cR;     R_geometry[0][1] = -sH*sR;            R_geometry[0][2] = cH*sR;
+        R_geometry[1][0] = sH*sR;  R_geometry[1][1] = cR*sH*sH + cH*cH;  R_geometry[1][2] = -cH*cR*sH + cH*sH;
+        R_geometry[2][0] = -cH*sR; R_geometry[2][1] = -cH*cR*sH + cH*sH; R_geometry[2][2] = cH*cH*cR + sH*sH;
+        
+        const f32 term1 = HEAD_CAM_POSITION[0]*cH + HEAD_CAM_POSITION[2]*sH + NECK_JOINT_POSITION[0];
+        const f32 term2 = T_fwd_robot*cR + T_hor_robot*sR;
+        Point3<f32> T_geometry(T_hor_robot*cR + term1*sR - T_fwd_robot*sR,
+                               sH*(-term1*cR + term1 + term2),
+                               cH*( term1*cR - term1 - term2));
+        
+
+        Array<f32> R_blockRelHead = Array<f32>(3,3,scratch);
+        tracker_.get_rotationMatrix(R_blockRelHead);
+        const Point3<f32>& T_blockRelHead = tracker_.get_translation();
+        
+        Array<f32> R_blockRelHead_new = Array<f32>(3,3,scratch);
+        Matrix::Multiply(R_geometry, R_blockRelHead, R_blockRelHead_new);
+        
+        Point3<f32> T_blockRelHead_new = R_geometry*T_blockRelHead + T_geometry;
+
+        if(tracker_.UpdateRotationAndTranslation(R_blockRelHead_new,
+                                                 T_blockRelHead_new,
+                                                 scratch) == RESULT_OK)
+        {
+          result = EXIT_SUCCESS;
+        }
+
+                                 
+#endif // #if USE_MATLAB_TRACKER
         
 #else
         const Quadrilateral<f32> sortedQuad  = currentQuad.ComputeClockwiseCorners();
@@ -701,7 +748,7 @@ namespace Anki {
         
         MatlabVisualization::SendTrackerPrediction_After(GetTrackerQuad(scratch));
         
-        return EXIT_SUCCESS;
+        return result;
       } // TrackerPredictionUpdate()
       
       

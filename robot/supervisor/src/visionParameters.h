@@ -37,7 +37,7 @@ namespace Anki {
 #define DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF 6 //< Currently only implemented in Matlab (USE_MATLAB_TRACKER = 1)
       
       // Set the docker here:
-#define DOCKING_ALGORITHM DOCKING_BINARY_TRACKER
+#define DOCKING_ALGORITHM DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
       
       // Set to 1 to use the top (or bottom) bar of the tracked marker to approximate
       // the pose of the block relative to the camera for docking.
@@ -143,7 +143,12 @@ namespace Anki {
       struct SimulatorParameters {
 #ifdef SIMULATOR
         static const u32 FIDUCIAL_DETECTION_SPEED_HZ = 5;
+        
+#if DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
+        static const u32 TRACKING_ALGORITHM_SPEED_HZ = 60;
+#else
         static const u32 TRACKING_ALGORITHM_SPEED_HZ = 10;
+#endif
         
         static const u32 TRACK_BLOCK_PERIOD_US = 1e6 / TRACKING_ALGORITHM_SPEED_HZ;
         static const u32 FIDUCIAL_DETECTION_PERIOD_US = 1e6 / FIDUCIAL_DETECTION_SPEED_HZ;
