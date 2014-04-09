@@ -148,7 +148,14 @@ namespace Anki {
         f32 ST_prevLeftPos, ST_prevRightPos;
         u16 ST_slowDownTics;
         ///// End of StopTest /////
+
         
+        ///////// IMUTest ////////
+        bool IT_turnLeft;
+        const f32 IT_TARGET_ANGLE = 3.14;
+        const f32 IT_MAX_ROT_VEL = 1.5f;
+        const f32 IT_ROT_ACCEL = 10.f;
+        ///// End of IMUTest /////
         
         
         // Current test mode
@@ -588,7 +595,21 @@ namespace Anki {
       
       ReturnCode IMUTestUpdate()
       {
+        
+        if (SteeringController::GetMode() != SteeringController::SM_POINT_TURN) {
+          if (IT_turnLeft) {
+            // Turn left 180 degrees
+            PRINT("Turning to 180\n");
+            SteeringController::ExecutePointTurn(IT_TARGET_ANGLE, IT_MAX_ROT_VEL, IT_ROT_ACCEL, IT_ROT_ACCEL);
+          } else {
+            // Turn right 180 degrees
+            PRINT("Turning to 0\n");
+            SteeringController::ExecutePointTurn(0.f, -IT_MAX_ROT_VEL, IT_ROT_ACCEL, IT_ROT_ACCEL);
+          }
+          IT_turnLeft = !IT_turnLeft;
+        }
 
+        
         // Print gyro readings
         if (++ticCnt_ >= 200 / TIME_STEP) {
           
@@ -603,10 +624,9 @@ namespace Anki {
           
           // IMUFilter readings
           f32 rot_imu = IMUFilter::GetRotation();
-          f32 rot_enc = Localization::GetCurrentMatOrientation().ToFloat();
-          PRINT("Rot(IMU): %f deg,  Rot(Encoders): %f deg\n",
-                RAD_TO_DEG_F32(rot_imu),
-                RAD_TO_DEG_F32(rot_enc));
+          PRINT("Rot(IMU): %f deg\n",
+                RAD_TO_DEG_F32(rot_imu)
+                );
           
           ticCnt_ = 0;
         }
