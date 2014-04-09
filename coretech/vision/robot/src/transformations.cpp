@@ -500,12 +500,12 @@ namespace Anki
 
         const Point<f32> transformedCenter = transformedCorners.ComputeCenter<f32>();
 
-        const Point<f32> upperMidpoint = Point<f32>(
-          (transformedCorners[Quadrilateral<f32>::TopLeft].x + transformedCorners[Quadrilateral<f32>::TopRight].x) / 2,
-          (transformedCorners[Quadrilateral<f32>::TopLeft].y + transformedCorners[Quadrilateral<f32>::TopRight].y) / 2);
+        const Point<f32> rightMidpoint = Point<f32>(
+          (transformedCorners[Quadrilateral<f32>::TopRight].x + transformedCorners[Quadrilateral<f32>::BottomRight].x) / 2,
+          (transformedCorners[Quadrilateral<f32>::TopRight].y + transformedCorners[Quadrilateral<f32>::BottomRight].y) / 2);
 
-        const f32 dy = transformedCenter.y - upperMidpoint.y;
-        const f32 dx = transformedCenter.x - upperMidpoint.x;
+        const f32 dy = rightMidpoint.y - transformedCenter.y;
+        const f32 dx = rightMidpoint.x - transformedCenter.x;
 
         const f32 orientation = atan2_acc(dy, dx);
 

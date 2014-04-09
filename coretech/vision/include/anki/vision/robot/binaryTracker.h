@@ -189,6 +189,8 @@ namespace Anki
         // The indexes of the detected edges
         EdgeLists templateEdges;
 
+        f32 originalTemplateOrientation;
+
         //f32 homographyOffsetX;
         //f32 homographyOffsetY;
 

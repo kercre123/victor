@@ -582,7 +582,7 @@ namespace Anki
           u8 * restrict pOut = reinterpret_cast<u8*>(out.Pointer(0, arrWidth-yIn-1));
 
           for(s32 xIn=0; xIn<arrWidth; xIn++) {
-            (reinterpret_cast<OutType * restrict>(pOut))[0] = static_cast<OutType>(pIn[xIn]);
+            (reinterpret_cast<OutType *>(pOut))[0] = static_cast<OutType>(pIn[xIn]);
 
             pOut += outStride;
           }
@@ -648,7 +648,7 @@ namespace Anki
           u8 * restrict pOut = reinterpret_cast<u8*>(out.Pointer(arrWidth-1, yIn));
 
           for(s32 xIn=0; xIn<arrWidth; xIn++) {
-            (reinterpret_cast<OutType * restrict>(pOut))[0] = static_cast<OutType>(pIn[xIn]);
+            (reinterpret_cast<OutType *>(pOut))[0] = static_cast<OutType>(pIn[xIn]);
 
             pOut -= outStride;
           }

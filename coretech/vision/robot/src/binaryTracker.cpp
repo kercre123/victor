@@ -115,6 +115,8 @@ namespace Anki
         this->templateImage = Array<u8>(templateImageHeight, templateImageWidth, slowMemory);
         this->templateImage.Set(templateImage);
 
+        this->originalTemplateOrientation = 0.0f;
+
         AnkiConditionalErrorAndReturn(
           this->templateEdges.xDecreasing.IsValid() && this->templateEdges.xIncreasing.IsValid() &&
           this->templateEdges.yDecreasing.IsValid() && this->templateEdges.yIncreasing.IsValid(),
@@ -269,23 +271,69 @@ namespace Anki
           Array<f32> binaryTemplateHomography(3, 3, slowMemory);
           Matrix::EstimateHomography(binaryCorners, templateCorners, binaryTemplateHomography, slowMemory);
 
-          // Extract the edges, and transform them to the actual fiducial detection location
-          // TODO: add subpixel
-          const Rectangle<s32> templateRect(0, binaryTemplateWithBorderWidth-1, 0, binaryTemplateWithBorderHeight-1);
-          const Result result = DetectBlurredEdges(binaryTemplateWithBorder, templateRect, 128, edgeDetection_minComponentWidth, edgeDetection_everyNLines, this->templateEdges);
-
-          this->templateEdges.imageHeight = templateImageHeight;
-          this->templateEdges.imageWidth = templateImageWidth;
-
-          AnkiConditionalErrorAndReturn(result == RESULT_OK,
-            "BinaryTracker::BinaryTracker", "DetectBlurredEdge failed");
-
           Transformations::PlanarTransformation_f32 binaryTemplateTransform(
             Transformations::TRANSFORM_PROJECTIVE,
             Quadrilateral<f32>(binaryCorners[0], binaryCorners[1], binaryCorners[2], binaryCorners[3]),
             binaryTemplateHomography,
             Point<f32>(0.0f,0.0f),
             slowMemory);
+
+          this->originalTemplateOrientation = binaryTemplateTransform.get_transformedOrientation(slowMemory);
+
+          Array<u8> rotatedBinaryTemplateWithBorder(binaryTemplateWithBorder.get_size(0), binaryTemplateWithBorder.get_size(1), slowMemory);
+
+          s32 rotationOrder[4];
+          if(this->originalTemplateOrientation >= (-PI/4) && this->originalTemplateOrientation < (PI/4)) { // No rotation
+            rotatedBinaryTemplateWithBorder.Set(binaryTemplateWithBorder);
+
+            rotationOrder[0] = 0;
+            rotationOrder[1] = 1;
+            rotationOrder[2] = 2;
+            rotationOrder[3] = 3;
+          } else if(this->originalTemplateOrientation >= (PI/4) && this->originalTemplateOrientation < (3*PI/4)) { // Rotate 90 degrees clockwise
+            Matrix::Rotate90<u8,u8>(binaryTemplateWithBorder, rotatedBinaryTemplateWithBorder);
+
+            rotationOrder[0] = 2;
+            rotationOrder[1] = 0;
+            rotationOrder[2] = 3;
+            rotationOrder[3] = 1;
+          } else if(this->originalTemplateOrientation >= (3*PI/4) && this->originalTemplateOrientation < (5*PI/4)) { // Rotate 180 degrees clockwise
+            Matrix::Rotate180<u8,u8>(binaryTemplateWithBorder, rotatedBinaryTemplateWithBorder);
+
+            rotationOrder[0] = 3;
+            rotationOrder[1] = 2;
+            rotationOrder[2] = 1;
+            rotationOrder[3] = 0;
+          } else { // Rotate 270 degrees clockwise
+            Matrix::Rotate270<u8,u8>(binaryTemplateWithBorder, rotatedBinaryTemplateWithBorder);
+
+            rotationOrder[0] = 1;
+            rotationOrder[1] = 3;
+            rotationOrder[2] = 0;
+            rotationOrder[3] = 2;
+          }
+          
+          FixedLengthList<Point<f32> > rotatedBinaryCorners(4, slowMemory);
+          rotatedBinaryCorners.set_size(4);
+
+          for(s32 i=0; i<4; i++) {
+            rotatedBinaryCorners[i] = binaryCorners[rotationOrder[i]];
+          }
+
+          Matrix::EstimateHomography(rotatedBinaryCorners, templateCorners, binaryTemplateHomography, slowMemory);
+          
+          binaryTemplateTransform.set_homography(binaryTemplateHomography);
+          
+          // Extract the edges, and transform them to the actual fiducial detection location
+          // TODO: add subpixel
+          const Rectangle<s32> templateRect(0, binaryTemplateWithBorderWidth-1, 0, binaryTemplateWithBorderHeight-1);
+          const Result result = DetectBlurredEdges(rotatedBinaryTemplateWithBorder, templateRect, 128, edgeDetection_minComponentWidth, edgeDetection_everyNLines, this->templateEdges);
+
+          this->templateEdges.imageHeight = templateImageHeight;
+          this->templateEdges.imageWidth = templateImageWidth;
+
+          AnkiConditionalErrorAndReturn(result == RESULT_OK,
+            "BinaryTracker::BinaryTracker", "DetectBlurredEdge failed");
 
           binaryTemplateTransform.Transform(this->templateEdges.xDecreasing, this->templateEdges.xDecreasing, slowMemory);
           binaryTemplateTransform.Transform(this->templateEdges.xIncreasing, this->templateEdges.xIncreasing, slowMemory);
