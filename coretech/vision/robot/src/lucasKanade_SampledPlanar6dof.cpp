@@ -77,38 +77,25 @@ namespace Anki
                          onchipScratch);  // TODO: which scratch?
         
         // Initialize 6DoF rotation angles
-        // Extract Euler angles from rotation matrix
-        // TODO: Move this to general utility function
-        if(fabs(1.f - R[2][0]) < 1e-6f) { // is R(2,0) == 1
-          this->params6DoF.angle_z = 0.f;
-          if(R[2][0] > 0) { // R(2,0) = +1
-            this->params6DoF.angle_y = M_PI_2;
-            this->params6DoF.angle_x = atan2_acc(R[0][1], R[1][1]);
-          } else { // R(2,0) = -1
-            this->params6DoF.angle_y = -M_PI_2;
-            this->params6DoF.angle_x = atan2_acc(-R[0][1], R[1][1]);
-          }
-        } else {
-          this->params6DoF.angle_y = asinf(R[2][0]);
-          const f32 inv_cy = 1.f / cosf(this->params6DoF.angle_y);
-          this->params6DoF.angle_x = atan2_acc(-R[2][1]*inv_cy, R[2][2]*inv_cy);
-          this->params6DoF.angle_z = atan2_acc(-R[1][0]*inv_cy, R[0][0]*inv_cy);
-        }
-      
+        const Result setR_result = this->set_rotationAnglesFromMatrix(R);
+        AnkiConditionalErrorAndReturn(setR_result == RESULT_OK,
+                                      "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
+                                      "Failed to set initial rotation angles.");
+        
         // Initialize the homography from the 6DoF params
         this->initialHomography = Array<f32>(3,3,onchipScratch); // TODO: on-chip b/c this is permanent, right?
-        const f32 makeH22one = 1.f / this->params6DoF.translation.z;;
-        this->initialHomography[0][0] = this->focalLength_x*R[0][0] * makeH22one;
-        this->initialHomography[0][1] = this->focalLength_x*R[0][1] * makeH22one;
-        this->initialHomography[0][2] = this->focalLength_x*this->params6DoF.translation.x * makeH22one;
         
-        this->initialHomography[1][0] = this->focalLength_y*R[1][0] * makeH22one;
-        this->initialHomography[1][1] = this->focalLength_y*R[1][1] * makeH22one;
-        this->initialHomography[1][2] = this->focalLength_y*this->params6DoF.translation.y * makeH22one;
+        this->initialHomography[0][0] = this->focalLength_x*R[0][0];
+        this->initialHomography[0][1] = this->focalLength_x*R[0][1];
+        this->initialHomography[0][2] = this->focalLength_x*this->params6DoF.translation.x;// / initialImageScaleF32;
         
-        this->initialHomography[2][0] = R[2][0] * makeH22one;
-        this->initialHomography[2][1] = R[2][1] * makeH22one;
-        this->initialHomography[2][2] = 1.f;
+        this->initialHomography[1][0] = this->focalLength_y*R[1][0];
+        this->initialHomography[1][1] = this->focalLength_y*R[1][1];
+        this->initialHomography[1][2] = this->focalLength_y*this->params6DoF.translation.y;// / initialImageScaleF32;
+        
+        this->initialHomography[2][0] = R[2][0];// * initialImageScaleF32;
+        this->initialHomography[2][1] = R[2][1];// * initialImageScaleF32;
+        this->initialHomography[2][2] = this->params6DoF.translation.z;
         
         // Note the center for this tracker is the camera's calibrated center
         Point<f32> centerOffset(this->camCenter_x, this->camCenter_y);
@@ -277,6 +264,9 @@ namespace Anki
             
             //Matrix::Sqrt<f32,f32,f32>(templateImageSquaredGradientMagnitudePyramid[iScale], templateImageSquaredGradientMagnitudePyramid[iScale]);
             
+            //cv::imshow("templateImageSquaredGradientMagnitude[iScale]", templateImageSquaredGradientMagnitudePyramid[iScale].get_CvMat_());
+            //cv::waitKey();
+            
             Array<f32> magnitudeVector = Matrix::Vectorize<f32,f32>(false, templateImageSquaredGradientMagnitudePyramid[iScale], offchipScratch);
             Array<u16> magnitudeIndexes = Array<u16>(1, numPointsY*numPointsX, offchipScratch);
             
@@ -339,6 +329,113 @@ namespace Anki
         this->isValid = true;
         
         EndBenchmark("LucasKanadeTracker_SampledPlanar6dof");
+      }
+      
+      
+      // Fill a rotation matrix according to the current tracker angles
+      // R should already be allocated to be 3x3
+      Result LucasKanadeTracker_SampledPlanar6dof::get_rotationMatrix(Array<f32>& R,
+                                                                      bool skipLastColumn) const
+      {
+        AnkiConditionalErrorAndReturnValue(R.get_size(0)==3 && R.get_size(1)==3, RESULT_FAIL_INVALID_SIZE,
+                                           "LucasKanadeTracker_SampledPlanar6dof::get_rotationMatrix",
+                                           "R should be a 3x3 matrix.");
+        
+        const f32 cx = cosf(this->params6DoF.angle_x);
+        const f32 cy = cosf(this->params6DoF.angle_y);
+        const f32 cz = cosf(this->params6DoF.angle_z);
+        const f32 sx = sinf(this->params6DoF.angle_x);
+        const f32 sy = sinf(this->params6DoF.angle_y);
+        const f32 sz = sinf(this->params6DoF.angle_z);
+        
+        R[0][0] = cy*cz;
+        R[0][1] = cx*sz+sx*sy*cz;
+        R[1][0] = -cy*sz;
+        R[1][1] = cx*cz-sx*sy*sz;
+        R[2][0] = sy;
+        R[2][1] = -sx*cy;
+        
+        if(!skipLastColumn) {
+          R[0][2] = sx*sz-cx*sy*cz;
+          R[1][2] = sx*cz+cx*sy*sz;
+          R[2][2] = cx*cy;
+        }
+
+        return RESULT_OK;
+      } // get_rotationMatrix()
+      
+      // Set the tracker angles by extracting Euler angles from the given
+      // rotation matrix
+      Result LucasKanadeTracker_SampledPlanar6dof::set_rotationAnglesFromMatrix(const Array<f32>& R)
+      {
+        AnkiConditionalErrorAndReturnValue(R.get_size(0)==3 && R.get_size(1)==3, RESULT_FAIL_INVALID_SIZE,
+                                      "LucasKanadeTracker_SampledPlanar6dof::set_rotationAnglesFromMatrix",
+                                      "R should be a 3x3 matrix.");
+
+        // Extract Euler angles from given rotation matrix:
+        if(fabs(1.f - R[2][0]) < 1e-6f) { // is R(2,0) == 1
+          this->params6DoF.angle_z = 0.f;
+          if(R[2][0] > 0) { // R(2,0) = +1
+            this->params6DoF.angle_y = M_PI_2;
+            this->params6DoF.angle_x = atan2_acc(R[0][1], R[1][1]);
+          } else { // R(2,0) = -1
+            this->params6DoF.angle_y = -M_PI_2;
+            this->params6DoF.angle_x = atan2_acc(-R[0][1], R[1][1]);
+          }
+        } else {
+          this->params6DoF.angle_y = asinf(R[2][0]);
+          const f32 inv_cy = 1.f / cosf(this->params6DoF.angle_y);
+          this->params6DoF.angle_x = atan2_acc(-R[2][1]*inv_cy, R[2][2]*inv_cy);
+          this->params6DoF.angle_z = atan2_acc(-R[1][0]*inv_cy, R[0][0]*inv_cy);
+        }
+        
+        return RESULT_OK;
+        
+      } // set_rotationMatrix()
+      
+      // Retrieve/update the current translation estimates of the tracker
+      const Point3<f32>& LucasKanadeTracker_SampledPlanar6dof::get_translation() const
+      {
+        return this->params6DoF.translation;
+      } // get_translation()
+      
+      
+      Result LucasKanadeTracker_SampledPlanar6dof::UpdateTransformation(MemoryStack scratch)
+      {
+        // Compute the new homography from the new 6DoF parameters, and
+        // update the transformation object
+        Array<f32> newHomography = Array<f32>(3,3,scratch);
+        this->get_rotationMatrix(newHomography, true);
+        
+        newHomography[0][0] *= this->focalLength_x;
+        newHomography[0][1] *= this->focalLength_x;
+        newHomography[0][2] = this->focalLength_x*this->params6DoF.translation.x;// / initialImageScaleF32;
+        
+        newHomography[1][0] *= this->focalLength_y;
+        newHomography[1][1] *= this->focalLength_y;
+        newHomography[1][2] = this->focalLength_y*this->params6DoF.translation.y;// / initialImageScaleF32;
+        
+        //newHomography[2][0] = newR[2][0];// * initialImageScaleF32;
+        //newHomography[2][1] = newR[2][1];// * initialImageScaleF32;
+        newHomography[2][2] = this->params6DoF.translation.z;
+        
+        Result result = this->transformation.set_homography(newHomography);
+        
+        return result;
+      }
+      
+      Result LucasKanadeTracker_SampledPlanar6dof::UpdateRotationAndTranslation(const Array<f32>& R,
+                                                                                const Point3<f32>& T,
+                                                                                MemoryStack scratch)
+      {
+        Result lastResult = this->set_rotationAnglesFromMatrix(R);
+        
+        if(lastResult == RESULT_OK) {
+          this->params6DoF.translation = T;
+          lastResult = this->UpdateTransformation(scratch);
+        }
+        
+        return lastResult;
       }
       
       Result LucasKanadeTracker_SampledPlanar6dof::ShowTemplate(const char * windowName, const bool waitForKeypress, const bool fitImageToWindow) const
@@ -916,6 +1013,13 @@ namespace Anki
           
           // TODO: make the x and y limits from 1 to end-2
           
+          // XXX: DEBUG!!!
+          Array<f32> xTransformedArray = Array<f32>(1,numTemplateSamples,scratch);
+          Array<f32> yTransformedArray = Array<f32>(1,numTemplateSamples,scratch);
+          static Matlab matlab(false);
+          matlab.PutArray(nextImage, "img");
+
+          
           for(s32 iSample=0; iSample<numTemplateSamples; iSample++) {
             const TemplateSample curSample = pTemplateSamplePyramid[iSample];
             const f32 yOriginal = curSample.yCoordinate;
@@ -929,6 +1033,10 @@ namespace Anki
             
             const f32 xTransformed = (xTransformedRaw / normalization) + centerOffsetScaled.x;
             const f32 yTransformed = (yTransformedRaw / normalization) + centerOffsetScaled.y;
+            
+            // XXX: DEBUG!
+            xTransformedArray[0][iSample] = xTransformed;
+            yTransformedArray[0][iSample] = yTransformed;
             
             const f32 x0 = FLT_FLOOR(xTransformed);
             const f32 x1 = ceilf(xTransformed); // x0 + 1.0f;
@@ -967,13 +1075,7 @@ namespace Anki
             
             // This block is the non-interpolation part of the per-sample algorithm
             {
-              const f32 templatePixelValue = curSample.grayvalue;
-              const f32 xGradientValue = scaleOverFiveTen * curSample.xGradient;
-              const f32 yGradientValue = scaleOverFiveTen * curSample.yGradient;
-              
-              const f32 tGradientValue = oneOverTwoFiftyFive * (interpolatedPixelF32 - templatePixelValue);
-              
-              //printf("%f ", xOriginal);
+              //printf("(%f,%f) ", xOriginal, yOriginal);
               
               // This is where we incorporate the 6DoF terms into the
               // Jacobians for the A matrix.  Note that the partials are
@@ -986,15 +1088,16 @@ namespace Anki
               // TODO: do i actually want to divide/multiply by initialImageScale here?
               const f32 h00_init = this->initialHomography[0][0];
               const f32 h01_init = this->initialHomography[0][1];
-              const f32 h02_init = this->initialHomography[0][2] / initialImageScaleF32;
+              const f32 h02_init = this->initialHomography[0][2];// / initialImageScaleF32;
               
               const f32 h10_init = this->initialHomography[1][0];
               const f32 h11_init = this->initialHomography[1][1];
-              const f32 h12_init = this->initialHomography[1][2] / initialImageScaleF32;
+              const f32 h12_init = this->initialHomography[1][2];// / initialImageScaleF32;
               
-              const f32 h20_init = this->initialHomography[2][0] * initialImageScaleF32;
-              const f32 h21_init = this->initialHomography[2][1] * initialImageScaleF32;
+              const f32 h20_init = this->initialHomography[2][0];// * initialImageScaleF32;
+              const f32 h21_init = this->initialHomography[2][1];// * initialImageScaleF32;
               const f32 h22_init = this->initialHomography[2][2];
+
               
               // TODO: These two could be strength reduced
               const f32 xTransformedRawInit = h00_init*xOriginal + h01_init*yOriginal + h02_init;
@@ -1044,6 +1147,13 @@ namespace Anki
               const f32 dWv_dthetaZ = (this->focalLength_y*normalizationInit*r2thetaZterm -
                                        r3thetaZterm*yTransformedRawInit) * invNormSq;
               
+              // This is the only stuff that depends on the current sample
+              const f32 templatePixelValue = curSample.grayvalue;
+              const f32 xGradientValue = scaleOverFiveTen * curSample.xGradient;
+              const f32 yGradientValue = scaleOverFiveTen * curSample.yGradient;
+              
+              const f32 tGradientValue = oneOverTwoFiftyFive * (interpolatedPixelF32 - templatePixelValue);
+              
               const f32 values[6] = {
                 xGradientValue*dWu_dthetaX + yGradientValue*dWv_dthetaX,
                 xGradientValue*dWu_dthetaY + yGradientValue*dWv_dthetaY,
@@ -1061,6 +1171,14 @@ namespace Anki
               }
             }
           } // for(s32 iSample=0; iSample<numTemplateSamples; iSample++)
+         
+          // XXX: DEBUG!
+          {
+            matlab.PutArray(xTransformedArray, "X");
+            matlab.PutArray(yTransformedArray, "Y");
+            matlab.EvalString("hold off, imagesc(img), axis image, hold on, "
+                              "plot(X,Y, 'rx'); colormap(gray), drawnow");
+          }
           
           if(numInBounds < 16) {
             AnkiWarn("LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack_Projective", "Template drifted too far out of image.");
@@ -1089,14 +1207,16 @@ namespace Anki
             return RESULT_OK;
           }
           
+          printf("Raw angle update = (%f,%f,%f) degrees, Raw translation udpate = (%f,%f,%f)\n",
+                 RAD_TO_DEG(b[0][0]), RAD_TO_DEG(b[0][1]), RAD_TO_DEG(b[0][2]),
+                 b[0][3], b[0][4], b[0][5]);
+
+          
           //b.Print("New update");
           
           // Update the 6DoF parameters
           // Note: we are subtracting the update because we're using an _inverse_
           // compositional LK tracking scheme.
-          printf("Angle update = (%f,%f,%f) degrees, Translation udpate = (%f,%f,%f)\n",
-                 RAD_TO_DEG(b[0][0]), RAD_TO_DEG(b[0][1]), RAD_TO_DEG(b[0][2]),
-                 b[0][3], b[0][4], b[0][5]);
           /*
           RAD_TO_DEG(this->params6DoF.angle_x),
                  RAD_TO_DEG(this->params6DoF.angle_y),
@@ -1105,58 +1225,42 @@ namespace Anki
                  this->params6DoF.translation.y,
                  this->params6DoF.translation.z);
             */
-          this->params6DoF.angle_x -= b[0][0];
-          this->params6DoF.angle_y -= b[0][1];
-          this->params6DoF.angle_z -= b[0][2];
           
-          this->params6DoF.translation.x -= b[0][3];
-          this->params6DoF.translation.y -= b[0][4];
-          this->params6DoF.translation.z -= b[0][5];
+          // TODO: Add "gain scheduling" like in Matlab
+          const f32 Kp = 0.25f;
           
+          this->params6DoF.angle_x -= Kp * b[0][0];
+          this->params6DoF.angle_y -= Kp * b[0][1];
+          this->params6DoF.angle_z -= Kp * b[0][2];
+          
+          this->params6DoF.translation.x -= Kp * b[0][3];
+          this->params6DoF.translation.y -= Kp * b[0][4];
+          this->params6DoF.translation.z -= Kp * b[0][5];
           
           //this->transformation.Update(b, initialImageScaleF32, scratch, Transformations::TRANSFORM_PROJECTIVE);
           
-          // Compute entries of the rotation matrix that we will need for the
-          // homography update, using the new 6DoF parameters
-          const f32 cx = cosf(this->params6DoF.angle_x);
-          const f32 cy = cosf(this->params6DoF.angle_y);
-          const f32 cz = cosf(this->params6DoF.angle_z);
-          const f32 sx = sinf(this->params6DoF.angle_x);
-          const f32 sy = sinf(this->params6DoF.angle_y);
-          const f32 sz = sinf(this->params6DoF.angle_z);
-          
-          const f32 R00 = cy*cz;
-          const f32 R01 = cx*sz+sx*sy*cz;
-          const f32 R10 = -cy*sz;
-          const f32 R11 = cx*cz-sx*sy*sz;
-          const f32 R20 = sy;
-          const f32 R21 = -sx*cy;
-          
-          // Compute the new homography from the new 6DoF parameters, and
-          // update the transformation object
-          Array<f32> newHomography = Array<f32>(3,3,scratch);
-          newHomography[0][0] = this->focalLength_x*R00;
-          newHomography[0][1] = this->focalLength_x*R01;
-          newHomography[0][2] = this->focalLength_x*this->params6DoF.translation.x;
-          
-          newHomography[1][0] = this->focalLength_y*R10;
-          newHomography[1][1] = this->focalLength_y*R11;
-          newHomography[1][2] = this->focalLength_y*this->params6DoF.translation.y;
-          
-          newHomography[2][0] = R20;
-          newHomography[2][1] = R21;
-          newHomography[2][2] = this->params6DoF.translation.z;
-          this->transformation.set_homography(newHomography);
-          
+          // Compute the new homography from the new 6DoF parameters
+          this->UpdateTransformation(scratch);
           
           //this->transformation.get_homography().Print("new transformation");
           
           // Check if we're done with iterations
-          const f32 minChange = UpdatePreviousCorners(transformation, previousCorners, scratch);
+          //const f32 minChange = UpdatePreviousCorners(transformation, previousCorners, scratch);
           
-          if(minChange < convergenceTolerance) {
-            
-            printf("Final params converged at scale %d: angles = (%f,%f,%f) degrees, translation = (%f,%f,%f)\n",
+          //if(minChange < convergenceTolerance * scale)
+          // TODO: make these parameters
+          const f32 angleConvergenceTolerance = scale*DEG_TO_RAD(0.1f);
+          const f32 transConvergenceTolerance = scale*0.1f;
+          
+          if(fabs(b[0][0]) < angleConvergenceTolerance &&
+             fabs(b[0][1]) < angleConvergenceTolerance &&
+             fabs(b[0][2]) < angleConvergenceTolerance &&
+             fabs(b[0][3]) < transConvergenceTolerance &&
+             fabs(b[0][4]) < transConvergenceTolerance &&
+             fabs(b[0][5]) < transConvergenceTolerance)
+          {
+            printf("Final params converged at scale %d: angles = (%f,%f,%f) "
+                   "degrees, translation = (%f,%f,%f)\n",
                    whichScale,
                    RAD_TO_DEG(this->params6DoF.angle_x),
                    RAD_TO_DEG(this->params6DoF.angle_y),

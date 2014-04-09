@@ -363,6 +363,20 @@ namespace Anki
                            s32 &verify_numSimilarPixels, //< For all pixels in the template, how many are within verifyMaxPixelDifference grayvalues? Use in conjunction with get_numTemplatePixels() or numInBounds for a percentage.
                            MemoryStack scratch);
         
+        // Fill a rotation matrix according to the current tracker angles
+        // R should already be allocated to be 3x3
+        Result get_rotationMatrix(Array<f32>& R, bool skipLastColumn = false) const;
+        
+        // Set the tracker's angles and translation from the given rotation
+        // matrix and translation vector. This will in turn update the
+        // tracker's transformation (homography).
+        Result UpdateRotationAndTranslation(const Array<f32>& R,
+                                            const Point3<f32>& T,
+                                            MemoryStack scratch);
+        
+        // Retrieve/update the current translation estimates of the tracker
+        const Point3<f32>& get_translation() const;
+        
         bool IsValid() const;
         
         Result ShowTemplate(const char * windowName="SampledPlanar6dof Template", const bool waitForKeypress=false, const bool fitImageToWindow=false) const;
@@ -413,6 +427,14 @@ namespace Anki
         
         FixedLengthList<FixedLengthList<TemplateSample> > templateSamplePyramid;
         
+        // Update the transformation homography with whatever is currently
+        // in the 6DoF parameters
+        Result UpdateTransformation(MemoryStack scratch);
+        
+        // Set the tracker angles by extracting Euler angles from the given
+        // rotation matrix
+        Result set_rotationAnglesFromMatrix(const Array<f32>& R);
+
         Result VerifyTrack_Projective(
                                       const Array<u8> &nextImage,
                                       const u8 verify_maxPixelDifference,
