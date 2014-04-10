@@ -473,7 +473,7 @@ namespace Anki {
                         currAngle,
                         maxAngularVel,
                         angularAccel,
-                        POINT_TURN_TERMINAL_VEL_RAD_PER_S,
+                        maxAngularVel > 0 ? POINT_TURN_TERMINAL_VEL_RAD_PER_S : -POINT_TURN_TERMINAL_VEL_RAD_PER_S,
                         destAngle,
                         CONTROL_DT);
     }

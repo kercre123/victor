@@ -283,6 +283,7 @@ namespace Anki {
       {
         PRINT("\n=== Starting PathFollowTest ===\n");
         pathStarted_ = false;
+        Localization::SetCurrentMatPose(0, 0, Radians(-PIDIV2_F));
         return EXIT_SUCCESS;
       }
       
@@ -293,6 +294,8 @@ namespace Anki {
           
           // Create a path and follow it
 #if(PATH_FOLLOW_ALIGNED_START)
+          //PathFollower::AppendPathSegment_PointTurn(0, 0, 0, -PIDIV2_F, -1.5f, 2.f, 2.f);
+          
           float arc1_radius = sqrt((float)5000);  // Radius of sqrt(50^2 + 50^2)
           f32 sweepAng = atan_fast((350-arc1_radius)/250);
           
@@ -322,8 +325,16 @@ namespace Anki {
           //PathFollower::AppendPathSegment_Arc(0, 0.35 + arc1_radius - arc2_radius, 0.2, arc2_radius, 0, PIDIV2);
           PathFollower::AppendPathSegment_Arc(0, 350 + arc1_radius - arc2_radius, 200, arc2_radius, 0, 3*PIDIV2,
                                               PF_TARGET_SPEED_MMPS, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
-          PathFollower::AppendPathSegment_Arc(0, 350 + arc1_radius - arc2_radius, 200 - 2*arc2_radius, arc2_radius, PIDIV2, -3.5*PIDIV2,
+          PathFollower::AppendPathSegment_Arc(0, 350 + arc1_radius - arc2_radius, 200 - 2*arc2_radius, arc2_radius, PIDIV2, -3*PIDIV2,
                                               PF_TARGET_SPEED_MMPS, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
+          
+          PathFollower::AppendPathSegment_Line(0, 350 + arc1_radius - 2*arc2_radius, 200 - 2*arc2_radius, 350 + arc1_radius - 2*arc2_radius, 0,
+                                               PF_TARGET_SPEED_MMPS, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
+          float arc3_radius = 0.5 * (350 + arc1_radius - 2*arc2_radius);
+          PathFollower::AppendPathSegment_Arc(0, arc3_radius, 0, arc3_radius, 0, PI_F,
+                                              PF_TARGET_SPEED_MMPS, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
+          
+          
           
           PathFollower::StartPathTraversal();
           pathStarted_ = true;
@@ -590,6 +601,7 @@ namespace Anki {
       {
         PRINT("\n==== Starting IMUTest =====\n");
         ticCnt_ = 0;
+        IT_turnLeft = false;
         return EXIT_SUCCESS;
       }
       
