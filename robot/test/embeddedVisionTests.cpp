@@ -35,12 +35,72 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "../../../systemTestImages/cozmo_2014_01_29_11_41_05_10_320x240.h"
 #include "../../../systemTestImages/cozmo_2014_01_29_11_41_05_12_320x240.h"
 #include "../../../systemTestImages/cozmo_date2014_04_04_time17_40_08_frame0.h"
+#include "../../../systemTestImages/cozmo_date2014_04_10_time16_15_40_frame0.h"
 
 #include "embeddedTests.h"
 
 #include <cmath>
 
 using namespace Anki::Embedded;
+
+GTEST_TEST(CoreTech_Vision, FaceDetection)
+{
+#ifdef ANKICORETECH_EMBEDDED_USE_OPENCV
+  using namespace std;
+
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(scratchOffchip.IsValid());
+
+  cv::CascadeClassifier face_cascade;
+
+  const std::string face_cascade_name = std::string("C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_frontalface_alt.xml");
+
+  cv::RNG rng(12345);
+
+  if( !face_cascade.load( face_cascade_name ) ) {
+    printf("Could not load %s\n", face_cascade_name.c_str());
+    return;
+  }
+
+  const s32 imageHeight = 240;
+  const s32 imageWidth = 320;
+
+  Array<u8> image(imageHeight, imageWidth, scratchOffchip);
+  image.Set(&cozmo_date2014_04_10_time16_15_40_frame0[0], imageHeight*imageWidth);
+
+  vector<cv::Rect> detectedFaces;
+
+  face_cascade.detectMultiScale(
+    image.get_CvMat_(),
+    detectedFaces,
+    1.1, // double scaleFactor=1.1,
+    2, // int minNeighbors=3,
+    0|CV_HAAR_SCALE_IMAGE, // int flags=0,
+    cv::Size(30, 30), // Size minSize=Size(),
+    cv::Size() // Size maxSize=Size()
+    );
+
+  cv::Mat toShow(imageHeight, imageWidth, CV_8UC3);
+
+  vector<cv::Mat> channels;
+  channels.push_back(image.get_CvMat_());
+  channels.push_back(image.get_CvMat_());
+  channels.push_back(image.get_CvMat_());
+  cv::merge(channels, toShow);
+
+  for( size_t i = 0; i < detectedFaces.size(); i++ )
+  {
+    cv::Point center( detectedFaces[i].x + detectedFaces[i].width*0.5, detectedFaces[i].y + detectedFaces[i].height*0.5 );
+    cv::ellipse( toShow, center, cv::Size( detectedFaces[i].width*0.5, detectedFaces[i].height*0.5), 0, 0, 360, cv::Scalar( 255, 0, 255 ), 4, 8, 0 );
+  }
+  //-- Show what you got
+  cv::imshow("Detected faces", toShow);
+  cv::waitKey();
+
+#endif // #ifdef ANKICORETECH_EMBEDDED_USE_OPENCV
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Vision, FaceDetection)
 
 GTEST_TEST(CoreTech_Vision, DecisionTreeVision)
 {

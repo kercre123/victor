@@ -24,6 +24,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "opencv2/core/core.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/objdetect/objdetect.hpp"
 #endif
 
 namespace Anki
