@@ -399,6 +399,17 @@ namespace Anki
       // Set the intensity for each LED channel in the range [0, 255]
       void LEDSet(u8 leds[LED_CHANNEL_COUNT]);
 
+      
+      enum LEDColor {
+        LED_ORANGE = 1,
+        LED_GREEN = 2,
+        LED_BLUE = 4
+      };
+      
+      // TEMP: Temporary single LED control with color
+      //       while "real" light functionality is being worked on.
+      void SetLED(u8 led_id, LEDColor color);
+      
 // #pragma mark --- Radio ---
       /////////////////////////////////////////////////////////////////////
       // RADIO

@@ -115,7 +115,7 @@ namespace Anki {
     
     // If target already reached, then return final position.
     if (targetReached_) {
-      currVel = 0.f;
+      currVel = endVel_;
       currPos = endPos_;
       return currTime_;
     }
@@ -155,7 +155,7 @@ namespace Anki {
     // Check whether or not final position has been reached
     if ( currDistToTarget * totalDistToTarget_ < 0 ) {
       targetReached_ = true;
-      currVel_ = 0.f;
+      currVel_ = endVel_;
       currPos_ = endPos_;
     }
     

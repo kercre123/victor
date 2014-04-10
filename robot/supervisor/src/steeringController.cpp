@@ -21,6 +21,7 @@
 
 #include "anki/cozmo/robot/hal.h"
 
+#include "anki/common/shared/velocityProfileGenerator.h"
 #include "anki/common/robot/trig_fast.h"
 
 #define INVALID_IDEAL_FOLLOW_LINE_IDX s16_MAX
@@ -60,6 +61,10 @@ namespace Anki {
 
       // Maximum rotation speed of robot
       f32 maxRotationWheelSpeedDiff = 0.f;
+      
+      VelocityProfileGenerator vpg_;
+      
+      const f32 POINT_TURN_TERMINAL_VEL_RAD_PER_S = 0.7f;
       
     } // Private namespace
     
@@ -449,8 +454,32 @@ namespace Anki {
       angularAccel_ = angularAccel;
       angularDecel_ = angularDecel;
       startedPointTurn_ = false;
+      
+      
+      f32 currAngle = Localization::GetCurrentMatOrientation().ToFloat();
+      
+      // Compute target angle that is on the appropriate side of currAngle given the maxAngularVel
+      // which determines the turning direction.
+      f32 destAngle = targetRad_.ToFloat();
+      if (currAngle > destAngle && maxAngularVel > 0) {
+        destAngle += 2*PI_F;
+      } else if (currAngle < destAngle && maxAngularVel < 0) {
+        destAngle -= 2*PI_F;
+      }
+      
+      // Generate velocity profile
+      // TODO: Use IMUFilter::GetRotationSpeed() for start speed?
+      vpg_.StartProfile(0,
+                        currAngle,
+                        maxAngularVel,
+                        angularAccel,
+                        maxAngularVel > 0 ? POINT_TURN_TERMINAL_VEL_RAD_PER_S : -POINT_TURN_TERMINAL_VEL_RAD_PER_S,
+                        destAngle,
+                        CONTROL_DT);
     }
     
+    // TODO: Currently, this is just an open-loop method.
+    //       Is it good enough or should we use position or velocity control?
     void ManagePointTurn()
     {
       if (!SpeedController::IsVehicleStopped() && !startedPointTurn_) {
@@ -461,17 +490,16 @@ namespace Anki {
       startedPointTurn_ = true;
       
       
-      // TODO(kevin): Computate max reachable angular velocity and angular distance to target where we begin slowing down.
-      //...
-      
-      
       // Compute distance to target
       Radians currAngle = Cozmo::Localization::GetCurrentMatOrientation();
       float angularDistToTarget = currAngle.angularDistance(targetRad_, maxAngularVel_ < 0);
       
-      // TODO(kevin): Update current angular velocity.
-      //...For now, just command constant angular speed
-      currAngularVel_ = PIDIV2;
+      // Update current angular velocity.
+      f32 currDesiredAngle;
+      vpg_.Step(currAngularVel_, currDesiredAngle);
+      
+      PRINT("currAngle: %f, targetRad: %f, AngularDist: %f, currAngularVel: %f, currDesiredAngle: %f\n",
+            currAngle.ToFloat(), targetRad_.ToFloat(), angularDistToTarget, currAngularVel_, currDesiredAngle);
       
       // Check for stop condition
       if (ABS(angularDistToTarget) < POINT_TURN_TARGET_DIST_STOP_RAD) {

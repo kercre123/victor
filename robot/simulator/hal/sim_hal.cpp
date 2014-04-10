@@ -667,6 +667,10 @@ namespace Anki {
     {
       return robotID_;
     }
+    
+    void HAL::SetLED(u8 led_id, LEDColor color) {
+      // TODO: ...
+    }
 
   } // namespace Cozmo
 } // namespace Anki

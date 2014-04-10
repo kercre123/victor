@@ -47,7 +47,6 @@ namespace Anki {
         f32 prevLeftWheelPos_ = 0;
         f32 prevRightWheelPos_ = 0;
         
-        f32 prevGyroRot_ = 0;
         f32 gyroRotOffset_ = 0;
       }
 
@@ -92,14 +91,7 @@ namespace Anki {
         // Compute distance traveled by each wheel
         f32 lDist = currLeftWheelPos - prevLeftWheelPos_;
         f32 rDist = currRightWheelPos - prevRightWheelPos_;
-        
-        
-#if(USE_GYRO_ORIENTATION)
-        // Compute the current tick's rotation based on gyro
-        f32 currGyroRot = IMUFilter::GetRotation();
-        f32 dTheta_gyro = currGyroRot - prevGyroRot_;
-        prevGyroRot_ = currGyroRot;
-#endif
+
         
         // Compute new pose based on encoders and gyros, but only if there was any motion.
         movement = (!FLT_NEAR(rDist, 0) || !FLT_NEAR(lDist,0));
@@ -146,14 +138,6 @@ namespace Anki {
             cDist = 0.5f*(lDist + rDist);
             cRadius = lRadius + WHEEL_DIST_HALF_MM;
           }
-          
-#if(USE_GYRO_ORIENTATION)
-          // Overwrite expected rotation with measured rotation
-          cTheta = dTheta_gyro;
-          
-//          PRINT("dTheta_gyro: %f, cDist: %f, cTheta %f, cRadius %f, wRadius %f %f, wDist %f %f\n", dTheta_gyro, cDist, cTheta, cRadius, lRadius, rRadius, lDist, rDist);
-#endif
-          
 
 #if(DEBUG_LOCALIZATION)
           PRINT("lRadius %f, rRadius %f, lDist %f, rDist %f, cTheta %f, cDist %f, cRadius %f\n",

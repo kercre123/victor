@@ -123,10 +123,10 @@ BlockWorldComms {
 
 }
 
-DEF OffboardVisionProcessor USBConnection {
-  controller "offboard_vision_processor"
-  usbChannel 10
-}
+#DEF OffboardVisionProcessor USBConnection {
+#  controller "offboard_vision_processor"
+#  usbChannel 10
+#}
 
 #OverlayDisplay {
 #

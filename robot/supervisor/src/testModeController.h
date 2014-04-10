@@ -55,6 +55,9 @@ namespace Anki {
         TM_GRIPPER,
 #endif
         
+        // Cycle through all LEDs with different colors
+        TM_LIGHTS,
+        
         // Drives slow and then stops.
         // Drives fast and then stops.
         // Reports stopping distance and time (in tics).
