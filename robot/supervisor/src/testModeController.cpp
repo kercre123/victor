@@ -158,6 +158,13 @@ namespace Anki {
         ///// End of IMUTest /////
         
         
+        /////// LightTest ////////
+        u8 ledID = 0;
+        u8 ledColorIdx = 0;
+        const u8 LED_COLOR_LIST_SIZE = 3;
+        const HAL::LEDColor LEDColorList[LED_COLOR_LIST_SIZE] = {HAL::LED_ORANGE, HAL::LED_GREEN, HAL::LED_BLUE};
+        ///// End of LightTest ///
+        
         // Current test mode
         TestMode testMode_ = TM_NONE;
         
@@ -678,6 +685,40 @@ namespace Anki {
         return EXIT_SUCCESS;
       }
       
+      ReturnCode LightTestInit()
+      {
+        PRINT("\n==== Starting LightTest =====\n");
+        ticCnt_ = 0;
+        ledID = 0;
+        ledColorIdx = 0;
+        return EXIT_SUCCESS;
+      }
+      
+      
+      ReturnCode LightTestUpdate()
+      {
+        if (ticCnt_++ > 2000 / TIME_STEP) {
+          
+          PRINT("LED channel %d, color %d\n", ledID, LEDColorList[ledColorIdx]);
+          HAL::SetLED(ledID, LEDColorList[ledColorIdx]);
+          
+          // Increment led
+          if (++ledID == HAL::LED_CHANNEL_COUNT) {
+            ledID = 0;
+            
+            // Increment color
+            if (++ledColorIdx == LED_COLOR_LIST_SIZE) {
+              ledColorIdx = 0;
+            }
+          }
+          
+          ticCnt_ = 0;
+        }
+        
+        return EXIT_SUCCESS;
+      }
+
+      
       ReturnCode StopTestInit()
       {
         PRINT("\n==== Starting StopTest =====\n");
@@ -806,6 +847,10 @@ namespace Anki {
             updateFunc = GripperTestUpdate;
             break;
 #endif
+          case TM_LIGHTS:
+            ret = LightTestInit();
+            updateFunc = LightTestUpdate;
+            break;
           case TM_STOP_TEST:
             ret = StopTestInit();
             updateFunc = StopTestUpdate;
