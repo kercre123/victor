@@ -150,6 +150,9 @@ namespace Anki
         Result set_initialCorners(const Quadrilateral<f32> &initialCorners);
         const Quadrilateral<f32>& get_initialCorners() const;
 
+        Result set_initialPointsAreZeroCentered(const bool areTheyCentered);
+        const bool get_initialPointsAreZeroCenetered() const;
+        
         Result set_centerOffset(const Point<f32> &centerOffset);
         Point<f32> get_centerOffset(const f32 scale) const;
 
@@ -172,6 +175,15 @@ namespace Anki
 
         // The initial corners of the valid region
         Quadrilateral<f32> initialCorners;
+        
+        // usually false for image-to-image transformations, but for situations
+        // like the planar6dof tracker, where the transformation is from a
+        // canonical 3D plane to the image, the centerOffset below may
+        // contain the image calibration center, and the initial (model) points
+        // may not need to be re-centered before applying the transformation.
+        // In that case, we use set_initialPointsAreZeroCentered() to set
+        // this member variable to true.
+        bool initialPointsAreZeroCentered;
 
         // The offset applied to an image, so that origin of the coordinate system is at the center
         // of the quadrilateral

@@ -66,6 +66,11 @@ namespace Anki {
       
       namespace VisionMemory
       {
+        /* 10X the memory for debugging on a PC
+        static const s32 OFFCHIP_BUFFER_SIZE = 20000000;
+        static const s32 ONCHIP_BUFFER_SIZE = 1700000; // The max here is somewhere between 175000 and 180000 bytes
+        static const s32 CCM_BUFFER_SIZE = 500000; // The max here is probably 65536 (0x10000) bytes
+        */
         static const s32 OFFCHIP_BUFFER_SIZE = 2000000;
         static const s32 ONCHIP_BUFFER_SIZE = 170000; // The max here is somewhere between 175000 and 180000 bytes
         static const s32 CCM_BUFFER_SIZE = 50000; // The max here is probably 65536 (0x10000) bytes
@@ -138,10 +143,12 @@ namespace Anki {
         static DetectFiducialMarkersParameters detectionParameters_;
         static TrackerParameters               trackerParameters_;
         static HAL::CameraMode                 captureResolution_;
-        
+
+        /* Only using static members of SimulatorParameters now
 #ifdef SIMULATOR
         static SimulatorParameters             simulatorParameters_;
 #endif
+         */
       } // private namespace for VisionSystem state
       
 #if 0
@@ -291,8 +298,8 @@ namespace Anki {
                                      const TrackerParameters &parameters,
                                      Tracker &tracker,
                                      MemoryStack ccmScratch,
-                                     MemoryStack &onchipScratch, //< NOTE: onchip is a reference
-                                     MemoryStack offchipScratch)
+                                     MemoryStack &onchipMemory, //< NOTE: onchip is a reference
+                                     MemoryStack &offchipMemory)
       {
         AnkiAssert(parameters.isInitialized);
         
@@ -330,7 +337,7 @@ namespace Anki {
                                                            parameters.numPyramidLevels,
                                                            Transformations::TRANSFORM_TRANSLATION,
                                                            0.0,
-                                                           onchipScratch);
+                                                           onchipMemory);
 #elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_AFFINE
         tracker = TemplateTracker::LucasKanadeTracker_Affine(
                                                              grayscaleImageSmall,
@@ -338,7 +345,7 @@ namespace Anki {
                                                              parameters.scaleTemplateRegionPercent,
                                                              parameters.numPyramidLevels,
                                                              Transformations::TRANSFORM_AFFINE,
-                                                             onchipScratch);
+                                                             onchipMemory);
 #elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE
         tracker = TemplateTracker::LucasKanadeTracker_Projective(
                                                                  grayscaleImageSmall,
@@ -346,7 +353,7 @@ namespace Anki {
                                                                  parameters.scaleTemplateRegionPercent,
                                                                  parameters.numPyramidLevels,
                                                                  Transformations::TRANSFORM_PROJECTIVE,
-                                                                 onchipScratch);
+                                                                 onchipMemory);
 #elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PROJECTIVE
         tracker = TemplateTracker::LucasKanadeTracker_SampledProjective(
                                                                         grayscaleImage,
@@ -356,8 +363,8 @@ namespace Anki {
                                                                         Transformations::TRANSFORM_PROJECTIVE,
                                                                         parameters.maxSamplesAtBaseLevel,
                                                                         ccmScratch,
-                                                                        onchipScratch,
-                                                                        offchipScratch);
+                                                                        onchipMemory,
+                                                                        offchipMemory);
 #elif DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
 #ifdef USE_HEADER_TEMPLATE
         tracker = TemplateTracker::BinaryTracker(
@@ -373,15 +380,42 @@ namespace Anki {
                                                  trackingQuad,
                                                  parameters.scaleTemplateRegionPercent,
                                                  parameters.edgeDetectionParams_template,
-                                                 onchipScratch, offchipScratch);
+                                                 onchipMemory, offchipMemory);
 #endif // #ifdef USE_HEADER_TEMPLATE ... #else                                               
+        
+#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
+        
+        tracker = TemplateTracker::LucasKanadeTracker_SampledPlanar6dof(grayscaleImage,
+                                                                        trackingQuad,
+                                                                        parameters.scaleTemplateRegionPercent,
+                                                                        parameters.numPyramidLevels,
+                                                                        Transformations::TRANSFORM_PROJECTIVE,
+                                                                        parameters.maxSamplesAtBaseLevel,
+                                                                        headCamInfo_->focalLength_x,
+                                                                        headCamInfo_->focalLength_y,
+                                                                        headCamInfo_->center_x,
+                                                                        headCamInfo_->center_y,
+                                                                        trackingMarkerWidth_mm,
+                                                                        ccmScratch,
+                                                                        onchipMemory,
+                                                                        offchipMemory);
+        
+        // TODO: Set this elsewhere
+        const f32 Kp_min = 0.05f;
+        const f32 Kp_max = 0.75f;
+        const f32 tz_min = 30.f;
+        const f32 tz_max = 150.f;
+        tracker.SetGainScheduling(tz_min, tz_max, Kp_min, Kp_max);
+        
+#else
+#error Unknown DOCKING_ALGORITHM.
 #endif
         
         if(!tracker.IsValid()) {
           return EXIT_FAILURE;
         }
         
-        MatlabVisualization::SendTrackInit(grayscaleImage, tracker, onchipScratch);
+        MatlabVisualization::SendTrackInit(grayscaleImage, tracker, onchipMemory);
         
 #if DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
         DebugStream::SendBinaryTracker(tracker, ccmScratch, onchipScratch, offchipScratch);
@@ -500,10 +534,17 @@ namespace Anki {
           converged = false;
         }
         
-#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PLANAR6DOF
+#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
         
-        // Nothing to do until this is implemented in embedded code!
-        const Result trackerResult = RESULT_OK;
+        const Result trackerResult = tracker.UpdateTrack(grayscaleImage,
+                                                         parameters.maxIterations,
+                                                         parameters.convergenceTolerance,
+                                                         parameters.verify_maxPixelDifference,
+                                                         converged,
+                                                         verify_meanAbsoluteDifference,
+                                                         verify_numInBounds,
+                                                         verify_numSimilarPixels,
+                                                         onchipScratch); // TODO: onchip scratch?
         
 #else
 #error Unknown DOCKING_ALGORITHM!
@@ -513,7 +554,9 @@ namespace Anki {
           return EXIT_FAILURE;
         }
         
+#if DOCKING_ALGORITHM != DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
         // Check for a super shrunk or super large template
+        // (I don't think this works for planar 6dof homographies?  Try dividing by h22?)
         {
           // TODO: make not hacky
           const Array<f32> &homography = tracker.get_transformation().get_homography();
@@ -543,6 +586,7 @@ namespace Anki {
             converged = false;
           }
         }
+#endif // #if DOCKING_ALGORITHM != DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
         
         MatlabVisualization::SendTrack(grayscaleImage, tracker, converged, offchipScratch);
         
@@ -561,6 +605,8 @@ namespace Anki {
       //
       static ReturnCode TrackerPredictionUpdate(const Array<u8>& grayscaleImage, MemoryStack scratch)
       {
+        ReturnCode result = EXIT_SUCCESS;
+        
         const Quadrilateral<f32> currentQuad = GetTrackerQuad(scratch);
         
         MatlabVisualization::SendTrackerPrediction_Before(grayscaleImage, currentQuad);
@@ -572,10 +618,66 @@ namespace Anki {
         GetPoseChange(T_fwd_robot, T_hor_robot, theta_robot);
         Radians theta_head = GetCurrentHeadAngle();
         
-#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PLANAR6DOF
+#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
         
+#if USE_MATLAB_TRACKER
         MatlabVisionProcessor::UpdateTracker(T_fwd_robot, T_hor_robot,
                                              theta_robot, theta_head);
+#else
+
+        const f32 cH = cosf(theta_head.ToFloat());
+        const f32 sH = sinf(theta_head.ToFloat());
+        
+        const f32 cR = cosf(theta_robot.ToFloat());
+        const f32 sR = sinf(theta_robot.ToFloat());
+     
+        // NOTE: these "geometry" entries were computed symbolically with Sage
+        // In the derivation, it was assumed the head and neck positions' Y
+        // components are zero.
+        //
+        // From Sage:
+        // R_blockRelHead_new =
+        //   [cos(thetaR)               sin(thetaH)*sin(thetaR)                                       cos(thetaH)*sin(thetaR)]
+        //   [-sin(thetaH)*sin(thetaR)  cos(thetaR)*sin(thetaH)^2 + cos(thetaH)^2                      cos(thetaH)*cos(thetaR)*sin(thetaH) - cos(thetaH)*sin(thetaH)]
+        //   [-cos(thetaH)*sin(thetaR)  cos(thetaH)*cos(thetaR)*sin(thetaH) - cos(thetaH)*sin(thetaH)  cos(thetaH)^2*cos(thetaR) + sin(thetaH)^2]
+        //
+        // T_blockRelHead_new =
+        //   [T_hor*cos(thetaR) + term1*sin(thetaR) - T_fwd*sin(thetaR)]
+        //   [term1*cos(thetaR)*sin(thetaH) - term1*sin(thetaH) - (T_fwd*cos(thetaR) + T_hor*sin(thetaR))*sin(thetaH)]
+        //   [term1*cos(thetaH)*cos(thetaR) - term1*cos(thetaH) - (T_fwd*cos(thetaR) + T_hor*sin(thetaR))*cos(thetaH)]
+        //  where term1 = (Hx*cos(thetaH) - Hz*sin(thetaH) + Nx)
+        
+        AnkiAssert(HEAD_CAM_POSITION[1] == 0.f && NECK_JOINT_POSITION[1] == 0.f);
+        Array<f32> R_geometry = Array<f32>(3,3,scratch);
+        R_geometry[0][0] = cR;     R_geometry[0][1] = sH*sR;             R_geometry[0][2] = cH*sR;
+        R_geometry[1][0] = -sH*sR; R_geometry[1][1] = cR*sH*sH + cH*cH;  R_geometry[1][2] = cH*cR*sH - cH*sH;
+        R_geometry[2][0] = -cH*sR; R_geometry[2][1] = cH*cR*sH - cH*sH;  R_geometry[2][2] = cH*cH*cR + sH*sH;
+        
+        const f32 term1 = HEAD_CAM_POSITION[0]*cH - HEAD_CAM_POSITION[2]*sH + NECK_JOINT_POSITION[0];
+        const f32 term2 = T_fwd_robot*cR + T_hor_robot*sR;
+        Point3<f32> T_geometry(T_hor_robot*cR + term1*sR - T_fwd_robot*sR,
+                               sH*(term1*cR - term1 - term2),
+                               cH*(term1*cR - term1 - term2));
+        
+
+        Array<f32> R_blockRelHead = Array<f32>(3,3,scratch);
+        tracker_.get_rotationMatrix(R_blockRelHead);
+        const Point3<f32>& T_blockRelHead = tracker_.get_translation();
+        
+        Array<f32> R_blockRelHead_new = Array<f32>(3,3,scratch);
+        Matrix::Multiply(R_geometry, R_blockRelHead, R_blockRelHead_new);
+        
+        Point3<f32> T_blockRelHead_new = R_geometry*T_blockRelHead + T_geometry;
+
+        if(tracker_.UpdateRotationAndTranslation(R_blockRelHead_new,
+                                                 T_blockRelHead_new,
+                                                 scratch) == RESULT_OK)
+        {
+          result = EXIT_SUCCESS;
+        }
+
+                                 
+#endif // #if USE_MATLAB_TRACKER
         
 #else
         const Quadrilateral<f32> sortedQuad  = currentQuad.ComputeClockwiseCorners<f32>();
@@ -662,11 +764,11 @@ namespace Anki {
 #endif
         } // if(tracker transformation type == TRANSLATION...)
         
-#endif // if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PLANAR6DOF
+#endif // if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
         
         MatlabVisualization::SendTrackerPrediction_After(GetTrackerQuad(scratch));
         
-        return EXIT_SUCCESS;
+        return result;
       } // TrackerPredictionUpdate()
       
       
@@ -718,7 +820,7 @@ namespace Anki {
         dockErrMsg.y_horErr  = midpointError;
         dockErrMsg.angleErr  = angleError;
         
-#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PLANAR6DOF
+#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
         
 #if USE_MATLAB_TRACKER
         MatlabVisionProcessor::ComputeProjectiveDockingSignal(currentQuad,
@@ -726,15 +828,18 @@ namespace Anki {
                                                               dockErrMsg.y_horErr,
                                                               dockErrMsg.angleErr);
 #else
-#error Projective-pose docking error signal with Planar 6DoF tracker not yet implemented outside of Matlab.
-        // TODO: Implement projective-pose docking error signal.
+        
+        dockErrMsg.x_distErr = tracker_.get_translation().z;
+        dockErrMsg.y_horErr  = -tracker_.get_translation().x;
+        dockErrMsg.angleErr  = tracker_.get_angleY();
+        
 #endif // if USE_MATLAB_TRACKER
 
         
 #elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PROJECTIVE || DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
 
         
-#if 0 && USE_MATLAB_TRACKER
+#if USE_MATLAB_TRACKER
         MatlabVisionProcessor::ComputeProjectiveDockingSignal(currentQuad,
                                                               dockErrMsg.x_distErr,
                                                               dockErrMsg.y_horErr,
@@ -967,13 +1072,13 @@ namespace Anki {
           
           VisionMemory::ResetBuffers();
           
-          MemoryStack offchipScratch_local(VisionMemory::offchipScratch_);
+          //MemoryStack offchipScratch_local(VisionMemory::offchipScratch_);
           
           const s32 captureHeight = CameraModeInfo[captureResolution_].height;
           const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
           
           Array<u8> grayscaleImage(captureHeight, captureWidth,
-                                   offchipScratch_local, Flags::Buffer(false,false,false));
+                                   VisionMemory::offchipScratch_, Flags::Buffer(false,false,false));
           
           HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
                               captureResolution_, exposure, false);
@@ -984,7 +1089,7 @@ namespace Anki {
                                                    VisionMemory::markers_,
                                                    VisionMemory::ccmScratch_,
                                                    VisionMemory::onchipScratch_,
-                                                   offchipScratch_local);
+                                                   VisionMemory::offchipScratch_);
           
           if(result != EXIT_SUCCESS) {
             return EXIT_FAILURE;
@@ -1043,7 +1148,7 @@ namespace Anki {
                                                      tracker_,
                                                      VisionMemory::ccmScratch_,
                                                      VisionMemory::onchipScratch_, //< NOTE: onchip is a reference
-                                                     offchipScratch_local);
+                                                     VisionMemory::offchipScratch_);
               
               if(result != EXIT_SUCCESS) {
                 return EXIT_FAILURE;

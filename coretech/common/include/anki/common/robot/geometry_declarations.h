@@ -48,7 +48,7 @@ namespace Anki
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
       Point(const cv::Point_<Type>& pt);
 
-      cv::Point_<Type> get_CvPoint_();
+      cv::Point_<Type> get_CvPoint_() const;
 #endif
 
       // Read in the input, then cast it to this object's type
@@ -101,7 +101,7 @@ namespace Anki
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
       Point3(const cv::Point3_<Type>& pt);
 
-      cv::Point3_<Type> get_CvPoint_();
+      cv::Point3_<Type> get_CvPoint_() const;
 #endif
 
       void Print() const;

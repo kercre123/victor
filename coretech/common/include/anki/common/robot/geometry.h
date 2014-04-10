@@ -47,7 +47,7 @@ namespace Anki
 #endif
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
-    template<typename Type> cv::Point_<Type> Point<Type>::get_CvPoint_()
+    template<typename Type> cv::Point_<Type> Point<Type>::get_CvPoint_() const
     {
       return cv::Point_<Type>(x,y);
     }
@@ -164,7 +164,7 @@ namespace Anki
 #endif
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
-    template<typename Type> cv::Point3_<Type> Point3<Type>::get_CvPoint_()
+    template<typename Type> cv::Point3_<Type> Point3<Type>::get_CvPoint_() const
     {
       return cv::Point3_<Type>(x,y,z);
     }

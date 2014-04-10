@@ -89,7 +89,7 @@ classdef LucasKanadeTracker < handle
             TrackingResolution = [size(firstImg,2), size(firstImg,1)];
             TemplateRegionPaddingFraction = 0;
             ErrorTolerance = [];
-            ApproximateGradientMargins = true;
+            ApproximateGradientMargins = false;
             %SampleNearEdges = false;
             NumSamples = [];
             MarkerWidth = [];
@@ -377,8 +377,9 @@ classdef LucasKanadeTracker < handle
                 
                 % Gaussian weighting function to give more weight to center of target
                 if isempty(Weights)
-                    W_ = W_mask .* exp(-((this.xgrid{i_scale}).^2 + ...
-                        (this.ygrid{i_scale}).^2) / (2*(W_sigma)^2));
+                    %W_ = W_mask .* exp(-((this.xgrid{i_scale}).^2 + ...
+                    %    (this.ygrid{i_scale}).^2) / (2*(W_sigma)^2));
+                    W_ = W_mask;
                 else
                     W_ = W_mask .* interp2(Weights, xi, yi, 'linear', 0);
                 end
