@@ -365,22 +365,14 @@ namespace Anki {
                                                 grayscaleImage,
                                                 trackingQuad,
                                                 parameters.scaleTemplateRegionPercent,
-                                                parameters.edgeDetection_threshold_yIncrement, parameters.edgeDetection_threshold_xIncrement,
-                                                parameters.edgeDetection_threshold_blackPercentile, parameters.edgeDetection_threshold_whitePercentile,
-                                                parameters.edgeDetection_threshold_scaleRegionPercent,
-                                                parameters.edgeDetection_minComponentWidth, parameters.edgeDetection_maxDetectionsPerType,
-                                                parameters.edgeDetection_everyNLines,
+                                                parameters.edgeDetectionParams_template,
                                                 onchipScratch, offchipScratch);
 #else // #ifdef USE_HEADER_TEMPLATE
         tracker = TemplateTracker::BinaryTracker(
                                                  grayscaleImage,
                                                  trackingQuad,
                                                  parameters.scaleTemplateRegionPercent,
-                                                 parameters.edgeDetection_threshold_yIncrement, parameters.edgeDetection_threshold_xIncrement,
-                                                 parameters.edgeDetection_threshold_blackPercentile, parameters.edgeDetection_threshold_whitePercentile,
-                                                 parameters.edgeDetection_threshold_scaleRegionPercent,
-                                                 parameters.edgeDetection_minComponentWidth, parameters.edgeDetection_maxDetectionsPerType,
-                                                 parameters.edgeDetection_everyNLines,
+                                                 parameters.edgeDetectionParams_template,
                                                  onchipScratch, offchipScratch);
 #endif // #ifdef USE_HEADER_TEMPLATE ... #else                                               
 #endif
@@ -484,14 +476,7 @@ namespace Anki {
         
         const Result trackerResult = tracker.UpdateTrack_Normal(
                                                          grayscaleImage,
-                                                         parameters.edgeDetection_threshold_yIncrement,
-                                                         parameters.edgeDetection_threshold_xIncrement,
-                                                         parameters.edgeDetection_threshold_blackPercentile,
-                                                         parameters.edgeDetection_threshold_whitePercentile,
-                                                         parameters.edgeDetection_threshold_scaleRegionPercent,
-                                                         parameters.edgeDetection_minComponentWidth,
-                                                         parameters.edgeDetection_maxDetectionsPerType,
-                                                         parameters.edgeDetection_everyNLines,
+                                                         parameters.edgeDetectionParams_update,
                                                          parameters.matching_maxTranslationDistance,
                                                          parameters.matching_maxProjectiveDistance,
                                                          parameters.verify_maxTranslationDistance,

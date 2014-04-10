@@ -67,6 +67,11 @@ namespace Anki
 #endif
       }
 
+      BinaryTracker::EdgeDetectionParameters::EdgeDetectionParameters()
+        : type(EDGE_TYPE_GRAYVALUE), threshold_yIncrement(-1), threshold_xIncrement(-1), threshold_blackPercentile(-1), threshold_whitePercentile(-1), threshold_scaleRegionPercent(-1), minComponentWidth(-1), maxDetectionsPerType(-1), combHalfWidth(-1), combResponseThreshold(-1), everyNLines(-1)
+      {
+      }
+
       BinaryTracker::EdgeDetectionParameters::EdgeDetectionParameters(EdgeDetectionType type, s32 threshold_yIncrement, s32 threshold_xIncrement, f32 threshold_blackPercentile, f32 threshold_whitePercentile, f32 threshold_scaleRegionPercent, s32 minComponentWidth, s32 maxDetectionsPerType, s32 combHalfWidth, s32 combResponseThreshold, s32 everyNLines)
         : type(type), threshold_yIncrement(threshold_yIncrement), threshold_xIncrement(threshold_xIncrement), threshold_blackPercentile(threshold_blackPercentile), threshold_whitePercentile(threshold_whitePercentile), threshold_scaleRegionPercent(threshold_scaleRegionPercent), minComponentWidth(minComponentWidth), maxDetectionsPerType(maxDetectionsPerType), combHalfWidth(combHalfWidth), combResponseThreshold(combResponseThreshold), everyNLines(everyNLines)
       {

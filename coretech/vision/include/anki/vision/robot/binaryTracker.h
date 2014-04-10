@@ -48,7 +48,7 @@ namespace Anki
 
           // For grayvalue binarization
           s32 minComponentWidth; //< The smallest horizontal size of a component (1 to 4 is good)
-          s32 maxDetectionsPerType; //< As many as you have memory and time for (500 is good)
+          s32 maxDetectionsPerType; //< As many as you have memory and time for (500 is good for a small template, 2500 for a whole qvga image)
 
           // For derivative binarization
           s32 combHalfWidth; //< How far apart to compute the derivative difference (1 is good)
@@ -56,6 +56,7 @@ namespace Anki
 
           s32 everyNLines; //< As many as you have time for
 
+          EdgeDetectionParameters();
           EdgeDetectionParameters(EdgeDetectionType type, s32 threshold_yIncrement, s32 threshold_xIncrement, f32 threshold_blackPercentile, f32 threshold_whitePercentile, f32 threshold_scaleRegionPercent, s32 minComponentWidth, s32 maxDetectionsPerType, s32 combHalfWidth, s32 combResponseThreshold, s32 everyNLines);
         } EdgeDetectionParameters;
 

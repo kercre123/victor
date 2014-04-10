@@ -104,16 +104,9 @@ namespace Anki {
         
 #if DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
         
-        f32 scaleTemplateRegionPercent;
-        //u8  edgeDetection_grayvalueThreshold;
-        s32 edgeDetection_threshold_yIncrement;
-        s32 edgeDetection_threshold_xIncrement;
-        f32 edgeDetection_threshold_blackPercentile;
-        f32 edgeDetection_threshold_whitePercentile;
-        f32 edgeDetection_threshold_scaleRegionPercent;
-        s32 edgeDetection_minComponentWidth;
-        s32 edgeDetection_maxDetectionsPerType;
-        s32 edgeDetection_everyNLines;
+        f32 scaleTemplateRegionPercent;                
+        Anki::Embedded::TemplateTracker::BinaryTracker::EdgeDetectionParameters edgeDetectionParams_template;
+        Anki::Embedded::TemplateTracker::BinaryTracker::EdgeDetectionParameters edgeDetectionParams_update;
         s32 matching_maxTranslationDistance;
         s32 matching_maxProjectiveDistance;
         s32 verify_maxTranslationDistance;
