@@ -298,8 +298,8 @@ namespace Anki {
                                      const TrackerParameters &parameters,
                                      Tracker &tracker,
                                      MemoryStack ccmScratch,
-                                     MemoryStack &onchipScratch, //< NOTE: onchip is a reference
-                                     MemoryStack offchipScratch)
+                                     MemoryStack &onchipMemory, //< NOTE: onchip is a reference
+                                     MemoryStack &offchipMemory)
       {
         AnkiAssert(parameters.isInitialized);
         
@@ -406,7 +406,7 @@ namespace Anki {
           return EXIT_FAILURE;
         }
         
-        MatlabVisualization::SendTrackInit(grayscaleImage, tracker, onchipScratch);
+        MatlabVisualization::SendTrackInit(grayscaleImage, tracker, onchipMemory);
         
 #if DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
         DebugStream::SendBinaryTracker(tracker, ccmScratch, onchipScratch, offchipScratch);
@@ -1066,13 +1066,13 @@ namespace Anki {
           
           VisionMemory::ResetBuffers();
           
-          MemoryStack offchipScratch_local(VisionMemory::offchipScratch_);
+          //MemoryStack offchipScratch_local(VisionMemory::offchipScratch_);
           
           const s32 captureHeight = CameraModeInfo[captureResolution_].height;
           const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
           
           Array<u8> grayscaleImage(captureHeight, captureWidth,
-                                   offchipScratch_local, Flags::Buffer(false,false,false));
+                                   VisionMemory::offchipScratch_, Flags::Buffer(false,false,false));
           
           HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
                               captureResolution_, exposure, false);
@@ -1083,7 +1083,7 @@ namespace Anki {
                                                    VisionMemory::markers_,
                                                    VisionMemory::ccmScratch_,
                                                    VisionMemory::onchipScratch_,
-                                                   offchipScratch_local);
+                                                   VisionMemory::offchipScratch_);
           
           if(result != EXIT_SUCCESS) {
             return EXIT_FAILURE;
@@ -1142,7 +1142,7 @@ namespace Anki {
                                                      tracker_,
                                                      VisionMemory::ccmScratch_,
                                                      VisionMemory::onchipScratch_, //< NOTE: onchip is a reference
-                                                     offchipScratch_local);
+                                                     VisionMemory::offchipScratch_);
               
               if(result != EXIT_SUCCESS) {
                 return EXIT_FAILURE;
