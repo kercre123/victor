@@ -627,17 +627,30 @@ namespace Anki {
         // NOTE: these "geometry" entries were computed symbolically with Sage
         // In the derivation, it was assumed the head and neck positions' Y
         // components are zero.
+        //
+        // From Sage:
+        // R_blockRelHead_new =
+        //   [cos(thetaR)               sin(thetaH)*sin(thetaR)                                       cos(thetaH)*sin(thetaR)]
+        //   [-sin(thetaH)*sin(thetaR)  cos(thetaR)*sin(thetaH)^2 + cos(thetaH)^2                      cos(thetaH)*cos(thetaR)*sin(thetaH) - cos(thetaH)*sin(thetaH)]
+        //   [-cos(thetaH)*sin(thetaR)  cos(thetaH)*cos(thetaR)*sin(thetaH) - cos(thetaH)*sin(thetaH)  cos(thetaH)^2*cos(thetaR) + sin(thetaH)^2]
+        //
+        // T_blockRelHead_new =
+        //   [T_hor*cos(thetaR) + term1*sin(thetaR) - T_fwd*sin(thetaR)]
+        //   [term1*cos(thetaR)*sin(thetaH) - term1*sin(thetaH) - (T_fwd*cos(thetaR) + T_hor*sin(thetaR))*sin(thetaH)]
+        //   [term1*cos(thetaH)*cos(thetaR) - term1*cos(thetaH) - (T_fwd*cos(thetaR) + T_hor*sin(thetaR))*cos(thetaH)]
+        //  where term1 = (Hx*cos(thetaH) - Hz*sin(thetaH) + Nx)
+        
         AnkiAssert(HEAD_CAM_POSITION[1] == 0.f && NECK_JOINT_POSITION[1] == 0.f);
         Array<f32> R_geometry = Array<f32>(3,3,scratch);
-        R_geometry[0][0] = cR;     R_geometry[0][1] = -sH*sR;            R_geometry[0][2] = cH*sR;
-        R_geometry[1][0] = sH*sR;  R_geometry[1][1] = cR*sH*sH + cH*cH;  R_geometry[1][2] = -cH*cR*sH + cH*sH;
-        R_geometry[2][0] = -cH*sR; R_geometry[2][1] = -cH*cR*sH + cH*sH; R_geometry[2][2] = cH*cH*cR + sH*sH;
+        R_geometry[0][0] = cR;     R_geometry[0][1] = sH*sR;             R_geometry[0][2] = cH*sR;
+        R_geometry[1][0] = -sH*sR; R_geometry[1][1] = cR*sH*sH + cH*cH;  R_geometry[1][2] = cH*cR*sH - cH*sH;
+        R_geometry[2][0] = -cH*sR; R_geometry[2][1] = cH*cR*sH - cH*sH;  R_geometry[2][2] = cH*cH*cR + sH*sH;
         
-        const f32 term1 = HEAD_CAM_POSITION[0]*cH + HEAD_CAM_POSITION[2]*sH + NECK_JOINT_POSITION[0];
+        const f32 term1 = HEAD_CAM_POSITION[0]*cH - HEAD_CAM_POSITION[2]*sH + NECK_JOINT_POSITION[0];
         const f32 term2 = T_fwd_robot*cR + T_hor_robot*sR;
         Point3<f32> T_geometry(T_hor_robot*cR + term1*sR - T_fwd_robot*sR,
-                               sH*(-term1*cR + term1 + term2),
-                               cH*( term1*cR - term1 - term2));
+                               sH*(term1*cR - term1 - term2),
+                               cH*(term1*cR - term1 - term2));
         
 
         Array<f32> R_blockRelHead = Array<f32>(3,3,scratch);
@@ -808,8 +821,11 @@ namespace Anki {
                                                               dockErrMsg.y_horErr,
                                                               dockErrMsg.angleErr);
 #else
-#error Projective-pose docking error signal with Planar 6DoF tracker not yet implemented outside of Matlab.
-        // TODO: Implement projective-pose docking error signal.
+        
+        dockErrMsg.x_distErr = tracker_.get_translation().z;
+        dockErrMsg.y_horErr  = -tracker_.get_translation().x;
+        dockErrMsg.angleErr  = tracker_.get_angleY();
+        
 #endif // if USE_MATLAB_TRACKER
 
         
