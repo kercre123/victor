@@ -62,10 +62,6 @@ Supervisor {
 		   channel IS usbChannel
 		}
 	
-		Gyro {
-		  name "gyro"
-		}
-	
 		# Are these still needed?
 		GPS {
 		  name "gps"
@@ -178,6 +174,20 @@ Supervisor {
 					height IS cameraHeight
 					fieldOfView IS fieldOfView
 				  }
+				  Gyro {
+				  	name "gyro"
+					translation 0.0058 -0.0135 0
+
+					# +/- 500 deg/s range expressed by 16-bits
+					# resolution 0.0002663
+				  }
+				  Accelerometer {
+					name "accel"
+					translation 0.0058 -0.0135 0
+
+					# +/-2g (+/- 19.62m/s^2) range expressed by 12-bits
+					# resolution 0.00958
+				  }
 				  DEF FACE Transform {
 					translation 0.016 0 0
 					rotation 0 0 1 1.5708
@@ -196,7 +206,7 @@ Supervisor {
 					  }
 					]
 				  }
-				  Shape {
+				  DEF HEAD_SPHERE Shape {
 					appearance Appearance {
 					  material Material {
 						diffuseColor IS bodyColor
@@ -209,6 +219,10 @@ Supervisor {
 				  }
 				]
 				name "head"
+				boundingObject USE HEAD_SPHERE
+				physics Physics {
+					density 100
+				}
 			  }
 			}
 		  ]

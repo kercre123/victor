@@ -116,18 +116,18 @@ namespace Anki {
     const f32 ONE_OVER_CONTROL_DT = 1.0f/CONTROL_DT;
     
     // The height of the lift at various configurations
-    const f32 LIFT_HEIGHT_LOWDOCK  = 30.f;  // Actual limit in proto is closer to 20.4mm, but there is a weird
+    const f32 LIFT_HEIGHT_LOWDOCK  = 29.f;  // Actual limit in proto is closer to 20.4mm, but there is a weird
     // issue with moving the lift when it is at a limit. The lift arm
     // flies off of the robot and comes back! So for now, we just don't
     // drive the lift down that far. We also skip calibration in sim.
-    const f32 LIFT_HEIGHT_HIGHDOCK = 74.f;
+    const f32 LIFT_HEIGHT_HIGHDOCK = 69.f;
     const f32 LIFT_HEIGHT_CARRY    = 88.f;
     
     // Height of lift "shoulder" joint where the arm attaches to robot body
     const f32 LIFT_JOINT_HEIGHT = 41.7f;
     
     // Distance between the lift shoulder joint and the lift "wrist" joint where arm attaches to fork assembly
-    const f32 LIFT_ARM_LENGTH = 61.f;
+    const f32 LIFT_ARM_LENGTH = 64.f;
     
     // The lift height is defined as the height of the upper lift arm's wrist joint plus this offset.
     const f32 LIFT_FORK_HEIGHT_REL_TO_ARM_END = 0;
@@ -141,6 +141,8 @@ namespace Anki {
     const f32 LIFT_BASE_POSITION[3]  = {-40.0f, 0.f, 27.5f + WHEEL_RAD_TO_MM}; // relative to robot origin
     //const f32 MAT_CAM_POSITION[3]   =  {-25.0f, 0.f, -3.f}; // relative to robot origin
     
+    
+    const f32 IMU_POSITION[3] = {5.8f, 0.f, -13.5f};  // relative to neck joint
     
     const f32 PREDOCK_DISTANCE_MM = 100.f;
     

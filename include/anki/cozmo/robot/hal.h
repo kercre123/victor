@@ -78,11 +78,18 @@ extern "C" {
 
 #if(DIVERT_PRINT_TO_RADIO)
 #define PRINT(...) Messages::SendText(__VA_ARGS__)
+#define PERIODIC_PRINT(num_calls_between_prints, ...)\
+{ \
+  static u16 cnt = num_calls_between_prints; \
+  if (cnt++ >= num_calls_between_prints) { \
+    Messages::SendText(__VA_ARGS__); \
+    cnt = 0; \
+  } \
+}
 #else
 #define PRINT(...)
-#endif // #if(USING_UART_RADIO)
-
 #define PERIODIC_PRINT(num_calls_between_prints, ...)
+#endif // #if(USING_UART_RADIO)
 
 #else
 
@@ -107,8 +114,14 @@ extern "C" {
 #if(USING_UART_RADIO && DIVERT_PRINT_TO_RADIO)
 
 #define PRINT(...) Messages::SendText(__VA_ARGS__)
-#define PERIODIC_PRINT(num_calls_between_prints, ...)
-
+#define PERIODIC_PRINT(num_calls_between_prints, ...)\
+{ \
+  static u16 cnt = num_calls_between_prints; \
+  if (cnt++ >= num_calls_between_prints) { \
+    Messages::SendText(__VA_ARGS__); \
+    cnt = 0; \
+  } \
+}
 #else
 
 #define PRINT(...) fprintf(stdout, __VA_ARGS__)
@@ -230,9 +243,6 @@ namespace Anki
         f32 rate_y;
         f32 rate_z;
       };
-      
-      // Set up IMU (including SPI communication channel)
-      void IMUInit();
 
       // Read acceleration and rate
       void IMUReadData(IMU_DataStructure &IMUData);
@@ -338,7 +348,7 @@ namespace Anki
       // Intrinsic calibration:
       // A struct for holding intrinsic camera calibration parameters
       typedef struct {
-        f32 focalLength_x, focalLength_y, fov_ver;
+        f32 focalLength_x, focalLength_y;
         f32 center_x, center_y;
         f32 skew;
         u16 nrows, ncols;
@@ -389,6 +399,17 @@ namespace Anki
       // Set the intensity for each LED channel in the range [0, 255]
       void LEDSet(u8 leds[LED_CHANNEL_COUNT]);
 
+      
+      enum LEDColor {
+        LED_ORANGE = 1,
+        LED_GREEN = 2,
+        LED_BLUE = 4
+      };
+      
+      // TEMP: Temporary single LED control with color
+      //       while "real" light functionality is being worked on.
+      void SetLED(u8 led_id, LEDColor color);
+      
 // #pragma mark --- Radio ---
       /////////////////////////////////////////////////////////////////////
       // RADIO

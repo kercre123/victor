@@ -492,18 +492,11 @@ namespace Anki
         }
       }
       
-      inline f32 ComputeVerticalFOV(const u16 height, const f32 fy)
-      {
-        return 2.f * atan_fast(static_cast<f32>(height) / (2.f * fy));
-      }
-      
       const CameraInfo* GetHeadCamInfo(void)
       {
         static CameraInfo s_headCamInfo = {
           HEAD_CAM_CALIB_FOCAL_LENGTH_X,
           HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
-          ComputeVerticalFOV(HEAD_CAM_CALIB_HEIGHT,
-                             HEAD_CAM_CALIB_FOCAL_LENGTH_Y),
           HEAD_CAM_CALIB_CENTER_X,
           HEAD_CAM_CALIB_CENTER_Y,
           0.f,

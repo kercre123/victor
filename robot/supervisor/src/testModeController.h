@@ -47,10 +47,16 @@ namespace Anki {
         // Tilts head up and down
         TM_HEAD,
         
+        // Prints gyro/accel data
+        TM_IMU,
+        
 #if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
         // Engages and disengages gripper
         TM_GRIPPER,
 #endif
+        
+        // Cycle through all LEDs with different colors
+        TM_LIGHTS,
         
         // Drives slow and then stops.
         // Drives fast and then stops.

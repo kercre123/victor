@@ -5,6 +5,7 @@
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h" // simulated or real!
+#include "imuFilter.h"
 #include "pickAndPlaceController.h"
 #include "dockingController.h"
 #include "gripController.h"
@@ -82,6 +83,7 @@ namespace Anki {
            && HeadController::IsCalibrated()
            ) {
           PRINT("Motors calibrated\n");
+          IMUFilter::Reset();
           isDone = true;
         }
         
@@ -170,9 +172,6 @@ namespace Anki {
         return EXIT_SUCCESS;
 #endif
 
-//#if(DEBUG_ANY && defined(SIMULATOR))
-//        PRINT("\n==== FRAME START (time = %d us) ====\n", HAL::GetMicroCounter() );
-//#endif
         // If the hardware interface needs to be advanced (as in the case of
         // a Webots simulation), do that first.
         HAL::Step();
@@ -232,6 +231,12 @@ namespace Anki {
           
         } // while blockMarkerMailbox has mail
         */      
+
+        //////////////////////////////////////////////////////////////
+        // Sensor updates
+        //////////////////////////////////////////////////////////////
+        IMUFilter::Update();
+        
         
         //////////////////////////////////////////////////////////////
         // Head & Lift Position Updates

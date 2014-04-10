@@ -3228,6 +3228,8 @@ GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation)
 {
 #define PRECISION f64
 
+  InitBenchmarking();
+
   // Allocate memory from the heap, for the memory allocator
   // TODO: How much memory do i need here?
   const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 250*sizeof(PRECISION));
@@ -3296,11 +3298,18 @@ GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation)
   // Compute the pose of the marker w.r.t. camera from the noisy projection
   Array<PRECISION> R = Array<PRECISION>(3,3,memory);
   Point3<PRECISION> T;
+
+  BeginBenchmark("P3P::computePose");
+
   ASSERT_TRUE(P3P::computePose(proj,
     marker3d[0], marker3d[1], marker3d[2], marker3d[3],
     focalLength_x, focalLength_y,
     camCenter_x, camCenter_y,
     R, T, memory) == EXIT_SUCCESS);
+
+  EndBenchmark("P3P::computePose");
+
+  PrintBenchmarkResults_All();
 
   //
   // Check if the estimated pose matches the true pose
@@ -3336,7 +3345,7 @@ GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation)
   }
 
 #undef PRECISION
-  
+
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation)
 

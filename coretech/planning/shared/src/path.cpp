@@ -56,6 +56,7 @@ namespace Anki
       def_.turn.x = x;
       def_.turn.y = y;
       def_.turn.targetAngle = targetAngle;
+      def_.turn.targetRotSpeed = targetRotSpeed;
       
       SetSpeedProfile(targetRotSpeed, rotAccel, rotDecel);
     }
@@ -191,7 +192,9 @@ namespace Anki
           res = GetDistToArcSegment(x,y,angle,shortestDistanceToPath,radDiff);
           break;
         case PST_POINT_TURN:
-                  // TODO: What do we do here?
+          // NOTE: This always returns IN_SEGMENT_RANGE since we can't know purely
+          // from the given pose whether it's approaching or past the target angle.
+          res = GetDistToPointTurnSegment(x,y,angle,shortestDistanceToPath,radDiff);
           break;
         default:
           assert(false);
@@ -453,6 +456,26 @@ namespace Anki
         }
       }
 
+      return IN_SEGMENT_RANGE;
+    }
+    
+    
+
+    SegmentRangeStatus PathSegment::GetDistToPointTurnSegment(const f32 x, const f32 y, const f32 angle,
+                                                        f32 &shortestDistanceToPath, f32 &radDiff) const
+    {
+      const PathSegmentDef::s_turn* seg = &(def_.turn);
+      
+#if(DEBUG_PATH_FOLLOWER)
+      PRINT("currPathSeg: %d, TURN (%f, %f), targetAngle: %f, targetRotSpeed: %f\n",
+            currPathSegment_, seg->x, seg->y, seg->targetAngle, seg->targetRotSpeed);
+#endif
+      
+      shortestDistanceToPath = sqrtf( (x - seg->x)*(x - seg->x) + (y - seg->y)*(y - seg->y) );
+      Radians currAngle(angle);
+      Radians targetAngle(seg->targetAngle);
+      radDiff = currAngle.angularDistance(targetAngle,seg->targetRotSpeed < 0);
+      
       return IN_SEGMENT_RANGE;
     }
     
