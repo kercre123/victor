@@ -1084,6 +1084,11 @@
               <FilePath>..\coretech\vision\robot\src\lucasKanade_Projective.cpp</FilePath>
             </File>
             <File>
+              <FileName>lucasKanade_SampledPlanar6dof.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\lucasKanade_SampledPlanar6dof.cpp</FilePath>
+            </File>
+            <File>
               <FileName>lucasKanade_SampledProjective.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\lucasKanade_SampledProjective.cpp</FilePath>
@@ -2430,6 +2435,11 @@
               <FileName>lucasKanade_Projective.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\lucasKanade_Projective.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>lucasKanade_SampledPlanar6dof.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\lucasKanade_SampledPlanar6dof.cpp</FilePath>
             </File>
             <File>
               <FileName>lucasKanade_SampledProjective.cpp</FileName>

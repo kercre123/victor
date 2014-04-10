@@ -480,7 +480,7 @@ namespace Anki
         return RESULT_OK;
       }
       
-      const bool PlanarTransformation_f32::get_initialPointsAreZeroCenetered() const
+      bool PlanarTransformation_f32::get_initialPointsAreZeroCenetered() const
       {
         return this->initialPointsAreZeroCentered;
       }
