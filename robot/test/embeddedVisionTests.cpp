@@ -1168,7 +1168,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledPlanar6dof)
     transform_groundTruth[1][2] = -4.952f;
     
     Array<u8> warpedImage(cozmo_2014_01_29_11_41_05_10_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_10_320x240_WIDTH, scratchOffchip);
-    tracker.get_transformation().TransformArray(templateImage, warpedImage, scratchOffchip);
+    tracker.get_transformation().Transform(templateImage, warpedImage, scratchOffchip);
     //warpedImage.Show("translationWarped", false, false, false);
     //nextImage.Show("nextImage", true, false, false);
     
@@ -1268,7 +1268,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledPlanar6dof)
     tracker.get_transformation().Print("Projective LK_SampledPlanar6dof");
     
     Array<u8> warpedImage(cozmo_2014_01_29_11_41_05_10_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_10_320x240_WIDTH, scratchOffchip);
-    tracker.get_transformation().TransformArray(templateImage, warpedImage, scratchOffchip);
+    tracker.get_transformation().Transform(templateImage, warpedImage, scratchOffchip);
     //warpedImage.Show("projectiveWarped", false, false, false);
     //nextImage.Show("nextImage", true, false, false);
     
