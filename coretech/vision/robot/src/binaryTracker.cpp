@@ -67,6 +67,11 @@ namespace Anki
 #endif
       }
 
+      BinaryTracker::EdgeDetectionParameters::EdgeDetectionParameters(EdgeDetectionType type, s32 threshold_yIncrement, s32 threshold_xIncrement, f32 threshold_blackPercentile, f32 threshold_whitePercentile, f32 threshold_scaleRegionPercent, s32 minComponentWidth, s32 maxDetectionsPerType, s32 combHalfWidth, s32 combResponseThreshold, s32 everyNLines)
+        : type(type), threshold_yIncrement(threshold_yIncrement), threshold_xIncrement(threshold_xIncrement), threshold_blackPercentile(threshold_blackPercentile), threshold_whitePercentile(threshold_whitePercentile), threshold_scaleRegionPercent(threshold_scaleRegionPercent), minComponentWidth(minComponentWidth), maxDetectionsPerType(maxDetectionsPerType), combHalfWidth(combHalfWidth), combResponseThreshold(combResponseThreshold), everyNLines(everyNLines)
+      {
+      }
+
       BinaryTracker::BinaryTracker()
         : isValid(false)
       {
@@ -76,15 +81,7 @@ namespace Anki
         const Array<u8> &templateImage,
         const Quadrilateral<f32> &templateQuad,
         const f32 scaleTemplateRegionPercent, //< Shrinks the region if less-than 1.0, expands the region if greater-than 1.0
-        //const u8 edgeDetection_grayvalueThreshold,
-        const s32 edgeDetection_threshold_yIncrement, //< How many pixels to use in the y direction (4 is a good value?)
-        const s32 edgeDetection_threshold_xIncrement, //< How many pixels to use in the x direction (4 is a good value?)
-        const f32 edgeDetection_threshold_blackPercentile, //< What percentile of histogram energy is black? (.1 is a good value)
-        const f32 edgeDetection_threshold_whitePercentile, //< What percentile of histogram energy is white? (.9 is a good value)
-        const f32 edgeDetection_threshold_scaleRegionPercent, //< How much to scale template bounding box (.8 is a good value)
-        const s32 edgeDetection_minComponentWidth, //< The smallest horizontal size of a component (1 to 4 is good)
-        const s32 edgeDetection_maxDetectionsPerType, //< As many as you have memory and time for
-        const s32 edgeDetection_everyNLines, //< As many as you have time for
+        const EdgeDetectionParameters &edgeDetectionParams,
         MemoryStack &fastMemory,
         MemoryStack &slowMemory)
         : isValid(false)
@@ -104,10 +101,10 @@ namespace Anki
 
         this->templateQuad = templateQuad;
 
-        this->templateEdges.xDecreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, fastMemory);
-        this->templateEdges.xIncreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, fastMemory);
-        this->templateEdges.yDecreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, fastMemory);
-        this->templateEdges.yIncreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, fastMemory);
+        this->templateEdges.xDecreasing = FixedLengthList<Point<s16> >(edgeDetectionParams.maxDetectionsPerType, fastMemory);
+        this->templateEdges.xIncreasing = FixedLengthList<Point<s16> >(edgeDetectionParams.maxDetectionsPerType, fastMemory);
+        this->templateEdges.yDecreasing = FixedLengthList<Point<s16> >(edgeDetectionParams.maxDetectionsPerType, fastMemory);
+        this->templateEdges.yIncreasing = FixedLengthList<Point<s16> >(edgeDetectionParams.maxDetectionsPerType, fastMemory);
 
         this->templateHistogram = Histogram(256, fastMemory);
         this->lastImageHistogram = Histogram(256, fastMemory);
@@ -122,22 +119,22 @@ namespace Anki
           this->templateEdges.yDecreasing.IsValid() && this->templateEdges.yIncreasing.IsValid(),
           "BinaryTracker::BinaryTracker", "Could not allocate local memory");
 
-        const Rectangle<s32> edgeDetection_imageRegionOfInterest = templateQuad.ComputeBoundingRectangle<s32>().ComputeScaledRectangle<s32>(edgeDetection_threshold_scaleRegionPercent);
+        const Rectangle<s32> edgeDetection_imageRegionOfInterest = templateQuad.ComputeBoundingRectangle<s32>().ComputeScaledRectangle<s32>(edgeDetectionParams.threshold_scaleRegionPercent);
 
         this->lastGrayvalueThreshold = ComputeGrayvalueThreshold(
           templateImage,
           edgeDetection_imageRegionOfInterest,
-          edgeDetection_threshold_yIncrement,
-          edgeDetection_threshold_xIncrement,
-          edgeDetection_threshold_blackPercentile,
-          edgeDetection_threshold_whitePercentile,
+          edgeDetectionParams.threshold_yIncrement,
+          edgeDetectionParams.threshold_xIncrement,
+          edgeDetectionParams.threshold_blackPercentile,
+          edgeDetectionParams.threshold_whitePercentile,
           this->templateHistogram);
 
         this->lastImageHistogram.Set(this->templateHistogram);
 
         const Rectangle<s32> templateRect = templateQuad.ComputeBoundingRectangle<s32>().ComputeScaledRectangle<s32>(scaleTemplateRegionPercent);
 
-        const Result result = DetectBlurredEdges_GrayvalueThreshold(templateImage, templateRect, this->lastGrayvalueThreshold, edgeDetection_minComponentWidth, edgeDetection_everyNLines, this->templateEdges);
+        const Result result = DetectBlurredEdges_GrayvalueThreshold(templateImage, templateRect, this->lastGrayvalueThreshold, edgeDetectionParams.minComponentWidth, edgeDetectionParams.everyNLines, this->templateEdges);
 
         this->lastUsedGrayvalueThreshold = this->lastGrayvalueThreshold;
 
@@ -152,14 +149,7 @@ namespace Anki
         const Array<u8> &templateImage,
         const Quadrilateral<f32> &templateQuad,
         const f32 scaleTemplateRegionPercent,
-        const s32 edgeDetection_threshold_yIncrement,
-        const s32 edgeDetection_threshold_xIncrement,
-        const f32 edgeDetection_threshold_blackPercentile,
-        const f32 edgeDetection_threshold_whitePercentile,
-        const f32 edgeDetection_threshold_scaleRegionPercent,
-        const s32 edgeDetection_minComponentWidth,
-        const s32 edgeDetection_maxDetectionsPerType,
-        const s32 edgeDetection_everyNLines,
+        const EdgeDetectionParameters &edgeDetectionParams,
         MemoryStack &fastMemory,
         MemoryStack &slowMemory)
         : isValid(false)
@@ -182,10 +172,10 @@ namespace Anki
 
         this->templateQuad = templateQuad;
 
-        this->templateEdges.xDecreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, fastMemory);
-        this->templateEdges.xIncreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, fastMemory);
-        this->templateEdges.yDecreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, fastMemory);
-        this->templateEdges.yIncreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, fastMemory);
+        this->templateEdges.xDecreasing = FixedLengthList<Point<s16> >(edgeDetectionParams.maxDetectionsPerType, fastMemory);
+        this->templateEdges.xIncreasing = FixedLengthList<Point<s16> >(edgeDetectionParams.maxDetectionsPerType, fastMemory);
+        this->templateEdges.yDecreasing = FixedLengthList<Point<s16> >(edgeDetectionParams.maxDetectionsPerType, fastMemory);
+        this->templateEdges.yIncreasing = FixedLengthList<Point<s16> >(edgeDetectionParams.maxDetectionsPerType, fastMemory);
 
         this->templateHistogram = Histogram(256, fastMemory);
         this->lastImageHistogram = Histogram(256, fastMemory);
@@ -204,7 +194,7 @@ namespace Anki
         {
           PUSH_MEMORY_STACK(slowMemory);
 
-          const s32 borderWidth = edgeDetection_minComponentWidth + 2;
+          const s32 borderWidth = edgeDetectionParams.minComponentWidth + 2;
 
           //
           // Decode the compressed binary image to an uncompressed image
@@ -327,7 +317,7 @@ namespace Anki
           // Extract the edges, and transform them to the actual fiducial detection location
           // TODO: add subpixel
           const Rectangle<s32> templateRect(0, binaryTemplateWithBorderWidth-1, 0, binaryTemplateWithBorderHeight-1);
-          const Result result = DetectBlurredEdges_GrayvalueThreshold(rotatedBinaryTemplateWithBorder, templateRect, 128, edgeDetection_minComponentWidth, edgeDetection_everyNLines, this->templateEdges);
+          const Result result = DetectBlurredEdges_GrayvalueThreshold(rotatedBinaryTemplateWithBorder, templateRect, 128, edgeDetectionParams.minComponentWidth, edgeDetectionParams.everyNLines, this->templateEdges);
 
           this->templateEdges.imageHeight = templateImageHeight;
           this->templateEdges.imageWidth = templateImageWidth;
@@ -361,15 +351,15 @@ namespace Anki
           //matlab.PutArray(this->templateImage, "templateImage");
         }
 
-        const Rectangle<s32> edgeDetection_imageRegionOfInterest = templateQuad.ComputeBoundingRectangle<s32>().ComputeScaledRectangle<s32>(edgeDetection_threshold_scaleRegionPercent);
+        const Rectangle<s32> edgeDetection_imageRegionOfInterest = templateQuad.ComputeBoundingRectangle<s32>().ComputeScaledRectangle<s32>(edgeDetectionParams.threshold_scaleRegionPercent);
 
         this->lastGrayvalueThreshold = ComputeGrayvalueThreshold(
           templateImage,
           edgeDetection_imageRegionOfInterest,
-          edgeDetection_threshold_yIncrement,
-          edgeDetection_threshold_xIncrement,
-          edgeDetection_threshold_blackPercentile,
-          edgeDetection_threshold_whitePercentile,
+          edgeDetectionParams.threshold_yIncrement,
+          edgeDetectionParams.threshold_xIncrement,
+          edgeDetectionParams.threshold_blackPercentile,
+          edgeDetectionParams.threshold_whitePercentile,
           this->templateHistogram);
 
         this->lastImageHistogram.Set(this->templateHistogram);
@@ -546,12 +536,7 @@ namespace Anki
 
       Result BinaryTracker::UpdateTrack_Normal(
         const Array<u8> &nextImage,
-        const s32 edgeDetection_threshold_yIncrement, //< How many pixels to use in the y direction (4 is a good value?)
-        const s32 edgeDetection_threshold_xIncrement, //< How many pixels to use in the x direction (4 is a good value?)
-        const f32 edgeDetection_threshold_blackPercentile, //< What percentile of histogram energy is black? (.1 is a good value)
-        const f32 edgeDetection_threshold_whitePercentile, //< What percentile of histogram energy is white? (.9 is a good value)
-        const f32 edgeDetection_threshold_scaleRegionPercent, //< How much to scale template bounding box (.8 is a good value)
-        const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
+        const EdgeDetectionParameters &edgeDetectionParams,
         const s32 matching_maxTranslationDistance, const s32 matching_maxProjectiveDistance,
         const s32 verify_maxTranslationDistance, const u8 verify_maxPixelDifference, const s32 verify_coordinateIncrement,
         s32 &numMatches,
@@ -564,8 +549,7 @@ namespace Anki
         return UpdateTrack_Generic(
           UPDATE_VERSION_NORMAL,
           nextImage,
-          edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent,
-          edgeDetection_minComponentWidth, edgeDetection_maxDetectionsPerType, edgeDetection_everyNLines,
+          edgeDetectionParams,
           matching_maxTranslationDistance, matching_maxProjectiveDistance,
           verify_maxTranslationDistance, verify_maxPixelDifference, verify_coordinateIncrement,
           0, 0, 0,
@@ -578,12 +562,7 @@ namespace Anki
       // WARNING: using a list is liable to be slower than normal, and not be more accurate
       Result BinaryTracker::UpdateTrack_List(
         const Array<u8> &nextImage,
-        const s32 edgeDetection_threshold_yIncrement, //< How many pixels to use in the y direction (4 is a good value?)
-        const s32 edgeDetection_threshold_xIncrement, //< How many pixels to use in the x direction (4 is a good value?)
-        const f32 edgeDetection_threshold_blackPercentile, //< What percentile of histogram energy is black? (.1 is a good value)
-        const f32 edgeDetection_threshold_whitePercentile, //< What percentile of histogram energy is white? (.9 is a good value)
-        const f32 edgeDetection_threshold_scaleRegionPercent, //< How much to scale template bounding box (.8 is a good value)
-        const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
+        const EdgeDetectionParameters &edgeDetectionParams,
         const s32 matching_maxTranslationDistance, const s32 matching_maxProjectiveDistance,
         const s32 verify_maxTranslationDistance, const u8 verify_maxPixelDifference, const s32 verify_coordinateIncrement,
         s32 &numMatches,
@@ -596,8 +575,7 @@ namespace Anki
         return UpdateTrack_Generic(
           UPDATE_VERSION_LIST,
           nextImage,
-          edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent,
-          edgeDetection_minComponentWidth, edgeDetection_maxDetectionsPerType, edgeDetection_everyNLines,
+          edgeDetectionParams,
           matching_maxTranslationDistance, matching_maxProjectiveDistance,
           verify_maxTranslationDistance, verify_maxPixelDifference, verify_coordinateIncrement,
           0, 0, 0,
@@ -609,12 +587,7 @@ namespace Anki
 
       Result BinaryTracker::UpdateTrack_Ransac(
         const Array<u8> &nextImage,
-        const s32 edgeDetection_threshold_yIncrement, //< How many pixels to use in the y direction (4 is a good value?)
-        const s32 edgeDetection_threshold_xIncrement, //< How many pixels to use in the x direction (4 is a good value?)
-        const f32 edgeDetection_threshold_blackPercentile, //< What percentile of histogram energy is black? (.1 is a good value)
-        const f32 edgeDetection_threshold_whitePercentile, //< What percentile of histogram energy is white? (.9 is a good value)
-        const f32 edgeDetection_threshold_scaleRegionPercent, //< How much to scale template bounding box (.8 is a good value)
-        const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
+        const EdgeDetectionParameters &edgeDetectionParams,
         const s32 matching_maxProjectiveDistance,
         const s32 verify_maxTranslationDistance, const u8 verify_maxPixelDifference, const s32 verify_coordinateIncrement,
         const s32 ransac_maxIterations,
@@ -630,8 +603,7 @@ namespace Anki
         return UpdateTrack_Generic(
           UPDATE_VERSION_RANSAC,
           nextImage,
-          edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent,
-          edgeDetection_minComponentWidth, edgeDetection_maxDetectionsPerType, edgeDetection_everyNLines,
+          edgeDetectionParams,
           0, matching_maxProjectiveDistance,
           verify_maxTranslationDistance, verify_maxPixelDifference, verify_coordinateIncrement,
           ransac_maxIterations, ransac_numSamplesPerType, ransac_inlinerDistance,
@@ -644,12 +616,7 @@ namespace Anki
       Result BinaryTracker::UpdateTrack_Generic(
         const UpdateVersion version,
         const Array<u8> &nextImage,
-        const s32 edgeDetection_threshold_yIncrement, //< How many pixels to use in the y direction (4 is a good value?)
-        const s32 edgeDetection_threshold_xIncrement, //< How many pixels to use in the x direction (4 is a good value?)
-        const f32 edgeDetection_threshold_blackPercentile, //< What percentile of histogram energy is black? (.1 is a good value)
-        const f32 edgeDetection_threshold_whitePercentile, //< What percentile of histogram energy is white? (.9 is a good value)
-        const f32 edgeDetection_threshold_scaleRegionPercent, //< How much to scale template bounding box (.8 is a good value)
-        const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
+        const EdgeDetectionParameters &edgeDetectionParams,
         const s32 matching_maxTranslationDistance, const s32 matching_maxProjectiveDistance,
         const s32 verify_maxTranslationDistance, const u8 verify_maxPixelDifference, const s32 verify_coordinateIncrement,
         const s32 ransac_maxIterations,
@@ -666,17 +633,17 @@ namespace Anki
 
         EdgeLists nextImageEdges;
 
-        nextImageEdges.xDecreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, fastScratch);
-        nextImageEdges.xIncreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, fastScratch);
-        nextImageEdges.yDecreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, fastScratch);
-        nextImageEdges.yIncreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, fastScratch);
+        nextImageEdges.xDecreasing = FixedLengthList<Point<s16> >(edgeDetectionParams.maxDetectionsPerType, fastScratch);
+        nextImageEdges.xIncreasing = FixedLengthList<Point<s16> >(edgeDetectionParams.maxDetectionsPerType, fastScratch);
+        nextImageEdges.yDecreasing = FixedLengthList<Point<s16> >(edgeDetectionParams.maxDetectionsPerType, fastScratch);
+        nextImageEdges.yIncreasing = FixedLengthList<Point<s16> >(edgeDetectionParams.maxDetectionsPerType, fastScratch);
 
         AnkiConditionalErrorAndReturnValue(nextImageEdges.xDecreasing.IsValid() && nextImageEdges.xIncreasing.IsValid() && nextImageEdges.yDecreasing.IsValid() && nextImageEdges.yIncreasing.IsValid(),
           RESULT_FAIL_OUT_OF_MEMORY, "BinaryTracker::UpdateTrack", "Could not allocate local scratch");
 
         BeginBenchmark("ut_DetectEdges");
 
-        lastResult = DetectBlurredEdges_GrayvalueThreshold(nextImage, this->lastGrayvalueThreshold, edgeDetection_minComponentWidth, edgeDetection_everyNLines, nextImageEdges);
+        lastResult = DetectBlurredEdges_GrayvalueThreshold(nextImage, this->lastGrayvalueThreshold, edgeDetectionParams.minComponentWidth, edgeDetectionParams.everyNLines, nextImageEdges);
         this->lastUsedGrayvalueThreshold = this->lastGrayvalueThreshold;
 
         EndBenchmark("ut_DetectEdges");
@@ -747,15 +714,15 @@ namespace Anki
 
         const Quadrilateral<f32> curWarpedCorners = this->get_transformation().get_transformedCorners(fastScratch);
 
-        const Rectangle<s32> edgeDetection_imageRegionOfInterest = curWarpedCorners.ComputeBoundingRectangle<s32>().ComputeScaledRectangle<s32>(edgeDetection_threshold_scaleRegionPercent);
+        const Rectangle<s32> edgeDetection_imageRegionOfInterest = curWarpedCorners.ComputeBoundingRectangle<s32>().ComputeScaledRectangle<s32>(edgeDetectionParams.threshold_scaleRegionPercent);
 
         this->lastGrayvalueThreshold = ComputeGrayvalueThreshold(
           nextImage,
           edgeDetection_imageRegionOfInterest,
-          edgeDetection_threshold_yIncrement,
-          edgeDetection_threshold_xIncrement,
-          edgeDetection_threshold_blackPercentile,
-          edgeDetection_threshold_whitePercentile,
+          edgeDetectionParams.threshold_yIncrement,
+          edgeDetectionParams.threshold_xIncrement,
+          edgeDetectionParams.threshold_blackPercentile,
+          edgeDetectionParams.threshold_whitePercentile,
           lastImageHistogram);
 
         EndBenchmark("ut_grayvalueThreshold");

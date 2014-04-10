@@ -132,15 +132,22 @@ GTEST_TEST(CoreTech_Vision, BinaryTrackerHeaderTemplate)
     Point<f32>(218, 100),
     Point<f32>(217, 227));
 
-  const s32 edgeDetection_minComponentWidth = 2;
+  TemplateTracker::BinaryTracker::EdgeDetectionParameters edgeDetectionParams_template(
+    TemplateTracker::BinaryTracker::EDGE_TYPE_GRAYVALUE,
+    4,    // s32 threshold_yIncrement; //< How many pixels to use in the y direction (4 is a good value?)
+    4,    // s32 threshold_xIncrement; //< How many pixels to use in the x direction (4 is a good value?)
+    0.1f, // f32 threshold_blackPercentile; //< What percentile of histogram energy is black? (.1 is a good value)
+    0.9f, // f32 threshold_whitePercentile; //< What percentile of histogram energy is white? (.9 is a good value)
+    0.8f, // f32 threshold_scaleRegionPercent; //< How much to scale template bounding box (.8 is a good value)
+    2,    // s32 minComponentWidth; //< The smallest horizontal size of a component (1 to 4 is good)
+    500,  // s32 maxDetectionsPerType; //< As many as you have memory and time for (500 is good)
+    1,    // s32 combHalfWidth; //< How far apart to compute the derivative difference (1 is good)
+    20,   // s32 combResponseThreshold; //< The minimum absolute-value response to start an edge component (20 is good)
+    1     // s32 everyNLines; //< As many as you have time for
+    );
 
-  const s32 edgeDetection_threshold_yIncrement = 4;
-  const s32 edgeDetection_threshold_xIncrement = 4;
-  const f32 edgeDetection_threshold_blackPercentile = 0.1f;
-  const f32 edgeDetection_threshold_whitePercentile = 0.9f;
-  const f32 edgeDetection_threshold_scaleRegionPercent = 0.8f;
-
-  const s32 templateEdgeDetection_maxDetectionsPerType = 500;
+  TemplateTracker::BinaryTracker::EdgeDetectionParameters edgeDetectionParams_update = edgeDetectionParams_template;
+  edgeDetectionParams_update.maxDetectionsPerType = 2500;
 
   const s32 updateEdgeDetection_maxDetectionsPerType = 2500;
 
@@ -170,10 +177,9 @@ GTEST_TEST(CoreTech_Vision, BinaryTrackerHeaderTemplate)
     PUSH_MEMORY_STACK(scratchOffchip);
 
     printf("Skip 0 nonlist\n");
+    edgeDetectionParams_template.everyNLines = 1;
 
     InitBenchmarking();
-
-    const s32 templateEdgeDetection_everyNLines = 1;
 
     BeginBenchmark("BinaryTracker init");
 
@@ -181,14 +187,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTrackerHeaderTemplate)
       Anki::Vision::MARKER_BATTERIES,
       templateImage, templateQuad,
       scaleTemplateRegionPercent,
-      edgeDetection_threshold_yIncrement,
-      edgeDetection_threshold_xIncrement,
-      edgeDetection_threshold_blackPercentile,
-      edgeDetection_threshold_whitePercentile,
-      edgeDetection_threshold_scaleRegionPercent,
-      edgeDetection_minComponentWidth,
-      templateEdgeDetection_maxDetectionsPerType,
-      1,
+      edgeDetectionParams_template,
       scratchOnchip, scratchOffchip);
 
     EndBenchmark("BinaryTracker init");
@@ -222,18 +221,23 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
   Array<u8> nextImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOnchip);
 
   const Quadrilateral<f32> templateQuad(Point<f32>(128,78), Point<f32>(220,74), Point<f32>(229,167), Point<f32>(127,171));
-  //const u8 edgeDetection_grayvalueThreshold = 100;
-  const s32 edgeDetection_minComponentWidth = 2;
 
-  const s32 edgeDetection_threshold_yIncrement = 4;
-  const s32 edgeDetection_threshold_xIncrement = 4;
-  const f32 edgeDetection_threshold_blackPercentile = 0.1f;
-  const f32 edgeDetection_threshold_whitePercentile = 0.9f;
-  const f32 edgeDetection_threshold_scaleRegionPercent = 0.8f;
+  TemplateTracker::BinaryTracker::EdgeDetectionParameters edgeDetectionParams_template(
+    TemplateTracker::BinaryTracker::EDGE_TYPE_GRAYVALUE,
+    4,    // s32 threshold_yIncrement; //< How many pixels to use in the y direction (4 is a good value?)
+    4,    // s32 threshold_xIncrement; //< How many pixels to use in the x direction (4 is a good value?)
+    0.1f, // f32 threshold_blackPercentile; //< What percentile of histogram energy is black? (.1 is a good value)
+    0.9f, // f32 threshold_whitePercentile; //< What percentile of histogram energy is white? (.9 is a good value)
+    0.8f, // f32 threshold_scaleRegionPercent; //< How much to scale template bounding box (.8 is a good value)
+    2,    // s32 minComponentWidth; //< The smallest horizontal size of a component (1 to 4 is good)
+    500,  // s32 maxDetectionsPerType; //< As many as you have memory and time for (500 is good)
+    1,    // s32 combHalfWidth; //< How far apart to compute the derivative difference (1 is good)
+    20,   // s32 combResponseThreshold; //< The minimum absolute-value response to start an edge component (20 is good)
+    1     // s32 everyNLines; //< As many as you have time for
+    );
 
-  const s32 templateEdgeDetection_maxDetectionsPerType = 500;
-
-  const s32 updateEdgeDetection_maxDetectionsPerType = 2500;
+  TemplateTracker::BinaryTracker::EdgeDetectionParameters edgeDetectionParams_update = edgeDetectionParams_template;
+  edgeDetectionParams_update.maxDetectionsPerType = 2500;
 
   const s32 normal_matching_maxTranslationDistance = 7;
   const s32 normal_matching_maxProjectiveDistance = 7;
@@ -262,18 +266,16 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     PUSH_MEMORY_STACK(scratchOffchip);
 
     printf("Skip 0 nonlist\n");
+    edgeDetectionParams_template.everyNLines = 1;
 
     InitBenchmarking();
-
-    const s32 templateEdgeDetection_everyNLines = 1;
 
     BeginBenchmark("BinaryTracker init");
 
     TemplateTracker::BinaryTracker tracker(
       templateImage, templateQuad,
       scaleTemplateRegionPercent,
-      edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent, edgeDetection_minComponentWidth,
-      templateEdgeDetection_maxDetectionsPerType, templateEdgeDetection_everyNLines,
+      edgeDetectionParams_template,
       scratchOnchip, scratchOffchip);
     EndBenchmark("BinaryTracker init");
 
@@ -294,9 +296,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     const Result result = tracker.UpdateTrack_Normal(
       nextImage,
-      edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent,
-      edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType,
-      1,
+      edgeDetectionParams_update,
       normal_matching_maxTranslationDistance, normal_matching_maxProjectiveDistance,
       verify_maxTranslationDistance, verify_maxPixelDifference, verify_coordinateIncrement,
       verify_numMatches, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels,
@@ -332,17 +332,15 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     PUSH_MEMORY_STACK(scratchOffchip);
 
     printf("\nSkip 1 nonlist\n");
+    edgeDetectionParams_template.everyNLines = 2;
 
     InitBenchmarking();
-
-    const s32 templateEdgeDetection_everyNLines = 2;
 
     BeginBenchmark("BinaryTracker init");
     TemplateTracker::BinaryTracker tracker(
       templateImage, templateQuad,
       scaleTemplateRegionPercent,
-      edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent, edgeDetection_minComponentWidth,
-      templateEdgeDetection_maxDetectionsPerType, templateEdgeDetection_everyNLines,
+      edgeDetectionParams_template,
       scratchOnchip, scratchOffchip);
     EndBenchmark("BinaryTracker init");
 
@@ -362,9 +360,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     const Result result = tracker.UpdateTrack_Normal(
       nextImage,
-      edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent,
-      edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType,
-      1,
+      edgeDetectionParams_update,
       normal_matching_maxTranslationDistance, normal_matching_maxProjectiveDistance,
       verify_maxTranslationDistance, verify_maxPixelDifference, verify_coordinateIncrement,
       verify_numMatches, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels,
@@ -400,17 +396,15 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     PUSH_MEMORY_STACK(scratchOffchip);
 
     printf("\nSkip 0 list\n");
+    edgeDetectionParams_template.everyNLines = 1;
 
     InitBenchmarking();
-
-    const s32 templateEdgeDetection_everyNLines = 1;
 
     BeginBenchmark("BinaryTracker init");
     TemplateTracker::BinaryTracker tracker(
       templateImage, templateQuad,
       scaleTemplateRegionPercent,
-      edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent, edgeDetection_minComponentWidth,
-      templateEdgeDetection_maxDetectionsPerType, templateEdgeDetection_everyNLines,
+      edgeDetectionParams_template,
       scratchOnchip, scratchOffchip);
     EndBenchmark("BinaryTracker init");
 
@@ -430,9 +424,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     const Result result = tracker.UpdateTrack_List(
       nextImage,
-      edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent,
-      edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType,
-      1,
+      edgeDetectionParams_update,
       normal_matching_maxTranslationDistance, normal_matching_maxProjectiveDistance,
       verify_maxTranslationDistance, verify_maxPixelDifference, verify_coordinateIncrement,
       verify_numMatches, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels,
@@ -468,17 +460,15 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     PUSH_MEMORY_STACK(scratchOffchip);
 
     printf("\nSkip 1 list\n");
+    edgeDetectionParams_template.everyNLines = 2;
 
     InitBenchmarking();
-
-    const s32 templateEdgeDetection_everyNLines = 2;
 
     BeginBenchmark("BinaryTracker init");
     TemplateTracker::BinaryTracker tracker(
       templateImage, templateQuad,
       scaleTemplateRegionPercent,
-      edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent, edgeDetection_minComponentWidth,
-      templateEdgeDetection_maxDetectionsPerType, templateEdgeDetection_everyNLines,
+      edgeDetectionParams_template,
       scratchOnchip, scratchOffchip);
     EndBenchmark("BinaryTracker init");
 
@@ -498,9 +488,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     const Result result = tracker.UpdateTrack_List(
       nextImage,
-      edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent,
-      edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType,
-      1,
+      edgeDetectionParams_update,
       normal_matching_maxTranslationDistance, normal_matching_maxProjectiveDistance,
       verify_maxTranslationDistance, verify_maxPixelDifference, verify_coordinateIncrement,
       verify_numMatches, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels,
@@ -536,17 +524,15 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     PUSH_MEMORY_STACK(scratchOffchip);
 
     printf("\nSkip 0 ransac\n");
+    edgeDetectionParams_template.everyNLines = 1;
 
     InitBenchmarking();
-
-    const s32 templateEdgeDetection_everyNLines = 1;
 
     BeginBenchmark("BinaryTracker init");
     TemplateTracker::BinaryTracker tracker(
       templateImage, templateQuad,
       scaleTemplateRegionPercent,
-      edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent, edgeDetection_minComponentWidth,
-      templateEdgeDetection_maxDetectionsPerType, templateEdgeDetection_everyNLines,
+      edgeDetectionParams_template,
       scratchOnchip, scratchOffchip);
     EndBenchmark("BinaryTracker init");
 
@@ -566,9 +552,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     const Result result = tracker.UpdateTrack_Ransac(
       nextImage,
-      edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent,
-      edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType,
-      1,
+      edgeDetectionParams_update,
       ransac_matching_maxProjectiveDistance,
       verify_maxTranslationDistance, verify_maxPixelDifference, verify_coordinateIncrement,
       ransac_maxIterations, ransac_numSamplesPerType, ransac_inlinerDistance,
@@ -604,17 +588,15 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     PUSH_MEMORY_STACK(scratchOffchip);
 
     printf("\nSkip 1 ransac\n");
+    edgeDetectionParams_template.everyNLines = 2;
 
     InitBenchmarking();
-
-    const s32 templateEdgeDetection_everyNLines = 2;
 
     BeginBenchmark("BinaryTracker init");
     TemplateTracker::BinaryTracker tracker(
       templateImage, templateQuad,
       scaleTemplateRegionPercent,
-      edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent, edgeDetection_minComponentWidth,
-      templateEdgeDetection_maxDetectionsPerType, templateEdgeDetection_everyNLines,
+      edgeDetectionParams_template,
       scratchOnchip, scratchOffchip);
     EndBenchmark("BinaryTracker init");
 
@@ -634,9 +616,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     const Result result = tracker.UpdateTrack_Ransac(
       nextImage,
-      edgeDetection_threshold_yIncrement, edgeDetection_threshold_xIncrement, edgeDetection_threshold_blackPercentile, edgeDetection_threshold_whitePercentile, edgeDetection_threshold_scaleRegionPercent,
-      edgeDetection_minComponentWidth, updateEdgeDetection_maxDetectionsPerType,
-      1,
+      edgeDetectionParams_update,
       ransac_matching_maxProjectiveDistance,
       verify_maxTranslationDistance, verify_maxPixelDifference, verify_coordinateIncrement,
       ransac_maxIterations, ransac_numSamplesPerType, ransac_inlinerDistance,

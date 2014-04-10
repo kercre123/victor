@@ -404,23 +404,23 @@ namespace Anki
 
                   xIncreasingSize++;
                 }
-              } else {
+              } else { // if(totalDiff > 0)
                 if(xDecreasingSize < xMaxSizeM1) {
                   const u32 newPoint = (y << 16) + middle; // Set x and y in one operation
                   pXDecreasing[xDecreasingSize] = newPoint;
 
                   xDecreasingSize++;
                 }
-              }
+              } // if(totalDiff > 0) ... else
 
               onEdge = false;
             }
-          } else {
+          } else { // if(onEdge)
             if(absDiff >= combResponseThreshold) {
               componentStart = x;
               onEdge = true;
             }
-          }
+          } // if(onEdge) ... else
 
           x++;
         } // while(x < xEnd)

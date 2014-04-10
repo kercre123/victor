@@ -31,6 +31,34 @@ namespace Anki
         // accurate and more jittery.
 
       public:
+        enum EdgeDetectionType {
+          EDGE_TYPE_GRAYVALUE,
+          EDGE_TYPE_DERIVATIVE,
+        };
+
+        typedef struct EdgeDetectionParameters {
+          EdgeDetectionType type;
+
+          // For grayvalue threshold computation
+          s32 threshold_yIncrement; //< How many pixels to use in the y direction (4 is a good value?)
+          s32 threshold_xIncrement; //< How many pixels to use in the x direction (4 is a good value?)
+          f32 threshold_blackPercentile; //< What percentile of histogram energy is black? (.1 is a good value)
+          f32 threshold_whitePercentile; //< What percentile of histogram energy is white? (.9 is a good value)
+          f32 threshold_scaleRegionPercent; //< How much to scale template bounding box (.8 is a good value)
+
+          // For grayvalue binarization
+          s32 minComponentWidth; //< The smallest horizontal size of a component (1 to 4 is good)
+          s32 maxDetectionsPerType; //< As many as you have memory and time for (500 is good)
+
+          // For derivative binarization
+          s32 combHalfWidth; //< How far apart to compute the derivative difference (1 is good)
+          s32 combResponseThreshold; //< The minimum absolute-value response to start an edge component (20 is good)
+
+          s32 everyNLines; //< As many as you have time for
+
+          EdgeDetectionParameters(EdgeDetectionType type, s32 threshold_yIncrement, s32 threshold_xIncrement, f32 threshold_blackPercentile, f32 threshold_whitePercentile, f32 threshold_scaleRegionPercent, s32 minComponentWidth, s32 maxDetectionsPerType, s32 combHalfWidth, s32 combResponseThreshold, s32 everyNLines);
+        } EdgeDetectionParameters;
+
         BinaryTracker();
 
         // the real max number of edge pixels is maxEdgePixelsPerType*4, for each of the four edge types
@@ -38,15 +66,7 @@ namespace Anki
           const Array<u8> &templateImage,
           const Quadrilateral<f32> &templateQuad,
           const f32 scaleTemplateRegionPercent, //< Shrinks the region if less-than 1.0, expands the region if greater-than 1.0
-          //const u8 edgeDetection_grayvalueThreshold,
-          const s32 edgeDetection_threshold_yIncrement, //< How many pixels to use in the y direction (4 is a good value?)
-          const s32 edgeDetection_threshold_xIncrement, //< How many pixels to use in the x direction (4 is a good value?)
-          const f32 edgeDetection_threshold_blackPercentile, //< What percentile of histogram energy is black? (.1 is a good value)
-          const f32 edgeDetection_threshold_whitePercentile, //< What percentile of histogram energy is white? (.9 is a good value)
-          const f32 edgeDetection_threshold_scaleRegionPercent, //< How much to scale template bounding box (.8 is a good value)
-          const s32 edgeDetection_minComponentWidth, //< The smallest horizontal size of a component (1 to 4 is good)
-          const s32 edgeDetection_maxDetectionsPerType, //< As many as you have memory and time for
-          const s32 edgeDetection_everyNLines, //< As many as you have time for
+          const EdgeDetectionParameters &edgeDetectionParams,
           MemoryStack &fastMemory,
           MemoryStack &slowMemory);
 
@@ -57,14 +77,7 @@ namespace Anki
           const Array<u8> &templateImage,
           const Quadrilateral<f32> &templateQuad,
           const f32 scaleTemplateRegionPercent,
-          const s32 edgeDetection_threshold_yIncrement,
-          const s32 edgeDetection_threshold_xIncrement,
-          const f32 edgeDetection_threshold_blackPercentile,
-          const f32 edgeDetection_threshold_whitePercentile,
-          const f32 edgeDetection_threshold_scaleRegionPercent,
-          const s32 edgeDetection_minComponentWidth,
-          const s32 edgeDetection_maxDetectionsPerType,
-          const s32 edgeDetection_everyNLines,
+          const EdgeDetectionParameters &edgeDetectionParams,
           MemoryStack &fastMemory,
           MemoryStack &slowMemory);
 
@@ -74,12 +87,7 @@ namespace Anki
         // To check is the update is reasonable, numMatches / this->get_numTemplatePixels() will give the percentage of matches
         Result UpdateTrack_Normal(
           const Array<u8> &nextImage,
-          const s32 edgeDetection_threshold_yIncrement, //< How many pixels to use in the y direction (4 is a good value?)
-          const s32 edgeDetection_threshold_xIncrement, //< How many pixels to use in the x direction (4 is a good value?)
-          const f32 edgeDetection_threshold_blackPercentile, //< What percentile of histogram energy is black? (.1 is a good value)
-          const f32 edgeDetection_threshold_whitePercentile, //< What percentile of histogram energy is white? (.9 is a good value)
-          const f32 edgeDetection_threshold_scaleRegionPercent, //< How much to scale template bounding box (.8 is a good value)
-          const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
+          const EdgeDetectionParameters &edgeDetectionParams,
           const s32 matching_maxTranslationDistance, const s32 matching_maxProjectiveDistance,
           const s32 verify_maxTranslationDistance, //< How close does a template pixel have to be to an edge to count as a match?
           const u8 verify_maxPixelDifference, //< See verify_numSimilarPixels
@@ -94,12 +102,7 @@ namespace Anki
         // WARNING: using a list is liable to be slower than normal, and not be more accurate
         Result UpdateTrack_List(
           const Array<u8> &nextImage,
-          const s32 edgeDetection_threshold_yIncrement, //< How many pixels to use in the y direction (4 is a good value?)
-          const s32 edgeDetection_threshold_xIncrement, //< How many pixels to use in the x direction (4 is a good value?)
-          const f32 edgeDetection_threshold_blackPercentile, //< What percentile of histogram energy is black? (.1 is a good value)
-          const f32 edgeDetection_threshold_whitePercentile, //< What percentile of histogram energy is white? (.9 is a good value)
-          const f32 edgeDetection_threshold_scaleRegionPercent, //< How much to scale template bounding box (.8 is a good value)
-          const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
+          const EdgeDetectionParameters &edgeDetectionParams,
           const s32 matching_maxTranslationDistance, const s32 matching_maxProjectiveDistance,
           const s32 verify_maxTranslationDistance, //< How close does a template pixel have to be to an edge to count as a match?
           const u8 verify_maxPixelDifference, //< See verify_numSimilarPixels
@@ -113,12 +116,7 @@ namespace Anki
 
         Result UpdateTrack_Ransac(
           const Array<u8> &nextImage,
-          const s32 edgeDetection_threshold_yIncrement, //< How many pixels to use in the y direction (4 is a good value?)
-          const s32 edgeDetection_threshold_xIncrement, //< How many pixels to use in the x direction (4 is a good value?)
-          const f32 edgeDetection_threshold_blackPercentile, //< What percentile of histogram energy is black? (.1 is a good value)
-          const f32 edgeDetection_threshold_whitePercentile, //< What percentile of histogram energy is white? (.9 is a good value)
-          const f32 edgeDetection_threshold_scaleRegionPercent, //< How much to scale template bounding box (.8 is a good value)
-          const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
+          const EdgeDetectionParameters &edgeDetectionParams,
           const s32 matching_maxProjectiveDistance,
           const s32 verify_maxTranslationDistance, //< How close does a template pixel have to be to an edge to count as a match?
           const u8 verify_maxPixelDifference, //< See verify_numSimilarPixels
@@ -359,12 +357,7 @@ namespace Anki
         Result UpdateTrack_Generic(
           const UpdateVersion version,
           const Array<u8> &nextImage,
-          const s32 edgeDetection_threshold_yIncrement, //< How many pixels to use in the y direction (4 is a good value?)
-          const s32 edgeDetection_threshold_xIncrement, //< How many pixels to use in the x direction (4 is a good value?)
-          const f32 edgeDetection_threshold_blackPercentile, //< What percentile of histogram energy is black? (.1 is a good value)
-          const f32 edgeDetection_threshold_whitePercentile, //< What percentile of histogram energy is white? (.9 is a good value)
-          const f32 edgeDetection_threshold_scaleRegionPercent, //< How much to scale template bounding box (.8 is a good value)
-          const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType, const s32 edgeDetection_everyNLines,
+          const EdgeDetectionParameters &edgeDetectionParams,
           const s32 matching_maxTranslationDistance, const s32 matching_maxProjectiveDistance,
           const s32 verify_maxTranslationDistance, const u8 verify_maxPixelDifference, const s32 verify_coordinateIncrement,
           const s32 ransac_maxIterations,
