@@ -734,8 +734,8 @@ namespace Anki
         const f32 templateCoordinateIncrementF32 = static_cast<f32>(templateCoordinateIncrement);
 
         const s32 xyReferenceMin = 0;
-        const s32 xReferenceMax = nextImageWidth;
-        const s32 yReferenceMax = nextImageHeight;
+        const s32 xReferenceMax = nextImageWidth - 1;
+        const s32 yReferenceMax = nextImageHeight - 1;
 
         const LinearSequence<f32> &yGridVector = originalCoordinates.get_yGridVector();
         const LinearSequence<f32> &xGridVector = originalCoordinates.get_xGridVector();

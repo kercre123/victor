@@ -171,7 +171,6 @@ namespace Anki {
         HeadCameraCalibration headCalibMsg = {
           headCamInfo->focalLength_x,
           headCamInfo->focalLength_y,
-          headCamInfo->fov_ver,
           headCamInfo->center_x,
           headCamInfo->center_y,
           headCamInfo->skew,
@@ -220,7 +219,6 @@ namespace Anki {
           Messages::HeadCameraCalibration headCalibMsg = {
             headCamInfo->focalLength_x,
             headCamInfo->focalLength_y,
-            headCamInfo->fov_ver,
             headCamInfo->center_x,
             headCamInfo->center_y,
             headCamInfo->skew,

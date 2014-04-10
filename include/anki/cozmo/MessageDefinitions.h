@@ -206,12 +206,10 @@ START_TIMESTAMPED_MESSAGE_DEFINITION(RequestCamCalib, 1)
 END_MESSAGE_DEFINITION(RequestCamCalib)
 
 // Common Camera Calibration Message Members:
-// TODO: Remove fov?  (it can be computed from focal length)
 // TODO: Assume zero skew and remove that member?
 #define ADD_COMMON_CAMERA_CALIBRATION_MEMBERS \
 ADD_MESSAGE_MEMBER(f32, focalLength_x) \
 ADD_MESSAGE_MEMBER(f32, focalLength_y) \
-ADD_MESSAGE_MEMBER(f32, fov) \
 ADD_MESSAGE_MEMBER(f32, center_x) \
 ADD_MESSAGE_MEMBER(f32, center_y) \
 ADD_MESSAGE_MEMBER(f32, skew) \
