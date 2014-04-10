@@ -1,5 +1,5 @@
 /**
- File: lucasKanade_SampledProjective.cpp
+ File: lucasKanade_SampledPlanar6dof.cpp
  Author: Andrew Stein
  Created: 2014-04-04
  
@@ -25,6 +25,12 @@
 
 //#define SEND_BINARY_IMAGES_TO_MATLAB
 
+#define USE_OPENCV_ITERATIVE_POSE_INIT 1
+
+#if USE_OPENCV_ITERATIVE_POSE_INIT
+#include "opencv2/calib3d/calib3d.hpp"
+#endif
+
 namespace Anki
 {
   namespace Embedded
@@ -38,7 +44,7 @@ namespace Anki
       
       LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof(
                                                                                  const Array<u8> &templateImage,
-                                                                                 const Quadrilateral<f32> &templateQuad,
+                                                                                 const Quadrilateral<f32> &templateQuadIn,
                                                                                  const f32 scaleTemplateRegionPercent,
                                                                                  const s32 numPyramidLevels,
                                                                                  const Transformations::TransformType transformType,
@@ -51,17 +57,16 @@ namespace Anki
                                                                                  MemoryStack ccmMemory,
                                                                                  MemoryStack &onchipScratch,
                                                                                  MemoryStack offchipScratch)
-      : LucasKanadeTracker_Generic(Transformations::TRANSFORM_PROJECTIVE, templateImage, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, transformType, onchipScratch)
+      : LucasKanadeTracker_Generic(Transformations::TRANSFORM_PROJECTIVE, templateImage, templateQuadIn, scaleTemplateRegionPercent, numPyramidLevels, transformType, onchipScratch)
       {
+        
         // Initialize calibration data
         this->focalLength_x = focalLength_x;
         this->focalLength_y = focalLength_y;
         this->camCenter_x   = camCenter_x;
         this->camCenter_y   = camCenter_y;
-        
-        // Compute the initial pose from the calibration, and the known physical
-        // size of the template.  This gives us R matrix and T vector.
-        // TODO: is single precision enough for the P3P::computePose call here?
+
+        // Create a canonical 3D template to use.
         Point3<f32> template3d[4];
         const f32 templateHalfWidth = templateWidth_mm * 0.5f;
         template3d[0] = Point3<f32>(-templateHalfWidth, -templateHalfWidth, 0.f);
@@ -69,12 +74,75 @@ namespace Anki
         template3d[2] = Point3<f32>( templateHalfWidth, -templateHalfWidth, 0.f);
         template3d[3] = Point3<f32>( templateHalfWidth,  templateHalfWidth, 0.f);
         Array<f32> R = Array<f32>(3,3,onchipScratch); // TODO: which scratch?
+        
+        // No matter the orientation of the incoming quad, we are always
+        // assuming the canonical 3D marker created above is vertically oriented.
+        // So, make this one vertically oriented too.
+        // TODO: better way to accomplish this?  Feed in un-reordered corners from detected marker?
+        Quadrilateral<f32> clockwiseQuad = templateQuadIn.ComputeClockwiseCorners();
+        Quadrilateral<f32> templateQuad(clockwiseQuad[0], clockwiseQuad[3],
+                                        clockwiseQuad[1], clockwiseQuad[2]);
+        
+        
+        // Compute the initial pose from the calibration, and the known physical
+        // size of the template.  This gives us R matrix and T vector.
+        // TODO: is single precision enough for the P3P::computePose call here?
+#if USE_OPENCV_ITERATIVE_POSE_INIT
+        {
+          cv::Vec3d cvRvec, cvTranslation;
+          
+          std::vector<cv::Point2f> cvImagePoints;
+          std::vector<cv::Point3f> cvObjPoints;
+          
+          for(s32 i=0; i<4; ++i) {
+            cvImagePoints.emplace_back(templateQuad[i].get_CvPoint_());
+            cvObjPoints.emplace_back(template3d[i].get_CvPoint_());
+          }
+          
+          Array<f32> calibMatrix = Array<f32>(3,3,onchipScratch);
+          calibMatrix[0][0] = focalLength_x; calibMatrix[0][1] = 0.f;           calibMatrix[0][2] = camCenter_x;
+          calibMatrix[1][0] = 0.f;           calibMatrix[1][1] = focalLength_y; calibMatrix[1][2] = camCenter_y;
+          calibMatrix[2][0] = 0.f;           calibMatrix[2][1] = 0.f;           calibMatrix[2][2] = 1.f;
+          
+          cv::Mat distortionCoeffs; // TODO: currently empty, use radial distoration?
+          cv::solvePnP(cvObjPoints, cvImagePoints,
+                       calibMatrix.get_CvMat_(), distortionCoeffs,
+                       cvRvec, cvTranslation,
+                       false, CV_ITERATIVE);
+        
+          //cv::Matx<float,3,3> cvRmat;
+          cv::Mat cvRmat;
+          cv::Rodrigues(cvRvec, cvRmat);
+          
+          cv::Matx<float,3,3> cvRmatx(cvRmat);
+          
+          for(s32 i=0; i<3; ++i) {
+            for(s32 j=0; j<3; ++j) {
+              R[i][j] = cvRmatx(i,j); //cvRmat.at<float>(i, j);
+            }
+          }
+          
+          this->params6DoF.translation.x = cvTranslation[0];
+          this->params6DoF.translation.y = cvTranslation[1];
+          this->params6DoF.translation.z = cvTranslation[2];
+        }
+#else
+        
         P3P::computePose(templateQuad,
                          template3d[0], template3d[1], template3d[2], template3d[3],
                          this->focalLength_x, this->focalLength_y,
                          this->camCenter_x,   this->camCenter_y,
                          R, this->params6DoF.translation,
                          onchipScratch);  // TODO: which scratch?
+        
+#endif // #if USE_OPENCV_ITERATIVE_POSE_INIT
+        
+        /*
+        R.Print("Initial R for tracker:", 0,3,0,3);
+        printf("Initial T for tracker: ");
+        this->params6DoF.translation.Print();
+        printf("\n");
+        */
         
         // Initialize 6DoF rotation angles
         const Result setR_result = this->set_rotationAnglesFromMatrix(R);
@@ -83,6 +151,7 @@ namespace Anki
                                       "Failed to set initial rotation angles.");
         
         // Initialize the homography from the 6DoF params
+        this->UpdateTransformation(onchipScratch);
         this->initialHomography = Array<f32>(3,3,onchipScratch); // TODO: on-chip b/c this is permanent, right?
         
         this->initialHomography[0][0] = this->focalLength_x*R[0][0];
@@ -254,6 +323,9 @@ namespace Anki
               return;
             }
             
+            //templateImageXGradientPyramid[iScale].Show("X Gradient", false);
+            //templateImageYGradientPyramid[iScale].Show("Y Gradient", true);
+            
             // Using the computed gradients, find a set of the max values, and store them
             
             Array<f32> tmpMagnitude(numPointsY, numPointsX, offchipScratch);
@@ -399,6 +471,20 @@ namespace Anki
         return this->params6DoF.translation;
       } // get_translation()
       
+      const f32& LucasKanadeTracker_SampledPlanar6dof::get_angleX() const
+      {
+        return this->params6DoF.angle_x;
+      }
+      
+      const f32& LucasKanadeTracker_SampledPlanar6dof::get_angleY() const
+      {
+        return this->params6DoF.angle_y;
+      }
+      
+      const f32& LucasKanadeTracker_SampledPlanar6dof::get_angleZ() const
+      {
+        return this->params6DoF.angle_z;
+      }
       
       Result LucasKanadeTracker_SampledPlanar6dof::UpdateTransformation(MemoryStack scratch)
       {
@@ -1013,12 +1099,14 @@ namespace Anki
           
           // TODO: make the x and y limits from 1 to end-2
           
-          // XXX: DEBUG!!!
-          Array<f32> xTransformedArray = Array<f32>(1,numTemplateSamples,scratch);
-          Array<f32> yTransformedArray = Array<f32>(1,numTemplateSamples,scratch);
-          static Matlab matlab(false);
-          matlab.PutArray(nextImage, "img");
-
+          // DEBUG!!!
+          //Array<f32> xTransformedArray = Array<f32>(1,numTemplateSamples,scratch);
+          //Array<f32> yTransformedArray = Array<f32>(1,numTemplateSamples,scratch);
+          //Array<f32> debugStuff = Array<f32>(numTemplateSamples, 6, scratch);
+          //Array<f32> debugA = Array<f32>(numTemplateSamples,6,scratch);
+          //static Matlab matlab(false);
+          //matlab.PutArray(nextImage, "img");
+          
           
           for(s32 iSample=0; iSample<numTemplateSamples; iSample++) {
             const TemplateSample curSample = pTemplateSamplePyramid[iSample];
@@ -1034,9 +1122,9 @@ namespace Anki
             const f32 xTransformed = (xTransformedRaw / normalization) + centerOffsetScaled.x;
             const f32 yTransformed = (yTransformedRaw / normalization) + centerOffsetScaled.y;
             
-            // XXX: DEBUG!
-            xTransformedArray[0][iSample] = xTransformed;
-            yTransformedArray[0][iSample] = yTransformed;
+            // DEBUG!
+            //xTransformedArray[0][iSample] = xTransformed;
+            //yTransformedArray[0][iSample] = yTransformed;
             
             const f32 x0 = FLT_FLOOR(xTransformed);
             const f32 x1 = ceilf(xTransformed); // x0 + 1.0f;
@@ -1070,6 +1158,16 @@ namespace Anki
             const f32 pixelBR = *(pReference_y1+1);
             
             const f32 interpolatedPixelF32 = InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse);
+            
+            // DEBUG:
+            /*
+            debugStuff[iSample][0] = curSample.xCoordinate;
+            debugStuff[iSample][1] = curSample.yCoordinate;
+            debugStuff[iSample][2] = curSample.grayvalue;
+            debugStuff[iSample][3] = interpolatedPixelF32;
+            debugStuff[iSample][4] = curSample.xGradient;
+            debugStuff[iSample][5] = curSample.yGradient;
+            */
             
             //const u8 interpolatedPixel = static_cast<u8>(Round(interpolatedPixelF32));
             
@@ -1163,6 +1261,12 @@ namespace Anki
                 xGradientValue*dWu_dtz + yGradientValue*dWv_dtz
               };
               
+              /*
+              for(s32 i=0; i<6; ++i) {
+                debugA[iSample][i] = values[i];
+              }
+               */
+              
               for(s32 ia=0; ia<6; ia++) {
                 for(s32 ja=ia; ja<6; ja++) {
                   AWAt_raw[ia][ja] += values[ia] * values[ja];
@@ -1171,14 +1275,7 @@ namespace Anki
               }
             }
           } // for(s32 iSample=0; iSample<numTemplateSamples; iSample++)
-         
-          // XXX: DEBUG!
-          {
-            matlab.PutArray(xTransformedArray, "X");
-            matlab.PutArray(yTransformedArray, "Y");
-            matlab.EvalString("hold off, imagesc(img), axis image, hold on, "
-                              "plot(X,Y, 'rx'); colormap(gray), drawnow");
-          }
+
           
           if(numInBounds < 16) {
             AnkiWarn("LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack_Projective", "Template drifted too far out of image.");
@@ -1197,6 +1294,20 @@ namespace Anki
           //AWAt.Print("New AWAt");
           //b.Print("New b");
           
+          // DEBUG
+          //matlab.PutArray(xTransformedArray, "X");
+          //matlab.PutArray(yTransformedArray, "Y");
+          //matlab.EvalString("hold off, imagesc(img), axis image, hold on, "
+          //                    "plot(X,Y, 'rx'); colormap(gray), drawnow");
+           /* matlab.PutArray(debugStuff, "debugStuff");
+            std::string A_name("A_"); A_name += std::to_string(whichScale);
+            matlab.PutArray(debugA, A_name);
+            if(whichScale == 0) {
+              //matlab.EvalString("desktop, keyboard");
+            }
+            */
+
+          
           bool numericalFailure;
           
           if((lastResult = Matrix::SolveLeastSquaresWithCholesky(AWAt, b, false, numericalFailure)) != RESULT_OK)
@@ -1207,10 +1318,11 @@ namespace Anki
             return RESULT_OK;
           }
           
+          /*
           printf("Raw angle update = (%f,%f,%f) degrees, Raw translation udpate = (%f,%f,%f)\n",
                  RAD_TO_DEG(b[0][0]), RAD_TO_DEG(b[0][1]), RAD_TO_DEG(b[0][2]),
                  b[0][3], b[0][4], b[0][5]);
-
+           */
           
           //b.Print("New update");
           
@@ -1259,6 +1371,7 @@ namespace Anki
              fabs(b[0][4]) < transConvergenceTolerance &&
              fabs(b[0][5]) < transConvergenceTolerance)
           {
+          /*
             printf("Final params converged at scale %d: angles = (%f,%f,%f) "
                    "degrees, translation = (%f,%f,%f)\n",
                    whichScale,
@@ -1268,7 +1381,7 @@ namespace Anki
                    this->params6DoF.translation.x,
                    this->params6DoF.translation.y,
                    this->params6DoF.translation.z);
-
+           */
             
             verify_converged = true;
             return RESULT_OK;

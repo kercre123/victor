@@ -374,8 +374,13 @@ namespace Anki
                                             const Point3<f32>& T,
                                             MemoryStack scratch);
         
-        // Retrieve/update the current translation estimates of the tracker
+        // Retrieve the current translation estimate of the tracker
         const Point3<f32>& get_translation() const;
+        
+        // Retrieve the current angle estimates of the tracker
+        const f32& get_angleX() const;
+        const f32& get_angleY() const;
+        const f32& get_angleZ() const;
         
         bool IsValid() const;
         
