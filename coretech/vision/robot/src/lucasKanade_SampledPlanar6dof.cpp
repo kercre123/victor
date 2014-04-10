@@ -391,14 +391,14 @@ namespace Anki
             
             const f32 h00 = initialHomography[0][0];
             const f32 h01 = initialHomography[0][1];
-            const f32 h02 = initialHomography[0][2];// / initialImageScaleF32;
+            const f32 h02 = initialHomography[0][2] / initialImageScaleF32;
             
             const f32 h10 = initialHomography[1][0];
             const f32 h11 = initialHomography[1][1];
-            const f32 h12 = initialHomography[1][2];// / initialImageScaleF32;
+            const f32 h12 = initialHomography[1][2] / initialImageScaleF32;
             
-            const f32 h20 = initialHomography[2][0];// * initialImageScaleF32;
-            const f32 h21 = initialHomography[2][1];// * initialImageScaleF32;
+            const f32 h20 = initialHomography[2][0] * initialImageScaleF32;
+            const f32 h21 = initialHomography[2][1] * initialImageScaleF32;
             const f32 h22 = initialHomography[2][2];
             
             TemplateSample * restrict pTemplateSamplePyramid = this->templateSamplePyramid[iScale].Pointer(0);
@@ -971,7 +971,7 @@ namespace Anki
           //if(minChange < convergenceTolerance * scale)
           // TODO: make these parameters
           //const f32 angleConvergenceTolerance = scale*DEG_TO_RAD(0.1f);
-          const f32 transConvergenceTolerance = scale*0.1f;
+          const f32 transConvergenceTolerance = scale*0.25f;
           
           if(fabs(b[0][0]) < transConvergenceTolerance &&
              fabs(b[0][1]) < transConvergenceTolerance &&
@@ -1453,8 +1453,8 @@ namespace Anki
           
           //if(minChange < convergenceTolerance * scale)
           // TODO: make these parameters
-          const f32 angleConvergenceTolerance = scale*DEG_TO_RAD(0.1f);
-          const f32 transConvergenceTolerance = scale*0.1f;
+          const f32 angleConvergenceTolerance = scale*DEG_TO_RAD(0.25f);
+          const f32 transConvergenceTolerance = scale*0.25f;
           
           if(fabs(b[0][0]) < angleConvergenceTolerance &&
              fabs(b[0][1]) < angleConvergenceTolerance &&
