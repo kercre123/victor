@@ -382,6 +382,13 @@ namespace Anki
         const f32& get_angleY() const;
         const f32& get_angleZ() const;
         
+        // Adjust "proporttional gain" with distance.
+        // For example, use this to turn down the proportional gain as we get
+        // closer (as indicated by z), to help avoid small oscillations that
+        // occur as the target gets large in our field of view.
+        void SetGainScheduling(const f32 zMin, const f32 zMax,
+                               const f32 KpMin, const f32 KpMax);
+        
         bool IsValid() const;
         
         Result ShowTemplate(const char * windowName="SampledPlanar6dof Template", const bool waitForKeypress=false, const bool fitImageToWindow=false) const;
@@ -422,6 +429,12 @@ namespace Anki
           f32 angle_x, angle_y, angle_z;  // rotation
           Point3<f32> translation;
         } Parameters6DoF;
+        
+        // Gain scheduling
+        f32 Kp_min, Kp_max;
+        f32 tz_min, tz_max;
+        bool useGainScheduling;
+        f32 GetCurrentGain() const;
         
         // The initial homography
         // (Need to store this for re-computing partial derivatives

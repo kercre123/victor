@@ -25,11 +25,12 @@
 
 //#define SEND_BINARY_IMAGES_TO_MATLAB
 
-#define USE_OPENCV_ITERATIVE_POSE_INIT 1
+#define USE_OPENCV_ITERATIVE_POSE_INIT 0
 
 #if USE_OPENCV_ITERATIVE_POSE_INIT
 #include "opencv2/calib3d/calib3d.hpp"
 #endif
+
 
 namespace Anki
 {
@@ -198,11 +199,11 @@ namespace Anki
         const f32 cy = cosf(params6DoF.angle_y);
         const f32 cz = cosf(params6DoF.angle_z);
         
-        //const f32 dr11_dthetaX = 0.f; // TODO: optimize this out since it's zero
+        //const f32 dr11_dthetaX = 0.f;
         const f32 dr12_dthetaX = -sx*sz + cx*sy*cz;
-        //const f32 dr21_dthetaX = 0.f; // TODO: optimize this out since it's zero
+        //const f32 dr21_dthetaX = 0.f;
         const f32 dr22_dthetaX = -sx*cz - cx*sy*sz;
-        //const f32 dr31_dthetaX = 0.f; // TODO: optimize this out since it's zero
+        //const f32 dr31_dthetaX = 0.f;
         const f32 dr32_dthetaX = -cx*cy;
         
         const f32 dr11_dthetaY = -sy*cz;
@@ -216,8 +217,8 @@ namespace Anki
         const f32 dr12_dthetaZ = cx*cz - sx*sy*sz;
         const f32 dr21_dthetaZ = -cy*cz;
         const f32 dr22_dthetaZ = -cx*sz - sx*sy*cz;
-        //const f32 dr31_dthetaZ = 0.f; // TODO: optimize this out since it's zero
-        //const f32 dr32_dthetaZ = 0.f; // TODO: optimize this out since it's zero
+        //const f32 dr31_dthetaZ = 0.f;
+        //const f32 dr32_dthetaZ = 0.f;
         
         
         const s32 numSelectBins = 20;
@@ -433,10 +434,10 @@ namespace Anki
               const f32 invNormSq = invNorm *invNorm;
               
               curJacobianSample.dWu_dtx = this->focalLength_x * invNorm;
-              //curJacobianSample.dWu_dty = 0.f; // TODO: optimize out since it's zero
+              //curJacobianSample.dWu_dty = 0.f;
               curJacobianSample.dWu_dtz = -xTransformedRaw * invNormSq;
               
-              //curJacobianSample.dWv_dtx = 0.f; // TODO: optimize out since it's zero
+              //curJacobianSample.dWv_dtx = 0.f;
               curJacobianSample.dWv_dty = this->focalLength_y * invNorm;
               curJacobianSample.dWv_dtz = -yTransformedRaw * invNormSq;
               
@@ -689,13 +690,10 @@ namespace Anki
         for(s32 iScale=numPyramidLevels-1; iScale>=0; iScale--) {
           verify_converged = false;
           
-          // TODO: Add back translation update
-          /*
           BeginBenchmark("UpdateTrack.refineTranslation");
           if((lastResult = IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance, Transformations::TRANSFORM_TRANSLATION, verify_converged, scratch)) != RESULT_OK)
             return lastResult;
           EndBenchmark("UpdateTrack.refineTranslation");
-          */
           
           if(this->transformation.get_transformType() != Transformations::TRANSFORM_TRANSLATION) {
             BeginBenchmark("UpdateTrack.refineOther");
@@ -750,6 +748,39 @@ namespace Anki
         return RESULT_FAIL;
       } // Result LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const TransformType curTransformType, bool &verify_converged, MemoryStack scratch)
       
+      void LucasKanadeTracker_SampledPlanar6dof::SetGainScheduling(const f32 zMin, const f32 zMax,
+                                                                  const f32 KpMin, const f32 KpMax)
+      {
+        this->Kp_min = KpMin;
+        this->Kp_max = KpMax;
+        this->tz_min = zMin;
+        this->tz_max = zMax;
+        
+        this->useGainScheduling = true;
+      }
+      
+      f32 LucasKanadeTracker_SampledPlanar6dof::GetCurrentGain() const
+      {
+        if(this->useGainScheduling) {
+          f32 Kp;
+          if(this->params6DoF.translation.z <= this->tz_min) {
+            Kp = this->Kp_min;
+          }
+          else if(this->params6DoF.translation.z >= this->tz_max) {
+            Kp = this->Kp_max;
+          }
+          else {
+            Kp = (this->params6DoF.translation.z - this->tz_min)/(this->tz_max-this->tz_min)*(this->Kp_max-this->Kp_min) + this->Kp_min;
+          }
+          
+          AnkiAssert(Kp >= this->Kp_min && Kp <= this->Kp_max);
+          return Kp;
+          
+        } else {
+          return 0.25f;
+        }
+      }
+      
       Result LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack_Translation(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &verify_converged, MemoryStack scratch)
       {
         // This method is heavily based on Interp2_Projective
@@ -757,16 +788,20 @@ namespace Anki
         
         Result lastResult;
         
-        Array<f32> AWAt(2, 2, scratch);
-        Array<f32> b(1, 2, scratch);
+        Array<f32> AWAt(3, 3, scratch);
+        Array<f32> b(1, 3, scratch);
         
         f32 &AWAt00 = AWAt[0][0];
         f32 &AWAt01 = AWAt[0][1];
+        f32 &AWAt02 = AWAt[0][2];
         //f32 &AWAt10 = AWAt[1][0];
         f32 &AWAt11 = AWAt[1][1];
+        f32 &AWAt12 = AWAt[1][2];
+        f32 &AWAt22 = AWAt[2][2];
         
         f32 &b0 = b[0][0];
         f32 &b1 = b[0][1];
+        f32 &b2 = b[0][2];
         
         verify_converged = false;
         
@@ -796,6 +831,7 @@ namespace Anki
         const f32 yReferenceMax = static_cast<f32>(nextImageHeight) - 1.0f;
         
         const TemplateSample * restrict pTemplateSamplePyramid = this->templateSamplePyramid[whichScale].Pointer(0);
+        const JacobianSample * restrict pJacobianSamplePyramid = this->jacobianSamplePyramid[whichScale].Pointer(0);
         
         const s32 numTemplateSamples = this->get_numTemplatePixels(whichScale);
         
@@ -804,7 +840,7 @@ namespace Anki
           const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2] / initialImageScaleF32;
           const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2] / initialImageScaleF32;
           const f32 h20 = homography[2][0] * initialImageScaleF32; const f32 h21 = homography[2][1] * initialImageScaleF32;
-          const f32 h22 = 1.f; //const f32 h22 = homography[2][2]; // TODO: unlike other trackers (not 1.0), correct?
+          const f32 h22 = homography[2][2];
           
           AWAt.SetZero();
           b.SetZero();
@@ -822,7 +858,7 @@ namespace Anki
             const f32 xTransformedRaw = h00*xOriginal + h01*yOriginal + h02;
             const f32 yTransformedRaw = h10*xOriginal + h11*yOriginal + h12;
             
-            const f32 normalization = h20*xOriginal + h21*yOriginal + h22; // TODO: Note h22 instead of 1.0
+            const f32 normalization = h20*xOriginal + h21*yOriginal + h22;
             
             const f32 xTransformed = (xTransformedRaw / normalization) + centerOffsetScaled.x;
             const f32 yTransformed = (yTransformedRaw / normalization) + centerOffsetScaled.y;
@@ -860,6 +896,8 @@ namespace Anki
             
             const f32 interpolatedPixelF32 = InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse);
             
+            const JacobianSample curJacobianSample = pJacobianSamplePyramid[iSample];
+            
             //const u8 interpolatedPixel = static_cast<u8>(Round(interpolatedPixelF32));
             
             // This block is the non-interpolation part of the per-sample algorithm
@@ -870,14 +908,29 @@ namespace Anki
               
               const f32 tGradientValue = oneOverTwoFiftyFive * (interpolatedPixelF32 - templatePixelValue);
               
+              const f32 dWu_dtx = curJacobianSample.dWu_dtx;
+              //const f32 dWv_dtx = curJacobianSample.dWv_dtx;  // always zero
+              //const f32 dWu_dty = curJacobianSample.dWu_dty;  // always zero
+              const f32 dWv_dty = curJacobianSample.dWv_dty;
+              const f32 dWu_dtz = curJacobianSample.dWu_dtz;
+              const f32 dWv_dtz = curJacobianSample.dWv_dtz;
+              
+              const f32 A0 = xGradientValue * dWu_dtx;
+              const f32 A1 = yGradientValue * dWv_dty;
+              const f32 A2 = xGradientValue*dWu_dtz + yGradientValue*dWv_dtz;
+              
               //AWAt
               //  b
-              AWAt00 += xGradientValue * xGradientValue;
-              AWAt01 += xGradientValue * yGradientValue;
-              AWAt11 += yGradientValue * yGradientValue;
+              AWAt00 += A0*A0;
+              AWAt01 += A0*A1;
+              AWAt02 += A0*A2;
+              AWAt11 += A1*A1;
+              AWAt12 += A1*A2;
+              AWAt22 += A2*A2;
               
-              b0 += xGradientValue * tGradientValue;
-              b1 += yGradientValue * tGradientValue;
+              b0 += A0 * tGradientValue;
+              b1 += A1 * tGradientValue;
+              b2 += A2 * tGradientValue;
             }
           } // for(s32 iSample=0; iSample<numTemplateSamples; iSample++)
           
@@ -901,14 +954,29 @@ namespace Anki
             return RESULT_OK;
           }
           
-          //b.Print("New update");
+          const f32 Kp = this->GetCurrentGain();
           
-          this->transformation.Update(b, initialImageScaleF32, scratch, Transformations::TRANSFORM_TRANSLATION);
+          this->params6DoF.translation.x -= Kp * b[0][0];
+          this->params6DoF.translation.y -= Kp * b[0][1];
+          this->params6DoF.translation.z -= Kp * b[0][2];
+          
+          // Compute the new homography from the new 6DoF parameters
+          this->UpdateTransformation(scratch);
+          
+          //this->transformation.get_homography().Print("new transformation");
           
           // Check if we're done with iterations
-          const f32 minChange = UpdatePreviousCorners(transformation, previousCorners, scratch);
+          //const f32 minChange = UpdatePreviousCorners(transformation, previousCorners, scratch);
           
-          if(minChange < convergenceTolerance) {
+          //if(minChange < convergenceTolerance * scale)
+          // TODO: make these parameters
+          //const f32 angleConvergenceTolerance = scale*DEG_TO_RAD(0.1f);
+          const f32 transConvergenceTolerance = scale*0.1f;
+          
+          if(fabs(b[0][0]) < transConvergenceTolerance &&
+             fabs(b[0][1]) < transConvergenceTolerance &&
+             fabs(b[0][2]) < transConvergenceTolerance)
+          {
             verify_converged = true;
             return RESULT_OK;
           }
@@ -1256,78 +1324,6 @@ namespace Anki
             {
               //printf("(%f,%f) ", xOriginal, yOriginal);
               
-              /*
-              // This is where we incorporate the 6DoF terms into the
-              // Jacobians for the A matrix.  Note that the partials are
-              // evaluated at the initial conditions of the tracker's params.
-              // (Thus the use of this->initialHomography instead of the current
-              //  homography in this->transformation.)
-              // So technically all this could be computed up front and stored
-              // but it may be faster to recompute each time since we can't
-              // store all this for all the sampled points in memory (?)
-              // TODO: do i actually want to divide/multiply by initialImageScale here?
-              const f32 h00_init = this->initialHomography[0][0];
-              const f32 h01_init = this->initialHomography[0][1];
-              const f32 h02_init = this->initialHomography[0][2];// / initialImageScaleF32;
-              
-              const f32 h10_init = this->initialHomography[1][0];
-              const f32 h11_init = this->initialHomography[1][1];
-              const f32 h12_init = this->initialHomography[1][2];// / initialImageScaleF32;
-              
-              const f32 h20_init = this->initialHomography[2][0];// * initialImageScaleF32;
-              const f32 h21_init = this->initialHomography[2][1];// * initialImageScaleF32;
-              const f32 h22_init = this->initialHomography[2][2];
-
-              
-              // TODO: These two could be strength reduced
-              const f32 xTransformedRawInit = h00_init*xOriginal + h01_init*yOriginal + h02_init;
-              const f32 yTransformedRawInit = h10_init*xOriginal + h11_init*yOriginal + h12_init;
-      
-              const f32 normalizationInit = h20_init*xOriginal + h21_init*yOriginal + h22_init;
-
-              const f32 invNorm = 1.f / normalizationInit;
-              const f32 invNormSq = invNorm *invNorm;
-              
-              const f32 dWu_dtx = this->focalLength_x * invNorm;
-              const f32 dWu_dty = 0.f; // TODO: optimize out since it's zero
-              const f32 dWu_dtz = -xTransformedRawInit * invNormSq;
-              
-              const f32 dWv_dtx = 0.f; // TODO: optimize out since it's zero
-              const f32 dWv_dty = this->focalLength_y * invNorm;
-              const f32 dWv_dtz = -yTransformedRawInit * invNormSq;
-
-              const f32 r1thetaXterm = this->dr11_dthetaX*xOriginal + this->dr12_dthetaX*yOriginal;
-              const f32 r1thetaYterm = this->dr11_dthetaY*xOriginal + this->dr12_dthetaY*yOriginal;
-              const f32 r1thetaZterm = this->dr11_dthetaZ*xOriginal + this->dr12_dthetaZ*yOriginal;
-              
-              const f32 r2thetaXterm = this->dr21_dthetaX*xOriginal + this->dr22_dthetaX*yOriginal;
-              const f32 r2thetaYterm = this->dr21_dthetaY*xOriginal + this->dr22_dthetaY*yOriginal;
-              const f32 r2thetaZterm = this->dr21_dthetaZ*xOriginal + this->dr22_dthetaZ*yOriginal;
-              
-              const f32 r3thetaXterm = this->dr31_dthetaX*xOriginal + this->dr32_dthetaX*yOriginal;
-              const f32 r3thetaYterm = this->dr31_dthetaY*xOriginal + this->dr32_dthetaY*yOriginal;
-              const f32 r3thetaZterm = this->dr31_dthetaZ*xOriginal + this->dr32_dthetaZ*yOriginal;
-              
-              const f32 dWu_dthetaX = (this->focalLength_x*normalizationInit*r1thetaXterm -
-                                       r3thetaXterm*xTransformedRawInit) * invNormSq;
-              
-              const f32 dWu_dthetaY = (this->focalLength_x*normalizationInit*r1thetaYterm -
-                                       r3thetaYterm*xTransformedRawInit) * invNormSq;
-              
-              const f32 dWu_dthetaZ = (this->focalLength_x*normalizationInit*r1thetaZterm -
-                                       r3thetaZterm*xTransformedRawInit) * invNormSq;
-              
-              
-              const f32 dWv_dthetaX = (this->focalLength_y*normalizationInit*r2thetaXterm -
-                                       r3thetaXterm*yTransformedRawInit) * invNormSq;
-               
-              const f32 dWv_dthetaY = (this->focalLength_y*normalizationInit*r2thetaYterm -
-                                       r3thetaYterm*yTransformedRawInit) * invNormSq;
-              
-              const f32 dWv_dthetaZ = (this->focalLength_y*normalizationInit*r2thetaZterm -
-                                       r3thetaZterm*yTransformedRawInit) * invNormSq;
-              */
-              
               // This is the only stuff that depends on the current sample
               const f32 templatePixelValue = curSample.grayvalue;
               const f32 xGradientValue = scaleOverFiveTen * curSample.xGradient;
@@ -1435,8 +1431,7 @@ namespace Anki
                  this->params6DoF.translation.z);
             */
           
-          // TODO: Add "gain scheduling" like in Matlab
-          const f32 Kp = 0.25f;
+          const f32 Kp = this->GetCurrentGain();
           
           this->params6DoF.angle_x -= Kp * b[0][0];
           this->params6DoF.angle_y -= Kp * b[0][1];
