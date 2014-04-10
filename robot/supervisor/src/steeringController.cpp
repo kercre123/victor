@@ -265,13 +265,13 @@ namespace Anki {
       }
       
       ///////////////////////////////////////////////////////////////////////////////
-      
+      float attitude = 0;
       if (steering_active == TRUE)
       {
         //convert speed to meters per second
         float speedmps = currspeed * M_PER_MM;
-        //float attitude = asin_fast(xtrack_speed / speedmps);
-        float attitude = -headingError_rad;
+        //attitude = asin_fast(xtrack_speed / speedmps);
+        attitude = -headingError_rad;
         curvature = -K1_ * (atan_fast(K2_ * xtrack_error / (speedmps + 0.2f)) + attitude);
         //We should allow this to go somewhat negative I think... but not too much
         
@@ -300,7 +300,7 @@ namespace Anki {
       
 #if(DEBUG_STEERING_CONTROLLER)
       PRINT(" STEERING: headingErr: %f, headingRad: %f, currSpeed: %d\n", location_pix, headingError_rad, currspeed);
-      PRINT(" STEERING: xtrack_err: %f, xtrack_speed: %f, attitude: %f, curvature: %f\n", xtrack_error, xtrack_speed, asin_fast(xtrack_speed / ((f32)currspeed * 0.001f)), curvature);
+      PRINT(" STEERING: xtrack_err: %f, xtrack_speed: %f, attitude: %f, curvature: %f\n", xtrack_error, xtrack_speed, attitude, curvature);
 #endif
       
       
