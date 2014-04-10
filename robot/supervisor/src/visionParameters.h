@@ -42,7 +42,7 @@ namespace Anki {
       // Set to 1 to use the top (or bottom) bar of the tracked marker to approximate
       // the pose of the block relative to the camera for docking.
       // NOTE: This *must* be set to 1 if using an affine tracker.
-#define USE_APPROXIMATE_DOCKING_ERROR_SIGNAL 1
+#define USE_APPROXIMATE_DOCKING_ERROR_SIGNAL 0
       
 #define USE_MATLAB_TRACKER  0
 #define USE_MATLAB_DETECTOR 0

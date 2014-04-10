@@ -399,7 +399,7 @@ namespace Anki {
                                                                         offchipMemory);
         
         // TODO: Set this elsewhere
-        const f32 Kp_min = 0.1f;
+        const f32 Kp_min = 0.05f;
         const f32 Kp_max = 0.75f;
         const f32 tz_min = 30.f;
         const f32 tz_max = 150.f;

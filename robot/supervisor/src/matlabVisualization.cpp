@@ -35,7 +35,7 @@ namespace Anki {
 #if USE_MATLAB_VISUALIZATION      
       static Matlab matlabViz_;     
       static bool beforeCalled_;
-      static const bool SHOW_TRACKER_PREDICTION = true;
+      static const bool SHOW_TRACKER_PREDICTION = false;
       static const bool saveTrackingResults_ = false;
 #endif      
       
