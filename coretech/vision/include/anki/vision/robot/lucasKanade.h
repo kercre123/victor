@@ -399,6 +399,17 @@ namespace Anki
           f32 grayvalue;
         } TemplateSample;
         
+        typedef struct JacobianSample
+        {
+          f32 dWu_dtx;// , dWv_dtx == 0!!;
+          f32 dWv_dty;
+          f32 dWu_dtz, dWv_dtz;
+          
+          f32 dWu_dthetaX, dWv_dthetaX;
+          f32 dWu_dthetaY, dWv_dthetaY;
+          f32 dWu_dthetaZ, dWv_dthetaZ;
+        } JacobianSample;
+        
         // Calibration data:
         f32 focalLength_x;
         f32 focalLength_y;
@@ -416,8 +427,9 @@ namespace Anki
         // (Need to store this for re-computing partial derivatives
         //  inside the tracking loop.  If those partials can be stored
         //  up front, then this could go away.
-        Array<f32> initialHomography;
+        //Array<f32> initialHomography;
         
+        /*
         // Partial derivatives
         f32 dr11_dthetaX, dr11_dthetaY, dr11_dthetaZ;
         f32 dr12_dthetaX, dr12_dthetaY, dr12_dthetaZ;
@@ -425,12 +437,14 @@ namespace Anki
         f32 dr22_dthetaX, dr22_dthetaY, dr22_dthetaZ;
         f32 dr31_dthetaX, dr31_dthetaY, dr31_dthetaZ;
         f32 dr32_dthetaX, dr32_dthetaY, dr32_dthetaZ;
+        */
         
         Parameters6DoF params6DoF;
         
         //Result SetHomographyFrom6DofParams(Array<f32> &H);
         
         FixedLengthList<FixedLengthList<TemplateSample> > templateSamplePyramid;
+        FixedLengthList<FixedLengthList<JacobianSample> > jacobianSamplePyramid;
         
         // Update the transformation homography with whatever is currently
         // in the 6DoF parameters

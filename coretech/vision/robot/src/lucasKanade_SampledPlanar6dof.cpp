@@ -59,6 +59,7 @@ namespace Anki
                                                                                  MemoryStack offchipScratch)
       : LucasKanadeTracker_Generic(Transformations::TRANSFORM_PROJECTIVE, templateImage, templateQuadIn, scaleTemplateRegionPercent, numPyramidLevels, transformType, onchipScratch)
       {
+        // Allocate all the
         
         // Initialize calibration data
         this->focalLength_x = focalLength_x;
@@ -151,20 +152,19 @@ namespace Anki
                                       "Failed to set initial rotation angles.");
         
         // Initialize the homography from the 6DoF params
-        this->UpdateTransformation(onchipScratch);
-        this->initialHomography = Array<f32>(3,3,onchipScratch); // TODO: on-chip b/c this is permanent, right?
+        Array<f32> initialHomography = Array<f32>(3,3,onchipScratch); // TODO: on-chip b/c this is permanent, right?
         
-        this->initialHomography[0][0] = this->focalLength_x*R[0][0];
-        this->initialHomography[0][1] = this->focalLength_x*R[0][1];
-        this->initialHomography[0][2] = this->focalLength_x*this->params6DoF.translation.x;// / initialImageScaleF32;
+        initialHomography[0][0] = this->focalLength_x*R[0][0];
+        initialHomography[0][1] = this->focalLength_x*R[0][1];
+        initialHomography[0][2] = this->focalLength_x*this->params6DoF.translation.x;// / initialImageScaleF32;
         
-        this->initialHomography[1][0] = this->focalLength_y*R[1][0];
-        this->initialHomography[1][1] = this->focalLength_y*R[1][1];
-        this->initialHomography[1][2] = this->focalLength_y*this->params6DoF.translation.y;// / initialImageScaleF32;
+        initialHomography[1][0] = this->focalLength_y*R[1][0];
+        initialHomography[1][1] = this->focalLength_y*R[1][1];
+        initialHomography[1][2] = this->focalLength_y*this->params6DoF.translation.y;// / initialImageScaleF32;
         
-        this->initialHomography[2][0] = R[2][0];// * initialImageScaleF32;
-        this->initialHomography[2][1] = R[2][1];// * initialImageScaleF32;
-        this->initialHomography[2][2] = this->params6DoF.translation.z;
+        initialHomography[2][0] = R[2][0];// * initialImageScaleF32;
+        initialHomography[2][1] = R[2][1];// * initialImageScaleF32;
+        initialHomography[2][2] = this->params6DoF.translation.z;
         
         // Note the center for this tracker is the camera's calibrated center
         Point<f32> centerOffset(this->camCenter_x, this->camCenter_y);
@@ -178,7 +178,7 @@ namespace Anki
                                        Point2f(template3d[3].x, template3d[3].y));
         
         this->transformation = Transformations::PlanarTransformation_f32(Transformations::TRANSFORM_PROJECTIVE,
-                                                                         initCorners, this->initialHomography, centerOffset,
+                                                                         initCorners, initialHomography, centerOffset,
                                                                          onchipScratch); // TODO: which scratch?
         
         // Important: we have to tell the transformation object that the input
@@ -198,26 +198,26 @@ namespace Anki
         const f32 cy = cosf(params6DoF.angle_y);
         const f32 cz = cosf(params6DoF.angle_z);
         
-        this->dr11_dthetaX = 0.f; // TODO: optimize this out since it's zero
-        this->dr12_dthetaX = -sx*sz + cx*sy*cz;
-        this->dr21_dthetaX = 0.f; // TODO: optimize this out since it's zero
-        this->dr22_dthetaX = -sx*cz - cx*sy*sz;
-        this->dr31_dthetaX = 0.f; // TODO: optimize this out since it's zero
-        this->dr32_dthetaX = -cx*cy;
+        //const f32 dr11_dthetaX = 0.f; // TODO: optimize this out since it's zero
+        const f32 dr12_dthetaX = -sx*sz + cx*sy*cz;
+        //const f32 dr21_dthetaX = 0.f; // TODO: optimize this out since it's zero
+        const f32 dr22_dthetaX = -sx*cz - cx*sy*sz;
+        //const f32 dr31_dthetaX = 0.f; // TODO: optimize this out since it's zero
+        const f32 dr32_dthetaX = -cx*cy;
         
-        this->dr11_dthetaY = -sy*cz;
-        this->dr12_dthetaY = sx*cy*cz;
-        this->dr21_dthetaY = sy*sz;
-        this->dr22_dthetaY = -sx*cy*sz;
-        this->dr31_dthetaY = cy;
-        this->dr32_dthetaY = sx*sy;
+        const f32 dr11_dthetaY = -sy*cz;
+        const f32 dr12_dthetaY = sx*cy*cz;
+        const f32 dr21_dthetaY = sy*sz;
+        const f32 dr22_dthetaY = -sx*cy*sz;
+        const f32 dr31_dthetaY = cy;
+        const f32 dr32_dthetaY = sx*sy;
         
-        this->dr11_dthetaZ = -cy*sz;
-        this->dr12_dthetaZ = cx*cz - sx*sy*sz;
-        this->dr21_dthetaZ = -cy*cz;
-        this->dr22_dthetaZ = -cx*sz - sx*sy*cz;
-        this->dr31_dthetaZ = 0.f; // TODO: optimize this out since it's zero
-        this->dr32_dthetaZ = 0.f; // TODO: optimize this out since it's zero
+        const f32 dr11_dthetaZ = -cy*sz;
+        const f32 dr12_dthetaZ = cx*cz - sx*sy*sz;
+        const f32 dr21_dthetaZ = -cy*cz;
+        const f32 dr22_dthetaZ = -cx*sz - sx*sy*cz;
+        //const f32 dr31_dthetaZ = 0.f; // TODO: optimize this out since it's zero
+        //const f32 dr32_dthetaZ = 0.f; // TODO: optimize this out since it's zero
         
         
         const s32 numSelectBins = 20;
@@ -227,6 +227,7 @@ namespace Anki
         BeginBenchmark("LucasKanadeTracker_SampledPlanar6dof");
         
         this->templateSamplePyramid = FixedLengthList<FixedLengthList<TemplateSample> >(numPyramidLevels, onchipScratch);
+        this->jacobianSamplePyramid = FixedLengthList<FixedLengthList<JacobianSample> >(numPyramidLevels, onchipScratch);
         
         for(s32 iScale=0; iScale<numPyramidLevels; iScale++) {
           const f32 scale = static_cast<f32>(1 << iScale);
@@ -244,15 +245,21 @@ namespace Anki
           
           this->templateSamplePyramid[iScale] = FixedLengthList<TemplateSample>(curMaxSamples, onchipScratch);
           this->templateSamplePyramid[iScale].set_size(curMaxSamples);
+          
+          this->jacobianSamplePyramid[iScale] = FixedLengthList<JacobianSample>(curMaxSamples, onchipScratch);
+          this->jacobianSamplePyramid[iScale].set_size(curMaxSamples);
         }
         
         //
         // Temporary allocations below this point
         //
         {
+          // Everything allocated using offchipScratch above will survive
+          //PUSH_MEMORY_STACK(offchipScratch);
+          
           // This section is based off lucasKanade_Fast, except uses f32 in offchip instead of integer types in onchip
           
-          FixedLengthList<Meshgrid<f32> > templateCoordinates = FixedLengthList<Meshgrid<f32> >(numPyramidLevels, onchipScratch);
+          FixedLengthList<Meshgrid<f32> > templateCoordinates = FixedLengthList<Meshgrid<f32> >(numPyramidLevels, offchipScratch);
           FixedLengthList<Array<f32> > templateImagePyramid = FixedLengthList<Array<f32> >(numPyramidLevels, offchipScratch);
           FixedLengthList<Array<f32> > templateImageXGradientPyramid = FixedLengthList<Array<f32> >(numPyramidLevels, offchipScratch);
           FixedLengthList<Array<f32> > templateImageYGradientPyramid = FixedLengthList<Array<f32> >(numPyramidLevels, offchipScratch);
@@ -381,19 +388,91 @@ namespace Anki
             const f32 * restrict pGrayscaleVector = grayscaleVector.Pointer(0,0);
             const u16 * restrict pMagnitudeIndexes = magnitudeIndexes.Pointer(0,0);
             
+            const f32 h00 = initialHomography[0][0];
+            const f32 h01 = initialHomography[0][1];
+            const f32 h02 = initialHomography[0][2];// / initialImageScaleF32;
+            
+            const f32 h10 = initialHomography[1][0];
+            const f32 h11 = initialHomography[1][1];
+            const f32 h12 = initialHomography[1][2];// / initialImageScaleF32;
+            
+            const f32 h20 = initialHomography[2][0];// * initialImageScaleF32;
+            const f32 h21 = initialHomography[2][1];// * initialImageScaleF32;
+            const f32 h22 = initialHomography[2][2];
+            
             TemplateSample * restrict pTemplateSamplePyramid = this->templateSamplePyramid[iScale].Pointer(0);
+            JacobianSample * restrict pJacobianSamplePyramid = this->jacobianSamplePyramid[iScale].Pointer(0);
             
             for(s32 iSample=0; iSample<numSamples; iSample++){
               const s32 curIndex = pMagnitudeIndexes[iSample];
               
-              TemplateSample curSample;
-              curSample.xCoordinate = pXCoordinates[curIndex];
-              curSample.yCoordinate = pYCoordinates[curIndex];
-              curSample.xGradient = pXGradientVector[curIndex];
-              curSample.yGradient = pYGradientVector[curIndex];
-              curSample.grayvalue = pGrayscaleVector[curIndex];
+              TemplateSample curTemplateSample;
+              curTemplateSample.xCoordinate = pXCoordinates[curIndex];
+              curTemplateSample.yCoordinate = pYCoordinates[curIndex];
+              curTemplateSample.xGradient   = pXGradientVector[curIndex];
+              curTemplateSample.yGradient   = pYGradientVector[curIndex];
+              curTemplateSample.grayvalue   = pGrayscaleVector[curIndex];
               
-              pTemplateSamplePyramid[iSample] = curSample;
+              pTemplateSamplePyramid[iSample] = curTemplateSample;
+              
+              // Everything below here is about filling in the Jacobian info
+              // for this sample
+              
+              JacobianSample curJacobianSample;
+              
+              const f32 xOriginal = curTemplateSample.xCoordinate;
+              const f32 yOriginal = curTemplateSample.yCoordinate;
+              
+              // TODO: These two could be strength reduced
+              const f32 xTransformedRaw = h00*xOriginal + h01*yOriginal + h02;
+              const f32 yTransformedRaw = h10*xOriginal + h11*yOriginal + h12;
+              
+              const f32 normalization = h20*xOriginal + h21*yOriginal + h22;
+              
+              const f32 invNorm = 1.f / normalization;
+              const f32 invNormSq = invNorm *invNorm;
+              
+              curJacobianSample.dWu_dtx = this->focalLength_x * invNorm;
+              //curJacobianSample.dWu_dty = 0.f; // TODO: optimize out since it's zero
+              curJacobianSample.dWu_dtz = -xTransformedRaw * invNormSq;
+              
+              //curJacobianSample.dWv_dtx = 0.f; // TODO: optimize out since it's zero
+              curJacobianSample.dWv_dty = this->focalLength_y * invNorm;
+              curJacobianSample.dWv_dtz = -yTransformedRaw * invNormSq;
+              
+              const f32 r1thetaXterm = /*dr11_dthetaX*xOriginal +*/ dr12_dthetaX*yOriginal;
+              const f32 r1thetaYterm = dr11_dthetaY*xOriginal + dr12_dthetaY*yOriginal;
+              const f32 r1thetaZterm = dr11_dthetaZ*xOriginal + dr12_dthetaZ*yOriginal;
+              
+              const f32 r2thetaXterm = /*dr21_dthetaX*xOriginal + */dr22_dthetaX*yOriginal;
+              const f32 r2thetaYterm = dr21_dthetaY*xOriginal + dr22_dthetaY*yOriginal;
+              const f32 r2thetaZterm = dr21_dthetaZ*xOriginal + dr22_dthetaZ*yOriginal;
+              
+              const f32 r3thetaXterm = /*dr31_dthetaX*xOriginal + */dr32_dthetaX*yOriginal;
+              const f32 r3thetaYterm = dr31_dthetaY*xOriginal + dr32_dthetaY*yOriginal;
+              //const f32 r3thetaZterm = dr31_dthetaZ*xOriginal + dr32_dthetaZ*yOriginal;
+              
+              curJacobianSample.dWu_dthetaX = (this->focalLength_x*normalization*r1thetaXterm -
+                                               r3thetaXterm*xTransformedRaw) * invNormSq;
+              
+              curJacobianSample.dWu_dthetaY = (this->focalLength_x*normalization*r1thetaYterm -
+                                               r3thetaYterm*xTransformedRaw) * invNormSq;
+              
+              curJacobianSample.dWu_dthetaZ = (this->focalLength_x*normalization*r1thetaZterm /*-
+                                               r3thetaZterm*xTransformedRaw*/) * invNormSq;
+              
+              
+              curJacobianSample.dWv_dthetaX = (this->focalLength_y*normalization*r2thetaXterm -
+                                               r3thetaXterm*yTransformedRaw) * invNormSq;
+              
+              curJacobianSample.dWv_dthetaY = (this->focalLength_y*normalization*r2thetaYterm -
+                                               r3thetaYterm*yTransformedRaw) * invNormSq;
+              
+              curJacobianSample.dWv_dthetaZ = (this->focalLength_y*normalization*r2thetaZterm /*-
+                                               r3thetaZterm*yTransformedRaw*/) * invNormSq;
+              
+              pJacobianSamplePyramid[iSample] = curJacobianSample;
+
             }
           }
         } // PUSH_MEMORY_STACK(fastMemory);
@@ -1075,6 +1154,7 @@ namespace Anki
         const f32 yReferenceMax = static_cast<f32>(nextImageHeight) - 1.0f;
         
         const TemplateSample * restrict pTemplateSamplePyramid = this->templateSamplePyramid[whichScale].Pointer(0);
+        const JacobianSample * restrict pJacobianSamplePyramid = this->jacobianSamplePyramid[whichScale].Pointer(0);
         
         const s32 numTemplateSamples = this->get_numTemplatePixels(whichScale);
         
@@ -1159,6 +1239,7 @@ namespace Anki
             
             const f32 interpolatedPixelF32 = InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse);
             
+            const JacobianSample curJacobianSample = pJacobianSamplePyramid[iSample];
             // DEBUG:
             /*
             debugStuff[iSample][0] = curSample.xCoordinate;
@@ -1175,6 +1256,7 @@ namespace Anki
             {
               //printf("(%f,%f) ", xOriginal, yOriginal);
               
+              /*
               // This is where we incorporate the 6DoF terms into the
               // Jacobians for the A matrix.  Note that the partials are
               // evaluated at the initial conditions of the tracker's params.
@@ -1244,6 +1326,7 @@ namespace Anki
               
               const f32 dWv_dthetaZ = (this->focalLength_y*normalizationInit*r2thetaZterm -
                                        r3thetaZterm*yTransformedRawInit) * invNormSq;
+              */
               
               // This is the only stuff that depends on the current sample
               const f32 templatePixelValue = curSample.grayvalue;
@@ -1252,12 +1335,26 @@ namespace Anki
               
               const f32 tGradientValue = oneOverTwoFiftyFive * (interpolatedPixelF32 - templatePixelValue);
               
+              const f32 dWu_dtx = curJacobianSample.dWu_dtx;
+              //const f32 dWv_dtx = curJacobianSample.dWv_dtx;  // always zero
+              //const f32 dWu_dty = curJacobianSample.dWu_dty;  // always zero
+              const f32 dWv_dty = curJacobianSample.dWv_dty;
+              const f32 dWu_dtz = curJacobianSample.dWu_dtz;
+              const f32 dWv_dtz = curJacobianSample.dWv_dtz;
+              
+              const f32 dWu_dthetaX = curJacobianSample.dWu_dthetaX;
+              const f32 dWv_dthetaX = curJacobianSample.dWv_dthetaX;
+              const f32 dWu_dthetaY = curJacobianSample.dWu_dthetaY;
+              const f32 dWv_dthetaY = curJacobianSample.dWv_dthetaY;
+              const f32 dWu_dthetaZ = curJacobianSample.dWu_dthetaZ;
+              const f32 dWv_dthetaZ = curJacobianSample.dWv_dthetaZ;
+              
               const f32 values[6] = {
                 xGradientValue*dWu_dthetaX + yGradientValue*dWv_dthetaX,
                 xGradientValue*dWu_dthetaY + yGradientValue*dWv_dthetaY,
                 xGradientValue*dWu_dthetaZ + yGradientValue*dWv_dthetaZ,
-                xGradientValue*dWu_dtx + yGradientValue*dWv_dtx,
-                xGradientValue*dWu_dty + yGradientValue*dWv_dty,
+                xGradientValue*dWu_dtx /*+ yGradientValue*dWv_dtx*/,
+                /*xGradientValue*dWu_dty + */yGradientValue*dWv_dty,
                 xGradientValue*dWu_dtz + yGradientValue*dWv_dtz
               };
               
