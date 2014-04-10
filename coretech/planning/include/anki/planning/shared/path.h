@@ -53,6 +53,7 @@ namespace Anki
         f32 x;
         f32 y;
         f32 targetAngle;
+        f32 targetRotSpeed;
       } turn;
     } PathSegmentDef;
     
@@ -108,6 +109,9 @@ namespace Anki
       
       SegmentRangeStatus GetDistToArcSegment(const f32 x, const f32 y, const f32 angle,
                                             f32 &shortestDistanceToPath, f32 &radDiff) const;
+
+      SegmentRangeStatus GetDistToPointTurnSegment(const f32 x, const f32 y, const f32 angle,
+                                                   f32 &shortestDistanceToPath, f32 &radDiff) const;
       
       PathSegmentType type_;
       PathSegmentDef def_;
