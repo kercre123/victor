@@ -337,7 +337,7 @@ namespace Anki {
                                                            parameters.numPyramidLevels,
                                                            Transformations::TRANSFORM_TRANSLATION,
                                                            0.0,
-                                                           onchipScratch);
+                                                           onchipMemory);
 #elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_AFFINE
         tracker = TemplateTracker::LucasKanadeTracker_Affine(
                                                              grayscaleImageSmall,
@@ -345,7 +345,7 @@ namespace Anki {
                                                              parameters.scaleTemplateRegionPercent,
                                                              parameters.numPyramidLevels,
                                                              Transformations::TRANSFORM_AFFINE,
-                                                             onchipScratch);
+                                                             onchipMemory);
 #elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE
         tracker = TemplateTracker::LucasKanadeTracker_Projective(
                                                                  grayscaleImageSmall,
@@ -353,7 +353,7 @@ namespace Anki {
                                                                  parameters.scaleTemplateRegionPercent,
                                                                  parameters.numPyramidLevels,
                                                                  Transformations::TRANSFORM_PROJECTIVE,
-                                                                 onchipScratch);
+                                                                 onchipMemory);
 #elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PROJECTIVE
         tracker = TemplateTracker::LucasKanadeTracker_SampledProjective(
                                                                         grayscaleImage,
@@ -363,8 +363,8 @@ namespace Anki {
                                                                         Transformations::TRANSFORM_PROJECTIVE,
                                                                         parameters.maxSamplesAtBaseLevel,
                                                                         ccmScratch,
-                                                                        onchipScratch,
-                                                                        offchipScratch);
+                                                                        onchipMemory,
+                                                                        offchipMemory);
 #elif DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
         tracker = TemplateTracker::BinaryTracker(
                                                  grayscaleImage,
@@ -378,8 +378,8 @@ namespace Anki {
                                                  parameters.edgeDetection_minComponentWidth,
                                                  parameters.edgeDetection_maxDetectionsPerType,
                                                  parameters.edgeDetection_everyNLines,
-                                                 onchipScratch,
-                                                 offchipScratch);
+                                                 onchipMemory,
+                                                 offchipMemory);
         
 #elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
         
