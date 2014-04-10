@@ -222,11 +222,19 @@ namespace Anki {
           edgeLists.yDecreasing = FixedLengthList<Point<s16> >(parameters.edgeDetectionParams_update.maxDetectionsPerType, offchipScratch);
           edgeLists.yIncreasing = FixedLengthList<Point<s16> >(parameters.edgeDetectionParams_update.maxDetectionsPerType, offchipScratch);
           
-          DetectBlurredEdges_GrayvalueThreshold(
-                             image,
-                             tracker.get_lastUsedGrayvalueThrehold(),
-                             parameters.edgeDetectionParams_update.minComponentWidth, parameters.edgeDetectionParams_update.everyNLines,
-                             edgeLists);
+          
+          if(parameters.edgeDetectionParams_update.type == TemplateTracker::BinaryTracker::EDGE_TYPE_GRAYVALUE) {
+            DetectBlurredEdges_GrayvalueThreshold(
+                               image,
+                               tracker.get_lastUsedGrayvalueThrehold(),
+                               parameters.edgeDetectionParams_update.minComponentWidth, parameters.edgeDetectionParams_update.everyNLines,
+                               edgeLists);            
+          } else {
+            DetectBlurredEdges_DerivativeThreshold(
+                               image,
+                               parameters.edgeDetectionParams_update.combHalfWidth, parameters.edgeDetectionParams_update.combResponseThreshold, parameters.edgeDetectionParams_update.everyNLines,
+                               edgeLists); 
+          }
           
           edgeLists.Serialize("Edge List", debugStreamBuffer_);
           

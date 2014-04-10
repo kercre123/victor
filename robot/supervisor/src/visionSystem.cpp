@@ -418,7 +418,7 @@ namespace Anki {
         MatlabVisualization::SendTrackInit(grayscaleImage, tracker, onchipMemory);
         
 #if DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
-        DebugStream::SendBinaryTracker(tracker, ccmScratch, onchipScratch, offchipScratch);
+        DebugStream::SendBinaryTracker(tracker, ccmScratch, onchipMemory, offchipMemory);
 #endif
         
         return EXIT_SUCCESS;
