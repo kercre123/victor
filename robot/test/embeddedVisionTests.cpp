@@ -676,7 +676,100 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
-GTEST_TEST(CoreTech_Vision, DetectBlurredEdge)
+GTEST_TEST(CoreTech_Vision, DetectBlurredEdge_DerivativeThreshold)
+{
+  const s32 combHalfWidth = 1;
+  const s32 combResponseThreshold = 20;
+  const s32 maxExtrema = 500;
+  const s32 everyNLines = 1;
+
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(scratchOffchip.IsValid());
+
+  const s32 imageHeight = 48;
+  const s32 imageWidth = 64;
+
+  Array<u8> image(imageHeight, imageWidth, scratchOffchip);
+
+  EdgeLists edges;
+
+  edges.xDecreasing = FixedLengthList<Point<s16> >(maxExtrema, scratchOffchip);
+  edges.xIncreasing = FixedLengthList<Point<s16> >(maxExtrema, scratchOffchip);
+  edges.yDecreasing = FixedLengthList<Point<s16> >(maxExtrema, scratchOffchip);
+  edges.yIncreasing = FixedLengthList<Point<s16> >(maxExtrema, scratchOffchip);
+
+  for(s32 y=0; y<24; y++) {
+    for(s32 x=0; x<32; x++) {
+      image[y][x] = (y)*8;
+    }
+  }
+
+  for(s32 y=24; y<48; y++) {
+    for(s32 x=0; x<32; x++) {
+      image[y][x] = 250 - (((y)*4));
+    }
+  }
+
+  for(s32 x=31; x<48; x++) {
+    for(s32 y=0; y<48; y++) {
+      image[y][x] = (x-31)*10;
+    }
+  }
+  for(s32 x=48; x<64; x++) {
+    for(s32 y=0; y<48; y++) {
+      image[y][x] = 250 - (((x-31)*6) - (x+1)/2);
+    }
+  }
+
+  //Matlab matlab(false);
+  //matlab.PutArray(image, "image");
+
+  const Result result = DetectBlurredEdges_DerivativeThreshold(image, combHalfWidth, combResponseThreshold, everyNLines, edges);
+
+  ASSERT_TRUE(result == RESULT_OK);
+
+  //cv::Mat drawEdges = edges.DrawIndexes(imageHeight, imageWidth, edges.xDecreasing, edges.xIncreasing, edges.yDecreasing, edges.yIncreasing);
+  //image.Show("image", false, false, true);
+  //cv::namedWindow("drawEdges", CV_WINDOW_NORMAL);
+  //cv::imshow("drawEdges", drawEdges);
+  //cv::waitKey();
+
+  //xDecreasing.Print("xDecreasing");
+  //xIncreasing.Print("xIncreasing");
+  //yDecreasing.Print("yDecreasing");
+  //yIncreasing.Print("yIncreasing");
+
+  ASSERT_TRUE(edges.xDecreasing.get_size() == 5);
+  ASSERT_TRUE(edges.xIncreasing.get_size() == 42);
+  ASSERT_TRUE(edges.yDecreasing.get_size() == 30);
+  ASSERT_TRUE(edges.yIncreasing.get_size() == 0);
+
+  ASSERT_TRUE(edges.xDecreasing[0] == Point<s16>(30,3));
+
+  for(s32 i=1;i<=4;i++) {
+    ASSERT_TRUE(edges.xDecreasing[i] == Point<s16>(38,19+i));
+  }
+
+  for(s32 i=0;i<3;i++) {
+    ASSERT_TRUE(edges.xIncreasing[i] == Point<s16>(39,i+1));
+  }
+
+  for(s32 i=3;i<19;i++) {
+    ASSERT_TRUE(edges.xIncreasing[i] == Point<s16>(38,i+1));
+  }
+
+  for(s32 i=19;i<42;i++) {
+    ASSERT_TRUE(edges.xIncreasing[i] == Point<s16>(38,i+5));
+  }
+
+  for(s32 i=0;i<30;i++) {
+    ASSERT_TRUE(edges.yDecreasing[i] == Point<s16>(i+1,23));
+  }
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Vision, DetectBlurredEdge_DerivativeThreshold)
+
+GTEST_TEST(CoreTech_Vision, DetectBlurredEdge_GrayvalueThreshold)
 {
   const u8 grayvalueThreshold = 128;
   const s32 minComponentWidth = 3;
@@ -686,7 +779,10 @@ GTEST_TEST(CoreTech_Vision, DetectBlurredEdge)
   MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(scratchOffchip.IsValid());
 
-  Array<u8> image(48, 64, scratchOffchip);
+  const s32 imageHeight = 48;
+  const s32 imageWidth = 64;
+
+  Array<u8> image(imageHeight, imageWidth, scratchOffchip);
 
   EdgeLists edges;
 
@@ -722,7 +818,7 @@ GTEST_TEST(CoreTech_Vision, DetectBlurredEdge)
 
   //image.Show("image", true);
 
-  const Result result = DetectBlurredEdges(image, grayvalueThreshold, minComponentWidth, everyNLines, edges);
+  const Result result = DetectBlurredEdges_GrayvalueThreshold(image, grayvalueThreshold, minComponentWidth, everyNLines, edges);
 
   ASSERT_TRUE(result == RESULT_OK);
 
@@ -802,7 +898,7 @@ GTEST_TEST(CoreTech_Vision, DetectBlurredEdge)
   }
 
   GTEST_RETURN_HERE;
-} // GTEST_TEST(CoreTech_Vision, DetectBlurredEdge)
+} // GTEST_TEST(CoreTech_Vision, DetectBlurredEdge_GrayvalueThreshold)
 
 GTEST_TEST(CoreTech_Vision, DownsampleByPowerOfTwo)
 {
@@ -3153,7 +3249,8 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
 
   CALL_GTEST_TEST(CoreTech_Vision, DecisionTreeVision);
   CALL_GTEST_TEST(CoreTech_Vision, BinaryTracker);
-  CALL_GTEST_TEST(CoreTech_Vision, DetectBlurredEdge);
+  CALL_GTEST_TEST(CoreTech_Vision, DetectBlurredEdge_DerivativeThreshold);
+  CALL_GTEST_TEST(CoreTech_Vision, DetectBlurredEdge_GrayvalueThreshold);
   CALL_GTEST_TEST(CoreTech_Vision, DownsampleByPowerOfTwo);
   //CALL_GTEST_TEST(CoreTech_Vision, ComputeDockingErrorSignalAffine);
   CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective);

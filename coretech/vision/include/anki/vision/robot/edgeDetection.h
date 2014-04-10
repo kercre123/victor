@@ -56,8 +56,11 @@ namespace Anki
     } EdgeLists;
 
     // Calculate local extrema (edges) in an image. Returns four list for the four directions of change.
-    Result DetectBlurredEdges(const Array<u8> &image, const u8 grayvalueThreshold, const s32 minComponentWidth, const s32 everyNLines, EdgeLists &edgeLists);
-    Result DetectBlurredEdges(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const u8 grayvalueThreshold, const s32 minComponentWidth, const s32 everyNLines, EdgeLists &edgeLists);
+    Result DetectBlurredEdges_GrayvalueThreshold(const Array<u8> &image, const u8 grayvalueThreshold, const s32 minComponentWidth, const s32 everyNLines, EdgeLists &edgeLists);
+    Result DetectBlurredEdges_GrayvalueThreshold(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const u8 grayvalueThreshold, const s32 minComponentWidth, const s32 everyNLines, EdgeLists &edgeLists);
+
+    Result DetectBlurredEdges_DerivativeThreshold(const Array<u8> &image, const s32 combHalfWidth, const s32 combResponseThreshold, const s32 everyNLines, EdgeLists &edgeLists);
+    Result DetectBlurredEdges_DerivativeThreshold(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const s32 combHalfWidth, const s32 combResponseThreshold, const s32 everyNLines, EdgeLists &edgeLists);
 
     u8 ComputeGrayvalueThreshold(
       const Array<u8> &image,

@@ -137,7 +137,7 @@ namespace Anki
 
         const Rectangle<s32> templateRect = templateQuad.ComputeBoundingRectangle<s32>().ComputeScaledRectangle<s32>(scaleTemplateRegionPercent);
 
-        const Result result = DetectBlurredEdges(templateImage, templateRect, this->lastGrayvalueThreshold, edgeDetection_minComponentWidth, edgeDetection_everyNLines, this->templateEdges);
+        const Result result = DetectBlurredEdges_GrayvalueThreshold(templateImage, templateRect, this->lastGrayvalueThreshold, edgeDetection_minComponentWidth, edgeDetection_everyNLines, this->templateEdges);
 
         this->lastUsedGrayvalueThreshold = this->lastGrayvalueThreshold;
 
@@ -312,7 +312,7 @@ namespace Anki
             rotationOrder[2] = 0;
             rotationOrder[3] = 2;
           }
-          
+
           FixedLengthList<Point<f32> > rotatedBinaryCorners(4, slowMemory);
           rotatedBinaryCorners.set_size(4);
 
@@ -321,13 +321,13 @@ namespace Anki
           }
 
           Matrix::EstimateHomography(rotatedBinaryCorners, templateCorners, binaryTemplateHomography, slowMemory);
-          
+
           binaryTemplateTransform.set_homography(binaryTemplateHomography);
-          
+
           // Extract the edges, and transform them to the actual fiducial detection location
           // TODO: add subpixel
           const Rectangle<s32> templateRect(0, binaryTemplateWithBorderWidth-1, 0, binaryTemplateWithBorderHeight-1);
-          const Result result = DetectBlurredEdges(rotatedBinaryTemplateWithBorder, templateRect, 128, edgeDetection_minComponentWidth, edgeDetection_everyNLines, this->templateEdges);
+          const Result result = DetectBlurredEdges_GrayvalueThreshold(rotatedBinaryTemplateWithBorder, templateRect, 128, edgeDetection_minComponentWidth, edgeDetection_everyNLines, this->templateEdges);
 
           this->templateEdges.imageHeight = templateImageHeight;
           this->templateEdges.imageWidth = templateImageWidth;
@@ -676,7 +676,7 @@ namespace Anki
 
         BeginBenchmark("ut_DetectEdges");
 
-        lastResult = DetectBlurredEdges(nextImage, this->lastGrayvalueThreshold, edgeDetection_minComponentWidth, edgeDetection_everyNLines, nextImageEdges);
+        lastResult = DetectBlurredEdges_GrayvalueThreshold(nextImage, this->lastGrayvalueThreshold, edgeDetection_minComponentWidth, edgeDetection_everyNLines, nextImageEdges);
         this->lastUsedGrayvalueThreshold = this->lastGrayvalueThreshold;
 
         EndBenchmark("ut_DetectEdges");

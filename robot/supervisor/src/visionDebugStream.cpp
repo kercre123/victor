@@ -222,7 +222,7 @@ namespace Anki {
           edgeLists.yDecreasing = FixedLengthList<Point<s16> >(parameters.edgeDetection_maxDetectionsPerType, offchipScratch);
           edgeLists.yIncreasing = FixedLengthList<Point<s16> >(parameters.edgeDetection_maxDetectionsPerType, offchipScratch);
           
-          DetectBlurredEdges(
+          DetectBlurredEdges_GrayvalueThreshold(
                              image,
                              tracker.get_lastUsedGrayvalueThrehold(),
                              parameters.edgeDetection_minComponentWidth, parameters.edgeDetection_everyNLines,
@@ -302,7 +302,7 @@ namespace Anki {
           edgeLists.yDecreasing = FixedLengthList<Point<s16> >(parameters.edgeDetection_maxDetectionsPerType, offchipScratch);
           edgeLists.yIncreasing = FixedLengthList<Point<s16> >(parameters.edgeDetection_maxDetectionsPerType, offchipScratch);
           
-          DetectBlurredEdges(
+          DetectBlurredEdges_GrayvalueThreshold(
                              grayscaleImage,
                              60,
                              parameters.edgeDetection_minComponentWidth, parameters.edgeDetection_everyNLines,
