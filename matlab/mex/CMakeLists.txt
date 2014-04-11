@@ -1,7 +1,7 @@
 # products-cozmo/matlab/mex/CMakeLists.txt
 
 set(MEX_LINK_LIBRARIES 
-	CoreTech_Common_Basestation
+	#CoreTech_Common_Basestation
 	#CoreTech_Vision_Basestation
 	${OPENCV_LIBS}
 )
