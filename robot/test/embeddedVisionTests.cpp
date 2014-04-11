@@ -53,7 +53,10 @@ GTEST_TEST(CoreTech_Vision, FaceDetection)
 
   cv::CascadeClassifier face_cascade;
 
-  const std::string face_cascade_name = std::string("C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_frontalface_alt.xml");
+  //const std::string face_cascade_name = std::string("C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_frontalface_alt.xml");
+  //const std::string face_cascade_name = std::string("C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_frontalface_alt2.xml");
+  //const std::string face_cascade_name = std::string("C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_frontalface_alt_tree.xml");
+  const std::string face_cascade_name = std::string("C:/Anki/coretech-external/opencv-2.4.8/data/lbpcascades/lbpcascade_frontalface.xml");
 
   cv::RNG rng(12345);
 
@@ -70,6 +73,8 @@ GTEST_TEST(CoreTech_Vision, FaceDetection)
 
   vector<cv::Rect> detectedFaces;
 
+  f32 t0 = GetTime();
+
   face_cascade.detectMultiScale(
     image.get_CvMat_(),
     detectedFaces,
@@ -79,6 +84,10 @@ GTEST_TEST(CoreTech_Vision, FaceDetection)
     cv::Size(30, 30), // Size minSize=Size(),
     cv::Size() // Size maxSize=Size()
     );
+
+  f32 t1 = GetTime();
+
+  printf("Detection took %f seconds\n", t1-t0);
 
   cv::Mat toShow(imageHeight, imageWidth, CV_8UC3);
 
