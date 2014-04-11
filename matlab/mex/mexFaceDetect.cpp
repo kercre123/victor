@@ -6,7 +6,8 @@
 #include <vector>
 
 #include "mex.h"
-#include "mexWrappers.h"
+#include "anki/common/matlab/mexWrappers.h"
+#include "anki/common/constantsAndMacros.h"
 
 cv::CascadeClassifier *face_cascade = NULL;
 cv::CascadeClassifier *eyes_cascade = NULL;
@@ -21,27 +22,32 @@ void closeHelper(void) {
   }
 }
 
+#ifndef OPENCV_ROOT_PATH
+#error OPENCV_ROOT should be defined. You may need to re-run cmake.
+#endif
 
 //int main(int argc, const char** argv)
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
  
   mexAtExit(closeHelper);
-  
-  // TODO: don't hardcode these paths!
-  
+    
   if(face_cascade == NULL) {
     face_cascade = new cv::CascadeClassifier();
     
-    if(not face_cascade->load("/Users/andrew/Code/coretech-external/opencv-2.4.6.1/data/haarcascades/haarcascade_frontalface_alt.xml"))
+    if(not face_cascade->load(QUOTE(OPENCV_ROOT_PATH)
+                              "/data/lbpcascades/lbpcascade_frontalface.xml"))
+//                              "/data/haarcascades/haarcascade_frontalface_alt.xml"))
     {
       mexErrMsgTxt("Could not load face cascade XML data. Check path.");
     }
+    mexPrintf("Using LBP cascade.\n");
   }
   
   if(eyes_cascade == NULL) {
     eyes_cascade = new cv::CascadeClassifier();
-    if(not eyes_cascade->load("/Users/andrew/Code/coretech-external/opencv-2.4.6.1/data/haarcascades/haarcascade_eye_tree_eyeglasses.xml"))
+    if(not eyes_cascade->load(QUOTE(OPENCV_ROOT_PATH)
+                              "/data/haarcascades/haarcascade_eye_tree_eyeglasses.xml"))
     {
       mexErrMsgTxt("Could not load eyes cascade XML data. Check path.");
     }
