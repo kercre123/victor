@@ -23,7 +23,7 @@ void closeHelper(void) {
 }
 
 #ifndef OPENCV_ROOT_PATH
-#error OPENCV_ROOT should be defined. You may need to re-run cmake.
+#error OPENCV_ROOT_PATH should be defined. You may need to re-run cmake.
 #endif
 
 //int main(int argc, const char** argv)
@@ -31,7 +31,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
  
   mexAtExit(closeHelper);
-    
+  
   if(face_cascade == NULL) {
     face_cascade = new cv::CascadeClassifier();
     
