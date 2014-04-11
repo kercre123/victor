@@ -31,9 +31,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
  
   mexAtExit(closeHelper);
-  
-  // TODO: don't hardcode these paths!
-  
+    
   if(face_cascade == NULL) {
     face_cascade = new cv::CascadeClassifier();
     
