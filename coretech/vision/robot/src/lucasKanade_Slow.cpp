@@ -58,7 +58,7 @@ namespace Anki
         AnkiConditionalErrorAndReturn(((1<<initialImagePowerS32)*templateImage.get_size(1)) == BASE_IMAGE_WIDTH,
           "LucasKanadeTracker_Slow::LucasKanadeTracker_Slow", "The templateImage must be a power of two smaller than BASE_IMAGE_WIDTH");
 
-        templateRegion = templateQuad.ComputeBoundingRectangle().ComputeScaledRectangle(scaleTemplateRegionPercent);
+        templateRegion = templateQuad.ComputeBoundingRectangle<f32>().ComputeScaledRectangle<f32>(scaleTemplateRegionPercent);
 
         templateRegion.left /= initialImageScaleF32;
         templateRegion.right /= initialImageScaleF32;

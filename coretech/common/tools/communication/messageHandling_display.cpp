@@ -248,7 +248,7 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
       if(!bt.IsValid())
         continue;
 
-      bt.ShowTemplate("BinaryTracker Template", false, false);
+      bt.ShowTemplate("BinaryTracker Template", false, false, 2.0f);
     } else if(strcmp(typeName, "EdgeLists") == 0) {
       PUSH_MEMORY_STACK(scratch);
       EdgeLists edges;
@@ -310,24 +310,35 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
 
       trackingBoxImage.setTo(0);
 
-      const cv::Scalar textColor = cv::Scalar(0,255,0);
+      const cv::Scalar textColor    = cv::Scalar(0,255,0);
       //const cv::Scalar boxColor = cv::Scalar(0,128,0);
-      const cv::Scalar boxColor = cv::Scalar(48,48,48);
+      const cv::Scalar boxColor     = cv::Scalar(0,16,0);
+      const cv::Scalar topLineColor = cv::Scalar(16,0,0);
 
-      const Quadrilateral<f32> transformedCorners = lastPlanarTransformation.get_transformedCorners(scratch);
+      //const Quadrilateral<f32> transformedCorners = lastPlanarTransformation.get_transformedCorners(scratch);
+      //const Quadrilateral<f32> sortedCorners = transformedCorners.ComputeClockwiseCorners<f32>();
 
-      const Quadrilateral<f32> sortedCorners = transformedCorners.ComputeClockwiseCorners();
+      const Quadrilateral<f32> orientedCorners = lastPlanarTransformation.get_transformedCorners(scratch).ComputeRotatedCorners<f32>(0.0f);
+
+      const s32 cornerOrder[5] = {
+        Quadrilateral<f32>::TopLeft,
+        Quadrilateral<f32>::TopRight,
+        Quadrilateral<f32>::BottomRight,
+        Quadrilateral<f32>::BottomLeft,
+        Quadrilateral<f32>::TopLeft};
 
       for(s32 iCorner=0; iCorner<4; iCorner++) {
-        const s32 point1Index = iCorner;
-        const s32 point2Index = (iCorner+1) % 4;
-        const cv::Point pt1(static_cast<s32>(sortedCorners[point1Index].x*scale), static_cast<s32>(sortedCorners[point1Index].y*scale));
-        const cv::Point pt2(static_cast<s32>(sortedCorners[point2Index].x*scale), static_cast<s32>(sortedCorners[point2Index].y*scale));
-        cv::line(trackingBoxImage, pt1, pt2, boxColor, 7);
+        const s32 point1Index = cornerOrder[iCorner];
+        const s32 point2Index = cornerOrder[iCorner+1];
+        const cv::Point pt1(RoundS32(orientedCorners[point1Index].x*scale), RoundS32(orientedCorners[point1Index].y*scale));
+        const cv::Point pt2(RoundS32(orientedCorners[point2Index].x*scale), RoundS32(orientedCorners[point2Index].y*scale));
+
+        cv::Scalar thisLineColor = (iCorner==0) ? topLineColor : boxColor;
+        cv::line(trackingBoxImage, pt1, pt2, thisLineColor, 15);
       }
 
-      const Point<f32> center = sortedCorners.ComputeCenter();
-      const s32 textX = RoundS32(MIN(MIN(MIN(sortedCorners.corners[0].x*scale, sortedCorners.corners[1].x*scale), sortedCorners.corners[2].x*scale), sortedCorners.corners[3].x*scale));
+      const Point<f32> center = orientedCorners.ComputeCenter<f32>();
+      const s32 textX = RoundS32(MIN(MIN(MIN(orientedCorners.corners[0].x*scale, orientedCorners.corners[1].x*scale), orientedCorners.corners[2].x*scale), orientedCorners.corners[3].x*scale));
       const cv::Point textStartPoint(textX, RoundS32(center.y*scale));
 
       cv::putText(trackingBoxImage, "Tracking", textStartPoint, cv::FONT_HERSHEY_PLAIN, 1.0, textColor);
@@ -340,7 +351,7 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
     } else { // if(isTracking)
       // Draw markers
       for(s32 iMarker=0; iMarker<static_cast<s32>(visionMarkerList.size()); iMarker++) {
-        cv::Scalar boxColor, textColor;
+        cv::Scalar boxColor, topLineColor, textColor;
         if(visionMarkerList[iMarker].isValid) {
           textColor = cv::Scalar(0,255,0);
           boxColor = cv::Scalar(0,128,0);
@@ -348,15 +359,27 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
           textColor = cv::Scalar(0,0,255);
           boxColor = cv::Scalar(0,0,128);
         }
+        topLineColor = cv::Scalar(128,0,0);
 
-        const Quadrilateral<s16> sortedCorners = visionMarkerList[iMarker].corners.ComputeClockwiseCorners();
+        const f32 observedOrientation = visionMarkerList[iMarker].observedOrientation;
+        //const Quadrilateral<f32> orientedCorners = visionMarkerList[iMarker].corners.ComputeRotatedCorners<f32>(observedOrientation*PI/180);
+        const Quadrilateral<f32> orientedCorners = visionMarkerList[iMarker].corners.ComputeRotatedCorners<f32>(0.0f);
+
+        const s32 cornerOrder[5] = {
+          Quadrilateral<f32>::TopLeft,
+          Quadrilateral<f32>::TopRight,
+          Quadrilateral<f32>::BottomRight,
+          Quadrilateral<f32>::BottomLeft,
+          Quadrilateral<f32>::TopLeft};
 
         for(s32 iCorner=0; iCorner<4; iCorner++) {
-          const s32 point1Index = iCorner;
-          const s32 point2Index = (iCorner+1) % 4;
-          const cv::Point pt1(RoundS32(sortedCorners[point1Index].x*scale), RoundS32(sortedCorners[point1Index].y*scale));
-          const cv::Point pt2(RoundS32(sortedCorners[point2Index].x*scale), RoundS32(sortedCorners[point2Index].y*scale));
-          cv::line(toShowImage, pt1, pt2, boxColor, 2);
+          const s32 point1Index = cornerOrder[iCorner];
+          const s32 point2Index = cornerOrder[iCorner+1];
+          const cv::Point pt1(RoundS32(orientedCorners[point1Index].x*scale), RoundS32(orientedCorners[point1Index].y*scale));
+          const cv::Point pt2(RoundS32(orientedCorners[point2Index].x*scale), RoundS32(orientedCorners[point2Index].y*scale));
+
+          cv::Scalar thisLineColor = (iCorner==0) ? topLineColor : boxColor;
+          cv::line(toShowImage, pt1, pt2, thisLineColor, 2);
         }
 
         const Anki::Vision::MarkerType markerType = visionMarkerList[iMarker].markerType;
@@ -366,7 +389,7 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
           typeString = Anki::Vision::MarkerTypeStrings[markerType];
         }
 
-        const Point<s16> center = visionMarkerList[iMarker].corners.ComputeCenter();
+        const Point<s16> center = visionMarkerList[iMarker].corners.ComputeCenter<s16>();
         const s32 textX = RoundS32(MIN(MIN(MIN(visionMarkerList[iMarker].corners[0].x*scale, visionMarkerList[iMarker].corners[1].x*scale), visionMarkerList[iMarker].corners[2].x*scale), visionMarkerList[iMarker].corners[3].x*scale));
         const cv::Point textStartPoint(textX, RoundS32(center.y*scale));
 
@@ -375,7 +398,7 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
     } // if(isTracking) ... else
 
     cv::imshow("Robot Image", toShowImage);
-    const s32 pressedKey = cv::waitKey(50);
+    const s32 pressedKey = cv::waitKey(10);
     //printf("%d\n", pressedKey);
     if(pressedKey == 'c') {
       const time_t t = time(0);   // get time now

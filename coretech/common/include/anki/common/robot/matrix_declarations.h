@@ -131,16 +131,23 @@ namespace Anki
       //
 
       // matlab equivalent: out = reshape(in, [M,N]);
-      template<typename TypeIn, typename TypeOut> Result Reshape(const bool isColumnMajor, const Array<TypeIn> &in, Array<TypeOut> &out);
-      template<typename TypeIn, typename TypeOut> Array<TypeOut> Reshape(const bool isColumnMajor, const Array<TypeIn> &in, const s32 newHeight, const s32 newWidth, MemoryStack &memory);
+      template<typename InType, typename OutType> Result Reshape(const bool isColumnMajor, const Array<InType> &in, Array<OutType> &out);
+      template<typename InType, typename OutType> Array<OutType> Reshape(const bool isColumnMajor, const Array<InType> &in, const s32 newHeight, const s32 newWidth, MemoryStack &memory);
 
       // matlab equivalent: out = in(:);
-      template<typename TypeIn, typename TypeOut> Result Vectorize(const bool isColumnMajor, const Array<TypeIn> &in, Array<TypeOut> &out);
-      template<typename TypeIn, typename TypeOut> Array<TypeOut> Vectorize(const bool isColumnMajor, const Array<TypeIn> &in, MemoryStack &memory);
+      template<typename InType, typename OutType> Result Vectorize(const bool isColumnMajor, const Array<InType> &in, Array<OutType> &out);
+      template<typename InType, typename OutType> Array<OutType> Vectorize(const bool isColumnMajor, const Array<InType> &in, MemoryStack &memory);
 
       // Perform an immediate matrix transpose (unlike the lazy transpose of ArraySlice)
       // in and out must be different Array objects
-      template<typename TypeIn, typename TypeOut> Result Transpose(const Array<TypeIn> &in, Array<TypeOut> &out);
+      template<typename InType, typename OutType> Result Transpose(const Array<InType> &in, Array<OutType> &out);
+
+      // Rotate an array clockwise by 90, 180, or 270 degrees.
+      // NOTE: Only works for a square matrix.
+      // NOTE: In and out must be different arrays (unlike the interview question)
+      template<typename InType, typename OutType> Result Rotate90( const Array<InType> &in, Array<OutType> &out);
+      template<typename InType, typename OutType> Result Rotate180(const Array<InType> &in, Array<OutType> &out);
+      template<typename InType, typename OutType> Result Rotate270(const Array<InType> &in, Array<OutType> &out);
 
       //
       // Misc matrix operations

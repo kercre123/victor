@@ -51,13 +51,13 @@ namespace Anki
     };
 
     // Similar to Matlab Interp2, except the upper-left corner is (0,0) instead of (1,1)
-    template<typename TypeIn, typename TypeOut> Result Interp2(const Array<TypeIn> &reference, const Array<f32> &xCoordinates, const Array<f32> &yCoordinates, Array<TypeOut> &out, const InterpolationType interpolationType=INTERPOLATE_LINEAR, const TypeOut invalidValue=static_cast<TypeOut>(0));
+    template<typename InType, typename OutType> Result Interp2(const Array<InType> &reference, const Array<f32> &xCoordinates, const Array<f32> &yCoordinates, Array<OutType> &out, const InterpolationType interpolationType=INTERPOLATE_LINEAR, const OutType invalidValue=static_cast<OutType>(0));
 
     // Same as Interp2, but uses an affine homography to compute the lookup coordinates
-    template<typename TypeIn, typename TypeOut> Result Interp2_Affine(const Array<TypeIn> &reference, const Meshgrid<f32> &originalCoordinates, const Array<f32> &homography, const Point<f32> &centerOffset, Array<TypeOut> &out, const InterpolationType interpolationType=INTERPOLATE_LINEAR, const TypeOut invalidValue=static_cast<TypeOut>(0));
+    template<typename InType, typename OutType> Result Interp2_Affine(const Array<InType> &reference, const Meshgrid<f32> &originalCoordinates, const Array<f32> &homography, const Point<f32> &centerOffset, Array<OutType> &out, const InterpolationType interpolationType=INTERPOLATE_LINEAR, const OutType invalidValue=static_cast<OutType>(0));
 
     // Same as Interp2, but uses an projective homography to compute the lookup coordinates
-    template<typename TypeIn, typename TypeOut> Result Interp2_Projective(const Array<TypeIn> &reference, const Meshgrid<f32> &originalCoordinates, const Array<f32> &homography, const Point<f32> &centerOffset, Array<TypeOut> &out, const InterpolationType interpolationType=INTERPOLATE_LINEAR, const TypeOut invalidValue=static_cast<TypeOut>(0));
+    template<typename InType, typename OutType> Result Interp2_Projective(const Array<InType> &reference, const Meshgrid<f32> &originalCoordinates, const Array<f32> &homography, const Point<f32> &centerOffset, Array<OutType> &out, const InterpolationType interpolationType=INTERPOLATE_LINEAR, const OutType invalidValue=static_cast<OutType>(0));
 
     // T = Top, B = Bottom, L = Left, R = Right
     template<typename Type> inline Type InterpolateBilinear2d(const Type pixelTL, const Type pixelTR, const Type pixelBL, const Type pixelBR, const Type alphaY, const Type alphaYinverse, const Type alphaX, const Type alphaXinverse);

@@ -536,6 +536,7 @@ namespace Anki
       SerializedBuffer::SerializeRawBasicType<Quadrilateral<s16> >("corners", this->corners, buffer, bufferLength);
       SerializedBuffer::SerializeRawBasicType<s32>("markerType", this->markerType, buffer, bufferLength);
       SerializedBuffer::SerializeRawBasicType<bool>("isValid", this->isValid, buffer, bufferLength);
+      SerializedBuffer::SerializeRawBasicType<f32>("observedOrientation", this->observedOrientation, buffer, bufferLength);
 
       return RESULT_OK;
     }
@@ -549,6 +550,7 @@ namespace Anki
       this->corners = SerializedBuffer::DeserializeRawBasicType<Quadrilateral<s16> >(NULL, buffer, bufferLength);
       this->markerType = static_cast<Vision::MarkerType>(SerializedBuffer::DeserializeRawBasicType<s32>(NULL, buffer, bufferLength));
       this->isValid = SerializedBuffer::DeserializeRawBasicType<bool>(NULL, buffer, bufferLength);
+      this->observedOrientation = SerializedBuffer::DeserializeRawBasicType<f32>(NULL, buffer, bufferLength);
 
       return RESULT_OK;
     }
@@ -754,7 +756,7 @@ namespace Anki
             {
               this->corners[i_corner] = quad[CornerReorderLUT[multiClassLabel][i_corner]];
             }
-            
+
             // 3. Keep track of what the original orientation was
             this->observedOrientation = ObservedOrientationLUT[multiClassLabel];
 
@@ -790,7 +792,7 @@ namespace Anki
     s32 VisionMarker::get_serializationSize() const
     {
       // TODO: make the correct length
-      return 64 + 8*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
+      return 64 + 10*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
     }
   } // namespace Embedded
 } // namespace Anki

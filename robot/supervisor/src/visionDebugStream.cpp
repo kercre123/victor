@@ -217,15 +217,15 @@ namespace Anki {
           edgeLists.imageHeight = image.get_size(0);
           edgeLists.imageWidth = image.get_size(1);
           
-          edgeLists.xDecreasing = FixedLengthList<Point<s16> >(parameters.edgeDetection_maxDetectionsPerType, offchipScratch);
-          edgeLists.xIncreasing = FixedLengthList<Point<s16> >(parameters.edgeDetection_maxDetectionsPerType, offchipScratch);
-          edgeLists.yDecreasing = FixedLengthList<Point<s16> >(parameters.edgeDetection_maxDetectionsPerType, offchipScratch);
-          edgeLists.yIncreasing = FixedLengthList<Point<s16> >(parameters.edgeDetection_maxDetectionsPerType, offchipScratch);
+          edgeLists.xDecreasing = FixedLengthList<Point<s16> >(parameters.edgeDetectionParams_update.maxDetectionsPerType, offchipScratch);
+          edgeLists.xIncreasing = FixedLengthList<Point<s16> >(parameters.edgeDetectionParams_update.maxDetectionsPerType, offchipScratch);
+          edgeLists.yDecreasing = FixedLengthList<Point<s16> >(parameters.edgeDetectionParams_update.maxDetectionsPerType, offchipScratch);
+          edgeLists.yIncreasing = FixedLengthList<Point<s16> >(parameters.edgeDetectionParams_update.maxDetectionsPerType, offchipScratch);
           
-          DetectBlurredEdges(
+          DetectBlurredEdges_GrayvalueThreshold(
                              image,
                              tracker.get_lastUsedGrayvalueThrehold(),
-                             parameters.edgeDetection_minComponentWidth, parameters.edgeDetection_everyNLines,
+                             parameters.edgeDetectionParams_update.minComponentWidth, parameters.edgeDetectionParams_update.everyNLines,
                              edgeLists);
           
           edgeLists.Serialize("Edge List", debugStreamBuffer_);
@@ -297,15 +297,15 @@ namespace Anki {
           edgeLists.imageHeight = grayscaleImage.get_size(0);
           edgeLists.imageWidth = grayscaleImage.get_size(1);
           
-          edgeLists.xDecreasing = FixedLengthList<Point<s16> >(parameters.edgeDetection_maxDetectionsPerType, offchipScratch);
-          edgeLists.xIncreasing = FixedLengthList<Point<s16> >(parameters.edgeDetection_maxDetectionsPerType, offchipScratch);
-          edgeLists.yDecreasing = FixedLengthList<Point<s16> >(parameters.edgeDetection_maxDetectionsPerType, offchipScratch);
-          edgeLists.yIncreasing = FixedLengthList<Point<s16> >(parameters.edgeDetection_maxDetectionsPerType, offchipScratch);
+          edgeLists.xDecreasing = FixedLengthList<Point<s16> >(parameters.edgeDetectionParams_update.maxDetectionsPerType, offchipScratch);
+          edgeLists.xIncreasing = FixedLengthList<Point<s16> >(parameters.edgeDetectionParams_update.maxDetectionsPerType, offchipScratch);
+          edgeLists.yDecreasing = FixedLengthList<Point<s16> >(parameters.edgeDetectionParams_update.maxDetectionsPerType, offchipScratch);
+          edgeLists.yIncreasing = FixedLengthList<Point<s16> >(parameters.edgeDetectionParams_update.maxDetectionsPerType, offchipScratch);
           
-          DetectBlurredEdges(
+          DetectBlurredEdges_GrayvalueThreshold(
                              grayscaleImage,
                              60,
-                             parameters.edgeDetection_minComponentWidth, parameters.edgeDetection_everyNLines,
+                             parameters.edgeDetectionParams_update.minComponentWidth, parameters.edgeDetectionParams_update.everyNLines,
                              edgeLists);
           
           edgeLists.Serialize("Edge List", debugStreamBuffer_);

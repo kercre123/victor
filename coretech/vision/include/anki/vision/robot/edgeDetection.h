@@ -43,20 +43,24 @@ namespace Anki
 
 #if defined(ANKICORETECH_EMBEDDED_USE_OPENCV) && ANKICORETECH_EMBEDDED_USE_OPENCV
       // Allocates the returned cv::Mat on the heap
-      cv::Mat DrawIndexes()  const;
+      cv::Mat DrawIndexes(const f32 scale=1.0f)  const;
 
       static cv::Mat DrawIndexes(
         const s32 imageHeight, const s32 imageWidth,
         const FixedLengthList<Point<s16> > &indexPoints1,
         const FixedLengthList<Point<s16> > &indexPoints2,
         const FixedLengthList<Point<s16> > &indexPoints3,
-        const FixedLengthList<Point<s16> > &indexPoints4);
+        const FixedLengthList<Point<s16> > &indexPoints4,
+        const f32 scale=1.0f);
 #endif
     } EdgeLists;
 
     // Calculate local extrema (edges) in an image. Returns four list for the four directions of change.
-    Result DetectBlurredEdges(const Array<u8> &image, const u8 grayvalueThreshold, const s32 minComponentWidth, const s32 everyNLines, EdgeLists &edgeLists);
-    Result DetectBlurredEdges(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const u8 grayvalueThreshold, const s32 minComponentWidth, const s32 everyNLines, EdgeLists &edgeLists);
+    Result DetectBlurredEdges_GrayvalueThreshold(const Array<u8> &image, const u8 grayvalueThreshold, const s32 minComponentWidth, const s32 everyNLines, EdgeLists &edgeLists);
+    Result DetectBlurredEdges_GrayvalueThreshold(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const u8 grayvalueThreshold, const s32 minComponentWidth, const s32 everyNLines, EdgeLists &edgeLists);
+
+    Result DetectBlurredEdges_DerivativeThreshold(const Array<u8> &image, const s32 combHalfWidth, const s32 combResponseThreshold, const s32 everyNLines, EdgeLists &edgeLists);
+    Result DetectBlurredEdges_DerivativeThreshold(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const s32 combHalfWidth, const s32 combResponseThreshold, const s32 everyNLines, EdgeLists &edgeLists);
 
     u8 ComputeGrayvalueThreshold(
       const Array<u8> &image,

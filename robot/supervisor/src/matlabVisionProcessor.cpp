@@ -43,7 +43,7 @@ namespace Anki {
 #elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PROJECTIVE
       static Transformations::TransformType transformType_ = Transformations::TRANSFORM_PROJECTIVE;
       const char* transformTypeStr_ = "homography";
-#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PLANAR6DOF
+#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
       static Transformations::TransformType transformType_ = Transformations::TRANSFORM_PROJECTIVE;
       const char* transformTypeStr_ = "planar6dof";
 #else
@@ -119,7 +119,7 @@ namespace Anki {
         matlabProc_.EvalStringEcho("marker3d = (%f/2)*[-1 0 1; -1 0 -1; 1 0 1; 1 0 -1];",
                                    VisionSystem::GetTrackingMarkerWidth());
         
-#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PLANAR6DOF
+#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
         matlabProc_.EvalStringEcho("LKtracker = LucasKanadeTracker(img, "
                                    "  initTrackingQuad + 1, "
                                    "  'Type', '%s', 'RidgeWeight', 0, "
@@ -173,13 +173,13 @@ namespace Anki {
                          const Radians& theta_robot,
                          const Radians& theta_head)
       {
-#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PLANAR6DOF
+#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
         matlabProc_.EvalStringEcho("LKtracker.UpdatePoseFromRobotMotion(%f, %f, %f, %f);",
                                    T_fwd_robot, T_hor_robot, theta_robot.ToFloat(), theta_head.ToFloat());
 #else
       // This call is only valid for for planar6dof tracker
       AnkiAssert(false);
-#endif // DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PLANAR6DOF
+#endif // DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
       }
       
       void UpdateTracker(const Array<f32>& predictionUpdate)
@@ -246,7 +246,7 @@ namespace Anki {
           matlabProc_.PutArray(img, "img");
         }
         
-#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PLANAR6DOF
+#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
         matlabProc_.EvalStringEcho(//"desktop, keyboard; "
                                    "[converged, reason] = LKtracker.track(img, "
                                    "   'MaxIterations', %d, "
@@ -336,7 +336,7 @@ namespace Anki {
         
         AnkiAssert(false); // Cannot compute projective error signal from affine tracker.
         
-#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PLANAR6DOF
+#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
         // Nothing to compute.  The tracker's parameters are the answer directly
         
         MatlabVisionProcessor::matlabProc_.EvalStringEcho("angleErr = LKtracker.theta_y; "
@@ -348,9 +348,9 @@ namespace Anki {
         matlabProc_.PutQuad(transformedQuad, "transformedQuad");
         
         matlabProc_.EvalStringEcho("blockPose = camera.computeExtrinsics(transformedQuad, marker3d); "
-                              "angleErr = asin(blockPose.Rmat(3,1)); "
-                              "distErr  = blockPose.T(3); "
-                              "horErr   = -blockPose.T(1); ");
+                                   "angleErr = asin(blockPose.Rmat(3,1)); "
+                                   "distErr  = blockPose.T(3); "
+                                   "horErr   = -blockPose.T(1); ");
         
 #endif
         

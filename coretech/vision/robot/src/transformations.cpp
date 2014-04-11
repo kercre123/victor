@@ -25,7 +25,7 @@ namespace Anki
     {
       PlanarTransformation_f32::PlanarTransformation_f32(const TransformType transformType, const Quadrilateral<f32> &initialCorners, const Array<f32> &initialHomography, MemoryStack &memory)
       {
-        this->centerOffset = initialCorners.ComputeCenter();
+        this->centerOffset = initialCorners.ComputeCenter<f32>();
 
         this->Init(transformType, initialCorners, initialHomography, centerOffset, memory);
       }
@@ -33,7 +33,7 @@ namespace Anki
       PlanarTransformation_f32::PlanarTransformation_f32(const TransformType transformType, const Quadrilateral<f32> &initialCorners, MemoryStack &memory)
       {
         this->homography = Array<f32>();
-        this->centerOffset = initialCorners.ComputeCenter();
+        this->centerOffset = initialCorners.ComputeCenter<f32>();
 
         this->Init(transformType, initialCorners, homography, centerOffset, memory);
       }
@@ -42,7 +42,7 @@ namespace Anki
       {
         this->homography = Array<f32>();
         this->initialCorners = Quadrilateral<f32>(Point<f32>(0.0f,0.0f), Point<f32>(0.0f,0.0f), Point<f32>(0.0f,0.0f), Point<f32>(0.0f,0.0f));
-        this->centerOffset = initialCorners.ComputeCenter();
+        this->centerOffset = initialCorners.ComputeCenter<f32>();
 
         this->Init(transformType, initialCorners, homography, centerOffset, memory);
       }
@@ -77,6 +77,8 @@ namespace Anki
         this->transformType = transformType;
         this->centerOffset = centerOffset;
         this->initialCorners = initialCorners;
+
+        this->initialPointsAreZeroCentered = false;
 
         this->homography = Eye<f32>(3, 3, memory);
 
@@ -215,7 +217,7 @@ namespace Anki
           yIn[0][i] = in.corners[i].y;
         }
 
-        TransformPoints(xIn, yIn, scale, false, false, xOut, yOut);
+        TransformPoints(xIn, yIn, scale, this->initialPointsAreZeroCentered, false, xOut, yOut);
 
         Quadrilateral<f32> out;
 
@@ -410,6 +412,9 @@ namespace Anki
         if(SerializedBuffer::SerializeRawBasicType<Point<f32> >("centerOffset", this->centerOffset, buffer, bufferLength) != RESULT_OK)
           return RESULT_FAIL;
 
+        if(SerializedBuffer::SerializeRawBasicType<bool>("initialPointsAreZeroCentered", this->initialPointsAreZeroCentered, buffer, bufferLength) != RESULT_OK)
+          return RESULT_FAIL;
+
         return RESULT_OK;
       }
 
@@ -424,6 +429,7 @@ namespace Anki
         this->homography = SerializedBuffer::DeserializeRawArray<f32>(NULL, buffer, bufferLength, memory);
         this->initialCorners = SerializedBuffer::DeserializeRawBasicType<Quadrilateral<f32> >(NULL, buffer, bufferLength);
         this->centerOffset = SerializedBuffer::DeserializeRawBasicType<Point<f32> >(NULL, buffer, bufferLength);
+        this->initialPointsAreZeroCentered = SerializedBuffer::DeserializeRawBasicType<bool>(NULL, buffer, bufferLength);
 
         return RESULT_OK;
       }
@@ -450,7 +456,7 @@ namespace Anki
         if(this->homography.Set(in) != 9)
           return RESULT_FAIL_INVALID_SIZE;
 
-        AnkiAssert(FLT_NEAR(in[2][2], 1.0f));
+        //AnkiAssert(FLT_NEAR(in[2][2], 1.0f));
 
         return RESULT_OK;
       }
@@ -470,6 +476,17 @@ namespace Anki
       const Quadrilateral<f32>& PlanarTransformation_f32::get_initialCorners() const
       {
         return this->initialCorners;
+      }
+
+      Result PlanarTransformation_f32::set_initialPointsAreZeroCentered(const bool areTheyCentered)
+      {
+        this->initialPointsAreZeroCentered = areTheyCentered;
+        return RESULT_OK;
+      }
+
+      bool PlanarTransformation_f32::get_initialPointsAreZeroCenetered() const
+      {
+        return this->initialPointsAreZeroCentered;
       }
 
       Result PlanarTransformation_f32::set_centerOffset(const Point<f32> &centerOffset)
@@ -492,6 +509,24 @@ namespace Anki
       Quadrilateral<f32> PlanarTransformation_f32::get_transformedCorners(MemoryStack scratch) const
       {
         return this->Transform(this->get_initialCorners(), scratch);
+      }
+
+      f32 PlanarTransformation_f32::get_transformedOrientation(MemoryStack scratch) const
+      {
+        const Quadrilateral<f32> transformedCorners = this->Transform(this->get_initialCorners(), scratch);
+
+        const Point<f32> transformedCenter = transformedCorners.ComputeCenter<f32>();
+
+        const Point<f32> rightMidpoint = Point<f32>(
+          (transformedCorners[Quadrilateral<f32>::TopRight].x + transformedCorners[Quadrilateral<f32>::BottomRight].x) / 2,
+          (transformedCorners[Quadrilateral<f32>::TopRight].y + transformedCorners[Quadrilateral<f32>::BottomRight].y) / 2);
+
+        const f32 dy = rightMidpoint.y - transformedCenter.y;
+        const f32 dx = rightMidpoint.x - transformedCenter.x;
+
+        const f32 orientation = atan2_acc(dy, dx);
+
+        return orientation;
       }
 
       Result PlanarTransformation_f32::TransformPointsStatic(
@@ -591,9 +626,9 @@ namespace Anki
         } else if(transformType == TRANSFORM_PROJECTIVE) {
           const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
           const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
-          const f32 h20 = homography[2][0]; const f32 h21 = homography[2][1]; const f32 h22 = 1.0f;
+          const f32 h20 = homography[2][0]; const f32 h21 = homography[2][1]; const f32 h22 = homography[2][2];
 
-          AnkiAssert(FLT_NEAR(homography[2][2], 1.0f));
+          //AnkiAssert(FLT_NEAR(homography[2][2], 1.0f));
 
           for(s32 y=0; y<numPointsY; y++) {
             const f32 * restrict pXIn = xIn.Pointer(y,0);
@@ -651,7 +686,7 @@ namespace Anki
       s32 PlanarTransformation_f32::get_serializationSize()
       {
         // TODO: make the correct length
-        return 512 + 14*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
+        return 512 + 16*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
       }
 
       Result ComputeHomographyFromQuad(const Quadrilateral<s16> &quad, Array<f32> &homography, MemoryStack scratch)
@@ -752,7 +787,7 @@ namespace Anki
         const Array<f32> &homography = this->get_homography();
         const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2] / initialImageScaleF32;
         const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2] / initialImageScaleF32;
-        const f32 h20 = homography[2][0] * initialImageScaleF32; const f32 h21 = homography[2][1] * initialImageScaleF32; //const f32 h22 = 1.0f;
+        const f32 h20 = homography[2][0] * initialImageScaleF32; const f32 h21 = homography[2][1] * initialImageScaleF32; const f32 h22 = homography[2][2] * initialImageScaleF32; // TODO: should h22 be scaled?
 
         //const s32 templateMeanS32 = RoundS32(templateHistogram.mean);
         //const s32 nextImageMeanS32 = RoundS32(nextImageHistogram.mean);
@@ -790,7 +825,7 @@ namespace Anki
             const f32 xTransformedRaw = h00*xOriginal + h01*yOriginal + h02;
             const f32 yTransformedRaw = h10*xOriginal + h11*yOriginal + h12;
 
-            const f32 normalization = 1.0f / (h20*xOriginal + h21*yOriginal + 1.0f);
+            const f32 normalization = 1.0f / (h20*xOriginal + h21*yOriginal + h22);
 
             const s32 xTransformedS32 = RoundS32( (xTransformedRaw * normalization) + centerOffsetScaled.x );
             const s32 yTransformedS32 = RoundS32( (yTransformedRaw * normalization) + centerOffsetScaled.y );
@@ -895,7 +930,7 @@ namespace Anki
         const Array<f32> &homography = this->get_homography();
         const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2] / initialImageScaleF32;
         const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2] / initialImageScaleF32;
-        const f32 h20 = homography[2][0] * initialImageScaleF32; const f32 h21 = homography[2][1] * initialImageScaleF32; //const f32 h22 = 1.0f;
+        const f32 h20 = homography[2][0] * initialImageScaleF32; const f32 h21 = homography[2][1] * initialImageScaleF32; const f32 h22 = homography[2][2] * initialImageScaleF32; // TODO: should h22 be scaled?
 
         numInBounds = 0;
         numSimilarPixels = 0;
@@ -918,7 +953,7 @@ namespace Anki
             const f32 xTransformedRaw = h00*xOriginal + h01*yOriginal + h02;
             const f32 yTransformedRaw = h10*xOriginal + h11*yOriginal + h12;
 
-            const f32 normalization = 1.0f / (h20*xOriginal + h21*yOriginal + 1.0f);
+            const f32 normalization = 1.0f / (h20*xOriginal + h21*yOriginal + h22);
 
             const f32 xTransformed = (xTransformedRaw * normalization) + centerOffsetScaled.x;
             const f32 yTransformed = (yTransformedRaw * normalization) + centerOffsetScaled.y;

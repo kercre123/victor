@@ -90,15 +90,25 @@ namespace Anki {
         trackingImageWidth  = CameraModeInfo[trackingResolution].width;
         trackingImageHeight = CameraModeInfo[trackingResolution].height;
         scaleTemplateRegionPercent = 1.1f;
-        //edgeDetection_grayvalueThreshold    = 128;
-        edgeDetection_threshold_yIncrement = 4;
-        edgeDetection_threshold_xIncrement = 4;
-        edgeDetection_threshold_blackPercentile = 0.10f;
-        edgeDetection_threshold_whitePercentile = 0.90f;
-        edgeDetection_threshold_scaleRegionPercent = 0.8f;
-        edgeDetection_minComponentWidth     = 2;
-        edgeDetection_maxDetectionsPerType  = 2500;
-        edgeDetection_everyNLines           = 1;
+        
+        
+        edgeDetectionParams_template = TemplateTracker::BinaryTracker::EdgeDetectionParameters(
+          TemplateTracker::BinaryTracker::EDGE_TYPE_GRAYVALUE,
+          4,    // s32 threshold_yIncrement; //< How many pixels to use in the y direction (4 is a good value?)
+          4,    // s32 threshold_xIncrement; //< How many pixels to use in the x direction (4 is a good value?)
+          0.1f, // f32 threshold_blackPercentile; //< What percentile of histogram energy is black? (.1 is a good value)
+          0.9f, // f32 threshold_whitePercentile; //< What percentile of histogram energy is white? (.9 is a good value)
+          0.8f, // f32 threshold_scaleRegionPercent; //< How much to scale template bounding box (.8 is a good value)
+          2,    // s32 minComponentWidth; //< The smallest horizontal size of a component (1 to 4 is good)
+          500,  // s32 maxDetectionsPerType; //< As many as you have memory and time for (500 is good)
+          1,    // s32 combHalfWidth; //< How far apart to compute the derivative difference (1 is good)
+          20,   // s32 combResponseThreshold; //< The minimum absolute-value response to start an edge component (20 is good)
+          1     // s32 everyNLines; //< As many as you have time for
+        );
+        
+        edgeDetectionParams_update = edgeDetectionParams_template;
+        edgeDetectionParams_update.maxDetectionsPerType = 2500;
+          
         matching_maxTranslationDistance     = 7;
         matching_maxProjectiveDistance      = 7;
         verify_maxTranslationDistance = 2;
@@ -109,9 +119,9 @@ namespace Anki {
 #else
         // LK tracker parameter initialization
         
-#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PROJECTIVE
+#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PROJECTIVE || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
         trackingResolution   = HAL::CAMERA_MODE_QVGA; // 320x240
-        numPyramidLevels     = 4;
+        numPyramidLevels     = 3;
 #else
         //trackingResolution   = HAL::CAMERA_MODE_QQQVGA; // 80x60
         trackingResolution   = HAL::CAMERA_MODE_QQVGA; // 160x120        

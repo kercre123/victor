@@ -16,6 +16,12 @@
 #include <webots/Robot.hpp>
 #include <webots/Supervisor.hpp>
 
+#define BLUR_CAPTURED_IMAGES 1
+
+#if BLUR_CAPTURED_IMAGES
+#include "opencv2/imgproc/imgproc.hpp"
+#endif
+
 #ifndef SIMULATOR
 #error SIMULATOR should be defined by any target using sim_hal.cpp
 #endif
@@ -639,7 +645,12 @@ namespace Anki {
             }
           }
         } // if averaging or not
-        
+      
+#if BLUR_CAPTURED_IMAGES
+        // Add some blur to simulated images
+        cv::Mat_<u8> cvImg(headCamInfo_.nrows, headCamInfo_.ncols, frame);
+        cv::GaussianBlur(cvImg, cvImg, cv::Size(0,0), 0.5f);
+#endif
       } // if image==NULL or not
       
     } // CameraGetFrame()

@@ -28,17 +28,20 @@ namespace Anki
     //const f32 ON_WHITE = 0;
     //const f32 ON_BLACK = 1.0f;
 
-    NO_INLINE static void DetectBlurredEdges_horizontal(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const u8 grayvalueThreshold, const s32 minComponentWidth, const s32 everyNLines, EdgeLists &edgeLists);
-    NO_INLINE static void DetectBlurredEdges_vertical(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const u8 grayvalueThreshold, const s32 minComponentWidth, const s32 everyNLines, EdgeLists &edgeLists);
+    NO_INLINE static void DetectBlurredEdges_GrayvalueThreshold_Horizontal(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const u8 grayvalueThreshold, const s32 minComponentWidth, const s32 everyNLines, EdgeLists &edgeLists);
+    NO_INLINE static void DetectBlurredEdges_GrayvalueThreshold_Vertical(  const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const u8 grayvalueThreshold, const s32 minComponentWidth, const s32 everyNLines, EdgeLists &edgeLists);
 
-    Result DetectBlurredEdges(const Array<u8> &image, const u8 grayvalueThreshold, const s32 minComponentWidth, const s32 everyNLines, EdgeLists &edgeLists)
+    NO_INLINE static void DetectBlurredEdges_DerivativeThreshold_Horizontal(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const s32 combHalfWidth, const s32 combResponseThreshold, const s32 everyNLines, EdgeLists &edgeLists);
+    NO_INLINE static void DetectBlurredEdges_DerivativeThreshold_Vertical(  const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const s32 combHalfWidth, const s32 combResponseThreshold, const s32 everyNLines, EdgeLists &edgeLists);
+
+    Result DetectBlurredEdges_GrayvalueThreshold(const Array<u8> &image, const u8 grayvalueThreshold, const s32 minComponentWidth, const s32 everyNLines, EdgeLists &edgeLists)
     {
       Rectangle<s32> imageRegionOfInterest(0, image.get_size(1), 0, image.get_size(0));
 
-      return DetectBlurredEdges(image, imageRegionOfInterest, grayvalueThreshold, minComponentWidth, everyNLines, edgeLists);
+      return DetectBlurredEdges_GrayvalueThreshold(image, imageRegionOfInterest, grayvalueThreshold, minComponentWidth, everyNLines, edgeLists);
     }
 
-    Result DetectBlurredEdges(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const u8 grayvalueThreshold, const s32 minComponentWidth, const s32 everyNLines, EdgeLists &edgeLists)
+    Result DetectBlurredEdges_GrayvalueThreshold(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const u8 grayvalueThreshold, const s32 minComponentWidth, const s32 everyNLines, EdgeLists &edgeLists)
     {
       AnkiConditionalErrorAndReturnValue(image.IsValid() && edgeLists.xDecreasing.IsValid() && edgeLists.xIncreasing.IsValid() && edgeLists.yDecreasing.IsValid() && edgeLists.yIncreasing.IsValid(),
         RESULT_FAIL_INVALID_OBJECT, "DetectBlurredEdges", "Arrays are not valid");
@@ -66,13 +69,51 @@ namespace Anki
       // TODO: won't detect an edge on the last horizontal (for x search) or vertical (for y search)
       //       pixel. Is there a fast way to do this?
 
-      DetectBlurredEdges_horizontal(image, imageRegionOfInterest, grayvalueThreshold, minComponentWidth, everyNLines, edgeLists);
-      DetectBlurredEdges_vertical(image, imageRegionOfInterest, grayvalueThreshold, minComponentWidth, everyNLines, edgeLists);
+      DetectBlurredEdges_GrayvalueThreshold_Horizontal(image, imageRegionOfInterest, grayvalueThreshold, minComponentWidth, everyNLines, edgeLists);
+      DetectBlurredEdges_GrayvalueThreshold_Vertical(image, imageRegionOfInterest, grayvalueThreshold, minComponentWidth, everyNLines, edgeLists);
 
       return RESULT_OK;
-    } // Result DetectBlurredEdges()
+    } // Result DetectBlurredEdges_GrayvalueThreshold()
 
-    NO_INLINE static void DetectBlurredEdges_horizontal(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const u8 grayvalueThreshold, const s32 minComponentWidth, const s32 everyNLines, EdgeLists &edgeLists)
+    Result DetectBlurredEdges_DerivativeThreshold(const Array<u8> &image, const s32 combHalfWidth, const s32 combResponseThreshold, const s32 everyNLines, EdgeLists &edgeLists)
+    {
+      Rectangle<s32> imageRegionOfInterest(0, image.get_size(1), 0, image.get_size(0));
+
+      return DetectBlurredEdges_DerivativeThreshold(image, imageRegionOfInterest, combHalfWidth, combResponseThreshold, everyNLines, edgeLists);
+    } // DetectBlurredEdges_DerivativeThreshold()
+
+    Result DetectBlurredEdges_DerivativeThreshold(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const s32 combHalfWidth, const s32 combResponseThreshold, const s32 everyNLines, EdgeLists &edgeLists)
+    {
+      AnkiConditionalErrorAndReturnValue(image.IsValid() && edgeLists.xDecreasing.IsValid() && edgeLists.xIncreasing.IsValid() && edgeLists.yDecreasing.IsValid() && edgeLists.yIncreasing.IsValid(),
+        RESULT_FAIL_INVALID_OBJECT, "DetectBlurredEdges", "Arrays are not valid");
+
+      AnkiConditionalErrorAndReturnValue(combHalfWidth > 0 && combResponseThreshold >= 0,
+        RESULT_FAIL_INVALID_SIZE, "DetectBlurredEdges", "combHalfWidth or combResponseThreshold are too small");
+
+      AnkiConditionalErrorAndReturnValue(edgeLists.xDecreasing.get_maximumSize() == edgeLists.xIncreasing.get_maximumSize() &&
+        edgeLists.xDecreasing.get_maximumSize() == edgeLists.yDecreasing.get_maximumSize() &&
+        edgeLists.xDecreasing.get_maximumSize() == edgeLists.yIncreasing.get_maximumSize(),
+        RESULT_FAIL_INVALID_SIZE, "DetectBlurredEdges", "All edgeLists must have the same maximum size");
+
+      edgeLists.xDecreasing.Clear();
+      edgeLists.xIncreasing.Clear();
+      edgeLists.yDecreasing.Clear();
+      edgeLists.yIncreasing.Clear();
+
+      const s32 imageHeight = image.get_size(0);
+      const s32 imageWidth = image.get_size(1);
+      const s32 imageStride = image.get_stride();
+
+      edgeLists.imageHeight = imageHeight;
+      edgeLists.imageWidth = imageWidth;
+
+      DetectBlurredEdges_DerivativeThreshold_Horizontal(image, imageRegionOfInterest, combHalfWidth, combResponseThreshold, everyNLines, edgeLists);
+      DetectBlurredEdges_DerivativeThreshold_Vertical(image, imageRegionOfInterest, combHalfWidth, combResponseThreshold, everyNLines, edgeLists);
+
+      return RESULT_OK;
+    } // DetectBlurredEdges_DerivativeThreshold()
+
+    NO_INLINE static void DetectBlurredEdges_GrayvalueThreshold_Horizontal(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const u8 grayvalueThreshold, const s32 minComponentWidth, const s32 everyNLines, EdgeLists &edgeLists)
     {
       //
       // Detect horizontal positive and negative transitions
@@ -137,7 +178,7 @@ namespace Anki
               if(componentWidth >= minComponentWidth) {
                 // If there's room, add the point to the list
                 if(xDecreasingSize < xMaxSizeM1) {
-                  u32 newPoint = (y << 16) + x; // Set x and y in one operation
+                  const u32 newPoint = (y << 16) + x; // Set x and y in one operation
                   pXDecreasing[xDecreasingSize] = newPoint;
 
                   xDecreasingSize++;
@@ -179,7 +220,7 @@ namespace Anki
               if(componentWidth >= minComponentWidth) {
                 // If there's room, add the point to the list
                 if(xIncreasingSize < xMaxSizeM1) {
-                  u32 newPoint = (y << 16) + x;
+                  const u32 newPoint = (y << 16) + x;
                   pXIncreasing[xIncreasingSize] = newPoint;
 
                   xIncreasingSize++;
@@ -196,9 +237,9 @@ namespace Anki
 
       edgeLists.xDecreasing.set_size(xDecreasingSize);
       edgeLists.xIncreasing.set_size(xIncreasingSize);
-    } // DetectBlurredEdges_horizontal()
+    } // DetectBlurredEdges_GrayvalueThreshold_Horizontal()
 
-    NO_INLINE static void DetectBlurredEdges_vertical(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const u8 grayvalueThreshold, const s32 minComponentWidth, const s32 everyNLines, EdgeLists &edgeLists)
+    NO_INLINE static void DetectBlurredEdges_GrayvalueThreshold_Vertical(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const u8 grayvalueThreshold, const s32 minComponentWidth, const s32 everyNLines, EdgeLists &edgeLists)
     {
       //
       //  Detect vertical positive and negative transitions
@@ -260,7 +301,7 @@ namespace Anki
               if(componentWidth >= minComponentWidth) {
                 // If there's room, add the point to the list
                 if(yDecreasingSize < yMaxSizeM1) {
-                  u32 newPoint = (y << 16) + x;
+                  const u32 newPoint = (y << 16) + x;
                   pYDecreasing[yDecreasingSize] = newPoint;
 
                   yDecreasingSize++;
@@ -299,7 +340,7 @@ namespace Anki
               if(componentWidth >= minComponentWidth) {
                 // If there's room, add the point to the list
                 if(yIncreasingSize < yMaxSizeM1) {
-                  u32 newPoint = (y << 16) + x;
+                  const u32 newPoint = (y << 16) + x;
                   pYIncreasing[yIncreasingSize] = newPoint;
 
                   yIncreasingSize++;
@@ -317,7 +358,149 @@ namespace Anki
 
       edgeLists.yDecreasing.set_size(yDecreasingSize);
       edgeLists.yIncreasing.set_size(yIncreasingSize);
-    } // DetectBlurredEdges_vertical()
+    } // DetectBlurredEdges_GrayvalueThreshold_Vertical()
+
+    NO_INLINE static void DetectBlurredEdges_DerivativeThreshold_Horizontal(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const s32 combHalfWidth, const s32 combResponseThreshold, const s32 everyNLines, EdgeLists &edgeLists)
+    {
+      //
+      // Detect horizontal positive and negative transitions
+      //
+
+      const s32 imageStride = image.get_stride();
+
+      s32 xDecreasingSize = edgeLists.xDecreasing.get_size();
+      s32 xIncreasingSize = edgeLists.xIncreasing.get_size();
+      s32 xMaxSizeM1 = edgeLists.xDecreasing.get_maximumSize() - 1;
+      u32 * restrict pXDecreasing = reinterpret_cast<u32 *>(edgeLists.xDecreasing.Pointer(0));
+      u32 * restrict pXIncreasing = reinterpret_cast<u32 *>(edgeLists.xIncreasing.Pointer(0));
+
+      const s32 xStart = imageRegionOfInterest.left + combHalfWidth;
+      const s32 xEnd = imageRegionOfInterest.right - combHalfWidth;
+
+      // These have an extra 1 pixel, to match the grayvalue binarization
+      const s32 yStart = imageRegionOfInterest.top + combHalfWidth;
+      const s32 yEnd = imageRegionOfInterest.bottom - combHalfWidth;
+
+      for(s32 y=yStart; y<yEnd; y+=everyNLines) {
+        const u8 * restrict pImage = image.Pointer(y,0);
+
+        bool onEdge = false;
+
+        s32 componentStart = -1;
+        s32 x = xStart;
+        while(x < xEnd) {
+          const s32 diff = pImage[x+combHalfWidth] - pImage[x-combHalfWidth];
+          const s32 absDiff = ABS(diff);
+
+          if(onEdge) {
+            if(absDiff < combResponseThreshold) {
+              const s32 middle = (componentStart + x - 1) >> 1;
+              const s32 totalDiff = pImage[x-1] - pImage[componentStart];
+
+              if(totalDiff > 0) {
+                if(xIncreasingSize < xMaxSizeM1) {
+                  const u32 newPoint = (y << 16) + middle; // Set x and y in one operation
+                  pXIncreasing[xIncreasingSize] = newPoint;
+
+                  xIncreasingSize++;
+                }
+              } else { // if(totalDiff > 0)
+                if(xDecreasingSize < xMaxSizeM1) {
+                  const u32 newPoint = (y << 16) + middle; // Set x and y in one operation
+                  pXDecreasing[xDecreasingSize] = newPoint;
+
+                  xDecreasingSize++;
+                }
+              } // if(totalDiff > 0) ... else
+
+              onEdge = false;
+            }
+          } else { // if(onEdge)
+            if(absDiff >= combResponseThreshold) {
+              componentStart = x;
+              onEdge = true;
+            }
+          } // if(onEdge) ... else
+
+          x++;
+        } // while(x < xEnd)
+      } // for(s32 y=imageRegionOfInterest.top; y<imageRegionOfInterest.bottom; y+=everyNLines)
+
+      edgeLists.xDecreasing.set_size(xDecreasingSize);
+      edgeLists.xIncreasing.set_size(xIncreasingSize);
+    } // DetectBlurredEdges_DerivativeThreshold_Horizontal()
+
+    NO_INLINE static void DetectBlurredEdges_DerivativeThreshold_Vertical(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const s32 combHalfWidth, const s32 combResponseThreshold, const s32 everyNLines, EdgeLists &edgeLists)
+    {
+      //
+      //  Detect vertical positive and negative transitions
+      //
+
+      const s32 imageStride = image.get_stride();
+
+      s32 yDecreasingSize = edgeLists.yDecreasing.get_size();
+      s32 yIncreasingSize = edgeLists.yIncreasing.get_size();
+      s32 yMaxSizeM1 = edgeLists.yDecreasing.get_maximumSize() - 1;
+      u32 * restrict pYDecreasing = reinterpret_cast<u32 *>(edgeLists.yDecreasing.Pointer(0));
+      u32 * restrict pYIncreasing = reinterpret_cast<u32 *>(edgeLists.yIncreasing.Pointer(0));
+
+      const s32 yStart = imageRegionOfInterest.top + combHalfWidth;
+      const s32 yEnd = imageRegionOfInterest.bottom - combHalfWidth;
+
+      // These have an extra 1 pixel, to match the grayvalue binarization
+      const s32 xStart = imageRegionOfInterest.left + combHalfWidth;
+      const s32 xEnd = imageRegionOfInterest.right - combHalfWidth;
+
+      for(s32 x=xStart; x<xEnd; x+=everyNLines) {
+        const u8 * restrict pImage = image.Pointer(yStart, x);
+        const u8 * restrict pImage_y0 = image.Pointer(0, x);
+
+        bool onEdge = false;
+
+        s32 componentStart = -1;
+        s32 y = yStart;
+        while(y < yEnd) {
+          const s32 diff = pImage[imageStride*combHalfWidth] - pImage[-imageStride*combHalfWidth];
+          const s32 absDiff = ABS(diff);
+
+          if(onEdge) {
+            if(absDiff < combResponseThreshold) {
+              const s32 middle = (componentStart + y - 1) >> 1;
+              const s32 totalDiff = pImage_y0[imageStride*(y-1)] - pImage_y0[imageStride*(componentStart)];
+
+              if(totalDiff > 0) {
+                if(yIncreasingSize < yMaxSizeM1) {
+                  const u32 newPoint = (middle << 16) + x; // Set x and y in one operation
+                  pYIncreasing[yIncreasingSize] = newPoint;
+
+                  yIncreasingSize++;
+                }
+              } else {
+                if(yDecreasingSize < yMaxSizeM1) {
+                  const u32 newPoint = (middle << 16) + x; // Set x and y in one operation
+                  pYDecreasing[yDecreasingSize] = newPoint;
+
+                  yDecreasingSize++;
+                }
+              }
+
+              onEdge = false;
+            }
+          } else {
+            if(absDiff >= combResponseThreshold) {
+              componentStart = y;
+              onEdge = true;
+            }
+          }
+
+          y++;
+          pImage += imageStride;
+        } // while(y < yEnd)
+      } // for(s32 x=imageRegionOfInterest.left; x<imageRegionOfInterest.right; x+=everyNLines)
+
+      edgeLists.yDecreasing.set_size(yDecreasingSize);
+      edgeLists.yIncreasing.set_size(yIncreasingSize);
+    } // DetectBlurredEdges_DerivativeThreshold_Vertical()
 
     Result EdgeLists::Serialize(const char *objectName, SerializedBuffer &buffer) const
     {
@@ -394,12 +577,12 @@ namespace Anki
     }
 
 #ifdef ANKICORETECH_EMBEDDED_USE_OPENCV
-    cv::Mat EdgeLists::DrawIndexes() const
+    cv::Mat EdgeLists::DrawIndexes(const f32 scale) const
     {
       AnkiConditionalErrorAndReturnValue(this->imageHeight > 16 && this->imageHeight < 2000 && this->imageWidth > 16 && this->imageWidth < 2000,
         cv::Mat(), "EdgeLists::DrawIndexes", "This object is invalid");
 
-      return DrawIndexes(this->imageHeight, this->imageWidth, this->xDecreasing, this->xIncreasing, this->yDecreasing, this->yIncreasing);
+      return DrawIndexes(this->imageHeight, this->imageWidth, this->xDecreasing, this->xIncreasing, this->yDecreasing, this->yIncreasing, scale);
     }
 
     cv::Mat EdgeLists::DrawIndexes(
@@ -407,7 +590,8 @@ namespace Anki
       const FixedLengthList<Point<s16> > &indexPoints1,
       const FixedLengthList<Point<s16> > &indexPoints2,
       const FixedLengthList<Point<s16> > &indexPoints3,
-      const FixedLengthList<Point<s16> > &indexPoints4)
+      const FixedLengthList<Point<s16> > &indexPoints4,
+      const f32 scale)
     {
       const u8 colors[4][3] = {
         {128,0,0},
@@ -467,6 +651,13 @@ namespace Anki
       }
 
       free(scratch.get_buffer());
+
+      if(!FLT_NEAR(scale, 1.0f)) {
+        cv::Mat totalImageLarge(RoundS32(imageHeight*scale), RoundS32(imageWidth*scale), CV_8UC3);
+        cv::resize(totalImage, totalImageLarge, totalImageLarge.size(), 0, 0, cv::INTER_NEAREST);
+
+        return totalImageLarge;
+      }
 
       return totalImage;
     }
