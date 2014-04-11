@@ -70,14 +70,14 @@ namespace Anki
       Result PlanarTransformation_f32::Init(const TransformType transformType, const Quadrilateral<f32> &initialCorners, const Array<f32> &initialHomography, const Point<f32> &centerOffset, MemoryStack &memory)
       {
         this->isValid = false;
-        
+
         AnkiConditionalErrorAndReturnValue(transformType==TRANSFORM_TRANSLATION || transformType==TRANSFORM_AFFINE || transformType==TRANSFORM_PROJECTIVE,
           RESULT_FAIL_INVALID_PARAMETERS, "PlanarTransformation_f32::Init", "Invalid transformType %d", transformType);
 
         this->transformType = transformType;
         this->centerOffset = centerOffset;
         this->initialCorners = initialCorners;
-        
+
         this->initialPointsAreZeroCentered = false;
 
         this->homography = Eye<f32>(3, 3, memory);
@@ -412,6 +412,9 @@ namespace Anki
         if(SerializedBuffer::SerializeRawBasicType<Point<f32> >("centerOffset", this->centerOffset, buffer, bufferLength) != RESULT_OK)
           return RESULT_FAIL;
 
+        if(SerializedBuffer::SerializeRawBasicType<bool>("initialPointsAreZeroCentered", this->initialPointsAreZeroCentered, buffer, bufferLength) != RESULT_OK)
+          return RESULT_FAIL;
+
         return RESULT_OK;
       }
 
@@ -426,6 +429,7 @@ namespace Anki
         this->homography = SerializedBuffer::DeserializeRawArray<f32>(NULL, buffer, bufferLength, memory);
         this->initialCorners = SerializedBuffer::DeserializeRawBasicType<Quadrilateral<f32> >(NULL, buffer, bufferLength);
         this->centerOffset = SerializedBuffer::DeserializeRawBasicType<Point<f32> >(NULL, buffer, bufferLength);
+        this->initialPointsAreZeroCentered = SerializedBuffer::DeserializeRawBasicType<bool>(NULL, buffer, bufferLength);
 
         return RESULT_OK;
       }
@@ -473,13 +477,13 @@ namespace Anki
       {
         return this->initialCorners;
       }
-      
+
       Result PlanarTransformation_f32::set_initialPointsAreZeroCentered(const bool areTheyCentered)
       {
         this->initialPointsAreZeroCentered = areTheyCentered;
         return RESULT_OK;
       }
-      
+
       bool PlanarTransformation_f32::get_initialPointsAreZeroCenetered() const
       {
         return this->initialPointsAreZeroCentered;
@@ -524,7 +528,7 @@ namespace Anki
 
         return orientation;
       }
-      
+
       Result PlanarTransformation_f32::TransformPointsStatic(
         const Array<f32> &xIn, const Array<f32> &yIn,
         const f32 scale,
@@ -682,7 +686,7 @@ namespace Anki
       s32 PlanarTransformation_f32::get_serializationSize()
       {
         // TODO: make the correct length
-        return 512 + 14*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
+        return 512 + 16*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
       }
 
       Result ComputeHomographyFromQuad(const Quadrilateral<s16> &quad, Array<f32> &homography, MemoryStack scratch)
