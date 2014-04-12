@@ -41,7 +41,95 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include <cmath>
 
+#ifdef ANKICORETECH_EMBEDDED_USE_OPENCV
+#include <iostream>
+#include <fstream>
+#endif
+
 using namespace Anki::Embedded;
+
+#define RUN_FACE_DETECTION_ALL
+
+#if defined(RUN_FACE_DETECTION_ALL) && defined(ANKICORETECH_EMBEDDED_USE_OPENCV)
+GTEST_TEST(CoreTech_Vision, FaceDetection_All)
+{
+  using namespace std;
+
+  cv::CascadeClassifier face_cascade;
+
+  //const std::string face_cascade_name = std::string("C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_frontalface_alt.xml");
+  //const std::string face_cascade_name = std::string("C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_frontalface_alt2.xml");
+  //const std::string face_cascade_name = std::string("C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_frontalface_alt_tree.xml");
+  const std::string face_cascade_name = std::string("C:/Anki/coretech-external/opencv-2.4.8/data/lbpcascades/lbpcascade_frontalface.xml");
+
+  if( !face_cascade.load( face_cascade_name ) ) {
+    printf("Could not load %s\n", face_cascade_name.c_str());
+    return;
+  }
+
+  std::ifstream faceFilenames("C:/datasets/faces/lfw/allFiles.txt");
+
+  while(!faceFilenames.eof()) {
+    const s32 numImagesAtATime = 20;
+    std::string lines[numImagesAtATime];
+
+    for(s32 in=0; in<numImagesAtATime; in++) {
+      getline(faceFilenames, lines[in]);
+
+      vector<cv::Rect> detectedFaces;
+
+      cv::Mat image = cv::imread(lines[in]);
+
+      f32 t0 = GetTime();
+
+      face_cascade.detectMultiScale(
+        image,
+        detectedFaces,
+        1.1, // double scaleFactor=1.1,
+        2, // int minNeighbors=3,
+        0|CV_HAAR_SCALE_IMAGE, // int flags=0,
+        cv::Size(30, 30), // Size minSize=Size(),
+        cv::Size() // Size maxSize=Size()
+        );
+
+      f32 t1 = GetTime();
+
+      printf("Detection took %f seconds\n", t1-t0);
+
+      cv::Mat toShow;
+
+      if(image.channels() == 1) {
+        (image.rows, image.cols, CV_8UC3);
+
+        vector<cv::Mat> channels;
+        channels.push_back(image);
+        channels.push_back(image);
+        channels.push_back(image);
+        cv::merge(channels, toShow);
+      } else {
+        toShow = image;
+      }
+
+      for( size_t i = 0; i < detectedFaces.size(); i++ )
+      {
+        cv::Point center( detectedFaces[i].x + detectedFaces[i].width*0.5, detectedFaces[i].y + detectedFaces[i].height*0.5 );
+        cv::ellipse( toShow, center, cv::Size( detectedFaces[i].width*0.5, detectedFaces[i].height*0.5), 0, 0, 360, cv::Scalar( 255, 0, 255 ), 4, 8, 0 );
+      }
+
+      const s32 maxChars = 1024;
+      char outname[maxChars];
+      snprintf(outname, "Detected faces %d", in);
+
+      //-- Show what you got
+      cv::imshow(outname, toShow);
+    }
+
+    cv::waitKey();
+  } // while(!faceFilenames.eof())
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Vision, FaceDetection_All)
+#endif // #if defined(RUN_FACE_DETECTION_ALL) && defined(ANKICORETECH_EMBEDDED_USE_OPENCV)
 
 GTEST_TEST(CoreTech_Vision, FaceDetection)
 {
