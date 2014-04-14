@@ -206,6 +206,32 @@ GTEST_TEST(CoreTech_Vision, FaceDetection)
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, FaceDetection)
 
+GTEST_TEST(CoreTech_Vision, ResizeImage)
+{
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(scratchOnchip.IsValid());
+
+  Array<f32> in( 2, 5, scratchOnchip);
+  Array<f32> out(3, 6, scratchOnchip);
+
+  in[0][0] = 1; in[0][1] = 2; in[0][2] = 3; in[0][3] = 4; in[0][4] = 5;
+  in[1][0] = 6; in[1][1] = 7; in[1][2] = 8; in[1][3] = 9; in[1][4] = 5;
+
+  const Result result = ImageProcessing::Resize<f32,f32>(in, out);
+
+  ASSERT_TRUE(result == RESULT_OK);
+
+  Array<f32> out_groundTruth(3, 6, scratchOnchip);
+
+  out_groundTruth[0][0] = 1.0000f; out_groundTruth[0][1] = 1.7500f; out_groundTruth[0][2] = 2.5833f; out_groundTruth[0][3] = 3.4167f; out_groundTruth[0][4] = 4.2500f; out_groundTruth[0][5] = 5.0000f;
+  out_groundTruth[1][0] = 3.5000f; out_groundTruth[1][1] = 4.2500f; out_groundTruth[1][2] = 5.0833f; out_groundTruth[1][3] = 5.9167f; out_groundTruth[1][4] = 6.1250f; out_groundTruth[1][5] = 5.0000f;
+  out_groundTruth[2][0] = 6.0000f; out_groundTruth[2][1] = 6.7500f; out_groundTruth[2][2] = 7.5833f; out_groundTruth[2][3] = 8.4167f; out_groundTruth[2][4] = 8.0000f; out_groundTruth[2][5] = 5.0000f;
+
+  ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(out, out_groundTruth, .01, .01));
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Vision, ResizeImage)
+
 GTEST_TEST(CoreTech_Vision, DecisionTreeVision)
 {
   MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
@@ -3624,6 +3650,7 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   numPassedTests = 0;
   numFailedTests = 0;
 
+  //CALL_GTEST_TEST(CoreTech_Vision, ResizeImage);
   //CALL_GTEST_TEST(CoreTech_Vision, DecisionTreeVision);
   CALL_GTEST_TEST(CoreTech_Vision, BinaryTracker);
   /*CALL_GTEST_TEST(CoreTech_Vision, DetectBlurredEdge_DerivativeThreshold);

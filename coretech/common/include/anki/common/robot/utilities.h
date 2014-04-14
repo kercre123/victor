@@ -180,6 +180,28 @@ namespace Anki
       else
         return static_cast<s32>(ceil(x - 0.5));
     }
+
+    inline s32 FloorS32(f32 x)
+    {
+#if !defined(__EDG__)
+      // Some platforms may not round to zero correctly, so do the function calls
+      return static_cast<s32>(floorf(x));
+#else
+      // The M4 rounds to zero correctly, without the function call
+      return static_cast<s32>(x - 0.5f);
+#endif
+    }
+
+    inline s32 CeilS32(f32 x)
+    {
+#if !defined(__EDG__)
+      // Some platforms may not round to zero correctly, so do the function calls
+      return static_cast<s32>(ceilf(x));
+#else
+      // The M4 rounds to zero correctly, without the function call
+      return static_cast<s32>(x + 0.5f);
+#endif
+    }
   } // namespace Embedded
 } // namespace Anki
 
