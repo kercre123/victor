@@ -211,23 +211,43 @@ GTEST_TEST(CoreTech_Vision, ResizeImage)
   MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
   ASSERT_TRUE(scratchOnchip.IsValid());
 
-  Array<f32> in( 2, 5, scratchOnchip);
-  Array<f32> out(3, 6, scratchOnchip);
+  Array<f32> in(2, 5, scratchOnchip);
+  Array<f32> outBig(3, 6, scratchOnchip);
+  Array<f32> outSmall(2, 5, scratchOnchip);
 
   in[0][0] = 1; in[0][1] = 2; in[0][2] = 3; in[0][3] = 4; in[0][4] = 5;
   in[1][0] = 6; in[1][1] = 7; in[1][2] = 8; in[1][3] = 9; in[1][4] = 5;
 
-  const Result result = ImageProcessing::Resize<f32,f32>(in, out);
+  {
+    const Result result = ImageProcessing::Resize<f32,f32>(in, outBig);
 
-  ASSERT_TRUE(result == RESULT_OK);
+    outBig.Print("outBig");
 
-  Array<f32> out_groundTruth(3, 6, scratchOnchip);
+    ASSERT_TRUE(result == RESULT_OK);
+  }
 
-  out_groundTruth[0][0] = 1.0000f; out_groundTruth[0][1] = 1.7500f; out_groundTruth[0][2] = 2.5833f; out_groundTruth[0][3] = 3.4167f; out_groundTruth[0][4] = 4.2500f; out_groundTruth[0][5] = 5.0000f;
-  out_groundTruth[1][0] = 3.5000f; out_groundTruth[1][1] = 4.2500f; out_groundTruth[1][2] = 5.0833f; out_groundTruth[1][3] = 5.9167f; out_groundTruth[1][4] = 6.1250f; out_groundTruth[1][5] = 5.0000f;
-  out_groundTruth[2][0] = 6.0000f; out_groundTruth[2][1] = 6.7500f; out_groundTruth[2][2] = 7.5833f; out_groundTruth[2][3] = 8.4167f; out_groundTruth[2][4] = 8.0000f; out_groundTruth[2][5] = 5.0000f;
+  Array<f32> outBig_groundTruth(3, 6, scratchOnchip);
 
-  ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(out, out_groundTruth, .01, .01));
+  outBig_groundTruth[0][0] = 1.0000f; outBig_groundTruth[0][1] = 1.7500f; outBig_groundTruth[0][2] = 2.5833f; outBig_groundTruth[0][3] = 3.4167f; outBig_groundTruth[0][4] = 4.2500f; outBig_groundTruth[0][5] = 5.0000f;
+  outBig_groundTruth[1][0] = 3.5000f; outBig_groundTruth[1][1] = 4.2500f; outBig_groundTruth[1][2] = 5.0833f; outBig_groundTruth[1][3] = 5.9167f; outBig_groundTruth[1][4] = 6.1250f; outBig_groundTruth[1][5] = 5.0000f;
+  outBig_groundTruth[2][0] = 6.0000f; outBig_groundTruth[2][1] = 6.7500f; outBig_groundTruth[2][2] = 7.5833f; outBig_groundTruth[2][3] = 8.4167f; outBig_groundTruth[2][4] = 8.0000f; outBig_groundTruth[2][5] = 5.0000f;
+
+  ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(outBig, outBig_groundTruth, .01, .01));
+
+  {
+    const Result result = ImageProcessing::Resize<f32,f32>(outBig_groundTruth, outSmall);
+
+    outSmall.Print("outSmall");
+
+    ASSERT_TRUE(result == RESULT_OK);
+  }
+
+  Array<f32> outSmall_groundTruth(2, 5, scratchOnchip);
+
+  outSmall_groundTruth[0][0] = 1.7000f; outSmall_groundTruth[0][1] = 2.6250f; outSmall_groundTruth[0][2] = 3.6250f; outSmall_groundTruth[0][3] = 4.5156f; outSmall_groundTruth[0][4] = 4.9719f;
+  outSmall_groundTruth[1][0] = 5.4500f; outSmall_groundTruth[1][1] = 6.3750f; outSmall_groundTruth[1][2] = 7.3750f; outSmall_groundTruth[1][3] = 7.6094f; outSmall_groundTruth[1][4] = 5.2531f;
+
+  ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(outSmall, outSmall_groundTruth, .01, .01));
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, ResizeImage)

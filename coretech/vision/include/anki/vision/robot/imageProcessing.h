@@ -202,27 +202,20 @@ namespace Anki
         const s32 outWidth  = out.get_size(1);
 
         Point<f32> scale(
-          static_cast<f32>(outWidth) / static_cast<f32>(inWidth),
-          static_cast<f32>(outHeight) / static_cast<f32>(inHeight));
+          static_cast<f32>(inWidth)  / static_cast<f32>(outWidth),
+          static_cast<f32>(inHeight) / static_cast<f32>(outHeight));
 
-        const f32 yInStart     = 0.5f * scale.y;
+        const f32 yInStart     = (0.5f * scale.y) - 0.5f;
         const f32 yInIncrement = scale.y;
 
-        const f32 xInStart     = 0.5f * scale.x;
+        const f32 xInStart     = (0.5f * scale.x) - 0.5f;
         const f32 xInIncrement = scale.x;
 
         for(s32 y=0; y<outHeight; y++) {
           const f32 inY = yInStart + yInIncrement * static_cast<f32>(y);
 
-          const f32 inY0 = static_cast<f32>(FloorS32(inY));
-          const f32 inY1 = static_cast<f32>(CeilS32(inY));
-
-          const f32 alphaY = inY - inY0;
-          const f32 alphaYinverse = 1.0f - alphaY;
-
-          // The -0.5 is because the input coordinates have 0.5 added, to make them the pixel centers
-          s32 inY0_S32 = FloorS32(inY - 0.5f);
-          s32 inY1_S32 = CeilS32(inY - 0.5f);
+          s32 inY0_S32 = FloorS32(inY);
+          s32 inY1_S32 = CeilS32(inY);
 
           // Technically, we can't interpolate the borders. But this is a reasonable approximation
           if(inY0_S32 < 0)
@@ -231,11 +224,17 @@ namespace Anki
           if(inY1_S32 < 0)
             inY1_S32 = 0;
 
-          if(inY0_S32 > (outHeight-1))
-            inY0_S32 = outHeight-1;
+          if(inY0_S32 > (inHeight-1))
+            inY0_S32 = inHeight-1;
 
-          if(inY1_S32 > (outHeight-1))
-            inY1_S32 = outHeight-1;
+          if(inY1_S32 > (inHeight-1))
+            inY1_S32 = inHeight-1;
+
+          const f32 inY0 = static_cast<f32>(inY0_S32);
+          //const f32 inY1 = static_cast<f32>(inY1_S32);
+
+          const f32 alphaY = inY - inY0;
+          const f32 alphaYinverse = 1.0f - alphaY;
 
           const InType * restrict pIn_y0 = in.Pointer(inY0_S32, 0);
           const InType * restrict pIn_y1 = in.Pointer(inY1_S32, 0);
@@ -245,15 +244,8 @@ namespace Anki
           for(s32 x=0; x<outWidth; x++) {
             const f32 inX = xInStart + xInIncrement * static_cast<f32>(x);
 
-            const f32 inX0 = static_cast<f32>(FloorS32(inX));
-            const f32 inX1 = static_cast<f32>(CeilS32(inX));
-
-            const f32 alphaX = inX - inX0;
-            const f32 alphaXinverse = 1.0f - alphaX;
-
-            // The -0.5 is because the input coordinates have 0.5 added, to make them the pixel centers
-            s32 inX0_S32 = FloorS32(inX - 0.5f);
-            s32 inX1_S32 = CeilS32(inX - 0.5f);
+            s32 inX0_S32 = FloorS32(inX);
+            s32 inX1_S32 = CeilS32(inX);
 
             // Technically, we can't interpolate the borders. But this is a reasonable approximation
             if(inX0_S32 < 0)
@@ -262,11 +254,17 @@ namespace Anki
             if(inX1_S32 < 0)
               inX1_S32 = 0;
 
-            if(inX0_S32 > (outWidth-1))
-              inX0_S32 = outWidth-1;
+            if(inX0_S32 > (inWidth-1))
+              inX0_S32 = inWidth-1;
 
-            if(inX1_S32 > (outWidth-1))
-              inX1_S32 = outWidth-1;
+            if(inX1_S32 > (inWidth-1))
+              inX1_S32 = inWidth-1;
+
+            const f32 inX0 = static_cast<f32>(inX0_S32);
+            //const f32 inX1 = static_cast<f32>(inX1_S32);
+
+            const f32 alphaX = inX - inX0;
+            const f32 alphaXinverse = 1.0f - alphaX;
 
             const f32 pixelTL = static_cast<f32>(pIn_y0[inX0_S32]);
             const f32 pixelTR = static_cast<f32>(pIn_y0[inX1_S32]);
