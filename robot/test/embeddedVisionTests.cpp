@@ -25,6 +25,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/binaryTracker.h"
 #include "anki/vision/robot/decisionTree_vision.h"
 #include "anki/vision/robot/perspectivePoseEstimation.h"
+#include "anki/vision/robot/classifier.h"
 
 #include "anki/vision/MarkerCodeDefinitions.h"
 
@@ -61,6 +62,12 @@ GTEST_TEST(CoreTech_Vision, FaceDetection_All)
   //const std::string face_cascade_name = std::string("C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_frontalface_alt2.xml");
   //const std::string face_cascade_name = std::string("C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_frontalface_alt_tree.xml");
   const std::string face_cascade_name = std::string("C:/Anki/coretech-external/opencv-2.4.8/data/lbpcascades/lbpcascade_frontalface.xml");
+
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(scratchOffchip.IsValid());
+
+  Classifier::CascadeClassifier cc(face_cascade_name.data(), scratchOffchip);
+  cc.SaveAsHeader("c:/tmp/cascade.h", "lbpcascade_frontalface");
 
   if( !face_cascade.load( face_cascade_name ) ) {
     printf("Could not load %s\n", face_cascade_name.c_str());
@@ -112,8 +119,8 @@ GTEST_TEST(CoreTech_Vision, FaceDetection_All)
 
       for( size_t i = 0; i < detectedFaces.size(); i++ )
       {
-        cv::Point center( detectedFaces[i].x + detectedFaces[i].width*0.5, detectedFaces[i].y + detectedFaces[i].height*0.5 );
-        cv::ellipse( toShow, center, cv::Size( detectedFaces[i].width*0.5, detectedFaces[i].height*0.5), 0, 0, 360, cv::Scalar( 255, 0, 255 ), 4, 8, 0 );
+        cv::Point center( RoundS32(detectedFaces[i].x + detectedFaces[i].width*0.5), RoundS32(detectedFaces[i].y + detectedFaces[i].height*0.5) );
+        cv::ellipse( toShow, center, cv::Size( RoundS32(detectedFaces[i].width*0.5), RoundS32(detectedFaces[i].height*0.5)), 0, 0, 360, cv::Scalar( 255, 0, 255 ), 4, 8, 0 );
       }
 
       const s32 maxChars = 1024;
@@ -187,8 +194,8 @@ GTEST_TEST(CoreTech_Vision, FaceDetection)
 
   for( size_t i = 0; i < detectedFaces.size(); i++ )
   {
-    cv::Point center( detectedFaces[i].x + detectedFaces[i].width*0.5, detectedFaces[i].y + detectedFaces[i].height*0.5 );
-    cv::ellipse( toShow, center, cv::Size( detectedFaces[i].width*0.5, detectedFaces[i].height*0.5), 0, 0, 360, cv::Scalar( 255, 0, 255 ), 4, 8, 0 );
+    cv::Point center( RoundS32(detectedFaces[i].x + detectedFaces[i].width*0.5), RoundS32(detectedFaces[i].y + detectedFaces[i].height*0.5) );
+    cv::ellipse( toShow, center, cv::Size( RoundS32(detectedFaces[i].width*0.5), RoundS32(detectedFaces[i].height*0.5)), 0, 0, 360, cv::Scalar( 255, 0, 255 ), 4, 8, 0 );
   }
   //-- Show what you got
   cv::imshow("Detected faces", toShow);

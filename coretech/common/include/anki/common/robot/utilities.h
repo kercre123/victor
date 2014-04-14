@@ -173,7 +173,7 @@ namespace Anki
 #endif
     }
 
-    inline s64 RoundS32(f64 x)
+    inline s32 RoundS32(f64 x)
     {
       if(x > 0)
         return static_cast<s32>(floor(x + 0.5));
