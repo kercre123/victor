@@ -56,7 +56,6 @@ namespace Anki {
       
       webots::Motor* headMotor_;
       webots::Motor* liftMotor_;
-      webots::Motor* liftMotor2_;
       
       webots::Motor* motors_[HAL::MOTOR_COUNT];
       
@@ -155,7 +154,6 @@ namespace Anki {
       void SetLiftAngularVelocity(const f32 rad_per_sec)
       {
         liftMotor_->setVelocity(rad_per_sec);
-        liftMotor2_->setVelocity(rad_per_sec);
       }
       
 #if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
@@ -218,7 +216,6 @@ namespace Anki {
       
       headMotor_  = webotRobot_.getMotor("HeadMotor");
       liftMotor_  = webotRobot_.getMotor("LiftMotor");
-      liftMotor2_ = webotRobot_.getMotor("LiftMotorFront");
       
 #if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
       con_ = webotRobot_.getConnector("connector");
@@ -251,7 +248,6 @@ namespace Anki {
       //Set the motors to velocity mode
       headMotor_->setPosition(WEBOTS_INFINITY);
       liftMotor_->setPosition(WEBOTS_INFINITY);
-      liftMotor2_->setPosition(WEBOTS_INFINITY);
       leftWheelMotor_->setPosition(WEBOTS_INFINITY);
       rightWheelMotor_->setPosition(WEBOTS_INFINITY);
       
@@ -275,18 +271,12 @@ namespace Anki {
       rightWheelMotor_->enablePosition(TIME_STEP);
       headMotor_->enablePosition(TIME_STEP);
       liftMotor_->enablePosition(TIME_STEP);
-      liftMotor2_->enablePosition(TIME_STEP);
       
       // Set speeds to 0
       leftWheelMotor_->setVelocity(0);
       rightWheelMotor_->setVelocity(0);
       headMotor_->setVelocity(0);
       liftMotor_->setVelocity(0);
-      liftMotor2_->setVelocity(0);
-           
-      //headMotor_->setPosition(0);
-      //liftMotor_->setPosition(-0.275);
-      //liftMotor2_->setPosition(0.275);
       
       // Get localization sensors
       gps_ = webotRobot_.getGPS("gps");

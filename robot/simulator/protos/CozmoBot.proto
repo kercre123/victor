@@ -94,7 +94,7 @@ Supervisor {
 					  }
 					}
 					geometry Box {
-					  size 0.005 0.041 0.005
+					  size 0.005 0.039 0.005
 					}
 				  }
 				  DEF EARS Shape {
@@ -104,7 +104,7 @@ Supervisor {
 					  }
 					}
 					geometry Cylinder {
-					  height 0.04
+					  height 0.038
 					  radius 0.007
 					  subdivision 16
 					}
@@ -213,7 +213,7 @@ Supervisor {
 					  }
 					}  
 					geometry Sphere {
-					  radius 0.02
+					  radius 0.018
 					  subdivision 3
 					}
 				  }
@@ -370,6 +370,7 @@ Supervisor {
 	
 		DEF LEFT_FRONT_WHEEL HingeJoint {
 		  jointParameters HingeJointParameters {
+			dampingConstant 3
 			axis 0 1 0
 		  }
 		  device RotationalMotor {
@@ -435,6 +436,7 @@ Supervisor {
 		}
 		DEF RIGHT_FRONT_WHEEL HingeJoint {
 		  jointParameters HingeJointParameters {
+			dampingConstant 3
 			axis 0 1 0
 		  }
 		  device RotationalMotor {
@@ -534,30 +536,33 @@ Supervisor {
 				subdivision 14
 			  }
 			}
-			HingeJoint {
+			DEF SHOULDER HingeJoint {
 			  jointParameters HingeJointParameters {
 				axis 0 -1 0
+				dampingConstant 3
 				position IS liftAngle
 				minStop IS liftAngle_lowLimit
 				maxStop IS liftAngle_highLimit
 			  }
 			  device RotationalMotor {
 				name "LiftMotor"
+				maxVelocity 2
+				maxTorque 2
 			  }
 			  endPoint Solid {
 				children [
-				  Transform {
+
+				#GRIPPER PLATE
+				Transform {
 					translation 0.0627 0 -0.0127
 					children [
 					  HingeJoint {
 						jointParameters HingeJointParameters {
 						  axis 0 1 0
+						  dampingConstant 3
 						  position IS liftAngle
 						  minStop IS liftAngle_lowLimit
 						  maxStop IS liftAngle_highLimit
-						}
-						device RotationalMotor {
-						  name "LiftMotorFront"
 						}
 						endPoint DEF SmallFingerGripper Solid {
 						  translation 0.002 0 0
@@ -567,9 +572,7 @@ Supervisor {
 							  children [
 								DEF GRIPPER_FINGER Group {
 								  children [
-									Solid {
-									  children [
-										Shape {
+										DEF GRIPPER_FINGER_SHAPE Shape {
 										  appearance Appearance {
 											material USE DarkGray
 										  }
@@ -606,12 +609,6 @@ Supervisor {
 										  }
 										}
 									  ]
-									  boundingObject USE GRIPPER_FINGER_SHAPE
-									  #physics Physics { 
-									  #   density 5000
-									  #}
-									}
-								  ]
 								}
 							  ]
 							}
@@ -702,11 +699,23 @@ Supervisor {
 							    }
 							  ] # CALIBRATION_RIG children
 							} # CALIBRATION_RIG Group
+              
+							Connector {
+							  name "gripper_connector"
+							  translation 0.0016 0 -0.007
+							  rotation 0 1 0 1.57
+							  model "magnetic"
+							  distanceTolerance 0.002
+							  type "active"
+							  isLocked FALSE
+							  autoLock FALSE
+							}
+
 						  ]
 						  boundingObject USE LIFTER_SHAPE
-						  #physics Physics {
-						  #  density 100
-						  #}
+						  physics Physics {
+						    density 100
+						  }
 						}  # SmallFingerGripper Solid
 					  } # Hinge Joint
 					] # Transform children
@@ -779,6 +788,32 @@ Supervisor {
 				  } # RIGHT_LIFT_ARM Transform
 			  
 				] # endPoint Solid children
+
+				boundingObject Group {
+				  children [
+
+				    # Right arm
+				    Transform {
+				      translation 0 -0.02175 0
+				      children [
+				        USE LIFT_ARM_SHAPE
+				      ]
+				    }
+
+				    # Left arm
+				    Transform {
+				      translation 0 0.02175 0
+				      children [
+				        USE LIFT_ARM_SHAPE
+				      ]
+				    }
+
+				  ]
+				}
+				physics Physics {
+				  density 100
+				}
+
 			  } # endPoint Transform
 			} # HingeJoint
 		  ] # LIFT Transform children
