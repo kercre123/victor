@@ -7,6 +7,8 @@
 #include "anki/common/shared/radians.h"
 
 
+#define DEBUG_LIFT_CONTROLLER 0
+
 // Re-calibrates lift position whenever lift is commanded to the limits
 #ifdef SIMULATOR
 #define RECALIBRATE_AT_LIMITS 0  // Don't do calibration at limits in simulator.

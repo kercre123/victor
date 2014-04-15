@@ -1,5 +1,5 @@
 /*
- * File:          cozmo_c_controller.c
+ * File:          cozmo_c_controller.cpp
  * Date:
  * Description:   
  * Author:        
@@ -20,6 +20,8 @@
 #include "sim_viz.h"
 #include "anki/cozmo/robot/hal.h"
 
+// If this is enabled here, it should be disabled in the basestation. (See ENABLE_BS_KEYBOARD_CONTROL.)
+#define ENABLE_KEYBOARD_CONTROL 0
 
 /*
  * This is the main program.

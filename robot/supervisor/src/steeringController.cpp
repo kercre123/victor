@@ -17,12 +17,13 @@
 //#include "hal/portable.h"
 //#include "hal/encoders.h"
 #include "anki/cozmo/robot/trace.h"
-#include "anki/cozmo/robot/debug.h"
 
 #include "anki/cozmo/robot/hal.h"
 
 #include "anki/common/shared/velocityProfileGenerator.h"
 #include "anki/common/robot/trig_fast.h"
+
+#define DEBUG_STEERING_CONTROLLER 0
 
 #define INVALID_IDEAL_FOLLOW_LINE_IDX s16_MAX
 
@@ -356,14 +357,7 @@ namespace Anki {
           
           PERIODIC_PRINT(1000,"fidx: %f, distErr %f, radErr %f\n", fidx, pathDistErr, pathRadErr);
           //PRINT("fidx: %f, distErr %f, radErr %f\n", fidx, pathDistErr, pathRadErr);
-#if(DEBUG_MAIN_EXECUTION)
-          {
-            using namespace Sim::OverlayDisplay;
-            SetText(PATH_ERROR, "PathError: %.2f mm, %.1f deg  => fidx: %f",
-                    pathDistErr, pathRadErr * (180.f/M_PI),
-                    fidx);
-          }
-#endif
+
         } else {
           SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
         }

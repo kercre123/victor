@@ -4,6 +4,8 @@
 #include "anki/common/robot/geometry.h"
 #include "imuFilter.h"
 
+#define DEBUG_LOCALIZATION 0
+
 #ifdef SIMULATOR
 // Whether or not to use simulator "ground truth" pose
 #define USE_SIM_GROUND_TRUTH_POSE 0
