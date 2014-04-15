@@ -105,11 +105,11 @@ namespace Anki
           LBPFeature(const s32 left, const s32 right, const s32 top, const s32 bottom)
             : rect(left, right, top, bottom) {}
 
-          int calc(int offset) const;
+          int calc(const int _offset) const;
           void updatePtrs(const IntegralImage_u8_s32 &sum);
 
           Rectangle<s32> rect; //< weight and height for block
-          const int* p[16]; //< direct pointer for fast access to integral images
+          const s32* p[16]; //< direct pointer for fast access to integral images
         };
 
         // See CascadeClassifier
@@ -160,7 +160,7 @@ namespace Anki
       protected:
         FixedLengthList<LBPFeature> features;
 
-        s32 PredictCategoricalStump(f32& sum) const;
+        s32 PredictCategoricalStump(const IntegralImage_u8_s32 &integralImage, const Point<s16> &location, f32& sum) const;
       }; // class CascadeClassifier_LBP : public CascadeClassifier
     } // namespace Classifier
   } // namespace Embedded

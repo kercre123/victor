@@ -13,9 +13,15 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/vision/robot/imageProcessing.h"
 
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
+#include "opencv2/objdetect/cascadedetect.hpp"
+#endif
+
 #if !defined(__EDG__)
 #include <time.h>
 #endif
+
+#define EXACTLY_MATCH_OPENCV
 
 #define USE_ARM_ACCELERATION
 
@@ -38,15 +44,15 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define CALC_SUM_(p0, p1, p2, p3, offset) \
   ((p0)[offset] - (p1)[offset] - (p2)[offset] + (p3)[offset])
 
-#define ANKI_SUM_PTRS( p0, p1, p2, p3, sum, rect, stride )               \
-  /* (x, y) */                                                         \
-  (p0) = sum + (rect).left  + (stride) * (rect).top,                   \
-  /* (x + w, y) */                                                     \
-  (p1) = sum + (rect).right + (stride) * (rect).top,                   \
-  /* (x, y + h) */                                                     \
-  (p2) = sum + (rect).left  + (stride) * ((rect).top + (rect).height), \
-  /* (x + w, y + h) */                                                 \
-  (p3) = sum + (rect).right + (stride) * ((rect).top + (rect).height)
+#define ANKI_SUM_PTRS( p0, p1, p2, p3, sum, rect, step ) \
+  /* (x, y) */                                           \
+  (p0) = sum + (rect).left  + (step) * (rect).top,       \
+  /* (x + w, y) */                                       \
+  (p1) = sum + (rect).right + (step) * (rect).top,       \
+  /* (x, y + h) */                                       \
+  (p2) = sum + (rect).left  + (step) * (rect).bottom,    \
+  /* (x + w, y + h) */                                   \
+  (p3) = sum + (rect).right + (step) * (rect).bottom
 
 namespace Anki
 {
@@ -149,7 +155,12 @@ namespace Anki
         this->data.subsets = FixedLengthList<s32>(static_cast<s32>(opencvCascade.data.subsets.size()), memory);
         this->data.subsets.set_size(static_cast<s32>(opencvCascade.data.subsets.size()));
 
-        AnkiConditionalErrorAndReturn(this->data.stages.IsValid() && this->data.classifiers.IsValid() && this->data.nodes.IsValid() && this->data.leaves.IsValid() && this->data.subsets.IsValid(),
+        const cv::LBPEvaluator* evaluator = static_cast<cv::LBPEvaluator*>(opencvCascade.featureEvaluator.obj);
+
+        this->features = FixedLengthList<LBPFeature>(static_cast<s32>(evaluator->features->size()), memory);
+        this->features.set_size(static_cast<s32>(evaluator->features->size()));
+
+        AnkiConditionalErrorAndReturn(this->data.stages.IsValid() && this->data.classifiers.IsValid() && this->data.nodes.IsValid() && this->data.leaves.IsValid() && this->data.subsets.IsValid() && this->features.IsValid(),
           "CascadeClassifier::CascadeClassifier", "Out of memory copying %s", filename);
 
         for(s32 i=0; i<this->data.stages.get_size(); i++) {
@@ -175,6 +186,19 @@ namespace Anki
 
         for(s32 i=0; i<this->data.subsets.get_size(); i++) {
           this->data.subsets[i] = opencvCascade.data.subsets[i];
+        }
+
+        for(s32 i=0; i<this->features.get_size(); i++) {
+          const s32 x = (*evaluator->features)[i].rect.x;
+          const s32 y = (*evaluator->features)[i].rect.y;
+          const s32 width = (*evaluator->features)[i].rect.width;
+          const s32 height = (*evaluator->features)[i].rect.height;
+
+          this->features[i].rect.left  = x;
+          this->features[i].rect.right = x + width;
+
+          this->features[i].rect.top    = y;
+          this->features[i].rect.bottom = y + height;
         }
 
         this->isValid = true;
@@ -229,12 +253,14 @@ namespace Anki
           "#define %s_classifiers_length %d\n"
           "#define %s_nodes_length %d\n"
           "#define %s_leaves_length %d\n"
-          "#define %s_subsets_length %d\n\n",
+          "#define %s_subsets_length %d\n"
+          "#define %s_features_length %d\n\n",
           objectName, this->data.stages.get_size(),
           objectName, this->data.classifiers.get_size(),
           objectName, this->data.nodes.get_size(),
           objectName, this->data.leaves.get_size(),
-          objectName, this->data.subsets.get_size());
+          objectName, this->data.subsets.get_size(),
+          objectName, this->features.get_size());
 
         // FixedLengthList<Stage> stages;
         fprintf(file,
@@ -341,6 +367,27 @@ namespace Anki
           "}; // %s_subsets_data\n\n\n",
           objectName);
 
+        // FixedLengthList<LBPFeature> features;
+        fprintf(file,
+          "#if defined(_MSC_VER)\n"
+          "__declspec(align(MEMORY_ALIGNMENT_RAW))\n"
+          "#endif\n"
+          "const Stage %s_features_data[%s_features_length]\n"
+          "#if defined(__EDG__)  // ARM-MDK\n"
+          "__attribute__ ((aligned (MEMORY_ALIGNMENT_RAW)))\n"
+          "#endif\n"
+          "= {\n",
+          objectName, objectName);
+
+        for(s32 i=0; i<this->features.get_size(); i++) {
+          fprintf(file,
+            "{%d,%d,%d,%d},", this->features[i].rect.left, this->features[i].rect.right, this->features[i].rect.top, this->features[i].rect.bottom);
+        }
+
+        fprintf(file,
+          "}; // %s_features_data\n\n\n",
+          objectName);
+
         fprintf(file,
           "#endif // %s\n", headerDefineString);
 
@@ -415,20 +462,31 @@ namespace Anki
 
           Array<u8> scaledImage(scaledImageHeight, scaledImageWidth, scratch, Flags::Buffer(false, false, false));
 
+          // OpenCV's resize grayvalues may be 1 or so different than Anki's
+#ifdef EXACTLY_MATCH_OPENCV
+          {
+            const cv::Size scaledImageSize = cv::Size(scaledImageWidth,scaledImageHeight);
+
+            Array<u8> tmpImHack = image;
+
+            cv::resize(tmpImHack.get_CvMat_(), scaledImage.get_CvMat_(), scaledImageSize, 0, 0, CV_INTER_LINEAR);
+          }
+#else
           ImageProcessing::Resize(image, scaledImage);
+#endif
 
           const s32 xyIncrement = factor > 2. ? 1 : 2;
 
-          int stripCount, stripSize;
+          //int stripCount, stripSize;
 
-          const int PTS_PER_THREAD = 1000;
-          stripCount = ((processingRectWidth/xyIncrement)*(processingRectHeight + xyIncrement-1)/xyIncrement + PTS_PER_THREAD/2)/PTS_PER_THREAD;
-          stripCount = std::min(std::max(stripCount, 1), 100);
-          stripSize = (((processingRectHeight + stripCount - 1)/stripCount + xyIncrement-1)/xyIncrement)*xyIncrement;
+          //const int PTS_PER_THREAD = 1000;
+          //stripCount = ((processingRectWidth/xyIncrement)*(processingRectHeight + xyIncrement-1)/xyIncrement + PTS_PER_THREAD/2)/PTS_PER_THREAD;
+          //stripCount = std::min(std::max(stripCount, 1), 100);
+          //stripSize = (((processingRectHeight + stripCount - 1)/stripCount + xyIncrement-1)/xyIncrement)*xyIncrement;
 
-          /*if( !detectSingleScale( scaledImage, stripCount, processingRectSize, stripSize, xyIncrement, factor, candidates,
-          rejectLevels, levelWeights, outputRejectLevels ) )
-          break;*/
+          if(DetectSingleScale(scaledImage, processingRectHeight, processingRectWidth, xyIncrement, factor, candidates, scratch) != RESULT_OK) {
+            break;
+          }
         } // for(f32 factor = 1; ; factor *= scaleFactor)
 
         objects.set_size(candidates.get_size());
@@ -451,6 +509,23 @@ namespace Anki
         //if( !featureEvaluator->setImage( image, data.origWinSize ) )
         //return false;
 
+        const IntegralImage_u8_s32 integralImage(image, scratch);
+
+        const s32 nfeatures = this->features.get_size();
+
+        for(s32 fi = 0; fi < nfeatures; fi++) {
+          this->features[fi].updatePtrs(integralImage);
+        }
+
+        //Matlab matlab(false);
+        //matlab.PutArray(image, "image");
+        //matlab.PutArray(integralImage, "integralImage");
+
+        //size_t fi, nfeatures = features->size();
+
+        //for( fi = 0; fi < nfeatures; fi++ )
+        //  featuresPtr[fi].updatePtrs( sum );
+
         //Ptr<FeatureEvaluator> evaluator = classifier->featureEvaluator->clone();
 
         const s32 winHeight = RoundS32(this->data.origWinHeight * scaleFactor);
@@ -458,9 +533,12 @@ namespace Anki
 
         for(s32 y = 0; y < processingRectHeight; y += xyIncrement ) {
           for(s32 x = 0; x < processingRectWidth; x += xyIncrement ) {
-            double gypWeight;
+            f32 gypWeight;
+
+            //int result = 0;
             //int result = classifier->runAt(evaluator, Point(x, y), gypWeight);
-            int result = 0;
+
+            const int result = this->PredictCategoricalStump(integralImage, Point<s16>(x,y), gypWeight);
 
             if( result > 0 ) {
               const s32 x0 = RoundS32(x*scaleFactor);
@@ -481,16 +559,19 @@ namespace Anki
         return RESULT_OK;
       }
 
-      s32 CascadeClassifier_LBP::PredictCategoricalStump(f32& sum) const
+      s32 CascadeClassifier_LBP::PredictCategoricalStump(const IntegralImage_u8_s32 &integralImage, const Point<s16> &location, f32& sum) const
+        //s32 CascadeClassifier_LBP::PredictCategoricalStump(f32& sum) const
       {
-        int nstages = (int)this->data.stages.get_size();
+        const int nstages = (int)this->data.stages.get_size();
         int nodeOfs = 0, leafOfs = 0;
         //FEval& featureEvaluator = (FEval&)*_featureEvaluator;
-        size_t subsetSize = (this->data.ncategories + 31)/32;
+        const size_t subsetSize = (this->data.ncategories + 31)/32;
         const int* cascadeSubsets = &this->data.subsets[0];
         const float* cascadeLeaves = &this->data.leaves[0];
         const CascadeClassifier::DTreeNode* cascadeNodes = &this->data.nodes[0];
         const CascadeClassifier::Stage* cascadeStages = &this->data.stages[0];
+
+        const s32 * restrict pIntegralImage = integralImage.Pointer(location);
 
         for( int si = 0; si < nstages; si++ )
         {
@@ -503,18 +584,8 @@ namespace Anki
           {
             const CascadeClassifier::DTreeNode& node = cascadeNodes[nodeOfs];
 
-            //int c = featureEvaluator();
-            //        int c = featuresPtr[node.featureIdx].calc(offset);
-            //            int cval = CALC_SUM_( p[5], p[6], p[9], p[10], _offset );
-
-            //return (CALC_SUM_( p[0], p[1], p[4], p[5], _offset ) >= cval ? 128 : 0) |   // 0
-            //       (CALC_SUM_( p[1], p[2], p[5], p[6], _offset ) >= cval ? 64 : 0) |    // 1
-            //       (CALC_SUM_( p[2], p[3], p[6], p[7], _offset ) >= cval ? 32 : 0) |    // 2
-            //       (CALC_SUM_( p[6], p[7], p[10], p[11], _offset ) >= cval ? 16 : 0) |  // 5
-            //       (CALC_SUM_( p[10], p[11], p[14], p[15], _offset ) >= cval ? 8 : 0)|  // 8
-            //       (CALC_SUM_( p[9], p[10], p[13], p[14], _offset ) >= cval ? 4 : 0)|   // 7
-            //       (CALC_SUM_( p[8], p[9], p[12], p[13], _offset ) >= cval ? 2 : 0)|    // 6
-            //       (CALC_SUM_( p[4], p[5], p[8], p[9], _offset ) >= cval ? 1 : 0);
+            //int c = featureEvaluator(node.featureIdx);
+            //const int c = this->features[node.featureIdx].calc();
 
             int c = 0;
 
@@ -531,6 +602,44 @@ namespace Anki
         }
 
         return 1;
+      }
+
+      void CascadeClassifier_LBP::LBPFeature::updatePtrs(const IntegralImage_u8_s32 &sum)
+      {
+        const int* ptr = sum.Pointer(0,0);
+        const s32 step = sum.get_stride() / sizeof(s32);
+        Rectangle<s32> tr = rect;
+
+        const s32 width = tr.get_width();
+        const s32 height = tr.get_height();
+
+        ANKI_SUM_PTRS( p[0], p[1], p[4], p[5], ptr, tr, step );
+        tr.left += 2*width;
+        tr.right += 2*width;
+
+        ANKI_SUM_PTRS( p[2], p[3], p[6], p[7], ptr, tr, step );
+        tr.top += 2*height;
+        tr.bottom += 2*height;
+
+        ANKI_SUM_PTRS( p[10], p[11], p[14], p[15], ptr, tr, step );
+        tr.left -= 2*width;
+        tr.right -= 2*width;
+
+        ANKI_SUM_PTRS( p[8], p[9], p[12], p[13], ptr, tr, step );
+      }
+
+      inline int CascadeClassifier_LBP::LBPFeature::calc(const int _offset) const
+      {
+        int cval = CALC_SUM_( p[5], p[6], p[9], p[10], _offset );
+
+        return (CALC_SUM_( p[0], p[1], p[4], p[5], _offset ) >= cval ? 128 : 0) |   // 0
+          (CALC_SUM_( p[1], p[2], p[5], p[6], _offset ) >= cval ? 64 : 0) |    // 1
+          (CALC_SUM_( p[2], p[3], p[6], p[7], _offset ) >= cval ? 32 : 0) |    // 2
+          (CALC_SUM_( p[6], p[7], p[10], p[11], _offset ) >= cval ? 16 : 0) |  // 5
+          (CALC_SUM_( p[10], p[11], p[14], p[15], _offset ) >= cval ? 8 : 0)|  // 8
+          (CALC_SUM_( p[9], p[10], p[13], p[14], _offset ) >= cval ? 4 : 0)|   // 7
+          (CALC_SUM_( p[8], p[9], p[12], p[13], _offset ) >= cval ? 2 : 0)|    // 6
+          (CALC_SUM_( p[4], p[5], p[8], p[9], _offset ) >= cval ? 1 : 0);
       }
     } // namespace Classifier
   } // namespace Embedded

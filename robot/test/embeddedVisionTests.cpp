@@ -163,8 +163,28 @@ GTEST_TEST(CoreTech_Vision, FaceDetection)
   const s32 imageHeight = 240;
   const s32 imageWidth = 320;
 
+  const double scaleFactor = 1.1;
+  const int minNeighbors = 2;
+  const cv::Size minSize = cv::Size(30,30);
+  const cv::Size maxSize = cv::Size(imageWidth, imageHeight);
+
   Array<u8> image(imageHeight, imageWidth, scratchOffchip);
   image.Set(&cozmo_date2014_04_10_time16_15_40_frame0[0], imageHeight*imageWidth);
+
+  {
+    FixedLengthList<Rectangle<s32> > detectedFaces;
+
+    Classifier::CascadeClassifier_LBP cc(face_cascade_name.data(), scratchOffchip);
+
+    cc.DetectMultiScale(
+      image,
+      scaleFactor,
+      minNeighbors,
+      minSize.height, minSize.width,
+      maxSize.height, maxSize.width,
+      detectedFaces,
+      scratchOffchip);
+  }
 
   vector<cv::Rect> detectedFaces;
 
@@ -173,11 +193,11 @@ GTEST_TEST(CoreTech_Vision, FaceDetection)
   face_cascade.detectMultiScale(
     image.get_CvMat_(),
     detectedFaces,
-    1.1, // double scaleFactor=1.1,
-    2, // int minNeighbors=3,
+    scaleFactor,
+    minNeighbors,
     0|CV_HAAR_SCALE_IMAGE, // int flags=0,
-    cv::Size(30, 30), // Size minSize=Size(),
-    cv::Size() // Size maxSize=Size()
+    minSize,
+    maxSize
     );
 
   f32 t1 = GetTime();
