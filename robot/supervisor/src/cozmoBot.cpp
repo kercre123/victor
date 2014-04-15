@@ -168,9 +168,6 @@ namespace Anki {
       
       ReturnCode step_MainExecution()
       {
-#ifdef THIS_IS_PETES_BOARD      
-        return EXIT_SUCCESS;
-#endif
 
         // If the hardware interface needs to be advanced (as in the case of
         // a Webots simulation), do that first.
