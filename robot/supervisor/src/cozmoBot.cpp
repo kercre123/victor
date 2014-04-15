@@ -41,7 +41,7 @@ namespace Anki {
         
         // TESTING
         // Change this value to run different test modes
-        const TestModeController::TestMode DEFAULT_TEST_MODE = TestModeController::TM_PICK_AND_PLACE;
+        const TestModeController::TestMode DEFAULT_TEST_MODE = TestModeController::TM_NONE;
 
         Robot::OperationMode mode_ = INIT_MOTOR_CALIBRATION;
         bool wasConnected_ = false;
