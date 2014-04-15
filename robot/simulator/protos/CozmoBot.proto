@@ -292,6 +292,8 @@ Supervisor {
 		DEF BACKPACK Solid {
 		  translation -0.04 0 0.0192
 		  children [
+		    DEF BACKPACK_GROUP Group {
+		      children [
 			Transform {
 			  children [
 				Shape {
@@ -340,8 +342,10 @@ Supervisor {
 				}
 			  ]
 			}
+		      ]
+		    }                      
 		  ] # BACKPACK Solid children
-	  
+	          boundingObject USE BACKPACK_GROUP
 		  physics Physics {
 			density 2000
 		  }
