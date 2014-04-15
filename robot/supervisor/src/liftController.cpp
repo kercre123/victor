@@ -50,7 +50,13 @@ namespace Anki {
         const f32 ANGLE_TOLERANCE = DEG_TO_RAD(0.5f);
         f32 LIFT_ANGLE_LOW_LIMIT; // Initialize in Init()
         f32 LIFT_ANGLE_HIGH_LIMIT; // Initialize in Init()
+        f32 LIFT_ANGLE_HIGH_DOCK;
 
+#ifdef SIMULATOR
+        // For disengaging gripper once the lift has reached its final position
+        bool disengageGripperAtDest_ = false;
+#endif
+        
         // Open loop gain
         // power_open_loop = SPEED_TO_POWER_OL_GAIN * desiredSpeed + BASE_POWER
         const f32 SPEED_TO_POWER_OL_GAIN = 0.2399;
@@ -62,6 +68,7 @@ namespace Anki {
         // and the lower lift joint on the forklift assembly.
         Radians currentAngle_ = 0.f;
         Radians desiredAngle_ = 0.f;
+        f32 desiredHeight_ = 0.f;
         f32 currDesiredAngle_ = 0.f;
         f32 currDesiredRadVel_ = 0.f;
         f32 angleError_ = 0.f;
@@ -124,6 +131,7 @@ namespace Anki {
         // Init consts
         LIFT_ANGLE_LOW_LIMIT = Height2Rad(LIFT_HEIGHT_LOWDOCK);
         LIFT_ANGLE_HIGH_LIMIT = Height2Rad(LIFT_HEIGHT_CARRY);
+        LIFT_ANGLE_HIGH_DOCK = Height2Rad(LIFT_HEIGHT_HIGHDOCK);
         return EXIT_SUCCESS;
       }
       
@@ -231,6 +239,11 @@ namespace Anki {
       }
 #endif
 
+      f32 GetLastCommandedHeightMM()
+      {
+        return desiredHeight_;
+      }
+      
       f32 GetHeightMM()
       {
         return Rad2Height(currentAngle_.ToFloat());
@@ -340,14 +353,33 @@ namespace Anki {
       {
         
         // Do range check on height
-        height_mm = CLIP(height_mm, LIFT_HEIGHT_LOWDOCK, LIFT_HEIGHT_CARRY);
+        desiredHeight_ = CLIP(height_mm, LIFT_HEIGHT_LOWDOCK, LIFT_HEIGHT_CARRY);
         
         
         // Convert desired height into the necessary angle:
 #if(DEBUG_LIFT_CONTROLLER)
-        PRINT("LIFT DESIRED HEIGHT: %f mm (curr height %f mm)\n", height_mm, GetHeightMM());
+        PRINT("LIFT DESIRED HEIGHT: %f mm (curr height %f mm)\n", desiredHeight_, GetHeightMM());
 #endif
-        desiredAngle_ = Height2Rad(height_mm);
+        
+#ifdef SIMULATOR
+        // Turning gripper on and off for simulator
+        disengageGripperAtDest_ = false;
+        if (HAL::IsGripperEngaged()) {
+          if (  (desiredAngle_ == LIFT_ANGLE_HIGH_LIMIT && desiredHeight_ != LIFT_HEIGHT_CARRY)
+              ) {
+            //PRINT("WILL DISENGAGE GRIPPER AFTER FINAL LIFT POSITION REACHED\n");
+            disengageGripperAtDest_ = true;
+          }
+        } else {
+          if (  (desiredAngle_ == LIFT_ANGLE_LOW_LIMIT && desiredHeight_ != LIFT_HEIGHT_LOWDOCK)
+             || (desiredAngle_ == LIFT_ANGLE_HIGH_DOCK && desiredHeight_ == LIFT_HEIGHT_CARRY)
+              ) {
+            HAL::EngageGripper();
+          }
+        }
+#endif
+        
+        desiredAngle_ = Height2Rad(desiredHeight_);
         angleError_ = desiredAngle_.ToFloat() - currentAngle_.ToFloat();
         angleErrorSum_ = 0.f;
         
@@ -368,7 +400,7 @@ namespace Anki {
         
 #if(RECALIBRATE_AT_LIMITS)
         // Adjust approach speed to be a little faster if desired height is at a limit.
-        approachSpeedRad_ = (height_mm == LIFT_HEIGHT_LOWDOCK || height_mm == LIFT_HEIGHT_CARRY) ? 0.5 : 0.2;
+        approachSpeedRad_ = (desiredHeight_ == LIFT_HEIGHT_LOWDOCK || desiredHeight_ == LIFT_HEIGHT_CARRY) ? 0.5 : 0.2;
 #endif
         
         // Start profile of lift trajectory
@@ -448,16 +480,16 @@ namespace Anki {
                 //power_ = MIN(-MIN_LIMIT_APPROACH_POWER, power_);
                 power_ = -LIMIT_APPROACH_POWER;
                 limitingExpected_ = true;
-  #if(DEBUG_LIFT_CONTROLLER)
+#if(DEBUG_LIFT_CONTROLLER)
                 PRINT(" Lift low limit reached. (power %f)\n", power_);
-  #endif
+#endif
               } else if (currDesiredAngle_ == LIFT_ANGLE_HIGH_LIMIT) {
                 //power_ = MAX(MIN_LIMIT_APPROACH_POWER, power_);
                 power_ = LIMIT_APPROACH_POWER;
                 limitingExpected_ = true;
-  #if(DEBUG_LIFT_CONTROLLER)
+#if(DEBUG_LIFT_CONTROLLER)
                 PRINT(" Lift high limit reached. (power %f)\n", power_);
-  #endif
+#endif
               }
             }
             
@@ -469,6 +501,11 @@ namespace Anki {
              || ABS(currentAngle_ - desiredAngle_) < ANGLE_TOLERANCE) {
               power_ = 0.f;
               inPosition_ = true;
+#ifdef SIMULATOR
+              if (disengageGripperAtDest_) {
+                HAL::DisengageGripper();
+              }
+#endif
               #if(DEBUG_LIFT_CONTROLLER)
               PRINT(" LIFT HEIGHT REACHED (%f mm)\n", GetHeightMM());
               #endif

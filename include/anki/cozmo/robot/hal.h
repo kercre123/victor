@@ -327,6 +327,13 @@ namespace Anki
       // Measures the unitless load on all motors
       s32 MotorGetLoad();
 
+#ifdef SIMULATOR
+      // For simulator only to activate connector for gripping.
+      // Does not actually guarantee a physical connection.
+      void EngageGripper();
+      void DisengageGripper();
+#endif
+      
 // #pragma mark --- Cameras ---
       /////////////////////////////////////////////////////////////////////
       // CAMERAS

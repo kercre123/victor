@@ -33,7 +33,14 @@ namespace Anki {
 
       // Const paramters / settings
       // TODO: some of these should be defined elsewhere (e.g. comms)
+      
+      // Represents the number of cycles it takes to engage or disengage an active gripper
+#if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
       const s32 UNLOCK_HYSTERESIS = 50;
+#else
+      const s32 UNLOCK_HYSTERESIS = 0;
+#endif
+      
       const f64 WEBOTS_INFINITY = std::numeric_limits<f64>::infinity();
       
       
@@ -156,34 +163,6 @@ namespace Anki {
         liftMotor_->setVelocity(rad_per_sec);
       }
       
-#if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
-      void EngageGripper()
-      {
-        //Should we lock to a block which is close to the connector?
-        if (!gripperEngaged_ && con_->getPresence() == 1)
-        {
-          if (unlockhysteresis_ == 0)
-          {
-            con_->lock();
-            gripperEngaged_ = true;
-            //printf("LOCKED!\n");
-          }else{
-            unlockhysteresis_--;
-          }
-        }
-      }
-      
-      void DisengageGripper()
-      {
-        if (gripperEngaged_)
-        {
-          gripperEngaged_ = false;
-          unlockhysteresis_ = UNLOCK_HYSTERESIS;
-          con_->unlock();
-          //printf("UNLOCKED!\n");
-        }
-      }
-#endif
     } // "private" namespace
     
     namespace Sim {
@@ -217,10 +196,8 @@ namespace Anki {
       headMotor_  = webotRobot_.getMotor("HeadMotor");
       liftMotor_  = webotRobot_.getMotor("LiftMotor");
       
-#if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
-      con_ = webotRobot_.getConnector("connector");
+      con_ = webotRobot_.getConnector("gripperConnector");
       con_->enablePresence(TIME_STEP);
-#endif
       
       //matCam_ = webotRobot_.getCamera("cam_down");
       headCam_ = webotRobot_.getCamera("HeadCamera");
@@ -468,7 +445,36 @@ namespace Anki {
       return motorPositions_[motor];
     }
     
-      
+    
+    void HAL::EngageGripper()
+    {
+      //Should we lock to a block which is close to the connector?
+      if (!gripperEngaged_ && con_->getPresence() == 1)
+      {
+        if (unlockhysteresis_ == 0)
+        {
+          con_->lock();
+          gripperEngaged_ = true;
+          //printf("GRIPPER LOCKED!\n");
+        }else{
+          unlockhysteresis_--;
+        }
+      }
+    }
+    
+    void HAL::DisengageGripper()
+    {
+      if (gripperEngaged_)
+      {
+        gripperEngaged_ = false;
+        unlockhysteresis_ = UNLOCK_HYSTERESIS;
+        con_->unlock();
+        //printf("GRIPPER UNLOCKED!\n");
+      }
+    }
+
+    
+    
     // Forward declaration
     void RadioUpdate();
       
