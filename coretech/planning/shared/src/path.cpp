@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <math.h>
 
+#define DEBUG_PATH 0
 
 #ifdef CORETECH_BASESTATION
 #include <stdio.h>
@@ -220,7 +221,7 @@ namespace Anki
       // Shortest path is along a line with inverse negative slope (i.e. -1/m).
       // Point of intersection is solution to mx + b == (-1/m)*x + b_inv where b_inv = y-(-1/m)*x
       
-#if(DEBUG_PATH_FOLLOWER)
+#if(DEBUG_PATH)
       PERIODIC_PRINT(DBG_PERIOD, "currPathSeg: %d, LINE (%f, %f, %f, %f)\n", currPathSegment_, seg->startPt_x, seg->startPt_y, seg->endPt_x, seg->endPt_y);
       PERIODIC_PRINT(DBG_PERIOD, "Robot Pose: x: %f, y: %f ang: %f\n", x,y,angle.ToFloat());
 #endif
@@ -291,7 +292,7 @@ namespace Anki
         
         shortestDistanceToPath = sqrtf(dy*dy + dx*dx);
         
-#if(DEBUG_PATH_FOLLOWER)
+#if(DEBUG_PATH)
         PERIODIC_PRINT(DBG_PERIOD, "m: %f, b: %f\n",line_m_,line_b_);
         PERIODIC_PRINT(DBG_PERIOD, "x_int: %f, y_int: %f, b_inv: %f\n", x_intersect, y_intersect, b_inv);
         PERIODIC_PRINT(DBG_PERIOD, "dy: %f, dx: %f, dist: %f\n", dy, dx, shortestDistanceToPath_m);
@@ -332,7 +333,7 @@ namespace Anki
     {
       const PathSegmentDef::s_arc* seg = &(def_.arc);
       
-#if(DEBUG_PATH_FOLLOWER)
+#if(DEBUG_PATH)
       PRINT("currPathSeg: %d, ARC (%f, %f), startRad: %f, sweepRad: %f, radius: %f\n",
             currPathSegment_, seg->centerPt_x, seg->centerPt_y, seg->startRad, seg->sweepRad, seg->radius);
 #endif
@@ -404,7 +405,7 @@ namespace Anki
         // Compute distance to intersection point (i.e. shortest distance to arc)
         shortestDistanceToPath = sqrtf((x - x_intersect) * (x - x_intersect) + (y - y_intersect) * (y - y_intersect));
         
-#if(DEBUG_PATH_FOLLOWER)
+#if(DEBUG_PATH)
         PRINT("A: %f, B: %f, C: %f, sqrt: %f\n", A, B, C, sqrtPart);
         PRINT("x_intersects: (%f %f)\n", x_intersect_1, x_intersect_2);
 #endif
@@ -421,7 +422,7 @@ namespace Anki
       
       
       
-#if(DEBUG_PATH_FOLLOWER)
+#if(DEBUG_PATH)
       PRINT("x: %f, y: %f, m: %f, b: %f\n", x,y,m,b);
       PRINT("x_center: %f, y_center: %f\n", x_center, y_center);
       PRINT("x_int: %f, y_int: %f\n", x_intersect, y_intersect);
@@ -466,7 +467,7 @@ namespace Anki
     {
       const PathSegmentDef::s_turn* seg = &(def_.turn);
       
-#if(DEBUG_PATH_FOLLOWER)
+#if(DEBUG_PATH)
       PRINT("currPathSeg: %d, TURN (%f, %f), targetAngle: %f, targetRotSpeed: %f\n",
             currPathSegment_, seg->x, seg->y, seg->targetAngle, seg->targetRotSpeed);
 #endif
