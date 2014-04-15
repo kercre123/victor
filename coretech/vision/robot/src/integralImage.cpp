@@ -13,6 +13,42 @@ namespace Anki
 {
   namespace Embedded
   {
+    IntegralImage_u8_s32::IntegralImage_u8_s32()
+      : Array<s32>()
+    {
+    }
+
+    IntegralImage_u8_s32::IntegralImage_u8_s32(const Array<u8> &image, MemoryStack &memory, const Flags::Buffer flags)
+      : Array<s32>(image.get_size(0) + 1, image.get_size(1) + 1, memory, flags)
+    {
+      AnkiConditionalErrorAndReturn(this->IsValid(),
+        "IntegralImage_u8_s32::IntegralImage_u8_s32", "Could not allocate array");
+
+      const s32 integralImageHeight = this->get_size(0);
+      const s32 integralImageWidth = this->get_size(1);
+
+      {
+        PUSH_MEMORY_STACK(memory);
+
+        memset(this->Pointer(0,0), 0, this->get_stride());
+
+        for(s32 y=1; y<integralImageHeight; y++) {
+          const u8 * restrict pImage = image.Pointer(y-1, 0);
+          const s32 * restrict pPrevious = this->Pointer(y-1, 0);
+
+          s32 * restrict pCurrent  = this->Pointer(y, 0);
+
+          s32 horizontalSum = 0;
+
+          pCurrent[0] = 0;
+          for(s32 x=1; x<integralImageWidth; x++) {
+            horizontalSum += pImage[x-1];
+            pCurrent[x] = horizontalSum + pPrevious[x];
+          }
+        }
+      }
+    }
+
     ScrollingIntegralImage_u8_s32::ScrollingIntegralImage_u8_s32()
       : Array<s32>(), imageWidth(-1), maxRow(-1), rowOffset(-1), numBorderPixels(-1)
     {

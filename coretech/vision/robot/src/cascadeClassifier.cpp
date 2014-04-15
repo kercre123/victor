@@ -8,7 +8,10 @@ For internal use only. No part of this code may be used without a signed non-dis
 **/
 
 #include "anki/vision/robot/classifier.h"
+
 #include "anki/common/robot/matlabInterface.h"
+
+#include "anki/vision/robot/imageProcessing.h"
 
 #if !defined(__EDG__)
 #include <time.h>
@@ -31,6 +34,19 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include <stm32f4xx.h>
 #endif
 #endif
+
+#define CALC_SUM_(p0, p1, p2, p3, offset) \
+  ((p0)[offset] - (p1)[offset] - (p2)[offset] + (p3)[offset])
+
+#define ANKI_SUM_PTRS( p0, p1, p2, p3, sum, rect, stride )               \
+  /* (x, y) */                                                         \
+  (p0) = sum + (rect).left  + (stride) * (rect).top,                   \
+  /* (x + w, y) */                                                     \
+  (p1) = sum + (rect).right + (stride) * (rect).top,                   \
+  /* (x, y + h) */                                                     \
+  (p2) = sum + (rect).left  + (stride) * ((rect).top + (rect).height), \
+  /* (x + w, y + h) */                                                 \
+  (p3) = sum + (rect).right + (stride) * ((rect).top + (rect).height)
 
 namespace Anki
 {
@@ -100,15 +116,16 @@ namespace Anki
       } // bool CascadeClassifier::IsValid() const
 
 #ifdef ANKICORETECH_EMBEDDED_USE_OPENCV
-      CascadeClassifier::CascadeClassifier(const char * filename, MemoryStack &memory)
-        : isValid(false)
+      CascadeClassifier_LBP::CascadeClassifier_LBP(const char * filename, MemoryStack &memory)
       {
+        this->isValid = false;
+
         cv::CascadeClassifier opencvCascade;
 
         const bool loadSucceeded = opencvCascade.load(filename);
 
         AnkiConditionalErrorAndReturn(loadSucceeded,
-          "CascadeClassifier::CascadeClassifier", "Could not load %s", filename);
+          "CascadeClassifier_LBP::CascadeClassifier_LBP", "Could not load %s", filename);
 
         this->data.isStumpBased = opencvCascade.data.isStumpBased;
         this->data.stageType = opencvCascade.data.stageType;
@@ -161,9 +178,9 @@ namespace Anki
         }
 
         this->isValid = true;
-      } // CascadeClassifier::CascadeClassifier(const char * filename, MemoryStack &memory)
+      } // CascadeClassifier_LBP::CascadeClassifier(const char * filename, MemoryStack &memory)
 
-      Result CascadeClassifier::SaveAsHeader(const char * filename, const char * objectName)
+      Result CascadeClassifier_LBP::SaveAsHeader(const char * filename, const char * objectName)
       {
         FILE *file;
 
@@ -200,11 +217,11 @@ namespace Anki
           "const s32 %s_featureType = %d;\n"
           "const s32 %s_ncategories = %d;\n"
           "const s32 %s_origWinHeight = %d;\n"
-          "const s32 %s_origWinWidth = %d;\n\n", 
+          "const s32 %s_origWinWidth = %d;\n\n",
           objectName, this->data.stageType,
           objectName, this->data.featureType,
-          objectName, this->data.ncategories, 
-          objectName, this->data.origWinHeight, 
+          objectName, this->data.ncategories,
+          objectName, this->data.origWinHeight,
           objectName, this->data.origWinWidth);
 
         fprintf(file,
@@ -330,8 +347,191 @@ namespace Anki
         fclose(file);
 
         return RESULT_OK;
-      } // Result CascadeClassifier::SaveAsHeader(const char * filename, const char * objectName)
+      } // Result CascadeClassifier_LBP::SaveAsHeader(const char * filename, const char * objectName)
 #endif
+
+      Result CascadeClassifier_LBP::DetectMultiScale(
+        const Array<u8> &image,
+        const f32 scaleFactor,
+        const s32 minNeighbors,
+        const s32 minObjectHeight,
+        const s32 minObjectWidth,
+        const s32 maxObjectHeight,
+        const s32 maxObjectWidth,
+        FixedLengthList<Rectangle<s32> > &objects,
+        MemoryStack scratch)
+      {
+        const s32 MAX_CANDIDATES = 5000;
+        const f32 GROUP_EPS = 0.2f;
+
+        const s32 imageHeight = image.get_size(0);
+        const s32 imageWidth = image.get_size(1);
+
+        AnkiConditionalErrorAndReturnValue(this->IsValid(),
+          RESULT_FAIL_INVALID_OBJECT, "CascadeClassifier::DetectMultiScale", "This object is invalid");
+
+        objects.Clear();
+
+        // TODO: do I need masks?
+
+        //if (!maskGenerator.empty()) {
+        //  maskGenerator->initializeMask(image);
+        //}
+
+        //if( maxObjectSize.height == 0 || maxObjectSize.width == 0 )
+        //  maxObjectSize = image.size();
+
+        //Mat grayImage = image;
+        //if( grayImage.channels() > 1 )
+        //{
+        //  Mat temp;
+        //  cvtColor(grayImage, temp, CV_BGR2GRAY);
+        //  grayImage = temp;
+        //}
+
+        //Mat imageBuffer(image.rows + 1, image.cols + 1, CV_8U);
+        FixedLengthList<Rectangle<s32> > candidates(MAX_CANDIDATES, scratch);
+
+        for(f32 factor = 1; ; factor *= scaleFactor) {
+          PUSH_MEMORY_STACK(scratch);
+
+          const s32 windowHeight = RoundS32(this->data.origWinHeight*factor);
+          const s32 windowWidth = RoundS32(this->data.origWinWidth*factor);
+
+          const s32 scaledImageHeight = RoundS32(imageHeight / factor);
+          const s32 scaledImageWidth = RoundS32(imageWidth / factor);
+
+          const s32 processingRectHeight = scaledImageHeight - this->data.origWinHeight;
+          const s32 processingRectWidth = scaledImageWidth - this->data.origWinWidth;
+
+          if( processingRectWidth <= 0 || processingRectHeight <= 0 )
+            break;
+
+          if( windowWidth > maxObjectWidth || windowHeight > maxObjectHeight )
+            break;
+
+          if( windowWidth < minObjectWidth || windowHeight < minObjectHeight )
+            continue;
+
+          Array<u8> scaledImage(scaledImageHeight, scaledImageWidth, scratch, Flags::Buffer(false, false, false));
+
+          ImageProcessing::Resize(image, scaledImage);
+
+          const s32 xyIncrement = factor > 2. ? 1 : 2;
+
+          int stripCount, stripSize;
+
+          const int PTS_PER_THREAD = 1000;
+          stripCount = ((processingRectWidth/xyIncrement)*(processingRectHeight + xyIncrement-1)/xyIncrement + PTS_PER_THREAD/2)/PTS_PER_THREAD;
+          stripCount = std::min(std::max(stripCount, 1), 100);
+          stripSize = (((processingRectHeight + stripCount - 1)/stripCount + xyIncrement-1)/xyIncrement)*xyIncrement;
+
+          /*if( !detectSingleScale( scaledImage, stripCount, processingRectSize, stripSize, xyIncrement, factor, candidates,
+          rejectLevels, levelWeights, outputRejectLevels ) )
+          break;*/
+        } // for(f32 factor = 1; ; factor *= scaleFactor)
+
+        objects.set_size(candidates.get_size());
+        /*std::copy(candidates.begin(), candidates.end(), objects.begin());
+
+        groupRectangles( objects, minNeighbors, GROUP_EPS );*/
+
+        return RESULT_OK;
+      }
+
+      Result CascadeClassifier_LBP::DetectSingleScale(
+        const Array<u8> &image,
+        const s32 processingRectHeight,
+        const s32 processingRectWidth,
+        const s32 xyIncrement, //< Same as openCV yStep
+        const f32 scaleFactor,
+        FixedLengthList<Rectangle<s32> > &candidates,
+        MemoryStack scratch)
+      {
+        //if( !featureEvaluator->setImage( image, data.origWinSize ) )
+        //return false;
+
+        //Ptr<FeatureEvaluator> evaluator = classifier->featureEvaluator->clone();
+
+        const s32 winHeight = RoundS32(this->data.origWinHeight * scaleFactor);
+        const s32 winWidth = RoundS32(this->data.origWinWidth * scaleFactor);
+
+        for(s32 y = 0; y < processingRectHeight; y += xyIncrement ) {
+          for(s32 x = 0; x < processingRectWidth; x += xyIncrement ) {
+            double gypWeight;
+            //int result = classifier->runAt(evaluator, Point(x, y), gypWeight);
+            int result = 0;
+
+            if( result > 0 ) {
+              const s32 x0 = RoundS32(x*scaleFactor);
+              const s32 y0 = RoundS32(y*scaleFactor);
+
+              // TODO: should be width/height minus one?
+              candidates.PushBack(Rectangle<s32>(
+                x0, x0 + winWidth,
+                y0, y0 + winHeight));
+            }
+
+            // TODO: should the xStep be twice the xyIncrement?
+            if(result == 0)
+              x += xyIncrement;
+          }
+        }
+
+        return RESULT_OK;
+      }
+
+      s32 CascadeClassifier_LBP::PredictCategoricalStump(f32& sum) const
+      {
+        int nstages = (int)this->data.stages.get_size();
+        int nodeOfs = 0, leafOfs = 0;
+        //FEval& featureEvaluator = (FEval&)*_featureEvaluator;
+        size_t subsetSize = (this->data.ncategories + 31)/32;
+        const int* cascadeSubsets = &this->data.subsets[0];
+        const float* cascadeLeaves = &this->data.leaves[0];
+        const CascadeClassifier::DTreeNode* cascadeNodes = &this->data.nodes[0];
+        const CascadeClassifier::Stage* cascadeStages = &this->data.stages[0];
+
+        for( int si = 0; si < nstages; si++ )
+        {
+          const CascadeClassifier::Stage& stage = cascadeStages[si];
+          int wi, ntrees = stage.ntrees;
+
+          sum = 0;
+
+          for( wi = 0; wi < ntrees; wi++ )
+          {
+            const CascadeClassifier::DTreeNode& node = cascadeNodes[nodeOfs];
+
+            //int c = featureEvaluator();
+            //        int c = featuresPtr[node.featureIdx].calc(offset);
+            //            int cval = CALC_SUM_( p[5], p[6], p[9], p[10], _offset );
+
+            //return (CALC_SUM_( p[0], p[1], p[4], p[5], _offset ) >= cval ? 128 : 0) |   // 0
+            //       (CALC_SUM_( p[1], p[2], p[5], p[6], _offset ) >= cval ? 64 : 0) |    // 1
+            //       (CALC_SUM_( p[2], p[3], p[6], p[7], _offset ) >= cval ? 32 : 0) |    // 2
+            //       (CALC_SUM_( p[6], p[7], p[10], p[11], _offset ) >= cval ? 16 : 0) |  // 5
+            //       (CALC_SUM_( p[10], p[11], p[14], p[15], _offset ) >= cval ? 8 : 0)|  // 8
+            //       (CALC_SUM_( p[9], p[10], p[13], p[14], _offset ) >= cval ? 4 : 0)|   // 7
+            //       (CALC_SUM_( p[8], p[9], p[12], p[13], _offset ) >= cval ? 2 : 0)|    // 6
+            //       (CALC_SUM_( p[4], p[5], p[8], p[9], _offset ) >= cval ? 1 : 0);
+
+            int c = 0;
+
+            const int* subset = &cascadeSubsets[nodeOfs*subsetSize];
+
+            sum += cascadeLeaves[ subset[c>>5] & (1 << (c & 31)) ? leafOfs : leafOfs+1];
+
+            nodeOfs++;
+            leafOfs += 2;
+          }
+
+          if( sum < stage.threshold )
+            return -si;
+        }
+
+        return 1;
+      }
     } // namespace Classifier
   } // namespace Embedded
 } // namespace Anki

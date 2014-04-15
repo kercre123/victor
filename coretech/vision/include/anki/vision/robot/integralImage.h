@@ -19,6 +19,16 @@ namespace Anki
 {
   namespace Embedded
   {
+    class IntegralImage_u8_s32 : public Array<s32>
+    {
+    public:
+      // Simple, memory-inefficient version of an integral image
+
+      IntegralImage_u8_s32();
+
+      IntegralImage_u8_s32(const Array<u8> &image, MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false,false));
+    };
+
     // #pragma mark --- ScrollingIntegralImage Class Definition ---
 
     // A ScrollingIntegralImage computes and integral image from and input image. To save memory, the entire Integral Image isn't computed at once. Instead, the ScrollingIntegralImage computes and stores a small window, plus optional border padding. For example, for an input image of size MxN, a ScrollingIntegralImage could be of size OxN (where O < N)

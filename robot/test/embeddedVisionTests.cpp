@@ -63,11 +63,11 @@ GTEST_TEST(CoreTech_Vision, FaceDetection_All)
   //const std::string face_cascade_name = std::string("C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_frontalface_alt_tree.xml");
   const std::string face_cascade_name = std::string("C:/Anki/coretech-external/opencv-2.4.8/data/lbpcascades/lbpcascade_frontalface.xml");
 
-  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(scratchOffchip.IsValid());
+  //MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  //ASSERT_TRUE(scratchOffchip.IsValid());
 
-  Classifier::CascadeClassifier cc(face_cascade_name.data(), scratchOffchip);
-  cc.SaveAsHeader("c:/tmp/cascade.h", "lbpcascade_frontalface");
+  //Classifier::CascadeClassifier cc(face_cascade_name.data(), scratchOffchip);
+  //cc.SaveAsHeader("c:/tmp/cascade.h", "lbpcascade_frontalface");
 
   if( !face_cascade.load( face_cascade_name ) ) {
     printf("Could not load %s\n", face_cascade_name.c_str());

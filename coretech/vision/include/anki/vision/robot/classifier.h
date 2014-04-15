@@ -16,6 +16,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/array2d.h"
 #include "anki/common/robot/fixedLengthList.h"
 
+#include "anki/vision/robot/integralImage.h"
+
 namespace Anki
 {
   namespace Embedded
@@ -63,14 +65,6 @@ namespace Anki
           const FixedLengthList<f32> &leaves,
           const FixedLengthList<s32> &subsets);
 
-#ifdef ANKICORETECH_EMBEDDED_USE_OPENCV
-        // Use OpenCV to load the XML file, and convert it to the native format
-        // NOTE: You must modify opencv to add "friend class Anki::Embedded::Classifier::CascadeClassifier;" to cv::CascadeClassifier
-        CascadeClassifier(const char * filename, MemoryStack &memory);
-
-        Result SaveAsHeader(const char * filename, const char * objectName);
-#endif
-
         bool IsValid() const;
 
       protected:
@@ -105,6 +99,18 @@ namespace Anki
       class CascadeClassifier_LBP : public CascadeClassifier
       {
       public:
+        struct LBPFeature
+        {
+          LBPFeature();
+          LBPFeature(const s32 left, const s32 right, const s32 top, const s32 bottom)
+            : rect(left, right, top, bottom) {}
+
+          int calc(int offset) const;
+          void updatePtrs(const IntegralImage_u8_s32 &sum);
+
+          Rectangle<s32> rect; //< weight and height for block
+          const int* p[16]; //< direct pointer for fast access to integral images
+        };
 
         // See CascadeClassifier
         CascadeClassifier_LBP();
@@ -120,9 +126,41 @@ namespace Anki
           const FixedLengthList<CascadeClassifier::DTree> &classifiers,
           const FixedLengthList<CascadeClassifier::DTreeNode> &nodes,
           const FixedLengthList<f32> &leaves,
-          const FixedLengthList<s32> &subsets);
+          const FixedLengthList<s32> &subsets,
+          const FixedLengthList<LBPFeature> &features);
+
+#ifdef ANKICORETECH_EMBEDDED_USE_OPENCV
+        // Use OpenCV to load the XML file, and convert it to the native format
+        // NOTE: You must modify opencv to add "friend class Anki::Embedded::Classifier::CascadeClassifier;" to cv::CascadeClassifier
+        CascadeClassifier_LBP(const char * filename, MemoryStack &memory);
+
+        Result SaveAsHeader(const char * filename, const char * objectName);
+#endif
+
+        Result DetectMultiScale(
+          const Array<u8> &image,
+          const f32 scaleFactor,
+          const s32 minNeighbors,
+          const s32 minObjectHeight,
+          const s32 minObjectWidth,
+          const s32 maxObjectHeight,
+          const s32 maxObjectWidth,
+          FixedLengthList<Rectangle<s32> > &objects,
+          MemoryStack scratch);
+
+        Result DetectSingleScale(
+          const Array<u8> &image,
+          const s32 processingRectHeight,
+          const s32 processingRectWidth,
+          const s32 xyIncrement, //< Same as openCV yStep
+          const f32 scaleFactor,
+          FixedLengthList<Rectangle<s32> > &candidates,
+          MemoryStack scratch);
 
       protected:
+        FixedLengthList<LBPFeature> features;
+
+        s32 PredictCategoricalStump(f32& sum) const;
       }; // class CascadeClassifier_LBP : public CascadeClassifier
     } // namespace Classifier
   } // namespace Embedded
