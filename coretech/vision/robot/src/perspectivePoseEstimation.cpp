@@ -478,34 +478,38 @@ namespace Anki {
 
           for(s32 i_solution=0; i_solution<4; ++i_solution)
           {
-            // Project the validation world point into the image using each
-            // possible pose
-            //   proj = K*[R T]*[worldX; worldY; worldZ; 1]
-            //   u = projX/projZ;
-            //   v = projY/projZ;
-            //
-            // NOTE: this does not take radial distortion into account, if/when
-            //       we have that for the camera
-
-            Point3<PRECISION> projectedPoint3 = (possibleR[i_solution] * (*worldPoints[i_validate])) + possibleT[i_solution];
-            projectedPoint3.x = focalLength_x*projectedPoint3.x + camCenter_x*projectedPoint3.z;
-            projectedPoint3.y = focalLength_y*projectedPoint3.y + camCenter_y*projectedPoint3.z;
-
-            AnkiAssert(fabs(projectedPoint3.z) > 1e-6);
-            
-            Point<PRECISION> projectedPoint(projectedPoint3.x/projectedPoint3.z,
-              projectedPoint3.y/projectedPoint3.z);
-
-            // Compare to the validation image point
-            float error = projectedPoint.Dist(imgQuad[i_validate]);
-
-            //printf("Solution %d reprojection error when validating with corner %d = %f\n",
-            //        i_solution, i_validate, error);
-
-            if(error < minErrorInner) {
-              minErrorInner = error;
-              bestSolution = i_solution;
-            }
+            // First make sure the target was in front of the camera
+            if(possibleT[i_solution].z > 0)
+            {
+              // Project the validation world point into the image using each
+              // possible pose
+              //   proj = K*[R T]*[worldX; worldY; worldZ; 1]
+              //   u = projX/projZ;
+              //   v = projY/projZ;
+              //
+              // NOTE: this does not take radial distortion into account, if/when
+              //       we have that for the camera
+              
+              Point3<PRECISION> projectedPoint3 = (possibleR[i_solution] * (*worldPoints[i_validate])) + possibleT[i_solution];
+              projectedPoint3.x = focalLength_x*projectedPoint3.x + camCenter_x*projectedPoint3.z;
+              projectedPoint3.y = focalLength_y*projectedPoint3.y + camCenter_y*projectedPoint3.z;
+              
+              AnkiAssert(fabs(projectedPoint3.z) > 1e-6);
+              
+              Point<PRECISION> projectedPoint(projectedPoint3.x/projectedPoint3.z,
+                                              projectedPoint3.y/projectedPoint3.z);
+              
+              // Compare to the validation image point
+              float error = projectedPoint.Dist(imgQuad[i_validate]);
+              
+              //printf("Solution %d reprojection error when validating with corner %d = %f\n",
+              //        i_solution, i_validate, error);
+              
+              if(error < minErrorInner) {
+                minErrorInner = error;
+                bestSolution = i_solution;
+              }
+            } // if(possibleT[i_solution].z > 0)
           } // for each solution
 
           AnkiAssert(bestSolution >= 0);
