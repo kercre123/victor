@@ -7,6 +7,47 @@ Copyright Anki, Inc. 2014
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
 **/
 
+/*M///////////////////////////////////////////////////////////////////////////////////////
+//
+//  IMPORTANT: READ BEFORE DOWNLOADING, COPYING, INSTALLING OR USING.
+//
+//  By downloading, copying, installing or using the software you agree to this license.
+//  If you do not agree to this license, do not download, install,
+//  copy or use the software.
+//
+//
+//                        Intel License Agreement
+//                For Open Source Computer Vision Library
+//
+// Copyright (C) 2000, Intel Corporation, all rights reserved.
+// Third party copyrights are property of their respective owners.
+//
+// Redistribution and use in source and binary forms, with or without modification,
+// are permitted provided that the following conditions are met:
+//
+//   * Redistribution's of source code must retain the above copyright notice,
+//     this list of conditions and the following disclaimer.
+//
+//   * Redistribution's in binary form must reproduce the above copyright notice,
+//     this list of conditions and the following disclaimer in the documentation
+//     and/or other materials provided with the distribution.
+//
+//   * The name of Intel Corporation may not be used to endorse or promote products
+//     derived from this software without specific prior written permission.
+//
+// This software is provided by the copyright holders and contributors "as is" and
+// any express or implied warranties, including, but not limited to, the implied
+// warranties of merchantability and fitness for a particular purpose are disclaimed.
+// In no event shall the Intel Corporation or contributors be liable for any direct,
+// indirect, incidental, special, exemplary, or consequential damages
+// (including, but not limited to, procurement of substitute goods or services;
+// loss of use, data, or profits; or business interruption) however caused
+// and on any theory of liability, whether in contract, strict liability,
+// or tort (including negligence or otherwise) arising in any way out of
+// the use of this software, even if advised of the possibility of such damage.
+//
+//M*/
+
 #include "anki/vision/robot/classifier.h"
 
 #include "anki/common/robot/matlabInterface.h"
@@ -60,6 +101,165 @@ namespace Anki
   {
     namespace Classifier
     {
+      class SimilarRects
+      {
+      public:
+        SimilarRects(f32 _eps) : eps(_eps) {}
+
+        inline bool operator()(const Rectangle<s32> &r1, const Rectangle<s32> &r2) const
+        {
+          const s32 width1 = r1.right - r1.left;
+          const s32 width2 = r2.right - r2.left;
+
+          const s32 height1 = r1.bottom - r1.top;
+          const s32 height2 = r2.bottom - r2.top;
+
+          f32 delta = eps * (MIN(width1, width2) + MIN(height1, height2)) * 0.5f;
+
+          return
+            ABS(r1.left - r2.left) <= delta &&
+            ABS(r1.top - r2.top) <= delta &&
+            ABS(r1.right - r2.right) <= delta &&
+            ABS(r1.bottom - r2.bottom) <= delta;
+        }
+
+        f32 eps;
+      }; // class SimilarRects
+
+      void GroupRectangles(FixedLengthList<Rectangle<s32> >& rectList, const s32 groupThreshold, const f32 eps, MemoryStack scratch)
+      {
+        GroupRectangles(rectList, groupThreshold, eps, NULL, NULL, scratch);
+      } // void GroupRectangles(FixedLengthList<Rectangle<s32> >& rectList, const s32 groupThreshold, const f32 eps)
+
+      void GroupRectangles(FixedLengthList<Rectangle<s32> >& rectList, const s32 groupThreshold, const f32 eps, FixedLengthList<s32>* weights, FixedLengthList<f32>* levelWeights, MemoryStack scratch)
+      {
+        if( groupThreshold <= 0 || rectList.get_size()==0 )
+        {
+          if( weights )
+          {
+            s32 sz = rectList.get_size();
+            weights->set_size(sz);
+            for(s32 i = 0; i < sz; i++ )
+              (*weights)[i] = 1;
+          }
+          return;
+        }
+
+        FixedLengthList<int> labels(rectList.get_size(), scratch, Flags::Buffer(false, false, true));
+
+        const int nclasses = Partition(rectList, labels, SimilarRects(eps), scratch);
+
+        FixedLengthList<Rectangle<s32> > rrects(nclasses, scratch, Flags::Buffer(false, false, true));
+
+        FixedLengthList<int> rweights(nclasses, scratch, Flags::Buffer(false, false, true));
+        rweights.Set(0);
+
+        FixedLengthList<int> rejectLevels(nclasses, scratch, Flags::Buffer(false, false, true));
+        rejectLevels.Set(0);
+
+        FixedLengthList<f32> rejectWeights(nclasses, scratch, Flags::Buffer(false, false, true));
+        rejectWeights.Set(FLT_MAX);
+
+        const int nlabels = (int)labels.get_size();
+
+        for(s32 i = 0; i < nlabels; i++ )
+        {
+          const int cls = labels[i];
+          rrects[cls].left += rectList[i].left;
+          rrects[cls].right += rectList[i].right;
+          rrects[cls].top += rectList[i].top;
+          rrects[cls].bottom += rectList[i].bottom;
+          rweights[cls]++;
+        }
+
+        if ( levelWeights && weights && !weights->get_size()==0 && !levelWeights->get_size()==0 )
+        {
+          for(s32 i = 0; i < nlabels; i++ )
+          {
+            const int cls = labels[i];
+
+            if( (*weights)[i] > rejectLevels[cls] )
+            {
+              rejectLevels[cls] = (*weights)[i];
+              rejectWeights[cls] = (*levelWeights)[i];
+            }
+            else if( ( (*weights)[i] == rejectLevels[cls] ) && ( (*levelWeights)[i] > rejectWeights[cls] ) )
+              rejectWeights[cls] = (*levelWeights)[i];
+          }
+        }
+
+        for(s32 i = 0; i < nclasses; i++ )
+        {
+          const Rectangle<s32> r = rrects[i];
+          const f32 s = 1.f/rweights[i];
+
+          rrects[i] = Rectangle<s32>(
+            RoundS32(r.left*s),
+            RoundS32(r.right*s),
+            RoundS32(r.top*s),
+            RoundS32(r.bottom*s));
+        }
+
+        rectList.Clear();
+
+        if( weights )
+          weights->Clear();
+
+        if( levelWeights )
+          levelWeights->Clear();
+
+        for(s32 i = 0; i < nclasses; i++ )
+        {
+          const Rectangle<s32> r1 = rrects[i];
+          const int n1 = levelWeights ? rejectLevels[i] : rweights[i];
+          const f32 w1 = rejectWeights[i];
+
+          if( n1 <= groupThreshold )
+            continue;
+
+          s32 j;
+
+          // filter out small face rectangles inside large rectangles
+          for(j = 0; j < nclasses; j++ )
+          {
+            const int n2 = rweights[j];
+
+            if( j == i || n2 <= groupThreshold )
+              continue;
+
+            const Rectangle<s32> r2 = rrects[j];
+
+            //const s32 width1 = r1.right - r1.left;
+            const s32 width2 = r2.right - r2.left;
+
+            //const s32 height1 = r1.bottom - r1.top;
+            const s32 height2 = r2.bottom - r2.top;
+
+            int dx = RoundS32( width2 * eps );
+            int dy = RoundS32( height2 * eps );
+
+            if( i != j &&
+              r1.left >= r2.left - dx &&
+              r1.top >= r2.top - dy &&
+              r1.right <= r2.right + dx &&
+              r1.bottom <= r2.bottom + dy &&
+              (n2 > std::max(3, n1) || n1 < 3) )
+              break;
+          }
+
+          if( j == nclasses )
+          {
+            rectList.PushBack(r1);
+
+            if( weights )
+              weights->PushBack(n1);
+
+            if( levelWeights )
+              levelWeights->PushBack(w1);
+          }
+        }
+      } // void GroupRectangles(FixedLengthList<Rectangle<s32> >& rectList, const s32 groupThreshold, const f32 eps, FixedLengthList<s32>* weights, FixedLengthList<f32>* levelWeights)
+
       CascadeClassifier::CascadeClassifier()
         : isValid(false)
       {
@@ -408,7 +608,7 @@ namespace Anki
         FixedLengthList<Rectangle<s32> > &objects,
         MemoryStack scratch)
       {
-        const s32 MAX_CANDIDATES = 5000;
+        //const s32 MAX_CANDIDATES = 5000;
         const f32 GROUP_EPS = 0.2f;
 
         const s32 imageHeight = image.get_size(0);
@@ -417,11 +617,14 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(this->IsValid(),
           RESULT_FAIL_INVALID_OBJECT, "CascadeClassifier::DetectMultiScale", "This object is invalid");
 
+        AnkiConditionalErrorAndReturnValue(image.IsValid() && objects.IsValid(),
+          RESULT_FAIL_INVALID_OBJECT, "CascadeClassifier::DetectMultiScale", "Invalid inputs");
+
         objects.Clear();
 
         // TODO: do I need masks?
 
-        //if (!maskGenerator.empty()) {
+        //if (!maskGenerator.get_size()==0) {
         //  maskGenerator->initializeMask(image);
         //}
 
@@ -437,7 +640,7 @@ namespace Anki
         //}
 
         //Mat imageBuffer(image.rows + 1, image.cols + 1, CV_8U);
-        FixedLengthList<Rectangle<s32> > candidates(MAX_CANDIDATES, scratch);
+        FixedLengthList<Rectangle<s32> > candidates(objects.get_maximumSize(), scratch);
 
         for(f32 factor = 1; ; factor *= scaleFactor) {
           PUSH_MEMORY_STACK(scratch);
@@ -490,9 +693,9 @@ namespace Anki
         } // for(f32 factor = 1; ; factor *= scaleFactor)
 
         objects.set_size(candidates.get_size());
-        /*std::copy(candidates.begin(), candidates.end(), objects.begin());
+        memcpy(objects.Pointer(0), candidates.Pointer(0), candidates.get_array().get_stride());
 
-        groupRectangles( objects, minNeighbors, GROUP_EPS );*/
+        GroupRectangles( objects, minNeighbors, GROUP_EPS, scratch );
 
         return RESULT_OK;
       }
@@ -516,6 +719,8 @@ namespace Anki
         for(s32 fi = 0; fi < nfeatures; fi++) {
           this->features[fi].updatePtrs(integralImage);
         }
+
+        //this->features.Print("features");
 
         //Matlab matlab(false);
         //matlab.PutArray(image, "image");
@@ -567,11 +772,13 @@ namespace Anki
         //FEval& featureEvaluator = (FEval&)*_featureEvaluator;
         const size_t subsetSize = (this->data.ncategories + 31)/32;
         const int* cascadeSubsets = &this->data.subsets[0];
-        const float* cascadeLeaves = &this->data.leaves[0];
+        const f32* cascadeLeaves = &this->data.leaves[0];
         const CascadeClassifier::DTreeNode* cascadeNodes = &this->data.nodes[0];
         const CascadeClassifier::Stage* cascadeStages = &this->data.stages[0];
 
         const s32 * restrict pIntegralImage = integralImage.Pointer(location);
+
+        const s32 offset = location.x + location.y * (integralImage.get_stride() / sizeof(s32));
 
         for( int si = 0; si < nstages; si++ )
         {
@@ -585,9 +792,9 @@ namespace Anki
             const CascadeClassifier::DTreeNode& node = cascadeNodes[nodeOfs];
 
             //int c = featureEvaluator(node.featureIdx);
-            //const int c = this->features[node.featureIdx].calc();
+            const int c = this->features[node.featureIdx].calc(offset);
 
-            int c = 0;
+            //int c = 0;
 
             const int* subset = &cascadeSubsets[nodeOfs*subsetSize];
 
@@ -610,8 +817,8 @@ namespace Anki
         const s32 step = sum.get_stride() / sizeof(s32);
         Rectangle<s32> tr = rect;
 
-        const s32 width = tr.get_width();
-        const s32 height = tr.get_height();
+        const s32 width = tr.right - tr.left;
+        const s32 height = tr.bottom - tr.top;
 
         ANKI_SUM_PTRS( p[0], p[1], p[4], p[5], ptr, tr, step );
         tr.left += 2*width;
@@ -640,6 +847,11 @@ namespace Anki
           (CALC_SUM_( p[9], p[10], p[13], p[14], _offset ) >= cval ? 4 : 0)|   // 7
           (CALC_SUM_( p[8], p[9], p[12], p[13], _offset ) >= cval ? 2 : 0)|    // 6
           (CALC_SUM_( p[4], p[5], p[8], p[9], _offset ) >= cval ? 1 : 0);
+      }
+
+      void CascadeClassifier_LBP::LBPFeature::Print() const
+      {
+        return this->rect.Print();
       }
     } // namespace Classifier
   } // namespace Embedded

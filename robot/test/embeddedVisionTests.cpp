@@ -168,31 +168,31 @@ GTEST_TEST(CoreTech_Vision, FaceDetection)
   const cv::Size minSize = cv::Size(30,30);
   const cv::Size maxSize = cv::Size(imageWidth, imageHeight);
 
+  const s32 MAX_CANDIDATES = 5000;
+
   Array<u8> image(imageHeight, imageWidth, scratchOffchip);
   image.Set(&cozmo_date2014_04_10_time16_15_40_frame0[0], imageHeight*imageWidth);
 
-  {
-    FixedLengthList<Rectangle<s32> > detectedFaces;
+  FixedLengthList<Rectangle<s32> > detectedFaces_anki(MAX_CANDIDATES, scratchOffchip);
 
-    Classifier::CascadeClassifier_LBP cc(face_cascade_name.data(), scratchOffchip);
+  Classifier::CascadeClassifier_LBP cc(face_cascade_name.data(), scratchOffchip);
 
-    cc.DetectMultiScale(
-      image,
-      scaleFactor,
-      minNeighbors,
-      minSize.height, minSize.width,
-      maxSize.height, maxSize.width,
-      detectedFaces,
-      scratchOffchip);
-  }
+  cc.DetectMultiScale(
+    image,
+    scaleFactor,
+    minNeighbors,
+    minSize.height, minSize.width,
+    maxSize.height, maxSize.width,
+    detectedFaces_anki,
+    scratchOffchip);
 
-  vector<cv::Rect> detectedFaces;
+  vector<cv::Rect> detectedFaces_opencv;
 
   f32 t0 = GetTime();
 
   face_cascade.detectMultiScale(
     image.get_CvMat_(),
-    detectedFaces,
+    detectedFaces_opencv,
     scaleFactor,
     minNeighbors,
     0|CV_HAAR_SCALE_IMAGE, // int flags=0,
@@ -212,11 +212,18 @@ GTEST_TEST(CoreTech_Vision, FaceDetection)
   channels.push_back(image.get_CvMat_());
   cv::merge(channels, toShow);
 
-  for( size_t i = 0; i < detectedFaces.size(); i++ )
+  for( s32 i = 0; i < detectedFaces_anki.get_size(); i++ )
   {
-    cv::Point center( RoundS32(detectedFaces[i].x + detectedFaces[i].width*0.5), RoundS32(detectedFaces[i].y + detectedFaces[i].height*0.5) );
-    cv::ellipse( toShow, center, cv::Size( RoundS32(detectedFaces[i].width*0.5), RoundS32(detectedFaces[i].height*0.5)), 0, 0, 360, cv::Scalar( 255, 0, 255 ), 4, 8, 0 );
+    cv::Point center( RoundS32((detectedFaces_anki[i].left + detectedFaces_anki[i].right)*0.5), RoundS32((detectedFaces_anki[i].top + detectedFaces_anki[i].bottom)*0.5) );
+    cv::ellipse( toShow, center, cv::Size( RoundS32((detectedFaces_anki[i].right-detectedFaces_anki[i].left)*0.5), RoundS32((detectedFaces_anki[i].bottom-detectedFaces_anki[i].top)*0.5)), 0, 0, 360, cv::Scalar( 255, 0, 0 ), 5, 8, 0 );
   }
+
+  for( size_t i = 0; i < detectedFaces_opencv.size(); i++ )
+  {
+    cv::Point center( RoundS32(detectedFaces_opencv[i].x + detectedFaces_opencv[i].width*0.5), RoundS32(detectedFaces_opencv[i].y + detectedFaces_opencv[i].height*0.5) );
+    cv::ellipse( toShow, center, cv::Size( RoundS32(detectedFaces_opencv[i].width*0.5), RoundS32(detectedFaces_opencv[i].height*0.5)), 0, 0, 360, cv::Scalar( 0, 0, 255 ), 1, 8, 0 );
+  }
+
   //-- Show what you got
   cv::imshow("Detected faces", toShow);
   cv::waitKey();
