@@ -89,21 +89,28 @@ GTEST_TEST(CoreTech_Vision, FaceDetection_All)
 
   Classifier::CascadeClassifier_LBP cc(face_cascade_name.data(), scratchOffchip);
 
-  s32 curSet = 0;
+  //s32 curSet = 0;
   while(!faceFilenames.eof()) {
-    /*const s32 numImagesAtATime = 20;*/
-    const s32 numImagesAtATime = 1;
+    const s32 numImagesAtATime = 25;
+    //const s32 numImagesAtATime = 1;
     std::string lines[numImagesAtATime];
+
+    const s32 maxX = 1800;
+    const s32 borderPixelsX = 10;
+    const s32 borderPixelsY = 20;
+    s32 largestY = 0;
+    s32 curX = 0;
+    s32 curY = 0;
 
     for(s32 in=0; in<numImagesAtATime; in++) {
       PUSH_MEMORY_STACK(scratchOffchip);
 
       getline(faceFilenames, lines[in]);
 
-      curSet++;
+      /*curSet++;
 
       if(curSet < 47)
-        continue;
+      continue;*/
 
       vector<cv::Rect> detectedFaces_opencv;
 
@@ -181,6 +188,17 @@ GTEST_TEST(CoreTech_Vision, FaceDetection_All)
 
       //-- Show what you got
       cv::imshow(outname, toShow);
+
+      cv::moveWindow(outname, curX, curY);
+
+      largestY = MAX(largestY, toShow.rows);
+
+      curX += toShow.cols + borderPixelsX;
+
+      if(curX > maxX) {
+        curX = 0;
+        curY += largestY + borderPixelsY;
+      }
     }
 
     cv::waitKey();

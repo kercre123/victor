@@ -145,17 +145,15 @@ namespace Anki
           return;
         }
 
-        FixedLengthList<int> labels(rectList.get_size(), scratch, Flags::Buffer(false, false, true));
+        FixedLengthList<int> labels(rectList.get_size(), scratch, Flags::Buffer(true, false, true));
 
         const int nclasses = Partition(rectList, labels, SimilarRects(eps), scratch);
 
-        FixedLengthList<Rectangle<s32> > rrects(nclasses, scratch, Flags::Buffer(false, false, true));
+        FixedLengthList<Rectangle<s32> > rrects(nclasses, scratch, Flags::Buffer(true, false, true));
 
-        FixedLengthList<int> rweights(nclasses, scratch, Flags::Buffer(false, false, true));
-        rweights.Set(0);
+        FixedLengthList<int> rweights(nclasses, scratch, Flags::Buffer(true, false, true));
 
-        FixedLengthList<int> rejectLevels(nclasses, scratch, Flags::Buffer(false, false, true));
-        rejectLevels.Set(0);
+        FixedLengthList<int> rejectLevels(nclasses, scratch, Flags::Buffer(true, false, true));
 
         FixedLengthList<f32> rejectWeights(nclasses, scratch, Flags::Buffer(false, false, true));
         rejectWeights.Set(FLT_MAX);
