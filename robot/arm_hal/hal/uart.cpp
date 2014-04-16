@@ -82,6 +82,7 @@ namespace Anki
         GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
         GPIO_Init(GPIO_TX, &GPIO_InitStructure);
         
+        GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
         GPIO_InitStructure.GPIO_Pin = PIN_RX;
         GPIO_Init(GPIO_RX, &GPIO_InitStructure);
         
