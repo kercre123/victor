@@ -1048,8 +1048,9 @@ namespace Anki {
 #elif defined(RUN_SIMPLE_FACE_DETECTION_TEST) // #ifdef SEND_IMAGE_ONLY 
 
       ReturnCode Update(const Messages::RobotState robotState)
-      {
-              
+      {              
+      const f32 exposure = 0.2f;
+        
       VisionMemory::ResetBuffers();
       
       const s32 captureHeight = CameraModeInfo[captureResolution_].height;
@@ -1059,7 +1060,7 @@ namespace Anki {
                                VisionMemory::offchipScratch_, Flags::Buffer(false,false,false));
       
       HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
-                          captureResolution_, 0.1f, false);
+                          captureResolution_, exposure, false);
       
       const s32 faceDetectionHeight = CameraModeInfo[faceDetectionResolution_].height;
       const s32 faceDetectionWidth  = CameraModeInfo[faceDetectionResolution_].width;
@@ -1073,7 +1074,7 @@ namespace Anki {
       const s32 MAX_CANDIDATES = 5000;
       
       Array<u8> smallImage(
-        faceDetectionWidth, faceDetectionHeight,
+        faceDetectionHeight, faceDetectionWidth,
         VisionMemory::onchipScratch_, Flags::Buffer(false,false,false));
         
       DownsampleHelper(grayscaleImage, smallImage, VisionMemory::ccmScratch_);
@@ -1114,6 +1115,7 @@ namespace Anki {
       DebugStream::SendFaceDetections(
         grayscaleImage, 
         detectedFaces,
+        smallImage.get_size(1),
         VisionMemory::ccmScratch_, 
         VisionMemory::onchipScratch_, 
         VisionMemory::offchipScratch_);

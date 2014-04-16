@@ -262,6 +262,7 @@ namespace Anki {
         ReturnCode SendFaceDetections(
           const Array<u8> &image, 
           const FixedLengthList<Rectangle<s32> > &detectedFaces,
+          const s32 detectedFacesImageWidth,
           MemoryStack ccmScratch, 
           MemoryStack onchipScratch, 
           MemoryStack offchipScratch)
@@ -281,8 +282,11 @@ namespace Anki {
           const s32 width  = CameraModeInfo[debugStreamResolution_].width;
           
           debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
-                    
-          debugStreamBuffer_.PushBack<Rectangle<s32> >("detectedFaces", detectedFaces);
+          
+          if(detectedFaces.get_size() > 0) {            
+            debugStreamBuffer_.PushBack<s32>("detectedFacesImageWidth", &detectedFacesImageWidth, 1);
+            debugStreamBuffer_.PushBack<Rectangle<s32> >("detectedFaces", detectedFaces);            
+          }
                     
           frameNumber++;
           
