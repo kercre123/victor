@@ -38,6 +38,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "../../../systemTestImages/cozmo_date2014_04_04_time17_40_08_frame0.h"
 #include "../../../systemTestImages/cozmo_date2014_04_10_time16_15_40_frame0.h"
 
+#include "anki/vision/robot/lbpcascade_frontalface.h"
+
 #include "embeddedTests.h"
 
 #include <cmath>
@@ -49,9 +51,9 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 using namespace Anki::Embedded;
 
-#define RUN_FACE_DETECTION_ALL
+//#define RUN_FACE_DETECTION_GUI
 
-#if defined(RUN_FACE_DETECTION_ALL) && defined(ANKICORETECH_EMBEDDED_USE_OPENCV)
+#if defined(RUN_FACE_DETECTION_GUI) && defined(ANKICORETECH_EMBEDDED_USE_OPENCV)
 GTEST_TEST(CoreTech_Vision, FaceDetection_All)
 {
   using namespace std;
@@ -206,12 +208,15 @@ GTEST_TEST(CoreTech_Vision, FaceDetection_All)
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, FaceDetection_All)
-#endif // #if defined(RUN_FACE_DETECTION_ALL) && defined(ANKICORETECH_EMBEDDED_USE_OPENCV)
+#endif // #if defined(RUN_FACE_DETECTION_GUI) && defined(ANKICORETECH_EMBEDDED_USE_OPENCV)
 
 GTEST_TEST(CoreTech_Vision, FaceDetection)
 {
-#ifdef ANKICORETECH_EMBEDDED_USE_OPENCV
-  using namespace std;
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  ASSERT_TRUE(scratchCcm.IsValid());
+
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(scratchOnchip.IsValid());
 
   MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(scratchOffchip.IsValid());
@@ -223,13 +228,6 @@ GTEST_TEST(CoreTech_Vision, FaceDetection)
   //const std::string face_cascade_name = std::string("C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_frontalface_alt_tree.xml");
   const std::string face_cascade_name = std::string("C:/Anki/coretech-external/opencv-2.4.8/data/lbpcascades/lbpcascade_frontalface.xml");
 
-  cv::RNG rng(12345);
-
-  if( !face_cascade.load( face_cascade_name ) ) {
-    printf("Could not load %s\n", face_cascade_name.c_str());
-    return;
-  }
-
   const s32 imageHeight = 240;
   const s32 imageWidth = 320;
 
@@ -240,14 +238,40 @@ GTEST_TEST(CoreTech_Vision, FaceDetection)
 
   const s32 MAX_CANDIDATES = 5000;
 
-  Array<u8> image(imageHeight, imageWidth, scratchOffchip);
+  Array<u8> image(imageHeight, imageWidth, scratchOnchip);
   image.Set(&cozmo_date2014_04_10_time16_15_40_frame0[0], imageHeight*imageWidth);
 
-  FixedLengthList<Rectangle<s32> > detectedFaces_anki(MAX_CANDIDATES, scratchOffchip);
+  FixedLengthList<Rectangle<s32> > detectedFaces_anki(MAX_CANDIDATES, scratchOnchip);
 
-  Classifier::CascadeClassifier_LBP cc(face_cascade_name.data(), scratchOffchip);
+  //Classifier::CascadeClassifier_LBP cc(face_cascade_name.data(), scratchOffchip);
+  //cc.SaveAsHeader("c:/tmp/lbpcascade_frontalface.h", "lbpcascade_frontalface");
 
-  cc.DetectMultiScale(
+  // TODO: are these const casts okay?
+  const FixedLengthList<Classifier::CascadeClassifier::Stage> &stages = FixedLengthList<Classifier::CascadeClassifier::Stage>(lbpcascade_frontalface_stages_length, const_cast<Classifier::CascadeClassifier::Stage*>(&lbpcascade_frontalface_stages_data[0]), lbpcascade_frontalface_stages_length*sizeof(Classifier::CascadeClassifier::Stage) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+  const FixedLengthList<Classifier::CascadeClassifier::DTree> &classifiers = FixedLengthList<Classifier::CascadeClassifier::DTree>(lbpcascade_frontalface_classifiers_length, const_cast<Classifier::CascadeClassifier::DTree*>(&lbpcascade_frontalface_classifiers_data[0]), lbpcascade_frontalface_classifiers_length*sizeof(Classifier::CascadeClassifier::DTree) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+  const FixedLengthList<Classifier::CascadeClassifier::DTreeNode> &nodes =  FixedLengthList<Classifier::CascadeClassifier::DTreeNode>(lbpcascade_frontalface_nodes_length, const_cast<Classifier::CascadeClassifier::DTreeNode*>(&lbpcascade_frontalface_nodes_data[0]), lbpcascade_frontalface_nodes_length*sizeof(Classifier::CascadeClassifier::DTreeNode) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));;
+  const FixedLengthList<f32> &leaves = FixedLengthList<f32>(lbpcascade_frontalface_leaves_length, const_cast<f32*>(&lbpcascade_frontalface_leaves_data[0]), lbpcascade_frontalface_leaves_length*sizeof(f32) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+  const FixedLengthList<s32> &subsets = FixedLengthList<s32>(lbpcascade_frontalface_subsets_length, const_cast<s32*>(&lbpcascade_frontalface_subsets_data[0]), lbpcascade_frontalface_subsets_length*sizeof(s32) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+  const FixedLengthList<Rectangle<s32> > &featureRectangles = FixedLengthList<Rectangle<s32> >(lbpcascade_frontalface_featureRectangles_length, const_cast<Rectangle<s32>*>(reinterpret_cast<const Rectangle<s32>*>(&lbpcascade_frontalface_featureRectangles_data[0])), lbpcascade_frontalface_featureRectangles_length*sizeof(Rectangle<s32>) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+
+  Classifier::CascadeClassifier_LBP cc(
+    lbpcascade_frontalface_isStumpBased,
+    lbpcascade_frontalface_stageType,
+    lbpcascade_frontalface_featureType,
+    lbpcascade_frontalface_ncategories,
+    lbpcascade_frontalface_origWinHeight,
+    lbpcascade_frontalface_origWinWidth,
+    stages,
+    classifiers,
+    nodes,
+    leaves,
+    subsets,
+    featureRectangles,
+    scratchCcm);
+
+  f32 t0 = GetTime();
+
+  const Result result = cc.DetectMultiScale(
     image,
     static_cast<f32>(scaleFactor),
     minNeighbors,
@@ -256,49 +280,14 @@ GTEST_TEST(CoreTech_Vision, FaceDetection)
     detectedFaces_anki,
     scratchOffchip);
 
-  vector<cv::Rect> detectedFaces_opencv;
-
-  f32 t0 = GetTime();
-
-  face_cascade.detectMultiScale(
-    image.get_CvMat_(),
-    detectedFaces_opencv,
-    scaleFactor,
-    minNeighbors,
-    0|CV_HAAR_SCALE_IMAGE, // int flags=0,
-    minSize,
-    maxSize
-    );
+  ASSERT_TRUE(result == RESULT_OK);
 
   f32 t1 = GetTime();
 
   printf("Detection took %f seconds\n", t1-t0);
 
-  cv::Mat toShow(imageHeight, imageWidth, CV_8UC3);
-
-  vector<cv::Mat> channels;
-  channels.push_back(image.get_CvMat_());
-  channels.push_back(image.get_CvMat_());
-  channels.push_back(image.get_CvMat_());
-  cv::merge(channels, toShow);
-
-  for( s32 i = 0; i < detectedFaces_anki.get_size(); i++ )
-  {
-    cv::Point center( RoundS32((detectedFaces_anki[i].left + detectedFaces_anki[i].right)*0.5), RoundS32((detectedFaces_anki[i].top + detectedFaces_anki[i].bottom)*0.5) );
-    cv::ellipse( toShow, center, cv::Size( RoundS32((detectedFaces_anki[i].right-detectedFaces_anki[i].left)*0.5), RoundS32((detectedFaces_anki[i].bottom-detectedFaces_anki[i].top)*0.5)), 0, 0, 360, cv::Scalar( 255, 0, 0 ), 5, 8, 0 );
-  }
-
-  for( size_t i = 0; i < detectedFaces_opencv.size(); i++ )
-  {
-    cv::Point center( RoundS32(detectedFaces_opencv[i].x + detectedFaces_opencv[i].width*0.5), RoundS32(detectedFaces_opencv[i].y + detectedFaces_opencv[i].height*0.5) );
-    cv::ellipse( toShow, center, cv::Size( RoundS32(detectedFaces_opencv[i].width*0.5), RoundS32(detectedFaces_opencv[i].height*0.5)), 0, 0, 360, cv::Scalar( 0, 0, 255 ), 1, 8, 0 );
-  }
-
-  //-- Show what you got
-  cv::imshow("Detected faces", toShow);
-  cv::waitKey();
-
-#endif // #ifdef ANKICORETECH_EMBEDDED_USE_OPENCV
+  ASSERT_TRUE(detectedFaces_anki.get_size() == 1);
+  ASSERT_TRUE(detectedFaces_anki[0] == Rectangle<s32>(103,218,40,155));
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, FaceDetection)

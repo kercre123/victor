@@ -269,7 +269,8 @@ namespace Anki
           const FixedLengthList<CascadeClassifier::DTreeNode> &nodes,
           const FixedLengthList<f32> &leaves,
           const FixedLengthList<s32> &subsets,
-          const FixedLengthList<LBPFeature> &features);
+          const FixedLengthList<Rectangle<s32> > &featureRectangles, //< Rectangles will be copied into this object's FixedLengthList<LBPFeature> features (which is allocated from memory)
+          MemoryStack &memory);
 
 #ifdef ANKICORETECH_EMBEDDED_USE_OPENCV
         // Use OpenCV to load the XML file, and convert it to the native format
@@ -298,6 +299,8 @@ namespace Anki
           const f32 scaleFactor,
           FixedLengthList<Rectangle<s32> > &candidates,
           MemoryStack scratch);
+
+        bool IsValid() const;
 
       protected:
         FixedLengthList<LBPFeature> features;

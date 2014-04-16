@@ -316,6 +316,32 @@ namespace Anki
         if(!data.subsets.IsValid())
           return false;
 
+        if(data.stages.get_size() != data.stages.get_maximumSize())
+          return false;
+
+        if(data.classifiers.get_size() != data.classifiers.get_maximumSize())
+          return false;
+
+        if(data.nodes.get_size() != data.nodes.get_maximumSize())
+          return false;
+
+        if(data.leaves.get_size() != data.leaves.get_maximumSize())
+          return false;
+
+        if(data.subsets.get_size() != data.subsets.get_maximumSize())
+          return false;
+
+        return true;
+      } // bool CascadeClassifier::IsValid() const
+
+      bool CascadeClassifier_LBP::IsValid() const
+      {
+        if(!CascadeClassifier::IsValid())
+          return false;
+
+        if(features.get_size() != features.get_maximumSize())
+          return false;
+
         return true;
       } // bool CascadeClassifier::IsValid() const
 
@@ -424,7 +450,8 @@ namespace Anki
         fprintf(file,
           "#ifndef %s\n"
           "#define %s\n\n"
-          "#include \"anki/common/robot/config.h\"\n\n", headerDefineString, headerDefineString);
+          "#include \"anki/common/robot/config.h\"\n"
+          "#include \"anki/vision/robot/classifier.h\"\n\n", headerDefineString, headerDefineString);
 
         if(this->data.isStumpBased) {
           fprintf(file,
@@ -452,7 +479,7 @@ namespace Anki
           "#define %s_nodes_length %d\n"
           "#define %s_leaves_length %d\n"
           "#define %s_subsets_length %d\n"
-          "#define %s_features_length %d\n\n",
+          "#define %s_featureRectangles_length %d\n\n",
           objectName, this->data.stages.get_size(),
           objectName, this->data.classifiers.get_size(),
           objectName, this->data.nodes.get_size(),
@@ -465,7 +492,7 @@ namespace Anki
           "#if defined(_MSC_VER)\n"
           "__declspec(align(MEMORY_ALIGNMENT_RAW))\n"
           "#endif\n"
-          "const Stage %s_stages_data[%s_stages_length]\n"
+          "const Anki::Embedded::Classifier::CascadeClassifier::Stage %s_stages_data[%s_stages_length + MEMORY_ALIGNMENT_RAW]\n"
           "#if defined(__EDG__)  // ARM-MDK\n"
           "__attribute__ ((aligned (MEMORY_ALIGNMENT_RAW)))\n"
           "#endif\n"
@@ -474,7 +501,7 @@ namespace Anki
 
         for(s32 i=0; i<this->data.stages.get_size(); i++) {
           fprintf(file,
-            "{%d,%d,%f},", this->data.stages[i].first, this->data.stages[i].ntrees, this->data.stages[i].threshold);
+            "{%d,%d,%ff},", this->data.stages[i].first, this->data.stages[i].ntrees, this->data.stages[i].threshold);
         }
 
         fprintf(file,
@@ -486,7 +513,7 @@ namespace Anki
           "#if defined(_MSC_VER)\n"
           "__declspec(align(MEMORY_ALIGNMENT_RAW))\n"
           "#endif\n"
-          "const DTree %s_classifiers_data[%s_classifiers_length]\n"
+          "const Anki::Embedded::Classifier::CascadeClassifier::DTree %s_classifiers_data[%s_classifiers_length + MEMORY_ALIGNMENT_RAW]\n"
           "#if defined(__EDG__)  // ARM-MDK\n"
           "__attribute__ ((aligned (MEMORY_ALIGNMENT_RAW)))\n"
           "#endif\n"
@@ -507,7 +534,7 @@ namespace Anki
           "#if defined(_MSC_VER)\n"
           "__declspec(align(MEMORY_ALIGNMENT_RAW))\n"
           "#endif\n"
-          "const DTreeNode %s_nodes_data[%s_nodes_length]\n"
+          "const Anki::Embedded::Classifier::CascadeClassifier::DTreeNode %s_nodes_data[%s_nodes_length + MEMORY_ALIGNMENT_RAW]\n"
           "#if defined(__EDG__)  // ARM-MDK\n"
           "__attribute__ ((aligned (MEMORY_ALIGNMENT_RAW)))\n"
           "#endif\n"
@@ -516,7 +543,7 @@ namespace Anki
 
         for(s32 i=0; i<this->data.nodes.get_size(); i++) {
           fprintf(file,
-            "{%d,%f,%d,%d},", this->data.nodes[i].featureIdx, this->data.nodes[i].threshold, this->data.nodes[i].left, this->data.nodes[i].right);
+            "{%d,%ff,%d,%d},", this->data.nodes[i].featureIdx, this->data.nodes[i].threshold, this->data.nodes[i].left, this->data.nodes[i].right);
         }
 
         fprintf(file,
@@ -528,7 +555,7 @@ namespace Anki
           "#if defined(_MSC_VER)\n"
           "__declspec(align(MEMORY_ALIGNMENT_RAW))\n"
           "#endif\n"
-          "const f32 %s_leaves_data[%s_leaves_length]\n"
+          "const f32 %s_leaves_data[%s_leaves_length + MEMORY_ALIGNMENT_RAW]\n"
           "#if defined(__EDG__)  // ARM-MDK\n"
           "__attribute__ ((aligned (MEMORY_ALIGNMENT_RAW)))\n"
           "#endif\n"
@@ -537,7 +564,7 @@ namespace Anki
 
         for(s32 i=0; i<this->data.leaves.get_size(); i++) {
           fprintf(file,
-            "%f,", this->data.leaves[i]);
+            "%ff,", this->data.leaves[i]);
         }
 
         fprintf(file,
@@ -549,7 +576,7 @@ namespace Anki
           "#if defined(_MSC_VER)\n"
           "__declspec(align(MEMORY_ALIGNMENT_RAW))\n"
           "#endif\n"
-          "const Stage %s_subsets_data[%s_subsets_length]\n"
+          "const s32 %s_subsets_data[%s_subsets_length + MEMORY_ALIGNMENT_RAW]\n"
           "#if defined(__EDG__)  // ARM-MDK\n"
           "__attribute__ ((aligned (MEMORY_ALIGNMENT_RAW)))\n"
           "#endif\n"
@@ -570,7 +597,7 @@ namespace Anki
           "#if defined(_MSC_VER)\n"
           "__declspec(align(MEMORY_ALIGNMENT_RAW))\n"
           "#endif\n"
-          "const Stage %s_features_data[%s_features_length]\n"
+          "const s32 %s_featureRectangles_data[%s_featureRectangles_length*4 + MEMORY_ALIGNMENT_RAW]\n"
           "#if defined(__EDG__)  // ARM-MDK\n"
           "__attribute__ ((aligned (MEMORY_ALIGNMENT_RAW)))\n"
           "#endif\n"
@@ -579,11 +606,11 @@ namespace Anki
 
         for(s32 i=0; i<this->features.get_size(); i++) {
           fprintf(file,
-            "{%d,%d,%d,%d},", this->features[i].rect.left, this->features[i].rect.right, this->features[i].rect.top, this->features[i].rect.bottom);
+            "%d,%d,%d,%d,", this->features[i].rect.left, this->features[i].rect.right, this->features[i].rect.top, this->features[i].rect.bottom);
         }
 
         fprintf(file,
-          "}; // %s_features_data\n\n\n",
+          "}; // %s_featureRectangles_data\n\n\n",
           objectName);
 
         fprintf(file,
@@ -594,6 +621,46 @@ namespace Anki
         return RESULT_OK;
       } // Result CascadeClassifier_LBP::SaveAsHeader(const char * filename, const char * objectName)
 #endif
+
+      CascadeClassifier_LBP::CascadeClassifier_LBP()
+        : CascadeClassifier()
+      {
+      }
+
+      CascadeClassifier_LBP::CascadeClassifier_LBP(
+        const bool isStumpBased,
+        const s32 stageType,
+        const s32 featureType,
+        const s32 ncategories,
+        const s32 origWinHeight,
+        const s32 origWinWidth,
+        const FixedLengthList<CascadeClassifier::Stage> &stages,
+        const FixedLengthList<CascadeClassifier::DTree> &classifiers,
+        const FixedLengthList<CascadeClassifier::DTreeNode> &nodes,
+        const FixedLengthList<f32> &leaves,
+        const FixedLengthList<s32> &subsets,
+        const FixedLengthList<Rectangle<s32> > &featureRectangles, //< Rectangles will be copied into this object's FixedLengthList<LBPFeature> features (which is allocated from memory)
+        MemoryStack &memory)
+        : CascadeClassifier(isStumpBased, stageType, featureType, ncategories, origWinHeight, origWinWidth, stages, classifiers, nodes, leaves, subsets)
+      {
+        this->isValid = false;
+
+        this->features = FixedLengthList<LBPFeature>(featureRectangles.get_size(), memory, Flags::Buffer(true, false, true));
+
+        AnkiConditionalErrorAndReturn(featureRectangles.IsValid() && this->features.IsValid(),
+          "CascadeClassifier_LBP::CascadeClassifier_LBP", "Some inputs are not valid");
+
+        const s32 numFeatures = featureRectangles.get_size();
+
+        const Rectangle<s32> * restrict pFeatureRectangles = featureRectangles.Pointer(0);
+        LBPFeature * restrict pFeatures = features.Pointer(0);
+
+        for(s32 i=0; i<numFeatures; i++) {
+          pFeatures[i].rect = pFeatureRectangles[i];
+        }
+
+        this->isValid = true;
+      }
 
       Result CascadeClassifier_LBP::DetectMultiScale(
         const Array<u8> &image,

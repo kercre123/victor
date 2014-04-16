@@ -994,6 +994,11 @@
               <FilePath>..\coretech\vision\robot\src\binaryTracker.cpp</FilePath>
             </File>
             <File>
+              <FileName>cascadeClassifier.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\cascadeClassifier.cpp</FilePath>
+            </File>
+            <File>
               <FileName>colorConversion.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\colorConversion.cpp</FilePath>
@@ -2345,6 +2350,11 @@
               <FileName>binaryTracker.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\binaryTracker.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>cascadeClassifier.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\cascadeClassifier.cpp</FilePath>
             </File>
             <File>
               <FileName>colorConversion.cpp</FileName>
