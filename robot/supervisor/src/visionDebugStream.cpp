@@ -259,6 +259,53 @@ namespace Anki {
           return result;
         } // static ReturnCode SendTrackingUpdate()
         
+        ReturnCode SendFaceDetections(
+          const Array<u8> &image, 
+          const FixedLengthList<Rectangle<s32> > &detectedFaces,
+          MemoryStack ccmScratch, 
+          MemoryStack onchipScratch, 
+          MemoryStack offchipScratch)
+        {
+          ReturnCode result = EXIT_SUCCESS;
+          
+#if SEND_DEBUG_STREAM
+          const f32 curTime = GetTime();
+          
+          // lastBenchmarkTime_algorithmsOnly is set again when the transmission is complete
+          lastBenchmarkDuration_algorithmsOnly = curTime - lastBenchmarkTime_algorithmsOnly;
+          
+          lastBenchmarkDuration_total = curTime - lastBenchmarkTime_total;
+          lastBenchmarkTime_total = curTime;
+          
+          const s32 height = CameraModeInfo[debugStreamResolution_].height;
+          const s32 width  = CameraModeInfo[debugStreamResolution_].width;
+          
+          debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
+                    
+          debugStreamBuffer_.PushBack<Rectangle<s32> >("detectedFaces", detectedFaces);
+                    
+          frameNumber++;
+          
+          //if(frameNumber % SEND_EVERY_N_FRAMES != 0) {
+          //  return EXIT_SUCCESS;
+          //}
+          
+          Array<u8> imageSmall(height, width, offchipScratch);
+          DownsampleHelper(image, imageSmall, ccmScratch);
+          debugStreamBuffer_.PushBack("Robot Image", imageSmall);
+          
+          result = SendBuffer(debugStreamBuffer_);
+          
+          // The UART can't handle this at full rate, so wait a bit between each frame
+          if(debugStreamResolution_ == HAL::CAMERA_MODE_QVGA) {
+            HAL::MicroWait(1000000);
+          }
+          
+#endif // #if SEND_DEBUG_STREAM
+          
+          return result;
+        } // static ReturnCode SendFaceDetections()
+        
 #if DOCKING_ALGORITHM ==  DOCKING_BINARY_TRACKER
         ReturnCode SendBinaryTracker(const TemplateTracker::BinaryTracker &tracker, MemoryStack ccmScratch, MemoryStack onchipScratch, MemoryStack offchipScratch)
         {
