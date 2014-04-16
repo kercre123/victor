@@ -235,7 +235,7 @@ GTEST_TEST(CoreTech_Vision, FaceDetection)
   const s32 minWidth = 30;
   const s32 maxHeight = imageHeight;
   const s32 maxWidth = imageWidth;
-  
+
   const s32 MAX_CANDIDATES = 5000;
 
   Array<u8> image(imageHeight, imageWidth, scratchOnchip);
@@ -245,6 +245,8 @@ GTEST_TEST(CoreTech_Vision, FaceDetection)
 
   //Classifier::CascadeClassifier_LBP cc(face_cascade_name, scratchOffchip);
   //cc.SaveAsHeader("c:/tmp/lbpcascade_frontalface.h", "lbpcascade_frontalface");
+
+  const f32 t0 = GetTime();
 
   // TODO: are these const casts okay?
   const FixedLengthList<Classifier::CascadeClassifier::Stage> &stages = FixedLengthList<Classifier::CascadeClassifier::Stage>(lbpcascade_frontalface_stages_length, const_cast<Classifier::CascadeClassifier::Stage*>(&lbpcascade_frontalface_stages_data[0]), lbpcascade_frontalface_stages_length*sizeof(Classifier::CascadeClassifier::Stage) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
@@ -269,7 +271,7 @@ GTEST_TEST(CoreTech_Vision, FaceDetection)
     featureRectangles,
     scratchCcm);
 
-  f32 t0 = GetTime();
+  const f32 t1 = GetTime();
 
   const Result result = cc.DetectMultiScale(
     image,
@@ -282,12 +284,12 @@ GTEST_TEST(CoreTech_Vision, FaceDetection)
 
   ASSERT_TRUE(result == RESULT_OK);
 
-  f32 t1 = GetTime();
-
-  printf("Detection took %f seconds\n", t1-t0);
+  const f32 t2 = GetTime();
+  
+  printf("Detection took %f seconds (setup time %f seconds)\n", t2-t1, t1-t0);
 
   ASSERT_TRUE(detectedFaces_anki.get_size() == 1);
-  ASSERT_TRUE(detectedFaces_anki[0] == Rectangle<s32>(103,218,40,155));
+  ASSERT_TRUE(detectedFaces_anki[0] == Rectangle<s32>(103,218,40,155));  
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, FaceDetection)
@@ -3759,7 +3761,7 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   CALL_GTEST_TEST(CoreTech_Vision, FaceDetection);
   //CALL_GTEST_TEST(CoreTech_Vision, ResizeImage);
   //CALL_GTEST_TEST(CoreTech_Vision, DecisionTreeVision);
-  CALL_GTEST_TEST(CoreTech_Vision, BinaryTracker);
+  //CALL_GTEST_TEST(CoreTech_Vision, BinaryTracker);
   /*CALL_GTEST_TEST(CoreTech_Vision, DetectBlurredEdge_DerivativeThreshold);
   CALL_GTEST_TEST(CoreTech_Vision, DetectBlurredEdge_GrayvalueThreshold);
   CALL_GTEST_TEST(CoreTech_Vision, DownsampleByPowerOfTwo);
