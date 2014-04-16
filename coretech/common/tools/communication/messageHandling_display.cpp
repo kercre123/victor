@@ -59,6 +59,7 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
 
   u8 lastMeanError = 0;
   f32 lastPercentMatchingGrayvalues = 0;
+  s32 detectedFacesImageWidth = 160;
 
   lastImage.setTo(0);
   largeLastImage.setTo(0);
@@ -123,6 +124,13 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
           continue;
 
         lastPercentMatchingGrayvalues = tmpBuffer[0];
+      } else if (strcmp(objectName, "detectedFacesImageWidth") == 0) {
+        s32* tmpBuffer = SerializedBuffer::DeserializeRawBasicType<s32>(innerObjectName, &dataSegment, dataLength, scratch);
+
+        if(!tmpBuffer)
+          continue;
+
+        detectedFacesImageWidth = tmpBuffer[0];
       } else {
         u16 size;
         bool isBasicType;
@@ -268,10 +276,12 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
 
       //cv::resize(toShow, toShowImage, toShowImage.size(), 0, 0, cv::INTER_NEAREST);
       //cv::imshow("Detected Binary Edges", toShowImage);
-    } else if(strcmp(typeName, "detectedFaces") == 0) {
-      FixedLengthList<Rectangle<s32> > newFaces = SerializedBuffer::DeserializeRawFixedLengthList<Rectangle<s32> >(NULL, reinterpret_cast<void**>(&dataSegment), dataLength, scratch);
-      for(s32 i=0; i<newFaces.get_size(); i++) {
-        detectedFaces.push_back(newFaces[i]);
+    } else if(strcmp(typeName, "ArraySlice") == 0) {
+      if(strcmp(objectName, "detectedFaces") == 0) {
+        FixedLengthList<Rectangle<s32> > newFaces = SerializedBuffer::DeserializeRawFixedLengthList<Rectangle<s32> >(NULL, reinterpret_cast<void**>(&dataSegment), dataLength, scratch);
+        for(s32 i=0; i<newFaces.get_size(); i++) {
+          detectedFaces.push_back(newFaces[i]);
+        }
       }
     } else {
       char toPrint[32];
@@ -406,10 +416,11 @@ void ProcessRawBuffer_Display(DisplayRawBuffer &buffer, const bool requireMatchi
     } // if(isTracking) ... else
 
     if(detectedFaces.size() != 0) {
+      const f32 faceScale = static_cast<f32>(bigWidth) / static_cast<f32>(detectedFacesImageWidth);
       for( s32 i = 0; i < static_cast<s32>(detectedFaces.size()); i++ )
       {
-        cv::Point center( RoundS32((detectedFaces[i].left + detectedFaces[i].right)*0.5), RoundS32((detectedFaces[i].top + detectedFaces[i].bottom)*0.5) );
-        cv::ellipse( toShowImage, center, cv::Size( RoundS32((detectedFaces[i].right-detectedFaces[i].left)*0.5), RoundS32((detectedFaces[i].bottom-detectedFaces[i].top)*0.5)), 0, 0, 360, cv::Scalar( 255, 0, 0 ), 5, 8, 0 );
+        cv::Point center( RoundS32(faceScale*(detectedFaces[i].left + detectedFaces[i].right)*0.5), RoundS32(faceScale*(detectedFaces[i].top + detectedFaces[i].bottom)*0.5) );
+        cv::ellipse( toShowImage, center, cv::Size( RoundS32(faceScale*(detectedFaces[i].right-detectedFaces[i].left)*0.5), RoundS32(faceScale*(detectedFaces[i].bottom-detectedFaces[i].top)*0.5)), 0, 0, 360, cv::Scalar( 255, 0, 0 ), 5, 8, 0 );
       }
     }
 
