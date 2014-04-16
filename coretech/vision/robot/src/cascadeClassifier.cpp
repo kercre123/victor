@@ -62,7 +62,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include <time.h>
 #endif
 
-#define EXACTLY_MATCH_OPENCV
+//#define EXACTLY_MATCH_OPENCV
 
 #define USE_ARM_ACCELERATION
 
