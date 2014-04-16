@@ -60,10 +60,10 @@ GTEST_TEST(CoreTech_Vision, FaceDetection_All)
 
   cv::CascadeClassifier face_cascade;
 
-  //const std::string face_cascade_name = std::string("C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_frontalface_alt.xml");
-  //const std::string face_cascade_name = std::string("C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_frontalface_alt2.xml");
-  //const std::string face_cascade_name = std::string("C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_frontalface_alt_tree.xml");
-  const std::string face_cascade_name = std::string("C:/Anki/coretech-external/opencv-2.4.8/data/lbpcascades/lbpcascade_frontalface.xml");
+  //const char * face_cascade_name = "C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_frontalface_alt";
+  //const char * face_cascade_name = "C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_frontalface_alt2";
+  //const char * face_cascade_name = "C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_frontalface_alt_tree";
+  const char * face_cascade_name = "C:/Anki/coretech-external/opencv-2.4.8/data/lbpcascades/lbpcascade_frontalface";
 
   //MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
   //ASSERT_TRUE(scratchOffchip.IsValid());
@@ -221,21 +221,21 @@ GTEST_TEST(CoreTech_Vision, FaceDetection)
   MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(scratchOffchip.IsValid());
 
-  cv::CascadeClassifier face_cascade;
-
-  //const std::string face_cascade_name = std::string("C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_frontalface_alt.xml");
-  //const std::string face_cascade_name = std::string("C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_frontalface_alt2.xml");
-  //const std::string face_cascade_name = std::string("C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_frontalface_alt_tree.xml");
-  const std::string face_cascade_name = std::string("C:/Anki/coretech-external/opencv-2.4.8/data/lbpcascades/lbpcascade_frontalface.xml");
+  //const char * face_cascade_name = "C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_frontalface_alt";
+  //const char * face_cascade_name = "C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_frontalface_alt2";
+  //const char * face_cascade_name = "C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_frontalface_alt_tree";
+  const char * face_cascade_name = "C:/Anki/coretech-external/opencv-2.4.8/data/lbpcascades/lbpcascade_frontalface.xml";
 
   const s32 imageHeight = 240;
   const s32 imageWidth = 320;
 
   const double scaleFactor = 1.1;
   const int minNeighbors = 2;
-  const cv::Size minSize = cv::Size(30,30);
-  const cv::Size maxSize = cv::Size(imageWidth, imageHeight);
-
+  const s32 minHeight = 30;
+  const s32 minWidth = 30;
+  const s32 maxHeight = imageHeight;
+  const s32 maxWidth = imageWidth;
+  
   const s32 MAX_CANDIDATES = 5000;
 
   Array<u8> image(imageHeight, imageWidth, scratchOnchip);
@@ -243,7 +243,7 @@ GTEST_TEST(CoreTech_Vision, FaceDetection)
 
   FixedLengthList<Rectangle<s32> > detectedFaces_anki(MAX_CANDIDATES, scratchOnchip);
 
-  //Classifier::CascadeClassifier_LBP cc(face_cascade_name.data(), scratchOffchip);
+  //Classifier::CascadeClassifier_LBP cc(face_cascade_name, scratchOffchip);
   //cc.SaveAsHeader("c:/tmp/lbpcascade_frontalface.h", "lbpcascade_frontalface");
 
   // TODO: are these const casts okay?
@@ -275,8 +275,8 @@ GTEST_TEST(CoreTech_Vision, FaceDetection)
     image,
     static_cast<f32>(scaleFactor),
     minNeighbors,
-    minSize.height, minSize.width,
-    maxSize.height, maxSize.width,
+    minHeight, minWidth,
+    maxHeight, maxWidth,
     detectedFaces_anki,
     scratchOffchip);
 
@@ -3756,6 +3756,7 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   numPassedTests = 0;
   numFailedTests = 0;
 
+  CALL_GTEST_TEST(CoreTech_Vision, FaceDetection);
   //CALL_GTEST_TEST(CoreTech_Vision, ResizeImage);
   //CALL_GTEST_TEST(CoreTech_Vision, DecisionTreeVision);
   CALL_GTEST_TEST(CoreTech_Vision, BinaryTracker);

@@ -241,7 +241,7 @@ namespace Anki
               r1.top >= r2.top - dy &&
               r1.right <= r2.right + dx &&
               r1.bottom <= r2.bottom + dy &&
-              (n2 > std::max(3, n1) || n1 < 3) )
+              (n2 > MAX(3, n1) || n1 < 3) )
               break;
           }
 
@@ -743,7 +743,7 @@ namespace Anki
           ImageProcessing::Resize(image, scaledImage);
 #endif
 
-          const s32 xyIncrement = factor > 2. ? 1 : 2;
+          const s32 xyIncrement = factor > 2.0f ? 1 : 2;
 
           //int stripCount, stripSize;
 
