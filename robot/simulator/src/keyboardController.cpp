@@ -27,13 +27,11 @@ namespace Anki {
       // Private memers:
       namespace {
         // Constants for Webots:
-        const f32 DRIVE_VELOCITY_SLOW = 75.0f; // mm/s
-        const f32 TURN_WHEEL_VELOCITY_SLOW = 75.0f;  //mm/s
+        const f32 DRIVE_VELOCITY_FAST = 75.0f; // mm/s
+        const f32 DRIVE_VELOCITY_SLOW = 20.0f; // mm/s
         const f32 TURN_VELOCITY_SLOW = 1.0f;
-        const f32 LIFT_CENTER = -0.275;
-        const f32 LIFT_UP = 0.635;
-        const f32 LIFT_UPUP = 0.7;
         
+        int lastKeyPressed_ = 0;
         bool isEnabled_ = false;
         
       } // private namespace
@@ -82,29 +80,50 @@ namespace Anki {
         {
           int key = CozmoBot->keyboardGetKey();
           
+          // Skip if same key as before
+          if (key == lastKeyPressed_)
+            return;
+          
+          // Extract modifier key
+          int modifier_key = key & ~webots::Supervisor::KEYBOARD_KEY;
+          
+          // Adjust wheel speed appropriately
+          f32 wheelSpeed = DRIVE_VELOCITY_FAST;
+          if (modifier_key == webots::Supervisor::KEYBOARD_SHIFT) {
+            wheelSpeed = DRIVE_VELOCITY_SLOW;
+          }
+          
+          // Set key to its modifier-less self
+          key &= webots::Supervisor::KEYBOARD_KEY;
+          
+          
+          //printf("keypressed: %d, modifier %d, orig_key %d, prev_key %d\n",
+          //       key, modifier_key, key | modifier_key, lastKeyPressed_);
+          
+          
           switch (key)
           {
             case webots::Robot::KEYBOARD_UP:
             {
-              SteeringController::ExecuteDirectDrive(DRIVE_VELOCITY_SLOW, DRIVE_VELOCITY_SLOW);
+              SteeringController::ExecuteDirectDrive(wheelSpeed, wheelSpeed);
               break;
             }
               
             case webots::Robot::KEYBOARD_DOWN:
             {
-              SteeringController::ExecuteDirectDrive(-DRIVE_VELOCITY_SLOW, -DRIVE_VELOCITY_SLOW);
+              SteeringController::ExecuteDirectDrive(-wheelSpeed, -wheelSpeed);
               break;
             }
               
             case webots::Robot::KEYBOARD_LEFT:
             {
-              SteeringController::ExecuteDirectDrive(-TURN_WHEEL_VELOCITY_SLOW, TURN_WHEEL_VELOCITY_SLOW);
+              SteeringController::ExecuteDirectDrive(-wheelSpeed, wheelSpeed);
               break;
             }
               
             case webots::Robot::KEYBOARD_RIGHT:
             {
-              SteeringController::ExecuteDirectDrive(TURN_WHEEL_VELOCITY_SLOW, -TURN_WHEEL_VELOCITY_SLOW);
+              SteeringController::ExecuteDirectDrive(wheelSpeed, -wheelSpeed);
               break;
             }
               
@@ -130,30 +149,52 @@ namespace Anki {
               LiftController::SetAngularVelocity(-TURN_VELOCITY_SLOW);
               break;
             }
-              /*
-            case '1': //set lift to pickup position
+            case '1': //set lift to low dock height
             {
-              SetLiftPitch(LIFT_CENTER);
+              LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
               break;
             }
-            case '2': //set lift to block +1 position
+              
+            case '2': //set lift to high dock height
             {
-              SetLiftPitch(LIFT_UP);
+              LiftController::SetDesiredHeight(LIFT_HEIGHT_HIGHDOCK);
               break;
             }
-            case '3': //set lift to highest position
+              
+            case '3': //set lift to carry height
             {
-              SetLiftPitch(LIFT_UPUP);
+              LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
               break;
             }
-               */
-#if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
+              
+            case '4': //set head to look all the way down
+            {
+              HeadController::SetDesiredAngle(MIN_HEAD_ANGLE);
+              break;
+            }
+              
+            case '5': //set head to straight ahead
+            {
+              HeadController::SetDesiredAngle(0);
+              break;
+            }
+              
+            case '6': //set head to look all the way up
+            {
+              HeadController::SetDesiredAngle(MAX_HEAD_ANGLE);
+              break;
+            }
+
+
             case CKEY_UNLOCK: //spacebar-key: unlock
             {
-              GripController::DisengageGripper();
+              if (HAL::IsGripperEngaged()) {
+                HAL::DisengageGripper();
+              } else {
+                HAL::EngageGripper();
+              }
               break;
             }
-#endif
             default:
             {
               //if(not PathFollower::IsTraversingPath()) {
@@ -173,6 +214,8 @@ namespace Anki {
             }
               
           } // switch(key)
+          
+          lastKeyPressed_ = key | modifier_key;
           
         } // if KEYBOARD_CONTROL_ENABLED
         

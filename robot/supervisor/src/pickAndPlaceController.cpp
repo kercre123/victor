@@ -12,6 +12,8 @@
 #include "anki/cozmo/robot/visionSystem.h"
 
 
+#define DEBUG_PAP_CONTROLLER 0
+
 namespace Anki {
   namespace Cozmo {
     namespace PickAndPlaceController {

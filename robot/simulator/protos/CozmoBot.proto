@@ -77,6 +77,7 @@ Supervisor {
 		  children [
 			HingeJoint {
 			  jointParameters HingeJointParameters {
+				dampingConstant 3
 				maxStop IS headAngle_highLimit
 				minStop IS headAngle_lowLimit
 				position IS headAngle
@@ -94,7 +95,7 @@ Supervisor {
 					  }
 					}
 					geometry Box {
-					  size 0.005 0.041 0.005
+					  size 0.005 0.039 0.005
 					}
 				  }
 				  DEF EARS Shape {
@@ -104,7 +105,7 @@ Supervisor {
 					  }
 					}
 					geometry Cylinder {
-					  height 0.04
+					  height 0.038
 					  radius 0.007
 					  subdivision 16
 					}
@@ -173,6 +174,7 @@ Supervisor {
 					width IS cameraWidth
 					height IS cameraHeight
 					fieldOfView IS fieldOfView
+					near 0.006
 				  }
 				  Gyro {
 				  	name "gyro"
@@ -213,7 +215,7 @@ Supervisor {
 					  }
 					}  
 					geometry Sphere {
-					  radius 0.02
+					  radius 0.018
 					  subdivision 3
 					}
 				  }
@@ -290,6 +292,8 @@ Supervisor {
 		DEF BACKPACK Solid {
 		  translation -0.04 0 0.0192
 		  children [
+		    DEF BACKPACK_GROUP Group {
+		      children [
 			Transform {
 			  children [
 				Shape {
@@ -338,8 +342,10 @@ Supervisor {
 				}
 			  ]
 			}
+		      ]
+		    }                      
 		  ] # BACKPACK Solid children
-	  
+	          boundingObject USE BACKPACK_GROUP
 		  physics Physics {
 			density 2000
 		  }
@@ -370,6 +376,7 @@ Supervisor {
 	
 		DEF LEFT_FRONT_WHEEL HingeJoint {
 		  jointParameters HingeJointParameters {
+			dampingConstant 3
 			axis 0 1 0
 		  }
 		  device RotationalMotor {
@@ -435,6 +442,7 @@ Supervisor {
 		}
 		DEF RIGHT_FRONT_WHEEL HingeJoint {
 		  jointParameters HingeJointParameters {
+			dampingConstant 3
 			axis 0 1 0
 		  }
 		  device RotationalMotor {
@@ -534,30 +542,33 @@ Supervisor {
 				subdivision 14
 			  }
 			}
-			HingeJoint {
+			DEF SHOULDER HingeJoint {
 			  jointParameters HingeJointParameters {
 				axis 0 -1 0
+				dampingConstant 3
 				position IS liftAngle
 				minStop IS liftAngle_lowLimit
 				maxStop IS liftAngle_highLimit
 			  }
 			  device RotationalMotor {
 				name "LiftMotor"
+				maxVelocity 2
+				maxTorque 2
 			  }
 			  endPoint Solid {
 				children [
-				  Transform {
+
+				#GRIPPER PLATE
+				Transform {
 					translation 0.0627 0 -0.0127
 					children [
 					  HingeJoint {
 						jointParameters HingeJointParameters {
 						  axis 0 1 0
+						  dampingConstant 3
 						  position IS liftAngle
 						  minStop IS liftAngle_lowLimit
 						  maxStop IS liftAngle_highLimit
-						}
-						device RotationalMotor {
-						  name "LiftMotorFront"
 						}
 						endPoint DEF SmallFingerGripper Solid {
 						  translation 0.002 0 0
@@ -567,9 +578,7 @@ Supervisor {
 							  children [
 								DEF GRIPPER_FINGER Group {
 								  children [
-									Solid {
-									  children [
-										Shape {
+										DEF GRIPPER_FINGER_SHAPE Shape {
 										  appearance Appearance {
 											material USE DarkGray
 										  }
@@ -606,12 +615,6 @@ Supervisor {
 										  }
 										}
 									  ]
-									  boundingObject USE GRIPPER_FINGER_SHAPE
-									  #physics Physics { 
-									  #   density 5000
-									  #}
-									}
-								  ]
 								}
 							  ]
 							}
@@ -702,11 +705,23 @@ Supervisor {
 							    }
 							  ] # CALIBRATION_RIG children
 							} # CALIBRATION_RIG Group
+              
+							Connector {
+							  name "gripperConnector"
+							  translation 0.0014 0 -0.007
+							  rotation 0 1 0 1.57
+							  model "magnetic"
+							  distanceTolerance 0.002
+							  type "active"
+							  isLocked FALSE
+							  autoLock FALSE
+							}
+
 						  ]
 						  boundingObject USE LIFTER_SHAPE
-						  #physics Physics {
-						  #  density 100
-						  #}
+						  physics Physics {
+						    density 100
+						  }
 						}  # SmallFingerGripper Solid
 					  } # Hinge Joint
 					] # Transform children
@@ -779,6 +794,32 @@ Supervisor {
 				  } # RIGHT_LIFT_ARM Transform
 			  
 				] # endPoint Solid children
+
+				boundingObject Group {
+				  children [
+
+				    # Right arm
+				    Transform {
+				      translation 0 -0.02175 0
+				      children [
+				        USE LIFT_ARM_SHAPE
+				      ]
+				    }
+
+				    # Left arm
+				    Transform {
+				      translation 0 0.02175 0
+				      children [
+				        USE LIFT_ARM_SHAPE
+				      ]
+				    }
+
+				  ]
+				}
+				physics Physics {
+				  density 100
+				}
+
 			  } # endPoint Transform
 			} # HingeJoint
 		  ] # LIFT Transform children

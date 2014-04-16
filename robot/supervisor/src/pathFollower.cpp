@@ -13,9 +13,9 @@
 
 #include "anki/cozmo/robot/hal.h"
 
-#if(DEBUG_MAIN_EXECUTION)
-#include "sim_overlayDisplay.h"
-#endif
+
+#define DEBUG_PATH_FOLLOWER 0
+
 
 #ifndef SIMULATOR
 #define ENABLE_PATH_VIZ 0  // This must always be 0!

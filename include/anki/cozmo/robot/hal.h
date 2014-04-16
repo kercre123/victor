@@ -57,6 +57,16 @@
 // USING_UART_RADIO must be 1 for this to work.
 #define DIVERT_PRINT_TO_RADIO 1
 
+// Disables PRINT macros entirely.
+// When 1, overrides all of the above macros.
+#define DISABLE_PRINT_MACROS 0
+
+// Enable to stream debug images via UART to Pete's tool.
+// This disables PRINT macros so they don't disrupt the stream of debug and image data.
+// Useful for debugging trackers.
+#define STREAM_DEBUG_IMAGES 0
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -65,14 +75,20 @@ extern "C" {
 }
 #endif
 
-#ifndef SIMULATOR
 
-#ifdef USE_CAPTURE_IMAGES
+#if(STREAM_DEBUG_IMAGES)
+#undef DISABLE_PRINT_MACROS
+#define DISABLE_PRINT_MACROS 1
+#endif
+
+#if(DISABLE_PRINT_MACROS)
 
 #define PRINT(...)
 #define PERIODIC_PRINT(num_calls_between_prints, ...)
 
-#else // #ifdef USE_CAPTURE_IMAGES
+#else // #if(DISABLE_PRINT_MACROS)
+
+#ifndef SIMULATOR
 
 #if(USING_UART_RADIO)
 
@@ -89,9 +105,9 @@ extern "C" {
 #else
 #define PRINT(...)
 #define PERIODIC_PRINT(num_calls_between_prints, ...)
-#endif // #if(USING_UART_RADIO)
+#endif // #if(DIVERT_PRINT_TO_RADIO)
 
-#else
+#else  // #if(USING_UART_RADIO)
 
 #define PRINT(...) printf(__VA_ARGS__)
 
@@ -106,8 +122,6 @@ extern "C" {
 }
 
 #endif // if (USING_UART_RADIO)
-
-#endif // #ifdef USE_CAPTURE_IMAGES ... #else
 
 #elif defined(SIMULATOR) // #ifndef SIMULATOR
 
@@ -138,6 +152,8 @@ extern "C" {
 #endif // #if(USING_UART_RADIO && DIVERT_PRINT_TO_RADIO)
 
 #endif  // #elif defined(SIMULATOR)
+
+#endif // #if(DISABLE_PRINT_MACROS)
 
 #define REG_WORD(x) *(volatile u32*)(x)
 
@@ -327,6 +343,13 @@ namespace Anki
       // Measures the unitless load on all motors
       s32 MotorGetLoad();
 
+#ifdef SIMULATOR
+      // For simulator only to activate connector for gripping.
+      // Does not actually guarantee a physical connection.
+      void EngageGripper();
+      void DisengageGripper();
+#endif
+      
 // #pragma mark --- Cameras ---
       /////////////////////////////////////////////////////////////////////
       // CAMERAS

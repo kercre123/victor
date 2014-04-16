@@ -32,6 +32,7 @@ Robot {
     DEF Block1x1Texture Transform {
       children [
         Connector {
+          name "connector1"
           translation 0 0 0.022
           rotation 0 1 0 0
           model "magnetic"
@@ -39,6 +40,7 @@ Robot {
           autoLock TRUE
         }
         Connector {
+          name "connector2"
           translation 0 0 -0.022
           rotation 0 1 0 3.14159
           model "magnetic"
@@ -47,6 +49,7 @@ Robot {
         }
         
         Connector {
+          name "connector3"
           translation 0.022 0 0
           rotation 0 1 0 1.57079
           model "magnetic"
@@ -54,6 +57,7 @@ Robot {
           autoLock TRUE
         }
         Connector {
+          name "connector4"
           translation -0.022 0 0
           rotation 0 1 0 -1.57079
           model "magnetic"
@@ -62,6 +66,7 @@ Robot {
         }
         
         Connector {
+          name "connector5"
           translation 0 0.022 0
           rotation 1 0 0 -1.57079
           model "magnetic"
@@ -69,6 +74,7 @@ Robot {
           autoLock TRUE
         }
         Connector {
+          name "connector6"
           translation 0 -0.022 0
           rotation 1 0 0 1.57079
           model "magnetic"

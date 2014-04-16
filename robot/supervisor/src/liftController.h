@@ -57,6 +57,9 @@ namespace Anki {
       // True if the lift has not had power applied to it for more than LIFT_RELAX_TIME
       bool IsRelaxed();
       
+      // Returns the last height that was commanded via SetDesiredHeight()
+      f32 GetLastCommandedHeightMM();
+      
       // Get current height of the lift
       f32 GetHeightMM();
       

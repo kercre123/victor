@@ -17,12 +17,13 @@
 //#include "hal/portable.h"
 //#include "hal/encoders.h"
 #include "anki/cozmo/robot/trace.h"
-#include "anki/cozmo/robot/debug.h"
 
 #include "anki/cozmo/robot/hal.h"
 
 #include "anki/common/shared/velocityProfileGenerator.h"
 #include "anki/common/robot/trig_fast.h"
+
+#define DEBUG_STEERING_CONTROLLER 0
 
 #define INVALID_IDEAL_FOLLOW_LINE_IDX s16_MAX
 
@@ -265,13 +266,13 @@ namespace Anki {
       }
       
       ///////////////////////////////////////////////////////////////////////////////
-      
+      float attitude = 0;
       if (steering_active == TRUE)
       {
         //convert speed to meters per second
         float speedmps = currspeed * M_PER_MM;
-        //float attitude = asin_fast(xtrack_speed / speedmps);
-        float attitude = -headingError_rad;
+        //attitude = asin_fast(xtrack_speed / speedmps);
+        attitude = -headingError_rad;
         curvature = -K1_ * (atan_fast(K2_ * xtrack_error / (speedmps + 0.2f)) + attitude);
         //We should allow this to go somewhat negative I think... but not too much
         
@@ -300,7 +301,7 @@ namespace Anki {
       
 #if(DEBUG_STEERING_CONTROLLER)
       PRINT(" STEERING: headingErr: %f, headingRad: %f, currSpeed: %d\n", location_pix, headingError_rad, currspeed);
-      PRINT(" STEERING: xtrack_err: %f, xtrack_speed: %f, attitude: %f, curvature: %f\n", xtrack_error, xtrack_speed, asin_fast(xtrack_speed / ((f32)currspeed * 0.001f)), curvature);
+      PRINT(" STEERING: xtrack_err: %f, xtrack_speed: %f, attitude: %f, curvature: %f\n", xtrack_error, xtrack_speed, attitude, curvature);
 #endif
       
       
@@ -356,14 +357,7 @@ namespace Anki {
           
           PERIODIC_PRINT(1000,"fidx: %f, distErr %f, radErr %f\n", fidx, pathDistErr, pathRadErr);
           //PRINT("fidx: %f, distErr %f, radErr %f\n", fidx, pathDistErr, pathRadErr);
-#if(DEBUG_MAIN_EXECUTION)
-          {
-            using namespace Sim::OverlayDisplay;
-            SetText(PATH_ERROR, "PathError: %.2f mm, %.1f deg  => fidx: %f",
-                    pathDistErr, pathRadErr * (180.f/M_PI),
-                    fidx);
-          }
-#endif
+
         } else {
           SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
         }

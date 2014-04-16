@@ -49,7 +49,7 @@ namespace Anki {
 #define USE_MATLAB_TRACKER  0
 #define USE_MATLAB_DETECTOR 0
 
-#ifdef THIS_IS_PETES_BOARD
+#if(STREAM_DEBUG_IMAGES)
       #define SEND_DEBUG_STREAM 1
       #define RUN_SIMPLE_TRACKING_TEST
       //#define SEND_IMAGE_ONLY

@@ -16,6 +16,8 @@
 #include "anki/cozmo/robot/messages.h"
 
 
+#define DEBUG_DOCK_CONTROLLER 0
+
 // Resets localization pose to (0,0,0) every time a relative block pose update is received.
 // Recalculates the start pose of the path that is at the same position relative to the block
 // as it was when tracking was initiated. If encoder-based localization is reasonably accurate,

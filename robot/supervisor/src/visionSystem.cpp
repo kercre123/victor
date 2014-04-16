@@ -373,7 +373,7 @@ namespace Anki {
                                                 trackingQuad,
                                                 parameters.scaleTemplateRegionPercent,
                                                 parameters.edgeDetectionParams_template,
-                                                onchipScratch, offchipScratch);
+                                                onchipMemory, offchipMemory);
 #else // #ifdef USE_HEADER_TEMPLATE
         tracker = TemplateTracker::BinaryTracker(
                                                  grayscaleImage,
@@ -418,7 +418,7 @@ namespace Anki {
         MatlabVisualization::SendTrackInit(grayscaleImage, tracker, onchipMemory);
         
 #if DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
-        DebugStream::SendBinaryTracker(tracker, ccmScratch, onchipScratch, offchipScratch);
+        DebugStream::SendBinaryTracker(tracker, ccmScratch, onchipMemory, offchipMemory);
 #endif
         
         return EXIT_SUCCESS;
@@ -716,12 +716,10 @@ namespace Anki {
         // length
         const f32 verticalShift_pix = T_ver_cam * headCamInfo_->focalLength_y/d;
         
-#ifndef THIS_IS_PETES_BOARD
         PRINT("Adjusting transformation: %.3fpix H shift for %.3fdeg rotation, "
               "%.3f scaling and %.3f V shift for %.3f translation forward (%.3f cam)\n",
               horizontalShift_pix, theta_robot.getDegrees(), scaleChange,
               verticalShift_pix, T_fwd_robot, T_fwd_cam);
-#endif
         
         // Adjust the Transformation
         // Note: UpdateTransformation is doing *inverse* composition (thus using the negatives)

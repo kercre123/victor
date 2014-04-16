@@ -8,15 +8,15 @@
 
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
-#include "anki/cozmo/robot/debug.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/steeringController.h"
 #include "anki/cozmo/robot/trace.h"
 #include "anki/cozmo/robot/speedController.h"
 #include "anki/cozmo/robot/wheelController.h"
 
-
 #include <stdio.h>
+
+#define DEBUG_WHEEL_CONTROLLER 0
 
 namespace Anki {
   namespace Cozmo {
