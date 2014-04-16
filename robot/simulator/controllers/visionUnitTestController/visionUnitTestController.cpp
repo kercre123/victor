@@ -105,16 +105,13 @@ int main(int argc, char **argv)
   // Motors
   webots::Motor* headMotor_  = webotRobot_.getMotor("HeadMotor");
   webots::Motor* liftMotor_  = webotRobot_.getMotor("LiftMotor");
-  webots::Motor* liftMotor2_ = webotRobot_.getMotor("LiftMotorFront");
   
   // Enable position measurements on head and lift
   headMotor_->enablePosition(TIME_STEP);
   liftMotor_->enablePosition(TIME_STEP);
-  liftMotor2_->enablePosition(TIME_STEP);
  
   // Lower the lift out of the way
   liftMotor_->setPosition(0.f);
-  liftMotor2_->setPosition(0.f);
 
   // Camera
   webots::Camera* headCam_ = webotRobot_.getCamera("HeadCamera");
@@ -231,14 +228,13 @@ int main(int argc, char **argv)
     
     // Step until the head and lift are in position
     const float TOL = DEG_TO_RAD(0.5f);
-    float headErr, liftErr, liftErr2;
+    float headErr, liftErr;
     do {
       webotRobot_.step(TIME_STEP);
       headErr  = fabs(headMotor_->getPosition()  - headMotor_->getTargetposition());
       liftErr  = fabs(liftMotor_->getPosition()  - liftMotor_->getTargetposition());
-      liftErr2 = fabs(liftMotor2_->getPosition() - liftMotor2_->getTargetposition());
-      //fprintf(stdout, "HeadErr = %.4f, LiftErr = %.4f, LiftErr2 = %.4f\n", headErr, liftErr, liftErr2);
-    } while(headErr > TOL || liftErr > TOL || liftErr2 > TOL);
+      fprintf(stdout, "HeadErr = %.4f, LiftErr = %.4f\n", headErr, liftErr);
+    } while(headErr > TOL || liftErr > TOL);
     //fprintf(stdout, "Head and lift in position. Continuing.\n");
     
     Json::Value currentPose;

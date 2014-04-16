@@ -1,9 +1,10 @@
 #include "headController.h"
-#include "anki/cozmo/robot/debug.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/common/robot/utilities_c.h"
 #include "anki/common/shared/radians.h"
 #include "anki/common/shared/velocityProfileGenerator.h"
+
+#define DEBUG_HEAD_CONTROLLER 0
 
 namespace Anki {
   namespace Cozmo {

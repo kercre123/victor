@@ -32,7 +32,6 @@
 //#include "hal/portable.h"
 #include <assert.h>
 #include "anki/cozmo/robot/cozmoBot.h"
-#include "anki/cozmo/robot/debug.h"
 #include "anki/cozmo/robot/speedController.h"
 #include "anki/cozmo/robot/wheelController.h"
 #include "anki/cozmo/robot/trace.h"
@@ -40,6 +39,9 @@
 #include "anki/cozmo/robot/cozmoConfig.h"
 
 #include "anki/common/robot/utilities_c.h"
+
+
+#define DEBUG_SPEED_CONTROLLER 0
 
 namespace Anki {
   namespace Cozmo {

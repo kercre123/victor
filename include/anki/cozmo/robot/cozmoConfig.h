@@ -120,7 +120,12 @@ namespace Anki {
     // issue with moving the lift when it is at a limit. The lift arm
     // flies off of the robot and comes back! So for now, we just don't
     // drive the lift down that far. We also skip calibration in sim.
+#ifdef SIMULATOR
+    // Need a different height in simulation because of the position of the connectors
+    const f32 LIFT_HEIGHT_HIGHDOCK = 73.f;
+#else
     const f32 LIFT_HEIGHT_HIGHDOCK = 69.f;
+#endif
     const f32 LIFT_HEIGHT_CARRY    = 88.f;
     
     // Height of lift "shoulder" joint where the arm attaches to robot body

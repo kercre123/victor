@@ -133,8 +133,6 @@ namespace Anki {
         u8 pickAndPlaceState_ = PAP_SET_HEAD_ANGLE;
         const f32 DOCKING_HEAD_ANGLE = DEG_TO_RAD(-15);
         
-        //const u16 BLOCK_TO_PICK_UP = 60;
-        //const u16 BLOCK_TO_PLACE_ON = 50;
         const Vision::MarkerType BLOCK_TO_PICK_UP = Vision::MARKER_FIRE;
         const Vision::MarkerType BLOCK_TO_PLACE_ON = Vision::MARKER_SQUAREPLUSCORNERS;
         const f32 BLOCK_MARKER_WIDTH = DEFAULT_BLOCK_MARKER_WIDTH_MM;

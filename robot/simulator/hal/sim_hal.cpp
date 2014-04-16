@@ -33,7 +33,14 @@ namespace Anki {
 
       // Const paramters / settings
       // TODO: some of these should be defined elsewhere (e.g. comms)
+      
+      // Represents the number of cycles it takes to engage or disengage an active gripper
+#if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
       const s32 UNLOCK_HYSTERESIS = 50;
+#else
+      const s32 UNLOCK_HYSTERESIS = 0;
+#endif
+      
       const f64 WEBOTS_INFINITY = std::numeric_limits<f64>::infinity();
       
       
@@ -56,7 +63,6 @@ namespace Anki {
       
       webots::Motor* headMotor_;
       webots::Motor* liftMotor_;
-      webots::Motor* liftMotor2_;
       
       webots::Motor* motors_[HAL::MOTOR_COUNT];
       
@@ -155,37 +161,8 @@ namespace Anki {
       void SetLiftAngularVelocity(const f32 rad_per_sec)
       {
         liftMotor_->setVelocity(rad_per_sec);
-        liftMotor2_->setVelocity(rad_per_sec);
       }
       
-#if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
-      void EngageGripper()
-      {
-        //Should we lock to a block which is close to the connector?
-        if (!gripperEngaged_ && con_->getPresence() == 1)
-        {
-          if (unlockhysteresis_ == 0)
-          {
-            con_->lock();
-            gripperEngaged_ = true;
-            //printf("LOCKED!\n");
-          }else{
-            unlockhysteresis_--;
-          }
-        }
-      }
-      
-      void DisengageGripper()
-      {
-        if (gripperEngaged_)
-        {
-          gripperEngaged_ = false;
-          unlockhysteresis_ = UNLOCK_HYSTERESIS;
-          con_->unlock();
-          //printf("UNLOCKED!\n");
-        }
-      }
-#endif
     } // "private" namespace
     
     namespace Sim {
@@ -218,12 +195,9 @@ namespace Anki {
       
       headMotor_  = webotRobot_.getMotor("HeadMotor");
       liftMotor_  = webotRobot_.getMotor("LiftMotor");
-      liftMotor2_ = webotRobot_.getMotor("LiftMotorFront");
       
-#if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
-      con_ = webotRobot_.getConnector("connector");
+      con_ = webotRobot_.getConnector("gripperConnector");
       con_->enablePresence(TIME_STEP);
-#endif
       
       //matCam_ = webotRobot_.getCamera("cam_down");
       headCam_ = webotRobot_.getCamera("HeadCamera");
@@ -251,7 +225,6 @@ namespace Anki {
       //Set the motors to velocity mode
       headMotor_->setPosition(WEBOTS_INFINITY);
       liftMotor_->setPosition(WEBOTS_INFINITY);
-      liftMotor2_->setPosition(WEBOTS_INFINITY);
       leftWheelMotor_->setPosition(WEBOTS_INFINITY);
       rightWheelMotor_->setPosition(WEBOTS_INFINITY);
       
@@ -275,18 +248,12 @@ namespace Anki {
       rightWheelMotor_->enablePosition(TIME_STEP);
       headMotor_->enablePosition(TIME_STEP);
       liftMotor_->enablePosition(TIME_STEP);
-      liftMotor2_->enablePosition(TIME_STEP);
       
       // Set speeds to 0
       leftWheelMotor_->setVelocity(0);
       rightWheelMotor_->setVelocity(0);
       headMotor_->setVelocity(0);
       liftMotor_->setVelocity(0);
-      liftMotor2_->setVelocity(0);
-           
-      //headMotor_->setPosition(0);
-      //liftMotor_->setPosition(-0.275);
-      //liftMotor2_->setPosition(0.275);
       
       // Get localization sensors
       gps_ = webotRobot_.getGPS("gps");
@@ -478,7 +445,36 @@ namespace Anki {
       return motorPositions_[motor];
     }
     
-      
+    
+    void HAL::EngageGripper()
+    {
+      //Should we lock to a block which is close to the connector?
+      if (!gripperEngaged_ && con_->getPresence() == 1)
+      {
+        if (unlockhysteresis_ == 0)
+        {
+          con_->lock();
+          gripperEngaged_ = true;
+          //printf("GRIPPER LOCKED!\n");
+        }else{
+          unlockhysteresis_--;
+        }
+      }
+    }
+    
+    void HAL::DisengageGripper()
+    {
+      if (gripperEngaged_)
+      {
+        gripperEngaged_ = false;
+        unlockhysteresis_ = UNLOCK_HYSTERESIS;
+        con_->unlock();
+        //printf("GRIPPER UNLOCKED!\n");
+      }
+    }
+
+    
+    
     // Forward declaration
     void RadioUpdate();
       
