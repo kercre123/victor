@@ -259,16 +259,20 @@ namespace Anki {
         
         for(s32 i_solution=0; i_solution<4; ++i_solution)
         {
-          Point2f projectedPoint;
-          this->project3dPoint(possiblePoses[i_solution]*worldQuad[i_validate], projectedPoint);
-          
-          float error = (projectedPoint - imgQuad[i_validate]).length();
-          
-          if(error < minErrorInner) {
-            minErrorInner = error;
-            bestSolution = i_solution;
-          }
-          
+          // First make sure this solution puts the object in front of the
+          // camera (this should be true for two solutions)
+          if(possiblePoses[i_solution].get_translation().z() > 0)
+          {
+            Point2f projectedPoint;
+            this->project3dPoint(possiblePoses[i_solution]*worldQuad[i_validate], projectedPoint);
+            
+            float error = (projectedPoint - imgQuad[i_validate]).length();
+            
+            if(error < minErrorInner) {
+              minErrorInner = error;
+              bestSolution = i_solution;
+            }
+          } // if translation.z > 0
         } // for each solution
         
         CORETECH_ASSERT(bestSolution >= 0);
