@@ -126,6 +126,8 @@ namespace Anki
       // Returns a templated cv::Mat_ that shares the same buffer with this Array. No data is copied.
       cv::Mat_<Type>& get_CvMat_();
 
+      s32 Set(const cv::Mat_<Type> &in);
+
       // Use the simple OpenCV gui to display this array as an image
       void Show(const char * const windowName, const bool waitForKeypress, const bool scaleValues=false, const bool fitImageToWindow=false) const;
 #endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV

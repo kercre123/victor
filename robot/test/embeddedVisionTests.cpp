@@ -76,22 +76,55 @@ GTEST_TEST(CoreTech_Vision, FaceDetection_All)
 
   std::ifstream faceFilenames("C:/datasets/faces/lfw/allFiles.txt");
 
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(scratchOffchip.IsValid());
+
+  const double scaleFactor = 1.1;
+  const int minNeighbors = 2;
+  const cv::Size minSize = cv::Size(30,30);
+
+  const s32 MAX_CANDIDATES = 5000;
+
+  FixedLengthList<Rectangle<s32> > detectedFaces_anki(MAX_CANDIDATES, scratchOffchip);
+
+  Classifier::CascadeClassifier_LBP cc(face_cascade_name.data(), scratchOffchip);
+
+  s32 curSet = 0;
   while(!faceFilenames.eof()) {
-    const s32 numImagesAtATime = 20;
+    /*const s32 numImagesAtATime = 20;*/
+    const s32 numImagesAtATime = 1;
     std::string lines[numImagesAtATime];
 
     for(s32 in=0; in<numImagesAtATime; in++) {
+      PUSH_MEMORY_STACK(scratchOffchip);
+
       getline(faceFilenames, lines[in]);
 
-      vector<cv::Rect> detectedFaces;
+      curSet++;
+
+      if(curSet < 47)
+        continue;
+
+      vector<cv::Rect> detectedFaces_opencv;
 
       cv::Mat image = cv::imread(lines[in]);
 
-      f32 t0 = GetTime();
+      cv::Mat grayImage = image;
+      if( grayImage.channels() > 1 )
+      {
+        cv::Mat temp;
+        cvtColor(grayImage, temp, CV_BGR2GRAY);
+        grayImage = temp;
+      }
+
+      Array<u8> imageArray(grayImage.rows, grayImage.cols, scratchOffchip);
+      imageArray.Set(grayImage);
+
+      const f32 t0 = GetTime();
 
       face_cascade.detectMultiScale(
-        image,
-        detectedFaces,
+        grayImage,
+        detectedFaces_opencv,
         1.1, // double scaleFactor=1.1,
         2, // int minNeighbors=3,
         0|CV_HAAR_SCALE_IMAGE, // int flags=0,
@@ -99,9 +132,22 @@ GTEST_TEST(CoreTech_Vision, FaceDetection_All)
         cv::Size() // Size maxSize=Size()
         );
 
-      f32 t1 = GetTime();
+      const f32 t1 = GetTime();
 
-      printf("Detection took %f seconds\n", t1-t0);
+      const cv::Size maxSize = cv::Size(imageArray.get_size(1), imageArray.get_size(0));
+
+      cc.DetectMultiScale(
+        imageArray,
+        static_cast<f32>(scaleFactor),
+        minNeighbors,
+        minSize.height, minSize.width,
+        maxSize.height, maxSize.width,
+        detectedFaces_anki,
+        scratchOffchip);
+
+      const f32 t2 = GetTime();
+
+      printf("OpenCV took %f seconds and Anki took %f seconds\n", t1-t0, t2-t1);
 
       cv::Mat toShow;
 
@@ -117,10 +163,16 @@ GTEST_TEST(CoreTech_Vision, FaceDetection_All)
         toShow = image;
       }
 
-      for( size_t i = 0; i < detectedFaces.size(); i++ )
+      for( s32 i = 0; i < detectedFaces_anki.get_size(); i++ )
       {
-        cv::Point center( RoundS32(detectedFaces[i].x + detectedFaces[i].width*0.5), RoundS32(detectedFaces[i].y + detectedFaces[i].height*0.5) );
-        cv::ellipse( toShow, center, cv::Size( RoundS32(detectedFaces[i].width*0.5), RoundS32(detectedFaces[i].height*0.5)), 0, 0, 360, cv::Scalar( 255, 0, 255 ), 4, 8, 0 );
+        cv::Point center( RoundS32((detectedFaces_anki[i].left + detectedFaces_anki[i].right)*0.5), RoundS32((detectedFaces_anki[i].top + detectedFaces_anki[i].bottom)*0.5) );
+        cv::ellipse( toShow, center, cv::Size( RoundS32((detectedFaces_anki[i].right-detectedFaces_anki[i].left)*0.5), RoundS32((detectedFaces_anki[i].bottom-detectedFaces_anki[i].top)*0.5)), 0, 0, 360, cv::Scalar( 255, 0, 0 ), 5, 8, 0 );
+      }
+
+      for( size_t i = 0; i < detectedFaces_opencv.size(); i++ )
+      {
+        cv::Point center( RoundS32(detectedFaces_opencv[i].x + detectedFaces_opencv[i].width*0.5), RoundS32(detectedFaces_opencv[i].y + detectedFaces_opencv[i].height*0.5) );
+        cv::ellipse( toShow, center, cv::Size( RoundS32(detectedFaces_opencv[i].width*0.5), RoundS32(detectedFaces_opencv[i].height*0.5)), 0, 0, 360, cv::Scalar( 0, 0, 255 ), 1, 8, 0 );
       }
 
       const s32 maxChars = 1024;
@@ -179,7 +231,7 @@ GTEST_TEST(CoreTech_Vision, FaceDetection)
 
   cc.DetectMultiScale(
     image,
-    scaleFactor,
+    static_cast<f32>(scaleFactor),
     minNeighbors,
     minSize.height, minSize.width,
     maxSize.height, maxSize.width,

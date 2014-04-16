@@ -235,6 +235,26 @@ namespace Anki
 #endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
+    template<typename Type> s32 Array<Type>::Set(const cv::Mat_<Type> &in)
+    {
+      const s32 inHeight = in.rows;
+      const s32 inWidth = in.cols;
+
+      AnkiConditionalErrorAndReturnValue(inHeight == this->size[0] && inWidth == this->size[1],
+        0, "Array<Type>::Set", "input cv::Mat is the incorrect size");
+
+      for(s32 y=0; y<inHeight; y++) {
+        const Type * restrict pIn = reinterpret_cast<const Type*>(in.ptr(y,0));
+        Type * restrict pThis = this->Pointer(y,0);
+
+        memcpy(pThis, pIn, inWidth*sizeof(Type));
+      }
+
+      return inHeight*inWidth;
+    }
+#endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
+
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
     template<typename Type> void Array<Type>::Show(const char * const windowName, const bool waitForKeypress, const bool scaleValues, const bool fitImageToWindow) const
     {
       AnkiConditionalError(this->IsValid(), "Array<Type>::Show", "Array<Type> is not valid");
