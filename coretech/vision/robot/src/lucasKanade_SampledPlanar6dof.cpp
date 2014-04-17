@@ -257,50 +257,59 @@ namespace Anki
 
           // This section is based off lucasKanade_Fast, except uses f32 in offchip instead of integer types in onchip
 
-          FixedLengthList<Meshgrid<f32> > templateCoordinates = FixedLengthList<Meshgrid<f32> >(numPyramidLevels, offchipScratch);
-          FixedLengthList<Array<f32> > templateImagePyramid = FixedLengthList<Array<f32> >(numPyramidLevels, offchipScratch);
-          FixedLengthList<Array<f32> > templateImageXGradientPyramid = FixedLengthList<Array<f32> >(numPyramidLevels, offchipScratch);
-          FixedLengthList<Array<f32> > templateImageYGradientPyramid = FixedLengthList<Array<f32> >(numPyramidLevels, offchipScratch);
-          FixedLengthList<Array<f32> > templateImageSquaredGradientMagnitudePyramid = FixedLengthList<Array<f32> >(numPyramidLevels, offchipScratch);
+          //FixedLengthList<Meshgrid<f32> > templateCoordinates = FixedLengthList<Meshgrid<f32> >(numPyramidLevels, offchipScratch);
+          //FixedLengthList<Array<f32> > templateImagePyramid = FixedLengthList<Array<f32> >(numPyramidLevels, offchipScratch);
+          //FixedLengthList<Array<f32> > templateImageXGradientPyramid = FixedLengthList<Array<f32> >(numPyramidLevels, offchipScratch);
+          //FixedLengthList<Array<f32> > templateImageYGradientPyramid = FixedLengthList<Array<f32> >(numPyramidLevels, offchipScratch);
+          //FixedLengthList<Array<f32> > templateImageSquaredGradientMagnitudePyramid = FixedLengthList<Array<f32> >(numPyramidLevels, offchipScratch);
+          
+          //templateCoordinates.set_size(numPyramidLevels);
+          //templateImagePyramid.set_size(numPyramidLevels);
+          //templateImageXGradientPyramid.set_size(numPyramidLevels);
+          //templateImageYGradientPyramid.set_size(numPyramidLevels);
+          //templateImageSquaredGradientMagnitudePyramid.set_size(numPyramidLevels);
 
-          templateCoordinates.set_size(numPyramidLevels);
-          templateImagePyramid.set_size(numPyramidLevels);
-          templateImageXGradientPyramid.set_size(numPyramidLevels);
-          templateImageYGradientPyramid.set_size(numPyramidLevels);
-          templateImageSquaredGradientMagnitudePyramid.set_size(numPyramidLevels);
-
-          AnkiConditionalErrorAndReturn(templateImagePyramid.IsValid() && templateImageXGradientPyramid.IsValid() && templateImageYGradientPyramid.IsValid() && templateCoordinates.IsValid() && templateImageSquaredGradientMagnitudePyramid.IsValid(),
-            "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "Could not allocate pyramid lists");
+          //AnkiConditionalErrorAndReturn(templateImagePyramid.IsValid() && templateImageXGradientPyramid.IsValid() && templateImageYGradientPyramid.IsValid() && templateCoordinates.IsValid() /*&& templateImageSquaredGradientMagnitudePyramid.IsValid()*/,
+          //"LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "Could not allocate pyramid lists");
 
           // Allocate the memory for all the images
           for(s32 iScale=0; iScale<numPyramidLevels; iScale++) {
+            
+            PUSH_MEMORY_STACK(offchipScratch);
+            PUSH_MEMORY_STACK(onchipScratch);
+            
             const f32 scale = static_cast<f32>(1 << iScale);
 
             // Note that template coordinates for this tracker are actually
             // coordinates on the 3d template, which get mapped into the image
             // by the homography
             const f32 halfWidth = scaleTemplateRegionPercent*templateHalfWidth;
-            templateCoordinates[iScale] = Meshgrid<f32>(
+            Meshgrid<f32> templateCoordinates = Meshgrid<f32>(
               Linspace(-halfWidth, halfWidth,
               static_cast<s32>(FLT_FLOOR(this->templateRegionWidth/scale))),
               Linspace(-halfWidth, halfWidth,
               static_cast<s32>(FLT_FLOOR(this->templateRegionHeight/scale))));
 
-            const s32 numPointsY = templateCoordinates[iScale].get_yGridVector().get_size();
-            const s32 numPointsX = templateCoordinates[iScale].get_xGridVector().get_size();
+            const s32 numPointsY = templateCoordinates.get_yGridVector().get_size();
+            const s32 numPointsX = templateCoordinates.get_xGridVector().get_size();
 
-            templateImagePyramid[iScale] = Array<f32>(numPointsY, numPointsX, offchipScratch);
-            templateImageXGradientPyramid[iScale] = Array<f32>(numPointsY, numPointsX, offchipScratch);
-            templateImageYGradientPyramid[iScale] = Array<f32>(numPointsY, numPointsX, offchipScratch);
-            templateImageSquaredGradientMagnitudePyramid[iScale] = Array<f32>(numPointsY, numPointsX, offchipScratch);
+            //templateImagePyramid[iScale] = Array<f32>(numPointsY, numPointsX, offchipScratch);
+            //templateImageXGradientPyramid[iScale] = Array<f32>(numPointsY, numPointsX, offchipScratch);
+            //templateImageYGradientPyramid[iScale] = Array<f32>(numPointsY, numPointsX, offchipScratch);
+            //templateImageSquaredGradientMagnitudePyramid[iScale] = Array<f32>(numPointsY, numPointsX, offchipScratch);
 
+            /*
             AnkiConditionalErrorAndReturn(templateImagePyramid[iScale].IsValid() && templateImageXGradientPyramid[iScale].IsValid() && templateImageYGradientPyramid[iScale].IsValid() && templateImageSquaredGradientMagnitudePyramid[iScale].IsValid(),
               "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "Could not allocate pyramid images");
+            */
+            
+            /*
           }
 
+          
           // Sample all levels of the pyramid images
           for(s32 iScale=0; iScale<numPyramidLevels; iScale++) {
-            if((lastResult = Interp2_Projective<u8,f32>(templateImage, templateCoordinates[iScale], transformation.get_homography(), this->transformation.get_centerOffset(initialImageScaleF32), templateImagePyramid[iScale], INTERPOLATE_LINEAR)) != RESULT_OK) {
+            if((lastResult = Interp2_Projective<u8,f32>(templateImage, templateCoordinates, transformation.get_homography(), this->transformation.get_centerOffset(initialImageScaleF32), templateImagePyramid[iScale], INTERPOLATE_LINEAR)) != RESULT_OK) {
               AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "Interp2_Projective failed with code 0x%x", lastResult);
               return;
             }
@@ -308,63 +317,114 @@ namespace Anki
             //cv::imshow("templateImagePyramid[iScale]", templateImagePyramid[iScale].get_CvMat_());
             //cv::waitKey();
           }
+           
 
           // Compute the spatial derivatives
           // TODO: compute without borders?
           for(s32 iScale=0; iScale<numPyramidLevels; iScale++) {
-            PUSH_MEMORY_STACK(offchipScratch);
-            PUSH_MEMORY_STACK(onchipScratch);
-
-            const s32 numPointsY = templateCoordinates[iScale].get_yGridVector().get_size();
-            const s32 numPointsX = templateCoordinates[iScale].get_xGridVector().get_size();
-
-            if((lastResult = ImageProcessing::ComputeXGradient<f32,f32,f32>(templateImagePyramid[iScale], templateImageXGradientPyramid[iScale])) != RESULT_OK) {
-              AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "ComputeXGradient failed with code 0x%x", lastResult);
-              return;
-            }
-
-            if((lastResult = ImageProcessing::ComputeYGradient<f32,f32,f32>(templateImagePyramid[iScale], templateImageYGradientPyramid[iScale])) != RESULT_OK) {
-              AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "ComputeYGradient failed with code 0x%x", lastResult);
-              return;
-            }
-
+            
+            */
+            
+            Array<f32> grayscaleVector = Array<f32>(1, numPointsX*numPointsY, offchipScratch);
+            Array<f32> xGradientVector = Array<f32>(1, numPointsX*numPointsY, offchipScratch);
+            Array<f32> yGradientVector = Array<f32>(1, numPointsX*numPointsY, offchipScratch);
+            
+            {
+              PUSH_MEMORY_STACK(offchipScratch);
+              
+              Array<f32> templateImageAtScale = Array<f32>(numPointsY, numPointsX, offchipScratch);
+              
+              if((lastResult = Interp2_Projective<u8,f32>(templateImage, templateCoordinates, transformation.get_homography(), this->transformation.get_centerOffset(initialImageScaleF32), templateImageAtScale, INTERPOLATE_LINEAR)) != RESULT_OK) {
+                AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "Interp2_Projective failed with code 0x%x", lastResult);
+                return;
+              }
+              
+              
+              //const s32 numPointsY = templateCoordinates.get_yGridVector().get_size();
+              //const s32 numPointsX = templateCoordinates.get_xGridVector().get_size();
+              
+              
+              {
+                PUSH_MEMORY_STACK(offchipScratch);
+                
+                Array<f32> templateImageXGradient = Array<f32>(numPointsY, numPointsX, offchipScratch);
+                
+                if((lastResult = ImageProcessing::ComputeXGradient<f32,f32,f32>(templateImageAtScale, templateImageXGradient)) != RESULT_OK) {
+                  AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "ComputeXGradient failed with code 0x%x", lastResult);
+                  return;
+                }
+                
+                if((lastResult = Matrix::Vectorize<f32,f32>(false, templateImageXGradient, xGradientVector)) != RESULT_OK) {
+                  AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "Matrix::Vectorize failed with code 0x%x", lastResult);
+                }
+              } // pop templateImageXGradient
+              
+              
+              {
+                PUSH_MEMORY_STACK(offchipScratch);
+                Array<f32> templateImageYGradient = Array<f32>(numPointsY, numPointsX, offchipScratch);
+                
+                if((lastResult = ImageProcessing::ComputeYGradient<f32,f32,f32>(templateImageAtScale, templateImageYGradient)) != RESULT_OK) {
+                  AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "ComputeYGradient failed with code 0x%x", lastResult);
+                  return;
+                }
+                if((lastResult = Matrix::Vectorize<f32,f32>(false, templateImageYGradient, yGradientVector)) != RESULT_OK) {
+                  AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "Matrix::Vectorize failed with code 0x%x", lastResult);
+                }
+              } // pop templateImageYGradient
+              
+              if((lastResult = Matrix::Vectorize<f32,f32>(false, templateImageAtScale, grayscaleVector)) != RESULT_OK) {
+                AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "Matrix::Vectorize failed with code 0x%x", lastResult);
+              }
+              
+            } // pop templateImageAtScale
+            
             //templateImageXGradientPyramid[iScale].Show("X Gradient", false);
             //templateImageYGradientPyramid[iScale].Show("Y Gradient", true);
-
+            
             // Using the computed gradients, find a set of the max values, and store them
-
-            Array<f32> tmpMagnitude(numPointsY, numPointsX, offchipScratch);
-
-            Matrix::DotMultiply<f32,f32,f32>(templateImageXGradientPyramid[iScale], templateImageXGradientPyramid[iScale], tmpMagnitude);
-            Matrix::DotMultiply<f32,f32,f32>(templateImageYGradientPyramid[iScale], templateImageYGradientPyramid[iScale], templateImageSquaredGradientMagnitudePyramid[iScale]);
-            Matrix::Add<f32,f32,f32>(tmpMagnitude, templateImageSquaredGradientMagnitudePyramid[iScale], templateImageSquaredGradientMagnitudePyramid[iScale]);
-
-            //Matrix::Sqrt<f32,f32,f32>(templateImageSquaredGradientMagnitudePyramid[iScale], templateImageSquaredGradientMagnitudePyramid[iScale]);
-
-            //cv::imshow("templateImageSquaredGradientMagnitude[iScale]", templateImageSquaredGradientMagnitudePyramid[iScale].get_CvMat_());
-            //cv::waitKey();
-
-            Array<f32> magnitudeVector = Matrix::Vectorize<f32,f32>(false, templateImageSquaredGradientMagnitudePyramid[iScale], offchipScratch);
-            Array<u16> magnitudeIndexes = Array<u16>(1, numPointsY*numPointsX, offchipScratch);
-
-            AnkiConditionalErrorAndReturn(magnitudeVector.IsValid() && magnitudeIndexes.IsValid(),
-              "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "Out of memory");
-
-            // Really slow
-            //const f32 t0 = GetTime();
-            //Matrix::Sort<f32>(magnitudeVector, magnitudeIndexes, 1, false);
-            //const f32 t1 = GetTime();
-
+            
             const s32 numSamples = this->templateSamplePyramid[iScale].get_size();
-            s32 numSelected;
-            LucasKanadeTracker_SampledPlanar6dof::ApproximateSelect(magnitudeVector, numSelectBins, numSamples, numSelected, magnitudeIndexes);
-
+            Array<u16> magnitudeIndexes = Array<u16>(1, numPointsY*numPointsX, offchipScratch);
+            
+            {
+              PUSH_MEMORY_STACK(offchipScratch);
+              
+              Array<f32> magnitudeVector = Array<f32>(1, numPointsX*numPointsY, offchipScratch);
+              {
+                PUSH_MEMORY_STACK(offchipScratch);
+                
+                Array<f32> tmpMagnitude(1, numPointsY*numPointsX, offchipScratch);
+                
+                Matrix::DotMultiply<f32,f32,f32>(xGradientVector, xGradientVector, tmpMagnitude);
+                Matrix::DotMultiply<f32,f32,f32>(yGradientVector, yGradientVector, magnitudeVector);
+                Matrix::Add<f32,f32,f32>(tmpMagnitude, magnitudeVector, magnitudeVector);
+              } // pop tmpMagnitude
+              
+              //Matrix::Sqrt<f32,f32,f32>(templateImageSquaredGradientMagnitudePyramid[iScale], templateImageSquaredGradientMagnitudePyramid[iScale]);
+              
+              //cv::imshow("templateImageSquaredGradientMagnitude[iScale]", templateImageSquaredGradientMagnitudePyramid[iScale].get_CvMat_());
+              //cv::waitKey();
+              
+              AnkiConditionalErrorAndReturn(magnitudeVector.IsValid() && magnitudeIndexes.IsValid(),
+                                            "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "Out of memory");
+              
+              // Really slow
+              //const f32 t0 = GetTime();
+              //Matrix::Sort<f32>(magnitudeVector, magnitudeIndexes, 1, false);
+              //const f32 t1 = GetTime();
+              
+              s32 numSelected;
+              LucasKanadeTracker_SampledPlanar6dof::ApproximateSelect(magnitudeVector, numSelectBins, numSamples, numSelected, magnitudeIndexes);
+              
+              if(numSelected == 0) {
+                return;
+              }
+              
+            } // pop magnitudeVector
+            
             //const f32 t2 = GetTime();
             //printf("%f %f\n", t1-t0, t2-t1);
-
-            if(numSelected == 0) {
-              return;
-            }
 
             //{
             //  Matlab matlab(false);
@@ -372,12 +432,12 @@ namespace Anki
             //  matlab.PutArray(magnitudeIndexes, "magnitudeIndexes");
             //}
 
-            Array<f32> yCoordinatesVector = templateCoordinates[iScale].EvaluateY1(false, offchipScratch);
-            Array<f32> xCoordinatesVector = templateCoordinates[iScale].EvaluateX1(false, offchipScratch);
+            Array<f32> yCoordinatesVector = templateCoordinates.EvaluateY1(false, offchipScratch);
+            Array<f32> xCoordinatesVector = templateCoordinates.EvaluateX1(false, offchipScratch);
 
-            Array<f32> yGradientVector = Matrix::Vectorize<f32,f32>(false, templateImageYGradientPyramid[iScale], offchipScratch);
-            Array<f32> xGradientVector = Matrix::Vectorize<f32,f32>(false, templateImageXGradientPyramid[iScale], offchipScratch);
-            Array<f32> grayscaleVector = Matrix::Vectorize<f32,f32>(false, templateImagePyramid[iScale], offchipScratch);
+            //Array<f32> yGradientVector = Matrix::Vectorize<f32,f32>(false, templateImageYGradient, offchipScratch);
+            //Array<f32> xGradientVector = Matrix::Vectorize<f32,f32>(false, templateImageXGradient, offchipScratch);
+            //Array<f32> grayscaleVector = Matrix::Vectorize<f32,f32>(false, templateImageAtScale, offchipScratch);
 
             const f32 * restrict pYCoordinates = yCoordinatesVector.Pointer(0,0);
             const f32 * restrict pXCoordinates = xCoordinatesVector.Pointer(0,0);
