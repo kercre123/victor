@@ -341,9 +341,9 @@ namespace Anki {
         // Nothing to compute.  The tracker's parameters are the answer directly
         
         MatlabVisionProcessor::matlabProc_.EvalStringEcho("angleErr = LKtracker.theta_y; "
-                                                          "distErr  = LKtracker.tz; "
-                                                          "horErr   = LKtracker.tx; "
-                                                          "height   = LKtracker.ty; ");
+                                                          "Tz  = LKtracker.tz; "
+                                                          "Tx  = LKtracker.tx; "
+                                                          "Ty  = LKtracker.ty; ");
 #else
         // Compute the pose of the block according to the current homography in
         // the tracker.
@@ -351,15 +351,15 @@ namespace Anki {
         
         matlabProc_.EvalStringEcho("blockPose = camera.computeExtrinsics(transformedQuad, marker3d); "
                                    "angleErr = asin(blockPose.Rmat(3,1)); "
-                                   "distErr  = blockPose.T(3); "
-                                   "horErr   = blockPose.T(1); "
-                                   "height   = blockPose.T(2); ");
+                                   "Tz  = blockPose.T(3); "
+                                   "Tx  = blockPose.T(1); "
+                                   "Ty  = blockPose.T(2); ");
         
 #endif
         
-        x_distErr = static_cast<f32>(mxGetScalar(matlabProc_.GetArray("distErr")));
-        y_horErr  = static_cast<f32>(mxGetScalar(matlabProc_.GetArray("horErr")));
-        z_height  = static_cast<f32>(mxGetScalar(matlabProc_.GetArray("height")));
+        x_distErr = static_cast<f32>(mxGetScalar(matlabProc_.GetArray("Tx")));
+        y_horErr  = static_cast<f32>(mxGetScalar(matlabProc_.GetArray("Ty")));
+        z_height  = static_cast<f32>(mxGetScalar(matlabProc_.GetArray("Tz")));
         angleErr  = static_cast<f32>(mxGetScalar(matlabProc_.GetArray("angleErr")));
         
       } // ComputeProjectiveDockingSignal()

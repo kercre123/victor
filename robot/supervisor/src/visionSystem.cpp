@@ -644,8 +644,6 @@ namespace Anki {
         f32 T_fwd_robot, T_hor_robot;
         
         GetPoseChange(T_fwd_robot, T_hor_robot, theta_robot);
-        Radians theta_head2 = GetCurrentHeadAngle();
-        Radians theta_head1 = GetPreviousHeadAngle();
         
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
         
@@ -653,7 +651,9 @@ namespace Anki {
         MatlabVisionProcessor::UpdateTracker(T_fwd_robot, T_hor_robot,
                                              theta_robot, theta_head);
 #else
-
+        Radians theta_head2 = GetCurrentHeadAngle();
+        Radians theta_head1 = GetPreviousHeadAngle();
+        
         const f32 cH1 = cosf(theta_head1.ToFloat());
         const f32 sH1 = sinf(theta_head1.ToFloat());
         
@@ -722,6 +722,7 @@ namespace Anki {
         // Compare observed vertical size to actual block marker size (projected
         // to be orthogonal to optical axis, using head angle) to approximate the
         // distance to the marker along the camera's optical axis
+        Radians theta_head = GetCurrentHeadAngle();
         const f32 cosHeadAngle = cosf(theta_head.ToFloat());
         const f32 sinHeadAngle = sinf(theta_head.ToFloat());
         const f32 d = (trackingMarkerWidth_mm* cosHeadAngle *
@@ -807,9 +808,11 @@ namespace Anki {
                                  Messages::DockingErrorSignal& dockErrMsg,
                                  MemoryStack scratch)
       {
-        
+        dockErrMsg.isApproximate = false;
         
 #if USE_APPROXIMATE_DOCKING_ERROR_SIGNAL
+        dockErrMsg.isApproximate = true;
+        
         const bool useTopBar = false; // TODO: pass in? make a docker parameter?
         const f32 focalLength_x = headCamInfo_->focalLength_x;
         const f32 imageResolutionWidth_pix = detectionParameters_.detectionWidth;
@@ -847,8 +850,10 @@ namespace Anki {
         //midPointErr = midPointErr * currentDistance / this.calibration.fc(1);
         midpointError *= distanceError / focalLength_x;
         
+        // Go ahead and put the errors in the robot centric coordinates (other
+        // than taking head angle into account)
         dockErrMsg.x_distErr = distanceError;
-        dockErrMsg.y_horErr  = midpointError;
+        dockErrMsg.y_horErr  = -midpointError;
         dockErrMsg.angleErr  = angleError;
         dockErrMsg.z_height  = -1.f; // unknown for approximate error signal
         
@@ -861,10 +866,10 @@ namespace Anki {
                                                               dockErrMsg.z_height,
                                                               dockErrMsg.angleErr);
 #else
-        
-        dockErrMsg.x_distErr = tracker_.get_translation().z;
-        dockErrMsg.y_horErr  = tracker_.get_translation().x;
-        dockErrMsg.z_height  = tracker_.get_translation().y;
+        // Despite the names, fill the elements of the message with camera-centric coordinates
+        dockErrMsg.x_distErr = tracker_.get_translation().x;
+        dockErrMsg.y_horErr  = tracker_.get_translation().y;
+        dockErrMsg.z_height  = tracker_.get_translation().z;
         
         dockErrMsg.angleErr  = tracker_.get_angleY();
         
@@ -898,9 +903,9 @@ namespace Anki {
                          R, T, scratch);
         
         // Extract what we need for the docking error signal from the block's pose:
-        dockErrMsg.x_distErr = T.z;
-        dockErrMsg.y_horErr  = T.x;
-        dockErrMsg.z_height  = T.y;
+        dockErrMsg.x_distErr = T.x;
+        dockErrMsg.y_horErr  = T.y;
+        dockErrMsg.z_height  = T.z;
         dockErrMsg.angleErr  = asinf(R[2][0]);
         
 

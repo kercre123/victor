@@ -193,6 +193,7 @@ ADD_MESSAGE_MEMBER(f32, y_horErr)
 ADD_MESSAGE_MEMBER(f32, z_height)
 ADD_MESSAGE_MEMBER(f32, angleErr) // in radians
 ADD_MESSAGE_MEMBER(u8,  didTrackingSucceed)
+ADD_MESSAGE_MEMBER(u8,  isApproximate)
 END_MESSAGE_DEFINITION(DockingErrorSignal)
 
 // AbsLocalizationUpdate
