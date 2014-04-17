@@ -341,7 +341,7 @@
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>3</Optim>
+            <Optim>1</Optim>
             <oTime>1</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>1</OneElfS>
@@ -442,6 +442,11 @@
               <FileName>usb_radio.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\usb_radio.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>wifi.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\wifi.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -1626,6 +1631,11 @@
                   </Cads>
                 </FileArmAds>
               </FileOption>
+            </File>
+            <File>
+              <FileName>wifi.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\wifi.cpp</FilePath>
             </File>
           </Files>
         </Group>
