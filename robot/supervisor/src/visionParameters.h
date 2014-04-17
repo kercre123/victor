@@ -58,7 +58,7 @@ namespace Anki {
       #define SEND_DEBUG_STREAM 0
 #endif
       
-#define P3P_PRECISION f64
+#define P3P_PRECISION f32
      
       //
       // Fiducial Detection Parameters
