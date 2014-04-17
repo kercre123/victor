@@ -26,6 +26,9 @@ namespace Anki {
         const u32 BACKOUT_TIME = 1500000;
         const f32 BACKOUT_SPEED_MMPS = -30;
         
+        const f32 LOW_DOCKING_HEAD_ANGLE = DEG_TO_RAD_F32(-15);
+        const f32 HIGH_DOCKING_HEAD_ANGLE = DEG_TO_RAD_F32(15);
+        
         // Distance between the robot origin and the distance along the robot's x-axis
         // to the lift when it is in the low docking position.
         const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 33.f;
@@ -70,12 +73,15 @@ namespace Anki {
             PRINT("PAP: SETTING LIFT PREDOCK\n");
 #endif
             mode_ = MOVING_LIFT_PREDOCK;
+            HeadController::SetDesiredAngle(LOW_DOCKING_HEAD_ANGLE);
             switch(action_) {
               case DA_PICKUP_LOW:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
                 break;
               case DA_PICKUP_HIGH:
-                LiftController::SetDesiredHeight(LIFT_HEIGHT_HIGHDOCK);
+                // This action starts by lowering the lift and tracking the high block
+                LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
+                HeadController::SetDesiredAngle(HIGH_DOCKING_HEAD_ANGLE);
                 break;
               case DA_PLACE_HIGH:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
@@ -89,7 +95,7 @@ namespace Anki {
           }
 
           case MOVING_LIFT_PREDOCK:
-            if (LiftController::IsInPosition()) {
+            if (LiftController::IsInPosition() && HeadController::IsInPosition()) {
               DockingController::StartDocking(dockToMarker_, markerWidth_, dockOffsetDistX_);
               mode_ = DOCKING;
 #if(DEBUG_PAP_CONTROLLER)
