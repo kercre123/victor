@@ -41,7 +41,8 @@ namespace Anki {
       Transformations::PlanarTransformation_f32 GetTrackerTransform(MemoryStack& memory);
       
       void ComputeProjectiveDockingSignal(const Quadrilateral<f32>& transformedQuad,
-                                          f32& x_distErr, f32& y_horErr, f32& angleErr);
+                                          f32& x_distErr, f32& y_horErr, f32& z_height,
+                                          f32& angleErr);
       
     } // namespace MatlabVisionProcessor
   } // namespace Cozmo

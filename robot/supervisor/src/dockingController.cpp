@@ -132,6 +132,7 @@ namespace Anki {
             // Convert from camera coordinates to robot coordinates
             // (Note that y and angle don't change)
             dockMsg.x_distErr += HEAD_CAM_POSITION[0]*cosf(HeadController::GetAngleRad()) + NECK_JOINT_POSITION[0];
+            dockMsg.y_horErr *= -1.f;
             
 #if(DEBUG_DOCK_CONTROLLER)
             PRINT("Received docking error signal: x_distErr=%f, y_horErr=%f, "

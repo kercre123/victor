@@ -330,7 +330,8 @@ namespace Anki {
       } // MatlabVisionProcessor::GetTrackerTransform()
       
       void ComputeProjectiveDockingSignal(const Quadrilateral<f32>& transformedQuad,
-                                          f32& x_distErr, f32& y_horErr, f32& angleErr)
+                                          f32& x_distErr, f32& y_horErr, f32& z_height,
+                                          f32& angleErr)
       {
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_AFFINE
         
@@ -341,7 +342,8 @@ namespace Anki {
         
         MatlabVisionProcessor::matlabProc_.EvalStringEcho("angleErr = LKtracker.theta_y; "
                                                           "distErr  = LKtracker.tz; "
-                                                          "horErr   = -LKtracker.tx; ");
+                                                          "horErr   = LKtracker.tx; "
+                                                          "height   = LKtracker.ty; ");
 #else
         // Compute the pose of the block according to the current homography in
         // the tracker.
@@ -350,12 +352,14 @@ namespace Anki {
         matlabProc_.EvalStringEcho("blockPose = camera.computeExtrinsics(transformedQuad, marker3d); "
                                    "angleErr = asin(blockPose.Rmat(3,1)); "
                                    "distErr  = blockPose.T(3); "
-                                   "horErr   = -blockPose.T(1); ");
+                                   "horErr   = blockPose.T(1); "
+                                   "height   = blockPose.T(2); ");
         
 #endif
         
         x_distErr = static_cast<f32>(mxGetScalar(matlabProc_.GetArray("distErr")));
         y_horErr  = static_cast<f32>(mxGetScalar(matlabProc_.GetArray("horErr")));
+        z_height  = static_cast<f32>(mxGetScalar(matlabProc_.GetArray("height")));
         angleErr  = static_cast<f32>(mxGetScalar(matlabProc_.GetArray("angleErr")));
         
       } // ComputeProjectiveDockingSignal()

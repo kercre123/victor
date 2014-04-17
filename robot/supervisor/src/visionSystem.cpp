@@ -842,7 +842,7 @@ namespace Anki {
         // TODO: should I be comparing to ncols/2 or calibration center?
         
         //midPointErr = -( (upperRight(1)+upperLeft(1))/2 - this.trackingResolution(1)/2 );
-        f32 midpointError = -( (lineRight.x+lineLeft.x)/2 - imageResolutionWidth_pix/2 );
+        f32 midpointError = ( (lineRight.x+lineLeft.x)/2 - imageResolutionWidth_pix/2 );
         
         //midPointErr = midPointErr * currentDistance / this.calibration.fc(1);
         midpointError *= distanceError / focalLength_x;
@@ -850,6 +850,7 @@ namespace Anki {
         dockErrMsg.x_distErr = distanceError;
         dockErrMsg.y_horErr  = midpointError;
         dockErrMsg.angleErr  = angleError;
+        dockErrMsg.z_height  = -1.f; // unknown for approximate error signal
         
 #elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
         
@@ -857,11 +858,14 @@ namespace Anki {
         MatlabVisionProcessor::ComputeProjectiveDockingSignal(currentQuad,
                                                               dockErrMsg.x_distErr,
                                                               dockErrMsg.y_horErr,
+                                                              dockErrMsg.z_height,
                                                               dockErrMsg.angleErr);
 #else
         
         dockErrMsg.x_distErr = tracker_.get_translation().z;
-        dockErrMsg.y_horErr  = -tracker_.get_translation().x;
+        dockErrMsg.y_horErr  = tracker_.get_translation().x;
+        dockErrMsg.z_height  = tracker_.get_translation().y;
+        
         dockErrMsg.angleErr  = tracker_.get_angleY();
         
 #endif // if USE_MATLAB_TRACKER
@@ -874,6 +878,7 @@ namespace Anki {
         MatlabVisionProcessor::ComputeProjectiveDockingSignal(currentQuad,
                                                               dockErrMsg.x_distErr,
                                                               dockErrMsg.y_horErr,
+                                                              dockErrMsg.z_height,
                                                               dockErrMsg.angleErr);
 #else
         
@@ -894,7 +899,8 @@ namespace Anki {
         
         // Extract what we need for the docking error signal from the block's pose:
         dockErrMsg.x_distErr = T.z;
-        dockErrMsg.y_horErr  = -T.x;
+        dockErrMsg.y_horErr  = T.x;
+        dockErrMsg.z_height  = T.y;
         dockErrMsg.angleErr  = asinf(R[2][0]);
         
 
