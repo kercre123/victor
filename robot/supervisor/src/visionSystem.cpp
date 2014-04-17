@@ -235,6 +235,11 @@ namespace Anki {
         return robotState_.headAngle;
       }
       
+      static Radians GetPreviousHeadAngle()
+      {
+        return prevRobotState_.headAngle;
+      }
+      
       static ReturnCode LookForMarkers(
                                        const Array<u8> &grayscaleImage,
                                        const DetectFiducialMarkersParameters &parameters,
@@ -639,7 +644,8 @@ namespace Anki {
         f32 T_fwd_robot, T_hor_robot;
         
         GetPoseChange(T_fwd_robot, T_hor_robot, theta_robot);
-        Radians theta_head = GetCurrentHeadAngle();
+        Radians theta_head2 = GetCurrentHeadAngle();
+        Radians theta_head1 = GetPreviousHeadAngle();
         
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
         
@@ -648,8 +654,11 @@ namespace Anki {
                                              theta_robot, theta_head);
 #else
 
-        const f32 cH = cosf(theta_head.ToFloat());
-        const f32 sH = sinf(theta_head.ToFloat());
+        const f32 cH1 = cosf(theta_head1.ToFloat());
+        const f32 sH1 = sinf(theta_head1.ToFloat());
+        
+        const f32 cH2 = cosf(theta_head2.ToFloat());
+        const f32 sH2 = sinf(theta_head2.ToFloat());
         
         const f32 cR = cosf(theta_robot.ToFloat());
         const f32 sR = sinf(theta_robot.ToFloat());
@@ -659,30 +668,31 @@ namespace Anki {
         // components are zero.
         //
         // From Sage:
-        // R_blockRelHead_new =
-        //   [cos(thetaR)               sin(thetaH)*sin(thetaR)                                       cos(thetaH)*sin(thetaR)]
-        //   [-sin(thetaH)*sin(thetaR)  cos(thetaR)*sin(thetaH)^2 + cos(thetaH)^2                      cos(thetaH)*cos(thetaR)*sin(thetaH) - cos(thetaH)*sin(thetaH)]
-        //   [-cos(thetaH)*sin(thetaR)  cos(thetaH)*cos(thetaR)*sin(thetaH) - cos(thetaH)*sin(thetaH)  cos(thetaH)^2*cos(thetaR) + sin(thetaH)^2]
+        // [cos(thetaR)                 sin(thetaH1)*sin(thetaR)       cos(thetaH1)*sin(thetaR)]
+        // [-sin(thetaH2)*sin(thetaR)   cos(thetaR)*sin(thetaH1)*sin(thetaH2) + cos(thetaH1)*cH2  cos(thetaH1)*cos(thetaR)*sin(thetaH2) - cos(thetaH2)*sin(thetaH1)]
+        // [-cos(thetaH2)*sin(thetaR)   cos(thetaH2)*cos(thetaR)*sin(thetaH1) - cos(thetaH1)*sin(thetaH2) cos(thetaH1)*cos(thetaH2)*cos(thetaR) + sin(thetaH1)*sin(thetaH2)]
         //
         // T_blockRelHead_new =
-        //   [T_hor*cos(thetaR) + term1*sin(thetaR) - T_fwd*sin(thetaR)]
-        //   [term1*cos(thetaR)*sin(thetaH) - term1*sin(thetaH) - (T_fwd*cos(thetaR) + T_hor*sin(thetaR))*sin(thetaH)]
-        //   [term1*cos(thetaH)*cos(thetaR) - term1*cos(thetaH) - (T_fwd*cos(thetaR) + T_hor*sin(thetaR))*cos(thetaH)]
-        //  where term1 = (Hx*cos(thetaH) - Hz*sin(thetaH) + Nx)
+        // [T_hor*cos(thetaR) + (Hx*cos(thetaH1) - Hz*sin(thetaH1) + Nx)*sin(thetaR) - T_fwd*sin(thetaR)]
+        // [(Hx*cos(thetaH1) - Hz*sin(thetaH1) + Nx)*cos(thetaR)*sin(thetaH2) - (Hz*cos(thetaH1) + Hx*sin(thetaH1) + Nz)*cos(thetaH2) + (Hz*cos(thetaH2) + Hx*sin(thetaH2) + Nz)*cos(thetaH2) - (Hx*cos(thetaH2) - Hz*sin(thetaH2) + Nx)*sin(thetaH2) - (T_fwd*cos(thetaR) + T_hor*sin(thetaR))*sin(thetaH2)]
+        // [(Hx*cos(thetaH1) - Hz*sin(thetaH1) + Nx)*cos(thetaH2)*cos(thetaR) - (Hx*cos(thetaH2) - Hz*sin(thetaH2) + Nx)*cos(thetaH2) - (T_fwd*cos(thetaR) + T_hor*sin(thetaR))*cos(thetaH2) + (Hz*cos(thetaH1) + Hx*sin(thetaH1) + Nz)*sin(thetaH2) - (Hz*cos(thetaH2) + Hx*sin(thetaH2) + Nz)*sin(thetaH2)]
         
         AnkiAssert(HEAD_CAM_POSITION[1] == 0.f && NECK_JOINT_POSITION[1] == 0.f);
         Array<f32> R_geometry = Array<f32>(3,3,scratch);
-        R_geometry[0][0] = cR;     R_geometry[0][1] = sH*sR;             R_geometry[0][2] = cH*sR;
-        R_geometry[1][0] = -sH*sR; R_geometry[1][1] = cR*sH*sH + cH*cH;  R_geometry[1][2] = cH*cR*sH - cH*sH;
-        R_geometry[2][0] = -cH*sR; R_geometry[2][1] = cH*cR*sH - cH*sH;  R_geometry[2][2] = cH*cH*cR + sH*sH;
+        R_geometry[0][0] = cR;     R_geometry[0][1] = sH1*sR;             R_geometry[0][2] = cH1*sR;
+        R_geometry[1][0] = -sH2*sR; R_geometry[1][1] = cR*sH1*sH2 + cH1*cH2;  R_geometry[1][2] = cH1*cR*sH2 - cH2*sH1;
+        R_geometry[2][0] = -cH2*sR; R_geometry[2][1] = cH2*cR*sH1 - cH1*sH2;  R_geometry[2][2] = cH1*cH2*cR + sH1*sH2;
         
-        const f32 term1 = HEAD_CAM_POSITION[0]*cH - HEAD_CAM_POSITION[2]*sH + NECK_JOINT_POSITION[0];
-        const f32 term2 = T_fwd_robot*cR + T_hor_robot*sR;
+        const f32 term1 = (HEAD_CAM_POSITION[0]*cH1 - HEAD_CAM_POSITION[2]*sH1 + NECK_JOINT_POSITION[0]);
+        const f32 term2 = (HEAD_CAM_POSITION[2]*cH1 + HEAD_CAM_POSITION[0]*sH1 + NECK_JOINT_POSITION[2]);
+        const f32 term3 = (HEAD_CAM_POSITION[2]*cH2 + HEAD_CAM_POSITION[0]*sH2 + NECK_JOINT_POSITION[2]);
+        const f32 term4 = (HEAD_CAM_POSITION[0]*cH2 - HEAD_CAM_POSITION[2]*sH2 + NECK_JOINT_POSITION[0]);
+        const f32 term5 = (T_fwd_robot*cR + T_hor_robot*sR);
+        
         Point3<f32> T_geometry(T_hor_robot*cR + term1*sR - T_fwd_robot*sR,
-                               sH*(term1*cR - term1 - term2),
-                               cH*(term1*cR - term1 - term2));
-        
-
+                               term1*cR*sH2 - term2*cH2 + term3*cH2 - term4*sH2 - term5*sH2,
+                               term1*cH2*cR - term4*cH2 - term5*cH2 + term2*sH2 - term3*sH2);
+       
         Array<f32> R_blockRelHead = Array<f32>(3,3,scratch);
         tracker_.get_rotationMatrix(R_blockRelHead);
         const Point3<f32>& T_blockRelHead = tracker_.get_translation();
