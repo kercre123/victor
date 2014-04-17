@@ -51,6 +51,8 @@ namespace Anki {
       
       // Get current head angle
       f32 GetAngleRad();
+
+      f32 GetLastCommandedAngle();
       
       ReturnCode Update();
       
