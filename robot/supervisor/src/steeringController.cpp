@@ -71,7 +71,7 @@ namespace Anki {
     
     // Private function declarations
     //Non linear version of the steering controller (For SM_PATH_FOLLOW)
-    void RunLineFollowControllerNL(f32 location_pix, float headingError_rad);
+    void RunLineFollowControllerNL(f32 offsetError_mm, float headingError_rad);
     void ManagePathFollow();
     void ManagePointTurn();
     void ManageDirectDrive();
@@ -190,46 +190,24 @@ namespace Anki {
     
     
     /**
-     * @brief     Crosstrack steering controller for skid-steered Anki cars
-     * @details   This control law uses the crosstrack error and vehicle speed to determine appropriate
-     *            left and right wheel pwm commands to converge on zero crosstrack error. The controller operates by attempting
+     * @brief     Crosstrack steering controller. Modification of original controller provided by Gabe Hoffmann for Drive.
+     * @details   This control law uses the crosstrack error, heading error, and vehicle speed to determine appropriate
+     *            left and right wheel pwm commands to converge on zero crosstrack error and zero heading error. The controller operates by attempting
      *            to turn the vehicle to have a heading w.r.t the path that is the arctan of a gain times the crosstrack error,
      *            normalized by speed.  Due to the normalization by speed, it should converge at a constant rate for a given gain.
-     *            The speed_to_pwm constant is known to vary across the full range of speeds - a curve which could be included to
-     *            enhance performance.  However, the conversion factor selected was simulated to work over a wide range of speeds
-     *            and assumptions about turn centers.
-     * @date      July 9th, 2012
-     * @version   1.2
-     * @author    Gabe Hoffmann (gabe.hoffmann@gmail.com), Hanns Tappeiner
+     *
+     * @author    Gabe Hoffmann (gabe.hoffmann@gmail.com), Hanns Tappeiner, Kevin Yoon
      * @copyright This original code is provided to Anki, Inc under royalty-free non-exclusive license per terms of consulting agreement.
      *            Gabe Hoffmann retains ownership of previous work herein: the control law, clipping logic, and filter.
-     * @param location_pix   The crosstrack location of the vehicle, in pixels, uncorrected for sensor center.
-     * @param wleft
-     * @param wright
+     * @param offsetError_mm    The crosstrack location (or shortest distance to the currently followed path segment) of the robot
+     * @param headingError_rad  The angular error between the robot's current orientation and the tangent of the closest point on the current path.
      */
-    void RunLineFollowControllerNL(f32 location_pix, float headingError_rad)
+    void RunLineFollowControllerNL(f32 offsetError_mm, float headingError_rad)
     {
       
       //We only steer in certain cases, for example if the car is supposed to move
       static bool steering_active = FALSE;
-      
-      // Measured error in meters
-      //float xtrack_error = (location_pix - LIN_ARRAY_CENTER_PIXEL) * LINE_ARRAY_MM_PER_PIX * M_PER_MM; // Crosstrack error (m)
-      float xtrack_error = location_pix * M_PER_MM; // Crosstrack error (m)
-      
-      float xtrack_speed;
-      static float xtrack_error_last; // Holds value of previous crosstrack error for next loop iteration
-      //static u8 isInit = 0; // (initialization flag, false on first function call only)
-      
-      // Initization
-      if (not isInit_) {
-        xtrack_speed = 0.f; // because xtrack_error_last never had a chance to be set
-        isInit_ = true;
-      } else {
-        xtrack_speed = (xtrack_error - xtrack_error_last) / Cozmo::CONTROL_DT;
-      }
-      xtrack_error_last = xtrack_error;
-      
+
       // Control law
       float curvature = 0;
       
@@ -266,31 +244,12 @@ namespace Anki {
       }
       
       ///////////////////////////////////////////////////////////////////////////////
-      float attitude = 0;
       if (steering_active == TRUE)
       {
-        //convert speed to meters per second
-        float speedmps = currspeed * M_PER_MM;
-        //attitude = asin_fast(xtrack_speed / speedmps);
-        attitude = -headingError_rad;
-        curvature = -K1_ * (atan_fast(K2_ * xtrack_error / (speedmps + 0.2f)) + attitude);
-        //We should allow this to go somewhat negative I think... but not too much
-        
-        Tracefloat(TRACE_VAR_ATTITUDE, attitude, TRACE_MASK_MOTOR_CONTROLLER);
-        Tracefloat(TRACE_VAR_XTRACK_ERROR, xtrack_error, TRACE_MASK_MOTOR_CONTROLLER);
-        Tracefloat(TRACE_VAR_XTRACK_SPEED, xtrack_speed, TRACE_MASK_MOTOR_CONTROLLER);
-        Tracefloat(TRACE_VAR_SPEEDMPS, speedmps, TRACE_MASK_MOTOR_CONTROLLER);
-        Tracefloat(TRACE_VAR_CURVATURE, curvature, TRACE_MASK_MOTOR_CONTROLLER);
-        
+        curvature = -K1_ * (atan_fast(K2_ * offsetError_mm / (currspeed + 200)) - headingError_rad);
       } else {
-
         curvature = 0;
- 
       }
-      
-      
-      //Convert the curvature to 1/mm
-      curvature *= 1000.0f;
       
       // TODO: Get rid of this??
       //STOP: This will make us coast when we command 0, good for now,
@@ -300,8 +259,7 @@ namespace Anki {
       }
       
 #if(DEBUG_STEERING_CONTROLLER)
-      PRINT(" STEERING: headingErr: %f, headingRad: %f, currSpeed: %d\n", location_pix, headingError_rad, currspeed);
-      PRINT(" STEERING: xtrack_err: %f, xtrack_speed: %f, attitude: %f, curvature: %f\n", xtrack_error, xtrack_speed, attitude, curvature);
+      PRINT(" STEERING: offsetError_mm: %f, headingError_rad: %f, curvature: %f, currSpeed: %d\n", offsetError_mm, headingError_rad, curvature, currspeed);
 #endif
       
       
@@ -351,7 +309,7 @@ namespace Anki {
           //SetGains(DEFAULT_STEERING_K1, DEFAULT_STEERING_K2);
           if (DockingController::IsBusy()) {
             //SetGains(DEFAULT_STEERING_K1, 5.f);
-            fidx = CLIP(fidx, -4, 4);  // TODO: Loosen this up the closer we get to the block?????
+            fidx = CLIP(fidx, -5, 5);  // TODO: Loosen this up the closer we get to the block?????
             pathRadErr = CLIP(pathRadErr, -0.2, 0.2);
           }
           
