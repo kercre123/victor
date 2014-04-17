@@ -75,6 +75,14 @@ namespace Anki {
 #pragma mark --- TrackerParameters ---
 #endif
       
+      
+#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
+      const f32 TrackerParameters::MIN_TRACKER_DISTANCE = 10.f;
+      const f32 TrackerParameters::MAX_TRACKER_DISTANCE = 200.f;
+      const f32 TrackerParameters::MAX_BLOCK_DOCKING_ANGLE = DEG_TO_RAD(30);
+      const f32 TrackerParameters::MAX_DOCKING_FOV_ANGLE = DEG_TO_RAD(60);
+#endif
+      
       TrackerParameters::TrackerParameters()
       : isInitialized(false)
       {

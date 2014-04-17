@@ -126,6 +126,15 @@ namespace Anki {
         
 #endif // if DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
         
+        
+#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
+        // Parameters for sanity checks after tracker update
+        static const f32 MIN_TRACKER_DISTANCE;
+        static const f32 MAX_TRACKER_DISTANCE;
+        static const f32 MAX_BLOCK_DOCKING_ANGLE;
+        static const f32 MAX_DOCKING_FOV_ANGLE;
+#endif
+        
         TrackerParameters();
         void Initialize();
         

@@ -553,8 +553,31 @@ namespace Anki {
         if(trackerResult != RESULT_OK) {
           return EXIT_FAILURE;
         }
-        
-#if DOCKING_ALGORITHM != DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
+     
+        // Sanity check on tracker result
+#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
+        // Check that pose makes sense (it's within a reasonable range in front
+        // of the robot
+        {
+          if(tracker.get_translation().z < TrackerParameters::MIN_TRACKER_DISTANCE || // can't get this close
+             tracker.get_translation().z > TrackerParameters::MAX_TRACKER_DISTANCE)  // too far away for docking
+          {
+            PRINT("Tracker failed distance sanity check.\n");
+            converged = false;
+          }
+          else if(fabs(tracker.get_angleY()) > TrackerParameters::MAX_BLOCK_DOCKING_ANGLE)
+          {
+            PRINT("Tracker failed target angle sanity check.\n");
+            converged = false;
+          }
+          else if(atan_fast(fabs(tracker.get_translation().x) / tracker.get_translation().z) > TrackerParameters::MAX_DOCKING_FOV_ANGLE)
+          {
+            PRINT("Tracker failed FOV sanity check.\n");
+            converged = false;
+            
+          }
+        }
+#else
         // Check for a super shrunk or super large template
         // (I don't think this works for planar 6dof homographies?  Try dividing by h22?)
         {
