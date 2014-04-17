@@ -92,8 +92,8 @@ u(invisible) = -1;
 v(invisible) = -1;
 
 if nargout==1
-    varargout{1} = [u v];
-elseif nargout==2
+    varargout{1} = [u v P(:,3)];
+elseif nargout>=2
     if ~isempty(origDims)
         u = reshape(u, origDims);
         v = reshape(v, origDims);
@@ -101,6 +101,13 @@ elseif nargout==2
     
     varargout{1} = u;
     varargout{2} = v;
+    if nargout == 3
+        w = P(:,3);
+        if ~isempty(origDims)
+            w = reshape(w, origDims);
+        end
+        varargout{3} = w;
+    end
 end
 
 end
