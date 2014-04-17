@@ -671,9 +671,9 @@ namespace Anki
         const s32 maxObjectHeight,
         const s32 maxObjectWidth,
         FixedLengthList<Rectangle<s32> > &objects,
-        MemoryStack scratch)
+        MemoryStack fastScratch,
+        MemoryStack slowScratch)
       {
-        //const s32 MAX_CANDIDATES = 5000;
         const f32 GROUP_EPS = 0.2f;
 
         const s32 imageHeight = image.get_size(0);
@@ -687,28 +687,10 @@ namespace Anki
 
         objects.Clear();
 
-        // TODO: do I need masks?
-
-        //if (!maskGenerator.get_size()==0) {
-        //  maskGenerator->initializeMask(image);
-        //}
-
-        //if( maxObjectSize.height == 0 || maxObjectSize.width == 0 )
-        //  maxObjectSize = image.size();
-
-        //Mat grayImage = image;
-        //if( grayImage.channels() > 1 )
-        //{
-        //  Mat temp;
-        //  cvtColor(grayImage, temp, CV_BGR2GRAY);
-        //  grayImage = temp;
-        //}
-
-        //Mat imageBuffer(image.rows + 1, image.cols + 1, CV_8U);
-        FixedLengthList<Rectangle<s32> > candidates(objects.get_maximumSize(), scratch);
+        FixedLengthList<Rectangle<s32> > candidates(objects.get_maximumSize(), slowScratch);
 
         for(f32 factor = 1; ; factor *= scaleFactor) {
-          PUSH_MEMORY_STACK(scratch);
+          PUSH_MEMORY_STACK(fastScratch);
 
           const s32 windowHeight = RoundS32(this->data.origWinHeight*factor);
           const s32 windowWidth = RoundS32(this->data.origWinWidth*factor);
@@ -728,7 +710,7 @@ namespace Anki
           if( windowWidth < minObjectWidth || windowHeight < minObjectHeight )
             continue;
 
-          Array<u8> scaledImage(scaledImageHeight, scaledImageWidth, scratch, Flags::Buffer(false, false, false));
+          Array<u8> scaledImage(scaledImageHeight, scaledImageWidth, fastScratch, Flags::Buffer(false, false, false));
 
           // OpenCV's resize grayvalues may be 1 or so different than Anki's
 #ifdef EXACTLY_MATCH_OPENCV
@@ -745,14 +727,7 @@ namespace Anki
 
           const s32 xyIncrement = factor > 2.0f ? 1 : 2;
 
-          //int stripCount, stripSize;
-
-          //const int PTS_PER_THREAD = 1000;
-          //stripCount = ((processingRectWidth/xyIncrement)*(processingRectHeight + xyIncrement-1)/xyIncrement + PTS_PER_THREAD/2)/PTS_PER_THREAD;
-          //stripCount = std::min(std::max(stripCount, 1), 100);
-          //stripSize = (((processingRectHeight + stripCount - 1)/stripCount + xyIncrement-1)/xyIncrement)*xyIncrement;
-
-          if(DetectSingleScale(scaledImage, processingRectHeight, processingRectWidth, xyIncrement, factor, candidates, scratch) != RESULT_OK) {
+          if(DetectSingleScale(scaledImage, processingRectHeight, processingRectWidth, xyIncrement, factor, candidates, fastScratch) != RESULT_OK) {
             break;
           }
         } // for(f32 factor = 1; ; factor *= scaleFactor)
@@ -760,7 +735,7 @@ namespace Anki
         objects.set_size(candidates.get_size());
         memcpy(objects.Pointer(0), candidates.Pointer(0), candidates.get_array().get_stride());
 
-        GroupRectangles( objects, minNeighbors, GROUP_EPS, scratch );
+        GroupRectangles(objects, minNeighbors, GROUP_EPS, fastScratch);
 
         return RESULT_OK;
       }
@@ -774,41 +749,36 @@ namespace Anki
         FixedLengthList<Rectangle<s32> > &candidates,
         MemoryStack scratch)
       {
-        //if( !featureEvaluator->setImage( image, data.origWinSize ) )
-        //return false;
-
-        const IntegralImage_u8_s32 integralImage(image, scratch);
-
-        const s32 nfeatures = this->features.get_size();
-
-        for(s32 fi = 0; fi < nfeatures; fi++) {
-          this->features[fi].updatePtrs(integralImage);
-        }
-
-        //this->features.Print("features");
-
-        //Matlab matlab(false);
-        //matlab.PutArray(image, "image");
-        //matlab.PutArray(integralImage, "integralImage");
-
-        //size_t fi, nfeatures = features->size();
-
-        //for( fi = 0; fi < nfeatures; fi++ )
-        //  featuresPtr[fi].updatePtrs( sum );
-
-        //Ptr<FeatureEvaluator> evaluator = classifier->featureEvaluator->clone();
-
         const s32 winHeight = RoundS32(this->data.origWinHeight * scaleFactor);
         const s32 winWidth = RoundS32(this->data.origWinWidth * scaleFactor);
 
-        for(s32 y = 0; y < processingRectHeight; y += xyIncrement ) {
-          for(s32 x = 0; x < processingRectWidth; x += xyIncrement ) {
+        const s32 nfeatures = this->features.get_size();
+
+        const s32 scrollingIntegralImage_numScrollRows = 16;
+        const s32 scrollingIntegralImage_bufferHeight = MIN(image.get_size(0)+2, winHeight + scrollingIntegralImage_numScrollRows + 2);
+
+        ScrollingIntegralImage_u8_s32 scrollingIntegralImage(scrollingIntegralImage_bufferHeight, image.get_size(1), 1, scratch);
+
+        scrollingIntegralImage.ScrollDown(image, scrollingIntegralImage_bufferHeight, scratch);
+
+        //const IntegralImage_u8_s32 integralImage(image, scratch);
+
+        for(s32 fi = 0; fi < nfeatures; fi++) {
+          this->features[fi].updatePtrs(scrollingIntegralImage);
+        }
+
+        for(s32 y = 0; y < processingRectHeight; y += xyIncrement) {
+          if(scrollingIntegralImage.get_maxRow(this->data.origWinHeight+xyIncrement) < y) {
+            const Result lastResult = scrollingIntegralImage.ScrollDown(image, scrollingIntegralImage_numScrollRows, scratch);
+
+            if(lastResult != RESULT_OK)
+              return lastResult;
+          }
+
+          for(s32 x = 0; x < processingRectWidth; x += xyIncrement) {
             f32 gypWeight;
 
-            //int result = 0;
-            //int result = classifier->runAt(evaluator, Point(x, y), gypWeight);
-
-            const int result = this->PredictCategoricalStump(integralImage, Point<s16>(x,y), gypWeight);
+            const int result = this->PredictCategoricalStump(scrollingIntegralImage, Point<s16>(x,y), gypWeight);
 
             if( result > 0 ) {
               const s32 x0 = RoundS32(x*scaleFactor);
@@ -829,21 +799,17 @@ namespace Anki
         return RESULT_OK;
       }
 
-      s32 CascadeClassifier_LBP::PredictCategoricalStump(const IntegralImage_u8_s32 &integralImage, const Point<s16> &location, f32& sum) const
-        //s32 CascadeClassifier_LBP::PredictCategoricalStump(f32& sum) const
+      s32 CascadeClassifier_LBP::PredictCategoricalStump(const ScrollingIntegralImage_u8_s32 &integralImage, const Point<s16> &location, f32& sum) const
       {
         const int nstages = (int)this->data.stages.get_size();
         int nodeOfs = 0, leafOfs = 0;
-        //FEval& featureEvaluator = (FEval&)*_featureEvaluator;
         const size_t subsetSize = (this->data.ncategories + 31)/32;
         const int* cascadeSubsets = &this->data.subsets[0];
         const f32* cascadeLeaves = &this->data.leaves[0];
         const CascadeClassifier::DTreeNode* cascadeNodes = &this->data.nodes[0];
         const CascadeClassifier::Stage* cascadeStages = &this->data.stages[0];
 
-        const s32 * restrict pIntegralImage = integralImage.Pointer(location);
-
-        const s32 offset = location.x + location.y * (integralImage.get_stride() / sizeof(s32));
+        const s32 offset = location.x + (location.y - integralImage.get_rowOffset() - 1) * (integralImage.get_stride() / sizeof(s32));
 
         for( int si = 0; si < nstages; si++ )
         {
@@ -856,10 +822,7 @@ namespace Anki
           {
             const CascadeClassifier::DTreeNode& node = cascadeNodes[nodeOfs];
 
-            //int c = featureEvaluator(node.featureIdx);
             const int c = this->features[node.featureIdx].calc(offset);
-
-            //int c = 0;
 
             const int* subset = &cascadeSubsets[nodeOfs*subsetSize];
 
@@ -876,7 +839,7 @@ namespace Anki
         return 1;
       }
 
-      void CascadeClassifier_LBP::LBPFeature::updatePtrs(const IntegralImage_u8_s32 &sum)
+      void CascadeClassifier_LBP::LBPFeature::updatePtrs(const ScrollingIntegralImage_u8_s32 &sum)
       {
         const int* ptr = sum.Pointer(0,0);
         const s32 step = sum.get_stride() / sizeof(s32);

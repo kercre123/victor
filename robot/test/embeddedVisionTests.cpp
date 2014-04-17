@@ -241,10 +241,11 @@ GTEST_TEST(CoreTech_Vision, FaceDetection)
   Array<u8> image(imageHeight, imageWidth, scratchOnchip);
   image.Set(&cozmo_date2014_04_10_time16_15_40_frame0[0], imageHeight*imageWidth);
 
-  FixedLengthList<Rectangle<s32> > detectedFaces_anki(MAX_CANDIDATES, scratchOnchip);
+  FixedLengthList<Rectangle<s32> > detectedFaces_anki(MAX_CANDIDATES, scratchOffchip);
 
-  //Classifier::CascadeClassifier_LBP cc(face_cascade_name, scratchOffchip);
-  //cc.SaveAsHeader("c:/tmp/lbpcascade_frontalface.h", "lbpcascade_frontalface");
+  // Load from the openCV XML file
+  // Classifier::CascadeClassifier_LBP cc(face_cascade_name, scratchOffchip);
+  // cc.SaveAsHeader("c:/tmp/lbpcascade_frontalface.h", "lbpcascade_frontalface");
 
   const f32 t0 = GetTime();
 
@@ -280,16 +281,17 @@ GTEST_TEST(CoreTech_Vision, FaceDetection)
     minHeight, minWidth,
     maxHeight, maxWidth,
     detectedFaces_anki,
+    scratchOnchip,
     scratchOffchip);
 
   ASSERT_TRUE(result == RESULT_OK);
 
   const f32 t2 = GetTime();
-  
+
   printf("Detection took %f seconds (setup time %f seconds)\n", t2-t1, t1-t0);
 
   ASSERT_TRUE(detectedFaces_anki.get_size() == 1);
-  ASSERT_TRUE(detectedFaces_anki[0] == Rectangle<s32>(103,218,40,155));  
+  ASSERT_TRUE(detectedFaces_anki[0] == Rectangle<s32>(103,218,40,155));
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, FaceDetection)

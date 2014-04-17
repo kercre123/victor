@@ -57,7 +57,7 @@ namespace Anki
     ScrollingIntegralImage_u8_s32::ScrollingIntegralImage_u8_s32(const s32 bufferHeight, const s32 imageWidth, const s32 numBorderPixels, MemoryStack &memory, const Flags::Buffer flags)
       : Array<s32>(bufferHeight, imageWidth+2*numBorderPixels, memory, flags), imageWidth(imageWidth), maxRow(-1), rowOffset(-numBorderPixels), numBorderPixels(numBorderPixels)
     {
-      AnkiAssert(imageWidth%ANKI_VISION_IMAGE_WIDTH_SHIFT == 0);
+      //AnkiAssert(imageWidth%ANKI_VISION_IMAGE_WIDTH_SHIFT == 0);
 
       if(numBorderPixels < 0 || numBorderPixels > bufferHeight || numBorderPixels > imageWidth) {
         AnkiError("Anki.ScrollingIntegralImage_u8_s32.ScrollingIntegralImage_u8_s32", "numBorderPixels must be greater than or equal to zero, and less than the size of this ScrollingIntegralImage.");
@@ -76,8 +76,8 @@ namespace Anki
       const s32 integralImageHeight = this->get_size(0);
       const s32 integralImageWidth = this->get_size(1);
 
-      AnkiAssert(imageWidth%ANKI_VISION_IMAGE_WIDTH_SHIFT == 0);
-      AnkiAssert(imageWidth == imageWidth);
+      //AnkiAssert(imageWidth%ANKI_VISION_IMAGE_WIDTH_SHIFT == 0);
+      AnkiAssert(this->imageWidth == imageWidth);
 
       AnkiConditionalErrorAndReturnValue(numRowsToScroll > 0 && numRowsToScroll <= integralImageHeight,
         RESULT_FAIL_INVALID_PARAMETERS, "ScrollingIntegralImage_u8_s32::ScrollDown", "numRowsToScroll is to high or low");
@@ -249,8 +249,6 @@ namespace Anki
       if(bottomOffset < (this->size[0]-1)) {
         shiftedMaxRow += (this->size[0]-1) - bottomOffset;
       }
-
-      //return maxRow - filterHalfHeight;
 
       return shiftedMaxRow;
     }
