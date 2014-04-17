@@ -39,7 +39,7 @@ namespace Anki {
       // Set the docker here:
 #define DOCKING_ALGORITHM DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
       
-#define USE_HEADER_TEMPLATE //< Currently only supported for binary tracker and battery marker
+//#define USE_HEADER_TEMPLATE //< Currently only supported for binary tracker and battery marker
       
       // Set to 1 to use the top (or bottom) bar of the tracked marker to approximate
       // the pose of the block relative to the camera for docking.

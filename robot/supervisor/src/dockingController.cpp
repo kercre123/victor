@@ -40,11 +40,11 @@ namespace Anki {
 
         // Turning radius of docking path
         const f32 DOCK_PATH_START_RADIUS_MM = 50;
-        const f32 DOCK_PATH_END_RADIUS_MM = 120;
+        const f32 DOCK_PATH_END_RADIUS_MM = 100;
         
         // The length of the straight tail end of the dock path.
         // Should be roughly the length of the forks on the lift.
-        const f32 FINAL_APPROACH_STRAIGHT_SEGMENT_LENGTH_MM = 60;
+        const f32 FINAL_APPROACH_STRAIGHT_SEGMENT_LENGTH_MM = 30;
 
         const f32 FAR_DIST_TO_BLOCK_THRESH_MM = 100;
         
