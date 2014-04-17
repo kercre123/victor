@@ -56,9 +56,6 @@ void TimerInit()
   // resolution. This should still provide enough for this chip/board.  
   NRF_RTC1->PRESCALER = 0;
   
-  // Enable interrupts on RTC1 overflow
-  //NRF_RTC1->INTENSET = RTC_INTENSET_OVRFLW_Msk;
-  
   // Start the RTC
   NRF_RTC1->TASKS_START = 1;
 }
@@ -83,27 +80,10 @@ loop
     BX lr
 }
 
+// XXX: We observed the counter jumping back, sometimes.
 u32 GetCounter()
 {
   // Each tick is 120 ns. However, we can't get that resolution with the RTC.
   // This value only gets 120*256 ns of resolution: the bottom 8-bits are 0.
   return NRF_RTC1->COUNTER << 8;
 }
-
-// XXX:
-// Need to verify a better way of incrementing the high part of the counter.
-// The counter will be sensitive to wrapping when inside of an interrupt,
-// i.e. encoders. It was not enough to check:
-// if (NRF_RTC1->COUNTER < m_low)
-// because the value returned by COUNTER was occasionally less than m_low
-// when inside of MicroWait(). This means we read incorrect clock ticks with
-// that method.
-/*extern "C"
-void RTC1_IRQHandler()
-{
-  // Increment the high part of the timer
-  m_high++;
-  
-  // Clear the event/interrupt
-  NRF_RTC1->EVENTS_OVRFLW = 0;
-}*/
