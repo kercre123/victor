@@ -137,11 +137,11 @@ namespace Anki {
     void Robot::set_headAngle(const Radians& angle)
     {
       if(angle < MIN_HEAD_ANGLE) {
-        fprintf(stdout, "Requested head angle too small. Clipping.\n");
+        fprintf(stdout, "Requested head angle (%f rad) too small. Clipping.\n", angle.ToFloat());
         currentHeadAngle = MIN_HEAD_ANGLE;
       }
       else if(angle > MAX_HEAD_ANGLE) {
-        fprintf(stdout, "Requested head angle too large. Clipping.\n");
+        fprintf(stdout, "Requested head angle (%f rad) too large. Clipping.\n", angle.ToFloat());
         currentHeadAngle = MAX_HEAD_ANGLE;
       }
       else {

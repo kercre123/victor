@@ -121,6 +121,7 @@ namespace Anki {
         eventDeactivationCallbacks[RIGHTSIDE_DOWN] = StartPickAndPlaceTest;
         eventActivationCallbacks[LEFTSIDE_DOWN] = TurnOnIndicatorLight;
         eventDeactivationCallbacks[LEFTSIDE_DOWN] = StartPathFollowTest;
+        eventActivationCallbacks[BACKSIDE_DOWN] = TurnOnIndicatorLight;
       }
       
       
