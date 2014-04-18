@@ -392,7 +392,11 @@ namespace Anki {
         MemoryStack scratch)
       {
         // Output rotation should already be allocated
-        AnkiAssert(R.get_size(0) == 3 && R.get_size(1) == 3);
+        AnkiConditionalErrorAndReturnValue(R.get_size(0)==3 && R.get_size(1)==3,
+                                           RESULT_FAIL_INVALID_SIZE,
+                                           "P3P::computePose()",
+                                           "Rotation matrix should be 3x3.");
+        
 
         BeginBenchmark("computePose_init");
 
