@@ -202,7 +202,7 @@ namespace Anki
       Type *data = static_cast<Type*>(mxGetData(mxMatrix));
 
       for(mwSize y=0; y<matrixHeight; y++) {
-        memcpy(data, matrix.ptr<u8>(y,0), matrixWidth*sizeof(Type));
+        memcpy(data, matrix.template ptr<u8>(y,0), matrixWidth*sizeof(Type));
         data += matrixWidth;
       }
 
