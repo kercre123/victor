@@ -381,8 +381,6 @@ DEF AngryFaceBlock Block1x1 {
 
 DEF Cozmo_1 CozmoBot {
   name "CozmoBot_1"
-  headAngle -0.2
-  #liftAngle  0
   usbChannel 10
 }
 
