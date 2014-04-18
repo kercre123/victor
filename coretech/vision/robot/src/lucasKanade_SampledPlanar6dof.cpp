@@ -37,6 +37,10 @@ namespace Anki
   {
     namespace TemplateTracker
     {
+      
+      const f32 TRANSLATION_TOLERANCE = 0.5f;
+      const f32 ANGLE_TOLERANCE = DEG_TO_RAD(0.5f);
+      
       LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof()
         : LucasKanadeTracker_Generic(maxSupportedTransformType)
       {
@@ -754,6 +758,7 @@ namespace Anki
           AnkiAssert(Kp >= this->Kp_min && Kp <= this->Kp_max);
           return Kp;
         } else {
+          // TODO: make this a parameter
           return 0.25f;
         }
       }
@@ -948,11 +953,10 @@ namespace Anki
           //if(minChange < convergenceTolerance * scale)
           // TODO: make these parameters
           //const f32 angleConvergenceTolerance = scale*DEG_TO_RAD(0.1f);
-          const f32 transConvergenceTolerance = scale*0.25f;
-
+          const f32 transConvergenceTolerance = scale*TRANSLATION_TOLERANCE;
           if(fabs(b[0][0]) < transConvergenceTolerance &&
-            fabs(b[0][1]) < transConvergenceTolerance &&
-            fabs(b[0][2]) < transConvergenceTolerance)
+             fabs(b[0][1]) < transConvergenceTolerance &&
+             fabs(b[0][2]) < transConvergenceTolerance)
           {
             verify_converged = true;
             return RESULT_OK;
@@ -1425,15 +1429,15 @@ namespace Anki
 
           //if(minChange < convergenceTolerance * scale)
           // TODO: make these parameters
-          const f32 angleConvergenceTolerance = scale*static_cast<f32>(DEG_TO_RAD(0.25f));
-          const f32 transConvergenceTolerance = scale*0.25f;
+          const f32 angleConvergenceTolerance = scale*ANGLE_TOLERANCE;
+          const f32 transConvergenceTolerance = scale*TRANSLATION_TOLERANCE;
 
           if(fabs(b[0][0]) < angleConvergenceTolerance &&
-            fabs(b[0][1]) < angleConvergenceTolerance &&
-            fabs(b[0][2]) < angleConvergenceTolerance &&
-            fabs(b[0][3]) < transConvergenceTolerance &&
-            fabs(b[0][4]) < transConvergenceTolerance &&
-            fabs(b[0][5]) < transConvergenceTolerance)
+             fabs(b[0][1]) < angleConvergenceTolerance &&
+             fabs(b[0][2]) < angleConvergenceTolerance &&
+             fabs(b[0][3]) < transConvergenceTolerance &&
+             fabs(b[0][4]) < transConvergenceTolerance &&
+             fabs(b[0][5]) < transConvergenceTolerance)
           {
             /*
             printf("Final params converged at scale %d: angles = (%f,%f,%f) "
