@@ -453,6 +453,11 @@
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\lights.cpp</FilePath>
             </File>
+            <File>
+              <FileName>wifi.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\wifi.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1696,6 +1701,11 @@
               <FileName>lights.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\lights.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>wifi.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\wifi.cpp</FilePath>
             </File>
           </Files>
         </Group>
