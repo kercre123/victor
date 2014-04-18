@@ -3,6 +3,12 @@
 #include "headController.h"
 #include "anki/cozmo/robot/hal.h"
 
+// For event callbacks
+#include "testModeController.h"
+#include "anki/cozmo/robot/cozmoBot.h"
+
+#define DEBUG_IMU_FILTER 0
+
 
 namespace Anki {
   namespace Cozmo {
@@ -25,13 +31,178 @@ namespace Anki {
         f32 accel_robot_frame_filt[3];
         const f32 ACCEL_FILT_COEFF = 0.4f;
         
+        
+        // ====== Event detection vars ======
+        enum IMUEvent {
+          FALLING = 0,
+          UPSIDE_DOWN,
+          LEFTSIDE_DOWN,
+          RIGHTSIDE_DOWN,
+          BACKSIDE_DOWN,
+          NUM_IMU_EVENTS
+        };
+        
+        // Stores whether or not IMU conditions for an event are met this cycle
+        bool eventStateRaw_[NUM_IMU_EVENTS];
+        
+        // Stores whether or not IMU and timing conditions for an event are met.
+        // This is the true indicator of whether or not an event has occured.
+        bool eventState_[NUM_IMU_EVENTS];
+        
+        // Used to store time that event was first activated or deactivated
+        u32 eventTime_[NUM_IMU_EVENTS] = {0};
+        
+        // The amount of time required for eventStateRaw to be true for eventState to be true
+        const u32 eventActivationTime_us_[NUM_IMU_EVENTS] = {500000, 500000, 500000, 500000, 500000};
+        
+        // The amount of time required for eventStateRaw to be false for eventState to be false
+        const u32 eventDeactivationTime_us_[NUM_IMU_EVENTS] = {500000, 500000, 500000, 500000, 500000};
+        
+        // Callback functions associated with event activation and deactivation
+        typedef void (*eventCallbackFn)(void);
+        eventCallbackFn eventActivationCallbacks[NUM_IMU_EVENTS] = {0};
+        eventCallbackFn eventDeactivationCallbacks[NUM_IMU_EVENTS] = {0};
+        
+        // Falling
+        const f32 FALLING_THRESH_MMPS2_SQRD = 4000000;
+        
+        // N-side down
+        const f32 NSIDE_DOWN_THRESH_MMPS2 = 8000;
+
+        // LED assignments
+        const u8 INDICATOR_LED_ID = 0;
+        const u8 HEADLIGHT_LED_ID = 3;
+        
       } // "private" namespace
+      
+      
+      // ==== Event callback functions ===
+      void ToggleHeadLights() {
+        static bool lightsOn = false;
+        if (lightsOn) {
+          HAL::SetLED(HEADLIGHT_LED_ID, HAL::LED_OFF);
+          lightsOn = false;
+        } else {
+          HAL::SetLED(HEADLIGHT_LED_ID, HAL::LED_ORANGE);
+          lightsOn = true;
+        }
+      }
+      
+      void TurnOnIndicatorLight()
+      {
+        TestModeController::Init(TestModeController::TM_NONE);
+        HAL::SetLED(INDICATOR_LED_ID, HAL::LED_ORANGE);
+        Robot::StopRobot();
+      }
+      
+      void StartPickAndPlaceTest()
+      {
+        TestModeController::Init(TestModeController::TM_PICK_AND_PLACE);
+        HAL::SetLED(INDICATOR_LED_ID, HAL::LED_OFF);
+      }
+      
+      void StartPathFollowTest()
+      {
+        TestModeController::Init(TestModeController::TM_PATH_FOLLOW);
+        HAL::SetLED(INDICATOR_LED_ID, HAL::LED_OFF);
+      }
+      
+      //===== End of event callbacks ====
       
       
       void Reset()
       {
         rot_ = 0;
         rotSpeed_ = 0;
+        // Event callback functions
+        // TODO: This should probably go somewhere else
+        eventActivationCallbacks[UPSIDE_DOWN] = ToggleHeadLights;
+        eventActivationCallbacks[RIGHTSIDE_DOWN] = TurnOnIndicatorLight;
+        eventDeactivationCallbacks[RIGHTSIDE_DOWN] = StartPickAndPlaceTest;
+        eventActivationCallbacks[LEFTSIDE_DOWN] = TurnOnIndicatorLight;
+        eventDeactivationCallbacks[LEFTSIDE_DOWN] = StartPathFollowTest;
+      }
+      
+      
+      void DetectFalling()
+      {
+        const f32 accelMagnitudeSqrd = accel_filt[0]*accel_filt[0] +
+                                       accel_filt[1]*accel_filt[1] +
+                                       accel_filt[2]*accel_filt[2];
+        
+        eventStateRaw_[FALLING] = accelMagnitudeSqrd < FALLING_THRESH_MMPS2_SQRD;
+      }
+      
+      void DetectNsideDown()
+      {
+        eventStateRaw_[UPSIDE_DOWN] = accel_robot_frame_filt[2] < -NSIDE_DOWN_THRESH_MMPS2;
+        eventStateRaw_[RIGHTSIDE_DOWN] = accel_robot_frame_filt[1] < -NSIDE_DOWN_THRESH_MMPS2;
+        eventStateRaw_[LEFTSIDE_DOWN] = accel_robot_frame_filt[1] > NSIDE_DOWN_THRESH_MMPS2;
+        eventStateRaw_[BACKSIDE_DOWN] = accel_robot_frame_filt[0] > NSIDE_DOWN_THRESH_MMPS2;
+      }
+      
+      
+      
+      void UpdateEventDetection()
+      {
+        // Call detect functions and update raw event state
+        DetectFalling();
+        DetectNsideDown();
+      
+        
+        // Now update event state according to (de)activation time
+        u32 currTime = HAL::GetMicroCounter();
+        for (int e = FALLING; e < NUM_IMU_EVENTS; ++e) {
+         
+#if(DEBUG_IMU_FILTER)
+          //PERIODIC_PRINT(40,"IMUFilter event %d: state %d, rawState %d, eventTime %d, currTime %d\n",
+          //               e, eventState_[e], eventStateRaw_[e], eventTime_[e], currTime);
+#endif
+          
+          if (!eventState_[e]) {
+            if (eventStateRaw_[e]) {
+              if (eventTime_[e] == 0) {
+                // Raw event state conditions met for the first time
+                eventTime_[e] = currTime;
+              } else if (currTime - eventTime_[e] > eventActivationTime_us_[e]) {
+                // Event activated
+                eventState_[e] = true;
+                
+                // Call activation function
+                if (eventActivationCallbacks[e]) {
+#if(DEBUG_IMU_FILTER)
+                  PRINT("IMUFilter: Activation callback %d\n", e);
+#endif
+                  eventActivationCallbacks[e]();
+                }
+              }
+            } else {
+              eventTime_[e] = 0;
+            }
+            
+          } else {
+            
+            if (!eventStateRaw_[e]){
+              if (eventTime_[e] == 0) {
+                eventTime_[e] = currTime;
+              } else if (currTime - eventTime_[e] > eventDeactivationTime_us_[e]) {
+                // Event deactivated
+                eventState_[e] = false;
+                
+                // Call deactivation function
+                if (eventDeactivationCallbacks[e]) {
+#if(DEBUG_IMU_FILTER)
+                  PRINT("IMUFilter: Deactivation callback %d\n", e);
+#endif
+                  eventDeactivationCallbacks[e]();
+                }
+              }
+            } else {
+              eventTime_[e] = 0;
+            }
+          }
+        }
+        
       }
       
       ReturnCode Update()
@@ -53,9 +224,8 @@ namespace Anki {
       
         
         // Compute head angle wrt to world horizontal plane
-        f32 headAngle = HeadController::GetAngleRad();  // TODO: Use encoders or accelerometer data? If encoders,
+        const f32 headAngle = HeadController::GetAngleRad();  // TODO: Use encoders or accelerometer data? If encoders,
                                                         // may need to use accelerometer data anyway for when it's on ramps.
-
         
 
         // Compute rotation speeds in robot XY-plane.
@@ -96,6 +266,27 @@ namespace Anki {
         pitch_ = atan2(accel_filt[0], accel_filt[2]);
         
         //PERIODIC_PRINT(50, "Pitch %f\n", RAD_TO_DEG_F32(pitch_));
+
+        // Compute accelerations in robot frame
+        const f32 xzAccelMagnitude = sqrtf(accel_filt[0]*accel_filt[0] + accel_filt[2]*accel_filt[2]);
+        const f32 accel_angle_imu_frame = atan2_fast(accel_filt[2], accel_filt[0]);
+        const f32 accel_angle_robot_frame = accel_angle_imu_frame + headAngle;
+        
+        
+        accel_robot_frame_filt[0] = xzAccelMagnitude * cosf(accel_angle_robot_frame);
+        accel_robot_frame_filt[1] = accel_filt[1];
+        accel_robot_frame_filt[2] = xzAccelMagnitude * sinf(accel_angle_robot_frame);
+        
+#if(DEBUG_IMU_FILTER)
+        PERIODIC_PRINT(200, "Accel angle %f %f\n", accel_angle_imu_frame, accel_angle_robot_frame);
+        PERIODIC_PRINT(200, "Accel (robot frame): %f %f %f\n",
+                       accel_robot_frame_filt[0],
+                       accel_robot_frame_filt[1],
+                       accel_robot_frame_filt[2]);
+#endif
+        
+        
+        UpdateEventDetection();
         
         return retVal;
         

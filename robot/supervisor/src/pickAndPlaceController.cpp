@@ -57,6 +57,12 @@ namespace Anki {
         return mode_;
       }
       
+      void Reset()
+      {
+        mode_ = IDLE;
+        DockingController::ResetDocker();
+      }
+      
       
       ReturnCode Update()
       {

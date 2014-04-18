@@ -424,6 +424,7 @@ namespace Anki
 
       
       enum LEDColor {
+        LED_OFF = 0,
         LED_ORANGE = 1,
         LED_GREEN = 2,
         LED_BLUE = 4

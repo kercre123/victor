@@ -63,6 +63,9 @@ namespace Anki {
       void PlaceOnBlock(const Vision::MarkerType blockID,
                         const f32 horizontal_offset, const f32 angular_offset);
       
+      // Abort whatever pick or place action we're currently doing
+      void Reset();
+      
     } // namespace PickAndPlaceController
   } // namespace Cozmo
 } // namespace Anki

@@ -319,6 +319,17 @@ namespace Anki {
         
       } // Robot::step_longExecution()
       
+      
+      void StopRobot()
+      {
+        // Stop wheels and vision system
+        PickAndPlaceController::Reset();
+        
+        // Stop lift and head
+        LiftController::SetAngularVelocity(0);
+        HeadController::SetAngularVelocity(0);
+      }
+      
     } // namespace Robot
   } // namespace Cozmo
 } // namespace Anki
