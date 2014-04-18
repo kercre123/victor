@@ -9,7 +9,7 @@ namespace Anki {
     
     namespace Robot {
       
-      ReturnCode Init();
+      Result Init();
       void Destroy();
       
       //
@@ -23,8 +23,8 @@ namespace Anki {
       // 2. The slower functions which take longer and will be run "as quickly
       //    as possible" (like the vision system for finding block markers)
       //
-      ReturnCode step_MainExecution();
-      ReturnCode step_LongExecution();
+      Result step_MainExecution();
+      Result step_LongExecution();
       
       //
       // State Machine Operation Modes

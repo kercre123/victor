@@ -52,7 +52,7 @@ namespace Anki {
         f32 gyroRotOffset_ = 0;
       }
 
-      ReturnCode Init() {
+      Result Init() {
         SetCurrentMatPose(0,0,0);
         
         prevLeftWheelPos_ = HAL::MotorGetPosition(HAL::MOTOR_LEFT_WHEEL);
@@ -60,7 +60,7 @@ namespace Anki {
 
         gyroRotOffset_ =  -IMUFilter::GetRotation();
         
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       }
 /*
       Anki::Embedded::Pose2d GetCurrMatPose()

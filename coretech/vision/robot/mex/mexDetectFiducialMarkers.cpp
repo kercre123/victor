@@ -97,7 +97,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   }
 
   {
-    const Result result = DetectFiducialMarkers(
+    const Anki::Result result = DetectFiducialMarkers(
       image,
       markers,
       homographies,
@@ -115,7 +115,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       scratch2,
       scratch3);
 
-    AnkiConditionalErrorAndReturn(result == RESULT_OK, "mexDetectFiducialMarkers", "mexDetectFiducialMarkers Failed");
+    AnkiConditionalErrorAndReturn(result == Anki::RESULT_OK, "mexDetectFiducialMarkers", "mexDetectFiducialMarkers Failed");
   }
 
   const s32 numMarkers = markers.get_size();

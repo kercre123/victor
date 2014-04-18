@@ -10,9 +10,9 @@ namespace Anki
     namespace PathFollower
     {
       
-      ReturnCode Init(void);
+      Result Init(void);
       
-      ReturnCode Update();
+      Result Update();
       
       // Deletes current path
       void ClearPath(void);

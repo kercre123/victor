@@ -48,7 +48,7 @@ namespace Anki {
       // TODO: Add if/when needed?
       // ReturnCode Init();
 
-      ReturnCode Update();
+      Result Update();
       
       Mode GetMode();
       

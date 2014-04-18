@@ -45,7 +45,7 @@ namespace Anki {
     {
     public:
       
-      ReturnCode Init();
+      Result Init();
       
       // Get a pointer to the singleton instance
       inline static VizManager* getInstance();

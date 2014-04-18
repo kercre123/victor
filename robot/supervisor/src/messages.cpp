@@ -373,7 +373,7 @@ namespace Anki {
 // ----------- Send messages -----------------
       
       
-      ReturnCode SendRobotStateMsg()
+      Result SendRobotStateMsg()
       {
         robotState_.timestamp = HAL::GetTimeStamp();
         
@@ -392,9 +392,9 @@ namespace Anki {
         robotState_.isCarryingBlock = PickAndPlaceController::IsCarryingBlock() ? 1 : 0;
         
         if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RobotState), &robotState_) == true) {
-          return EXIT_SUCCESS;
+          return RESULT_OK;
         } else {
-          return EXIT_FAILURE;
+          return RESULT_FAIL;
         }
       }
       

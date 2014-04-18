@@ -226,7 +226,7 @@ namespace Anki
     //    [R2 T2] = [Rdiff Tdiff] * [R1 T1]
     // I.e., the diff pose is the one that takes pose 1 to pose 2.
     template<typename Type>
-    ReturnCode ComputePoseDiff(const Array<Type>& R1, const Point3<Type>& T1,
+    Result ComputePoseDiff(const Array<Type>& R1, const Point3<Type>& T1,
       const Array<Type>& R2, const Point3<Type>& T2,
       Array<Type>& Rdiff, Point3<Type>& Tdiff,
       MemoryStack scratch);

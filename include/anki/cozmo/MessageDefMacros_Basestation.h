@@ -284,9 +284,9 @@ buffer += __LENGTH__*sizeof(__TYPE__);
 //
 //  Creates both of these for each message type:
 //
-//   ReturnCode ProcessMessage(Robot* robot, const MessageFooBar& msg);
+//   Result ProcessMessage(Robot* robot, const MessageFooBar& msg);
 //
-//   inline ReturnCode MessageHandler::ProcessBufferAs_MessageFooBar(Robot* robot,
+//   inline Result MessageHandler::ProcessBufferAs_MessageFooBar(Robot* robot,
 //                                                                   const u8* buffer)
 //   {
 //      const MessageFooBar msg(buffer);
@@ -296,8 +296,8 @@ buffer += __LENGTH__*sizeof(__TYPE__);
 #elif MESSAGE_DEFINITION_MODE == MESSAGE_PROCESS_METHODS_MODE
 
 #define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
-ReturnCode ProcessMessage(Robot* robot, const GET_MESSAGE_CLASSNAME(__MSG_TYPE__)& msg); \
-inline ReturnCode GET_DISPATCH_FCN_NAME(__MSG_TYPE__)(Robot* robot, const u8* buffer) \
+Result ProcessMessage(Robot* robot, const GET_MESSAGE_CLASSNAME(__MSG_TYPE__)& msg); \
+inline Result GET_DISPATCH_FCN_NAME(__MSG_TYPE__)(Robot* robot, const u8* buffer) \
 { \
   const GET_MESSAGE_CLASSNAME(__MSG_TYPE__) msg(buffer); \
   return ProcessMessage(robot, msg); \
@@ -357,20 +357,20 @@ return root; \
 // {
 //    if(not root.isMember("Name") || root["Name"].asString() != "FooBar") {
 //      fprintf(stderr, "No 'Name' member matching 'FooBar' found!\n");
-//      return EXIT_FAILURE;
+//      return RESULT_FAIL;
 //    }
 //    if(not root.isMember("foo")) {
 //      fprintf(stderr, "No 'foo' member found!\n");
-//      return EXIT_FAILURE;
+//      return RESULT_FAIL;
 //    }
 //    this->foo = root["foo"];
 //    if(not root.isMember("bar")) {
 //      fprintf(stderr, "No 'bar' member found!\n");
-//      return EXIT_FAILURE;
+//      return RESULT_FAIL;
 //    }
 //    this->bar = root["bar"];
 //
-//    return EXIT_SUCCESS;
+//    return RESULT_OK;
 // }
 //
 #elif MESSAGE_DEFINITION_MODE == MESSAGE_CLASS_JSON_CONSTRUCTOR_MODE

@@ -190,8 +190,10 @@ END_MESSAGE_DEFINITION(MatMarkerObserved)
 START_TIMESTAMPED_MESSAGE_DEFINITION(DockingErrorSignal, 1)
 ADD_MESSAGE_MEMBER(f32, x_distErr)
 ADD_MESSAGE_MEMBER(f32, y_horErr)
+ADD_MESSAGE_MEMBER(f32, z_height)
 ADD_MESSAGE_MEMBER(f32, angleErr) // in radians
 ADD_MESSAGE_MEMBER(u8,  didTrackingSucceed)
+ADD_MESSAGE_MEMBER(u8,  isApproximate)
 END_MESSAGE_DEFINITION(DockingErrorSignal)
 
 // AbsLocalizationUpdate

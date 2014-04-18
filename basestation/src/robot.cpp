@@ -33,13 +33,13 @@ namespace Anki {
       
     }
     
-    ReturnCode RobotManager::Init(MessageHandler* msgHandler, BlockWorld* blockWorld, PathPlanner* pathPlanner)
+    Result RobotManager::Init(MessageHandler* msgHandler, BlockWorld* blockWorld, PathPlanner* pathPlanner)
     {
       msgHandler_ = msgHandler;
       blockWorld_ = blockWorld;
       pathPlanner_ = pathPlanner;
       
-      return EXIT_SUCCESS;
+      return RESULT_OK;
     }
     
     void RobotManager::AddRobot(const RobotID_t withID)
@@ -311,7 +311,7 @@ namespace Anki {
     } // dockWithBlock()
 
     
-    ReturnCode Robot::GetPathToPose(const Pose3d& targetPose, Planning::Path& path)
+    Result Robot::GetPathToPose(const Pose3d& targetPose, Planning::Path& path)
     {
       
       return pathPlanner_->GetPlan(path, get_pose(), targetPose);
@@ -319,14 +319,14 @@ namespace Anki {
       
     }
     
-    ReturnCode Robot::ExecutePathToPose(const Pose3d& pose)
+    Result Robot::ExecutePathToPose(const Pose3d& pose)
     {
       Planning::Path p;
-      if (GetPathToPose(pose, p) == EXIT_SUCCESS) {
+      if (GetPathToPose(pose, p) == RESULT_OK) {
         return SendExecutePath(p);
       }
         
-      return EXIT_FAILURE;
+      return RESULT_FAIL;
       
     }
     
@@ -334,14 +334,14 @@ namespace Anki {
     
     // ============ Messaging ================
     
-    ReturnCode Robot::SendRequestCamCalib() const
+    Result Robot::SendRequestCamCalib() const
     {
       MessageRequestCamCalib m;
       return msgHandler_->SendMessage(ID_, m);
     }
     
     // Clears the path that the robot is executing which also stops the robot
-    ReturnCode Robot::SendClearPath() const
+    Result Robot::SendClearPath() const
     {
       MessageClearPath m;
       m.pathID = 0;
@@ -350,11 +350,11 @@ namespace Anki {
     }
     
     // Sends a path to the robot to be immediately executed
-    ReturnCode Robot::SendExecutePath(const Planning::Path& path) const
+    Result Robot::SendExecutePath(const Planning::Path& path) const
     {
       // TODO: Clear currently executing path or write to buffered path?
-      if (SendClearPath() == EXIT_FAILURE)
-        return EXIT_FAILURE;
+      if (SendClearPath() == RESULT_FAIL)
+        return RESULT_FAIL;
 
       
       // Send path segments
@@ -377,8 +377,8 @@ namespace Anki {
             m.accel = path[i].GetAccel();
             m.decel = path[i].GetDecel();
             
-            if (msgHandler_->SendMessage(ID_, m) == EXIT_FAILURE)
-              return EXIT_FAILURE;
+            if (msgHandler_->SendMessage(ID_, m) == RESULT_FAIL)
+              return RESULT_FAIL;
             break;
           }
           case Planning::PST_ARC:
@@ -397,16 +397,16 @@ namespace Anki {
             m.accel = path[i].GetAccel();
             m.decel = path[i].GetDecel();
             
-            if (msgHandler_->SendMessage(ID_, m) == EXIT_FAILURE)
-              return EXIT_FAILURE;
+            if (msgHandler_->SendMessage(ID_, m) == RESULT_FAIL)
+              return RESULT_FAIL;
             break;
           }
           case Planning::PST_POINT_TURN:
             PRINT_NAMED_ERROR("PointTurnNotImplemented", "Point turns not working yet");
-            return EXIT_FAILURE;
+            return RESULT_FAIL;
           default:
             PRINT_NAMED_ERROR("Invalid path segment", "Can't send path segment of unknown type");
-            return EXIT_FAILURE;
+            return RESULT_FAIL;
             
         }
         
@@ -421,7 +421,7 @@ namespace Anki {
     }
     
     
-    ReturnCode Robot::SendDockWithBlock(const u8 markerType, const f32 markerWidth_mm, const DockAction_t dockAction) const
+    Result Robot::SendDockWithBlock(const u8 markerType, const f32 markerWidth_mm, const DockAction_t dockAction) const
     {
       MessageDockWithBlock m;
       m.markerWidth_mm = markerWidth_mm;
@@ -429,7 +429,7 @@ namespace Anki {
       return msgHandler_->SendMessage(ID_, m);
     }
     
-    ReturnCode Robot::SendMoveLift(const f32 height_mm,
+    Result Robot::SendMoveLift(const f32 height_mm,
                                    const f32 max_speed_rad_per_sec,
                                    const f32 accel_rad_per_sec2) const
     {
@@ -441,7 +441,7 @@ namespace Anki {
       return msgHandler_->SendMessage(ID_,m);
     }
     
-    ReturnCode Robot::SendMoveHead(const f32 angle_rad,
+    Result Robot::SendMoveHead(const f32 angle_rad,
                                    const f32 max_speed_rad_per_sec,
                                    const f32 accel_rad_per_sec2) const
     {
@@ -453,7 +453,7 @@ namespace Anki {
       return msgHandler_->SendMessage(ID_,m);
     }
     
-    ReturnCode Robot::SendDriveWheels(const f32 lwheel_speed_mmps, const f32 rwheel_speed_mmps) const
+    Result Robot::SendDriveWheels(const f32 lwheel_speed_mmps, const f32 rwheel_speed_mmps) const
     {
       MessageDriveWheels m;
       m.lwheel_speed_mmps = lwheel_speed_mmps;
@@ -462,13 +462,13 @@ namespace Anki {
       return msgHandler_->SendMessage(ID_,m);
     }
     
-    ReturnCode Robot::SendStopAllMotors() const
+    Result Robot::SendStopAllMotors() const
     {
       MessageStopAllMotors m;
       return msgHandler_->SendMessage(ID_,m);
     }
     
-    ReturnCode Robot::SendAbsLocalizationUpdate() const
+    Result Robot::SendAbsLocalizationUpdate() const
     {
       // TODO: Add z?
       MessageAbsLocalizationUpdate m;

@@ -27,32 +27,32 @@ namespace Anki {
     
     namespace MatlabVisualization {
       
-      ReturnCode Initialize();
-      ReturnCode ResetFiducialDetection(const Array<u8>& image);
-      ReturnCode SendFiducialDetection(const Quadrilateral<s16> &corners,
+      Result Initialize();
+      Result ResetFiducialDetection(const Array<u8>& image);
+      Result SendFiducialDetection(const Quadrilateral<s16> &corners,
                                        const Vision::MarkerType &markerCode );
-      ReturnCode SendDrawNow();
+      Result SendDrawNow();
       
-      ReturnCode SendTrackInit(const Array<u8> &image,
+      Result SendTrackInit(const Array<u8> &image,
                                const Quadrilateral<f32>& quad);
       
-      ReturnCode SendTrackInit(const Array<u8> &image,
+      Result SendTrackInit(const Array<u8> &image,
                                const VisionSystem::Tracker& tracker,
                                MemoryStack scratch);
       
-      ReturnCode SendTrack(const Array<u8>& image,
+      Result SendTrack(const Array<u8>& image,
                            const Quadrilateral<f32>& quad,
                            const bool converged);
       
-      ReturnCode SendTrack(const Array<u8>& image,
+      Result SendTrack(const Array<u8>& image,
                            const VisionSystem::Tracker& tracker,
                            const bool converged,
                            MemoryStack scratch);
       
-      ReturnCode SendTrackerPrediction_Before(const Array<u8>& image,
+      Result SendTrackerPrediction_Before(const Array<u8>& image,
                                               const Quadrilateral<f32>& quad);
       
-      ReturnCode SendTrackerPrediction_After(const Quadrilateral<f32>& quad);
+      Result SendTrackerPrediction_After(const Quadrilateral<f32>& quad);
       
     } // namespace MatlabVisualization
   } // namespace Cozmo

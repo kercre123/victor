@@ -58,11 +58,11 @@ namespace Anki
       } // Private Members
       
       
-      ReturnCode Init(void)
+      Result Init(void)
       {
         ClearPath();
         
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       }
       
       
@@ -327,7 +327,7 @@ namespace Anki
       
       
       
-      ReturnCode Update()
+      Result Update()
       {
         
 #if(FREE_DRIVE_DUBINS_TEST)
@@ -373,7 +373,7 @@ namespace Anki
         
         if (currPathSegment_ < 0) {
           SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
-          return EXIT_FAILURE;
+          return RESULT_FAIL;
         }
         
         Planning::SegmentRangeStatus segRes = Planning::OOR_NEAR_END;
@@ -399,7 +399,7 @@ namespace Anki
           if (++currPathSegment_ >= path_.GetNumSegments()) {
             // Path is complete
             PathComplete();
-            return EXIT_SUCCESS;
+            return RESULT_OK;
           }
           
           // Command new speed for segment
@@ -426,11 +426,11 @@ namespace Anki
 #if(DEBUG_PATH_FOLLOWER)
             PRINT("PATH STARTING ERROR TOO LARGE (%f mm)\n", distToPath_mm_);
 #endif
-            return EXIT_FAILURE;
+            return RESULT_FAIL;
           }
         }
         
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       }
       
       

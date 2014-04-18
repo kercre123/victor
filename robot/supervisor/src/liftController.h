@@ -20,7 +20,7 @@ namespace Anki {
   namespace Cozmo {
     namespace LiftController {
       
-      ReturnCode Init();
+      Result Init();
 
       // Enable/Disable commands to the motor via HAL functions
       // Mostly for debug.
@@ -66,7 +66,7 @@ namespace Anki {
       // Get current angle of the lift
       f32 GetAngleRad();
       
-      ReturnCode Update();
+      Result Update();
       
     } // namespace LiftController
   } // namespcae Cozmo

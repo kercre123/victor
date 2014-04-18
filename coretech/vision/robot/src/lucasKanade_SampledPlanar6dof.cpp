@@ -227,18 +227,24 @@ namespace Anki
         this->templateSamplePyramid = FixedLengthList<FixedLengthList<TemplateSample> >(numPyramidLevels, onchipScratch);
         this->jacobianSamplePyramid = FixedLengthList<FixedLengthList<JacobianSample> >(numPyramidLevels, onchipScratch);
 
-        for(s32 iScale=0; iScale<numPyramidLevels; iScale++) {
+        //
+        // Compute the samples (and their Jacobians) at each scale
+        //
+        for(s32 iScale=0; iScale<numPyramidLevels; iScale++)
+        {
           const f32 scale = static_cast<f32>(1 << iScale);
 
-          // Coordinates for this tracker are 3D plane coordinates
+          // Note that template coordinates for this tracker are actually
+          // coordinates on the 3d template, which get mapped into the image
+          // by the homography
           const f32 halfWidth = scaleTemplateRegionPercent*templateHalfWidth;
-          Meshgrid<f32> curTemplateCoordinates = Meshgrid<f32>(Linspace(-halfWidth, halfWidth,
+          Meshgrid<f32> templateCoordinates = Meshgrid<f32>(Linspace(-halfWidth, halfWidth,
             static_cast<s32>(FLT_FLOOR(this->templateRegionWidth/scale))),
             Linspace(-halfWidth, halfWidth,
             static_cast<s32>(FLT_FLOOR(this->templateRegionHeight/scale))));
 
           // Half the sample at each subsequent level (not a quarter)
-          const s32 maxPossibleLocations = curTemplateCoordinates.get_numElements();
+          const s32 maxPossibleLocations = templateCoordinates.get_numElements();
           const s32 curMaxSamples = MIN(maxPossibleLocations, maxSamplesAtBaseLevel >> iScale);
 
           this->templateSamplePyramid[iScale] = FixedLengthList<TemplateSample>(curMaxSamples, onchipScratch);
@@ -246,232 +252,211 @@ namespace Anki
 
           this->jacobianSamplePyramid[iScale] = FixedLengthList<JacobianSample>(curMaxSamples, onchipScratch);
           this->jacobianSamplePyramid[iScale].set_size(curMaxSamples);
-        }
 
-        //
-        // Temporary allocations below this point
-        //
-        {
-          // Everything allocated using offchipScratch above will survive
-          //PUSH_MEMORY_STACK(offchipScratch);
+          const s32 numPointsY = templateCoordinates.get_yGridVector().get_size();
+          const s32 numPointsX = templateCoordinates.get_xGridVector().get_size();
+          
+          PUSH_MEMORY_STACK(offchipScratch);
+          PUSH_MEMORY_STACK(onchipScratch);
 
-          // This section is based off lucasKanade_Fast, except uses f32 in offchip instead of integer types in onchip
-
-          FixedLengthList<Meshgrid<f32> > templateCoordinates = FixedLengthList<Meshgrid<f32> >(numPyramidLevels, offchipScratch);
-          FixedLengthList<Array<f32> > templateImagePyramid = FixedLengthList<Array<f32> >(numPyramidLevels, offchipScratch);
-          FixedLengthList<Array<f32> > templateImageXGradientPyramid = FixedLengthList<Array<f32> >(numPyramidLevels, offchipScratch);
-          FixedLengthList<Array<f32> > templateImageYGradientPyramid = FixedLengthList<Array<f32> >(numPyramidLevels, offchipScratch);
-          FixedLengthList<Array<f32> > templateImageSquaredGradientMagnitudePyramid = FixedLengthList<Array<f32> >(numPyramidLevels, offchipScratch);
-
-          templateCoordinates.set_size(numPyramidLevels);
-          templateImagePyramid.set_size(numPyramidLevels);
-          templateImageXGradientPyramid.set_size(numPyramidLevels);
-          templateImageYGradientPyramid.set_size(numPyramidLevels);
-          templateImageSquaredGradientMagnitudePyramid.set_size(numPyramidLevels);
-
-          AnkiConditionalErrorAndReturn(templateImagePyramid.IsValid() && templateImageXGradientPyramid.IsValid() && templateImageYGradientPyramid.IsValid() && templateCoordinates.IsValid() && templateImageSquaredGradientMagnitudePyramid.IsValid(),
-            "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "Could not allocate pyramid lists");
-
-          // Allocate the memory for all the images
-          for(s32 iScale=0; iScale<numPyramidLevels; iScale++) {
-            const f32 scale = static_cast<f32>(1 << iScale);
-
-            // Note that template coordinates for this tracker are actually
-            // coordinates on the 3d template, which get mapped into the image
-            // by the homography
-            const f32 halfWidth = scaleTemplateRegionPercent*templateHalfWidth;
-            templateCoordinates[iScale] = Meshgrid<f32>(
-              Linspace(-halfWidth, halfWidth,
-              static_cast<s32>(FLT_FLOOR(this->templateRegionWidth/scale))),
-              Linspace(-halfWidth, halfWidth,
-              static_cast<s32>(FLT_FLOOR(this->templateRegionHeight/scale))));
-
-            const s32 numPointsY = templateCoordinates[iScale].get_yGridVector().get_size();
-            const s32 numPointsX = templateCoordinates[iScale].get_xGridVector().get_size();
-
-            templateImagePyramid[iScale] = Array<f32>(numPointsY, numPointsX, offchipScratch);
-            templateImageXGradientPyramid[iScale] = Array<f32>(numPointsY, numPointsX, offchipScratch);
-            templateImageYGradientPyramid[iScale] = Array<f32>(numPointsY, numPointsX, offchipScratch);
-            templateImageSquaredGradientMagnitudePyramid[iScale] = Array<f32>(numPointsY, numPointsX, offchipScratch);
-
-            AnkiConditionalErrorAndReturn(templateImagePyramid[iScale].IsValid() && templateImageXGradientPyramid[iScale].IsValid() && templateImageYGradientPyramid[iScale].IsValid() && templateImageSquaredGradientMagnitudePyramid[iScale].IsValid(),
-              "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "Could not allocate pyramid images");
-          }
-
-          // Sample all levels of the pyramid images
-          for(s32 iScale=0; iScale<numPyramidLevels; iScale++) {
-            if((lastResult = Interp2_Projective<u8,f32>(templateImage, templateCoordinates[iScale], transformation.get_homography(), this->transformation.get_centerOffset(initialImageScaleF32), templateImagePyramid[iScale], INTERPOLATE_LINEAR)) != RESULT_OK) {
+          Array<f32> grayscaleVector = Array<f32>(1, numPointsX*numPointsY, offchipScratch);
+          Array<f32> xGradientVector = Array<f32>(1, numPointsX*numPointsY, offchipScratch);
+          Array<f32> yGradientVector = Array<f32>(1, numPointsX*numPointsY, offchipScratch);
+          {
+            PUSH_MEMORY_STACK(offchipScratch);
+            
+            Array<f32> templateImageAtScale = Array<f32>(numPointsY, numPointsX, offchipScratch);
+            
+            if((lastResult = Interp2_Projective<u8,f32>(templateImage, templateCoordinates, transformation.get_homography(), this->transformation.get_centerOffset(initialImageScaleF32), templateImageAtScale, INTERPOLATE_LINEAR)) != RESULT_OK) {
               AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "Interp2_Projective failed with code 0x%x", lastResult);
               return;
             }
-
-            //cv::imshow("templateImagePyramid[iScale]", templateImagePyramid[iScale].get_CvMat_());
-            //cv::waitKey();
-          }
-
-          // Compute the spatial derivatives
-          // TODO: compute without borders?
-          for(s32 iScale=0; iScale<numPyramidLevels; iScale++) {
+            
+            {
+              PUSH_MEMORY_STACK(offchipScratch);
+              
+              Array<f32> templateImageXGradient = Array<f32>(numPointsY, numPointsX, offchipScratch);
+              
+              if((lastResult = ImageProcessing::ComputeXGradient<f32,f32,f32>(templateImageAtScale, templateImageXGradient)) != RESULT_OK) {
+                AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "ComputeXGradient failed with code 0x%x", lastResult);
+                return;
+              }
+              
+              // Turn the X gradient image into a vector
+              if((lastResult = Matrix::Vectorize<f32,f32>(false, templateImageXGradient, xGradientVector)) != RESULT_OK) {
+                AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "Matrix::Vectorize failed with code 0x%x", lastResult);
+              }
+            } // pop templateImageXGradient
+            
+            
+            {
+              PUSH_MEMORY_STACK(offchipScratch);
+              Array<f32> templateImageYGradient = Array<f32>(numPointsY, numPointsX, offchipScratch);
+              
+              if((lastResult = ImageProcessing::ComputeYGradient<f32,f32,f32>(templateImageAtScale, templateImageYGradient)) != RESULT_OK) {
+                AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "ComputeYGradient failed with code 0x%x", lastResult);
+                return;
+              }
+              
+              // Turn the Y gradient image into a vector
+              if((lastResult = Matrix::Vectorize<f32,f32>(false, templateImageYGradient, yGradientVector)) != RESULT_OK) {
+                AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "Matrix::Vectorize failed with code 0x%x", lastResult);
+              }
+            } // pop templateImageYGradient
+            
+            // Turn the templateImage at this scale into a vector
+            if((lastResult = Matrix::Vectorize<f32,f32>(false, templateImageAtScale, grayscaleVector)) != RESULT_OK) {
+              AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "Matrix::Vectorize failed with code 0x%x", lastResult);
+            }
+            
+          } // pop templateImageAtScale
+          
+          //templateImageXGradientPyramid[iScale].Show("X Gradient", false);
+          //templateImageYGradientPyramid[iScale].Show("Y Gradient", true);
+          
+          // Using the computed gradients, find a set of the max values, and store them
+          const s32 numSamples = this->templateSamplePyramid[iScale].get_size();
+          Array<u16> magnitudeIndexes = Array<u16>(1, numPointsY*numPointsX, offchipScratch);
+          {
             PUSH_MEMORY_STACK(offchipScratch);
-            PUSH_MEMORY_STACK(onchipScratch);
-
-            const s32 numPointsY = templateCoordinates[iScale].get_yGridVector().get_size();
-            const s32 numPointsX = templateCoordinates[iScale].get_xGridVector().get_size();
-
-            if((lastResult = ImageProcessing::ComputeXGradient<f32,f32,f32>(templateImagePyramid[iScale], templateImageXGradientPyramid[iScale])) != RESULT_OK) {
-              AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "ComputeXGradient failed with code 0x%x", lastResult);
-              return;
-            }
-
-            if((lastResult = ImageProcessing::ComputeYGradient<f32,f32,f32>(templateImagePyramid[iScale], templateImageYGradientPyramid[iScale])) != RESULT_OK) {
-              AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "ComputeYGradient failed with code 0x%x", lastResult);
-              return;
-            }
-
-            //templateImageXGradientPyramid[iScale].Show("X Gradient", false);
-            //templateImageYGradientPyramid[iScale].Show("Y Gradient", true);
-
-            // Using the computed gradients, find a set of the max values, and store them
-
-            Array<f32> tmpMagnitude(numPointsY, numPointsX, offchipScratch);
-
-            Matrix::DotMultiply<f32,f32,f32>(templateImageXGradientPyramid[iScale], templateImageXGradientPyramid[iScale], tmpMagnitude);
-            Matrix::DotMultiply<f32,f32,f32>(templateImageYGradientPyramid[iScale], templateImageYGradientPyramid[iScale], templateImageSquaredGradientMagnitudePyramid[iScale]);
-            Matrix::Add<f32,f32,f32>(tmpMagnitude, templateImageSquaredGradientMagnitudePyramid[iScale], templateImageSquaredGradientMagnitudePyramid[iScale]);
-
+            
+            Array<f32> magnitudeVector = Array<f32>(1, numPointsX*numPointsY, offchipScratch);
+            {
+              PUSH_MEMORY_STACK(offchipScratch);
+              
+              Array<f32> tmpMagnitude(1, numPointsY*numPointsX, offchipScratch);
+              
+              Matrix::DotMultiply<f32,f32,f32>(xGradientVector, xGradientVector, tmpMagnitude);
+              Matrix::DotMultiply<f32,f32,f32>(yGradientVector, yGradientVector, magnitudeVector);
+              Matrix::Add<f32,f32,f32>(tmpMagnitude, magnitudeVector, magnitudeVector);
+            } // pop tmpMagnitude
+            
             //Matrix::Sqrt<f32,f32,f32>(templateImageSquaredGradientMagnitudePyramid[iScale], templateImageSquaredGradientMagnitudePyramid[iScale]);
-
+            
             //cv::imshow("templateImageSquaredGradientMagnitude[iScale]", templateImageSquaredGradientMagnitudePyramid[iScale].get_CvMat_());
             //cv::waitKey();
-
-            Array<f32> magnitudeVector = Matrix::Vectorize<f32,f32>(false, templateImageSquaredGradientMagnitudePyramid[iScale], offchipScratch);
-            Array<u16> magnitudeIndexes = Array<u16>(1, numPointsY*numPointsX, offchipScratch);
-
+            
             AnkiConditionalErrorAndReturn(magnitudeVector.IsValid() && magnitudeIndexes.IsValid(),
-              "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "Out of memory");
-
+                                          "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "Out of memory");
+            
             // Really slow
             //const f32 t0 = GetTime();
             //Matrix::Sort<f32>(magnitudeVector, magnitudeIndexes, 1, false);
             //const f32 t1 = GetTime();
-
-            const s32 numSamples = this->templateSamplePyramid[iScale].get_size();
+            
             s32 numSelected;
             LucasKanadeTracker_SampledPlanar6dof::ApproximateSelect(magnitudeVector, numSelectBins, numSamples, numSelected, magnitudeIndexes);
-
-            //const f32 t2 = GetTime();
-            //printf("%f %f\n", t1-t0, t2-t1);
-
+            
             if(numSelected == 0) {
               return;
             }
-
-            //{
-            //  Matlab matlab(false);
-            //  matlab.PutArray(magnitudeVector, "magnitudeVector");
-            //  matlab.PutArray(magnitudeIndexes, "magnitudeIndexes");
-            //}
-
-            Array<f32> yCoordinatesVector = templateCoordinates[iScale].EvaluateY1(false, offchipScratch);
-            Array<f32> xCoordinatesVector = templateCoordinates[iScale].EvaluateX1(false, offchipScratch);
-
-            Array<f32> yGradientVector = Matrix::Vectorize<f32,f32>(false, templateImageYGradientPyramid[iScale], offchipScratch);
-            Array<f32> xGradientVector = Matrix::Vectorize<f32,f32>(false, templateImageXGradientPyramid[iScale], offchipScratch);
-            Array<f32> grayscaleVector = Matrix::Vectorize<f32,f32>(false, templateImagePyramid[iScale], offchipScratch);
-
-            const f32 * restrict pYCoordinates = yCoordinatesVector.Pointer(0,0);
-            const f32 * restrict pXCoordinates = xCoordinatesVector.Pointer(0,0);
-            const f32 * restrict pYGradientVector = yGradientVector.Pointer(0,0);
-            const f32 * restrict pXGradientVector = xGradientVector.Pointer(0,0);
-            const f32 * restrict pGrayscaleVector = grayscaleVector.Pointer(0,0);
-            const u16 * restrict pMagnitudeIndexes = magnitudeIndexes.Pointer(0,0);
-
-            const f32 h00 = initialHomography[0][0];
-            const f32 h01 = initialHomography[0][1];
-            const f32 h02 = initialHomography[0][2] / initialImageScaleF32;
-
-            const f32 h10 = initialHomography[1][0];
-            const f32 h11 = initialHomography[1][1];
-            const f32 h12 = initialHomography[1][2] / initialImageScaleF32;
-
-            const f32 h20 = initialHomography[2][0] * initialImageScaleF32;
-            const f32 h21 = initialHomography[2][1] * initialImageScaleF32;
-            const f32 h22 = initialHomography[2][2];
-
-            TemplateSample * restrict pTemplateSamplePyramid = this->templateSamplePyramid[iScale].Pointer(0);
-            JacobianSample * restrict pJacobianSamplePyramid = this->jacobianSamplePyramid[iScale].Pointer(0);
-
-            for(s32 iSample=0; iSample<numSamples; iSample++){
-              const s32 curIndex = pMagnitudeIndexes[iSample];
-
-              TemplateSample curTemplateSample;
-              curTemplateSample.xCoordinate = pXCoordinates[curIndex];
-              curTemplateSample.yCoordinate = pYCoordinates[curIndex];
-              curTemplateSample.xGradient   = pXGradientVector[curIndex];
-              curTemplateSample.yGradient   = pYGradientVector[curIndex];
-              curTemplateSample.grayvalue   = pGrayscaleVector[curIndex];
-
-              pTemplateSamplePyramid[iSample] = curTemplateSample;
-
-              // Everything below here is about filling in the Jacobian info
-              // for this sample
-
-              JacobianSample curJacobianSample;
-
-              const f32 xOriginal = curTemplateSample.xCoordinate;
-              const f32 yOriginal = curTemplateSample.yCoordinate;
-
-              // TODO: These two could be strength reduced
-              const f32 xTransformedRaw = h00*xOriginal + h01*yOriginal + h02;
-              const f32 yTransformedRaw = h10*xOriginal + h11*yOriginal + h12;
-
-              const f32 normalization = h20*xOriginal + h21*yOriginal + h22;
-
-              const f32 invNorm = 1.f / normalization;
-              const f32 invNormSq = invNorm *invNorm;
-
-              curJacobianSample.dWu_dtx = this->focalLength_x * invNorm;
-              //curJacobianSample.dWu_dty = 0.f;
-              curJacobianSample.dWu_dtz = -xTransformedRaw * invNormSq;
-
-              //curJacobianSample.dWv_dtx = 0.f;
-              curJacobianSample.dWv_dty = this->focalLength_y * invNorm;
-              curJacobianSample.dWv_dtz = -yTransformedRaw * invNormSq;
-
-              const f32 r1thetaXterm = /*dr11_dthetaX*xOriginal +*/ dr12_dthetaX*yOriginal;
-              const f32 r1thetaYterm = dr11_dthetaY*xOriginal + dr12_dthetaY*yOriginal;
-              const f32 r1thetaZterm = dr11_dthetaZ*xOriginal + dr12_dthetaZ*yOriginal;
-
-              const f32 r2thetaXterm = /*dr21_dthetaX*xOriginal + */dr22_dthetaX*yOriginal;
-              const f32 r2thetaYterm = dr21_dthetaY*xOriginal + dr22_dthetaY*yOriginal;
-              const f32 r2thetaZterm = dr21_dthetaZ*xOriginal + dr22_dthetaZ*yOriginal;
-
-              const f32 r3thetaXterm = /*dr31_dthetaX*xOriginal + */dr32_dthetaX*yOriginal;
-              const f32 r3thetaYterm = dr31_dthetaY*xOriginal + dr32_dthetaY*yOriginal;
-              //const f32 r3thetaZterm = dr31_dthetaZ*xOriginal + dr32_dthetaZ*yOriginal;
-
-              curJacobianSample.dWu_dthetaX = (this->focalLength_x*normalization*r1thetaXterm -
-                r3thetaXterm*xTransformedRaw) * invNormSq;
-
-              curJacobianSample.dWu_dthetaY = (this->focalLength_x*normalization*r1thetaYterm -
-                r3thetaYterm*xTransformedRaw) * invNormSq;
-
-              curJacobianSample.dWu_dthetaZ = (this->focalLength_x*normalization*r1thetaZterm /*-
-                                                                                              r3thetaZterm*xTransformedRaw*/) * invNormSq;
-
-              curJacobianSample.dWv_dthetaX = (this->focalLength_y*normalization*r2thetaXterm -
-                r3thetaXterm*yTransformedRaw) * invNormSq;
-
-              curJacobianSample.dWv_dthetaY = (this->focalLength_y*normalization*r2thetaYterm -
-                r3thetaYterm*yTransformedRaw) * invNormSq;
-
-              curJacobianSample.dWv_dthetaZ = (this->focalLength_y*normalization*r2thetaZterm /*-
-                                                                                              r3thetaZterm*yTransformedRaw*/) * invNormSq;
-
-              pJacobianSamplePyramid[iSample] = curJacobianSample;
-            }
+            
+          } // pop magnitudeVector
+          
+          //const f32 t2 = GetTime();
+          //printf("%f %f\n", t1-t0, t2-t1);
+          
+          //{
+          //  Matlab matlab(false);
+          //  matlab.PutArray(magnitudeVector, "magnitudeVector");
+          //  matlab.PutArray(magnitudeIndexes, "magnitudeIndexes");
+          //}
+          
+          Array<f32> yCoordinatesVector = templateCoordinates.EvaluateY1(false, offchipScratch);
+          Array<f32> xCoordinatesVector = templateCoordinates.EvaluateX1(false, offchipScratch);
+          
+          const f32 * restrict pYCoordinates = yCoordinatesVector.Pointer(0,0);
+          const f32 * restrict pXCoordinates = xCoordinatesVector.Pointer(0,0);
+          const f32 * restrict pYGradientVector = yGradientVector.Pointer(0,0);
+          const f32 * restrict pXGradientVector = xGradientVector.Pointer(0,0);
+          const f32 * restrict pGrayscaleVector = grayscaleVector.Pointer(0,0);
+          const u16 * restrict pMagnitudeIndexes = magnitudeIndexes.Pointer(0,0);
+          
+          const f32 h00 = initialHomography[0][0];
+          const f32 h01 = initialHomography[0][1];
+          const f32 h02 = initialHomography[0][2] / initialImageScaleF32;
+          
+          const f32 h10 = initialHomography[1][0];
+          const f32 h11 = initialHomography[1][1];
+          const f32 h12 = initialHomography[1][2] / initialImageScaleF32;
+          
+          const f32 h20 = initialHomography[2][0] * initialImageScaleF32;
+          const f32 h21 = initialHomography[2][1] * initialImageScaleF32;
+          const f32 h22 = initialHomography[2][2];
+          
+          TemplateSample * restrict pTemplateSamplePyramid = this->templateSamplePyramid[iScale].Pointer(0);
+          JacobianSample * restrict pJacobianSamplePyramid = this->jacobianSamplePyramid[iScale].Pointer(0);
+          
+          for(s32 iSample=0; iSample<numSamples; iSample++){
+            const s32 curIndex = pMagnitudeIndexes[iSample];
+            
+            TemplateSample curTemplateSample;
+            curTemplateSample.xCoordinate = pXCoordinates[curIndex];
+            curTemplateSample.yCoordinate = pYCoordinates[curIndex];
+            curTemplateSample.xGradient   = pXGradientVector[curIndex];
+            curTemplateSample.yGradient   = pYGradientVector[curIndex];
+            curTemplateSample.grayvalue   = pGrayscaleVector[curIndex];
+            
+            pTemplateSamplePyramid[iSample] = curTemplateSample;
+            
+            // Everything below here is about filling in the Jacobian info
+            // for this sample
+            
+            JacobianSample curJacobianSample;
+            
+            const f32 xOriginal = curTemplateSample.xCoordinate;
+            const f32 yOriginal = curTemplateSample.yCoordinate;
+            
+            // TODO: These two could be strength reduced
+            const f32 xTransformedRaw = h00*xOriginal + h01*yOriginal + h02;
+            const f32 yTransformedRaw = h10*xOriginal + h11*yOriginal + h12;
+            
+            const f32 normalization = h20*xOriginal + h21*yOriginal + h22;
+            
+            const f32 invNorm = 1.f / normalization;
+            const f32 invNormSq = invNorm *invNorm;
+            
+            curJacobianSample.dWu_dtx = this->focalLength_x * invNorm;
+            //curJacobianSample.dWu_dty = 0.f;
+            curJacobianSample.dWu_dtz = -xTransformedRaw * invNormSq;
+            
+            //curJacobianSample.dWv_dtx = 0.f;
+            curJacobianSample.dWv_dty = this->focalLength_y * invNorm;
+            curJacobianSample.dWv_dtz = -yTransformedRaw * invNormSq;
+            
+            const f32 r1thetaXterm = /*dr11_dthetaX*xOriginal +*/ dr12_dthetaX*yOriginal;
+            const f32 r1thetaYterm = dr11_dthetaY*xOriginal + dr12_dthetaY*yOriginal;
+            const f32 r1thetaZterm = dr11_dthetaZ*xOriginal + dr12_dthetaZ*yOriginal;
+            
+            const f32 r2thetaXterm = /*dr21_dthetaX*xOriginal + */dr22_dthetaX*yOriginal;
+            const f32 r2thetaYterm = dr21_dthetaY*xOriginal + dr22_dthetaY*yOriginal;
+            const f32 r2thetaZterm = dr21_dthetaZ*xOriginal + dr22_dthetaZ*yOriginal;
+            
+            const f32 r3thetaXterm = /*dr31_dthetaX*xOriginal + */dr32_dthetaX*yOriginal;
+            const f32 r3thetaYterm = dr31_dthetaY*xOriginal + dr32_dthetaY*yOriginal;
+            //const f32 r3thetaZterm = dr31_dthetaZ*xOriginal + dr32_dthetaZ*yOriginal;
+            
+            curJacobianSample.dWu_dthetaX = (this->focalLength_x*normalization*r1thetaXterm -
+                                             r3thetaXterm*xTransformedRaw) * invNormSq;
+            
+            curJacobianSample.dWu_dthetaY = (this->focalLength_x*normalization*r1thetaYterm -
+                                             r3thetaYterm*xTransformedRaw) * invNormSq;
+            
+            curJacobianSample.dWu_dthetaZ = (this->focalLength_x*normalization*r1thetaZterm /*-
+                                                                                             r3thetaZterm*xTransformedRaw*/) * invNormSq;
+            
+            curJacobianSample.dWv_dthetaX = (this->focalLength_y*normalization*r2thetaXterm -
+                                             r3thetaXterm*yTransformedRaw) * invNormSq;
+            
+            curJacobianSample.dWv_dthetaY = (this->focalLength_y*normalization*r2thetaYterm -
+                                             r3thetaYterm*yTransformedRaw) * invNormSq;
+            
+            curJacobianSample.dWv_dthetaZ = (this->focalLength_y*normalization*r2thetaZterm /*-
+                                                                                             r3thetaZterm*yTransformedRaw*/) * invNormSq;
+            
+            pJacobianSamplePyramid[iSample] = curJacobianSample;
           }
-        } // PUSH_MEMORY_STACK(fastMemory);
+        }
 
         this->isValid = true;
 

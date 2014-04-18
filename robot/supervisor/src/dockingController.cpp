@@ -117,7 +117,7 @@ namespace Anki {
         return success_;
       }
       
-      ReturnCode Update()
+      Result Update()
       {
         
         // Get any docking error signal available from the vision system
@@ -143,21 +143,41 @@ namespace Anki {
             //PRINT("ErrSignal %d (msgTime %d)\n", HAL::GetMicroCounter(), dockMsg.timestamp);
             
             // Convert from camera coordinates to robot coordinates
-            // (Note that y and angle don't change)
-            dockMsg.x_distErr += HEAD_CAM_POSITION[0]*cosf(HeadController::GetAngleRad()) + NECK_JOINT_POSITION[0];
+            if(dockMsg.isApproximate) 
+            {
+              dockMsg.x_distErr += HEAD_CAM_POSITION[0]*cosf(HeadController::GetAngleRad()) + NECK_JOINT_POSITION[0];
+            }
+            else {
+              Embedded::Point3<f32> tempPoint;
+              VisionSystem::GetWithRespectToRobot(Embedded::Point3<f32>(dockMsg.x_distErr, dockMsg.y_horErr, dockMsg.z_height),
+                                                  tempPoint);
+              
+              dockMsg.x_distErr = tempPoint.x;
+              dockMsg.y_horErr  = tempPoint.y;
+              dockMsg.z_height  = tempPoint.z;
+            }
             
 #if(DEBUG_DOCK_CONTROLLER)
-            PRINT("Received docking error signal: x_distErr=%f, y_horErr=%f, "
-                  "angleErr=%fdeg\n", dockMsg.x_distErr, dockMsg.y_horErr,
-                  RAD_TO_DEG_F32(dockMsg.angleErr));
+            PRINT("Received%sdocking error signal: x_distErr=%f, y_horErr=%f, "
+                  "z_height=%f, angleErr=%fdeg\n",
+                  (dockMsg.isApproximate ? " approximate " : " "),
+                  dockMsg.x_distErr, dockMsg.y_horErr,
+                  dockMsg.z_height, RAD_TO_DEG_F32(dockMsg.angleErr));
 #endif
             
             // Check that error signal is plausible
             // If not, treat as if tracking failed.
             // TODO: Get tracker to detect these situations and not even send the error message here.
             if (dockMsg.x_distErr > 0 && ABS(dockMsg.angleErr) < 0.75*PIDIV2_F) {
-              
+             
               SetRelDockPose(dockMsg.x_distErr, dockMsg.y_horErr, dockMsg.angleErr);
+
+              if(!dockMsg.isApproximate) // will be -1 if not computed
+              {
+                // If we have the height of the marker for docking, we can also
+                // compute the head angle to keep it centered
+                HeadController::SetDesiredAngle(atan_fast( (dockMsg.z_height - NECK_JOINT_POSITION[2])/dockMsg.x_distErr));
+              }
               
               // Send to basestation for visualization
               HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::DockingErrorSignal), &dockMsg);
@@ -179,7 +199,7 @@ namespace Anki {
         } // while dockErrSignalMailbox has mail
 
         
-        ReturnCode retVal = EXIT_SUCCESS;
+        Result retVal = RESULT_OK;
         
         switch(mode_)
         {
@@ -229,7 +249,7 @@ namespace Anki {
 
         if(success_ == false)
         {
-          retVal = EXIT_FAILURE;
+          retVal = RESULT_FAIL;
         }
         
         return retVal;

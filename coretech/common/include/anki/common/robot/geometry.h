@@ -285,7 +285,7 @@ namespace Anki
 #endif
 
     template<typename Type>
-    ReturnCode ComputePoseDiff(const Array<Type>& R1, const Point3<Type>& T1,
+    Result ComputePoseDiff(const Array<Type>& R1, const Point3<Type>& T1,
       const Array<Type>& R2, const Point3<Type>& T2,
       Array<Type>& Rdiff, Point3<Type>& Tdiff,
       MemoryStack scratch)
@@ -303,7 +303,7 @@ namespace Anki
       Matrix::Multiply(R2, invR1, Rdiff);
       Tdiff = T2 - (Rdiff * T1);
 
-      return EXIT_SUCCESS;
+      return RESULT_OK;
     }
 
 #if 0

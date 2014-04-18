@@ -49,6 +49,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include <fstream>
 #endif
 
+using namespace Anki;
 using namespace Anki::Embedded;
 
 //#define RUN_FACE_DETECTION_GUI
@@ -3616,7 +3617,7 @@ GTEST_TEST(CoreTech_Vision, SolveQuartic)
   };
 
   PRECISION roots_computed[4];
-  ASSERT_TRUE(P3P::solveQuartic(factors, roots_computed) == EXIT_SUCCESS);
+  ASSERT_TRUE(P3P::solveQuartic(factors, roots_computed) == RESULT_OK);
 
   for(s32 i=0; i<4; ++i) {
     ASSERT_NEAR(roots_groundTruth[i], roots_computed[i], 1e-6f);
@@ -3708,7 +3709,7 @@ GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation)
     marker3d[0], marker3d[1], marker3d[2], marker3d[3],
     focalLength_x, focalLength_y,
     camCenter_x, camCenter_y,
-    R, T, memory) == EXIT_SUCCESS);
+    R, T, memory) == RESULT_OK);
 
   EndBenchmark("P3P::computePose");
 

@@ -32,7 +32,7 @@ int main(int argc, char **argv)
 {
   using namespace Anki::Cozmo;
 
-  if(Robot::Init() == EXIT_FAILURE) {
+  if(Robot::Init() == Anki::RESULT_FAIL) {
     fprintf(stdout, "Failed to initialize Cozmo::Robot!\n");
     return -1;
   }
@@ -45,9 +45,9 @@ int main(int argc, char **argv)
   Sim::OverlayDisplay::Init();
   Sim::Viz::Init();
   
-  while(Robot::step_MainExecution() == EXIT_SUCCESS)
+  while(Robot::step_MainExecution() == Anki::RESULT_OK)
   {
-    if( Robot::step_LongExecution() == EXIT_FAILURE ) {
+    if( Robot::step_LongExecution() == Anki::RESULT_FAIL ) {
       fprintf(stdout, "step_LongExecution failed.\n");
       break;
     }

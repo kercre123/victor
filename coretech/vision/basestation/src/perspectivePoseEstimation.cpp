@@ -51,7 +51,7 @@ namespace Anki {
     namespace P3P {
       
       template<typename PRECISION>
-      ReturnCode createIntermediateCameraFrameHelper(Point<3,PRECISION>& f1,
+      Result createIntermediateCameraFrameHelper(Point<3,PRECISION>& f1,
                                                      Point<3,PRECISION>& f2,
                                                      Point<3,PRECISION>& f3,
                                                      SmallSquareMatrix<3,PRECISION>& T)
@@ -67,12 +67,12 @@ namespace Anki {
         
         f3 = T * f3;
         
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       } // createIntermediateCameraFrameHelper()
       
       
       template<typename PRECISION>
-      ReturnCode solveQuartic(const std::array<PRECISION,5>& factors,
+      Result solveQuartic(const std::array<PRECISION,5>& factors,
                               std::array<PRECISION,4>& realRoots)
       {
         PRECISION A = factors[0];
@@ -129,13 +129,13 @@ namespace Anki {
                realRoots[0], realRoots[1], realRoots[2], realRoots[3]);
         */
         
-        return EXIT_SUCCESS;
+        return RESULT_OK;
         
       } // solveQuartic()
       
       
       template<typename PRECISION>
-      ReturnCode computePossiblePoses(const Point<3,PRECISION>& worldPoint1,
+      Result computePossiblePoses(const Point<3,PRECISION>& worldPoint1,
                                       const Point<3,PRECISION>& worldPoint2,
                                       const Point<3,PRECISION>& worldPoint3,
                                       const Point<3,PRECISION>& imageRay1,
@@ -163,7 +163,7 @@ namespace Anki {
         
         // Verify the world points are not colinear
         if(cross(P2 - P1, P3 - P1).length() == 0) {
-          return EXIT_FAILURE;
+          return RESULT_FAIL;
         }
         
         POINT f1(imageRay1);
@@ -327,12 +327,12 @@ namespace Anki {
 
         }
         
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       } // computePossiblePoses(from individually-listed points)
       
 
       template<typename PRECISION>
-      ReturnCode computePossiblePoses(const std::array<Point<3,PRECISION>,3>& worldPoints,
+      Result computePossiblePoses(const std::array<Point<3,PRECISION>,3>& worldPoints,
                                       const std::array<Point<3,PRECISION>,3>& imageRays,
                                       std::array<Pose3d,4>& poses)
       {
@@ -343,11 +343,11 @@ namespace Anki {
       
       
       // Explicit instantiation for float and double
-      template ReturnCode computePossiblePoses<float>(const std::array<Point<3,float>,3>& worldPoints,
+      template Result computePossiblePoses<float>(const std::array<Point<3,float>,3>& worldPoints,
                                                       const std::array<Point<3,float>,3>& imageRays,
                                                       std::array<Pose3d,4>& poses);
       
-      template ReturnCode computePossiblePoses<double>(const std::array<Point<3,double>,3>& worldPoints,
+      template Result computePossiblePoses<double>(const std::array<Point<3,double>,3>& worldPoints,
                                                        const std::array<Point<3,double>,3>& imageRays,
                                                        std::array<Pose3d,4>& poses);
       

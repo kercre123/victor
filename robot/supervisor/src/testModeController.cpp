@@ -165,7 +165,7 @@ namespace Anki {
         TestMode testMode_ = TM_NONE;
         
         // Pointer to update function for current test mode
-        ReturnCode (*updateFunc)() = NULL;
+        Result (*updateFunc)() = NULL;
         
       } // private namespace
       
@@ -176,14 +176,14 @@ namespace Anki {
       }
       
 
-      ReturnCode PickAndPlaceTestInit()
+      Result PickAndPlaceTestInit()
       {
         PRINT("\n==== Starting PickAndPlaceTest =====\n");
         ticCnt_ = 0;
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       }
       
-      ReturnCode PickAndPlaceTestUpdate()
+      Result PickAndPlaceTestUpdate()
       {
         switch(pickAndPlaceState_)
         {
@@ -220,22 +220,22 @@ namespace Anki {
             PRINT("WTF?\n");
             break;
         }
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       }
 
       
       
       
       // Commands a path and executes it
-      ReturnCode DockPathTestInit()
+      Result DockPathTestInit()
       {
         PRINT("\n==== Starting DockPathTest =====\n");
         ticCnt_ = 0;
         dockPathState_ = DT_STOP;
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       }
       
-      ReturnCode DockPathTestUpdate()
+      Result DockPathTestUpdate()
       {
         
         // Toggle dock path state
@@ -271,21 +271,21 @@ namespace Anki {
             break;
         }
         
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       }
 
       
       
       // Commands a path and executes it
-      ReturnCode PathFollowTestInit()
+      Result PathFollowTestInit()
       {
         PRINT("\n=== Starting PathFollowTest ===\n");
         pathStarted_ = false;
         Localization::SetCurrentMatPose(0, 0, Radians(-PIDIV2_F));
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       }
       
-      ReturnCode PathFollowTestUpdate()
+      Result PathFollowTestUpdate()
       {
         const u32 startDriveTime_us = 500000;
         if (!pathStarted_ && HAL::GetMicroCounter() > startDriveTime_us) {
@@ -338,19 +338,19 @@ namespace Anki {
           pathStarted_ = true;
         }
         
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       }
       
       
       
-      ReturnCode DriveTestInit()
+      Result DriveTestInit()
       {
         PRINT("\n=== Starting DirectDriveTest ===\n");
         ticCnt_ = 0;
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       }
       
-      ReturnCode DriveTestUpdate()
+      Result DriveTestUpdate()
       {
         static bool fwd = false;
         static bool firstSpeedCommanded = false;
@@ -372,7 +372,7 @@ namespace Anki {
             PRINT("Going forward %f mm/s (currSpeed %f %f, filtSpeed %f %f)\n", WHEEL_SPEED_CMD_MMPS, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
 #endif
             ticCnt_ = 0;
-            return EXIT_SUCCESS;
+            return RESULT_OK;
           }
           
           
@@ -407,11 +407,11 @@ namespace Anki {
 #endif
        }
 
-       return EXIT_SUCCESS;
+       return RESULT_OK;
       }
       
       
-      ReturnCode LiftTestInit()
+      Result LiftTestInit()
       {
         PRINT("\n==== Starting LiftTest =====\n");
         PRINT("!!! REMOVE JTAG CABLE !!!\n");
@@ -421,11 +421,11 @@ namespace Anki {
 #if(!LIFT_HEIGHT_TEST)
         LiftController::Disable();
 #endif
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       }
       
       
-      ReturnCode LiftTestUpdate()
+      Result LiftTestUpdate()
       {
         static bool up = false;
         
@@ -479,18 +479,18 @@ namespace Anki {
         }
 */
         
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       }
       
-      ReturnCode LiftToggleTestInit()
+      Result LiftToggleTestInit()
       {
         PRINT("\n==== Starting LiftToggleTest =====\n");
         PRINT("!!! REMOVE JTAG CABLE !!!\n");
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       }
       
       
-      ReturnCode LiftToggleTestUpdate()
+      Result LiftToggleTestUpdate()
       {
 
         static f32 liftHeight = LIFT_HEIGHT_LOWDOCK;
@@ -525,11 +525,11 @@ namespace Anki {
          */
 
         
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       }
       
       
-      ReturnCode HeadTestInit()
+      Result HeadTestInit()
       {
         PRINT("\n==== Starting HeadTest =====\n");
         ticCnt_ = 0;
@@ -538,11 +538,11 @@ namespace Anki {
 #if(!HEAD_POSITION_TEST)
         HeadController::Disable();
 #endif
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       }
       
       
-      ReturnCode HeadTestUpdate()
+      Result HeadTestUpdate()
       {
         static bool up = false;
         
@@ -592,18 +592,18 @@ namespace Anki {
         }
         
         
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       }
       
-      ReturnCode IMUTestInit()
+      Result IMUTestInit()
       {
         PRINT("\n==== Starting IMUTest =====\n");
         ticCnt_ = 0;
         IT_turnLeft = false;
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       }
       
-      ReturnCode IMUTestUpdate()
+      Result IMUTestUpdate()
       {
         
         if (SteeringController::GetMode() != SteeringController::SM_POINT_TURN) {
@@ -641,19 +641,19 @@ namespace Anki {
           ticCnt_ = 0;
         }
 
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       }
       
       
-      ReturnCode GripperTestInit()
+      Result GripperTestInit()
       {
         PRINT("\n==== Starting GripperTest =====\n");
         ticCnt_ = 0;
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       }
       
       
-      ReturnCode GripperTestUpdate()
+      Result GripperTestUpdate()
       {
 #if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
         static bool up = false;
@@ -673,20 +673,20 @@ namespace Anki {
           ticCnt_ = 0;
         }
 #endif
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       }
       
-      ReturnCode LightTestInit()
+      Result LightTestInit()
       {
         PRINT("\n==== Starting LightTest =====\n");
         ticCnt_ = 0;
         ledID = (HAL::LEDId)0;
         ledColorIdx = 0;
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       }
       
       
-      ReturnCode LightTestUpdate()
+      Result LightTestUpdate()
       {
         if (ticCnt_++ > 2000 / TIME_STEP) {
           
@@ -707,22 +707,22 @@ namespace Anki {
           ticCnt_ = 0;
         }
         
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       }
 
       
-      ReturnCode StopTestInit()
+      Result StopTestInit()
       {
         PRINT("\n==== Starting StopTest =====\n");
         ticCnt_ = 0;
         ST_go = false;
         ST_speed = 0.f;
         ST_slowingDown = false;
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       }
       
       
-      ReturnCode StopTestUpdate()
+      Result StopTestUpdate()
       {
         if (ticCnt_++ > 2000 / TIME_STEP) {
           ST_go = !ST_go;
@@ -760,10 +760,10 @@ namespace Anki {
           ST_slowDownTics++;
         }
         
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       }
 
-      ReturnCode MaxPowerTestInit()
+      Result MaxPowerTestInit()
       {
         ticCnt_ = 0;
         
@@ -771,11 +771,11 @@ namespace Anki {
         WheelController::Disable();
         LiftController::Disable();
         
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       }
       
       
-      ReturnCode MaxPowerTestUpdate()
+      Result MaxPowerTestUpdate()
       {
         static f32 pwr = 1.0;
         if (ticCnt_++ > 5000 / TIME_STEP) {
@@ -788,12 +788,12 @@ namespace Anki {
           pwr *= -1;
           ticCnt_ = 0;
         }
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       }
       
-      ReturnCode Init(TestMode mode)
+      Result Init(TestMode mode)
       {
-        ReturnCode ret = EXIT_SUCCESS;
+        Result ret = RESULT_OK;
 #if(!FREE_DRIVE_DUBINS_TEST)
         testMode_ = mode;
         
@@ -853,7 +853,7 @@ namespace Anki {
             break;
           default:
             PRINT("ERROR (TestModeController): Undefined mode %d\n", testMode_);
-            ret = EXIT_FAILURE;
+            ret = RESULT_FAIL;
             break;
         }
 #endif
@@ -862,7 +862,7 @@ namespace Anki {
       }
       
       
-      ReturnCode Update()
+      Result Update()
       {
 #if(!FREE_DRIVE_DUBINS_TEST)
         // Don't run Update until robot is finished initializing
@@ -872,7 +872,7 @@ namespace Anki {
           }
         }
 #endif
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       }
       
       

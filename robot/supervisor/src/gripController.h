@@ -23,7 +23,7 @@ namespace Anki {
   namespace Cozmo {
     namespace GripController {
 
-      ReturnCode Update();
+      Result Update();
       
       void EngageGripper();
       void DisengageGripper();

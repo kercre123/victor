@@ -25,7 +25,7 @@ namespace Anki {
     
     PathPlanner::PathPlanner() {}
 
-    ReturnCode PathPlanner::GetPlan(Planning::Path &path, const Pose3d &startPose, const Pose3d &targetPose)
+    Result PathPlanner::GetPlan(Planning::Path &path, const Pose3d &startPose, const Pose3d &targetPose)
     {
       Vec3f startPt = startPose.get_translation();
       f32 startAngle = startPose.get_rotationAngle().ToFloat(); // Assuming robot is not tilted
@@ -40,10 +40,10 @@ namespace Anki {
                                        DUBINS_START_RADIUS_MM, DUBINS_END_RADIUS_MM,
                                        DUBINS_TARGET_SPEED_MMPS, DUBINS_ACCEL_MMPS2, DUBINS_DECEL_MMPS2) == 0) {
         PRINT_NAMED_INFO("GetPlan.NoPathFound", "Could not generate Dubins path (startPose %f %f %f, targetPose %f %f %f)\n", startPt.x(), startPt.y(), startAngle, targetPt.x(), targetPt.y(), targetAngle);
-        return EXIT_FAILURE;
+        return RESULT_FAIL;
       }
 
-      return EXIT_SUCCESS;
+      return RESULT_OK;
     }
     
     

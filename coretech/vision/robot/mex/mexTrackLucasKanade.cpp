@@ -67,13 +67,13 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   initialTransform.set_homography(homography);
   initialTransform.set_centerOffset(tracker.get_transformation().get_centerOffset(1.0f));
 
-  if(tracker.set_transformation(initialTransform) != RESULT_OK) {
+  if(tracker.set_transformation(initialTransform) != Anki::RESULT_OK) {
     AnkiError("mexTrackLucasKanade", "set_transformation");
     return;
   }
 
   bool converged = false;
-  if(tracker.UpdateTrack(nextImage, maxIterations, convergenceTolerance, true, converged, memory) != RESULT_OK) {
+  if(tracker.UpdateTrack(nextImage, maxIterations, convergenceTolerance, true, converged, memory) != Anki::RESULT_OK) {
     AnkiError("mexTrackLucasKanade", "UpdateTrack");
     return;
   }
