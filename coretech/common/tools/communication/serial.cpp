@@ -209,10 +209,12 @@ Result Socket::Close()
 
 Result Socket::Read(void * buffer, s32 bufferLength, DWORD &bytesRead)
 {
-  const s32 received = recv(socketHandle, reinterpret_cast<char*>(buffer), bufferLength, 0);
+  const s32 bytesReadS32 = recv(socketHandle, reinterpret_cast<char*>(buffer), bufferLength, 0);
 
-  if(received < 0)
+  if(bytesReadS32 < 0)
     return RESULT_FAIL_IO;
+
+  bytesRead = bytesReadS32;
 
   return RESULT_OK;
 }
