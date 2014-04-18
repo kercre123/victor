@@ -125,6 +125,19 @@ namespace Anki {
         Messages::DockingErrorSignal dockMsg;
         while( Messages::CheckMailbox(dockMsg) )
         {
+          
+#if(0)
+          // Print period of tracker (i.e. messages coming in from tracker)
+          static u32 lastTime = 0;
+          u32 currTime = HAL::GetMicroCounter();
+          if (lastTime != 0) {
+            u32 period = (currTime - lastTime)/1000;
+            PRINT("PERIOD: %d ms\n", period);
+          }
+          lastTime = currTime;
+#endif
+          
+          
           if(dockMsg.didTrackingSucceed) {
             
             //PRINT("ErrSignal %d (msgTime %d)\n", HAL::GetMicroCounter(), dockMsg.timestamp);
