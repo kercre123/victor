@@ -32,6 +32,14 @@ namespace Anki {
                                       MemoryStack ccmScratch,
                                       MemoryStack onchipScratch,
                                       MemoryStack offchipScratch);
+                                      
+        ReturnCode SendFaceDetections(
+          const Array<u8> &image, 
+          const FixedLengthList<Rectangle<s32> > &detectedFaces,
+          const s32 detectedFacesImageWidth,
+          MemoryStack ccmScratch, 
+          MemoryStack onchipScratch, 
+          MemoryStack offchipScratch)                                      ;
         
         //ReturnCode SendPrintf(const char * string);
         

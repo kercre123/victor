@@ -173,12 +173,22 @@ namespace Anki
 #endif
     }
 
-    inline s64 RoundS32(f64 x)
+    inline s32 RoundS32(f64 x)
     {
       if(x > 0)
         return static_cast<s32>(floor(x + 0.5));
       else
         return static_cast<s32>(ceil(x - 0.5));
+    }
+
+    inline s32 FloorS32(f32 x)
+    {
+      return static_cast<s32>(floorf(x));
+    }
+
+    inline s32 CeilS32(f32 x)
+    {
+      return static_cast<s32>(ceilf(x));
     }
   } // namespace Embedded
 } // namespace Anki

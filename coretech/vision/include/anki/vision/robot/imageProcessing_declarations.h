@@ -47,6 +47,10 @@ namespace Anki
       // Image resizing
       //
 
+      // Linearly interpolate a resized image. Not as efficient as DownsampleByTwo or DownsampleByPowerOfTwo
+      // Should give the same results as Matlab's imresize, with 'AntiAliasing' == false
+      template<typename InType, typename OutType> Result Resize(const Array<InType> &in, Array<OutType> &out);
+
       template<typename InType, typename IntermediateType, typename OutType> Result DownsampleByTwo(const Array<InType> &in, Array<OutType> &out);
 
       // Downsample the image by 2^downsamplePower.

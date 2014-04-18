@@ -25,6 +25,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/binaryTracker.h"
 #include "anki/vision/robot/decisionTree_vision.h"
 #include "anki/vision/robot/perspectivePoseEstimation.h"
+#include "anki/vision/robot/classifier.h"
 
 #include "anki/vision/MarkerCodeDefinitions.h"
 
@@ -35,12 +36,309 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "../../../systemTestImages/cozmo_2014_01_29_11_41_05_10_320x240.h"
 #include "../../../systemTestImages/cozmo_2014_01_29_11_41_05_12_320x240.h"
 #include "../../../systemTestImages/cozmo_date2014_04_04_time17_40_08_frame0.h"
+#include "../../../systemTestImages/cozmo_date2014_04_10_time16_15_40_frame0.h"
+
+#include "anki/vision/robot/lbpcascade_frontalface.h"
 
 #include "embeddedTests.h"
 
 #include <cmath>
 
+#ifdef ANKICORETECH_EMBEDDED_USE_OPENCV
+#include <iostream>
+#include <fstream>
+#endif
+
 using namespace Anki::Embedded;
+
+//#define RUN_FACE_DETECTION_GUI
+
+#if defined(RUN_FACE_DETECTION_GUI) && defined(ANKICORETECH_EMBEDDED_USE_OPENCV)
+GTEST_TEST(CoreTech_Vision, FaceDetection_All)
+{
+  using namespace std;
+
+  cv::CascadeClassifier face_cascade;
+
+  //const char * face_cascade_name = "C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_frontalface_alt";
+  //const char * face_cascade_name = "C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_frontalface_alt2";
+  //const char * face_cascade_name = "C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_frontalface_alt_tree";
+  const char * face_cascade_name = "C:/Anki/coretech-external/opencv-2.4.8/data/lbpcascades/lbpcascade_frontalface";
+
+  //MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  //ASSERT_TRUE(scratchOffchip.IsValid());
+
+  //Classifier::CascadeClassifier cc(face_cascade_name.data(), scratchOffchip);
+  //cc.SaveAsHeader("c:/tmp/cascade.h", "lbpcascade_frontalface");
+
+  if( !face_cascade.load( face_cascade_name ) ) {
+    printf("Could not load %s\n", face_cascade_name.c_str());
+    return;
+  }
+
+  std::ifstream faceFilenames("C:/datasets/faces/lfw/allFiles.txt");
+
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(scratchOffchip.IsValid());
+
+  const double scaleFactor = 1.1;
+  const int minNeighbors = 2;
+  const cv::Size minSize = cv::Size(30,30);
+
+  const s32 MAX_CANDIDATES = 5000;
+
+  FixedLengthList<Rectangle<s32> > detectedFaces_anki(MAX_CANDIDATES, scratchOffchip);
+
+  Classifier::CascadeClassifier_LBP cc(face_cascade_name.data(), scratchOffchip);
+
+  //s32 curSet = 0;
+  while(!faceFilenames.eof()) {
+    const s32 numImagesAtATime = 25;
+    //const s32 numImagesAtATime = 1;
+    std::string lines[numImagesAtATime];
+
+    const s32 maxX = 1800;
+    const s32 borderPixelsX = 10;
+    const s32 borderPixelsY = 20;
+    s32 largestY = 0;
+    s32 curX = 0;
+    s32 curY = 0;
+
+    for(s32 in=0; in<numImagesAtATime; in++) {
+      PUSH_MEMORY_STACK(scratchOffchip);
+
+      getline(faceFilenames, lines[in]);
+
+      /*curSet++;
+
+      if(curSet < 47)
+      continue;*/
+
+      vector<cv::Rect> detectedFaces_opencv;
+
+      cv::Mat image = cv::imread(lines[in]);
+
+      cv::Mat grayImage = image;
+      if( grayImage.channels() > 1 )
+      {
+        cv::Mat temp;
+        cvtColor(grayImage, temp, CV_BGR2GRAY);
+        grayImage = temp;
+      }
+
+      Array<u8> imageArray(grayImage.rows, grayImage.cols, scratchOffchip);
+      imageArray.Set(grayImage);
+
+      const f32 t0 = GetTime();
+
+      face_cascade.detectMultiScale(
+        grayImage,
+        detectedFaces_opencv,
+        1.1, // double scaleFactor=1.1,
+        2, // int minNeighbors=3,
+        0|CV_HAAR_SCALE_IMAGE, // int flags=0,
+        cv::Size(30, 30), // Size minSize=Size(),
+        cv::Size() // Size maxSize=Size()
+        );
+
+      const f32 t1 = GetTime();
+
+      const cv::Size maxSize = cv::Size(imageArray.get_size(1), imageArray.get_size(0));
+
+      cc.DetectMultiScale(
+        imageArray,
+        static_cast<f32>(scaleFactor),
+        minNeighbors,
+        minSize.height, minSize.width,
+        maxSize.height, maxSize.width,
+        detectedFaces_anki,
+        scratchOffchip);
+
+      const f32 t2 = GetTime();
+
+      printf("OpenCV took %f seconds and Anki took %f seconds\n", t1-t0, t2-t1);
+
+      cv::Mat toShow;
+
+      if(image.channels() == 1) {
+        (image.rows, image.cols, CV_8UC3);
+
+        vector<cv::Mat> channels;
+        channels.push_back(image);
+        channels.push_back(image);
+        channels.push_back(image);
+        cv::merge(channels, toShow);
+      } else {
+        toShow = image;
+      }
+
+      for( s32 i = 0; i < detectedFaces_anki.get_size(); i++ )
+      {
+        cv::Point center( RoundS32((detectedFaces_anki[i].left + detectedFaces_anki[i].right)*0.5), RoundS32((detectedFaces_anki[i].top + detectedFaces_anki[i].bottom)*0.5) );
+        cv::ellipse( toShow, center, cv::Size( RoundS32((detectedFaces_anki[i].right-detectedFaces_anki[i].left)*0.5), RoundS32((detectedFaces_anki[i].bottom-detectedFaces_anki[i].top)*0.5)), 0, 0, 360, cv::Scalar( 255, 0, 0 ), 5, 8, 0 );
+      }
+
+      for( size_t i = 0; i < detectedFaces_opencv.size(); i++ )
+      {
+        cv::Point center( RoundS32(detectedFaces_opencv[i].x + detectedFaces_opencv[i].width*0.5), RoundS32(detectedFaces_opencv[i].y + detectedFaces_opencv[i].height*0.5) );
+        cv::ellipse( toShow, center, cv::Size( RoundS32(detectedFaces_opencv[i].width*0.5), RoundS32(detectedFaces_opencv[i].height*0.5)), 0, 0, 360, cv::Scalar( 0, 0, 255 ), 1, 8, 0 );
+      }
+
+      const s32 maxChars = 1024;
+      char outname[maxChars];
+      snprintf(outname, "Detected faces %d", in);
+
+      //-- Show what you got
+      cv::imshow(outname, toShow);
+
+      cv::moveWindow(outname, curX, curY);
+
+      largestY = MAX(largestY, toShow.rows);
+
+      curX += toShow.cols + borderPixelsX;
+
+      if(curX > maxX) {
+        curX = 0;
+        curY += largestY + borderPixelsY;
+      }
+    }
+
+    cv::waitKey();
+  } // while(!faceFilenames.eof())
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Vision, FaceDetection_All)
+#endif // #if defined(RUN_FACE_DETECTION_GUI) && defined(ANKICORETECH_EMBEDDED_USE_OPENCV)
+
+GTEST_TEST(CoreTech_Vision, FaceDetection)
+{
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  ASSERT_TRUE(scratchCcm.IsValid());
+
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(scratchOnchip.IsValid());
+
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(scratchOffchip.IsValid());
+
+  //const char * face_cascade_name = "C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_frontalface_alt";
+  //const char * face_cascade_name = "C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_frontalface_alt2";
+  //const char * face_cascade_name = "C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_frontalface_alt_tree";
+  const char * face_cascade_name = "C:/Anki/coretech-external/opencv-2.4.8/data/lbpcascades/lbpcascade_frontalface.xml";
+
+  const s32 imageHeight = 240;
+  const s32 imageWidth = 320;
+
+  const double scaleFactor = 1.1;
+  const int minNeighbors = 2;
+  const s32 minHeight = 30;
+  const s32 minWidth = 30;
+  const s32 maxHeight = imageHeight;
+  const s32 maxWidth = imageWidth;
+
+  const s32 MAX_CANDIDATES = 5000;
+
+  Array<u8> image(imageHeight, imageWidth, scratchOnchip);
+  image.Set(&cozmo_date2014_04_10_time16_15_40_frame0[0], imageHeight*imageWidth);
+
+  FixedLengthList<Rectangle<s32> > detectedFaces_anki(MAX_CANDIDATES, scratchOnchip);
+
+  //Classifier::CascadeClassifier_LBP cc(face_cascade_name, scratchOffchip);
+  //cc.SaveAsHeader("c:/tmp/lbpcascade_frontalface.h", "lbpcascade_frontalface");
+
+  const f32 t0 = GetTime();
+
+  // TODO: are these const casts okay?
+  const FixedLengthList<Classifier::CascadeClassifier::Stage> &stages = FixedLengthList<Classifier::CascadeClassifier::Stage>(lbpcascade_frontalface_stages_length, const_cast<Classifier::CascadeClassifier::Stage*>(&lbpcascade_frontalface_stages_data[0]), lbpcascade_frontalface_stages_length*sizeof(Classifier::CascadeClassifier::Stage) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+  const FixedLengthList<Classifier::CascadeClassifier::DTree> &classifiers = FixedLengthList<Classifier::CascadeClassifier::DTree>(lbpcascade_frontalface_classifiers_length, const_cast<Classifier::CascadeClassifier::DTree*>(&lbpcascade_frontalface_classifiers_data[0]), lbpcascade_frontalface_classifiers_length*sizeof(Classifier::CascadeClassifier::DTree) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+  const FixedLengthList<Classifier::CascadeClassifier::DTreeNode> &nodes =  FixedLengthList<Classifier::CascadeClassifier::DTreeNode>(lbpcascade_frontalface_nodes_length, const_cast<Classifier::CascadeClassifier::DTreeNode*>(&lbpcascade_frontalface_nodes_data[0]), lbpcascade_frontalface_nodes_length*sizeof(Classifier::CascadeClassifier::DTreeNode) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));;
+  const FixedLengthList<f32> &leaves = FixedLengthList<f32>(lbpcascade_frontalface_leaves_length, const_cast<f32*>(&lbpcascade_frontalface_leaves_data[0]), lbpcascade_frontalface_leaves_length*sizeof(f32) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+  const FixedLengthList<s32> &subsets = FixedLengthList<s32>(lbpcascade_frontalface_subsets_length, const_cast<s32*>(&lbpcascade_frontalface_subsets_data[0]), lbpcascade_frontalface_subsets_length*sizeof(s32) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+  const FixedLengthList<Rectangle<s32> > &featureRectangles = FixedLengthList<Rectangle<s32> >(lbpcascade_frontalface_featureRectangles_length, const_cast<Rectangle<s32>*>(reinterpret_cast<const Rectangle<s32>*>(&lbpcascade_frontalface_featureRectangles_data[0])), lbpcascade_frontalface_featureRectangles_length*sizeof(Rectangle<s32>) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+
+  Classifier::CascadeClassifier_LBP cc(
+    lbpcascade_frontalface_isStumpBased,
+    lbpcascade_frontalface_stageType,
+    lbpcascade_frontalface_featureType,
+    lbpcascade_frontalface_ncategories,
+    lbpcascade_frontalface_origWinHeight,
+    lbpcascade_frontalface_origWinWidth,
+    stages,
+    classifiers,
+    nodes,
+    leaves,
+    subsets,
+    featureRectangles,
+    scratchCcm);
+
+  const f32 t1 = GetTime();
+
+  const Result result = cc.DetectMultiScale(
+    image,
+    static_cast<f32>(scaleFactor),
+    minNeighbors,
+    minHeight, minWidth,
+    maxHeight, maxWidth,
+    detectedFaces_anki,
+    scratchOffchip);
+
+  ASSERT_TRUE(result == RESULT_OK);
+
+  const f32 t2 = GetTime();
+  
+  printf("Detection took %f seconds (setup time %f seconds)\n", t2-t1, t1-t0);
+
+  ASSERT_TRUE(detectedFaces_anki.get_size() == 1);
+  ASSERT_TRUE(detectedFaces_anki[0] == Rectangle<s32>(103,218,40,155));  
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Vision, FaceDetection)
+
+GTEST_TEST(CoreTech_Vision, ResizeImage)
+{
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(scratchOnchip.IsValid());
+
+  Array<f32> in(2, 5, scratchOnchip);
+  Array<f32> outBig(3, 6, scratchOnchip);
+  Array<f32> outSmall(2, 5, scratchOnchip);
+
+  in[0][0] = 1; in[0][1] = 2; in[0][2] = 3; in[0][3] = 4; in[0][4] = 5;
+  in[1][0] = 6; in[1][1] = 7; in[1][2] = 8; in[1][3] = 9; in[1][4] = 5;
+
+  {
+    const Result result = ImageProcessing::Resize<f32,f32>(in, outBig);
+
+    outBig.Print("outBig");
+
+    ASSERT_TRUE(result == RESULT_OK);
+  }
+
+  Array<f32> outBig_groundTruth(3, 6, scratchOnchip);
+
+  outBig_groundTruth[0][0] = 1.0000f; outBig_groundTruth[0][1] = 1.7500f; outBig_groundTruth[0][2] = 2.5833f; outBig_groundTruth[0][3] = 3.4167f; outBig_groundTruth[0][4] = 4.2500f; outBig_groundTruth[0][5] = 5.0000f;
+  outBig_groundTruth[1][0] = 3.5000f; outBig_groundTruth[1][1] = 4.2500f; outBig_groundTruth[1][2] = 5.0833f; outBig_groundTruth[1][3] = 5.9167f; outBig_groundTruth[1][4] = 6.1250f; outBig_groundTruth[1][5] = 5.0000f;
+  outBig_groundTruth[2][0] = 6.0000f; outBig_groundTruth[2][1] = 6.7500f; outBig_groundTruth[2][2] = 7.5833f; outBig_groundTruth[2][3] = 8.4167f; outBig_groundTruth[2][4] = 8.0000f; outBig_groundTruth[2][5] = 5.0000f;
+
+  ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(outBig, outBig_groundTruth, .01, .01));
+
+  {
+    const Result result = ImageProcessing::Resize<f32,f32>(outBig_groundTruth, outSmall);
+
+    outSmall.Print("outSmall");
+
+    ASSERT_TRUE(result == RESULT_OK);
+  }
+
+  Array<f32> outSmall_groundTruth(2, 5, scratchOnchip);
+
+  outSmall_groundTruth[0][0] = 1.7000f; outSmall_groundTruth[0][1] = 2.6250f; outSmall_groundTruth[0][2] = 3.6250f; outSmall_groundTruth[0][3] = 4.5156f; outSmall_groundTruth[0][4] = 4.9719f;
+  outSmall_groundTruth[1][0] = 5.4500f; outSmall_groundTruth[1][1] = 6.3750f; outSmall_groundTruth[1][2] = 7.3750f; outSmall_groundTruth[1][3] = 7.6094f; outSmall_groundTruth[1][4] = 5.2531f;
+
+  ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(outSmall, outSmall_groundTruth, .01, .01));
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Vision, ResizeImage)
 
 GTEST_TEST(CoreTech_Vision, DecisionTreeVision)
 {
@@ -224,6 +522,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
   TemplateTracker::BinaryTracker::EdgeDetectionParameters edgeDetectionParams_template(
     TemplateTracker::BinaryTracker::EDGE_TYPE_GRAYVALUE,
+    //TemplateTracker::BinaryTracker::EDGE_TYPE_DERIVATIVE,
     4,    // s32 threshold_yIncrement; //< How many pixels to use in the y direction (4 is a good value?)
     4,    // s32 threshold_xIncrement; //< How many pixels to use in the x direction (4 is a good value?)
     0.1f, // f32 threshold_blackPercentile; //< What percentile of histogram energy is black? (.1 is a good value)
@@ -285,7 +584,11 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     const s32 numTemplatePixels = tracker.get_numTemplatePixels();
 
-    ASSERT_TRUE(numTemplatePixels == 1292);
+    if(edgeDetectionParams_template.type == TemplateTracker::BinaryTracker::EDGE_TYPE_GRAYVALUE) {
+      ASSERT_TRUE(numTemplatePixels == 1292);
+    } else if(edgeDetectionParams_template.type == TemplateTracker::BinaryTracker::EDGE_TYPE_DERIVATIVE) {
+      ASSERT_TRUE(numTemplatePixels == 1366);
+    }
 
     BeginBenchmark("BinaryTracker update fixed-float");
 
@@ -313,14 +616,16 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
 
-    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
-    transform_groundTruth[0][0] = 1.069f; transform_groundTruth[0][1] = -0.001f;   transform_groundTruth[0][2] = 2.376f;
-    transform_groundTruth[1][0] = 0.003f; transform_groundTruth[1][1] = 1.061f; transform_groundTruth[1][2] = -4.109f;
-    transform_groundTruth[2][0] = 0.0f;   transform_groundTruth[2][1] = 0.0f;   transform_groundTruth[2][2] = 1.0f;
+    if(edgeDetectionParams_template.type == TemplateTracker::BinaryTracker::EDGE_TYPE_GRAYVALUE) {
+      Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
+      transform_groundTruth[0][0] = 1.069f; transform_groundTruth[0][1] = -0.001f;   transform_groundTruth[0][2] = 2.376f;
+      transform_groundTruth[1][0] = 0.003f; transform_groundTruth[1][1] = 1.061f; transform_groundTruth[1][2] = -4.109f;
+      transform_groundTruth[2][0] = 0.0f;   transform_groundTruth[2][1] = 0.0f;   transform_groundTruth[2][2] = 1.0f;
 
-    tracker.get_transformation().get_homography().Print("fixed-float 1");
+      //tracker.get_transformation().get_homography().Print("fixed-float 1");
 
-    ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
+      ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
+    }
 
     PrintBenchmarkResults_OnlyTotals();
   } // Skip zero rows/columns (non-list)
@@ -346,7 +651,11 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     const s32 numTemplatePixels = tracker.get_numTemplatePixels();
 
-    ASSERT_TRUE(numTemplatePixels == 647);
+    if(edgeDetectionParams_template.type == TemplateTracker::BinaryTracker::EDGE_TYPE_GRAYVALUE) {
+      ASSERT_TRUE(numTemplatePixels == 647);
+    } else if(edgeDetectionParams_template.type == TemplateTracker::BinaryTracker::EDGE_TYPE_DERIVATIVE) {
+      ASSERT_TRUE(numTemplatePixels == 678);
+    }
 
     //templateImage.Show("templateImage",false);
     //nextImage.Show("nextImage",false);
@@ -377,14 +686,16 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
 
-    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
-    transform_groundTruth[0][0] = 1.069f; transform_groundTruth[0][1] = -0.001f; transform_groundTruth[0][2] = 2.440f;
-    transform_groundTruth[1][0] = 0.005f; transform_groundTruth[1][1] = 1.061f; transform_groundTruth[1][2] = -4.100f;
-    transform_groundTruth[2][0] = 0.0f;   transform_groundTruth[2][1] = 0.0f;   transform_groundTruth[2][2] = 1.0f;
+    if(edgeDetectionParams_template.type == TemplateTracker::BinaryTracker::EDGE_TYPE_GRAYVALUE) {
+      Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
+      transform_groundTruth[0][0] = 1.069f; transform_groundTruth[0][1] = -0.001f; transform_groundTruth[0][2] = 2.440f;
+      transform_groundTruth[1][0] = 0.005f; transform_groundTruth[1][1] = 1.061f; transform_groundTruth[1][2] = -4.100f;
+      transform_groundTruth[2][0] = 0.0f;   transform_groundTruth[2][1] = 0.0f;   transform_groundTruth[2][2] = 1.0f;
 
-    tracker.get_transformation().get_homography().Print("fixed-float 2");
+      //tracker.get_transformation().get_homography().Print("fixed-float 2");
 
-    ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
+      ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
+    }
 
     PrintBenchmarkResults_OnlyTotals();
   } // Skip one row/column (non-list)
@@ -410,7 +721,11 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     const s32 numTemplatePixels = tracker.get_numTemplatePixels();
 
-    ASSERT_TRUE(numTemplatePixels == 1292);
+    if(edgeDetectionParams_template.type == TemplateTracker::BinaryTracker::EDGE_TYPE_GRAYVALUE) {
+      ASSERT_TRUE(numTemplatePixels == 1292);
+    } else if(edgeDetectionParams_template.type == TemplateTracker::BinaryTracker::EDGE_TYPE_DERIVATIVE) {
+      ASSERT_TRUE(numTemplatePixels == 1366);
+    }
 
     //templateImage.Show("templateImage",false);
     //nextImage.Show("nextImage",false);
@@ -441,14 +756,16 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
 
-    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
-    transform_groundTruth[0][0] = 1.068f; transform_groundTruth[0][1] = -0.001f;   transform_groundTruth[0][2] = 2.376f;
-    transform_groundTruth[1][0] = 0.003f; transform_groundTruth[1][1] = 1.061f; transform_groundTruth[1][2] = -4.109f;
-    transform_groundTruth[2][0] = 0.0f;   transform_groundTruth[2][1] = 0.0f;   transform_groundTruth[2][2] = 1.0f;
+    if(edgeDetectionParams_template.type == TemplateTracker::BinaryTracker::EDGE_TYPE_GRAYVALUE) {
+      Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
+      transform_groundTruth[0][0] = 1.068f; transform_groundTruth[0][1] = -0.001f;   transform_groundTruth[0][2] = 2.376f;
+      transform_groundTruth[1][0] = 0.003f; transform_groundTruth[1][1] = 1.061f; transform_groundTruth[1][2] = -4.109f;
+      transform_groundTruth[2][0] = 0.0f;   transform_groundTruth[2][1] = 0.0f;   transform_groundTruth[2][2] = 1.0f;
 
-    tracker.get_transformation().get_homography().Print("fixed-float 1");
+      //tracker.get_transformation().get_homography().Print("fixed-float 1");
 
-    ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
+      ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
+    }
 
     PrintBenchmarkResults_OnlyTotals();
   } // Skip zero rows/columns (with-list)
@@ -474,7 +791,11 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     const s32 numTemplatePixels = tracker.get_numTemplatePixels();
 
-    ASSERT_TRUE(numTemplatePixels == 647);
+    if(edgeDetectionParams_template.type == TemplateTracker::BinaryTracker::EDGE_TYPE_GRAYVALUE) {
+      ASSERT_TRUE(numTemplatePixels == 647);
+    } else if(edgeDetectionParams_template.type == TemplateTracker::BinaryTracker::EDGE_TYPE_DERIVATIVE) {
+      ASSERT_TRUE(numTemplatePixels == 678);
+    }
 
     //templateImage.Show("templateImage",false);
     //nextImage.Show("nextImage",false);
@@ -505,14 +826,16 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
 
-    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
-    transform_groundTruth[0][0] = 1.069f; transform_groundTruth[0][1] = -0.001f; transform_groundTruth[0][2] = 2.440f;
-    transform_groundTruth[1][0] = 0.005f; transform_groundTruth[1][1] = 1.060f; transform_groundTruth[1][2] = -4.100f;
-    transform_groundTruth[2][0] = 0.0f;   transform_groundTruth[2][1] = 0.0f;   transform_groundTruth[2][2] = 1.0f;
+    if(edgeDetectionParams_template.type == TemplateTracker::BinaryTracker::EDGE_TYPE_GRAYVALUE) {
+      Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
+      transform_groundTruth[0][0] = 1.069f; transform_groundTruth[0][1] = -0.001f; transform_groundTruth[0][2] = 2.440f;
+      transform_groundTruth[1][0] = 0.005f; transform_groundTruth[1][1] = 1.060f; transform_groundTruth[1][2] = -4.100f;
+      transform_groundTruth[2][0] = 0.0f;   transform_groundTruth[2][1] = 0.0f;   transform_groundTruth[2][2] = 1.0f;
 
-    tracker.get_transformation().get_homography().Print("fixed-float 2");
+      //tracker.get_transformation().get_homography().Print("fixed-float 2");
 
-    ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
+      ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
+    }
 
     PrintBenchmarkResults_OnlyTotals();
   } // Skip one row/column (with-list)
@@ -569,14 +892,16 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
 
-    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
-    transform_groundTruth[0][0] = 1.068f; transform_groundTruth[0][1] = -0.001f;   transform_groundTruth[0][2] = 2.376f;
-    transform_groundTruth[1][0] = 0.003f; transform_groundTruth[1][1] = 1.061f; transform_groundTruth[1][2] = -4.109f;
-    transform_groundTruth[2][0] = 0.0f;   transform_groundTruth[2][1] = 0.0f;   transform_groundTruth[2][2] = 1.0f;
+    if(edgeDetectionParams_template.type == TemplateTracker::BinaryTracker::EDGE_TYPE_GRAYVALUE) {
+      Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
+      transform_groundTruth[0][0] = 1.068f; transform_groundTruth[0][1] = -0.001f;   transform_groundTruth[0][2] = 2.376f;
+      transform_groundTruth[1][0] = 0.003f; transform_groundTruth[1][1] = 1.061f; transform_groundTruth[1][2] = -4.109f;
+      transform_groundTruth[2][0] = 0.0f;   transform_groundTruth[2][1] = 0.0f;   transform_groundTruth[2][2] = 1.0f;
 
-    tracker.get_transformation().get_homography().Print("fixed-float 1");
+      //tracker.get_transformation().get_homography().Print("fixed-float 1");
 
-    //ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
+      //ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
+    }
 
     PrintBenchmarkResults_OnlyTotals();
   } // Skip zero rows/columns (with-ransac)
@@ -633,14 +958,16 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
 
-    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
-    transform_groundTruth[0][0] = 1.069f; transform_groundTruth[0][1] = -0.001f; transform_groundTruth[0][2] = 2.440f;
-    transform_groundTruth[1][0] = 0.005f; transform_groundTruth[1][1] = 1.060f; transform_groundTruth[1][2] = -4.100f;
-    transform_groundTruth[2][0] = 0.0f;   transform_groundTruth[2][1] = 0.0f;   transform_groundTruth[2][2] = 1.0f;
+    if(edgeDetectionParams_template.type == TemplateTracker::BinaryTracker::EDGE_TYPE_GRAYVALUE) {
+      Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
+      transform_groundTruth[0][0] = 1.069f; transform_groundTruth[0][1] = -0.001f; transform_groundTruth[0][2] = 2.440f;
+      transform_groundTruth[1][0] = 0.005f; transform_groundTruth[1][1] = 1.060f; transform_groundTruth[1][2] = -4.100f;
+      transform_groundTruth[2][0] = 0.0f;   transform_groundTruth[2][1] = 0.0f;   transform_groundTruth[2][2] = 1.0f;
 
-    tracker.get_transformation().get_homography().Print("fixed-float 2");
+      //tracker.get_transformation().get_homography().Print("fixed-float 2");
 
-    //ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
+      //ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
+    }
 
     PrintBenchmarkResults_OnlyTotals();
   } // Skip one row/column (with-ransac)
@@ -3431,9 +3758,11 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   numPassedTests = 0;
   numFailedTests = 0;
 
-  CALL_GTEST_TEST(CoreTech_Vision, DecisionTreeVision);
-  CALL_GTEST_TEST(CoreTech_Vision, BinaryTracker);
-  CALL_GTEST_TEST(CoreTech_Vision, DetectBlurredEdge_DerivativeThreshold);
+  CALL_GTEST_TEST(CoreTech_Vision, FaceDetection);
+  //CALL_GTEST_TEST(CoreTech_Vision, ResizeImage);
+  //CALL_GTEST_TEST(CoreTech_Vision, DecisionTreeVision);
+  //CALL_GTEST_TEST(CoreTech_Vision, BinaryTracker);
+  /*CALL_GTEST_TEST(CoreTech_Vision, DetectBlurredEdge_DerivativeThreshold);
   CALL_GTEST_TEST(CoreTech_Vision, DetectBlurredEdge_GrayvalueThreshold);
   CALL_GTEST_TEST(CoreTech_Vision, DownsampleByPowerOfTwo);
   //CALL_GTEST_TEST(CoreTech_Vision, ComputeDockingErrorSignalAffine);
@@ -3464,7 +3793,7 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   CALL_GTEST_TEST(CoreTech_Vision, BinomialFilter);
   CALL_GTEST_TEST(CoreTech_Vision, DownsampleByFactor);
   CALL_GTEST_TEST(CoreTech_Vision, SolveQuartic);
-  CALL_GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation);
+  CALL_GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation);*/
 
   return numFailedTests;
 } // int RUN_ALL_VISION_TESTS()

@@ -433,6 +433,11 @@ namespace Anki
 
       return segmentStart;
     }
+
+    template<typename Type> void* SerializedBuffer::PushBack(const char *objectName, const FixedLengthList<Type> &in)
+    {
+      return PushBack(objectName, *static_cast<const ArraySlice<Type>*>(&in));
+    }
   } // namespace Embedded
 } //namespace Anki
 

@@ -8,7 +8,7 @@
 
 #include "uart.h"
 
-#define TO_FIXED(x) ((x) * 65536)
+#define TO_FIXED(x) ((x) * 65535)
 #define FIXED_MUL(x, y) ((s32)(((s64)(x) * (s64)(y)) >> 16))
 #define FIXED_DIV(x, y) ((s32)(((s64)(x) << 16) / (y)))
 
@@ -51,10 +51,10 @@ namespace
   
   const s16 PWM_DIVISOR = SHRT_MAX / TIMER_TICKS_END;
   
-  const u8 LEFT_WHEEL_FORWARD_PIN = 3;
-  const u8 LEFT_WHEEL_BACKWARD_PIN = 7;
-  const u8 RIGHT_WHEEL_FORWARD_PIN = 23;
-  const u8 RIGHT_WHEEL_BACKWARD_PIN = 22;
+  const u8 LEFT_WHEEL_FORWARD_PIN = 7;
+  const u8 LEFT_WHEEL_BACKWARD_PIN = 3;
+  const u8 RIGHT_WHEEL_FORWARD_PIN = 22;
+  const u8 RIGHT_WHEEL_BACKWARD_PIN = 23;
   const u8 LIFT_UP_PIN = 24;
   const u8 LIFT_DOWN_PIN = 25;
   const u8 HEAD_UP_PIN = 10;
@@ -194,6 +194,8 @@ static void ConfigurePinSense(u8 pin, u32 pinState)
   }
 }
 
+// Reset Nordic tasks to allow less glitchy changes.
+// Without a reset, the polarity will become permanently inverted.
 static void ConfigureTask(u8 motorID)
 {
   MotorInfo* motorInfo = &m_motors[motorID];
@@ -374,13 +376,25 @@ void MotorsUpdate()
   g_dataToHead.positions[1] = m_motors[1].position;
   g_dataToHead.positions[2] = m_motors[2].position;
   g_dataToHead.positions[3] = m_motors[3].position;
-  
-  /*UARTPutHex32(g_dataToHead.speeds[3]);
-  UARTPutChar(' ');
-  UARTPutHex32(g_dataToHead.positions[3]);
-  UARTPutChar('\n');*/
 }
 
+void MotorsPrintEncodersRaw()
+{
+  UARTPutChar('0' + nrf_gpio_pin_read(ENCODER_1_PIN));
+  UARTPutChar(' ');
+  UARTPutChar('0' + nrf_gpio_pin_read(ENCODER_2_PIN));
+  UARTPutChar(' ');
+  UARTPutChar('0' + nrf_gpio_pin_read(ENCODER_3A_PIN));
+  UARTPutChar(' ');
+  UARTPutChar('0' + nrf_gpio_pin_read(ENCODER_3B_PIN));
+  UARTPutChar(' ');
+  UARTPutChar('0' + nrf_gpio_pin_read(ENCODER_4A_PIN));
+  UARTPutChar(' ');
+  UARTPutChar('0' + nrf_gpio_pin_read(ENCODER_4B_PIN));
+  UARTPutChar('\n');
+}
+
+// TODO: This should be optimized
 static void HandlePinTransition(MotorInfo* motorInfo, u32 pinState, u32 count)
 {
   u32 pin = motorInfo->encoderPins[0];

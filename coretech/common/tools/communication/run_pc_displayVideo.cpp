@@ -88,8 +88,20 @@ static DisplayRawBuffer AllocateNewRawBuffer(const s32 bufferRawSize)
 
 int main(int argc, char ** argv)
 {
-  double lastUpdateTime;
+  const bool useTcp = true;
+
+  // TCP
+  Socket socket;
+  const char * ipAddress = "192.168.3.30";
+  const s32 port = 5551;
+
+  // Com
   Serial serial;
+  s32 comPort = 11;
+  s32 baudRate = 1000000;
+
+  double lastUpdateTime;
+
   const s32 USB_BUFFER_SIZE = 5000;
   const s32 MESSAGE_BUFFER_SIZE = 1000000;
 
@@ -98,9 +110,6 @@ int main(int argc, char ** argv)
   DisplayRawBuffer nextMessage = AllocateNewRawBuffer(MESSAGE_BUFFER_SIZE);
 
   ThreadSafeQueue<DisplayRawBuffer> messageQueue = ThreadSafeQueue<DisplayRawBuffer>();
-
-  s32 comPort = 11;
-  s32 baudRate = 1000000;
 
   if(argc == 1) {
     // just use defaults, but print the help anyway
@@ -113,8 +122,13 @@ int main(int argc, char ** argv)
     return -1;
   }
 
-  if(serial.Open(comPort, baudRate) != RESULT_OK)
-    return -2;
+  if(useTcp) {
+    if(socket.Open(ipAddress, port) != RESULT_OK)
+      return -2;
+  } else {
+    if(serial.Open(comPort, baudRate) != RESULT_OK)
+      return -2;
+  }
 
   lastUpdateTime = GetTime() + 10e10;
 
@@ -139,8 +153,14 @@ int main(int argc, char ** argv)
     }
 
     DWORD bytesRead = 0;
-    if(serial.Read(usbBuffer, USB_BUFFER_SIZE-2, bytesRead) != RESULT_OK)
-      return -4;
+
+    if(useTcp) {
+      if(socket.Read(usbBuffer, USB_BUFFER_SIZE-2, bytesRead) != RESULT_OK)
+        return -4;
+    } else {
+      if(serial.Read(usbBuffer, USB_BUFFER_SIZE-2, bytesRead) != RESULT_OK)
+        return -4;
+    }
 
     if(bytesRead == 0) {
       Sleep(1);

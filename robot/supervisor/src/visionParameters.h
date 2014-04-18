@@ -51,9 +51,15 @@ namespace Anki {
 
 #if(STREAM_DEBUG_IMAGES)
       #define SEND_DEBUG_STREAM 1
-      #define RUN_SIMPLE_TRACKING_TEST
-      //#define SEND_IMAGE_ONLY
-      //#define SEND_BINARY_IMAGE_ONLY
+      //#define RUN_SIMPLE_TRACKING_TEST 1
+      #define RUN_SIMPLE_FACE_DETECTION_TEST 1
+      //#define SEND_IMAGE_ONLY 1
+      //#define SEND_BINARY_IMAGE_ONLY 1
+      
+#if defined(RUN_SIMPLE_TRACKING_TEST) && defined(RUN_SIMPLE_FACE_DETECTION_TEST)
+#error Cannot run both RUN_SIMPLE_TRACKING_TEST and RUN_SIMPLE_FACE_DETECTION_TEST
+#endif
+
 #else
       #define SEND_DEBUG_STREAM 0
 #endif
