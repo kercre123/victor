@@ -150,3 +150,69 @@ Result Serial::Read(void * buffer, s32 bufferLength, DWORD &bytesRead)
 
   return RESULT_OK;
 }
+
+Socket::Socket()
+  : isOpen(false), socketHandle(NULL)
+{
+}
+
+Result Socket::Open(
+  const char * ipAddress,
+  const s32 port)
+{
+  // Based on example at http://www.codeproject.com/Articles/13071/Programming-Windows-TCP-Sockets-in-C-for-the-Begin
+
+  const s32 winsockVersion = 0x0202;
+
+  WSADATA wsadata;
+
+  const s32 error = WSAStartup(winsockVersion, &wsadata);
+
+  if(error)
+    return RESULT_FAIL_IO;
+
+  if(wsadata.wVersion != winsockVersion) {
+    WSACleanup(); //Clean up Winsock
+    return RESULT_FAIL_IO;
+  }
+
+  SOCKADDR_IN target; //Socket address information
+
+  target.sin_family = AF_INET; // address family Internet
+  target.sin_port = htons (port); //Port to connect on
+  target.sin_addr.s_addr = inet_addr (ipAddress); //Target IP
+
+  socketHandle = socket (AF_INET, SOCK_STREAM, IPPROTO_TCP); //Create socket
+  if (socketHandle == INVALID_SOCKET) {
+    const s32 lastError = WSAGetLastError();
+    return RESULT_FAIL_IO; //Couldn't create the socket
+  }
+
+  const s32 connectResult = connect(socketHandle, (SOCKADDR *)&target, sizeof(target));
+  if (connectResult == SOCKET_ERROR) {
+    const s32 lastError = WSAGetLastError();
+    return RESULT_FAIL_IO; //Couldn't connect
+  }
+
+  return RESULT_OK;
+}
+
+Result Socket::Close()
+{
+  if(socketHandle)
+    closesocket(socketHandle);
+
+  WSACleanup();
+
+  return RESULT_OK;
+}
+
+Result Socket::Read(void * buffer, s32 bufferLength, DWORD &bytesRead)
+{
+  const s32 received = recv(socketHandle, reinterpret_cast<char*>(buffer), bufferLength, 0);
+
+  if(received < 0)
+    return RESULT_FAIL_IO;
+
+  return RESULT_OK;
+}
