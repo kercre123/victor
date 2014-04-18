@@ -74,7 +74,7 @@ namespace Anki {
         static const s32 OFFCHIP_BUFFER_SIZE = 2000000;
         static const s32 ONCHIP_BUFFER_SIZE = 170000; // The max here is somewhere between 175000 and 180000 bytes
         static const s32 CCM_BUFFER_SIZE = 50000; // The max here is probably 65536 (0x10000) bytes
-        static const s32 MAX_MARKERS = 100;
+        static const s32 MAX_MARKERS = 100; // TODO: this should probably be in visionParameters
         
         static OFFCHIP char offchipBuffer[OFFCHIP_BUFFER_SIZE];
         static ONCHIP char onchipBuffer[ONCHIP_BUFFER_SIZE];
@@ -119,13 +119,15 @@ namespace Anki {
 
         // The tracker can fail to converge this many times before we give up
         // and reset the docker
+        // TODO: Move this to visionParameters
         static const s32 MAX_TRACKING_FAILURES = 1;
         
         static const Anki::Cozmo::HAL::CameraInfo* headCamInfo_;
         static f32 headCamFOV_;
+        static Array<f32> RcamWrtRobot_;
         
         static VisionSystemMode mode_;
-        
+       
         // Tracking marker related members
         static Anki::Vision::MarkerType markerTypeToTrack_;
         static Quadrilateral<f32> trackingQuad_;
@@ -1016,6 +1018,8 @@ namespace Anki {
           if(result != EXIT_SUCCESS) { return result; }
 #endif
           
+          RcamWrtRobot_ = Array<f32>(3,3,VisionMemory::onchipScratch_);
+          
           isInitialized_ = true;
         }
         
@@ -1056,8 +1060,105 @@ namespace Anki {
         mode_ = VISION_MODE_IDLE;
       }
       
+      const Embedded::FixedLengthList<Embedded::VisionMarker>& GetObservedMarkerList()
+      {
+        return VisionMemory::markers_;
+      } // GetObservedMarkerList()
       
       
+      template<typename PRECISION>
+      static Result GetCamPoseWrtRobot(Array<PRECISION>& RcamWrtRobot,
+                                       Point3<PRECISION>& TcamWrtRobot)
+      {
+        AnkiConditionalErrorAndReturnValue(RcamWrtRobot.get_size(0)==3 &&
+                                           RcamWrtRobot.get_size(1)==3,
+                                           RESULT_FAIL_INVALID_SIZE,
+                                           "VisionSystem::GetCamPoseWrtRobot",
+                                           "Rotation matrix must already be 3x3.");
+        
+        const f32 headAngle = HeadController::GetAngleRad();
+        const f32 cosH = cosf(headAngle);
+        const f32 sinH = sinf(headAngle);
+
+        RcamWrtRobot[0][0] = 0;  RcamWrtRobot[0][1] = sinH;  RcamWrtRobot[0][2] = cosH;
+        RcamWrtRobot[1][0] = -1; RcamWrtRobot[1][1] = 0;     RcamWrtRobot[1][2] = 0;
+        RcamWrtRobot[2][0] = 0;  RcamWrtRobot[2][1] = -cosH; RcamWrtRobot[2][2] = sinH;
+        
+        TcamWrtRobot.x = HEAD_CAM_POSITION[0]*cosH - HEAD_CAM_POSITION[2]*sinH + NECK_JOINT_POSITION[0];
+        TcamWrtRobot.y = 0;
+        TcamWrtRobot.z = HEAD_CAM_POSITION[2]*cosH + HEAD_CAM_POSITION[0]*sinH + NECK_JOINT_POSITION[2];
+        
+        return RESULT_OK;
+      }
+      
+      Result GetWithRespectToRobot(const Embedded::Point3<f32>& pointWrtCamera,
+                                   Embedded::Point3<f32>&       pointWrtRobot)
+      {
+        Point3<f32> TcamWrtRobot;
+        
+        Result lastResult;
+        if((lastResult = GetCamPoseWrtRobot(RcamWrtRobot_, TcamWrtRobot)) != RESULT_OK) {
+          return lastResult;
+        }
+        
+        pointWrtRobot = RcamWrtRobot_*pointWrtCamera + TcamWrtRobot;
+        
+        return RESULT_OK;
+      }
+      
+      Result GetWithRespectToRobot(const Embedded::Array<f32>&  rotationWrtCamera,
+                                   const Embedded::Point3<f32>& translationWrtCamera,
+                                   Embedded::Array<f32>&        rotationWrtRobot,
+                                   Embedded::Point3<f32>&       translationWrtRobot)
+      {
+        Point3<f32> TcamWrtRobot;
+        
+        Result lastResult;
+        if((lastResult = GetCamPoseWrtRobot(RcamWrtRobot_, TcamWrtRobot)) != RESULT_OK) {
+          return lastResult;
+        }
+        
+        if((lastResult = Matrix::Multiply(RcamWrtRobot_, rotationWrtCamera, rotationWrtRobot)) != RESULT_OK) {
+          return lastResult;
+        }
+        
+        translationWrtRobot = RcamWrtRobot_*translationWrtCamera + TcamWrtRobot;
+        
+        return RESULT_OK;
+      }
+      
+      ReturnCode GetVisionMarkerPose(const Embedded::VisionMarker& marker,
+                                     Embedded::Array<f32>&  rotation,
+                                     Embedded::Point3<f32>& translation,
+                                     const bool ignoreOrientation,
+                                     Embedded::MemoryStack  scratch)
+      {
+        Quadrilateral<f32> quad(Point<f32>(marker.corners[0].x, marker.corners[0].y),
+                                          Point<f32>(marker.corners[1].x, marker.corners[1].y),
+                                          Point<f32>(marker.corners[2].x, marker.corners[2].y),
+                                          Point<f32>(marker.corners[3].x, marker.corners[3].y));
+        
+        Quadrilateral<f32> sortedQuad;
+        if(ignoreOrientation) {
+          sortedQuad = marker.corners.ComputeClockwiseCorners<f32>();
+        } else {
+          sortedQuad = Quadrilateral<f32>(Point<f32>(marker.corners[0].x, marker.corners[0].y),
+                                                    Point<f32>(marker.corners[1].x, marker.corners[1].y),
+                                                    Point<f32>(marker.corners[2].x, marker.corners[2].y),
+                                                    Point<f32>(marker.corners[3].x, marker.corners[3].y));
+        }
+        
+
+        return P3P::computePose(sortedQuad,
+                                canonicalMarker3d_[0], canonicalMarker3d_[1],
+                                canonicalMarker3d_[2], canonicalMarker3d_[3],
+                                headCamInfo_->focalLength_x, headCamInfo_->focalLength_y,
+                                headCamInfo_->center_x, headCamInfo_->center_y,
+                                rotation, translation, scratch);
+        
+      } // GetVisionMarkerPose()
+      
+            
 #ifdef SEND_IMAGE_ONLY
       // In SEND_IMAGE_ONLY mode, just create a special version of update
       

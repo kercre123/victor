@@ -135,18 +135,13 @@ namespace Anki {
               dockMsg.x_distErr += HEAD_CAM_POSITION[0]*cosf(HeadController::GetAngleRad()) + NECK_JOINT_POSITION[0];
             }
             else {
-              // TODO: Actually push the dockMsg (x,y,z) camera-centric position through full robot kinematics
-              const f32 headAngle = HeadController::GetAngleRad();
-              const f32 cosH = cosf(headAngle);
-              const f32 sinH = sinf(headAngle);
+              Embedded::Point3<f32> tempPoint;
+              VisionSystem::GetWithRespectToRobot(Embedded::Point3<f32>(dockMsg.x_distErr, dockMsg.y_horErr, dockMsg.z_height),
+                                                  tempPoint);
               
-              const f32 xNew = dockMsg.z_height*cosH + dockMsg.y_horErr*sinH;
-              const f32 yNew = -dockMsg.x_distErr;
-              const f32 zNew = -dockMsg.y_horErr*cosH + dockMsg.z_height*sinH;
-              
-              dockMsg.x_distErr = xNew + HEAD_CAM_POSITION[0]*cosH + HEAD_CAM_POSITION[2]*sinH + NECK_JOINT_POSITION[0];
-              dockMsg.y_horErr  = yNew; // HEAD_CAM_POSITION[1] and NECK_JOINT_POSITION[1] are 0
-              dockMsg.z_height  = zNew + HEAD_CAM_POSITION[2]*cosH + HEAD_CAM_POSITION[0]*sinH + NECK_JOINT_POSITION[2];
+              dockMsg.x_distErr = tempPoint.x;
+              dockMsg.y_horErr  = tempPoint.y;
+              dockMsg.z_height  = tempPoint.z;
             }
             
 #if(DEBUG_DOCK_CONTROLLER)
