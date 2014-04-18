@@ -40,21 +40,16 @@ typedef u16 BlockID_t;
 typedef u16 ObjectID_t;
 typedef u16 ObjectType_t;
 
-// If we're using c++, ReturnCode is in a namespace. In c, it's not.
+// If we're using c++, Result is in a namespace. In c, it's not.
 #ifdef __cplusplus
 namespace Anki
 {
 #endif
 
-  typedef s32 ReturnCode;
-
   // NOTE: changing the basic type of TimeStamp_t (e.g. to u16 in order to save
   //       bytes), has implications for message alignment since it currently
   //       comes first in the message structs.
   typedef u32 TimeStamp_t;
-
-#define	EXIT_FAILURE	1
-#define	EXIT_SUCCESS	0
 
 #ifdef __cplusplus
 } // namespace Anki
@@ -62,10 +57,7 @@ namespace Anki
 
 // If we're using c++, Result is in a namespace. In c, it's not.
 #ifdef __cplusplus
-namespace Anki
-{
-  namespace Embedded
-  {
+namespace Anki {
 #endif
     // Return values:
     typedef enum {
@@ -81,8 +73,7 @@ namespace Anki
       RESULT_FAIL_INVALID_SIZE         = 0x05000000
     } Result;
 #ifdef __cplusplus
-  }
-}
+} // namespace Anki
 #endif
 
 #endif /* ANKICORETECH_COMMON_TYPES_H_ */
