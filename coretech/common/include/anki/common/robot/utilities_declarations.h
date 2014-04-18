@@ -23,9 +23,14 @@ namespace Anki
     template<typename Type> class Array;
     template<typename Type> class FixedLengthList;
 
-    template<typename Type> inline Type RoundUp(Type number, Type multiple);
+    template<typename Type> inline Type RoundUp(const Type number, const Type multiple);
 
-    template<typename Type> inline Type RoundDown(Type number, Type multiple);
+    template<typename Type> inline Type RoundDown(const Type number, const Type multiple);
+
+    // Only s32, u32, f32, and f64 outputs are supported. If you need something else, also do a saturate_cast
+    // Rounding to unsigned also saturates negative numbers to zero
+    template<typename Type> inline Type Round(const f32 v);
+    template<typename Type> inline Type Round(const f64 v);
 
     // Taylor-series approximation of an exponential function
     template<typename Type> Type approximateExp(const Type exponent, const s32 numTerms = 10);
@@ -56,6 +61,21 @@ namespace Anki
     // Cartesian coordinates to Polar coordinates
     template<typename Type> void Cart2Pol(const Type x, const Type y, Type &rho, Type &theta);
     template<typename Type> void Pol2Cart(const Type rho, const Type theta, Type &x, Type &y);
+
+    // This saturate cast is based on OpenCV 2.4.8, except:
+    // 1. It saturates signed to unsigned without wrapping (OpenCV does not clip negative s32 ints, which makes -1 become 0xffffffff etc. I don't know why?)
+    // 2. It includes some cases that were missing
+    // 3. It doesn't use template that call other templates, which will help less-sophisticated compilers
+    template<typename Type> inline Type saturate_cast(const u8  v);
+    template<typename Type> inline Type saturate_cast(const s8  v);
+    template<typename Type> inline Type saturate_cast(const u16 v);
+    template<typename Type> inline Type saturate_cast(const s16 v);
+    template<typename Type> inline Type saturate_cast(const u32 v);
+    template<typename Type> inline Type saturate_cast(const s32 v);
+    template<typename Type> inline Type saturate_cast(const u64 v);
+    template<typename Type> inline Type saturate_cast(const s64 v);
+    template<typename Type> inline Type saturate_cast(const f32 v);
+    template<typename Type> inline Type saturate_cast(const f64 v);
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
     // Converts from typeid names to openCV types

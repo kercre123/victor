@@ -174,14 +174,14 @@ GTEST_TEST(CoreTech_Vision, FaceDetection_All)
 
       for( s32 i = 0; i < detectedFaces_anki.get_size(); i++ )
       {
-        cv::Point center( RoundS32((detectedFaces_anki[i].left + detectedFaces_anki[i].right)*0.5), RoundS32((detectedFaces_anki[i].top + detectedFaces_anki[i].bottom)*0.5) );
-        cv::ellipse( toShow, center, cv::Size( RoundS32((detectedFaces_anki[i].right-detectedFaces_anki[i].left)*0.5), RoundS32((detectedFaces_anki[i].bottom-detectedFaces_anki[i].top)*0.5)), 0, 0, 360, cv::Scalar( 255, 0, 0 ), 5, 8, 0 );
+        cv::Point center( Round<s32>((detectedFaces_anki[i].left + detectedFaces_anki[i].right)*0.5), Round<s32>((detectedFaces_anki[i].top + detectedFaces_anki[i].bottom)*0.5) );
+        cv::ellipse( toShow, center, cv::Size( Round<s32>((detectedFaces_anki[i].right-detectedFaces_anki[i].left)*0.5), Round<s32>((detectedFaces_anki[i].bottom-detectedFaces_anki[i].top)*0.5)), 0, 0, 360, cv::Scalar( 255, 0, 0 ), 5, 8, 0 );
       }
 
       for( size_t i = 0; i < detectedFaces_opencv.size(); i++ )
       {
-        cv::Point center( RoundS32(detectedFaces_opencv[i].x + detectedFaces_opencv[i].width*0.5), RoundS32(detectedFaces_opencv[i].y + detectedFaces_opencv[i].height*0.5) );
-        cv::ellipse( toShow, center, cv::Size( RoundS32(detectedFaces_opencv[i].width*0.5), RoundS32(detectedFaces_opencv[i].height*0.5)), 0, 0, 360, cv::Scalar( 0, 0, 255 ), 1, 8, 0 );
+        cv::Point center( Round<s32>(detectedFaces_opencv[i].x + detectedFaces_opencv[i].width*0.5), Round<s32>(detectedFaces_opencv[i].y + detectedFaces_opencv[i].height*0.5) );
+        cv::ellipse( toShow, center, cv::Size( Round<s32>(detectedFaces_opencv[i].width*0.5), Round<s32>(detectedFaces_opencv[i].height*0.5)), 0, 0, 360, cv::Scalar( 0, 0, 255 ), 1, 8, 0 );
       }
 
       const s32 maxChars = 1024;
@@ -257,6 +257,10 @@ GTEST_TEST(CoreTech_Vision, FaceDetection)
   const FixedLengthList<s32> &subsets = FixedLengthList<s32>(lbpcascade_frontalface_subsets_length, const_cast<s32*>(&lbpcascade_frontalface_subsets_data[0]), lbpcascade_frontalface_subsets_length*sizeof(s32) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
   const FixedLengthList<Rectangle<s32> > &featureRectangles = FixedLengthList<Rectangle<s32> >(lbpcascade_frontalface_featureRectangles_length, const_cast<Rectangle<s32>*>(reinterpret_cast<const Rectangle<s32>*>(&lbpcascade_frontalface_featureRectangles_data[0])), lbpcascade_frontalface_featureRectangles_length*sizeof(Rectangle<s32>) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
 
+  InitBenchmarking();
+
+  BeginBenchmark("CascadeClassifier_LBP constructor");
+
   Classifier::CascadeClassifier_LBP cc(
     lbpcascade_frontalface_isStumpBased,
     lbpcascade_frontalface_stageType,
@@ -271,6 +275,8 @@ GTEST_TEST(CoreTech_Vision, FaceDetection)
     subsets,
     featureRectangles,
     scratchCcm);
+
+  EndBenchmark("CascadeClassifier_LBP constructor");
 
   const f32 t1 = GetTime();
 
@@ -289,6 +295,8 @@ GTEST_TEST(CoreTech_Vision, FaceDetection)
   const f32 t2 = GetTime();
 
   printf("Detection took %f seconds (setup time %f seconds)\n", t2-t1, t1-t0);
+
+  PrintBenchmarkResults_All();
 
   ASSERT_TRUE(detectedFaces_anki.get_size() == 1);
   ASSERT_TRUE(detectedFaces_anki[0] == Rectangle<s32>(103,218,40,155));
@@ -1366,7 +1374,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
 
     const f64 time2 = GetTime();
 
-    printf("Translation-only LK_SampledProjective totalTime:%dms initTime:%dms updateTrack:%dms\n", (s32)Round(1000*(time2-time0)), (s32)Round(1000*(time1-time0)), (s32)Round(1000*(time2-time1)));
+    printf("Translation-only LK_SampledProjective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
     PrintBenchmarkResults_All();
 
     tracker.get_transformation().Print("Translation-only LK_SampledProjective");
@@ -1414,7 +1422,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
 
     const f64 time2 = GetTime();
 
-    printf("Affine LK_SampledProjective totalTime:%dms initTime:%dms updateTrack:%dms\n", (s32)Round(1000*(time2-time0)), (s32)Round(1000*(time1-time0)), (s32)Round(1000*(time2-time1)));
+    printf("Affine LK_SampledProjective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
     PrintBenchmarkResults_All();
 
     tracker.get_transformation().Print("Affine LK_SampledProjective");
@@ -1463,7 +1471,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
 
     const f64 time2 = GetTime();
 
-    printf("Projective LK_SampledProjective totalTime:%dms initTime:%dms updateTrack:%dms\n", (s32)Round(1000*(time2-time0)), (s32)Round(1000*(time1-time0)), (s32)Round(1000*(time2-time1)));
+    printf("Projective LK_SampledProjective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
     PrintBenchmarkResults_All();
 
     tracker.get_transformation().Print("Projective LK_SampledProjective");
@@ -1562,7 +1570,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledPlanar6dof)
   //
   //    const f64 time2 = GetTime();
   //
-  //    printf("Translation-only LK_SampledPlanar6dof totalTime:%dms initTime:%dms updateTrack:%dms\n", (s32)Round(1000*(time2-time0)), (s32)Round(1000*(time1-time0)), (s32)Round(1000*(time2-time1)));
+  //    printf("Translation-only LK_SampledPlanar6dof totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
   //    PrintBenchmarkResults_All();
   //
   //    tracker.get_transformation().Print("Translation-only LK_SampledPlanar6dof");
@@ -1611,7 +1619,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledPlanar6dof)
   //
   //    const f64 time2 = GetTime();
   //
-  //    printf("Affine LK_SampledProjective totalTime:%dms initTime:%dms updateTrack:%dms\n", (s32)Round(1000*(time2-time0)), (s32)Round(1000*(time1-time0)), (s32)Round(1000*(time2-time1)));
+  //    printf("Affine LK_SampledProjective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
   //    PrintBenchmarkResults_All();
   //
   //    tracker.get_transformation().Print("Affine LK_SampledProjective");
@@ -1667,7 +1675,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledPlanar6dof)
   //
   //    const f64 time2 = GetTime();
   //
-  //    printf("Projective LK_SampledPlanar6dof totalTime:%dms initTime:%dms updateTrack:%dms\n", (s32)Round(1000*(time2-time0)), (s32)Round(1000*(time1-time0)), (s32)Round(1000*(time2-time1)));
+  //    printf("Projective LK_SampledPlanar6dof totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
   //    PrintBenchmarkResults_All();
   //
   //    tracker.get_transformation().Print("Projective LK_SampledPlanar6dof");
@@ -1756,7 +1764,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
 
     const f64 time2 = GetTime();
 
-    printf("Translation-only LK_Projective totalTime:%dms initTime:%dms updateTrack:%dms\n", (s32)Round(1000*(time2-time0)), (s32)Round(1000*(time1-time0)), (s32)Round(1000*(time2-time1)));
+    printf("Translation-only LK_Projective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
     PrintBenchmarkResults_All();
 
     tracker.get_transformation().Print("Translation-only LK_Projective");
@@ -1797,7 +1805,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
 
     const f64 time2 = GetTime();
 
-    printf("Affine LK_Projective totalTime:%dms initTime:%dms updateTrack:%dms\n", (s32)Round(1000*(time2-time0)), (s32)Round(1000*(time1-time0)), (s32)Round(1000*(time2-time1)));
+    printf("Affine LK_Projective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
     PrintBenchmarkResults_All();
 
     tracker.get_transformation().Print("Affine LK_Projective");
@@ -1839,7 +1847,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
 
     const f64 time2 = GetTime();
 
-    printf("Projective LK_Projective totalTime:%dms initTime:%dms updateTrack:%dms\n", (s32)Round(1000*(time2-time0)), (s32)Round(1000*(time1-time0)), (s32)Round(1000*(time2-time1)));
+    printf("Projective LK_Projective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
     PrintBenchmarkResults_All();
 
     tracker.get_transformation().Print("Projective LK_Projective");
@@ -1922,7 +1930,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
 
     const f64 time2 = GetTime();
 
-    printf("Translation-only FAST-LK totalTime:%dms initTime:%dms updateTrack:%dms\n", (s32)Round(1000*(time2-time0)), (s32)Round(1000*(time1-time0)), (s32)Round(1000*(time2-time1)));
+    printf("Translation-only FAST-LK totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
     PrintBenchmarkResults_All();
 
     tracker.get_transformation().Print("Translation-only LK_Affine");
@@ -1962,7 +1970,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
 
     const f64 time2 = GetTime();
 
-    printf("Affine FAST-LK totalTime:%dms initTime:%dms updateTrack:%dms\n", (s32)Round(1000*(time2-time0)), (s32)Round(1000*(time1-time0)), (s32)Round(1000*(time2-time1)));
+    printf("Affine FAST-LK totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
     PrintBenchmarkResults_All();
 
     tracker.get_transformation().Print("Affine LK_Affine");
@@ -2039,7 +2047,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
 
     const f64 time2 = GetTime();
 
-    printf("Translation-only LK totalTime:%dms initTime:%dms updateTrack:%dms\n", (s32)Round(1000*(time2-time0)), (s32)Round(1000*(time1-time0)), (s32)Round(1000*(time2-time1)));
+    printf("Translation-only LK totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
     PrintBenchmarkResults_All();
 
     tracker.get_transformation().Print("Translation-only LK");
@@ -2072,7 +2080,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
 
     const f64 time2 = GetTime();
 
-    printf("Affine LK totalTime:%dms initTime:%dms updateTrack:%dms\n", (s32)Round(1000*(time2-time0)), (s32)Round(1000*(time1-time0)), (s32)Round(1000*(time2-time1)));
+    printf("Affine LK totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
     PrintBenchmarkResults_All();
 
     tracker.get_transformation().Print("Affine LK");
@@ -2107,7 +2115,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
 
     const f64 time2 = GetTime();
 
-    printf("Projective LK totalTime:%dms initTime:%dms updateTrack:%dms\n", (s32)Round(1000*(time2-time0)), (s32)Round(1000*(time1-time0)), (s32)Round(1000*(time2-time1)));
+    printf("Projective LK totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
     PrintBenchmarkResults_All();
 
     tracker.get_transformation().Print("Projective LK");
@@ -2522,8 +2530,8 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
   const f32 minSideLength = 0.03f*MAX(newFiducials_320x240_HEIGHT,newFiducials_320x240_WIDTH);
   const f32 maxSideLength = 0.97f*MIN(newFiducials_320x240_HEIGHT,newFiducials_320x240_WIDTH);
 
-  const s32 component_minimumNumPixels = RoundS32(minSideLength*minSideLength - (0.8f*minSideLength)*(0.8f*minSideLength));
-  const s32 component_maximumNumPixels = RoundS32(maxSideLength*maxSideLength - (0.8f*maxSideLength)*(0.8f*maxSideLength));
+  const s32 component_minimumNumPixels = Round<s32>(minSideLength*minSideLength - (0.8f*minSideLength)*(0.8f*minSideLength));
+  const s32 component_maximumNumPixels = Round<s32>(maxSideLength*maxSideLength - (0.8f*maxSideLength)*(0.8f*maxSideLength));
   const s32 component_sparseMultiplyThreshold = 1000 << 5;
   const s32 component_solidMultiplyThreshold = 2 << 5;
 
@@ -2593,7 +2601,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
       scratchOffchip);
     const f64 time1 = GetTime();
 
-    printf("totalTime: %dms\n", (s32)Round(1000*(time1-time0)));
+    printf("totalTime: %dms\n", Round<s32>(1000*(time1-time0)));
 
     // TODO: add back
     //PrintBenchmarkResults_All();

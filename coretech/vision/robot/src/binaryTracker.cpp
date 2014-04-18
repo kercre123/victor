@@ -926,7 +926,7 @@ namespace Anki
           } // if(warpedXrounded >= 0 && warpedXrounded < imageWidth)
         } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
 
-        numCorrespondences = RoundS32(numCorrespondencesF32);
+        numCorrespondences = Round<s32>(numCorrespondencesF32);
 
         return RESULT_OK;
       } // Result BinaryTracker::FindVerticalCorrespondences_Translation()
@@ -1006,7 +1006,7 @@ namespace Anki
           } // if(warpedYrounded >= 0 && warpedYrounded < imageHeight)
         } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
 
-        numCorrespondences = RoundS32(numCorrespondencesF32);
+        numCorrespondences = Round<s32>(numCorrespondencesF32);
 
         return RESULT_OK;
       } // Result BinaryTracker::FindHorizontalCorrespondences_Translation()
@@ -1387,7 +1387,7 @@ namespace Anki
           } // if(warpedXrounded >= 0 && warpedXrounded < imageWidth)
         } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
 
-        numTemplatePixelsMatched = RoundS32(numTemplatePixelsMatchedF32);
+        numTemplatePixelsMatched = Round<s32>(numTemplatePixelsMatchedF32);
 
         return RESULT_OK;
       }
@@ -1460,7 +1460,7 @@ namespace Anki
           } // if(warpedYrounded >= 0 && warpedYrounded < imageHeight)
         } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
 
-        numTemplatePixelsMatched = RoundS32(numTemplatePixelsMatchedF32);
+        numTemplatePixelsMatched = Round<s32>(numTemplatePixelsMatchedF32);
 
         return RESULT_OK;
       }

@@ -160,7 +160,7 @@ namespace Anki
 
       const s32 * restrict pHistogram = histogram.counts.Pointer(0);
 
-      const s32 numBelow = RoundS32(static_cast<f32>(histogram.numElements) * percentile);
+      const s32 numBelow = Round<s32>(static_cast<f32>(histogram.numElements) * percentile);
 
       count += pHistogram[0];
 

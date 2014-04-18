@@ -23,7 +23,7 @@ namespace Anki
   {
     // #pragma mark
 
-    template<typename Type> inline Type RoundUp(Type number, Type multiple)
+    template<typename Type> inline Type RoundUp(const Type number, const Type multiple)
     {
       return multiple*( (number-1)/multiple + 1 );
 
@@ -31,7 +31,7 @@ namespace Anki
       // return (number + (multiple-1)) & ~(multiple-1);
     }
 
-    template<typename Type> inline Type RoundDown(Type number, Type multiple)
+    template<typename Type> inline Type RoundDown(const Type number, const Type multiple)
     {
       return multiple * (number/multiple);
     }
@@ -140,47 +140,6 @@ namespace Anki
       y = rho * sinf(theta);
     }
 
-    inline f32 Round(f32 x)
-    {
-      if(x > 0)
-        return floorf(x + 0.5f);
-      else
-        return ceilf(x - 0.5f);
-    }
-
-    inline f64 Round(f64 x)
-    {
-      if(x > 0)
-        return floor(x + 0.5);
-      else
-        return ceil(x - 0.5);
-    }
-
-    inline s32 RoundS32(f32 x)
-    {
-#if !defined(__EDG__)
-      // Some platforms may not round to zero correctly, so do the function calls
-      if(x > 0)
-        return static_cast<s32>(floorf(x + 0.5f));
-      else
-        return static_cast<s32>(ceilf(x - 0.5f));
-#else
-      // The M4 rounds to zero correctly, without the function call
-      if(x > 0)
-        return static_cast<s32>(x + 0.5f);
-      else
-        return static_cast<s32>(x - 0.5f);
-#endif
-    }
-
-    inline s32 RoundS32(f64 x)
-    {
-      if(x > 0)
-        return static_cast<s32>(floor(x + 0.5));
-      else
-        return static_cast<s32>(ceil(x - 0.5));
-    }
-
     inline s32 FloorS32(f32 x)
     {
       return static_cast<s32>(floorf(x));
@@ -190,6 +149,126 @@ namespace Anki
     {
       return static_cast<s32>(ceilf(x));
     }
+
+#if !defined(__EDG__)
+    // Some platforms may not round to zero correctly, so do the function calls
+    template<> inline s32 Round<s32> (const f32 v) { return (v > 0) ? static_cast<s32>(floorf(v + 0.5f)) : static_cast<s32>(ceilf(v - 0.5f)); }
+    template<> inline s64 Round<s64> (const f32 v) { return (v > 0) ? static_cast<s64>(floorf(v + 0.5f)) : static_cast<s64>(ceilf(v - 0.5f)); }
+    template<> inline u32 Round<u32> (const f32 v) { return (v > 0) ? static_cast<u32>(floorf(v + 0.5f)) : 0; }
+    template<> inline u64 Round<u64> (const f32 v) { return (v > 0) ? static_cast<u64>(floorf(v + 0.5f)) : 0; }
+    template<> inline f32 Round<f32> (const f32 v) { return (v > 0) ? floorf(v + 0.5f) : ceilf(v - 0.5f); }
+    template<> inline f64 Round<f64> (const f32 v) { return (v > 0) ? floorf(v + 0.5f) : ceilf(v - 0.5f); }
+
+    template<> inline s32 Round<s32> (const f64 v) { return (v > 0) ? static_cast<s32>(floor(v + 0.5)) : static_cast<s32>(ceil(v - 0.5)); }
+    template<> inline s64 Round<s64> (const f64 v) { return (v > 0) ? static_cast<s64>(floor(v + 0.5)) : static_cast<s64>(ceil(v - 0.5)); }
+    template<> inline u32 Round<u32> (const f64 v) { return (v > 0) ? static_cast<u32>(floor(v + 0.5)) : 0; }
+    template<> inline u64 Round<u64> (const f64 v) { return (v > 0) ? static_cast<u64>(floor(v + 0.5)) : 0; }
+    template<> inline f32 Round<f32> (const f64 v) { return (v > 0) ? static_cast<f32>(floor(v + 0.5)) : static_cast<f32>(ceil(v - 0.5)); }
+    template<> inline f64 Round<f64> (const f64 v) { return (v > 0) ? floor(v + 0.5) : ceil(v - 0.5); }
+#else
+    // The M4 rounds to zero correctly, without the function calls
+    template<> inline s32 Round<s32> (const f32 v) { return (v > 0) ? static_cast<s32>(v + 0.5f) : static_cast<s32>(v - 0.5f); }
+    template<> inline s64 Round<s64> (const f32 v) { return (v > 0) ? static_cast<s64>(v + 0.5f) : static_cast<s64>(v - 0.5f); }
+    template<> inline u32 Round<u32> (const f32 v) { return (v > 0) ? static_cast<u32>(v + 0.5f) : 0; }
+    template<> inline u64 Round<u64> (const f32 v) { return (v > 0) ? static_cast<u64>(v + 0.5f) : 0; }
+    template<> inline f32 Round<f32> (const f32 v) { return (v > 0) ? floorf(v + 0.5f) : ceilf(v - 0.5f); }
+    template<> inline f64 Round<f64> (const f32 v) { return (v > 0) ? floorf(v + 0.5f) : ceilf(v - 0.5f); }
+
+    template<> inline s32 Round<s32> (const f64 v) { return (v > 0) ? static_cast<s32>(v + 0.5) : static_cast<s32>(v - 0.5); }
+    template<> inline s64 Round<s64> (const f64 v) { return (v > 0) ? static_cast<s64>(v + 0.5) : static_cast<s64>(v - 0.5); }
+    template<> inline u32 Round<u32> (const f64 v) { return (v > 0) ? static_cast<u32>(v + 0.5) : 0; }
+    template<> inline u64 Round<u64> (const f64 v) { return (v > 0) ? static_cast<u64>(v + 0.5) : 0; }
+    template<> inline f32 Round<f32> (const f64 v) { return (v > 0) ? static_cast<f32>(floor(v + 0.5)) : static_cast<f32>(ceil(v - 0.5)); }
+    template<> inline f64 Round<f64> (const f64 v) { return (v > 0) ? floor(v + 0.5) : ceil(v - 0.5); }
+#endif
+
+    template<> inline u8  saturate_cast<u8> (const u8  v) { return v; }
+    template<> inline u8  saturate_cast<u8> (const u16 v) { return (u8) MIN((u32)u8_MAX, (u32)v); }
+    template<> inline u8  saturate_cast<u8> (const u32 v) { return (u8) MIN((u32)u8_MAX, (u32)v); }
+    template<> inline u8  saturate_cast<u8> (const u64 v) { return (u8) MIN((u64)u8_MAX, (u64)v); }
+    template<> inline u8  saturate_cast<u8> (const s8  v) { return (u8)                  MAX((s32)0, (s32)v);  }
+    template<> inline u8  saturate_cast<u8> (const s16 v) { return (u8) MIN((s32)u8_MAX, MAX((s32)0, (s32)v)); }
+    template<> inline u8  saturate_cast<u8> (const s32 v) { return (u8) MIN((s32)u8_MAX, MAX((s32)0, (s32)v)); }
+    template<> inline u8  saturate_cast<u8> (const s64 v) { return (u8) MIN((s64)u8_MAX, MAX((s64)0, (s64)v)); }
+    template<> inline u8  saturate_cast<u8> (const f32 v) { return (u8) MIN((s32)u8_MAX, MAX((s32)0, (s32)Round<s32>(v))); }
+    template<> inline u8  saturate_cast<u8> (const f64 v) { return (u8) MIN((s32)u8_MAX, MAX((s32)0, (s32)Round<s32>(v))); }
+
+    template<> inline s8  saturate_cast<s8> (const u8  v) { return (s8) MIN((u32)s8_MAX, (u32)v); }
+    template<> inline s8  saturate_cast<s8> (const u16 v) { return (s8) MIN((u32)s8_MAX, (u32)v); }
+    template<> inline s8  saturate_cast<s8> (const u32 v) { return (s8) MIN((u32)s8_MAX, (u32)v); }
+    template<> inline s8  saturate_cast<s8> (const u64 v) { return (s8) MIN((u64)s8_MAX, (u64)v); }
+    template<> inline s8  saturate_cast<s8> (const s8  v) { return v; }
+    template<> inline s8  saturate_cast<s8> (const s16 v) { return (s8) MIN((s32)s8_MAX, MAX((s32)s8_MIN, (s32)v)); }
+    template<> inline s8  saturate_cast<s8> (const s32 v) { return (s8) MIN((s32)s8_MAX, MAX((s32)s8_MIN, (s32)v)); }
+    template<> inline s8  saturate_cast<s8> (const s64 v) { return (s8) MIN((s64)s8_MAX, MAX((s64)s8_MIN, (s64)v)); }
+    template<> inline s8  saturate_cast<s8> (const f32 v) { return (s8) MIN((s32)s8_MAX, MAX((s32)s8_MIN, (s32)Round<s32>(v))); }
+    template<> inline s8  saturate_cast<s8> (const f64 v) { return (s8) MIN((s32)s8_MAX, MAX((s32)s8_MIN, (s32)Round<s32>(v))); }
+
+    template<> inline u16 saturate_cast<u16>(const u8  v) { return v; }
+    template<> inline u16 saturate_cast<u16>(const u16 v) { return v; }
+    template<> inline u16 saturate_cast<u16>(const u32 v) { return (u16)MIN((u32)u16_MAX, (u32)v); }
+    template<> inline u16 saturate_cast<u16>(const u64 v) { return (u16)MIN((u64)u16_MAX, (u64)v); }
+    template<> inline u16 saturate_cast<u16>(const s8  v) { return (u16)                  MAX((s32)0, (s32)v);  }
+    template<> inline u16 saturate_cast<u16>(const s16 v) { return (u16)                  MAX((s32)0, (s32)v);  }
+    template<> inline u16 saturate_cast<u16>(const s32 v) { return (u16)MIN((s32)u16_MAX, MAX((s32)0, (s32)v)); }
+    template<> inline u16 saturate_cast<u16>(const s64 v) { return (u16)MIN((s64)u16_MAX, MAX((s64)0, (s64)v)); }
+    template<> inline u16 saturate_cast<u16>(const f32 v) { return (u16)MIN((s32)u16_MAX, MAX((s32)0, (s32)Round<s32>(v))); }
+    template<> inline u16 saturate_cast<u16>(const f64 v) { return (u16)MIN((s32)u16_MAX, MAX((s32)0, (s32)Round<s32>(v))); }
+
+    template<> inline s16 saturate_cast<s16>(const u8  v) { return v; }
+    template<> inline s16 saturate_cast<s16>(const u16 v) { return (s16)MIN((u32)s16_MAX, (u32)v); }
+    template<> inline s16 saturate_cast<s16>(const u32 v) { return (s16)MIN((u32)s16_MAX, (u32)v); }
+    template<> inline s16 saturate_cast<s16>(const u64 v) { return (s16)MIN((u64)s16_MAX, (u64)v); }
+    template<> inline s16 saturate_cast<s16>(const s8  v) { return v; }
+    template<> inline s16 saturate_cast<s16>(const s16 v) { return v; }
+    template<> inline s16 saturate_cast<s16>(const s32 v) { return (s16)MIN((s32)s16_MAX, MAX((s32)s16_MIN, (s32)v)); }
+    template<> inline s16 saturate_cast<s16>(const s64 v) { return (s16)MIN((s64)s16_MAX, MAX((s64)s16_MIN, (s64)v)); }
+    template<> inline s16 saturate_cast<s16>(const f32 v) { return (s16)MIN((s32)s16_MAX, MAX((s32)s16_MIN, (s32)Round<s32>(v))); }
+    template<> inline s16 saturate_cast<s16>(const f64 v) { return (s16)MIN((s32)s16_MAX, MAX((s32)s16_MIN, (s32)Round<s32>(v))); }
+
+    template<> inline u32 saturate_cast<u32>(const u8  v) { return v; }
+    template<> inline u32 saturate_cast<u32>(const u16 v) { return v; }
+    template<> inline u32 saturate_cast<u32>(const u32 v) { return v; }
+    template<> inline u32 saturate_cast<u32>(const u64 v) { return (u32)MIN((u64)u32_MAX, (u64)v); }
+    template<> inline u32 saturate_cast<u32>(const s8  v) { return (u32)                  MAX((s32)0, (s32)v);  }
+    template<> inline u32 saturate_cast<u32>(const s16 v) { return (u32)                  MAX((s32)0, (s32)v);  }
+    template<> inline u32 saturate_cast<u32>(const s32 v) { return (u32)                  MAX((s32)0, (s32)v);  }
+    template<> inline u32 saturate_cast<u32>(const s64 v) { return (u32)MIN((s64)u32_MAX, MAX((s64)0, (s64)v)); }
+    template<> inline u32 saturate_cast<u32>(const f32 v) { return (u32)MIN((u32)u32_MAX, MAX((u32)0, (u32)Round<u32>(v))); }
+    template<> inline u32 saturate_cast<u32>(const f64 v) { return (u32)MIN((u32)u32_MAX, MAX((u32)0, (u32)Round<u32>(v))); }
+
+    template<> inline s32 saturate_cast<s32>(const u8  v) { return v; }
+    template<> inline s32 saturate_cast<s32>(const u16 v) { return v; }
+    template<> inline s32 saturate_cast<s32>(const u32 v) { return (s32)MIN((u32)s32_MAX, (u32)v); }
+    template<> inline s32 saturate_cast<s32>(const u64 v) { return (s32)MIN((u64)s32_MAX, (u64)v); }
+    template<> inline s32 saturate_cast<s32>(const s8  v) { return v; }
+    template<> inline s32 saturate_cast<s32>(const s16 v) { return v; }
+    template<> inline s32 saturate_cast<s32>(const s32 v) { return v; }
+    template<> inline s32 saturate_cast<s32>(const s64 v) { return (s32)MIN((s64)s32_MAX, MAX((s64)s32_MIN, (s64)v)); }
+    template<> inline s32 saturate_cast<s32>(const f32 v) { return (s32)MIN((s32)s32_MAX, MAX((s32)s32_MIN, (s32)Round<s32>(v))); }
+    template<> inline s32 saturate_cast<s32>(const f64 v) { return (s32)MIN((s32)s32_MAX, MAX((s32)s32_MIN, (s32)Round<s32>(v))); }
+
+    template<> inline u64 saturate_cast<u64>(const u8  v) { return v; }
+    template<> inline u64 saturate_cast<u64>(const u16 v) { return v; }
+    template<> inline u64 saturate_cast<u64>(const u32 v) { return v; }
+    template<> inline u64 saturate_cast<u64>(const u64 v) { return v; }
+    template<> inline u64 saturate_cast<u64>(const s8  v) { return (u64)                  MAX((s32)0, (s32)v);  }
+    template<> inline u64 saturate_cast<u64>(const s16 v) { return (u64)                  MAX((s32)0, (s32)v);  }
+    template<> inline u64 saturate_cast<u64>(const s32 v) { return (u64)                  MAX((s32)0, (s32)v);  }
+    template<> inline u64 saturate_cast<u64>(const s64 v) { return (u64)                  MAX((u64)0, (u64)v);  }
+    template<> inline u64 saturate_cast<u64>(const f32 v) { return (u64)MIN((u64)u64_MAX, MAX((u64)0, (u64)Round<u64>(v))); }
+    template<> inline u64 saturate_cast<u64>(const f64 v) { return (u64)MIN((u64)u64_MAX, MAX((u64)0, (u64)Round<u64>(v))); }
+
+    template<> inline s64 saturate_cast<s64>(const u8  v) { return v; }
+    template<> inline s64 saturate_cast<s64>(const u16 v) { return v; }
+    template<> inline s64 saturate_cast<s64>(const u32 v) { return v; }
+    template<> inline s64 saturate_cast<s64>(const u64 v) { return (s64)MIN((u64)s64_MAX, (u64)v); }
+    template<> inline s64 saturate_cast<s64>(const s8  v) { return v; }
+    template<> inline s64 saturate_cast<s64>(const s16 v) { return v; }
+    template<> inline s64 saturate_cast<s64>(const s32 v) { return v; }
+    template<> inline s64 saturate_cast<s64>(const s64 v) { return v; }
+    template<> inline s64 saturate_cast<s64>(const f32 v) { return (s64)MIN((s64)s64_MAX, MAX((s64)s64_MIN, (s64)Round<s64>(v))); }
+    template<> inline s64 saturate_cast<s64>(const f64 v) { return (s64)MIN((s64)s64_MAX, MAX((s64)s64_MIN, (s64)Round<s64>(v))); }
   } // namespace Embedded
 } // namespace Anki
 

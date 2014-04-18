@@ -653,7 +653,7 @@ namespace Anki
       free(scratch.get_buffer());
 
       if(!FLT_NEAR(scale, 1.0f)) {
-        cv::Mat totalImageLarge(RoundS32(imageHeight*scale), RoundS32(imageWidth*scale), CV_8UC3);
+        cv::Mat totalImageLarge(Round<s32>(imageHeight*scale), Round<s32>(imageWidth*scale), CV_8UC3);
         cv::resize(totalImage, totalImageLarge, totalImageLarge.size(), 0, 0, cv::INTER_NEAREST);
 
         return totalImageLarge;

@@ -51,6 +51,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/classifier.h"
 
 #include "anki/common/robot/matlabInterface.h"
+#include "anki/common/robot/benchmarking_c.h"
 
 #include "anki/vision/robot/imageProcessing.h"
 
@@ -192,10 +193,10 @@ namespace Anki
           const f32 s = 1.f/rweights[i];
 
           rrects[i] = Rectangle<s32>(
-            RoundS32(r.left*s),
-            RoundS32(r.right*s),
-            RoundS32(r.top*s),
-            RoundS32(r.bottom*s));
+            Round<s32>(r.left*s),
+            Round<s32>(r.right*s),
+            Round<s32>(r.top*s),
+            Round<s32>(r.bottom*s));
         }
 
         rectList.Clear();
@@ -233,8 +234,8 @@ namespace Anki
             //const s32 height1 = r1.bottom - r1.top;
             const s32 height2 = r2.bottom - r2.top;
 
-            int dx = RoundS32( width2 * eps );
-            int dy = RoundS32( height2 * eps );
+            int dx = Round<s32>( width2 * eps );
+            int dy = Round<s32>( height2 * eps );
 
             if( i != j &&
               r1.left >= r2.left - dx &&
@@ -685,6 +686,8 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(image.IsValid() && objects.IsValid(),
           RESULT_FAIL_INVALID_OBJECT, "CascadeClassifier::DetectMultiScale", "Invalid inputs");
 
+        BeginBenchmark("CascadeClassifier_LBP::DetectMultiScale");
+
         objects.Clear();
 
         FixedLengthList<Rectangle<s32> > candidates(objects.get_maximumSize(), slowScratch);
@@ -692,11 +695,13 @@ namespace Anki
         for(f32 factor = 1; ; factor *= scaleFactor) {
           PUSH_MEMORY_STACK(fastScratch);
 
-          const s32 windowHeight = RoundS32(this->data.origWinHeight*factor);
-          const s32 windowWidth = RoundS32(this->data.origWinWidth*factor);
+          BeginBenchmark("CascadeClassifier_LBP::DetectMultiScale main loop");
 
-          const s32 scaledImageHeight = RoundS32(imageHeight / factor);
-          const s32 scaledImageWidth = RoundS32(imageWidth / factor);
+          const s32 windowHeight = Round<s32>(this->data.origWinHeight*factor);
+          const s32 windowWidth = Round<s32>(this->data.origWinWidth*factor);
+
+          const s32 scaledImageHeight = Round<s32>(imageHeight / factor);
+          const s32 scaledImageWidth = Round<s32>(imageWidth / factor);
 
           const s32 processingRectHeight = scaledImageHeight - this->data.origWinHeight;
           const s32 processingRectWidth = scaledImageWidth - this->data.origWinWidth;
@@ -730,12 +735,16 @@ namespace Anki
           if(DetectSingleScale(scaledImage, processingRectHeight, processingRectWidth, xyIncrement, factor, candidates, fastScratch) != RESULT_OK) {
             break;
           }
+
+          EndBenchmark("CascadeClassifier_LBP::DetectMultiScale main loop");
         } // for(f32 factor = 1; ; factor *= scaleFactor)
 
         objects.set_size(candidates.get_size());
         memcpy(objects.Pointer(0), candidates.Pointer(0), candidates.get_array().get_stride());
 
         GroupRectangles(objects, minNeighbors, GROUP_EPS, fastScratch);
+
+        EndBenchmark("CascadeClassifier_LBP::DetectMultiScale");
 
         return RESULT_OK;
       }
@@ -749,8 +758,12 @@ namespace Anki
         FixedLengthList<Rectangle<s32> > &candidates,
         MemoryStack scratch)
       {
-        const s32 winHeight = RoundS32(this->data.origWinHeight * scaleFactor);
-        const s32 winWidth = RoundS32(this->data.origWinWidth * scaleFactor);
+        BeginBenchmark("CascadeClassifier_LBP::DetectSingleScale");
+
+        BeginBenchmark("CascadeClassifier_LBP::DetectSingleScale init");
+
+        const s32 winHeight = Round<s32>(this->data.origWinHeight * scaleFactor);
+        const s32 winWidth = Round<s32>(this->data.origWinWidth * scaleFactor);
 
         const s32 nfeatures = this->features.get_size();
 
@@ -767,7 +780,11 @@ namespace Anki
           this->features[fi].updatePtrs(scrollingIntegralImage);
         }
 
+        EndBenchmark("CascadeClassifier_LBP::DetectSingleScale init");
+
         for(s32 y = 0; y < processingRectHeight; y += xyIncrement) {
+          BeginBenchmark("CascadeClassifier_LBP::DetectSingleScale scrollIntegralImage");
+
           if(scrollingIntegralImage.get_maxRow(this->data.origWinHeight+xyIncrement) < y) {
             const Result lastResult = scrollingIntegralImage.ScrollDown(image, scrollingIntegralImage_numScrollRows, scratch);
 
@@ -775,14 +792,17 @@ namespace Anki
               return lastResult;
           }
 
+          EndBenchmark("CascadeClassifier_LBP::DetectSingleScale scrollIntegralImage");
+
+          BeginBenchmark("CascadeClassifier_LBP::DetectSingleScale x loop");
           for(s32 x = 0; x < processingRectWidth; x += xyIncrement) {
             f32 gypWeight;
 
             const int result = this->PredictCategoricalStump(scrollingIntegralImage, Point<s16>(x,y), gypWeight);
 
             if( result > 0 ) {
-              const s32 x0 = RoundS32(x*scaleFactor);
-              const s32 y0 = RoundS32(y*scaleFactor);
+              const s32 x0 = Round<s32>(x*scaleFactor);
+              const s32 y0 = Round<s32>(y*scaleFactor);
 
               // TODO: should be width/height minus one?
               candidates.PushBack(Rectangle<s32>(
@@ -794,7 +814,10 @@ namespace Anki
             if(result == 0)
               x += xyIncrement;
           }
+          EndBenchmark("CascadeClassifier_LBP::DetectSingleScale x loop");
         }
+
+        EndBenchmark("CascadeClassifier_LBP::DetectSingleScale");
 
         return RESULT_OK;
       }
