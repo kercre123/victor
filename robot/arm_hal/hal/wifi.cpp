@@ -6,9 +6,14 @@
 
 //#define ENABLE_WIFI
 
-#define RED (1)
-#define GREEN (2)
-#define BLUE (4)
+// Set to 1 to enable LED indicator of wifi activity
+#define ENABLE_WIFI_LED 1
+
+#if(ENABLE_WIFI_LED)
+#define WIFI_LED_ID (LED_LEFT_EYE_LEFT)
+#else
+#define WIFI_LED_ID (NUM_LEDS)
+#endif
 
 static const char* ssid = "AnkiRobits";
 static const char* psk = "KlaatuBaradaNikto!";
@@ -33,9 +38,6 @@ static const MACIP g_MACToIP[] =
 
 static int g_moduleIndex = 0;
 
-// Set to false to turn off LED color changing
-static bool g_wifiLEDs = true;
-
 namespace Anki
 {
   namespace Cozmo
@@ -47,45 +49,6 @@ namespace Anki
       extern s32 (*GetChar)(u32 timeout);
       
       extern int UARTGetFreeSpace();
-      
-      // Light up one of the eye LEDs to a chosen color
-      // number is 0 thru 7 to select which LED to light
-      // color is 1 (ORANGE) | 2 (GREEN) | 4 (BLUE) - or some combination
-      void SetLED(u8 number, u8 color)
-      {
-        if (!g_wifiLEDs)
-          return;
-        
-        GPIO_PIN_SOURCE(RED, GPIOA, 2);
-        GPIO_PIN_SOURCE(GREEN, GPIOA, 1);
-        GPIO_PIN_SOURCE(BLUE, GPIOB, 1);
-        GPIO_PIN_SOURCE(EYECLK, GPIOA, 11);
-        GPIO_PIN_SOURCE(EYERST, GPIOA, 12);
-        
-        if (color & 1)
-          GPIO_RESET(GPIO_RED, PIN_RED);
-        else
-          GPIO_SET(GPIO_RED, PIN_RED);        
-        PIN_OUT(GPIO_RED, SOURCE_RED);
-        if (color & 2)
-          GPIO_RESET(GPIO_GREEN, PIN_GREEN);
-        else
-          GPIO_SET(GPIO_GREEN, PIN_GREEN);        
-        PIN_OUT(GPIO_GREEN, SOURCE_GREEN);        
-        if (color & 4)
-          GPIO_RESET(GPIO_BLUE, PIN_BLUE);
-        else
-          GPIO_SET(GPIO_BLUE, PIN_BLUE);
-        PIN_OUT(GPIO_BLUE, SOURCE_BLUE);
-
-        GPIO_RESET(GPIO_EYECLK, PIN_EYECLK);
-        PIN_OUT(GPIO_EYECLK, SOURCE_EYECLK);        
-        GPIO_SET(GPIO_EYERST, PIN_EYERST);
-        PIN_OUT(GPIO_EYERST, SOURCE_EYERST);
-        MicroWait(1);
-        GPIO_RESET(GPIO_EYERST, PIN_EYERST);
-      }
-      
       
       enum WaitState
       {
@@ -854,7 +817,7 @@ namespace Anki
                 m_waitState = WAIT_RX_SPI_READY_0;
                 m_isTransferring = true;
                 
-                SetLED(0, RED);
+                SetLED(WIFI_LED_ID, LED_RED);
                 
               } else if ((UARTGetFreeSpace() < BUFFER_WRITE_SIZE) 
                           && m_isClientConnected
@@ -863,14 +826,14 @@ namespace Anki
                 m_waitState = WAIT_TX_SPI_READY_0;
                 m_isTransferring = true;
                 
-                SetLED(0, RED);
+                SetLED(WIFI_LED_ID, LED_RED);
               } else {
                 // Nothing to do
                 
                 if (m_isClientConnected)
-                  SetLED(0, BLUE);
+                  SetLED(WIFI_LED_ID, LED_BLUE);
                 else
-                  SetLED(0, GREEN);
+                  SetLED(WIFI_LED_ID, LED_GREEN);
                 
                 goto ret;
               }
@@ -1088,7 +1051,7 @@ namespace Anki
         
         WifiConfigurePins();
         
-        SetLED(0, RED);
+        SetLED(WIFI_LED_ID, LED_RED);
         
         if (WifiEnterCardReadyState() < 0)
           return -1;
@@ -1135,13 +1098,13 @@ namespace Anki
         if (g_moduleIndex < 0)
         {
           // Force enable the LED
-          g_wifiLEDs = true;
+          //g_wifiLEDs = true;
           
           while (1)
           {
-            SetLED(0, RED | BLUE | GREEN);
+            SetLED(LED_LEFT_EYE_TOP, (LEDColor)(LED_RED | LED_BLUE | LED_GREEN));
             MicroWait(500000);
-            SetLED(0, 0);
+            SetLED(LED_LEFT_EYE_TOP, LED_OFF);
             MicroWait(500000);
           }
         }
@@ -1157,7 +1120,7 @@ namespace Anki
         // Enable GPIO interrupts on these pins
         EXTI->IMR |= (PIN_INTERRUPT | PIN_SPI_READY);
         
-        SetLED(0, GREEN);
+        SetLED(WIFI_LED_ID, LED_GREEN);
         
         return 0;
       }

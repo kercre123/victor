@@ -70,8 +70,8 @@ namespace Anki {
         const f32 NSIDE_DOWN_THRESH_MMPS2 = 8000;
 
         // LED assignments
-        const u8 INDICATOR_LED_ID = 0;
-        const u8 HEADLIGHT_LED_ID = 3;
+        const HAL::LEDId INDICATOR_LED_ID = HAL::LED_LEFT_EYE_TOP;
+        const HAL::LEDId HEADLIGHT_LED_ID = HAL::LED_RIGHT_EYE_TOP;
         
       } // "private" namespace
       
@@ -83,7 +83,7 @@ namespace Anki {
           HAL::SetLED(HEADLIGHT_LED_ID, HAL::LED_OFF);
           lightsOn = false;
         } else {
-          HAL::SetLED(HEADLIGHT_LED_ID, HAL::LED_ORANGE);
+          HAL::SetLED(HEADLIGHT_LED_ID, HAL::LED_RED);
           lightsOn = true;
         }
       }
@@ -91,7 +91,7 @@ namespace Anki {
       void TurnOnIndicatorLight()
       {
         TestModeController::Init(TestModeController::TM_NONE);
-        HAL::SetLED(INDICATOR_LED_ID, HAL::LED_ORANGE);
+        HAL::SetLED(INDICATOR_LED_ID, HAL::LED_RED);
         Robot::StopRobot();
       }
       
