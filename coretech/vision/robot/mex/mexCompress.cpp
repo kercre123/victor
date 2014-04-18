@@ -26,7 +26,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   Array<u8> inputArray = mxArrayToArray<u8>(prhs[0], memory);
 
   s32 outCompressedLength;
-  const Result result = Compress(inputArray, outRaw, outMaxLength, outCompressedLength, memory);
+  const Anki::Result result = Compress(inputArray, outRaw, outMaxLength, outCompressedLength, memory);
 
   Array<u8> compressedVector = Array<u8>(1, outCompressedLength, memory);
   compressedVector.Set(reinterpret_cast<u8*>(outRaw), outCompressedLength);

@@ -39,7 +39,7 @@ namespace Anki {
       // NOTE: R1,R2,R3,R4 should all already be allocated to be 3x3.
       //
       template<typename PRECISION>
-      ReturnCode computePossiblePoses(const Point3<PRECISION>& worldPoint1,
+      Result computePossiblePoses(const Point3<PRECISION>& worldPoint1,
                                       const Point3<PRECISION>& worldPoint2,
                                       const Point3<PRECISION>& worldPoint3,
                                       const Point3<PRECISION>& imageRay1,
@@ -58,7 +58,7 @@ namespace Anki {
       // NOTE: R should already be allocated to be 3x3.
       // TODO: Make a Quadrilateral3 class to store 4 world points?
       template<typename PRECISION>
-      ReturnCode computePose(const Quadrilateral<PRECISION>& imgQuad,
+      Result computePose(const Quadrilateral<PRECISION>& imgQuad,
                              const Point3<PRECISION>& worldPoint1,
                              const Point3<PRECISION>& worldPoint2,
                              const Point3<PRECISION>& worldPoint3,
@@ -74,7 +74,7 @@ namespace Anki {
       // a 4-element array.  (I.e. allocation is caller's responsibility.)
       // NOTE: Really only exposed for testing
       template<typename PRECISION>
-      ReturnCode solveQuartic(const PRECISION* factors, PRECISION* realRoots);
+      Result solveQuartic(const PRECISION* factors, PRECISION* realRoots);
       
     } // namespace P3P
   } // namespace Embedded
