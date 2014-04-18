@@ -13,6 +13,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define _ANKICORETECHEMBEDDED_VISION_IMAGE_PROCESSING_H_
 
 #include "anki/vision/robot/imageProcessing_declarations.h"
+#include "anki/common/robot/interpolate.h"
 
 #include "anki/common/robot/array2d.h"
 
@@ -182,6 +183,99 @@ namespace Anki
             pImageFiltered_ym2[x] = static_cast<OutType>(filteredm2 >> (2*kernelShift));
           }
         }
+
+        return RESULT_OK;
+      }
+
+      template<typename InType, typename OutType> Result Resize(const Array<InType> &in, Array<OutType> &out)
+      {
+        AnkiConditionalErrorAndReturnValue(in.IsValid(),
+          RESULT_FAIL_INVALID_OBJECT, "Resize", "in is not valid");
+
+        AnkiConditionalErrorAndReturnValue(out.IsValid(),
+          RESULT_FAIL_INVALID_OBJECT, "Resize", "out is not valid");
+
+        const s32 inHeight = in.get_size(0);
+        const s32 inWidth  = in.get_size(1);
+
+        const s32 outHeight = out.get_size(0);
+        const s32 outWidth  = out.get_size(1);
+
+        Point<f32> scale(
+          static_cast<f32>(inWidth)  / static_cast<f32>(outWidth),
+          static_cast<f32>(inHeight) / static_cast<f32>(outHeight));
+
+        const f32 yInStart     = (0.5f * scale.y) - 0.5f;
+        const f32 yInIncrement = scale.y;
+
+        const f32 xInStart     = (0.5f * scale.x) - 0.5f;
+        const f32 xInIncrement = scale.x;
+
+        for(s32 y=0; y<outHeight; y++) {
+          const f32 inY = yInStart + yInIncrement * static_cast<f32>(y);
+
+          s32 inY0_S32 = FloorS32(inY);
+          s32 inY1_S32 = CeilS32(inY);
+
+          // Technically, we can't interpolate the borders. But this is a reasonable approximation
+          if(inY0_S32 < 0)
+            inY0_S32 = 0;
+
+          if(inY1_S32 < 0)
+            inY1_S32 = 0;
+
+          if(inY0_S32 > (inHeight-1))
+            inY0_S32 = inHeight-1;
+
+          if(inY1_S32 > (inHeight-1))
+            inY1_S32 = inHeight-1;
+
+          const f32 inY0 = static_cast<f32>(inY0_S32);
+          //const f32 inY1 = static_cast<f32>(inY1_S32);
+
+          const f32 alphaY = inY - inY0;
+          const f32 alphaYinverse = 1.0f - alphaY;
+
+          const InType * restrict pIn_y0 = in.Pointer(inY0_S32, 0);
+          const InType * restrict pIn_y1 = in.Pointer(inY1_S32, 0);
+
+          OutType * restrict pOut = out.Pointer(y, 0);
+
+          for(s32 x=0; x<outWidth; x++) {
+            const f32 inX = xInStart + xInIncrement * static_cast<f32>(x);
+
+            s32 inX0_S32 = FloorS32(inX);
+            s32 inX1_S32 = CeilS32(inX);
+
+            // Technically, we can't interpolate the borders. But this is a reasonable approximation
+            if(inX0_S32 < 0)
+              inX0_S32 = 0;
+
+            if(inX1_S32 < 0)
+              inX1_S32 = 0;
+
+            if(inX0_S32 > (inWidth-1))
+              inX0_S32 = inWidth-1;
+
+            if(inX1_S32 > (inWidth-1))
+              inX1_S32 = inWidth-1;
+
+            const f32 inX0 = static_cast<f32>(inX0_S32);
+            //const f32 inX1 = static_cast<f32>(inX1_S32);
+
+            const f32 alphaX = inX - inX0;
+            const f32 alphaXinverse = 1.0f - alphaX;
+
+            const f32 pixelTL = static_cast<f32>(pIn_y0[inX0_S32]);
+            const f32 pixelTR = static_cast<f32>(pIn_y0[inX1_S32]);
+            const f32 pixelBL = static_cast<f32>(pIn_y1[inX0_S32]);
+            const f32 pixelBR = static_cast<f32>(pIn_y1[inX1_S32]);
+
+            const OutType interpolatedPixelValue = static_cast<OutType>( InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse) );
+
+            pOut[x] = static_cast<OutType>(interpolatedPixelValue);
+          } // for(s32 x=0; x<outWidth; x++)
+        } // for(s32 y=0; y<outHeight; y++)
 
         return RESULT_OK;
       }

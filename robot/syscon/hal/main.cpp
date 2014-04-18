@@ -1,3 +1,4 @@
+#include "battery.h"
 #include "motors.h"
 #include "spi.h"
 #include "uart.h"
@@ -9,6 +10,8 @@
 const u32 MAX_FAILED_TRANSFER_COUNT = 10;
 GlobalDataToHead g_dataToHead;
 GlobalDataToBody g_dataToBody;
+
+extern void MotorsPrintRaw();
 
 extern "C"
 void SystemInit(void) 
@@ -30,24 +33,61 @@ int main(void)
   u32 failedTransferCount = 0;
   
   // Initialize the hardware peripherals
+  BatteryInit();
   TimerInit();
   MotorsInit();
   SPIInit();
   UARTInit();
-  nrf_gpio_pin_clear(17);
+  nrf_gpio_pin_clear(17);  // Multiplex blinking LED with UART
   nrf_gpio_cfg_output(17);
   
   UARTPutString("\r\nInitialized...\r\n");
   
   g_dataToHead.common.source = SPI_SOURCE_BODY;
   
-  /*g_dataToBody.motorPWM[0] = 0; //0x7fff * 0.5;
-  g_dataToBody.motorPWM[1] = 0x7fff * 0.2;
-  g_dataToBody.motorPWM[2] = 0; //0x7fff * 0.5;
-  g_dataToBody.motorPWM[3] = 0; //0x7fff * 0.1;*/
+  /*g_dataToBody.motorPWM[0] = 0; //0x7fff * 0.7;
+  g_dataToBody.motorPWM[1] = 0; //0x7fff * 0.7;
+  g_dataToBody.motorPWM[2] = 0; //0x7fff * 0.7;
+  g_dataToBody.motorPWM[3] = 0; //0x7fff * -0.3;*/
+  
+  // Force charger on for now
+  nrf_gpio_pin_clear(16);
+  nrf_gpio_cfg_output(16);
   
   while (1)
   {
+#if 0
+    // Motor testing...
+    for (int i = 0; i < MOTOR_COUNT; i++)
+    {
+      MotorsSetPower(i, 0x7fff);
+    }
+    
+    MotorsUpdate();
+    
+    u32 t = GetCounter();
+    while ((GetCounter() - t) < 8333333)  // 1 second
+    {
+      MotorsPrintEncodersRaw();
+    }
+    
+    for (int i = 0; i < MOTOR_COUNT; i++)
+    {
+      MotorsSetPower(i, -0x7fff);
+    }
+      
+    MotorsUpdate();
+    
+    t = GetCounter();
+    while ((GetCounter() - t) < 8333333)
+    {
+      MotorsPrintEncodersRaw();
+    }
+    
+    //BatteryUpdate();
+    
+#else
+    
     u32 timerStart = GetCounter();
     // Exchange data with the head board
     SPITransmitReceive(
@@ -70,12 +110,13 @@ int main(void)
     // Verify the source
     if (g_dataToBody.common.source != SPI_SOURCE_HEAD)
     {
+      // TODO: Remove 0. For now, needed to do head debugging
       if(0 && ++failedTransferCount > MAX_FAILED_TRANSFER_COUNT)
       {
         // Perform a full system reset in order to reinitialize the head board
         NVIC_SystemReset();
       }
-    } else {
+    } else  {
       failedTransferCount = 0;
       
       static u32 s = 0;
@@ -95,11 +136,12 @@ int main(void)
       
       MotorsUpdate();
     }
-
+    
     // Update at 200Hz
     // 41666 ticks * 120 ns is roughly 5ms
     while ((GetCounter() - timerStart) < 41666)
       ;
+#endif
   }
   
   return 0;

@@ -39,7 +39,7 @@ namespace Anki {
       // Set the docker here:
 #define DOCKING_ALGORITHM DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
       
-#define USE_HEADER_TEMPLATE //< Currently only supported for binary tracker and battery marker
+//#define USE_HEADER_TEMPLATE //< Currently only supported for binary tracker and battery marker
       
       // Set to 1 to use the top (or bottom) bar of the tracked marker to approximate
       // the pose of the block relative to the camera for docking.
@@ -51,9 +51,15 @@ namespace Anki {
 
 #if(STREAM_DEBUG_IMAGES)
       #define SEND_DEBUG_STREAM 1
-      #define RUN_SIMPLE_TRACKING_TEST
-      //#define SEND_IMAGE_ONLY
-      //#define SEND_BINARY_IMAGE_ONLY
+      //#define RUN_SIMPLE_TRACKING_TEST 1
+      #define RUN_SIMPLE_FACE_DETECTION_TEST 1
+      //#define SEND_IMAGE_ONLY 1
+      //#define SEND_BINARY_IMAGE_ONLY 1
+      
+#if defined(RUN_SIMPLE_TRACKING_TEST) && defined(RUN_SIMPLE_FACE_DETECTION_TEST)
+#error Cannot run both RUN_SIMPLE_TRACKING_TEST and RUN_SIMPLE_FACE_DETECTION_TEST
+#endif
+
 #else
       #define SEND_DEBUG_STREAM 0
 #endif

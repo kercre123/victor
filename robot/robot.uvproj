@@ -453,6 +453,11 @@
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\lights.cpp</FilePath>
             </File>
+            <File>
+              <FileName>wifi.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\wifi.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -992,6 +997,11 @@
               <FileName>binaryTracker.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\binaryTracker.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>cascadeClassifier.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\cascadeClassifier.cpp</FilePath>
             </File>
             <File>
               <FileName>colorConversion.cpp</FileName>
@@ -1692,6 +1702,11 @@
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\lights.cpp</FilePath>
             </File>
+            <File>
+              <FileName>wifi.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\wifi.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -2345,6 +2360,11 @@
               <FileName>binaryTracker.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\binaryTracker.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>cascadeClassifier.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\cascadeClassifier.cpp</FilePath>
             </File>
             <File>
               <FileName>colorConversion.cpp</FileName>

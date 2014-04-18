@@ -18,6 +18,8 @@
 #include "anki/vision/robot/fiducialMarkers.h"
 #include "anki/vision/robot/imageProcessing.h"
 #include "anki/vision/robot/perspectivePoseEstimation.h"
+#include "anki/vision/robot/classifier.h"
+#include "anki/vision/robot/lbpcascade_frontalface.h"
 
 // CoreTech Common Includes
 #include "anki/common/shared/radians.h"
@@ -145,6 +147,7 @@ namespace Anki {
         static DetectFiducialMarkersParameters detectionParameters_;
         static TrackerParameters               trackerParameters_;
         static HAL::CameraMode                 captureResolution_;
+        static HAL::CameraMode                 faceDetectionResolution_;
 
         /* Only using static members of SimulatorParameters now
 #ifdef SIMULATOR
@@ -968,6 +971,7 @@ namespace Anki {
         if(!isInitialized_) {
           
           captureResolution_ = HAL::CAMERA_MODE_QVGA;
+          faceDetectionResolution_ = HAL::CAMERA_MODE_QQVGA;
           
           // WARNING: the order of these initializations matter!
 
@@ -1186,8 +1190,85 @@ namespace Anki {
       return EXIT_SUCCESS;
     } // Update() [SEND_IMAGE_ONLY]
     
+#elif defined(RUN_SIMPLE_FACE_DETECTION_TEST) // #ifdef SEND_IMAGE_ONLY 
+
+      ReturnCode Update(const Messages::RobotState robotState)
+      {              
+      const f32 exposure = 0.2f;
+        
+      VisionMemory::ResetBuffers();
+      
+      const s32 captureHeight = CameraModeInfo[captureResolution_].height;
+      const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
+              
+      Array<u8> grayscaleImage(captureHeight, captureWidth,
+                               VisionMemory::offchipScratch_, Flags::Buffer(false,false,false));
+      
+      HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
+                          captureResolution_, exposure, false);
+      
+      const s32 faceDetectionHeight = CameraModeInfo[faceDetectionResolution_].height;
+      const s32 faceDetectionWidth  = CameraModeInfo[faceDetectionResolution_].width;
+        
+      const double scaleFactor = 1.1;
+      const int minNeighbors = 2;
+      const s32 minHeight = 30;
+      const s32 minWidth = 30;
+      const s32 maxHeight = faceDetectionHeight;
+      const s32 maxWidth = faceDetectionWidth;
+      const s32 MAX_CANDIDATES = 5000;
+      
+      Array<u8> smallImage(
+        faceDetectionHeight, faceDetectionWidth,
+        VisionMemory::onchipScratch_, Flags::Buffer(false,false,false));
+        
+      DownsampleHelper(grayscaleImage, smallImage, VisionMemory::ccmScratch_);
+      
+      const FixedLengthList<Classifier::CascadeClassifier::Stage> &stages = FixedLengthList<Classifier::CascadeClassifier::Stage>(lbpcascade_frontalface_stages_length, const_cast<Classifier::CascadeClassifier::Stage*>(&lbpcascade_frontalface_stages_data[0]), lbpcascade_frontalface_stages_length*sizeof(Classifier::CascadeClassifier::Stage) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+      const FixedLengthList<Classifier::CascadeClassifier::DTree> &classifiers = FixedLengthList<Classifier::CascadeClassifier::DTree>(lbpcascade_frontalface_classifiers_length, const_cast<Classifier::CascadeClassifier::DTree*>(&lbpcascade_frontalface_classifiers_data[0]), lbpcascade_frontalface_classifiers_length*sizeof(Classifier::CascadeClassifier::DTree) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+      const FixedLengthList<Classifier::CascadeClassifier::DTreeNode> &nodes =  FixedLengthList<Classifier::CascadeClassifier::DTreeNode>(lbpcascade_frontalface_nodes_length, const_cast<Classifier::CascadeClassifier::DTreeNode*>(&lbpcascade_frontalface_nodes_data[0]), lbpcascade_frontalface_nodes_length*sizeof(Classifier::CascadeClassifier::DTreeNode) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));;
+      const FixedLengthList<f32> &leaves = FixedLengthList<f32>(lbpcascade_frontalface_leaves_length, const_cast<f32*>(&lbpcascade_frontalface_leaves_data[0]), lbpcascade_frontalface_leaves_length*sizeof(f32) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+      const FixedLengthList<s32> &subsets = FixedLengthList<s32>(lbpcascade_frontalface_subsets_length, const_cast<s32*>(&lbpcascade_frontalface_subsets_data[0]), lbpcascade_frontalface_subsets_length*sizeof(s32) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+      const FixedLengthList<Rectangle<s32> > &featureRectangles = FixedLengthList<Rectangle<s32> >(lbpcascade_frontalface_featureRectangles_length, const_cast<Rectangle<s32>*>(reinterpret_cast<const Rectangle<s32>*>(&lbpcascade_frontalface_featureRectangles_data[0])), lbpcascade_frontalface_featureRectangles_length*sizeof(Rectangle<s32>) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+ 
+      Classifier::CascadeClassifier_LBP cc(
+        lbpcascade_frontalface_isStumpBased,
+        lbpcascade_frontalface_stageType,
+        lbpcascade_frontalface_featureType,
+        lbpcascade_frontalface_ncategories,
+        lbpcascade_frontalface_origWinHeight,
+        lbpcascade_frontalface_origWinWidth,
+        stages,
+        classifiers,
+        nodes,
+        leaves,
+        subsets,
+        featureRectangles,
+        VisionMemory::ccmScratch_);      
+      
+      FixedLengthList<Rectangle<s32> > detectedFaces(MAX_CANDIDATES, VisionMemory::offchipScratch_);
+      
+      const Result result = cc.DetectMultiScale(
+        smallImage,
+        static_cast<f32>(scaleFactor),
+        minNeighbors,
+        minHeight, minWidth,
+        maxHeight, maxWidth,
+        detectedFaces,
+        VisionMemory::onchipScratch_);
+            
+      DebugStream::SendFaceDetections(
+        grayscaleImage, 
+        detectedFaces,
+        smallImage.get_size(1),
+        VisionMemory::ccmScratch_, 
+        VisionMemory::onchipScratch_, 
+        VisionMemory::offchipScratch_);
+                  
+      return EXIT_SUCCESS;
+    } // Update() [SEND_IMAGE_ONLY]    
     
-#else // #ifdef SEND_IMAGE_ONLY
+#else // #elseif RUN_SIMPLE_FACE_DETECTION_TEST
     
       
       // This is the regular Update() call

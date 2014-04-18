@@ -139,7 +139,12 @@ namespace Anki
 
         const Rectangle<s32> templateRect = templateQuad.ComputeBoundingRectangle<s32>().ComputeScaledRectangle<s32>(scaleTemplateRegionPercent);
 
-        const Result result = DetectBlurredEdges_GrayvalueThreshold(templateImage, templateRect, this->lastGrayvalueThreshold, edgeDetectionParams.minComponentWidth, edgeDetectionParams.everyNLines, this->templateEdges);
+        Result result = RESULT_FAIL;
+        if(edgeDetectionParams.type == TemplateTracker::BinaryTracker::EDGE_TYPE_GRAYVALUE) {
+          result = DetectBlurredEdges_GrayvalueThreshold(templateImage, templateRect, this->lastGrayvalueThreshold, edgeDetectionParams.minComponentWidth, edgeDetectionParams.everyNLines, this->templateEdges);
+        } else if(edgeDetectionParams.type == TemplateTracker::BinaryTracker::EDGE_TYPE_DERIVATIVE) {
+          result = DetectBlurredEdges_DerivativeThreshold(templateImage, templateRect, edgeDetectionParams.combHalfWidth, edgeDetectionParams.combResponseThreshold, edgeDetectionParams.everyNLines, this->templateEdges);
+        }
 
         this->lastUsedGrayvalueThreshold = this->lastGrayvalueThreshold;
 
@@ -322,7 +327,13 @@ namespace Anki
           // Extract the edges, and transform them to the actual fiducial detection location
           // TODO: add subpixel
           const Rectangle<s32> templateRect(0, binaryTemplateWithBorderWidth-1, 0, binaryTemplateWithBorderHeight-1);
-          const Result result = DetectBlurredEdges_GrayvalueThreshold(rotatedBinaryTemplateWithBorder, templateRect, 128, edgeDetectionParams.minComponentWidth, edgeDetectionParams.everyNLines, this->templateEdges);
+
+          Result result = RESULT_FAIL;
+          if(edgeDetectionParams.type == TemplateTracker::BinaryTracker::EDGE_TYPE_GRAYVALUE) {
+            result = DetectBlurredEdges_GrayvalueThreshold(rotatedBinaryTemplateWithBorder, templateRect, 128, edgeDetectionParams.minComponentWidth, edgeDetectionParams.everyNLines, this->templateEdges);
+          } else if(edgeDetectionParams.type == TemplateTracker::BinaryTracker::EDGE_TYPE_DERIVATIVE) {
+            result = DetectBlurredEdges_DerivativeThreshold(rotatedBinaryTemplateWithBorder, templateRect, edgeDetectionParams.combHalfWidth, edgeDetectionParams.combResponseThreshold, edgeDetectionParams.everyNLines, this->templateEdges);
+          }
 
           this->templateEdges.imageHeight = templateImageHeight;
           this->templateEdges.imageWidth = templateImageWidth;
@@ -634,7 +645,7 @@ namespace Anki
         MemoryStack fastScratch,
         MemoryStack slowScratch)
       {
-        Result lastResult;
+        Result lastResult = RESULT_FAIL;
 
         EdgeLists nextImageEdges;
 
@@ -648,7 +659,12 @@ namespace Anki
 
         BeginBenchmark("ut_DetectEdges");
 
-        lastResult = DetectBlurredEdges_GrayvalueThreshold(nextImage, this->lastGrayvalueThreshold, edgeDetectionParams.minComponentWidth, edgeDetectionParams.everyNLines, nextImageEdges);
+        if(edgeDetectionParams.type == TemplateTracker::BinaryTracker::EDGE_TYPE_GRAYVALUE) {
+          lastResult = DetectBlurredEdges_GrayvalueThreshold(nextImage, this->lastGrayvalueThreshold, edgeDetectionParams.minComponentWidth, edgeDetectionParams.everyNLines, nextImageEdges);
+        } else if(edgeDetectionParams.type == TemplateTracker::BinaryTracker::EDGE_TYPE_DERIVATIVE) {
+          lastResult = DetectBlurredEdges_DerivativeThreshold(nextImage, edgeDetectionParams.combHalfWidth, edgeDetectionParams.combResponseThreshold, edgeDetectionParams.everyNLines, nextImageEdges);
+        }
+
         this->lastUsedGrayvalueThreshold = this->lastGrayvalueThreshold;
 
         EndBenchmark("ut_DetectEdges");

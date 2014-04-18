@@ -126,14 +126,15 @@ namespace Anki
 
       template<typename Type> Array<Type> GetArray(const std::string name, MemoryStack &memory);
 
+      template<typename Type> Result PutOpencvMat(const cv::Mat_<Type> &matrix, const std::string name);
+
       template<typename Type> Result PutQuad(const Quadrilateral<Type> &quad, const std::string name);
 
       template<typename Type> Result Put(const Type * values, s32 nValues, const std::string name);
 
       template<typename Type> Type* Get(const std::string name);
-      
+
       template<typename Type> Quadrilateral<Type> GetQuad(const std::string name);
-      
     }; // class Matlab
 
     // #pragma mark --- Implementations ---
@@ -184,6 +185,34 @@ namespace Anki
       */
       return RESULT_OK;
     } // template<typename Type> Result Matlab::PutArray(const Array<Type> &matrix, const std::string name)
+
+    template<typename Type> Result Matlab::PutOpencvMat(const cv::Mat_<Type> &matrix, const std::string name)
+    {
+      const mwSize matrixHeight = static_cast<mwSize>(matrix.rows);
+      const mwSize matrixWidth  = static_cast<mwSize>(matrix.cols);
+
+      AnkiConditionalErrorAndReturnValue(ep, RESULT_FAIL, "Anki.PutOpencvMat<Type>", "Matlab engine is not started/connected");
+
+      const mxClassID whichClass = GetMatlabClassID<Type>();
+      AnkiConditionalErrorAndReturnValue(whichClass != mxUNKNOWN_CLASS, RESULT_FAIL, "Anki.PutOpencvMat<Type>", "Unknown type to convert to a mxClassID");
+
+      // Create the transpose:
+      const mwSize dims[2] = {matrixWidth, matrixHeight};
+      mxArray* mxMatrix = mxCreateNumericArray(2, dims, whichClass, mxREAL);
+      Type *data = static_cast<Type*>(mxGetData(mxMatrix));
+
+      for(mwSize y=0; y<matrixHeight; y++) {
+        memcpy(data, matrix.ptr<u8>(y,0), matrixWidth*sizeof(Type));
+        data += matrixWidth;
+      }
+
+      engPutVariable(ep, name.data(), mxMatrix);
+
+      // Transpose to what we actually want over in matlab
+      EvalString("%s = %s';", name.data(), name.data());
+
+      return RESULT_OK;
+    }
 
     template<typename Type> Result Matlab::PutQuad(const Quadrilateral<Type> &quad, const std::string name)
     {
@@ -286,28 +315,26 @@ namespace Anki
     template<typename Type> Quadrilateral<Type> Matlab::GetQuad(const std::string name)
     {
       AnkiConditionalErrorAndReturnValue(this->ep, Quadrilateral<Type>(),
-                                         "Anki.Get", "Matlab engine is not started/connected");
+        "Anki.Get", "Matlab engine is not started/connected");
 
       const mxArray* mxQuad = GetArray(name);
-      
+
       AnkiConditionalErrorAndReturnValue(mxQuad != NULL, Quadrilateral<Type>(),
-                                         "Anki.GetQuad", "No variable named '%s' found.", name.c_str());
+        "Anki.GetQuad", "No variable named '%s' found.", name.c_str());
       AnkiConditionalErrorAndReturnValue(mxGetM(mxQuad)==4 && mxGetN(mxQuad)==2, Quadrilateral<Type>(),
-                                    "Anki.GetQuad", "Variable '%s' is not 4x2 in size.", name.c_str());
+        "Anki.GetQuad", "Variable '%s' is not 4x2 in size.", name.c_str());
       AnkiConditionalErrorAndReturnValue(mxGetClassID(mxQuad)==mxDOUBLE_CLASS, Quadrilateral<Type>(),
-                                    "Anki.GetQuad", "Variable '%s' must be DOUBLE to get as quad.", name.c_str());
-      
+        "Anki.GetQuad", "Variable '%s' must be DOUBLE to get as quad.", name.c_str());
+
       const double* x = mxGetPr(mxQuad);
       const double* y = x + 4;
-      
+
       return Quadrilateral<Type>(Point<Type>(static_cast<Type>(x[0]), static_cast<Type>(y[0])),
-                                 Point<Type>(static_cast<Type>(x[1]), static_cast<Type>(y[1])),
-                                 Point<Type>(static_cast<Type>(x[2]), static_cast<Type>(y[2])),
-                                 Point<Type>(static_cast<Type>(x[3]), static_cast<Type>(y[3])));
-      
+        Point<Type>(static_cast<Type>(x[1]), static_cast<Type>(y[1])),
+        Point<Type>(static_cast<Type>(x[2]), static_cast<Type>(y[2])),
+        Point<Type>(static_cast<Type>(x[3]), static_cast<Type>(y[3])));
     }
-    
-    
+
     template<> Result Matlab::Put<Point<s16> >(const Point<s16> * values, s32 nValues, const std::string name);
 
     // #pragma mark --- Specializations ---

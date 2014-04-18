@@ -110,7 +110,7 @@ namespace Anki {
           2,    // s32 minComponentWidth; //< The smallest horizontal size of a component (1 to 4 is good)
           500,  // s32 maxDetectionsPerType; //< As many as you have memory and time for (500 is good)
           1,    // s32 combHalfWidth; //< How far apart to compute the derivative difference (1 is good)
-          20,   // s32 combResponseThreshold; //< The minimum absolute-value response to start an edge component (20 is good)
+          10,   // s32 combResponseThreshold; //< The minimum absolute-value response to start an edge component (20 is good)
           1     // s32 everyNLines; //< As many as you have time for
         );
         

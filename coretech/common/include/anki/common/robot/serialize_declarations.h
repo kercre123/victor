@@ -127,8 +127,9 @@ namespace Anki
       // WARNING: CRC code generation is broken
       template<typename Type> void* PushBack(const char *objectName, const ArraySlice<Type> &in);
 
-      // Push back a FixedLengthList
-      //template<typename Type> void* PushBack(const FixedLengthList<Type> &in);
+      // Push back an FixedLengthList
+      // WARNING: CRC code generation is broken
+      template<typename Type> void* PushBack(const char *objectName, const FixedLengthList<Type> &in);
 
       // Push back a null-terminated string. Works like printf().
       void* PushBackString(const char * format, ...);

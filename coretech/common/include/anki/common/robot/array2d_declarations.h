@@ -24,6 +24,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "opencv2/core/core.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/objdetect/objdetect.hpp"
 #endif
 
 namespace Anki
@@ -124,6 +125,8 @@ namespace Anki
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
       // Returns a templated cv::Mat_ that shares the same buffer with this Array. No data is copied.
       cv::Mat_<Type>& get_CvMat_();
+
+      s32 Set(const cv::Mat_<Type> &in);
 
       // Use the simple OpenCV gui to display this array as an image
       void Show(const char * const windowName, const bool waitForKeypress, const bool scaleValues=false, const bool fitImageToWindow=false) const;

@@ -72,11 +72,19 @@ namespace Anki
         "Array<Type>::Array", "Invalid size");
 
       if(flags.get_isFullyAllocated()) {
-        AnkiConditionalErrorAndReturn(this->stride == (numCols*static_cast<s32>(sizeof(Type))),
-          "Array<Type>::Array", "if the data buffer being passed in doesn't contain a raw buffer, the stride must be simple");
+        if(numRows == 1) {
+          // If there's only one row, the stride restrictions are less stringent, though the buffer still must round up to a multiple of 16 bytes (or more)
+          AnkiConditionalErrorAndReturn(this->stride <= dataLength,
+            "Array<Type>::Array", "if the data buffer being passed in doesn't contain a raw buffer, the dataLength must be greater-than-or-equal-to the stride");
+        } else {
+          const s32 simpleStride = numCols * static_cast<s32>(sizeof(Type));
 
-        AnkiConditionalErrorAndReturn((numCols*sizeof(Type)) % MEMORY_ALIGNMENT == 0,
-          "Array<Type>::Array", "if the data buffer being passed in doesn't contain a raw buffer, (numCols*sizeof(Type)) mod MEMORY_ALIGNMENT must equal zero");
+          AnkiConditionalErrorAndReturn(this->stride == simpleStride,
+            "Array<Type>::Array", "if the data buffer being passed in doesn't contain a raw buffer, the stride must be simple");
+
+          AnkiConditionalErrorAndReturn((numCols*sizeof(Type)) % MEMORY_ALIGNMENT == 0,
+            "Array<Type>::Array", "if the data buffer being passed in doesn't contain a raw buffer, (numCols*sizeof(Type)) mod MEMORY_ALIGNMENT must equal zero");
+        }
 
         AnkiConditionalErrorAndReturn(flags.get_useBoundaryFillPatterns() == false,
           "Array<Type>::Array", "if the data buffer being passed in doesn't contain a raw buffer, flags.get_useBoundaryFillPatterns must be false");
@@ -231,6 +239,26 @@ namespace Anki
       AnkiConditionalError(this->IsValid(), "Array<Type>::get_CvMat_", "Array<Type> is not valid");
 
       return cvMatMirror;
+    }
+#endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
+
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
+    template<typename Type> s32 Array<Type>::Set(const cv::Mat_<Type> &in)
+    {
+      const s32 inHeight = in.rows;
+      const s32 inWidth = in.cols;
+
+      AnkiConditionalErrorAndReturnValue(inHeight == this->size[0] && inWidth == this->size[1],
+        0, "Array<Type>::Set", "input cv::Mat is the incorrect size");
+
+      for(s32 y=0; y<inHeight; y++) {
+        const Type * restrict pIn = reinterpret_cast<const Type*>(in.ptr(y,0));
+        Type * restrict pThis = this->Pointer(y,0);
+
+        memcpy(pThis, pIn, inWidth*sizeof(Type));
+      }
+
+      return inHeight*inWidth;
     }
 #endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
