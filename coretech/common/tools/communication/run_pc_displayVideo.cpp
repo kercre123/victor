@@ -26,6 +26,8 @@ _Check_return_opt_ _CRTIMP int __cdecl printf(_In_z_ _Printf_format_string_ cons
 #include "opencv/cv.h"
 
 using namespace std;
+using namespace Anki;
+using namespace Anki::Embedded;
 
 // Based off example at http://msdn.microsoft.com/en-us/library/windows/desktop/ms682516(v=vs.85).aspx
 DWORD WINAPI DisplayBuffersThread(LPVOID lpParam)
