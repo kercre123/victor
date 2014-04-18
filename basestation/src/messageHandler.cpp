@@ -27,11 +27,11 @@ namespace Anki {
     {
       
     }
-    ReturnCode MessageHandler::Init(Comms::IComms* comms,
+    Result MessageHandler::Init(Comms::IComms* comms,
                                     RobotManager*  robotMgr,
                                     BlockWorld*    blockWorld)
     {
-      ReturnCode retVal = EXIT_FAILURE;
+      Result retVal = RESULT_FAIL;
       
       //TODO: PRINT_NAMED_DEBUG("MessageHandler", "Initializing comms");
       comms_ = comms;
@@ -42,7 +42,7 @@ namespace Anki {
         isInitialized_ = comms_->IsInitialized();
         if (isInitialized_ == false) {
           // TODO: PRINT_NAMED_ERROR("MessageHandler", "Unable to initialize comms!");
-          retVal = EXIT_SUCCESS;
+          retVal = RESULT_OK;
         }
       }
       
@@ -50,7 +50,7 @@ namespace Anki {
     }
     
 
-    ReturnCode MessageHandler::SendMessage(const RobotID_t robotID, const Message& msg)
+    Result MessageHandler::SendMessage(const RobotID_t robotID, const Message& msg)
     {
       Comms::MsgPacket p;
       p.data[0] = msg.GetID();
@@ -58,13 +58,13 @@ namespace Anki {
       p.dataLen = msg.GetSize() + 1;
       p.destId = robotID;
       
-      return comms_->Send(p) > 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+      return comms_->Send(p) > 0 ? RESULT_OK : RESULT_FAIL;
     }
 
     
-    ReturnCode MessageHandler::ProcessPacket(const Comms::MsgPacket& packet)
+    Result MessageHandler::ProcessPacket(const Comms::MsgPacket& packet)
     {
-      ReturnCode retVal = EXIT_FAILURE;
+      Result retVal = RESULT_FAIL;
       
       if(robotMgr_ == NULL) {
         PRINT_NAMED_ERROR("MessageHandler.NullRobotManager",
@@ -103,20 +103,20 @@ namespace Anki {
       return retVal;
     } // ProcessBuffer()
     
-    ReturnCode MessageHandler::ProcessMessages()
+    Result MessageHandler::ProcessMessages()
     {
-      ReturnCode retVal = EXIT_FAILURE;
+      Result retVal = RESULT_FAIL;
       
       if(isInitialized_) {
-        retVal = EXIT_SUCCESS;
+        retVal = RESULT_OK;
         
         while(comms_->GetNumPendingMsgPackets() > 0)
         {
           Comms::MsgPacket packet;
           comms_->GetNextMsgPacket(packet);
           
-          if(ProcessPacket(packet) != EXIT_SUCCESS) {
-            retVal = EXIT_FAILURE;
+          if(ProcessPacket(packet) != RESULT_OK) {
+            retVal = RESULT_FAIL;
           }
         } // while messages are still available from comms
       }
@@ -127,9 +127,9 @@ namespace Anki {
     
     // Convert a MessageVisionMarker into a VisionMarker object and hand it off
     // to the BlockWorld
-    ReturnCode MessageHandler::ProcessMessage(Robot* robot, const MessageVisionMarker& msg)
+    Result MessageHandler::ProcessMessage(Robot* robot, const MessageVisionMarker& msg)
     {
-      ReturnCode retVal = EXIT_FAILURE;
+      Result retVal = RESULT_FAIL;
       
       if(blockWorld_ == NULL) {
         PRINT_NAMED_ERROR("MessageHandler:NullBlockWorld",
@@ -164,14 +164,14 @@ namespace Anki {
                               "Received VisionMarker message from robot before "
                               "camera calibration was set on Basestation.");
         }
-        retVal = EXIT_SUCCESS;
+        retVal = RESULT_OK;
       }
       
       return retVal;
     } // ProcessMessage(MessageVisionMarker)
     
     
-    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageHeadCameraCalibration const& msg)
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageHeadCameraCalibration const& msg)
     {
       // Convert calibration message into a calibration object to pass to
       // the robot
@@ -185,10 +185,10 @@ namespace Anki {
       
       robot->set_camCalibration(calib);
       
-      return EXIT_SUCCESS;
+      return RESULT_OK;
     }
     
-    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageRobotState const& msg)
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageRobotState const& msg)
     {
       /*
       PRINT_NAMED_INFO("RobotStateMsgRecvd",
@@ -217,10 +217,10 @@ namespace Anki {
       robot->SetTraversingPath( msg.isTraversingPath );
       robot->SetCarryingBlock( msg.isCarryingBlock );
       
-      return EXIT_SUCCESS;
+      return RESULT_OK;
     }
 
-    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessagePrintText const& msg)
+    Result MessageHandler::ProcessMessage(Robot* robot, MessagePrintText const& msg)
     {
       static char text[512];  // Local storage for large messages which may come across in multiple packets
       static u32 textIdx = 0;
@@ -245,35 +245,35 @@ namespace Anki {
         textIdx += PRINT_TEXT_MSG_LENGTH;
       }
 
-      return EXIT_SUCCESS;
+      return RESULT_OK;
     }
     
     // For visualization of docking error signal
-    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageDockingErrorSignal const& msg)
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageDockingErrorSignal const& msg)
     {
       VizManager::getInstance()->SetDockingError(msg.x_distErr, msg.y_horErr, msg.angleErr);
-      return EXIT_SUCCESS;
+      return RESULT_OK;
     }
     
     
     // STUBS:
-    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageClearPath const&){return EXIT_FAILURE;}
-    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageDriveWheels const&){return EXIT_FAILURE;}
-    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageDriveWheelsCurvature const&){return EXIT_FAILURE;}
-    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageMoveLift const&){return EXIT_FAILURE;}
-    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageMoveHead const&){return EXIT_FAILURE;}
-    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageStopAllMotors const&){return EXIT_FAILURE;}
-    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageRobotAvailable const&){return EXIT_FAILURE;}
-    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageMatMarkerObserved const&){return EXIT_FAILURE;}
-    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageRobotAddedToWorld const&){return EXIT_FAILURE;}
-    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageAppendPathSegmentArc const&){return EXIT_FAILURE;}
-    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageExecutePath const&){return EXIT_FAILURE;}
-    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageDockWithBlock const&){return EXIT_FAILURE;}
-    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageAppendPathSegmentLine const&){return EXIT_FAILURE;}
-    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageBlockMarkerObserved const&){return EXIT_FAILURE;}
-    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageMatCameraCalibration const&){return EXIT_FAILURE;}
-    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageRequestCamCalib const&){return EXIT_FAILURE;}
-    ReturnCode MessageHandler::ProcessMessage(Robot* robot, MessageAbsLocalizationUpdate const&){return EXIT_FAILURE;}
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageClearPath const&){return RESULT_FAIL;}
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageDriveWheels const&){return RESULT_FAIL;}
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageDriveWheelsCurvature const&){return RESULT_FAIL;}
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageMoveLift const&){return RESULT_FAIL;}
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageMoveHead const&){return RESULT_FAIL;}
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageStopAllMotors const&){return RESULT_FAIL;}
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageRobotAvailable const&){return RESULT_FAIL;}
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageMatMarkerObserved const&){return RESULT_FAIL;}
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageRobotAddedToWorld const&){return RESULT_FAIL;}
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageAppendPathSegmentArc const&){return RESULT_FAIL;}
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageExecutePath const&){return RESULT_FAIL;}
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageDockWithBlock const&){return RESULT_FAIL;}
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageAppendPathSegmentLine const&){return RESULT_FAIL;}
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageBlockMarkerObserved const&){return RESULT_FAIL;}
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageMatCameraCalibration const&){return RESULT_FAIL;}
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageRequestCamCalib const&){return RESULT_FAIL;}
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageAbsLocalizationUpdate const&){return RESULT_FAIL;}
     
   } // namespace Cozmo
 } // namespace Anki

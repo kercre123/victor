@@ -58,7 +58,7 @@ namespace Anki {
       // Methods:
       //
       
-      ReturnCode Init(void);
+      Result Init(void);
       bool IsInitialized();
       
       // Accessors
@@ -70,7 +70,7 @@ namespace Anki {
       // NOTE: It is important the passed-in robot state message be passed by
       //   value and NOT by reference, since the vision system can be interrupted
       //   by main execution (which updates the state).
-      ReturnCode Update(const Messages::RobotState robotState);
+      Result Update(const Messages::RobotState robotState);
       
       void StopTracking();
 
@@ -79,7 +79,7 @@ namespace Anki {
       // for blocks, it will initialize a template tracker and switch to
       // docking mode.
       // TODO: Something smarter about seeing the block in the expected place as well?
-      ReturnCode SetMarkerToTrack(const Vision::MarkerType& markerToTrack,
+      Result SetMarkerToTrack(const Vision::MarkerType& markerToTrack,
                                   const f32 markerWidth_mm);
       
       u32 DownsampleHelper(const Embedded::Array<u8>& imageIn,
@@ -98,22 +98,22 @@ namespace Anki {
       //    image plane will be ignored (by sorting the marker's corners such
       //    that they always represent an upright marker).
       // NOTE: rotation should already be allocated as a 3x3 array.
-      ReturnCode GetVisionMarkerPose(const Embedded::VisionMarker& marker,
-                                     Embedded::Array<f32>&  rotationWrtCamera,
-                                     Embedded::Point3<f32>& translationWrtCamera,
-                                     const bool ignoreOrientation,
-                                     Embedded::MemoryStack  scratch);
+      Result GetVisionMarkerPose(const Embedded::VisionMarker& marker,
+                                 Embedded::Array<f32>&  rotationWrtCamera,
+                                 Embedded::Point3<f32>& translationWrtCamera,
+                                 const bool ignoreOrientation,
+                                 Embedded::MemoryStack  scratch);
       
       // Convert a point or pose in camera coordinates to robot coordinates,
       // using the kinematic chain of the neck and head geometry.
       // NOTE: the rotation matrices should already be allocated as 3x3 arrays.
-      Embedded::Result GetWithRespectToRobot(const Embedded::Point3<f32>& pointWrtCamera,
-                                             Embedded::Point3<f32>&       pointWrtRobot);
+      Result GetWithRespectToRobot(const Embedded::Point3<f32>& pointWrtCamera,
+                                   Embedded::Point3<f32>&       pointWrtRobot);
       
-      Embedded::Result GetWithRespectToRobot(const Embedded::Array<f32>&  rotationWrtCamera,
-                                             const Embedded::Point3<f32>& translationWrtCamera,
-                                             Embedded::Array<f32>&        rotationWrtRobot,
-                                             Embedded::Point3<f32>&       translationWrtRobot);
+      Result GetWithRespectToRobot(const Embedded::Array<f32>&  rotationWrtCamera,
+                                   const Embedded::Point3<f32>& translationWrtCamera,
+                                   Embedded::Array<f32>&        rotationWrtRobot,
+                                   Embedded::Point3<f32>&       translationWrtRobot);
       
     } // namespace VisionSystem
     

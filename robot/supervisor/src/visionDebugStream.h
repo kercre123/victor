@@ -16,15 +16,15 @@ namespace Anki {
     namespace VisionSystem {
       namespace DebugStream {
         
-        ReturnCode Initialize();
+        Result Initialize();
         
-        ReturnCode SendFiducialDetection(const Array<u8> &image,
+        Result SendFiducialDetection(const Array<u8> &image,
                                          const FixedLengthList<VisionMarker> &markers,
                                          MemoryStack ccmScratch,
                                          MemoryStack onchipScratch,
                                          MemoryStack offchipScratch);
         
-        ReturnCode SendTrackingUpdate(const Array<u8> &image,
+        Result SendTrackingUpdate(const Array<u8> &image,
                                       const Tracker &tracker,
                                       const TrackerParameters &parameters,
                                       const u8 meanGrayvalueError,
@@ -33,7 +33,7 @@ namespace Anki {
                                       MemoryStack onchipScratch,
                                       MemoryStack offchipScratch);
                                       
-        ReturnCode SendFaceDetections(
+        Result SendFaceDetections(
           const Array<u8> &image, 
           const FixedLengthList<Rectangle<s32> > &detectedFaces,
           const s32 detectedFacesImageWidth,
@@ -41,11 +41,11 @@ namespace Anki {
           MemoryStack onchipScratch, 
           MemoryStack offchipScratch)                                      ;
         
-        //ReturnCode SendPrintf(const char * string);
+        //Result SendPrintf(const char * string);
         
-        ReturnCode SendArray(const Array<u8> &array);
+        Result SendArray(const Array<u8> &array);
         
-        ReturnCode SendBinaryImage(const Array<u8> &grayscaleImage,
+        Result SendBinaryImage(const Array<u8> &grayscaleImage,
                                    const Tracker &tracker,
                                    const TrackerParameters &parameters,
                                    MemoryStack ccmScratch,
@@ -53,7 +53,7 @@ namespace Anki {
                                    MemoryStack offchipScratch);
         
 #if DOCKING_ALGORITHM ==  DOCKING_BINARY_TRACKER
-        ReturnCode SendBinaryTracker(const TemplateTracker::BinaryTracker &tracker,
+        Result SendBinaryTracker(const TemplateTracker::BinaryTracker &tracker,
                                      MemoryStack ccmScratch,
                                      MemoryStack onchipScratch,
                                      MemoryStack offchipScratch);

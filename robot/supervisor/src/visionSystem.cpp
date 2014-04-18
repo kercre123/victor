@@ -90,7 +90,7 @@ namespace Anki {
         static FixedLengthList<VisionMarker> markers_;
         
         // WARNING: ResetBuffers should be used with caution
-        static ReturnCode ResetBuffers()
+        static Result ResetBuffers()
         {
           offchipScratch_ = MemoryStack(offchipBuffer, OFFCHIP_BUFFER_SIZE);
           onchipScratch_ = MemoryStack(onchipBuffer, ONCHIP_BUFFER_SIZE);
@@ -98,15 +98,15 @@ namespace Anki {
           
           if(!offchipScratch_.IsValid() || !onchipScratch_.IsValid() || !ccmScratch_.IsValid()) {
             PRINT("Error: InitializeScratchBuffers\n");
-            return EXIT_FAILURE;
+            return RESULT_FAIL;
           }
           
           markers_ = FixedLengthList<VisionMarker>(VisionMemory::MAX_MARKERS, offchipScratch_);
           
-          return EXIT_SUCCESS;
+          return RESULT_OK;
         }
         
-        static ReturnCode Initialize()
+        static Result Initialize()
         {
           return ResetBuffers();
         }
@@ -167,9 +167,9 @@ namespace Anki {
 #ifdef SIMULATOR
         static u32 frameReadyTime_;
         
-        static ReturnCode Initialize() {
+        static Result Initialize() {
           frameReadyTime_ = 0;
-          return EXIT_SUCCESS;
+          return RESULT_OK;
         }
         
         // Returns true if we are past the last set time for simulated processing
@@ -184,7 +184,7 @@ namespace Anki {
           frameReadyTime_ = HAL::GetMicroCounter() + SimulatorParameters::TRACK_BLOCK_PERIOD_US;
         }
 #else
-        static ReturnCode Initialize() { return EXIT_SUCCESS; }
+        static Result Initialize() { return RESULT_OK; }
         static bool IsFrameReady() { return true; }
         static void SetDetectionReadyTime() { }
         static void SetTrackingReadyTime() { }
@@ -204,7 +204,7 @@ namespace Anki {
 #endif
       } // GetTrackerQuad()
       
-      static ReturnCode UpdateRobotState(const Messages::RobotState newRobotState)
+      static Result UpdateRobotState(const Messages::RobotState newRobotState)
       {
         prevRobotState_ = robotState_;
         robotState_     = newRobotState;
@@ -215,7 +215,7 @@ namespace Anki {
           wasCalledOnce_ = true;
         }
         
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       } // UpdateRobotState()
       
       static void GetPoseChange(f32& xChange, f32& yChange, Radians& angleChange)
@@ -245,7 +245,7 @@ namespace Anki {
         return prevRobotState_.headAngle;
       }
       
-      static ReturnCode LookForMarkers(
+      static Result LookForMarkers(
                                        const Array<u8> &grayscaleImage,
                                        const DetectFiducialMarkersParameters &parameters,
                                        FixedLengthList<VisionMarker> &markers,
@@ -299,10 +299,10 @@ namespace Anki {
           MatlabVisualization::SendDrawNow();
         } // if(result == RESULT_OK)
         
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       } // LookForMarkers()
       
-      static ReturnCode InitTemplate(
+      static Result InitTemplate(
                                      const Array<u8> &grayscaleImage,
                                      const Quadrilateral<f32> &trackingQuad,
                                      const TrackerParameters &parameters,
@@ -422,7 +422,7 @@ namespace Anki {
 #endif
         
         if(!tracker.IsValid()) {
-          return EXIT_FAILURE;
+          return RESULT_FAIL;
         }
         
         MatlabVisualization::SendTrackInit(grayscaleImage, tracker, onchipMemory);
@@ -431,10 +431,10 @@ namespace Anki {
         DebugStream::SendBinaryTracker(tracker, ccmScratch, onchipMemory, offchipMemory);
 #endif
         
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       } // InitTemplate()
       
-      static ReturnCode TrackTemplate(
+      static Result TrackTemplate(
                                       const Array<u8> &grayscaleImage,
                                       const Quadrilateral<f32> &trackingQuad,
                                       const TrackerParameters &parameters,
@@ -561,7 +561,7 @@ namespace Anki {
 #endif
         
         if(trackerResult != RESULT_OK) {
-          return EXIT_FAILURE;
+          return RESULT_FAIL;
         }
      
         // Sanity check on tracker result
@@ -627,7 +627,7 @@ namespace Anki {
         
         DebugStream::SendTrackingUpdate(grayscaleImage, tracker, parameters, verify_meanAbsoluteDifference, static_cast<f32>(verify_numSimilarPixels) / static_cast<f32>(verify_numInBounds), ccmScratch, onchipScratch, offchipScratch);
         
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       } // TrackTemplate()
       
       //
@@ -636,9 +636,9 @@ namespace Anki {
       // Adjust the tracker transformation by approximately how much we
       // think we've moved since the last tracking call.
       //
-      static ReturnCode TrackerPredictionUpdate(const Array<u8>& grayscaleImage, MemoryStack scratch)
+      static Result TrackerPredictionUpdate(const Array<u8>& grayscaleImage, MemoryStack scratch)
       {
-        ReturnCode result = EXIT_SUCCESS;
+        Result result = RESULT_OK;
         
         const Quadrilateral<f32> currentQuad = GetTrackerQuad(scratch);
         
@@ -711,7 +711,7 @@ namespace Anki {
                                                  T_blockRelHead_new,
                                                  scratch) == RESULT_OK)
         {
-          result = EXIT_SUCCESS;
+          result = RESULT_OK;
         }
 
                                  
@@ -964,9 +964,9 @@ namespace Anki {
         return trackingMarkerWidth_mm;
       }
       
-      ReturnCode Init()
+      Result Init()
       {
-        ReturnCode result = EXIT_SUCCESS;
+        Result result = RESULT_OK;
         
         if(!isInitialized_) {
           
@@ -991,7 +991,7 @@ namespace Anki {
           headCamInfo_ = HAL::GetHeadCamInfo();
           if(headCamInfo_ == NULL) {
             PRINT("Initialize() - HeadCam Info pointer is NULL!\n");
-            return EXIT_FAILURE;
+            return RESULT_FAIL;
           }
           
           // Compute FOV from focal length (currently used for tracker prediciton)
@@ -1009,17 +1009,17 @@ namespace Anki {
 #endif
           
           result = VisionMemory::Initialize();
-          if(result != EXIT_SUCCESS) { return result; }
+          if(result != RESULT_OK) { return result; }
           
           result = DebugStream::Initialize();
-          if(result != EXIT_SUCCESS) { return result; }
+          if(result != RESULT_OK) { return result; }
           
           result = MatlabVisualization::Initialize();
-          if(result != EXIT_SUCCESS) { return result; }
+          if(result != RESULT_OK) { return result; }
           
 #if USE_MATLAB_TRACKER || USE_MATLAB_DETECTOR
           result = MatlabVisionProcessor::Initialize();
-          if(result != EXIT_SUCCESS) { return result; }
+          if(result != RESULT_OK) { return result; }
 #endif
           
           RcamWrtRobot_ = Array<f32>(3,3,VisionMemory::onchipScratch_);
@@ -1030,7 +1030,7 @@ namespace Anki {
         return result;
       }
       
-      ReturnCode SetMarkerToTrack(const Vision::MarkerType& markerToTrack,
+      Result SetMarkerToTrack(const Vision::MarkerType& markerToTrack,
                                   const f32 markerWidth_mm)
       {
         markerTypeToTrack_     = markerToTrack;
@@ -1055,7 +1055,7 @@ namespace Anki {
           isTrackingMarkerSpecified_ = false;
         }
         
-        return EXIT_SUCCESS;
+        return RESULT_OK;
         
       } // SetMarkerToTrack()
       
@@ -1131,11 +1131,11 @@ namespace Anki {
         return RESULT_OK;
       }
       
-      ReturnCode GetVisionMarkerPose(const Embedded::VisionMarker& marker,
-                                     Embedded::Array<f32>&  rotation,
-                                     Embedded::Point3<f32>& translation,
-                                     const bool ignoreOrientation,
-                                     Embedded::MemoryStack  scratch)
+      Result GetVisionMarkerPose(const Embedded::VisionMarker& marker,
+                                 Embedded::Array<f32>&  rotation,
+                                 Embedded::Point3<f32>& translation,
+                                 const bool ignoreOrientation,
+                                 Embedded::MemoryStack  scratch)
       {
         Quadrilateral<f32> quad(Point<f32>(marker.corners[0].x, marker.corners[0].y),
                                           Point<f32>(marker.corners[1].x, marker.corners[1].y),
@@ -1147,9 +1147,9 @@ namespace Anki {
           sortedQuad = marker.corners.ComputeClockwiseCorners<f32>();
         } else {
           sortedQuad = Quadrilateral<f32>(Point<f32>(marker.corners[0].x, marker.corners[0].y),
-                                                    Point<f32>(marker.corners[1].x, marker.corners[1].y),
-                                                    Point<f32>(marker.corners[2].x, marker.corners[2].y),
-                                                    Point<f32>(marker.corners[3].x, marker.corners[3].y));
+                                          Point<f32>(marker.corners[1].x, marker.corners[1].y),
+                                          Point<f32>(marker.corners[2].x, marker.corners[2].y),
+                                          Point<f32>(marker.corners[3].x, marker.corners[3].y));
         }
         
 
@@ -1166,7 +1166,7 @@ namespace Anki {
 #ifdef SEND_IMAGE_ONLY
       // In SEND_IMAGE_ONLY mode, just create a special version of update
       
-      ReturnCode Update(const Messages::RobotState robotState)
+      Result Update(const Messages::RobotState robotState)
       {
       VisionMemory::ResetBuffers();
       
@@ -1187,12 +1187,12 @@ namespace Anki {
       HAL::MicroWait(1500000);
 #endif
       
-      return EXIT_SUCCESS;
+      return RESULT_OK;
     } // Update() [SEND_IMAGE_ONLY]
     
 #elif defined(RUN_SIMPLE_FACE_DETECTION_TEST) // #ifdef SEND_IMAGE_ONLY 
 
-      ReturnCode Update(const Messages::RobotState robotState)
+      Result Update(const Messages::RobotState robotState)
       {              
       const f32 exposure = 0.2f;
         
@@ -1265,14 +1265,14 @@ namespace Anki {
         VisionMemory::onchipScratch_, 
         VisionMemory::offchipScratch_);
                   
-      return EXIT_SUCCESS;
+      return RESULT_OK;
     } // Update() [SEND_IMAGE_ONLY]    
     
 #else // #elseif RUN_SIMPLE_FACE_DETECTION_TEST
     
       
       // This is the regular Update() call
-      ReturnCode Update(const Messages::RobotState robotState)
+      Result Update(const Messages::RobotState robotState)
       {
         const f32 exposure = 0.1f;
         
@@ -1281,7 +1281,7 @@ namespace Anki {
         
         // no-op on real hardware
         if(!Simulator::IsFrameReady()) {
-          return EXIT_SUCCESS;
+          return RESULT_OK;
         }
         
         UpdateRobotState(robotState);
@@ -1307,7 +1307,7 @@ namespace Anki {
           HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
                               captureResolution_, exposure, false);
           
-          const ReturnCode result = LookForMarkers(
+          const Result result = LookForMarkers(
                                                    grayscaleImage,
                                                    detectionParameters_,
                                                    VisionMemory::markers_,
@@ -1315,8 +1315,8 @@ namespace Anki {
                                                    VisionMemory::onchipScratch_,
                                                    VisionMemory::offchipScratch_);
           
-          if(result != EXIT_SUCCESS) {
-            return EXIT_FAILURE;
+          if(result != RESULT_OK) {
+            return RESULT_FAIL;
           }
           
           const s32 numMarkers = VisionMemory::markers_.get_size();
@@ -1366,7 +1366,7 @@ namespace Anki {
                                                               Point<f32>(crntMarker.corners[2].x, crntMarker.corners[2].y),
                                                               Point<f32>(crntMarker.corners[3].x, crntMarker.corners[3].y));
               
-              const ReturnCode result = InitTemplate(grayscaleImage,
+              const Result result = InitTemplate(grayscaleImage,
                                                      trackingQuad_,
                                                      trackerParameters_,
                                                      tracker_,
@@ -1374,8 +1374,8 @@ namespace Anki {
                                                      VisionMemory::onchipScratch_, //< NOTE: onchip is a reference
                                                      VisionMemory::offchipScratch_);
               
-              if(result != EXIT_SUCCESS) {
-                return EXIT_FAILURE;
+              if(result != RESULT_OK) {
+                return RESULT_FAIL;
               }
               
               // Template initialization succeeded, switch to tracking mode:
@@ -1410,11 +1410,11 @@ namespace Anki {
           // think we've moved since the last tracking call.
           //
           
-          ReturnCode predictionResult = TrackerPredictionUpdate(grayscaleImage, onchipScratch_local);
+          Result predictionResult = TrackerPredictionUpdate(grayscaleImage, onchipScratch_local);
           
-          if(predictionResult != EXIT_SUCCESS) {
+          if(predictionResult != RESULT_OK) {
             PRINT("VisionSystem::Update(): TrackTemplate() failed.\n");
-            return EXIT_FAILURE;
+            return RESULT_FAIL;
           }
           
           //
@@ -1424,7 +1424,7 @@ namespace Anki {
           // Set by TrackTemplate() call
           bool converged = false;
           
-          const ReturnCode trackResult = TrackTemplate(
+          const Result trackResult = TrackTemplate(
                                                        grayscaleImage,
                                                        trackingQuad_,
                                                        trackerParameters_,
@@ -1434,9 +1434,9 @@ namespace Anki {
                                                        onchipScratch_local,
                                                        offchipScratch_local);
           
-          if(trackResult != EXIT_SUCCESS) {
+          if(trackResult != RESULT_OK) {
             PRINT("VisionSystem::Update(): TrackTemplate() failed.\n");
-            return EXIT_FAILURE;
+            return RESULT_FAIL;
           }
           
           //
@@ -1468,10 +1468,10 @@ namespace Anki {
           Messages::ProcessDockingErrorSignalMessage(dockErrMsg);
         } else {
           PRINT("VisionSystem::Update(): reached default case in switch statement.");
-          return EXIT_FAILURE;
+          return RESULT_FAIL;
         } // if(converged)
         
-        return EXIT_SUCCESS;
+        return RESULT_OK;
         
       } // Update() [Real]
       

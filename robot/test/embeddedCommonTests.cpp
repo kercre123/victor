@@ -32,6 +32,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "embeddedTests.h"
 
+using namespace Anki;
 using namespace Anki::Embedded;
 
 GTEST_TEST(CoreTech_Common, Rotate90)

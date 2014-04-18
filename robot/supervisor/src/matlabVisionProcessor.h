@@ -18,9 +18,9 @@ namespace Anki {
       
       using namespace Embedded;
       
-      ReturnCode Initialize();
+      Result Initialize();
       
-      ReturnCode InitTemplate(const Array<u8>& imgFull,
+      Result InitTemplate(const Array<u8>& imgFull,
                               const Quadrilateral<f32>& trackingQuad,
                               MemoryStack scratch);
       
@@ -34,7 +34,7 @@ namespace Anki {
                          const Radians& theta_robot,
                          const Radians& theta_head);
       
-      ReturnCode TrackTemplate(const Array<u8>& imgFull, bool& converged, MemoryStack scratch);
+      Result TrackTemplate(const Array<u8>& imgFull, bool& converged, MemoryStack scratch);
       
       Quadrilateral<f32> GetTrackerQuad();
       

@@ -29,7 +29,7 @@ namespace Anki {
     namespace HeadController {
       
       // TODO: Add if/when needed?
-      // ReturnCode Init();
+      // Result Init();
 
       void StartCalibrationRoutine();
       bool IsCalibrated();
@@ -52,7 +52,7 @@ namespace Anki {
       // Get current head angle
       f32 GetAngleRad();
       
-      ReturnCode Update();
+      Result Update();
       
     } // namespace HeadController
   } // namespcae Cozmo

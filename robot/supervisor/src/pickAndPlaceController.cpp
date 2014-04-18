@@ -55,9 +55,9 @@ namespace Anki {
       }
       
       
-      ReturnCode Update()
+      Result Update()
       {
-        ReturnCode retVal = EXIT_SUCCESS;
+        Result retVal = RESULT_OK;
         
         switch(mode_)
         {

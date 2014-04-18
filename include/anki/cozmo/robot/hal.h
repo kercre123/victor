@@ -197,7 +197,7 @@ namespace Anki
       // Hardware Interface Methods:
       //
 
-      ReturnCode Init(void);
+      Result Init(void);
       void Destroy(void);
 
       // Gripper control
@@ -220,7 +220,7 @@ namespace Anki
       s32 GetRobotID(void);
 
       // Take a step (needed for webots, possibly a no-op for real robot?)
-      ReturnCode Step(void);
+      Result Step(void);
 
       // Ground truth (no-op if not in simulation?)
       void GetGroundTruthPose(f32 &x, f32 &y, f32& rad);

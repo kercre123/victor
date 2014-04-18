@@ -9,7 +9,7 @@ namespace Anki {
   namespace Cozmo {
     namespace Localization {
 
-      ReturnCode Init();
+      Result Init();
       
       //Embedded::Pose2d GetCurrMatPose();
       

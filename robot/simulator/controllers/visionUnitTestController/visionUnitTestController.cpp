@@ -337,7 +337,7 @@ int main(int argc, char **argv)
   jsonFile << root.toStyledString();
   jsonFile.close();
   
-  webotRobot_.simulationQuit(EXIT_SUCCESS);
+  webotRobot_.simulationQuit(RESULT_OK);
   
   return 0;
 }

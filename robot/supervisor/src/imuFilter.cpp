@@ -34,9 +34,9 @@ namespace Anki {
         rotSpeed_ = 0;
       }
       
-      ReturnCode Update()
+      Result Update()
       {
-        ReturnCode retVal = EXIT_SUCCESS;
+        Result retVal = RESULT_OK;
         
         // Get IMU data
         HAL::IMU_DataStructure imu_data;

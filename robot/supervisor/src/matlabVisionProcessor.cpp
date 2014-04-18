@@ -59,7 +59,7 @@ namespace Anki {
       static f32 errorTolerance_;
       static s32 scaleFactor_;
       
-      ReturnCode Initialize()
+      Result Initialize()
       {
         if(!isInitialized_) {
           matlabProc_.EvalStringEcho("run(fullfile('..','..','..','..','matlab','initCozmoPath')); "
@@ -87,15 +87,15 @@ namespace Anki {
           isInitialized_ = true;
         }
         
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       } // MatlabVisionProcess::Initialize()
       
-      ReturnCode InitTemplate(const Array<u8>& imgFull,
+      Result InitTemplate(const Array<u8>& imgFull,
                               const Quadrilateral<f32>& trackingQuad,
                               MemoryStack scratch)
       {
         if(!isInitialized_) {
-          return EXIT_FAILURE;
+          return RESULT_FAIL;
         }
         
         matlabProc_.PutQuad(trackingQuad, "initTrackingQuad");
@@ -165,7 +165,7 @@ namespace Anki {
         
         MatlabVisualization::SendTrackInit(imgFull, trackingQuad);
         
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       } // MatlabVisionProcessor::InitTemplate()
 
 
@@ -224,12 +224,12 @@ namespace Anki {
                                    scaleFactor_, scaleFactor_);
       } // MatlabVisionProcess::UpdateTracker()
       
-      ReturnCode TrackTemplate(const Array<u8>& imgFull, bool& converged, MemoryStack scratch)
+      Result TrackTemplate(const Array<u8>& imgFull, bool& converged, MemoryStack scratch)
       {
         if(!haveTemplate_) {
           AnkiWarn("MatlabVisionProcess::TrackTemplate",
                    "TrackTemplate called before tracker initialized.");
-          return EXIT_FAILURE;
+          return RESULT_FAIL;
         }
         
         if(imgFull.get_size(0) == trackerParameters_.trackingImageHeight &&
@@ -281,7 +281,7 @@ namespace Anki {
         
         MatlabVisualization::SendTrack(imgFull, quad, converged);
         
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       } // MatlabVisionProcessor::TrackTemplate()
       
       

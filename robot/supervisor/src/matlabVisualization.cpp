@@ -39,7 +39,7 @@ namespace Anki {
       static const bool saveTrackingResults_ = false;
 #endif      
       
-      ReturnCode Initialize()
+      Result Initialize()
       {
 #if USE_MATLAB_VISUALIZATION
         //matlabViz_ = Matlab(false);
@@ -60,10 +60,10 @@ namespace Anki {
         
         beforeCalled_ = false;
 #endif
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       }
       
-      ReturnCode ResetFiducialDetection(const Array<u8>& image)
+      Result ResetFiducialDetection(const Array<u8>& image)
       {
 #if USE_MATLAB_VISUALIZATION
         matlabViz_.EvalStringEcho("delete(findobj(h_axes, 'Tag', 'DetectedQuad'));");
@@ -72,10 +72,10 @@ namespace Anki {
                                   "set(h_axes, 'XLim', [.5 size(detectionImage,2)+.5], "
                                   "            'YLim', [.5 size(detectionImage,1)+.5]);");
 #endif
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       }
       
-      ReturnCode SendFiducialDetection(const Quadrilateral<s16> &corners,
+      Result SendFiducialDetection(const Quadrilateral<s16> &corners,
                                        const Vision::MarkerType &markerCode )
       {
 #if USE_MATLAB_VISUALIZATION
@@ -98,18 +98,18 @@ namespace Anki {
                                   "     'Tag', 'DetectedQuad');",
                                   Vision::MarkerTypeStrings[markerCode]);
 #endif
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       }
       
-      ReturnCode SendDrawNow()
+      Result SendDrawNow()
       {
 #if USE_MATLAB_VISUALIZATION
         matlabViz_.EvalString("drawnow");
 #endif
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       }
       
-      ReturnCode SendTrackInit(const Array<u8> &image, const Quadrilateral<f32>& quad)
+      Result SendTrackInit(const Array<u8> &image, const Quadrilateral<f32>& quad)
       {
 #if USE_MATLAB_VISUALIZATION
         ResetFiducialDetection(image);
@@ -155,17 +155,17 @@ namespace Anki {
                                     fnameStr1, fnameStr2);
         }
 #endif // #if USE_MATLAB_VISUALIZATION
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       }
       
-      ReturnCode SendTrackInit(const Array<u8> &image,
+      Result SendTrackInit(const Array<u8> &image,
                                const VisionSystem::Tracker& tracker,
                                MemoryStack scratch)
       {
         return SendTrackInit(image, tracker.get_transformation().get_transformedCorners(scratch));
       }
       
-      ReturnCode SendTrack(const Array<u8>& image,
+      Result SendTrack(const Array<u8>& image,
                            const Quadrilateral<f32>& quad,
                            const bool converged)
       {
@@ -210,10 +210,10 @@ namespace Anki {
         matlabViz_.EvalString("drawnow");
 #endif // #if USE_MATLAB_VISUALIZATION
         
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       }
       
-      ReturnCode SendTrack(const Array<u8>& image,
+      Result SendTrack(const Array<u8>& image,
                            const VisionSystem::Tracker& tracker,
                            const bool converged,
                            MemoryStack scratch)
@@ -221,7 +221,7 @@ namespace Anki {
 #if USE_MATLAB_VISUALIZATION        
         return SendTrack(image, tracker.get_transformation().get_transformedCorners(scratch), converged);
 #else
-        return EXIT_SUCCESS;
+        return RESULT_OK;
 #endif        
       }
       
@@ -235,7 +235,7 @@ namespace Anki {
 #endif        
       }
       
-      ReturnCode SendTrackerPrediction_Before(const Array<u8>& image,
+      Result SendTrackerPrediction_Before(const Array<u8>& image,
                                               const Quadrilateral<f32>& quad)
       {
 #if USE_MATLAB_VISUALIZATION
@@ -246,10 +246,10 @@ namespace Anki {
           beforeCalled_ = true;
         }
 #endif
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       }
       
-      ReturnCode SendTrackerPrediction_After(const Quadrilateral<f32>& quad)
+      Result SendTrackerPrediction_After(const Quadrilateral<f32>& quad)
       {
 #if USE_MATLAB_VISUALIZATION
         if(SHOW_TRACKER_PREDICTION) {
@@ -258,7 +258,7 @@ namespace Anki {
           SendTrackerPrediction_Helper(2, "After Prediction");
         }
 #endif
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       }
 
       

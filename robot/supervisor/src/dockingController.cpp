@@ -117,7 +117,7 @@ namespace Anki {
         return success_;
       }
       
-      ReturnCode Update()
+      Result Update()
       {
         
         // Get any docking error signal available from the vision system
@@ -186,7 +186,7 @@ namespace Anki {
         } // while dockErrSignalMailbox has mail
 
         
-        ReturnCode retVal = EXIT_SUCCESS;
+        Result retVal = RESULT_OK;
         
         switch(mode_)
         {
@@ -236,7 +236,7 @@ namespace Anki {
 
         if(success_ == false)
         {
-          retVal = EXIT_FAILURE;
+          retVal = RESULT_FAIL;
         }
         
         return retVal;

@@ -25,7 +25,7 @@ namespace Anki {
     public:
       PathPlanner();
       
-      ReturnCode GetPlan(Planning::Path &path, const Pose3d &startPose, const Pose3d &targetPose);
+      Result GetPlan(Planning::Path &path, const Pose3d &startPose, const Pose3d &targetPose);
       
     protected:
       

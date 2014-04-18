@@ -111,7 +111,7 @@ namespace Anki {
           // 5) Command path to that docking pose
           
           // HACK: For now just generate a random path to anywhere.
-          if (robot_->ExecutePathToPose(p) == EXIT_SUCCESS)
+          if (robot_->ExecutePathToPose(p) == RESULT_OK)
             state_ = EXECUTING_PATH_TO_DOCK_POSE;
           
           break;
