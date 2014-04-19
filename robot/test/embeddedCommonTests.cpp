@@ -50,72 +50,122 @@ GTEST_TEST(CoreTech_Common, RoundAndSaturate)
   ASSERT_TRUE(Round<f32>(-1.6) == -2); ASSERT_TRUE(Round<f32>(-1.1) == -1); ASSERT_TRUE(Round<f32>(0.0) == 0); ASSERT_TRUE(Round<f32>(1.1) == 1); ASSERT_TRUE(Round<f32>(1.6) == 2);
   ASSERT_TRUE(Round<f64>(-1.6) == -2); ASSERT_TRUE(Round<f64>(-1.1) == -1); ASSERT_TRUE(Round<f64>(0.0) == 0); ASSERT_TRUE(Round<f64>(1.1) == 1); ASSERT_TRUE(Round<f64>(1.6) == 2);
 
-  /**/                                                         ASSERT_TRUE(saturate_cast<u8>(static_cast<u8> (0)) == 0); ASSERT_TRUE(saturate_cast<u8>(static_cast<u8> (0xFF)) == 0xFF);
-  ASSERT_TRUE(saturate_cast<u8>(static_cast<s8> (-128)) == 0); ASSERT_TRUE(saturate_cast<u8>(static_cast<s8> (0)) == 0); ASSERT_TRUE(saturate_cast<u8>(static_cast<s8> (0x7F)) == 0x7F);
-  /**/                                                         ASSERT_TRUE(saturate_cast<u8>(static_cast<u16>(0)) == 0); ASSERT_TRUE(saturate_cast<u8>(static_cast<u16>(500)) == 0xFF);
-  ASSERT_TRUE(saturate_cast<u8>(static_cast<s16>(-128)) == 0); ASSERT_TRUE(saturate_cast<u8>(static_cast<s16>(0)) == 0); ASSERT_TRUE(saturate_cast<u8>(static_cast<s16>(500)) == 0xFF);
-  /**/                                                         ASSERT_TRUE(saturate_cast<u8>(static_cast<u32>(0)) == 0); ASSERT_TRUE(saturate_cast<u8>(static_cast<u32>(500)) == 0xFF);
-  ASSERT_TRUE(saturate_cast<u8>(static_cast<s32>(-128)) == 0); ASSERT_TRUE(saturate_cast<u8>(static_cast<s32>(0)) == 0); ASSERT_TRUE(saturate_cast<u8>(static_cast<s32>(500)) == 0xFF);
-  /**/                                                         ASSERT_TRUE(saturate_cast<u8>(static_cast<u64>(0)) == 0); ASSERT_TRUE(saturate_cast<u8>(static_cast<u64>(500)) == 0xFF);
-  ASSERT_TRUE(saturate_cast<u8>(static_cast<s64>(-128)) == 0); ASSERT_TRUE(saturate_cast<u8>(static_cast<s64>(0)) == 0); ASSERT_TRUE(saturate_cast<u8>(static_cast<s64>(500)) == 0xFF);
-  ASSERT_TRUE(saturate_cast<u8>(static_cast<f32>(-128)) == 0); ASSERT_TRUE(saturate_cast<u8>(static_cast<f32>(0)) == 0); ASSERT_TRUE(saturate_cast<u8>(static_cast<f32>(500)) == 0xFF);
-  ASSERT_TRUE(saturate_cast<u8>(static_cast<f64>(-128)) == 0); ASSERT_TRUE(saturate_cast<u8>(static_cast<f64>(0)) == 0); ASSERT_TRUE(saturate_cast<u8>(static_cast<f64>(500)) == 0xFF);
+  /**/                                                                           ASSERT_TRUE(saturate_cast<u8> (static_cast<u8> (0)) == 0); ASSERT_TRUE(saturate_cast<u8> (static_cast<u8> (0xFF))                  == 0xFF);
+  ASSERT_TRUE(saturate_cast<u8> (static_cast<s8> (-0x80))                 == 0); ASSERT_TRUE(saturate_cast<u8> (static_cast<s8> (0)) == 0); ASSERT_TRUE(saturate_cast<u8> (static_cast<s8> (0x7F))                  == 0x7F);
+  /**/                                                                           ASSERT_TRUE(saturate_cast<u8> (static_cast<u16>(0)) == 0); ASSERT_TRUE(saturate_cast<u8> (static_cast<u16>(0xFFFF))                == 0xFF);
+  ASSERT_TRUE(saturate_cast<u8> (static_cast<s16>(-0x8000))               == 0); ASSERT_TRUE(saturate_cast<u8> (static_cast<s16>(0)) == 0); ASSERT_TRUE(saturate_cast<u8> (static_cast<s16>(0x7FFF))                == 0xFF);
+  /**/                                                                           ASSERT_TRUE(saturate_cast<u8> (static_cast<u32>(0)) == 0); ASSERT_TRUE(saturate_cast<u8> (static_cast<u32>(0xFFFFFFFF))            == 0xFF);
+  ASSERT_TRUE(saturate_cast<u8> (static_cast<s32>(-0x80000000LL))         == 0); ASSERT_TRUE(saturate_cast<u8> (static_cast<s32>(0)) == 0); ASSERT_TRUE(saturate_cast<u8> (static_cast<s32>(0x7FFFFFFF))            == 0xFF);
+  /**/                                                                           ASSERT_TRUE(saturate_cast<u8> (static_cast<u64>(0)) == 0); ASSERT_TRUE(saturate_cast<u8> (static_cast<u64>(0xFFFFFFFFFFFFFFFFULL)) == 0xFF);
+  ASSERT_TRUE(saturate_cast<u8> (static_cast<s64>(-0x8000000000000000LL)) == 0); ASSERT_TRUE(saturate_cast<u8> (static_cast<s64>(0)) == 0); ASSERT_TRUE(saturate_cast<u8> (static_cast<s64>(0x7FFFFFFFFFFFFFFFLL))  == 0xFF);
+  ASSERT_TRUE(saturate_cast<u8> (static_cast<f32>(-10e30))                == 0); ASSERT_TRUE(saturate_cast<u8> (static_cast<f32>(0)) == 0); ASSERT_TRUE(saturate_cast<u8> (static_cast<f32>(10e30))                 == 0xFF);
+  ASSERT_TRUE(saturate_cast<u8> (static_cast<f64>(-10e50))                == 0); ASSERT_TRUE(saturate_cast<u8> (static_cast<f64>(0)) == 0); ASSERT_TRUE(saturate_cast<u8> (static_cast<f64>(10e50))                 == 0xFF);
 
-  /**/                                                            ASSERT_TRUE(saturate_cast<s8>(static_cast<u8> (0)) == 0); ASSERT_TRUE(saturate_cast<s8>(static_cast<u8> (0xFF)) == 0x7F);
-  ASSERT_TRUE(saturate_cast<s8>(static_cast<s8> (-128)) == -128); ASSERT_TRUE(saturate_cast<s8>(static_cast<s8> (0)) == 0); ASSERT_TRUE(saturate_cast<s8>(static_cast<s8> (0x7F)) == 0x7F);
-  /**/                                                            ASSERT_TRUE(saturate_cast<s8>(static_cast<u16>(0)) == 0); ASSERT_TRUE(saturate_cast<s8>(static_cast<u16>(500)) == 0x7F);
-  ASSERT_TRUE(saturate_cast<s8>(static_cast<s16>(-500)) == -128); ASSERT_TRUE(saturate_cast<s8>(static_cast<s16>(0)) == 0); ASSERT_TRUE(saturate_cast<s8>(static_cast<s16>(500)) == 0x7F);
-  /**/                                                            ASSERT_TRUE(saturate_cast<s8>(static_cast<u32>(0)) == 0); ASSERT_TRUE(saturate_cast<s8>(static_cast<u32>(500)) == 0x7F);
-  ASSERT_TRUE(saturate_cast<s8>(static_cast<s32>(-500)) == -128); ASSERT_TRUE(saturate_cast<s8>(static_cast<s32>(0)) == 0); ASSERT_TRUE(saturate_cast<s8>(static_cast<s32>(500)) == 0x7F);
-  /**/                                                            ASSERT_TRUE(saturate_cast<s8>(static_cast<u64>(0)) == 0); ASSERT_TRUE(saturate_cast<s8>(static_cast<u64>(500)) == 0x7F);
-  ASSERT_TRUE(saturate_cast<s8>(static_cast<s64>(-500)) == -128); ASSERT_TRUE(saturate_cast<s8>(static_cast<s64>(0)) == 0); ASSERT_TRUE(saturate_cast<s8>(static_cast<s64>(500)) == 0x7F);
-  ASSERT_TRUE(saturate_cast<s8>(static_cast<f32>(-500)) == -128); ASSERT_TRUE(saturate_cast<s8>(static_cast<f32>(0)) == 0); ASSERT_TRUE(saturate_cast<s8>(static_cast<f32>(500)) == 0x7F);
-  ASSERT_TRUE(saturate_cast<s8>(static_cast<f64>(-500)) == -128); ASSERT_TRUE(saturate_cast<s8>(static_cast<f64>(0)) == 0); ASSERT_TRUE(saturate_cast<s8>(static_cast<f64>(500)) == 0x7F);
+  /**/                                                                               ASSERT_TRUE(saturate_cast<s8> (static_cast<u8> (0)) == 0); ASSERT_TRUE(saturate_cast<s8> (static_cast<u8> (0xFF))                  == 0x7F);
+  ASSERT_TRUE(saturate_cast<s8> (static_cast<s8> (-0x80))                 == -0x80); ASSERT_TRUE(saturate_cast<s8> (static_cast<s8> (0)) == 0); ASSERT_TRUE(saturate_cast<s8> (static_cast<s8> (0x7F))                  == 0x7F);
+  /**/                                                                               ASSERT_TRUE(saturate_cast<s8> (static_cast<u16>(0)) == 0); ASSERT_TRUE(saturate_cast<s8> (static_cast<u16>(0xFFFF))                == 0x7F);
+  ASSERT_TRUE(saturate_cast<s8> (static_cast<s16>(-0x8000))               == -0x80); ASSERT_TRUE(saturate_cast<s8> (static_cast<s16>(0)) == 0); ASSERT_TRUE(saturate_cast<s8> (static_cast<s16>(0x7FFF))                == 0x7F);
+  /**/                                                                               ASSERT_TRUE(saturate_cast<s8> (static_cast<u32>(0)) == 0); ASSERT_TRUE(saturate_cast<s8> (static_cast<u32>(0xFFFFFFFF))            == 0x7F);
+  ASSERT_TRUE(saturate_cast<s8> (static_cast<s32>(-0x80000000LL))         == -0x80); ASSERT_TRUE(saturate_cast<s8> (static_cast<s32>(0)) == 0); ASSERT_TRUE(saturate_cast<s8> (static_cast<s32>(0x7FFFFFFF))            == 0x7F);
+  /**/                                                                               ASSERT_TRUE(saturate_cast<s8> (static_cast<u64>(0)) == 0); ASSERT_TRUE(saturate_cast<s8> (static_cast<u64>(0xFFFFFFFFFFFFFFFFULL)) == 0x7F);
+  ASSERT_TRUE(saturate_cast<s8> (static_cast<s64>(-0x8000000000000000LL)) == -0x80); ASSERT_TRUE(saturate_cast<s8> (static_cast<s64>(0)) == 0); ASSERT_TRUE(saturate_cast<s8> (static_cast<s64>(0x7FFFFFFFFFFFFFFFLL))  == 0x7F);
+  ASSERT_TRUE(saturate_cast<s8> (static_cast<f32>(-10e30))                == -0x80); ASSERT_TRUE(saturate_cast<s8> (static_cast<f32>(0)) == 0); ASSERT_TRUE(saturate_cast<s8> (static_cast<f32>(10e30))                 == 0x7F);
+  ASSERT_TRUE(saturate_cast<s8> (static_cast<f64>(-10e50))                == -0x80); ASSERT_TRUE(saturate_cast<s8> (static_cast<f64>(0)) == 0); ASSERT_TRUE(saturate_cast<s8> (static_cast<f64>(10e50))                 == 0x7F);
 
-  /**/                                                          ASSERT_TRUE(saturate_cast<u16>(static_cast<u8> (0)) == 0); ASSERT_TRUE(saturate_cast<u16>(static_cast<u8> (0xFF))    == 0xFF);
-  ASSERT_TRUE(saturate_cast<u16>(static_cast<s8> (-128)) == 0); ASSERT_TRUE(saturate_cast<u16>(static_cast<s8> (0)) == 0); ASSERT_TRUE(saturate_cast<u16>(static_cast<s8> (0x7F))    == 0x7F);
-  /**/                                                          ASSERT_TRUE(saturate_cast<u16>(static_cast<u16>(0)) == 0); ASSERT_TRUE(saturate_cast<u16>(static_cast<u16>(0xFFFF))  == 0xFFFF);
-  ASSERT_TRUE(saturate_cast<u16>(static_cast<s16>(-128)) == 0); ASSERT_TRUE(saturate_cast<u16>(static_cast<s16>(0)) == 0); ASSERT_TRUE(saturate_cast<u16>(static_cast<s16>(32767))  == 32767);
-  /**/                                                          ASSERT_TRUE(saturate_cast<u16>(static_cast<u32>(0)) == 0); ASSERT_TRUE(saturate_cast<u16>(static_cast<u32>(500000)) == 0xFFFF);
-  ASSERT_TRUE(saturate_cast<u16>(static_cast<s32>(-128)) == 0); ASSERT_TRUE(saturate_cast<u16>(static_cast<s32>(0)) == 0); ASSERT_TRUE(saturate_cast<u16>(static_cast<s32>(500000)) == 0xFFFF);
-  /**/                                                          ASSERT_TRUE(saturate_cast<u16>(static_cast<u64>(0)) == 0); ASSERT_TRUE(saturate_cast<u16>(static_cast<u64>(500000)) == 0xFFFF);
-  ASSERT_TRUE(saturate_cast<u16>(static_cast<s64>(-128)) == 0); ASSERT_TRUE(saturate_cast<u16>(static_cast<s64>(0)) == 0); ASSERT_TRUE(saturate_cast<u16>(static_cast<s64>(500000)) == 0xFFFF);
-  ASSERT_TRUE(saturate_cast<u16>(static_cast<f32>(-128)) == 0); ASSERT_TRUE(saturate_cast<u16>(static_cast<f32>(0)) == 0); ASSERT_TRUE(saturate_cast<u16>(static_cast<f32>(500000)) == 0xFFFF);
-  ASSERT_TRUE(saturate_cast<u16>(static_cast<f64>(-128)) == 0); ASSERT_TRUE(saturate_cast<u16>(static_cast<f64>(0)) == 0); ASSERT_TRUE(saturate_cast<u16>(static_cast<f64>(500000)) == 0xFFFF);
+  /**/                                                                           ASSERT_TRUE(saturate_cast<u16>(static_cast<u8> (0)) == 0); ASSERT_TRUE(saturate_cast<u16>(static_cast<u8> (0xFF))                  == 0xFF);
+  ASSERT_TRUE(saturate_cast<u16>(static_cast<s8> (-0x80))                 == 0); ASSERT_TRUE(saturate_cast<u16>(static_cast<s8> (0)) == 0); ASSERT_TRUE(saturate_cast<u16>(static_cast<s8> (0x7F))                  == 0x7F);
+  /**/                                                                           ASSERT_TRUE(saturate_cast<u16>(static_cast<u16>(0)) == 0); ASSERT_TRUE(saturate_cast<u16>(static_cast<u16>(0xFFFF))                == 0xFFFF);
+  ASSERT_TRUE(saturate_cast<u16>(static_cast<s16>(-0x8000))               == 0); ASSERT_TRUE(saturate_cast<u16>(static_cast<s16>(0)) == 0); ASSERT_TRUE(saturate_cast<u16>(static_cast<s16>(0x7FFF))                == 0x7FFF);
+  /**/                                                                           ASSERT_TRUE(saturate_cast<u16>(static_cast<u32>(0)) == 0); ASSERT_TRUE(saturate_cast<u16>(static_cast<u32>(0xFFFFFFFF))            == 0xFFFF);
+  ASSERT_TRUE(saturate_cast<u16>(static_cast<s32>(-0x80000000LL))         == 0); ASSERT_TRUE(saturate_cast<u16>(static_cast<s32>(0)) == 0); ASSERT_TRUE(saturate_cast<u16>(static_cast<s32>(0x7FFFFFFF))            == 0xFFFF);
+  /**/                                                                           ASSERT_TRUE(saturate_cast<u16>(static_cast<u64>(0)) == 0); ASSERT_TRUE(saturate_cast<u16>(static_cast<u64>(0xFFFFFFFFFFFFFFFFULL)) == 0xFFFF);
+  ASSERT_TRUE(saturate_cast<u16>(static_cast<s64>(-0x8000000000000000LL)) == 0); ASSERT_TRUE(saturate_cast<u16>(static_cast<s64>(0)) == 0); ASSERT_TRUE(saturate_cast<u16>(static_cast<s64>(0x7FFFFFFFFFFFFFFFLL))  == 0xFFFF);
+  ASSERT_TRUE(saturate_cast<u16>(static_cast<f32>(-10e30))                == 0); ASSERT_TRUE(saturate_cast<u16>(static_cast<f32>(0)) == 0); ASSERT_TRUE(saturate_cast<u16>(static_cast<f32>(10e30))                 == 0xFFFF);
+  ASSERT_TRUE(saturate_cast<u16>(static_cast<f64>(-10e50))                == 0); ASSERT_TRUE(saturate_cast<u16>(static_cast<f64>(0)) == 0); ASSERT_TRUE(saturate_cast<u16>(static_cast<f64>(10e50))                 == 0xFFFF);
 
-  /**/                                                                  ASSERT_TRUE(saturate_cast<s16>(static_cast<u8> (0)) == 0); ASSERT_TRUE(saturate_cast<s16>(static_cast<u8> (0xFF))    == 0xFF);
-  ASSERT_TRUE(saturate_cast<s16>(static_cast<s8> (-128)) == -128);      ASSERT_TRUE(saturate_cast<s16>(static_cast<s8> (0)) == 0); ASSERT_TRUE(saturate_cast<s16>(static_cast<s8> (0x7F))    == 0x7F);
-  /**/                                                                  ASSERT_TRUE(saturate_cast<s16>(static_cast<u16>(0)) == 0);
-  ASSERT_TRUE(saturate_cast<s16>(static_cast<u16>(0xFFFF))  == 32767);
-  ASSERT_TRUE(saturate_cast<s16>(static_cast<s16>(-32768)) == -32768);  ASSERT_TRUE(saturate_cast<s16>(static_cast<s16>(0)) == 0); ASSERT_TRUE(saturate_cast<s16>(static_cast<s16>(32767))  == 32767);
-  /**/                                                                  ASSERT_TRUE(saturate_cast<s16>(static_cast<u32>(0)) == 0); ASSERT_TRUE(saturate_cast<s16>(static_cast<u32>(500000)) == 32767);
-  ASSERT_TRUE(saturate_cast<s16>(static_cast<s32>(-500000)) == -32768); ASSERT_TRUE(saturate_cast<s16>(static_cast<s32>(0)) == 0); ASSERT_TRUE(saturate_cast<s16>(static_cast<s32>(500000)) == 32767);
-  /**/                                                                  ASSERT_TRUE(saturate_cast<s16>(static_cast<u64>(0)) == 0); ASSERT_TRUE(saturate_cast<s16>(static_cast<u64>(500000)) == 32767);
-  ASSERT_TRUE(saturate_cast<s16>(static_cast<s64>(-500000)) == -32768); ASSERT_TRUE(saturate_cast<s16>(static_cast<s64>(0)) == 0); ASSERT_TRUE(saturate_cast<s16>(static_cast<s64>(500000)) == 32767);
-  ASSERT_TRUE(saturate_cast<s16>(static_cast<f32>(-500000)) == -32768); ASSERT_TRUE(saturate_cast<s16>(static_cast<f32>(0)) == 0); ASSERT_TRUE(saturate_cast<s16>(static_cast<f32>(500000)) == 32767);
-  ASSERT_TRUE(saturate_cast<s16>(static_cast<f64>(-500000)) == -32768); ASSERT_TRUE(saturate_cast<s16>(static_cast<f64>(0)) == 0); ASSERT_TRUE(saturate_cast<s16>(static_cast<f64>(500000)) == 32767);
+  /**/                                                                                 ASSERT_TRUE(saturate_cast<s16>(static_cast<u8> (0)) == 0); ASSERT_TRUE(saturate_cast<s16>(static_cast<u8> (0xFF))                  == 0xFF);
+  ASSERT_TRUE(saturate_cast<s16>(static_cast<s8> (-0x80))                 == -0x80);   ASSERT_TRUE(saturate_cast<s16>(static_cast<s8> (0)) == 0); ASSERT_TRUE(saturate_cast<s16>(static_cast<s8> (0x7F))                  == 0x7F);
+  /**/                                                                                 ASSERT_TRUE(saturate_cast<s16>(static_cast<u16>(0)) == 0); ASSERT_TRUE(saturate_cast<s16>(static_cast<u16>(0xFFFF))                == 0x7FFF);
+  ASSERT_TRUE(saturate_cast<s16>(static_cast<s16>(-0x8000))               == -0x8000); ASSERT_TRUE(saturate_cast<s16>(static_cast<s16>(0)) == 0); ASSERT_TRUE(saturate_cast<s16>(static_cast<s16>(0x7FFF))                == 0x7FFF);
+  /**/                                                                                 ASSERT_TRUE(saturate_cast<s16>(static_cast<u32>(0)) == 0); ASSERT_TRUE(saturate_cast<s16>(static_cast<u32>(0xFFFFFFFF))            == 0x7FFF);
+  ASSERT_TRUE(saturate_cast<s16>(static_cast<s32>(-0x80000000LL))         == -0x8000); ASSERT_TRUE(saturate_cast<s16>(static_cast<s32>(0)) == 0); ASSERT_TRUE(saturate_cast<s16>(static_cast<s32>(0x7FFFFFFF))            == 0x7FFF);
+  /**/                                                                                 ASSERT_TRUE(saturate_cast<s16>(static_cast<u64>(0)) == 0); ASSERT_TRUE(saturate_cast<s16>(static_cast<u64>(0xFFFFFFFFFFFFFFFFULL)) == 0x7FFF);
+  ASSERT_TRUE(saturate_cast<s16>(static_cast<s64>(-0x8000000000000000LL)) == -0x8000); ASSERT_TRUE(saturate_cast<s16>(static_cast<s64>(0)) == 0); ASSERT_TRUE(saturate_cast<s16>(static_cast<s64>(0x7FFFFFFFFFFFFFFFLL))  == 0x7FFF);
+  ASSERT_TRUE(saturate_cast<s16>(static_cast<f32>(-10e30))                == -0x8000); ASSERT_TRUE(saturate_cast<s16>(static_cast<f32>(0)) == 0); ASSERT_TRUE(saturate_cast<s16>(static_cast<f32>(10e30))                 == 0x7FFF);
+  ASSERT_TRUE(saturate_cast<s16>(static_cast<f64>(-10e50))                == -0x8000); ASSERT_TRUE(saturate_cast<s16>(static_cast<f64>(0)) == 0); ASSERT_TRUE(saturate_cast<s16>(static_cast<f64>(10e50))                 == 0x7FFF);
 
-  /**/                                                          ASSERT_TRUE(saturate_cast<u32>(static_cast<u8> (0)) == 0); ASSERT_TRUE(saturate_cast<u32>(static_cast<u8> (0xFF))        == 0xFF);
-  ASSERT_TRUE(saturate_cast<u32>(static_cast<s8> (-128)) == 0); ASSERT_TRUE(saturate_cast<u32>(static_cast<s8> (0)) == 0); ASSERT_TRUE(saturate_cast<u32>(static_cast<s8> (0x7F))        == 0x7F);
-  /**/                                                          ASSERT_TRUE(saturate_cast<u32>(static_cast<u16>(0)) == 0); ASSERT_TRUE(saturate_cast<u32>(static_cast<u16>(0xFFFF))      == 0xFFFF);
-  ASSERT_TRUE(saturate_cast<u32>(static_cast<s16>(-128)) == 0); ASSERT_TRUE(saturate_cast<u32>(static_cast<s16>(0)) == 0); ASSERT_TRUE(saturate_cast<u32>(static_cast<s16>(0x7FFF))      == 0x7FFF);
-  /**/                                                          ASSERT_TRUE(saturate_cast<u32>(static_cast<u32>(0)) == 0); ASSERT_TRUE(saturate_cast<u32>(static_cast<u32>(0xFFFFFFFF)) == 0xFFFFFFFF);
-  ASSERT_TRUE(saturate_cast<u32>(static_cast<s32>(-128)) == 0); ASSERT_TRUE(saturate_cast<u32>(static_cast<s32>(0)) == 0); ASSERT_TRUE(saturate_cast<u32>(static_cast<s32>(0x7FFFFFFF)) == 0x7FFFFFFF);
-  /**/                                                          ASSERT_TRUE(saturate_cast<u32>(static_cast<u64>(0)) == 0); ASSERT_TRUE(saturate_cast<u32>(static_cast<u64>(5000000000)) == 0xFFFFFFFF);
-  ASSERT_TRUE(saturate_cast<u32>(static_cast<s64>(-128)) == 0); ASSERT_TRUE(saturate_cast<u32>(static_cast<s64>(0)) == 0); ASSERT_TRUE(saturate_cast<u32>(static_cast<s64>(5000000000)) == 0xFFFFFFFF);
-  ASSERT_TRUE(saturate_cast<u32>(static_cast<f32>(-128)) == 0); ASSERT_TRUE(saturate_cast<u32>(static_cast<f32>(0)) == 0); ASSERT_TRUE(saturate_cast<u32>(static_cast<f32>(5000000000)) == 0xFFFFFFFF);
-  ASSERT_TRUE(saturate_cast<u32>(static_cast<f64>(-128)) == 0); ASSERT_TRUE(saturate_cast<u32>(static_cast<f64>(0)) == 0); ASSERT_TRUE(saturate_cast<u32>(static_cast<f64>(5000000000)) == 0xFFFFFFFF);
+  /**/                                                                           ASSERT_TRUE(saturate_cast<u32>(static_cast<u8> (0)) == 0); ASSERT_TRUE(saturate_cast<u32>(static_cast<u8> (0xFF))                  == 0xFF);
+  ASSERT_TRUE(saturate_cast<u32>(static_cast<s8> (-0x80))                 == 0); ASSERT_TRUE(saturate_cast<u32>(static_cast<s8> (0)) == 0); ASSERT_TRUE(saturate_cast<u32>(static_cast<s8> (0x7F))                  == 0x7F);
+  /**/                                                                           ASSERT_TRUE(saturate_cast<u32>(static_cast<u16>(0)) == 0); ASSERT_TRUE(saturate_cast<u32>(static_cast<u16>(0xFFFF))                == 0xFFFF);
+  ASSERT_TRUE(saturate_cast<u32>(static_cast<s16>(-0x8000))               == 0); ASSERT_TRUE(saturate_cast<u32>(static_cast<s16>(0)) == 0); ASSERT_TRUE(saturate_cast<u32>(static_cast<s16>(0x7FFF))                == 0x7FFF);
+  /**/                                                                           ASSERT_TRUE(saturate_cast<u32>(static_cast<u32>(0)) == 0); ASSERT_TRUE(saturate_cast<u32>(static_cast<u32>(0xFFFFFFFF))            == 0xFFFFFFFF);
+  ASSERT_TRUE(saturate_cast<u32>(static_cast<s32>(-0x80000000LL))         == 0); ASSERT_TRUE(saturate_cast<u32>(static_cast<s32>(0)) == 0); ASSERT_TRUE(saturate_cast<u32>(static_cast<s32>(0x7FFFFFFF))            == 0x7FFFFFFF);
+  /**/                                                                           ASSERT_TRUE(saturate_cast<u32>(static_cast<u64>(0)) == 0); ASSERT_TRUE(saturate_cast<u32>(static_cast<u64>(0xFFFFFFFFFFFFFFFFULL)) == 0xFFFFFFFF);
+  ASSERT_TRUE(saturate_cast<u32>(static_cast<s64>(-0x8000000000000000LL)) == 0); ASSERT_TRUE(saturate_cast<u32>(static_cast<s64>(0)) == 0); ASSERT_TRUE(saturate_cast<u32>(static_cast<s64>(0x7FFFFFFFFFFFFFFFLL))  == 0xFFFFFFFF);
+  ASSERT_TRUE(saturate_cast<u32>(static_cast<f32>(-10e30))                == 0); ASSERT_TRUE(saturate_cast<u32>(static_cast<f32>(0)) == 0); ASSERT_TRUE(saturate_cast<u32>(static_cast<f32>(10e30))                 == 0xFFFFFFFF);
+  ASSERT_TRUE(saturate_cast<u32>(static_cast<f64>(-10e50))                == 0); ASSERT_TRUE(saturate_cast<u32>(static_cast<f64>(0)) == 0); ASSERT_TRUE(saturate_cast<u32>(static_cast<f64>(10e50))                 == 0xFFFFFFFF);
 
-  /**/                                                                           ASSERT_TRUE(saturate_cast<s32>(static_cast<u8> (0)) == 0); ASSERT_TRUE(saturate_cast<s32>(static_cast<u8> (0xFF))        == 0xFF);
-  ASSERT_TRUE(saturate_cast<s32>(static_cast<s8> (-128)) == -128);               ASSERT_TRUE(saturate_cast<s32>(static_cast<s8> (0)) == 0); ASSERT_TRUE(saturate_cast<s32>(static_cast<s8> (0x7F))        == 0x7F);
-  /**/                                                                           ASSERT_TRUE(saturate_cast<s32>(static_cast<u16>(0)) == 0); ASSERT_TRUE(saturate_cast<s32>(static_cast<u16>(0xFFFF))      == 32767);
-  ASSERT_TRUE(saturate_cast<s32>(static_cast<s16>(-32768)) == -32768);           ASSERT_TRUE(saturate_cast<s32>(static_cast<s16>(0)) == 0); ASSERT_TRUE(saturate_cast<s32>(static_cast<s16>(32767))      == 32767);
-  /**/                                                                           ASSERT_TRUE(saturate_cast<s32>(static_cast<u32>(0)) == 0);
-  ASSERT_TRUE(saturate_cast<s32>(static_cast<u32>(4294967296)) == 2147483647); ASSERT_TRUE(saturate_cast<s32>(static_cast<s32>(-2147483648LL)) == -2147483648LL); ASSERT_TRUE(saturate_cast<s32>(static_cast<s32>(0)) == 0); ASSERT_TRUE(saturate_cast<s32>(static_cast<s32>(2147483647)) == 2147483647);
-  /**/                                                                           ASSERT_TRUE(saturate_cast<s32>(static_cast<u64>(0)) == 0); ASSERT_TRUE(saturate_cast<s32>(static_cast<u64>(5000000000LL)) == 2147483647);
-  ASSERT_TRUE(saturate_cast<s32>(static_cast<s64>(-5000000000LL)) == -2147483648LL); ASSERT_TRUE(saturate_cast<s32>(static_cast<s64>(0)) == 0); ASSERT_TRUE(saturate_cast<s32>(static_cast<s64>(5000000000LL)) == 2147483647);
-  ASSERT_TRUE(saturate_cast<s32>(static_cast<f32>(-5000000000LL)) == -2147483648LL); ASSERT_TRUE(saturate_cast<s32>(static_cast<f32>(0)) == 0); ASSERT_TRUE(saturate_cast<s32>(static_cast<f32>(5000000000LL)) == 2147483647);
-  ASSERT_TRUE(saturate_cast<s32>(static_cast<f64>(-5000000000LL)) == -2147483648LL); ASSERT_TRUE(saturate_cast<s32>(static_cast<f64>(0)) == 0); ASSERT_TRUE(saturate_cast<s32>(static_cast<f64>(5000000000LL)) == 2147483647);
+  /**/                                                                                       ASSERT_TRUE(saturate_cast<s32>(static_cast<u8> (0)) == 0); ASSERT_TRUE(saturate_cast<s32>(static_cast<u8> (0xFF))                  == 0xFF);
+  ASSERT_TRUE(saturate_cast<s32>(static_cast<s8> (-0x80))                 == -0x80);         ASSERT_TRUE(saturate_cast<s32>(static_cast<s8> (0)) == 0); ASSERT_TRUE(saturate_cast<s32>(static_cast<s8> (0x7F))                  == 0x7F);
+  /**/                                                                                       ASSERT_TRUE(saturate_cast<s32>(static_cast<u16>(0)) == 0); ASSERT_TRUE(saturate_cast<s32>(static_cast<u16>(0xFFFF))                == 0xFFFF);
+  ASSERT_TRUE(saturate_cast<s32>(static_cast<s16>(-0x8000))               == -0x8000);       ASSERT_TRUE(saturate_cast<s32>(static_cast<s16>(0)) == 0); ASSERT_TRUE(saturate_cast<s32>(static_cast<s16>(0x7FFF))                == 0x7FFF);
+  /**/                                                                                       ASSERT_TRUE(saturate_cast<s32>(static_cast<u32>(0)) == 0); ASSERT_TRUE(saturate_cast<s32>(static_cast<u32>(0xFFFFFFFF))            == 0x7FFFFFFF);
+  ASSERT_TRUE(saturate_cast<s32>(static_cast<s32>(-0x80000000LL))         == -0x80000000LL); ASSERT_TRUE(saturate_cast<s32>(static_cast<s32>(0)) == 0); ASSERT_TRUE(saturate_cast<s32>(static_cast<s32>(0x7FFFFFFF))            == 0x7FFFFFFF);
+  /**/                                                                                       ASSERT_TRUE(saturate_cast<s32>(static_cast<u64>(0)) == 0); ASSERT_TRUE(saturate_cast<s32>(static_cast<u64>(0xFFFFFFFFFFFFFFFFULL)) == 0x7FFFFFFF);
+  ASSERT_TRUE(saturate_cast<s32>(static_cast<s64>(-0x8000000000000000LL)) == -0x80000000LL); ASSERT_TRUE(saturate_cast<s32>(static_cast<s64>(0)) == 0); ASSERT_TRUE(saturate_cast<s32>(static_cast<s64>(0x7FFFFFFFFFFFFFFFLL))  == 0x7FFFFFFF);
+  ASSERT_TRUE(saturate_cast<s32>(static_cast<f32>(-10e30))                == -0x80000000LL); ASSERT_TRUE(saturate_cast<s32>(static_cast<f32>(0)) == 0); ASSERT_TRUE(saturate_cast<s32>(static_cast<f32>(10e30))                 == 0x7FFFFFFF);
+  ASSERT_TRUE(saturate_cast<s32>(static_cast<f64>(-10e50))                == -0x80000000LL); ASSERT_TRUE(saturate_cast<s32>(static_cast<f64>(0)) == 0); ASSERT_TRUE(saturate_cast<s32>(static_cast<f64>(10e50))                 == 0x7FFFFFFF);
+
+  /**/                                                                           ASSERT_TRUE(saturate_cast<u64>(static_cast<u8> (0)) == 0); ASSERT_TRUE(saturate_cast<u64>(static_cast<u8> (0xFF))                  == 0xFF);
+  ASSERT_TRUE(saturate_cast<u64>(static_cast<s8> (-0x80))                 == 0); ASSERT_TRUE(saturate_cast<u64>(static_cast<s8> (0)) == 0); ASSERT_TRUE(saturate_cast<u64>(static_cast<s8> (0x7F))                  == 0x7F);
+  /**/                                                                           ASSERT_TRUE(saturate_cast<u64>(static_cast<u16>(0)) == 0); ASSERT_TRUE(saturate_cast<u64>(static_cast<u16>(0xFFFF))                == 0xFFFF);
+  ASSERT_TRUE(saturate_cast<u64>(static_cast<s16>(-0x8000))               == 0); ASSERT_TRUE(saturate_cast<u64>(static_cast<s16>(0)) == 0); ASSERT_TRUE(saturate_cast<u64>(static_cast<s16>(0x7FFF))                == 0x7FFF);
+  /**/                                                                           ASSERT_TRUE(saturate_cast<u64>(static_cast<u32>(0)) == 0); ASSERT_TRUE(saturate_cast<u64>(static_cast<u32>(0xFFFFFFFF))            == 0xFFFFFFFF);
+  ASSERT_TRUE(saturate_cast<u64>(static_cast<s32>(-0x80000000LL))         == 0); ASSERT_TRUE(saturate_cast<u64>(static_cast<s32>(0)) == 0); ASSERT_TRUE(saturate_cast<u64>(static_cast<s32>(0x7FFFFFFF))            == 0x7FFFFFFF);
+  /**/                                                                           ASSERT_TRUE(saturate_cast<u64>(static_cast<u64>(0)) == 0); ASSERT_TRUE(saturate_cast<u64>(static_cast<u64>(0xFFFFFFFFFFFFFFFFULL)) == 0xFFFFFFFFFFFFFFFFULL);
+  ASSERT_TRUE(saturate_cast<u64>(static_cast<s64>(-0x8000000000000000LL)) == 0); ASSERT_TRUE(saturate_cast<u64>(static_cast<s64>(0)) == 0); ASSERT_TRUE(saturate_cast<u64>(static_cast<s64>(0x7FFFFFFFFFFFFFFFLL))  == 0x7FFFFFFFFFFFFFFFLL);
+
+  ASSERT_TRUE(saturate_cast<u64>(static_cast<f32>(-10e30))                == 0);
+
+  const f32 v = static_cast<f32>(0);
+  const f32 t = (f32)0XFFFFFF7FFFFFFBFFULL;
+  const u64 a = saturate_cast<u64>(static_cast<f32>(v));
+  const u64 b = (v > t) ? 0xFFFFFFFFFFFFFFFFULL : 4;
+
+  //(v > (f32)0XFFFFFF7FFFFFFBFFLL) ? 0xFFFFFFFFFFFFFFFFULL : Round<u64>(MAX((f32)0, (f32)v)); } // Due to precision issues, this cast is a little wierd
+
+  ASSERT_TRUE(saturate_cast<u64>(static_cast<f32>(0)) == 0);
+
+  //const f32 v = static_cast<f32>(10e30);
+  //const f32 a = MIN((f32)u64_MAX, MAX((f32)0, (f32)v));
+  //const u64 b = Round<u64>( MIN((f32)u64_MAX, MAX((f32)0, (f32)v)) );
+  //const u64 c = saturate_cast<u64>(v);
+
+  ////for(u64 i=0xFFFFFF7FEFFFFFFFLL; i<0xFFFFFF7FFFFFFFFFLL; i+=0x100000LL) {
+  //for(u64 i=0xFFFFFF7FFFFFFBFFLL; i<0xFFFFFF7FFFFFFFFFLL; i+=0x1LL) {
+  //  printf("0x%llx = 0x%llx\n", i, Round<u64>( MIN((f32)i, MAX((f32)0, (f32)v)) ));
+  //}
+
+  //for(u64 i=0xFFFFFFFFFFFFFBF4LL; i<0xFFFFFFFFFFFFFF87LL; i++) {
+  //  printf("0x%llx = 0x%llx\n", i, Round<u64>( MIN((f64)i, MAX((f64)0, (f64)v)) ));
+  //}
+
+  ASSERT_TRUE(saturate_cast<u64>(static_cast<f32>(10e30))                == 0xFFFFFFFFFFFFFFFFULL);
+
+  ASSERT_TRUE(saturate_cast<u64>(static_cast<f64>(-10e50))                == 0);
+  ASSERT_TRUE(saturate_cast<u64>(static_cast<f64>(0)) == 0);
+  ASSERT_TRUE(saturate_cast<u64>(static_cast<f64>(10e50))                == 0xFFFFFFFFFFFFFFFFULL);
+
+  /**/                                                                                               ASSERT_TRUE(saturate_cast<s64>(static_cast<u8> (0)) == 0); ASSERT_TRUE(saturate_cast<s64>(static_cast<u8> (0xFF))                  == 0xFF);
+  ASSERT_TRUE(saturate_cast<s64>(static_cast<s8> (-0x80))                 == -0x80);                 ASSERT_TRUE(saturate_cast<s64>(static_cast<s8> (0)) == 0); ASSERT_TRUE(saturate_cast<s64>(static_cast<s8> (0x7F))                  == 0x7F);
+  /**/                                                                                               ASSERT_TRUE(saturate_cast<s64>(static_cast<u16>(0)) == 0); ASSERT_TRUE(saturate_cast<s64>(static_cast<u16>(0xFFFF))                == 0xFFFF);
+  ASSERT_TRUE(saturate_cast<s64>(static_cast<s16>(-0x8000))               == -0x8000);               ASSERT_TRUE(saturate_cast<s64>(static_cast<s16>(0)) == 0); ASSERT_TRUE(saturate_cast<s64>(static_cast<s16>(0x7FFF))                == 0x7FFF);
+  /**/                                                                                               ASSERT_TRUE(saturate_cast<s64>(static_cast<u32>(0)) == 0); ASSERT_TRUE(saturate_cast<s64>(static_cast<u32>(0xFFFFFFFF))            == 0xFFFFFFFF);
+  ASSERT_TRUE(saturate_cast<s64>(static_cast<s32>(-0x80000000LL))         == -0x80000000LL);         ASSERT_TRUE(saturate_cast<s64>(static_cast<s32>(0)) == 0); ASSERT_TRUE(saturate_cast<s64>(static_cast<s32>(0x7FFFFFFF))            == 0x7FFFFFFF);
+  /**/                                                                                               ASSERT_TRUE(saturate_cast<s64>(static_cast<u64>(0)) == 0); ASSERT_TRUE(saturate_cast<s64>(static_cast<u64>(0xFFFFFFFFFFFFFFFFULL))  == 0x7FFFFFFFFFFFFFFFLL);
+  ASSERT_TRUE(saturate_cast<s64>(static_cast<s64>(-0x8000000000000000LL)) == -0x8000000000000000LL); ASSERT_TRUE(saturate_cast<s64>(static_cast<s64>(0)) == 0); ASSERT_TRUE(saturate_cast<s64>(static_cast<s64>(0x7FFFFFFFFFFFFFFFLL))  == 0x7FFFFFFFFFFFFFFFLL);
+  ASSERT_TRUE(saturate_cast<s64>(static_cast<f32>(-10e30))                == -0x8000000000000000LL); ASSERT_TRUE(saturate_cast<s64>(static_cast<f32>(0)) == 0); ASSERT_TRUE(saturate_cast<s64>(static_cast<f32>(10e30))                 == 0x7FFFFFFFFFFFFFFFLL);
+  ASSERT_TRUE(saturate_cast<s64>(static_cast<f64>(-10e50))                == -0x8000000000000000LL); ASSERT_TRUE(saturate_cast<s64>(static_cast<f64>(0)) == 0); ASSERT_TRUE(saturate_cast<s64>(static_cast<f64>(10e50))                 == 0x7FFFFFFFFFFFFFFFLL);
 
   //ASSERT_TRUE(saturate_cast<u8>(static_cast<u8>(0)) == 0); ASSERT_TRUE(saturate_cast<u8>(static_cast<u8>()) == );
   //ASSERT_TRUE(saturate_cast<u8>(static_cast<s8>()) == ); ASSERT_TRUE(saturate_cast<u8>(static_cast<s8>()) == ); ASSERT_TRUE(saturate_cast<u8>(static_cast<s8>()) == );
