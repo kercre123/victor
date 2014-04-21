@@ -62,8 +62,8 @@ namespace Anki {
       
       void dockWithBlock(const Block& block);
       
-      ReturnCode GetPathToPose(const Pose3d& pose, Planning::Path& path);
-      ReturnCode ExecutePathToPose(const Pose3d& pose);
+      Result GetPathToPose(const Pose3d& pose, Planning::Path& path);
+      Result ExecutePathToPose(const Pose3d& pose);
       
       void SetTraversingPath(bool t) {isTraversingPath_ = t;}
       bool IsTraversingPath() {return isTraversingPath_;}
@@ -74,36 +74,36 @@ namespace Anki {
       ///////// Messaging ////////
       
       // Request camera calibration from robot
-      ReturnCode SendRequestCamCalib() const;
+      Result SendRequestCamCalib() const;
       
       // Clears the path that the robot is executing which also stops the robot
-      ReturnCode SendClearPath() const;
+      Result SendClearPath() const;
       
       // Sends a path to the robot to be immediately executed
-      ReturnCode SendExecutePath(const Planning::Path& path) const;
+      Result SendExecutePath(const Planning::Path& path) const;
       
       // Sends a message to the robot to dock with the specified block
       // that it should currently be seeing.
-      ReturnCode SendDockWithBlock(const u8 markerType,
+      Result SendDockWithBlock(const u8 markerType,
                                    const f32 markerWidth_mm,
                                    const DockAction_t dockAction) const;
       
       // Sends a message to the robot to move the lift to the specified height
-      ReturnCode SendMoveLift(const f32 height_mm,
+      Result SendMoveLift(const f32 height_mm,
                               const f32 max_speed_rad_per_sec,
                               const f32 accel_rad_per_sec2) const;
       
-      ReturnCode SendMoveHead(const f32 angle_rad,
+      Result SendMoveHead(const f32 angle_rad,
                               const f32 max_speed_rad_per_sec,
                               const f32 accel_rad_per_sec2) const;
       
-      ReturnCode SendDriveWheels(const f32 lwheel_speed_mmps,
+      Result SendDriveWheels(const f32 lwheel_speed_mmps,
                                  const f32 rwheel_speed_mmps) const;
       
-      ReturnCode SendStopAllMotors() const;
+      Result SendStopAllMotors() const;
       
       // Send's robot's current pose
-      ReturnCode SendAbsLocalizationUpdate() const;
+      Result SendAbsLocalizationUpdate() const;
       
     protected:
       // The robot's identifier
@@ -188,7 +188,7 @@ namespace Anki {
 #endif
 
       // Sets pointers to other managers
-      ReturnCode Init(MessageHandler* msgHandler, BlockWorld* blockWorld, PathPlanner* pathPlanner);
+      Result Init(MessageHandler* msgHandler, BlockWorld* blockWorld, PathPlanner* pathPlanner);
       
       // Get the list of known robot ID's
       std::vector<RobotID_t> const& GetRobotIDList() const;

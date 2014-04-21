@@ -14,4 +14,7 @@ void MotorsSetPower(u8 motorID, s16 power);
 // Updates the PWM values for the timers in a safe manner
 void MotorsUpdate();
 
+// Print the raw encoder input values over the UART
+void MotorsPrintEncodersRaw();
+
 #endif

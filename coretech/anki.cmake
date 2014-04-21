@@ -55,6 +55,13 @@ else()
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -stdlib=libc++")
 endif(WIN32)
 
+# Add networking libraries
+if(WIN32)
+set(NETWORKING_LIBS Ws2_32)
+else()
+set(NETWORKING_LIBS )
+endif()
+
 # So long as we're using full version names in our external libraries,
 # lets not have to hardcode them all over the place:
 set(OPENCV_DIR opencv-2.4.8)
@@ -194,6 +201,8 @@ if(${ANKICORETECH_EMBEDDED_USE_HEATSHRINK})
 else()  
   set(HEATSHRINK_LIBRARY )
 endif()
+
+set(ALL_EMBEDDED_LIBRARIES ${ALL_EMBEDDED_LIBRARIES} ${NETWORKING_LIBS})
 
 project(${PROJECT_NAME})
 

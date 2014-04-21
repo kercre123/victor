@@ -19,7 +19,7 @@ namespace Anki {
     
     VizManager* VizManager::singletonInstance_ = 0;
     
-    ReturnCode VizManager::Init()
+    Result VizManager::Init()
     {
       
       if (!vizClient_.Connect(ROBOT_SIM_WORLD_HOST, VIZ_SERVER_PORT)) {
@@ -31,7 +31,7 @@ namespace Anki {
       DefineColor(VIZ_COLOR_EXECUTED_PATH, 1.0, 0.0, 0.0, 1.0);
       DefineColor(VIZ_COLOR_PREDOCKPOSE,   1.0, 0.0, 0.0, 0.75);
       
-      return isInitialized_ ? EXIT_SUCCESS : EXIT_FAILURE;
+      return isInitialized_ ? RESULT_OK : RESULT_FAIL;
     }
     
     VizManager::VizManager()

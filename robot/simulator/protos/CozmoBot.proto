@@ -8,7 +8,6 @@ PROTO CozmoBot [
   field SFInt32  cameraHeight 240
   field SFFloat fieldOfView   0.92
   
-  field SFFloat headAngle 0 
   field SFFloat headAngle_lowLimit -0.4363 # 25 degrees down
   field SFFloat headAngle_highLimit 0.6109 # 35 degrees up
   
@@ -80,7 +79,7 @@ Supervisor {
 				dampingConstant 3
 				maxStop IS headAngle_highLimit
 				minStop IS headAngle_lowLimit
-				position IS headAngle
+				position 0
 				axis 0 -1 0
 			  }
 			  device RotationalMotor {
@@ -708,10 +707,10 @@ Supervisor {
               
 							Connector {
 							  name "gripperConnector"
-							  translation 0.0014 0 -0.007
+							  translation 0.0014 0 -0.006
 							  rotation 0 1 0 1.57
 							  model "magnetic"
-							  distanceTolerance 0.002
+							  distanceTolerance 0.003
 							  type "active"
 							  isLocked FALSE
 							  autoLock FALSE

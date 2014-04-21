@@ -64,7 +64,7 @@ namespace Anki {
       #define SEND_DEBUG_STREAM 0
 #endif
       
-#define P3P_PRECISION f64
+#define P3P_PRECISION f32
      
       //
       // Fiducial Detection Parameters
@@ -131,6 +131,15 @@ namespace Anki {
         s32 maxSamplesAtBaseLevel;
         
 #endif // if DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
+        
+        
+#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
+        // Parameters for sanity checks after tracker update
+        static const f32 MIN_TRACKER_DISTANCE;
+        static const f32 MAX_TRACKER_DISTANCE;
+        static const f32 MAX_BLOCK_DOCKING_ANGLE;
+        static const f32 MAX_DOCKING_FOV_ANGLE;
+#endif
         
         TrackerParameters();
         void Initialize();

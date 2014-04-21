@@ -47,7 +47,7 @@ namespace Anki {
           
         } // private namespace
         
-        ReturnCode SendBuffer(SerializedBuffer &toSend)
+        Result SendBuffer(SerializedBuffer &toSend)
         {
 #if SEND_DEBUG_STREAM
           const f32 curTime = GetTime();
@@ -60,7 +60,7 @@ namespace Anki {
           } else {
             if(bytesSinceLastSecond > MAX_BYTES_PER_SECOND) {
               lastBenchmarkTime_algorithmsOnly = GetTime();
-              return EXIT_SUCCESS;
+              return RESULT_OK;
             } else {
               bytesSinceLastSecond += toSend.get_memoryStack().get_usedBytes();
             }
@@ -97,11 +97,11 @@ namespace Anki {
           lastBenchmarkTime_algorithmsOnly = GetTime();
 #endif // SEND_DEBUG_STREAM
           
-          return EXIT_SUCCESS;
+          return RESULT_OK;
         }
         
         // TODO: Commented out to prevent unused compiler warning. Add back if needed.
-        //static ReturnCode SendPrintf(const char * string)
+        //static Result SendPrintf(const char * string)
         //{
         //  printfBuffer_ = SerializedBuffer(&printfBufferRaw_[0], PRINTF_BUFFER_SIZE);
         //  printfBuffer_.PushBackString(string);
@@ -109,9 +109,9 @@ namespace Anki {
         //  return SendBuffer(printfBuffer_);
         //} // void SendPrintf(const char * string)
         
-        ReturnCode SendFiducialDetection(const Array<u8> &image, const FixedLengthList<VisionMarker> &markers, MemoryStack ccmScratch, MemoryStack onchipScratch, MemoryStack offchipScratch)
+        Result SendFiducialDetection(const Array<u8> &image, const FixedLengthList<VisionMarker> &markers, MemoryStack ccmScratch, MemoryStack onchipScratch, MemoryStack offchipScratch)
         {
-          ReturnCode result = EXIT_SUCCESS;
+          Result result = RESULT_OK;
           
 #if SEND_DEBUG_STREAM
           const f32 curTime = GetTime();
@@ -161,9 +161,9 @@ namespace Anki {
 #endif // #if SEND_DEBUG_STREAM
           
           return result;
-        } // ReturnCode SendDebugStream_Detection()
+        } // Result SendDebugStream_Detection()
         
-        ReturnCode SendTrackingUpdate(
+        Result SendTrackingUpdate(
           const Array<u8> &image, 
           const Tracker &tracker, 
           const TrackerParameters &parameters, 
@@ -173,7 +173,7 @@ namespace Anki {
           MemoryStack onchipScratch, 
           MemoryStack offchipScratch)
         {
-          ReturnCode result = EXIT_SUCCESS;
+          Result result = RESULT_OK;
           
 #if SEND_DEBUG_STREAM
           const f32 curTime = GetTime();
@@ -208,7 +208,7 @@ namespace Anki {
           frameNumber++;
           
           if(frameNumber % SEND_EVERY_N_FRAMES != 0) {
-            return EXIT_SUCCESS;
+            return RESULT_OK;
           }
           
 #if DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
@@ -257,9 +257,9 @@ namespace Anki {
 #endif // #if SEND_DEBUG_STREAM
           
           return result;
-        } // static ReturnCode SendTrackingUpdate()
+        } // static Result SendTrackingUpdate()
         
-        ReturnCode SendFaceDetections(
+        Result SendFaceDetections(
           const Array<u8> &image, 
           const FixedLengthList<Rectangle<s32> > &detectedFaces,
           const s32 detectedFacesImageWidth,
@@ -267,7 +267,7 @@ namespace Anki {
           MemoryStack onchipScratch, 
           MemoryStack offchipScratch)
         {
-          ReturnCode result = EXIT_SUCCESS;
+          Result result = RESULT_OK;
           
 #if SEND_DEBUG_STREAM
           const f32 curTime = GetTime();
@@ -291,7 +291,7 @@ namespace Anki {
           frameNumber++;
           
           //if(frameNumber % SEND_EVERY_N_FRAMES != 0) {
-          //  return EXIT_SUCCESS;
+          //  return RESULT_OK;
           //}
           
           Array<u8> imageSmall(height, width, offchipScratch);
@@ -308,10 +308,10 @@ namespace Anki {
 #endif // #if SEND_DEBUG_STREAM
           
           return result;
-        } // static ReturnCode SendFaceDetections()
+        } // static Result SendFaceDetections()
         
 #if DOCKING_ALGORITHM ==  DOCKING_BINARY_TRACKER
-        ReturnCode SendBinaryTracker(const TemplateTracker::BinaryTracker &tracker, MemoryStack ccmScratch, MemoryStack onchipScratch, MemoryStack offchipScratch)
+        Result SendBinaryTracker(const TemplateTracker::BinaryTracker &tracker, MemoryStack ccmScratch, MemoryStack onchipScratch, MemoryStack offchipScratch)
         {
 #if SEND_DEBUG_STREAM
 
@@ -329,25 +329,25 @@ namespace Anki {
           
           return SendBuffer(debugStreamBuffer_);
 #else
-          return EXIT_SUCCESS;
+          return RESULT_OK;
 #endif // #if SEND_DEBUG_STREAM
         }
 #endif // DOCKING_ALGORITHM ==  DOCKING_BINARY_TRACKER
         
-        ReturnCode SendArray(const Array<u8> &array)
+        Result SendArray(const Array<u8> &array)
         {
 #if SEND_DEBUG_STREAM
           debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
           debugStreamBuffer_.PushBack("Array", array);
           return SendBuffer(debugStreamBuffer_);
 #else
-          return EXIT_SUCCESS;
+          return RESULT_OK;
 #endif // #if SEND_DEBUG_STREAM
         }
         
-        ReturnCode SendBinaryImage(const Array<u8> &grayscaleImage, const Tracker &tracker, const TrackerParameters &parameters, MemoryStack ccmScratch, MemoryStack onchipScratch, MemoryStack offchipScratch)
+        Result SendBinaryImage(const Array<u8> &grayscaleImage, const Tracker &tracker, const TrackerParameters &parameters, MemoryStack ccmScratch, MemoryStack onchipScratch, MemoryStack offchipScratch)
         {
-          ReturnCode result = EXIT_SUCCESS;
+          Result result = RESULT_OK;
 #if SEND_DEBUG_STREAM && DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
           DebugStream::debugStreamBuffer_ = SerializedBuffer(&DebugStream::debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
           
@@ -385,14 +385,14 @@ namespace Anki {
           return result;
         }
         
-        ReturnCode Initialize()
+        Result Initialize()
         {
 #if SEND_DEBUG_STREAM
           // TODO: add the rest
           debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
           printfBuffer_ = SerializedBuffer(&printfBufferRaw_[0], PRINTF_BUFFER_SIZE);
 #endif
-          return EXIT_SUCCESS;
+          return RESULT_OK;
         }
       } // namespace DebugStream
     } // namespace VisionSystem

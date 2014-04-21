@@ -53,14 +53,14 @@ namespace Anki {
   namespace Embedded {
     namespace P3P {
       template<typename PRECISION>
-      ReturnCode createIntermediateCameraFrameHelper(Point3<PRECISION>& f1,
+      Result createIntermediateCameraFrameHelper(Point3<PRECISION>& f1,
         Point3<PRECISION>& f2,
         Point3<PRECISION>& f3,
         Array<PRECISION>& T)
       {
         Point3<PRECISION> e1 = f1;
         Point3<PRECISION> e3 = CrossProduct(f1, f2);
-        if(e3.MakeUnitLength() == 0) { return EXIT_FAILURE; }
+        if(e3.MakeUnitLength() == 0) { return RESULT_FAIL; }
         Point3<PRECISION> e2 = CrossProduct(e3, e1);
 
         // The e vectors are the rows of the T matrix (and T should already be allocated)
@@ -71,11 +71,11 @@ namespace Anki {
 
         f3 = T * f3;
 
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       } // createIntermediateCameraFrameHelper()
 
       template<typename PRECISION>
-      ReturnCode solveQuartic(const PRECISION* factors, //const Array<PRECISION>& factors,  // 1x5
+      Result solveQuartic(const PRECISION* factors, //const Array<PRECISION>& factors,  // 1x5
         PRECISION* realRoots) //Array<PRECISION>& realRoots)      // 1x4
       {
         //AnkiAssert(factors.get_size(0) == 1 && factors.get_size(1) == 5);
@@ -136,11 +136,11 @@ namespace Anki {
         realRoots[0], realRoots[1], realRoots[2], realRoots[3]);
         */
 
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       } // solveQuartic()
 
       template<typename PRECISION>
-      ReturnCode computePossiblePoses(const Point3<PRECISION>& worldPoint1,
+      Result computePossiblePoses(const Point3<PRECISION>& worldPoint1,
         const Point3<PRECISION>& worldPoint2,
         const Point3<PRECISION>& worldPoint3,
         const Point3<PRECISION>& imageRay1,
@@ -174,7 +174,7 @@ namespace Anki {
 
         // Verify the world points are not colinear
         if(CrossProduct(P2 - P1, P3 - P1).Length() == 0) {
-          return EXIT_FAILURE;
+          return RESULT_FAIL;
         }
 
         POINT f1(imageRay1);
@@ -189,8 +189,8 @@ namespace Anki {
         MATRIX T = MATRIX(3,3,scratch);
 
         // Create intermediate camera frame
-        if(createIntermediateCameraFrameHelper(f1, f2, f3, T) != EXIT_SUCCESS) {
-          return EXIT_FAILURE;
+        if(createIntermediateCameraFrameHelper(f1, f2, f3, T) != RESULT_OK) {
+          return RESULT_FAIL;
         }
 
         // Reinforce that f3[2] > 0 for theta in [0,pi]
@@ -200,8 +200,8 @@ namespace Anki {
           f2 = imageRay1;
           f3 = imageRay3;
 
-          if(createIntermediateCameraFrameHelper(f1, f2, f3, T) != EXIT_SUCCESS) {
-            return EXIT_FAILURE;
+          if(createIntermediateCameraFrameHelper(f1, f2, f3, T) != RESULT_OK) {
+            return RESULT_FAIL;
           }
 
           P1 = worldPoint2;
@@ -211,10 +211,10 @@ namespace Anki {
 
         // Creation of intermediate world frame
         POINT n1 = P2 - P1;
-        if(n1.MakeUnitLength() == 0) { return EXIT_FAILURE; }
+        if(n1.MakeUnitLength() == 0) { return RESULT_FAIL; }
 
         POINT n3(CrossProduct(n1, (P3-P1)));
-        if(n3.MakeUnitLength() == 0) { return EXIT_FAILURE; }
+        if(n3.MakeUnitLength() == 0) { return RESULT_FAIL; }
 
         POINT n2(CrossProduct(n3,n1));
 
@@ -352,11 +352,11 @@ namespace Anki {
           EndBenchmark("cpml_mainLoop");
         }
 
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       } // computePossiblePoses(from individually-listed points)
 
       // Explicit instatiation for single and double precision
-      template ReturnCode computePossiblePoses<float>(const Point3<float>& worldPoint1,
+      template Result computePossiblePoses<float>(const Point3<float>& worldPoint1,
         const Point3<float>& worldPoint2,
         const Point3<float>& worldPoint3,
         const Point3<float>& imageRay1,
@@ -368,7 +368,7 @@ namespace Anki {
         Array<float>& R4, Point3<float>& T4,
         MemoryStack scratch);
 
-      template ReturnCode computePossiblePoses<double>(const Point3<double>& worldPoint1,
+      template Result computePossiblePoses<double>(const Point3<double>& worldPoint1,
         const Point3<double>& worldPoint2,
         const Point3<double>& worldPoint3,
         const Point3<double>& imageRay1,
@@ -381,7 +381,7 @@ namespace Anki {
         MemoryStack scratch);
 
       template<typename PRECISION>
-      ReturnCode computePose(const Quadrilateral<PRECISION>& imgQuad,
+      Result computePose(const Quadrilateral<PRECISION>& imgQuad,
         const Point3<PRECISION>& worldPoint1,
         const Point3<PRECISION>& worldPoint2,
         const Point3<PRECISION>& worldPoint3,
@@ -392,7 +392,11 @@ namespace Anki {
         MemoryStack scratch)
       {
         // Output rotation should already be allocated
-        AnkiAssert(R.get_size(0) == 3 && R.get_size(1) == 3);
+        AnkiConditionalErrorAndReturnValue(R.get_size(0)==3 && R.get_size(1)==3,
+                                           RESULT_FAIL_INVALID_SIZE,
+                                           "P3P::computePose()",
+                                           "Rotation matrix should be 3x3.");
+        
 
         BeginBenchmark("computePose_init");
 
@@ -466,9 +470,9 @@ namespace Anki {
             possibleR[1], possibleT[1],
             possibleR[2], possibleT[2],
             possibleR[3], possibleT[3],
-            scratch) != EXIT_SUCCESS)
+            scratch) != RESULT_OK)
           {
-            return EXIT_FAILURE;
+            return RESULT_FAIL;
           }
 
           // Find the pose with the least reprojection error for the 4th
@@ -536,7 +540,7 @@ namespace Anki {
 
         //printf("Best solution had error of %f\n", minErrorOuter);
 
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       } // computePose()
 
       // Explicit instantiation for single and double precision
@@ -544,7 +548,7 @@ namespace Anki {
       //       computePossiblePoses() for each as well
       // TODO: Once we decide which we actually need, we could only instantiate that one
 
-      template ReturnCode computePose<f32>(const Quadrilateral<f32>& imgQuad,
+      template Result computePose<f32>(const Quadrilateral<f32>& imgQuad,
         const Point3<f32>& worldPoint1,
         const Point3<f32>& worldPoint2,
         const Point3<f32>& worldPoint3,
@@ -554,7 +558,7 @@ namespace Anki {
         Array<f32>& R, Point3<f32>& T,
         MemoryStack scratch);
 
-      template ReturnCode computePose<f64>(const Quadrilateral<f64>& imgQuad,
+      template Result computePose<f64>(const Quadrilateral<f64>& imgQuad,
         const Point3<f64>& worldPoint1,
         const Point3<f64>& worldPoint2,
         const Point3<f64>& worldPoint3,
@@ -566,7 +570,7 @@ namespace Anki {
 
       /*
       template<typename PRECISION>
-      ReturnCode computePossiblePoses(const std::array<Point3<PRECISION>,3>& worldPoints,
+      Result computePossiblePoses(const std::array<Point3<PRECISION>,3>& worldPoints,
       const std::array<Point3<PRECISION>,3>& imageRays,
       std::array<Pose3d,4>& poses)
       {

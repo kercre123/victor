@@ -91,62 +91,62 @@ namespace Anki {
       }
       
       
-      ReturnCode Init(void)
+      Result Init(void)
       {
-        if(HAL::Init() == EXIT_FAILURE) {
+        if(HAL::Init() == RESULT_FAIL) {
           PRINT("Hardware Interface initialization failed!\n");
-          return EXIT_FAILURE;
+          return RESULT_FAIL;
         }
         
-        if (Localization::Init() == EXIT_FAILURE) {
+        if (Localization::Init() == RESULT_FAIL) {
           PRINT("Localization System init failed.\n");
-          return EXIT_FAILURE;
+          return RESULT_FAIL;
         }
         
         // TODO: Get VisionSystem to work on robot
-        if(VisionSystem::Init() == EXIT_FAILURE)
+        if(VisionSystem::Init() == RESULT_FAIL)
         {
           PRINT("Vision System initialization failed.\n");
-          return EXIT_FAILURE;
+          return RESULT_FAIL;
         }
         
-        if(PathFollower::Init() == EXIT_FAILURE) {
+        if(PathFollower::Init() == RESULT_FAIL) {
           PRINT("PathFollower initialization failed.\n");
-          return EXIT_FAILURE;
+          return RESULT_FAIL;
         }
         
         // Initialize subsystems if/when available:
         /*
-         if(WheelController::Init() == EXIT_FAILURE) {
+         if(WheelController::Init() == RESULT_FAIL) {
          PRINT("WheelController initialization failed.\n");
-         return EXIT_FAILURE;
+         return RESULT_FAIL;
          }
          
-         if(SpeedController::Init() == EXIT_FAILURE) {
+         if(SpeedController::Init() == RESULT_FAIL) {
          PRINT("SpeedController initialization failed.\n");
-         return EXIT_FAILURE;
+         return RESULT_FAIL;
          }
          
-         if(SteeringController::Init() == EXIT_FAILURE) {
+         if(SteeringController::Init() == RESULT_FAIL) {
          PRINT("SteeringController initialization failed.\n");
-         return EXIT_FAILURE;
+         return RESULT_FAIL;
          }
          
-         if(HeadController::Init() == EXIT_FAILURE) {
+         if(HeadController::Init() == RESULT_FAIL) {
          PRINT("HeadController initialization failed.\n");
-         return EXIT_FAILURE;
+         return RESULT_FAIL;
          }
          */
         
-         if(LiftController::Init() == EXIT_FAILURE) {
+         if(LiftController::Init() == RESULT_FAIL) {
          PRINT("LiftController initialization failed.\n");
-         return EXIT_FAILURE;
+         return RESULT_FAIL;
          }
          
         // Setup test mode
-        if(TestModeController::Init(DEFAULT_TEST_MODE) == EXIT_FAILURE) {
+        if(TestModeController::Init(DEFAULT_TEST_MODE) == RESULT_FAIL) {
           PRINT("TestMode initialization failed.\n");
-          return EXIT_FAILURE;
+          return RESULT_FAIL;
         }
         
         // Start calibration
@@ -155,7 +155,7 @@ namespace Anki {
         // Set starting state
         mode_ = INIT_MOTOR_CALIBRATION;
         
-        return EXIT_SUCCESS;
+        return RESULT_OK;
         
       } // Robot::Init()
       
@@ -166,7 +166,7 @@ namespace Anki {
       }
       
       
-      ReturnCode step_MainExecution()
+      Result step_MainExecution()
       {
 
         // If the hardware interface needs to be advanced (as in the case of
@@ -297,16 +297,16 @@ namespace Anki {
         HAL::UpdateDisplay();
         
         
-        return EXIT_SUCCESS;
+        return RESULT_OK;
         
       } // Robot::step_MainExecution()
       
       
       // For the "long execution" thread, i.e. the vision code, which
       // will be slower
-      ReturnCode step_LongExecution()
+      Result step_LongExecution()
       {
-        ReturnCode retVal = EXIT_SUCCESS;
+        Result retVal = RESULT_OK;
         
         // IMPORTANT: The static robot state message is being passed in here
         //   *by value*, NOT by reference.  This is because step_LongExecution()
@@ -318,6 +318,17 @@ namespace Anki {
         return retVal;
         
       } // Robot::step_longExecution()
+      
+      
+      void StopRobot()
+      {
+        // Stop wheels and vision system
+        PickAndPlaceController::Reset();
+        
+        // Stop lift and head
+        LiftController::SetAngularVelocity(0);
+        HeadController::SetAngularVelocity(0);
+      }
       
     } // namespace Robot
   } // namespace Cozmo

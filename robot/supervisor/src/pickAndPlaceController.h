@@ -48,7 +48,7 @@ namespace Anki {
       // TODO: Add if/when needed?
       // ReturnCode Init();
 
-      ReturnCode Update();
+      Result Update();
       
       Mode GetMode();
       
@@ -62,6 +62,9 @@ namespace Anki {
       
       void PlaceOnBlock(const Vision::MarkerType blockID,
                         const f32 horizontal_offset, const f32 angular_offset);
+      
+      // Abort whatever pick or place action we're currently doing
+      void Reset();
       
     } // namespace PickAndPlaceController
   } // namespace Cozmo

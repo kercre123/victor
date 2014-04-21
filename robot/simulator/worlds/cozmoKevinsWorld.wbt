@@ -90,7 +90,7 @@ Background {
 DirectionalLight {
   ambientIntensity 0.75
   direction 1 1 -2
-  castShadows TRUE
+  castShadows FALSE
 }
 CozmoMat {
 }
@@ -118,7 +118,8 @@ Block1x1 {
   ]
 }
 Block1x1 {
-  translation 0.2 0.2 0.022
+  translation 0.28 0.03 0.022
+  rotation 0 0 1 0.35
   facemarkerFront [
     "textures/squarePlusCorners.png"
   ]
@@ -163,7 +164,8 @@ Block2x1 {
 }
 DEF Cozmo_1 CozmoBot {
   name "CozmoBot_1"
-  controller ""
+  #rotation 0 0 1 -1.57
+  #controller ""
 }
 RobotAdvertisementService {
 }

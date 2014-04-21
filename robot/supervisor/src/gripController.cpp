@@ -66,7 +66,7 @@ namespace Anki {
 #endif
       }
       
-      ReturnCode Update()
+      Result Update()
       {
         if (HAL::GetMicroCounter() - gripperPowerAppliedTime_ > GRIPPER_MOTOR_ENGAGE_TIME_US) {
           if (gripperPower_ > 0) {
@@ -74,7 +74,7 @@ namespace Anki {
           }
           PowerGripper(0.f);
         }
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       }
       
 

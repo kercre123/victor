@@ -30,8 +30,8 @@ namespace Anki {
     namespace DockingController {
 
       // TODO: Add if/when needed?
-      // ReturnCode Init();
-      ReturnCode Update();
+      // Result Init();
+      Result Update();
       
       // Returns true if robot is the process of looking for a block or docking to a block
       bool IsBusy();

@@ -59,7 +59,7 @@ namespace Anki {
       static f32 errorTolerance_;
       static s32 scaleFactor_;
       
-      ReturnCode Initialize()
+      Result Initialize()
       {
         if(!isInitialized_) {
           matlabProc_.EvalStringEcho("run(fullfile('..','..','..','..','matlab','initCozmoPath')); "
@@ -87,15 +87,15 @@ namespace Anki {
           isInitialized_ = true;
         }
         
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       } // MatlabVisionProcess::Initialize()
       
-      ReturnCode InitTemplate(const Array<u8>& imgFull,
+      Result InitTemplate(const Array<u8>& imgFull,
                               const Quadrilateral<f32>& trackingQuad,
                               MemoryStack scratch)
       {
         if(!isInitialized_) {
-          return EXIT_FAILURE;
+          return RESULT_FAIL;
         }
         
         matlabProc_.PutQuad(trackingQuad, "initTrackingQuad");
@@ -165,7 +165,7 @@ namespace Anki {
         
         MatlabVisualization::SendTrackInit(imgFull, trackingQuad);
         
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       } // MatlabVisionProcessor::InitTemplate()
 
 
@@ -224,12 +224,12 @@ namespace Anki {
                                    scaleFactor_, scaleFactor_);
       } // MatlabVisionProcess::UpdateTracker()
       
-      ReturnCode TrackTemplate(const Array<u8>& imgFull, bool& converged, MemoryStack scratch)
+      Result TrackTemplate(const Array<u8>& imgFull, bool& converged, MemoryStack scratch)
       {
         if(!haveTemplate_) {
           AnkiWarn("MatlabVisionProcess::TrackTemplate",
                    "TrackTemplate called before tracker initialized.");
-          return EXIT_FAILURE;
+          return RESULT_FAIL;
         }
         
         if(imgFull.get_size(0) == trackerParameters_.trackingImageHeight &&
@@ -281,7 +281,7 @@ namespace Anki {
         
         MatlabVisualization::SendTrack(imgFull, quad, converged);
         
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       } // MatlabVisionProcessor::TrackTemplate()
       
       
@@ -330,7 +330,8 @@ namespace Anki {
       } // MatlabVisionProcessor::GetTrackerTransform()
       
       void ComputeProjectiveDockingSignal(const Quadrilateral<f32>& transformedQuad,
-                                          f32& x_distErr, f32& y_horErr, f32& angleErr)
+                                          f32& x_distErr, f32& y_horErr, f32& z_height,
+                                          f32& angleErr)
       {
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_AFFINE
         
@@ -340,8 +341,9 @@ namespace Anki {
         // Nothing to compute.  The tracker's parameters are the answer directly
         
         MatlabVisionProcessor::matlabProc_.EvalStringEcho("angleErr = LKtracker.theta_y; "
-                                                          "distErr  = LKtracker.tz; "
-                                                          "horErr   = -LKtracker.tx; ");
+                                                          "Tz  = LKtracker.tz; "
+                                                          "Tx  = LKtracker.tx; "
+                                                          "Ty  = LKtracker.ty; ");
 #else
         // Compute the pose of the block according to the current homography in
         // the tracker.
@@ -349,13 +351,15 @@ namespace Anki {
         
         matlabProc_.EvalStringEcho("blockPose = camera.computeExtrinsics(transformedQuad, marker3d); "
                                    "angleErr = asin(blockPose.Rmat(3,1)); "
-                                   "distErr  = blockPose.T(3); "
-                                   "horErr   = -blockPose.T(1); ");
+                                   "Tz  = blockPose.T(3); "
+                                   "Tx  = blockPose.T(1); "
+                                   "Ty  = blockPose.T(2); ");
         
 #endif
         
-        x_distErr = static_cast<f32>(mxGetScalar(matlabProc_.GetArray("distErr")));
-        y_horErr  = static_cast<f32>(mxGetScalar(matlabProc_.GetArray("horErr")));
+        x_distErr = static_cast<f32>(mxGetScalar(matlabProc_.GetArray("Tx")));
+        y_horErr  = static_cast<f32>(mxGetScalar(matlabProc_.GetArray("Ty")));
+        z_height  = static_cast<f32>(mxGetScalar(matlabProc_.GetArray("Tz")));
         angleErr  = static_cast<f32>(mxGetScalar(matlabProc_.GetArray("angleErr")));
         
       } // ComputeProjectiveDockingSignal()

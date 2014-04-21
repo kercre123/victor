@@ -38,13 +38,13 @@ namespace Anki {
       //   by Kneip et al.
       //
       template<typename PRECISION>
-      ReturnCode computePossiblePoses(const std::array<Point<3,PRECISION>,3>& worldPoints,
+      Result computePossiblePoses(const std::array<Point<3,PRECISION>,3>& worldPoints,
                                       const std::array<Point<3,PRECISION>,3>& imageRays,
                                       std::array<Pose3d,4>& poses);
       
       
       template<typename PRECISION>
-      ReturnCode computePossiblePoses(const Point<3,PRECISION>& worldPoint1,
+      Result computePossiblePoses(const Point<3,PRECISION>& worldPoint1,
                                       const Point<3,PRECISION>& worldPoint2,
                                       const Point<3,PRECISION>& worldPoint3,
                                       const Point<3,PRECISION>& imageRay1,
@@ -55,7 +55,7 @@ namespace Anki {
       // Find the real parts of the four roots of a quartic (4th order polynomial)
       // NOTE: This is really only exposed for testing purposes.
       template<typename PRECISION>
-      ReturnCode solveQuartic(const std::array<PRECISION,5>& factors,
+      Result solveQuartic(const std::array<PRECISION,5>& factors,
                               std::array<PRECISION,4>& realRoots);
       
     } // namespace P3P

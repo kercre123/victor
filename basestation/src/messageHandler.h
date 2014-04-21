@@ -52,16 +52,16 @@ namespace Anki {
 #endif
       
       // Set the message handler's communications manager
-      ReturnCode Init(Comms::IComms* comms,
+      Result Init(Comms::IComms* comms,
                       RobotManager*  robotMgr,
                       BlockWorld*    blockWorld);
       
       // As long as there are messages available from the comms object,
       // process them and pass them along to robots.
-      ReturnCode ProcessMessages();
+      Result ProcessMessages();
       
       // Send a message to a specified ID
-      ReturnCode SendMessage(const RobotID_t robotID, const Message& msg);
+      Result SendMessage(const RobotID_t robotID, const Message& msg);
       
     protected:
       
@@ -82,7 +82,7 @@ namespace Anki {
       
       // Process a raw byte buffer as a message and send it to the specified
       // robot
-      ReturnCode ProcessPacket(const Comms::MsgPacket& packet);
+      Result ProcessPacket(const Comms::MsgPacket& packet);
       
       // Auto-gen the ProcessBufferAs_MessageX() method prototypes using macros:
 #define MESSAGE_DEFINITION_MODE MESSAGE_PROCESS_METHODS_MODE
@@ -94,7 +94,7 @@ namespace Anki {
       struct {
         u8 priority;
         u8 size;
-        ReturnCode (MessageHandler::*ProcessPacketAs)(Robot*, const u8*);
+        Result (MessageHandler::*ProcessPacketAs)(Robot*, const u8*);
       } lookupTable_[NUM_MSG_IDS+1] = {
         {0, 0, 0}, // Empty entry for NO_MESSAGE_ID
 #define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_MODE

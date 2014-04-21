@@ -28,7 +28,7 @@ namespace Anki {
       
       // TODO: Add if/when needed?
       // ReturnCode Init();
-      ReturnCode Update();
+      Result Update();
 
       // Rotation (or "yaw"). Turning left is positive.
       f32 GetRotation();

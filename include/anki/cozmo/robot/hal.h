@@ -197,7 +197,7 @@ namespace Anki
       // Hardware Interface Methods:
       //
 
-      ReturnCode Init(void);
+      Result Init(void);
       void Destroy(void);
 
       // Gripper control
@@ -220,7 +220,7 @@ namespace Anki
       s32 GetRobotID(void);
 
       // Take a step (needed for webots, possibly a no-op for real robot?)
-      ReturnCode Step(void);
+      Result Step(void);
 
       // Ground truth (no-op if not in simulation?)
       void GetGroundTruthPose(f32 &x, f32 &y, f32& rad);
@@ -416,22 +416,31 @@ namespace Anki
       /////////////////////////////////////////////////////////////////////
       // UI LEDs
       //
-
-      const u32 LED_CHANNEL_COUNT = 8;
+      enum LEDId {
+        LED_LEFT_EYE_TOP = 0,
+        LED_LEFT_EYE_LEFT,
+        LED_RIGHT_EYE_LEFT,
+        LED_RIGHT_EYE_TOP,
+        LED_LEFT_EYE_RIGHT,
+        LED_LEFT_EYE_BOTTOM,
+        LED_RIGHT_EYE_BOTTOM,
+        LED_RIGHT_EYE_RIGHT,
+        NUM_LEDS
+      };
 
       // Set the intensity for each LED channel in the range [0, 255]
-      void LEDSet(u8 leds[LED_CHANNEL_COUNT]);
-
+      void LEDSet(u8 leds[NUM_LEDS]);
       
       enum LEDColor {
-        LED_ORANGE = 1,
+        LED_OFF = 0,
+        LED_RED = 1,
         LED_GREEN = 2,
         LED_BLUE = 4
       };
       
       // TEMP: Temporary single LED control with color
       //       while "real" light functionality is being worked on.
-      void SetLED(u8 led_id, LEDColor color);
+      void SetLED(LEDId led_id, LEDColor color);
       
 // #pragma mark --- Radio ---
       /////////////////////////////////////////////////////////////////////

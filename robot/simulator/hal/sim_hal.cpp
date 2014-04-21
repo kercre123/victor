@@ -47,7 +47,7 @@ namespace Anki {
       const u32 CAMERA_SINGLE_CAPTURE_TIME_US = 1000000 / 15;  // 15Hz, VGA
       const u32 CAMERA_CONTINUOUS_CAPTURE_TIME_US = 1000000 / 30;  // 30Hz, VGA
 
-      const f32 MIN_WHEEL_POWER_FOR_MOTION = 0.2;
+      const f32 MIN_WHEEL_POWER_FOR_MOTION = 0.15;
       
 #pragma mark --- Simulated HardwareInterface "Member Variables" ---
       
@@ -176,14 +176,14 @@ namespace Anki {
 #pragma mark --- Simulated Hardware Method Implementations ---
     
     // Forward Declaration.  This is implemented in sim_radio.cpp
-    ReturnCode InitSimRadio(s32 robotID);
+    Result InitSimRadio(s32 robotID);
    
     namespace HAL {
       // Forward Declaration.  This is implemented in sim_uart.cpp
       void UARTInit();
     }
     
-    ReturnCode HAL::Init()
+    Result HAL::Init()
     {
       assert(TIME_STEP >= webotRobot_.getBasicTimeStep());
       
@@ -214,12 +214,12 @@ namespace Anki {
         robotID_ = atoi( name.substr(lastDelimPos+1).c_str() );
         if (robotID_ < 1) {
           PRINT("***ERROR: Invalid robot name (%s). ID must be greater than 0\n", name.c_str());
-          return EXIT_FAILURE;
+          return RESULT_FAIL;
         }
         PRINT("Initializing robot ID: %d\n", robotID_);
       } else {
         PRINT("***ERROR: Cozmo robot name %s is invalid.  Must end with '_<ID number>'\n.", name.c_str());
-        return EXIT_FAILURE;
+        return RESULT_FAIL;
       }
       
       //Set the motors to velocity mode
@@ -270,13 +270,13 @@ namespace Anki {
       accel_ = webotRobot_.getAccelerometer("accel");
       accel_->enable(TIME_STEP);
       
-      if(InitSimRadio(robotID_) == EXIT_FAILURE) {
+      if(InitSimRadio(robotID_) == RESULT_FAIL) {
         PRINT("Failed to initialize Simulated Radio.\n");
-        return EXIT_FAILURE;
+        return RESULT_FAIL;
       }
       
       isInitialized = true;
-      return EXIT_SUCCESS;
+      return RESULT_OK;
       
     } // Init()
     
@@ -478,11 +478,11 @@ namespace Anki {
     // Forward declaration
     void RadioUpdate();
       
-    ReturnCode HAL::Step(void)
+    Result HAL::Step(void)
     {
 
       if(webotRobot_.step(Cozmo::TIME_STEP) == -1) {
-        return EXIT_FAILURE;
+        return RESULT_FAIL;
       } else {
         MotorUpdate();
         RadioUpdate();
@@ -506,7 +506,7 @@ namespace Anki {
         }
          */
         
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       }
       
       
@@ -675,7 +675,7 @@ namespace Anki {
       return robotID_;
     }
     
-    void HAL::SetLED(u8 led_id, LEDColor color) {
+    void HAL::SetLED(LEDId led_id, LEDColor color) {
       // TODO: ...
     }
 

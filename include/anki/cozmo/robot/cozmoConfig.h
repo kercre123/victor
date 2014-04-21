@@ -30,7 +30,7 @@ namespace Anki {
 
     // The base listening port for robot TCP server.
     // Each robot listens on port (ROBOT_RADIO_BASE_PORT + ROBOT_ID)
-    const u16 ROBOT_RADIO_BASE_PORT = 5000;
+    const u16 ROBOT_RADIO_BASE_PORT = 5551;
     
     // Expected message receive latency
     // It is assumed that this value does not fluctuate greatly.

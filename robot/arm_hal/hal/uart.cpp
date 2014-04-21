@@ -23,23 +23,35 @@ namespace Anki
   {
     namespace HAL
     {
-      /////////////////////////////////////////////////////////////////////
-      // UART
-      //
+      volatile s32 m_writeTail = 0;
+      volatile s32 m_writeHead = 0;
+      volatile s32 m_writeLength = 0;
+      
+      volatile s32 m_readTail = 0;
+      volatile s32 m_readHead = 0;
+      
+      volatile bool m_isTransferring = false;
+      
+      static void UARTStartTransfer();
+      static s32 UARTGetCharacter(u32 timeout);
+      
+      extern s32 WifiGetCharacter(u32 timeout);
+      extern bool WifiInit();
+      
+      // Function pointers depending on whether wifi or UART is used
+      void (*StartTransfer)() =  UARTStartTransfer;
+      s32 (*GetChar)(u32 timeout) = UARTGetCharacter;
+      
+      // TODO: Refactor this mess. PUNT!
+      int BUFFER_WRITE_SIZE = 1024 * 1024 * 1;
+      int BUFFER_READ_SIZE = 1024;
       OFFCHIP u8 m_bufferWrite[1024 * 1024 * 1];
       OFFCHIP u8 m_bufferRead[1024];
       
-      volatile s32 m_DMAWriteTail = 0;
-      volatile s32 m_DMAWriteHead = 0;
-      volatile s32 m_DMAWriteLength = 0;
-      u32 m_DMAReadIndex = 0;
-      
-      volatile bool m_isDMARunning = false;
-      
-      static void FlushDMA()
+      static void UARTStartTransfer()
       {
-        int tail = m_DMAWriteTail;
-        int length = m_DMAWriteHead - tail;
+        int tail = m_writeTail;
+        int length = m_writeHead - tail;
         if (length < 0)
           length = sizeof(m_bufferWrite) - tail;
         if (length > 65535)
@@ -48,22 +60,23 @@ namespace Anki
         DMA_STREAM_TX->NDTR = length;                     // Buffer size
         DMA_STREAM_TX->M0AR = (u32)&m_bufferWrite[tail];  // Buffer address
         
-        m_DMAWriteLength = length;
-        m_isDMARunning = true;
+        m_writeLength = length;
+        m_isTransferring = true;
         
         DMA_STREAM_TX->CR |= DMA_SxCR_EN; // Enable DMA
       }
       
       int UARTGetFreeSpace()
       {
-        int tail = m_DMAWriteTail;
-        if (m_DMAWriteHead < tail)
-          return tail - m_DMAWriteHead;
+        int tail = m_writeTail;
+        int head = m_writeHead;
+        if (m_writeHead < tail)
+          return tail - head;
         else
-          return sizeof(m_bufferWrite) - (m_DMAWriteHead - tail);
+          return sizeof(m_bufferWrite) - (head - tail);
       }
-      
-      void UARTInit()
+
+      void UARTConfigure()
       {
         GPIO_PIN_SOURCE(TX, GPIOC, 10);
         GPIO_PIN_SOURCE(RX, GPIOC, 11);
@@ -82,6 +95,7 @@ namespace Anki
         GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
         GPIO_Init(GPIO_TX, &GPIO_InitStructure);
         
+        GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
         GPIO_InitStructure.GPIO_Pin = PIN_RX;
         GPIO_Init(GPIO_RX, &GPIO_InitStructure);
         
@@ -162,7 +176,17 @@ namespace Anki
         NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
         NVIC_Init(&NVIC_InitStructure);
         
-        m_DMAWriteHead = m_DMAWriteTail = m_DMAReadIndex = 0;
+        m_writeHead = m_writeTail = m_readTail = 0;
+      }
+      
+      void UARTInit()
+      {
+        // Try to configure wifi
+        if (WifiInit())
+          return;
+        
+        // Otherwise, configure the UART
+        UARTConfigure();
       }
 
       int UARTPutChar(int c)
@@ -171,23 +195,23 @@ namespace Anki
         //while (!(UART->SR & USART_FLAG_TXE))
         //  ;
         //return c;
-
+        
         // Leave one guard byte in the buffer
         while (UARTGetFreeSpace() <= 2)
           ;
         
         __disable_irq();
-        m_bufferWrite[m_DMAWriteHead] = c;
-        m_DMAWriteHead++;
-        if (m_DMAWriteHead >= sizeof(m_bufferWrite))
+        m_bufferWrite[m_writeHead] = c;
+        m_writeHead++;
+        if (m_writeHead >= sizeof(m_bufferWrite))
         {
-          m_DMAWriteHead = 0;
+          m_writeHead = 0;
         }
         
         // Enable DMA if it's not already running
-        if (!m_isDMARunning)
+        if (!m_isTransferring)
         {
-          FlushDMA();
+          StartTransfer();
         }
         
         __enable_irq();
@@ -207,31 +231,31 @@ namespace Anki
         {
           result = true;
           
-          bytesLeft = sizeof(m_bufferWrite) - m_DMAWriteHead;
+          bytesLeft = sizeof(m_bufferWrite) - m_writeHead;
           if (length <= bytesLeft)
           {
-            memcpy(&m_bufferWrite[m_DMAWriteHead], buffer, length);
-            m_DMAWriteHead += length;
+            memcpy(&m_bufferWrite[m_writeHead], buffer, length);
+            m_writeHead += length;
             
-            if (m_DMAWriteHead == sizeof(m_bufferWrite))
+            if (m_writeHead == sizeof(m_bufferWrite))
             {
-              m_DMAWriteHead = 0;
+              m_writeHead = 0;
             }
           } else {
             // Copy to the end of the buffer, then wrap around for the rest
             int lengthFirst = bytesLeft;
-            memcpy(&m_bufferWrite[m_DMAWriteHead], buffer, lengthFirst);
+            memcpy(&m_bufferWrite[m_writeHead], buffer, lengthFirst);
             
             bytesLeft = length - lengthFirst;
             memcpy(m_bufferWrite, &buffer[lengthFirst], bytesLeft);
             
-            m_DMAWriteHead = bytesLeft;
+            m_writeHead = bytesLeft;
           }
           
           // Enable DMA if it's not already running
-          if (!m_isDMARunning)
+          if (!m_isTransferring)
           {
-            FlushDMA();
+            StartTransfer();
           }
         }
         __enable_irq();
@@ -259,8 +283,8 @@ namespace Anki
         UARTPutHex(value >> 8);
         UARTPutHex(value);
       }
-
-      s32 UARTGetChar(u32 timeout)
+      
+      static s32 UARTGetCharacter(u32 timeout)
       {
         u32 startTime = GetMicroCounter();
 
@@ -268,10 +292,10 @@ namespace Anki
         {
           // Make sure there's data in the FIFO
           // NDTR counts down...
-          if (DMA_STREAM_RX->NDTR != sizeof(m_bufferRead) - m_DMAReadIndex)
+          if (DMA_STREAM_RX->NDTR != sizeof(m_bufferRead) - m_readTail)
           {
-            u8 value = m_bufferRead[m_DMAReadIndex];
-            m_DMAReadIndex = (m_DMAReadIndex + 1) % sizeof(m_bufferRead);  
+            u8 value = m_bufferRead[m_readTail];
+            m_readTail = (m_readTail + 1) % sizeof(m_bufferRead);  
             return value;
           }
         }
@@ -279,6 +303,11 @@ namespace Anki
 
         // No data, so return with an error
         return -1;
+      }
+
+      s32 UARTGetChar(u32 timeout)
+      {
+        return GetChar(timeout);
       }
       
       void USBSendBuffer(const u8* buffer, const u32 size)
@@ -316,22 +345,25 @@ int std::fgetc(FILE* f)
 }
 
 extern "C"
-void DMA1_Stream4_IRQHandler()
 {
-  using namespace Anki::Cozmo::HAL;
-  
-  // Clear DMA Transfer Complete flag
-  DMA_ClearFlag(DMA1_Stream4, DMA_FLAG_TCIF4);
-  
-  m_DMAWriteTail += m_DMAWriteLength;
-  if (m_DMAWriteTail >= sizeof(m_bufferWrite))
-    m_DMAWriteTail = 0;
-  
-  // Check if there's more data to be transferred
-  if (m_DMAWriteHead != m_DMAWriteTail)
+  // Used for UART transfer-complete
+  void DMA1_Stream4_IRQHandler()
   {
-    FlushDMA();
-  } else {
-    m_isDMARunning = false;
+    using namespace Anki::Cozmo::HAL;
+    
+    // Clear DMA Transfer Complete flag
+    DMA_ClearFlag(DMA1_Stream4, DMA_FLAG_TCIF4);
+    
+    m_writeTail += m_writeLength;
+    if (m_writeTail >= sizeof(m_bufferWrite))
+      m_writeTail = 0;
+    
+    // Check if there's more data to be transferred
+    if (m_writeHead != m_writeTail)
+    {
+      StartTransfer();
+    } else {
+      m_isTransferring = false;
+    }
   }
 }

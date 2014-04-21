@@ -108,7 +108,7 @@ namespace Anki {
     }
     
     
-    ReturnCode InitSimRadio(s32 robotID)
+    Result InitSimRadio(s32 robotID)
     {
       server.StartListening(ROBOT_RADIO_BASE_PORT + robotID);
       
@@ -126,7 +126,7 @@ namespace Anki {
       RegisterRobot();
       recvBufSize_ = 0;
       
-      return EXIT_SUCCESS;
+      return RESULT_OK;
     }
     
     bool HAL::RadioIsConnected(void)
@@ -231,7 +231,7 @@ namespace Anki {
     s32 HAL::RadioGetChar(u32 timeout)
     {
       u8 c;
-      if(RadioGetData(&c, sizeof(u8)) == EXIT_SUCCESS) {
+      if(RadioGetData(&c, sizeof(u8)) == RESULT_OK) {
         return static_cast<s32>(c);
       }
       else {

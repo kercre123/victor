@@ -128,13 +128,13 @@ namespace Anki {
       }
       
       
-      ReturnCode Init()
+      Result Init()
       {
         // Init consts
         LIFT_ANGLE_LOW_LIMIT = Height2Rad(LIFT_HEIGHT_LOWDOCK);
         LIFT_ANGLE_HIGH_LIMIT = Height2Rad(LIFT_HEIGHT_CARRY);
         LIFT_ANGLE_HIGH_DOCK = Height2Rad(LIFT_HEIGHT_HIGHDOCK);
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       }
       
       
@@ -422,7 +422,7 @@ namespace Anki {
         return inPosition_;
       }
       
-      ReturnCode Update()
+      Result Update()
       {
 #if (!defined(SIMULATOR) && (RECALIBRATE_AT_LIMITS == 0))
         // Update routine for calibration sequence
@@ -435,7 +435,7 @@ namespace Anki {
         
         // If disabled, do not activate motors
         if(!enable_) {
-          return EXIT_SUCCESS;
+          return RESULT_OK;
         }
         
         if(not inPosition_) {
@@ -542,7 +542,7 @@ namespace Anki {
         }
       
       
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       }
     } // namespace LiftController
   } // namespace Cozmo

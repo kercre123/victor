@@ -22,7 +22,7 @@ GTEST_TEST(PoseEstimation, SolveQuartic)
   };
   
   std::array<PRECISION,4> roots_computed;
-  EXPECT_TRUE(Vision::P3P::solveQuartic(factors, roots_computed) == EXIT_SUCCESS);
+  EXPECT_TRUE(Vision::P3P::solveQuartic(factors, roots_computed) == RESULT_OK);
   
   for(s32 i=0; i<4; ++i) {
     EXPECT_NEAR(roots_groundTruth[i], roots_computed[i], 1e-6f);

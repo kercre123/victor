@@ -183,6 +183,11 @@ namespace Anki {
     {
       return currentAngle_.ToFloat();
     }
+
+    f32 GetLastCommandedAngle()
+    {
+      return desiredAngle_.ToFloat();
+    }
     
     void PoseAndSpeedFilterUpdate()
     {
@@ -258,14 +263,14 @@ namespace Anki {
       return inPosition_;
     }
     
-    ReturnCode Update()
+    Result Update()
     {
       CalibrationUpdate();
       
       PoseAndSpeedFilterUpdate();
       
       if (!enable_)
-        return EXIT_SUCCESS;
+        return RESULT_OK;
       
       
       // Note that a new call to SetDesiredAngle will get
@@ -386,7 +391,7 @@ namespace Anki {
         
       } // if not in position
       
-      return EXIT_SUCCESS;
+      return RESULT_OK;
     }
   } // namespace HeadController
   } // namespace Cozmo
