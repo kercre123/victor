@@ -299,7 +299,7 @@ GTEST_TEST(CoreTech_Vision, FaceDetection)
   PrintBenchmarkResults_All();
 
   ASSERT_TRUE(detectedFaces_anki.get_size() == 1);
-  ASSERT_TRUE(detectedFaces_anki[0] == Rectangle<s32>(103,218,40,155));
+  ASSERT_TRUE(detectedFaces_anki[0] == Rectangle<s32>(102, 219, 39, 156));
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, FaceDetection)

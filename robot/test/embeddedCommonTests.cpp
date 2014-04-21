@@ -2654,20 +2654,20 @@ GTEST_TEST(CoreTech_Common, ApproximateExp)
   // 1.00001000005000, 1.00010000500017, 1.00100050016671, 1.01005016708417, 1.10517091807565, 2.71828182845905, 22026.4657948067
   // 0.999990000050000	0.999900004999833	0.999000499833375	0.990049833749168	0.904837418035960	0.367879441171442	.0000453999297624849
 
-  const f64 valP0 = approximateExp(0.00001);
-  const f64 valP1 = approximateExp(0.0001);
-  const f64 valP2 = approximateExp(0.001);
-  const f64 valP3 = approximateExp(0.01);
-  const f64 valP4 = approximateExp(0.1);
-  const f64 valP5 = approximateExp(0.0);
-  const f64 valP6 = approximateExp(1.0);
+  const f64 valP0 = ApproximateExp(0.00001);
+  const f64 valP1 = ApproximateExp(0.0001);
+  const f64 valP2 = ApproximateExp(0.001);
+  const f64 valP3 = ApproximateExp(0.01);
+  const f64 valP4 = ApproximateExp(0.1);
+  const f64 valP5 = ApproximateExp(0.0);
+  const f64 valP6 = ApproximateExp(1.0);
 
-  const f64 valN0 = approximateExp(-0.00001);
-  const f64 valN1 = approximateExp(-0.0001);
-  const f64 valN2 = approximateExp(-0.001);
-  const f64 valN3 = approximateExp(-0.01);
-  const f64 valN4 = approximateExp(-0.1);
-  const f64 valN5 = approximateExp(-1.0);
+  const f64 valN0 = ApproximateExp(-0.00001);
+  const f64 valN1 = ApproximateExp(-0.0001);
+  const f64 valN2 = ApproximateExp(-0.001);
+  const f64 valN3 = ApproximateExp(-0.01);
+  const f64 valN4 = ApproximateExp(-0.1);
+  const f64 valN5 = ApproximateExp(-1.0);
 
   ASSERT_TRUE(ABS(valP0 - 1.00001000005000) < .0001);
   ASSERT_TRUE(ABS(valP1 - 1.00010000500017) < .0001);

@@ -36,7 +36,7 @@ namespace Anki
       return multiple * (number/multiple);
     }
 
-    template<typename Type> Type approximateExp(const Type exponent, const s32 numTerms)
+    template<typename Type> Type ApproximateExp(const Type exponent, const s32 numTerms)
     {
       AnkiAssert(numTerms > 2);
 
@@ -182,6 +182,19 @@ namespace Anki
     template<> inline f64 Round<f64> (const f64 v) { return (v > 0) ? floor(v + 0.5) : ceil(v - 0.5); }
 #endif
 
+    // Most cases of RoundIfInteger are from int-to-int or float-to-float, so just do a normal cast
+    template<typename Type> inline Type RoundIfInteger(const u8  v) { return static_cast<Type>(v); }
+    template<typename Type> inline Type RoundIfInteger(const s8  v) { return static_cast<Type>(v); }
+    template<typename Type> inline Type RoundIfInteger(const u16 v) { return static_cast<Type>(v); }
+    template<typename Type> inline Type RoundIfInteger(const s16 v) { return static_cast<Type>(v); }
+    template<typename Type> inline Type RoundIfInteger(const u32 v) { return static_cast<Type>(v); }
+    template<typename Type> inline Type RoundIfInteger(const s32 v) { return static_cast<Type>(v); }
+    template<typename Type> inline Type RoundIfInteger(const u64 v) { return static_cast<Type>(v); }
+    template<typename Type> inline Type RoundIfInteger(const s64 v) { return static_cast<Type>(v); }
+    template<typename Type> inline Type RoundIfInteger(const f32 v) { return static_cast<Type>(v); }
+    template<typename Type> inline Type RoundIfInteger(const f64 v) { return static_cast<Type>(v); }
+
+    // Specialize for cases with float-to-int
     template<> inline u8  RoundIfInteger(const f32 v) { return static_cast<u8> (Round<s32>(v)); }
     template<> inline s8  RoundIfInteger(const f32 v) { return static_cast<s8> (Round<s32>(v)); }
     template<> inline u16 RoundIfInteger(const f32 v) { return static_cast<u16>(Round<s32>(v)); }
@@ -190,8 +203,6 @@ namespace Anki
     template<> inline s32 RoundIfInteger(const f32 v) { return static_cast<s32>(Round<s32>(v)); }
     template<> inline u64 RoundIfInteger(const f32 v) { return static_cast<u64>(Round<u64>(v)); }
     template<> inline s64 RoundIfInteger(const f32 v) { return static_cast<s64>(Round<s64>(v)); }
-    template<> inline f32 RoundIfInteger(const f32 v) { return v; }
-    template<> inline f64 RoundIfInteger(const f32 v) { return v; }
 
     template<> inline u8  RoundIfInteger(const f64 v) { return static_cast<u8> (Round<s32>(v)); }
     template<> inline s8  RoundIfInteger(const f64 v) { return static_cast<s8> (Round<s32>(v)); }
@@ -201,9 +212,8 @@ namespace Anki
     template<> inline s32 RoundIfInteger(const f64 v) { return static_cast<s32>(Round<s32>(v)); }
     template<> inline u64 RoundIfInteger(const f64 v) { return static_cast<u64>(Round<u64>(v)); }
     template<> inline s64 RoundIfInteger(const f64 v) { return static_cast<s64>(Round<s64>(v)); }
-    template<> inline f32 RoundIfInteger(const f64 v) { return static_cast<f32>(v); }
-    template<> inline f64 RoundIfInteger(const f64 v) { return v; }
 
+    // All saturate_cast calls are explicitly specialized
     template<> inline u8  saturate_cast<u8> (const u8  v) { return v; }
     template<> inline u8  saturate_cast<u8> (const u16 v) { return (u8)             MIN((u32)u8_MAX, (u32)v); }
     template<> inline u8  saturate_cast<u8> (const u32 v) { return (u8)             MIN((u32)u8_MAX, (u32)v); }
