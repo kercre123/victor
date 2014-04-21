@@ -267,8 +267,8 @@ namespace Anki
     template<> inline s64 saturate_cast<s64>(const s16 v) { return v; }
     template<> inline s64 saturate_cast<s64>(const s32 v) { return v; }
     template<> inline s64 saturate_cast<s64>(const s64 v) { return v; }
-    template<> inline s64 saturate_cast<s64>(const f32 v) { return (s64) Round<s64>( MIN((f32)s64_MAX, MAX((f32)s64_MIN, (f32)v)) ); }
-    template<> inline s64 saturate_cast<s64>(const f64 v) { return (s64) Round<s64>( MIN((f64)s64_MAX, MAX((f64)s64_MIN, (f64)v)) ); }
+    template<> inline s64 saturate_cast<s64>(const f32 v) { return (s64) (v > (f32)0x7FFFFFBFFFFFFDFFLL) ? 0x7FFFFFFFFFFFFFFFLL : Round<s64>(MAX((f32)s64_MIN, (f32)v)); } // Due to precision issues, this cast is a little wierd
+    template<> inline s64 saturate_cast<s64>(const f64 v) { return (s64) (v > (f64)0x7FFFFFFFFFFFFDFFLL) ? 0x7FFFFFFFFFFFFFFFLL : Round<s64>(MAX((f64)s64_MIN, (f64)v)); } // Due to precision issues, this cast is a little wierd
   } // namespace Embedded
 } // namespace Anki
 
