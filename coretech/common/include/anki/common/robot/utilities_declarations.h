@@ -62,10 +62,13 @@ namespace Anki
     template<typename Type> void Cart2Pol(const Type x, const Type y, Type &rho, Type &theta);
     template<typename Type> void Pol2Cart(const Type rho, const Type theta, Type &x, Type &y);
 
-    // This saturate cast is based on OpenCV 2.4.8, except:
+    // This saturate cast is similar to OpenCV 2.4.8, except:
     // 1. It saturates signed to unsigned without wrapping (OpenCV does not clip negative s32 ints, which makes -1 become 0xffffffff etc. I don't know why?)
     // 2. It includes some cases that were missing
-    // 3. It doesn't use template that call other templates, which will help less-sophisticated compilers
+    // 3. It doesn't use saturate_casts that call other saturate_casts, which helps less-sophisticated compilers
+    //
+    // WARNING: When rounding from very large floats to ints, the exact value may differ on the M4
+    //          and PC. For some examples, see the unit test "CoreTech_Common RoundAndSaturate".
     template<typename Type> inline Type saturate_cast(const u8  v);
     template<typename Type> inline Type saturate_cast(const s8  v);
     template<typename Type> inline Type saturate_cast(const u16 v);
