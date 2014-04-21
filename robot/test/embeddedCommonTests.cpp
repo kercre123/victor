@@ -40,19 +40,57 @@ GTEST_TEST(CoreTech_Common, RoundAndSaturate)
   // Normal Round<>
   //
 
-  ASSERT_TRUE(Round<u32>(-1.6f) == 0);  ASSERT_TRUE(Round<u32>(-1.1f) == 0);  ASSERT_TRUE(Round<u32>(0.0f) == 0); ASSERT_TRUE(Round<u32>(1.1f) == 1); ASSERT_TRUE(Round<u32>(1.6f) == 2);
-  ASSERT_TRUE(Round<s32>(-1.6f) == -2); ASSERT_TRUE(Round<s32>(-1.1f) == -1); ASSERT_TRUE(Round<s32>(0.0f) == 0); ASSERT_TRUE(Round<s32>(1.1f) == 1); ASSERT_TRUE(Round<s32>(1.6f) == 2);
-  ASSERT_TRUE(Round<u64>(-1.6f) == 0);  ASSERT_TRUE(Round<u64>(-1.1f) == 0);  ASSERT_TRUE(Round<u64>(0.0f) == 0); ASSERT_TRUE(Round<u64>(1.1f) == 1); ASSERT_TRUE(Round<u64>(1.6f) == 2);
-  ASSERT_TRUE(Round<s64>(-1.6f) == -2); ASSERT_TRUE(Round<s64>(-1.1f) == -1); ASSERT_TRUE(Round<s64>(0.0f) == 0); ASSERT_TRUE(Round<s64>(1.1f) == 1); ASSERT_TRUE(Round<s64>(1.6f) == 2);
-  ASSERT_TRUE(Round<f32>(-1.6f) == -2); ASSERT_TRUE(Round<f32>(-1.1f) == -1); ASSERT_TRUE(Round<f32>(0.0f) == 0); ASSERT_TRUE(Round<f32>(1.1f) == 1); ASSERT_TRUE(Round<f32>(1.6f) == 2);
-  ASSERT_TRUE(Round<f64>(-1.6f) == -2); ASSERT_TRUE(Round<f64>(-1.1f) == -1); ASSERT_TRUE(Round<f64>(0.0f) == 0); ASSERT_TRUE(Round<f64>(1.1f) == 1); ASSERT_TRUE(Round<f64>(1.6f) == 2);
+  // f32
+  /**/                                  ASSERT_TRUE(Round<u32>(-0.4f) == 0); ASSERT_TRUE(Round<u32>(0.0f) == 0); ASSERT_TRUE(Round<u32>(1.1f) == 1); ASSERT_TRUE(Round<u32>(1.6f) == 2);
+  /**/                                  ASSERT_TRUE(Round<u64>(-0.4f) == 0); ASSERT_TRUE(Round<u64>(0.0f) == 0); ASSERT_TRUE(Round<u64>(1.1f) == 1); ASSERT_TRUE(Round<u64>(1.6f) == 2);
 
-  ASSERT_TRUE(Round<u32>(-1.6) == 0);  ASSERT_TRUE(Round<u32>(-1.1) == 0);  ASSERT_TRUE(Round<u32>(0.0) == 0); ASSERT_TRUE(Round<u32>(1.1) == 1); ASSERT_TRUE(Round<u32>(1.6) == 2);
-  ASSERT_TRUE(Round<s32>(-1.6) == -2); ASSERT_TRUE(Round<s32>(-1.1) == -1); ASSERT_TRUE(Round<s32>(0.0) == 0); ASSERT_TRUE(Round<s32>(1.1) == 1); ASSERT_TRUE(Round<s32>(1.6) == 2);
-  ASSERT_TRUE(Round<u64>(-1.6) == 0);  ASSERT_TRUE(Round<u64>(-1.1) == 0);  ASSERT_TRUE(Round<u64>(0.0) == 0); ASSERT_TRUE(Round<u64>(1.1) == 1); ASSERT_TRUE(Round<u64>(1.6) == 2);
-  ASSERT_TRUE(Round<s64>(-1.6) == -2); ASSERT_TRUE(Round<s64>(-1.1) == -1); ASSERT_TRUE(Round<s64>(0.0) == 0); ASSERT_TRUE(Round<s64>(1.1) == 1); ASSERT_TRUE(Round<s64>(1.6) == 2);
-  ASSERT_TRUE(Round<f32>(-1.6) == -2); ASSERT_TRUE(Round<f32>(-1.1) == -1); ASSERT_TRUE(Round<f32>(0.0) == 0); ASSERT_TRUE(Round<f32>(1.1) == 1); ASSERT_TRUE(Round<f32>(1.6) == 2);
-  ASSERT_TRUE(Round<f64>(-1.6) == -2); ASSERT_TRUE(Round<f64>(-1.1) == -1); ASSERT_TRUE(Round<f64>(0.0) == 0); ASSERT_TRUE(Round<f64>(1.1) == 1); ASSERT_TRUE(Round<f64>(1.6) == 2);
+  ASSERT_TRUE(Round<s32>(-1.6f) == -2); ASSERT_TRUE(Round<s32>(-0.4f) == 0); ASSERT_TRUE(Round<s32>(0.0f) == 0); ASSERT_TRUE(Round<s32>(1.1f) == 1); ASSERT_TRUE(Round<s32>(1.6f) == 2);
+  ASSERT_TRUE(Round<s64>(-1.6f) == -2); ASSERT_TRUE(Round<s64>(-0.4f) == 0); ASSERT_TRUE(Round<s64>(0.0f) == 0); ASSERT_TRUE(Round<s64>(1.1f) == 1); ASSERT_TRUE(Round<s64>(1.6f) == 2);
+
+  ASSERT_TRUE(Round<f32>(-1.6f) == -2); ASSERT_TRUE(Round<f32>(-0.4f) == 0); ASSERT_TRUE(Round<f32>(0.0f) == 0); ASSERT_TRUE(Round<f32>(1.1f) == 1); ASSERT_TRUE(Round<f32>(1.6f) == 2);
+  ASSERT_TRUE(Round<f64>(-1.6f) == -2); ASSERT_TRUE(Round<f64>(-0.4f) == 0); ASSERT_TRUE(Round<f64>(0.0f) == 0); ASSERT_TRUE(Round<f64>(1.1f) == 1); ASSERT_TRUE(Round<f64>(1.6f) == 2);
+
+  // f64
+  /**/                                  ASSERT_TRUE(Round<u32>(-0.4)  == 0); ASSERT_TRUE(Round<u32>(0.0)  == 0); ASSERT_TRUE(Round<u32>(1.1)  == 1); ASSERT_TRUE(Round<u32>(1.6)  == 2);
+  /**/                                  ASSERT_TRUE(Round<u64>(-0.4)  == 0); ASSERT_TRUE(Round<u64>(0.0)  == 0); ASSERT_TRUE(Round<u64>(1.1)  == 1); ASSERT_TRUE(Round<u64>(1.6)  == 2);
+
+  ASSERT_TRUE(Round<s32>(-1.6)  == -2); ASSERT_TRUE(Round<s32>(-0.4)  == 0); ASSERT_TRUE(Round<s32>(0.0)  == 0); ASSERT_TRUE(Round<s32>(1.1)  == 1); ASSERT_TRUE(Round<s32>(1.6)  == 2);
+  ASSERT_TRUE(Round<s64>(-1.6)  == -2); ASSERT_TRUE(Round<s64>(-0.4)  == 0); ASSERT_TRUE(Round<s64>(0.0)  == 0); ASSERT_TRUE(Round<s64>(1.1)  == 1); ASSERT_TRUE(Round<s64>(1.6)  == 2);
+
+  ASSERT_TRUE(Round<f32>(-1.6)  == -2); ASSERT_TRUE(Round<f32>(-0.4)  == 0); ASSERT_TRUE(Round<f32>(0.0)  == 0); ASSERT_TRUE(Round<f32>(1.1)  == 1); ASSERT_TRUE(Round<f32>(1.6)  == 2);
+  ASSERT_TRUE(Round<f64>(-1.6)  == -2); ASSERT_TRUE(Round<f64>(-0.4)  == 0); ASSERT_TRUE(Round<f64>(0.0)  == 0); ASSERT_TRUE(Round<f64>(1.1)  == 1); ASSERT_TRUE(Round<f64>(1.6)  == 2);
+
+  //
+  // RoundIfInteger<>
+  //
+
+  // f32
+  /**/                                           ASSERT_TRUE(RoundIfInteger<u8> (-0.4f) == 0); ASSERT_TRUE(RoundIfInteger<u8> (0.0f) == 0); ASSERT_TRUE(RoundIfInteger<u8> (1.1f) == 1); ASSERT_TRUE(RoundIfInteger<u8> (1.6f) == 2);
+  /**/                                           ASSERT_TRUE(RoundIfInteger<u16>(-0.4f) == 0); ASSERT_TRUE(RoundIfInteger<u16>(0.0f) == 0); ASSERT_TRUE(RoundIfInteger<u16>(1.1f) == 1); ASSERT_TRUE(RoundIfInteger<u16>(1.6f) == 2);
+  /**/                                           ASSERT_TRUE(RoundIfInteger<u32>(-0.4f) == 0); ASSERT_TRUE(RoundIfInteger<u32>(0.0f) == 0); ASSERT_TRUE(RoundIfInteger<u32>(1.1f) == 1); ASSERT_TRUE(RoundIfInteger<u32>(1.6f) == 2);
+  /**/                                           ASSERT_TRUE(RoundIfInteger<u64>(-0.4f) == 0); ASSERT_TRUE(RoundIfInteger<u64>(0.0f) == 0); ASSERT_TRUE(RoundIfInteger<u64>(1.1f) == 1); ASSERT_TRUE(RoundIfInteger<u64>(1.6f) == 2);
+
+  ASSERT_TRUE(RoundIfInteger<s8> (-1.6f) == -2); ASSERT_TRUE(RoundIfInteger<s8> (-0.4f) == 0); ASSERT_TRUE(RoundIfInteger<s8> (0.0f) == 0); ASSERT_TRUE(RoundIfInteger<s8> (1.1f) == 1); ASSERT_TRUE(RoundIfInteger<s8> (1.6f) == 2);
+  ASSERT_TRUE(RoundIfInteger<s16>(-1.6f) == -2); ASSERT_TRUE(RoundIfInteger<s16>(-0.4f) == 0); ASSERT_TRUE(RoundIfInteger<s16>(0.0f) == 0); ASSERT_TRUE(RoundIfInteger<s16>(1.1f) == 1); ASSERT_TRUE(RoundIfInteger<s16>(1.6f) == 2);
+  ASSERT_TRUE(RoundIfInteger<s32>(-1.6f) == -2); ASSERT_TRUE(RoundIfInteger<s32>(-0.4f) == 0); ASSERT_TRUE(RoundIfInteger<s32>(0.0f) == 0); ASSERT_TRUE(RoundIfInteger<s32>(1.1f) == 1); ASSERT_TRUE(RoundIfInteger<s32>(1.6f) == 2);
+  ASSERT_TRUE(RoundIfInteger<s64>(-1.6f) == -2); ASSERT_TRUE(RoundIfInteger<s64>(-0.4f) == 0); ASSERT_TRUE(RoundIfInteger<s64>(0.0f) == 0); ASSERT_TRUE(RoundIfInteger<s64>(1.1f) == 1); ASSERT_TRUE(RoundIfInteger<s64>(1.6f) == 2);
+
+  ASSERT_TRUE(FLT_NEAR(RoundIfInteger<f32>(-1.6f), -1.6f)); ASSERT_TRUE(FLT_NEAR(RoundIfInteger<f32>(-0.4f), -0.4f)); ASSERT_TRUE(FLT_NEAR(RoundIfInteger<f32>(0.0f), 0)); ASSERT_TRUE(FLT_NEAR(RoundIfInteger<f32>(1.1f), 1.1f)); ASSERT_TRUE(FLT_NEAR(RoundIfInteger<f32>(1.6f), 1.6f));
+  ASSERT_TRUE(DBL_NEAR(RoundIfInteger<f64>(-1.6f), -1.6));  ASSERT_TRUE(DBL_NEAR(RoundIfInteger<f64>(-0.4f), -0.4));  ASSERT_TRUE(DBL_NEAR(RoundIfInteger<f64>(0.0f), 0)); ASSERT_TRUE(DBL_NEAR(RoundIfInteger<f64>(1.1f), 1.1));  ASSERT_TRUE(DBL_NEAR(RoundIfInteger<f64>(1.6f), 1.6));
+
+  // f64
+  /**/                                           ASSERT_TRUE(RoundIfInteger<u8> (-0.4)  == 0); ASSERT_TRUE(RoundIfInteger<u8> (0.0)  == 0); ASSERT_TRUE(RoundIfInteger<u8> (1.1) == 1); ASSERT_TRUE(RoundIfInteger<u8> (1.6) == 2);
+  /**/                                           ASSERT_TRUE(RoundIfInteger<u16>(-0.4)  == 0); ASSERT_TRUE(RoundIfInteger<u16>(0.0)  == 0); ASSERT_TRUE(RoundIfInteger<u16>(1.1) == 1); ASSERT_TRUE(RoundIfInteger<u16>(1.6) == 2);
+  /**/                                           ASSERT_TRUE(RoundIfInteger<u32>(-0.4)  == 0); ASSERT_TRUE(RoundIfInteger<u32>(0.0)  == 0); ASSERT_TRUE(RoundIfInteger<u32>(1.1) == 1); ASSERT_TRUE(RoundIfInteger<u32>(1.6) == 2);
+  /**/                                           ASSERT_TRUE(RoundIfInteger<u64>(-0.4)  == 0); ASSERT_TRUE(RoundIfInteger<u64>(0.0)  == 0); ASSERT_TRUE(RoundIfInteger<u64>(1.1) == 1); ASSERT_TRUE(RoundIfInteger<u64>(1.6) == 2);
+
+  ASSERT_TRUE(RoundIfInteger<s8> (-1.6)  == -2); ASSERT_TRUE(RoundIfInteger<s8> (-0.4)  == 0); ASSERT_TRUE(RoundIfInteger<s8> (0.0)  == 0); ASSERT_TRUE(RoundIfInteger<s8> (1.1) == 1); ASSERT_TRUE(RoundIfInteger<s8> (1.6) == 2);
+  ASSERT_TRUE(RoundIfInteger<s16>(-1.6)  == -2); ASSERT_TRUE(RoundIfInteger<s16>(-0.4)  == 0); ASSERT_TRUE(RoundIfInteger<s16>(0.0)  == 0); ASSERT_TRUE(RoundIfInteger<s16>(1.1) == 1); ASSERT_TRUE(RoundIfInteger<s16>(1.6) == 2);
+  ASSERT_TRUE(RoundIfInteger<s32>(-1.6)  == -2); ASSERT_TRUE(RoundIfInteger<s32>(-0.4)  == 0); ASSERT_TRUE(RoundIfInteger<s32>(0.0)  == 0); ASSERT_TRUE(RoundIfInteger<s32>(1.1) == 1); ASSERT_TRUE(RoundIfInteger<s32>(1.6) == 2);
+  ASSERT_TRUE(RoundIfInteger<s64>(-1.6)  == -2); ASSERT_TRUE(RoundIfInteger<s64>(-0.4)  == 0); ASSERT_TRUE(RoundIfInteger<s64>(0.0)  == 0); ASSERT_TRUE(RoundIfInteger<s64>(1.1) == 1); ASSERT_TRUE(RoundIfInteger<s64>(1.6) == 2);
+
+  ASSERT_TRUE(FLT_NEAR(RoundIfInteger<f32>(-1.6), -1.6f)); ASSERT_TRUE(FLT_NEAR(RoundIfInteger<f32>(-0.4), -0.4f)); ASSERT_TRUE(FLT_NEAR(RoundIfInteger<f32>(0.0), 0)); ASSERT_TRUE(FLT_NEAR(RoundIfInteger<f32>(1.1), 1.1f)); ASSERT_TRUE(FLT_NEAR(RoundIfInteger<f32>(1.6), 1.6f));
+  ASSERT_TRUE(DBL_NEAR(RoundIfInteger<f64>(-1.6), -1.6));  ASSERT_TRUE(DBL_NEAR(RoundIfInteger<f64>(-0.4), -0.4));  ASSERT_TRUE(DBL_NEAR(RoundIfInteger<f64>(0.0), 0)); ASSERT_TRUE(DBL_NEAR(RoundIfInteger<f64>(1.1), 1.1));  ASSERT_TRUE(DBL_NEAR(RoundIfInteger<f64>(1.6), 1.6));
 
   //
   // saturate_cast<>
@@ -161,7 +199,7 @@ GTEST_TEST(CoreTech_Common, RoundAndSaturate)
   // u64
   ASSERT_TRUE(saturate_cast<u64>(static_cast<f32>(0XFFFFFF7FFFFFFBFFULL)) == 0xFFFFFF0000000000ULL);
   ASSERT_TRUE(saturate_cast<u64>(static_cast<f32>(0XFFFFFF7FFFFFFC00ULL)) == 0xFFFFFF0000000000ULL);
-  
+
   const u64 a = saturate_cast<u64>(static_cast<f32>(0XFFFFFF7FFFFFFFFFULL));
 #ifdef __EDG__
   ASSERT_TRUE(a == 0xFFFFFF0000000000ULL);
@@ -222,14 +260,14 @@ GTEST_TEST(CoreTech_Common, RoundAndSaturate)
 
   ASSERT_TRUE(saturate_cast<s64>(static_cast<f32>(0x7FFFFFFFFFFFFFFFLL)) == 0x7FFFFFFFFFFFFFFFLL);
   ASSERT_TRUE(saturate_cast<s64>(static_cast<f64>(0x7FFFFFFFFFFFFDFFLL)) == 0x7FFFFFFFFFFFFC00LL);
-  
+
   const s64 d = saturate_cast<s64>(static_cast<f64>(0x7FFFFFFFFFFFFE00LL));
 #ifdef __EDG__
   ASSERT_TRUE(d == 0x7FFFFFFFFFFFFFFFLL);
 #else
   ASSERT_TRUE(d == 0x7FFFFFFFFFFFFC00LL);
 #endif
-  
+
   ASSERT_TRUE(saturate_cast<s64>(static_cast<f64>(0x7FFFFFFFFFFFFFFFLL)) == 0x7FFFFFFFFFFFFFFFLL);
 
   {

@@ -32,6 +32,11 @@ namespace Anki
     template<typename Type> inline Type Round(const f32 v);
     template<typename Type> inline Type Round(const f64 v);
 
+    // Some templated functions should only round a result if it is an integer.
+    // Using saturate_cast<> would work, but RoundIfInteger is faster if the value is never too big or small.
+    template<typename Type> inline Type RoundIfInteger(const f32 v);
+    template<typename Type> inline Type RoundIfInteger(const f64 v);
+
     // Taylor-series approximation of an exponential function
     template<typename Type> Type approximateExp(const Type exponent, const s32 numTerms = 10);
 
