@@ -37,8 +37,8 @@ namespace Anki
       void UpdateDisplay(){ }
       //bool RadioSendMessage(Anki::Cozmo::Messages::ID, const void*, u32){ return true; }
       
-      ReturnCode Init(){ return 0; }
-      ReturnCode Step(){ return 0; }
+      Result Init(){ return RESULT_OK; }
+      Result Step(){ return RESULT_OK; }
       void Destroy(){ }
       
       int UARTGetFreeSpace();
@@ -120,7 +120,7 @@ int main(void)
   Anki::Cozmo::Robot::Init();
   
 #ifndef SEND_IMAGE_ONLY
-  while (Anki::Cozmo::Robot::step_LongExecution() == EXIT_SUCCESS)
+  while (Anki::Cozmo::Robot::step_LongExecution() == Anki::RESULT_OK)
   {
   }
 #else

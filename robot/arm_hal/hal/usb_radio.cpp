@@ -27,9 +27,9 @@ namespace Anki {
       s32 recvBufSize_ = 0;
     }
     
-    ReturnCode InitSimRadio(s32 robotID)
+    Result InitSimRadio(s32 robotID)
     {
-      return EXIT_SUCCESS;
+      return RESULT_OK;
     }
     
     bool HAL::RadioIsConnected(void)
