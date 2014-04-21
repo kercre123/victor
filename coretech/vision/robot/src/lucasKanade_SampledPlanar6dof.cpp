@@ -38,9 +38,6 @@ namespace Anki
     namespace TemplateTracker
     {
       
-      const f32 TRANSLATION_TOLERANCE = 0.5f;
-      const f32 ANGLE_TOLERANCE = DEG_TO_RAD(0.5f);
-      
       LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof()
         : LucasKanadeTracker_Generic(maxSupportedTransformType)
       {
@@ -657,15 +654,16 @@ namespace Anki
       }
 
       Result LucasKanadeTracker_SampledPlanar6dof::UpdateTrack(
-        const Array<u8> &nextImage,
-        const s32 maxIterations,
-        const f32 convergenceTolerance,
-        const u8 verify_maxPixelDifference,
-        bool &verify_converged,
-        s32 &verify_meanAbsoluteDifference,
-        s32 &verify_numInBounds,
-        s32 &verify_numSimilarPixels,
-        MemoryStack scratch)
+                                                               const Array<u8> &nextImage,
+                                                               const s32 maxIterations,
+                                                               const f32 convergenceTolerance_angle,
+                                                               const f32 convergenceTolerance_distance,
+                                                               const u8 verify_maxPixelDifference,
+                                                               bool &verify_converged,
+                                                               s32 &verify_meanAbsoluteDifference,
+                                                               s32 &verify_numInBounds,
+                                                               s32 &verify_numSimilarPixels,
+                                                               MemoryStack scratch)
       {
         Result lastResult;
 
@@ -673,15 +671,15 @@ namespace Anki
           verify_converged = false;
 
           BeginBenchmark("UpdateTrack.refineTranslation");
-          if((lastResult = IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance, Transformations::TRANSFORM_TRANSLATION, verify_converged, scratch)) != RESULT_OK)
+          if((lastResult = IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance_angle, convergenceTolerance_distance, Transformations::TRANSFORM_TRANSLATION, verify_converged, scratch)) != RESULT_OK)
             return lastResult;
           EndBenchmark("UpdateTrack.refineTranslation");
 
-          if(this->transformation.get_transformType() != Transformations::TRANSFORM_TRANSLATION) {
-            BeginBenchmark("UpdateTrack.refineOther");
-            if((lastResult = IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance, this->transformation.get_transformType(), verify_converged, scratch)) != RESULT_OK)
-              return lastResult;
-            EndBenchmark("UpdateTrack.refineOther");
+            if(this->transformation.get_transformType() != Transformations::TRANSFORM_TRANSLATION) {
+              BeginBenchmark("UpdateTrack.refineOther");
+              if((lastResult = IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance_angle, convergenceTolerance_distance, this->transformation.get_transformType(), verify_converged, scratch)) != RESULT_OK)
+                return lastResult;
+              EndBenchmark("UpdateTrack.refineOther");
           }
         } // for(s32 iScale=numPyramidLevels; iScale>=0; iScale--)
 
@@ -690,7 +688,7 @@ namespace Anki
         return lastResult;
       }
 
-      Result LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const Transformations::TransformType curTransformType, bool &verify_converged, MemoryStack scratch)
+      Result LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance_angle, const f32 convergenceTolerance_distance, const Transformations::TransformType curTransformType, bool &verify_converged, MemoryStack scratch)
       {
         const s32 nextImageHeight = nextImage.get_size(0);
         const s32 nextImageWidth = nextImage.get_size(1);
@@ -707,8 +705,8 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(whichScale >= 0 && whichScale < this->numPyramidLevels,
           RESULT_FAIL_INVALID_PARAMETERS, "LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack", "whichScale is invalid");
 
-        AnkiConditionalErrorAndReturnValue(convergenceTolerance > 0.0f,
-          RESULT_FAIL_INVALID_PARAMETERS, "LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack", "convergenceTolerance must be greater than zero");
+        AnkiConditionalErrorAndReturnValue(convergenceTolerance_angle > 0.0f && convergenceTolerance_distance > 0.0f,
+          RESULT_FAIL_INVALID_PARAMETERS, "LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack", "convergenceTolerances must be greater than zero");
 
         AnkiConditionalErrorAndReturnValue(nextImageHeight == templateImageHeight && nextImageWidth == templateImageWidth,
           RESULT_FAIL_INVALID_SIZE, "LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack", "nextImage must be the same size as the template");
@@ -720,11 +718,9 @@ namespace Anki
           RESULT_FAIL_INVALID_SIZE, "LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack", "The templateImage must be a power of two smaller than BASE_IMAGE_WIDTH");
 
         if(curTransformType == Transformations::TRANSFORM_TRANSLATION) {
-          return IterativelyRefineTrack_Translation(nextImage, maxIterations, whichScale, convergenceTolerance, verify_converged, scratch);
-        } else if(curTransformType == Transformations::TRANSFORM_AFFINE) {
-          return IterativelyRefineTrack_Affine(nextImage, maxIterations, whichScale, convergenceTolerance, verify_converged, scratch);
+          return IterativelyRefineTrack_Translation(nextImage, maxIterations, whichScale, convergenceTolerance_distance, verify_converged, scratch);
         } else if(curTransformType == Transformations::TRANSFORM_PROJECTIVE) {
-          return IterativelyRefineTrack_Projective(nextImage, maxIterations, whichScale, convergenceTolerance, verify_converged, scratch);
+          return IterativelyRefineTrack_Projective(nextImage, maxIterations, whichScale, convergenceTolerance_angle, convergenceTolerance_distance, verify_converged, scratch);
         }
 
         return RESULT_FAIL;
@@ -763,7 +759,7 @@ namespace Anki
         }
       }
 
-      Result LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack_Translation(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &verify_converged, MemoryStack scratch)
+      Result LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack_Translation(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance_distance, bool &verify_converged, MemoryStack scratch)
       {
         // This method is heavily based on Interp2_Projective
         // The call would be like: Interp2_Projective<u8,u8>(nextImage, originalCoordinates, interpolationHomography, centerOffset, nextImageTransformed2d, INTERPOLATE_LINEAR, 0);
@@ -953,7 +949,7 @@ namespace Anki
           //if(minChange < convergenceTolerance * scale)
           // TODO: make these parameters
           //const f32 angleConvergenceTolerance = scale*DEG_TO_RAD(0.1f);
-          const f32 transConvergenceTolerance = scale*TRANSLATION_TOLERANCE;
+          const f32 transConvergenceTolerance = scale*convergenceTolerance_distance;
           if(fabs(b[0][0]) < transConvergenceTolerance &&
              fabs(b[0][1]) < transConvergenceTolerance &&
              fabs(b[0][2]) < transConvergenceTolerance)
@@ -966,200 +962,7 @@ namespace Anki
         return RESULT_OK;
       } // Result LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack_Translation()
 
-      Result LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack_Affine(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &verify_converged, MemoryStack scratch)
-      {
-        /* Not sure this makes sense for the Planar6dof tracker
-
-        // This method is heavily based on Interp2_Projective
-        // The call would be like: Interp2_Projective<u8,u8>(nextImage, originalCoordinates, interpolationHomography, centerOffset, nextImageTransformed2d, INTERPOLATE_LINEAR, 0);
-
-        Result lastResult;
-
-        Array<f32> AWAt(6, 6, scratch);
-        Array<f32> b(1, 6, scratch);
-
-        // These addresses should be known at compile time, so should be faster
-        f32 AWAt_raw[6][6];
-        f32 b_raw[6];
-
-        verify_converged = false;
-
-        const s32 nextImageHeight = nextImage.get_size(0);
-        const s32 nextImageWidth = nextImage.get_size(1);
-
-        const f32 scale = static_cast<f32>(1 << whichScale);
-
-        const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / nextImageWidth;
-        const f32 initialImageScaleF32 = static_cast<f32>(initialImageScaleS32);
-
-        const f32 oneOverTwoFiftyFive = 1.0f / 255.0f;
-        const f32 scaleOverFiveTen = scale / (2.0f*255.0f);
-
-        //const Point<f32>& centerOffset = this->transformation.get_centerOffset();
-        const Point<f32> centerOffsetScaled = this->transformation.get_centerOffset(initialImageScaleF32);
-
-        // Initialize with some very extreme coordinates
-        FixedLengthList<Quadrilateral<f32> > previousCorners(NUM_PREVIOUS_QUADS_TO_COMPARE, scratch);
-
-        for(s32 i=0; i<NUM_PREVIOUS_QUADS_TO_COMPARE; i++) {
-        previousCorners[i] = Quadrilateral<f32>(Point<f32>(-1e10f,-1e10f), Point<f32>(-1e10f,-1e10f), Point<f32>(-1e10f,-1e10f), Point<f32>(-1e10f,-1e10f));
-        }
-
-        const f32 xyReferenceMin = 0.0f;
-        const f32 xReferenceMax = static_cast<f32>(nextImageWidth) - 1.0f;
-        const f32 yReferenceMax = static_cast<f32>(nextImageHeight) - 1.0f;
-
-        const TemplateSample * restrict pTemplateSamplePyramid = this->templateSamplePyramid[whichScale].Pointer(0);
-
-        const s32 numTemplateSamples = this->get_numTemplatePixels(whichScale);
-
-        for(s32 iteration=0; iteration<maxIterations; iteration++) {
-        const Array<f32> &homography = this->transformation.get_homography();
-        const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2] / initialImageScaleF32;
-        const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2] / initialImageScaleF32;
-        const f32 h20 = homography[2][0] * initialImageScaleF32; const f32 h21 = homography[2][1] * initialImageScaleF32;
-        const f32 h22 = homography[2][2];
-
-        //AWAt.SetZero();
-        //b.SetZero();
-
-        for(s32 ia=0; ia<6; ia++) {
-        for(s32 ja=0; ja<6; ja++) {
-        AWAt_raw[ia][ja] = 0;
-        }
-        b_raw[ia] = 0;
-        }
-
-        s32 numInBounds = 0;
-
-        for(s32 iSample=0; iSample<numTemplateSamples; iSample++) {
-        const TemplateSample curSample = pTemplateSamplePyramid[iSample];
-        const f32 yOriginal = curSample.yCoordinate;
-        const f32 xOriginal = curSample.xCoordinate;
-
-        // TODO: These two could be strength reduced
-        const f32 xTransformedRaw = h00*xOriginal + h01*yOriginal + h02;
-        const f32 yTransformedRaw = h10*xOriginal + h11*yOriginal + h12;
-
-        const f32 normalization = h20*xOriginal + h21*yOriginal + h22;
-
-        const f32 xTransformed = (xTransformedRaw / normalization) + centerOffsetScaled.x;
-        const f32 yTransformed = (yTransformedRaw / normalization) + centerOffsetScaled.y;
-
-        const f32 x0 = FLT_FLOOR(xTransformed);
-        const f32 x1 = ceilf(xTransformed); // x0 + 1.0f;
-
-        const f32 y0 = FLT_FLOOR(yTransformed);
-        const f32 y1 = ceilf(yTransformed); // y0 + 1.0f;
-
-        // If out of bounds, continue
-        if(x0 < xyReferenceMin || x1 > xReferenceMax || y0 < xyReferenceMin || y1 > yReferenceMax) {
-        continue;
-        }
-
-        numInBounds++;
-
-        const f32 alphaX = xTransformed - x0;
-        const f32 alphaXinverse = 1 - alphaX;
-
-        const f32 alphaY = yTransformed - y0;
-        const f32 alphaYinverse = 1.0f - alphaY;
-
-        const s32 y0S32 = RoundS32(y0);
-        const s32 y1S32 = RoundS32(y1);
-        const s32 x0S32 = RoundS32(x0);
-
-        const u8 * restrict pReference_y0 = nextImage.Pointer(y0S32, x0S32);
-        const u8 * restrict pReference_y1 = nextImage.Pointer(y1S32, x0S32);
-
-        const f32 pixelTL = *pReference_y0;
-        const f32 pixelTR = *(pReference_y0+1);
-        const f32 pixelBL = *pReference_y1;
-        const f32 pixelBR = *(pReference_y1+1);
-
-        const f32 interpolatedPixelF32 = InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse);
-
-        //const u8 interpolatedPixel = static_cast<u8>(Round(interpolatedPixelF32));
-
-        // This block is the non-interpolation part of the per-sample algorithm
-        {
-        const f32 templatePixelValue = curSample.grayvalue;
-        const f32 xGradientValue = scaleOverFiveTen * curSample.xGradient;
-        const f32 yGradientValue = scaleOverFiveTen * curSample.yGradient;
-
-        const f32 tGradientValue = oneOverTwoFiftyFive * (interpolatedPixelF32 - templatePixelValue);
-
-        //printf("%f ", xOriginal);
-        const f32 values[6] = {
-        xOriginal * xGradientValue,
-        yOriginal * xGradientValue,
-        xGradientValue,
-        xOriginal * yGradientValue,
-        yOriginal * yGradientValue,
-        yGradientValue};
-
-        //for(s32 ia=0; ia<6; ia++) {
-        //  printf("%f ", values[ia]);
-        //}
-        //printf("\n");
-
-        //f32 AWAt_raw[6][6];
-        //f32 b_raw[6];
-        for(s32 ia=0; ia<6; ia++) {
-        for(s32 ja=ia; ja<6; ja++) {
-        AWAt_raw[ia][ja] += values[ia] * values[ja];
-        }
-        b_raw[ia] += values[ia] * tGradientValue;
-        }
-        }
-        } // for(s32 iSample=0; iSample<numTemplateSamples; iSample++)
-
-        if(numInBounds < 16) {
-        AnkiWarn("LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack_Affine", "Template drifted too far out of image.");
-        return RESULT_OK;
-        }
-
-        for(s32 ia=0; ia<6; ia++) {
-        for(s32 ja=ia; ja<6; ja++) {
-        AWAt[ia][ja] = AWAt_raw[ia][ja];
-        }
-        b[0][ia] = b_raw[ia];
-        }
-
-        Matrix::MakeSymmetric(AWAt, false);
-
-        //AWAt.Print("New AWAt");
-        //b.Print("New b");
-
-        bool numericalFailure;
-
-        if((lastResult = Matrix::SolveLeastSquaresWithCholesky(AWAt, b, false, numericalFailure)) != RESULT_OK)
-        return lastResult;
-
-        if(numericalFailure){
-        AnkiWarn("LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack_Affine", "numericalFailure");
-        return RESULT_OK;
-        }
-
-        //b.Print("New update");
-
-        this->transformation.Update(b, initialImageScaleF32, scratch, Transformations::TRANSFORM_AFFINE);
-
-        //this->transformation.get_homography().Print("new transformation");
-
-        // Check if we're done with iterations
-        const f32 minChange = UpdatePreviousCorners(transformation, previousCorners, scratch);
-
-        if(minChange < convergenceTolerance) {
-        verify_converged = true;
-        return RESULT_OK;
-        }
-        } // for(s32 iteration=0; iteration<maxIterations; iteration++)
-        */
-        return RESULT_FAIL;
-      } // Result LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack_Affine()
-
-      Result LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack_Projective(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &verify_converged, MemoryStack scratch)
+      Result LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack_Projective(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance_angle, const f32 convergenceTolerance_distance, bool &verify_converged, MemoryStack scratch)
       {
         // This method is heavily based on Interp2_Projective
         // The call would be like: Interp2_Projective<u8,u8>(nextImage, originalCoordinates, interpolationHomography, centerOffset, nextImageTransformed2d, INTERPOLATE_LINEAR, 0);
@@ -1429,8 +1232,8 @@ namespace Anki
 
           //if(minChange < convergenceTolerance * scale)
           // TODO: make these parameters
-          const f32 angleConvergenceTolerance = scale*ANGLE_TOLERANCE;
-          const f32 transConvergenceTolerance = scale*TRANSLATION_TOLERANCE;
+          const f32 angleConvergenceTolerance = scale*convergenceTolerance_angle;
+          const f32 transConvergenceTolerance = scale*convergenceTolerance_distance;
 
           if(fabs(b[0][0]) < angleConvergenceTolerance &&
              fabs(b[0][1]) < angleConvergenceTolerance &&
