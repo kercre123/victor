@@ -1,4 +1,4 @@
-function threshold = ComputeThreshold(img, tform)
+function [threshold, brightValue, darkValue] = ComputeThreshold(img, tform)
 
 brightValue = mean(ProbeHelper(img, tform, VisionMarkerTrained.BrightProbes));
 darkValue   = mean(ProbeHelper(img, tform, VisionMarkerTrained.DarkProbes));
@@ -23,6 +23,7 @@ Y = VisionMarkerTrained.ProbePattern.y(ones(1,numPoints),:) + probes.y(:)*ones(1
 
 [xi,yi] = tformfwd(tform, X, Y);
     
-values = mean(interp2(img, xi, yi, 'linear'),2);
+%values = mean(interp2(img, xi, yi, 'linear'),2);
+values = mean(mexInterp2(img, xi, yi),2);
 
 end
