@@ -8,12 +8,14 @@ CalibrationMatrix = [];
 MarkerWidth = [];
 ConvergenceTolerance = 0.25;
 MaxIterations = 25;
-ErrorTolerance = .25;
+IntensityErrorTolerance = .5;
+IntensityErrorFraction = 0.25;
 TemplateRegionPaddingFraction = 0.05;
+FilterFcn = []; % abs(imfilter(img, fspecial('log', 3)));
 
 CamCaptureArgs = parseVarargin(varargin{:});
 
-if strcmp(TrackerType, 'homography')
+if strcmp(TrackerType, 'homography') 
     calibration = Calibration;
     
     if isempty(calibration)
@@ -72,7 +74,13 @@ CameraCapture('processFcn', @trackHelper, ...
                 'Box', 'on', 'XTick', [], 'YTick', [], ...
                 'XLim', [0.5 ncols+.5], 'YLim', [.5 nrows+.5]);
             
-            set(h_img, 'CData', img); %(:,:,[3 2 1]));
+            if isempty(FilterFcn)
+                imgFiltered = img;
+            else
+                imgFiltered = FilterFcn(img);
+            end
+            
+            set(h_img, 'CData', imgFiltered); %(:,:,[3 2 1]));
             hold(h_axes, 'on');
             
             h_target = plot(corners(order,1), corners(order,2), 'r', ...
@@ -87,11 +95,11 @@ CameraCapture('processFcn', @trackHelper, ...
             %    'Type', TrackerType, 'RidgeWeight', 1e-3, ...
             %    'DebugDisplay', false, 'UseBlurring', false, ...
             %    'UseNormalization', true, 'TrackingResolution', Downsample);
-            
-            LKtracker = LucasKanadeTracker(img, corners, ...
-               'Type', TrackerType, 'RidgeWeight', 0.5, ...
+
+            LKtracker = LucasKanadeTracker(imgFiltered, corners, ...
+               'Type', TrackerType, 'RidgeWeight', 0, ...
                'DebugDisplay', false, 'UseBlurring', false, ...
-               'UseNormalization', false, 'NumSamples', NumSamples, ...
+               'UseNormalization', true, 'NumSamples', NumSamples, ...
                'TemplateRegionPaddingFraction', TemplateRegionPaddingFraction, ...
                'MarkerWidth', MarkerWidth, 'CalibrationMatrix', CalibrationMatrix);
             
@@ -138,14 +146,20 @@ CameraCapture('processFcn', @trackHelper, ...
             end
             
             %t = tic;
-            converged = LKtracker.track(img, ...
+            if isempty(FilterFcn)
+                imgFiltered = img;
+            else
+                imgFiltered = FilterFcn(img);
+            end
+            [converged, reason] = LKtracker.track(imgFiltered, ...
                 'MaxIterations', MaxIterations, ...
                 'ConvergenceTolerance', ConvergenceTolerance, ...
-                'ErrorTolerance', ErrorTolerance);
+                'IntensityErrorTolerance', IntensityErrorTolerance, ...
+                'IntensityErrorFraction', IntensityErrorFraction);
             %fprintf('Tracking took %.2f seconds.\n', toc(t));
             
             if ~converged 
-                disp('Lost Track!')
+                fprintf('Lost Track! (%s)\n', reason)
                 LKtracker = [];
                 h_cam = [];
                 delete(h_target)
@@ -158,7 +172,7 @@ CameraCapture('processFcn', @trackHelper, ...
             if size(img,3)>1
                 img = img(:,:,[3 2 1]);
             end
-            set(h_img, 'CData', img);
+            set(h_img, 'CData', imgFiltered);
             
             if strcmp(TrackerType, 'planar6dof')
                 title(h_axes, sprintf('Pose: %s', LKtracker.poseString), 'FontSize', 12);
