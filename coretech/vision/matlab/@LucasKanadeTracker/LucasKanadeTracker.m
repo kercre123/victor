@@ -18,6 +18,10 @@ classdef LucasKanadeTracker < handle
         xgrid;
         ygrid;
         
+        xgridFull; % unsampled
+        ygridFull; % unsampled
+        targetFull;
+        
         initCorners;
         
         err = Inf;
@@ -61,7 +65,7 @@ classdef LucasKanadeTracker < handle
         minSize;
         numScales;
         convergenceTolerance;
-        errorTolerance;
+        %errorTolerance;
         maxIterations;
         
         debugDisplay;
@@ -88,7 +92,6 @@ classdef LucasKanadeTracker < handle
             RidgeWeight = 0;
             TrackingResolution = [size(firstImg,2), size(firstImg,1)];
             TemplateRegionPaddingFraction = 0;
-            ErrorTolerance = [];
             ApproximateGradientMargins = false;
             %SampleNearEdges = false;
             NumSamples = [];
@@ -103,20 +106,14 @@ classdef LucasKanadeTracker < handle
             this.minSize = MinSize;
             this.useNormalization = UseNormalization;
             this.ridgeWeight = RidgeWeight;
-            this.errorTolerance = ErrorTolerance;
-            
+                        
             this.debugDisplay = DebugDisplay;
             this.tformType = Type;
            
             this.useBlurring = UseBlurring;
             
             this.approximateGradientMargins = ApproximateGradientMargins;
-            
-            this.target = cell(1, this.numScales);
-            
-            this.xgrid = cell(1, this.numScales);
-            this.ygrid = cell(1, this.numScales);
-            
+               
             [nrows,ncols,nbands] = size(firstImg);
             firstImg = im2double(firstImg);
             if nbands>1
@@ -277,6 +274,13 @@ classdef LucasKanadeTracker < handle
                 assert(isscalar(NumScales));
                 this.numScales = NumScales;
             end
+                     
+            this.target = cell(1, this.numScales);
+            this.targetFull = cell(1, this.numScales);
+            this.xgrid = cell(1, this.numScales);
+            this.ygrid = cell(1, this.numScales);
+            this.xgridFull = cell(1, this.numScales);
+            this.ygridFull = cell(1, this.numScales);
             
             this.finestScale = 1;
             Downsample = 1;
@@ -422,6 +426,14 @@ classdef LucasKanadeTracker < handle
                         
                         [~,sortIndex] = sort(mag(:), 'descend');
                         sampleIndex = sortIndex(1:numSamplesCurrent);
+                        
+                        % Save the "full" coordinates for final
+                        % verification and normalization
+                        this.xgridFull{i_scale} = this.xgrid{i_scale};
+                        this.ygridFull{i_scale} = this.ygrid{i_scale};
+                        if i_scale == this.finestScale
+                            this.targetFull{i_scale} = this.target{i_scale};
+                        end
                         
                         this.xgrid{i_scale} = this.xgrid{i_scale}(sampleIndex);
                         this.ygrid{i_scale} = this.ygrid{i_scale}(sampleIndex);
