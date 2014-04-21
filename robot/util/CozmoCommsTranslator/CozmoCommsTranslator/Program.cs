@@ -86,7 +86,7 @@ namespace CozmoCommsTranslator
 
 
         // Port on which to listen for connecting basestation
-        public const Int32 listenPort = 5000;
+        public const Int32 listenPort = 5551;
         
         static void Main(string[] args)
         {

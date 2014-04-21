@@ -25,6 +25,12 @@
 
 #include <webots/Supervisor.hpp>
 
+
+// Physical wifi robots do not yet register/deregister with advertising service so just
+// hard-coding its connection
+#define FORCE_ADD_ROBOT 1
+
+
 using namespace std;
 
 /*
@@ -62,6 +68,19 @@ int main(int argc, char **argv)
   
   double lastAdvertisingTime = 0;
   
+  
+#if(FORCE_ADD_ROBOT)
+  // Force add physical robot since it's not registering by itself yet.
+  const u8 forcedRobotId = 31;
+  const char* forcedRobotIP = "192.168.3.31";
+  robotConnectionInfoMap[forcedRobotId].robotID = forcedRobotId;
+  robotConnectionInfoMap[forcedRobotId].port = ROBOT_RADIO_BASE_PORT;
+  snprintf((char*)robotConnectionInfoMap[forcedRobotId].robotAddr,
+           sizeof(robotConnectionInfoMap[forcedRobotId].robotAddr),
+           "%s", forcedRobotIP);
+#endif
+  
+  
   while(advertisementController.step(TIME_STEP) != -1) {
   //while(1) {
     
@@ -97,14 +116,16 @@ int main(int argc, char **argv)
     do {
       bytes_recvd = advertisingServer.Recv((char*)&regMsg, sizeof(regMsg));  //NOTE: Don't actually expect to get RobotAdvertisementRegistration message here, but just need something to put stuff in. Server automatically adds client to internal list when recv is called.
       
-      if (bytes_recvd > 0) std::cout << "Received ping from robot\n";
+      if (bytes_recvd > 0) std::cout << "Received ping from basestation\n";
     } while(bytes_recvd > 0);
     
     
     // Notify all clients
     if (advertisementController.getTime() - lastAdvertisingTime > ROBOT_ADVERTISING_PERIOD_S) {
       if (advertisingServer.GetNumClients() > 0 && !robotConnectionInfoMap.empty())
+#if(FORCE_ADD_ROBOT == 0)
         std::cout << "Notifying " <<  advertisingServer.GetNumClients() << " clients of advertising robots\n";
+#endif
       
       for (it = robotConnectionInfoMap.begin(); it != robotConnectionInfoMap.end(); it++) {
         //std::cout << "Advertising: Robot " << it->second.robotID
