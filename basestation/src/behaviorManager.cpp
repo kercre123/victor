@@ -49,6 +49,7 @@ namespace Anki {
       state_ = WAITING_FOR_ROBOT;
       nextState_ = state_;
       updateFcn_ = NULL;
+      robot_ = NULL;
     }
     
     void BehaviorManager::Update()

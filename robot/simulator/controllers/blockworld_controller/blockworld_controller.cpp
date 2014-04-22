@@ -93,6 +93,7 @@ int main(int argc, char **argv)
             printf("Connected to robot %d\n", robotID);
             robotMgr.AddRobot(robotID);
             robotMgr.GetRobotByID(robotID)->SendRequestCamCalib();
+            break;
           } else {
             printf("Failed to connect to robot %d\n", robotID);
             return -1;
