@@ -396,6 +396,18 @@ namespace Anki
         
         s32 get_numTemplatePixels(const s32 whichScale) const;
         
+        // TODO: verify that there's no alignment padding
+        typedef struct TemplateSample
+        {
+          f32 xCoordinate;
+          f32 yCoordinate;
+          f32 xGradient;
+          f32 yGradient;
+          f32 grayvalue;
+        } TemplateSample;
+        
+        const FixedLengthList<TemplateSample>& get_templateSamples(const s32 atScale) const;
+        
       protected:
         
         // Store grid of original template values for verification
@@ -409,15 +421,7 @@ namespace Anki
         
         f32 verifyCoordScalar;
         
-        // TODO: verify that there's no alignment padding
-        typedef struct TemplateSample
-        {
-          f32 xCoordinate;
-          f32 yCoordinate;
-          f32 xGradient;
-          f32 yGradient;
-          f32 grayvalue;
-        } TemplateSample;
+        
         
         typedef struct JacobianSample
         {

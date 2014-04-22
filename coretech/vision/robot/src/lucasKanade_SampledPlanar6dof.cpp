@@ -63,6 +63,8 @@ namespace Anki
         : LucasKanadeTracker_Generic(Transformations::TRANSFORM_PROJECTIVE, templateImage, templateQuadIn, scaleTemplateRegionPercent, numPyramidLevels, transformType, onchipScratch)
       {
         // Allocate all the
+        
+        //templateImage.Show("InitialImage", false);
 
         // Initialize calibration data
         this->focalLength_x = focalLength_x;
@@ -234,6 +236,9 @@ namespace Anki
         this->jacobianSamplePyramid = FixedLengthList<FixedLengthList<JacobianSample> >(numPyramidLevels, onchipScratch);
         this->verificationSamples   = FixedLengthList<VerifySample>(verifyGridSize*verifyGridSize, onchipScratch);
         
+        this->templateSamplePyramid.set_size(numPyramidLevels);
+        this->jacobianSamplePyramid.set_size(numPyramidLevels);
+        
         //
         // Compute the samples (and their Jacobians) at each scale
         //
@@ -289,6 +294,8 @@ namespace Anki
                 return;
               }
               
+              //templateImageXGradient.Show("X Gradient", false);
+              
               // Turn the X gradient image into a vector
               if((lastResult = Matrix::Vectorize<f32,f32>(false, templateImageXGradient, xGradientVector)) != RESULT_OK) {
                 AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "Matrix::Vectorize failed with code 0x%x", lastResult);
@@ -305,6 +312,8 @@ namespace Anki
                 return;
               }
               
+              //templateImageYGradient.Show("Y Gradient", false);
+              
               // Turn the Y gradient image into a vector
               if((lastResult = Matrix::Vectorize<f32,f32>(false, templateImageYGradient, yGradientVector)) != RESULT_OK) {
                 AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "Matrix::Vectorize failed with code 0x%x", lastResult);
@@ -317,9 +326,6 @@ namespace Anki
             }
             
           } // pop templateImageAtScale
-          
-          //templateImageXGradientPyramid[iScale].Show("X Gradient", false);
-          //templateImageYGradientPyramid[iScale].Show("Y Gradient", true);
           
           // Using the computed gradients, find a set of the max values, and store them
           const s32 numSamples = this->templateSamplePyramid[iScale].get_size();
@@ -526,6 +532,15 @@ namespace Anki
         this->isValid = true;
 
         EndBenchmark("LucasKanadeTracker_SampledPlanar6dof");
+      }
+      
+      const FixedLengthList<LucasKanadeTracker_SampledPlanar6dof::TemplateSample>& LucasKanadeTracker_SampledPlanar6dof::get_templateSamples(const s32 atScale) const
+      {
+        AnkiConditionalError(atScale >=0 && atScale < this->templateSamplePyramid.get_size(),
+                             "LucasKanadeTracker_SampledPlanar6dof::get_templateSamples()",
+                             "Requested scale out of range.");
+        
+        return this->templateSamplePyramid[atScale];
       }
 
       // Fill a rotation matrix according to the current tracker angles
