@@ -36,7 +36,7 @@ namespace Anki {
         
       void DetectFiducialMarkersParameters::Initialize()
       {
-        detectionResolution = HAL::CAMERA_MODE_QVGA;
+        detectionResolution = Vision::CAMERA_RES_QVGA;
         detectionWidth  = CameraModeInfo[detectionResolution].width;
         detectionHeight = CameraModeInfo[detectionResolution].height;
         
@@ -93,7 +93,7 @@ namespace Anki {
       {
 #if DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
         // Binary tracker works at QVGA (unlike LK)
-        trackingResolution = HAL::CAMERA_MODE_QVGA;
+        trackingResolution = Vision::CAMERA_RES_QVGA;
         
         trackingImageWidth  = CameraModeInfo[trackingResolution].width;
         trackingImageHeight = CameraModeInfo[trackingResolution].height;
@@ -128,11 +128,11 @@ namespace Anki {
         // LK tracker parameter initialization
         
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PROJECTIVE || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
-        trackingResolution   = HAL::CAMERA_MODE_QVGA; // 320x240
+        trackingResolution   = Vision::CAMERA_RES_QVGA; // 320x240
         numPyramidLevels     = 3;
 #else
-        //trackingResolution   = HAL::CAMERA_MODE_QQQVGA; // 80x60
-        trackingResolution   = HAL::CAMERA_MODE_QQVGA; // 160x120        
+        //trackingResolution   = Vision::CAMERA_RES_QQQVGA; // 80x60
+        trackingResolution   = Vision::CAMERA_RES_QQVGA; // 160x120
         numPyramidLevels     = 3;
 #endif // DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PROJECTIVE
         

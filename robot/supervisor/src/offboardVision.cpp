@@ -81,8 +81,8 @@ namespace Anki
     // TODO: pull the downsampling out of this function
     void HAL::USBSendFrame(const u8*        frame,
                            const TimeStamp_t  timestamp,
-                           const CameraMode inputResolution,
-                           const CameraMode sendResolution,
+                           const CameraResolution inputResolution,
+                           const CameraResolution sendResolution,
                            const u8         commandByte)
     {
       // Set window size for averaging when downsampling

@@ -146,8 +146,8 @@ namespace Anki {
         // Parameters defined in visionParameters.h
         static DetectFiducialMarkersParameters detectionParameters_;
         static TrackerParameters               trackerParameters_;
-        static HAL::CameraMode                 captureResolution_;
-        static HAL::CameraMode                 faceDetectionResolution_;
+        static Vision::CameraResolution        captureResolution_;
+        static Vision::CameraResolution        faceDetectionResolution_;
 
         /* Only using static members of SimulatorParameters now
 #ifdef SIMULATOR
@@ -970,8 +970,8 @@ namespace Anki {
         
         if(!isInitialized_) {
           
-          captureResolution_ = HAL::CAMERA_MODE_QVGA;
-          faceDetectionResolution_ = HAL::CAMERA_MODE_QQVGA;
+          captureResolution_ = Vision::CAMERA_RES_QVGA;
+          faceDetectionResolution_ = Vision::CAMERA_RES_QQVGA;
           
           // WARNING: the order of these initializations matter!
 

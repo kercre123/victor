@@ -79,7 +79,7 @@ namespace Anki {
       webots::Camera* headCam_;
       HAL::CameraInfo headCamInfo_;
       HAL::CameraInfo matCamInfo_;
-      HAL::CameraMode headCamMode_;
+      Vision::CameraResolution headCamMode_;
       // HAL::CameraMode matCamMode_;
       //u8* headCamBuffer_;
       //u8* matCamBuffer_;
@@ -590,7 +590,7 @@ namespace Anki {
     
     
     // Starts camera frame synchronization
-    void HAL::CameraGetFrame(u8* frame, CameraMode mode, f32 exposure, bool enableLight)
+    void HAL::CameraGetFrame(u8* frame, Vision::CameraResolution res, f32 exposure, bool enableLight)
     {
       // TODO: exposure? enableLight?
       
@@ -608,9 +608,9 @@ namespace Anki {
         
         if(supportAveraging) {
           AnkiAssert(false);
-          // Need a way to get downsampling increment (LUT for resolution based on mode?)
-          //AnkiAssert(headCamInfo_.nrows >= HAL::CameraModeInfo[mode].height);
-          //inc = headCamInfo_.nrows / HAL::CameraModeInfo[mode].height;
+          // Need a way to get downsampling increment (LUT for resolution based on res?)
+          //AnkiAssert(headCamInfo_.nrows >= HAL::CameraModeInfo[res].height);
+          //inc = headCamInfo_.nrows / HAL::CameraModeInfo[res].height;
         }
         
         if(inc == 1)

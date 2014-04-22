@@ -36,8 +36,8 @@ namespace Anki {
           
           s32 frameNumber = 0;
           
-          const HAL::CameraMode debugStreamResolution_ = HAL::CAMERA_MODE_QQQVGA;
-          //const HAL::CameraMode debugStreamResolution_ = HAL::CAMERA_MODE_QVGA;
+          const Vision::CameraResolution debugStreamResolution_ = Vision::CAMERA_RES_QQQQVGA;
+          //const Vision::CameraResolution debugStreamResolution_ = Vision::CAMERA_RES_QVGA;
           
           f32 lastBenchmarkTime_algorithmsOnly;
           f32 lastBenchmarkDuration_algorithmsOnly;
@@ -155,7 +155,7 @@ namespace Anki {
           result = SendBuffer(debugStreamBuffer_);
           
           // The UART can't handle this at full rate, so wait a bit between each frame
-          if(debugStreamResolution_ == HAL::CAMERA_MODE_QVGA) {
+          if(debugStreamResolution_ == Vision::CAMERA_RES_QVGA) {
             HAL::MicroWait(1000000);
           }
 #endif // #if SEND_DEBUG_STREAM
@@ -250,7 +250,7 @@ namespace Anki {
           result = SendBuffer(debugStreamBuffer_);
           
           // The UART can't handle this at full rate, so wait a bit between each frame
-          if(debugStreamResolution_ == HAL::CAMERA_MODE_QVGA) {
+          if(debugStreamResolution_ == Vision::CAMERA_RES_QVGA) {
             HAL::MicroWait(1000000);
           }
           
@@ -301,7 +301,7 @@ namespace Anki {
           result = SendBuffer(debugStreamBuffer_);
           
           // The UART can't handle this at full rate, so wait a bit between each frame
-          if(debugStreamResolution_ == HAL::CAMERA_MODE_QVGA) {
+          if(debugStreamResolution_ == Vision::CAMERA_RES_QVGA) {
             HAL::MicroWait(1000000);
           }
           

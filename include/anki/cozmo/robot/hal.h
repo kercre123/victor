@@ -36,7 +36,7 @@
 #include "anki/common/robot/utilities_c.h"
 #include "anki/common/types.h"
 #include "anki/common/constantsAndMacros.h"
-
+#include "anki/vision/CameraSettings.h"
 #include "anki/cozmo/robot/messages.h"
 
 #include "anki/cozmo/robot/cozmoConfig.h"
@@ -356,18 +356,6 @@ namespace Anki
       // TODO: Add functions for adjusting ROI of cameras?
       //
 
-      typedef enum
-      {
-        CAMERA_MODE_VGA = 0,
-        CAMERA_MODE_QVGA,
-        CAMERA_MODE_QQVGA,
-        CAMERA_MODE_QQQVGA,
-        CAMERA_MODE_QQQQVGA,
-        CAMERA_MODE_COUNT,
-
-        CAMERA_MODE_NONE = CAMERA_MODE_COUNT
-      } CameraMode;
-
       // Intrinsic calibration:
       // A struct for holding intrinsic camera calibration parameters
       typedef struct {
@@ -380,12 +368,12 @@ namespace Anki
       
       const CameraInfo* GetHeadCamInfo();
 
-      // Set the camera capture resolution with CAMERA_MODE_XXXXX_HEADER.
+      // Set the camera capture resolution with CAMERA_RES_XXXXX_HEADER.
       //void       SetHeadCamMode(const u8 frameResHeader);
       //CameraMode GetHeadCamMode(void);
 
       // Starts camera frame synchronization (blocking call)
-      void CameraGetFrame(u8* frame, CameraMode mode,
+      void CameraGetFrame(u8* frame, Vision::CameraResolution res,
           f32 exposure, bool enableLight);
 
       // Get the number of lines received so far for the specified camera
@@ -550,8 +538,8 @@ namespace Anki
       // a call to SetUSBFrameResolution)
       void USBSendFrame(const u8*        frame,
                         const TimeStamp_t  timestamp,
-                        const CameraMode inputResolution,
-                        const CameraMode sendResolution,
+                        const CameraResolution inputResolution,
+                        const CameraResolution sendResolution,
                         const u8         commandByte);
 
       // Send an arbitrary packet of data
