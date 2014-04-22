@@ -183,6 +183,11 @@ namespace Anki {
     {
       return currentAngle_.ToFloat();
     }
+    
+    void SetAngleRad(f32 angle)
+    {
+      currentAngle_ = angle;
+    }
 
     f32 GetLastCommandedAngle()
     {

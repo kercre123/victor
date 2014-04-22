@@ -68,14 +68,14 @@ namespace Anki {
       
       if(robotMgr_ == NULL) {
         PRINT_NAMED_ERROR("MessageHandler.NullRobotManager",
-                          "RobotManager NULL when MessageHandler::ProcessPacket() called.");
+                          "RobotManager NULL when MessageHandler::ProcessPacket() called.\n");
       }
       else {
         const u8 msgID = packet.data[0];
         
         if(lookupTable_[msgID].size != packet.dataLen-1) {
           PRINT_NAMED_ERROR("MessageHandler.MessageBufferWrongSize",
-                            "Buffer's size does not match expected size for this message ID. (Msg %d, expected %d, recvd %d)",
+                            "Buffer's size does not match expected size for this message ID. (Msg %d, expected %d, recvd %d)\n",
                             msgID,
                             lookupTable_[msgID].size,
                             packet.dataLen - 1
@@ -87,7 +87,7 @@ namespace Anki {
           Robot* robot = robotMgr_->GetRobotByID(robotID);
           if(robot == NULL) {
             PRINT_NAMED_ERROR("MessageFromInvalidRobotSource",
-                              "Message %d received from invalid robot source ID %d.",
+                              "Message %d received from invalid robot source ID %d.\n",
                               msgID, robotID);
           }
           else {
@@ -274,6 +274,7 @@ namespace Anki {
     Result MessageHandler::ProcessMessage(Robot* robot, MessageMatCameraCalibration const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageRequestCamCalib const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageAbsLocalizationUpdate const&){return RESULT_FAIL;}
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageHeadAngleUpdate const&){return RESULT_FAIL;}
     
   } // namespace Cozmo
 } // namespace Anki

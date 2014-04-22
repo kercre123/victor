@@ -137,12 +137,14 @@ namespace Anki {
     void Robot::set_headAngle(const Radians& angle)
     {
       if(angle < MIN_HEAD_ANGLE) {
-        fprintf(stdout, "Requested head angle (%f rad) too small. Clipping.\n", angle.ToFloat());
+        PRINT_NAMED_WARNING("Robot.HeadAngleOOB", "Requested head angle (%f rad) too small. Clipping.\n", angle.ToFloat());
         currentHeadAngle = MIN_HEAD_ANGLE;
+        SendHeadAngleUpdate();
       }
       else if(angle > MAX_HEAD_ANGLE) {
-        fprintf(stdout, "Requested head angle (%f rad) too large. Clipping.\n", angle.ToFloat());
+        PRINT_NAMED_WARNING("Robot.HeadAngleOOB", "Requested head angle (%f rad) too large. Clipping.\n", angle.ToFloat());
         currentHeadAngle = MAX_HEAD_ANGLE;
+        SendHeadAngleUpdate();
       }
       else {
         currentHeadAngle = angle;
@@ -485,6 +487,15 @@ namespace Anki {
       return msgHandler_->SendMessage(ID_, m);
     }
     
+    Result Robot::SendHeadAngleUpdate() const
+    {
+      MessageHeadAngleUpdate m;
+      
+      m.newAngle = currentHeadAngle.ToFloat();
+      
+      return msgHandler_->SendMessage(ID_, m);
+    }
+
     
   } // namespace Cozmo
 } // namespace Anki

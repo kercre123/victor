@@ -337,6 +337,10 @@ namespace Anki {
         HeadController::SetAngularVelocity(0);
       }
       
+      void ProcessHeadAngleUpdateMessage(const HeadAngleUpdate& msg) {
+        HeadController::SetAngleRad(msg.newAngle);
+      }
+      
       
       // TODO: Fill these in once they are needed/used:
       
