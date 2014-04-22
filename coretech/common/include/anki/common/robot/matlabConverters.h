@@ -75,16 +75,17 @@ namespace Anki {
 
     template<typename Type> void mxArrayToArray(const mxArray * const array, Array<Type> &mat)
     {
-      const int npixels = mat.get_size(0)*mat.get_size(1);
+      AnkiConditionalError(mxGetNumberOfDimensions(array) == 2,
+                           "mxArrayToArray", "Matlab array should be 2D.\n");
+      
       const int nrows = mat.get_size(0);
       const int ncols = mat.get_size(1);
 
       const Type * const matlabMatrixStartPointer = reinterpret_cast<const Type *>( mxGetData(array) );
 
-      const mwSize numMatlabElements = mxGetNumberOfElements(array);
-
-      if(numMatlabElements != npixels) {
-        AnkiError("mxArrayToArray", "mxArrayToArray<Type>(array,mat) - Matlab array has a different number of elements than the Anki::Embedded::Array (%d != %d)\n", numMatlabElements, npixels);
+      if(mxGetM(array) != nrows || mxGetN(array) != ncols) {
+        AnkiError("mxArrayToArray", "Matlab array size does not match Anki::Embedded::Array size: (%d x %d) vs (%d x %d).\n",
+                  mxGetM(array), mxGetN(array), nrows, ncols);
         return;
       }
 
@@ -98,10 +99,11 @@ namespace Anki {
 
       for(s32 y=0; y<nrows; ++y) {
         Type * const pArray = mat.Pointer(y, 0);
-        const Type * const pMatlabMatrix = matlabMatrixStartPointer + y*ncols;
-
+        //const Type * const pMatlabMatrix = matlabMatrixStartPointer + y*ncols;
+        const Type * const pMatlabMatrixRowY = matlabMatrixStartPointer + y;
+        
         for(s32 x=0; x<ncols; ++x) {
-          pArray[x] = pMatlabMatrix[x];
+          pArray[x] = *(pMatlabMatrixRowY + x*nrows);
         }
       }
     } // template<typename Type> void mxArrayToArray(const mxArray * const array, Array<Type> &mat)
