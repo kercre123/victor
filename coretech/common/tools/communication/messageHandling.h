@@ -26,7 +26,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define ThreadResult void*
 #endif
 
-class DebugStreamParserThread
+class DebugStreamClient
 {
 public:
 
@@ -36,7 +36,7 @@ public:
     char typeName[Anki::Embedded::SerializedBuffer::DESCRIPTION_STRING_LENGTH];
     char objectName[Anki::Embedded::SerializedBuffer::DESCRIPTION_STRING_LENGTH];
 
-    void * buffer; //< This buffer is allocated by DebugStreamParserThread, and the user must free it
+    void * buffer; //< This buffer is allocated by DebugStreamClient, and the user must free it
     s32 bufferLength;
 
     const void * startOfPayload; //< This points after any header in buffer. Just cast this pointer to the appropriate type.
@@ -51,8 +51,8 @@ public:
     bool IsValid() const;
   };
 
-  // Example: DebugStreamParserThread("192.168.3.30", 5551)
-  DebugStreamParserThread(const char * ipAddress, const s32 port);
+  // Example: DebugStreamClient("192.168.3.30", 5551)
+  DebugStreamClient(const char * ipAddress, const s32 port);
 
   // Close the socket and stop the parsing thread
   Anki::Result Close();
@@ -86,18 +86,18 @@ protected:
   bool isConnected;
 
   ThreadSafeQueue<DisplayRawBuffer> rawMessageQueue;
-  ThreadSafeQueue<DebugStreamParserThread::Object> parsedObjectQueue;
+  ThreadSafeQueue<DebugStreamClient::Object> parsedObjectQueue;
 
   static DisplayRawBuffer AllocateNewRawBuffer(const s32 bufferRawSize);
 
   // Process the buffer using the BufferAction action. Optionally, free the buffer on completion.
-  static void ProcessRawBuffer(DisplayRawBuffer &buffer, ThreadSafeQueue<DebugStreamParserThread::Object> &parsedObjectQueue, const bool requireMatchingSegmentLengths);
+  static void ProcessRawBuffer(DisplayRawBuffer &buffer, ThreadSafeQueue<DebugStreamClient::Object> &parsedObjectQueue, const bool requireMatchingSegmentLengths);
 
   // Grab data from the socket and put in a big temporary buffer, as fast as possible
   static ThreadResult ConnectionThread(void *threadParameter);
 
   // Once the big temporary buffer is filled, parse it
   static ThreadResult ParseBufferThread(void *threadParameter);
-}; // DebugStreamParserThread
+}; // DebugStreamClient
 
 #endif // #ifndef _MESSAGE_HANDLING_H_

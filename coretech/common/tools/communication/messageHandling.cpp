@@ -26,12 +26,12 @@ using namespace std;
 static const s32 scratchSize = 1000000;
 static u8 scratchBuffer[scratchSize];
 
-DebugStreamParserThread::Object::Object()
+DebugStreamClient::Object::Object()
   : bufferLength(0), buffer(NULL), startOfPayload(NULL)
 {
 }
 
-DebugStreamParserThread::Object::Object(const s32 bufferLength)
+DebugStreamClient::Object::Object(const s32 bufferLength)
   : bufferLength(0), buffer(NULL), startOfPayload(NULL)
 {
   this->buffer = malloc(bufferLength);
@@ -40,7 +40,7 @@ DebugStreamParserThread::Object::Object(const s32 bufferLength)
     this->bufferLength = bufferLength;
 }
 
-bool DebugStreamParserThread::Object::IsValid() const
+bool DebugStreamClient::Object::IsValid() const
 {
   if(bufferLength <= 0)
     return false;
@@ -48,7 +48,7 @@ bool DebugStreamParserThread::Object::IsValid() const
   return true;
 }
 
-Result DebugStreamParserThread::Close()
+Result DebugStreamClient::Close()
 {
   if(isConnected) {
     if(socket.Close() != RESULT_OK) {
@@ -61,10 +61,10 @@ Result DebugStreamParserThread::Close()
   return RESULT_OK;
 }
 
-DebugStreamParserThread::DebugStreamParserThread(const char * ipAddress, const s32 port)
+DebugStreamClient::DebugStreamClient(const char * ipAddress, const s32 port)
   : isConnected(false)
 {
-  printf("Starting DebugStreamParserThread\n");
+  printf("Starting DebugStreamClient\n");
 
   rawMessageQueue = ThreadSafeQueue<DisplayRawBuffer>();
 
@@ -81,15 +81,18 @@ DebugStreamParserThread::DebugStreamParserThread(const char * ipAddress, const s
 
 #ifdef _MSC_VER
   SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST); // THREAD_PRIORITY_ABOVE_NORMAL
+#else
+#endif
 
-  DWORD threadId = -1;
+#ifdef _MSC_VER
+  DWORD parsingThreadId = -1;
   CreateThread(
     NULL,        // default security attributes
     0,           // use default stack size
-    DebugStreamParserThread::ConnectionThread, // thread function name
-    &rawMessageQueue,    // argument to thread function
+    DebugStreamClient::ParseBufferThread, // thread function name
+    this,    // argument to thread function
     0,           // use default creation flags
-    &threadId);  // returns the thread identifier
+    &parsingThreadId);  // returns the thread identifier
 #else
   // TODO: set thread priority
 
@@ -97,32 +100,61 @@ DebugStreamParserThread::DebugStreamParserThread(const char * ipAddress, const s
   pthread_attr_t attr;
   pthread_attr_init(&attr);
 
-  pthread_create(&thread, &attr, DebugStreamParserThread::ConnectionThread, (void *)&rawMessageQueue);
+  pthread_create(&thread, &attr, DebugStreamClient::ParseBufferThread, (void *)this);
 #endif
 
   printf("Parsing thread created\n");
+
+#ifdef _MSC_VER
+  DWORD connectionThreadId = -1;
+  CreateThread(
+    NULL,        // default security attributes
+    0,           // use default stack size
+    DebugStreamClient::ConnectionThread, // thread function name
+    this,    // argument to thread function
+    0,           // use default creation flags
+    &connectionThreadId);  // returns the thread identifier
+#else
+  // TODO: set thread priority
+
+  pthread_t thread;
+  pthread_attr_t attr;
+  pthread_attr_init(&attr);
+
+  pthread_create(&thread, &attr, DebugStreamClient::ConnectionThread, (void *)this);
+#endif
+
+  printf("Connection thread created\n");
 
   bool atLeastOneStartFound = false;
   s32 start_state = 0;
 
   this->isConnected = true;
-} // DebugStreamParserThread::DebugStreamParserThread
+} // DebugStreamClient::DebugStreamClient
 
-DebugStreamParserThread::Object DebugStreamParserThread::GetNextObject()
+DebugStreamClient::Object DebugStreamClient::GetNextObject()
 {
-  DebugStreamParserThread::Object newObject;
+  DebugStreamClient::Object newObject;
+
+  while(parsedObjectQueue.IsEmpty()) {
+#ifdef _MSC_VER
+    Sleep(10);
+#else
+    usleep(10000);
+#endif
+  }
 
   newObject = parsedObjectQueue.Pop();
 
   return newObject;
 }
 
-bool DebugStreamParserThread::get_isConnected() const
+bool DebugStreamClient::get_isConnected() const
 {
   return this->isConnected;
 }
 
-DebugStreamParserThread::DisplayRawBuffer DebugStreamParserThread::AllocateNewRawBuffer(const s32 bufferRawSize)
+DebugStreamClient::DisplayRawBuffer DebugStreamClient::AllocateNewRawBuffer(const s32 bufferRawSize)
 {
   DisplayRawBuffer rawBuffer;
 
@@ -140,7 +172,7 @@ DebugStreamParserThread::DisplayRawBuffer DebugStreamParserThread::AllocateNewRa
   return rawBuffer;
 }
 
-void DebugStreamParserThread::ProcessRawBuffer(DisplayRawBuffer &buffer, ThreadSafeQueue<DebugStreamParserThread::Object> &parsedObjectQueue, const bool requireMatchingSegmentLengths)
+void DebugStreamClient::ProcessRawBuffer(DisplayRawBuffer &buffer, ThreadSafeQueue<DebugStreamClient::Object> &parsedObjectQueue, const bool requireMatchingSegmentLengths)
 {
   MemoryStack scratch(scratchBuffer, scratchSize, Flags::Buffer(false, true, false));
 
@@ -182,6 +214,9 @@ void DebugStreamParserThread::ProcessRawBuffer(DisplayRawBuffer &buffer, ThreadS
 
       Object newObject(512 + static_cast<s32>(size) * numElements);
 
+      if(!newObject.buffer)
+        continue;
+
       // Copy the header (probably the user won't need this, but just in case)
       reinterpret_cast<s32*>(newObject.buffer)[0] = size;
       reinterpret_cast<s32*>(newObject.buffer)[1] = isBasicType;
@@ -193,6 +228,9 @@ void DebugStreamParserThread::ProcessRawBuffer(DisplayRawBuffer &buffer, ThreadS
       // Copy the type and object names. Probably the user will use these to figure out how to cast the payload
       memcpy(newObject.typeName, typeName, SerializedBuffer::DESCRIPTION_STRING_LENGTH);
       memcpy(newObject.objectName, objectName, SerializedBuffer::DESCRIPTION_STRING_LENGTH);
+
+      newObject.typeName[SerializedBuffer::DESCRIPTION_STRING_LENGTH - 1] = '\0';
+      newObject.objectName[SerializedBuffer::DESCRIPTION_STRING_LENGTH - 1] = '\0';
 
       MemoryStack localMemory(reinterpret_cast<void*>(&reinterpret_cast<s32*>(newObject.buffer)[6]), newObject.bufferLength - 6*sizeof(s32));
 
@@ -241,6 +279,11 @@ void DebugStreamParserThread::ProcessRawBuffer(DisplayRawBuffer &buffer, ThreadS
       // Copy the type and object names. Probably the user will use these to figure out how to cast the payload
       memcpy(newObject.typeName, typeName, SerializedBuffer::DESCRIPTION_STRING_LENGTH);
       memcpy(newObject.objectName, objectName, SerializedBuffer::DESCRIPTION_STRING_LENGTH);
+
+      newObject.typeName[SerializedBuffer::DESCRIPTION_STRING_LENGTH - 1] = '\0';
+      newObject.objectName[SerializedBuffer::DESCRIPTION_STRING_LENGTH - 1] = '\0';
+
+      printf("Received %s %s\n", newObject.typeName, newObject.objectName);
     }
 
     //else if(strcmp(typeName, "Array") == 0) {
@@ -549,22 +592,24 @@ void DebugStreamParserThread::ProcessRawBuffer(DisplayRawBuffer &buffer, ThreadS
   return;
 } // void ProcessRawBuffer()
 
-ThreadResult DebugStreamParserThread::ConnectionThread(void *threadParameter)
+ThreadResult DebugStreamClient::ConnectionThread(void *threadParameter)
 {
   Object object;
   object.bufferLength = -1;
 
-  DebugStreamParserThread *callingObject = (DebugStreamParserThread *) threadParameter;
+  DebugStreamClient *callingObject = (DebugStreamClient *) threadParameter;
 
-  if(!callingObject->isConnected)
+  if(!callingObject->isConnected) {
+    AnkiError("DebugStreamClient::ConnectionThread", "Not connected");
     return -1;
+  }
 
   u8 *usbBuffer = reinterpret_cast<u8*>(malloc(USB_BUFFER_SIZE));
   DisplayRawBuffer nextMessage = AllocateNewRawBuffer(MESSAGE_BUFFER_SIZE);
 
   if(!usbBuffer || !nextMessage.data) {
-    printf("\n\nCould not allocate usbBuffer and nextMessage.data\n\n");
-    return -3;
+    AnkiError("DebugStreamClient::ConnectionThread", "Could not allocate usbBuffer and nextMessage.data");
+    return -2;
   }
 
   bool atLeastOneStartFound = false;
@@ -572,7 +617,7 @@ ThreadResult DebugStreamParserThread::ConnectionThread(void *threadParameter)
 
   while(callingObject->get_isConnected()) {
     if(!usbBuffer) {
-      printf("\n\nCould not allocate usbBuffer\n\n");
+      AnkiError("DebugStreamClient::ConnectionThread", "Could not allocate usbBuffer");
       return -3;
     }
 
@@ -694,7 +739,7 @@ ThreadResult DebugStreamParserThread::ConnectionThread(void *threadParameter)
   return 0;
 }
 
-ThreadResult DebugStreamParserThread::ParseBufferThread(void *threadParameter)
+ThreadResult DebugStreamClient::ParseBufferThread(void *threadParameter)
 {
 #ifdef _MSC_VER
   SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_BELOW_NORMAL);
@@ -702,10 +747,10 @@ ThreadResult DebugStreamParserThread::ParseBufferThread(void *threadParameter)
   // TODO: set thread priority
 #endif
 
-  DebugStreamParserThread *callingObject = (DebugStreamParserThread *) threadParameter;
+  DebugStreamClient *callingObject = (DebugStreamClient *) threadParameter;
 
   ThreadSafeQueue<DisplayRawBuffer> &rawMessageQueue = callingObject->rawMessageQueue;
-  ThreadSafeQueue<DebugStreamParserThread::Object> &parsedObjectQueue = callingObject->parsedObjectQueue;
+  ThreadSafeQueue<DebugStreamClient::Object> &parsedObjectQueue = callingObject->parsedObjectQueue;
 
   while(true) {
     while(rawMessageQueue.IsEmpty()) {

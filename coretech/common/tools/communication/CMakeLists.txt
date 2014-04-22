@@ -30,36 +30,36 @@ file(GLOB HEADER_FILES
 )
 
 #add_executable(run_pc_saveVideo
-#	${SOURCE_FILES_SAVE_VIDEO}
-#	${HEADER_FILES})
+#  ${SOURCE_FILES_SAVE_VIDEO}
+#  ${HEADER_FILES})
 
 #target_link_libraries(run_pc_saveVideo
-#	CoreTech_Common_Robot
+#  CoreTech_Common_Robot
 #  CoreTech_Vision_Robot
-#	${ALL_EMBEDDED_LIBRARIES})
+#  ${ALL_EMBEDDED_LIBRARIES})
 
 add_executable(run_pc_displayVideo
-	${SOURCE_FILES_DISPLAY_VIDEO}
-	${HEADER_FILES})
+  ${SOURCE_FILES_DISPLAY_VIDEO}
+  ${HEADER_FILES})
 
 target_link_libraries(run_pc_displayVideo
-	CoreTech_Common_Robot
+  CoreTech_Common_Robot
   CoreTech_Vision_Robot
-  DebugStreamParser
-	${ALL_EMBEDDED_LIBRARIES})
+  DebugStreamClient
+  ${ALL_EMBEDDED_LIBRARIES})
 
 #add_executable(run_pc_terminal
-#	${SOURCE_FILES_TERMINAL}
-#	${HEADER_FILES})
+#  ${SOURCE_FILES_TERMINAL}
+#  ${HEADER_FILES})
 
 #target_link_libraries(run_pc_terminal
-#	CoreTech_Common_Robot
+#  CoreTech_Common_Robot
 #  CoreTech_Vision_Robot
-#	${ALL_EMBEDDED_LIBRARIES})
+#  ${ALL_EMBEDDED_LIBRARIES})
 
 add_definitions(-DCORETECH_ROBOT)
 
-add_library(DebugStreamParser
-	${SOURCE_FILES_DEBUG_STREAM_PARSER} 
-	${HEADER_FILES}
+add_library(DebugStreamClient
+  ${SOURCE_FILES_DEBUG_STREAM_PARSER}
+  ${HEADER_FILES}
 )

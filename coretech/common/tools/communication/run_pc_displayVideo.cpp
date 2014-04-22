@@ -48,11 +48,16 @@ int main(int argc, char ** argv)
 
   printf("Starting display\n");
 
-  DebugStreamParserThread parserThread(ipAddress, port);
+  DebugStreamClient parserThread(ipAddress, port);
 
   while(true) {
-    DebugStreamParserThread::Object newObject = parserThread.GetNextObject();
+    DebugStreamClient::Object newObject = parserThread.GetNextObject();
     printf("Received %s %s\n", newObject.typeName, newObject.objectName);
+
+    if(newObject.buffer) {
+      free(newObject.buffer);
+      newObject.buffer = NULL;
+    }
   }
 
   //
