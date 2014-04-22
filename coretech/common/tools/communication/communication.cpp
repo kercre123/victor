@@ -1,15 +1,13 @@
 /**
-File: serial.cpp
+File: communication.cpp
 Author: Peter Barnum
 Created: 2013
-
-Simple serial connection routines
 
 Copyright Anki, Inc. 2013
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
 **/
 
-#include "serial.h"
+#include "communication.h"
 #include "anki/common/robot/utilities.h"
 #include "anki/common/robot/errorHandling.h"
 
@@ -19,6 +17,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 using namespace Anki;
 
+// Serial is only supported on Windows
+#ifdef _MSC_VER
 Serial::Serial()
   : isOpen(false)
 {
@@ -125,7 +125,7 @@ Result Serial::Close()
   return RESULT_OK;
 }
 
-Result Serial::Read(void * buffer, s32 bufferLength, DWORD &bytesRead)
+Result Serial::Read(void * buffer, s32 bufferLength, s32 &bytesRead)
 {
   const s32 timeToWaitForRead = 50000;
 
@@ -142,7 +142,7 @@ Result Serial::Read(void * buffer, s32 bufferLength, DWORD &bytesRead)
   }
 
   bytesRead = comStat.cbInQue;
-  if(bufferLength < static_cast<s32>(bytesRead))
+  if(bufferLength < bytesRead)
     bytesRead = bufferLength;
 
   const bool fileRead = ReadFile(comPortHandle, buffer, bytesRead, &bytesRead, &readEventHandle);
@@ -187,12 +187,68 @@ Result Socket::Open(
   socketHandle = socket (AF_INET, SOCK_STREAM, IPPROTO_TCP); //Create socket
   if (socketHandle == INVALID_SOCKET) {
     const s32 lastError = WSAGetLastError();
+    socketHandle = NULL;
     return RESULT_FAIL_IO; //Couldn't create the socket
   }
 
   const s32 connectResult = connect(socketHandle, (SOCKADDR *)&target, sizeof(target));
-  if (connectResult == SOCKET_ERROR) {
-    const s32 lastError = WSAGetLastError();
+  if (connectResult < 0) {
+    return RESULT_FAIL_IO; //Couldn't connect
+  }
+
+  isOpen = true;
+
+  return RESULT_OK;
+}
+
+Result Socket::Close()
+{
+  if(socketHandle)
+    close(socketHandle);
+
+  return RESULT_OK;
+}
+
+Result Socket::Read(void * buffer, s32 bufferLength, s32 &bytesRead)
+{
+  bytesRead = recv(socketHandle, reinterpret_cast<char*>(buffer), bufferLength, 0);
+
+  if(bytesRead < 0)
+    return RESULT_FAIL_IO;
+
+  return RESULT_OK;
+}
+
+#else // #ifdef _MSC_VER
+
+Socket::Socket()
+: isOpen(false), socketHandle(0)
+{
+}
+
+Result Socket::Open(
+                    const char * ipAddress,
+                    const s32 port)
+{
+  struct sockaddr_in target; //Socket address information
+
+  memset(&target, 0, sizeof(target));
+
+  target.sin_family = AF_INET; // address family Internet
+  target.sin_port = htons(port); //Port to connect on
+
+  struct hostent *host = gethostbyname(ipAddress);
+  memcpy(&(target.sin_addr.s_addr), host->h_addr, host->h_length);
+
+  socketHandle = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP); //Create socket
+  if (socketHandle < 0) {
+    socketHandle = 0;
+    return RESULT_FAIL_IO; //Couldn't create the socket
+  }
+
+  const s32 connectResult = connect(socketHandle, (struct sockaddr *)&target, sizeof(target));
+  if (connectResult < 0) {
+    socketHandle = 0;
     return RESULT_FAIL_IO; //Couldn't connect
   }
 
@@ -202,21 +258,21 @@ Result Socket::Open(
 Result Socket::Close()
 {
   if(socketHandle)
-    closesocket(socketHandle);
-
-  WSACleanup();
+    shutdown(socketHandle, 2);
 
   return RESULT_OK;
 }
 
-Result Socket::Read(void * buffer, s32 bufferLength, DWORD &bytesRead)
+Result Socket::Read(void * buffer, s32 bufferLength, s32 &bytesRead)
 {
-  const s32 bytesReadS32 = recv(socketHandle, reinterpret_cast<char*>(buffer), bufferLength, 0);
+  bytesRead = recv(socketHandle, reinterpret_cast<char*>(buffer), bufferLength, 0);
 
-  if(bytesReadS32 < 0)
+  //printf("%d\n", bytesRead);
+
+  if(bytesRead < 0)
     return RESULT_FAIL_IO;
 
-  bytesRead = bytesReadS32;
-
   return RESULT_OK;
 }
+
+#endif // #ifdef _MSC_VER ... #else
