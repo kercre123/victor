@@ -3300,7 +3300,7 @@ s32 RUN_ALL_COMMON_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   numFailedTests = 0;
 
   CALL_GTEST_TEST(CoreTech_Common, RoundAndSaturate);
-  /*  CALL_GTEST_TEST(CoreTech_Common, RunLengthEncode);
+  CALL_GTEST_TEST(CoreTech_Common, RunLengthEncode);
   CALL_GTEST_TEST(CoreTech_Common, IsConvex);
   CALL_GTEST_TEST(CoreTech_Common, RoundFloat);
   CALL_GTEST_TEST(CoreTech_Common, CompressArray);
@@ -3348,7 +3348,7 @@ s32 RUN_ALL_COMMON_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   CALL_GTEST_TEST(CoreTech_Common, ArraySpecifiedClass);
   CALL_GTEST_TEST(CoreTech_Common, ArrayAlignment1);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStackAlignment);
-  CALL_GTEST_TEST(CoreTech_Common, ArrayFillPattern);*/
+  CALL_GTEST_TEST(CoreTech_Common, ArrayFillPattern);
 
 #ifdef TEST_BENCHMARKING
   CALL_GTEST_TEST(CoreTech_Common, Benchmarking);

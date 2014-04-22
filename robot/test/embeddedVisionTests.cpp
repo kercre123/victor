@@ -3770,10 +3770,10 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   numFailedTests = 0;
 
   CALL_GTEST_TEST(CoreTech_Vision, FaceDetection);
-  //CALL_GTEST_TEST(CoreTech_Vision, ResizeImage);
-  //CALL_GTEST_TEST(CoreTech_Vision, DecisionTreeVision);
-  //CALL_GTEST_TEST(CoreTech_Vision, BinaryTracker);
-  /*CALL_GTEST_TEST(CoreTech_Vision, DetectBlurredEdge_DerivativeThreshold);
+  CALL_GTEST_TEST(CoreTech_Vision, ResizeImage);
+  CALL_GTEST_TEST(CoreTech_Vision, DecisionTreeVision);
+  CALL_GTEST_TEST(CoreTech_Vision, BinaryTracker);
+  CALL_GTEST_TEST(CoreTech_Vision, DetectBlurredEdge_DerivativeThreshold);
   CALL_GTEST_TEST(CoreTech_Vision, DetectBlurredEdge_GrayvalueThreshold);
   CALL_GTEST_TEST(CoreTech_Vision, DownsampleByPowerOfTwo);
   //CALL_GTEST_TEST(CoreTech_Vision, ComputeDockingErrorSignalAffine);
@@ -3804,7 +3804,7 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   CALL_GTEST_TEST(CoreTech_Vision, BinomialFilter);
   CALL_GTEST_TEST(CoreTech_Vision, DownsampleByFactor);
   CALL_GTEST_TEST(CoreTech_Vision, SolveQuartic);
-  CALL_GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation);*/
+  CALL_GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation);
 
   return numFailedTests;
 } // int RUN_ALL_VISION_TESTS()

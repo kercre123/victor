@@ -51,7 +51,7 @@ namespace Anki {
         {
 #if SEND_DEBUG_STREAM
           const f32 curTime = GetTime();
-          const s32 curSecond = RoundS32(curTime);
+          const s32 curSecond = Round<s32>(curTime);
           
           // Hack, to prevent overwhelming the send buffer
           if(curSecond != lastSecond) {

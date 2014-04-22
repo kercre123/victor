@@ -404,6 +404,11 @@
               <FilePath>.\arm_hal\hal\frontCamera.cpp</FilePath>
             </File>
             <File>
+              <FileName>hal.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\include\anki\cozmo\robot\hal.h</FilePath>
+            </File>
+            <File>
               <FileName>main.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\main.cpp</FilePath>
@@ -1610,6 +1615,11 @@
               <FileName>frontCamera.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\frontCamera.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>hal.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\include\anki\cozmo\robot\hal.h</FilePath>
             </File>
             <File>
               <FileName>main.cpp</FileName>
