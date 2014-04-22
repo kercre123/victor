@@ -124,14 +124,12 @@ namespace Anki {
         
         //////// PickAndPlaceTest /////////
         enum {
-          PAP_SET_HEAD_ANGLE,
           PAP_WAITING_FOR_PICKUP_BLOCK,
           PAP_WAITING_FOR_PLACEMENT_BLOCK,
           PAP_DOCKING,
           PAP_PLACING
         };
-        u8 pickAndPlaceState_ = PAP_SET_HEAD_ANGLE;
-        const f32 DOCKING_HEAD_ANGLE = DEG_TO_RAD(-15);
+        u8 pickAndPlaceState_ = PAP_WAITING_FOR_PICKUP_BLOCK;
         
         const Vision::MarkerType BLOCK_TO_PICK_UP = Vision::MARKER_FIRE;
         const Vision::MarkerType BLOCK_TO_PLACE_ON = Vision::MARKER_SQUAREPLUSCORNERS;
@@ -157,10 +155,10 @@ namespace Anki {
         
         
         /////// LightTest ////////
-        u8 ledID = 0;
+        HAL::LEDId ledID = (HAL::LEDId)0;
         u8 ledColorIdx = 0;
         const u8 LED_COLOR_LIST_SIZE = 3;
-        const HAL::LEDColor LEDColorList[LED_COLOR_LIST_SIZE] = {HAL::LED_ORANGE, HAL::LED_GREEN, HAL::LED_BLUE};
+        const HAL::LEDColor LEDColorList[LED_COLOR_LIST_SIZE] = {HAL::LED_RED, HAL::LED_GREEN, HAL::LED_BLUE};
         ///// End of LightTest ///
         
         // Current test mode
@@ -189,23 +187,17 @@ namespace Anki {
       {
         switch(pickAndPlaceState_)
         {
-          case PAP_SET_HEAD_ANGLE:
-          {
-            HeadController::SetDesiredAngle(DOCKING_HEAD_ANGLE);
-            pickAndPlaceState_ = PAP_WAITING_FOR_PICKUP_BLOCK;
-            break;
-          }
           case PAP_WAITING_FOR_PICKUP_BLOCK:
           {
-            if (HeadController::IsInPosition()) {
-              PickAndPlaceController::PickUpBlock(BLOCK_TO_PICK_UP, BLOCK_MARKER_WIDTH, 0);
-              pickAndPlaceState_ = PAP_DOCKING;
-            }
+            PRINT("PAPT: Docking to block %d\n", BLOCK_TO_PICK_UP);
+            PickAndPlaceController::PickUpBlock(BLOCK_TO_PICK_UP, BLOCK_MARKER_WIDTH, 0);
+            pickAndPlaceState_ = PAP_DOCKING;
             break;
           }
           case PAP_DOCKING:
             if (!PickAndPlaceController::IsBusy()) {
               if (PickAndPlaceController::DidLastActionSucceed()) {
+                PRINT("PAPT: Placing on other block %d\n", BLOCK_TO_PLACE_ON);
                 PickAndPlaceController::PlaceOnBlock(BLOCK_TO_PLACE_ON, 0, 0);
                 pickAndPlaceState_ = PAP_PLACING;
               } else {
@@ -216,6 +208,7 @@ namespace Anki {
           case PAP_PLACING:
             if (!PickAndPlaceController::IsBusy()) {
               if (PickAndPlaceController::DidLastActionSucceed()) {
+                PRINT("PAPT: Success\n");
                 pickAndPlaceState_ = PAP_WAITING_FOR_PICKUP_BLOCK;
               } else {
                 PickAndPlaceController::PlaceOnBlock(BLOCK_TO_PLACE_ON, 0, 0);
@@ -335,7 +328,7 @@ namespace Anki {
           
           PathFollower::AppendPathSegment_Line(0, 350 + arc1_radius - 2*arc2_radius, 200 - 2*arc2_radius, 350 + arc1_radius - 2*arc2_radius, 0,
                                                PF_TARGET_SPEED_MMPS, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
-          float arc3_radius = 0.5 * (350 + arc1_radius - 2*arc2_radius);
+          float arc3_radius = 0.5f * (350 + arc1_radius - 2*arc2_radius);
           PathFollower::AppendPathSegment_Arc(0, arc3_radius, 0, arc3_radius, 0, PI_F,
                                               PF_TARGET_SPEED_MMPS, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
           
@@ -687,7 +680,7 @@ namespace Anki {
       {
         PRINT("\n==== Starting LightTest =====\n");
         ticCnt_ = 0;
-        ledID = 0;
+        ledID = (HAL::LEDId)0;
         ledColorIdx = 0;
         return RESULT_OK;
       }
@@ -701,8 +694,9 @@ namespace Anki {
           HAL::SetLED(ledID, LEDColorList[ledColorIdx]);
           
           // Increment led
-          if (++ledID == HAL::LED_CHANNEL_COUNT) {
-            ledID = 0;
+          ledID = (HAL::LEDId)((u8)ledID+1);
+          if (ledID == HAL::NUM_LEDS) {
+            ledID = (HAL::LEDId)0;
             
             // Increment color
             if (++ledColorIdx == LED_COLOR_LIST_SIZE) {

@@ -39,6 +39,8 @@ namespace Anki {
       
       OperationMode GetOperationMode();
       void SetOperationMode(OperationMode newMode);
+
+      void StopRobot();
       
     } // namespace Robot
     

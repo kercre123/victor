@@ -40,11 +40,11 @@ namespace Anki {
 
         // Turning radius of docking path
         const f32 DOCK_PATH_START_RADIUS_MM = 50;
-        const f32 DOCK_PATH_END_RADIUS_MM = 120;
+        const f32 DOCK_PATH_END_RADIUS_MM = 100;
         
         // The length of the straight tail end of the dock path.
         // Should be roughly the length of the forks on the lift.
-        const f32 FINAL_APPROACH_STRAIGHT_SEGMENT_LENGTH_MM = 60;
+        const f32 FINAL_APPROACH_STRAIGHT_SEGMENT_LENGTH_MM = 30;
 
         const f32 FAR_DIST_TO_BLOCK_THRESH_MM = 100;
         
@@ -60,7 +60,7 @@ namespace Anki {
         // view and docking is aborted.
         const u32 GIVEUP_DOCKING_TIMEOUT_US = 1000000;
         
-        const u16 DOCK_APPROACH_SPEED_MMPS = 20;
+        const u16 DOCK_APPROACH_SPEED_MMPS = 10;
         const u16 DOCK_FAR_APPROACH_SPEED_MMPS = 30;
         const u16 DOCK_APPROACH_ACCEL_MMPS2 = 60;
         const u16 DOCK_APPROACH_DECEL_MMPS2 = 200;
@@ -125,6 +125,19 @@ namespace Anki {
         Messages::DockingErrorSignal dockMsg;
         while( Messages::CheckMailbox(dockMsg) )
         {
+          
+#if(0)
+          // Print period of tracker (i.e. messages coming in from tracker)
+          static u32 lastTime = 0;
+          u32 currTime = HAL::GetMicroCounter();
+          if (lastTime != 0) {
+            u32 period = (currTime - lastTime)/1000;
+            PRINT("PERIOD: %d ms\n", period);
+          }
+          lastTime = currTime;
+#endif
+          
+          
           if(dockMsg.didTrackingSucceed) {
             
             //PRINT("ErrSignal %d (msgTime %d)\n", HAL::GetMicroCounter(), dockMsg.timestamp);

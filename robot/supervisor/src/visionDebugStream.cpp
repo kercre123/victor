@@ -36,7 +36,8 @@ namespace Anki {
           
           s32 frameNumber = 0;
           
-          const HAL::CameraMode debugStreamResolution_ = HAL::CAMERA_MODE_QQQVGA;
+          //const HAL::CameraMode debugStreamResolution_ = HAL::CAMERA_MODE_QQQVGA;
+          const HAL::CameraMode debugStreamResolution_ = HAL::CAMERA_MODE_QQVGA;
           //const HAL::CameraMode debugStreamResolution_ = HAL::CAMERA_MODE_QVGA;
           
           f32 lastBenchmarkTime_algorithmsOnly;
@@ -51,7 +52,7 @@ namespace Anki {
         {
 #if SEND_DEBUG_STREAM
           const f32 curTime = GetTime();
-          const s32 curSecond = RoundS32(curTime);
+          const s32 curSecond = Round<s32>(curTime);
           
           // Hack, to prevent overwhelming the send buffer
           if(curSecond != lastSecond) {

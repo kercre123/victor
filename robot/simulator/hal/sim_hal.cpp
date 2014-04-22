@@ -47,7 +47,7 @@ namespace Anki {
       const u32 CAMERA_SINGLE_CAPTURE_TIME_US = 1000000 / 15;  // 15Hz, VGA
       const u32 CAMERA_CONTINUOUS_CAPTURE_TIME_US = 1000000 / 30;  // 30Hz, VGA
 
-      const f32 MIN_WHEEL_POWER_FOR_MOTION = 0.2;
+      const f32 MIN_WHEEL_POWER_FOR_MOTION = 0.15;
       
 #pragma mark --- Simulated HardwareInterface "Member Variables" ---
       
@@ -675,7 +675,7 @@ namespace Anki {
       return robotID_;
     }
     
-    void HAL::SetLED(u8 led_id, LEDColor color) {
+    void HAL::SetLED(LEDId led_id, LEDColor color) {
       // TODO: ...
     }
 

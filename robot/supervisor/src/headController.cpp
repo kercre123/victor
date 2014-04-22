@@ -183,6 +183,11 @@ namespace Anki {
     {
       return currentAngle_.ToFloat();
     }
+
+    f32 GetLastCommandedAngle()
+    {
+      return desiredAngle_.ToFloat();
+    }
     
     void PoseAndSpeedFilterUpdate()
     {
