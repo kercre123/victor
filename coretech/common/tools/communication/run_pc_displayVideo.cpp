@@ -149,8 +149,14 @@ int main(int argc, char ** argv)
   }
 
   if(useTcp) {
-    if(socket.Open(ipAddress, port) != RESULT_OK)
-      return -2;
+    while(socket.Open(ipAddress, port) != RESULT_OK) {
+      printf("Trying again to open socket.\n");
+#ifdef _MSC_VER
+      Sleep(100);
+#else
+      usleep(100000);
+#endif
+    }
   } else {
 #ifdef _MSC_VER
     if(serial.Open(comPort, baudRate) != RESULT_OK)
@@ -159,6 +165,8 @@ int main(int argc, char ** argv)
     printf("Error: serial is only supported on Windows\n");
 #endif
   }
+
+  printf("Connection opened\n");
 
   lastUpdateTime = GetTime() + 10e10;
 
@@ -183,6 +191,7 @@ int main(int argc, char ** argv)
   pthread_create(&thread, &attr, DisplayBuffersThread, (void *)&messageQueue);
 #endif
 
+  printf("Parsing thread created\n");
 
   bool atLeastOneStartFound = false;
   s32 start_state = 0;
@@ -196,8 +205,16 @@ int main(int argc, char ** argv)
     s32 bytesRead = 0;
 
     if(useTcp) {
-      if(socket.Read(usbBuffer, USB_BUFFER_SIZE-2, bytesRead) != RESULT_OK)
-        return -4;
+
+      while(socket.Read(usbBuffer, USB_BUFFER_SIZE-2, bytesRead) != RESULT_OK)
+      {
+        printf("socket read failure. Retrying...\n");
+#ifdef _MSC_VER
+        Sleep(1);
+#else
+        usleep(1000);
+#endif
+      }
     } else {
 #ifdef _MSC_VER
       if(serial.Read(usbBuffer, USB_BUFFER_SIZE-2, bytesRead) != RESULT_OK)
