@@ -397,6 +397,18 @@ namespace Anki
         s32 get_numTemplatePixels(const s32 whichScale) const;
         
       protected:
+        
+        // Store grid of original template values for verification
+        // (We don't want to use samples because they are _on_ edges)
+        typedef struct VerifySample
+        {
+          s8 xCoordinate;
+          s8 yCoordinate;
+          u8 grayvalue;
+        } VerifySample;
+        
+        f32 verifyCoordScalar;
+        
         // TODO: verify that there's no alignment padding
         typedef struct TemplateSample
         {
@@ -459,6 +471,8 @@ namespace Anki
         
         FixedLengthList<FixedLengthList<TemplateSample> > templateSamplePyramid;
         FixedLengthList<FixedLengthList<JacobianSample> > jacobianSamplePyramid;
+        
+        FixedLengthList<VerifySample> verificationSamples;
         
         // Update the transformation homography with whatever is currently
         // in the 6DoF parameters

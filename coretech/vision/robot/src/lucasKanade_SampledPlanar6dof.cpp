@@ -227,7 +227,7 @@ namespace Anki
 
         this->templateSamplePyramid = FixedLengthList<FixedLengthList<TemplateSample> >(numPyramidLevels, onchipScratch);
         this->jacobianSamplePyramid = FixedLengthList<FixedLengthList<JacobianSample> >(numPyramidLevels, onchipScratch);
-
+        
         //
         // Compute the samples (and their Jacobians) at each scale
         //
@@ -459,6 +459,67 @@ namespace Anki
           }
         }
 
+        //
+        // Create Grid of Verification Samples
+        //
+        {
+          // TODO: make this a parameter/argument
+          const s32 verifyGridSize = 16;
+          
+          this->verificationSamples = FixedLengthList<VerifySample>(verifyGridSize*verifyGridSize, offchipScratch);
+          
+          const f32 halfWidth = scaleTemplateRegionPercent*templateHalfWidth;
+
+          Meshgrid<f32> verifyCoordinates = Meshgrid<f32>(Linspace(-halfWidth, halfWidth, verifyGridSize),
+                                                          Linspace(-halfWidth, halfWidth, verifyGridSize));
+
+          Array<f32> verifyGrayscaleVector = Array<f32>(1, verifyGridSize*verifyGridSize, offchipScratch);
+          {
+            PUSH_MEMORY_STACK(offchipScratch);
+            
+            Array<f32> verifyImage = Array<f32>(verifyGridSize, verifyGridSize, offchipScratch);
+            
+            if((lastResult = Interp2_Projective<u8,f32>(templateImage, verifyCoordinates,
+                                                        this->transformation.get_homography(),
+                                                        this->transformation.get_centerOffset(initialImageScaleF32),
+                                                        verifyImage, INTERPOLATE_LINEAR)) != RESULT_OK) {
+              AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
+                        "Interp2_Projective for verification image failed with code 0x%x", lastResult);
+              return;
+            }
+            
+            // Turn the templateImage at this scale into a vector
+            if((lastResult = Matrix::Vectorize<f32,f32>(false, verifyImage, verifyGrayscaleVector)) != RESULT_OK) {
+              AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
+                        "Matrix::Vectorize failed with code 0x%x", lastResult);
+            }
+          } // pop verifyImage
+         
+          Array<f32> yVerifyVector = verifyCoordinates.EvaluateY1(false, offchipScratch);
+          Array<f32> xVerifyVector = verifyCoordinates.EvaluateX1(false, offchipScratch);
+          
+          const f32 * restrict pYCoordinates = yVerifyVector.Pointer(0,0);
+          const f32 * restrict pXCoordinates = xVerifyVector.Pointer(0,0);
+          const f32 * restrict pGrayvalues   = verifyGrayscaleVector.Pointer(0,0);
+          
+          const f32 verifyCoordScalarInv = 128.f / halfWidth;
+          
+          for(s32 i=0; i<verifyGridSize*verifyGridSize; ++i)
+          {
+            VerifySample curVerifySample;
+            curVerifySample.xCoordinate = static_cast<u8>(pXCoordinates[i] * verifyCoordScalarInv);
+            curVerifySample.yCoordinate = static_cast<u8>(pYCoordinates[i] * verifyCoordScalarInv);
+            curVerifySample.grayvalue   = static_cast<u8>(pGrayvalues[i]);
+            
+            this->verificationSamples[i] = curVerifySample;
+          }
+          
+          // Store the scalar we need at trackign time to take the stored s8
+          // coordinates into f32 values:
+          this->verifyCoordScalar = 1.f / verifyCoordScalarInv;
+          
+        } // create grid of verification samples
+        
         this->isValid = true;
 
         EndBenchmark("LucasKanadeTracker_SampledPlanar6dof");
@@ -684,7 +745,7 @@ namespace Anki
         } // for(s32 iScale=numPyramidLevels; iScale>=0; iScale--)
 
         lastResult = this->VerifyTrack_Projective(nextImage, verify_maxPixelDifference, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels, scratch);
-
+        
         return lastResult;
       }
 
@@ -1277,27 +1338,15 @@ namespace Anki
         const s32 nextImageHeight = nextImage.get_size(0);
         const s32 nextImageWidth = nextImage.get_size(1);
 
-        const s32 whichScale = 0;
-
         const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / nextImageWidth;
         const f32 initialImageScaleF32 = static_cast<f32>(initialImageScaleS32);
-
         const Point<f32> centerOffsetScaled = this->transformation.get_centerOffset(initialImageScaleF32);
-
-        // Initialize with some very extreme coordinates
-        FixedLengthList<Quadrilateral<f32> > previousCorners(NUM_PREVIOUS_QUADS_TO_COMPARE, scratch);
-
-        for(s32 i=0; i<NUM_PREVIOUS_QUADS_TO_COMPARE; i++) {
-          previousCorners[i] = Quadrilateral<f32>(Point<f32>(-1e10f,-1e10f), Point<f32>(-1e10f,-1e10f), Point<f32>(-1e10f,-1e10f), Point<f32>(-1e10f,-1e10f));
-        }
 
         const f32 xyReferenceMin = 0.0f;
         const f32 xReferenceMax = static_cast<f32>(nextImageWidth) - 1.0f;
         const f32 yReferenceMax = static_cast<f32>(nextImageHeight) - 1.0f;
 
-        const TemplateSample * restrict pTemplateSamplePyramid = this->templateSamplePyramid[whichScale].Pointer(0);
-
-        const s32 numTemplateSamples = this->get_numTemplatePixels(whichScale);
+        const s32 numVerifySamples = this->verificationSamples.get_size();
 
         const Array<f32> &homography = this->transformation.get_homography();
         const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2] / initialImageScaleF32;
@@ -1311,11 +1360,12 @@ namespace Anki
 
         // TODO: make the x and y limits from 1 to end-2
 
-        for(s32 iSample=0; iSample<numTemplateSamples; iSample++) {
-          const TemplateSample curSample = pTemplateSamplePyramid[iSample];
-          const f32 yOriginal = curSample.yCoordinate;
-          const f32 xOriginal = curSample.xCoordinate;
-
+        for(s32 iSample=0; iSample<numVerifySamples; iSample++) {
+          const VerifySample curSample = this->verificationSamples[iSample];
+          const f32 yOriginal = static_cast<f32>(curSample.yCoordinate) * this->verifyCoordScalar;
+          const f32 xOriginal = static_cast<f32>(curSample.xCoordinate) * this->verifyCoordScalar;
+          const f32 grayvalue = static_cast<f32>(curSample.grayvalue);
+          
           // TODO: These two could be strength reduced
           const f32 xTransformedRaw = h00*xOriginal + h01*yOriginal + h02;
           const f32 yTransformedRaw = h10*xOriginal + h11*yOriginal + h12;
@@ -1356,10 +1406,14 @@ namespace Anki
           const f32 pixelBL = *pReference_y1;
           const f32 pixelBR = *(pReference_y1+1);
 
+          // Interpolate the value of this sample in the current image...
           const s32 interpolatedPixelValue = Round<s32>(InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse));
-          const s32 templatePixelValue = Round<s32>(curSample.grayvalue);
+          const s32 templatePixelValue = Round<s32>(grayvalue);
+          
+          // ...compare that value to the template sample
           const s32 grayvalueDifference = ABS(interpolatedPixelValue - templatePixelValue);
 
+          // Keep track of the total difference
           totalGrayvalueDifference += grayvalueDifference;
 
           if(grayvalueDifference <= verify_maxPixelDifferenceS32) {
