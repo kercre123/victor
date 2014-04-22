@@ -241,9 +241,9 @@ namespace Anki
               const f32 alphaY = yTransformed - y0;
               const f32 alphaYinverse = 1.0f - alphaY;
 
-              const s32 y0S32 = RoundS32(y0);
-              const s32 y1S32 = RoundS32(y1);
-              const s32 x0S32 = RoundS32(x0);
+              const s32 y0S32 = Round<s32>(y0);
+              const s32 y1S32 = Round<s32>(y1);
+              const s32 x0S32 = Round<s32>(x0);
 
               const u8 * restrict pReference_y0 = nextImage.Pointer(y0S32, x0S32);
               const u8 * restrict pReference_y1 = nextImage.Pointer(y1S32, x0S32);
@@ -440,9 +440,9 @@ namespace Anki
               const f32 alphaY = yTransformed - y0;
               const f32 alphaYinverse = 1.0f - alphaY;
 
-              const s32 y0S32 = RoundS32(y0);
-              const s32 y1S32 = RoundS32(y1);
-              const s32 x0S32 = RoundS32(x0);
+              const s32 y0S32 = Round<s32>(y0);
+              const s32 y1S32 = Round<s32>(y1);
+              const s32 x0S32 = Round<s32>(x0);
 
               const u8 * restrict pReference_y0 = nextImage.Pointer(y0S32, x0S32);
               const u8 * restrict pReference_y1 = nextImage.Pointer(y1S32, x0S32);

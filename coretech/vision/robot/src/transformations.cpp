@@ -338,8 +338,8 @@ namespace Anki
         Point<s16> * restrict pOut = out.Pointer(0);
 
         for(s32 i=0; i<numPoints; i++) {
-          pOut[i].x = static_cast<s16>(RoundS32(pXOut[i]));
-          pOut[i].y = static_cast<s16>(RoundS32(pYOut[i]));
+          pOut[i].x = static_cast<s16>(Round<s32>(pXOut[i]));
+          pOut[i].y = static_cast<s16>(Round<s32>(pYOut[i]));
         }
 
         return RESULT_OK;
@@ -789,19 +789,19 @@ namespace Anki
         const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2] / initialImageScaleF32;
         const f32 h20 = homography[2][0] * initialImageScaleF32; const f32 h21 = homography[2][1] * initialImageScaleF32; const f32 h22 = homography[2][2] * initialImageScaleF32; // TODO: should h22 be scaled?
 
-        //const s32 templateMeanS32 = RoundS32(templateHistogram.mean);
-        //const s32 nextImageMeanS32 = RoundS32(nextImageHistogram.mean);
+        //const s32 templateMeanS32 = Round<s32>(templateHistogram.mean);
+        //const s32 nextImageMeanS32 = Round<s32>(nextImageHistogram.mean);
 
-        //const s32 templateStdDivisor = RoundS32(static_cast<f32>((1 << numStatisticsFractionalBits)) / templateHistogram.standardDeviation);
-        //const s32 nextImageStdDivisor = RoundS32(static_cast<f32>((1 << numStatisticsFractionalBits)) / nextImageHistogram.standardDeviation);
+        //const s32 templateStdDivisor = Round<s32>(static_cast<f32>((1 << numStatisticsFractionalBits)) / templateHistogram.standardDeviation);
+        //const s32 nextImageStdDivisor = Round<s32>(static_cast<f32>((1 << numStatisticsFractionalBits)) / nextImageHistogram.standardDeviation);
 
         //const s32 templateLowS32 = ComputePercentile(templateHistogram, lowPercentile);
         const s32 templateHighS32 = ComputePercentile(templateHistogram, highPercentile);
-        const s32 templateHighDivisorS32 = 255*RoundS32(static_cast<f32>(1 << numStatisticsFractionalBits) / static_cast<f32>(templateHighS32));
+        const s32 templateHighDivisorS32 = 255*Round<s32>(static_cast<f32>(1 << numStatisticsFractionalBits) / static_cast<f32>(templateHighS32));
 
         //const s32 nextImageLowS32 = ComputePercentile(nextImageHistogram, lowPercentile);
         const s32 nextImageHighS32 = ComputePercentile(nextImageHistogram, highPercentile);
-        const s32 nextImageHighDivisorS32 = 255*RoundS32(static_cast<f32>(1 << numStatisticsFractionalBits) / static_cast<f32>(nextImageHighS32));
+        const s32 nextImageHighDivisorS32 = 255*Round<s32>(static_cast<f32>(1 << numStatisticsFractionalBits) / static_cast<f32>(nextImageHighS32));
 
         numInBounds = 0;
         numSimilarPixels = 0;
@@ -816,7 +816,7 @@ namespace Anki
 
         f32 yOriginal = yGridStart;
         for(s32 y=0; y<yIterationMax; y+=templateCoordinateIncrement) {
-          const u8 * restrict pTemplateImage = templateImage.Pointer(RoundS32(y+templateRegionOfInterest.top), RoundS32(templateRegionOfInterest.left));
+          const u8 * restrict pTemplateImage = templateImage.Pointer(Round<s32>(y+templateRegionOfInterest.top), Round<s32>(templateRegionOfInterest.left));
 
           f32 xOriginal = xGridStart;
 
@@ -827,8 +827,8 @@ namespace Anki
 
             const f32 normalization = 1.0f / (h20*xOriginal + h21*yOriginal + h22);
 
-            const s32 xTransformedS32 = RoundS32( (xTransformedRaw * normalization) + centerOffsetScaled.x );
-            const s32 yTransformedS32 = RoundS32( (yTransformedRaw * normalization) + centerOffsetScaled.y );
+            const s32 xTransformedS32 = Round<s32>( (xTransformedRaw * normalization) + centerOffsetScaled.x );
+            const s32 yTransformedS32 = Round<s32>( (yTransformedRaw * normalization) + centerOffsetScaled.y );
 
             xOriginal += xGridDelta;
 
@@ -944,7 +944,7 @@ namespace Anki
 
         f32 yOriginal = yGridStart;
         for(s32 y=0; y<yIterationMax; y+=templateCoordinateIncrement) {
-          const u8 * restrict pTemplateImage = templateImage.Pointer(RoundS32(y+templateRegionOfInterest.top), RoundS32(templateRegionOfInterest.left));
+          const u8 * restrict pTemplateImage = templateImage.Pointer(Round<s32>(y+templateRegionOfInterest.top), Round<s32>(templateRegionOfInterest.left));
 
           f32 xOriginal = xGridStart;
 
@@ -979,9 +979,9 @@ namespace Anki
             const f32 alphaY = yTransformed - y0;
             const f32 alphaYinverse = 1.0f - alphaY;
 
-            const s32 y0S32 = RoundS32(y0);
-            const s32 y1S32 = RoundS32(y1);
-            const s32 x0S32 = RoundS32(x0);
+            const s32 y0S32 = Round<s32>(y0);
+            const s32 y1S32 = Round<s32>(y1);
+            const s32 x0S32 = Round<s32>(x0);
 
             const u8 * restrict pReference_y0 = nextImage.Pointer(y0S32, x0S32);
             const u8 * restrict pReference_y1 = nextImage.Pointer(y1S32, x0S32);
@@ -991,11 +991,11 @@ namespace Anki
             const f32 pixelBL = *pReference_y1;
             const f32 pixelBR = *(pReference_y1+1);
 
-            const s32 interpolatedPixelValue = RoundS32(InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse));
+            const s32 interpolatedPixelValue = Round<s32>(InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse));
             const s32 templatePixelValue = pTemplateImage[x];
             const s32 grayvalueDifference = ABS(interpolatedPixelValue - templatePixelValue);
 
-            //matlab.EvalString("template(%d,%d) = %d; warped(%d,%d) = %d;", RoundS32(y0), RoundS32(x0), templatePixelValue, RoundS32(y0), RoundS32(x0), interpolatedPixelValue);
+            //matlab.EvalString("template(%d,%d) = %d; warped(%d,%d) = %d;", Round<s32>(y0), Round<s32>(x0), templatePixelValue, Round<s32>(y0), Round<s32>(x0), interpolatedPixelValue);
 
             totalGrayvalueDifference += grayvalueDifference;
 

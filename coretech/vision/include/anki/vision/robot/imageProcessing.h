@@ -271,9 +271,9 @@ namespace Anki
             const f32 pixelBL = static_cast<f32>(pIn_y1[inX0_S32]);
             const f32 pixelBR = static_cast<f32>(pIn_y1[inX1_S32]);
 
-            const OutType interpolatedPixelValue = static_cast<OutType>( InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse) );
+            const f32 interpolatedPixelValueF32 = InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse);
 
-            pOut[x] = static_cast<OutType>(interpolatedPixelValue);
+            pOut[x] = RoundIfInteger<OutType>(interpolatedPixelValueF32);
           } // for(s32 x=0; x<outWidth; x++)
         } // for(s32 y=0; y<outHeight; y++)
 

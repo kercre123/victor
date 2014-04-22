@@ -94,8 +94,8 @@ namespace Anki
           const f32 warpedXf = (h00 * x + h01 *y + h02) * homogenousDivisor;
           const f32 warpedYf = (h10 * x + h11 *y + h12) * homogenousDivisor;
 
-          const s32 warpedX = RoundS32(warpedXf);
-          const s32 warpedY = RoundS32(warpedYf);
+          const s32 warpedX = Round<s32>(warpedXf);
+          const s32 warpedY = Round<s32>(warpedYf);
 
           // 2. Sample the image
 

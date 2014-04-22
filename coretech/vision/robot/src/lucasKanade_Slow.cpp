@@ -189,10 +189,10 @@ namespace Anki
           Array<f32> templateMask = Array<f32>(templateImageHeight, templateImageWidth, memory);
           templateMask.SetZero();
           templateMask(
-            RoundS32(templateRegion.top),
-            RoundS32(templateRegion.bottom),
-            RoundS32(templateRegion.left),
-            RoundS32(templateRegion.right)).Set(1.0f);
+            Round<s32>(templateRegion.top),
+            Round<s32>(templateRegion.bottom),
+            Round<s32>(templateRegion.left),
+            Round<s32>(templateRegion.right)).Set(1.0f);
           EndBenchmark("InitializeTemplate.setTemplateMask");
 
           for(s32 iScale=0; iScale<this->numPyramidLevels; iScale++) {

@@ -608,8 +608,8 @@ namespace Anki
           for(s32 iSample=0; iSample<numSamples; iSample++) {
             const TemplateSample curTemplateSample = pTemplateSample[iSample];
 
-            const s32 curY = RoundS32(curTemplateSample.yCoordinate + centerOffset.y);
-            const s32 curX = RoundS32(curTemplateSample.xCoordinate + centerOffset.x);
+            const s32 curY = Round<s32>(curTemplateSample.yCoordinate + centerOffset.y);
+            const s32 curX = Round<s32>(curTemplateSample.xCoordinate + centerOffset.x);
 
             if(curX >= 0 && curY >= 0 && curX < this->templateImageWidth && curY < this->templateImageHeight) {
               image[curY][curX] = 255;
@@ -860,9 +860,9 @@ namespace Anki
             const f32 alphaY = yTransformed - y0;
             const f32 alphaYinverse = 1.0f - alphaY;
 
-            const s32 y0S32 = RoundS32(y0);
-            const s32 y1S32 = RoundS32(y1);
-            const s32 x0S32 = RoundS32(x0);
+            const s32 y0S32 = Round<s32>(y0);
+            const s32 y1S32 = Round<s32>(y1);
+            const s32 x0S32 = Round<s32>(x0);
 
             const u8 * restrict pReference_y0 = nextImage.Pointer(y0S32, x0S32);
             const u8 * restrict pReference_y1 = nextImage.Pointer(y1S32, x0S32);
@@ -1074,9 +1074,9 @@ namespace Anki
             const f32 alphaY = yTransformed - y0;
             const f32 alphaYinverse = 1.0f - alphaY;
 
-            const s32 y0S32 = RoundS32(y0);
-            const s32 y1S32 = RoundS32(y1);
-            const s32 x0S32 = RoundS32(x0);
+            const s32 y0S32 = Round<s32>(y0);
+            const s32 y1S32 = Round<s32>(y1);
+            const s32 x0S32 = Round<s32>(x0);
 
             const u8 * restrict pReference_y0 = nextImage.Pointer(y0S32, x0S32);
             const u8 * restrict pReference_y1 = nextImage.Pointer(y1S32, x0S32);
@@ -1344,9 +1344,9 @@ namespace Anki
           const f32 alphaY = yTransformed - y0;
           const f32 alphaYinverse = 1.0f - alphaY;
 
-          const s32 y0S32 = RoundS32(y0);
-          const s32 y1S32 = RoundS32(y1);
-          const s32 x0S32 = RoundS32(x0);
+          const s32 y0S32 = Round<s32>(y0);
+          const s32 y1S32 = Round<s32>(y1);
+          const s32 x0S32 = Round<s32>(x0);
 
           const u8 * restrict pReference_y0 = nextImage.Pointer(y0S32, x0S32);
           const u8 * restrict pReference_y1 = nextImage.Pointer(y1S32, x0S32);
@@ -1356,8 +1356,8 @@ namespace Anki
           const f32 pixelBL = *pReference_y1;
           const f32 pixelBR = *(pReference_y1+1);
 
-          const s32 interpolatedPixelValue = RoundS32(InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse));
-          const s32 templatePixelValue = RoundS32(curSample.grayvalue);
+          const s32 interpolatedPixelValue = Round<s32>(InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse));
+          const s32 templatePixelValue = Round<s32>(curSample.grayvalue);
           const s32 grayvalueDifference = ABS(interpolatedPixelValue - templatePixelValue);
 
           totalGrayvalueDifference += grayvalueDifference;
