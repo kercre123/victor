@@ -44,8 +44,7 @@ DWORD WINAPI DisplayBuffersThread(LPVOID lpParam)
 #else
 void* DisplayBuffersThread(void *threadParameters)
 {
-
-// TODO: set thread priority
+  // TODO: set thread priority
 
   ThreadSafeQueue<DisplayRawBuffer> *messageQueue = (ThreadSafeQueue<DisplayRawBuffer>*)threadParameters;
 #endif
@@ -144,7 +143,7 @@ int main(int argc, char ** argv)
   //    sscanf(argv[2], "%d", &baudRate);
   //}
   else {
-  // printUsage();
+    // printUsage();
     return -1;
   }
 
@@ -175,12 +174,12 @@ int main(int argc, char ** argv)
 
   DWORD threadId = -1;
   CreateThread(
-               NULL,        // default security attributes
-               0,           // use default stack size
-               DisplayBuffersThread, // thread function name
-               &messageQueue,    // argument to thread function
-               0,           // use default creation flags
-               &threadId);  // returns the thread identifier
+    NULL,        // default security attributes
+    0,           // use default stack size
+    DisplayBuffersThread, // thread function name
+    &messageQueue,    // argument to thread function
+    0,           // use default creation flags
+    &threadId);  // returns the thread identifier
 #else
   // TODO: set thread priority
 
@@ -205,7 +204,6 @@ int main(int argc, char ** argv)
     s32 bytesRead = 0;
 
     if(useTcp) {
-
       while(socket.Read(usbBuffer, USB_BUFFER_SIZE-2, bytesRead) != RESULT_OK)
       {
         printf("socket read failure. Retrying...\n");
