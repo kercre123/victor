@@ -221,12 +221,17 @@ namespace Anki
 
         const s32 numSelectBins = 20;
 
+        // TODO: Pass this in as a parameter/argument
+        const s32 verifyGridSize = 16;
+        
         Result lastResult;
 
         BeginBenchmark("LucasKanadeTracker_SampledPlanar6dof");
 
         this->templateSamplePyramid = FixedLengthList<FixedLengthList<TemplateSample> >(numPyramidLevels, onchipScratch);
         this->jacobianSamplePyramid = FixedLengthList<FixedLengthList<JacobianSample> >(numPyramidLevels, onchipScratch);
+        this->verificationSamples   = FixedLengthList<VerifySample>(verifyGridSize*verifyGridSize, onchipScratch);
+        
         
         //
         // Compute the samples (and their Jacobians) at each scale
@@ -463,13 +468,10 @@ namespace Anki
         // Create Grid of Verification Samples
         //
         {
-          // TODO: make this a parameter/argument
-          const s32 verifyGridSize = 16;
-          
-          this->verificationSamples = FixedLengthList<VerifySample>(verifyGridSize*verifyGridSize, offchipScratch);
-          
           const f32 halfWidth = scaleTemplateRegionPercent*templateHalfWidth;
 
+          this->verificationSamples.set_size(verifyGridSize*verifyGridSize);
+          
           Meshgrid<f32> verifyCoordinates = Meshgrid<f32>(Linspace(-halfWidth, halfWidth, verifyGridSize),
                                                           Linspace(-halfWidth, halfWidth, verifyGridSize));
 
