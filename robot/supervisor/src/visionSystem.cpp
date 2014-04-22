@@ -548,7 +548,8 @@ namespace Anki {
         
         const Result trackerResult = tracker.UpdateTrack(grayscaleImage,
                                                          parameters.maxIterations,
-                                                         parameters.convergenceTolerance,
+                                                         parameters.convergenceTolerance_angle,
+                                                         parameters.convergenceTolerance_distance,
                                                          parameters.verify_maxPixelDifference,
                                                          converged,
                                                          verify_meanAbsoluteDifference,
