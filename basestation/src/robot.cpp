@@ -12,6 +12,7 @@
 #include "anki/cozmo/basestation/messages.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/common/basestation/general.h"
+#include "anki/vision/CameraSettings.h"
 
 // TODO: This is shared between basestation and robot and should be moved up
 #include "anki/cozmo/robot/cozmoConfig.h"
@@ -496,6 +497,14 @@ namespace Anki {
       return msgHandler_->SendMessage(ID_, m);
     }
 
+    Result Robot::SendImageRequest() const
+    {
+      MessageImageRequest m;
+      
+      m.resolution = Vision::CAMERA_RES_QQQQVGA;
+      
+      return msgHandler_->SendMessage(ID_, m);
+    }
     
   } // namespace Cozmo
 } // namespace Anki

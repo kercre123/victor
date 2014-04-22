@@ -77,6 +77,7 @@ namespace Anki {
       //bool CheckMailbox(MatMarkerObserved&   msg);
       bool CheckMailbox(VisionMarker&        msg);
       bool CheckMailbox(DockingErrorSignal&  msg);
+      bool CheckMailbox(ImageChunk&          msg);
       
     } // namespace Messages
   } // namespace Cozmo

@@ -149,6 +149,9 @@ namespace Anki {
         static Vision::CameraResolution        captureResolution_;
         static Vision::CameraResolution        faceDetectionResolution_;
 
+        // For sending images to basestation
+        static Vision::CameraResolution        nextSendImageResolution_ = Vision::CAMERA_RES_NONE;
+        
         /* Only using static members of SimulatorParameters now
 #ifdef SIMULATOR
         static SimulatorParameters             simulatorParameters_;
@@ -244,6 +247,74 @@ namespace Anki {
       {
         return prevRobotState_.headAngle;
       }
+      
+      void SendNextImage(Vision::CameraResolution res)
+      {
+        // TODO: With the current method we only have the space to send QQQQVGA.
+        //       Try sending images from longExecution directly if possible so that
+        //       the space for an entire image doesn't need to be reserved in a mailbox.
+        if (res == Vision::CAMERA_RES_QQQQVGA) {
+          nextSendImageResolution_ = res;
+        }
+      }
+      
+      void DownsampleAndSendImage(Array<u8> &img)
+      {
+        // Only downsample if normal capture res is QVGA
+        if (nextSendImageResolution_ != Vision::CAMERA_RES_NONE && captureResolution_ == Vision::CAMERA_RES_QVGA) {
+          
+          static u8 imgID = 0;
+          
+          // Downsample and split into image chunk message
+          const u32 xRes = CameraModeInfo[nextSendImageResolution_].width;
+          const u32 yRes = CameraModeInfo[nextSendImageResolution_].height;
+          
+          const u32 xSkip = 320 / xRes;
+          const u32 ySkip = 240 / yRes;
+          
+          const u32 numTotalBytes = xRes*yRes;
+          
+          Messages::ImageChunk m;
+          m.resolution = nextSendImageResolution_;
+          m.imageId = ++imgID;
+          m.chunkId = 0;
+          m.chunkSize = IMAGE_CHUNK_SIZE;
+          
+          u32 totalByteCnt = 0;
+          u32 chunkByteCnt = 0;
+          
+          //PRINT("Downsample: from %d x %d  to  %d x %d\n", img.get_size(1), img.get_size(0), xRes, yRes);
+          
+          u32 dataY = 0;
+          for (u32 y = 0; y < 240; y += ySkip, dataY++)
+          {
+            const u8* restrict rowPtr = img.Pointer(y, 0);
+            
+            u32 dataX = 0;
+            for (u32 x = 0; x < 320; x += xSkip, dataX++)
+            {
+              m.data[chunkByteCnt] = rowPtr[x];
+              ++chunkByteCnt;
+              ++totalByteCnt;
+              
+              if (chunkByteCnt == IMAGE_CHUNK_SIZE) {
+                Messages::ProcessImageChunkMessage(m);
+                ++m.chunkId;
+                chunkByteCnt = 0;
+                //PRINT("Adding chunk %d to mailbox\n", m.chunkId);
+              } else if (totalByteCnt == numTotalBytes) {
+                // This should be the last message!
+                m.chunkSize = chunkByteCnt;
+                Messages::ProcessImageChunkMessage(m);
+                //PRINT("Adding LAST chunk %d to mailbox\n", m.chunkId);
+              }
+            }
+          }
+          
+          nextSendImageResolution_ = Vision::CAMERA_RES_NONE;
+        }
+      }
+      
       
       static Result LookForMarkers(
                                        const Array<u8> &grayscaleImage,
@@ -1306,6 +1377,8 @@ namespace Anki {
           
           HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
                               captureResolution_, exposure, false);
+          
+          DownsampleAndSendImage(grayscaleImage);
           
           const Result result = LookForMarkers(
                                                    grayscaleImage,

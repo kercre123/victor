@@ -115,6 +115,8 @@ namespace Anki {
                                    Embedded::Array<f32>&        rotationWrtRobot,
                                    Embedded::Point3<f32>&       translationWrtRobot);
       
+      void SendNextImage(Vision::CameraResolution res);
+      
     } // namespace VisionSystem
     
   } // namespace Cozmo

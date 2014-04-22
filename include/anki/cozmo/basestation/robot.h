@@ -107,6 +107,9 @@ namespace Anki {
 
       // Update the head angle on the robot
       Result SendHeadAngleUpdate() const;
+
+      // Request camera snapshot from robot
+      Result SendImageRequest() const;
       
     protected:
       // The robot's identifier
