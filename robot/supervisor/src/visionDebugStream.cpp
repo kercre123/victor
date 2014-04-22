@@ -157,7 +157,7 @@ namespace Anki {
           
           // The UART can't handle this at full rate, so wait a bit between each frame
           if(debugStreamResolution_ == HAL::CAMERA_MODE_QVGA) {
-            HAL::MicroWait(1000000);
+            //HAL::MicroWait(1000000);
           }
 #endif // #if SEND_DEBUG_STREAM
           
@@ -252,7 +252,7 @@ namespace Anki {
           
           // The UART can't handle this at full rate, so wait a bit between each frame
           if(debugStreamResolution_ == HAL::CAMERA_MODE_QVGA) {
-            HAL::MicroWait(1000000);
+            //HAL::MicroWait(1000000);
           }
           
 #endif // #if SEND_DEBUG_STREAM
@@ -303,7 +303,7 @@ namespace Anki {
           
           // The UART can't handle this at full rate, so wait a bit between each frame
           if(debugStreamResolution_ == HAL::CAMERA_MODE_QVGA) {
-            HAL::MicroWait(1000000);
+            //HAL::MicroWait(1000000);
           }
           
 #endif // #if SEND_DEBUG_STREAM
