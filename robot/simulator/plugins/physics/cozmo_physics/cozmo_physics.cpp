@@ -69,25 +69,21 @@ const int SIZEOF_FLOAT = sizeof(float);
 
 namespace Anki {
   namespace Cozmo{
-    
-    // TODO: Move the following to VizStructs.cpp?
+
 #define MESSAGE_DEFINITION_MODE MESSAGE_DISPATCH_DEFINITION_MODE
 #include "anki/cozmo/VizMsgDefs.h"
     
-    typedef struct {
-      u8 priority;
-      u8 size;
-      void (*dispatchFcn)(const u8* buffer);
-    } TableEntry;
+    typedef void (*DispatchFcn_t)(const u8* buffer);
     
     const size_t NUM_TABLE_ENTRIES = Anki::Cozmo::NUM_VIZ_MSG_IDS + 1;
-    TableEntry LookupTable_[NUM_TABLE_ENTRIES] = {
-      {0, 0, 0}, // Empty entry for NO_MESSAGE_ID
+    DispatchFcn_t DispatchTable_[NUM_TABLE_ENTRIES] = {
+      0, // Empty entry for NO_MESSAGE_ID
 #undef  MESSAGE_DEFINITION_MODE
-#define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_MODE
+#define MESSAGE_DEFINITION_MODE MESSAGE_DISPATCH_FCN_TABLE_DEFINITION_MODE
 #include "anki/cozmo/VizMsgDefs.h"
-      {0, 0, 0} // Final dummy entry without comma at end
+      0 // Final dummy entry without comma at end
     };
+
     
     void ProcessVizObjectMessage(const VizObject& msg)
     {
@@ -207,6 +203,7 @@ namespace Anki {
     // These messages are handled by cozmo_viz_controller
     void ProcessVizSetLabelMessage(const VizSetLabel& msg){};
     void ProcessVizDockingErrorSignalMessage(const VizDockingErrorSignal& msg){};
+    void ProcessVizCamImageMessage(const VizCamImage& msg){};
     
   } // namespace Cozmo
 } // namespace Anki
@@ -294,7 +291,7 @@ void webots_physics_step() {
     int msgID = static_cast<Anki::Cozmo::VizMsgID>(recvBuf[0]);
     PRINT( "Processing msgs from Basestation: Got msg %d (%d bytes)\n", msgID, bytes_recvd);
     
-    (*Anki::Cozmo::LookupTable_[msgID].dispatchFcn)(recvBuf + 1);
+    (*Anki::Cozmo::DispatchTable_[msgID])(recvBuf + 1);
   }
 
 }

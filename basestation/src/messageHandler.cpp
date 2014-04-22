@@ -296,6 +296,8 @@ namespace Anki {
         snprintf(imgCaptureFilename, sizeof(imgCaptureFilename), "robot%d_img%d.pgm", robot->get_ID(), imgID);
         PRINT_INFO("Printing image to %s\n", imgCaptureFilename);
         Vision::WritePGM(imgCaptureFilename, data, width, height);
+        
+        VizManager::getInstance()->SendGreyImage(width, height, data);
       }
       
       

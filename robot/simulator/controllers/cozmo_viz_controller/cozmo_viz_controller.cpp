@@ -22,30 +22,36 @@ webots::Supervisor vizSupervisor;
 namespace Anki {
   namespace Cozmo{
     
-    // TODO: Move the following to VizStructs.cpp?
+
 #define MESSAGE_DEFINITION_MODE MESSAGE_DISPATCH_DEFINITION_MODE
 #include "anki/cozmo/VizMsgDefs.h"
-    
-    typedef struct {
-      u8 priority;
-      u8 size;
-      void (*dispatchFcn)(const u8* buffer);
-    } TableEntry;
+
+    typedef void (*DispatchFcn_t)(const u8* buffer);
     
     const size_t NUM_TABLE_ENTRIES = Anki::Cozmo::NUM_VIZ_MSG_IDS + 1;
-    TableEntry LookupTable_[NUM_TABLE_ENTRIES] = {
-      {0, 0, 0}, // Empty entry for NO_MESSAGE_ID
+    DispatchFcn_t DispatchTable_[NUM_TABLE_ENTRIES] = {
+      0, // Empty entry for NO_MESSAGE_ID
 #undef  MESSAGE_DEFINITION_MODE
-#define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_MODE
+#define MESSAGE_DEFINITION_MODE MESSAGE_DISPATCH_FCN_TABLE_DEFINITION_MODE
 #include "anki/cozmo/VizMsgDefs.h"
-      {0, 0, 0} // Final dummy entry without comma at end
+      0 // Final dummy entry without comma at end
     };
     
+    namespace {
+      // For displaying misc debug data
+      webots::Display* disp;
+      
+      // For displaying images
+      webots::Display* camDisp;
+      
+      // Image reference for display in camDisp
+      webots::ImageRef* camImg = nullptr;
+    }
     
-    webots::Display* disp;
     void Init()
     {
       disp = vizSupervisor.getDisplay("cozmo_viz_display");
+      camDisp = vizSupervisor.getDisplay("cozmo_cam_viz_display");
     }
     
 
@@ -121,6 +127,31 @@ namespace Anki {
       
     }
     
+    void ProcessVizCamImageMessage(const VizCamImage& msg)
+    {
+      u32 imgSize = msg.width * msg.height;
+      u8 img[imgSize * 3];
+      
+      // Duplicate channels for viewability. (Webots only supports RGB)
+      for(int i=0; i<imgSize; ++i) {
+        img[3*i] = msg.data[i];
+        img[3*i+1] = img[3*i];
+        img[3*i+2] = img[3*i];
+      }
+      
+      // Delete existing image if there is one.
+      if (camImg != nullptr) {
+        camDisp->imageDelete(camImg);
+      }
+      
+      //printf("DISP IMAGE %d x %d\n", msg.width, msg.height);
+      
+      camImg = camDisp->imageNew(msg.width, msg.height, img, webots::Display::RGB);
+      camDisp->imagePaste(camImg, 0, 0);
+    };
+  
+    
+    
     // Stubs
     // These messages are handled by cozmo_physics.
     void ProcessVizObjectMessage(const VizObject& msg){};
@@ -140,7 +171,7 @@ using namespace Anki::Cozmo;
 
 int main(int argc, char **argv)
 {
-  const int maxPacketSize = 1024;
+  const int maxPacketSize = MAX_VIZ_MSG_SIZE;
   char data[maxPacketSize];
   int numBytesRecvd;
   
@@ -170,7 +201,8 @@ int main(int argc, char **argv)
         // Messages that are handled in cozmo_viz_controller
         case VizSetLabel_ID:
         case VizDockingErrorSignal_ID:
-          (*Anki::Cozmo::LookupTable_[msgID].dispatchFcn)((unsigned char*)(data + 1));
+        case VizCamImage_ID:
+          (*Anki::Cozmo::DispatchTable_[msgID])((unsigned char*)(data + 1));
           break;
         // All other messages are forwarded to cozmo_physics plugin
         default:
