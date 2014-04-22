@@ -27,6 +27,8 @@ non-disclosure agreement with Anki, inc.
 
 #define USE_OPENCV_ITERATIVE_POSE_INIT 0
 
+// If 0, just uses nearest pixel
+#define USE_LINEAR_INTERPOLATION_FOR_VERIFICATION 0
 #if USE_OPENCV_ITERATIVE_POSE_INIT
 #include "opencv2/calib3d/calib3d.hpp"
 #endif
@@ -231,7 +233,6 @@ namespace Anki
         this->templateSamplePyramid = FixedLengthList<FixedLengthList<TemplateSample> >(numPyramidLevels, onchipScratch);
         this->jacobianSamplePyramid = FixedLengthList<FixedLengthList<JacobianSample> >(numPyramidLevels, onchipScratch);
         this->verificationSamples   = FixedLengthList<VerifySample>(verifyGridSize*verifyGridSize, onchipScratch);
-        
         
         //
         // Compute the samples (and their Jacobians) at each scale
@@ -490,7 +491,7 @@ namespace Anki
               return;
             }
             
-            // Turn the templateImage at this scale into a vector
+            // Turn verifyImage into a vector
             if((lastResult = Matrix::Vectorize<f32,f32>(false, verifyImage, verifyGrayscaleVector)) != RESULT_OK) {
               AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
                         "Matrix::Vectorize failed with code 0x%x", lastResult);
@@ -504,19 +505,19 @@ namespace Anki
           const f32 * restrict pXCoordinates = xVerifyVector.Pointer(0,0);
           const f32 * restrict pGrayvalues   = verifyGrayscaleVector.Pointer(0,0);
           
-          const f32 verifyCoordScalarInv = 128.f / halfWidth;
+          const f32 verifyCoordScalarInv = static_cast<f32>(s8_MAX) / halfWidth;
           
           for(s32 i=0; i<verifyGridSize*verifyGridSize; ++i)
           {
             VerifySample curVerifySample;
-            curVerifySample.xCoordinate = static_cast<u8>(pXCoordinates[i] * verifyCoordScalarInv);
-            curVerifySample.yCoordinate = static_cast<u8>(pYCoordinates[i] * verifyCoordScalarInv);
+            curVerifySample.xCoordinate = static_cast<s8>(pXCoordinates[i] * verifyCoordScalarInv);
+            curVerifySample.yCoordinate = static_cast<s8>(pYCoordinates[i] * verifyCoordScalarInv);
             curVerifySample.grayvalue   = static_cast<u8>(pGrayvalues[i]);
             
             this->verificationSamples[i] = curVerifySample;
           }
           
-          // Store the scalar we need at trackign time to take the stored s8
+          // Store the scalar we need at tracking time to take the stored s8
           // coordinates into f32 values:
           this->verifyCoordScalar = 1.f / verifyCoordScalarInv;
           
@@ -1366,7 +1367,8 @@ namespace Anki
           const VerifySample curSample = this->verificationSamples[iSample];
           const f32 yOriginal = static_cast<f32>(curSample.yCoordinate) * this->verifyCoordScalar;
           const f32 xOriginal = static_cast<f32>(curSample.xCoordinate) * this->verifyCoordScalar;
-          const f32 grayvalue = static_cast<f32>(curSample.grayvalue);
+          
+          const s32 templatePixelValue = static_cast<s32>(curSample.grayvalue);
           
           // TODO: These two could be strength reduced
           const f32 xTransformedRaw = h00*xOriginal + h01*yOriginal + h02;
@@ -1376,57 +1378,77 @@ namespace Anki
 
           const f32 xTransformed = (xTransformedRaw / normalization) + centerOffsetScaled.x;
           const f32 yTransformed = (yTransformedRaw / normalization) + centerOffsetScaled.y;
-
+          
+#if USE_LINEAR_INTERPOLATION_FOR_VERIFICATION
           const f32 x0 = FLT_FLOOR(xTransformed);
           const f32 x1 = ceilf(xTransformed); // x0 + 1.0f;
-
+          
           const f32 y0 = FLT_FLOOR(yTransformed);
           const f32 y1 = ceilf(yTransformed); // y0 + 1.0f;
-
+          
           // If out of bounds, continue
           if(x0 < xyReferenceMin || x1 > xReferenceMax || y0 < xyReferenceMin || y1 > yReferenceMax) {
             continue;
           }
-
-          verify_numInBounds++;
-
+          
           const f32 alphaX = xTransformed - x0;
           const f32 alphaXinverse = 1 - alphaX;
-
+          
           const f32 alphaY = yTransformed - y0;
           const f32 alphaYinverse = 1.0f - alphaY;
-
+          
           const s32 y0S32 = Round<s32>(y0);
           const s32 y1S32 = Round<s32>(y1);
           const s32 x0S32 = Round<s32>(x0);
-
+          
           const u8 * restrict pReference_y0 = nextImage.Pointer(y0S32, x0S32);
           const u8 * restrict pReference_y1 = nextImage.Pointer(y1S32, x0S32);
-
+          
           const f32 pixelTL = *pReference_y0;
           const f32 pixelTR = *(pReference_y0+1);
           const f32 pixelBL = *pReference_y1;
           const f32 pixelBR = *(pReference_y1+1);
-
+          
           // Interpolate the value of this sample in the current image...
           const s32 interpolatedPixelValue = Round<s32>(InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse));
-          const s32 templatePixelValue = Round<s32>(grayvalue);
+          
+#else // No linear interpolation, just nearest pixel
+          
+          if(xTransformed < xyReferenceMin || xTransformed > xReferenceMax ||
+             yTransformed < xyReferenceMin || yTransformed > yReferenceMax)
+          {
+            // Out of bounds
+            continue;
+          }
+          
+          const s32 xS32 = Round<s32>(xTransformed);
+          const s32 yS32 = Round<s32>(yTransformed);
+          
+          // Lookup nearest pixel value in the current image...
+          const u8 * restrict pReference = nextImage.Pointer(yS32, xS32);
+          
+          const s32 interpolatedPixelValue = static_cast<s32>(*pReference);
+          
+#endif // #if USE_LINEAR_INTERPOLATION_FOR_VERIFICATION
+          
+          verify_numInBounds++;
           
           // ...compare that value to the template sample
           const s32 grayvalueDifference = ABS(interpolatedPixelValue - templatePixelValue);
-
+          
           // Keep track of the total difference
           totalGrayvalueDifference += grayvalueDifference;
-
+          
           if(grayvalueDifference <= verify_maxPixelDifferenceS32) {
             verify_numSimilarPixels++;
           }
         } // for(s32 iSample=0; iSample<numTemplateSamples; iSample++)
-
+        
         verify_meanAbsoluteDifference = totalGrayvalueDifference / verify_numInBounds;
 
         return RESULT_OK;
-      }
+        
+      } // VerifyTrack_Projective()
 
       Result LucasKanadeTracker_SampledPlanar6dof::ApproximateSelect(const Array<f32> &magnitudeVector, const s32 numBins, const s32 numToSelect, s32 &numSelected, Array<u16> &magnitudeIndexes)
       {
