@@ -23,8 +23,6 @@ namespace Anki
   {
     namespace InterpolateOperation
     {
-      // #pragma mark
-
       // const Type h00, h01, h02, h10, h11, h12;
       template<typename Type> Affine<Type>::Affine(const Array<Type> &homography)
         : h00(homography[0][0]), h01(homography[0][1]), h02(homography[0][2]),
@@ -37,25 +35,6 @@ namespace Anki
         outX = h00*inX + h01*inY + h02;
         outY = h10*inX + h11*inY + h12;
       }
-
-      //// const Type h00, h01, h02, h10, h11, h12, h20, h21; // h22 should be 1
-      //template<typename Type> Projective<Type>::Projective(const Array<Type> &homography)
-      //  : h00(homography[0][0]), h01(homography[0][1]), h02(homography[0][2]),
-      //  h10(homography[1][0]), h11(homography[1][1]), h12(homography[1][2]),
-      //  h20(homography[2][0]), h21(homography[2][1])
-      //{
-      //  AnkiConditionalError(NEAR(homography[2][2], static_cast<Type>(1), 1e-10),
-      //    "Projective<Type>::Projective", "homography[2][2] should equal 1");
-      //}
-
-      //template<typename Type> inline void Projective<Type>::Apply(const Type inX, const Type inY, Type &outX, Type &outY)
-      //{
-      //  // TODO: why is this not +1?
-      //  const Type normalization = h20*inX + h21*inY;
-
-      //  outX = (h00*inX + h01*inY + h02) / normalization;
-      //  outY = (h10*inX + h11*inY + h12) / normalization;
-      //}
     }
 
     template<typename Type> inline Type InterpolateBilinear2d(const Type pixelTL, const Type pixelTR, const Type pixelBL, const Type pixelBR, const Type alphaY, const Type alphaYinverse, const Type alphaX, const Type alphaXinverse)
@@ -148,9 +127,9 @@ namespace Anki
           const f32 alphaY = curY - y0;
           const f32 alphaYinverse = 1.0f - alphaY;
 
-          const s32 y0S32 = RoundS32(y0);
-          const s32 y1S32 = RoundS32(y1);
-          const s32 x0S32 = RoundS32(x0);
+          const s32 y0S32 = Round<s32>(y0);
+          const s32 y1S32 = Round<s32>(y1);
+          const s32 x0S32 = Round<s32>(x0);
 
           const InType * restrict pReference_y0 = reference.Pointer(y0S32, x0S32);
           const InType * restrict pReference_y1 = reference.Pointer(y1S32, x0S32);
@@ -162,7 +141,7 @@ namespace Anki
 
           const f32 interpolatedPixelF32 = InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse);
 
-          const OutType interpolatedPixel = static_cast<OutType>(interpolatedPixelF32);
+          const OutType interpolatedPixel = RoundIfInteger<OutType>(interpolatedPixelF32);
 
           pOut[x] = interpolatedPixel;
         } // for(s32 x=0; x<xIterationMax; x++)
@@ -277,9 +256,9 @@ namespace Anki
           const f32 alphaY = yTransformed - y0;
           const f32 alphaYinverse = 1.0f - alphaY;
 
-          const s32 y0S32 = RoundS32(y0);
-          const s32 y1S32 = RoundS32(y1);
-          const s32 x0S32 = RoundS32(x0);
+          const s32 y0S32 = Round<s32>(y0);
+          const s32 y1S32 = Round<s32>(y1);
+          const s32 x0S32 = Round<s32>(x0);
 
           const InType * restrict pReference_y0 = reference.Pointer(y0S32, x0S32);
           const InType * restrict pReference_y1 = reference.Pointer(y1S32, x0S32);
@@ -291,7 +270,7 @@ namespace Anki
 
           const f32 interpolatedPixelF32 = InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse);
 
-          const OutType interpolatedPixel = static_cast<OutType>(interpolatedPixelF32);
+          const OutType interpolatedPixel = RoundIfInteger<OutType>(interpolatedPixelF32);
 
           pOut[x] = interpolatedPixel;
 
@@ -338,7 +317,7 @@ namespace Anki
       const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
       const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
       const f32 h20 = homography[2][0]; const f32 h21 = homography[2][1]; const f32 h22 = homography[2][2];
-      
+
       const LinearSequence<f32> &yGridVector = originalCoordinates.get_yGridVector();
       const LinearSequence<f32> &xGridVector = originalCoordinates.get_xGridVector();
 
@@ -350,9 +329,6 @@ namespace Anki
 
       const s32 yIterationMax = yGridVector.get_size();
       const s32 xIterationMax = xGridVector.get_size();
-
-      //const f32 yTransformedDelta = h10 * yGridDelta;
-      //const f32 xTransformedDelta = h00 * xGridDelta;
 
       // One last check, to see if the sizes match
       if(isOutputOneDimensional) {
@@ -419,9 +395,9 @@ namespace Anki
           const f32 alphaY = yTransformed - y0;
           const f32 alphaYinverse = 1.0f - alphaY;
 
-          const s32 y0S32 = RoundS32(y0);
-          const s32 y1S32 = RoundS32(y1);
-          const s32 x0S32 = RoundS32(x0);
+          const s32 y0S32 = Round<s32>(y0);
+          const s32 y1S32 = Round<s32>(y1);
+          const s32 x0S32 = Round<s32>(x0);
 
           const InType * restrict pReference_y0 = reference.Pointer(y0S32, x0S32);
           const InType * restrict pReference_y1 = reference.Pointer(y1S32, x0S32);
@@ -433,7 +409,7 @@ namespace Anki
 
           const f32 interpolatedPixelF32 = InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse);
 
-          const OutType interpolatedPixel = static_cast<OutType>(interpolatedPixelF32);
+          const OutType interpolatedPixel = RoundIfInteger<OutType>(interpolatedPixelF32);
 
           pOut[x] = interpolatedPixel;
         } // for(s32 x=0; x<xIterationMax; x++)
@@ -445,12 +421,6 @@ namespace Anki
     } // Interp2_Projective
 
     // #pragma mark --- Specializations ---
-
-    template<> Result Interp2(const Array<u8> &reference, const Array<f32> &xCoordinates, const Array<f32> &yCoordinates, Array<u8> &out, const InterpolationType interpolationType, const u8 invalidValue);
-
-    template<> Result Interp2_Affine(const Array<u8> &reference, const Meshgrid<f32> &originalCoordinates, const Array<f32> &homography, const Point<f32> &centerOffset, Array<u8> &out, const InterpolationType interpolationType, const u8 invalidValue);
-
-    template<> Result Interp2_Projective(const Array<u8> &reference, const Meshgrid<f32> &originalCoordinates, const Array<f32> &homography, const Point<f32> &centerOffset, Array<u8> &out, const InterpolationType interpolationType, const u8 invalidValue);
   } // namespace Embedded
 } // namespace Anki
 
