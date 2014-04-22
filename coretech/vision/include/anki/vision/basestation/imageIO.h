@@ -1,6 +1,8 @@
 //
 //  imageIO.h
-//  CoreTech_Vision
+//  CoreTech_Vision_Basestation
+//
+//  Description: Image file read/write methods
 //
 //  Created by Kevin Yoon on 4/21/14.
 //  Copyright (c) 2014 Anki, Inc. All rights reserved.
