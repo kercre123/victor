@@ -2,22 +2,25 @@
 
 # save buffered video
 
-file(GLOB SOURCE_FILES_SAVE_VIDEO
-  run_pc_saveVideo.cpp
-  communication.cpp
-  messageHandling_save.cpp
-)
+#file(GLOB SOURCE_FILES_SAVE_VIDEO
+#  run_pc_saveVideo.cpp
+#  communication.cpp
+#  messageHandling_save.cpp
+#)
 
 file(GLOB SOURCE_FILES_DISPLAY_VIDEO
   run_pc_displayVideo.cpp
-  communication.cpp
-  messageHandling_display.cpp
 )
 
-file(GLOB SOURCE_FILES_TERMINAL
-  run_pc_terminal.cpp
+file(GLOB SOURCE_FILES_DEBUG_STREAM_PARSER
   communication.cpp
+  messageHandling.cpp
 )
+
+#file(GLOB SOURCE_FILES_TERMINAL
+#  run_pc_terminal.cpp
+#  communication.cpp
+#)
 
 file(GLOB HEADER_FILES
   communication.h
@@ -42,6 +45,7 @@ add_executable(run_pc_displayVideo
 target_link_libraries(run_pc_displayVideo
 	CoreTech_Common_Robot
   CoreTech_Vision_Robot
+  DebugStreamParser
 	${ALL_EMBEDDED_LIBRARIES})
 
 #add_executable(run_pc_terminal
@@ -52,3 +56,10 @@ target_link_libraries(run_pc_displayVideo
 #	CoreTech_Common_Robot
 #  CoreTech_Vision_Robot
 #	${ALL_EMBEDDED_LIBRARIES})
+
+add_definitions(-DCORETECH_ROBOT)
+
+add_library(DebugStreamParser
+	${SOURCE_FILES_DEBUG_STREAM_PARSER} 
+	${HEADER_FILES}
+)
