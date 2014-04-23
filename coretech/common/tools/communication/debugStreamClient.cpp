@@ -212,25 +212,25 @@ namespace Anki
 
         //printf("Next segment is (%d,%d): ", dataLength, type);
         if(strcmp(typeName, "Basic Type Buffer") == 0) {
-          u16 size;
+          u16 sizeOfType;
           bool isBasicType;
           bool isInteger;
           bool isSigned;
           bool isFloat;
           s32 numElements;
 
-          SerializedBuffer::EncodedBasicTypeBuffer::Deserialize(false, size, isBasicType, isInteger, isSigned, isFloat, numElements, &dataSegment, dataLength);
+          SerializedBuffer::EncodedBasicTypeBuffer::Deserialize(false, sizeOfType, isBasicType, isInteger, isSigned, isFloat, numElements, &dataSegment, dataLength);
 
-          //printf("Basic type buffer segment \"%s\" (%d, %d, %d, %d, %d)\n", objectName, size, isInteger, isSigned, isFloat, numElements);
+          //printf("Basic type buffer segment \"%s\" (%d, %d, %d, %d, %d)\n", objectName, sizeOfType, isInteger, isSigned, isFloat, numElements);
 
-          newObject.bufferLength = 512 + static_cast<s32>(size) * numElements;
+          newObject.bufferLength = 512 + static_cast<s32>(sizeOfType) * numElements;
           newObject.buffer = malloc(newObject.bufferLength);
 
           if(!newObject.buffer)
             continue;
 
           // Copy the header (probably the user won't need this, but just in case)
-          reinterpret_cast<s32*>(newObject.buffer)[0] = size;
+          reinterpret_cast<s32*>(newObject.buffer)[0] = sizeOfType;
           reinterpret_cast<s32*>(newObject.buffer)[1] = isBasicType;
           reinterpret_cast<s32*>(newObject.buffer)[2] = isInteger;
           reinterpret_cast<s32*>(newObject.buffer)[3] = isSigned;
@@ -239,57 +239,21 @@ namespace Anki
 
           MemoryStack localMemory(reinterpret_cast<void*>(&reinterpret_cast<s32*>(newObject.buffer)[6]), newObject.bufferLength - 6*sizeof(s32));
 
-          // TODO: make a DeserializeRawBasicType function that is not templated, so we don't need to repeat these, and so an unknown type can be handled
-          if(isFloat) {
-            if(size == 4) {
-              newObject.startOfPayload = SerializedBuffer::DeserializeRawBasicType<f32>(innerObjectName, &dataSegment, dataLength, localMemory);
-            } else if(size == 8) {
-              newObject.startOfPayload = SerializedBuffer::DeserializeRawBasicType<f64>(innerObjectName, &dataSegment, dataLength, localMemory);
-            } else {
-              //printf("Could not parse basic type buffer %s\n", objectName);
-            }
-          } else { // if(isFloat)
-            if(size == 1) {
-              if(isSigned) {
-                newObject.startOfPayload = SerializedBuffer::DeserializeRawBasicType<s8>(innerObjectName, &dataSegment, dataLength, localMemory);
-              } else {
-                newObject.startOfPayload = SerializedBuffer::DeserializeRawBasicType<u8>(innerObjectName, &dataSegment, dataLength, localMemory);
-              }
-            } else if(size == 2) {
-              if(isSigned) {
-                newObject.startOfPayload = SerializedBuffer::DeserializeRawBasicType<s16>(innerObjectName, &dataSegment, dataLength, localMemory);
-              } else {
-                newObject.startOfPayload = SerializedBuffer::DeserializeRawBasicType<u16>(innerObjectName, &dataSegment, dataLength, localMemory);
-              }
-            } else if(size == 4) {
-              if(isSigned) {
-                newObject.startOfPayload = SerializedBuffer::DeserializeRawBasicType<s32>(innerObjectName, &dataSegment, dataLength, localMemory);
-              } else {
-                newObject.startOfPayload = SerializedBuffer::DeserializeRawBasicType<u32>(innerObjectName, &dataSegment, dataLength, localMemory);
-              }
-            } else if(size == 8) {
-              if(isSigned) {
-                newObject.startOfPayload = SerializedBuffer::DeserializeRawBasicType<s64>(innerObjectName, &dataSegment, dataLength, localMemory);
-              } else {
-                newObject.startOfPayload = SerializedBuffer::DeserializeRawBasicType<u64>(innerObjectName, &dataSegment, dataLength, localMemory);
-              }
-            } else {
-              //printf("Could not parse basic type buffer %s\n", objectName);
-            }
-          } // if(isFloat) ... else
+          // the type may not be a char, but we only care about the start of the buffer (this only works for basic types c-style arrays, not for Array objects)
+          newObject.startOfPayload = SerializedBuffer::DeserializeRawBasicType<char>(innerObjectName, &dataSegment, dataLength, localMemory);
         } else if(strcmp(typeName, "Array") == 0) {
           s32 height;
           s32 width;
           s32 stride;
           Flags::Buffer flags;
-          u16 basicType_size;
+          u16 basicType_sizeOfType;
           bool basicType_isBasicType;
           bool basicType_isInteger;
           bool basicType_isSigned;
           bool basicType_isFloat;
           s32 basicType_numElements;
           void * tmpDataSegment = reinterpret_cast<u8*>(dataSegment) + 2*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
-          SerializedBuffer::EncodedArray::Deserialize(false, height, width, stride, flags, basicType_size, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_numElements, &tmpDataSegment, dataLength);
+          SerializedBuffer::EncodedArray::Deserialize(false, height, width, stride, flags, basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_numElements, &tmpDataSegment, dataLength);
 
           newObject.bufferLength = 512 + stride * height;
           newObject.buffer = malloc(newObject.bufferLength);
@@ -302,7 +266,7 @@ namespace Anki
           reinterpret_cast<s32*>(newObject.buffer)[1] = width;
           reinterpret_cast<s32*>(newObject.buffer)[2] = stride;
           reinterpret_cast<u32*>(newObject.buffer)[3] = flags.get_rawFlags();
-          reinterpret_cast<s32*>(newObject.buffer)[4] = basicType_size;
+          reinterpret_cast<s32*>(newObject.buffer)[4] = basicType_sizeOfType;
           reinterpret_cast<s32*>(newObject.buffer)[5] = basicType_isBasicType;
           reinterpret_cast<s32*>(newObject.buffer)[6] = basicType_isInteger;
           reinterpret_cast<s32*>(newObject.buffer)[7] = basicType_isSigned;
@@ -315,14 +279,14 @@ namespace Anki
 
           // TODO: make a DeserializeRawBasicType function that is not templated, so we don't need to repeat these, and so an unknown type can be handled
           if(basicType_isFloat) {
-            if(basicType_size == 4) {
+            if(basicType_sizeOfType == 4) {
               Array<f32> arr = SerializedBuffer::DeserializeRawArray<f32>(NULL, &dataSegment, dataLength, localMemory);
 
               if(!arr.IsValid())
                 continue;
 
               memcpy(newObject.startOfPayload, &arr, sizeof(arr));
-            } else if(basicType_size == 8) {
+            } else if(basicType_sizeOfType == 8) {
               Array<f64> arr = SerializedBuffer::DeserializeRawArray<f64>(NULL, &dataSegment, dataLength, localMemory);
 
               if(!arr.IsValid())
@@ -333,7 +297,7 @@ namespace Anki
               //printf("Could not parse Array %s\n", objectName);
             }
           } else { // if(basicType_isFloat)
-            if(basicType_size == 1) {
+            if(basicType_sizeOfType == 1) {
               if(basicType_isSigned) {
                 Array<s8> arr = SerializedBuffer::DeserializeRawArray<s8>(NULL, &dataSegment, dataLength, localMemory);
 
@@ -349,7 +313,7 @@ namespace Anki
 
                 memcpy(newObject.startOfPayload, &arr, sizeof(arr));
               }
-            } else if(basicType_size == 2) {
+            } else if(basicType_sizeOfType == 2) {
               if(basicType_isSigned) {
                 Array<s16> arr = SerializedBuffer::DeserializeRawArray<s16>(NULL, &dataSegment, dataLength, localMemory);
 
@@ -365,7 +329,7 @@ namespace Anki
 
                 memcpy(newObject.startOfPayload, &arr, sizeof(arr));
               }
-            } else if(basicType_size == 4) {
+            } else if(basicType_sizeOfType == 4) {
               if(basicType_isSigned) {
                 Array<s32> arr = SerializedBuffer::DeserializeRawArray<s32>(NULL, &dataSegment, dataLength, localMemory);
 
@@ -381,7 +345,7 @@ namespace Anki
 
                 memcpy(newObject.startOfPayload, &arr, sizeof(arr));
               }
-            } else if(basicType_size == 8) {
+            } else if(basicType_sizeOfType == 8) {
               if(basicType_isSigned) {
                 Array<s64> arr = SerializedBuffer::DeserializeRawArray<s64>(NULL, &dataSegment, dataLength, localMemory);
 
@@ -412,14 +376,14 @@ namespace Anki
           s32 xSlice_start;
           s32 xSlice_increment;
           s32 xSlice_end;
-          u16 basicType_size;
+          u16 basicType_sizeOfType;
           bool basicType_isBasicType;
           bool basicType_isInteger;
           bool basicType_isSigned;
           bool basicType_isFloat;
           s32 basicType_numElements;
           void * tmpDataSegment = reinterpret_cast<u8*>(dataSegment) + 2*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
-          SerializedBuffer::EncodedArraySlice::Deserialize(false, height, width, stride, flags, ySlice_start, ySlice_increment, ySlice_end, xSlice_start, xSlice_increment, xSlice_end, basicType_size, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_numElements, &tmpDataSegment, dataLength);
+          SerializedBuffer::EncodedArraySlice::Deserialize(false, height, width, stride, flags, ySlice_start, ySlice_increment, ySlice_end, xSlice_start, xSlice_increment, xSlice_end, basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_numElements, &tmpDataSegment, dataLength);
 
           newObject.bufferLength = 512 + stride * height;
           newObject.buffer = malloc(newObject.bufferLength);
@@ -432,7 +396,7 @@ namespace Anki
           reinterpret_cast<s32*>(newObject.buffer)[1] = width;
           reinterpret_cast<s32*>(newObject.buffer)[2] = stride;
           reinterpret_cast<u32*>(newObject.buffer)[3] = flags.get_rawFlags();
-          reinterpret_cast<s32*>(newObject.buffer)[4] = basicType_size;
+          reinterpret_cast<s32*>(newObject.buffer)[4] = basicType_sizeOfType;
           reinterpret_cast<s32*>(newObject.buffer)[5] = basicType_isBasicType;
           reinterpret_cast<s32*>(newObject.buffer)[6] = basicType_isInteger;
           reinterpret_cast<s32*>(newObject.buffer)[7] = basicType_isSigned;
@@ -445,14 +409,14 @@ namespace Anki
 
           // TODO: make a DeserializeRawBasicType function that is not templated, so we don't need to repeat these, and so an unknown type can be handled
           if(basicType_isFloat) {
-            if(basicType_size == 4) {
+            if(basicType_sizeOfType == 4) {
               ArraySlice<f32> arr = SerializedBuffer::DeserializeRawArraySlice<f32>(NULL, &dataSegment, dataLength, localMemory);
 
               if(!arr.get_array().IsValid())
                 continue;
 
               memcpy(newObject.startOfPayload, &arr, sizeof(arr));
-            } else if(basicType_size == 8) {
+            } else if(basicType_sizeOfType == 8) {
               ArraySlice<f64> arr = SerializedBuffer::DeserializeRawArraySlice<f64>(NULL, &dataSegment, dataLength, localMemory);
 
               if(!arr.get_array().IsValid())
@@ -463,7 +427,7 @@ namespace Anki
               //printf("Could not parse Array %s\n", objectName);
             }
           } else { // if(basicType_isFloat)
-            if(basicType_size == 1) {
+            if(basicType_sizeOfType == 1) {
               if(basicType_isSigned) {
                 ArraySlice<s8> arr = SerializedBuffer::DeserializeRawArraySlice<s8>(NULL, &dataSegment, dataLength, localMemory);
 
@@ -479,7 +443,7 @@ namespace Anki
 
                 memcpy(newObject.startOfPayload, &arr, sizeof(arr));
               }
-            } else if(basicType_size == 2) {
+            } else if(basicType_sizeOfType == 2) {
               if(basicType_isSigned) {
                 ArraySlice<s16> arr = SerializedBuffer::DeserializeRawArraySlice<s16>(NULL, &dataSegment, dataLength, localMemory);
 
@@ -495,7 +459,7 @@ namespace Anki
 
                 memcpy(newObject.startOfPayload, &arr, sizeof(arr));
               }
-            } else if(basicType_size == 4) {
+            } else if(basicType_sizeOfType == 4) {
               if(basicType_isSigned) {
                 ArraySlice<s32> arr = SerializedBuffer::DeserializeRawArraySlice<s32>(NULL, &dataSegment, dataLength, localMemory);
 
@@ -511,7 +475,7 @@ namespace Anki
 
                 memcpy(newObject.startOfPayload, &arr, sizeof(arr));
               }
-            } else if(basicType_size == 8) {
+            } else if(basicType_sizeOfType == 8) {
               if(basicType_isSigned) {
                 ArraySlice<s64> arr = SerializedBuffer::DeserializeRawArraySlice<s64>(NULL, &dataSegment, dataLength, localMemory);
 

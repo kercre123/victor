@@ -225,23 +225,23 @@ namespace Anki
       DeserializeDescriptionStrings(NULL, objectName, buffer, bufferLength);
 
       // TODO: check if encoded type is valid
-      u16 size;
+      u16 sizeOfType;
       bool isBasicType;
       bool isInteger;
       bool isSigned;
       bool isFloat;
       s32 numElements;
-      EncodedBasicTypeBuffer::Deserialize(true, size, isBasicType, isInteger, isSigned, isFloat, numElements, buffer, bufferLength);
+      EncodedBasicTypeBuffer::Deserialize(true, sizeOfType, isBasicType, isInteger, isSigned, isFloat, numElements, buffer, bufferLength);
 
       const Type var = *reinterpret_cast<Type*>(*buffer);
 
       // Hack, to prevent corrupted input from causing a memory access error
-      if(size > 256 || numElements <= 0 || numElements >= 1000000) {
+      if(sizeOfType > 256 || numElements <= 0 || numElements >= 1000000) {
         return var;
       }
 
-      *buffer = reinterpret_cast<u8*>(*buffer) + sizeof(Type)*numElements;
-      bufferLength -= sizeof(Type)*numElements;
+      *buffer = reinterpret_cast<u8*>(*buffer) + sizeOfType*numElements;
+      bufferLength -= sizeOfType*numElements;
 
       return var;
     }
@@ -252,18 +252,18 @@ namespace Anki
       DeserializeDescriptionStrings(NULL, objectName, buffer, bufferLength);
 
       // TODO: check if encoded type is valid
-      u16 size;
+      u16 sizeOfType;
       bool isBasicType;
       bool isInteger;
       bool isSigned;
       bool isFloat;
       s32 numElements;
-      EncodedBasicTypeBuffer::Deserialize(true, size, isBasicType, isInteger, isSigned, isFloat, numElements, buffer, bufferLength);
+      EncodedBasicTypeBuffer::Deserialize(true, sizeOfType, isBasicType, isInteger, isSigned, isFloat, numElements, buffer, bufferLength);
 
       AnkiConditionalErrorAndReturnValue(numElements > 0 && numElements < 1000000,
         NULL, "SerializedBuffer::DeserializeRawBasicType", "numElements is not reasonable");
 
-      const s32 numBytes = numElements*sizeof(Type);
+      const s32 numBytes = numElements*sizeOfType;
       Type *var = reinterpret_cast<Type*>( memory.Allocate(numBytes) );
 
       memcpy(var, *buffer, numBytes);
@@ -284,13 +284,13 @@ namespace Anki
       s32 width;
       s32 stride;
       Flags::Buffer flags;
-      u16 basicType_size;
+      u16 basicType_sizeOfType;
       bool basicType_isBasicType;
       bool basicType_isInteger;
       bool basicType_isSigned;
       bool basicType_isFloat;
       s32 basicType_numElements;
-      EncodedArray::Deserialize(true, height, width, stride, flags, basicType_size, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_numElements, buffer, bufferLength);
+      EncodedArray::Deserialize(true, height, width, stride, flags, basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_numElements, buffer, bufferLength);
 
       AnkiConditionalErrorAndReturnValue(stride == RoundUp(width*sizeof(Type), MEMORY_ALIGNMENT),
         Array<Type>(), "SerializedBuffer::DeserializeRawArray", "Parsed stride is not reasonable");
@@ -324,13 +324,13 @@ namespace Anki
       s32 xSlice_start;
       s32 xSlice_increment;
       s32 xSlice_end;
-      u16 basicType_size;
+      u16 basicType_sizeOfType;
       bool basicType_isBasicType;
       bool basicType_isInteger;
       bool basicType_isSigned;
       bool basicType_isFloat;
       s32 basicType_numElements;
-      EncodedArraySlice::Deserialize(true, height, width, stride, flags, ySlice_start, ySlice_increment, ySlice_end, xSlice_start, xSlice_increment, xSlice_end, basicType_size, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_numElements, buffer, bufferLength);
+      EncodedArraySlice::Deserialize(true, height, width, stride, flags, ySlice_start, ySlice_increment, ySlice_end, xSlice_start, xSlice_increment, xSlice_end, basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_numElements, buffer, bufferLength);
 
       const LinearSequence<s32> ySlice(ySlice_start, ySlice_increment, ySlice_end);
       const LinearSequence<s32> xSlice(xSlice_start, xSlice_increment, xSlice_end);
