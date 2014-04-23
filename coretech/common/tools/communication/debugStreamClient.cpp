@@ -28,6 +28,18 @@ using namespace std;
 static const s32 scratchSize = 1000000;
 static u8 scratchBuffer[scratchSize];
 
+// Kind of a hack for parsing. We only need a type of the correct number of bytes.
+typedef struct { u8  v1; } Bytes1;
+typedef struct { u16 v1; } Bytes2;
+typedef struct { u32 v1; } Bytes4;
+typedef struct { u32 v1, v2; } Bytes8;
+typedef struct { u32 v1, v2, v3; } Bytes12;
+typedef struct { u32 v1, v2, v3, v4; } Bytes16;
+typedef struct { u32 v1, v2, v3, v4, v5; } Bytes20;
+typedef struct { u32 v1, v2, v3, v4, v5, v6; } Bytes24;
+typedef struct { u32 v1, v2, v3, v4, v5, v6, v7; } Bytes28;
+typedef struct { u32 v1, v2, v3, v4, v5, v6, v7, v8; } Bytes32;
+
 namespace Anki
 {
   namespace Embedded
@@ -277,94 +289,84 @@ namespace Anki
 
           MemoryStack localMemory(reinterpret_cast<void*>(reinterpret_cast<u8*>(newObject.buffer)+256), newObject.bufferLength - 256);
 
-          // TODO: make a DeserializeRawBasicType function that is not templated, so we don't need to repeat these, and so an unknown type can be handled
-          if(basicType_isFloat) {
-            if(basicType_sizeOfType == 4) {
-              Array<f32> arr = SerializedBuffer::DeserializeRawArray<f32>(NULL, &dataSegment, dataLength, localMemory);
+          // This next part is a little wierd.
+          // We only need to get the sizeOfType correct. Nothing else about the type is stored explicitly in the array.
+          // If we have the type size correct, then everything will be initialized and copied correctly, so when the Array is cast to the correct Type, everything will be fine.
 
-              if(!arr.IsValid())
-                continue;
+          if(basicType_sizeOfType == 1) {
+            Array<Bytes1> arr = SerializedBuffer::DeserializeRawArray<Bytes1>(NULL, &dataSegment, dataLength, localMemory);
 
-              memcpy(newObject.startOfPayload, &arr, sizeof(arr));
-            } else if(basicType_sizeOfType == 8) {
-              Array<f64> arr = SerializedBuffer::DeserializeRawArray<f64>(NULL, &dataSegment, dataLength, localMemory);
+            if(!arr.IsValid())
+              continue;
 
-              if(!arr.IsValid())
-                continue;
+            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
+          } else if(basicType_sizeOfType == 2) {
+            Array<Bytes2> arr = SerializedBuffer::DeserializeRawArray<Bytes2>(NULL, &dataSegment, dataLength, localMemory);
 
-              memcpy(newObject.startOfPayload, &arr, sizeof(arr));
-            } else {
-              //printf("Could not parse Array %s\n", objectName);
-            }
-          } else { // if(basicType_isFloat)
-            if(basicType_sizeOfType == 1) {
-              if(basicType_isSigned) {
-                Array<s8> arr = SerializedBuffer::DeserializeRawArray<s8>(NULL, &dataSegment, dataLength, localMemory);
+            if(!arr.IsValid())
+              continue;
 
-                if(!arr.IsValid())
-                  continue;
+            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
+          } else if(basicType_sizeOfType == 4) {
+            Array<Bytes4> arr = SerializedBuffer::DeserializeRawArray<Bytes4>(NULL, &dataSegment, dataLength, localMemory);
 
-                memcpy(newObject.startOfPayload, &arr, sizeof(arr));
-              } else {
-                Array<u8> arr = SerializedBuffer::DeserializeRawArray<u8>(NULL, &dataSegment, dataLength, localMemory);
+            if(!arr.IsValid())
+              continue;
 
-                if(!arr.IsValid())
-                  continue;
+            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
+          } else if(basicType_sizeOfType == 8) {
+            Array<Bytes8> arr = SerializedBuffer::DeserializeRawArray<Bytes8>(NULL, &dataSegment, dataLength, localMemory);
 
-                memcpy(newObject.startOfPayload, &arr, sizeof(arr));
-              }
-            } else if(basicType_sizeOfType == 2) {
-              if(basicType_isSigned) {
-                Array<s16> arr = SerializedBuffer::DeserializeRawArray<s16>(NULL, &dataSegment, dataLength, localMemory);
+            if(!arr.IsValid())
+              continue;
 
-                if(!arr.IsValid())
-                  continue;
+            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
+          } else if(basicType_sizeOfType == 12) {
+            Array<Bytes12> arr = SerializedBuffer::DeserializeRawArray<Bytes12>(NULL, &dataSegment, dataLength, localMemory);
 
-                memcpy(newObject.startOfPayload, &arr, sizeof(arr));
-              } else {
-                Array<u16> arr = SerializedBuffer::DeserializeRawArray<u16>(NULL, &dataSegment, dataLength, localMemory);
+            if(!arr.IsValid())
+              continue;
 
-                if(!arr.IsValid())
-                  continue;
+            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
+          } else if(basicType_sizeOfType == 16) {
+            Array<Bytes16> arr = SerializedBuffer::DeserializeRawArray<Bytes16>(NULL, &dataSegment, dataLength, localMemory);
 
-                memcpy(newObject.startOfPayload, &arr, sizeof(arr));
-              }
-            } else if(basicType_sizeOfType == 4) {
-              if(basicType_isSigned) {
-                Array<s32> arr = SerializedBuffer::DeserializeRawArray<s32>(NULL, &dataSegment, dataLength, localMemory);
+            if(!arr.IsValid())
+              continue;
 
-                if(!arr.IsValid())
-                  continue;
+            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
+          } else if(basicType_sizeOfType == 20) {
+            Array<Bytes20> arr = SerializedBuffer::DeserializeRawArray<Bytes20>(NULL, &dataSegment, dataLength, localMemory);
 
-                memcpy(newObject.startOfPayload, &arr, sizeof(arr));
-              } else {
-                Array<u32> arr = SerializedBuffer::DeserializeRawArray<u32>(NULL, &dataSegment, dataLength, localMemory);
+            if(!arr.IsValid())
+              continue;
 
-                if(!arr.IsValid())
-                  continue;
+            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
+          } else if(basicType_sizeOfType == 24) {
+            Array<Bytes24> arr = SerializedBuffer::DeserializeRawArray<Bytes24>(NULL, &dataSegment, dataLength, localMemory);
 
-                memcpy(newObject.startOfPayload, &arr, sizeof(arr));
-              }
-            } else if(basicType_sizeOfType == 8) {
-              if(basicType_isSigned) {
-                Array<s64> arr = SerializedBuffer::DeserializeRawArray<s64>(NULL, &dataSegment, dataLength, localMemory);
+            if(!arr.IsValid())
+              continue;
 
-                if(!arr.IsValid())
-                  continue;
+            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
+          } else if(basicType_sizeOfType == 28) {
+            Array<Bytes28> arr = SerializedBuffer::DeserializeRawArray<Bytes28>(NULL, &dataSegment, dataLength, localMemory);
 
-                memcpy(newObject.startOfPayload, &arr, sizeof(arr));
-              } else {
-                Array<u64> arr = SerializedBuffer::DeserializeRawArray<u64>(NULL, &dataSegment, dataLength, localMemory);
+            if(!arr.IsValid())
+              continue;
 
-                if(!arr.IsValid())
-                  continue;
+            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
+          } else if(basicType_sizeOfType == 32) {
+            Array<Bytes32> arr = SerializedBuffer::DeserializeRawArray<Bytes32>(NULL, &dataSegment, dataLength, localMemory);
 
-                memcpy(newObject.startOfPayload, &arr, sizeof(arr));
-              }
-            } else {
-              //printf("Could not parse Array %s\n", objectName);
-            }
-          } // if(basicType_isFloat) ... else
+            if(!arr.IsValid())
+              continue;
+
+            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
+          } else {
+            //printf("Unusual size %d. Add a case to parse objects of this Type.\n", basicType_sizeOfType);
+            continue;
+          }
         } else if(strcmp(typeName, "ArraySlice") == 0) {
           s32 height;
           s32 width;
@@ -407,94 +409,84 @@ namespace Anki
 
           MemoryStack localMemory(reinterpret_cast<void*>(reinterpret_cast<u8*>(newObject.buffer)+256), newObject.bufferLength - 256);
 
-          // TODO: make a DeserializeRawBasicType function that is not templated, so we don't need to repeat these, and so an unknown type can be handled
-          if(basicType_isFloat) {
-            if(basicType_sizeOfType == 4) {
-              ArraySlice<f32> arr = SerializedBuffer::DeserializeRawArraySlice<f32>(NULL, &dataSegment, dataLength, localMemory);
+          // As with Array<>, this next part is a little wierd.
+          // We only need to get the sizeOfType correct. Nothing else about the type is stored explicitly in the array.
+          // If we have the type size correct, then everything will be initialized and copied correctly, so when the Array is cast to the correct Type, everything will be fine.
 
-              if(!arr.get_array().IsValid())
-                continue;
+          if(basicType_sizeOfType == 1) {
+            ArraySlice<Bytes1> arr = SerializedBuffer::DeserializeRawArraySlice<Bytes1>(NULL, &dataSegment, dataLength, localMemory);
 
-              memcpy(newObject.startOfPayload, &arr, sizeof(arr));
-            } else if(basicType_sizeOfType == 8) {
-              ArraySlice<f64> arr = SerializedBuffer::DeserializeRawArraySlice<f64>(NULL, &dataSegment, dataLength, localMemory);
+            if(!arr.get_array().IsValid())
+              continue;
 
-              if(!arr.get_array().IsValid())
-                continue;
+            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
+          } else if(basicType_sizeOfType == 2) {
+            ArraySlice<Bytes2> arr = SerializedBuffer::DeserializeRawArraySlice<Bytes2>(NULL, &dataSegment, dataLength, localMemory);
 
-              memcpy(newObject.startOfPayload, &arr, sizeof(arr));
-            } else {
-              //printf("Could not parse Array %s\n", objectName);
-            }
-          } else { // if(basicType_isFloat)
-            if(basicType_sizeOfType == 1) {
-              if(basicType_isSigned) {
-                ArraySlice<s8> arr = SerializedBuffer::DeserializeRawArraySlice<s8>(NULL, &dataSegment, dataLength, localMemory);
+            if(!arr.get_array().IsValid())
+              continue;
 
-                if(!arr.get_array().IsValid())
-                  continue;
+            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
+          } else if(basicType_sizeOfType == 4) {
+            ArraySlice<Bytes4> arr = SerializedBuffer::DeserializeRawArraySlice<Bytes4>(NULL, &dataSegment, dataLength, localMemory);
 
-                memcpy(newObject.startOfPayload, &arr, sizeof(arr));
-              } else {
-                ArraySlice<u8> arr = SerializedBuffer::DeserializeRawArraySlice<u8>(NULL, &dataSegment, dataLength, localMemory);
+            if(!arr.get_array().IsValid())
+              continue;
 
-                if(!arr.get_array().IsValid())
-                  continue;
+            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
+          } else if(basicType_sizeOfType == 8) {
+            ArraySlice<Bytes8> arr = SerializedBuffer::DeserializeRawArraySlice<Bytes8>(NULL, &dataSegment, dataLength, localMemory);
 
-                memcpy(newObject.startOfPayload, &arr, sizeof(arr));
-              }
-            } else if(basicType_sizeOfType == 2) {
-              if(basicType_isSigned) {
-                ArraySlice<s16> arr = SerializedBuffer::DeserializeRawArraySlice<s16>(NULL, &dataSegment, dataLength, localMemory);
+            if(!arr.get_array().IsValid())
+              continue;
 
-                if(!arr.get_array().IsValid())
-                  continue;
+            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
+          } else if(basicType_sizeOfType == 12) {
+            ArraySlice<Bytes12> arr = SerializedBuffer::DeserializeRawArraySlice<Bytes12>(NULL, &dataSegment, dataLength, localMemory);
 
-                memcpy(newObject.startOfPayload, &arr, sizeof(arr));
-              } else {
-                ArraySlice<u16> arr = SerializedBuffer::DeserializeRawArraySlice<u16>(NULL, &dataSegment, dataLength, localMemory);
+            if(!arr.get_array().IsValid())
+              continue;
 
-                if(!arr.get_array().IsValid())
-                  continue;
+            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
+          } else if(basicType_sizeOfType == 16) {
+            ArraySlice<Bytes16> arr = SerializedBuffer::DeserializeRawArraySlice<Bytes16>(NULL, &dataSegment, dataLength, localMemory);
 
-                memcpy(newObject.startOfPayload, &arr, sizeof(arr));
-              }
-            } else if(basicType_sizeOfType == 4) {
-              if(basicType_isSigned) {
-                ArraySlice<s32> arr = SerializedBuffer::DeserializeRawArraySlice<s32>(NULL, &dataSegment, dataLength, localMemory);
+            if(!arr.get_array().IsValid())
+              continue;
 
-                if(!arr.get_array().IsValid())
-                  continue;
+            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
+          } else if(basicType_sizeOfType == 20) {
+            ArraySlice<Bytes20> arr = SerializedBuffer::DeserializeRawArraySlice<Bytes20>(NULL, &dataSegment, dataLength, localMemory);
 
-                memcpy(newObject.startOfPayload, &arr, sizeof(arr));
-              } else {
-                ArraySlice<u32> arr = SerializedBuffer::DeserializeRawArraySlice<u32>(NULL, &dataSegment, dataLength, localMemory);
+            if(!arr.get_array().IsValid())
+              continue;
 
-                if(!arr.get_array().IsValid())
-                  continue;
+            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
+          } else if(basicType_sizeOfType == 24) {
+            ArraySlice<Bytes24> arr = SerializedBuffer::DeserializeRawArraySlice<Bytes24>(NULL, &dataSegment, dataLength, localMemory);
 
-                memcpy(newObject.startOfPayload, &arr, sizeof(arr));
-              }
-            } else if(basicType_sizeOfType == 8) {
-              if(basicType_isSigned) {
-                ArraySlice<s64> arr = SerializedBuffer::DeserializeRawArraySlice<s64>(NULL, &dataSegment, dataLength, localMemory);
+            if(!arr.get_array().IsValid())
+              continue;
 
-                if(!arr.get_array().IsValid())
-                  continue;
+            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
+          } else if(basicType_sizeOfType == 28) {
+            ArraySlice<Bytes28> arr = SerializedBuffer::DeserializeRawArraySlice<Bytes28>(NULL, &dataSegment, dataLength, localMemory);
 
-                memcpy(newObject.startOfPayload, &arr, sizeof(arr));
-              } else {
-                ArraySlice<u64> arr = SerializedBuffer::DeserializeRawArraySlice<u64>(NULL, &dataSegment, dataLength, localMemory);
+            if(!arr.get_array().IsValid())
+              continue;
 
-                if(!arr.get_array().IsValid())
-                  continue;
+            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
+          } else if(basicType_sizeOfType == 32) {
+            ArraySlice<Bytes32> arr = SerializedBuffer::DeserializeRawArraySlice<Bytes32>(NULL, &dataSegment, dataLength, localMemory);
 
-                memcpy(newObject.startOfPayload, &arr, sizeof(arr));
-              }
-            } else {
-              //printf("Could not parse Array %s\n", objectName);
-            }
-          } // if(basicType_isFloat) ... else
+            if(!arr.get_array().IsValid())
+              continue;
+
+            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
+          } else {
+            //printf("Unusual size %d. Add a case to parse objects of this Type.\n", basicType_sizeOfType);
+            continue;
+          }
         } else if(strcmp(typeName, "String") == 0) {
           const s32 stringLength = strlen(reinterpret_cast<char*>(dataSegment));
 
