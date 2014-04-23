@@ -31,14 +31,10 @@ DebugStreamClient::Object::Object()
 {
 }
 
-DebugStreamClient::Object::Object(const s32 bufferLength)
-  : bufferLength(0), buffer(NULL), startOfPayload(NULL)
-{
-  this->buffer = malloc(bufferLength);
-
-  if(this->buffer)
-    this->bufferLength = bufferLength;
-}
+//DebugStreamClient::Object::Object(void * buffer, const s32 bufferLength)
+//  : bufferLength(bufferLength), buffer(buffer), startOfPayload(NULL)
+//{
+//}
 
 bool DebugStreamClient::Object::IsValid() const
 {
@@ -199,6 +195,15 @@ void DebugStreamClient::ProcessRawBuffer(DisplayRawBuffer &buffer, ThreadSafeQue
       continue;
     }
 
+    Object newObject;
+
+    // Copy the type and object names. Probably the user will use these to figure out how to cast the payload
+    memcpy(newObject.typeName, typeName, SerializedBuffer::DESCRIPTION_STRING_LENGTH);
+    memcpy(newObject.objectName, objectName, SerializedBuffer::DESCRIPTION_STRING_LENGTH);
+
+    newObject.typeName[SerializedBuffer::DESCRIPTION_STRING_LENGTH - 1] = '\0';
+    newObject.objectName[SerializedBuffer::DESCRIPTION_STRING_LENGTH - 1] = '\0';
+
     //printf("Next segment is (%d,%d): ", dataLength, type);
     if(strcmp(typeName, "Basic Type Buffer") == 0) {
       u16 size;
@@ -210,9 +215,10 @@ void DebugStreamClient::ProcessRawBuffer(DisplayRawBuffer &buffer, ThreadSafeQue
 
       SerializedBuffer::EncodedBasicTypeBuffer::Deserialize(false, size, isBasicType, isInteger, isSigned, isFloat, numElements, &dataSegment, dataLength);
 
-      printf("Basic type buffer segment \"%s\" (%d, %d, %d, %d, %d)\n", objectName, size, isInteger, isSigned, isFloat, numElements);
+      //printf("Basic type buffer segment \"%s\" (%d, %d, %d, %d, %d)\n", objectName, size, isInteger, isSigned, isFloat, numElements);
 
-      Object newObject(512 + static_cast<s32>(size) * numElements);
+      newObject.bufferLength = 512 + static_cast<s32>(size) * numElements;
+      newObject.buffer = malloc(newObject.bufferLength);
 
       if(!newObject.buffer)
         continue;
@@ -225,13 +231,6 @@ void DebugStreamClient::ProcessRawBuffer(DisplayRawBuffer &buffer, ThreadSafeQue
       reinterpret_cast<s32*>(newObject.buffer)[4] = isFloat;
       reinterpret_cast<s32*>(newObject.buffer)[5] = numElements;
 
-      // Copy the type and object names. Probably the user will use these to figure out how to cast the payload
-      memcpy(newObject.typeName, typeName, SerializedBuffer::DESCRIPTION_STRING_LENGTH);
-      memcpy(newObject.objectName, objectName, SerializedBuffer::DESCRIPTION_STRING_LENGTH);
-
-      newObject.typeName[SerializedBuffer::DESCRIPTION_STRING_LENGTH - 1] = '\0';
-      newObject.objectName[SerializedBuffer::DESCRIPTION_STRING_LENGTH - 1] = '\0';
-
       MemoryStack localMemory(reinterpret_cast<void*>(&reinterpret_cast<s32*>(newObject.buffer)[6]), newObject.bufferLength - 6*sizeof(s32));
 
       // TODO: make a DeserializeRawBasicType function that is not templated, so we don't need to repeat these, and so an unknown type can be handled
@@ -241,9 +240,9 @@ void DebugStreamClient::ProcessRawBuffer(DisplayRawBuffer &buffer, ThreadSafeQue
         } else if(size == 8) {
           newObject.startOfPayload = SerializedBuffer::DeserializeRawBasicType<f64>(innerObjectName, &dataSegment, dataLength, localMemory);
         } else {
-          printf("Could not parse basic type buffer\n");
+          //printf("Could not parse basic type buffer %s\n", objectName);
         }
-      } else {
+      } else { // if(isFloat)
         if(size == 1) {
           if(isSigned) {
             newObject.startOfPayload = SerializedBuffer::DeserializeRawBasicType<s8>(innerObjectName, &dataSegment, dataLength, localMemory);
@@ -269,105 +268,147 @@ void DebugStreamClient::ProcessRawBuffer(DisplayRawBuffer &buffer, ThreadSafeQue
             newObject.startOfPayload = SerializedBuffer::DeserializeRawBasicType<u64>(innerObjectName, &dataSegment, dataLength, localMemory);
           }
         } else {
-          printf("Could not parse basic type buffer\n");
+          //printf("Could not parse basic type buffer %s\n", objectName);
         }
-      }
+      } // if(isFloat) ... else
+    } else if(strcmp(typeName, "Array") == 0) {
+      s32 height;
+      s32 width;
+      s32 stride;
+      Flags::Buffer flags;
+      u16 basicType_size;
+      bool basicType_isBasicType;
+      bool basicType_isInteger;
+      bool basicType_isSigned;
+      bool basicType_isFloat;
+      s32 basicType_numElements;
+      void * tmpDataSegment = reinterpret_cast<u8*>(dataSegment) + 2*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
+      SerializedBuffer::EncodedArray::Deserialize(false, height, width, stride, flags, basicType_size, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_numElements, &tmpDataSegment, dataLength);
+
+      newObject.bufferLength = 512 + stride * height;
+      newObject.buffer = malloc(newObject.bufferLength);
+
+      if(!newObject.buffer)
+        continue;
+
+      // Copy the header (probably the user won't need this, but just in case)
+      reinterpret_cast<s32*>(newObject.buffer)[0] = height;
+      reinterpret_cast<s32*>(newObject.buffer)[1] = width;
+      reinterpret_cast<s32*>(newObject.buffer)[2] = stride;
+      reinterpret_cast<u32*>(newObject.buffer)[3] = flags.get_rawFlags();
+      reinterpret_cast<s32*>(newObject.buffer)[4] = basicType_size;
+      reinterpret_cast<s32*>(newObject.buffer)[5] = basicType_isBasicType;
+      reinterpret_cast<s32*>(newObject.buffer)[6] = basicType_isInteger;
+      reinterpret_cast<s32*>(newObject.buffer)[7] = basicType_isSigned;
+      reinterpret_cast<s32*>(newObject.buffer)[8] = basicType_isFloat;
+      reinterpret_cast<s32*>(newObject.buffer)[9] = basicType_numElements;
+
+      newObject.startOfPayload = reinterpret_cast<void*>(&reinterpret_cast<s32*>(newObject.buffer)[10]);
+
+      MemoryStack localMemory(reinterpret_cast<void*>(reinterpret_cast<s32*>(newObject.buffer)+256), newObject.bufferLength - 256);
+
+      // TODO: make a DeserializeRawBasicType function that is not templated, so we don't need to repeat these, and so an unknown type can be handled
+      if(basicType_isFloat) {
+        if(basicType_size == 4) {
+          Array<f32> arr = SerializedBuffer::DeserializeRawArray<f32>(NULL, &dataSegment, dataLength, scratch);
+
+          if(!arr.IsValid())
+            continue;
+
+          memcpy(newObject.startOfPayload, &arr, sizeof(arr));
+        } else if(basicType_size == 8) {
+          Array<f64> arr = SerializedBuffer::DeserializeRawArray<f64>(NULL, &dataSegment, dataLength, scratch);
+
+          if(!arr.IsValid())
+            continue;
+
+          memcpy(newObject.startOfPayload, &arr, sizeof(arr));
+        } else {
+          //printf("Could not parse Array %s\n", objectName);
+        }
+      } else { // if(basicType_isFloat)
+        if(basicType_size == 1) {
+          if(basicType_isSigned) {
+            Array<s8> arr = SerializedBuffer::DeserializeRawArray<s8>(NULL, &dataSegment, dataLength, scratch);
+
+            if(!arr.IsValid())
+              continue;
+
+            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
+          } else {
+            Array<u8> arr = SerializedBuffer::DeserializeRawArray<u8>(NULL, &dataSegment, dataLength, scratch);
+
+            if(!arr.IsValid())
+              continue;
+
+            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
+          }
+        } else if(basicType_size == 2) {
+          if(basicType_isSigned) {
+            Array<s16> arr = SerializedBuffer::DeserializeRawArray<s16>(NULL, &dataSegment, dataLength, scratch);
+
+            if(!arr.IsValid())
+              continue;
+
+            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
+          } else {
+            Array<u16> arr = SerializedBuffer::DeserializeRawArray<u16>(NULL, &dataSegment, dataLength, scratch);
+
+            if(!arr.IsValid())
+              continue;
+
+            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
+          }
+        } else if(basicType_size == 4) {
+          if(basicType_isSigned) {
+            Array<s32> arr = SerializedBuffer::DeserializeRawArray<s32>(NULL, &dataSegment, dataLength, scratch);
+
+            if(!arr.IsValid())
+              continue;
+
+            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
+          } else {
+            Array<u32> arr = SerializedBuffer::DeserializeRawArray<u32>(NULL, &dataSegment, dataLength, scratch);
+
+            if(!arr.IsValid())
+              continue;
+
+            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
+          }
+        } else if(basicType_size == 8) {
+          if(basicType_isSigned) {
+            Array<s64> arr = SerializedBuffer::DeserializeRawArray<s64>(NULL, &dataSegment, dataLength, scratch);
+
+            if(!arr.IsValid())
+              continue;
+
+            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
+          } else {
+            Array<u64> arr = SerializedBuffer::DeserializeRawArray<u64>(NULL, &dataSegment, dataLength, scratch);
+
+            if(!arr.IsValid())
+              continue;
+
+            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
+          }
+        } else {
+          //printf("Could not parse Array %s\n", objectName);
+        }
+      } // if(basicType_isFloat) ... else
     } else {
       // TODO: actually parse other things
-      Object newObject(512);
-
-      // Copy the type and object names. Probably the user will use these to figure out how to cast the payload
-      memcpy(newObject.typeName, typeName, SerializedBuffer::DESCRIPTION_STRING_LENGTH);
-      memcpy(newObject.objectName, objectName, SerializedBuffer::DESCRIPTION_STRING_LENGTH);
-
-      newObject.typeName[SerializedBuffer::DESCRIPTION_STRING_LENGTH - 1] = '\0';
-      newObject.objectName[SerializedBuffer::DESCRIPTION_STRING_LENGTH - 1] = '\0';
-
-      printf("Received %s %s\n", newObject.typeName, newObject.objectName);
+      newObject.bufferLength = 512;
+      newObject.buffer = malloc(newObject.bufferLength);
     }
 
-    //else if(strcmp(typeName, "Array") == 0) {
-    //  s32 height;
-    //  s32 width;
-    //  s32 stride;
-    //  Flags::Buffer flags;
-    //  u16 basicType_size;
-    //  bool basicType_isBasicType;
-    //  bool basicType_isInteger;
-    //  bool basicType_isSigned;
-    //  bool basicType_isFloat;
-    //  s32 basicType_numElements;
-    //  void * tmpDataSegment = reinterpret_cast<u8*>(dataSegment) + 2*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
-    //  SerializedBuffer::EncodedArray::Deserialize(false, height, width, stride, flags, basicType_size, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_numElements, &tmpDataSegment, dataLength);
+    if(newObject.IsValid())
+      parsedObjectQueue.Push(newObject);
 
-    //  //template<typename Type> static Result DeserializeArray(const void * data, const s32 dataLength, Array<Type> &out, MemoryStack &memory);
-    //  if(basicType_size==1 && basicType_isInteger==1 && basicType_isSigned==0 && basicType_isFloat==0) {
-    //    Array<u8> arr = SerializedBuffer::DeserializeRawArray<u8>(NULL, &dataSegment, dataLength, scratch);
+    //printf("Received %s %s\n", newObject.typeName, newObject.objectName);
 
-    //    if(!arr.IsValid()) {
-    //      continue;
-    //    }
+    //printf("\n");
 
-    //    const s32 arrHeight = arr.get_size(0);
-    //    const s32 arrWidth = arr.get_size(1);
-
-    //    // Do the copy explicitly, to prevent OpenCV trying to be smart with memory
-    //    lastImage = cv::Mat(arrHeight, arrWidth, CV_8U);
-    //    //const cv::Mat_<u8> &mat = arr.get_CvMat_();
-    //    //const s32 numBytes = mat.size().width * mat.size().height;
-    //    /*for(s32 i=0; i<numBytes; i++) {
-    //    lastImage.data[i] = mat.data[i];
-    //    }*/
-    //    s32 cLastImage = 0;
-    //    for(s32 y=0; y<arrHeight; y++) {
-    //      const u8 * restrict pArr = arr.Pointer(y,0);
-    //      for(s32 x=0; x<arrWidth; x++) {
-    //        lastImage.data[cLastImage] = pArr[x];
-    //        cLastImage++;
-    //      }
-    //    }
-
-    //    cv::resize(lastImage, largeLastImage, largeLastImage.size(), 0, 0, cv::INTER_NEAREST);
-
-    //    const s32 blinkerWidth = 7;
-
-    //    //Draw a blinky rectangle at the upper right
-    //    static s32 frameNumber = 0;
-    //    frameNumber++;
-
-    //    if(frameNumber%2 == 0) {
-    //      for(s32 y=0; y<blinkerWidth; y++) {
-    //        for(s32 x=bigWidth-blinkerWidth; x<bigWidth; x++) {
-    //          largeLastImage.at<u8>(y,x) = 0;
-    //        }
-    //      }
-
-    //      for(s32 y=1; y<blinkerWidth-1; y++) {
-    //        for(s32 x=bigWidth+1-blinkerWidth; x<(bigWidth-1); x++) {
-    //          largeLastImage.at<u8>(y,x) = 255;
-    //        }
-    //      }
-    //      //largeLastImage.at<u8>(blinkerHalfWidth,320-blinkerHalfWidth) = 255;
-    //    } else {
-    //      for(s32 y=0; y<blinkerWidth; y++) {
-    //        for(s32 x=bigWidth-blinkerWidth; x<bigWidth; x++) {
-    //          largeLastImage.at<u8>(y,x) = 0;
-    //        }
-    //      }
-    //    }
-
-    //    // Grayscale to RGB
-    //    vector<cv::Mat> channels;
-    //    channels.push_back(largeLastImage);
-    //    channels.push_back(largeLastImage);
-    //    channels.push_back(largeLastImage);
-    //    cv::merge(channels, toShowImage);
-
-    //    //cv::resize(toShowImage, toShowLarge, toShowLargeTmp.size(), 0, 0, cv::INTER_NEAREST);
-    //  } else {
-    //    printf("Array \"%s\": (%d, %d, %d, %d, %d, %d, %d, %d)\n", objectName, height, width, stride, flags, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat);
-    //  }
-    //} else if(strcmp(typeName, "String") == 0) {
+    //else if(strcmp(typeName, "String") == 0) {
     //  printf("Board>> %s", dataSegment);
     //} else if(strcmp(typeName, "VisionMarker") == 0) {
     //  VisionMarker marker;

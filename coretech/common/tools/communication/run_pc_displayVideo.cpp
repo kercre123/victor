@@ -51,6 +51,8 @@ int main(int argc, char ** argv)
   DebugStreamClient parserThread(ipAddress, port);
 
   while(true) {
+    /*Sleep(10);
+    }*/
     DebugStreamClient::Object newObject = parserThread.GetNextObject();
     printf("Received %s %s\n", newObject.typeName, newObject.objectName);
 

@@ -39,14 +39,11 @@ public:
     void * buffer; //< This buffer is allocated by DebugStreamClient, and the user must free it
     s32 bufferLength;
 
-    const void * startOfPayload; //< This points after any header in buffer. Just cast this pointer to the appropriate type.
+    void * startOfPayload; //< This points after any header in buffer. Just cast this pointer to the appropriate type.
 
     f32 timeReceived; //< All objects from the same message will have the same timeReceived
 
     Object();
-
-    // Allocate the memory for this object
-    Object(const s32 bufferLength);
 
     bool IsValid() const;
   };
@@ -79,7 +76,7 @@ protected:
   //  s32 dataLength;
   //} RawBuffer;
 
-  static const s32 USB_BUFFER_SIZE = 100000;
+  static const s32 USB_BUFFER_SIZE = 5000;
   static const s32 MESSAGE_BUFFER_SIZE = 1000000;
 
   Socket socket;
