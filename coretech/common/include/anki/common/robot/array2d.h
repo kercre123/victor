@@ -359,7 +359,7 @@ namespace Anki
         numCols,
         this->data,
         numBytesAllocated,
-        flags);
+        this->flags);
 
       this->flags.set_zeroAllocatedMemory(clearMemory);
 

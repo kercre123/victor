@@ -54,19 +54,18 @@ namespace Anki
       // Constructor for a Array, pointing to user-allocated MemoryStack. This is the preferred
       // method for creating a new Array.
       //
-      // Flags: :Buffer.isFullyAllocated doesn't do anything
+      // Flags::Buffer.isFullyAllocated doesn't do anything
       Array(const s32 numRows, const s32 numCols, MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false,false));
 
       // Constructor for a Array, pointing to user-allocated data. This type of array is more
       // restrictive than most matrix libraries. For example, it may make it hard to convert from
-      // OpenCV: :Mat to Array, though the reverse is trivial.
+      // OpenCV::Mat to Array, though the reverse is trivial.
       //
       // If following are true, then the contents of data will not be modified, and it will work as
       // a normal buffer without extra zeros as stride padding:
       // 1. (numCols*sizeof(Type)) % MEMORY_ALIGNMENT == 0
       // 2. reinterpret_cast<size_t>(data) % MEMORY_ALIGNMENT == 0
-      // 3. flags.get_useBoundaryFillPatterns == false
-      // 4. numRows*numCols*sizeof(Type) <= dataLength
+      // 3. numRows*numCols*sizeof(Type) <= dataLength
       //
       // If Flags::Buffer.isFullyAllocated == true, then the input data buffer's stride must be a
       // simple multiple
