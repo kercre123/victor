@@ -308,19 +308,19 @@ void DebugStreamClient::ProcessRawBuffer(DisplayRawBuffer &buffer, ThreadSafeQue
 
       newObject.startOfPayload = reinterpret_cast<void*>(&reinterpret_cast<s32*>(newObject.buffer)[10]);
 
-      MemoryStack localMemory(reinterpret_cast<void*>(reinterpret_cast<s32*>(newObject.buffer)+256), newObject.bufferLength - 256);
+      MemoryStack localMemory(reinterpret_cast<void*>(reinterpret_cast<u8*>(newObject.buffer)+256), newObject.bufferLength - 256);
 
       // TODO: make a DeserializeRawBasicType function that is not templated, so we don't need to repeat these, and so an unknown type can be handled
       if(basicType_isFloat) {
         if(basicType_size == 4) {
-          Array<f32> arr = SerializedBuffer::DeserializeRawArray<f32>(NULL, &dataSegment, dataLength, scratch);
+          Array<f32> arr = SerializedBuffer::DeserializeRawArray<f32>(NULL, &dataSegment, dataLength, localMemory);
 
           if(!arr.IsValid())
             continue;
 
           memcpy(newObject.startOfPayload, &arr, sizeof(arr));
         } else if(basicType_size == 8) {
-          Array<f64> arr = SerializedBuffer::DeserializeRawArray<f64>(NULL, &dataSegment, dataLength, scratch);
+          Array<f64> arr = SerializedBuffer::DeserializeRawArray<f64>(NULL, &dataSegment, dataLength, localMemory);
 
           if(!arr.IsValid())
             continue;
@@ -332,14 +332,14 @@ void DebugStreamClient::ProcessRawBuffer(DisplayRawBuffer &buffer, ThreadSafeQue
       } else { // if(basicType_isFloat)
         if(basicType_size == 1) {
           if(basicType_isSigned) {
-            Array<s8> arr = SerializedBuffer::DeserializeRawArray<s8>(NULL, &dataSegment, dataLength, scratch);
+            Array<s8> arr = SerializedBuffer::DeserializeRawArray<s8>(NULL, &dataSegment, dataLength, localMemory);
 
             if(!arr.IsValid())
               continue;
 
             memcpy(newObject.startOfPayload, &arr, sizeof(arr));
           } else {
-            Array<u8> arr = SerializedBuffer::DeserializeRawArray<u8>(NULL, &dataSegment, dataLength, scratch);
+            Array<u8> arr = SerializedBuffer::DeserializeRawArray<u8>(NULL, &dataSegment, dataLength, localMemory);
 
             if(!arr.IsValid())
               continue;
@@ -348,14 +348,14 @@ void DebugStreamClient::ProcessRawBuffer(DisplayRawBuffer &buffer, ThreadSafeQue
           }
         } else if(basicType_size == 2) {
           if(basicType_isSigned) {
-            Array<s16> arr = SerializedBuffer::DeserializeRawArray<s16>(NULL, &dataSegment, dataLength, scratch);
+            Array<s16> arr = SerializedBuffer::DeserializeRawArray<s16>(NULL, &dataSegment, dataLength, localMemory);
 
             if(!arr.IsValid())
               continue;
 
             memcpy(newObject.startOfPayload, &arr, sizeof(arr));
           } else {
-            Array<u16> arr = SerializedBuffer::DeserializeRawArray<u16>(NULL, &dataSegment, dataLength, scratch);
+            Array<u16> arr = SerializedBuffer::DeserializeRawArray<u16>(NULL, &dataSegment, dataLength, localMemory);
 
             if(!arr.IsValid())
               continue;
@@ -364,14 +364,14 @@ void DebugStreamClient::ProcessRawBuffer(DisplayRawBuffer &buffer, ThreadSafeQue
           }
         } else if(basicType_size == 4) {
           if(basicType_isSigned) {
-            Array<s32> arr = SerializedBuffer::DeserializeRawArray<s32>(NULL, &dataSegment, dataLength, scratch);
+            Array<s32> arr = SerializedBuffer::DeserializeRawArray<s32>(NULL, &dataSegment, dataLength, localMemory);
 
             if(!arr.IsValid())
               continue;
 
             memcpy(newObject.startOfPayload, &arr, sizeof(arr));
           } else {
-            Array<u32> arr = SerializedBuffer::DeserializeRawArray<u32>(NULL, &dataSegment, dataLength, scratch);
+            Array<u32> arr = SerializedBuffer::DeserializeRawArray<u32>(NULL, &dataSegment, dataLength, localMemory);
 
             if(!arr.IsValid())
               continue;
@@ -380,14 +380,14 @@ void DebugStreamClient::ProcessRawBuffer(DisplayRawBuffer &buffer, ThreadSafeQue
           }
         } else if(basicType_size == 8) {
           if(basicType_isSigned) {
-            Array<s64> arr = SerializedBuffer::DeserializeRawArray<s64>(NULL, &dataSegment, dataLength, scratch);
+            Array<s64> arr = SerializedBuffer::DeserializeRawArray<s64>(NULL, &dataSegment, dataLength, localMemory);
 
             if(!arr.IsValid())
               continue;
 
             memcpy(newObject.startOfPayload, &arr, sizeof(arr));
           } else {
-            Array<u64> arr = SerializedBuffer::DeserializeRawArray<u64>(NULL, &dataSegment, dataLength, scratch);
+            Array<u64> arr = SerializedBuffer::DeserializeRawArray<u64>(NULL, &dataSegment, dataLength, localMemory);
 
             if(!arr.IsValid())
               continue;
@@ -398,89 +398,242 @@ void DebugStreamClient::ProcessRawBuffer(DisplayRawBuffer &buffer, ThreadSafeQue
           //printf("Could not parse Array %s\n", objectName);
         }
       } // if(basicType_isFloat) ... else
-    } else {
-      // TODO: actually parse other things
-      newObject.bufferLength = 512;
+    } else if(strcmp(typeName, "ArraySlice") == 0) {
+      s32 height;
+      s32 width;
+      s32 stride;
+      Flags::Buffer flags;
+      s32 ySlice_start;
+      s32 ySlice_increment;
+      s32 ySlice_end;
+      s32 xSlice_start;
+      s32 xSlice_increment;
+      s32 xSlice_end;
+      u16 basicType_size;
+      bool basicType_isBasicType;
+      bool basicType_isInteger;
+      bool basicType_isSigned;
+      bool basicType_isFloat;
+      s32 basicType_numElements;
+      void * tmpDataSegment = reinterpret_cast<u8*>(dataSegment) + 2*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
+      SerializedBuffer::EncodedArraySlice::Deserialize(false, height, width, stride, flags, ySlice_start, ySlice_increment, ySlice_end, xSlice_start, xSlice_increment, xSlice_end, basicType_size, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_numElements, &tmpDataSegment, dataLength);
+
+      newObject.bufferLength = 512 + stride * height;
       newObject.buffer = malloc(newObject.bufferLength);
+
+      if(!newObject.buffer)
+        continue;
+
+      // Copy the header (probably the user won't need this, but just in case)
+      reinterpret_cast<s32*>(newObject.buffer)[0] = height;
+      reinterpret_cast<s32*>(newObject.buffer)[1] = width;
+      reinterpret_cast<s32*>(newObject.buffer)[2] = stride;
+      reinterpret_cast<u32*>(newObject.buffer)[3] = flags.get_rawFlags();
+      reinterpret_cast<s32*>(newObject.buffer)[4] = basicType_size;
+      reinterpret_cast<s32*>(newObject.buffer)[5] = basicType_isBasicType;
+      reinterpret_cast<s32*>(newObject.buffer)[6] = basicType_isInteger;
+      reinterpret_cast<s32*>(newObject.buffer)[7] = basicType_isSigned;
+      reinterpret_cast<s32*>(newObject.buffer)[8] = basicType_isFloat;
+      reinterpret_cast<s32*>(newObject.buffer)[9] = basicType_numElements;
+
+      newObject.startOfPayload = reinterpret_cast<void*>(&reinterpret_cast<s32*>(newObject.buffer)[10]);
+
+      MemoryStack localMemory(reinterpret_cast<void*>(reinterpret_cast<u8*>(newObject.buffer)+256), newObject.bufferLength - 256);
+
+      // TODO: make a DeserializeRawBasicType function that is not templated, so we don't need to repeat these, and so an unknown type can be handled
+      if(basicType_isFloat) {
+        if(basicType_size == 4) {
+          ArraySlice<f32> arr = SerializedBuffer::DeserializeRawArraySlice<f32>(NULL, &dataSegment, dataLength, localMemory);
+
+          if(!arr.get_array().IsValid())
+            continue;
+
+          memcpy(newObject.startOfPayload, &arr, sizeof(arr));
+        } else if(basicType_size == 8) {
+          ArraySlice<f64> arr = SerializedBuffer::DeserializeRawArraySlice<f64>(NULL, &dataSegment, dataLength, localMemory);
+
+          if(!arr.get_array().IsValid())
+            continue;
+
+          memcpy(newObject.startOfPayload, &arr, sizeof(arr));
+        } else {
+          //printf("Could not parse Array %s\n", objectName);
+        }
+      } else { // if(basicType_isFloat)
+        if(basicType_size == 1) {
+          if(basicType_isSigned) {
+            ArraySlice<s8> arr = SerializedBuffer::DeserializeRawArraySlice<s8>(NULL, &dataSegment, dataLength, localMemory);
+
+            if(!arr.get_array().IsValid())
+              continue;
+
+            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
+          } else {
+            ArraySlice<u8> arr = SerializedBuffer::DeserializeRawArraySlice<u8>(NULL, &dataSegment, dataLength, localMemory);
+
+            if(!arr.get_array().IsValid())
+              continue;
+
+            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
+          }
+        } else if(basicType_size == 2) {
+          if(basicType_isSigned) {
+            ArraySlice<s16> arr = SerializedBuffer::DeserializeRawArraySlice<s16>(NULL, &dataSegment, dataLength, localMemory);
+
+            if(!arr.get_array().IsValid())
+              continue;
+
+            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
+          } else {
+            ArraySlice<u16> arr = SerializedBuffer::DeserializeRawArraySlice<u16>(NULL, &dataSegment, dataLength, localMemory);
+
+            if(!arr.get_array().IsValid())
+              continue;
+
+            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
+          }
+        } else if(basicType_size == 4) {
+          if(basicType_isSigned) {
+            ArraySlice<s32> arr = SerializedBuffer::DeserializeRawArraySlice<s32>(NULL, &dataSegment, dataLength, localMemory);
+
+            if(!arr.get_array().IsValid())
+              continue;
+
+            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
+          } else {
+            ArraySlice<u32> arr = SerializedBuffer::DeserializeRawArraySlice<u32>(NULL, &dataSegment, dataLength, localMemory);
+
+            if(!arr.get_array().IsValid())
+              continue;
+
+            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
+          }
+        } else if(basicType_size == 8) {
+          if(basicType_isSigned) {
+            ArraySlice<s64> arr = SerializedBuffer::DeserializeRawArraySlice<s64>(NULL, &dataSegment, dataLength, localMemory);
+
+            if(!arr.get_array().IsValid())
+              continue;
+
+            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
+          } else {
+            ArraySlice<u64> arr = SerializedBuffer::DeserializeRawArraySlice<u64>(NULL, &dataSegment, dataLength, localMemory);
+
+            if(!arr.get_array().IsValid())
+              continue;
+
+            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
+          }
+        } else {
+          //printf("Could not parse Array %s\n", objectName);
+        }
+      } // if(basicType_isFloat) ... else
+    } else if(strcmp(typeName, "String") == 0) {
+      const s32 stringLength = strlen(reinterpret_cast<char*>(dataSegment));
+
+      newObject.bufferLength = 32 + stringLength;
+      newObject.buffer = malloc(newObject.bufferLength);
+
+      if(!newObject.buffer)
+        continue;
+
+      reinterpret_cast<s32*>(newObject.buffer)[0] = stringLength;
+
+      newObject.startOfPayload = reinterpret_cast<void*>(&reinterpret_cast<s32*>(newObject.buffer)[1]);
+
+      memcpy(newObject.startOfPayload, dataSegment, stringLength);
+      reinterpret_cast<char*>(newObject.startOfPayload)[stringLength] = '\0';
+    } else if(strcmp(typeName, "VisionMarker") == 0) {
+      VisionMarker marker;
+
+      marker.Deserialize(innerObjectName, reinterpret_cast<void**>(&dataSegment), dataLength);
+
+      if(!marker.isValid)
+        continue;
+
+      newObject.bufferLength = 32 + sizeof(marker);
+      newObject.buffer = malloc(newObject.bufferLength);
+
+      if(!newObject.buffer)
+        continue;
+
+      newObject.startOfPayload = newObject.buffer;
+
+      memcpy(newObject.startOfPayload, &marker, sizeof(marker));
+    } else if(strcmp(typeName, "PlanarTransformation_f32") == 0) {
+      newObject.bufferLength = 512 + Transformations::PlanarTransformation_f32::get_serializationSize();
+      newObject.buffer = malloc(newObject.bufferLength);
+
+      if(!newObject.buffer)
+        continue;
+
+      newObject.startOfPayload = newObject.buffer;
+
+      MemoryStack localMemory(newObject.buffer, newObject.bufferLength);
+
+      Transformations::PlanarTransformation_f32 tranformation;
+      tranformation.Deserialize(innerObjectName, reinterpret_cast<void**>(&dataSegment), dataLength, localMemory);
+
+      memcpy(newObject.startOfPayload, &tranformation, sizeof(tranformation));
+    } else if(strcmp(typeName, "BinaryTracker") == 0) {
+      PUSH_MEMORY_STACK(scratch);
+      TemplateTracker::BinaryTracker bt;
+
+      {
+        void * dataSegment_tmp = dataSegment;
+        s32 dataLength_tmp = dataLength;
+        bt.Deserialize(innerObjectName, reinterpret_cast<void**>(&dataSegment_tmp), dataLength_tmp, scratch);
+      }
+
+      if(!bt.IsValid())
+        continue;
+
+      newObject.bufferLength = 4196 + bt.get_serializationSize();
+      newObject.buffer = malloc(newObject.bufferLength);
+
+      if(!newObject.buffer)
+        continue;
+
+      newObject.startOfPayload = newObject.buffer;
+
+      MemoryStack localMemory(newObject.buffer, newObject.bufferLength);
+
+      bt.Deserialize(innerObjectName, reinterpret_cast<void**>(&dataSegment), dataLength, localMemory);
+
+      memcpy(newObject.startOfPayload, &bt, sizeof(bt));
+    } else if(strcmp(typeName, "EdgeLists") == 0) {
+      PUSH_MEMORY_STACK(scratch);
+
+      EdgeLists edges;
+
+      {
+        void * dataSegment_tmp = dataSegment;
+        s32 dataLength_tmp = dataLength;
+        edges.Deserialize(innerObjectName, reinterpret_cast<void**>(&dataSegment_tmp), dataLength_tmp, scratch);
+      }
+
+      newObject.bufferLength = 4196 + edges.get_serializationSize();
+      newObject.buffer = malloc(newObject.bufferLength);
+
+      if(!newObject.buffer)
+        continue;
+
+      newObject.startOfPayload = newObject.buffer;
+
+      MemoryStack localMemory(newObject.buffer, newObject.bufferLength);
+
+      edges.Deserialize(innerObjectName, reinterpret_cast<void**>(&dataSegment), dataLength, localMemory);
+
+      memcpy(newObject.startOfPayload, &edges, sizeof(edges));
+    } else {
+      newObject.bufferLength = 0;
+      newObject.buffer = NULL;
     }
 
     if(newObject.IsValid())
       parsedObjectQueue.Push(newObject);
 
     //printf("Received %s %s\n", newObject.typeName, newObject.objectName);
-
-    //printf("\n");
-
-    //else if(strcmp(typeName, "String") == 0) {
-    //  printf("Board>> %s", dataSegment);
-    //} else if(strcmp(typeName, "VisionMarker") == 0) {
-    //  VisionMarker marker;
-
-    //  marker.Deserialize(innerObjectName, reinterpret_cast<void**>(&dataSegment), dataLength);
-
-    //  if(!marker.isValid)
-    //    continue;
-
-    //  if(!aMessageAlreadyPrinted) {
-    //    time_t rawtime;
-    //    time (&rawtime);
-    //    string timeString = string(ctime(&rawtime));
-    //    timeString[timeString.length()-6] = '\0';
-    //    printf("%s>> ", timeString.data());
-    //    aMessageAlreadyPrinted = true;
-    //  }
-
-    //  marker.Print();
-    //  printf("\n");
-    //  visionMarkerList.push_back(marker);
-    //  isTracking = false;
-    //} else if(strcmp(typeName, "PlanarTransformation_f32") == 0) {
-    //  lastPlanarTransformation.Deserialize(innerObjectName, reinterpret_cast<void**>(&dataSegment), dataLength, scratch);
-    //  //lastPlanarTransformation.Print();
-    //  isTracking = true;
-    //} else if(strcmp(typeName, "BinaryTracker") == 0) {
-    //  PUSH_MEMORY_STACK(scratch);
-    //  TemplateTracker::BinaryTracker bt;
-    //  bt.Deserialize(innerObjectName, reinterpret_cast<void**>(&dataSegment), dataLength, scratch);
-
-    //  if(!bt.IsValid())
-    //    continue;
-
-    //  bt.ShowTemplate("BinaryTracker Template", false, false, 2.0f);
-    //} else if(strcmp(typeName, "EdgeLists") == 0) {
-    //  PUSH_MEMORY_STACK(scratch);
-    //  EdgeLists edges;
-    //  edges.Deserialize(innerObjectName, reinterpret_cast<void**>(&dataSegment), dataLength, scratch);
-
-    //  cv::Mat toShow = edges.DrawIndexes();
-
-    //  if(toShow.cols == 0)
-    //    continue;
-
-    //  cv::Mat toShowLargeTmp(bigHeight, bigWidth, CV_8UC3);
-    //  cv::resize(toShow, toShowLargeTmp, toShowLargeTmp.size(), 0, 0, cv::INTER_NEAREST);
-    //  cv::imshow("Detected Binary Edges", toShowLargeTmp);
-
-    //  //cv::resize(toShow, toShowImage, toShowImage.size(), 0, 0, cv::INTER_NEAREST);
-    //  //cv::imshow("Detected Binary Edges", toShowImage);
-    //} else if(strcmp(typeName, "ArraySlice") == 0) {
-    //  if(strcmp(objectName, "detectedFaces") == 0) {
-    //    FixedLengthList<Anki::Embedded::Rectangle<s32> > newFaces = SerializedBuffer::DeserializeRawFixedLengthList<Anki::Embedded::Rectangle<s32> >(NULL, reinterpret_cast<void**>(&dataSegment), dataLength, scratch);
-    //    for(s32 i=0; i<newFaces.get_size(); i++) {
-    //      detectedFaces.push_back(newFaces[i]);
-    //    }
-    //  }
-    //} else {
-    //  char toPrint[32];
-
-    //  memcpy(toPrint, typeName, 31);
-    //  toPrint[31] = '\0';
-    //  printf("Unknown Type \"%s\"", toPrint);
-
-    //  memcpy(toPrint, objectName, 31);
-    //  toPrint[31] = '\0';
-    //  printf(" \"%s\"\n", toPrint);
-    //}
   } // while(iterator.HasNext())
 
   //if(aMessageAlreadyPrinted) {
