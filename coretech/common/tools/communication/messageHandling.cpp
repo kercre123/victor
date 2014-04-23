@@ -20,6 +20,9 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include <ctime>
 #include <vector>
 
+#undef printf
+#define printf (Do not use printf on this thread)
+
 using namespace Anki::Embedded;
 using namespace std;
 
@@ -60,12 +63,12 @@ Result DebugStreamClient::Close()
 DebugStreamClient::DebugStreamClient(const char * ipAddress, const s32 port)
   : isConnected(false)
 {
-  printf("Starting DebugStreamClient\n");
+  //printf("Starting DebugStreamClient\n");
 
   rawMessageQueue = ThreadSafeQueue<DisplayRawBuffer>();
 
   while(socket.Open(ipAddress, port) != RESULT_OK) {
-    printf("Trying again to open socket.\n");
+    //printf("Trying again to open socket.\n");
 #ifdef _MSC_VER
     Sleep(100);
 #else
@@ -73,7 +76,7 @@ DebugStreamClient::DebugStreamClient(const char * ipAddress, const s32 port)
 #endif
   }
 
-  printf("Connection opened\n");
+  //printf("Connection opened\n");
 
 #ifdef _MSC_VER
   SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST); // THREAD_PRIORITY_ABOVE_NORMAL
@@ -99,7 +102,7 @@ DebugStreamClient::DebugStreamClient(const char * ipAddress, const s32 port)
   pthread_create(&thread, &attr, DebugStreamClient::ParseBufferThread, (void *)this);
 #endif
 
-  printf("Parsing thread created\n");
+  //printf("Parsing thread created\n");
 
 #ifdef _MSC_VER
   DWORD connectionThreadId = -1;
@@ -120,7 +123,7 @@ DebugStreamClient::DebugStreamClient(const char * ipAddress, const s32 port)
   pthread_create(&thread, &attr, DebugStreamClient::ConnectionThread, (void *)this);
 #endif
 
-  printf("Connection thread created\n");
+  //printf("Connection thread created\n");
 
   bool atLeastOneStartFound = false;
   s32 start_state = 0;
@@ -160,7 +163,7 @@ DebugStreamClient::DisplayRawBuffer DebugStreamClient::AllocateNewRawBuffer(cons
   rawBuffer.curDataLength = 0;
 
   if(rawBuffer.rawDataPointer == NULL) {
-    printf("Could not allocate memory");
+    //printf("Could not allocate memory");
     rawBuffer.data = NULL;
     rawBuffer.maxDataLength = 0;
   }
@@ -641,7 +644,7 @@ ThreadResult DebugStreamClient::ConnectionThread(void *threadParameter)
   DebugStreamClient *callingObject = (DebugStreamClient *) threadParameter;
 
   if(!callingObject->isConnected) {
-    AnkiError("DebugStreamClient::ConnectionThread", "Not connected");
+    //AnkiError("DebugStreamClient::ConnectionThread", "Not connected");
     return -1;
   }
 
@@ -649,7 +652,7 @@ ThreadResult DebugStreamClient::ConnectionThread(void *threadParameter)
   DisplayRawBuffer nextMessage = AllocateNewRawBuffer(MESSAGE_BUFFER_SIZE);
 
   if(!usbBuffer || !nextMessage.data) {
-    AnkiError("DebugStreamClient::ConnectionThread", "Could not allocate usbBuffer and nextMessage.data");
+    //AnkiError("DebugStreamClient::ConnectionThread", "Could not allocate usbBuffer and nextMessage.data");
     return -2;
   }
 
@@ -658,7 +661,7 @@ ThreadResult DebugStreamClient::ConnectionThread(void *threadParameter)
 
   while(callingObject->get_isConnected()) {
     if(!usbBuffer) {
-      AnkiError("DebugStreamClient::ConnectionThread", "Could not allocate usbBuffer");
+      //AnkiError("DebugStreamClient::ConnectionThread", "Could not allocate usbBuffer");
       return -3;
     }
 
@@ -666,7 +669,7 @@ ThreadResult DebugStreamClient::ConnectionThread(void *threadParameter)
 
     while(callingObject->socket.Read(usbBuffer, USB_BUFFER_SIZE-2, bytesRead) != RESULT_OK)
     {
-      printf("socket read failure. Retrying...\n");
+      //printf("socket read failure. Retrying...\n");
 #ifdef _MSC_VER
       Sleep(1);
 #else
@@ -714,7 +717,7 @@ ThreadResult DebugStreamClient::ConnectionThread(void *threadParameter)
 
         if((nextMessage.curDataLength + numBytesToCopy + 16) > nextMessage.maxDataLength) {
           nextMessage = AllocateNewRawBuffer(MESSAGE_BUFFER_SIZE);
-          printf("Buffer trashed\n");
+          //printf("Buffer trashed\n");
           continue;
         }
 
@@ -738,12 +741,12 @@ ThreadResult DebugStreamClient::ConnectionThread(void *threadParameter)
       // If we've filled up the buffer, just trash it
       if((nextMessage.curDataLength + numBytesToCopy + 16) > nextMessage.maxDataLength) {
         nextMessage = AllocateNewRawBuffer(MESSAGE_BUFFER_SIZE);
-        printf("Buffer trashed\n");
+        //printf("Buffer trashed\n");
         continue;
       }
 
       if(numBytesToCopy <= 0) {
-        printf("negative numBytesToCopy");
+        //printf("negative numBytesToCopy");
         continue;
       }
 
@@ -760,7 +763,7 @@ ThreadResult DebugStreamClient::ConnectionThread(void *threadParameter)
         // If we've filled up the buffer, just trash it
         if((nextMessage.curDataLength + numBytesToCopy + 16) > nextMessage.maxDataLength) {
           nextMessage = AllocateNewRawBuffer(MESSAGE_BUFFER_SIZE);
-          printf("Buffer trashed\n");
+          //printf("Buffer trashed\n");
           continue;
         }
 
