@@ -49,10 +49,10 @@ Supervisor {
         }
       ]
       name "cozmo_cam_viz_display"
-      width 320
-      height 240
+      width 160
+      height 120
       windowPosition 1 1
-      pixelSize 1
+      pixelSize 2
     }
   ]
 

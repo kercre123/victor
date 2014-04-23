@@ -208,13 +208,6 @@ namespace Anki {
         {
           HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::VisionMarker), &markerMsg);
         }
-
-        Messages::ImageChunk imgChunkMsg;
-        while( Messages::CheckMailbox(imgChunkMsg) )
-        {
-          //PRINT("Sending imgChunk %d size %d\n", imgChunkMsg.chunkId, imgChunkMsg.chunkSize);
-          HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::ImageChunk), &imgChunkMsg);
-        }
         
         /*
         Messages::MatMarkerObserved matMsg;

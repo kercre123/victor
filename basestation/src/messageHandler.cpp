@@ -261,7 +261,6 @@ namespace Anki {
     
     Result MessageHandler::ProcessMessage(Robot* robot, MessageImageChunk const& msg)
     {
-      const Vision::CameraResolution MAX_RESOLUTION = Vision::CAMERA_RES_QQVGA;
       static u8 imgID = 0;
       static u32 totalImgSize = 0;
       static u8 data[ 320*240 ];
@@ -269,11 +268,14 @@ namespace Anki {
       static u32 width;
       static u32 height;
 
-      PRINT_INFO("Img %d, chunk %d, size %d, res %d, dataSize %d\n",
-                 msg.imageId, msg.chunkId, msg.chunkSize, msg.resolution, dataSize);
+      //PRINT_INFO("Img %d, chunk %d, size %d, res %d, dataSize %d\n",
+      //           msg.imageId, msg.chunkId, msg.chunkSize, msg.resolution, dataSize);
       
-      // Check that resolution does not exceed max resolution
-      if (msg.resolution <= MAX_RESOLUTION) { // TODO : Reverse order of CameraResolution items
+      // Check that resolution is supported
+      if (msg.resolution != Vision::CAMERA_RES_QVGA &&
+          msg.resolution != Vision::CAMERA_RES_QQVGA &&
+          msg.resolution != Vision::CAMERA_RES_QQQVGA &&
+          msg.resolution != Vision::CAMERA_RES_QQQQVGA) {
         return RESULT_FAIL;
       }
       

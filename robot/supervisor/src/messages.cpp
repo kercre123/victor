@@ -52,10 +52,6 @@ namespace Anki {
         // max vision markers we can see in one image and transmit to the
         // basestation
         const u8 MAX_MARKER_MESSAGES = 32;
-
-        // Max number of image chunk messages that may be generated
-        // upon a request for image. (Largest image size / IMAGE_CHUNK_SIZE)
-        const u8 MAX_IMAGE_CHUNK_MESSAGES = 20;
         
         // Single-message Mailbox Class
         template<typename MsgType>
@@ -97,8 +93,6 @@ namespace Anki {
         //Mailbox<Messages::MatMarkerObserved>    matMarkerMailbox_;
         MultiMailbox<Messages::VisionMarker, MAX_MARKER_MESSAGES> visionMarkerMailbox_;
         Mailbox<Messages::DockingErrorSignal>   dockingMailbox_;
-        MultiMailbox<Messages::ImageChunk, MAX_IMAGE_CHUNK_MESSAGES> imageChunkMailbox_;
-        
 
         static RobotState robotState_;
         
@@ -259,11 +253,6 @@ namespace Anki {
         // system back in LOOKING_FOR_BLOCKS mode.
         dockingMailbox_.putMessage(msg);
       }
-
-      void ProcessImageChunkMessage(const ImageChunk& msg)
-      {
-        imageChunkMailbox_.putMessage(msg);
-      }
       
       void ProcessBTLEMessages()
       {
@@ -376,6 +365,10 @@ namespace Anki {
         PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
       }
       
+      void ProcessImageChunkMessage(const ImageChunk& msg) {
+        PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
+      }
+      
 // ----------- Send messages -----------------
       
       
@@ -456,11 +449,6 @@ namespace Anki {
       bool CheckMailbox(DockingErrorSignal&  msg)
       {
         return dockingMailbox_.getMessage(msg);
-      }
-      
-      bool CheckMailbox(ImageChunk& msg)
-      {
-        return imageChunkMailbox_.getMessage(msg);
       }
       
       //

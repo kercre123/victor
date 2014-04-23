@@ -501,7 +501,7 @@ namespace Anki {
     {
       MessageImageRequest m;
       
-      m.resolution = Vision::CAMERA_RES_QQQQVGA;
+      m.resolution = Vision::CAMERA_RES_QQVGA;
       
       return msgHandler_->SendMessage(ID_, m);
     }

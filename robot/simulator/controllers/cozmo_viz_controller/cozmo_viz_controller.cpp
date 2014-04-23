@@ -50,7 +50,7 @@ namespace Anki {
       
       // Image message processing
       u8 imgID = 0;
-      u8 imgData[320*240];
+      u8 imgData[3*320*240];
       u32 imgBytes = 0;
       u32 imgWidth, imgHeight = 0;
     }
@@ -147,7 +147,7 @@ namespace Anki {
       
       // Copy chunk into the appropriate location in the imgData array.
       // Triplicate channels for viewability. (Webots only supports RGB)
-      printf("Processing chunk %d of size %d\n", msg.chunkId, msg.chunkSize);
+      //printf("Processing chunk %d of size %d\n", msg.chunkId, msg.chunkSize);
       u8* chunkStart = imgData + 3 * msg.chunkId * MAX_VIZ_IMAGE_CHUNK_SIZE;
       for(int i=0; i<msg.chunkSize; ++i) {
         chunkStart[3*i] = msg.data[i];

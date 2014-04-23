@@ -250,10 +250,10 @@ namespace Anki {
       
       void SendNextImage(Vision::CameraResolution res)
       {
-        // TODO: With the current method we only have the space to send QQQQVGA.
-        //       Try sending images from longExecution directly if possible so that
-        //       the space for an entire image doesn't need to be reserved in a mailbox.
-        if (res == Vision::CAMERA_RES_QQQQVGA) {
+        if (res == Vision::CAMERA_RES_QVGA ||
+            res == Vision::CAMERA_RES_QQVGA ||
+            res == Vision::CAMERA_RES_QQQVGA ||
+            res == Vision::CAMERA_RES_QQQQVGA) {
           nextSendImageResolution_ = res;
         }
       }
@@ -298,15 +298,15 @@ namespace Anki {
               ++totalByteCnt;
               
               if (chunkByteCnt == IMAGE_CHUNK_SIZE) {
-                Messages::ProcessImageChunkMessage(m);
+                //PRINT("Sending image chunk %d\n", m.chunkId);
+                HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::ImageChunk), &m);
                 ++m.chunkId;
                 chunkByteCnt = 0;
-                //PRINT("Adding chunk %d to mailbox\n", m.chunkId);
               } else if (totalByteCnt == numTotalBytes) {
                 // This should be the last message!
+                //PRINT("Sending LAST image chunk %d\n", m.chunkId);
                 m.chunkSize = chunkByteCnt;
-                Messages::ProcessImageChunkMessage(m);
-                //PRINT("Adding LAST chunk %d to mailbox\n", m.chunkId);
+                HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::ImageChunk), &m);
               }
             }
           }

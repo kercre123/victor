@@ -304,7 +304,7 @@ namespace Anki {
         }
         bytesToSend -= v.chunkSize;
 
-        printf("Sending CAM image %d chunk %d (size: %d), bytesLeftToSend %d\n", v.imgId, v.chunkId, v.chunkSize, bytesToSend);
+        //printf("Sending CAM image %d chunk %d (size: %d), bytesLeftToSend %d\n", v.imgId, v.chunkId, v.chunkSize, bytesToSend);
         memcpy(v.data, &data[v.chunkId * MAX_VIZ_IMAGE_CHUNK_SIZE], v.chunkSize);
         SendMessage( GET_MESSAGE_ID(VizImageChunk), &v );
         
