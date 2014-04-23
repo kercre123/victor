@@ -3719,7 +3719,7 @@ GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation)
     marker3d[0], marker3d[1], marker3d[2], marker3d[3],
     focalLength_x, focalLength_y,
     camCenter_x, camCenter_y,
-    R, T, memory) == RESULT_OK);
+    R, T) == RESULT_OK);
 
   EndBenchmark("P3P::computePose");
 
