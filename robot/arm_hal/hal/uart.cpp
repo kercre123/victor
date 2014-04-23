@@ -189,6 +189,17 @@ namespace Anki
         UARTConfigure();
       }
 
+      // Add one char to the buffer, wrapping around
+      static void BufPutChar(u8 c)
+      {
+        m_bufferWrite[m_writeHead] = c;
+        m_writeHead++;
+        if (m_writeHead >= sizeof(m_bufferWrite))
+        {
+          m_writeHead = 0;
+        }
+      }
+      
       int UARTPutChar(int c)
       {
         //UART->DR = c;
@@ -201,12 +212,7 @@ namespace Anki
           ;
         
         __disable_irq();
-        m_bufferWrite[m_writeHead] = c;
-        m_writeHead++;
-        if (m_writeHead >= sizeof(m_bufferWrite))
-        {
-          m_writeHead = 0;
-        }
+        BufPutChar(c);
         
         // Enable DMA if it's not already running
         if (!m_isTransferring)
@@ -218,18 +224,28 @@ namespace Anki
         
         return c;
       }
-      
-      bool UARTPutBuffer(u8* buffer, u32 length)
+
+      bool UARTPutMessage(u8 msgID, u32 timestamp, u8* buffer, u32 length)
       {
         bool result = false;
         
         __disable_irq();
         int bytesLeft = UARTGetFreeSpace();
         
-        // Leave one guard byte
-        if (bytesLeft > (length + 1))
+        // Leave one guard byte + header + footer length
+        if (bytesLeft > (length + 1 + 7 + 2))
         {
           result = true;
+          
+          // Write header first
+          BufPutChar(0xBE);
+          BufPutChar(0xEF);
+          // TBD:  Reduce timestamp size with wraparound
+          BufPutChar(timestamp);
+          BufPutChar(timestamp >> 8);
+          BufPutChar(timestamp >> 16);
+          BufPutChar(timestamp >> 24);
+          BufPutChar(msgID);
           
           bytesLeft = sizeof(m_bufferWrite) - m_writeHead;
           if (length <= bytesLeft)
@@ -251,6 +267,10 @@ namespace Anki
             
             m_writeHead = bytesLeft;
           }
+          
+          // Add footer
+          BufPutChar(0xFF);
+          BufPutChar(0x0F);
           
           // Enable DMA if it's not already running
           if (!m_isTransferring)
@@ -308,27 +328,7 @@ namespace Anki
       s32 UARTGetChar(u32 timeout)
       {
         return GetChar(timeout);
-      }
-      
-      void USBSendBuffer(const u8* buffer, const u32 size)
-      {
-        for (u32 i=0; i<size; ++i) {
-          UARTPutChar(buffer[i]);
-        }
-      }
-			
-      u32 USBRecvBuffer(u8* buffer, const u32 max_size)
-      {
-        u32 i;
-        for (i=0; i<max_size; ++i) {
-          s32 c = UARTGetChar(0);
-          if (c<0) {
-            return i;
-          }
-          buffer[i] = c;
-        }
-        return i;
-      }
+      }      
     }
   }
 }

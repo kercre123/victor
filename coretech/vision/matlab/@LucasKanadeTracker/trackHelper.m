@@ -83,7 +83,17 @@ while iteration < this.maxIterations
     inBounds = ~isnan(imgi);
     
     if this.useNormalization
-        imgi = (imgi - mean(imgi(inBounds)))/std(imgi(inBounds));
+        if ~isempty(this.xgridFull{i_scale})
+            [xnorm, ynorm] = this.getImagePoints(this.xgridFull{i_scale}, ...
+                this.ygridFull{i_scale});
+            normData = interp2(img, xnorm(:), ynorm(:), 'nearest');
+            tempInBounds = ~isnan(normData);
+            imgi = (imgi - mean(normData(tempInBounds))) / ...
+                std(normData(tempInBounds));
+        
+        else        
+            imgi = (imgi - mean(imgi(inBounds))) ./ std(imgi(inBounds));
+        end
     end
     
     %figure(3); imshow(this.target{i_scale});

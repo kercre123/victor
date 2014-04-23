@@ -24,6 +24,7 @@ namespace Anki
 {
   namespace Embedded
   {
+#ifdef ANKICORETECH_EMBEDDED_USE_HEATSHRINK
     Result Compress(const void * in, const u32 inLength, void *out, const u32 outMaxLength, s32 &outCompressedLength, MemoryStack scratch)
     {
       heatshrink_encoder *hse = reinterpret_cast<heatshrink_encoder*>( scratch.Allocate(sizeof(heatshrink_encoder)) );
@@ -126,6 +127,7 @@ namespace Anki
 
       return RESULT_OK;
     } // Result Decompress()
+#endif // #ifdef ANKICORETECH_EMBEDDED_USE_HEATSHRINK
 
     Result EncodeRunLengthBinary(
       const u8 * restrict in, const s32 inLength,

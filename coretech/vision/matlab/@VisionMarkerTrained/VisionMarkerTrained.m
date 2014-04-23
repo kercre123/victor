@@ -40,7 +40,7 @@ classdef VisionMarkerTrained
         [squareWidth_pix, padding_pix] = GetFiducialPixelSize(imageSize, imageSizeType);
         %Corners = GetMarkerCorners(imageSize, isPadded);
         corners = GetFiducialCorners(imageSize, isPadded);
-        threshold = ComputeThreshold(img, tform);
+        [threshold, bright, dark] = ComputeThreshold(img, tform);
         outputString = GenerateHeaderFiles(varargin);
         
     end % Static Methods
@@ -80,6 +80,7 @@ classdef VisionMarkerTrained
             Size = 1;
             UseSortedCorners = false;
             UseSingleProbe = false;
+            CornerRefinementIterations = 0;
                         
             parseVarargin(varargin{:});
             
@@ -95,7 +96,7 @@ classdef VisionMarkerTrained
                 %Corners = [0 0; 0 1; 1 0; 1 1];
                 Corners = VisionMarkerTrained.GetFiducialCorners(size(img,1), false);
             end
-            
+                        
             this.corners = Corners;
             
             if UseSortedCorners
@@ -113,14 +114,20 @@ classdef VisionMarkerTrained
             end            
             
             this.H = tform.tdata.T';
-            
-            threshold = VisionMarkerTrained.ComputeThreshold(img, tform);
+    
+            [threshold, bright, dark] = VisionMarkerTrained.ComputeThreshold(img, tform);
             
             if threshold < 0
                 %warning('VisionMarkerTrained:TooLittleContrast', ...
                 %    'Not enough contrast to create VisionMarkerTrained.');
                 this.isValid = false;
             else
+                if CornerRefinementIterations > 0
+                    this.RefineCorners(img, 'NumSamples', 100, ... 'DebugDisplay', true,  ...
+                        'MaxIterations', CornerRefinementIterations, ...
+                        'Contrast', bright-dark);
+                end
+                
                 [this.codeName, this.codeID] = TestTree( ...
                     VisionMarkerTrained.ProbeTree, img, tform, threshold, ...
                     VisionMarkerTrained.ProbePattern);

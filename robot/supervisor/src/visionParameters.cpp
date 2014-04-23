@@ -141,10 +141,16 @@ namespace Anki {
         scaleTemplateRegionPercent = 1.1f;
         
         maxIterations             = 25;
-        convergenceTolerance      = 1.f;
         verify_maxPixelDifference = 30;
         useWeights                = true;
-        maxSamplesAtBaseLevel     = 500; // NOTE: used by all Matlab trackers & "SAMPLED_PROJECTIVE"
+        maxSamplesAtBaseLevel     = 500; // NOTE: used by all Matlab trackers & "SAMPLED_PROJECTIVE" / "SAMPLED_PLANAR6DOF"
+        
+#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
+        convergenceTolerance_angle    = DEG_TO_RAD(0.5); 
+        convergenceTolerance_distance = 0.5f; // mm
+#else
+        convergenceTolerance      = 1.f;
+#endif
         
         
 #endif // if DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER

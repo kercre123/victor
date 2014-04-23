@@ -355,7 +355,8 @@ namespace Anki
         Result UpdateTrack(
                            const Array<u8> &nextImage,
                            const s32 maxIterations,
-                           const f32 convergenceTolerance,
+                           const f32 convergenceTolerance_angle,
+                           const f32 convergenceTolerance_distance,
                            const u8 verify_maxPixelDifference,
                            bool &verify_converged,
                            s32 &verify_meanAbsoluteDifference, //< For all pixels in the template, compute the mean difference between the template and the final warped template
@@ -395,7 +396,6 @@ namespace Anki
         
         s32 get_numTemplatePixels(const s32 whichScale) const;
         
-      protected:
         // TODO: verify that there's no alignment padding
         typedef struct TemplateSample
         {
@@ -405,6 +405,23 @@ namespace Anki
           f32 yGradient;
           f32 grayvalue;
         } TemplateSample;
+        
+        const FixedLengthList<TemplateSample>& get_templateSamples(const s32 atScale) const;
+        
+      protected:
+        
+        // Store grid of original template values for verification
+        // (We don't want to use samples because they are _on_ edges)
+        typedef struct VerifySample
+        {
+          s8 xCoordinate;
+          s8 yCoordinate;
+          u8 grayvalue;
+        } VerifySample;
+        
+        f32 verifyCoordScalar;
+        
+        
         
         typedef struct JacobianSample
         {
@@ -459,6 +476,8 @@ namespace Anki
         FixedLengthList<FixedLengthList<TemplateSample> > templateSamplePyramid;
         FixedLengthList<FixedLengthList<JacobianSample> > jacobianSamplePyramid;
         
+        FixedLengthList<VerifySample> verificationSamples;
+        
         // Update the transformation homography with whatever is currently
         // in the 6DoF parameters
         Result UpdateTransformation(MemoryStack scratch);
@@ -475,13 +494,14 @@ namespace Anki
                                       s32 &verify_numSimilarPixels,
                                       MemoryStack scratch) const;
         
-        Result IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const Transformations::TransformType curTransformType, bool &converged, MemoryStack scratch);
+        Result IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance_angle, const f32 convergenceTolerance_distance, const Transformations::TransformType curTransformType, bool &converged, MemoryStack scratch);
         
         Result IterativelyRefineTrack_Translation(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack scratch);
-        Result IterativelyRefineTrack_Affine(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack scratch);
-        Result IterativelyRefineTrack_Projective(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack scratch);
+        
+        Result IterativelyRefineTrack_Projective(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance_angle, const f32 convergenceTolerance_distance, bool &converged, MemoryStack scratch);
         
         static Result ApproximateSelect(const Array<f32> &magnitudeVector, const s32 numBins, const s32 numToSelect, s32 &numSelected, Array<u16> &magnitudeIndexes);
+                
       }; // class LucasKanadeTracker_SampledPlanar6dof
       
       

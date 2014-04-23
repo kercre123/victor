@@ -27,6 +27,11 @@ non-disclosure agreement with Anki, inc.
 
 #define USE_OPENCV_ITERATIVE_POSE_INIT 0
 
+#define COMPUTE_CONVERGENCE_FROM_CORNER_CHANGE 0
+
+// If 0, just uses nearest pixel
+#define USE_LINEAR_INTERPOLATION_FOR_VERIFICATION 0
+
 #if USE_OPENCV_ITERATIVE_POSE_INIT
 #include "opencv2/calib3d/calib3d.hpp"
 #endif
@@ -35,8 +40,10 @@ namespace Anki
 {
   namespace Embedded
   {
+    
     namespace TemplateTracker
     {
+      
       LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof()
         : LucasKanadeTracker_Generic(maxSupportedTransformType)
       {
@@ -60,6 +67,8 @@ namespace Anki
         : LucasKanadeTracker_Generic(Transformations::TRANSFORM_PROJECTIVE, templateImage, templateQuadIn, scaleTemplateRegionPercent, numPyramidLevels, transformType, onchipScratch)
       {
         // Allocate all the
+        
+        //templateImage.Show("InitialImage", false);
 
         // Initialize calibration data
         this->focalLength_x = focalLength_x;
@@ -132,8 +141,7 @@ namespace Anki
           template3d[0], template3d[1], template3d[2], template3d[3],
           this->focalLength_x, this->focalLength_y,
           this->camCenter_x,   this->camCenter_y,
-          R, this->params6DoF.translation,
-          onchipScratch);  // TODO: which scratch?
+          R, this->params6DoF.translation);
 
 #endif // #if USE_OPENCV_ITERATIVE_POSE_INIT
 
@@ -220,13 +228,20 @@ namespace Anki
 
         const s32 numSelectBins = 20;
 
+        // TODO: Pass this in as a parameter/argument
+        const s32 verifyGridSize = 16;
+        
         Result lastResult;
 
         BeginBenchmark("LucasKanadeTracker_SampledPlanar6dof");
 
         this->templateSamplePyramid = FixedLengthList<FixedLengthList<TemplateSample> >(numPyramidLevels, onchipScratch);
         this->jacobianSamplePyramid = FixedLengthList<FixedLengthList<JacobianSample> >(numPyramidLevels, onchipScratch);
-
+        this->verificationSamples   = FixedLengthList<VerifySample>(verifyGridSize*verifyGridSize, onchipScratch);
+        
+        this->templateSamplePyramid.set_size(numPyramidLevels);
+        this->jacobianSamplePyramid.set_size(numPyramidLevels);
+        
         //
         // Compute the samples (and their Jacobians) at each scale
         //
@@ -262,96 +277,126 @@ namespace Anki
           Array<f32> grayscaleVector = Array<f32>(1, numPointsX*numPointsY, offchipScratch);
           Array<f32> xGradientVector = Array<f32>(1, numPointsX*numPointsY, offchipScratch);
           Array<f32> yGradientVector = Array<f32>(1, numPointsX*numPointsY, offchipScratch);
+          Array<u16> magnitudeIndexes = Array<u16>(1, numPointsY*numPointsX, offchipScratch);
+          s32 numSelected = 0;
           {
             PUSH_MEMORY_STACK(offchipScratch);
             
             Array<f32> templateImageAtScale = Array<f32>(numPointsY, numPointsX, offchipScratch);
-            
+            AnkiConditionalErrorAndReturn(templateImageAtScale.IsValid(),
+                                          "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
+                                          "Out of memory allocating templateImageAtScale.\n");
             if((lastResult = Interp2_Projective<u8,f32>(templateImage, templateCoordinates, transformation.get_homography(), this->transformation.get_centerOffset(initialImageScaleF32), templateImageAtScale, INTERPOLATE_LINEAR)) != RESULT_OK) {
               AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "Interp2_Projective failed with code 0x%x", lastResult);
               return;
             }
             
+            // Compute X gradient image
+            Array<f32> templateImageXGradient = Array<f32>(numPointsY, numPointsX, offchipScratch);
+            AnkiConditionalErrorAndReturn(templateImageXGradient.IsValid(),
+                                          "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
+                                          "Out of memory allocating templateImageXGradient.\n");
+            if((lastResult = ImageProcessing::ComputeXGradient<f32,f32,f32>(templateImageAtScale, templateImageXGradient)) != RESULT_OK) {
+              AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "ComputeXGradient failed with code 0x%x", lastResult);
+              return;
+            }
+            
+            // Compuate Y gradient image
+            Array<f32> templateImageYGradient = Array<f32>(numPointsY, numPointsX, offchipScratch);
+            AnkiConditionalErrorAndReturn(templateImageYGradient.IsValid(),
+                                          "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
+                                          "Out of memory allocating templateImageYGradient.\n");
+            if((lastResult = ImageProcessing::ComputeYGradient<f32,f32,f32>(templateImageAtScale, templateImageYGradient)) != RESULT_OK) {
+              AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "ComputeYGradient failed with code 0x%x", lastResult);
+              return;
+            }
+          
+            // Using the computed gradients, find a set of the max values, and store them
             {
               PUSH_MEMORY_STACK(offchipScratch);
               
-              Array<f32> templateImageXGradient = Array<f32>(numPointsY, numPointsX, offchipScratch);
+              Array<f32> magnitudeVector(1, numPointsY*numPointsX, offchipScratch);
+              AnkiConditionalErrorAndReturn(magnitudeVector.IsValid(),
+                                            "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
+                                            "Out of memory allocating magnitudeVector.\n");
+              {
+                PUSH_MEMORY_STACK(offchipScratch);
+                
+                Array<f32> magnitudeImage(numPointsY, numPointsX, offchipScratch);
+                AnkiConditionalErrorAndReturn(magnitudeImage.IsValid(),
+                                              "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
+                                              "Out of memory allocating magnitudeImage.\n");
+                {
+                  PUSH_MEMORY_STACK(offchipScratch);
+                  
+                  Array<f32> tmpMagnitude(numPointsY, numPointsX, offchipScratch);
+                  AnkiConditionalErrorAndReturn(tmpMagnitude.IsValid(),
+                                                "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
+                                                "Out of memory allocating tmpMagnitude.\n");
+                  
+                  Matrix::DotMultiply<f32,f32,f32>(templateImageXGradient, templateImageXGradient, tmpMagnitude);
+                  Matrix::DotMultiply<f32,f32,f32>(templateImageYGradient, templateImageYGradient, magnitudeImage);
+                  Matrix::Add<f32,f32,f32>(tmpMagnitude, magnitudeImage, magnitudeImage);
+                } // pop tmpMagnitude
+                
+                //Matrix::Sqrt<f32,f32,f32>(magnitudeVector, magnitudeVector);
+                
+                // Rough non-local maxima suppression on magnitudes, to get more
+                // distributed samples, putting result into vectorized form
+                magnitudeVector.SetZero();
+                
+                for(s32 i=1; i<numPointsY-1; ++i) {
+                  const f32 * restrict mag_ip = magnitudeImage.Pointer(i-1,0); // prev
+                  const f32 * restrict mag_i  = magnitudeImage.Pointer(i,0);
+                  const f32 * restrict mag_in = magnitudeImage.Pointer(i+1,0); // next
+                  
+                  f32 * restrict pMagVector = magnitudeVector.Pointer(0, i*numPointsX);
+                  
+                  for(s32 j=1; j<numPointsX-1; ++j) {
+                    
+                    const f32 mag      = mag_i[j];
+                    const f32 magLeft  = mag_i[j-1];
+                    const f32 magRight = mag_i[j+1];
+                    const f32 magUp    = mag_ip[j];
+                    const f32 magDown  = mag_in[j];
+                    
+                    if(mag > magLeft && mag > magRight && mag > magUp && mag > magDown) {
+                      pMagVector[j] = mag_i[j];
+                    }
+                    
+                  }
+                }
+                
+              } // pop magnitudeImage
+
+              const s32 numDesiredSamples = this->templateSamplePyramid[iScale].get_size();
+              LucasKanadeTracker_SampledPlanar6dof::ApproximateSelect(magnitudeVector, numSelectBins, numDesiredSamples, numSelected, magnitudeIndexes);
               
-              if((lastResult = ImageProcessing::ComputeXGradient<f32,f32,f32>(templateImageAtScale, templateImageXGradient)) != RESULT_OK) {
-                AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "ComputeXGradient failed with code 0x%x", lastResult);
-                return;
-              }
-              
-              // Turn the X gradient image into a vector
-              if((lastResult = Matrix::Vectorize<f32,f32>(false, templateImageXGradient, xGradientVector)) != RESULT_OK) {
-                AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "Matrix::Vectorize failed with code 0x%x", lastResult);
-              }
-            } // pop templateImageXGradient
+            } // pop magnitudeVector
             
+            // Vectorize template image grayvalues, and x/y gradients
+            if((lastResult = Matrix::Vectorize<f32,f32>(false, templateImageXGradient, xGradientVector)) != RESULT_OK) {
+              AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "Matrix::Vectorize failed with code 0x%x", lastResult);
+            }
             
-            {
-              PUSH_MEMORY_STACK(offchipScratch);
-              Array<f32> templateImageYGradient = Array<f32>(numPointsY, numPointsX, offchipScratch);
-              
-              if((lastResult = ImageProcessing::ComputeYGradient<f32,f32,f32>(templateImageAtScale, templateImageYGradient)) != RESULT_OK) {
-                AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "ComputeYGradient failed with code 0x%x", lastResult);
-                return;
-              }
-              
-              // Turn the Y gradient image into a vector
-              if((lastResult = Matrix::Vectorize<f32,f32>(false, templateImageYGradient, yGradientVector)) != RESULT_OK) {
-                AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "Matrix::Vectorize failed with code 0x%x", lastResult);
-              }
-            } // pop templateImageYGradient
+            if((lastResult = Matrix::Vectorize<f32,f32>(false, templateImageYGradient, yGradientVector)) != RESULT_OK) {
+              AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "Matrix::Vectorize failed with code 0x%x", lastResult);
+            }
             
-            // Turn the templateImage at this scale into a vector
             if((lastResult = Matrix::Vectorize<f32,f32>(false, templateImageAtScale, grayscaleVector)) != RESULT_OK) {
               AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "Matrix::Vectorize failed with code 0x%x", lastResult);
             }
             
-          } // pop templateImageAtScale
+          } // pop templateImageAtScale, templateImageXGradient, and templateImageYGradient
           
-          //templateImageXGradientPyramid[iScale].Show("X Gradient", false);
-          //templateImageYGradientPyramid[iScale].Show("Y Gradient", true);
+          if(numSelected == 0) {
+            // Should this be an error?
+            AnkiWarn("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
+                     "No samples found within given quad.");
+            return;
+          }
           
-          // Using the computed gradients, find a set of the max values, and store them
-          const s32 numSamples = this->templateSamplePyramid[iScale].get_size();
-          Array<u16> magnitudeIndexes = Array<u16>(1, numPointsY*numPointsX, offchipScratch);
-          {
-            PUSH_MEMORY_STACK(offchipScratch);
-            
-            Array<f32> magnitudeVector = Array<f32>(1, numPointsX*numPointsY, offchipScratch);
-            {
-              PUSH_MEMORY_STACK(offchipScratch);
-              
-              Array<f32> tmpMagnitude(1, numPointsY*numPointsX, offchipScratch);
-              
-              Matrix::DotMultiply<f32,f32,f32>(xGradientVector, xGradientVector, tmpMagnitude);
-              Matrix::DotMultiply<f32,f32,f32>(yGradientVector, yGradientVector, magnitudeVector);
-              Matrix::Add<f32,f32,f32>(tmpMagnitude, magnitudeVector, magnitudeVector);
-            } // pop tmpMagnitude
-            
-            //Matrix::Sqrt<f32,f32,f32>(templateImageSquaredGradientMagnitudePyramid[iScale], templateImageSquaredGradientMagnitudePyramid[iScale]);
-            
-            //cv::imshow("templateImageSquaredGradientMagnitude[iScale]", templateImageSquaredGradientMagnitudePyramid[iScale].get_CvMat_());
-            //cv::waitKey();
-            
-            AnkiConditionalErrorAndReturn(magnitudeVector.IsValid() && magnitudeIndexes.IsValid(),
-                                          "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "Out of memory");
-            
-            // Really slow
-            //const f32 t0 = GetTime();
-            //Matrix::Sort<f32>(magnitudeVector, magnitudeIndexes, 1, false);
-            //const f32 t1 = GetTime();
-            
-            s32 numSelected;
-            LucasKanadeTracker_SampledPlanar6dof::ApproximateSelect(magnitudeVector, numSelectBins, numSamples, numSelected, magnitudeIndexes);
-            
-            if(numSelected == 0) {
-              return;
-            }
-            
-          } // pop magnitudeVector
+          const s32 numSamples = numSelected;
           
           //const f32 t2 = GetTime();
           //printf("%f %f\n", t1-t0, t2-t1);
@@ -458,9 +503,76 @@ namespace Anki
           }
         }
 
+        //
+        // Create Grid of Verification Samples
+        //
+        {
+          const f32 halfWidth = scaleTemplateRegionPercent*templateHalfWidth;
+
+          this->verificationSamples.set_size(verifyGridSize*verifyGridSize);
+          
+          Meshgrid<f32> verifyCoordinates = Meshgrid<f32>(Linspace(-halfWidth, halfWidth, verifyGridSize),
+                                                          Linspace(-halfWidth, halfWidth, verifyGridSize));
+
+          Array<f32> verifyGrayscaleVector = Array<f32>(1, verifyGridSize*verifyGridSize, offchipScratch);
+          {
+            PUSH_MEMORY_STACK(offchipScratch);
+            
+            Array<f32> verifyImage = Array<f32>(verifyGridSize, verifyGridSize, offchipScratch);
+            
+            if((lastResult = Interp2_Projective<u8,f32>(templateImage, verifyCoordinates,
+                                                        this->transformation.get_homography(),
+                                                        this->transformation.get_centerOffset(initialImageScaleF32),
+                                                        verifyImage, INTERPOLATE_LINEAR)) != RESULT_OK) {
+              AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
+                        "Interp2_Projective for verification image failed with code 0x%x", lastResult);
+              return;
+            }
+            
+            // Turn verifyImage into a vector
+            if((lastResult = Matrix::Vectorize<f32,f32>(false, verifyImage, verifyGrayscaleVector)) != RESULT_OK) {
+              AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
+                        "Matrix::Vectorize failed with code 0x%x", lastResult);
+            }
+          } // pop verifyImage
+         
+          Array<f32> yVerifyVector = verifyCoordinates.EvaluateY1(false, offchipScratch);
+          Array<f32> xVerifyVector = verifyCoordinates.EvaluateX1(false, offchipScratch);
+          
+          const f32 * restrict pYCoordinates = yVerifyVector.Pointer(0,0);
+          const f32 * restrict pXCoordinates = xVerifyVector.Pointer(0,0);
+          const f32 * restrict pGrayvalues   = verifyGrayscaleVector.Pointer(0,0);
+          
+          const f32 verifyCoordScalarInv = static_cast<f32>(s8_MAX) / halfWidth;
+          
+          for(s32 i=0; i<verifyGridSize*verifyGridSize; ++i)
+          {
+            VerifySample curVerifySample;
+            curVerifySample.xCoordinate = static_cast<s8>(pXCoordinates[i] * verifyCoordScalarInv);
+            curVerifySample.yCoordinate = static_cast<s8>(pYCoordinates[i] * verifyCoordScalarInv);
+            curVerifySample.grayvalue   = static_cast<u8>(pGrayvalues[i]);
+            
+            this->verificationSamples[i] = curVerifySample;
+          }
+          
+          // Store the scalar we need at tracking time to take the stored s8
+          // coordinates into f32 values:
+          this->verifyCoordScalar = 1.f / verifyCoordScalarInv;
+          
+        } // create grid of verification samples
+        
         this->isValid = true;
 
         EndBenchmark("LucasKanadeTracker_SampledPlanar6dof");
+      }
+      
+      const FixedLengthList<LucasKanadeTracker_SampledPlanar6dof::TemplateSample>& LucasKanadeTracker_SampledPlanar6dof::get_templateSamples(const s32 atScale) const
+      {
+        AnkiConditionalError(atScale >=0 && atScale < this->templateSamplePyramid.get_size(),
+                             "LucasKanadeTracker_SampledPlanar6dof::get_templateSamples()",
+                             "Requested scale out of range.");
+        
+        return this->templateSamplePyramid[atScale];
       }
 
       // Fill a rotation matrix according to the current tracker angles
@@ -653,15 +765,16 @@ namespace Anki
       }
 
       Result LucasKanadeTracker_SampledPlanar6dof::UpdateTrack(
-        const Array<u8> &nextImage,
-        const s32 maxIterations,
-        const f32 convergenceTolerance,
-        const u8 verify_maxPixelDifference,
-        bool &verify_converged,
-        s32 &verify_meanAbsoluteDifference,
-        s32 &verify_numInBounds,
-        s32 &verify_numSimilarPixels,
-        MemoryStack scratch)
+                                                               const Array<u8> &nextImage,
+                                                               const s32 maxIterations,
+                                                               const f32 convergenceTolerance_angle,
+                                                               const f32 convergenceTolerance_distance,
+                                                               const u8 verify_maxPixelDifference,
+                                                               bool &verify_converged,
+                                                               s32 &verify_meanAbsoluteDifference,
+                                                               s32 &verify_numInBounds,
+                                                               s32 &verify_numSimilarPixels,
+                                                               MemoryStack scratch)
       {
         Result lastResult;
 
@@ -669,24 +782,24 @@ namespace Anki
           verify_converged = false;
 
           BeginBenchmark("UpdateTrack.refineTranslation");
-          if((lastResult = IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance, Transformations::TRANSFORM_TRANSLATION, verify_converged, scratch)) != RESULT_OK)
+          if((lastResult = IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance_angle, convergenceTolerance_distance, Transformations::TRANSFORM_TRANSLATION, verify_converged, scratch)) != RESULT_OK)
             return lastResult;
           EndBenchmark("UpdateTrack.refineTranslation");
 
-          if(this->transformation.get_transformType() != Transformations::TRANSFORM_TRANSLATION) {
-            BeginBenchmark("UpdateTrack.refineOther");
-            if((lastResult = IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance, this->transformation.get_transformType(), verify_converged, scratch)) != RESULT_OK)
-              return lastResult;
-            EndBenchmark("UpdateTrack.refineOther");
+            if(this->transformation.get_transformType() != Transformations::TRANSFORM_TRANSLATION) {
+              BeginBenchmark("UpdateTrack.refineOther");
+              if((lastResult = IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance_angle, convergenceTolerance_distance, this->transformation.get_transformType(), verify_converged, scratch)) != RESULT_OK)
+                return lastResult;
+              EndBenchmark("UpdateTrack.refineOther");
           }
         } // for(s32 iScale=numPyramidLevels; iScale>=0; iScale--)
 
         lastResult = this->VerifyTrack_Projective(nextImage, verify_maxPixelDifference, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels, scratch);
-
+        
         return lastResult;
       }
 
-      Result LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const Transformations::TransformType curTransformType, bool &verify_converged, MemoryStack scratch)
+      Result LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance_angle, const f32 convergenceTolerance_distance, const Transformations::TransformType curTransformType, bool &verify_converged, MemoryStack scratch)
       {
         const s32 nextImageHeight = nextImage.get_size(0);
         const s32 nextImageWidth = nextImage.get_size(1);
@@ -698,13 +811,13 @@ namespace Anki
           RESULT_FAIL_INVALID_OBJECT, "LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack", "nextImage is not valid");
 
         AnkiConditionalErrorAndReturnValue(maxIterations > 0 && maxIterations < 1000,
-          RESULT_FAIL_INVALID_PARAMETER, "LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack", "maxIterations must be greater than zero and less than 1000");
+          RESULT_FAIL_INVALID_PARAMETERS, "LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack", "maxIterations must be greater than zero and less than 1000");
 
         AnkiConditionalErrorAndReturnValue(whichScale >= 0 && whichScale < this->numPyramidLevels,
-          RESULT_FAIL_INVALID_PARAMETER, "LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack", "whichScale is invalid");
+          RESULT_FAIL_INVALID_PARAMETERS, "LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack", "whichScale is invalid");
 
-        AnkiConditionalErrorAndReturnValue(convergenceTolerance > 0.0f,
-          RESULT_FAIL_INVALID_PARAMETER, "LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack", "convergenceTolerance must be greater than zero");
+        AnkiConditionalErrorAndReturnValue(convergenceTolerance_angle > 0.0f && convergenceTolerance_distance > 0.0f,
+          RESULT_FAIL_INVALID_PARAMETERS, "LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack", "convergenceTolerances must be greater than zero");
 
         AnkiConditionalErrorAndReturnValue(nextImageHeight == templateImageHeight && nextImageWidth == templateImageWidth,
           RESULT_FAIL_INVALID_SIZE, "LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack", "nextImage must be the same size as the template");
@@ -716,11 +829,9 @@ namespace Anki
           RESULT_FAIL_INVALID_SIZE, "LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack", "The templateImage must be a power of two smaller than BASE_IMAGE_WIDTH");
 
         if(curTransformType == Transformations::TRANSFORM_TRANSLATION) {
-          return IterativelyRefineTrack_Translation(nextImage, maxIterations, whichScale, convergenceTolerance, verify_converged, scratch);
-        } else if(curTransformType == Transformations::TRANSFORM_AFFINE) {
-          return IterativelyRefineTrack_Affine(nextImage, maxIterations, whichScale, convergenceTolerance, verify_converged, scratch);
+          return IterativelyRefineTrack_Translation(nextImage, maxIterations, whichScale, convergenceTolerance_distance, verify_converged, scratch);
         } else if(curTransformType == Transformations::TRANSFORM_PROJECTIVE) {
-          return IterativelyRefineTrack_Projective(nextImage, maxIterations, whichScale, convergenceTolerance, verify_converged, scratch);
+          return IterativelyRefineTrack_Projective(nextImage, maxIterations, whichScale, convergenceTolerance_angle, convergenceTolerance_distance, verify_converged, scratch);
         }
 
         return RESULT_FAIL;
@@ -754,11 +865,12 @@ namespace Anki
           AnkiAssert(Kp >= this->Kp_min && Kp <= this->Kp_max);
           return Kp;
         } else {
+          // TODO: make this a parameter
           return 0.25f;
         }
       }
 
-      Result LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack_Translation(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &verify_converged, MemoryStack scratch)
+      Result LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack_Translation(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance_distance, bool &verify_converged, MemoryStack scratch)
       {
         // This method is heavily based on Interp2_Projective
         // The call would be like: Interp2_Projective<u8,u8>(nextImage, originalCoordinates, interpolationHomography, centerOffset, nextImageTransformed2d, INTERPOLATE_LINEAR, 0);
@@ -948,11 +1060,10 @@ namespace Anki
           //if(minChange < convergenceTolerance * scale)
           // TODO: make these parameters
           //const f32 angleConvergenceTolerance = scale*DEG_TO_RAD(0.1f);
-          const f32 transConvergenceTolerance = scale*0.25f;
-
+          const f32 transConvergenceTolerance = scale*convergenceTolerance_distance;
           if(fabs(b[0][0]) < transConvergenceTolerance &&
-            fabs(b[0][1]) < transConvergenceTolerance &&
-            fabs(b[0][2]) < transConvergenceTolerance)
+             fabs(b[0][1]) < transConvergenceTolerance &&
+             fabs(b[0][2]) < transConvergenceTolerance)
           {
             verify_converged = true;
             return RESULT_OK;
@@ -962,200 +1073,7 @@ namespace Anki
         return RESULT_OK;
       } // Result LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack_Translation()
 
-      Result LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack_Affine(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &verify_converged, MemoryStack scratch)
-      {
-        /* Not sure this makes sense for the Planar6dof tracker
-
-        // This method is heavily based on Interp2_Projective
-        // The call would be like: Interp2_Projective<u8,u8>(nextImage, originalCoordinates, interpolationHomography, centerOffset, nextImageTransformed2d, INTERPOLATE_LINEAR, 0);
-
-        Result lastResult;
-
-        Array<f32> AWAt(6, 6, scratch);
-        Array<f32> b(1, 6, scratch);
-
-        // These addresses should be known at compile time, so should be faster
-        f32 AWAt_raw[6][6];
-        f32 b_raw[6];
-
-        verify_converged = false;
-
-        const s32 nextImageHeight = nextImage.get_size(0);
-        const s32 nextImageWidth = nextImage.get_size(1);
-
-        const f32 scale = static_cast<f32>(1 << whichScale);
-
-        const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / nextImageWidth;
-        const f32 initialImageScaleF32 = static_cast<f32>(initialImageScaleS32);
-
-        const f32 oneOverTwoFiftyFive = 1.0f / 255.0f;
-        const f32 scaleOverFiveTen = scale / (2.0f*255.0f);
-
-        //const Point<f32>& centerOffset = this->transformation.get_centerOffset();
-        const Point<f32> centerOffsetScaled = this->transformation.get_centerOffset(initialImageScaleF32);
-
-        // Initialize with some very extreme coordinates
-        FixedLengthList<Quadrilateral<f32> > previousCorners(NUM_PREVIOUS_QUADS_TO_COMPARE, scratch);
-
-        for(s32 i=0; i<NUM_PREVIOUS_QUADS_TO_COMPARE; i++) {
-        previousCorners[i] = Quadrilateral<f32>(Point<f32>(-1e10f,-1e10f), Point<f32>(-1e10f,-1e10f), Point<f32>(-1e10f,-1e10f), Point<f32>(-1e10f,-1e10f));
-        }
-
-        const f32 xyReferenceMin = 0.0f;
-        const f32 xReferenceMax = static_cast<f32>(nextImageWidth) - 1.0f;
-        const f32 yReferenceMax = static_cast<f32>(nextImageHeight) - 1.0f;
-
-        const TemplateSample * restrict pTemplateSamplePyramid = this->templateSamplePyramid[whichScale].Pointer(0);
-
-        const s32 numTemplateSamples = this->get_numTemplatePixels(whichScale);
-
-        for(s32 iteration=0; iteration<maxIterations; iteration++) {
-        const Array<f32> &homography = this->transformation.get_homography();
-        const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2] / initialImageScaleF32;
-        const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2] / initialImageScaleF32;
-        const f32 h20 = homography[2][0] * initialImageScaleF32; const f32 h21 = homography[2][1] * initialImageScaleF32;
-        const f32 h22 = homography[2][2];
-
-        //AWAt.SetZero();
-        //b.SetZero();
-
-        for(s32 ia=0; ia<6; ia++) {
-        for(s32 ja=0; ja<6; ja++) {
-        AWAt_raw[ia][ja] = 0;
-        }
-        b_raw[ia] = 0;
-        }
-
-        s32 numInBounds = 0;
-
-        for(s32 iSample=0; iSample<numTemplateSamples; iSample++) {
-        const TemplateSample curSample = pTemplateSamplePyramid[iSample];
-        const f32 yOriginal = curSample.yCoordinate;
-        const f32 xOriginal = curSample.xCoordinate;
-
-        // TODO: These two could be strength reduced
-        const f32 xTransformedRaw = h00*xOriginal + h01*yOriginal + h02;
-        const f32 yTransformedRaw = h10*xOriginal + h11*yOriginal + h12;
-
-        const f32 normalization = h20*xOriginal + h21*yOriginal + h22;
-
-        const f32 xTransformed = (xTransformedRaw / normalization) + centerOffsetScaled.x;
-        const f32 yTransformed = (yTransformedRaw / normalization) + centerOffsetScaled.y;
-
-        const f32 x0 = FLT_FLOOR(xTransformed);
-        const f32 x1 = ceilf(xTransformed); // x0 + 1.0f;
-
-        const f32 y0 = FLT_FLOOR(yTransformed);
-        const f32 y1 = ceilf(yTransformed); // y0 + 1.0f;
-
-        // If out of bounds, continue
-        if(x0 < xyReferenceMin || x1 > xReferenceMax || y0 < xyReferenceMin || y1 > yReferenceMax) {
-        continue;
-        }
-
-        numInBounds++;
-
-        const f32 alphaX = xTransformed - x0;
-        const f32 alphaXinverse = 1 - alphaX;
-
-        const f32 alphaY = yTransformed - y0;
-        const f32 alphaYinverse = 1.0f - alphaY;
-
-        const s32 y0S32 = Round<s32>(y0);
-        const s32 y1S32 = Round<s32>(y1);
-        const s32 x0S32 = Round<s32>(x0);
-
-        const u8 * restrict pReference_y0 = nextImage.Pointer(y0S32, x0S32);
-        const u8 * restrict pReference_y1 = nextImage.Pointer(y1S32, x0S32);
-
-        const f32 pixelTL = *pReference_y0;
-        const f32 pixelTR = *(pReference_y0+1);
-        const f32 pixelBL = *pReference_y1;
-        const f32 pixelBR = *(pReference_y1+1);
-
-        const f32 interpolatedPixelF32 = InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse);
-
-        //const u8 interpolatedPixel = static_cast<u8>(Round(interpolatedPixelF32));
-
-        // This block is the non-interpolation part of the per-sample algorithm
-        {
-        const f32 templatePixelValue = curSample.grayvalue;
-        const f32 xGradientValue = scaleOverFiveTen * curSample.xGradient;
-        const f32 yGradientValue = scaleOverFiveTen * curSample.yGradient;
-
-        const f32 tGradientValue = oneOverTwoFiftyFive * (interpolatedPixelF32 - templatePixelValue);
-
-        //printf("%f ", xOriginal);
-        const f32 values[6] = {
-        xOriginal * xGradientValue,
-        yOriginal * xGradientValue,
-        xGradientValue,
-        xOriginal * yGradientValue,
-        yOriginal * yGradientValue,
-        yGradientValue};
-
-        //for(s32 ia=0; ia<6; ia++) {
-        //  printf("%f ", values[ia]);
-        //}
-        //printf("\n");
-
-        //f32 AWAt_raw[6][6];
-        //f32 b_raw[6];
-        for(s32 ia=0; ia<6; ia++) {
-        for(s32 ja=ia; ja<6; ja++) {
-        AWAt_raw[ia][ja] += values[ia] * values[ja];
-        }
-        b_raw[ia] += values[ia] * tGradientValue;
-        }
-        }
-        } // for(s32 iSample=0; iSample<numTemplateSamples; iSample++)
-
-        if(numInBounds < 16) {
-        AnkiWarn("LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack_Affine", "Template drifted too far out of image.");
-        return RESULT_OK;
-        }
-
-        for(s32 ia=0; ia<6; ia++) {
-        for(s32 ja=ia; ja<6; ja++) {
-        AWAt[ia][ja] = AWAt_raw[ia][ja];
-        }
-        b[0][ia] = b_raw[ia];
-        }
-
-        Matrix::MakeSymmetric(AWAt, false);
-
-        //AWAt.Print("New AWAt");
-        //b.Print("New b");
-
-        bool numericalFailure;
-
-        if((lastResult = Matrix::SolveLeastSquaresWithCholesky(AWAt, b, false, numericalFailure)) != RESULT_OK)
-        return lastResult;
-
-        if(numericalFailure){
-        AnkiWarn("LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack_Affine", "numericalFailure");
-        return RESULT_OK;
-        }
-
-        //b.Print("New update");
-
-        this->transformation.Update(b, initialImageScaleF32, scratch, Transformations::TRANSFORM_AFFINE);
-
-        //this->transformation.get_homography().Print("new transformation");
-
-        // Check if we're done with iterations
-        const f32 minChange = UpdatePreviousCorners(transformation, previousCorners, scratch);
-
-        if(minChange < convergenceTolerance) {
-        verify_converged = true;
-        return RESULT_OK;
-        }
-        } // for(s32 iteration=0; iteration<maxIterations; iteration++)
-        */
-        return RESULT_FAIL;
-      } // Result LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack_Affine()
-
-      Result LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack_Projective(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &verify_converged, MemoryStack scratch)
+      Result LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack_Projective(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance_angle, const f32 convergenceTolerance_distance, bool &verify_converged, MemoryStack scratch)
       {
         // This method is heavily based on Interp2_Projective
         // The call would be like: Interp2_Projective<u8,u8>(nextImage, originalCoordinates, interpolationHomography, centerOffset, nextImageTransformed2d, INTERPOLATE_LINEAR, 0);
@@ -1425,15 +1343,15 @@ namespace Anki
 
           //if(minChange < convergenceTolerance * scale)
           // TODO: make these parameters
-          const f32 angleConvergenceTolerance = scale*static_cast<f32>(DEG_TO_RAD(0.25f));
-          const f32 transConvergenceTolerance = scale*0.25f;
+          const f32 angleConvergenceTolerance = scale*convergenceTolerance_angle;
+          const f32 transConvergenceTolerance = scale*convergenceTolerance_distance;
 
           if(fabs(b[0][0]) < angleConvergenceTolerance &&
-            fabs(b[0][1]) < angleConvergenceTolerance &&
-            fabs(b[0][2]) < angleConvergenceTolerance &&
-            fabs(b[0][3]) < transConvergenceTolerance &&
-            fabs(b[0][4]) < transConvergenceTolerance &&
-            fabs(b[0][5]) < transConvergenceTolerance)
+             fabs(b[0][1]) < angleConvergenceTolerance &&
+             fabs(b[0][2]) < angleConvergenceTolerance &&
+             fabs(b[0][3]) < transConvergenceTolerance &&
+             fabs(b[0][4]) < transConvergenceTolerance &&
+             fabs(b[0][5]) < transConvergenceTolerance)
           {
             /*
             printf("Final params converged at scale %d: angles = (%f,%f,%f) "
@@ -1470,27 +1388,15 @@ namespace Anki
         const s32 nextImageHeight = nextImage.get_size(0);
         const s32 nextImageWidth = nextImage.get_size(1);
 
-        const s32 whichScale = 0;
-
         const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / nextImageWidth;
         const f32 initialImageScaleF32 = static_cast<f32>(initialImageScaleS32);
-
         const Point<f32> centerOffsetScaled = this->transformation.get_centerOffset(initialImageScaleF32);
-
-        // Initialize with some very extreme coordinates
-        FixedLengthList<Quadrilateral<f32> > previousCorners(NUM_PREVIOUS_QUADS_TO_COMPARE, scratch);
-
-        for(s32 i=0; i<NUM_PREVIOUS_QUADS_TO_COMPARE; i++) {
-          previousCorners[i] = Quadrilateral<f32>(Point<f32>(-1e10f,-1e10f), Point<f32>(-1e10f,-1e10f), Point<f32>(-1e10f,-1e10f), Point<f32>(-1e10f,-1e10f));
-        }
 
         const f32 xyReferenceMin = 0.0f;
         const f32 xReferenceMax = static_cast<f32>(nextImageWidth) - 1.0f;
         const f32 yReferenceMax = static_cast<f32>(nextImageHeight) - 1.0f;
 
-        const TemplateSample * restrict pTemplateSamplePyramid = this->templateSamplePyramid[whichScale].Pointer(0);
-
-        const s32 numTemplateSamples = this->get_numTemplatePixels(whichScale);
+        const s32 numVerifySamples = this->verificationSamples.get_size();
 
         const Array<f32> &homography = this->transformation.get_homography();
         const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2] / initialImageScaleF32;
@@ -1504,11 +1410,13 @@ namespace Anki
 
         // TODO: make the x and y limits from 1 to end-2
 
-        for(s32 iSample=0; iSample<numTemplateSamples; iSample++) {
-          const TemplateSample curSample = pTemplateSamplePyramid[iSample];
-          const f32 yOriginal = curSample.yCoordinate;
-          const f32 xOriginal = curSample.xCoordinate;
-
+        for(s32 iSample=0; iSample<numVerifySamples; iSample++) {
+          const VerifySample curSample = this->verificationSamples[iSample];
+          const f32 yOriginal = static_cast<f32>(curSample.yCoordinate) * this->verifyCoordScalar;
+          const f32 xOriginal = static_cast<f32>(curSample.xCoordinate) * this->verifyCoordScalar;
+          
+          const s32 templatePixelValue = static_cast<s32>(curSample.grayvalue);
+          
           // TODO: These two could be strength reduced
           const f32 xTransformedRaw = h00*xOriginal + h01*yOriginal + h02;
           const f32 yTransformedRaw = h10*xOriginal + h11*yOriginal + h12;
@@ -1517,53 +1425,77 @@ namespace Anki
 
           const f32 xTransformed = (xTransformedRaw / normalization) + centerOffsetScaled.x;
           const f32 yTransformed = (yTransformedRaw / normalization) + centerOffsetScaled.y;
-
+          
+#if USE_LINEAR_INTERPOLATION_FOR_VERIFICATION
           const f32 x0 = FLT_FLOOR(xTransformed);
           const f32 x1 = ceilf(xTransformed); // x0 + 1.0f;
-
+          
           const f32 y0 = FLT_FLOOR(yTransformed);
           const f32 y1 = ceilf(yTransformed); // y0 + 1.0f;
-
+          
           // If out of bounds, continue
           if(x0 < xyReferenceMin || x1 > xReferenceMax || y0 < xyReferenceMin || y1 > yReferenceMax) {
             continue;
           }
-
-          verify_numInBounds++;
-
+          
           const f32 alphaX = xTransformed - x0;
           const f32 alphaXinverse = 1 - alphaX;
-
+          
           const f32 alphaY = yTransformed - y0;
           const f32 alphaYinverse = 1.0f - alphaY;
-
+          
           const s32 y0S32 = Round<s32>(y0);
           const s32 y1S32 = Round<s32>(y1);
           const s32 x0S32 = Round<s32>(x0);
-
+          
           const u8 * restrict pReference_y0 = nextImage.Pointer(y0S32, x0S32);
           const u8 * restrict pReference_y1 = nextImage.Pointer(y1S32, x0S32);
-
+          
           const f32 pixelTL = *pReference_y0;
           const f32 pixelTR = *(pReference_y0+1);
           const f32 pixelBL = *pReference_y1;
           const f32 pixelBR = *(pReference_y1+1);
-
+          
+          // Interpolate the value of this sample in the current image...
           const s32 interpolatedPixelValue = Round<s32>(InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse));
-          const s32 templatePixelValue = Round<s32>(curSample.grayvalue);
+          
+#else // No linear interpolation, just nearest pixel
+          
+          if(xTransformed < xyReferenceMin || xTransformed > xReferenceMax ||
+             yTransformed < xyReferenceMin || yTransformed > yReferenceMax)
+          {
+            // Out of bounds
+            continue;
+          }
+          
+          const s32 xS32 = Round<s32>(xTransformed);
+          const s32 yS32 = Round<s32>(yTransformed);
+          
+          // Lookup nearest pixel value in the current image...
+          const u8 * restrict pReference = nextImage.Pointer(yS32, xS32);
+          
+          const s32 interpolatedPixelValue = static_cast<s32>(*pReference);
+          
+#endif // #if USE_LINEAR_INTERPOLATION_FOR_VERIFICATION
+          
+          verify_numInBounds++;
+          
+          // ...compare that value to the template sample
           const s32 grayvalueDifference = ABS(interpolatedPixelValue - templatePixelValue);
-
+          
+          // Keep track of the total difference
           totalGrayvalueDifference += grayvalueDifference;
-
+          
           if(grayvalueDifference <= verify_maxPixelDifferenceS32) {
             verify_numSimilarPixels++;
           }
         } // for(s32 iSample=0; iSample<numTemplateSamples; iSample++)
-
+        
         verify_meanAbsoluteDifference = totalGrayvalueDifference / verify_numInBounds;
 
         return RESULT_OK;
-      }
+        
+      } // VerifyTrack_Projective()
 
       Result LucasKanadeTracker_SampledPlanar6dof::ApproximateSelect(const Array<f32> &magnitudeVector, const s32 numBins, const s32 numToSelect, s32 &numSelected, Array<u16> &magnitudeIndexes)
       {
@@ -1602,7 +1534,7 @@ namespace Anki
         }
 
         u16 * restrict pMagnitudeIndexes = magnitudeIndexes.Pointer(0,0);
-
+        
         for(s32 i=0; i<numMagnitudes; i++) {
           if(pMagnitudeVector[i] > foundThreshold) {
             pMagnitudeIndexes[numSelected] = static_cast<u16>(i);
@@ -1612,6 +1544,7 @@ namespace Anki
 
         return RESULT_OK;
       }
-    } // namespace TemplateTracker
+      
+      } // namespace TemplateTracker
   } // namespace Embedded
 } // namespace Anki
