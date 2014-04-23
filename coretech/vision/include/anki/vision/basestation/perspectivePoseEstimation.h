@@ -56,7 +56,7 @@ namespace Anki {
       // NOTE: This is really only exposed for testing purposes.
       template<typename PRECISION>
       Result solveQuartic(const std::array<PRECISION,5>& factors,
-                              std::array<PRECISION,4>& realRoots);
+                          std::array<PRECISION,4>& realRoots);
       
     } // namespace P3P
   } // namespace Vision
