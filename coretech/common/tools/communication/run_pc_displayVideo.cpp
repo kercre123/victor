@@ -31,6 +31,7 @@ _Check_return_opt_ _CRTIMP int __cdecl printf(_In_z_ _Printf_format_string_ cons
 #include "opencv/cv.h"
 
 #include "messageHandling.h"
+#include "anki/common/robot/errorHandling.h"
 
 using namespace std;
 using namespace Anki;
@@ -47,6 +48,8 @@ int main(int argc, char ** argv)
   const s32 port = 5551;
 
   printf("Starting display\n");
+
+  SetLogSilence(true);
 
   DebugStreamClient parserThread(ipAddress, port);
 

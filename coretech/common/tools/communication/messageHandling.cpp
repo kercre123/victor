@@ -29,6 +29,35 @@ using namespace std;
 static const s32 scratchSize = 1000000;
 static u8 scratchBuffer[scratchSize];
 
+template<typename Type> Result AllocateNewObject(DebugStreamClient::Object &newObject, const s32 additionalBytesRequired, void ** dataSegment, s32 &dataLength, MemoryStack scratch)
+{
+  char *innerObjectName = reinterpret_cast<char*>( scratch.Allocate(SerializedBuffer::DESCRIPTION_STRING_LENGTH + 1) );
+
+  Type objectOfType;
+
+  {
+    void * dataSegment_tmp = *dataSegment;
+    s32 dataLength_tmp = dataLength;
+    objectOfType.Deserialize(innerObjectName, &dataSegment_tmp, dataLength_tmp, scratch);
+  }
+
+  newObject.bufferLength = additionalBytesRequired + objectOfType.get_serializationSize();
+  newObject.buffer = malloc(newObject.bufferLength);
+
+  if(!newObject.buffer)
+    return RESULT_FAIL;
+
+  newObject.startOfPayload = newObject.buffer;
+
+  MemoryStack localMemory(newObject.buffer, newObject.bufferLength);
+
+  objectOfType.Deserialize(innerObjectName, dataSegment, dataLength, localMemory);
+
+  memcpy(newObject.startOfPayload, &objectOfType, sizeof(objectOfType));
+
+  return RESULT_OK;
+}
+
 DebugStreamClient::Object::Object()
   : bufferLength(0), buffer(NULL), startOfPayload(NULL)
 {
@@ -544,87 +573,17 @@ void DebugStreamClient::ProcessRawBuffer(DisplayRawBuffer &buffer, ThreadSafeQue
       memcpy(newObject.startOfPayload, dataSegment, stringLength);
       reinterpret_cast<char*>(newObject.startOfPayload)[stringLength] = '\0';
     } else if(strcmp(typeName, "VisionMarker") == 0) {
-      VisionMarker marker;
-
-      marker.Deserialize(innerObjectName, reinterpret_cast<void**>(&dataSegment), dataLength);
-
-      if(!marker.isValid)
+      if(AllocateNewObject<VisionMarker>(newObject, 32, &dataSegment, dataLength, scratch) != RESULT_OK)
         continue;
-
-      newObject.bufferLength = 32 + sizeof(marker);
-      newObject.buffer = malloc(newObject.bufferLength);
-
-      if(!newObject.buffer)
-        continue;
-
-      newObject.startOfPayload = newObject.buffer;
-
-      memcpy(newObject.startOfPayload, &marker, sizeof(marker));
     } else if(strcmp(typeName, "PlanarTransformation_f32") == 0) {
-      newObject.bufferLength = 512 + Transformations::PlanarTransformation_f32::get_serializationSize();
-      newObject.buffer = malloc(newObject.bufferLength);
-
-      if(!newObject.buffer)
+      if(AllocateNewObject<Transformations::PlanarTransformation_f32>(newObject, 4196, &dataSegment, dataLength, scratch) != RESULT_OK)
         continue;
-
-      newObject.startOfPayload = newObject.buffer;
-
-      MemoryStack localMemory(newObject.buffer, newObject.bufferLength);
-
-      Transformations::PlanarTransformation_f32 tranformation;
-      tranformation.Deserialize(innerObjectName, reinterpret_cast<void**>(&dataSegment), dataLength, localMemory);
-
-      memcpy(newObject.startOfPayload, &tranformation, sizeof(tranformation));
     } else if(strcmp(typeName, "BinaryTracker") == 0) {
-      PUSH_MEMORY_STACK(scratch);
-      TemplateTracker::BinaryTracker bt;
-
-      {
-        void * dataSegment_tmp = dataSegment;
-        s32 dataLength_tmp = dataLength;
-        bt.Deserialize(innerObjectName, reinterpret_cast<void**>(&dataSegment_tmp), dataLength_tmp, scratch);
-      }
-
-      if(!bt.IsValid())
+      if(AllocateNewObject<TemplateTracker::BinaryTracker>(newObject, 4196, &dataSegment, dataLength, scratch) != RESULT_OK)
         continue;
-
-      newObject.bufferLength = 4196 + bt.get_serializationSize();
-      newObject.buffer = malloc(newObject.bufferLength);
-
-      if(!newObject.buffer)
-        continue;
-
-      newObject.startOfPayload = newObject.buffer;
-
-      MemoryStack localMemory(newObject.buffer, newObject.bufferLength);
-
-      bt.Deserialize(innerObjectName, reinterpret_cast<void**>(&dataSegment), dataLength, localMemory);
-
-      memcpy(newObject.startOfPayload, &bt, sizeof(bt));
     } else if(strcmp(typeName, "EdgeLists") == 0) {
-      PUSH_MEMORY_STACK(scratch);
-
-      EdgeLists edges;
-
-      {
-        void * dataSegment_tmp = dataSegment;
-        s32 dataLength_tmp = dataLength;
-        edges.Deserialize(innerObjectName, reinterpret_cast<void**>(&dataSegment_tmp), dataLength_tmp, scratch);
-      }
-
-      newObject.bufferLength = 4196 + edges.get_serializationSize();
-      newObject.buffer = malloc(newObject.bufferLength);
-
-      if(!newObject.buffer)
+      if(AllocateNewObject<EdgeLists>(newObject, 4196, &dataSegment, dataLength, scratch) != RESULT_OK)
         continue;
-
-      newObject.startOfPayload = newObject.buffer;
-
-      MemoryStack localMemory(newObject.buffer, newObject.bufferLength);
-
-      edges.Deserialize(innerObjectName, reinterpret_cast<void**>(&dataSegment), dataLength, localMemory);
-
-      memcpy(newObject.startOfPayload, &edges, sizeof(edges));
     } else {
       newObject.bufferLength = 0;
       newObject.buffer = NULL;

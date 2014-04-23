@@ -541,7 +541,7 @@ namespace Anki
       return RESULT_OK;
     }
 
-    Result VisionMarker::Deserialize(char *objectName, void** buffer, s32 &bufferLength)
+    Result VisionMarker::Deserialize(char *objectName, void** buffer, s32 &bufferLength, MemoryStack scratch)
     {
       // TODO: check if the name is correct
       if(SerializedBuffer::DeserializeDescriptionStrings(NULL, objectName, buffer, bufferLength) != RESULT_OK)
