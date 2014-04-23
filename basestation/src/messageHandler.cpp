@@ -297,7 +297,7 @@ namespace Anki {
         PRINT_INFO("Printing image to %s\n", imgCaptureFilename);
         Vision::WritePGM(imgCaptureFilename, data, width, height);
         
-        VizManager::getInstance()->SendGreyImage(width, height, data);
+        VizManager::getInstance()->SendGreyImage(data, (Vision::CameraResolution)msg.resolution);
       }
       
       

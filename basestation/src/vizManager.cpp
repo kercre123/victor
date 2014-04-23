@@ -37,6 +37,7 @@ namespace Anki {
     VizManager::VizManager()
     {
       isInitialized_ = false;
+      imgID = 0;
     }
 
     void VizManager::SendMessage(u8 vizMsgID, void* msg)
@@ -286,16 +287,28 @@ namespace Anki {
     }
     
 
-    void VizManager::SendGreyImage(const u32 width, const u32 height, const u8* data)
+    void VizManager::SendGreyImage(const u8* data, const Vision::CameraResolution res)
     {
-      if (width*height <= MAX_VIZ_CAM_IMAGE_SIZE) {
-        VizCamImage v;
-        v.width = width;
-        v.height = height;
-        memcpy(v.data, data, width*height);
+      VizImageChunk v;
+      v.resolution = res;
+      v.imgId = ++imgID;
+      v.chunkId = 0;
+      v.chunkSize = MAX_VIZ_IMAGE_CHUNK_SIZE;
+      
+      s32 bytesToSend = Vision::CameraResInfo[res].width * Vision::CameraResInfo[res].height;
+      
+
+      while (bytesToSend > 0) {
+        if (bytesToSend < MAX_VIZ_IMAGE_CHUNK_SIZE) {
+          v.chunkSize = bytesToSend;
+        }
+        bytesToSend -= v.chunkSize;
+
+        printf("Sending CAM image %d chunk %d (size: %d), bytesLeftToSend %d\n", v.imgId, v.chunkId, v.chunkSize, bytesToSend);
+        memcpy(v.data, &data[v.chunkId * MAX_VIZ_IMAGE_CHUNK_SIZE], v.chunkSize);
+        SendMessage( GET_MESSAGE_ID(VizImageChunk), &v );
         
-        printf("Sending CAM image (size: %d)\n", (int)(sizeof(v)+1));
-        SendMessage( GET_MESSAGE_ID(VizCamImage), &v );
+        ++v.chunkId;
       }
     }
     

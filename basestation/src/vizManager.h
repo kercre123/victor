@@ -16,6 +16,7 @@
 
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/types.h"
+#include "anki/vision/CameraSettings.h"
 #include "anki/planning/shared/path.h"
 #include "anki/messaging/shared/UdpClient.h"
 #include "anki/cozmo/VizStructs.h"
@@ -138,7 +139,7 @@ namespace Anki {
       // ==== Misc. Debug functions =====
       void SetDockingError(const f32 x_dist, const f32 y_dist, const f32 angle);
 
-      void SendGreyImage(const u32 width, const u32 height, const u8* data);
+      void SendGreyImage(const u8* data, const Vision::CameraResolution res);
       
     protected:
       
@@ -153,6 +154,9 @@ namespace Anki {
       UdpClient vizClient_;
       
       char sendBuf[MAX_VIZ_MSG_SIZE];
+
+      // Image sending
+      u8 imgID;
       
     }; // class VizManager
     

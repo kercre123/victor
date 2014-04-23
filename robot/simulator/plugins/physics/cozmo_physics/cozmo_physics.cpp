@@ -203,7 +203,7 @@ namespace Anki {
     // These messages are handled by cozmo_viz_controller
     void ProcessVizSetLabelMessage(const VizSetLabel& msg){};
     void ProcessVizDockingErrorSignalMessage(const VizDockingErrorSignal& msg){};
-    void ProcessVizCamImageMessage(const VizCamImage& msg){};
+    void ProcessVizImageChunkMessage(const VizImageChunk& msg){};
     
   } // namespace Cozmo
 } // namespace Anki

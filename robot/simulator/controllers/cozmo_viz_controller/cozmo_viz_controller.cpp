@@ -15,6 +15,7 @@
 #include "anki/cozmo/VizStructs.h"
 #include "anki/messaging/shared/UdpServer.h"
 #include "anki/messaging/shared/UdpClient.h"
+#include "anki/vision/CameraSettings.h"
 
 webots::Supervisor vizSupervisor;
 
@@ -46,6 +47,12 @@ namespace Anki {
       
       // Image reference for display in camDisp
       webots::ImageRef* camImg = nullptr;
+      
+      // Image message processing
+      u8 imgID = 0;
+      u8 imgData[320*240];
+      u32 imgBytes = 0;
+      u32 imgWidth, imgHeight = 0;
     }
     
     void Init()
@@ -127,16 +134,31 @@ namespace Anki {
       
     }
     
-    void ProcessVizCamImageMessage(const VizCamImage& msg)
+    void ProcessVizImageChunkMessage(const VizImageChunk& msg)
     {
-      u32 imgSize = msg.width * msg.height;
-      u8 img[imgSize * 3];
+      // If this is a new image, then reset everything
+      if (msg.imgId != imgID) {
+        printf("Resetting image (img %d, res %d)\n", msg.imgId, msg.resolution);
+        imgID = msg.imgId;
+        imgBytes = 0;
+        imgWidth = Vision::CameraResInfo[msg.resolution].width;
+        imgHeight = Vision::CameraResInfo[msg.resolution].height;
+      }
       
-      // Duplicate channels for viewability. (Webots only supports RGB)
-      for(int i=0; i<imgSize; ++i) {
-        img[3*i] = msg.data[i];
-        img[3*i+1] = img[3*i];
-        img[3*i+2] = img[3*i];
+      // Copy chunk into the appropriate location in the imgData array.
+      // Triplicate channels for viewability. (Webots only supports RGB)
+      printf("Processing chunk %d of size %d\n", msg.chunkId, msg.chunkSize);
+      u8* chunkStart = imgData + 3 * msg.chunkId * MAX_VIZ_IMAGE_CHUNK_SIZE;
+      for(int i=0; i<msg.chunkSize; ++i) {
+        chunkStart[3*i] = msg.data[i];
+        chunkStart[3*i+1] = msg.data[i];
+        chunkStart[3*i+2] = msg.data[i];
+      }
+      
+      // Do we have all the data for this image?
+      imgBytes += msg.chunkSize;
+      if (imgBytes < imgWidth * imgHeight) {
+        return;
       }
       
       // Delete existing image if there is one.
@@ -144,9 +166,9 @@ namespace Anki {
         camDisp->imageDelete(camImg);
       }
       
-      //printf("DISP IMAGE %d x %d\n", msg.width, msg.height);
+      printf("Displaying image %d x %d\n", imgWidth, imgHeight);
       
-      camImg = camDisp->imageNew(msg.width, msg.height, img, webots::Display::RGB);
+      camImg = camDisp->imageNew(imgWidth, imgHeight, imgData, webots::Display::RGB);
       camDisp->imagePaste(camImg, 0, 0);
     };
   
@@ -201,7 +223,7 @@ int main(int argc, char **argv)
         // Messages that are handled in cozmo_viz_controller
         case VizSetLabel_ID:
         case VizDockingErrorSignal_ID:
-        case VizCamImage_ID:
+        case VizImageChunk_ID:
           (*Anki::Cozmo::DispatchTable_[msgID])((unsigned char*)(data + 1));
           break;
         // All other messages are forwarded to cozmo_physics plugin
