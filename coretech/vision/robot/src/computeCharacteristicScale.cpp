@@ -175,10 +175,10 @@ namespace Anki
         RESULT_FAIL_INVALID_OBJECT, "ExtractComponentsViaCharacteristicScale", "components is not valid");
 
       //AnkiConditionalErrorAndReturnValue(scaleImage_numPyramidLevels <= 4 && scaleImage_numPyramidLevels > 0,
-      //  RESULT_FAIL_INVALID_PARAMETERS, "ExtractComponentsViaCharacteristicScale", "scaleImage_numPyramidLevels must be less than %d", 4+1);
+      //  RESULT_FAIL_INVALID_PARAMETER, "ExtractComponentsViaCharacteristicScale", "scaleImage_numPyramidLevels must be less than %d", 4+1);
 
       AnkiConditionalErrorAndReturnValue(scaleImage_numPyramidLevels <= 8 && scaleImage_numPyramidLevels > 0,
-        RESULT_FAIL_INVALID_PARAMETERS, "ExtractComponentsViaCharacteristicScale", "scaleImage_numPyramidLevels must be less than %d", 8+1);
+        RESULT_FAIL_INVALID_PARAMETER, "ExtractComponentsViaCharacteristicScale", "scaleImage_numPyramidLevels must be less than %d", 8+1);
 
       // Initialize the first integralImageHeight rows of the integralImage
       ScrollingIntegralImage_u8_s32 integralImage(integralImageHeight, imageWidth, numBorderPixels, slowScratch);

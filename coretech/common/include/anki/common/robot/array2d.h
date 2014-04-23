@@ -546,7 +546,7 @@ namespace Anki
         RESULT_FAIL_INVALID_SIZE, "Array<Type>::InitializeBuffer", "Negative dimension");
 
       AnkiConditionalErrorAndReturnValue(!flags.get_useBoundaryFillPatterns(),
-        RESULT_FAIL_INVALID_PARAMETERS, "Array<Type>::InitializeBuffer", "Fill patterns not supported for Array");
+        RESULT_FAIL_INVALID_PARAMETER, "Array<Type>::InitializeBuffer", "Fill patterns not supported for Array");
 
       this->flags = flags;
       this->size[0] = numRows;

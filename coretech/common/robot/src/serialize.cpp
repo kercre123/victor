@@ -125,7 +125,7 @@ namespace Anki
         RESULT_FAIL_UNINITIALIZED_MEMORY, "SerializedBuffer::FindSerializedBuffer", "rawBuffer is NULL");
 
       AnkiConditionalErrorAndReturnValue(rawBufferLength >= 0,
-        RESULT_FAIL_INVALID_PARAMETERS, "SerializedBuffer::FindSerializedBuffer", "rawBufferLength is >= 0");
+        RESULT_FAIL_INVALID_PARAMETER, "SerializedBuffer::FindSerializedBuffer", "rawBufferLength is >= 0");
 
       if(rawBufferLength == 0)
         return RESULT_OK;

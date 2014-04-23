@@ -28,7 +28,7 @@ namespace Anki
         RESULT_FAIL_INVALID_OBJECT, "ComputeQuadrilateralsFromConnectedComponents", "scratch is not valid");
 
       AnkiConditionalErrorAndReturnValue(peaks.get_maximumSize() == 4,
-        RESULT_FAIL_INVALID_PARAMETERS, "ComputeQuadrilateralsFromConnectedComponents", "Currently only four peaks supported");
+        RESULT_FAIL_INVALID_PARAMETER, "ComputeQuadrilateralsFromConnectedComponents", "Currently only four peaks supported");
 
       const s32 maximumTemporaryPeaks = boundary.get_size() / 3; // Worst case
       const s32 numSigmaFractionalBits = 8;

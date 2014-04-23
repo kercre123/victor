@@ -56,7 +56,7 @@ namespace Anki
         RESULT_FAIL_INVALID_OBJECT, "Find.Evaluate", "This Find object is invalid");
 
       AnkiConditionalErrorAndReturnValue(this->numOutputDimensions == 1,
-        RESULT_FAIL_INVALID_PARAMETERS, "Find.Evaluate", "One-dimensional Evaluate only works with one-dimensional Array input");
+        RESULT_FAIL_INVALID_PARAMETER, "Find.Evaluate", "One-dimensional Evaluate only works with one-dimensional Array input");
 
       const s32 arrayHeight = array1.get_size(0);
       const s32 arrayWidth = array1.get_size(1);
@@ -331,7 +331,7 @@ namespace Anki
         RESULT_FAIL_INVALID_SIZE, "Find.SetArray", "One-dimensional SetArray only works with one-dimensional Array input");
 
       AnkiConditionalErrorAndReturnValue(findWhichDimension == 0 || findWhichDimension == 1,
-        RESULT_FAIL_INVALID_PARAMETERS, "Find.SetArray", "findWhichDimension must be zero or one");
+        RESULT_FAIL_INVALID_PARAMETER, "Find.SetArray", "findWhichDimension must be zero or one");
 
       const s32 array1Height = array1.get_size(0);
       const s32 array1Width = array1.get_size(1);

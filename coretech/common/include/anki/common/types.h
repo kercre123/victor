@@ -59,19 +59,19 @@ namespace Anki
 #ifdef __cplusplus
 namespace Anki {
 #endif
-    // Return values:
-    typedef enum {
-      RESULT_OK                        = 0,
-      RESULT_FAIL                      = 0x00000001,
-      RESULT_FAIL_MEMORY               = 0x01000000,
-      RESULT_FAIL_OUT_OF_MEMORY        = 0x01000001,
-      RESULT_FAIL_UNINITIALIZED_MEMORY = 0x01000002,
-      RESULT_FAIL_ALIASED_MEMORY       = 0x01000003,
-      RESULT_FAIL_IO                   = 0x02000000,
-      RESULT_FAIL_INVALID_PARAMETERS   = 0x03000000,
-      RESULT_FAIL_INVALID_OBJECT       = 0x04000000,
-      RESULT_FAIL_INVALID_SIZE         = 0x05000000
-    } Result;
+  // Return values:
+  typedef enum {
+    RESULT_OK                        = 0,
+    RESULT_FAIL                      = 0x00000001,
+    RESULT_FAIL_MEMORY               = 0x01000000,
+    RESULT_FAIL_OUT_OF_MEMORY        = 0x01000001,
+    RESULT_FAIL_UNINITIALIZED_MEMORY = 0x01000002,
+    RESULT_FAIL_ALIASED_MEMORY       = 0x01000003,
+    RESULT_FAIL_IO                   = 0x02000000,
+    RESULT_FAIL_INVALID_PARAMETER    = 0x03000000,
+    RESULT_FAIL_INVALID_OBJECT       = 0x04000000,
+    RESULT_FAIL_INVALID_SIZE         = 0x05000000
+  } Result;
 #ifdef __cplusplus
 } // namespace Anki
 #endif
