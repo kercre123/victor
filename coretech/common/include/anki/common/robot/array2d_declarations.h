@@ -123,8 +123,9 @@ namespace Anki
       ConstArraySliceExpression<Type> Transpose() const;
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
-      // Returns a templated cv::Mat_ that shares the same buffer with this Array. No data is copied.
+      // Returns a templated cv::Mat_ that shares the same buffer with this Array. No data should be copied (though with OpenCV, it's hard to tell).
       cv::Mat_<Type>& get_CvMat_();
+      const cv::Mat_<Type>& get_CvMat_() const;
 
       s32 Set(const cv::Mat_<Type> &in);
 
@@ -231,7 +232,16 @@ namespace Anki
       // WARNING:
       // If the OpenCV API changes, this could cause OpenCV errors even where no OpenCV is used.
       // This will probably be easily fixable, but be aware.
-      cv::Mat_<Type> cvMatMirror;
+      //
+      // WARNING: Don't access this directly, even from within the Array<> class. Use get_CvMat_()
+      //
+      // NOTE: cvMatMirror is mutable, because it should really mirror this Array<>, but due to
+      //       complexity in OpenCV, it may need to be updated at arbitrary times to actually mirror
+      //       this Array<>.
+      mutable cv::Mat_<Type> cvMatMirror;
+
+      // May need to be called after deserialization (called automatically by get_CvMat_
+      void UpdateCvMatMirror(const Array<Type> &in) const;
 #endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
       // Basic allocation method

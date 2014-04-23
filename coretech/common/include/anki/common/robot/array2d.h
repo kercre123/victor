@@ -238,8 +238,22 @@ namespace Anki
     {
       AnkiConditionalError(this->IsValid(), "Array<Type>::get_CvMat_", "Array<Type> is not valid");
 
+      //if(reinterpret_cast<size_t>(cvMatMirror.data) != reinterpret_cast<size_t>(this->data)) {
+      this->UpdateCvMatMirror(*this);
+      //}
+
       return cvMatMirror;
     }
+
+    template<typename Type> const cv::Mat_<Type>& Array<Type>::get_CvMat_() const
+    {
+      AnkiConditionalError(this->IsValid(), "Array<Type>::get_CvMat_", "Array<Type> is not valid");
+
+      this->UpdateCvMatMirror(*this);
+
+      return cvMatMirror;
+    }
+
 #endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
@@ -275,7 +289,7 @@ namespace Anki
 
       if(scaleValues) {
         cv::Mat_<f64> scaledArray(this->get_size(0), this->get_size(1));
-        scaledArray = cvMatMirror;
+        scaledArray = this->get_CvMat_();
 
         const f64 minValue = Matrix::Min<Type>(*this);
         const f64 maxValue = Matrix::Max<Type>(*this);
@@ -286,7 +300,7 @@ namespace Anki
 
         cv::imshow(windowName, scaledArray);
       } else {
-        cv::imshow(windowName, cvMatMirror);
+        cv::imshow(windowName, this->get_CvMat_());
       }
 
       if(waitForKeypress) {
@@ -486,11 +500,7 @@ namespace Anki
       this->rawDataPointer = rightHandSide.rawDataPointer;
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
-      // These two should be set, because if the Array constructor was not called, these will not be initialized
-      this->cvMatMirror.step.p = this->cvMatMirror.step.buf;
-      this->cvMatMirror.size = &this->cvMatMirror.rows;
-
-      this->cvMatMirror = cv::Mat_<Type>(rightHandSide.size[0], rightHandSide.size[1], rightHandSide.data, rightHandSide.stride);
+      this->UpdateCvMatMirror(rightHandSide);
 #endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
       return *this;
@@ -535,6 +545,17 @@ namespace Anki
     {
       return flags;
     }
+
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
+    template<typename Type> void Array<Type>::UpdateCvMatMirror(const Array<Type> &in) const
+    {
+      // These two should be set, because if the Array constructor was not called, these will not be initialized
+      this->cvMatMirror.step.p = this->cvMatMirror.step.buf;
+      this->cvMatMirror.size = &this->cvMatMirror.rows;
+
+      this->cvMatMirror = cv::Mat_<Type>(in.size[0], in.size[1], in.data, in.stride);
+    }
+#endif
 
     template<typename Type> void* Array<Type>::AllocateBufferFromMemoryStack(const s32 numRows, const s32 stride, MemoryStack &memory, s32 &numBytesAllocated, const Flags::Buffer flags, bool reAllocate)
     {
@@ -609,7 +630,7 @@ namespace Anki
       }
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
-      cvMatMirror = cv::Mat_<Type>(size[0], size[1], data, stride);
+      this->UpdateCvMatMirror(*this);
 #endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
       return RESULT_OK;

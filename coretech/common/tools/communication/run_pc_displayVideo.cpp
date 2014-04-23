@@ -55,6 +55,12 @@ int main(int argc, char ** argv)
     DebugStreamClient::Object newObject = parserThread.GetNextObject();
     printf("Received %s %s\n", newObject.typeName, newObject.objectName);
 
+    if(strcmp(newObject.objectName, "Robot Image") == 0) {
+      Array<u8> image = *(reinterpret_cast<Array<u8>*>(newObject.startOfPayload));
+      image.Show("Robot Image", false);
+      cv::waitKey(10);
+    }
+
     if(newObject.buffer) {
       free(newObject.buffer);
       newObject.buffer = NULL;
