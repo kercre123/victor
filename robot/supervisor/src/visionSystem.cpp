@@ -619,7 +619,8 @@ namespace Anki {
         
         const Result trackerResult = tracker.UpdateTrack(grayscaleImage,
                                                          parameters.maxIterations,
-                                                         parameters.convergenceTolerance,
+                                                         parameters.convergenceTolerance_angle,
+                                                         parameters.convergenceTolerance_distance,
                                                          parameters.verify_maxPixelDifference,
                                                          converged,
                                                          verify_meanAbsoluteDifference,
@@ -1203,15 +1204,14 @@ namespace Anki {
       }
       
       Result GetVisionMarkerPose(const Embedded::VisionMarker& marker,
-                                 Embedded::Array<f32>&  rotation,
-                                 Embedded::Point3<f32>& translation,
                                  const bool ignoreOrientation,
-                                 Embedded::MemoryStack  scratch)
+                                 Embedded::Array<f32>&  rotation,
+                                 Embedded::Point3<f32>& translation)
       {
         Quadrilateral<f32> quad(Point<f32>(marker.corners[0].x, marker.corners[0].y),
-                                          Point<f32>(marker.corners[1].x, marker.corners[1].y),
-                                          Point<f32>(marker.corners[2].x, marker.corners[2].y),
-                                          Point<f32>(marker.corners[3].x, marker.corners[3].y));
+                                Point<f32>(marker.corners[1].x, marker.corners[1].y),
+                                Point<f32>(marker.corners[2].x, marker.corners[2].y),
+                                Point<f32>(marker.corners[3].x, marker.corners[3].y));
         
         Quadrilateral<f32> sortedQuad;
         if(ignoreOrientation) {
@@ -1229,7 +1229,7 @@ namespace Anki {
                                 canonicalMarker3d_[2], canonicalMarker3d_[3],
                                 headCamInfo_->focalLength_x, headCamInfo_->focalLength_y,
                                 headCamInfo_->center_x, headCamInfo_->center_y,
-                                rotation, translation, scratch);
+                                rotation, translation);
         
       } // GetVisionMarkerPose()
       

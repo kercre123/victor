@@ -3,7 +3,8 @@ function [converged, reason] = track(this, nextImg, varargin)
 
 MaxIterations = 25;
 ConvergenceTolerance = 1e-3;
-ErrorTolerance = [];
+IntensityErrorTolerance = [];
+IntensityErrorFraction = 0.25;
 
 parseVarargin(varargin{:});
 
@@ -11,7 +12,7 @@ reason = '';
 
 this.maxIterations = MaxIterations;
 this.convergenceTolerance = ConvergenceTolerance;
-this.errorTolerance = ErrorTolerance;
+% this.errorTolerance = ErrorTolerance;
 
 nextImg = im2double(nextImg);
 if size(nextImg,3) > 1
@@ -55,22 +56,38 @@ for i_scale = this.numScales:-1:this.finestScale
     
 end % FOR each scale
 
-% Compute final error
-[xi,yi] = this.getImagePoints(this.finestScale);
-
-imgi = interp2(imgBlur{this.finestScale}, xi(:), yi(:), 'linear');
-inBounds = ~isnan(imgi);
-
-if this.useNormalization
-    imgi = (imgi - mean(imgi(inBounds)))/std(imgi(inBounds));
+% Compute final error for verification
+if ~isempty(IntensityErrorTolerance)
+    if ~isempty(this.xgridFull{i_scale})
+        % For sampled trackers
+        [xi, yi] = this.getImagePoints(this.xgridFull{i_scale}, ...
+            this.ygridFull{i_scale});
+        template = this.targetFull{this.finestScale}(:);
+    else
+        [xi,yi] = this.getImagePoints(this.finestScale);
+        template = this.target{this.finestScale}(:);
+    end
+    
+    imgi = interp2(imgBlur{this.finestScale}, xi(:), yi(:), 'nearest');
+    inBounds = ~isnan(imgi);
+    
+    if this.useNormalization
+        stddev = std(imgi(inBounds));
+        imgi = (imgi - mean(imgi(inBounds))) ./ stddev;
+        IntensityErrorTolerance = IntensityErrorTolerance / stddev;
+    end
+    
+    It = template - imgi;
+    %this.err = mean(abs(It(inBounds)));
+    this.err = sum(abs(It(inBounds)) > IntensityErrorTolerance) / sum(inBounds);
+    
+else
+    this.err = -1;
 end
-It = this.target{this.finestScale}(:) - imgi;
-
-this.err = mean(abs(It(inBounds)));
 
 if ~converged
     reason = 'Tracker failed to converge due to parameter/quad change.';
-elseif isnan(this.err) || (~isempty(this.errorTolerance) && this.err > this.errorTolerance)
+elseif isnan(this.err) || this.err > IntensityErrorFraction
     reason = 'Tracker failed to converge due to intensity error.';
     converged = false;
 else

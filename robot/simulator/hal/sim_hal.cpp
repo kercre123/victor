@@ -177,18 +177,10 @@ namespace Anki {
     
     // Forward Declaration.  This is implemented in sim_radio.cpp
     Result InitSimRadio(s32 robotID);
-   
-    namespace HAL {
-      // Forward Declaration.  This is implemented in sim_uart.cpp
-      void UARTInit();
-    }
     
     Result HAL::Init()
     {
       assert(TIME_STEP >= webotRobot_.getBasicTimeStep());
-      
-      // TODO: need to check return code?
-      UARTInit();
       
       leftWheelMotor_  = webotRobot_.getMotor("LeftWheelMotor");
       rightWheelMotor_ = webotRobot_.getMotor("RightWheelMotor");

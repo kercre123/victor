@@ -99,10 +99,9 @@ namespace Anki {
       //    that they always represent an upright marker).
       // NOTE: rotation should already be allocated as a 3x3 array.
       Result GetVisionMarkerPose(const Embedded::VisionMarker& marker,
-                                 Embedded::Array<f32>&  rotationWrtCamera,
-                                 Embedded::Point3<f32>& translationWrtCamera,
-                                 const bool ignoreOrientation,
-                                 Embedded::MemoryStack  scratch);
+                                 const bool                    ignoreOrientation,
+                                 Embedded::Array<f32>&         rotationWrtCamera,
+                                 Embedded::Point3<f32>&        translationWrtCamera);
       
       // Convert a point or pose in camera coordinates to robot coordinates,
       // using the kinematic chain of the neck and head geometry.
