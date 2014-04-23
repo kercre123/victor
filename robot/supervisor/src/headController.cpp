@@ -376,19 +376,6 @@ namespace Anki {
 */
         
         HAL::MotorSetPower(HAL::MOTOR_HEAD, power_);
-
-#if USE_OFFBOARD_VISION
-        // Keep offboard vision processor apprised of the current head angle for
-        // computing the docking error signal
-        {
-          Messages::RobotState stateMsg;
-          stateMsg.timestamp = HAL::GetTimeStamp();
-          stateMsg.headAngle = currentAngle_.ToFloat();
-          HAL::USBSendPacket(HAL::USB_VISION_COMMAND_ROBOTSTATE,
-                             &stateMsg, sizeof(Messages::RobotState));
-        }
-#endif
-        
       } // if not in position
       
       return RESULT_OK;

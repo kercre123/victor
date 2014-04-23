@@ -50,50 +50,13 @@ namespace Anki {
         // Send the message header (0xBEEF + timestamp + robotID + msgID)
         // For TCP comms, send timestamp immediately after the header.
         // This is needed on the basestation side to properly order messages.
-        const u8 HEADER_LENGTH = 7;
-        u8 header[HEADER_LENGTH];
-        UtilMsgError packRes = UtilMsgPack(header, HEADER_LENGTH, NULL, "ccic",
-                    RADIO_PACKET_HEADER[0],
-                    RADIO_PACKET_HEADER[1],
-                    ts,
-                    msgID);
-        
-        assert (packRes == UTILMSG_OK);
-        
-        // Send header and message content
-        const u8 size = Messages::GetSize(msgID);
-        //server.Send((char*)header, HEADER_LENGTH);
-        USBSendBuffer(header, HEADER_LENGTH);
-        //server.Send((char*)buffer, size);
-        USBSendBuffer((u8*)buffer, size);
-        
-        // Send footer
-      /*
-        if (server.Send((char*)RADIO_PACKET_FOOTER, sizeof(RADIO_PACKET_FOOTER)) < 0 ) {
-          DisconnectRadio();
-          return false;
-        }
-       */
-        USBSendBuffer(RADIO_PACKET_FOOTER, sizeof(RADIO_PACKET_FOOTER));
 
-        /*
-        printf("SENT: ");
-        for (int i=0; i<HEADER_LENGTH;i++){
-          u8 t = header[i];
-          printf("0x%x ", t);
-        }
-        for (int i=0; i<size;i++){
-          u8 t = ((char*)buffer)[i];
-          printf("0x%x ", t);
-        }
-        for (int i=0; i<sizeof(RADIO_PACKET_FOOTER);i++){
-          u8 t = RADIO_PACKET_FOOTER[i];
-          printf("0x%x ", t);
-        }
-        printf("\n");
-        */
-#endif        
+        // Send header and message content - return false if message was discarded (full buffer)
+        const u8 size = Messages::GetSize(msgID);
+        return UARTPutMessage(msgID, ts, (u8*)buffer, size);
+#else
         return true;
+#endif      
       
     } // RadioSendMessage()
     
@@ -101,18 +64,13 @@ namespace Anki {
     u32 HAL::RadioGetNumBytesAvailable(void)
     {
 #if(USING_UART_RADIO)			
-      // Check for incoming data and add it to receive buffer
-      int dataSize;
-      
-      // Read available data
-      //dataSize = server.Recv((char*)&recvBuf_[recvBufSize_], RECV_BUFFER_SIZE - recvBufSize_);
-      dataSize = USBRecvBuffer(&recvBuf_[recvBufSize_], RECV_BUFFER_SIZE - recvBufSize_);
-      
-      if (dataSize > 0) {
-        recvBufSize_ += dataSize;
-      } else if (dataSize < 0) {
-        // Something went wrong
-        DisconnectRadio();
+      // Pull as many inbound chars as we can into our local buffer
+      while (recvBufSize_ < RECV_BUFFER_SIZE)
+      {
+        int c = UARTGetChar(0);
+        if (c < 0)    // Nothing more to grab
+          return recvBufSize_;
+        recvBuf_[recvBufSize_++] = c;
       }
 #endif      
       return recvBufSize_;

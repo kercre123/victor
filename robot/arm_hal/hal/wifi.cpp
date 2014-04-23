@@ -4,7 +4,7 @@
 
 //#define MIKES_HEAD_BOARD
 
-//#define ENABLE_WIFI
+#define ENABLE_WIFI
 
 // Set to 1 to enable LED indicator of wifi activity
 #define ENABLE_WIFI_LED 1
