@@ -1418,7 +1418,7 @@ namespace Anki {
               msg.x_imgLowerRight = crntMarker.corners[Quadrilateral<f32>::BottomRight].x;
               msg.y_imgLowerRight = crntMarker.corners[Quadrilateral<f32>::BottomRight].y;
               
-              Messages::ProcessVisionMarkerMessage(msg);
+              HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::VisionMarker),&msg);
             }
             
             // Was the desired marker found? If so, start tracking it.
