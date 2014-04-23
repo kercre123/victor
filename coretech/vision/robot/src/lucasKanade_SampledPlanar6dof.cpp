@@ -27,8 +27,11 @@ non-disclosure agreement with Anki, inc.
 
 #define USE_OPENCV_ITERATIVE_POSE_INIT 0
 
+#define COMPUTE_CONVERGENCE_FROM_CORNER_CHANGE 0
+
 // If 0, just uses nearest pixel
 #define USE_LINEAR_INTERPOLATION_FOR_VERIFICATION 0
+
 #if USE_OPENCV_ITERATIVE_POSE_INIT
 #include "opencv2/calib3d/calib3d.hpp"
 #endif
@@ -37,6 +40,7 @@ namespace Anki
 {
   namespace Embedded
   {
+    
     namespace TemplateTracker
     {
       
@@ -137,8 +141,7 @@ namespace Anki
           template3d[0], template3d[1], template3d[2], template3d[3],
           this->focalLength_x, this->focalLength_y,
           this->camCenter_x,   this->camCenter_y,
-          R, this->params6DoF.translation,
-          onchipScratch);  // TODO: which scratch?
+          R, this->params6DoF.translation);
 
 #endif // #if USE_OPENCV_ITERATIVE_POSE_INIT
 

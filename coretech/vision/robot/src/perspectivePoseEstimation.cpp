@@ -149,9 +149,15 @@ namespace Anki {
         Array<PRECISION>& R1, Point3<PRECISION>& T1,
         Array<PRECISION>& R2, Point3<PRECISION>& T2,
         Array<PRECISION>& R3, Point3<PRECISION>& T3,
-        Array<PRECISION>& R4, Point3<PRECISION>& T4,
-        MemoryStack scratch)
+        Array<PRECISION>& R4, Point3<PRECISION>& T4)
       {
+        Result lastResult = RESULT_OK;
+        
+        // Create a little memory stack for the various 3x3 matrices used below
+        const s32 SCRATCH_BUFFER_SIZE = 512;
+        char buffer[SCRATCH_BUFFER_SIZE];
+        MemoryStack scratch(buffer, SCRATCH_BUFFER_SIZE);
+        
         // Typedef the templated classes for brevity below
         typedef Point3<PRECISION> POINT;
         typedef Array<PRECISION>  MATRIX;
@@ -187,10 +193,13 @@ namespace Anki {
         AnkiAssert(NEAR(f3.Length(), 1.f, 1e-6f));
 
         MATRIX T = MATRIX(3,3,scratch);
+        AnkiConditionalErrorAndReturnValue(T.IsValid(), RESULT_FAIL_MEMORY,
+                                           "P3P::computePossiblePoses()",
+                                           "Invalid T Matrix, out of memory?");
 
         // Create intermediate camera frame
-        if(createIntermediateCameraFrameHelper(f1, f2, f3, T) != RESULT_OK) {
-          return RESULT_FAIL;
+        if((lastResult = createIntermediateCameraFrameHelper(f1, f2, f3, T)) != RESULT_OK) {
+          return lastResult;
         }
 
         // Reinforce that f3[2] > 0 for theta in [0,pi]
@@ -200,8 +209,8 @@ namespace Anki {
           f2 = imageRay1;
           f3 = imageRay3;
 
-          if(createIntermediateCameraFrameHelper(f1, f2, f3, T) != RESULT_OK) {
-            return RESULT_FAIL;
+          if((lastResult = createIntermediateCameraFrameHelper(f1, f2, f3, T)) != RESULT_OK) {
+            return lastResult;
           }
 
           P1 = worldPoint2;
@@ -220,6 +229,9 @@ namespace Anki {
 
         // the n vectors are the rows of the N matrix
         MATRIX N = MATRIX(3,3,scratch);
+        AnkiConditionalErrorAndReturnValue(N.IsValid(), RESULT_FAIL_MEMORY,
+                                           "P3P::computePossiblePoses()",
+                                           "Invalid N Matrix, out of memory?");
         N[0][0] = n1.x; N[0][1] = n1.y; N[0][2] = n1.z;
         N[1][0] = n2.x; N[1][1] = n2.y; N[1][2] = n2.z;
         N[2][0] = n3.x; N[2][1] = n3.y; N[2][2] = n3.z;
@@ -306,13 +318,29 @@ namespace Anki {
         Point3<PRECISION>* Tout[4] = {&T1, &T2, &T3, &T4};
 
         MATRIX Tt = MATRIX(3,3,scratch);
-        Matrix::Transpose(T, Tt);
+        AnkiConditionalErrorAndReturnValue(Tt.IsValid(), RESULT_FAIL_MEMORY,
+                                           "P3P::computePossiblePoses()",
+                                           "Invalid Tt Matrix, out of memory?");
+        if((lastResult = Matrix::Transpose(T, Tt)) != RESULT_OK) {
+          return lastResult;
+        }
 
         MATRIX Nt = MATRIX(3,3,scratch);
-        Matrix::Transpose(N, Nt);
+        AnkiConditionalErrorAndReturnValue(Nt.IsValid(), RESULT_FAIL_MEMORY,
+                                           "P3P::computePossiblePoses()",
+                                           "Invalid Nt Matrix, out of memory?");
+        if((lastResult = Matrix::Transpose(N, Nt)) != RESULT_OK) {
+          return lastResult;
+        }
 
         MATRIX R = MATRIX(3,3,scratch);
+        AnkiConditionalErrorAndReturnValue(R.IsValid(), RESULT_FAIL_MEMORY,
+                                           "P3P::computePossiblePoses()",
+                                           "Invalid R Matrix, out of memory?");
         MATRIX temp = MATRIX(3,3,scratch);
+        AnkiConditionalErrorAndReturnValue(temp.IsValid(), RESULT_FAIL_MEMORY,
+                                           "P3P::computePossiblePoses()",
+                                           "Invalid temp Matrix, out of memory?");
 
         EndBenchmark("cpml_init");
 
@@ -339,8 +367,12 @@ namespace Anki {
           // Assign this solution's rotation matrix to the output
           //  Rout[i] = Tt * R * N;
           AnkiAssert(Rout[i]->get_size(0) == 3 && Rout[i]->get_size(1) == 3);
-          Matrix::Multiply(Tt, R, temp);
-          Matrix::Multiply(temp, N, *Rout[i]);
+          if((lastResult = Matrix::Multiply(Tt, R, temp)) != RESULT_OK) {
+            return lastResult;
+          }
+          if((lastResult = Matrix::Multiply(temp, N, *Rout[i])) != RESULT_OK) {
+            return lastResult;
+          }
 
           POINT C(d_12*cos_alpha*(sin_alpha*b+cos_alpha),
             cos_theta*d_12*sin_alpha*(sin_alpha*b+cos_alpha),
@@ -353,6 +385,7 @@ namespace Anki {
         }
 
         return RESULT_OK;
+        
       } // computePossiblePoses(from individually-listed points)
 
       // Explicit instatiation for single and double precision
@@ -365,8 +398,7 @@ namespace Anki {
         Array<float>& R1, Point3<float>& T1,
         Array<float>& R2, Point3<float>& T2,
         Array<float>& R3, Point3<float>& T3,
-        Array<float>& R4, Point3<float>& T4,
-        MemoryStack scratch);
+        Array<float>& R4, Point3<float>& T4);
 
       template Result computePossiblePoses<double>(const Point3<double>& worldPoint1,
         const Point3<double>& worldPoint2,
@@ -377,8 +409,7 @@ namespace Anki {
         Array<double>& R1, Point3<double>& T1,
         Array<double>& R2, Point3<double>& T2,
         Array<double>& R3, Point3<double>& T3,
-        Array<double>& R4, Point3<double>& T4,
-        MemoryStack scratch);
+        Array<double>& R4, Point3<double>& T4);
 
       template<typename PRECISION>
       Result computePose(const Quadrilateral<PRECISION>& imgQuad,
@@ -388,9 +419,15 @@ namespace Anki {
         const Point3<PRECISION>& worldPoint4,
         const f32 focalLength_x, const f32 focalLength_y,
         const f32 camCenter_x,   const f32 camCenter_y,
-        Array<PRECISION>& R, Point3<PRECISION>& T,
-        MemoryStack scratch)
+        Array<PRECISION>& R, Point3<PRECISION>& T)
       {
+        Result lastResult = RESULT_OK;
+        
+        // Create a little memory stack for the few 3x3 matrices used below
+        const s32 SCRATCH_BUFFER_SIZE = 512;
+        char buffer[SCRATCH_BUFFER_SIZE];
+        MemoryStack scratch(buffer, SCRATCH_BUFFER_SIZE);
+        
         // Output rotation should already be allocated
         AnkiConditionalErrorAndReturnValue(R.get_size(0)==3 && R.get_size(1)==3,
                                            RESULT_FAIL_INVALID_SIZE,
@@ -443,6 +480,9 @@ namespace Anki {
         Array<PRECISION> possibleR[4];
         for(s32 i=0; i<4; ++i) {
           possibleR[i] = Array<PRECISION>(3,3,scratch);
+          AnkiConditionalErrorAndReturnValue(possibleR[i].IsValid(), RESULT_FAIL_MEMORY,
+                                             "P3P::computePossiblePoses()",
+                                             "Invalid possibleR[%d] Matrix, out of memory?", i);
         }
 
         EndBenchmark("computePose_init");
@@ -460,7 +500,7 @@ namespace Anki {
           //printf("Validating with %d, estimating with %d, %d, %d\n",
           //       i_validate, cornerList[1], cornerList[2], cornerList[3]);
 
-          if(P3P::computePossiblePoses(*worldPoints[cornerList[1]],
+          if((lastResult = P3P::computePossiblePoses(*worldPoints[cornerList[1]],
             *worldPoints[cornerList[2]],
             *worldPoints[cornerList[3]],
             imgRays[cornerList[1]],
@@ -469,10 +509,9 @@ namespace Anki {
             possibleR[0], possibleT[0],
             possibleR[1], possibleT[1],
             possibleR[2], possibleT[2],
-            possibleR[3], possibleT[3],
-            scratch) != RESULT_OK)
+            possibleR[3], possibleT[3])) != RESULT_OK)
           {
-            return RESULT_FAIL;
+            return lastResult;
           }
 
           // Find the pose with the least reprojection error for the 4th
@@ -555,8 +594,7 @@ namespace Anki {
         const Point3<f32>& worldPoint4,
         const f32 focalLength_x, const f32 focalLength_y,
         const f32 camCenter_x, const f32 camCenter_y,
-        Array<f32>& R, Point3<f32>& T,
-        MemoryStack scratch);
+        Array<f32>& R, Point3<f32>& T);
 
       template Result computePose<f64>(const Quadrilateral<f64>& imgQuad,
         const Point3<f64>& worldPoint1,
@@ -565,8 +603,7 @@ namespace Anki {
         const Point3<f64>& worldPoint4,
         const f32 focalLength_x, const f32 focalLength_y,
         const f32 camCenter_x, const f32 camCenter_y,
-        Array<f64>& R, Point3<f64>& T,
-        MemoryStack scratch);
+        Array<f64>& R, Point3<f64>& T);
 
       /*
       template<typename PRECISION>
