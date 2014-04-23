@@ -501,9 +501,7 @@ namespace Anki
         Result IterativelyRefineTrack_Projective(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance_angle, const f32 convergenceTolerance_distance, bool &converged, MemoryStack scratch);
         
         static Result ApproximateSelect(const Array<f32> &magnitudeVector, const s32 numBins, const s32 numToSelect, s32 &numSelected, Array<u16> &magnitudeIndexes);
-        
-        Result ApproximateSelect(const Array<f32> &magnitudeImage, const s32 numBins, const s32 numRegions, const s32 numToSelect, s32 &numSelected, Array<u16> &magnitudeIndexes);
-        
+                
       }; // class LucasKanadeTracker_SampledPlanar6dof
       
       
