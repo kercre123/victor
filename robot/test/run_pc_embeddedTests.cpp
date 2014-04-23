@@ -66,7 +66,7 @@ int main()
 #if ANKICORETECH_EMBEDDED_USE_GTEST
 
   //char * filterString = "--gtest_filter=*"; // Run all tests
-  char * filterString = "--gtest_filter=*FaceDetection"; // Run only some tests
+  char * filterString = "--gtest_filter=*RoundAndSaturate"; // Run only some tests
 
   argc++;
   argv[argc-1] = filterString;

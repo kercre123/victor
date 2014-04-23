@@ -200,12 +200,7 @@ namespace Anki {
 
         // Process any messages from the basestation
         Messages::ProcessBTLEMessages();
-#ifndef USE_OFFBOARD_VISION
-        // UART messages are handled during longExecution() when using
-        // offboard vision processing.
-        Messages::ProcessUARTMessages();
-#endif
-        
+
         // Check for any messages from the vision system and pass them along to
         // the basestation, update the docking controller, etc.
         Messages::VisionMarker markerMsg;
@@ -319,8 +314,6 @@ namespace Anki {
         //   *by value*, NOT by reference.  This is because step_LongExecution()
         //   can be interuppted by step_MainExecution().
         retVal = VisionSystem::Update(Messages::GetRobotStateMsg());
-        
-        HAL::USBSendPrintBuffer();
         
         return retVal;
         

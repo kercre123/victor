@@ -1042,7 +1042,7 @@ namespace Anki {
         if(!isInitialized_) {
           
           captureResolution_ = Vision::CAMERA_RES_QVGA;
-          faceDetectionResolution_ = Vision::CAMERA_RES_QQVGA;
+          faceDetectionResolution_ = Vision::CAMERA_RES_QVGA;
           
           // WARNING: the order of these initializations matter!
 
@@ -1326,7 +1326,8 @@ namespace Anki {
         minHeight, minWidth,
         maxHeight, maxWidth,
         detectedFaces,
-        VisionMemory::onchipScratch_);
+        VisionMemory::onchipScratch_,
+        VisionMemory::offchipScratch_);
             
       DebugStream::SendFaceDetections(
         grayscaleImage, 

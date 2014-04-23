@@ -1,12 +1,8 @@
 #ifndef ROBOT_HARDWARE
 
-#ifndef _MSC_VER
-#error Currently, only visual c++ is supported
-#endif
-
 #define COZMO_ROBOT
 
-#include "serial.h"
+#include "communication.h"
 #include "threadSafeQueue.h"
 #include "messageHandling.h"
 
@@ -14,13 +10,22 @@
 #include "anki/common/robot/utilities.h"
 #include "anki/common/robot/serialize.h"
 
+#ifdef _MSC_VER
+#include <tchar.h>
+#include <strsafe.h>
+
 #undef printf
 _Check_return_opt_ _CRTIMP int __cdecl printf(_In_z_ _Printf_format_string_ const char * _Format, ...);
 
+#else // #ifdef _MSC_VER
+
+#include <unistd.h>
+#include <pthread.h>
+
+#endif // #ifdef _MSC_VER ... #else
+
 #include <queue>
 
-#include <tchar.h>
-#include <strsafe.h>
 #include <ctime>
 
 #include "opencv/cv.h"
@@ -29,18 +34,31 @@ using namespace std;
 using namespace Anki;
 using namespace Anki::Embedded;
 
+#ifdef _MSC_VER
 // Based off example at http://msdn.microsoft.com/en-us/library/windows/desktop/ms682516(v=vs.85).aspx
 DWORD WINAPI DisplayBuffersThread(LPVOID lpParam)
 {
   SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_BELOW_NORMAL);
 
   ThreadSafeQueue<DisplayRawBuffer> *messageQueue = (ThreadSafeQueue<DisplayRawBuffer>*)lpParam;
+#else
+void* DisplayBuffersThread(void *threadParameters)
+{
+
+// TODO: set thread priority
+
+  ThreadSafeQueue<DisplayRawBuffer> *messageQueue = (ThreadSafeQueue<DisplayRawBuffer>*)threadParameters;
+#endif
 
   bool pausePressed = false;
 
   while(true) {
     while(messageQueue->IsEmpty()) {
+#ifdef _MSC_VER
       Sleep(1);
+#else
+      usleep(1000);
+#endif
 
       if(pausePressed) {
         const s32 pressedKey = cv::waitKey(1000);
@@ -98,13 +116,17 @@ int main(int argc, char ** argv)
   const s32 port = 5551;
 
   // Com
+#ifdef _MSC_VER
   Serial serial;
   s32 comPort = 11;
   s32 baudRate = 1000000;
+#endif
+
+  printf("Starting display\n");
 
   double lastUpdateTime;
 
-  const s32 USB_BUFFER_SIZE = 5000;
+  const s32 USB_BUFFER_SIZE = useTcp ? 100000 : 5000;
   const s32 MESSAGE_BUFFER_SIZE = 1000000;
 
   u8 *usbBuffer = reinterpret_cast<u8*>(malloc(USB_BUFFER_SIZE));
@@ -115,35 +137,61 @@ int main(int argc, char ** argv)
 
   if(argc == 1) {
     // just use defaults, but print the help anyway
-    printUsage();
-  } else if(argc == 3) {
-    sscanf(argv[1], "%d", &comPort);
-    sscanf(argv[2], "%d", &baudRate);
-  } else {
-    printUsage();
+    // printUsage();
+  }
+  //else if(argc == 3) {
+  //  sscanf(argv[1], "%d", &comPort);
+  //    sscanf(argv[2], "%d", &baudRate);
+  //}
+  else {
+  // printUsage();
     return -1;
   }
 
   if(useTcp) {
-    if(socket.Open(ipAddress, port) != RESULT_OK)
-      return -2;
+    while(socket.Open(ipAddress, port) != RESULT_OK) {
+      printf("Trying again to open socket.\n");
+#ifdef _MSC_VER
+      Sleep(100);
+#else
+      usleep(100000);
+#endif
+    }
   } else {
+#ifdef _MSC_VER
     if(serial.Open(comPort, baudRate) != RESULT_OK)
       return -2;
+#else
+    printf("Error: serial is only supported on Windows\n");
+#endif
   }
+
+  printf("Connection opened\n");
 
   lastUpdateTime = GetTime() + 10e10;
 
+#ifdef _MSC_VER
   SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST); // THREAD_PRIORITY_ABOVE_NORMAL
 
   DWORD threadId = -1;
   CreateThread(
-    NULL,        // default security attributes
-    0,           // use default stack size
-    DisplayBuffersThread, // thread function name
-    &messageQueue,    // argument to thread function
-    0,           // use default creation flags
-    &threadId);  // returns the thread identifier
+               NULL,        // default security attributes
+               0,           // use default stack size
+               DisplayBuffersThread, // thread function name
+               &messageQueue,    // argument to thread function
+               0,           // use default creation flags
+               &threadId);  // returns the thread identifier
+#else
+  // TODO: set thread priority
+
+  pthread_t thread;
+  pthread_attr_t attr;
+  pthread_attr_init(&attr);
+
+  pthread_create(&thread, &attr, DisplayBuffersThread, (void *)&messageQueue);
+#endif
+
+  printf("Parsing thread created\n");
 
   bool atLeastOneStartFound = false;
   s32 start_state = 0;
@@ -154,18 +202,34 @@ int main(int argc, char ** argv)
       return -3;
     }
 
-    DWORD bytesRead = 0;
+    s32 bytesRead = 0;
 
     if(useTcp) {
-      if(socket.Read(usbBuffer, USB_BUFFER_SIZE-2, bytesRead) != RESULT_OK)
-        return -4;
+
+      while(socket.Read(usbBuffer, USB_BUFFER_SIZE-2, bytesRead) != RESULT_OK)
+      {
+        printf("socket read failure. Retrying...\n");
+#ifdef _MSC_VER
+        Sleep(1);
+#else
+        usleep(1000);
+#endif
+      }
     } else {
+#ifdef _MSC_VER
       if(serial.Read(usbBuffer, USB_BUFFER_SIZE-2, bytesRead) != RESULT_OK)
         return -4;
+#else
+      return -4;
+#endif
     }
 
     if(bytesRead == 0) {
+#ifdef _MSC_VER
       Sleep(1);
+#else
+      usleep(1000);
+#endif
       continue;
     }
 
@@ -265,8 +329,15 @@ int main(int argc, char ** argv)
     }
   } // while(true)
 
-  if(serial.Close() != RESULT_OK)
-    return -5;
+  if(useTcp) {
+    if(socket.Close() != RESULT_OK)
+      return -5;
+  } else {
+#ifdef _MSC_VER
+    if(serial.Close() != RESULT_OK)
+      return -5;
+#endif
+  }
 
   return 0;
 } // int main()

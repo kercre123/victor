@@ -276,18 +276,6 @@ namespace Anki {
         
       } // ProcessBTLEMessages()
       
-      void ProcessUARTMessages()
-      {
-        ID msgID;
-        
-        while((msgID = HAL::USBGetNextMessage(msgBuffer_)) != NO_MESSAGE_ID)
-        {
-          ProcessMessage(msgID, msgBuffer_);
-        }
-        
-      } // ProcessUARTMessages()
-
-      
       void ProcessClearPathMessage(const ClearPath& msg) {
         SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
         PathFollower::ClearPath();

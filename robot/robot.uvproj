@@ -355,7 +355,7 @@
             <uSurpInc>1</uSurpInc>
             <VariousControls>
               <MiscControls>--asm</MiscControls>
-              <Define>USE_STDPERIPH_DRIVER,STM32F429_439xx,USE_DEFAULT_TIMEOUT_CALLBACK,USE_EMBEDDED_PHY,USE_USB_OTG_FS,COZMO_ROBOT,ROBOT_HARDWARE,ANKICORETECH_EMBEDDED_USE_HEATSHRINK,CORETECH_ROBOT</Define>
+              <Define>USE_STDPERIPH_DRIVER,STM32F429_439xx,USE_DEFAULT_TIMEOUT_CALLBACK,USE_EMBEDDED_PHY,USE_USB_OTG_FS,COZMO_ROBOT,ROBOT_HARDWARE,CORETECH_ROBOT</Define>
               <Undefine></Undefine>
               <IncludePath>.\arm_hal;.\arm_hal\lib;..\include;..\coretech\common\include;..\coretech\messaging\include;..\coretech\planning\include;..\coretech\vision\include;.\supervisor\src;..\..\coretech-external\heatshrink;C:\Keil\ARM\Pack\ARM\CMSIS\3.20.4\Device\ARM\ARMCM4\Include;.\include</IncludePath>
             </VariousControls>
@@ -402,6 +402,11 @@
               <FileName>frontCamera.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\frontCamera.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>hal.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\include\anki\cozmo\robot\hal.h</FilePath>
             </File>
             <File>
               <FileName>main.cpp</FileName>
@@ -638,66 +643,6 @@
               <FileType>1</FileType>
               <FilePath>.\arm_hal\lib\system_stm32f4xx.c</FilePath>
             </File>
-            <File>
-              <FileName>usb_bsp_template.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\usb\usb_bsp_template.c</FilePath>
-            </File>
-            <File>
-              <FileName>usb_core.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\usb\usb_core.c</FilePath>
-            </File>
-            <File>
-              <FileName>usb_dcd.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\usb\usb_dcd.c</FilePath>
-            </File>
-            <File>
-              <FileName>usb_dcd_int.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\usb\usb_dcd_int.c</FilePath>
-            </File>
-            <File>
-              <FileName>usbd_cdc_core.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\usb\usbd_cdc_core.c</FilePath>
-            </File>
-            <File>
-              <FileName>usbd_cdc_if_template.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\usb\usbd_cdc_if_template.c</FilePath>
-            </File>
-            <File>
-              <FileName>usbd_core.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\usb\usbd_core.c</FilePath>
-            </File>
-            <File>
-              <FileName>usbd_desc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\usb\usbd_desc.c</FilePath>
-            </File>
-            <File>
-              <FileName>usbd_ioreq.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\usb\usbd_ioreq.c</FilePath>
-            </File>
-            <File>
-              <FileName>usbd_req.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\usb\usbd_req.c</FilePath>
-            </File>
-            <File>
-              <FileName>usbd_usr.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\usb\usbd_usr.c</FilePath>
-            </File>
-            <File>
-              <FileName>usbd_cdc_vcp.cpp</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\usb\usbd_cdc_vcp.cpp</FilePath>
-            </File>
           </Files>
         </Group>
         <Group>
@@ -713,11 +658,6 @@
         <Group>
           <GroupName>supervisor</GroupName>
           <Files>
-            <File>
-              <FileName>console.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\console.cpp</FilePath>
-            </File>
             <File>
               <FileName>cozmoBot.cpp</FileName>
               <FileType>8</FileType>
@@ -764,11 +704,6 @@
               <FilePath>.\supervisor\src\messages.cpp</FilePath>
             </File>
             <File>
-              <FileName>offboardVision.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\offboardVision.cpp</FilePath>
-            </File>
-            <File>
               <FileName>pathFollower.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\pathFollower.cpp</FilePath>
@@ -792,11 +727,6 @@
               <FileName>testModeController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\testModeController.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>usbPrint.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\usbPrint.cpp</FilePath>
             </File>
             <File>
               <FileName>visionDebugStream.cpp</FileName>
@@ -847,11 +777,6 @@
               <FileName>comparisons.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\robot\src\comparisons.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>compress.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\compress.cpp</FilePath>
             </File>
             <File>
               <FileName>decisionTree.cpp</FileName>
@@ -953,30 +878,10 @@
               <FileType>8</FileType>
               <FilePath>..\coretech\common\shared\src\velocityProfileGenerator.cpp</FilePath>
             </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>coretech-external</GroupName>
-          <Files>
             <File>
-              <FileName>heatshrink_decoder.cpp</FileName>
+              <FileName>compress.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\..\coretech-external\heatshrink\heatshrink_decoder.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>heatshrink_encoder.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\..\coretech-external\heatshrink\heatshrink_encoder.cpp</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>coretech-messaging</GroupName>
-          <Files>
-            <File>
-              <FileName>utilMessaging.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\coretech\messaging\shared\src\utilMessaging.c</FilePath>
+              <FilePath>..\coretech\common\robot\src\compress.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -1612,6 +1517,11 @@
               <FilePath>.\arm_hal\hal\frontCamera.cpp</FilePath>
             </File>
             <File>
+              <FileName>hal.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\include\anki\cozmo\robot\hal.h</FilePath>
+            </File>
+            <File>
               <FileName>main.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\main.cpp</FilePath>
@@ -1887,66 +1797,6 @@
               <FileType>1</FileType>
               <FilePath>.\arm_hal\lib\system_stm32f4xx.c</FilePath>
             </File>
-            <File>
-              <FileName>usb_bsp_template.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\usb\usb_bsp_template.c</FilePath>
-            </File>
-            <File>
-              <FileName>usb_core.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\usb\usb_core.c</FilePath>
-            </File>
-            <File>
-              <FileName>usb_dcd.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\usb\usb_dcd.c</FilePath>
-            </File>
-            <File>
-              <FileName>usb_dcd_int.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\usb\usb_dcd_int.c</FilePath>
-            </File>
-            <File>
-              <FileName>usbd_cdc_core.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\usb\usbd_cdc_core.c</FilePath>
-            </File>
-            <File>
-              <FileName>usbd_cdc_if_template.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\usb\usbd_cdc_if_template.c</FilePath>
-            </File>
-            <File>
-              <FileName>usbd_core.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\usb\usbd_core.c</FilePath>
-            </File>
-            <File>
-              <FileName>usbd_desc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\usb\usbd_desc.c</FilePath>
-            </File>
-            <File>
-              <FileName>usbd_ioreq.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\usb\usbd_ioreq.c</FilePath>
-            </File>
-            <File>
-              <FileName>usbd_req.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\usb\usbd_req.c</FilePath>
-            </File>
-            <File>
-              <FileName>usbd_usr.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\usb\usbd_usr.c</FilePath>
-            </File>
-            <File>
-              <FileName>usbd_cdc_vcp.cpp</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\usb\usbd_cdc_vcp.cpp</FilePath>
-            </File>
           </Files>
         </Group>
         <Group>
@@ -2020,11 +1870,6 @@
           </GroupOption>
           <Files>
             <File>
-              <FileName>console.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\console.cpp</FilePath>
-            </File>
-            <File>
               <FileName>cozmoBot.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\cozmoBot.cpp</FilePath>
@@ -2070,11 +1915,6 @@
               <FilePath>.\supervisor\src\messages.cpp</FilePath>
             </File>
             <File>
-              <FileName>offboardVision.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\offboardVision.cpp</FilePath>
-            </File>
-            <File>
               <FileName>pathFollower.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\pathFollower.cpp</FilePath>
@@ -2098,11 +1938,6 @@
               <FileName>testModeController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\testModeController.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>usbPrint.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\usbPrint.cpp</FilePath>
             </File>
             <File>
               <FileName>visionDebugStream.cpp</FileName>
@@ -2153,11 +1988,6 @@
               <FileName>comparisons.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\robot\src\comparisons.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>compress.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\compress.cpp</FilePath>
             </File>
             <File>
               <FileName>decisionTree.cpp</FileName>
@@ -2259,30 +2089,10 @@
               <FileType>8</FileType>
               <FilePath>..\coretech\common\shared\src\velocityProfileGenerator.cpp</FilePath>
             </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>coretech-external</GroupName>
-          <Files>
             <File>
-              <FileName>heatshrink_decoder.cpp</FileName>
+              <FileName>compress.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\..\coretech-external\heatshrink\heatshrink_decoder.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>heatshrink_encoder.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\..\coretech-external\heatshrink\heatshrink_encoder.cpp</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>coretech-messaging</GroupName>
-          <Files>
-            <File>
-              <FileName>utilMessaging.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\coretech\messaging\shared\src\utilMessaging.c</FilePath>
+              <FilePath>..\coretech\common\robot\src\compress.cpp</FilePath>
             </File>
           </Files>
         </Group>

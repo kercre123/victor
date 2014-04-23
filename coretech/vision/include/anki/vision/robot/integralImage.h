@@ -23,6 +23,8 @@ namespace Anki
     {
     public:
       // Simple, memory-inefficient version of an integral image
+      // The top row and left column are all zeros
+      // The integral image has one more row and column than the original image
 
       IntegralImage_u8_s32();
 
@@ -31,8 +33,12 @@ namespace Anki
 
     // #pragma mark --- ScrollingIntegralImage Class Definition ---
 
-    // A ScrollingIntegralImage computes and integral image from and input image. To save memory, the entire Integral Image isn't computed at once. Instead, the ScrollingIntegralImage computes and stores a small window, plus optional border padding. For example, for an input image of size MxN, a ScrollingIntegralImage could be of size OxN (where O < N)
-    // The suffix is _InputType_AccumulatorType
+    // A ScrollingIntegralImage computes and integral image from and input image. To save memory,
+    // the entire Integral Image isn't computed at once. Instead, the ScrollingIntegralImage
+    // computes and stores a small window, plus optional border padding.
+    //
+    // For example, for an input image of size MxN, a ScrollingIntegralImage could be of size OxN
+    // (where O < N) The suffix is _InputType_AccumulatorType
     class ScrollingIntegralImage_u8_s32 : public Array<s32>
     {
     public:
@@ -79,7 +85,7 @@ namespace Anki
       // Note that for a given filterHalfHeight, the minRow can be greater than the maxRow. This
       // will happen if the filter size is too large for this ScrollingIntegralImage, or due to
       // assymetric filters.
-      s32 get_minRow(const s32 filterHalfHeight) const;
+      //s32 get_minRow(const s32 filterHalfHeight) const;
       s32 get_maxRow(const s32 filterHalfHeight) const;
 
       // Return the width of the original image (this integral image is imageWidth + 2*numBorderPixels wide).

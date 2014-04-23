@@ -248,9 +248,9 @@ namespace Anki
             const f32 alphaY = yTransformed - y0;
             const f32 alphaYinverse = 1.0f - alphaY;
 
-            const s32 y0S32 = static_cast<s32>(Round(y0));
-            const s32 y1S32 = static_cast<s32>(Round(y1));
-            const s32 x0S32 = static_cast<s32>(Round(x0));
+            const s32 y0S32 = Round<s32>(y0);
+            const s32 y1S32 = Round<s32>(y1);
+            const s32 x0S32 = Round<s32>(x0);
 
             const u8 * restrict pReference_y0 = nextImage.Pointer(y0S32, x0S32);
             const u8 * restrict pReference_y1 = nextImage.Pointer(y1S32, x0S32);
@@ -260,7 +260,7 @@ namespace Anki
             const f32 pixelBL = *pReference_y1;
             const f32 pixelBR = *(pReference_y1+1);
 
-            const s32 interpolatedPixelValue = RoundS32(InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse));
+            const s32 interpolatedPixelValue = Round<s32>(InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse));
             const s32 templatePixelValue = pTemplateImage[x];
             const s32 grayvalueDifference = ABS(interpolatedPixelValue - templatePixelValue);
 
@@ -281,7 +281,7 @@ namespace Anki
 
       s32 LucasKanadeTracker_Fast::get_numTemplatePixels() const
       {
-        return RoundS32(templateRegionHeight * templateRegionWidth);
+        return Round<s32>(templateRegionHeight * templateRegionWidth);
       }
     } // namespace TemplateTracker
   } // namespace Embedded

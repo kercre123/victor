@@ -3,6 +3,32 @@
 
 #include <queue>
 
+#ifdef _MSC_VER
+#include <windows.h>
+#define SimpleMutex HANDLE
+#else
+#include <pthread.h>
+#define SimpleMutex pthread_mutex_t
+#endif
+
+inline void WaitForSimpleMutex(SimpleMutex mutex)
+{
+#ifdef _MSC_VER
+  WaitForSingleObject(mutex, INFINITE);
+#else
+  pthread_mutex_lock(&mutex);
+#endif
+}
+
+inline void ReleaseSimpleMutex(SimpleMutex mutex)
+{
+#ifdef _MSC_VER
+  ReleaseMutex(mutex);
+#else
+  pthread_mutex_unlock(&mutex);
+#endif
+}
+
 template<typename Type> class ThreadSafeQueue
 {
 public:
@@ -15,14 +41,19 @@ public:
   bool IsEmpty();
 
 protected:
-  HANDLE mutex;
+  SimpleMutex mutex;
 
   std::queue<Type> buffers;
 }; // class ThreadSafeQueue
 
 template<typename Type> ThreadSafeQueue<Type>::ThreadSafeQueue()
 {
+#ifdef _MSC_VER
   mutex = CreateMutex(NULL, FALSE, NULL);
+#else
+  pthread_mutex_init(&mutex, NULL);
+#endif
+
   buffers = std::queue<Type>();
 } // template<typename Type> ThreadSafeQueue::ThreadSafeQueue()
 
@@ -30,7 +61,7 @@ template<typename Type> Type ThreadSafeQueue<Type>::Pop()
 {
   Type value;
 
-  WaitForSingleObject(mutex, INFINITE);
+  WaitForSimpleMutex(mutex);
 
   // TODO: figure out what to return on failure
   if(buffers.empty()) {
@@ -40,25 +71,25 @@ template<typename Type> Type ThreadSafeQueue<Type>::Pop()
     buffers.pop();
   }
 
-  ReleaseMutex(mutex);
+  ReleaseSimpleMutex(mutex);
 
   return value;
 } // template<typename Type> ThreadSafeQueue::Type Pop()
 
 template<typename Type> void ThreadSafeQueue<Type>::Push(Type newString)
 {
-  WaitForSingleObject(mutex, INFINITE);
+  WaitForSimpleMutex(mutex);
 
   buffers.push(newString);
 
-  ReleaseMutex(mutex);
+  ReleaseSimpleMutex(mutex);
 } // template<typename Type> ThreadSafeQueue::void Push(Type newString)
 
 template<typename Type> bool ThreadSafeQueue<Type>::IsEmpty()
 {
   bool isEmpty;
 
-  WaitForSingleObject(mutex, INFINITE);
+  WaitForSimpleMutex(mutex);
 
   if(buffers.empty()) {
     isEmpty = true;
@@ -66,7 +97,7 @@ template<typename Type> bool ThreadSafeQueue<Type>::IsEmpty()
     isEmpty = false;
   }
 
-  ReleaseMutex(mutex);
+  ReleaseSimpleMutex(mutex);
 
   return isEmpty;
 } // template<typename Type> bool ThreadSafeQueue::IsEmpty()

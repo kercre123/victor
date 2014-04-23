@@ -51,8 +51,8 @@ namespace Anki {
 
 #if(STREAM_DEBUG_IMAGES)
       #define SEND_DEBUG_STREAM 1
-      //#define RUN_SIMPLE_TRACKING_TEST 1
-      #define RUN_SIMPLE_FACE_DETECTION_TEST 1
+      #define RUN_SIMPLE_TRACKING_TEST 1
+      //#define RUN_SIMPLE_FACE_DETECTION_TEST 1
       //#define SEND_IMAGE_ONLY 1
       //#define SEND_BINARY_IMAGE_ONLY 1
       

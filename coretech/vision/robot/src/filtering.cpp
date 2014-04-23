@@ -70,7 +70,7 @@ namespace Anki
           const f32 twoToNumBits = powf(2.0f, static_cast<f32>(numSigmaFractionalBits));
           for(s32 i=0; i<(2*halfWidth+1); i++) {
             const f32 gScaled = pGaussianKernelF32[i] * sumInverse * twoToNumBits;
-            pGaussianKernel[i] = RoundS32(gScaled);
+            pGaussianKernel[i] = Round<s32>(gScaled);
           }
 
           // gaussianKernelF32.Print("gaussianKernelF32");

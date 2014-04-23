@@ -41,10 +41,6 @@
 
 #include "anki/cozmo/robot/cozmoConfig.h"
 
-#ifndef USE_OFFBOARD_VISION
-#define USE_OFFBOARD_VISION 0
-#endif
-
 #define HAVE_ACTIVE_GRIPPER 0
 
 // Set to 0 if you want to read printf output in a terminal and you're not
@@ -265,51 +261,20 @@ namespace Anki
 
 
 
-// #pragma mark --- USB / UART ---
+// #pragma mark --- UART/Wifi ---
       /////////////////////////////////////////////////////////////////////
-      // USB / UART
+      // UART Debug Channel (aka Wifi)
       //
 
       int UARTPrintf(const char* format, ...);
       int UARTPutChar(int c);
+
+      // Puts an entire message, with the usual header/footer
+      // Returns false is there wasn't enough space to buffer the message
+      bool UARTPutMessage(u8 msgID, u32 timestamp, u8* buffer, u32 length);
       
-      // Returns false if there's not enough room to fit buffer in memory
-      bool UARTPutBuffer(u8* buffer, u32 length);
-      
-      void UARTPutHex(u8 c);
-      void UARTPutHex32(u32 data);
       void UARTPutString(const char* s);
       int UARTGetChar(u32 timeout = 0);
-
-      // Send a variable length buffer
-      void USBSendBuffer(const u8* buffer, const u32 size);
-      
-      // Receives as many as max_size bytes in buffer.
-      // Returns the number of bytes received.
-      u32 USBRecvBuffer(u8* buffer, const u32 max_size);
-
-      // Returns the number of bytes that are in the serial buffer
-      u32 USBGetNumBytesToRead();
-
-      // Get a character from the serial buffer.
-      // Timeout is in microseconds.
-      // Returns < 0 if no character available within timeout.
-      s32 USBGetChar(u32 timeout = 0);
-
-      // Peeks at the offset'th character in serial receive buffer.
-      // (The next character available is at an offset of 0.)
-      // Returns < 0 if no character available.
-      s32 USBPeekChar(u32 offset = 0);
-
-      // Returns an entire message packet in buffer, if one is available.
-      // Until a valid packet header is found and the entire packet is
-      // available, NO_MESSAGE_ID will be returned.  Once a valid header
-      // is found and returned, its MessageID is returned.
-      Messages::ID USBGetNextMessage(u8* buffer);
-
-      // Send a byte.
-      // Prototype matches putc for printf.
-      int USBPutChar(int c);
 
 // #pragma mark --- Motors ---
       /////////////////////////////////////////////////////////////////////
@@ -490,67 +455,6 @@ namespace Anki
 
       // TODO: remove when interrupts don't cause problems
       //void DisableCamera(CameraID cameraID);
-
-      // Put a byte into a send buffer to be sent by LongExecution()
-      // (Using same prototype as putc / USBPutChar for printf.)
-      int USBBufferChar(int c);
-
-      // Send the contents of the USB message buffer.
-      void USBSendPrintBuffer(void);
-
-#ifdef SIMULATOR
-      // Called by SendFooter() to terminate a message when in simulation,
-      // otherwise a no-op.
-      void USBFlush();
-#endif
-
-#if USE_OFFBOARD_VISION
-      const u8 USB_MESSAGE_HEADER = 0xDD;
-
-      // Bytes to add to USB frame header to tell the offboard processor
-      // what to do with the frame
-      const u8 USB_VISION_COMMAND_DETECTBLOCKS    = 0xAB;
-      const u8 USB_VISION_COMMAND_SETTRACKMARKER  = 0xBC;
-      const u8 USB_VISION_COMMAND_TRACK           = 0xCD;
-      const u8 USB_VISION_COMMAND_ROBOTSTATE      = 0xDE;
-      const u8 USB_VISION_COMMAND_MATLOCALIZATION = 0xEF;
-      const u8 USB_VISION_COMMAND_DISPLAY_IMAGE   = 0xF0;
-      const u8 USB_VISION_COMMAND_SAVE_BUFFERED_DATA = 0x01;
-
-      const u8 USB_VISION_COMMAND_HEAD_CALIBRATION = 0xC1;
-      const u8 USB_VISION_COMMAND_MAT_CALIBRATION  = 0xC2;
-
-      enum BufferedDataType
-      {
-        BUFFERED_DATA_MISC = 0,
-        BUFFERED_DATA_IMAGE = 1
-      };
-
-      // Send header/footer around each message/packet/image
-      void USBSendHeader(const u8 command);
-      void USBSendFooter(const u8 command);
-
-      // Send a command message (from messageProtocol.h)
-      // The msgID will determine the size
-      void USBSendMessage(const void* msg, const Messages::ID msgID);
-
-      // Send a frame at the current frame resolution (last set by
-      // a call to SetUSBFrameResolution)
-      void USBSendFrame(const u8*        frame,
-                        const TimeStamp_t  timestamp,
-                        const CameraResolution inputResolution,
-                        const CameraResolution sendResolution,
-                        const u8         commandByte);
-
-      // Send an arbitrary packet of data
-      void USBSendPacket(const u8 packetType, const void* data, const u32 numBytes);
-
-      // Registur a message name with its ID (e.g. for Matlab, which doesn't
-      // read messageProtocol.h directly)
-      const u8 USB_DEFINE_MESSAGE_ID = 0xD0;
-      void SendMessageID(const char* name, const u8 msgID);
-
-#endif // if USE_OFFBOARD_VISION
     } // namespace HAL
   } // namespace Cozmo
 } // namespace Anki

@@ -49,8 +49,8 @@ namespace Anki {
         minSideLength = 0.03f*static_cast<f32>(MAX(detectionWidth,detectionHeight));
         maxSideLength = 0.97f*static_cast<f32>(MIN(detectionWidth,detectionHeight));
         
-        component_minimumNumPixels = static_cast<s32>(Round(minSideLength*minSideLength - (0.8f*minSideLength)*(0.8f*minSideLength)));
-        component_maximumNumPixels = static_cast<s32>(Round(maxSideLength*maxSideLength - (0.8f*maxSideLength)*(0.8f*maxSideLength)));
+        component_minimumNumPixels = Round<s32>(minSideLength*minSideLength - (0.8f*minSideLength)*(0.8f*minSideLength));
+        component_maximumNumPixels = Round<s32>(maxSideLength*maxSideLength - (0.8f*maxSideLength)*(0.8f*maxSideLength));
         component_sparseMultiplyThreshold = 1000 << 5;
         component_solidMultiplyThreshold = 2 << 5;
         
