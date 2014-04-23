@@ -39,11 +39,7 @@ namespace Anki
 
       const s32 bufferRequired = static_cast<s32>(RoundUp<size_t>(sizeof(Type)*numCols, MEMORY_ALIGNMENT));
 
-      const s32 extraBoundaryPatternBytes = flags.get_useBoundaryFillPatterns() ? (HEADER_LENGTH+FOOTER_LENGTH) : 0;
-
-      const s32 totalRequired = bufferRequired + extraBoundaryPatternBytes;
-
-      return totalRequired;
+      return bufferRequired;
     }
 
     template<typename Type> s32 Array<Type>::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const Flags::Buffer flags)
@@ -335,7 +331,7 @@ namespace Anki
 
     template<typename Type> bool Array<Type>::IsValid() const
     {
-      if(this->rawDataPointer == NULL || this->data == NULL) {
+      if(this->data == NULL) {
         return false;
       }
 
@@ -343,24 +339,7 @@ namespace Anki
         return false;
       }
 
-      if(flags.get_useBoundaryFillPatterns()) {
-        Flags::Buffer flagsWithoutBoundary = flags;
-        flagsWithoutBoundary.set_useBoundaryFillPatterns(false);
-        const s32 strideWithoutFillPatterns = ComputeRequiredStride(size[1],flagsWithoutBoundary);
-
-        for(s32 y=0; y<size[0]; y++) {
-          if((reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride - HEADER_LENGTH)[0]) != FILL_PATTERN_START ||
-            (reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride - HEADER_LENGTH)[1]) != FILL_PATTERN_START ||
-            (reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride + strideWithoutFillPatterns)[0]) != FILL_PATTERN_END ||
-            (reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride + strideWithoutFillPatterns)[1]) != FILL_PATTERN_END) {
-              return false;
-          }
-        }
-
-        return true;
-      } else { // if(flags.get_useBoundaryFillPatterns()) {
-        return true;
-      } // if(flags.get_useBoundaryFillPatterns()) { ... else
+      return true;
     }
 
     template<typename Type> Result Array<Type>::Resize(const s32 numRows, const s32 numCols, MemoryStack &memory)
@@ -370,7 +349,7 @@ namespace Anki
 
       s32 numBytesAllocated = 0;
 
-      this->rawDataPointer = AllocateBufferFromMemoryStack(numRows, ComputeRequiredStride(numCols, flags), memory, numBytesAllocated, flags, true);
+      this->data = reinterpret_cast<Type*>( AllocateBufferFromMemoryStack(numRows, ComputeRequiredStride(numCols, flags), memory, numBytesAllocated, flags, true) );
 
       // Don't clear the reallocated memory
       const bool clearMemory = this->flags.get_zeroAllocatedMemory();
@@ -378,7 +357,7 @@ namespace Anki
 
       const Result result = InitializeBuffer(numRows,
         numCols,
-        this->rawDataPointer,
+        this->data,
         numBytesAllocated,
         flags);
 
@@ -392,13 +371,11 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(this->IsValid(),
         0, "Array<Type>::SetZero", "Array<Type> is not valid");
 
-      const s32 strideWithoutFillPatterns = this->get_strideWithoutFillPatterns();
-      for(s32 y=0; y<size[0]; y++) {
-        char * restrict pThisData = reinterpret_cast<char*>(Pointer(y, 0));
-        memset(pThisData, 0, strideWithoutFillPatterns);
-      }
+      const s32 numBytes = this->get_size(0)*this->get_stride();
 
-      return strideWithoutFillPatterns*size[0];
+      memset(this->Pointer(0,0), 0, numBytes);
+
+      return numBytes;
     }
 
     template<typename Type> s32 Array<Type>::Set(const Type value)
@@ -497,7 +474,6 @@ namespace Anki
       this->stride = rightHandSide.stride;
       this->flags = rightHandSide.flags;
       this->data = rightHandSide.data;
-      this->rawDataPointer = rightHandSide.rawDataPointer;
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
       this->UpdateCvMatMirror(rightHandSide);
@@ -522,23 +498,14 @@ namespace Anki
       return stride;
     }
 
-    template<typename Type> s32 Array<Type>::get_strideWithoutFillPatterns() const
-    {
-      Flags::Buffer flagsWithoutBoundary = this->flags;
-      flagsWithoutBoundary.set_useBoundaryFillPatterns(false);
-
-      const s32 strideWithoutFillPatterns = ComputeRequiredStride(size[1],flagsWithoutBoundary);
-      return strideWithoutFillPatterns;
-    }
-
     template<typename Type> void* Array<Type>::get_rawDataPointer()
     {
-      return rawDataPointer;
+      return data;
     }
 
     template<typename Type> const void* Array<Type>::get_rawDataPointer() const
     {
-      return rawDataPointer;
+      return data;
     }
 
     template<typename Type> Flags::Buffer Array<Type>::get_flags() const
@@ -564,11 +531,10 @@ namespace Anki
 
       this->stride = stride;
 
-      const s32 extraBoundaryPatternBytes = flags.get_useBoundaryFillPatterns() ? static_cast<s32>(MEMORY_ALIGNMENT) : 0;
-      const s32 numBytesRequested = numRows * this->stride + extraBoundaryPatternBytes;
+      const s32 numBytesRequested = numRows * this->stride;
 
       if(reAllocate) {
-        return memory.Reallocate(this->rawDataPointer, numBytesRequested, numBytesAllocated);
+        return memory.Reallocate(this->data, numBytesRequested, numBytesAllocated);
       } else {
         return memory.Allocate(numBytesRequested, flags.get_zeroAllocatedMemory(), numBytesAllocated);
       }
@@ -579,6 +545,9 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(numCols >= 0 && numRows >= 0 && dataLength >= 0,
         RESULT_FAIL_INVALID_SIZE, "Array<Type>::InitializeBuffer", "Negative dimension");
 
+      AnkiConditionalErrorAndReturnValue(!flags.get_useBoundaryFillPatterns(),
+        RESULT_FAIL_INVALID_PARAMETERS, "Array<Type>::InitializeBuffer", "Fill patterns not supported for Array");
+
       this->flags = flags;
       this->size[0] = numRows;
       this->size[1] = numCols;
@@ -588,7 +557,6 @@ namespace Anki
       // An empty array is invalid, and will return false from
       // Array::IsValid(), but is a possible return value from some functions
       if(numCols == 0 || numRows == 0) {
-        this->rawDataPointer = NULL;
         this->data = NULL;
         return RESULT_OK;
       }
@@ -599,10 +567,9 @@ namespace Anki
         return RESULT_FAIL_UNINITIALIZED_MEMORY;
       }
 
-      this->rawDataPointer = rawData;
+      this->data = reinterpret_cast<Type*>(rawData);
 
-      const size_t extraBoundaryPatternBytes = flags.get_useBoundaryFillPatterns() ? static_cast<size_t>(HEADER_LENGTH) : 0;
-      const s32 extraAlignmentBytes = static_cast<s32>(RoundUp<size_t>(reinterpret_cast<size_t>(rawData)+extraBoundaryPatternBytes, MEMORY_ALIGNMENT) - extraBoundaryPatternBytes - reinterpret_cast<size_t>(rawData));
+      const s32 extraAlignmentBytes = static_cast<s32>(RoundUp<size_t>(reinterpret_cast<size_t>(rawData), MEMORY_ALIGNMENT) - reinterpret_cast<size_t>(rawData));
       const s32 requiredBytes = ComputeRequiredStride(numCols,flags)*numRows + extraAlignmentBytes;
 
       if(requiredBytes > dataLength) {
@@ -611,23 +578,7 @@ namespace Anki
         return RESULT_FAIL_OUT_OF_MEMORY;
       }
 
-      if(flags.get_useBoundaryFillPatterns()) {
-        Flags::Buffer flagsWithoutBoundary = flags;
-        flagsWithoutBoundary.set_useBoundaryFillPatterns(false);
-        const s32 strideWithoutFillPatterns = ComputeRequiredStride(size[1], flagsWithoutBoundary);
-        this->data = reinterpret_cast<Type*>( reinterpret_cast<char*>(rawData) + extraAlignmentBytes + HEADER_LENGTH );
-        for(s32 y=0; y<size[0]; y++) {
-          // Add the fill patterns just before the data on each line
-          reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride - HEADER_LENGTH)[0] = FILL_PATTERN_START;
-          reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride - HEADER_LENGTH)[1] = FILL_PATTERN_START;
-
-          // And also just after the data (including normal byte-alignment padding)
-          reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride + strideWithoutFillPatterns)[0] = FILL_PATTERN_END;
-          reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride + strideWithoutFillPatterns)[1] = FILL_PATTERN_END;
-        }
-      } else {
-        this->data = reinterpret_cast<Type*>( reinterpret_cast<char*>(rawData) + extraAlignmentBytes );
-      }
+      this->data = reinterpret_cast<Type*>( reinterpret_cast<char*>(rawData) + extraAlignmentBytes );
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
       this->UpdateCvMatMirror(*this);
@@ -643,7 +594,6 @@ namespace Anki
       this->size[1] = -1;
       this->stride = -1;
       this->data = NULL;
-      this->rawDataPointer = NULL;
     } // void Array<Type>::InvalidateArray()
 
     template<typename Type> Result Array<Type>::PrintBasicType(const char * const variableName, const s32 version, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX)  const

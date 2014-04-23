@@ -123,7 +123,7 @@ namespace Anki
           s32 * restrict pIntegralImage_yDst = this->Pointer(y, 0);
           const s32 * restrict pIntegralImage_ySrc = this->Pointer(y+numRowsToScroll, 0);
 
-          memcpy(pIntegralImage_yDst, pIntegralImage_ySrc, this->get_strideWithoutFillPatterns());
+          memcpy(pIntegralImage_yDst, pIntegralImage_ySrc, this->get_stride());
         }
         this->rowOffset += numRowsToScroll;
       } // if(numRowsToScroll == integralImageHeight) ... else

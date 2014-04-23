@@ -143,20 +143,16 @@ namespace Anki
       Result PrintAlternate(const char * const variableName = "Array", const s32 version=2, const s32 minY = 0, const s32 maxY = 0x7FFFFFE, const s32 minX = 0, const s32 maxX = 0x7FFFFFE) const;
 
       // Checks the basic parameters of this Array, and if it is allocated.
-      //
-      // If the Array was constructed with Flags::Buffer::USE_BOUNDARY_FILL_PATTERNS, then it also
-      // checks for out of bounds writes (via fill patterns at the beginning and end).
       bool IsValid() const;
 
       // Resize will use MemoryStack::Reallocate() to change the Array's size. It only works if this
       // Array was the last thing allocated. The reallocated memory will not be cleared
       //
-      //
       // WARNING:
       // This will not update any references to the memory, you must update all references manually.
       Result Resize(const s32 numRows, const s32 numCols, MemoryStack &memory);
 
-      // Set every element in the Array to zero, including the stride padding, but not including the optional fill patterns (if they exist).
+      // Set every element in the Array to zero, including the stride padding.
       // Returns the number of bytes set to zero
       s32 SetZero();
 
@@ -179,11 +175,6 @@ namespace Anki
       template<typename InType> s32 SetCast(const Array<InType> &in);
       template<typename InType> s32 SetCast(const InType * const values, const s32 numValues);
 
-      // TODO: implement these?
-      //template<typename FindType1, typename FindType2> s32 Set(const Find<FindType1, FindType2> &find, const Type value);
-      //template<typename FindType1, typename FindType2> s32 Set(const Find<FindType1, FindType2> &find, const Array<Type> &in, bool useFindForInput=false);
-      //template<typename FindType1, typename FindType2> s32 Set(const Find<FindType1, FindType2> &find, const ConstArraySlice<Type> &in);
-
       // This is a shallow copy. There's no reference counting. Updating the data of one array will
       // update that of others (because they point to the same location in memory).
       // However, Resizing or other operations on one array won't update the others.
@@ -195,25 +186,17 @@ namespace Anki
       // Get the stride, which is the number of bytes between an element at (n,m) and an element at (n+1,m)
       s32 get_stride() const;
 
-      // Get the stride, without the optional fill pattern. This is the number of bytes on a
-      // horizontal line that can safely be written to. If this array was created without fill
-      // patterns, it returns the same value as get_stride().
-      s32 get_strideWithoutFillPatterns() const;
-
       // Return the flags that were used when this object was constructed.
       Flags::Buffer get_flags() const;
 
+      // Equivalent to Pointer(0,0)
+      //
       // These are for very low-level access to the buffers. Probably you want to be using one of
       // the Pointer() accessor methods instead of these.
       void* get_rawDataPointer();
       const void* get_rawDataPointer() const;
 
     protected:
-      // This pattern will be put twice at the beginning and end of each line. (Twice matches up
-      // nicely for 16-byte memory alignment).
-      static const u32 FILL_PATTERN_START = 0XFF05FF06;
-      static const u32 FILL_PATTERN_END = 0X07FF08FF;
-
       static const s32 HEADER_LENGTH = 8;
       static const s32 FOOTER_LENGTH = 8;
 
@@ -222,11 +205,6 @@ namespace Anki
       Flags::Buffer flags;
 
       Type * data;
-
-      // To enforce alignment, rawDataPointer may be slightly before Type * data.
-      // If the inputted data buffer was from malloc, this is the pointer that
-      // should be used to free.
-      void * rawDataPointer;
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
       // WARNING:
@@ -240,7 +218,7 @@ namespace Anki
       //       this Array<>.
       mutable cv::Mat_<Type> cvMatMirror;
 
-      // May need to be called after deserialization (called automatically by get_CvMat_
+      // gets called automatically by get_CvMat_()
       void UpdateCvMatMirror(const Array<Type> &in) const;
 #endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
