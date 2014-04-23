@@ -5,7 +5,7 @@
 #file(GLOB SOURCE_FILES_SAVE_VIDEO
 #  run_pc_saveVideo.cpp
 #  communication.cpp
-#  messageHandling_save.cpp
+#  debugStreamClient_save.cpp
 #)
 
 file(GLOB SOURCE_FILES_DISPLAY_VIDEO
@@ -14,7 +14,7 @@ file(GLOB SOURCE_FILES_DISPLAY_VIDEO
 
 file(GLOB SOURCE_FILES_DEBUG_STREAM_PARSER
   communication.cpp
-  messageHandling.cpp
+  debugStreamClient.cpp
 )
 
 #file(GLOB SOURCE_FILES_TERMINAL
@@ -25,7 +25,7 @@ file(GLOB SOURCE_FILES_DEBUG_STREAM_PARSER
 file(GLOB HEADER_FILES
   communication.h
   threadSafeQueue.h
-  messageHandling.h
+  debugStreamClient.h
   C:/Anki/products-cozmo/basestation/src/messageDefMacros.h
 )
 
