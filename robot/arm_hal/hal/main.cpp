@@ -25,12 +25,7 @@ namespace Anki
       void UARTInit();
       void FrontCameraInit();
       void IMUInit();
-      
-      int USBGetChar(u32){ return -1; }
-      s32 USBPeekChar(u32 offset){ return -1; }
-      u32 USBGetNumBytesToRead(){ return 0; }
-      int USBPutChar(int c){ return c; }
-      
+
       TimeStamp_t GetTimeStamp(void){ return (TimeStamp_t)0; }
       
       int GetRobotID(){ return 0; }

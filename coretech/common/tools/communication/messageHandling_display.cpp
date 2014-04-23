@@ -28,10 +28,6 @@ using namespace std;
 
 #ifndef ROBOT_HARDWARE
 
-#ifndef _MSC_VER
-#error Currently, only visual c++ is supported
-#endif
-
 #ifndef ANKICORETECH_EMBEDDED_USE_OPENCV
 #error OpenCV is required
 #endif
