@@ -415,6 +415,7 @@ classdef LucasKanadeTracker < handle
                     if numSamplesCurrent < numel(this.xgrid{i_scale})
                         
                         mag = sqrt(Ix.^2 + Iy.^2);
+                        mag(image_right(mag)>mag | image_left(mag)>mag | image_down(mag)>mag | image_up(mag)>mag) = 0;
                         %{
                     Ix_norm = Ix./max(eps,mag);
                     Iy_norm = Iy./max(eps,mag);
