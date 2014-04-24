@@ -133,8 +133,9 @@ namespace Anki {
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
         // Planar6DoF tracker has separate convergence tolerance for
         // angle and distance components parameters of the tracker
-        f32 convergenceTolerance_angle;
-        f32 convergenceTolerance_distance;
+        f32 convergenceTolerance_angle;    // radians
+        f32 convergenceTolerance_distance; // mm
+        s32 numSamplingRegions;            // NxN grid of sampling regions within quad
 #else
         f32 convergenceTolerance;
 #endif
