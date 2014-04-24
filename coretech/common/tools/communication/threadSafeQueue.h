@@ -34,7 +34,7 @@ template<typename Type> class ThreadSafeQueue
 public:
   ThreadSafeQueue();
 
-  Type Pop();
+  Type Pop(bool * popSuccessful = NULL);
 
   void Push(Type newString);
 
@@ -57,18 +57,21 @@ template<typename Type> ThreadSafeQueue<Type>::ThreadSafeQueue()
   buffers = std::queue<Type>();
 } // template<typename Type> ThreadSafeQueue::ThreadSafeQueue()
 
-template<typename Type> Type ThreadSafeQueue<Type>::Pop()
+template<typename Type> Type ThreadSafeQueue<Type>::Pop(bool * popSuccessful)
 {
   Type value;
 
   WaitForSimpleMutex(mutex);
 
-  // TODO: figure out what to return on failure
   if(buffers.empty()) {
-    //    value = static_cast<Type>(0);
+    if(popSuccessful)
+      *popSuccessful = false;
   } else {
     value = buffers.front();
     buffers.pop();
+
+    if(popSuccessful)
+      *popSuccessful = true;
   }
 
   ReleaseSimpleMutex(mutex);
