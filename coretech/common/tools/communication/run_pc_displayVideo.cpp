@@ -16,20 +16,6 @@
 #include "anki/vision/robot/fiducialMarkers.h"
 #include "anki/vision/robot/binaryTracker.h"
 
-#ifdef _MSC_VER
-#include <tchar.h>
-#include <strsafe.h>
-
-#undef printf
-_Check_return_opt_ _CRTIMP int __cdecl printf(_In_z_ _Printf_format_string_ const char * _Format, ...);
-
-#else // #ifdef _MSC_VER
-
-#include <unistd.h>
-#include <pthread.h>
-
-#endif // #ifdef _MSC_VER ... #else
-
 #include <queue>
 
 #include <ctime>
@@ -55,8 +41,6 @@ static const s32 outputFilenamePatternLength = 1024;
 static char outputFilenamePattern[outputFilenamePatternLength] = "C:/Users/Pete/Box Sync/Cozmo SE/systemTestImages/cozmo_date%04d_%02d_%02d_time%02d_%02d_%02d_frame%d.%s";
 
 static f32 lastTime = 0;
-
-static char innerObjectName[SerializedBuffer::DESCRIPTION_STRING_LENGTH + 1];
 
 static cv::Mat lastImage;
 static cv::Mat largeLastImage;

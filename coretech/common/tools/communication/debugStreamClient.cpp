@@ -116,11 +116,11 @@ namespace Anki
         0,           // use default creation flags
         &connectionThreadId);  // returns the thread identifier
 #else
-      pthread_t thread;
-      pthread_attr_t attr;
-      pthread_attr_init(&attr);
+      pthread_t connectionThread;
+      pthread_attr_t connectionAttr;
+      pthread_attr_init(&connectionAttr);
 
-      pthread_create(&thread, &attr, DebugStreamClient::ConnectionThread, (void *)this);
+      pthread_create(&connectionThread, &connectionAttr, DebugStreamClient::ConnectionThread, (void *)this);
 #endif
       //printf("Connection thread created\n");
 
@@ -134,11 +134,11 @@ namespace Anki
         0,           // use default creation flags
         &parsingThreadId);  // returns the thread identifier
 #else // #ifdef _MSC_VER
-      pthread_t thread;
-      pthread_attr_t attr;
-      pthread_attr_init(&attr);
+      pthread_t parsingThread;
+      pthread_attr_t parsingAttr;
+      pthread_attr_init(&parsingAttr);
 
-      pthread_create(&thread, &attr, DebugStreamClient::ParseBufferThread, (void *)this);
+      pthread_create(&parsingThread, &parsingAttr, DebugStreamClient::ParseBufferThread, (void *)this);
 #endif // #ifdef _MSC_VER ... else
       //printf("Parsing thread created\n");
     } // DebugStreamClient::DebugStreamClient
@@ -544,7 +544,11 @@ namespace Anki
 
       if(!usbBuffer || !nextRawBuffer.data) {
         //AnkiError("DebugStreamClient::ConnectionThread", "Could not allocate usbBuffer and nextRawBuffer.data");
+#ifdef _MSC_VER
         return -1;
+#else
+        return NULL;
+#endif
       }
 
       Object object;

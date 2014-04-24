@@ -407,7 +407,16 @@ f32 GetTime(void)
   QueryPerformanceFrequency(&frequency);
   timeInSeconds = (f32)(counter.QuadPart)/(f32)(frequency.QuadPart);
 #elif defined(__APPLE_CC__)
-  const f32 timeInSeconds = 0.0f; // TODO: implement
+  struct timeval time;
+  gettimeofday(&time, NULL);
+
+  // Subtract startSeconds, so the floating point number has reasonable precision
+  static long startSeconds = 0;
+  if(startSeconds == 0) {
+    startSeconds = time.tv_sec;
+  }
+
+  const f32 timeInSeconds = (f32)(time.tv_sec-startSeconds) + ((f32)time.tv_usec / 1000000.0f);
 #elif defined(__EDG__)  // ARM-MDK
   const f32 timeInSeconds = XXX_HACK_FOR_PETE() / 1000000.0f;
 #else // Generic Unix

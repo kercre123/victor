@@ -20,6 +20,18 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include <string>
 
+#ifdef _MSC_VER
+
+#include <tchar.h>
+#include <strsafe.h>
+
+#else // #ifdef _MSC_VER
+
+#include <unistd.h>
+#include <pthread.h>
+
+#endif // #ifdef _MSC_VER ... #else
+
 namespace Anki
 {
   namespace Embedded
