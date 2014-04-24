@@ -29,14 +29,14 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/vision/MarkerCodeDefinitions.h"
 
-#include "../../coretech/vision/blockImages/blockImage50_320x240.h"
-#include "../../coretech/vision/blockImages/blockImages00189_80x60.h"
-#include "../../coretech/vision/blockImages/blockImages00190_80x60.h"
-#include "../../coretech/vision/blockImages/newFiducials_320x240.h"
-#include "../../../systemTestImages/cozmo_2014_01_29_11_41_05_10_320x240.h"
-#include "../../../systemTestImages/cozmo_2014_01_29_11_41_05_12_320x240.h"
-#include "../../../systemTestImages/cozmo_date2014_04_04_time17_40_08_frame0.h"
-#include "../../../systemTestImages/cozmo_date2014_04_10_time16_15_40_frame0.h"
+#include "data/blockImage50_320x240.h"
+#include "data/blockImages00189_80x60.h"
+#include "data/blockImages00190_80x60.h"
+#include "data/newFiducials_320x240.h"
+#include "data/cozmo_date2014_01_29_time11_41_05_frame10_320x240.h"
+#include "data/cozmo_date2014_01_29_time11_41_05_frame12_320x240.h"
+#include "data/cozmo_date2014_04_04_time17_40_08_frame0.h"
+#include "data/cozmo_date2014_04_10_time16_15_40_frame0.h"
 
 #include "anki/vision/robot/lbpcascade_frontalface.h"
 
@@ -526,8 +526,8 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
   MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(scratchOffchip.IsValid());
 
-  Array<u8> templateImage(cozmo_2014_01_29_11_41_05_10_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_10_320x240_WIDTH, scratchOnchip);
-  Array<u8> nextImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOnchip);
+  Array<u8> templateImage(cozmo_date2014_01_29_time11_41_05_frame10_320x240_HEIGHT, cozmo_date2014_01_29_time11_41_05_frame10_320x240_WIDTH, scratchOnchip);
+  Array<u8> nextImage(cozmo_date2014_01_29_time11_41_05_frame12_320x240_HEIGHT, cozmo_date2014_01_29_time11_41_05_frame12_320x240_WIDTH, scratchOnchip);
 
   const Quadrilateral<f32> templateQuad(Point<f32>(128,78), Point<f32>(220,74), Point<f32>(229,167), Point<f32>(127,171));
 
@@ -566,8 +566,8 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
   const s32 ransac_numSamplesPerType = 8;
   const s32 ransac_inlinerDistance = verify_maxTranslationDistance;
 
-  templateImage.Set(&cozmo_2014_01_29_11_41_05_10_320x240[0], cozmo_2014_01_29_11_41_05_10_320x240_WIDTH*cozmo_2014_01_29_11_41_05_10_320x240_HEIGHT);
-  nextImage.Set(&cozmo_2014_01_29_11_41_05_12_320x240[0], cozmo_2014_01_29_11_41_05_12_320x240_WIDTH*cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT);
+  templateImage.Set(&cozmo_date2014_01_29_time11_41_05_frame10_320x240[0], cozmo_date2014_01_29_time11_41_05_frame10_320x240_WIDTH*cozmo_date2014_01_29_time11_41_05_frame10_320x240_HEIGHT);
+  nextImage.Set(&cozmo_date2014_01_29_time11_41_05_frame12_320x240[0], cozmo_date2014_01_29_time11_41_05_frame12_320x240_WIDTH*cozmo_date2014_01_29_time11_41_05_frame12_320x240_HEIGHT);
 
   // Skip zero rows/columns (non-list)
   {
@@ -625,7 +625,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     ASSERT_TRUE(verify_numInBounds == 1155);
     ASSERT_TRUE(verify_numSimilarPixels == 1137);*/
 
-    //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
+    //Array<u8> warpedTemplateImage(cozmo_date2014_01_29_time11_41_05_frame12_320x240_HEIGHT, cozmo_date2014_01_29_time11_41_05_frame12_320x240_WIDTH, scratchOffchip);
 
     if(edgeDetectionParams_template.type == TemplateTracker::BinaryTracker::EDGE_TYPE_GRAYVALUE) {
       Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
@@ -695,7 +695,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     ASSERT_TRUE(verify_numInBounds == 1155);
     ASSERT_TRUE(verify_numSimilarPixels == 1143);*/
 
-    //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
+    //Array<u8> warpedTemplateImage(cozmo_date2014_01_29_time11_41_05_frame12_320x240_HEIGHT, cozmo_date2014_01_29_time11_41_05_frame12_320x240_WIDTH, scratchOffchip);
 
     if(edgeDetectionParams_template.type == TemplateTracker::BinaryTracker::EDGE_TYPE_GRAYVALUE) {
       Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
@@ -765,7 +765,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     ASSERT_TRUE(verify_numInBounds == 1155);
     ASSERT_TRUE(verify_numSimilarPixels == 1137);*/
 
-    //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
+    //Array<u8> warpedTemplateImage(cozmo_date2014_01_29_time11_41_05_frame12_320x240_HEIGHT, cozmo_date2014_01_29_time11_41_05_frame12_320x240_WIDTH, scratchOffchip);
 
     if(edgeDetectionParams_template.type == TemplateTracker::BinaryTracker::EDGE_TYPE_GRAYVALUE) {
       Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
@@ -835,7 +835,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     ASSERT_TRUE(verify_numInBounds == 1155);
     ASSERT_TRUE(verify_numSimilarPixels == 1143);*/
 
-    //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
+    //Array<u8> warpedTemplateImage(cozmo_date2014_01_29_time11_41_05_frame12_320x240_HEIGHT, cozmo_date2014_01_29_time11_41_05_frame12_320x240_WIDTH, scratchOffchip);
 
     if(edgeDetectionParams_template.type == TemplateTracker::BinaryTracker::EDGE_TYPE_GRAYVALUE) {
       Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
@@ -901,7 +901,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     // TODO: verify this number manually
     //ASSERT_TRUE(verify_numMatches == );
 
-    //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
+    //Array<u8> warpedTemplateImage(cozmo_date2014_01_29_time11_41_05_frame12_320x240_HEIGHT, cozmo_date2014_01_29_time11_41_05_frame12_320x240_WIDTH, scratchOffchip);
 
     if(edgeDetectionParams_template.type == TemplateTracker::BinaryTracker::EDGE_TYPE_GRAYVALUE) {
       Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
@@ -967,7 +967,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     // TODO: verify this number manually
     //ASSERT_TRUE(verify_numMatches == );
 
-    //Array<u8> warpedTemplateImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOffchip);
+    //Array<u8> warpedTemplateImage(cozmo_date2014_01_29_time11_41_05_frame12_320x240_HEIGHT, cozmo_date2014_01_29_time11_41_05_frame12_320x240_WIDTH, scratchOffchip);
 
     if(edgeDetectionParams_template.type == TemplateTracker::BinaryTracker::EDGE_TYPE_GRAYVALUE) {
       Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
@@ -1322,8 +1322,8 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
   MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(scratchOffchip.IsValid());
 
-  Array<u8> templateImage(cozmo_2014_01_29_11_41_05_10_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_10_320x240_WIDTH, scratchOffchip);
-  Array<u8> nextImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOnchip);
+  Array<u8> templateImage(cozmo_date2014_01_29_time11_41_05_frame10_320x240_HEIGHT, cozmo_date2014_01_29_time11_41_05_frame10_320x240_WIDTH, scratchOffchip);
+  Array<u8> nextImage(cozmo_date2014_01_29_time11_41_05_frame12_320x240_HEIGHT, cozmo_date2014_01_29_time11_41_05_frame12_320x240_WIDTH, scratchOnchip);
 
   const Quadrilateral<f32> templateQuad(Point<f32>(128,78), Point<f32>(220,74), Point<f32>(229,167), Point<f32>(127,171));
 
@@ -1340,8 +1340,8 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
 
   // TODO: add check that images were loaded correctly
 
-  templateImage.Set(&cozmo_2014_01_29_11_41_05_10_320x240[0], cozmo_2014_01_29_11_41_05_10_320x240_WIDTH*cozmo_2014_01_29_11_41_05_10_320x240_HEIGHT);
-  nextImage.Set(&cozmo_2014_01_29_11_41_05_12_320x240[0], cozmo_2014_01_29_11_41_05_12_320x240_WIDTH*cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT);
+  templateImage.Set(&cozmo_date2014_01_29_time11_41_05_frame10_320x240[0], cozmo_date2014_01_29_time11_41_05_frame10_320x240_WIDTH*cozmo_date2014_01_29_time11_41_05_frame10_320x240_HEIGHT);
+  nextImage.Set(&cozmo_date2014_01_29_time11_41_05_frame12_320x240[0], cozmo_date2014_01_29_time11_41_05_frame12_320x240_WIDTH*cozmo_date2014_01_29_time11_41_05_frame12_320x240_HEIGHT);
 
   // Translation-only LK_Projective
   {
@@ -1385,7 +1385,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
     transform_groundTruth[0][2] = 3.143f;;
     transform_groundTruth[1][2] = -4.952f;
 
-    Array<u8> warpedImage(cozmo_2014_01_29_11_41_05_10_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_10_320x240_WIDTH, scratchOffchip);
+    Array<u8> warpedImage(cozmo_date2014_01_29_time11_41_05_frame10_320x240_HEIGHT, cozmo_date2014_01_29_time11_41_05_frame10_320x240_WIDTH, scratchOffchip);
     tracker.get_transformation().Transform(templateImage, warpedImage, scratchOffchip);
     //warpedImage.Show("translationWarped", false, false, false);
     //nextImage.Show("nextImage", true, false, false);
@@ -1428,7 +1428,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
 
     tracker.get_transformation().Print("Affine LK_SampledProjective");
 
-    Array<u8> warpedImage(cozmo_2014_01_29_11_41_05_10_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_10_320x240_WIDTH, scratchOffchip);
+    Array<u8> warpedImage(cozmo_date2014_01_29_time11_41_05_frame10_320x240_HEIGHT, cozmo_date2014_01_29_time11_41_05_frame10_320x240_WIDTH, scratchOffchip);
     tracker.get_transformation().Transform(templateImage, warpedImage, scratchOffchip);
     //warpedImage.Show("affineWarped", false, false, false);
     //nextImage.Show("nextImage", true, false, false);
@@ -1477,7 +1477,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
 
     tracker.get_transformation().Print("Projective LK_SampledProjective");
 
-    Array<u8> warpedImage(cozmo_2014_01_29_11_41_05_10_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_10_320x240_WIDTH, scratchOffchip);
+    Array<u8> warpedImage(cozmo_date2014_01_29_time11_41_05_frame10_320x240_HEIGHT, cozmo_date2014_01_29_time11_41_05_frame10_320x240_WIDTH, scratchOffchip);
     tracker.get_transformation().Transform(templateImage, warpedImage, scratchOffchip);
     //warpedImage.Show("projectiveWarped", false, false, false);
     //nextImage.Show("nextImage", true, false, false);
@@ -1505,8 +1505,8 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledPlanar6dof)
   //  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
   //  ASSERT_TRUE(scratchOffchip.IsValid());
   //
-  //  Array<u8> templateImage(cozmo_2014_01_29_11_41_05_10_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_10_320x240_WIDTH, scratchOffchip);
-  //  Array<u8> nextImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratchOnchip);
+  //  Array<u8> templateImage(cozmo_date2014_01_29_time11_41_05_frame10_320x240_HEIGHT, cozmo_date2014_01_29_time11_41_05_frame10_320x240_WIDTH, scratchOffchip);
+  //  Array<u8> nextImage(cozmo_date2014_01_29_time11_41_05_frame12_320x240_HEIGHT, cozmo_date2014_01_29_time11_41_05_frame12_320x240_WIDTH, scratchOnchip);
   //
   //  const Quadrilateral<f32> templateQuad(Point<f32>(128,78), Point<f32>(220,74), Point<f32>(229,167), Point<f32>(127,171));
   //
@@ -1530,8 +1530,8 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledPlanar6dof)
   //
   //  // TODO: add check that images were loaded correctly
   //
-  //  templateImage.Set(&cozmo_2014_01_29_11_41_05_10_320x240[0], cozmo_2014_01_29_11_41_05_10_320x240_WIDTH*cozmo_2014_01_29_11_41_05_10_320x240_HEIGHT);
-  //  nextImage.Set(&cozmo_2014_01_29_11_41_05_12_320x240[0], cozmo_2014_01_29_11_41_05_12_320x240_WIDTH*cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT);
+  //  templateImage.Set(&cozmo_date2014_01_29_time11_41_05_frame10_320x240[0], cozmo_date2014_01_29_time11_41_05_frame10_320x240_WIDTH*cozmo_date2014_01_29_time11_41_05_frame10_320x240_HEIGHT);
+  //  nextImage.Set(&cozmo_date2014_01_29_time11_41_05_frame12_320x240[0], cozmo_date2014_01_29_time11_41_05_frame12_320x240_WIDTH*cozmo_date2014_01_29_time11_41_05_frame12_320x240_HEIGHT);
   //
   //  // Translation-only LK_Projective
   //  {
@@ -1581,7 +1581,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledPlanar6dof)
   //    transform_groundTruth[0][2] = 3.143f;;
   //    transform_groundTruth[1][2] = -4.952f;
   //
-  //    Array<u8> warpedImage(cozmo_2014_01_29_11_41_05_10_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_10_320x240_WIDTH, scratchOffchip);
+  //    Array<u8> warpedImage(cozmo_date2014_01_29_time11_41_05_frame10_320x240_HEIGHT, cozmo_date2014_01_29_time11_41_05_frame10_320x240_WIDTH, scratchOffchip);
   //    tracker.get_transformation().Transform(templateImage, warpedImage, scratchOffchip);
   //    //warpedImage.Show("translationWarped", false, false, false);
   //    //nextImage.Show("nextImage", true, false, false);
@@ -1625,7 +1625,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledPlanar6dof)
   //
   //    tracker.get_transformation().Print("Affine LK_SampledProjective");
   //
-  //    Array<u8> warpedImage(cozmo_2014_01_29_11_41_05_10_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_10_320x240_WIDTH, scratchOffchip);
+  //    Array<u8> warpedImage(cozmo_date2014_01_29_time11_41_05_frame10_320x240_HEIGHT, cozmo_date2014_01_29_time11_41_05_frame10_320x240_WIDTH, scratchOffchip);
   //    tracker.get_transformation().TransformArray(templateImage, warpedImage, scratchOffchip);
   //    //warpedImage.Show("affineWarped", false, false, false);
   //    //nextImage.Show("nextImage", true, false, false);
@@ -1681,7 +1681,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledPlanar6dof)
   //
   //    tracker.get_transformation().Print("Projective LK_SampledPlanar6dof");
   //
-  //    Array<u8> warpedImage(cozmo_2014_01_29_11_41_05_10_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_10_320x240_WIDTH, scratchOffchip);
+  //    Array<u8> warpedImage(cozmo_date2014_01_29_time11_41_05_frame10_320x240_HEIGHT, cozmo_date2014_01_29_time11_41_05_frame10_320x240_WIDTH, scratchOffchip);
   //    tracker.get_transformation().Transform(templateImage, warpedImage, scratchOffchip);
   //    //warpedImage.Show("projectiveWarped", false, false, false);
   //    //nextImage.Show("nextImage", true, false, false);
