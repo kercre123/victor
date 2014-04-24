@@ -183,6 +183,7 @@ namespace Anki {
     void ProcessVizSetPathColorMessage(const VizSetPathColor& msg){};
     void ProcessVizAppendPathSegmentLineMessage(const VizAppendPathSegmentLine& msg){};
     void ProcessVizAppendPathSegmentArcMessage(const VizAppendPathSegmentArc& msg){};
+    void ProcessVizShowObjectsMessage(const VizShowObjects& msg){};
     
   }  // namespace Cozmo
 } // namespace Anki

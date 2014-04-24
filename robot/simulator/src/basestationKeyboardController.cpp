@@ -1,6 +1,7 @@
 #include "basestationKeyboardController.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
+#include "vizManager.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -84,6 +85,7 @@ namespace Anki {
         const s32 CKEY_HEAD_DOWN   = 88;  // x
         const s32 CKEY_UNLOCK      = 32;  // space
         const s32 CKEY_REQUEST_IMG = 73;  // i
+        const s32 CKEY_DISPLAY_TOGGLE = 68;  // d
 
         // Get robot
         robot_ = NULL;
@@ -218,7 +220,14 @@ namespace Anki {
               robot_->SendImageRequest();
               break;
             }
- 
+              
+            case CKEY_DISPLAY_TOGGLE:
+            {
+              static bool showObjects = false;
+              VizManager::getInstance()->ShowObjects(showObjects);
+              showObjects = !showObjects;
+              break;
+            }
             default:
             {
               // Stop wheels

@@ -51,6 +51,8 @@ namespace Anki {
       // Get a pointer to the singleton instance
       inline static VizManager* getInstance();
       
+      // Whether or not to display the viz objects
+      void ShowObjects(bool show);
       
       // ===== Convenience object draw functions for specific object types ====
       

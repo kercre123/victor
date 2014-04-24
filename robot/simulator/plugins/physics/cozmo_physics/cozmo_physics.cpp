@@ -49,8 +49,8 @@ static const f32 DEFAULT_COLOR[3] = {1.0, 0.8, 0.0};
 // Server that listens for visualization messages from basestation's VizManger
 static UdpServer server;
 
-// Whether or not to draw paths
-static bool drawPaths_ = true;
+// Whether or not to draw anything
+static bool drawEnabled_ = true;
 
 // Default height offset of paths (m)
 static float heightOffset_ = 0.045;
@@ -196,6 +196,13 @@ namespace Anki {
       PRINT("Processing DefineColor\n");
       
       colorMap_[msg.colorID] = msg;
+    }
+    
+    void ProcessVizShowObjectsMessage(const VizShowObjects& msg)
+    {
+      PRINT("Processing ShowObjects (%d)\n", msg.show);
+      
+      drawEnabled_ = msg.show > 0;
     }
     
     
@@ -428,6 +435,8 @@ void draw_predockpose()
 }
 
 void webots_physics_draw(int pass, const char *view) {
+  
+  if (!drawEnabled_) return;
  
   // Only draw in main 3D view (view == NULL) and not the camera views
   if (pass == 1 && view == NULL) {
