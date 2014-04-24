@@ -8,7 +8,7 @@ set(   ../../include/anki/messaging/shared)
 
 include_directories(
   ../../include
-  ${  }
+  ${INCLUDE_DIR}
 )
 
 
@@ -18,7 +18,7 @@ set(SERVER_SOURCE_FILES
 )
 
 set(SERVER_HEADER_FILES
-  ${  }/UdpServer.h
+  ${INCLUDE_DIR}/UdpServer.h
 )
 
 add_executable(UdpEchoServer ${SERVER_SOURCE_FILES} ${SERVER_HEADER_FILES})
@@ -31,7 +31,7 @@ set(CLIENT_SOURCE_FILES
 )
 
 set(CLIENT_HEADER_FILES
-  ${  }/UdpClient.h
+  ${INCLUDE_DIR}/UdpClient.h
 )
 
 add_executable(UdpEchoClient ${CLIENT_SOURCE_FILES} ${CLIENT_HEADER_FILES})
