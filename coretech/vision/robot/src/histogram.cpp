@@ -150,9 +150,19 @@ namespace Anki
       return counts.IsValid();
     }
 
+    const FixedLengthList<s32>& IntegerCounts::get_counts() const
+    {
+      return this->counts;
+    }
+
     s32 IntegerCounts::get_numBins() const
     {
       return this->counts.get_size();
+    }
+
+    s32 IntegerCounts::get_numElements() const
+    {
+      return this->numElements;
     }
   } // namespace Embedded
 } // namespace Anki

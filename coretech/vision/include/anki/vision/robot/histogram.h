@@ -54,7 +54,13 @@ namespace Anki
 
       bool IsValid() const;
 
+      const FixedLengthList<s32>& get_counts() const;
+
+      // For example, for u8, numBins = 256
       s32 get_numBins() const;
+
+      // The sum of the values of all bins. For example, for a 320x240 image, numElements = 76800
+      s32 get_numElements() const;
 
     protected:
       FixedLengthList<s32> counts;

@@ -899,6 +899,11 @@
           <GroupName>coretech-vision</GroupName>
           <Files>
             <File>
+              <FileName>autoExposure.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\autoExposure.cpp</FilePath>
+            </File>
+            <File>
               <FileName>binaryTracker.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\binaryTracker.cpp</FilePath>
@@ -2166,6 +2171,11 @@
         <Group>
           <GroupName>coretech-vision</GroupName>
           <Files>
+            <File>
+              <FileName>autoExposure.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\autoExposure.cpp</FilePath>
+            </File>
             <File>
               <FileName>binaryTracker.cpp</FileName>
               <FileType>8</FileType>
