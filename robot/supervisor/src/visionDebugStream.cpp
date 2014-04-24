@@ -79,21 +79,9 @@ namespace Anki {
           const u8 * bufferStart = reinterpret_cast<const u8*>(toSend.get_memoryStack().get_validBufferStart(startIndex));
           const s32 validUsedBytes = toSend.get_memoryStack().get_usedBytes() - startIndex;
           
-          Anki::Cozmo::HAL::UARTPutBuffer(const_cast<u8*>(Embedded::SERIALIZED_BUFFER_HEADER), SERIALIZED_BUFFER_HEADER_LENGTH);
-          Anki::Cozmo::HAL::UARTPutBuffer(const_cast<u8*>(bufferStart), validUsedBytes);
-          Anki::Cozmo::HAL::UARTPutBuffer(const_cast<u8*>(Embedded::SERIALIZED_BUFFER_FOOTER), SERIALIZED_BUFFER_FOOTER_LENGTH);
-          
-          /*for(s32 i=0; i<Embedded::SERIALIZED_BUFFER_HEADER_LENGTH; i++) {
-           Anki::Cozmo::HAL::UARTPutChar(Embedded::SERIALIZED_BUFFER_HEADER[i]);
-           }
-           
-           for(s32 i=0; i<validUsedBytes; i++) {
-           Anki::Cozmo::HAL::UARTPutChar(bufferStart[i]);
-           }
-           
-           for(s32 i=0; i<Embedded::SERIALIZED_BUFFER_FOOTER_LENGTH; i++) {
-           Anki::Cozmo::HAL::UARTPutChar(Embedded::SERIALIZED_BUFFER_FOOTER[i]);
-           }*/
+          Anki::Cozmo::HAL::UARTPutMessage(0, 0, const_cast<u8*>(Embedded::SERIALIZED_BUFFER_HEADER), SERIALIZED_BUFFER_HEADER_LENGTH);
+          Anki::Cozmo::HAL::UARTPutMessage(0, 0, const_cast<u8*>(bufferStart), validUsedBytes);
+          Anki::Cozmo::HAL::UARTPutMessage(0, 0, const_cast<u8*>(Embedded::SERIALIZED_BUFFER_FOOTER), SERIALIZED_BUFFER_FOOTER_LENGTH);
           
           lastBenchmarkTime_algorithmsOnly = GetTime();
 #endif // SEND_DEBUG_STREAM
