@@ -1160,7 +1160,12 @@ namespace Anki {
         if(VisionMemory::markers_.get_size() > 0)
         {
           FixedLengthList<VisionMarker*> markersWithType(VisionMemory::markers_.get_size(),
-                                                         VisionMemory::offchipScratch_);
+                                                         VisionMemory::onchipScratch_);
+          
+          AnkiConditionalErrorAndReturnValue(markersWithType.IsValid(),
+                                             RESULT_FAIL_MEMORY,
+                                             "GetVisionMarkerPoseNearestTo",
+                                             "Failed to allocate markersWithType FixedLengthList.");
           
           // Find all markers with specified type
           s32 numFound = 0;
@@ -1185,6 +1190,7 @@ namespace Anki {
             char scratchBuffer[SCRATCH_BUFFER_SIZE];
             MemoryStack scratch(scratchBuffer, SCRATCH_BUFFER_SIZE);
             
+            // Create temporary pose storage (wrt camera)
             Point3<f32> translationWrtCamera;
             Array<f32> rotationWrtCamera(3,3,scratch);
             AnkiConditionalErrorAndReturnValue(rotationWrtCamera.IsValid(),
