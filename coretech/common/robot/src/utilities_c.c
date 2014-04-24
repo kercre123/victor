@@ -398,14 +398,30 @@ void PrintU32Hex(int (*writeChar)(int), u32 value)
   return;
 } // void printInt(s32 value)
 
-f32 GetTime(void)
+f32 GetTimeF32(void)
 {
 #if defined(_MSC_VER)
   f32 timeInSeconds;
-  LARGE_INTEGER frequency, counter;
+
+  static f32 frequency = 0;
+  static LONGLONG startCounter = 0;
+
+  LARGE_INTEGER counter;
+
+  if(frequency == 0) {
+    LARGE_INTEGER frequencyTmp;
+    QueryPerformanceFrequency(&frequencyTmp);
+    frequency = (f32)frequencyTmp.QuadPart;
+  }
+
   QueryPerformanceCounter(&counter);
-  QueryPerformanceFrequency(&frequency);
-  timeInSeconds = (f32)(counter.QuadPart)/(f32)(frequency.QuadPart);
+
+  // Subtract startSeconds, so the floating point number has reasonable precision
+  if(startCounter == 0) {
+    startCounter = counter.QuadPart;
+  }
+
+  timeInSeconds = (f32)(counter.QuadPart - startCounter) / frequency;
 #elif defined(__APPLE_CC__)
   struct timeval time;
   gettimeofday(&time, NULL);
@@ -421,29 +437,58 @@ f32 GetTime(void)
   const f32 timeInSeconds = XXX_HACK_FOR_PETE() / 1000000.0f;
 #else // Generic Unix
   timespec ts;
-  clock_gettime(CLOCK_MONOTONIC, &ts);
+  clock_GetTimeF32(CLOCK_MONOTONIC, &ts);
   const f32 timeInSeconds = (f32)(ts.tv_sec) + (f32)(ts.tv_nsec)/1000000000.0f;
 #endif
 
   return timeInSeconds;
 }
 
-//f32 Roundf(const f32 number)
-//{
-//  if(number > 0)
-//    return floorf(number + 0.5f);
-//  else
-//    return ceilf(number - 0.5f);
-//}
-//
-//f64 Round(const f64 number)
-//{
-//  // This casting wierdness is because the myriad doesn't have a double-precision floor function.
-//  if(number > 0)
-//    return (f64)(floorf((f32)(number) + 0.5f));
-//  else
-//    return (f64)(ceilf((f32)(number) - 0.5f));
-//}
+f64 GetTimeF64(void)
+{
+#if defined(_MSC_VER)
+  f64 timeInSeconds;
+
+  static f64 frequency = 0;
+  static LONGLONG startCounter = 0;
+
+  LARGE_INTEGER counter;
+
+  if(frequency == 0) {
+    LARGE_INTEGER frequencyTmp;
+    QueryPerformanceFrequency(&frequencyTmp);
+    frequency = (f64)frequencyTmp.QuadPart;
+  }
+
+  QueryPerformanceCounter(&counter);
+
+  // Subtract startSeconds, so the floating point number has reasonable precision
+  if(startCounter == 0) {
+    startCounter = counter.QuadPart;
+  }
+
+  timeInSeconds = (f64)(counter.QuadPart - startCounter) / frequency;
+#elif defined(__APPLE_CC__)
+  struct timeval time;
+  gettimeofday(&time, NULL);
+
+  // Subtract startSeconds, so the floating point number has reasonable precision
+  static long startSeconds = 0;
+  if(startSeconds == 0) {
+    startSeconds = time.tv_sec;
+  }
+
+  const f64 timeInSeconds = (f64)(time.tv_sec-startSeconds) + ((f64)time.tv_usec / 1000000.0);
+#elif defined(__EDG__)  // ARM-MDK
+  const f64 timeInSeconds = XXX_HACK_FOR_PETE() / 1000000.0;
+#else // Generic Unix
+  timespec ts;
+  clock_GetTime(CLOCK_MONOTONIC, &ts);
+  const f64 timeInSeconds = (f64)(ts.tv_sec) + (f64)(ts.tv_nsec)/1000000000.0;
+#endif
+
+  return timeInSeconds;
+}
 
 s32 IsPowerOfTwo(u32 x)
 {

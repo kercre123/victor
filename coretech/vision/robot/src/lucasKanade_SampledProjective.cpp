@@ -154,15 +154,15 @@ namespace Anki
               "LucasKanadeTracker_SampledProjective::LucasKanadeTracker_SampledProjective", "Out of memory");
 
             // Really slow
-            //const f32 t0 = GetTime();
+            //const f32 t0 = GetTimeF32();
             //Matrix::Sort<f32>(magnitudeVector, magnitudeIndexes, 1, false);
-            //const f32 t1 = GetTime();
+            //const f32 t1 = GetTimeF32();
 
             const s32 numSamples = this->templateSamplePyramid[iScale].get_size();
             s32 numSelected;
             LucasKanadeTracker_SampledProjective::ApproximateSelect(magnitudeVector, numSelectBins, numSamples, numSelected, magnitudeIndexes);
 
-            //const f32 t2 = GetTime();
+            //const f32 t2 = GetTimeF32();
             //printf("%f %f\n", t1-t0, t2-t1);
 
             if(numSelected == 0) {

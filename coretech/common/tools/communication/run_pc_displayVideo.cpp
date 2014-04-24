@@ -109,9 +109,9 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
         char benchmarkBuffer[1024];
 
         static f32 lastTime;
-        const f32 curTime = GetTime();
+        const f32 curTime = GetTimeF32();
         const f32 receivedDelta = curTime - lastTime;
-        lastTime = GetTime();
+        lastTime = GetTimeF32();
 
         snprintf(benchmarkBuffer, 1024, "Total:%0.1ffps Algorithms:%0.1ffps   GrayvalueError:%d %f", 1.0f/benchmarkTimes[1], 1.0f/benchmarkTimes[0], lastMeanError, lastPercentMatchingGrayvalues);
 

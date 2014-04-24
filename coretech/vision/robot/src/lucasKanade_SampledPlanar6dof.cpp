@@ -485,7 +485,7 @@ namespace Anki
           else {
             const s32 numSamples = numSelected;
             
-            //const f32 t2 = GetTime();
+            //const f32 t2 = GetTimeF32();
             //printf("%f %f\n", t1-t0, t2-t1);
             
             //{

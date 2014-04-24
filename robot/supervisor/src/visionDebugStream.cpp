@@ -51,7 +51,7 @@ namespace Anki {
         Result SendBuffer(SerializedBuffer &toSend)
         {
 #if SEND_DEBUG_STREAM
-          const f32 curTime = GetTime();
+          const f32 curTime = GetTimeF32();
           const s32 curSecond = Round<s32>(curTime);
           
           // Hack, to prevent overwhelming the send buffer
@@ -60,7 +60,7 @@ namespace Anki {
             lastSecond = curSecond;
           } else {
             if(bytesSinceLastSecond > MAX_BYTES_PER_SECOND) {
-              lastBenchmarkTime_algorithmsOnly = GetTime();
+              lastBenchmarkTime_algorithmsOnly = GetTimeF32();
               return RESULT_OK;
             } else {
               bytesSinceLastSecond += toSend.get_memoryStack().get_usedBytes();
@@ -83,7 +83,7 @@ namespace Anki {
           Anki::Cozmo::HAL::UARTPutMessage(0, 0, const_cast<u8*>(bufferStart), validUsedBytes);
           Anki::Cozmo::HAL::UARTPutMessage(0, 0, const_cast<u8*>(Embedded::SERIALIZED_BUFFER_FOOTER), SERIALIZED_BUFFER_FOOTER_LENGTH);
           
-          lastBenchmarkTime_algorithmsOnly = GetTime();
+          lastBenchmarkTime_algorithmsOnly = GetTimeF32();
 #endif // SEND_DEBUG_STREAM
           
           return RESULT_OK;
@@ -103,7 +103,7 @@ namespace Anki {
           Result result = RESULT_OK;
           
 #if SEND_DEBUG_STREAM
-          const f32 curTime = GetTime();
+          const f32 curTime = GetTimeF32();
           
           // lastBenchmarkTime_algorithmsOnly is set again when the transmission is complete
           lastBenchmarkDuration_algorithmsOnly = curTime - lastBenchmarkTime_algorithmsOnly;
@@ -165,7 +165,7 @@ namespace Anki {
           Result result = RESULT_OK;
           
 #if SEND_DEBUG_STREAM
-          const f32 curTime = GetTime();
+          const f32 curTime = GetTimeF32();
           
           // lastBenchmarkTime_algorithmsOnly is set again when the transmission is complete
           lastBenchmarkDuration_algorithmsOnly = curTime - lastBenchmarkTime_algorithmsOnly;
@@ -259,7 +259,7 @@ namespace Anki {
           Result result = RESULT_OK;
           
 #if SEND_DEBUG_STREAM
-          const f32 curTime = GetTime();
+          const f32 curTime = GetTimeF32();
           
           // lastBenchmarkTime_algorithmsOnly is set again when the transmission is complete
           lastBenchmarkDuration_algorithmsOnly = curTime - lastBenchmarkTime_algorithmsOnly;
