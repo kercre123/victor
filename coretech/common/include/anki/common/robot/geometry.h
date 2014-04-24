@@ -603,6 +603,16 @@ namespace Anki
 
       return *this;
     }
+    
+    template<typename Type>
+    template<typename InType>
+    void Quadrilateral<Type>::SetCast(const Quadrilateral<InType> &quad2)
+    {
+      for(s32 i=0; i<4; i++) {
+        this->corners[i].SetCast(quad2.corners[i]);
+      }
+    }
+
 
     template<typename Type> inline const Point<Type>& Quadrilateral<Type>::operator[] (const s32 index) const
     {
