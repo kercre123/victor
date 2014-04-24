@@ -91,6 +91,10 @@ namespace Anki {
       // vision markers.
       const Embedded::FixedLengthList<Embedded::VisionMarker>& GetObservedMarkerList();
       
+      // Return a const pointer to the largest (in terms of image size)
+      // VisionMarker of the specified type.  Pointer is NULL if there is none.
+      const Embedded::VisionMarker* GetLargestVisionMarker(const Vision::MarkerType withType);
+      
       // Compute the 3D pose of a VisionMarker w.r.t. the camera.
       // - If the pose w.r.t. the robot is required, follow this with a call to
       //    the GetWithRespectToRobot() method below.
@@ -102,6 +106,18 @@ namespace Anki {
                                  const bool                    ignoreOrientation,
                                  Embedded::Array<f32>&         rotationWrtCamera,
                                  Embedded::Point3<f32>&        translationWrtCamera);
+      
+      // Find the VisionMarker with the specified type whose 3D pose is closest
+      // to the given 3D position (with respect to *robot*) and also within the
+      // specified maxDistance (in mm).  If such a marker is found, the pose is
+      // returned and the "markerFound" flag will be true.
+      // NOTE: rotation should already be allocated as a 3x3 array.
+      Result GetVisionMarkerPoseNearestTo(const Embedded::Point3<f32>&  atPosition,
+                                          const Vision::MarkerType&     withType,
+                                          const f32                     maxDistance_mm,
+                                          Embedded::Array<f32>&         rotationWrtRobot,
+                                          Embedded::Point3<f32>&        translationWrtRobot,
+                                          bool&                         markerFound);
       
       // Convert a point or pose in camera coordinates to robot coordinates,
       // using the kinematic chain of the neck and head geometry.
