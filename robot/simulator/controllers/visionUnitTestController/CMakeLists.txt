@@ -20,9 +20,9 @@ file(GLOB COZMO_ROBOT_SUPERVISOR_INC "${ROBOT_SRC_DIR}/*.h")
 file(GLOB COZMO_ROBOT_HEADER_FILES "${COZMO_INCLUDE_DIR}/anki/cozmo/robot/*.h")
 
 include_directories( 
-	${ROBOT_SRC_DIR}
+  ${ROBOT_SRC_DIR}
     ${SIMULATOR_SRC_DIR}
-	${PHYSICS_PLUGIN_DIR}
+  ${PHYSICS_PLUGIN_DIR}
     ${WEBOTS_CPP_INCLUDE_DIR}
 )
 
@@ -52,8 +52,8 @@ set(SOURCE_FILES
 
 set(HEADER_FILES
   #  ${COZMO_ROBOT_SUPERVISOR_INC}
-	#${COZMO_ROBOT_HEADER_FILES}
-	#${COZMO_INCLUDE_FILES}
+  #${COZMO_ROBOT_HEADER_FILES}
+  #${COZMO_INCLUDE_FILES}
 )
 
 if(NOT WIN32)
@@ -84,9 +84,9 @@ endif()
 # Make sure a copy of the target exists in cozmo_c_controller/
 # no matter where the target is actually built.
 add_custom_command(
-	TARGET visionUnitTestController
-	POST_BUILD
-	#COMMAND cp visionUnitTestController ${CMAKE_CURRENT_SOURCE_DIR}/
-	COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:visionUnitTestController> ${CMAKE_CURRENT_SOURCE_DIR}/
-	COMMAND ${CMAKE_COMMAND} -E remove $<TARGET_FILE:visionUnitTestController>
+  TARGET visionUnitTestController
+  POST_BUILD
+  #COMMAND cp visionUnitTestController ${CMAKE_CURRENT_SOURCE_DIR}/
+  COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:visionUnitTestController> ${CMAKE_CURRENT_SOURCE_DIR}/
+  COMMAND ${CMAKE_COMMAND} -E remove $<TARGET_FILE:visionUnitTestController>
 )

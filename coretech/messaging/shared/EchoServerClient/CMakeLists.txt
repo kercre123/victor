@@ -13,12 +13,12 @@ include_directories(
 
 
 set(SERVER_SOURCE_FILES
-	../src/TcpServer.cpp
-	TcpServerMain.cpp
+  ../src/TcpServer.cpp
+  TcpServerMain.cpp
 )
 
 set(SERVER_HEADER_FILES
-	${INCLUDE_DIR}/TcpServer.h
+  ${INCLUDE_DIR}/TcpServer.h
 )
 
 add_executable(EchoServer ${SERVER_SOURCE_FILES} ${SERVER_HEADER_FILES})
@@ -26,12 +26,12 @@ add_executable(EchoServer ${SERVER_SOURCE_FILES} ${SERVER_HEADER_FILES})
 
 
 set(CLIENT_SOURCE_FILES
-	../src/TcpClient.cpp
-	TcpClientMain.cpp
+  ../src/TcpClient.cpp
+  TcpClientMain.cpp
 )
 
 set(CLIENT_HEADER_FILES
-	${INCLUDE_DIR}/TcpClient.h
+  ${INCLUDE_DIR}/TcpClient.h
 )
 
 add_executable(EchoClient ${CLIENT_SOURCE_FILES} ${CLIENT_HEADER_FILES})

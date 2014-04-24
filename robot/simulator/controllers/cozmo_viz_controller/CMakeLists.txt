@@ -32,15 +32,15 @@ endif()
   
 #set_target_properties(blockworld_controller PROPERTIES
 #  COMPILE_DEFINITIONS USE_TCP_MESSAGING_INTERFACE
-#	XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++98"
+#  XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++98"
 #   XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libstdc++"
 #)
 
-# Make sure a copy of the target exists	in cozmo_viz_controller/
+# Make sure a copy of the target exists  in cozmo_viz_controller/
 # no matter where the target is actually built.
 add_custom_command(
-	TARGET cozmo_viz_controller
-    POST_BUILD
-	COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:cozmo_viz_controller> ${CMAKE_CURRENT_SOURCE_DIR}/
-	COMMAND ${CMAKE_COMMAND} -E remove $<TARGET_FILE:cozmo_viz_controller>
+  TARGET cozmo_viz_controller
+  POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:cozmo_viz_controller> ${CMAKE_CURRENT_SOURCE_DIR}/
+  COMMAND ${CMAKE_COMMAND} -E remove $<TARGET_FILE:cozmo_viz_controller>
 )

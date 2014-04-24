@@ -7,8 +7,8 @@ add_definitions(-DCORETECH_ROBOT)
 file(GLOB SOURCE_FILES "*.cpp")
 
 file(GLOB HEADER_FILES 
-	"*.h"
-	"${CORETECH_PLANNING_INCLUDE_DIR}/robot/*.h"
+  "*.h"
+  "${CORETECH_PLANNING_INCLUDE_DIR}/robot/*.h"
 )
 
 if(NOT WIN32)

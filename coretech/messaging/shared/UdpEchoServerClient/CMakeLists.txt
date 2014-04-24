@@ -4,21 +4,21 @@ cmake_minimum_required(VERSION 2.8)
 
 project(UDPEchoServerClient)
 
-set(INCLUDE_DIR ../../include/anki/messaging/shared)
+set(   ../../include/anki/messaging/shared)
 
 include_directories(
   ../../include
-  ${INCLUDE_DIR}
+  ${  }
 )
 
 
 set(SERVER_SOURCE_FILES
-	../src/UdpServer.cpp
-	UdpEchoServer.cpp
+  ../src/UdpServer.cpp
+  UdpEchoServer.cpp
 )
 
 set(SERVER_HEADER_FILES
-	${INCLUDE_DIR}/UdpServer.h
+  ${  }/UdpServer.h
 )
 
 add_executable(UdpEchoServer ${SERVER_SOURCE_FILES} ${SERVER_HEADER_FILES})
@@ -26,12 +26,12 @@ add_executable(UdpEchoServer ${SERVER_SOURCE_FILES} ${SERVER_HEADER_FILES})
 
 
 set(CLIENT_SOURCE_FILES
-	../src/UdpClient.cpp
-	UdpEchoClient.cpp
+  ../src/UdpClient.cpp
+  UdpEchoClient.cpp
 )
 
 set(CLIENT_HEADER_FILES
-	${INCLUDE_DIR}/UdpClient.h
+  ${  }/UdpClient.h
 )
 
 add_executable(UdpEchoClient ${CLIENT_SOURCE_FILES} ${CLIENT_HEADER_FILES})
