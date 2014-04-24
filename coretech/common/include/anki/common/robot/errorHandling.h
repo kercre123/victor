@@ -126,6 +126,9 @@ extern "C" {
 
   void _Anki_Log (int logLevel, const char* eventName, const char* eventValue, const char* file, const char* funct, int line, ...);
 
+  // If true, AnkiError, AnkiWarn, and AnkiLog won't output printfs
+  void SetLogSilence(const bool isLogSilent);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif

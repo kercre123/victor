@@ -234,11 +234,13 @@ endif(NOT DEFINED EXTERNAL_DIR)
 set(OPENCV_MODULES_DIR ${EXTERNAL_DIR}/${OPENCV_DIR}/modules)
 include_directories(
 	${EXTERNAL_DIR}/${OPENCV_DIR}/include
-        ${EXTERNAL_DIR}/${GTEST_DIR}/include
-        ${EXTERNAL_DIR}/jsoncpp
-        ${EXTERNAL_DIR}/heatshrink
+  ${EXTERNAL_DIR}/${GTEST_DIR}/include
+  ${EXTERNAL_DIR}/jsoncpp
+  ${EXTERNAL_DIR}/heatshrink
 	${MATLAB_INCLUDE_DIR}
 )
+
+include_directories(${PROJECT_SOURCE_DIR}/robot/test)
 
 # Add the include directory for each OpenCV module:
 file(GLOB OPENCV_MODULES RELATIVE ${OPENCV_MODULES_DIR} ${OPENCV_MODULES_DIR}/*)

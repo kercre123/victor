@@ -472,6 +472,7 @@ namespace Anki {
                                                                         parameters.numPyramidLevels,
                                                                         Transformations::TRANSFORM_PROJECTIVE,
                                                                         parameters.maxSamplesAtBaseLevel,
+                                                                        parameters.numSamplingRegions,
                                                                         headCamInfo_->focalLength_x,
                                                                         headCamInfo_->focalLength_y,
                                                                         headCamInfo_->center_x,

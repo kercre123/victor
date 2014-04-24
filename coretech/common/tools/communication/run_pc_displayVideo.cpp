@@ -4,25 +4,17 @@
 
 #include "communication.h"
 #include "threadSafeQueue.h"
-#include "messageHandling.h"
+#include "debugStreamClient.h"
 
 #include "anki/common/robot/config.h"
 #include "anki/common/robot/utilities.h"
 #include "anki/common/robot/serialize.h"
+#include "anki/common/robot/errorHandling.h"
+#include "anki/common/robot/geometry.h"
 
-#ifdef _MSC_VER
-#include <tchar.h>
-#include <strsafe.h>
-
-#undef printf
-_Check_return_opt_ _CRTIMP int __cdecl printf(_In_z_ _Printf_format_string_ const char * _Format, ...);
-
-#else // #ifdef _MSC_VER
-
-#include <unistd.h>
-#include <pthread.h>
-
-#endif // #ifdef _MSC_VER ... #else
+#include "anki/vision/robot/transformations.h"
+#include "anki/vision/robot/fiducialMarkers.h"
+#include "anki/vision/robot/binaryTracker.h"
 
 #include <queue>
 
@@ -34,309 +26,406 @@ using namespace std;
 using namespace Anki;
 using namespace Anki::Embedded;
 
-#ifdef _MSC_VER
-// Based off example at http://msdn.microsoft.com/en-us/library/windows/desktop/ms682516(v=vs.85).aspx
-DWORD WINAPI DisplayBuffersThread(LPVOID lpParam)
-{
-  SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_BELOW_NORMAL);
+//
+// All these variables and constants are for InitDisplayDebuggingInfo() and DisplayDebuggingInfo()
+//
 
-  ThreadSafeQueue<DisplayRawBuffer> *messageQueue = (ThreadSafeQueue<DisplayRawBuffer>*)lpParam;
-#else
-void* DisplayBuffersThread(void *threadParameters)
-{
+static const s32 bigHeight = 480;
+static const s32 bigWidth = 640;
+static const f32 scale = bigWidth / 320.0f;
 
-// TODO: set thread priority
+static const s32 scratchSize = 1000000;
+static u8 scratchBuffer[scratchSize];
 
-  ThreadSafeQueue<DisplayRawBuffer> *messageQueue = (ThreadSafeQueue<DisplayRawBuffer>*)threadParameters;
-#endif
+static const s32 outputFilenamePatternLength = 1024;
+static char outputFilenamePattern[outputFilenamePatternLength] = "C:/Users/Pete/Box Sync/Cozmo SE/systemTestImages/cozmo_date%04d_%02d_%02d_time%02d_%02d_%02d_frame%d.%s";
 
-  bool pausePressed = false;
+static f32 lastTime = 0;
 
-  while(true) {
-    while(messageQueue->IsEmpty()) {
-#ifdef _MSC_VER
-      Sleep(1);
-#else
-      usleep(1000);
-#endif
+static cv::Mat lastImage;
+static cv::Mat largeLastImage;
+static cv::Mat toShowImage;
 
-      if(pausePressed) {
-        const s32 pressedKey = cv::waitKey(1000);
-        if(pressedKey == 'p') {
-          pausePressed = false;
-          printf("Unpaused\n");
-        }
-      } else  {
-        cv::waitKey(1);
-      }
-    }
+static u8 lastMeanError = 0;
+static f32 lastPercentMatchingGrayvalues = 0;
+static s32 detectedFacesImageWidth = 160;
 
-    DisplayRawBuffer nextMessage = messageQueue->Pop();
+static Transformations::PlanarTransformation_f32 lastPlanarTransformation;
 
-    if(!pausePressed) {
-      ProcessRawBuffer_Display(nextMessage, false, pausePressed);
-    }
-  }
+static f32 benchmarkTimes[2];
 
-  return 0;
-} // DWORD WINAPI PrintfBuffers(LPVOID lpParam)
+static std::vector<VisionMarker> visionMarkerList;
+
+static std::vector<Anki::Embedded::Rectangle<s32> > detectedFaces;
+
+static bool aMessageAlreadyPrinted;
+static bool isTracking;
+
+static vector<DebugStreamClient::Object> currentObjects;
 
 static void printUsage()
 {
-  printf(
-    "usage: displayVideo <comPort> <baudRate>\n"
-    "example: displayVideo 8 1000000 \n");
 } // void printUsage()
 
-static DisplayRawBuffer AllocateNewRawBuffer(const s32 bufferRawSize)
+static void InitDisplayDebuggingInfo()
 {
-  DisplayRawBuffer rawBuffer;
+  //innerObjectName = reinterpret_cast<char*>( scratch.Allocate(SerializedBuffer::DESCRIPTION_STRING_LENGTH + 1) );
 
-  rawBuffer.rawDataPointer = reinterpret_cast<u8*>(malloc(bufferRawSize));
-  rawBuffer.data = reinterpret_cast<u8*>( RoundUp(reinterpret_cast<size_t>(rawBuffer.rawDataPointer), MEMORY_ALIGNMENT) + MEMORY_ALIGNMENT - MemoryStack::HEADER_LENGTH );
-  rawBuffer.maxDataLength = bufferRawSize - (reinterpret_cast<size_t>(rawBuffer.data) - reinterpret_cast<size_t>(rawBuffer.rawDataPointer));
-  rawBuffer.curDataLength = 0;
+  // Used for displaying detected fiducials
+  lastImage = cv::Mat(240,320,CV_8U);
+  largeLastImage = cv::Mat(bigHeight, bigWidth, CV_8U);
+  toShowImage = cv::Mat(bigHeight, bigWidth, CV_8UC3);
 
-  if(rawBuffer.rawDataPointer == NULL) {
-    printf("Could not allocate memory");
-    rawBuffer.data = NULL;
-    rawBuffer.maxDataLength = 0;
-  }
+  lastMeanError = 0;
+  lastPercentMatchingGrayvalues = 0;
+  detectedFacesImageWidth = 160;
 
-  return rawBuffer;
+  lastImage.setTo(0);
+  largeLastImage.setTo(0);
+  toShowImage.setTo(0);
+
+  lastPlanarTransformation = Transformations::PlanarTransformation_f32();
+
+  benchmarkTimes[0] = -1.0f;
+  benchmarkTimes[1] = -1.0f;
+
+  visionMarkerList.clear();
+  detectedFaces.clear();
+  currentObjects.clear();
+
+  aMessageAlreadyPrinted = false;
 }
+
+static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
+{
+  //
+  // If we've reached a new message, display the last image and messages
+  //
+
+  if(newObject.timeReceived != lastTime) {
+    if(lastImage.rows > 0) {
+      // Print FPS
+      if(benchmarkTimes[0] > 0.0f) {
+        char benchmarkBuffer[1024];
+
+        static f32 lastTime;
+        const f32 curTime = GetTime();
+        const f32 receivedDelta = curTime - lastTime;
+        lastTime = GetTime();
+
+        snprintf(benchmarkBuffer, 1024, "Total:%0.1ffps Algorithms:%0.1ffps   GrayvalueError:%d %f", 1.0f/benchmarkTimes[1], 1.0f/benchmarkTimes[0], lastMeanError, lastPercentMatchingGrayvalues);
+
+        cv::putText(toShowImage, benchmarkBuffer, cv::Point(5,15), cv::FONT_HERSHEY_PLAIN, 1.0, cv::Scalar(0,255,0));
+      }
+
+      if(isTracking) {
+        MemoryStack scratch = MemoryStack(scratchBuffer, scratchSize, Flags::Buffer(false, true, false));
+
+        cv::Mat trackingBoxImage(bigHeight, bigWidth, CV_8UC3);
+
+        trackingBoxImage.setTo(0);
+
+        const cv::Scalar textColor    = cv::Scalar(0,255,0);
+        const cv::Scalar boxColor     = cv::Scalar(0,16,0);
+        const cv::Scalar topLineColor = cv::Scalar(16,0,0);
+
+        const Quadrilateral<f32> orientedCorners = lastPlanarTransformation.get_transformedCorners(scratch).ComputeRotatedCorners<f32>(0.0f);
+
+        const s32 cornerOrder[5] = {
+          Quadrilateral<f32>::TopLeft,
+          Quadrilateral<f32>::TopRight,
+          Quadrilateral<f32>::BottomRight,
+          Quadrilateral<f32>::BottomLeft,
+          Quadrilateral<f32>::TopLeft};
+
+        for(s32 iCorner=0; iCorner<4; iCorner++) {
+          const s32 point1Index = cornerOrder[iCorner];
+          const s32 point2Index = cornerOrder[iCorner+1];
+          const cv::Point pt1(Round<s32>(orientedCorners[point1Index].x*scale), Round<s32>(orientedCorners[point1Index].y*scale));
+          const cv::Point pt2(Round<s32>(orientedCorners[point2Index].x*scale), Round<s32>(orientedCorners[point2Index].y*scale));
+
+          cv::Scalar thisLineColor = (iCorner==0) ? topLineColor : boxColor;
+          cv::line(trackingBoxImage, pt1, pt2, thisLineColor, 15);
+        }
+
+        const Point<f32> center = orientedCorners.ComputeCenter<f32>();
+        const s32 textX = Round<s32>(MIN(MIN(MIN(orientedCorners.corners[0].x*scale, orientedCorners.corners[1].x*scale), orientedCorners.corners[2].x*scale), orientedCorners.corners[3].x*scale));
+        const cv::Point textStartPoint(textX, Round<s32>(center.y*scale));
+
+        cv::putText(trackingBoxImage, "Tracking", textStartPoint, cv::FONT_HERSHEY_PLAIN, 1.0, textColor);
+
+        const s32 numPixels = bigHeight * bigWidth * 3;
+
+        for(s32 iPixel=0; iPixel<numPixels; iPixel++) {
+          toShowImage.data[iPixel] += trackingBoxImage.data[iPixel];
+        }
+      } else { // if(isTracking)
+        // Draw markers
+        for(s32 iMarker=0; iMarker<static_cast<s32>(visionMarkerList.size()); iMarker++) {
+          cv::Scalar boxColor, topLineColor, textColor;
+          if(visionMarkerList[iMarker].isValid) {
+            textColor = cv::Scalar(0,255,0);
+            boxColor = cv::Scalar(0,128,0);
+          } else {
+            textColor = cv::Scalar(0,0,255);
+            boxColor = cv::Scalar(0,0,128);
+          }
+          topLineColor = cv::Scalar(128,0,0);
+
+          const f32 observedOrientation = visionMarkerList[iMarker].observedOrientation;
+          const Quadrilateral<f32> orientedCorners = visionMarkerList[iMarker].corners.ComputeRotatedCorners<f32>(0.0f);
+
+          const s32 cornerOrder[5] = {
+            Quadrilateral<f32>::TopLeft,
+            Quadrilateral<f32>::TopRight,
+            Quadrilateral<f32>::BottomRight,
+            Quadrilateral<f32>::BottomLeft,
+            Quadrilateral<f32>::TopLeft};
+
+          for(s32 iCorner=0; iCorner<4; iCorner++) {
+            const s32 point1Index = cornerOrder[iCorner];
+            const s32 point2Index = cornerOrder[iCorner+1];
+            const cv::Point pt1(Round<s32>(orientedCorners[point1Index].x*scale), Round<s32>(orientedCorners[point1Index].y*scale));
+            const cv::Point pt2(Round<s32>(orientedCorners[point2Index].x*scale), Round<s32>(orientedCorners[point2Index].y*scale));
+
+            cv::Scalar thisLineColor = (iCorner==0) ? topLineColor : boxColor;
+            cv::line(toShowImage, pt1, pt2, thisLineColor, 2);
+          }
+
+          const Anki::Vision::MarkerType markerType = visionMarkerList[iMarker].markerType;
+
+          const char * typeString = "??";
+          if(static_cast<s32>(markerType) >=0 && static_cast<s32>(markerType) <= Anki::Vision::NUM_MARKER_TYPES) {
+            typeString = Anki::Vision::MarkerTypeStrings[markerType];
+          }
+
+          const Point<s16> center = visionMarkerList[iMarker].corners.ComputeCenter<s16>();
+          const s32 textX = Round<s32>(MIN(MIN(MIN(visionMarkerList[iMarker].corners[0].x*scale, visionMarkerList[iMarker].corners[1].x*scale), visionMarkerList[iMarker].corners[2].x*scale), visionMarkerList[iMarker].corners[3].x*scale));
+          const cv::Point textStartPoint(textX, Round<s32>(center.y*scale));
+
+          cv::putText(toShowImage, typeString, textStartPoint, cv::FONT_HERSHEY_PLAIN, 1.0, textColor);
+        }
+      } // if(isTracking) ... else
+
+      if(detectedFaces.size() != 0) {
+        const f32 faceScale = static_cast<f32>(bigWidth) / static_cast<f32>(detectedFacesImageWidth);
+        for( s32 i = 0; i < static_cast<s32>(detectedFaces.size()); i++ )
+        {
+          cv::Point center( Round<s32>(faceScale*(detectedFaces[i].left + detectedFaces[i].right)*0.5), Round<s32>(faceScale*(detectedFaces[i].top + detectedFaces[i].bottom)*0.5) );
+          cv::ellipse( toShowImage, center, cv::Size( Round<s32>(faceScale*(detectedFaces[i].right-detectedFaces[i].left)*0.5), Round<s32>(faceScale*(detectedFaces[i].bottom-detectedFaces[i].top)*0.5)), 0, 0, 360, cv::Scalar( 255, 0, 0 ), 5, 8, 0 );
+        }
+      }
+
+      cv::imshow("Robot Image", toShowImage);
+      const s32 pressedKey = cv::waitKey(10);
+      //printf("%d\n", pressedKey);
+      if(pressedKey == 'c') {
+        const time_t t = time(0);   // get time now
+        const struct tm * currentTime = localtime(&t);
+        char outputFilename[1024];
+        snprintf(&outputFilename[0], 1024, outputFilenamePattern,
+          currentTime->tm_year+1900, currentTime->tm_mon+1, currentTime->tm_mday,
+          currentTime->tm_hour, currentTime->tm_min, currentTime->tm_sec,
+          0,
+          "png");
+
+        printf("Saving to %s\n", outputFilename);
+        cv::imwrite(outputFilename, lastImage);
+      }
+    } else { // if(lastImage.rows > 0)
+      cv::waitKey(1);
+    }
+
+    for(size_t iObject=0; iObject<currentObjects.size(); iObject++) {
+      free(currentObjects[iObject].buffer);
+    }
+
+    visionMarkerList.clear();
+    detectedFaces.clear();
+    currentObjects.clear();
+
+    lastTime = newObject.timeReceived;
+  } // if(newObject.timeReceived != lastTime)
+
+  //
+  // Add the newObject to out lists of data to display
+  //
+
+  currentObjects.push_back(newObject);
+
+  if(strcmp(newObject.typeName, "Basic Type Buffer") == 0) {
+    if(strcmp(newObject.objectName, "Benchmark Times") == 0) {
+      const f32* tmpBuffer = reinterpret_cast<f32*>(newObject.startOfPayload);
+
+      for(s32 i=0; i<2; i++) {
+        benchmarkTimes[i] = tmpBuffer[i];
+      }
+    } else if(strcmp(newObject.objectName, "meanGrayvalueError") == 0) {
+      u8* tmpBuffer = reinterpret_cast<u8*>(newObject.startOfPayload);
+
+      lastMeanError = tmpBuffer[0];
+    } else if(strcmp(newObject.objectName, "percentMatchingGrayvalues") == 0) {
+      f32* tmpBuffer = reinterpret_cast<f32*>(newObject.startOfPayload);
+
+      lastPercentMatchingGrayvalues = tmpBuffer[0];
+    } else if (strcmp(newObject.objectName, "detectedFacesImageWidth") == 0) {
+      s32* tmpBuffer = reinterpret_cast<s32*>(newObject.startOfPayload);
+
+      detectedFacesImageWidth = tmpBuffer[0];
+    }
+  } else if(strcmp(newObject.typeName, "Array") == 0) {
+    if (strcmp(newObject.objectName, "Robot Image") == 0) {
+      const Array<u8> arr = *(reinterpret_cast<Array<u8>*>(newObject.startOfPayload));
+
+      const s32 arrHeight = arr.get_size(0);
+      const s32 arrWidth = arr.get_size(1);
+
+      // Do the copy explicitly, to prevent OpenCV trying to be smart with memory
+      lastImage = cv::Mat(arrHeight, arrWidth, CV_8U);
+
+      s32 cLastImage = 0;
+      for(s32 y=0; y<arrHeight; y++) {
+        const u8 * restrict pArr = arr.Pointer(y,0);
+        for(s32 x=0; x<arrWidth; x++) {
+          lastImage.data[cLastImage] = pArr[x];
+          cLastImage++;
+        }
+      }
+
+      cv::resize(lastImage, largeLastImage, largeLastImage.size(), 0, 0, cv::INTER_NEAREST);
+
+      const s32 blinkerWidth = 7;
+
+      //Draw a blinky rectangle at the upper right
+      static s32 frameNumber = 0;
+      frameNumber++;
+
+      if(frameNumber%2 == 0) {
+        for(s32 y=0; y<blinkerWidth; y++) {
+          for(s32 x=bigWidth-blinkerWidth; x<bigWidth; x++) {
+            largeLastImage.at<u8>(y,x) = 0;
+          }
+        }
+
+        for(s32 y=1; y<blinkerWidth-1; y++) {
+          for(s32 x=bigWidth+1-blinkerWidth; x<(bigWidth-1); x++) {
+            largeLastImage.at<u8>(y,x) = 255;
+          }
+        }
+        //largeLastImage.at<u8>(blinkerHalfWidth,320-blinkerHalfWidth) = 255;
+      } else {
+        for(s32 y=0; y<blinkerWidth; y++) {
+          for(s32 x=bigWidth-blinkerWidth; x<bigWidth; x++) {
+            largeLastImage.at<u8>(y,x) = 0;
+          }
+        }
+      }
+
+      // Grayscale to RGB
+      vector<cv::Mat> channels;
+      channels.push_back(largeLastImage);
+      channels.push_back(largeLastImage);
+      channels.push_back(largeLastImage);
+      cv::merge(channels, toShowImage);
+    }
+  } else if(strcmp(newObject.typeName, "String") == 0) {
+    printf("Board>> %s", reinterpret_cast<const char*>(newObject.startOfPayload));
+  } else if(strcmp(newObject.typeName, "VisionMarker") == 0) {
+    VisionMarker marker = *reinterpret_cast<VisionMarker*>(newObject.startOfPayload);
+
+    if(!marker.isValid)
+      return;
+
+    if(!aMessageAlreadyPrinted) {
+      time_t rawtime;
+      time (&rawtime);
+      string timeString = string(ctime(&rawtime));
+      timeString[timeString.length()-6] = '\0';
+      printf("%s>> ", timeString.data());
+      aMessageAlreadyPrinted = true;
+    }
+
+    marker.Print();
+    printf("\n");
+    visionMarkerList.push_back(marker);
+
+    isTracking = false;
+  } else if(strcmp(newObject.typeName, "PlanarTransformation_f32") == 0) {
+    lastPlanarTransformation = *reinterpret_cast<Transformations::PlanarTransformation_f32*>(newObject.startOfPayload);
+    //lastPlanarTransformation.Print();
+    isTracking = true;
+  } else if(strcmp(newObject.typeName, "BinaryTracker") == 0) {
+    TemplateTracker::BinaryTracker bt = *reinterpret_cast<TemplateTracker::BinaryTracker*>(newObject.startOfPayload);
+
+    if(!bt.IsValid())
+      return;
+
+    bt.ShowTemplate("BinaryTracker Template", false, false, 2.0f);
+  } else if(strcmp(newObject.typeName, "EdgeLists") == 0) {
+    EdgeLists edges = *reinterpret_cast<EdgeLists*>(newObject.startOfPayload);
+
+    cv::Mat toShow = edges.DrawIndexes();
+
+    if(toShow.cols == 0)
+      return;
+
+    cv::Mat toShowLargeTmp(bigHeight, bigWidth, CV_8UC3);
+    cv::resize(toShow, toShowLargeTmp, toShowLargeTmp.size(), 0, 0, cv::INTER_NEAREST);
+    cv::imshow("Detected Binary Edges", toShowLargeTmp);
+
+    //cv::resize(toShow, toShowImage, toShowImage.size(), 0, 0, cv::INTER_NEAREST);
+    //cv::imshow("Detected Binary Edges", toShowImage);
+  } else if(strcmp(newObject.typeName, "ArraySlice") == 0) {
+    if(strcmp(newObject.objectName, "detectedFaces") == 0) {
+      FixedLengthList<Anki::Embedded::Rectangle<s32> > newFaces = *reinterpret_cast<FixedLengthList<Anki::Embedded::Rectangle<s32> >*>(newObject.startOfPayload);
+
+      for(s32 i=0; i<newFaces.get_size(); i++) {
+        detectedFaces.push_back(newFaces[i]);
+      }
+    }
+  } else {
+    char toPrint[32];
+
+    memcpy(toPrint, newObject.typeName, 31);
+    toPrint[31] = '\0';
+    printf("Unknown Type \"%s\"", toPrint);
+
+    memcpy(toPrint, newObject.objectName, 31);
+    toPrint[31] = '\0';
+    printf(" \"%s\"\n", toPrint);
+  }
+} // void DisplayDebuggingInfo()
 
 int main(int argc, char ** argv)
 {
-  const bool useTcp = true;
-
   // TCP
-  Socket socket;
   const char * ipAddress = "192.168.3.30";
   const s32 port = 5551;
 
-  // Com
-#ifdef _MSC_VER
-  Serial serial;
-  s32 comPort = 11;
-  s32 baudRate = 1000000;
-#endif
-
   printf("Starting display\n");
 
-  double lastUpdateTime;
+  SetLogSilence(true);
 
-  const s32 USB_BUFFER_SIZE = useTcp ? 100000 : 5000;
-  const s32 MESSAGE_BUFFER_SIZE = 1000000;
+  DebugStreamClient parserThread(ipAddress, port);
 
-  u8 *usbBuffer = reinterpret_cast<u8*>(malloc(USB_BUFFER_SIZE));
-
-  DisplayRawBuffer nextMessage = AllocateNewRawBuffer(MESSAGE_BUFFER_SIZE);
-
-  ThreadSafeQueue<DisplayRawBuffer> messageQueue = ThreadSafeQueue<DisplayRawBuffer>();
-
-  if(argc == 1) {
-    // just use defaults, but print the help anyway
-    // printUsage();
-  }
-  //else if(argc == 3) {
-  //  sscanf(argv[1], "%d", &comPort);
-  //    sscanf(argv[2], "%d", &baudRate);
-  //}
-  else {
-  // printUsage();
-    return -1;
-  }
-
-  if(useTcp) {
-    while(socket.Open(ipAddress, port) != RESULT_OK) {
-      printf("Trying again to open socket.\n");
-#ifdef _MSC_VER
-      Sleep(100);
-#else
-      usleep(100000);
-#endif
-    }
-  } else {
-#ifdef _MSC_VER
-    if(serial.Open(comPort, baudRate) != RESULT_OK)
-      return -2;
-#else
-    printf("Error: serial is only supported on Windows\n");
-#endif
-  }
-
-  printf("Connection opened\n");
-
-  lastUpdateTime = GetTime() + 10e10;
-
-#ifdef _MSC_VER
-  SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST); // THREAD_PRIORITY_ABOVE_NORMAL
-
-  DWORD threadId = -1;
-  CreateThread(
-               NULL,        // default security attributes
-               0,           // use default stack size
-               DisplayBuffersThread, // thread function name
-               &messageQueue,    // argument to thread function
-               0,           // use default creation flags
-               &threadId);  // returns the thread identifier
-#else
-  // TODO: set thread priority
-
-  pthread_t thread;
-  pthread_attr_t attr;
-  pthread_attr_init(&attr);
-
-  pthread_create(&thread, &attr, DisplayBuffersThread, (void *)&messageQueue);
-#endif
-
-  printf("Parsing thread created\n");
-
-  bool atLeastOneStartFound = false;
-  s32 start_state = 0;
+  InitDisplayDebuggingInfo();
 
   while(true) {
-    if(!usbBuffer) {
-      printf("\n\nCould not allocate usbBuffer\n\n");
-      return -3;
-    }
+    DebugStreamClient::Object newObject = parserThread.GetNextObject();
+    //printf("Received %s %s\n", newObject.typeName, newObject.newObject.objectName);
 
-    s32 bytesRead = 0;
+    DisplayDebuggingInfo(newObject);
 
-    if(useTcp) {
-
-      while(socket.Read(usbBuffer, USB_BUFFER_SIZE-2, bytesRead) != RESULT_OK)
-      {
-        printf("socket read failure. Retrying...\n");
-#ifdef _MSC_VER
-        Sleep(1);
-#else
-        usleep(1000);
-#endif
-      }
-    } else {
-#ifdef _MSC_VER
-      if(serial.Read(usbBuffer, USB_BUFFER_SIZE-2, bytesRead) != RESULT_OK)
-        return -4;
-#else
-      return -4;
-#endif
-    }
-
-    if(bytesRead == 0) {
-#ifdef _MSC_VER
-      Sleep(1);
-#else
-      usleep(1000);
-#endif
-      continue;
-    }
-
-    // Find the next SERIALIZED_BUFFER_HEADER
-    s32 start_searchIndex = 0;
-    s32 start_foundIndex = -1;
-
-    // This method can only find one message per usbBuffer
-    // TODO: support more
-    while(start_searchIndex < static_cast<s32>(bytesRead)) {
-      if(start_state == SERIALIZED_BUFFER_HEADER_LENGTH) {
-        start_foundIndex = start_searchIndex;
-        start_state = 0;
-        break;
-      }
-
-      if(usbBuffer[start_searchIndex] == SERIALIZED_BUFFER_HEADER[start_state]) {
-        start_state++;
-      } else if(usbBuffer[start_searchIndex] == SERIALIZED_BUFFER_HEADER[0]) {
-        start_state = 1;
-      } else {
-        start_state = 0;
-      }
-
-      start_searchIndex++;
-    } // while(start_searchIndex < static_cast<s32>(bytesRead))
-
-    // If we found a start header, handle it
-    if(start_foundIndex != -1) {
-      if(atLeastOneStartFound) {
-        const s32 numBytesToCopy = start_foundIndex;
-
-        if((nextMessage.curDataLength + numBytesToCopy + 16) > nextMessage.maxDataLength) {
-          nextMessage = AllocateNewRawBuffer(MESSAGE_BUFFER_SIZE);
-          printf("Buffer trashed\n");
-          continue;
-        }
-
-        memcpy(
-          nextMessage.data + nextMessage.curDataLength,
-          usbBuffer,
-          numBytesToCopy);
-
-        nextMessage.curDataLength += numBytesToCopy;
-
-        //ProcessRawBuffer_Display(nextMessage, true, false);
-        messageQueue.Push(nextMessage);
-
-        nextMessage = AllocateNewRawBuffer(MESSAGE_BUFFER_SIZE);
-      } else {
-        atLeastOneStartFound = true;
-      }
-
-      const s32 numBytesToCopy = static_cast<s32>(bytesRead) - start_foundIndex;
-
-      // If we've filled up the buffer, just trash it
-      if((nextMessage.curDataLength + numBytesToCopy + 16) > nextMessage.maxDataLength) {
-        nextMessage = AllocateNewRawBuffer(MESSAGE_BUFFER_SIZE);
-        printf("Buffer trashed\n");
-        continue;
-      }
-
-      if(numBytesToCopy <= 0) {
-        printf("negative numBytesToCopy");
-        continue;
-      }
-
-      //for(s32 i=0; i<50; i++) {
-      //  printf("%d ", *(usbBuffer + start_foundIndex + i));
-      //}
-      //printf("\n");
-
-      memcpy(
-        nextMessage.data + nextMessage.curDataLength,
-        usbBuffer + start_foundIndex,
-        numBytesToCopy);
-
-      nextMessage.curDataLength += numBytesToCopy;
-    } else {// if(start_foundIndex != -1)
-      if(atLeastOneStartFound) {
-        const s32 numBytesToCopy = static_cast<s32>(bytesRead);
-
-        // If we've filled up the buffer, just trash it
-        if((nextMessage.curDataLength + numBytesToCopy + 16) > nextMessage.maxDataLength) {
-          nextMessage = AllocateNewRawBuffer(MESSAGE_BUFFER_SIZE);
-          printf("Buffer trashed\n");
-          continue;
-        }
-
-        memcpy(
-          nextMessage.data + nextMessage.curDataLength,
-          usbBuffer,
-          numBytesToCopy);
-
-        nextMessage.curDataLength += numBytesToCopy;
-      }
-    }
-  } // while(true)
-
-  if(useTcp) {
-    if(socket.Close() != RESULT_OK)
-      return -5;
-  } else {
-#ifdef _MSC_VER
-    if(serial.Close() != RESULT_OK)
-      return -5;
-#endif
+    // Simple example to display an image
+    //if(strcmp(newObject.newObject.objectName, "Robot Image") == 0) {
+    //  Array<u8> image = *(reinterpret_cast<Array<u8>*>(newObject.startOfPayload));
+    //  image.Show("Robot Image", false);
+    //  cv::waitKey(10);
+    //}
+    //if(newObject.buffer) {
+    //  free(newObject.buffer);
+    //  newObject.buffer = NULL;
+    //}
   }
 
   return 0;

@@ -49,7 +49,7 @@ namespace Anki
     template<typename InType, typename OutType> Result Interp2(const Array<InType> &reference, const Array<f32> &xCoordinates, const Array<f32> &yCoordinates, Array<OutType> &out, const InterpolationType interpolationType, const OutType invalidValue)
     {
       AnkiConditionalErrorAndReturnValue(interpolationType == INTERPOLATE_LINEAR,
-        RESULT_FAIL_INVALID_PARAMETERS, "Interp2", "Only INTERPOLATE_LINEAR is supported");
+        RESULT_FAIL_INVALID_PARAMETER, "Interp2", "Only INTERPOLATE_LINEAR is supported");
 
       AnkiConditionalErrorAndReturnValue(reference.IsValid(),
         RESULT_FAIL_INVALID_OBJECT, "Interp2", "reference is not valid");
@@ -153,7 +153,7 @@ namespace Anki
     template<typename InType, typename OutType> Result Interp2_Affine(const Array<InType> &reference, const Meshgrid<f32> &originalCoordinates, const Array<f32> &homography, const Point<f32> &centerOffset, Array<OutType> &out, const InterpolationType interpolationType, const OutType invalidValue)
     {
       AnkiConditionalErrorAndReturnValue(interpolationType == INTERPOLATE_LINEAR,
-        RESULT_FAIL_INVALID_PARAMETERS, "Interp2_Affine", "Only INTERPOLATE_LINEAR is supported");
+        RESULT_FAIL_INVALID_PARAMETER, "Interp2_Affine", "Only INTERPOLATE_LINEAR is supported");
 
       AnkiConditionalErrorAndReturnValue(reference.IsValid(),
         RESULT_FAIL_INVALID_OBJECT, "Interp2_Affine", "reference is not valid");
@@ -288,7 +288,7 @@ namespace Anki
     template<typename InType, typename OutType> Result Interp2_Projective(const Array<InType> &reference, const Meshgrid<f32> &originalCoordinates, const Array<f32> &homography, const Point<f32> &centerOffset, Array<OutType> &out, const InterpolationType interpolationType, const OutType invalidValue)
     {
       AnkiConditionalErrorAndReturnValue(interpolationType == INTERPOLATE_LINEAR,
-        RESULT_FAIL_INVALID_PARAMETERS, "Interp2_Projective", "Only INTERPOLATE_LINEAR is supported");
+        RESULT_FAIL_INVALID_PARAMETER, "Interp2_Projective", "Only INTERPOLATE_LINEAR is supported");
 
       AnkiConditionalErrorAndReturnValue(reference.IsValid(),
         RESULT_FAIL_INVALID_OBJECT, "Interp2_Projective", "reference is not valid");
@@ -300,7 +300,7 @@ namespace Anki
         RESULT_FAIL_ALIASED_MEMORY, "Interp2_Projective", "reference cannot be the same as out");
 
       //AnkiConditionalErrorAndReturnValue(FLT_NEAR(homography[2][2], 1.0f),
-      //  RESULT_FAIL_INVALID_PARAMETERS, "Interp2_Projective", "homography[2][2] should be 1.0");
+      //  RESULT_FAIL_INVALID_PARAMETER, "Interp2_Projective", "homography[2][2] should be 1.0");
 
       const s32 referenceHeight = reference.get_size(0);
       const s32 referenceWidth = reference.get_size(1);

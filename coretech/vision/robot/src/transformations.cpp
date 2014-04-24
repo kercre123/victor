@@ -72,7 +72,7 @@ namespace Anki
         this->isValid = false;
 
         AnkiConditionalErrorAndReturnValue(transformType==TRANSFORM_TRANSLATION || transformType==TRANSFORM_AFFINE || transformType==TRANSFORM_PROJECTIVE,
-          RESULT_FAIL_INVALID_PARAMETERS, "PlanarTransformation_f32::Init", "Invalid transformType %d", transformType);
+          RESULT_FAIL_INVALID_PARAMETER, "PlanarTransformation_f32::Init", "Invalid transformType %d", transformType);
 
         this->transformType = transformType;
         this->centerOffset = centerOffset;
@@ -126,13 +126,13 @@ namespace Anki
         // An Object of a given transformation type can only be updated with a simpler transformation
         if(this->transformType == TRANSFORM_TRANSLATION) {
           AnkiConditionalErrorAndReturnValue(updateType == TRANSFORM_TRANSLATION,
-            RESULT_FAIL_INVALID_PARAMETERS, "PlanarTransformation_f32::Update", "cannot update this transform with the update type %d", updateType);
+            RESULT_FAIL_INVALID_PARAMETER, "PlanarTransformation_f32::Update", "cannot update this transform with the update type %d", updateType);
         } else if(this->transformType == TRANSFORM_AFFINE) {
           AnkiConditionalErrorAndReturnValue(updateType == TRANSFORM_TRANSLATION || updateType == TRANSFORM_AFFINE,
-            RESULT_FAIL_INVALID_PARAMETERS, "PlanarTransformation_f32::Update", "cannot update this transform with the update type %d", updateType);
+            RESULT_FAIL_INVALID_PARAMETER, "PlanarTransformation_f32::Update", "cannot update this transform with the update type %d", updateType);
         } else if(this->transformType == TRANSFORM_PROJECTIVE) {
           AnkiConditionalErrorAndReturnValue(updateType == TRANSFORM_TRANSLATION|| updateType == TRANSFORM_AFFINE || updateType == TRANSFORM_PROJECTIVE,
-            RESULT_FAIL_INVALID_PARAMETERS, "PlanarTransformation_f32::Update", "cannot update this transform with the update type %d", updateType);
+            RESULT_FAIL_INVALID_PARAMETER, "PlanarTransformation_f32::Update", "cannot update this transform with the update type %d", updateType);
         } else {
           AnkiAssert(false);
         }
@@ -170,7 +170,7 @@ namespace Anki
             updateArray[2][0] = pUpdate[6]/scale;  updateArray[2][1] = pUpdate[7]/scale;  updateArray[2][2] = 1.0f;
           } else {
             AnkiError("PlanarTransformation_f32::Update", "Unknown transformation type %d", updateType);
-            return RESULT_FAIL_INVALID_PARAMETERS;
+            return RESULT_FAIL_INVALID_PARAMETER;
           }
 
           // this.tform = this.tform*inv(tformUpdate);
@@ -440,7 +440,7 @@ namespace Anki
           this->transformType = transformType;
         } else {
           AnkiError("PlanarTransformation_f32::set_transformType", "Unknown transformation type %d", transformType);
-          return RESULT_FAIL_INVALID_PARAMETERS;
+          return RESULT_FAIL_INVALID_PARAMETER;
         }
 
         return RESULT_OK;

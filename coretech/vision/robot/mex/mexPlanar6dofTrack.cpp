@@ -32,7 +32,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
 
   
-  if(nrhs == 10) {
+  if(nrhs == 11) {
     //
     // Tracker Init
     //
@@ -77,6 +77,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     const f32 scaleTemplateRegionPercent = static_cast<f32>(mxGetScalar(prhs[argIndex++]));
     const s32 numPyramidLevels           = static_cast<s32>(mxGetScalar(prhs[argIndex++]));
     const s32 maxSamplesAtBaseLevel      = static_cast<s32>(mxGetScalar(prhs[argIndex++]));
+    const s32 numSamplingRegions         = static_cast<s32>(mxGetScalar(prhs[argIndex++]));
     
     tracker = TemplateTracker::LucasKanadeTracker_SampledPlanar6dof(grayscaleImage,
                                                                     initialQuad,
@@ -84,6 +85,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                                                                     numPyramidLevels,
                                                                     Transformations::TRANSFORM_PROJECTIVE,
                                                                     maxSamplesAtBaseLevel,
+                                                                    numSamplingRegions,
                                                                     focalLength_x,
                                                                     focalLength_y,
                                                                     center_x,
@@ -93,6 +95,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                                                                     onchipMemory,
                                                                     offchipMemory);
     
+    mxAssert(tracker.IsValid(), "Failed to instantiate valid tracker!");
     
     // TODO: Set this elsewhere
     const f32 Kp_min = 0.05f;
@@ -153,7 +156,11 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                                                            verify_numSimilarPixels,
                                                            onchipMemory);
     
-    //mxAssert(trackerResult == Anki::RESULT_OK, "UpdateTrack() failed!");
+    if(trackerResult != Anki::RESULT_OK) {
+      char buffer[128];
+      snprintf(buffer, 128, "UpdateTrack() failed with result = %x!", trackerResult);
+      mexWarnMsgTxt(buffer);
+    }
     
     // Return converged and verification info
     s32 argOutIndex = 0;
@@ -197,7 +204,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     mexPrintf("\t\ttrackingMarkerWidth_mm, \n");
     mexPrintf("\t\tscaleTemplateRegionPercent, \n");
     mexPrintf("\t\tnumPyramidLevels, \n");
-    mexPrintf("\t\tmaxSamplesAtBaseLevel)\n");
+    mexPrintf("\t\tmaxSamplesAtBaseLevel, \n");
+    mexPrintf("\t\tnumSamplingRegions)\n");
     
     mexPrintf("\nTrack with: \n\n");
     mexPrintf("\t[converged, verify_meanAbsDiff, verify_numInBounds, verify_numSimilarPixels, \n");
