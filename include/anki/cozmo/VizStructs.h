@@ -25,7 +25,11 @@ namespace Anki {
       VIZ_RAMP,
       VIZ_PREDOCKPOSE
     };
-    
+
+    enum VizRobotMarkerType {
+      VIZ_ROBOT_MARKER_SMALL_TRIANGLE,
+      VIZ_ROBOT_MARKER_BIG_TRIANGLE
+    };
     
     // Define viz messages
 //#ifdef COZMO_ROBOT
