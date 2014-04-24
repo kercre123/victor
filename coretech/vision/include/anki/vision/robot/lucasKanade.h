@@ -343,6 +343,7 @@ namespace Anki
                                              const s32 numPyramidLevels,
                                              const Transformations::TransformType transformType,
                                              const s32 maxSamplesAtBaseLevel,
+                                             const s32 numSamplingRegions, 
                                              const f32 focalLength_x,
                                              const f32 focalLength_y,
                                              const f32 camCenter_x,
@@ -403,7 +404,7 @@ namespace Anki
           f32 yCoordinate;
           f32 xGradient;
           f32 yGradient;
-          f32 grayvalue;
+          u8 grayvalue;
         } TemplateSample;
         
         const FixedLengthList<TemplateSample>& get_templateSamples(const s32 atScale) const;
@@ -500,7 +501,9 @@ namespace Anki
         
         Result IterativelyRefineTrack_Projective(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance_angle, const f32 convergenceTolerance_distance, bool &converged, MemoryStack scratch);
         
-        static Result ApproximateSelect(const Array<f32> &magnitudeVector, const s32 numBins, const s32 numToSelect, s32 &numSelected, Array<u16> &magnitudeIndexes);
+        static Result ApproximateSelect(const Array<f32> &magnitudeVector, const s32 numBins, const s32 numToSelect, s32 &numSelected, Array<s32> &magnitudeIndexes);
+        
+        static Result ApproximateSelect(const Array<f32> &magnitudeImage, const s32 numBins, const s32 numRegions, const s32 numToSelect, s32 &numSelected, Array<s32> &magnitudeIndexes);
                 
       }; // class LucasKanadeTracker_SampledPlanar6dof
       
