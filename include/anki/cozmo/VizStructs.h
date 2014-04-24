@@ -25,7 +25,11 @@ namespace Anki {
       VIZ_RAMP,
       VIZ_PREDOCKPOSE
     };
-    
+
+    enum VizRobotMarkerType {
+      VIZ_ROBOT_MARKER_SMALL_TRIANGLE,
+      VIZ_ROBOT_MARKER_BIG_TRIANGLE
+    };
     
     // Define viz messages
 //#ifdef COZMO_ROBOT
@@ -54,6 +58,25 @@ namespace Anki {
       NUM_VIZ_MSG_IDS // Final entry without comma at end
     } VizMsgID;
 
+    
+    
+    // 4. Create {priority,size} table
+    typedef struct {
+      u8 priority;
+      u32 size;
+    } VizMsgTableEntry;
+    
+    const size_t NUM_VIZ_MSG_TABLE_ENTRIES = Anki::Cozmo::NUM_VIZ_MSG_IDS + 1;
+    const VizMsgTableEntry VizMsgLookupTable_[NUM_VIZ_MSG_TABLE_ENTRIES] = {
+      {0, 0}, // Empty entry for NO_MESSAGE_ID
+#undef  MESSAGE_DEFINITION_MODE
+#define MESSAGE_DEFINITION_MODE MESSAGE_SIZE_TABLE_DEFINITION_MODE
+#include "anki/cozmo/VizMsgDefs.h"
+      {0, 0} // Final dummy entry without comma at end
+    };
+    
+    
+    
 #ifdef THIS_IS_ACTUALLY_BASESTATION
 #define COZMO_BASESTATION
 #undef COZMO_ROBOT

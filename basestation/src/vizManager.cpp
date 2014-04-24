@@ -37,8 +37,23 @@ namespace Anki {
     VizManager::VizManager()
     {
       isInitialized_ = false;
+      imgID = 0;
     }
 
+    void VizManager::SendMessage(u8 vizMsgID, void* msg)
+    {
+      //printf("Sending viz msg %d with %d bytes\n", vizMsgID, msgSize + 1);
+      
+      // TODO: Does this work for poorly packed structs?  Just use Andrew's message class creator?
+      u32 msgSize = Anki::Cozmo::VizMsgLookupTable_[vizMsgID].size;
+      
+      sendBuf[0] = vizMsgID;
+      memcpy(sendBuf + 1, msg, msgSize);
+      if (vizClient_.Send(sendBuf, msgSize+1) <= 0) {
+        printf("Send msg %d of size %d failed\n", vizMsgID, msgSize+1);
+      }
+    }
+    
     // ===== Convenience object draw functions for specific object types ====
     
     void VizManager::DrawRobot(const u32 robotID,
@@ -112,13 +127,8 @@ namespace Anki {
       v.rot_axis_z = pose.get_rotationAxis().z();
       
       v.color = colorID;
-
-      //printf("Sending msg %d with %d bytes\n", VizObject_ID, (int)(sizeof(v) + 1));
       
-      // TODO: Does this work for poorly packed structs?  Just use Andrew's message class creator?
-      sendBuf[0] = VizObject_ID;
-      memcpy(sendBuf + 1, &v, sizeof(v));
-      vizClient_.Send(sendBuf, sizeof(v)+1);
+      SendMessage( GET_MESSAGE_ID(VizObject), &v );
     }
     
     
@@ -127,9 +137,7 @@ namespace Anki {
       VizEraseObject v;
       v.objectID = objectID;
       
-      sendBuf[0] = VizEraseObject_ID;
-      memcpy(sendBuf + 1, &v, sizeof(v));
-      vizClient_.Send(sendBuf, sizeof(v)+1);
+      SendMessage( GET_MESSAGE_ID(VizEraseObject), &v );
     }
     
 
@@ -138,9 +146,7 @@ namespace Anki {
       VizEraseObject v;
       v.objectID = ALL_OBJECT_IDs;
       
-      sendBuf[0] = VizEraseObject_ID;
-      memcpy(sendBuf + 1, &v, sizeof(v));
-      vizClient_.Send(sendBuf, sizeof(v)+1);
+      SendMessage( GET_MESSAGE_ID(VizEraseObject), &v );
     }
     
     // ================== Path drawing methods ====================
@@ -188,9 +194,7 @@ namespace Anki {
       v.y_end_m = MM_TO_M(y_end_mm);
       v.z_end_m = 0;
       
-      sendBuf[0] = VizAppendPathSegmentLine_ID;
-      memcpy(sendBuf + 1, &v, sizeof(v));
-      vizClient_.Send(sendBuf, sizeof(v)+1);
+      SendMessage( GET_MESSAGE_ID(VizAppendPathSegmentLine), &v );
     }
     
     void VizManager::AppendPathSegmentArc(const u32 pathID,
@@ -206,9 +210,7 @@ namespace Anki {
       v. sweep_rad = sweepRad;
       
       
-      sendBuf[0] = VizAppendPathSegmentArc_ID;
-      memcpy(sendBuf + 1, &v, sizeof(v));
-      vizClient_.Send(sendBuf, sizeof(v)+1);
+      SendMessage( GET_MESSAGE_ID(VizAppendPathSegmentArc), &v );
     }
     
 
@@ -217,20 +219,15 @@ namespace Anki {
       VizErasePath v;
       v.pathID = pathID;
       
-      sendBuf[0] = VizErasePath_ID;
-      memcpy(sendBuf + 1, &v, sizeof(v));
-      vizClient_.Send(sendBuf, sizeof(v)+1);
+      SendMessage( GET_MESSAGE_ID(VizErasePath), &v );
     }
-    
 
     void VizManager::EraseAllPaths()
     {
       VizErasePath v;
       v.pathID = ALL_PATH_IDs;
       
-      sendBuf[0] = VizErasePath_ID;
-      memcpy(sendBuf + 1, &v, sizeof(v));
-      vizClient_.Send(sendBuf, sizeof(v)+1);
+      SendMessage( GET_MESSAGE_ID(VizErasePath), &v );
     }
 
 
@@ -240,9 +237,7 @@ namespace Anki {
       v.pathID = pathID;
       v.colorID = colorID;
       
-      sendBuf[0] = VizSetPathColor_ID;
-      memcpy(sendBuf + 1, &v, sizeof(v));
-      vizClient_.Send(sendBuf, sizeof(v)+1);
+      SendMessage( GET_MESSAGE_ID(VizSetPathColor), &v );
     }
     
     // =============== Text methods ==================
@@ -258,9 +253,7 @@ namespace Anki {
       vsnprintf((char*)v.text, sizeof(v.text), format, argptr);
       va_end(argptr);
       
-      sendBuf[0] = VizSetLabel_ID;
-      memcpy(sendBuf + 1, &v, sizeof(v));
-      vizClient_.Send(sendBuf, sizeof(v)+1);
+      SendMessage( GET_MESSAGE_ID(VizSetLabel), &v );
     }
     
     
@@ -278,9 +271,7 @@ namespace Anki {
       v.b = blue;
       v.alpha = alpha;
       
-      sendBuf[0] = VizDefineColor_ID;
-      memcpy(sendBuf + 1, &v, sizeof(v));
-      vizClient_.Send(sendBuf, sizeof(v)+1);
+      SendMessage( GET_MESSAGE_ID(VizDefineColor), &v );
     }
     
     
@@ -292,11 +283,34 @@ namespace Anki {
       v.y_dist = y_dist;
       v.angle = angle;
       
-      sendBuf[0] = VizDockingErrorSignal_ID;
-      memcpy(sendBuf + 1, &v, sizeof(v));
-      vizClient_.Send(sendBuf, sizeof(v)+1);
+      SendMessage( GET_MESSAGE_ID(VizDockingErrorSignal), &v );
     }
     
+
+    void VizManager::SendGreyImage(const u8* data, const Vision::CameraResolution res)
+    {
+      VizImageChunk v;
+      v.resolution = res;
+      v.imgId = ++imgID;
+      v.chunkId = 0;
+      v.chunkSize = MAX_VIZ_IMAGE_CHUNK_SIZE;
+      
+      s32 bytesToSend = Vision::CameraResInfo[res].width * Vision::CameraResInfo[res].height;
+      
+
+      while (bytesToSend > 0) {
+        if (bytesToSend < MAX_VIZ_IMAGE_CHUNK_SIZE) {
+          v.chunkSize = bytesToSend;
+        }
+        bytesToSend -= v.chunkSize;
+
+        //printf("Sending CAM image %d chunk %d (size: %d), bytesLeftToSend %d\n", v.imgId, v.chunkId, v.chunkSize, bytesToSend);
+        memcpy(v.data, &data[v.chunkId * MAX_VIZ_IMAGE_CHUNK_SIZE], v.chunkSize);
+        SendMessage( GET_MESSAGE_ID(VizImageChunk), &v );
+        
+        ++v.chunkId;
+      }
+    }
     
   } // namespace Cozmo
 } // namespace Anki

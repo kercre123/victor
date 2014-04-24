@@ -72,7 +72,7 @@ namespace Anki {
       struct DetectFiducialMarkersParameters
       {
         bool isInitialized;
-        HAL::CameraMode detectionResolution;
+        Vision::CameraResolution detectionResolution;
         s32 detectionWidth;
         s32 detectionHeight;
         s32 scaleImage_thresholdMultiplier;
@@ -104,7 +104,7 @@ namespace Anki {
       struct TrackerParameters
       {
         bool isInitialized;
-        HAL::CameraMode trackingResolution;
+        Vision::CameraResolution trackingResolution;
         s32 trackingImageHeight;
         s32 trackingImageWidth;
         

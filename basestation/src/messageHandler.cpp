@@ -10,6 +10,8 @@
  * Copyright: Anki, Inc. 2014
  **/
 
+#include "anki/vision/CameraSettings.h"
+#include "anki/vision/basestation/imageIO.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "messageHandler.h"
@@ -68,14 +70,14 @@ namespace Anki {
       
       if(robotMgr_ == NULL) {
         PRINT_NAMED_ERROR("MessageHandler.NullRobotManager",
-                          "RobotManager NULL when MessageHandler::ProcessPacket() called.");
+                          "RobotManager NULL when MessageHandler::ProcessPacket() called.\n");
       }
       else {
         const u8 msgID = packet.data[0];
         
         if(lookupTable_[msgID].size != packet.dataLen-1) {
           PRINT_NAMED_ERROR("MessageHandler.MessageBufferWrongSize",
-                            "Buffer's size does not match expected size for this message ID. (Msg %d, expected %d, recvd %d)",
+                            "Buffer's size does not match expected size for this message ID. (Msg %d, expected %d, recvd %d)\n",
                             msgID,
                             lookupTable_[msgID].size,
                             packet.dataLen - 1
@@ -87,7 +89,7 @@ namespace Anki {
           Robot* robot = robotMgr_->GetRobotByID(robotID);
           if(robot == NULL) {
             PRINT_NAMED_ERROR("MessageFromInvalidRobotSource",
-                              "Message %d received from invalid robot source ID %d.",
+                              "Message %d received from invalid robot source ID %d.\n",
                               msgID, robotID);
           }
           else {
@@ -255,6 +257,55 @@ namespace Anki {
       return RESULT_OK;
     }
     
+
+    
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageImageChunk const& msg)
+    {
+      static u8 imgID = 0;
+      static u32 totalImgSize = 0;
+      static u8 data[ 320*240 ];
+      static u32 dataSize = 0;
+      static u32 width;
+      static u32 height;
+
+      //PRINT_INFO("Img %d, chunk %d, size %d, res %d, dataSize %d\n",
+      //           msg.imageId, msg.chunkId, msg.chunkSize, msg.resolution, dataSize);
+      
+      // Check that resolution is supported
+      if (msg.resolution != Vision::CAMERA_RES_QVGA &&
+          msg.resolution != Vision::CAMERA_RES_QQVGA &&
+          msg.resolution != Vision::CAMERA_RES_QQQVGA &&
+          msg.resolution != Vision::CAMERA_RES_QQQQVGA) {
+        return RESULT_FAIL;
+      }
+      
+      // If msgID has changed, then start over.
+      if (msg.imageId != imgID) {
+        imgID = msg.imageId;
+        dataSize = 0;
+        width = Vision::CameraResInfo[msg.resolution].width;
+        height = Vision::CameraResInfo[msg.resolution].height;
+        totalImgSize = width * height;
+      }
+      
+      // Msgs are guaranteed to be received in order so just append data to array
+      memcpy(data + dataSize, msg.data.data(), msg.chunkSize);
+      dataSize += msg.chunkSize;
+        
+      // When dataSize matches the expected size, print to file
+      if (dataSize >= totalImgSize) {
+        char imgCaptureFilename[64];
+        snprintf(imgCaptureFilename, sizeof(imgCaptureFilename), "robot%d_img%d.pgm", robot->get_ID(), imgID);
+        PRINT_INFO("Printing image to %s\n", imgCaptureFilename);
+        Vision::WritePGM(imgCaptureFilename, data, width, height);
+        
+        VizManager::getInstance()->SendGreyImage(data, (Vision::CameraResolution)msg.resolution);
+      }
+      
+      
+      return RESULT_OK;
+    }
+    
     
     // STUBS:
     Result MessageHandler::ProcessMessage(Robot* robot, MessageClearPath const&){return RESULT_FAIL;}
@@ -274,6 +325,8 @@ namespace Anki {
     Result MessageHandler::ProcessMessage(Robot* robot, MessageMatCameraCalibration const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageRequestCamCalib const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageAbsLocalizationUpdate const&){return RESULT_FAIL;}
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageHeadAngleUpdate const&){return RESULT_FAIL;}
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageImageRequest const&){return RESULT_FAIL;}
     
   } // namespace Cozmo
 } // namespace Anki

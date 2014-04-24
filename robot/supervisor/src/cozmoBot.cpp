@@ -200,14 +200,6 @@ namespace Anki {
 
         // Process any messages from the basestation
         Messages::ProcessBTLEMessages();
-
-        // Check for any messages from the vision system and pass them along to
-        // the basestation, update the docking controller, etc.
-        Messages::VisionMarker markerMsg;
-        while( Messages::CheckMailbox(markerMsg) )
-        {
-          HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::VisionMarker), &markerMsg);
-        }
         
         /*
         Messages::MatMarkerObserved matMsg;

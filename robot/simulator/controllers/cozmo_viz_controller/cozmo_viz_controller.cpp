@@ -15,6 +15,7 @@
 #include "anki/cozmo/VizStructs.h"
 #include "anki/messaging/shared/UdpServer.h"
 #include "anki/messaging/shared/UdpClient.h"
+#include "anki/vision/CameraSettings.h"
 
 webots::Supervisor vizSupervisor;
 
@@ -22,30 +23,42 @@ webots::Supervisor vizSupervisor;
 namespace Anki {
   namespace Cozmo{
     
-    // TODO: Move the following to VizStructs.cpp?
+
 #define MESSAGE_DEFINITION_MODE MESSAGE_DISPATCH_DEFINITION_MODE
 #include "anki/cozmo/VizMsgDefs.h"
-    
-    typedef struct {
-      u8 priority;
-      u8 size;
-      void (*dispatchFcn)(const u8* buffer);
-    } TableEntry;
+
+    typedef void (*DispatchFcn_t)(const u8* buffer);
     
     const size_t NUM_TABLE_ENTRIES = Anki::Cozmo::NUM_VIZ_MSG_IDS + 1;
-    TableEntry LookupTable_[NUM_TABLE_ENTRIES] = {
-      {0, 0, 0}, // Empty entry for NO_MESSAGE_ID
+    DispatchFcn_t DispatchTable_[NUM_TABLE_ENTRIES] = {
+      0, // Empty entry for NO_MESSAGE_ID
 #undef  MESSAGE_DEFINITION_MODE
-#define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_MODE
+#define MESSAGE_DEFINITION_MODE MESSAGE_DISPATCH_FCN_TABLE_DEFINITION_MODE
 #include "anki/cozmo/VizMsgDefs.h"
-      {0, 0, 0} // Final dummy entry without comma at end
+      0 // Final dummy entry without comma at end
     };
     
+    namespace {
+      // For displaying misc debug data
+      webots::Display* disp;
+      
+      // For displaying images
+      webots::Display* camDisp;
+      
+      // Image reference for display in camDisp
+      webots::ImageRef* camImg = nullptr;
+      
+      // Image message processing
+      u8 imgID = 0;
+      u8 imgData[3*320*240];
+      u32 imgBytes = 0;
+      u32 imgWidth, imgHeight = 0;
+    }
     
-    webots::Display* disp;
     void Init()
     {
       disp = vizSupervisor.getDisplay("cozmo_viz_display");
+      camDisp = vizSupervisor.getDisplay("cozmo_cam_viz_display");
     }
     
 
@@ -121,6 +134,46 @@ namespace Anki {
       
     }
     
+    void ProcessVizImageChunkMessage(const VizImageChunk& msg)
+    {
+      // If this is a new image, then reset everything
+      if (msg.imgId != imgID) {
+        printf("Resetting image (img %d, res %d)\n", msg.imgId, msg.resolution);
+        imgID = msg.imgId;
+        imgBytes = 0;
+        imgWidth = Vision::CameraResInfo[msg.resolution].width;
+        imgHeight = Vision::CameraResInfo[msg.resolution].height;
+      }
+      
+      // Copy chunk into the appropriate location in the imgData array.
+      // Triplicate channels for viewability. (Webots only supports RGB)
+      //printf("Processing chunk %d of size %d\n", msg.chunkId, msg.chunkSize);
+      u8* chunkStart = imgData + 3 * msg.chunkId * MAX_VIZ_IMAGE_CHUNK_SIZE;
+      for(int i=0; i<msg.chunkSize; ++i) {
+        chunkStart[3*i] = msg.data[i];
+        chunkStart[3*i+1] = msg.data[i];
+        chunkStart[3*i+2] = msg.data[i];
+      }
+      
+      // Do we have all the data for this image?
+      imgBytes += msg.chunkSize;
+      if (imgBytes < imgWidth * imgHeight) {
+        return;
+      }
+      
+      // Delete existing image if there is one.
+      if (camImg != nullptr) {
+        camDisp->imageDelete(camImg);
+      }
+      
+      printf("Displaying image %d x %d\n", imgWidth, imgHeight);
+      
+      camImg = camDisp->imageNew(imgWidth, imgHeight, imgData, webots::Display::RGB);
+      camDisp->imagePaste(camImg, 0, 0);
+    };
+  
+    
+    
     // Stubs
     // These messages are handled by cozmo_physics.
     void ProcessVizObjectMessage(const VizObject& msg){};
@@ -140,7 +193,7 @@ using namespace Anki::Cozmo;
 
 int main(int argc, char **argv)
 {
-  const int maxPacketSize = 1024;
+  const int maxPacketSize = MAX_VIZ_MSG_SIZE;
   char data[maxPacketSize];
   int numBytesRecvd;
   
@@ -170,7 +223,8 @@ int main(int argc, char **argv)
         // Messages that are handled in cozmo_viz_controller
         case VizSetLabel_ID:
         case VizDockingErrorSignal_ID:
-          (*Anki::Cozmo::LookupTable_[msgID].dispatchFcn)((unsigned char*)(data + 1));
+        case VizImageChunk_ID:
+          (*Anki::Cozmo::DispatchTable_[msgID])((unsigned char*)(data + 1));
           break;
         // All other messages are forwarded to cozmo_physics plugin
         default:

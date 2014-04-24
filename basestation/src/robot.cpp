@@ -12,6 +12,7 @@
 #include "anki/cozmo/basestation/messages.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/common/basestation/general.h"
+#include "anki/vision/CameraSettings.h"
 
 // TODO: This is shared between basestation and robot and should be moved up
 #include "anki/cozmo/robot/cozmoConfig.h"
@@ -137,12 +138,14 @@ namespace Anki {
     void Robot::set_headAngle(const Radians& angle)
     {
       if(angle < MIN_HEAD_ANGLE) {
-        fprintf(stdout, "Requested head angle (%f rad) too small. Clipping.\n", angle.ToFloat());
+        PRINT_NAMED_WARNING("Robot.HeadAngleOOB", "Requested head angle (%f rad) too small. Clipping.\n", angle.ToFloat());
         currentHeadAngle = MIN_HEAD_ANGLE;
+        SendHeadAngleUpdate();
       }
       else if(angle > MAX_HEAD_ANGLE) {
-        fprintf(stdout, "Requested head angle (%f rad) too large. Clipping.\n", angle.ToFloat());
+        PRINT_NAMED_WARNING("Robot.HeadAngleOOB", "Requested head angle (%f rad) too large. Clipping.\n", angle.ToFloat());
         currentHeadAngle = MAX_HEAD_ANGLE;
+        SendHeadAngleUpdate();
       }
       else {
         currentHeadAngle = angle;
@@ -485,6 +488,23 @@ namespace Anki {
       return msgHandler_->SendMessage(ID_, m);
     }
     
+    Result Robot::SendHeadAngleUpdate() const
+    {
+      MessageHeadAngleUpdate m;
+      
+      m.newAngle = currentHeadAngle.ToFloat();
+      
+      return msgHandler_->SendMessage(ID_, m);
+    }
+
+    Result Robot::SendImageRequest() const
+    {
+      MessageImageRequest m;
+      
+      m.resolution = Vision::CAMERA_RES_QQVGA;
+      
+      return msgHandler_->SendMessage(ID_, m);
+    }
     
   } // namespace Cozmo
 } // namespace Anki

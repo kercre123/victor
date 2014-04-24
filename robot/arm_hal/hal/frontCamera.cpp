@@ -34,15 +34,6 @@ namespace Anki
       const u32 DCMI_TIMEOUT_MAX = 10000;
       const u8 I2C_ADDR = 0x42;
       
-      const u32 RESOLUTIONS[CAMERA_MODE_COUNT][2] = 
-      {
-        {640, 480},
-        {320, 240},
-        {160, 120},
-        {80, 60},
-        {40, 30}
-      };
-      
       const u8 OV7725_VGA[][2] =
       {       
         0x12, 0x80,
@@ -412,7 +403,7 @@ namespace Anki
         OV7725Init();
       }
       
-      void CameraGetFrame(u8* frame, CameraMode mode, f32 exposure, bool enableLight)
+      void CameraGetFrame(u8* frame, Vision::CameraResolution res, f32 exposure, bool enableLight)
       {
         // Update the exposure
         u16 exp = (u16)(exposure * 0xFF);
@@ -439,8 +430,8 @@ namespace Anki
         
         // Copy the Y-channel into frame
 
-        u32 xRes = RESOLUTIONS[mode][0];
-        u32 yRes = RESOLUTIONS[mode][1];
+        u32 xRes = Vision::CameraResInfo[res].width;
+        u32 yRes = Vision::CameraResInfo[res].height;
         
         u32 xSkip = 320 / xRes;
         u32 ySkip = 240 / yRes;
