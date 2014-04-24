@@ -635,7 +635,7 @@ namespace Anki
               numBytesToCopy);
 
             nextRawBuffer.curDataLength += numBytesToCopy;
-            nextRawBuffer.timeReceived = GetTimeF32();
+            nextRawBuffer.timeReceived = GetTimeF64();
 
             callingObject->rawMessageQueue.Push(nextRawBuffer);
 

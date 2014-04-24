@@ -40,7 +40,7 @@ static u8 scratchBuffer[scratchSize];
 static const s32 outputFilenamePatternLength = 1024;
 static char outputFilenamePattern[outputFilenamePatternLength] = "C:/Users/Pete/Box Sync/Cozmo SE/systemTestImages/cozmo_date%04d_%02d_%02d_time%02d_%02d_%02d_frame%d.%s";
 
-static f32 lastTime = 0;
+static f64 lastTime = 0;
 
 static cv::Mat lastImage;
 static cv::Mat largeLastImage;
@@ -108,10 +108,10 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
       if(benchmarkTimes[0] > 0.0f) {
         char benchmarkBuffer[1024];
 
-        static f32 lastTime;
-        const f32 curTime = GetTimeF32();
-        const f32 receivedDelta = curTime - lastTime;
-        lastTime = GetTimeF32();
+        static f64 lastTime;
+        const f64 curTime = GetTimeF64();
+        const f64 receivedDelta = curTime - lastTime;
+        lastTime = GetTimeF64();
 
         snprintf(benchmarkBuffer, 1024, "Total:%0.1ffps Algorithms:%0.1ffps   GrayvalueError:%d %f", 1.0f/benchmarkTimes[1], 1.0f/benchmarkTimes[0], lastMeanError, lastPercentMatchingGrayvalues);
 
