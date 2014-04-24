@@ -148,6 +148,7 @@ namespace Anki {
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
         convergenceTolerance_angle    = DEG_TO_RAD(0.5); 
         convergenceTolerance_distance = 0.5f; // mm
+        numSamplingRegions            = 3; 
 #else
         convergenceTolerance      = 1.f;
 #endif

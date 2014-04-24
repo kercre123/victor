@@ -54,6 +54,11 @@ CameraCapture('processFcn', @trackHelper, ...
             marker = simpleDetector(img);
             
             if isempty(marker) || ~marker{1}.isValid
+%                 if size(img,3)>1
+%                     img = img(:,:,[3 2 1]);
+%                 end
+                set(h_img, 'CData', img);
+                
                 return
             end
             
@@ -98,11 +103,22 @@ CameraCapture('processFcn', @trackHelper, ...
             %    'UseNormalization', true, 'TrackingResolution', Downsample);
 
             if strcmp(TrackerType, 'planar6dof_embedded')
-                initialSamples = mexPlanar6dofTrack(rgb2gray(im2uint8(imgFiltered)), corners, ...
-                    CalibrationMatrix(1,1), CalibrationMatrix(2,2), ...
-                    CalibrationMatrix(1,3), CalibrationMatrix(2,3), ...
-                    MarkerWidth, 1+TemplateRegionPaddingFraction, ...
-                    3, NumSamples);
+                try
+                    initialSamples = mexPlanar6dofTrack(rgb2gray(im2uint8(imgFiltered)), corners, ...
+                        CalibrationMatrix(1,1), CalibrationMatrix(2,2), ...
+                        CalibrationMatrix(1,3), CalibrationMatrix(2,3), ...
+                        MarkerWidth, 1+TemplateRegionPaddingFraction, ...
+                        3, NumSamples, 5);
+                catch E
+                    warning(E.message);
+                    return;
+                end
+                
+                if isempty(initialSamples)
+                    error('No initialSamples found.');
+                else
+                    fprintf('%d initial samples.\n', size(initialSamples,1));
+                end
                 LKtracker = 0;
             else
                 LKtracker = LucasKanadeTracker(imgFiltered, corners, ...
@@ -205,9 +221,9 @@ CameraCapture('processFcn', @trackHelper, ...
                 return
             end
             
-            if size(img,3)>1
-                img = img(:,:,[3 2 1]);
-            end
+%             if size(img,3)>1
+%                 img = img(:,:,[3 2 1]);
+%             end
             set(h_img, 'CData', imgFiltered);
             
             if strncmp(TrackerType, 'planar6dof', 10)
