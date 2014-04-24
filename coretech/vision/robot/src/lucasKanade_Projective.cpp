@@ -96,13 +96,13 @@ namespace Anki
           RESULT_FAIL_INVALID_OBJECT, "LucasKanadeTracker_Projective::IterativelyRefineTrack", "nextImage is not valid");
 
         AnkiConditionalErrorAndReturnValue(maxIterations > 0 && maxIterations < 1000,
-          RESULT_FAIL_INVALID_PARAMETERS, "LucasKanadeTracker_Projective::IterativelyRefineTrack", "maxIterations must be greater than zero and less than 1000");
+          RESULT_FAIL_INVALID_PARAMETER, "LucasKanadeTracker_Projective::IterativelyRefineTrack", "maxIterations must be greater than zero and less than 1000");
 
         AnkiConditionalErrorAndReturnValue(whichScale >= 0 && whichScale < this->numPyramidLevels,
-          RESULT_FAIL_INVALID_PARAMETERS, "LucasKanadeTracker_Projective::IterativelyRefineTrack", "whichScale is invalid");
+          RESULT_FAIL_INVALID_PARAMETER, "LucasKanadeTracker_Projective::IterativelyRefineTrack", "whichScale is invalid");
 
         AnkiConditionalErrorAndReturnValue(convergenceTolerance > 0.0f,
-          RESULT_FAIL_INVALID_PARAMETERS, "LucasKanadeTracker_Projective::IterativelyRefineTrack", "convergenceTolerance must be greater than zero");
+          RESULT_FAIL_INVALID_PARAMETER, "LucasKanadeTracker_Projective::IterativelyRefineTrack", "convergenceTolerance must be greater than zero");
 
         AnkiConditionalErrorAndReturnValue(nextImageHeight == templateImageHeight && nextImageWidth == templateImageWidth,
           RESULT_FAIL_INVALID_SIZE, "LucasKanadeTracker_Projective::IterativelyRefineTrack", "nextImage must be the same size as the template");

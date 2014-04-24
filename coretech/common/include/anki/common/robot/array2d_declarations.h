@@ -54,19 +54,18 @@ namespace Anki
       // Constructor for a Array, pointing to user-allocated MemoryStack. This is the preferred
       // method for creating a new Array.
       //
-      // Flags: :Buffer.isFullyAllocated doesn't do anything
+      // Flags::Buffer.isFullyAllocated doesn't do anything
       Array(const s32 numRows, const s32 numCols, MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false,false));
 
       // Constructor for a Array, pointing to user-allocated data. This type of array is more
       // restrictive than most matrix libraries. For example, it may make it hard to convert from
-      // OpenCV: :Mat to Array, though the reverse is trivial.
+      // OpenCV::Mat to Array, though the reverse is trivial.
       //
       // If following are true, then the contents of data will not be modified, and it will work as
       // a normal buffer without extra zeros as stride padding:
       // 1. (numCols*sizeof(Type)) % MEMORY_ALIGNMENT == 0
       // 2. reinterpret_cast<size_t>(data) % MEMORY_ALIGNMENT == 0
-      // 3. flags.get_useBoundaryFillPatterns == false
-      // 4. numRows*numCols*sizeof(Type) <= dataLength
+      // 3. numRows*numCols*sizeof(Type) <= dataLength
       //
       // If Flags::Buffer.isFullyAllocated == true, then the input data buffer's stride must be a
       // simple multiple
@@ -123,8 +122,9 @@ namespace Anki
       ConstArraySliceExpression<Type> Transpose() const;
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
-      // Returns a templated cv::Mat_ that shares the same buffer with this Array. No data is copied.
+      // Returns a templated cv::Mat_ that shares the same buffer with this Array. No data should be copied (though with OpenCV, it's hard to tell).
       cv::Mat_<Type>& get_CvMat_();
+      const cv::Mat_<Type>& get_CvMat_() const;
 
       s32 Set(const cv::Mat_<Type> &in);
 
@@ -142,20 +142,16 @@ namespace Anki
       Result PrintAlternate(const char * const variableName = "Array", const s32 version=2, const s32 minY = 0, const s32 maxY = 0x7FFFFFE, const s32 minX = 0, const s32 maxX = 0x7FFFFFE) const;
 
       // Checks the basic parameters of this Array, and if it is allocated.
-      //
-      // If the Array was constructed with Flags::Buffer::USE_BOUNDARY_FILL_PATTERNS, then it also
-      // checks for out of bounds writes (via fill patterns at the beginning and end).
       bool IsValid() const;
 
       // Resize will use MemoryStack::Reallocate() to change the Array's size. It only works if this
       // Array was the last thing allocated. The reallocated memory will not be cleared
       //
-      //
       // WARNING:
       // This will not update any references to the memory, you must update all references manually.
       Result Resize(const s32 numRows, const s32 numCols, MemoryStack &memory);
 
-      // Set every element in the Array to zero, including the stride padding, but not including the optional fill patterns (if they exist).
+      // Set every element in the Array to zero, including the stride padding.
       // Returns the number of bytes set to zero
       s32 SetZero();
 
@@ -178,11 +174,6 @@ namespace Anki
       template<typename InType> s32 SetCast(const Array<InType> &in);
       template<typename InType> s32 SetCast(const InType * const values, const s32 numValues);
 
-      // TODO: implement these?
-      //template<typename FindType1, typename FindType2> s32 Set(const Find<FindType1, FindType2> &find, const Type value);
-      //template<typename FindType1, typename FindType2> s32 Set(const Find<FindType1, FindType2> &find, const Array<Type> &in, bool useFindForInput=false);
-      //template<typename FindType1, typename FindType2> s32 Set(const Find<FindType1, FindType2> &find, const ConstArraySlice<Type> &in);
-
       // This is a shallow copy. There's no reference counting. Updating the data of one array will
       // update that of others (because they point to the same location in memory).
       // However, Resizing or other operations on one array won't update the others.
@@ -194,25 +185,17 @@ namespace Anki
       // Get the stride, which is the number of bytes between an element at (n,m) and an element at (n+1,m)
       s32 get_stride() const;
 
-      // Get the stride, without the optional fill pattern. This is the number of bytes on a
-      // horizontal line that can safely be written to. If this array was created without fill
-      // patterns, it returns the same value as get_stride().
-      s32 get_strideWithoutFillPatterns() const;
-
       // Return the flags that were used when this object was constructed.
       Flags::Buffer get_flags() const;
 
+      // Equivalent to Pointer(0,0)
+      //
       // These are for very low-level access to the buffers. Probably you want to be using one of
       // the Pointer() accessor methods instead of these.
       void* get_rawDataPointer();
       const void* get_rawDataPointer() const;
 
     protected:
-      // This pattern will be put twice at the beginning and end of each line. (Twice matches up
-      // nicely for 16-byte memory alignment).
-      static const u32 FILL_PATTERN_START = 0XFF05FF06;
-      static const u32 FILL_PATTERN_END = 0X07FF08FF;
-
       static const s32 HEADER_LENGTH = 8;
       static const s32 FOOTER_LENGTH = 8;
 
@@ -222,16 +205,20 @@ namespace Anki
 
       Type * data;
 
-      // To enforce alignment, rawDataPointer may be slightly before Type * data.
-      // If the inputted data buffer was from malloc, this is the pointer that
-      // should be used to free.
-      void * rawDataPointer;
-
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
       // WARNING:
       // If the OpenCV API changes, this could cause OpenCV errors even where no OpenCV is used.
       // This will probably be easily fixable, but be aware.
-      cv::Mat_<Type> cvMatMirror;
+      //
+      // WARNING: Don't access this directly, even from within the Array<> class. Use get_CvMat_()
+      //
+      // NOTE: cvMatMirror is mutable, because it should really mirror this Array<>, but due to
+      //       complexity in OpenCV, it may need to be updated at arbitrary times to actually mirror
+      //       this Array<>.
+      mutable cv::Mat_<Type> cvMatMirror;
+
+      // gets called automatically by get_CvMat_()
+      void UpdateCvMatMirror(const Array<Type> &in) const;
 #endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
       // Basic allocation method

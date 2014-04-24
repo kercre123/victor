@@ -1885,7 +1885,7 @@ GTEST_TEST(CoreTech_Common, Find_Evaluate1D)
 
     Array<s32> indexes;
 
-    ASSERT_TRUE(findB.Evaluate(indexes, ms) == RESULT_FAIL_INVALID_PARAMETERS);
+    ASSERT_TRUE(findB.Evaluate(indexes, ms) == RESULT_FAIL_INVALID_PARAMETER);
   } // PUSH_MEMORY_STACK(ms)
 
   GTEST_RETURN_HERE;
@@ -1936,7 +1936,7 @@ GTEST_TEST(CoreTech_Common, Find_Evaluate2D)
   Array<s32> yIndexes;
   Array<s32> xIndexes;
 
-  ASSERT_TRUE(find.Evaluate(yIndexes, ms) == RESULT_FAIL_INVALID_PARAMETERS);
+  ASSERT_TRUE(find.Evaluate(yIndexes, ms) == RESULT_FAIL_INVALID_PARAMETER);
   ASSERT_TRUE(find.Evaluate(yIndexes, xIndexes, ms) == RESULT_OK);
 
   ASSERT_TRUE(yIndexes.get_size(0) == 1);
@@ -3107,69 +3107,6 @@ GTEST_TEST(CoreTech_Common, MemoryStackAlignment)
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Common, MemoryStackAlignment)
 
-GTEST_TEST(CoreTech_Common, ArrayFillPattern)
-{
-  const s32 width = 6, height = 10;
-  const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 1000);
-  ASSERT_TRUE(offchipBuffer != NULL);
-
-  void *alignedBuffer = reinterpret_cast<void*>( RoundUp(reinterpret_cast<size_t>(offchipBuffer), MEMORY_ALIGNMENT) );
-
-  MemoryStack ms(alignedBuffer, numBytes-MEMORY_ALIGNMENT);
-
-  // Create a matrix, and manually set a few values
-  Array<s16> simpleArray(height, width, ms, Flags::Buffer(true,true,false));
-  ASSERT_TRUE(simpleArray.get_rawDataPointer() != NULL);
-
-  ASSERT_TRUE(simpleArray.IsValid());
-
-  char * curDataPointer = reinterpret_cast<char*>(simpleArray.get_rawDataPointer());
-
-  // Unused space
-  for(s32 i=0; i<8; i++) {
-    ASSERT_TRUE(simpleArray.IsValid());
-    (*curDataPointer)++;
-    ASSERT_TRUE(simpleArray.IsValid());
-    (*curDataPointer)--;
-
-    curDataPointer++;
-  }
-
-  for(s32 y=0; y<height; y++) {
-    // Header
-    for(s32 x=0; x<8; x++) {
-      ASSERT_TRUE(simpleArray.IsValid());
-      (*curDataPointer)++;
-      ASSERT_FALSE(simpleArray.IsValid());
-      (*curDataPointer)--;
-
-      curDataPointer++;
-    }
-
-    // Data
-    for(s32 x=8; x<24; x++) {
-      ASSERT_TRUE(simpleArray.IsValid());
-      (*curDataPointer)++;
-      ASSERT_TRUE(simpleArray.IsValid());
-      (*curDataPointer)--;
-
-      curDataPointer++;
-    }
-
-    // Footer
-    for(s32 x=24; x<32; x++) {
-      ASSERT_TRUE(simpleArray.IsValid());
-      (*curDataPointer)++;
-      ASSERT_FALSE(simpleArray.IsValid());
-      (*curDataPointer)--;
-
-      curDataPointer++;
-    }
-  }
-
-  GTEST_RETURN_HERE;
-} // GTEST_TEST(CoreTech_Common, ArrayFillPattern)
-
 // This test requires a stopwatch, and takes about ten seconds to do manually
 //#define TEST_BENCHMARKING
 #ifdef TEST_BENCHMARKING
@@ -3348,7 +3285,6 @@ s32 RUN_ALL_COMMON_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   CALL_GTEST_TEST(CoreTech_Common, ArraySpecifiedClass);
   CALL_GTEST_TEST(CoreTech_Common, ArrayAlignment1);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStackAlignment);
-  CALL_GTEST_TEST(CoreTech_Common, ArrayFillPattern);
 
 #ifdef TEST_BENCHMARKING
   CALL_GTEST_TEST(CoreTech_Common, Benchmarking);

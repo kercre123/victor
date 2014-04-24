@@ -418,13 +418,13 @@ namespace Anki
           RESULT_FAIL_INVALID_OBJECT, "LucasKanadeTracker_Slow::IterativelyRefineTrack", "nextImage is not valid");
 
         AnkiConditionalErrorAndReturnValue(maxIterations > 0 && maxIterations < 1000,
-          RESULT_FAIL_INVALID_PARAMETERS, "LucasKanadeTracker_Slow::IterativelyRefineTrack", "maxIterations must be greater than zero and less than 1000");
+          RESULT_FAIL_INVALID_PARAMETER, "LucasKanadeTracker_Slow::IterativelyRefineTrack", "maxIterations must be greater than zero and less than 1000");
 
         AnkiConditionalErrorAndReturnValue(whichScale >= 0 && whichScale < this->numPyramidLevels,
-          RESULT_FAIL_INVALID_PARAMETERS, "LucasKanadeTracker_Slow::IterativelyRefineTrack", "whichScale is invalid");
+          RESULT_FAIL_INVALID_PARAMETER, "LucasKanadeTracker_Slow::IterativelyRefineTrack", "whichScale is invalid");
 
         AnkiConditionalErrorAndReturnValue(convergenceTolerance > 0.0f,
-          RESULT_FAIL_INVALID_PARAMETERS, "LucasKanadeTracker_Slow::IterativelyRefineTrack", "convergenceTolerance must be greater than zero");
+          RESULT_FAIL_INVALID_PARAMETER, "LucasKanadeTracker_Slow::IterativelyRefineTrack", "convergenceTolerance must be greater than zero");
 
         const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / nextImage.get_size(1) ;
         const f32 initialImageScaleF32 = static_cast<f32>(initialImageScaleS32); // TODO: check that this is integer

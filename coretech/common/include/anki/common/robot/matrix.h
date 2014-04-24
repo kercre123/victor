@@ -666,7 +666,7 @@ namespace Anki
           RESULT_FAIL_INVALID_OBJECT, "Sort", "Input array is invalid");
 
         AnkiConditionalErrorAndReturnValue(sortWhichDimension==0 || sortWhichDimension==1,
-          RESULT_FAIL_INVALID_PARAMETERS, "Sort", "sortWhichDimension must be zero or one");
+          RESULT_FAIL_INVALID_PARAMETER, "Sort", "sortWhichDimension must be zero or one");
 
         if(sortWhichDimension == 0) {
           // TODO: This columnwise sorting could be sped up, with smarter array indexing.
@@ -754,7 +754,7 @@ namespace Anki
           RESULT_FAIL_INVALID_OBJECT, "Sort", "indexes array is invalid");
 
         AnkiConditionalErrorAndReturnValue(sortWhichDimension==0 || sortWhichDimension==1,
-          RESULT_FAIL_INVALID_PARAMETERS, "Sort", "sortWhichDimension must be zero or one");
+          RESULT_FAIL_INVALID_PARAMETER, "Sort", "sortWhichDimension must be zero or one");
 
         AnkiConditionalErrorAndReturnValue(indexes.get_size(0) == arrHeight && indexes.get_size(1) == arrWidth,
           RESULT_FAIL_INVALID_SIZE, "Sort", "indexes must be the same size as arr");

@@ -145,7 +145,10 @@ Result Serial::Read(void * buffer, s32 bufferLength, s32 &bytesRead)
   if(bufferLength < bytesRead)
     bytesRead = bufferLength;
 
-  const bool fileRead = ReadFile(comPortHandle, buffer, bytesRead, &bytesRead, &readEventHandle);
+  DWORD bytesReadWord;
+  const bool fileRead = ReadFile(comPortHandle, buffer, bytesRead, &bytesReadWord, &readEventHandle);
+
+  bytesRead = bytesReadWord;
 
   AnkiConditionalErrorAndReturnValue(fileRead,
     RESULT_FAIL, "Serial::Open", "Could not read from port");
@@ -204,7 +207,7 @@ Result Socket::Open(
 Result Socket::Close()
 {
   if(socketHandle)
-    close(socketHandle);
+    closesocket(socketHandle);
 
   return RESULT_OK;
 }
@@ -222,13 +225,13 @@ Result Socket::Read(void * buffer, s32 bufferLength, s32 &bytesRead)
 #else // #ifdef _MSC_VER
 
 Socket::Socket()
-: isOpen(false), socketHandle(0)
+  : isOpen(false), socketHandle(0)
 {
 }
 
 Result Socket::Open(
-                    const char * ipAddress,
-                    const s32 port)
+  const char * ipAddress,
+  const s32 port)
 {
   struct sockaddr_in target; //Socket address information
 
