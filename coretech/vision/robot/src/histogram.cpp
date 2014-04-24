@@ -13,111 +13,27 @@ namespace Anki
 {
   namespace Embedded
   {
-    static void UpdateHistogramStatistics_UnsignedInt(Histogram &histogram)
-    {
-      const s32 numBins = histogram.get_numBins();
-
-      const s32 * restrict pHistogram = histogram.counts.Pointer(0);
-
-      histogram.sum = 0;
-      for(s32 i=0; i<numBins; i++) {
-        histogram.sum += i * pHistogram[i];
-      }
-
-      histogram.mean = static_cast<f32>(histogram.sum) / static_cast<f32>(histogram.numElements);
-
-      f32 sumOfSquaredDifferences = 0;
-      for(s32 i=0; i<numBins; i++) {
-        const f32 diff = static_cast<f32>(i) - histogram.mean;
-        sumOfSquaredDifferences += static_cast<f32>(pHistogram[i]) * (diff*diff);
-      }
-
-      // Unbiased standard deviation
-      histogram.standardDeviation = sqrtf( sumOfSquaredDifferences / static_cast<f32>(histogram.numElements - 1) );
-
-      for(s32 i=0; i<numBins; i++) {
-        if(pHistogram[i] > 0) {
-          histogram.min = i;
-          break;
-        };
-      }
-
-      for(s32 i=numBins-1; i>=0; i--) {
-        if(pHistogram[i] > 0) {
-          histogram.max = i;
-          break;
-        };
-      }
-    }
-
-    Histogram::Histogram()
+    IntegerCounts::IntegerCounts()
       : counts(FixedLengthList<s32>()), numElements(-1)
     {
     }
 
-    Histogram::Histogram(const s32 numBins, MemoryStack &memory)
-      : counts(FixedLengthList<s32>(numBins, memory)), numElements(0)
+    IntegerCounts::IntegerCounts(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const s32 yIncrement, const s32 xIncrement, MemoryStack &memory)
+      : counts(FixedLengthList<s32>()), numElements(-1)
     {
-      this->counts.set_size(numBins);
-    }
-
-    void Histogram::Reset()
-    {
-      this->counts.SetZero();
-      this->max = 0;
-      this->mean = 0;
-      this->min = 0;
-      this->numElements = 0;
-      this->standardDeviation = 0;
-      this->sum = 0;
-    }
-
-    Result Histogram::Set(const Histogram &in)
-    {
-      AnkiConditionalErrorAndReturnValue(in.counts.get_size() == this->counts.get_size(),
-        RESULT_FAIL, "Histogram::Set", "counts must be allocated");
-
-      this->counts.Set(in.counts);
-      this->max = in.max;
-      this->mean = in.mean;
-      this->min = in.min;
-      this->numElements = in.numElements;
-      this->standardDeviation = in.standardDeviation;
-      this->sum = in.sum;
-
-      return RESULT_OK;
-    }
-
-    bool Histogram::IsValid() const
-    {
-      return counts.IsValid();
-    }
-
-    s32 Histogram::get_numBins() const
-    {
-      return this->counts.get_size();
-    }
-
-    Histogram ComputeHistogram(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const s32 yIncrement, const s32 xIncrement, MemoryStack &memory)
-    {
-      Histogram histogram(256, memory);
-
-      ComputeHistogram(image, imageRegionOfInterest, yIncrement, xIncrement, histogram);
-
-      return histogram;
-    }
-
-    Result ComputeHistogram(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const s32 yIncrement, const s32 xIncrement, Histogram &histogram)
-    {
-      AnkiConditionalErrorAndReturnValue(histogram.get_numBins() == 256,
-        RESULT_FAIL, "ComputeHistogram", "Wrong number of bins");
-
       const s32 imageHeight = image.get_size(0);
       const s32 imageWidth = image.get_size(1);
 
-      histogram.Reset();
+      this->counts = FixedLengthList<s32>(256, memory);
+      this->counts.set_size(this->counts.get_maximumSize());
 
-      s32 * restrict pHistogram = histogram.counts.Pointer(0);
+      AnkiConditionalErrorAndReturn(this->counts.IsValid(),
+        "IntegerCounts::IntegerCounts", "Out of memory");
+
+      this->counts.set_size(this->counts.get_maximumSize());
+      this->counts.SetZero();
+
+      s32 * restrict pCounts = this->counts.Pointer(0);
 
       const Rectangle<s32> imageRegionOfInterestClipped(
         MAX(0, MIN(imageWidth-1, imageRegionOfInterest.left)),
@@ -125,51 +41,118 @@ namespace Anki
         MAX(0, MIN(imageHeight-1, imageRegionOfInterest.top)),
         MAX(0, MIN(imageHeight-1, imageRegionOfInterest.bottom)));
 
-      histogram.numElements = 0;
+      this->numElements = 0;
 
       for(s32 y=imageRegionOfInterestClipped.top; y<=imageRegionOfInterestClipped.bottom; y+=yIncrement) {
         const u8 * restrict pImage = image.Pointer(y,0);
 
         for(s32 x=imageRegionOfInterestClipped.left; x<=imageRegionOfInterestClipped.right; x+=xIncrement) {
           const u8 curImage = pImage[x];
-          pHistogram[curImage]++;
-          histogram.numElements++;
+          pCounts[curImage]++;
+          this->numElements++;
         }
       }
 
       // TODO: fix for speed
       /*const s32 numY = ((imageRegionOfInterest.bottom - imageRegionOfInterest.top) / yIncrement) + 1;
       const s32 numX = ((imageRegionOfInterest.right - imageRegionOfInterest.left) / xIncrement) + 1;
-      histogram.numElements = numY * numX;
+      this->numElements = numY * numX;
 
-      printf("%d %d", histogram.numElements, numPoints);*/
-
-      UpdateHistogramStatistics_UnsignedInt(histogram);
-
-      return RESULT_OK;
+      printf("%d %d", this->numElements, numPoints);*/
     }
 
-    s32 ComputePercentile(const Histogram &histogram, const f32 percentile)
+    s32 IntegerCounts::ComputePercentile(const f32 percentile) const
     {
       // TODO: there may be a boundary error in this function
 
       s32 binIndex = 0;
       s32 count = 0;
 
-      const s32 numBins = histogram.get_numBins();
+      const s32 numBins = this->get_numBins();
 
-      const s32 * restrict pHistogram = histogram.counts.Pointer(0);
+      const s32 * restrict pCounts = this->counts.Pointer(0);
 
-      const s32 numBelow = Round<s32>(static_cast<f32>(histogram.numElements) * percentile);
+      const s32 numBelow = Round<s32>(static_cast<f32>(this->numElements) * percentile);
 
-      count += pHistogram[0];
+      count += pCounts[0];
 
       while(count < numBelow && binIndex < (numBins-1)) {
         binIndex++;
-        count += pHistogram[binIndex];
+        count += pCounts[binIndex];
       }
 
       return binIndex;
+    }
+
+    IntegerCounts::Statistics IntegerCounts::ComputeStatistics() const
+    {
+      IntegerCounts::Statistics statistics;
+
+      statistics.isValid = false;
+
+      statistics.numElements = this->numElements;
+
+      const s32 numBins = this->get_numBins();
+
+      const s32 * restrict pCounts = this->counts.Pointer(0);
+
+      statistics.sum = 0;
+      for(s32 i=0; i<numBins; i++) {
+        statistics.sum += i * pCounts[i];
+      }
+
+      statistics.mean = static_cast<f32>(statistics.sum) / static_cast<f32>(this->numElements);
+
+      f32 sumOfSquaredDifferences = 0;
+      for(s32 i=0; i<numBins; i++) {
+        const f32 diff = static_cast<f32>(i) - statistics.mean;
+        sumOfSquaredDifferences += static_cast<f32>(pCounts[i]) * (diff*diff);
+      }
+
+      // Unbiased standard deviation
+      statistics.standardDeviation = sqrtf( sumOfSquaredDifferences / static_cast<f32>(this->numElements - 1) );
+
+      for(s32 i=0; i<numBins; i++) {
+        if(pCounts[i] > 0) {
+          statistics.min = i;
+          break;
+        };
+      }
+
+      for(s32 i=numBins-1; i>=0; i--) {
+        if(pCounts[i] > 0) {
+          statistics.max = i;
+          break;
+        };
+      }
+
+      statistics.isValid = true;
+
+      return statistics;
+    }
+
+    Result IntegerCounts::Set(const IntegerCounts &in)
+    {
+      AnkiConditionalErrorAndReturnValue(in.counts.get_size() == this->counts.get_size(),
+        RESULT_FAIL, "Histogram::Set", "counts must be allocated");
+
+      this->counts.Set(in.counts);
+      this->numElements = in.numElements;
+
+      return RESULT_OK;
+    }
+
+    bool IntegerCounts::IsValid() const
+    {
+      if(numElements < 0)
+        return false;
+
+      return counts.IsValid();
+    }
+
+    s32 IntegerCounts::get_numBins() const
+    {
+      return this->counts.get_size();
     }
   } // namespace Embedded
 } // namespace Anki
