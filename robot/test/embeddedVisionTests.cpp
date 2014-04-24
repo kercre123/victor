@@ -2658,7 +2658,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
       ASSERT_TRUE(markers[iMarker].isValid);
       ASSERT_TRUE(markers[iMarker].markerType == markerTypes_groundTruth[iMarker]);
       for(s32 iCorner=0; iCorner<4; iCorner++) {
-        ASSERT_TRUE(markers[iMarker].corners[iCorner] == Point<s16>(corners_groundTruth[iMarker][iCorner][0], corners_groundTruth[iMarker][iCorner][1]));
+        ASSERT_TRUE(markers[iMarker].corners[iCorner] == Point<f32>(corners_groundTruth[iMarker][iCorner][0], corners_groundTruth[iMarker][iCorner][1]));
       }
     }
   } else {
