@@ -1257,7 +1257,7 @@ namespace Anki {
                                VisionMemory::onchipScratch_, Flags::Buffer(false,false,false));
 
       HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
-                          captureResolution_, 0.1f, false);
+                          captureResolution_, exposureMilliseconds, false);
 
       ComputeBestCameraParameters(
             grayscaleImage,
@@ -1271,7 +1271,7 @@ namespace Anki {
       DebugStream::SendBinaryImage(grayscaleImage, "Binary Robot Image", tracker_, trackerParameters_, VisionMemory::ccmScratch_, VisionMemory::onchipScratch_, VisionMemory::offchipScratch_);
       HAL::MicroWait(250000);
 #else
-      DebugStream::SendArray(grayscaleImage, "Robot Image");
+      DebugStream::SendImage(grayscaleImage, exposureMilliseconds, "Robot Image");
       HAL::MicroWait(166666); // 6fps
       //HAL::MicroWait(140000); //7fps
       //HAL::MicroWait(125000); //8fps

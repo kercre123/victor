@@ -272,6 +272,48 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
       s32* tmpBuffer = reinterpret_cast<s32*>(newObject.startOfPayload);
 
       detectedFacesImageWidth = tmpBuffer[0];
+    } else {
+      const s32 sizeOfType = reinterpret_cast<s32*>(newObject.buffer)[0];
+      const s32 isBasicType = reinterpret_cast<s32*>(newObject.buffer)[1];
+      const s32 isInteger = reinterpret_cast<s32*>(newObject.buffer)[2];
+      const s32 isSigned = reinterpret_cast<s32*>(newObject.buffer)[3];
+      const s32 isFloat = reinterpret_cast<s32*>(newObject.buffer)[4];
+      const s32 numElements = reinterpret_cast<s32*>(newObject.buffer)[5];
+
+      printf("%s: ", newObject.objectName);
+
+      if(isBasicType)
+        if(isFloat) {
+          if(sizeOfType == 4) {
+            for(s32 i=0; i<numElements; i++) { printf("%0.5f, ", reinterpret_cast<f32*>(newObject.startOfPayload)[i]); }
+          } else if(sizeOfType == 8) {
+            for(s32 i=0; i<numElements; i++) { printf("%0.5f, ", reinterpret_cast<f64*>(newObject.startOfPayload)[i]); }
+          }
+        } else {
+          if(isSigned) {
+            if(sizeOfType == 1) {
+              for(s32 i=0; i<numElements; i++) { printf("%d, ", reinterpret_cast<s8*>(newObject.startOfPayload)[i]); }
+            } else if(sizeOfType == 2) {
+              for(s32 i=0; i<numElements; i++) { printf("%d, ", reinterpret_cast<s16*>(newObject.startOfPayload)[i]); }
+            } else if(sizeOfType == 4) {
+              for(s32 i=0; i<numElements; i++) { printf("%d, ", reinterpret_cast<s32*>(newObject.startOfPayload)[i]); }
+            } else if(sizeOfType == 8) {
+              for(s32 i=0; i<numElements; i++) { printf("%lld, ", reinterpret_cast<s64*>(newObject.startOfPayload)[i]); }
+            }
+          } else {
+            if(sizeOfType == 1) {
+              for(s32 i=0; i<numElements; i++) { printf("%d, ", reinterpret_cast<u8*>(newObject.startOfPayload)[i]); }
+            } else if(sizeOfType == 2) {
+              for(s32 i=0; i<numElements; i++) { printf("%d, ", reinterpret_cast<u16*>(newObject.startOfPayload)[i]); }
+            } else if(sizeOfType == 4) {
+              for(s32 i=0; i<numElements; i++) { printf("%u, ", reinterpret_cast<u32*>(newObject.startOfPayload)[i]); }
+            } else if(sizeOfType == 8) {
+              for(s32 i=0; i<numElements; i++) { printf("%llu, ", reinterpret_cast<u64*>(newObject.startOfPayload)[i]); }
+            }
+          }
+        } else {
+          printf("\n");
+        }
     }
   } else if(strcmp(newObject.typeName, "Array") == 0) {
     if (strcmp(newObject.objectName, "Robot Image") == 0) {
@@ -329,7 +371,7 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
       cv::merge(channels, toShowImage);
     }
   } else if(strcmp(newObject.typeName, "String") == 0) {
-    printf("Board>> %s", reinterpret_cast<const char*>(newObject.startOfPayload));
+    printf("Board>> %s\n", reinterpret_cast<const char*>(newObject.startOfPayload));
   } else if(strcmp(newObject.typeName, "VisionMarker") == 0) {
     VisionMarker marker = *reinterpret_cast<VisionMarker*>(newObject.startOfPayload);
 

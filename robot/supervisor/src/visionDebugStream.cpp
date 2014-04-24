@@ -334,6 +334,18 @@ namespace Anki {
 #endif // #if SEND_DEBUG_STREAM
         }
         
+        Result SendImage(const Array<u8> &array, const f32 exposureTime, const char * objectName)
+        {
+#if SEND_DEBUG_STREAM
+          debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
+          debugStreamBuffer_.PushBack(objectName, array);
+          debugStreamBuffer_.PushBackString("Exposure time: %dms", Round<s32>(1000.0f*exposureTime));
+          return SendBuffer(debugStreamBuffer_);
+#else
+          return RESULT_OK;
+#endif // #if SEND_DEBUG_STREAM
+        }
+        
         Result SendBinaryImage(const Array<u8> &grayscaleImage, const char * objectName, const Tracker &tracker, const TrackerParameters &parameters, MemoryStack ccmScratch, MemoryStack onchipScratch, MemoryStack offchipScratch)
         {
           Result result = RESULT_OK;
