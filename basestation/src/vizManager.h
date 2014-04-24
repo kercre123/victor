@@ -16,6 +16,7 @@
 
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/types.h"
+#include "anki/vision/CameraSettings.h"
 #include "anki/planning/shared/path.h"
 #include "anki/messaging/shared/UdpClient.h"
 #include "anki/cozmo/VizStructs.h"
@@ -137,20 +138,25 @@ namespace Anki {
       
       // ==== Misc. Debug functions =====
       void SetDockingError(const f32 x_dist, const f32 y_dist, const f32 angle);
-      
+
+      void SendGreyImage(const u8* data, const Vision::CameraResolution res);
       
     protected:
       
       // Protected default constructor for singleton.
       VizManager();
       
+      void SendMessage(u8 vizMsgID, void* msg);
+      
       static VizManager* singletonInstance_;
       
       bool isInitialized_;
       UdpClient vizClient_;
       
-      static const u32 MAX_SIZE_SEND_BUF = 128;
-      char sendBuf[MAX_SIZE_SEND_BUF];
+      char sendBuf[MAX_VIZ_MSG_SIZE];
+
+      // Image sending
+      u8 imgID;
       
     }; // class VizManager
     

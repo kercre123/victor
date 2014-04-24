@@ -127,10 +127,11 @@ namespace Anki
       const cv::Mat_<Type>& get_CvMat_() const;
 
       s32 Set(const cv::Mat_<Type> &in);
+#endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
       // Use the simple OpenCV gui to display this array as an image
+      // Does nothing is OpenCV is not available
       void Show(const char * const windowName, const bool waitForKeypress, const bool scaleValues=false, const bool fitImageToWindow=false) const;
-#endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
       // Print out the contents of this Array
       //

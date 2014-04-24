@@ -13,11 +13,11 @@ file(GLOB COZMO_INCLUDE_FILES "${COZMO_INCLUDE_DIR}/anki/cozmo/*.h")
 add_definitions(-DSYSTEM_ROOT_PATH=${PROJECT_SOURCE_DIR})
 
 include_directories(
-	${COZMO_INCLUDE_DIR}
-	coretech/common/include
-	coretech/messaging/include
-	coretech/vision/include
-	coretech/planning/include
+  ${COZMO_INCLUDE_DIR}
+  coretech/common/include
+  coretech/messaging/include
+  coretech/vision/include
+  coretech/planning/include
 )
 
 add_subdirectory(basestation)

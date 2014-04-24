@@ -36,8 +36,8 @@ endif()
 # Make sure a copy of the target exists in robot_advertisement_controller/
 # no matter where the target is actually built.
 add_custom_command(
-	TARGET robot_advertisement_controller
-	POST_BUILD
-	COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:robot_advertisement_controller> ${CMAKE_CURRENT_SOURCE_DIR}/
-	COMMAND ${CMAKE_COMMAND} -E remove $<TARGET_FILE:robot_advertisement_controller>
+  TARGET robot_advertisement_controller
+  POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:robot_advertisement_controller> ${CMAKE_CURRENT_SOURCE_DIR}/
+  COMMAND ${CMAKE_COMMAND} -E remove $<TARGET_FILE:robot_advertisement_controller>
 )

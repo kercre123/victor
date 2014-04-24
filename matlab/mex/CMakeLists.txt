@@ -1,9 +1,9 @@
 # products-cozmo/matlab/mex/CMakeLists.txt
 
 set(MEX_LINK_LIBRARIES 
-	#CoreTech_Common_Basestation
-	#CoreTech_Vision_Basestation
-	${OPENCV_LIBS}
+  #CoreTech_Common_Basestation
+  #CoreTech_Vision_Basestation
+  ${OPENCV_LIBS}
 )
 
 add_definitions(-DOPENCV_ROOT_PATH=${EXTERNAL_DIR}/${OPENCV_DIR})

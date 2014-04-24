@@ -49,10 +49,6 @@ namespace Anki {
         //   by the faster MainExecution.
         //
         
-        // max vision markers we can see in one image and transmit to the
-        // basestation
-        const u8 MAX_MARKER_MESSAGES = 32;
-        
         // Single-message Mailbox Class
         template<typename MsgType>
         class Mailbox
@@ -91,9 +87,7 @@ namespace Anki {
         // system communicates to main execution:
         //MultiMailbox<Messages::BlockMarkerObserved, MAX_BLOCK_MARKER_MESSAGES> blockMarkerMailbox_;
         //Mailbox<Messages::MatMarkerObserved>    matMarkerMailbox_;
-        MultiMailbox<Messages::VisionMarker, MAX_MARKER_MESSAGES> visionMarkerMailbox_;
         Mailbox<Messages::DockingErrorSignal>   dockingMailbox_;
-        
 
         static RobotState robotState_;
         
@@ -236,16 +230,6 @@ namespace Anki {
 
       }
       
-      
-      void ProcessVisionMarkerMessage(const VisionMarker& msg)
-      {
-#if defined(SIMULATOR)
-        PRINT("Processing VisionMarker message\n");
-#endif
-        
-        visionMarkerMailbox_.putMessage(msg);
-      }
-      
       void ProcessDockingErrorSignalMessage(const DockingErrorSignal& msg)
       {
         // Just pass the docking error signal along to the mainExecution to
@@ -325,8 +309,19 @@ namespace Anki {
         HeadController::SetAngularVelocity(0);
       }
       
+      void ProcessHeadAngleUpdateMessage(const HeadAngleUpdate& msg) {
+        HeadController::SetAngleRad(msg.newAngle);
+      }
+      
+      void ProcessImageRequestMessage(const ImageRequest& msg) {
+        VisionSystem::SendNextImage((Vision::CameraResolution)msg.resolution);
+      }
+      
       
       // TODO: Fill these in once they are needed/used:
+      void ProcessVisionMarkerMessage(const VisionMarker& msg) {
+        PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
+      }
       
       void ProcessBlockMarkerObservedMessage(const BlockMarkerObserved& msg) {
         PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
@@ -355,6 +350,10 @@ namespace Anki {
       }
 
       void ProcessPrintTextMessage(const PrintText& msg) {
+        PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
+      }
+      
+      void ProcessImageChunkMessage(const ImageChunk& msg) {
         PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
       }
       
@@ -417,11 +416,6 @@ namespace Anki {
       
       
 // #pragma mark --- VisionSystem::Mailbox Template Implementations ---
-      
-      bool CheckMailbox(VisionMarker& msg)
-      {
-        return visionMarkerMailbox_.getMessage(msg);
-      }
       
       /*
       bool CheckMailbox(BlockMarkerObserved& msg)

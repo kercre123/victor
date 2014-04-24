@@ -36,9 +36,9 @@ namespace Anki {
           
           s32 frameNumber = 0;
           
-          //const HAL::CameraMode debugStreamResolution_ = HAL::CAMERA_MODE_QQQVGA;
-          const HAL::CameraMode debugStreamResolution_ = HAL::CAMERA_MODE_QQVGA;
-          //const HAL::CameraMode debugStreamResolution_ = HAL::CAMERA_MODE_QVGA;
+          //const HAL::CameraResolution debugStreamResolution_ = Vision::CAMERA_RES_QQQVGA;
+          const Vision::CameraResolution debugStreamResolution_ = Vision::CAMERA_RES_QQVGA;
+          //const Vision::CameraResolution debugStreamResolution_ = Vision::CAMERA_RES_QVGA;
           
           f32 lastBenchmarkTime_algorithmsOnly;
           f32 lastBenchmarkDuration_algorithmsOnly;
@@ -144,7 +144,7 @@ namespace Anki {
           result = SendBuffer(debugStreamBuffer_);
           
           // The UART can't handle this at full rate, so wait a bit between each frame
-          if(debugStreamResolution_ == HAL::CAMERA_MODE_QVGA) {
+          if(debugStreamResolution_ == Vision::CAMERA_RES_QVGA) {
             //HAL::MicroWait(1000000);
           }
 #endif // #if SEND_DEBUG_STREAM
@@ -239,7 +239,7 @@ namespace Anki {
           result = SendBuffer(debugStreamBuffer_);
           
           // The UART can't handle this at full rate, so wait a bit between each frame
-          if(debugStreamResolution_ == HAL::CAMERA_MODE_QVGA) {
+          if(debugStreamResolution_ == Vision::CAMERA_RES_QVGA) {
             //HAL::MicroWait(1000000);
           }
           
@@ -290,7 +290,7 @@ namespace Anki {
           result = SendBuffer(debugStreamBuffer_);
           
           // The UART can't handle this at full rate, so wait a bit between each frame
-          if(debugStreamResolution_ == HAL::CAMERA_MODE_QVGA) {
+          if(debugStreamResolution_ == Vision::CAMERA_RES_QVGA) {
             //HAL::MicroWait(1000000);
           }
           
@@ -323,18 +323,18 @@ namespace Anki {
         }
 #endif // DOCKING_ALGORITHM ==  DOCKING_BINARY_TRACKER
         
-        Result SendArray(const Array<u8> &array)
+        Result SendArray(const Array<u8> &array, const char * objectName)
         {
 #if SEND_DEBUG_STREAM
           debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
-          debugStreamBuffer_.PushBack("Array", array);
+          debugStreamBuffer_.PushBack(objectName, array);
           return SendBuffer(debugStreamBuffer_);
 #else
           return RESULT_OK;
 #endif // #if SEND_DEBUG_STREAM
         }
         
-        Result SendBinaryImage(const Array<u8> &grayscaleImage, const Tracker &tracker, const TrackerParameters &parameters, MemoryStack ccmScratch, MemoryStack onchipScratch, MemoryStack offchipScratch)
+        Result SendBinaryImage(const Array<u8> &grayscaleImage, const char * objectName, const Tracker &tracker, const TrackerParameters &parameters, MemoryStack ccmScratch, MemoryStack onchipScratch, MemoryStack offchipScratch)
         {
           Result result = RESULT_OK;
 #if SEND_DEBUG_STREAM && DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
@@ -365,7 +365,7 @@ namespace Anki {
           
           DownsampleHelper(grayscaleImage, imageSmall, ccmScratch);
           
-          debugStreamBuffer_.PushBack("Robot Image", imageSmall);
+          debugStreamBuffer_.PushBack(objectName, imageSmall);
           
           result = SendBuffer(debugStreamBuffer_);
           

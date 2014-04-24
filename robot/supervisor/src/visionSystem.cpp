@@ -146,9 +146,12 @@ namespace Anki {
         // Parameters defined in visionParameters.h
         static DetectFiducialMarkersParameters detectionParameters_;
         static TrackerParameters               trackerParameters_;
-        static HAL::CameraMode                 captureResolution_;
-        static HAL::CameraMode                 faceDetectionResolution_;
+        static Vision::CameraResolution        captureResolution_;
+        static Vision::CameraResolution        faceDetectionResolution_;
 
+        // For sending images to basestation
+        static Vision::CameraResolution        nextSendImageResolution_ = Vision::CAMERA_RES_NONE;
+        
         /* Only using static members of SimulatorParameters now
 #ifdef SIMULATOR
         static SimulatorParameters             simulatorParameters_;
@@ -244,6 +247,74 @@ namespace Anki {
       {
         return prevRobotState_.headAngle;
       }
+      
+      void SendNextImage(Vision::CameraResolution res)
+      {
+        if (res == Vision::CAMERA_RES_QVGA ||
+            res == Vision::CAMERA_RES_QQVGA ||
+            res == Vision::CAMERA_RES_QQQVGA ||
+            res == Vision::CAMERA_RES_QQQQVGA) {
+          nextSendImageResolution_ = res;
+        }
+      }
+      
+      void DownsampleAndSendImage(Array<u8> &img)
+      {
+        // Only downsample if normal capture res is QVGA
+        if (nextSendImageResolution_ != Vision::CAMERA_RES_NONE && captureResolution_ == Vision::CAMERA_RES_QVGA) {
+          
+          static u8 imgID = 0;
+          
+          // Downsample and split into image chunk message
+          const u32 xRes = CameraModeInfo[nextSendImageResolution_].width;
+          const u32 yRes = CameraModeInfo[nextSendImageResolution_].height;
+          
+          const u32 xSkip = 320 / xRes;
+          const u32 ySkip = 240 / yRes;
+          
+          const u32 numTotalBytes = xRes*yRes;
+          
+          Messages::ImageChunk m;
+          m.resolution = nextSendImageResolution_;
+          m.imageId = ++imgID;
+          m.chunkId = 0;
+          m.chunkSize = IMAGE_CHUNK_SIZE;
+          
+          u32 totalByteCnt = 0;
+          u32 chunkByteCnt = 0;
+          
+          //PRINT("Downsample: from %d x %d  to  %d x %d\n", img.get_size(1), img.get_size(0), xRes, yRes);
+          
+          u32 dataY = 0;
+          for (u32 y = 0; y < 240; y += ySkip, dataY++)
+          {
+            const u8* restrict rowPtr = img.Pointer(y, 0);
+            
+            u32 dataX = 0;
+            for (u32 x = 0; x < 320; x += xSkip, dataX++)
+            {
+              m.data[chunkByteCnt] = rowPtr[x];
+              ++chunkByteCnt;
+              ++totalByteCnt;
+              
+              if (chunkByteCnt == IMAGE_CHUNK_SIZE) {
+                //PRINT("Sending image chunk %d\n", m.chunkId);
+                HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::ImageChunk), &m);
+                ++m.chunkId;
+                chunkByteCnt = 0;
+              } else if (totalByteCnt == numTotalBytes) {
+                // This should be the last message!
+                //PRINT("Sending LAST image chunk %d\n", m.chunkId);
+                m.chunkSize = chunkByteCnt;
+                HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::ImageChunk), &m);
+              }
+            }
+          }
+          
+          nextSendImageResolution_ = Vision::CAMERA_RES_NONE;
+        }
+      }
+      
       
       static Result LookForMarkers(
                                        const Array<u8> &grayscaleImage,
@@ -975,8 +1046,8 @@ namespace Anki {
         
         if(!isInitialized_) {
           
-          captureResolution_ = HAL::CAMERA_MODE_QVGA;
-          faceDetectionResolution_ = HAL::CAMERA_MODE_QVGA;
+          captureResolution_ = Vision::CAMERA_RES_QVGA;
+          faceDetectionResolution_ = Vision::CAMERA_RES_QVGA;
           
           // WARNING: the order of these initializations matter!
 
@@ -1266,11 +1337,13 @@ namespace Anki {
                           captureResolution_, 0.1f, false);
       
 #ifdef SEND_BINARY_IMAGE_ONLY
-      DebugStream::SendBinaryImage(grayscaleImage, tracker_, trackerParameters_, VisionMemory::ccmScratch_, VisionMemory::onchipScratch_, VisionMemory::offchipScratch_);
+      DebugStream::SendBinaryImage(grayscaleImage, "Binary Robot Image", tracker_, trackerParameters_, VisionMemory::ccmScratch_, VisionMemory::onchipScratch_, VisionMemory::offchipScratch_);
       HAL::MicroWait(250000);
 #else
-      DebugStream::SendArray(grayscaleImage);
-      HAL::MicroWait(1500000);
+      DebugStream::SendArray(grayscaleImage, "Robot Image");
+      HAL::MicroWait(166666); // 6fps
+      //HAL::MicroWait(140000); //7fps
+      //HAL::MicroWait(125000); //8fps
 #endif
       
       return RESULT_OK;
@@ -1394,6 +1467,8 @@ namespace Anki {
           HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
                               captureResolution_, exposure, false);
           
+          DownsampleAndSendImage(grayscaleImage);
+          
           const Result result = LookForMarkers(
                                                    grayscaleImage,
                                                    detectionParameters_,
@@ -1431,7 +1506,7 @@ namespace Anki {
               msg.x_imgLowerRight = crntMarker.corners[Quadrilateral<f32>::BottomRight].x;
               msg.y_imgLowerRight = crntMarker.corners[Quadrilateral<f32>::BottomRight].y;
               
-              Messages::ProcessVisionMarkerMessage(msg);
+              HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::VisionMarker),&msg);
             }
             
             // Was the desired marker found? If so, start tracking it.

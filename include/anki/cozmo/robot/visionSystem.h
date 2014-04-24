@@ -33,13 +33,13 @@ namespace Anki {
       typedef struct {
         u8  headerByte; // used to specify a frame's resolution in a packet if transmitting
         u16 width, height;
-        u8 downsamplePower[HAL::CAMERA_MODE_COUNT];
+        u8 downsamplePower[Vision::CAMERA_RES_COUNT];
       } CameraModeInfo_t;
       
       // NOTE: To get the downsampling power to go from resoution "FROM" to
       //       resolution "TO", use:
       //       u8 power = CameraModeInfo[FROM].downsamplePower[TO];
-      const CameraModeInfo_t CameraModeInfo[HAL::CAMERA_MODE_COUNT] =
+      const CameraModeInfo_t CameraModeInfo[Vision::CAMERA_RES_COUNT] =
       {
         // VGA
         { 0xBA, 640, 480, {0, 1, 2, 3, 4} },
@@ -129,6 +129,8 @@ namespace Anki {
                                    const Embedded::Point3<f32>& translationWrtCamera,
                                    Embedded::Array<f32>&        rotationWrtRobot,
                                    Embedded::Point3<f32>&       translationWrtRobot);
+      
+      void SendNextImage(Vision::CameraResolution res);
       
     } // namespace VisionSystem
     

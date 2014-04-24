@@ -69,25 +69,21 @@ const int SIZEOF_FLOAT = sizeof(float);
 
 namespace Anki {
   namespace Cozmo{
-    
-    // TODO: Move the following to VizStructs.cpp?
+
 #define MESSAGE_DEFINITION_MODE MESSAGE_DISPATCH_DEFINITION_MODE
 #include "anki/cozmo/VizMsgDefs.h"
     
-    typedef struct {
-      u8 priority;
-      u8 size;
-      void (*dispatchFcn)(const u8* buffer);
-    } TableEntry;
+    typedef void (*DispatchFcn_t)(const u8* buffer);
     
     const size_t NUM_TABLE_ENTRIES = Anki::Cozmo::NUM_VIZ_MSG_IDS + 1;
-    TableEntry LookupTable_[NUM_TABLE_ENTRIES] = {
-      {0, 0, 0}, // Empty entry for NO_MESSAGE_ID
+    DispatchFcn_t DispatchTable_[NUM_TABLE_ENTRIES] = {
+      0, // Empty entry for NO_MESSAGE_ID
 #undef  MESSAGE_DEFINITION_MODE
-#define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_MODE
+#define MESSAGE_DEFINITION_MODE MESSAGE_DISPATCH_FCN_TABLE_DEFINITION_MODE
 #include "anki/cozmo/VizMsgDefs.h"
-      {0, 0, 0} // Final dummy entry without comma at end
+      0 // Final dummy entry without comma at end
     };
+
     
     void ProcessVizObjectMessage(const VizObject& msg)
     {
@@ -207,6 +203,7 @@ namespace Anki {
     // These messages are handled by cozmo_viz_controller
     void ProcessVizSetLabelMessage(const VizSetLabel& msg){};
     void ProcessVizDockingErrorSignalMessage(const VizDockingErrorSignal& msg){};
+    void ProcessVizImageChunkMessage(const VizImageChunk& msg){};
     
   } // namespace Cozmo
 } // namespace Anki
@@ -294,7 +291,7 @@ void webots_physics_step() {
     int msgID = static_cast<Anki::Cozmo::VizMsgID>(recvBuf[0]);
     PRINT( "Processing msgs from Basestation: Got msg %d (%d bytes)\n", msgID, bytes_recvd);
     
-    (*Anki::Cozmo::LookupTable_[msgID].dispatchFcn)(recvBuf + 1);
+    (*Anki::Cozmo::DispatchTable_[msgID])(recvBuf + 1);
   }
 
 }
@@ -353,23 +350,17 @@ void draw_ramp()
 }
 
 
-
-void draw_robot()
+// x,y,z: Position of tetrahedron main tip with respect to its origin
+// length_x, length_y, length_z: Dimensions of tetrahedron
+void draw_tetrahedron_marker(const float x, const float y, const float z,
+                             const float length_x, const float length_y, const float length_z)
 {
-  // Tetrahedron-y shape that represents robot's pose by pointing to the robot's origin at head height.
-  // Origin is at the the point between the front wheels at ground-level. x-axis points forward. y-axis points left.
+  // Dimensions of tetrahedon-h shape
+  const float l = length_x;
+  const float half_w = 0.5*length_y;
+  const float h = length_z;
   
   glBegin(GL_TRIANGLES);
-  
-  // Location of tip
-  float x = 0;
-  float y = 0;
-  float z = 0.068;
-  
-  // Dimensions of tetrahedon-h shape
-  float l = 0.03;      // along x-axis
-  float half_w = 0.01; // along y-axis
-  float h = 0.01;      // along z-axis
   
   // Bottom face
   glVertex3f( x, y, z);
@@ -396,13 +387,44 @@ void draw_robot()
 }
 
 
+void draw_robot(Anki::Cozmo::VizRobotMarkerType type)
+{
+  
+  // Location of robot origin project up above the head
+  float x = 0;
+  float y = 0;
+  float z = 0.068;
+
+  // Dimensions
+  float l,w,h;
+  
+  switch (type) {
+    case Anki::Cozmo::VIZ_ROBOT_MARKER_SMALL_TRIANGLE:
+      l = 0.03;
+      w = 0.02;
+      h = 0.01;
+      break;
+    case Anki::Cozmo::VIZ_ROBOT_MARKER_BIG_TRIANGLE:
+      x += 0.03;  // Move tip of marker to come forward, roughly up to lift position.
+      l = 0.062;
+      w = 0.08;
+      h = 0.01;
+      break;
+    default:
+      break;
+  }
+  
+  draw_tetrahedron_marker(x, y, z, l, w, h);
+}
+
+
 
 void draw_predockpose()
 {
   // Another tetrahedron-y shape like draw_robot that shows where the robot
   // _would_ be if it were positioned at this pre-dock pose
   
-  draw_robot();
+  draw_robot(Anki::Cozmo::VIZ_ROBOT_MARKER_SMALL_TRIANGLE);
 }
 
 void webots_physics_draw(int pass, const char *view) {
@@ -468,7 +490,7 @@ void webots_physics_draw(int pass, const char *view) {
       // Use objectType-specific drawing functions
       switch(obj->objectTypeID) {
         case Anki::Cozmo::VIZ_ROBOT:
-          draw_robot();
+          draw_robot(Anki::Cozmo::VIZ_ROBOT_MARKER_BIG_TRIANGLE);
           break;
         case Anki::Cozmo::VIZ_CUBOID:
           draw_cuboid(obj->x_size_m, obj->y_size_m, obj->z_size_m);

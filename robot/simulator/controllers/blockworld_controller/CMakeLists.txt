@@ -19,14 +19,14 @@ link_directories( ${WEBOTS_LIB_DIR} )
 
 # Source files
 set(SOURCE_FILES
-	blockworld_controller.cpp
-	${PROJECT_SOURCE_DIR}/robot/simulator/src/basestationKeyboardController.cpp
-	${COZMO_BASESTATION_SRC}
+  blockworld_controller.cpp
+  ${PROJECT_SOURCE_DIR}/robot/simulator/src/basestationKeyboardController.cpp
+  ${COZMO_BASESTATION_SRC}
 #  ${PROJECT_SOURCE_DIR}/basestation/src/messages.cpp
 )
 
 set(HEADER_FILES
-	${PROJECT_SOURCE_DIR}/robot/simulator/src/basestationKeyboardController.h
+  ${PROJECT_SOURCE_DIR}/robot/simulator/src/basestationKeyboardController.h
 )
 
 if(NOT WIN32)
@@ -49,15 +49,15 @@ endif()
   
 #set_target_properties(blockworld_controller PROPERTIES
 #  COMPILE_DEFINITIONS USE_TCP_MESSAGING_INTERFACE
-#	XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++98"
+#  XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++98"
 #   XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libstdc++"
 #)
 
-# Make sure a copy of the target exists	in cozmo_c_controller/
+# Make sure a copy of the target exists  in cozmo_c_controller/
 # no matter where the target is actually built.
 add_custom_command(
-	TARGET blockworld_controller
-    POST_BUILD
-	COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:blockworld_controller> ${CMAKE_CURRENT_SOURCE_DIR}/
-	COMMAND ${CMAKE_COMMAND} -E remove $<TARGET_FILE:blockworld_controller>
+  TARGET blockworld_controller
+  POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:blockworld_controller> ${CMAKE_CURRENT_SOURCE_DIR}/
+  COMMAND ${CMAKE_COMMAND} -E remove $<TARGET_FILE:blockworld_controller>
 )

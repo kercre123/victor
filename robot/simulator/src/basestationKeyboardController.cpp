@@ -77,12 +77,13 @@ namespace Anki {
         //Numbers, spacebar etc. work, letters are different, why?
         //a, z, s, x, Space
         //const s32 CKEY_LIFT_UPUP  = 81;  // q
-        const s32 CKEY_LIFT_UP    = 65;  // a
-        const s32 CKEY_LIFT_DOWN  = 90;  // z
+        const s32 CKEY_LIFT_UP     = 65;  // a
+        const s32 CKEY_LIFT_DOWN   = 90;  // z
         //const s32 CKEY_HEAD_UPUP  = 87;  // w
-        const s32 CKEY_HEAD_UP    = 83;  // s
-        const s32 CKEY_HEAD_DOWN  = 88;  // x
-        const s32 CKEY_UNLOCK     = 32;  // space
+        const s32 CKEY_HEAD_UP     = 83;  // s
+        const s32 CKEY_HEAD_DOWN   = 88;  // x
+        const s32 CKEY_UNLOCK      = 32;  // space
+        const s32 CKEY_REQUEST_IMG = 73;  // i
 
         // Get robot
         robot_ = NULL;
@@ -209,6 +210,12 @@ namespace Anki {
             case CKEY_UNLOCK: // Stop all motors
             {
               robot_->SendStopAllMotors();
+              break;
+            }
+              
+            case CKEY_REQUEST_IMG:
+            {
+              robot_->SendImageRequest();
               break;
             }
  
