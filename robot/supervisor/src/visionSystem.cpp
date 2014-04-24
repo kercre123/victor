@@ -1180,11 +1180,13 @@ namespace Anki {
                           captureResolution_, 0.1f, false);
       
 #ifdef SEND_BINARY_IMAGE_ONLY
-      DebugStream::SendBinaryImage(grayscaleImage, tracker_, trackerParameters_, VisionMemory::ccmScratch_, VisionMemory::onchipScratch_, VisionMemory::offchipScratch_);
+      DebugStream::SendBinaryImage(grayscaleImage, "Binary Robot Image", tracker_, trackerParameters_, VisionMemory::ccmScratch_, VisionMemory::onchipScratch_, VisionMemory::offchipScratch_);
       HAL::MicroWait(250000);
 #else
-      DebugStream::SendArray(grayscaleImage);
-      HAL::MicroWait(1500000);
+      DebugStream::SendArray(grayscaleImage, "Robot Image");
+      HAL::MicroWait(166666); // 6fps
+      //HAL::MicroWait(140000); //7fps
+      //HAL::MicroWait(125000); //8fps
 #endif
       
       return RESULT_OK;
