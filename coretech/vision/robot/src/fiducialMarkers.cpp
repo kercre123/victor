@@ -507,7 +507,7 @@ namespace Anki
         typeString = Vision::MarkerTypeStrings[markerType];
       }
 
-      printf("[Type %d-%s]: (%f,%f) (%f,%f) (%f,%f) (%f,%f)] ",
+      printf("[Type %d-%s]: (%0.2f,%0.2f) (%0.2f,%0.2f) (%0.2f,%0.2f) (%0.2f,%0.2f)] ",
         markerType, typeString,
         corners[0].x, corners[0].y,
         corners[1].x, corners[1].y,
@@ -582,10 +582,9 @@ namespace Anki
       } // IF trees initialized
     }
 
-    
     Result VisionMarker::ComputeBrightDarkValues(const Array <u8> &image,
-                                                 const Array<f32> &homography,
-                                                 f32& brightValue, f32& darkValue)
+      const Array<f32> &homography,
+      f32& brightValue, f32& darkValue)
     {
       using namespace VisionMarkerDecisionTree;
 
@@ -683,15 +682,14 @@ namespace Anki
       const f32 divisor = 1.f / static_cast<f32>(NUM_PROBE_POINTS * NUM_THRESHOLD_PROBES);
       brightValue = static_cast<f32>(brightAccumulator) * divisor;
       darkValue   = static_cast<f32>(darkAccumulator)   * divisor;
-      
+
       return lastResult;
     }
-    
-    
+
     Result VisionMarker::Extract(const Array<u8> &image, const Quadrilateral<s16> &initQuad,
-                                 const Array<f32> &initHomography, const f32 minContrastRatio,
-                                 const s32 quadRefinementIterations,
-                                 MemoryStack scratch)
+      const Array<f32> &initHomography, const f32 minContrastRatio,
+      const s32 quadRefinementIterations,
+      MemoryStack scratch)
     {
       using namespace VisionMarkerDecisionTree;
 
@@ -710,42 +708,39 @@ namespace Anki
       if(brightValue > darkValue*minContrastRatio)
       {
         // If the contrast is sufficient, compute the threshold and parse the marker
-        
+
         Quadrilateral<f32> quad;
         Array<f32> homography(3,3,scratch);
         AnkiConditionalErrorAndReturnValue(homography.IsValid(),
-                                           RESULT_FAIL_OUT_OF_MEMORY,
-                                           "VisionMarker::Extract",
-                                           "Failed to allocate homography Array.");
-      
+          RESULT_FAIL_OUT_OF_MEMORY,
+          "VisionMarker::Extract",
+          "Failed to allocate homography Array.");
+
         const u8 meanGrayvalueThreshold = static_cast<u8>(0.5f*(brightValue+darkValue));
-        
+
         const s32 quadRefinementIterations = 10; // TODO: make an argument/parameter
         if(quadRefinementIterations > 0) {
           BeginBenchmark("vme_quadrefine");
-          
+
           const f32 contrast = brightValue - darkValue;
-          
+
           const f32 squareWidthFraction = 0.1f; // TODO: make a part of marker/fiducial definitions?
-          
+
           const s32 numRefinementSamples = 100; // TODO: make argument/parameter?
-          
+
           if((lastResult = RefineQuadrilateral(initQuad, initHomography, image, squareWidthFraction, quadRefinementIterations, contrast, numRefinementSamples, quad, homography, scratch)) != RESULT_OK) {
-            
             // TODO: Don't fail? Just warn and keep original quad?
             return lastResult;
           }
-        
+
           EndBenchmark("vme_quadrefine");
         } else {
-          
           // No refinement, just cast initial quad to f32 and keep initial
           // homography
           quad.SetCast(initQuad);
           homography.Set(initHomography);
-          
         }// if(refineQuads)
-        
+
         BeginBenchmark("vme_classify");
 
         //s16 multiClassLabel = static_cast<s16>(MARKER_UNKNOWN);
