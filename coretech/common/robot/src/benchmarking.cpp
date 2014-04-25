@@ -1,5 +1,5 @@
 /**
-File: benchmarking.c
+File: benchmarking.cpp
 Author: Peter Barnum
 Created: 2013
 
@@ -27,7 +27,7 @@ typedef enum
 typedef struct
 {
   const char * name; // WARNING: name must be in globally available memory
-  unsigned long long time;
+  u64 time;
   BenchmarkEventType type;
 } BenchmarkEvent;
 
@@ -41,18 +41,18 @@ typedef enum
 OFFCHIP static BenchmarkEvent benchmarkEvents[MAX_BENCHMARK_EVENTS];
 
 // The index of the next place to record a benchmark event
-static int numBenchmarkEvents;
+static s32 numBenchmarkEvents;
 
 OFFCHIP static const char * eventNames[MAX_BENCHMARK_EVENTS];
-static volatile int numEventNames;
+static s32 numEventNames;
 
-OFFCHIP static double totalTimes[MAX_BENCHMARK_EVENTS];
-OFFCHIP static double minTimes[MAX_BENCHMARK_EVENTS];
-OFFCHIP static double maxTimes[MAX_BENCHMARK_EVENTS];
-OFFCHIP static unsigned int numEvents[MAX_BENCHMARK_EVENTS];
-OFFCHIP static int lastBeginIndex[MAX_BENCHMARK_EVENTS];
+OFFCHIP static f64 totalTimes[MAX_BENCHMARK_EVENTS];
+OFFCHIP static f64 minTimes[MAX_BENCHMARK_EVENTS];
+OFFCHIP static f64 maxTimes[MAX_BENCHMARK_EVENTS];
+OFFCHIP static u32 numEvents[MAX_BENCHMARK_EVENTS];
+OFFCHIP static s32 lastBeginIndex[MAX_BENCHMARK_EVENTS];
 
-staticInline void AddBenchmarkEvent(const char *name, unsigned long long time, BenchmarkEventType type);
+staticInline void AddBenchmarkEvent(const char *name, u64 time, BenchmarkEventType type);
 
 static void PrintBenchmarkResults(const BenchmarkPrintType printType);
 
@@ -61,25 +61,26 @@ void InitBenchmarking(void)
   numBenchmarkEvents = 0;
 }
 
-staticInline unsigned long long GetBenchmarkTime(void)
+staticInline u64 GetBenchmarkTime(void)
 {
 #if defined(_MSC_VER)
   LARGE_INTEGER counter;
   QueryPerformanceCounter(&counter);
-
   return counter.QuadPart;
 #elif defined(__APPLE_CC__)
-  return 0; // TODO: implement
+  struct timeval time;
+  gettimeofday(&time, NULL);
+  return (u64)time.tv_sec*1000000ULL + (u64)time.tv_usec;
 #elif defined (__EDG__)  // MDK-ARM
   return Anki::Cozmo::HAL::GetMicroCounter();
 #else
   timespec ts;
   clock_gettime(CLOCK_MONOTONIC, &ts);
-  return ts.tv_sec * 1000000000 + ts.tv_nsec;
+  return (u64)ts.tv_sec * 1000000000ULL + (u64)ts.tv_nsec;
 #endif
 }
 
-staticInline void AddBenchmarkEvent(const char *name, unsigned long long time, BenchmarkEventType type)
+staticInline void AddBenchmarkEvent(const char *name, const u64 time, BenchmarkEventType type)
 {
   benchmarkEvents[numBenchmarkEvents].name = name;
   benchmarkEvents[numBenchmarkEvents].time = time;
@@ -102,9 +103,9 @@ void EndBenchmark(const char *name)
   AddBenchmarkEvent(name, GetBenchmarkTime(), BENCHMARK_EVENT_END);
 } // void endBenchmark(const char *name)
 
-static int GetNameIndex(const char * const name, unsigned int * index)
+static s32 GetNameIndex(const char * const name, u32 * index)
 {
-  int i;
+  s32 i;
   for(i=0; i<numEventNames; i++)
   {
     if(strcmp(name, eventNames[i]) == 0)
@@ -117,9 +118,9 @@ static int GetNameIndex(const char * const name, unsigned int * index)
   return -1;
 }
 
-static unsigned int AddName(const char * const name)
+static u32 AddName(const char * const name)
 {
-  unsigned int index = 0;
+  u32 index = 0;
 
   if(GetNameIndex(name, &index)) {
     eventNames[numEventNames++] = name;
@@ -141,27 +142,27 @@ void PrintBenchmarkResults_OnlyTotals(void)
 
 static void PrintBenchmarkResults(const BenchmarkPrintType printType)
 {
-  int i;
+  s32 i;
 
 #if defined(_MSC_VER)
   LARGE_INTEGER frequency;
-  double freqencyDouble;
+  f64 freqencyDouble;
   QueryPerformanceFrequency(&frequency);
-  freqencyDouble = (double)(frequency.QuadPart);
+  freqencyDouble = (f64)(frequency.QuadPart);
 #endif
 
   numEventNames = 0;
 
   for(i=0; i<MAX_BENCHMARK_EVENTS; i++) {
     totalTimes[i] = 0.0;
-    minTimes[i] = (double)(0x7FFFFFFFFFFFFFFFLL);
-    maxTimes[i] = (double)(-0x7FFFFFFFFFFFFFFFLL);
+    minTimes[i] = (f64)(0x7FFFFFFFFFFFFFFFLL);
+    maxTimes[i] = (f64)(-0x7FFFFFFFFFFFFFFFLL);
     numEvents[i] = 0;
     lastBeginIndex[i] = -1;
   }
 
   for(i=0; i<numBenchmarkEvents; i++) {
-    const unsigned int index = AddName(benchmarkEvents[i].name);
+    const u32 index = AddName(benchmarkEvents[i].name);
     if(benchmarkEvents[i].type == BENCHMARK_EVENT_BEGIN) {
       lastBeginIndex[index] = i;
     } else { // BENCHMARK_EVENT_END
@@ -171,17 +172,17 @@ static void PrintBenchmarkResults(const BenchmarkPrintType printType)
       }
 
       {
-        const unsigned long long rawElapsedTime = benchmarkEvents[i].time - benchmarkEvents[lastBeginIndex[index]].time;
+        const u64 rawElapsedTime = benchmarkEvents[i].time - benchmarkEvents[lastBeginIndex[index]].time;
         //#pragma unused (rawElapsedTime) // may or may not get used depending on #ifs below
 
 #if defined(_MSC_VER)
-        const double elapsedTime = (double)rawElapsedTime / freqencyDouble;
+        const f64 elapsedTime = (f64)rawElapsedTime / freqencyDouble;
 #elif defined(__APPLE_CC__)
-        const double elapsedTime = 0.0;
+        const f64 elapsedTime = (f64)rawElapsedTime / 1000000.0;
 #elif defined(__EDG__)  // MDK-ARM
-        const double elapsedTime = (double)rawElapsedTime / 1000000.0;
+        const f64 elapsedTime = (f64)rawElapsedTime / 1000000.0;
 #else
-        const double elapsedTime = (double)rawElapsedTime / 1000000000.0;
+        const f64 elapsedTime = (f64)rawElapsedTime / 1000000000.0;
 #endif
 
         minTimes[index] = MIN(minTimes[index], elapsedTime);
@@ -201,7 +202,7 @@ static void PrintBenchmarkResults(const BenchmarkPrintType printType)
     printf(eventNames[i]);
     if(printType == BENCHMARK_PRINT_ALL) {
       printf(": Mean:%dus Min:%dus Max:%dus Total:%dus NumEvents:%d\n",
-        (s32)DBL_ROUND(1000000*totalTimes[i]/(double)numEvents[i]), (s32)DBL_ROUND(1000000*minTimes[i]), (s32)DBL_ROUND(1000000*maxTimes[i]), (s32)DBL_ROUND(1000000*totalTimes[i]), (s32)numEvents[i]);
+        (s32)DBL_ROUND(1000000*totalTimes[i]/(f64)numEvents[i]), (s32)DBL_ROUND(1000000*minTimes[i]), (s32)DBL_ROUND(1000000*maxTimes[i]), (s32)DBL_ROUND(1000000*totalTimes[i]), (s32)numEvents[i]);
     } else if (printType == BENCHMARK_PRINT_TOTALS) {
       printf(": Total:%dus\n",
         (s32)DBL_ROUND(1000000*totalTimes[i]));
