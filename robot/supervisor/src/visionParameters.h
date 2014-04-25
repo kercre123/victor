@@ -92,6 +92,7 @@ namespace Anki {
         s32 quads_minDistanceFromImageEdge;
         f32 decode_minContrastRatio;
         s32 maxConnectedComponentSegments;
+        s32 quadRefinementIterations; // set to zero to disable
         
         // Methods
         DetectFiducialMarkersParameters();

@@ -637,7 +637,7 @@ namespace Anki {
 #if BLUR_CAPTURED_IMAGES
         // Add some blur to simulated images
         cv::Mat_<u8> cvImg(headCamInfo_.nrows, headCamInfo_.ncols, frame);
-        cv::GaussianBlur(cvImg, cvImg, cv::Size(0,0), 0.5f);
+        cv::GaussianBlur(cvImg, cvImg, cv::Size(0,0), 0.75f);
 #endif
       } // if image==NULL or not
       

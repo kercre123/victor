@@ -29,28 +29,28 @@ namespace Anki {
       
       Result Initialize();
       Result ResetFiducialDetection(const Array<u8>& image);
-      Result SendFiducialDetection(const Quadrilateral<s16> &corners,
-                                       const Vision::MarkerType &markerCode );
+      Result SendFiducialDetection(const Quadrilateral<f32> &corners,
+                                   const Vision::MarkerType &markerCode );
       Result SendDrawNow();
       
       Result SendTrackInit(const Array<u8> &image,
-                               const Quadrilateral<f32>& quad);
+                           const Quadrilateral<f32>& quad);
       
       Result SendTrackInit(const Array<u8> &image,
-                               const VisionSystem::Tracker& tracker,
-                               MemoryStack scratch);
-      
-      Result SendTrack(const Array<u8>& image,
-                           const Quadrilateral<f32>& quad,
-                           const bool converged);
-      
-      Result SendTrack(const Array<u8>& image,
                            const VisionSystem::Tracker& tracker,
-                           const bool converged,
                            MemoryStack scratch);
       
+      Result SendTrack(const Array<u8>& image,
+                       const Quadrilateral<f32>& quad,
+                       const bool converged);
+      
+      Result SendTrack(const Array<u8>& image,
+                       const VisionSystem::Tracker& tracker,
+                       const bool converged,
+                       MemoryStack scratch);
+      
       Result SendTrackerPrediction_Before(const Array<u8>& image,
-                                              const Quadrilateral<f32>& quad);
+                                          const Quadrilateral<f32>& quad);
       
       Result SendTrackerPrediction_After(const Quadrilateral<f32>& quad);
       
