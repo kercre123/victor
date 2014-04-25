@@ -355,6 +355,7 @@ namespace Anki {
                                                     parameters.decode_minContrastRatio,
                                                     parameters.maxConnectedComponentSegments,
                                                     parameters.maxExtractedQuads,
+                                                    parameters.quadRefinementIterations,
                                                     false,
                                                     ccmScratch, onchipScratch, offchipScratch);
         

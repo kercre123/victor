@@ -65,6 +65,9 @@ namespace Anki {
         
         maxConnectedComponentSegments = 39000; // 322*240/2 = 38640
         
+        // TODO: Benchmark quad refinement so we can enable this by default
+        quadRefinementIterations = 0;
+        
         isInitialized = true;
       } // DetectFiducialMarkersParameters::Initialize()
 
