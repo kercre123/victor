@@ -2550,6 +2550,8 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
   const s32 maxMarkers = 100;
   //const s32 maxConnectedComponentSegments = 5000; // 25000/4 = 6250
   const s32 maxConnectedComponentSegments = 39000; // 322*240/2 = 38640
+  
+  const s32 quadRefinementIterations = 5;
 
   MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
   MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
@@ -2595,6 +2597,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
       decode_minContrastRatio,
       maxConnectedComponentSegments,
       maxExtractedQuads,
+      quadRefinementIterations,
       //true, //< TODO: change back to false
       false,
       scratchCcm,
@@ -2658,7 +2661,13 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
       ASSERT_TRUE(markers[iMarker].isValid);
       ASSERT_TRUE(markers[iMarker].markerType == markerTypes_groundTruth[iMarker]);
       for(s32 iCorner=0; iCorner<4; iCorner++) {
-        ASSERT_TRUE(markers[iMarker].corners[iCorner] == Point<s16>(corners_groundTruth[iMarker][iCorner][0], corners_groundTruth[iMarker][iCorner][1]));
+        const Point2f& currentCorner = markers[iMarker].corners[iCorner];
+        
+        const Point2f trueCorner(corners_groundTruth[iMarker][iCorner][0],
+                                 corners_groundTruth[iMarker][iCorner][1]);
+        
+        ASSERT_TRUE(NEAR(currentCorner.x, trueCorner.x, 0.05f) &&
+                    NEAR(currentCorner.y, trueCorner.y, 0.05f));
       }
     }
   } else {

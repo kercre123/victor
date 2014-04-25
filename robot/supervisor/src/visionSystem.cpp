@@ -366,22 +366,26 @@ namespace Anki {
                                                     parameters.decode_minContrastRatio,
                                                     parameters.maxConnectedComponentSegments,
                                                     parameters.maxExtractedQuads,
+                                                    parameters.quadRefinementIterations,
                                                     false,
                                                     ccmScratch, onchipScratch, offchipScratch);
 
-        if(result == RESULT_OK) {
-          DebugStream::SendFiducialDetection(grayscaleImage, markers, ccmScratch, onchipScratch, offchipScratch);
-
-          for(s32 i_marker = 0; i_marker < markers.get_size(); ++i_marker) {
-            const VisionMarker crntMarker = markers[i_marker];
-
-            MatlabVisualization::SendFiducialDetection(crntMarker.corners, crntMarker.markerType);
-          }
-
-          MatlabVisualization::SendDrawNow();
-        } // if(result == RESULT_OK)
-
+        if(result != RESULT_OK) {
+          return result;
+        }
+        
+        DebugStream::SendFiducialDetection(grayscaleImage, markers, ccmScratch, onchipScratch, offchipScratch);
+        
+        for(s32 i_marker = 0; i_marker < markers.get_size(); ++i_marker) {
+          const VisionMarker crntMarker = markers[i_marker];
+          
+          MatlabVisualization::SendFiducialDetection(crntMarker.corners, crntMarker.markerType);
+        }
+        
+        MatlabVisualization::SendDrawNow();
+        
         return RESULT_OK;
+        
       } // LookForMarkers()
 
       static Result InitTemplate(
@@ -1156,7 +1160,93 @@ namespace Anki {
         return VisionMemory::markers_;
       } // GetObservedMarkerList()
 
-
+      Result GetVisionMarkerPoseNearestTo(const Embedded::Point3<f32>&  atPosition,
+                                          const Vision::MarkerType&     withType,
+                                          const f32                     maxDistance_mm,
+                                          Embedded::Array<f32>&         rotationWrtRobot,
+                                          Embedded::Point3<f32>&        translationWrtRobot,
+                                          bool&                         markerFound)
+      {
+        using namespace Embedded;
+        
+        Result lastResult = RESULT_OK;
+        markerFound = false;
+        
+        if(VisionMemory::markers_.get_size() > 0)
+        {
+          FixedLengthList<VisionMarker*> markersWithType(VisionMemory::markers_.get_size(),
+                                                         VisionMemory::onchipScratch_);
+          
+          AnkiConditionalErrorAndReturnValue(markersWithType.IsValid(),
+                                             RESULT_FAIL_MEMORY,
+                                             "GetVisionMarkerPoseNearestTo",
+                                             "Failed to allocate markersWithType FixedLengthList.");
+          
+          // Find all markers with specified type
+          s32 numFound = 0;
+          VisionMarker  * restrict pMarker = VisionMemory::markers_.Pointer(0);
+          VisionMarker* * restrict pMarkerWithType = markersWithType.Pointer(0);
+          
+          for(s32 i=0; i<VisionMemory::markers_.get_size(); ++i)
+          {
+            if(pMarker[i].markerType == withType) {
+              pMarkerWithType[numFound++] = pMarker + i;
+            }
+          }
+          markersWithType.set_size(numFound);
+          
+          // If any were found, find the one that is closest to the specified
+          // 3D point and within the specified max distance
+          if(numFound > 0) {
+            
+            // Create a little MemoryStack for allocating temporary
+            // rotation matrix
+            const s32 SCRATCH_BUFFER_SIZE = 128;
+            char scratchBuffer[SCRATCH_BUFFER_SIZE];
+            MemoryStack scratch(scratchBuffer, SCRATCH_BUFFER_SIZE);
+            
+            // Create temporary pose storage (wrt camera)
+            Point3<f32> translationWrtCamera;
+            Array<f32> rotationWrtCamera(3,3,scratch);
+            AnkiConditionalErrorAndReturnValue(rotationWrtCamera.IsValid(),
+                                               RESULT_FAIL_MEMORY,
+                                               "GetVisionMarkerPoseNearestTo",
+                                               "Failed to allocate rotationWrtCamera Array.");
+            
+            VisionMarker* const* restrict pMarkerWithType = markersWithType.Pointer(0);
+            
+            f32 closestDistance = maxDistance_mm;
+            
+            for(s32 i=0; i<numFound; ++i) {
+              
+              // Compute this marker's pose WRT camera
+              if((lastResult = GetVisionMarkerPose(*(pMarkerWithType[i]), true,
+                                                   rotationWrtCamera, translationWrtCamera)) != RESULT_OK) {
+                return lastResult;
+              }
+             
+              // Convert it to pose WRT robot
+              if((lastResult = GetWithRespectToRobot(rotationWrtCamera, translationWrtCamera,
+                                                     rotationWrtRobot, translationWrtRobot)) != RESULT_OK) {
+                return lastResult;
+              }
+              
+              // See how far it is from the specified position
+              const f32 currentDistance = (translationWrtRobot - atPosition).Length();
+              if(currentDistance < closestDistance) {
+                closestDistance = currentDistance;
+                markerFound = true;
+              }
+            } // for each marker with type
+            
+          } // if numFound > 0
+          
+        } // if(VisionMemory::markers_.get_size() > 0)
+        
+        return RESULT_OK;
+        
+      } // GetVisionMarkerPoseNearestTo()
+      
       template<typename PRECISION>
       static Result GetCamPoseWrtRobot(Array<PRECISION>& RcamWrtRobot,
                                        Point3<PRECISION>& TcamWrtRobot)
@@ -1223,21 +1313,12 @@ namespace Anki {
                                  Embedded::Array<f32>&  rotation,
                                  Embedded::Point3<f32>& translation)
       {
-        Quadrilateral<f32> quad(Point<f32>(marker.corners[0].x, marker.corners[0].y),
-                                Point<f32>(marker.corners[1].x, marker.corners[1].y),
-                                Point<f32>(marker.corners[2].x, marker.corners[2].y),
-                                Point<f32>(marker.corners[3].x, marker.corners[3].y));
-
         Quadrilateral<f32> sortedQuad;
         if(ignoreOrientation) {
           sortedQuad = marker.corners.ComputeClockwiseCorners<f32>();
         } else {
-          sortedQuad = Quadrilateral<f32>(Point<f32>(marker.corners[0].x, marker.corners[0].y),
-                                          Point<f32>(marker.corners[1].x, marker.corners[1].y),
-                                          Point<f32>(marker.corners[2].x, marker.corners[2].y),
-                                          Point<f32>(marker.corners[3].x, marker.corners[3].y));
+          sortedQuad = marker.corners;
         }
-
 
         return P3P::computePose(sortedQuad,
                                 canonicalMarker3d_[0], canonicalMarker3d_[1],
@@ -1247,7 +1328,6 @@ namespace Anki {
                                 rotation, translation);
 
       } // GetVisionMarkerPose()
-
 
 #ifdef SEND_IMAGE_ONLY
       // In SEND_IMAGE_ONLY mode, just create a special version of update

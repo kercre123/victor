@@ -702,29 +702,14 @@ namespace Anki
       // rotation matrix
       Result LucasKanadeTracker_SampledPlanar6dof::set_rotationAnglesFromMatrix(const Array<f32>& R)
       {
-        AnkiConditionalErrorAndReturnValue(R.get_size(0)==3 && R.get_size(1)==3, RESULT_FAIL_INVALID_SIZE,
-          "LucasKanadeTracker_SampledPlanar6dof::set_rotationAnglesFromMatrix",
-          "R should be a 3x3 matrix.");
-
-        // Extract Euler angles from given rotation matrix:
-        if(fabs(1.f - R[2][0]) < 1e-6f) { // is R(2,0) == 1
-          this->params6DoF.angle_z = 0.f;
-          if(R[2][0] > 0) { // R(2,0) = +1
-            this->params6DoF.angle_y = M_PI_2;
-            this->params6DoF.angle_x = atan2_acc(R[0][1], R[1][1]);
-          } else { // R(2,0) = -1
-            this->params6DoF.angle_y = -M_PI_2;
-            this->params6DoF.angle_x = atan2_acc(-R[0][1], R[1][1]);
-          }
-        } else {
-          this->params6DoF.angle_y = asinf(R[2][0]);
-          const f32 inv_cy = 1.f / cosf(this->params6DoF.angle_y);
-          this->params6DoF.angle_x = atan2_acc(-R[2][1]*inv_cy, R[2][2]*inv_cy);
-          this->params6DoF.angle_z = atan2_acc(-R[1][0]*inv_cy, R[0][0]*inv_cy);
-        }
-
-        return RESULT_OK;
-      } // set_rotationMatrix()
+        return Matrix::GetEulerAngles(R,
+                                      this->params6DoF.angle_x,
+                                      this->params6DoF.angle_y,
+                                      this->params6DoF.angle_z);
+        
+      } // set_rotationAnglesFromMatrix
+      
+     
 
       // Retrieve/update the current translation estimates of the tracker
       const Point3<f32>& LucasKanadeTracker_SampledPlanar6dof::get_translation() const

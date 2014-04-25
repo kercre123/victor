@@ -507,7 +507,7 @@ namespace Anki
         typeString = Vision::MarkerTypeStrings[markerType];
       }
 
-      printf("[Type %d-%s]: (%d,%d) (%d,%d) (%d,%d) (%d,%d)] ",
+      printf("[Type %d-%s]: (%f,%f) (%f,%f) (%f,%f) (%f,%f)] ",
         markerType, typeString,
         corners[0].x, corners[0].y,
         corners[1].x, corners[1].y,
@@ -533,7 +533,7 @@ namespace Anki
       if(SerializedBuffer::SerializeDescriptionStrings("VisionMarker", objectName, buffer, bufferLength) != RESULT_OK)
         return RESULT_FAIL;
 
-      SerializedBuffer::SerializeRawBasicType<Quadrilateral<s16> >("corners", this->corners, buffer, bufferLength);
+      SerializedBuffer::SerializeRawBasicType<Quadrilateral<f32> >("corners", this->corners, buffer, bufferLength);
       SerializedBuffer::SerializeRawBasicType<s32>("markerType", this->markerType, buffer, bufferLength);
       SerializedBuffer::SerializeRawBasicType<bool>("isValid", this->isValid, buffer, bufferLength);
       SerializedBuffer::SerializeRawBasicType<f32>("observedOrientation", this->observedOrientation, buffer, bufferLength);
@@ -547,7 +547,7 @@ namespace Anki
       if(SerializedBuffer::DeserializeDescriptionStrings(NULL, objectName, buffer, bufferLength) != RESULT_OK)
         return RESULT_FAIL;
 
-      this->corners = SerializedBuffer::DeserializeRawBasicType<Quadrilateral<s16> >(NULL, buffer, bufferLength);
+      this->corners = SerializedBuffer::DeserializeRawBasicType<Quadrilateral<f32> >(NULL, buffer, bufferLength);
       this->markerType = static_cast<Vision::MarkerType>(SerializedBuffer::DeserializeRawBasicType<s32>(NULL, buffer, bufferLength));
       this->isValid = SerializedBuffer::DeserializeRawBasicType<bool>(NULL, buffer, bufferLength);
       this->observedOrientation = SerializedBuffer::DeserializeRawBasicType<f32>(NULL, buffer, bufferLength);
@@ -582,11 +582,10 @@ namespace Anki
       } // IF trees initialized
     }
 
-    Result VisionMarker::ComputeThreshold(const Array <u8> &image,
-      const Array<f32> &homography,
-      const f32 minContrastRatio,
-      bool &isHighContrast,
-      u8 &meanGrayvalueThreshold)
+    
+    Result VisionMarker::ComputeBrightDarkValues(const Array <u8> &image,
+                                                 const Array<f32> &homography,
+                                                 f32& brightValue, f32& darkValue)
     {
       using namespace VisionMarkerDecisionTree;
 
@@ -681,26 +680,18 @@ namespace Anki
         } // FOR each probe point
       } // FOR each probe
 
-      // Is this correct?
-      if(static_cast<f32>(brightAccumulator) < static_cast<f32>(darkAccumulator)*minContrastRatio) {
-        // Not enough contrast, return isHighContrast = false Note this is not a "failure" of the
-        // method though, so we should still return RESULT_OK
-        isHighContrast = false;
-        meanGrayvalueThreshold = 0;
-      }
-      else {
-        // The accumulators now contain the _sum_ of all the bright and dark values To compute the
-        // threshold, I can average those sums and divide by N = numProbes * numPointsPerProbe, or
-        // equivalently, just compute the threshold as (sum(Dark) + sum(Bright)) / (2*N)
-        isHighContrast = true;
-        meanGrayvalueThreshold = static_cast<u8>((darkAccumulator + brightAccumulator) / (NUM_PROBE_POINTS*NUM_THRESHOLD_PROBES*2));
-      }
-
+      const f32 divisor = 1.f / static_cast<f32>(NUM_PROBE_POINTS * NUM_THRESHOLD_PROBES);
+      brightValue = static_cast<f32>(brightAccumulator) * divisor;
+      darkValue   = static_cast<f32>(darkAccumulator)   * divisor;
+      
       return lastResult;
-    } // ComputeThreshold()
-
-    Result VisionMarker::Extract(const Array<u8> &image, const Quadrilateral<s16> &quad,
-      const Array<f32> &homography, const f32 minContrastRatio)
+    }
+    
+    
+    Result VisionMarker::Extract(const Array<u8> &image, const Quadrilateral<s16> &initQuad,
+                                 const Array<f32> &initHomography, const f32 minContrastRatio,
+                                 const s32 quadRefinementIterations,
+                                 MemoryStack scratch)
     {
       using namespace VisionMarkerDecisionTree;
 
@@ -709,17 +700,52 @@ namespace Anki
 
       Initialize();
 
-      BeginBenchmark("vme_threshold");
-      u8 meanGrayvalueThreshold;
-      bool isHighContrast;
-      if((lastResult = ComputeThreshold(image, homography, minContrastRatio, isHighContrast, meanGrayvalueThreshold)) != RESULT_OK) {
+      BeginBenchmark("vme_brightdarkvals");
+      f32 brightValue, darkValue;
+      if((lastResult = this->ComputeBrightDarkValues(image, initHomography, brightValue, darkValue)) != RESULT_OK) {
         return lastResult;
       }
-      EndBenchmark("vme_threshold");
+      EndBenchmark("vme_brightdarkvals");
 
-      // If the contrast sufficient for ComputeThreshold, parse the marker
-      if(isHighContrast)
+      if(brightValue > darkValue*minContrastRatio)
       {
+        // If the contrast is sufficient, compute the threshold and parse the marker
+        
+        Quadrilateral<f32> quad;
+        Array<f32> homography(3,3,scratch);
+        AnkiConditionalErrorAndReturnValue(homography.IsValid(),
+                                           RESULT_FAIL_OUT_OF_MEMORY,
+                                           "VisionMarker::Extract",
+                                           "Failed to allocate homography Array.");
+      
+        const u8 meanGrayvalueThreshold = static_cast<u8>(0.5f*(brightValue+darkValue));
+        
+        const s32 quadRefinementIterations = 10; // TODO: make an argument/parameter
+        if(quadRefinementIterations > 0) {
+          BeginBenchmark("vme_quadrefine");
+          
+          const f32 contrast = brightValue - darkValue;
+          
+          const f32 squareWidthFraction = 0.1f; // TODO: make a part of marker/fiducial definitions?
+          
+          const s32 numRefinementSamples = 100; // TODO: make argument/parameter?
+          
+          if((lastResult = RefineQuadrilateral(initQuad, initHomography, image, squareWidthFraction, quadRefinementIterations, contrast, numRefinementSamples, quad, homography, scratch)) != RESULT_OK) {
+            
+            // TODO: Don't fail? Just warn and keep original quad?
+            return lastResult;
+          }
+        
+          EndBenchmark("vme_quadrefine");
+        } else {
+          
+          // No refinement, just cast initial quad to f32 and keep initial
+          // homography
+          quad.SetCast(initQuad);
+          homography.Set(initHomography);
+          
+        }// if(refineQuads)
+        
         BeginBenchmark("vme_classify");
 
         //s16 multiClassLabel = static_cast<s16>(MARKER_UNKNOWN);
@@ -767,23 +793,23 @@ namespace Anki
 #ifdef OUTPUT_FAILED_MARKER_STEPS
             AnkiWarn("VisionMarker::Extract", "verifyLabel failed detected");
 #endif
-          }
+          } // if(verifyLabel == multiClassLabel)
 
           EndBenchmark("vme_verify");
         } else {
 #ifdef OUTPUT_FAILED_MARKER_STEPS
           AnkiWarn("VisionMarker::Extract", "MARKER_UNKNOWN detected");
 #endif
-        }
+        } // if(multiClassLabel != MARKER_UNKNOWN)
       } else {
 #ifdef OUTPUT_FAILED_MARKER_STEPS
         AnkiWarn("VisionMarker::Extract", "Poor contrast marker detected");
 #endif
-      }
+      } // if contrast is sufficient
 
       if(!this->isValid) {
         this->markerType = Vision::MARKER_UNKNOWN;
-        this->corners = quad; // Just copy the non-reordered corners
+        this->corners.SetCast(initQuad); // Just copy the non-reordered, non-refined corners
       }
 
       return lastResult;
@@ -792,7 +818,7 @@ namespace Anki
     s32 VisionMarker::get_serializationSize() const
     {
       // TODO: make the correct length
-      return 64 + 10*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
+      return 96 + 10*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
     }
   } // namespace Embedded
 } // namespace Anki
