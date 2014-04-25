@@ -19,25 +19,42 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define _ANKICORETECHEMBEDDED_COMMON_BENCHMARKING_H_
 
 #include "anki/common/robot/config.h"
+#include "anki/common/robot/fixedLengthList.h"
 
-#define MAX_BENCHMARK_EVENTS 0xFFF
+namespace Anki
+{
+  namespace Embedded
+  {
+    const s32 MAX_BENCHMARK_EVENTS = 0xFFF;
 
-// Call this before doing any benchmarking, to clear the buffer of benchmarkEvents.
-// Can be called multiple times.
-void InitBenchmarking(void);
+    typedef struct BenchmarkElement
+    {
+      static const s32 NAME_LENGTH = 32;
 
-// Use these functions to add a new event to the list. These functions are very fast.
-//
-// WARNING: name must be in globally available memory
-//
-// WARNING: nesting BeginBenchmark() and EndBenchmark() events that have the same name won't work.
-// This is okay: BeginBenchmark("a"); BeginBenchmark("b"); EndBenchmark("b"); EndBenchmark("a");
-// This is not okay: BeginBenchmark("a"); BeginBenchmark("a"); EndBenchmark("a"); EndBenchmark("a");
-void BeginBenchmark(const char *name);
-void EndBenchmark(const char *name);
+      f64 elapsedTime;
+      char name[BenchmarkElement::NAME_LENGTH];
+    } BenchmarkElement;
 
-// Compile and print out all the benchmark events that were recorded
-void PrintBenchmarkResults_All(void);
-void PrintBenchmarkResults_OnlyTotals(void);
+    // Call this before doing any benchmarking, to clear the buffer of benchmarkEvents.
+    // Can be called multiple times.
+    void InitBenchmarking();
+
+    // Use these functions to add a new event to the list. These functions are very fast.
+    //
+    // WARNING: name must be in globally available memory
+    //
+    // WARNING: nesting BeginBenchmark() and EndBenchmark() events that have the same name won't work.
+    // This is okay: BeginBenchmark("a"); BeginBenchmark("b"); EndBenchmark("b"); EndBenchmark("a");
+    // This is not okay: BeginBenchmark("a"); BeginBenchmark("a"); EndBenchmark("a"); EndBenchmark("a");
+    void BeginBenchmark(const char *name);
+    void EndBenchmark(const char *name);
+
+    // Compile and print out all the benchmark events that were recorded
+    void PrintBenchmarkResults_All();
+    void PrintBenchmarkResults_OnlyTotals();
+
+    FixedLengthList<BenchmarkElement> ComputeBenchmarkResults(MemoryStack &memory);
+  } // namespace Embedded
+} // namespace Anki
 
 #endif // _ANKICORETECHEMBEDDED_COMMON_BENCHMARKING_H_
