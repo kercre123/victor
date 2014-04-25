@@ -80,7 +80,8 @@ namespace Anki {
       {
 #if USE_MATLAB_VISUALIZATION
         matlabViz_.PutQuad(corners, "detectedQuad");
-        matlabViz_.EvalStringEcho("plot(detectedQuad([1 2 4 3 1],1)+1, "
+        matlabViz_.EvalStringEcho("detectedQuad = double(detectedQuad); "
+                                  "plot(detectedQuad([1 2 4 3 1],1)+1, "
                                   "     detectedQuad([1 2 4 3 1],2)+1, "
                                   "     'r', 'LineWidth', 2, "
                                   "     'Parent', h_axes, "
