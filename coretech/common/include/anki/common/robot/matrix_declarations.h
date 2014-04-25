@@ -82,6 +82,18 @@ namespace Anki
       // Note that this is the naive O(n^3) Definition
       // MultiplyTranspose has better access patterns than Multiply for certain types of arrays, so could be a lot faster (and easier to accelerate)
       template<typename InType, typename OutType> Result MultiplyTranspose(const Array<InType> &in1, const Array<InType> &in2Transposed, Array<OutType> &out);
+      
+      
+      //
+      // Rotation Matrices
+      //
+      
+      // TODO: Add other rotation-related math, like Rodrigues' formula, or Pose chaining...
+      
+      // Compute the three Euler angles from a given 3x3 Rotation Matrix.
+      Result GetEulerAngles(const Array<f32>& R, f32& angle_x, f32& angle_y, f32& angle_z);
+
+      
 
       //
       // Linear Algebra and Linear Solvers
@@ -95,6 +107,7 @@ namespace Anki
         bool &numericalFailure //!< If true, the solver failed because of numerical instability
         );
 
+      
       // Compute the homography such that "transformedPoints = homography * originalPoints"
       //
       // WARNING: This uses the inhomogeneous solution and the Cholesky decomposition, therefore it

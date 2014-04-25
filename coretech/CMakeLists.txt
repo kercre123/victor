@@ -6,10 +6,10 @@ cmake_minimum_required(VERSION 2.8)
 #ankiProject(CoreTech)
 
 include_directories(
-	common/include
-	vision/include
-        planning/include
-	messaging/include
+  common/include
+  vision/include
+  planning/include
+  messaging/include
 )
 
 add_subdirectory(common)

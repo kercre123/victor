@@ -5,14 +5,14 @@ add_definitions(-DCORETECH_ROBOT)
 file(GLOB SOURCE_FILES *.c *.cpp ../../shared/src/*.cpp)
 
 file(GLOB HEADER_FILES 
-	*.h 
-	../../shared/src/*.h
-	${CORETECH_COMMON_INCLUDE_DIR}/robot/*.h
-	${CORETECH_COMMON_INCLUDE_DIR}/shared/*.h
+  *.h 
+  ../../shared/src/*.h
+  ${CORETECH_COMMON_INCLUDE_DIR}/robot/*.h
+  ${CORETECH_COMMON_INCLUDE_DIR}/shared/*.h
 )
 
 add_library(CoreTech_Common_Robot
-	${SOURCE_FILES} 
-	${HEADER_FILES}
-	${CORETECH_COMMON_INCLUDE_FILES}
+  ${SOURCE_FILES} 
+  ${HEADER_FILES}
+  ${CORETECH_COMMON_INCLUDE_FILES}
 )

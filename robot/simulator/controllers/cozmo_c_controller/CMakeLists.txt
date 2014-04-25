@@ -15,9 +15,9 @@ file(GLOB COZMO_ROBOT_SUPERVISOR_SRC "${ROBOT_SRC_DIR}/*.cpp")
 file(GLOB COZMO_ROBOT_HEADER_FILES "${COZMO_INCLUDE_DIR}/anki/cozmo/robot/*.h")
 
 include_directories( 
-	${ROBOT_SRC_DIR}
+  ${ROBOT_SRC_DIR}
   ${SIMULATOR_SRC_DIR}
-	${PHYSICS_PLUGIN_DIR}
+  ${PHYSICS_PLUGIN_DIR}
   ${WEBOTS_CPP_INCLUDE_DIR}
 )
 
@@ -32,7 +32,7 @@ add_definitions(-DSIMULATOR)
 
 # Source files
 set(SOURCE_FILES
-	cozmo_c_controller.cpp
+  cozmo_c_controller.cpp
   
   # this is where the Supervisor object lives, it must be early in the compile list?!?
   ${SIMULATOR_HAL_DIR}/sim_hal.cpp
@@ -45,9 +45,9 @@ set(SOURCE_FILES
 
   ${COZMO_ROBOT_SUPERVISOR_SRC}
   
-#	${COZMO_ROBOT_SRC_DIR}/hal/simhal/sim_encoders.cpp
-#	${COZMO_ROBOT_SRC_DIR}/hal/simhal/sim_motors.cpp
-#	${COZMO_ROBOT_SRC_DIR}/hal/simhal/sim_timers.cpp
+#  ${COZMO_ROBOT_SRC_DIR}/hal/simhal/sim_encoders.cpp
+#  ${COZMO_ROBOT_SRC_DIR}/hal/simhal/sim_motors.cpp
+#  ${COZMO_ROBOT_SRC_DIR}/hal/simhal/sim_timers.cpp
 )
 
 set(HEADER_FILES
@@ -61,12 +61,12 @@ set(HEADER_FILES
  ${ROBOT_SRC_DIR}/visionParameters.h
  ${ROBOT_SRC_DIR}/visionDebugStream.h
 
-	${SIMULATOR_SRC_DIR}/keyboardController.h
-  ${SIMULATOR_SRC_DIR}/sim_viz.h
-  ${SIMULATOR_SRC_DIR}/sim_overlayDisplay.h
-	
-	${COZMO_ROBOT_HEADER_FILES}
-	${COZMO_INCLUDE_FILES}
+ ${SIMULATOR_SRC_DIR}/keyboardController.h
+ ${SIMULATOR_SRC_DIR}/sim_viz.h
+ ${SIMULATOR_SRC_DIR}/sim_overlayDisplay.h
+  
+ ${COZMO_ROBOT_HEADER_FILES}
+ ${COZMO_INCLUDE_FILES}
 )
 
 if(NOT WIN32)
@@ -95,9 +95,9 @@ endif()
 # Make sure a copy of the target exists in cozmo_c_controller/
 # no matter where the target is actually built.
 add_custom_command(
-	TARGET cozmo_c_controller
-	POST_BUILD
-	#COMMAND cp cozmo_c_controller ${CMAKE_CURRENT_SOURCE_DIR}/
-	COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:cozmo_c_controller> ${CMAKE_CURRENT_SOURCE_DIR}/
-	COMMAND ${CMAKE_COMMAND} -E remove $<TARGET_FILE:cozmo_c_controller>
+  TARGET cozmo_c_controller
+  POST_BUILD
+  #COMMAND cp cozmo_c_controller ${CMAKE_CURRENT_SOURCE_DIR}/
+  COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:cozmo_c_controller> ${CMAKE_CURRENT_SOURCE_DIR}/
+  COMMAND ${CMAKE_COMMAND} -E remove $<TARGET_FILE:cozmo_c_controller>
 )

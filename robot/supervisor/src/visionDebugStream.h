@@ -43,9 +43,10 @@ namespace Anki {
         
         //Result SendPrintf(const char * string);
         
-        Result SendArray(const Array<u8> &array);
+        Result SendArray(const Array<u8> &array, const char * objectName);
         
         Result SendBinaryImage(const Array<u8> &grayscaleImage,
+                               const char * objectName,
                                    const Tracker &tracker,
                                    const TrackerParameters &parameters,
                                    MemoryStack ccmScratch,

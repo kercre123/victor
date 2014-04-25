@@ -14,7 +14,7 @@ link_directories( ${WEBOTS_LIB_DIR} )
 
 # Source files
 set(SOURCE_FILES
-	overlay_display_supervisor.c
+  overlay_display_supervisor.c
 )
 if(NOT WIN32)
   add_executable(overlay_display_supervisor ${SOURCE_FILES} )
@@ -22,11 +22,11 @@ if(NOT WIN32)
   target_link_libraries(overlay_display_supervisor Controller)
 endif()
   
-# Make sure a copy of the target exists		 in cozmo_c_controller/
-# no matter where the target is	 actually built.
+# Make sure a copy of the target exists     in cozmo_c_controller/
+# no matter where the target is   actually built.
 add_custom_command(
-	TARGET overlay_display_supervisor
-    POST_BUILD
-	COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:overlay_display_supervisor> ${CMAKE_CURRENT_SOURCE_DIR}/
-	COMMAND ${CMAKE_COMMAND} -E remove $<TARGET_FILE:overlay_display_supervisor>
+  TARGET overlay_display_supervisor
+  POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:overlay_display_supervisor> ${CMAKE_CURRENT_SOURCE_DIR}/
+  COMMAND ${CMAKE_COMMAND} -E remove $<TARGET_FILE:overlay_display_supervisor>
 )

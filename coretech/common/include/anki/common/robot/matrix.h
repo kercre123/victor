@@ -15,6 +15,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/matrix_declarations.h"
 #include "anki/common/robot/array2d.h"
 #include "anki/common/robot/arraySlices.h"
+#include "anki/common/robot/trig_fast.h"
 
 namespace Anki
 {
@@ -360,6 +361,7 @@ namespace Anki
         return RESULT_OK;
       }
 
+      
       template<typename Type> Result EstimateHomography(
         const FixedLengthList<Point<Type> > &originalPoints,    //!< Four points in the original coordinate system
         const FixedLengthList<Point<Type> > &transformedPoints, //!< Four points in the transformed coordinate system
