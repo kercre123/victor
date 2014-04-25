@@ -37,6 +37,7 @@ namespace Anki
       const f32 decode_minContrastRatio,
       const s32 maxConnectedComponentSegments,
       const s32 maxExtractedQuads,
+      const s32 quadRefinementIterations,
       const bool returnInvalidMarkers,
       MemoryStack scratchCcm,
       MemoryStack scratchOnchip,
@@ -183,8 +184,6 @@ namespace Anki
         const Quadrilateral<s16> &currentQuad = extractedQuads[iQuad];
 
         VisionMarker &currentMarker = markers[iQuad];
-
-        const s32 quadRefinementIterations = 10; // TODO: make argument/parameter
         if((lastResult = currentMarker.Extract(image, currentQuad, currentHomography,
           decode_minContrastRatio, quadRefinementIterations, scratchOnchip)) != RESULT_OK)
         {

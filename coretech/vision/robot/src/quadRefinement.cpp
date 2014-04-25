@@ -3,6 +3,13 @@
 
 #include "anki/vision/robot/fiducialDetection.h"
 
+#define VISUALIZE_WITH_MATLAB 0
+
+#if VISUALIZE_WITH_MATLAB
+#include "anki/common/robot/matlabInterface.h"
+static Anki::Embedded::Matlab matlab(false);
+#endif
+
 namespace Anki {
   namespace Embedded {
     
@@ -33,6 +40,21 @@ namespace Anki {
                                          "RefineQuadrilateral",
                                          "Input initial homography array must be valid and 3x3.");
       
+#if VISUALIZE_WITH_MATLAB
+      printf("Initial quad: ");
+      initialQuad.Print();
+      printf("\n");
+      
+      matlab.PutArray(image, "img");
+      matlab.PutQuad(initialQuad, "initialQuad");
+      matlab.EvalStringEcho("initialQuad = double(initialQuad); "
+                                "imagesc(img), axis image, hold on, colormap(gray), "
+                                "plot(initialQuad([1 2 4 3 1],1)+1, "
+                                "     initialQuad([1 2 4 3 1],2)+1, "
+                                "     'r', 'LineWidth', 2, "
+                                "     'Tag', 'initialQuad'); drawnow");
+      
+#endif
       
       // Use the size of the initial quad to establish the resolution and thus
       // the scale of the derivatives of the implicit template model
@@ -530,8 +552,8 @@ namespace Anki {
         } // for each sample
       
         // Put the raw A and b matrices into the Array containers
-        for(s32 ia=0; ia<6; ia++) {
-          for(s32 ja=ia; ja<6; ja++) {
+        for(s32 ia=0; ia<8; ia++) {
+          for(s32 ja=ia; ja<8; ja++) {
             AWAt[ia][ja] = AWAt_raw[ia][ja];
           }
           b[0][ia] = b_raw[ia];
@@ -569,6 +591,37 @@ namespace Anki {
         }
       
         refinedHomography.Set(newHomography);
+        
+#if VISUALIZE_WITH_MATLAB
+        {
+          // Compute the final refined corners
+          const f32 h00 = refinedHomography[0][0]; const f32 h01 = refinedHomography[0][1]; const f32 h02 = refinedHomography[0][2];
+          const f32 h10 = refinedHomography[1][0]; const f32 h11 = refinedHomography[1][1]; const f32 h12 = refinedHomography[1][2];
+          const f32 h20 = refinedHomography[2][0]; const f32 h21 = refinedHomography[2][1]; const f32 h22 = refinedHomography[2][2];
+          
+          // Start with canonical corners
+          refinedQuad[0].x = 0.f;  refinedQuad[0].y = 0.f;
+          refinedQuad[1].x = 0.f;  refinedQuad[1].y = 1.f;
+          refinedQuad[2].x = 1.f;  refinedQuad[2].y = 0.f;
+          refinedQuad[3].x = 1.f;  refinedQuad[3].y = 1.f;
+          
+          for(s32 i=0; i<4; ++i) {
+            const f32 xOriginal = refinedQuad[i].x;
+            const f32 yOriginal = refinedQuad[i].y;
+            const f32 normalization = 1.f / (h20*xOriginal + h21*yOriginal + h22);
+            refinedQuad[i].x = (h00*xOriginal + h01*yOriginal + h02) * normalization;
+            refinedQuad[i].y = (h10*xOriginal + h11*yOriginal + h12) * normalization;
+          }
+          
+          matlab.PutQuad(refinedQuad, "refinedQuad");
+          matlab.EvalStringEcho("delete(findobj(gcf, 'Tag', 'refinedQuad')); "
+                                "refinedQuad = double(refinedQuad); "
+                                "plot(refinedQuad([1 2 4 3 1],1)+1, "
+                                "     refinedQuad([1 2 4 3 1],2)+1, "
+                                "     'b', 'LineWidth', 1, "
+                                "     'Tag', 'refinedQuad'); drawnow");
+        }
+#endif
       
       } // for each iteration
       
@@ -591,6 +644,20 @@ namespace Anki {
         refinedQuad[i].x = (h00*xOriginal + h01*yOriginal + h02) * normalization;
         refinedQuad[i].y = (h10*xOriginal + h11*yOriginal + h12) * normalization;
       }
+      
+#if VISUALIZE_WITH_MATLAB
+      printf("Final quad: ");
+      refinedQuad.Print();
+      printf("\n");
+      {
+        matlab.PutQuad(refinedQuad, "refinedQuad");
+        matlab.EvalStringEcho("refinedQuad = double(refinedQuad); "
+                              "plot(refinedQuad([1 2 4 3 1],1)+1, "
+                              "     refinedQuad([1 2 4 3 1],2)+1, "
+                              "     'g', 'LineWidth', 1, "
+                              "     'Tag', 'refinedQuad'); drawnow");
+      }
+#endif
       
       return RESULT_OK;
       
