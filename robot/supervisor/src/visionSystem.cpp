@@ -132,9 +132,14 @@ namespace Anki {
         static VisionSystemMode mode_;
 
         // Camera parameters
-        static f32 exposureMilliseconds;
-        const s32 autoExposure_integerCountsIncrement = 4;
-        const f32 autoExposure_percentileToSaturate = 0.95f;
+        static f32 exposureTime;
+        static s32 frameNumber;
+        static const bool autoExposure_enabled = true;
+        static const s32 autoExposure_integerCountsIncrement = 2;
+        static const f32 autoExposure_minExposureTime = 0.03f;
+        static const f32 autoExposure_maxExposureTime = 0.97f;
+        static const f32 autoExposure_percentileToSaturate = 0.95f;
+        static const s32 autoExposure_adjustEveryNFrames = 2;
 
         // Tracking marker related members
         static Anki::Vision::MarkerType markerTypeToTrack_;
@@ -1077,7 +1082,8 @@ namespace Anki {
           headCamFOV_ = 2.f * atan_fast(static_cast<f32>(headCamInfo_->nrows) /
                                         (2.f * headCamInfo_->focalLength_y));
 
-          exposureMilliseconds = 0.2f; // TODO: pick a reasonable start value
+          exposureTime = 0.2f; // TODO: pick a reasonable start value
+          frameNumber = 0;
 
           detectionParameters_.Initialize();
           trackerParameters_.Initialize();
@@ -1248,7 +1254,12 @@ namespace Anki {
 
       Result Update(const Messages::RobotState robotState)
       {
-      VisionMemory::ResetBuffers();
+        // This should be called from elsewhere first, but calling it again won't hurt
+        Init();
+        
+        VisionMemory::ResetBuffers();
+        
+        frameNumber++;
 
       const s32 captureHeight = CameraModeInfo[captureResolution_].height;
       const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
@@ -1257,21 +1268,24 @@ namespace Anki {
                                VisionMemory::onchipScratch_, Flags::Buffer(false,false,false));
 
       HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
-                          captureResolution_, exposureMilliseconds, false);
+                          captureResolution_, exposureTime, false);
 
-      ComputeBestCameraParameters(
-            grayscaleImage,
-            Rectangle<s32>(0, grayscaleImage.get_size(1)-1, 0, grayscaleImage.get_size(0)-1),
-            autoExposure_integerCountsIncrement,
-            autoExposure_percentileToSaturate,
-            exposureMilliseconds,
-            VisionMemory::ccmScratch_);
+      if(autoExposure_enabled && (frameNumber % autoExposure_adjustEveryNFrames) == 0) {
+        ComputeBestCameraParameters(
+              grayscaleImage,
+              Rectangle<s32>(0, grayscaleImage.get_size(1)-1, 0, grayscaleImage.get_size(0)-1),
+              autoExposure_integerCountsIncrement,
+              autoExposure_percentileToSaturate,
+              autoExposure_minExposureTime, autoExposure_maxExposureTime,
+              exposureTime,
+              VisionMemory::ccmScratch_);
+      }
       
 #ifdef SEND_BINARY_IMAGE_ONLY
       DebugStream::SendBinaryImage(grayscaleImage, "Binary Robot Image", tracker_, trackerParameters_, VisionMemory::ccmScratch_, VisionMemory::onchipScratch_, VisionMemory::offchipScratch_);
       HAL::MicroWait(250000);
 #else
-      DebugStream::SendImage(grayscaleImage, exposureMilliseconds, "Robot Image");
+      DebugStream::SendImage(grayscaleImage, exposureTime, "Robot Image");
       HAL::MicroWait(166666); // 6fps
       //HAL::MicroWait(140000); //7fps
       //HAL::MicroWait(125000); //8fps
@@ -1284,7 +1298,12 @@ namespace Anki {
 
       Result Update(const Messages::RobotState robotState)
       {
-      VisionMemory::ResetBuffers();
+        // This should be called from elsewhere first, but calling it again won't hurt
+        Init();
+        
+        VisionMemory::ResetBuffers();
+        
+        frameNumber++;
 
       const s32 captureHeight = CameraModeInfo[captureResolution_].height;
       const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
@@ -1293,15 +1312,18 @@ namespace Anki {
                                VisionMemory::offchipScratch_, Flags::Buffer(false,false,false));
 
       HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
-                          captureResolution_, exposureMilliseconds, false);
+                          captureResolution_, exposureTime, false);
 
+      if(autoExposure_enabled && (frameNumber % autoExposure_adjustEveryNFrames) == 0) {
       ComputeBestCameraParameters(
             grayscaleImage,
             Rectangle<s32>(0, grayscaleImage.get_size(1)-1, 0, grayscaleImage.get_size(0)-1),
             autoExposure_integerCountsIncrement,
             autoExposure_percentileToSaturate,
-            exposureMilliseconds,
+            autoExposure_minExposureTime, autoExposure_maxExposureTime,
+            exposureTime,
             VisionMemory::ccmScratch_);
+      }
       
       const s32 faceDetectionHeight = CameraModeInfo[faceDetectionResolution_].height;
       const s32 faceDetectionWidth  = CameraModeInfo[faceDetectionResolution_].width;
@@ -1373,6 +1395,8 @@ namespace Anki {
       {
         // This should be called from elsewhere first, but calling it again won't hurt
         Init();
+        
+        frameNumber++;
 
         // no-op on real hardware
         if(!Simulator::IsFrameReady()) {
@@ -1400,15 +1424,18 @@ namespace Anki {
                                    VisionMemory::offchipScratch_, Flags::Buffer(false,false,false));
 
           HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
-                              captureResolution_, exposureMilliseconds, false);
-
-          ComputeBestCameraParameters(
-            grayscaleImage,
-            Rectangle<s32>(0, grayscaleImage.get_size(1)-1, 0, grayscaleImage.get_size(0)-1),
-            autoExposure_integerCountsIncrement,
-            autoExposure_percentileToSaturate,
-            exposureMilliseconds,
-            VisionMemory::ccmScratch_);
+                              captureResolution_, exposureTime, false);
+         
+          if(autoExposure_enabled && (frameNumber % autoExposure_adjustEveryNFrames) == 0) {
+            ComputeBestCameraParameters(
+              grayscaleImage,
+              Rectangle<s32>(0, grayscaleImage.get_size(1)-1, 0, grayscaleImage.get_size(0)-1), 
+              autoExposure_integerCountsIncrement,
+              autoExposure_percentileToSaturate,
+              autoExposure_minExposureTime, autoExposure_maxExposureTime,
+              exposureTime,
+              VisionMemory::ccmScratch_);
+          }
           
           DownsampleAndSendImage(grayscaleImage);
 
@@ -1506,16 +1533,20 @@ namespace Anki {
                                    onchipScratch_local, Flags::Buffer(false,false,false));
 
           HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
-                              captureResolution_, exposureMilliseconds, false);
+                              captureResolution_, exposureTime, false);
 
+          // TODO: allow tracking to work with exposure changes
+          /*if(autoExposure_enabled && (frameNumber % autoExposure_adjustEveryNFrames) == 0) {
           ComputeBestCameraParameters(
-            grayscaleImage
-            Rectangle<s32>(0, grayscaleImage.get_size(1)-1, 0, grayscaleImage.get_size(0)-1),
+            grayscaleImage,
+            Rectangle<s32>(0, grayscaleImage.get_size(1)-1, 0, grayscaleImage.get_size(0)-1), 
             autoExposure_integerCountsIncrement,
             autoExposure_percentileToSaturate,
-            exposureMilliseconds,
+            autoExposure_minExposureTime, autoExposure_maxExposureTime,
+            exposureTime,
             VisionMemory::ccmScratch_);
-          
+          }*/
+            
           //
           // Tracker Prediction
           //

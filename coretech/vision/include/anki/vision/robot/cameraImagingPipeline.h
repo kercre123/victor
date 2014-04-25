@@ -26,6 +26,8 @@ namespace Anki
       const Rectangle<s32> &imageRegionOfInterest,
       const s32 integerCountsIncrement, // Can be any value >= 1. Higher values skip more pixels, so are faster and less accurate.
       const f32 percentileToSaturate, // Can be in the range [0.0, 1.0]. 0.95 is a good value
+      const f32 minMilliseconds,
+      const f32 maxMilliseconds,
       f32 &exposureMilliseconds, //< Input the value used to capture "Array<u8> &image", and outputs the value to set next
       MemoryStack scratch);
   } // namespace Embedded

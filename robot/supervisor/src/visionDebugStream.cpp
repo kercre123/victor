@@ -71,9 +71,9 @@ namespace Anki {
           
           toSend.PushBack<f32>("Benchmark Times", &benchmarkTimes[0], 2);
           
-          const s32 nothing[8] = {0,0,0,0,0,0,0,0};
-          toSend.PushBack<s32>("Nothing", &nothing[0], 8);
-          toSend.PushBack<s32>("Nothing", &nothing[0], 8);
+          //const s32 nothing[8] = {0,0,0,0,0,0,0,0};
+          //toSend.PushBack<s32>("Nothing", &nothing[0], 8);
+          //toSend.PushBack<s32>("Nothing", &nothing[0], 8);
           
           s32 startIndex;
           const u8 * bufferStart = reinterpret_cast<const u8*>(toSend.get_memoryStack().get_validBufferStart(startIndex));
@@ -339,7 +339,7 @@ namespace Anki {
 #if SEND_DEBUG_STREAM
           debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
           debugStreamBuffer_.PushBack(objectName, array);
-          debugStreamBuffer_.PushBackString("Exposure time: %dms", Round<s32>(1000.0f*exposureTime));
+          debugStreamBuffer_.PushBack<f32>("Exposure time", &exposureTime, 1);
           return SendBuffer(debugStreamBuffer_);
 #else
           return RESULT_OK;

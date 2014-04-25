@@ -20,6 +20,8 @@ namespace Anki
       const Rectangle<s32> &imageRegionOfInterest,
       const s32 integerCountsIncrement,
       const f32 percentileToSaturate,
+      const f32 minMilliseconds,
+      const f32 maxMilliseconds,
       f32 &exposureMilliseconds,
       MemoryStack scratch)
     {
@@ -37,18 +39,20 @@ namespace Anki
       const f32 numCurrentlySaturated = static_cast<f32>(counts.get_counts()[255]);
       const f32 percentCurrentlySaturated = numCurrentlySaturated / numElements;
 
-      if(percentCurrentlySaturated >= percentileToSaturate) {
+      if(percentCurrentlySaturated >= (1.0f - percentileToSaturate)) {
         // If the brightness is too high, we have to guess at the correct brightness
 
         // If we assume a underlying uniform distribution of true irradience,
         // then the ratio of saturated to unsaturated pixels tells us how to change the threshold
-        exposureMilliseconds = oldExposureMilliseconds * (percentileToSaturate / percentCurrentlySaturated);
+        exposureMilliseconds = oldExposureMilliseconds * ((1.0f - percentileToSaturate) / percentCurrentlySaturated);
       } else {
         // If the brightness is too low, compute the new brightness exactly
-        const f32 curBrightPixelValue = static_cast<f32>( counts.ComputePercentile(percentileToSaturate) );
+        const f32 curBrightPixelValue = static_cast<f32>( MAX(1, counts.ComputePercentile(percentileToSaturate)) );
 
         exposureMilliseconds = oldExposureMilliseconds * (255.0f / curBrightPixelValue);
       }
+
+      exposureMilliseconds = CLIP(exposureMilliseconds, minMilliseconds, maxMilliseconds);
 
       return RESULT_OK;
     }

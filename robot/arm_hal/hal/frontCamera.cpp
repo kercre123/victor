@@ -71,7 +71,9 @@ namespace Anki
         0x26, 0xa1,  // VPT - AGC/AEC Fast Mode Operating Region
         0x2b, 0x00,  // Dummy bytes LSB
         0x6b, 0xaa,  // AWB mode select - Simple AWB
-        0x13, 0xe6,  // COM8 - AGC stuff... Enable all but AEC
+        //0x13, 0xe6,  // COM8 - AGC stuff... Enable all but AEC
+        //0x13, 0xe0,  // COM8 - AGC stuff
+        0x13, 0x00,  // COM8 - AGC stuff
         0x90, 0x05,  // Sharpness Control 1 - threshold detection
         0x91, 0x01,  // Auto De-noise Threshold Control
         
