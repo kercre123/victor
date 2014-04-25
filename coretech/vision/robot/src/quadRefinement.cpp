@@ -406,7 +406,7 @@ namespace Anki {
       // Get a pointer to each row of A:
       f32 * restrict Arow[8];
       for(s32 i=0; i<8; ++i) {
-        restrict Arow[i] = A.Pointer(i,0); // TODO: do i need "restrict" here?
+        Arow[i] = A.Pointer(i,0); // TODO: do i need "restrict" here?
       }
       
       // Create A matrix of Jacobians
