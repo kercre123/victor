@@ -1299,24 +1299,13 @@ namespace Anki {
                                  Embedded::Array<f32>&  rotation,
                                  Embedded::Point3<f32>& translation)
       {
-        // TODO: replace with simple copy constructor
-        Quadrilateral<f32> quad(Point<f32>(marker.corners[0].x, marker.corners[0].y),
-                                Point<f32>(marker.corners[1].x, marker.corners[1].y),
-                                Point<f32>(marker.corners[2].x, marker.corners[2].y),
-                                Point<f32>(marker.corners[3].x, marker.corners[3].y));
-        
         Quadrilateral<f32> sortedQuad;
         if(ignoreOrientation) {
           sortedQuad = marker.corners.ComputeClockwiseCorners<f32>();
         } else {
-          // TODO: replace with simple copy constructor
-          sortedQuad = Quadrilateral<f32>(Point<f32>(marker.corners[0].x, marker.corners[0].y),
-                                          Point<f32>(marker.corners[1].x, marker.corners[1].y),
-                                          Point<f32>(marker.corners[2].x, marker.corners[2].y),
-                                          Point<f32>(marker.corners[3].x, marker.corners[3].y));
+          sortedQuad = marker.corners;
         }
-        
-
+       
         return P3P::computePose(sortedQuad,
                                 canonicalMarker3d_[0], canonicalMarker3d_[1],
                                 canonicalMarker3d_[2], canonicalMarker3d_[3],
