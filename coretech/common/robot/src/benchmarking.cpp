@@ -150,9 +150,9 @@ namespace Anki
 
 #if defined(_MSC_VER)
       LARGE_INTEGER frequency;
-      f64 freqencyDouble;
+      f64 frequencyF64;
       QueryPerformanceFrequency(&frequency);
-      freqencyDouble = (f64)(frequency.QuadPart);
+      frequencyF64 = (f64)(frequency.QuadPart);
 #endif
 
       numEventNames = 0;
@@ -180,7 +180,7 @@ namespace Anki
             //#pragma unused (rawElapsedTime) // may or may not get used depending on #ifs below
 
 #if defined(_MSC_VER)
-            const f64 elapsedTime = (f64)rawElapsedTime / freqencyDouble;
+            const f64 elapsedTime = (f64)rawElapsedTime / frequencyF64;
 #elif defined(__APPLE_CC__)
             const f64 elapsedTime = (f64)rawElapsedTime / 1000000.0;
 #elif defined(__EDG__)  // MDK-ARM
@@ -213,5 +213,156 @@ namespace Anki
         }
       } // for(i=0; i<numEventNames; i++)
     } // void PrintBenchmarkResults()
+
+    BenchmarkElement::BenchmarkElement(const char * name)
+      : inclusive_mean(0), inclusive_min(DBL_MAX), inclusive_max(DBL_MIN), inclusive_total(0), exclusive_mean(0), exclusive_min(DBL_MAX), exclusive_max(DBL_MIN), exclusive_total(0), numEvents(0)
+    {
+      snprintf(this->name, BenchmarkElement::NAME_LENGTH, "%s", name);
+    }
+
+    class CompileBenchmarkResults
+    {
+    public:
+
+      static FixedLengthList<BenchmarkElement> ComputeBenchmarkResults(MemoryStack &memory)
+      {
+        FixedLengthList<BenchmarkElement> outputResults(MAX_BENCHMARK_EVENTS, memory);
+
+        AnkiConditionalErrorAndReturnValue(numBenchmarkEvents > 0 && numBenchmarkEvents < MAX_BENCHMARK_EVENTS,
+          outputResults, "ComputeBenchmarkResults", "Invalid numBenchmarkEvents");
+
+#if defined(_MSC_VER)
+        LARGE_INTEGER frequency;
+        f64 frequencyF64;
+        QueryPerformanceFrequency(&frequency);
+        frequencyF64 = (f64)(frequency.QuadPart);
+#endif
+
+        {
+          PUSH_MEMORY_STACK(memory);
+
+          FixedLengthList<BenchmarkInstance> fullList(MAX_BENCHMARK_EVENTS, memory);
+          FixedLengthList<BenchmarkInstance> parseStack(MAX_BENCHMARK_EVENTS, memory);
+
+          BenchmarkInstance * pParseStack = parseStack.Pointer(0);
+
+          // First, parse each event individually, and add it to the fullList
+          for(s32 iEvent=0; iEvent<numBenchmarkEvents; iEvent++) {
+#if defined(_MSC_VER)
+            const f64 timeF64 = static_cast<f64>(benchmarkEvents[iEvent].time) / frequencyF64;
+#elif defined(__APPLE_CC__)
+            const f64 timeF64 = static_cast<f64>(benchmarkEvents[iEvent].time) / 1000000.0;
+#elif defined(__EDG__)  // MDK-ARM
+            const f64 timeF64 = static_cast<f64>(benchmarkEvents[iEvent].time) / 1000000.0;
+#else
+            const f64 timeF64 = static_cast<f64>(benchmarkEvents[iEvent].time) / 1000000000.0;
+#endif
+
+            if(benchmarkEvents[iEvent].type == BENCHMARK_EVENT_BEGIN) {
+              const s32 startLevel = parseStack.get_size();
+
+              parseStack.PushBack(BenchmarkInstance(benchmarkEvents[iEvent].name, timeF64, 0, 0, startLevel));
+            } else {
+              // BENCHMARK_EVENT_END
+
+              const BenchmarkInstance startInstance = parseStack.PopBack();
+
+              const s32 endLevel = parseStack.get_size();
+
+              AnkiConditionalErrorAndReturnValue(strcmp(startInstance.name, benchmarkEvents[iEvent].name) == 0 && startInstance.level == endLevel,
+                outputResults, "ComputeBenchmarkResults", "Benchmark parse error: Perhaps BeginBenchmark() and EndBenchmark() were nested, or there were more than %d benchmark events, or some other non-supported thing listed in the comments.\n", MAX_BENCHMARK_EVENTS);
+
+              const f64 elapsedTime = timeF64 - startInstance.startTime;
+
+              // Remove the time for this event from the exclusive time for all other events on the stack
+              const s32 numParents = endLevel;
+              for(s32 iParent=0; iParent<numParents; iParent++) {
+                pParseStack[iParent].exclusiveTimeElapsed -= elapsedTime;
+              }
+
+              fullList.PushBack(BenchmarkInstance(benchmarkEvents[iEvent].name, startInstance.startTime, elapsedTime, elapsedTime + startInstance.exclusiveTimeElapsed, endLevel));
+            }
+          } // for(s32 iEvent=0; iEvent<numBenchmarkEvents; iEvent++)
+
+          // Second, combine the events in fullList to create the total outputResults
+          const s32 numFullList = fullList.get_size();
+          const BenchmarkInstance * pFullList = fullList.Pointer(0);
+          BenchmarkElement * pOutputResults = outputResults.Pointer(0);
+
+          for(s32 iInstance=0; iInstance<numFullList; iInstance++) {
+            const char * const curName = pFullList[iInstance].name;
+            const f64 curInclusiveTimeElapsed = pFullList[iInstance].inclusiveTimeElapsed;
+            const f64 curExclusiveTimeElapsed = pFullList[iInstance].exclusiveTimeElapsed;
+
+            s32 index = GetNameIndex(curName, fullList);
+
+            // If this name hasn't been used yet, add it
+            if(index < 0) {
+              BenchmarkElement newElement(curName);
+              outputResults.PushBack(curName);
+              index = GetNameIndex(curName, fullList);
+              AnkiAssert(index >= 0);
+            }
+
+            pOutputResults[index].inclusive_min = MIN(pOutputResults[index].inclusive_min, curInclusiveTimeElapsed);
+            pOutputResults[index].inclusive_max = MAX(pOutputResults[index].inclusive_max, curInclusiveTimeElapsed);
+            pOutputResults[index].inclusive_total += curInclusiveTimeElapsed;
+
+            pOutputResults[index].exclusive_min = MIN(pOutputResults[index].exclusive_min, curExclusiveTimeElapsed);
+            pOutputResults[index].exclusive_max = MAX(pOutputResults[index].exclusive_max, curExclusiveTimeElapsed);
+            pOutputResults[index].exclusive_total += curExclusiveTimeElapsed;
+
+            pOutputResults[index].numEvents++;
+          } // for(s32 iInstance=0; iInstance<numFullList; iInstance++)
+
+          const s32 numEvents = outputResults.get_size();
+          for(s32 iEvent=0; iEvent<numEvents; iEvent++) {
+            pOutputResults[iEvent].inclusive_mean = pOutputResults[iEvent].inclusive_total / pOutputResults[iEvent].numEvents;
+            pOutputResults[iEvent].exclusive_mean = pOutputResults[iEvent].exclusive_total / pOutputResults[iEvent].numEvents;
+          } // for(s32 iEvent=0; iEvent<numEvents; iEvent++)
+        } // PUSH_MEMORY_STACK(memory);
+
+        // TODO: resize outputResults
+
+        return outputResults;
+      } // ComputeBenchmarkResults()
+
+    protected:
+      typedef struct BenchmarkInstance
+      {
+        f64 startTime; // A standard timestamp for the parseStack
+        f64 inclusiveTimeElapsed; // An elapsed inclusive time for the fullList
+        f64 exclusiveTimeElapsed; //< May be negative while the algorithm is still parsing
+        s32 level; //< Level 0 is the base level. Every sub-benchmark adds another level.
+
+        char name[BenchmarkElement::NAME_LENGTH];
+
+        BenchmarkInstance(const char * name, const f64 startTime, const f64 inclusiveTimeElapsed, f64 exclusiveTimeElapsed, const s32 level)
+          : startTime(startTime), inclusiveTimeElapsed(inclusiveTimeElapsed), exclusiveTimeElapsed(exclusiveTimeElapsed), level(level)
+        {
+          snprintf(this->name, BenchmarkElement::NAME_LENGTH, "%s", name);
+        }
+      } BenchmarkInstance;
+
+      // Returns the index of "name", or -1 if it isn't found
+      static s32 GetNameIndex(const char * name, const FixedLengthList<BenchmarkInstance> &fullList)
+      {
+        const BenchmarkInstance * pFullList = fullList.Pointer(0);
+        const s32 numFullList = fullList.get_size();
+
+        for(s32 i=0; i<numFullList; i++) {
+          if(strcmp(name, pFullList[i].name) == 0) {
+            return i;
+          }
+        } // for(s32 i=0; i<numOutputResults; i++)
+
+        return -1;
+      } // GetNameIndex()
+    }; // class CompileBenchmarkResults
+
+    FixedLengthList<BenchmarkElement> ComputeBenchmarkResults(MemoryStack &memory)
+    {
+      return CompileBenchmarkResults::ComputeBenchmarkResults(memory);
+    } // FixedLengthList<BenchmarkElement> ComputeBenchmarkResults(MemoryStack &memory)
   } // namespace Embedded
 } // namespace Anki

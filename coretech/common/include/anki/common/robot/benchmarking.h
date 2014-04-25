@@ -29,10 +29,35 @@ namespace Anki
 
     typedef struct BenchmarkElement
     {
-      static const s32 NAME_LENGTH = 32;
+      static const s32 NAME_LENGTH = 64;
 
-      f64 elapsedTime;
+      // Inclusive includes all the time for all sub-benchmarks
+      f64 inclusive_mean;
+      f64 inclusive_min;
+      f64 inclusive_max;
+      f64 inclusive_total;
+
+      // Exclusive does not include sub-benchmarks
+      f64 exclusive_mean;
+      f64 exclusive_min;
+      f64 exclusive_max;
+      f64 exclusive_total;
+
+      //// When was BeginBenchmark first called for this name ?
+      //f64 firstInstanceStartTime;
+
+      // How many times was this element's name benchmarked?
+      s32 numEvents;
+
+      //// Level 0 is the base level. Every sub-benchmark adds another level.
+      ////
+      //// For example, take BeginBenchmark("a"); BeginBenchmark("b"); EndBenchmark("b"); EndBenchmark("a")
+      //// "a" is level 0, "b" is level 1
+      //s32 level;
+
       char name[BenchmarkElement::NAME_LENGTH];
+
+      BenchmarkElement(const char * name);
     } BenchmarkElement;
 
     // Call this before doing any benchmarking, to clear the buffer of benchmarkEvents.
@@ -43,9 +68,14 @@ namespace Anki
     //
     // WARNING: name must be in globally available memory
     //
+    // WARNING: the character string must be less than BenchmarkElement::NAME_LENGTH bytes
+    //
+    // WARNING: Using the same name for different benchmark events
+    //
     // WARNING: nesting BeginBenchmark() and EndBenchmark() events that have the same name won't work.
     // This is okay: BeginBenchmark("a"); BeginBenchmark("b"); EndBenchmark("b"); EndBenchmark("a");
     // This is not okay: BeginBenchmark("a"); BeginBenchmark("a"); EndBenchmark("a"); EndBenchmark("a");
+    // This is not okay: BeginBenchmark("a"); BeginBenchmark("b"); EndBenchmark("a"); EndBenchmark("b");
     void BeginBenchmark(const char *name);
     void EndBenchmark(const char *name);
 
