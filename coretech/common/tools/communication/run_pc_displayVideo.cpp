@@ -311,9 +311,8 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
               for(s32 i=0; i<numElements; i++) { printf("%llu, ", reinterpret_cast<u64*>(newObject.startOfPayload)[i]); }
             }
           }
-        } else {
-          printf("\n");
         }
+        printf("\n");
     }
   } else if(strcmp(newObject.typeName, "Array") == 0) {
     if (strcmp(newObject.objectName, "Robot Image") == 0) {
