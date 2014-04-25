@@ -75,11 +75,6 @@ extern "C" {
   // Returns 1 if it is odd, zero otherwise
   s32 IsOdd(const s32 x);
 
-  // Get the current system time in seconds
-  // WARNING: f32 is enough for only about two hours (2*60*60*1000 ~= 2^23)
-  f32 GetTimeF32(void);
-  f64 GetTimeF64(void);
-
   void explicitPrintf(int (*writeChar)(int), int reverseEachFourCharacters, const char *format, ...);
 
   void PrintS32(int (*writeChar)(int), s32 value); // Print a single number

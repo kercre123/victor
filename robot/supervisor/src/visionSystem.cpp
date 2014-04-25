@@ -24,7 +24,7 @@
 
 // CoreTech Common Includes
 #include "anki/common/shared/radians.h"
-#include "anki/common/robot/benchmarking_c.h"
+#include "anki/common/robot/benchmarking.h"
 #include "anki/common/robot/memory.h"
 #include "anki/common/robot/utilities.h"
 

@@ -12,7 +12,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/config.h"
 #include "anki/common/robot/gtestLight.h"
 #include "anki/common/robot/matlabInterface.h"
-#include "anki/common/robot/benchmarking_c.h"
+#include "anki/common/robot/benchmarking.h"
 #include "anki/common/robot/comparisons.h"
 #include "anki/common/robot/arrayPatterns.h"
 
@@ -2550,7 +2550,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
   const s32 maxMarkers = 100;
   //const s32 maxConnectedComponentSegments = 5000; // 25000/4 = 6250
   const s32 maxConnectedComponentSegments = 39000; // 322*240/2 = 38640
-  
+
   const s32 quadRefinementIterations = 5;
 
   MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
@@ -2662,12 +2662,12 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
       ASSERT_TRUE(markers[iMarker].markerType == markerTypes_groundTruth[iMarker]);
       for(s32 iCorner=0; iCorner<4; iCorner++) {
         const Point2f& currentCorner = markers[iMarker].corners[iCorner];
-        
+
         const Point2f trueCorner(corners_groundTruth[iMarker][iCorner][0],
-                                 corners_groundTruth[iMarker][iCorner][1]);
-        
+          corners_groundTruth[iMarker][iCorner][1]);
+
         ASSERT_TRUE(NEAR(currentCorner.x, trueCorner.x, 0.05f) &&
-                    NEAR(currentCorner.y, trueCorner.y, 0.05f));
+          NEAR(currentCorner.y, trueCorner.y, 0.05f));
       }
     }
   } else {

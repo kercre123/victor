@@ -769,9 +769,9 @@
               <FilePath>..\coretech\common\robot\src\array2d.cpp</FilePath>
             </File>
             <File>
-              <FileName>benchmarking_c.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\coretech\common\robot\src\benchmarking_c.c</FilePath>
+              <FileName>benchmarking.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\robot\src\benchmarking.cpp</FilePath>
             </File>
             <File>
               <FileName>comparisons.cpp</FileName>
@@ -1990,9 +1990,9 @@
               <FilePath>..\coretech\common\robot\src\array2d.cpp</FilePath>
             </File>
             <File>
-              <FileName>benchmarking_c.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\coretech\common\robot\src\benchmarking_c.c</FilePath>
+              <FileName>benchmarking.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\robot\src\benchmarking.cpp</FilePath>
             </File>
             <File>
               <FileName>comparisons.cpp</FileName>

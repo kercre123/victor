@@ -1,5 +1,5 @@
 /**
-File: benchmarkins_c.h
+File: benchmarkins.h
 Author: Peter Barnum
 Created: 2013
 
@@ -22,29 +22,22 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #define MAX_BENCHMARK_EVENTS 0xFFF
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-  // Call this before doing any benchmarking, to clear the buffer of benchmarkEvents.
-  // Can be called multiple times.
-  void InitBenchmarking(void);
+// Call this before doing any benchmarking, to clear the buffer of benchmarkEvents.
+// Can be called multiple times.
+void InitBenchmarking(void);
 
-  // Use these functions to add a new event to the list. These functions are very fast.
-  //
-  // WARNING: name must be in globally available memory
-  //
-  // WARNING: nesting BeginBenchmark() and EndBenchmark() events that have the same name won't work.
-  // This is okay: BeginBenchmark("a"); BeginBenchmark("b"); EndBenchmark("b"); EndBenchmark("a");
-  // This is not okay: BeginBenchmark("a"); BeginBenchmark("a"); EndBenchmark("a"); EndBenchmark("a");
-  void BeginBenchmark(const char *name);
-  void EndBenchmark(const char *name);
+// Use these functions to add a new event to the list. These functions are very fast.
+//
+// WARNING: name must be in globally available memory
+//
+// WARNING: nesting BeginBenchmark() and EndBenchmark() events that have the same name won't work.
+// This is okay: BeginBenchmark("a"); BeginBenchmark("b"); EndBenchmark("b"); EndBenchmark("a");
+// This is not okay: BeginBenchmark("a"); BeginBenchmark("a"); EndBenchmark("a"); EndBenchmark("a");
+void BeginBenchmark(const char *name);
+void EndBenchmark(const char *name);
 
-  // Compile and print out all the benchmark events that were recorded
-  void PrintBenchmarkResults_All(void);
-  void PrintBenchmarkResults_OnlyTotals(void);
-
-#ifdef __cplusplus
-}
-#endif
+// Compile and print out all the benchmark events that were recorded
+void PrintBenchmarkResults_All(void);
+void PrintBenchmarkResults_OnlyTotals(void);
 
 #endif // _ANKICORETECHEMBEDDED_COMMON_BENCHMARKING_H_

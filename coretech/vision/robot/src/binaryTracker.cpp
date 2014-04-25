@@ -12,7 +12,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/interpolate.h"
 #include "anki/common/robot/arrayPatterns.h"
 #include "anki/common/robot/find.h"
-#include "anki/common/robot/benchmarking_c.h"
+#include "anki/common/robot/benchmarking.h"
 #include "anki/common/robot/draw.h"
 #include "anki/common/robot/comparisons.h"
 #include "anki/common/robot/serialize.h"

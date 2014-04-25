@@ -13,7 +13,7 @@ non-disclosure agreement with Anki, inc.
 #include "anki/common/robot/interpolate.h"
 #include "anki/common/robot/arrayPatterns.h"
 #include "anki/common/robot/find.h"
-#include "anki/common/robot/benchmarking_c.h"
+#include "anki/common/robot/benchmarking.h"
 #include "anki/common/robot/draw.h"
 #include "anki/common/robot/comparisons.h"
 #include "anki/common/robot/errorHandling.h"
@@ -40,10 +40,8 @@ namespace Anki
 {
   namespace Embedded
   {
-    
     namespace TemplateTracker
     {
-      
       LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof()
         : LucasKanadeTracker_Generic(maxSupportedTransformType)
       {
@@ -56,7 +54,7 @@ namespace Anki
         const s32 numPyramidLevels,
         const Transformations::TransformType transformType,
         const s32 maxSamplesAtBaseLevel,
-        const s32 numSamplingRegions, 
+        const s32 numSamplingRegions,
         const f32 focalLength_x,
         const f32 focalLength_y,
         const f32 camCenter_x,
@@ -68,7 +66,7 @@ namespace Anki
         : LucasKanadeTracker_Generic(Transformations::TRANSFORM_PROJECTIVE, templateImage, templateQuadIn, scaleTemplateRegionPercent, numPyramidLevels, transformType, onchipScratch)
       {
         // Allocate all the
-        
+
         //templateImage.Show("InitialImage", false);
 
         // Initialize calibration data
@@ -231,7 +229,7 @@ namespace Anki
 
         // TODO: Pass this in as a parameter/argument
         const s32 verifyGridSize = 16;
-        
+
         Result lastResult;
 
         BeginBenchmark("LucasKanadeTracker_SampledPlanar6dof");
@@ -239,10 +237,10 @@ namespace Anki
         this->templateSamplePyramid = FixedLengthList<FixedLengthList<TemplateSample> >(numPyramidLevels, onchipScratch);
         this->jacobianSamplePyramid = FixedLengthList<FixedLengthList<JacobianSample> >(numPyramidLevels, onchipScratch);
         this->verificationSamples   = FixedLengthList<VerifySample>(verifyGridSize*verifyGridSize, onchipScratch);
-        
+
         this->templateSamplePyramid.set_size(numPyramidLevels);
         this->jacobianSamplePyramid.set_size(numPyramidLevels);
-        
+
         //
         // Compute the samples (and their Jacobians) at each scale
         //
@@ -269,7 +267,7 @@ namespace Anki
 
           const s32 numPointsY = templateCoordinates.get_yGridVector().get_size();
           const s32 numPointsX = templateCoordinates.get_xGridVector().get_size();
-          
+
           PUSH_MEMORY_STACK(offchipScratch);
           PUSH_MEMORY_STACK(onchipScratch);
 
@@ -280,173 +278,162 @@ namespace Anki
           s32 numSelected = 0;
           {
             PUSH_MEMORY_STACK(offchipScratch);
-            
+
             Array<u8> templateImageAtScale = Array<u8>(numPointsY, numPointsX, offchipScratch);
             AnkiConditionalErrorAndReturn(templateImageAtScale.IsValid(),
-                                          "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
-                                          "Out of memory allocating templateImageAtScale.\n");
+              "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
+              "Out of memory allocating templateImageAtScale.\n");
             if((lastResult = Interp2_Projective<u8,u8>(templateImage, templateCoordinates, transformation.get_homography(), this->transformation.get_centerOffset(initialImageScaleF32), templateImageAtScale, INTERPOLATE_LINEAR)) != RESULT_OK) {
               AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "Interp2_Projective failed with code 0x%x", lastResult);
               return;
             }
-            
+
             // Compute X gradient image
             Array<f32> templateImageXGradient = Array<f32>(numPointsY, numPointsX, offchipScratch);
             AnkiConditionalErrorAndReturn(templateImageXGradient.IsValid(),
-                                          "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
-                                          "Out of memory allocating templateImageXGradient.\n");
+              "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
+              "Out of memory allocating templateImageXGradient.\n");
             if((lastResult = ImageProcessing::ComputeXGradient<u8,f32,f32>(templateImageAtScale, templateImageXGradient)) != RESULT_OK) {
               AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "ComputeXGradient failed with code 0x%x", lastResult);
               return;
             }
-            
+
             // Compuate Y gradient image
             Array<f32> templateImageYGradient = Array<f32>(numPointsY, numPointsX, offchipScratch);
             AnkiConditionalErrorAndReturn(templateImageYGradient.IsValid(),
-                                          "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
-                                          "Out of memory allocating templateImageYGradient.\n");
+              "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
+              "Out of memory allocating templateImageYGradient.\n");
             if((lastResult = ImageProcessing::ComputeYGradient<u8,f32,f32>(templateImageAtScale, templateImageYGradient)) != RESULT_OK) {
               AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "ComputeYGradient failed with code 0x%x", lastResult);
               return;
             }
-          
+
             const s32 numDesiredSamples = curMaxSamples;
-            
+
             if(numDesiredSamples < maxPossibleLocations)
-            // Using the computed gradients, find a set of the max values, and store them
+              // Using the computed gradients, find a set of the max values, and store them
             {
               PUSH_MEMORY_STACK(offchipScratch);
-              
+
               /*
               Array<f32> magnitudeVector(1, numPointsY*numPointsX, offchipScratch);
               AnkiConditionalErrorAndReturn(magnitudeVector.IsValid(),
-                                            "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
-                                            "Out of memory allocating magnitudeVector.\n");
+              "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
+              "Out of memory allocating magnitudeVector.\n");
               */
-              
-              
-              
+
               {
                 PUSH_MEMORY_STACK(offchipScratch);
-                
+
                 Array<f32> magnitudeImage(numPointsY, numPointsX, offchipScratch);
                 AnkiConditionalErrorAndReturn(magnitudeImage.IsValid(),
-                                              "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
-                                              "Out of memory allocating magnitudeImage.\n");
+                  "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
+                  "Out of memory allocating magnitudeImage.\n");
                 {
                   PUSH_MEMORY_STACK(offchipScratch);
-                  
+
                   Array<f32> tmpMagnitude(numPointsY, numPointsX, offchipScratch);
                   AnkiConditionalErrorAndReturn(tmpMagnitude.IsValid(),
-                                                "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
-                                                "Out of memory allocating tmpMagnitude.\n");
-                  
+                    "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
+                    "Out of memory allocating tmpMagnitude.\n");
+
                   Matrix::DotMultiply<f32,f32,f32>(templateImageXGradient, templateImageXGradient, tmpMagnitude);
                   Matrix::DotMultiply<f32,f32,f32>(templateImageYGradient, templateImageYGradient, magnitudeImage);
                   Matrix::Add<f32,f32,f32>(tmpMagnitude, magnitudeImage, magnitudeImage);
                 } // pop tmpMagnitude
-                
-                
+
                 //Matrix::Sqrt<f32,f32,f32>(magnitudeImage, magnitudeImage);
-                
+
                 {
                   PUSH_MEMORY_STACK(offchipScratch);
-                  
+
                   // Rough non-local maxima suppression on magnitudes, to get more
                   // distributed samples, keeping the result in 2D image form
                   Array<bool> magnitudeImageNLMS(numPointsY, numPointsX, offchipScratch);
                   AnkiConditionalErrorAndReturn(magnitudeImageNLMS.IsValid(),
-                                                "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
-                                                "Out of memory allocating magnitudeImageNLMS.\n");
+                    "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
+                    "Out of memory allocating magnitudeImageNLMS.\n");
                   magnitudeImageNLMS.SetZero();
                   s32 nonZeroCount = 0;
                   for(s32 i=1; i<numPointsY-1; ++i) {
                     const f32 * restrict mag_iPrev = magnitudeImage.Pointer(i-1,0); // prev
                     const f32 * restrict mag_i     = magnitudeImage.Pointer(i,0);
                     const f32 * restrict mag_iNext = magnitudeImage.Pointer(i+1,0); // next
-                    
+
                     bool * restrict magNLMS_i = magnitudeImageNLMS.Pointer(i,0);
-                    
+
                     for(s32 j=1; j<numPointsX-1; ++j) {
-                      
                       const f32 mag      = mag_i[j];
                       const f32 magLeft  = mag_i[j-1];
                       const f32 magRight = mag_i[j+1];
                       const f32 magUp    = mag_iPrev[j];
                       const f32 magDown  = mag_iNext[j];
-                      
+
                       const f32 magUpLeft    = mag_iPrev[j-1];
                       const f32 magUpRight   = mag_iPrev[j+1];
                       const f32 magDownLeft  = mag_iNext[j-1];
                       const f32 magDownRight = mag_iNext[j+1];
-                      
+
                       if((mag > magLeft && mag > magRight) ||
-                         (mag > magUp && mag > magDown) ||
-                         (mag > magUpLeft && mag > magDownRight) ||
-                         (mag > magUpRight && mag > magDownLeft))
+                        (mag > magUp && mag > magDown) ||
+                        (mag > magUpLeft && mag > magDownRight) ||
+                        (mag > magUpRight && mag > magDownLeft))
                       {
                         magNLMS_i[j] = true; //mag_i[j];
                         ++nonZeroCount;
                       }
-                      
                     }
                   }
-                  
+
                   /*
-                   // Rough non-local maxima suppression on magnitudes, to get more
-                   // distributed samples, putting result into vectorized form
-                   magnitudeVector.SetZero();
-                   
-                   for(s32 i=1; i<numPointsY-1; ++i) {
-                   const f32 * restrict mag_ip = magnitudeImage.Pointer(i-1,0); // prev
-                   const f32 * restrict mag_i  = magnitudeImage.Pointer(i,0);
-                   const f32 * restrict mag_in = magnitudeImage.Pointer(i+1,0); // next
-                   
-                   f32 * restrict pMagVector = magnitudeVector.Pointer(0, i*numPointsX);
-                   
-                   for(s32 j=1; j<numPointsX-1; ++j) {
-                   
-                   const f32 mag      = mag_i[j];
-                   const f32 magLeft  = mag_i[j-1];
-                   const f32 magRight = mag_i[j+1];
-                   const f32 magUp    = mag_ip[j];
-                   const f32 magDown  = mag_in[j];
-                   
-                   if(mag > magLeft && mag > magRight && mag > magUp && mag > magDown) {
-                   pMagVector[j] = mag_i[j];
-                   }
-                   
-                   }
-                   }*/
-                  
+                  // Rough non-local maxima suppression on magnitudes, to get more
+                  // distributed samples, putting result into vectorized form
+                  magnitudeVector.SetZero();
+
+                  for(s32 i=1; i<numPointsY-1; ++i) {
+                  const f32 * restrict mag_ip = magnitudeImage.Pointer(i-1,0); // prev
+                  const f32 * restrict mag_i  = magnitudeImage.Pointer(i,0);
+                  const f32 * restrict mag_in = magnitudeImage.Pointer(i+1,0); // next
+
+                  f32 * restrict pMagVector = magnitudeVector.Pointer(0, i*numPointsX);
+
+                  for(s32 j=1; j<numPointsX-1; ++j) {
+                  const f32 mag      = mag_i[j];
+                  const f32 magLeft  = mag_i[j-1];
+                  const f32 magRight = mag_i[j+1];
+                  const f32 magUp    = mag_ip[j];
+                  const f32 magDown  = mag_in[j];
+
+                  if(mag > magLeft && mag > magRight && mag > magUp && mag > magDown) {
+                  pMagVector[j] = mag_i[j];
+                  }
+                  }
+                  }*/
+
                   magnitudeImage.Show("MagImage", false);
-                  
+
                   //if(nonZeroCount > numDesiredSamples) {
-                    // After non-local maxima suppression, we still have enough
-                    // non-zero magnitudes to do sampling, so actually loop back
-                    // through the magnitude image and zero out the non-local
-                    // maxima.
-                    for(s32 i=1; i<numPointsY-1; ++i) {
-                      f32 * restrict mag_i  = magnitudeImage.Pointer(i,0);
-                      bool * restrict magNLMS_i = magnitudeImageNLMS.Pointer(i,0);
-                      
-                      for(s32 j=1; j<numPointsX-1; ++j) {
-                        if(!magNLMS_i[j]) {
-                          mag_i[j] = 0.f;
-                        }
+                  // After non-local maxima suppression, we still have enough
+                  // non-zero magnitudes to do sampling, so actually loop back
+                  // through the magnitude image and zero out the non-local
+                  // maxima.
+                  for(s32 i=1; i<numPointsY-1; ++i) {
+                    f32 * restrict mag_i  = magnitudeImage.Pointer(i,0);
+                    bool * restrict magNLMS_i = magnitudeImageNLMS.Pointer(i,0);
+
+                    for(s32 j=1; j<numPointsX-1; ++j) {
+                      if(!magNLMS_i[j]) {
+                        mag_i[j] = 0.f;
                       }
+                    }
                     //}
-                    
                   } // if(nonZeroCount > numDesiredSamples)
-                
+
                   magnitudeImage.Show("MagImageNLMS", false);
-                  
                 } // pop magnitudeImageNLMS
-            
+
                 LucasKanadeTracker_SampledPlanar6dof::ApproximateSelect(magnitudeImage, numSelectBins, numSamplingRegions, numDesiredSamples, numSelected, magnitudeIndexes);
-              
               } // pop magnitudeImage
-            
             } else {
               // There are fewer pixels than desired samples, so just use them
               // all -- no need to sample.
@@ -456,144 +443,141 @@ namespace Anki
               }
               numSelected = numPointsX*numPointsY;
             }
-            
-            
+
             // Vectorize template image grayvalues, and x/y gradients
             if((lastResult = Matrix::Vectorize<f32,f32>(false, templateImageXGradient, xGradientVector)) != RESULT_OK) {
               AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "Matrix::Vectorize failed with code 0x%x", lastResult);
             }
-            
+
             if((lastResult = Matrix::Vectorize<f32,f32>(false, templateImageYGradient, yGradientVector)) != RESULT_OK) {
               AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "Matrix::Vectorize failed with code 0x%x", lastResult);
             }
-            
+
             if((lastResult = Matrix::Vectorize<u8,u8>(false, templateImageAtScale, grayscaleVector)) != RESULT_OK) {
               AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "Matrix::Vectorize failed with code 0x%x", lastResult);
             }
-            
           } // pop templateImageAtScale, templateImageXGradient, and templateImageYGradient
-          
+
           this->templateSamplePyramid[iScale].set_size(numSelected);
           this->jacobianSamplePyramid[iScale].set_size(numSelected);
 
           if(numSelected == 0) {
             // Should this be an error?
             AnkiWarn("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
-                     "No samples found within given quad at scale %d.", iScale);
-
+              "No samples found within given quad at scale %d.", iScale);
           }
           else {
             const s32 numSamples = numSelected;
-            
+
             //const f32 t2 = GetTimeF32();
             //printf("%f %f\n", t1-t0, t2-t1);
-            
+
             //{
             //  Matlab matlab(false);
             //  matlab.PutArray(magnitudeVector, "magnitudeVector");
             //  matlab.PutArray(magnitudeIndexes, "magnitudeIndexes");
             //}
-            
+
             Array<f32> yCoordinatesVector = templateCoordinates.EvaluateY1(false, offchipScratch);
             Array<f32> xCoordinatesVector = templateCoordinates.EvaluateX1(false, offchipScratch);
-            
+
             const f32 * restrict pYCoordinates = yCoordinatesVector.Pointer(0,0);
             const f32 * restrict pXCoordinates = xCoordinatesVector.Pointer(0,0);
             const f32 * restrict pYGradientVector = yGradientVector.Pointer(0,0);
             const f32 * restrict pXGradientVector = xGradientVector.Pointer(0,0);
             const u8  * restrict pGrayscaleVector = grayscaleVector.Pointer(0,0);
             const s32 * restrict pMagnitudeIndexes = magnitudeIndexes.Pointer(0,0);
-            
+
             const f32 h00 = initialHomography[0][0];
             const f32 h01 = initialHomography[0][1];
             const f32 h02 = initialHomography[0][2] / initialImageScaleF32;
-            
+
             const f32 h10 = initialHomography[1][0];
             const f32 h11 = initialHomography[1][1];
             const f32 h12 = initialHomography[1][2] / initialImageScaleF32;
-            
+
             const f32 h20 = initialHomography[2][0] * initialImageScaleF32;
             const f32 h21 = initialHomography[2][1] * initialImageScaleF32;
             const f32 h22 = initialHomography[2][2];
-            
+
             TemplateSample * restrict pTemplateSamplePyramid = this->templateSamplePyramid[iScale].Pointer(0);
             JacobianSample * restrict pJacobianSamplePyramid = this->jacobianSamplePyramid[iScale].Pointer(0);
-            
+
             const f32 scale = static_cast<f32>(1 << iScale);
             const f32 scaleOverFiveTen = scale / (2.0f*255.0f);
-            
+
             for(s32 iSample=0; iSample<numSamples; iSample++){
               const s32 curIndex = pMagnitudeIndexes[iSample];
-              
+
               TemplateSample curTemplateSample;
               curTemplateSample.xCoordinate = pXCoordinates[curIndex];
               curTemplateSample.yCoordinate = pYCoordinates[curIndex];
               curTemplateSample.xGradient   = scaleOverFiveTen * pXGradientVector[curIndex];
               curTemplateSample.yGradient   = scaleOverFiveTen * pYGradientVector[curIndex];
               curTemplateSample.grayvalue   = pGrayscaleVector[curIndex];
-              
+
               pTemplateSamplePyramid[iSample] = curTemplateSample;
-              
+
               // Everything below here is about filling in the Jacobian info
               // for this sample
-              
+
               JacobianSample curJacobianSample;
-              
+
               const f32 xOriginal = curTemplateSample.xCoordinate;
               const f32 yOriginal = curTemplateSample.yCoordinate;
-              
+
               // TODO: These two could be strength reduced
               const f32 xTransformedRaw = h00*xOriginal + h01*yOriginal + h02;
               const f32 yTransformedRaw = h10*xOriginal + h11*yOriginal + h12;
-              
+
               const f32 normalization = h20*xOriginal + h21*yOriginal + h22;
-              
+
               const f32 invNorm = 1.f / normalization;
               const f32 invNormSq = invNorm *invNorm;
-              
+
               curJacobianSample.dWu_dtx = this->focalLength_x * invNorm;
               //curJacobianSample.dWu_dty = 0.f;
               curJacobianSample.dWu_dtz = -xTransformedRaw * invNormSq;
-              
+
               //curJacobianSample.dWv_dtx = 0.f;
               curJacobianSample.dWv_dty = this->focalLength_y * invNorm;
               curJacobianSample.dWv_dtz = -yTransformedRaw * invNormSq;
-              
+
               const f32 r1thetaXterm = /*dr11_dthetaX*xOriginal +*/ dr12_dthetaX*yOriginal;
               const f32 r1thetaYterm = dr11_dthetaY*xOriginal + dr12_dthetaY*yOriginal;
               const f32 r1thetaZterm = dr11_dthetaZ*xOriginal + dr12_dthetaZ*yOriginal;
-              
+
               const f32 r2thetaXterm = /*dr21_dthetaX*xOriginal + */dr22_dthetaX*yOriginal;
               const f32 r2thetaYterm = dr21_dthetaY*xOriginal + dr22_dthetaY*yOriginal;
               const f32 r2thetaZterm = dr21_dthetaZ*xOriginal + dr22_dthetaZ*yOriginal;
-              
+
               const f32 r3thetaXterm = /*dr31_dthetaX*xOriginal + */dr32_dthetaX*yOriginal;
               const f32 r3thetaYterm = dr31_dthetaY*xOriginal + dr32_dthetaY*yOriginal;
               //const f32 r3thetaZterm = dr31_dthetaZ*xOriginal + dr32_dthetaZ*yOriginal;
-              
+
               curJacobianSample.dWu_dthetaX = (this->focalLength_x*normalization*r1thetaXterm -
-                                               r3thetaXterm*xTransformedRaw) * invNormSq;
-              
+                r3thetaXterm*xTransformedRaw) * invNormSq;
+
               curJacobianSample.dWu_dthetaY = (this->focalLength_x*normalization*r1thetaYterm -
-                                               r3thetaYterm*xTransformedRaw) * invNormSq;
-              
+                r3thetaYterm*xTransformedRaw) * invNormSq;
+
               curJacobianSample.dWu_dthetaZ = (this->focalLength_x*normalization*r1thetaZterm /*-
-                                                                                               r3thetaZterm*xTransformedRaw*/) * invNormSq;
-              
+                                                                                              r3thetaZterm*xTransformedRaw*/) * invNormSq;
+
               curJacobianSample.dWv_dthetaX = (this->focalLength_y*normalization*r2thetaXterm -
-                                               r3thetaXterm*yTransformedRaw) * invNormSq;
-              
+                r3thetaXterm*yTransformedRaw) * invNormSq;
+
               curJacobianSample.dWv_dthetaY = (this->focalLength_y*normalization*r2thetaYterm -
-                                               r3thetaYterm*yTransformedRaw) * invNormSq;
-              
+                r3thetaYterm*yTransformedRaw) * invNormSq;
+
               curJacobianSample.dWv_dthetaZ = (this->focalLength_y*normalization*r2thetaZterm /*-
-                                                                                               r3thetaZterm*yTransformedRaw*/) * invNormSq;
-              
+                                                                                              r3thetaZterm*yTransformedRaw*/) * invNormSq;
+
               pJacobianSamplePyramid[iSample] = curJacobianSample;
             }
           }
         } // if/else numSelected==0
-        
+
         //
         // Create Grid of Verification Samples
         //
@@ -601,68 +585,67 @@ namespace Anki
           const f32 halfWidth = scaleTemplateRegionPercent*templateHalfWidth;
 
           this->verificationSamples.set_size(verifyGridSize*verifyGridSize);
-          
+
           Meshgrid<f32> verifyCoordinates = Meshgrid<f32>(Linspace(-halfWidth, halfWidth, verifyGridSize),
-                                                          Linspace(-halfWidth, halfWidth, verifyGridSize));
+            Linspace(-halfWidth, halfWidth, verifyGridSize));
 
           Array<f32> verifyGrayscaleVector = Array<f32>(1, verifyGridSize*verifyGridSize, offchipScratch);
           {
             PUSH_MEMORY_STACK(offchipScratch);
-            
+
             Array<f32> verifyImage = Array<f32>(verifyGridSize, verifyGridSize, offchipScratch);
-            
+
             if((lastResult = Interp2_Projective<u8,f32>(templateImage, verifyCoordinates,
-                                                        this->transformation.get_homography(),
-                                                        this->transformation.get_centerOffset(initialImageScaleF32),
-                                                        verifyImage, INTERPOLATE_LINEAR)) != RESULT_OK) {
-              AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
-                        "Interp2_Projective for verification image failed with code 0x%x", lastResult);
-              return;
+              this->transformation.get_homography(),
+              this->transformation.get_centerOffset(initialImageScaleF32),
+              verifyImage, INTERPOLATE_LINEAR)) != RESULT_OK) {
+                AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
+                  "Interp2_Projective for verification image failed with code 0x%x", lastResult);
+                return;
             }
-            
+
             // Turn verifyImage into a vector
             if((lastResult = Matrix::Vectorize<f32,f32>(false, verifyImage, verifyGrayscaleVector)) != RESULT_OK) {
               AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
-                        "Matrix::Vectorize failed with code 0x%x", lastResult);
+                "Matrix::Vectorize failed with code 0x%x", lastResult);
             }
           } // pop verifyImage
-         
+
           Array<f32> yVerifyVector = verifyCoordinates.EvaluateY1(false, offchipScratch);
           Array<f32> xVerifyVector = verifyCoordinates.EvaluateX1(false, offchipScratch);
-          
+
           const f32 * restrict pYCoordinates = yVerifyVector.Pointer(0,0);
           const f32 * restrict pXCoordinates = xVerifyVector.Pointer(0,0);
           const f32 * restrict pGrayvalues   = verifyGrayscaleVector.Pointer(0,0);
-          
+
           const f32 verifyCoordScalarInv = static_cast<f32>(s8_MAX) / halfWidth;
-          
+
           for(s32 i=0; i<verifyGridSize*verifyGridSize; ++i)
           {
             VerifySample curVerifySample;
             curVerifySample.xCoordinate = static_cast<s8>(pXCoordinates[i] * verifyCoordScalarInv);
             curVerifySample.yCoordinate = static_cast<s8>(pYCoordinates[i] * verifyCoordScalarInv);
             curVerifySample.grayvalue   = static_cast<u8>(pGrayvalues[i]);
-            
+
             this->verificationSamples[i] = curVerifySample;
           }
-          
+
           // Store the scalar we need at tracking time to take the stored s8
           // coordinates into f32 values:
           this->verifyCoordScalar = 1.f / verifyCoordScalarInv;
-          
         } // create grid of verification samples
-        
+
         this->isValid = true;
 
         EndBenchmark("LucasKanadeTracker_SampledPlanar6dof");
       }
-      
+
       const FixedLengthList<LucasKanadeTracker_SampledPlanar6dof::TemplateSample>& LucasKanadeTracker_SampledPlanar6dof::get_templateSamples(const s32 atScale) const
       {
         AnkiConditionalError(atScale >=0 && atScale < this->templateSamplePyramid.get_size(),
-                             "LucasKanadeTracker_SampledPlanar6dof::get_templateSamples()",
-                             "Requested scale out of range.");
-        
+          "LucasKanadeTracker_SampledPlanar6dof::get_templateSamples()",
+          "Requested scale out of range.");
+
         return this->templateSamplePyramid[atScale];
       }
 
@@ -703,13 +686,10 @@ namespace Anki
       Result LucasKanadeTracker_SampledPlanar6dof::set_rotationAnglesFromMatrix(const Array<f32>& R)
       {
         return Matrix::GetEulerAngles(R,
-                                      this->params6DoF.angle_x,
-                                      this->params6DoF.angle_y,
-                                      this->params6DoF.angle_z);
-        
+          this->params6DoF.angle_x,
+          this->params6DoF.angle_y,
+          this->params6DoF.angle_z);
       } // set_rotationAnglesFromMatrix
-      
-     
 
       // Retrieve/update the current translation estimates of the tracker
       const Point3<f32>& LucasKanadeTracker_SampledPlanar6dof::get_translation() const
@@ -841,16 +821,16 @@ namespace Anki
       }
 
       Result LucasKanadeTracker_SampledPlanar6dof::UpdateTrack(
-                                                               const Array<u8> &nextImage,
-                                                               const s32 maxIterations,
-                                                               const f32 convergenceTolerance_angle,
-                                                               const f32 convergenceTolerance_distance,
-                                                               const u8 verify_maxPixelDifference,
-                                                               bool &verify_converged,
-                                                               s32 &verify_meanAbsoluteDifference,
-                                                               s32 &verify_numInBounds,
-                                                               s32 &verify_numSimilarPixels,
-                                                               MemoryStack scratch)
+        const Array<u8> &nextImage,
+        const s32 maxIterations,
+        const f32 convergenceTolerance_angle,
+        const f32 convergenceTolerance_distance,
+        const u8 verify_maxPixelDifference,
+        bool &verify_converged,
+        s32 &verify_meanAbsoluteDifference,
+        s32 &verify_numInBounds,
+        s32 &verify_numSimilarPixels,
+        MemoryStack scratch)
       {
         Result lastResult;
 
@@ -862,16 +842,16 @@ namespace Anki
             return lastResult;
           EndBenchmark("UpdateTrack.refineTranslation");
 
-            if(this->transformation.get_transformType() != Transformations::TRANSFORM_TRANSLATION) {
-              BeginBenchmark("UpdateTrack.refineOther");
-              if((lastResult = IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance_angle, convergenceTolerance_distance, this->transformation.get_transformType(), verify_converged, scratch)) != RESULT_OK)
-                return lastResult;
-              EndBenchmark("UpdateTrack.refineOther");
+          if(this->transformation.get_transformType() != Transformations::TRANSFORM_TRANSLATION) {
+            BeginBenchmark("UpdateTrack.refineOther");
+            if((lastResult = IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance_angle, convergenceTolerance_distance, this->transformation.get_transformType(), verify_converged, scratch)) != RESULT_OK)
+              return lastResult;
+            EndBenchmark("UpdateTrack.refineOther");
           }
         } // for(s32 iScale=numPyramidLevels; iScale>=0; iScale--)
 
         lastResult = this->VerifyTrack_Projective(nextImage, verify_maxPixelDifference, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels, scratch);
-        
+
         return lastResult;
       }
 
@@ -950,7 +930,7 @@ namespace Anki
       {
         // This method is heavily based on Interp2_Projective
         // The call would be like: Interp2_Projective<u8,u8>(nextImage, originalCoordinates, interpolationHomography, centerOffset, nextImageTransformed2d, INTERPOLATE_LINEAR, 0);
-        
+
         Result lastResult;
 
         Array<f32> AWAt(3, 3, scratch);
@@ -969,7 +949,7 @@ namespace Anki
         f32 &b2 = b[0][2];
 
         verify_converged = false;
-        
+
         f32 minChange = 0.f;
 
         const s32 nextImageHeight = nextImage.get_size(0);
@@ -1124,14 +1104,14 @@ namespace Anki
           }
 
           const f32 Kp = this->GetCurrentGain();
-          
+
           this->params6DoF.translation.x -= Kp * b[0][0];
           this->params6DoF.translation.y -= Kp * b[0][1];
           this->params6DoF.translation.z -= Kp * b[0][2];
-          
+
           // Compute the new homography from the new 6DoF parameters
           this->UpdateTransformation(scratch);
-          
+
           //this->transformation.get_homography().Print("new transformation");
 
           // Check if we're done with iterations
@@ -1141,10 +1121,10 @@ namespace Anki
           if(minChange < convergenceTolerance * scale) {
 #else
           const f32 transConvergenceTolerance = scale*convergenceTolerance_distance;
-            
+
           if(fabs(b[0][0]) < transConvergenceTolerance &&
-             fabs(b[0][1]) < transConvergenceTolerance &&
-             fabs(b[0][2]) < transConvergenceTolerance)
+            fabs(b[0][1]) < transConvergenceTolerance &&
+            fabs(b[0][2]) < transConvergenceTolerance)
           {
 #endif
             verify_converged = true;
@@ -1153,9 +1133,9 @@ namespace Anki
         } // for(s32 iteration=0; iteration<maxIterations; iteration++)
 
         printf("LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack_Translation() "
-               "failed to converge at scale %f with minChange = %f\n",
-               scale, minChange);
-        
+          "failed to converge at scale %f with minChange = %f\n",
+          scale, minChange);
+
         return RESULT_OK;
       } // Result LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack_Translation()
 
@@ -1176,7 +1156,7 @@ namespace Anki
         verify_converged = false;
 
         f32 minChange = 0.f;
-        
+
         const s32 nextImageHeight = nextImage.get_size(0);
         const s32 nextImageWidth = nextImage.get_size(1);
 
@@ -1427,13 +1407,13 @@ namespace Anki
 #else
           const f32 angleConvergenceTolerance = scale*convergenceTolerance_angle;
           const f32 transConvergenceTolerance = scale*convergenceTolerance_distance;
-            
+
           if(fabs(b[0][0]) < angleConvergenceTolerance &&
-             fabs(b[0][1]) < angleConvergenceTolerance &&
-             fabs(b[0][2]) < angleConvergenceTolerance &&
-             fabs(b[0][3]) < transConvergenceTolerance &&
-             fabs(b[0][4]) < transConvergenceTolerance &&
-             fabs(b[0][5]) < transConvergenceTolerance)
+            fabs(b[0][1]) < angleConvergenceTolerance &&
+            fabs(b[0][2]) < angleConvergenceTolerance &&
+            fabs(b[0][3]) < transConvergenceTolerance &&
+            fabs(b[0][4]) < transConvergenceTolerance &&
+            fabs(b[0][5]) < transConvergenceTolerance)
           {
             /*
             printf("Final params converged at scale %d: angles = (%f,%f,%f) "
@@ -1445,7 +1425,7 @@ namespace Anki
             this->params6DoF.translation.x,
             this->params6DoF.translation.y,
             this->params6DoF.translation.z);
-             */
+            */
 #endif
 
             verify_converged = true;
@@ -1454,8 +1434,8 @@ namespace Anki
         } // for(s32 iteration=0; iteration<maxIterations; iteration++)
 
         printf("LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack_Projective() "
-               "failed to converged at scale %f with minChange of %f\n", scale, minChange);
-        
+          "failed to converged at scale %f with minChange of %f\n", scale, minChange);
+
         return RESULT_OK;
       } // Result LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack_Projective()
 
@@ -1500,9 +1480,9 @@ namespace Anki
           const VerifySample curSample = this->verificationSamples[iSample];
           const f32 yOriginal = static_cast<f32>(curSample.yCoordinate) * this->verifyCoordScalar;
           const f32 xOriginal = static_cast<f32>(curSample.xCoordinate) * this->verifyCoordScalar;
-          
+
           const s32 templatePixelValue = static_cast<s32>(curSample.grayvalue);
-          
+
           // TODO: These two could be strength reduced
           const f32 xTransformedRaw = h00*xOriginal + h01*yOriginal + h02;
           const f32 yTransformedRaw = h10*xOriginal + h11*yOriginal + h12;
@@ -1511,76 +1491,75 @@ namespace Anki
 
           const f32 xTransformed = (xTransformedRaw * normalization) + centerOffsetScaled.x;
           const f32 yTransformed = (yTransformedRaw * normalization) + centerOffsetScaled.y;
-          
+
 #if USE_LINEAR_INTERPOLATION_FOR_VERIFICATION
           const f32 x0 = FLT_FLOOR(xTransformed);
           const f32 x1 = ceilf(xTransformed); // x0 + 1.0f;
-          
+
           const f32 y0 = FLT_FLOOR(yTransformed);
           const f32 y1 = ceilf(yTransformed); // y0 + 1.0f;
-          
+
           // If out of bounds, continue
           if(x0 < xyReferenceMin || x1 > xReferenceMax || y0 < xyReferenceMin || y1 > yReferenceMax) {
             continue;
           }
-          
+
           const f32 alphaX = xTransformed - x0;
           const f32 alphaXinverse = 1 - alphaX;
-          
+
           const f32 alphaY = yTransformed - y0;
           const f32 alphaYinverse = 1.0f - alphaY;
-          
+
           const s32 y0S32 = Round<s32>(y0);
           const s32 y1S32 = Round<s32>(y1);
           const s32 x0S32 = Round<s32>(x0);
-          
+
           const u8 * restrict pReference_y0 = nextImage.Pointer(y0S32, x0S32);
           const u8 * restrict pReference_y1 = nextImage.Pointer(y1S32, x0S32);
-          
+
           const f32 pixelTL = *pReference_y0;
           const f32 pixelTR = *(pReference_y0+1);
           const f32 pixelBL = *pReference_y1;
           const f32 pixelBR = *(pReference_y1+1);
-          
+
           // Interpolate the value of this sample in the current image...
           const s32 interpolatedPixelValue = Round<s32>(InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse));
-          
+
 #else // No linear interpolation, just nearest pixel
-          
+
           if(xTransformed < xyReferenceMin || xTransformed > xReferenceMax ||
-             yTransformed < xyReferenceMin || yTransformed > yReferenceMax)
+            yTransformed < xyReferenceMin || yTransformed > yReferenceMax)
           {
             // Out of bounds
             continue;
           }
-          
+
           const s32 xS32 = Round<s32>(xTransformed);
           const s32 yS32 = Round<s32>(yTransformed);
-          
+
           // Lookup nearest pixel value in the current image...
           const u8 * restrict pReference = nextImage.Pointer(yS32, xS32);
-          
+
           const s32 interpolatedPixelValue = static_cast<s32>(*pReference);
-          
+
 #endif // #if USE_LINEAR_INTERPOLATION_FOR_VERIFICATION
-          
+
           verify_numInBounds++;
-          
+
           // ...compare that value to the template sample
           const s32 grayvalueDifference = ABS(interpolatedPixelValue - templatePixelValue);
-          
+
           // Keep track of the total difference
           totalGrayvalueDifference += grayvalueDifference;
-          
+
           if(grayvalueDifference <= verify_maxPixelDifferenceS32) {
             verify_numSimilarPixels++;
           }
         } // for(s32 iSample=0; iSample<numTemplateSamples; iSample++)
-        
+
         verify_meanAbsoluteDifference = totalGrayvalueDifference / verify_numInBounds;
 
         return RESULT_OK;
-        
       } // VerifyTrack_Projective()
 
       Result LucasKanadeTracker_SampledPlanar6dof::ApproximateSelect(const Array<f32> &magnitudeVector, const s32 numBins, const s32 numToSelect, s32 &numSelected, Array<s32> &magnitudeIndexes)
@@ -1620,7 +1599,7 @@ namespace Anki
         }
 
         s32 * restrict pMagnitudeIndexes = magnitudeIndexes.Pointer(0,0);
-        
+
         for(s32 i=0; i<numMagnitudes; i++) {
           if(pMagnitudeVector[i] > foundThreshold) {
             pMagnitudeIndexes[numSelected] = i;
@@ -1629,113 +1608,100 @@ namespace Anki
         }
 
         return RESULT_OK;
-        
       } // ApproximateSelect()
-        
-        
-        
-        Result LucasKanadeTracker_SampledPlanar6dof::ApproximateSelect(const Array<f32> &magnitudeImage, const s32 numBins, const s32 numRegions, const s32 numToSelect, s32 &numSelected, Array<s32> &magnitudeIndexes)
-        {
-          
-          //magnitudeImage.Show("magnitudeImage", false);
-          
-          
-          // For each threshold, count the number above the threshold
-          // If the number is low enough, copy the appropriate indexes and return
-          
-          const s32 nrows = magnitudeImage.get_size(0);
-          const s32 ncols = magnitudeImage.get_size(1);
-          
-          AnkiConditionalErrorAndReturnValue(magnitudeIndexes.get_size(0)*magnitudeIndexes.get_size(1) == nrows*ncols, RESULT_FAIL_INVALID_SIZE, "LucasKanadeTracker_SampledPlanar6dof::ApproximateSelect()", "Size of magnitudeIndexes vector does not match size of magnitudeImage.\n");
-          
-          numSelected = 0;
-          s32 * restrict pMagnitudeIndexes = magnitudeIndexes.Pointer(0,0);
-          
-          const s32 regionRows = magnitudeImage.get_size(0) / numRegions;
-          const s32 regionCols = magnitudeImage.get_size(1) / numRegions;
-          
-          s32 numRegionsLeft = numRegions*numRegions;
-          
-          for(s32 i_region=0; i_region<numRegions; ++i_region) {
-            const s32 i_min = i_region * regionRows;
-            const s32 i_max = i_min + regionRows;
-            
-            for(s32 j_region=0; j_region<numRegions; ++j_region) {
-              const s32 j_min = j_region*regionCols;
-              const s32 j_max = j_min + regionCols;
-              
-              ConstArraySlice<f32> currentRegion = magnitudeImage(i_min, i_max-1, j_min, j_max-1);
-              const f32 maxMagnitude = Matrix::Max<f32>(currentRegion);
-              const f32 minMagnitude = 0.5f*maxMagnitude; // + Matrix::Min<f32>(currentRegion));
-              
-              if(maxMagnitude == minMagnitude) {
-                // This would result in magnitudeIncrement==0 below
-                continue;
-              }
-              
-              const f32 magnitudeIncrement = (maxMagnitude-minMagnitude) / static_cast<f32>(numBins);
-              
-              const s32 numToSelectThisRegion = (numToSelect-numSelected)/numRegionsLeft;
-              //const s32 numToSelectThisRegion = numToSelect / (numRegions*numRegions);
-              
-              f32 foundThreshold = -1.0f;
-              for(f32 threshold=minMagnitude; threshold<maxMagnitude; threshold+=magnitudeIncrement) {
-                s32 numAbove = 0;
-                for(s32 i=i_min; i<i_max; i++) {
-                  const f32 * restrict mag_i = magnitudeImage.Pointer(i,0);
-                  for(s32 j=j_min; j<j_max; j++) {
-                    if(mag_i[j] > threshold) {
-                      numAbove++;
-                    }
-                  }
-                }
-                
-                if(numAbove <= numToSelectThisRegion) {
-                  foundThreshold = threshold;
-                  break;
-                }
-              } // for each threshold
-              
-              /*
-              if(foundThreshold < -0.1f) {
-                AnkiWarn("LucasKanadeTracker_SampledPlanar6dof::ApproximateSelect",
-                         "Could not find valid threshold for region (%d,%d).", i_region, j_region);
-                magnitudeIndexes.SetZero();
-                return RESULT_OK;
-              }
-               */
-              
-              if(foundThreshold > 0.f) {
-                
-                s32 numSelectedThisRegion = 0;
-                for(s32 i=i_min; i<i_max; i++) {
-                  const f32 * restrict mag_i = magnitudeImage.Pointer(i,0);
-                  
-                  for(s32 j=j_min; j<j_max && numSelectedThisRegion < numToSelectThisRegion; j++) {
-                    if(mag_i[j] > foundThreshold) {
-                      pMagnitudeIndexes[numSelected++] = i*ncols + j;
-                      
-                      ++numSelectedThisRegion;
-                      
-                    }
-                  }
-                }
-                
-                //AnkiWarn("ApproximateSelect", "Finished region (%d,%d), have %d selected.\n", i_region, j_region, numSelected);
-                
-              } // if(foundThreshold > 0.f)
-              
-              --numRegionsLeft;
-              
-            } // for j_region
-          } // for i_region
-          
-          
-          return RESULT_OK;
-        }
-        
 
-      
-      } // namespace TemplateTracker
+      Result LucasKanadeTracker_SampledPlanar6dof::ApproximateSelect(const Array<f32> &magnitudeImage, const s32 numBins, const s32 numRegions, const s32 numToSelect, s32 &numSelected, Array<s32> &magnitudeIndexes)
+      {
+        //magnitudeImage.Show("magnitudeImage", false);
+
+        // For each threshold, count the number above the threshold
+        // If the number is low enough, copy the appropriate indexes and return
+
+        const s32 nrows = magnitudeImage.get_size(0);
+        const s32 ncols = magnitudeImage.get_size(1);
+
+        AnkiConditionalErrorAndReturnValue(magnitudeIndexes.get_size(0)*magnitudeIndexes.get_size(1) == nrows*ncols, RESULT_FAIL_INVALID_SIZE, "LucasKanadeTracker_SampledPlanar6dof::ApproximateSelect()", "Size of magnitudeIndexes vector does not match size of magnitudeImage.\n");
+
+        numSelected = 0;
+        s32 * restrict pMagnitudeIndexes = magnitudeIndexes.Pointer(0,0);
+
+        const s32 regionRows = magnitudeImage.get_size(0) / numRegions;
+        const s32 regionCols = magnitudeImage.get_size(1) / numRegions;
+
+        s32 numRegionsLeft = numRegions*numRegions;
+
+        for(s32 i_region=0; i_region<numRegions; ++i_region) {
+          const s32 i_min = i_region * regionRows;
+          const s32 i_max = i_min + regionRows;
+
+          for(s32 j_region=0; j_region<numRegions; ++j_region) {
+            const s32 j_min = j_region*regionCols;
+            const s32 j_max = j_min + regionCols;
+
+            ConstArraySlice<f32> currentRegion = magnitudeImage(i_min, i_max-1, j_min, j_max-1);
+            const f32 maxMagnitude = Matrix::Max<f32>(currentRegion);
+            const f32 minMagnitude = 0.5f*maxMagnitude; // + Matrix::Min<f32>(currentRegion));
+
+            if(maxMagnitude == minMagnitude) {
+              // This would result in magnitudeIncrement==0 below
+              continue;
+            }
+
+            const f32 magnitudeIncrement = (maxMagnitude-minMagnitude) / static_cast<f32>(numBins);
+
+            const s32 numToSelectThisRegion = (numToSelect-numSelected)/numRegionsLeft;
+            //const s32 numToSelectThisRegion = numToSelect / (numRegions*numRegions);
+
+            f32 foundThreshold = -1.0f;
+            for(f32 threshold=minMagnitude; threshold<maxMagnitude; threshold+=magnitudeIncrement) {
+              s32 numAbove = 0;
+              for(s32 i=i_min; i<i_max; i++) {
+                const f32 * restrict mag_i = magnitudeImage.Pointer(i,0);
+                for(s32 j=j_min; j<j_max; j++) {
+                  if(mag_i[j] > threshold) {
+                    numAbove++;
+                  }
+                }
+              }
+
+              if(numAbove <= numToSelectThisRegion) {
+                foundThreshold = threshold;
+                break;
+              }
+            } // for each threshold
+
+            /*
+            if(foundThreshold < -0.1f) {
+            AnkiWarn("LucasKanadeTracker_SampledPlanar6dof::ApproximateSelect",
+            "Could not find valid threshold for region (%d,%d).", i_region, j_region);
+            magnitudeIndexes.SetZero();
+            return RESULT_OK;
+            }
+            */
+
+            if(foundThreshold > 0.f) {
+              s32 numSelectedThisRegion = 0;
+              for(s32 i=i_min; i<i_max; i++) {
+                const f32 * restrict mag_i = magnitudeImage.Pointer(i,0);
+
+                for(s32 j=j_min; j<j_max && numSelectedThisRegion < numToSelectThisRegion; j++) {
+                  if(mag_i[j] > foundThreshold) {
+                    pMagnitudeIndexes[numSelected++] = i*ncols + j;
+
+                    ++numSelectedThisRegion;
+                  }
+                }
+              }
+
+              //AnkiWarn("ApproximateSelect", "Finished region (%d,%d), have %d selected.\n", i_region, j_region, numSelected);
+            } // if(foundThreshold > 0.f)
+
+            --numRegionsLeft;
+          } // for j_region
+        } // for i_region
+
+        return RESULT_OK;
+      }
+    } // namespace TemplateTracker
   } // namespace Embedded
 } // namespace Anki

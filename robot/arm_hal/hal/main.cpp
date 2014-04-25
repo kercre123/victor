@@ -158,12 +158,6 @@ int main(void)
 }
 
 extern "C"
-u32 XXX_HACK_FOR_PETE()
-{
-  return Anki::Cozmo::HAL::GetMicroCounter();
-}
-
-extern "C"
 void __aeabi_assert(const char* s1, const char* s2, int s3)
 {
 }

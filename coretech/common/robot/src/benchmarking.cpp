@@ -1,5 +1,5 @@
 /**
-File: benchmarking_c.c
+File: benchmarking.c
 Author: Peter Barnum
 Created: 2013
 
@@ -7,13 +7,13 @@ Copyright Anki, Inc. 2013
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
 **/
 
-#include "anki/common/robot/benchmarking_c.h"
-#include "anki/common/robot/utilities_c.h"
+#include "anki/common/robot/benchmarking.h"
+#include "anki/common/robot/utilities.h"
 
 #if defined(_MSC_VER)
 #include <windows.h>
 #elif defined(__EDG__)
-extern u32 XXX_HACK_FOR_PETE(void);
+#include "anki/cozmo/robot/hal.h"
 #else
 #include <sys/time.h>
 #endif
@@ -71,7 +71,7 @@ staticInline unsigned long long GetBenchmarkTime(void)
 #elif defined(__APPLE_CC__)
   return 0; // TODO: implement
 #elif defined (__EDG__)  // MDK-ARM
-  return XXX_HACK_FOR_PETE();
+  return Anki::Cozmo::HAL::GetMicroCounter();
 #else
   timespec ts;
   clock_gettime(CLOCK_MONOTONIC, &ts);
