@@ -24,6 +24,7 @@ struct MACIP
   u8 IP[4];
 };
 
+// This maps the modules at Anki to their IP address (as written on the front)
 static const MACIP g_MACToIP[] =
 {
   {
@@ -34,6 +35,18 @@ static const MACIP g_MACToIP[] =
     0x00, 0x23, 0xA7, 0x0C, 0x01, 0xFF,
     192, 168, 3, 31
   },
+  {
+    0x00, 0x23, 0xA7, 0x0C, 0x03, 0x9B,
+    192, 168, 3, 32
+  },  
+  {
+    0x00, 0x23, 0xA7, 0x0C, 0x03, 0xC7,
+    192, 168, 3, 33
+  },  
+  {
+    0x00, 0x23, 0xA7, 0x0C, 0x03, 0xF7,
+    192, 168, 3, 34
+  },  
 };
 
 static int g_moduleIndex = 0;
@@ -1127,7 +1140,14 @@ namespace Anki
       
       bool WifiInit()
       {
-#ifdef ENABLE_WIFI
+#ifndef ENABLE_WIFI
+        return false;
+#else       
+#if 1 //def AUTODETECT   // This does not work on all modules        
+      //  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
+      //  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
+      //  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
+
         // Auto-detect the wifi module
         PIN_PULLUP(GPIO_SPI_MOSI, SOURCE_SPI_MOSI);
         PIN_IN(GPIO_SPI_MOSI, SOURCE_SPI_MOSI);
@@ -1140,7 +1160,7 @@ namespace Anki
         
         MicroWait(1);  // Wait for pins to settle
         
-        u32 mask = PIN_SPI_MOSI | PIN_SPI_MISO | PIN_SPI_SCK;
+        u32 mask = PIN_SPI_MOSI | PIN_SPI_MISO | PIN_SPI_SCK;        
         if ((GPIO_READ(GPIO_SPI_MOSI) & mask) == mask)
         {
           PIN_PULLDOWN(GPIO_SPI_MOSI, SOURCE_SPI_MOSI);
@@ -1155,8 +1175,13 @@ namespace Anki
             return true;
           }
         }
-#endif
         return false;
+#else
+        while (WifiConfigure() < 0)
+          ;
+        return true;        
+#endif
+#endif        
       }
     }
   }
