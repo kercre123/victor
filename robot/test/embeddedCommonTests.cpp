@@ -438,97 +438,6 @@ GTEST_TEST(CoreTech_Common, RoundFloat)
   GTEST_RETURN_HERE;
 }
 
-GTEST_TEST(CoreTech_Common, CompressArray)
-{
-  const s32 arrayHeight = 3;
-  const s32 arrayWidth = 4;
-
-  //printf("Compressor size: %d Decompressor size:%d\n", sizeof(heatshrink_encoder), sizeof(heatshrink_decoder));
-
-  ASSERT_TRUE(offchipBuffer != NULL);
-  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
-
-  Array<s16> original(arrayHeight, arrayWidth, ms);
-
-  original.SetZero();
-
-  const s32 compressedBufferLength = 1000;
-  void * compressedBuffer = ms.Allocate(compressedBufferLength);
-  memset(compressedBuffer, 0, compressedBufferLength);
-
-  CompressedArray<s16> compressed(compressedBuffer, compressedBufferLength, 0,
-    arrayHeight, arrayWidth, Flags::Buffer());
-
-  for(s32 y=0; y<arrayHeight; y++) {
-    for(s32 x=0; x<arrayWidth; x++) {
-      original[y][x] = static_cast<s16>(10*y + x + 3);
-    }
-  }
-
-  {
-    const Result result = Compress<s16>(original, compressed, ms);
-    ASSERT_TRUE(result == RESULT_OK);
-  }
-
-  original.Print("original");
-
-  {
-    const s32 originalLength = original.get_size(0) * original.get_stride();
-    const s32 compressedLength = compressed.get_compressedBufferUsedLength();
-    printf("Original Length:%d Compressed Length:%d Compression percent size:%f\n", originalLength, compressedLength, 100.0f*f32(compressedLength)/f32(originalLength));
-  }
-
-  Array<s16> decompressed = Decompress<s16>(compressed, ms);
-
-  decompressed.Print("decompressed");
-
-  ASSERT_TRUE(AreElementwiseEqual<s16>(original, decompressed));
-
-  GTEST_RETURN_HERE;
-} // GTEST_TEST(CoreTech_Common, CompressArray)
-
-GTEST_TEST(CoreTech_Common, Heatshrink)
-{
-  const s32 dataLength = 1000;
-
-  //printf("Compressor size: %d Decompressor size:%d\n", sizeof(heatshrink_encoder), sizeof(heatshrink_decoder));
-
-  ASSERT_TRUE(offchipBuffer != NULL);
-  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
-
-  Array<u8> original(1, dataLength, ms);
-  Array<u8> compressed(1, dataLength + dataLength/2 + 4, ms);
-  Array<u8> decompressed(1, dataLength + dataLength/2 + 4, ms);
-
-  compressed.SetZero();
-  decompressed.SetZero();
-
-  for(s32 i=0; i<dataLength; i++) {
-    original[0][i] = static_cast<u8>((i<<1) + 5);
-  }
-
-  s32 compressedLength = -1;
-  ASSERT_TRUE(Compress(original.Pointer(0,0), dataLength, compressed.Pointer(0,0), compressed.get_size(1), compressedLength, ms) == RESULT_OK);
-
-  //original.Print("original");
-  //compressed.Print("compressed", 0, 0, 0, compressedLength-1);
-
-  printf("Original Length:%d Compressed Length:%d Compression percent size:%f\n", dataLength, compressedLength, 100.0f*f32(compressedLength)/f32(dataLength));
-
-  s32 uncompressedLength = -1;
-  ASSERT_TRUE(Decompress(compressed.Pointer(0,0), compressedLength, decompressed.Pointer(0,0), decompressed.get_size(1), uncompressedLength, ms) == RESULT_OK);
-  decompressed.Resize(1, dataLength, ms);
-
-  //decompressed.Print("decompressed");
-
-  ASSERT_TRUE(AreElementwiseEqual<u8>(original, decompressed));
-  ASSERT_TRUE(uncompressedLength == dataLength);
-
-  GTEST_RETURN_HERE;
-} // GTEST_TEST(CoreTech_Common, Heatshrink)
-
 GTEST_TEST(CoreTech_Common, SerializedBuffer)
 {
   const s32 segment1Length = 32;
@@ -3117,21 +3026,21 @@ GTEST_TEST(CoreTech_Common, Benchmarking)
   BeginBenchmark("testOuter");
 
   const double startTime0 = GetTimeF32();
-  while((GetTimeF32() - startTime0) < 1.0) {}
+  while((GetTimeF32() - startTime0) < 1.0/10) {}
 
   BeginBenchmark("testInner");
   const double startTime1 = GetTimeF32();
-  while((GetTimeF32() - startTime1) < 1.0) {}
+  while((GetTimeF32() - startTime1) < 2.0/10) {}
   EndBenchmark("testInner");
 
   BeginBenchmark("testInner");
   const double startTime2 = GetTimeF32();
-  while((GetTimeF32() - startTime2) < 2.0) {}
+  while((GetTimeF32() - startTime2) < 3.0/10) {}
   EndBenchmark("testInner");
 
   BeginBenchmark("testInner");
   const double startTime3 = GetTimeF32();
-  while((GetTimeF32() - startTime3) < 3.0) {}
+  while((GetTimeF32() - startTime3) < 3.0/10) {}
   EndBenchmark("testInner");
 
   EndBenchmark("testOuter");
@@ -3240,8 +3149,6 @@ s32 RUN_ALL_COMMON_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   CALL_GTEST_TEST(CoreTech_Common, RunLengthEncode);
   CALL_GTEST_TEST(CoreTech_Common, IsConvex);
   CALL_GTEST_TEST(CoreTech_Common, RoundFloat);
-  CALL_GTEST_TEST(CoreTech_Common, CompressArray);
-  CALL_GTEST_TEST(CoreTech_Common, Heatshrink);
   CALL_GTEST_TEST(CoreTech_Common, SerializedBuffer);
   CALL_GTEST_TEST(CoreTech_Common, CRC32Code);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStackIterator);
