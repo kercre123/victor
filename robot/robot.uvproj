@@ -899,6 +899,11 @@
           <GroupName>coretech-vision</GroupName>
           <Files>
             <File>
+              <FileName>autoExposure.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\autoExposure.cpp</FilePath>
+            </File>
+            <File>
               <FileName>binaryTracker.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\binaryTracker.cpp</FilePath>
@@ -1017,6 +1022,11 @@
               <FileName>perspectivePoseEstimation.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\perspectivePoseEstimation.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>quadRefinement.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\quadRefinement.cpp</FilePath>
             </File>
             <File>
               <FileName>traceBoundary.cpp</FileName>
@@ -2167,6 +2177,11 @@
           <GroupName>coretech-vision</GroupName>
           <Files>
             <File>
+              <FileName>autoExposure.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\autoExposure.cpp</FilePath>
+            </File>
+            <File>
               <FileName>binaryTracker.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\binaryTracker.cpp</FilePath>
@@ -2285,6 +2300,11 @@
               <FileName>perspectivePoseEstimation.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\perspectivePoseEstimation.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>quadRefinement.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\quadRefinement.cpp</FilePath>
             </File>
             <File>
               <FileName>traceBoundary.cpp</FileName>

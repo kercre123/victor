@@ -111,9 +111,6 @@ namespace Anki
         this->templateEdges.yDecreasing = FixedLengthList<Point<s16> >(edgeDetectionParams.maxDetectionsPerType, fastMemory);
         this->templateEdges.yIncreasing = FixedLengthList<Point<s16> >(edgeDetectionParams.maxDetectionsPerType, fastMemory);
 
-        this->templateHistogram = Histogram(256, fastMemory);
-        this->lastImageHistogram = Histogram(256, fastMemory);
-
         this->templateImage = Array<u8>(templateImageHeight, templateImageWidth, slowMemory);
         this->templateImage.Set(templateImage);
 
@@ -126,16 +123,18 @@ namespace Anki
 
         const Rectangle<s32> edgeDetection_imageRegionOfInterest = templateQuad.ComputeBoundingRectangle<s32>().ComputeScaledRectangle<s32>(edgeDetectionParams.threshold_scaleRegionPercent);
 
-        this->lastGrayvalueThreshold = ComputeGrayvalueThreshold(
-          templateImage,
-          edgeDetection_imageRegionOfInterest,
+        this->templateIntegerCounts = IntegerCounts(
+          this->templateImage, edgeDetection_imageRegionOfInterest,
           edgeDetectionParams.threshold_yIncrement,
           edgeDetectionParams.threshold_xIncrement,
-          edgeDetectionParams.threshold_blackPercentile,
-          edgeDetectionParams.threshold_whitePercentile,
-          this->templateHistogram);
+          fastMemory);
 
-        this->lastImageHistogram.Set(this->templateHistogram);
+        AnkiConditionalErrorAndReturn(this->templateIntegerCounts.IsValid() ,
+          "BinaryTracker::BinaryTracker", "Could not allocate local memory");
+
+        this->lastGrayvalueThreshold = ComputeGrayvalueThreshold(this->templateIntegerCounts, edgeDetectionParams.threshold_blackPercentile, edgeDetectionParams.threshold_whitePercentile);
+
+        //this->lastImageIntegerCounts.Set(this->templateIntegerCounts);
 
         const Rectangle<s32> templateRect = templateQuad.ComputeBoundingRectangle<s32>().ComputeScaledRectangle<s32>(scaleTemplateRegionPercent);
 
@@ -187,15 +186,15 @@ namespace Anki
         this->templateEdges.yDecreasing = FixedLengthList<Point<s16> >(edgeDetectionParams.maxDetectionsPerType, fastMemory);
         this->templateEdges.yIncreasing = FixedLengthList<Point<s16> >(edgeDetectionParams.maxDetectionsPerType, fastMemory);
 
-        this->templateHistogram = Histogram(256, fastMemory);
-        this->lastImageHistogram = Histogram(256, fastMemory);
+        //this->templateIntegerCounts = IntegerCounts(256, fastMemory);
+        //this->lastImageIntegerCounts = IntegerCounts(256, fastMemory);
 
         this->templateImage = Array<u8>(templateImageHeight, templateImageWidth, slowMemory);
 
         AnkiConditionalErrorAndReturn(
           this->templateEdges.xDecreasing.IsValid() && this->templateEdges.xIncreasing.IsValid() &&
           this->templateEdges.yDecreasing.IsValid() && this->templateEdges.yIncreasing.IsValid() &&
-          this->templateHistogram.IsValid() && this->lastImageHistogram.IsValid() && this->templateImage.IsValid(),
+          this->templateImage.IsValid(),
           "BinaryTracker::BinaryTracker", "Could not allocate local memory");
 
         this->templateImage.Set(templateImage);
@@ -369,16 +368,18 @@ namespace Anki
 
         const Rectangle<s32> edgeDetection_imageRegionOfInterest = templateQuad.ComputeBoundingRectangle<s32>().ComputeScaledRectangle<s32>(edgeDetectionParams.threshold_scaleRegionPercent);
 
-        this->lastGrayvalueThreshold = ComputeGrayvalueThreshold(
-          templateImage,
-          edgeDetection_imageRegionOfInterest,
+        this->templateIntegerCounts = IntegerCounts(
+          this->templateImage, edgeDetection_imageRegionOfInterest,
           edgeDetectionParams.threshold_yIncrement,
           edgeDetectionParams.threshold_xIncrement,
-          edgeDetectionParams.threshold_blackPercentile,
-          edgeDetectionParams.threshold_whitePercentile,
-          this->templateHistogram);
+          fastMemory);
 
-        this->lastImageHistogram.Set(this->templateHistogram);
+        AnkiConditionalErrorAndReturn(this->templateIntegerCounts.IsValid() ,
+          "BinaryTracker::BinaryTracker", "Could not allocate local memory");
+
+        this->lastGrayvalueThreshold = ComputeGrayvalueThreshold(this->templateIntegerCounts, edgeDetectionParams.threshold_blackPercentile, edgeDetectionParams.threshold_whitePercentile);
+
+        //this->lastImageIntegerCounts.Set(this->templateIntegerCounts);
         this->lastUsedGrayvalueThreshold = this->lastGrayvalueThreshold;
 
         this->isValid = true;
@@ -737,14 +738,14 @@ namespace Anki
 
         const Rectangle<s32> edgeDetection_imageRegionOfInterest = curWarpedCorners.ComputeBoundingRectangle<s32>().ComputeScaledRectangle<s32>(edgeDetectionParams.threshold_scaleRegionPercent);
 
-        this->lastGrayvalueThreshold = ComputeGrayvalueThreshold(
+        IntegerCounts lastImageIntegerCounts(
           nextImage,
           edgeDetection_imageRegionOfInterest,
           edgeDetectionParams.threshold_yIncrement,
           edgeDetectionParams.threshold_xIncrement,
-          edgeDetectionParams.threshold_blackPercentile,
-          edgeDetectionParams.threshold_whitePercentile,
-          lastImageHistogram);
+          fastScratch);
+
+        this->lastGrayvalueThreshold = ComputeGrayvalueThreshold(lastImageIntegerCounts, edgeDetectionParams.threshold_blackPercentile, edgeDetectionParams.threshold_whitePercentile);
 
         EndBenchmark("ut_grayvalueThreshold");
 
@@ -756,8 +757,8 @@ namespace Anki
 
           //lastResult = this->transformation.VerifyTransformation_Projective_LinearInterpolate(
           lastResult = this->transformation.VerifyTransformation_Projective_NearestNeighbor(
-            templateImage, this->templateHistogram, this->templateQuad.ComputeBoundingRectangle<f32>(),
-            nextImage, this->lastImageHistogram,
+            templateImage, this->templateIntegerCounts, this->templateQuad.ComputeBoundingRectangle<f32>(),
+            nextImage, lastImageIntegerCounts,
             templateRegionHeight, templateRegionWidth, verify_coordinateIncrement,
             verify_maxPixelDifference, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels,
             fastScratch);

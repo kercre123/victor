@@ -280,6 +280,10 @@ namespace Anki
       Quadrilateral<Type> operator- (const Quadrilateral<Type> &quad2) const;
 
       inline Quadrilateral<Type>& operator= (const Quadrilateral<Type> &quad2);
+      
+      // Keeping this explicit to avoid accidental setting of quads of
+      // different types
+      template<typename InType> void SetCast(const Quadrilateral<InType> &quad2);
 
       inline const Point<Type>& operator[] (const s32 index) const;
       inline Point<Type>& operator[] (const s32 index);

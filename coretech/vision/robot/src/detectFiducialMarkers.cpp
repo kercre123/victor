@@ -37,6 +37,7 @@ namespace Anki
       const f32 decode_minContrastRatio,
       const s32 maxConnectedComponentSegments,
       const s32 maxExtractedQuads,
+      const s32 quadRefinementIterations,
       const bool returnInvalidMarkers,
       MemoryStack scratchCcm,
       MemoryStack scratchOnchip,
@@ -158,17 +159,20 @@ namespace Anki
       EndBenchmark("ComputeQuadrilateralsFromConnectedComponents");
 
       // 4b. Compute a homography for each extracted quadrilateral
+      Array<f32> refinedHomography(3,3,scratchOnchip);
       BeginBenchmark("ComputeHomographyFromQuad");
       for(s32 iQuad=0; iQuad<extractedQuads.get_size(); iQuad++) {
         Array<f32> &currentHomography = homographies[iQuad];
 
-        if((lastResult = Transformations::ComputeHomographyFromQuad(extractedQuads[iQuad], currentHomography, scratchOnchip)) != RESULT_OK)
+        if((lastResult = Transformations::ComputeHomographyFromQuad(extractedQuads[iQuad], currentHomography, scratchOnchip)) != RESULT_OK) {
           return lastResult;
-
+        }
+        
         //currentHomography.Print("currentHomography");
       } // for(iQuad=0; iQuad<; iQuad++)
       EndBenchmark("ComputeHomographyFromQuad");
-
+      
+      
       // 5. Decode fiducial markers from the candidate quadrilaterals
 
       BeginBenchmark("ExtractVisionMarker");
@@ -180,9 +184,8 @@ namespace Anki
         const Quadrilateral<s16> &currentQuad = extractedQuads[iQuad];
 
         VisionMarker &currentMarker = markers[iQuad];
-
         if((lastResult = currentMarker.Extract(image, currentQuad, currentHomography,
-          decode_minContrastRatio)) != RESULT_OK)
+          decode_minContrastRatio, quadRefinementIterations, scratchOnchip)) != RESULT_OK)
         {
           return lastResult;
         }

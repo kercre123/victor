@@ -106,10 +106,10 @@ namespace Anki
 
         Result VerifyTransformation_Projective_NearestNeighbor(
           const Array<u8> &templateImage,
-          const Histogram &templateHistogram,
+          const IntegerCounts &templateIntegerCounts,
           const Rectangle<f32> &templateRegionOfInterest,
           const Array<u8> &nextImage,
-          const Histogram &nextImageHistogram,
+          const IntegerCounts &nextImageHistogram,
           const f32 templateRegionHeight,
           const f32 templateRegionWidth,
           const s32 templateCoordinateIncrement,

@@ -3116,22 +3116,22 @@ GTEST_TEST(CoreTech_Common, Benchmarking)
 
   BeginBenchmark("testOuter");
 
-  const double startTime0 = GetTime();
-  while((GetTime() - startTime0) < 1.0) {}
+  const double startTime0 = GetTimeF32();
+  while((GetTimeF32() - startTime0) < 1.0) {}
 
   BeginBenchmark("testInner");
-  const double startTime1 = GetTime();
-  while((GetTime() - startTime1) < 1.0) {}
+  const double startTime1 = GetTimeF32();
+  while((GetTimeF32() - startTime1) < 1.0) {}
   EndBenchmark("testInner");
 
   BeginBenchmark("testInner");
-  const double startTime2 = GetTime();
-  while((GetTime() - startTime2) < 2.0) {}
+  const double startTime2 = GetTimeF32();
+  while((GetTimeF32() - startTime2) < 2.0) {}
   EndBenchmark("testInner");
 
   BeginBenchmark("testInner");
-  const double startTime3 = GetTime();
-  while((GetTime() - startTime3) < 3.0) {}
+  const double startTime3 = GetTimeF32();
+  while((GetTimeF32() - startTime3) < 3.0) {}
   EndBenchmark("testInner");
 
   EndBenchmark("testOuter");

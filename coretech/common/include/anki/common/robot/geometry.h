@@ -55,8 +55,8 @@ namespace Anki
 
     template<typename Type> template<typename InType> void Point<Type>::SetCast(const Point<InType> &in)
     {
-      this->x == static_cast<Type>(in.x);
-      this->y == static_cast<Type>(in.y);
+      this->x = static_cast<Type>(in.x);
+      this->y = static_cast<Type>(in.y);
     }
 
     template<typename Type> void Point<Type>::Print() const
@@ -602,6 +602,15 @@ namespace Anki
       }
 
       return *this;
+    }
+
+    template<typename Type>
+    template<typename InType>
+    void Quadrilateral<Type>::SetCast(const Quadrilateral<InType> &quad2)
+    {
+      for(s32 i=0; i<4; i++) {
+        this->corners[i].SetCast(quad2.corners[i]);
+      }
     }
 
     template<typename Type> inline const Point<Type>& Quadrilateral<Type>::operator[] (const s32 index) const

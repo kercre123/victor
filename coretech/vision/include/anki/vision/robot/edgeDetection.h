@@ -63,14 +63,18 @@ namespace Anki
     Result DetectBlurredEdges_DerivativeThreshold(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const s32 combHalfWidth, const s32 combResponseThreshold, const s32 everyNLines, EdgeLists &edgeLists);
 
     u8 ComputeGrayvalueThreshold(
-      const Array<u8> &image,
-      const Rectangle<s32> &imageRegionOfInterest,
-      const s32 yIncrement,
-      const s32 xIncrement,
+      const IntegerCounts &integerCounts,
+      const f32 blackPercentile,  //< What percentile of histogram energy is black? (.1 is a good value)
+      const f32 whitePercentile); //< What percentile of histogram energy is white? (.9 is a good value)
+
+    u8 ComputeGrayvalueThreshold(
+      const Array<u8> &image, //< Used to compute the IntegerCounts
+      const Rectangle<s32> &imageRegionOfInterest, //< Used to compute the IntegerCounts
+      const s32 yIncrement, //< Used to compute the IntegerCounts
+      const s32 xIncrement, //< Used to compute the IntegerCounts
       const f32 blackPercentile, //< What percentile of histogram energy is black? (.1 is a good value)
       const f32 whitePercentile, //< What percentile of histogram energy is white? (.9 is a good value)
-      Histogram &histogram //< Histogram is computed as a byproduct
-      );
+      MemoryStack scratch);
   } // namespace Embedded
 } //namespace Anki
 

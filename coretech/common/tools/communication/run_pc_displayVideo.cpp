@@ -40,7 +40,7 @@ static u8 scratchBuffer[scratchSize];
 static const s32 outputFilenamePatternLength = 1024;
 static char outputFilenamePattern[outputFilenamePatternLength] = "C:/Users/Pete/Box Sync/Cozmo SE/systemTestImages/cozmo_date%04d_%02d_%02d_time%02d_%02d_%02d_frame%d.%s";
 
-static f32 lastTime = 0;
+static f64 lastTime = 0;
 
 static cv::Mat lastImage;
 static cv::Mat largeLastImage;
@@ -108,10 +108,10 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
       if(benchmarkTimes[0] > 0.0f) {
         char benchmarkBuffer[1024];
 
-        static f32 lastTime;
-        const f32 curTime = GetTime();
-        const f32 receivedDelta = curTime - lastTime;
-        lastTime = GetTime();
+        static f64 lastTime;
+        const f64 curTime = GetTimeF64();
+        const f64 receivedDelta = curTime - lastTime;
+        lastTime = GetTimeF64();
 
         snprintf(benchmarkBuffer, 1024, "Total:%0.1ffps Algorithms:%0.1ffps   GrayvalueError:%d %f", 1.0f/benchmarkTimes[1], 1.0f/benchmarkTimes[0], lastMeanError, lastPercentMatchingGrayvalues);
 
@@ -272,6 +272,47 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
       s32* tmpBuffer = reinterpret_cast<s32*>(newObject.startOfPayload);
 
       detectedFacesImageWidth = tmpBuffer[0];
+    } else {
+      const s32 sizeOfType = reinterpret_cast<s32*>(newObject.buffer)[0];
+      const s32 isBasicType = reinterpret_cast<s32*>(newObject.buffer)[1];
+      const s32 isInteger = reinterpret_cast<s32*>(newObject.buffer)[2];
+      const s32 isSigned = reinterpret_cast<s32*>(newObject.buffer)[3];
+      const s32 isFloat = reinterpret_cast<s32*>(newObject.buffer)[4];
+      const s32 numElements = reinterpret_cast<s32*>(newObject.buffer)[5];
+
+      printf("%s: ", newObject.objectName);
+
+      if(isBasicType)
+        if(isFloat) {
+          if(sizeOfType == 4) {
+            for(s32 i=0; i<numElements; i++) { printf("%0.5f, ", reinterpret_cast<f32*>(newObject.startOfPayload)[i]); }
+          } else if(sizeOfType == 8) {
+            for(s32 i=0; i<numElements; i++) { printf("%0.5f, ", reinterpret_cast<f64*>(newObject.startOfPayload)[i]); }
+          }
+        } else {
+          if(isSigned) {
+            if(sizeOfType == 1) {
+              for(s32 i=0; i<numElements; i++) { printf("%d, ", reinterpret_cast<s8*>(newObject.startOfPayload)[i]); }
+            } else if(sizeOfType == 2) {
+              for(s32 i=0; i<numElements; i++) { printf("%d, ", reinterpret_cast<s16*>(newObject.startOfPayload)[i]); }
+            } else if(sizeOfType == 4) {
+              for(s32 i=0; i<numElements; i++) { printf("%d, ", reinterpret_cast<s32*>(newObject.startOfPayload)[i]); }
+            } else if(sizeOfType == 8) {
+              for(s32 i=0; i<numElements; i++) { printf("%lld, ", reinterpret_cast<s64*>(newObject.startOfPayload)[i]); }
+            }
+          } else {
+            if(sizeOfType == 1) {
+              for(s32 i=0; i<numElements; i++) { printf("%d, ", reinterpret_cast<u8*>(newObject.startOfPayload)[i]); }
+            } else if(sizeOfType == 2) {
+              for(s32 i=0; i<numElements; i++) { printf("%d, ", reinterpret_cast<u16*>(newObject.startOfPayload)[i]); }
+            } else if(sizeOfType == 4) {
+              for(s32 i=0; i<numElements; i++) { printf("%u, ", reinterpret_cast<u32*>(newObject.startOfPayload)[i]); }
+            } else if(sizeOfType == 8) {
+              for(s32 i=0; i<numElements; i++) { printf("%llu, ", reinterpret_cast<u64*>(newObject.startOfPayload)[i]); }
+            }
+          }
+        }
+        printf("\n");
     }
   } else if(strcmp(newObject.typeName, "Array") == 0) {
     if (strcmp(newObject.objectName, "Robot Image") == 0) {
@@ -329,7 +370,7 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
       cv::merge(channels, toShowImage);
     }
   } else if(strcmp(newObject.typeName, "String") == 0) {
-    printf("Board>> %s", reinterpret_cast<const char*>(newObject.startOfPayload));
+    printf("Board>> %s\n", reinterpret_cast<const char*>(newObject.startOfPayload));
   } else if(strcmp(newObject.typeName, "VisionMarker") == 0) {
     VisionMarker marker = *reinterpret_cast<VisionMarker*>(newObject.startOfPayload);
 

@@ -34,6 +34,7 @@ namespace Anki
       const f32 decode_minContrastRatio,
       const s32 maxConnectedComponentSegments,
       const s32 maxExtractedQuads,
+      const s32 quadRefinementIterations,
       const bool returnInvalidMarkers,
       MemoryStack scratchCcm,
       MemoryStack scratchOnchip,
@@ -76,6 +77,24 @@ namespace Anki
     //
     // Requires ??? bytes of scratch
     Result ExtractLaplacianPeaks(const FixedLengthList<Point<s16> > &boundary, FixedLengthList<Point<s16> > &peaks, MemoryStack scratch);
+    
+    // Used by DetectFiducialMarkers
+    //
+    // Uses projective Lucas-Kanade to refine an initial on-pixel quadrilateral
+    // to sub-pixel position, using samples along the edges of an implicit model
+    // of a black square fiducial on a white background.
+    //
+    Result RefineQuadrilateral(const Quadrilateral<s16>& initialQuad,
+                               const Array<f32>& initialHomography,
+                               const Array<u8> &image,
+                               const f32 squareWidthFraction,
+                               const s32 maxIterations,
+                               const f32 contrast,
+                               const s32 numSamples,
+                               Quadrilateral<f32>& refinedQuad,
+                               Array<f32>& refinedHomography,
+                               MemoryStack scratch);
+    
   } // namespace Embedded
 } // namespace Anki
 

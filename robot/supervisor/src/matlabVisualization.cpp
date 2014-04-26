@@ -75,12 +75,13 @@ namespace Anki {
         return RESULT_OK;
       }
       
-      Result SendFiducialDetection(const Quadrilateral<s16> &corners,
-                                       const Vision::MarkerType &markerCode )
+      Result SendFiducialDetection(const Quadrilateral<f32> &corners,
+                                   const Vision::MarkerType &markerCode )
       {
 #if USE_MATLAB_VISUALIZATION
         matlabViz_.PutQuad(corners, "detectedQuad");
-        matlabViz_.EvalStringEcho("plot(detectedQuad([1 2 4 3 1],1)+1, "
+        matlabViz_.EvalStringEcho("detectedQuad = double(detectedQuad); "
+                                  "plot(detectedQuad([1 2 4 3 1],1)+1, "
                                   "     detectedQuad([1 2 4 3 1],2)+1, "
                                   "     'r', 'LineWidth', 2, "
                                   "     'Parent', h_axes, "

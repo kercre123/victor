@@ -154,7 +154,7 @@ namespace Anki {
         Result lastResult = RESULT_OK;
         
         // Create a little memory stack for the various 3x3 matrices used below
-        const s32 SCRATCH_BUFFER_SIZE = 512;
+        const s32 SCRATCH_BUFFER_SIZE = 768;
         char buffer[SCRATCH_BUFFER_SIZE];
         MemoryStack scratch(buffer, SCRATCH_BUFFER_SIZE);
         

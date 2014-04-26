@@ -183,19 +183,12 @@ namespace Anki
         s32 templateImageHeight;
         s32 templateImageWidth;
         Quadrilateral<f32> templateQuad;
-        Histogram templateHistogram;
+        IntegerCounts templateIntegerCounts;
 
         // The indexes of the detected edges
         EdgeLists templateEdges;
 
         f32 originalTemplateOrientation;
-
-        //f32 homographyOffsetX;
-        //f32 homographyOffsetY;
-
-        //Meshgrid<f32> grid;
-        //Array<f32> xGrid;
-        //Array<f32> yGrid;
 
         Transformations::PlanarTransformation_f32 transformation;
 
@@ -203,7 +196,6 @@ namespace Anki
         // The last threshold is the value computed on the last image, that will be used for the next image
         u8 lastUsedGrayvalueThreshold;
         u8 lastGrayvalueThreshold;
-        Histogram lastImageHistogram;
 
         bool isValid;
 

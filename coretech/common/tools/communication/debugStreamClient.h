@@ -57,7 +57,7 @@ namespace Anki
 
         void * startOfPayload; //< This points after any header in buffer. Just cast this pointer to the appropriate type.
 
-        f32 timeReceived; //< All objects from the same message will have the same timeReceived
+        f64 timeReceived; //< All objects from the same message will have the same timeReceived
 
         Object();
 
@@ -85,7 +85,7 @@ namespace Anki
         u8 * rawDataPointer; // Unaligned
         s32 curDataLength;
         s32 maxDataLength;
-        f32 timeReceived; // The time (in seconds) when the receiving of this buffer was complete
+        f64 timeReceived; // The time (in seconds) when the receiving of this buffer was complete
       } RawBuffer;
 
       static const s32 USB_BUFFER_SIZE = 5000;

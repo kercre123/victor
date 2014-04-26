@@ -665,25 +665,30 @@ namespace Anki
 #endif // #ifdef ANKICORETECH_EMBEDDED_USE_OPENCV
 
     u8 ComputeGrayvalueThreshold(
+      const IntegerCounts &integerCounts,
+      const f32 blackPercentile,
+      const f32 whitePercentile)
+    {
+      const s32 grayvalueBlack = integerCounts.ComputePercentile(blackPercentile);
+      const s32 grayvalueWhite = integerCounts.ComputePercentile(whitePercentile);
+
+      const u8 grayvalueThreshold = static_cast<u8>( (grayvalueBlack + grayvalueWhite) / 2 );
+
+      return grayvalueThreshold;
+    }
+
+    u8 ComputeGrayvalueThreshold(
       const Array<u8> &image,
       const Rectangle<s32> &imageRegionOfInterest,
       const s32 yIncrement,
       const s32 xIncrement,
       const f32 blackPercentile,
       const f32 whitePercentile,
-      Histogram &histogram)
+      MemoryStack scratch)
     {
-      AnkiConditionalErrorAndReturnValue(histogram.get_numBins() == 256,
-        0, "ComputeGrayvalueThreshold", "Wrong number of bins");
+      IntegerCounts integerCounts(image, imageRegionOfInterest, yIncrement, xIncrement, scratch);
 
-      ComputeHistogram(image, imageRegionOfInterest, yIncrement, xIncrement, histogram);
-
-      const s32 grayvalueBlack = ComputePercentile(histogram, blackPercentile);
-      const s32 grayvalueWhite = ComputePercentile(histogram, whitePercentile);
-
-      const u8 grayvalueThreshold = static_cast<u8>( (grayvalueBlack + grayvalueWhite) / 2 );
-
-      return grayvalueThreshold;
+      return ComputeGrayvalueThreshold(integerCounts, blackPercentile, whitePercentile);
     }
   } // namespace Embedded
 } // namespace Anki

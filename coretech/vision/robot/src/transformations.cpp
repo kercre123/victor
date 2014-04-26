@@ -724,10 +724,10 @@ namespace Anki
 
       Result PlanarTransformation_f32::VerifyTransformation_Projective_NearestNeighbor(
         const Array<u8> &templateImage,
-        const Histogram &templateHistogram,
+        const IntegerCounts &templateIntegerCounts,
         const Rectangle<f32> &templateRegionOfInterest,
         const Array<u8> &nextImage,
-        const Histogram &nextImageHistogram,
+        const IntegerCounts &nextImageHistogram,
         const f32 templateRegionHeight,
         const f32 templateRegionWidth,
         const s32 templateCoordinateIncrement,
@@ -789,18 +789,18 @@ namespace Anki
         const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2] / initialImageScaleF32;
         const f32 h20 = homography[2][0] * initialImageScaleF32; const f32 h21 = homography[2][1] * initialImageScaleF32; const f32 h22 = homography[2][2] * initialImageScaleF32; // TODO: should h22 be scaled?
 
-        //const s32 templateMeanS32 = Round<s32>(templateHistogram.mean);
+        //const s32 templateMeanS32 = Round<s32>(templateIntegerCounts.mean);
         //const s32 nextImageMeanS32 = Round<s32>(nextImageHistogram.mean);
 
-        //const s32 templateStdDivisor = Round<s32>(static_cast<f32>((1 << numStatisticsFractionalBits)) / templateHistogram.standardDeviation);
+        //const s32 templateStdDivisor = Round<s32>(static_cast<f32>((1 << numStatisticsFractionalBits)) / templateIntegerCounts.standardDeviation);
         //const s32 nextImageStdDivisor = Round<s32>(static_cast<f32>((1 << numStatisticsFractionalBits)) / nextImageHistogram.standardDeviation);
 
-        //const s32 templateLowS32 = ComputePercentile(templateHistogram, lowPercentile);
-        const s32 templateHighS32 = ComputePercentile(templateHistogram, highPercentile);
+        //const s32 templateLowS32 = ComputePercentile(templateIntegerCounts, lowPercentile);
+        const s32 templateHighS32 = templateIntegerCounts.ComputePercentile(highPercentile);
         const s32 templateHighDivisorS32 = 255*Round<s32>(static_cast<f32>(1 << numStatisticsFractionalBits) / static_cast<f32>(templateHighS32));
 
         //const s32 nextImageLowS32 = ComputePercentile(nextImageHistogram, lowPercentile);
-        const s32 nextImageHighS32 = ComputePercentile(nextImageHistogram, highPercentile);
+        const s32 nextImageHighS32 = nextImageHistogram.ComputePercentile(highPercentile);
         const s32 nextImageHighDivisorS32 = 255*Round<s32>(static_cast<f32>(1 << numStatisticsFractionalBits) / static_cast<f32>(nextImageHighS32));
 
         numInBounds = 0;

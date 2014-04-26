@@ -61,7 +61,8 @@ namespace Anki
     {
     public:
 
-      Quadrilateral<s16> corners; // SQ 15.0 (Though may be changed later)
+      //Quadrilateral<s16> corners; // SQ 15.0 (Though may be changed later)
+      Quadrilateral<f32> corners;
       Vision::MarkerType markerType;
       f32 observedOrientation; //< In degrees. TODO: change to radians or discrete
       bool isValid;
@@ -69,7 +70,8 @@ namespace Anki
       VisionMarker();
 
       Result Extract(const Array<u8> &image, const Quadrilateral<s16> &quad,
-        const Array<f32> &homography, const f32 minContrastRatio);
+                     const Array<f32> &homography, const f32 minContrastRatio,
+                     const s32 quadRefinementIterations, MemoryStack scratch);
 
       void Print() const;
 
@@ -84,9 +86,12 @@ namespace Anki
       // TODO: make less hacky
       void Initialize();
 
-      Result ComputeThreshold(const Array <u8> &image, const Array<f32> &homography,
-        const f32 minContrastRatio, bool &isHighContrast, u8 &meanGrayvalueThreshold);
+      //Result ComputeThreshold(const Array <u8> &image, const Array<f32> &homography,
+      //  const f32 minContrastRatio, bool &isHighContrast, u8 &meanGrayvalueThreshold);
 
+      Result ComputeBrightDarkValues(const Array <u8> &image, const Array<f32> &homography,
+                                     f32& brightValue, f32& darkValue);
+      
       static bool areTreesInitialized;
       static FiducialMarkerDecisionTree multiClassTree;
       static FiducialMarkerDecisionTree verificationTrees[VisionMarkerDecisionTree::NUM_MARKER_LABELS_ORIENTED];

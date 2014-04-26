@@ -44,6 +44,8 @@ namespace Anki {
         //Result SendPrintf(const char * string);
         
         Result SendArray(const Array<u8> &array, const char * objectName);
+          
+        Result SendImage(const Array<u8> &array, const f32 exposureTime, const char * objectName);
         
         Result SendBinaryImage(const Array<u8> &grayscaleImage,
                                const char * objectName,
