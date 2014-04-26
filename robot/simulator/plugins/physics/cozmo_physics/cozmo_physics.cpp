@@ -499,7 +499,7 @@ void webots_physics_draw(int pass, const char *view) {
       // Use objectType-specific drawing functions
       switch(obj->objectTypeID) {
         case Anki::Cozmo::VIZ_ROBOT:
-          draw_robot(Anki::Cozmo::VIZ_ROBOT_MARKER_BIG_TRIANGLE);
+          draw_robot(Anki::Cozmo::VIZ_ROBOT_MARKER_SMALL_TRIANGLE);
           break;
         case Anki::Cozmo::VIZ_CUBOID:
           draw_cuboid(obj->x_size_m, obj->y_size_m, obj->z_size_m);
