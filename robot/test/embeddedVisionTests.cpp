@@ -297,7 +297,7 @@ GTEST_TEST(CoreTech_Vision, FaceDetection)
 
   printf("Detection took %f seconds (setup time %f seconds)\n", t2-t1, t1-t0);
 
-  PrintBenchmarkResults_All();
+  PrintBenchmarkResults();
 
   ASSERT_TRUE(detectedFaces_anki.get_size() == 1);
   ASSERT_TRUE(detectedFaces_anki[0] == Rectangle<s32>(102, 219, 39, 156));
@@ -509,7 +509,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTrackerHeaderTemplate)
 
     ASSERT_TRUE(numTemplatePixels == 1588);
 
-    PrintBenchmarkResults_OnlyTotals();
+    PrintBenchmarkResults();
   } // Skip zero rows/columns (non-list)
 
   GTEST_RETURN_HERE;
@@ -638,7 +638,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
       ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
     }
 
-    PrintBenchmarkResults_OnlyTotals();
+    PrintBenchmarkResults();
   } // Skip zero rows/columns (non-list)
 
   // Skip one row/column (non-list)
@@ -708,7 +708,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
       ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
     }
 
-    PrintBenchmarkResults_OnlyTotals();
+    PrintBenchmarkResults();
   } // Skip one row/column (non-list)
 
   // Skip zero rows/columns (with-list)
@@ -778,7 +778,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
       ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
     }
 
-    PrintBenchmarkResults_OnlyTotals();
+    PrintBenchmarkResults();
   } // Skip zero rows/columns (with-list)
 
   // Skip one row/column (with-list)
@@ -848,7 +848,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
       ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
     }
 
-    PrintBenchmarkResults_OnlyTotals();
+    PrintBenchmarkResults();
   } // Skip one row/column (with-list)
 
   // Skip zero rows/columns (with-ransac)
@@ -914,7 +914,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
       //ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
     }
 
-    PrintBenchmarkResults_OnlyTotals();
+    PrintBenchmarkResults();
   } // Skip zero rows/columns (with-ransac)
 
   // Skip one row/column (with-ransac)
@@ -980,7 +980,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
       //ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
     }
 
-    PrintBenchmarkResults_OnlyTotals();
+    PrintBenchmarkResults();
   } // Skip one row/column (with-ransac)
 
   //tracker.get_transformation().Transform(templateImage, warpedTemplateImage, scratchOffchip, 1.0f);
@@ -1376,7 +1376,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
     const f64 time2 = GetTimeF32();
 
     printf("Translation-only LK_SampledProjective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
-    PrintBenchmarkResults_All();
+    PrintBenchmarkResults();
 
     tracker.get_transformation().Print("Translation-only LK_SampledProjective");
 
@@ -1424,7 +1424,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
     const f64 time2 = GetTimeF32();
 
     printf("Affine LK_SampledProjective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
-    PrintBenchmarkResults_All();
+    PrintBenchmarkResults();
 
     tracker.get_transformation().Print("Affine LK_SampledProjective");
 
@@ -1473,7 +1473,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
     const f64 time2 = GetTimeF32();
 
     printf("Projective LK_SampledProjective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
-    PrintBenchmarkResults_All();
+    PrintBenchmarkResults();
 
     tracker.get_transformation().Print("Projective LK_SampledProjective");
 
@@ -1572,7 +1572,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledPlanar6dof)
   //    const f64 time2 = GetTimeF32();
   //
   //    printf("Translation-only LK_SampledPlanar6dof totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
-  //    PrintBenchmarkResults_All();
+  //    PrintBenchmarkResults();
   //
   //    tracker.get_transformation().Print("Translation-only LK_SampledPlanar6dof");
   //
@@ -1621,7 +1621,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledPlanar6dof)
   //    const f64 time2 = GetTimeF32();
   //
   //    printf("Affine LK_SampledProjective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
-  //    PrintBenchmarkResults_All();
+  //    PrintBenchmarkResults();
   //
   //    tracker.get_transformation().Print("Affine LK_SampledProjective");
   //
@@ -1677,7 +1677,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledPlanar6dof)
   //    const f64 time2 = GetTimeF32();
   //
   //    printf("Projective LK_SampledPlanar6dof totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
-  //    PrintBenchmarkResults_All();
+  //    PrintBenchmarkResults();
   //
   //    tracker.get_transformation().Print("Projective LK_SampledPlanar6dof");
   //
@@ -1766,7 +1766,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
     const f64 time2 = GetTimeF32();
 
     printf("Translation-only LK_Projective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
-    PrintBenchmarkResults_All();
+    PrintBenchmarkResults();
 
     tracker.get_transformation().Print("Translation-only LK_Projective");
 
@@ -1807,7 +1807,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
     const f64 time2 = GetTimeF32();
 
     printf("Affine LK_Projective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
-    PrintBenchmarkResults_All();
+    PrintBenchmarkResults();
 
     tracker.get_transformation().Print("Affine LK_Projective");
 
@@ -1849,7 +1849,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
     const f64 time2 = GetTimeF32();
 
     printf("Projective LK_Projective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
-    PrintBenchmarkResults_All();
+    PrintBenchmarkResults();
 
     tracker.get_transformation().Print("Projective LK_Projective");
 
@@ -1932,7 +1932,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
     const f64 time2 = GetTimeF32();
 
     printf("Translation-only FAST-LK totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
-    PrintBenchmarkResults_All();
+    PrintBenchmarkResults();
 
     tracker.get_transformation().Print("Translation-only LK_Affine");
 
@@ -1972,7 +1972,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
     const f64 time2 = GetTimeF32();
 
     printf("Affine FAST-LK totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
-    PrintBenchmarkResults_All();
+    PrintBenchmarkResults();
 
     tracker.get_transformation().Print("Affine LK_Affine");
 
@@ -2049,7 +2049,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
     const f64 time2 = GetTimeF32();
 
     printf("Translation-only LK totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
-    PrintBenchmarkResults_All();
+    PrintBenchmarkResults();
 
     tracker.get_transformation().Print("Translation-only LK");
 
@@ -2082,7 +2082,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
     const f64 time2 = GetTimeF32();
 
     printf("Affine LK totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
-    PrintBenchmarkResults_All();
+    PrintBenchmarkResults();
 
     tracker.get_transformation().Print("Affine LK");
 
@@ -2117,7 +2117,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
     const f64 time2 = GetTimeF32();
 
     printf("Projective LK totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
-    PrintBenchmarkResults_All();
+    PrintBenchmarkResults();
 
     tracker.get_transformation().Print("Projective LK");
 
@@ -2608,7 +2608,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
     printf("totalTime: %dms\n", Round<s32>(1000*(time1-time0)));
 
     // TODO: add back
-    //PrintBenchmarkResults_All();
+    //PrintBenchmarkResults();
 
     ASSERT_TRUE(result == RESULT_OK);
   }
@@ -3732,7 +3732,7 @@ GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation)
 
   EndBenchmark("P3P::computePose");
 
-  PrintBenchmarkResults_All();
+  PrintBenchmarkResults();
 
   //
   // Check if the estimated pose matches the true pose

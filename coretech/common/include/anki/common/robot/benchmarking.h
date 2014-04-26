@@ -58,6 +58,8 @@ namespace Anki
       char name[BenchmarkElement::NAME_LENGTH];
 
       BenchmarkElement(const char * name);
+
+      void Print() const;
     } BenchmarkElement;
 
     // Call this before doing any benchmarking, to clear the buffer of benchmarkEvents.
@@ -79,11 +81,11 @@ namespace Anki
     void BeginBenchmark(const char *name);
     void EndBenchmark(const char *name);
 
-    // Compile and print out all the benchmark events that were recorded
-    void PrintBenchmarkResults_All();
-    void PrintBenchmarkResults_OnlyTotals();
-
+    // Compile all the benchmark events that were recorded
     FixedLengthList<BenchmarkElement> ComputeBenchmarkResults(MemoryStack &memory);
+
+    // Compile and print out all the benchmark events that were recorded
+    void PrintBenchmarkResults();
   } // namespace Embedded
 } // namespace Anki
 

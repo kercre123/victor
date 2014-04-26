@@ -35,30 +35,16 @@ namespace Anki
       BenchmarkEventType type;
     } BenchmarkEvent;
 
-    typedef enum
-    {
-      BENCHMARK_PRINT_ALL,
-      BENCHMARK_PRINT_TOTALS,
-    } BenchmarkPrintType;
-
     // A big array, full of events
     OFFCHIP static BenchmarkEvent benchmarkEvents[MAX_BENCHMARK_EVENTS];
+
+    static const s32 benchmarkPrintBufferLength = 512 + MAX_BENCHMARK_EVENTS*350;
+    OFFCHIP static char benchmarkPrintBuffer[benchmarkPrintBufferLength];
 
     // The index of the next place to record a benchmark event
     static s32 numBenchmarkEvents;
 
-    OFFCHIP static const char * eventNames[MAX_BENCHMARK_EVENTS];
-    static s32 numEventNames;
-
-    OFFCHIP static f64 totalTimes[MAX_BENCHMARK_EVENTS];
-    OFFCHIP static f64 minTimes[MAX_BENCHMARK_EVENTS];
-    OFFCHIP static f64 maxTimes[MAX_BENCHMARK_EVENTS];
-    OFFCHIP static u32 numEvents[MAX_BENCHMARK_EVENTS];
-    OFFCHIP static s32 lastBeginIndex[MAX_BENCHMARK_EVENTS];
-
     staticInline void AddBenchmarkEvent(const char *name, u64 time, BenchmarkEventType type);
-
-    static void PrintBenchmarkResults(const BenchmarkPrintType printType);
 
     void InitBenchmarking()
     {
@@ -107,117 +93,47 @@ namespace Anki
       AddBenchmarkEvent(name, GetBenchmarkTime(), BENCHMARK_EVENT_END);
     } // void endBenchmark(const char *name)
 
-    static s32 GetNameIndex(const char * const name, u32 * index)
-    {
-      s32 i;
-      for(i=0; i<numEventNames; i++)
-      {
-        if(strcmp(name, eventNames[i]) == 0)
-        {
-          *index = i;
-          return 0;
-        }
-      }
-
-      return -1;
-    }
-
-    static u32 AddName(const char * const name)
-    {
-      u32 index = 0;
-
-      if(GetNameIndex(name, &index)) {
-        eventNames[numEventNames++] = name;
-        return numEventNames-1;
-      } else {
-        return index;
-      }
-    }
-
-    void PrintBenchmarkResults_All()
-    {
-      PrintBenchmarkResults(BENCHMARK_PRINT_ALL);
-    }
-
-    void PrintBenchmarkResults_OnlyTotals()
-    {
-      PrintBenchmarkResults(BENCHMARK_PRINT_TOTALS);
-    }
-
-    static void PrintBenchmarkResults(const BenchmarkPrintType printType)
-    {
-      s32 i;
-
-#if defined(_MSC_VER)
-      LARGE_INTEGER frequency;
-      f64 frequencyF64;
-      QueryPerformanceFrequency(&frequency);
-      frequencyF64 = (f64)(frequency.QuadPart);
-#endif
-
-      numEventNames = 0;
-
-      for(i=0; i<MAX_BENCHMARK_EVENTS; i++) {
-        totalTimes[i] = 0.0;
-        minTimes[i] = (f64)(0x7FFFFFFFFFFFFFFFLL);
-        maxTimes[i] = (f64)(-0x7FFFFFFFFFFFFFFFLL);
-        numEvents[i] = 0;
-        lastBeginIndex[i] = -1;
-      }
-
-      for(i=0; i<numBenchmarkEvents; i++) {
-        const u32 index = AddName(benchmarkEvents[i].name);
-        if(benchmarkEvents[i].type == BENCHMARK_EVENT_BEGIN) {
-          lastBeginIndex[index] = i;
-        } else { // BENCHMARK_EVENT_END
-          if(lastBeginIndex[index] < 0) {
-            printf("Benchmark parse error: Perhaps BeginBenchmark() and EndBenchmark() were nested, or there were more than %d benchmark events.\n", MAX_BENCHMARK_EVENTS);
-            continue;
-          }
-
-          {
-            const u64 rawElapsedTime = benchmarkEvents[i].time - benchmarkEvents[lastBeginIndex[index]].time;
-            //#pragma unused (rawElapsedTime) // may or may not get used depending on #ifs below
-
-#if defined(_MSC_VER)
-            const f64 elapsedTime = (f64)rawElapsedTime / frequencyF64;
-#elif defined(__APPLE_CC__)
-            const f64 elapsedTime = (f64)rawElapsedTime / 1000000.0;
-#elif defined(__EDG__)  // MDK-ARM
-            const f64 elapsedTime = (f64)rawElapsedTime / 1000000.0;
-#else
-            const f64 elapsedTime = (f64)rawElapsedTime / 1000000000.0;
-#endif
-
-            minTimes[index] = MIN(minTimes[index], elapsedTime);
-            maxTimes[index] = MAX(maxTimes[index], elapsedTime);
-
-            totalTimes[index] += elapsedTime;
-
-            numEvents[index]++;
-
-            lastBeginIndex[index] = -1;
-          }
-        }
-      } // for(i=0; i<numBenchmarkEvents; i++)
-
-      for(i=0; i<numEventNames; i++) {
-        printf("Event ");
-        printf(eventNames[i]);
-        if(printType == BENCHMARK_PRINT_ALL) {
-          printf(": Mean:%dus Min:%dus Max:%dus Total:%dus NumEvents:%d\n",
-            (s32)DBL_ROUND(1000000*totalTimes[i]/(f64)numEvents[i]), (s32)DBL_ROUND(1000000*minTimes[i]), (s32)DBL_ROUND(1000000*maxTimes[i]), (s32)DBL_ROUND(1000000*totalTimes[i]), (s32)numEvents[i]);
-        } else if (printType == BENCHMARK_PRINT_TOTALS) {
-          printf(": Total:%dus\n",
-            (s32)DBL_ROUND(1000000*totalTimes[i]));
-        }
-      } // for(i=0; i<numEventNames; i++)
-    } // void PrintBenchmarkResults()
-
     BenchmarkElement::BenchmarkElement(const char * name)
       : inclusive_mean(0), inclusive_min(DBL_MAX), inclusive_max(DBL_MIN), inclusive_total(0), exclusive_mean(0), exclusive_min(DBL_MAX), exclusive_max(DBL_MIN), exclusive_total(0), numEvents(0)
     {
       snprintf(this->name, BenchmarkElement::NAME_LENGTH, "%s", name);
+    }
+
+    void BenchmarkElement::Print() const
+    {
+      const s32 bufferLength = 128;
+      char buffer[bufferLength];
+
+      //printf("Exclusive Mean:%fs Exclusive Min:%fs Exclusive Max:%fs Inclusive Mean:%fs Inclusive Min:%fs Inclusive Max:%fs (Exclusive Total:%fs Inclusive Total:%fs NumEvents:%d)\n",
+
+      printf("%s: ", this->name);
+
+      SnprintfCommasS32(buffer, bufferLength, Round<s32>(this->exclusive_total*1000000.0));
+      printf("Exclusive-Total:%sus ", buffer);
+
+      SnprintfCommasS32(buffer, bufferLength, Round<s32>(this->inclusive_total*1000000.0));
+      printf("Inclusive-Total:%sus ", buffer);
+
+      SnprintfCommasS32(buffer, bufferLength, this->numEvents);
+      printf("NumEvents:%s     ", buffer);
+
+      SnprintfCommasS32(buffer, bufferLength, Round<s32>(this->exclusive_mean*1000000.0));
+      printf("Exclusive-Mean:%sus ", buffer);
+
+      SnprintfCommasS32(buffer, bufferLength, Round<s32>(this->exclusive_min*1000000.0));
+      printf("Exclusive-Min:%sus ", buffer);
+
+      SnprintfCommasS32(buffer, bufferLength, Round<s32>(this->exclusive_max*1000000.0));
+      printf("Exclusive-Max:%sus ", buffer);
+
+      SnprintfCommasS32(buffer, bufferLength, Round<s32>(this->inclusive_mean*1000000.0));
+      printf("Inclusive-Mean:%sus ", buffer);
+
+      SnprintfCommasS32(buffer, bufferLength, Round<s32>(this->inclusive_min*1000000.0));
+      printf("Inclusive-Min:%sus ", buffer);
+
+      SnprintfCommasS32(buffer, bufferLength, Round<s32>(this->inclusive_max*1000000.0));
+      printf("Inclusive-Max:%sus\n", buffer);
     }
 
     class CompileBenchmarkResults
@@ -243,6 +159,9 @@ namespace Anki
 
           FixedLengthList<BenchmarkInstance> fullList(MAX_BENCHMARK_EVENTS, memory);
           FixedLengthList<BenchmarkInstance> parseStack(MAX_BENCHMARK_EVENTS, memory);
+
+          AnkiConditionalErrorAndReturnValue(outputResults.IsValid() && fullList.IsValid() && parseStack.IsValid(),
+            outputResults, "ComputeBenchmarkResults", "Out of memory");
 
           BenchmarkInstance * pParseStack = parseStack.Pointer(0);
 
@@ -294,13 +213,13 @@ namespace Anki
             const f64 curInclusiveTimeElapsed = pFullList[iInstance].inclusiveTimeElapsed;
             const f64 curExclusiveTimeElapsed = pFullList[iInstance].exclusiveTimeElapsed;
 
-            s32 index = GetNameIndex(curName, fullList);
+            s32 index = GetNameIndex(curName, outputResults);
 
             // If this name hasn't been used yet, add it
             if(index < 0) {
               BenchmarkElement newElement(curName);
               outputResults.PushBack(curName);
-              index = GetNameIndex(curName, fullList);
+              index = GetNameIndex(curName, outputResults);
               AnkiAssert(index >= 0);
             }
 
@@ -345,13 +264,13 @@ namespace Anki
       } BenchmarkInstance;
 
       // Returns the index of "name", or -1 if it isn't found
-      static s32 GetNameIndex(const char * name, const FixedLengthList<BenchmarkInstance> &fullList)
+      static s32 GetNameIndex(const char * name, const FixedLengthList<BenchmarkElement> &outputResults)
       {
-        const BenchmarkInstance * pFullList = fullList.Pointer(0);
-        const s32 numFullList = fullList.get_size();
+        const BenchmarkElement * pOutputResults = outputResults.Pointer(0);
+        const s32 numOutputResults = outputResults.get_size();
 
-        for(s32 i=0; i<numFullList; i++) {
-          if(strcmp(name, pFullList[i].name) == 0) {
+        for(s32 i=0; i<numOutputResults; i++) {
+          if(strcmp(name, pOutputResults[i].name) == 0) {
             return i;
           }
         } // for(s32 i=0; i<numOutputResults; i++)
@@ -364,5 +283,14 @@ namespace Anki
     {
       return CompileBenchmarkResults::ComputeBenchmarkResults(memory);
     } // FixedLengthList<BenchmarkElement> ComputeBenchmarkResults(MemoryStack &memory)
+
+    void PrintBenchmarkResults()
+    {
+      MemoryStack scratch(benchmarkPrintBuffer, benchmarkPrintBufferLength);
+
+      FixedLengthList<BenchmarkElement> results = ComputeBenchmarkResults(scratch);
+
+      results.Print("Benchmark Results");
+    }
   } // namespace Embedded
 } // namespace Anki

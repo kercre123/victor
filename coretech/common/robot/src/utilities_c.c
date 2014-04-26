@@ -248,6 +248,45 @@ void PrintF64WithExponent(int (*writeChar)(int), f64 value)
   return;
 } // void printFloat(f32 value)
 
+s32 SnprintfCommasS32(char *buffer, const s32 bufferLength, const s32 value)
+{
+  s32 numberLength;
+  s32 numCommas;
+  s32 numWritten;
+  s32 iOut;
+
+  char tmpBuffer[128];
+
+  snprintf(tmpBuffer, 128, "%d", value);
+
+  numberLength = strlen(tmpBuffer);
+
+  if(value < 0)
+    numCommas = (numberLength-2) / 3;
+  else
+    numCommas = (numberLength-1) / 3;
+
+  if((numberLength + numCommas + 1) > bufferLength)
+    return 0;
+
+  numWritten = 0;
+  iOut = numberLength + numCommas - 1;
+  while(iOut >= 0) {
+    if(numWritten > 0 && (numWritten%3 == 0) && (tmpBuffer[numberLength - numWritten - 1] != '-')) {
+      buffer[iOut] = ',';
+      iOut--;
+    }
+
+    buffer[iOut] = tmpBuffer[numberLength - numWritten - 1];
+    iOut--;
+    numWritten++;
+  }
+
+  buffer[numberLength + numCommas] = '\0';
+
+  return numberLength + numCommas;
+}
+
 void PrintS32(int (*writeChar)(int), s32 value)
 {
   int digits[MAX_PRINTF_DIGITS];
