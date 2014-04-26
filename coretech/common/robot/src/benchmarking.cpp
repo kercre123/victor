@@ -54,9 +54,18 @@ namespace Anki
     staticInline u64 GetBenchmarkTime()
     {
 #if defined(_MSC_VER)
+      static LONGLONG startCounter = 0;
+
       LARGE_INTEGER counter;
+
       QueryPerformanceCounter(&counter);
-      return counter.QuadPart;
+
+      // Subtract startSeconds, so the floating point number has reasonable precision
+      if(startCounter == 0) {
+        startCounter = counter.QuadPart;
+      }
+
+      return counter.QuadPart - startCounter;
 #elif defined(__APPLE_CC__)
       struct timeval time;
       gettimeofday(&time, NULL);
@@ -208,6 +217,8 @@ namespace Anki
           const BenchmarkInstance * pFullList = fullList.Pointer(0);
           BenchmarkElement * pOutputResults = outputResults.Pointer(0);
 
+          fullList.Print("fullList");
+
           for(s32 iInstance=0; iInstance<numFullList; iInstance++) {
             const char * const curName = pFullList[iInstance].name;
             const f64 curInclusiveTimeElapsed = pFullList[iInstance].inclusiveTimeElapsed;
@@ -260,6 +271,28 @@ namespace Anki
           : startTime(startTime), inclusiveTimeElapsed(inclusiveTimeElapsed), exclusiveTimeElapsed(exclusiveTimeElapsed), level(level)
         {
           snprintf(this->name, BenchmarkElement::NAME_LENGTH, "%s", name);
+        }
+
+        void Print() const
+        {
+          const s32 bufferLength = 128;
+          char buffer[bufferLength];
+
+          //printf("Exclusive Mean:%fs Exclusive Min:%fs Exclusive Max:%fs Inclusive Mean:%fs Inclusive Min:%fs Inclusive Max:%fs (Exclusive Total:%fs Inclusive Total:%fs NumEvents:%d)\n",
+
+          printf("%s: ", this->name);
+
+          SnprintfCommasS32(buffer, bufferLength, Round<s32>(this->exclusiveTimeElapsed*1000000.0));
+          printf("exclusiveTimeElapsed:%sus ", buffer);
+
+          SnprintfCommasS32(buffer, bufferLength, Round<s32>(this->inclusiveTimeElapsed*1000000.0));
+          printf("inclusiveTimeElapsed:%sus ", buffer);
+
+          SnprintfCommasS32(buffer, bufferLength, Round<s32>(this->startTime*1000000.0));
+          printf("startTime:%sus ", buffer);
+
+          SnprintfCommasS32(buffer, bufferLength, this->level);
+          printf("NumEvents:%s\n", buffer);
         }
       } BenchmarkInstance;
 
