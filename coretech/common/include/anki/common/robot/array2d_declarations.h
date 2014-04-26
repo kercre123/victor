@@ -119,6 +119,8 @@ namespace Anki
       ConstArraySlice<Type> operator() (s32 minY, s32 incrementY, s32 maxY, s32 minX, s32 incrementX, s32 maxX) const;
 
       // ArraySlice Transpose doesn't modify the data, it just sets an "isTransposed" flag.
+      // Anything that uses ArraySliceExpression respects this flag. This doesn't include things
+      // like Matrix::Multiply(const Array<InType> &in1, const Array<InType> &in2, Array<OutType> &out) for example.
       ConstArraySliceExpression<Type> Transpose() const;
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
