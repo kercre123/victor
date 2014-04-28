@@ -59,7 +59,7 @@ namespace Anki
 
       BenchmarkElement(const char * name);
 
-      void Print() const;
+      void Print(const bool verbose=true, const bool microseconds=true, const FixedLengthList<s32> * minCharacterToPrint=NULL) const;
     } BenchmarkElement;
 
     // Call this before doing any benchmarking, to clear the buffer of benchmarkEvents.
@@ -84,8 +84,10 @@ namespace Anki
     // Compile all the benchmark events that were recorded
     FixedLengthList<BenchmarkElement> ComputeBenchmarkResults(MemoryStack &memory);
 
+    Result PrintBenchmarkResults(const FixedLengthList<BenchmarkElement> &results, const bool verbose=true, const bool microseconds=true);
+
     // Compile and print out all the benchmark events that were recorded
-    void PrintBenchmarkResults();
+    Result ComputeAndPrintBenchmarkResults(const bool verbose=true, const bool microseconds=true);
   } // namespace Embedded
 } // namespace Anki
 

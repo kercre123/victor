@@ -3023,29 +3023,40 @@ GTEST_TEST(CoreTech_Common, Benchmarking)
 {
   InitBenchmarking();
 
+  BeginBenchmark("testOuterSpace");
+
   BeginBenchmark("testOuter");
 
+  const double startTimeN1 = GetTimeF32();
+  while((GetTimeF32() - startTimeN1) < 2.0/1) {}
+
+  BeginBenchmark("testMiddle");
+
   const double startTime0 = GetTimeF32();
-  while((GetTimeF32() - startTime0) < 1.0/10) {}
+  while((GetTimeF32() - startTime0) < 1.0/1) {}
 
   BeginBenchmark("testInner");
   const double startTime1 = GetTimeF32();
-  while((GetTimeF32() - startTime1) < 2.0/10) {}
+  while((GetTimeF32() - startTime1) < 2.0/1) {}
   EndBenchmark("testInner");
 
   BeginBenchmark("testInner");
   const double startTime2 = GetTimeF32();
-  while((GetTimeF32() - startTime2) < 3.0/10) {}
+  while((GetTimeF32() - startTime2) < 3.0/1) {}
   EndBenchmark("testInner");
 
   BeginBenchmark("testInner");
   const double startTime3 = GetTimeF32();
-  while((GetTimeF32() - startTime3) < 3.0/10) {}
+  while((GetTimeF32() - startTime3) < 3.0/1) {}
   EndBenchmark("testInner");
+
+  EndBenchmark("testMiddle");
 
   EndBenchmark("testOuter");
 
-  PrintBenchmarkResults();
+  EndBenchmark("testOuterSpace");
+
+  ComputeAndPrintBenchmarkResults(true, true);
 
   printf("Done with benchmarking test\n");
 
