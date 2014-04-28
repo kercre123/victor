@@ -58,7 +58,7 @@ namespace Anki
 
     template<typename Type> ArraySlice<Type>::ArraySlice()
       //: array(Array<Type>()), ySlice(LinearSequence<Type>()), xSlice(LinearSequence<Type>())
-      : ConstArraySlice<Type>(), arrayData(array.Pointer(0,0))
+      : ConstArraySlice<Type>(), arrayData(NULL)
     {
     }
 
