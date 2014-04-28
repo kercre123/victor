@@ -11,6 +11,7 @@
 #include "anki/common/robot/serialize.h"
 #include "anki/common/robot/errorHandling.h"
 #include "anki/common/robot/geometry.h"
+#include "anki/common/robot/benchmarking.h"
 
 #include "anki/vision/robot/transformations.h"
 #include "anki/vision/robot/fiducialMarkers.h"
@@ -101,6 +102,10 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
   //
   // If we've reached a new message, display the last image and messages
   //
+
+  if(strcmp(newObject.objectName, "Benchmarks") == 0) {
+    FixedLengthList<BenchmarkElement> benchmarks = *(reinterpret_cast<FixedLengthList<BenchmarkElement>*>(newObject.startOfPayload));
+  }
 
   if(newObject.timeReceived != lastTime) {
     if(lastImage.rows > 0) {

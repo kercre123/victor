@@ -1,6 +1,7 @@
 
 #include "anki/common/robot/config.h"
 #include "anki/common/robot/serialize.h"
+#include "anki/common/robot/benchmarking.h"
 
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/visionSystem.h"
@@ -40,15 +41,15 @@ namespace Anki {
           const Vision::CameraResolution debugStreamResolution_ = Vision::CAMERA_RES_QQVGA;
           //const Vision::CameraResolution debugStreamResolution_ = Vision::CAMERA_RES_QVGA;
           
-          f32 lastBenchmarkTime_algorithmsOnly;
-          f32 lastBenchmarkDuration_algorithmsOnly;
+          //f32 lastBenchmarkTime_algorithmsOnly;
+          //f32 lastBenchmarkDuration_algorithmsOnly;
           
-          f32 lastBenchmarkTime_total;
-          f32 lastBenchmarkDuration_total;
+          //f32 lastBenchmarkTime_total;
+          //f32 lastBenchmarkDuration_total;
           
         } // private namespace
         
-        Result SendBuffer(SerializedBuffer &toSend)
+        Result SendBuffer(SerializedBuffer &toSend, MemoryStack scratch)
         {
 #if SEND_DEBUG_STREAM
           const f32 curTime = GetTimeF32();
@@ -60,16 +61,21 @@ namespace Anki {
             lastSecond = curSecond;
           } else {
             if(bytesSinceLastSecond > MAX_BYTES_PER_SECOND) {
-              lastBenchmarkTime_algorithmsOnly = GetTimeF32();
+              //lastBenchmarkTime_algorithmsOnly = GetTimeF32();
               return RESULT_OK;
             } else {
               bytesSinceLastSecond += toSend.get_memoryStack().get_usedBytes();
             }
           }
           
-          const f32 benchmarkTimes[2] = {lastBenchmarkDuration_algorithmsOnly, lastBenchmarkDuration_total};
+          //const f32 benchmarkTimes[2] = {lastBenchmarkDuration_algorithmsOnly, lastBenchmarkDuration_total};          
+          //toSend.PushBack<f32>("Benchmark Times", &benchmarkTimes[0], 2);
           
-          toSend.PushBack<f32>("Benchmark Times", &benchmarkTimes[0], 2);
+          FixedLengthList<BenchmarkElement> benchmarks = ComputeBenchmarkResults(scratch);
+          
+          toSend.PushBack<BenchmarkElement>("Benchmarks", benchmarks);
+          
+          InitBenchmarking();
           
           //const s32 nothing[8] = {0,0,0,0,0,0,0,0};
           //toSend.PushBack<s32>("Nothing", &nothing[0], 8);
@@ -83,7 +89,7 @@ namespace Anki {
           Anki::Cozmo::HAL::UARTPutMessage(0, 0, const_cast<u8*>(bufferStart), validUsedBytes);
           Anki::Cozmo::HAL::UARTPutMessage(0, 0, const_cast<u8*>(Embedded::SERIALIZED_BUFFER_FOOTER), SERIALIZED_BUFFER_FOOTER_LENGTH);
           
-          lastBenchmarkTime_algorithmsOnly = GetTimeF32();
+          //lastBenchmarkTime_algorithmsOnly = GetTimeF32();
 #endif // SEND_DEBUG_STREAM
           
           return RESULT_OK;
@@ -105,11 +111,11 @@ namespace Anki {
 #if SEND_DEBUG_STREAM
           const f32 curTime = GetTimeF32();
           
-          // lastBenchmarkTime_algorithmsOnly is set again when the transmission is complete
-          lastBenchmarkDuration_algorithmsOnly = curTime - lastBenchmarkTime_algorithmsOnly;
+          //lastBenchmarkTime_algorithmsOnly is set again when the transmission is complete
+          //lastBenchmarkDuration_algorithmsOnly = curTime - lastBenchmarkTime_algorithmsOnly;
           
-          lastBenchmarkDuration_total = curTime - lastBenchmarkTime_total;
-          lastBenchmarkTime_total = curTime;
+          //lastBenchmarkDuration_total = curTime - lastBenchmarkTime_total;
+          //lastBenchmarkTime_total = curTime;
           
           debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
           
@@ -141,7 +147,7 @@ namespace Anki {
           DownsampleHelper(image, imageSmall, ccmScratch);
           debugStreamBuffer_.PushBack("Robot Image", imageSmall);
           
-          result = SendBuffer(debugStreamBuffer_);
+          result = SendBuffer(debugStreamBuffer_, offchipScratch);
           
           // The UART can't handle this at full rate, so wait a bit between each frame
           if(debugStreamResolution_ == Vision::CAMERA_RES_QVGA) {
@@ -168,10 +174,10 @@ namespace Anki {
           const f32 curTime = GetTimeF32();
           
           // lastBenchmarkTime_algorithmsOnly is set again when the transmission is complete
-          lastBenchmarkDuration_algorithmsOnly = curTime - lastBenchmarkTime_algorithmsOnly;
+          //lastBenchmarkDuration_algorithmsOnly = curTime - lastBenchmarkTime_algorithmsOnly;
           
-          lastBenchmarkDuration_total = curTime - lastBenchmarkTime_total;
-          lastBenchmarkTime_total = curTime;
+          //lastBenchmarkDuration_total = curTime - lastBenchmarkTime_total;
+          //lastBenchmarkTime_total = curTime;
           
           const s32 height = CameraModeInfo[debugStreamResolution_].height;
           const s32 width  = CameraModeInfo[debugStreamResolution_].width;
@@ -236,7 +242,7 @@ namespace Anki {
           debugStreamBuffer_.PushBack("Robot Image", imageSmall);
 #endif
           
-          result = SendBuffer(debugStreamBuffer_);
+          result = SendBuffer(debugStreamBuffer_, offchipScratch);
           
           // The UART can't handle this at full rate, so wait a bit between each frame
           if(debugStreamResolution_ == Vision::CAMERA_RES_QVGA) {
@@ -262,10 +268,10 @@ namespace Anki {
           const f32 curTime = GetTimeF32();
           
           // lastBenchmarkTime_algorithmsOnly is set again when the transmission is complete
-          lastBenchmarkDuration_algorithmsOnly = curTime - lastBenchmarkTime_algorithmsOnly;
+          //lastBenchmarkDuration_algorithmsOnly = curTime - lastBenchmarkTime_algorithmsOnly;
           
-          lastBenchmarkDuration_total = curTime - lastBenchmarkTime_total;
-          lastBenchmarkTime_total = curTime;
+          //lastBenchmarkDuration_total = curTime - lastBenchmarkTime_total;
+          //lastBenchmarkTime_total = curTime;
           
           const s32 height = CameraModeInfo[debugStreamResolution_].height;
           const s32 width  = CameraModeInfo[debugStreamResolution_].width;
@@ -287,7 +293,7 @@ namespace Anki {
           DownsampleHelper(image, imageSmall, ccmScratch);
           debugStreamBuffer_.PushBack("Robot Image", imageSmall);
           
-          result = SendBuffer(debugStreamBuffer_);
+          result = SendBuffer(debugStreamBuffer_, offchipScratch);
           
           // The UART can't handle this at full rate, so wait a bit between each frame
           if(debugStreamResolution_ == Vision::CAMERA_RES_QVGA) {
@@ -323,24 +329,24 @@ namespace Anki {
         }
 #endif // DOCKING_ALGORITHM ==  DOCKING_BINARY_TRACKER
         
-        Result SendArray(const Array<u8> &array, const char * objectName)
+        Result SendArray(const Array<u8> &array, const char * objectName, MemoryStack scratch)
         {
 #if SEND_DEBUG_STREAM
           debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
           debugStreamBuffer_.PushBack(objectName, array);
-          return SendBuffer(debugStreamBuffer_);
+          return SendBuffer(debugStreamBuffer_, scratch);
 #else
           return RESULT_OK;
 #endif // #if SEND_DEBUG_STREAM
         }
         
-        Result SendImage(const Array<u8> &array, const f32 exposureTime, const char * objectName)
+        Result SendImage(const Array<u8> &array, const f32 exposureTime, const char * objectName, MemoryStack scratch)
         {
 #if SEND_DEBUG_STREAM
           debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
           debugStreamBuffer_.PushBack(objectName, array);
           debugStreamBuffer_.PushBack<f32>("Exposure time", &exposureTime, 1);
-          return SendBuffer(debugStreamBuffer_);
+          return SendBuffer(debugStreamBuffer_, scratch);
 #else
           return RESULT_OK;
 #endif // #if SEND_DEBUG_STREAM
@@ -392,6 +398,8 @@ namespace Anki {
           // TODO: add the rest
           debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
           printfBuffer_ = SerializedBuffer(&printfBufferRaw_[0], PRINTF_BUFFER_SIZE);
+          
+          InitBenchmarking();
 #endif
           return RESULT_OK;
         }

@@ -174,7 +174,7 @@ namespace Anki
 
       static FixedLengthList<BenchmarkElement> ComputeBenchmarkResults(MemoryStack &memory)
       {
-        FixedLengthList<BenchmarkElement> outputResults(MAX_BENCHMARK_EVENTS, memory);
+        FixedLengthList<BenchmarkElement> outputResults(numBenchmarkEvents, memory);
 
         AnkiConditionalErrorAndReturnValue(numBenchmarkEvents > 0 && numBenchmarkEvents < MAX_BENCHMARK_EVENTS,
           outputResults, "ComputeBenchmarkResults", "Invalid numBenchmarkEvents");
@@ -189,8 +189,8 @@ namespace Anki
         {
           PUSH_MEMORY_STACK(memory);
 
-          FixedLengthList<BenchmarkInstance> fullList(MAX_BENCHMARK_EVENTS, memory);
-          FixedLengthList<BenchmarkInstance> parseStack(MAX_BENCHMARK_EVENTS, memory);
+          FixedLengthList<BenchmarkInstance> fullList(numBenchmarkEvents, memory);
+          FixedLengthList<BenchmarkInstance> parseStack(numBenchmarkEvents, memory);
 
           AnkiConditionalErrorAndReturnValue(outputResults.IsValid() && fullList.IsValid() && parseStack.IsValid(),
             outputResults, "ComputeBenchmarkResults", "Out of memory");

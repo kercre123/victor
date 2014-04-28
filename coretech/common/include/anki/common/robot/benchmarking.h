@@ -47,7 +47,7 @@ namespace Anki
       //f64 firstInstanceStartTime;
 
       // How many times was this element's name benchmarked?
-      s32 numEvents;
+      s64 numEvents;
 
       //// Level 0 is the base level. Every sub-benchmark adds another level.
       ////
