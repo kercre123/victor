@@ -879,22 +879,44 @@ namespace Anki
       {
         Result lastResult;
 
+        Transformations::PlanarTransformation_f32 previousTransformation(this->transformation.get_transformType(), scratch);
+
         for(s32 iScale=numPyramidLevels-1; iScale>=0; iScale--) {
           verify_converged = false;
+          
+          previousTransformation.Set(this->transformation);
 
           BeginBenchmark("UpdateTrack.refineTranslation");
           if((lastResult = IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance_angle, convergenceTolerance_distance, Transformations::TRANSFORM_TRANSLATION, verify_converged, scratch)) != RESULT_OK)
             return lastResult;
           EndBenchmark("UpdateTrack.refineTranslation");
 
+          if(verify_converged) {
+            previousTransformation.Set(this->transformation);
+            
             if(this->transformation.get_transformType() != Transformations::TRANSFORM_TRANSLATION) {
               BeginBenchmark("UpdateTrack.refineOther");
               if((lastResult = IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance_angle, convergenceTolerance_distance, this->transformation.get_transformType(), verify_converged, scratch)) != RESULT_OK)
                 return lastResult;
               EndBenchmark("UpdateTrack.refineOther");
+              
+              if(!verify_converged) {
+                // If full refinement didn't converge stick with translation
+                // only result
+                this->transformation.Set(previousTransformation);
+              }
+            }
+          } else {
+            // If translation update didn't converge, replace with previous
+            // transformation
+            this->transformation.Set(previousTransformation);
           }
+          
         } // for(s32 iScale=numPyramidLevels; iScale>=0; iScale--)
 
+        //DEBUG!!!
+        //verify_converged = true;
+        
         lastResult = this->VerifyTrack_Projective(nextImage, verify_maxPixelDifference, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels, scratch);
         
         return lastResult;
