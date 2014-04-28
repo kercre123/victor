@@ -31,7 +31,7 @@
 //#include <math.h>
 //#include "hal/portable.h"
 #include <assert.h>
-#include "anki/cozmo/robot/cozmoBot.h"
+#include "anki/common/types.h"
 #include "anki/cozmo/robot/speedController.h"
 #include "anki/cozmo/robot/wheelController.h"
 #include "anki/cozmo/robot/trace.h"

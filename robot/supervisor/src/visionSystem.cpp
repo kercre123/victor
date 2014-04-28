@@ -29,7 +29,6 @@
 #include "anki/common/robot/utilities.h"
 
 // Cozmo-Specific Library Includes
-#include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/messages.h"

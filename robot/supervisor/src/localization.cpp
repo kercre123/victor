@@ -1,4 +1,3 @@
-#include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/localization.h"
 #include "anki/common/robot/geometry.h"
