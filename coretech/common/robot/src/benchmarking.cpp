@@ -152,17 +152,17 @@ namespace Anki
         multiplier = 1000.0;
       }
 
-      PrintElement("Exclusive-Total:", Round<s32>(this->exclusive_total*multiplier), suffix, (*minCharacterToPrint)[1]);
-      PrintElement("Inclusive-Total:", Round<s32>(this->inclusive_total*multiplier), suffix, (*minCharacterToPrint)[2]);
-      PrintElement("NumEvents:", this->numEvents, suffix, (*minCharacterToPrint)[3]);
+      PrintElement("ExcTot:", Round<s32>(this->exclusive_total*multiplier), suffix, (*minCharacterToPrint)[1]);
+      PrintElement("IncTot:", Round<s32>(this->inclusive_total*multiplier), suffix, (*minCharacterToPrint)[2]);
+      PrintElement("NEvents:", this->numEvents, " ", (*minCharacterToPrint)[3]);
 
       if(verbose) {
-        PrintElement("Exclusive-Mean:", Round<s32>(this->exclusive_mean*multiplier), suffix, (*minCharacterToPrint)[4]);
-        PrintElement("Exclusive-Min:", Round<s32>(this->exclusive_min*multiplier), suffix, (*minCharacterToPrint)[5]);
-        PrintElement("Exclusive-Max:", Round<s32>(this->exclusive_max*multiplier), suffix, (*minCharacterToPrint)[6]);
-        PrintElement("Inclusive-Mean:", Round<s32>(this->inclusive_mean*multiplier), suffix, (*minCharacterToPrint)[7]);
-        PrintElement("Inclusive-Min:", Round<s32>(this->inclusive_min*multiplier), suffix, (*minCharacterToPrint)[8]);
-        PrintElement("Inclusive-Max:", Round<s32>(this->inclusive_max*multiplier), suffix, (*minCharacterToPrint)[9]);
+        PrintElement("ExcMean:", Round<s32>(this->exclusive_mean*multiplier), suffix, (*minCharacterToPrint)[4]);
+        PrintElement("ExcMin:", Round<s32>(this->exclusive_min*multiplier), suffix, (*minCharacterToPrint)[5]);
+        PrintElement("ExcMax:", Round<s32>(this->exclusive_max*multiplier), suffix, (*minCharacterToPrint)[6]);
+        PrintElement("IncMean:", Round<s32>(this->inclusive_mean*multiplier), suffix, (*minCharacterToPrint)[7]);
+        PrintElement("IncMin:", Round<s32>(this->inclusive_min*multiplier), suffix, (*minCharacterToPrint)[8]);
+        PrintElement("IncMax:", Round<s32>(this->inclusive_max*multiplier), suffix, (*minCharacterToPrint)[9]);
       }
 
       printf("\n");
@@ -362,7 +362,7 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(minCharacterToPrint.IsValid(),
         RESULT_FAIL_OUT_OF_MEMORY, "PrintBenchmarkResults", "Out of memory");
 
-      printf("Benchmark Results:\n");
+      printf("Benchmark Results: (Exc=Exclusive Inc=Inclusive Tot=Total N=NumberOf)\n");
 
       const s32 numResults = results.get_size();
       const BenchmarkElement * const pResults = results.Pointer(0);
@@ -399,6 +399,8 @@ namespace Anki
       }
 
       printf("\n");
+
+      return RESULT_OK;
     }
 
     Result ComputeAndPrintBenchmarkResults(const bool verbose, const bool microseconds)
@@ -414,45 +416,6 @@ namespace Anki
         RESULT_FAIL_INVALID_OBJECT, "PrintBenchmarkResults", "results is not valid");
 
       return PrintBenchmarkResults(results, verbose, microseconds);
-
-      /*printf("Benchmark Results:\n");
-
-      const s32 numResults = results.get_size();
-      const BenchmarkElement * const pResults = results.Pointer(0);
-
-      f64 multiplier;
-      if(microseconds) {
-      multiplier = 1000000.0;
-      } else {
-      multiplier = 1000.0;
-      }
-
-      for(s32 x=0; x<numResults; x++) {
-      const s32 values[] = {
-      Round<s32>(pResults[x].exclusive_total*multiplier),
-      Round<s32>(pResults[x].inclusive_total*multiplier),
-      pResults[x].numEvents,
-      Round<s32>(pResults[x].exclusive_mean*multiplier),
-      Round<s32>(pResults[x].exclusive_min*multiplier),
-      Round<s32>(pResults[x].exclusive_max*multiplier),
-      Round<s32>(pResults[x].inclusive_mean*multiplier),
-      Round<s32>(pResults[x].inclusive_min*multiplier),
-      Round<s32>(pResults[x].inclusive_max*multiplier)};
-
-      minCharacterToPrint[0] = MAX(minCharacterToPrint[0], static_cast<s32>(strlen(pResults[x].name)));
-
-      for(s32 iVal=0; iVal<=8; iVal++) {
-      SnprintfCommasS32(buffer, bufferLength, values[iVal]);
-      minCharacterToPrint[iVal+1] = MAX(minCharacterToPrint[iVal+1], static_cast<s32>(strlen(buffer)));
-      }
-      }
-
-      for(s32 x=0; x<numResults; x++) {
-      pResults[x].Print(verbose, microseconds, &minCharacterToPrint);
-      }
-      printf("\n");*/
-
-      //return RESULT_OK;
     }
   } // namespace Embedded
 } // namespace Anki
