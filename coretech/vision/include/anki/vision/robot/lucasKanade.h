@@ -402,9 +402,8 @@ namespace Anki
         {
           f32 xCoordinate;
           f32 yCoordinate;
-          f32 xGradient;
-          f32 yGradient;
           u8 grayvalue;
+          f32 A[6];
         } TemplateSample;
         
         const FixedLengthList<TemplateSample>& get_templateSamples(const s32 atScale) const;
@@ -422,8 +421,7 @@ namespace Anki
         
         f32 verifyCoordScalar;
         
-        
-        
+        /*
         typedef struct JacobianSample
         {
           f32 dWu_dtx;// , dWv_dtx == 0!!;
@@ -434,6 +432,7 @@ namespace Anki
           f32 dWu_dthetaY, dWv_dthetaY;
           f32 dWu_dthetaZ, dWv_dthetaZ;
         } JacobianSample;
+        */
         
         // Calibration data:
         f32 focalLength_x;
@@ -475,7 +474,7 @@ namespace Anki
         //Result SetHomographyFrom6DofParams(Array<f32> &H);
         
         FixedLengthList<FixedLengthList<TemplateSample> > templateSamplePyramid;
-        FixedLengthList<FixedLengthList<JacobianSample> > jacobianSamplePyramid;
+        // FixedLengthList<FixedLengthList<JacobianSample> > jacobianSamplePyramid;
         
         FixedLengthList<VerifySample> verificationSamples;
         

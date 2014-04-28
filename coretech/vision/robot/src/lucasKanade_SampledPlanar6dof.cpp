@@ -237,11 +237,9 @@ namespace Anki
         BeginBenchmark("LucasKanadeTracker_SampledPlanar6dof");
 
         this->templateSamplePyramid = FixedLengthList<FixedLengthList<TemplateSample> >(numPyramidLevels, onchipScratch);
-        this->jacobianSamplePyramid = FixedLengthList<FixedLengthList<JacobianSample> >(numPyramidLevels, onchipScratch);
         this->verificationSamples   = FixedLengthList<VerifySample>(verifyGridSize*verifyGridSize, onchipScratch);
         
         this->templateSamplePyramid.set_size(numPyramidLevels);
-        this->jacobianSamplePyramid.set_size(numPyramidLevels);
         
         //
         // Compute the samples (and their Jacobians) at each scale
@@ -264,8 +262,6 @@ namespace Anki
           const s32 curMaxSamples = MIN(maxPossibleLocations, maxSamplesAtBaseLevel >> iScale);
 
           this->templateSamplePyramid[iScale] = FixedLengthList<TemplateSample>(curMaxSamples, onchipScratch);
-
-          this->jacobianSamplePyramid[iScale] = FixedLengthList<JacobianSample>(curMaxSamples, onchipScratch);
 
           const s32 numPointsY = templateCoordinates.get_yGridVector().get_size();
           const s32 numPointsX = templateCoordinates.get_xGridVector().get_size();
@@ -474,7 +470,6 @@ namespace Anki
           } // pop templateImageAtScale, templateImageXGradient, and templateImageYGradient
           
           this->templateSamplePyramid[iScale].set_size(numSelected);
-          this->jacobianSamplePyramid[iScale].set_size(numSelected);
 
           if(numSelected == 0) {
             // Should this be an error?
@@ -517,7 +512,6 @@ namespace Anki
             const f32 h22 = initialHomography[2][2];
             
             TemplateSample * restrict pTemplateSamplePyramid = this->templateSamplePyramid[iScale].Pointer(0);
-            JacobianSample * restrict pJacobianSamplePyramid = this->jacobianSamplePyramid[iScale].Pointer(0);
             
             const f32 scale = static_cast<f32>(1 << iScale);
             const f32 scaleOverFiveTen = scale / (2.0f*255.0f);
@@ -528,16 +522,12 @@ namespace Anki
               TemplateSample curTemplateSample;
               curTemplateSample.xCoordinate = pXCoordinates[curIndex];
               curTemplateSample.yCoordinate = pYCoordinates[curIndex];
-              curTemplateSample.xGradient   = scaleOverFiveTen * pXGradientVector[curIndex];
-              curTemplateSample.yGradient   = scaleOverFiveTen * pYGradientVector[curIndex];
               curTemplateSample.grayvalue   = pGrayscaleVector[curIndex];
               
               pTemplateSamplePyramid[iSample] = curTemplateSample;
               
               // Everything below here is about filling in the Jacobian info
               // for this sample
-              
-              JacobianSample curJacobianSample;
               
               const f32 xOriginal = curTemplateSample.xCoordinate;
               const f32 yOriginal = curTemplateSample.yCoordinate;
@@ -551,13 +541,13 @@ namespace Anki
               const f32 invNorm = 1.f / normalization;
               const f32 invNormSq = invNorm *invNorm;
               
-              curJacobianSample.dWu_dtx = this->focalLength_x * invNorm;
-              //curJacobianSample.dWu_dty = 0.f;
-              curJacobianSample.dWu_dtz = -xTransformedRaw * invNormSq;
+              const f32 dWu_dtx = this->focalLength_x * invNorm;
+              //const f32 dWu_dty = 0.f;
+              const f32 dWu_dtz = -xTransformedRaw * invNormSq;
               
-              //curJacobianSample.dWv_dtx = 0.f;
-              curJacobianSample.dWv_dty = this->focalLength_y * invNorm;
-              curJacobianSample.dWv_dtz = -yTransformedRaw * invNormSq;
+              //const f32 dWv_dtx = 0.f;
+              const f32 dWv_dty = this->focalLength_y * invNorm;
+              const f32 dWv_dtz = -yTransformedRaw * invNormSq;
               
               const f32 r1thetaXterm = /*dr11_dthetaX*xOriginal +*/ dr12_dthetaX*yOriginal;
               const f32 r1thetaYterm = dr11_dthetaY*xOriginal + dr12_dthetaY*yOriginal;
@@ -571,25 +561,34 @@ namespace Anki
               const f32 r3thetaYterm = dr31_dthetaY*xOriginal + dr32_dthetaY*yOriginal;
               //const f32 r3thetaZterm = dr31_dthetaZ*xOriginal + dr32_dthetaZ*yOriginal;
               
-              curJacobianSample.dWu_dthetaX = (this->focalLength_x*normalization*r1thetaXterm -
-                                               r3thetaXterm*xTransformedRaw) * invNormSq;
+              const f32 dWu_dthetaX = (this->focalLength_x*normalization*r1thetaXterm -
+                                       r3thetaXterm*xTransformedRaw) * invNormSq;
               
-              curJacobianSample.dWu_dthetaY = (this->focalLength_x*normalization*r1thetaYterm -
-                                               r3thetaYterm*xTransformedRaw) * invNormSq;
+              const f32 dWu_dthetaY = (this->focalLength_x*normalization*r1thetaYterm -
+                                       r3thetaYterm*xTransformedRaw) * invNormSq;
               
-              curJacobianSample.dWu_dthetaZ = (this->focalLength_x*normalization*r1thetaZterm /*-
-                                                                                               r3thetaZterm*xTransformedRaw*/) * invNormSq;
+              const f32 dWu_dthetaZ = (this->focalLength_x*normalization*r1thetaZterm
+                                       /* - r3thetaZterm*xTransformedRaw*/) * invNormSq;
               
-              curJacobianSample.dWv_dthetaX = (this->focalLength_y*normalization*r2thetaXterm -
-                                               r3thetaXterm*yTransformedRaw) * invNormSq;
+              const f32 dWv_dthetaX = (this->focalLength_y*normalization*r2thetaXterm -
+                                       r3thetaXterm*yTransformedRaw) * invNormSq;
               
-              curJacobianSample.dWv_dthetaY = (this->focalLength_y*normalization*r2thetaYterm -
-                                               r3thetaYterm*yTransformedRaw) * invNormSq;
+              const f32 dWv_dthetaY = (this->focalLength_y*normalization*r2thetaYterm -
+                                       r3thetaYterm*yTransformedRaw) * invNormSq;
               
-              curJacobianSample.dWv_dthetaZ = (this->focalLength_y*normalization*r2thetaZterm /*-
-                                                                                               r3thetaZterm*yTransformedRaw*/) * invNormSq;
+              const f32 dWv_dthetaZ = (this->focalLength_y*normalization*r2thetaZterm
+                                       /* - r3thetaZterm*yTransformedRaw*/) * invNormSq;
               
-              pJacobianSamplePyramid[iSample] = curJacobianSample;
+              const f32 xGradient   = scaleOverFiveTen * pXGradientVector[curIndex];
+              const f32 yGradient   = scaleOverFiveTen * pYGradientVector[curIndex];
+              
+              curTemplateSample.A[0] = xGradient*dWu_dthetaX + yGradient*dWv_dthetaX;
+              curTemplateSample.A[1] = xGradient*dWu_dthetaY + yGradient*dWv_dthetaY;
+              curTemplateSample.A[2] = xGradient*dWu_dthetaZ + yGradient*dWv_dthetaZ;
+              curTemplateSample.A[3] = xGradient*dWu_dtx /*+ yGradient*dWv_dtx*/;
+              curTemplateSample.A[4] = /*xGradient*dWu_dty + */yGradient*dWv_dty;
+              curTemplateSample.A[5] = xGradient*dWu_dtz + yGradient*dWv_dtz;
+
             }
           }
         } // if/else numSelected==0
@@ -1000,7 +999,6 @@ namespace Anki
         const f32 yReferenceMax = static_cast<f32>(nextImageHeight) - 1.0f;
 
         const TemplateSample * restrict pTemplateSamplePyramid = this->templateSamplePyramid[whichScale].Pointer(0);
-        const JacobianSample * restrict pJacobianSamplePyramid = this->jacobianSamplePyramid[whichScale].Pointer(0);
 
         const s32 numTemplateSamples = this->get_numTemplatePixels(whichScale);
 
@@ -1065,28 +1063,19 @@ namespace Anki
 
             const f32 interpolatedPixelF32 = InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse);
 
-            const JacobianSample curJacobianSample = pJacobianSamplePyramid[iSample];
-
             //const u8 interpolatedPixel = static_cast<u8>(Round(interpolatedPixelF32));
 
             // This block is the non-interpolation part of the per-sample algorithm
             {
               const f32 templatePixelValue = static_cast<f32>(curSample.grayvalue);
-              const f32 xGradientValue = curSample.xGradient;
-              const f32 yGradientValue = curSample.yGradient;
 
               const f32 tGradientValue = oneOverTwoFiftyFive * (interpolatedPixelF32 - templatePixelValue);
 
-              const f32 dWu_dtx = curJacobianSample.dWu_dtx;
-              //const f32 dWv_dtx = curJacobianSample.dWv_dtx;  // always zero
-              //const f32 dWu_dty = curJacobianSample.dWu_dty;  // always zero
-              const f32 dWv_dty = curJacobianSample.dWv_dty;
-              const f32 dWu_dtz = curJacobianSample.dWu_dtz;
-              const f32 dWv_dtz = curJacobianSample.dWv_dtz;
-
-              const f32 A0 = xGradientValue * dWu_dtx;
-              const f32 A1 = yGradientValue * dWv_dty;
-              const f32 A2 = xGradientValue*dWu_dtz + yGradientValue*dWv_dtz;
+              // NOTE: The three columns of A we need for translation-only
+              // update are the *last* three entries in the sample's A entries
+              const f32 A0 = curSample.A[3];
+              const f32 A1 = curSample.A[4];
+              const f32 A2 = curSample.A[5];
 
               //AWAt
               //  b
@@ -1205,7 +1194,6 @@ namespace Anki
         const f32 yReferenceMax = static_cast<f32>(nextImageHeight) - 1.0f;
 
         const TemplateSample * restrict pTemplateSamplePyramid = this->templateSamplePyramid[whichScale].Pointer(0);
-        const JacobianSample * restrict pJacobianSamplePyramid = this->jacobianSamplePyramid[whichScale].Pointer(0);
 
         const s32 numTemplateSamples = this->get_numTemplatePixels(whichScale);
 
@@ -1289,7 +1277,6 @@ namespace Anki
 
             const f32 interpolatedPixelF32 = InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse);
 
-            const JacobianSample curJacobianSample = pJacobianSamplePyramid[iSample];
             // DEBUG:
             /*
             debugStuff[iSample][0] = curSample.xCoordinate;
@@ -1308,34 +1295,11 @@ namespace Anki
 
               // This is the only stuff that depends on the current sample
               const f32 templatePixelValue = static_cast<f32>(curSample.grayvalue);
-              const f32 xGradientValue = curSample.xGradient;
-              const f32 yGradientValue = curSample.yGradient;
-
+              
               const f32 tGradientValue = oneOverTwoFiftyFive * (interpolatedPixelF32 - templatePixelValue);
 
-              const f32 dWu_dtx = curJacobianSample.dWu_dtx;
-              //const f32 dWv_dtx = curJacobianSample.dWv_dtx;  // always zero
-              //const f32 dWu_dty = curJacobianSample.dWu_dty;  // always zero
-              const f32 dWv_dty = curJacobianSample.dWv_dty;
-              const f32 dWu_dtz = curJacobianSample.dWu_dtz;
-              const f32 dWv_dtz = curJacobianSample.dWv_dtz;
-
-              const f32 dWu_dthetaX = curJacobianSample.dWu_dthetaX;
-              const f32 dWv_dthetaX = curJacobianSample.dWv_dthetaX;
-              const f32 dWu_dthetaY = curJacobianSample.dWu_dthetaY;
-              const f32 dWv_dthetaY = curJacobianSample.dWv_dthetaY;
-              const f32 dWu_dthetaZ = curJacobianSample.dWu_dthetaZ;
-              const f32 dWv_dthetaZ = curJacobianSample.dWv_dthetaZ;
-
-              const f32 values[6] = {
-                xGradientValue*dWu_dthetaX + yGradientValue*dWv_dthetaX,
-                xGradientValue*dWu_dthetaY + yGradientValue*dWv_dthetaY,
-                xGradientValue*dWu_dthetaZ + yGradientValue*dWv_dthetaZ,
-                xGradientValue*dWu_dtx /*+ yGradientValue*dWv_dtx*/,
-                /*xGradientValue*dWu_dty + */yGradientValue*dWv_dty,
-                xGradientValue*dWu_dtz + yGradientValue*dWv_dtz
-              };
-
+              const f32* Arow = curSample.A;
+              
               /*
               for(s32 i=0; i<6; ++i) {
               debugA[iSample][i] = values[i];
@@ -1344,9 +1308,9 @@ namespace Anki
 
               for(s32 ia=0; ia<6; ia++) {
                 for(s32 ja=ia; ja<6; ja++) {
-                  AWAt_raw[ia][ja] += values[ia] * values[ja];
+                  AWAt_raw[ia][ja] += Arow[ia] * Arow[ja];
                 }
-                b_raw[ia] += values[ia] * tGradientValue;
+                b_raw[ia] += Arow[ia] * tGradientValue;
               }
             }
           } // for(s32 iSample=0; iSample<numTemplateSamples; iSample++)
