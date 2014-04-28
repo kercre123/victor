@@ -71,11 +71,15 @@ namespace Anki {
           //const f32 benchmarkTimes[2] = {lastBenchmarkDuration_algorithmsOnly, lastBenchmarkDuration_total};          
           //toSend.PushBack<f32>("Benchmark Times", &benchmarkTimes[0], 2);
           
+          EndBenchmark("TotalTime");
+          
           FixedLengthList<BenchmarkElement> benchmarks = ComputeBenchmarkResults(scratch);
           
           toSend.PushBack<BenchmarkElement>("Benchmarks", benchmarks);
           
           InitBenchmarking();
+          
+          BeginBenchmark("TotalTime");
           
           //const s32 nothing[8] = {0,0,0,0,0,0,0,0};
           //toSend.PushBack<s32>("Nothing", &nothing[0], 8);
@@ -400,6 +404,7 @@ namespace Anki {
           printfBuffer_ = SerializedBuffer(&printfBufferRaw_[0], PRINTF_BUFFER_SIZE);
           
           InitBenchmarking();
+          BeginBenchmark("TotalTime");
 #endif
           return RESULT_OK;
         }

@@ -62,6 +62,11 @@ namespace Anki
       void Print(const bool verbose=true, const bool microseconds=true, const FixedLengthList<s32> * minCharacterToPrint=NULL) const;
     } BenchmarkElement;
 
+    typedef struct BenchmarkElementName
+    {
+      char name[BenchmarkElement::NAME_LENGTH];
+    } BenchmarkElementName;
+
     // Call this before doing any benchmarking, to clear the buffer of benchmarkEvents.
     // Can be called multiple times.
     void InitBenchmarking();
@@ -88,6 +93,16 @@ namespace Anki
 
     // Compile and print out all the benchmark events that were recorded
     Result ComputeAndPrintBenchmarkResults(const bool verbose=true, const bool microseconds=true);
+
+    // Use OpenCV to display a running benchmark
+    // Requires a "TotalTime" benchmark event
+    // namesToDisplay can be 11 or less names
+    Result ShowBenchmarkResults(
+      const FixedLengthList<BenchmarkElement> &results,
+      const FixedLengthList<BenchmarkElementName> &namesToDisplay,
+      const f64 pixelsPerMillisecond,
+      const s32 imageHeight,
+      const s32 imageWidth);
   } // namespace Embedded
 } // namespace Anki
 

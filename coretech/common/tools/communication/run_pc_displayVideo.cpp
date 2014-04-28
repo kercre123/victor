@@ -103,8 +103,19 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
   // If we've reached a new message, display the last image and messages
   //
 
+  MemoryStack scratch = MemoryStack(scratchBuffer, scratchSize, Flags::Buffer(false, true, false));
+
   if(strcmp(newObject.objectName, "Benchmarks") == 0) {
+    const f64 pixelsPerMillisecond = 2.0;
+    const s32 imageHeight = 800;
+    const s32 imageWidth = 1600;
+
     FixedLengthList<BenchmarkElement> benchmarks = *(reinterpret_cast<FixedLengthList<BenchmarkElement>*>(newObject.startOfPayload));
+
+    FixedLengthList<BenchmarkElementName> namesToDisplay(1, scratch, Flags::Buffer(true, false, true));
+    snprintf(namesToDisplay[0].name, BenchmarkElement::NAME_LENGTH, "DetectFiducialMarkers");
+
+    ShowBenchmarkResults(benchmarks, namesToDisplay, pixelsPerMillisecond, imageHeight, imageWidth);
   }
 
   if(newObject.timeReceived != lastTime) {
@@ -124,8 +135,6 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
       }
 
       if(isTracking) {
-        MemoryStack scratch = MemoryStack(scratchBuffer, scratchSize, Flags::Buffer(false, true, false));
-
         cv::Mat trackingBoxImage(bigHeight, bigWidth, CV_8UC3);
 
         trackingBoxImage.setTo(0);

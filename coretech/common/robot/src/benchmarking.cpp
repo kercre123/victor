@@ -284,6 +284,21 @@ namespace Anki
         return outputResults;
       } // ComputeBenchmarkResults()
 
+      // Returns the index of "name", or -1 if it isn't found
+      static s32 GetNameIndex(const char * name, const FixedLengthList<BenchmarkElement> &outputResults)
+      {
+        const BenchmarkElement * pOutputResults = outputResults.Pointer(0);
+        const s32 numOutputResults = outputResults.get_size();
+
+        for(s32 i=0; i<numOutputResults; i++) {
+          if(strcmp(name, pOutputResults[i].name) == 0) {
+            return i;
+          }
+        } // for(s32 i=0; i<numOutputResults; i++)
+
+        return -1;
+      } // GetNameIndex()
+
     protected:
       typedef struct BenchmarkInstance
       {
@@ -322,21 +337,6 @@ namespace Anki
           printf("NumEvents:%s\n", buffer);
         }
       } BenchmarkInstance;
-
-      // Returns the index of "name", or -1 if it isn't found
-      static s32 GetNameIndex(const char * name, const FixedLengthList<BenchmarkElement> &outputResults)
-      {
-        const BenchmarkElement * pOutputResults = outputResults.Pointer(0);
-        const s32 numOutputResults = outputResults.get_size();
-
-        for(s32 i=0; i<numOutputResults; i++) {
-          if(strcmp(name, pOutputResults[i].name) == 0) {
-            return i;
-          }
-        } // for(s32 i=0; i<numOutputResults; i++)
-
-        return -1;
-      } // GetNameIndex()
     }; // class CompileBenchmarkResults
 
     FixedLengthList<BenchmarkElement> ComputeBenchmarkResults(MemoryStack &memory)
@@ -416,6 +416,95 @@ namespace Anki
         RESULT_FAIL_INVALID_OBJECT, "PrintBenchmarkResults", "results is not valid");
 
       return PrintBenchmarkResults(results, verbose, microseconds);
+    }
+
+#ifdef ANKICORETECH_EMBEDDED_USE_OPENCV
+    static cv::Mat toShowImage;
+    static s32 toShowImageColumn;
+#endif
+
+    Result ShowBenchmarkResults(
+      const FixedLengthList<BenchmarkElement> &results,
+      const FixedLengthList<BenchmarkElementName> &namesToDisplay,
+      const f64 pixelsPerMillisecond,
+      const s32 imageHeight,
+      const s32 imageWidth)
+    {
+#ifdef ANKICORETECH_EMBEDDED_USE_OPENCV
+      const s32 htmlColors[16][3] = { // {R,G,B}
+        {0xFF, 0xFF, 0xFF}, // 0  White
+        {0xC0, 0xC0, 0xC0}, // 1  Silver
+        {0x80, 0x80, 0x80}, // 2  Gray
+        {0x00, 0x00, 0x00}, // 3  Black
+        {0xFF, 0x00, 0x00}, // 4  Red
+        {0x80, 0x00, 0x00}, // 5  Maroon
+        {0xFF, 0xFF, 0x00}, // 6  Yellow
+        {0x80, 0x80, 0x00}, // 7  Olive
+        {0x00, 0xFF, 0x00}, // 8  Lime
+        {0x00, 0x80, 0x00}, // 9  Green
+        {0x00, 0xFF, 0xFF}, // 10 Aqua
+        {0x00, 0x80, 0x80}, // 11 Teal
+        {0x00, 0x00, 0xFF}, // 12 Blue
+        {0x00, 0x00, 0x80}, // 13 Navy
+        {0xFF, 0x00, 0xFF}, // 14 Fuchsia
+        {0x80, 0x00, 0x80}  // 15 Purple
+      };
+
+      const s32 totalTimeIndex = CompileBenchmarkResults::GetNameIndex("TotalTime", results);
+
+      AnkiConditionalErrorAndReturnValue(totalTimeIndex >= 0,
+        RESULT_FAIL, "ShowBenchmarkResults", "Requires a \"TotalTime\" benchmark event");
+
+      AnkiConditionalErrorAndReturnValue(namesToDisplay.get_size() > 0 && namesToDisplay.get_size() <= 11,
+        RESULT_FAIL_INVALID_PARAMETER, "ShowBenchmarkResults", "namesToDisplay must be between 1 and 11");
+
+      if(toShowImage.rows != imageHeight || toShowImage.cols != imageWidth) {
+        toShowImage = cv::Mat(imageHeight, imageWidth, CV_8UC3);
+        toShowImage = 0;
+        toShowImageColumn = 0;
+      }
+
+      for(s32 iX=0; iX>5; iX++) {
+        const s32 x1 = iX % imageWidth;
+        const s32 x2 = (iX + 1) % imageWidth;
+        cv::rectangle(toShowImage, cv::Point(x1,0), cv::Point(x2,0), CV_FILLED);
+      }
+
+      // Draw the total time as gray
+      const s32 numPixelsTotal = Round<s32>(pixelsPerMillisecond * results[totalTimeIndex].inclusive_total);
+      cv::line(
+        toShowImage,
+        cv::Point(toShowImageColumn, imageHeight - 1),
+        cv::Point(toShowImageColumn, MAX(0, imageHeight - numPixelsTotal)),
+        cv::Scalar(htmlColors[2][2], htmlColors[2][1], htmlColors[2][0]),
+        1,
+        4);
+
+      // Draw the specific benchmarks as colors
+      s32 curX = imageHeight - 1;
+      for(s32 iName=0; iName<namesToDisplay.get_size(); iName++) {
+        const s32 index = CompileBenchmarkResults::GetNameIndex(namesToDisplay[iName].name, results);
+        const s32 numPixels = Round<s32>(pixelsPerMillisecond * results[index].exclusive_total);
+
+        cv::line(
+          toShowImage,
+          cv::Point(toShowImageColumn, curX),
+          cv::Point(toShowImageColumn, MAX(0, curX-numPixels+1)),
+          cv::Scalar(htmlColors[iName+4][2], htmlColors[iName+4][1], htmlColors[iName+4][0]),
+          1,
+          4);
+
+        curX -= numPixels;
+      } // for(s32 iName=0; iName<namesToDisplay.get_size(); iName++)
+
+      cv::imshow("Benchmarks", toShowImage);
+
+      toShowImageColumn++;
+
+      return RESULT_OK;
+#else // #ifdef ANKICORETECH_EMBEDDED_USE_OPENCV
+      return RESULT_FAIL;
+#endif // #ifdef ANKICORETECH_EMBEDDED_USE_OPENCV ... #else
     }
   } // namespace Embedded
 } // namespace Anki
