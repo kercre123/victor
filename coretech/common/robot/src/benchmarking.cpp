@@ -154,7 +154,7 @@ namespace Anki
 
       PrintElement("ExcTot:", Round<s32>(this->exclusive_total*multiplier), suffix, (*minCharacterToPrint)[1]);
       PrintElement("IncTot:", Round<s32>(this->inclusive_total*multiplier), suffix, (*minCharacterToPrint)[2]);
-      PrintElement("NEvents:", this->numEvents, " ", (*minCharacterToPrint)[3]);
+      PrintElement("NEvents:", static_cast<s32>(this->numEvents), " ", (*minCharacterToPrint)[3]);
 
       if(verbose) {
         PrintElement("ExcMean:", Round<s32>(this->exclusive_mean*multiplier), suffix, (*minCharacterToPrint)[4]);
@@ -378,7 +378,7 @@ namespace Anki
         const s32 values[] = {
           Round<s32>(pResults[x].exclusive_total*multiplier),
           Round<s32>(pResults[x].inclusive_total*multiplier),
-          pResults[x].numEvents,
+          static_cast<s32>(pResults[x].numEvents),
           Round<s32>(pResults[x].exclusive_mean*multiplier),
           Round<s32>(pResults[x].exclusive_min*multiplier),
           Round<s32>(pResults[x].exclusive_max*multiplier),
