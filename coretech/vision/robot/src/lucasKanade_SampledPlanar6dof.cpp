@@ -1187,9 +1187,9 @@ namespace Anki
           }
         } // for(s32 iteration=0; iteration<maxIterations; iteration++)
 
-        printf("LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack_Translation() "
-               "failed to converge at scale %f with minChange = %f\n",
-               scale, minChange);
+        //printf("LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack_Translation() "
+        //       "failed to converge at scale %f with minChange = %f\n",
+        //       scale, minChange);
         
         return RESULT_OK;
       } // Result LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack_Translation()
@@ -1494,13 +1494,16 @@ namespace Anki
              */
 #endif
 
+            //snprintf(this->resultMessageBuffer, RESULT_MSG_LENGTH,
+            //         "Converged at scale %f with minChange of %f\n", scale, minChange);
+            
             verify_converged = true;
             return RESULT_OK;
           }
         } // for(s32 iteration=0; iteration<maxIterations; iteration++)
 
-        printf("LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack_Projective() "
-               "failed to converged at scale %f with minChange of %f\n", scale, minChange);
+          //snprintf(this->resultMessageBuffer, RESULT_MSG_LENGTH,
+          //         "Failed to converge at scale %f with minChange of %f\n", scale, minChange);
         
         return RESULT_OK;
       } // Result LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack_Projective()
