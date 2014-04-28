@@ -238,8 +238,10 @@ namespace Anki
 
         this->templateSamplePyramid = FixedLengthList<FixedLengthList<TemplateSample> >(numPyramidLevels, onchipScratch);
         this->verificationSamples   = FixedLengthList<VerifySample>(verifyGridSize*verifyGridSize, onchipScratch);
+        this->AtAPyramid            = FixedLengthList<Array<f32> >(numPyramidLevels, onchipScratch);
         
         this->templateSamplePyramid.set_size(numPyramidLevels);
+        this->AtAPyramid.set_size(numPyramidLevels);
         
         //
         // Compute the samples (and their Jacobians) at each scale
@@ -266,12 +268,16 @@ namespace Anki
           const s32 numPointsY = templateCoordinates.get_yGridVector().get_size();
           const s32 numPointsX = templateCoordinates.get_xGridVector().get_size();
           
+          this->AtAPyramid[iScale] = Array<f32>(6,6,onchipScratch);
+          Array<f32>& curAtA = this->AtAPyramid[iScale];
+          curAtA.SetZero();
+          
           PUSH_MEMORY_STACK(offchipScratch);
           PUSH_MEMORY_STACK(onchipScratch);
 
-          Array<u8> grayscaleVector = Array<u8>(1, numPointsX*numPointsY, offchipScratch);
-          Array<f32> xGradientVector = Array<f32>(1, numPointsX*numPointsY, offchipScratch);
-          Array<f32> yGradientVector = Array<f32>(1, numPointsX*numPointsY, offchipScratch);
+          Array<u8> grayscaleVector   = Array<u8>(1, numPointsX*numPointsY, offchipScratch);
+          Array<f32> xGradientVector  = Array<f32>(1, numPointsX*numPointsY, offchipScratch);
+          Array<f32> yGradientVector  = Array<f32>(1, numPointsX*numPointsY, offchipScratch);
           Array<s32> magnitudeIndexes = Array<s32>(1, numPointsY*numPointsX, offchipScratch); // NOTE: u16 not enough for full 320x240
           s32 numSelected = 0;
           {
@@ -582,13 +588,26 @@ namespace Anki
               const f32 xGradient   = scaleOverFiveTen * pXGradientVector[curIndex];
               const f32 yGradient   = scaleOverFiveTen * pYGradientVector[curIndex];
               
+              // Store the row of the A (Jacobian) matrix for this sample:
               curTemplateSample.A[0] = xGradient*dWu_dthetaX + yGradient*dWv_dthetaX;
               curTemplateSample.A[1] = xGradient*dWu_dthetaY + yGradient*dWv_dthetaY;
               curTemplateSample.A[2] = xGradient*dWu_dthetaZ + yGradient*dWv_dthetaZ;
               curTemplateSample.A[3] = xGradient*dWu_dtx /*+ yGradient*dWv_dtx*/;
               curTemplateSample.A[4] = /*xGradient*dWu_dty + */yGradient*dWv_dty;
               curTemplateSample.A[5] = xGradient*dWu_dtz + yGradient*dWv_dtz;
-
+              
+              // Store the full AtA matrix for when all the samples are within
+              // image bounds
+              // NOTE: the matrix is symmetric so we only need to compute and
+              //       store the 21 upper triangle of unique entries
+              for(s32 i=0; i<6; ++i) {
+                f32 * restrict AtA_i = curAtA.Pointer(i,0);
+                for(s32 j=i; j<6; ++i) {
+                  AtA_i[j]  += curTemplateSample.A[i] * curTemplateSample.A[j];
+                }
+              }
+              Matrix::MakeSymmetric(curAtA);
+            
             }
           }
         } // if/else numSelected==0
@@ -954,6 +973,10 @@ namespace Anki
 
         Array<f32> AWAt(3, 3, scratch);
         Array<f32> b(1, 3, scratch);
+        
+        // Start with the full (translation-only) part of AtA for this scale.
+        // We will subtract out contributions from samples currently out of bounds.
+        AWAt(0,2,0,2).Set(this->AtAPyramid[whichScale](3,5,3,5));
 
         f32 &AWAt00 = AWAt[0][0];
         f32 &AWAt01 = AWAt[0][1];
@@ -963,6 +986,7 @@ namespace Anki
         f32 &AWAt12 = AWAt[1][2];
         f32 &AWAt22 = AWAt[2][2];
 
+        b.SetZero();
         f32 &b0 = b[0][0];
         f32 &b1 = b[0][1];
         f32 &b2 = b[0][2];
@@ -1036,8 +1060,23 @@ namespace Anki
             const f32 y0 = FLT_FLOOR(yTransformed);
             const f32 y1 = ceilf(yTransformed); // y0 + 1.0f;
 
-            // If out of bounds, continue
+            // If out of bounds, subtract this sample's contribution from AtA
             if(x0 < xyReferenceMin || x1 > xReferenceMax || y0 < xyReferenceMin || y1 > yReferenceMax) {
+
+              // NOTE: The three columns of A we need for translation-only
+              // update are the *last* three entries in the sample's A entries
+              const f32 A0 = curSample.A[3];
+              const f32 A1 = curSample.A[4];
+              const f32 A2 = curSample.A[5];
+              
+              //AWAt
+              //  b
+              AWAt00 -= A0*A0;
+              AWAt01 -= A0*A1;
+              AWAt02 -= A0*A2;
+              AWAt11 -= A1*A1;
+              AWAt12 -= A1*A2;
+              AWAt22 -= A2*A2;
               continue;
             }
 
@@ -1076,15 +1115,6 @@ namespace Anki
               const f32 A0 = curSample.A[3];
               const f32 A1 = curSample.A[4];
               const f32 A2 = curSample.A[5];
-
-              //AWAt
-              //  b
-              AWAt00 += A0*A0;
-              AWAt01 += A0*A1;
-              AWAt02 += A0*A2;
-              AWAt11 += A1*A1;
-              AWAt12 += A1*A2;
-              AWAt22 += A2*A2;
 
               b0 += A0 * tGradientValue;
               b1 += A1 * tGradientValue;
@@ -1157,11 +1187,26 @@ namespace Anki
 
         Array<f32> AWAt(6, 6, scratch);
         Array<f32> b(1, 6, scratch);
-
+        
+        // Start with the full (translation-only) part of AtA for this scale.
+        // We will subtract out contributions from samples currently out of bounds.
+        AWAt.Set(this->AtAPyramid[whichScale]);
+        
         // These addresses should be known at compile time, so should be faster
-        f32 AWAt_raw[6][6];
+        //f32 AWAt_raw[6][6];
+        const s32 NUM_SYMMETRIC_ENTRIES = 21;
+        f32 AWAt_raw[NUM_SYMMETRIC_ENTRIES];
         f32 b_raw[6];
-
+        
+        // Initialize the raw symmetric entries
+        s32 symIndex = 0;
+        for(s32 i=0; i<6; ++i) {
+          f32 * restrict AWAt_i = AWAt.Pointer(i,0);
+          for(s32 j=i; j<6; ++j) {
+            AWAt_raw[symIndex++] = AWAt_i[j];
+          }
+        }
+        
         verify_converged = false;
 
         f32 minChange = 0.f;
@@ -1207,11 +1252,12 @@ namespace Anki
           //AWAt.SetZero();
           //b.SetZero();
 
-          for(s32 ia=0; ia<6; ia++) {
-            for(s32 ja=0; ja<6; ja++) {
-              AWAt_raw[ia][ja] = 0;
-            }
-            b_raw[ia] = 0;
+          
+          for(s32 i=0; i<NUM_SYMMETRIC_ENTRIES; i++) {
+            AWAt_raw[i] = 0;
+          }
+          for(s32 i=0; i<6; ++i) {
+            b_raw[i] = 0;
           }
 
           s32 numInBounds = 0;
@@ -1250,8 +1296,38 @@ namespace Anki
             const f32 y0 = FLT_FLOOR(yTransformed);
             const f32 y1 = ceilf(yTransformed); // y0 + 1.0f;
 
-            // If out of bounds, continue
+            // If out of bounds, remove this sample's contribution from the
+            // AtA matrix
             if(x0 < xyReferenceMin || x1 > xReferenceMax || y0 < xyReferenceMin || y1 > yReferenceMax) {
+              const f32* Arow = curSample.A;
+             
+             AWAt_raw[0] -= Arow[0] * Arow[0];
+             AWAt_raw[1] -= Arow[0] * Arow[1];
+             AWAt_raw[2] -= Arow[0] * Arow[2];
+             AWAt_raw[3] -= Arow[0] * Arow[3];
+             AWAt_raw[4] -= Arow[0] * Arow[4];
+             AWAt_raw[5] -= Arow[0] * Arow[5];
+             
+             AWAt_raw[6]  -= Arow[1] * Arow[1];
+             AWAt_raw[7]  -= Arow[1] * Arow[2];
+             AWAt_raw[8]  -= Arow[1] * Arow[3];
+             AWAt_raw[9]  -= Arow[1] * Arow[4];
+             AWAt_raw[10] -= Arow[1] * Arow[5];
+
+             AWAt_raw[11] -= Arow[2] * Arow[2];
+             AWAt_raw[12] -= Arow[2] * Arow[3];
+             AWAt_raw[13] -= Arow[2] * Arow[4];
+             AWAt_raw[14] -= Arow[2] * Arow[5];
+             
+             AWAt_raw[15] -= Arow[3] * Arow[3];
+             AWAt_raw[16] -= Arow[3] * Arow[4];
+             AWAt_raw[17] -= Arow[3] * Arow[5];
+             
+             AWAt_raw[18] -= Arow[4] * Arow[4];
+             AWAt_raw[19] -= Arow[5] * Arow[5];
+             
+             AWAt_raw[20] -= Arow[5] * Arow[5];
+
               continue;
             }
 
@@ -1307,9 +1383,6 @@ namespace Anki
               */
 
               for(s32 ia=0; ia<6; ia++) {
-                for(s32 ja=ia; ja<6; ja++) {
-                  AWAt_raw[ia][ja] += Arow[ia] * Arow[ja];
-                }
                 b_raw[ia] += Arow[ia] * tGradientValue;
               }
             }
@@ -1320,9 +1393,11 @@ namespace Anki
             return RESULT_OK;
           }
 
+          // Get the symmetric entries back out of the "raw" matrix
+          symIndex = 0;
           for(s32 ia=0; ia<6; ia++) {
             for(s32 ja=ia; ja<6; ja++) {
-              AWAt[ia][ja] = AWAt_raw[ia][ja];
+              AWAt[ia][ja] = AWAt_raw[symIndex++];
             }
             b[0][ia] = b_raw[ia];
           }

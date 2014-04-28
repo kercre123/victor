@@ -475,6 +475,7 @@ namespace Anki
         
         FixedLengthList<FixedLengthList<TemplateSample> > templateSamplePyramid;
         // FixedLengthList<FixedLengthList<JacobianSample> > jacobianSamplePyramid;
+        FixedLengthList<Array<f32> > AtAPyramid;
         
         FixedLengthList<VerifySample> verificationSamples;
         
