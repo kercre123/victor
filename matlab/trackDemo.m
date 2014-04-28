@@ -13,6 +13,11 @@ IntensityErrorFraction = 0.25;
 TemplateRegionPaddingFraction = 0.05;
 FilterFcn = []; % abs(imfilter(img, fspecial('log', 3)));
 
+% Example settings for testing planar6dof_embedded tracker
+% calib = load('~/Documents/Anki/Data/CameraCalibrationImages/CameraA1/2014-03-26/Calib_Results.mat');
+% K = [calib.fc(1) 0 calib.cc(1); 0 calib.fc(2) calib.cc(2); 0 0 1];
+% trackDemo('resolution', [320 240], 'TrackerType', 'planar6dof_embedded', 'CalibrationMatrix', K, 'NumSamples', 500, 'MarkerWidth', 26, 'ConvergenceTolerance', struct('angle', 0.1, 'distance', 0.1));
+
 CamCaptureArgs = parseVarargin(varargin{:});
 
 if strcmp(TrackerType, 'homography') 
@@ -184,13 +189,24 @@ CameraCapture('processFcn', @trackHelper, ...
                     MaxIterations, ConvergenceTolerance.angle, ...
                     ConvergenceTolerance.distance, ...
                     IntensityErrorTolerance);
+                
+                if ~converged
+                    reason = 'Did not converge.';
+%                 elseif verify_numSimilarPixels / verify_numInBounds < IntensityErrorFraction
+%                     reason = 'Too few pixels below IntensityErrorThreshold.';
+%                     converged = false;
+                elseif verify_meanAbsDiff > IntensityErrorTolerance
+                    reason = 'Mean absolute difference above IntensityErrorThreshold.';
+                    converged = false;
+                end
+                    
                 %converged = true;
                 poseString = num2str([180/pi*[angleX, angleY, angleZ], tX, tY, tZ]);
                 
                 temp = tform * [initialSamples ones(size(initialSamples,1),1)]';
                 xsamples = temp(1,:)./temp(3,:) + CalibrationMatrix(1,3);
                 ysamples = temp(2,:)./temp(3,:) + CalibrationMatrix(2,3);
-                reason = '';    
+                
             else
                 [converged, reason] = LKtracker.track(imgFiltered, ...
                     'MaxIterations', MaxIterations, ...
