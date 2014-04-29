@@ -351,8 +351,6 @@ namespace Anki {
 
         MatlabVisualization::ResetFiducialDetection(grayscaleImage);
 
-        InitBenchmarking();
-
         const Result result = DetectFiducialMarkers(
                                                     grayscaleImage,
                                                     markers,
