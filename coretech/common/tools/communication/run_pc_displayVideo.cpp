@@ -103,6 +103,42 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
   // If we've reached a new message, display the last image and messages
   //
 
+  const u8 htmlColors[16][3] = { // {R,G,B}
+    {0xFF, 0xFF, 0xFF}, // 0  White
+    {0xC0, 0xC0, 0xC0}, // 1  Silver
+    {0x80, 0x80, 0x80}, // 2  Gray
+    {0x00, 0x00, 0x00}, // 3  Black
+    {0xFF, 0x00, 0x00}, // 4  Red
+    {0x80, 0x00, 0x00}, // 5  Maroon
+    {0xFF, 0xFF, 0x00}, // 6  Yellow
+    {0x80, 0x80, 0x00}, // 7  Olive
+    {0x00, 0xFF, 0x00}, // 8  Lime
+    {0x00, 0x80, 0x00}, // 9  Green
+    {0x00, 0xFF, 0xFF}, // 10 Aqua
+    {0x00, 0x80, 0x80}, // 11 Teal
+    {0x00, 0x00, 0xFF}, // 12 Blue
+    {0x00, 0x00, 0x80}, // 13 Navy
+    {0xFF, 0x00, 0xFF}, // 14 Fuchsia
+    {0x80, 0x00, 0x80}  // 15 Purple
+  };
+
+  const u8 * const white = htmlColors[0];
+  const u8 * const silver = htmlColors[1];
+  const u8 * const gray = htmlColors[2];
+  const u8 * const black = htmlColors[3];
+  const u8 * const red = htmlColors[4];
+  const u8 * const maroon = htmlColors[5];
+  const u8 * const yellow = htmlColors[6];
+  const u8 * const olive = htmlColors[7];
+  const u8 * const lime = htmlColors[8];
+  const u8 * const green = htmlColors[9];
+  const u8 * const aqua = htmlColors[10];
+  const u8 * const teal = htmlColors[11];
+  const u8 * const blue = htmlColors[12];
+  const u8 * const navy = htmlColors[13];
+  const u8 * const fuchsia = htmlColors[14];
+  const u8 * const purple = htmlColors[15];
+
   MemoryStack scratch = MemoryStack(scratchBuffer, scratchSize, Flags::Buffer(false, true, false));
 
   if(strcmp(newObject.objectName, "Benchmarks") == 0) {
@@ -114,16 +150,12 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
 
     //PrintBenchmarkResults(benchmarks, false, false);
 
-    FixedLengthList<ShowBenchmarkParameters> namesToDisplay(3, scratch, Flags::Buffer(true, false, true));
-
-    snprintf(namesToDisplay[0].name, BenchmarkElement::NAME_LENGTH, "VisionSystem_CameraGetFrame");
-    namesToDisplay[0].showExclusiveTime = false;
-
-    snprintf(namesToDisplay[1].name, BenchmarkElement::NAME_LENGTH, "VisionSystem_LookForMarkers");
-    namesToDisplay[1].showExclusiveTime = false;
-
-    snprintf(namesToDisplay[2].name, BenchmarkElement::NAME_LENGTH, "VisionSystem_TrackTemplate");
-    namesToDisplay[2].showExclusiveTime = false;
+    FixedLengthList<ShowBenchmarkParameters> namesToDisplay(5, scratch);
+    namesToDisplay.PushBack(ShowBenchmarkParameters("VisionSystem_CameraGetFrame", false, red));
+    namesToDisplay.PushBack(ShowBenchmarkParameters("VisionSystem_LookForMarkers", false, green));
+    namesToDisplay.PushBack(ShowBenchmarkParameters("VisionSystem_TrackTemplate", false, blue));
+    namesToDisplay.PushBack(ShowBenchmarkParameters("UARTPutMessage", false, maroon));
+    namesToDisplay.PushBack(ShowBenchmarkParameters("ComputeBenchmarkResults", false, maroon));
 
     ShowBenchmarkResults(benchmarks, namesToDisplay, pixelsPerMillisecond, imageHeight, imageWidth);
   }

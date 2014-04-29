@@ -66,6 +66,12 @@ namespace Anki
     {
       char name[BenchmarkElement::NAME_LENGTH];
       bool showExclusiveTime;
+      u8 red, green, blue;
+
+      ShowBenchmarkParameters(
+        const char * name,
+        const bool showExclusiveTime,
+        const u8 *color); //< Color is {R,G,B}
     } ShowBenchmarkParameters;
 
     // Call this before doing any benchmarking, to clear the buffer of benchmarkEvents.

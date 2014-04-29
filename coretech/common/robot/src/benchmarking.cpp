@@ -87,6 +87,15 @@ namespace Anki
 {
   namespace Embedded
   {
+    ShowBenchmarkParameters::ShowBenchmarkParameters(const char * name, const bool showExclusiveTime, const u8 *color)
+    {
+      snprintf(this->name, BenchmarkElement::NAME_LENGTH, "VisionSystem_CameraGetFrame");
+      this->showExclusiveTime = showExclusiveTime;
+      this->red = color[0];
+      this->green = color[1];
+      this->blue = color[2];
+    }
+
     void InitBenchmarking()
     {
       g_numBenchmarkEvents = 0;
@@ -221,7 +230,7 @@ namespace Anki
               const s32 endLevel = parseStack.get_size();
 
               AnkiConditionalErrorAndReturnValue(strcmp(startInstance.name, benchmarkEvents[iEvent].name) == 0 && startInstance.level == endLevel,
-                outputResults, "ComputeBenchmarkResults", "Benchmark parse error: Perhaps BeginBenchmark() and EndBenchmark() were nested, or there were more than %d benchmark events, or some other non-supported thing listed in the comments.\n", MAX_BENCHMARK_EVENTS);
+                outputResults, "ComputeBenchmarkResults", "Benchmark parse error: Perhaps BeginBenchmark() and EndBenchmark() were nested, or there were more than %d benchmark events, or InitBenchmarking() was called in between a StartBenchmarking() and EndBenchmarking() pair, or some other non-supported thing listed in the comments.\n", MAX_BENCHMARK_EVENTS);
 
               const f64 elapsedTime = timeF64 - startInstance.startTime;
 
@@ -431,40 +440,6 @@ namespace Anki
       const s32 imageWidth)
     {
 #ifdef ANKICORETECH_EMBEDDED_USE_OPENCV
-      //const s32 htmlColors[16][3] = { // {R,G,B}
-      //  {0xFF, 0xFF, 0xFF}, // 0  White
-      //  {0xC0, 0xC0, 0xC0}, // 1  Silver
-      //  {0x80, 0x80, 0x80}, // 2  Gray
-      //  {0x00, 0x00, 0x00}, // 3  Black
-      //  {0xFF, 0x00, 0x00}, // 4  Red
-      //  {0x80, 0x00, 0x00}, // 5  Maroon
-      //  {0xFF, 0xFF, 0x00}, // 6  Yellow
-      //  {0x80, 0x80, 0x00}, // 7  Olive
-      //  {0x00, 0xFF, 0x00}, // 8  Lime
-      //  {0x00, 0x80, 0x00}, // 9  Green
-      //  {0x00, 0xFF, 0xFF}, // 10 Aqua
-      //  {0x00, 0x80, 0x80}, // 11 Teal
-      //  {0x00, 0x00, 0xFF}, // 12 Blue
-      //  {0x00, 0x00, 0x80}, // 13 Navy
-      //  {0xFF, 0x00, 0xFF}, // 14 Fuchsia
-      //  {0x80, 0x00, 0x80}  // 15 Purple
-      //};
-
-      const s32 colors[12][3] = { // {R,G,B}
-        {0xFF, 0x00, 0x00}, // 4  Red
-        {0x00, 0x80, 0x00}, // 9  Green
-        {0x00, 0x00, 0xFF}, // 12 Blue
-        {0xFF, 0xFF, 0x00}, // 6  Yellow
-        {0xFF, 0x00, 0xFF}, // 14 Fuchsia
-        {0x80, 0x00, 0x00}, // 5  Maroon
-        {0x80, 0x80, 0x00}, // 7  Olive
-        {0x00, 0xFF, 0x00}, // 8  Lime
-        {0x00, 0xFF, 0xFF}, // 10 Aqua
-        {0x00, 0x80, 0x80}, // 11 Teal
-        {0x00, 0x00, 0x80}, // 13 Navy
-        {0x80, 0x00, 0x80}  // 15 Purple
-      };
-
       const s32 blackWidth = 10;
 
       const s32 totalTimeIndex = CompileBenchmarkResults::GetNameIndex("TotalTime", results);
@@ -521,7 +496,7 @@ namespace Anki
           toShowImage,
           cv::Point(toShowImageColumn, curY),
           cv::Point(toShowImageColumn, MAX(0, curY-numPixels+1)),
-          cv::Scalar(colors[iName][2], colors[iName][1], colors[iName][0]),
+          cv::Scalar(namesToDisplay[iName].blue, namesToDisplay[iName].green, namesToDisplay[iName].red),
           1,
           4);
 

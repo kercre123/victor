@@ -37,6 +37,9 @@ namespace Anki {
           
           s32 frameNumber = 0;
           
+          static f32 computeBenchmarkResults_start;
+          static f32 computeBenchmarkResults_end;
+          
           //const HAL::CameraResolution debugStreamResolution_ = Vision::CAMERA_RES_QQQVGA;
           const Vision::CameraResolution debugStreamResolution_ = Vision::CAMERA_RES_QQVGA;
           //const Vision::CameraResolution debugStreamResolution_ = Vision::CAMERA_RES_QVGA;
@@ -73,18 +76,47 @@ namespace Anki {
           
           EndBenchmark("TotalTime");
           
+          const f32 lastComputeBenchmarkResults_elapsedTime = computeBenchmarkResults_end - computeBenchmarkResults_start;
+          
+          computeBenchmarkResults_start = GetTimeF32();
+          
           FixedLengthList<BenchmarkElement> benchmarks = ComputeBenchmarkResults(scratch);
+                    
+          // Hack to add the time for computing the benchmark to the compiled times
+          if(benchmarks.get_size() < benchmarks.get_maximumSize()) {
+            BenchmarkElement newElement("ComputeBenchmarkResults");
+            newElement.inclusive_mean = lastComputeBenchmarkResults_elapsedTime;
+            newElement.inclusive_min = lastComputeBenchmarkResults_elapsedTime;
+            newElement.inclusive_max = lastComputeBenchmarkResults_elapsedTime;
+            newElement.inclusive_total = lastComputeBenchmarkResults_elapsedTime;
+            newElement.exclusive_mean = lastComputeBenchmarkResults_elapsedTime;
+            newElement.exclusive_min = lastComputeBenchmarkResults_elapsedTime;
+            newElement.exclusive_max = lastComputeBenchmarkResults_elapsedTime;
+            newElement.exclusive_total = lastComputeBenchmarkResults_elapsedTime;
+            newElement.numEvents = 1;
+            
+            const s32 numBenchmarks = benchmarks.get_size();
+            BenchmarkElement * restrict pBenchmarks = benchmarks.Pointer(0);
+            for(s32 i=numBenchmarks-1; i>=0; i--) {
+              if(strcmp(pBenchmarks[i].name, "TotalTime") == 0) {
+                pBenchmarks[i].inclusive_total += lastComputeBenchmarkResults_elapsedTime;
+                break;
+              }              
+            }
+            
+            benchmarks.set_size(numBenchmarks + 1);
+          }
           
           toSend.PushBack<BenchmarkElement>("Benchmarks", benchmarks);
           
           InitBenchmarking();
           
+          computeBenchmarkResults_end = GetTimeF32();
+          
           BeginBenchmark("TotalTime");
           
-          //const s32 nothing[8] = {0,0,0,0,0,0,0,0};
-          //toSend.PushBack<s32>("Nothing", &nothing[0], 8);
-          //toSend.PushBack<s32>("Nothing", &nothing[0], 8);
-          
+          BeginBenchmark("UARTPutMessage");
+
           s32 startIndex;
           const u8 * bufferStart = reinterpret_cast<const u8*>(toSend.get_memoryStack().get_validBufferStart(startIndex));
           const s32 validUsedBytes = toSend.get_memoryStack().get_usedBytes() - startIndex;
@@ -92,6 +124,8 @@ namespace Anki {
           Anki::Cozmo::HAL::UARTPutMessage(0, 0, const_cast<u8*>(Embedded::SERIALIZED_BUFFER_HEADER), SERIALIZED_BUFFER_HEADER_LENGTH);
           Anki::Cozmo::HAL::UARTPutMessage(0, 0, const_cast<u8*>(bufferStart), validUsedBytes);
           Anki::Cozmo::HAL::UARTPutMessage(0, 0, const_cast<u8*>(Embedded::SERIALIZED_BUFFER_FOOTER), SERIALIZED_BUFFER_FOOTER_LENGTH);
+          
+          EndBenchmark("UARTPutMessage");
           
           //lastBenchmarkTime_algorithmsOnly = GetTimeF32();
 #endif // SEND_DEBUG_STREAM

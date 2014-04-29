@@ -335,6 +335,8 @@ namespace Anki {
                                        MemoryStack onchipScratch,
                                        MemoryStack offchipScratch)
       {
+        BeginBenchmark("VisionSystem_LookForMarkers");
+        
         AnkiAssert(parameters.isInitialized);
 
         const s32 maxMarkers = markers.get_maximumSize();
@@ -371,6 +373,8 @@ namespace Anki {
         if(result != RESULT_OK) {
           return result;
         }
+        
+        EndBenchmark("VisionSystem_LookForMarkers");
         
         DebugStream::SendFiducialDetection(grayscaleImage, markers, ccmScratch, onchipScratch, offchipScratch);
         
@@ -529,6 +533,8 @@ namespace Anki {
                                       MemoryStack onchipScratch,
                                       MemoryStack offchipScratch)
       {
+        BeginBenchmark("VisionSystem_TrackTemplate");
+
         AnkiAssert(parameters.isInitialized);
 
 #if USE_MATLAB_TRACKER
@@ -707,6 +713,8 @@ namespace Anki {
         }
 #endif // #if DOCKING_ALGORITHM != DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
 
+        EndBenchmark("VisionSystem_TrackTemplate");
+        
         MatlabVisualization::SendTrack(grayscaleImage, tracker, converged, offchipScratch);
 
         //MatlabVisualization::SendTrackerPrediction_Compare(tracker, offchipScratch);
@@ -1056,7 +1064,7 @@ namespace Anki {
 
         if(!isInitialized_) {
 
-          captureResolution_ = Vision::CAMERA_RES_QVGA;
+          captureResolution_ = Vision::CAMERA_RES_QQVGA;
           faceDetectionResolution_ = Vision::CAMERA_RES_QVGA;
 
           // WARNING: the order of these initializations matter!
@@ -1529,8 +1537,6 @@ namespace Anki {
           
           DownsampleAndSendImage(grayscaleImage);
 
-          BeginBenchmark("VisionSystem_LookForMarkers");
-
           const Result result = LookForMarkers(
                                                    grayscaleImage,
                                                    detectionParameters_,
@@ -1538,9 +1544,6 @@ namespace Anki {
                                                    VisionMemory::ccmScratch_,
                                                    VisionMemory::onchipScratch_,
                                                    VisionMemory::offchipScratch_);
-                          
-          EndBenchmark("VisionSystem_LookForMarkers");
-
 
           if(result != RESULT_OK) {
             return RESULT_FAIL;
@@ -1666,8 +1669,6 @@ namespace Anki {
 
           // Set by TrackTemplate() call
           bool converged = false;
-
-          BeginBenchmark("VisionSystem_TrackTemplate");
           
           const Result trackResult = TrackTemplate(
                                                        grayscaleImage,
@@ -1678,9 +1679,7 @@ namespace Anki {
                                                        VisionMemory::ccmScratch_,
                                                        onchipScratch_local,
                                                        offchipScratch_local);
-          
-          EndBenchmark("VisionSystem_TrackTemplate");
-
+            
           if(trackResult != RESULT_OK) {
             PRINT("VisionSystem::Update(): TrackTemplate() failed.\n");
             return RESULT_FAIL;
