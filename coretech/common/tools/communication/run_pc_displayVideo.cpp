@@ -112,6 +112,8 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
 
     FixedLengthList<BenchmarkElement> benchmarks = *(reinterpret_cast<FixedLengthList<BenchmarkElement>*>(newObject.startOfPayload));
 
+    //PrintBenchmarkResults(benchmarks, false, false);
+
     FixedLengthList<BenchmarkElementName> namesToDisplay(1, scratch, Flags::Buffer(true, false, true));
     snprintf(namesToDisplay[0].name, BenchmarkElement::NAME_LENGTH, "DetectFiducialMarkers");
 

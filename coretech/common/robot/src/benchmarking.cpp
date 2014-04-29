@@ -471,7 +471,7 @@ namespace Anki
       }
 
       // Draw the total time as gray
-      const s32 numPixelsTotal = Round<s32>(pixelsPerMillisecond * results[totalTimeIndex].inclusive_total);
+      const s32 numPixelsTotal = Round<s32>(pixelsPerMillisecond * 1000.0 * results[totalTimeIndex].inclusive_total);
       cv::line(
         toShowImage,
         cv::Point(toShowImageColumn, imageHeight - 1),
@@ -484,7 +484,7 @@ namespace Anki
       s32 curX = imageHeight - 1;
       for(s32 iName=0; iName<namesToDisplay.get_size(); iName++) {
         const s32 index = CompileBenchmarkResults::GetNameIndex(namesToDisplay[iName].name, results);
-        const s32 numPixels = Round<s32>(pixelsPerMillisecond * results[index].exclusive_total);
+        const s32 numPixels = Round<s32>(pixelsPerMillisecond * 1000.0 * results[index].exclusive_total);
 
         cv::line(
           toShowImage,
