@@ -918,7 +918,7 @@ namespace Anki
         Transformations::PlanarTransformation_f32 previousTransformation(this->transformation.get_transformType(), scratch);
 
         for(s32 iScale=numPyramidLevels-1; iScale>=0; iScale--) {
-          /*
+          
           verify_converged = false;
           
           previousTransformation.Set(this->transformation);
@@ -927,8 +927,8 @@ namespace Anki
           if((lastResult = IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance_angle, convergenceTolerance_distance, Transformations::TRANSFORM_TRANSLATION, verify_converged, scratch)) != RESULT_OK)
             return lastResult;
           EndBenchmark("UpdateTrack.refineTranslation");
-*/
-          if(true /*verify_converged*/) {
+
+          if(verify_converged) {
             previousTransformation.Set(this->transformation);
             
             if(this->transformation.get_transformType() != Transformations::TRANSFORM_TRANSLATION) {
@@ -1407,7 +1407,7 @@ namespace Anki
               AWAt_raw[17] -= Arow[3] * Arow[5];
               
               AWAt_raw[18] -= Arow[4] * Arow[4];
-              AWAt_raw[19] -= Arow[5] * Arow[5];
+              AWAt_raw[19] -= Arow[4] * Arow[5];
               
               AWAt_raw[20] -= Arow[5] * Arow[5];
               
