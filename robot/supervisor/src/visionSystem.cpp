@@ -31,8 +31,8 @@
 // Cozmo-Specific Library Includes
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
-#include "anki/cozmo/robot/messages.h"
-#include "anki/cozmo/robot/visionSystem.h"
+#include "messages.h"
+#include "visionSystem.h"
 
 // Local Cozmo Includes
 #include "headController.h"

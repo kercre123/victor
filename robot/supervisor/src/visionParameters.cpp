@@ -14,7 +14,7 @@
 
 #include "anki/common/robot/utilities.h"
 
-#include "anki/cozmo/robot/visionSystem.h"
+#include "visionSystem.h"
 
 namespace Anki {
   namespace Cozmo {

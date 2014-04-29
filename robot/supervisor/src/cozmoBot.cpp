@@ -1,10 +1,9 @@
 #include "anki/common/robot/config.h"
-#include "anki/cozmo/robot/messages.h"
-
-// TODO: move more of these include files to "src"
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h" // simulated or real!
+#include "anki/cozmo/robot/debug.h"
+#include "messages.h"
 #include "imuFilter.h"
 #include "pickAndPlaceController.h"
 #include "dockingController.h"
@@ -12,13 +11,12 @@
 #include "headController.h"
 #include "liftController.h"
 #include "testModeController.h"
-#include "anki/cozmo/robot/debug.h"
-#include "anki/cozmo/robot/localization.h"
-#include "anki/cozmo/robot/pathFollower.h"
-#include "anki/cozmo/robot/speedController.h"
-#include "anki/cozmo/robot/steeringController.h"
-#include "anki/cozmo/robot/wheelController.h"
-#include "anki/cozmo/robot/visionSystem.h"
+#include "localization.h"
+#include "pathFollower.h"
+#include "speedController.h"
+#include "steeringController.h"
+#include "wheelController.h"
+#include "visionSystem.h"
 
 #include "anki/messaging/shared/utilMessaging.h"
 

@@ -7,10 +7,10 @@
 
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
-#include "anki/cozmo/robot/steeringController.h"
+#include "steeringController.h"
 #include "anki/cozmo/robot/trace.h"
-#include "anki/cozmo/robot/speedController.h"
-#include "anki/cozmo/robot/wheelController.h"
+#include "speedController.h"
+#include "wheelController.h"
 
 #include <stdio.h>
 
