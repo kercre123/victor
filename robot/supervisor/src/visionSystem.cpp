@@ -1375,7 +1375,7 @@ namespace Anki {
       DebugStream::SendBinaryImage(grayscaleImage, "Binary Robot Image", tracker_, trackerParameters_, VisionMemory::ccmScratch_, VisionMemory::onchipScratch_, VisionMemory::offchipScratch_);
       HAL::MicroWait(250000);
 #else
-      DebugStream::SendImage(grayscaleImage, exposureTime, "Robot Image");
+      DebugStream::SendImage(grayscaleImage, exposureTime, "Robot Image", VisionMemory::offchipScratch_);
       HAL::MicroWait(166666); // 6fps
       //HAL::MicroWait(140000); //7fps
       //HAL::MicroWait(125000); //8fps
