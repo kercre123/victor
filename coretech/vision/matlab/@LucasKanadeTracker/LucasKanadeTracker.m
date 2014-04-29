@@ -162,6 +162,7 @@ classdef LucasKanadeTracker < handle
                 % the image plane
                 pose = camera.computeExtrinsics([x-this.K(1,3) y-this.K(2,3)], Marker3D);
                 
+                
                 % Compute Euler angles from R
                 this.rotationMatrix = pose.Rmat;
                                 
@@ -231,8 +232,8 @@ classdef LucasKanadeTracker < handle
                 this.tform = eye(3);
             end
             
-            xmin = floor(min(x)); xmax = ceil(max(x));
-            ymin = floor(min(y)); ymax = ceil(max(y));
+            xmin = max(1, floor(min(x))); xmax = min(ncols, ceil(max(x)));
+            ymin = max(1, floor(min(y))); ymax = min(nrows, ceil(max(y)));
             
             this.height = ymax - ymin + 1;
             this.width  = xmax - xmin + 1;
@@ -242,12 +243,12 @@ classdef LucasKanadeTracker < handle
                this.width  = this.width  * (1 + TemplateRegionPaddingFraction);
                
                xmid = (xmax+xmin)/2;
-               xmin = round(xmid - this.width/2);
-               xmax = round(xmid + this.width/2);
+               xmin = max(1, round(xmid - this.width/2));
+               xmax = min(ncols, round(xmid + this.width/2));
                
                ymid = (ymax+ymin)/2;
-               ymin = round(ymid - this.height/2);
-               ymax = round(ymid + this.height/2);
+               ymin = max(1, round(ymid - this.height/2));
+               ymax = min(nrows, round(ymid + this.height/2));
             end
             
             maskBBox = [xmin ymin xmax-xmin ymax-ymin];
@@ -415,7 +416,14 @@ classdef LucasKanadeTracker < handle
                     if numSamplesCurrent < numel(this.xgrid{i_scale})
                         
                         mag = sqrt(Ix.^2 + Iy.^2);
-                        mag(image_right(mag)>mag | image_left(mag)>mag | image_down(mag)>mag | image_up(mag)>mag) = 0;
+                        
+                        % Suppress non-local maxima
+                        NLMS = (mag > image_up(mag)      & mag > image_down(mag))      | ...
+                               (mag > image_left(mag)    & mag > image_right(mag))     | ...
+                               (mag > image_upleft(mag)  & mag > image_downright(mag)) | ...
+                               (mag > image_upright(mag) & mag > image_downleft(mag));
+                        mag(~NLMS) = 0;
+                        
                         %{
                     Ix_norm = Ix./max(eps,mag);
                     Iy_norm = Iy./max(eps,mag);
