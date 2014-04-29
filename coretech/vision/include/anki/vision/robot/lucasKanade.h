@@ -402,7 +402,7 @@ namespace Anki
         {
           f32 xCoordinate;
           f32 yCoordinate;
-          u8 grayvalue;
+          f32 grayvalue;
           f32 A[6];
         } TemplateSample;
         
@@ -447,6 +447,10 @@ namespace Anki
         FixedLengthList<FixedLengthList<TemplateSample> > templateSamplePyramid;
         // FixedLengthList<FixedLengthList<JacobianSample> > jacobianSamplePyramid;
         FixedLengthList<Array<f32> > AtAPyramid;
+
+        // Normalization data
+        FixedLengthList<f32> normalizationMean;
+        FixedLengthList<f32> normalizationSigmaInv;
         
         FixedLengthList<VerifySample> verificationSamples;
         

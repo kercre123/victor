@@ -29,6 +29,8 @@ non-disclosure agreement with Anki, inc.
 
 #define COMPUTE_CONVERGENCE_FROM_CORNER_CHANGE 0
 
+#define USE_INTENSITY_NORMALIZATION 0
+
 // If 0, just uses nearest pixel
 #define USE_LINEAR_INTERPOLATION_FOR_VERIFICATION 0
 
@@ -243,6 +245,13 @@ namespace Anki
         this->templateSamplePyramid.set_size(numPyramidLevels);
         this->AtAPyramid.set_size(numPyramidLevels);
         
+#if USE_INTENSITY_NORMALIZATION
+        this->normalizationMean     = FixedLengthList<f32>(numPyramidLevels, onchipScratch);
+        this->normalizationSigmaInv = FixedLengthList<f32>(numPyramidLevels, onchipScratch);
+        this->normalizationMean.set_size(numPyramidLevels);
+        this->normalizationSigmaInv.set_size(numPyramidLevels);
+#endif
+        
         //
         // Compute the samples (and their Jacobians) at each scale
         //
@@ -295,6 +304,22 @@ namespace Anki
               AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "Interp2_Projective failed with code 0x%x", lastResult);
               return;
             }
+            
+#if USE_INTENSITY_NORMALIZATION
+            // Compute the mean and standard deviation of the template for normalization
+            f32 tempVariance;
+            if((lastResult = Matrix::MeanAndVar<u8,f32>(templateImageAtScale, this->normalizationMean[iScale], tempVariance)) != RESULT_OK) {
+              AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "MeanAndVar failed with code 0x%x", lastResult);
+              return;
+            }
+            AnkiConditionalError(this->normalizationMean[iScale] < 0.f || this->normalizationMean[iScale] > 255.f,
+                                 "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
+                                 "Template mean out of reasonable bounds [0,255] - was %.f\n", this->normalizationMean[iScale]);
+            AnkiConditionalError(tempVariance > 0.f,
+                                 "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
+                                 "Template variance was zero or negative.");
+            this->normalizationSigmaInv[iScale] = 1.f/sqrtf(static_cast<f32>(tempVariance));
+#endif
             
             // Compute X gradient image
             Array<f32> templateImageXGradient = Array<f32>(numPointsY, numPointsX, offchipScratch);
@@ -525,7 +550,14 @@ namespace Anki
             TemplateSample * restrict pTemplateSamplePyramid = this->templateSamplePyramid[iScale].Pointer(0);
             
             const f32 scale = static_cast<f32>(1 << iScale);
+            
+#if USE_INTENSITY_NORMALIZATION
+            const f32 curMean     = this->normalizationMean[iScale];
+            const f32 curSigmaInv = this->normalizationSigmaInv[iScale];
+            const f32 scaleOverFiveTen = (scale / (2.0f*255.0f)) * curSigmaInv;
+#else
             const f32 scaleOverFiveTen = scale / (2.0f*255.0f);
+#endif
             
             for(s32 iSample=0; iSample<numSamples; iSample++){
               const s32 curIndex = pMagnitudeIndexes[iSample];
@@ -533,7 +565,11 @@ namespace Anki
               TemplateSample curTemplateSample;
               curTemplateSample.xCoordinate = pXCoordinates[curIndex];
               curTemplateSample.yCoordinate = pYCoordinates[curIndex];
-              curTemplateSample.grayvalue   = pGrayscaleVector[curIndex];
+#if USE_INTENSITY_NORMALIZATION
+              curTemplateSample.grayvalue   = (static_cast<f32>(pGrayscaleVector[curIndex]) - curMean) * curSigmaInv;
+#else
+              curTemplateSample.grayvalue   = static_cast<f32>(pGrayscaleVector[curIndex]);
+#endif
               
               // Everything below here is about filling in the Jacobian info
               // for this sample
@@ -882,6 +918,7 @@ namespace Anki
         Transformations::PlanarTransformation_f32 previousTransformation(this->transformation.get_transformType(), scratch);
 
         for(s32 iScale=numPyramidLevels-1; iScale>=0; iScale--) {
+          /*
           verify_converged = false;
           
           previousTransformation.Set(this->transformation);
@@ -890,8 +927,8 @@ namespace Anki
           if((lastResult = IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance_angle, convergenceTolerance_distance, Transformations::TRANSFORM_TRANSLATION, verify_converged, scratch)) != RESULT_OK)
             return lastResult;
           EndBenchmark("UpdateTrack.refineTranslation");
-
-          if(verify_converged) {
+*/
+          if(true /*verify_converged*/) {
             previousTransformation.Set(this->transformation);
             
             if(this->transformation.get_transformType() != Transformations::TRANSFORM_TRANSLATION) {
@@ -911,7 +948,7 @@ namespace Anki
             // transformation
             this->transformation.Set(previousTransformation);
           }
-          
+       
         } // for(s32 iScale=numPyramidLevels; iScale>=0; iScale--)
 
         //DEBUG!!!
@@ -1035,14 +1072,19 @@ namespace Anki
         }
 #endif
 
-        const f32 xyReferenceMin = 0.0f;
-        const f32 xReferenceMax = static_cast<f32>(nextImageWidth) - 1.0f;
-        const f32 yReferenceMax = static_cast<f32>(nextImageHeight) - 1.0f;
+        const f32 xyReferenceMin = 0.f;
+        const f32 xReferenceMax = static_cast<f32>(nextImageWidth - 1);
+        const f32 yReferenceMax = static_cast<f32>(nextImageHeight - 1);
 
         const TemplateSample * restrict pTemplateSamplePyramid = this->templateSamplePyramid[whichScale].Pointer(0);
 
         const s32 numTemplateSamples = this->get_numTemplatePixels(whichScale);
 
+#if USE_INTENSITY_NORMALIZATION
+        const f32 curMean     = this->normalizationMean[whichScale];
+        const f32 curSigmaInv = this->normalizationSigmaInv[whichScale];
+#endif
+        
         for(s32 iteration=0; iteration<maxIterations; iteration++) {
           const Array<f32> &homography = this->transformation.get_homography();
           const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2] / initialImageScaleF32;
@@ -1070,7 +1112,7 @@ namespace Anki
           s32 numInBounds = 0;
 
           // TODO: make the x and y limits from 1 to end-2
-
+          
           for(s32 iSample=0; iSample<numTemplateSamples; iSample++) {
             const TemplateSample curSample = pTemplateSamplePyramid[iSample];
             const f32 yOriginal = curSample.yCoordinate;
@@ -1122,7 +1164,7 @@ namespace Anki
             const s32 y0S32 = Round<s32>(y0);
             const s32 y1S32 = Round<s32>(y1);
             const s32 x0S32 = Round<s32>(x0);
-
+            
             const u8 * restrict pReference_y0 = nextImage.Pointer(y0S32, x0S32);
             const u8 * restrict pReference_y1 = nextImage.Pointer(y1S32, x0S32);
 
@@ -1131,13 +1173,19 @@ namespace Anki
             const f32 pixelBL = *pReference_y1;
             const f32 pixelBR = *(pReference_y1+1);
 
-            const f32 interpolatedPixelF32 = InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse);
+            f32 interpolatedPixelF32 = InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR,
+                                                                  alphaY, alphaYinverse, alphaX, alphaXinverse);
 
+#if USE_INTENSITY_NORMALIZATION
+            interpolatedPixelF32 = (interpolatedPixelF32 - curMean) * curSigmaInv;
+#endif
+            
             //const u8 interpolatedPixel = static_cast<u8>(Round(interpolatedPixelF32));
 
             // This block is the non-interpolation part of the per-sample algorithm
             {
               const f32 templatePixelValue = static_cast<f32>(curSample.grayvalue);
+              //const f32 templatePixelValue = curSample.grayvalue;
 
               const f32 tGradientValue = oneOverTwoFiftyFive * (interpolatedPixelF32 - templatePixelValue);
 
@@ -1146,12 +1194,12 @@ namespace Anki
               b2 += A2 * tGradientValue;
             }
           } // for(s32 iSample=0; iSample<numTemplateSamples; iSample++)
-
+/*
           if(numInBounds < 16) {
             AnkiWarn("LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack_Translation", "Template drifted too far out of image.");
             return RESULT_OK;
           }
-          
+  */
           // Copy out the AtA results for this iteration and create the full
           // symmetric matrix
           AWAt[0][0] = AWAt00;
@@ -1237,7 +1285,7 @@ namespace Anki
         f32 minChange = 0.f;
         
         const s32 nextImageHeight = nextImage.get_size(0);
-        const s32 nextImageWidth = nextImage.get_size(1);
+        const s32 nextImageWidth  = nextImage.get_size(1);
 
         const f32 scale = static_cast<f32>(1 << whichScale);
 
@@ -1260,13 +1308,18 @@ namespace Anki
 #endif
 
         const f32 xyReferenceMin = 0.0f;
-        const f32 xReferenceMax = static_cast<f32>(nextImageWidth) - 1.0f;
-        const f32 yReferenceMax = static_cast<f32>(nextImageHeight) - 1.0f;
+        const f32 xReferenceMax = static_cast<f32>(nextImageWidth - 1);
+        const f32 yReferenceMax = static_cast<f32>(nextImageHeight - 1);
 
         const TemplateSample * restrict pTemplateSamplePyramid = this->templateSamplePyramid[whichScale].Pointer(0);
 
         const s32 numTemplateSamples = this->get_numTemplatePixels(whichScale);
 
+#if USE_INTENSITY_NORMALIZATION
+        const f32 curMean     = this->normalizationMean[whichScale];
+        const f32 curSigmaInv = this->normalizationSigmaInv[whichScale];
+#endif
+        
         for(s32 iteration=0; iteration<maxIterations; iteration++) {
           const Array<f32> &homography = this->transformation.get_homography();
           const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2] / initialImageScaleF32;
@@ -1330,34 +1383,34 @@ namespace Anki
             // If out of bounds, remove this sample's contribution from the
             // AtA matrix
             if(x0 < xyReferenceMin || x1 > xReferenceMax || y0 < xyReferenceMin || y1 > yReferenceMax) {
-             
-             AWAt_raw[0]  -= Arow[0] * Arow[0];
-             AWAt_raw[1]  -= Arow[0] * Arow[1];
-             AWAt_raw[2]  -= Arow[0] * Arow[2];
-             AWAt_raw[3]  -= Arow[0] * Arow[3];
-             AWAt_raw[4]  -= Arow[0] * Arow[4];
-             AWAt_raw[5]  -= Arow[0] * Arow[5];
-             
-             AWAt_raw[6]  -= Arow[1] * Arow[1];
-             AWAt_raw[7]  -= Arow[1] * Arow[2];
-             AWAt_raw[8]  -= Arow[1] * Arow[3];
-             AWAt_raw[9]  -= Arow[1] * Arow[4];
-             AWAt_raw[10] -= Arow[1] * Arow[5];
-
-             AWAt_raw[11] -= Arow[2] * Arow[2];
-             AWAt_raw[12] -= Arow[2] * Arow[3];
-             AWAt_raw[13] -= Arow[2] * Arow[4];
-             AWAt_raw[14] -= Arow[2] * Arow[5];
-             
-             AWAt_raw[15] -= Arow[3] * Arow[3];
-             AWAt_raw[16] -= Arow[3] * Arow[4];
-             AWAt_raw[17] -= Arow[3] * Arow[5];
-             
-             AWAt_raw[18] -= Arow[4] * Arow[4];
-             AWAt_raw[19] -= Arow[5] * Arow[5];
-             
-             AWAt_raw[20] -= Arow[5] * Arow[5];
-
+              
+              AWAt_raw[0]  -= Arow[0] * Arow[0];
+              AWAt_raw[1]  -= Arow[0] * Arow[1];
+              AWAt_raw[2]  -= Arow[0] * Arow[2];
+              AWAt_raw[3]  -= Arow[0] * Arow[3];
+              AWAt_raw[4]  -= Arow[0] * Arow[4];
+              AWAt_raw[5]  -= Arow[0] * Arow[5];
+              
+              AWAt_raw[6]  -= Arow[1] * Arow[1];
+              AWAt_raw[7]  -= Arow[1] * Arow[2];
+              AWAt_raw[8]  -= Arow[1] * Arow[3];
+              AWAt_raw[9]  -= Arow[1] * Arow[4];
+              AWAt_raw[10] -= Arow[1] * Arow[5];
+              
+              AWAt_raw[11] -= Arow[2] * Arow[2];
+              AWAt_raw[12] -= Arow[2] * Arow[3];
+              AWAt_raw[13] -= Arow[2] * Arow[4];
+              AWAt_raw[14] -= Arow[2] * Arow[5];
+              
+              AWAt_raw[15] -= Arow[3] * Arow[3];
+              AWAt_raw[16] -= Arow[3] * Arow[4];
+              AWAt_raw[17] -= Arow[3] * Arow[5];
+              
+              AWAt_raw[18] -= Arow[4] * Arow[4];
+              AWAt_raw[19] -= Arow[5] * Arow[5];
+              
+              AWAt_raw[20] -= Arow[5] * Arow[5];
+              
               continue;
             }
 
@@ -1372,7 +1425,7 @@ namespace Anki
             const s32 y0S32 = Round<s32>(y0);
             const s32 y1S32 = Round<s32>(y1);
             const s32 x0S32 = Round<s32>(x0);
-
+            
             const u8 * restrict pReference_y0 = nextImage.Pointer(y0S32, x0S32);
             const u8 * restrict pReference_y1 = nextImage.Pointer(y1S32, x0S32);
 
@@ -1381,8 +1434,13 @@ namespace Anki
             const f32 pixelBL = *pReference_y1;
             const f32 pixelBR = *(pReference_y1+1);
 
-            const f32 interpolatedPixelF32 = InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse);
+            f32 interpolatedPixelF32 = InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR,
+                                                                  alphaY, alphaYinverse, alphaX, alphaXinverse);
 
+#if USE_INTENSITY_NORMALIZATION
+            interpolatedPixelF32 = (interpolatedPixelF32 - curMean) * curSigmaInv;
+#endif
+            
             // DEBUG:
             /*
             debugStuff[iSample][0] = curSample.xCoordinate;
@@ -1416,10 +1474,12 @@ namespace Anki
             }
           } // for(s32 iSample=0; iSample<numTemplateSamples; iSample++)
 
+          /*
           if(numInBounds < 16) {
             AnkiWarn("LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack_Projective", "Template drifted too far out of image.");
             return RESULT_OK;
           }
+           */
 
           // Get the symmetric entries back out of the "raw" matrix
           symIndex = 0;
@@ -1647,8 +1707,12 @@ namespace Anki
             verify_numSimilarPixels++;
           }
         } // for(s32 iSample=0; iSample<numTemplateSamples; iSample++)
-        
-        verify_meanAbsoluteDifference = totalGrayvalueDifference / verify_numInBounds;
+
+        if(verify_numInBounds > 0) {
+          verify_meanAbsoluteDifference = totalGrayvalueDifference / verify_numInBounds;
+        } else {
+          verify_meanAbsoluteDifference = s32_MAX;
+        }
 
         return RESULT_OK;
         
