@@ -24,7 +24,7 @@
 //
 
 // For now at least, Viz uses Robot-style message structures
-#include "anki/cozmo/MessageDefMacros_Robot.h"
+#include "anki/cozmo/robot/MessageDefMacros_Robot.h"
 
 
 // VizObject

@@ -4,12 +4,12 @@
 #include "headController.h"
 #include "liftController.h"
 
-#include "anki/cozmo/cozmoTypes.h"
+#include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
-#include "anki/cozmo/robot/speedController.h"
-#include "anki/cozmo/robot/steeringController.h"
-#include "anki/cozmo/robot/visionSystem.h"
+#include "speedController.h"
+#include "steeringController.h"
+#include "visionSystem.h"
 
 
 #define DEBUG_PAP_CONTROLLER 0

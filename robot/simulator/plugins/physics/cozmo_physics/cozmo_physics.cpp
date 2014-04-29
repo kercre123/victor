@@ -17,7 +17,7 @@
 #include <map>
 #include <vector>
 
-#include "anki/cozmo/VizStructs.h"
+#include "anki/cozmo/shared/VizStructs.h"
 #include "anki/messaging/shared/UdpServer.h"
 
 
@@ -71,7 +71,7 @@ namespace Anki {
   namespace Cozmo{
 
 #define MESSAGE_DEFINITION_MODE MESSAGE_DISPATCH_DEFINITION_MODE
-#include "anki/cozmo/VizMsgDefs.h"
+#include "anki/cozmo/shared/VizMsgDefs.h"
     
     typedef void (*DispatchFcn_t)(const u8* buffer);
     
@@ -80,7 +80,7 @@ namespace Anki {
       0, // Empty entry for NO_MESSAGE_ID
 #undef  MESSAGE_DEFINITION_MODE
 #define MESSAGE_DEFINITION_MODE MESSAGE_DISPATCH_FCN_TABLE_DEFINITION_MODE
-#include "anki/cozmo/VizMsgDefs.h"
+#include "anki/cozmo/shared/VizMsgDefs.h"
       0 // Final dummy entry without comma at end
     };
 

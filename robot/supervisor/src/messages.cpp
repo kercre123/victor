@@ -28,7 +28,7 @@ namespace Anki {
         const TableEntry LookupTable_[NUM_TABLE_ENTRIES] = {
           {0, 0, 0}, // Empty entry for NO_MESSAGE_ID
 #define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_MODE
-#include "anki/cozmo/MessageDefinitions.h"
+#include "anki/cozmo/shared/MessageDefinitions.h"
           {0, 0, 0} // Final dummy entry without comma at end
         };
         
