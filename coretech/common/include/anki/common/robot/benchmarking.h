@@ -62,10 +62,11 @@ namespace Anki
       void Print(const bool verbose=true, const bool microseconds=true, const FixedLengthList<s32> * minCharacterToPrint=NULL) const;
     } BenchmarkElement;
 
-    typedef struct BenchmarkElementName
+    typedef struct ShowBenchmarkParameters
     {
       char name[BenchmarkElement::NAME_LENGTH];
-    } BenchmarkElementName;
+      bool showExclusiveTime;
+    } ShowBenchmarkParameters;
 
     // Call this before doing any benchmarking, to clear the buffer of benchmarkEvents.
     // Can be called multiple times.
@@ -99,7 +100,7 @@ namespace Anki
     // namesToDisplay can be 11 or less names
     Result ShowBenchmarkResults(
       const FixedLengthList<BenchmarkElement> &results,
-      const FixedLengthList<BenchmarkElementName> &namesToDisplay,
+      const FixedLengthList<ShowBenchmarkParameters> &namesToDisplay,
       const f64 pixelsPerMillisecond,
       const s32 imageHeight,
       const s32 imageWidth);

@@ -107,15 +107,23 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
 
   if(strcmp(newObject.objectName, "Benchmarks") == 0) {
     const f64 pixelsPerMillisecond = 2.0;
-    const s32 imageHeight = 800;
+    const s32 imageHeight = 400;
     const s32 imageWidth = 1600;
 
     FixedLengthList<BenchmarkElement> benchmarks = *(reinterpret_cast<FixedLengthList<BenchmarkElement>*>(newObject.startOfPayload));
 
     //PrintBenchmarkResults(benchmarks, false, false);
 
-    FixedLengthList<BenchmarkElementName> namesToDisplay(1, scratch, Flags::Buffer(true, false, true));
-    snprintf(namesToDisplay[0].name, BenchmarkElement::NAME_LENGTH, "DetectFiducialMarkers");
+    FixedLengthList<ShowBenchmarkParameters> namesToDisplay(3, scratch, Flags::Buffer(true, false, true));
+
+    snprintf(namesToDisplay[0].name, BenchmarkElement::NAME_LENGTH, "VisionSystem_CameraGetFrame");
+    namesToDisplay[0].showExclusiveTime = false;
+
+    snprintf(namesToDisplay[1].name, BenchmarkElement::NAME_LENGTH, "VisionSystem_LookForMarkers");
+    namesToDisplay[1].showExclusiveTime = false;
+
+    snprintf(namesToDisplay[2].name, BenchmarkElement::NAME_LENGTH, "VisionSystem_TrackTemplate");
+    namesToDisplay[2].showExclusiveTime = false;
 
     ShowBenchmarkResults(benchmarks, namesToDisplay, pixelsPerMillisecond, imageHeight, imageWidth);
   }

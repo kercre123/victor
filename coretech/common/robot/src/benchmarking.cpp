@@ -425,30 +425,47 @@ namespace Anki
 
     Result ShowBenchmarkResults(
       const FixedLengthList<BenchmarkElement> &results,
-      const FixedLengthList<BenchmarkElementName> &namesToDisplay,
+      const FixedLengthList<ShowBenchmarkParameters> &namesToDisplay,
       const f64 pixelsPerMillisecond,
       const s32 imageHeight,
       const s32 imageWidth)
     {
 #ifdef ANKICORETECH_EMBEDDED_USE_OPENCV
-      const s32 htmlColors[16][3] = { // {R,G,B}
-        {0xFF, 0xFF, 0xFF}, // 0  White
-        {0xC0, 0xC0, 0xC0}, // 1  Silver
-        {0x80, 0x80, 0x80}, // 2  Gray
-        {0x00, 0x00, 0x00}, // 3  Black
+      //const s32 htmlColors[16][3] = { // {R,G,B}
+      //  {0xFF, 0xFF, 0xFF}, // 0  White
+      //  {0xC0, 0xC0, 0xC0}, // 1  Silver
+      //  {0x80, 0x80, 0x80}, // 2  Gray
+      //  {0x00, 0x00, 0x00}, // 3  Black
+      //  {0xFF, 0x00, 0x00}, // 4  Red
+      //  {0x80, 0x00, 0x00}, // 5  Maroon
+      //  {0xFF, 0xFF, 0x00}, // 6  Yellow
+      //  {0x80, 0x80, 0x00}, // 7  Olive
+      //  {0x00, 0xFF, 0x00}, // 8  Lime
+      //  {0x00, 0x80, 0x00}, // 9  Green
+      //  {0x00, 0xFF, 0xFF}, // 10 Aqua
+      //  {0x00, 0x80, 0x80}, // 11 Teal
+      //  {0x00, 0x00, 0xFF}, // 12 Blue
+      //  {0x00, 0x00, 0x80}, // 13 Navy
+      //  {0xFF, 0x00, 0xFF}, // 14 Fuchsia
+      //  {0x80, 0x00, 0x80}  // 15 Purple
+      //};
+
+      const s32 colors[12][3] = { // {R,G,B}
         {0xFF, 0x00, 0x00}, // 4  Red
-        {0x80, 0x00, 0x00}, // 5  Maroon
+        {0x00, 0x80, 0x00}, // 9  Green
+        {0x00, 0x00, 0xFF}, // 12 Blue
         {0xFF, 0xFF, 0x00}, // 6  Yellow
+        {0xFF, 0x00, 0xFF}, // 14 Fuchsia
+        {0x80, 0x00, 0x00}, // 5  Maroon
         {0x80, 0x80, 0x00}, // 7  Olive
         {0x00, 0xFF, 0x00}, // 8  Lime
-        {0x00, 0x80, 0x00}, // 9  Green
         {0x00, 0xFF, 0xFF}, // 10 Aqua
         {0x00, 0x80, 0x80}, // 11 Teal
-        {0x00, 0x00, 0xFF}, // 12 Blue
         {0x00, 0x00, 0x80}, // 13 Navy
-        {0xFF, 0x00, 0xFF}, // 14 Fuchsia
         {0x80, 0x00, 0x80}  // 15 Purple
       };
+
+      const s32 blackWidth = 10;
 
       const s32 totalTimeIndex = CompileBenchmarkResults::GetNameIndex("TotalTime", results);
 
@@ -464,10 +481,18 @@ namespace Anki
         toShowImageColumn = 0;
       }
 
-      for(s32 iX=0; iX>5; iX++) {
-        const s32 x1 = iX % imageWidth;
-        const s32 x2 = (iX + 1) % imageWidth;
-        cv::rectangle(toShowImage, cv::Point(x1,0), cv::Point(x2,0), CV_FILLED);
+      for(s32 iX=0; iX<blackWidth; iX++) {
+        //const s32 x = MIN((toShowImageColumn + iX), imageWidth-1);
+        //cv::rectangle(toShowImage, cv::Rect(x1,0,blackWidth,imageHeight-1), cv::Scalar(0,0,0), CV_FILLED);
+
+        const s32 x = (toShowImageColumn + iX) % imageWidth;
+        cv::line(
+          toShowImage,
+          cv::Point(x, 0),
+          cv::Point(x, imageHeight - 1),
+          cv::Scalar(0,0,0),
+          1,
+          4);
       }
 
       // Draw the total time as gray
@@ -476,30 +501,39 @@ namespace Anki
         toShowImage,
         cv::Point(toShowImageColumn, imageHeight - 1),
         cv::Point(toShowImageColumn, MAX(0, imageHeight - numPixelsTotal)),
-        cv::Scalar(htmlColors[2][2], htmlColors[2][1], htmlColors[2][0]),
+        cv::Scalar(128, 128, 128),
         1,
         4);
 
       // Draw the specific benchmarks as colors
-      s32 curX = imageHeight - 1;
+      s32 curY = imageHeight - 1;
       for(s32 iName=0; iName<namesToDisplay.get_size(); iName++) {
         const s32 index = CompileBenchmarkResults::GetNameIndex(namesToDisplay[iName].name, results);
-        const s32 numPixels = Round<s32>(pixelsPerMillisecond * 1000.0 * results[index].exclusive_total);
+
+        if(index < 0)
+          continue;
+
+        const f64 timeElapsed = namesToDisplay[iName].showExclusiveTime ? results[index].exclusive_total : results[index].inclusive_total;
+
+        const s32 numPixels = Round<s32>(pixelsPerMillisecond * 1000.0 * timeElapsed);
 
         cv::line(
           toShowImage,
-          cv::Point(toShowImageColumn, curX),
-          cv::Point(toShowImageColumn, MAX(0, curX-numPixels+1)),
-          cv::Scalar(htmlColors[iName+4][2], htmlColors[iName+4][1], htmlColors[iName+4][0]),
+          cv::Point(toShowImageColumn, curY),
+          cv::Point(toShowImageColumn, MAX(0, curY-numPixels+1)),
+          cv::Scalar(colors[iName][2], colors[iName][1], colors[iName][0]),
           1,
           4);
 
-        curX -= numPixels;
+        curY -= numPixels;
       } // for(s32 iName=0; iName<namesToDisplay.get_size(); iName++)
 
       cv::imshow("Benchmarks", toShowImage);
 
       toShowImageColumn++;
+
+      if(toShowImageColumn >= imageWidth)
+        toShowImageColumn = 0;
 
       return RESULT_OK;
 #else // #ifdef ANKICORETECH_EMBEDDED_USE_OPENCV
