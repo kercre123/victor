@@ -89,7 +89,7 @@ namespace Anki
   {
     ShowBenchmarkParameters::ShowBenchmarkParameters(const char * name, const bool showExclusiveTime, const u8 *color)
     {
-      snprintf(this->name, BenchmarkElement::NAME_LENGTH, "VisionSystem_CameraGetFrame");
+      snprintf(this->name, BenchmarkElement::NAME_LENGTH, name);
       this->showExclusiveTime = showExclusiveTime;
       this->red = color[0];
       this->green = color[1];
