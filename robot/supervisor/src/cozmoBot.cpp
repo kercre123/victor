@@ -245,9 +245,11 @@ namespace Anki {
               HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RobotAvailable), &msg);
          
               // Start test mode
-              if(TestModeController::Start(DEFAULT_TEST_MODE) == RESULT_FAIL) {
-                PRINT("TestMode %d failed to start.\n", DEFAULT_TEST_MODE);
-                return RESULT_FAIL;
+              if (DEFAULT_TEST_MODE != TestModeController::TM_NONE) {
+                if(TestModeController::Start(DEFAULT_TEST_MODE) == RESULT_FAIL) {
+                  PRINT("TestMode %d failed to start.\n", DEFAULT_TEST_MODE);
+                  return RESULT_FAIL;
+                }
               }
               
               mode_ = WAITING;
@@ -277,7 +279,9 @@ namespace Anki {
         // Feedback / Display
         //////////////////////////////////////////////////////////////
         
+#if(!STREAM_DEBUG_IMAGES)
         Messages::SendRobotStateMsg();
+#endif
         
         HAL::UpdateDisplay();
         
