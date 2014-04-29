@@ -42,8 +42,20 @@ namespace Anki
           for(s32 x=1; x<imageWidth-1; x++) {
             pOut[x] = static_cast<IntermediateType>(pIn[x+1]) - static_cast<IntermediateType>(pIn[x-1]);
           }
-        }
 
+          // Fill in left/right boundaries
+          pOut[0] = 0;
+          pOut[imageWidth-1] = 0;
+        }
+        
+        // Fill in top/bottom boundaries
+        OutType * restrict pOutTop = out.Pointer(0,0);
+        OutType * restrict pOutBtm = out.Pointer(imageHeight-1,0);
+        for(s32 x=0; x<imageWidth; x++) {
+          pOutTop[x] = 0;
+          pOutBtm[x] = 0;
+        }
+        
         return RESULT_OK;
       }
 
@@ -67,8 +79,20 @@ namespace Anki
           for(s32 x=1; x<imageWidth-1; x++) {
             pOut[x] = static_cast<IntermediateType>(pIn_yp1[x]) - static_cast<IntermediateType>(pIn_ym1[x]);
           }
+          
+          // Fill in left/right boundaries
+          pOut[0] = 0;
+          pOut[imageWidth-1] = 0;
         }
 
+        // Fill in top/bottom boundaries
+        OutType * restrict pOutTop = out.Pointer(0,0);
+        OutType * restrict pOutBtm = out.Pointer(imageHeight-1,0);
+        for(s32 x=0; x<imageWidth; x++) {
+          pOutTop[x] = 0;
+          pOutBtm[x] = 0;
+        }
+        
         return RESULT_OK;
       }
 
