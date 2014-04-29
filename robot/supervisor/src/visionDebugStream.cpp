@@ -94,17 +94,19 @@ namespace Anki {
             newElement.exclusive_max = lastComputeBenchmarkResults_elapsedTime;
             newElement.exclusive_total = lastComputeBenchmarkResults_elapsedTime;
             newElement.numEvents = 1;
-            
+                        
             const s32 numBenchmarks = benchmarks.get_size();
             BenchmarkElement * restrict pBenchmarks = benchmarks.Pointer(0);
+            
+            // Iterate backwards, because "TotalTime" is probably the last BenchmarkElement
             for(s32 i=numBenchmarks-1; i>=0; i--) {
               if(strcmp(pBenchmarks[i].name, "TotalTime") == 0) {
                 pBenchmarks[i].inclusive_total += lastComputeBenchmarkResults_elapsedTime;
                 break;
               }              
             }
-            
-            benchmarks.set_size(numBenchmarks + 1);
+                        
+            benchmarks.PushBack(newElement);
           }
           
           toSend.PushBack<BenchmarkElement>("Benchmarks", benchmarks);
