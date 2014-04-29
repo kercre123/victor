@@ -7,8 +7,8 @@
 
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
-#include "anki/cozmo/robot/messages.h"
-#include "anki/cozmo/robot/wheelController.h"
+#include "messages.h"
+#include "wheelController.h"
 
 #include "sim_overlayDisplay.h"
 

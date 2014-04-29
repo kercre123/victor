@@ -53,6 +53,16 @@ namespace Anki {
         printf("Send msg %d of size %d failed\n", vizMsgID, msgSize+1);
       }
     }
+
+    
+    void VizManager::ShowObjects(bool show)
+    {
+      VizShowObjects v;
+      v.show = show ? 1 : 0;
+      
+      SendMessage(GET_MESSAGE_ID(VizShowObjects), &v);
+    }
+    
     
     // ===== Convenience object draw functions for specific object types ====
     

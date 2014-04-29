@@ -28,9 +28,9 @@
 // code based on the definitions below *is* specific to the two platforms.
 // Include the correct one based on the definition of COZMO_ROBOT / COZMO_BASESTATION
 #if defined(COZMO_ROBOT)
-#include "anki/cozmo/MessageDefMacros_Robot.h"
+#include "anki/cozmo/shared/MessageDefMacros_Robot.h"
 #elif defined(COZMO_BASESTATION)
-#include "anki/cozmo/MessageDefMacros_Basestation.h"
+#include "anki/cozmo/shared/MessageDefMacros_Basestation.h"
 #else
 #error Either COZMO_ROBOT or COZMO_BASESTATION should be defined.
 #endif

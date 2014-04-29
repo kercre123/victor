@@ -4,7 +4,7 @@
 #include "anki/common/robot/benchmarking.h"
 
 #include "anki/cozmo/robot/hal.h"
-#include "anki/cozmo/robot/visionSystem.h"
+#include "visionSystem.h"
 
 #include "visionDebugStream.h"
 

@@ -19,7 +19,7 @@
 
 #include "anki/planning/shared/path.h"
 
-#include "anki/cozmo/cozmoTypes.h"
+#include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/messages.h"
 

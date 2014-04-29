@@ -19,7 +19,7 @@
 #include "anki/vision/CameraSettings.h"
 #include "anki/planning/shared/path.h"
 #include "anki/messaging/shared/UdpClient.h"
-#include "anki/cozmo/VizStructs.h"
+#include "anki/cozmo/shared/VizStructs.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -51,6 +51,8 @@ namespace Anki {
       // Get a pointer to the singleton instance
       inline static VizManager* getInstance();
       
+      // Whether or not to display the viz objects
+      void ShowObjects(bool show);
       
       // ===== Convenience object draw functions for specific object types ====
       

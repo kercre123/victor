@@ -1,10 +1,9 @@
 #include "anki/common/robot/config.h"
-#include "anki/cozmo/robot/messages.h"
-
-// TODO: move more of these include files to "src"
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h" // simulated or real!
+#include "anki/cozmo/robot/debug.h"
+#include "messages.h"
 #include "imuFilter.h"
 #include "pickAndPlaceController.h"
 #include "dockingController.h"
@@ -12,13 +11,12 @@
 #include "headController.h"
 #include "liftController.h"
 #include "testModeController.h"
-#include "anki/cozmo/robot/debug.h"
-#include "anki/cozmo/robot/localization.h"
-#include "anki/cozmo/robot/pathFollower.h"
-#include "anki/cozmo/robot/speedController.h"
-#include "anki/cozmo/robot/steeringController.h"
-#include "anki/cozmo/robot/wheelController.h"
-#include "anki/cozmo/robot/visionSystem.h"
+#include "localization.h"
+#include "pathFollower.h"
+#include "speedController.h"
+#include "steeringController.h"
+#include "wheelController.h"
+#include "visionSystem.h"
 
 #include "anki/messaging/shared/utilMessaging.h"
 
@@ -142,12 +140,6 @@ namespace Anki {
          PRINT("LiftController initialization failed.\n");
          return RESULT_FAIL;
          }
-         
-        // Setup test mode
-        if(TestModeController::Init(DEFAULT_TEST_MODE) == RESULT_FAIL) {
-          PRINT("TestMode initialization failed.\n");
-          return RESULT_FAIL;
-        }
         
         // Start calibration
         StartMotorCalibrationRoutine();
@@ -251,7 +243,13 @@ namespace Anki {
               msg.robotID = HAL::GetRobotID();
               PRINT("Robot %d broadcasting availability message.\n", msg.robotID);
               HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RobotAvailable), &msg);
-            
+         
+              // Start test mode
+              if(TestModeController::Start(DEFAULT_TEST_MODE) == RESULT_FAIL) {
+                PRINT("TestMode %d failed to start.\n", DEFAULT_TEST_MODE);
+                return RESULT_FAIL;
+              }
+              
               mode_ = WAITING;
             }
             
@@ -304,16 +302,6 @@ namespace Anki {
         
       } // Robot::step_longExecution()
       
-      
-      void StopRobot()
-      {
-        // Stop wheels and vision system
-        PickAndPlaceController::Reset();
-        
-        // Stop lift and head
-        LiftController::SetAngularVelocity(0);
-        HeadController::SetAngularVelocity(0);
-      }
       
     } // namespace Robot
   } // namespace Cozmo

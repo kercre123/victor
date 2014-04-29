@@ -22,8 +22,6 @@
 #include "anki/vision/robot/fiducialMarkers.h"
 
 #include "anki/cozmo/robot/hal.h"
-#include "anki/cozmo/robot/messages.h"
-
 #include "visionParameters.h"
 
 namespace Anki {

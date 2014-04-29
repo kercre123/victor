@@ -8,12 +8,12 @@
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/common/robot/geometry.h"
 #include "anki/cozmo/robot/hal.h"
-#include "anki/cozmo/robot/localization.h"
-#include "anki/cozmo/robot/visionSystem.h"
-#include "anki/cozmo/robot/speedController.h"
-#include "anki/cozmo/robot/steeringController.h"
-#include "anki/cozmo/robot/pathFollower.h"
-#include "anki/cozmo/robot/messages.h"
+#include "localization.h"
+#include "visionSystem.h"
+#include "speedController.h"
+#include "steeringController.h"
+#include "pathFollower.h"
+#include "messages.h"
 
 
 #define DEBUG_DOCK_CONTROLLER 0

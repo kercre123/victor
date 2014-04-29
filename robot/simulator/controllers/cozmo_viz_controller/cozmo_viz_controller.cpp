@@ -12,7 +12,7 @@
 #include <string>
 #include <webots/Supervisor.hpp>
 #include "anki/cozmo/robot/cozmoConfig.h"
-#include "anki/cozmo/VizStructs.h"
+#include "anki/cozmo/shared/VizStructs.h"
 #include "anki/messaging/shared/UdpServer.h"
 #include "anki/messaging/shared/UdpClient.h"
 #include "anki/vision/CameraSettings.h"
@@ -25,7 +25,7 @@ namespace Anki {
     
 
 #define MESSAGE_DEFINITION_MODE MESSAGE_DISPATCH_DEFINITION_MODE
-#include "anki/cozmo/VizMsgDefs.h"
+#include "anki/cozmo/shared/VizMsgDefs.h"
 
     typedef void (*DispatchFcn_t)(const u8* buffer);
     
@@ -34,7 +34,7 @@ namespace Anki {
       0, // Empty entry for NO_MESSAGE_ID
 #undef  MESSAGE_DEFINITION_MODE
 #define MESSAGE_DEFINITION_MODE MESSAGE_DISPATCH_FCN_TABLE_DEFINITION_MODE
-#include "anki/cozmo/VizMsgDefs.h"
+#include "anki/cozmo/shared/VizMsgDefs.h"
       0 // Final dummy entry without comma at end
     };
     
@@ -183,6 +183,7 @@ namespace Anki {
     void ProcessVizSetPathColorMessage(const VizSetPathColor& msg){};
     void ProcessVizAppendPathSegmentLineMessage(const VizAppendPathSegmentLine& msg){};
     void ProcessVizAppendPathSegmentArcMessage(const VizAppendPathSegmentArc& msg){};
+    void ProcessVizShowObjectsMessage(const VizShowObjects& msg){};
     
   }  // namespace Cozmo
 } // namespace Anki
