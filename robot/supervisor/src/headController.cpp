@@ -193,6 +193,16 @@ namespace Anki {
     {
       return desiredAngle_.ToFloat();
     }
+
+    void GetCamPose(f32 &x, f32 &z, f32 &angle)
+    {
+      f32 cosH = cosf(currentAngle_.ToFloat());
+      f32 sinH = sinf(currentAngle_.ToFloat());
+      
+      x = HEAD_CAM_POSITION[0]*cosH - HEAD_CAM_POSITION[2]*sinH + NECK_JOINT_POSITION[0];
+      z = HEAD_CAM_POSITION[2]*cosH + HEAD_CAM_POSITION[0]*sinH + NECK_JOINT_POSITION[2];
+      angle = currentAngle_.ToFloat();
+    }
     
     void PoseAndSpeedFilterUpdate()
     {
