@@ -350,7 +350,7 @@ namespace Anki {
         }
 
         MatlabVisualization::ResetFiducialDetection(grayscaleImage);
-
+        
         const Result result = DetectFiducialMarkers(
                                                     grayscaleImage,
                                                     markers,
@@ -1345,8 +1345,12 @@ namespace Anki {
       Array<u8> grayscaleImage(captureHeight, captureWidth,
                                VisionMemory::onchipScratch_, Flags::Buffer(false,false,false));
 
+      BeginBenchmark("VisionSystem_CameraGetFrame");
+        
       HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
                           captureResolution_, exposureTime, false);
+      
+      EndBenchmark("VisionSystem_CameraGetFrame");
 
       if(autoExposure_enabled && (frameNumber % autoExposure_adjustEveryNFrames) == 0) {
         ComputeBestCameraParameters(
@@ -1389,8 +1393,12 @@ namespace Anki {
       Array<u8> grayscaleImage(captureHeight, captureWidth,
                                VisionMemory::offchipScratch_, Flags::Buffer(false,false,false));
 
+      BeginBenchmark("VisionSystem_CameraGetFrame");
+        
       HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
                           captureResolution_, exposureTime, false);
+      
+      EndBenchmark("VisionSystem_CameraGetFrame");
 
       if(autoExposure_enabled && (frameNumber % autoExposure_adjustEveryNFrames) == 0) {
       ComputeBestCameraParameters(
@@ -1501,8 +1509,12 @@ namespace Anki {
           Array<u8> grayscaleImage(captureHeight, captureWidth,
                                    VisionMemory::offchipScratch_, Flags::Buffer(false,false,false));
 
+          BeginBenchmark("VisionSystem_CameraGetFrame");
+          
           HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
                               captureResolution_, exposureTime, false);
+          
+          EndBenchmark("VisionSystem_CameraGetFrame");
          
           if(autoExposure_enabled && (frameNumber % autoExposure_adjustEveryNFrames) == 0) {
             ComputeBestCameraParameters(
@@ -1517,6 +1529,8 @@ namespace Anki {
           
           DownsampleAndSendImage(grayscaleImage);
 
+          BeginBenchmark("VisionSystem_LookForMarkers");
+
           const Result result = LookForMarkers(
                                                    grayscaleImage,
                                                    detectionParameters_,
@@ -1524,6 +1538,9 @@ namespace Anki {
                                                    VisionMemory::ccmScratch_,
                                                    VisionMemory::onchipScratch_,
                                                    VisionMemory::offchipScratch_);
+                          
+          EndBenchmark("VisionSystem_LookForMarkers");
+
 
           if(result != RESULT_OK) {
             return RESULT_FAIL;
@@ -1610,8 +1627,12 @@ namespace Anki {
           Array<u8> grayscaleImage(captureHeight, captureWidth,
                                    onchipScratch_local, Flags::Buffer(false,false,false));
 
+          BeginBenchmark("VisionSystem_CameraGetFrame");
+          
           HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
                               captureResolution_, exposureTime, false);
+          
+          EndBenchmark("VisionSystem_CameraGetFrame");
 
           // TODO: allow tracking to work with exposure changes
           /*if(autoExposure_enabled && (frameNumber % autoExposure_adjustEveryNFrames) == 0) {
@@ -1646,6 +1667,8 @@ namespace Anki {
           // Set by TrackTemplate() call
           bool converged = false;
 
+          BeginBenchmark("VisionSystem_TrackTemplate");
+          
           const Result trackResult = TrackTemplate(
                                                        grayscaleImage,
                                                        trackingQuad_,
@@ -1655,6 +1678,8 @@ namespace Anki {
                                                        VisionMemory::ccmScratch_,
                                                        onchipScratch_local,
                                                        offchipScratch_local);
+          
+          EndBenchmark("VisionSystem_TrackTemplate");
 
           if(trackResult != RESULT_OK) {
             PRINT("VisionSystem::Update(): TrackTemplate() failed.\n");
