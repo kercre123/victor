@@ -18,78 +18,78 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include <sys/time.h>
 #endif
 
+typedef enum
+{
+  BENCHMARK_EVENT_BEGIN,
+  BENCHMARK_EVENT_END
+} BenchmarkEventType;
+
+typedef struct
+{
+  const char * name; // WARNING: name must be in globally available memory
+  u64 time;
+  BenchmarkEventType type;
+} BenchmarkEvent;
+
+// A big array, full of events
+OFFCHIP static BenchmarkEvent g_benchmarkEvents[Anki::Embedded::MAX_BENCHMARK_EVENTS];
+
+// The index of the next place to record a benchmark event
+static s32 g_numBenchmarkEvents;
+
+static const s32 benchmarkPrintBufferLength = 512 + Anki::Embedded::MAX_BENCHMARK_EVENTS*350;
+OFFCHIP static char benchmarkPrintBuffer[benchmarkPrintBufferLength];
+
+staticInline void AddBenchmarkEvent(const char *name, u64 time, BenchmarkEventType type);
+
+staticInline u64 GetBenchmarkTime()
+{
+#if defined(_MSC_VER)
+  static LONGLONG startCounter = 0;
+
+  LARGE_INTEGER counter;
+
+  QueryPerformanceCounter(&counter);
+
+  // Subtract startSeconds, so the floating point number has reasonable precision
+  if(startCounter == 0) {
+    startCounter = counter.QuadPart;
+  }
+
+  return counter.QuadPart - startCounter;
+#elif defined(__APPLE_CC__)
+  struct timeval time;
+  gettimeofday(&time, NULL);
+  return (u64)time.tv_sec*1000000ULL + (u64)time.tv_usec;
+#elif defined (__EDG__)  // MDK-ARM
+  return Anki::Cozmo::HAL::GetMicroCounter();
+#else
+  timespec ts;
+  clock_gettime(CLOCK_MONOTONIC, &ts);
+  return (u64)ts.tv_sec * 1000000000ULL + (u64)ts.tv_nsec;
+#endif
+}
+
+staticInline void AddBenchmarkEvent(const char *name, const u64 time, BenchmarkEventType type)
+{
+  g_benchmarkEvents[g_numBenchmarkEvents].name = name;
+  g_benchmarkEvents[g_numBenchmarkEvents].time = time;
+  g_benchmarkEvents[g_numBenchmarkEvents].type = type;
+
+  g_numBenchmarkEvents++;
+
+  // If we run out of space, just keep overwriting the last event
+  if(g_numBenchmarkEvents >= Anki::Embedded::MAX_BENCHMARK_EVENTS)
+    g_numBenchmarkEvents = Anki::Embedded::MAX_BENCHMARK_EVENTS-1;
+}
+
 namespace Anki
 {
   namespace Embedded
   {
-    typedef enum
-    {
-      BENCHMARK_EVENT_BEGIN,
-      BENCHMARK_EVENT_END
-    } BenchmarkEventType;
-
-    typedef struct
-    {
-      const char * name; // WARNING: name must be in globally available memory
-      u64 time;
-      BenchmarkEventType type;
-    } BenchmarkEvent;
-
-    // A big array, full of events
-    OFFCHIP static BenchmarkEvent benchmarkEvents[MAX_BENCHMARK_EVENTS];
-
-    static const s32 benchmarkPrintBufferLength = 512 + MAX_BENCHMARK_EVENTS*350;
-    OFFCHIP static char benchmarkPrintBuffer[benchmarkPrintBufferLength];
-
-    // The index of the next place to record a benchmark event
-    static s32 numBenchmarkEvents;
-
-    staticInline void AddBenchmarkEvent(const char *name, u64 time, BenchmarkEventType type);
-
     void InitBenchmarking()
     {
-      numBenchmarkEvents = 0;
-    }
-
-    staticInline u64 GetBenchmarkTime()
-    {
-#if defined(_MSC_VER)
-      static LONGLONG startCounter = 0;
-
-      LARGE_INTEGER counter;
-
-      QueryPerformanceCounter(&counter);
-
-      // Subtract startSeconds, so the floating point number has reasonable precision
-      if(startCounter == 0) {
-        startCounter = counter.QuadPart;
-      }
-
-      return counter.QuadPart - startCounter;
-#elif defined(__APPLE_CC__)
-      struct timeval time;
-      gettimeofday(&time, NULL);
-      return (u64)time.tv_sec*1000000ULL + (u64)time.tv_usec;
-#elif defined (__EDG__)  // MDK-ARM
-      return Anki::Cozmo::HAL::GetMicroCounter();
-#else
-      timespec ts;
-      clock_gettime(CLOCK_MONOTONIC, &ts);
-      return (u64)ts.tv_sec * 1000000000ULL + (u64)ts.tv_nsec;
-#endif
-    }
-
-    staticInline void AddBenchmarkEvent(const char *name, const u64 time, BenchmarkEventType type)
-    {
-      benchmarkEvents[numBenchmarkEvents].name = name;
-      benchmarkEvents[numBenchmarkEvents].time = time;
-      benchmarkEvents[numBenchmarkEvents].type = type;
-
-      numBenchmarkEvents++;
-
-      // If we run out of space, just keep overwriting the last event
-      if(numBenchmarkEvents >= MAX_BENCHMARK_EVENTS)
-        numBenchmarkEvents = MAX_BENCHMARK_EVENTS-1;
+      g_numBenchmarkEvents = 0;
     }
 
     void BeginBenchmark(const char *name)
@@ -172,7 +172,7 @@ namespace Anki
     {
     public:
 
-      static FixedLengthList<BenchmarkElement> ComputeBenchmarkResults(MemoryStack &memory)
+      static FixedLengthList<BenchmarkElement> ComputeBenchmarkResults(const s32 numBenchmarkEvents, const BenchmarkEvent * benchmarkEvents, MemoryStack &memory)
       {
         FixedLengthList<BenchmarkElement> outputResults(numBenchmarkEvents, memory);
 
@@ -341,7 +341,7 @@ namespace Anki
 
     FixedLengthList<BenchmarkElement> ComputeBenchmarkResults(MemoryStack &memory)
     {
-      return CompileBenchmarkResults::ComputeBenchmarkResults(memory);
+      return CompileBenchmarkResults::ComputeBenchmarkResults(g_numBenchmarkEvents, g_benchmarkEvents, memory);
     } // FixedLengthList<BenchmarkElement> ComputeBenchmarkResults(MemoryStack &memory)
 
     Result PrintBenchmarkResults(const FixedLengthList<BenchmarkElement> &results, const bool verbose, const bool microseconds)
