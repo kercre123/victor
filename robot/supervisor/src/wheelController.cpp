@@ -8,7 +8,6 @@
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
 #include "steeringController.h"
-#include "anki/cozmo/robot/trace.h"
 #include "speedController.h"
 #include "wheelController.h"
 
@@ -103,13 +102,6 @@ namespace Anki {
         //Compute the error between dessired and actual (filtered)
         float errorL = (desiredWheelSpeedL_ - filterWheelSpeedL_);
         float errorR = (desiredWheelSpeedR_ - filterWheelSpeedR_);
-        
-        Traces16(TRACE_VAR_DESIRED_SPD_L, desiredWheelSpeedL_, TRACE_MASK_MOTOR_CONTROLLER);
-        Traces16(TRACE_VAR_DESIRED_SPD_R, desiredWheelSpeedR_, TRACE_MASK_MOTOR_CONTROLLER);
-        Tracefloat(TRACE_VAR_WSPD_FILT_L, filterSpeedL_, TRACE_MASK_MOTOR_CONTROLLER);
-        Tracefloat(TRACE_VAR_WSPD_FILT_R, filterSpeedR_, TRACE_MASK_MOTOR_CONTROLLER);
-        Tracefloat(TRACE_VAR_ERROR_L, error_sumL_, TRACE_MASK_MOTOR_CONTROLLER);
-        Tracefloat(TRACE_VAR_ERROR_R, error_sumR_, TRACE_MASK_MOTOR_CONTROLLER);
     
         f32 dirL = desiredWheelSpeedL_ >= 0 ? 1 : -1;
         f32 dirR = desiredWheelSpeedR_ >= 0 ? 1 : -1;

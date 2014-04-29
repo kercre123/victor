@@ -34,7 +34,6 @@
 #include "anki/common/types.h"
 #include "speedController.h"
 #include "wheelController.h"
-#include "anki/cozmo/robot/trace.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 
@@ -262,26 +261,11 @@ namespace Anki {
 #if(DEBUG_SPEED_CONTROLLER)
       PRINT(" SPEED_CTRL: userDesSpeed: %d, userCurrSpeed: %f, measSpeed: %d, userAccel: %d, controllerSpeed: %d, currError: %d, errorSum: %d\n", userCommandedDesiredVehicleSpeed_, userCommandedCurrentVehicleSpeed_, GetCurrentMeasuredVehicleSpeed(), userCommandedAcceleration_, controllerCommandedVehicleSpeed_, currerror, errorsum_);
 #endif
-      
-      Traces16(TRACE_VAR_VSC_DESIRED_SPEED, desVehicleSpeed, TRACE_MASK_MOTOR_CONTROLLER);
-      Traces32(TRACE_VAR_VSC_ERROR_SUM, errorsum, TRACE_MASK_MOTOR_CONTROLLER);
     }
     
     
     void ResetIntegralError() {
       errorsum_ = 0;
-    }
-    
-    void TraceSpeedControllerVars(u8 traceLevel)
-    {
-      Traces32(TRACE_VAR_SPD_L, Cozmo::Robot::GetLeftWheelSpeed(), TRACE_MASK_MOTOR_CONTROLLER);
-      Traces32(TRACE_VAR_SPD_R, Cozmo::Robot::GetRightWheelSpeed(), TRACE_MASK_MOTOR_CONTROLLER);
-      Traces32(TRACE_VAR_SPD_L_FILT, Cozmo::Robot::GetLeftWheelSpeedFiltered(), TRACE_MASK_MOTOR_CONTROLLER);
-      Traces32(TRACE_VAR_SPD_R_FILT, Cozmo::Robot::GetRightWheelSpeedFiltered(), TRACE_MASK_MOTOR_CONTROLLER);
-      Traces16(TRACE_VAR_SPD_USER_DES, GetUserCommandedDesiredVehicleSpeed(), TRACE_MASK_MOTOR_CONTROLLER | TRACE_MASK_ALWAYS_ON);
-      Traces16(TRACE_VAR_SPD_USER_CUR, GetUserCommandedCurrentVehicleSpeed(), TRACE_MASK_MOTOR_CONTROLLER);
-      Traces16(TRACE_VAR_SPD_CTRL, GetControllerCommandedVehicleSpeed(), TRACE_MASK_MOTOR_CONTROLLER);
-      Traces16(TRACE_VAR_SPD_MEAS, GetCurrentMeasuredVehicleSpeed(), TRACE_MASK_MOTOR_CONTROLLER | TRACE_MASK_ALWAYS_ON);    
     }
     
   } // namespace SpeedController

@@ -14,9 +14,6 @@
 #include "speedController.h"
 #include "steeringController.h"
 #include "wheelController.h"
-//#include "hal/portable.h"
-//#include "hal/encoders.h"
-#include "anki/cozmo/robot/trace.h"
 
 #include "anki/cozmo/robot/hal.h"
 
