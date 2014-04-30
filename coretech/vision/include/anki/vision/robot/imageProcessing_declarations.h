@@ -43,6 +43,17 @@ namespace Anki
       // NOTE: uses a 32-bit accumulator, so be careful of overflows
       Result Correlate1dCircularAndSameSizeOutput(const FixedPointArray<s32> &image, const FixedPointArray<s32> &filter, FixedPointArray<s32> &out);
 
+      // Populate a full integral image created from the input image.
+      template<typename InType, typename OutType>
+      Result CreateIntegralImage(const Array<InType> &image, Array<OutType> integralImage);
+      
+      // Divide each pixel by the box-filter average of its neighborhood
+      // This is not memory efficient: it internally creates a full f32 integral
+      // image the same size as the input image, and thus requires enough
+      // scratch memory to store that integral image.
+      Result BoxFilterNormalize(const Array<u8> &image, const s32 boxSize, const u8 padValue,
+                                Array<u8> &imageNorm, MemoryStack scratch);
+      
       //
       // Image resizing
       //
