@@ -99,13 +99,24 @@ namespace Anki
     }
 
     DebugStreamClient::DebugStreamClient(const char * ipAddress, const s32 port)
-      : isRunning(true), ipAddress(ipAddress), port(port), isConnectionThreadActive(false), isParseBufferThreadActive(false)
+      : isSocket(true), socket_ipAddress(ipAddress), socket_port(port), isConnectionThreadActive(false), isParseBufferThreadActive(false)
     {
+      Initialize();
+    } // DebugStreamClient::DebugStreamClient
+
+    DebugStreamClient::DebugStreamClient(const s32 comPort, const s32 baudRate, const char parity, const s32 dataBits, const s32 stopBits)
+      : isSocket(false), serial_comPort(comPort), serial_baudRate(baudRate), serial_parity(parity), serial_dataBits(dataBits), serial_stopBits(stopBits)
+    {
+      Initialize();
+    }
+
+    Result DebugStreamClient::Initialize()
+    {
+      this->isRunning = true;
+
       //printf("Starting DebugStreamClient\n");
 
       rawMessageQueue = ThreadSafeQueue<RawBuffer>();
-
-      //printf("Connection opened\n");
 
 #ifdef _MSC_VER
       DWORD connectionThreadId = -1;
@@ -142,7 +153,9 @@ namespace Anki
       pthread_create(&parsingThread, &parsingAttr, DebugStreamClient::ParseBufferThread, (void *)this);
 #endif // #ifdef _MSC_VER ... else
       //printf("Parsing thread created\n");
-    } // DebugStreamClient::DebugStreamClient
+
+      return RESULT_OK;
+    }
 
     DebugStreamClient::Object DebugStreamClient::GetNextObject()
     {
@@ -556,7 +569,7 @@ namespace Anki
 #else
 #endif
 
-      u8 *usbBuffer = reinterpret_cast<u8*>(malloc(USB_BUFFER_SIZE));
+      u8 *usbBuffer = reinterpret_cast<u8*>(malloc(CONNECTION_BUFFER_SIZE));
       RawBuffer nextRawBuffer = AllocateNewRawBuffer(MESSAGE_BUFFER_SIZE);
 
       if(!usbBuffer || !nextRawBuffer.data) {
@@ -576,14 +589,26 @@ namespace Anki
       callingObject->isConnectionThreadActive = true;
 
       Socket socket;
+      Serial serial;
 
-      while(socket.Open(callingObject->ipAddress, callingObject->port) != RESULT_OK) {
-        //printf("Trying again to open socket.\n");
+      if(callingObject->isSocket) {
+        while(socket.Open(callingObject->socket_ipAddress, callingObject->socket_port) != RESULT_OK) {
+          //printf("Trying again to open socket.\n");
 #ifdef _MSC_VER
-        Sleep(1000);
+          Sleep(1000);
 #else
-        usleep(1000000);
+          usleep(1000000);
 #endif
+        }
+      } else {
+        while(serial.Open(callingObject->serial_comPort, callingObject->serial_baudRate, callingObject->serial_parity, callingObject->serial_dataBits, callingObject->serial_stopBits) != RESULT_OK) {
+          //printf("Trying again to open serial.\n");
+#ifdef _MSC_VER
+          Sleep(1000);
+#else
+          usleep(1000000);
+#endif
+        }
       }
 
       bool atLeastOneStartFound = false;
@@ -592,14 +617,26 @@ namespace Anki
       while(callingObject->get_isRunning()) {
         s32 bytesRead = 0;
 
-        while(socket.Read(usbBuffer, USB_BUFFER_SIZE-2, bytesRead) != RESULT_OK)
-        {
-          //printf("socket read failure. Retrying...\n");
+        if(callingObject->isSocket) {
+          while(socket.Read(usbBuffer, CONNECTION_BUFFER_SIZE-2, bytesRead) != RESULT_OK)
+          {
+            //printf("socket read failure. Retrying...\n");
 #ifdef _MSC_VER
-          Sleep(1);
+            Sleep(1);
 #else
-          usleep(1000);
+            usleep(1000);
 #endif
+          }
+        } else {
+          while(serial.Read(usbBuffer, CONNECTION_BUFFER_SIZE-2, bytesRead) != RESULT_OK)
+          {
+            //printf("serial read failure. Retrying...\n");
+#ifdef _MSC_VER
+            Sleep(1);
+#else
+            usleep(1000);
+#endif
+          }
         }
 
         if(bytesRead == 0) {
@@ -702,7 +739,11 @@ namespace Anki
         }
       } // while(this->isConnected)
 
-      socket.Close();
+      if(callingObject->isSocket) {
+        socket.Close();
+      } else {
+        serial.Close();
+      }
 
       callingObject->isConnectionThreadActive = false;
 
