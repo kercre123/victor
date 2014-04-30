@@ -86,6 +86,7 @@ h_fig = namedFigure(figureName, 'CurrentCharacter', '~');
 keypressID = iptaddcallback(h_fig, 'KeyPressFcn', @keypress);
 clf(h_fig);
 figure(h_fig);
+colormap(h_fig, gray);
 
 if isempty(displayAxes)
     if ~isempty(processFcn)
@@ -171,6 +172,10 @@ try
     %set(h_img, 'EraseMode', 'none');
     pause(1/fps)
     
+    if ~isempty(grabInc) 
+        grabs = {frame};
+    end
+        
     % Capture remaining frames
     i_frame = 2;
     while i_frame < numFrames && ~escapePressed
@@ -199,7 +204,7 @@ try
         
         i_frame = i_frame + 1;
         
-        if ~isempty(grabInc) && mod(i_frame, grabInc)==0
+        if ~isempty(grabInc) && mod(i_frame-1, grabInc)==0
             grabs{end+1} = frame; %#ok<AGROW>
         end
         
