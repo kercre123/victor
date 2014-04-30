@@ -25,7 +25,7 @@ namespace Anki
 {
   namespace Embedded
   {
-    const s32 MAX_BENCHMARK_EVENTS = 0xFFF;
+    const s32 MAX_BENCHMARK_EVENTS = 4000;
 
     typedef struct BenchmarkElement
     {
@@ -99,7 +99,7 @@ namespace Anki
     Result PrintBenchmarkResults(const FixedLengthList<BenchmarkElement> &results, const bool verbose=true, const bool microseconds=true);
 
     // Compile and print out all the benchmark events that were recorded
-    Result ComputeAndPrintBenchmarkResults(const bool verbose=true, const bool microseconds=true);
+    Result ComputeAndPrintBenchmarkResults(const bool verbose, const bool microseconds, MemoryStack scratch);
 
     // Use OpenCV to display a running benchmark
     // Requires a "TotalTime" benchmark event

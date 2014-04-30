@@ -19,17 +19,17 @@ namespace Anki {
       namespace DebugStream
       {
         namespace { // private namespace for all state
-          const s32 PRINTF_BUFFER_SIZE = 10000;
-          const s32 DEBUG_STREAM_BUFFER_SIZE = 2000000;
+          //const s32 PRINTF_BUFFER_SIZE = 10000;
+          const s32 DEBUG_STREAM_BUFFER_SIZE = 1000000;
           
           const s32 MAX_BYTES_PER_SECOND = 500000;
           
           const s32 SEND_EVERY_N_FRAMES = 7;
           
-          OFFCHIP u8 printfBufferRaw_[PRINTF_BUFFER_SIZE];
+          //OFFCHIP u8 printfBufferRaw_[PRINTF_BUFFER_SIZE];
           OFFCHIP u8 debugStreamBufferRaw_[DEBUG_STREAM_BUFFER_SIZE];
           
-          SerializedBuffer printfBuffer_;
+          //SerializedBuffer printfBuffer_;
           SerializedBuffer debugStreamBuffer_;
           
           s32 lastSecond;
@@ -437,7 +437,7 @@ namespace Anki {
 #if SEND_DEBUG_STREAM
           // TODO: add the rest
           debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferRaw_[0], DEBUG_STREAM_BUFFER_SIZE);
-          printfBuffer_ = SerializedBuffer(&printfBufferRaw_[0], PRINTF_BUFFER_SIZE);
+          //printfBuffer_ = SerializedBuffer(&printfBufferRaw_[0], PRINTF_BUFFER_SIZE);
           
           InitBenchmarking();
           BeginBenchmark("TotalTime");

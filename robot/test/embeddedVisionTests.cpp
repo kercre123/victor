@@ -297,7 +297,7 @@ GTEST_TEST(CoreTech_Vision, FaceDetection)
 
   printf("Detection took %f seconds (setup time %f seconds)\n", t2-t1, t1-t0);
 
-  ComputeAndPrintBenchmarkResults();
+  ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
   ASSERT_TRUE(detectedFaces_anki.get_size() == 1);
   ASSERT_TRUE(detectedFaces_anki[0] == Rectangle<s32>(102, 219, 39, 156));
@@ -509,7 +509,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTrackerHeaderTemplate)
 
     ASSERT_TRUE(numTemplatePixels == 1588);
 
-    ComputeAndPrintBenchmarkResults();
+    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
   } // Skip zero rows/columns (non-list)
 
   GTEST_RETURN_HERE;
@@ -638,7 +638,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
       ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
     }
 
-    ComputeAndPrintBenchmarkResults();
+    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
   } // Skip zero rows/columns (non-list)
 
   // Skip one row/column (non-list)
@@ -708,7 +708,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
       ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
     }
 
-    ComputeAndPrintBenchmarkResults();
+    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
   } // Skip one row/column (non-list)
 
   // Skip zero rows/columns (with-list)
@@ -778,7 +778,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
       ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
     }
 
-    ComputeAndPrintBenchmarkResults();
+    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
   } // Skip zero rows/columns (with-list)
 
   // Skip one row/column (with-list)
@@ -848,7 +848,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
       ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
     }
 
-    ComputeAndPrintBenchmarkResults();
+    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
   } // Skip one row/column (with-list)
 
   // Skip zero rows/columns (with-ransac)
@@ -914,7 +914,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
       //ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
     }
 
-    ComputeAndPrintBenchmarkResults();
+    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
   } // Skip zero rows/columns (with-ransac)
 
   // Skip one row/column (with-ransac)
@@ -980,7 +980,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
       //ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
     }
 
-    ComputeAndPrintBenchmarkResults();
+    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
   } // Skip one row/column (with-ransac)
 
   //tracker.get_transformation().Transform(templateImage, warpedTemplateImage, scratchOffchip, 1.0f);
@@ -1376,7 +1376,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
     const f64 time2 = GetTimeF32();
 
     printf("Translation-only LK_SampledProjective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
-    ComputeAndPrintBenchmarkResults();
+    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
     tracker.get_transformation().Print("Translation-only LK_SampledProjective");
 
@@ -1424,7 +1424,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
     const f64 time2 = GetTimeF32();
 
     printf("Affine LK_SampledProjective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
-    ComputeAndPrintBenchmarkResults();
+    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
     tracker.get_transformation().Print("Affine LK_SampledProjective");
 
@@ -1473,7 +1473,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
     const f64 time2 = GetTimeF32();
 
     printf("Projective LK_SampledProjective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
-    ComputeAndPrintBenchmarkResults();
+    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
     tracker.get_transformation().Print("Projective LK_SampledProjective");
 
@@ -1572,7 +1572,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledPlanar6dof)
   //    const f64 time2 = GetTimeF32();
   //
   //    printf("Translation-only LK_SampledPlanar6dof totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
-  //    ComputeAndPrintBenchmarkResults();
+  //    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
   //
   //    tracker.get_transformation().Print("Translation-only LK_SampledPlanar6dof");
   //
@@ -1621,7 +1621,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledPlanar6dof)
   //    const f64 time2 = GetTimeF32();
   //
   //    printf("Affine LK_SampledProjective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
-  //    ComputeAndPrintBenchmarkResults();
+  //    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
   //
   //    tracker.get_transformation().Print("Affine LK_SampledProjective");
   //
@@ -1677,7 +1677,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledPlanar6dof)
   //    const f64 time2 = GetTimeF32();
   //
   //    printf("Projective LK_SampledPlanar6dof totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
-  //    ComputeAndPrintBenchmarkResults();
+  //    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
   //
   //    tracker.get_transformation().Print("Projective LK_SampledPlanar6dof");
   //
@@ -1717,19 +1717,16 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
 
   // TODO: add check that images were loaded correctly
 
-  //MemoryStack scratch0(&ddrBuffer[0], 80*60*2 + 256);
-  MemoryStack scratch1(&offchipBuffer[0], 600000);
-
-  //ASSERT_TRUE(scratch0.IsValid());
-  ASSERT_TRUE(scratch1.IsValid());
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(scratchOffchip.IsValid());
 
   ASSERT_TRUE(blockImages00189_80x60_HEIGHT == imageHeight && blockImages00190_80x60_HEIGHT == imageHeight);
   ASSERT_TRUE(blockImages00189_80x60_WIDTH == imageWidth && blockImages00190_80x60_WIDTH == imageWidth);
 
-  Array<u8> image1(imageHeight, imageWidth, scratch1);
+  Array<u8> image1(imageHeight, imageWidth, scratchOffchip);
   image1.Set(blockImages00189_80x60, imageWidth*imageHeight);
 
-  Array<u8> image2(imageHeight, imageWidth, scratch1);
+  Array<u8> image2(imageHeight, imageWidth, scratchOffchip);
   image2.Set(blockImages00190_80x60, imageWidth*imageHeight);
 
   ASSERT_TRUE(*image1.Pointer(0,0) == 45);
@@ -1739,13 +1736,13 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
 
   // Translation-only LK_Projective
   {
-    PUSH_MEMORY_STACK(scratch1);
+    PUSH_MEMORY_STACK(scratchOffchip);
 
     InitBenchmarking();
 
     const f64 time0 = GetTimeF32();
 
-    TemplateTracker::LucasKanadeTracker_Projective tracker(image1, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, scratch1);
+    TemplateTracker::LucasKanadeTracker_Projective tracker(image1, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, scratchOffchip);
 
     ASSERT_TRUE(tracker.IsValid());
 
@@ -1756,7 +1753,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
     s32 verify_numInBounds;
     s32 verify_numSimilarPixels;
 
-    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, verify_maxPixelDifference, verify_converged, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels, scratch1) == RESULT_OK);
+    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, verify_maxPixelDifference, verify_converged, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels, scratchOffchip) == RESULT_OK);
 
     ASSERT_TRUE(verify_converged == true);
     ASSERT_TRUE(verify_meanAbsoluteDifference == 13);
@@ -1766,12 +1763,12 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
     const f64 time2 = GetTimeF32();
 
     printf("Translation-only LK_Projective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
-    ComputeAndPrintBenchmarkResults();
+    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
     tracker.get_transformation().Print("Translation-only LK_Projective");
 
     // This ground truth is from the PC c++ version
-    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
+    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
     transform_groundTruth[0][2] = -1.368f;
     transform_groundTruth[1][2] = -1.041f;
 
@@ -1780,13 +1777,13 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
 
   // Affine LK_Projective
   {
-    PUSH_MEMORY_STACK(scratch1);
+    PUSH_MEMORY_STACK(scratchOffchip);
 
     InitBenchmarking();
 
     const f64 time0 = GetTimeF32();
 
-    TemplateTracker::LucasKanadeTracker_Projective tracker(image1, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_AFFINE, scratch1);
+    TemplateTracker::LucasKanadeTracker_Projective tracker(image1, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_AFFINE, scratchOffchip);
 
     ASSERT_TRUE(tracker.IsValid());
 
@@ -1797,7 +1794,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
     s32 verify_numInBounds;
     s32 verify_numSimilarPixels;
 
-    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, verify_maxPixelDifference, verify_converged, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels, scratch1) == RESULT_OK);
+    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, verify_maxPixelDifference, verify_converged, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels, scratchOffchip) == RESULT_OK);
 
     ASSERT_TRUE(verify_converged == true);
     ASSERT_TRUE(verify_meanAbsoluteDifference == 8);
@@ -1807,12 +1804,12 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
     const f64 time2 = GetTimeF32();
 
     printf("Affine LK_Projective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
-    ComputeAndPrintBenchmarkResults();
+    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
     tracker.get_transformation().Print("Affine LK_Projective");
 
     // This ground truth is from the PC c++ version
-    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
+    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
     transform_groundTruth[0][0] = 1.013f;  transform_groundTruth[0][1] = 0.032f; transform_groundTruth[0][2] = -1.301f;
     transform_groundTruth[1][0] = -0.036f; transform_groundTruth[1][1] = 1.0f;   transform_groundTruth[1][2] = -1.101f;
     transform_groundTruth[2][0] = 0.0f;    transform_groundTruth[2][1] = 0.0f;   transform_groundTruth[2][2] = 1.0f;
@@ -1822,13 +1819,13 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
 
   // Projective LK_Projective
   {
-    PUSH_MEMORY_STACK(scratch1);
+    PUSH_MEMORY_STACK(scratchOffchip);
 
     InitBenchmarking();
 
     const f64 time0 = GetTimeF32();
 
-    TemplateTracker::LucasKanadeTracker_Projective tracker(image1, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_PROJECTIVE, scratch1);
+    TemplateTracker::LucasKanadeTracker_Projective tracker(image1, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_PROJECTIVE, scratchOffchip);
 
     ASSERT_TRUE(tracker.IsValid());
 
@@ -1839,7 +1836,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
     s32 verify_numInBounds;
     s32 verify_numSimilarPixels;
 
-    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, verify_maxPixelDifference, verify_converged, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels, scratch1) == RESULT_OK);
+    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, verify_maxPixelDifference, verify_converged, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels, scratchOffchip) == RESULT_OK);
 
     ASSERT_TRUE(verify_converged == true);
     ASSERT_TRUE(verify_meanAbsoluteDifference == 8);
@@ -1849,12 +1846,12 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
     const f64 time2 = GetTimeF32();
 
     printf("Projective LK_Projective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
-    ComputeAndPrintBenchmarkResults();
+    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
     tracker.get_transformation().Print("Projective LK_Projective");
 
     // This ground truth is from the PC c++ version
-    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
+    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
     transform_groundTruth[0][0] = 1.013f;  transform_groundTruth[0][1] = 0.032f; transform_groundTruth[0][2] = -1.342f;
     transform_groundTruth[1][0] = -0.036f; transform_groundTruth[1][1] = 1.0f;   transform_groundTruth[1][2] = -1.044f;
     transform_groundTruth[2][0] = 0.0f;    transform_groundTruth[2][1] = 0.0f;   transform_groundTruth[2][2] = 1.0f;
@@ -1885,17 +1882,17 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
 
   // TODO: add check that images were loaded correctly
 
-  MemoryStack scratch1(&offchipBuffer[0], 600000);
+  MemoryStack scratchOffchip(&offchipBuffer[0], 600000);
 
-  ASSERT_TRUE(scratch1.IsValid());
+  ASSERT_TRUE(scratchOffchip.IsValid());
 
   ASSERT_TRUE(blockImages00189_80x60_HEIGHT == imageHeight && blockImages00190_80x60_HEIGHT == imageHeight);
   ASSERT_TRUE(blockImages00189_80x60_WIDTH == imageWidth && blockImages00190_80x60_WIDTH == imageWidth);
 
-  Array<u8> image1(imageHeight, imageWidth, scratch1);
+  Array<u8> image1(imageHeight, imageWidth, scratchOffchip);
   image1.Set(blockImages00189_80x60, imageWidth*imageHeight);
 
-  Array<u8> image2(imageHeight, imageWidth, scratch1);
+  Array<u8> image2(imageHeight, imageWidth, scratchOffchip);
   image2.Set(blockImages00190_80x60, imageWidth*imageHeight);
 
   ASSERT_TRUE(*image1.Pointer(0,0) == 45);
@@ -1905,13 +1902,13 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
 
   // Translation-only LK
   {
-    PUSH_MEMORY_STACK(scratch1);
+    PUSH_MEMORY_STACK(scratchOffchip);
 
     InitBenchmarking();
 
     const f64 time0 = GetTimeF32();
 
-    TemplateTracker::LucasKanadeTracker_Affine tracker(image1, templateRegion, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, scratch1);
+    TemplateTracker::LucasKanadeTracker_Affine tracker(image1, templateRegion, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, scratchOffchip);
 
     ASSERT_TRUE(tracker.IsValid());
 
@@ -1922,7 +1919,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
     s32 verify_numInBounds;
     s32 verify_numSimilarPixels;
 
-    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, verify_maxPixelDifference, verify_converged, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels, scratch1) == RESULT_OK);
+    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, verify_maxPixelDifference, verify_converged, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels, scratchOffchip) == RESULT_OK);
 
     ASSERT_TRUE(verify_converged == true);
     ASSERT_TRUE(verify_meanAbsoluteDifference == 13);
@@ -1932,12 +1929,12 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
     const f64 time2 = GetTimeF32();
 
     printf("Translation-only FAST-LK totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
-    ComputeAndPrintBenchmarkResults();
+    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
     tracker.get_transformation().Print("Translation-only LK_Affine");
 
     // This ground truth is from the PC c++ version
-    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
+    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
     transform_groundTruth[0][2] = -1.368f;
     transform_groundTruth[1][2] = -1.041f;
 
@@ -1946,13 +1943,13 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
 
   // Affine LK
   {
-    PUSH_MEMORY_STACK(scratch1);
+    PUSH_MEMORY_STACK(scratchOffchip);
 
     InitBenchmarking();
 
     const f64 time0 = GetTimeF32();
 
-    TemplateTracker::LucasKanadeTracker_Affine tracker(image1, templateRegion, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_AFFINE, scratch1);
+    TemplateTracker::LucasKanadeTracker_Affine tracker(image1, templateRegion, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_AFFINE, scratchOffchip);
 
     ASSERT_TRUE(tracker.IsValid());
 
@@ -1962,7 +1959,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
     s32 verify_meanAbsoluteDifference;
     s32 verify_numInBounds;
     s32 verify_numSimilarPixels;
-    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, verify_maxPixelDifference, verify_converged, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels, scratch1) == RESULT_OK);
+    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, verify_maxPixelDifference, verify_converged, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels, scratchOffchip) == RESULT_OK);
 
     ASSERT_TRUE(verify_converged);
     ASSERT_TRUE(verify_meanAbsoluteDifference == 8);
@@ -1972,12 +1969,12 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
     const f64 time2 = GetTimeF32();
 
     printf("Affine FAST-LK totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
-    ComputeAndPrintBenchmarkResults();
+    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
     tracker.get_transformation().Print("Affine LK_Affine");
 
     // This ground truth is from the PC c++ version
-    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
+    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
     transform_groundTruth[0][0] = 1.013f;  transform_groundTruth[0][1] = 0.032f; transform_groundTruth[0][2] = -1.299f;
     transform_groundTruth[1][0] = -0.036f; transform_groundTruth[1][1] = 1.0f;   transform_groundTruth[1][2] = -1.104f;
     transform_groundTruth[2][0] = 0.0f;    transform_groundTruth[2][1] = 0.0f;   transform_groundTruth[2][2] = 1.0f;
@@ -2008,18 +2005,18 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
   // TODO: add check that images were loaded correctly
 
   //MemoryStack scratch0(&ddrBuffer[0], 80*60*2 + 256);
-  MemoryStack scratch1(&offchipBuffer[0], 600000);
+  MemoryStack scratchOffchip(&offchipBuffer[0], 600000);
 
   //ASSERT_TRUE(scratch0.IsValid());
-  ASSERT_TRUE(scratch1.IsValid());
+  ASSERT_TRUE(scratchOffchip.IsValid());
 
   ASSERT_TRUE(blockImages00189_80x60_HEIGHT == imageHeight && blockImages00190_80x60_HEIGHT == imageHeight);
   ASSERT_TRUE(blockImages00189_80x60_WIDTH == imageWidth && blockImages00190_80x60_WIDTH == imageWidth);
 
-  Array<u8> image1(imageHeight, imageWidth, scratch1);
+  Array<u8> image1(imageHeight, imageWidth, scratchOffchip);
   image1.Set(blockImages00189_80x60, imageWidth*imageHeight);
 
-  Array<u8> image2(imageHeight, imageWidth, scratch1);
+  Array<u8> image2(imageHeight, imageWidth, scratchOffchip);
   image2.Set(blockImages00190_80x60, imageWidth*imageHeight);
 
   ASSERT_TRUE(*image1.Pointer(0,0) == 45);
@@ -2029,32 +2026,32 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
 
   // Translation-only LK
   {
-    PUSH_MEMORY_STACK(scratch1);
+    PUSH_MEMORY_STACK(scratchOffchip);
 
     InitBenchmarking();
 
     const f64 time0 = GetTimeF32();
 
-    TemplateTracker::LucasKanadeTracker_Slow tracker(image1, templateRegion, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, ridgeWeight, scratch1);
+    TemplateTracker::LucasKanadeTracker_Slow tracker(image1, templateRegion, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, ridgeWeight, scratchOffchip);
 
     ASSERT_TRUE(tracker.IsValid());
 
     const f64 time1 = GetTimeF32();
 
     bool verify_converged = false;
-    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, false, verify_converged, scratch1) == RESULT_OK);
+    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, false, verify_converged, scratchOffchip) == RESULT_OK);
 
     ASSERT_TRUE(verify_converged == true);
 
     const f64 time2 = GetTimeF32();
 
     printf("Translation-only LK totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
-    ComputeAndPrintBenchmarkResults();
+    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
     tracker.get_transformation().Print("Translation-only LK");
 
     // This ground truth is from the PC c++ version
-    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
+    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
     transform_groundTruth[0][2] = -1.368f;
     transform_groundTruth[1][2] = -1.041f;
 
@@ -2063,31 +2060,31 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
 
   // Affine LK
   {
-    PUSH_MEMORY_STACK(scratch1);
+    PUSH_MEMORY_STACK(scratchOffchip);
 
     InitBenchmarking();
 
     const f64 time0 = GetTimeF32();
 
-    TemplateTracker::LucasKanadeTracker_Slow tracker(image1, templateRegion, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_AFFINE, ridgeWeight, scratch1);
+    TemplateTracker::LucasKanadeTracker_Slow tracker(image1, templateRegion, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_AFFINE, ridgeWeight, scratchOffchip);
 
     ASSERT_TRUE(tracker.IsValid());
 
     const f64 time1 = GetTimeF32();
 
     bool verify_converged = false;
-    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, false, verify_converged, scratch1) == RESULT_OK);
+    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, false, verify_converged, scratchOffchip) == RESULT_OK);
     ASSERT_TRUE(verify_converged == true);
 
     const f64 time2 = GetTimeF32();
 
     printf("Affine LK totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
-    ComputeAndPrintBenchmarkResults();
+    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
     tracker.get_transformation().Print("Affine LK");
 
     // This ground truth is from the PC c++ version
-    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
+    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
     transform_groundTruth[0][0] = 1.013f;  transform_groundTruth[0][1] = 0.032f; transform_groundTruth[0][2] = -1.299f;
     transform_groundTruth[1][0] = -0.036f; transform_groundTruth[1][1] = 1.0f;   transform_groundTruth[1][2] = -1.104f;
     transform_groundTruth[2][0] = 0.0f;    transform_groundTruth[2][1] = 0.0f;   transform_groundTruth[2][2] = 1.0f;
@@ -2097,32 +2094,32 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
 
   // Projective LK
   {
-    PUSH_MEMORY_STACK(scratch1);
+    PUSH_MEMORY_STACK(scratchOffchip);
 
     InitBenchmarking();
 
     const f64 time0 = GetTimeF32();
 
-    TemplateTracker::LucasKanadeTracker_Slow tracker(image1, templateRegion, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_PROJECTIVE, ridgeWeight, scratch1);
+    TemplateTracker::LucasKanadeTracker_Slow tracker(image1, templateRegion, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_PROJECTIVE, ridgeWeight, scratchOffchip);
 
     ASSERT_TRUE(tracker.IsValid());
 
     const f64 time1 = GetTimeF32();
 
     bool verify_converged = false;
-    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, true, verify_converged, scratch1) == RESULT_OK);
+    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, true, verify_converged, scratchOffchip) == RESULT_OK);
 
     ASSERT_TRUE(verify_converged == true);
 
     const f64 time2 = GetTimeF32();
 
     printf("Projective LK totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
-    ComputeAndPrintBenchmarkResults();
+    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
     tracker.get_transformation().Print("Projective LK");
 
     // This ground truth is from the PC c++ version
-    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
+    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
     transform_groundTruth[0][0] = 1.013f;  transform_groundTruth[0][1] = 0.032f; transform_groundTruth[0][2] = -1.339f;
     transform_groundTruth[1][0] = -0.036f; transform_groundTruth[1][1] = 1.0f;   transform_groundTruth[1][2] = -1.042f;
     transform_groundTruth[2][0] = 0.0f;    transform_groundTruth[2][1] = 0.0f;   transform_groundTruth[2][2] = 1.0f;
@@ -2156,28 +2153,28 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
 //  const s32 bigBufferSize = 10000000;
 //  char * bigBuffer = reinterpret_cast<char*>(malloc(bigBufferSize));
 //
-//  MemoryStack scratch1(bigBuffer, bigBufferSize);
+//  MemoryStack scratchOffchip(bigBuffer, bigBufferSize);
 //
-//  ASSERT_TRUE(scratch1.IsValid());
+//  ASSERT_TRUE(scratchOffchip.IsValid());
 //
-//  Array<u8> image1Tmp(imageTmpHeight, imageTmpWidth, scratch1);
+//  Array<u8> image1Tmp(imageTmpHeight, imageTmpWidth, scratchOffchip);
 //  image1Tmp.Set(templateImage, imageTmpWidth*imageTmpHeight);
 //
-//  Array<u8> image2Tmp(imageTmpHeight, imageTmpWidth, scratch1);
+//  Array<u8> image2Tmp(imageTmpHeight, imageTmpWidth, scratchOffchip);
 //  image2Tmp.Set(nextImage, imageTmpWidth*imageTmpHeight);
 //
-//  Array<u8> image1(imageHeight, imageWidth, scratch1);
-//  Array<u8> image2(imageHeight, imageWidth, scratch1);
+//  Array<u8> image1(imageHeight, imageWidth, scratchOffchip);
+//  Array<u8> image2(imageHeight, imageWidth, scratchOffchip);
 //
-//  ImageProcessing::DownsampleByPowerOfTwo<u8,u32,u8>(image1Tmp, 2, image1, scratch1);
-//  ImageProcessing::DownsampleByPowerOfTwo<u8,u32,u8>(image2Tmp, 2, image2, scratch1);
+//  ImageProcessing::DownsampleByPowerOfTwo<u8,u32,u8>(image1Tmp, 2, image1, scratchOffchip);
+//  ImageProcessing::DownsampleByPowerOfTwo<u8,u32,u8>(image2Tmp, 2, image2, scratchOffchip);
 //
-//  TemplateTracker::LucasKanadeTracker_Slow tracker(image1, templateRegion, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, ridgeWeight, scratch1);
+//  TemplateTracker::LucasKanadeTracker_Slow tracker(image1, templateRegion, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, ridgeWeight, scratchOffchip);
 //
 //  ASSERT_TRUE(tracker.IsValid());
 //
 //  bool verify_converged = false;
-//  ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, false, verify_converged, scratch1) == RESULT_OK);
+//  ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, false, verify_converged, scratchOffchip) == RESULT_OK);
 //
 //  tracker.get_transformation().Print("Translation-only LK");
 //
@@ -2608,7 +2605,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
     printf("totalTime: %dms\n", Round<s32>(1000*(time1-time0)));
 
     // TODO: add back
-    //ComputeAndPrintBenchmarkResults();
+    //ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
     ASSERT_TRUE(result == RESULT_OK);
   }
@@ -3657,11 +3654,11 @@ GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation)
   // TODO: How much memory do i need here?
   const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 250*sizeof(PRECISION));
 
-  // TODO: is onchipbBuffer the right one to use here?
-  MemoryStack memory(&offchipBuffer[0], numBytes);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(scratchOffchip.IsValid());
 
   // Parameters
-  Array<PRECISION> Rtrue = Array<PRECISION>(3,3,memory);
+  Array<PRECISION> Rtrue = Array<PRECISION>(3,3,scratchOffchip);
   // rodrigues(3*pi/180*[0 0 1])*rodrigues(4*pi/180*[0 1 0])*rodrigues(-10*pi/180*[1 0 0])
   Rtrue[0][0] =  0.9962;  Rtrue[0][1] =   -0.0636;  Rtrue[0][2] =    0.0595;
   Rtrue[1][0] =  0.0522;  Rtrue[1][1] =    0.9828;  Rtrue[1][2] =    0.1770;
@@ -3719,7 +3716,7 @@ GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation)
   }
 
   // Compute the pose of the marker w.r.t. camera from the noisy projection
-  Array<PRECISION> R = Array<PRECISION>(3,3,memory);
+  Array<PRECISION> R = Array<PRECISION>(3,3,scratchOffchip);
   Point3<PRECISION> T;
 
   BeginBenchmark("P3P::computePose");
@@ -3732,7 +3729,7 @@ GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation)
 
   EndBenchmark("P3P::computePose");
 
-  ComputeAndPrintBenchmarkResults();
+  ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
   //
   // Check if the estimated pose matches the true pose
@@ -3741,9 +3738,9 @@ GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation)
   // 1. Compute angular difference between the two rotation matrices
   // TODO: make this a utility function somewhere?
   // R = R_this * R_other^T
-  Array<PRECISION> Rdiff = Array<PRECISION>(3,3,memory);
+  Array<PRECISION> Rdiff = Array<PRECISION>(3,3,scratchOffchip);
   Point3<PRECISION> Tdiff;
-  ComputePoseDiff(R, T, Rtrue, Ttrue, Rdiff, Tdiff, memory);
+  ComputePoseDiff(R, T, Rtrue, Ttrue, Rdiff, Tdiff, scratchOffchip);
 
   // This is computing angular rotation vs. identity matrix
   const f32 trace =static_cast<f32>( Rdiff[0][0] + Rdiff[1][1] + Rdiff[2][2] );

@@ -37,8 +37,8 @@ OFFCHIP static BenchmarkEvent g_benchmarkEvents[Anki::Embedded::MAX_BENCHMARK_EV
 // The index of the next place to record a benchmark event
 static s32 g_numBenchmarkEvents;
 
-static const s32 benchmarkPrintBufferLength = 512 + Anki::Embedded::MAX_BENCHMARK_EVENTS*350;
-OFFCHIP static char benchmarkPrintBuffer[benchmarkPrintBufferLength];
+//static const s32 benchmarkPrintBufferLength = 512 + Anki::Embedded::MAX_BENCHMARK_EVENTS*350;
+//OFFCHIP static char benchmarkPrintBuffer[benchmarkPrintBufferLength];
 
 staticInline void AddBenchmarkEvent(const char *name, u64 time, BenchmarkEventType type);
 
@@ -412,10 +412,8 @@ namespace Anki
       return RESULT_OK;
     }
 
-    Result ComputeAndPrintBenchmarkResults(const bool verbose, const bool microseconds)
+    Result ComputeAndPrintBenchmarkResults(const bool verbose, const bool microseconds, MemoryStack scratch)
     {
-      MemoryStack scratch(benchmarkPrintBuffer, benchmarkPrintBufferLength);
-
       AnkiConditionalErrorAndReturnValue(scratch.IsValid(),
         RESULT_FAIL_OUT_OF_MEMORY, "PrintBenchmarkResults", "Out of memory");
 
