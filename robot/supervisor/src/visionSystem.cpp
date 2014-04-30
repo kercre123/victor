@@ -569,15 +569,14 @@ namespace Anki {
         return RESULT_OK;
       } // InitTemplate()
 
-      static Result TrackTemplate(
-                                      const Array<u8> &grayscaleImage,
-                                      const Quadrilateral<f32> &trackingQuad,
-                                      const TrackerParameters &parameters,
-                                      Tracker &tracker,
-                                      bool &converged,
-                                      MemoryStack ccmScratch,
-                                      MemoryStack onchipScratch,
-                                      MemoryStack offchipScratch)
+      static Result TrackTemplate(const Array<u8> &grayscaleImage,
+                                  const Quadrilateral<f32> &trackingQuad,
+                                  const TrackerParameters &parameters,
+                                  Tracker &tracker,
+                                  bool &trackingSucceeded,
+                                  MemoryStack ccmScratch,
+                                  MemoryStack onchipScratch,
+                                  MemoryStack offchipScratch)
       {
         AnkiAssert(parameters.isInitialized);
 
@@ -594,7 +593,7 @@ namespace Anki {
         //DebugStream::SendArray(grayscaleImageSmall);
 #endif
 
-        converged = false;
+        trackingSucceeded = false;
         s32 verify_meanAbsoluteDifference;
         s32 verify_numInBounds;
         s32 verify_numSimilarPixels;
@@ -605,7 +604,7 @@ namespace Anki {
                                                          parameters.maxIterations,
                                                          parameters.convergenceTolerance,
                                                          parameters.useWeights,
-                                                         converged,
+                                                         trackingSucceeded,
                                                          onchipScratch);
 
 #elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_AFFINE
@@ -614,7 +613,7 @@ namespace Anki {
                                                          parameters.maxIterations,
                                                          parameters.convergenceTolerance,
                                                          parameters.verify_maxPixelDifference,
-                                                         converged,
+                                                         trackingSucceeded,
                                                          verify_meanAbsoluteDifference,
                                                          verify_numInBounds,
                                                          verify_numSimilarPixels,
@@ -628,7 +627,7 @@ namespace Anki {
                                                          parameters.maxIterations,
                                                          parameters.convergenceTolerance,
                                                          parameters.verify_maxPixelDifference,
-                                                         converged,
+                                                         trackingSucceeded,
                                                          verify_meanAbsoluteDifference,
                                                          verify_numInBounds,
                                                          verify_numSimilarPixels,
@@ -637,12 +636,13 @@ namespace Anki {
         //tracker.get_transformation().Print("track");
 
 #elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PROJECTIVE
+
         const Result trackerResult = tracker.UpdateTrack(
                                                          grayscaleImage,
                                                          parameters.maxIterations,
                                                          parameters.convergenceTolerance,
                                                          parameters.verify_maxPixelDifference,
-                                                         converged,
+                                                         trackingSucceeded,
                                                          verify_meanAbsoluteDifference,
                                                          verify_numInBounds,
                                                          verify_numSimilarPixels,
@@ -674,9 +674,9 @@ namespace Anki {
         const f32 percentMatchedPixels = static_cast<f32>(numMatches) / static_cast<f32>(numTemplatePixels);
 
         if(percentMatchedPixels >= parameters.percentMatchedPixelsThreshold) {
-          converged = true;
+          trackingSucceeded = true;
         } else {
-          converged = false;
+          trackingSucceeded = false;
         }
 
 #elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
@@ -686,6 +686,7 @@ namespace Anki {
         const Radians initAngleZ(tracker.get_angleZ());
         const Point3<f32>& initTranslation = tracker.get_translation();
         
+        bool converged = false;
         const Result trackerResult = tracker.UpdateTrack(grayscaleImage,
                                                          parameters.maxIterations,
                                                          parameters.convergenceTolerance_angle,
@@ -697,27 +698,53 @@ namespace Anki {
                                                          verify_numSimilarPixels,
                                                          onchipScratch);
         
+        // TODO: Do we care if converged == false?
+        
+        //
+        // Go through a bunch of checks to see whether the tracking succeeded
+        //
+        
         if(fabs((initAngleX - tracker.get_angleX()).ToFloat()) > parameters.successTolerance_angle ||
            fabs((initAngleY - tracker.get_angleY()).ToFloat()) > parameters.successTolerance_angle ||
            fabs((initAngleZ - tracker.get_angleZ()).ToFloat()) > parameters.successTolerance_angle)
         {
-          // Angle changed too much
-          converged = false;
+          PRINT("Tracker failed: angle(s) changed too much.\n");
+          trackingSucceeded = false;
+        }
+        else if(tracker.get_translation().z < TrackerParameters::MIN_TRACKER_DISTANCE)
+        {
+          PRINT("Tracker failed: final distance too close.\n");
+          trackingSucceeded = false;
+        }
+        else if(tracker.get_translation().z > TrackerParameters::MAX_TRACKER_DISTANCE)
+        {
+          PRINT("Tracker failed: final distance too far away.\n");
+          trackingSucceeded = false;
         }
         else if((initTranslation - tracker.get_translation()).Length() > parameters.successTolerance_distance)
         {
-          // Position changed too much
-          converged = false;
+          PRINT("Tracker failed: position changed too much.\n");
+          trackingSucceeded = false;
+        }
+        else if(fabs(tracker.get_angleY()) > TrackerParameters::MAX_BLOCK_DOCKING_ANGLE)
+        {
+          PRINT("Tracker failed: target angle too large.\n");
+          trackingSucceeded = false;
+        }
+        else if(atan_fast(fabs(tracker.get_translation().x) / tracker.get_translation().z) > TrackerParameters::MAX_DOCKING_FOV_ANGLE)
+        {
+          PRINT("Tracker failed: FOV angle too large.\n");
+          trackingSucceeded = false;
         }
         else if( (static_cast<f32>(verify_numSimilarPixels) /
                   static_cast<f32>(verify_numInBounds)) < parameters.successTolerance_matchingPixelsFraction)
         {
-          // Too many in-bounds pixels failed intensity verification
-          converged = false;
+          PRINT("Tracker failed: too many in-bounds pixels failed intensity verification.\n");
+          trackingSucceeded = false;
         }
         else {
-          // Everything seems ok
-          converged = true;
+          // Everything seems ok!
+          trackingSucceeded = true;
         }
           
         
@@ -730,29 +757,8 @@ namespace Anki {
         }
 
         // Sanity check on tracker result
-#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
-        // Check that pose makes sense (it's within a reasonable range in front
-        // of the robot
-        {
-          if(tracker.get_translation().z < TrackerParameters::MIN_TRACKER_DISTANCE || // can't get this close
-             tracker.get_translation().z > TrackerParameters::MAX_TRACKER_DISTANCE)  // too far away for docking
-          {
-            PRINT("Tracker failed distance sanity check.\n");
-            converged = false;
-          }
-          else if(fabs(tracker.get_angleY()) > TrackerParameters::MAX_BLOCK_DOCKING_ANGLE)
-          {
-            PRINT("Tracker failed target angle sanity check.\n");
-            converged = false;
-          }
-          else if(atan_fast(fabs(tracker.get_translation().x) / tracker.get_translation().z) > TrackerParameters::MAX_DOCKING_FOV_ANGLE)
-          {
-            PRINT("Tracker failed FOV sanity check.\n");
-            converged = false;
-
-          }
-        }
-#else
+#if DOCKING_ALGORITHM != DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
+        
         // Check for a super shrunk or super large template
         // (I don't think this works for planar 6dof homographies?  Try dividing by h22?)
         {
@@ -786,7 +792,7 @@ namespace Anki {
         }
 #endif // #if DOCKING_ALGORITHM != DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
 
-        MatlabVisualization::SendTrack(grayscaleImage, tracker, converged, offchipScratch);
+        MatlabVisualization::SendTrack(grayscaleImage, tracker, trackingSucceeded, offchipScratch);
 
         //MatlabVisualization::SendTrackerPrediction_Compare(tracker, offchipScratch);
 
