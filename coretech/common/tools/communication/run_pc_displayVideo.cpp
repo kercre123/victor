@@ -495,15 +495,22 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
 
 int main(int argc, char ** argv)
 {
-  // TCP
-  const char * ipAddress = "192.168.3.30";
-  const s32 port = 5551;
+  // Comment out to use serial
+  //#define USE_SOCKET
 
   printf("Starting display\n");
-
   SetLogSilence(true);
 
+#ifdef USE_SOCKET
+  // TCP
+  const char * ipAddress = "192.168.3.33";
+  const s32 port = 5551;
   DebugStreamClient parserThread(ipAddress, port);
+#else
+  const s32 comPort = 11;
+  const s32 baudRate = 1000000;
+  DebugStreamClient parserThread(comPort, baudRate);
+#endif
 
   InitDisplayDebuggingInfo();
 
