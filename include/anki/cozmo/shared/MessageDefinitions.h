@@ -52,7 +52,8 @@ ADD_MESSAGE_MEMBER(f32, pose_angle)
 ADD_MESSAGE_MEMBER(f32, lwheel_speed_mmps)
 ADD_MESSAGE_MEMBER(f32, rwheel_speed_mmps)
 ADD_MESSAGE_MEMBER(f32, headAngle)
-ADD_MESSAGE_MEMBER(f32, liftHeight)
+ADD_MESSAGE_MEMBER(f32, liftAngle)
+ADD_MESSAGE_MEMBER(f32, liftHeight) // TODO: Need this?
 ADD_MESSAGE_MEMBER(u8, isTraversingPath)
 ADD_MESSAGE_MEMBER(u8, isCarryingBlock)
 // ...

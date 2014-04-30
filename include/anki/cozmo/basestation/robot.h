@@ -50,10 +50,12 @@ namespace Anki {
       const Vision::Camera& get_camDown() const;
       const Vision::Camera& get_camHead() const;
       OperationMode get_operationMode() const;
-      const Radians get_headAngle() const;
+      const f32 get_headAngle() const;
+      const f32 get_liftAngle() const;
       
       void set_pose(const Pose3d &newPose);
-      void set_headAngle(const Radians& angle);
+      void set_headAngle(const f32& angle);
+      void set_liftAngle(const f32& angle);
       void set_camCalibration(const Vision::CameraCalibration& calib);
       
       void queueIncomingMessage(const u8 *msg, const u8 msgSize);
@@ -133,7 +135,8 @@ namespace Anki {
       const Pose3d headCamPose; // in canonical (untilted) position w.r.t. neck joint
       const Pose3d liftBasePose; // around which the base rotates/lifts
 
-      Radians currentHeadAngle;
+      f32 currentHeadAngle;
+      f32 currentLiftAngle;
       
       OperationMode mode, nextMode;
       bool setOperationMode(OperationMode newMode);
@@ -173,8 +176,11 @@ namespace Anki {
     inline bool Robot::hasOutgoingMessages() const
     { return not this->messagesOut.empty(); }
     
-    inline const Radians Robot::get_headAngle() const
+    inline const f32 Robot::get_headAngle() const
     { return this->currentHeadAngle; }
+    
+    inline const f32 Robot::get_liftAngle() const
+    { return this->currentLiftAngle; }
     
     //
     // RobotManager class for keeping up with available robots, by their ID

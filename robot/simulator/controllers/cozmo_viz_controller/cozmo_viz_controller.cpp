@@ -53,15 +53,133 @@ namespace Anki {
       u8 imgData[3*320*240];
       u32 imgBytes = 0;
       u32 imgWidth, imgHeight = 0;
+      
+      // Cozmo bots for visualization
+      typedef struct  {
+        webots::Supervisor* supNode = NULL;
+        webots::Field* trans = NULL;
+        webots::Field* rot = NULL;
+        webots::Field* liftAngle = NULL;
+        webots::Field* headAngle = NULL;
+      } CozmoBotVizParams;
+      
+      // Vector of available CozmoBots for vizualization
+      std::vector<CozmoBotVizParams> vizBots_;
+      
+      // Map of robotID to vizBot index
+      std::map<u8, u8> robotIDToVizBotIdxMap_;
     }
     
     void Init()
     {
+      // Get display devices
       disp = vizSupervisor.getDisplay("cozmo_viz_display");
       camDisp = vizSupervisor.getDisplay("cozmo_cam_viz_display");
+      
+      
+      // === Look for CozmoBot in scene tree ===
+      
+      // Get world root node
+      webots::Node* root = vizSupervisor.getRoot();
+      
+      // Look for controller-less CozmoBot in children.
+      // These will be used as visualization robots.
+      webots::Field* rootChildren = root->getField("children");
+      int numRootChildren = rootChildren->getCount();
+      for (int n = 0 ; n<numRootChildren; ++n) {
+        webots::Node* nd = rootChildren->getMFNode(n);
+        
+        // Get the node name
+        std::string nodeName = "";
+        webots::Field* nameField = nd->getField("name");
+        if (nameField) {
+          nodeName = nameField->getSFString();
+        }
+        
+        // Get the controller name
+        std::string controllerName = "";
+        webots::Field* controllerField = nd->getField("controller");
+        if (controllerField) {
+          controllerName = controllerField->getSFString();
+        }
+        
+        //printf(" Node %d: name \"%s\" typeName \"%s\" controllerName \"%s\"\n",
+        //       n, nodeName.c_str(), nd->getTypeName().c_str(), controllerName.c_str());
+        
+        if (nd->getTypeName().find("Supervisor") != std::string::npos &&
+            nodeName.find("CozmoBot") != std::string::npos &&
+            controllerName.empty()) {
+          
+          printf("Found Viz robot with name %s\n", nodeName.c_str());
+          CozmoBotVizParams p;
+          p.supNode = (webots::Supervisor*)nd;
+          
+          // Find pose fields
+          p.trans = nd->getField("translation");
+          p.rot = nd->getField("rotation");
+          
+          // Find lift and head angle fields
+          p.headAngle = nd->getField("headAngle");
+          p.liftAngle = nd->getField("liftAngle");
+          
+          if (p.supNode && p.trans && p.rot && p.headAngle && p.liftAngle) {
+            printf("Added viz robot %s\n", nodeName.c_str());
+            vizBots_.push_back(p);
+          } else {
+            printf("ERROR: Could not find all required fields in CozmoBot supervisor\n");
+          }
+        }
+      }
+      
     }
     
-
+    void SetRobotPose(CozmoBotVizParams *p,
+                      const f32 x, const f32 y, const f32 z,
+                      const f32 rot_axis_x, const f32 rot_axis_y, const f32 rot_axis_z, const f32 rot_rad,
+                      const f32 headAngle, const f32 liftAngle)
+    {
+      if (p) {
+        double trans[3] = {x,y,z};
+        p->trans->setSFVec3f(trans);
+        
+        // TODO: Transform roll pitch yaw to axis-angle.
+        // Only using yaw for now.
+        double rot[4] = {rot_axis_x,rot_axis_y,rot_axis_z, rot_rad};
+        p->rot->setSFRotation(rot);
+        
+        p->liftAngle->setSFFloat(liftAngle + 0.199763);  // Adding LIFT_LOW_ANGLE_LIMIT since the model's lift angle does not correspond to robot's lift angle.
+                                                         // TODO: Make this less hard-coded.
+        p->headAngle->setSFFloat(headAngle);
+      }
+    }
+    
+    
+    void ProcessVizSetRobotMessage(const VizSetRobot& msg)
+    {
+      // Find robot by ID
+      u8 robotID = msg.robotID;
+      std::map<u8, u8>::iterator it = robotIDToVizBotIdxMap_.find(robotID);
+      if (it == robotIDToVizBotIdxMap_.end()) {
+        if (robotIDToVizBotIdxMap_.size() < vizBots_.size()) {
+          // Robot ID is not currently registered, but there are still some available vizBots.
+          // Auto assign one here.
+          robotIDToVizBotIdxMap_[robotID] = robotIDToVizBotIdxMap_.size();
+          it = robotIDToVizBotIdxMap_.end();
+          it--;
+          printf("Registering vizBot for robot %d\n", robotID);
+        } else {
+          printf("WARNING: RobotID %d not registered. No more available Viz bots. Add more to world file!\n", robotID);
+          return;
+        }
+      }
+      
+      CozmoBotVizParams *p = &(vizBots_[it->second]);
+      
+      SetRobotPose(p,
+                   msg.x_trans_m, msg.y_trans_m, msg.z_trans_m,
+                   msg.rot_axis_x, msg.rot_axis_y, msg.rot_axis_z, msg.rot_rad,
+                   msg.head_angle, msg.lift_angle);
+    }
     
     void DrawText(u32 labelID, const char* text)
     {
@@ -225,6 +343,7 @@ int main(int argc, char **argv)
         case VizSetLabel_ID:
         case VizDockingErrorSignal_ID:
         case VizImageChunk_ID:
+        case VizSetRobot_ID:
           (*Anki::Cozmo::DispatchTable_[msgID])((unsigned char*)(data + 1));
           break;
         // All other messages are forwarded to cozmo_physics plugin

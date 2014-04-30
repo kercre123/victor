@@ -199,16 +199,19 @@ namespace Anki {
                        "  pose (%f,%f,%f,%f)\n"
                        "  wheel speeds (l=%f, r=%f)\n"
                        "  headAngle %f\n"
+                       "  liftAngle %f\n"
                        "  liftHeight %f\n",
                        robot->get_ID(),
                        msg.pose_x, msg.pose_y, msg.pose_z, msg.pose_angle,
                        msg.lwheel_speed_mmps, msg.rwheel_speed_mmps,
-                       msg.headAngle, msg.liftHeight);
+                       msg.headAngle, msg.liftAngle, msg.liftHeight);
       */
       
       // Update head angle
       robot->set_headAngle(msg.headAngle);
 
+      // Update lift angle
+      robot->set_liftAngle(msg.liftAngle);
       
       // Update robot pose
       Vec3f axis(0,0,1);

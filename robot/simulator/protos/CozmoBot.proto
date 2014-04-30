@@ -7,7 +7,8 @@ PROTO CozmoBot [
   field SFInt32  cameraWidth  320
   field SFInt32  cameraHeight 240
   field SFFloat fieldOfView   0.92
-  
+
+  field SFFloat headAngle          -0.4363 # 25 degrees down
   field SFFloat headAngle_lowLimit -0.4363 # 25 degrees down
   field SFFloat headAngle_highLimit 0.6109 # 35 degrees up
   
@@ -77,6 +78,7 @@ Supervisor {
 			HingeJoint {
 			  jointParameters HingeJointParameters {
 				dampingConstant 3
+				position IS headAngle
 				maxStop IS headAngle_highLimit
 				minStop IS headAngle_lowLimit
 				position 0
