@@ -4,9 +4,9 @@
 #include "hal/portable.h"
 #include "spiData.h"
 
-//#define SEND_IMAGE_ONLY
+//#define SEND_IMAGE_ONLY_TEST_BASESTATION
 
-#ifdef SEND_IMAGE_ONLY
+#ifdef SEND_IMAGE_ONLY_TEST_BASESTATION
 OFFCHIP u8 buffer[320*240 + 5]; // +5 for beeffoodfd
 #endif
 
@@ -114,7 +114,7 @@ int main(void)
   
   Anki::Cozmo::Robot::Init();
   
-#ifndef SEND_IMAGE_ONLY
+#ifndef SEND_IMAGE_ONLY_TEST_BASESTATION
   while (Anki::Cozmo::Robot::step_LongExecution() == Anki::RESULT_OK)
   {
   }
@@ -152,7 +152,7 @@ int main(void)
     {
     }*/
   }
-#endif // #ifdef SEND_IMAGE_ONLY
+#endif // #ifdef SEND_IMAGE_ONLY_TEST_BASESTATION
   
 #endif
 }
