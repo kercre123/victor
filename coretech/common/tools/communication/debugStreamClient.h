@@ -64,6 +64,17 @@ namespace Anki
         bool IsValid() const;
       };
 
+      class ObjectToSave : public DebugStreamClient::Object
+      {
+      public:
+        static const s32 SAVE_FILENAME_PATTERN_LENGTH = 256;
+        char filename[SAVE_FILENAME_PATTERN_LENGTH];
+
+        ObjectToSave();
+
+        ObjectToSave(DebugStreamClient::Object &object, const char * filename);
+      };
+
       // Connect via TCP
       // Example: DebugStreamClient("192.168.3.30", 5551)
       DebugStreamClient(const char * ipAddress, const s32 port);
@@ -81,6 +92,10 @@ namespace Anki
       // If the object bufferLength is less than zero, something failed
       Object GetNextObject();
 
+      // Doesn't block, as the saving is done by a separate, low-priority thread
+      // It frees the object memory after the save is complete
+      Result SaveObject(Object &object, const char * filename);
+
       bool get_isRunning() const;
 
     protected:
@@ -95,6 +110,8 @@ namespace Anki
 
       static const s32 CONNECTION_BUFFER_SIZE = 5000;
       static const s32 MESSAGE_BUFFER_SIZE = 1000000;
+
+      char saveFilenamePattern[DebugStreamClient::ObjectToSave::SAVE_FILENAME_PATTERN_LENGTH];
 
       bool isSocket; // Either Socket of Serial
 
@@ -112,9 +129,11 @@ namespace Anki
       volatile bool isRunning; //< If true, keep working. If false, close everything down
       volatile bool isConnectionThreadActive;
       volatile bool isParseBufferThreadActive;
+      volatile bool isSaveObjectThreadActive;
 
       ThreadSafeQueue<RawBuffer> rawMessageQueue;
       ThreadSafeQueue<DebugStreamClient::Object> parsedObjectQueue;
+      ThreadSafeQueue<DebugStreamClient::ObjectToSave> saveObjectQueue;
 
       Result Initialize();
 
@@ -129,6 +148,9 @@ namespace Anki
 
       // Once the big temporary buffer is filled, parse it
       static ThreadResult ParseBufferThread(void *threadParameter);
+
+      // Save any files that are put in the saveObjectQueue
+      static ThreadResult SaveObjectThread(void *threadParameter);
     }; // DebugStreamClient
   } // namespace Embedded
 } // namespace Anki

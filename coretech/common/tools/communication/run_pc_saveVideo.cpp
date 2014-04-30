@@ -1,138 +1,118 @@
 #ifndef ROBOT_HARDWARE
 
-#ifndef _MSC_VER
-#error Currently, only visual c++ is supported
-#endif
-
 #define COZMO_ROBOT
 
-#include "serial.h"
+#include "communication.h"
 #include "threadSafeQueue.h"
-#include "messageHandling.h"
+#include "debugStreamClient.h"
 
 #include "anki/common/robot/config.h"
 #include "anki/common/robot/utilities.h"
 #include "anki/common/robot/serialize.h"
+#include "anki/common/robot/errorHandling.h"
+#include "anki/common/robot/geometry.h"
+#include "anki/common/robot/benchmarking.h"
 
-#undef printf
-_Check_return_opt_ _CRTIMP int __cdecl printf(_In_z_ _Printf_format_string_ const char * _Format, ...);
+#include "anki/vision/robot/transformations.h"
+#include "anki/vision/robot/fiducialMarkers.h"
+#include "anki/vision/robot/binaryTracker.h"
 
 #include <queue>
 
-#include <tchar.h>
-#include <strsafe.h>
 #include <ctime>
 
 #include "opencv/cv.h"
 
 using namespace std;
+using namespace Anki;
+using namespace Anki::Embedded;
 
-const double secondsToWaitBeforeSavingABuffer = 1.0;
+//
+// All these variables and constants are for InitDisplayDebuggingInfo() and DisplayDebuggingInfo()
+//
 
-const s32 outputFilenamePatternLength = 1024;
-//char outputFilenamePattern[outputFilenamePatternLength] = "C:/datasets/systemTestImages/cozmo_%04d-%02d-%02d_%02d-%02d-%02d_%d.%s";
-char outputFilenamePattern[outputFilenamePatternLength] = "C:/datasets/systemTestImages/cozmo_date%04d_%02d_%02d_time%02d_%02d_%02d_frame%d.%s";
+static const s32 scratchSize = 1000000;
+static u8 scratchBuffer[scratchSize];
 
-// Based off example at http://msdn.microsoft.com/en-us/library/windows/desktop/ms682516(v=vs.85).aspx
-DWORD WINAPI SaveBuffersThread(LPVOID lpParam)
+static const s32 outputFilenamePatternLength = 1024;
+static char outputFilenamePattern[outputFilenamePatternLength] = "C:/Users/Pete/Box Sync/Cozmo SE/systemTestImages/cozmo_date%04d_%02d_%02d_time%02d_%02d_%02d_frame%d.%s";
+
+static f64 lastTime = 0;
+
+static cv::Mat lastImage;
+static cv::Mat largeLastImage;
+static cv::Mat toShowImage;
+
+static u8 lastMeanError = 0;
+static f32 lastPercentMatchingGrayvalues = 0;
+static s32 detectedFacesImageWidth = 160;
+
+static Transformations::PlanarTransformation_f32 lastPlanarTransformation;
+
+static std::vector<VisionMarker> visionMarkerList;
+
+static std::vector<Anki::Embedded::Rectangle<s32> > detectedFaces;
+
+static bool aMessageAlreadyPrinted;
+static bool isTracking;
+
+static vector<DebugStreamClient::Object> currentObjects;
+
+static void printUsage()
 {
-  SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_BELOW_NORMAL);
-
-  /*RawBuffer *buffer = (RawBuffer*)lpParam;
-
-  ProcessRawBuffer(*buffer, string(outputFilenamePattern), true, BUFFER_ACTION_SAVE, true);*/
-
-  return 0;
-} // DWORD WINAPI PrintfBuffers(LPVOID lpParam)
-
-void printUsage()
-{
-  printf(
-    "usage: saveVideo <comPort> <baudRate> <outputPatternString>\n"
-    "example: saveVideo 8 1000000 C:/datasets/systemTestImages/cozmo_%%04d-%%02d-%%02d_%%02d-%%02d-%%02d_%%d.%%s\n");
 } // void printUsage()
 
 int main(int argc, char ** argv)
 {
-  double lastUpdateTime;
-  Serial serial;
-  const s32 USB_BUFFER_SIZE = 100000000;
-  u8 *usbBuffer = reinterpret_cast<u8*>(malloc(USB_BUFFER_SIZE));
-  s32 usbBufferIndex = 0;
+  // Comment out to use serial
+#define USE_SOCKET
 
-  s32 comPort = 11;
-  s32 baudRate = 1000000;
+  const char outputFilenamePattern[outputFilenamePatternLength] = "C:/datasets/systemTestImages/cozmo_date%04d_%02d_%02d_time%02d_%02d_%02d_frame%d.%s";
 
-  if(argc == 1) {
-    // just use defaults, but print the help anyway
-    printUsage();
-  } else if(argc == 4) {
-    sscanf(argv[1], "%d", &comPort);
-    sscanf(argv[2], "%d", &baudRate);
-    strcpy(outputFilenamePattern, argv[3]);
-  } else {
-    printUsage();
-    return -1;
-  }
+  printf("Starting display\n");
+  SetLogSilence(true);
 
-  if(serial.Open(comPort, baudRate) != RESULT_OK)
-    return -2;
+#ifdef USE_SOCKET
+  // TCP
+  const char * ipAddress = "192.168.3.33";
+  const s32 port = 5551;
+  DebugStreamClient parserThread(ipAddress, port);
+#else
+  const s32 comPort = 11;
+  const s32 baudRate = 1000000;
+  DebugStreamClient parserThread(comPort, baudRate);
+#endif
 
-  lastUpdateTime = GetTime() + 10e10;
+  const time_t t = time(0);   // get time now
+  struct tm * lastTime = localtime(&t);
 
-  SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST); // THREAD_PRIORITY_ABOVE_NORMAL
+  char outputFilename[DebugStreamClient::ObjectToSave::SAVE_FILENAME_PATTERN_LENGTH];
+
+  s32 frameNumber = 0;
 
   while(true) {
-    if(!usbBuffer) {
-      printf("\n\nCould not allocate usbBuffer\n\n");
-      return -3;
-    }
+    DebugStreamClient::Object newObject = parserThread.GetNextObject();
+    //printf("Received %s %s\n", newObject.typeName, newObject.newObject.objectName);
 
-    DWORD bytesRead = 0;
-    if(serial.Read(usbBuffer+usbBufferIndex, USB_BUFFER_SIZE-usbBufferIndex-2, bytesRead) != RESULT_OK)
-      return -4;
-
-    usbBufferIndex += bytesRead;
-
-    if(bytesRead > 0) {
-      lastUpdateTime = GetTime();
-    } else {
-      if((GetTime()-lastUpdateTime) > secondsToWaitBeforeSavingABuffer) {
-        lastUpdateTime = GetTime();
-
-        if(usbBufferIndex > 0) {
-          printf("Received %d bytes\n", usbBufferIndex);
-          RawBuffer rawBuffer;
-          rawBuffer.data = reinterpret_cast<u8*>(usbBuffer);
-          rawBuffer.dataLength = usbBufferIndex;
-
-          // Use a seperate thread
-          /*
-          DWORD threadId = -1;
-          CreateThread(
-          NULL,        // default security attributes
-          0,           // use default stack size
-          SaveBuffersThread, // thread function name
-          &rawBuffer,    // argument to thread function
-          0,           // use default creation flags
-          &threadId);  // returns the thread identifier
-          */
-
-          // Just call the function
-          ProcessRawBuffer_Save(rawBuffer, string(outputFilenamePattern), true);
-
-          usbBuffer = reinterpret_cast<u8*>(malloc(USB_BUFFER_SIZE));
-          usbBufferIndex = 0;
-        }
+    if(strcmp(newObject.typeName, "Array") == 0 && strcmp(newObject.objectName, "Robot Image") == 0) {
+      const time_t t = time(0);   // get time now
+      const struct tm * currentTime = localtime(&t);
+      if(lastTime->tm_sec == currentTime->tm_sec && lastTime->tm_min == currentTime->tm_min && lastTime->tm_year == currentTime->tm_year) {
+        frameNumber++;
       } else {
-        //Sleep(1);
+        frameNumber = 0;
       }
+
+      snprintf(&outputFilename[0], DebugStreamClient::ObjectToSave::SAVE_FILENAME_PATTERN_LENGTH, outputFilenamePattern,
+        currentTime->tm_year+1900, currentTime->tm_mon+1, currentTime->tm_mday,
+        currentTime->tm_hour, currentTime->tm_min, currentTime->tm_sec,
+        frameNumber,
+        "png");
+
+      parserThread.SaveObject(newObject, outputFilename);
     }
   }
 
-  if(serial.Close() != RESULT_OK)
-    return -5;
-
   return 0;
-}
+} // int main()
 #endif // #ifndef ROBOT_HARDWARE

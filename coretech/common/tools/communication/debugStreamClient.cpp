@@ -101,25 +101,42 @@ namespace Anki
       return true;
     }
 
+    DebugStreamClient::ObjectToSave::ObjectToSave()
+      : DebugStreamClient::Object()
+    {
+    }
+
+    DebugStreamClient::ObjectToSave::ObjectToSave(DebugStreamClient::Object &object, const char * filename)
+    {
+      this->buffer = object.buffer;
+      this->bufferLength = object.bufferLength;
+      this->startOfPayload = object.startOfPayload;
+      this->timeReceived = object.timeReceived;
+
+      snprintf(this->typeName, Anki::Embedded::SerializedBuffer::DESCRIPTION_STRING_LENGTH, "%s", object.typeName);
+      snprintf(this->objectName, Anki::Embedded::SerializedBuffer::DESCRIPTION_STRING_LENGTH, "%s", object.objectName);
+      snprintf(this->filename, Anki::Embedded::DebugStreamClient::ObjectToSave::SAVE_FILENAME_PATTERN_LENGTH, "%s", filename);
+    }
+
     Result DebugStreamClient::Close()
     {
       this->isRunning = false;
 
       // Wait for the threads to complete
-      while(this->isConnectionThreadActive && this->isParseBufferThreadActive)
+      while(this->isConnectionThreadActive && this->isParseBufferThreadActive && this->isSaveObjectThreadActive)
       {}
 
       return RESULT_OK;
     }
 
     DebugStreamClient::DebugStreamClient(const char * ipAddress, const s32 port)
-      : isSocket(true), socket_ipAddress(ipAddress), socket_port(port), isConnectionThreadActive(false), isParseBufferThreadActive(false)
+      : isSocket(true), socket_ipAddress(ipAddress), socket_port(port), isConnectionThreadActive(false), isParseBufferThreadActive(false), isSaveObjectThreadActive(false)
     {
       Initialize();
     } // DebugStreamClient::DebugStreamClient
 
     DebugStreamClient::DebugStreamClient(const s32 comPort, const s32 baudRate, const char parity, const s32 dataBits, const s32 stopBits)
-      : isSocket(false), serial_comPort(comPort), serial_baudRate(baudRate), serial_parity(parity), serial_dataBits(dataBits), serial_stopBits(stopBits)
+      : isSocket(false), serial_comPort(comPort), serial_baudRate(baudRate), serial_parity(parity), serial_dataBits(dataBits), serial_stopBits(stopBits), isConnectionThreadActive(false), isParseBufferThreadActive(false), isSaveObjectThreadActive(false)
     {
       Initialize();
     }
@@ -130,7 +147,9 @@ namespace Anki
 
       //printf("Starting DebugStreamClient\n");
 
-      rawMessageQueue = ThreadSafeQueue<RawBuffer>();
+      this->rawMessageQueue = ThreadSafeQueue<RawBuffer>();
+      this->parsedObjectQueue = ThreadSafeQueue<DebugStreamClient::Object>();
+      this->saveObjectQueue = ThreadSafeQueue<DebugStreamClient::ObjectToSave>();
 
 #ifdef _MSC_VER
       DWORD connectionThreadId = -1;
@@ -168,6 +187,24 @@ namespace Anki
 #endif // #ifdef _MSC_VER ... else
       //printf("Parsing thread created\n");
 
+#ifdef _MSC_VER
+      DWORD savingThreadId = -1;
+      CreateThread(
+        NULL,        // default security attributes
+        0,           // use default stack size
+        DebugStreamClient::SaveObjectThread, // thread function name
+        this,    // argument to thread function
+        0,           // use default creation flags
+        &savingThreadId);  // returns the thread identifier
+#else // #ifdef _MSC_VER
+      pthread_t savingThread;
+      pthread_attr_t savingAttr;
+      pthread_attr_init(&savingAttr);
+
+      pthread_create(&savingThread, &savingAttr, DebugStreamClient::SaveObjectThread, (void *)this);
+#endif // #ifdef _MSC_VER ... else
+      //printf("Saving thread created\n");
+
       return RESULT_OK;
     }
 
@@ -186,6 +223,15 @@ namespace Anki
       newObject = parsedObjectQueue.Pop();
 
       return newObject;
+    }
+
+    Result DebugStreamClient::SaveObject(Object &object, const char * filename)
+    {
+      DebugStreamClient::ObjectToSave toSave(object, filename);
+
+      saveObjectQueue.Push(toSave);
+
+      return RESULT_OK;
     }
 
     bool DebugStreamClient::get_isRunning() const
@@ -785,6 +831,46 @@ namespace Anki
       } // while(true)
 
       callingObject->isParseBufferThreadActive = false;
+
+      return 0;
+    }
+
+    ThreadResult DebugStreamClient::SaveObjectThread(void *threadParameter)
+    {
+#ifdef _MSC_VER
+      SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_BELOW_NORMAL);
+#else
+      // TODO: set thread priority
+#endif
+
+      DebugStreamClient *callingObject = (DebugStreamClient *) threadParameter;
+
+      callingObject->isSaveObjectThreadActive = true;
+
+      ThreadSafeQueue<DebugStreamClient::ObjectToSave> &saveObjectQueue = callingObject->saveObjectQueue;
+
+      while(true) {
+        while(saveObjectQueue.IsEmpty() && callingObject->get_isRunning()) {
+#ifdef _MSC_VER
+          Sleep(10);
+#else
+          usleep(10000);
+#endif
+        }
+
+        if(!callingObject->get_isRunning())
+          break;
+
+        const DebugStreamClient::ObjectToSave nextObject = saveObjectQueue.Pop();
+
+        // TODO: save things other than images
+        Array<u8> image = *(reinterpret_cast<Array<u8>*>(nextObject.startOfPayload));
+        cv::imwrite(nextObject.filename, image.get_CvMat_());
+
+        free(nextObject.buffer);
+      } // while(true)
+
+      callingObject->isSaveObjectThreadActive = false;
 
       return 0;
     }
