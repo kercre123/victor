@@ -224,7 +224,8 @@ namespace Anki {
 
     Result MessageHandler::ProcessMessage(Robot* robot, MessagePrintText const& msg)
     {
-      static char text[512];  // Local storage for large messages which may come across in multiple packets
+      const u32 MAX_PRINT_STRING_LENGTH = 1024;
+      static char text[MAX_PRINT_STRING_LENGTH];  // Local storage for large messages which may come across in multiple packets
       static u32 textIdx = 0;
 
       char *newText = (char*)&(msg.text.front());
@@ -244,7 +245,15 @@ namespace Anki {
       } else {
         // This message is part of a larger text. Copy to local buffer. There is more to come!
         memcpy(text + textIdx, newText, PRINT_TEXT_MSG_LENGTH);
-        textIdx += PRINT_TEXT_MSG_LENGTH;
+        textIdx = MIN(textIdx + PRINT_TEXT_MSG_LENGTH, MAX_PRINT_STRING_LENGTH-1);
+        
+        // The message received was too long or garbled (i.e. chunks somehow lost)
+        if (textIdx == MAX_PRINT_STRING_LENGTH-1) {
+          text[MAX_PRINT_STRING_LENGTH-1] = 0;
+          printf("ROBOT-PRINT-garbled (%d): %s", robot->get_ID(), text);
+          textIdx = 0;
+        }
+        
       }
 
       return RESULT_OK;
