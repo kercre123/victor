@@ -136,6 +136,27 @@ namespace Anki {
         return true;
         
       }
+
+      
+      void UpdateRobotStateMsg()
+      {
+        robotState_.timestamp = HAL::GetTimeStamp();
+        
+        Radians poseAngle;
+        
+        Localization::GetCurrentMatPose(robotState_.pose_x, robotState_.pose_y, poseAngle);
+        robotState_.pose_z = 0;
+        robotState_.pose_angle = poseAngle.ToFloat();
+        
+        WheelController::GetFilteredWheelSpeeds(robotState_.lwheel_speed_mmps, robotState_.rwheel_speed_mmps);
+        
+        robotState_.headAngle  = HeadController::GetAngleRad();
+        robotState_.liftAngle  = LiftController::GetAngleRad();
+        robotState_.liftHeight = LiftController::GetHeightMM();
+        
+        robotState_.isTraversingPath = PathFollower::IsTraversingPath() ? 1 : 0;
+        robotState_.isCarryingBlock = PickAndPlaceController::IsCarryingBlock() ? 1 : 0;
+      }
       
       RobotState const& GetRobotStateMsg() {
         return robotState_;
@@ -361,22 +382,6 @@ namespace Anki {
       
       Result SendRobotStateMsg()
       {
-        robotState_.timestamp = HAL::GetTimeStamp();
-        
-        Radians poseAngle;
-        
-        Localization::GetCurrentMatPose(robotState_.pose_x, robotState_.pose_y, poseAngle);
-        robotState_.pose_z = 0;
-        robotState_.pose_angle = poseAngle.ToFloat();
-        
-        WheelController::GetFilteredWheelSpeeds(robotState_.lwheel_speed_mmps, robotState_.rwheel_speed_mmps);
-
-        robotState_.headAngle  = HeadController::GetAngleRad();
-        robotState_.liftHeight = LiftController::GetHeightMM();
-
-        robotState_.isTraversingPath = PathFollower::IsTraversingPath() ? 1 : 0;
-        robotState_.isCarryingBlock = PickAndPlaceController::IsCarryingBlock() ? 1 : 0;
-        
         if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RobotState), &robotState_) == true) {
           return RESULT_OK;
         } else {

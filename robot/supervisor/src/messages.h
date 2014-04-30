@@ -65,9 +65,13 @@ namespace Anki {
       
       // Did we see the message ID we last set? (Or perhaps we timed out)
       bool StillLookingForID(void);
+ 
+      // Used by visionSystem for prediction during tracking
+      void UpdateRobotStateMsg();
       
       // Send messages
-      Result SendRobotStateMsg(); // populates and sends state message
+      Result SendRobotStateMsg();     // Only sends message.
+                                      // Actual message contents are updated in UpdateRobotStateMsg()
       void SendText(const char *format, ...);
       
       

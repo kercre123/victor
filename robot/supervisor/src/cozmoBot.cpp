@@ -279,6 +279,7 @@ namespace Anki {
         // Feedback / Display
         //////////////////////////////////////////////////////////////
         
+        Messages::UpdateRobotStateMsg();
 #if(!STREAM_DEBUG_IMAGES)
         Messages::SendRobotStateMsg();
 #endif
