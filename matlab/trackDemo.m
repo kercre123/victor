@@ -260,12 +260,27 @@ end
                 xsamples = temp(1,:)./temp(3,:) + CalibrationMatrix(1,3);
                 ysamples = temp(2,:)./temp(3,:) + CalibrationMatrix(2,3);
                 
+                if any(abs(currentParams(1:3)-initialParams(1:3)) > 30*pi/180)
+                    trackerSucceeded = false;
+                    reason = 'Angle changed too much.';
+                elseif any(abs(currentParams(4:6)-initialParams(4:6)) > 20)
+                    trackerSucceeded = false;
+                    reason = 'Position changed too much.';
+                elseif verify_numSimilarPixels / verify_numInBounds < IntensityErrorFraction
+                    trackerSucceeded = false;
+                    reason = 'Too many verification pixels above error tolerance.';
+                else
+                    trackerSucceeded = true;
+                end
+                
             else
                 [converged, reason] = LKtracker.track(imgFiltered, ...
                     'MaxIterations', MaxIterations, ...
                     'ConvergenceTolerance', ConvergenceTolerance, ...
                     'IntensityErrorTolerance', IntensityErrorTolerance, ...
                     'IntensityErrorFraction', IntensityErrorFraction);
+                
+                trackerSucceeded = converged;
                 
                 corners = LKtracker.corners;
                 
@@ -278,23 +293,8 @@ end
                 end
                 
             end
-            
-            % DEBUG:
-            %if any( abs( (currentParams - initialParams) ./ initialParams )  > .25 )
-            if any(abs(currentParams(1:3)-initialParams(1:3)) > 30*pi/180) 
-                converged = false;
-                reason = 'Angle changed too much.';
-            elseif any(abs(currentParams(4:6)-initialParams(4:6)) > 20)
-                converged = false;
-                reason = 'Position changed too much.';
-            elseif verify_numSimilarPixels / verify_numInBounds < IntensityErrorFraction
-                converged = false;
-                reason = 'Too many verification pixels above error tolerance.';
-            else
-                converged = true;
-            end
-            
-            if ~converged
+               
+            if ~trackerSucceeded
                 resetTracker = true;
             end
             %fprintf('Tracking took %.2f seconds.\n', toc(t));

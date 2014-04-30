@@ -110,6 +110,8 @@ namespace Anki {
         s32 trackingImageWidth;
         f32 normalizationFilterWidthFraction; // as fraction of tracking quad diagonal (0 to disable)
         
+        u8 verify_maxPixelDifference;
+        
 #if DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
         
         f32 scaleTemplateRegionPercent;                
@@ -118,7 +120,6 @@ namespace Anki {
         s32 matching_maxTranslationDistance;
         s32 matching_maxProjectiveDistance;
         s32 verify_maxTranslationDistance;
-        u8 verify_maxPixelDifference;
         s32 verify_coordinateIncrement;
         f32 percentMatchedPixelsThreshold;
         
@@ -127,8 +128,7 @@ namespace Anki {
         f32 scaleTemplateRegionPercent;
         s32 numPyramidLevels;
         s32 maxIterations;
-        f32 convergenceTolerance;
-        u8 verify_maxPixelDifference;
+
         bool useWeights;
         s32 maxSamplesAtBaseLevel;
         
@@ -138,6 +138,10 @@ namespace Anki {
         f32 convergenceTolerance_angle;    // radians
         f32 convergenceTolerance_distance; // mm
         s32 numSamplingRegions;            // NxN grid of sampling regions within quad
+        
+        f32 successTolerance_angle;
+        f32 successTolerance_distance;
+        f32 successTolerance_matchingPixelsFraction;
 #else
         f32 convergenceTolerance;
 #endif

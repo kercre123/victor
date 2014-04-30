@@ -544,13 +544,14 @@ namespace Anki {
                                                                         onchipMemory,
                                                                         offchipMemory);
 
+        /*
         // TODO: Set this elsewhere
         const f32 Kp_min = 0.05f;
         const f32 Kp_max = 0.75f;
         const f32 tz_min = 30.f;
         const f32 tz_max = 150.f;
         tracker.SetGainScheduling(tz_min, tz_max, Kp_min, Kp_max);
-
+         */
 #else
 #error Unknown DOCKING_ALGORITHM.
 #endif
@@ -680,6 +681,11 @@ namespace Anki {
 
 #elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
 
+        const Radians initAngleX(tracker.get_angleX());
+        const Radians initAngleY(tracker.get_angleY());
+        const Radians initAngleZ(tracker.get_angleZ());
+        const Point3<f32>& initTranslation = tracker.get_translation();
+        
         const Result trackerResult = tracker.UpdateTrack(grayscaleImage,
                                                          parameters.maxIterations,
                                                          parameters.convergenceTolerance_angle,
@@ -689,8 +695,32 @@ namespace Anki {
                                                          verify_meanAbsoluteDifference,
                                                          verify_numInBounds,
                                                          verify_numSimilarPixels,
-                                                         onchipScratch); // TODO: onchip scratch?
-
+                                                         onchipScratch);
+        
+        if(fabs((initAngleX - tracker.get_angleX()).ToFloat()) > parameters.successTolerance_angle ||
+           fabs((initAngleY - tracker.get_angleY()).ToFloat()) > parameters.successTolerance_angle ||
+           fabs((initAngleZ - tracker.get_angleZ()).ToFloat()) > parameters.successTolerance_angle)
+        {
+          // Angle changed too much
+          converged = false;
+        }
+        else if((initTranslation - tracker.get_translation()).Length() > parameters.successTolerance_distance)
+        {
+          // Position changed too much
+          converged = false;
+        }
+        else if( (static_cast<f32>(verify_numSimilarPixels) /
+                  static_cast<f32>(verify_numInBounds)) < parameters.successTolerance_matchingPixelsFraction)
+        {
+          // Too many in-bounds pixels failed intensity verification
+          converged = false;
+        }
+        else {
+          // Everything seems ok
+          converged = true;
+        }
+          
+        
 #else
 #error Unknown DOCKING_ALGORITHM!
 #endif
