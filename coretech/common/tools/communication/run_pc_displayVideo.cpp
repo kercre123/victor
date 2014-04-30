@@ -53,8 +53,6 @@ static s32 detectedFacesImageWidth = 160;
 
 static Transformations::PlanarTransformation_f32 lastPlanarTransformation;
 
-static f32 benchmarkTimes[2];
-
 static std::vector<VisionMarker> visionMarkerList;
 
 static std::vector<Anki::Embedded::Rectangle<s32> > detectedFaces;
@@ -86,9 +84,6 @@ static void InitDisplayDebuggingInfo()
   toShowImage.setTo(0);
 
   lastPlanarTransformation = Transformations::PlanarTransformation_f32();
-
-  benchmarkTimes[0] = -1.0f;
-  benchmarkTimes[1] = -1.0f;
 
   visionMarkerList.clear();
   detectedFaces.clear();
@@ -142,8 +137,8 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
   MemoryStack scratch = MemoryStack(scratchBuffer, scratchSize, Flags::Buffer(false, true, false));
 
   if(strcmp(newObject.objectName, "Benchmarks") == 0) {
-    const f64 pixelsPerMillisecond = 2.0;
-    const s32 imageHeight = 400;
+    const f64 pixelsPerMillisecond = 1.5;
+    const s32 imageHeight = 500;
     const s32 imageWidth = 1600;
 
     FixedLengthList<BenchmarkElement> benchmarks = *(reinterpret_cast<FixedLengthList<BenchmarkElement>*>(newObject.startOfPayload));
@@ -162,20 +157,6 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
 
   if(newObject.timeReceived != lastTime) {
     if(lastImage.rows > 0) {
-      // Print FPS
-      if(benchmarkTimes[0] > 0.0f) {
-        char benchmarkBuffer[1024];
-
-        static f64 lastTime;
-        const f64 curTime = GetTimeF64();
-        const f64 receivedDelta = curTime - lastTime;
-        lastTime = GetTimeF64();
-
-        snprintf(benchmarkBuffer, 1024, "Total:%0.1ffps Algorithms:%0.1ffps   GrayvalueError:%d %f", 1.0f/benchmarkTimes[1], 1.0f/benchmarkTimes[0], lastMeanError, lastPercentMatchingGrayvalues);
-
-        cv::putText(toShowImage, benchmarkBuffer, cv::Point(5,15), cv::FONT_HERSHEY_PLAIN, 1.0, cv::Scalar(0,255,0));
-      }
-
       if(isTracking) {
         cv::Mat trackingBoxImage(bigHeight, bigWidth, CV_8UC3);
 
@@ -273,6 +254,7 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
       }
 
       cv::imshow("Robot Image", toShowImage);
+      cv::moveWindow("Robot Image", 150, 540);
       const s32 pressedKey = cv::waitKey(10);
       //printf("%d\n", pressedKey);
       if(pressedKey == 'c') {
@@ -310,13 +292,7 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
   currentObjects.push_back(newObject);
 
   if(strcmp(newObject.typeName, "Basic Type Buffer") == 0) {
-    if(strcmp(newObject.objectName, "Benchmark Times") == 0) {
-      const f32* tmpBuffer = reinterpret_cast<f32*>(newObject.startOfPayload);
-
-      for(s32 i=0; i<2; i++) {
-        benchmarkTimes[i] = tmpBuffer[i];
-      }
-    } else if(strcmp(newObject.objectName, "meanGrayvalueError") == 0) {
+    if(strcmp(newObject.objectName, "meanGrayvalueError") == 0) {
       u8* tmpBuffer = reinterpret_cast<u8*>(newObject.startOfPayload);
 
       lastMeanError = tmpBuffer[0];

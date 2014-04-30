@@ -439,6 +439,7 @@ namespace Anki
     {
 #ifdef ANKICORETECH_EMBEDDED_USE_OPENCV
       const s32 blackWidth = 10;
+      const s32 displayGridEveryNMilliseconds = 50;
 
       const s32 totalTimeIndex = CompileBenchmarkResults::GetNameIndex("TotalTime", results);
 
@@ -501,7 +502,20 @@ namespace Anki
         curY -= numPixels;
       } // for(s32 iName=0; iName<namesToDisplay.get_size(); iName++)
 
+      const s32 numGridlines = static_cast<s32>( floor(imageHeight / (50.0 * pixelsPerMillisecond)) ) + 1;
+      for(s32 i=0; i<numGridlines; i++) {
+        const s32 curY = imageHeight - 1 - Round<s32>(50.0 * pixelsPerMillisecond * i);
+        cv::line(
+          toShowImage,
+          cv::Point(0, curY),
+          cv::Point(imageWidth-1, curY),
+          cv::Scalar(196,196,196),
+          1,
+          4);
+      }
+
       cv::imshow("Benchmarks", toShowImage);
+      cv::moveWindow("Benchmarks", 150, 0);
 
       toShowImageColumn++;
 
@@ -536,6 +550,7 @@ namespace Anki
         }
 
         cv::imshow("Benchmarks Key", keyImage);
+        cv::moveWindow("Benchmarks Key", 850, 540);
       }
 
       return RESULT_OK;
