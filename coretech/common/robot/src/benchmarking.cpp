@@ -508,6 +508,36 @@ namespace Anki
       if(toShowImageColumn >= imageWidth)
         toShowImageColumn = 0;
 
+      // Display the key
+      {
+        const s32 textHeightInPixels = 20;
+        const f64 textFontSize = 1.0;
+
+        cv::Mat keyImage((namesToDisplay.get_size()+1)*textHeightInPixels, 640, CV_8UC3);
+        keyImage.setTo(0);
+
+        s32 curY = 15;
+
+        const s32 textBufferLength = 256;
+        char textBuffer[textBufferLength];
+
+        snprintf(textBuffer, textBufferLength, "Total: %dms", Round<s32>(1000.0*results[totalTimeIndex].inclusive_total));
+        cv::putText(keyImage, textBuffer, cv::Point(5,curY), cv::FONT_HERSHEY_PLAIN, textFontSize, cv::Scalar(128, 128, 128));
+        curY += textHeightInPixels;
+
+        for(s32 iKey=namesToDisplay.get_size() - 1; iKey>=0; iKey--) {
+          const s32 index = CompileBenchmarkResults::GetNameIndex(namesToDisplay[iKey].name, results);
+
+          const f64 time = namesToDisplay[iKey].showExclusiveTime ? results[index].exclusive_total : results[index].inclusive_total;
+
+          snprintf(textBuffer, textBufferLength,  "%s: %dms", namesToDisplay[iKey].name, Round<s32>(1000.0*time));
+          cv::putText(keyImage, textBuffer, cv::Point(5,curY), cv::FONT_HERSHEY_PLAIN, textFontSize, cv::Scalar(namesToDisplay[iKey].blue, namesToDisplay[iKey].green, namesToDisplay[iKey].red));
+          curY += textHeightInPixels;
+        }
+
+        cv::imshow("Benchmarks Key", keyImage);
+      }
+
       return RESULT_OK;
 #else // #ifdef ANKICORETECH_EMBEDDED_USE_OPENCV
       return RESULT_FAIL;
