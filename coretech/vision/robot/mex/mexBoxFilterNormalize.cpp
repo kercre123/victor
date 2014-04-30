@@ -7,8 +7,11 @@
 using namespace Anki;
 using namespace Anki::Embedded;
 
+
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
+  mexAtExit(cv::destroyAllWindows);
+  
   if(nrhs == 3 && nlhs == 1)
   {
     // Memory

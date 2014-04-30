@@ -57,6 +57,8 @@ void NormalizeImage(Array<u8>& grayscaleImage, const Quadrilateral<f32>& current
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
+  mexAtExit(cv::destroyAllWindows);
+  
   // TODO: Make this a passed-in parameter
   const f32 filterWidthFraction = 0.5f;
   
@@ -188,7 +190,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     
     Quadrilateral<f32> currentQuad = tracker.get_transformation().get_transformedCorners(onchipMemory);
     NormalizeImage(grayscaleImage, currentQuad, filterWidthFraction, offchipMemory);
-    
+
     // Update tracker
     const Anki::Result trackerResult = tracker.UpdateTrack(grayscaleImage,
                                                            maxIterations,
