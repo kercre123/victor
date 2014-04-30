@@ -388,6 +388,53 @@ namespace Anki {
         
       } // LookForMarkers()
 
+      static Result BrightnessNormalizeImage(Array<u8>& image, const Quadrilateral<f32>& quad,
+                                             const f32 filterWidthFraction,
+                                             MemoryStack scratch)
+      {
+        if(filterWidthFraction > 0.f) {
+          // TODO: Add the ability to only normalize within the vicinity of the quad
+          // Note that this requires templateQuad to be sorted!
+          const s32 filterWidth = static_cast<s32>(filterWidthFraction*((quad[3] - quad[0]).Length()));
+          AnkiAssert(filterWidth > 0.f);
+          
+          Array<u8> imageNormalized(image.get_size(0), image.get_size(1), scratch);
+          
+          AnkiConditionalErrorAndReturnValue(imageNormalized.IsValid(),
+                                             RESULT_FAIL_OUT_OF_MEMORY,
+                                             "VisionSystem::BrightnessNormalizeImage",
+                                             "Out of memory allocating imageNormalized.\n");
+          
+          BeginBenchmark("BoxFilterNormalize");
+
+          ImageProcessing::BoxFilterNormalize(image, filterWidth, static_cast<u8>(128),
+                                              imageNormalized, scratch);
+          
+          EndBenchmark("BoxFilterNormalize");
+
+          
+          { // DEBUG
+            /*
+             static Matlab matlab(false);
+             matlab.PutArray(grayscaleImage, "grayscaleImage");
+             matlab.PutArray(grayscaleImageNormalized, "grayscaleImageNormalized");
+             matlab.EvalString("subplot(121), imagesc(grayscaleImage), axis image, colorbar, "
+             "subplot(122), imagesc(grayscaleImageNormalized), colorbar, axis image, "
+             "colormap(gray)");
+             */
+            
+            //image.Show("GrayscaleImage", false);
+            //imageNormalized.Show("GrayscaleImageNormalized", false);
+          }
+          
+          image.Set(imageNormalized);
+        } // if(filterWidthFraction > 0)
+        
+        return RESULT_OK;
+        
+      } // BrightnessNormalizeImage()
+      
+      
       static Result InitTemplate(
                                      const Array<u8> &grayscaleImage,
                                      const Quadrilateral<f32> &trackingQuad,
@@ -1473,6 +1520,8 @@ namespace Anki {
       // This is the regular Update() call
       Result Update(const Messages::RobotState robotState)
       {
+        Result lastResult = RESULT_OK;
+        
         // This should be called from elsewhere first, but calling it again won't hurt
         Init();
         
@@ -1519,16 +1568,14 @@ namespace Anki {
           
           DownsampleAndSendImage(grayscaleImage);
 
-          const Result result = LookForMarkers(
-                                                   grayscaleImage,
-                                                   detectionParameters_,
-                                                   VisionMemory::markers_,
-                                                   VisionMemory::ccmScratch_,
-                                                   VisionMemory::onchipScratch_,
-                                                   VisionMemory::offchipScratch_);
-
-          if(result != RESULT_OK) {
-            return RESULT_FAIL;
+          if((lastResult = LookForMarkers(grayscaleImage,
+                                          detectionParameters_,
+                                          VisionMemory::markers_,
+                                          VisionMemory::ccmScratch_,
+                                          VisionMemory::onchipScratch_,
+                                          VisionMemory::offchipScratch_)) != RESULT_OK)
+          {
+            return lastResult;
           }
 
           const s32 numMarkers = VisionMemory::markers_.get_size();
@@ -1572,22 +1619,26 @@ namespace Anki {
               // InitTemplate downsamples it for the time being, since we're still doing template
               // initialization at tracking resolution instead of the eventual goal of doing it at
               // full detection resolution.
-              trackingQuad_ = Quadrilateral<f32>(
-                                                              Point<f32>(crntMarker.corners[0].x, crntMarker.corners[0].y),
-                                                              Point<f32>(crntMarker.corners[1].x, crntMarker.corners[1].y),
-                                                              Point<f32>(crntMarker.corners[2].x, crntMarker.corners[2].y),
-                                                              Point<f32>(crntMarker.corners[3].x, crntMarker.corners[3].y));
+              trackingQuad_ = crntMarker.corners;
+              
+              // NOTE: This will change grayscaleImage!
+              // NOTE: This is currently off-chip for memory reasons, so it's slow!
+              if((lastResult = BrightnessNormalizeImage(grayscaleImage, trackingQuad_,
+                                                        trackerParameters_.normalizationFilterWidthFraction,
+                                                        VisionMemory::offchipScratch_)) != RESULT_OK)
+              {
+                return lastResult;
+              }
 
-              const Result result = InitTemplate(grayscaleImage,
-                                                     trackingQuad_,
-                                                     trackerParameters_,
-                                                     tracker_,
-                                                     VisionMemory::ccmScratch_,
-                                                     VisionMemory::onchipScratch_, //< NOTE: onchip is a reference
-                                                     VisionMemory::offchipScratch_);
-
-              if(result != RESULT_OK) {
-                return RESULT_FAIL;
+              if((lastResult = InitTemplate(grayscaleImage,
+                                            trackingQuad_,
+                                            trackerParameters_,
+                                            tracker_,
+                                            VisionMemory::ccmScratch_,
+                                            VisionMemory::onchipScratch_, //< NOTE: onchip is a reference
+                                            VisionMemory::offchipScratch_)) != RESULT_OK)
+              {
+                return lastResult;
               }
 
               // Template initialization succeeded, switch to tracking mode:
@@ -1626,7 +1677,16 @@ namespace Anki {
             exposureTime,
             VisionMemory::ccmScratch_);
           }*/
-            
+          
+          // NOTE: This will change grayscaleImage!
+          // NOTE: This is currently off-chip for memory reasons, so it's slow!
+          if((lastResult = BrightnessNormalizeImage(grayscaleImage, trackingQuad_,
+                                                    trackerParameters_.normalizationFilterWidthFraction,
+                                                    VisionMemory::offchipScratch_)) != RESULT_OK)
+          {
+            return lastResult;
+          }
+          
           //
           // Tracker Prediction
           //
@@ -1634,11 +1694,9 @@ namespace Anki {
           // think we've moved since the last tracking call.
           //
 
-          Result predictionResult = TrackerPredictionUpdate(grayscaleImage, onchipScratch_local);
-
-          if(predictionResult != RESULT_OK) {
+          if((lastResult =TrackerPredictionUpdate(grayscaleImage, onchipScratch_local)) != RESULT_OK) {
             PRINT("VisionSystem::Update(): TrackTemplate() failed.\n");
-            return RESULT_FAIL;
+            return lastResult;
           }
 
           //
@@ -1648,19 +1706,16 @@ namespace Anki {
           // Set by TrackTemplate() call
           bool converged = false;
 
-          const Result trackResult = TrackTemplate(
-                                                       grayscaleImage,
-                                                       trackingQuad_,
-                                                       trackerParameters_,
-                                                       tracker_,
-                                                       converged,
-                                                       VisionMemory::ccmScratch_,
-                                                       onchipScratch_local,
-                                                       offchipScratch_local);
-
-          if(trackResult != RESULT_OK) {
+          if((lastResult = TrackTemplate(grayscaleImage,
+                                         trackingQuad_,
+                                         trackerParameters_,
+                                         tracker_,
+                                         converged,
+                                         VisionMemory::ccmScratch_,
+                                         onchipScratch_local,
+                                         offchipScratch_local)) != RESULT_OK) {
             PRINT("VisionSystem::Update(): TrackTemplate() failed.\n");
-            return RESULT_FAIL;
+            return lastResult;
           }
 
           //

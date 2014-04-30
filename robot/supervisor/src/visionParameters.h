@@ -108,6 +108,7 @@ namespace Anki {
         Vision::CameraResolution trackingResolution;
         s32 trackingImageHeight;
         s32 trackingImageWidth;
+        f32 normalizationFilterWidthFraction; // as fraction of tracking quad diagonal (0 to disable)
         
 #if DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
         

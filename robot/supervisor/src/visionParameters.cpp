@@ -94,6 +94,8 @@ namespace Anki {
       
       void TrackerParameters::Initialize()
       {
+        normalizationFilterWidthFraction = 0.5f;
+        
 #if DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
         // Binary tracker works at QVGA (unlike LK)
         trackingResolution = Vision::CAMERA_RES_QVGA;
