@@ -78,6 +78,9 @@ namespace Anki
         this->focalLength_y = focalLength_y;
         this->camCenter_x   = camCenter_x;
         this->camCenter_y   = camCenter_y;
+        
+        // Start with gain scheduling off
+        this->useGainScheduling = false;
 
         // Create a canonical 3D template to use.
         Point3<f32> template3d[4];
@@ -242,6 +245,18 @@ namespace Anki
         this->verificationSamples   = FixedLengthList<VerifySample>(verifyGridSize*verifyGridSize, onchipScratch);
         this->AtAPyramid            = FixedLengthList<Array<f32> >(numPyramidLevels, onchipScratch);
         
+        AnkiConditionalErrorAndReturn(this->templateSamplePyramid.IsValid(),
+                                      "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
+                                      "Unable to allocate templateSamplePyramid FixedLengthList.");
+
+        AnkiConditionalErrorAndReturn(this->verificationSamples.IsValid(),
+                                      "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
+                                      "Unable to allocate verificationSamples FixedLengthList.");
+
+        AnkiConditionalErrorAndReturn(this->AtAPyramid.IsValid(),
+                                      "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
+                                      "Unable to allocate AtAPyramid FixedLengthList.");
+
         this->templateSamplePyramid.set_size(numPyramidLevels);
         this->AtAPyramid.set_size(numPyramidLevels);
         
@@ -273,37 +288,43 @@ namespace Anki
           const s32 curMaxSamples = MIN(maxPossibleLocations, maxSamplesAtBaseLevel >> iScale);
 
           this->templateSamplePyramid[iScale] = FixedLengthList<TemplateSample>(curMaxSamples, onchipScratch);
-
+          AnkiConditionalErrorAndReturn(this->templateSamplePyramid[iScale].IsValid(),
+                                        "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
+                                        "Unable to allocate templateSamplePyramid[%d] FixedLengthList.", iScale);
+          
           const s32 numPointsY = templateCoordinates.get_yGridVector().get_size();
           const s32 numPointsX = templateCoordinates.get_xGridVector().get_size();
           
           this->AtAPyramid[iScale] = Array<f32>(6,6,onchipScratch);
           Array<f32>& curAtA = this->AtAPyramid[iScale];
-          curAtA.SetZero();
           
           AnkiConditionalErrorAndReturn(curAtA.IsValid(),
                                         "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
                                         "Invalid AtA matrix at scale %d.\n", iScale);
           
+          curAtA.SetZero();
+          
           PUSH_MEMORY_STACK(offchipScratch);
           PUSH_MEMORY_STACK(onchipScratch);
 
-          Array<u8> grayscaleVector   = Array<u8>(1, numPointsX*numPointsY, offchipScratch);
-          Array<f32> xGradientVector  = Array<f32>(1, numPointsX*numPointsY, offchipScratch);
-          Array<f32> yGradientVector  = Array<f32>(1, numPointsX*numPointsY, offchipScratch);
-          Array<s32> magnitudeIndexes = Array<s32>(1, numPointsY*numPointsX, offchipScratch); // NOTE: u16 not enough for full 320x240
+          Array<u8> grayscaleVector(1, numPointsX*numPointsY, offchipScratch);
+          Array<f32> xGradientVector(1, numPointsX*numPointsY, offchipScratch);
+          Array<f32> yGradientVector(1, numPointsX*numPointsY, offchipScratch);
+          Array<s32> magnitudeIndexes(1, numPointsY*numPointsX, offchipScratch); // NOTE: u16 not enough for full 320x240
           s32 numSelected = 0;
           {
             PUSH_MEMORY_STACK(offchipScratch);
             
-            Array<u8> templateImageAtScale = Array<u8>(numPointsY, numPointsX, offchipScratch);
+            Array<u8> templateImageAtScale(numPointsY, numPointsX, offchipScratch);
             AnkiConditionalErrorAndReturn(templateImageAtScale.IsValid(),
                                           "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
                                           "Out of memory allocating templateImageAtScale.\n");
+            
             if((lastResult = Interp2_Projective<u8,u8>(templateImage, templateCoordinates, transformation.get_homography(), this->transformation.get_centerOffset(initialImageScaleF32), templateImageAtScale, INTERPOLATE_LINEAR)) != RESULT_OK) {
               AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "Interp2_Projective failed with code 0x%x", lastResult);
               return;
             }
+            
             
 #if USE_INTENSITY_NORMALIZATION
             // Compute the mean and standard deviation of the template for normalization
@@ -322,7 +343,7 @@ namespace Anki
 #endif
             
             // Compute X gradient image
-            Array<f32> templateImageXGradient = Array<f32>(numPointsY, numPointsX, offchipScratch);
+            Array<f32> templateImageXGradient(numPointsY, numPointsX, offchipScratch);
             AnkiConditionalErrorAndReturn(templateImageXGradient.IsValid(),
                                           "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
                                           "Out of memory allocating templateImageXGradient.\n");
@@ -332,7 +353,7 @@ namespace Anki
             }
             
             // Compuate Y gradient image
-            Array<f32> templateImageYGradient = Array<f32>(numPointsY, numPointsX, offchipScratch);
+            Array<f32> templateImageYGradient(numPointsY, numPointsX, offchipScratch);
             AnkiConditionalErrorAndReturn(templateImageYGradient.IsValid(),
                                           "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
                                           "Out of memory allocating templateImageYGradient.\n");
@@ -450,7 +471,7 @@ namespace Anki
                    }
                    }*/
                   
-                  magnitudeImage.Show("MagImage", false);
+                  //magnitudeImage.Show("MagImage", false);
                   
                   //if(nonZeroCount > numDesiredSamples) {
                     // After non-local maxima suppression, we still have enough
@@ -470,7 +491,7 @@ namespace Anki
                     
                   } // if(nonZeroCount > numDesiredSamples)
                 
-                  magnitudeImage.Show("MagImageNLMS", false);
+                  //magnitudeImage.Show("MagImageNLMS", false);
                   
                 } // pop magnitudeImageNLMS
             
@@ -663,14 +684,14 @@ namespace Anki
 
           this->verificationSamples.set_size(verifyGridSize*verifyGridSize);
           
-          Meshgrid<f32> verifyCoordinates = Meshgrid<f32>(Linspace(-halfWidth, halfWidth, verifyGridSize),
-                                                          Linspace(-halfWidth, halfWidth, verifyGridSize));
+          Meshgrid<f32> verifyCoordinates(Linspace(-halfWidth, halfWidth, verifyGridSize),
+                                          Linspace(-halfWidth, halfWidth, verifyGridSize));
 
-          Array<f32> verifyGrayscaleVector = Array<f32>(1, verifyGridSize*verifyGridSize, offchipScratch);
+          Array<f32> verifyGrayscaleVector(1, verifyGridSize*verifyGridSize, offchipScratch);
           {
             PUSH_MEMORY_STACK(offchipScratch);
             
-            Array<f32> verifyImage = Array<f32>(verifyGridSize, verifyGridSize, offchipScratch);
+            Array<f32> verifyImage(verifyGridSize, verifyGridSize, offchipScratch);
             
             if((lastResult = Interp2_Projective<u8,f32>(templateImage, verifyCoordinates,
                                                         this->transformation.get_homography(),
