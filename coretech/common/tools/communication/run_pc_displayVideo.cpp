@@ -496,7 +496,7 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
 int main(int argc, char ** argv)
 {
   // Comment out to use serial
-  //#define USE_SOCKET
+#define USE_SOCKET
 
   printf("Starting display\n");
   SetLogSilence(true);
