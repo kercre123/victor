@@ -95,6 +95,7 @@ classdef LucasKanadeTracker < handle
             ApproximateGradientMargins = false;
             %SampleNearEdges = false;
             NumSamples = [];
+            SampleGradientMagnitude = true; % if false, samples directly form image data
             MarkerWidth = [];
             CalibrationMatrix = [];
             HeadPosition = [11.45 0 -6]'; % relative to neck
@@ -415,7 +416,11 @@ classdef LucasKanadeTracker < handle
                     
                     if numSamplesCurrent < numel(this.xgrid{i_scale})
                         
-                        mag = sqrt(Ix.^2 + Iy.^2);
+                        if SampleGradientMagnitude
+                            mag = sqrt(Ix.^2 + Iy.^2);
+                        else
+                            mag = targetBlur;
+                        end
                         
                         % Suppress non-local maxima
                         NLMS = (mag > image_up(mag)      & mag > image_down(mag))      | ...
