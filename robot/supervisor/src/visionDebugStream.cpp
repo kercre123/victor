@@ -17,17 +17,12 @@ namespace Anki {
       namespace DebugStream
       {
         namespace { // private namespace for all state
-          //const s32 PRINTF_BUFFER_SIZE = 10000;
           const s32 DEBUG_STREAM_BUFFER_SIZE = 1000000;
-
           const s32 MAX_BYTES_PER_SECOND = 500000;
+          const s32 SEND_EVERY_N_FRAMES = 1;
 
-          const s32 SEND_EVERY_N_FRAMES = 7;
-
-          //OFFCHIP u8 printfBufferRaw_[PRINTF_BUFFER_SIZE];
           OFFCHIP u8 debugStreamBufferData_[DEBUG_STREAM_BUFFER_SIZE];
 
-          //SerializedBuffer printfBuffer_;
           SerializedBuffer debugStreamBuffer_;
 
           s32 lastSecond;
@@ -115,17 +110,11 @@ namespace Anki {
             memcpy(bufferStart - SERIALIZED_BUFFER_HEADER_LENGTH, &Embedded::SERIALIZED_BUFFER_HEADER[0], SERIALIZED_BUFFER_HEADER_LENGTH);
             memcpy(bufferStart + validUsedBytes, &Embedded::SERIALIZED_BUFFER_FOOTER[0], SERIALIZED_BUFFER_FOOTER_LENGTH);
 
-            // The header should already be at the start of the buffer
-            //Anki::Cozmo::HAL::UARTPutMessage(0, 0, const_cast<u8*>(Embedded::SERIALIZED_BUFFER_HEADER), SERIALIZED_BUFFER_HEADER_LENGTH);
-
             Anki::Cozmo::HAL::UARTPutMessage(
               0,
               0,
               bufferStart - SERIALIZED_BUFFER_HEADER_LENGTH,
               validUsedBytes + SERIALIZED_BUFFER_HEADER_LENGTH + SERIALIZED_BUFFER_FOOTER_LENGTH);
-
-            // TODO: send the footer
-            //Anki::Cozmo::HAL::UARTPutMessage(0, 0, const_cast<u8*>(Embedded::SERIALIZED_BUFFER_FOOTER), SERIALIZED_BUFFER_FOOTER_LENGTH);
           }
 
           EndBenchmark("UARTPutMessage");
@@ -133,15 +122,6 @@ namespace Anki {
 
           return RESULT_OK;
         }
-
-        // TODO: Commented out to prevent unused compiler warning. Add back if needed.
-        //static Result SendPrintf(const char * string)
-        //{
-        //  debugStreamBuffer_ = SerializedBuffer(debugStreamBufferStart_, DEBUG_STREAM_BUFFER_SIZE);
-        //  printfBuffer_.PushBackString(string);
-
-        //  return SendBuffer(printfBuffer_);
-        //} // void SendPrintf(const char * string)
 
         Result SendFiducialDetection(const Array<u8> &image, const FixedLengthList<VisionMarker> &markers, MemoryStack ccmScratch, MemoryStack onchipScratch, MemoryStack offchipScratch)
         {
@@ -155,16 +135,6 @@ namespace Anki {
           if(markers.get_size() != 0) {
             const s32 numMarkers = markers.get_size();
             const VisionMarker * pMarkers = markers.Pointer(0);
-
-            /*
-            void * restrict oneMarker = offchipScratch.Allocate(sizeof(VisionMarker));
-            const s32 oneMarkerLength = sizeof(VisionMarker);
-
-            for(s32 i=0; i<numMarkers; i++) {
-            pMarkers[i].Serialize(oneMarker, oneMarkerLength);
-            debugStreamBuffer_.PushBack("VisionMarker", oneMarker, oneMarkerLength);
-            }
-            */
 
             char objectName[64];
             for(s32 i=0; i<numMarkers; i++) {
@@ -295,10 +265,6 @@ namespace Anki {
 
           frameNumber++;
 
-          //if(frameNumber % SEND_EVERY_N_FRAMES != 0) {
-          //  return RESULT_OK;
-          //}
-
           Array<u8> imageSmall(height, width, offchipScratch);
           DownsampleHelper(image, imageSmall, ccmScratch);
           debugStreamBuffer_.PushBack("Robot Image", imageSmall);
@@ -401,7 +367,6 @@ namespace Anki {
         {
 #if SEND_DEBUG_STREAM
           debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferData_[0], DEBUG_STREAM_BUFFER_SIZE);
-          //printfBuffer_ = SerializedBuffer(&printfBufferRaw_[0], PRINTF_BUFFER_SIZE);
 
           InitBenchmarking();
           BeginBenchmark("TotalTime");
