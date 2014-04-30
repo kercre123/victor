@@ -1063,7 +1063,7 @@ namespace Anki {
 
         if(!isInitialized_) {
 
-          captureResolution_ = Vision::CAMERA_RES_QQVGA;
+          captureResolution_ = Vision::CAMERA_RES_QVGA;
           faceDetectionResolution_ = Vision::CAMERA_RES_QVGA;
 
           // WARNING: the order of these initializations matter!
