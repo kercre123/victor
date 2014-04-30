@@ -314,7 +314,7 @@ namespace Anki
         }
         
         // Divide each input pixel by box filter results computed from integral image
-        const s32 halfWidth = MIN(MIN(imageWidth,imageHeight)/2, boxSize/2);
+        const s32 halfWidth = MIN(MIN(imageWidth,imageHeight)-1, boxSize)/2;
         const s32 boxWidth  = 2*halfWidth + 1;
         const f32 boxArea   = static_cast<f32>(boxWidth*boxWidth);
         const f32 outMean = 128.f; //static_cast<f32>(GetImageTypeMean<u8>());
@@ -356,7 +356,7 @@ namespace Anki
           // Middle
           const f32 OutOfBoundsArea = static_cast<f32>(boxArea - boxWidth*inBoundsHeight);
           const f32 paddingSum = OutOfBoundsArea * static_cast<f32>(padValue);
-          for(s32 x=halfWidth+1; x<imageWidth-halfWidth-1; x++) {
+          for(s32 x=halfWidth+1; x<imageWidth-halfWidth; x++) {
             f32 boxSum = (pIntegralImageRowAhead[x+halfWidth] -
                           pIntegralImageRowAhead[x-halfWidth-1] -
                           pIntegralImageRowBehind[x+halfWidth] +
@@ -367,7 +367,7 @@ namespace Anki
           }
           
           // Right side
-          for(s32 x=imageWidth-halfWidth-1; x<imageWidth; x++) {
+          for(s32 x=imageWidth-halfWidth; x<imageWidth; x++) {
             f32 OutOfBoundsArea = static_cast<f32>(boxArea - (imageWidth-x+halfWidth)*inBoundsHeight);
             
             f32 boxSum = (pIntegralImageRowAhead[imageWidth-1] -
