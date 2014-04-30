@@ -155,6 +155,7 @@ xythetaEnvironment::xythetaEnvironment()
 {
   numAngles_ = 1<<THETA_BITS;
   radiansPerAngle_ = 2*M_PI/numAngles_;
+  oneOverRadiansPerAngle_ = (float)(1.0 / ((double)radiansPerAngle_));
 }
 
 xythetaEnvironment::xythetaEnvironment(const char* mprimFilename, const char* mapFile)
@@ -176,6 +177,7 @@ xythetaEnvironment::xythetaEnvironment(const char* mprimFilename, const char* ma
 
     numAngles_ = 1<<THETA_BITS;
     radiansPerAngle_ = 2*M_PI/numAngles_;
+    oneOverRadiansPerAngle_ = (float)(1.0 / ((double)radiansPerAngle_));
   }
   else {
     printf("error: could not parse motion primitives!\n");
@@ -205,6 +207,8 @@ bool xythetaEnvironment::ParseMotionPrims(Json::Value& config)
     JsonTools::PrintJson(config, 1);
     return false;
   }
+
+  oneOverResolution_ = (float)(1.0 / ((double)resolution_mm_));
 
   // parse through each starting angle
   if(config["angles"].size() != numAngles_) {
@@ -278,7 +282,6 @@ bool xythetaEnvironment::ReadEnvironment(FILE* fEnv)
 
   return true;
 }
-
 
 
 SuccessorIterator xythetaEnvironment::GetSuccessors(StateID startID, Cost currG) const

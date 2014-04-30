@@ -22,7 +22,18 @@ namespace Planning
 
 struct xythetaPlannerImpl
 {
+  xythetaPlannerImpl(const xythetaEnvironment& env);
+
+  void SetGoal(const State_c& goal);
+
+  void ComputePath();
+
+  State goal_;
+  State start_;
+  const xythetaEnvironment& env_;
   OpenList open_;
+
+  xythetaPlan plan_;
 };
 
 

@@ -18,16 +18,27 @@ namespace Anki
 namespace Planning
 {
 
+// TODO:(bn) env_fwd.h file?
+
 struct xythetaPlannerImpl;
+class xythetaEnvironment;
+class xythetaPlan;
+class State_c;
 
 class xythetaPlanner
 {
 public:
 
-  xythetaPlanner();
+  xythetaPlanner(const xythetaEnvironment& env);
   ~xythetaPlanner();
 
-  void SayHello() const;
+  // set a goal in meters and radians
+  void SetGoal(const State_c& goal);
+
+  void ComputePath();
+
+  // must call compute path before getting the plan
+  const xythetaPlan& GetPlan() const;
 
 private:
   xythetaPlannerImpl* _impl;

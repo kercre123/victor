@@ -34,6 +34,35 @@ GTEST_TEST(TestEnvironment, StateIDPacking)
   }
 }
 
+GTEST_TEST(TestEnvironment, State2c)
+{
+  xythetaEnvironment env;
+
+  // just read the prims so we havea  valid environment (resolution, etc).
+  EXPECT_TRUE(env.ReadMotionPrimitives(PREPEND_SCOPED_PATH(Test, "coretech/planning/matlab/unicycle_backonlystraight_mprim.json").c_str()));
+
+  ASSERT_FLOAT_EQ(1.0 / env.resolution_mm_, env.oneOverResolution_);
+  ASSERT_FLOAT_EQ(1.0 / env.radiansPerAngle_, env.oneOverRadiansPerAngle_);
+
+  State s(0, 0, 0);
+  State_c c = env.State2State_c(s);
+
+  EXPECT_FLOAT_EQ(c.x_mm, 0.0);
+  EXPECT_FLOAT_EQ(c.y_mm, 0.0);
+  EXPECT_FLOAT_EQ(c.theta, 0.0);
+  
+  State s2 = env.State_c2State(c);
+  EXPECT_EQ(s, s2);
+
+  s.x = 234;
+  s.y = 103;
+  s.theta = 6;
+
+  s2 = env.State_c2State(env.State2State_c(s));
+  EXPECT_EQ(s, s2);
+
+}
+
 GTEST_TEST(TestEnvironment, LoadPrimFile)
 {
   // Assuming this is running from root/build......
