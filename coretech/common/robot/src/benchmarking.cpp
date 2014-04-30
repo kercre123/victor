@@ -452,7 +452,7 @@ namespace Anki
 
       if(toShowImage.rows != imageHeight || toShowImage.cols != imageWidth) {
         toShowImage = cv::Mat(imageHeight, imageWidth, CV_8UC3);
-        toShowImage = 0;
+        toShowImage.setTo(0);
         toShowImageColumn = 0;
       }
 
