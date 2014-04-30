@@ -314,7 +314,7 @@ namespace Anki
         }
         
         // Divide each input pixel by box filter results computed from integral image
-        const s32 halfWidth = boxSize/2;
+        const s32 halfWidth = MIN(MIN(imageWidth,imageHeight)/2, boxSize/2);
         const s32 boxWidth  = 2*halfWidth + 1;
         const f32 boxArea   = static_cast<f32>(boxWidth*boxWidth);
         const f32 outMean = 128.f; //static_cast<f32>(GetImageTypeMean<u8>());
@@ -332,7 +332,7 @@ namespace Anki
             inBoundsHeight = imageHeight - y + halfWidth;
             rowAhead = imageHeight - 1;
           }
-          else if(rowBehind < 0) {
+          if(rowBehind < 0) {
             inBoundsHeight = y+halfWidth+1;
             rowBehind = 0;
           }
