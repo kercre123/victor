@@ -160,7 +160,7 @@ xythetaEnvironment::xythetaEnvironment(const char* mprimFilename, const char* ma
   int totalNumofActions = 0;
   */
 
-  if(!ReadMotionPrimitives(mprimFilename)) {
+  if(ReadMotionPrimitives(mprimFilename)) {
     if(mapFile != NULL) {
       FILE* fMap = fopen(mapFile, "r");
       ReadEnvironment(fMap);
