@@ -1,8 +1,8 @@
 #ifndef _ANKICORETECH_PLANNING_XYTHETA_ENVIRONMENT_H_
 #define _ANKICORETECH_PLANNING_XYTHETA_ENVIRONMENT_H_
 
-
 #include <vector>
+#include <string>
 #include "json/json-forwards.h"
 
 namespace Anki
@@ -56,8 +56,8 @@ public:
 // bit field representation that packs into an int
 class StateID
 {
+  friend bool operator==(const StateID& lhs, const StateID& rhs);
 public:
-  // This constructor adds the offset to the given state
   StateID() : theta(0), x(0), y(0) {};
 
   unsigned int theta : THETA_BITS;

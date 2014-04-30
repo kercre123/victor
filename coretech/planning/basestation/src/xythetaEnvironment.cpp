@@ -32,6 +32,13 @@ State::State(StateID sid)
 {
 }
 
+bool operator==(const StateID& lhs, const StateID& rhs)
+{
+  // TODO:(bn) efficient comparison of bit fields?
+  return lhs.theta == rhs.theta && lhs.x == rhs.x && lhs.y == rhs.y;
+}
+
+
 bool State::Import(Json::Value& config)
 {
   if(!JsonTools::GetValueOptional(config, "x", x) ||
