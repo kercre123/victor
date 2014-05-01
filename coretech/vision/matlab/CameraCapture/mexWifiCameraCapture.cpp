@@ -26,6 +26,7 @@ void closeHelper(void) {
     parserThread = NULL;
   }
 
+  cv::destroyAllWindows();
 }
 
 enum Command {
