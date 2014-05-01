@@ -1354,8 +1354,9 @@ namespace Anki {
 
       BeginBenchmark("VisionSystem_CameraGetFrame");
         
+      HAL::CameraSetExposure(exposureTime);
       HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
-                          captureResolution_, exposureTime, false);
+                          captureResolution_, false);
       
       EndBenchmark("VisionSystem_CameraGetFrame");
 
@@ -1402,8 +1403,9 @@ namespace Anki {
 
       BeginBenchmark("VisionSystem_CameraGetFrame");
         
+      HAL::CameraSetExposure(exposureTime);
       HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
-                          captureResolution_, exposureTime, false);
+                          captureResolution_, false);
       
       EndBenchmark("VisionSystem_CameraGetFrame");
 
@@ -1518,8 +1520,9 @@ namespace Anki {
 
           BeginBenchmark("VisionSystem_CameraGetFrame");
           
+          HAL::CameraSetExposure(exposureTime);
           HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
-                              captureResolution_, exposureTime, false);
+                              captureResolution_, false);
           
           EndBenchmark("VisionSystem_CameraGetFrame");
          
@@ -1631,8 +1634,9 @@ namespace Anki {
 
           BeginBenchmark("VisionSystem_CameraGetFrame");
           
+          HAL::CameraSetExposure(exposureTime);
           HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
-                              captureResolution_, exposureTime, false);
+                              captureResolution_, false);
           
           EndBenchmark("VisionSystem_CameraGetFrame");
 
