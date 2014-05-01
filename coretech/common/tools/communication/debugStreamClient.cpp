@@ -865,7 +865,12 @@ namespace Anki
 
         // TODO: save things other than images
         Array<u8> image = *(reinterpret_cast<Array<u8>*>(nextObject.startOfPayload));
-        cv::imwrite(nextObject.filename, image.get_CvMat_());
+
+        vector<int> compression_params;
+        compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
+        compression_params.push_back(9);
+
+        cv::imwrite(nextObject.filename, image.get_CvMat_(), compression_params);
 
         free(nextObject.buffer);
       } // while(true)
