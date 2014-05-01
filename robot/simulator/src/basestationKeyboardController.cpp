@@ -86,6 +86,7 @@ namespace Anki {
         const s32 CKEY_UNLOCK      = 32;  // space
         const s32 CKEY_REQUEST_IMG = 73;  // i
         const s32 CKEY_DISPLAY_TOGGLE = 68;  // d
+        const s32 CKEY_HEADLIGHT   = 72;  // h
 
         // Get robot
         robot_ = NULL;
@@ -251,6 +252,14 @@ namespace Anki {
               showObjects = !showObjects;
               break;
             }
+              
+            case CKEY_HEADLIGHT:
+            {
+              static bool headlightsOn = false;
+              headlightsOn = !headlightsOn;
+              robot_->SendHeadlight(headlightsOn ? 128 : 0);
+            }
+              
             default:
             {
               // Stop wheels

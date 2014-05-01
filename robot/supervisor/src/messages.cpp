@@ -361,6 +361,14 @@ namespace Anki {
         VisionSystem::SetImageSendMode((ImageSendMode_t)msg.imageSendMode, (Vision::CameraResolution)msg.resolution);
       }
       
+      void ProcessSetHeadlightMessage(const SetHeadlight& msg) {
+        if (msg.intensity > 0) {
+          HAL::SetLED(HAL::LED_RIGHT_EYE_TOP, (HAL::LEDColor)(HAL::LED_RED | HAL::LED_GREEN | HAL::LED_BLUE));
+        } else {
+          HAL::SetLED(HAL::LED_RIGHT_EYE_TOP, HAL::LED_OFF);
+        }
+      }
+      
       
       // TODO: Fill these in once they are needed/used:
       void ProcessVisionMarkerMessage(const VisionMarker& msg) {

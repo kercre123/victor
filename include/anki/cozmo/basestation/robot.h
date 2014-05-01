@@ -74,6 +74,9 @@ namespace Anki {
       bool IsCarryingBlock() {return isCarryingBlock_;}
       
       ///////// Messaging ////////
+      // TODO: Most of these send functions should be private and wrapped in
+      // relevant state modifying functions. e.g. SendStopAllMotors() should be
+      // called from StopAllMotors().
       
       // Request camera calibration from robot
       Result SendRequestCamCalib() const;
@@ -115,6 +118,9 @@ namespace Anki {
 
       // Run a test mode
       Result SendStartTestMode(const TestMode mode) const;
+      
+      // Turn on/off headlight LEDs
+      Result SendHeadlight(u8 intensity);
       
     protected:
       // The robot's identifier

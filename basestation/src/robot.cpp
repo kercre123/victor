@@ -527,5 +527,12 @@ namespace Anki {
       return msgHandler_->SendMessage(ID_, m);
     }
     
+    Result Robot::SendHeadlight(u8 intensity)
+    {
+      MessageSetHeadlight m;
+      m.intensity = intensity;
+      return msgHandler_->SendMessage(ID_, m);
+    }
+    
   } // namespace Cozmo
 } // namespace Anki
