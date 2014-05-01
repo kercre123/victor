@@ -60,8 +60,6 @@ namespace Anki {
     
     void ResetIntegralError(void);
     
-    void TraceSpeedControllerVars(u8 traceLevel);
-    
   } // namespace SpeedController
   } // namespace Cozmo
 } // namespace Anki

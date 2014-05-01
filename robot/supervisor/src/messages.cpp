@@ -1,12 +1,11 @@
-#include "anki/cozmo/robot/messages.h"
-
 #include "anki/cozmo/robot/hal.h"
-#include "anki/cozmo/robot/localization.h"
-#include "anki/cozmo/robot/visionSystem.h"
-#include "anki/cozmo/robot/pathFollower.h"
-#include "anki/cozmo/robot/speedController.h"
-#include "anki/cozmo/robot/steeringController.h"
-#include "anki/cozmo/robot/wheelController.h"
+#include "messages.h"
+#include "localization.h"
+#include "visionSystem.h"
+#include "pathFollower.h"
+#include "speedController.h"
+#include "steeringController.h"
+#include "wheelController.h"
 #include "liftController.h"
 #include "headController.h"
 #include "dockingController.h"
@@ -29,7 +28,7 @@ namespace Anki {
         const TableEntry LookupTable_[NUM_TABLE_ENTRIES] = {
           {0, 0, 0}, // Empty entry for NO_MESSAGE_ID
 #define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_MODE
-#include "anki/cozmo/MessageDefinitions.h"
+#include "anki/cozmo/shared/MessageDefinitions.h"
           {0, 0, 0} // Final dummy entry without comma at end
         };
         

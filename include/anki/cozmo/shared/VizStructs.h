@@ -42,19 +42,19 @@ namespace Anki {
     
     
     // 1. Initial include just defines the definition modes for use below
-#include "anki/cozmo/VizMsgDefs.h"
+#include "anki/cozmo/shared/VizMsgDefs.h"
 
     
     // 2. Define all the message structs:
 #define MESSAGE_DEFINITION_MODE MESSAGE_STRUCT_DEFINITION_MODE
-#include "anki/cozmo/VizMsgDefs.h"
+#include "anki/cozmo/shared/VizMsgDefs.h"
     
     // 3. Create the enumerated message IDs:
     typedef enum {
       NO_VIZ_MESSAGE_ID = 0,
 #undef MESSAGE_DEFINITION_MODE
 #define MESSAGE_DEFINITION_MODE MESSAGE_ENUM_DEFINITION_MODE
-#include "anki/cozmo/VizMsgDefs.h"
+#include "anki/cozmo/shared/VizMsgDefs.h"
       NUM_VIZ_MSG_IDS // Final entry without comma at end
     } VizMsgID;
 
@@ -71,7 +71,7 @@ namespace Anki {
       {0, 0}, // Empty entry for NO_MESSAGE_ID
 #undef  MESSAGE_DEFINITION_MODE
 #define MESSAGE_DEFINITION_MODE MESSAGE_SIZE_TABLE_DEFINITION_MODE
-#include "anki/cozmo/VizMsgDefs.h"
+#include "anki/cozmo/shared/VizMsgDefs.h"
       {0, 0} // Final dummy entry without comma at end
     };
     
@@ -91,11 +91,11 @@ namespace Anki {
     
     // 1. Initial include just defines the definition modes for use below
 #undef MESSAGE_DEFINITION_MODE
-#include "anki/cozmo/VizMsgDefs.h"
+#include "anki/cozmo/shared/VizMsgDefs.h"
     
     // 2. Define all the message classes:
 #define MESSAGE_DEFINITION_MODE MESSAGE_CLASS_DEFINITION_MODE
-#include "anki/cozmo/VizMsgDefs.h"
+#include "anki/cozmo/shared/VizMsgDefs.h"
 
 #else
 #error VizStructs.h - Neither COZMO_ROBOT or COZMO_BASESTATION is defined!

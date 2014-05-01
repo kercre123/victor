@@ -18,9 +18,6 @@
 #define COZMO_DOCKING_CONTROLLER_H_
 
 #include "anki/common/types.h"
-
-#include "anki/cozmo/robot/messages.h"
-
 #include "anki/vision/MarkerCodeDefinitions.h"
 
 namespace Anki {

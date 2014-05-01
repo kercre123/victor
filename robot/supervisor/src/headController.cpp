@@ -193,6 +193,16 @@ namespace Anki {
     {
       return desiredAngle_.ToFloat();
     }
+
+    void GetCamPose(f32 &x, f32 &z, f32 &angle)
+    {
+      f32 cosH = cosf(currentAngle_.ToFloat());
+      f32 sinH = sinf(currentAngle_.ToFloat());
+      
+      x = HEAD_CAM_POSITION[0]*cosH - HEAD_CAM_POSITION[2]*sinH + NECK_JOINT_POSITION[0];
+      z = HEAD_CAM_POSITION[2]*cosH + HEAD_CAM_POSITION[0]*sinH + NECK_JOINT_POSITION[2];
+      angle = currentAngle_.ToFloat();
+    }
     
     void PoseAndSpeedFilterUpdate()
     {
@@ -233,6 +243,10 @@ namespace Anki {
       // Do range check on angle
       angle = CLIP(angle, MIN_HEAD_ANGLE, MAX_HEAD_ANGLE);
       
+      // Exit early if already moving to the commanded angle
+      if (desiredAngle_ == angle && !inPosition_) {
+        return;
+      }
       
 #if(DEBUG_HEAD_CONTROLLER)
       PRINT("HEAD: SetDesiredAngle %f rads\n", desiredAngle_.ToFloat());

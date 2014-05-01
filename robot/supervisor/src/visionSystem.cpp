@@ -24,16 +24,15 @@
 
 // CoreTech Common Includes
 #include "anki/common/shared/radians.h"
-#include "anki/common/robot/benchmarking_c.h"
+#include "anki/common/robot/benchmarking.h"
 #include "anki/common/robot/memory.h"
 #include "anki/common/robot/utilities.h"
 
 // Cozmo-Specific Library Includes
-#include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
-#include "anki/cozmo/robot/messages.h"
-#include "anki/cozmo/robot/visionSystem.h"
+#include "messages.h"
+#include "visionSystem.h"
 
 // Local Cozmo Includes
 #include "headController.h"
@@ -335,6 +334,8 @@ namespace Anki {
                                        MemoryStack onchipScratch,
                                        MemoryStack offchipScratch)
       {
+        BeginBenchmark("VisionSystem_LookForMarkers");
+        
         AnkiAssert(parameters.isInitialized);
 
         const s32 maxMarkers = markers.get_maximumSize();
@@ -350,9 +351,7 @@ namespace Anki {
         }
 
         MatlabVisualization::ResetFiducialDetection(grayscaleImage);
-
-        InitBenchmarking();
-
+        
         const Result result = DetectFiducialMarkers(
                                                     grayscaleImage,
                                                     markers,
@@ -373,6 +372,8 @@ namespace Anki {
         if(result != RESULT_OK) {
           return result;
         }
+        
+        EndBenchmark("VisionSystem_LookForMarkers");
         
         DebugStream::SendFiducialDetection(grayscaleImage, markers, ccmScratch, onchipScratch, offchipScratch);
         
@@ -578,6 +579,8 @@ namespace Anki {
                                   MemoryStack onchipScratch,
                                   MemoryStack offchipScratch)
       {
+        BeginBenchmark("VisionSystem_TrackTemplate");
+
         AnkiAssert(parameters.isInitialized);
 
 #if USE_MATLAB_TRACKER
@@ -791,6 +794,8 @@ namespace Anki {
           }
         }
 #endif // #if DOCKING_ALGORITHM != DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
+
+		EndBenchmark("VisionSystem_TrackTemplate");
 
         MatlabVisualization::SendTrack(grayscaleImage, tracker, trackingSucceeded, offchipScratch);
 
@@ -1430,8 +1435,12 @@ namespace Anki {
       Array<u8> grayscaleImage(captureHeight, captureWidth,
                                VisionMemory::onchipScratch_, Flags::Buffer(false,false,false));
 
+      BeginBenchmark("VisionSystem_CameraGetFrame");
+        
       HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
                           captureResolution_, exposureTime, false);
+      
+      EndBenchmark("VisionSystem_CameraGetFrame");
 
       if(autoExposure_enabled && (frameNumber % autoExposure_adjustEveryNFrames) == 0) {
         ComputeBestCameraParameters(
@@ -1448,7 +1457,7 @@ namespace Anki {
       DebugStream::SendBinaryImage(grayscaleImage, "Binary Robot Image", tracker_, trackerParameters_, VisionMemory::ccmScratch_, VisionMemory::onchipScratch_, VisionMemory::offchipScratch_);
       HAL::MicroWait(250000);
 #else
-      DebugStream::SendImage(grayscaleImage, exposureTime, "Robot Image");
+      DebugStream::SendImage(grayscaleImage, exposureTime, "Robot Image", VisionMemory::offchipScratch_);
       HAL::MicroWait(166666); // 6fps
       //HAL::MicroWait(140000); //7fps
       //HAL::MicroWait(125000); //8fps
@@ -1474,8 +1483,12 @@ namespace Anki {
       Array<u8> grayscaleImage(captureHeight, captureWidth,
                                VisionMemory::offchipScratch_, Flags::Buffer(false,false,false));
 
+      BeginBenchmark("VisionSystem_CameraGetFrame");
+        
       HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
                           captureResolution_, exposureTime, false);
+      
+      EndBenchmark("VisionSystem_CameraGetFrame");
 
       if(autoExposure_enabled && (frameNumber % autoExposure_adjustEveryNFrames) == 0) {
       ComputeBestCameraParameters(
@@ -1588,8 +1601,12 @@ namespace Anki {
           Array<u8> grayscaleImage(captureHeight, captureWidth,
                                    VisionMemory::offchipScratch_, Flags::Buffer(false,false,false));
 
+          BeginBenchmark("VisionSystem_CameraGetFrame");
+          
           HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
                               captureResolution_, exposureTime, false);
+          
+          EndBenchmark("VisionSystem_CameraGetFrame");
          
           if(autoExposure_enabled && (frameNumber % autoExposure_adjustEveryNFrames) == 0) {
             ComputeBestCameraParameters(
@@ -1699,8 +1716,12 @@ namespace Anki {
           Array<u8> grayscaleImage(captureHeight, captureWidth,
                                    onchipScratch_local, Flags::Buffer(false,false,false));
 
+          BeginBenchmark("VisionSystem_CameraGetFrame");
+          
           HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
                               captureResolution_, exposureTime, false);
+          
+          EndBenchmark("VisionSystem_CameraGetFrame");
 
           // TODO: allow tracking to work with exposure changes
           /*if(autoExposure_enabled && (frameNumber % autoExposure_adjustEveryNFrames) == 0) {

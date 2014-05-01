@@ -69,7 +69,7 @@ namespace Anki {
       
       
       // Sets up controller to run specified test mode
-      Result Init(TestMode mode);
+      Result Start(TestMode mode);
 
       Result Update();
       

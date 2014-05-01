@@ -769,14 +769,19 @@
               <FilePath>..\coretech\common\robot\src\array2d.cpp</FilePath>
             </File>
             <File>
-              <FileName>benchmarking_c.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\coretech\common\robot\src\benchmarking_c.c</FilePath>
+              <FileName>benchmarking.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\robot\src\benchmarking.cpp</FilePath>
             </File>
             <File>
               <FileName>comparisons.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\robot\src\comparisons.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>compress.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\robot\src\compress.cpp</FilePath>
             </File>
             <File>
               <FileName>decisionTree.cpp</FileName>
@@ -877,11 +882,6 @@
               <FileName>velocityProfileGenerator.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\shared\src\velocityProfileGenerator.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>compress.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\compress.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -1990,14 +1990,19 @@
               <FilePath>..\coretech\common\robot\src\array2d.cpp</FilePath>
             </File>
             <File>
-              <FileName>benchmarking_c.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\coretech\common\robot\src\benchmarking_c.c</FilePath>
+              <FileName>benchmarking.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\robot\src\benchmarking.cpp</FilePath>
             </File>
             <File>
               <FileName>comparisons.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\robot\src\comparisons.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>compress.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\robot\src\compress.cpp</FilePath>
             </File>
             <File>
               <FileName>decisionTree.cpp</FileName>
@@ -2098,11 +2103,6 @@
               <FileName>velocityProfileGenerator.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\shared\src\velocityProfileGenerator.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>compress.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\compress.cpp</FilePath>
             </File>
           </Files>
         </Group>

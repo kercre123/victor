@@ -1,6 +1,7 @@
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
+#include "anki/cozmo/robot/debug.h"
 #include "pickAndPlaceController.h"
 #include "dockingController.h"
 #include "gripController.h"
@@ -8,14 +9,13 @@
 #include "liftController.h"
 #include "imuFilter.h"
 #include "testModeController.h"
-#include "anki/cozmo/robot/debug.h"
-#include "anki/cozmo/robot/localization.h"
-#include "anki/cozmo/robot/messages.h"
-#include "anki/cozmo/robot/pathFollower.h"
-#include "anki/cozmo/robot/speedController.h"
-#include "anki/cozmo/robot/steeringController.h"
-#include "anki/cozmo/robot/wheelController.h"
-#include "anki/cozmo/robot/visionSystem.h"
+#include "localization.h"
+#include "messages.h"
+#include "pathFollower.h"
+#include "speedController.h"
+#include "steeringController.h"
+#include "wheelController.h"
+#include "visionSystem.h"
 
 #include "anki/common/robot/trig_fast.h"
 
@@ -175,7 +175,20 @@ namespace Anki {
         return testMode_;
       }
       
-
+      // Bring robot to normal state and stops all motors
+      Result Reset()
+      {
+        // Stop wheels and vision system
+        PickAndPlaceController::Reset();
+        
+        // Stop lift and head
+        LiftController::Enable();
+        LiftController::SetAngularVelocity(0);
+        LiftController::Enable();
+        HeadController::SetAngularVelocity(0);
+      }
+      
+      
       Result PickAndPlaceTestInit()
       {
         PRINT("\n==== Starting PickAndPlaceTest =====\n");
@@ -791,7 +804,7 @@ namespace Anki {
         return RESULT_OK;
       }
       
-      Result Init(TestMode mode)
+      Result Start(TestMode mode)
       {
         Result ret = RESULT_OK;
 #if(!FREE_DRIVE_DUBINS_TEST)
@@ -799,6 +812,7 @@ namespace Anki {
         
         switch(testMode_) {
           case TM_NONE:
+            ret = Reset();
             updateFunc = NULL;
             break;
           case TM_PICK_AND_PLACE:

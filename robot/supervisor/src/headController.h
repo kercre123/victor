@@ -57,6 +57,10 @@ namespace Anki {
 
       f32 GetLastCommandedAngle();
       
+      // Returns the camera's pose with respect to the robot origin.
+      // y is always 0 since head doesn't move laterally.
+      void GetCamPose(f32 &x, f32 &z, f32 &angle);
+      
       Result Update();
       
     } // namespace HeadController

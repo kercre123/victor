@@ -17,7 +17,7 @@
 #include <map>
 #include <vector>
 
-#include "anki/cozmo/VizStructs.h"
+#include "anki/cozmo/shared/VizStructs.h"
 #include "anki/messaging/shared/UdpServer.h"
 
 
@@ -49,8 +49,8 @@ static const f32 DEFAULT_COLOR[3] = {1.0, 0.8, 0.0};
 // Server that listens for visualization messages from basestation's VizManger
 static UdpServer server;
 
-// Whether or not to draw paths
-static bool drawPaths_ = true;
+// Whether or not to draw anything
+static bool drawEnabled_ = true;
 
 // Default height offset of paths (m)
 static float heightOffset_ = 0.045;
@@ -71,7 +71,7 @@ namespace Anki {
   namespace Cozmo{
 
 #define MESSAGE_DEFINITION_MODE MESSAGE_DISPATCH_DEFINITION_MODE
-#include "anki/cozmo/VizMsgDefs.h"
+#include "anki/cozmo/shared/VizMsgDefs.h"
     
     typedef void (*DispatchFcn_t)(const u8* buffer);
     
@@ -80,7 +80,7 @@ namespace Anki {
       0, // Empty entry for NO_MESSAGE_ID
 #undef  MESSAGE_DEFINITION_MODE
 #define MESSAGE_DEFINITION_MODE MESSAGE_DISPATCH_FCN_TABLE_DEFINITION_MODE
-#include "anki/cozmo/VizMsgDefs.h"
+#include "anki/cozmo/shared/VizMsgDefs.h"
       0 // Final dummy entry without comma at end
     };
 
@@ -196,6 +196,13 @@ namespace Anki {
       PRINT("Processing DefineColor\n");
       
       colorMap_[msg.colorID] = msg;
+    }
+    
+    void ProcessVizShowObjectsMessage(const VizShowObjects& msg)
+    {
+      PRINT("Processing ShowObjects (%d)\n", msg.show);
+      
+      drawEnabled_ = msg.show > 0;
     }
     
     
@@ -428,6 +435,8 @@ void draw_predockpose()
 }
 
 void webots_physics_draw(int pass, const char *view) {
+  
+  if (!drawEnabled_) return;
  
   // Only draw in main 3D view (view == NULL) and not the camera views
   if (pass == 1 && view == NULL) {
@@ -490,7 +499,7 @@ void webots_physics_draw(int pass, const char *view) {
       // Use objectType-specific drawing functions
       switch(obj->objectTypeID) {
         case Anki::Cozmo::VIZ_ROBOT:
-          draw_robot(Anki::Cozmo::VIZ_ROBOT_MARKER_BIG_TRIANGLE);
+          draw_robot(Anki::Cozmo::VIZ_ROBOT_MARKER_SMALL_TRIANGLE);
           break;
         case Anki::Cozmo::VIZ_CUBOID:
           draw_cuboid(obj->x_size_m, obj->y_size_m, obj->z_size_m);
