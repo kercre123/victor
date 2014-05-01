@@ -60,7 +60,7 @@
 // Enable to stream debug images via UART to Pete's tool.
 // This disables PRINT macros so they don't disrupt the stream of debug and image data.
 // Useful for debugging trackers.
-#define STREAM_DEBUG_IMAGES 1
+#define STREAM_DEBUG_IMAGES 0
 
 
 #ifdef __cplusplus
