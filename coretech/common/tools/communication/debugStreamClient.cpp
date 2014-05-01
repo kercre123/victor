@@ -133,6 +133,22 @@ namespace Anki
       pthread_join(saveObjectThread);
 #endif
 
+      // Clean up allocated memory
+      while(!rawMessageQueue.IsEmpty()) {
+        DebugStreamClient::RawBuffer object = rawMessageQueue.Pop();
+        free(object.data);
+      }
+
+      while(!parsedObjectQueue.IsEmpty()) {
+        DebugStreamClient::Object object = parsedObjectQueue.Pop();
+        free(object.buffer);
+      }
+
+      while(!saveObjectQueue.IsEmpty()) {
+        DebugStreamClient::ObjectToSave object = saveObjectQueue.Pop();
+        free(object.buffer);
+      }
+
       return RESULT_OK;
     }
 
@@ -154,7 +170,7 @@ namespace Anki
 
       //printf("Starting DebugStreamClient\n");
 
-      this->rawMessageQueue = ThreadSafeQueue<RawBuffer>();
+      this->rawMessageQueue = ThreadSafeQueue<DebugStreamClient::RawBuffer>();
       this->parsedObjectQueue = ThreadSafeQueue<DebugStreamClient::Object>();
       this->saveObjectQueue = ThreadSafeQueue<DebugStreamClient::ObjectToSave>();
 
@@ -245,7 +261,7 @@ namespace Anki
 
     DebugStreamClient::RawBuffer DebugStreamClient::AllocateNewRawBuffer(const s32 bufferRawSize)
     {
-      RawBuffer rawBuffer;
+      DebugStreamClient::RawBuffer rawBuffer;
 
       rawBuffer.rawDataPointer = reinterpret_cast<u8*>(malloc(bufferRawSize));
       rawBuffer.data = reinterpret_cast<u8*>( RoundUp(reinterpret_cast<size_t>(rawBuffer.rawDataPointer), MEMORY_ALIGNMENT) + MEMORY_ALIGNMENT - MemoryStack::HEADER_LENGTH );
@@ -262,7 +278,7 @@ namespace Anki
       return rawBuffer;
     }
 
-    void DebugStreamClient::ProcessRawBuffer(RawBuffer &buffer, ThreadSafeQueue<DebugStreamClient::Object> &parsedObjectQueue, const bool requireMatchingSegmentLengths)
+    void DebugStreamClient::ProcessRawBuffer(DebugStreamClient::RawBuffer &buffer, ThreadSafeQueue<DebugStreamClient::Object> &parsedObjectQueue, const bool requireMatchingSegmentLengths)
     {
       MemoryStack scratch(scratchBuffer, scratchSize, Flags::Buffer(false, true, false));
 
@@ -622,7 +638,7 @@ namespace Anki
 #endif
 
       u8 *usbBuffer = reinterpret_cast<u8*>(malloc(CONNECTION_BUFFER_SIZE));
-      RawBuffer nextRawBuffer = AllocateNewRawBuffer(MESSAGE_BUFFER_SIZE);
+      DebugStreamClient::RawBuffer nextRawBuffer = AllocateNewRawBuffer(MESSAGE_BUFFER_SIZE);
 
       if(!usbBuffer || !nextRawBuffer.data) {
         //AnkiError("DebugStreamClient::ConnectionThread", "Could not allocate usbBuffer and nextRawBuffer.data");
@@ -808,7 +824,7 @@ namespace Anki
 
       DebugStreamClient *callingObject = (DebugStreamClient *) threadParameter;
 
-      ThreadSafeQueue<RawBuffer> &rawMessageQueue = callingObject->rawMessageQueue;
+      ThreadSafeQueue<DebugStreamClient::RawBuffer> &rawMessageQueue = callingObject->rawMessageQueue;
       ThreadSafeQueue<DebugStreamClient::Object> &parsedObjectQueue = callingObject->parsedObjectQueue;
 
       while(true) {
@@ -823,7 +839,7 @@ namespace Anki
         if(!callingObject->get_isRunning())
           break;
 
-        RawBuffer nextRawBuffer = rawMessageQueue.Pop();
+        DebugStreamClient::RawBuffer nextRawBuffer = rawMessageQueue.Pop();
 
         ProcessRawBuffer(nextRawBuffer, parsedObjectQueue, false);
       } // while(true)

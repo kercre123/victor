@@ -137,7 +137,7 @@ namespace Anki
       ThreadHandle parseBufferThread;
       ThreadHandle saveObjectThread;
 
-      ThreadSafeQueue<RawBuffer> rawMessageQueue;
+      ThreadSafeQueue<DebugStreamClient::RawBuffer> rawMessageQueue;
       ThreadSafeQueue<DebugStreamClient::Object> parsedObjectQueue;
       ThreadSafeQueue<DebugStreamClient::ObjectToSave> saveObjectQueue;
 
@@ -145,10 +145,10 @@ namespace Anki
       Result Initialize();
 
       // Allocates using malloc
-      static RawBuffer AllocateNewRawBuffer(const s32 bufferRawSize);
+      static DebugStreamClient::RawBuffer AllocateNewRawBuffer(const s32 bufferRawSize);
 
       // Process the buffer, and adds any parsed objects to parsedObjectQueue. Frees the buffer on completion.
-      static void ProcessRawBuffer(RawBuffer &buffer, ThreadSafeQueue<DebugStreamClient::Object> &parsedObjectQueue, const bool requireMatchingSegmentLengths);
+      static void ProcessRawBuffer(DebugStreamClient::RawBuffer &buffer, ThreadSafeQueue<DebugStreamClient::Object> &parsedObjectQueue, const bool requireMatchingSegmentLengths);
 
       // Grab data from the socket and put in a big temporary buffer, as fast as possible
       static ThreadResult ConnectionThread(void *threadParameter);
