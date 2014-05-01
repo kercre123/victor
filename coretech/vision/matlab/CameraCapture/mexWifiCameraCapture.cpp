@@ -6,6 +6,8 @@
 
 #define VERBOSITY 0
 
+#define USE_OPENCV_DISPLAY 0
+
 using namespace Anki::Embedded;
 
 static const std::string DEFAULT_IP_PREFIX("192.168.3.");
@@ -26,7 +28,10 @@ void closeHelper(void) {
     parserThread = NULL;
   }
 
-  cv::destroyAllWindows();
+
+#if USE_OPENCV_DISPLAY
+  cv::destroyWindow("Robot Image");
+#endif
 }
 
 enum Command {
@@ -123,7 +128,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     // Simple example to display an image
     if(strcmp(newObject.objectName, "Robot Image") == 0) {
       Array<u8> image = *(reinterpret_cast<Array<u8>*>(newObject.startOfPayload));
-      //image.Show("Robot Image", false);
+#if USE_OPENCV_DISPLAY
+      image.Show("Robot Image", false);
+#endif
       //mexPrintf("Captured %dx%d frame.\n", image.get_size(1), image.get_size(0));
       plhs[0] = Anki::Embedded::arrayToMxArray(image);
     } else {

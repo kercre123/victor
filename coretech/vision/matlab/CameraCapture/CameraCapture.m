@@ -130,18 +130,24 @@ CLOSE = 2;
         end     
         frame = im2uint8( im2double(frame) .^ (1/2.2));
     end
+
+% Default close camera function doesn't need to do anything.
+% Can be redefined below depending on device type.
+closeCameraFcn = @()[];
+
 try
     
     % Initialize and grab first frame
     if ischar(device)
         % see if it looks like an IP address
         if ~isempty(regexp(device, '\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}', 'once'))
-            deviceType = 'wifiCamera';
+            %deviceType = 'wifiCamera';
             frame = mexWifiCameraCapture(OPEN, device);
             getFrameFcn = @readFrameFromWifiCamera;
+            closeCameraFcn = @()mexWifiCameraCapture(CLOSE);
         else
             % assume it's a filename/pattern
-            deviceType = 'file';
+            %deviceType = 'file';
             [framePath, pattern, patternExt] = fileparts(device);
             frameList = getfnames(framePath, [pattern patternExt]);
             if isempty(frameList)
@@ -152,17 +158,17 @@ try
             getFrameFcn = @(i_frame)readFrameFromFile(i_frame, framePath, frameList);
         end
     elseif isa(device, 'SerialCamera')
-        deviceType = 'serialCamera';
-        
+        %deviceType = 'serialCamera';
         getFrameFcn = @(i_frame)getFrame(device);
         frame = getFrameFcn();
         if size(frame,3)==1
             colormap(h_fig, gray);
         end
     else
-        deviceType = 'usbCamera';
+        %deviceType = 'usbCamera';
         frame = mexCameraCapture(OPEN, device, resolution(1), resolution(2));
         getFrameFcn = @readFrameFromCamera;
+        closeCameraFcn = @()mexCameraCapture(CLOSE);
     end
     
     if cropFactor < 1
@@ -233,27 +239,16 @@ try
     
 catch E
 
-    closeCamera();    
+    closeCameraFcn();    
     rethrow(E)
     
 end
 
-closeCamera();
+closeCameraFcn();
 
 if nargout==0
     clear grabs;
 end
-
-    function closeCamera()
-        switch(deviceType)
-            case 'usbCamera'
-                mexCameraCapture(CLOSE);
-            case 'wifiCamera'
-                mexWifiCameraCapture(CLOSE);
-            otherwise
-                % Nothing to do
-        end
-    end
 
     function keypress(~, edata)
         if isempty(edata.Modifier)
