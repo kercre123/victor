@@ -129,9 +129,9 @@ namespace Anki
         WaitForSingleObject(parseBufferThread, INFINITE);
         WaitForSingleObject(saveObjectThread, INFINITE);
 #else
-        pthread_join(connectionThread);
-        pthread_join(parseBufferThread);
-        pthread_join(saveObjectThread);
+        pthread_join(connectionThread, NULL);
+        pthread_join(parseBufferThread, NULL);
+        pthread_join(saveObjectThread, NULL);
 #endif
       }
 
