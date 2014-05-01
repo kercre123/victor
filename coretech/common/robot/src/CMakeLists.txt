@@ -16,3 +16,7 @@ add_library(CoreTech_Common_Robot
   ${HEADER_FILES}
   ${CORETECH_COMMON_INCLUDE_FILES}
 )
+
+set_target_properties(CoreTech_Common_Robot PROPERTIES
+  FOLDER "CoreTech"#/Robot"
+)
