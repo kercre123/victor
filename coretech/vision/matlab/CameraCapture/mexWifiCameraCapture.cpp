@@ -73,6 +73,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       // Close device (if necessary) before reopening it:
       closeHelper();
       
+      // Let Matlab handle all the memory allocation inside DebugStreamClient
+      DebugStreamClient::set_memoryAllocationFunctions(&mxMalloc, &mxFree);
+      
       mexPrintf("Opening capture on IP %s.\n", ipAddress.c_str());
       parserThread = new DebugStreamClient(ipAddress.c_str(), port);
       
@@ -132,7 +135,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     }
     
     if(newObject.buffer) {
-      free(newObject.buffer);
+      mxFree(newObject.buffer);
       newObject.buffer = NULL;
     }
 

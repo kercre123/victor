@@ -83,6 +83,9 @@ namespace Anki
 
       bool get_isRunning() const;
 
+      static void set_memoryAllocationFunctions(void* (*mallocFunc)(size_t size),
+                                                void  (*freeFunc)(void* ptr));
+      
     protected:
 
       typedef struct {
@@ -118,6 +121,9 @@ namespace Anki
 
       Result Initialize();
 
+      static void* (*myMalloc)(size_t size);
+      static void  (*myFree)(void* ptr);
+      
       // Allocates using malloc
       static RawBuffer AllocateNewRawBuffer(const s32 bufferRawSize);
 
