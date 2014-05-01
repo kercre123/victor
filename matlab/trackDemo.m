@@ -259,7 +259,9 @@ end
                     reason = '';
                 end
                     
-                poseString = num2str([180/pi*[angleX, angleY, angleZ], tX, tY, tZ]);
+                %poseString = num2str([180/pi*[angleX, angleY, angleZ], tX, tY, tZ]);
+                poseString = sprintf('[\\theta_X: %.2f\\circ \\theta_Y: %.2f\\circ \\theta_Z: %.2f\\circ], [x: %.2fmm  y: %.2fmm  z: %.2fmm]', ...
+                    180/pi*[angleX, angleY, angleZ], tX, tY, tZ);
                 
                 temp = tform * [initialSamples ones(size(initialSamples,1),1)]';
                 xsamples = temp(1,:)./temp(3,:) + CalibrationMatrix(1,3);
@@ -325,7 +327,7 @@ end
             set(h_img, 'CData',im2uint8(imgFiltered));
             
             if strncmp(TrackerType, 'planar6dof', 10)
-                title(h_axes, sprintf('Pose: %s', poseString), 'FontSize', 12);
+                title(h_axes, sprintf('          Block Pose: %s', poseString), 'FontSize', 14);
             else
                 title(h_axes, sprintf('Error: %.3f', LKtracker.err));
             end

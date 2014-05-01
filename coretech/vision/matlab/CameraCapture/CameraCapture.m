@@ -96,7 +96,7 @@ if isempty(displayAxes)
             displayAxes = subplot(1,1,1, 'Parent', h_fig);
             processAxes = [];
         elseif isempty(processAxes)
-            displayAxes = axes('Pos', [0 .51 1 .45], 'Parent', h_fig);
+            displayAxes = axes('Pos', [0 .53 1 .45], 'Parent', h_fig);
             processAxes = axes('Pos', [0 .03 1 .45], 'Parent', h_fig);
         else
             assert(~isempty(displayAxes), 'If processAxes are specified, so must be displayAxes.');
