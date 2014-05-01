@@ -140,7 +140,7 @@ namespace Anki {
         static const f32 autoExposure_minExposureTime = 0.03f;
         static const f32 autoExposure_maxExposureTime = 0.97f;
         static const f32 autoExposure_percentileToSaturate = 0.95f;
-        static const s32 autoExposure_adjustEveryNFrames = 2;
+        static const s32 autoExposure_adjustEveryNFrames = 1;
 
         // Tracking marker related members
         static Anki::Vision::MarkerType markerTypeToTrack_;
@@ -1438,9 +1438,9 @@ namespace Anki {
                                VisionMemory::onchipScratch_, Flags::Buffer(false,false,false));
 
       BeginBenchmark("VisionSystem_CameraGetFrame");
-        
+      
       HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
-                          captureResolution_, exposureTime, false);
+                          captureResolution_, false);
       
       EndBenchmark("VisionSystem_CameraGetFrame");
 
@@ -1454,6 +1454,8 @@ namespace Anki {
               exposureTime,
               VisionMemory::ccmScratch_);
       }
+      
+      HAL::CameraSetExposure(exposureTime);
       
 #ifdef SEND_BINARY_IMAGE_ONLY
       DebugStream::SendBinaryImage(grayscaleImage, "Binary Robot Image", tracker_, trackerParameters_, VisionMemory::ccmScratch_, VisionMemory::onchipScratch_, VisionMemory::offchipScratch_);
@@ -1486,9 +1488,9 @@ namespace Anki {
                                VisionMemory::offchipScratch_, Flags::Buffer(false,false,false));
 
       BeginBenchmark("VisionSystem_CameraGetFrame");
-        
+
       HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
-                          captureResolution_, exposureTime, false);
+                          captureResolution_, false);
       
       EndBenchmark("VisionSystem_CameraGetFrame");
 
@@ -1502,6 +1504,8 @@ namespace Anki {
             exposureTime,
             VisionMemory::ccmScratch_);
       }
+      
+      HAL::CameraSetExposure(exposureTime);
       
       const s32 faceDetectionHeight = CameraModeInfo[faceDetectionResolution_].height;
       const s32 faceDetectionWidth  = CameraModeInfo[faceDetectionResolution_].width;
@@ -1606,7 +1610,7 @@ namespace Anki {
           BeginBenchmark("VisionSystem_CameraGetFrame");
           
           HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
-                              captureResolution_, exposureTime, false);
+                              captureResolution_, false);
           
           EndBenchmark("VisionSystem_CameraGetFrame");
          
@@ -1620,6 +1624,8 @@ namespace Anki {
               exposureTime,
               VisionMemory::ccmScratch_);
           }
+          
+          HAL::CameraSetExposure(exposureTime);
           
           DownsampleAndSendImage(grayscaleImage);
 
@@ -1721,7 +1727,7 @@ namespace Anki {
           BeginBenchmark("VisionSystem_CameraGetFrame");
           
           HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
-                              captureResolution_, exposureTime, false);
+                              captureResolution_, false);
           
           EndBenchmark("VisionSystem_CameraGetFrame");
 
@@ -1736,6 +1742,8 @@ namespace Anki {
             exposureTime,
             VisionMemory::ccmScratch_);
           }*/
+          
+          HAL::CameraSetExposure(exposureTime);
           
           // NOTE: This will change grayscaleImage!
           // NOTE: This is currently off-chip for memory reasons, so it's slow!

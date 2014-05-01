@@ -337,9 +337,12 @@ namespace Anki
       //void       SetHeadCamMode(const u8 frameResHeader);
       //CameraMode GetHeadCamMode(void);
 
+      // Sets the camera exposure (non-blocking call)
+      // exposure is clipped to [0.0, 1.0]
+      void CameraSetExposure(f32 exposure);
+      
       // Starts camera frame synchronization (blocking call)
-      void CameraGetFrame(u8* frame, Vision::CameraResolution res,
-          f32 exposure, bool enableLight);
+      void CameraGetFrame(u8* frame, Vision::CameraResolution res, bool enableLight);
 
       // Get the number of lines received so far for the specified camera
       //u32 CameraGetReceivedLines(CameraID cameraID);
