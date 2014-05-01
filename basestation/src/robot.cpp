@@ -111,10 +111,9 @@ namespace Anki {
     
     void Robot::Update(void)
     {
+      // TODO: State update
+      // ...
       
-      // Update vizualization
-      // TODO: Only send when pose has changed?
-      VizManager::getInstance()->DrawRobot(ID_, get_pose(), get_headAngle(), get_liftAngle());
       
     } // step()
 
