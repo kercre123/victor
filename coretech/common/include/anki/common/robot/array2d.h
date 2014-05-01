@@ -612,9 +612,9 @@ namespace Anki
 
       this->data = reinterpret_cast<Type*>( reinterpret_cast<char*>(rawData) + extraAlignmentBytes );
 
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
-      this->UpdateCvMatMirror(*this);
-#endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
+//#if ANKICORETECH_EMBEDDED_USE_OPENCV
+//      this->UpdateCvMatMirror(*this);
+//#endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
       return RESULT_OK;
     } // Array<Type>::InitializeBuffer()

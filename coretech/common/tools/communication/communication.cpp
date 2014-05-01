@@ -17,12 +17,10 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 using namespace Anki;
 
-// Serial is only supported on Windows
-#ifdef _MSC_VER
 Serial::Serial()
   : isOpen(false)
 {
-}
+} // Serial::Serial()
 
 Result Serial::Open(
   s32 comPort,
@@ -32,6 +30,7 @@ Result Serial::Open(
   s32 stopBits
   )
 {
+#ifdef _MSC_VER
   AnkiConditionalErrorAndReturnValue(isOpen == false,
     RESULT_FAIL, "Serial::Open", "Port is already open");
 
@@ -108,10 +107,15 @@ Result Serial::Open(
   printf("Com port %d opened at %d baud\n", comPort, baudRate);
 
   return RESULT_OK;
-}
+#else // #ifdef _MSC_VER
+  AnkiError("Serial::Open", "Only MSVC supported");
+  return RESULT_FAIL;
+#endif // #ifdef _MSC_VER ... #else
+} // Result Serial::Open()
 
 Result Serial::Close()
 {
+#ifdef _MSC_VER
   if(readEventHandle.hEvent != NULL)
     CloseHandle(readEventHandle.hEvent);
 
@@ -123,10 +127,15 @@ Result Serial::Close()
   isOpen = false;
 
   return RESULT_OK;
-}
+#else // #ifdef _MSC_VER
+  AnkiError("Serial::Open", "Only MSVC supported");
+  return RESULT_FAIL;
+#endif // #ifdef _MSC_VER ... #else
+} // Result Serial::Close()
 
 Result Serial::Read(void * buffer, s32 bufferLength, s32 &bytesRead)
 {
+#ifdef _MSC_VER
   const s32 timeToWaitForRead = 50000;
 
   bytesRead = 0;
@@ -154,17 +163,23 @@ Result Serial::Read(void * buffer, s32 bufferLength, s32 &bytesRead)
     RESULT_FAIL, "Serial::Open", "Could not read from port");
 
   return RESULT_OK;
-}
+#else // #ifdef _MSC_VER
+  AnkiError("Serial::Open", "Only MSVC supported");
+  return RESULT_FAIL;
+#endif // #ifdef _MSC_VER ... #else
+} // Result Serial::Close()
 
 Socket::Socket()
-  : isOpen(false), socketHandle(NULL)
+  : isOpen(false), socketHandle(0)
 {
-}
+} // Socket::Socket()
 
 Result Socket::Open(
   const char * ipAddress,
   const s32 port)
 {
+#ifdef _MSC_VER
+
   // Based on example at http://www.codeproject.com/Articles/13071/Programming-Windows-TCP-Sockets-in-C-for-the-Begin
 
   const s32 winsockVersion = 0x0202;
@@ -199,40 +214,8 @@ Result Socket::Open(
     return RESULT_FAIL_IO; //Couldn't connect
   }
 
-  isOpen = true;
-
-  return RESULT_OK;
-}
-
-Result Socket::Close()
-{
-  if(socketHandle)
-    closesocket(socketHandle);
-
-  return RESULT_OK;
-}
-
-Result Socket::Read(void * buffer, s32 bufferLength, s32 &bytesRead)
-{
-  bytesRead = recv(socketHandle, reinterpret_cast<char*>(buffer), bufferLength, 0);
-
-  if(bytesRead < 0)
-    return RESULT_FAIL_IO;
-
-  return RESULT_OK;
-}
-
 #else // #ifdef _MSC_VER
 
-Socket::Socket()
-  : isOpen(false), socketHandle(0)
-{
-}
-
-Result Socket::Open(
-  const char * ipAddress,
-  const s32 port)
-{
   struct sockaddr_in target; //Socket address information
 
   memset(&target, 0, sizeof(target));
@@ -255,27 +238,32 @@ Result Socket::Open(
     return RESULT_FAIL_IO; //Couldn't connect
   }
 
+#endif // #ifdef _MSC_VER ... #else
+
+  isOpen = true;
+
   return RESULT_OK;
-}
+} // Result Socket::Open()
 
 Result Socket::Close()
 {
+#ifdef _MSC_VER
+  if(socketHandle)
+    closesocket(socketHandle);
+#else
   if(socketHandle)
     shutdown(socketHandle, 2);
+#endif
 
   return RESULT_OK;
-}
+} // Result Socket::Close()
 
 Result Socket::Read(void * buffer, s32 bufferLength, s32 &bytesRead)
 {
   bytesRead = recv(socketHandle, reinterpret_cast<char*>(buffer), bufferLength, 0);
 
-  //printf("%d\n", bytesRead);
-
   if(bytesRead < 0)
     return RESULT_FAIL_IO;
 
   return RESULT_OK;
-}
-
-#endif // #ifdef _MSC_VER ... #else
+} // Result Socket::Read()

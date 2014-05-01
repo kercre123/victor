@@ -64,8 +64,13 @@ namespace Anki
         bool IsValid() const;
       };
 
+      // Connect via TCP
       // Example: DebugStreamClient("192.168.3.30", 5551)
       DebugStreamClient(const char * ipAddress, const s32 port);
+
+      // Connect via UART serial
+      // Example: DebugStreamClient(11, 1000000)
+      DebugStreamClient(const s32 comPort, const s32 baudRate, const char parity = 'N', const s32 dataBits = 8, const s32 stopBits = 1);
 
       // Close the socket and stop the parsing threads
       Anki::Result Close();
@@ -88,11 +93,21 @@ namespace Anki
         f64 timeReceived; // The time (in seconds) when the receiving of this buffer was complete
       } RawBuffer;
 
-      static const s32 USB_BUFFER_SIZE = 5000;
+      static const s32 CONNECTION_BUFFER_SIZE = 5000;
       static const s32 MESSAGE_BUFFER_SIZE = 1000000;
 
-      const char * ipAddress;
-      s32 port;
+      bool isSocket; // Either Socket of Serial
+
+      // If Socket
+      const char * socket_ipAddress;
+      s32 socket_port;
+
+      // If Serial
+      s32 serial_comPort;
+      s32 serial_baudRate;
+      char serial_parity;
+      s32 serial_dataBits;
+      s32 serial_stopBits;
 
       volatile bool isRunning; //< If true, keep working. If false, close everything down
       volatile bool isConnectionThreadActive;
@@ -100,6 +115,8 @@ namespace Anki
 
       ThreadSafeQueue<RawBuffer> rawMessageQueue;
       ThreadSafeQueue<DebugStreamClient::Object> parsedObjectQueue;
+
+      Result Initialize();
 
       // Allocates using malloc
       static RawBuffer AllocateNewRawBuffer(const s32 bufferRawSize);
