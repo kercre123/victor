@@ -35,7 +35,7 @@ namespace Anki
 {
   namespace Embedded
   {
-    template<typename Type> Result AllocateNewObject(DebugStreamClient::Object &newObject, const s32 additionalBytesRequired, void ** dataSegment, s32 &dataLength, void* (*mallocFunction)(size_t size), MemoryStack scratch)
+    template<typename Type> Result AllocateNewObject(DebugStreamClient::Object &newObject, const s32 additionalBytesRequired, void ** dataSegment, s32 &dataLength, MemoryStack scratch)
     {
       char *innerObjectName = reinterpret_cast<char*>( scratch.Allocate(SerializedBuffer::DESCRIPTION_STRING_LENGTH + 1) );
 
@@ -48,7 +48,7 @@ namespace Anki
       }
 
       newObject.bufferLength = additionalBytesRequired + objectOfType.get_serializationSize();
-      newObject.buffer = mallocFunction(newObject.bufferLength);
+      newObject.buffer = malloc(newObject.bufferLength);
 
       if(!newObject.buffer)
         return RESULT_FAIL;
@@ -89,7 +89,7 @@ namespace Anki
     }
 
     DebugStreamClient::Object::Object()
-      : buffer(NULL), bufferLength(0), startOfPayload(NULL)
+      : bufferLength(0), buffer(NULL), startOfPayload(NULL)
     {
     }
 
@@ -124,17 +124,6 @@ namespace Anki
       Initialize();
     }
 
-    void DebugStreamClient::set_memoryAllocationFunctions(void* (*mallocFunc)(size_t size),
-                                                          void  (*freeFunc)(void* ptr))
-    {
-      DebugStreamClient::myMalloc = mallocFunc;
-      DebugStreamClient::myFree   = freeFunc;
-    }
-
-    // Default to using regular malloc/free for allocation
-    void* (*DebugStreamClient::myMalloc)(size_t size) = &malloc;
-    void  (*DebugStreamClient::myFree)(void* ptr)     = &free;
-    
     Result DebugStreamClient::Initialize()
     {
       this->isRunning = true;
@@ -219,7 +208,7 @@ namespace Anki
     {
       RawBuffer rawBuffer;
 
-      rawBuffer.rawDataPointer = reinterpret_cast<u8*>(DebugStreamClient::myMalloc(bufferRawSize));
+      rawBuffer.rawDataPointer = reinterpret_cast<u8*>(malloc(bufferRawSize));
       rawBuffer.data = reinterpret_cast<u8*>( RoundUp(reinterpret_cast<size_t>(rawBuffer.rawDataPointer), MEMORY_ALIGNMENT) + MEMORY_ALIGNMENT - MemoryStack::HEADER_LENGTH );
       rawBuffer.maxDataLength = bufferRawSize - (reinterpret_cast<size_t>(rawBuffer.data) - reinterpret_cast<size_t>(rawBuffer.rawDataPointer));
       rawBuffer.curDataLength = 0;
@@ -287,7 +276,7 @@ namespace Anki
           //printf("Basic type buffer segment \"%s\" (%d, %d, %d, %d, %d)\n", objectName, sizeOfType, isInteger, isSigned, isFloat, numElements);
 
           newObject.bufferLength = 512 + static_cast<s32>(sizeOfType) * numElements;
-          newObject.buffer = DebugStreamClient::myMalloc(newObject.bufferLength);
+          newObject.buffer = malloc(newObject.bufferLength);
 
           if(!newObject.buffer)
             continue;
@@ -320,7 +309,7 @@ namespace Anki
           SerializedBuffer::EncodedArray::Deserialize(false, height, width, stride, flags, basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_numElements, &tmpDataSegment, tmpDataLength);
 
           newObject.bufferLength = 512 + stride * height;
-          newObject.buffer = DebugStreamClient::myMalloc(newObject.bufferLength);
+          newObject.buffer = malloc(newObject.bufferLength);
 
           if(!newObject.buffer)
             continue;
@@ -441,7 +430,7 @@ namespace Anki
           SerializedBuffer::EncodedArraySlice::Deserialize(false, height, width, stride, flags, ySlice_start, ySlice_increment, ySlice_end, xSlice_start, xSlice_increment, xSlice_end, basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_numElements, &tmpDataSegment, dataLength);
 
           newObject.bufferLength = 512 + stride * height;
-          newObject.buffer = DebugStreamClient::myMalloc(newObject.bufferLength);
+          newObject.buffer = malloc(newObject.bufferLength);
 
           if(!newObject.buffer)
             continue;
@@ -545,7 +534,7 @@ namespace Anki
           const s32 stringLength = strlen(reinterpret_cast<char*>(dataSegment));
 
           newObject.bufferLength = 32 + stringLength;
-          newObject.buffer = DebugStreamClient::myMalloc(newObject.bufferLength);
+          newObject.buffer = malloc(newObject.bufferLength);
 
           if(!newObject.buffer)
             continue;
@@ -557,16 +546,16 @@ namespace Anki
           memcpy(newObject.startOfPayload, dataSegment, stringLength);
           reinterpret_cast<char*>(newObject.startOfPayload)[stringLength] = '\0';
         } else if(strcmp(typeName, "VisionMarker") == 0) {
-          if(AllocateNewObject<VisionMarker>(newObject, 32, &dataSegment, dataLength, DebugStreamClient::myMalloc, scratch) != RESULT_OK)
+          if(AllocateNewObject<VisionMarker>(newObject, 32, &dataSegment, dataLength, scratch) != RESULT_OK)
             continue;
         } else if(strcmp(typeName, "PlanarTransformation_f32") == 0) {
-          if(AllocateNewObject<Transformations::PlanarTransformation_f32>(newObject, 4196, &dataSegment, dataLength, DebugStreamClient::myMalloc, scratch) != RESULT_OK)
+          if(AllocateNewObject<Transformations::PlanarTransformation_f32>(newObject, 4196, &dataSegment, dataLength, scratch) != RESULT_OK)
             continue;
         } else if(strcmp(typeName, "BinaryTracker") == 0) {
-          if(AllocateNewObject<TemplateTracker::BinaryTracker>(newObject, 4196, &dataSegment, dataLength, DebugStreamClient::myMalloc, scratch) != RESULT_OK)
+          if(AllocateNewObject<TemplateTracker::BinaryTracker>(newObject, 4196, &dataSegment, dataLength, scratch) != RESULT_OK)
             continue;
         } else if(strcmp(typeName, "EdgeLists") == 0) {
-          if(AllocateNewObject<EdgeLists>(newObject, 4196, &dataSegment, dataLength, DebugStreamClient::myMalloc, scratch) != RESULT_OK)
+          if(AllocateNewObject<EdgeLists>(newObject, 4196, &dataSegment, dataLength, scratch) != RESULT_OK)
             continue;
         } else {
           newObject.bufferLength = 0;
@@ -579,7 +568,7 @@ namespace Anki
         //printf("Received %s %s\n", newObject.typeName, newObject.objectName);
       } // while(iterator.HasNext())
 
-      DebugStreamClient::myFree(buffer.rawDataPointer);
+      free(buffer.rawDataPointer);
       buffer.rawDataPointer = NULL;
       buffer.data = NULL;
 
@@ -593,7 +582,7 @@ namespace Anki
 #else
 #endif
 
-      u8 *usbBuffer = reinterpret_cast<u8*>(DebugStreamClient::myMalloc(CONNECTION_BUFFER_SIZE));
+      u8 *usbBuffer = reinterpret_cast<u8*>(malloc(CONNECTION_BUFFER_SIZE));
       RawBuffer nextRawBuffer = AllocateNewRawBuffer(MESSAGE_BUFFER_SIZE);
 
       if(!usbBuffer || !nextRawBuffer.data) {
