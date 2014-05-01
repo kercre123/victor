@@ -58,6 +58,9 @@ namespace Anki {
     Quadrilateral<N,T>& operator+=(const Quadrilateral<N,T> &quad2);
     Quadrilateral<N,T>& operator-=(const Quadrilateral<N,T> &quad2);
     Quadrilateral<N,T>& operator*=(const T value);
+
+    Quadrilateral<N,T>& operator+=(const Point<N,T> &point);
+    Quadrilateral<N,T>& operator-=(const Point<N,T> &point);
     
     // Scale around centroid:
     Quadrilateral<N,T>  getScaled(const T scaleFactor) const;
@@ -162,6 +165,26 @@ namespace Anki {
     using namespace Quad;
     for(CornerName i=FirstCorner; i<NumCorners; ++i) {
       (*this)[i] *= value;
+    }
+    return *this;
+  }
+  
+  template<QuadDimType N, typename T>
+  inline Quadrilateral<N,T>&  Quadrilateral<N,T>::operator+=(const Point<N,T> &point)
+  {
+    using namespace Quad;
+    for(CornerName i=FirstCorner; i<NumCorners; ++i) {
+      (*this)[i] += point;
+    }
+    return *this;
+  }
+  
+  template<QuadDimType N, typename T>
+  inline Quadrilateral<N,T>&  Quadrilateral<N,T>::operator-=(const Point<N,T> &point)
+  {
+    using namespace Quad;
+    for(CornerName i=FirstCorner; i<NumCorners; ++i) {
+      (*this)[i] -= point;
     }
     return *this;
   }
