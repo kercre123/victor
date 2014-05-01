@@ -27,6 +27,21 @@ void StateTable::Clear()
   table_.clear();
 }
 
+StateEntry& StateTable::operator[](const StateID& sid)
+{
+  return table_[sid];
+}
+
+StateTable::iterator StateTable::find(StateID sid)
+{
+  return table_.find(sid);
+}
+
+StateTable::const_iterator StateTable::end() const
+{
+  return table_.end();
+}
+
 void StateTable::emplace(StateID sid,
                              OpenList::iterator openIt,
                              StateID backpointer,

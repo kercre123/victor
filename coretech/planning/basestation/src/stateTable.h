@@ -35,7 +35,7 @@ struct StateEntry
     backpointerAction_(backpointerAction),
     g_(g)
     {
-      printf("running argument constructor\n");
+      // printf("running argument constructor\n");
     }
 
   StateEntry(const StateEntry& lval) :
@@ -45,7 +45,7 @@ struct StateEntry
     backpointerAction_(lval.backpointerAction_),
     g_(lval.g_)
     {
-      printf("running lval copy constructor\n");
+      // printf("running lval copy constructor\n");
     }
 
   StateEntry(StateEntry&& rval) :
@@ -55,8 +55,15 @@ struct StateEntry
     backpointerAction_(rval.backpointerAction_),
     g_(rval.g_)
     {
-      printf("running rval copy constructor\n");
+      // printf("running rval copy constructor\n");
     }    
+
+  StateEntry() :
+    closedIter_(-1),
+    g_(-1.0)
+    {
+      printf("WARNING: default StateEntry constructor called. This is a performance bug\n");
+    }
 
   // Check if we are closed on the given search iteration
   bool IsClosed(short currAraIter) const { return currAraIter == closedIter_; }
@@ -75,10 +82,17 @@ struct StateEntry
 class StateTable
 {
 public:
+  typedef std::map<StateID, StateEntry>::iterator iterator;
+  typedef std::map<StateID, StateEntry>::const_iterator const_iterator;
 
   StateTable();
 
   void Clear();
+
+  iterator find(StateID sid);
+  const_iterator end() const;
+
+  StateEntry& operator[](const StateID& sid);
 
   // First argument must be a StateID, followed by all arguments for
   // the StateEntry constructor

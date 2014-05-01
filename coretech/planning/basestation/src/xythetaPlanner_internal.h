@@ -29,13 +29,31 @@ struct xythetaPlannerImpl
 
   void ComputePath();
 
-  State goal_;
+  // helper functions
+
+  void Reset();
+
+  void ExpandState(StateID sid);
+
+  Cost heur(StateID sid);
+
+  void BuildPlan();
+
+  StateID goalID_;
+  State_c goal_c_;
   State start_;
+  StateID startID_;
   const xythetaEnvironment& env_;
   OpenList open_;
   StateTable table_;
 
   xythetaPlan plan_;
+
+  unsigned int expansions_;
+  unsigned int considerations_;
+  unsigned int collisionChecks_;
+
+  unsigned int searchNum_;
 };
 
 
