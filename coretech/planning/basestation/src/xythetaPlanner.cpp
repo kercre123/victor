@@ -82,7 +82,7 @@ void xythetaPlannerImpl::ComputePath()
     StateID sid = open_.pop();
     if(sid == goalID_) {
       foundGoal = true;
-      printf("expanded goal! done!\n");
+      printf("expanded goal! cost = %f\n", table_[sid].g_);
       break;
     }
 
@@ -155,11 +155,7 @@ Cost xythetaPlannerImpl::heur(StateID sid)
   State s(sid);
   // return euclidean distance in mm
 
-  float distSq = 
-    pow(env_.GetX_mm(s.x) - goal_c_.x_mm, 2)
-    + pow(env_.GetY_mm(s.y) - goal_c_.y_mm, 2);
-
-  return sqrtf(distSq);
+  return env_.GetDistanceBetween(goal_c_, s);
 }
 
 void xythetaPlannerImpl::BuildPlan()

@@ -205,6 +205,10 @@ public:
   inline StateXY GetY(float y_mm) const;
   inline StateTheta GetTheta(float theta_rad) const;
 
+  float GetDistanceBetween(const State_c& start, const State& end) const;
+  static float GetDistanceBetween(const State_c& start, const State_c& end);
+
+
   // Get a motion primitive. Returns true if the action is retrieved,
   // false otherwise. Returns primitive in arguments
   inline bool GetMotion(StateTheta theta, ActionID actionID, MotionPrimitive& prim) const;
