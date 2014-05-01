@@ -436,5 +436,24 @@ namespace Anki
     } // commandRobotToDock()
 
     
+    void BlockWorld::GetBlockBoundingBoxesXY(const f32 minHeight, const f32 maxHeight,
+                                             const f32 padding,
+                                             std::vector<Quad2f>& rectangles) const
+    {
+      for(auto & blocksByType : existingBlocks_) {
+        for(auto & blocksByID : blocksByType.second) {
+          const Block * block = dynamic_cast<const Block*>(blocksByID.second);
+          
+          const Pose3d& blockPose = block->GetPose();
+          const f32 blockHeight = blockPose.get_translation().z();
+          
+          if(blockHeight >= minHeight && blockHeight <= maxHeight) {
+            rectangles.emplace_back(block->GetBoundingBoxXY(padding));
+          } // if block is within specified height range
+        } // for each block of the current type
+      } // for each block type
+      
+    } // ProjectBlockOutlinessOntoPlane()
+    
   } // namespace Cozmo
 } // namespace Anki

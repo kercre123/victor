@@ -69,6 +69,14 @@ namespace Anki
       const std::map<ObjectID_t, Vision::ObservableObject*>& GetExistingBlocks(const ObjectType_t blockType) const;
       const Vision::ObservableObjectLibrary& GetMatLibrary() const;
       
+      // Finds all blocks in the world whose centers are within the specified
+      // heights off the ground (z dimension) and returns a vector of rectangles
+      // of their outlines on the ground plane (z=0).  Can also add pad the
+      // rectangles by a specified amount.
+      void GetBlockBoundingBoxesXY(const f32 minHeight, const f32 maxHeight,
+                                   const f32 padding,
+                                   std::vector<Quad2f>& rectangles) const;
+      
       ~BlockWorld();
       
     protected:

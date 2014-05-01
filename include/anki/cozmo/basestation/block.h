@@ -125,6 +125,10 @@ namespace Anki {
       void GetPreDockPoses(const float distance_mm,
                            std::vector<Pose3d>& poses) const;
       
+      // Projects the box in its current 3D pose onto the XY plane and returns
+      // the corresponding quadrilateral. Adds optional padding if desired.
+      Quad2f GetBoundingBoxXY(const f32 padding = 0.f) const;
+      
     protected:
       
       static const FaceName OppositeFaceLUT[NUM_FACES];

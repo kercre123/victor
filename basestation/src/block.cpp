@@ -133,6 +133,67 @@ namespace Anki {
       
     } // Constructor: Block(type)
     
+    Quad2f Block::GetBoundingBoxXY(const f32 padding) const
+    {
+      // Data structure for helping me sort 3D points by their 2D x-y distance
+      // from center
+      struct xyPoint {
+        
+        xyPoint(const Point3f& pt3d, const RotationMatrix3d& R)
+        {
+          Point3f pt3d_rotated( R*pt3d );
+          pt_.x() = pt3d_rotated.x();
+          pt_.y() = pt3d_rotated.y();
+          length_ = pt_.length();
+        }
+        
+        bool operator<(const xyPoint& other) const {
+          return this->length_ > other.length_; // sort decreasing!
+        }
+        
+        Point2f pt_;
+        f32 length_;
+      };
+      
+      const RotationMatrix3d& R = this->GetPose().get_rotationMatrix();
+      
+      // Choose the 4 points furthest from the XY center of the block (in the
+      // XY plane)
+      std::vector<xyPoint> xyCorners = {
+        xyPoint(blockCorners_[LEFT_FRONT_TOP], R),
+        xyPoint(blockCorners_[RIGHT_FRONT_TOP], R),
+        xyPoint(blockCorners_[LEFT_FRONT_BOTTOM], R),
+        xyPoint(blockCorners_[RIGHT_FRONT_BOTTOM], R),
+        xyPoint(blockCorners_[LEFT_BACK_TOP], R),
+        xyPoint(blockCorners_[RIGHT_BACK_TOP], R),
+        xyPoint(blockCorners_[LEFT_BACK_BOTTOM], R),
+        xyPoint(blockCorners_[RIGHT_BACK_BOTTOM], R)
+      };
+      
+      // NOTE: Uses xyPoint class's operator<, which sorts in _decreasing_ order
+      // so we get the 4 points the _largest_ distance from the center, after
+      // rotation is applied
+      std::partial_sort(xyCorners.begin(), xyCorners.begin()+4, xyCorners.end());
+      
+      Point2f center(this->GetPose().get_translation().x(), this->GetPose().get_translation().y());
+      
+      Quad2f boundingQuad(xyCorners[0].pt_,
+                          xyCorners[1].pt_,
+                          xyCorners[2].pt_,
+                          xyCorners[3].pt_);
+      
+      // scale and re-center (Note: we don't need to use Quadrilateral::scale()
+      // here because we know the points are zero-centered and can thus just
+      // multiply them by padding directly.)
+      if(padding != 0.f) {
+        boundingQuad *= padding;
+      }
+      boundingQuad += center;
+      
+      return boundingQuad;
+      
+    } // GetBoundingBoxXY()
+    
     
     Block::~Block(void)
     {
