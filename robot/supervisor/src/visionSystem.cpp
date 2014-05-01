@@ -31,12 +31,12 @@
 // Cozmo-Specific Library Includes
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
-#include "messages.h"
-#include "visionSystem.h"
 
 // Local Cozmo Includes
 #include "headController.h"
 #include "matlabVisualization.h"
+#include "messages.h"
+#include "visionSystem.h"
 #include "visionDebugStream.h"
 
 #if USE_MATLAB_TRACKER || USE_MATLAB_DETECTOR
@@ -74,8 +74,9 @@ namespace Anki {
         static const s32 CCM_BUFFER_SIZE = 500000; // The max here is probably 65536 (0x10000) bytes
         */
         static const s32 OFFCHIP_BUFFER_SIZE = 2000000;
-        static const s32 ONCHIP_BUFFER_SIZE = 170000; // The max here is somewhere between 175000 and 180000 bytes
-        static const s32 CCM_BUFFER_SIZE = 50000; // The max here is probably 65536 (0x10000) bytes
+        static const s32 ONCHIP_BUFFER_SIZE  = 170000; // The max here is somewhere between 175000 and 180000 bytes
+        static const s32 CCM_BUFFER_SIZE     = 50000; // The max here is probably 65536 (0x10000) bytes
+        
         static const s32 MAX_MARKERS = 100; // TODO: this should probably be in visionParameters
 
         static OFFCHIP char offchipBuffer[OFFCHIP_BUFFER_SIZE];
@@ -93,8 +94,8 @@ namespace Anki {
         static Result ResetBuffers()
         {
           offchipScratch_ = MemoryStack(offchipBuffer, OFFCHIP_BUFFER_SIZE);
-          onchipScratch_ = MemoryStack(onchipBuffer, ONCHIP_BUFFER_SIZE);
-          ccmScratch_ = MemoryStack(ccmBuffer, CCM_BUFFER_SIZE);
+          onchipScratch_  = MemoryStack(onchipBuffer, ONCHIP_BUFFER_SIZE);
+          ccmScratch_     = MemoryStack(ccmBuffer, CCM_BUFFER_SIZE);
 
           if(!offchipScratch_.IsValid() || !onchipScratch_.IsValid() || !ccmScratch_.IsValid()) {
             PRINT("Error: InitializeScratchBuffers\n");
@@ -131,6 +132,7 @@ namespace Anki {
         static VisionSystemMode mode_;
 
         // Camera parameters
+        // TODO: Should these be moved to (their own struct in) visionParameters.h/cpp?
         static f32 exposureTime;
         static s32 frameNumber;
         static const bool autoExposure_enabled = true;

@@ -30,7 +30,10 @@ if(NOT WIN32)
     CoreTech_Common_Robot
     CoreTech_Messaging_Shared
   )
-
+  
+  set_target_properties(robot_advertisement_controller PROPERTIES
+      FOLDER "Webots Controllers"
+  )
 endif()
 
 # Make sure a copy of the target exists in robot_advertisement_controller/
