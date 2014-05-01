@@ -65,6 +65,11 @@ if ~isempty(keypressID) && ~isempty(h_fig)
     iptremovecallback(h_fig, 'KeyPressFcn', keypressID);
 end
 
+if strcmp(TrackerType, 'planar6dof_embedded')
+    % This will close any OpenCV windows created by the tracker
+    clear mexPlanar6dofTrack
+end
+
     function trackHelper(img, h_axes, h_img)
         
         if isempty(h_fig)
