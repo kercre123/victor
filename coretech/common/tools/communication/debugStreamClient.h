@@ -37,8 +37,10 @@ namespace Anki
   namespace Embedded
   {
 #ifdef _MSC_VER
+    typedef HANDLE ThreadHandle;
 #define ThreadResult DWORD WINAPI
 #else
+    typedef pthread_t ThreadHandle;
 #define ThreadResult void*
 #endif
 
@@ -113,7 +115,7 @@ namespace Anki
 
       char saveFilenamePattern[DebugStreamClient::ObjectToSave::SAVE_FILENAME_PATTERN_LENGTH];
 
-      bool isSocket; // Either Socket of Serial
+      bool isSocket; //< Either Socket of Serial
 
       // If Socket
       const char * socket_ipAddress;
@@ -127,14 +129,19 @@ namespace Anki
       s32 serial_stopBits;
 
       volatile bool isRunning; //< If true, keep working. If false, close everything down
-      volatile bool isConnectionThreadActive;
-      volatile bool isParseBufferThreadActive;
-      volatile bool isSaveObjectThreadActive;
+      //volatile bool isConnectionThreadActive;
+      //volatile bool isParseBufferThreadActive;
+      //volatile bool isSaveObjectThreadActive;
+
+      ThreadHandle connectionThread;
+      ThreadHandle parseBufferThread;
+      ThreadHandle saveObjectThread;
 
       ThreadSafeQueue<RawBuffer> rawMessageQueue;
       ThreadSafeQueue<DebugStreamClient::Object> parsedObjectQueue;
       ThreadSafeQueue<DebugStreamClient::ObjectToSave> saveObjectQueue;
 
+      // Initialize the queues and spawn the threads
       Result Initialize();
 
       // Allocates using malloc

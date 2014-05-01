@@ -123,20 +123,27 @@ namespace Anki
       this->isRunning = false;
 
       // Wait for the threads to complete
-      while(this->isConnectionThreadActive && this->isParseBufferThreadActive && this->isSaveObjectThreadActive)
-      {}
+#ifdef _MSC_VER
+      WaitForSingleObject(connectionThread, INFINITE);
+      WaitForSingleObject(parseBufferThread, INFINITE);
+      WaitForSingleObject(saveObjectThread, INFINITE);
+#else
+      pthread_join(connectionThread);
+      pthread_join(parseBufferThread);
+      pthread_join(saveObjectThread);
+#endif
 
       return RESULT_OK;
     }
 
     DebugStreamClient::DebugStreamClient(const char * ipAddress, const s32 port)
-      : isSocket(true), socket_ipAddress(ipAddress), socket_port(port), isConnectionThreadActive(false), isParseBufferThreadActive(false), isSaveObjectThreadActive(false)
+      : isSocket(true), socket_ipAddress(ipAddress), socket_port(port)
     {
       Initialize();
     } // DebugStreamClient::DebugStreamClient
 
     DebugStreamClient::DebugStreamClient(const s32 comPort, const s32 baudRate, const char parity, const s32 dataBits, const s32 stopBits)
-      : isSocket(false), serial_comPort(comPort), serial_baudRate(baudRate), serial_parity(parity), serial_dataBits(dataBits), serial_stopBits(stopBits), isConnectionThreadActive(false), isParseBufferThreadActive(false), isSaveObjectThreadActive(false)
+      : isSocket(false), serial_comPort(comPort), serial_baudRate(baudRate), serial_parity(parity), serial_dataBits(dataBits), serial_stopBits(stopBits)
     {
       Initialize();
     }
@@ -153,7 +160,7 @@ namespace Anki
 
 #ifdef _MSC_VER
       DWORD connectionThreadId = -1;
-      CreateThread(
+      connectionThread = CreateThread(
         NULL,        // default security attributes
         0,           // use default stack size
         DebugStreamClient::ConnectionThread, // thread function name
@@ -161,7 +168,6 @@ namespace Anki
         0,           // use default creation flags
         &connectionThreadId);  // returns the thread identifier
 #else
-      pthread_t connectionThread;
       pthread_attr_t connectionAttr;
       pthread_attr_init(&connectionAttr);
 
@@ -170,38 +176,36 @@ namespace Anki
       //printf("Connection thread created\n");
 
 #ifdef _MSC_VER
-      DWORD parsingThreadId = -1;
-      CreateThread(
+      DWORD parseBufferThreadId = -1;
+      parseBufferThread = CreateThread(
         NULL,        // default security attributes
         0,           // use default stack size
         DebugStreamClient::ParseBufferThread, // thread function name
         this,    // argument to thread function
         0,           // use default creation flags
-        &parsingThreadId);  // returns the thread identifier
+        &parseBufferThreadId);  // returns the thread identifier
 #else // #ifdef _MSC_VER
-      pthread_t parsingThread;
       pthread_attr_t parsingAttr;
       pthread_attr_init(&parsingAttr);
 
-      pthread_create(&parsingThread, &parsingAttr, DebugStreamClient::ParseBufferThread, (void *)this);
+      pthread_create(&parseBufferThread, &parsingAttr, DebugStreamClient::ParseBufferThread, (void *)this);
 #endif // #ifdef _MSC_VER ... else
       //printf("Parsing thread created\n");
 
 #ifdef _MSC_VER
-      DWORD savingThreadId = -1;
-      CreateThread(
+      DWORD saveObjectThreadId = -1;
+      saveObjectThread = CreateThread(
         NULL,        // default security attributes
         0,           // use default stack size
         DebugStreamClient::SaveObjectThread, // thread function name
         this,    // argument to thread function
         0,           // use default creation flags
-        &savingThreadId);  // returns the thread identifier
+        &saveObjectThreadId);  // returns the thread identifier
 #else // #ifdef _MSC_VER
-      pthread_t savingThread;
       pthread_attr_t savingAttr;
       pthread_attr_init(&savingAttr);
 
-      pthread_create(&savingThread, &savingAttr, DebugStreamClient::SaveObjectThread, (void *)this);
+      pthread_create(&saveObjectThread, &savingAttr, DebugStreamClient::SaveObjectThread, (void *)this);
 #endif // #ifdef _MSC_VER ... else
       //printf("Saving thread created\n");
 
@@ -398,8 +402,8 @@ namespace Anki
           else if(basicType_sizeOfType == 92) { result = CopyPayload_Array<92>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
           else if(basicType_sizeOfType == 96) { result = CopyPayload_Array<96>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
           else if(basicType_sizeOfType == 100) { result = CopyPayload_Array<100>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
-          else if(basicType_sizeOfType == 104) { result = CopyPayload_Array<4>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
-          else if(basicType_sizeOfType == 108) { result = CopyPayload_Array<8>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 104) { result = CopyPayload_Array<104>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 108) { result = CopyPayload_Array<108>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
           else if(basicType_sizeOfType == 112) { result = CopyPayload_Array<112>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
           else if(basicType_sizeOfType == 116) { result = CopyPayload_Array<116>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
           else if(basicType_sizeOfType == 120) { result = CopyPayload_Array<120>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
@@ -519,8 +523,8 @@ namespace Anki
           else if(basicType_sizeOfType == 92) { result = CopyPayload_ArraySlice<92>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
           else if(basicType_sizeOfType == 96) { result = CopyPayload_ArraySlice<96>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
           else if(basicType_sizeOfType == 100) { result = CopyPayload_ArraySlice<100>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
-          else if(basicType_sizeOfType == 104) { result = CopyPayload_ArraySlice<4>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
-          else if(basicType_sizeOfType == 108) { result = CopyPayload_ArraySlice<8>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 104) { result = CopyPayload_ArraySlice<104>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 108) { result = CopyPayload_ArraySlice<108>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
           else if(basicType_sizeOfType == 112) { result = CopyPayload_ArraySlice<112>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
           else if(basicType_sizeOfType == 116) { result = CopyPayload_ArraySlice<116>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
           else if(basicType_sizeOfType == 120) { result = CopyPayload_ArraySlice<120>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
@@ -633,8 +637,6 @@ namespace Anki
       object.bufferLength = -1;
 
       DebugStreamClient *callingObject = (DebugStreamClient *) threadParameter;
-
-      callingObject->isConnectionThreadActive = true;
 
       Socket socket;
       Serial serial;
@@ -793,8 +795,6 @@ namespace Anki
         serial.Close();
       }
 
-      callingObject->isConnectionThreadActive = false;
-
       return 0;
     }
 
@@ -807,8 +807,6 @@ namespace Anki
 #endif
 
       DebugStreamClient *callingObject = (DebugStreamClient *) threadParameter;
-
-      callingObject->isParseBufferThreadActive = true;
 
       ThreadSafeQueue<RawBuffer> &rawMessageQueue = callingObject->rawMessageQueue;
       ThreadSafeQueue<DebugStreamClient::Object> &parsedObjectQueue = callingObject->parsedObjectQueue;
@@ -830,8 +828,6 @@ namespace Anki
         ProcessRawBuffer(nextRawBuffer, parsedObjectQueue, false);
       } // while(true)
 
-      callingObject->isParseBufferThreadActive = false;
-
       return 0;
     }
 
@@ -844,8 +840,6 @@ namespace Anki
 #endif
 
       DebugStreamClient *callingObject = (DebugStreamClient *) threadParameter;
-
-      callingObject->isSaveObjectThreadActive = true;
 
       ThreadSafeQueue<DebugStreamClient::ObjectToSave> &saveObjectQueue = callingObject->saveObjectQueue;
 
@@ -874,8 +868,6 @@ namespace Anki
 
         free(nextObject.buffer);
       } // while(true)
-
-      callingObject->isSaveObjectThreadActive = false;
 
       return 0;
     }
