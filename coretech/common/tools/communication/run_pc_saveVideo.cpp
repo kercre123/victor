@@ -67,14 +67,21 @@ int main(int argc, char ** argv)
     const f64 waitingTime = (startTime + waitBeforeStarting) - GetTimeF64();
     if(waitingTime > 0.0 )
     {
-      if(rawFrameNumber % 5 == 0) {
-        Array<u8> image = *(reinterpret_cast<Array<u8>*>(newObject.startOfPayload));
-        const cv::Mat_<u8> &refMat = image.get_CvMat_();
-        cv::imshow("Robot Image", image.get_CvMat_());
-        cv::waitKey(1);
+      //if(rawFrameNumber % 5 == 0)
+      {
+        Array<u8> *imageRaw = (reinterpret_cast<Array<u8>*>(newObject.startOfPayload));
+
+        if(imageRaw->get_size(0) > 20 && imageRaw->get_size(0) < 1000 && imageRaw->get_size(0) > 20 && imageRaw->get_size(0) < 1000) {
+          Array<u8> image = *imageRaw;
+          const cv::Mat_<u8> &refMat = image.get_CvMat_();
+          cv::imshow("Robot Image", image.get_CvMat_());
+          cv::waitKey(1);
+        }
       }
 
       printf("Waiting for %f more seconds\n", waitingTime);
+
+      free(newObject.buffer); newObject.buffer = NULL;
       continue;
     }
 
@@ -99,12 +106,16 @@ int main(int argc, char ** argv)
 
       printf("Saving %s\n", outputFilename);
 
-      Array<u8> image = *(reinterpret_cast<Array<u8>*>(newObject.startOfPayload));
-      cv::imshow("Robot Image", image.get_CvMat_());
+      Array<u8> *imageRaw = (reinterpret_cast<Array<u8>*>(newObject.startOfPayload));
 
-      parserThread.SaveObject(newObject, outputFilename);
+      if(imageRaw->get_size(0) > 20 && imageRaw->get_size(0) < 1000 && imageRaw->get_size(0) > 20 && imageRaw->get_size(0) < 1000) {
+        Array<u8> image = *(reinterpret_cast<Array<u8>*>(newObject.startOfPayload));
+        cv::imshow("Robot Image", image.get_CvMat_());
 
-      cv::waitKey(10);
+        parserThread.SaveObject(newObject, outputFilename);
+
+        cv::waitKey(10);
+      }
     }
   }
 
