@@ -68,8 +68,6 @@ static void printUsage()
 
 static void InitDisplayDebuggingInfo()
 {
-  //innerObjectName = reinterpret_cast<char*>( scratch.Allocate(SerializedBuffer::DESCRIPTION_STRING_LENGTH + 1) );
-
   // Used for displaying detected fiducials
   lastImage = cv::Mat(240,320,CV_8U);
   largeLastImage = cv::Mat(bigHeight, bigWidth, CV_8U);
@@ -94,10 +92,6 @@ static void InitDisplayDebuggingInfo()
 
 static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
 {
-  //
-  // If we've reached a new message, display the last image and messages
-  //
-
   const u8 htmlColors[16][3] = { // {R,G,B}
     {0xFF, 0xFF, 0xFF}, // 0  White
     {0xC0, 0xC0, 0xC0}, // 1  Silver
@@ -154,6 +148,10 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
 
     ShowBenchmarkResults(benchmarks, namesToDisplay, pixelsPerMillisecond, imageHeight, imageWidth);
   }
+
+  //
+  // If we've reached a new message, display the last image and messages
+  //
 
   if(newObject.timeReceived != lastTime) {
     if(lastImage.rows > 0) {
@@ -348,7 +346,12 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
     }
   } else if(strcmp(newObject.typeName, "Array") == 0) {
     if (strcmp(newObject.objectName, "Robot Image") == 0) {
-      const Array<u8> arr = *(reinterpret_cast<Array<u8>*>(newObject.startOfPayload));
+      const Array<u8> *arrRaw = reinterpret_cast<Array<u8>*>(newObject.startOfPayload);
+
+      if(!arrRaw->IsValid())
+        return;
+
+      const Array<u8> arr = *arrRaw;
 
       const s32 arrHeight = arr.get_size(0);
       const s32 arrWidth = arr.get_size(1);

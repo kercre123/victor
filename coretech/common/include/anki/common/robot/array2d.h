@@ -548,6 +548,10 @@ namespace Anki
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
     template<typename Type> void Array<Type>::UpdateCvMatMirror(const Array<Type> &in) const
     {
+      //memset(&this->cvMatMirror, 0, sizeof(this->cvMatMirror));
+
+      this->cvMatMirror.refcount = NULL;
+
       // These two should be set, because if the Array constructor was not called, these will not be initialized
       this->cvMatMirror.step.p = this->cvMatMirror.step.buf;
       this->cvMatMirror.size = &this->cvMatMirror.rows;
@@ -612,9 +616,9 @@ namespace Anki
 
       this->data = reinterpret_cast<Type*>( reinterpret_cast<char*>(rawData) + extraAlignmentBytes );
 
-//#if ANKICORETECH_EMBEDDED_USE_OPENCV
-//      this->UpdateCvMatMirror(*this);
-//#endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
+      //#if ANKICORETECH_EMBEDDED_USE_OPENCV
+      //      this->UpdateCvMatMirror(*this);
+      //#endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
       return RESULT_OK;
     } // Array<Type>::InitializeBuffer()
@@ -626,6 +630,13 @@ namespace Anki
       this->size[1] = -1;
       this->stride = -1;
       this->data = NULL;
+
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
+      this->cvMatMirror.step.p = this->cvMatMirror.step.buf;
+      this->cvMatMirror.size = &this->cvMatMirror.rows;
+      this->cvMatMirror.data = NULL;
+      this->cvMatMirror.refcount = NULL;
+#endif
     } // void Array<Type>::InvalidateArray()
 
     template<typename Type> Result Array<Type>::PrintBasicType(const char * const variableName, const s32 version, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX)  const
