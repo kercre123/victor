@@ -200,6 +200,13 @@ namespace Anki {
       
       void ProcessAbsLocalizationUpdateMessage(const AbsLocalizationUpdate& msg)
       {
+        // Don't modify localization while running path following test.
+        // The point of the test is to see how well it follows a path
+        // assuming perfect localization.
+        if (TestModeController::GetMode() == TM_PATH_FOLLOW) {
+          return;
+        }
+        
         // TODO: Double-check that size matches expected size?
         
         // TODO: take advantage of timestamp
@@ -301,6 +308,11 @@ namespace Anki {
       }
 
       void ProcessDriveWheelsMessage(const DriveWheels& msg) {
+        
+        // Do not process external drive commands if following a test path
+        if (TestModeController::GetMode() == TM_PATH_FOLLOW) {
+          return;
+        }
         //PathFollower::ClearPath();
         SteeringController::ExecuteDirectDrive(msg.lwheel_speed_mmps, msg.rwheel_speed_mmps);
       }

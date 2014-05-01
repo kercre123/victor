@@ -307,7 +307,10 @@ namespace Anki {
         if (!pathStarted_ && HAL::GetMicroCounter() > startDriveTime_us) {
           
           // Create a path and follow it
+          PathFollower::ClearPath();
 #if(PATH_FOLLOW_ALIGNED_START)
+          Localization::SetCurrentMatPose(0, 0, -PIDIV2_F);
+          
           //PathFollower::AppendPathSegment_PointTurn(0, 0, 0, -PIDIV2_F, -1.5f, 2.f, 2.f);
           
           float arc1_radius = sqrt((float)5000);  // Radius of sqrt(50^2 + 50^2)
