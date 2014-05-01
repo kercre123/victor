@@ -346,7 +346,12 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
     }
   } else if(strcmp(newObject.typeName, "Array") == 0) {
     if (strcmp(newObject.objectName, "Robot Image") == 0) {
-      const Array<u8> arr = *(reinterpret_cast<Array<u8>*>(newObject.startOfPayload));
+      const Array<u8> *arrRaw = reinterpret_cast<Array<u8>*>(newObject.startOfPayload);
+
+      if(!arrRaw->IsValid())
+        return;
+
+      const Array<u8> arr = *arrRaw;
 
       const s32 arrHeight = arr.get_size(0);
       const s32 arrWidth = arr.get_size(1);

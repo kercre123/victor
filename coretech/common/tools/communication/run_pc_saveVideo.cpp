@@ -71,7 +71,7 @@ int main(int argc, char ** argv)
       {
         Array<u8> *imageRaw = (reinterpret_cast<Array<u8>*>(newObject.startOfPayload));
 
-        if(imageRaw->get_size(0) > 20 && imageRaw->get_size(0) < 1000 && imageRaw->get_size(0) > 20 && imageRaw->get_size(0) < 1000) {
+        if(imageRaw->IsValid()) {
           Array<u8> image = *imageRaw;
           const cv::Mat_<u8> &refMat = image.get_CvMat_();
           cv::imshow("Robot Image", image.get_CvMat_());
@@ -108,7 +108,7 @@ int main(int argc, char ** argv)
 
       Array<u8> *imageRaw = (reinterpret_cast<Array<u8>*>(newObject.startOfPayload));
 
-      if(imageRaw->get_size(0) > 20 && imageRaw->get_size(0) < 1000 && imageRaw->get_size(0) > 20 && imageRaw->get_size(0) < 1000) {
+      if(imageRaw->IsValid()) {
         Array<u8> image = *(reinterpret_cast<Array<u8>*>(newObject.startOfPayload));
         cv::imshow("Robot Image", image.get_CvMat_());
 
