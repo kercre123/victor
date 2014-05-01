@@ -64,7 +64,27 @@ StateID State::GetStateID() const
 
 bool State::operator==(const State& other) const
 {
+  // TODO:(bn) use union?
   return x==other.x && y==other.y && theta==other.theta;
+}
+
+bool StateID::operator<(const StateID& rhs) const
+{
+  // TODO:(bn) use union?
+  if(x < rhs.x)
+    return true;
+  if(x > rhs.x)
+    return false;
+
+  if(y < rhs.y)
+    return true;
+  if(y > rhs.y)
+    return false;
+
+  if(theta < rhs.theta)
+    return true;
+  // if(theta > rhs.theta)
+  return false;
 }
 
 

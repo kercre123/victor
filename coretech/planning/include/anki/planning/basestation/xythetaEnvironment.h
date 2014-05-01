@@ -59,6 +59,9 @@ class StateID
 {
   friend bool operator==(const StateID& lhs, const StateID& rhs);
 public:
+
+  bool operator<(const StateID& rhs) const;
+
   StateID() : theta(0), x(0), y(0) {};
 
   unsigned int theta : THETA_BITS;

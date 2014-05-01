@@ -14,6 +14,7 @@
 #define _ANKICORETECH_PLANNING_XYTHETA_PLANNER_INTERNAL_H_
 
 #include "openList.h"
+#include "stateTable.h"
 
 namespace Anki
 {
@@ -32,6 +33,7 @@ struct xythetaPlannerImpl
   State start_;
   const xythetaEnvironment& env_;
   OpenList open_;
+  StateTable table_;
 
   xythetaPlan plan_;
 };
