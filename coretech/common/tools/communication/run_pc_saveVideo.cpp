@@ -59,16 +59,16 @@ int main(int argc, char ** argv)
   const f64 startTime = GetTimeF64();
 
   while(true) {
-    rawFrameNumber++;
-
     DebugStreamClient::Object newObject = parserThread.GetNextObject();
     //printf("Received %s %s\n", newObject.typeName, newObject.newObject.objectName);
 
+    if (strcmp(newObject.objectName, "Robot Image") == 0) {
+      rawFrameNumber++;
+    }
+
     const f64 waitingTime = (startTime + waitBeforeStarting) - GetTimeF64();
-    if(waitingTime > 0.0 )
-    {
-      //if(rawFrameNumber % 5 == 0)
-      {
+    if(waitingTime > 0.0) {
+      if ( (strcmp(newObject.objectName, "Robot Image") == 0) && (rawFrameNumber % 5 == 0) ) {
         Array<u8> *imageRaw = (reinterpret_cast<Array<u8>*>(newObject.startOfPayload));
 
         if(imageRaw->IsValid()) {
@@ -85,7 +85,7 @@ int main(int argc, char ** argv)
       continue;
     }
 
-    if(strcmp(newObject.typeName, "Array") == 0 && strcmp(newObject.objectName, "Robot Image") == 0) {
+    if(strcmp(newObject.objectName, "Robot Image") == 0) {
       const time_t t = time(0);   // get time now
       const struct tm * currentTime = localtime(&t);
       if(last_tm_sec == currentTime->tm_sec && last_tm_min == currentTime->tm_min && last_tm_hour == currentTime->tm_hour) {
