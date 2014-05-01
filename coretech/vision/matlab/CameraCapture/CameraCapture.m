@@ -84,6 +84,8 @@ processKeyPressed = false;
 % Set up display figure
 h_fig = namedFigure(figureName, 'CurrentCharacter', '~');
 keypressID = iptaddcallback(h_fig, 'KeyPressFcn', @keypress);
+keypressCleanup = onCleanup(@()iptremovecallback(h_fig, 'KeyPressFcn', keypressID));
+
 clf(h_fig);
 figure(h_fig);
 colormap(h_fig, gray);
@@ -119,19 +121,36 @@ CLOSE = 2;
         frame = mexCameraCapture(GRAB, device);
         frame = frame(:,:,[3 2 1]); % BGR to RGB
     end
+
+    function frame = readFrameFromWifiCamera(~)
+        frame = [];
+        while isempty(frame)
+            frame = mexWifiCameraCapture(GRAB);
+            pause(1/fps);
+        end     
+        frame = im2uint8( im2double(frame) .^ (1/2.2));
+    end
 try
     
     % Initialize and grab first frame
     if ischar(device)
-        deviceType = 'file';
-        [framePath, pattern, patternExt] = fileparts(device);
-        frameList = getfnames(framePath, [pattern patternExt]);
-        if isempty(frameList)
-            error('No frames found at %s.\n', device);
+        % see if it looks like an IP address
+        if ~isempty(regexp(device, '\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}', 'once'))
+            deviceType = 'wifiCamera';
+            frame = mexWifiCameraCapture(OPEN, device);
+            getFrameFcn = @readFrameFromWifiCamera;
+        else
+            % assume it's a filename/pattern
+            deviceType = 'file';
+            [framePath, pattern, patternExt] = fileparts(device);
+            frameList = getfnames(framePath, [pattern patternExt]);
+            if isempty(frameList)
+                error('No frames found at %s.\n', device);
+            end
+            numFrames = min(numFrames, length(frameList));
+            frame = readFrameFromFile(1, framePath, frameList);
+            getFrameFcn = @(i_frame)readFrameFromFile(i_frame, framePath, frameList);
         end
-        numFrames = min(numFrames, length(frameList));
-        frame = readFrameFromFile(1, framePath, frameList);
-        getFrameFcn = @(i_frame)readFrameFromFile(i_frame, framePath, frameList);
     elseif isa(device, 'SerialCamera')
         deviceType = 'serialCamera';
         
@@ -142,7 +161,6 @@ try
         end
     else
         deviceType = 'usbCamera';
-        
         frame = mexCameraCapture(OPEN, device, resolution(1), resolution(2));
         getFrameFcn = @readFrameFromCamera;
     end
@@ -214,23 +232,28 @@ try
     end
     
 catch E
-    iptremovecallback(h_fig, 'KeyPressFcn', keypressID);
-    if strcmp(deviceType, 'usbCamera')
-        mexCameraCapture(CLOSE);
-    end
+
+    closeCamera();    
     rethrow(E)
+    
 end
 
-if strcmp(deviceType, 'usbCamera')
-    mexCameraCapture(CLOSE);
-end
-
-iptremovecallback(h_fig, 'KeyPressFcn', keypressID);
+closeCamera();
 
 if nargout==0
     clear grabs;
 end
 
+    function closeCamera()
+        switch(deviceType)
+            case 'usbCamera'
+                mexCameraCapture(CLOSE);
+            case 'wifiCamera'
+                mexWifiCameraCapture(CLOSE);
+            otherwise
+                % Nothing to do
+        end
+    end
 
     function keypress(~, edata)
         if isempty(edata.Modifier)
