@@ -122,16 +122,20 @@ namespace Anki
     {
       this->isRunning = false;
 
-      // Wait for the threads to complete
+      if(this->isValid) {
+        // Wait for the threads to complete
 #ifdef _MSC_VER
-      WaitForSingleObject(connectionThread, INFINITE);
-      WaitForSingleObject(parseBufferThread, INFINITE);
-      WaitForSingleObject(saveObjectThread, INFINITE);
+        WaitForSingleObject(connectionThread, INFINITE);
+        WaitForSingleObject(parseBufferThread, INFINITE);
+        WaitForSingleObject(saveObjectThread, INFINITE);
 #else
-      pthread_join(connectionThread);
-      pthread_join(parseBufferThread);
-      pthread_join(saveObjectThread);
+        pthread_join(connectionThread);
+        pthread_join(parseBufferThread);
+        pthread_join(saveObjectThread);
 #endif
+      }
+
+      this->isValid = false;
 
       // Clean up allocated memory
       while(!rawMessageQueue.IsEmpty()) {
@@ -153,15 +157,20 @@ namespace Anki
     }
 
     DebugStreamClient::DebugStreamClient(const char * ipAddress, const s32 port)
-      : isSocket(true), socket_ipAddress(ipAddress), socket_port(port)
+      : isValid(false), isSocket(true), socket_ipAddress(ipAddress), socket_port(port)
     {
       Initialize();
     } // DebugStreamClient::DebugStreamClient
 
     DebugStreamClient::DebugStreamClient(const s32 comPort, const s32 baudRate, const char parity, const s32 dataBits, const s32 stopBits)
-      : isSocket(false), serial_comPort(comPort), serial_baudRate(baudRate), serial_parity(parity), serial_dataBits(dataBits), serial_stopBits(stopBits)
+      : isValid(false), isSocket(false), serial_comPort(comPort), serial_baudRate(baudRate), serial_parity(parity), serial_dataBits(dataBits), serial_stopBits(stopBits)
     {
       Initialize();
+    }
+
+    DebugStreamClient::~DebugStreamClient()
+    {
+      this->Close();
     }
 
     Result DebugStreamClient::Initialize()
@@ -224,6 +233,8 @@ namespace Anki
       pthread_create(&saveObjectThread, &savingAttr, DebugStreamClient::SaveObjectThread, (void *)this);
 #endif // #ifdef _MSC_VER ... else
       //printf("Saving thread created\n");
+
+      this->isValid = true;
 
       return RESULT_OK;
     }
@@ -633,7 +644,7 @@ namespace Anki
     ThreadResult DebugStreamClient::ConnectionThread(void *threadParameter)
     {
 #ifdef _MSC_VER
-      SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST); // THREAD_PRIORITY_ABOVE_NORMAL
+      SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST);
 #else
 #endif
 

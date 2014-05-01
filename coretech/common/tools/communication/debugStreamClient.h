@@ -85,8 +85,12 @@ namespace Anki
       // Example: DebugStreamClient(11, 1000000)
       DebugStreamClient(const s32 comPort, const s32 baudRate, const char parity = 'N', const s32 dataBits = 8, const s32 stopBits = 1);
 
+      // Warning: calling the destructor from a different thread than the constructor is a race condition
+      ~DebugStreamClient();
+
       // Close the socket and stop the parsing threads
-      Anki::Result Close();
+      // Warning: calling Close from a different thread than the constructor is a race condition
+      Result Close();
 
       // Blocks until an Object is available, the returns it. To use an object, just cast its buffer based on its typeName and objectName.
       //
@@ -98,6 +102,8 @@ namespace Anki
       // It frees the object memory after the save is complete
       Result SaveObject(Object &object, const char * filename);
 
+      // Returns if the object's threads are acquiring and processing new data
+      // This is false while the object is starting up and closing down.
       bool get_isRunning() const;
 
     protected:
@@ -114,6 +120,8 @@ namespace Anki
       static const s32 MESSAGE_BUFFER_SIZE = 1000000;
 
       char saveFilenamePattern[DebugStreamClient::ObjectToSave::SAVE_FILENAME_PATTERN_LENGTH];
+
+      bool isValid;
 
       bool isSocket; //< Either Socket of Serial
 
@@ -158,6 +166,11 @@ namespace Anki
 
       // Save any files that are put in the saveObjectQueue
       static ThreadResult SaveObjectThread(void *threadParameter);
+
+    private:
+      // Do not use these
+      DebugStreamClient(const DebugStreamClient& in);
+      DebugStreamClient& operator= (const DebugStreamClient& in);
     }; // DebugStreamClient
   } // namespace Embedded
 } // namespace Anki
