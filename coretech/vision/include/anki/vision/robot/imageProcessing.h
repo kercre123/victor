@@ -42,8 +42,20 @@ namespace Anki
           for(s32 x=1; x<imageWidth-1; x++) {
             pOut[x] = static_cast<IntermediateType>(pIn[x+1]) - static_cast<IntermediateType>(pIn[x-1]);
           }
-        }
 
+          // Fill in left/right boundaries
+          pOut[0] = 0;
+          pOut[imageWidth-1] = 0;
+        }
+        
+        // Fill in top/bottom boundaries
+        OutType * restrict pOutTop = out.Pointer(0,0);
+        OutType * restrict pOutBtm = out.Pointer(imageHeight-1,0);
+        for(s32 x=0; x<imageWidth; x++) {
+          pOutTop[x] = 0;
+          pOutBtm[x] = 0;
+        }
+        
         return RESULT_OK;
       }
 
@@ -67,8 +79,20 @@ namespace Anki
           for(s32 x=1; x<imageWidth-1; x++) {
             pOut[x] = static_cast<IntermediateType>(pIn_yp1[x]) - static_cast<IntermediateType>(pIn_ym1[x]);
           }
+          
+          // Fill in left/right boundaries
+          pOut[0] = 0;
+          pOut[imageWidth-1] = 0;
         }
 
+        // Fill in top/bottom boundaries
+        OutType * restrict pOutTop = out.Pointer(0,0);
+        OutType * restrict pOutBtm = out.Pointer(imageHeight-1,0);
+        for(s32 x=0; x<imageWidth; x++) {
+          pOutTop[x] = 0;
+          pOutBtm[x] = 0;
+        }
+        
         return RESULT_OK;
       }
 
@@ -186,7 +210,55 @@ namespace Anki
 
         return RESULT_OK;
       }
-
+ 
+      template<typename InType, typename OutType>
+      Result CreateIntegralImage(const Array<InType> &image, Array<OutType> integralImage)
+      {
+        AnkiConditionalErrorAndReturnValue(image.IsValid(),
+                                           RESULT_FAIL_INVALID_OBJECT,
+                                           "ImageProcessing::CreateIntgralImage",
+                                           "Input image is invalid.");
+        
+        AnkiConditionalErrorAndReturnValue(integralImage.IsValid(),
+                                           RESULT_FAIL_INVALID_OBJECT,
+                                           "ImageProcessing::CreateIntgralImage",
+                                           "Input image is invalid.");
+        
+        const s32 imageHeight = image.get_size(0);
+        const s32 imageWidth  = image.get_size(1);
+        
+        AnkiConditionalErrorAndReturnValue(integralImage.get_size(0) == imageHeight &&
+                                           integralImage.get_size(1) == imageWidth,
+                                           RESULT_FAIL_INVALID_SIZE,
+                                           "ImageProcessing::CreateIntegralImage",
+                                           "Output integralImage array must match input image's size.");
+        
+        // Fill in first row of integral image
+        const InType * restrict pImageRow         = image.Pointer(0,0);
+        OutType      * restrict pIntegralImageRow = integralImage.Pointer(0,0);
+        
+        pIntegralImageRow[0] = static_cast<OutType>(pImageRow[0]);
+        for(s32 x=1; x<imageWidth; x++) {
+          pIntegralImageRow[x] = pIntegralImageRow[x-1] + static_cast<OutType>(pImageRow[x]);
+        }
+        
+        // Fill in remaining rows of integral image
+        for(s32 y=1; y<imageHeight; y++) {
+          const InType * restrict pImageRow             = image.Pointer(y,0);
+          OutType      * restrict pIntegralImageRow     = integralImage.Pointer(y,0);
+          OutType      * restrict pIntegralImageRowPrev = integralImage.Pointer(y-1,0);
+          
+          pIntegralImageRow[0] = static_cast<f32>(pImageRow[0]) + pIntegralImageRowPrev[0];
+          for(s32 x=1; x<imageWidth; x++) {
+            pIntegralImageRow[x] = (pIntegralImageRow[x-1] + pIntegralImageRowPrev[x] +
+                                    static_cast<OutType>(pImageRow[x]) - pIntegralImageRowPrev[x-1]);
+          }
+        }
+        
+        return RESULT_OK;
+      } // CreateIntegralImage()
+      
+      
       template<typename InType, typename OutType> Result Resize(const Array<InType> &in, Array<OutType> &out)
       {
         AnkiConditionalErrorAndReturnValue(in.IsValid(),

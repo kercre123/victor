@@ -102,6 +102,40 @@ namespace Anki
 
         return mean;
       }
+      
+      template<typename Array_Type, typename Accumulator_Type> Result MeanAndVar(const ConstArraySliceExpression<Array_Type> &mat,
+                                                                                 Accumulator_Type& mean, Accumulator_Type& var)
+      {
+        const Array<Array_Type> &array = mat.get_array();
+        
+        AnkiConditionalErrorAndReturnValue(array.IsValid(),
+                                           RESULT_FAIL_INVALID_OBJECT, "Matrix::MeanAndVar", "Array<Type> is not valid");
+        
+        const ArraySliceLimits_in1_out0<s32> limits(mat.get_ySlice(), mat.get_xSlice());
+        
+        AnkiConditionalErrorAndReturnValue(limits.isValid,
+                                           RESULT_FAIL_INVALID_OBJECT, "Matrix::MeanAndVar", "Limits is not valid");
+        
+        Accumulator_Type sum = 0;
+        Accumulator_Type sumSq = 0;
+        for(s32 y=limits.rawIn1Limits.yStart; y<=limits.rawIn1Limits.yEnd; y+=limits.rawIn1Limits.yIncrement) {
+          const Array_Type * restrict pMat = array.Pointer(y, 0);
+          for(s32 x=limits.rawIn1Limits.xStart; x<=limits.rawIn1Limits.xEnd; x+=limits.rawIn1Limits.xIncrement) {
+            const Accumulator_Type val = static_cast<Accumulator_Type>(pMat[x]);
+            sum   += val;
+            sumSq += val*val;
+          }
+        }
+        
+        const Accumulator_Type numElements = static_cast<Accumulator_Type>(mat.get_ySlice().get_size() * mat.get_xSlice().get_size());
+
+        mean = sum / numElements;                  // mean = E[x]
+        var  = (sumSq / numElements) - (mean*mean);  // var  = E[x^2] - E[x]^2
+        
+        return RESULT_OK;
+        
+      } // template<typename Array_Type, typename Accumulator_Type> Accumulator_Type Sum(const Array<Array_Type> &image)
+      
 
       template<typename InType, typename IntermediateType, typename OutType> Result Add(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out)
       {

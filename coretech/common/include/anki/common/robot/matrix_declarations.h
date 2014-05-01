@@ -40,6 +40,10 @@ namespace Anki
       // Return the mean of every element in the Array
       template<typename Array_Type, typename Accumulator_Type> Array_Type Mean(const ConstArraySliceExpression<Array_Type> &mat);
 
+      // Simultaneously compute the mean and variance of every element in the Array
+      template<typename Array_Type, typename Accumulator_Type> Result MeanAndVar(const ConstArraySliceExpression<Array_Type> &mat,
+                                                                                 Accumulator_Type& mean, Accumulator_Type& var);
+
       //
       // Elementwise matrix operations
       //

@@ -329,6 +329,38 @@ namespace Anki
       return this->Print(variableName, minY, maxY, minX, maxX);
     }
 
+    
+    template<typename Type> bool Array<Type>::IsNearlyEqualTo(const Array<Type>& other, const Type epsilon) const
+    {
+      bool isSame = false;
+      if(this->IsValid() && other.IsValid()) {
+        
+        const s32 nrows = this->get_size(0);
+        const s32 ncols = this->get_size(1);
+
+        if(other.get_size(0)==nrows && other.get_size(1) == ncols) {
+
+          isSame = true;
+          for(s32 i=0; i<nrows && isSame; ++i) {
+            const Type * restrict pThis  = this->Pointer(i,0);
+            const Type * restrict pOther = other.Pointer(i,0);
+            
+            for(s32 j=0; j<ncols; ++j) {
+              if(!NEAR(pThis[j], pOther[j], epsilon)) {
+                isSame = false;
+                break;
+              }
+            } // for j
+            
+          } // for i
+          
+        } // if sizes match
+      } // if both valid
+      
+      return isSame;
+      
+    } // IsNearlyEqualTo()
+    
     template<typename Type> bool Array<Type>::IsValid() const
     {
       if(this->data == NULL) {
@@ -452,7 +484,7 @@ namespace Anki
 
           //memcpy(pThisData, values + y*size[1], numValuesThisRow*sizeof(Type));
           for(s32 x=0; x<numWordsToCopy; x++) {
-            AnkiAssert(reinterpret_cast<size_t>(values+y*size[1]) % 4 == 0);
+            //AnkiAssert(reinterpret_cast<size_t>(values+y*size[1]) % 4 == 0);
             pThisData[x] = reinterpret_cast<const u32*>(values+y*size[1])[x];
           }
           numValuesSet += numValuesThisRow;

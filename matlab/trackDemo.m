@@ -7,11 +7,18 @@ NumSamples = 0;
 CalibrationMatrix = [];
 MarkerWidth = [];
 ConvergenceTolerance = 0.25;
+ConvergenceMultiplier = 3;
 MaxIterations = 25;
 IntensityErrorTolerance = .5;
 IntensityErrorFraction = 0.25;
 TemplateRegionPaddingFraction = 0.05;
-FilterFcn = []; % abs(imfilter(img, fspecial('log', 3)));
+%FilterFcn = @(img, width) repmat(mean(im2double(img),3)./separable_filter(mean(im2double(img),3), ones(1,width)/width), [1 1 3]); %@(img)smoothgradient(img, 0.5)/25; %@(img)abs(imfilter(img, fspecial('log', 5, 2)));
+FilterFcn = []; %@(img,width)mean(im2double(img ./ separable_filter(img, ones(1,width)/width)),3);
+
+% Example settings for testing planar6dof_embedded tracker
+% calib = load('~/Documents/Anki/Data/CameraCalibrationImages/CameraA1/2014-03-26/Calib_Results.mat');
+% K = [calib.fc(1) 0 calib.cc(1); 0 calib.fc(2) calib.cc(2); 0 0 1];
+% trackDemo('resolution', [320 240], 'TrackerType', 'planar6dof_embedded', 'CalibrationMatrix', K, 'NumSamples', 500, 'MarkerWidth', 26, 'ConvergenceTolerance', struct('angle', 0.1, 'distance', 0.1));
 
 CamCaptureArgs = parseVarargin(varargin{:});
 
@@ -39,16 +46,38 @@ marker3d = [];
 corners = [];
 cen = [];
 
+resetTracker = false;
+
 H_init = [];
 
 initialSamples = [];
 
+currentParams = [];
+
+h_fig = [];
+
+keypressID = [];
+
 CameraCapture('processFcn', @trackHelper, ...
     'doContinuousProcessing', true, CamCaptureArgs{:});
 
+if ~isempty(keypressID) && ~isempty(h_fig)
+    iptremovecallback(h_fig, 'KeyPressFcn', keypressID);
+end
+
+if strcmp(TrackerType, 'planar6dof_embedded')
+    % This will close any OpenCV windows created by the tracker
+    clear mexPlanar6dofTrack
+end
+
     function trackHelper(img, h_axes, h_img)
         
+        if isempty(h_fig)
+            h_fig = get(h_axes, 'Parent');
+        end
+        
         if isempty(LKtracker)
+            keypressID = iptaddcallback(h_fig, 'KeyPressFcn', @keypressFcn);                
             
             % Detect at full resolution
             marker = simpleDetector(img);
@@ -83,10 +112,11 @@ CameraCapture('processFcn', @trackHelper, ...
             if isempty(FilterFcn)
                 imgFiltered = img;
             else
-                imgFiltered = FilterFcn(img);
+                filterWidth = round((max(corners(:,1)) - min(corners(:,1)))/2);
+                imgFiltered = FilterFcn(img, filterWidth, corners);
             end
             
-            set(h_img, 'CData', imgFiltered); %(:,:,[3 2 1]));
+            set(h_img, 'CData', im2uint8(imgFiltered)); %(:,:,[3 2 1]));
             hold(h_axes, 'on');
             
             h_target = plot(corners(order,1), corners(order,2), 'r', ...
@@ -104,11 +134,19 @@ CameraCapture('processFcn', @trackHelper, ...
 
             if strcmp(TrackerType, 'planar6dof_embedded')
                 try
-                    initialSamples = mexPlanar6dofTrack(rgb2gray(im2uint8(imgFiltered)), corners, ...
+                    imgFiltered = im2uint8(imgFiltered);
+                    if size(imgFiltered,3) > 1
+                        imgFiltered = rgb2gray(imgFiltered);
+                    end
+                    
+                    [initialSamples, angleX, angleY, angleZ, tX, tY, tZ] = mexPlanar6dofTrack(imgFiltered, corners, ...
                         CalibrationMatrix(1,1), CalibrationMatrix(2,2), ...
                         CalibrationMatrix(1,3), CalibrationMatrix(2,3), ...
                         MarkerWidth, 1+TemplateRegionPaddingFraction, ...
                         3, NumSamples, 5);
+                    
+                    currentParams = [angleX, angleY, angleZ, tX, tY, tZ];
+                    
                 catch E
                     warning(E.message);
                     return;
@@ -124,7 +162,7 @@ CameraCapture('processFcn', @trackHelper, ...
                 LKtracker = LucasKanadeTracker(imgFiltered, corners, ...
                     'Type', TrackerType, 'RidgeWeight', 0, ...
                     'DebugDisplay', false, 'UseBlurring', false, ...
-                    'UseNormalization', true, 'NumSamples', NumSamples, ...
+                    'UseNormalization', false, 'NumSamples', NumSamples, ...
                     'TemplateRegionPaddingFraction', TemplateRegionPaddingFraction, ...
                     'MarkerWidth', MarkerWidth, 'CalibrationMatrix', CalibrationMatrix);
             end
@@ -174,23 +212,74 @@ CameraCapture('processFcn', @trackHelper, ...
             if isempty(FilterFcn)
                 imgFiltered = img;
             else
-                imgFiltered = FilterFcn(img);
+                filterWidth = round((max(corners(:,1)) - min(corners(:,1)))/2);
+                imgFiltered = FilterFcn(img, filterWidth, corners);
             end
             if strcmp(TrackerType, 'planar6dof_embedded')
+                imgFiltered = im2uint8(imgFiltered);
+                if size(imgFiltered,3) > 1
+                    imgFiltered = rgb2gray(imgFiltered);
+                end
+               
+                % Compute the convergence tolerance for the current distance
+                minAngleTol = ConvergenceTolerance.angle;
+                maxAngleTol = ConvergenceMultiplier*ConvergenceTolerance.angle;
+                minDistTol  = ConvergenceTolerance.distance;
+                maxDistTol  = ConvergenceMultiplier*ConvergenceTolerance.distance;
+                
+                minDist  = 25;
+                maxDist  = 100;
+                
+                tZ = currentParams(end);
+                angleTol = min(maxAngleTol, max(minAngleTol, ...
+                    maxAngleTol + (minAngleTol-maxAngleTol)/(maxDist-minDist) * (tZ - minDist)));
+                distTol = min(maxDistTol, max(minDistTol, ...
+                    maxDistTol + (minDistTol-maxDistTol)/(maxDist-minDist) * (tZ - minDist)));
+                
+                initialParams = currentParams;
+                
                 [converged, verify_meanAbsDiff, verify_numInBounds, verify_numSimilarPixels, ...
-                    crntCorners, angleX, angleY, angleZ, tX, tY, tZ, ...
+                    corners, angleX, angleY, angleZ, tX, tY, tZ, ...
                     tform] = ...
-                    mexPlanar6dofTrack(rgb2gray(im2uint8(imgFiltered)), ...
-                    MaxIterations, ConvergenceTolerance.angle, ...
-                    ConvergenceTolerance.distance, ...
+                    mexPlanar6dofTrack(imgFiltered, ...
+                    MaxIterations, angleTol, distTol, ...
                     IntensityErrorTolerance);
-                %converged = true;
-                poseString = num2str([180/pi*[angleX, angleY, angleZ], tX, tY, tZ]);
+                
+                currentParams = [angleX angleY angleZ tX tY tZ];
+                
+                if ~converged
+                    reason = 'Did not converge.';
+%                 elseif verify_numSimilarPixels / verify_numInBounds < IntensityErrorFraction
+%                     reason = 'Too few pixels below IntensityErrorThreshold.';
+%                     converged = false;
+                elseif verify_meanAbsDiff > IntensityErrorTolerance
+                    reason = 'Mean absolute difference above IntensityErrorThreshold.';
+                    converged = false;
+                else 
+                    reason = '';
+                end
+                    
+                %poseString = num2str([180/pi*[angleX, angleY, angleZ], tX, tY, tZ]);
+                poseString = sprintf('[\\theta_X: %.2f\\circ \\theta_Y: %.2f\\circ \\theta_Z: %.2f\\circ], [x: %.2fmm  y: %.2fmm  z: %.2fmm]', ...
+                    180/pi*[angleX, angleY, angleZ], tX, tY, tZ);
                 
                 temp = tform * [initialSamples ones(size(initialSamples,1),1)]';
                 xsamples = temp(1,:)./temp(3,:) + CalibrationMatrix(1,3);
                 ysamples = temp(2,:)./temp(3,:) + CalibrationMatrix(2,3);
-                reason = '';    
+                
+                if any(abs(currentParams(1:3)-initialParams(1:3)) > 30*pi/180)
+                    trackerSucceeded = false;
+                    reason = 'Angle changed too much.';
+                elseif any(abs(currentParams(4:6)-initialParams(4:6)) > 20)
+                    trackerSucceeded = false;
+                    reason = 'Position changed too much.';
+                elseif verify_numSimilarPixels / verify_numInBounds < IntensityErrorFraction
+                    trackerSucceeded = false;
+                    reason = 'Too many verification pixels above error tolerance.';
+                else
+                    trackerSucceeded = true;
+                end
+                
             else
                 [converged, reason] = LKtracker.track(imgFiltered, ...
                     'MaxIterations', MaxIterations, ...
@@ -198,7 +287,9 @@ CameraCapture('processFcn', @trackHelper, ...
                     'IntensityErrorTolerance', IntensityErrorTolerance, ...
                     'IntensityErrorFraction', IntensityErrorFraction);
                 
-                crntCorners = LKtracker.corners;
+                trackerSucceeded = converged;
+                
+                corners = LKtracker.corners;
                 
                 if strcmp(TrackerType, 'planar6dof')
                     poseString = LKtracker.poseString;
@@ -207,10 +298,16 @@ CameraCapture('processFcn', @trackHelper, ...
                 if NumSamples > 0
                     [xsamples,ysamples] = LKtracker.getImagePoints(1);
                 end
+                
+            end
+               
+            if ~trackerSucceeded
+                resetTracker = true;
             end
             %fprintf('Tracking took %.2f seconds.\n', toc(t));
             
-            if ~converged 
+            if resetTracker
+                
                 fprintf('Lost Track! (%s)\n', reason)
                 LKtracker = [];
                 h_cam = [];
@@ -218,16 +315,19 @@ CameraCapture('processFcn', @trackHelper, ...
                 if NumSamples > 0
                     delete(h_samples)
                 end
+                
+                resetTracker = false;
+                
                 return
             end
             
 %             if size(img,3)>1
 %                 img = img(:,:,[3 2 1]);
 %             end
-            set(h_img, 'CData', imgFiltered);
+            set(h_img, 'CData',im2uint8(imgFiltered));
             
             if strncmp(TrackerType, 'planar6dof', 10)
-                title(h_axes, sprintf('Pose: %s', poseString), 'FontSize', 12);
+                title(h_axes, sprintf('          Block Pose: %s', poseString), 'FontSize', 14);
             else
                 title(h_axes, sprintf('Error: %.3f', LKtracker.err));
             end
@@ -241,8 +341,8 @@ CameraCapture('processFcn', @trackHelper, ...
             %[tempx, tempy] = LKtracker.getImagePoints(corners(:,1), corners(:,2));
             
            
-            set(h_target, 'XData', crntCorners([1 2 4 3 1],1), ...
-                'YData', crntCorners([1 2 4 3 1],2));
+            set(h_target, 'XData', corners([1 2 4 3 1],1), ...
+                'YData', corners([1 2 4 3 1],2));
             
             if NumSamples > 0
                 %[xsamples,ysamples] = LKtracker.getImagePoints(1);
@@ -412,8 +512,21 @@ CameraCapture('processFcn', @trackHelper, ...
 %             end
             
         end
+
+    end % trackHelper 
+
+        
+    function keypressFcn(~, edata)
+        if isempty(edata.Modifier)
+            switch(edata.Key)
+                case 'r'
+                    resetTracker = true;
+                    
+            end
+        end
     end
-end
+
+end % trackDemo
 
 %function [Rmat, T] = getCameraPose(pts2d, pts3d, fc, cc)
 function [Rmat, T] = getCameraPose(H)
@@ -500,3 +613,6 @@ else
     s = -1;
 end
 end
+
+
+
