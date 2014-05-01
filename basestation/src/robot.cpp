@@ -508,16 +508,17 @@ namespace Anki {
       return msgHandler_->SendMessage(ID_, m);
     }
 
-    Result Robot::SendImageRequest() const
+    Result Robot::SendImageRequest(const ImageSendMode_t mode) const
     {
       MessageImageRequest m;
       
+      m.imageSendMode = mode;
       m.resolution = Vision::CAMERA_RES_QQVGA;
       
       return msgHandler_->SendMessage(ID_, m);
     }
     
-    Result Robot::SendStartTestMode(TestMode mode) const
+    Result Robot::SendStartTestMode(const TestMode mode) const
     {
       MessageStartTestMode m;
       

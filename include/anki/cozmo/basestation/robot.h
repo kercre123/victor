@@ -111,10 +111,10 @@ namespace Anki {
       Result SendHeadAngleUpdate() const;
 
       // Request camera snapshot from robot
-      Result SendImageRequest() const;
+      Result SendImageRequest(const ImageSendMode_t mode) const;
 
       // Run a test mode
-      Result SendStartTestMode(TestMode mode) const;
+      Result SendStartTestMode(const TestMode mode) const;
       
     protected:
       // The robot's identifier

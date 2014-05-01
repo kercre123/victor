@@ -7,6 +7,12 @@ namespace Anki {
   namespace Cozmo {
 
     typedef enum {
+      ISM_OFF,
+      ISM_STREAM,
+      ISM_SINGLE_SHOT
+    } ImageSendMode_t;
+    
+    typedef enum {
       DA_PICKUP_LOW = 0,  // Docking to block at level 0
       DA_PICKUP_HIGH,     // Docking to block at level 1
       DA_PLACE_HIGH       // Placing block atop another block at level 0

@@ -344,9 +344,9 @@ namespace Anki {
         }
       }
       
-      
       void ProcessImageRequestMessage(const ImageRequest& msg) {
-        VisionSystem::SendNextImage((Vision::CameraResolution)msg.resolution);
+        PRINT("Image requested (mode: %d, resolution: %d)\n", msg.imageSendMode, msg.resolution);
+        VisionSystem::SetImageSendMode((ImageSendMode_t)msg.imageSendMode, (Vision::CameraResolution)msg.resolution);
       }
       
       

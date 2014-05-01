@@ -306,11 +306,12 @@ namespace Anki {
         
       // When dataSize matches the expected size, print to file
       if (dataSize >= totalImgSize) {
+#if(0)
         char imgCaptureFilename[64];
         snprintf(imgCaptureFilename, sizeof(imgCaptureFilename), "robot%d_img%d.pgm", robot->get_ID(), imgID);
         PRINT_INFO("Printing image to %s\n", imgCaptureFilename);
         Vision::WritePGM(imgCaptureFilename, data, width, height);
-        
+#endif
         VizManager::getInstance()->SendGreyImage(data, (Vision::CameraResolution)msg.resolution);
       }
       

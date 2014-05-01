@@ -266,6 +266,7 @@ END_MESSAGE_DEFINITION(HeadAngleUpdate)
 
 // ImageRequest
 START_MESSAGE_DEFINITION(ImageRequest, 1)
+ADD_MESSAGE_MEMBER(u8, imageSendMode)
 ADD_MESSAGE_MEMBER(u8, resolution)
 END_MESSAGE_DEFINITION(ImageRequest)
 

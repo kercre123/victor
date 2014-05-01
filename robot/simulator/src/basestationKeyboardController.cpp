@@ -230,7 +230,17 @@ namespace Anki {
               
             case CKEY_REQUEST_IMG:
             {
-              robot_->SendImageRequest();
+              ImageSendMode_t mode = ISM_SINGLE_SHOT;
+              if (modifier_key == webots::Supervisor::KEYBOARD_SHIFT) {
+                static bool streamOn = false;
+                if (streamOn) {
+                  mode = ISM_OFF;
+                } else {
+                  mode = ISM_STREAM;
+                }
+                streamOn = !streamOn;
+              }
+              robot_->SendImageRequest(mode);
               break;
             }
               

@@ -261,7 +261,7 @@ namespace Anki {
     {
       // If this is a new image, then reset everything
       if (msg.imgId != imgID) {
-        printf("Resetting image (img %d, res %d)\n", msg.imgId, msg.resolution);
+        //printf("Resetting image (img %d, res %d)\n", msg.imgId, msg.resolution);
         imgID = msg.imgId;
         imgBytes = 0;
         imgWidth = Vision::CameraResInfo[msg.resolution].width;
@@ -289,7 +289,7 @@ namespace Anki {
         camDisp->imageDelete(camImg);
       }
       
-      printf("Displaying image %d x %d\n", imgWidth, imgHeight);
+      //printf("Displaying image %d x %d\n", imgWidth, imgHeight);
       
       camImg = camDisp->imageNew(imgWidth, imgHeight, imgData, webots::Display::RGB);
       camDisp->imagePaste(camImg, 0, 0);
