@@ -53,11 +53,13 @@ void xythetaPlannerImpl::ComputePath()
 
   // TEMP: testing
   StateID startID = start_.GetStateID();
-  table_.emplace(std::make_pair(startID,
-                                    StateEntry{open_.insert(startID, 0.0),
-                                        startID,
-                                        0, // action doesn't matter
-                                        0.0}));
+
+  table_.emplace(startID, 
+                     open_.insert(startID, 0.0),
+                     startID,
+                     0, // action doesn't matter
+                     0.0);
+
 }
 
 }

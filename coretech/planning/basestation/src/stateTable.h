@@ -35,7 +35,28 @@ struct StateEntry
     backpointerAction_(backpointerAction),
     g_(g)
     {
+      printf("running argument constructor\n");
     }
+
+  StateEntry(const StateEntry& lval) :
+    openIt_(lval.openIt_),
+    closedIter_(lval.closedIter_),
+    backpointer_(lval.backpointer_),
+    backpointerAction_(lval.backpointerAction_),
+    g_(lval.g_)
+    {
+      printf("running lval copy constructor\n");
+    }
+
+  StateEntry(StateEntry&& rval) :
+    openIt_(rval.openIt_),
+    closedIter_(rval.closedIter_),
+    backpointer_(rval.backpointer_),
+    backpointerAction_(rval.backpointerAction_),
+    g_(rval.g_)
+    {
+      printf("running rval copy constructor\n");
+    }    
 
   // Check if we are closed on the given search iteration
   bool IsClosed(short currAraIter) const { return currAraIter == closedIter_; }
@@ -61,19 +82,15 @@ public:
 
   // First argument must be a StateID, followed by all arguments for
   // the StateEntry constructor
-  template<class... Args>
-  void emplace(Args&&... args);
+  void emplace(StateID sid,
+                   OpenList::iterator openIt,
+                   StateID backpointer,
+                   ActionID backpointerAction,
+                   Cost g);
 
 private:
   std::map<StateID, StateEntry> table_;
 };
-
-template<class... Args>
-void StateTable::emplace(Args&&... args)
-{
-  // TODO:(bn) double check that this is correct
-  table_.emplace(std::forward<Args>(args)...);
-}
 
 
 }
