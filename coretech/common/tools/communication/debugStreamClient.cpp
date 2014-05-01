@@ -171,19 +171,30 @@ namespace Anki
       return RESULT_OK;
     }
 
-    DebugStreamClient::Object DebugStreamClient::GetNextObject()
+    DebugStreamClient::Object DebugStreamClient::GetNextObject(s32 maxAttempts)
     {
       DebugStreamClient::Object newObject;
 
+      bool foundObject = true;
+      s32 attempts = 0;
       while(parsedObjectQueue.IsEmpty()) {
 #ifdef _MSC_VER
         Sleep(10);
 #else
         usleep(10000);
 #endif
+        ++attempts;
+        if(attempts >= maxAttempts) {
+          foundObject = false;
+          break;
+        }
       }
 
-      newObject = parsedObjectQueue.Pop();
+      if(foundObject) {
+        newObject = parsedObjectQueue.Pop();
+      } else {
+        newObject = DebugStreamClient::Object();
+      }
 
       return newObject;
     }

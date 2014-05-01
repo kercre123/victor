@@ -79,7 +79,7 @@ namespace Anki
       //
       // If the object bufferLength is zero, it's not a big issue, just ignore the object
       // If the object bufferLength is less than zero, something failed
-      Object GetNextObject();
+      Object GetNextObject(s32 maxAttempts = s32_MAX);
 
       bool get_isRunning() const;
 
