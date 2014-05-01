@@ -128,7 +128,7 @@ CLOSE = 2;
             frame = mexWifiCameraCapture(GRAB);
             pause(1/fps);
         end     
-        frame = im2uint8( im2double(frame) .^ (1/2.2));
+        %frame = im2uint8( im2double(frame) .^ (1/2.2));
     end
 
 % Default close camera function doesn't need to do anything.
