@@ -119,6 +119,19 @@ namespace Anki {
           //printf("keypressed: %d, modifier %d, orig_key %d, prev_key %d\n",
           //       key, modifier_key, key | modifier_key, lastKeyPressed_);
           
+          while(1) {
+          
+          // Check for test mode (alt + key)
+          if (modifier_key == webots::Supervisor::KEYBOARD_ALT) {
+            if (key >= '0' && key <= '9') {
+              TestMode m = TestMode(key - '0');
+              printf("Sending test mode %d\n", m);
+              robot_->SendStartTestMode(m);
+              break;
+            }
+          }
+          
+          // Check for (mostly) single key commands
           switch (key)
           {
             case webots::Robot::KEYBOARD_UP:
@@ -235,6 +248,9 @@ namespace Anki {
             }
               
           } // switch(key)
+            
+            break;
+          } // while(1)
           
           lastKeyPressed_ = key | modifier_key;
           

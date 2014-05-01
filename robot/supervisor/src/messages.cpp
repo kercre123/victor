@@ -1,4 +1,5 @@
 #include "anki/cozmo/robot/hal.h"
+#include "anki/cozmo/shared/cozmoTypes.h"
 #include "messages.h"
 #include "localization.h"
 #include "visionSystem.h"
@@ -10,6 +11,7 @@
 #include "headController.h"
 #include "dockingController.h"
 #include "pickAndPlaceController.h"
+#include "testModeController.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -332,6 +334,16 @@ namespace Anki {
       void ProcessHeadAngleUpdateMessage(const HeadAngleUpdate& msg) {
         HeadController::SetAngleRad(msg.newAngle);
       }
+      
+      void ProcessStartTestModeMessage(const StartTestMode& msg)
+      {
+        if (msg.mode < TM_NUM_TESTS) {
+          TestModeController::Start((TestMode)(msg.mode));
+        } else {
+          PRINT("Unknown test mode %d received\n", msg.mode);
+        }
+      }
+      
       
       void ProcessImageRequestMessage(const ImageRequest& msg) {
         VisionSystem::SendNextImage((Vision::CameraResolution)msg.resolution);

@@ -517,5 +517,14 @@ namespace Anki {
       return msgHandler_->SendMessage(ID_, m);
     }
     
+    Result Robot::SendStartTestMode(TestMode mode) const
+    {
+      MessageStartTestMode m;
+      
+      m.mode = mode;
+      
+      return msgHandler_->SendMessage(ID_, m);
+    }
+    
   } // namespace Cozmo
 } // namespace Anki

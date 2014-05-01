@@ -39,7 +39,7 @@ namespace Anki {
         
         // TESTING
         // Change this value to run different test modes
-        const TestModeController::TestMode DEFAULT_TEST_MODE = TestModeController::TM_NONE;
+        const TestMode DEFAULT_TEST_MODE = TM_NONE;
 
         Robot::OperationMode mode_ = INIT_MOTOR_CALIBRATION;
         bool wasConnected_ = false;
@@ -245,7 +245,7 @@ namespace Anki {
               HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RobotAvailable), &msg);
          
               // Start test mode
-              if (DEFAULT_TEST_MODE != TestModeController::TM_NONE) {
+              if (DEFAULT_TEST_MODE != TM_NONE) {
                 if(TestModeController::Start(DEFAULT_TEST_MODE) == RESULT_FAIL) {
                   PRINT("TestMode %d failed to start.\n", DEFAULT_TEST_MODE);
                   return RESULT_FAIL;

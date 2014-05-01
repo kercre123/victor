@@ -112,6 +112,9 @@ namespace Anki {
 
       // Request camera snapshot from robot
       Result SendImageRequest() const;
+
+      // Run a test mode
+      Result SendStartTestMode(TestMode mode) const;
       
     protected:
       // The robot's identifier

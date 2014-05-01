@@ -178,6 +178,7 @@ namespace Anki {
       // Bring robot to normal state and stops all motors
       Result Reset()
       {
+        PRINT("TestMode reset\n");
         // Stop wheels and vision system
         PickAndPlaceController::Reset();
         
@@ -186,6 +187,8 @@ namespace Anki {
         LiftController::SetAngularVelocity(0);
         LiftController::Enable();
         HeadController::SetAngularVelocity(0);
+        
+        return RESULT_OK;
       }
       
       
@@ -804,7 +807,7 @@ namespace Anki {
         return RESULT_OK;
       }
       
-      Result Start(TestMode mode)
+      Result Start(const TestMode mode)
       {
         Result ret = RESULT_OK;
 #if(!FREE_DRIVE_DUBINS_TEST)

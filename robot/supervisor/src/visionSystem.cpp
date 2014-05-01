@@ -1151,7 +1151,8 @@ namespace Anki {
 
       void StopTracking()
       {
-        mode_ = VISION_MODE_IDLE;
+        isTrackingMarkerSpecified_ = false;
+        mode_ = VISION_MODE_LOOKING_FOR_MARKERS;
       }
 
       const Embedded::FixedLengthList<Embedded::VisionMarker>& GetObservedMarkerList()
