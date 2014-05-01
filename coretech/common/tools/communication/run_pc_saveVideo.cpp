@@ -10,53 +10,12 @@
 #include "anki/common/robot/utilities.h"
 #include "anki/common/robot/serialize.h"
 #include "anki/common/robot/errorHandling.h"
-#include "anki/common/robot/geometry.h"
-#include "anki/common/robot/benchmarking.h"
-
-#include "anki/vision/robot/transformations.h"
-#include "anki/vision/robot/fiducialMarkers.h"
-#include "anki/vision/robot/binaryTracker.h"
-
-#include <queue>
 
 #include <ctime>
 
 #include "opencv/cv.h"
 
-using namespace std;
-using namespace Anki;
 using namespace Anki::Embedded;
-
-//
-// All these variables and constants are for InitDisplayDebuggingInfo() and DisplayDebuggingInfo()
-//
-
-static const s32 scratchSize = 1000000;
-static u8 scratchBuffer[scratchSize];
-
-static const s32 outputFilenamePatternLength = 1024;
-static char outputFilenamePattern[outputFilenamePatternLength] = "C:/Users/Pete/Box Sync/Cozmo SE/systemTestImages/cozmo_date%04d_%02d_%02d_time%02d_%02d_%02d_frame%d.%s";
-
-static f64 lastTime = 0;
-
-static cv::Mat lastImage;
-static cv::Mat largeLastImage;
-static cv::Mat toShowImage;
-
-static u8 lastMeanError = 0;
-static f32 lastPercentMatchingGrayvalues = 0;
-static s32 detectedFacesImageWidth = 160;
-
-static Transformations::PlanarTransformation_f32 lastPlanarTransformation;
-
-static std::vector<VisionMarker> visionMarkerList;
-
-static std::vector<Anki::Embedded::Rectangle<s32> > detectedFaces;
-
-static bool aMessageAlreadyPrinted;
-static bool isTracking;
-
-static vector<DebugStreamClient::Object> currentObjects;
 
 static void printUsage()
 {
@@ -67,7 +26,9 @@ int main(int argc, char ** argv)
   // Comment out to use serial
 #define USE_SOCKET
 
-  const char outputFilenamePattern[outputFilenamePatternLength] = "C:/datasets/systemTestImages/cozmo_date%04d_%02d_%02d_time%02d_%02d_%02d_frame%d.%s";
+  const char outputFilenamePattern[DebugStreamClient::ObjectToSave::SAVE_FILENAME_PATTERN_LENGTH] = "C:/datasets/systemTestImages/cozmo_date%04d_%02d_%02d_time%02d_%02d_%02d_frame%d.%s";
+
+  const f64 waitBeforeStarting = 10.0; // Wait a few seconds before starting saving, to flush the buffer
 
   printf("Starting display\n");
   SetLogSilence(true);
@@ -83,21 +44,44 @@ int main(int argc, char ** argv)
   DebugStreamClient parserThread(comPort, baudRate);
 #endif
 
-  const time_t t = time(0);   // get time now
+  time_t t = time(0);   // get time now
   struct tm * lastTime = localtime(&t);
+
+  s32 last_tm_sec = lastTime->tm_sec;
+  s32 last_tm_min = lastTime->tm_min;
+  s32 last_tm_hour = lastTime->tm_hour;
 
   char outputFilename[DebugStreamClient::ObjectToSave::SAVE_FILENAME_PATTERN_LENGTH];
 
+  s32 rawFrameNumber = -1;
   s32 frameNumber = 0;
 
+  const f64 startTime = GetTimeF64();
+
   while(true) {
+    rawFrameNumber++;
+
     DebugStreamClient::Object newObject = parserThread.GetNextObject();
     //printf("Received %s %s\n", newObject.typeName, newObject.newObject.objectName);
+
+    const f64 waitingTime = (startTime + waitBeforeStarting) - GetTimeF64();
+    if(waitingTime > 0.0 )
+    {
+      if(rawFrameNumber % 5 == 0) {
+        Array<u8> image = *(reinterpret_cast<Array<u8>*>(newObject.startOfPayload));
+        const cv::Mat_<u8> &refMat = image.get_CvMat_();
+        cv::imshow("Robot Image", image.get_CvMat_());
+        cv::waitKey(1);
+      }
+
+      printf("Waiting for %f more seconds\n", waitingTime);
+      continue;
+    }
 
     if(strcmp(newObject.typeName, "Array") == 0 && strcmp(newObject.objectName, "Robot Image") == 0) {
       const time_t t = time(0);   // get time now
       const struct tm * currentTime = localtime(&t);
-      if(lastTime->tm_sec == currentTime->tm_sec && lastTime->tm_min == currentTime->tm_min && lastTime->tm_year == currentTime->tm_year) {
+      if(last_tm_sec == currentTime->tm_sec && last_tm_min == currentTime->tm_min && last_tm_hour == currentTime->tm_hour) {
         frameNumber++;
       } else {
         frameNumber = 0;
@@ -109,7 +93,18 @@ int main(int argc, char ** argv)
         frameNumber,
         "png");
 
+      last_tm_sec = currentTime->tm_sec;
+      last_tm_min = currentTime->tm_min;
+      last_tm_hour = currentTime->tm_hour;
+
+      printf("Saving %s\n", outputFilename);
+
+      Array<u8> image = *(reinterpret_cast<Array<u8>*>(newObject.startOfPayload));
+      cv::imshow("Robot Image", image.get_CvMat_());
+
       parserThread.SaveObject(newObject, outputFilename);
+
+      cv::waitKey(10);
     }
   }
 
