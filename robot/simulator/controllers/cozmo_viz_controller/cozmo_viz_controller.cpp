@@ -168,7 +168,12 @@ namespace Anki {
           it--;
           printf("Registering vizBot for robot %d\n", robotID);
         } else {
-          printf("WARNING: RobotID %d not registered. No more available Viz bots. Add more to world file!\n", robotID);
+          // Print 'no more vizBots' message. Just once.
+          static bool printedNoMoreVizBots = false;
+          if (!printedNoMoreVizBots) {
+            printf("WARNING: RobotID %d not registered. No more available Viz bots. Add more to world file!\n", robotID);
+            printedNoMoreVizBots = true;
+          }
           return;
         }
       }
