@@ -28,7 +28,7 @@ int main(int argc, char ** argv)
 
   const char outputFilenamePattern[DebugStreamClient::ObjectToSave::SAVE_FILENAME_PATTERN_LENGTH] = "C:/datasets/systemTestImages/cozmo_date%04d_%02d_%02d_time%02d_%02d_%02d_frame%d.%s";
 
-  const f64 waitBeforeStarting = 10.0; // Wait a few seconds before starting saving, to flush the buffer
+  const f64 waitBeforeStarting = 0.0; // Optionally wait a few seconds before starting saving, to flush the buffer
 
   printf("Starting display\n");
   SetLogSilence(true);
