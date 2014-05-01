@@ -23,8 +23,8 @@ void closeHelper(void) {
       mexWarnMsgTxt("Failed to close the parserThread cleanly!");
     }
     
-    mexPrintf("NOTE: not actually deleting the parser -- was crashing matlab.  Investigate.\n");
-    //delete parserThread;
+    //mexPrintf("NOTE: not actually deleting the parser -- was crashing matlab.  Investigate.\n");
+    delete parserThread;
     parserThread = NULL;
   }
 
@@ -60,7 +60,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         mexErrMsgTxt("You must specify a device with the OPEN command.");
       }
       
-      printf("Starting display\n");
+      //printf("Starting display\n");
       SetLogSilence(true);
       
       std::string ipAddress(DEFAULT_IP_PREFIX);
