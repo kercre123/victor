@@ -422,17 +422,24 @@ namespace Anki {
       }
       
       
-      void SendText(const char *format, ...)
+      int SendText(const char *format, ...)
+      {
+        va_list argptr;
+        va_start(argptr, format);
+        SendText(format, argptr);
+        va_end(argptr);
+        
+        return 0;
+      }
+
+      int SendText(const char *format, va_list vaList)
       {
         #define MAX_SEND_TEXT_LENGTH 512
         char text[MAX_SEND_TEXT_LENGTH];
         memset(text, 0, MAX_SEND_TEXT_LENGTH);
 
         // Create formatted text
-        va_list argptr;
-        va_start(argptr, format);
-        vsnprintf(text, MAX_SEND_TEXT_LENGTH, format, argptr);
-        va_end(argptr);
+        vsnprintf(text, MAX_SEND_TEXT_LENGTH, format, vaList);
         
         // Breakup and send in multiple messages if necessary
         Messages::PrintText m;
@@ -448,6 +455,8 @@ namespace Anki {
           HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::PrintText), &m);
           numMsgs++;
         }
+        
+        return 0;
       }
       
       

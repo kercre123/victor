@@ -1,4 +1,5 @@
 #include "anki/common/robot/config.h"
+#include "anki/common/shared/utilities_shared.h"
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h" // simulated or real!
@@ -91,6 +92,20 @@ namespace Anki {
       
       Result Init(void)
       {
+        // Coretech setup
+#ifndef SIMULATOR
+#if(DIVERT_PRINT_TO_RADIO)
+        SetCoreTechPrintFunctionPtr(Messages::SendText);
+#else
+        SetCoreTechPrintFunctionPtr(0);
+#endif
+#elif(USING_UART_RADIO && DIVERT_PRINT_TO_RADIO)
+        SetCoreTechPrintFunctionPtr(Messages::SendText);
+#endif
+ 
+        
+        // HAL and supervisor init
+        
         if(HAL::Init() == RESULT_FAIL) {
           PRINT("Hardware Interface initialization failed!\n");
           return RESULT_FAIL;

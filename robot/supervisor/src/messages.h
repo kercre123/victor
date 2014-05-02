@@ -72,8 +72,12 @@ namespace Anki {
       // Send messages
       Result SendRobotStateMsg();     // Only sends message.
                                       // Actual message contents are updated in UpdateRobotStateMsg()
-      void SendText(const char *format, ...);
       
+      // For sending text message to basestation
+      int SendText(const char *format, ...);
+      
+      // va_list version
+      int SendText(const char *format, va_list vaList);
       
       // These return true if a mailbox messages was available, and they copy
       // that message into the passed-in message struct.
