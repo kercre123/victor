@@ -8,6 +8,8 @@
 
 #include "anki/common/basestation/general.h"
 
+#include "anki/common/basestation/math/linearAlgebra_impl.h"
+
 #include "anki/vision/basestation/camera.h"
 
 #include "anki/cozmo/basestation/block.h"
@@ -133,7 +135,80 @@ namespace Anki {
       
     } // Constructor: Block(type)
     
-    Quad2f Block::GetBoundingBoxXY(const f32 padding) const
+    Quad2f Block::GetBoundingBoxXY(const f32 padding) const {
+      return GetBoundingBoxXY(pose_, padding);
+    }
+    
+    
+    Quad3f Block::GetBoundingBoxInPlane(const Point3f& planeNormal, const Pose3d& atPose, const f32 paddingScale) const
+    {
+      // Data structure for helping me sort 3D points by their 2D distance
+      // from center in the given plane
+      struct planePoint {
+        
+        planePoint(const Point3f& pt3d, const RotationMatrix3d& R, const Matrix_3x3f& P)
+        {
+          // Rotate the point
+          Point3f pt3d_rotated( R*pt3d );
+          
+          // Project it onto the given plane (i.e. remove all variation in the
+          // direction of the normal)
+          pt_ = P*pt3d_rotated;
+          
+          length_ = pt_.length();
+        }
+        
+        bool operator<(const planePoint& other) const {
+          return this->length_ > other.length_; // sort decreasing!
+        }
+        
+        Point3f pt_;
+        f32 length_;
+      }; // struct planePoint
+      
+      const RotationMatrix3d& R = atPose.get_rotationMatrix();
+      const Matrix_3x3f planeProjector = GetProjectionOperator(planeNormal);
+      
+      // Choose the 4 points furthest from the center of the block (in the
+      // given plane)
+      std::vector<planePoint> planeCorners = {
+        planePoint(blockCorners_[LEFT_FRONT_TOP],     R, planeProjector),
+        planePoint(blockCorners_[RIGHT_FRONT_TOP],    R, planeProjector),
+        planePoint(blockCorners_[LEFT_FRONT_BOTTOM],  R, planeProjector),
+        planePoint(blockCorners_[RIGHT_FRONT_BOTTOM], R, planeProjector),
+        planePoint(blockCorners_[LEFT_BACK_TOP],      R, planeProjector),
+        planePoint(blockCorners_[RIGHT_BACK_TOP],     R, planeProjector),
+        planePoint(blockCorners_[LEFT_BACK_BOTTOM],   R, planeProjector),
+        planePoint(blockCorners_[RIGHT_BACK_BOTTOM],  R, planeProjector)
+      };
+
+      // NOTE: Uses planePoint class's operator<, which sorts in _decreasing_ order
+      // so we get the 4 points the _largest_ distance from the center, after
+      // rotation is applied
+      std::partial_sort(planeCorners.begin(), planeCorners.begin()+4, planeCorners.end());
+      
+      Quad3f boundingQuad(planeCorners[0].pt_,
+                          planeCorners[1].pt_,
+                          planeCorners[2].pt_,
+                          planeCorners[3].pt_);
+      
+      boundingQuad = boundingQuad.SortCornersClockwise(planeNormal);
+      
+      // Scale and re-center (Note: we don't need to use Quadrilateral::scale()
+      // here because we know the points are zero-centered and can thus just
+      // multiply them by paddingScale directly.)
+      if(paddingScale != 1.f) {
+        boundingQuad *= paddingScale;
+      }
+      boundingQuad += atPose.get_translation();
+      
+      
+      return boundingQuad;
+      
+    } // GetBoundingBoxInPlane()
+    
+    
+    Quad2f Block::GetBoundingBoxXY(const Pose3d& atPose, const f32 paddingScale) const
     {
       // Data structure for helping me sort 3D points by their 2D x-y distance
       // from center
@@ -153,11 +228,11 @@ namespace Anki {
         
         Point2f pt_;
         f32 length_;
-      };
+      }; // struct xyPoint
       
-      const RotationMatrix3d& R = this->GetPose().get_rotationMatrix();
+      const RotationMatrix3d& R = atPose.get_rotationMatrix();
       
-      // Choose the 4 points furthest from the XY center of the block (in the
+      // Choose the 4 points furthest from the center of the block (in the
       // XY plane)
       std::vector<xyPoint> xyCorners = {
         xyPoint(blockCorners_[LEFT_FRONT_TOP], R),
@@ -175,18 +250,19 @@ namespace Anki {
       // rotation is applied
       std::partial_sort(xyCorners.begin(), xyCorners.begin()+4, xyCorners.end());
       
-      Point2f center(this->GetPose().get_translation().x(), this->GetPose().get_translation().y());
-      
       Quad2f boundingQuad(xyCorners[0].pt_,
                           xyCorners[1].pt_,
                           xyCorners[2].pt_,
                           xyCorners[3].pt_);
       
+      boundingQuad = boundingQuad.SortCornersClockwise();
+      
       // scale and re-center (Note: we don't need to use Quadrilateral::scale()
       // here because we know the points are zero-centered and can thus just
       // multiply them by padding directly.)
-      if(padding != 0.f) {
-        boundingQuad *= padding;
+      Point2f center(atPose.get_translation().x(), atPose.get_translation().y());
+      if(paddingScale != 1.f) {
+        boundingQuad *= paddingScale;
       }
       boundingQuad += center;
       
