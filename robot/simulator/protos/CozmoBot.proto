@@ -628,27 +628,27 @@ Supervisor {
 							DEF LIFTER_SHAPE Group {
 							  children [
 								Transform {
-								  translation 0 -0.017 -0.005
+								  translation 0 -0.017 -0.01
 								  children [
 									DEF GRIPPER_SIDE Shape {
 									  geometry Box {
-										size 0.003 0.006 0.02
+										size 0.003 0.006 0.03
 									  }
 									}
 								  ]
 								}
 								Transform {
-								  translation 0 0.017 -0.005
+								  translation 0 0.017 -0.01
 								  children [
 								    USE GRIPPER_SIDE
 								  ]
 								}
 								Transform {
-								  translation 0 0 -0.02
+								  translation 0 0 -0.0225
 								  children [
 									DEF GRIPPER_BOTTOM Shape {
 									  geometry Box {
-										size 0.003 0.04 0.01
+										size 0.003 0.04 0.005
 									  }
 									}
 								  ]
