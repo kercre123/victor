@@ -52,7 +52,8 @@ ADD_MESSAGE_MEMBER(f32, pose_angle)
 ADD_MESSAGE_MEMBER(f32, lwheel_speed_mmps)
 ADD_MESSAGE_MEMBER(f32, rwheel_speed_mmps)
 ADD_MESSAGE_MEMBER(f32, headAngle)
-ADD_MESSAGE_MEMBER(f32, liftHeight)
+ADD_MESSAGE_MEMBER(f32, liftAngle)
+ADD_MESSAGE_MEMBER(f32, liftHeight) // TODO: Need this?
 ADD_MESSAGE_MEMBER(u8, isTraversingPath)
 ADD_MESSAGE_MEMBER(u8, isCarryingBlock)
 // ...
@@ -265,6 +266,7 @@ END_MESSAGE_DEFINITION(HeadAngleUpdate)
 
 // ImageRequest
 START_MESSAGE_DEFINITION(ImageRequest, 1)
+ADD_MESSAGE_MEMBER(u8, imageSendMode)
 ADD_MESSAGE_MEMBER(u8, resolution)
 END_MESSAGE_DEFINITION(ImageRequest)
 
@@ -278,3 +280,12 @@ ADD_MESSAGE_MEMBER(u8, resolution)
 ADD_MESSAGE_MEMBER_ARRAY(u8, data, IMAGE_CHUNK_SIZE)
 END_MESSAGE_DEFINITION(ImageChunk)
 
+// StartTestMode
+START_MESSAGE_DEFINITION(StartTestMode, 1)
+ADD_MESSAGE_MEMBER(u8, mode)
+END_MESSAGE_DEFINITION(StartTestMode)
+
+// SetHeadlight
+START_MESSAGE_DEFINITION(SetHeadlight, 1)
+ADD_MESSAGE_MEMBER(u8, intensity)
+END_MESSAGE_DEFINITION(SetHeadlight)

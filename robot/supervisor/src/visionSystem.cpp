@@ -162,6 +162,7 @@ namespace Anki {
         static Vision::CameraResolution        faceDetectionResolution_;
 
         // For sending images to basestation
+        static ImageSendMode_t                 imageSendMode_ = ISM_OFF;
         static Vision::CameraResolution        nextSendImageResolution_ = Vision::CAMERA_RES_NONE;
 
         /* Only using static members of SimulatorParameters now
@@ -260,12 +261,13 @@ namespace Anki {
         return prevRobotState_.headAngle;
       }
 
-      void SendNextImage(Vision::CameraResolution res)
+      void SetImageSendMode(ImageSendMode_t mode, Vision::CameraResolution res)
       {
         if (res == Vision::CAMERA_RES_QVGA ||
             res == Vision::CAMERA_RES_QQVGA ||
             res == Vision::CAMERA_RES_QQQVGA ||
             res == Vision::CAMERA_RES_QQQQVGA) {
+          imageSendMode_ = mode;
           nextSendImageResolution_ = res;
         }
       }
@@ -273,7 +275,7 @@ namespace Anki {
       void DownsampleAndSendImage(Array<u8> &img)
       {
         // Only downsample if normal capture res is QVGA
-        if (nextSendImageResolution_ != Vision::CAMERA_RES_NONE && captureResolution_ == Vision::CAMERA_RES_QVGA) {
+        if (imageSendMode_ != ISM_OFF && captureResolution_ == Vision::CAMERA_RES_QVGA) {
 
           static u8 imgID = 0;
 
@@ -323,7 +325,10 @@ namespace Anki {
             }
           }
 
-          nextSendImageResolution_ = Vision::CAMERA_RES_NONE;
+          // Turn off image sending if sending single image only.
+          if (imageSendMode_ == ISM_SINGLE_SHOT) {
+            imageSendMode_ = ISM_OFF;
+          }
         }
       }
 
@@ -1242,7 +1247,8 @@ namespace Anki {
 
       void StopTracking()
       {
-        mode_ = VISION_MODE_IDLE;
+        isTrackingMarkerSpecified_ = false;
+        mode_ = VISION_MODE_LOOKING_FOR_MARKERS;
       }
 
       const Embedded::FixedLengthList<Embedded::VisionMarker>& GetObservedMarkerList()

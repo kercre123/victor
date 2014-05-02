@@ -91,7 +91,7 @@ namespace Anki {
       
       void TurnOnIndicatorLight()
       {
-        TestModeController::Start(TestModeController::TM_NONE);
+        TestModeController::Start(TM_NONE);
         HAL::SetLED(INDICATOR_LED_ID, HAL::LED_RED);
       }
       void TurnOffIndicatorLight()
@@ -101,19 +101,19 @@ namespace Anki {
       
       void StartPickAndPlaceTest()
       {
-        TestModeController::Start(TestModeController::TM_PICK_AND_PLACE);
+        TestModeController::Start(TM_PICK_AND_PLACE);
         TurnOffIndicatorLight();
       }
       
       void StartPathFollowTest()
       {
-        TestModeController::Start(TestModeController::TM_PATH_FOLLOW);
+        TestModeController::Start(TM_PATH_FOLLOW);
         TurnOffIndicatorLight();
       }
       
       void StartLiftTest()
       {
-        TestModeController::Start(TestModeController::TM_LIFT);
+        TestModeController::Start(TM_LIFT);
         TurnOffIndicatorLight();
       }
       
@@ -150,8 +150,8 @@ namespace Anki {
       void DetectNsideDown()
       {
         eventStateRaw_[UPSIDE_DOWN] = accel_robot_frame_filt[2] < -NSIDE_DOWN_THRESH_MMPS2;
-        eventStateRaw_[RIGHTSIDE_DOWN] = accel_robot_frame_filt[1] < -NSIDE_DOWN_THRESH_MMPS2;
-        eventStateRaw_[LEFTSIDE_DOWN] = accel_robot_frame_filt[1] > NSIDE_DOWN_THRESH_MMPS2;
+        eventStateRaw_[LEFTSIDE_DOWN] = accel_robot_frame_filt[1] < -NSIDE_DOWN_THRESH_MMPS2;
+        eventStateRaw_[RIGHTSIDE_DOWN] = accel_robot_frame_filt[1] > NSIDE_DOWN_THRESH_MMPS2;
         eventStateRaw_[FRONTSIDE_DOWN] = accel_robot_frame_filt[0] < -NSIDE_DOWN_THRESH_MMPS2;
         eventStateRaw_[BACKSIDE_DOWN] = accel_robot_frame_filt[0] > NSIDE_DOWN_THRESH_MMPS2;
       }

@@ -86,6 +86,7 @@ namespace Anki {
         const s32 CKEY_UNLOCK      = 32;  // space
         const s32 CKEY_REQUEST_IMG = 73;  // i
         const s32 CKEY_DISPLAY_TOGGLE = 68;  // d
+        const s32 CKEY_HEADLIGHT   = 72;  // h
 
         // Get robot
         robot_ = NULL;
@@ -119,6 +120,19 @@ namespace Anki {
           //printf("keypressed: %d, modifier %d, orig_key %d, prev_key %d\n",
           //       key, modifier_key, key | modifier_key, lastKeyPressed_);
           
+          while(1) {
+          
+          // Check for test mode (alt + key)
+          if (modifier_key == webots::Supervisor::KEYBOARD_ALT) {
+            if (key >= '0' && key <= '9') {
+              TestMode m = TestMode(key - '0');
+              printf("Sending test mode %d\n", m);
+              robot_->SendStartTestMode(m);
+              break;
+            }
+          }
+          
+          // Check for (mostly) single key commands
           switch (key)
           {
             case webots::Robot::KEYBOARD_UP:
@@ -217,7 +231,17 @@ namespace Anki {
               
             case CKEY_REQUEST_IMG:
             {
-              robot_->SendImageRequest();
+              ImageSendMode_t mode = ISM_SINGLE_SHOT;
+              if (modifier_key == webots::Supervisor::KEYBOARD_SHIFT) {
+                static bool streamOn = false;
+                if (streamOn) {
+                  mode = ISM_OFF;
+                } else {
+                  mode = ISM_STREAM;
+                }
+                streamOn = !streamOn;
+              }
+              robot_->SendImageRequest(mode);
               break;
             }
               
@@ -228,6 +252,15 @@ namespace Anki {
               showObjects = !showObjects;
               break;
             }
+              
+            case CKEY_HEADLIGHT:
+            {
+              static bool headlightsOn = false;
+              headlightsOn = !headlightsOn;
+              robot_->SendHeadlight(headlightsOn ? 128 : 0);
+              break;
+            }
+              
             default:
             {
               // Stop wheels
@@ -235,6 +268,9 @@ namespace Anki {
             }
               
           } // switch(key)
+            
+            break;
+          } // while(1)
           
           lastKeyPressed_ = key | modifier_key;
           

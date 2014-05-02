@@ -32,9 +32,10 @@ void UdpServer::set_nonblock(int socket) {
 
 bool UdpServer::StartListening(const unsigned short port)
 {
+    bool res = false;
     if (socketfd >= 0) {
       DEBUG_UDP_SERVER("WARNING (UdpServer): Already listening");
-      return false;
+      return res;
     }
 
     int status;
@@ -57,7 +58,11 @@ bool UdpServer::StartListening(const unsigned short port)
     status = getaddrinfo(NULL, portStr, &host_info, &host_info_list);
     // getaddrinfo returns 0 on succes, or some other value when an error occured.
     // (translated into human readable text by the gai_gai_strerror function).
-    if (status != 0)  std::cout << "getaddrinfo error" << gai_strerror(status) ;
+    if (status != 0) {
+     std::cout << "getaddrinfo error" << gai_strerror(status) ;
+     freeaddrinfo(host_info_list);
+     return res;
+    }
 
     DEBUG_UDP_SERVER("UdpServer: Creating a socket on port " << portStr);
 
@@ -65,7 +70,8 @@ bool UdpServer::StartListening(const unsigned short port)
                       host_info_list->ai_protocol);
     if (socketfd == -1) {
       std::cout << "socket error\n" ;
-      return false;
+      freeaddrinfo(host_info_list);
+      return res;
     }
 
     DEBUG_UDP_SERVER("UdpServer: Binding socket...");
@@ -82,12 +88,13 @@ bool UdpServer::StartListening(const unsigned short port)
     status = bind(socketfd, host_info_list->ai_addr, host_info_list->ai_addrlen);
     if (status == -1) {
       std::cout << "bind error\n";
-      return false;
+    } else {
+      DEBUG_UDP_SERVER("UdpServer: Port is open");
+      res = true;
     }
 
-    DEBUG_UDP_SERVER("UdpServer: Port is open");
-
-    return true;
+    freeaddrinfo(host_info_list);
+    return res;
 }
 
 void UdpServer::StopListening() 
@@ -95,7 +102,7 @@ void UdpServer::StopListening()
   if (socketfd >= 0) {
     DEBUG_UDP_SERVER("UdpServer: Stopping server listening on socket " << socketfd);
     
-    freeaddrinfo(host_info_list);
+
     close(socketfd);
     socketfd = -1;
     return;
