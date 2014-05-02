@@ -28,13 +28,11 @@ if(NOT WIN32)
     CppController # Webots C++ Controller
     ${OPENCV_LIBS}
   )
+
+  set_target_properties(cozmo_viz_controller PROPERTIES
+      FOLDER "Webots Controllers"
+  )
 endif()
-  
-#set_target_properties(blockworld_controller PROPERTIES
-#  COMPILE_DEFINITIONS USE_TCP_MESSAGING_INTERFACE
-#  XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++98"
-#   XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libstdc++"
-#)
 
 # Make sure a copy of the target exists  in cozmo_viz_controller/
 # no matter where the target is actually built.

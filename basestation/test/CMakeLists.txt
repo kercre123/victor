@@ -12,4 +12,8 @@ if(NOT WIN32)
      CoreTech_Messaging_Shared 
      ${OPENCV_LIBS} gtest jsoncpp)
      
+  set_target_properties(run_CozmoTests PROPERTIES 
+    FOLDER "Unit Tests"
+  )
+
 endif()

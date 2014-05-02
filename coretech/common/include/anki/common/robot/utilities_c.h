@@ -63,9 +63,6 @@ extern "C" {
   ( ((u32)((value) & 0x00FF0000)) >>  8) | \
   ( ((u32)((value) & 0xFF000000)) >> 24))
 
-  //f32 Roundf(const f32 number);
-  //f64 Round(const f64 number);
-
   // Returns 1 if it is a power of two, zero otherwise
   s32 IsPowerOfTwo(u32 x);
 
@@ -75,12 +72,11 @@ extern "C" {
   // Returns 1 if it is odd, zero otherwise
   s32 IsOdd(const s32 x);
 
-  // Get the current system time in seconds
-  // WARNING: f32 is enough for only about two hours (2*60*60*1000 ~= 2^23)
-  f32 GetTimeF32(void);
-  f64 GetTimeF64(void);
-
   void explicitPrintf(int (*writeChar)(int), int reverseEachFourCharacters, const char *format, ...);
+
+  // Print an int like 1234567 as 1,234,567
+  // Returns the number of characters (not counting final '\0')
+  s32 SnprintfCommasS32(char *buffer, const s32 bufferLength, const s32 value);
 
   void PrintS32(int (*writeChar)(int), s32 value); // Print a single number
   void PrintU32Hex(int (*writeChar)(int), u32 value); // Print a single unsigned int in hex format 0xabcd0123

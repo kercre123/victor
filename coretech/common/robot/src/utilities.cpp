@@ -17,6 +17,14 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include <cstdlib>
 
+#if defined(_MSC_VER)
+#include <windows.h>
+#elif defined(__EDG__)
+#include "anki/cozmo/robot/hal.h"
+#else
+#include <sys/time.h>
+#endif
+
 #define PrintfOneArray_FORMAT_STRING_2 "%d %d "
 #define PrintfOneArray_FORMAT_STRING_1 "%d "
 
@@ -97,6 +105,98 @@ namespace Anki
       const s32 num = (rand() % (maxLimit - minLimit + 1)) + minLimit;
 
       return num;
+    }
+
+    f32 GetTimeF32(void)
+    {
+#if defined(_MSC_VER)
+      f32 timeInSeconds;
+
+      static f32 frequency = 0;
+      static LONGLONG startCounter = 0;
+
+      LARGE_INTEGER counter;
+
+      if(frequency == 0) {
+        LARGE_INTEGER frequencyTmp;
+        QueryPerformanceFrequency(&frequencyTmp);
+        frequency = (f32)frequencyTmp.QuadPart;
+      }
+
+      QueryPerformanceCounter(&counter);
+
+      // Subtract startSeconds, so the floating point number has reasonable precision
+      if(startCounter == 0) {
+        startCounter = counter.QuadPart;
+      }
+
+      timeInSeconds = (f32)(counter.QuadPart - startCounter) / frequency;
+#elif defined(__APPLE_CC__)
+      struct timeval time;
+      gettimeofday(&time, NULL);
+
+      // Subtract startSeconds, so the floating point number has reasonable precision
+      static long startSeconds = 0;
+      if(startSeconds == 0) {
+        startSeconds = time.tv_sec;
+      }
+
+      const f32 timeInSeconds = (f32)(time.tv_sec-startSeconds) + ((f32)time.tv_usec / 1000000.0f);
+#elif defined(__EDG__)  // ARM-MDK
+      const f32 timeInSeconds = Anki::Cozmo::HAL::GetMicroCounter() / 1000000.0f;
+#else // Generic Unix
+      timespec ts;
+      clock_GetTimeF32(CLOCK_MONOTONIC, &ts);
+      const f32 timeInSeconds = (f32)(ts.tv_sec) + (f32)(ts.tv_nsec)/1000000000.0f;
+#endif
+
+      return timeInSeconds;
+    }
+
+    f64 GetTimeF64(void)
+    {
+#if defined(_MSC_VER)
+      f64 timeInSeconds;
+
+      static f64 frequency = 0;
+      static LONGLONG startCounter = 0;
+
+      LARGE_INTEGER counter;
+
+      if(frequency == 0) {
+        LARGE_INTEGER frequencyTmp;
+        QueryPerformanceFrequency(&frequencyTmp);
+        frequency = (f64)frequencyTmp.QuadPart;
+      }
+
+      QueryPerformanceCounter(&counter);
+
+      // Subtract startSeconds, so the floating point number has reasonable precision
+      if(startCounter == 0) {
+        startCounter = counter.QuadPart;
+      }
+
+      timeInSeconds = (f64)(counter.QuadPart - startCounter) / frequency;
+#elif defined(__APPLE_CC__)
+      struct timeval time;
+      gettimeofday(&time, NULL);
+
+      // Subtract startSeconds, so the floating point number has reasonable precision
+      static long startSeconds = 0;
+      if(startSeconds == 0) {
+        startSeconds = time.tv_sec;
+      }
+
+      const f64 timeInSeconds = (f64)(time.tv_sec-startSeconds) + ((f64)time.tv_usec / 1000000.0);
+#elif defined(__EDG__)  // ARM-MDK
+      const f64 timeInSeconds = Anki::Cozmo::HAL::GetMicroCounter() / 1000000.0;
+#else // Generic Unix
+      timespec ts;
+      clock_GetTime(CLOCK_MONOTONIC, &ts);
+      const f64 timeInSeconds = (f64)(ts.tv_sec) + (f64)(ts.tv_nsec)/1000000000.0;
+#endif
+
+      return timeInSeconds;
     }
   } // namespace Embedded
 } // namespace Anki

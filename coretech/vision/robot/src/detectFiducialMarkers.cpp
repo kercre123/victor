@@ -8,7 +8,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 **/
 
 #include "anki/common/robot/config.h"
-#include "anki/common/robot/benchmarking_c.h"
+#include "anki/common/robot/benchmarking.h"
 
 #include "anki/vision/robot/fiducialMarkers.h"
 #include "anki/vision/robot/fiducialDetection.h"
@@ -167,12 +167,11 @@ namespace Anki
         if((lastResult = Transformations::ComputeHomographyFromQuad(extractedQuads[iQuad], currentHomography, scratchOnchip)) != RESULT_OK) {
           return lastResult;
         }
-        
+
         //currentHomography.Print("currentHomography");
       } // for(iQuad=0; iQuad<; iQuad++)
       EndBenchmark("ComputeHomographyFromQuad");
-      
-      
+
       // 5. Decode fiducial markers from the candidate quadrilaterals
 
       BeginBenchmark("ExtractVisionMarker");

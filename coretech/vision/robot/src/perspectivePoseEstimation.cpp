@@ -43,7 +43,7 @@
 */
 
 #include "anki/common/robot/array2d.h"
-#include "anki/common/robot/benchmarking_c.h"
+#include "anki/common/robot/benchmarking.h"
 
 #include "anki/vision/robot/perspectivePoseEstimation.h"
 
@@ -152,12 +152,12 @@ namespace Anki {
         Array<PRECISION>& R4, Point3<PRECISION>& T4)
       {
         Result lastResult = RESULT_OK;
-        
+
         // Create a little memory stack for the various 3x3 matrices used below
         const s32 SCRATCH_BUFFER_SIZE = 768;
         char buffer[SCRATCH_BUFFER_SIZE];
         MemoryStack scratch(buffer, SCRATCH_BUFFER_SIZE);
-        
+
         // Typedef the templated classes for brevity below
         typedef Point3<PRECISION> POINT;
         typedef Array<PRECISION>  MATRIX;
@@ -194,8 +194,8 @@ namespace Anki {
 
         MATRIX T = MATRIX(3,3,scratch);
         AnkiConditionalErrorAndReturnValue(T.IsValid(), RESULT_FAIL_MEMORY,
-                                           "P3P::computePossiblePoses()",
-                                           "Invalid T Matrix, out of memory?");
+          "P3P::computePossiblePoses()",
+          "Invalid T Matrix, out of memory?");
 
         // Create intermediate camera frame
         if((lastResult = createIntermediateCameraFrameHelper(f1, f2, f3, T)) != RESULT_OK) {
@@ -230,8 +230,8 @@ namespace Anki {
         // the n vectors are the rows of the N matrix
         MATRIX N = MATRIX(3,3,scratch);
         AnkiConditionalErrorAndReturnValue(N.IsValid(), RESULT_FAIL_MEMORY,
-                                           "P3P::computePossiblePoses()",
-                                           "Invalid N Matrix, out of memory?");
+          "P3P::computePossiblePoses()",
+          "Invalid N Matrix, out of memory?");
         N[0][0] = n1.x; N[0][1] = n1.y; N[0][2] = n1.z;
         N[1][0] = n2.x; N[1][1] = n2.y; N[1][2] = n2.z;
         N[2][0] = n3.x; N[2][1] = n3.y; N[2][2] = n3.z;
@@ -319,28 +319,28 @@ namespace Anki {
 
         MATRIX Tt = MATRIX(3,3,scratch);
         AnkiConditionalErrorAndReturnValue(Tt.IsValid(), RESULT_FAIL_MEMORY,
-                                           "P3P::computePossiblePoses()",
-                                           "Invalid Tt Matrix, out of memory?");
+          "P3P::computePossiblePoses()",
+          "Invalid Tt Matrix, out of memory?");
         if((lastResult = Matrix::Transpose(T, Tt)) != RESULT_OK) {
           return lastResult;
         }
 
         MATRIX Nt = MATRIX(3,3,scratch);
         AnkiConditionalErrorAndReturnValue(Nt.IsValid(), RESULT_FAIL_MEMORY,
-                                           "P3P::computePossiblePoses()",
-                                           "Invalid Nt Matrix, out of memory?");
+          "P3P::computePossiblePoses()",
+          "Invalid Nt Matrix, out of memory?");
         if((lastResult = Matrix::Transpose(N, Nt)) != RESULT_OK) {
           return lastResult;
         }
 
         MATRIX R = MATRIX(3,3,scratch);
         AnkiConditionalErrorAndReturnValue(R.IsValid(), RESULT_FAIL_MEMORY,
-                                           "P3P::computePossiblePoses()",
-                                           "Invalid R Matrix, out of memory?");
+          "P3P::computePossiblePoses()",
+          "Invalid R Matrix, out of memory?");
         MATRIX temp = MATRIX(3,3,scratch);
         AnkiConditionalErrorAndReturnValue(temp.IsValid(), RESULT_FAIL_MEMORY,
-                                           "P3P::computePossiblePoses()",
-                                           "Invalid temp Matrix, out of memory?");
+          "P3P::computePossiblePoses()",
+          "Invalid temp Matrix, out of memory?");
 
         EndBenchmark("cpml_init");
 
@@ -385,7 +385,6 @@ namespace Anki {
         }
 
         return RESULT_OK;
-        
       } // computePossiblePoses(from individually-listed points)
 
       // Explicit instatiation for single and double precision
@@ -422,18 +421,17 @@ namespace Anki {
         Array<PRECISION>& R, Point3<PRECISION>& T)
       {
         Result lastResult = RESULT_OK;
-        
+
         // Create a little memory stack for the few 3x3 matrices used below
         const s32 SCRATCH_BUFFER_SIZE = 512;
         char buffer[SCRATCH_BUFFER_SIZE];
         MemoryStack scratch(buffer, SCRATCH_BUFFER_SIZE);
-        
+
         // Output rotation should already be allocated
         AnkiConditionalErrorAndReturnValue(R.get_size(0)==3 && R.get_size(1)==3,
-                                           RESULT_FAIL_INVALID_SIZE,
-                                           "P3P::computePose()",
-                                           "Rotation matrix should be 3x3.");
-        
+          RESULT_FAIL_INVALID_SIZE,
+          "P3P::computePose()",
+          "Rotation matrix should be 3x3.");
 
         BeginBenchmark("computePose_init");
 
@@ -481,8 +479,8 @@ namespace Anki {
         for(s32 i=0; i<4; ++i) {
           possibleR[i] = Array<PRECISION>(3,3,scratch);
           AnkiConditionalErrorAndReturnValue(possibleR[i].IsValid(), RESULT_FAIL_MEMORY,
-                                             "P3P::computePossiblePoses()",
-                                             "Invalid possibleR[%d] Matrix, out of memory?", i);
+            "P3P::computePossiblePoses()",
+            "Invalid possibleR[%d] Matrix, out of memory?", i);
         }
 
         EndBenchmark("computePose_init");
@@ -532,22 +530,22 @@ namespace Anki {
               //
               // NOTE: this does not take radial distortion into account, if/when
               //       we have that for the camera
-              
+
               Point3<PRECISION> projectedPoint3 = (possibleR[i_solution] * (*worldPoints[i_validate])) + possibleT[i_solution];
               projectedPoint3.x = focalLength_x*projectedPoint3.x + camCenter_x*projectedPoint3.z;
               projectedPoint3.y = focalLength_y*projectedPoint3.y + camCenter_y*projectedPoint3.z;
-              
+
               AnkiAssert(fabs(projectedPoint3.z) > 1e-6);
-              
+
               Point<PRECISION> projectedPoint(projectedPoint3.x/projectedPoint3.z,
-                                              projectedPoint3.y/projectedPoint3.z);
-              
+                projectedPoint3.y/projectedPoint3.z);
+
               // Compare to the validation image point
               float error = projectedPoint.Dist(imgQuad[i_validate]);
-              
+
               //printf("Solution %d reprojection error when validating with corner %d = %f\n",
               //        i_solution, i_validate, error);
-              
+
               if(error < minErrorInner) {
                 minErrorInner = error;
                 bestSolution = i_solution;

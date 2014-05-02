@@ -1,7 +1,7 @@
 # script to drive around manually. Run it directly from the matlab dir
 
 disp('Please cd to the build dir and run:')
-disp('Unix\ Makefiles/bin/Debug/run_coreTechPlanningStandalone ../coretech/planning/matlab/cozmo.mprim ../coretech/planning/matlab/test3.env')
+disp('Unix\ Makefiles/bin/Debug/run_coreTechPlanningStandalone ../coretech/planning/matlab/cozmo_mprim.json ../coretech/planning/matlab/test3.env')
 
 system('rm /Users/bneuman/Documents/code/products-cozmo/build/path.txt');
 

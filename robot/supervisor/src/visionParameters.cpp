@@ -94,6 +94,8 @@ namespace Anki {
       
       void TrackerParameters::Initialize()
       {
+        normalizationFilterWidthFraction = 0.5f;
+        
 #if DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
         // Binary tracker works at QVGA (unlike LK)
         trackingResolution = Vision::CAMERA_RES_QVGA;
@@ -152,6 +154,10 @@ namespace Anki {
         convergenceTolerance_angle    = DEG_TO_RAD(0.5); 
         convergenceTolerance_distance = 0.5f; // mm
         numSamplingRegions            = 5;
+        
+        successTolerance_angle        = DEG_TO_RAD(30);
+        successTolerance_distance     = 20.f;
+        successTolerance_matchingPixelsFraction = 0.5f;
 #else
         convergenceTolerance      = 1.f;
 #endif

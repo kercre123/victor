@@ -34,39 +34,10 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests);
 int main()
 #endif
 {
-  //// Set the floating point rounding to nearest
-
-  //unsigned int control_word;
-  //int err = _controlfp_s(&control_word, 0, 0);
-
-  //AnkiConditionalErrorAndReturnValue(err == 0,
-  //  -1, "main", "_controlfp_s failed");
-
-  //{
-  //  const s32 d1 = -1.1f;
-  //  const s32 d2 = 1.1f;
-
-  //  //printf("%d %d %d 0x%x\n", static_cast<s32>(1.4), static_cast<s32>(1.5), static_cast<s32>(1.6), control_word);
-  //  printf("%d %d 0x%x\n", d1, d2, control_word);
-  //}
-
-  //err = _controlfp_s(&control_word, _RC_UP, _MCW_RC);
-
-  //AnkiConditionalErrorAndReturnValue(err == 0,
-  //  -1, "main", "_controlfp_s failed");
-
-  //{
-  //  const s32 d1 = -1.1f;
-  //  const s32 d2 = 1.1f;
-
-  //  //printf("%d %d %d 0x%x\n", static_cast<s32>(1.4), static_cast<s32>(1.5), static_cast<s32>(1.6), control_word);
-  //  printf("%d %d 0x%x\n", d1, d2, control_word);
-  //}
-
 #if ANKICORETECH_EMBEDDED_USE_GTEST
 
   char * filterString = "--gtest_filter=*"; // Run all tests
-  //char * filterString = "--gtest_filter=*RoundAndSaturate"; // Run only some tests
+  //char * filterString = "--gtest_filter=*Benchmarking"; // Run only some tests
 
   argc++;
   argv[argc-1] = filterString;

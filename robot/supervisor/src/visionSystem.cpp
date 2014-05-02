@@ -24,19 +24,19 @@
 
 // CoreTech Common Includes
 #include "anki/common/shared/radians.h"
-#include "anki/common/robot/benchmarking_c.h"
+#include "anki/common/robot/benchmarking.h"
 #include "anki/common/robot/memory.h"
 #include "anki/common/robot/utilities.h"
 
 // Cozmo-Specific Library Includes
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
-#include "messages.h"
-#include "visionSystem.h"
 
 // Local Cozmo Includes
 #include "headController.h"
 #include "matlabVisualization.h"
+#include "messages.h"
+#include "visionSystem.h"
 #include "visionDebugStream.h"
 
 #if USE_MATLAB_TRACKER || USE_MATLAB_DETECTOR
@@ -74,8 +74,9 @@ namespace Anki {
         static const s32 CCM_BUFFER_SIZE = 500000; // The max here is probably 65536 (0x10000) bytes
         */
         static const s32 OFFCHIP_BUFFER_SIZE = 2000000;
-        static const s32 ONCHIP_BUFFER_SIZE = 170000; // The max here is somewhere between 175000 and 180000 bytes
-        static const s32 CCM_BUFFER_SIZE = 50000; // The max here is probably 65536 (0x10000) bytes
+        static const s32 ONCHIP_BUFFER_SIZE  = 170000; // The max here is somewhere between 175000 and 180000 bytes
+        static const s32 CCM_BUFFER_SIZE     = 50000; // The max here is probably 65536 (0x10000) bytes
+        
         static const s32 MAX_MARKERS = 100; // TODO: this should probably be in visionParameters
 
         static OFFCHIP char offchipBuffer[OFFCHIP_BUFFER_SIZE];
@@ -93,8 +94,8 @@ namespace Anki {
         static Result ResetBuffers()
         {
           offchipScratch_ = MemoryStack(offchipBuffer, OFFCHIP_BUFFER_SIZE);
-          onchipScratch_ = MemoryStack(onchipBuffer, ONCHIP_BUFFER_SIZE);
-          ccmScratch_ = MemoryStack(ccmBuffer, CCM_BUFFER_SIZE);
+          onchipScratch_  = MemoryStack(onchipBuffer, ONCHIP_BUFFER_SIZE);
+          ccmScratch_     = MemoryStack(ccmBuffer, CCM_BUFFER_SIZE);
 
           if(!offchipScratch_.IsValid() || !onchipScratch_.IsValid() || !ccmScratch_.IsValid()) {
             PRINT("Error: InitializeScratchBuffers\n");
@@ -131,6 +132,7 @@ namespace Anki {
         static VisionSystemMode mode_;
 
         // Camera parameters
+        // TODO: Should these be moved to (their own struct in) visionParameters.h/cpp?
         static f32 exposureTime;
         static s32 frameNumber;
         static const bool autoExposure_enabled = true;
@@ -138,7 +140,7 @@ namespace Anki {
         static const f32 autoExposure_minExposureTime = 0.03f;
         static const f32 autoExposure_maxExposureTime = 0.97f;
         static const f32 autoExposure_percentileToSaturate = 0.95f;
-        static const s32 autoExposure_adjustEveryNFrames = 2;
+        static const s32 autoExposure_adjustEveryNFrames = 1;
 
         // Tracking marker related members
         static Anki::Vision::MarkerType markerTypeToTrack_;
@@ -339,6 +341,8 @@ namespace Anki {
                                        MemoryStack onchipScratch,
                                        MemoryStack offchipScratch)
       {
+        BeginBenchmark("VisionSystem_LookForMarkers");
+        
         AnkiAssert(parameters.isInitialized);
 
         const s32 maxMarkers = markers.get_maximumSize();
@@ -354,9 +358,7 @@ namespace Anki {
         }
 
         MatlabVisualization::ResetFiducialDetection(grayscaleImage);
-
-        InitBenchmarking();
-
+        
         const Result result = DetectFiducialMarkers(
                                                     grayscaleImage,
                                                     markers,
@@ -378,6 +380,8 @@ namespace Anki {
           return result;
         }
         
+        EndBenchmark("VisionSystem_LookForMarkers");
+        
         DebugStream::SendFiducialDetection(grayscaleImage, markers, ccmScratch, onchipScratch, offchipScratch);
         
         for(s32 i_marker = 0; i_marker < markers.get_size(); ++i_marker) {
@@ -392,6 +396,53 @@ namespace Anki {
         
       } // LookForMarkers()
 
+      static Result BrightnessNormalizeImage(Array<u8>& image, const Quadrilateral<f32>& quad,
+                                             const f32 filterWidthFraction,
+                                             MemoryStack scratch)
+      {
+        if(filterWidthFraction > 0.f) {
+          // TODO: Add the ability to only normalize within the vicinity of the quad
+          // Note that this requires templateQuad to be sorted!
+          const s32 filterWidth = static_cast<s32>(filterWidthFraction*((quad[3] - quad[0]).Length()));
+          AnkiAssert(filterWidth > 0.f);
+          
+          Array<u8> imageNormalized(image.get_size(0), image.get_size(1), scratch);
+          
+          AnkiConditionalErrorAndReturnValue(imageNormalized.IsValid(),
+                                             RESULT_FAIL_OUT_OF_MEMORY,
+                                             "VisionSystem::BrightnessNormalizeImage",
+                                             "Out of memory allocating imageNormalized.\n");
+          
+          BeginBenchmark("BoxFilterNormalize");
+
+          ImageProcessing::BoxFilterNormalize(image, filterWidth, static_cast<u8>(128),
+                                              imageNormalized, scratch);
+          
+          EndBenchmark("BoxFilterNormalize");
+
+          
+          { // DEBUG
+            /*
+             static Matlab matlab(false);
+             matlab.PutArray(grayscaleImage, "grayscaleImage");
+             matlab.PutArray(grayscaleImageNormalized, "grayscaleImageNormalized");
+             matlab.EvalString("subplot(121), imagesc(grayscaleImage), axis image, colorbar, "
+             "subplot(122), imagesc(grayscaleImageNormalized), colorbar, axis image, "
+             "colormap(gray)");
+             */
+            
+            //image.Show("GrayscaleImage", false);
+            //imageNormalized.Show("GrayscaleImageNormalized", false);
+          }
+          
+          image.Set(imageNormalized);
+        } // if(filterWidthFraction > 0)
+        
+        return RESULT_OK;
+        
+      } // BrightnessNormalizeImage()
+      
+      
       static Result InitTemplate(
                                      const Array<u8> &grayscaleImage,
                                      const Quadrilateral<f32> &trackingQuad,
@@ -501,13 +552,14 @@ namespace Anki {
                                                                         onchipMemory,
                                                                         offchipMemory);
 
+        /*
         // TODO: Set this elsewhere
         const f32 Kp_min = 0.05f;
         const f32 Kp_max = 0.75f;
         const f32 tz_min = 30.f;
         const f32 tz_max = 150.f;
         tracker.SetGainScheduling(tz_min, tz_max, Kp_min, Kp_max);
-
+         */
 #else
 #error Unknown DOCKING_ALGORITHM.
 #endif
@@ -525,16 +577,17 @@ namespace Anki {
         return RESULT_OK;
       } // InitTemplate()
 
-      static Result TrackTemplate(
-                                      const Array<u8> &grayscaleImage,
-                                      const Quadrilateral<f32> &trackingQuad,
-                                      const TrackerParameters &parameters,
-                                      Tracker &tracker,
-                                      bool &converged,
-                                      MemoryStack ccmScratch,
-                                      MemoryStack onchipScratch,
-                                      MemoryStack offchipScratch)
+      static Result TrackTemplate(const Array<u8> &grayscaleImage,
+                                  const Quadrilateral<f32> &trackingQuad,
+                                  const TrackerParameters &parameters,
+                                  Tracker &tracker,
+                                  bool &trackingSucceeded,
+                                  MemoryStack ccmScratch,
+                                  MemoryStack onchipScratch,
+                                  MemoryStack offchipScratch)
       {
+        BeginBenchmark("VisionSystem_TrackTemplate");
+
         AnkiAssert(parameters.isInitialized);
 
 #if USE_MATLAB_TRACKER
@@ -550,7 +603,7 @@ namespace Anki {
         //DebugStream::SendArray(grayscaleImageSmall);
 #endif
 
-        converged = false;
+        trackingSucceeded = false;
         s32 verify_meanAbsoluteDifference;
         s32 verify_numInBounds;
         s32 verify_numSimilarPixels;
@@ -561,7 +614,7 @@ namespace Anki {
                                                          parameters.maxIterations,
                                                          parameters.convergenceTolerance,
                                                          parameters.useWeights,
-                                                         converged,
+                                                         trackingSucceeded,
                                                          onchipScratch);
 
 #elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_AFFINE
@@ -570,7 +623,7 @@ namespace Anki {
                                                          parameters.maxIterations,
                                                          parameters.convergenceTolerance,
                                                          parameters.verify_maxPixelDifference,
-                                                         converged,
+                                                         trackingSucceeded,
                                                          verify_meanAbsoluteDifference,
                                                          verify_numInBounds,
                                                          verify_numSimilarPixels,
@@ -584,7 +637,7 @@ namespace Anki {
                                                          parameters.maxIterations,
                                                          parameters.convergenceTolerance,
                                                          parameters.verify_maxPixelDifference,
-                                                         converged,
+                                                         trackingSucceeded,
                                                          verify_meanAbsoluteDifference,
                                                          verify_numInBounds,
                                                          verify_numSimilarPixels,
@@ -593,12 +646,13 @@ namespace Anki {
         //tracker.get_transformation().Print("track");
 
 #elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PROJECTIVE
+
         const Result trackerResult = tracker.UpdateTrack(
                                                          grayscaleImage,
                                                          parameters.maxIterations,
                                                          parameters.convergenceTolerance,
                                                          parameters.verify_maxPixelDifference,
-                                                         converged,
+                                                         trackingSucceeded,
                                                          verify_meanAbsoluteDifference,
                                                          verify_numInBounds,
                                                          verify_numSimilarPixels,
@@ -630,13 +684,19 @@ namespace Anki {
         const f32 percentMatchedPixels = static_cast<f32>(numMatches) / static_cast<f32>(numTemplatePixels);
 
         if(percentMatchedPixels >= parameters.percentMatchedPixelsThreshold) {
-          converged = true;
+          trackingSucceeded = true;
         } else {
-          converged = false;
+          trackingSucceeded = false;
         }
 
 #elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
 
+        const Radians initAngleX(tracker.get_angleX());
+        const Radians initAngleY(tracker.get_angleY());
+        const Radians initAngleZ(tracker.get_angleZ());
+        const Point3<f32>& initTranslation = tracker.get_translation();
+        
+        bool converged = false;
         const Result trackerResult = tracker.UpdateTrack(grayscaleImage,
                                                          parameters.maxIterations,
                                                          parameters.convergenceTolerance_angle,
@@ -646,8 +706,58 @@ namespace Anki {
                                                          verify_meanAbsoluteDifference,
                                                          verify_numInBounds,
                                                          verify_numSimilarPixels,
-                                                         onchipScratch); // TODO: onchip scratch?
-
+                                                         onchipScratch);
+        
+        // TODO: Do we care if converged == false?
+        
+        //
+        // Go through a bunch of checks to see whether the tracking succeeded
+        //
+        
+        if(fabs((initAngleX - tracker.get_angleX()).ToFloat()) > parameters.successTolerance_angle ||
+           fabs((initAngleY - tracker.get_angleY()).ToFloat()) > parameters.successTolerance_angle ||
+           fabs((initAngleZ - tracker.get_angleZ()).ToFloat()) > parameters.successTolerance_angle)
+        {
+          PRINT("Tracker failed: angle(s) changed too much.\n");
+          trackingSucceeded = false;
+        }
+        else if(tracker.get_translation().z < TrackerParameters::MIN_TRACKER_DISTANCE)
+        {
+          PRINT("Tracker failed: final distance too close.\n");
+          trackingSucceeded = false;
+        }
+        else if(tracker.get_translation().z > TrackerParameters::MAX_TRACKER_DISTANCE)
+        {
+          PRINT("Tracker failed: final distance too far away.\n");
+          trackingSucceeded = false;
+        }
+        else if((initTranslation - tracker.get_translation()).Length() > parameters.successTolerance_distance)
+        {
+          PRINT("Tracker failed: position changed too much.\n");
+          trackingSucceeded = false;
+        }
+        else if(fabs(tracker.get_angleY()) > TrackerParameters::MAX_BLOCK_DOCKING_ANGLE)
+        {
+          PRINT("Tracker failed: target angle too large.\n");
+          trackingSucceeded = false;
+        }
+        else if(atan_fast(fabs(tracker.get_translation().x) / tracker.get_translation().z) > TrackerParameters::MAX_DOCKING_FOV_ANGLE)
+        {
+          PRINT("Tracker failed: FOV angle too large.\n");
+          trackingSucceeded = false;
+        }
+        else if( (static_cast<f32>(verify_numSimilarPixels) /
+                  static_cast<f32>(verify_numInBounds)) < parameters.successTolerance_matchingPixelsFraction)
+        {
+          PRINT("Tracker failed: too many in-bounds pixels failed intensity verification.\n");
+          trackingSucceeded = false;
+        }
+        else {
+          // Everything seems ok!
+          trackingSucceeded = true;
+        }
+          
+        
 #else
 #error Unknown DOCKING_ALGORITHM!
 #endif
@@ -657,29 +767,8 @@ namespace Anki {
         }
 
         // Sanity check on tracker result
-#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
-        // Check that pose makes sense (it's within a reasonable range in front
-        // of the robot
-        {
-          if(tracker.get_translation().z < TrackerParameters::MIN_TRACKER_DISTANCE || // can't get this close
-             tracker.get_translation().z > TrackerParameters::MAX_TRACKER_DISTANCE)  // too far away for docking
-          {
-            PRINT("Tracker failed distance sanity check.\n");
-            converged = false;
-          }
-          else if(fabs(tracker.get_angleY()) > TrackerParameters::MAX_BLOCK_DOCKING_ANGLE)
-          {
-            PRINT("Tracker failed target angle sanity check.\n");
-            converged = false;
-          }
-          else if(atan_fast(fabs(tracker.get_translation().x) / tracker.get_translation().z) > TrackerParameters::MAX_DOCKING_FOV_ANGLE)
-          {
-            PRINT("Tracker failed FOV sanity check.\n");
-            converged = false;
-
-          }
-        }
-#else
+#if DOCKING_ALGORITHM != DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
+        
         // Check for a super shrunk or super large template
         // (I don't think this works for planar 6dof homographies?  Try dividing by h22?)
         {
@@ -713,7 +802,9 @@ namespace Anki {
         }
 #endif // #if DOCKING_ALGORITHM != DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
 
-        MatlabVisualization::SendTrack(grayscaleImage, tracker, converged, offchipScratch);
+		EndBenchmark("VisionSystem_TrackTemplate");
+
+        MatlabVisualization::SendTrack(grayscaleImage, tracker, trackingSucceeded, offchipScratch);
 
         //MatlabVisualization::SendTrackerPrediction_Compare(tracker, offchipScratch);
 
@@ -1352,8 +1443,12 @@ namespace Anki {
       Array<u8> grayscaleImage(captureHeight, captureWidth,
                                VisionMemory::onchipScratch_, Flags::Buffer(false,false,false));
 
+      BeginBenchmark("VisionSystem_CameraGetFrame");
+      
       HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
-                          captureResolution_, exposureTime, false);
+                          captureResolution_, false);
+      
+      EndBenchmark("VisionSystem_CameraGetFrame");
 
       if(autoExposure_enabled && (frameNumber % autoExposure_adjustEveryNFrames) == 0) {
         ComputeBestCameraParameters(
@@ -1366,11 +1461,13 @@ namespace Anki {
               VisionMemory::ccmScratch_);
       }
       
+      HAL::CameraSetExposure(exposureTime);
+      
 #ifdef SEND_BINARY_IMAGE_ONLY
       DebugStream::SendBinaryImage(grayscaleImage, "Binary Robot Image", tracker_, trackerParameters_, VisionMemory::ccmScratch_, VisionMemory::onchipScratch_, VisionMemory::offchipScratch_);
       HAL::MicroWait(250000);
 #else
-      DebugStream::SendImage(grayscaleImage, exposureTime, "Robot Image");
+      DebugStream::SendImage(grayscaleImage, exposureTime, "Robot Image", VisionMemory::offchipScratch_);
       HAL::MicroWait(166666); // 6fps
       //HAL::MicroWait(140000); //7fps
       //HAL::MicroWait(125000); //8fps
@@ -1396,8 +1493,12 @@ namespace Anki {
       Array<u8> grayscaleImage(captureHeight, captureWidth,
                                VisionMemory::offchipScratch_, Flags::Buffer(false,false,false));
 
+      BeginBenchmark("VisionSystem_CameraGetFrame");
+
       HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
-                          captureResolution_, exposureTime, false);
+                          captureResolution_, false);
+      
+      EndBenchmark("VisionSystem_CameraGetFrame");
 
       if(autoExposure_enabled && (frameNumber % autoExposure_adjustEveryNFrames) == 0) {
       ComputeBestCameraParameters(
@@ -1409,6 +1510,8 @@ namespace Anki {
             exposureTime,
             VisionMemory::ccmScratch_);
       }
+      
+      HAL::CameraSetExposure(exposureTime);
       
       const s32 faceDetectionHeight = CameraModeInfo[faceDetectionResolution_].height;
       const s32 faceDetectionWidth  = CameraModeInfo[faceDetectionResolution_].width;
@@ -1478,6 +1581,8 @@ namespace Anki {
       // This is the regular Update() call
       Result Update(const Messages::RobotState robotState)
       {
+        Result lastResult = RESULT_OK;
+        
         // This should be called from elsewhere first, but calling it again won't hurt
         Init();
         
@@ -1508,8 +1613,12 @@ namespace Anki {
           Array<u8> grayscaleImage(captureHeight, captureWidth,
                                    VisionMemory::offchipScratch_, Flags::Buffer(false,false,false));
 
+          BeginBenchmark("VisionSystem_CameraGetFrame");
+          
           HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
-                              captureResolution_, exposureTime, false);
+                              captureResolution_, false);
+          
+          EndBenchmark("VisionSystem_CameraGetFrame");
          
           if(autoExposure_enabled && (frameNumber % autoExposure_adjustEveryNFrames) == 0) {
             ComputeBestCameraParameters(
@@ -1522,18 +1631,18 @@ namespace Anki {
               VisionMemory::ccmScratch_);
           }
           
+          HAL::CameraSetExposure(exposureTime);
+          
           DownsampleAndSendImage(grayscaleImage);
 
-          const Result result = LookForMarkers(
-                                                   grayscaleImage,
-                                                   detectionParameters_,
-                                                   VisionMemory::markers_,
-                                                   VisionMemory::ccmScratch_,
-                                                   VisionMemory::onchipScratch_,
-                                                   VisionMemory::offchipScratch_);
-
-          if(result != RESULT_OK) {
-            return RESULT_FAIL;
+          if((lastResult = LookForMarkers(grayscaleImage,
+                                          detectionParameters_,
+                                          VisionMemory::markers_,
+                                          VisionMemory::ccmScratch_,
+                                          VisionMemory::onchipScratch_,
+                                          VisionMemory::offchipScratch_)) != RESULT_OK)
+          {
+            return lastResult;
           }
 
           const s32 numMarkers = VisionMemory::markers_.get_size();
@@ -1577,22 +1686,26 @@ namespace Anki {
               // InitTemplate downsamples it for the time being, since we're still doing template
               // initialization at tracking resolution instead of the eventual goal of doing it at
               // full detection resolution.
-              trackingQuad_ = Quadrilateral<f32>(
-                                                              Point<f32>(crntMarker.corners[0].x, crntMarker.corners[0].y),
-                                                              Point<f32>(crntMarker.corners[1].x, crntMarker.corners[1].y),
-                                                              Point<f32>(crntMarker.corners[2].x, crntMarker.corners[2].y),
-                                                              Point<f32>(crntMarker.corners[3].x, crntMarker.corners[3].y));
+              trackingQuad_ = crntMarker.corners;
+              
+              // NOTE: This will change grayscaleImage!
+              // NOTE: This is currently off-chip for memory reasons, so it's slow!
+              if((lastResult = BrightnessNormalizeImage(grayscaleImage, trackingQuad_,
+                                                        trackerParameters_.normalizationFilterWidthFraction,
+                                                        VisionMemory::offchipScratch_)) != RESULT_OK)
+              {
+                return lastResult;
+              }
 
-              const Result result = InitTemplate(grayscaleImage,
-                                                     trackingQuad_,
-                                                     trackerParameters_,
-                                                     tracker_,
-                                                     VisionMemory::ccmScratch_,
-                                                     VisionMemory::onchipScratch_, //< NOTE: onchip is a reference
-                                                     VisionMemory::offchipScratch_);
-
-              if(result != RESULT_OK) {
-                return RESULT_FAIL;
+              if((lastResult = InitTemplate(grayscaleImage,
+                                            trackingQuad_,
+                                            trackerParameters_,
+                                            tracker_,
+                                            VisionMemory::ccmScratch_,
+                                            VisionMemory::onchipScratch_, //< NOTE: onchip is a reference
+                                            VisionMemory::offchipScratch_)) != RESULT_OK)
+              {
+                return lastResult;
               }
 
               // Template initialization succeeded, switch to tracking mode:
@@ -1617,8 +1730,12 @@ namespace Anki {
           Array<u8> grayscaleImage(captureHeight, captureWidth,
                                    onchipScratch_local, Flags::Buffer(false,false,false));
 
+          BeginBenchmark("VisionSystem_CameraGetFrame");
+          
           HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
-                              captureResolution_, exposureTime, false);
+                              captureResolution_, false);
+          
+          EndBenchmark("VisionSystem_CameraGetFrame");
 
           // TODO: allow tracking to work with exposure changes
           /*if(autoExposure_enabled && (frameNumber % autoExposure_adjustEveryNFrames) == 0) {
@@ -1631,7 +1748,18 @@ namespace Anki {
             exposureTime,
             VisionMemory::ccmScratch_);
           }*/
-            
+          
+          HAL::CameraSetExposure(exposureTime);
+          
+          // NOTE: This will change grayscaleImage!
+          // NOTE: This is currently off-chip for memory reasons, so it's slow!
+          if((lastResult = BrightnessNormalizeImage(grayscaleImage, trackingQuad_,
+                                                    trackerParameters_.normalizationFilterWidthFraction,
+                                                    VisionMemory::offchipScratch_)) != RESULT_OK)
+          {
+            return lastResult;
+          }
+          
           //
           // Tracker Prediction
           //
@@ -1639,11 +1767,9 @@ namespace Anki {
           // think we've moved since the last tracking call.
           //
 
-          Result predictionResult = TrackerPredictionUpdate(grayscaleImage, onchipScratch_local);
-
-          if(predictionResult != RESULT_OK) {
+          if((lastResult =TrackerPredictionUpdate(grayscaleImage, onchipScratch_local)) != RESULT_OK) {
             PRINT("VisionSystem::Update(): TrackTemplate() failed.\n");
-            return RESULT_FAIL;
+            return lastResult;
           }
 
           //
@@ -1653,19 +1779,16 @@ namespace Anki {
           // Set by TrackTemplate() call
           bool converged = false;
 
-          const Result trackResult = TrackTemplate(
-                                                       grayscaleImage,
-                                                       trackingQuad_,
-                                                       trackerParameters_,
-                                                       tracker_,
-                                                       converged,
-                                                       VisionMemory::ccmScratch_,
-                                                       onchipScratch_local,
-                                                       offchipScratch_local);
-
-          if(trackResult != RESULT_OK) {
+          if((lastResult = TrackTemplate(grayscaleImage,
+                                         trackingQuad_,
+                                         trackerParameters_,
+                                         tracker_,
+                                         converged,
+                                         VisionMemory::ccmScratch_,
+                                         onchipScratch_local,
+                                         offchipScratch_local)) != RESULT_OK) {
             PRINT("VisionSystem::Update(): TrackTemplate() failed.\n");
-            return RESULT_FAIL;
+            return lastResult;
           }
 
           //

@@ -2,11 +2,9 @@
 
 # save buffered video
 
-#file(GLOB SOURCE_FILES_SAVE_VIDEO
-#  run_pc_saveVideo.cpp
-#  communication.cpp
-#  debugStreamClient_save.cpp
-#)
+file(GLOB SOURCE_FILES_SAVE_VIDEO
+  run_pc_saveVideo.cpp
+)
 
 file(GLOB SOURCE_FILES_DISPLAY_VIDEO
   run_pc_displayVideo.cpp
@@ -17,11 +15,6 @@ file(GLOB SOURCE_FILES_DEBUG_STREAM_PARSER
   debugStreamClient.cpp
 )
 
-#file(GLOB SOURCE_FILES_TERMINAL
-#  run_pc_terminal.cpp
-#  communication.cpp
-#)
-
 file(GLOB HEADER_FILES
   communication.h
   threadSafeQueue.h
@@ -29,14 +22,27 @@ file(GLOB HEADER_FILES
   C:/Anki/products-cozmo/basestation/src/messageDefMacros.h
 )
 
-#add_executable(run_pc_saveVideo
-#  ${SOURCE_FILES_SAVE_VIDEO}
-#  ${HEADER_FILES})
+#
+# run_pc_saveVideo
+#
 
-#target_link_libraries(run_pc_saveVideo
-#  CoreTech_Common_Robot
-#  CoreTech_Vision_Robot
-#  ${ALL_EMBEDDED_LIBRARIES})
+add_executable(run_pc_saveVideo
+  ${SOURCE_FILES_SAVE_VIDEO}
+  ${HEADER_FILES})
+
+target_link_libraries(run_pc_saveVideo
+  CoreTech_Common_Robot
+  CoreTech_Vision_Robot
+  DebugStreamClient
+  ${ALL_EMBEDDED_LIBRARIES})
+
+set_target_properties(run_pc_saveVideo PROPERTIES
+  FOLDER "Tools"
+)
+
+#
+# run_pc_displayVideo
+#
 
 add_executable(run_pc_displayVideo
   ${SOURCE_FILES_DISPLAY_VIDEO}
@@ -48,18 +54,21 @@ target_link_libraries(run_pc_displayVideo
   DebugStreamClient
   ${ALL_EMBEDDED_LIBRARIES})
 
-#add_executable(run_pc_terminal
-#  ${SOURCE_FILES_TERMINAL}
-#  ${HEADER_FILES})
+set_target_properties(run_pc_displayVideo PROPERTIES
+  FOLDER "Tools"
+)
 
-#target_link_libraries(run_pc_terminal
-#  CoreTech_Common_Robot
-#  CoreTech_Vision_Robot
-#  ${ALL_EMBEDDED_LIBRARIES})
+#
+# DebugStreamClient
+#
 
 add_definitions(-DCORETECH_ROBOT)
 
 add_library(DebugStreamClient
   ${SOURCE_FILES_DEBUG_STREAM_PARSER}
   ${HEADER_FILES}
+)
+
+set_target_properties(DebugStreamClient PROPERTIES
+  FOLDER "Tools"
 )

@@ -82,10 +82,8 @@ namespace Anki
       s32 set_size(s32 newSize);
 
     protected:
+      // TODO: make less hacky
       friend SerializedBuffer;
-
-      // For speed, this is a direct pointer to the Array's protected data
-      Type * arrayData;
     }; // class FixedLengthList
   } // namespace Embedded
 } //namespace Anki

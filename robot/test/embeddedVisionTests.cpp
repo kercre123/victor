@@ -12,7 +12,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/config.h"
 #include "anki/common/robot/gtestLight.h"
 #include "anki/common/robot/matlabInterface.h"
-#include "anki/common/robot/benchmarking_c.h"
+#include "anki/common/robot/benchmarking.h"
 #include "anki/common/robot/comparisons.h"
 #include "anki/common/robot/arrayPatterns.h"
 
@@ -297,7 +297,7 @@ GTEST_TEST(CoreTech_Vision, FaceDetection)
 
   printf("Detection took %f seconds (setup time %f seconds)\n", t2-t1, t1-t0);
 
-  PrintBenchmarkResults_All();
+  ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
   ASSERT_TRUE(detectedFaces_anki.get_size() == 1);
   ASSERT_TRUE(detectedFaces_anki[0] == Rectangle<s32>(102, 219, 39, 156));
@@ -509,7 +509,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTrackerHeaderTemplate)
 
     ASSERT_TRUE(numTemplatePixels == 1588);
 
-    PrintBenchmarkResults_OnlyTotals();
+    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
   } // Skip zero rows/columns (non-list)
 
   GTEST_RETURN_HERE;
@@ -638,7 +638,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
       ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
     }
 
-    PrintBenchmarkResults_OnlyTotals();
+    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
   } // Skip zero rows/columns (non-list)
 
   // Skip one row/column (non-list)
@@ -708,7 +708,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
       ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
     }
 
-    PrintBenchmarkResults_OnlyTotals();
+    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
   } // Skip one row/column (non-list)
 
   // Skip zero rows/columns (with-list)
@@ -778,7 +778,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
       ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
     }
 
-    PrintBenchmarkResults_OnlyTotals();
+    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
   } // Skip zero rows/columns (with-list)
 
   // Skip one row/column (with-list)
@@ -848,7 +848,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
       ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
     }
 
-    PrintBenchmarkResults_OnlyTotals();
+    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
   } // Skip one row/column (with-list)
 
   // Skip zero rows/columns (with-ransac)
@@ -914,7 +914,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
       //ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
     }
 
-    PrintBenchmarkResults_OnlyTotals();
+    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
   } // Skip zero rows/columns (with-ransac)
 
   // Skip one row/column (with-ransac)
@@ -980,7 +980,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
       //ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
     }
 
-    PrintBenchmarkResults_OnlyTotals();
+    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
   } // Skip one row/column (with-ransac)
 
   //tracker.get_transformation().Transform(templateImage, warpedTemplateImage, scratchOffchip, 1.0f);
@@ -1376,7 +1376,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
     const f64 time2 = GetTimeF32();
 
     printf("Translation-only LK_SampledProjective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
-    PrintBenchmarkResults_All();
+    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
     tracker.get_transformation().Print("Translation-only LK_SampledProjective");
 
@@ -1424,7 +1424,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
     const f64 time2 = GetTimeF32();
 
     printf("Affine LK_SampledProjective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
-    PrintBenchmarkResults_All();
+    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
     tracker.get_transformation().Print("Affine LK_SampledProjective");
 
@@ -1473,7 +1473,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
     const f64 time2 = GetTimeF32();
 
     printf("Projective LK_SampledProjective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
-    PrintBenchmarkResults_All();
+    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
     tracker.get_transformation().Print("Projective LK_SampledProjective");
 
@@ -1572,7 +1572,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledPlanar6dof)
   //    const f64 time2 = GetTimeF32();
   //
   //    printf("Translation-only LK_SampledPlanar6dof totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
-  //    PrintBenchmarkResults_All();
+  //    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
   //
   //    tracker.get_transformation().Print("Translation-only LK_SampledPlanar6dof");
   //
@@ -1621,7 +1621,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledPlanar6dof)
   //    const f64 time2 = GetTimeF32();
   //
   //    printf("Affine LK_SampledProjective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
-  //    PrintBenchmarkResults_All();
+  //    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
   //
   //    tracker.get_transformation().Print("Affine LK_SampledProjective");
   //
@@ -1677,7 +1677,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledPlanar6dof)
   //    const f64 time2 = GetTimeF32();
   //
   //    printf("Projective LK_SampledPlanar6dof totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
-  //    PrintBenchmarkResults_All();
+  //    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
   //
   //    tracker.get_transformation().Print("Projective LK_SampledPlanar6dof");
   //
@@ -1717,19 +1717,16 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
 
   // TODO: add check that images were loaded correctly
 
-  //MemoryStack scratch0(&ddrBuffer[0], 80*60*2 + 256);
-  MemoryStack scratch1(&offchipBuffer[0], 600000);
-
-  //ASSERT_TRUE(scratch0.IsValid());
-  ASSERT_TRUE(scratch1.IsValid());
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(scratchOffchip.IsValid());
 
   ASSERT_TRUE(blockImages00189_80x60_HEIGHT == imageHeight && blockImages00190_80x60_HEIGHT == imageHeight);
   ASSERT_TRUE(blockImages00189_80x60_WIDTH == imageWidth && blockImages00190_80x60_WIDTH == imageWidth);
 
-  Array<u8> image1(imageHeight, imageWidth, scratch1);
+  Array<u8> image1(imageHeight, imageWidth, scratchOffchip);
   image1.Set(blockImages00189_80x60, imageWidth*imageHeight);
 
-  Array<u8> image2(imageHeight, imageWidth, scratch1);
+  Array<u8> image2(imageHeight, imageWidth, scratchOffchip);
   image2.Set(blockImages00190_80x60, imageWidth*imageHeight);
 
   ASSERT_TRUE(*image1.Pointer(0,0) == 45);
@@ -1739,13 +1736,13 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
 
   // Translation-only LK_Projective
   {
-    PUSH_MEMORY_STACK(scratch1);
+    PUSH_MEMORY_STACK(scratchOffchip);
 
     InitBenchmarking();
 
     const f64 time0 = GetTimeF32();
 
-    TemplateTracker::LucasKanadeTracker_Projective tracker(image1, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, scratch1);
+    TemplateTracker::LucasKanadeTracker_Projective tracker(image1, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, scratchOffchip);
 
     ASSERT_TRUE(tracker.IsValid());
 
@@ -1756,7 +1753,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
     s32 verify_numInBounds;
     s32 verify_numSimilarPixels;
 
-    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, verify_maxPixelDifference, verify_converged, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels, scratch1) == RESULT_OK);
+    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, verify_maxPixelDifference, verify_converged, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels, scratchOffchip) == RESULT_OK);
 
     ASSERT_TRUE(verify_converged == true);
     ASSERT_TRUE(verify_meanAbsoluteDifference == 13);
@@ -1766,12 +1763,12 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
     const f64 time2 = GetTimeF32();
 
     printf("Translation-only LK_Projective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
-    PrintBenchmarkResults_All();
+    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
     tracker.get_transformation().Print("Translation-only LK_Projective");
 
     // This ground truth is from the PC c++ version
-    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
+    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
     transform_groundTruth[0][2] = -1.368f;
     transform_groundTruth[1][2] = -1.041f;
 
@@ -1780,13 +1777,13 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
 
   // Affine LK_Projective
   {
-    PUSH_MEMORY_STACK(scratch1);
+    PUSH_MEMORY_STACK(scratchOffchip);
 
     InitBenchmarking();
 
     const f64 time0 = GetTimeF32();
 
-    TemplateTracker::LucasKanadeTracker_Projective tracker(image1, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_AFFINE, scratch1);
+    TemplateTracker::LucasKanadeTracker_Projective tracker(image1, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_AFFINE, scratchOffchip);
 
     ASSERT_TRUE(tracker.IsValid());
 
@@ -1797,7 +1794,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
     s32 verify_numInBounds;
     s32 verify_numSimilarPixels;
 
-    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, verify_maxPixelDifference, verify_converged, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels, scratch1) == RESULT_OK);
+    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, verify_maxPixelDifference, verify_converged, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels, scratchOffchip) == RESULT_OK);
 
     ASSERT_TRUE(verify_converged == true);
     ASSERT_TRUE(verify_meanAbsoluteDifference == 8);
@@ -1807,12 +1804,12 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
     const f64 time2 = GetTimeF32();
 
     printf("Affine LK_Projective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
-    PrintBenchmarkResults_All();
+    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
     tracker.get_transformation().Print("Affine LK_Projective");
 
     // This ground truth is from the PC c++ version
-    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
+    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
     transform_groundTruth[0][0] = 1.013f;  transform_groundTruth[0][1] = 0.032f; transform_groundTruth[0][2] = -1.301f;
     transform_groundTruth[1][0] = -0.036f; transform_groundTruth[1][1] = 1.0f;   transform_groundTruth[1][2] = -1.101f;
     transform_groundTruth[2][0] = 0.0f;    transform_groundTruth[2][1] = 0.0f;   transform_groundTruth[2][2] = 1.0f;
@@ -1822,13 +1819,13 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
 
   // Projective LK_Projective
   {
-    PUSH_MEMORY_STACK(scratch1);
+    PUSH_MEMORY_STACK(scratchOffchip);
 
     InitBenchmarking();
 
     const f64 time0 = GetTimeF32();
 
-    TemplateTracker::LucasKanadeTracker_Projective tracker(image1, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_PROJECTIVE, scratch1);
+    TemplateTracker::LucasKanadeTracker_Projective tracker(image1, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_PROJECTIVE, scratchOffchip);
 
     ASSERT_TRUE(tracker.IsValid());
 
@@ -1839,7 +1836,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
     s32 verify_numInBounds;
     s32 verify_numSimilarPixels;
 
-    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, verify_maxPixelDifference, verify_converged, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels, scratch1) == RESULT_OK);
+    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, verify_maxPixelDifference, verify_converged, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels, scratchOffchip) == RESULT_OK);
 
     ASSERT_TRUE(verify_converged == true);
     ASSERT_TRUE(verify_meanAbsoluteDifference == 8);
@@ -1849,12 +1846,12 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
     const f64 time2 = GetTimeF32();
 
     printf("Projective LK_Projective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
-    PrintBenchmarkResults_All();
+    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
     tracker.get_transformation().Print("Projective LK_Projective");
 
     // This ground truth is from the PC c++ version
-    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
+    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
     transform_groundTruth[0][0] = 1.013f;  transform_groundTruth[0][1] = 0.032f; transform_groundTruth[0][2] = -1.342f;
     transform_groundTruth[1][0] = -0.036f; transform_groundTruth[1][1] = 1.0f;   transform_groundTruth[1][2] = -1.044f;
     transform_groundTruth[2][0] = 0.0f;    transform_groundTruth[2][1] = 0.0f;   transform_groundTruth[2][2] = 1.0f;
@@ -1885,17 +1882,17 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
 
   // TODO: add check that images were loaded correctly
 
-  MemoryStack scratch1(&offchipBuffer[0], 600000);
+  MemoryStack scratchOffchip(&offchipBuffer[0], 600000);
 
-  ASSERT_TRUE(scratch1.IsValid());
+  ASSERT_TRUE(scratchOffchip.IsValid());
 
   ASSERT_TRUE(blockImages00189_80x60_HEIGHT == imageHeight && blockImages00190_80x60_HEIGHT == imageHeight);
   ASSERT_TRUE(blockImages00189_80x60_WIDTH == imageWidth && blockImages00190_80x60_WIDTH == imageWidth);
 
-  Array<u8> image1(imageHeight, imageWidth, scratch1);
+  Array<u8> image1(imageHeight, imageWidth, scratchOffchip);
   image1.Set(blockImages00189_80x60, imageWidth*imageHeight);
 
-  Array<u8> image2(imageHeight, imageWidth, scratch1);
+  Array<u8> image2(imageHeight, imageWidth, scratchOffchip);
   image2.Set(blockImages00190_80x60, imageWidth*imageHeight);
 
   ASSERT_TRUE(*image1.Pointer(0,0) == 45);
@@ -1905,13 +1902,13 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
 
   // Translation-only LK
   {
-    PUSH_MEMORY_STACK(scratch1);
+    PUSH_MEMORY_STACK(scratchOffchip);
 
     InitBenchmarking();
 
     const f64 time0 = GetTimeF32();
 
-    TemplateTracker::LucasKanadeTracker_Affine tracker(image1, templateRegion, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, scratch1);
+    TemplateTracker::LucasKanadeTracker_Affine tracker(image1, templateRegion, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, scratchOffchip);
 
     ASSERT_TRUE(tracker.IsValid());
 
@@ -1922,7 +1919,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
     s32 verify_numInBounds;
     s32 verify_numSimilarPixels;
 
-    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, verify_maxPixelDifference, verify_converged, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels, scratch1) == RESULT_OK);
+    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, verify_maxPixelDifference, verify_converged, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels, scratchOffchip) == RESULT_OK);
 
     ASSERT_TRUE(verify_converged == true);
     ASSERT_TRUE(verify_meanAbsoluteDifference == 13);
@@ -1932,12 +1929,12 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
     const f64 time2 = GetTimeF32();
 
     printf("Translation-only FAST-LK totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
-    PrintBenchmarkResults_All();
+    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
     tracker.get_transformation().Print("Translation-only LK_Affine");
 
     // This ground truth is from the PC c++ version
-    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
+    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
     transform_groundTruth[0][2] = -1.368f;
     transform_groundTruth[1][2] = -1.041f;
 
@@ -1946,13 +1943,13 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
 
   // Affine LK
   {
-    PUSH_MEMORY_STACK(scratch1);
+    PUSH_MEMORY_STACK(scratchOffchip);
 
     InitBenchmarking();
 
     const f64 time0 = GetTimeF32();
 
-    TemplateTracker::LucasKanadeTracker_Affine tracker(image1, templateRegion, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_AFFINE, scratch1);
+    TemplateTracker::LucasKanadeTracker_Affine tracker(image1, templateRegion, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_AFFINE, scratchOffchip);
 
     ASSERT_TRUE(tracker.IsValid());
 
@@ -1962,7 +1959,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
     s32 verify_meanAbsoluteDifference;
     s32 verify_numInBounds;
     s32 verify_numSimilarPixels;
-    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, verify_maxPixelDifference, verify_converged, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels, scratch1) == RESULT_OK);
+    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, verify_maxPixelDifference, verify_converged, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels, scratchOffchip) == RESULT_OK);
 
     ASSERT_TRUE(verify_converged);
     ASSERT_TRUE(verify_meanAbsoluteDifference == 8);
@@ -1972,12 +1969,12 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
     const f64 time2 = GetTimeF32();
 
     printf("Affine FAST-LK totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
-    PrintBenchmarkResults_All();
+    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
     tracker.get_transformation().Print("Affine LK_Affine");
 
     // This ground truth is from the PC c++ version
-    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
+    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
     transform_groundTruth[0][0] = 1.013f;  transform_groundTruth[0][1] = 0.032f; transform_groundTruth[0][2] = -1.299f;
     transform_groundTruth[1][0] = -0.036f; transform_groundTruth[1][1] = 1.0f;   transform_groundTruth[1][2] = -1.104f;
     transform_groundTruth[2][0] = 0.0f;    transform_groundTruth[2][1] = 0.0f;   transform_groundTruth[2][2] = 1.0f;
@@ -2008,18 +2005,18 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
   // TODO: add check that images were loaded correctly
 
   //MemoryStack scratch0(&ddrBuffer[0], 80*60*2 + 256);
-  MemoryStack scratch1(&offchipBuffer[0], 600000);
+  MemoryStack scratchOffchip(&offchipBuffer[0], 600000);
 
   //ASSERT_TRUE(scratch0.IsValid());
-  ASSERT_TRUE(scratch1.IsValid());
+  ASSERT_TRUE(scratchOffchip.IsValid());
 
   ASSERT_TRUE(blockImages00189_80x60_HEIGHT == imageHeight && blockImages00190_80x60_HEIGHT == imageHeight);
   ASSERT_TRUE(blockImages00189_80x60_WIDTH == imageWidth && blockImages00190_80x60_WIDTH == imageWidth);
 
-  Array<u8> image1(imageHeight, imageWidth, scratch1);
+  Array<u8> image1(imageHeight, imageWidth, scratchOffchip);
   image1.Set(blockImages00189_80x60, imageWidth*imageHeight);
 
-  Array<u8> image2(imageHeight, imageWidth, scratch1);
+  Array<u8> image2(imageHeight, imageWidth, scratchOffchip);
   image2.Set(blockImages00190_80x60, imageWidth*imageHeight);
 
   ASSERT_TRUE(*image1.Pointer(0,0) == 45);
@@ -2029,32 +2026,32 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
 
   // Translation-only LK
   {
-    PUSH_MEMORY_STACK(scratch1);
+    PUSH_MEMORY_STACK(scratchOffchip);
 
     InitBenchmarking();
 
     const f64 time0 = GetTimeF32();
 
-    TemplateTracker::LucasKanadeTracker_Slow tracker(image1, templateRegion, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, ridgeWeight, scratch1);
+    TemplateTracker::LucasKanadeTracker_Slow tracker(image1, templateRegion, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, ridgeWeight, scratchOffchip);
 
     ASSERT_TRUE(tracker.IsValid());
 
     const f64 time1 = GetTimeF32();
 
     bool verify_converged = false;
-    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, false, verify_converged, scratch1) == RESULT_OK);
+    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, false, verify_converged, scratchOffchip) == RESULT_OK);
 
     ASSERT_TRUE(verify_converged == true);
 
     const f64 time2 = GetTimeF32();
 
     printf("Translation-only LK totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
-    PrintBenchmarkResults_All();
+    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
     tracker.get_transformation().Print("Translation-only LK");
 
     // This ground truth is from the PC c++ version
-    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
+    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
     transform_groundTruth[0][2] = -1.368f;
     transform_groundTruth[1][2] = -1.041f;
 
@@ -2063,31 +2060,31 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
 
   // Affine LK
   {
-    PUSH_MEMORY_STACK(scratch1);
+    PUSH_MEMORY_STACK(scratchOffchip);
 
     InitBenchmarking();
 
     const f64 time0 = GetTimeF32();
 
-    TemplateTracker::LucasKanadeTracker_Slow tracker(image1, templateRegion, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_AFFINE, ridgeWeight, scratch1);
+    TemplateTracker::LucasKanadeTracker_Slow tracker(image1, templateRegion, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_AFFINE, ridgeWeight, scratchOffchip);
 
     ASSERT_TRUE(tracker.IsValid());
 
     const f64 time1 = GetTimeF32();
 
     bool verify_converged = false;
-    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, false, verify_converged, scratch1) == RESULT_OK);
+    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, false, verify_converged, scratchOffchip) == RESULT_OK);
     ASSERT_TRUE(verify_converged == true);
 
     const f64 time2 = GetTimeF32();
 
     printf("Affine LK totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
-    PrintBenchmarkResults_All();
+    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
     tracker.get_transformation().Print("Affine LK");
 
     // This ground truth is from the PC c++ version
-    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
+    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
     transform_groundTruth[0][0] = 1.013f;  transform_groundTruth[0][1] = 0.032f; transform_groundTruth[0][2] = -1.299f;
     transform_groundTruth[1][0] = -0.036f; transform_groundTruth[1][1] = 1.0f;   transform_groundTruth[1][2] = -1.104f;
     transform_groundTruth[2][0] = 0.0f;    transform_groundTruth[2][1] = 0.0f;   transform_groundTruth[2][2] = 1.0f;
@@ -2097,32 +2094,32 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
 
   // Projective LK
   {
-    PUSH_MEMORY_STACK(scratch1);
+    PUSH_MEMORY_STACK(scratchOffchip);
 
     InitBenchmarking();
 
     const f64 time0 = GetTimeF32();
 
-    TemplateTracker::LucasKanadeTracker_Slow tracker(image1, templateRegion, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_PROJECTIVE, ridgeWeight, scratch1);
+    TemplateTracker::LucasKanadeTracker_Slow tracker(image1, templateRegion, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_PROJECTIVE, ridgeWeight, scratchOffchip);
 
     ASSERT_TRUE(tracker.IsValid());
 
     const f64 time1 = GetTimeF32();
 
     bool verify_converged = false;
-    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, true, verify_converged, scratch1) == RESULT_OK);
+    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, true, verify_converged, scratchOffchip) == RESULT_OK);
 
     ASSERT_TRUE(verify_converged == true);
 
     const f64 time2 = GetTimeF32();
 
     printf("Projective LK totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
-    PrintBenchmarkResults_All();
+    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
     tracker.get_transformation().Print("Projective LK");
 
     // This ground truth is from the PC c++ version
-    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
+    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
     transform_groundTruth[0][0] = 1.013f;  transform_groundTruth[0][1] = 0.032f; transform_groundTruth[0][2] = -1.339f;
     transform_groundTruth[1][0] = -0.036f; transform_groundTruth[1][1] = 1.0f;   transform_groundTruth[1][2] = -1.042f;
     transform_groundTruth[2][0] = 0.0f;    transform_groundTruth[2][1] = 0.0f;   transform_groundTruth[2][2] = 1.0f;
@@ -2156,28 +2153,28 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
 //  const s32 bigBufferSize = 10000000;
 //  char * bigBuffer = reinterpret_cast<char*>(malloc(bigBufferSize));
 //
-//  MemoryStack scratch1(bigBuffer, bigBufferSize);
+//  MemoryStack scratchOffchip(bigBuffer, bigBufferSize);
 //
-//  ASSERT_TRUE(scratch1.IsValid());
+//  ASSERT_TRUE(scratchOffchip.IsValid());
 //
-//  Array<u8> image1Tmp(imageTmpHeight, imageTmpWidth, scratch1);
+//  Array<u8> image1Tmp(imageTmpHeight, imageTmpWidth, scratchOffchip);
 //  image1Tmp.Set(templateImage, imageTmpWidth*imageTmpHeight);
 //
-//  Array<u8> image2Tmp(imageTmpHeight, imageTmpWidth, scratch1);
+//  Array<u8> image2Tmp(imageTmpHeight, imageTmpWidth, scratchOffchip);
 //  image2Tmp.Set(nextImage, imageTmpWidth*imageTmpHeight);
 //
-//  Array<u8> image1(imageHeight, imageWidth, scratch1);
-//  Array<u8> image2(imageHeight, imageWidth, scratch1);
+//  Array<u8> image1(imageHeight, imageWidth, scratchOffchip);
+//  Array<u8> image2(imageHeight, imageWidth, scratchOffchip);
 //
-//  ImageProcessing::DownsampleByPowerOfTwo<u8,u32,u8>(image1Tmp, 2, image1, scratch1);
-//  ImageProcessing::DownsampleByPowerOfTwo<u8,u32,u8>(image2Tmp, 2, image2, scratch1);
+//  ImageProcessing::DownsampleByPowerOfTwo<u8,u32,u8>(image1Tmp, 2, image1, scratchOffchip);
+//  ImageProcessing::DownsampleByPowerOfTwo<u8,u32,u8>(image2Tmp, 2, image2, scratchOffchip);
 //
-//  TemplateTracker::LucasKanadeTracker_Slow tracker(image1, templateRegion, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, ridgeWeight, scratch1);
+//  TemplateTracker::LucasKanadeTracker_Slow tracker(image1, templateRegion, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, ridgeWeight, scratchOffchip);
 //
 //  ASSERT_TRUE(tracker.IsValid());
 //
 //  bool verify_converged = false;
-//  ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, false, verify_converged, scratch1) == RESULT_OK);
+//  ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, false, verify_converged, scratchOffchip) == RESULT_OK);
 //
 //  tracker.get_transformation().Print("Translation-only LK");
 //
@@ -2550,7 +2547,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
   const s32 maxMarkers = 100;
   //const s32 maxConnectedComponentSegments = 5000; // 25000/4 = 6250
   const s32 maxConnectedComponentSegments = 39000; // 322*240/2 = 38640
-  
+
   const s32 quadRefinementIterations = 5;
 
   MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
@@ -2608,7 +2605,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
     printf("totalTime: %dms\n", Round<s32>(1000*(time1-time0)));
 
     // TODO: add back
-    //PrintBenchmarkResults_All();
+    //ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
     ASSERT_TRUE(result == RESULT_OK);
   }
@@ -2662,12 +2659,12 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
       ASSERT_TRUE(markers[iMarker].markerType == markerTypes_groundTruth[iMarker]);
       for(s32 iCorner=0; iCorner<4; iCorner++) {
         const Point2f& currentCorner = markers[iMarker].corners[iCorner];
-        
+
         const Point2f trueCorner(corners_groundTruth[iMarker][iCorner][0],
-                                 corners_groundTruth[iMarker][iCorner][1]);
-        
+          corners_groundTruth[iMarker][iCorner][1]);
+
         ASSERT_TRUE(NEAR(currentCorner.x, trueCorner.x, 0.05f) &&
-                    NEAR(currentCorner.y, trueCorner.y, 0.05f));
+          NEAR(currentCorner.y, trueCorner.y, 0.05f));
       }
     }
   } else {
@@ -3657,11 +3654,11 @@ GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation)
   // TODO: How much memory do i need here?
   const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 250*sizeof(PRECISION));
 
-  // TODO: is onchipbBuffer the right one to use here?
-  MemoryStack memory(&offchipBuffer[0], numBytes);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(scratchOffchip.IsValid());
 
   // Parameters
-  Array<PRECISION> Rtrue = Array<PRECISION>(3,3,memory);
+  Array<PRECISION> Rtrue = Array<PRECISION>(3,3,scratchOffchip);
   // rodrigues(3*pi/180*[0 0 1])*rodrigues(4*pi/180*[0 1 0])*rodrigues(-10*pi/180*[1 0 0])
   Rtrue[0][0] =  0.9962;  Rtrue[0][1] =   -0.0636;  Rtrue[0][2] =    0.0595;
   Rtrue[1][0] =  0.0522;  Rtrue[1][1] =    0.9828;  Rtrue[1][2] =    0.1770;
@@ -3719,7 +3716,7 @@ GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation)
   }
 
   // Compute the pose of the marker w.r.t. camera from the noisy projection
-  Array<PRECISION> R = Array<PRECISION>(3,3,memory);
+  Array<PRECISION> R = Array<PRECISION>(3,3,scratchOffchip);
   Point3<PRECISION> T;
 
   BeginBenchmark("P3P::computePose");
@@ -3732,7 +3729,7 @@ GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation)
 
   EndBenchmark("P3P::computePose");
 
-  PrintBenchmarkResults_All();
+  ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
   //
   // Check if the estimated pose matches the true pose
@@ -3741,9 +3738,9 @@ GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation)
   // 1. Compute angular difference between the two rotation matrices
   // TODO: make this a utility function somewhere?
   // R = R_this * R_other^T
-  Array<PRECISION> Rdiff = Array<PRECISION>(3,3,memory);
+  Array<PRECISION> Rdiff = Array<PRECISION>(3,3,scratchOffchip);
   Point3<PRECISION> Tdiff;
-  ComputePoseDiff(R, T, Rtrue, Ttrue, Rdiff, Tdiff, memory);
+  ComputePoseDiff(R, T, Rtrue, Ttrue, Rdiff, Tdiff, scratchOffchip);
 
   // This is computing angular rotation vs. identity matrix
   const f32 trace =static_cast<f32>( Rdiff[0][0] + Rdiff[1][1] + Rdiff[2][2] );
@@ -3771,6 +3768,84 @@ GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation)
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation)
+
+GTEST_TEST(CoreTech_Vision, BoxFilterNormalize)
+{
+  // Input image:
+  const s32 testImageHeight = 20;
+  const s32 testImageWidth  = 30;
+  const u8 testImageData[testImageHeight*testImageWidth] = {
+    191, 192, 193, 194, 195, 196, 196, 195, 194, 193, 193, 193, 193, 193, 192, 192, 191, 189, 189, 188, 187, 186, 185, 184, 183, 182, 180,
+    178, 176, 174, 193, 193, 192, 184, 169, 159, 164, 179, 191, 194, 194, 194, 193, 193, 193, 193, 194, 194, 193, 192, 191, 189, 188, 186,
+    186, 185, 184, 182, 179, 177, 194, 192, 183, 149, 97, 45, 55, 112, 161, 189, 193, 194, 193, 193, 193, 190, 184, 176, 170, 167, 169, 175,
+    182, 186, 186, 185, 184, 182, 181, 179, 196, 194, 188, 157, 100, 34, 6, 47, 116, 167, 189, 192, 192, 184, 162, 128, 92, 66, 51, 47, 53,
+    71, 102, 136, 163, 177, 181, 180, 180, 179, 198, 197, 195, 185, 148, 88, 26, 8, 58, 125, 170, 187, 175, 136, 78, 26, 3, 6, 16, 21, 14, 4,
+    7, 37, 93, 144, 174, 181, 181, 181, 199, 198, 198, 196, 182, 140, 77, 17, 11, 68, 132, 162, 140, 78, 14, 2, 37, 86, 125, 137, 118, 73, 23,
+    0, 30, 99, 153, 177, 179, 169, 199, 200, 200, 199, 197, 179, 132, 66, 10, 17, 78, 120, 110, 54, 2, 10, 68, 133, 175, 185, 168, 116, 48, 2,
+    15, 79, 141, 172, 165, 126, 203, 203, 204, 203, 202, 198, 175, 124, 56, 8, 25, 79, 96, 71, 22, 0, 22, 65, 98, 109, 92, 54, 13, 4, 46, 110,
+    158, 169, 134, 72, 204, 204, 204, 204, 203, 203, 198, 171, 119, 58, 30, 74, 123, 129, 98, 49, 17, 6, 5, 7, 6, 8, 27, 70, 122, 164, 180,
+    159, 103, 33, 204, 204, 204, 204, 204, 203, 202, 197, 180, 156, 145, 157, 179, 189, 180, 158, 130, 104, 88, 84, 91, 111, 139, 166, 185,
+    192, 184, 145, 77, 13, 204, 204, 204, 204, 203, 202, 200, 195, 181, 165, 161, 175, 190, 196, 194, 186, 173, 160, 152, 154, 164, 178, 190,
+    196, 196, 194, 182, 135, 62, 6, 203, 204, 204, 204, 203, 201, 189, 156, 102, 51, 55, 111, 149, 155, 128, 91, 62, 44, 38, 44, 62, 94, 135,
+    169, 188, 191, 176, 126, 51, 3, 202, 203, 203, 202, 199, 185, 145, 84, 25, 15, 54, 95, 102, 69, 25, 6, 13, 26, 32, 24, 9, 6, 34, 93, 148,
+    179, 173, 126, 54, 5, 200, 200, 199, 196, 179, 134, 71, 19, 20, 68, 113, 113, 68, 13, 8, 46, 99, 138, 150, 131, 83, 28, 0, 29, 101, 157,
+    174, 140, 74, 14, 197, 198, 193, 170, 122, 58, 13, 25, 80, 137, 159, 125, 57, 7, 16, 73, 136, 174, 181, 163, 110, 42, 2, 22, 92, 152, 179,
+    164, 113, 45, 194, 190, 166, 117, 56, 20, 39, 95, 150, 183, 185, 153, 96, 38, 14, 32, 71, 98, 104, 85, 47, 14, 18, 68, 131, 175, 190, 188,
+    166, 116, 189, 165, 116, 56, 32, 62, 119, 169, 194, 200, 200, 193, 169, 129, 87, 55, 41, 38, 36, 37, 46, 71, 110, 151, 183, 197, 198, 198,
+    195, 182, 188, 158, 114, 74, 86, 135, 180, 202, 206, 206, 206, 207, 205, 197, 180, 158, 138, 125, 124, 133, 152, 173, 191, 199, 200, 200,
+    200, 199, 197, 196, 194, 187, 175, 172, 179, 193, 201, 203, 204, 204, 205, 205, 205, 206, 206, 204, 202, 199, 199, 199, 201, 202, 202,
+    200, 199, 199, 198, 196, 194, 192, 191, 192, 193, 195, 198, 198, 198, 199, 200, 201, 202, 202, 202, 202, 201, 201, 201, 201, 200, 199,
+    198, 198, 197, 196, 195, 195, 193, 191, 189, 186};
+  
+  // Ground truth result for filterWidth = 5, 10, 20, 40, 80
+  const s32 NUM_FILTER_WIDTHS = 5;
+  const u8 groundTruthData[NUM_FILTER_WIDTHS][testImageHeight*testImageWidth] = {
+    // FilterWidth = 5:
+    {217, 222, 234, 218, 233, 241, 240, 228, 213, 200, 194, 192, 192, 192, 192, 193, 193, 193, 194, 194, 193, 191, 189, 188, 186, 186, 184, 183, 180, 178, 220, 221, 232, 204, 214, 221, 230, 232, 218, 196, 183, 177, 176, 180, 186, 194, 205, 215, 222, 223, 219, 210, 200, 189, 183, 178, 175, 173, 172, 172, 220, 215, 215, 156, 122, 68, 89, 168, 202, 197, 178, 170, 171, 182, 199, 218, 234, 243, 247, 246, 245, 241, 231, 213, 194, 178, 168, 162, 164, 166, 195, 180, 172, 126, 96, 39, 8, 61, 130, 154, 151, 145, 148, 155, 154, 136, 106, 78, 60, 55, 63, 85, 118, 144, 154, 150, 140, 132, 137, 144, 196, 181, 175, 146, 141, 106, 39, 13, 83, 143, 162, 164, 159, 139, 94, 36, 4, 8, 20, 26, 18, 5, 10, 50, 109, 141, 147, 140, 141, 148, 195, 178, 169, 143, 152, 145, 102, 27, 18, 97, 157, 175, 157, 103, 23, 4, 79, 161, 201, 210, 196, 142, 49, 0, 44, 112, 140, 146, 147, 145, 193, 176, 163, 134, 145, 153, 141, 90, 16, 27, 111, 157, 147, 84, 4, 26, 187, 255, 255, 255, 255, 255, 129, 4, 24, 94, 135, 152, 144, 115, 196, 177, 162, 131, 137, 148, 153, 133, 73, 11, 34, 102, 123, 98, 35, 0, 41, 109, 145, 155, 140, 93, 24, 6, 62, 120, 151, 161, 128, 72, 197, 177, 161, 129, 131, 139, 150, 152, 124, 67, 35, 85, 136, 145, 118, 64, 23, 8, 6, 8, 7, 10, 35, 85, 130, 155, 166, 161, 107, 37, 196, 176, 160, 128, 129, 133, 144, 162, 174, 170, 164, 171, 184, 190, 192, 192, 183, 162, 142, 133, 135, 150, 164, 169, 165, 161, 162, 153, 87, 16, 196, 176, 160, 128, 130, 135, 147, 164, 179, 181, 180, 187, 192, 195, 207, 229, 255, 255, 255, 255, 255, 251, 218, 185, 161, 153, 157, 148, 75, 8, 196, 177, 162, 131, 136, 146, 155, 149, 110, 58, 62, 120, 157, 166, 145, 112, 81, 60, 53, 64, 89, 124, 154, 163, 159, 154, 156, 142, 63, 4, 196, 179, 166, 138, 148, 157, 145, 98, 32, 19, 67, 116, 128, 92, 35, 8, 17, 33, 40, 32, 13, 8, 45, 105, 141, 155, 156, 140, 65, 6, 197, 183, 176, 149, 156, 139, 88, 26, 28, 91, 146, 152, 103, 23, 16, 93, 175, 214, 225, 217, 162, 59, 0, 40, 108, 142, 154, 143, 81, 16, 202, 197, 195, 150, 127, 72, 18, 34, 99, 153, 172, 145, 79, 12, 34, 160, 255, 255, 255, 255, 225, 94, 3, 31, 99, 134, 148, 147, 108, 47, 208, 205, 190, 117, 66, 26, 50, 109, 148, 162, 160, 142, 104, 49, 21, 48, 97, 122, 126, 109, 67, 21, 25, 80, 126, 144, 146, 150, 140, 107, 205, 182, 136, 56, 35, 71, 125, 155, 156, 148, 147, 151, 148, 128, 95, 62, 45, 40, 37, 40, 51, 80, 116, 142, 151, 147, 140, 143, 150, 152, 204, 173, 129, 69, 84, 127, 154, 155, 144, 138, 137, 143, 152, 159, 158, 147, 133, 121, 121, 129, 145, 158, 163, 156, 145, 137, 134, 134, 143, 154, 209, 202, 190, 156, 162, 167, 160, 150, 143, 140, 140, 143, 147, 154, 163, 171, 177, 180, 181, 178, 173, 165, 157, 148, 143, 140, 139, 138, 145, 154, 199, 196, 192, 167, 168, 162, 155, 151, 148, 148, 148, 149, 149, 151, 153, 156, 160, 162, 161, 159, 156, 153, 150, 148, 147, 147, 146, 145, 151, 157},
+    // FilterWidth = 10:
+    {199, 206, 213, 218, 219, 219, 205, 205, 206, 209, 211, 210, 207, 205, 203, 206, 210, 215, 220, 221, 217, 211, 204, 198, 192, 188, 184, 178, 173, 169, 198, 204, 210, 206, 191, 179, 171, 189, 207, 216, 222, 223, 219, 214, 211, 211, 218, 226, 233, 235, 229, 219, 210, 202, 198, 195, 191, 186, 179, 173, 196, 199, 196, 164, 109, 50, 57, 119, 176, 216, 230, 236, 233, 228, 224, 220, 218, 217, 220, 219, 216, 213, 211, 208, 204, 201, 196, 190, 183, 176, 195, 197, 196, 169, 110, 37, 6, 49, 126, 191, 228, 240, 242, 230, 200, 158, 116, 88, 71, 67, 73, 92, 124, 158, 186, 198, 197, 190, 183, 176, 194, 196, 198, 193, 157, 94, 25, 8, 60, 137, 197, 225, 214, 166, 95, 31, 3, 7, 22, 30, 19, 5, 8, 43, 106, 160, 189, 190, 183, 177, 192, 193, 196, 199, 188, 145, 72, 16, 11, 71, 146, 186, 164, 91, 16, 2, 44, 109, 167, 187, 155, 90, 26, 0, 33, 108, 164, 184, 180, 165, 180, 181, 182, 184, 184, 168, 112, 57, 9, 16, 78, 126, 119, 59, 2, 11, 76, 156, 215, 231, 202, 131, 51, 2, 15, 80, 140, 167, 157, 118, 183, 183, 186, 190, 193, 192, 154, 113, 53, 8, 27, 92, 116, 88, 27, 0, 28, 88, 140, 157, 125, 67, 15, 4, 51, 119, 166, 171, 131, 69, 181, 181, 184, 190, 195, 199, 177, 159, 117, 62, 35, 95, 166, 177, 133, 67, 24, 9, 8, 11, 9, 10, 33, 83, 147, 191, 202, 170, 105, 32, 180, 180, 184, 190, 197, 199, 182, 186, 183, 175, 180, 213, 254, 255, 250, 219, 187, 161, 145, 137, 135, 148, 171, 200, 231, 233, 215, 161, 80, 13, 183, 183, 186, 191, 196, 198, 181, 186, 186, 187, 202, 236, 255, 255, 255, 255, 247, 245, 245, 241, 234, 228, 226, 231, 241, 233, 211, 149, 65, 6, 188, 188, 189, 192, 195, 196, 169, 147, 102, 55, 65, 140, 196, 208, 173, 125, 89, 67, 60, 67, 86, 118, 158, 195, 224, 221, 196, 133, 51, 2, 191, 191, 191, 191, 190, 177, 127, 76, 24, 15, 58, 107, 120, 84, 31, 7, 17, 37, 47, 34, 11, 7, 37, 102, 166, 194, 181, 126, 52, 4, 191, 189, 187, 183, 167, 124, 60, 16, 18, 64, 111, 114, 71, 13, 8, 52, 118, 172, 190, 160, 95, 30, 0, 29, 104, 158, 170, 133, 68, 12, 188, 188, 181, 158, 112, 52, 10, 21, 69, 123, 147, 118, 54, 6, 15, 74, 144, 191, 200, 175, 112, 40, 1, 20, 87, 143, 166, 149, 102, 40, 188, 184, 160, 112, 53, 18, 33, 83, 135, 170, 177, 148, 94, 37, 14, 32, 75, 107, 115, 91, 48, 13, 16, 63, 124, 165, 177, 172, 150, 105, 186, 163, 114, 55, 31, 59, 105, 154, 182, 194, 199, 195, 172, 132, 90, 58, 45, 43, 41, 41, 48, 71, 106, 144, 176, 188, 186, 183, 177, 165, 188, 159, 115, 74, 85, 131, 162, 186, 195, 201, 205, 207, 204, 196, 180, 162, 147, 138, 139, 145, 158, 171, 183, 189, 191, 190, 188, 184, 179, 177, 197, 191, 179, 174, 177, 187, 181, 186, 191, 194, 196, 195, 193, 193, 194, 197, 202, 205, 207, 203, 197, 192, 187, 183, 183, 184, 182, 179, 175, 173, 196, 197, 197, 195, 194, 189, 177, 180, 183, 184, 185, 183, 182, 183, 184, 189, 194, 199, 199, 195, 189, 184, 179, 176, 175, 175, 173, 171, 168, 166},
+    // FilterWidth = 20:
+    {195, 196, 197, 197, 199, 201, 204, 205, 206, 207, 202, 206, 211, 216, 219, 220, 217, 212, 208, 205, 204, 204, 203, 202, 199, 195, 191, 187, 183, 180, 195, 195, 193, 185, 169, 160, 167, 184, 199, 203, 198, 203, 206, 211, 215, 216, 215, 212, 208, 206, 205, 204, 204, 202, 200, 197, 194, 190, 185, 182, 195, 193, 184, 149, 97, 45, 56, 115, 167, 198, 198, 203, 208, 213, 217, 215, 206, 194, 185, 180, 184, 191, 199, 204, 202, 199, 195, 191, 188, 184, 197, 196, 189, 157, 100, 34, 6, 49, 122, 178, 197, 206, 212, 209, 188, 150, 106, 75, 57, 52, 59, 79, 115, 153, 182, 194, 196, 192, 190, 186, 200, 200, 197, 187, 150, 90, 27, 8, 62, 135, 179, 203, 197, 158, 93, 31, 3, 7, 18, 23, 16, 4, 8, 42, 105, 160, 190, 195, 193, 191, 202, 202, 202, 199, 186, 145, 81, 18, 11, 74, 140, 178, 160, 92, 17, 2, 44, 101, 144, 157, 137, 84, 26, 0, 34, 110, 168, 192, 192, 179, 203, 205, 204, 203, 203, 187, 141, 71, 11, 18, 83, 134, 128, 65, 2, 12, 84, 159, 205, 215, 198, 137, 56, 2, 17, 89, 156, 187, 178, 134, 208, 208, 209, 207, 208, 207, 187, 135, 62, 9, 27, 89, 113, 87, 27, 0, 27, 78, 115, 127, 108, 64, 15, 4, 53, 124, 175, 184, 144, 76, 209, 209, 208, 207, 207, 210, 210, 184, 130, 64, 32, 82, 143, 155, 121, 60, 20, 7, 5, 7, 6, 9, 31, 81, 138, 182, 196, 170, 109, 34, 207, 206, 205, 204, 205, 207, 209, 208, 192, 169, 150, 169, 201, 220, 214, 188, 151, 117, 97, 92, 101, 124, 157, 186, 205, 208, 196, 152, 80, 13, 199, 198, 196, 194, 193, 194, 194, 192, 179, 165, 153, 173, 195, 208, 210, 201, 184, 166, 154, 155, 168, 184, 198, 205, 203, 198, 183, 135, 61, 5, 199, 199, 198, 196, 195, 195, 186, 156, 103, 52, 53, 112, 157, 169, 142, 101, 67, 46, 39, 45, 65, 99, 144, 180, 198, 198, 180, 128, 51, 2, 198, 198, 197, 195, 192, 181, 144, 84, 25, 15, 53, 97, 109, 76, 28, 6, 14, 28, 34, 25, 9, 6, 37, 101, 159, 189, 180, 129, 55, 5, 195, 194, 192, 188, 173, 131, 70, 19, 20, 69, 111, 115, 72, 14, 8, 52, 110, 150, 160, 139, 89, 30, 0, 31, 108, 165, 180, 144, 75, 14, 191, 192, 186, 163, 117, 56, 12, 25, 80, 138, 155, 125, 59, 7, 17, 80, 148, 186, 190, 170, 116, 44, 2, 23, 96, 157, 183, 167, 114, 45, 187, 183, 159, 112, 53, 19, 38, 94, 149, 183, 179, 152, 98, 39, 14, 34, 75, 102, 107, 87, 49, 14, 18, 71, 136, 180, 193, 190, 167, 116, 182, 159, 111, 53, 30, 59, 115, 165, 191, 198, 192, 190, 171, 133, 91, 57, 42, 38, 36, 37, 47, 73, 114, 157, 189, 201, 201, 199, 195, 181, 181, 152, 109, 70, 82, 129, 173, 195, 200, 201, 196, 201, 204, 199, 183, 160, 139, 124, 122, 132, 153, 175, 194, 203, 203, 201, 200, 198, 195, 193, 188, 180, 168, 164, 171, 185, 193, 196, 197, 198, 193, 197, 201, 204, 205, 202, 198, 193, 192, 193, 198, 200, 201, 199, 197, 197, 195, 193, 190, 188, 187, 187, 187, 188, 191, 192, 193, 195, 196, 197, 194, 197, 200, 202, 202, 201, 199, 197, 194, 194, 196, 197, 196, 195, 193, 192, 190, 187, 185, 182},
+    // FilterWidth = 40:
+    {195, 196, 197, 197, 199, 201, 204, 205, 206, 207, 202, 206, 211, 216, 219, 220, 217, 212, 208, 205, 204, 204, 203, 202, 199, 195, 191, 187, 183, 180, 195, 195, 193, 185, 169, 160, 167, 184, 199, 203, 198, 203, 206, 211, 215, 216, 215, 212, 208, 206, 205, 204, 204, 202, 200, 197, 194, 190, 185, 182, 195, 193, 184, 149, 97, 45, 56, 115, 167, 198, 198, 203, 208, 213, 217, 215, 206, 194, 185, 180, 184, 191, 199, 204, 202, 199, 195, 191, 188, 184, 197, 196, 189, 157, 100, 34, 6, 49, 122, 178, 197, 206, 212, 209, 188, 150, 106, 75, 57, 52, 59, 79, 115, 153, 182, 194, 196, 192, 190, 186, 200, 200, 197, 187, 150, 90, 27, 8, 62, 135, 179, 203, 197, 158, 93, 31, 3, 7, 18, 23, 16, 4, 8, 42, 105, 160, 190, 195, 193, 191, 202, 202, 202, 199, 186, 145, 81, 18, 11, 74, 140, 178, 160, 92, 17, 2, 44, 101, 144, 157, 137, 84, 26, 0, 34, 110, 168, 192, 192, 179, 203, 205, 204, 203, 203, 187, 141, 71, 11, 18, 83, 134, 128, 65, 2, 12, 84, 159, 205, 215, 198, 137, 56, 2, 17, 89, 156, 187, 178, 134, 208, 208, 209, 207, 208, 207, 187, 135, 62, 9, 27, 89, 113, 87, 27, 0, 27, 78, 115, 127, 108, 64, 15, 4, 53, 124, 175, 184, 144, 76, 209, 209, 208, 207, 207, 210, 210, 184, 130, 64, 32, 82, 143, 155, 121, 60, 20, 7, 5, 7, 6, 9, 31, 81, 138, 182, 196, 170, 109, 34, 207, 206, 205, 204, 205, 207, 209, 208, 192, 169, 150, 169, 201, 220, 214, 188, 151, 117, 97, 92, 101, 124, 157, 186, 205, 208, 196, 152, 80, 13, 199, 198, 196, 194, 193, 194, 194, 192, 179, 165, 153, 173, 195, 208, 210, 201, 184, 166, 154, 155, 168, 184, 198, 205, 203, 198, 183, 135, 61, 5, 199, 199, 198, 196, 195, 195, 186, 156, 103, 52, 53, 112, 157, 169, 142, 101, 67, 46, 39, 45, 65, 99, 144, 180, 198, 198, 180, 128, 51, 2, 198, 198, 197, 195, 192, 181, 144, 84, 25, 15, 53, 97, 109, 76, 28, 6, 14, 28, 34, 25, 9, 6, 37, 101, 159, 189, 180, 129, 55, 5, 195, 194, 192, 188, 173, 131, 70, 19, 20, 69, 111, 115, 72, 14, 8, 52, 110, 150, 160, 139, 89, 30, 0, 31, 108, 165, 180, 144, 75, 14, 191, 192, 186, 163, 117, 56, 12, 25, 80, 138, 155, 125, 59, 7, 17, 80, 148, 186, 190, 170, 116, 44, 2, 23, 96, 157, 183, 167, 114, 45, 187, 183, 159, 112, 53, 19, 38, 94, 149, 183, 179, 152, 98, 39, 14, 34, 75, 102, 107, 87, 49, 14, 18, 71, 136, 180, 193, 190, 167, 116, 182, 159, 111, 53, 30, 59, 115, 165, 191, 198, 192, 190, 171, 133, 91, 57, 42, 38, 36, 37, 47, 73, 114, 157, 189, 201, 201, 199, 195, 181, 181, 152, 109, 70, 82, 129, 173, 195, 200, 201, 196, 201, 204, 199, 183, 160, 139, 124, 122, 132, 153, 175, 194, 203, 203, 201, 200, 198, 195, 193, 188, 180, 168, 164, 171, 185, 193, 196, 197, 198, 193, 197, 201, 204, 205, 202, 198, 193, 192, 193, 198, 200, 201, 199, 197, 197, 195, 193, 190, 188, 187, 187, 187, 188, 191, 192, 193, 195, 196, 197, 194, 197, 200, 202, 202, 201, 199, 197, 194, 194, 196, 197, 196, 195, 193, 192, 190, 187, 185, 182},
+    // FilterWidth = 80:
+    {195, 196, 197, 197, 199, 201, 204, 205, 206, 207, 202, 206, 211, 216, 219, 220, 217, 212, 208, 205, 204, 204, 203, 202, 199, 195, 191, 187, 183, 180, 195, 195, 193, 185, 169, 160, 167, 184, 199, 203, 198, 203, 206, 211, 215, 216, 215, 212, 208, 206, 205, 204, 204, 202, 200, 197, 194, 190, 185, 182, 195, 193, 184, 149, 97, 45, 56, 115, 167, 198, 198, 203, 208, 213, 217, 215, 206, 194, 185, 180, 184, 191, 199, 204, 202, 199, 195, 191, 188, 184, 197, 196, 189, 157, 100, 34, 6, 49, 122, 178, 197, 206, 212, 209, 188, 150, 106, 75, 57, 52, 59, 79, 115, 153, 182, 194, 196, 192, 190, 186, 200, 200, 197, 187, 150, 90, 27, 8, 62, 135, 179, 203, 197, 158, 93, 31, 3, 7, 18, 23, 16, 4, 8, 42, 105, 160, 190, 195, 193, 191, 202, 202, 202, 199, 186, 145, 81, 18, 11, 74, 140, 178, 160, 92, 17, 2, 44, 101, 144, 157, 137, 84, 26, 0, 34, 110, 168, 192, 192, 179, 203, 205, 204, 203, 203, 187, 141, 71, 11, 18, 83, 134, 128, 65, 2, 12, 84, 159, 205, 215, 198, 137, 56, 2, 17, 89, 156, 187, 178, 134, 208, 208, 209, 207, 208, 207, 187, 135, 62, 9, 27, 89, 113, 87, 27, 0, 27, 78, 115, 127, 108, 64, 15, 4, 53, 124, 175, 184, 144, 76, 209, 209, 208, 207, 207, 210, 210, 184, 130, 64, 32, 82, 143, 155, 121, 60, 20, 7, 5, 7, 6, 9, 31, 81, 138, 182, 196, 170, 109, 34, 207, 206, 205, 204, 205, 207, 209, 208, 192, 169, 150, 169, 201, 220, 214, 188, 151, 117, 97, 92, 101, 124, 157, 186, 205, 208, 196, 152, 80, 13, 199, 198, 196, 194, 193, 194, 194, 192, 179, 165, 153, 173, 195, 208, 210, 201, 184, 166, 154, 155, 168, 184, 198, 205, 203, 198, 183, 135, 61, 5, 199, 199, 198, 196, 195, 195, 186, 156, 103, 52, 53, 112, 157, 169, 142, 101, 67, 46, 39, 45, 65, 99, 144, 180, 198, 198, 180, 128, 51, 2, 198, 198, 197, 195, 192, 181, 144, 84, 25, 15, 53, 97, 109, 76, 28, 6, 14, 28, 34, 25, 9, 6, 37, 101, 159, 189, 180, 129, 55, 5, 195, 194, 192, 188, 173, 131, 70, 19, 20, 69, 111, 115, 72, 14, 8, 52, 110, 150, 160, 139, 89, 30, 0, 31, 108, 165, 180, 144, 75, 14, 191, 192, 186, 163, 117, 56, 12, 25, 80, 138, 155, 125, 59, 7, 17, 80, 148, 186, 190, 170, 116, 44, 2, 23, 96, 157, 183, 167, 114, 45, 187, 183, 159, 112, 53, 19, 38, 94, 149, 183, 179, 152, 98, 39, 14, 34, 75, 102, 107, 87, 49, 14, 18, 71, 136, 180, 193, 190, 167, 116, 182, 159, 111, 53, 30, 59, 115, 165, 191, 198, 192, 190, 171, 133, 91, 57, 42, 38, 36, 37, 47, 73, 114, 157, 189, 201, 201, 199, 195, 181, 181, 152, 109, 70, 82, 129, 173, 195, 200, 201, 196, 201, 204, 199, 183, 160, 139, 124, 122, 132, 153, 175, 194, 203, 203, 201, 200, 198, 195, 193, 188, 180, 168, 164, 171, 185, 193, 196, 197, 198, 193, 197, 201, 204, 205, 202, 198, 193, 192, 193, 198, 200, 201, 199, 197, 197, 195, 193, 190, 188, 187, 187, 187, 188, 191, 192, 193, 195, 196, 197, 194, 197, 200, 202, 202, 201, 199, 197, 194, 194, 196, 197, 196, 195, 193, 192, 190, 187, 185, 182}
+  };
+  const s32 filterWidths[NUM_FILTER_WIDTHS] = {5, 10, 20, 40, 80};
+  
+  // Need space for input, output, and ground truth, plus the f32 array used
+  // inside BoxFilterNormalize for the integral image, plus some "extra"
+  const s32 BUFFER_SIZE = 9*testImageWidth*testImageHeight;
+  u8 buffer[BUFFER_SIZE];
+  MemoryStack scratch(buffer, BUFFER_SIZE);
+  
+  Array<u8> testImage(testImageHeight, testImageWidth, scratch);
+  ASSERT_TRUE(testImage.IsValid());
+  
+  Array<u8> groundTruthResult(testImageHeight, testImageWidth, scratch);
+  ASSERT_TRUE(groundTruthResult.IsValid());
+
+  Array<u8> testImageNorm(testImageHeight, testImageWidth, scratch);
+  ASSERT_TRUE(testImageNorm.IsValid());
+  
+  ASSERT_TRUE(testImage.Set(testImageData, testImageHeight*testImageWidth) == testImageHeight*testImageWidth);
+  
+  for(s32 iWidth=0; iWidth<NUM_FILTER_WIDTHS; ++iWidth) {
+    ASSERT_TRUE(groundTruthResult.Set(groundTruthData[iWidth], testImageHeight*testImageWidth) == testImageHeight*testImageWidth);
+    
+    Result lastResult = ImageProcessing::BoxFilterNormalize(testImage, filterWidths[iWidth],
+                                                            static_cast<u8>(128), testImageNorm, scratch);
+    
+    ASSERT_TRUE(lastResult == RESULT_OK);
+    
+    EXPECT_TRUE(testImageNorm.IsNearlyEqualTo(groundTruthResult, 1));
+    
+    //testImageNorm.Show("testImageNorm", false);
+    //groundTruthResult.Show("groundTruth", true);
+    
+  } // for each filter width
+  
+} // GTEST_TEST(CoreTech_Vision, BoxFilterNormalize)
 
 #if !ANKICORETECH_EMBEDDED_USE_GTEST
 s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
@@ -3814,6 +3889,7 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   CALL_GTEST_TEST(CoreTech_Vision, DownsampleByFactor);
   CALL_GTEST_TEST(CoreTech_Vision, SolveQuartic);
   CALL_GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation);
+  CALL_GTEST_TEST(CoreTech_Vision, BoxFilterNormalize);
 
   return numFailedTests;
 } // int RUN_ALL_VISION_TESTS()

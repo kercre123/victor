@@ -12,5 +12,9 @@ if(NOT WIN32)
     CoreTech_Vision_Basestation CoreTech_Common_Basestation
     ${OPENCV_LIBS} gtest jsoncpp)
     
+  set_target_properties(run_coreTechVisionTests PROPERTIES
+    FOLDER "Unit Tests"
+  )
+    
 endif()
     
