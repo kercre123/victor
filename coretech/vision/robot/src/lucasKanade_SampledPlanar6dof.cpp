@@ -578,7 +578,7 @@ namespace Anki
 #if USE_INTENSITY_NORMALIZATION
               curTemplateSample.grayvalue   = (static_cast<f32>(pGrayscaleVector[curIndex]) - curMean) * curSigmaInv;
 #else
-              curTemplateSample.grayvalue   = static_cast<f32>(pGrayscaleVector[curIndex]);
+              curTemplateSample.grayvalue   = pGrayscaleVector[curIndex];
 #endif
               
               // Everything below here is about filling in the Jacobian info
