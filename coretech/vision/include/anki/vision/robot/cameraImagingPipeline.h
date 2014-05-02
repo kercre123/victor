@@ -30,6 +30,11 @@ namespace Anki
       const f32 maxMilliseconds,
       f32 &exposureMilliseconds, //< Input the value used to capture "Array<u8> &image", and outputs the value to set next
       MemoryStack scratch);
+
+    Result CorrectVignetting(
+      Array<u8> &image,
+      const FixedLengthList<f32> &polynomialParameters, //< Use the matlab tool fit2dCurve to get a model of the form [constant, x, y, x.^2, y.^2, ...]
+      MemoryStack scratch);
   } // namespace Embedded
 } // namespace Anki
 
