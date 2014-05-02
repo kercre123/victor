@@ -904,14 +904,14 @@
           <GroupName>coretech-vision</GroupName>
           <Files>
             <File>
-              <FileName>autoExposure.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\autoExposure.cpp</FilePath>
-            </File>
-            <File>
               <FileName>binaryTracker.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\binaryTracker.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>cameraImagingPipeline.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\cameraImagingPipeline.cpp</FilePath>
             </File>
             <File>
               <FileName>cascadeClassifier.cpp</FileName>
@@ -2187,14 +2187,14 @@
           <GroupName>coretech-vision</GroupName>
           <Files>
             <File>
-              <FileName>autoExposure.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\autoExposure.cpp</FilePath>
-            </File>
-            <File>
               <FileName>binaryTracker.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\binaryTracker.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>cameraImagingPipeline.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\cameraImagingPipeline.cpp</FilePath>
             </File>
             <File>
               <FileName>cascadeClassifier.cpp</FileName>
