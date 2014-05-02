@@ -259,6 +259,11 @@ namespace Anki {
         lastActionSucceeded_ = false;        
       }
       
+      void PlaceOnGround()
+      {
+        // TODO: ...
+      }
+      
       
     } // namespace PickAndPlaceController
   } // namespace Cozmo
