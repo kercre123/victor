@@ -195,7 +195,7 @@ namespace Anki {
       // Returns true when the point (computed by one of the projection functions
       // above) is behind the camera.  Otherwise it is false -- even if the point
       // is outside image dimensions.
-      bool isBehind(const Point2f& projectedPoint) const;
+      static bool isBehind(const Point2f& projectedPoint);
       
       // Returns true when the point (computed by one of the projection functions
       // above) is BOTH in front of the camera AND within image dimensions.
@@ -233,14 +233,14 @@ namespace Anki {
     inline void Camera::set_pose(const Pose3d& newPose)
     { this->pose = newPose; }
     
-    inline bool Camera::isBehind(const Point2f &projectedPoint) const
+    inline bool Camera::isBehind(const Point2f &projectedPoint)
     {
       return (std::isnan(projectedPoint.x()) || std::isnan(projectedPoint.y()));
     }
     
     inline bool Camera::isVisible(const Point2f &projectedPoint) const
     {
-      return (not isBehind(projectedPoint) &&
+      return (not Camera::isBehind(projectedPoint) &&
               projectedPoint.x() >= 0.f && projectedPoint.y() >= 0.f &&
               projectedPoint.x() < this->calibration.get_ncols() &&
               projectedPoint.y() < this->calibration.get_nrows());
