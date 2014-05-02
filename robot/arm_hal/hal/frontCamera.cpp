@@ -78,7 +78,9 @@ namespace Anki
         0x91, 0x01,  // Auto De-noise Threshold Control
 
         // Lens correction control
-        0x46, 0x01, // on/off and RGB
+        //0x46, 0x01, // Vignetting correction on and grayscale
+        0x46, 0x00, // Vignetting correction off
+        
         0x47, 0x00, // x center
         0x48, 0x00, // y center
         0x49, 0x20, // RGB (or G) coefficient
