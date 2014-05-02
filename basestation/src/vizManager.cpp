@@ -64,6 +64,33 @@ namespace Anki {
     }
     
     
+    // ===== Robot drawing function =======
+    
+    void VizManager::DrawRobot(const u32 robotID,
+                               const Pose3d &pose,
+                               const f32 headAngle,
+                               const f32 liftAngle)
+    {
+      VizSetRobot v;
+      
+      v.robotID = robotID;
+      
+      v.x_trans_m = MM_TO_M(pose.get_translation().x());
+      v.y_trans_m = MM_TO_M(pose.get_translation().y());
+      v.z_trans_m = MM_TO_M(pose.get_translation().z());
+      
+      v.rot_rad = pose.get_rotationAngle().ToFloat();
+      v.rot_axis_x = pose.get_rotationAxis().x();
+      v.rot_axis_y = pose.get_rotationAxis().y();
+      v.rot_axis_z = pose.get_rotationAxis().z();
+
+      v.head_angle = headAngle;
+      v.lift_angle = liftAngle;
+      
+      SendMessage(GET_MESSAGE_ID(VizSetRobot), &v);
+    }
+    
+    
     // ===== Convenience object draw functions for specific object types ====
     
     void VizManager::DrawRobot(const u32 robotID,

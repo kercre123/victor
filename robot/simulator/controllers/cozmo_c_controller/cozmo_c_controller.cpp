@@ -52,7 +52,7 @@ int main(int argc, char **argv)
       break;
     }
       
-    if(Sim::KeyboardController::IsEnabled() && TestModeController::GetMode() == TestModeController::TM_NONE) {
+    if(Sim::KeyboardController::IsEnabled() && TestModeController::GetMode() == TM_NONE) {
       Sim::KeyboardController::ProcessKeystroke();
     }      
   }

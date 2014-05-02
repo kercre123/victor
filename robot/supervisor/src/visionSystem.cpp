@@ -31,12 +31,12 @@
 // Cozmo-Specific Library Includes
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
-#include "messages.h"
-#include "visionSystem.h"
 
 // Local Cozmo Includes
 #include "headController.h"
 #include "matlabVisualization.h"
+#include "messages.h"
+#include "visionSystem.h"
 #include "visionDebugStream.h"
 
 #if USE_MATLAB_TRACKER || USE_MATLAB_DETECTOR
@@ -74,8 +74,9 @@ namespace Anki {
         static const s32 CCM_BUFFER_SIZE = 500000; // The max here is probably 65536 (0x10000) bytes
         */
         static const s32 OFFCHIP_BUFFER_SIZE = 2000000;
-        static const s32 ONCHIP_BUFFER_SIZE = 170000; // The max here is somewhere between 175000 and 180000 bytes
-        static const s32 CCM_BUFFER_SIZE = 50000; // The max here is probably 65536 (0x10000) bytes
+        static const s32 ONCHIP_BUFFER_SIZE  = 170000; // The max here is somewhere between 175000 and 180000 bytes
+        static const s32 CCM_BUFFER_SIZE     = 50000; // The max here is probably 65536 (0x10000) bytes
+        
         static const s32 MAX_MARKERS = 100; // TODO: this should probably be in visionParameters
 
         static OFFCHIP char offchipBuffer[OFFCHIP_BUFFER_SIZE];
@@ -93,8 +94,8 @@ namespace Anki {
         static Result ResetBuffers()
         {
           offchipScratch_ = MemoryStack(offchipBuffer, OFFCHIP_BUFFER_SIZE);
-          onchipScratch_ = MemoryStack(onchipBuffer, ONCHIP_BUFFER_SIZE);
-          ccmScratch_ = MemoryStack(ccmBuffer, CCM_BUFFER_SIZE);
+          onchipScratch_  = MemoryStack(onchipBuffer, ONCHIP_BUFFER_SIZE);
+          ccmScratch_     = MemoryStack(ccmBuffer, CCM_BUFFER_SIZE);
 
           if(!offchipScratch_.IsValid() || !onchipScratch_.IsValid() || !ccmScratch_.IsValid()) {
             PRINT("Error: InitializeScratchBuffers\n");
@@ -131,6 +132,7 @@ namespace Anki {
         static VisionSystemMode mode_;
 
         // Camera parameters
+        // TODO: Should these be moved to (their own struct in) visionParameters.h/cpp?
         static f32 exposureTime;
         static s32 frameNumber;
         static const bool autoExposure_enabled = true;
@@ -160,6 +162,7 @@ namespace Anki {
         static Vision::CameraResolution        faceDetectionResolution_;
 
         // For sending images to basestation
+        static ImageSendMode_t                 imageSendMode_ = ISM_OFF;
         static Vision::CameraResolution        nextSendImageResolution_ = Vision::CAMERA_RES_NONE;
 
         /* Only using static members of SimulatorParameters now
@@ -258,12 +261,13 @@ namespace Anki {
         return prevRobotState_.headAngle;
       }
 
-      void SendNextImage(Vision::CameraResolution res)
+      void SetImageSendMode(ImageSendMode_t mode, Vision::CameraResolution res)
       {
         if (res == Vision::CAMERA_RES_QVGA ||
             res == Vision::CAMERA_RES_QQVGA ||
             res == Vision::CAMERA_RES_QQQVGA ||
             res == Vision::CAMERA_RES_QQQQVGA) {
+          imageSendMode_ = mode;
           nextSendImageResolution_ = res;
         }
       }
@@ -271,7 +275,7 @@ namespace Anki {
       void DownsampleAndSendImage(Array<u8> &img)
       {
         // Only downsample if normal capture res is QVGA
-        if (nextSendImageResolution_ != Vision::CAMERA_RES_NONE && captureResolution_ == Vision::CAMERA_RES_QVGA) {
+        if (imageSendMode_ != ISM_OFF && captureResolution_ == Vision::CAMERA_RES_QVGA) {
 
           static u8 imgID = 0;
 
@@ -321,7 +325,10 @@ namespace Anki {
             }
           }
 
-          nextSendImageResolution_ = Vision::CAMERA_RES_NONE;
+          // Turn off image sending if sending single image only.
+          if (imageSendMode_ == ISM_SINGLE_SHOT) {
+            imageSendMode_ = ISM_OFF;
+          }
         }
       }
 
@@ -1240,7 +1247,8 @@ namespace Anki {
 
       void StopTracking()
       {
-        mode_ = VISION_MODE_IDLE;
+        isTrackingMarkerSpecified_ = false;
+        mode_ = VISION_MODE_LOOKING_FOR_MARKERS;
       }
 
       const Embedded::FixedLengthList<Embedded::VisionMarker>& GetObservedMarkerList()

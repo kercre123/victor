@@ -22,6 +22,10 @@ file(GLOB HEADER_FILES
   C:/Anki/products-cozmo/basestation/src/messageDefMacros.h
 )
 
+#
+# run_pc_saveVideo
+#
+
 add_executable(run_pc_saveVideo
   ${SOURCE_FILES_SAVE_VIDEO}
   ${HEADER_FILES})
@@ -31,6 +35,14 @@ target_link_libraries(run_pc_saveVideo
   CoreTech_Vision_Robot
   DebugStreamClient
   ${ALL_EMBEDDED_LIBRARIES})
+
+set_target_properties(run_pc_saveVideo PROPERTIES
+  FOLDER "Tools"
+)
+
+#
+# run_pc_displayVideo
+#
 
 add_executable(run_pc_displayVideo
   ${SOURCE_FILES_DISPLAY_VIDEO}
@@ -42,9 +54,21 @@ target_link_libraries(run_pc_displayVideo
   DebugStreamClient
   ${ALL_EMBEDDED_LIBRARIES})
 
+set_target_properties(run_pc_displayVideo PROPERTIES
+  FOLDER "Tools"
+)
+
+#
+# DebugStreamClient
+#
+
 add_definitions(-DCORETECH_ROBOT)
 
 add_library(DebugStreamClient
   ${SOURCE_FILES_DEBUG_STREAM_PARSER}
   ${HEADER_FILES}
+)
+
+set_target_properties(DebugStreamClient PROPERTIES
+  FOLDER "Tools"
 )

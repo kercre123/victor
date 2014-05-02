@@ -15,5 +15,9 @@ if(NOT WIN32)
     ${HEADER_FILES}
     ${CORETECH_MESSAGING_INCLUDE_FILES}
   )
+  
+  set_target_properties(CoreTech_Messaging_Shared PROPERTIES
+    FOLDER "CoreTech"#/Shared"
+  )
 endif()
 

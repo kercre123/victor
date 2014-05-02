@@ -20,6 +20,10 @@ if(NOT WIN32)
   add_executable(overlay_display_supervisor ${SOURCE_FILES} )
 
   target_link_libraries(overlay_display_supervisor Controller)
+  
+  set_target_properties(overlay_display_supervisor PROPERTIES     
+    FOLDER "Webots Controllers"
+  )
 endif()
   
 # Make sure a copy of the target exists     in cozmo_c_controller/

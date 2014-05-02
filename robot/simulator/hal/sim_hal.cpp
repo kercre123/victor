@@ -576,11 +576,21 @@ namespace Anki {
     } //SetHeadCamMode()
     */
     
+    void HAL::CameraSetExposure(f32 exposure)
+    {
+      // Can't control simulated camera's exposure.
+      
+      // TODO: Simulate this somehow?
+      
+      return;
+      
+    } // HAL::CameraSetExposure()
+    
     
     // Starts camera frame synchronization
-    void HAL::CameraGetFrame(u8* frame, Vision::CameraResolution res, f32 exposure, bool enableLight)
+    void HAL::CameraGetFrame(u8* frame, Vision::CameraResolution res, bool enableLight)
     {
-      // TODO: exposure? enableLight?
+      // TODO: enableLight?
       
       const u8* image = headCam_->getImage();
       if(image == NULL) {

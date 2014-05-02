@@ -21,6 +21,7 @@
 
 #include "anki/vision/robot/fiducialMarkers.h"
 
+#include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/cozmo/robot/hal.h"
 #include "visionParameters.h"
 
@@ -128,7 +129,9 @@ namespace Anki {
                                    Embedded::Array<f32>&        rotationWrtRobot,
                                    Embedded::Point3<f32>&       translationWrtRobot);
       
-      void SendNextImage(Vision::CameraResolution res);
+      // Send single or continuous images back to basestation at requested resolution.
+      // If resolution is not supported, this function does nothing.
+      void SetImageSendMode(ImageSendMode_t mode, Vision::CameraResolution res);
       
     } // namespace VisionSystem
     

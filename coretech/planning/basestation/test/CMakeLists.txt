@@ -9,17 +9,28 @@ if(NOT WIN32)
           CoreTech_Planning_Basestation
           CoreTech_Common_Basestation
           jsoncpp ${OPENCV_LIBS})
+          
+  set_property(TARGET run_coreTechPlanningStandalone
+          PROPERTY FOLDER "Unit Tests"
+  )
+
+
 
   include_directories(../src)
 
   add_executable(run_coreTechPlanningTests
           run_coreTechPlanningTests.cpp
           testRectangle.cpp
-          testEnvironment.cpp)
+          testEnvironment.cpp
+  )
 
   target_link_libraries(run_coreTechPlanningTests
           CoreTech_Planning_Basestation
           CoreTech_Common_Basestation
           jsoncpp
           gtest ${OPENCV_LIBS})
+          
+  set_target_properties(run_coreTechPlanningTests PROPERTIES
+         FOLDER "Unit Tests"
+  )
 endif()

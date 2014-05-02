@@ -1,4 +1,5 @@
 #include "anki/common/robot/config.h"
+#include "anki/common/shared/utilities_shared.h"
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h" // simulated or real!
@@ -39,7 +40,7 @@ namespace Anki {
         
         // TESTING
         // Change this value to run different test modes
-        const TestModeController::TestMode DEFAULT_TEST_MODE = TestModeController::TM_NONE;
+        const TestMode DEFAULT_TEST_MODE = TM_NONE;
 
         Robot::OperationMode mode_ = INIT_MOTOR_CALIBRATION;
         bool wasConnected_ = false;
@@ -91,6 +92,20 @@ namespace Anki {
       
       Result Init(void)
       {
+        // Coretech setup
+#ifndef SIMULATOR
+#if(DIVERT_PRINT_TO_RADIO)
+        SetCoreTechPrintFunctionPtr(Messages::SendText);
+#else
+        SetCoreTechPrintFunctionPtr(0);
+#endif
+#elif(USING_UART_RADIO && DIVERT_PRINT_TO_RADIO)
+        SetCoreTechPrintFunctionPtr(Messages::SendText);
+#endif
+ 
+        
+        // HAL and supervisor init
+        
         if(HAL::Init() == RESULT_FAIL) {
           PRINT("Hardware Interface initialization failed!\n");
           return RESULT_FAIL;
@@ -245,7 +260,7 @@ namespace Anki {
               HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RobotAvailable), &msg);
          
               // Start test mode
-              if (DEFAULT_TEST_MODE != TestModeController::TM_NONE) {
+              if (DEFAULT_TEST_MODE != TM_NONE) {
                 if(TestModeController::Start(DEFAULT_TEST_MODE) == RESULT_FAIL) {
                   PRINT("TestMode %d failed to start.\n", DEFAULT_TEST_MODE);
                   return RESULT_FAIL;
@@ -279,6 +294,7 @@ namespace Anki {
         // Feedback / Display
         //////////////////////////////////////////////////////////////
         
+        Messages::UpdateRobotStateMsg();
 #if(!STREAM_DEBUG_IMAGES)
         Messages::SendRobotStateMsg();
 #endif

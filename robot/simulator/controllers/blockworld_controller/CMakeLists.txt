@@ -45,13 +45,16 @@ if(NOT WIN32)
     jsoncpp
     ${OPENCV_LIBS}
   )
-endif()
   
-#set_target_properties(blockworld_controller PROPERTIES
+  set_target_properties(blockworld_controller PROPERTIES
+      FOLDER "Webots Controllers"
+  )
 #  COMPILE_DEFINITIONS USE_TCP_MESSAGING_INTERFACE
 #  XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++98"
 #   XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libstdc++"
 #)
+
+endif()
 
 # Make sure a copy of the target exists  in cozmo_c_controller/
 # no matter where the target is actually built.

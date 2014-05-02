@@ -18,6 +18,11 @@ if(NOT WIN32)
     ${HEADER_FILES}
     ${CORETECH_PLANNING_INCLUDE_FILES}  
   )
+  
+  set_target_properties(CoreTech_Planning_Basestation PROPERTIES
+    FOLDER "CoreTech"#/Basestation"
+  )
+
 endif() 
 
 

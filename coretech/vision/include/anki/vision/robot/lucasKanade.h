@@ -402,7 +402,7 @@ namespace Anki
         {
           f32 xCoordinate;
           f32 yCoordinate;
-          f32 grayvalue;
+          u8  grayvalue;
           f32 A[6];
         } TemplateSample;
         

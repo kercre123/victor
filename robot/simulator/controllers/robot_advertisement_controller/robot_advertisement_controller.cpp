@@ -28,8 +28,9 @@
 
 // Physical wifi robots do not yet register/deregister with advertising service so just
 // hard-coding its connection
-#define FORCE_ADD_ROBOT 1
-
+#define FORCE_ADD_ROBOT 0
+const u8 forcedRobotId = 34;
+const char* forcedRobotIP = "192.168.3.34";
 
 using namespace std;
 
@@ -71,8 +72,6 @@ int main(int argc, char **argv)
   
 #if(FORCE_ADD_ROBOT)
   // Force add physical robot since it's not registering by itself yet.
-  const u8 forcedRobotId = 31;
-  const char* forcedRobotIP = "192.168.3.31";
   robotConnectionInfoMap[forcedRobotId].robotID = forcedRobotId;
   robotConnectionInfoMap[forcedRobotId].port = ROBOT_RADIO_BASE_PORT;
   snprintf((char*)robotConnectionInfoMap[forcedRobotId].robotAddr,
