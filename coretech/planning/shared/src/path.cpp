@@ -237,7 +237,7 @@ namespace Anki
       (seg->endPt_y - y) * (seg->endPt_y - y);
       
       
-      if (FLT_NEAR(seg->startPt_x, seg->endPt_x)) {
+      if (ABS(line_m_) > 10000) {
         // Special case: Vertical line
         if (seg->endPt_y > seg->startPt_y) {
           shortestDistanceToPath = seg->startPt_x - x;
@@ -259,7 +259,7 @@ namespace Anki
             }
         }
         
-      } else if (FLT_NEAR(seg->startPt_y, seg->endPt_y)) {
+      } else if (FLT_NEAR(line_m_, 0.f)) {
         // Special case: Horizontal line
         if (seg->endPt_x > seg->startPt_x) {
           shortestDistanceToPath = y - seg->startPt_y;
@@ -401,7 +401,13 @@ namespace Anki
         }
         
         // Find y value of intersection
-        y_intersect = y_center + (dy > 0 ? 1 : -1) * sqrtf(r*r - (x_intersect - x_center) * (x_intersect - x_center));
+        f32 dx_intersect = x_intersect - x_center;
+        if (ABS(dx_intersect) > r) {
+          // This can sometimes happen if we're at the right-most or left-most side of the circle
+          y_intersect = y_center;
+        } else {
+          y_intersect = y_center + (dy > 0 ? 1 : -1) * sqrtf((r*r) - (dx_intersect * dx_intersect));
+        }
         
         // Compute distance to intersection point (i.e. shortest distance to arc)
         shortestDistanceToPath = sqrtf((x - x_intersect) * (x - x_intersect) + (y - y_intersect) * (y - y_intersect));
@@ -419,46 +425,45 @@ namespace Anki
       if ((robotInsideCircle && !movingCCW) || (!robotInsideCircle && movingCCW)) {
         shortestDistanceToPath *= -1;
       }
+
+      // Did we pass the current segment?
+      // Check if the angDiff exceeds the sweep angle.
+      // Also check for transitions between -PI and +PI by checking if angDiff
+      // ever exceeds a conservative half the distance if PI was approached from the opposite direction.
+      SegmentRangeStatus segStatus = IN_SEGMENT_RANGE;
+      f32 angDiff = (theta_line - startRad).ToFloat();
+      if ( (movingCCW && (angDiff > seg->sweepRad || angDiff < -0.5f*(2.f*PI-seg->sweepRad))) ||
+          (!movingCCW && (angDiff < seg->sweepRad || angDiff >  0.5f*(2.f*PI+seg->sweepRad))) ){
+        segStatus = OOR_NEAR_END;
+      }
+
       
-      
-      
+      if (movingCCW) {
+        if (angDiff > seg->sweepRad || angDiff < -0.5f*(2.f*PI-seg->sweepRad)) {
+          segStatus = OOR_NEAR_END;
+        } else if (angDiff < 0 && angDiff > -0.5f*(2.f*PI-seg->sweepRad)) {
+          segStatus = OOR_NEAR_START;
+        }
+          
+      } else {
+        if (angDiff < seg->sweepRad || angDiff >  0.5f*(2.f*PI+seg->sweepRad)) {
+          segStatus = OOR_NEAR_END;
+        } else if (angDiff > 0 && angDiff < 0.5f*(2.f*PI-seg->sweepRad)) {
+          segStatus = OOR_NEAR_START;
+        }
+      }
+
       
 #if(DEBUG_PATH)
       CORETECH_PRINT("x: %f, y: %f, m: %f, b: %f\n", x,y,m,b);
       CORETECH_PRINT("x_center: %f, y_center: %f\n", x_center, y_center);
       CORETECH_PRINT("x_int: %f, y_int: %f\n", x_intersect, y_intersect);
       CORETECH_PRINT("dy: %f, dx: %f, dist: %f, radDiff: %f\n", dy, dx, shortestDistanceToPath, radDiff);
-      CORETECH_PRINT("insideCircle: %d\n", robotInsideCircle);
+      CORETECH_PRINT("insideCircle: %d, segmentRangeStatus: %d\n", robotInsideCircle, segStatus);
       CORETECH_PRINT("theta_line: %f, theta_tangent: %f\n", theta_line.ToFloat(), theta_tangent.ToFloat());
 #endif
-
-      // Did we pass the current segment?
-      // Check if the angDiff exceeds the sweep angle.
-      // Also check for transitions between -PI and +PI by checking if angDiff
-      // ever exceeds a conservative half the distance if PI was approached from the opposite direction.
-      f32 angDiff = (theta_line - startRad).ToFloat();
-      if ( (movingCCW && (angDiff > seg->sweepRad || angDiff < -0.5f*(2.f*PI-seg->sweepRad))) ||
-          (!movingCCW && (angDiff < seg->sweepRad || angDiff >  0.5f*(2.f*PI+seg->sweepRad))) ){
-        return OOR_NEAR_END;
-      }
-
       
-      if (movingCCW) {
-        if (angDiff > seg->sweepRad || angDiff < -0.5f*(2.f*PI-seg->sweepRad)) {
-          return OOR_NEAR_END;
-        } else if (angDiff < 0 && angDiff > -0.5f*(2.f*PI-seg->sweepRad)) {
-          return OOR_NEAR_START;
-        }
-          
-      } else {
-        if (angDiff < seg->sweepRad || angDiff >  0.5f*(2.f*PI+seg->sweepRad)) {
-          return OOR_NEAR_END;
-        } else if (angDiff > 0 && angDiff < 0.5f*(2.f*PI-seg->sweepRad)) {
-          return OOR_NEAR_START;
-        }
-      }
-
-      return IN_SEGMENT_RANGE;
+      return segStatus;
     }
     
     
