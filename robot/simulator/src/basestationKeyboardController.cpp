@@ -102,7 +102,7 @@ namespace Anki {
           int key = basestationController.keyboardGetKey();
           
           // Skip if same key as before
-          if (key == lastKeyPressed_)
+          if (key == lastKeyAndModPressed_)
             return;
           
           // Extract modifier key
