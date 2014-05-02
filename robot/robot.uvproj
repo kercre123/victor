@@ -883,6 +883,11 @@
               <FileType>8</FileType>
               <FilePath>..\coretech\common\shared\src\velocityProfileGenerator.cpp</FilePath>
             </File>
+            <File>
+              <FileName>utilities_shared.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\shared\src\utilities_shared.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -2103,6 +2108,11 @@
               <FileName>velocityProfileGenerator.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\shared\src\velocityProfileGenerator.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>utilities_shared.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\shared\src\utilities_shared.cpp</FilePath>
             </File>
           </Files>
         </Group>
