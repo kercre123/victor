@@ -258,6 +258,7 @@ namespace Anki {
               static bool headlightsOn = false;
               headlightsOn = !headlightsOn;
               robot_->SendHeadlight(headlightsOn ? 128 : 0);
+              break;
             }
               
             default:
