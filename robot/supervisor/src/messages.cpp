@@ -328,11 +328,19 @@ namespace Anki {
       }
       
       void ProcessMoveLiftMessage(const MoveLift& msg) {
+        LiftController::SetAngularVelocity(msg.speed_rad_per_sec);
+      }
+      
+      void ProcessMoveHeadMessage(const MoveHead& msg) {
+        HeadController::SetAngularVelocity(msg.speed_rad_per_sec);
+      }
+      
+      void ProcessSetLiftHeightMessage(const SetLiftHeight& msg) {
         LiftController::SetSpeedAndAccel(msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
         LiftController::SetDesiredHeight(msg.height_mm);
       }
       
-      void ProcessMoveHeadMessage(const MoveHead& msg) {
+      void ProcessSetHeadAngleMessage(const SetHeadAngle& msg) {
         HeadController::SetSpeedAndAccel(msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
         HeadController::SetDesiredAngle(msg.angle_rad);
       }

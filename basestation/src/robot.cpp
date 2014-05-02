@@ -443,11 +443,27 @@ namespace Anki {
       return msgHandler_->SendMessage(ID_, m);
     }
     
-    Result Robot::SendMoveLift(const f32 height_mm,
-                                   const f32 max_speed_rad_per_sec,
-                                   const f32 accel_rad_per_sec2) const
+    Result Robot::SendMoveLift(const f32 speed_rad_per_sec) const
     {
       MessageMoveLift m;
+      m.speed_rad_per_sec = speed_rad_per_sec;
+      
+      return msgHandler_->SendMessage(ID_,m);
+    }
+    
+    Result Robot::SendMoveHead(const f32 speed_rad_per_sec) const
+    {
+      MessageMoveHead m;
+      m.speed_rad_per_sec = speed_rad_per_sec;
+      
+      return msgHandler_->SendMessage(ID_,m);
+    }
+
+    Result Robot::SendSetLiftHeight(const f32 height_mm,
+                                    const f32 max_speed_rad_per_sec,
+                                    const f32 accel_rad_per_sec2) const
+    {
+      MessageSetLiftHeight m;
       m.height_mm = height_mm;
       m.max_speed_rad_per_sec = max_speed_rad_per_sec;
       m.accel_rad_per_sec2 = accel_rad_per_sec2;
@@ -455,11 +471,11 @@ namespace Anki {
       return msgHandler_->SendMessage(ID_,m);
     }
     
-    Result Robot::SendMoveHead(const f32 angle_rad,
+    Result Robot::SendSetHeadAngle(const f32 angle_rad,
                                    const f32 max_speed_rad_per_sec,
                                    const f32 accel_rad_per_sec2) const
     {
-      MessageMoveHead m;
+      MessageSetHeadAngle m;
       m.angle_rad = angle_rad;
       m.max_speed_rad_per_sec = max_speed_rad_per_sec;
       m.accel_rad_per_sec2 = accel_rad_per_sec2;
