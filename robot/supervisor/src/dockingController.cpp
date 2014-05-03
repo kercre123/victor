@@ -104,6 +104,14 @@ namespace Anki {
         f32 approachPath_dist, approachPath_dtheta, approachPath_dOrientation;
 #endif
         
+        // Whether or not the lift should track the angle of the camera so that the
+        // lift crossbar is just out of the field of view of the camera.
+        bool trackCamWithLift_ = false;
+        
+        // If trackCamWithLift_ == true, start actually doing the tracking only when
+        // the block is at least START_LIFT_TRACKING_DIST_MM close and START_LIFT_TRACKING_HEIGHT_MM high
+        const f32 START_LIFT_TRACKING_DIST_MM = 50.f;
+        const f32 START_LIFT_TRACKING_HEIGHT_MM = 44.f;
         
       } // "private" namespace
       
@@ -115,6 +123,36 @@ namespace Anki {
       bool DidLastDockSucceed()
       {
         return success_;
+      }
+      
+      void TrackCamWithLift(bool on)
+      {
+        trackCamWithLift_ = on;
+      }
+      
+      // Returns the height that the lift should be moved to such that the
+      // lift crossbar is just out of the field of view of the camera.
+      // TODO: Should this be in some kinematics module where we have functions to get things wrt other things?
+      f32 GetCamFOVLowerHeight()
+      {
+        f32 x, z, angle, liftH;
+        HeadController::GetCamPose(x, z, angle);
+ 
+        // Compute the angle of the line extending from the camera that represents
+        // the lower bound of its field of view
+        f32 lowerCamFOVangle = angle - 0.5f * VisionSystem::GetVerticalFOV();
+        
+        // Compute the lift height required to raise the cross bar to be at
+        // the height of that line.
+        // TODO: This is really rough computation approximating with a fixed horizontal distance between
+        //       the camera and the lift. make better!
+        const f32 liftDistToCam = 25;
+        liftH = liftDistToCam * sinf(lowerCamFOVangle) + z;
+        liftH -= LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT;
+        
+        //PRINT("CAM POSE: x %f, z %f, angle %f (lowerCamAngle %f, liftH %f)\n", x, z, angle, lowerCamFOVangle, liftH);
+        
+        return CLIP(liftH, LIFT_HEIGHT_LOWDOCK, LIFT_HEIGHT_CARRY);
       }
       
       Result Update()
@@ -170,6 +208,7 @@ namespace Anki {
             // TODO: Get tracker to detect these situations and not even send the error message here.
             if (dockMsg.x_distErr > 0 && ABS(dockMsg.angleErr) < 0.75*PIDIV2_F) {
              
+              // Set relative block pose to start/continue docking
               SetRelDockPose(dockMsg.x_distErr, dockMsg.y_horErr, dockMsg.angleErr);
 
               if(!dockMsg.isApproximate) // will be -1 if not computed
@@ -177,6 +216,14 @@ namespace Anki {
                 // If we have the height of the marker for docking, we can also
                 // compute the head angle to keep it centered
                 HeadController::SetDesiredAngle(atan_fast( (dockMsg.z_height - NECK_JOINT_POSITION[2])/dockMsg.x_distErr));
+                
+                // Track camera with lift.
+                // Do it only when it's a high block and we're within a certain distance of it.
+                if (trackCamWithLift_ &&
+                    dockMsg.z_height > START_LIFT_TRACKING_HEIGHT_MM &&
+                    dockMsg.x_distErr < START_LIFT_TRACKING_DIST_MM) {
+                  LiftController::SetDesiredHeight(GetCamFOVLowerHeight());
+                }
               }
               
               // Send to basestation for visualization

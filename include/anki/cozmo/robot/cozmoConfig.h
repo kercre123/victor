@@ -134,6 +134,9 @@ namespace Anki {
     
     // The lift height is defined as the height of the upper lift arm's wrist joint plus this offset.
     const f32 LIFT_FORK_HEIGHT_REL_TO_ARM_END = 0;
+
+    // The height of the top of the lift crossbar with respect to the wrist joint
+    const f32 LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT = -18.f;
     
     // TODO: convert to using these in degree form?
     const f32 MIN_HEAD_ANGLE = DEG_TO_RAD(-25.f);

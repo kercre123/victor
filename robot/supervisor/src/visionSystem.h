@@ -132,6 +132,10 @@ namespace Anki {
       // Send single or continuous images back to basestation at requested resolution.
       // If resolution is not supported, this function does nothing.
       void SetImageSendMode(ImageSendMode_t mode, Vision::CameraResolution res);
+
+      // Returns field of view (radians) of camera
+      f32 GetVerticalFOV();
+      f32 GetHorizontalFOV();
       
     } // namespace VisionSystem
     

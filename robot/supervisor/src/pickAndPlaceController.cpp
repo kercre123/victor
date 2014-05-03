@@ -32,7 +32,8 @@ namespace Anki {
         // Distance between the robot origin and the distance along the robot's x-axis
         // to the lift when it is in the low docking position.
         const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 33.f;
-        const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 26.f;
+        const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 20.f;
+        const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 26.f;  // TODO: Technically, this should be the same as ORIGIN_TO_HIGH_LIFT_DIST_MM
 
         Mode mode_ = IDLE;
         
@@ -76,21 +77,24 @@ namespace Anki {
           case SET_LIFT_PREDOCK:
           {
 #if(DEBUG_PAP_CONTROLLER)
-            PRINT("PAP: SETTING LIFT PREDOCK\n");
+            PRINT("PAP: SETTING LIFT PREDOCK (action %d)\n", action_);
 #endif
             mode_ = MOVING_LIFT_PREDOCK;
             HeadController::SetDesiredAngle(LOW_DOCKING_HEAD_ANGLE);
             switch(action_) {
               case DA_PICKUP_LOW:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
+                dockOffsetDistX_ = ORIGIN_TO_LOW_LIFT_DIST_MM;
                 break;
               case DA_PICKUP_HIGH:
                 // This action starts by lowering the lift and tracking the high block
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
                 HeadController::SetDesiredAngle(HIGH_DOCKING_HEAD_ANGLE);
+                dockOffsetDistX_ = ORIGIN_TO_HIGH_LIFT_DIST_MM;
                 break;
               case DA_PLACE_HIGH:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
+                dockOffsetDistX_ = ORIGIN_TO_HIGH_PLACEMENT_DIST_MM;
                 break;
               default:
                 PRINT("ERROR: Unknown PickAndPlaceAction %d\n", action_);
@@ -101,12 +105,23 @@ namespace Anki {
           }
 
           case MOVING_LIFT_PREDOCK:
+#if(DEBUG_PAP_CONTROLLER)
+            PERIODIC_PRINT(200, "PAP: MLP %d %d\n", LiftController::IsInPosition(), HeadController::IsInPosition());
+#endif
             if (LiftController::IsInPosition() && HeadController::IsInPosition()) {
-              DockingController::StartDocking(dockToMarker_, markerWidth_, dockOffsetDistX_);
+              DockingController::StartDocking(dockToMarker_,
+                                              markerWidth_,
+                                              dockOffsetDistX_,
+                                              dockOffsetDistX_,
+                                              dockOffsetAng_);
               mode_ = DOCKING;
 #if(DEBUG_PAP_CONTROLLER)
               PRINT("PAP: DOCKING\n");
 #endif
+              
+              if (action_ == DA_PICKUP_HIGH) {
+                DockingController::TrackCamWithLift(true);
+              }
             }
             break;
 
@@ -114,9 +129,16 @@ namespace Anki {
              
             if (!DockingController::IsBusy()) {
 
+              DockingController::TrackCamWithLift(false);
+              
               if (DockingController::DidLastDockSucceed()) {
+                
                 // Docking is complete
                 mode_ = SET_LIFT_POSTDOCK;
+#if(DEBUG_PAP_CONTROLLER)
+                PRINT("PAP: SET_LIFT_POSTDOCK\n");
+#endif
+                
               } else {
                 // Block is not being tracked.
                 // Probably not visible.
@@ -155,11 +177,12 @@ namespace Anki {
             if (LiftController::IsInPosition()) {
               switch(action_) {
                 case DA_PICKUP_LOW:
-                case DA_PICKUP_HIGH:
                   mode_ = IDLE;
                   lastActionSucceeded_ = true;
                   isCarryingBlock_ = true;
                   break;
+                case DA_PICKUP_HIGH:
+                  isCarryingBlock_ = true;
                 case DA_PLACE_HIGH:
                   SteeringController::ExecuteDirectDrive(BACKOUT_SPEED_MMPS, BACKOUT_SPEED_MMPS);
                   transitionTime_ = HAL::GetMicroCounter() + BACKOUT_TIME;
@@ -174,12 +197,24 @@ namespace Anki {
             
           case BACKOUT:
             if (HAL::GetMicroCounter() > transitionTime_) {
-#if(DEBUG_PAP_CONTROLLER)
-              PRINT("PAP: LOWERING LIFT\n");
-#endif
+
               SteeringController::ExecuteDirectDrive(0,0);
-              LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
-              mode_ = LOWER_LIFT;
+              
+              switch(action_) {
+                case DA_PICKUP_LOW:
+                case DA_PICKUP_HIGH:
+                  mode_ = IDLE;
+                  lastActionSucceeded_ = true;
+                  isCarryingBlock_ = true;
+                  break;
+                case DA_PLACE_HIGH:
+                  LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
+                  mode_ = LOWER_LIFT;
+                  #if(DEBUG_PAP_CONTROLLER)
+                  PRINT("PAP: LOWERING LIFT\n");
+                  #endif
+                  break;
+              }
             }
             break;
           case LOWER_LIFT:
@@ -230,10 +265,8 @@ namespace Anki {
 #endif
         if (level == 0) {
           action_ = DA_PICKUP_LOW;
-          dockOffsetDistX_ = ORIGIN_TO_LOW_LIFT_DIST_MM;
         } else {
           action_ = DA_PICKUP_HIGH;
-          dockOffsetDistX_ = ORIGIN_TO_HIGH_PLACEMENT_DIST_MM;
         }
         
         dockToMarker_ = blockMarker;
@@ -253,7 +286,6 @@ namespace Anki {
         PRINT("PAP: PLACING BLOCK on %d\n", blockMarker);
 #endif
         action_ = DA_PLACE_HIGH;
-        dockOffsetDistX_ = ORIGIN_TO_HIGH_PLACEMENT_DIST_MM;
         dockToMarker_ = blockMarker;
         mode_ = SET_LIFT_PREDOCK;
         lastActionSucceeded_ = false;        
