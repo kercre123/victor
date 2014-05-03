@@ -1,5 +1,5 @@
 /**
-File: autoExposure.cpp
+File: cameraImagingPipeline.cpp
 Author: Peter Barnum
 Created: 2014-04-24
 
@@ -59,8 +59,7 @@ namespace Anki
 
     Result CorrectVignetting(
       Array<u8> &image,
-      const FixedLengthList<f32> &polynomialParameters,
-      MemoryStack scratch)
+      const FixedLengthList<f32> &polynomialParameters)
     {
       AnkiConditionalErrorAndReturnValue(IsOdd(polynomialParameters.get_size()) && polynomialParameters.get_size() == 5,
         RESULT_FAIL_INVALID_PARAMETER, "CorrectVignetting", "only 5 polynomialParameters currently supported (2nd order polynomial)");

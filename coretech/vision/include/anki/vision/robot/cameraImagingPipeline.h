@@ -33,8 +33,7 @@ namespace Anki
 
     Result CorrectVignetting(
       Array<u8> &image,
-      const FixedLengthList<f32> &polynomialParameters, //< Use the matlab tool fit2dCurve to get a model of the form [constant, x, y, x.^2, y.^2, ...]
-      MemoryStack scratch);
+      const FixedLengthList<f32> &polynomialParameters); //< Use the matlab tool fit2dCurve to get a model of the form [constant, x, y, x.^2, y.^2, ...]
   } // namespace Embedded
 } // namespace Anki
 

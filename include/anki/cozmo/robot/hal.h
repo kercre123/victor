@@ -339,7 +339,7 @@ namespace Anki
 
       // Sets the camera exposure (non-blocking call)
       // exposure is clipped to [0.0, 1.0]
-      void CameraSetExposure(f32 exposure);
+      void CameraSetParameters(f32 exposure, bool enableVignettingCorrection);
       
       // Starts camera frame synchronization (blocking call)
       void CameraGetFrame(u8* frame, Vision::CameraResolution res, bool enableLight);

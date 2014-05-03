@@ -119,6 +119,12 @@ namespace Anki {
       // defined outside this namespace.
       // TODO: I don't think we really need _both_ a private namespace and static
       namespace {
+        enum VignettingCorrection
+        {
+          VignettingCorrection_Off,
+          VignettingCorrection_CameraHardware,
+          VignettingCorrection_Software
+        };
 
         // The tracker can fail to converge this many times before we give up
         // and reset the docker
@@ -134,6 +140,10 @@ namespace Anki {
         // Camera parameters
         // TODO: Should these be moved to (their own struct in) visionParameters.h/cpp?
         static f32 exposureTime;
+        
+        static VignettingCorrection vignettingCorrection = VignettingCorrection_Off;
+        static const f32 vignettingCorrectionParameters[5] = {1.56852140958887f, -0.00619880766167132f, -0.00364222219719291f, 2.75640497906470e-05f, 1.75476361058157e-05f}; //< for vignettingCorrection == VignettingCorrection_Software, computed by fit2dCurve.m
+        
         static s32 frameNumber;
         static const bool autoExposure_enabled = true;
         static const s32 autoExposure_integerCountsIncrement = 2;
@@ -1450,6 +1460,18 @@ namespace Anki {
       
       EndBenchmark("VisionSystem_CameraGetFrame");
 
+      BeginBenchmark("VisionSystem_CameraImagingPipeline");
+      
+      if(vignettingCorrection == VignettingCorrection_Software) {        
+        MemoryStack onchipScratch_local = VisionMemory::onchipScratch_;
+        FixedLengthList<f32> polynomialParameters(5, onchipScratch_local, Flags::Buffer(false, false, true));
+        
+        for(s32 i=0; i<5; i++) 
+          polynomialParameters[i] = vignettingCorrectionParameters[i];
+        
+        CorrectVignetting(grayscaleImage, polynomialParameters);
+      } // if(vignettingCorrection == VignettingCorrection_Software)
+      
       if(autoExposure_enabled && (frameNumber % autoExposure_adjustEveryNFrames) == 0) {
         ComputeBestCameraParameters(
               grayscaleImage,
@@ -1461,7 +1483,10 @@ namespace Anki {
               VisionMemory::ccmScratch_);
       }
       
-      HAL::CameraSetExposure(exposureTime);
+      
+      HAL::CameraSetParameters(exposureTime, vignettingCorrection == VignettingCorrection_CameraHardware);
+      
+      EndBenchmark("VisionSystem_CameraImagingPipeline");
       
 #ifdef SEND_BINARY_IMAGE_ONLY
       DebugStream::SendBinaryImage(grayscaleImage, "Binary Robot Image", tracker_, trackerParameters_, VisionMemory::ccmScratch_, VisionMemory::onchipScratch_, VisionMemory::offchipScratch_);
@@ -1500,6 +1525,18 @@ namespace Anki {
       
       EndBenchmark("VisionSystem_CameraGetFrame");
 
+      BeginBenchmark("VisionSystem_CameraImagingPipeline");
+      
+      if(vignettingCorrection == VignettingCorrection_Software) {        
+        MemoryStack onchipScratch_local = VisionMemory::onchipScratch_;
+        FixedLengthList<f32> polynomialParameters(5, onchipScratch_local, Flags::Buffer(false, false, true));
+        
+        for(s32 i=0; i<5; i++) 
+          polynomialParameters[i] = vignettingCorrectionParameters[i];
+        
+        CorrectVignetting(grayscaleImage, polynomialParameters);
+      } // if(vignettingCorrection == VignettingCorrection_Software)
+      
       if(autoExposure_enabled && (frameNumber % autoExposure_adjustEveryNFrames) == 0) {
       ComputeBestCameraParameters(
             grayscaleImage,
@@ -1511,7 +1548,9 @@ namespace Anki {
             VisionMemory::ccmScratch_);
       }
       
-      HAL::CameraSetExposure(exposureTime);
+      HAL::CameraSetParameters(exposureTime, vignettingCorrection == VignettingCorrection_CameraHardware);
+      
+      EndBenchmark("VisionSystem_CameraImagingPipeline");
       
       const s32 faceDetectionHeight = CameraModeInfo[faceDetectionResolution_].height;
       const s32 faceDetectionWidth  = CameraModeInfo[faceDetectionResolution_].width;
@@ -1620,6 +1659,18 @@ namespace Anki {
           
           EndBenchmark("VisionSystem_CameraGetFrame");
          
+          BeginBenchmark("VisionSystem_CameraImagingPipeline");
+      
+          if(vignettingCorrection == VignettingCorrection_Software) {        
+            MemoryStack onchipScratch_local = VisionMemory::onchipScratch_;
+        FixedLengthList<f32> polynomialParameters(5, onchipScratch_local, Flags::Buffer(false, false, true));
+            
+            for(s32 i=0; i<5; i++) 
+              polynomialParameters[i] = vignettingCorrectionParameters[i];
+            
+            CorrectVignetting(grayscaleImage, polynomialParameters);
+          } // if(vignettingCorrection == VignettingCorrection_Software)
+          
           if(autoExposure_enabled && (frameNumber % autoExposure_adjustEveryNFrames) == 0) {
             ComputeBestCameraParameters(
               grayscaleImage,
@@ -1631,7 +1682,9 @@ namespace Anki {
               VisionMemory::ccmScratch_);
           }
           
-          HAL::CameraSetExposure(exposureTime);
+          HAL::CameraSetParameters(exposureTime, vignettingCorrection == VignettingCorrection_CameraHardware);
+          
+          EndBenchmark("VisionSystem_CameraImagingPipeline");
           
           DownsampleAndSendImage(grayscaleImage);
 
@@ -1737,6 +1790,18 @@ namespace Anki {
           
           EndBenchmark("VisionSystem_CameraGetFrame");
 
+          BeginBenchmark("VisionSystem_CameraImagingPipeline");
+      
+          if(vignettingCorrection == VignettingCorrection_Software) {        
+            MemoryStack onchipScratch_local = VisionMemory::onchipScratch_;
+            FixedLengthList<f32> polynomialParameters(5, onchipScratch_local, Flags::Buffer(false, false, true));
+            
+            for(s32 i=0; i<5; i++) 
+              polynomialParameters[i] = vignettingCorrectionParameters[i];
+            
+            CorrectVignetting(grayscaleImage, polynomialParameters);
+          } // if(vignettingCorrection == VignettingCorrection_Software)
+          
           // TODO: allow tracking to work with exposure changes
           /*if(autoExposure_enabled && (frameNumber % autoExposure_adjustEveryNFrames) == 0) {
           ComputeBestCameraParameters(
@@ -1749,7 +1814,9 @@ namespace Anki {
             VisionMemory::ccmScratch_);
           }*/
           
-          HAL::CameraSetExposure(exposureTime);
+          EndBenchmark("VisionSystem_CameraImagingPipeline");
+          
+          HAL::CameraSetParameters(exposureTime, vignettingCorrection == VignettingCorrection_CameraHardware);
           
           // NOTE: This will change grayscaleImage!
           // NOTE: This is currently off-chip for memory reasons, so it's slow!
