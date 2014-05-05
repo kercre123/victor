@@ -769,11 +769,6 @@
               <FilePath>..\coretech\common\robot\src\array2d.cpp</FilePath>
             </File>
             <File>
-              <FileName>benchmarking_c.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\coretech\common\robot\src\benchmarking_c.c</FilePath>
-            </File>
-            <File>
               <FileName>comparisons.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\robot\src\comparisons.cpp</FilePath>
@@ -882,6 +877,16 @@
               <FileName>compress.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\robot\src\compress.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>benchmarking.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\robot\src\benchmarking.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>utilities_shared.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\shared\src\utilities_shared.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -1990,11 +1995,6 @@
               <FilePath>..\coretech\common\robot\src\array2d.cpp</FilePath>
             </File>
             <File>
-              <FileName>benchmarking_c.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\coretech\common\robot\src\benchmarking_c.c</FilePath>
-            </File>
-            <File>
               <FileName>comparisons.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\robot\src\comparisons.cpp</FilePath>
@@ -2103,6 +2103,16 @@
               <FileName>compress.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\robot\src\compress.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>benchmarking.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\robot\src\benchmarking.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>utilities_shared.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\shared\src\utilities_shared.cpp</FilePath>
             </File>
           </Files>
         </Group>
