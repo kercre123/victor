@@ -248,9 +248,9 @@ bool xythetaEnvironment::GetMotion(StateTheta theta, ActionID actionID, MotionPr
 }
 
 // TODO:(bn) pull out into _inline.cpp
-State_c xythetaEnvironment::State2State_c(const State& c) const
+State_c xythetaEnvironment::State2State_c(const State& s) const
 {
-  return State_c(GetX_mm(c.x), GetY_mm(c.y), GetTheta_c(c.theta));
+  return State_c(GetX_mm(s.x), GetY_mm(s.y), GetTheta_c(s.theta));
 }
 
 State xythetaEnvironment::State_c2State(const State_c& c) const

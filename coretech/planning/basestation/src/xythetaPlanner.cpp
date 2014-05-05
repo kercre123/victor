@@ -37,6 +37,8 @@ const xythetaPlan& xythetaPlanner::GetPlan() const
 // implementation functions
 ////////////////////////////////////////////////////////////////////////////////
 
+#define PLANNER_DEBUG_PLOT_STATES_CONSIDERED 0
+
 xythetaPlannerImpl::xythetaPlannerImpl(const xythetaEnvironment& env)
   : env_(env),
     start_(0,0,0),
@@ -68,6 +70,10 @@ void xythetaPlannerImpl::ComputePath()
 {
   Reset();
 
+  if(PLANNER_DEBUG_PLOT_STATES_CONSIDERED) {
+    debugExpPlotFile_ = fopen("expanded.txt", "w");
+  }
+
   StateID startID = start_.GetStateID();
 
   // push starting state
@@ -89,6 +95,16 @@ void xythetaPlannerImpl::ComputePath()
     ExpandState(sid);
     expansions_++;
 
+    if(PLANNER_DEBUG_PLOT_STATES_CONSIDERED) {
+      State_c c = env_.State2State_c(State(sid));
+      fprintf(debugExpPlotFile_, "%f %f %f %d\n",
+                  c.x_mm,
+                  c.y_mm,
+                  c.theta,
+                  sid.theta);
+    }
+
+
     // TEMP: 
     if(expansions_ % 10000 == 0) {
       printf("%8d %8.5f = %8.5f + %8.5f\n",
@@ -102,6 +118,10 @@ void xythetaPlannerImpl::ComputePath()
 
   if(foundGoal)
     BuildPlan();
+
+  if(PLANNER_DEBUG_PLOT_STATES_CONSIDERED) {
+    fclose(debugExpPlotFile_);
+  }
 
   printf("finished after %d expansions\n", expansions_);
 }

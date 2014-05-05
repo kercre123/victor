@@ -288,7 +288,7 @@ bool MotionPrimitive::Import(Json::Value& config, StateTheta startingAngle)
 
     State_c old(0, 0, 0);
     if(!intermediatePositions.empty())
-      old = intermediatePositions[0];
+      old = intermediatePositions.back();
     
     dist += xythetaEnvironment::GetDistanceBetween(old, s);
     angle += fabs(s.theta - old.theta);
@@ -303,7 +303,7 @@ bool MotionPrimitive::Import(Json::Value& config, StateTheta startingAngle)
   Cost costFactor = config.get("extra_cost_factor", 1.0f).asFloat();
   float baseCost = config.get("cost", -1.0f).asFloat();
   if(baseCost < 0) {
-    baseCost = dist / linearVelocity + angle / angularVelocity;
+    baseCost = std::max(dist / linearVelocity, angle / angularVelocity);
   }
   cost = baseCost * costFactor;  // TODO:(bn) cost!
 

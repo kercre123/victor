@@ -54,6 +54,9 @@ struct xythetaPlannerImpl
   unsigned int collisionChecks_;
 
   unsigned int searchNum_;
+
+  // for debugging only
+  FILE* debugExpPlotFile_;
 };
 
 
