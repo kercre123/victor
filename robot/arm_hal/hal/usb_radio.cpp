@@ -59,15 +59,14 @@ namespace Anki {
 #endif      
       
     } // RadioSendMessage()
-    
-    
-    u32 HAL::RadioGetNumBytesAvailable(void)
+
+    u32 RadioGetNumBytesAvailable(void)
     {
 #if(USING_UART_RADIO)			
       // Pull as many inbound chars as we can into our local buffer
       while (recvBufSize_ < RECV_BUFFER_SIZE)
       {
-        int c = UARTGetChar(0);
+        int c = HAL::UARTGetChar(0);
         if (c < 0)    // Nothing more to grab
           return recvBufSize_;
         recvBuf_[recvBufSize_++] = c;
@@ -142,11 +141,8 @@ namespace Anki {
       return retVal;
     } // RadioGetNextMessage()
     
-
     void RadioUpdate()
     {
-    }
-
-    
+    }    
   } // namespace Cozmo
 } // namespace Anki
