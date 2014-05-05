@@ -1188,9 +1188,9 @@ namespace Anki {
           }
 
           // Compute FOV from focal length (currently used for tracker prediciton)
-          headCamFOV_ver_ = 2.f * atan_fast(static_cast<f32>(headCamInfo_->nrows) /
+          headCamFOV_ver_ = 2.f * atanf(static_cast<f32>(headCamInfo_->nrows) /
                                         (2.f * headCamInfo_->focalLength_y));
-          headCamFOV_hor_ = 2.f * atan_fast(static_cast<f32>(headCamInfo_->ncols) /
+          headCamFOV_hor_ = 2.f * atanf(static_cast<f32>(headCamInfo_->ncols) /
                                             (2.f * headCamInfo_->focalLength_x));
 
           exposureTime = 0.2f; // TODO: pick a reasonable start value
