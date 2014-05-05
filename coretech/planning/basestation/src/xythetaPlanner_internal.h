@@ -47,6 +47,8 @@ struct xythetaPlannerImpl
   OpenList open_;
   StateTable table_;
 
+  bool freeTurnInPlaceAtGoal_;
+
   xythetaPlan plan_;
 
   unsigned int expansions_;

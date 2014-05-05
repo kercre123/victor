@@ -23,6 +23,12 @@ void xythetaPlanner::SetGoal(const State_c& goal)
   _impl->SetGoal(goal);
 }
 
+void xythetaPlanner::AllowFreeTurnInPlaceAtGoal(bool allow)
+{
+  _impl->freeTurnInPlaceAtGoal_ = allow;
+}
+
+
 void xythetaPlanner::ComputePath()
 {
   _impl->ComputePath();
@@ -42,7 +48,8 @@ const xythetaPlan& xythetaPlanner::GetPlan() const
 xythetaPlannerImpl::xythetaPlannerImpl(const xythetaEnvironment& env)
   : env_(env),
     start_(0,0,0),
-    searchNum_(0)
+    searchNum_(0),
+    freeTurnInPlaceAtGoal_(false)
 {
   startID_ = start_.GetStateID();
   Reset();
@@ -139,28 +146,32 @@ void xythetaPlannerImpl::ExpandState(StateID currID)
     considerations_++;
 
     StateID nextID = it.Front().stateID;
+    float newG = it.Front().g;
+
+    if(freeTurnInPlaceAtGoal_ && currID.x == goalID_.x && currID.y == goalID_.y)
+      newG = currG;
 
     auto oldEntry = table_.find(nextID);
 
     if(oldEntry == table_.end()) {    
       Cost h = heur(nextID);
-      Cost f = it.Front().g + h;
+      Cost f = newG + h;
       table_.emplace(nextID,
                          open_.insert(nextID, f),
                          currID,
                          it.Front().actionID,
-                         it.Front().g);
+                         newG);
     }
     else if(!oldEntry->second.IsClosed(searchNum_)) {
       // only update if g value is lower
-      if(it.Front().g < oldEntry->second.g_) {
+      if(newG < oldEntry->second.g_) {
         Cost h = heur(nextID);
-        Cost f = it.Front().g + h;
+        Cost f = newG + h;
         oldEntry->second.openIt_ = open_.insert(nextID, f);
         oldEntry->second.closedIter_ = -1;
         oldEntry->second.backpointer_ = currID;
         oldEntry->second.backpointerAction_ = it.Front().actionID;
-        oldEntry->second.g_ = it.Front().g;
+        oldEntry->second.g_ = newG;
       }
     }
 
