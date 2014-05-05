@@ -276,20 +276,56 @@ bool MotionPrimitive::Import(Json::Value& config, StateTheta startingAngle)
 
   name = config.get("name", "").asString();
 
-  Cost costFactor = config.get("extra_cost_factor", 1.0f).asFloat();
-  cost = 1.0 * costFactor;  // TODO:(bn) cost!
-
   unsigned int numIntermediatePoses = config["intermediate_poses"].size();
+  float dist = 0.0;
+  float angle = 0.0;
   for(unsigned int i=0; i<numIntermediatePoses; ++i) {
     State_c s;
     if(!s.Import(config["intermediate_poses"][i])) {
       printf("error: could not read 'intermediate_poses'[%d]\n", i);
         return false;
     }
+
+    State_c old(0, 0, 0);
+    if(!intermediatePositions.empty())
+      old = intermediatePositions.back();
+    
+    dist += xythetaEnvironment::GetDistanceBetween(old, s);
+    angle += fabs(s.theta - old.theta);
+
     intermediatePositions.push_back(s);
   }
 
+  // TODO:(bn) params!
+  float linearVelocity = 1.0;
+  float angularVelocity = 1.0;
+
+  Cost costFactor = config.get("extra_cost_factor", 1.0f).asFloat();
+  float baseCost = config.get("cost", -1.0f).asFloat();
+  if(baseCost < 0) {
+    baseCost = std::max(dist / linearVelocity, angle / angularVelocity);
+  }
+  cost = baseCost * costFactor;  // TODO:(bn) cost!
+
   return true;
+}
+
+float xythetaEnvironment::GetDistanceBetween(const State_c& start, const State& end) const
+{
+  float distSq = 
+    pow(GetX_mm(end.x) - start.x_mm, 2)
+    + pow(GetY_mm(end.y) - start.y_mm, 2);
+
+  return sqrtf(distSq);
+}
+
+float xythetaEnvironment::GetDistanceBetween(const State_c& start, const State_c& end)
+{
+  float distSq = 
+    pow(end.x_mm - start.x_mm, 2)
+    + pow(end.y_mm - start.y_mm, 2);
+
+  return sqrtf(distSq);
 }
 
 bool xythetaEnvironment::ReadEnvironment(FILE* fEnv)

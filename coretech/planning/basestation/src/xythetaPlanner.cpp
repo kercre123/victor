@@ -37,6 +37,8 @@ const xythetaPlan& xythetaPlanner::GetPlan() const
 // implementation functions
 ////////////////////////////////////////////////////////////////////////////////
 
+#define PLANNER_DEBUG_PLOT_STATES_CONSIDERED 0
+
 xythetaPlannerImpl::xythetaPlannerImpl(const xythetaEnvironment& env)
   : env_(env),
     start_(0,0,0),
@@ -68,6 +70,10 @@ void xythetaPlannerImpl::ComputePath()
 {
   Reset();
 
+  if(PLANNER_DEBUG_PLOT_STATES_CONSIDERED) {
+    debugExpPlotFile_ = fopen("expanded.txt", "w");
+  }
+
   StateID startID = start_.GetStateID();
 
   // push starting state
@@ -82,12 +88,22 @@ void xythetaPlannerImpl::ComputePath()
     StateID sid = open_.pop();
     if(sid == goalID_) {
       foundGoal = true;
-      printf("expanded goal! done!\n");
+      printf("expanded goal! cost = %f\n", table_[sid].g_);
       break;
     }
 
     ExpandState(sid);
     expansions_++;
+
+    if(PLANNER_DEBUG_PLOT_STATES_CONSIDERED) {
+      State_c c = env_.State2State_c(State(sid));
+      fprintf(debugExpPlotFile_, "%f %f %f %d\n",
+                  c.x_mm,
+                  c.y_mm,
+                  c.theta,
+                  sid.theta);
+    }
+
 
     // TEMP: 
     if(expansions_ % 10000 == 0) {
@@ -102,6 +118,10 @@ void xythetaPlannerImpl::ComputePath()
 
   if(foundGoal)
     BuildPlan();
+
+  if(PLANNER_DEBUG_PLOT_STATES_CONSIDERED) {
+    fclose(debugExpPlotFile_);
+  }
 
   printf("finished after %d expansions\n", expansions_);
 }
@@ -155,11 +175,7 @@ Cost xythetaPlannerImpl::heur(StateID sid)
   State s(sid);
   // return euclidean distance in mm
 
-  float distSq = 
-    pow(env_.GetX_mm(s.x) - goal_c_.x_mm, 2)
-    + pow(env_.GetY_mm(s.y) - goal_c_.y_mm, 2);
-
-  return sqrtf(distSq);
+  return env_.GetDistanceBetween(goal_c_, s);
 }
 
 void xythetaPlannerImpl::BuildPlan()
