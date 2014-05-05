@@ -13,3 +13,7 @@ target_link_libraries(run_pc_embeddedTests
   CoreTech_Common_Robot
   CoreTech_Vision_Robot
   ${ALL_EMBEDDED_LIBRARIES})
+  
+set_target_properties(run_pc_embeddedTests PROPERTIES
+  FOLDER "Unit Tests"
+)

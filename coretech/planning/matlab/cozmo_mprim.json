@@ -1,0 +1,7030 @@
+{
+  "angles": [
+    {
+      "prims": [
+        {
+          "end_pose": {
+            "theta": 0,
+            "x": 1,
+            "y": 0
+          },
+          "extra_cost_factor": 1.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 0.0,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.0,
+              "x_mm": 0.11199999999999999,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.0,
+              "x_mm": 0.22399999999999998,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.0,
+              "x_mm": 0.332,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.0,
+              "x_mm": 0.444,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.0,
+              "x_mm": 0.5559999999999999,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.0,
+              "x_mm": 0.6679999999999999,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.0,
+              "x_mm": 0.776,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.0,
+              "x_mm": 0.888,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.0,
+              "x_mm": 1.0,
+              "y_mm": 0.0
+            }
+          ],
+          "name": "short straight",
+          "prim_id": 0
+        },
+        {
+          "end_pose": {
+            "theta": 0,
+            "x": 8,
+            "y": 0
+          },
+          "extra_cost_factor": 1.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 0.0,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.0,
+              "x_mm": 0.888,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.0,
+              "x_mm": 1.776,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.0,
+              "x_mm": 2.6679999999999997,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.0,
+              "x_mm": 3.556,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.0,
+              "x_mm": 4.444,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.0,
+              "x_mm": 5.332000000000001,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.0,
+              "x_mm": 6.223999999999999,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.0,
+              "x_mm": 7.112,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.0,
+              "x_mm": 8.0,
+              "y_mm": 0.0
+            }
+          ],
+          "name": "long straight",
+          "prim_id": 1
+        },
+        {
+          "end_pose": {
+            "theta": 0,
+            "x": -1,
+            "y": 0
+          },
+          "extra_cost_factor": 5.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 0.0,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.0,
+              "x_mm": -0.11199999999999999,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.0,
+              "x_mm": -0.22399999999999998,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.0,
+              "x_mm": -0.332,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.0,
+              "x_mm": -0.444,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.0,
+              "x_mm": -0.5559999999999999,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.0,
+              "x_mm": -0.6679999999999999,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.0,
+              "x_mm": -0.776,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.0,
+              "x_mm": -0.888,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.0,
+              "x_mm": -1.0,
+              "y_mm": 0.0
+            }
+          ],
+          "name": "backup short straight",
+          "prim_id": 2
+        },
+        {
+          "end_pose": {
+            "theta": 1,
+            "x": 8,
+            "y": 1
+          },
+          "extra_cost_factor": 1.3,
+          "intermediate_poses": [
+            {
+              "theta_rad": 0.0,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.0,
+              "x_mm": 0.904,
+              "y_mm": -0.0
+            },
+            {
+              "theta_rad": 0.0,
+              "x_mm": 1.808,
+              "y_mm": -0.0
+            },
+            {
+              "theta_rad": 0.0,
+              "x_mm": 2.7119999999999997,
+              "y_mm": -0.0
+            },
+            {
+              "theta_rad": 0.0488,
+              "x_mm": 3.6120000000000005,
+              "y_mm": 0.016
+            },
+            {
+              "theta_rad": 0.1176,
+              "x_mm": 4.5120000000000005,
+              "y_mm": 0.092
+            },
+            {
+              "theta_rad": 0.1864,
+              "x_mm": 5.4079999999999995,
+              "y_mm": 0.228
+            },
+            {
+              "theta_rad": 0.2551,
+              "x_mm": 6.288,
+              "y_mm": 0.424
+            },
+            {
+              "theta_rad": 0.3239,
+              "x_mm": 7.156000000000001,
+              "y_mm": 0.684
+            },
+            {
+              "theta_rad": 0.3927,
+              "x_mm": 8.0,
+              "y_mm": 1.0
+            }
+          ],
+          "name": "long left",
+          "prim_id": 3
+        },
+        {
+          "end_pose": {
+            "theta": 15,
+            "x": 8,
+            "y": -1
+          },
+          "extra_cost_factor": 1.3,
+          "intermediate_poses": [
+            {
+              "theta_rad": 0.0,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.0,
+              "x_mm": 0.904,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.0,
+              "x_mm": 1.808,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.0,
+              "x_mm": 2.7119999999999997,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": -0.0488,
+              "x_mm": 3.6120000000000005,
+              "y_mm": -0.016
+            },
+            {
+              "theta_rad": -0.1176,
+              "x_mm": 4.5120000000000005,
+              "y_mm": -0.092
+            },
+            {
+              "theta_rad": -0.1864,
+              "x_mm": 5.4079999999999995,
+              "y_mm": -0.228
+            },
+            {
+              "theta_rad": -0.2551,
+              "x_mm": 6.288,
+              "y_mm": -0.424
+            },
+            {
+              "theta_rad": -0.3239,
+              "x_mm": 7.156000000000001,
+              "y_mm": -0.684
+            },
+            {
+              "theta_rad": -0.3927,
+              "x_mm": 8.0,
+              "y_mm": -1.0
+            }
+          ],
+          "name": "long right",
+          "prim_id": 4
+        },
+        {
+          "end_pose": {
+            "theta": 1,
+            "x": 0,
+            "y": 0
+          },
+          "extra_cost_factor": 1.5,
+          "intermediate_poses": [
+            {
+              "theta_rad": 0.0,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.0436,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.0873,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.1309,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.1745,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.2182,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.2618,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.3054,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.3491,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.3927,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            }
+          ],
+          "name": "in place left",
+          "prim_id": 5
+        },
+        {
+          "end_pose": {
+            "theta": 15,
+            "x": 0,
+            "y": 0
+          },
+          "extra_cost_factor": 1.5,
+          "intermediate_poses": [
+            {
+              "theta_rad": 0.0,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": -0.0436,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": -0.0873,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": -0.1309,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": -0.1745,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": -0.2182,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": -0.2618,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": -0.3054,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": -0.3491,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": -0.3927,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            }
+          ],
+          "name": "in place right",
+          "prim_id": 6
+        }
+      ],
+      "starting_angle": 0
+    },
+    {
+      "prims": [
+        {
+          "end_pose": {
+            "theta": 1,
+            "x": 2,
+            "y": 1
+          },
+          "extra_cost_factor": 1.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 0.3927,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.3927,
+              "x_mm": 0.22399999999999998,
+              "y_mm": 0.11199999999999999
+            },
+            {
+              "theta_rad": 0.3927,
+              "x_mm": 0.444,
+              "y_mm": 0.22399999999999998
+            },
+            {
+              "theta_rad": 0.3927,
+              "x_mm": 0.6679999999999999,
+              "y_mm": 0.332
+            },
+            {
+              "theta_rad": 0.3927,
+              "x_mm": 0.888,
+              "y_mm": 0.444
+            },
+            {
+              "theta_rad": 0.3927,
+              "x_mm": 1.1119999999999999,
+              "y_mm": 0.5559999999999999
+            },
+            {
+              "theta_rad": 0.3927,
+              "x_mm": 1.332,
+              "y_mm": 0.6679999999999999
+            },
+            {
+              "theta_rad": 0.3927,
+              "x_mm": 1.5559999999999998,
+              "y_mm": 0.776
+            },
+            {
+              "theta_rad": 0.3927,
+              "x_mm": 1.776,
+              "y_mm": 0.888
+            },
+            {
+              "theta_rad": 0.3927,
+              "x_mm": 2.0,
+              "y_mm": 1.0
+            }
+          ],
+          "name": "short straight",
+          "prim_id": 0
+        },
+        {
+          "end_pose": {
+            "theta": 1,
+            "x": 6,
+            "y": 3
+          },
+          "extra_cost_factor": 1.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 0.3927,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.3927,
+              "x_mm": 0.6679999999999999,
+              "y_mm": 0.332
+            },
+            {
+              "theta_rad": 0.3927,
+              "x_mm": 1.332,
+              "y_mm": 0.6679999999999999
+            },
+            {
+              "theta_rad": 0.3927,
+              "x_mm": 2.0,
+              "y_mm": 1.0
+            },
+            {
+              "theta_rad": 0.3927,
+              "x_mm": 2.6679999999999997,
+              "y_mm": 1.332
+            },
+            {
+              "theta_rad": 0.3927,
+              "x_mm": 3.3320000000000003,
+              "y_mm": 1.6680000000000001
+            },
+            {
+              "theta_rad": 0.3927,
+              "x_mm": 4.0,
+              "y_mm": 2.0
+            },
+            {
+              "theta_rad": 0.3927,
+              "x_mm": 4.668,
+              "y_mm": 2.332
+            },
+            {
+              "theta_rad": 0.3927,
+              "x_mm": 5.332000000000001,
+              "y_mm": 2.6679999999999997
+            },
+            {
+              "theta_rad": 0.3927,
+              "x_mm": 5.999999999999999,
+              "y_mm": 2.9999999999999996
+            }
+          ],
+          "name": "long straight",
+          "prim_id": 1
+        },
+        {
+          "end_pose": {
+            "theta": 1,
+            "x": -2,
+            "y": -1
+          },
+          "extra_cost_factor": 5.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 0.3927,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.3927,
+              "x_mm": -0.22399999999999998,
+              "y_mm": -0.11199999999999999
+            },
+            {
+              "theta_rad": 0.3927,
+              "x_mm": -0.444,
+              "y_mm": -0.22399999999999998
+            },
+            {
+              "theta_rad": 0.3927,
+              "x_mm": -0.6679999999999999,
+              "y_mm": -0.332
+            },
+            {
+              "theta_rad": 0.3927,
+              "x_mm": -0.888,
+              "y_mm": -0.444
+            },
+            {
+              "theta_rad": 0.3927,
+              "x_mm": -1.1119999999999999,
+              "y_mm": -0.5559999999999999
+            },
+            {
+              "theta_rad": 0.3927,
+              "x_mm": -1.332,
+              "y_mm": -0.6679999999999999
+            },
+            {
+              "theta_rad": 0.3927,
+              "x_mm": -1.5559999999999998,
+              "y_mm": -0.776
+            },
+            {
+              "theta_rad": 0.3927,
+              "x_mm": -1.776,
+              "y_mm": -0.888
+            },
+            {
+              "theta_rad": 0.3927,
+              "x_mm": -2.0,
+              "y_mm": -1.0
+            }
+          ],
+          "name": "backup short straight",
+          "prim_id": 2
+        },
+        {
+          "end_pose": {
+            "theta": 2,
+            "x": 5,
+            "y": 4
+          },
+          "extra_cost_factor": 1.3,
+          "intermediate_poses": [
+            {
+              "theta_rad": 0.3927,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.423,
+              "x_mm": 0.596,
+              "y_mm": 0.368
+            },
+            {
+              "theta_rad": 0.4533,
+              "x_mm": 1.184,
+              "y_mm": 0.7560000000000001
+            },
+            {
+              "theta_rad": 0.4836,
+              "x_mm": 1.76,
+              "y_mm": 1.1640000000000001
+            },
+            {
+              "theta_rad": 0.5139,
+              "x_mm": 2.3280000000000003,
+              "y_mm": 1.5920000000000003
+            },
+            {
+              "theta_rad": 0.5442,
+              "x_mm": 2.8880000000000003,
+              "y_mm": 2.036
+            },
+            {
+              "theta_rad": 0.5745,
+              "x_mm": 3.432,
+              "y_mm": 2.5
+            },
+            {
+              "theta_rad": 0.6048,
+              "x_mm": 3.968,
+              "y_mm": 2.984
+            },
+            {
+              "theta_rad": 0.6351,
+              "x_mm": 4.492,
+              "y_mm": 3.484
+            },
+            {
+              "theta_rad": 0.6654,
+              "x_mm": 5.0,
+              "y_mm": 4.0
+            }
+          ],
+          "name": "long left",
+          "prim_id": 3
+        },
+        {
+          "end_pose": {
+            "theta": 0,
+            "x": 7,
+            "y": 2
+          },
+          "extra_cost_factor": 1.3,
+          "intermediate_poses": [
+            {
+              "theta_rad": 0.3927,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.3927,
+              "x_mm": 0.752,
+              "y_mm": 0.312
+            },
+            {
+              "theta_rad": 0.3927,
+              "x_mm": 1.5079999999999998,
+              "y_mm": 0.624
+            },
+            {
+              "theta_rad": 0.3927,
+              "x_mm": 2.2600000000000002,
+              "y_mm": 0.9359999999999999
+            },
+            {
+              "theta_rad": 0.3736,
+              "x_mm": 3.0159999999999996,
+              "y_mm": 1.248
+            },
+            {
+              "theta_rad": 0.2989,
+              "x_mm": 3.7840000000000003,
+              "y_mm": 1.5160000000000002
+            },
+            {
+              "theta_rad": 0.2242,
+              "x_mm": 4.572,
+              "y_mm": 1.7280000000000002
+            },
+            {
+              "theta_rad": 0.1494,
+              "x_mm": 5.3759999999999994,
+              "y_mm": 1.8800000000000001
+            },
+            {
+              "theta_rad": 0.0747,
+              "x_mm": 6.183999999999999,
+              "y_mm": 1.9680000000000002
+            },
+            {
+              "theta_rad": 0.0,
+              "x_mm": 7.0,
+              "y_mm": 2.0
+            }
+          ],
+          "name": "long right",
+          "prim_id": 4
+        },
+        {
+          "end_pose": {
+            "theta": 2,
+            "x": 0,
+            "y": 0
+          },
+          "extra_cost_factor": 1.5,
+          "intermediate_poses": [
+            {
+              "theta_rad": 0.3927,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.4363,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.48,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.5236,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.5672,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.6109,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.6545,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.6981,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.7418,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.7854,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            }
+          ],
+          "name": "in place left",
+          "prim_id": 5
+        },
+        {
+          "end_pose": {
+            "theta": 0,
+            "x": 0,
+            "y": 0
+          },
+          "extra_cost_factor": 1.5,
+          "intermediate_poses": [
+            {
+              "theta_rad": 0.3927,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.3491,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.3054,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.2618,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.2182,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.1745,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.1309,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.0873,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.0436,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.0,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            }
+          ],
+          "name": "in place right",
+          "prim_id": 6
+        }
+      ],
+      "starting_angle": 1
+    },
+    {
+      "prims": [
+        {
+          "end_pose": {
+            "theta": 2,
+            "x": 1,
+            "y": 1
+          },
+          "extra_cost_factor": 1.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 0.7854,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.7854,
+              "x_mm": 0.11199999999999999,
+              "y_mm": 0.11199999999999999
+            },
+            {
+              "theta_rad": 0.7854,
+              "x_mm": 0.22399999999999998,
+              "y_mm": 0.22399999999999998
+            },
+            {
+              "theta_rad": 0.7854,
+              "x_mm": 0.332,
+              "y_mm": 0.332
+            },
+            {
+              "theta_rad": 0.7854,
+              "x_mm": 0.444,
+              "y_mm": 0.444
+            },
+            {
+              "theta_rad": 0.7854,
+              "x_mm": 0.5559999999999999,
+              "y_mm": 0.5559999999999999
+            },
+            {
+              "theta_rad": 0.7854,
+              "x_mm": 0.6679999999999999,
+              "y_mm": 0.6679999999999999
+            },
+            {
+              "theta_rad": 0.7854,
+              "x_mm": 0.776,
+              "y_mm": 0.776
+            },
+            {
+              "theta_rad": 0.7854,
+              "x_mm": 0.888,
+              "y_mm": 0.888
+            },
+            {
+              "theta_rad": 0.7854,
+              "x_mm": 1.0,
+              "y_mm": 1.0
+            }
+          ],
+          "name": "short straight",
+          "prim_id": 0
+        },
+        {
+          "end_pose": {
+            "theta": 2,
+            "x": 6,
+            "y": 6
+          },
+          "extra_cost_factor": 1.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 0.7854,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.7854,
+              "x_mm": 0.6679999999999999,
+              "y_mm": 0.6679999999999999
+            },
+            {
+              "theta_rad": 0.7854,
+              "x_mm": 1.332,
+              "y_mm": 1.332
+            },
+            {
+              "theta_rad": 0.7854,
+              "x_mm": 2.0,
+              "y_mm": 2.0
+            },
+            {
+              "theta_rad": 0.7854,
+              "x_mm": 2.6679999999999997,
+              "y_mm": 2.6679999999999997
+            },
+            {
+              "theta_rad": 0.7854,
+              "x_mm": 3.3320000000000003,
+              "y_mm": 3.3320000000000003
+            },
+            {
+              "theta_rad": 0.7854,
+              "x_mm": 4.0,
+              "y_mm": 4.0
+            },
+            {
+              "theta_rad": 0.7854,
+              "x_mm": 4.668,
+              "y_mm": 4.668
+            },
+            {
+              "theta_rad": 0.7854,
+              "x_mm": 5.332000000000001,
+              "y_mm": 5.332000000000001
+            },
+            {
+              "theta_rad": 0.7854,
+              "x_mm": 5.999999999999999,
+              "y_mm": 5.999999999999999
+            }
+          ],
+          "name": "long straight",
+          "prim_id": 1
+        },
+        {
+          "end_pose": {
+            "theta": 2,
+            "x": -1,
+            "y": -1
+          },
+          "extra_cost_factor": 5.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 0.7854,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.7854,
+              "x_mm": -0.11199999999999999,
+              "y_mm": -0.11199999999999999
+            },
+            {
+              "theta_rad": 0.7854,
+              "x_mm": -0.22399999999999998,
+              "y_mm": -0.22399999999999998
+            },
+            {
+              "theta_rad": 0.7854,
+              "x_mm": -0.332,
+              "y_mm": -0.332
+            },
+            {
+              "theta_rad": 0.7854,
+              "x_mm": -0.444,
+              "y_mm": -0.444
+            },
+            {
+              "theta_rad": 0.7854,
+              "x_mm": -0.5559999999999999,
+              "y_mm": -0.5559999999999999
+            },
+            {
+              "theta_rad": 0.7854,
+              "x_mm": -0.6679999999999999,
+              "y_mm": -0.6679999999999999
+            },
+            {
+              "theta_rad": 0.7854,
+              "x_mm": -0.776,
+              "y_mm": -0.776
+            },
+            {
+              "theta_rad": 0.7854,
+              "x_mm": -0.888,
+              "y_mm": -0.888
+            },
+            {
+              "theta_rad": 0.7854,
+              "x_mm": -1.0,
+              "y_mm": -1.0
+            }
+          ],
+          "name": "backup short straight",
+          "prim_id": 2
+        },
+        {
+          "end_pose": {
+            "theta": 3,
+            "x": 5,
+            "y": 7
+          },
+          "extra_cost_factor": 1.3,
+          "intermediate_poses": [
+            {
+              "theta_rad": 0.7854,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.7854,
+              "x_mm": 0.6800000000000002,
+              "y_mm": 0.6800000000000002
+            },
+            {
+              "theta_rad": 0.8151,
+              "x_mm": 1.3559999999999999,
+              "y_mm": 1.368
+            },
+            {
+              "theta_rad": 0.8669,
+              "x_mm": 2.0,
+              "y_mm": 2.088
+            },
+            {
+              "theta_rad": 0.9188,
+              "x_mm": 2.6040000000000005,
+              "y_mm": 2.8360000000000003
+            },
+            {
+              "theta_rad": 0.9707,
+              "x_mm": 3.1680000000000006,
+              "y_mm": 3.616
+            },
+            {
+              "theta_rad": 1.0225,
+              "x_mm": 3.6919999999999997,
+              "y_mm": 4.428
+            },
+            {
+              "theta_rad": 1.0744,
+              "x_mm": 4.172,
+              "y_mm": 5.26
+            },
+            {
+              "theta_rad": 1.1262,
+              "x_mm": 4.608,
+              "y_mm": 6.12
+            },
+            {
+              "theta_rad": 1.1781,
+              "x_mm": 5.0,
+              "y_mm": 7.0
+            }
+          ],
+          "name": "long left",
+          "prim_id": 3
+        },
+        {
+          "end_pose": {
+            "theta": 1,
+            "x": 7,
+            "y": 5
+          },
+          "extra_cost_factor": 1.3,
+          "intermediate_poses": [
+            {
+              "theta_rad": 0.7854,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.7854,
+              "x_mm": 0.6800000000000002,
+              "y_mm": 0.6800000000000002
+            },
+            {
+              "theta_rad": 0.7557,
+              "x_mm": 1.368,
+              "y_mm": 1.3559999999999999
+            },
+            {
+              "theta_rad": 0.7039,
+              "x_mm": 2.088,
+              "y_mm": 2.0
+            },
+            {
+              "theta_rad": 0.652,
+              "x_mm": 2.8360000000000003,
+              "y_mm": 2.6040000000000005
+            },
+            {
+              "theta_rad": 0.6001,
+              "x_mm": 3.616,
+              "y_mm": 3.1680000000000006
+            },
+            {
+              "theta_rad": 0.5483,
+              "x_mm": 4.428,
+              "y_mm": 3.6919999999999997
+            },
+            {
+              "theta_rad": 0.4964,
+              "x_mm": 5.26,
+              "y_mm": 4.172
+            },
+            {
+              "theta_rad": 0.4446,
+              "x_mm": 6.12,
+              "y_mm": 4.608
+            },
+            {
+              "theta_rad": 0.3927,
+              "x_mm": 7.0,
+              "y_mm": 5.0
+            }
+          ],
+          "name": "long right",
+          "prim_id": 4
+        },
+        {
+          "end_pose": {
+            "theta": 3,
+            "x": 0,
+            "y": 0
+          },
+          "extra_cost_factor": 1.5,
+          "intermediate_poses": [
+            {
+              "theta_rad": 0.7854,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.829,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.8727,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.9163,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.9599,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.0036,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.0472,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.0908,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.1345,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.1781,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            }
+          ],
+          "name": "in place left",
+          "prim_id": 5
+        },
+        {
+          "end_pose": {
+            "theta": 1,
+            "x": 0,
+            "y": 0
+          },
+          "extra_cost_factor": 1.5,
+          "intermediate_poses": [
+            {
+              "theta_rad": 0.7854,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.7418,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.6981,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.6545,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.6109,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.5672,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.5236,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.48,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.4363,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.3927,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            }
+          ],
+          "name": "in place right",
+          "prim_id": 6
+        }
+      ],
+      "starting_angle": 2
+    },
+    {
+      "prims": [
+        {
+          "end_pose": {
+            "theta": 3,
+            "x": 1,
+            "y": 2
+          },
+          "extra_cost_factor": 1.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 1.1781,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.1781,
+              "x_mm": 0.11199999999999999,
+              "y_mm": 0.22399999999999998
+            },
+            {
+              "theta_rad": 1.1781,
+              "x_mm": 0.22399999999999998,
+              "y_mm": 0.444
+            },
+            {
+              "theta_rad": 1.1781,
+              "x_mm": 0.332,
+              "y_mm": 0.6679999999999999
+            },
+            {
+              "theta_rad": 1.1781,
+              "x_mm": 0.444,
+              "y_mm": 0.888
+            },
+            {
+              "theta_rad": 1.1781,
+              "x_mm": 0.5559999999999999,
+              "y_mm": 1.1119999999999999
+            },
+            {
+              "theta_rad": 1.1781,
+              "x_mm": 0.6679999999999999,
+              "y_mm": 1.332
+            },
+            {
+              "theta_rad": 1.1781,
+              "x_mm": 0.776,
+              "y_mm": 1.5559999999999998
+            },
+            {
+              "theta_rad": 1.1781,
+              "x_mm": 0.888,
+              "y_mm": 1.776
+            },
+            {
+              "theta_rad": 1.1781,
+              "x_mm": 1.0,
+              "y_mm": 2.0
+            }
+          ],
+          "name": "short straight",
+          "prim_id": 0
+        },
+        {
+          "end_pose": {
+            "theta": 3,
+            "x": 3,
+            "y": 6
+          },
+          "extra_cost_factor": 1.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 1.1781,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.1781,
+              "x_mm": 0.332,
+              "y_mm": 0.6679999999999999
+            },
+            {
+              "theta_rad": 1.1781,
+              "x_mm": 0.6679999999999999,
+              "y_mm": 1.332
+            },
+            {
+              "theta_rad": 1.1781,
+              "x_mm": 1.0,
+              "y_mm": 2.0
+            },
+            {
+              "theta_rad": 1.1781,
+              "x_mm": 1.332,
+              "y_mm": 2.6679999999999997
+            },
+            {
+              "theta_rad": 1.1781,
+              "x_mm": 1.6680000000000001,
+              "y_mm": 3.3320000000000003
+            },
+            {
+              "theta_rad": 1.1781,
+              "x_mm": 2.0,
+              "y_mm": 4.0
+            },
+            {
+              "theta_rad": 1.1781,
+              "x_mm": 2.332,
+              "y_mm": 4.668
+            },
+            {
+              "theta_rad": 1.1781,
+              "x_mm": 2.6679999999999997,
+              "y_mm": 5.332000000000001
+            },
+            {
+              "theta_rad": 1.1781,
+              "x_mm": 2.9999999999999996,
+              "y_mm": 5.999999999999999
+            }
+          ],
+          "name": "long straight",
+          "prim_id": 1
+        },
+        {
+          "end_pose": {
+            "theta": 3,
+            "x": -1,
+            "y": -2
+          },
+          "extra_cost_factor": 5.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 1.1781,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.1781,
+              "x_mm": -0.11199999999999999,
+              "y_mm": -0.22399999999999998
+            },
+            {
+              "theta_rad": 1.1781,
+              "x_mm": -0.22399999999999998,
+              "y_mm": -0.444
+            },
+            {
+              "theta_rad": 1.1781,
+              "x_mm": -0.332,
+              "y_mm": -0.6679999999999999
+            },
+            {
+              "theta_rad": 1.1781,
+              "x_mm": -0.444,
+              "y_mm": -0.888
+            },
+            {
+              "theta_rad": 1.1781,
+              "x_mm": -0.5559999999999999,
+              "y_mm": -1.1119999999999999
+            },
+            {
+              "theta_rad": 1.1781,
+              "x_mm": -0.6679999999999999,
+              "y_mm": -1.332
+            },
+            {
+              "theta_rad": 1.1781,
+              "x_mm": -0.776,
+              "y_mm": -1.5559999999999998
+            },
+            {
+              "theta_rad": 1.1781,
+              "x_mm": -0.888,
+              "y_mm": -1.776
+            },
+            {
+              "theta_rad": 1.1781,
+              "x_mm": -1.0,
+              "y_mm": -2.0
+            }
+          ],
+          "name": "backup short straight",
+          "prim_id": 2
+        },
+        {
+          "end_pose": {
+            "theta": 2,
+            "x": 4,
+            "y": 5
+          },
+          "extra_cost_factor": 1.3,
+          "intermediate_poses": [
+            {
+              "theta_rad": 1.1781,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.1478,
+              "x_mm": 0.368,
+              "y_mm": 0.596
+            },
+            {
+              "theta_rad": 1.1175,
+              "x_mm": 0.7560000000000001,
+              "y_mm": 1.184
+            },
+            {
+              "theta_rad": 1.0872,
+              "x_mm": 1.1640000000000001,
+              "y_mm": 1.76
+            },
+            {
+              "theta_rad": 1.0569,
+              "x_mm": 1.5920000000000003,
+              "y_mm": 2.3280000000000003
+            },
+            {
+              "theta_rad": 1.0266,
+              "x_mm": 2.036,
+              "y_mm": 2.8880000000000003
+            },
+            {
+              "theta_rad": 0.9963,
+              "x_mm": 2.5,
+              "y_mm": 3.432
+            },
+            {
+              "theta_rad": 0.966,
+              "x_mm": 2.984,
+              "y_mm": 3.968
+            },
+            {
+              "theta_rad": 0.9357,
+              "x_mm": 3.484,
+              "y_mm": 4.492
+            },
+            {
+              "theta_rad": 0.9054,
+              "x_mm": 4.0,
+              "y_mm": 5.0
+            }
+          ],
+          "name": "long right",
+          "prim_id": 3
+        },
+        {
+          "end_pose": {
+            "theta": 4,
+            "x": 2,
+            "y": 7
+          },
+          "extra_cost_factor": 1.3,
+          "intermediate_poses": [
+            {
+              "theta_rad": 1.1781,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.1781,
+              "x_mm": 0.312,
+              "y_mm": 0.752
+            },
+            {
+              "theta_rad": 1.1781,
+              "x_mm": 0.624,
+              "y_mm": 1.5079999999999998
+            },
+            {
+              "theta_rad": 1.1781,
+              "x_mm": 0.9359999999999999,
+              "y_mm": 2.2600000000000002
+            },
+            {
+              "theta_rad": 1.1972,
+              "x_mm": 1.248,
+              "y_mm": 3.0159999999999996
+            },
+            {
+              "theta_rad": 1.2719,
+              "x_mm": 1.5160000000000002,
+              "y_mm": 3.7840000000000003
+            },
+            {
+              "theta_rad": 1.3466,
+              "x_mm": 1.7280000000000002,
+              "y_mm": 4.572
+            },
+            {
+              "theta_rad": 1.4214,
+              "x_mm": 1.8800000000000001,
+              "y_mm": 5.3759999999999994
+            },
+            {
+              "theta_rad": 1.4961,
+              "x_mm": 1.9680000000000002,
+              "y_mm": 6.183999999999999
+            },
+            {
+              "theta_rad": 1.5708,
+              "x_mm": 2.0,
+              "y_mm": 7.0
+            }
+          ],
+          "name": "long left",
+          "prim_id": 4
+        },
+        {
+          "end_pose": {
+            "theta": 2,
+            "x": 0,
+            "y": 0
+          },
+          "extra_cost_factor": 1.5,
+          "intermediate_poses": [
+            {
+              "theta_rad": 1.1781,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.1345,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.0908,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.0472,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.0036,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.9599,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.9163,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.8727,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.829,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.7854,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            }
+          ],
+          "name": "in place right",
+          "prim_id": 5
+        },
+        {
+          "end_pose": {
+            "theta": 4,
+            "x": 0,
+            "y": 0
+          },
+          "extra_cost_factor": 1.5,
+          "intermediate_poses": [
+            {
+              "theta_rad": 1.1781,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.2217,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.2654,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.309,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.3526,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.3963,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.4399,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.4835,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.5272,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.5708,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            }
+          ],
+          "name": "in place left",
+          "prim_id": 6
+        }
+      ],
+      "starting_angle": 3
+    },
+    {
+      "prims": [
+        {
+          "end_pose": {
+            "theta": 4,
+            "x": 0,
+            "y": 1
+          },
+          "extra_cost_factor": 1.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 1.5708,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.5708,
+              "x_mm": 0.0,
+              "y_mm": 0.11199999999999999
+            },
+            {
+              "theta_rad": 1.5708,
+              "x_mm": 0.0,
+              "y_mm": 0.22399999999999998
+            },
+            {
+              "theta_rad": 1.5708,
+              "x_mm": 0.0,
+              "y_mm": 0.332
+            },
+            {
+              "theta_rad": 1.5708,
+              "x_mm": 0.0,
+              "y_mm": 0.444
+            },
+            {
+              "theta_rad": 1.5708,
+              "x_mm": 0.0,
+              "y_mm": 0.5559999999999999
+            },
+            {
+              "theta_rad": 1.5708,
+              "x_mm": 0.0,
+              "y_mm": 0.6679999999999999
+            },
+            {
+              "theta_rad": 1.5708,
+              "x_mm": 0.0,
+              "y_mm": 0.776
+            },
+            {
+              "theta_rad": 1.5708,
+              "x_mm": 0.0,
+              "y_mm": 0.888
+            },
+            {
+              "theta_rad": 1.5708,
+              "x_mm": 0.0,
+              "y_mm": 1.0
+            }
+          ],
+          "name": "short straight",
+          "prim_id": 0
+        },
+        {
+          "end_pose": {
+            "theta": 4,
+            "x": 0,
+            "y": 8
+          },
+          "extra_cost_factor": 1.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 1.5708,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.5708,
+              "x_mm": 0.0,
+              "y_mm": 0.888
+            },
+            {
+              "theta_rad": 1.5708,
+              "x_mm": 0.0,
+              "y_mm": 1.776
+            },
+            {
+              "theta_rad": 1.5708,
+              "x_mm": 0.0,
+              "y_mm": 2.6679999999999997
+            },
+            {
+              "theta_rad": 1.5708,
+              "x_mm": 0.0,
+              "y_mm": 3.556
+            },
+            {
+              "theta_rad": 1.5708,
+              "x_mm": 0.0,
+              "y_mm": 4.444
+            },
+            {
+              "theta_rad": 1.5708,
+              "x_mm": 0.0,
+              "y_mm": 5.332000000000001
+            },
+            {
+              "theta_rad": 1.5708,
+              "x_mm": 0.0,
+              "y_mm": 6.223999999999999
+            },
+            {
+              "theta_rad": 1.5708,
+              "x_mm": 0.0,
+              "y_mm": 7.112
+            },
+            {
+              "theta_rad": 1.5708,
+              "x_mm": 0.0,
+              "y_mm": 8.0
+            }
+          ],
+          "name": "long straight",
+          "prim_id": 1
+        },
+        {
+          "end_pose": {
+            "theta": 4,
+            "x": 0,
+            "y": -1
+          },
+          "extra_cost_factor": 5.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 1.5708,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.5708,
+              "x_mm": 0.0,
+              "y_mm": -0.11199999999999999
+            },
+            {
+              "theta_rad": 1.5708,
+              "x_mm": 0.0,
+              "y_mm": -0.22399999999999998
+            },
+            {
+              "theta_rad": 1.5708,
+              "x_mm": 0.0,
+              "y_mm": -0.332
+            },
+            {
+              "theta_rad": 1.5708,
+              "x_mm": 0.0,
+              "y_mm": -0.444
+            },
+            {
+              "theta_rad": 1.5708,
+              "x_mm": 0.0,
+              "y_mm": -0.5559999999999999
+            },
+            {
+              "theta_rad": 1.5708,
+              "x_mm": 0.0,
+              "y_mm": -0.6679999999999999
+            },
+            {
+              "theta_rad": 1.5708,
+              "x_mm": 0.0,
+              "y_mm": -0.776
+            },
+            {
+              "theta_rad": 1.5708,
+              "x_mm": 0.0,
+              "y_mm": -0.888
+            },
+            {
+              "theta_rad": 1.5708,
+              "x_mm": 0.0,
+              "y_mm": -1.0
+            }
+          ],
+          "name": "backup short straight",
+          "prim_id": 2
+        },
+        {
+          "end_pose": {
+            "theta": 5,
+            "x": -1,
+            "y": 8
+          },
+          "extra_cost_factor": 1.3,
+          "intermediate_poses": [
+            {
+              "theta_rad": 1.5708,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.5708,
+              "x_mm": 0.0,
+              "y_mm": 0.904
+            },
+            {
+              "theta_rad": 1.5708,
+              "x_mm": 0.0,
+              "y_mm": 1.808
+            },
+            {
+              "theta_rad": 1.5708,
+              "x_mm": 0.0,
+              "y_mm": 2.7119999999999997
+            },
+            {
+              "theta_rad": 1.6196,
+              "x_mm": -0.016,
+              "y_mm": 3.6120000000000005
+            },
+            {
+              "theta_rad": 1.6884,
+              "x_mm": -0.092,
+              "y_mm": 4.5120000000000005
+            },
+            {
+              "theta_rad": 1.7572,
+              "x_mm": -0.228,
+              "y_mm": 5.4079999999999995
+            },
+            {
+              "theta_rad": 1.8259,
+              "x_mm": -0.424,
+              "y_mm": 6.288
+            },
+            {
+              "theta_rad": 1.8947,
+              "x_mm": -0.684,
+              "y_mm": 7.156000000000001
+            },
+            {
+              "theta_rad": 1.9635,
+              "x_mm": -1.0,
+              "y_mm": 8.0
+            }
+          ],
+          "name": "long left",
+          "prim_id": 3
+        },
+        {
+          "end_pose": {
+            "theta": 3,
+            "x": 1,
+            "y": 8
+          },
+          "extra_cost_factor": 1.3,
+          "intermediate_poses": [
+            {
+              "theta_rad": 1.5708,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.5708,
+              "x_mm": -0.0,
+              "y_mm": 0.904
+            },
+            {
+              "theta_rad": 1.5708,
+              "x_mm": -0.0,
+              "y_mm": 1.808
+            },
+            {
+              "theta_rad": 1.5708,
+              "x_mm": -0.0,
+              "y_mm": 2.7119999999999997
+            },
+            {
+              "theta_rad": 1.522,
+              "x_mm": 0.016,
+              "y_mm": 3.6120000000000005
+            },
+            {
+              "theta_rad": 1.4532,
+              "x_mm": 0.092,
+              "y_mm": 4.5120000000000005
+            },
+            {
+              "theta_rad": 1.3844,
+              "x_mm": 0.228,
+              "y_mm": 5.4079999999999995
+            },
+            {
+              "theta_rad": 1.3156,
+              "x_mm": 0.424,
+              "y_mm": 6.288
+            },
+            {
+              "theta_rad": 1.2469,
+              "x_mm": 0.684,
+              "y_mm": 7.156000000000001
+            },
+            {
+              "theta_rad": 1.1781,
+              "x_mm": 1.0,
+              "y_mm": 8.0
+            }
+          ],
+          "name": "long right",
+          "prim_id": 4
+        },
+        {
+          "end_pose": {
+            "theta": 5,
+            "x": 0,
+            "y": 0
+          },
+          "extra_cost_factor": 1.5,
+          "intermediate_poses": [
+            {
+              "theta_rad": 1.5708,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.6144,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.6581,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.7017,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.7453,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.789,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.8326,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.8762,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.9199,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.9635,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            }
+          ],
+          "name": "in place left",
+          "prim_id": 5
+        },
+        {
+          "end_pose": {
+            "theta": 3,
+            "x": 0,
+            "y": 0
+          },
+          "extra_cost_factor": 1.5,
+          "intermediate_poses": [
+            {
+              "theta_rad": 1.5708,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.5272,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.4835,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.4399,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.3963,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.3526,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.309,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.2654,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.2217,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.1781,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            }
+          ],
+          "name": "in place right",
+          "prim_id": 6
+        }
+      ],
+      "starting_angle": 4
+    },
+    {
+      "prims": [
+        {
+          "end_pose": {
+            "theta": 5,
+            "x": -1,
+            "y": 2
+          },
+          "extra_cost_factor": 1.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 1.9635,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.9635,
+              "x_mm": -0.11199999999999999,
+              "y_mm": 0.22399999999999998
+            },
+            {
+              "theta_rad": 1.9635,
+              "x_mm": -0.22399999999999998,
+              "y_mm": 0.444
+            },
+            {
+              "theta_rad": 1.9635,
+              "x_mm": -0.332,
+              "y_mm": 0.6679999999999999
+            },
+            {
+              "theta_rad": 1.9635,
+              "x_mm": -0.444,
+              "y_mm": 0.888
+            },
+            {
+              "theta_rad": 1.9635,
+              "x_mm": -0.5559999999999999,
+              "y_mm": 1.1119999999999999
+            },
+            {
+              "theta_rad": 1.9635,
+              "x_mm": -0.6679999999999999,
+              "y_mm": 1.332
+            },
+            {
+              "theta_rad": 1.9635,
+              "x_mm": -0.776,
+              "y_mm": 1.5559999999999998
+            },
+            {
+              "theta_rad": 1.9635,
+              "x_mm": -0.888,
+              "y_mm": 1.776
+            },
+            {
+              "theta_rad": 1.9635,
+              "x_mm": -1.0,
+              "y_mm": 2.0
+            }
+          ],
+          "name": "short straight",
+          "prim_id": 0
+        },
+        {
+          "end_pose": {
+            "theta": 5,
+            "x": -3,
+            "y": 6
+          },
+          "extra_cost_factor": 1.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 1.9635,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.9635,
+              "x_mm": -0.332,
+              "y_mm": 0.6679999999999999
+            },
+            {
+              "theta_rad": 1.9635,
+              "x_mm": -0.6679999999999999,
+              "y_mm": 1.332
+            },
+            {
+              "theta_rad": 1.9635,
+              "x_mm": -1.0,
+              "y_mm": 2.0
+            },
+            {
+              "theta_rad": 1.9635,
+              "x_mm": -1.332,
+              "y_mm": 2.6679999999999997
+            },
+            {
+              "theta_rad": 1.9635,
+              "x_mm": -1.6680000000000001,
+              "y_mm": 3.3320000000000003
+            },
+            {
+              "theta_rad": 1.9635,
+              "x_mm": -2.0,
+              "y_mm": 4.0
+            },
+            {
+              "theta_rad": 1.9635,
+              "x_mm": -2.332,
+              "y_mm": 4.668
+            },
+            {
+              "theta_rad": 1.9635,
+              "x_mm": -2.6679999999999997,
+              "y_mm": 5.332000000000001
+            },
+            {
+              "theta_rad": 1.9635,
+              "x_mm": -2.9999999999999996,
+              "y_mm": 5.999999999999999
+            }
+          ],
+          "name": "long straight",
+          "prim_id": 1
+        },
+        {
+          "end_pose": {
+            "theta": 5,
+            "x": 1,
+            "y": -2
+          },
+          "extra_cost_factor": 5.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 1.9635,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.9635,
+              "x_mm": 0.11199999999999999,
+              "y_mm": -0.22399999999999998
+            },
+            {
+              "theta_rad": 1.9635,
+              "x_mm": 0.22399999999999998,
+              "y_mm": -0.444
+            },
+            {
+              "theta_rad": 1.9635,
+              "x_mm": 0.332,
+              "y_mm": -0.6679999999999999
+            },
+            {
+              "theta_rad": 1.9635,
+              "x_mm": 0.444,
+              "y_mm": -0.888
+            },
+            {
+              "theta_rad": 1.9635,
+              "x_mm": 0.5559999999999999,
+              "y_mm": -1.1119999999999999
+            },
+            {
+              "theta_rad": 1.9635,
+              "x_mm": 0.6679999999999999,
+              "y_mm": -1.332
+            },
+            {
+              "theta_rad": 1.9635,
+              "x_mm": 0.776,
+              "y_mm": -1.5559999999999998
+            },
+            {
+              "theta_rad": 1.9635,
+              "x_mm": 0.888,
+              "y_mm": -1.776
+            },
+            {
+              "theta_rad": 1.9635,
+              "x_mm": 1.0,
+              "y_mm": -2.0
+            }
+          ],
+          "name": "short straight",
+          "prim_id": 2
+        },
+        {
+          "end_pose": {
+            "theta": 6,
+            "x": -4,
+            "y": 5
+          },
+          "extra_cost_factor": 1.3,
+          "intermediate_poses": [
+            {
+              "theta_rad": 1.9635,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.9938,
+              "x_mm": -0.368,
+              "y_mm": 0.596
+            },
+            {
+              "theta_rad": 2.0241,
+              "x_mm": -0.7560000000000001,
+              "y_mm": 1.184
+            },
+            {
+              "theta_rad": 2.0544,
+              "x_mm": -1.1640000000000001,
+              "y_mm": 1.76
+            },
+            {
+              "theta_rad": 2.0847,
+              "x_mm": -1.5920000000000003,
+              "y_mm": 2.3280000000000003
+            },
+            {
+              "theta_rad": 2.115,
+              "x_mm": -2.036,
+              "y_mm": 2.8880000000000003
+            },
+            {
+              "theta_rad": 2.1453,
+              "x_mm": -2.5,
+              "y_mm": 3.432
+            },
+            {
+              "theta_rad": 2.1756,
+              "x_mm": -2.984,
+              "y_mm": 3.968
+            },
+            {
+              "theta_rad": 2.2059,
+              "x_mm": -3.484,
+              "y_mm": 4.492
+            },
+            {
+              "theta_rad": 2.2362,
+              "x_mm": -4.0,
+              "y_mm": 5.0
+            }
+          ],
+          "name": "long left",
+          "prim_id": 3
+        },
+        {
+          "end_pose": {
+            "theta": 4,
+            "x": -2,
+            "y": 7
+          },
+          "extra_cost_factor": 1.3,
+          "intermediate_poses": [
+            {
+              "theta_rad": 1.9635,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.9635,
+              "x_mm": -0.312,
+              "y_mm": 0.752
+            },
+            {
+              "theta_rad": 1.9635,
+              "x_mm": -0.624,
+              "y_mm": 1.5079999999999998
+            },
+            {
+              "theta_rad": 1.9635,
+              "x_mm": -0.9359999999999999,
+              "y_mm": 2.2600000000000002
+            },
+            {
+              "theta_rad": 1.9444,
+              "x_mm": -1.248,
+              "y_mm": 3.0159999999999996
+            },
+            {
+              "theta_rad": 1.8697,
+              "x_mm": -1.5160000000000002,
+              "y_mm": 3.7840000000000003
+            },
+            {
+              "theta_rad": 1.795,
+              "x_mm": -1.7280000000000002,
+              "y_mm": 4.572
+            },
+            {
+              "theta_rad": 1.7202,
+              "x_mm": -1.8800000000000001,
+              "y_mm": 5.3759999999999994
+            },
+            {
+              "theta_rad": 1.6455,
+              "x_mm": -1.9680000000000002,
+              "y_mm": 6.183999999999999
+            },
+            {
+              "theta_rad": 1.5708,
+              "x_mm": -2.0,
+              "y_mm": 7.0
+            }
+          ],
+          "name": "long right",
+          "prim_id": 4
+        },
+        {
+          "end_pose": {
+            "theta": 6,
+            "x": 0,
+            "y": 0
+          },
+          "extra_cost_factor": 1.5,
+          "intermediate_poses": [
+            {
+              "theta_rad": 1.9635,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.0071,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.0508,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.0944,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.138,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.1817,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.2253,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.2689,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.3126,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.3562,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            }
+          ],
+          "name": "in place left",
+          "prim_id": 5
+        },
+        {
+          "end_pose": {
+            "theta": 4,
+            "x": 0,
+            "y": 0
+          },
+          "extra_cost_factor": 1.5,
+          "intermediate_poses": [
+            {
+              "theta_rad": 1.9635,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.9199,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.8762,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.8326,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.789,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.7453,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.7017,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.6581,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.6144,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.5708,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            }
+          ],
+          "name": "in place right",
+          "prim_id": 6
+        }
+      ],
+      "starting_angle": 5
+    },
+    {
+      "prims": [
+        {
+          "end_pose": {
+            "theta": 6,
+            "x": -1,
+            "y": 1
+          },
+          "extra_cost_factor": 1.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 2.3562,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.3562,
+              "x_mm": -0.11199999999999999,
+              "y_mm": 0.11199999999999999
+            },
+            {
+              "theta_rad": 2.3562,
+              "x_mm": -0.22399999999999998,
+              "y_mm": 0.22399999999999998
+            },
+            {
+              "theta_rad": 2.3562,
+              "x_mm": -0.332,
+              "y_mm": 0.332
+            },
+            {
+              "theta_rad": 2.3562,
+              "x_mm": -0.444,
+              "y_mm": 0.444
+            },
+            {
+              "theta_rad": 2.3562,
+              "x_mm": -0.5559999999999999,
+              "y_mm": 0.5559999999999999
+            },
+            {
+              "theta_rad": 2.3562,
+              "x_mm": -0.6679999999999999,
+              "y_mm": 0.6679999999999999
+            },
+            {
+              "theta_rad": 2.3562,
+              "x_mm": -0.776,
+              "y_mm": 0.776
+            },
+            {
+              "theta_rad": 2.3562,
+              "x_mm": -0.888,
+              "y_mm": 0.888
+            },
+            {
+              "theta_rad": 2.3562,
+              "x_mm": -1.0,
+              "y_mm": 1.0
+            }
+          ],
+          "name": "short straight",
+          "prim_id": 0
+        },
+        {
+          "end_pose": {
+            "theta": 6,
+            "x": -6,
+            "y": 6
+          },
+          "extra_cost_factor": 1.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 2.3562,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.3562,
+              "x_mm": -0.6679999999999999,
+              "y_mm": 0.6679999999999999
+            },
+            {
+              "theta_rad": 2.3562,
+              "x_mm": -1.332,
+              "y_mm": 1.332
+            },
+            {
+              "theta_rad": 2.3562,
+              "x_mm": -2.0,
+              "y_mm": 2.0
+            },
+            {
+              "theta_rad": 2.3562,
+              "x_mm": -2.6679999999999997,
+              "y_mm": 2.6679999999999997
+            },
+            {
+              "theta_rad": 2.3562,
+              "x_mm": -3.3320000000000003,
+              "y_mm": 3.3320000000000003
+            },
+            {
+              "theta_rad": 2.3562,
+              "x_mm": -4.0,
+              "y_mm": 4.0
+            },
+            {
+              "theta_rad": 2.3562,
+              "x_mm": -4.668,
+              "y_mm": 4.668
+            },
+            {
+              "theta_rad": 2.3562,
+              "x_mm": -5.332000000000001,
+              "y_mm": 5.332000000000001
+            },
+            {
+              "theta_rad": 2.3562,
+              "x_mm": -5.999999999999999,
+              "y_mm": 5.999999999999999
+            }
+          ],
+          "name": "long straight",
+          "prim_id": 1
+        },
+        {
+          "end_pose": {
+            "theta": 6,
+            "x": 1,
+            "y": -1
+          },
+          "extra_cost_factor": 5.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 2.3562,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.3562,
+              "x_mm": 0.11199999999999999,
+              "y_mm": -0.11199999999999999
+            },
+            {
+              "theta_rad": 2.3562,
+              "x_mm": 0.22399999999999998,
+              "y_mm": -0.22399999999999998
+            },
+            {
+              "theta_rad": 2.3562,
+              "x_mm": 0.332,
+              "y_mm": -0.332
+            },
+            {
+              "theta_rad": 2.3562,
+              "x_mm": 0.444,
+              "y_mm": -0.444
+            },
+            {
+              "theta_rad": 2.3562,
+              "x_mm": 0.5559999999999999,
+              "y_mm": -0.5559999999999999
+            },
+            {
+              "theta_rad": 2.3562,
+              "x_mm": 0.6679999999999999,
+              "y_mm": -0.6679999999999999
+            },
+            {
+              "theta_rad": 2.3562,
+              "x_mm": 0.776,
+              "y_mm": -0.776
+            },
+            {
+              "theta_rad": 2.3562,
+              "x_mm": 0.888,
+              "y_mm": -0.888
+            },
+            {
+              "theta_rad": 2.3562,
+              "x_mm": 1.0,
+              "y_mm": -1.0
+            }
+          ],
+          "name": "short straight",
+          "prim_id": 2
+        },
+        {
+          "end_pose": {
+            "theta": 7,
+            "x": -7,
+            "y": 5
+          },
+          "extra_cost_factor": 1.3,
+          "intermediate_poses": [
+            {
+              "theta_rad": 2.3562,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.3562,
+              "x_mm": -0.6800000000000002,
+              "y_mm": 0.6800000000000002
+            },
+            {
+              "theta_rad": 2.3859,
+              "x_mm": -1.368,
+              "y_mm": 1.3559999999999999
+            },
+            {
+              "theta_rad": 2.4377,
+              "x_mm": -2.088,
+              "y_mm": 2.0
+            },
+            {
+              "theta_rad": 2.4896,
+              "x_mm": -2.8360000000000003,
+              "y_mm": 2.6040000000000005
+            },
+            {
+              "theta_rad": 2.5415,
+              "x_mm": -3.616,
+              "y_mm": 3.1680000000000006
+            },
+            {
+              "theta_rad": 2.5933,
+              "x_mm": -4.428,
+              "y_mm": 3.6919999999999997
+            },
+            {
+              "theta_rad": 2.6452,
+              "x_mm": -5.26,
+              "y_mm": 4.172
+            },
+            {
+              "theta_rad": 2.697,
+              "x_mm": -6.12,
+              "y_mm": 4.608
+            },
+            {
+              "theta_rad": 2.7489,
+              "x_mm": -7.0,
+              "y_mm": 5.0
+            }
+          ],
+          "name": "long left",
+          "prim_id": 3
+        },
+        {
+          "end_pose": {
+            "theta": 5,
+            "x": -5,
+            "y": 7
+          },
+          "extra_cost_factor": 1.3,
+          "intermediate_poses": [
+            {
+              "theta_rad": 2.3562,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.3562,
+              "x_mm": -0.6800000000000002,
+              "y_mm": 0.6800000000000002
+            },
+            {
+              "theta_rad": 2.3265,
+              "x_mm": -1.3559999999999999,
+              "y_mm": 1.368
+            },
+            {
+              "theta_rad": 2.2747,
+              "x_mm": -2.0,
+              "y_mm": 2.088
+            },
+            {
+              "theta_rad": 2.2228,
+              "x_mm": -2.6040000000000005,
+              "y_mm": 2.8360000000000003
+            },
+            {
+              "theta_rad": 2.1709,
+              "x_mm": -3.1680000000000006,
+              "y_mm": 3.616
+            },
+            {
+              "theta_rad": 2.1191,
+              "x_mm": -3.6919999999999997,
+              "y_mm": 4.428
+            },
+            {
+              "theta_rad": 2.0672,
+              "x_mm": -4.172,
+              "y_mm": 5.26
+            },
+            {
+              "theta_rad": 2.0154,
+              "x_mm": -4.608,
+              "y_mm": 6.12
+            },
+            {
+              "theta_rad": 1.9635,
+              "x_mm": -5.0,
+              "y_mm": 7.0
+            }
+          ],
+          "name": "long right",
+          "prim_id": 4
+        },
+        {
+          "end_pose": {
+            "theta": 7,
+            "x": 0,
+            "y": 0
+          },
+          "extra_cost_factor": 1.5,
+          "intermediate_poses": [
+            {
+              "theta_rad": 2.3562,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.3998,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.4435,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.4871,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.5307,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.5744,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.618,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.6616,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.7053,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.7489,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            }
+          ],
+          "name": "in place left",
+          "prim_id": 5
+        },
+        {
+          "end_pose": {
+            "theta": 5,
+            "x": 0,
+            "y": 0
+          },
+          "extra_cost_factor": 1.5,
+          "intermediate_poses": [
+            {
+              "theta_rad": 2.3562,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.3126,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.2689,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.2253,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.1817,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.138,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.0944,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.0508,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.0071,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 1.9635,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            }
+          ],
+          "name": "in place right",
+          "prim_id": 6
+        }
+      ],
+      "starting_angle": 6
+    },
+    {
+      "prims": [
+        {
+          "end_pose": {
+            "theta": 7,
+            "x": -2,
+            "y": 1
+          },
+          "extra_cost_factor": 1.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 2.7489,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.7489,
+              "x_mm": -0.22399999999999998,
+              "y_mm": 0.11199999999999999
+            },
+            {
+              "theta_rad": 2.7489,
+              "x_mm": -0.444,
+              "y_mm": 0.22399999999999998
+            },
+            {
+              "theta_rad": 2.7489,
+              "x_mm": -0.6679999999999999,
+              "y_mm": 0.332
+            },
+            {
+              "theta_rad": 2.7489,
+              "x_mm": -0.888,
+              "y_mm": 0.444
+            },
+            {
+              "theta_rad": 2.7489,
+              "x_mm": -1.1119999999999999,
+              "y_mm": 0.5559999999999999
+            },
+            {
+              "theta_rad": 2.7489,
+              "x_mm": -1.332,
+              "y_mm": 0.6679999999999999
+            },
+            {
+              "theta_rad": 2.7489,
+              "x_mm": -1.5559999999999998,
+              "y_mm": 0.776
+            },
+            {
+              "theta_rad": 2.7489,
+              "x_mm": -1.776,
+              "y_mm": 0.888
+            },
+            {
+              "theta_rad": 2.7489,
+              "x_mm": -2.0,
+              "y_mm": 1.0
+            }
+          ],
+          "name": "short straight",
+          "prim_id": 0
+        },
+        {
+          "end_pose": {
+            "theta": 7,
+            "x": -6,
+            "y": 3
+          },
+          "extra_cost_factor": 1.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 2.7489,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.7489,
+              "x_mm": -0.6679999999999999,
+              "y_mm": 0.332
+            },
+            {
+              "theta_rad": 2.7489,
+              "x_mm": -1.332,
+              "y_mm": 0.6679999999999999
+            },
+            {
+              "theta_rad": 2.7489,
+              "x_mm": -2.0,
+              "y_mm": 1.0
+            },
+            {
+              "theta_rad": 2.7489,
+              "x_mm": -2.6679999999999997,
+              "y_mm": 1.332
+            },
+            {
+              "theta_rad": 2.7489,
+              "x_mm": -3.3320000000000003,
+              "y_mm": 1.6680000000000001
+            },
+            {
+              "theta_rad": 2.7489,
+              "x_mm": -4.0,
+              "y_mm": 2.0
+            },
+            {
+              "theta_rad": 2.7489,
+              "x_mm": -4.668,
+              "y_mm": 2.332
+            },
+            {
+              "theta_rad": 2.7489,
+              "x_mm": -5.332000000000001,
+              "y_mm": 2.6679999999999997
+            },
+            {
+              "theta_rad": 2.7489,
+              "x_mm": -5.999999999999999,
+              "y_mm": 2.9999999999999996
+            }
+          ],
+          "name": "long straight",
+          "prim_id": 1
+        },
+        {
+          "end_pose": {
+            "theta": 7,
+            "x": 2,
+            "y": -1
+          },
+          "extra_cost_factor": 5.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 2.7489,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.7489,
+              "x_mm": 0.22399999999999998,
+              "y_mm": -0.11199999999999999
+            },
+            {
+              "theta_rad": 2.7489,
+              "x_mm": 0.444,
+              "y_mm": -0.22399999999999998
+            },
+            {
+              "theta_rad": 2.7489,
+              "x_mm": 0.6679999999999999,
+              "y_mm": -0.332
+            },
+            {
+              "theta_rad": 2.7489,
+              "x_mm": 0.888,
+              "y_mm": -0.444
+            },
+            {
+              "theta_rad": 2.7489,
+              "x_mm": 1.1119999999999999,
+              "y_mm": -0.5559999999999999
+            },
+            {
+              "theta_rad": 2.7489,
+              "x_mm": 1.332,
+              "y_mm": -0.6679999999999999
+            },
+            {
+              "theta_rad": 2.7489,
+              "x_mm": 1.5559999999999998,
+              "y_mm": -0.776
+            },
+            {
+              "theta_rad": 2.7489,
+              "x_mm": 1.776,
+              "y_mm": -0.888
+            },
+            {
+              "theta_rad": 2.7489,
+              "x_mm": 2.0,
+              "y_mm": -1.0
+            }
+          ],
+          "name": "short straight",
+          "prim_id": 2
+        },
+        {
+          "end_pose": {
+            "theta": 6,
+            "x": -5,
+            "y": 4
+          },
+          "extra_cost_factor": 1.3,
+          "intermediate_poses": [
+            {
+              "theta_rad": 2.7489,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.7186,
+              "x_mm": -0.596,
+              "y_mm": 0.368
+            },
+            {
+              "theta_rad": 2.6883,
+              "x_mm": -1.184,
+              "y_mm": 0.7560000000000001
+            },
+            {
+              "theta_rad": 2.658,
+              "x_mm": -1.76,
+              "y_mm": 1.1640000000000001
+            },
+            {
+              "theta_rad": 2.6277,
+              "x_mm": -2.3280000000000003,
+              "y_mm": 1.5920000000000003
+            },
+            {
+              "theta_rad": 2.5974,
+              "x_mm": -2.8880000000000003,
+              "y_mm": 2.036
+            },
+            {
+              "theta_rad": 2.5671,
+              "x_mm": -3.432,
+              "y_mm": 2.5
+            },
+            {
+              "theta_rad": 2.5368,
+              "x_mm": -3.968,
+              "y_mm": 2.984
+            },
+            {
+              "theta_rad": 2.5065,
+              "x_mm": -4.492,
+              "y_mm": 3.484
+            },
+            {
+              "theta_rad": 2.4762,
+              "x_mm": -5.0,
+              "y_mm": 4.0
+            }
+          ],
+          "name": "long right",
+          "prim_id": 3
+        },
+        {
+          "end_pose": {
+            "theta": 8,
+            "x": -7,
+            "y": 2
+          },
+          "extra_cost_factor": 1.3,
+          "intermediate_poses": [
+            {
+              "theta_rad": 2.7489,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.7489,
+              "x_mm": -0.752,
+              "y_mm": 0.312
+            },
+            {
+              "theta_rad": 2.7489,
+              "x_mm": -1.5079999999999998,
+              "y_mm": 0.624
+            },
+            {
+              "theta_rad": 2.7489,
+              "x_mm": -2.2600000000000002,
+              "y_mm": 0.9359999999999999
+            },
+            {
+              "theta_rad": 2.768,
+              "x_mm": -3.0159999999999996,
+              "y_mm": 1.248
+            },
+            {
+              "theta_rad": 2.8427,
+              "x_mm": -3.7840000000000003,
+              "y_mm": 1.5160000000000002
+            },
+            {
+              "theta_rad": 2.9174,
+              "x_mm": -4.572,
+              "y_mm": 1.7280000000000002
+            },
+            {
+              "theta_rad": 2.9921,
+              "x_mm": -5.3759999999999994,
+              "y_mm": 1.8800000000000001
+            },
+            {
+              "theta_rad": 3.0669,
+              "x_mm": -6.183999999999999,
+              "y_mm": 1.9680000000000002
+            },
+            {
+              "theta_rad": 3.1416,
+              "x_mm": -7.0,
+              "y_mm": 2.0
+            }
+          ],
+          "name": "long left",
+          "prim_id": 4
+        },
+        {
+          "end_pose": {
+            "theta": 6,
+            "x": 0,
+            "y": 0
+          },
+          "extra_cost_factor": 1.5,
+          "intermediate_poses": [
+            {
+              "theta_rad": 2.7489,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.7053,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.6616,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.618,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.5744,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.5307,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.4871,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.4435,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.3998,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.3562,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            }
+          ],
+          "name": "in place right",
+          "prim_id": 5
+        },
+        {
+          "end_pose": {
+            "theta": 8,
+            "x": 0,
+            "y": 0
+          },
+          "extra_cost_factor": 1.5,
+          "intermediate_poses": [
+            {
+              "theta_rad": 2.7489,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.7925,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.8362,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.8798,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.9234,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.9671,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.0107,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.0543,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.098,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.1416,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            }
+          ],
+          "name": "in place left",
+          "prim_id": 6
+        }
+      ],
+      "starting_angle": 7
+    },
+    {
+      "prims": [
+        {
+          "end_pose": {
+            "theta": 8,
+            "x": -1,
+            "y": 0
+          },
+          "extra_cost_factor": 1.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 3.1416,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.1416,
+              "x_mm": -0.11199999999999999,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.1416,
+              "x_mm": -0.22399999999999998,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.1416,
+              "x_mm": -0.332,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.1416,
+              "x_mm": -0.444,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.1416,
+              "x_mm": -0.5559999999999999,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.1416,
+              "x_mm": -0.6679999999999999,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.1416,
+              "x_mm": -0.776,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.1416,
+              "x_mm": -0.888,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.1416,
+              "x_mm": -1.0,
+              "y_mm": 0.0
+            }
+          ],
+          "name": "backup short straight",
+          "prim_id": 0
+        },
+        {
+          "end_pose": {
+            "theta": 8,
+            "x": -8,
+            "y": 0
+          },
+          "extra_cost_factor": 1.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 3.1416,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.1416,
+              "x_mm": -0.888,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.1416,
+              "x_mm": -1.776,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.1416,
+              "x_mm": -2.6679999999999997,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.1416,
+              "x_mm": -3.556,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.1416,
+              "x_mm": -4.444,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.1416,
+              "x_mm": -5.332000000000001,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.1416,
+              "x_mm": -6.223999999999999,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.1416,
+              "x_mm": -7.112,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.1416,
+              "x_mm": -8.0,
+              "y_mm": 0.0
+            }
+          ],
+          "name": "backup long straight",
+          "prim_id": 1
+        },
+        {
+          "end_pose": {
+            "theta": 8,
+            "x": 1,
+            "y": 0
+          },
+          "extra_cost_factor": 5.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 3.1416,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.1416,
+              "x_mm": 0.11199999999999999,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.1416,
+              "x_mm": 0.22399999999999998,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.1416,
+              "x_mm": 0.332,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.1416,
+              "x_mm": 0.444,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.1416,
+              "x_mm": 0.5559999999999999,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.1416,
+              "x_mm": 0.6679999999999999,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.1416,
+              "x_mm": 0.776,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.1416,
+              "x_mm": 0.888,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.1416,
+              "x_mm": 1.0,
+              "y_mm": 0.0
+            }
+          ],
+          "name": "short straight",
+          "prim_id": 2
+        },
+        {
+          "end_pose": {
+            "theta": 9,
+            "x": -8,
+            "y": -1
+          },
+          "extra_cost_factor": 1.3,
+          "intermediate_poses": [
+            {
+              "theta_rad": 3.1416,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.1416,
+              "x_mm": -0.904,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.1416,
+              "x_mm": -1.808,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.1416,
+              "x_mm": -2.7119999999999997,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.1904,
+              "x_mm": -3.6120000000000005,
+              "y_mm": -0.016
+            },
+            {
+              "theta_rad": 3.2592,
+              "x_mm": -4.5120000000000005,
+              "y_mm": -0.092
+            },
+            {
+              "theta_rad": 3.328,
+              "x_mm": -5.4079999999999995,
+              "y_mm": -0.228
+            },
+            {
+              "theta_rad": 3.3967,
+              "x_mm": -6.288,
+              "y_mm": -0.424
+            },
+            {
+              "theta_rad": 3.4655,
+              "x_mm": -7.156000000000001,
+              "y_mm": -0.684
+            },
+            {
+              "theta_rad": 3.5343,
+              "x_mm": -8.0,
+              "y_mm": -1.0
+            }
+          ],
+          "name": "backup long left",
+          "prim_id": 3
+        },
+        {
+          "end_pose": {
+            "theta": 7,
+            "x": -8,
+            "y": 1
+          },
+          "extra_cost_factor": 1.3,
+          "intermediate_poses": [
+            {
+              "theta_rad": 3.1416,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.1416,
+              "x_mm": -0.904,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.1416,
+              "x_mm": -1.808,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.1416,
+              "x_mm": -2.7119999999999997,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.0928,
+              "x_mm": -3.6120000000000005,
+              "y_mm": 0.016
+            },
+            {
+              "theta_rad": 3.024,
+              "x_mm": -4.5120000000000005,
+              "y_mm": 0.092
+            },
+            {
+              "theta_rad": 2.9552,
+              "x_mm": -5.4079999999999995,
+              "y_mm": 0.228
+            },
+            {
+              "theta_rad": 2.8864,
+              "x_mm": -6.288,
+              "y_mm": 0.424
+            },
+            {
+              "theta_rad": 2.8177,
+              "x_mm": -7.156000000000001,
+              "y_mm": 0.684
+            },
+            {
+              "theta_rad": 2.7489,
+              "x_mm": -8.0,
+              "y_mm": 1.0
+            }
+          ],
+          "name": "long right",
+          "prim_id": 4
+        },
+        {
+          "end_pose": {
+            "theta": 9,
+            "x": 0,
+            "y": 0
+          },
+          "extra_cost_factor": 1.5,
+          "intermediate_poses": [
+            {
+              "theta_rad": 3.1416,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.1852,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.2289,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.2725,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.3161,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.3598,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.4034,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.447,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.4907,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.5343,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            }
+          ],
+          "name": "in place left",
+          "prim_id": 5
+        },
+        {
+          "end_pose": {
+            "theta": 7,
+            "x": 0,
+            "y": 0
+          },
+          "extra_cost_factor": 1.5,
+          "intermediate_poses": [
+            {
+              "theta_rad": 3.1416,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.098,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.0543,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.0107,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.9671,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.9234,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.8798,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.8362,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.7925,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 2.7489,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            }
+          ],
+          "name": "in place right",
+          "prim_id": 6
+        }
+      ],
+      "starting_angle": 8
+    },
+    {
+      "prims": [
+        {
+          "end_pose": {
+            "theta": 9,
+            "x": -2,
+            "y": -1
+          },
+          "extra_cost_factor": 1.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 3.5343,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.5343,
+              "x_mm": -0.22399999999999998,
+              "y_mm": -0.11199999999999999
+            },
+            {
+              "theta_rad": 3.5343,
+              "x_mm": -0.444,
+              "y_mm": -0.22399999999999998
+            },
+            {
+              "theta_rad": 3.5343,
+              "x_mm": -0.6679999999999999,
+              "y_mm": -0.332
+            },
+            {
+              "theta_rad": 3.5343,
+              "x_mm": -0.888,
+              "y_mm": -0.444
+            },
+            {
+              "theta_rad": 3.5343,
+              "x_mm": -1.1119999999999999,
+              "y_mm": -0.5559999999999999
+            },
+            {
+              "theta_rad": 3.5343,
+              "x_mm": -1.332,
+              "y_mm": -0.6679999999999999
+            },
+            {
+              "theta_rad": 3.5343,
+              "x_mm": -1.5559999999999998,
+              "y_mm": -0.776
+            },
+            {
+              "theta_rad": 3.5343,
+              "x_mm": -1.776,
+              "y_mm": -0.888
+            },
+            {
+              "theta_rad": 3.5343,
+              "x_mm": -2.0,
+              "y_mm": -1.0
+            }
+          ],
+          "name": "backup short straight",
+          "prim_id": 0
+        },
+        {
+          "end_pose": {
+            "theta": 9,
+            "x": -6,
+            "y": -3
+          },
+          "extra_cost_factor": 1.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 3.5343,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.5343,
+              "x_mm": -0.6679999999999999,
+              "y_mm": -0.332
+            },
+            {
+              "theta_rad": 3.5343,
+              "x_mm": -1.332,
+              "y_mm": -0.6679999999999999
+            },
+            {
+              "theta_rad": 3.5343,
+              "x_mm": -2.0,
+              "y_mm": -1.0
+            },
+            {
+              "theta_rad": 3.5343,
+              "x_mm": -2.6679999999999997,
+              "y_mm": -1.332
+            },
+            {
+              "theta_rad": 3.5343,
+              "x_mm": -3.3320000000000003,
+              "y_mm": -1.6680000000000001
+            },
+            {
+              "theta_rad": 3.5343,
+              "x_mm": -4.0,
+              "y_mm": -2.0
+            },
+            {
+              "theta_rad": 3.5343,
+              "x_mm": -4.668,
+              "y_mm": -2.332
+            },
+            {
+              "theta_rad": 3.5343,
+              "x_mm": -5.332000000000001,
+              "y_mm": -2.6679999999999997
+            },
+            {
+              "theta_rad": 3.5343,
+              "x_mm": -5.999999999999999,
+              "y_mm": -2.9999999999999996
+            }
+          ],
+          "name": "backup long straight",
+          "prim_id": 1
+        },
+        {
+          "end_pose": {
+            "theta": 9,
+            "x": 2,
+            "y": 1
+          },
+          "extra_cost_factor": 5.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 3.5343,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.5343,
+              "x_mm": 0.22399999999999998,
+              "y_mm": 0.11199999999999999
+            },
+            {
+              "theta_rad": 3.5343,
+              "x_mm": 0.444,
+              "y_mm": 0.22399999999999998
+            },
+            {
+              "theta_rad": 3.5343,
+              "x_mm": 0.6679999999999999,
+              "y_mm": 0.332
+            },
+            {
+              "theta_rad": 3.5343,
+              "x_mm": 0.888,
+              "y_mm": 0.444
+            },
+            {
+              "theta_rad": 3.5343,
+              "x_mm": 1.1119999999999999,
+              "y_mm": 0.5559999999999999
+            },
+            {
+              "theta_rad": 3.5343,
+              "x_mm": 1.332,
+              "y_mm": 0.6679999999999999
+            },
+            {
+              "theta_rad": 3.5343,
+              "x_mm": 1.5559999999999998,
+              "y_mm": 0.776
+            },
+            {
+              "theta_rad": 3.5343,
+              "x_mm": 1.776,
+              "y_mm": 0.888
+            },
+            {
+              "theta_rad": 3.5343,
+              "x_mm": 2.0,
+              "y_mm": 1.0
+            }
+          ],
+          "name": "short straight",
+          "prim_id": 2
+        },
+        {
+          "end_pose": {
+            "theta": 10,
+            "x": -5,
+            "y": -4
+          },
+          "extra_cost_factor": 1.3,
+          "intermediate_poses": [
+            {
+              "theta_rad": 3.5343,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.5646,
+              "x_mm": -0.596,
+              "y_mm": -0.368
+            },
+            {
+              "theta_rad": 3.5949,
+              "x_mm": -1.184,
+              "y_mm": -0.7560000000000001
+            },
+            {
+              "theta_rad": 3.6252,
+              "x_mm": -1.76,
+              "y_mm": -1.1640000000000001
+            },
+            {
+              "theta_rad": 3.6555,
+              "x_mm": -2.3280000000000003,
+              "y_mm": -1.5920000000000003
+            },
+            {
+              "theta_rad": 3.6858,
+              "x_mm": -2.8880000000000003,
+              "y_mm": -2.036
+            },
+            {
+              "theta_rad": 3.7161,
+              "x_mm": -3.432,
+              "y_mm": -2.5
+            },
+            {
+              "theta_rad": 3.7464,
+              "x_mm": -3.968,
+              "y_mm": -2.984
+            },
+            {
+              "theta_rad": 3.7767,
+              "x_mm": -4.492,
+              "y_mm": -3.484
+            },
+            {
+              "theta_rad": 3.807,
+              "x_mm": -5.0,
+              "y_mm": -4.0
+            }
+          ],
+          "name": "backup long left",
+          "prim_id": 3
+        },
+        {
+          "end_pose": {
+            "theta": 8,
+            "x": -7,
+            "y": -2
+          },
+          "extra_cost_factor": 1.3,
+          "intermediate_poses": [
+            {
+              "theta_rad": 3.5343,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.5343,
+              "x_mm": -0.752,
+              "y_mm": -0.312
+            },
+            {
+              "theta_rad": 3.5343,
+              "x_mm": -1.5079999999999998,
+              "y_mm": -0.624
+            },
+            {
+              "theta_rad": 3.5343,
+              "x_mm": -2.2600000000000002,
+              "y_mm": -0.9359999999999999
+            },
+            {
+              "theta_rad": 3.5152,
+              "x_mm": -3.0159999999999996,
+              "y_mm": -1.248
+            },
+            {
+              "theta_rad": 3.4405,
+              "x_mm": -3.7840000000000003,
+              "y_mm": -1.5160000000000002
+            },
+            {
+              "theta_rad": 3.3658,
+              "x_mm": -4.572,
+              "y_mm": -1.7280000000000002
+            },
+            {
+              "theta_rad": 3.291,
+              "x_mm": -5.3759999999999994,
+              "y_mm": -1.8800000000000001
+            },
+            {
+              "theta_rad": 3.2163,
+              "x_mm": -6.183999999999999,
+              "y_mm": -1.9680000000000002
+            },
+            {
+              "theta_rad": 3.1416,
+              "x_mm": -7.0,
+              "y_mm": -2.0
+            }
+          ],
+          "name": "backup long right",
+          "prim_id": 4
+        },
+        {
+          "end_pose": {
+            "theta": 10,
+            "x": 0,
+            "y": 0
+          },
+          "extra_cost_factor": 1.5,
+          "intermediate_poses": [
+            {
+              "theta_rad": 3.5343,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.5779,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.6216,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.6652,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.7088,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.7525,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.7961,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.8397,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.8834,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.927,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            }
+          ],
+          "name": "in place left",
+          "prim_id": 5
+        },
+        {
+          "end_pose": {
+            "theta": 8,
+            "x": 0,
+            "y": 0
+          },
+          "extra_cost_factor": 1.5,
+          "intermediate_poses": [
+            {
+              "theta_rad": 3.5343,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.4907,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.447,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.4034,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.3598,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.3161,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.2725,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.2289,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.1852,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.1416,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            }
+          ],
+          "name": "in place right",
+          "prim_id": 6
+        }
+      ],
+      "starting_angle": 9
+    },
+    {
+      "prims": [
+        {
+          "end_pose": {
+            "theta": 10,
+            "x": -1,
+            "y": -1
+          },
+          "extra_cost_factor": 1.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 3.927,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.927,
+              "x_mm": -0.11199999999999999,
+              "y_mm": -0.11199999999999999
+            },
+            {
+              "theta_rad": 3.927,
+              "x_mm": -0.22399999999999998,
+              "y_mm": -0.22399999999999998
+            },
+            {
+              "theta_rad": 3.927,
+              "x_mm": -0.332,
+              "y_mm": -0.332
+            },
+            {
+              "theta_rad": 3.927,
+              "x_mm": -0.444,
+              "y_mm": -0.444
+            },
+            {
+              "theta_rad": 3.927,
+              "x_mm": -0.5559999999999999,
+              "y_mm": -0.5559999999999999
+            },
+            {
+              "theta_rad": 3.927,
+              "x_mm": -0.6679999999999999,
+              "y_mm": -0.6679999999999999
+            },
+            {
+              "theta_rad": 3.927,
+              "x_mm": -0.776,
+              "y_mm": -0.776
+            },
+            {
+              "theta_rad": 3.927,
+              "x_mm": -0.888,
+              "y_mm": -0.888
+            },
+            {
+              "theta_rad": 3.927,
+              "x_mm": -1.0,
+              "y_mm": -1.0
+            }
+          ],
+          "name": "backup short straight",
+          "prim_id": 0
+        },
+        {
+          "end_pose": {
+            "theta": 10,
+            "x": -6,
+            "y": -6
+          },
+          "extra_cost_factor": 1.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 3.927,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.927,
+              "x_mm": -0.6679999999999999,
+              "y_mm": -0.6679999999999999
+            },
+            {
+              "theta_rad": 3.927,
+              "x_mm": -1.332,
+              "y_mm": -1.332
+            },
+            {
+              "theta_rad": 3.927,
+              "x_mm": -2.0,
+              "y_mm": -2.0
+            },
+            {
+              "theta_rad": 3.927,
+              "x_mm": -2.6679999999999997,
+              "y_mm": -2.6679999999999997
+            },
+            {
+              "theta_rad": 3.927,
+              "x_mm": -3.3320000000000003,
+              "y_mm": -3.3320000000000003
+            },
+            {
+              "theta_rad": 3.927,
+              "x_mm": -4.0,
+              "y_mm": -4.0
+            },
+            {
+              "theta_rad": 3.927,
+              "x_mm": -4.668,
+              "y_mm": -4.668
+            },
+            {
+              "theta_rad": 3.927,
+              "x_mm": -5.332000000000001,
+              "y_mm": -5.332000000000001
+            },
+            {
+              "theta_rad": 3.927,
+              "x_mm": -5.999999999999999,
+              "y_mm": -5.999999999999999
+            }
+          ],
+          "name": "backup long straight",
+          "prim_id": 1
+        },
+        {
+          "end_pose": {
+            "theta": 10,
+            "x": 1,
+            "y": 1
+          },
+          "extra_cost_factor": 5.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 3.927,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.927,
+              "x_mm": 0.11199999999999999,
+              "y_mm": 0.11199999999999999
+            },
+            {
+              "theta_rad": 3.927,
+              "x_mm": 0.22399999999999998,
+              "y_mm": 0.22399999999999998
+            },
+            {
+              "theta_rad": 3.927,
+              "x_mm": 0.332,
+              "y_mm": 0.332
+            },
+            {
+              "theta_rad": 3.927,
+              "x_mm": 0.444,
+              "y_mm": 0.444
+            },
+            {
+              "theta_rad": 3.927,
+              "x_mm": 0.5559999999999999,
+              "y_mm": 0.5559999999999999
+            },
+            {
+              "theta_rad": 3.927,
+              "x_mm": 0.6679999999999999,
+              "y_mm": 0.6679999999999999
+            },
+            {
+              "theta_rad": 3.927,
+              "x_mm": 0.776,
+              "y_mm": 0.776
+            },
+            {
+              "theta_rad": 3.927,
+              "x_mm": 0.888,
+              "y_mm": 0.888
+            },
+            {
+              "theta_rad": 3.927,
+              "x_mm": 1.0,
+              "y_mm": 1.0
+            }
+          ],
+          "name": "short straight",
+          "prim_id": 2
+        },
+        {
+          "end_pose": {
+            "theta": 11,
+            "x": -5,
+            "y": -7
+          },
+          "extra_cost_factor": 1.3,
+          "intermediate_poses": [
+            {
+              "theta_rad": 3.927,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.927,
+              "x_mm": -0.6800000000000002,
+              "y_mm": -0.6800000000000002
+            },
+            {
+              "theta_rad": 3.9567,
+              "x_mm": -1.3559999999999999,
+              "y_mm": -1.368
+            },
+            {
+              "theta_rad": 4.0085,
+              "x_mm": -2.0,
+              "y_mm": -2.088
+            },
+            {
+              "theta_rad": 4.0604,
+              "x_mm": -2.6040000000000005,
+              "y_mm": -2.8360000000000003
+            },
+            {
+              "theta_rad": 4.1123,
+              "x_mm": -3.1680000000000006,
+              "y_mm": -3.616
+            },
+            {
+              "theta_rad": 4.1641,
+              "x_mm": -3.6919999999999997,
+              "y_mm": -4.428
+            },
+            {
+              "theta_rad": 4.216,
+              "x_mm": -4.172,
+              "y_mm": -5.26
+            },
+            {
+              "theta_rad": 4.2678,
+              "x_mm": -4.608,
+              "y_mm": -6.12
+            },
+            {
+              "theta_rad": 4.3197,
+              "x_mm": -5.0,
+              "y_mm": -7.0
+            }
+          ],
+          "name": "backup long left",
+          "prim_id": 3
+        },
+        {
+          "end_pose": {
+            "theta": 9,
+            "x": -7,
+            "y": -5
+          },
+          "extra_cost_factor": 1.3,
+          "intermediate_poses": [
+            {
+              "theta_rad": 3.927,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.927,
+              "x_mm": -0.6800000000000002,
+              "y_mm": -0.6800000000000002
+            },
+            {
+              "theta_rad": 3.8973,
+              "x_mm": -1.368,
+              "y_mm": -1.3559999999999999
+            },
+            {
+              "theta_rad": 3.8455,
+              "x_mm": -2.088,
+              "y_mm": -2.0
+            },
+            {
+              "theta_rad": 3.7936,
+              "x_mm": -2.8360000000000003,
+              "y_mm": -2.6040000000000005
+            },
+            {
+              "theta_rad": 3.7417,
+              "x_mm": -3.616,
+              "y_mm": -3.1680000000000006
+            },
+            {
+              "theta_rad": 3.6899,
+              "x_mm": -4.428,
+              "y_mm": -3.6919999999999997
+            },
+            {
+              "theta_rad": 3.638,
+              "x_mm": -5.26,
+              "y_mm": -4.172
+            },
+            {
+              "theta_rad": 3.5862,
+              "x_mm": -6.12,
+              "y_mm": -4.608
+            },
+            {
+              "theta_rad": 3.5343,
+              "x_mm": -7.0,
+              "y_mm": -5.0
+            }
+          ],
+          "name": "backup long right",
+          "prim_id": 4
+        },
+        {
+          "end_pose": {
+            "theta": 11,
+            "x": 0,
+            "y": 0
+          },
+          "extra_cost_factor": 1.5,
+          "intermediate_poses": [
+            {
+              "theta_rad": 3.927,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.9706,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.0143,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.0579,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.1015,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.1452,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.1888,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.2324,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.2761,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.3197,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            }
+          ],
+          "name": "in place left",
+          "prim_id": 5
+        },
+        {
+          "end_pose": {
+            "theta": 9,
+            "x": 0,
+            "y": 0
+          },
+          "extra_cost_factor": 1.5,
+          "intermediate_poses": [
+            {
+              "theta_rad": 3.927,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.8834,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.8397,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.7961,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.7525,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.7088,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.6652,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.6216,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.5779,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.5343,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            }
+          ],
+          "name": "in place right",
+          "prim_id": 6
+        }
+      ],
+      "starting_angle": 10
+    },
+    {
+      "prims": [
+        {
+          "end_pose": {
+            "theta": 11,
+            "x": -1,
+            "y": -2
+          },
+          "extra_cost_factor": 1.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 4.3197,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.3197,
+              "x_mm": -0.11199999999999999,
+              "y_mm": -0.22399999999999998
+            },
+            {
+              "theta_rad": 4.3197,
+              "x_mm": -0.22399999999999998,
+              "y_mm": -0.444
+            },
+            {
+              "theta_rad": 4.3197,
+              "x_mm": -0.332,
+              "y_mm": -0.6679999999999999
+            },
+            {
+              "theta_rad": 4.3197,
+              "x_mm": -0.444,
+              "y_mm": -0.888
+            },
+            {
+              "theta_rad": 4.3197,
+              "x_mm": -0.5559999999999999,
+              "y_mm": -1.1119999999999999
+            },
+            {
+              "theta_rad": 4.3197,
+              "x_mm": -0.6679999999999999,
+              "y_mm": -1.332
+            },
+            {
+              "theta_rad": 4.3197,
+              "x_mm": -0.776,
+              "y_mm": -1.5559999999999998
+            },
+            {
+              "theta_rad": 4.3197,
+              "x_mm": -0.888,
+              "y_mm": -1.776
+            },
+            {
+              "theta_rad": 4.3197,
+              "x_mm": -1.0,
+              "y_mm": -2.0
+            }
+          ],
+          "name": "backup short straight",
+          "prim_id": 0
+        },
+        {
+          "end_pose": {
+            "theta": 11,
+            "x": -3,
+            "y": -6
+          },
+          "extra_cost_factor": 1.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 4.3197,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.3197,
+              "x_mm": -0.332,
+              "y_mm": -0.6679999999999999
+            },
+            {
+              "theta_rad": 4.3197,
+              "x_mm": -0.6679999999999999,
+              "y_mm": -1.332
+            },
+            {
+              "theta_rad": 4.3197,
+              "x_mm": -1.0,
+              "y_mm": -2.0
+            },
+            {
+              "theta_rad": 4.3197,
+              "x_mm": -1.332,
+              "y_mm": -2.6679999999999997
+            },
+            {
+              "theta_rad": 4.3197,
+              "x_mm": -1.6680000000000001,
+              "y_mm": -3.3320000000000003
+            },
+            {
+              "theta_rad": 4.3197,
+              "x_mm": -2.0,
+              "y_mm": -4.0
+            },
+            {
+              "theta_rad": 4.3197,
+              "x_mm": -2.332,
+              "y_mm": -4.668
+            },
+            {
+              "theta_rad": 4.3197,
+              "x_mm": -2.6679999999999997,
+              "y_mm": -5.332000000000001
+            },
+            {
+              "theta_rad": 4.3197,
+              "x_mm": -2.9999999999999996,
+              "y_mm": -5.999999999999999
+            }
+          ],
+          "name": "backup long straight",
+          "prim_id": 1
+        },
+        {
+          "end_pose": {
+            "theta": 11,
+            "x": 1,
+            "y": 2
+          },
+          "extra_cost_factor": 5.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 4.3197,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.3197,
+              "x_mm": 0.11199999999999999,
+              "y_mm": 0.22399999999999998
+            },
+            {
+              "theta_rad": 4.3197,
+              "x_mm": 0.22399999999999998,
+              "y_mm": 0.444
+            },
+            {
+              "theta_rad": 4.3197,
+              "x_mm": 0.332,
+              "y_mm": 0.6679999999999999
+            },
+            {
+              "theta_rad": 4.3197,
+              "x_mm": 0.444,
+              "y_mm": 0.888
+            },
+            {
+              "theta_rad": 4.3197,
+              "x_mm": 0.5559999999999999,
+              "y_mm": 1.1119999999999999
+            },
+            {
+              "theta_rad": 4.3197,
+              "x_mm": 0.6679999999999999,
+              "y_mm": 1.332
+            },
+            {
+              "theta_rad": 4.3197,
+              "x_mm": 0.776,
+              "y_mm": 1.5559999999999998
+            },
+            {
+              "theta_rad": 4.3197,
+              "x_mm": 0.888,
+              "y_mm": 1.776
+            },
+            {
+              "theta_rad": 4.3197,
+              "x_mm": 1.0,
+              "y_mm": 2.0
+            }
+          ],
+          "name": "short straight",
+          "prim_id": 2
+        },
+        {
+          "end_pose": {
+            "theta": 10,
+            "x": -4,
+            "y": -5
+          },
+          "extra_cost_factor": 1.3,
+          "intermediate_poses": [
+            {
+              "theta_rad": 4.3197,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.2894,
+              "x_mm": -0.368,
+              "y_mm": -0.596
+            },
+            {
+              "theta_rad": 4.2591,
+              "x_mm": -0.7560000000000001,
+              "y_mm": -1.184
+            },
+            {
+              "theta_rad": 4.2288,
+              "x_mm": -1.1640000000000001,
+              "y_mm": -1.76
+            },
+            {
+              "theta_rad": 4.1985,
+              "x_mm": -1.5920000000000003,
+              "y_mm": -2.3280000000000003
+            },
+            {
+              "theta_rad": 4.1682,
+              "x_mm": -2.036,
+              "y_mm": -2.8880000000000003
+            },
+            {
+              "theta_rad": 4.1379,
+              "x_mm": -2.5,
+              "y_mm": -3.432
+            },
+            {
+              "theta_rad": 4.1076,
+              "x_mm": -2.984,
+              "y_mm": -3.968
+            },
+            {
+              "theta_rad": 4.0773,
+              "x_mm": -3.484,
+              "y_mm": -4.492
+            },
+            {
+              "theta_rad": 4.047,
+              "x_mm": -4.0,
+              "y_mm": -5.0
+            }
+          ],
+          "name": "backup long right",
+          "prim_id": 3
+        },
+        {
+          "end_pose": {
+            "theta": 12,
+            "x": -2,
+            "y": -7
+          },
+          "extra_cost_factor": 1.3,
+          "intermediate_poses": [
+            {
+              "theta_rad": 4.3197,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.3197,
+              "x_mm": -0.312,
+              "y_mm": -0.752
+            },
+            {
+              "theta_rad": 4.3197,
+              "x_mm": -0.624,
+              "y_mm": -1.5079999999999998
+            },
+            {
+              "theta_rad": 4.3197,
+              "x_mm": -0.9359999999999999,
+              "y_mm": -2.2600000000000002
+            },
+            {
+              "theta_rad": 4.3388,
+              "x_mm": -1.248,
+              "y_mm": -3.0159999999999996
+            },
+            {
+              "theta_rad": 4.4135,
+              "x_mm": -1.5160000000000002,
+              "y_mm": -3.7840000000000003
+            },
+            {
+              "theta_rad": 4.4882,
+              "x_mm": -1.7280000000000002,
+              "y_mm": -4.572
+            },
+            {
+              "theta_rad": 4.5629,
+              "x_mm": -1.8800000000000001,
+              "y_mm": -5.3759999999999994
+            },
+            {
+              "theta_rad": 4.6377,
+              "x_mm": -1.9680000000000002,
+              "y_mm": -6.183999999999999
+            },
+            {
+              "theta_rad": 4.7124,
+              "x_mm": -2.0,
+              "y_mm": -7.0
+            }
+          ],
+          "name": "backup long left",
+          "prim_id": 4
+        },
+        {
+          "end_pose": {
+            "theta": 10,
+            "x": 0,
+            "y": 0
+          },
+          "extra_cost_factor": 1.5,
+          "intermediate_poses": [
+            {
+              "theta_rad": 4.3197,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.2761,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.2324,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.1888,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.1452,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.1015,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.0579,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.0143,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.9706,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 3.927,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            }
+          ],
+          "name": "in place right",
+          "prim_id": 5
+        },
+        {
+          "end_pose": {
+            "theta": 12,
+            "x": 0,
+            "y": 0
+          },
+          "extra_cost_factor": 1.5,
+          "intermediate_poses": [
+            {
+              "theta_rad": 4.3197,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.3633,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.407,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.4506,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.4942,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.5379,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.5815,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.6251,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.6688,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.7124,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            }
+          ],
+          "name": "in place left",
+          "prim_id": 6
+        }
+      ],
+      "starting_angle": 11
+    },
+    {
+      "prims": [
+        {
+          "end_pose": {
+            "theta": 12,
+            "x": 0,
+            "y": -1
+          },
+          "extra_cost_factor": 1.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 4.7124,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.7124,
+              "x_mm": 0.0,
+              "y_mm": -0.11199999999999999
+            },
+            {
+              "theta_rad": 4.7124,
+              "x_mm": 0.0,
+              "y_mm": -0.22399999999999998
+            },
+            {
+              "theta_rad": 4.7124,
+              "x_mm": 0.0,
+              "y_mm": -0.332
+            },
+            {
+              "theta_rad": 4.7124,
+              "x_mm": 0.0,
+              "y_mm": -0.444
+            },
+            {
+              "theta_rad": 4.7124,
+              "x_mm": 0.0,
+              "y_mm": -0.5559999999999999
+            },
+            {
+              "theta_rad": 4.7124,
+              "x_mm": 0.0,
+              "y_mm": -0.6679999999999999
+            },
+            {
+              "theta_rad": 4.7124,
+              "x_mm": 0.0,
+              "y_mm": -0.776
+            },
+            {
+              "theta_rad": 4.7124,
+              "x_mm": 0.0,
+              "y_mm": -0.888
+            },
+            {
+              "theta_rad": 4.7124,
+              "x_mm": 0.0,
+              "y_mm": -1.0
+            }
+          ],
+          "name": "backup short straight",
+          "prim_id": 0
+        },
+        {
+          "end_pose": {
+            "theta": 12,
+            "x": 0,
+            "y": -8
+          },
+          "extra_cost_factor": 1.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 4.7124,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.7124,
+              "x_mm": 0.0,
+              "y_mm": -0.888
+            },
+            {
+              "theta_rad": 4.7124,
+              "x_mm": 0.0,
+              "y_mm": -1.776
+            },
+            {
+              "theta_rad": 4.7124,
+              "x_mm": 0.0,
+              "y_mm": -2.6679999999999997
+            },
+            {
+              "theta_rad": 4.7124,
+              "x_mm": 0.0,
+              "y_mm": -3.556
+            },
+            {
+              "theta_rad": 4.7124,
+              "x_mm": 0.0,
+              "y_mm": -4.444
+            },
+            {
+              "theta_rad": 4.7124,
+              "x_mm": 0.0,
+              "y_mm": -5.332000000000001
+            },
+            {
+              "theta_rad": 4.7124,
+              "x_mm": 0.0,
+              "y_mm": -6.223999999999999
+            },
+            {
+              "theta_rad": 4.7124,
+              "x_mm": 0.0,
+              "y_mm": -7.112
+            },
+            {
+              "theta_rad": 4.7124,
+              "x_mm": 0.0,
+              "y_mm": -8.0
+            }
+          ],
+          "name": "backup long straight",
+          "prim_id": 1
+        },
+        {
+          "end_pose": {
+            "theta": 12,
+            "x": 0,
+            "y": 1
+          },
+          "extra_cost_factor": 5.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 4.7124,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.7124,
+              "x_mm": 0.0,
+              "y_mm": 0.11199999999999999
+            },
+            {
+              "theta_rad": 4.7124,
+              "x_mm": 0.0,
+              "y_mm": 0.22399999999999998
+            },
+            {
+              "theta_rad": 4.7124,
+              "x_mm": 0.0,
+              "y_mm": 0.332
+            },
+            {
+              "theta_rad": 4.7124,
+              "x_mm": 0.0,
+              "y_mm": 0.444
+            },
+            {
+              "theta_rad": 4.7124,
+              "x_mm": 0.0,
+              "y_mm": 0.5559999999999999
+            },
+            {
+              "theta_rad": 4.7124,
+              "x_mm": 0.0,
+              "y_mm": 0.6679999999999999
+            },
+            {
+              "theta_rad": 4.7124,
+              "x_mm": 0.0,
+              "y_mm": 0.776
+            },
+            {
+              "theta_rad": 4.7124,
+              "x_mm": 0.0,
+              "y_mm": 0.888
+            },
+            {
+              "theta_rad": 4.7124,
+              "x_mm": 0.0,
+              "y_mm": 1.0
+            }
+          ],
+          "name": "short straight",
+          "prim_id": 2
+        },
+        {
+          "end_pose": {
+            "theta": 13,
+            "x": 1,
+            "y": -8
+          },
+          "extra_cost_factor": 1.3,
+          "intermediate_poses": [
+            {
+              "theta_rad": 4.7124,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.7124,
+              "x_mm": -0.0,
+              "y_mm": -0.904
+            },
+            {
+              "theta_rad": 4.7124,
+              "x_mm": -0.0,
+              "y_mm": -1.808
+            },
+            {
+              "theta_rad": 4.7124,
+              "x_mm": -0.0,
+              "y_mm": -2.7119999999999997
+            },
+            {
+              "theta_rad": 4.7612,
+              "x_mm": 0.016,
+              "y_mm": -3.6120000000000005
+            },
+            {
+              "theta_rad": 4.83,
+              "x_mm": 0.092,
+              "y_mm": -4.5120000000000005
+            },
+            {
+              "theta_rad": 4.8988,
+              "x_mm": 0.228,
+              "y_mm": -5.4079999999999995
+            },
+            {
+              "theta_rad": 4.9675,
+              "x_mm": 0.424,
+              "y_mm": -6.288
+            },
+            {
+              "theta_rad": 5.0363,
+              "x_mm": 0.684,
+              "y_mm": -7.156000000000001
+            },
+            {
+              "theta_rad": 5.1051,
+              "x_mm": 1.0,
+              "y_mm": -8.0
+            }
+          ],
+          "name": "long left",
+          "prim_id": 3
+        },
+        {
+          "end_pose": {
+            "theta": 11,
+            "x": -1,
+            "y": -8
+          },
+          "extra_cost_factor": 1.3,
+          "intermediate_poses": [
+            {
+              "theta_rad": 4.7124,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.7124,
+              "x_mm": -0.0,
+              "y_mm": -0.904
+            },
+            {
+              "theta_rad": 4.7124,
+              "x_mm": -0.0,
+              "y_mm": -1.808
+            },
+            {
+              "theta_rad": 4.7124,
+              "x_mm": -0.0,
+              "y_mm": -2.7119999999999997
+            },
+            {
+              "theta_rad": 4.6636,
+              "x_mm": -0.016,
+              "y_mm": -3.6120000000000005
+            },
+            {
+              "theta_rad": 4.5948,
+              "x_mm": -0.092,
+              "y_mm": -4.5120000000000005
+            },
+            {
+              "theta_rad": 4.526,
+              "x_mm": -0.228,
+              "y_mm": -5.4079999999999995
+            },
+            {
+              "theta_rad": 4.4572,
+              "x_mm": -0.424,
+              "y_mm": -6.288
+            },
+            {
+              "theta_rad": 4.3885,
+              "x_mm": -0.684,
+              "y_mm": -7.156000000000001
+            },
+            {
+              "theta_rad": 4.3197,
+              "x_mm": -1.0,
+              "y_mm": -8.0
+            }
+          ],
+          "name": "backup long right",
+          "prim_id": 4
+        },
+        {
+          "end_pose": {
+            "theta": 13,
+            "x": 0,
+            "y": 0
+          },
+          "extra_cost_factor": 1.5,
+          "intermediate_poses": [
+            {
+              "theta_rad": 4.7124,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.756,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.7997,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.8433,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.8869,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.9306,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.9742,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.0178,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.0615,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.1051,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            }
+          ],
+          "name": "in place left",
+          "prim_id": 5
+        },
+        {
+          "end_pose": {
+            "theta": 11,
+            "x": 0,
+            "y": 0
+          },
+          "extra_cost_factor": 1.5,
+          "intermediate_poses": [
+            {
+              "theta_rad": 4.7124,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.6688,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.6251,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.5815,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.5379,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.4942,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.4506,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.407,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.3633,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.3197,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            }
+          ],
+          "name": "in place right",
+          "prim_id": 6
+        }
+      ],
+      "starting_angle": 12
+    },
+    {
+      "prims": [
+        {
+          "end_pose": {
+            "theta": 13,
+            "x": 1,
+            "y": -2
+          },
+          "extra_cost_factor": 1.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 5.1051,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.1051,
+              "x_mm": 0.11199999999999999,
+              "y_mm": -0.22399999999999998
+            },
+            {
+              "theta_rad": 5.1051,
+              "x_mm": 0.22399999999999998,
+              "y_mm": -0.444
+            },
+            {
+              "theta_rad": 5.1051,
+              "x_mm": 0.332,
+              "y_mm": -0.6679999999999999
+            },
+            {
+              "theta_rad": 5.1051,
+              "x_mm": 0.444,
+              "y_mm": -0.888
+            },
+            {
+              "theta_rad": 5.1051,
+              "x_mm": 0.5559999999999999,
+              "y_mm": -1.1119999999999999
+            },
+            {
+              "theta_rad": 5.1051,
+              "x_mm": 0.6679999999999999,
+              "y_mm": -1.332
+            },
+            {
+              "theta_rad": 5.1051,
+              "x_mm": 0.776,
+              "y_mm": -1.5559999999999998
+            },
+            {
+              "theta_rad": 5.1051,
+              "x_mm": 0.888,
+              "y_mm": -1.776
+            },
+            {
+              "theta_rad": 5.1051,
+              "x_mm": 1.0,
+              "y_mm": -2.0
+            }
+          ],
+          "name": "short straight",
+          "prim_id": 0
+        },
+        {
+          "end_pose": {
+            "theta": 13,
+            "x": 3,
+            "y": -6
+          },
+          "extra_cost_factor": 1.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 5.1051,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.1051,
+              "x_mm": 0.332,
+              "y_mm": -0.6679999999999999
+            },
+            {
+              "theta_rad": 5.1051,
+              "x_mm": 0.6679999999999999,
+              "y_mm": -1.332
+            },
+            {
+              "theta_rad": 5.1051,
+              "x_mm": 1.0,
+              "y_mm": -2.0
+            },
+            {
+              "theta_rad": 5.1051,
+              "x_mm": 1.332,
+              "y_mm": -2.6679999999999997
+            },
+            {
+              "theta_rad": 5.1051,
+              "x_mm": 1.6680000000000001,
+              "y_mm": -3.3320000000000003
+            },
+            {
+              "theta_rad": 5.1051,
+              "x_mm": 2.0,
+              "y_mm": -4.0
+            },
+            {
+              "theta_rad": 5.1051,
+              "x_mm": 2.332,
+              "y_mm": -4.668
+            },
+            {
+              "theta_rad": 5.1051,
+              "x_mm": 2.6679999999999997,
+              "y_mm": -5.332000000000001
+            },
+            {
+              "theta_rad": 5.1051,
+              "x_mm": 2.9999999999999996,
+              "y_mm": -5.999999999999999
+            }
+          ],
+          "name": "long straight",
+          "prim_id": 1
+        },
+        {
+          "end_pose": {
+            "theta": 13,
+            "x": -1,
+            "y": 2
+          },
+          "extra_cost_factor": 5.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 5.1051,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.1051,
+              "x_mm": -0.11199999999999999,
+              "y_mm": 0.22399999999999998
+            },
+            {
+              "theta_rad": 5.1051,
+              "x_mm": -0.22399999999999998,
+              "y_mm": 0.444
+            },
+            {
+              "theta_rad": 5.1051,
+              "x_mm": -0.332,
+              "y_mm": 0.6679999999999999
+            },
+            {
+              "theta_rad": 5.1051,
+              "x_mm": -0.444,
+              "y_mm": 0.888
+            },
+            {
+              "theta_rad": 5.1051,
+              "x_mm": -0.5559999999999999,
+              "y_mm": 1.1119999999999999
+            },
+            {
+              "theta_rad": 5.1051,
+              "x_mm": -0.6679999999999999,
+              "y_mm": 1.332
+            },
+            {
+              "theta_rad": 5.1051,
+              "x_mm": -0.776,
+              "y_mm": 1.5559999999999998
+            },
+            {
+              "theta_rad": 5.1051,
+              "x_mm": -0.888,
+              "y_mm": 1.776
+            },
+            {
+              "theta_rad": 5.1051,
+              "x_mm": -1.0,
+              "y_mm": 2.0
+            }
+          ],
+          "name": "short straight",
+          "prim_id": 2
+        },
+        {
+          "end_pose": {
+            "theta": 14,
+            "x": 4,
+            "y": -5
+          },
+          "extra_cost_factor": 1.3,
+          "intermediate_poses": [
+            {
+              "theta_rad": 5.1051,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.1354,
+              "x_mm": 0.368,
+              "y_mm": -0.596
+            },
+            {
+              "theta_rad": 5.1657,
+              "x_mm": 0.7560000000000001,
+              "y_mm": -1.184
+            },
+            {
+              "theta_rad": 5.196,
+              "x_mm": 1.1640000000000001,
+              "y_mm": -1.76
+            },
+            {
+              "theta_rad": 5.2263,
+              "x_mm": 1.5920000000000003,
+              "y_mm": -2.3280000000000003
+            },
+            {
+              "theta_rad": 5.2566,
+              "x_mm": 2.036,
+              "y_mm": -2.8880000000000003
+            },
+            {
+              "theta_rad": 5.2869,
+              "x_mm": 2.5,
+              "y_mm": -3.432
+            },
+            {
+              "theta_rad": 5.3172,
+              "x_mm": 2.984,
+              "y_mm": -3.968
+            },
+            {
+              "theta_rad": 5.3475,
+              "x_mm": 3.484,
+              "y_mm": -4.492
+            },
+            {
+              "theta_rad": 5.3778,
+              "x_mm": 4.0,
+              "y_mm": -5.0
+            }
+          ],
+          "name": "long left",
+          "prim_id": 3
+        },
+        {
+          "end_pose": {
+            "theta": 12,
+            "x": 2,
+            "y": -7
+          },
+          "extra_cost_factor": 1.3,
+          "intermediate_poses": [
+            {
+              "theta_rad": 5.1051,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.1051,
+              "x_mm": 0.312,
+              "y_mm": -0.752
+            },
+            {
+              "theta_rad": 5.1051,
+              "x_mm": 0.624,
+              "y_mm": -1.5079999999999998
+            },
+            {
+              "theta_rad": 5.1051,
+              "x_mm": 0.9359999999999999,
+              "y_mm": -2.2600000000000002
+            },
+            {
+              "theta_rad": 5.086,
+              "x_mm": 1.248,
+              "y_mm": -3.0159999999999996
+            },
+            {
+              "theta_rad": 5.0113,
+              "x_mm": 1.5160000000000002,
+              "y_mm": -3.7840000000000003
+            },
+            {
+              "theta_rad": 4.9366,
+              "x_mm": 1.7280000000000002,
+              "y_mm": -4.572
+            },
+            {
+              "theta_rad": 4.8618,
+              "x_mm": 1.8800000000000001,
+              "y_mm": -5.3759999999999994
+            },
+            {
+              "theta_rad": 4.7871,
+              "x_mm": 1.9680000000000002,
+              "y_mm": -6.183999999999999
+            },
+            {
+              "theta_rad": 4.7124,
+              "x_mm": 2.0,
+              "y_mm": -7.0
+            }
+          ],
+          "name": "long right",
+          "prim_id": 4
+        },
+        {
+          "end_pose": {
+            "theta": 14,
+            "x": 0,
+            "y": 0
+          },
+          "extra_cost_factor": 1.5,
+          "intermediate_poses": [
+            {
+              "theta_rad": 5.1051,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.1487,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.1924,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.236,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.2796,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.3233,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.3669,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.4105,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.4542,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.4978,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            }
+          ],
+          "name": "in place left",
+          "prim_id": 5
+        },
+        {
+          "end_pose": {
+            "theta": 12,
+            "x": 0,
+            "y": 0
+          },
+          "extra_cost_factor": 1.5,
+          "intermediate_poses": [
+            {
+              "theta_rad": 5.1051,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.0615,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.0178,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.9742,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.9306,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.8869,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.8433,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.7997,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.756,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 4.7124,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            }
+          ],
+          "name": "in place right",
+          "prim_id": 6
+        }
+      ],
+      "starting_angle": 13
+    },
+    {
+      "prims": [
+        {
+          "end_pose": {
+            "theta": 14,
+            "x": 1,
+            "y": -1
+          },
+          "extra_cost_factor": 1.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 5.4978,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.4978,
+              "x_mm": 0.11199999999999999,
+              "y_mm": -0.11199999999999999
+            },
+            {
+              "theta_rad": 5.4978,
+              "x_mm": 0.22399999999999998,
+              "y_mm": -0.22399999999999998
+            },
+            {
+              "theta_rad": 5.4978,
+              "x_mm": 0.332,
+              "y_mm": -0.332
+            },
+            {
+              "theta_rad": 5.4978,
+              "x_mm": 0.444,
+              "y_mm": -0.444
+            },
+            {
+              "theta_rad": 5.4978,
+              "x_mm": 0.5559999999999999,
+              "y_mm": -0.5559999999999999
+            },
+            {
+              "theta_rad": 5.4978,
+              "x_mm": 0.6679999999999999,
+              "y_mm": -0.6679999999999999
+            },
+            {
+              "theta_rad": 5.4978,
+              "x_mm": 0.776,
+              "y_mm": -0.776
+            },
+            {
+              "theta_rad": 5.4978,
+              "x_mm": 0.888,
+              "y_mm": -0.888
+            },
+            {
+              "theta_rad": 5.4978,
+              "x_mm": 1.0,
+              "y_mm": -1.0
+            }
+          ],
+          "name": "short straight",
+          "prim_id": 0
+        },
+        {
+          "end_pose": {
+            "theta": 14,
+            "x": 6,
+            "y": -6
+          },
+          "extra_cost_factor": 1.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 5.4978,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.4978,
+              "x_mm": 0.6679999999999999,
+              "y_mm": -0.6679999999999999
+            },
+            {
+              "theta_rad": 5.4978,
+              "x_mm": 1.332,
+              "y_mm": -1.332
+            },
+            {
+              "theta_rad": 5.4978,
+              "x_mm": 2.0,
+              "y_mm": -2.0
+            },
+            {
+              "theta_rad": 5.4978,
+              "x_mm": 2.6679999999999997,
+              "y_mm": -2.6679999999999997
+            },
+            {
+              "theta_rad": 5.4978,
+              "x_mm": 3.3320000000000003,
+              "y_mm": -3.3320000000000003
+            },
+            {
+              "theta_rad": 5.4978,
+              "x_mm": 4.0,
+              "y_mm": -4.0
+            },
+            {
+              "theta_rad": 5.4978,
+              "x_mm": 4.668,
+              "y_mm": -4.668
+            },
+            {
+              "theta_rad": 5.4978,
+              "x_mm": 5.332000000000001,
+              "y_mm": -5.332000000000001
+            },
+            {
+              "theta_rad": 5.4978,
+              "x_mm": 5.999999999999999,
+              "y_mm": -5.999999999999999
+            }
+          ],
+          "name": "long straight",
+          "prim_id": 1
+        },
+        {
+          "end_pose": {
+            "theta": 14,
+            "x": -1,
+            "y": 1
+          },
+          "extra_cost_factor": 5.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 5.4978,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.4978,
+              "x_mm": -0.11199999999999999,
+              "y_mm": 0.11199999999999999
+            },
+            {
+              "theta_rad": 5.4978,
+              "x_mm": -0.22399999999999998,
+              "y_mm": 0.22399999999999998
+            },
+            {
+              "theta_rad": 5.4978,
+              "x_mm": -0.332,
+              "y_mm": 0.332
+            },
+            {
+              "theta_rad": 5.4978,
+              "x_mm": -0.444,
+              "y_mm": 0.444
+            },
+            {
+              "theta_rad": 5.4978,
+              "x_mm": -0.5559999999999999,
+              "y_mm": 0.5559999999999999
+            },
+            {
+              "theta_rad": 5.4978,
+              "x_mm": -0.6679999999999999,
+              "y_mm": 0.6679999999999999
+            },
+            {
+              "theta_rad": 5.4978,
+              "x_mm": -0.776,
+              "y_mm": 0.776
+            },
+            {
+              "theta_rad": 5.4978,
+              "x_mm": -0.888,
+              "y_mm": 0.888
+            },
+            {
+              "theta_rad": 5.4978,
+              "x_mm": -1.0,
+              "y_mm": 1.0
+            }
+          ],
+          "name": "short straight",
+          "prim_id": 2
+        },
+        {
+          "end_pose": {
+            "theta": 15,
+            "x": 7,
+            "y": -5
+          },
+          "extra_cost_factor": 1.3,
+          "intermediate_poses": [
+            {
+              "theta_rad": 5.4978,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.4978,
+              "x_mm": 0.6800000000000002,
+              "y_mm": -0.6800000000000002
+            },
+            {
+              "theta_rad": 5.5275,
+              "x_mm": 1.368,
+              "y_mm": -1.3559999999999999
+            },
+            {
+              "theta_rad": 5.5793,
+              "x_mm": 2.088,
+              "y_mm": -2.0
+            },
+            {
+              "theta_rad": 5.6312,
+              "x_mm": 2.8360000000000003,
+              "y_mm": -2.6040000000000005
+            },
+            {
+              "theta_rad": 5.683,
+              "x_mm": 3.616,
+              "y_mm": -3.1680000000000006
+            },
+            {
+              "theta_rad": 5.7349,
+              "x_mm": 4.428,
+              "y_mm": -3.6919999999999997
+            },
+            {
+              "theta_rad": 5.7868,
+              "x_mm": 5.26,
+              "y_mm": -4.172
+            },
+            {
+              "theta_rad": 5.8386,
+              "x_mm": 6.12,
+              "y_mm": -4.608
+            },
+            {
+              "theta_rad": 5.8905,
+              "x_mm": 7.0,
+              "y_mm": -5.0
+            }
+          ],
+          "name": "long left",
+          "prim_id": 3
+        },
+        {
+          "end_pose": {
+            "theta": 13,
+            "x": 5,
+            "y": -7
+          },
+          "extra_cost_factor": 1.3,
+          "intermediate_poses": [
+            {
+              "theta_rad": 5.4978,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.4978,
+              "x_mm": 0.6800000000000002,
+              "y_mm": -0.6800000000000002
+            },
+            {
+              "theta_rad": 5.4681,
+              "x_mm": 1.3559999999999999,
+              "y_mm": -1.368
+            },
+            {
+              "theta_rad": 5.4162,
+              "x_mm": 2.0,
+              "y_mm": -2.088
+            },
+            {
+              "theta_rad": 5.3644,
+              "x_mm": 2.6040000000000005,
+              "y_mm": -2.8360000000000003
+            },
+            {
+              "theta_rad": 5.3125,
+              "x_mm": 3.1680000000000006,
+              "y_mm": -3.616
+            },
+            {
+              "theta_rad": 5.2607,
+              "x_mm": 3.6919999999999997,
+              "y_mm": -4.428
+            },
+            {
+              "theta_rad": 5.2088,
+              "x_mm": 4.172,
+              "y_mm": -5.26
+            },
+            {
+              "theta_rad": 5.1569,
+              "x_mm": 4.608,
+              "y_mm": -6.12
+            },
+            {
+              "theta_rad": 5.1051,
+              "x_mm": 5.0,
+              "y_mm": -7.0
+            }
+          ],
+          "name": "long right",
+          "prim_id": 4
+        },
+        {
+          "end_pose": {
+            "theta": 15,
+            "x": 0,
+            "y": 0
+          },
+          "extra_cost_factor": 1.5,
+          "intermediate_poses": [
+            {
+              "theta_rad": 5.4978,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.5414,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.5851,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.6287,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.6723,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.716,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.7596,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.8032,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.8469,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.8905,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            }
+          ],
+          "name": "in place left",
+          "prim_id": 5
+        },
+        {
+          "end_pose": {
+            "theta": 13,
+            "x": 0,
+            "y": 0
+          },
+          "extra_cost_factor": 1.5,
+          "intermediate_poses": [
+            {
+              "theta_rad": 5.4978,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.4542,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.4105,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.3669,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.3233,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.2796,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.236,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.1924,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.1487,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.1051,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            }
+          ],
+          "name": "in place right",
+          "prim_id": 6
+        }
+      ],
+      "starting_angle": 14
+    },
+    {
+      "prims": [
+        {
+          "end_pose": {
+            "theta": 15,
+            "x": 2,
+            "y": -1
+          },
+          "extra_cost_factor": 1.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 5.8905,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.8905,
+              "x_mm": 0.22399999999999998,
+              "y_mm": -0.11199999999999999
+            },
+            {
+              "theta_rad": 5.8905,
+              "x_mm": 0.444,
+              "y_mm": -0.22399999999999998
+            },
+            {
+              "theta_rad": 5.8905,
+              "x_mm": 0.6679999999999999,
+              "y_mm": -0.332
+            },
+            {
+              "theta_rad": 5.8905,
+              "x_mm": 0.888,
+              "y_mm": -0.444
+            },
+            {
+              "theta_rad": 5.8905,
+              "x_mm": 1.1119999999999999,
+              "y_mm": -0.5559999999999999
+            },
+            {
+              "theta_rad": 5.8905,
+              "x_mm": 1.332,
+              "y_mm": -0.6679999999999999
+            },
+            {
+              "theta_rad": 5.8905,
+              "x_mm": 1.5559999999999998,
+              "y_mm": -0.776
+            },
+            {
+              "theta_rad": 5.8905,
+              "x_mm": 1.776,
+              "y_mm": -0.888
+            },
+            {
+              "theta_rad": 5.8905,
+              "x_mm": 2.0,
+              "y_mm": -1.0
+            }
+          ],
+          "name": "short straight",
+          "prim_id": 0
+        },
+        {
+          "end_pose": {
+            "theta": 15,
+            "x": 6,
+            "y": -3
+          },
+          "extra_cost_factor": 1.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 5.8905,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.8905,
+              "x_mm": 0.6679999999999999,
+              "y_mm": -0.332
+            },
+            {
+              "theta_rad": 5.8905,
+              "x_mm": 1.332,
+              "y_mm": -0.6679999999999999
+            },
+            {
+              "theta_rad": 5.8905,
+              "x_mm": 2.0,
+              "y_mm": -1.0
+            },
+            {
+              "theta_rad": 5.8905,
+              "x_mm": 2.6679999999999997,
+              "y_mm": -1.332
+            },
+            {
+              "theta_rad": 5.8905,
+              "x_mm": 3.3320000000000003,
+              "y_mm": -1.6680000000000001
+            },
+            {
+              "theta_rad": 5.8905,
+              "x_mm": 4.0,
+              "y_mm": -2.0
+            },
+            {
+              "theta_rad": 5.8905,
+              "x_mm": 4.668,
+              "y_mm": -2.332
+            },
+            {
+              "theta_rad": 5.8905,
+              "x_mm": 5.332000000000001,
+              "y_mm": -2.6679999999999997
+            },
+            {
+              "theta_rad": 5.8905,
+              "x_mm": 5.999999999999999,
+              "y_mm": -2.9999999999999996
+            }
+          ],
+          "name": "long straight",
+          "prim_id": 1
+        },
+        {
+          "end_pose": {
+            "theta": 15,
+            "x": -2,
+            "y": 1
+          },
+          "extra_cost_factor": 5.0,
+          "intermediate_poses": [
+            {
+              "theta_rad": 5.8905,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.8905,
+              "x_mm": -0.22399999999999998,
+              "y_mm": 0.11199999999999999
+            },
+            {
+              "theta_rad": 5.8905,
+              "x_mm": -0.444,
+              "y_mm": 0.22399999999999998
+            },
+            {
+              "theta_rad": 5.8905,
+              "x_mm": -0.6679999999999999,
+              "y_mm": 0.332
+            },
+            {
+              "theta_rad": 5.8905,
+              "x_mm": -0.888,
+              "y_mm": 0.444
+            },
+            {
+              "theta_rad": 5.8905,
+              "x_mm": -1.1119999999999999,
+              "y_mm": 0.5559999999999999
+            },
+            {
+              "theta_rad": 5.8905,
+              "x_mm": -1.332,
+              "y_mm": 0.6679999999999999
+            },
+            {
+              "theta_rad": 5.8905,
+              "x_mm": -1.5559999999999998,
+              "y_mm": 0.776
+            },
+            {
+              "theta_rad": 5.8905,
+              "x_mm": -1.776,
+              "y_mm": 0.888
+            },
+            {
+              "theta_rad": 5.8905,
+              "x_mm": -2.0,
+              "y_mm": 1.0
+            }
+          ],
+          "name": "short straight",
+          "prim_id": 2
+        },
+        {
+          "end_pose": {
+            "theta": 14,
+            "x": 5,
+            "y": -4
+          },
+          "extra_cost_factor": 1.3,
+          "intermediate_poses": [
+            {
+              "theta_rad": 5.8905,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.8602,
+              "x_mm": 0.596,
+              "y_mm": -0.368
+            },
+            {
+              "theta_rad": 5.8299,
+              "x_mm": 1.184,
+              "y_mm": -0.7560000000000001
+            },
+            {
+              "theta_rad": 5.7996,
+              "x_mm": 1.76,
+              "y_mm": -1.1640000000000001
+            },
+            {
+              "theta_rad": 5.7693,
+              "x_mm": 2.3280000000000003,
+              "y_mm": -1.5920000000000003
+            },
+            {
+              "theta_rad": 5.739,
+              "x_mm": 2.8880000000000003,
+              "y_mm": -2.036
+            },
+            {
+              "theta_rad": 5.7087,
+              "x_mm": 3.432,
+              "y_mm": -2.5
+            },
+            {
+              "theta_rad": 5.6784,
+              "x_mm": 3.968,
+              "y_mm": -2.984
+            },
+            {
+              "theta_rad": 5.6481,
+              "x_mm": 4.492,
+              "y_mm": -3.484
+            },
+            {
+              "theta_rad": 5.6178,
+              "x_mm": 5.0,
+              "y_mm": -4.0
+            }
+          ],
+          "name": "long right",
+          "prim_id": 3
+        },
+        {
+          "end_pose": {
+            "theta": 0,
+            "x": 7,
+            "y": -2
+          },
+          "extra_cost_factor": 1.3,
+          "intermediate_poses": [
+            {
+              "theta_rad": 5.8905,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.8905,
+              "x_mm": 0.752,
+              "y_mm": -0.312
+            },
+            {
+              "theta_rad": 5.8905,
+              "x_mm": 1.5079999999999998,
+              "y_mm": -0.624
+            },
+            {
+              "theta_rad": 5.8905,
+              "x_mm": 2.2600000000000002,
+              "y_mm": -0.9359999999999999
+            },
+            {
+              "theta_rad": 5.9096,
+              "x_mm": 3.0159999999999996,
+              "y_mm": -1.248
+            },
+            {
+              "theta_rad": 5.9843,
+              "x_mm": 3.7840000000000003,
+              "y_mm": -1.5160000000000002
+            },
+            {
+              "theta_rad": 6.059,
+              "x_mm": 4.572,
+              "y_mm": -1.7280000000000002
+            },
+            {
+              "theta_rad": 6.1337,
+              "x_mm": 5.3759999999999994,
+              "y_mm": -1.8800000000000001
+            },
+            {
+              "theta_rad": 6.2085,
+              "x_mm": 6.183999999999999,
+              "y_mm": -1.9680000000000002
+            },
+            {
+              "theta_rad": 6.2832,
+              "x_mm": 7.0,
+              "y_mm": -2.0
+            }
+          ],
+          "name": "long left",
+          "prim_id": 4
+        },
+        {
+          "end_pose": {
+            "theta": 14,
+            "x": 0,
+            "y": 0
+          },
+          "extra_cost_factor": 1.5,
+          "intermediate_poses": [
+            {
+              "theta_rad": 5.8905,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.8469,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.8032,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.7596,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.716,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.6723,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.6287,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.5851,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.5414,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.4978,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            }
+          ],
+          "name": "in place right",
+          "prim_id": 5
+        },
+        {
+          "end_pose": {
+            "theta": 0,
+            "x": 0,
+            "y": 0
+          },
+          "extra_cost_factor": 1.5,
+          "intermediate_poses": [
+            {
+              "theta_rad": 5.8905,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.9341,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 5.9778,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 6.0214,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 6.065,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 6.1087,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 6.1523,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 6.1959,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 6.2396,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            },
+            {
+              "theta_rad": 0.0,
+              "x_mm": 0.0,
+              "y_mm": 0.0
+            }
+          ],
+          "name": "in place right",
+          "prim_id": 6
+        }
+      ],
+      "starting_angle": 15
+    }
+  ],
+  "num_angles": 16,
+  "resolution_mm": 1.0
+}

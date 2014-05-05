@@ -21,12 +21,7 @@ void writePath(string filename, const xythetaEnvironment& env, const xythetaPlan
 
 int main(int argc, char *argv[])
 {
-  Anki::Planning::xythetaPlanner planner;
-
-  planner.SayHello();
-
   if(argc == 3) {
-
     cout<<"doing some env stuff!\n";
 
     xythetaEnvironment env(argv[1], argv[2]);
@@ -81,6 +76,24 @@ int main(int argc, char *argv[])
         curr = State(results[choice]);
       }
     }
+  }
+  else if(argc == 7 || argc == 6) {
+    cout<<"running planner!\n";
+
+    xythetaEnvironment env(argv[1], argv[2]);
+    xythetaPlanner planner(env);
+    float theta = 0.0;
+    if(argc == 7) {
+      planner.AllowFreeTurnInPlaceAtGoal();
+    }
+
+    State_c goal(atof(argv[3]), atof(argv[4]), atof(argv[5]));
+
+    planner.SetGoal(goal);
+    planner.ComputePath();
+
+    writePath("path.txt", env, planner.GetPlan());
+    cout<<"done! check path.txt\n";
   }
 
   return 0;

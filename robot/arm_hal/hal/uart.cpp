@@ -43,9 +43,9 @@ namespace Anki
       s32 (*GetChar)(u32 timeout) = UARTGetCharacter;
       
       // TODO: Refactor this mess. PUNT!
-      int BUFFER_WRITE_SIZE = 1024 * 1024 * 1;
+      int BUFFER_WRITE_SIZE = 1024 * 1024 * 4;
       int BUFFER_READ_SIZE = 1024;
-      OFFCHIP u8 m_bufferWrite[1024 * 1024 * 1];
+      OFFCHIP u8 m_bufferWrite[1024 * 1024 * 4];
       OFFCHIP u8 m_bufferRead[1024];
       
       static void UARTStartTransfer()

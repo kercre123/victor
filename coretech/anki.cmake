@@ -206,6 +206,9 @@ set(ALL_EMBEDDED_LIBRARIES ${ALL_EMBEDDED_LIBRARIES} ${NETWORKING_LIBS})
 
 project(${PROJECT_NAME})
 
+# Make sure folder-based organization of targets is enabled
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
 # This is a hack, to get around some new cmake requirements
 if(WIN32)
   STRING(REPLACE "INCREMENTAL" "INCREMENTAL:NO" replacementFlags ${CMAKE_EXE_LINKER_FLAGS_DEBUG})
@@ -397,6 +400,7 @@ if( MATLAB_FOUND AND (ANKICORETECH_USE_MATLAB OR ANKICORETECHEMBEDDED_USE_MATLAB
     COMPILE_DEFINITIONS "ANKI_MEX_BUILD;MATLAB_MEX_FILE"
     PREFIX ""
     SUFFIX ".${MATLAB_MEXEXT}"
+    FOLDER "Matlab Mex"
   )
 
 endif()

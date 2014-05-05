@@ -5,7 +5,7 @@
 
 // For event callbacks
 #include "testModeController.h"
-#include "anki/cozmo/robot/cozmoBot.h"
+
 
 #define DEBUG_IMU_FILTER 0
 
@@ -38,6 +38,7 @@ namespace Anki {
           UPSIDE_DOWN,
           LEFTSIDE_DOWN,
           RIGHTSIDE_DOWN,
+          FRONTSIDE_DOWN,
           BACKSIDE_DOWN,
           NUM_IMU_EVENTS
         };
@@ -90,21 +91,30 @@ namespace Anki {
       
       void TurnOnIndicatorLight()
       {
-        TestModeController::Init(TestModeController::TM_NONE);
+        TestModeController::Start(TM_NONE);
         HAL::SetLED(INDICATOR_LED_ID, HAL::LED_RED);
-        Robot::StopRobot();
+      }
+      void TurnOffIndicatorLight()
+      {
+        HAL::SetLED(INDICATOR_LED_ID, HAL::LED_OFF);
       }
       
       void StartPickAndPlaceTest()
       {
-        TestModeController::Init(TestModeController::TM_PICK_AND_PLACE);
-        HAL::SetLED(INDICATOR_LED_ID, HAL::LED_OFF);
+        TestModeController::Start(TM_PICK_AND_PLACE);
+        TurnOffIndicatorLight();
       }
       
       void StartPathFollowTest()
       {
-        TestModeController::Init(TestModeController::TM_PATH_FOLLOW);
-        HAL::SetLED(INDICATOR_LED_ID, HAL::LED_OFF);
+        TestModeController::Start(TM_PATH_FOLLOW);
+        TurnOffIndicatorLight();
+      }
+      
+      void StartLiftTest()
+      {
+        TestModeController::Start(TM_LIFT);
+        TurnOffIndicatorLight();
       }
       
       //===== End of event callbacks ====
@@ -121,7 +131,10 @@ namespace Anki {
         eventDeactivationCallbacks[RIGHTSIDE_DOWN] = StartPickAndPlaceTest;
         eventActivationCallbacks[LEFTSIDE_DOWN] = TurnOnIndicatorLight;
         eventDeactivationCallbacks[LEFTSIDE_DOWN] = StartPathFollowTest;
+        eventActivationCallbacks[FRONTSIDE_DOWN] = TurnOnIndicatorLight;
+        eventDeactivationCallbacks[FRONTSIDE_DOWN] = StartLiftTest;
         eventActivationCallbacks[BACKSIDE_DOWN] = TurnOnIndicatorLight;
+        eventDeactivationCallbacks[BACKSIDE_DOWN] = TurnOffIndicatorLight;
       }
       
       
@@ -137,8 +150,9 @@ namespace Anki {
       void DetectNsideDown()
       {
         eventStateRaw_[UPSIDE_DOWN] = accel_robot_frame_filt[2] < -NSIDE_DOWN_THRESH_MMPS2;
-        eventStateRaw_[RIGHTSIDE_DOWN] = accel_robot_frame_filt[1] < -NSIDE_DOWN_THRESH_MMPS2;
-        eventStateRaw_[LEFTSIDE_DOWN] = accel_robot_frame_filt[1] > NSIDE_DOWN_THRESH_MMPS2;
+        eventStateRaw_[LEFTSIDE_DOWN] = accel_robot_frame_filt[1] < -NSIDE_DOWN_THRESH_MMPS2;
+        eventStateRaw_[RIGHTSIDE_DOWN] = accel_robot_frame_filt[1] > NSIDE_DOWN_THRESH_MMPS2;
+        eventStateRaw_[FRONTSIDE_DOWN] = accel_robot_frame_filt[0] < -NSIDE_DOWN_THRESH_MMPS2;
         eventStateRaw_[BACKSIDE_DOWN] = accel_robot_frame_filt[0] > NSIDE_DOWN_THRESH_MMPS2;
       }
       

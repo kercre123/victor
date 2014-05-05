@@ -2,8 +2,8 @@
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
-#include "anki/cozmo/robot/pathFollower.h"
-#include "anki/cozmo/robot/steeringController.h"
+#include "pathFollower.h"
+#include "steeringController.h"
 
 #include "gripController.h"
 #include "headController.h"

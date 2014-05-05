@@ -6,6 +6,7 @@
 #include "anki/common/robot/fixedLengthList.h"
 
 #include "anki/vision/robot/lucasKanade.h"
+#include "anki/vision/robot/imageProcessing_declarations.h"
 
 #define VERBOSITY 0
 
@@ -27,10 +28,39 @@ Array<u8> grayscaleImage;
 // Tracker
 TemplateTracker::LucasKanadeTracker_SampledPlanar6dof tracker;
 
+void NormalizeImage(Array<u8>& grayscaleImage, const Quadrilateral<f32>& currentQuad, const f32 filterWidthFraction, MemoryStack scratch)
+{
+  
+  // TODO: Add the ability to only normalize within the vicinity of the quad
+  // Note that this requires templateQuad to be sorted!
+  const s32 filterWidth = static_cast<s32>(filterWidthFraction*((currentQuad[3] - currentQuad[0]).Length()));
+  AnkiAssert(filterWidth > 0.f);
+  
+  Array<u8> grayscaleImageNormalized(grayscaleImage.get_size(0), grayscaleImage.get_size(1), scratch);
+  
+  mxAssert(grayscaleImageNormalized.IsValid(),
+           "Out of memory allocating grayscaleImageNormalized.\n");
+  
+  Anki::Result lastResult = ImageProcessing::BoxFilterNormalize(grayscaleImage, filterWidth, static_cast<u8>(128),
+                                                                grayscaleImageNormalized, scratch);
+  
+  mxAssert(lastResult == Anki::RESULT_OK, "BoxFilterNormalize failed.");
+  
+  {
+    grayscaleImage.Show("grayscaleImage", false);
+    grayscaleImageNormalized.Show("grayscaleImageNormalized", false);
+  }
+  
+  grayscaleImage.Set(grayscaleImageNormalized);
+  
+} // NormalizeImage()
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
-
+  mexAtExit(cv::destroyAllWindows);
+  
+  // TODO: Make this a passed-in parameter
+  const f32 filterWidthFraction = 0.5f;
   
   if(nrhs == 11) {
     //
@@ -65,6 +95,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                                    Point2f(quadX[3], quadY[3]));
     ++argIndex;
     
+    NormalizeImage(grayscaleImage, initialQuad, filterWidthFraction, offchipMemory);
+    
     // Get Calibration Data
     f32 focalLength_x = static_cast<f32>(mxGetScalar(prhs[argIndex++]));
     f32 focalLength_y = static_cast<f32>(mxGetScalar(prhs[argIndex++]));
@@ -97,12 +129,14 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     
     mxAssert(tracker.IsValid(), "Failed to instantiate valid tracker!");
     
+    /*
     // TODO: Set this elsewhere
-    const f32 Kp_min = 0.05f;
+    const f32 Kp_min = 0.1f;
     const f32 Kp_max = 0.75f;
     const f32 tz_min = 30.f;
     const f32 tz_max = 150.f;
     tracker.SetGainScheduling(tz_min, tz_max, Kp_min, Kp_max);
+    */
     
     if(nlhs > 0) {
       using namespace TemplateTracker;
@@ -116,6 +150,16 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       for(s32 i=0; i<numSamples; ++i) {
         xSample[i] = samples[i].xCoordinate;
         ySample[i] = samples[i].yCoordinate;
+      }
+      
+      if(nlhs >= 7) {
+        plhs[1] = mxCreateDoubleScalar(static_cast<double>(tracker.get_angleX()));
+        plhs[2] = mxCreateDoubleScalar(static_cast<double>(tracker.get_angleY()));
+        plhs[3] = mxCreateDoubleScalar(static_cast<double>(tracker.get_angleZ()));
+        
+        plhs[4] = mxCreateDoubleScalar(static_cast<double>(tracker.get_translation().x));
+        plhs[5] = mxCreateDoubleScalar(static_cast<double>(tracker.get_translation().y));
+        plhs[6] = mxCreateDoubleScalar(static_cast<double>(tracker.get_translation().z));
       }
       
     }
@@ -144,6 +188,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     bool converged = false;
     s32 verify_meanAbsDiff, verify_numInBounds, verify_numSimilarPixels;
     
+    Quadrilateral<f32> currentQuad = tracker.get_transformation().get_transformedCorners(onchipMemory);
+    NormalizeImage(grayscaleImage, currentQuad, filterWidthFraction, offchipMemory);
+
     // Update tracker
     const Anki::Result trackerResult = tracker.UpdateTrack(grayscaleImage,
                                                            maxIterations,

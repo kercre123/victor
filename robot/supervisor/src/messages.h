@@ -29,18 +29,18 @@ namespace Anki {
     namespace Messages {
       
       // 1. Initial include just defines the definition modes for use below
-#include "anki/cozmo/MessageDefinitions.h"
+#include "anki/cozmo/shared/MessageDefinitions.h"
       
       // 2. Define all the message structs:
 #define MESSAGE_DEFINITION_MODE MESSAGE_STRUCT_DEFINITION_MODE
-#include "anki/cozmo/MessageDefinitions.h"
+#include "anki/cozmo/shared/MessageDefinitions.h"
       
       // 3. Create the enumerated message IDs:
       typedef enum {
         NO_MESSAGE_ID = 0,
 #undef MESSAGE_DEFINITION_MODE
 #define MESSAGE_DEFINITION_MODE MESSAGE_ENUM_DEFINITION_MODE
-#include "anki/cozmo/MessageDefinitions.h"
+#include "anki/cozmo/shared/MessageDefinitions.h"
         NUM_MSG_IDS // Final entry without comma at end
       } ID;
       
@@ -53,7 +53,7 @@ namespace Anki {
       // Create all the dispatch function prototypes (all implemented
       // manually in messages.cpp).  
 #define MESSAGE_DEFINITION_MODE MESSAGE_DISPATCH_DEFINITION_MODE
-#include "anki/cozmo/MessageDefinitions.h"
+#include "anki/cozmo/shared/MessageDefinitions.h"
       
       void ProcessBTLEMessages();
       void ProcessUARTMessages();
@@ -65,11 +65,19 @@ namespace Anki {
       
       // Did we see the message ID we last set? (Or perhaps we timed out)
       bool StillLookingForID(void);
+ 
+      // Used by visionSystem for prediction during tracking
+      void UpdateRobotStateMsg();
       
       // Send messages
-      Result SendRobotStateMsg(); // populates and sends state message
-      void SendText(const char *format, ...);
+      Result SendRobotStateMsg();     // Only sends message.
+                                      // Actual message contents are updated in UpdateRobotStateMsg()
       
+      // For sending text message to basestation
+      int SendText(const char *format, ...);
+      
+      // va_list version
+      int SendText(const char *format, va_list vaList);
       
       // These return true if a mailbox messages was available, and they copy
       // that message into the passed-in message struct.

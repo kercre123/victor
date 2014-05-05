@@ -17,6 +17,11 @@ if(NOT WIN32)
     ${HEADER_FILES}
     ${CORETECH_VISION_INCLUDE_FILES}  
   )
+  
+  set_target_properties(CoreTech_Vision_Basestation PROPERTIES
+    FOLDER "CoreTech"#/Basestation"
+  )
+
 endif()
   
 #target_link_libraries(CoreTech_Vision)

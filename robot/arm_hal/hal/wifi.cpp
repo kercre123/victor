@@ -982,6 +982,12 @@ namespace Anki
                 m_bufferSocket[0] = m_payloadRead[0];
                 m_bufferSocket[1] = m_payloadRead[1];
                 m_isClientConnected = true;
+                
+                // Dump the buffer on connection
+                //
+                // TODO: Make this optional, depending on a command. 
+                // Perhaps connecting to one socket should flush the buffer, and connecting to another doesn't?
+                m_writeTail = m_writeHead;   
               } else if (result == 2 && m_isClientConnected) {
                 if (m_bufferSocket[0] == m_payloadRead[0] &&
                     m_bufferSocket[1] == m_payloadRead[1])

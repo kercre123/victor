@@ -29,7 +29,6 @@ For internal use only. No part of this code may be used without a signed non-dis
 using namespace Anki;
 
 // Serial is only supported on Windows
-#ifdef _MSC_VER
 class Serial
 {
 public:
@@ -40,23 +39,29 @@ public:
     s32 baudRate,
     char parity = 'N',
     s32 dataBits = 8,
-    s32 stopBits = 1
-    );
+    s32 stopBits = 1);
 
   Result Close();
 
-  Result Read(void * buffer, s32 bufferLength, s32 &bytesRead);
+  Result Read(
+    void * buffer,
+    s32 bufferLength,
+    s32 &bytesRead);
 
 protected:
   bool isOpen;
 
+#ifdef _MSC_VER
   HANDLE comPortHandle;
   OVERLAPPED readEventHandle;
   OVERLAPPED writeEventHandle;
   DCB dcb;
-}; // class Serial
+#else
+  // Only MSCV supported
 #endif
+}; // class Serial
 
+// Socket is supported on Windows, Mac, and probably most Posix
 class Socket
 {
 public:
@@ -68,7 +73,10 @@ public:
 
   Result Close();
 
-  Result Read(void * buffer, s32 bufferLength, s32 &bytesRead);
+  Result Read(
+    void * buffer,
+    s32 bufferLength,
+    s32 &bytesRead);
 
 protected:
   bool isOpen;

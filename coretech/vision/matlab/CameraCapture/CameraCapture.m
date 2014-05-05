@@ -84,8 +84,11 @@ processKeyPressed = false;
 % Set up display figure
 h_fig = namedFigure(figureName, 'CurrentCharacter', '~');
 keypressID = iptaddcallback(h_fig, 'KeyPressFcn', @keypress);
+keypressCleanup = onCleanup(@()iptremovecallback(h_fig, 'KeyPressFcn', keypressID));
+
 clf(h_fig);
 figure(h_fig);
+colormap(h_fig, gray);
 
 if isempty(displayAxes)
     if ~isempty(processFcn)
@@ -93,7 +96,7 @@ if isempty(displayAxes)
             displayAxes = subplot(1,1,1, 'Parent', h_fig);
             processAxes = [];
         elseif isempty(processAxes)
-            displayAxes = axes('Pos', [0 .51 1 .45], 'Parent', h_fig);
+            displayAxes = axes('Pos', [0 .53 1 .45], 'Parent', h_fig);
             processAxes = axes('Pos', [0 .03 1 .45], 'Parent', h_fig);
         else
             assert(~isempty(displayAxes), 'If processAxes are specified, so must be displayAxes.');
@@ -118,32 +121,54 @@ CLOSE = 2;
         frame = mexCameraCapture(GRAB, device);
         frame = frame(:,:,[3 2 1]); % BGR to RGB
     end
+
+    function frame = readFrameFromWifiCamera(~)
+        frame = [];
+        while isempty(frame)
+            frame = mexWifiCameraCapture(GRAB);
+            pause(1/fps);
+        end     
+        %frame = im2uint8( im2double(frame) .^ (1/2.2));
+    end
+
+% Default close camera function doesn't need to do anything.
+% Can be redefined below depending on device type.
+closeCameraFcn = @()[];
+
 try
     
     % Initialize and grab first frame
     if ischar(device)
-        deviceType = 'file';
-        [framePath, pattern, patternExt] = fileparts(device);
-        frameList = getfnames(framePath, [pattern patternExt]);
-        if isempty(frameList)
-            error('No frames found at %s.\n', device);
+        % see if it looks like an IP address
+        if ~isempty(regexp(device, '\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}', 'once'))
+            %deviceType = 'wifiCamera';
+            frame = mexWifiCameraCapture(OPEN, device);
+            getFrameFcn = @readFrameFromWifiCamera;
+            closeCameraFcn = @()mexWifiCameraCapture(CLOSE);
+        else
+            % assume it's a filename/pattern
+            %deviceType = 'file';
+            [framePath, pattern, patternExt] = fileparts(device);
+            frameList = getfnames(framePath, [pattern patternExt]);
+            if isempty(frameList)
+                error('No frames found at %s.\n', device);
+            end
+            numFrames = min(numFrames, length(frameList));
+            frame = readFrameFromFile(1, framePath, frameList);
+            getFrameFcn = @(i_frame)readFrameFromFile(i_frame, framePath, frameList);
         end
-        numFrames = min(numFrames, length(frameList));
-        frame = readFrameFromFile(1, framePath, frameList);
-        getFrameFcn = @(i_frame)readFrameFromFile(i_frame, framePath, frameList);
     elseif isa(device, 'SerialCamera')
-        deviceType = 'serialCamera';
-        
+        %deviceType = 'serialCamera';
         getFrameFcn = @(i_frame)getFrame(device);
         frame = getFrameFcn();
         if size(frame,3)==1
             colormap(h_fig, gray);
         end
     else
-        deviceType = 'usbCamera';
-        
+        %deviceType = 'usbCamera';
         frame = mexCameraCapture(OPEN, device, resolution(1), resolution(2));
         getFrameFcn = @readFrameFromCamera;
+        closeCameraFcn = @()mexCameraCapture(CLOSE);
     end
     
     if cropFactor < 1
@@ -171,6 +196,10 @@ try
     %set(h_img, 'EraseMode', 'none');
     pause(1/fps)
     
+    if ~isempty(grabInc) 
+        grabs = {frame};
+    end
+        
     % Capture remaining frames
     i_frame = 2;
     while i_frame < numFrames && ~escapePressed
@@ -199,7 +228,7 @@ try
         
         i_frame = i_frame + 1;
         
-        if ~isempty(grabInc) && mod(i_frame, grabInc)==0
+        if ~isempty(grabInc) && mod(i_frame-1, grabInc)==0
             grabs{end+1} = frame; %#ok<AGROW>
         end
         
@@ -209,23 +238,17 @@ try
     end
     
 catch E
-    iptremovecallback(h_fig, 'KeyPressFcn', keypressID);
-    if strcmp(deviceType, 'usbCamera')
-        mexCameraCapture(CLOSE);
-    end
+
+    closeCameraFcn();    
     rethrow(E)
+    
 end
 
-if strcmp(deviceType, 'usbCamera')
-    mexCameraCapture(CLOSE);
-end
-
-iptremovecallback(h_fig, 'KeyPressFcn', keypressID);
+closeCameraFcn();
 
 if nargout==0
     clear grabs;
 end
-
 
     function keypress(~, edata)
         if isempty(edata.Modifier)

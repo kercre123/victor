@@ -18,7 +18,7 @@
 
 #include "anki/vision/MarkerCodeDefinitions.h"
 
-#include "anki/cozmo/robot/visionSystem.h"
+#include "visionSystem.h"
 
 namespace Anki {
   using namespace Embedded;

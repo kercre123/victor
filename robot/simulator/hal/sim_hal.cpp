@@ -7,8 +7,8 @@
 
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
-#include "anki/cozmo/robot/messages.h"
-#include "anki/cozmo/robot/wheelController.h"
+#include "messages.h"
+#include "wheelController.h"
 
 #include "sim_overlayDisplay.h"
 
@@ -43,10 +43,6 @@ namespace Anki {
       
       const f64 WEBOTS_INFINITY = std::numeric_limits<f64>::infinity();
       
-      
-      const u32 CAMERA_SINGLE_CAPTURE_TIME_US = 1000000 / 15;  // 15Hz, VGA
-      const u32 CAMERA_CONTINUOUS_CAPTURE_TIME_US = 1000000 / 30;  // 30Hz, VGA
-
       const f32 MIN_WHEEL_POWER_FOR_MOTION = 0.15;
       
 #pragma mark --- Simulated HardwareInterface "Member Variables" ---
@@ -580,11 +576,21 @@ namespace Anki {
     } //SetHeadCamMode()
     */
     
+    void HAL::CameraSetExposure(f32 exposure)
+    {
+      // Can't control simulated camera's exposure.
+      
+      // TODO: Simulate this somehow?
+      
+      return;
+      
+    } // HAL::CameraSetExposure()
+    
     
     // Starts camera frame synchronization
-    void HAL::CameraGetFrame(u8* frame, Vision::CameraResolution res, f32 exposure, bool enableLight)
+    void HAL::CameraGetFrame(u8* frame, Vision::CameraResolution res, bool enableLight)
     {
-      // TODO: exposure? enableLight?
+      // TODO: enableLight?
       
       const u8* image = headCam_->getImage();
       if(image == NULL) {

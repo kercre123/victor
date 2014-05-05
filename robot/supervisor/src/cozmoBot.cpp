@@ -1,10 +1,10 @@
 #include "anki/common/robot/config.h"
-#include "anki/cozmo/robot/messages.h"
-
-// TODO: move more of these include files to "src"
+#include "anki/common/shared/utilities_shared.h"
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h" // simulated or real!
+#include "anki/cozmo/robot/debug.h"
+#include "messages.h"
 #include "imuFilter.h"
 #include "pickAndPlaceController.h"
 #include "dockingController.h"
@@ -12,13 +12,12 @@
 #include "headController.h"
 #include "liftController.h"
 #include "testModeController.h"
-#include "anki/cozmo/robot/debug.h"
-#include "anki/cozmo/robot/localization.h"
-#include "anki/cozmo/robot/pathFollower.h"
-#include "anki/cozmo/robot/speedController.h"
-#include "anki/cozmo/robot/steeringController.h"
-#include "anki/cozmo/robot/wheelController.h"
-#include "anki/cozmo/robot/visionSystem.h"
+#include "localization.h"
+#include "pathFollower.h"
+#include "speedController.h"
+#include "steeringController.h"
+#include "wheelController.h"
+#include "visionSystem.h"
 
 #include "anki/messaging/shared/utilMessaging.h"
 
@@ -41,7 +40,7 @@ namespace Anki {
         
         // TESTING
         // Change this value to run different test modes
-        const TestModeController::TestMode DEFAULT_TEST_MODE = TestModeController::TM_NONE;
+        const TestMode DEFAULT_TEST_MODE = TM_NONE;
 
         Robot::OperationMode mode_ = INIT_MOTOR_CALIBRATION;
         bool wasConnected_ = false;
@@ -93,6 +92,18 @@ namespace Anki {
       
       Result Init(void)
       {
+        // Coretech setup
+#ifndef SIMULATOR
+#if(DIVERT_PRINT_TO_RADIO)
+        SetCoreTechPrintFunctionPtr(Messages::SendText);
+#else
+        SetCoreTechPrintFunctionPtr(0);
+#endif
+#elif(USING_UART_RADIO && DIVERT_PRINT_TO_RADIO)
+        SetCoreTechPrintFunctionPtr(Messages::SendText);
+#endif 
+        
+        // HAL and supervisor init
 #ifndef ROBOT_HARDWARE    // The HAL/Operating System cannot be Init()ed or Destroy()ed on a real robot
         if(HAL::Init() == RESULT_FAIL) {
           PRINT("Hardware Interface initialization failed!\n");
@@ -144,12 +155,6 @@ namespace Anki {
          PRINT("LiftController initialization failed.\n");
          return RESULT_FAIL;
          }
-         
-        // Setup test mode
-        if(TestModeController::Init(DEFAULT_TEST_MODE) == RESULT_FAIL) {
-          PRINT("TestMode initialization failed.\n");
-          return RESULT_FAIL;
-        }
         
         // Start calibration
         StartMotorCalibrationRoutine();
@@ -257,7 +262,15 @@ namespace Anki {
               Messages::RobotAvailable msg;
               PRINT("Robot %d broadcasting availability message.\n", msg.robotID);
               HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RobotAvailable), &msg);
-            
+         
+              // Start test mode
+              if (DEFAULT_TEST_MODE != TM_NONE) {
+                if(TestModeController::Start(DEFAULT_TEST_MODE) == RESULT_FAIL) {
+                  PRINT("TestMode %d failed to start.\n", DEFAULT_TEST_MODE);
+                  return RESULT_FAIL;
+                }
+              }
+              
               mode_ = WAITING;
             }
             
@@ -285,7 +298,10 @@ namespace Anki {
         // Feedback / Display
         //////////////////////////////////////////////////////////////
         
+        Messages::UpdateRobotStateMsg();
+#if(!STREAM_DEBUG_IMAGES)
         Messages::SendRobotStateMsg();
+#endif
         
 // TBD - This should be moved to simulator just after step_MainExecution is called
 #ifndef ROBOT_HARDWARE
@@ -312,16 +328,6 @@ namespace Anki {
         
       } // Robot::step_longExecution()
       
-      
-      void StopRobot()
-      {
-        // Stop wheels and vision system
-        PickAndPlaceController::Reset();
-        
-        // Stop lift and head
-        LiftController::SetAngularVelocity(0);
-        HeadController::SetAngularVelocity(0);
-      }
       
     } // namespace Robot
   } // namespace Cozmo

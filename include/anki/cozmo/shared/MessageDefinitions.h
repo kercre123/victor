@@ -28,9 +28,9 @@
 // code based on the definitions below *is* specific to the two platforms.
 // Include the correct one based on the definition of COZMO_ROBOT / COZMO_BASESTATION
 #if defined(COZMO_ROBOT)
-#include "anki/cozmo/MessageDefMacros_Robot.h"
+#include "anki/cozmo/shared/MessageDefMacros_Robot.h"
 #elif defined(COZMO_BASESTATION)
-#include "anki/cozmo/MessageDefMacros_Basestation.h"
+#include "anki/cozmo/shared/MessageDefMacros_Basestation.h"
 #else
 #error Either COZMO_ROBOT or COZMO_BASESTATION should be defined.
 #endif
@@ -52,7 +52,8 @@ ADD_MESSAGE_MEMBER(f32, pose_angle)
 ADD_MESSAGE_MEMBER(f32, lwheel_speed_mmps)
 ADD_MESSAGE_MEMBER(f32, rwheel_speed_mmps)
 ADD_MESSAGE_MEMBER(f32, headAngle)
-ADD_MESSAGE_MEMBER(f32, liftHeight)
+ADD_MESSAGE_MEMBER(f32, liftAngle)
+ADD_MESSAGE_MEMBER(f32, liftHeight) // TODO: Need this?
 ADD_MESSAGE_MEMBER(u8, isTraversingPath)
 ADD_MESSAGE_MEMBER(u8, isCarryingBlock)
 // ...
@@ -77,17 +78,28 @@ END_MESSAGE_DEFINITION(DriveWheelsCurvature)
 
 // MoveLift
 START_MESSAGE_DEFINITION(MoveLift, 1)
-ADD_MESSAGE_MEMBER(f32, height_mm)
-ADD_MESSAGE_MEMBER(f32, max_speed_rad_per_sec)
-ADD_MESSAGE_MEMBER(f32, accel_rad_per_sec2)
+ADD_MESSAGE_MEMBER(f32, speed_rad_per_sec)
 END_MESSAGE_DEFINITION(MoveLift)
 
 // MoveHead
 START_MESSAGE_DEFINITION(MoveHead, 1)
+ADD_MESSAGE_MEMBER(f32, speed_rad_per_sec)
+END_MESSAGE_DEFINITION(MoveHead)
+
+
+// SetLiftHeight
+START_MESSAGE_DEFINITION(SetLiftHeight, 1)
+ADD_MESSAGE_MEMBER(f32, height_mm)
+ADD_MESSAGE_MEMBER(f32, max_speed_rad_per_sec)
+ADD_MESSAGE_MEMBER(f32, accel_rad_per_sec2)
+END_MESSAGE_DEFINITION(SetLiftHeight)
+
+// SetHeadAngle
+START_MESSAGE_DEFINITION(SetHeadAngle, 1)
 ADD_MESSAGE_MEMBER(f32, angle_rad)
 ADD_MESSAGE_MEMBER(f32, max_speed_rad_per_sec)
 ADD_MESSAGE_MEMBER(f32, accel_rad_per_sec2)
-END_MESSAGE_DEFINITION(MoveHead)
+END_MESSAGE_DEFINITION(SetHeadAngle)
 
 // StopAllMotors
 START_MESSAGE_DEFINITION(StopAllMotors, 1)
@@ -265,6 +277,7 @@ END_MESSAGE_DEFINITION(HeadAngleUpdate)
 
 // ImageRequest
 START_MESSAGE_DEFINITION(ImageRequest, 1)
+ADD_MESSAGE_MEMBER(u8, imageSendMode)
 ADD_MESSAGE_MEMBER(u8, resolution)
 END_MESSAGE_DEFINITION(ImageRequest)
 
@@ -278,3 +291,12 @@ ADD_MESSAGE_MEMBER(u8, resolution)
 ADD_MESSAGE_MEMBER_ARRAY(u8, data, IMAGE_CHUNK_SIZE)
 END_MESSAGE_DEFINITION(ImageChunk)
 
+// StartTestMode
+START_MESSAGE_DEFINITION(StartTestMode, 1)
+ADD_MESSAGE_MEMBER(u8, mode)
+END_MESSAGE_DEFINITION(StartTestMode)
+
+// SetHeadlight
+START_MESSAGE_DEFINITION(SetHeadlight, 1)
+ADD_MESSAGE_MEMBER(u8, intensity)
+END_MESSAGE_DEFINITION(SetHeadlight)

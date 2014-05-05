@@ -32,6 +32,13 @@ State::State(StateID sid)
 {
 }
 
+bool operator==(const StateID& lhs, const StateID& rhs)
+{
+  // TODO:(bn) efficient comparison of bit fields?
+  return lhs.theta == rhs.theta && lhs.x == rhs.x && lhs.y == rhs.y;
+}
+
+
 bool State::Import(Json::Value& config)
 {
   if(!JsonTools::GetValueOptional(config, "x", x) ||
@@ -57,7 +64,27 @@ StateID State::GetStateID() const
 
 bool State::operator==(const State& other) const
 {
+  // TODO:(bn) use union?
   return x==other.x && y==other.y && theta==other.theta;
+}
+
+bool StateID::operator<(const StateID& rhs) const
+{
+  // TODO:(bn) use union?
+  if(x < rhs.x)
+    return true;
+  if(x > rhs.x)
+    return false;
+
+  if(y < rhs.y)
+    return true;
+  if(y > rhs.y)
+    return false;
+
+  if(theta < rhs.theta)
+    return true;
+  // if(theta > rhs.theta)
+  return false;
 }
 
 
@@ -148,6 +175,7 @@ xythetaEnvironment::xythetaEnvironment()
 {
   numAngles_ = 1<<THETA_BITS;
   radiansPerAngle_ = 2*M_PI/numAngles_;
+  oneOverRadiansPerAngle_ = (float)(1.0 / ((double)radiansPerAngle_));
 }
 
 xythetaEnvironment::xythetaEnvironment(const char* mprimFilename, const char* mapFile)
@@ -160,7 +188,7 @@ xythetaEnvironment::xythetaEnvironment(const char* mprimFilename, const char* ma
   int totalNumofActions = 0;
   */
 
-  if(!ReadMotionPrimitives(mprimFilename)) {
+  if(ReadMotionPrimitives(mprimFilename)) {
     if(mapFile != NULL) {
       FILE* fMap = fopen(mapFile, "r");
       ReadEnvironment(fMap);
@@ -169,6 +197,7 @@ xythetaEnvironment::xythetaEnvironment(const char* mprimFilename, const char* ma
 
     numAngles_ = 1<<THETA_BITS;
     radiansPerAngle_ = 2*M_PI/numAngles_;
+    oneOverRadiansPerAngle_ = (float)(1.0 / ((double)radiansPerAngle_));
   }
   else {
     printf("error: could not parse motion primitives!\n");
@@ -198,6 +227,8 @@ bool xythetaEnvironment::ParseMotionPrims(Json::Value& config)
     JsonTools::PrintJson(config, 1);
     return false;
   }
+
+  oneOverResolution_ = (float)(1.0 / ((double)resolution_mm_));
 
   // parse through each starting angle
   if(config["angles"].size() != numAngles_) {
@@ -245,20 +276,56 @@ bool MotionPrimitive::Import(Json::Value& config, StateTheta startingAngle)
 
   name = config.get("name", "").asString();
 
-  Cost costFactor = config.get("extra_cost_factor", 1.0f).asFloat();
-  cost = 1.0 * costFactor;  // TODO:(bn) cost!
-
   unsigned int numIntermediatePoses = config["intermediate_poses"].size();
+  float dist = 0.0;
+  float angle = 0.0;
   for(unsigned int i=0; i<numIntermediatePoses; ++i) {
     State_c s;
     if(!s.Import(config["intermediate_poses"][i])) {
       printf("error: could not read 'intermediate_poses'[%d]\n", i);
         return false;
     }
+
+    State_c old(0, 0, 0);
+    if(!intermediatePositions.empty())
+      old = intermediatePositions.back();
+    
+    dist += xythetaEnvironment::GetDistanceBetween(old, s);
+    angle += fabs(s.theta - old.theta);
+
     intermediatePositions.push_back(s);
   }
 
+  // TODO:(bn) params!
+  float linearVelocity = 1.0;
+  float angularVelocity = 1.0;
+
+  Cost costFactor = config.get("extra_cost_factor", 1.0f).asFloat();
+  float baseCost = config.get("cost", -1.0f).asFloat();
+  if(baseCost < 0) {
+    baseCost = std::max(dist / linearVelocity, angle / angularVelocity);
+  }
+  cost = baseCost * costFactor;  // TODO:(bn) cost!
+
   return true;
+}
+
+float xythetaEnvironment::GetDistanceBetween(const State_c& start, const State& end) const
+{
+  float distSq = 
+    pow(GetX_mm(end.x) - start.x_mm, 2)
+    + pow(GetY_mm(end.y) - start.y_mm, 2);
+
+  return sqrtf(distSq);
+}
+
+float xythetaEnvironment::GetDistanceBetween(const State_c& start, const State_c& end)
+{
+  float distSq = 
+    pow(end.x_mm - start.x_mm, 2)
+    + pow(end.y_mm - start.y_mm, 2);
+
+  return sqrtf(distSq);
 }
 
 bool xythetaEnvironment::ReadEnvironment(FILE* fEnv)
@@ -271,7 +338,6 @@ bool xythetaEnvironment::ReadEnvironment(FILE* fEnv)
 
   return true;
 }
-
 
 
 SuccessorIterator xythetaEnvironment::GetSuccessors(StateID startID, Cost currG) const

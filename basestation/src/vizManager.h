@@ -19,7 +19,7 @@
 #include "anki/vision/CameraSettings.h"
 #include "anki/planning/shared/path.h"
 #include "anki/messaging/shared/UdpClient.h"
-#include "anki/cozmo/VizStructs.h"
+#include "anki/cozmo/shared/VizStructs.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -50,6 +50,19 @@ namespace Anki {
       
       // Get a pointer to the singleton instance
       inline static VizManager* getInstance();
+      
+      // Whether or not to display the viz objects
+      void ShowObjects(bool show);
+      
+      
+      // NOTE: This DrawRobot is completely different from the convenience
+      // function below which is just a wrapper around DrawObject. This one
+      // actually sets the pose of a CozmoBot model in the world providing
+      // more detailed visualization capabilities.
+      void DrawRobot(const u32 robotID,
+                     const Pose3d &pose,
+                     const f32 headAngle,
+                     const f32 liftAngle);
       
       
       // ===== Convenience object draw functions for specific object types ====

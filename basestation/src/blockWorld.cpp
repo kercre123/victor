@@ -400,10 +400,16 @@ namespace Anki
       
       
       // Draw all robot poses
+      // TODO: Only send when pose has changed?
       for(auto robotID : robotMgr_->GetRobotIDList())
       {
         Robot* robot = robotMgr_->GetRobotByID(robotID);
+        
+        // Triangle pose marker
         VizManager::getInstance()->DrawRobot(robotID, robot->get_pose());
+        
+        // Full Webots CozmoBot model
+        VizManager::getInstance()->DrawRobot(robotID, robot->get_pose(), robot->get_headAngle(), robot->get_liftAngle());
       }
       
     } // Update()

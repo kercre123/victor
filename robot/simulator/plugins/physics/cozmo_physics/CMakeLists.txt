@@ -49,6 +49,7 @@ target_link_libraries(cozmo_physics
 set_target_properties(
   cozmo_physics PROPERTIES
   LINK_FLAGS "-flat_namespace -undefined suppress -install_name @executable_path/../../plugins/physics/cozmo_physics/libcozmo_physics.dylib"
+  FOLDER "Webots Controllers"
 )
 
 # Make sure a copy of the target exists  in cozmo_c_controller/

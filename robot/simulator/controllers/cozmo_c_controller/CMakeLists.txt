@@ -50,6 +50,10 @@ set(SOURCE_FILES
 #  ${COZMO_ROBOT_SRC_DIR}/hal/simhal/sim_timers.cpp
 )
 
+source_group(Supervisor FILES ${COZMO_ROBOT_SUPERVISOR_SRC})
+source_group(Simulator  REGULAR_EXPRESSION "${SIMULATOR_HAL_DIR}/.*")
+source_group(Simulator  REGULAR_EXPRESSION "${SIMULATOR_SRC_DIR}/.*")
+
 set(HEADER_FILES
  ${ROBOT_SRC_DIR}/dockingController.h
  ${ROBOT_SRC_DIR}/gripController.h
@@ -87,6 +91,7 @@ if(NOT WIN32)
     cozmo_c_controller PROPERTIES
     COMPILE_DEFINITIONS USE_TCP_MESSAGING_INTERFACE
     LINK_FLAGS "-Wl,-rpath,${MATLAB_ROOT_DIR}/bin/maci64/"
+    FOLDER "Webots Controllers"
     #XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++98"
     #XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libstdc++"
   )

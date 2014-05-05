@@ -37,7 +37,7 @@
 #include "anki/common/types.h"
 #include "anki/common/constantsAndMacros.h"
 #include "anki/vision/CameraSettings.h"
-#include "anki/cozmo/robot/messages.h"
+#include "messages.h"
 
 #include "anki/cozmo/robot/cozmoConfig.h"
 
@@ -325,9 +325,16 @@ namespace Anki
       
       const CameraInfo* GetHeadCamInfo();
 
+      // Set the camera capture resolution with CAMERA_RES_XXXXX_HEADER.
+      //void       SetHeadCamMode(const u8 frameResHeader);
+      //CameraMode GetHeadCamMode(void);
+
+      // Sets the camera exposure (non-blocking call)
+      // exposure is clipped to [0.0, 1.0]
+      void CameraSetExposure(f32 exposure);
+      
       // Starts camera frame synchronization (blocking call)
-      void CameraGetFrame(u8* frame, Vision::CameraResolution res,
-          f32 exposure, bool enableLight);
+      void CameraGetFrame(u8* frame, Vision::CameraResolution res, bool enableLight);
 
       // Get the number of lines received so far for the specified camera
       //u32 CameraGetReceivedLines(CameraID cameraID);

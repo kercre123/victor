@@ -61,6 +61,9 @@ namespace Anki
       LinearSequence<s32> xSlice;
 
       Array<Type> array;
+
+      // For speed, this is a direct pointer to the Array's protected data
+      const Type * constArrayData;
     }; // template<typename Type> class ArraySlice
 
     // A non-const version of ConstArraySlice, see ConstArraySlice for details
@@ -97,6 +100,11 @@ namespace Anki
       // Get the raw Array from the Slice. This is mainly useful for interfacing with functions that
       // don't support the full ArraySlice type, and should be used with caution.
       Array<Type>& get_array();
+
+    protected:
+
+      // For speed, this is a direct pointer to the Array's protected data
+      Type * arrayData;
     }; // template<typename Type> class ArraySlice
 
     // An ConstArraySliceExpression is like a ConstArraySlice, but can also be transposed

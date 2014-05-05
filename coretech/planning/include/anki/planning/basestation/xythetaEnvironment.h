@@ -1,9 +1,10 @@
 #ifndef _ANKICORETECH_PLANNING_XYTHETA_ENVIRONMENT_H_
 #define _ANKICORETECH_PLANNING_XYTHETA_ENVIRONMENT_H_
 
-
 #include <vector>
+#include <string>
 #include "json/json-forwards.h"
+#include <math.h>
 
 namespace Anki
 {
@@ -56,8 +57,11 @@ public:
 // bit field representation that packs into an int
 class StateID
 {
+  friend bool operator==(const StateID& lhs, const StateID& rhs);
 public:
-  // This constructor adds the offset to the given state
+
+  bool operator<(const StateID& rhs) const;
+
   StateID() : theta(0), x(0), y(0) {};
 
   unsigned int theta : THETA_BITS;
@@ -163,6 +167,7 @@ public:
   std::vector<ActionID> actions_;
   
   void Push(ActionID action) {actions_.push_back(action);}
+  void Clear() {actions_.clear();}
 };
 
 class xythetaEnvironment
@@ -183,8 +188,10 @@ public:
   // Returns an iterator to the successors from state "start"
   SuccessorIterator GetSuccessors(StateID startID, Cost currG) const;
 
-  inline State_c State2State_c(const State& c) const;
+  inline State_c State2State_c(const State& s) const;
   inline State_c StateID2State_c(StateID sid) const;
+
+  inline State State_c2State(const State_c& c) const;
 
   inline static float GetXFromStateID(StateID sid);
   inline static float GetYFromStateID(StateID sid);
@@ -193,6 +200,14 @@ public:
   inline float GetX_mm(StateXY x) const;
   inline float GetY_mm(StateXY y) const;
   inline float GetTheta_c(StateTheta theta) const;
+
+  inline StateXY GetX(float x_mm) const;
+  inline StateXY GetY(float y_mm) const;
+  inline StateTheta GetTheta(float theta_rad) const;
+
+  float GetDistanceBetween(const State_c& start, const State& end) const;
+  static float GetDistanceBetween(const State_c& start, const State_c& end);
+
 
   // Get a motion primitive. Returns true if the action is retrieved,
   // false otherwise. Returns primitive in arguments
@@ -209,9 +224,11 @@ private:
   bool ParseMotionPrims(Json::Value& config);
 
   float resolution_mm_;
+  float oneOverResolution_;
 
   unsigned int numAngles_;
   float radiansPerAngle_;
+  float oneOverRadiansPerAngle_;
 
   // First index is starting angle, second is prim ID
   std::vector< std::vector<MotionPrimitive> > allMotionPrimitives_;
@@ -231,9 +248,14 @@ bool xythetaEnvironment::GetMotion(StateTheta theta, ActionID actionID, MotionPr
 }
 
 // TODO:(bn) pull out into _inline.cpp
-State_c xythetaEnvironment::State2State_c(const State& c) const
+State_c xythetaEnvironment::State2State_c(const State& s) const
 {
-  return State_c(GetX_mm(c.x), GetY_mm(c.y), GetTheta_c(c.theta));
+  return State_c(GetX_mm(s.x), GetY_mm(s.y), GetTheta_c(s.theta));
+}
+
+State xythetaEnvironment::State_c2State(const State_c& c) const
+{
+  return State(GetX(c.x_mm), GetY(c.y_mm), GetTheta(c.theta));
 }
 
 State_c xythetaEnvironment::StateID2State_c(StateID sid) const
@@ -270,6 +292,22 @@ float xythetaEnvironment::GetTheta_c(StateTheta theta) const
 {
   return theta * radiansPerAngle_;
 }
+
+StateXY xythetaEnvironment::GetX(float x_mm) const
+{
+  return (StateXY) roundf(x_mm * oneOverResolution_);
+}
+
+StateXY xythetaEnvironment::GetY(float y_mm) const
+{
+  return (StateXY) roundf(y_mm * oneOverResolution_);
+}
+
+StateTheta xythetaEnvironment::GetTheta(float theta_rad) const
+{
+  return (StateTheta) roundf(theta_rad * oneOverRadiansPerAngle_);
+}
+
 
 
 }

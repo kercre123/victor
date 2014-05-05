@@ -13,5 +13,10 @@ if(NOT WIN32)
 
   target_link_libraries(run_coreTechCommonTests 
     CoreTech_Common_Basestation ${OPENCV_LIBS} gtest jsoncpp)
+    
+  set_target_properties(run_coreTechCommonTests PROPERTIES
+    FOLDER "Unit Tests"
+  )
+  
 endif()
     

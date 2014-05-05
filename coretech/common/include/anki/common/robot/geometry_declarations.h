@@ -14,6 +14,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/common/robot/config.h"
 #include "anki/common/shared/radians.h"
+#include "anki/common/robot/memory.h"
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
 #include "opencv2/core/core.hpp"
@@ -72,7 +73,7 @@ namespace Anki
       Point<Type>& operator+= (const Point<Type> &point2);
       Point<Type>& operator-= (const Point<Type> &point2);
 
-      inline Point<Type>& operator= (const Point<Type> &point2);
+      Point<Type>& operator= (const Point<Type> &point2);
 
       // The L2 (Euclidian) distance between this point and an input point.
       f32 Dist(const Point<Type> &point2) const;
@@ -118,7 +119,7 @@ namespace Anki
       Point3<Type>& operator-= (const Type value);
       Point3<Type>& operator-= (const Point3<Type> &point2);
 
-      inline Point3<Type>& operator= (const Point3<Type> &point2);
+      Point3<Type>& operator= (const Point3<Type> &point2);
 
       // The L2 (Euclidian) distance between this point and an input point.
       f32 Dist(const Point3<Type> &point2) const;

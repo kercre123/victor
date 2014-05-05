@@ -24,7 +24,7 @@
 //
 
 // For now at least, Viz uses Robot-style message structures
-#include "anki/cozmo/MessageDefMacros_Robot.h"
+#include "anki/cozmo/shared/MessageDefMacros_Robot.h"
 
 
 // VizObject
@@ -48,6 +48,20 @@ END_MESSAGE_DEFINITION(VizObject)
 START_MESSAGE_DEFINITION(VizEraseObject, 1)
 ADD_MESSAGE_MEMBER(u32, objectID)
 END_MESSAGE_DEFINITION(VizEraseObject)
+
+// VizSetRobot
+START_MESSAGE_DEFINITION(VizSetRobot, 1)
+ADD_MESSAGE_MEMBER(u32, robotID)
+ADD_MESSAGE_MEMBER(f32, x_trans_m)
+ADD_MESSAGE_MEMBER(f32, y_trans_m)
+ADD_MESSAGE_MEMBER(f32, z_trans_m)
+ADD_MESSAGE_MEMBER(f32, rot_rad)
+ADD_MESSAGE_MEMBER(f32, rot_axis_x)
+ADD_MESSAGE_MEMBER(f32, rot_axis_y)
+ADD_MESSAGE_MEMBER(f32, rot_axis_z)
+ADD_MESSAGE_MEMBER(f32, head_angle)
+ADD_MESSAGE_MEMBER(f32, lift_angle)
+END_MESSAGE_DEFINITION(VizSetRobot)
 
 
 // VizAppendPathSegmentLine
@@ -111,7 +125,7 @@ ADD_MESSAGE_MEMBER(f32, angle)
 END_MESSAGE_DEFINITION(VizDockingErrorSignal)
 
 
-// CamImage
+// VizImageChunk
 #define MAX_VIZ_IMAGE_CHUNK_SIZE (4800)
 START_MESSAGE_DEFINITION(VizImageChunk, 1)
 ADD_MESSAGE_MEMBER(u32, chunkSize)
@@ -120,6 +134,11 @@ ADD_MESSAGE_MEMBER(u8, imgId)
 ADD_MESSAGE_MEMBER(u8, resolution)
 ADD_MESSAGE_MEMBER_ARRAY(u8, data, MAX_VIZ_IMAGE_CHUNK_SIZE)
 END_MESSAGE_DEFINITION(VizImageChunk)
+
+// VizShowObjects
+START_MESSAGE_DEFINITION(VizShowObjects, 1)
+ADD_MESSAGE_MEMBER(u8, show)
+END_MESSAGE_DEFINITION(VizShowObjects)
 
 // The maximum size of a VizMsg
 #define MAX_VIZ_MSG_SIZE (MAX_VIZ_IMAGE_CHUNK_SIZE+8)

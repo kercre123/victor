@@ -17,3 +17,6 @@ add_library(CoreTech_Vision_Robot
   ${CORETECH_VISION_INCLUDE_FILES}  
 )
 
+set_target_properties(CoreTech_Vision_Robot PROPERTIES
+  FOLDER "CoreTech"#/Robot"
+)

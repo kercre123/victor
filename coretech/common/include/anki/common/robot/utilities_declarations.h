@@ -105,6 +105,11 @@ namespace Anki
 
     // Returns a number [minLimit, maxLimit]
     s32 RandS32(const s32 minLimit, const s32 maxLimit);
+
+    // Get the current system time in seconds
+    // WARNING: f32 is enough for only about two hours (2*60*60*1000 ~= 2^23)
+    f32 GetTimeF32(void);
+    f64 GetTimeF64(void);
   } // namespace Embedded
 } // namespace Anki
 

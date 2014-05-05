@@ -51,7 +51,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/classifier.h"
 
 #include "anki/common/robot/matlabInterface.h"
-#include "anki/common/robot/benchmarking_c.h"
+#include "anki/common/robot/benchmarking.h"
 
 #include "anki/vision/robot/imageProcessing.h"
 

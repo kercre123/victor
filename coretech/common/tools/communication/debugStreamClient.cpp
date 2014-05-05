@@ -29,16 +29,7 @@ static const s32 scratchSize = 1000000;
 static u8 scratchBuffer[scratchSize];
 
 // Kind of a hack for parsing. We only need a type of the correct number of bytes.
-typedef struct { u8  v1; } Bytes1;
-typedef struct { u16 v1; } Bytes2;
-typedef struct { u32 v1; } Bytes4;
-typedef struct { u32 v1, v2; } Bytes8;
-typedef struct { u32 v1, v2, v3; } Bytes12;
-typedef struct { u32 v1, v2, v3, v4; } Bytes16;
-typedef struct { u32 v1, v2, v3, v4, v5; } Bytes20;
-typedef struct { u32 v1, v2, v3, v4, v5, v6; } Bytes24;
-typedef struct { u32 v1, v2, v3, v4, v5, v6, v7; } Bytes28;
-typedef struct { u32 v1, v2, v3, v4, v5, v6, v7, v8; } Bytes32;
+template<s32 num> struct Bytes { u8 v[num]; };
 
 namespace Anki
 {
@@ -73,6 +64,30 @@ namespace Anki
       return RESULT_OK;
     }
 
+    template <s32 num> Result CopyPayload_Array(void * startOfPayload, void ** buffer, s32 &bufferLength, MemoryStack &memory)
+    {
+      Array<Bytes<num> > arr = SerializedBuffer::DeserializeRawArray<Bytes<num> >(NULL, buffer, bufferLength, memory);
+
+      if(!arr.IsValid())
+        return RESULT_FAIL;
+
+      memcpy(startOfPayload, &arr, sizeof(arr));
+
+      return RESULT_OK;
+    }
+
+    template <s32 num> Result CopyPayload_ArraySlice(void * startOfPayload, void ** buffer, s32 &bufferLength, MemoryStack &memory)
+    {
+      ArraySlice<Bytes<num> > arr = SerializedBuffer::DeserializeRawArraySlice<Bytes<num> >(NULL, buffer, bufferLength, memory);
+
+      if(!arr.get_array().IsValid())
+        return RESULT_FAIL;
+
+      memcpy(startOfPayload, &arr, sizeof(arr));
+
+      return RESULT_OK;
+    }
+
     DebugStreamClient::Object::Object()
       : bufferLength(0), buffer(NULL), startOfPayload(NULL)
     {
@@ -86,29 +101,91 @@ namespace Anki
       return true;
     }
 
+    DebugStreamClient::ObjectToSave::ObjectToSave()
+      : DebugStreamClient::Object()
+    {
+    }
+
+    DebugStreamClient::ObjectToSave::ObjectToSave(DebugStreamClient::Object &object, const char * filename)
+    {
+      this->buffer = object.buffer;
+      this->bufferLength = object.bufferLength;
+      this->startOfPayload = object.startOfPayload;
+      this->timeReceived = object.timeReceived;
+
+      snprintf(this->typeName, Anki::Embedded::SerializedBuffer::DESCRIPTION_STRING_LENGTH, "%s", object.typeName);
+      snprintf(this->objectName, Anki::Embedded::SerializedBuffer::DESCRIPTION_STRING_LENGTH, "%s", object.objectName);
+      snprintf(this->filename, Anki::Embedded::DebugStreamClient::ObjectToSave::SAVE_FILENAME_PATTERN_LENGTH, "%s", filename);
+    }
+
     Result DebugStreamClient::Close()
     {
       this->isRunning = false;
 
-      // Wait for the threads to complete
-      while(this->isConnectionThreadActive && this->isParseBufferThreadActive)
-      {}
+      if(this->isValid) {
+        // Wait for the threads to complete
+#ifdef _MSC_VER
+        WaitForSingleObject(connectionThread, INFINITE);
+        WaitForSingleObject(parseBufferThread, INFINITE);
+        WaitForSingleObject(saveObjectThread, INFINITE);
+#else
+        pthread_join(connectionThread, NULL);
+        pthread_join(parseBufferThread, NULL);
+        pthread_join(saveObjectThread, NULL);
+#endif
+      }
+
+      this->isValid = false;
+
+      // Clean up allocated memory
+      while(!rawMessageQueue.IsEmpty()) {
+        DebugStreamClient::RawBuffer object = rawMessageQueue.Pop();
+        free(object.data);
+      }
+
+      while(!parsedObjectQueue.IsEmpty()) {
+        DebugStreamClient::Object object = parsedObjectQueue.Pop();
+        free(object.buffer);
+      }
+
+      while(!saveObjectQueue.IsEmpty()) {
+        DebugStreamClient::ObjectToSave object = saveObjectQueue.Pop();
+        free(object.buffer);
+      }
 
       return RESULT_OK;
     }
 
     DebugStreamClient::DebugStreamClient(const char * ipAddress, const s32 port)
-      : isRunning(true), ipAddress(ipAddress), port(port), isConnectionThreadActive(false), isParseBufferThreadActive(false)
+      : isValid(false), isSocket(true), socket_ipAddress(ipAddress), socket_port(port)
     {
+      Initialize();
+    } // DebugStreamClient::DebugStreamClient
+
+    DebugStreamClient::DebugStreamClient(const s32 comPort, const s32 baudRate, const char parity, const s32 dataBits, const s32 stopBits)
+      : isValid(false), isSocket(false), serial_comPort(comPort), serial_baudRate(baudRate), serial_parity(parity), serial_dataBits(dataBits), serial_stopBits(stopBits)
+    {
+      Initialize();
+    }
+
+    DebugStreamClient::~DebugStreamClient()
+    {
+      this->Close();
+    }
+
+    Result DebugStreamClient::Initialize()
+    {
+      this->isRunning = true;
+
       //printf("Starting DebugStreamClient\n");
 
-      rawMessageQueue = ThreadSafeQueue<RawBuffer>();
-
-      //printf("Connection opened\n");
+      this->rawMessageQueue = ThreadSafeQueue<DebugStreamClient::RawBuffer>();
+      this->parsedObjectQueue = ThreadSafeQueue<DebugStreamClient::Object>();
+      this->saveObjectQueue = ThreadSafeQueue<DebugStreamClient::ObjectToSave>();
 
 #ifdef _MSC_VER
       DWORD connectionThreadId = -1;
-      CreateThread(
+      connectionThread = CreateThread(
         NULL,        // default security attributes
         0,           // use default stack size
         DebugStreamClient::ConnectionThread, // thread function name
@@ -116,7 +193,6 @@ namespace Anki
         0,           // use default creation flags
         &connectionThreadId);  // returns the thread identifier
 #else
-      pthread_t connectionThread;
       pthread_attr_t connectionAttr;
       pthread_attr_init(&connectionAttr);
 
@@ -125,39 +201,79 @@ namespace Anki
       //printf("Connection thread created\n");
 
 #ifdef _MSC_VER
-      DWORD parsingThreadId = -1;
-      CreateThread(
+      DWORD parseBufferThreadId = -1;
+      parseBufferThread = CreateThread(
         NULL,        // default security attributes
         0,           // use default stack size
         DebugStreamClient::ParseBufferThread, // thread function name
         this,    // argument to thread function
         0,           // use default creation flags
-        &parsingThreadId);  // returns the thread identifier
+        &parseBufferThreadId);  // returns the thread identifier
 #else // #ifdef _MSC_VER
-      pthread_t parsingThread;
       pthread_attr_t parsingAttr;
       pthread_attr_init(&parsingAttr);
 
-      pthread_create(&parsingThread, &parsingAttr, DebugStreamClient::ParseBufferThread, (void *)this);
+      pthread_create(&parseBufferThread, &parsingAttr, DebugStreamClient::ParseBufferThread, (void *)this);
 #endif // #ifdef _MSC_VER ... else
       //printf("Parsing thread created\n");
-    } // DebugStreamClient::DebugStreamClient
 
-    DebugStreamClient::Object DebugStreamClient::GetNextObject()
+#ifdef _MSC_VER
+      DWORD saveObjectThreadId = -1;
+      saveObjectThread = CreateThread(
+        NULL,        // default security attributes
+        0,           // use default stack size
+        DebugStreamClient::SaveObjectThread, // thread function name
+        this,    // argument to thread function
+        0,           // use default creation flags
+        &saveObjectThreadId);  // returns the thread identifier
+#else // #ifdef _MSC_VER
+      pthread_attr_t savingAttr;
+      pthread_attr_init(&savingAttr);
+
+      pthread_create(&saveObjectThread, &savingAttr, DebugStreamClient::SaveObjectThread, (void *)this);
+#endif // #ifdef _MSC_VER ... else
+      //printf("Saving thread created\n");
+
+      this->isValid = true;
+
+      return RESULT_OK;
+    }
+
+    DebugStreamClient::Object DebugStreamClient::GetNextObject(s32 maxAttempts)
     {
       DebugStreamClient::Object newObject;
 
+      bool foundObject = true;
+      s32 attempts = 0;
       while(parsedObjectQueue.IsEmpty()) {
 #ifdef _MSC_VER
         Sleep(10);
 #else
         usleep(10000);
 #endif
+        ++attempts;
+        if(attempts >= maxAttempts) {
+          foundObject = false;
+          break;
+        }
       }
 
-      newObject = parsedObjectQueue.Pop();
+      if(foundObject) {
+        newObject = parsedObjectQueue.Pop();
+      } else {
+        newObject = DebugStreamClient::Object();
+      }
 
       return newObject;
+    }
+
+    Result DebugStreamClient::SaveObject(Object &object, const char * filename)
+    {
+      DebugStreamClient::ObjectToSave toSave(object, filename);
+
+      saveObjectQueue.Push(toSave);
+
+      return RESULT_OK;
     }
 
     bool DebugStreamClient::get_isRunning() const
@@ -167,7 +283,7 @@ namespace Anki
 
     DebugStreamClient::RawBuffer DebugStreamClient::AllocateNewRawBuffer(const s32 bufferRawSize)
     {
-      RawBuffer rawBuffer;
+      DebugStreamClient::RawBuffer rawBuffer;
 
       rawBuffer.rawDataPointer = reinterpret_cast<u8*>(malloc(bufferRawSize));
       rawBuffer.data = reinterpret_cast<u8*>( RoundUp(reinterpret_cast<size_t>(rawBuffer.rawDataPointer), MEMORY_ALIGNMENT) + MEMORY_ALIGNMENT - MemoryStack::HEADER_LENGTH );
@@ -184,7 +300,7 @@ namespace Anki
       return rawBuffer;
     }
 
-    void DebugStreamClient::ProcessRawBuffer(RawBuffer &buffer, ThreadSafeQueue<DebugStreamClient::Object> &parsedObjectQueue, const bool requireMatchingSegmentLengths)
+    void DebugStreamClient::ProcessRawBuffer(DebugStreamClient::RawBuffer &buffer, ThreadSafeQueue<DebugStreamClient::Object> &parsedObjectQueue, const bool requireMatchingSegmentLengths)
     {
       MemoryStack scratch(scratchBuffer, scratchSize, Flags::Buffer(false, true, false));
 
@@ -295,80 +411,81 @@ namespace Anki
           // We only need to get the sizeOfType correct. Nothing else about the type is stored explicitly in the array.
           // If we have the type size correct, then everything will be initialized and copied correctly, so when the Array is cast to the correct Type, everything will be fine.
 
-          if(basicType_sizeOfType == 1) {
-            Array<Bytes1> arr = SerializedBuffer::DeserializeRawArray<Bytes1>(NULL, &dataSegment, dataLength, localMemory);
+          Result result;
 
-            if(!arr.IsValid())
-              continue;
-
-            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
-          } else if(basicType_sizeOfType == 2) {
-            Array<Bytes2> arr = SerializedBuffer::DeserializeRawArray<Bytes2>(NULL, &dataSegment, dataLength, localMemory);
-
-            if(!arr.IsValid())
-              continue;
-
-            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
-          } else if(basicType_sizeOfType == 4) {
-            Array<Bytes4> arr = SerializedBuffer::DeserializeRawArray<Bytes4>(NULL, &dataSegment, dataLength, localMemory);
-
-            if(!arr.IsValid())
-              continue;
-
-            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
-          } else if(basicType_sizeOfType == 8) {
-            Array<Bytes8> arr = SerializedBuffer::DeserializeRawArray<Bytes8>(NULL, &dataSegment, dataLength, localMemory);
-
-            if(!arr.IsValid())
-              continue;
-
-            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
-          } else if(basicType_sizeOfType == 12) {
-            Array<Bytes12> arr = SerializedBuffer::DeserializeRawArray<Bytes12>(NULL, &dataSegment, dataLength, localMemory);
-
-            if(!arr.IsValid())
-              continue;
-
-            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
-          } else if(basicType_sizeOfType == 16) {
-            Array<Bytes16> arr = SerializedBuffer::DeserializeRawArray<Bytes16>(NULL, &dataSegment, dataLength, localMemory);
-
-            if(!arr.IsValid())
-              continue;
-
-            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
-          } else if(basicType_sizeOfType == 20) {
-            Array<Bytes20> arr = SerializedBuffer::DeserializeRawArray<Bytes20>(NULL, &dataSegment, dataLength, localMemory);
-
-            if(!arr.IsValid())
-              continue;
-
-            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
-          } else if(basicType_sizeOfType == 24) {
-            Array<Bytes24> arr = SerializedBuffer::DeserializeRawArray<Bytes24>(NULL, &dataSegment, dataLength, localMemory);
-
-            if(!arr.IsValid())
-              continue;
-
-            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
-          } else if(basicType_sizeOfType == 28) {
-            Array<Bytes28> arr = SerializedBuffer::DeserializeRawArray<Bytes28>(NULL, &dataSegment, dataLength, localMemory);
-
-            if(!arr.IsValid())
-              continue;
-
-            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
-          } else if(basicType_sizeOfType == 32) {
-            Array<Bytes32> arr = SerializedBuffer::DeserializeRawArray<Bytes32>(NULL, &dataSegment, dataLength, localMemory);
-
-            if(!arr.IsValid())
-              continue;
-
-            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
-          } else {
+          if(basicType_sizeOfType == 1) { result = CopyPayload_Array<1>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 2) { result = CopyPayload_Array<2>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 4) { result = CopyPayload_Array<4>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 8) { result = CopyPayload_Array<8>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 12) { result = CopyPayload_Array<12>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 16) { result = CopyPayload_Array<16>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 20) { result = CopyPayload_Array<20>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 24) { result = CopyPayload_Array<24>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 28) { result = CopyPayload_Array<28>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 32) { result = CopyPayload_Array<32>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 36) { result = CopyPayload_Array<36>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 40) { result = CopyPayload_Array<40>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 44) { result = CopyPayload_Array<44>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 48) { result = CopyPayload_Array<48>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 52) { result = CopyPayload_Array<52>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 56) { result = CopyPayload_Array<56>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 60) { result = CopyPayload_Array<60>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 64) { result = CopyPayload_Array<64>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 68) { result = CopyPayload_Array<68>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 72) { result = CopyPayload_Array<72>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 76) { result = CopyPayload_Array<76>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 80) { result = CopyPayload_Array<80>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 84) { result = CopyPayload_Array<84>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 88) { result = CopyPayload_Array<88>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 92) { result = CopyPayload_Array<92>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 96) { result = CopyPayload_Array<96>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 100) { result = CopyPayload_Array<100>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 104) { result = CopyPayload_Array<104>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 108) { result = CopyPayload_Array<108>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 112) { result = CopyPayload_Array<112>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 116) { result = CopyPayload_Array<116>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 120) { result = CopyPayload_Array<120>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 124) { result = CopyPayload_Array<124>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 128) { result = CopyPayload_Array<128>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 132) { result = CopyPayload_Array<132>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 136) { result = CopyPayload_Array<136>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 140) { result = CopyPayload_Array<140>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 144) { result = CopyPayload_Array<144>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 148) { result = CopyPayload_Array<148>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 152) { result = CopyPayload_Array<152>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 156) { result = CopyPayload_Array<156>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 160) { result = CopyPayload_Array<160>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 164) { result = CopyPayload_Array<164>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 168) { result = CopyPayload_Array<168>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 172) { result = CopyPayload_Array<172>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 176) { result = CopyPayload_Array<176>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 180) { result = CopyPayload_Array<180>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 184) { result = CopyPayload_Array<184>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 188) { result = CopyPayload_Array<188>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 192) { result = CopyPayload_Array<192>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 196) { result = CopyPayload_Array<196>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 200) { result = CopyPayload_Array<200>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 204) { result = CopyPayload_Array<204>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 208) { result = CopyPayload_Array<208>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 212) { result = CopyPayload_Array<212>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 216) { result = CopyPayload_Array<216>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 220) { result = CopyPayload_Array<220>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 224) { result = CopyPayload_Array<224>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 228) { result = CopyPayload_Array<228>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 232) { result = CopyPayload_Array<232>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 236) { result = CopyPayload_Array<236>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 240) { result = CopyPayload_Array<240>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 244) { result = CopyPayload_Array<244>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 248) { result = CopyPayload_Array<248>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 252) { result = CopyPayload_Array<252>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 256) { result = CopyPayload_Array<256>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else {
             //printf("Unusual size %d. Add a case to parse objects of this Type.\n", basicType_sizeOfType);
             continue;
           }
+
+          if(result != RESULT_OK)
+            continue;
         } else if(strcmp(typeName, "ArraySlice") == 0) {
           s32 height;
           s32 width;
@@ -415,80 +532,81 @@ namespace Anki
           // We only need to get the sizeOfType correct. Nothing else about the type is stored explicitly in the array.
           // If we have the type size correct, then everything will be initialized and copied correctly, so when the Array is cast to the correct Type, everything will be fine.
 
-          if(basicType_sizeOfType == 1) {
-            ArraySlice<Bytes1> arr = SerializedBuffer::DeserializeRawArraySlice<Bytes1>(NULL, &dataSegment, dataLength, localMemory);
+          Result result;
 
-            if(!arr.get_array().IsValid())
-              continue;
-
-            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
-          } else if(basicType_sizeOfType == 2) {
-            ArraySlice<Bytes2> arr = SerializedBuffer::DeserializeRawArraySlice<Bytes2>(NULL, &dataSegment, dataLength, localMemory);
-
-            if(!arr.get_array().IsValid())
-              continue;
-
-            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
-          } else if(basicType_sizeOfType == 4) {
-            ArraySlice<Bytes4> arr = SerializedBuffer::DeserializeRawArraySlice<Bytes4>(NULL, &dataSegment, dataLength, localMemory);
-
-            if(!arr.get_array().IsValid())
-              continue;
-
-            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
-          } else if(basicType_sizeOfType == 8) {
-            ArraySlice<Bytes8> arr = SerializedBuffer::DeserializeRawArraySlice<Bytes8>(NULL, &dataSegment, dataLength, localMemory);
-
-            if(!arr.get_array().IsValid())
-              continue;
-
-            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
-          } else if(basicType_sizeOfType == 12) {
-            ArraySlice<Bytes12> arr = SerializedBuffer::DeserializeRawArraySlice<Bytes12>(NULL, &dataSegment, dataLength, localMemory);
-
-            if(!arr.get_array().IsValid())
-              continue;
-
-            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
-          } else if(basicType_sizeOfType == 16) {
-            ArraySlice<Bytes16> arr = SerializedBuffer::DeserializeRawArraySlice<Bytes16>(NULL, &dataSegment, dataLength, localMemory);
-
-            if(!arr.get_array().IsValid())
-              continue;
-
-            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
-          } else if(basicType_sizeOfType == 20) {
-            ArraySlice<Bytes20> arr = SerializedBuffer::DeserializeRawArraySlice<Bytes20>(NULL, &dataSegment, dataLength, localMemory);
-
-            if(!arr.get_array().IsValid())
-              continue;
-
-            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
-          } else if(basicType_sizeOfType == 24) {
-            ArraySlice<Bytes24> arr = SerializedBuffer::DeserializeRawArraySlice<Bytes24>(NULL, &dataSegment, dataLength, localMemory);
-
-            if(!arr.get_array().IsValid())
-              continue;
-
-            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
-          } else if(basicType_sizeOfType == 28) {
-            ArraySlice<Bytes28> arr = SerializedBuffer::DeserializeRawArraySlice<Bytes28>(NULL, &dataSegment, dataLength, localMemory);
-
-            if(!arr.get_array().IsValid())
-              continue;
-
-            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
-          } else if(basicType_sizeOfType == 32) {
-            ArraySlice<Bytes32> arr = SerializedBuffer::DeserializeRawArraySlice<Bytes32>(NULL, &dataSegment, dataLength, localMemory);
-
-            if(!arr.get_array().IsValid())
-              continue;
-
-            memcpy(newObject.startOfPayload, &arr, sizeof(arr));
-          } else {
+          if(basicType_sizeOfType == 1) { result = CopyPayload_ArraySlice<1>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 2) { result = CopyPayload_ArraySlice<2>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 4) { result = CopyPayload_ArraySlice<4>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 8) { result = CopyPayload_ArraySlice<8>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 12) { result = CopyPayload_ArraySlice<12>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 16) { result = CopyPayload_ArraySlice<16>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 20) { result = CopyPayload_ArraySlice<20>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 24) { result = CopyPayload_ArraySlice<24>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 28) { result = CopyPayload_ArraySlice<28>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 32) { result = CopyPayload_ArraySlice<32>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 36) { result = CopyPayload_ArraySlice<36>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 40) { result = CopyPayload_ArraySlice<40>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 44) { result = CopyPayload_ArraySlice<44>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 48) { result = CopyPayload_ArraySlice<48>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 52) { result = CopyPayload_ArraySlice<52>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 56) { result = CopyPayload_ArraySlice<56>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 60) { result = CopyPayload_ArraySlice<60>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 64) { result = CopyPayload_ArraySlice<64>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 68) { result = CopyPayload_ArraySlice<68>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 72) { result = CopyPayload_ArraySlice<72>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 76) { result = CopyPayload_ArraySlice<76>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 80) { result = CopyPayload_ArraySlice<80>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 84) { result = CopyPayload_ArraySlice<84>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 88) { result = CopyPayload_ArraySlice<88>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 92) { result = CopyPayload_ArraySlice<92>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 96) { result = CopyPayload_ArraySlice<96>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 100) { result = CopyPayload_ArraySlice<100>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 104) { result = CopyPayload_ArraySlice<104>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 108) { result = CopyPayload_ArraySlice<108>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 112) { result = CopyPayload_ArraySlice<112>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 116) { result = CopyPayload_ArraySlice<116>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 120) { result = CopyPayload_ArraySlice<120>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 124) { result = CopyPayload_ArraySlice<124>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 128) { result = CopyPayload_ArraySlice<128>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 132) { result = CopyPayload_ArraySlice<132>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 136) { result = CopyPayload_ArraySlice<136>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 140) { result = CopyPayload_ArraySlice<140>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 144) { result = CopyPayload_ArraySlice<144>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 148) { result = CopyPayload_ArraySlice<148>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 152) { result = CopyPayload_ArraySlice<152>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 156) { result = CopyPayload_ArraySlice<156>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 160) { result = CopyPayload_ArraySlice<160>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 164) { result = CopyPayload_ArraySlice<164>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 168) { result = CopyPayload_ArraySlice<168>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 172) { result = CopyPayload_ArraySlice<172>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 176) { result = CopyPayload_ArraySlice<176>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 180) { result = CopyPayload_ArraySlice<180>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 184) { result = CopyPayload_ArraySlice<184>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 188) { result = CopyPayload_ArraySlice<188>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 192) { result = CopyPayload_ArraySlice<192>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 196) { result = CopyPayload_ArraySlice<196>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 200) { result = CopyPayload_ArraySlice<200>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 204) { result = CopyPayload_ArraySlice<204>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 208) { result = CopyPayload_ArraySlice<208>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 212) { result = CopyPayload_ArraySlice<212>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 216) { result = CopyPayload_ArraySlice<216>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 220) { result = CopyPayload_ArraySlice<220>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 224) { result = CopyPayload_ArraySlice<224>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 228) { result = CopyPayload_ArraySlice<228>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 232) { result = CopyPayload_ArraySlice<232>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 236) { result = CopyPayload_ArraySlice<236>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 240) { result = CopyPayload_ArraySlice<240>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 244) { result = CopyPayload_ArraySlice<244>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 248) { result = CopyPayload_ArraySlice<248>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 252) { result = CopyPayload_ArraySlice<252>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else if(basicType_sizeOfType == 256) { result = CopyPayload_ArraySlice<256>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
+          else {
             //printf("Unusual size %d. Add a case to parse objects of this Type.\n", basicType_sizeOfType);
             continue;
           }
+
+          if(result != RESULT_OK)
+            continue;
         } else if(strcmp(typeName, "String") == 0) {
           const s32 stringLength = strlen(reinterpret_cast<char*>(dataSegment));
 
@@ -537,12 +655,12 @@ namespace Anki
     ThreadResult DebugStreamClient::ConnectionThread(void *threadParameter)
     {
 #ifdef _MSC_VER
-      SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST); // THREAD_PRIORITY_ABOVE_NORMAL
+      SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST);
 #else
 #endif
 
-      u8 *usbBuffer = reinterpret_cast<u8*>(malloc(USB_BUFFER_SIZE));
-      RawBuffer nextRawBuffer = AllocateNewRawBuffer(MESSAGE_BUFFER_SIZE);
+      u8 *usbBuffer = reinterpret_cast<u8*>(malloc(CONNECTION_BUFFER_SIZE));
+      DebugStreamClient::RawBuffer nextRawBuffer = AllocateNewRawBuffer(MESSAGE_BUFFER_SIZE);
 
       if(!usbBuffer || !nextRawBuffer.data) {
         //AnkiError("DebugStreamClient::ConnectionThread", "Could not allocate usbBuffer and nextRawBuffer.data");
@@ -558,17 +676,27 @@ namespace Anki
 
       DebugStreamClient *callingObject = (DebugStreamClient *) threadParameter;
 
-      callingObject->isConnectionThreadActive = true;
-
       Socket socket;
+      Serial serial;
 
-      while(socket.Open(callingObject->ipAddress, callingObject->port) != RESULT_OK) {
-        //printf("Trying again to open socket.\n");
+      if(callingObject->isSocket) {
+        while(socket.Open(callingObject->socket_ipAddress, callingObject->socket_port) != RESULT_OK) {
+          //printf("Trying again to open socket.\n");
 #ifdef _MSC_VER
-        Sleep(1000);
+          Sleep(1000);
 #else
-        usleep(1000000);
+          usleep(1000000);
 #endif
+        }
+      } else {
+        while(serial.Open(callingObject->serial_comPort, callingObject->serial_baudRate, callingObject->serial_parity, callingObject->serial_dataBits, callingObject->serial_stopBits) != RESULT_OK) {
+          //printf("Trying again to open serial.\n");
+#ifdef _MSC_VER
+          Sleep(1000);
+#else
+          usleep(1000000);
+#endif
+        }
       }
 
       bool atLeastOneStartFound = false;
@@ -577,14 +705,26 @@ namespace Anki
       while(callingObject->get_isRunning()) {
         s32 bytesRead = 0;
 
-        while(socket.Read(usbBuffer, USB_BUFFER_SIZE-2, bytesRead) != RESULT_OK)
-        {
-          //printf("socket read failure. Retrying...\n");
+        if(callingObject->isSocket) {
+          while(socket.Read(usbBuffer, CONNECTION_BUFFER_SIZE-2, bytesRead) != RESULT_OK)
+          {
+            //printf("socket read failure. Retrying...\n");
 #ifdef _MSC_VER
-          Sleep(1);
+            Sleep(1);
 #else
-          usleep(1000);
+            usleep(1000);
 #endif
+          }
+        } else {
+          while(serial.Read(usbBuffer, CONNECTION_BUFFER_SIZE-2, bytesRead) != RESULT_OK)
+          {
+            //printf("serial read failure. Retrying...\n");
+#ifdef _MSC_VER
+            Sleep(1);
+#else
+            usleep(1000);
+#endif
+          }
         }
 
         if(bytesRead == 0) {
@@ -687,9 +827,11 @@ namespace Anki
         }
       } // while(this->isConnected)
 
-      socket.Close();
-
-      callingObject->isConnectionThreadActive = false;
+      if(callingObject->isSocket) {
+        socket.Close();
+      } else {
+        serial.Close();
+      }
 
       return 0;
     }
@@ -704,9 +846,7 @@ namespace Anki
 
       DebugStreamClient *callingObject = (DebugStreamClient *) threadParameter;
 
-      callingObject->isParseBufferThreadActive = true;
-
-      ThreadSafeQueue<RawBuffer> &rawMessageQueue = callingObject->rawMessageQueue;
+      ThreadSafeQueue<DebugStreamClient::RawBuffer> &rawMessageQueue = callingObject->rawMessageQueue;
       ThreadSafeQueue<DebugStreamClient::Object> &parsedObjectQueue = callingObject->parsedObjectQueue;
 
       while(true) {
@@ -721,12 +861,51 @@ namespace Anki
         if(!callingObject->get_isRunning())
           break;
 
-        RawBuffer nextRawBuffer = rawMessageQueue.Pop();
+        DebugStreamClient::RawBuffer nextRawBuffer = rawMessageQueue.Pop();
 
         ProcessRawBuffer(nextRawBuffer, parsedObjectQueue, false);
       } // while(true)
 
-      callingObject->isParseBufferThreadActive = false;
+      return 0;
+    }
+
+    ThreadResult DebugStreamClient::SaveObjectThread(void *threadParameter)
+    {
+#ifdef _MSC_VER
+      SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_BELOW_NORMAL);
+#else
+      // TODO: set thread priority
+#endif
+
+      DebugStreamClient *callingObject = (DebugStreamClient *) threadParameter;
+
+      ThreadSafeQueue<DebugStreamClient::ObjectToSave> &saveObjectQueue = callingObject->saveObjectQueue;
+
+      while(true) {
+        while(saveObjectQueue.IsEmpty() && callingObject->get_isRunning()) {
+#ifdef _MSC_VER
+          Sleep(10);
+#else
+          usleep(10000);
+#endif
+        }
+
+        if(!callingObject->get_isRunning())
+          break;
+
+        const DebugStreamClient::ObjectToSave nextObject = saveObjectQueue.Pop();
+
+        // TODO: save things other than images
+        Array<u8> image = *(reinterpret_cast<Array<u8>*>(nextObject.startOfPayload));
+
+        vector<int> compression_params;
+        compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
+        compression_params.push_back(9);
+
+        cv::imwrite(nextObject.filename, image.get_CvMat_(), compression_params);
+
+        free(nextObject.buffer);
+      } // while(true)
 
       return 0;
     }

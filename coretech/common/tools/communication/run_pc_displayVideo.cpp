@@ -11,6 +11,7 @@
 #include "anki/common/robot/serialize.h"
 #include "anki/common/robot/errorHandling.h"
 #include "anki/common/robot/geometry.h"
+#include "anki/common/robot/benchmarking.h"
 
 #include "anki/vision/robot/transformations.h"
 #include "anki/vision/robot/fiducialMarkers.h"
@@ -52,8 +53,6 @@ static s32 detectedFacesImageWidth = 160;
 
 static Transformations::PlanarTransformation_f32 lastPlanarTransformation;
 
-static f32 benchmarkTimes[2];
-
 static std::vector<VisionMarker> visionMarkerList;
 
 static std::vector<Anki::Embedded::Rectangle<s32> > detectedFaces;
@@ -69,8 +68,6 @@ static void printUsage()
 
 static void InitDisplayDebuggingInfo()
 {
-  //innerObjectName = reinterpret_cast<char*>( scratch.Allocate(SerializedBuffer::DESCRIPTION_STRING_LENGTH + 1) );
-
   // Used for displaying detected fiducials
   lastImage = cv::Mat(240,320,CV_8U);
   largeLastImage = cv::Mat(bigHeight, bigWidth, CV_8U);
@@ -86,9 +83,6 @@ static void InitDisplayDebuggingInfo()
 
   lastPlanarTransformation = Transformations::PlanarTransformation_f32();
 
-  benchmarkTimes[0] = -1.0f;
-  benchmarkTimes[1] = -1.0f;
-
   visionMarkerList.clear();
   detectedFaces.clear();
   currentObjects.clear();
@@ -98,29 +92,70 @@ static void InitDisplayDebuggingInfo()
 
 static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
 {
+  const u8 htmlColors[16][3] = { // {R,G,B}
+    {0xFF, 0xFF, 0xFF}, // 0  White
+    {0xC0, 0xC0, 0xC0}, // 1  Silver
+    {0x80, 0x80, 0x80}, // 2  Gray
+    {0x00, 0x00, 0x00}, // 3  Black
+    {0xFF, 0x00, 0x00}, // 4  Red
+    {0x80, 0x00, 0x00}, // 5  Maroon
+    {0xFF, 0xFF, 0x00}, // 6  Yellow
+    {0x80, 0x80, 0x00}, // 7  Olive
+    {0x00, 0xFF, 0x00}, // 8  Lime
+    {0x00, 0x80, 0x00}, // 9  Green
+    {0x00, 0xFF, 0xFF}, // 10 Aqua
+    {0x00, 0x80, 0x80}, // 11 Teal
+    {0x00, 0x00, 0xFF}, // 12 Blue
+    {0x00, 0x00, 0x80}, // 13 Navy
+    {0xFF, 0x00, 0xFF}, // 14 Fuchsia
+    {0x80, 0x00, 0x80}  // 15 Purple
+  };
+
+  const u8 * const white = htmlColors[0];
+  const u8 * const silver = htmlColors[1];
+  const u8 * const gray = htmlColors[2];
+  const u8 * const black = htmlColors[3];
+  const u8 * const red = htmlColors[4];
+  const u8 * const maroon = htmlColors[5];
+  const u8 * const yellow = htmlColors[6];
+  const u8 * const olive = htmlColors[7];
+  const u8 * const lime = htmlColors[8];
+  const u8 * const green = htmlColors[9];
+  const u8 * const aqua = htmlColors[10];
+  const u8 * const teal = htmlColors[11];
+  const u8 * const blue = htmlColors[12];
+  const u8 * const navy = htmlColors[13];
+  const u8 * const fuchsia = htmlColors[14];
+  const u8 * const purple = htmlColors[15];
+
+  MemoryStack scratch = MemoryStack(scratchBuffer, scratchSize, Flags::Buffer(false, true, false));
+
+  if(strcmp(newObject.objectName, "Benchmarks") == 0) {
+    const f64 pixelsPerMillisecond = 1.5;
+    const s32 imageHeight = 500;
+    const s32 imageWidth = 1600;
+
+    FixedLengthList<BenchmarkElement> benchmarks = *(reinterpret_cast<FixedLengthList<BenchmarkElement>*>(newObject.startOfPayload));
+
+    //PrintBenchmarkResults(benchmarks, false, false);
+
+    FixedLengthList<ShowBenchmarkParameters> namesToDisplay(5, scratch);
+    namesToDisplay.PushBack(ShowBenchmarkParameters("VisionSystem_CameraGetFrame", false, red));
+    namesToDisplay.PushBack(ShowBenchmarkParameters("ComputeBenchmarkResults", false, maroon));
+    namesToDisplay.PushBack(ShowBenchmarkParameters("UARTPutMessage", false, maroon));
+    namesToDisplay.PushBack(ShowBenchmarkParameters("VisionSystem_LookForMarkers", false, green));
+    namesToDisplay.PushBack(ShowBenchmarkParameters("VisionSystem_TrackTemplate", false, blue));
+
+    ShowBenchmarkResults(benchmarks, namesToDisplay, pixelsPerMillisecond, imageHeight, imageWidth);
+  }
+
   //
   // If we've reached a new message, display the last image and messages
   //
 
   if(newObject.timeReceived != lastTime) {
     if(lastImage.rows > 0) {
-      // Print FPS
-      if(benchmarkTimes[0] > 0.0f) {
-        char benchmarkBuffer[1024];
-
-        static f64 lastTime;
-        const f64 curTime = GetTimeF64();
-        const f64 receivedDelta = curTime - lastTime;
-        lastTime = GetTimeF64();
-
-        snprintf(benchmarkBuffer, 1024, "Total:%0.1ffps Algorithms:%0.1ffps   GrayvalueError:%d %f", 1.0f/benchmarkTimes[1], 1.0f/benchmarkTimes[0], lastMeanError, lastPercentMatchingGrayvalues);
-
-        cv::putText(toShowImage, benchmarkBuffer, cv::Point(5,15), cv::FONT_HERSHEY_PLAIN, 1.0, cv::Scalar(0,255,0));
-      }
-
       if(isTracking) {
-        MemoryStack scratch = MemoryStack(scratchBuffer, scratchSize, Flags::Buffer(false, true, false));
-
         cv::Mat trackingBoxImage(bigHeight, bigWidth, CV_8UC3);
 
         trackingBoxImage.setTo(0);
@@ -217,6 +252,7 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
       }
 
       cv::imshow("Robot Image", toShowImage);
+      cv::moveWindow("Robot Image", 150, 540);
       const s32 pressedKey = cv::waitKey(10);
       //printf("%d\n", pressedKey);
       if(pressedKey == 'c') {
@@ -254,13 +290,7 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
   currentObjects.push_back(newObject);
 
   if(strcmp(newObject.typeName, "Basic Type Buffer") == 0) {
-    if(strcmp(newObject.objectName, "Benchmark Times") == 0) {
-      const f32* tmpBuffer = reinterpret_cast<f32*>(newObject.startOfPayload);
-
-      for(s32 i=0; i<2; i++) {
-        benchmarkTimes[i] = tmpBuffer[i];
-      }
-    } else if(strcmp(newObject.objectName, "meanGrayvalueError") == 0) {
+    if(strcmp(newObject.objectName, "meanGrayvalueError") == 0) {
       u8* tmpBuffer = reinterpret_cast<u8*>(newObject.startOfPayload);
 
       lastMeanError = tmpBuffer[0];
@@ -316,7 +346,12 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
     }
   } else if(strcmp(newObject.typeName, "Array") == 0) {
     if (strcmp(newObject.objectName, "Robot Image") == 0) {
-      const Array<u8> arr = *(reinterpret_cast<Array<u8>*>(newObject.startOfPayload));
+      const Array<u8> *arrRaw = reinterpret_cast<Array<u8>*>(newObject.startOfPayload);
+
+      if(!arrRaw->IsValid())
+        return;
+
+      const Array<u8> arr = *arrRaw;
 
       const s32 arrHeight = arr.get_size(0);
       const s32 arrWidth = arr.get_size(1);
@@ -439,15 +474,22 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
 
 int main(int argc, char ** argv)
 {
-  // TCP
-  const char * ipAddress = "192.168.3.30";
-  const s32 port = 5551;
+  // Comment out to use serial
+#define USE_SOCKET
 
   printf("Starting display\n");
-
   SetLogSilence(true);
 
+#ifdef USE_SOCKET
+  // TCP
+  const char * ipAddress = "192.168.3.33";
+  const s32 port = 5551;
   DebugStreamClient parserThread(ipAddress, port);
+#else
+  const s32 comPort = 11;
+  const s32 baudRate = 1000000;
+  DebugStreamClient parserThread(comPort, baudRate);
+#endif
 
   InitDisplayDebuggingInfo();
 

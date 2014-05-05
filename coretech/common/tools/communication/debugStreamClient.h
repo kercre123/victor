@@ -37,8 +37,10 @@ namespace Anki
   namespace Embedded
   {
 #ifdef _MSC_VER
+    typedef HANDLE ThreadHandle;
 #define ThreadResult DWORD WINAPI
 #else
+    typedef pthread_t ThreadHandle;
 #define ThreadResult void*
 #endif
 
@@ -64,18 +66,44 @@ namespace Anki
         bool IsValid() const;
       };
 
+      class ObjectToSave : public DebugStreamClient::Object
+      {
+      public:
+        static const s32 SAVE_FILENAME_PATTERN_LENGTH = 256;
+        char filename[SAVE_FILENAME_PATTERN_LENGTH];
+
+        ObjectToSave();
+
+        ObjectToSave(DebugStreamClient::Object &object, const char * filename);
+      };
+
+      // Connect via TCP
       // Example: DebugStreamClient("192.168.3.30", 5551)
       DebugStreamClient(const char * ipAddress, const s32 port);
 
+      // Connect via UART serial
+      // Example: DebugStreamClient(11, 1000000)
+      DebugStreamClient(const s32 comPort, const s32 baudRate, const char parity = 'N', const s32 dataBits = 8, const s32 stopBits = 1);
+
+      // Warning: calling the destructor from a different thread than the constructor is a race condition
+      ~DebugStreamClient();
+
       // Close the socket and stop the parsing threads
-      Anki::Result Close();
+      // Warning: calling Close from a different thread than the constructor is a race condition
+      Result Close();
 
       // Blocks until an Object is available, the returns it. To use an object, just cast its buffer based on its typeName and objectName.
       //
       // If the object bufferLength is zero, it's not a big issue, just ignore the object
       // If the object bufferLength is less than zero, something failed
-      Object GetNextObject();
+      Object GetNextObject(s32 maxAttempts = s32_MAX);
 
+      // Doesn't block, as the saving is done by a separate, low-priority thread
+      // It frees the object memory after the save is complete
+      Result SaveObject(Object &object, const char * filename);
+
+      // Returns if the object's threads are acquiring and processing new data
+      // This is false while the object is starting up and closing down.
       bool get_isRunning() const;
 
     protected:
@@ -88,30 +116,61 @@ namespace Anki
         f64 timeReceived; // The time (in seconds) when the receiving of this buffer was complete
       } RawBuffer;
 
-      static const s32 USB_BUFFER_SIZE = 5000;
+      static const s32 CONNECTION_BUFFER_SIZE = 5000;
       static const s32 MESSAGE_BUFFER_SIZE = 1000000;
 
-      const char * ipAddress;
-      s32 port;
+      char saveFilenamePattern[DebugStreamClient::ObjectToSave::SAVE_FILENAME_PATTERN_LENGTH];
+
+      bool isValid;
+
+      bool isSocket; //< Either Socket of Serial
+
+      // If Socket
+      const char * socket_ipAddress;
+      s32 socket_port;
+
+      // If Serial
+      s32 serial_comPort;
+      s32 serial_baudRate;
+      char serial_parity;
+      s32 serial_dataBits;
+      s32 serial_stopBits;
 
       volatile bool isRunning; //< If true, keep working. If false, close everything down
-      volatile bool isConnectionThreadActive;
-      volatile bool isParseBufferThreadActive;
+      //volatile bool isConnectionThreadActive;
+      //volatile bool isParseBufferThreadActive;
+      //volatile bool isSaveObjectThreadActive;
 
-      ThreadSafeQueue<RawBuffer> rawMessageQueue;
+      ThreadHandle connectionThread;
+      ThreadHandle parseBufferThread;
+      ThreadHandle saveObjectThread;
+
+      ThreadSafeQueue<DebugStreamClient::RawBuffer> rawMessageQueue;
       ThreadSafeQueue<DebugStreamClient::Object> parsedObjectQueue;
+      ThreadSafeQueue<DebugStreamClient::ObjectToSave> saveObjectQueue;
+
+      // Initialize the queues and spawn the threads
+      Result Initialize();
 
       // Allocates using malloc
-      static RawBuffer AllocateNewRawBuffer(const s32 bufferRawSize);
+      static DebugStreamClient::RawBuffer AllocateNewRawBuffer(const s32 bufferRawSize);
 
       // Process the buffer, and adds any parsed objects to parsedObjectQueue. Frees the buffer on completion.
-      static void ProcessRawBuffer(RawBuffer &buffer, ThreadSafeQueue<DebugStreamClient::Object> &parsedObjectQueue, const bool requireMatchingSegmentLengths);
+      static void ProcessRawBuffer(DebugStreamClient::RawBuffer &buffer, ThreadSafeQueue<DebugStreamClient::Object> &parsedObjectQueue, const bool requireMatchingSegmentLengths);
 
       // Grab data from the socket and put in a big temporary buffer, as fast as possible
       static ThreadResult ConnectionThread(void *threadParameter);
 
       // Once the big temporary buffer is filled, parse it
       static ThreadResult ParseBufferThread(void *threadParameter);
+
+      // Save any files that are put in the saveObjectQueue
+      static ThreadResult SaveObjectThread(void *threadParameter);
+
+    private:
+      // Do not use these
+      DebugStreamClient(const DebugStreamClient& in);
+      DebugStreamClient& operator= (const DebugStreamClient& in);
     }; // DebugStreamClient
   } // namespace Embedded
 } // namespace Anki

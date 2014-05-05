@@ -77,7 +77,10 @@ namespace Anki {
     
     void RobotManager::UpdateAllRobots()
     {
-      // TODO
+      for (auto &r : robots_) {
+        // Call update
+        r.second->Update();
+      }
     }
     
     
@@ -90,7 +93,7 @@ namespace Anki {
       headCamPose({0,0,1,  -1,0,0,  0,-1,0},
                   {{HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}}, &neckPose),
       liftBasePose(0.f, Y_AXIS_3D, {{LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}}, &pose),
-      currentHeadAngle(0),
+      currentHeadAngle(0), currentLiftAngle(0),
       isCarryingBlock_(false), isTraversingPath_(false)
     {
       this->set_headAngle(currentHeadAngle);
@@ -108,6 +111,9 @@ namespace Anki {
     
     void Robot::Update(void)
     {
+      // TODO: State update
+      // ...
+      
       
     } // step()
 
@@ -135,15 +141,15 @@ namespace Anki {
       
     } // set_pose()
     
-    void Robot::set_headAngle(const Radians& angle)
+    void Robot::set_headAngle(const f32& angle)
     {
       if(angle < MIN_HEAD_ANGLE) {
-        PRINT_NAMED_WARNING("Robot.HeadAngleOOB", "Requested head angle (%f rad) too small. Clipping.\n", angle.ToFloat());
+        PRINT_NAMED_WARNING("Robot.HeadAngleOOB", "Requested head angle (%f rad) too small. Clipping.\n", angle);
         currentHeadAngle = MIN_HEAD_ANGLE;
         SendHeadAngleUpdate();
       }
       else if(angle > MAX_HEAD_ANGLE) {
-        PRINT_NAMED_WARNING("Robot.HeadAngleOOB", "Requested head angle (%f rad) too large. Clipping.\n", angle.ToFloat());
+        PRINT_NAMED_WARNING("Robot.HeadAngleOOB", "Requested head angle (%f rad) too large. Clipping.\n", angle);
         currentHeadAngle = MAX_HEAD_ANGLE;
         SendHeadAngleUpdate();
       }
@@ -162,6 +168,11 @@ namespace Anki {
       this->camHead.set_pose(newHeadPose);
       
     } // set_headAngle()
+
+    void Robot::set_liftAngle(const f32& angle)
+    {
+      currentLiftAngle = angle;
+    }
     
     
     void Robot::dockWithBlock(const Block& block)
@@ -432,11 +443,27 @@ namespace Anki {
       return msgHandler_->SendMessage(ID_, m);
     }
     
-    Result Robot::SendMoveLift(const f32 height_mm,
-                                   const f32 max_speed_rad_per_sec,
-                                   const f32 accel_rad_per_sec2) const
+    Result Robot::SendMoveLift(const f32 speed_rad_per_sec) const
     {
       MessageMoveLift m;
+      m.speed_rad_per_sec = speed_rad_per_sec;
+      
+      return msgHandler_->SendMessage(ID_,m);
+    }
+    
+    Result Robot::SendMoveHead(const f32 speed_rad_per_sec) const
+    {
+      MessageMoveHead m;
+      m.speed_rad_per_sec = speed_rad_per_sec;
+      
+      return msgHandler_->SendMessage(ID_,m);
+    }
+
+    Result Robot::SendSetLiftHeight(const f32 height_mm,
+                                    const f32 max_speed_rad_per_sec,
+                                    const f32 accel_rad_per_sec2) const
+    {
+      MessageSetLiftHeight m;
       m.height_mm = height_mm;
       m.max_speed_rad_per_sec = max_speed_rad_per_sec;
       m.accel_rad_per_sec2 = accel_rad_per_sec2;
@@ -444,11 +471,11 @@ namespace Anki {
       return msgHandler_->SendMessage(ID_,m);
     }
     
-    Result Robot::SendMoveHead(const f32 angle_rad,
+    Result Robot::SendSetHeadAngle(const f32 angle_rad,
                                    const f32 max_speed_rad_per_sec,
                                    const f32 accel_rad_per_sec2) const
     {
-      MessageMoveHead m;
+      MessageSetHeadAngle m;
       m.angle_rad = angle_rad;
       m.max_speed_rad_per_sec = max_speed_rad_per_sec;
       m.accel_rad_per_sec2 = accel_rad_per_sec2;
@@ -492,17 +519,34 @@ namespace Anki {
     {
       MessageHeadAngleUpdate m;
       
-      m.newAngle = currentHeadAngle.ToFloat();
+      m.newAngle = currentHeadAngle;
       
       return msgHandler_->SendMessage(ID_, m);
     }
 
-    Result Robot::SendImageRequest() const
+    Result Robot::SendImageRequest(const ImageSendMode_t mode) const
     {
       MessageImageRequest m;
       
+      m.imageSendMode = mode;
       m.resolution = Vision::CAMERA_RES_QQVGA;
       
+      return msgHandler_->SendMessage(ID_, m);
+    }
+    
+    Result Robot::SendStartTestMode(const TestMode mode) const
+    {
+      MessageStartTestMode m;
+      
+      m.mode = mode;
+      
+      return msgHandler_->SendMessage(ID_, m);
+    }
+    
+    Result Robot::SendHeadlight(u8 intensity)
+    {
+      MessageSetHeadlight m;
+      m.intensity = intensity;
       return msgHandler_->SendMessage(ID_, m);
     }
     

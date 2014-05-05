@@ -20,17 +20,17 @@ namespace Anki
   namespace Embedded
   {
     template<typename Type> ConstArraySlice<Type>::ConstArraySlice()
-      : ySlice(LinearSequence<s32>()), xSlice(LinearSequence<s32>()), array(Array<Type>())
+      : ySlice(LinearSequence<s32>()), xSlice(LinearSequence<s32>()), array(Array<Type>()), constArrayData(NULL)
     {
     }
 
     template<typename Type> ConstArraySlice<Type>::ConstArraySlice(const Array<Type> &array)
-      : ySlice(LinearSequence<s32>(0,array.get_size(0)-1)), xSlice(LinearSequence<s32>(0,array.get_size(1)-1)), array(array)
+      : ySlice(LinearSequence<s32>(0,array.get_size(0)-1)), xSlice(LinearSequence<s32>(0,array.get_size(1)-1)), array(array), constArrayData(array.Pointer(0,0))
     {
     }
 
     template<typename Type> ConstArraySlice<Type>::ConstArraySlice(const Array<Type> &array, const LinearSequence<s32> &ySlice, const LinearSequence<s32> &xSlice)
-      : ySlice(ySlice), xSlice(xSlice), array(array)
+      : ySlice(ySlice), xSlice(xSlice), array(array), constArrayData(array.Pointer(0,0))
     {
     }
 
@@ -58,19 +58,19 @@ namespace Anki
 
     template<typename Type> ArraySlice<Type>::ArraySlice()
       //: array(Array<Type>()), ySlice(LinearSequence<Type>()), xSlice(LinearSequence<Type>())
-      : ConstArraySlice<Type>()
+      : ConstArraySlice<Type>(), arrayData(NULL)
     {
     }
 
     template<typename Type> ArraySlice<Type>::ArraySlice(Array<Type> array)
       //: array(array), ySlice(LinearSequence<s32>(0,array.get_size(0)-1)), xSlice(LinearSequence<s32>(0,array.get_size(1)-1))
-      : ConstArraySlice<Type>(array)
+      : ConstArraySlice<Type>(array), arrayData(array.Pointer(0,0))
     {
     }
 
     template<typename Type> ArraySlice<Type>::ArraySlice(Array<Type> array, const LinearSequence<s32> &ySlice, const LinearSequence<s32> &xSlice)
       //: array(array), ySlice(ySlice), xSlice(xSlice)
-      : ConstArraySlice<Type>(array, ySlice, xSlice)
+      : ConstArraySlice<Type>(array, ySlice, xSlice), arrayData(array.Pointer(0,0))
     {
     }
 

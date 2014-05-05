@@ -1,5 +1,6 @@
 #include "anki/planning/shared/path.h"
 #include "anki/common/shared/radians.h"
+#include "anki/common/shared/utilities_shared.h"
 #include "anki/common/constantsAndMacros.h"
 #include <assert.h>
 #include <math.h>
@@ -80,7 +81,7 @@ namespace Anki
         case PST_POINT_TURN:
           return 0;
         default:
-          printf("ERROR (Path::GetLength): Undefined segment %d\n", type_);
+          CORETECH_PRINT("ERROR (Path::GetLength): Undefined segment %d\n", type_);
           assert(false);
       }
       return 0;
@@ -103,7 +104,7 @@ namespace Anki
           y = def_.turn.y;
           break;
         default:
-          printf("ERROR (GetStartPoint): Undefined segment %d\n", type_);
+          CORETECH_PRINT("ERROR (GetStartPoint): Undefined segment %d\n", type_);
           assert(false);
       }
     }
@@ -124,7 +125,7 @@ namespace Anki
           y = def_.turn.y;
           break;
         default:
-          printf("ERROR (GetEndPoint): Undefined segment %d\n", type_);
+          CORETECH_PRINT("ERROR (GetEndPoint): Undefined segment %d\n", type_);
           assert(false);
       }
     }
@@ -137,7 +138,7 @@ namespace Anki
         case PST_LINE:
         {
           const PathSegmentDef::s_line& seg = def_.line;
-          printf("line: (%f, %f) to (%f, %f), speed/accel/decel = (%f, %f, %f)\n",
+          CORETECH_PRINT("line: (%f, %f) to (%f, %f), speed/accel/decel = (%f, %f, %f)\n",
                  seg.startPt_x,
                  seg.startPt_y,
                  seg.endPt_x,
@@ -150,7 +151,7 @@ namespace Anki
         case PST_ARC:
         {
           const PathSegmentDef::s_arc& seg = def_.arc;
-          printf("arc: centerPt (%f, %f), radius %f, startAng %f, sweep %f, speed/accel/decel = (%f, %f, %f)\n",
+          CORETECH_PRINT("arc: centerPt (%f, %f), radius %f, startAng %f, sweep %f, speed/accel/decel = (%f, %f, %f)\n",
                  seg.centerPt_x,
                  seg.centerPt_y,
                  seg.radius,
@@ -164,7 +165,7 @@ namespace Anki
         case PST_POINT_TURN:
         {
           const PathSegmentDef::s_turn& seg = def_.turn;
-          printf("ptTurn: x %f, y %f, targetAngle %f, speed/accel/decel = (%f, %f, %f)\n",
+          CORETECH_PRINT("ptTurn: x %f, y %f, targetAngle %f, speed/accel/decel = (%f, %f, %f)\n",
                  seg.x,
                  seg.y,
                  seg.targetAngle,
@@ -222,8 +223,8 @@ namespace Anki
       // Point of intersection is solution to mx + b == (-1/m)*x + b_inv where b_inv = y-(-1/m)*x
       
 #if(DEBUG_PATH)
-      PERIODIC_PRINT(DBG_PERIOD, "currPathSeg: %d, LINE (%f, %f, %f, %f)\n", currPathSegment_, seg->startPt_x, seg->startPt_y, seg->endPt_x, seg->endPt_y);
-      PERIODIC_PRINT(DBG_PERIOD, "Robot Pose: x: %f, y: %f ang: %f\n", x,y,angle.ToFloat());
+      CORETECH_PRINT("currPathSeg: %d, LINE (%f, %f, %f, %f)\n", currPathSegment_, seg->startPt_x, seg->startPt_y, seg->endPt_x, seg->endPt_y);
+      CORETECH_PRINT("Robot Pose: x: %f, y: %f ang: %f\n", x,y,angle.ToFloat());
 #endif
       
       
@@ -236,7 +237,7 @@ namespace Anki
       (seg->endPt_y - y) * (seg->endPt_y - y);
       
       
-      if (FLT_NEAR(seg->startPt_x, seg->endPt_x)) {
+      if (ABS(line_m_) > 10000) {
         // Special case: Vertical line
         if (seg->endPt_y > seg->startPt_y) {
           shortestDistanceToPath = seg->startPt_x - x;
@@ -258,7 +259,7 @@ namespace Anki
             }
         }
         
-      } else if (FLT_NEAR(seg->startPt_y, seg->endPt_y)) {
+      } else if (FLT_NEAR(line_m_, 0.f)) {
         // Special case: Horizontal line
         if (seg->endPt_x > seg->startPt_x) {
           shortestDistanceToPath = y - seg->startPt_y;
@@ -293,11 +294,11 @@ namespace Anki
         shortestDistanceToPath = sqrtf(dy*dy + dx*dx);
         
 #if(DEBUG_PATH)
-        PERIODIC_PRINT(DBG_PERIOD, "m: %f, b: %f\n",line_m_,line_b_);
-        PERIODIC_PRINT(DBG_PERIOD, "x_int: %f, y_int: %f, b_inv: %f\n", x_intersect, y_intersect, b_inv);
-        PERIODIC_PRINT(DBG_PERIOD, "dy: %f, dx: %f, dist: %f\n", dy, dx, shortestDistanceToPath_m);
-        PERIODIC_PRINT(DBG_PERIOD, "SIGN(dx): %d, dy_sign: %f\n", (SIGN(dx) ? 1 : -1), line_dy_sign_);
-        PERIODIC_PRINT(DBG_PERIOD, "lineTheta: %f\n", line_theta_.ToFloat());
+        CORETECH_PRINT("m: %f, b: %f\n",line_m_,line_b_);
+        CORETECH_PRINT("x_int: %f, y_int: %f, b_inv: %f\n", x_intersect, y_intersect, b_inv);
+        CORETECH_PRINT("dy: %f, dx: %f, dist: %f\n", dy, dx, shortestDistanceToPath_m);
+        CORETECH_PRINT("SIGN(dx): %d, dy_sign: %f\n", (SIGN(dx) ? 1 : -1), line_dy_sign_);
+        CORETECH_PRINT("lineTheta: %f\n", line_theta_.ToFloat());
         //PRINT("lineTheta: %f, robotTheta: %f\n", seg->theta.ToFloat(), currPose.get_angle().ToFloat());
 #endif
         
@@ -334,8 +335,8 @@ namespace Anki
       const PathSegmentDef::s_arc* seg = &(def_.arc);
       
 #if(DEBUG_PATH)
-      PRINT("currPathSeg: %d, ARC (%f, %f), startRad: %f, sweepRad: %f, radius: %f\n",
-            currPathSegment_, seg->centerPt_x, seg->centerPt_y, seg->startRad, seg->sweepRad, seg->radius);
+      CORETECH_PRINT("ARC (%f, %f), startRad: %f, sweepRad: %f, radius: %f\n",
+            seg->centerPt_x, seg->centerPt_y, seg->startRad, seg->sweepRad, seg->radius);
 #endif
       
       
@@ -400,14 +401,20 @@ namespace Anki
         }
         
         // Find y value of intersection
-        y_intersect = y_center + (dy > 0 ? 1 : -1) * sqrtf(r*r - (x_intersect - x_center) * (x_intersect - x_center));
+        f32 dx_intersect = x_intersect - x_center;
+        if (ABS(dx_intersect) > r) {
+          // This can sometimes happen if we're at the right-most or left-most side of the circle
+          y_intersect = y_center;
+        } else {
+          y_intersect = y_center + (dy > 0 ? 1 : -1) * sqrtf((r*r) - (dx_intersect * dx_intersect));
+        }
         
         // Compute distance to intersection point (i.e. shortest distance to arc)
         shortestDistanceToPath = sqrtf((x - x_intersect) * (x - x_intersect) + (y - y_intersect) * (y - y_intersect));
         
 #if(DEBUG_PATH)
-        PRINT("A: %f, B: %f, C: %f, sqrt: %f\n", A, B, C, sqrtPart);
-        PRINT("x_intersects: (%f %f)\n", x_intersect_1, x_intersect_2);
+        CORETECH_PRINT("A: %f, B: %f, C: %f, sqrt: %f\n", A, B, C, sqrtPart);
+        CORETECH_PRINT("x_intersects: (%f %f)\n", x_intersect_1, x_intersect_2);
 #endif
         
         
@@ -418,46 +425,45 @@ namespace Anki
       if ((robotInsideCircle && !movingCCW) || (!robotInsideCircle && movingCCW)) {
         shortestDistanceToPath *= -1;
       }
-      
-      
-      
-      
-#if(DEBUG_PATH)
-      PRINT("x: %f, y: %f, m: %f, b: %f\n", x,y,m,b);
-      PRINT("x_center: %f, y_center: %f\n", x_center, y_center);
-      PRINT("x_int: %f, y_int: %f\n", x_intersect, y_intersect);
-      PRINT("dy: %f, dx: %f, dist: %f, radDiff: %f\n", dy, dx, shortestDistanceToPath, radDiff);
-      PRINT("insideCircle: %d\n", robotInsideCircle);
-      PRINT("theta_line: %f, theta_tangent: %f\n", theta_line.ToFloat(), theta_tangent.ToFloat());
-#endif
 
       // Did we pass the current segment?
       // Check if the angDiff exceeds the sweep angle.
       // Also check for transitions between -PI and +PI by checking if angDiff
       // ever exceeds a conservative half the distance if PI was approached from the opposite direction.
+      SegmentRangeStatus segStatus = IN_SEGMENT_RANGE;
       f32 angDiff = (theta_line - startRad).ToFloat();
       if ( (movingCCW && (angDiff > seg->sweepRad || angDiff < -0.5f*(2.f*PI-seg->sweepRad))) ||
           (!movingCCW && (angDiff < seg->sweepRad || angDiff >  0.5f*(2.f*PI+seg->sweepRad))) ){
-        return OOR_NEAR_END;
+        segStatus = OOR_NEAR_END;
       }
 
       
       if (movingCCW) {
         if (angDiff > seg->sweepRad || angDiff < -0.5f*(2.f*PI-seg->sweepRad)) {
-          return OOR_NEAR_END;
+          segStatus = OOR_NEAR_END;
         } else if (angDiff < 0 && angDiff > -0.5f*(2.f*PI-seg->sweepRad)) {
-          return OOR_NEAR_START;
+          segStatus = OOR_NEAR_START;
         }
           
       } else {
         if (angDiff < seg->sweepRad || angDiff >  0.5f*(2.f*PI+seg->sweepRad)) {
-          return OOR_NEAR_END;
+          segStatus = OOR_NEAR_END;
         } else if (angDiff > 0 && angDiff < 0.5f*(2.f*PI-seg->sweepRad)) {
-          return OOR_NEAR_START;
+          segStatus = OOR_NEAR_START;
         }
       }
 
-      return IN_SEGMENT_RANGE;
+      
+#if(DEBUG_PATH)
+      CORETECH_PRINT("x: %f, y: %f, m: %f, b: %f\n", x,y,m,b);
+      CORETECH_PRINT("x_center: %f, y_center: %f\n", x_center, y_center);
+      CORETECH_PRINT("x_int: %f, y_int: %f\n", x_intersect, y_intersect);
+      CORETECH_PRINT("dy: %f, dx: %f, dist: %f, radDiff: %f\n", dy, dx, shortestDistanceToPath, radDiff);
+      CORETECH_PRINT("insideCircle: %d, segmentRangeStatus: %d\n", robotInsideCircle, segStatus);
+      CORETECH_PRINT("theta_line: %f, theta_tangent: %f\n", theta_line.ToFloat(), theta_tangent.ToFloat());
+#endif
+      
+      return segStatus;
     }
     
     
@@ -468,7 +474,7 @@ namespace Anki
       const PathSegmentDef::s_turn* seg = &(def_.turn);
       
 #if(DEBUG_PATH)
-      PRINT("currPathSeg: %d, TURN (%f, %f), targetAngle: %f, targetRotSpeed: %f\n",
+      CORETECH_PRINT("currPathSeg: %d, TURN (%f, %f), targetAngle: %f, targetRotSpeed: %f\n",
             currPathSegment_, seg->x, seg->y, seg->targetAngle, seg->targetRotSpeed);
 #endif
       
@@ -504,7 +510,7 @@ namespace Anki
     void Path::PrintSegment(u8 segment) const
     {
       if (segment < numPathSegments_) {
-        printf("Path segment %d - ", segment);
+        CORETECH_PRINT("Path segment %d - ", segment);
         path_[segment].Print();
       }
     }
@@ -662,7 +668,7 @@ namespace Anki
       
 #if(DEBUG_PATH)
        f32 tanPtAngle = ATAN2_ACC(n_y, n_x);
-       PRINT("Dubins %d: \n"
+       CORETECH_PRINT("Dubins %d: \n"
        " p_c1 (%f, %f)\n"
        " p_c2 (%f, %f)\n"
        " V1 (%f %f)\n"
@@ -755,7 +761,7 @@ namespace Anki
       
       
 #if(DEBUG_PATH)
-      PRINT("DUBINS: startPt %f %f %f, preEnd %f %f, endPt %f %f %f, start_radius %f, end_radius %f\n",
+      CORETECH_PRINT("DUBINS: startPt %f %f %f, preEnd %f %f, endPt %f %f %f, start_radius %f, end_radius %f\n",
             start_x, start_y, start_theta, preStraightApproach_x, preStraightApproach_y, end_x, end_y, end_theta, start_radius, end_radius);
 #endif
 
@@ -763,7 +769,7 @@ namespace Anki
 
         numSegments = GenerateCSCCurve(start_x, start_y, start_theta, preStraightApproach_x, preStraightApproach_y, end_theta, start_radius, end_radius,  targetSpeed, accel, decel, i, csc_path[i], pathLength);
 #if(DEBUG_PATH)
-        PRINT("Dubins path %d: numSegments %d, length %f m\n", i, numSegments, pathLength);
+        CORETECH_PRINT("Dubins path %d: numSegments %d, length %f m\n", i, numSegments, pathLength);
 #endif
         if (pathLength < shortestPathLength) {
           shortestNumSegments = numSegments;
@@ -793,7 +799,7 @@ namespace Anki
               break;
             }
             default:
-              printf("ERROR: Invalid path segment type in Dubins path. Should not be possible!\n");
+              CORETECH_PRINT("ERROR: Invalid path segment type in Dubins path. Should not be possible!\n");
               assert(0);
               break;
           }
@@ -812,7 +818,7 @@ namespace Anki
       }
       
 #if(DEBUG_PATH)
-      PRINT("Dubins: Shortest path %d, length %f\n", shortestPathType, shortestPathLength);
+      CORETECH_PRINT("Dubins: Shortest path %d, length %f\n", shortestPathType, shortestPathLength);
 #endif
       
       return path.GetNumSegments();
@@ -840,7 +846,7 @@ namespace Anki
         return true;
       }
   
-      printf("Continuity fail: Segment %d start point (%f, %f), Segment %d end point (%f, %f)\n",
+      CORETECH_PRINT("Continuity fail: Segment %d start point (%f, %f), Segment %d end point (%f, %f)\n",
             pathSegmentIdx, start_x, start_y, pathSegmentIdx - 1, end_x, end_y);
       return false;
     }
@@ -851,7 +857,7 @@ namespace Anki
       if (pathSegmentIdx < 0) {
         for (u8 i=0; i< numPathSegments_; ++i) {
           if (!CheckSegmentContinuity(tolerance_distance_squared, i)) {
-            printf("ERROR: Continuity check failed on segment %d\n", i);
+            CORETECH_PRINT("ERROR: Continuity check failed on segment %d\n", i);
             return false;
           }
         }
@@ -869,7 +875,7 @@ namespace Anki
                           f32 targetSpeed, f32 accel, f32 decel)
     {
       if (numPathSegments_ >= MAX_NUM_PATH_SEGMENTS) {
-        printf("ERROR (AppendLine): Exceeded path size\n");
+        CORETECH_PRINT("ERROR (AppendLine): Exceeded path size\n");
         return false;
       }
       
@@ -893,12 +899,12 @@ namespace Anki
                          f32 targetSpeed, f32 accel, f32 decel)
     {
       if (numPathSegments_ >= MAX_NUM_PATH_SEGMENTS) {
-        printf("ERROR (AppendArc): Exceeded path size\n");
+        CORETECH_PRINT("ERROR (AppendArc): Exceeded path size\n");
         return false;
       }
       
       if (FLT_NEAR(sweepRad,0)) {
-        printf("ERROR: sweepRad is zero\n");
+        CORETECH_PRINT("ERROR: sweepRad is zero\n");
         return false;
       }
       
@@ -963,7 +969,7 @@ namespace Anki
                                f32 targetRotSpeed, f32 rotAccel, f32 rotDecel)
     {
       if (numPathSegments_ >= MAX_NUM_PATH_SEGMENTS) {
-        printf("ERROR (AppendArc): Exceeded path size\n");
+        CORETECH_PRINT("ERROR (AppendArc): Exceeded path size\n");
         return false;
       }
       
