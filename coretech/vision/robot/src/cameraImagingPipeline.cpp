@@ -75,15 +75,14 @@ namespace Anki
       const f32 model3 = polynomialParameters[3];
       const f32 model4 = polynomialParameters[4];
 
+      f32 yF32 = 0.5f;
       for(s32 y=0; y<imageHeight; y++) {
         u8 * restrict pImage = image.Pointer(y,0);
 
-        const f32 yF32 = static_cast<f32>(y) + 0.5f;
         const f32 yScaleComponent = model0 + model2 * yF32 + model4 * yF32 * yF32;
 
+        f32 xF32 = 0.5f;
         for(s32 x=0; x<imageWidth; x++) {
-          const f32 xF32 = static_cast<f32>(x) + 0.5f;
-
           const f32 curPixel = static_cast<f32>(pImage[x]);
 
           const f32 scale = yScaleComponent + model1 * xF32 + model3 * xF32 * xF32;
@@ -91,7 +90,11 @@ namespace Anki
           const u8 outPixel = saturate_cast<u8>(scale * curPixel);
 
           pImage[x] = outPixel;
+
+          xF32 += 1.0f;
         }
+
+        yF32 += 1.0f;
       }
 
       return RESULT_OK;
