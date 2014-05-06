@@ -77,11 +77,16 @@ int main(int argc, char *argv[])
       }
     }
   }
-  else if(argc == 6) {
+  else if(argc == 7 || argc == 6) {
     cout<<"running planner!\n";
 
     xythetaEnvironment env(argv[1], argv[2]);
     xythetaPlanner planner(env);
+    float theta = 0.0;
+    if(argc == 7) {
+      planner.AllowFreeTurnInPlaceAtGoal();
+    }
+
     State_c goal(atof(argv[3]), atof(argv[4]), atof(argv[5]));
 
     planner.SetGoal(goal);

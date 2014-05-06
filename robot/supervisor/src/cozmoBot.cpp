@@ -101,15 +101,15 @@ namespace Anki {
 #endif
 #elif(USING_UART_RADIO && DIVERT_PRINT_TO_RADIO)
         SetCoreTechPrintFunctionPtr(Messages::SendText);
-#endif
- 
+#endif 
         
         // HAL and supervisor init
-        
+#ifndef ROBOT_HARDWARE    // The HAL/Operating System cannot be Init()ed or Destroy()ed on a real robot
         if(HAL::Init() == RESULT_FAIL) {
           PRINT("Hardware Interface initialization failed!\n");
           return RESULT_FAIL;
         }
+#endif        
         
         if (Localization::Init() == RESULT_FAIL) {
           PRINT("Localization System init failed.\n");
@@ -167,19 +167,24 @@ namespace Anki {
       } // Robot::Init()
       
       
+#ifndef ROBOT_HARDWARE    // The HAL/Operating System cannot be Init()ed or Destroy()ed on a real robot
       void Destroy()
       {
         HAL::Destroy();
       }
+#endif
       
       
       Result step_MainExecution()
       {
 
+// TBD - This should be moved to simulator just before step_MainExecution is called
+#ifndef ROBOT_HARDWARE
         // If the hardware interface needs to be advanced (as in the case of
         // a Webots simulation), do that first.
         HAL::Step();
-
+#endif
+        
         //////////////////////////////////////////////////////////////
         // Test Mode
         //////////////////////////////////////////////////////////////
@@ -198,7 +203,7 @@ namespace Anki {
 
         // Check if there is a new or dropped connection to a basestation
         if (HAL::RadioIsConnected() && !wasConnected_) {
-          PRINT("Robot %d's radio is connected.\n", HAL::GetRobotID());
+          PRINT("Robot radio is connected.\n");
           wasConnected_ = true;
         } else if (!HAL::RadioIsConnected() && wasConnected_) {
           PRINT("Radio disconnected\n");
@@ -255,7 +260,6 @@ namespace Anki {
               // Once initialization is done, broadcast a message that this robot
               // is ready to go
               Messages::RobotAvailable msg;
-              msg.robotID = HAL::GetRobotID();
               PRINT("Robot %d broadcasting availability message.\n", msg.robotID);
               HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RobotAvailable), &msg);
          
@@ -299,8 +303,10 @@ namespace Anki {
         Messages::SendRobotStateMsg();
 #endif
         
+// TBD - This should be moved to simulator just after step_MainExecution is called
+#ifndef ROBOT_HARDWARE
         HAL::UpdateDisplay();
-        
+#endif        
         
         return RESULT_OK;
         

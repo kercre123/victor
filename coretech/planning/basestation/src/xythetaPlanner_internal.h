@@ -47,6 +47,8 @@ struct xythetaPlannerImpl
   OpenList open_;
   StateTable table_;
 
+  bool freeTurnInPlaceAtGoal_;
+
   xythetaPlan plan_;
 
   unsigned int expansions_;
@@ -54,6 +56,9 @@ struct xythetaPlannerImpl
   unsigned int collisionChecks_;
 
   unsigned int searchNum_;
+
+  // for debugging only
+  FILE* debugExpPlotFile_;
 };
 
 

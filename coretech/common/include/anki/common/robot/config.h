@@ -145,12 +145,6 @@ extern "C" {
 }
 #endif
 
-//// If we're not building mex (which will replace printf w/ mexPrintf),
-//// then we want to swap printf for explicitPrintf
-//#ifndef ANKI_MEX_BUILD
-//#undef printf
-//#define printf(...) explicitPrintf(0, 0, __VA_ARGS__)
-//#endif
 
 #define ANKICORETECHEMBEDDED_VERSION_MAJOR 0
 #define ANKICORETECHEMBEDDED_VERSION_MINOR 1

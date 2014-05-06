@@ -326,6 +326,8 @@ namespace Anki {
     Result MessageHandler::ProcessMessage(Robot* robot, MessageDriveWheelsCurvature const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageMoveLift const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageMoveHead const&){return RESULT_FAIL;}
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageSetLiftHeight const&){return RESULT_FAIL;}
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageSetHeadAngle const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageStopAllMotors const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageRobotAvailable const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageMatMarkerObserved const&){return RESULT_FAIL;}

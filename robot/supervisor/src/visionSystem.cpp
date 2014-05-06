@@ -129,7 +129,8 @@ namespace Anki {
         static const s32 MAX_TRACKING_FAILURES = 1;
 
         static const Anki::Cozmo::HAL::CameraInfo* headCamInfo_;
-        static f32 headCamFOV_;
+        static f32 headCamFOV_ver_;
+        static f32 headCamFOV_hor_;
         static Array<f32> RcamWrtRobot_;
 
         static VisionSystemMode mode_;
@@ -750,7 +751,8 @@ namespace Anki {
         else if( (static_cast<f32>(verify_numSimilarPixels) /
           static_cast<f32>(verify_numInBounds)) < parameters.successTolerance_matchingPixelsFraction)
         {
-          PRINT("Tracker failed: too many in-bounds pixels failed intensity verification.\n");
+          PRINT("Tracker failed: too many in-bounds pixels failed intensity verification (%d / %d < %f).\n",
+                verify_numSimilarPixels, verify_numInBounds, parameters.successTolerance_matchingPixelsFraction);
           trackingSucceeded = false;
         }
         else {
@@ -921,12 +923,12 @@ namespace Anki {
         const f32 T_ver_cam = -T_fwd_robot*sinHeadAngle;
 
         // Predict approximate horizontal shift from two things:
-        // 1. The rotation fo the robot
+        // 1. The rotation of the robot
         //    Compute pixel-per-degree of the camera and multiply by degrees rotated
         // 2. Convert horizontal shift of the robot to pixel shift, using
         //    focal length
-        f32 horizontalShift_pix = (static_cast<f32>(headCamInfo_->nrows/2) * theta_robot.ToFloat() /
-          headCamFOV_) + (T_hor_robot*headCamInfo_->focalLength_x/d);
+        f32 horizontalShift_pix = (static_cast<f32>(headCamInfo_->ncols/2) * theta_robot.ToFloat() /
+                                   headCamFOV_hor_) + (T_hor_robot*headCamInfo_->focalLength_x/d);
 
         // Predict approximate scale change by comparing the distance to the
         // object before and after forward motion
@@ -1139,6 +1141,14 @@ namespace Anki {
         return trackingMarkerWidth_mm;
       }
 
+      f32 GetVerticalFOV() {
+        return headCamFOV_ver_;
+      }
+      
+      f32 GetHorizontalFOV() {
+        return headCamFOV_hor_;
+      }
+      
       Result Init()
       {
         Result result = RESULT_OK;
@@ -1169,8 +1179,10 @@ namespace Anki {
           }
 
           // Compute FOV from focal length (currently used for tracker prediciton)
-          headCamFOV_ = 2.f * atan_fast(static_cast<f32>(headCamInfo_->nrows) /
-            (2.f * headCamInfo_->focalLength_y));
+          headCamFOV_ver_ = 2.f * atan_fast(static_cast<f32>(headCamInfo_->nrows) /
+                                        (2.f * headCamInfo_->focalLength_y));
+          headCamFOV_hor_ = 2.f * atan_fast(static_cast<f32>(headCamInfo_->ncols) /
+                                            (2.f * headCamInfo_->focalLength_x));
 
           exposureTime = 0.2f; // TODO: pick a reasonable start value
           frameNumber = 0;

@@ -35,6 +35,9 @@ public:
   // set a goal in meters and radians
   void SetGoal(const State_c& goal);
 
+  // Allow (or disallow) free turn-in-place at the goal
+  void AllowFreeTurnInPlaceAtGoal(bool allow = true);
+
   void ComputePath();
 
   // must call compute path before getting the plan

@@ -23,6 +23,12 @@ void xythetaPlanner::SetGoal(const State_c& goal)
   _impl->SetGoal(goal);
 }
 
+void xythetaPlanner::AllowFreeTurnInPlaceAtGoal(bool allow)
+{
+  _impl->freeTurnInPlaceAtGoal_ = allow;
+}
+
+
 void xythetaPlanner::ComputePath()
 {
   _impl->ComputePath();
@@ -37,10 +43,13 @@ const xythetaPlan& xythetaPlanner::GetPlan() const
 // implementation functions
 ////////////////////////////////////////////////////////////////////////////////
 
+#define PLANNER_DEBUG_PLOT_STATES_CONSIDERED 0
+
 xythetaPlannerImpl::xythetaPlannerImpl(const xythetaEnvironment& env)
   : env_(env),
     start_(0,0,0),
-    searchNum_(0)
+    searchNum_(0),
+    freeTurnInPlaceAtGoal_(false)
 {
   startID_ = start_.GetStateID();
   Reset();
@@ -68,6 +77,10 @@ void xythetaPlannerImpl::ComputePath()
 {
   Reset();
 
+  if(PLANNER_DEBUG_PLOT_STATES_CONSIDERED) {
+    debugExpPlotFile_ = fopen("expanded.txt", "w");
+  }
+
   StateID startID = start_.GetStateID();
 
   // push starting state
@@ -82,12 +95,22 @@ void xythetaPlannerImpl::ComputePath()
     StateID sid = open_.pop();
     if(sid == goalID_) {
       foundGoal = true;
-      printf("expanded goal! done!\n");
+      printf("expanded goal! cost = %f\n", table_[sid].g_);
       break;
     }
 
     ExpandState(sid);
     expansions_++;
+
+    if(PLANNER_DEBUG_PLOT_STATES_CONSIDERED) {
+      State_c c = env_.State2State_c(State(sid));
+      fprintf(debugExpPlotFile_, "%f %f %f %d\n",
+                  c.x_mm,
+                  c.y_mm,
+                  c.theta,
+                  sid.theta);
+    }
+
 
     // TEMP: 
     if(expansions_ % 10000 == 0) {
@@ -102,6 +125,10 @@ void xythetaPlannerImpl::ComputePath()
 
   if(foundGoal)
     BuildPlan();
+
+  if(PLANNER_DEBUG_PLOT_STATES_CONSIDERED) {
+    fclose(debugExpPlotFile_);
+  }
 
   printf("finished after %d expansions\n", expansions_);
 }
@@ -119,28 +146,32 @@ void xythetaPlannerImpl::ExpandState(StateID currID)
     considerations_++;
 
     StateID nextID = it.Front().stateID;
+    float newG = it.Front().g;
+
+    if(freeTurnInPlaceAtGoal_ && currID.x == goalID_.x && currID.y == goalID_.y)
+      newG = currG;
 
     auto oldEntry = table_.find(nextID);
 
     if(oldEntry == table_.end()) {    
       Cost h = heur(nextID);
-      Cost f = it.Front().g + h;
+      Cost f = newG + h;
       table_.emplace(nextID,
                          open_.insert(nextID, f),
                          currID,
                          it.Front().actionID,
-                         it.Front().g);
+                         newG);
     }
     else if(!oldEntry->second.IsClosed(searchNum_)) {
       // only update if g value is lower
-      if(it.Front().g < oldEntry->second.g_) {
+      if(newG < oldEntry->second.g_) {
         Cost h = heur(nextID);
-        Cost f = it.Front().g + h;
+        Cost f = newG + h;
         oldEntry->second.openIt_ = open_.insert(nextID, f);
         oldEntry->second.closedIter_ = -1;
         oldEntry->second.backpointer_ = currID;
         oldEntry->second.backpointerAction_ = it.Front().actionID;
-        oldEntry->second.g_ = it.Front().g;
+        oldEntry->second.g_ = newG;
       }
     }
 
@@ -155,11 +186,7 @@ Cost xythetaPlannerImpl::heur(StateID sid)
   State s(sid);
   // return euclidean distance in mm
 
-  float distSq = 
-    pow(env_.GetX_mm(s.x) - goal_c_.x_mm, 2)
-    + pow(env_.GetY_mm(s.y) - goal_c_.y_mm, 2);
-
-  return sqrtf(distSq);
+  return env_.GetDistanceBetween(goal_c_, s);
 }
 
 void xythetaPlannerImpl::BuildPlan()

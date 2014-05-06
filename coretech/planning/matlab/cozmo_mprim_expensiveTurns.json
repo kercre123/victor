@@ -318,7 +318,7 @@
             "x": 0,
             "y": 0
           },
-          "extra_cost_factor": 1.5,
+          "extra_cost_factor": 50.0,
           "intermediate_poses": [
             {
               "theta_rad": 0.0,
@@ -380,7 +380,7 @@
             "x": 0,
             "y": 0
           },
-          "extra_cost_factor": 1.5,
+          "extra_cost_factor": 50.0,
           "intermediate_poses": [
             {
               "theta_rad": 0.0,
@@ -757,7 +757,7 @@
             "x": 0,
             "y": 0
           },
-          "extra_cost_factor": 1.5,
+          "extra_cost_factor": 50.0,
           "intermediate_poses": [
             {
               "theta_rad": 0.3927,
@@ -819,7 +819,7 @@
             "x": 0,
             "y": 0
           },
-          "extra_cost_factor": 1.5,
+          "extra_cost_factor": 50.0,
           "intermediate_poses": [
             {
               "theta_rad": 0.3927,
@@ -1196,7 +1196,7 @@
             "x": 0,
             "y": 0
           },
-          "extra_cost_factor": 1.5,
+          "extra_cost_factor": 50.0,
           "intermediate_poses": [
             {
               "theta_rad": 0.7854,
@@ -1258,7 +1258,7 @@
             "x": 0,
             "y": 0
           },
-          "extra_cost_factor": 1.5,
+          "extra_cost_factor": 50.0,
           "intermediate_poses": [
             {
               "theta_rad": 0.7854,
@@ -1635,7 +1635,7 @@
             "x": 0,
             "y": 0
           },
-          "extra_cost_factor": 1.5,
+          "extra_cost_factor": 50.0,
           "intermediate_poses": [
             {
               "theta_rad": 1.1781,
@@ -1697,7 +1697,7 @@
             "x": 0,
             "y": 0
           },
-          "extra_cost_factor": 1.5,
+          "extra_cost_factor": 50.0,
           "intermediate_poses": [
             {
               "theta_rad": 1.1781,
@@ -2074,7 +2074,7 @@
             "x": 0,
             "y": 0
           },
-          "extra_cost_factor": 1.5,
+          "extra_cost_factor": 50.0,
           "intermediate_poses": [
             {
               "theta_rad": 1.5708,
@@ -2136,7 +2136,7 @@
             "x": 0,
             "y": 0
           },
-          "extra_cost_factor": 1.5,
+          "extra_cost_factor": 50.0,
           "intermediate_poses": [
             {
               "theta_rad": 1.5708,
@@ -2513,7 +2513,7 @@
             "x": 0,
             "y": 0
           },
-          "extra_cost_factor": 1.5,
+          "extra_cost_factor": 50.0,
           "intermediate_poses": [
             {
               "theta_rad": 1.9635,
@@ -2575,7 +2575,7 @@
             "x": 0,
             "y": 0
           },
-          "extra_cost_factor": 1.5,
+          "extra_cost_factor": 50.0,
           "intermediate_poses": [
             {
               "theta_rad": 1.9635,
@@ -2952,7 +2952,7 @@
             "x": 0,
             "y": 0
           },
-          "extra_cost_factor": 1.5,
+          "extra_cost_factor": 50.0,
           "intermediate_poses": [
             {
               "theta_rad": 2.3562,
@@ -3014,7 +3014,7 @@
             "x": 0,
             "y": 0
           },
-          "extra_cost_factor": 1.5,
+          "extra_cost_factor": 50.0,
           "intermediate_poses": [
             {
               "theta_rad": 2.3562,
@@ -3391,7 +3391,7 @@
             "x": 0,
             "y": 0
           },
-          "extra_cost_factor": 1.5,
+          "extra_cost_factor": 50.0,
           "intermediate_poses": [
             {
               "theta_rad": 2.7489,
@@ -3453,7 +3453,7 @@
             "x": 0,
             "y": 0
           },
-          "extra_cost_factor": 1.5,
+          "extra_cost_factor": 50.0,
           "intermediate_poses": [
             {
               "theta_rad": 2.7489,
@@ -3830,7 +3830,7 @@
             "x": 0,
             "y": 0
           },
-          "extra_cost_factor": 1.5,
+          "extra_cost_factor": 50.0,
           "intermediate_poses": [
             {
               "theta_rad": 3.1416,
@@ -3892,7 +3892,7 @@
             "x": 0,
             "y": 0
           },
-          "extra_cost_factor": 1.5,
+          "extra_cost_factor": 50.0,
           "intermediate_poses": [
             {
               "theta_rad": 3.1416,
@@ -4269,7 +4269,7 @@
             "x": 0,
             "y": 0
           },
-          "extra_cost_factor": 1.5,
+          "extra_cost_factor": 50.0,
           "intermediate_poses": [
             {
               "theta_rad": 3.5343,
@@ -4331,7 +4331,7 @@
             "x": 0,
             "y": 0
           },
-          "extra_cost_factor": 1.5,
+          "extra_cost_factor": 50.0,
           "intermediate_poses": [
             {
               "theta_rad": 3.5343,
@@ -4708,7 +4708,7 @@
             "x": 0,
             "y": 0
           },
-          "extra_cost_factor": 1.5,
+          "extra_cost_factor": 50.0,
           "intermediate_poses": [
             {
               "theta_rad": 3.927,
@@ -4770,7 +4770,7 @@
             "x": 0,
             "y": 0
           },
-          "extra_cost_factor": 1.5,
+          "extra_cost_factor": 50.0,
           "intermediate_poses": [
             {
               "theta_rad": 3.927,
@@ -5147,7 +5147,7 @@
             "x": 0,
             "y": 0
           },
-          "extra_cost_factor": 1.5,
+          "extra_cost_factor": 50.0,
           "intermediate_poses": [
             {
               "theta_rad": 4.3197,
@@ -5209,7 +5209,7 @@
             "x": 0,
             "y": 0
           },
-          "extra_cost_factor": 1.5,
+          "extra_cost_factor": 50.0,
           "intermediate_poses": [
             {
               "theta_rad": 4.3197,
@@ -5586,7 +5586,7 @@
             "x": 0,
             "y": 0
           },
-          "extra_cost_factor": 1.5,
+          "extra_cost_factor": 50.0,
           "intermediate_poses": [
             {
               "theta_rad": 4.7124,
@@ -5648,7 +5648,7 @@
             "x": 0,
             "y": 0
           },
-          "extra_cost_factor": 1.5,
+          "extra_cost_factor": 50.0,
           "intermediate_poses": [
             {
               "theta_rad": 4.7124,
@@ -6025,7 +6025,7 @@
             "x": 0,
             "y": 0
           },
-          "extra_cost_factor": 1.5,
+          "extra_cost_factor": 50.0,
           "intermediate_poses": [
             {
               "theta_rad": 5.1051,
@@ -6087,7 +6087,7 @@
             "x": 0,
             "y": 0
           },
-          "extra_cost_factor": 1.5,
+          "extra_cost_factor": 50.0,
           "intermediate_poses": [
             {
               "theta_rad": 5.1051,
@@ -6464,7 +6464,7 @@
             "x": 0,
             "y": 0
           },
-          "extra_cost_factor": 1.5,
+          "extra_cost_factor": 50.0,
           "intermediate_poses": [
             {
               "theta_rad": 5.4978,
@@ -6526,7 +6526,7 @@
             "x": 0,
             "y": 0
           },
-          "extra_cost_factor": 1.5,
+          "extra_cost_factor": 50.0,
           "intermediate_poses": [
             {
               "theta_rad": 5.4978,
@@ -6903,7 +6903,7 @@
             "x": 0,
             "y": 0
           },
-          "extra_cost_factor": 1.5,
+          "extra_cost_factor": 50.0,
           "intermediate_poses": [
             {
               "theta_rad": 5.8905,
@@ -6965,7 +6965,7 @@
             "x": 0,
             "y": 0
           },
-          "extra_cost_factor": 1.5,
+          "extra_cost_factor": 50.0,
           "intermediate_poses": [
             {
               "theta_rad": 5.8905,

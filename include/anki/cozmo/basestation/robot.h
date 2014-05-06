@@ -93,12 +93,19 @@ namespace Anki {
                                    const f32 markerWidth_mm,
                                    const DockAction_t dockAction) const;
       
-      // Sends a message to the robot to move the lift to the specified height
-      Result SendMoveLift(const f32 height_mm,
-                              const f32 max_speed_rad_per_sec,
-                              const f32 accel_rad_per_sec2) const;
+      // Sends message to move lift at specified speed
+      Result SendMoveLift(const f32 speed_rad_per_sec) const;
       
-      Result SendMoveHead(const f32 angle_rad,
+      // Sends message to move head at specified speed
+      Result SendMoveHead(const f32 speed_rad_per_sec) const;
+      
+      // Sends a message to the robot to move the lift to the specified height
+      Result SendSetLiftHeight(const f32 height_mm,
+                               const f32 max_speed_rad_per_sec,
+                               const f32 accel_rad_per_sec2) const;
+
+      // Sends a message to the robot to move the head to the specified angle
+      Result SendSetHeadAngle(const f32 angle_rad,
                               const f32 max_speed_rad_per_sec,
                               const f32 accel_rad_per_sec2) const;
       

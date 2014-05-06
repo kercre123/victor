@@ -58,11 +58,6 @@ namespace Anki
         
         return now;
       }
-
-      u32 GetCoreFrequencyMHz()
-      {
-        return CORE_CLOCK_MHZ;
-      }
     }
   }
 }

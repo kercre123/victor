@@ -78,17 +78,28 @@ END_MESSAGE_DEFINITION(DriveWheelsCurvature)
 
 // MoveLift
 START_MESSAGE_DEFINITION(MoveLift, 1)
-ADD_MESSAGE_MEMBER(f32, height_mm)
-ADD_MESSAGE_MEMBER(f32, max_speed_rad_per_sec)
-ADD_MESSAGE_MEMBER(f32, accel_rad_per_sec2)
+ADD_MESSAGE_MEMBER(f32, speed_rad_per_sec)
 END_MESSAGE_DEFINITION(MoveLift)
 
 // MoveHead
 START_MESSAGE_DEFINITION(MoveHead, 1)
+ADD_MESSAGE_MEMBER(f32, speed_rad_per_sec)
+END_MESSAGE_DEFINITION(MoveHead)
+
+
+// SetLiftHeight
+START_MESSAGE_DEFINITION(SetLiftHeight, 1)
+ADD_MESSAGE_MEMBER(f32, height_mm)
+ADD_MESSAGE_MEMBER(f32, max_speed_rad_per_sec)
+ADD_MESSAGE_MEMBER(f32, accel_rad_per_sec2)
+END_MESSAGE_DEFINITION(SetLiftHeight)
+
+// SetHeadAngle
+START_MESSAGE_DEFINITION(SetHeadAngle, 1)
 ADD_MESSAGE_MEMBER(f32, angle_rad)
 ADD_MESSAGE_MEMBER(f32, max_speed_rad_per_sec)
 ADD_MESSAGE_MEMBER(f32, accel_rad_per_sec2)
-END_MESSAGE_DEFINITION(MoveHead)
+END_MESSAGE_DEFINITION(SetHeadAngle)
 
 // StopAllMotors
 START_MESSAGE_DEFINITION(StopAllMotors, 1)

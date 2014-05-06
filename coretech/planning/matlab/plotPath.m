@@ -1,14 +1,19 @@
-function state = plotPath(filename, animate, state)
+function state = plotPath(filename, animate, state, color)
 
 if nargin == 0
-   filename = "path.txt"
+   filename = 'path.txt'
    animate = true
    state = {};
+   color = 'g.-'
 elseif nargin == 1
   animate = true
   state = {};
+  color = 'g.-'
 elseif nargin == 2
   state = {};
+  color = 'g.-'
+elseif nargin == 3
+  golgor = 'g.-'
 end
 
 path = [];
@@ -49,7 +54,7 @@ if exist(filename, 'file')
 
       if length(state) == 0
         disp('first state')
-        state{1} = plot(path(1,1), path(1,2), 'g.-');
+        state{1} = plot(path(1,1), path(1,2), color);
         state{2} = plotRobot(path(1,1), path(1,2), path(1,3));
         state{3} = 1;
       end
@@ -63,7 +68,7 @@ if exist(filename, 'file')
 
       state{3} = size(path,1);
    else
-     plot(path(:,1), path(:,2), 'g.-');
+     plot(path(:,1), path(:,2), color);
      plotRobot(path(end,1), path(end,2), path(end,3));
    end
 end
