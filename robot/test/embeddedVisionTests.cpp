@@ -3838,13 +3838,13 @@ GTEST_TEST(CoreTech_Vision, BoxFilterNormalize)
     
     ASSERT_TRUE(lastResult == RESULT_OK);
     
-    EXPECT_TRUE(testImageNorm.IsNearlyEqualTo(groundTruthResult, 1));
+    ASSERT_TRUE(testImageNorm.IsNearlyEqualTo(groundTruthResult, 1));
     
     //testImageNorm.Show("testImageNorm", false);
     //groundTruthResult.Show("groundTruth", true);
-    
   } // for each filter width
   
+  GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, BoxFilterNormalize)
 
 #if !ANKICORETECH_EMBEDDED_USE_GTEST
