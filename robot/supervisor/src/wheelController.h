@@ -79,6 +79,7 @@ namespace Anki {
     // wheel controllers
     void SetCoastMode(bool isOn);
     
+    bool AreWheelsPowered();
     
     void ResetIntegralGainSums(void);
     

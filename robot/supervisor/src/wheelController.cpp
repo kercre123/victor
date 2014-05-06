@@ -275,6 +275,11 @@ namespace Anki {
         ResetIntegralGainSums();
       }
     }
+
+    bool AreWheelsPowered()
+    {
+      return (power_l_ != 0 || power_r_ != 0);
+    }
     
     
     void ResetIntegralGainSums(void)
