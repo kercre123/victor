@@ -86,6 +86,65 @@ namespace Anki {
       
     }
     
+    bool KnownMarker::IsVisibleFrom(const Camera& camera,
+                                    const f32 maxAngleRad,
+                                    const f32 minImageSize) const
+    {
+      using namespace Quad;
+      
+      // Get the marker's pose relative to the camera
+      Pose3d markerPoseWrtCamera( pose_.getWithRespectTo(&camera.get_pose()) );
+      
+      // Make sure the marker is at least in front of the camera!
+      if(markerPoseWrtCamera.get_translation().z() <= 0.f) {
+        return false;
+      }
+      
+      // Get the 3D positions of the marker's corners relative to the camera
+      Quad3f markerCornersWrtCamera;
+      markerPoseWrtCamera.applyTo(corners3d_, markerCornersWrtCamera);
+      
+      // Make sure the face of the marker is pointed towards the camera
+      // Use "TopLeft" canonical corner as the local origin for computing the
+      // face normal
+      Vec3f topLine(markerCornersWrtCamera[TopRight]);
+      topLine -= markerCornersWrtCamera[TopLeft];
+      topLine.makeUnitLength();
+      
+      Vec3f sideLine(markerCornersWrtCamera[BottomLeft]);
+      sideLine -= markerCornersWrtCamera[TopLeft];
+      sideLine.makeUnitLength();
+      
+      const Point3f faceNormal( cross(sideLine, topLine) );
+      const f32 dotProd = dot(faceNormal, Z_AXIS_3D); // TODO: Optimize to just: faceNormal.z()?
+      if(dotProd > 0.f || acosf(dotProd) > maxAngleRad) {
+        return false;
+      }
+      
+      // Make sure the projected corners are within the image
+      // TODO: add some border padding?
+      Quad2f imgCorners;
+      camera.project3dPoints(markerCornersWrtCamera, imgCorners);
+      if(not camera.isVisible(imgCorners[TopLeft]) ||
+         not camera.isVisible(imgCorners[TopRight]) ||
+         not camera.isVisible(imgCorners[BottomLeft]) ||
+         not camera.isVisible(imgCorners[BottomRight]))
+      {
+        return false;
+      }
+      
+      // Make sure the projected marker size is big enough
+      if((imgCorners[BottomRight] - imgCorners[TopLeft]).length() < minImageSize ||
+         (imgCorners[BottomLeft]  - imgCorners[TopRight]).length() < minImageSize)
+      {
+        return false;
+      }
+      
+      // We passed all the checks, so the marker is visible
+      return true;
+      
+    } // KnownMarker::IsVisibleFrom()
+    
     
     Pose3d KnownMarker::EstimateObservedPose(const ObservedMarker& obsMarker) const
     {

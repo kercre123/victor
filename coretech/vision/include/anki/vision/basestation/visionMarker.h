@@ -79,6 +79,15 @@ namespace Anki {
       //
       void SetPose(const Pose3d& newPose);
       
+      // Return true if all this marker's corners are visible from the given
+      // camera, using current 3D poses of each. The marker must be within the
+      // given angle tolerance of being front-parallel to the camera (i.e.
+      // facing it) and have a diaonal image size at least the given image size
+      // tolerance.
+      bool IsVisibleFrom(const Camera& camera,
+                         const f32 maxAngleRad,
+                         const f32 minImageSize) const;
+      
       // Accessors
       inline const Quad3f& Get3dCorners() const;
       inline const Pose3d& GetPose()      const;
