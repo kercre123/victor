@@ -78,11 +78,11 @@ namespace Anki
       for(s32 y=0; y<imageHeight; y++) {
         u8 * restrict pImage = image.Pointer(y,0);
 
-        const f32 yF32 = static_cast<f32>(y);
+        const f32 yF32 = static_cast<f32>(y) + 0.5f;
         const f32 yScaleComponent = model0 + model2 * yF32 + model4 * yF32 * yF32;
 
         for(s32 x=0; x<imageWidth; x++) {
-          const f32 xF32 = static_cast<f32>(x);
+          const f32 xF32 = static_cast<f32>(x) + 0.5f;
 
           const f32 curPixel = static_cast<f32>(pImage[x]);
 

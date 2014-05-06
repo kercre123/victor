@@ -26,6 +26,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/decisionTree_vision.h"
 #include "anki/vision/robot/perspectivePoseEstimation.h"
 #include "anki/vision/robot/classifier.h"
+#include "anki/vision/robot/cameraImagingPipeline.h"
 
 #include "anki/vision/MarkerCodeDefinitions.h"
 
@@ -53,6 +54,66 @@ using namespace Anki;
 using namespace Anki::Embedded;
 
 //#define RUN_FACE_DETECTION_GUI
+
+GTEST_TEST(CoreTech_Vision, Vignetting)
+{
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  ASSERT_TRUE(scratchCcm.IsValid());
+
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(scratchOnchip.IsValid());
+
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(scratchOffchip.IsValid());
+
+  const s32 imageHeight = 2;
+  const s32 imageWidth = 16;
+
+  Array<u8> image(imageHeight,imageWidth,scratchOnchip);
+  image.Set(128);
+
+  FixedLengthList<f32> polynomialParameters(5, scratchOnchip, Flags::Buffer(false, false, true));
+  const f32 parameters[5] = {1.0f, 0.2f, 0.3f, 0.04f, -1.0f};
+
+  for(s32 i=0; i<5; i++)
+    polynomialParameters[i] = parameters[i];
+
+  const Result result = CorrectVignetting(image, polynomialParameters);
+
+  ASSERT_TRUE(result == RESULT_OK);
+
+  //image.Print("image");
+
+  Array<u8> image_groundTruth(imageHeight,imageWidth,scratchOnchip);
+
+  const u8 image_groundTruthData[imageHeight*imageWidth] = {
+    129, 165, 211, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+    0, 0, 0, 50, 116, 193, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255};
+
+  image_groundTruth.Set(image_groundTruthData, imageHeight*imageWidth);
+
+  ASSERT_TRUE(AreElementwiseEqual<u8>(image, image_groundTruth));
+
+  // Just benchmarks
+  {
+    Array<u8> imageOffchip(240,320,scratchOffchip);
+    Array<u8> imageOnchip(240,320,scratchOnchip);
+
+    InitBenchmarking();
+
+    BeginBenchmark("CorrectVignetting_offchip");
+    CorrectVignetting(imageOffchip, polynomialParameters);
+    EndBenchmark("CorrectVignetting_offchip");
+
+    BeginBenchmark("CorrectVignetting_onchip");
+    CorrectVignetting(imageOnchip, polynomialParameters);
+    EndBenchmark("CorrectVignetting_onchip");
+
+    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
+  }
+
+  GTEST_RETURN_HERE;
+}
 
 #if defined(RUN_FACE_DETECTION_GUI) && defined(ANKICORETECH_EMBEDDED_USE_OPENCV)
 GTEST_TEST(CoreTech_Vision, FaceDetection_All)
@@ -3796,7 +3857,7 @@ GTEST_TEST(CoreTech_Vision, BoxFilterNormalize)
     200, 199, 197, 196, 194, 187, 175, 172, 179, 193, 201, 203, 204, 204, 205, 205, 205, 206, 206, 204, 202, 199, 199, 199, 201, 202, 202,
     200, 199, 199, 198, 196, 194, 192, 191, 192, 193, 195, 198, 198, 198, 199, 200, 201, 202, 202, 202, 202, 201, 201, 201, 201, 200, 199,
     198, 198, 197, 196, 195, 195, 193, 191, 189, 186};
-  
+
   // Ground truth result for filterWidth = 5, 10, 20, 40, 80
   const s32 NUM_FILTER_WIDTHS = 5;
   const u8 groundTruthData[NUM_FILTER_WIDTHS][testImageHeight*testImageWidth] = {
@@ -3812,38 +3873,38 @@ GTEST_TEST(CoreTech_Vision, BoxFilterNormalize)
     {195, 196, 197, 197, 199, 201, 204, 205, 206, 207, 202, 206, 211, 216, 219, 220, 217, 212, 208, 205, 204, 204, 203, 202, 199, 195, 191, 187, 183, 180, 195, 195, 193, 185, 169, 160, 167, 184, 199, 203, 198, 203, 206, 211, 215, 216, 215, 212, 208, 206, 205, 204, 204, 202, 200, 197, 194, 190, 185, 182, 195, 193, 184, 149, 97, 45, 56, 115, 167, 198, 198, 203, 208, 213, 217, 215, 206, 194, 185, 180, 184, 191, 199, 204, 202, 199, 195, 191, 188, 184, 197, 196, 189, 157, 100, 34, 6, 49, 122, 178, 197, 206, 212, 209, 188, 150, 106, 75, 57, 52, 59, 79, 115, 153, 182, 194, 196, 192, 190, 186, 200, 200, 197, 187, 150, 90, 27, 8, 62, 135, 179, 203, 197, 158, 93, 31, 3, 7, 18, 23, 16, 4, 8, 42, 105, 160, 190, 195, 193, 191, 202, 202, 202, 199, 186, 145, 81, 18, 11, 74, 140, 178, 160, 92, 17, 2, 44, 101, 144, 157, 137, 84, 26, 0, 34, 110, 168, 192, 192, 179, 203, 205, 204, 203, 203, 187, 141, 71, 11, 18, 83, 134, 128, 65, 2, 12, 84, 159, 205, 215, 198, 137, 56, 2, 17, 89, 156, 187, 178, 134, 208, 208, 209, 207, 208, 207, 187, 135, 62, 9, 27, 89, 113, 87, 27, 0, 27, 78, 115, 127, 108, 64, 15, 4, 53, 124, 175, 184, 144, 76, 209, 209, 208, 207, 207, 210, 210, 184, 130, 64, 32, 82, 143, 155, 121, 60, 20, 7, 5, 7, 6, 9, 31, 81, 138, 182, 196, 170, 109, 34, 207, 206, 205, 204, 205, 207, 209, 208, 192, 169, 150, 169, 201, 220, 214, 188, 151, 117, 97, 92, 101, 124, 157, 186, 205, 208, 196, 152, 80, 13, 199, 198, 196, 194, 193, 194, 194, 192, 179, 165, 153, 173, 195, 208, 210, 201, 184, 166, 154, 155, 168, 184, 198, 205, 203, 198, 183, 135, 61, 5, 199, 199, 198, 196, 195, 195, 186, 156, 103, 52, 53, 112, 157, 169, 142, 101, 67, 46, 39, 45, 65, 99, 144, 180, 198, 198, 180, 128, 51, 2, 198, 198, 197, 195, 192, 181, 144, 84, 25, 15, 53, 97, 109, 76, 28, 6, 14, 28, 34, 25, 9, 6, 37, 101, 159, 189, 180, 129, 55, 5, 195, 194, 192, 188, 173, 131, 70, 19, 20, 69, 111, 115, 72, 14, 8, 52, 110, 150, 160, 139, 89, 30, 0, 31, 108, 165, 180, 144, 75, 14, 191, 192, 186, 163, 117, 56, 12, 25, 80, 138, 155, 125, 59, 7, 17, 80, 148, 186, 190, 170, 116, 44, 2, 23, 96, 157, 183, 167, 114, 45, 187, 183, 159, 112, 53, 19, 38, 94, 149, 183, 179, 152, 98, 39, 14, 34, 75, 102, 107, 87, 49, 14, 18, 71, 136, 180, 193, 190, 167, 116, 182, 159, 111, 53, 30, 59, 115, 165, 191, 198, 192, 190, 171, 133, 91, 57, 42, 38, 36, 37, 47, 73, 114, 157, 189, 201, 201, 199, 195, 181, 181, 152, 109, 70, 82, 129, 173, 195, 200, 201, 196, 201, 204, 199, 183, 160, 139, 124, 122, 132, 153, 175, 194, 203, 203, 201, 200, 198, 195, 193, 188, 180, 168, 164, 171, 185, 193, 196, 197, 198, 193, 197, 201, 204, 205, 202, 198, 193, 192, 193, 198, 200, 201, 199, 197, 197, 195, 193, 190, 188, 187, 187, 187, 188, 191, 192, 193, 195, 196, 197, 194, 197, 200, 202, 202, 201, 199, 197, 194, 194, 196, 197, 196, 195, 193, 192, 190, 187, 185, 182}
   };
   const s32 filterWidths[NUM_FILTER_WIDTHS] = {5, 10, 20, 40, 80};
-  
+
   // Need space for input, output, and ground truth, plus the f32 array used
   // inside BoxFilterNormalize for the integral image, plus some "extra"
   const s32 BUFFER_SIZE = 9*testImageWidth*testImageHeight;
   u8 buffer[BUFFER_SIZE];
   MemoryStack scratch(buffer, BUFFER_SIZE);
-  
+
   Array<u8> testImage(testImageHeight, testImageWidth, scratch);
   ASSERT_TRUE(testImage.IsValid());
-  
+
   Array<u8> groundTruthResult(testImageHeight, testImageWidth, scratch);
   ASSERT_TRUE(groundTruthResult.IsValid());
 
   Array<u8> testImageNorm(testImageHeight, testImageWidth, scratch);
   ASSERT_TRUE(testImageNorm.IsValid());
-  
+
   ASSERT_TRUE(testImage.Set(testImageData, testImageHeight*testImageWidth) == testImageHeight*testImageWidth);
-  
+
   for(s32 iWidth=0; iWidth<NUM_FILTER_WIDTHS; ++iWidth) {
     ASSERT_TRUE(groundTruthResult.Set(groundTruthData[iWidth], testImageHeight*testImageWidth) == testImageHeight*testImageWidth);
-    
+
     Result lastResult = ImageProcessing::BoxFilterNormalize(testImage, filterWidths[iWidth],
-                                                            static_cast<u8>(128), testImageNorm, scratch);
-    
+      static_cast<u8>(128), testImageNorm, scratch);
+
     ASSERT_TRUE(lastResult == RESULT_OK);
-    
+
     ASSERT_TRUE(testImageNorm.IsNearlyEqualTo(groundTruthResult, 1));
-    
+
     //testImageNorm.Show("testImageNorm", false);
     //groundTruthResult.Show("groundTruth", true);
   } // for each filter width
-  
+
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, BoxFilterNormalize)
 
@@ -3853,6 +3914,7 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   numPassedTests = 0;
   numFailedTests = 0;
 
+  CALL_GTEST_TEST(CoreTech_Vision, Vignetting);
   CALL_GTEST_TEST(CoreTech_Vision, FaceDetection);
   CALL_GTEST_TEST(CoreTech_Vision, ResizeImage);
   CALL_GTEST_TEST(CoreTech_Vision, DecisionTreeVision);
