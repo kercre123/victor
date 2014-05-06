@@ -144,7 +144,8 @@ namespace Anki {
       // Projects the box in its current 3D pose (or a given 3D pose) onto the
       // XY plane and returns the corresponding quadrilateral. Adds optional
       // padding if desired.
-      Quad3f GetBoundingBoxInPlane(const Point3f& planeNormal, const Pose3d& atPose, const f32 padding) const;
+      Quad3f GetBoundingQuadInPlane(const Point3f& planeNormal, const f32 padding) const;
+      Quad3f GetBoundingQuadInPlane(const Point3f& planeNormal, const Pose3d& atPose, const f32 padding) const;
       
     protected:
       
