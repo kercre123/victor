@@ -188,7 +188,7 @@ namespace Anki
       Type get_height() const;
     }; // class Rectangle<Type>
 
-    typedef Point<float> Point2f;
+
 
 #if 0
 #pragma mark --- Pose2d Class Declaration ---
