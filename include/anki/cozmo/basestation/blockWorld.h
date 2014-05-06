@@ -100,11 +100,12 @@ namespace Anki
       Vision::ObservableObjectLibrary otherObjectsLibrary_;
       
       // Store all observed objects, indexed first by Type, then by ID
-      typedef std::map<ObjectType_t, std::map<ObjectID_t, Vision::ObservableObject*> > ObjectsMap_t;
+      typedef std::map<ObjectID_t, Vision::ObservableObject*> ObjectIdMap_t;
+      typedef std::map<ObjectType_t, ObjectIdMap_t> ObjectsMap_t; // TODO: Rename to ObjectTypeMap_t
       ObjectsMap_t existingBlocks_;
       ObjectsMap_t existingMatPieces_;
       
-      static const std::map<ObjectID_t, Vision::ObservableObject*> EmptyObjectMap;
+      static const ObjectIdMap_t EmptyObjectMap;
       
       
       void FindOverlappingObjects(const Vision::ObservableObject* objectSeen,
