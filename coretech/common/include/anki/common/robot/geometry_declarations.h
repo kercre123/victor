@@ -80,6 +80,8 @@ namespace Anki
       f32 Length() const;
     }; // class Point<Type>
 
+    typedef Point<float> Point2f;
+    
 #if 0
 #pragma mark --- 3D Point Class Declaration ---
 #endif
