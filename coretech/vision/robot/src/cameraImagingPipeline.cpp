@@ -143,17 +143,17 @@ namespace Anki
           const f32 curScaledPixelF32_y1_x2 = scale_right * curPixel_y1_x2;
           const f32 curScaledPixelF32_y1_x3 = scale_right * curPixel_y1_x3;
 
-          const u32 curScaledPixelU32_y0_x0 = static_cast<u32>(curScaledPixelF32_y0_x0);
-          const u32 curScaledPixelU32_y0_x1 = static_cast<u32>(curScaledPixelF32_y0_x1);
-          const u32 curScaledPixelU32_y0_x2 = static_cast<u32>(curScaledPixelF32_y0_x2);
-          const u32 curScaledPixelU32_y0_x3 = static_cast<u32>(curScaledPixelF32_y0_x3);
-
-          const u32 curScaledPixelU32_y1_x0 = static_cast<u32>(curScaledPixelF32_y1_x0);
-          const u32 curScaledPixelU32_y1_x1 = static_cast<u32>(curScaledPixelF32_y1_x1);
-          const u32 curScaledPixelU32_y1_x2 = static_cast<u32>(curScaledPixelF32_y1_x2);
-          const u32 curScaledPixelU32_y1_x3 = static_cast<u32>(curScaledPixelF32_y1_x3);
-
 #if !defined(USE_ARM_ACCELERATION) // natural C
+          const u16 curScaledPixelU32_y0_x0 = static_cast<u16>(curScaledPixelF32_y0_x0);
+          const u16 curScaledPixelU32_y0_x1 = static_cast<u16>(curScaledPixelF32_y0_x1);
+          const u16 curScaledPixelU32_y0_x2 = static_cast<u16>(curScaledPixelF32_y0_x2);
+          const u16 curScaledPixelU32_y0_x3 = static_cast<u16>(curScaledPixelF32_y0_x3);
+
+          const u16 curScaledPixelU32_y1_x0 = static_cast<u16>(curScaledPixelF32_y1_x0);
+          const u16 curScaledPixelU32_y1_x1 = static_cast<u16>(curScaledPixelF32_y1_x1);
+          const u16 curScaledPixelU32_y1_x2 = static_cast<u16>(curScaledPixelF32_y1_x2);
+          const u16 curScaledPixelU32_y1_x3 = static_cast<u16>(curScaledPixelF32_y1_x3);
+
           const u8 outPixel_y0_x0 = static_cast<u8>(MIN(255, curScaledPixelU32_y0_x0));
           const u8 outPixel_y0_x1 = static_cast<u8>(MIN(255, curScaledPixelU32_y0_x1));
           const u8 outPixel_y0_x2 = static_cast<u8>(MIN(255, curScaledPixelU32_y0_x2));
@@ -163,20 +163,34 @@ namespace Anki
           const u8 outPixel_y1_x1 = static_cast<u8>(MIN(255, curScaledPixelU32_y1_x1));
           const u8 outPixel_y1_x2 = static_cast<u8>(MIN(255, curScaledPixelU32_y1_x2));
           const u8 outPixel_y1_x3 = static_cast<u8>(MIN(255, curScaledPixelU32_y1_x3));
-#else // ARM optimized
-          const u8 outPixel_y0_x0 = __USAT(curScaledPixelU32_y0_x0, 8);
-          const u8 outPixel_y0_x1 = __USAT(curScaledPixelU32_y0_x1, 8);
-          const u8 outPixel_y0_x2 = __USAT(curScaledPixelU32_y0_x2, 8);
-          const u8 outPixel_y0_x3 = __USAT(curScaledPixelU32_y0_x3, 8);
-
-          const u8 outPixel_y1_x0 = __USAT(curScaledPixelU32_y1_x0, 8);
-          const u8 outPixel_y1_x1 = __USAT(curScaledPixelU32_y1_x1, 8);
-          const u8 outPixel_y1_x2 = __USAT(curScaledPixelU32_y1_x2, 8);
-          const u8 outPixel_y1_x3 = __USAT(curScaledPixelU32_y1_x3, 8);
-#endif // #if !defined(USE_ARM_ACCELERATION) ... #else
 
           const u32 outPixel_y0 = outPixel_y0_x0 | (outPixel_y0_x1<<8) | (outPixel_y0_x2<<16) | (outPixel_y0_x3<<24);
           const u32 outPixel_y1 = outPixel_y1_x0 | (outPixel_y1_x1<<8) | (outPixel_y1_x2<<16) | (outPixel_y1_x3<<24);
+#else // ARM optimized
+          const u32 curScaledPixelU32_y0_x01 = static_cast<u16>(curScaledPixelF32_y0_x0) | (static_cast<u16>(curScaledPixelF32_y0_x1) << 16);
+          const u32 curScaledPixelU32_y0_x23 = static_cast<u16>(curScaledPixelF32_y0_x2) | (static_cast<u16>(curScaledPixelF32_y0_x3) << 16);
+
+          const u32 curScaledPixelU32_y1_x01 = static_cast<u16>(curScaledPixelF32_y1_x0) | (static_cast<u16>(curScaledPixelF32_y1_x1) << 16);
+          const u32 curScaledPixelU32_y1_x23 = static_cast<u16>(curScaledPixelF32_y1_x2) | (static_cast<u16>(curScaledPixelF32_y1_x3) << 16);
+
+          const u32 outPixel_y0_x01 = __USAT16(curScaledPixelU32_y0_x01, 8);
+          const u32 outPixel_y0_x23 = __USAT16(curScaledPixelU32_y0_x23, 8);
+
+          const u32 outPixel_y1_x01 = __USAT16(curScaledPixelU32_y1_x01, 8);
+          const u32 outPixel_y1_x23 = __USAT16(curScaledPixelU32_y1_x23, 8);
+
+          const u32 outPixel_y0 = 
+             (outPixel_y0_x01&0xFF) | 
+            ((outPixel_y0_x01&0xFF0000) >> 8) | 
+            ((outPixel_y0_x23&0xFF) << 16) | 
+            ((outPixel_y0_x23&0xFF0000) << 8);
+          
+          const u32 outPixel_y1 = 
+            (outPixel_y1_x01&0xFF) | 
+            ((outPixel_y1_x01&0xFF0000) >> 8) | 
+            ((outPixel_y1_x23&0xFF) << 16) | 
+            ((outPixel_y1_x23&0xFF0000) << 8);
+#endif // #if !defined(USE_ARM_ACCELERATION) ... #else
 
           pImage_y0[x] = outPixel_y0;
           pImage_y1[x] = outPixel_y1;
