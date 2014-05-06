@@ -107,19 +107,19 @@ namespace Anki
           const f32 scale_3 = yScaleComponent + model1 * xF32_3 + model3 * xF32_3 * xF32_3;
 
           const f32 curScaledPixelF32_0 = scale_0 * curPixel_0;
-          const s32 curScaledPixelS32_0 = static_cast<s32>(curScaledPixelF32_0 + 0.5f);
+          const s32 curScaledPixelS32_0 = static_cast<s32>(curScaledPixelF32_0);
           const u8 outPixel_0 = static_cast<u8>(MIN(255, curScaledPixelS32_0));
 
           const f32 curScaledPixelF32_1 = scale_1 * curPixel_1;
-          const s32 curScaledPixelS32_1 = static_cast<s32>(curScaledPixelF32_1 + 0.5f);
+          const s32 curScaledPixelS32_1 = static_cast<s32>(curScaledPixelF32_1);
           const u8 outPixel_1 = static_cast<u8>(MIN(255, curScaledPixelS32_1));
 
           const f32 curScaledPixelF32_2 = scale_2 * curPixel_2;
-          const s32 curScaledPixelS32_2 = static_cast<s32>(curScaledPixelF32_2 + 0.5f);
+          const s32 curScaledPixelS32_2 = static_cast<s32>(curScaledPixelF32_2);
           const u8 outPixel_2 = static_cast<u8>(MIN(255, curScaledPixelS32_2));
 
           const f32 curScaledPixelF32_3 = scale_3 * curPixel_3;
-          const s32 curScaledPixelS32_3 = static_cast<s32>(curScaledPixelF32_3 + 0.5f);
+          const s32 curScaledPixelS32_3 = static_cast<s32>(curScaledPixelF32_3);
           const u8 outPixel_3 = static_cast<u8>(MIN(255, curScaledPixelS32_3));
 
           const u32 outPixel = outPixel_0 | (outPixel_1<<8) | (outPixel_2<<16) | (outPixel_3<<24);

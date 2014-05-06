@@ -33,7 +33,8 @@ namespace Anki
 
     // Scale the grayvalue of each pixel, to correct for vignetting
     // Use the matlab tool fit2dCurve to get a model of the form [constant, x, y, x.^2, y.^2, ...]
-    // The model must be such that the scale at every pixel is in the range [0.0, 2^23];
+    // The model must be such that the scale at every pixel is in the range [0.0, 2^8];
+    // NOTE: The rounding is approximate, so the answer may be 1 different than Matlab
     Result CorrectVignetting(
       Array<u8> &image,
       const FixedLengthList<f32> &polynomialParameters);

@@ -87,7 +87,7 @@ GTEST_TEST(CoreTech_Vision, Vignetting)
   Array<u8> image_groundTruth(imageHeight,imageWidth,scratchOnchip);
 
   const u8 image_groundTruthData[imageHeight*imageWidth] = {
-    160, 196, 242, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+    159, 195, 241, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
     185, 221, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255};
 
   image_groundTruth.Set(image_groundTruthData, imageHeight*imageWidth);
