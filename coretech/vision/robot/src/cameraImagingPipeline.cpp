@@ -11,6 +11,24 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/cameraImagingPipeline.h"
 #include "anki/vision/robot/histogram.h"
 
+#define USE_ARM_ACCELERATION
+
+#if defined(__EDG__)
+#ifndef USE_ARM_ACCELERATION
+#warning not using USE_ARM_ACCELERATION
+#endif
+#else
+#undef USE_ARM_ACCELERATION
+#endif
+
+#if defined(USE_ARM_ACCELERATION)
+#ifdef USING_CHIP_SIMULATOR
+#include <ARMCM4.h>
+#else
+#include <stm32f4xx.h>
+#endif
+#endif
+
 namespace Anki
 {
   namespace Embedded
@@ -89,7 +107,6 @@ namespace Anki
         f32 xF32 = 0.5f;
         for(s32 x=0; x<imageWidth4; x++) {
           const u32 curPixels = pImage[x];
-          //const f32 curPixel = static_cast<f32>(pImage[x]);
 
           const f32 curPixel_0 = static_cast<f32>(curPixels & 0xFF);
           const f32 curPixel_1 = static_cast<f32>((curPixels & 0xFF00) >> 8);
@@ -107,20 +124,26 @@ namespace Anki
           const f32 scale_3 = yScaleComponent + model1 * xF32_3 + model3 * xF32_3 * xF32_3;
 
           const f32 curScaledPixelF32_0 = scale_0 * curPixel_0;
-          const s32 curScaledPixelS32_0 = static_cast<s32>(curScaledPixelF32_0);
-          const u8 outPixel_0 = static_cast<u8>(MIN(255, curScaledPixelS32_0));
-
           const f32 curScaledPixelF32_1 = scale_1 * curPixel_1;
-          const s32 curScaledPixelS32_1 = static_cast<s32>(curScaledPixelF32_1);
-          const u8 outPixel_1 = static_cast<u8>(MIN(255, curScaledPixelS32_1));
-
           const f32 curScaledPixelF32_2 = scale_2 * curPixel_2;
-          const s32 curScaledPixelS32_2 = static_cast<s32>(curScaledPixelF32_2);
-          const u8 outPixel_2 = static_cast<u8>(MIN(255, curScaledPixelS32_2));
-
           const f32 curScaledPixelF32_3 = scale_3 * curPixel_3;
-          const s32 curScaledPixelS32_3 = static_cast<s32>(curScaledPixelF32_3);
-          const u8 outPixel_3 = static_cast<u8>(MIN(255, curScaledPixelS32_3));
+
+          const u32 curScaledPixelU32_0 = static_cast<u32>(curScaledPixelF32_0);
+          const u32 curScaledPixelU32_1 = static_cast<u32>(curScaledPixelF32_1);
+          const u32 curScaledPixelU32_2 = static_cast<u32>(curScaledPixelF32_2);
+          const u32 curScaledPixelU32_3 = static_cast<u32>(curScaledPixelF32_3);
+
+#if !defined(USE_ARM_ACCELERATION) // natural C
+          const u8 outPixel_0 = static_cast<u8>(MIN(255, curScaledPixelU32_0));
+          const u8 outPixel_1 = static_cast<u8>(MIN(255, curScaledPixelU32_1));
+          const u8 outPixel_2 = static_cast<u8>(MIN(255, curScaledPixelU32_2));
+          const u8 outPixel_3 = static_cast<u8>(MIN(255, curScaledPixelU32_3));
+#else // ARM optimized
+          const u8 outPixel_0 = __USAT(curScaledPixelU32_0, 8);
+          const u8 outPixel_1 = __USAT(curScaledPixelU32_1, 8);
+          const u8 outPixel_2 = __USAT(curScaledPixelU32_2, 8);
+          const u8 outPixel_3 = __USAT(curScaledPixelU32_3, 8);
+#endif // #if !defined(USE_ARM_ACCELERATION) ... #else
 
           const u32 outPixel = outPixel_0 | (outPixel_1<<8) | (outPixel_2<<16) | (outPixel_3<<24);
 
