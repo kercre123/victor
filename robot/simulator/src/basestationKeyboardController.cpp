@@ -36,12 +36,21 @@ namespace Anki {
         
         bool isEnabled_ = false;
         
+        webots::GPS* gps_;
+        webots::Compass* compass_;
+        
       } // private namespace
       
       
       void BSKeyboardController::Init(RobotManager *robotMgr)
       {
         robotMgr_ = robotMgr;
+        
+        gps_ = basestationController.getGPS("gps");
+        compass_ = basestationController.getCompass("compass");
+        
+        gps_->enable(TIME_STEP);
+        compass_->enable(TIME_STEP);
       }
       
       void BSKeyboardController::Enable(void)
@@ -88,6 +97,7 @@ namespace Anki {
         const s32 CKEY_REQUEST_IMG = 73;  // i
         const s32 CKEY_DISPLAY_TOGGLE = 68;  // d
         const s32 CKEY_HEADLIGHT   = 72;  // h
+        const s32 CKEY_GOTO_POSE   = 71;  // g
 
         // Get robot
         robot_ = NULL;
@@ -261,7 +271,28 @@ namespace Anki {
               robot_->SendHeadlight(headlightsOn ? 128 : 0);
               break;
             }
+            case CKEY_GOTO_POSE:
+            {
+              const double* trans = gps_->getValues();
+              const double* northVec = compass_->getValues();
               
+              // Convert to mm
+              Vec3f transVec;
+              transVec.x() = trans[0] * 1000;
+              transVec.y() = trans[1] * 1000;
+              transVec.z() = trans[2] * 1000;
+              
+              // Compute orientation from north vector
+              f32 angle = atan2f(-northVec[1], northVec[0]);
+              
+              // Generate destination pose
+              Vec3f rotAxis(0,0,1);
+              Anki::Pose3d pose(angle, rotAxis, transVec);
+              
+              // Execute path to pose
+              robot_->ExecutePathToPose(pose);
+              break;
+            }
             default:
             {
               // Stop wheels
