@@ -66,14 +66,14 @@ GTEST_TEST(CoreTech_Vision, Vignetting)
   MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
   ASSERT_TRUE(scratchOffchip.IsValid());
 
-  const s32 imageHeight = 2;
+  const s32 imageHeight = 4;
   const s32 imageWidth = 16;
 
   Array<u8> image(imageHeight,imageWidth,scratchOnchip);
   image.Set(128);
 
   FixedLengthList<f32> polynomialParameters(5, scratchOnchip, Flags::Buffer(false, false, true));
-  const f32 parameters[5] = {1.0f, 0.2f, 0.3f, 0.04f, -0.05f};
+  const f32 parameters[5] = {1.0f, 0.01f, 0.03f, 0.01f, -0.01f};
 
   for(s32 i=0; i<5; i++)
     polynomialParameters[i] = parameters[i];
@@ -82,13 +82,15 @@ GTEST_TEST(CoreTech_Vision, Vignetting)
 
   ASSERT_TRUE(result == RESULT_OK);
 
-  //image.Print("image");
+  image.Print("image");
 
   Array<u8> image_groundTruth(imageHeight,imageWidth,scratchOnchip);
 
   const u8 image_groundTruthData[imageHeight*imageWidth] = {
-    159, 195, 241, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-    185, 221, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255};
+    133, 133, 145, 145, 168, 168, 202, 202, 245, 245, 255, 255, 255, 255, 255, 255,
+    133, 133, 145, 145, 168, 168, 202, 202, 245, 245, 255, 255, 255, 255, 255, 255,
+    130, 130, 143, 143, 166, 166, 199, 199, 243, 243, 255, 255, 255, 255, 255, 255,
+    130, 130, 143, 143, 166, 166, 199, 199, 243, 243, 255, 255, 255, 255, 255, 255};
 
   image_groundTruth.Set(image_groundTruthData, imageHeight*imageWidth);
 
