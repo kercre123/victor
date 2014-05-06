@@ -298,13 +298,6 @@ namespace Anki {
     return std::array<Point<N,T>,4>::operator[](static_cast<int>(whichCorner));
   }
   
-  bool sortHelper(const std::pair<f32,QuadDimType>& pair1,
-                  const std::pair<f32,QuadDimType>& pair2)
-  {
-    return pair1.first < pair2.first;
-  }
-  
-  
   template<QuadDimType N, typename T>
   Quadrilateral<2,T> Quadrilateral<N,T>::SortCornersClockwise() const
   {
@@ -326,7 +319,7 @@ namespace Anki {
     }
     
     // Sort by angle, bringing corner index along for the ride
-    std::sort(angleIndexPairs.begin(), angleIndexPairs.end(), sortHelper);
+    std::sort(angleIndexPairs.begin(), angleIndexPairs.end(), CompareFirst<f32,Quad::CornerName>());
     
     // Re-order the corners using the sorted indices
     const Quadrilateral<2,T> sortedQuad((*this)[angleIndexPairs[0].second],
@@ -381,7 +374,7 @@ namespace Anki {
     }
     
     // Sort by angle, taking the corner index along for the ride
-    std::sort(angleIndexPairs.begin(), angleIndexPairs.end(), sortHelper);
+    std::sort(angleIndexPairs.begin(), angleIndexPairs.end(), CompareFirst<f32,Quad::CornerName>());
     
     const Quadrilateral<N,T> sortedQuad((*this)[Quad::FirstCorner],
                                         (*this)[angleIndexPairs[0].second],
