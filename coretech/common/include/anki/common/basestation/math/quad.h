@@ -5,15 +5,19 @@
 #include <array>
 
 #include "anki/common/basestation/exceptions.h"
+#include "anki/common/basestation/general.h"
 #include "anki/common/basestation/math/linearAlgebra_impl.h"
 #include "anki/common/basestation/math/point.h"
 
 #if ANKICORETECH_USE_OPENCV
 #include "opencv2/core/core.hpp"
+#include "opencv2/imgproc/imgproc.hpp" // for minAreaRect
 #endif
 
 namespace Anki {
 
+  typedef size_t QuadDimType;
+  
   namespace Quad {
     
     enum CornerName {
@@ -32,10 +36,8 @@ namespace Anki {
     CornerName operator++(CornerName& cname, int);
     
     CornerName operator+(CornerName& cname, int value);
-    
+        
   } // namespace Quad
-  
-  typedef size_t QuadDimType;
   
   template<QuadDimType N, typename T>
   class Quadrilateral : public std::array<Point<N,T>, 4>
@@ -108,6 +110,15 @@ namespace Anki {
   
   typedef Quadrilateral<2,float> Quad2f;
   typedef Quadrilateral<3,float> Quad3f;
+  
+  // Find the minimum bounding quad for a set of points. Note that this will
+  // actually be a rotated rectangle (i.e. not a completely general
+  // quadrilateral. It also only works for N==2 for now.
+  // TODO: Take in more generic STL containers of points beyond just std::vector?
+  // TODO: Make a 3D version too, with a projector?
+  template<typename T>
+  Quadrilateral<2,T> GetBoundingQuad(std::vector<Point<2,T> >& points);
+
   
   
 #pragma mark --- Quadrilateral Implementations ---
@@ -355,7 +366,7 @@ namespace Anki {
     
     // The cross product of the first coordinate axis vector with the normal
     // to define the (orthogonal) other coordinate axis vector
-    Point<N,T> unitV( cross(unitU, unitNormal) );
+    Point<N,T> unitV( cross(unitNormal, unitU) );
     
     // By definition, the first corner's angle is 0.  Sort the other three
     // relative to it, using the plane's coordinate system we just established
@@ -382,6 +393,33 @@ namespace Anki {
                                         (*this)[angleIndexPairs[2].second]);
               
     return sortedQuad;
+  }
+  
+  template<typename T>
+  Quadrilateral<2,T> GetBoundingQuad(std::vector<Point<2,T> >& points)
+  {
+#if ANKICORETECH_USE_OPENCV
+    cv::vector<cv::Point2f> cvPoints(points.size());
+    for(s32 i_corner = 0; i_corner < points.size(); ++i_corner) {
+      cvPoints[i_corner].x = static_cast<f32>(points[i_corner].x());
+      cvPoints[i_corner].y = static_cast<f32>(points[i_corner].y());
+    }
+    
+    cv::RotatedRect cvRotatedRect = cv::minAreaRect(cvPoints);
+    cv::Point2f cvQuad[4];
+    cvRotatedRect.points(cvQuad);
+    Quad2f boundingQuad(Point<2,T>(static_cast<T>(cvQuad[0].x), static_cast<T>(cvQuad[0].y)),
+                        Point<2,T>(static_cast<T>(cvQuad[1].x), static_cast<T>(cvQuad[1].y)),
+                        Point<2,T>(static_cast<T>(cvQuad[2].x), static_cast<T>(cvQuad[2].y)),
+                        Point<2,T>(static_cast<T>(cvQuad[3].x), static_cast<T>(cvQuad[3].y)));
+    
+    boundingQuad = boundingQuad.SortCornersClockwise();
+    
+#else
+    CORETECH_THROW("GetBoundingQuad() currently requires OpenCV.");
+#endif
+    
+    return boundingQuad;
   }
   
   /*
