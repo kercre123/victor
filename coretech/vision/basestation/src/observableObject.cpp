@@ -11,11 +11,20 @@ namespace Anki {
     const std::vector<const KnownMarker*> ObservableObject::sEmptyMarkerVector(0);
     
     ObservableObject::ObservableObject(ObjectType_t objType)
-    : type_(objType), ID_(0)
+    : type_(objType), ID_(0), wasObserved_(false)
     {
       //ID_ = ObservableObject::ObjectCounter++;
     }
     
+    bool ObservableObject::GetWhetherObserved() const
+    {
+      return wasObserved_;
+    }
+    
+    void ObservableObject::SetWhetherObserved(const bool wasObserved)
+    {
+      wasObserved_ = wasObserved;
+    }
     Vision::KnownMarker const& ObservableObject::AddMarker(const Marker::Code&  withCode,
                                                            const Pose3d&        atPose,
                                                            const f32            size_mm)
@@ -29,7 +38,7 @@ namespace Anki {
       markersWithCode_[withCode].push_back(&markers_.back());
       
       return markers_.back();
-    }
+    } // ObservableObject::AddMarker()
     
     std::vector<const KnownMarker*> const& ObservableObject::GetMarkersWithCode(const Marker::Code& withCode) const
     {
@@ -40,7 +49,7 @@ namespace Anki {
       else {
         return ObservableObject::sEmptyMarkerVector;
       }
-    }
+    } // ObservableObject::GetMarkersWithCode()
     
     bool ObservableObject::IsSameAs(const ObservableObject&  otherObject,
                                     const float              distThreshold,
@@ -88,6 +97,13 @@ namespace Anki {
       }
       
     } // ComputePossiblePoses()
+
+    
+    void ObservableObject::GetCorners(std::vector<Point3f>& corners) const
+    {
+      this->GetCorners(pose_, corners);
+    }
+    
     
     
 #pragma mark --- ObservableObjectLibrary Implementations ---

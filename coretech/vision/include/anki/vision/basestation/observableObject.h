@@ -51,6 +51,8 @@ namespace Anki {
       void ComputePossiblePoses(const ObservedMarker*     obsMarker,
                                 std::vector<PoseMatchPair>& possiblePoses) const;
       
+      bool GetWhetherObserved(void) const;
+      void SetWhetherObserved(bool wasObserved);
       // Accessors:
       ObjectID_t      GetID()     const;
       ObjectType_t    GetType()   const;
@@ -78,6 +80,9 @@ namespace Anki {
       // ObservableObjectBase below
       virtual ObservableObject* Clone() const = 0;
       
+      virtual void GetCorners(std::vector<Point3f>& corners) const;
+      virtual void GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const = 0;
+      
     protected:
       
       //static const std::vector<RotationMatrix3d> rotationAmbiguities_;
@@ -95,6 +100,8 @@ namespace Anki {
       std::map<Marker::Code, std::vector<const KnownMarker*> > markersWithCode_;
       
       Pose3d pose_;
+      
+      bool wasObserved_;
       
       /*
       // Canonical pose used as the parent pose for the object's markers so
