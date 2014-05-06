@@ -87,7 +87,11 @@ namespace Anki
 
           const f32 scale = yScaleComponent + model1 * xF32 + model3 * xF32 * xF32;
 
-          const u8 outPixel = saturate_cast<u8>(scale * curPixel);
+          //const u8 outPixel = saturate_cast<u8>(scale * curPixel);
+
+          const f32 curScaledPixelF32 = scale * curPixel;
+          const s32 curScaledPixelS32 = static_cast<s32>(curScaledPixelF32 + 0.5f);
+          const u8 outPixel = static_cast<u8>(MIN(255, curScaledPixelS32));
 
           pImage[x] = outPixel;
 
