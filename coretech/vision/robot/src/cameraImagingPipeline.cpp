@@ -79,16 +79,16 @@ namespace Anki
       Array<u8> &image,
       const FixedLengthList<f32> &polynomialParameters)
     {
+      const s32 imageHeight = image.get_size(0);
+      const s32 imageWidth = image.get_size(1);
+
       AnkiConditionalErrorAndReturnValue(IsOdd(polynomialParameters.get_size()) && polynomialParameters.get_size() == 5,
         RESULT_FAIL_INVALID_PARAMETER, "CorrectVignetting", "only 5 polynomialParameters currently supported (2nd order polynomial)");
 
-      AnkiConditionalErrorAndReturnValue(image.get_size(1)%4 == 0,
-        RESULT_FAIL_INVALID_SIZE, "CorrectVignetting", "Image width must be divisible by 4");
+      AnkiConditionalErrorAndReturnValue((imageWidth%4 == 0) && imageWidth >= 4 && (imageHeight%2 == 0) && imageHeight >= 2,
+        RESULT_FAIL_INVALID_SIZE, "CorrectVignetting", "Image width must be divisible by 4 and height by 2");
 
       const s32 polynomialDegree = (polynomialParameters.get_size() - 1) / 2;
-
-      const s32 imageHeight = image.get_size(0);
-      const s32 imageWidth = image.get_size(1);
 
       const s32 imageWidth4 = imageWidth / 4;
 
