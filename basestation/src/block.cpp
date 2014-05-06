@@ -15,6 +15,11 @@
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/robot.h"
 
+
+#if ANKICORETECH_USE_OPENCV
+#include "opencv2/imgproc/imgproc.hpp"
+#endif
+
 namespace Anki {
   namespace Cozmo {
     
@@ -96,17 +101,40 @@ namespace Anki {
     //unsigned int Block::numBlocks = 0;
     
     //ObjectType_t Block::NumTypes = 0;
-   
+    
+    const std::array<Point3f, Block::NUM_CORNERS> Block::CanonicalCorners = {{
+      Point3f(-0.5f, -0.5f,  0.5f),
+      Point3f( 0.5f, -0.5f,  0.5f),
+      Point3f(-0.5f, -0.5f, -0.5f),
+      Point3f( 0.5f, -0.5f, -0.5f),
+      Point3f(-0.5f,  0.5f,  0.5f),
+      Point3f( 0.5f,  0.5f,  0.5f),
+      Point3f(-0.5f,  0.5f, -0.5f),
+      Point3f( 0.5f,  0.5f, -0.5f)
+    }};
+       
+    void Block::GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const
+    {
+      corners.resize(NUM_CORNERS);
+      for(s32 i=0; i<NUM_CORNERS; ++i) {
+        // Start with (zero-centered) canonical corner
+        corners[i] = Block::CanonicalCorners[i];
+        // Scale to the right size
+        corners[i] *= size_;
+        // Move to block's current pose
+        corners[i] = atPose * corners[i];
+      }
+    }
+    
     Block::Block(const ObjectType_t type)
     : ObservableObject(type),
       color_(BlockInfoLUT_[type].color),
       size_(BlockInfoLUT_[type].size),
-      name_(BlockInfoLUT_[type].name),
-      blockCorners_(8)
+      name_(BlockInfoLUT_[type].name)
     {
       
       //++Block::numBlocks;
-      
+      /*
       const float halfWidth  = 0.5f * this->GetWidth();
       const float halfHeight = 0.5f * this->GetHeight();
       const float halfDepth  = 0.5f * this->GetDepth();
@@ -123,7 +151,7 @@ namespace Anki {
       blockCorners_[RIGHT_BACK_TOP]     = { halfWidth, halfDepth, halfHeight};
       blockCorners_[LEFT_BACK_BOTTOM]   = {-halfWidth, halfDepth,-halfHeight};
       blockCorners_[RIGHT_BACK_BOTTOM]  = { halfWidth, halfDepth,-halfHeight};
-      
+      */
       markersByFace_.fill(NULL);
       
       for(auto face : BlockInfoLUT_[type_].faces) {
@@ -135,13 +163,35 @@ namespace Anki {
       
     } // Constructor: Block(type)
     
-    Quad2f Block::GetBoundingBoxXY(const f32 padding) const {
-      return GetBoundingBoxXY(pose_, padding);
+    Quad3f Block::GetBoundingQuadInPlane(const Point3f& planeNormal, const f32 padding) const
+    {
+      return GetBoundingQuadInPlane(planeNormal, pose_, padding);
     }
     
     
-    Quad3f Block::GetBoundingBoxInPlane(const Point3f& planeNormal, const Pose3d& atPose, const f32 paddingScale) const
+    Quad3f Block::GetBoundingQuadInPlane(const Point3f& planeNormal, const Pose3d& atPose, const f32 paddingScale) const
     {
+      const RotationMatrix3d& R = atPose.get_rotationMatrix();
+      const Matrix_3x3f planeProjector = GetProjectionOperator(planeNormal);
+      
+      // Compute a single projection and rotation operator
+      const Matrix_3x3f PR(planeProjector*R);
+      
+      std::vector<Point3f> points;
+      points.reserve(8);
+      for(auto corner : Block::CanonicalCorners) {
+        // Scale to the right block size
+        corner *= size_;
+        
+        // Rotate to given pose and project onto the given plane
+        points.emplace_back(PR*corner);
+      }
+      
+      // TODO: 3D bounding quad doesn't exist yet
+      Quad3f boundingQuad; // = GetBoundingQuad(points);
+      CORETECH_ASSERT(false);
+      
+      /*
       // Data structure for helping me sort 3D points by their 2D distance
       // from center in the given plane
       struct planePoint {
@@ -171,7 +221,7 @@ namespace Anki {
       
       // Choose the 4 points furthest from the center of the block (in the
       // given plane)
-      std::vector<planePoint> planeCorners = {
+      std::array<planePoint,8> planeCorners = {
         planePoint(blockCorners_[LEFT_FRONT_TOP],     R, planeProjector),
         planePoint(blockCorners_[RIGHT_FRONT_TOP],    R, planeProjector),
         planePoint(blockCorners_[LEFT_FRONT_BOTTOM],  R, planeProjector),
@@ -193,7 +243,8 @@ namespace Anki {
                           planeCorners[3].pt_);
       
       boundingQuad = boundingQuad.SortCornersClockwise(planeNormal);
-      
+      */
+       
       // Scale and re-center (Note: we don't need to use Quadrilateral::scale()
       // here because we know the points are zero-centered and can thus just
       // multiply them by paddingScale directly.)
@@ -208,8 +259,26 @@ namespace Anki {
     } // GetBoundingBoxInPlane()
     
     
-    Quad2f Block::GetBoundingBoxXY(const Pose3d& atPose, const f32 paddingScale) const
+    Quad2f Block::GetBoundingQuadXY(const Pose3d& atPose, const f32 paddingScale) const
     {
+      const RotationMatrix3d& R = atPose.get_rotationMatrix();
+      
+      std::vector<Point2f> points;
+      points.reserve(8);
+      for(auto corner : Block::CanonicalCorners) {
+        // Scale canonical point to correct size
+        corner *= size_;
+        
+        // Rotate to given pose
+        corner = R*corner;
+        
+        // Project onto XY plane, i.e. just drop the Z coordinate
+        points.emplace_back(corner.x(), corner.y());
+      }
+      
+      Quad2f boundingQuad = GetBoundingQuad(points);
+      
+      /*
       // Data structure for helping me sort 3D points by their 2D x-y distance
       // from center
       struct xyPoint {
@@ -256,6 +325,7 @@ namespace Anki {
                           xyCorners[3].pt_);
       
       boundingQuad = boundingQuad.SortCornersClockwise();
+      */
       
       // scale and re-center (Note: we don't need to use Quadrilateral::scale()
       // here because we know the points are zero-centered and can thus just
