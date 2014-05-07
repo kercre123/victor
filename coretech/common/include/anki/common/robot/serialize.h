@@ -292,6 +292,14 @@ namespace Anki
       s32 basicType_numElements;
       EncodedArray::Deserialize(true, height, width, stride, flags, basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_numElements, buffer, bufferLength);
 
+      AnkiConditionalErrorAndReturnValue(
+        height > 0 && height < 1000000 &&
+        width > 0 && width < 1000000 &&
+        stride > 0 && stride < 1000000 &&
+        basicType_sizeOfType > 0 && basicType_sizeOfType < 10000 &&
+        basicType_numElements > 0 && basicType_numElements < 1000000,
+        Array<Type>(), "SerializedBuffer::DeserializeRawArray", "Unreasonable deserialized values");
+
       AnkiConditionalErrorAndReturnValue(stride == RoundUp(width*sizeof(Type), MEMORY_ALIGNMENT),
         Array<Type>(), "SerializedBuffer::DeserializeRawArray", "Parsed stride is not reasonable");
 
@@ -332,16 +340,33 @@ namespace Anki
       s32 basicType_numElements;
       EncodedArraySlice::Deserialize(true, height, width, stride, flags, ySlice_start, ySlice_increment, ySlice_end, xSlice_start, xSlice_increment, xSlice_end, basicType_sizeOfType, basicType_isBasicType, basicType_isInteger, basicType_isSigned, basicType_isFloat, basicType_numElements, buffer, bufferLength);
 
-      const LinearSequence<s32> ySlice(ySlice_start, ySlice_increment, ySlice_end);
-      const LinearSequence<s32> xSlice(xSlice_start, xSlice_increment, xSlice_end);
+      AnkiConditionalErrorAndReturnValue(
+        height > 0 && height < 1000000 &&
+        width > 0 && width < 1000000 &&
+        stride > 0 && stride < 1000000 &&
+        ySlice_start >= 0 && ySlice_start <= ySlice_end &&
+        ySlice_increment > 0 &&
+        ySlice_end >= 0 &&
+        xSlice_start >= 0 && xSlice_start <= xSlice_end &&
+        xSlice_increment > 0 &&
+        xSlice_end >= 0 &&
+        basicType_sizeOfType > 0 && basicType_sizeOfType < 10000 &&
+        basicType_numElements > 0 && basicType_numElements < 1000000,
+        ArraySlice<Type>(), "SerializedBuffer::DeserializeRawArraySlice", "Unreasonable deserialized values");
 
       AnkiConditionalErrorAndReturnValue(stride == RoundUp(width*sizeof(Type), MEMORY_ALIGNMENT),
         ArraySlice<Type>(), "SerializedBuffer::DeserializeRawArraySlice", "Parsed stride is not reasonable");
+
+      const LinearSequence<s32> ySlice(ySlice_start, ySlice_increment, ySlice_end);
+      const LinearSequence<s32> xSlice(xSlice_start, xSlice_increment, xSlice_end);
 
       AnkiConditionalErrorAndReturnValue(bufferLength >= static_cast<s32>(xSlice.get_size()*ySlice.get_size()*sizeof(Type)),
         ArraySlice<Type>(), "SerializedBuffer::DeserializeRawArraySlice", "Not enought bytes left to set the array");
 
       Array<Type> array(height, width, memory);
+
+      AnkiConditionalErrorAndReturnValue(array.IsValid(),
+        ArraySlice<Type>(), "SerializedBuffer::DeserializeRawArraySlice", "Out of memory");
 
       // TODO: this could be done more efficiently
 
