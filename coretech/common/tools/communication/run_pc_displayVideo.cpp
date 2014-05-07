@@ -139,7 +139,7 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
 
     //PrintBenchmarkResults(benchmarks, false, false);
 
-    FixedLengthList<ShowBenchmarkParameters> namesToDisplay(5, scratch);
+    FixedLengthList<ShowBenchmarkParameters> namesToDisplay(128, scratch);
     namesToDisplay.PushBack(ShowBenchmarkParameters("VisionSystem_CameraGetFrame", false, red));
     namesToDisplay.PushBack(ShowBenchmarkParameters("ComputeBenchmarkResults", false, maroon));
     namesToDisplay.PushBack(ShowBenchmarkParameters("UARTPutMessage", false, maroon));

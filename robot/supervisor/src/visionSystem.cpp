@@ -773,7 +773,8 @@ namespace Anki {
 
         // Check for a super shrunk or super large template
         // (I don't think this works for planar 6dof homographies?  Try dividing by h22?)
-        {
+#warning broken
+        /*{
           // TODO: make not hacky
           const Array<f32> &homography = tracker.get_transformation().get_homography();
 
@@ -801,7 +802,7 @@ namespace Anki {
           if(secondValue < 0.1f || secondValue > 40.0f) {
             converged = false;
           }
-        }
+        }*/
 #endif // #if DOCKING_ALGORITHM != DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
 
         EndBenchmark("VisionSystem_TrackTemplate");
@@ -1081,12 +1082,13 @@ namespace Anki {
           Point<P3P_PRECISION>(currentQuad[2].x, currentQuad[2].y),
           Point<P3P_PRECISION>(currentQuad[3].x, currentQuad[3].y));
 
-        P3P::computePose(currentQuad_atPrecision,
+#warning broken
+        /*P3P::computePose(currentQuad_atPrecision,
           canonicalMarker3d_[0], canonicalMarker3d_[1],
           canonicalMarker3d_[2], canonicalMarker3d_[3],
           headCamInfo_->focalLength_x, headCamInfo_->focalLength_y,
           headCamInfo_->center_x, headCamInfo_->center_y,
-          R, T, scratch);
+          R, T, scratch);*/
 
         // Extract what we need for the docking error signal from the block's pose:
         dockErrMsg.x_distErr = T.x;

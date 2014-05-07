@@ -293,7 +293,7 @@ namespace Anki {
 
           tracker.Serialize("Binary Tracker", debugStreamBuffer_);
 
-          return SendBuffer(debugStreamBuffer_);
+          return SendBuffer(debugStreamBuffer_, offchipScratch);
 #else
           return RESULT_OK;
 #endif // #if SEND_DEBUG_STREAM
@@ -356,7 +356,7 @@ namespace Anki {
 
           debugStreamBuffer_.PushBack(objectName, imageSmall);
 
-          result = SendBuffer(debugStreamBuffer_);
+          result = SendBuffer(debugStreamBuffer_, offchipScratch);
 
 #endif // #if SEND_DEBUG_STREAM
 
