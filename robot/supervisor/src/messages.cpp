@@ -311,7 +311,7 @@ namespace Anki {
       void ProcessDriveWheelsMessage(const DriveWheels& msg) {
         
         // Do not process external drive commands if following a test path
-        if (TestModeController::GetMode() == TM_PATH_FOLLOW) {
+        if (PathFollower::IsTraversingPath()) {
           return;
         }
         //PathFollower::ClearPath();

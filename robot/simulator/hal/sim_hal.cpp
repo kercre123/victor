@@ -515,9 +515,10 @@ namespace Anki {
       f32 fov_hor = camera->getFov();
       f32 fov_ver = fov_hor / aspect;
       
+      f32 fx = width / (2.f * std::tan(0.5f*fov_hor));
       f32 fy = height / (2.f * std::tan(0.5f*fov_ver));
       
-      info.focalLength_x = fy;
+      info.focalLength_x = fx;
       info.focalLength_y = fy;
       //info.fov_ver       = fov_ver;
       info.center_x      = 0.5f*width;
@@ -576,7 +577,7 @@ namespace Anki {
     } //SetHeadCamMode()
     */
     
-    void HAL::CameraSetExposure(f32 exposure)
+    void HAL::CameraSetParameters(f32 exposure, bool enableVignettingCorrection)
     {
       // Can't control simulated camera's exposure.
       
@@ -584,7 +585,7 @@ namespace Anki {
       
       return;
       
-    } // HAL::CameraSetExposure()
+    } // HAL::CameraSetParameters()
     
     
     // Starts camera frame synchronization
