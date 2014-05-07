@@ -62,34 +62,31 @@ namespace Anki {
 
           FixedLengthList<BenchmarkElement> benchmarks = ComputeBenchmarkResults(scratch);
 
-          // Hack to add the time for computing the benchmark to the compiled times
-          if(benchmarks.get_size() < benchmarks.get_maximumSize()) {
-            BenchmarkElement newElement("ComputeBenchmarkResults");
-            newElement.inclusive_mean = lastComputeBenchmarkResults_elapsedTime;
-            newElement.inclusive_min = lastComputeBenchmarkResults_elapsedTime;
-            newElement.inclusive_max = lastComputeBenchmarkResults_elapsedTime;
-            newElement.inclusive_total = lastComputeBenchmarkResults_elapsedTime;
-            newElement.exclusive_mean = lastComputeBenchmarkResults_elapsedTime;
-            newElement.exclusive_min = lastComputeBenchmarkResults_elapsedTime;
-            newElement.exclusive_max = lastComputeBenchmarkResults_elapsedTime;
-            newElement.exclusive_total = lastComputeBenchmarkResults_elapsedTime;
-            newElement.numEvents = 1;
+          const s32 totalTimeIndex = GetNameIndex("TotalTime", benchmarks);
+          if(totalTimeIndex >= 0) {
+            // Hack to add the time for computing the benchmark to the compiled times
+            if(benchmarks.get_size() < benchmarks.get_maximumSize()) {
+              BenchmarkElement newElement("ComputeBenchmarkResults");
+              newElement.inclusive_mean = lastComputeBenchmarkResults_elapsedTime;
+              newElement.inclusive_min = lastComputeBenchmarkResults_elapsedTime;
+              newElement.inclusive_max = lastComputeBenchmarkResults_elapsedTime;
+              newElement.inclusive_total = lastComputeBenchmarkResults_elapsedTime;
+              newElement.exclusive_mean = lastComputeBenchmarkResults_elapsedTime;
+              newElement.exclusive_min = lastComputeBenchmarkResults_elapsedTime;
+              newElement.exclusive_max = lastComputeBenchmarkResults_elapsedTime;
+              newElement.exclusive_total = lastComputeBenchmarkResults_elapsedTime;
+              newElement.numEvents = 1;
 
-            const s32 numBenchmarks = benchmarks.get_size();
-            BenchmarkElement * restrict pBenchmarks = benchmarks.Pointer(0);
+              const s32 numBenchmarks = benchmarks.get_size();
+              BenchmarkElement * restrict pBenchmarks = benchmarks.Pointer(0);
 
-            // Iterate backwards, because "TotalTime" is probably the last BenchmarkElement
-            for(s32 i=numBenchmarks-1; i>=0; i--) {
-              if(strcmp(pBenchmarks[i].name, "TotalTime") == 0) {
-                pBenchmarks[i].inclusive_total += lastComputeBenchmarkResults_elapsedTime;
-                break;
-              }
+              pBenchmarks[totalTimeIndex].inclusive_total += lastComputeBenchmarkResults_elapsedTime;
+              
+              benchmarks.PushBack(newElement);
             }
 
-            benchmarks.PushBack(newElement);
-          }
-
-          toSend.PushBack<BenchmarkElement>("Benchmarks", benchmarks);
+            toSend.PushBack<BenchmarkElement>("Benchmarks", benchmarks);
+          } // if(totalTimeIndex >= 0)
 
           InitBenchmarking();
 

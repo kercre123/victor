@@ -183,11 +183,11 @@ namespace Anki
 
       static FixedLengthList<BenchmarkElement> ComputeBenchmarkResults(const s32 numBenchmarkEvents, const BenchmarkEvent * benchmarkEvents, MemoryStack &memory)
       {
-        FixedLengthList<BenchmarkElement> outputResults(numBenchmarkEvents, memory);
-
         AnkiConditionalErrorAndReturnValue(numBenchmarkEvents > 0 && numBenchmarkEvents < MAX_BENCHMARK_EVENTS,
-          outputResults, "ComputeBenchmarkResults", "Invalid numBenchmarkEvents");
-
+          FixedLengthList<BenchmarkElement>(), "ComputeBenchmarkResults", "Invalid numBenchmarkEvents");
+        
+        FixedLengthList<BenchmarkElement> outputResults(numBenchmarkEvents, memory);
+        
 #if defined(_MSC_VER)
         LARGE_INTEGER frequency;
         f64 frequencyF64;
@@ -202,7 +202,7 @@ namespace Anki
           FixedLengthList<BenchmarkInstance> parseStack(numBenchmarkEvents, memory);
 
           AnkiConditionalErrorAndReturnValue(outputResults.IsValid() && fullList.IsValid() && parseStack.IsValid(),
-            outputResults, "ComputeBenchmarkResults", "Out of memory");
+            FixedLengthList<BenchmarkElement>(), "ComputeBenchmarkResults", "Out of memory");
 
           BenchmarkInstance * pParseStack = parseStack.Pointer(0);
 
@@ -557,6 +557,11 @@ namespace Anki
 #else // #ifdef ANKICORETECH_EMBEDDED_USE_OPENCV
       return RESULT_FAIL;
 #endif // #ifdef ANKICORETECH_EMBEDDED_USE_OPENCV ... #else
+    }
+
+    s32 GetNameIndex(const char * name, const FixedLengthList<BenchmarkElement> &outputResults)
+    {
+      return CompileBenchmarkResults::GetNameIndex(name, outputResults);
     }
   } // namespace Embedded
 } // namespace Anki

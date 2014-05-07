@@ -110,6 +110,8 @@ namespace Anki
       const f64 pixelsPerMillisecond,
       const s32 imageHeight,
       const s32 imageWidth);
+
+    s32 GetNameIndex(const char * name, const FixedLengthList<BenchmarkElement> &outputResults);
   } // namespace Embedded
 } // namespace Anki
 

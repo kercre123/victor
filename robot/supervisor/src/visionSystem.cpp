@@ -156,15 +156,15 @@ namespace Anki {
           f32                       width_mm;
           Point2f                   imageCenter;
           f32                       imageSearchRadius;
-          
+
           MarkerToTrack();
           bool IsSpecified() const;
           void Clear();
           bool Matches(const VisionMarker& marker) const;
         };
-        
+
         static MarkerToTrack markerToTrack_;
-        
+
         static Quadrilateral<f32>          trackingQuad_;
         static s32                         numTrackFailures_ ;
         static Tracker                     tracker_;
@@ -190,34 +190,34 @@ namespace Anki {
         static SimulatorParameters             simulatorParameters_;
         #endif
         */
-        
+
         //
         // Implementation of MarkerToTrack methods:
         //
-        
+
         MarkerToTrack::MarkerToTrack()
         {
           Clear();
         }
-        
+
         inline bool MarkerToTrack::IsSpecified() const {
           return type != Anki::Vision::MARKER_UNKNOWN;
         }
-        
+
         void MarkerToTrack::Clear() {
           type        = Anki::Vision::MARKER_UNKNOWN;
           width_mm    = 0;
           imageCenter = Point2f(-1.f, -1.f);
           imageSearchRadius = -1.f;
         }
-        
+
         bool MarkerToTrack::Matches(const VisionMarker& marker) const
         {
           bool doesMatch = false;
-          
+
           if(marker.markerType == this->type) {
             if(this->imageCenter.x >= 0.f && this->imageCenter.y >= 0.f &&
-               this->imageSearchRadius > 0.f)
+              this->imageSearchRadius > 0.f)
             {
               // There is an image position specified, check to see if the
               // marker's centroid is close enough to it
@@ -231,10 +231,9 @@ namespace Anki {
               doesMatch = true;
             }
           }
-          
+
           return doesMatch;
         } // MarkerToTrack::Matches()
-        
       } // private namespace for VisionSystem state
 
 #if 0
@@ -809,7 +808,7 @@ namespace Anki {
           static_cast<f32>(verify_numInBounds)) < parameters.successTolerance_matchingPixelsFraction)
         {
           PRINT("Tracker failed: too many in-bounds pixels failed intensity verification (%d / %d < %f).\n",
-                verify_numSimilarPixels, verify_numInBounds, parameters.successTolerance_matchingPixelsFraction);
+            verify_numSimilarPixels, verify_numInBounds, parameters.successTolerance_matchingPixelsFraction);
           trackingSucceeded = false;
         }
         else {
@@ -832,33 +831,33 @@ namespace Anki {
         // (I don't think this works for planar 6dof homographies?  Try dividing by h22?)
 #warning broken
         /*{
-          // TODO: make not hacky
-          const Array<f32> &homography = tracker.get_transformation().get_homography();
+        // TODO: make not hacky
+        const Array<f32> &homography = tracker.get_transformation().get_homography();
 
-          const s32 numValues = 4;
-          const s32 numMaxValues = 2;
-          f32 values[numValues] = {ABS(homography[0][0]), ABS(homography[0][1]), ABS(homography[1][0]), ABS(homography[1][1])};
-          s32 maxInds[numMaxValues] = {0, 1};
-          for(s32 i=1; i<numValues; i++) {
-            if(values[i] > values[maxInds[0]]) {
-              maxInds[0] = i;
-            }
-          }
+        const s32 numValues = 4;
+        const s32 numMaxValues = 2;
+        f32 values[numValues] = {ABS(homography[0][0]), ABS(homography[0][1]), ABS(homography[1][0]), ABS(homography[1][1])};
+        s32 maxInds[numMaxValues] = {0, 1};
+        for(s32 i=1; i<numValues; i++) {
+        if(values[i] > values[maxInds[0]]) {
+        maxInds[0] = i;
+        }
+        }
 
-          for(s32 i=0; i<numValues; i++) {
-            if(i == maxInds[0])
-              continue;
+        for(s32 i=0; i<numValues; i++) {
+        if(i == maxInds[0])
+        continue;
 
-            if(values[i] > values[maxInds[1]]) {
-              maxInds[1] = i;
-            }
-          }
+        if(values[i] > values[maxInds[1]]) {
+        maxInds[1] = i;
+        }
+        }
 
-          const f32 secondValue = values[maxInds[1]];
+        const f32 secondValue = values[maxInds[1]];
 
-          if(secondValue < 0.1f || secondValue > 40.0f) {
-            converged = false;
-          }
+        if(secondValue < 0.1f || secondValue > 40.0f) {
+        converged = false;
+        }
         }*/
 #endif // #if DOCKING_ALGORITHM != DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
 
@@ -986,7 +985,7 @@ namespace Anki {
         // 2. Convert horizontal shift of the robot to pixel shift, using
         //    focal length
         f32 horizontalShift_pix = (static_cast<f32>(headCamInfo_->ncols/2) * theta_robot.ToFloat() /
-                                   headCamFOV_hor_) + (T_hor_robot*headCamInfo_->focalLength_x/d);
+          headCamFOV_hor_) + (T_hor_robot*headCamInfo_->focalLength_x/d);
 
         // Predict approximate scale change by comparing the distance to the
         // object before and after forward motion
@@ -1141,11 +1140,11 @@ namespace Anki {
 
 #warning broken
         /*P3P::computePose(currentQuad_atPrecision,
-          canonicalMarker3d_[0], canonicalMarker3d_[1],
-          canonicalMarker3d_[2], canonicalMarker3d_[3],
-          headCamInfo_->focalLength_x, headCamInfo_->focalLength_y,
-          headCamInfo_->center_x, headCamInfo_->center_y,
-          R, T, scratch);*/
+        canonicalMarker3d_[0], canonicalMarker3d_[1],
+        canonicalMarker3d_[2], canonicalMarker3d_[3],
+        headCamInfo_->focalLength_x, headCamInfo_->focalLength_y,
+        headCamInfo_->center_x, headCamInfo_->center_y,
+        R, T, scratch);*/
 
         // Extract what we need for the docking error signal from the block's pose:
         dockErrMsg.x_distErr = T.x;
@@ -1203,11 +1202,11 @@ namespace Anki {
       f32 GetVerticalFOV() {
         return headCamFOV_ver_;
       }
-      
+
       f32 GetHorizontalFOV() {
         return headCamFOV_hor_;
       }
-      
+
       Result Init()
       {
         Result result = RESULT_OK;
@@ -1237,9 +1236,9 @@ namespace Anki {
 
           // Compute FOV from focal length (currently used for tracker prediciton)
           headCamFOV_ver_ = 2.f * atanf(static_cast<f32>(headCamInfo_->nrows) /
-                                        (2.f * headCamInfo_->focalLength_y));
+            (2.f * headCamInfo_->focalLength_y));
           headCamFOV_hor_ = 2.f * atanf(static_cast<f32>(headCamInfo_->ncols) /
-                                            (2.f * headCamInfo_->focalLength_x));
+            (2.f * headCamInfo_->focalLength_x));
 
           exposureTime = 0.2f; // TODO: pick a reasonable start value
           frameNumber = 0;
@@ -1277,24 +1276,24 @@ namespace Anki {
       }
 
       Result SetMarkerToTrack(const Vision::MarkerType& markerTypeToTrack,
-                              const f32 markerWidth_mm)
+        const f32 markerWidth_mm)
       {
         const Point2f imageCenter(-1.f, -1.f);
         const f32     searchRadius = -1.f;
         return SetMarkerToTrack(markerTypeToTrack, markerWidth_mm,
-                                imageCenter, searchRadius);
+          imageCenter, searchRadius);
       }
-      
+
       Result SetMarkerToTrack(const Vision::MarkerType& markerTypeToTrack,
-                              const f32 markerWidth_mm,
-                              const Point2f& atImageCenter,
-                              const f32 imageSearchRadius)
+        const f32 markerWidth_mm,
+        const Point2f& atImageCenter,
+        const f32 imageSearchRadius)
       {
         markerToTrack_.type              = markerTypeToTrack;
         markerToTrack_.width_mm          = markerWidth_mm;
         markerToTrack_.imageCenter       = atImageCenter;
         markerToTrack_.imageSearchRadius = imageSearchRadius;
-        
+
         mode_                  = VISION_MODE_LOOKING_FOR_MARKERS;
         numTrackFailures_      = 0;
 
@@ -1825,9 +1824,8 @@ namespace Anki {
 
             // Was the desired marker found? If so, start tracking it.
             if(markerToTrack_.IsSpecified() && !isTrackingMarkerFound &&
-               markerToTrack_.Matches(crntMarker))
+              markerToTrack_.Matches(crntMarker))
             {
-              
               // We will start tracking the _first_ marker of the right type that
               // we see.
               // TODO: Something smarter to track the one closest to the image center or to the expected location provided by the basestation?
@@ -1985,9 +1983,9 @@ namespace Anki {
             if(numTrackFailures_ == MAX_TRACKING_FAILURES) {
               // This resets docking, puttings us back in VISION_MODE_LOOKING_FOR_MARKERS mode
               SetMarkerToTrack(markerToTrack_.type,
-                               markerToTrack_.width_mm,
-                               markerToTrack_.imageCenter,
-                               markerToTrack_.imageSearchRadius);
+                markerToTrack_.width_mm,
+                markerToTrack_.imageCenter,
+                markerToTrack_.imageSearchRadius);
             }
           }
 
