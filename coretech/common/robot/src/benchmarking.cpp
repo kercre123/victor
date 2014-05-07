@@ -209,7 +209,7 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(numBenchmarkEvents > 0 && numBenchmarkEvents < MAX_BENCHMARK_EVENTS,
           FixedLengthList<BenchmarkElement>(), "ComputeBenchmarkResults", "Invalid numBenchmarkEvents");
 
-        FixedLengthList<BenchmarkElement> outputResults(numBenchmarkEvents, memory);
+        FixedLengthList<BenchmarkElement> outputResults(numBenchmarkEvents, memory, Flags::Buffer(false, false, false));
 
 #if defined(_MSC_VER)
         LARGE_INTEGER frequency;
@@ -221,8 +221,8 @@ namespace Anki
         {
           PUSH_MEMORY_STACK(memory);
 
-          FixedLengthList<BenchmarkInstance> fullList(numBenchmarkEvents, memory);
-          FixedLengthList<BenchmarkInstance> parseStack(numBenchmarkEvents, memory);
+          FixedLengthList<BenchmarkInstance> fullList(numBenchmarkEvents, memory, Flags::Buffer(false, false, false));
+          FixedLengthList<BenchmarkInstance> parseStack(numBenchmarkEvents, memory, Flags::Buffer(false, false, false));
 
           AnkiConditionalErrorAndReturnValue(outputResults.IsValid() && fullList.IsValid() && parseStack.IsValid(),
             FixedLengthList<BenchmarkElement>(), "ComputeBenchmarkResults", "Out of memory");
@@ -263,10 +263,6 @@ namespace Anki
                 pParseStack[endLevel-1].exclusiveTimeElapsed -= elapsedTime;
               }
 
-              /*for(s32 iParent=0; iParent<numParents; iParent++) {
-              pParseStack[iParent].exclusiveTimeElapsed -= elapsedTime;
-              }*/
-
               fullList.PushBack(BenchmarkInstance(benchmarkEvents[iEvent].name, startInstance.startTime, elapsedTime, elapsedTime + startInstance.exclusiveTimeElapsed, endLevel));
             }
           } // for(s32 iEvent=0; iEvent<numBenchmarkEvents; iEvent++)
@@ -306,8 +302,13 @@ namespace Anki
 
           const s32 numEvents = outputResults.get_size();
           for(s32 iEvent=0; iEvent<numEvents; iEvent++) {
-            pOutputResults[iEvent].inclusive_mean = pOutputResults[iEvent].inclusive_total / pOutputResults[iEvent].numEvents;
-            pOutputResults[iEvent].exclusive_mean = pOutputResults[iEvent].exclusive_total / pOutputResults[iEvent].numEvents;
+            if(pOutputResults[iEvent].numEvents == 1) {
+              pOutputResults[iEvent].inclusive_mean = pOutputResults[iEvent].inclusive_total;
+              pOutputResults[iEvent].exclusive_mean = pOutputResults[iEvent].exclusive_total;
+            } else {
+              pOutputResults[iEvent].inclusive_mean = pOutputResults[iEvent].inclusive_total / pOutputResults[iEvent].numEvents;
+              pOutputResults[iEvent].exclusive_mean = pOutputResults[iEvent].exclusive_total / pOutputResults[iEvent].numEvents;
+            }
           } // for(s32 iEvent=0; iEvent<numEvents; iEvent++)
         } // PUSH_MEMORY_STACK(memory);
 
