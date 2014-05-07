@@ -80,7 +80,7 @@ classdef VisionMarkerTrained
             Size = 1;
             UseSortedCorners = false;
             UseSingleProbe = false;
-            CornerRefinementIterations = 0;
+            CornerRefinementIterations = 10;
                         
             parseVarargin(varargin{:});
             
@@ -123,7 +123,7 @@ classdef VisionMarkerTrained
                 this.isValid = false;
             else
                 if CornerRefinementIterations > 0
-                    this.RefineCorners(img, 'NumSamples', 100, ... 'DebugDisplay', true,  ...
+                    [this.corners, this.H] = this.RefineCorners(img, 'NumSamples', 100, ... 'DebugDisplay', true,  ...
                         'MaxIterations', CornerRefinementIterations, ...
                         'Contrast', bright-dark);
                 end
