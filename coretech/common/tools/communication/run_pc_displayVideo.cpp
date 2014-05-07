@@ -290,6 +290,10 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
 
   currentObjects.push_back(newObject);
 
+  if(!newObject.startOfPayload) {
+    return;
+  }
+
   if(strcmp(newObject.typeName, "Basic Type Buffer") == 0) {
     if(strcmp(newObject.objectName, "meanGrayvalueError") == 0) {
       u8* tmpBuffer = reinterpret_cast<u8*>(newObject.startOfPayload);

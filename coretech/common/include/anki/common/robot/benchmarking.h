@@ -96,6 +96,8 @@ namespace Anki
     // Compile all the benchmark events that were recorded
     FixedLengthList<BenchmarkElement> ComputeBenchmarkResults(MemoryStack &memory);
 
+    // printf() the benchmark results
+    // WARNING: This doesn't work well with multi-threaded programs
     Result PrintBenchmarkResults(const FixedLengthList<BenchmarkElement> &results, const bool verbose=true, const bool microseconds=true);
 
     // Compile and print out all the benchmark events that were recorded

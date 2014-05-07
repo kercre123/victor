@@ -522,6 +522,51 @@ namespace Anki
       if(toShowImageColumn >= imageWidth)
         toShowImageColumn = 0;
 
+      // Display all the benchmarks ( copied from Print() )
+      {
+        const s32 textHeightInPixels = 20;
+        const f64 textFontSize = 1.0;
+        const bool microseconds = false;
+        const bool verbose = false;
+
+        cv::Mat textImage((results.get_size()+1)*textHeightInPixels + 10, 1100, CV_8UC3);
+        textImage.setTo(0);
+
+        s32 curY = 15;
+
+        const s32 stringBufferLength = 256;
+        char stringBuffer[stringBufferLength];
+
+        snprintf(stringBuffer, stringBufferLength, "Benchmark Results: (Exc=Exclusive Inc=Inclusive Tot=Total N=NumberOf)\n");
+        cv::putText(textImage, stringBuffer, cv::Point(5,curY), cv::FONT_HERSHEY_PLAIN, textFontSize, cv::Scalar(255, 255, 255));
+        curY += textHeightInPixels;
+
+        const s32 numResults = results.get_size();
+        const BenchmarkElement * const pResults = results.Pointer(0);
+
+        f64 multiplier;
+        if(microseconds) {
+          multiplier = 1000000.0;
+        } else {
+          multiplier = 1000.0;
+        }
+
+        for(s32 x=0; x<numResults; x++) {
+          snprintf(stringBuffer, stringBufferLength,
+            "%s: ExcTot:%dms IncTot:%dms NEvents:%dms",
+            pResults[x].name,
+            Round<s32>(pResults[x].exclusive_total*multiplier),
+            Round<s32>(pResults[x].inclusive_total*multiplier),
+            static_cast<s32>(pResults[x].numEvents));
+
+          cv::putText(textImage, stringBuffer, cv::Point(5,curY), cv::FONT_HERSHEY_PLAIN, textFontSize, cv::Scalar(255, 255, 255));
+          curY += textHeightInPixels;
+        }
+
+        cv::imshow("All Benchmarks", textImage);
+        cv::moveWindow("All Benchmarks", 850, 675);
+      }
+
       // Display the key
       {
         const s32 textHeightInPixels = 20;
