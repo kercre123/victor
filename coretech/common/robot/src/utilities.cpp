@@ -59,6 +59,61 @@ namespace Anki
     }
 #endif //#if ANKICORETECH_EMBEDDED_USE_OPENCV
 
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
+    void CvPutTextFixedWidth(
+      cv::Mat& img, const char * text, cv::Point org,
+      int fontFace, double fontScale, cv::Scalar color,
+      int thickness, int lineType,
+      bool bottomLeftOrigin)
+    {
+      static int last_fontFace = -1;
+      static double last_fontScale = -1.0;
+      static int last_thickness = -1;
+      static int last_lineType = -1;
+      static int maxWidth = -1;
+
+      // If the font has changed since last call, compute the new font width
+      if(last_fontFace != fontFace || last_fontScale != fontScale || last_thickness != thickness || last_lineType != lineType) {
+        last_fontFace = fontFace;
+        last_fontScale = fontScale;
+        last_thickness = thickness;
+        last_lineType = lineType;
+
+        /*// All characters
+        const s32 numCharacters = 93;
+        const char characters[numCharacters] = "abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789~!@#$%^&*()_+-=[]{},.<>/?;':\"";*/
+
+        // These are generally the largest characters
+        const s32 numCharacters = 12;
+        const char characters[numCharacters] = "mwMW@%^&+-=";
+
+        maxWidth = 0;
+        for(s32 i=0; i<(numCharacters-1); i++) {
+          char tmpBuffer[2];
+          tmpBuffer[0] = characters[i];
+          tmpBuffer[1] = '\0';
+
+          cv::Size textSize = cv::getTextSize(std::string(tmpBuffer), fontFace, fontScale, thickness, NULL);
+          //printf("%c = %dx%d\n", characters[i], textSize.width, textSize.height);
+          maxWidth = MAX(maxWidth, textSize.width);
+        }
+      }
+
+      const s32 stringLength = strlen(text);
+
+      cv::Point curOrg = org;
+      for(s32 iChar=0; iChar<stringLength; iChar++) {
+        char tmpBuffer[2];
+        tmpBuffer[0] = text[iChar];
+        tmpBuffer[1] = '\0';
+
+        cv::putText(img, std::string(tmpBuffer), curOrg, fontFace, fontScale, color, thickness, lineType, bottomLeftOrigin);
+
+        curOrg.x += maxWidth - 1;
+      }
+    }
+#endif //#if ANKICORETECH_EMBEDDED_USE_OPENCV
+
     s32 FindBytePattern(const void * restrict buffer, const s32 bufferLength, const u8 * restrict bytePattern, const s32 bytePatternLength)
     {
       s32 curIndex = 0;

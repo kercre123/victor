@@ -544,7 +544,7 @@ namespace Anki
         const bool microseconds = false;
         const bool verbose = false;
 
-        cv::Mat textImage((results.get_size()+1)*textHeightInPixels + 10, 1100, CV_8UC3);
+        cv::Mat textImage((results.get_size()+1)*textHeightInPixels + 10, 1400, CV_8UC3);
         textImage.setTo(0);
 
         s32 curY = 15;
@@ -601,31 +601,9 @@ namespace Anki
 
         for(s32 x=0; x<numResults; x++) {
           pResults[x].Snprint(stringBuffer, stringBufferLength, verbose, microseconds, &minCharacterToPrint);
-          cv::putText(textImage, stringBuffer, cv::Point(5,curY), cv::FONT_HERSHEY_PLAIN, textFontSize, cv::Scalar(255, 255, 255));
+          CvPutTextFixedWidth(textImage, stringBuffer, cv::Point(5,curY), cv::FONT_HERSHEY_PLAIN, textFontSize, cv::Scalar(255, 255, 255));
           curY += textHeightInPixels;
         }
-        /*
-        const s32 numResults = results.get_size();
-        const BenchmarkElement * const pResults = results.Pointer(0);
-
-        f64 multiplier;
-        if(microseconds) {
-        multiplier = 1000000.0;
-        } else {
-        multiplier = 1000.0;
-        }
-
-        for(s32 x=0; x<numResults; x++) {
-        snprintf(stringBuffer, stringBufferLength,
-        "%s: ExcTot:%dms IncTot:%dms NEvents:%dms",
-        pResults[x].name,
-        Round<s32>(pResults[x].exclusive_total*multiplier),
-        Round<s32>(pResults[x].inclusive_total*multiplier),
-        static_cast<s32>(pResults[x].numEvents));
-
-        cv::putText(textImage, stringBuffer, cv::Point(5,curY), cv::FONT_HERSHEY_PLAIN, textFontSize, cv::Scalar(255, 255, 255));
-        curY += textHeightInPixels;
-        }*/
 
         cv::imshow("All Benchmarks", textImage);
         //cv::moveWindow("All Benchmarks", 850, 675);
