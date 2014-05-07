@@ -78,7 +78,9 @@ namespace Anki
         0x91, 0x01,  // Auto De-noise Threshold Control
 
         // Lens correction control
-        0x46, 0x01, // on/off and RGB
+        //0x46, 0x01, // Vignetting correction on and grayscale
+        0x46, 0x00, // Vignetting correction off
+        
         0x47, 0x00, // x center
         0x48, 0x00, // y center
         0x49, 0x20, // RGB (or G) coefficient
@@ -125,6 +127,8 @@ namespace Anki
 
       // Camera exposure value
       u16 m_exposure;
+      
+      bool m_enableVignettingCorrection;
 
       // DMA is limited to 256KB - 1
       const u32 BUFFER_SIZE = 320 * 240 * 2;
@@ -248,6 +252,7 @@ namespace Anki
       void OV7725Init()
       {
         m_exposure = 0;
+        m_enableVignettingCorrection = false;
 
         // Configure the camera interface
         DCMI_InitTypeDef DCMI_InitStructure;
@@ -405,7 +410,7 @@ namespace Anki
         OV7725Init();
       }
 
-      void CameraSetExposure(f32 exposure)
+      void CameraSetParameters(f32 exposure, bool enableVignettingCorrection)
       {
         // Update the exposure
         u8 exp;
@@ -429,8 +434,18 @@ namespace Anki
 
           //CamWrite(0x08, (exposure >> 8));  // AEC[15:8]
           //MicroWait(100);
-          CamWrite(0x10, m_exposure);  // AEC[7:0]
+          CamWrite(0x10, m_exposure);  // AEC[7:0]          
         }
+        
+        if(m_enableVignettingCorrection != enableVignettingCorrection)
+        {
+          m_enableVignettingCorrection = enableVignettingCorrection;
+          
+          const u8 newValue = enableVignettingCorrection ? 0x01 : 0x00;
+          
+          MicroWait(100);
+          CamWrite(0x46, newValue);
+        }        
       }
 
       void CameraGetFrame(u8* frame, Vision::CameraResolution res, bool enableLight)

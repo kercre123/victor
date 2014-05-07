@@ -143,6 +143,7 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
     namesToDisplay.PushBack(ShowBenchmarkParameters("VisionSystem_CameraGetFrame", false, red));
     namesToDisplay.PushBack(ShowBenchmarkParameters("ComputeBenchmarkResults", false, maroon));
     namesToDisplay.PushBack(ShowBenchmarkParameters("UARTPutMessage", false, maroon));
+    namesToDisplay.PushBack(ShowBenchmarkParameters("VisionSystem_CameraImagingPipeline", false, maroon));
     namesToDisplay.PushBack(ShowBenchmarkParameters("VisionSystem_LookForMarkers", false, green));
     namesToDisplay.PushBack(ShowBenchmarkParameters("VisionSystem_TrackTemplate", false, blue));
 

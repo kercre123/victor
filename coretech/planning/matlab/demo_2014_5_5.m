@@ -9,7 +9,12 @@ rectWorld('test3.env');
 mprim1 = 'cozmo_mprim.json'
 mprim2 = 'cozmo_mprim_expensiveTurns.json'
 
-plot(0,0,'ro');
+plotRobot(0, 0, 0);
+
+pause
+axis equal;
+
+disp('click twice to define goal and direction')
 
 [x,y] = ginput(2);
 
@@ -31,3 +36,11 @@ system(sprintf('"/Users/bneuman/Documents/code/products-cozmo/build/Unix Makefil
 toc
 
 S = plotPath('path.txt', true, {}, 'c.-');
+
+n = ginput(1)
+
+tic
+system(sprintf('"/Users/bneuman/Documents/code/products-cozmo/build/Unix Makefiles/bin/Debug/run_coreTechPlanningStandalone" %s test3.env %f %f %f -turnAtGoal', mprim1, x(1), y(1), theta));
+toc
+
+S = plotPath('path.txt', true, {}, 'm-');

@@ -769,19 +769,9 @@
               <FilePath>..\coretech\common\robot\src\array2d.cpp</FilePath>
             </File>
             <File>
-              <FileName>benchmarking.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\benchmarking.cpp</FilePath>
-            </File>
-            <File>
               <FileName>comparisons.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\robot\src\comparisons.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>compress.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\compress.cpp</FilePath>
             </File>
             <File>
               <FileName>decisionTree.cpp</FileName>
@@ -884,6 +874,16 @@
               <FilePath>..\coretech\common\shared\src\velocityProfileGenerator.cpp</FilePath>
             </File>
             <File>
+              <FileName>compress.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\robot\src\compress.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>benchmarking.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\robot\src\benchmarking.cpp</FilePath>
+            </File>
+            <File>
               <FileName>utilities_shared.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\shared\src\utilities_shared.cpp</FilePath>
@@ -904,14 +904,14 @@
           <GroupName>coretech-vision</GroupName>
           <Files>
             <File>
-              <FileName>autoExposure.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\autoExposure.cpp</FilePath>
-            </File>
-            <File>
               <FileName>binaryTracker.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\binaryTracker.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>cameraImagingPipeline.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\cameraImagingPipeline.cpp</FilePath>
             </File>
             <File>
               <FileName>cascadeClassifier.cpp</FileName>
@@ -1995,19 +1995,9 @@
               <FilePath>..\coretech\common\robot\src\array2d.cpp</FilePath>
             </File>
             <File>
-              <FileName>benchmarking.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\benchmarking.cpp</FilePath>
-            </File>
-            <File>
               <FileName>comparisons.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\robot\src\comparisons.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>compress.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\compress.cpp</FilePath>
             </File>
             <File>
               <FileName>decisionTree.cpp</FileName>
@@ -2110,6 +2100,16 @@
               <FilePath>..\coretech\common\shared\src\velocityProfileGenerator.cpp</FilePath>
             </File>
             <File>
+              <FileName>compress.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\robot\src\compress.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>benchmarking.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\robot\src\benchmarking.cpp</FilePath>
+            </File>
+            <File>
               <FileName>utilities_shared.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\shared\src\utilities_shared.cpp</FilePath>
@@ -2187,14 +2187,14 @@
           <GroupName>coretech-vision</GroupName>
           <Files>
             <File>
-              <FileName>autoExposure.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\autoExposure.cpp</FilePath>
-            </File>
-            <File>
               <FileName>binaryTracker.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\binaryTracker.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>cameraImagingPipeline.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\cameraImagingPipeline.cpp</FilePath>
             </File>
             <File>
               <FileName>cascadeClassifier.cpp</FileName>

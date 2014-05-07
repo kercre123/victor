@@ -1,15 +1,15 @@
 /**
- * File: visionSystem.cpp
- *
- * Author: Andrew Stein
- * Date:   (various)
- *
- * Description: High-level module that controls the vision system and switches
- *              between fiducial detection and tracking and feeds results to
- *              main execution thread via message mailboxes.
- *
- * Copyright: Anki, Inc. 2014
- **/
+* File: visionSystem.cpp
+*
+* Author: Andrew Stein
+* Date:   (various)
+*
+* Description: High-level module that controls the vision system and switches
+*              between fiducial detection and tracking and feeds results to
+*              main execution thread via message mailboxes.
+*
+* Copyright: Anki, Inc. 2014
+**/
 
 #include "anki/common/robot/config.h"
 // Coretech Vision Includes
@@ -52,7 +52,6 @@ static bool isInitialized_ = false;
 namespace Anki {
   namespace Cozmo {
     namespace VisionSystem {
-
       using namespace Embedded;
 
       typedef enum {
@@ -60,7 +59,6 @@ namespace Anki {
         VISION_MODE_LOOKING_FOR_MARKERS,
         VISION_MODE_TRACKING
       } VisionSystemMode;
-
 
 #if 0
 #pragma mark --- VisionMemory ---
@@ -76,7 +74,7 @@ namespace Anki {
         static const s32 OFFCHIP_BUFFER_SIZE = 2000000;
         static const s32 ONCHIP_BUFFER_SIZE  = 170000; // The max here is somewhere between 175000 and 180000 bytes
         static const s32 CCM_BUFFER_SIZE     = 50000; // The max here is probably 65536 (0x10000) bytes
-        
+
         static const s32 MAX_MARKERS = 100; // TODO: this should probably be in visionParameters
 
         static OFFCHIP char offchipBuffer[OFFCHIP_BUFFER_SIZE];
@@ -113,12 +111,17 @@ namespace Anki {
         }
       } // namespace VisionMemory
 
-
       // This private namespace stores all the "member" or "state" variables
       // with scope restricted to this file. There should be no globals
       // defined outside this namespace.
       // TODO: I don't think we really need _both_ a private namespace and static
       namespace {
+        enum VignettingCorrection
+        {
+          VignettingCorrection_Off,
+          VignettingCorrection_CameraHardware,
+          VignettingCorrection_Software
+        };
 
         // The tracker can fail to converge this many times before we give up
         // and reset the docker
@@ -135,6 +138,10 @@ namespace Anki {
         // Camera parameters
         // TODO: Should these be moved to (their own struct in) visionParameters.h/cpp?
         static f32 exposureTime;
+
+        static VignettingCorrection vignettingCorrection = VignettingCorrection_Software;
+        static const f32 vignettingCorrectionParameters[5] = {1.56852140958887f, -0.00619880766167132f, -0.00364222219719291f, 2.75640497906470e-05f, 1.75476361058157e-05f}; //< for vignettingCorrection == VignettingCorrection_Software, computed by fit2dCurve.m
+
         static s32 frameNumber;
         static const bool autoExposure_enabled = true;
         static const s32 autoExposure_integerCountsIncrement = 2;
@@ -144,13 +151,25 @@ namespace Anki {
         static const s32 autoExposure_adjustEveryNFrames = 1;
 
         // Tracking marker related members
-        static Anki::Vision::MarkerType markerTypeToTrack_;
-        static Quadrilateral<f32> trackingQuad_;
-        static s32 numTrackFailures_ ;
-        static bool isTrackingMarkerSpecified_;
-        static Tracker tracker_;
-        static f32 trackingMarkerWidth_mm;
-        static Point3<P3P_PRECISION> canonicalMarker3d_[4];
+        struct MarkerToTrack {
+          Anki::Vision::MarkerType  type;
+          f32                       width_mm;
+          Point2f                   imageCenter;
+          f32                       imageSearchRadius;
+          
+          MarkerToTrack();
+          bool IsSpecified() const;
+          void Clear();
+          bool Matches(const VisionMarker& marker) const;
+        };
+        
+        static MarkerToTrack markerToTrack_;
+        
+        static Quadrilateral<f32>          trackingQuad_;
+        static s32                         numTrackFailures_ ;
+        static Tracker                     tracker_;
+
+        static Point3<P3P_PRECISION>       canonicalMarker3d_[4];
 
         // Snapshots of robot state
         static bool wasCalledOnce_, havePreviousRobotState_;
@@ -167,10 +186,55 @@ namespace Anki {
         static Vision::CameraResolution        nextSendImageResolution_ = Vision::CAMERA_RES_NONE;
 
         /* Only using static members of SimulatorParameters now
-#ifdef SIMULATOR
+        #ifdef SIMULATOR
         static SimulatorParameters             simulatorParameters_;
-#endif
-         */
+        #endif
+        */
+        
+        //
+        // Implementation of MarkerToTrack methods:
+        //
+        
+        MarkerToTrack::MarkerToTrack()
+        {
+          Clear();
+        }
+        
+        inline bool MarkerToTrack::IsSpecified() const {
+          return type != Anki::Vision::MARKER_UNKNOWN;
+        }
+        
+        void MarkerToTrack::Clear() {
+          type        = Anki::Vision::MARKER_UNKNOWN;
+          width_mm    = 0;
+          imageCenter = Point2f(-1.f, -1.f);
+          imageSearchRadius = -1.f;
+        }
+        
+        bool MarkerToTrack::Matches(const VisionMarker& marker) const
+        {
+          bool doesMatch = false;
+          
+          if(marker.markerType == this->type) {
+            if(this->imageCenter.x >= 0.f && this->imageCenter.y >= 0.f &&
+               this->imageSearchRadius > 0.f)
+            {
+              // There is an image position specified, check to see if the
+              // marker's centroid is close enough to it
+              Point2f centroid = marker.corners.ComputeCenter<f32>();
+              if( (centroid - this->imageCenter).Length() < this->imageSearchRadius ) {
+                doesMatch = true;
+              }
+            } else {
+              // No image position specified, just return true since the
+              // types match
+              doesMatch = true;
+            }
+          }
+          
+          return doesMatch;
+        } // MarkerToTrack::Matches()
+        
       } // private namespace for VisionSystem state
 
 #if 0
@@ -265,11 +329,11 @@ namespace Anki {
       void SetImageSendMode(ImageSendMode_t mode, Vision::CameraResolution res)
       {
         if (res == Vision::CAMERA_RES_QVGA ||
-            res == Vision::CAMERA_RES_QQVGA ||
-            res == Vision::CAMERA_RES_QQQVGA ||
-            res == Vision::CAMERA_RES_QQQQVGA) {
-          imageSendMode_ = mode;
-          nextSendImageResolution_ = res;
+          res == Vision::CAMERA_RES_QQVGA ||
+          res == Vision::CAMERA_RES_QQQVGA ||
+          res == Vision::CAMERA_RES_QQQQVGA) {
+            imageSendMode_ = mode;
+            nextSendImageResolution_ = res;
         }
       }
 
@@ -277,7 +341,6 @@ namespace Anki {
       {
         // Only downsample if normal capture res is QVGA
         if (imageSendMode_ != ISM_OFF && captureResolution_ == Vision::CAMERA_RES_QVGA) {
-
           static u8 imgID = 0;
 
           // Downsample and split into image chunk message
@@ -333,17 +396,16 @@ namespace Anki {
         }
       }
 
-
       static Result LookForMarkers(
-                                       const Array<u8> &grayscaleImage,
-                                       const DetectFiducialMarkersParameters &parameters,
-                                       FixedLengthList<VisionMarker> &markers,
-                                       MemoryStack ccmScratch,
-                                       MemoryStack onchipScratch,
-                                       MemoryStack offchipScratch)
+        const Array<u8> &grayscaleImage,
+        const DetectFiducialMarkersParameters &parameters,
+        FixedLengthList<VisionMarker> &markers,
+        MemoryStack ccmScratch,
+        MemoryStack onchipScratch,
+        MemoryStack offchipScratch)
       {
         BeginBenchmark("VisionSystem_LookForMarkers");
-        
+
         AnkiAssert(parameters.isInitialized);
 
         const s32 maxMarkers = markers.get_maximumSize();
@@ -359,99 +421,95 @@ namespace Anki {
         }
 
         MatlabVisualization::ResetFiducialDetection(grayscaleImage);
-        
+
         const Result result = DetectFiducialMarkers(
-                                                    grayscaleImage,
-                                                    markers,
-                                                    homographies,
-                                                    parameters.scaleImage_numPyramidLevels, parameters.scaleImage_thresholdMultiplier,
-                                                    parameters.component1d_minComponentWidth, parameters.component1d_maxSkipDistance,
-                                                    parameters.component_minimumNumPixels, parameters.component_maximumNumPixels,
-                                                    parameters.component_sparseMultiplyThreshold, parameters.component_solidMultiplyThreshold,
-                                                    parameters.component_minHollowRatio,
-                                                    parameters.quads_minQuadArea, parameters.quads_quadSymmetryThreshold, parameters.quads_minDistanceFromImageEdge,
-                                                    parameters.decode_minContrastRatio,
-                                                    parameters.maxConnectedComponentSegments,
-                                                    parameters.maxExtractedQuads,
-                                                    parameters.quadRefinementIterations,
-                                                    false,
-                                                    ccmScratch, onchipScratch, offchipScratch);
+          grayscaleImage,
+          markers,
+          homographies,
+          parameters.scaleImage_numPyramidLevels, parameters.scaleImage_thresholdMultiplier,
+          parameters.component1d_minComponentWidth, parameters.component1d_maxSkipDistance,
+          parameters.component_minimumNumPixels, parameters.component_maximumNumPixels,
+          parameters.component_sparseMultiplyThreshold, parameters.component_solidMultiplyThreshold,
+          parameters.component_minHollowRatio,
+          parameters.quads_minQuadArea, parameters.quads_quadSymmetryThreshold, parameters.quads_minDistanceFromImageEdge,
+          parameters.decode_minContrastRatio,
+          parameters.maxConnectedComponentSegments,
+          parameters.maxExtractedQuads,
+          parameters.quadRefinementIterations,
+          false,
+          ccmScratch, onchipScratch, offchipScratch);
 
         if(result != RESULT_OK) {
           return result;
         }
-        
+
         EndBenchmark("VisionSystem_LookForMarkers");
-        
+
         DebugStream::SendFiducialDetection(grayscaleImage, markers, ccmScratch, onchipScratch, offchipScratch);
-        
+
         for(s32 i_marker = 0; i_marker < markers.get_size(); ++i_marker) {
           const VisionMarker crntMarker = markers[i_marker];
-          
+
           MatlabVisualization::SendFiducialDetection(crntMarker.corners, crntMarker.markerType);
         }
-        
+
         MatlabVisualization::SendDrawNow();
-        
+
         return RESULT_OK;
-        
       } // LookForMarkers()
 
       static Result BrightnessNormalizeImage(Array<u8>& image, const Quadrilateral<f32>& quad,
-                                             const f32 filterWidthFraction,
-                                             MemoryStack scratch)
+        const f32 filterWidthFraction,
+        MemoryStack scratch)
       {
         if(filterWidthFraction > 0.f) {
           // TODO: Add the ability to only normalize within the vicinity of the quad
           // Note that this requires templateQuad to be sorted!
           const s32 filterWidth = static_cast<s32>(filterWidthFraction*((quad[3] - quad[0]).Length()));
           AnkiAssert(filterWidth > 0.f);
-          
+
           Array<u8> imageNormalized(image.get_size(0), image.get_size(1), scratch);
-          
+
           AnkiConditionalErrorAndReturnValue(imageNormalized.IsValid(),
-                                             RESULT_FAIL_OUT_OF_MEMORY,
-                                             "VisionSystem::BrightnessNormalizeImage",
-                                             "Out of memory allocating imageNormalized.\n");
-          
+            RESULT_FAIL_OUT_OF_MEMORY,
+            "VisionSystem::BrightnessNormalizeImage",
+            "Out of memory allocating imageNormalized.\n");
+
           BeginBenchmark("BoxFilterNormalize");
 
           ImageProcessing::BoxFilterNormalize(image, filterWidth, static_cast<u8>(128),
-                                              imageNormalized, scratch);
-          
+            imageNormalized, scratch);
+
           EndBenchmark("BoxFilterNormalize");
 
-          
           { // DEBUG
             /*
-             static Matlab matlab(false);
-             matlab.PutArray(grayscaleImage, "grayscaleImage");
-             matlab.PutArray(grayscaleImageNormalized, "grayscaleImageNormalized");
-             matlab.EvalString("subplot(121), imagesc(grayscaleImage), axis image, colorbar, "
-             "subplot(122), imagesc(grayscaleImageNormalized), colorbar, axis image, "
-             "colormap(gray)");
-             */
-            
+            static Matlab matlab(false);
+            matlab.PutArray(grayscaleImage, "grayscaleImage");
+            matlab.PutArray(grayscaleImageNormalized, "grayscaleImageNormalized");
+            matlab.EvalString("subplot(121), imagesc(grayscaleImage), axis image, colorbar, "
+            "subplot(122), imagesc(grayscaleImageNormalized), colorbar, axis image, "
+            "colormap(gray)");
+            */
+
             //image.Show("GrayscaleImage", false);
             //imageNormalized.Show("GrayscaleImageNormalized", false);
           }
-          
+
           image.Set(imageNormalized);
         } // if(filterWidthFraction > 0)
-        
+
         return RESULT_OK;
-        
       } // BrightnessNormalizeImage()
-      
-      
+
       static Result InitTemplate(
-                                     const Array<u8> &grayscaleImage,
-                                     const Quadrilateral<f32> &trackingQuad,
-                                     const TrackerParameters &parameters,
-                                     Tracker &tracker,
-                                     MemoryStack ccmScratch,
-                                     MemoryStack &onchipMemory, //< NOTE: onchip is a reference
-                                     MemoryStack &offchipMemory)
+        const Array<u8> &grayscaleImage,
+        const Quadrilateral<f32> &trackingQuad,
+        const TrackerParameters &parameters,
+        Tracker &tracker,
+        MemoryStack ccmScratch,
+        MemoryStack &onchipMemory, //< NOTE: onchip is a reference
+        MemoryStack &offchipMemory)
       {
         AnkiAssert(parameters.isInitialized);
 
@@ -474,84 +532,84 @@ namespace Anki {
 
         /*Quadrilateral<f32> trackingQuadSmall;
 
-         for(s32 i=0; i<4; ++i) {
-         trackingQuadSmall[i].x = trackingQuad[i].x / downsampleFactor;
-         trackingQuadSmall[i].y = trackingQuad[i].y / downsampleFactor;
-         }*/
+        for(s32 i=0; i<4; ++i) {
+        trackingQuadSmall[i].x = trackingQuad[i].x / downsampleFactor;
+        trackingQuadSmall[i].y = trackingQuad[i].y / downsampleFactor;
+        }*/
 
 #endif // #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SLOW || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_AFFINE || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE
 
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SLOW
         tracker = TemplateTracker::LucasKanadeTracker_Slow(
-                                                           grayscaleImageSmall,
-                                                           trackingQuad,
-                                                           parameters.scaleTemplateRegionPercent,
-                                                           parameters.numPyramidLevels,
-                                                           Transformations::TRANSFORM_TRANSLATION,
-                                                           0.0,
-                                                           onchipMemory);
+          grayscaleImageSmall,
+          trackingQuad,
+          parameters.scaleTemplateRegionPercent,
+          parameters.numPyramidLevels,
+          Transformations::TRANSFORM_TRANSLATION,
+          0.0,
+          onchipMemory);
 #elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_AFFINE
         tracker = TemplateTracker::LucasKanadeTracker_Affine(
-                                                             grayscaleImageSmall,
-                                                             trackingQuad,
-                                                             parameters.scaleTemplateRegionPercent,
-                                                             parameters.numPyramidLevels,
-                                                             Transformations::TRANSFORM_AFFINE,
-                                                             onchipMemory);
+          grayscaleImageSmall,
+          trackingQuad,
+          parameters.scaleTemplateRegionPercent,
+          parameters.numPyramidLevels,
+          Transformations::TRANSFORM_AFFINE,
+          onchipMemory);
 #elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE
         tracker = TemplateTracker::LucasKanadeTracker_Projective(
-                                                                 grayscaleImageSmall,
-                                                                 trackingQuad,
-                                                                 parameters.scaleTemplateRegionPercent,
-                                                                 parameters.numPyramidLevels,
-                                                                 Transformations::TRANSFORM_PROJECTIVE,
-                                                                 onchipMemory);
+          grayscaleImageSmall,
+          trackingQuad,
+          parameters.scaleTemplateRegionPercent,
+          parameters.numPyramidLevels,
+          Transformations::TRANSFORM_PROJECTIVE,
+          onchipMemory);
 #elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PROJECTIVE
         tracker = TemplateTracker::LucasKanadeTracker_SampledProjective(
-                                                                        grayscaleImage,
-                                                                        trackingQuad,
-                                                                        parameters.scaleTemplateRegionPercent,
-                                                                        parameters.numPyramidLevels,
-                                                                        Transformations::TRANSFORM_PROJECTIVE,
-                                                                        parameters.maxSamplesAtBaseLevel,
-                                                                        ccmScratch,
-                                                                        onchipMemory,
-                                                                        offchipMemory);
+          grayscaleImage,
+          trackingQuad,
+          parameters.scaleTemplateRegionPercent,
+          parameters.numPyramidLevels,
+          Transformations::TRANSFORM_PROJECTIVE,
+          parameters.maxSamplesAtBaseLevel,
+          ccmScratch,
+          onchipMemory,
+          offchipMemory);
 #elif DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
 #ifdef USE_HEADER_TEMPLATE
         tracker = TemplateTracker::BinaryTracker(
-                                                Vision::MARKER_BATTERIES,
-                                                grayscaleImage,
-                                                trackingQuad,
-                                                parameters.scaleTemplateRegionPercent,
-                                                parameters.edgeDetectionParams_template,
-                                                onchipMemory, offchipMemory);
+          Vision::MARKER_BATTERIES,
+          grayscaleImage,
+          trackingQuad,
+          parameters.scaleTemplateRegionPercent,
+          parameters.edgeDetectionParams_template,
+          onchipMemory, offchipMemory);
 #else // #ifdef USE_HEADER_TEMPLATE
         tracker = TemplateTracker::BinaryTracker(
-                                                 grayscaleImage,
-                                                 trackingQuad,
-                                                 parameters.scaleTemplateRegionPercent,
-                                                 parameters.edgeDetectionParams_template,
-                                                 onchipMemory, offchipMemory);
+          grayscaleImage,
+          trackingQuad,
+          parameters.scaleTemplateRegionPercent,
+          parameters.edgeDetectionParams_template,
+          onchipMemory, offchipMemory);
 #endif // #ifdef USE_HEADER_TEMPLATE ... #else
 
 #elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
 
         tracker = TemplateTracker::LucasKanadeTracker_SampledPlanar6dof(grayscaleImage,
-                                                                        trackingQuad,
-                                                                        parameters.scaleTemplateRegionPercent,
-                                                                        parameters.numPyramidLevels,
-                                                                        Transformations::TRANSFORM_PROJECTIVE,
-                                                                        parameters.maxSamplesAtBaseLevel,
-                                                                        parameters.numSamplingRegions,
-                                                                        headCamInfo_->focalLength_x,
-                                                                        headCamInfo_->focalLength_y,
-                                                                        headCamInfo_->center_x,
-                                                                        headCamInfo_->center_y,
-                                                                        trackingMarkerWidth_mm,
-                                                                        ccmScratch,
-                                                                        onchipMemory,
-                                                                        offchipMemory);
+          trackingQuad,
+          parameters.scaleTemplateRegionPercent,
+          parameters.numPyramidLevels,
+          Transformations::TRANSFORM_PROJECTIVE,
+          parameters.maxSamplesAtBaseLevel,
+          parameters.numSamplingRegions,
+          headCamInfo_->focalLength_x,
+          headCamInfo_->focalLength_y,
+          headCamInfo_->center_x,
+          headCamInfo_->center_y,
+          markerToTrack_.width_mm,
+          ccmScratch,
+          onchipMemory,
+          offchipMemory);
 
         /*
         // TODO: Set this elsewhere
@@ -560,7 +618,7 @@ namespace Anki {
         const f32 tz_min = 30.f;
         const f32 tz_max = 150.f;
         tracker.SetGainScheduling(tz_min, tz_max, Kp_min, Kp_max);
-         */
+        */
 #else
 #error Unknown DOCKING_ALGORITHM.
 #endif
@@ -579,13 +637,13 @@ namespace Anki {
       } // InitTemplate()
 
       static Result TrackTemplate(const Array<u8> &grayscaleImage,
-                                  const Quadrilateral<f32> &trackingQuad,
-                                  const TrackerParameters &parameters,
-                                  Tracker &tracker,
-                                  bool &trackingSucceeded,
-                                  MemoryStack ccmScratch,
-                                  MemoryStack onchipScratch,
-                                  MemoryStack offchipScratch)
+        const Quadrilateral<f32> &trackingQuad,
+        const TrackerParameters &parameters,
+        Tracker &tracker,
+        bool &trackingSucceeded,
+        MemoryStack ccmScratch,
+        MemoryStack onchipScratch,
+        MemoryStack offchipScratch)
       {
         BeginBenchmark("VisionSystem_TrackTemplate");
 
@@ -611,53 +669,53 @@ namespace Anki {
 
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SLOW
         const Result trackerResult = tracker.UpdateTrack(
-                                                         grayscaleImage,
-                                                         parameters.maxIterations,
-                                                         parameters.convergenceTolerance,
-                                                         parameters.useWeights,
-                                                         trackingSucceeded,
-                                                         onchipScratch);
+          grayscaleImage,
+          parameters.maxIterations,
+          parameters.convergenceTolerance,
+          parameters.useWeights,
+          trackingSucceeded,
+          onchipScratch);
 
 #elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_AFFINE
         const Result trackerResult = tracker.UpdateTrack(
-                                                         grayscaleImageSmall,
-                                                         parameters.maxIterations,
-                                                         parameters.convergenceTolerance,
-                                                         parameters.verify_maxPixelDifference,
-                                                         trackingSucceeded,
-                                                         verify_meanAbsoluteDifference,
-                                                         verify_numInBounds,
-                                                         verify_numSimilarPixels,
-                                                         onchipScratch);
+          grayscaleImageSmall,
+          parameters.maxIterations,
+          parameters.convergenceTolerance,
+          parameters.verify_maxPixelDifference,
+          trackingSucceeded,
+          verify_meanAbsoluteDifference,
+          verify_numInBounds,
+          verify_numSimilarPixels,
+          onchipScratch);
 
         //tracker.get_transformation().Print("track");
 
 #elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE
         const Result trackerResult = tracker.UpdateTrack(
-                                                         grayscaleImageSmall,
-                                                         parameters.maxIterations,
-                                                         parameters.convergenceTolerance,
-                                                         parameters.verify_maxPixelDifference,
-                                                         trackingSucceeded,
-                                                         verify_meanAbsoluteDifference,
-                                                         verify_numInBounds,
-                                                         verify_numSimilarPixels,
-                                                         onchipScratch);
+          grayscaleImageSmall,
+          parameters.maxIterations,
+          parameters.convergenceTolerance,
+          parameters.verify_maxPixelDifference,
+          trackingSucceeded,
+          verify_meanAbsoluteDifference,
+          verify_numInBounds,
+          verify_numSimilarPixels,
+          onchipScratch);
 
         //tracker.get_transformation().Print("track");
 
 #elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PROJECTIVE
 
         const Result trackerResult = tracker.UpdateTrack(
-                                                         grayscaleImage,
-                                                         parameters.maxIterations,
-                                                         parameters.convergenceTolerance,
-                                                         parameters.verify_maxPixelDifference,
-                                                         trackingSucceeded,
-                                                         verify_meanAbsoluteDifference,
-                                                         verify_numInBounds,
-                                                         verify_numSimilarPixels,
-                                                         onchipScratch);
+          grayscaleImage,
+          parameters.maxIterations,
+          parameters.convergenceTolerance,
+          parameters.verify_maxPixelDifference,
+          trackingSucceeded,
+          verify_meanAbsoluteDifference,
+          verify_numInBounds,
+          verify_numSimilarPixels,
+          onchipScratch);
 
         //tracker.get_transformation().Print("track");
 
@@ -665,18 +723,18 @@ namespace Anki {
         s32 numMatches = -1;
 
         const Result trackerResult = tracker.UpdateTrack_Normal(
-                                                         grayscaleImage,
-                                                         parameters.edgeDetectionParams_update,
-                                                         parameters.matching_maxTranslationDistance,
-                                                         parameters.matching_maxProjectiveDistance,
-                                                         parameters.verify_maxTranslationDistance,
-                                                         parameters.verify_maxPixelDifference,
-                                                         parameters.verify_coordinateIncrement,
-                                                         numMatches,
-                                                         verify_meanAbsoluteDifference,
-                                                         verify_numInBounds,
-                                                         verify_numSimilarPixels,
-                                                         ccmScratch, offchipScratch);
+          grayscaleImage,
+          parameters.edgeDetectionParams_update,
+          parameters.matching_maxTranslationDistance,
+          parameters.matching_maxProjectiveDistance,
+          parameters.verify_maxTranslationDistance,
+          parameters.verify_maxPixelDifference,
+          parameters.verify_coordinateIncrement,
+          numMatches,
+          verify_meanAbsoluteDifference,
+          verify_numInBounds,
+          verify_numSimilarPixels,
+          ccmScratch, offchipScratch);
 
         //tracker.get_transformation().Print("track");
 
@@ -696,28 +754,28 @@ namespace Anki {
         const Radians initAngleY(tracker.get_angleY());
         const Radians initAngleZ(tracker.get_angleZ());
         const Point3<f32>& initTranslation = tracker.get_translation();
-        
+
         bool converged = false;
         const Result trackerResult = tracker.UpdateTrack(grayscaleImage,
-                                                         parameters.maxIterations,
-                                                         parameters.convergenceTolerance_angle,
-                                                         parameters.convergenceTolerance_distance,
-                                                         parameters.verify_maxPixelDifference,
-                                                         converged,
-                                                         verify_meanAbsoluteDifference,
-                                                         verify_numInBounds,
-                                                         verify_numSimilarPixels,
-                                                         onchipScratch);
-        
+          parameters.maxIterations,
+          parameters.convergenceTolerance_angle,
+          parameters.convergenceTolerance_distance,
+          parameters.verify_maxPixelDifference,
+          converged,
+          verify_meanAbsoluteDifference,
+          verify_numInBounds,
+          verify_numSimilarPixels,
+          onchipScratch);
+
         // TODO: Do we care if converged == false?
-        
+
         //
         // Go through a bunch of checks to see whether the tracking succeeded
         //
-        
+
         if(fabs((initAngleX - tracker.get_angleX()).ToFloat()) > parameters.successTolerance_angle ||
-           fabs((initAngleY - tracker.get_angleY()).ToFloat()) > parameters.successTolerance_angle ||
-           fabs((initAngleZ - tracker.get_angleZ()).ToFloat()) > parameters.successTolerance_angle)
+          fabs((initAngleY - tracker.get_angleY()).ToFloat()) > parameters.successTolerance_angle ||
+          fabs((initAngleZ - tracker.get_angleZ()).ToFloat()) > parameters.successTolerance_angle)
         {
           PRINT("Tracker failed: angle(s) changed too much.\n");
           trackingSucceeded = false;
@@ -748,7 +806,7 @@ namespace Anki {
           trackingSucceeded = false;
         }
         else if( (static_cast<f32>(verify_numSimilarPixels) /
-                  static_cast<f32>(verify_numInBounds)) < parameters.successTolerance_matchingPixelsFraction)
+          static_cast<f32>(verify_numInBounds)) < parameters.successTolerance_matchingPixelsFraction)
         {
           PRINT("Tracker failed: too many in-bounds pixels failed intensity verification (%d / %d < %f).\n",
                 verify_numSimilarPixels, verify_numInBounds, parameters.successTolerance_matchingPixelsFraction);
@@ -758,8 +816,7 @@ namespace Anki {
           // Everything seems ok!
           trackingSucceeded = true;
         }
-          
-        
+
 #else
 #error Unknown DOCKING_ALGORITHM!
 #endif
@@ -770,7 +827,7 @@ namespace Anki {
 
         // Sanity check on tracker result
 #if DOCKING_ALGORITHM != DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
-        
+
         // Check for a super shrunk or super large template
         // (I don't think this works for planar 6dof homographies?  Try dividing by h22?)
         {
@@ -804,7 +861,7 @@ namespace Anki {
         }
 #endif // #if DOCKING_ALGORITHM != DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
 
-		EndBenchmark("VisionSystem_TrackTemplate");
+        EndBenchmark("VisionSystem_TrackTemplate");
 
         MatlabVisualization::SendTrack(grayscaleImage, tracker, trackingSucceeded, offchipScratch);
 
@@ -839,7 +896,7 @@ namespace Anki {
 
 #if USE_MATLAB_TRACKER
         MatlabVisionProcessor::UpdateTracker(T_fwd_robot, T_hor_robot,
-                                             theta_robot, theta_head);
+          theta_robot, theta_head);
 #else
         Radians theta_head2 = GetCurrentHeadAngle();
         Radians theta_head1 = GetPreviousHeadAngle();
@@ -880,8 +937,8 @@ namespace Anki {
         const f32 term5 = (T_fwd_robot*cR + T_hor_robot*sR);
 
         Point3<f32> T_geometry(T_hor_robot*cR + term1*sR - T_fwd_robot*sR,
-                               term1*cR*sH2 - term2*cH2 + term3*cH2 - term4*sH2 - term5*sH2,
-                               term1*cH2*cR - term4*cH2 - term5*cH2 + term2*sH2 - term3*sH2);
+          term1*cR*sH2 - term2*cH2 + term3*cH2 - term4*sH2 - term5*sH2,
+          term1*cH2*cR - term4*cH2 - term5*cH2 + term2*sH2 - term3*sH2);
 
         Array<f32> R_blockRelHead = Array<f32>(3,3,scratch);
         tracker_.get_rotationMatrix(R_blockRelHead);
@@ -893,12 +950,11 @@ namespace Anki {
         Point3<f32> T_blockRelHead_new = R_geometry*T_blockRelHead + T_geometry;
 
         if(tracker_.UpdateRotationAndTranslation(R_blockRelHead_new,
-                                                 T_blockRelHead_new,
-                                                 scratch) == RESULT_OK)
+          T_blockRelHead_new,
+          scratch) == RESULT_OK)
         {
           result = RESULT_OK;
         }
-
 
 #endif // #if USE_MATLAB_TRACKER
 
@@ -916,8 +972,8 @@ namespace Anki {
         const f32 cosHeadAngle = cosf(theta_head.ToFloat());
         const f32 sinHeadAngle = sinf(theta_head.ToFloat());
         const f32 d = (trackingMarkerWidth_mm* cosHeadAngle *
-                       headCamInfo_->focalLength_y /
-                       observedVerticalSize_pix);
+          headCamInfo_->focalLength_y /
+          observedVerticalSize_pix);
 
         // Convert to how much we've moved along (and orthogonal to) the camera's optical axis
         const f32 T_fwd_cam =  T_fwd_robot*cosHeadAngle;
@@ -941,9 +997,9 @@ namespace Anki {
         const f32 verticalShift_pix = T_ver_cam * headCamInfo_->focalLength_y/d;
 
         PRINT("Adjusting transformation: %.3fpix H shift for %.3fdeg rotation, "
-              "%.3f scaling and %.3f V shift for %.3f translation forward (%.3f cam)\n",
-              horizontalShift_pix, theta_robot.getDegrees(), scaleChange,
-              verticalShift_pix, T_fwd_robot, T_fwd_cam);
+          "%.3f scaling and %.3f V shift for %.3f translation forward (%.3f cam)\n",
+          horizontalShift_pix, theta_robot.getDegrees(), scaleChange,
+          verticalShift_pix, T_fwd_robot, T_fwd_cam);
 
         // Adjust the Transformation
         // Note: UpdateTransformation is doing *inverse* composition (thus using the negatives)
@@ -956,7 +1012,7 @@ namespace Anki {
           MatlabVisionProcessor::UpdateTracker(update);
 #else
           tracker_.UpdateTransformation(update, 1.f, scratch,
-                                                     Transformations::TRANSFORM_TRANSLATION);
+            Transformations::TRANSFORM_TRANSLATION);
 #endif
         }
         else {
@@ -982,7 +1038,7 @@ namespace Anki {
           MatlabVisionProcessor::UpdateTracker(update);
 #else
           tracker_.UpdateTransformation(update, 1.f, scratch,
-                                                     Transformations::TRANSFORM_AFFINE);
+            Transformations::TRANSFORM_AFFINE);
 #endif
         } // if(tracker transformation type == TRANSLATION...)
 
@@ -993,10 +1049,9 @@ namespace Anki {
         return result;
       } // TrackerPredictionUpdate()
 
-
       static void FillDockErrMsg(const Quadrilateral<f32>& currentQuad,
-                                 Messages::DockingErrorSignal& dockErrMsg,
-                                 MemoryStack scratch)
+        Messages::DockingErrorSignal& dockErrMsg,
+        MemoryStack scratch)
       {
         dockErrMsg.isApproximate = false;
 
@@ -1051,10 +1106,10 @@ namespace Anki {
 
 #if USE_MATLAB_TRACKER
         MatlabVisionProcessor::ComputeProjectiveDockingSignal(currentQuad,
-                                                              dockErrMsg.x_distErr,
-                                                              dockErrMsg.y_horErr,
-                                                              dockErrMsg.z_height,
-                                                              dockErrMsg.angleErr);
+          dockErrMsg.x_distErr,
+          dockErrMsg.y_horErr,
+          dockErrMsg.z_height,
+          dockErrMsg.angleErr);
 #else
         // Despite the names, fill the elements of the message with camera-centric coordinates
         dockErrMsg.x_distErr = tracker_.get_translation().x;
@@ -1065,32 +1120,30 @@ namespace Anki {
 
 #endif // if USE_MATLAB_TRACKER
 
-
 #elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PROJECTIVE || DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
-
 
 #if USE_MATLAB_TRACKER
         MatlabVisionProcessor::ComputeProjectiveDockingSignal(currentQuad,
-                                                              dockErrMsg.x_distErr,
-                                                              dockErrMsg.y_horErr,
-                                                              dockErrMsg.z_height,
-                                                              dockErrMsg.angleErr);
+          dockErrMsg.x_distErr,
+          dockErrMsg.y_horErr,
+          dockErrMsg.z_height,
+          dockErrMsg.angleErr);
 #else
 
         // Compute the current pose of the block relative to the camera:
         Array<P3P_PRECISION> R = Array<P3P_PRECISION>(3,3, scratch);
         Point3<P3P_PRECISION> T;
         Quadrilateral<P3P_PRECISION> currentQuad_atPrecision(Point<P3P_PRECISION>(currentQuad[0].x, currentQuad[0].y),
-                                                             Point<P3P_PRECISION>(currentQuad[1].x, currentQuad[1].y),
-                                                             Point<P3P_PRECISION>(currentQuad[2].x, currentQuad[2].y),
-                                                             Point<P3P_PRECISION>(currentQuad[3].x, currentQuad[3].y));
+          Point<P3P_PRECISION>(currentQuad[1].x, currentQuad[1].y),
+          Point<P3P_PRECISION>(currentQuad[2].x, currentQuad[2].y),
+          Point<P3P_PRECISION>(currentQuad[3].x, currentQuad[3].y));
 
         P3P::computePose(currentQuad_atPrecision,
-                         canonicalMarker3d_[0], canonicalMarker3d_[1],
-                         canonicalMarker3d_[2], canonicalMarker3d_[3],
-                         headCamInfo_->focalLength_x, headCamInfo_->focalLength_y,
-                         headCamInfo_->center_x, headCamInfo_->center_y,
-                         R, T, scratch);
+          canonicalMarker3d_[0], canonicalMarker3d_[1],
+          canonicalMarker3d_[2], canonicalMarker3d_[3],
+          headCamInfo_->focalLength_x, headCamInfo_->focalLength_y,
+          headCamInfo_->center_x, headCamInfo_->center_y,
+          R, T, scratch);
 
         // Extract what we need for the docking error signal from the block's pose:
         dockErrMsg.x_distErr = T.x;
@@ -1098,22 +1151,18 @@ namespace Anki {
         dockErrMsg.z_height  = T.z;
         dockErrMsg.angleErr  = asinf(R[2][0]);
 
-
 #endif // if USE_MATLAB_TRACKER
 
-
 #endif // if USE_APPROXIMATE_DOCKING_ERROR_SIGNAL
-
       } // FillDockErrMsg()
-
 
 #if 0
 #pragma mark --- Public VisionSystem API Implementations ---
 #endif
 
       u32 DownsampleHelper(const Array<u8>& in,
-                           Array<u8>& out,
-                           MemoryStack scratch)
+        Array<u8>& out,
+        MemoryStack scratch)
       {
         const s32 inWidth  = in.get_size(1);
         //const s32 inHeight = in.get_size(0);
@@ -1129,9 +1178,9 @@ namespace Anki {
           //PRINT("Downsampling [%d x %d] frame by %d.\n", inWidth, inHeight, (1 << downsamplePower));
 
           ImageProcessing::DownsampleByPowerOfTwo<u8,u32,u8>(in,
-                                                             downsamplePower,
-                                                             out,
-                                                             scratch);
+            downsamplePower,
+            out,
+            scratch);
         } else {
           // No need to downsample, just copy the buffer
           out.Set(in);
@@ -1146,7 +1195,7 @@ namespace Anki {
       }
 
       f32 GetTrackingMarkerWidth() {
-        return trackingMarkerWidth_mm;
+        return markerToTrack_.width_mm;
       }
 
       f32 GetVerticalFOV() {
@@ -1162,7 +1211,6 @@ namespace Anki {
         Result result = RESULT_OK;
 
         if(!isInitialized_) {
-
           captureResolution_ = Vision::CAMERA_RES_QVGA;
           faceDetectionResolution_ = Vision::CAMERA_RES_QVGA;
 
@@ -1173,10 +1221,8 @@ namespace Anki {
           //
 
           mode_                      = VISION_MODE_LOOKING_FOR_MARKERS;
-          markerTypeToTrack_         = Anki::Vision::MARKER_UNKNOWN;
+          markerToTrack_.Clear();
           numTrackFailures_          = 0;
-          isTrackingMarkerSpecified_ = false;
-          trackingMarkerWidth_mm     = 0;
 
           wasCalledOnce_             = false;
           havePreviousRobotState_    = false;
@@ -1203,7 +1249,7 @@ namespace Anki {
 
 #ifdef RUN_SIMPLE_TRACKING_TEST
           Anki::Cozmo::VisionSystem::SetMarkerToTrack(Vision::MARKER_BATTERIES,
-                                                      DEFAULT_BLOCK_MARKER_WIDTH_MM);
+            DEFAULT_BLOCK_MARKER_WIDTH_MM);
 #endif
 
           result = VisionMemory::Initialize();
@@ -1228,38 +1274,45 @@ namespace Anki {
         return result;
       }
 
-      Result SetMarkerToTrack(const Vision::MarkerType& markerToTrack,
-                                  const f32 markerWidth_mm)
+      Result SetMarkerToTrack(const Vision::MarkerType& markerTypeToTrack,
+                              const f32 markerWidth_mm)
       {
-        markerTypeToTrack_     = markerToTrack;
-        trackingMarkerWidth_mm = markerWidth_mm;
+        const Point2f imageCenter(-1.f, -1.f);
+        const f32     searchRadius = -1.f;
+        return SetMarkerToTrack(markerTypeToTrack, markerWidth_mm,
+                                imageCenter, searchRadius);
+      }
+      
+      Result SetMarkerToTrack(const Vision::MarkerType& markerTypeToTrack,
+                              const f32 markerWidth_mm,
+                              const Point2f& atImageCenter,
+                              const f32 imageSearchRadius)
+      {
+        markerToTrack_.type              = markerTypeToTrack;
+        markerToTrack_.width_mm          = markerWidth_mm;
+        markerToTrack_.imageCenter       = atImageCenter;
+        markerToTrack_.imageSearchRadius = imageSearchRadius;
+        
         mode_                  = VISION_MODE_LOOKING_FOR_MARKERS;
         numTrackFailures_      = 0;
 
         // If the marker type is valid, start looking for it
-        if(markerToTrack != Vision::MARKER_UNKNOWN &&
-           markerWidth_mm > 0.f)
+        if(markerToTrack_.IsSpecified())
         {
-          isTrackingMarkerSpecified_ = true;
-
           // Set canonical 3D marker's corner coordinates
-          const P3P_PRECISION markerHalfWidth = trackingMarkerWidth_mm * P3P_PRECISION(0.5);
+          const P3P_PRECISION markerHalfWidth = markerToTrack_.width_mm * P3P_PRECISION(0.5);
           canonicalMarker3d_[0] = Point3<P3P_PRECISION>(-markerHalfWidth, -markerHalfWidth, 0);
           canonicalMarker3d_[1] = Point3<P3P_PRECISION>(-markerHalfWidth,  markerHalfWidth, 0);
           canonicalMarker3d_[2] = Point3<P3P_PRECISION>( markerHalfWidth, -markerHalfWidth, 0);
           canonicalMarker3d_[3] = Point3<P3P_PRECISION>( markerHalfWidth,  markerHalfWidth, 0);
-
-        } else {
-          isTrackingMarkerSpecified_ = false;
         }
 
         return RESULT_OK;
-
       } // SetMarkerToTrack()
 
       void StopTracking()
       {
-        isTrackingMarkerSpecified_ = false;
+        markerToTrack_.Clear();
         mode_ = VISION_MODE_LOOKING_FOR_MARKERS;
       }
 
@@ -1269,32 +1322,32 @@ namespace Anki {
       } // GetObservedMarkerList()
 
       Result GetVisionMarkerPoseNearestTo(const Embedded::Point3<f32>&  atPosition,
-                                          const Vision::MarkerType&     withType,
-                                          const f32                     maxDistance_mm,
-                                          Embedded::Array<f32>&         rotationWrtRobot,
-                                          Embedded::Point3<f32>&        translationWrtRobot,
-                                          bool&                         markerFound)
+        const Vision::MarkerType&     withType,
+        const f32                     maxDistance_mm,
+        Embedded::Array<f32>&         rotationWrtRobot,
+        Embedded::Point3<f32>&        translationWrtRobot,
+        bool&                         markerFound)
       {
         using namespace Embedded;
-        
+
         Result lastResult = RESULT_OK;
         markerFound = false;
-        
+
         if(VisionMemory::markers_.get_size() > 0)
         {
           FixedLengthList<VisionMarker*> markersWithType(VisionMemory::markers_.get_size(),
-                                                         VisionMemory::onchipScratch_);
-          
+            VisionMemory::onchipScratch_);
+
           AnkiConditionalErrorAndReturnValue(markersWithType.IsValid(),
-                                             RESULT_FAIL_MEMORY,
-                                             "GetVisionMarkerPoseNearestTo",
-                                             "Failed to allocate markersWithType FixedLengthList.");
-          
+            RESULT_FAIL_MEMORY,
+            "GetVisionMarkerPoseNearestTo",
+            "Failed to allocate markersWithType FixedLengthList.");
+
           // Find all markers with specified type
           s32 numFound = 0;
           VisionMarker  * restrict pMarker = VisionMemory::markers_.Pointer(0);
           VisionMarker* * restrict pMarkerWithType = markersWithType.Pointer(0);
-          
+
           for(s32 i=0; i<VisionMemory::markers_.get_size(); ++i)
           {
             if(pMarker[i].markerType == withType) {
@@ -1302,43 +1355,41 @@ namespace Anki {
             }
           }
           markersWithType.set_size(numFound);
-          
+
           // If any were found, find the one that is closest to the specified
           // 3D point and within the specified max distance
           if(numFound > 0) {
-            
             // Create a little MemoryStack for allocating temporary
             // rotation matrix
             const s32 SCRATCH_BUFFER_SIZE = 128;
             char scratchBuffer[SCRATCH_BUFFER_SIZE];
             MemoryStack scratch(scratchBuffer, SCRATCH_BUFFER_SIZE);
-            
+
             // Create temporary pose storage (wrt camera)
             Point3<f32> translationWrtCamera;
             Array<f32> rotationWrtCamera(3,3,scratch);
             AnkiConditionalErrorAndReturnValue(rotationWrtCamera.IsValid(),
-                                               RESULT_FAIL_MEMORY,
-                                               "GetVisionMarkerPoseNearestTo",
-                                               "Failed to allocate rotationWrtCamera Array.");
-            
+              RESULT_FAIL_MEMORY,
+              "GetVisionMarkerPoseNearestTo",
+              "Failed to allocate rotationWrtCamera Array.");
+
             VisionMarker* const* restrict pMarkerWithType = markersWithType.Pointer(0);
-            
+
             f32 closestDistance = maxDistance_mm;
-            
+
             for(s32 i=0; i<numFound; ++i) {
-              
               // Compute this marker's pose WRT camera
               if((lastResult = GetVisionMarkerPose(*(pMarkerWithType[i]), true,
-                                                   rotationWrtCamera, translationWrtCamera)) != RESULT_OK) {
-                return lastResult;
+                rotationWrtCamera, translationWrtCamera)) != RESULT_OK) {
+                  return lastResult;
               }
-             
+
               // Convert it to pose WRT robot
               if((lastResult = GetWithRespectToRobot(rotationWrtCamera, translationWrtCamera,
-                                                     rotationWrtRobot, translationWrtRobot)) != RESULT_OK) {
-                return lastResult;
+                rotationWrtRobot, translationWrtRobot)) != RESULT_OK) {
+                  return lastResult;
               }
-              
+
               // See how far it is from the specified position
               const f32 currentDistance = (translationWrtRobot - atPosition).Length();
               if(currentDistance < closestDistance) {
@@ -1346,24 +1397,21 @@ namespace Anki {
                 markerFound = true;
               }
             } // for each marker with type
-            
           } // if numFound > 0
-          
         } // if(VisionMemory::markers_.get_size() > 0)
-        
+
         return RESULT_OK;
-        
       } // GetVisionMarkerPoseNearestTo()
-      
+
       template<typename PRECISION>
       static Result GetCamPoseWrtRobot(Array<PRECISION>& RcamWrtRobot,
-                                       Point3<PRECISION>& TcamWrtRobot)
+        Point3<PRECISION>& TcamWrtRobot)
       {
         AnkiConditionalErrorAndReturnValue(RcamWrtRobot.get_size(0)==3 &&
-                                           RcamWrtRobot.get_size(1)==3,
-                                           RESULT_FAIL_INVALID_SIZE,
-                                           "VisionSystem::GetCamPoseWrtRobot",
-                                           "Rotation matrix must already be 3x3.");
+          RcamWrtRobot.get_size(1)==3,
+          RESULT_FAIL_INVALID_SIZE,
+          "VisionSystem::GetCamPoseWrtRobot",
+          "Rotation matrix must already be 3x3.");
 
         const f32 headAngle = HeadController::GetAngleRad();
         const f32 cosH = cosf(headAngle);
@@ -1381,7 +1429,7 @@ namespace Anki {
       }
 
       Result GetWithRespectToRobot(const Embedded::Point3<f32>& pointWrtCamera,
-                                   Embedded::Point3<f32>&       pointWrtRobot)
+        Embedded::Point3<f32>&       pointWrtRobot)
       {
         Point3<f32> TcamWrtRobot;
 
@@ -1396,9 +1444,9 @@ namespace Anki {
       }
 
       Result GetWithRespectToRobot(const Embedded::Array<f32>&  rotationWrtCamera,
-                                   const Embedded::Point3<f32>& translationWrtCamera,
-                                   Embedded::Array<f32>&        rotationWrtRobot,
-                                   Embedded::Point3<f32>&       translationWrtRobot)
+        const Embedded::Point3<f32>& translationWrtCamera,
+        Embedded::Array<f32>&        rotationWrtRobot,
+        Embedded::Point3<f32>&       translationWrtRobot)
       {
         Point3<f32> TcamWrtRobot;
 
@@ -1417,9 +1465,9 @@ namespace Anki {
       }
 
       Result GetVisionMarkerPose(const Embedded::VisionMarker& marker,
-                                 const bool ignoreOrientation,
-                                 Embedded::Array<f32>&  rotation,
-                                 Embedded::Point3<f32>& translation)
+        const bool ignoreOrientation,
+        Embedded::Array<f32>&  rotation,
+        Embedded::Point3<f32>& translation)
       {
         Quadrilateral<f32> sortedQuad;
         if(ignoreOrientation) {
@@ -1429,12 +1477,11 @@ namespace Anki {
         }
 
         return P3P::computePose(sortedQuad,
-                                canonicalMarker3d_[0], canonicalMarker3d_[1],
-                                canonicalMarker3d_[2], canonicalMarker3d_[3],
-                                headCamInfo_->focalLength_x, headCamInfo_->focalLength_y,
-                                headCamInfo_->center_x, headCamInfo_->center_y,
-                                rotation, translation);
-
+          canonicalMarker3d_[0], canonicalMarker3d_[1],
+          canonicalMarker3d_[2], canonicalMarker3d_[3],
+          headCamInfo_->focalLength_x, headCamInfo_->focalLength_y,
+          headCamInfo_->center_x, headCamInfo_->center_y,
+          rotation, translation);
       } // GetVisionMarkerPose()
 
 #ifdef SEND_IMAGE_ONLY
@@ -1444,76 +1491,44 @@ namespace Anki {
       {
         // This should be called from elsewhere first, but calling it again won't hurt
         Init();
-        
+
         VisionMemory::ResetBuffers();
-        
+
         frameNumber++;
 
-      const s32 captureHeight = CameraModeInfo[captureResolution_].height;
-      const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
+        const s32 captureHeight = CameraModeInfo[captureResolution_].height;
+        const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
 
-      Array<u8> grayscaleImage(captureHeight, captureWidth,
-                               VisionMemory::onchipScratch_, Flags::Buffer(false,false,false));
+        Array<u8> grayscaleImage(captureHeight, captureWidth,
+          VisionMemory::onchipScratch_, Flags::Buffer(false,false,false));
 
-      BeginBenchmark("VisionSystem_CameraGetFrame");
-      
-      HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
-                          captureResolution_, false);
-      
-      EndBenchmark("VisionSystem_CameraGetFrame");
+        BeginBenchmark("VisionSystem_CameraGetFrame");
 
-      if(autoExposure_enabled && (frameNumber % autoExposure_adjustEveryNFrames) == 0) {
-        ComputeBestCameraParameters(
-              grayscaleImage,
-              Rectangle<s32>(0, grayscaleImage.get_size(1)-1, 0, grayscaleImage.get_size(0)-1),
-              autoExposure_integerCountsIncrement,
-              autoExposure_percentileToSaturate,
-              autoExposure_minExposureTime, autoExposure_maxExposureTime,
-              exposureTime,
-              VisionMemory::ccmScratch_);
-      }
-      
-      HAL::CameraSetExposure(exposureTime);
-      
-#ifdef SEND_BINARY_IMAGE_ONLY
-      DebugStream::SendBinaryImage(grayscaleImage, "Binary Robot Image", tracker_, trackerParameters_, VisionMemory::ccmScratch_, VisionMemory::onchipScratch_, VisionMemory::offchipScratch_);
-      HAL::MicroWait(250000);
-#else
-      DebugStream::SendImage(grayscaleImage, exposureTime, "Robot Image", VisionMemory::offchipScratch_);
-      HAL::MicroWait(166666); // 6fps
-      //HAL::MicroWait(140000); //7fps
-      //HAL::MicroWait(125000); //8fps
-#endif
+        HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
+          captureResolution_, false);
 
-      return RESULT_OK;
-    } // Update() [SEND_IMAGE_ONLY]
+        EndBenchmark("VisionSystem_CameraGetFrame");
 
-#elif defined(RUN_SIMPLE_FACE_DETECTION_TEST) // #ifdef SEND_IMAGE_ONLY
+        BeginBenchmark("VisionSystem_CameraImagingPipeline");
 
-      Result Update(const Messages::RobotState robotState)
-      {
-        // This should be called from elsewhere first, but calling it again won't hurt
-        Init();
-        
-        VisionMemory::ResetBuffers();
-        
-        frameNumber++;
+        if(vignettingCorrection == VignettingCorrection_Software) {
+          BeginBenchmark("VisionSystem_CameraImagingPipeline_Vignetting");
 
-      const s32 captureHeight = CameraModeInfo[captureResolution_].height;
-      const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
+          MemoryStack onchipScratch_local = VisionMemory::onchipScratch_;
+          FixedLengthList<f32> polynomialParameters(5, onchipScratch_local, Flags::Buffer(false, false, true));
 
-      Array<u8> grayscaleImage(captureHeight, captureWidth,
-                               VisionMemory::offchipScratch_, Flags::Buffer(false,false,false));
+          for(s32 i=0; i<5; i++)
+            polynomialParameters[i] = vignettingCorrectionParameters[i];
 
-      BeginBenchmark("VisionSystem_CameraGetFrame");
+          CorrectVignetting(grayscaleImage, polynomialParameters);
 
-      HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
-                          captureResolution_, false);
-      
-      EndBenchmark("VisionSystem_CameraGetFrame");
+          EndBenchmark("VisionSystem_CameraImagingPipeline_Vignetting");
+        } // if(vignettingCorrection == VignettingCorrection_Software)
 
-      if(autoExposure_enabled && (frameNumber % autoExposure_adjustEveryNFrames) == 0) {
-      ComputeBestCameraParameters(
+        if(autoExposure_enabled && (frameNumber % autoExposure_adjustEveryNFrames) == 0) {
+          BeginBenchmark("VisionSystem_CameraImagingPipeline_AutoExposure");
+
+          ComputeBestCameraParameters(
             grayscaleImage,
             Rectangle<s32>(0, grayscaleImage.get_size(1)-1, 0, grayscaleImage.get_size(0)-1),
             autoExposure_integerCountsIncrement,
@@ -1521,83 +1536,182 @@ namespace Anki {
             autoExposure_minExposureTime, autoExposure_maxExposureTime,
             exposureTime,
             VisionMemory::ccmScratch_);
-      }
-      
-      HAL::CameraSetExposure(exposureTime);
-      
-      const s32 faceDetectionHeight = CameraModeInfo[faceDetectionResolution_].height;
-      const s32 faceDetectionWidth  = CameraModeInfo[faceDetectionResolution_].width;
 
-      const double scaleFactor = 1.1;
-      const int minNeighbors = 2;
-      const s32 minHeight = 30;
-      const s32 minWidth = 30;
-      const s32 maxHeight = faceDetectionHeight;
-      const s32 maxWidth = faceDetectionWidth;
-      const s32 MAX_CANDIDATES = 5000;
+          EndBenchmark("VisionSystem_CameraImagingPipeline_AutoExposure");
+        }
 
-      Array<u8> smallImage(
-        faceDetectionHeight, faceDetectionWidth,
-        VisionMemory::onchipScratch_, Flags::Buffer(false,false,false));
+        //if(frameNumber % 10 == 0) {
+        //if(vignettingCorrection == VignettingCorrection_Off)
+        //vignettingCorrection = VignettingCorrection_CameraHardware;
+        //else if(vignettingCorrection == VignettingCorrection_CameraHardware)
+        //vignettingCorrection = VignettingCorrection_Software;
+        //else if(vignettingCorrection == VignettingCorrection_Software)
+        //vignettingCorrection = VignettingCorrection_Off;
+        //}
 
-      DownsampleHelper(grayscaleImage, smallImage, VisionMemory::ccmScratch_);
+        //if(vignettingCorrection == VignettingCorrection_Software) {
+        //  for(s32 y=0; y<3; y++) {
+        //    for(s32 x=0; x<3; x++) {
+        //      grayscaleImage[y][x] = 0;
+        //    }
+        //  }
+        //}
 
-      const FixedLengthList<Classifier::CascadeClassifier::Stage> &stages = FixedLengthList<Classifier::CascadeClassifier::Stage>(lbpcascade_frontalface_stages_length, const_cast<Classifier::CascadeClassifier::Stage*>(&lbpcascade_frontalface_stages_data[0]), lbpcascade_frontalface_stages_length*sizeof(Classifier::CascadeClassifier::Stage) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
-      const FixedLengthList<Classifier::CascadeClassifier::DTree> &classifiers = FixedLengthList<Classifier::CascadeClassifier::DTree>(lbpcascade_frontalface_classifiers_length, const_cast<Classifier::CascadeClassifier::DTree*>(&lbpcascade_frontalface_classifiers_data[0]), lbpcascade_frontalface_classifiers_length*sizeof(Classifier::CascadeClassifier::DTree) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
-      const FixedLengthList<Classifier::CascadeClassifier::DTreeNode> &nodes =  FixedLengthList<Classifier::CascadeClassifier::DTreeNode>(lbpcascade_frontalface_nodes_length, const_cast<Classifier::CascadeClassifier::DTreeNode*>(&lbpcascade_frontalface_nodes_data[0]), lbpcascade_frontalface_nodes_length*sizeof(Classifier::CascadeClassifier::DTreeNode) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));;
-      const FixedLengthList<f32> &leaves = FixedLengthList<f32>(lbpcascade_frontalface_leaves_length, const_cast<f32*>(&lbpcascade_frontalface_leaves_data[0]), lbpcascade_frontalface_leaves_length*sizeof(f32) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
-      const FixedLengthList<s32> &subsets = FixedLengthList<s32>(lbpcascade_frontalface_subsets_length, const_cast<s32*>(&lbpcascade_frontalface_subsets_data[0]), lbpcascade_frontalface_subsets_length*sizeof(s32) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
-      const FixedLengthList<Rectangle<s32> > &featureRectangles = FixedLengthList<Rectangle<s32> >(lbpcascade_frontalface_featureRectangles_length, const_cast<Rectangle<s32>*>(reinterpret_cast<const Rectangle<s32>*>(&lbpcascade_frontalface_featureRectangles_data[0])), lbpcascade_frontalface_featureRectangles_length*sizeof(Rectangle<s32>) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+        //if(frameNumber % 25 == 0) {
+        //  if(vignettingCorrection == VignettingCorrection_Off)
+        //    vignettingCorrection = VignettingCorrection_Software;
+        //  else if(vignettingCorrection == VignettingCorrection_Software)
+        //    vignettingCorrection = VignettingCorrection_Off;
+        //}
 
-      Classifier::CascadeClassifier_LBP cc(
-        lbpcascade_frontalface_isStumpBased,
-        lbpcascade_frontalface_stageType,
-        lbpcascade_frontalface_featureType,
-        lbpcascade_frontalface_ncategories,
-        lbpcascade_frontalface_origWinHeight,
-        lbpcascade_frontalface_origWinWidth,
-        stages,
-        classifiers,
-        nodes,
-        leaves,
-        subsets,
-        featureRectangles,
-        VisionMemory::ccmScratch_);
+        HAL::CameraSetParameters(exposureTime, vignettingCorrection == VignettingCorrection_CameraHardware);
 
-      FixedLengthList<Rectangle<s32> > detectedFaces(MAX_CANDIDATES, VisionMemory::offchipScratch_);
+        EndBenchmark("VisionSystem_CameraImagingPipeline");
 
-      const Result result = cc.DetectMultiScale(
-        smallImage,
-        static_cast<f32>(scaleFactor),
-        minNeighbors,
-        minHeight, minWidth,
-        maxHeight, maxWidth,
-        detectedFaces,
-        VisionMemory::onchipScratch_,
-        VisionMemory::offchipScratch_);
+#ifdef SEND_BINARY_IMAGE_ONLY
+        DebugStream::SendBinaryImage(grayscaleImage, "Binary Robot Image", tracker_, trackerParameters_, VisionMemory::ccmScratch_, VisionMemory::onchipScratch_, VisionMemory::offchipScratch_);
+        HAL::MicroWait(250000);
+#else
+        DebugStream::SendImage(grayscaleImage, exposureTime, "Robot Image", VisionMemory::offchipScratch_);
+        HAL::MicroWait(166666); // 6fps
+        //HAL::MicroWait(140000); //7fps
+        //HAL::MicroWait(125000); //8fps
+#endif
 
-      DebugStream::SendFaceDetections(
-        grayscaleImage,
-        detectedFaces,
-        smallImage.get_size(1),
-        VisionMemory::ccmScratch_,
-        VisionMemory::onchipScratch_,
-        VisionMemory::offchipScratch_);
+        return RESULT_OK;
+      } // Update() [SEND_IMAGE_ONLY]
 
-      return RESULT_OK;
-    } // Update() [SEND_IMAGE_ONLY]
+#elif defined(RUN_SIMPLE_FACE_DETECTION_TEST) // #ifdef SEND_IMAGE_ONLY
+
+      Result Update(const Messages::RobotState robotState)
+      {
+        // This should be called from elsewhere first, but calling it again won't hurt
+        Init();
+
+        VisionMemory::ResetBuffers();
+
+        frameNumber++;
+
+        const s32 captureHeight = CameraModeInfo[captureResolution_].height;
+        const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
+
+        Array<u8> grayscaleImage(captureHeight, captureWidth,
+          VisionMemory::offchipScratch_, Flags::Buffer(false,false,false));
+
+        BeginBenchmark("VisionSystem_CameraGetFrame");
+
+        HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
+          captureResolution_, false);
+
+        EndBenchmark("VisionSystem_CameraGetFrame");
+
+        BeginBenchmark("VisionSystem_CameraImagingPipeline");
+
+        if(vignettingCorrection == VignettingCorrection_Software) {
+          BeginBenchmark("VisionSystem_CameraImagingPipeline_Vignetting");
+
+          MemoryStack onchipScratch_local = VisionMemory::onchipScratch_;
+          FixedLengthList<f32> polynomialParameters(5, onchipScratch_local, Flags::Buffer(false, false, true));
+
+          for(s32 i=0; i<5; i++)
+            polynomialParameters[i] = vignettingCorrectionParameters[i];
+
+          CorrectVignetting(grayscaleImage, polynomialParameters);
+
+          EndBenchmark("VisionSystem_CameraImagingPipeline_Vignetting");
+        } // if(vignettingCorrection == VignettingCorrection_Software)
+
+        if(autoExposure_enabled && (frameNumber % autoExposure_adjustEveryNFrames) == 0) {
+          BeginBenchmark("VisionSystem_CameraImagingPipeline_AutoExposure");
+
+          ComputeBestCameraParameters(
+            grayscaleImage,
+            Rectangle<s32>(0, grayscaleImage.get_size(1)-1, 0, grayscaleImage.get_size(0)-1),
+            autoExposure_integerCountsIncrement,
+            autoExposure_percentileToSaturate,
+            autoExposure_minExposureTime, autoExposure_maxExposureTime,
+            exposureTime,
+            VisionMemory::ccmScratch_);
+
+          EndBenchmark("VisionSystem_CameraImagingPipeline_AutoExposure");
+        }
+
+        HAL::CameraSetParameters(exposureTime, vignettingCorrection == VignettingCorrection_CameraHardware);
+
+        EndBenchmark("VisionSystem_CameraImagingPipeline");
+
+        const s32 faceDetectionHeight = CameraModeInfo[faceDetectionResolution_].height;
+        const s32 faceDetectionWidth  = CameraModeInfo[faceDetectionResolution_].width;
+
+        const double scaleFactor = 1.1;
+        const int minNeighbors = 2;
+        const s32 minHeight = 30;
+        const s32 minWidth = 30;
+        const s32 maxHeight = faceDetectionHeight;
+        const s32 maxWidth = faceDetectionWidth;
+        const s32 MAX_CANDIDATES = 5000;
+
+        Array<u8> smallImage(
+          faceDetectionHeight, faceDetectionWidth,
+          VisionMemory::onchipScratch_, Flags::Buffer(false,false,false));
+
+        DownsampleHelper(grayscaleImage, smallImage, VisionMemory::ccmScratch_);
+
+        const FixedLengthList<Classifier::CascadeClassifier::Stage> &stages = FixedLengthList<Classifier::CascadeClassifier::Stage>(lbpcascade_frontalface_stages_length, const_cast<Classifier::CascadeClassifier::Stage*>(&lbpcascade_frontalface_stages_data[0]), lbpcascade_frontalface_stages_length*sizeof(Classifier::CascadeClassifier::Stage) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+        const FixedLengthList<Classifier::CascadeClassifier::DTree> &classifiers = FixedLengthList<Classifier::CascadeClassifier::DTree>(lbpcascade_frontalface_classifiers_length, const_cast<Classifier::CascadeClassifier::DTree*>(&lbpcascade_frontalface_classifiers_data[0]), lbpcascade_frontalface_classifiers_length*sizeof(Classifier::CascadeClassifier::DTree) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+        const FixedLengthList<Classifier::CascadeClassifier::DTreeNode> &nodes =  FixedLengthList<Classifier::CascadeClassifier::DTreeNode>(lbpcascade_frontalface_nodes_length, const_cast<Classifier::CascadeClassifier::DTreeNode*>(&lbpcascade_frontalface_nodes_data[0]), lbpcascade_frontalface_nodes_length*sizeof(Classifier::CascadeClassifier::DTreeNode) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));;
+        const FixedLengthList<f32> &leaves = FixedLengthList<f32>(lbpcascade_frontalface_leaves_length, const_cast<f32*>(&lbpcascade_frontalface_leaves_data[0]), lbpcascade_frontalface_leaves_length*sizeof(f32) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+        const FixedLengthList<s32> &subsets = FixedLengthList<s32>(lbpcascade_frontalface_subsets_length, const_cast<s32*>(&lbpcascade_frontalface_subsets_data[0]), lbpcascade_frontalface_subsets_length*sizeof(s32) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+        const FixedLengthList<Rectangle<s32> > &featureRectangles = FixedLengthList<Rectangle<s32> >(lbpcascade_frontalface_featureRectangles_length, const_cast<Rectangle<s32>*>(reinterpret_cast<const Rectangle<s32>*>(&lbpcascade_frontalface_featureRectangles_data[0])), lbpcascade_frontalface_featureRectangles_length*sizeof(Rectangle<s32>) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
+
+        Classifier::CascadeClassifier_LBP cc(
+          lbpcascade_frontalface_isStumpBased,
+          lbpcascade_frontalface_stageType,
+          lbpcascade_frontalface_featureType,
+          lbpcascade_frontalface_ncategories,
+          lbpcascade_frontalface_origWinHeight,
+          lbpcascade_frontalface_origWinWidth,
+          stages,
+          classifiers,
+          nodes,
+          leaves,
+          subsets,
+          featureRectangles,
+          VisionMemory::ccmScratch_);
+
+        FixedLengthList<Rectangle<s32> > detectedFaces(MAX_CANDIDATES, VisionMemory::offchipScratch_);
+
+        const Result result = cc.DetectMultiScale(
+          smallImage,
+          static_cast<f32>(scaleFactor),
+          minNeighbors,
+          minHeight, minWidth,
+          maxHeight, maxWidth,
+          detectedFaces,
+          VisionMemory::onchipScratch_,
+          VisionMemory::offchipScratch_);
+
+        DebugStream::SendFaceDetections(
+          grayscaleImage,
+          detectedFaces,
+          smallImage.get_size(1),
+          VisionMemory::ccmScratch_,
+          VisionMemory::onchipScratch_,
+          VisionMemory::offchipScratch_);
+
+        return RESULT_OK;
+      } // Update() [SEND_IMAGE_ONLY]
 
 #else // #elseif RUN_SIMPLE_FACE_DETECTION_TEST
-
 
       // This is the regular Update() call
       Result Update(const Messages::RobotState robotState)
       {
         Result lastResult = RESULT_OK;
-        
+
         // This should be called from elsewhere first, but calling it again won't hurt
         Init();
-        
+
         frameNumber++;
 
         // no-op on real hardware
@@ -1623,36 +1737,58 @@ namespace Anki {
           const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
 
           Array<u8> grayscaleImage(captureHeight, captureWidth,
-                                   VisionMemory::offchipScratch_, Flags::Buffer(false,false,false));
+            VisionMemory::offchipScratch_, Flags::Buffer(false,false,false));
 
           BeginBenchmark("VisionSystem_CameraGetFrame");
-          
+
           HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
-                              captureResolution_, false);
-          
+            captureResolution_, false);
+
           EndBenchmark("VisionSystem_CameraGetFrame");
-         
+
+          BeginBenchmark("VisionSystem_CameraImagingPipeline");
+
+          if(vignettingCorrection == VignettingCorrection_Software) {
+            BeginBenchmark("VisionSystem_CameraImagingPipeline_Vignetting");
+
+            MemoryStack onchipScratch_local = VisionMemory::onchipScratch_;
+            FixedLengthList<f32> polynomialParameters(5, onchipScratch_local, Flags::Buffer(false, false, true));
+
+            for(s32 i=0; i<5; i++)
+              polynomialParameters[i] = vignettingCorrectionParameters[i];
+
+            CorrectVignetting(grayscaleImage, polynomialParameters);
+
+            EndBenchmark("VisionSystem_CameraImagingPipeline_Vignetting");
+          } // if(vignettingCorrection == VignettingCorrection_Software)
+
           if(autoExposure_enabled && (frameNumber % autoExposure_adjustEveryNFrames) == 0) {
+            BeginBenchmark("VisionSystem_CameraImagingPipeline_AutoExposure");
+
             ComputeBestCameraParameters(
               grayscaleImage,
-              Rectangle<s32>(0, grayscaleImage.get_size(1)-1, 0, grayscaleImage.get_size(0)-1), 
+              Rectangle<s32>(0, grayscaleImage.get_size(1)-1, 0, grayscaleImage.get_size(0)-1),
               autoExposure_integerCountsIncrement,
               autoExposure_percentileToSaturate,
               autoExposure_minExposureTime, autoExposure_maxExposureTime,
               exposureTime,
               VisionMemory::ccmScratch_);
+
+            EndBenchmark("VisionSystem_CameraImagingPipeline_AutoExposure");
           }
-          
-          HAL::CameraSetExposure(exposureTime);
-          
+
+          HAL::CameraSetParameters(exposureTime, vignettingCorrection == VignettingCorrection_CameraHardware);
+
+          EndBenchmark("VisionSystem_CameraImagingPipeline");
+
           DownsampleAndSendImage(grayscaleImage);
 
           if((lastResult = LookForMarkers(grayscaleImage,
-                                          detectionParameters_,
-                                          VisionMemory::markers_,
-                                          VisionMemory::ccmScratch_,
-                                          VisionMemory::onchipScratch_,
-                                          VisionMemory::offchipScratch_)) != RESULT_OK)
+            detectionParameters_,
+            VisionMemory::markers_,
+            VisionMemory::ccmScratch_,
+            VisionMemory::onchipScratch_,
+            VisionMemory::offchipScratch_)) != RESULT_OK)
           {
             return lastResult;
           }
@@ -1686,9 +1822,10 @@ namespace Anki {
             }
 
             // Was the desired marker found? If so, start tracking it.
-            if(isTrackingMarkerSpecified_ && !isTrackingMarkerFound &&
-               crntMarker.markerType == markerTypeToTrack_)
+            if(markerToTrack_.IsSpecified() && !isTrackingMarkerFound &&
+               markerToTrack_.Matches(crntMarker))
             {
+              
               // We will start tracking the _first_ marker of the right type that
               // we see.
               // TODO: Something smarter to track the one closest to the image center or to the expected location provided by the basestation?
@@ -1699,23 +1836,23 @@ namespace Anki {
               // initialization at tracking resolution instead of the eventual goal of doing it at
               // full detection resolution.
               trackingQuad_ = crntMarker.corners;
-              
+
               // NOTE: This will change grayscaleImage!
               // NOTE: This is currently off-chip for memory reasons, so it's slow!
               if((lastResult = BrightnessNormalizeImage(grayscaleImage, trackingQuad_,
-                                                        trackerParameters_.normalizationFilterWidthFraction,
-                                                        VisionMemory::offchipScratch_)) != RESULT_OK)
+                trackerParameters_.normalizationFilterWidthFraction,
+                VisionMemory::offchipScratch_)) != RESULT_OK)
               {
                 return lastResult;
               }
 
               if((lastResult = InitTemplate(grayscaleImage,
-                                            trackingQuad_,
-                                            trackerParameters_,
-                                            tracker_,
-                                            VisionMemory::ccmScratch_,
-                                            VisionMemory::onchipScratch_, //< NOTE: onchip is a reference
-                                            VisionMemory::offchipScratch_)) != RESULT_OK)
+                trackingQuad_,
+                trackerParameters_,
+                tracker_,
+                VisionMemory::ccmScratch_,
+                VisionMemory::onchipScratch_, //< NOTE: onchip is a reference
+                VisionMemory::offchipScratch_)) != RESULT_OK)
               {
                 return lastResult;
               }
@@ -1726,7 +1863,6 @@ namespace Anki {
             } // if(isTrackingMarkerSpecified && !isTrackingMarkerFound && markerType == markerToTrack)
           } // for(each marker)
         } else if(mode_ == VISION_MODE_TRACKING) {
-
           Simulator::SetTrackingReadyTime(); // no-op on real hardware
 
           //
@@ -1740,38 +1876,60 @@ namespace Anki {
           const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
 
           Array<u8> grayscaleImage(captureHeight, captureWidth,
-                                   onchipScratch_local, Flags::Buffer(false,false,false));
+            onchipScratch_local, Flags::Buffer(false,false,false));
 
           BeginBenchmark("VisionSystem_CameraGetFrame");
-          
+
           HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
-                              captureResolution_, false);
-          
+            captureResolution_, false);
+
           EndBenchmark("VisionSystem_CameraGetFrame");
+
+          BeginBenchmark("VisionSystem_CameraImagingPipeline");
+
+          if(vignettingCorrection == VignettingCorrection_Software) {
+            BeginBenchmark("VisionSystem_CameraImagingPipeline_Vignetting");
+
+            MemoryStack onchipScratch_local = VisionMemory::onchipScratch_;
+            FixedLengthList<f32> polynomialParameters(5, onchipScratch_local, Flags::Buffer(false, false, true));
+
+            for(s32 i=0; i<5; i++)
+              polynomialParameters[i] = vignettingCorrectionParameters[i];
+
+            CorrectVignetting(grayscaleImage, polynomialParameters);
+
+            EndBenchmark("VisionSystem_CameraImagingPipeline_Vignetting");
+          } // if(vignettingCorrection == VignettingCorrection_Software)
 
           // TODO: allow tracking to work with exposure changes
           /*if(autoExposure_enabled && (frameNumber % autoExposure_adjustEveryNFrames) == 0) {
+          BeginBenchmark("VisionSystem_CameraImagingPipeline_AutoExposure");
+
           ComputeBestCameraParameters(
-            grayscaleImage,
-            Rectangle<s32>(0, grayscaleImage.get_size(1)-1, 0, grayscaleImage.get_size(0)-1), 
-            autoExposure_integerCountsIncrement,
-            autoExposure_percentileToSaturate,
-            autoExposure_minExposureTime, autoExposure_maxExposureTime,
-            exposureTime,
-            VisionMemory::ccmScratch_);
+          grayscaleImage,
+          Rectangle<s32>(0, grayscaleImage.get_size(1)-1, 0, grayscaleImage.get_size(0)-1),
+          autoExposure_integerCountsIncrement,
+          autoExposure_percentileToSaturate,
+          autoExposure_minExposureTime, autoExposure_maxExposureTime,
+          exposureTime,
+          VisionMemory::ccmScratch_);
+
+          EndBenchmark("VisionSystem_CameraImagingPipeline_AutoExposure");
           }*/
-          
-          HAL::CameraSetExposure(exposureTime);
-          
+
+          EndBenchmark("VisionSystem_CameraImagingPipeline");
+
+          HAL::CameraSetParameters(exposureTime, vignettingCorrection == VignettingCorrection_CameraHardware);
+
           // NOTE: This will change grayscaleImage!
           // NOTE: This is currently off-chip for memory reasons, so it's slow!
           if((lastResult = BrightnessNormalizeImage(grayscaleImage, trackingQuad_,
-                                                    trackerParameters_.normalizationFilterWidthFraction,
-                                                    VisionMemory::offchipScratch_)) != RESULT_OK)
+            trackerParameters_.normalizationFilterWidthFraction,
+            VisionMemory::offchipScratch_)) != RESULT_OK)
           {
             return lastResult;
           }
-          
+
           //
           // Tracker Prediction
           //
@@ -1792,15 +1950,15 @@ namespace Anki {
           bool converged = false;
 
           if((lastResult = TrackTemplate(grayscaleImage,
-                                         trackingQuad_,
-                                         trackerParameters_,
-                                         tracker_,
-                                         converged,
-                                         VisionMemory::ccmScratch_,
-                                         onchipScratch_local,
-                                         offchipScratch_local)) != RESULT_OK) {
-            PRINT("VisionSystem::Update(): TrackTemplate() failed.\n");
-            return lastResult;
+            trackingQuad_,
+            trackerParameters_,
+            tracker_,
+            converged,
+            VisionMemory::ccmScratch_,
+            onchipScratch_local,
+            offchipScratch_local)) != RESULT_OK) {
+              PRINT("VisionSystem::Update(): TrackTemplate() failed.\n");
+              return lastResult;
           }
 
           //
@@ -1824,8 +1982,10 @@ namespace Anki {
 
             if(numTrackFailures_ == MAX_TRACKING_FAILURES) {
               // This resets docking, puttings us back in VISION_MODE_LOOKING_FOR_MARKERS mode
-              SetMarkerToTrack(markerTypeToTrack_,
-                               trackingMarkerWidth_mm);
+              SetMarkerToTrack(markerToTrack_.type,
+                               markerToTrack_.width_mm,
+                               markerToTrack_.imageCenter,
+                               markerToTrack_.imageSearchRadius);
             }
           }
 
@@ -1836,11 +1996,9 @@ namespace Anki {
         } // if(converged)
 
         return RESULT_OK;
-
       } // Update() [Real]
 
 #endif // #ifdef SEND_IMAGE_ONLY
-
     } // namespace VisionSystem
   } // namespace Cozmo
 } // namespace Anki

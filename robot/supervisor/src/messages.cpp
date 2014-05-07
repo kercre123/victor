@@ -170,11 +170,12 @@ namespace Anki {
       
       void ProcessRobotAddedToWorldMessage(const RobotAddedToWorld& msg)
       {
+        /* XXX - RobotIDs are not available in real HAL, so this should be rethought
         if(msg.robotID != HAL::GetRobotID()) {
           PRINT("Robot received ADDED_TO_WORLD handshake with "
                 " wrong robotID (%d instead of %d).\n",
                 msg.robotID, HAL::GetRobotID());
-        }
+        }*/
         
         PRINT("Robot received handshake from basestation, "
               "sending camera calibration.\n");

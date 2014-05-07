@@ -446,8 +446,8 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(totalTimeIndex >= 0,
         RESULT_FAIL, "ShowBenchmarkResults", "Requires a \"TotalTime\" benchmark event");
 
-      AnkiConditionalErrorAndReturnValue(namesToDisplay.get_size() > 0 && namesToDisplay.get_size() <= 11,
-        RESULT_FAIL_INVALID_PARAMETER, "ShowBenchmarkResults", "namesToDisplay must be between 1 and 11");
+      AnkiConditionalErrorAndReturnValue(namesToDisplay.get_size() > 0,
+        RESULT_FAIL_INVALID_PARAMETER, "ShowBenchmarkResults", "namesToDisplay must be have 1 or more names");
 
       if(toShowImage.rows != imageHeight || toShowImage.cols != imageWidth) {
         toShowImage = cv::Mat(imageHeight, imageWidth, CV_8UC3);
