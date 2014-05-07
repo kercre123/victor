@@ -399,11 +399,13 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
       }
 
       // Grayscale to RGB
-      vector<cv::Mat> channels;
-      channels.push_back(largeLastImage);
-      channels.push_back(largeLastImage);
-      channels.push_back(largeLastImage);
-      cv::merge(channels, toShowImage);
+      const s32 numPixels = bigHeight * bigWidth;
+      s32 cPixel = 0;
+      for(s32 iPixel=0; iPixel<numPixels; iPixel++) {
+        toShowImage.data[cPixel++] = largeLastImage.data[iPixel];
+        toShowImage.data[cPixel++] = largeLastImage.data[iPixel];
+        toShowImage.data[cPixel++] = largeLastImage.data[iPixel];
+      }
     }
   } else if(strcmp(newObject.typeName, "String") == 0) {
     printf("Board>> %s\n", reinterpret_cast<const char*>(newObject.startOfPayload));
