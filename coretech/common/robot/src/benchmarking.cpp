@@ -60,7 +60,14 @@ staticInline u64 GetBenchmarkTime()
 #elif defined(__APPLE_CC__)
   struct timeval time;
   gettimeofday(&time, NULL);
-  return (u64)time.tv_sec*1000000ULL + (u64)time.tv_usec;
+
+  // Subtract startSeconds, so the floating point number has reasonable precision
+  static long startSeconds = 0;
+  if(startSeconds == 0) {
+    startSeconds = time.tv_sec;
+  }
+
+  return (u64)(time.tv_sec-startSeconds)*1000000ULL + (u64)time.tv_usec;
 #elif defined (__EDG__)  // MDK-ARM
   return Anki::Cozmo::HAL::GetMicroCounter();
 #else
@@ -72,6 +79,8 @@ staticInline u64 GetBenchmarkTime()
 
 staticInline void AddBenchmarkEvent(const char *name, const u64 time, BenchmarkEventType type)
 {
+  AnkiAssert(strlen(name) < Anki::Embedded::BenchmarkElement::NAME_LENGTH);
+
   g_benchmarkEvents[g_numBenchmarkEvents].name = name;
   g_benchmarkEvents[g_numBenchmarkEvents].time = time;
   g_benchmarkEvents[g_numBenchmarkEvents].type = type;
@@ -112,7 +121,7 @@ namespace Anki
     } // void endBenchmark(const char *name)
 
     BenchmarkElement::BenchmarkElement(const char * name)
-      : inclusive_mean(0), inclusive_min(DBL_MAX), inclusive_max(DBL_MIN), inclusive_total(0), exclusive_mean(0), exclusive_min(DBL_MAX), exclusive_max(DBL_MIN), exclusive_total(0), numEvents(0)
+      : inclusive_mean(0), inclusive_min(FLT_MAX), inclusive_max(FLT_MIN), inclusive_total(0), exclusive_mean(0), exclusive_min(FLT_MAX), exclusive_max(FLT_MIN), exclusive_total(0), numEvents(0)
     {
       snprintf(this->name, BenchmarkElement::NAME_LENGTH, "%s", name);
     }
@@ -156,13 +165,13 @@ namespace Anki
       }
 
       const char * suffix;
-      f64 multiplier;
+      f32 multiplier;
       if(microseconds) {
         suffix = "us ";
-        multiplier = 1000000.0;
+        multiplier = 1000000.0f;
       } else {
         suffix = "ms ";
-        multiplier = 1000.0;
+        multiplier = 1000.0f;
       }
 
       numPrintedTotal += SnprintElement(&buffer[numPrintedTotal], bufferLength - numPrintedTotal, "ExcTot:", Round<s32>(this->exclusive_total*multiplier), suffix, (*minCharacterToPrint)[1]);
@@ -204,9 +213,9 @@ namespace Anki
 
 #if defined(_MSC_VER)
         LARGE_INTEGER frequency;
-        f64 frequencyF64;
+        f32 frequencyF32;
         QueryPerformanceFrequency(&frequency);
-        frequencyF64 = (f64)(frequency.QuadPart);
+        frequencyF32 = (f32)(frequency.QuadPart);
 #endif
 
         {
@@ -223,19 +232,19 @@ namespace Anki
           // First, parse each event individually, and add it to the fullList
           for(s32 iEvent=0; iEvent<numBenchmarkEvents; iEvent++) {
 #if defined(_MSC_VER)
-            const f64 timeF64 = static_cast<f64>(benchmarkEvents[iEvent].time) / frequencyF64;
+            const f32 timeF32 = static_cast<f32>(benchmarkEvents[iEvent].time) / frequencyF32;
 #elif defined(__APPLE_CC__)
-            const f64 timeF64 = static_cast<f64>(benchmarkEvents[iEvent].time) / 1000000.0;
+            const f32 timeF32 = static_cast<f32>(benchmarkEvents[iEvent].time) / 1000000.0f;
 #elif defined(__EDG__)  // MDK-ARM
-            const f64 timeF64 = static_cast<f64>(benchmarkEvents[iEvent].time) / 1000000.0;
+            const f32 timeF32 = static_cast<f32>(benchmarkEvents[iEvent].time) / 1000000.0f;
 #else
-            const f64 timeF64 = static_cast<f64>(benchmarkEvents[iEvent].time) / 1000000000.0;
+            const f32 timeF32 = static_cast<f32>(benchmarkEvents[iEvent].time) / 1000000000.0f;
 #endif
 
             if(benchmarkEvents[iEvent].type == BENCHMARK_EVENT_BEGIN) {
               const s32 startLevel = parseStack.get_size();
 
-              parseStack.PushBack(BenchmarkInstance(benchmarkEvents[iEvent].name, timeF64, 0, 0, startLevel));
+              parseStack.PushBack(BenchmarkInstance(benchmarkEvents[iEvent].name, timeF32, 0, 0, startLevel));
             } else {
               // BENCHMARK_EVENT_END
 
@@ -246,7 +255,7 @@ namespace Anki
               AnkiConditionalErrorAndReturnValue(strcmp(startInstance.name, benchmarkEvents[iEvent].name) == 0 && startInstance.level == endLevel,
                 outputResults, "ComputeBenchmarkResults", "Benchmark parse error: Perhaps BeginBenchmark() and EndBenchmark() were nested, or there were more than %d benchmark events, or InitBenchmarking() was called in between a StartBenchmarking() and EndBenchmarking() pair, or some other non-supported thing listed in the comments.\n", MAX_BENCHMARK_EVENTS);
 
-              const f64 elapsedTime = timeF64 - startInstance.startTime;
+              const f32 elapsedTime = timeF32 - startInstance.startTime;
 
               // Remove the time for this event from the exclusive time for all other events on the stack
               //const s32 numParents = endLevel;
@@ -271,8 +280,8 @@ namespace Anki
 
           for(s32 iInstance=0; iInstance<numFullList; iInstance++) {
             const char * const curName = pFullList[iInstance].name;
-            const f64 curInclusiveTimeElapsed = pFullList[iInstance].inclusiveTimeElapsed;
-            const f64 curExclusiveTimeElapsed = pFullList[iInstance].exclusiveTimeElapsed;
+            const f32 curInclusiveTimeElapsed = pFullList[iInstance].inclusiveTimeElapsed;
+            const f32 curExclusiveTimeElapsed = pFullList[iInstance].exclusiveTimeElapsed;
 
             s32 index = GetNameIndex(curName, outputResults);
 
@@ -325,14 +334,14 @@ namespace Anki
     protected:
       typedef struct BenchmarkInstance
       {
-        f64 startTime; // A standard timestamp for the parseStack
-        f64 inclusiveTimeElapsed; // An elapsed inclusive time for the fullList
-        f64 exclusiveTimeElapsed; //< May be negative while the algorithm is still parsing
+        f32 startTime; // A standard timestamp for the parseStack
+        f32 inclusiveTimeElapsed; // An elapsed inclusive time for the fullList
+        f32 exclusiveTimeElapsed; //< May be negative while the algorithm is still parsing
         s32 level; //< Level 0 is the base level. Every sub-benchmark adds another level.
 
         char name[BenchmarkElement::NAME_LENGTH];
 
-        BenchmarkInstance(const char * name, const f64 startTime, const f64 inclusiveTimeElapsed, f64 exclusiveTimeElapsed, const s32 level)
+        BenchmarkInstance(const char * name, const f32 startTime, const f32 inclusiveTimeElapsed, f32 exclusiveTimeElapsed, const s32 level)
           : startTime(startTime), inclusiveTimeElapsed(inclusiveTimeElapsed), exclusiveTimeElapsed(exclusiveTimeElapsed), level(level)
         {
           snprintf(this->name, BenchmarkElement::NAME_LENGTH, "%s", name);
@@ -347,13 +356,13 @@ namespace Anki
 
           printf("%s: ", this->name);
 
-          SnprintfCommasS32(buffer, bufferLength, Round<s32>(this->exclusiveTimeElapsed*1000000.0));
+          SnprintfCommasS32(buffer, bufferLength, Round<s32>(this->exclusiveTimeElapsed*1000000.0f));
           printf("exclusiveTimeElapsed:%sus ", buffer);
 
-          SnprintfCommasS32(buffer, bufferLength, Round<s32>(this->inclusiveTimeElapsed*1000000.0));
+          SnprintfCommasS32(buffer, bufferLength, Round<s32>(this->inclusiveTimeElapsed*1000000.0f));
           printf("inclusiveTimeElapsed:%sus ", buffer);
 
-          SnprintfCommasS32(buffer, bufferLength, Round<s32>(this->startTime*1000000.0));
+          SnprintfCommasS32(buffer, bufferLength, Round<s32>(this->startTime*1000000.0f));
           printf("startTime:%sus ", buffer);
 
           SnprintfCommasS32(buffer, bufferLength, this->level);
@@ -390,11 +399,11 @@ namespace Anki
       const s32 numResults = results.get_size();
       const BenchmarkElement * const pResults = results.Pointer(0);
 
-      f64 multiplier;
+      f32 multiplier;
       if(microseconds) {
-        multiplier = 1000000.0;
+        multiplier = 1000000.0f;
       } else {
-        multiplier = 1000.0;
+        multiplier = 1000.0f;
       }
 
       for(s32 x=0; x<numResults; x++) {
@@ -443,7 +452,7 @@ namespace Anki
     Result ShowBenchmarkResults(
       const FixedLengthList<BenchmarkElement> &results,
       const FixedLengthList<ShowBenchmarkParameters> &namesToDisplay,
-      const f64 pixelsPerMillisecond,
+      const f32 pixelsPerMillisecond,
       const s32 imageHeight,
       const s32 imageWidth)
     {
@@ -485,7 +494,7 @@ namespace Anki
       }
 
       // Draw the total time as gray
-      const s32 numPixelsTotal = Round<s32>(pixelsPerMillisecond * 1000.0 * results[totalTimeIndex].inclusive_total);
+      const s32 numPixelsTotal = Round<s32>(pixelsPerMillisecond * 1000.0f * results[totalTimeIndex].inclusive_total);
       cv::line(
         toShowImage,
         cv::Point(toShowImageColumn, imageHeight - 1),
@@ -502,9 +511,9 @@ namespace Anki
         if(index < 0)
           continue;
 
-        const f64 timeElapsed = namesToDisplay[iName].showExclusiveTime ? results[index].exclusive_total : results[index].inclusive_total;
+        const f32 timeElapsed = namesToDisplay[iName].showExclusiveTime ? results[index].exclusive_total : results[index].inclusive_total;
 
-        const s32 numPixels = Round<s32>(pixelsPerMillisecond * 1000.0 * timeElapsed);
+        const s32 numPixels = Round<s32>(pixelsPerMillisecond * 1000.0f * timeElapsed);
 
         cv::line(
           toShowImage,
@@ -517,9 +526,9 @@ namespace Anki
         curY -= numPixels;
       } // for(s32 iName=0; iName<namesToDisplay.get_size(); iName++)
 
-      const s32 numGridlines = static_cast<s32>( floor(imageHeight / (50.0 * pixelsPerMillisecond)) ) + 1;
+      const s32 numGridlines = static_cast<s32>( floor(imageHeight / (50.0f * pixelsPerMillisecond)) ) + 1;
       for(s32 i=0; i<numGridlines; i++) {
-        const s32 curY = imageHeight - 1 - Round<s32>(50.0 * pixelsPerMillisecond * i);
+        const s32 curY = imageHeight - 1 - Round<s32>(50.0f * pixelsPerMillisecond * i);
         cv::line(
           toShowImage,
           cv::Point(0, curY),
@@ -540,7 +549,7 @@ namespace Anki
       // Display all the benchmarks ( copied from Print() )
       {
         const s32 textHeightInPixels = 20;
-        const f64 textFontSize = 1.0;
+        const f32 textFontSize = 1.0f;
         const bool microseconds = false;
         const bool verbose = false;
 
@@ -602,11 +611,11 @@ namespace Anki
         const s32 numResults = results.get_size();
         const BenchmarkElement * const pResults = results.Pointer(0);
 
-        f64 multiplier;
+        f32 multiplier;
         if(microseconds) {
-          multiplier = 1000000.0;
+          multiplier = 1000000.0f;
         } else {
-          multiplier = 1000.0;
+          multiplier = 1000.0f;
         }
 
         for(s32 x=0; x<numResults; x++) {
@@ -642,7 +651,7 @@ namespace Anki
       // Display the key
       {
         const s32 textHeightInPixels = 20;
-        const f64 textFontSize = 1.0;
+        const f32 textFontSize = 1.0f;
 
         const s32 keyImageHeight = (namesToDisplay.get_size()+1)*textHeightInPixels;
         const s32 keyImageWidth = 640;
@@ -682,21 +691,21 @@ namespace Anki
         const s32 textBufferLength = 256;
         char textBuffer[textBufferLength];
 
-        snprintf(textBuffer, textBufferLength, "Total: %dms", Round<s32>(1000.0*results[totalTimeIndex].inclusive_total));
+        snprintf(textBuffer, textBufferLength, "Total: %dms", Round<s32>(1000.0f*results[totalTimeIndex].inclusive_total));
         cv::putText(keyImage, textBuffer, cv::Point(5,curY), cv::FONT_HERSHEY_PLAIN, textFontSize, cv::Scalar(128, 128, 128));
         curY += textHeightInPixels;
 
         for(s32 iKey=namesToDisplay.get_size() - 1; iKey>=0; iKey--) {
           const s32 index = CompileBenchmarkResults::GetNameIndex(namesToDisplay[iKey].name, results);
 
-          f64 time;
+          f32 time;
           if(index == -1) {
             time = 0;
           } else {
             time = namesToDisplay[iKey].showExclusiveTime ? results[index].exclusive_total : results[index].inclusive_total;
           }
 
-          snprintf(textBuffer, textBufferLength,  "%s: %dms", namesToDisplay[iKey].name, Round<s32>(1000.0*time));
+          snprintf(textBuffer, textBufferLength,  "%s: %dms", namesToDisplay[iKey].name, Round<s32>(1000.0f*time));
           cv::putText(keyImage, textBuffer, cv::Point(5,curY), cv::FONT_HERSHEY_PLAIN, textFontSize, cv::Scalar(namesToDisplay[iKey].blue, namesToDisplay[iKey].green, namesToDisplay[iKey].red));
           curY += textHeightInPixels;
         }

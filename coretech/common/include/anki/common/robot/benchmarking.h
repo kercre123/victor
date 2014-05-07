@@ -32,28 +32,19 @@ namespace Anki
       static const s32 NAME_LENGTH = 64;
 
       // Inclusive includes all the time for all sub-benchmarks
-      f64 inclusive_mean;
-      f64 inclusive_min;
-      f64 inclusive_max;
-      f64 inclusive_total;
+      f32 inclusive_mean;
+      f32 inclusive_min;
+      f32 inclusive_max;
+      f32 inclusive_total;
 
       // Exclusive does not include sub-benchmarks
-      f64 exclusive_mean;
-      f64 exclusive_min;
-      f64 exclusive_max;
-      f64 exclusive_total;
-
-      //// When was BeginBenchmark first called for this name ?
-      //f64 firstInstanceStartTime;
+      f32 exclusive_mean;
+      f32 exclusive_min;
+      f32 exclusive_max;
+      f32 exclusive_total;
 
       // How many times was this element's name benchmarked?
-      s64 numEvents;
-
-      //// Level 0 is the base level. Every sub-benchmark adds another level.
-      ////
-      //// For example, take BeginBenchmark("a"); BeginBenchmark("b"); EndBenchmark("b"); EndBenchmark("a")
-      //// "a" is level 0, "b" is level 1
-      //s32 level;
+      s32 numEvents;
 
       char name[BenchmarkElement::NAME_LENGTH];
 
@@ -113,7 +104,7 @@ namespace Anki
     Result ShowBenchmarkResults(
       const FixedLengthList<BenchmarkElement> &results,
       const FixedLengthList<ShowBenchmarkParameters> &namesToDisplay,
-      const f64 pixelsPerMillisecond,
+      const f32 pixelsPerMillisecond,
       const s32 imageHeight,
       const s32 imageWidth);
 
