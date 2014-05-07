@@ -131,7 +131,7 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
   MemoryStack scratch = MemoryStack(scratchBuffer, scratchSize, Flags::Buffer(false, true, false));
 
   if(strcmp(newObject.objectName, "Benchmarks") == 0) {
-    const f64 pixelsPerMillisecond = 1.5;
+    const f32 pixelsPerMillisecond = 1.5f;
     const s32 imageHeight = 500;
     const s32 imageWidth = 1600;
 
