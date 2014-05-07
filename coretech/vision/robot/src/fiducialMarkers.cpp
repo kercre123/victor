@@ -722,13 +722,11 @@ namespace Anki
         if(quadRefinementIterations > 0) {
           BeginBenchmark("vme_quadrefine");
 
-          const f32 contrast = brightValue - darkValue;
-
           const f32 squareWidthFraction = 0.1f; // TODO: make a part of marker/fiducial definitions?
 
           const s32 numRefinementSamples = 100; // TODO: make argument/parameter?
 
-          if((lastResult = RefineQuadrilateral(initQuad, initHomography, image, squareWidthFraction, quadRefinementIterations, contrast, numRefinementSamples, quad, homography, scratch)) != RESULT_OK) {
+          if((lastResult = RefineQuadrilateral(initQuad, initHomography, image, squareWidthFraction, quadRefinementIterations, darkValue, brightValue, numRefinementSamples, quad, homography, scratch)) != RESULT_OK) {
             // TODO: Don't fail? Just warn and keep original quad?
             return lastResult;
           }
