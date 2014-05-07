@@ -117,38 +117,42 @@ namespace Anki
       snprintf(this->name, BenchmarkElement::NAME_LENGTH, "%s", name);
     }
 
-    s32 PrintElement(const char * prefix, const s32 number, const char * suffix, const s32 minNumberCharacterToPrint)
+    s32 SnprintElement(char * buffer, const s32 bufferLength, const char * prefix, const s32 number, const char * suffix, const s32 minNumberCharacterToPrint)
     {
-      const s32 bufferLength = 128;
-      char numberBuffer[bufferLength];
-      char totalBuffer[bufferLength];
+      const s32 internalBufferLength = 128;
+      char numberBuffer[internalBufferLength];
 
-      SnprintfCommasS32(numberBuffer, bufferLength, number);
+      SnprintfCommasS32(numberBuffer, internalBufferLength, number);
 
-      snprintf(totalBuffer, bufferLength, "%s%s%s", prefix, numberBuffer, suffix);
-      printf(totalBuffer);
+      s32 numPrinted = 0;
+
+      numPrinted += snprintf(buffer, bufferLength, "%s%s%s", prefix, numberBuffer, suffix);
 
       const s32 numNumberCharactersPrinted = strlen(numberBuffer);
 
-      for(s32 i=numNumberCharactersPrinted;  i<minNumberCharacterToPrint; i++)
-        printf(" ");
+      for(s32 i=numNumberCharactersPrinted;  i<minNumberCharacterToPrint; i++) {
+        if(numPrinted < (bufferLength-1)) {
+          buffer[numPrinted] = ' ';
+          numPrinted++;
+        }
+      }
 
-      return (minNumberCharacterToPrint - numNumberCharactersPrinted) + strlen(totalBuffer);
+      buffer[numPrinted] = '\0';
+
+      return numPrinted;
     }
 
-    void BenchmarkElement::Print(const bool verbose, const bool microseconds, const FixedLengthList<s32> * minCharacterToPrint) const
+    s32 BenchmarkElement::Snprint(char * buffer, const s32 bufferLength, const bool verbose, const bool microseconds, const FixedLengthList<s32> * minCharacterToPrint) const
     {
-      const s32 bufferLength = 128;
-      char buffer[bufferLength];
-
-      //printf("Exclusive Mean:%fs Exclusive Min:%fs Exclusive Max:%fs Inclusive Mean:%fs Inclusive Min:%fs Inclusive Max:%fs (Exclusive Total:%fs Inclusive Total:%fs NumEvents:%d)\n",
-
-      snprintf(buffer, bufferLength, "%s: ", this->name);
-      printf(buffer);
+      s32 numPrintedTotal = 0;
+      numPrintedTotal += snprintf(buffer + numPrintedTotal, bufferLength - numPrintedTotal, "%s: ", this->name);
 
       if(minCharacterToPrint && minCharacterToPrint->get_size() > 0) {
         const s32 numPrinted = strlen(buffer);
-        for(s32 i=numPrinted;  i<((*minCharacterToPrint)[0]+2); i++) printf(" ");
+        for(s32 i=numPrinted;  i<((*minCharacterToPrint)[0]+2); i++) {
+          buffer[numPrintedTotal] = ' ';
+          numPrintedTotal++;
+        }
       }
 
       const char * suffix;
@@ -161,20 +165,30 @@ namespace Anki
         multiplier = 1000.0;
       }
 
-      PrintElement("ExcTot:", Round<s32>(this->exclusive_total*multiplier), suffix, (*minCharacterToPrint)[1]);
-      PrintElement("IncTot:", Round<s32>(this->inclusive_total*multiplier), suffix, (*minCharacterToPrint)[2]);
-      PrintElement("NEvents:", static_cast<s32>(this->numEvents), " ", (*minCharacterToPrint)[3]);
+      numPrintedTotal += SnprintElement(&buffer[numPrintedTotal], bufferLength - numPrintedTotal, "ExcTot:", Round<s32>(this->exclusive_total*multiplier), suffix, (*minCharacterToPrint)[1]);
+      numPrintedTotal += SnprintElement(&buffer[numPrintedTotal], bufferLength - numPrintedTotal, "IncTot:", Round<s32>(this->inclusive_total*multiplier), suffix, (*minCharacterToPrint)[2]);
+      numPrintedTotal += SnprintElement(&buffer[numPrintedTotal], bufferLength - numPrintedTotal, "NEvents:", static_cast<s32>(this->numEvents), " ", (*minCharacterToPrint)[3]);
 
       if(verbose) {
-        PrintElement("ExcMean:", Round<s32>(this->exclusive_mean*multiplier), suffix, (*minCharacterToPrint)[4]);
-        PrintElement("ExcMin:", Round<s32>(this->exclusive_min*multiplier), suffix, (*minCharacterToPrint)[5]);
-        PrintElement("ExcMax:", Round<s32>(this->exclusive_max*multiplier), suffix, (*minCharacterToPrint)[6]);
-        PrintElement("IncMean:", Round<s32>(this->inclusive_mean*multiplier), suffix, (*minCharacterToPrint)[7]);
-        PrintElement("IncMin:", Round<s32>(this->inclusive_min*multiplier), suffix, (*minCharacterToPrint)[8]);
-        PrintElement("IncMax:", Round<s32>(this->inclusive_max*multiplier), suffix, (*minCharacterToPrint)[9]);
+        numPrintedTotal += SnprintElement(&buffer[numPrintedTotal], bufferLength - numPrintedTotal, "ExcMean:", Round<s32>(this->exclusive_mean*multiplier), suffix, (*minCharacterToPrint)[4]);
+        numPrintedTotal += SnprintElement(&buffer[numPrintedTotal], bufferLength - numPrintedTotal, "ExcMin:", Round<s32>(this->exclusive_min*multiplier), suffix, (*minCharacterToPrint)[5]);
+        numPrintedTotal += SnprintElement(&buffer[numPrintedTotal], bufferLength - numPrintedTotal, "ExcMax:", Round<s32>(this->exclusive_max*multiplier), suffix, (*minCharacterToPrint)[6]);
+        numPrintedTotal += SnprintElement(&buffer[numPrintedTotal], bufferLength - numPrintedTotal, "IncMean:", Round<s32>(this->inclusive_mean*multiplier), suffix, (*minCharacterToPrint)[7]);
+        numPrintedTotal += SnprintElement(&buffer[numPrintedTotal], bufferLength - numPrintedTotal, "IncMin:", Round<s32>(this->inclusive_min*multiplier), suffix, (*minCharacterToPrint)[8]);
+        numPrintedTotal += SnprintElement(&buffer[numPrintedTotal], bufferLength - numPrintedTotal, "IncMax:", Round<s32>(this->inclusive_max*multiplier), suffix, (*minCharacterToPrint)[9]);
       }
 
-      printf("\n");
+      return numPrintedTotal;
+    }
+
+    void BenchmarkElement::Print(const bool verbose, const bool microseconds, const FixedLengthList<s32> * minCharacterToPrint) const
+    {
+      const s32 bufferLength = 1024;
+      char buffer[bufferLength];
+
+      Snprint(buffer, bufferLength, verbose, microseconds, minCharacterToPrint);
+
+      printf(buffer);
     }
 
     class CompileBenchmarkResults
@@ -405,6 +419,7 @@ namespace Anki
 
       for(s32 x=0; x<numResults; x++) {
         pResults[x].Print(verbose, microseconds, &minCharacterToPrint);
+        printf("\n");
       }
 
       printf("\n");
@@ -521,6 +536,78 @@ namespace Anki
 
       if(toShowImageColumn >= imageWidth)
         toShowImageColumn = 0;
+
+      // Display all the benchmarks ( copied from Print() )
+      {
+        const s32 textHeightInPixels = 20;
+        const f64 textFontSize = 1.0;
+        const bool microseconds = false;
+        const bool verbose = false;
+
+        cv::Mat textImage((results.get_size()+1)*textHeightInPixels + 10, 1400, CV_8UC3);
+        textImage.setTo(0);
+
+        s32 curY = 15;
+
+        const s32 stringBufferLength = 256;
+        char stringBuffer[stringBufferLength];
+
+        const s32 scratchBufferLength = 128;
+        char scratchBuffer[scratchBufferLength];
+
+        MemoryStack scratch(scratchBuffer, scratchBufferLength);
+
+        AnkiConditionalErrorAndReturnValue(scratch.IsValid(),
+          RESULT_FAIL_OUT_OF_MEMORY, "ShowBenchmarkResults", "Out of memory");
+
+        FixedLengthList<s32> minCharacterToPrint(10, scratch, Flags::Buffer(true, false, true));
+
+        AnkiConditionalErrorAndReturnValue(minCharacterToPrint.IsValid(),
+          RESULT_FAIL_OUT_OF_MEMORY, "ShowBenchmarkResults", "Out of memory");
+
+        snprintf(stringBuffer, stringBufferLength, "Benchmark Results: (Exc=Exclusive Inc=Inclusive Tot=Total N=NumberOf)\n");
+        cv::putText(textImage, stringBuffer, cv::Point(5,curY), cv::FONT_HERSHEY_PLAIN, textFontSize, cv::Scalar(255, 255, 255));
+        curY += textHeightInPixels;
+
+        const s32 numResults = results.get_size();
+        const BenchmarkElement * const pResults = results.Pointer(0);
+
+        f64 multiplier;
+        if(microseconds) {
+          multiplier = 1000000.0;
+        } else {
+          multiplier = 1000.0;
+        }
+
+        for(s32 x=0; x<numResults; x++) {
+          const s32 values[] = {
+            Round<s32>(pResults[x].exclusive_total*multiplier),
+            Round<s32>(pResults[x].inclusive_total*multiplier),
+            static_cast<s32>(pResults[x].numEvents),
+            Round<s32>(pResults[x].exclusive_mean*multiplier),
+            Round<s32>(pResults[x].exclusive_min*multiplier),
+            Round<s32>(pResults[x].exclusive_max*multiplier),
+            Round<s32>(pResults[x].inclusive_mean*multiplier),
+            Round<s32>(pResults[x].inclusive_min*multiplier),
+            Round<s32>(pResults[x].inclusive_max*multiplier)};
+
+          minCharacterToPrint[0] = MAX(minCharacterToPrint[0], static_cast<s32>(strlen(pResults[x].name)));
+
+          for(s32 iVal=0; iVal<=8; iVal++) {
+            SnprintfCommasS32(stringBuffer, stringBufferLength, values[iVal]);
+            minCharacterToPrint[iVal+1] = MAX(minCharacterToPrint[iVal+1], static_cast<s32>(strlen(stringBuffer)));
+          }
+        }
+
+        for(s32 x=0; x<numResults; x++) {
+          pResults[x].Snprint(stringBuffer, stringBufferLength, verbose, microseconds, &minCharacterToPrint);
+          CvPutTextFixedWidth(textImage, stringBuffer, cv::Point(5,curY), cv::FONT_HERSHEY_PLAIN, textFontSize, cv::Scalar(255, 255, 255));
+          curY += textHeightInPixels;
+        }
+
+        cv::imshow("All Benchmarks", textImage);
+        //cv::moveWindow("All Benchmarks", 850, 675);
+      }
 
       // Display the key
       {
