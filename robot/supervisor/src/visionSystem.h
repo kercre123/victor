@@ -73,13 +73,21 @@ namespace Anki {
       
       void StopTracking();
 
-      // Select a block type to look for to dock with.  Use MARKER_UNKNOWN to disable.
+      // Select a block type to look for to dock with.
+      // Use MARKER_UNKNOWN to disable.
       // Next time the vision system sees a block of this type while looking
       // for blocks, it will initialize a template tracker and switch to
       // docking mode.
-      // TODO: Something smarter about seeing the block in the expected place as well?
-      Result SetMarkerToTrack(const Vision::MarkerType& markerToTrack,
-                                  const f32 markerWidth_mm);
+      Result SetMarkerToTrack(const Vision::MarkerType&  markerToTrack,
+                              const f32                  markerWidth_mm);
+      
+      // Same as above, except the robot will only start tracking the marker
+      // if its observed centroid is within the specified radius (in pixels)
+      // from the given image point.
+      Result SetMarkerToTrack(const Vision::MarkerType&  markerToTrack,
+                              const f32                  markerWidth_mm,
+                              const Embedded::Point2f&   imageCenter,
+                              const f32                  radius);
       
       u32 DownsampleHelper(const Embedded::Array<u8>& imageIn,
                            Embedded::Array<u8>&       imageOut,

@@ -576,7 +576,7 @@ namespace Anki {
     } //SetHeadCamMode()
     */
     
-    void HAL::CameraSetExposure(f32 exposure)
+    void HAL::CameraSetParameters(f32 exposure, bool enableVignettingCorrection)
     {
       // Can't control simulated camera's exposure.
       
@@ -584,7 +584,7 @@ namespace Anki {
       
       return;
       
-    } // HAL::CameraSetExposure()
+    } // HAL::CameraSetParameters()
     
     
     // Starts camera frame synchronization

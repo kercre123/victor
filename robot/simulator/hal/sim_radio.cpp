@@ -203,11 +203,11 @@ namespace Anki {
     } // RadioSendMessage()
     
     
-    u32 HAL::RadioGetNumBytesAvailable(void)
+    u32 RadioGetNumBytesAvailable(void)
     {
-      if (!server.HasClient())
+      if (!server.HasClient()) {
         return 0;
-      
+      }
       
       // Check for incoming data and add it to receive buffer
       int dataSize;
