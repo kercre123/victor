@@ -235,10 +235,8 @@ namespace Anki
 
       const Type var = *reinterpret_cast<Type*>(*buffer);
 
-      // Hack, to prevent corrupted input from causing a memory access error
-      if(sizeOfType > 256 || numElements <= 0 || numElements >= 1000000) {
-        return var;
-      }
+      AnkiConditionalErrorAndReturnValue(sizeOfType < 10000 && numElements > 0 && numElements < 1000000,
+        Type(), "SerializedBuffer::DeserializeRawBasicType", "Unreasonable deserialized values");
 
       *buffer = reinterpret_cast<u8*>(*buffer) + sizeOfType*numElements;
       bufferLength -= sizeOfType*numElements;
@@ -260,8 +258,8 @@ namespace Anki
       s32 numElements;
       EncodedBasicTypeBuffer::Deserialize(true, sizeOfType, isBasicType, isInteger, isSigned, isFloat, numElements, buffer, bufferLength);
 
-      AnkiConditionalErrorAndReturnValue(numElements > 0 && numElements < 1000000,
-        NULL, "SerializedBuffer::DeserializeRawBasicType", "numElements is not reasonable");
+      AnkiConditionalErrorAndReturnValue(sizeOfType < 10000 && numElements > 0 && numElements < 1000000,
+        NULL, "SerializedBuffer::DeserializeRawBasicType", "Unreasonable deserialized values");
 
       const s32 numBytes = numElements*sizeOfType;
       Type *var = reinterpret_cast<Type*>( memory.Allocate(numBytes) );
@@ -348,8 +346,8 @@ namespace Anki
         ySlice_increment > 0 &&
         ySlice_end >= 0 &&
         xSlice_start >= 0 && xSlice_start <= xSlice_end &&
-        xSlice_increment > 0 &&
-        xSlice_end >= 0 &&
+        xSlice_increment > 0 && xSlice_increment < 1000000 &&
+        xSlice_end >= 0 && xSlice_end < 1000000 &&
         basicType_sizeOfType > 0 && basicType_sizeOfType < 10000 &&
         basicType_numElements > 0 && basicType_numElements < 1000000,
         ArraySlice<Type>(), "SerializedBuffer::DeserializeRawArraySlice", "Unreasonable deserialized values");
@@ -383,7 +381,8 @@ namespace Anki
 
       const s32 numElements = xSlice.get_size()*ySlice.get_size();
 
-      AnkiAssert(iData == numElements);
+      AnkiConditionalErrorAndReturnValue(iData == numElements,
+        ArraySlice<Type>(), "SerializedBuffer::DeserializeRawArraySlice", "Deserialization error");
 
       ArraySlice<Type> out = ArraySlice<Type>(array, ySlice, xSlice);
 

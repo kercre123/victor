@@ -199,9 +199,9 @@ namespace Anki
       {
         AnkiConditionalErrorAndReturnValue(numBenchmarkEvents > 0 && numBenchmarkEvents < MAX_BENCHMARK_EVENTS,
           FixedLengthList<BenchmarkElement>(), "ComputeBenchmarkResults", "Invalid numBenchmarkEvents");
-        
+
         FixedLengthList<BenchmarkElement> outputResults(numBenchmarkEvents, memory);
-        
+
 #if defined(_MSC_VER)
         LARGE_INTEGER frequency;
         f64 frequencyF64;
@@ -440,11 +440,6 @@ namespace Anki
       return PrintBenchmarkResults(results, verbose, microseconds);
     }
 
-#ifdef ANKICORETECH_EMBEDDED_USE_OPENCV
-    static cv::Mat toShowImage;
-    static s32 toShowImageColumn;
-#endif
-
     Result ShowBenchmarkResults(
       const FixedLengthList<BenchmarkElement> &results,
       const FixedLengthList<ShowBenchmarkParameters> &namesToDisplay,
@@ -453,8 +448,13 @@ namespace Anki
       const s32 imageWidth)
     {
 #ifdef ANKICORETECH_EMBEDDED_USE_OPENCV
+      static cv::Mat toShowImage;
+      static s32 toShowImageColumn;
+      static bool blinkOn = true;
+
       const s32 blackWidth = 10;
       const s32 displayGridEveryNMilliseconds = 50;
+      const s32 blinkerWidth = 7;
 
       const s32 totalTimeIndex = CompileBenchmarkResults::GetNameIndex("TotalTime", results);
 
@@ -544,8 +544,38 @@ namespace Anki
         const bool microseconds = false;
         const bool verbose = false;
 
-        cv::Mat textImage((results.get_size()+1)*textHeightInPixels + 10, 1400, CV_8UC3);
+        const s32 textImageHeight = (results.get_size()+1)*textHeightInPixels + 10;
+        const s32 textImageWidth = 1400;
+        cv::Mat textImage(textImageHeight, textImageWidth, CV_8UC3);
         textImage.setTo(0);
+
+        if(blinkOn) {
+          //Draw a blinky rectangle at the upper right
+
+          for(s32 y=0; y<blinkerWidth; y++) {
+            for(s32 x=textImageWidth-blinkerWidth; x<textImageWidth; x++) {
+              textImage.at<u8>(y,x*3) = 0;
+              textImage.at<u8>(y,x*3+1) = 0;
+              textImage.at<u8>(y,x*3+2) = 0;
+            }
+          }
+
+          for(s32 y=1; y<blinkerWidth-1; y++) {
+            for(s32 x=textImageWidth+1-blinkerWidth; x<(textImageWidth-1); x++) {
+              textImage.at<u8>(y,x*3) = 255;
+              textImage.at<u8>(y,x*3+1) = 255;
+              textImage.at<u8>(y,x*3+2) = 255;
+            }
+          }
+        } else { // if(blinkOn)
+          for(s32 y=0; y<blinkerWidth; y++) {
+            for(s32 x=textImageWidth-blinkerWidth; x<textImageWidth; x++) {
+              textImage.at<u8>(y,x*3) = 0;
+              textImage.at<u8>(y,x*3+1) = 0;
+              textImage.at<u8>(y,x*3+2) = 0;
+            }
+          }
+        } // if(blinkOn) ... else
 
         s32 curY = 15;
 
@@ -614,8 +644,38 @@ namespace Anki
         const s32 textHeightInPixels = 20;
         const f64 textFontSize = 1.0;
 
-        cv::Mat keyImage((namesToDisplay.get_size()+1)*textHeightInPixels, 640, CV_8UC3);
+        const s32 keyImageHeight = (namesToDisplay.get_size()+1)*textHeightInPixels;
+        const s32 keyImageWidth = 640;
+        cv::Mat keyImage(keyImageHeight, keyImageWidth, CV_8UC3);
         keyImage.setTo(0);
+
+        if(blinkOn) {
+          //Draw a blinky rectangle at the upper right
+
+          for(s32 y=0; y<blinkerWidth; y++) {
+            for(s32 x=keyImageWidth-blinkerWidth; x<keyImageWidth; x++) {
+              keyImage.at<u8>(y,x*3) = 0;
+              keyImage.at<u8>(y,x*3+1) = 0;
+              keyImage.at<u8>(y,x*3+2) = 0;
+            }
+          }
+
+          for(s32 y=1; y<blinkerWidth-1; y++) {
+            for(s32 x=keyImageWidth+1-blinkerWidth; x<(keyImageWidth-1); x++) {
+              keyImage.at<u8>(y,x*3) = 255;
+              keyImage.at<u8>(y,x*3+1) = 255;
+              keyImage.at<u8>(y,x*3+2) = 255;
+            }
+          }
+        } else { // if(blinkOn)
+          for(s32 y=0; y<blinkerWidth; y++) {
+            for(s32 x=keyImageWidth-blinkerWidth; x<keyImageWidth; x++) {
+              keyImage.at<u8>(y,x*3) = 0;
+              keyImage.at<u8>(y,x*3+1) = 0;
+              keyImage.at<u8>(y,x*3+2) = 0;
+            }
+          }
+        } // if(blinkOn) ... else
 
         s32 curY = 15;
 
@@ -629,7 +689,12 @@ namespace Anki
         for(s32 iKey=namesToDisplay.get_size() - 1; iKey>=0; iKey--) {
           const s32 index = CompileBenchmarkResults::GetNameIndex(namesToDisplay[iKey].name, results);
 
-          const f64 time = namesToDisplay[iKey].showExclusiveTime ? results[index].exclusive_total : results[index].inclusive_total;
+          f64 time;
+          if(index == -1) {
+            time = 0;
+          } else {
+            time = namesToDisplay[iKey].showExclusiveTime ? results[index].exclusive_total : results[index].inclusive_total;
+          }
 
           snprintf(textBuffer, textBufferLength,  "%s: %dms", namesToDisplay[iKey].name, Round<s32>(1000.0*time));
           cv::putText(keyImage, textBuffer, cv::Point(5,curY), cv::FONT_HERSHEY_PLAIN, textFontSize, cv::Scalar(namesToDisplay[iKey].blue, namesToDisplay[iKey].green, namesToDisplay[iKey].red));
@@ -639,6 +704,8 @@ namespace Anki
         cv::imshow("Benchmarks Key", keyImage);
         cv::moveWindow("Benchmarks Key", 850, 540);
       }
+
+      blinkOn = !blinkOn;
 
       return RESULT_OK;
 #else // #ifdef ANKICORETECH_EMBEDDED_USE_OPENCV

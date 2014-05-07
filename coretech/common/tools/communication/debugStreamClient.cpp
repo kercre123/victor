@@ -44,7 +44,10 @@ namespace Anki
       {
         void * dataSegment_tmp = *dataSegment;
         s32 dataLength_tmp = dataLength;
-        objectOfType.Deserialize(innerObjectName, &dataSegment_tmp, dataLength_tmp, scratch);
+        Result result = objectOfType.Deserialize(innerObjectName, &dataSegment_tmp, dataLength_tmp, scratch);
+
+        if(result != RESULT_OK)
+          return result;
       }
 
       newObject.bufferLength = additionalBytesRequired + objectOfType.get_serializationSize();
