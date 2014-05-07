@@ -59,7 +59,11 @@ namespace Anki
 
       BenchmarkElement(const char * name);
 
+      // Print with printf()
       void Print(const bool verbose=true, const bool microseconds=true, const FixedLengthList<s32> * minCharacterToPrint=NULL) const;
+
+      // Like snprintf(). Returns the number of characters printed, not including the final null byte.
+      s32 Snprint(char * buffer, const s32 bufferLength, const bool verbose=true, const bool microseconds=true, const FixedLengthList<s32> * minCharacterToPrint=NULL) const;
     } BenchmarkElement;
 
     typedef struct ShowBenchmarkParameters
