@@ -151,13 +151,25 @@ namespace Anki {
         static const s32 autoExposure_adjustEveryNFrames = 1;
 
         // Tracking marker related members
-        static Anki::Vision::MarkerType markerTypeToTrack_;
-        static Quadrilateral<f32> trackingQuad_;
-        static s32 numTrackFailures_ ;
-        static bool isTrackingMarkerSpecified_;
-        static Tracker tracker_;
-        static f32 trackingMarkerWidth_mm;
-        static Point3<P3P_PRECISION> canonicalMarker3d_[4];
+        struct MarkerToTrack {
+          Anki::Vision::MarkerType  type;
+          f32                       width_mm;
+          Point2f                   imageCenter;
+          f32                       imageSearchRadius;
+          
+          MarkerToTrack();
+          bool IsSpecified() const;
+          void Clear();
+          bool Matches(const VisionMarker& marker) const;
+        };
+        
+        static MarkerToTrack markerToTrack_;
+        
+        static Quadrilateral<f32>          trackingQuad_;
+        static s32                         numTrackFailures_ ;
+        static Tracker                     tracker_;
+
+        static Point3<P3P_PRECISION>       canonicalMarker3d_[4];
 
         // Snapshots of robot state
         static bool wasCalledOnce_, havePreviousRobotState_;
@@ -178,6 +190,51 @@ namespace Anki {
         static SimulatorParameters             simulatorParameters_;
         #endif
         */
+        
+        //
+        // Implementation of MarkerToTrack methods:
+        //
+        
+        MarkerToTrack::MarkerToTrack()
+        {
+          Clear();
+        }
+        
+        inline bool MarkerToTrack::IsSpecified() const {
+          return type != Anki::Vision::MARKER_UNKNOWN;
+        }
+        
+        void MarkerToTrack::Clear() {
+          type        = Anki::Vision::MARKER_UNKNOWN;
+          width_mm    = 0;
+          imageCenter = Point2f(-1.f, -1.f);
+          imageSearchRadius = -1.f;
+        }
+        
+        bool MarkerToTrack::Matches(const VisionMarker& marker) const
+        {
+          bool doesMatch = false;
+          
+          if(marker.markerType == this->type) {
+            if(this->imageCenter.x >= 0.f && this->imageCenter.y >= 0.f &&
+               this->imageSearchRadius > 0.f)
+            {
+              // There is an image position specified, check to see if the
+              // marker's centroid is close enough to it
+              Point2f centroid = marker.corners.ComputeCenter<f32>();
+              if( (centroid - this->imageCenter).Length() < this->imageSearchRadius ) {
+                doesMatch = true;
+              }
+            } else {
+              // No image position specified, just return true since the
+              // types match
+              doesMatch = true;
+            }
+          }
+          
+          return doesMatch;
+        } // MarkerToTrack::Matches()
+        
       } // private namespace for VisionSystem state
 
 #if 0
@@ -549,7 +606,7 @@ namespace Anki {
           headCamInfo_->focalLength_y,
           headCamInfo_->center_x,
           headCamInfo_->center_y,
-          trackingMarkerWidth_mm,
+          markerToTrack_.width_mm,
           ccmScratch,
           onchipMemory,
           offchipMemory);
@@ -1138,7 +1195,7 @@ namespace Anki {
       }
 
       f32 GetTrackingMarkerWidth() {
-        return trackingMarkerWidth_mm;
+        return markerToTrack_.width_mm;
       }
 
       f32 GetVerticalFOV() {
@@ -1164,10 +1221,8 @@ namespace Anki {
           //
 
           mode_                      = VISION_MODE_LOOKING_FOR_MARKERS;
-          markerTypeToTrack_         = Anki::Vision::MARKER_UNKNOWN;
+          markerToTrack_.Clear();
           numTrackFailures_          = 0;
-          isTrackingMarkerSpecified_ = false;
-          trackingMarkerWidth_mm     = 0;
 
           wasCalledOnce_             = false;
           havePreviousRobotState_    = false;
@@ -1219,28 +1274,37 @@ namespace Anki {
         return result;
       }
 
-      Result SetMarkerToTrack(const Vision::MarkerType& markerToTrack,
-        const f32 markerWidth_mm)
+      Result SetMarkerToTrack(const Vision::MarkerType& markerTypeToTrack,
+                              const f32 markerWidth_mm)
       {
-        markerTypeToTrack_     = markerToTrack;
-        trackingMarkerWidth_mm = markerWidth_mm;
+        const Point2f imageCenter(-1.f, -1.f);
+        const f32     searchRadius = -1.f;
+        return SetMarkerToTrack(markerTypeToTrack, markerWidth_mm,
+                                imageCenter, searchRadius);
+      }
+      
+      Result SetMarkerToTrack(const Vision::MarkerType& markerTypeToTrack,
+                              const f32 markerWidth_mm,
+                              const Point2f& atImageCenter,
+                              const f32 imageSearchRadius)
+      {
+        markerToTrack_.type              = markerTypeToTrack;
+        markerToTrack_.width_mm          = markerWidth_mm;
+        markerToTrack_.imageCenter       = atImageCenter;
+        markerToTrack_.imageSearchRadius = imageSearchRadius;
+        
         mode_                  = VISION_MODE_LOOKING_FOR_MARKERS;
         numTrackFailures_      = 0;
 
         // If the marker type is valid, start looking for it
-        if(markerToTrack != Vision::MARKER_UNKNOWN &&
-          markerWidth_mm > 0.f)
+        if(markerToTrack_.IsSpecified())
         {
-          isTrackingMarkerSpecified_ = true;
-
           // Set canonical 3D marker's corner coordinates
-          const P3P_PRECISION markerHalfWidth = trackingMarkerWidth_mm * P3P_PRECISION(0.5);
+          const P3P_PRECISION markerHalfWidth = markerToTrack_.width_mm * P3P_PRECISION(0.5);
           canonicalMarker3d_[0] = Point3<P3P_PRECISION>(-markerHalfWidth, -markerHalfWidth, 0);
           canonicalMarker3d_[1] = Point3<P3P_PRECISION>(-markerHalfWidth,  markerHalfWidth, 0);
           canonicalMarker3d_[2] = Point3<P3P_PRECISION>( markerHalfWidth, -markerHalfWidth, 0);
           canonicalMarker3d_[3] = Point3<P3P_PRECISION>( markerHalfWidth,  markerHalfWidth, 0);
-        } else {
-          isTrackingMarkerSpecified_ = false;
         }
 
         return RESULT_OK;
@@ -1248,7 +1312,7 @@ namespace Anki {
 
       void StopTracking()
       {
-        isTrackingMarkerSpecified_ = false;
+        markerToTrack_.Clear();
         mode_ = VISION_MODE_LOOKING_FOR_MARKERS;
       }
 
@@ -1758,9 +1822,10 @@ namespace Anki {
             }
 
             // Was the desired marker found? If so, start tracking it.
-            if(isTrackingMarkerSpecified_ && !isTrackingMarkerFound &&
-              crntMarker.markerType == markerTypeToTrack_)
+            if(markerToTrack_.IsSpecified() && !isTrackingMarkerFound &&
+               markerToTrack_.Matches(crntMarker))
             {
+              
               // We will start tracking the _first_ marker of the right type that
               // we see.
               // TODO: Something smarter to track the one closest to the image center or to the expected location provided by the basestation?
@@ -1917,8 +1982,10 @@ namespace Anki {
 
             if(numTrackFailures_ == MAX_TRACKING_FAILURES) {
               // This resets docking, puttings us back in VISION_MODE_LOOKING_FOR_MARKERS mode
-              SetMarkerToTrack(markerTypeToTrack_,
-                trackingMarkerWidth_mm);
+              SetMarkerToTrack(markerToTrack_.type,
+                               markerToTrack_.width_mm,
+                               markerToTrack_.imageCenter,
+                               markerToTrack_.imageSearchRadius);
             }
           }
 
