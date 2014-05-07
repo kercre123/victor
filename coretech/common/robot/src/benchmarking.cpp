@@ -340,12 +340,11 @@ namespace Anki
         f32 exclusiveTimeElapsed; //< May be negative while the algorithm is still parsing
         s32 level; //< Level 0 is the base level. Every sub-benchmark adds another level.
 
-        char name[BenchmarkElement::NAME_LENGTH];
+        const char * name;
 
         BenchmarkInstance(const char * name, const f32 startTime, const f32 inclusiveTimeElapsed, f32 exclusiveTimeElapsed, const s32 level)
-          : startTime(startTime), inclusiveTimeElapsed(inclusiveTimeElapsed), exclusiveTimeElapsed(exclusiveTimeElapsed), level(level)
+          : startTime(startTime), inclusiveTimeElapsed(inclusiveTimeElapsed), exclusiveTimeElapsed(exclusiveTimeElapsed), level(level), name(name)
         {
-          snprintf(this->name, BenchmarkElement::NAME_LENGTH, "%s", name);
         }
 
         void Print() const
