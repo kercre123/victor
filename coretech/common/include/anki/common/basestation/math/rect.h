@@ -38,6 +38,12 @@ namespace Anki {
     
     bool Contains(const Point<2,T>& point) const;
     
+#if ANKICORETECH_USE_OPENCV
+    Rectangle(const cv::Rect_<T>& cvRect);
+    const cv::Rect_<T>& get_CvRect_() const;
+    cv::Rect_<T>& get_CvRect_();
+#endif
+    
   protected:
     
     template<class PointContainer>
@@ -53,7 +59,7 @@ namespace Anki {
   template<typename T>
   Rectangle<T>::Rectangle()
 #if ANKICORETECH_USE_OPENCV
-  : cv::Rect()
+  : cv::Rect_<T>()
 #endif
   {
     
@@ -62,12 +68,32 @@ namespace Anki {
   template<typename T>
   Rectangle<T>::Rectangle(T x, T y, T width, T height)
 #if ANKICORETECH_USE_OPENCV
-  : cv::Rect(x,y,width,height)
+  : cv::Rect_<T>(x,y,width,height)
 #endif
   {
     
   }
   
+#if ANKICORETECH_USE_OPENCV
+  template<typename T>
+  Rectangle<T>::Rectangle(const cv::Rect_<T>& cvRect)
+  : cv::Rect_<T>(cvRect)
+  {
+    
+  }
+  
+  template<typename T>
+  cv::Rect_<T>& Rectangle<T>::get_CvRect_()
+  {
+    return *this;
+  }
+  
+  template<typename T>
+  const cv::Rect_<T>& Rectangle<T>::get_CvRect_() const
+  {
+    return *this;
+  }
+#endif
   
   template<typename T>
   template<class PointContainer>
@@ -128,7 +154,7 @@ namespace Anki {
   Rectangle<T> Rectangle<T>::Intersect(const Rectangle<T>& other) const
   {
 #if ANKICORETECH_USE_OPENCV
-    cv::Rect_<T> temp = *this & other;
+    cv::Rect_<T> temp = this->get_CvRect_() & other.get_CvRect_();
     return Rectangle<T>(temp.x, temp.y, temp.width, temp.height);
 #else
     CORETECH_THROW("Rectangle::Intersect() currently relies on OpenCV.");
