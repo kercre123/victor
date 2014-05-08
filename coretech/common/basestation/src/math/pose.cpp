@@ -336,7 +336,7 @@ namespace Anki {
           return P_to;
         }
         
-        --depthDiff;
+        ++depthDiff;
       }
       
       // Treedepths should now match:
