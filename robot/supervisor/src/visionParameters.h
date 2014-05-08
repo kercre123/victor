@@ -130,20 +130,22 @@ namespace Anki {
         s32 maxIterations;
 
         bool useWeights;
-        s32 maxSamplesAtBaseLevel;
         
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
         // Planar6DoF tracker has separate convergence tolerance for
         // angle and distance components parameters of the tracker
         f32 convergenceTolerance_angle;    // radians
         f32 convergenceTolerance_distance; // mm
-        s32 numSamplingRegions;            // NxN grid of sampling regions within quad
+        s32 numInteriorSamples;            // number of samples on the code within the fiducial
+        s32 numSamplingRegions;            // NxN grid of sampling regions within fiducial
+        s32 numFiducialEdgeSamples;        // Number of samples on fiducial square's edges
         
         f32 successTolerance_angle;
         f32 successTolerance_distance;
         f32 successTolerance_matchingPixelsFraction;
 #else
         f32 convergenceTolerance;
+        s32 maxSamplesAtBaseLevel;
 #endif
         
 #endif // if DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
