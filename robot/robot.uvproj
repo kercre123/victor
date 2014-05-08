@@ -409,6 +409,16 @@
               <FilePath>..\include\anki\cozmo\robot\hal.h</FilePath>
             </File>
             <File>
+              <FileName>imu.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\imu.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>lights.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\lights.cpp</FilePath>
+            </File>
+            <File>
               <FileName>main.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\main.cpp</FilePath>
@@ -447,16 +457,6 @@
               <FileName>usb_radio.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\usb_radio.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>imu.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\imu.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>lights.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\lights.cpp</FilePath>
             </File>
             <File>
               <FileName>wifi.cpp</FileName>
@@ -769,9 +769,19 @@
               <FilePath>..\coretech\common\robot\src\array2d.cpp</FilePath>
             </File>
             <File>
+              <FileName>benchmarking.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\robot\src\benchmarking.cpp</FilePath>
+            </File>
+            <File>
               <FileName>comparisons.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\robot\src\comparisons.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>compress.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\robot\src\compress.cpp</FilePath>
             </File>
             <File>
               <FileName>decisionTree.cpp</FileName>
@@ -869,24 +879,14 @@
               <FilePath>..\coretech\common\robot\src\utilities_c.c</FilePath>
             </File>
             <File>
-              <FileName>velocityProfileGenerator.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\shared\src\velocityProfileGenerator.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>compress.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\compress.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>benchmarking.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\benchmarking.cpp</FilePath>
-            </File>
-            <File>
               <FileName>utilities_shared.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\shared\src\utilities_shared.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>velocityProfileGenerator.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\shared\src\velocityProfileGenerator.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -1537,6 +1537,16 @@
               <FilePath>..\include\anki\cozmo\robot\hal.h</FilePath>
             </File>
             <File>
+              <FileName>imu.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\imu.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>lights.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\lights.cpp</FilePath>
+            </File>
+            <File>
               <FileName>main.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\main.cpp</FilePath>
@@ -1616,16 +1626,6 @@
                   </Cads>
                 </FileArmAds>
               </FileOption>
-            </File>
-            <File>
-              <FileName>imu.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\imu.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>lights.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\lights.cpp</FilePath>
             </File>
             <File>
               <FileName>wifi.cpp</FileName>
@@ -1995,9 +1995,19 @@
               <FilePath>..\coretech\common\robot\src\array2d.cpp</FilePath>
             </File>
             <File>
+              <FileName>benchmarking.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\robot\src\benchmarking.cpp</FilePath>
+            </File>
+            <File>
               <FileName>comparisons.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\robot\src\comparisons.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>compress.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\robot\src\compress.cpp</FilePath>
             </File>
             <File>
               <FileName>decisionTree.cpp</FileName>
@@ -2095,24 +2105,14 @@
               <FilePath>..\coretech\common\robot\src\utilities_c.c</FilePath>
             </File>
             <File>
-              <FileName>velocityProfileGenerator.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\shared\src\velocityProfileGenerator.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>compress.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\compress.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>benchmarking.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\benchmarking.cpp</FilePath>
-            </File>
-            <File>
               <FileName>utilities_shared.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\shared\src\utilities_shared.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>velocityProfileGenerator.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\shared\src\velocityProfileGenerator.cpp</FilePath>
             </File>
           </Files>
         </Group>

@@ -131,7 +131,7 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
   MemoryStack scratch = MemoryStack(scratchBuffer, scratchSize, Flags::Buffer(false, true, false));
 
   if(strcmp(newObject.objectName, "Benchmarks") == 0) {
-    const f64 pixelsPerMillisecond = 1.5;
+    const f32 pixelsPerMillisecond = 1.5f;
     const s32 imageHeight = 500;
     const s32 imageWidth = 1600;
 
@@ -139,7 +139,7 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
 
     //PrintBenchmarkResults(benchmarks, false, false);
 
-    FixedLengthList<ShowBenchmarkParameters> namesToDisplay(5, scratch);
+    FixedLengthList<ShowBenchmarkParameters> namesToDisplay(128, scratch);
     namesToDisplay.PushBack(ShowBenchmarkParameters("VisionSystem_CameraGetFrame", false, red));
     namesToDisplay.PushBack(ShowBenchmarkParameters("ComputeBenchmarkResults", false, maroon));
     namesToDisplay.PushBack(ShowBenchmarkParameters("UARTPutMessage", false, maroon));
@@ -290,6 +290,10 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
 
   currentObjects.push_back(newObject);
 
+  if(!newObject.startOfPayload) {
+    return;
+  }
+
   if(strcmp(newObject.typeName, "Basic Type Buffer") == 0) {
     if(strcmp(newObject.objectName, "meanGrayvalueError") == 0) {
       u8* tmpBuffer = reinterpret_cast<u8*>(newObject.startOfPayload);
@@ -399,11 +403,13 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
       }
 
       // Grayscale to RGB
-      vector<cv::Mat> channels;
-      channels.push_back(largeLastImage);
-      channels.push_back(largeLastImage);
-      channels.push_back(largeLastImage);
-      cv::merge(channels, toShowImage);
+      const s32 numPixels = bigHeight * bigWidth;
+      s32 cPixel = 0;
+      for(s32 iPixel=0; iPixel<numPixels; iPixel++) {
+        toShowImage.data[cPixel++] = largeLastImage.data[iPixel];
+        toShowImage.data[cPixel++] = largeLastImage.data[iPixel];
+        toShowImage.data[cPixel++] = largeLastImage.data[iPixel];
+      }
     }
   } else if(strcmp(newObject.typeName, "String") == 0) {
     printf("Board>> %s\n", reinterpret_cast<const char*>(newObject.startOfPayload));

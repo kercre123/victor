@@ -342,6 +342,8 @@ namespace Anki
                                              const f32 scaleTemplateRegionPercent, //< Shrinks the region if less-than 1.0, expands the region if greater-than 1.0
                                              const s32 numPyramidLevels,
                                              const Transformations::TransformType transformType,
+                                             const s32 numFiducialSquareSamples,
+                                             const f32 fiducialSquareWidthFraction,
                                              const s32 maxSamplesAtBaseLevel,
                                              const s32 numSamplingRegions, 
                                              const f32 focalLength_x,
@@ -479,7 +481,14 @@ namespace Anki
         static Result ApproximateSelect(const Array<f32> &magnitudeVector, const s32 numBins, const s32 numToSelect, s32 &numSelected, Array<s32> &magnitudeIndexes);
         
         static Result ApproximateSelect(const Array<f32> &magnitudeImage, const s32 numBins, const s32 numRegions, const s32 numToSelect, s32 &numSelected, Array<s32> &magnitudeIndexes);
-                
+        
+        Result CreateVerificationSamples(const Array<u8>& image,
+                                         const LinearSequence<f32>& Xlocations,
+                                         const LinearSequence<f32>& Ylocations,
+                                         const f32 verifyCoordScalarInv,
+                                         s32& startIndex,
+                                         MemoryStack scratch);
+        
       }; // class LucasKanadeTracker_SampledPlanar6dof
       
       

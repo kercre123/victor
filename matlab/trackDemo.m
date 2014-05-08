@@ -4,10 +4,11 @@ TrackerType = 'affine';
 Calibration = [];
 Downsample = 1;
 NumSamples = 0;
+NumFiducialSamples = 0;
 CalibrationMatrix = [];
 MarkerWidth = [];
 ConvergenceTolerance = 0.25;
-ConvergenceMultiplier = 3;
+ConvergenceMultiplier = 1;
 MaxIterations = 25;
 IntensityErrorTolerance = .5;
 IntensityErrorFraction = 0.25;
@@ -139,11 +140,17 @@ end
                         imgFiltered = rgb2gray(imgFiltered);
                     end
                     
+                    if NumFiducialSamples > 0
+                        regionWidth = 1 - (2*VisionMarkerTrained.SquareWidthFraction) - TemplateRegionPaddingFraction;
+                    else
+                        regionWidth = 1 + TemplateRegionPaddingFraction;
+                    end
+                    
                     [initialSamples, angleX, angleY, angleZ, tX, tY, tZ] = mexPlanar6dofTrack(imgFiltered, corners, ...
                         CalibrationMatrix(1,1), CalibrationMatrix(2,2), ...
                         CalibrationMatrix(1,3), CalibrationMatrix(2,3), ...
-                        MarkerWidth, 1+TemplateRegionPaddingFraction, ...
-                        3, NumSamples, 5);
+                        MarkerWidth, regionWidth, ...
+                        3, NumSamples, 5, NumFiducialSamples, VisionMarkerTrained.SquareWidthFraction);
                     
                     currentParams = [angleX, angleY, angleZ, tX, tY, tZ];
                     

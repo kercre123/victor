@@ -10,10 +10,12 @@
  * Copyright: Anki, Inc. 2014
  **/
 
-#include "visionParameters.h"
 
 #include "anki/common/robot/utilities.h"
 
+#include "anki/vision/robot/fiducialDetection.h" // just for FIDUCIAL_SQUARE_WIDTH_FRACTION
+
+#include "visionParameters.h"
 #include "visionSystem.h"
 
 namespace Anki {
@@ -66,7 +68,7 @@ namespace Anki {
         maxConnectedComponentSegments = 39000; // 322*240/2 = 38640
         
         // TODO: Benchmark quad refinement so we can enable this by default
-        quadRefinementIterations = 0;
+        quadRefinementIterations = 25;
         
         isInitialized = true;
       } // DetectFiducialMarkersParameters::Initialize()
@@ -82,7 +84,7 @@ namespace Anki {
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
       const f32 TrackerParameters::MIN_TRACKER_DISTANCE = 10.f;
       const f32 TrackerParameters::MAX_TRACKER_DISTANCE = 200.f;
-      const f32 TrackerParameters::MAX_BLOCK_DOCKING_ANGLE = DEG_TO_RAD(30);
+      const f32 TrackerParameters::MAX_BLOCK_DOCKING_ANGLE = DEG_TO_RAD(45);
       const f32 TrackerParameters::MAX_DOCKING_FOV_ANGLE = DEG_TO_RAD(60);
 #endif
       
@@ -143,23 +145,34 @@ namespace Anki {
         
         trackingImageWidth   = CameraModeInfo[trackingResolution].width;
         trackingImageHeight  = CameraModeInfo[trackingResolution].height;
-        scaleTemplateRegionPercent = 1.1f;
         
         maxIterations             = 25;
         verify_maxPixelDifference = 30;
         useWeights                = true;
-        maxSamplesAtBaseLevel     = 500; // NOTE: used by all Matlab trackers & "SAMPLED_PROJECTIVE" / "SAMPLED_PLANAR6DOF"
-        
+       
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
-        convergenceTolerance_angle    = DEG_TO_RAD(0.5); 
-        convergenceTolerance_distance = 0.5f; // mm
+        convergenceTolerance_angle    = DEG_TO_RAD(0.25);
+        convergenceTolerance_distance = 0.25f; // mm
+        
         numSamplingRegions            = 5;
+        
+        // Split total samples between fiducial and interior
+        numInteriorSamples            = 250;
+        numFiducialEdgeSamples        = 250;
+        
+        if(numFiducialEdgeSamples > 0) {
+          scaleTemplateRegionPercent    = 1.f - FIDUCIAL_SQUARE_WIDTH_FRACTION;
+        } else {
+          scaleTemplateRegionPercent = 1.1f;
+        }
         
         successTolerance_angle        = DEG_TO_RAD(30);
         successTolerance_distance     = 20.f;
         successTolerance_matchingPixelsFraction = 0.5f;
 #else
-        convergenceTolerance      = 1.f;
+        scaleTemplateRegionPercent    = 1.1f;
+        convergenceTolerance          = 1.f;
+        maxSamplesAtBaseLevel         = 500;
 #endif
         
         

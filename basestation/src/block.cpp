@@ -198,14 +198,15 @@ namespace Anki {
     
     
     void Block::GetPreDockPoses(const float distance_mm,
-                                std::vector<Pose3d>& points) const
+                                std::vector<PoseMarkerPair_t>& poseMarkerPairs) const
     {
       Pose3d preDockPose;
       
-      for(auto & canonicalPoint : Block::CanonicalDockingPoints)
+      //for(auto & canonicalPoint : Block::CanonicalDockingPoints)
+      for(FaceName i_face = FIRST_FACE; i_face < NUM_FACES; ++i_face)
       {
-        if(GetPreDockPose(canonicalPoint, distance_mm, this->pose_, preDockPose) == true) {
-          points.emplace_back(preDockPose);
+        if(GetPreDockPose(CanonicalDockingPoints[i_face], distance_mm, this->pose_, preDockPose) == true) {
+          poseMarkerPairs.emplace_back(preDockPose, GetMarker(i_face));
         }
       } // for each canonical docking point
       

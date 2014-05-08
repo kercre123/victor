@@ -524,6 +524,10 @@ namespace Anki
         f32 rho;
         f32 theta;
 
+        if((center.x == static_cast<f32>(this->corners[i].x)) && (center.y == static_cast<f32>(this->corners[i].y))) {
+          return *this;
+        }
+
         Cart2Pol<f32>(
           static_cast<f32>(this->corners[i].x) - center.x,
           static_cast<f32>(this->corners[i].y) - center.y,
