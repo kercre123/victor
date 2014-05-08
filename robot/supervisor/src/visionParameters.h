@@ -175,7 +175,7 @@ namespace Anki {
 #if DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
         static const u32 TRACKING_ALGORITHM_SPEED_HZ = 60;
 #else
-        static const u32 TRACKING_ALGORITHM_SPEED_HZ = 10;
+        static const u32 TRACKING_ALGORITHM_SPEED_HZ = 15;
 #endif
         
         static const u32 TRACK_BLOCK_PERIOD_US = 1e6 / TRACKING_ALGORITHM_SPEED_HZ;
