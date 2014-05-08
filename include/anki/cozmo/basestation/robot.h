@@ -49,6 +49,8 @@ namespace Anki {
       const Pose3d& get_pose() const;
       const Vision::Camera& get_camDown() const;
       const Vision::Camera& get_camHead() const;
+      Vision::Camera& get_camHead(void);
+      
       OperationMode get_operationMode() const;
       const f32 get_headAngle() const;
       const f32 get_liftAngle() const;
@@ -181,6 +183,9 @@ namespace Anki {
     { return this->pose; }
     
     inline const Vision::Camera& Robot::get_camHead(void) const
+    { return this->camHead; }
+    
+    inline Vision::Camera& Robot::get_camHead(void)
     { return this->camHead; }
     
     inline Robot::OperationMode Robot::get_operationMode() const

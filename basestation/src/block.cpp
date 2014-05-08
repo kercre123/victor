@@ -258,6 +258,10 @@ namespace Anki {
       
     } // GetBoundingBoxInPlane()
     
+    Quad2f Block::GetBoundingQuadXY(const f32 paddingScale) const
+    {
+      return GetBoundingQuadXY(pose_, paddingScale);
+    }
     
     Quad2f Block::GetBoundingQuadXY(const Pose3d& atPose, const f32 paddingScale) const
     {
