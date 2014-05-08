@@ -30,8 +30,8 @@ namespace Anki {
 
           s32 frameNumber = 0;
 
-          static f32 computeBenchmarkResults_start;
-          static f32 computeBenchmarkResults_end;
+          static u32 computeBenchmarkResults_start;
+          static u32 computeBenchmarkResults_end;
 
           const Vision::CameraResolution debugStreamResolution_ = Vision::CAMERA_RES_QQQVGA;
         } // private namespace
@@ -39,8 +39,7 @@ namespace Anki {
         Result SendBuffer(SerializedBuffer &toSend, MemoryStack scratch)
         {
 #if SEND_DEBUG_STREAM
-          const f32 curTime = GetTimeF32();
-          const s32 curSecond = Round<s32>(curTime);
+          const f32 curSecond = Round<s32>(GetTimeF32());
 
           // Hack, to prevent overwhelming the send buffer
           if(curSecond != lastSecond) {
@@ -61,9 +60,9 @@ namespace Anki {
           
           EndBenchmark("TotalTime");
 
-          const f32 lastComputeBenchmarkResults_elapsedTime = computeBenchmarkResults_end - computeBenchmarkResults_start;
+          const u32 lastComputeBenchmarkResults_elapsedTime = computeBenchmarkResults_end - computeBenchmarkResults_start;
 
-          computeBenchmarkResults_start = GetTimeF32();
+          computeBenchmarkResults_start = GetTimeU32();
 
           FixedLengthList<BenchmarkElement> benchmarks = ComputeBenchmarkResults(scratch);
 
@@ -95,7 +94,7 @@ namespace Anki {
 
           InitBenchmarking();
 
-          computeBenchmarkResults_end = GetTimeF32();
+          computeBenchmarkResults_end = GetTimeU32();
 
           BeginBenchmark("TotalTime");
 
@@ -130,8 +129,6 @@ namespace Anki {
           Result result = RESULT_OK;
 
 #if SEND_DEBUG_STREAM
-          const f32 curTime = GetTimeF32();
-
           debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferData_[0], DEBUG_STREAM_BUFFER_SIZE);
 
           if(markers.get_size() != 0) {
@@ -176,8 +173,6 @@ namespace Anki {
           Result result = RESULT_OK;
 
 #if SEND_DEBUG_STREAM
-          const f32 curTime = GetTimeF32();
-
           const s32 height = CameraModeInfo[debugStreamResolution_].height;
           const s32 width  = CameraModeInfo[debugStreamResolution_].width;
 
@@ -253,8 +248,6 @@ namespace Anki {
           Result result = RESULT_OK;
 
 #if SEND_DEBUG_STREAM
-          const f32 curTime = GetTimeF32();
-
           const s32 height = CameraModeInfo[debugStreamResolution_].height;
           const s32 width  = CameraModeInfo[debugStreamResolution_].width;
 

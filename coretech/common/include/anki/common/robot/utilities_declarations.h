@@ -122,8 +122,9 @@ namespace Anki
 
     // Get the current system time in seconds
     // WARNING: f32 is enough for only about two hours (2*60*60*1000 ~= 2^23)
-    f32 GetTimeF32(void);
-    f64 GetTimeF64(void);
+    f32 GetTimeF32(); // In seconds
+    f64 GetTimeF64(); // In seconds
+    u32 GetTimeU32(); // In microseconds
   } // namespace Embedded
 } // namespace Anki
 

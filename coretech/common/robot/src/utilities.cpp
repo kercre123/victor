@@ -162,7 +162,7 @@ namespace Anki
       return num;
     }
 
-    f32 GetTimeF32(void)
+    f32 GetTimeF32()
     {
 #if defined(_MSC_VER)
       f32 timeInSeconds;
@@ -208,7 +208,7 @@ namespace Anki
       return timeInSeconds;
     }
 
-    f64 GetTimeF64(void)
+    f64 GetTimeF64()
     {
 #if defined(_MSC_VER)
       f64 timeInSeconds;
@@ -252,6 +252,41 @@ namespace Anki
 #endif
 
       return timeInSeconds;
+    }
+
+    u32 GetTimeU32()
+    {
+#if defined(_MSC_VER)
+      static LONGLONG startCounter = 0;
+
+      LARGE_INTEGER counter;
+
+      QueryPerformanceCounter(&counter);
+
+      // Subtract startCounter, so the floating point number has reasonable precision
+      if(startCounter == 0) {
+        startCounter = counter.QuadPart;
+      }
+
+      return static_cast<u32>((counter.QuadPart - startCounter) & 0xFFFFFFFF);
+#elif defined(__APPLE_CC__)
+      struct timeval time;
+      gettimeofday(&time, NULL);
+
+      // Subtract startSeconds, so the floating point number has reasonable precision
+      static long startSeconds = 0;
+      if(startSeconds == 0) {
+        startSeconds = time.tv_sec;
+      }
+
+      return (u32)(time.tv_sec-startSeconds)*1000000 + (u32)time.tv_usec;
+#elif defined (__EDG__)  // MDK-ARM
+      return Anki::Cozmo::HAL::GetMicroCounter();
+#else
+      timespec ts;
+      clock_gettime(CLOCK_MONOTONIC, &ts);
+      return (u32)ts.tv_sec * 1000000 + (u32)(ts.tv_nsec/1000);
+#endif
     }
   } // namespace Embedded
 } // namespace Anki

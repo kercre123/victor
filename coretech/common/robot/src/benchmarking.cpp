@@ -77,7 +77,7 @@ staticInline u32 GetBenchmarkTime()
 
   QueryPerformanceCounter(&counter);
 
-  // Subtract startSeconds, so the floating point number has reasonable precision
+  // Subtract startCounter, so the floating point number has reasonable precision
   if(startCounter == 0) {
     startCounter = counter.QuadPart;
   }
