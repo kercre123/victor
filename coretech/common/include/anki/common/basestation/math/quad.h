@@ -321,7 +321,7 @@ namespace Anki {
     
     Point<N,T> center = this->computeCentroid();
     
-    for(CornerName i=FirstCorner; i<NumCorners; i++) {
+    for(CornerName i=FirstCorner; i<NumCorners; ++i) {
       Point<N,T> corner((*this)[i]);
       corner -= center;
       
@@ -333,10 +333,10 @@ namespace Anki {
     std::sort(angleIndexPairs.begin(), angleIndexPairs.end(), CompareFirst<f32,Quad::CornerName>());
     
     // Re-order the corners using the sorted indices
-    const Quadrilateral<2,T> sortedQuad((*this)[angleIndexPairs[0].second],
-                                        (*this)[angleIndexPairs[1].second],
-                                        (*this)[angleIndexPairs[2].second],
-                                        (*this)[angleIndexPairs[3].second]);
+    const Quadrilateral<2,T> sortedQuad((*this)[angleIndexPairs[0].second],   // TopLeft    (min angle)
+                                        (*this)[angleIndexPairs[3].second],   // BottomLeft (max angle)
+                                        (*this)[angleIndexPairs[1].second],   // TopRight
+                                        (*this)[angleIndexPairs[2].second]);
     
     return sortedQuad;
     
