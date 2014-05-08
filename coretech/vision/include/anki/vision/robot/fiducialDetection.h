@@ -19,6 +19,9 @@ namespace Anki
 {
   namespace Embedded
   {
+    // TODO: make this into a parameter stored elsewhere?
+    const f32 FIDUCIAL_SQUARE_WIDTH_FRACTION = 0.1f;
+    
     // The primary wrapper function for detecting fiducial markers in an image
     Result DetectFiducialMarkers(
       const Array<u8> &image,

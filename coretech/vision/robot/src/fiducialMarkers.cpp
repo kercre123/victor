@@ -718,17 +718,17 @@ namespace Anki
 
         const u8 meanGrayvalueThreshold = static_cast<u8>(0.5f*(brightValue+darkValue));
 
-        const s32 quadRefinementIterations = 10; // TODO: make an argument/parameter
         if(quadRefinementIterations > 0) {
           BeginBenchmark("vme_quadrefine");
 
-          const f32 squareWidthFraction = 0.1f; // TODO: make a part of marker/fiducial definitions?
-
           const s32 numRefinementSamples = 100; // TODO: make argument/parameter?
 
-          if((lastResult = RefineQuadrilateral(initQuad, initHomography, image, squareWidthFraction, quadRefinementIterations, darkValue, brightValue, numRefinementSamples, quad, homography, scratch)) != RESULT_OK) {
+          if((lastResult = RefineQuadrilateral(initQuad, initHomography, image, FIDUCIAL_SQUARE_WIDTH_FRACTION, quadRefinementIterations, darkValue, brightValue, numRefinementSamples, quad, homography, scratch)) != RESULT_OK)
+          {
             // TODO: Don't fail? Just warn and keep original quad?
-            return lastResult;
+            AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
+                                               "RefineQuadrilateral",
+                                               "RefineQuadrilateral() failed with code %0x.", lastResult);
           }
 
           EndBenchmark("vme_quadrefine");
