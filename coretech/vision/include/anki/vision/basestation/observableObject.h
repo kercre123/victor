@@ -53,6 +53,13 @@ namespace Anki {
       
       bool GetWhetherObserved(void) const;
       void SetWhetherObserved(bool wasObserved);
+      
+      // Return true if any of the object's markers is visible from the given
+      // camera. See also KnownMarker::IsVisibleFrom().
+      bool IsVisibleFrom(Camera& camera,
+                         const f32 maxFaceNormalAngle,
+                         const f32 minMarkerImageSize) const;
+      
       // Accessors:
       ObjectID_t      GetID()     const;
       ObjectType_t    GetType()   const;

@@ -86,7 +86,7 @@ namespace Anki {
       
     }
     
-    bool KnownMarker::IsVisibleFrom(const Camera& camera,
+    bool KnownMarker::IsVisibleFrom(Camera& camera,
                                     const f32 maxAngleRad,
                                     const f32 minImageSize) const
     {

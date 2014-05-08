@@ -84,7 +84,7 @@ namespace Anki {
       // given angle tolerance of being front-parallel to the camera (i.e.
       // facing it) and have a diaonal image size at least the given image size
       // tolerance.
-      bool IsVisibleFrom(const Camera& camera,
+      bool IsVisibleFrom(Camera& camera,
                          const f32 maxAngleRad,
                          const f32 minImageSize) const;
       

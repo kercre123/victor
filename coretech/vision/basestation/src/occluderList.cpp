@@ -6,6 +6,7 @@
 //  Copyright (c) 2014 Anki, Inc. All rights reserved.
 //
 
+#include "anki/common/basestation/general.h"
 #include "anki/common/basestation/math/quad.h"
 #include "anki/common/basestation/math/rect.h"
 
@@ -76,7 +77,7 @@ namespace Anki {
     bool OccluderList::IsOccluded(const Quad2f &quad, const f32 atDistance)
     {
       if(not isSorted_) {
-        std::sort(rectDepthPairs_.begin(), rectDepthPairs_.end(), CompareSecond<Quad2f, f32>());
+        std::sort(rectDepthPairs_.begin(), rectDepthPairs_.end(), CompareSecond<Rectangle<f32>, f32>());
         isSorted_ = true;
       }
       
@@ -110,7 +111,7 @@ namespace Anki {
     bool OccluderList::IsOccluded(const Point2f &point, const f32 atDistance)
     {
       if(not isSorted_) {
-        std::sort(rectDepthPairs_.begin(), rectDepthPairs_.end(), CompareSecond<Quad2f, f32>());
+        std::sort(rectDepthPairs_.begin(), rectDepthPairs_.end(), CompareSecond<Rectangle<f32>, f32>());
         isSorted_ = true;
       }
       
