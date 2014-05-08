@@ -12,9 +12,9 @@ namespace Anki {
 
     // postfix operator (cname++)
     CornerName operator++(CornerName& cname, int) {
-      CornerName newCname = cname;
-      ++newCname;
-      return newCname;
+      CornerName cnameToReturn = cname; // make a copy to return before we increment
+      ++cname;
+      return cnameToReturn;
     }
     
     CornerName operator+(CornerName& cname, int value)
