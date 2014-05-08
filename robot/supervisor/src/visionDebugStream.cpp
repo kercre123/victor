@@ -54,6 +54,11 @@ namespace Anki {
             }
           }
 
+          /*for(s32 i=0; i<500; i++) {
+            BeginBenchmark("Test");
+            EndBenchmark("Test");
+          }*/
+          
           EndBenchmark("TotalTime");
 
           const f32 lastComputeBenchmarkResults_elapsedTime = computeBenchmarkResults_end - computeBenchmarkResults_start;
