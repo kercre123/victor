@@ -28,8 +28,9 @@ namespace Anki {
       }
     
       // Define colors
-      DefineColor(VIZ_COLOR_EXECUTED_PATH, 1.0, 0.0, 0.0, 1.0);
-      DefineColor(VIZ_COLOR_PREDOCKPOSE,   1.0, 0.0, 0.0, 0.75);
+      DefineColor(VIZ_COLOR_EXECUTED_PATH,       1.0, 0.0, 0.0, 1.00);
+      DefineColor(VIZ_COLOR_PREDOCKPOSE,         1.0, 0.0, 0.0, 0.75);
+      DefineColor(VIZ_COLOR_BLOCK_BOUNDING_QUAD, 0.0, 0.0, 1.0, 0.75);
       
       return isInitialized_ ? RESULT_OK : RESULT_FAIL;
     }
@@ -135,6 +136,7 @@ namespace Anki {
                  colorID);
     }
     
+
     
     // ================== Object drawing methods ====================
     
@@ -266,8 +268,7 @@ namespace Anki {
       
       SendMessage( GET_MESSAGE_ID(VizErasePath), &v );
     }
-
-
+    
     void VizManager::SetPathColor(const u32 pathID, const u32 colorID)
     {
       VizSetPathColor v;
@@ -276,6 +277,23 @@ namespace Anki {
       
       SendMessage( GET_MESSAGE_ID(VizSetPathColor), &v );
     }
+    
+    
+    // =============== Quad methods ==================
+    
+    void VizManager::EraseQuad(const u32 quadID)
+    {
+      VizEraseQuad v;
+      v.quadID = quadID;
+      
+      SendMessage( GET_MESSAGE_ID(VizEraseQuad), &v );
+    }
+    
+    void VizManager::EraseAllQuads()
+    {
+      EraseQuad(ALL_QUAD_IDs);
+    }
+
     
     // =============== Text methods ==================
 

@@ -62,6 +62,8 @@ int main(int argc, char **argv)
   blockWorld.Init(&robotMgr);
   behaviorMgr.Init(&robotMgr, &blockWorld);
   
+  // Force an update before VizManager's Init() so that color defs, etc, get sent
+  Sim::basestationController.step(TIME_STEP);
   VizManager::getInstance()->Init();
   
 #if(ENABLE_BS_KEYBOARD_CONTROL)

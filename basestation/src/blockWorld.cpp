@@ -496,6 +496,7 @@ namespace Anki
       
       // Draw all blocks we know about (and their pre-dock poses)
       VizManager::getInstance()->EraseAllVizObjects();
+      VizManager::getInstance()->EraseAllQuads();
       for(auto blocksByType : existingBlocks_) {
         for(auto blocksByID : blocksByType.second) {
           
@@ -512,6 +513,18 @@ namespace Anki
           for(auto pose : poses) {
             VizManager::getInstance()->DrawPreDockPose(6*block->GetID()+poseID++, pose, VIZ_COLOR_PREDOCKPOSE);
             ++poseID;
+          }
+          
+          {
+            using namespace Quad;
+            Quad2f quadOnGround2d = block->GetBoundingQuadXY();
+            
+            Quad3f quadOnGround3d(Point3f(quadOnGround2d[TopLeft].x(),     quadOnGround2d[TopLeft].y(),     0.5f),
+                                  Point3f(quadOnGround2d[BottomLeft].x(),  quadOnGround2d[BottomLeft].y(),  0.5f),
+                                  Point3f(quadOnGround2d[TopRight].x(),    quadOnGround2d[TopRight].y(),    0.5f),
+                                  Point3f(quadOnGround2d[BottomRight].x(), quadOnGround2d[BottomRight].y(), 0.5f));
+            
+            VizManager::getInstance()->DrawQuad(block->GetID(), quadOnGround3d, VIZ_COLOR_BLOCK_BOUNDING_QUAD);
           }
 
         } // FOR each ID of this type

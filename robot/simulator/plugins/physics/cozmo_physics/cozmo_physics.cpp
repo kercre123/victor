@@ -39,6 +39,10 @@ static std::map<int, int> pathColorMap_;
 typedef std::map<int, Anki::Cozmo::VizObject> VizObject_t;
 static VizObject_t objectMap_;
 
+// Static quads
+typedef std::map<int, Anki::Cozmo::VizQuad> VizQuadMap_t;
+static VizQuadMap_t quadMap_;
+
 // Color map
 typedef std::map<int, Anki::Cozmo::VizDefineColor> VizColorDef_t;
 static VizColorDef_t colorMap_;
@@ -58,7 +62,7 @@ static float heightOffset_ = 0.045;
 // Default angular resolution of arc path segments (radians)
 static float arcRes_rad = 0.2;
 
-const int SIZEOF_FLOAT = sizeof(float);
+//const int SIZEOF_FLOAT = sizeof(float);
 
 #if DEBUG_COZMO_PHYSICS
 #define PRINT(...) dWebotsConsolePrintf(__VA_ARGS__)
@@ -97,6 +101,16 @@ namespace Anki {
       objectMap_[msg.objectID] = msg;
     }
     
+    void ProcessVizQuadMessage(const VizQuad& msg)
+    {
+      PRINT("Processing DrawQuad (%f %f %f), (%f %f %f), (%f %f %f), (%f %f %f)\n",
+            msg.xUpperLeft,  msg.yUpperLeft,  msg.zUpperLeft,
+            msg.xLowerLeft,  msg.yLowerLeft,  msg.zLowerLeft,
+            msg.xUpperRight, msg.yUpperRight, msg.zUpperRight,
+            msg.xLowerRight, msg.yLowerRight, msg.zLowerRight);
+      
+      quadMap_[msg.quadID] = msg;
+    }
     
     void ProcessVizEraseObjectMessage(const VizEraseObject& msg)
     {
@@ -109,6 +123,16 @@ namespace Anki {
       }
     }
     
+    void ProcessVizEraseQuadMessage(const VizEraseQuad& msg)
+    {
+      PRINT("Processing EraseQuad\n");
+      
+      if (msg.quadID == ALL_QUAD_IDs) {
+        quadMap_.clear();
+      } else {
+        quadMap_.erase(msg.quadID);
+      }
+    }
     
     void ProcessVizAppendPathSegmentLineMessage(const VizAppendPathSegmentLine &msg)
     {
@@ -425,14 +449,25 @@ void draw_robot(Anki::Cozmo::VizRobotMarkerType type)
   draw_tetrahedron_marker(x, y, z, l, w, h);
 }
 
-
-
 void draw_predockpose()
 {
   // Another tetrahedron-y shape like draw_robot that shows where the robot
   // _would_ be if it were positioned at this pre-dock pose
   
   draw_robot(Anki::Cozmo::VIZ_ROBOT_MARKER_SMALL_TRIANGLE);
+}
+
+void draw_quad(const f32 xUpperLeft,  const f32 yUpperLeft, const f32 zUpperLeft,
+               const f32 xLowerLeft,  const f32 yLowerLeft, const f32 zLowerLeft,
+               const f32 xUpperRight, const f32 yUpperRight, const f32 zUpperRight,
+               const f32 xLowerRight, const f32 yLowerRight, const f32 zLowerRight)
+{
+  glBegin(GL_LINE_LOOP);
+  glVertex3f(xUpperLeft,  yUpperLeft,  zUpperLeft );
+  glVertex3f(xUpperRight, yUpperRight, zUpperRight);
+  glVertex3f(xLowerRight, yLowerRight, zLowerRight);
+  glVertex3f(xLowerLeft,  yLowerLeft,  zLowerLeft );
+  glEnd();
 }
 
 void webots_physics_draw(int pass, const char *view) {
@@ -520,7 +555,29 @@ void webots_physics_draw(int pass, const char *view) {
       
       // Restore default color
       glColor3f(DEFAULT_COLOR[0], DEFAULT_COLOR[1], DEFAULT_COLOR[2]);
-    }
+    } // for each object
+    
+    // Draw quads
+    VizQuadMap_t::iterator quadIt;
+    for (quadIt = quadMap_.begin(); quadIt != quadMap_.end(); ++quadIt) {
+      
+      Anki::Cozmo::VizQuad *quad = &(quadIt->second);
+      
+      // Set color for the block
+      VizColorDef_t::iterator cIt = colorMap_.find(quad->color);
+      if (cIt != colorMap_.end()) {
+        Anki::Cozmo::VizDefineColor *c = &(cIt->second);
+        glColor3f(c->r, c->g, c->b);
+      }
+      
+      draw_quad(quad->xUpperLeft,  quad->yUpperLeft,  quad->zUpperLeft,
+                quad->xLowerLeft,  quad->yLowerLeft,  quad->zLowerLeft,
+                quad->xUpperRight, quad->yUpperRight, quad->zUpperRight,
+                quad->xLowerRight, quad->yLowerRight, quad->zLowerRight);
+      
+      // Restore default color
+      glColor3f(DEFAULT_COLOR[0], DEFAULT_COLOR[1], DEFAULT_COLOR[2]);
+    } // for each quad
     
   }
 }

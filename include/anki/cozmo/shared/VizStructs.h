@@ -14,8 +14,9 @@ namespace Anki {
     // cozmo_physics plugin. Basestation or robot can draw via cozmo_viz_controller.
     const u32 PHYSICS_PLUGIN_SERVER_PORT = 5253;
 
-    const u32 ALL_PATH_IDs = u32_MAX;
+    const u32 ALL_PATH_IDs   = u32_MAX;
     const u32 ALL_OBJECT_IDs = u32_MAX;
+    const u32 ALL_QUAD_IDs   = u32_MAX;
 
     const u32 DEFAULT_COLOR_ID = u32_MAX;
     
