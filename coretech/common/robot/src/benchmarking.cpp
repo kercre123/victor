@@ -235,7 +235,7 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(numBenchmarkEvents > 0 && numBenchmarkEvents < MAX_BENCHMARK_EVENTS,
           FixedLengthList<BenchmarkElement>(), "ComputeBenchmarkResults", "Invalid numBenchmarkEvents");
 
-        FixedLengthList<BenchmarkElement> outputResults(numBenchmarkEvents, memory, Flags::Buffer(false, false, false));
+        FixedLengthList<BenchmarkElement> outputResults(numBenchmarkEvents/2, memory, Flags::Buffer(false, false, false));
 
 #if defined(_MSC_VER)
         LARGE_INTEGER frequency;
@@ -247,9 +247,9 @@ namespace Anki
         {
           PUSH_MEMORY_STACK(memory);
 
-          FixedLengthList<BasicBenchmarkElement> basicOutputResults(numBenchmarkEvents, memory, Flags::Buffer(false, false, false));
-          FixedLengthList<BenchmarkInstance> fullList(numBenchmarkEvents, memory, Flags::Buffer(false, false, false));
-          FixedLengthList<BenchmarkInstance> parseStack(numBenchmarkEvents, memory, Flags::Buffer(false, false, false));
+          FixedLengthList<BasicBenchmarkElement> basicOutputResults(numBenchmarkEvents/2, memory, Flags::Buffer(false, false, false));
+          FixedLengthList<BenchmarkInstance> fullList(numBenchmarkEvents/2, memory, Flags::Buffer(false, false, false));
+          FixedLengthList<BenchmarkInstance> parseStack(numBenchmarkEvents/2, memory, Flags::Buffer(false, false, false));
 
           AnkiConditionalErrorAndReturnValue(outputResults.IsValid() && basicOutputResults.IsValid() && fullList.IsValid() && parseStack.IsValid(),
             FixedLengthList<BenchmarkElement>(), "ComputeBenchmarkResults", "Out of memory");

@@ -25,7 +25,7 @@ namespace Anki
 {
   namespace Embedded
   {
-    const s32 MAX_BENCHMARK_EVENTS = 4000;
+    const s32 MAX_BENCHMARK_EVENTS = 16000;
 
     typedef struct BenchmarkElement
     {
