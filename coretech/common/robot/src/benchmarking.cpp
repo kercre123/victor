@@ -27,7 +27,7 @@ typedef enum
 typedef struct
 {
   const char * name; // WARNING: name must be in globally available memory
-  u64 time;
+  u32 time;
   BenchmarkEventType type;
 } BenchmarkEvent;
 
@@ -40,33 +40,35 @@ static s32 g_numBenchmarkEvents;
 //static const s32 benchmarkPrintBufferLength = 512 + Anki::Embedded::MAX_BENCHMARK_EVENTS*350;
 //OFFCHIP static char benchmarkPrintBuffer[benchmarkPrintBufferLength];
 
-staticInline void AddBenchmarkEvent(const char *name, u64 time, BenchmarkEventType type);
+staticInline void AddBenchmarkEvent(const char *name, u32 time, BenchmarkEventType type);
 
 // For use instead of a BenchmarkElement for intermediate processing
 typedef struct BasicBenchmarkElement
 {
+  // All times in microseconds, on all platforms
+
   // Inclusive includes all the time for all sub-benchmarks
-  f32 inclusive_total;
-  f32 inclusive_min;
-  f32 inclusive_max;
+  u32 inclusive_total;
+  u32 inclusive_min;
+  u32 inclusive_max;
 
   // Exclusive does not include sub-benchmarks
-  f32 exclusive_total;
-  f32 exclusive_min;
-  f32 exclusive_max;
+  u32 exclusive_total;
+  u32 exclusive_min;
+  u32 exclusive_max;
 
   // How many times was this element's name benchmarked?
-  s32 numEvents;
+  u32 numEvents;
 
   const char * name;
 
   BasicBenchmarkElement(const char * name)
-    : inclusive_total(0), inclusive_min(FLT_MAX), inclusive_max(FLT_MIN), exclusive_total(0), exclusive_min(FLT_MAX), exclusive_max(FLT_MIN), numEvents(0), name(name)
+    : inclusive_total(0), inclusive_min(u32_MAX), inclusive_max(0), exclusive_total(0), exclusive_min(u32_MAX), exclusive_max(0), numEvents(0), name(name)
   {
   }
 } BasicBenchmarkElement;
 
-staticInline u64 GetBenchmarkTime()
+staticInline u32 GetBenchmarkTime()
 {
 #if defined(_MSC_VER)
   static LONGLONG startCounter = 0;
@@ -80,7 +82,7 @@ staticInline u64 GetBenchmarkTime()
     startCounter = counter.QuadPart;
   }
 
-  return counter.QuadPart - startCounter;
+  return static_cast<u32>((counter.QuadPart - startCounter) & 0xFFFFFFFF);
 #elif defined(__APPLE_CC__)
   struct timeval time;
   gettimeofday(&time, NULL);
@@ -91,17 +93,17 @@ staticInline u64 GetBenchmarkTime()
     startSeconds = time.tv_sec;
   }
 
-  return (u64)(time.tv_sec-startSeconds)*1000000ULL + (u64)time.tv_usec;
+  return (u32)(time.tv_sec-startSeconds)*1000000 + (u32)time.tv_usec;
 #elif defined (__EDG__)  // MDK-ARM
   return Anki::Cozmo::HAL::GetMicroCounter();
 #else
   timespec ts;
   clock_gettime(CLOCK_MONOTONIC, &ts);
-  return (u64)ts.tv_sec * 1000000000ULL + (u64)ts.tv_nsec;
+  return (u32)ts.tv_sec * 1000000 + (u32)(ts.tv_nsec/1000);
 #endif
 }
 
-staticInline void AddBenchmarkEvent(const char *name, const u64 time, BenchmarkEventType type)
+staticInline void AddBenchmarkEvent(const char *name, const u32 time, BenchmarkEventType type)
 {
   AnkiAssert(strlen(name) < Anki::Embedded::BenchmarkElement::NAME_LENGTH);
 
@@ -145,7 +147,7 @@ namespace Anki
     } // void endBenchmark(const char *name)
 
     BenchmarkElement::BenchmarkElement(const char * name)
-      : inclusive_mean(0), inclusive_min(FLT_MAX), inclusive_max(FLT_MIN), inclusive_total(0), exclusive_mean(0), exclusive_min(FLT_MAX), exclusive_max(FLT_MIN), exclusive_total(0), numEvents(0)
+      : inclusive_mean(0), inclusive_min(u32_MAX), inclusive_max(0), inclusive_total(0), exclusive_mean(0), exclusive_min(u32_MAX), exclusive_max(0), exclusive_total(0), numEvents(0)
     {
       snprintf(this->name, BenchmarkElement::NAME_LENGTH, "%s", name);
     }
@@ -192,10 +194,10 @@ namespace Anki
       f32 multiplier;
       if(microseconds) {
         suffix = "us ";
-        multiplier = 1000000.0f;
+        multiplier = 1.0f;
       } else {
         suffix = "ms ";
-        multiplier = 1000.0f;
+        multiplier = 1.0f / 1000.0f;
       }
 
       numPrintedTotal += SnprintElement(&buffer[numPrintedTotal], bufferLength - numPrintedTotal, "ExcTot:", Round<s32>(this->exclusive_total*multiplier), suffix, (*minCharacterToPrint)[1]);
@@ -237,9 +239,9 @@ namespace Anki
 
 #if defined(_MSC_VER)
         LARGE_INTEGER frequency;
-        f32 frequencyF32;
+        f64 frequencyF64;
         QueryPerformanceFrequency(&frequency);
-        frequencyF32 = (f32)(frequency.QuadPart);
+        frequencyF64 = (f64)(frequency.QuadPart);
 #endif
 
         {
@@ -257,19 +259,19 @@ namespace Anki
           // First, parse each event individually, and add it to the fullList
           for(s32 iEvent=0; iEvent<numBenchmarkEvents; iEvent++) {
 #if defined(_MSC_VER)
-            const f32 timeF32 = static_cast<f32>(benchmarkEvents[iEvent].time) / frequencyF32;
+            const u32 timeU32 = static_cast<u32>(1000000.0 * (static_cast<f64>(benchmarkEvents[iEvent].time) / frequencyF64));
 #elif defined(__APPLE_CC__)
-            const f32 timeF32 = static_cast<f32>(benchmarkEvents[iEvent].time) / 1000000.0f;
+            const u32 timeU32 = benchmarkEvents[iEvent].time;
 #elif defined(__EDG__)  // MDK-ARM
-            const f32 timeF32 = static_cast<f32>(benchmarkEvents[iEvent].time) / 1000000.0f;
+            const u32 timeU32 = benchmarkEvents[iEvent].time;
 #else
-            const f32 timeF32 = static_cast<f32>(benchmarkEvents[iEvent].time) / 1000000000.0f;
+            const u32 timeU32 = benchmarkEvents[iEvent].time;
 #endif
 
             if(benchmarkEvents[iEvent].type == BENCHMARK_EVENT_BEGIN) {
               const s32 startLevel = parseStack.get_size();
 
-              parseStack.PushBack(BenchmarkInstance(benchmarkEvents[iEvent].name, timeF32, 0, 0, startLevel));
+              parseStack.PushBack(BenchmarkInstance(benchmarkEvents[iEvent].name, timeU32, 0, 0, startLevel));
             } else {
               // BENCHMARK_EVENT_END
 
@@ -280,7 +282,7 @@ namespace Anki
               AnkiConditionalErrorAndReturnValue(strcmp(startInstance.name, benchmarkEvents[iEvent].name) == 0 && startInstance.level == endLevel,
                 FixedLengthList<BenchmarkElement>(), "ComputeBenchmarkResults", "Benchmark parse error: Perhaps BeginBenchmark() and EndBenchmark() were nested, or there were more than %d benchmark events, or InitBenchmarking() was called in between a StartBenchmarking() and EndBenchmarking() pair, or some other non-supported thing listed in the comments.\n", MAX_BENCHMARK_EVENTS);
 
-              const f32 elapsedTime = timeF32 - startInstance.startTime;
+              const u32 elapsedTime = timeU32 - startInstance.startTime;
 
               // Remove the time for this event from the exclusive time for all other events on the stack
               //const s32 numParents = endLevel;
@@ -302,8 +304,8 @@ namespace Anki
           for(s32 iInstance=0; iInstance<numFullList; iInstance++) {
             //for(s32 iInstance=numFullList-1; iInstance<numFullList; iInstance++) {
             const char * const curName = pFullList[iInstance].name;
-            const f32 curInclusiveTimeElapsed = pFullList[iInstance].inclusiveTimeElapsed;
-            const f32 curExclusiveTimeElapsed = pFullList[iInstance].exclusiveTimeElapsed;
+            const u32 curInclusiveTimeElapsed = pFullList[iInstance].inclusiveTimeElapsed;
+            const u32 curExclusiveTimeElapsed = pFullList[iInstance].exclusiveTimeElapsed;
 
             s32 index = CompileBenchmarkResults::GetNameIndex(curName, basicOutputResults);
 
@@ -358,6 +360,7 @@ namespace Anki
       } // ComputeBenchmarkResults()
 
       // Returns the index of "name", or -1 if it isn't found
+      // compares with strcmp()
       static s32 GetNameIndex(const char * name, const FixedLengthList<BenchmarkElement> &outputResults)
       {
         const BenchmarkElement * pOutputResults = outputResults.Pointer(0);
@@ -372,6 +375,8 @@ namespace Anki
         return -1;
       } // GetNameIndex()
 
+      // Returns the index of "name", or -1 if it isn't found
+      // compares the raw pointer addresses
       static s32 GetNameIndex(const char * name, const FixedLengthList<BasicBenchmarkElement> &basicOutputResults)
       {
         const BasicBenchmarkElement * pOutputResults = basicOutputResults.Pointer(0);
@@ -389,14 +394,14 @@ namespace Anki
     protected:
       typedef struct BenchmarkInstance
       {
-        f32 startTime; // A standard timestamp for the parseStack
-        f32 inclusiveTimeElapsed; // An elapsed inclusive time for the fullList
-        f32 exclusiveTimeElapsed; //< May be negative while the algorithm is still parsing
+        u32 startTime; // A standard timestamp for the parseStack
+        u32 inclusiveTimeElapsed; // An elapsed inclusive time for the fullList
+        u32 exclusiveTimeElapsed; //< May be negative while the algorithm is still parsing
         s32 level; //< Level 0 is the base level. Every sub-benchmark adds another level.
 
         const char * name;
 
-        BenchmarkInstance(const char * name, const f32 startTime, const f32 inclusiveTimeElapsed, f32 exclusiveTimeElapsed, const s32 level)
+        BenchmarkInstance(const char * name, const u32 startTime, const u32 inclusiveTimeElapsed, u32 exclusiveTimeElapsed, const s32 level)
           : startTime(startTime), inclusiveTimeElapsed(inclusiveTimeElapsed), exclusiveTimeElapsed(exclusiveTimeElapsed), level(level), name(name)
         {
         }
@@ -410,13 +415,13 @@ namespace Anki
 
           printf("%s: ", this->name);
 
-          SnprintfCommasS32(buffer, bufferLength, Round<s32>(this->exclusiveTimeElapsed*1000000.0f));
+          SnprintfCommasS32(buffer, bufferLength, this->exclusiveTimeElapsed);
           printf("exclusiveTimeElapsed:%sus ", buffer);
 
-          SnprintfCommasS32(buffer, bufferLength, Round<s32>(this->inclusiveTimeElapsed*1000000.0f));
+          SnprintfCommasS32(buffer, bufferLength, this->inclusiveTimeElapsed);
           printf("inclusiveTimeElapsed:%sus ", buffer);
 
-          SnprintfCommasS32(buffer, bufferLength, Round<s32>(this->startTime*1000000.0f));
+          SnprintfCommasS32(buffer, bufferLength, this->startTime);
           printf("startTime:%sus ", buffer);
 
           SnprintfCommasS32(buffer, bufferLength, this->level);
@@ -455,9 +460,9 @@ namespace Anki
 
       f32 multiplier;
       if(microseconds) {
-        multiplier = 1000000.0f;
+        multiplier = 1.0f;
       } else {
-        multiplier = 1000.0f;
+        multiplier = 1.0f / 1000.0f;
       }
 
       for(s32 x=0; x<numResults; x++) {
@@ -548,7 +553,7 @@ namespace Anki
       }
 
       // Draw the total time as gray
-      const s32 numPixelsTotal = Round<s32>(pixelsPerMillisecond * 1000.0f * results[totalTimeIndex].inclusive_total);
+      const s32 numPixelsTotal = Round<s32>(pixelsPerMillisecond * results[totalTimeIndex].inclusive_total / 1000.0f);
       cv::line(
         toShowImage,
         cv::Point(toShowImageColumn, imageHeight - 1),
@@ -565,9 +570,9 @@ namespace Anki
         if(index < 0)
           continue;
 
-        const f32 timeElapsed = namesToDisplay[iName].showExclusiveTime ? results[index].exclusive_total : results[index].inclusive_total;
+        const u32 timeElapsed = namesToDisplay[iName].showExclusiveTime ? results[index].exclusive_total : results[index].inclusive_total;
 
-        const s32 numPixels = Round<s32>(pixelsPerMillisecond * 1000.0f * timeElapsed);
+        const s32 numPixels = Round<s32>(pixelsPerMillisecond * timeElapsed / 1000.0f);
 
         cv::line(
           toShowImage,
@@ -667,9 +672,9 @@ namespace Anki
 
         f32 multiplier;
         if(microseconds) {
-          multiplier = 1000000.0f;
+          multiplier = 1.0f;
         } else {
-          multiplier = 1000.0f;
+          multiplier = 1.0f / 1000.0f;
         }
 
         for(s32 x=0; x<numResults; x++) {
@@ -745,14 +750,14 @@ namespace Anki
         const s32 textBufferLength = 256;
         char textBuffer[textBufferLength];
 
-        snprintf(textBuffer, textBufferLength, "Total: %dms", Round<s32>(1000.0f*results[totalTimeIndex].inclusive_total));
+        snprintf(textBuffer, textBufferLength, "Total: %dms", Round<s32>(results[totalTimeIndex].inclusive_total / 1000.0f));
         cv::putText(keyImage, textBuffer, cv::Point(5,curY), cv::FONT_HERSHEY_PLAIN, textFontSize, cv::Scalar(128, 128, 128));
         curY += textHeightInPixels;
 
         for(s32 iKey=namesToDisplay.get_size() - 1; iKey>=0; iKey--) {
           const s32 index = CompileBenchmarkResults::GetNameIndex(namesToDisplay[iKey].name, results);
 
-          f32 time;
+          u32 time;
           if(index == -1) {
             time = 0;
           } else {

@@ -29,22 +29,24 @@ namespace Anki
 
     typedef struct BenchmarkElement
     {
+      // All times in microseconds, on all platforms
+
       static const s32 NAME_LENGTH = 64;
 
       // Inclusive includes all the time for all sub-benchmarks
-      f32 inclusive_mean;
-      f32 inclusive_min;
-      f32 inclusive_max;
-      f32 inclusive_total;
+      u32 inclusive_mean;
+      u32 inclusive_min;
+      u32 inclusive_max;
+      u32 inclusive_total;
 
       // Exclusive does not include sub-benchmarks
-      f32 exclusive_mean;
-      f32 exclusive_min;
-      f32 exclusive_max;
-      f32 exclusive_total;
+      u32 exclusive_mean;
+      u32 exclusive_min;
+      u32 exclusive_max;
+      u32 exclusive_total;
 
       // How many times was this element's name benchmarked?
-      s32 numEvents;
+      u32 numEvents;
 
       char name[BenchmarkElement::NAME_LENGTH];
 
