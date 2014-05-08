@@ -1,4 +1,4 @@
-function RefineCorners(this, img, varargin)
+function [newCorners, newH] = RefineCorners(this, img, varargin)
 % Iteratively refine the locations of the corners (and adjust transform).
 %
 % RefineCorners(this, img, varargin)
@@ -59,20 +59,22 @@ if DebugDisplay
     %h_pr  = plot(nan, nan, 'r.', 'MarkerSize', 10);
 end
 
+newH = this.H;
+
 iteration = 1;
 while iteration < MaxIterations
-    temp = this.H*[xsquare ysquare ones(length(xsquare),1)]';
+    temp = newH*[xsquare ysquare ones(length(xsquare),1)]';
     xi = temp(1,:)./temp(3,:);
     yi = temp(2,:)./temp(3,:);
     
     if DebugDisplay
         
-        temp = this.H*[[0 0 1 1; 0 1 0 1]' ones(4,1)]';
+        temp = newH*[[0 0 1 1; 0 1 0 1]' ones(4,1)]';
         xc = temp(1,:)./temp(3,:);
         yc = temp(2,:)./temp(3,:);
         set(h_out, 'XData', xc([1 2 4 3 1]), 'YData', yc([1 2 4 3 1]));
         
-        temp = this.H*[[this.SquareWidthFraction*[1 1] (1-this.SquareWidthFraction)*[1 1]; 
+        temp = newH*[[this.SquareWidthFraction*[1 1] (1-this.SquareWidthFraction)*[1 1]; 
             this.SquareWidthFraction 1-this.SquareWidthFraction this.SquareWidthFraction 1-this.SquareWidthFraction]' ones(4,1)]';
         xc = temp(1,:)./temp(3,:);
         yc = temp(2,:)./temp(3,:);
@@ -83,18 +85,28 @@ while iteration < MaxIterations
     end
     
     %imgi = interp2(img, xi, yi, 'linear');
-    imgi = mexInterp2(img, xi, yi);
-    inBounds = ~isnan(imgi);
+    %inBounds = ~isnan(imgi);
+    
+    [imgi, outOfBounds] = mexInterp2(img, xi, yi);
+    inBounds = ~outOfBounds;
+    
     It = imgi(:) - template;
     
     update = (A(inBounds,:)'*A(inBounds,:)) \ (A(inBounds,:)'*It(inBounds));
     
     H_update = eye(3) + [update(1:3)'; update(4:6)'; update(7:8)' 0];
-    this.H = this.H / H_update;
+    newH = newH / H_update;
     iteration = iteration + 1;
 end
 
-temp = this.H*[[0 0 1 1; 0 1 0 1]' ones(4,1)]';
-this.corners = (temp(1:2,:)./temp([3 3],:))';
+temp = newH*[[0 0 1 1; 0 1 0 1]' ones(4,1)]';
+newCorners = (temp(1:2,:)./temp([3 3],:))';
+
+if nargout == 1
+    this.H = newH;
+    this.corners = newCorners;
+    
+    newCorners = this;
+end
 
 end

@@ -599,7 +599,9 @@ namespace Anki {
           parameters.scaleTemplateRegionPercent,
           parameters.numPyramidLevels,
           Transformations::TRANSFORM_PROJECTIVE,
-          parameters.maxSamplesAtBaseLevel,
+          parameters.numFiducialEdgeSamples,
+          FIDUCIAL_SQUARE_WIDTH_FRACTION,
+          parameters.numInteriorSamples,
           parameters.numSamplingRegions,
           headCamInfo_->focalLength_x,
           headCamInfo_->focalLength_y,
@@ -773,8 +775,8 @@ namespace Anki {
         //
 
         if(fabs((initAngleX - tracker.get_angleX()).ToFloat()) > parameters.successTolerance_angle ||
-          fabs((initAngleY - tracker.get_angleY()).ToFloat()) > parameters.successTolerance_angle ||
-          fabs((initAngleZ - tracker.get_angleZ()).ToFloat()) > parameters.successTolerance_angle)
+           fabs((initAngleY - tracker.get_angleY()).ToFloat()) > parameters.successTolerance_angle ||
+           fabs((initAngleZ - tracker.get_angleZ()).ToFloat()) > parameters.successTolerance_angle)
         {
           PRINT("Tracker failed: angle(s) changed too much.\n");
           trackingSucceeded = false;
@@ -794,9 +796,19 @@ namespace Anki {
           PRINT("Tracker failed: position changed too much.\n");
           trackingSucceeded = false;
         }
+        else if(fabs(tracker.get_angleX()) > TrackerParameters::MAX_BLOCK_DOCKING_ANGLE)
+        {
+          PRINT("Tracker failed: target X angle too large.\n");
+          trackingSucceeded = false;
+        }
         else if(fabs(tracker.get_angleY()) > TrackerParameters::MAX_BLOCK_DOCKING_ANGLE)
         {
-          PRINT("Tracker failed: target angle too large.\n");
+          PRINT("Tracker failed: target Y angle too large.\n");
+          trackingSucceeded = false;
+        }
+        else if(fabs(tracker.get_angleZ()) > TrackerParameters::MAX_BLOCK_DOCKING_ANGLE)
+        {
+          PRINT("Tracker failed: target Z angle too large.\n");
           trackingSucceeded = false;
         }
         else if(atan_fast(fabs(tracker.get_translation().x) / tracker.get_translation().z) > TrackerParameters::MAX_DOCKING_FOV_ANGLE)
