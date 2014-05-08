@@ -462,7 +462,7 @@ namespace Anki
         {
         }
         
-        Anki::Embedded::EndBenchmark("CameraGetFrame_end");
+        Anki::Embedded::EndBenchmark("CameraGetFrame_wait");
         
         Anki::Embedded::BeginBenchmark("CameraGetFrame_convert");
         
