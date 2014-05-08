@@ -342,6 +342,8 @@ namespace Anki
                                              const f32 scaleTemplateRegionPercent, //< Shrinks the region if less-than 1.0, expands the region if greater-than 1.0
                                              const s32 numPyramidLevels,
                                              const Transformations::TransformType transformType,
+                                             const s32 numFiducialSquareSamples,
+                                             const f32 fiducialSquareWidthFraction,
                                              const s32 maxSamplesAtBaseLevel,
                                              const s32 numSamplingRegions, 
                                              const f32 focalLength_x,
