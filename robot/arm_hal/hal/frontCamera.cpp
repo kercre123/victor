@@ -5,6 +5,7 @@
 
 #include "anki/cozmo/robot/cozmoConfig.h" // for calibration parameters
 #include "anki/common/robot/config.h"
+#include "anki/common/robot/benchmarking.h"
 
 namespace Anki
 {
@@ -450,12 +451,20 @@ namespace Anki
 
       void CameraGetFrame(u8* frame, Vision::CameraResolution res, bool enableLight)
       {
+        Anki::Embedded::BeginBenchmark("CameraGetFrame");
+        
+        Anki::Embedded::BeginBenchmark("CameraGetFrame_wait");
+        
         m_isEOF = false;
 
         // Wait until the frame has completed (based on DMA_FLAG_TCIF1)
         while (!m_isEOF)
         {
         }
+        
+        Anki::Embedded::EndBenchmark("CameraGetFrame_end");
+        
+        Anki::Embedded::BeginBenchmark("CameraGetFrame_convert");
         
         // TODO: Change this to DMA mem-to-mem when we have a different camera
         // and we support resolution changes in the actual hardware
@@ -513,6 +522,10 @@ namespace Anki
             }
           }
         }
+        
+        Anki::Embedded::EndBenchmark("CameraGetFrame_convert");
+        
+        Anki::Embedded::EndBenchmark("CameraGetFrame");
       }
 
       const CameraInfo* GetHeadCamInfo(void)

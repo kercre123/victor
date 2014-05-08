@@ -1515,12 +1515,8 @@ namespace Anki {
         Array<u8> grayscaleImage(captureHeight, captureWidth,
           VisionMemory::onchipScratch_, Flags::Buffer(false,false,false));
 
-        BeginBenchmark("VisionSystem_CameraGetFrame");
-
         HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
           captureResolution_, false);
-
-        EndBenchmark("VisionSystem_CameraGetFrame");
 
         BeginBenchmark("VisionSystem_CameraImagingPipeline");
 
@@ -1611,12 +1607,8 @@ namespace Anki {
         Array<u8> grayscaleImage(captureHeight, captureWidth,
           VisionMemory::offchipScratch_, Flags::Buffer(false,false,false));
 
-        BeginBenchmark("VisionSystem_CameraGetFrame");
-
         HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
           captureResolution_, false);
-
-        EndBenchmark("VisionSystem_CameraGetFrame");
 
         BeginBenchmark("VisionSystem_CameraImagingPipeline");
 
@@ -1752,12 +1744,8 @@ namespace Anki {
           Array<u8> grayscaleImage(captureHeight, captureWidth,
             VisionMemory::offchipScratch_, Flags::Buffer(false,false,false));
 
-          BeginBenchmark("VisionSystem_CameraGetFrame");
-
           HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
             captureResolution_, false);
-
-          EndBenchmark("VisionSystem_CameraGetFrame");
 
           BeginBenchmark("VisionSystem_CameraImagingPipeline");
 
@@ -1890,12 +1878,8 @@ namespace Anki {
           Array<u8> grayscaleImage(captureHeight, captureWidth,
             onchipScratch_local, Flags::Buffer(false,false,false));
 
-          BeginBenchmark("VisionSystem_CameraGetFrame");
-
           HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_rawDataPointer()),
             captureResolution_, false);
-
-          EndBenchmark("VisionSystem_CameraGetFrame");
 
           BeginBenchmark("VisionSystem_CameraImagingPipeline");
 
