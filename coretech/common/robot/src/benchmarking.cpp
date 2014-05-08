@@ -42,6 +42,30 @@ static s32 g_numBenchmarkEvents;
 
 staticInline void AddBenchmarkEvent(const char *name, u64 time, BenchmarkEventType type);
 
+// For use instead of a BenchmarkElement for intermediate processing
+typedef struct BasicBenchmarkElement
+{
+  // Inclusive includes all the time for all sub-benchmarks
+  f32 inclusive_total;
+  f32 inclusive_min;
+  f32 inclusive_max;
+
+  // Exclusive does not include sub-benchmarks
+  f32 exclusive_total;
+  f32 exclusive_min;
+  f32 exclusive_max;
+
+  // How many times was this element's name benchmarked?
+  s32 numEvents;
+
+  const char * name;
+
+  BasicBenchmarkElement(const char * name)
+    : inclusive_total(0), inclusive_min(FLT_MAX), inclusive_max(FLT_MIN), exclusive_total(0), exclusive_min(FLT_MAX), exclusive_max(FLT_MIN), numEvents(0), name(name)
+  {
+  }
+} BasicBenchmarkElement;
+
 staticInline u64 GetBenchmarkTime()
 {
 #if defined(_MSC_VER)
@@ -221,10 +245,11 @@ namespace Anki
         {
           PUSH_MEMORY_STACK(memory);
 
+          FixedLengthList<BasicBenchmarkElement> basicOutputResults(numBenchmarkEvents, memory, Flags::Buffer(false, false, false));
           FixedLengthList<BenchmarkInstance> fullList(numBenchmarkEvents, memory, Flags::Buffer(false, false, false));
           FixedLengthList<BenchmarkInstance> parseStack(numBenchmarkEvents, memory, Flags::Buffer(false, false, false));
 
-          AnkiConditionalErrorAndReturnValue(outputResults.IsValid() && fullList.IsValid() && parseStack.IsValid(),
+          AnkiConditionalErrorAndReturnValue(outputResults.IsValid() && basicOutputResults.IsValid() && fullList.IsValid() && parseStack.IsValid(),
             FixedLengthList<BenchmarkElement>(), "ComputeBenchmarkResults", "Out of memory");
 
           BenchmarkInstance * pParseStack = parseStack.Pointer(0);
@@ -253,7 +278,7 @@ namespace Anki
               const s32 endLevel = parseStack.get_size();
 
               AnkiConditionalErrorAndReturnValue(strcmp(startInstance.name, benchmarkEvents[iEvent].name) == 0 && startInstance.level == endLevel,
-                outputResults, "ComputeBenchmarkResults", "Benchmark parse error: Perhaps BeginBenchmark() and EndBenchmark() were nested, or there were more than %d benchmark events, or InitBenchmarking() was called in between a StartBenchmarking() and EndBenchmarking() pair, or some other non-supported thing listed in the comments.\n", MAX_BENCHMARK_EVENTS);
+                FixedLengthList<BenchmarkElement>(), "ComputeBenchmarkResults", "Benchmark parse error: Perhaps BeginBenchmark() and EndBenchmark() were nested, or there were more than %d benchmark events, or InitBenchmarking() was called in between a StartBenchmarking() and EndBenchmarking() pair, or some other non-supported thing listed in the comments.\n", MAX_BENCHMARK_EVENTS);
 
               const f32 elapsedTime = timeF32 - startInstance.startTime;
 
@@ -270,38 +295,53 @@ namespace Anki
           // Second, combine the events in fullList to create the total outputResults
           const s32 numFullList = fullList.get_size();
           const BenchmarkInstance * pFullList = fullList.Pointer(0);
-          BenchmarkElement * pOutputResults = outputResults.Pointer(0);
+          BasicBenchmarkElement * pBasicOutputResults = basicOutputResults.Pointer(0);
 
           //fullList.Print("fullList");
 
           for(s32 iInstance=0; iInstance<numFullList; iInstance++) {
+            //for(s32 iInstance=numFullList-1; iInstance<numFullList; iInstance++) {
             const char * const curName = pFullList[iInstance].name;
             const f32 curInclusiveTimeElapsed = pFullList[iInstance].inclusiveTimeElapsed;
             const f32 curExclusiveTimeElapsed = pFullList[iInstance].exclusiveTimeElapsed;
 
-            s32 index = GetNameIndex(curName, outputResults);
+            s32 index = CompileBenchmarkResults::GetNameIndex(curName, basicOutputResults);
 
             // If this name hasn't been used yet, add it
+            //if(index < 0 && iInstance == (numFullList-1)) {
             if(index < 0) {
-              BenchmarkElement newElement(curName);
-              outputResults.PushBack(curName);
-              index = GetNameIndex(curName, outputResults);
-              AnkiAssert(index >= 0);
+              basicOutputResults.PushBack(curName);
+              index = basicOutputResults.get_size() - 1;
+              AnkiAssert(index == CompileBenchmarkResults::GetNameIndex(curName, basicOutputResults));
             }
 
-            pOutputResults[index].inclusive_min = MIN(pOutputResults[index].inclusive_min, curInclusiveTimeElapsed);
-            pOutputResults[index].inclusive_max = MAX(pOutputResults[index].inclusive_max, curInclusiveTimeElapsed);
-            pOutputResults[index].inclusive_total += curInclusiveTimeElapsed;
+            pBasicOutputResults[index].inclusive_min = MIN(pBasicOutputResults[index].inclusive_min, curInclusiveTimeElapsed);
+            pBasicOutputResults[index].inclusive_max = MAX(pBasicOutputResults[index].inclusive_max, curInclusiveTimeElapsed);
+            pBasicOutputResults[index].inclusive_total += curInclusiveTimeElapsed;
 
-            pOutputResults[index].exclusive_min = MIN(pOutputResults[index].exclusive_min, curExclusiveTimeElapsed);
-            pOutputResults[index].exclusive_max = MAX(pOutputResults[index].exclusive_max, curExclusiveTimeElapsed);
-            pOutputResults[index].exclusive_total += curExclusiveTimeElapsed;
+            pBasicOutputResults[index].exclusive_min = MIN(pBasicOutputResults[index].exclusive_min, curExclusiveTimeElapsed);
+            pBasicOutputResults[index].exclusive_max = MAX(pBasicOutputResults[index].exclusive_max, curExclusiveTimeElapsed);
+            pBasicOutputResults[index].exclusive_total += curExclusiveTimeElapsed;
 
-            pOutputResults[index].numEvents++;
+            pBasicOutputResults[index].numEvents++;
           } // for(s32 iInstance=0; iInstance<numFullList; iInstance++)
 
-          const s32 numEvents = outputResults.get_size();
+          const s32 numEvents = basicOutputResults.get_size();
+          outputResults.set_size(numEvents);
+
+          BenchmarkElement * pOutputResults = outputResults.Pointer(0);
+
           for(s32 iEvent=0; iEvent<numEvents; iEvent++) {
+            pOutputResults[iEvent].inclusive_min = pBasicOutputResults[iEvent].inclusive_min;
+            pOutputResults[iEvent].inclusive_max = pBasicOutputResults[iEvent].inclusive_max;
+            pOutputResults[iEvent].inclusive_total = pBasicOutputResults[iEvent].inclusive_total;
+            pOutputResults[iEvent].exclusive_min = pBasicOutputResults[iEvent].exclusive_min;
+            pOutputResults[iEvent].exclusive_max = pBasicOutputResults[iEvent].exclusive_max;
+            pOutputResults[iEvent].exclusive_total = pBasicOutputResults[iEvent].exclusive_total;
+            pOutputResults[iEvent].numEvents = pBasicOutputResults[iEvent].numEvents;
+
+            snprintf(pOutputResults[iEvent].name, BenchmarkElement::NAME_LENGTH, "%s", pBasicOutputResults[iEvent].name);
+
             if(pOutputResults[iEvent].numEvents == 1) {
               pOutputResults[iEvent].inclusive_mean = pOutputResults[iEvent].inclusive_total;
               pOutputResults[iEvent].exclusive_mean = pOutputResults[iEvent].exclusive_total;
@@ -323,8 +363,22 @@ namespace Anki
         const BenchmarkElement * pOutputResults = outputResults.Pointer(0);
         const s32 numOutputResults = outputResults.get_size();
 
-        for(s32 i=0; i<numOutputResults; i++) {
+        for(s32 i=numOutputResults-1; i>=0; i--) {
           if(strcmp(name, pOutputResults[i].name) == 0) {
+            return i;
+          }
+        } // for(s32 i=0; i<numOutputResults; i++)
+
+        return -1;
+      } // GetNameIndex()
+
+      static s32 GetNameIndex(const char * name, const FixedLengthList<BasicBenchmarkElement> &basicOutputResults)
+      {
+        const BasicBenchmarkElement * pOutputResults = basicOutputResults.Pointer(0);
+        const s32 numBasicOutputResults = basicOutputResults.get_size();
+
+        for(s32 i=numBasicOutputResults-1; i>=0; i--) {
+          if(reinterpret_cast<size_t>(name) == reinterpret_cast<size_t>(pOutputResults[i].name)) {
             return i;
           }
         } // for(s32 i=0; i<numOutputResults; i++)
