@@ -1,4 +1,5 @@
 #include "anki/common/robot/config.h"
+#include "anki/common/shared/utilities_shared.h"
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h" // simulated or real!
@@ -39,7 +40,7 @@ namespace Anki {
         
         // TESTING
         // Change this value to run different test modes
-        const TestModeController::TestMode DEFAULT_TEST_MODE = TestModeController::TM_NONE;
+        const TestMode DEFAULT_TEST_MODE = TM_NONE;
 
         Robot::OperationMode mode_ = INIT_MOTOR_CALIBRATION;
         bool wasConnected_ = false;
@@ -91,10 +92,24 @@ namespace Anki {
       
       Result Init(void)
       {
+        // Coretech setup
+#ifndef SIMULATOR
+#if(DIVERT_PRINT_TO_RADIO)
+        SetCoreTechPrintFunctionPtr(Messages::SendText);
+#else
+        SetCoreTechPrintFunctionPtr(0);
+#endif
+#elif(USING_UART_RADIO && DIVERT_PRINT_TO_RADIO)
+        SetCoreTechPrintFunctionPtr(Messages::SendText);
+#endif 
+        
+        // HAL and supervisor init
+#ifndef ROBOT_HARDWARE    // The HAL/Operating System cannot be Init()ed or Destroy()ed on a real robot
         if(HAL::Init() == RESULT_FAIL) {
           PRINT("Hardware Interface initialization failed!\n");
           return RESULT_FAIL;
         }
+#endif        
         
         if (Localization::Init() == RESULT_FAIL) {
           PRINT("Localization System init failed.\n");
@@ -152,19 +167,24 @@ namespace Anki {
       } // Robot::Init()
       
       
+#ifndef ROBOT_HARDWARE    // The HAL/Operating System cannot be Init()ed or Destroy()ed on a real robot
       void Destroy()
       {
         HAL::Destroy();
       }
+#endif
       
       
       Result step_MainExecution()
       {
 
+// TBD - This should be moved to simulator just before step_MainExecution is called
+#ifndef ROBOT_HARDWARE
         // If the hardware interface needs to be advanced (as in the case of
         // a Webots simulation), do that first.
         HAL::Step();
-
+#endif
+        
         //////////////////////////////////////////////////////////////
         // Test Mode
         //////////////////////////////////////////////////////////////
@@ -183,7 +203,7 @@ namespace Anki {
 
         // Check if there is a new or dropped connection to a basestation
         if (HAL::RadioIsConnected() && !wasConnected_) {
-          PRINT("Robot %d's radio is connected.\n", HAL::GetRobotID());
+          PRINT("Robot radio is connected.\n");
           wasConnected_ = true;
         } else if (!HAL::RadioIsConnected() && wasConnected_) {
           PRINT("Radio disconnected\n");
@@ -240,12 +260,11 @@ namespace Anki {
               // Once initialization is done, broadcast a message that this robot
               // is ready to go
               Messages::RobotAvailable msg;
-              msg.robotID = HAL::GetRobotID();
               PRINT("Robot %d broadcasting availability message.\n", msg.robotID);
               HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RobotAvailable), &msg);
          
               // Start test mode
-              if (DEFAULT_TEST_MODE != TestModeController::TM_NONE) {
+              if (DEFAULT_TEST_MODE != TM_NONE) {
                 if(TestModeController::Start(DEFAULT_TEST_MODE) == RESULT_FAIL) {
                   PRINT("TestMode %d failed to start.\n", DEFAULT_TEST_MODE);
                   return RESULT_FAIL;
@@ -279,12 +298,15 @@ namespace Anki {
         // Feedback / Display
         //////////////////////////////////////////////////////////////
         
+        Messages::UpdateRobotStateMsg();
 #if(!STREAM_DEBUG_IMAGES)
         Messages::SendRobotStateMsg();
 #endif
         
+// TBD - This should be moved to simulator just after step_MainExecution is called
+#ifndef ROBOT_HARDWARE
         HAL::UpdateDisplay();
-        
+#endif        
         
         return RESULT_OK;
         

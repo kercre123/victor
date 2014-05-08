@@ -16,6 +16,10 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/errorHandling.h"
 #include "anki/common/robot/utilities_c.h"
 
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
+#include "opencv2/core/core.hpp"
+#endif
+
 namespace Anki
 {
   namespace Embedded
@@ -95,8 +99,18 @@ namespace Anki
     template<typename Type> inline Type saturate_cast(const f64 v);
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
+#include "opencv2/core/core.hpp"
+
     // Converts from typeid names to openCV types
     int ConvertToOpenCvType(const char *typeName, size_t byteDepth);
+
+    // Calls cv::putText, but uses a fixed width font
+    // NOTE: It recomputes the width only when you change the font type or size
+    void CvPutTextFixedWidth(
+      cv::Mat& img, const char * text, cv::Point org,
+      int fontFace, double fontScale, cv::Scalar color,
+      int thickness=1, int lineType=8,
+      bool bottomLeftOrigin=false);
 #endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
     // Returns the index of the first instance of bytePattern in buffer. If the pattern is not found, returns -1
@@ -108,8 +122,9 @@ namespace Anki
 
     // Get the current system time in seconds
     // WARNING: f32 is enough for only about two hours (2*60*60*1000 ~= 2^23)
-    f32 GetTimeF32(void);
-    f64 GetTimeF64(void);
+    f32 GetTimeF32(); // In seconds
+    f64 GetTimeF64(); // In seconds
+    u32 GetTimeU32(); // In microseconds
   } // namespace Embedded
 } // namespace Anki
 

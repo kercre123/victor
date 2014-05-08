@@ -29,37 +29,34 @@ namespace Anki
 
     typedef struct BenchmarkElement
     {
+      // All times in microseconds, on all platforms
+
       static const s32 NAME_LENGTH = 64;
 
       // Inclusive includes all the time for all sub-benchmarks
-      f64 inclusive_mean;
-      f64 inclusive_min;
-      f64 inclusive_max;
-      f64 inclusive_total;
+      u32 inclusive_mean;
+      u32 inclusive_min;
+      u32 inclusive_max;
+      u32 inclusive_total;
 
       // Exclusive does not include sub-benchmarks
-      f64 exclusive_mean;
-      f64 exclusive_min;
-      f64 exclusive_max;
-      f64 exclusive_total;
-
-      //// When was BeginBenchmark first called for this name ?
-      //f64 firstInstanceStartTime;
+      u32 exclusive_mean;
+      u32 exclusive_min;
+      u32 exclusive_max;
+      u32 exclusive_total;
 
       // How many times was this element's name benchmarked?
-      s64 numEvents;
-
-      //// Level 0 is the base level. Every sub-benchmark adds another level.
-      ////
-      //// For example, take BeginBenchmark("a"); BeginBenchmark("b"); EndBenchmark("b"); EndBenchmark("a")
-      //// "a" is level 0, "b" is level 1
-      //s32 level;
+      u32 numEvents;
 
       char name[BenchmarkElement::NAME_LENGTH];
 
       BenchmarkElement(const char * name);
 
+      // Print with printf()
       void Print(const bool verbose=true, const bool microseconds=true, const FixedLengthList<s32> * minCharacterToPrint=NULL) const;
+
+      // Like snprintf(). Returns the number of characters printed, not including the final null byte.
+      s32 Snprint(char * buffer, const s32 bufferLength, const bool verbose=true, const bool microseconds=true, const FixedLengthList<s32> * minCharacterToPrint=NULL) const;
     } BenchmarkElement;
 
     typedef struct ShowBenchmarkParameters
@@ -96,6 +93,8 @@ namespace Anki
     // Compile all the benchmark events that were recorded
     FixedLengthList<BenchmarkElement> ComputeBenchmarkResults(MemoryStack &memory);
 
+    // printf() the benchmark results
+    // WARNING: This doesn't work well with multi-threaded programs
     Result PrintBenchmarkResults(const FixedLengthList<BenchmarkElement> &results, const bool verbose=true, const bool microseconds=true);
 
     // Compile and print out all the benchmark events that were recorded
@@ -107,9 +106,11 @@ namespace Anki
     Result ShowBenchmarkResults(
       const FixedLengthList<BenchmarkElement> &results,
       const FixedLengthList<ShowBenchmarkParameters> &namesToDisplay,
-      const f64 pixelsPerMillisecond,
+      const f32 pixelsPerMillisecond,
       const s32 imageHeight,
       const s32 imageWidth);
+
+    s32 GetNameIndex(const char * name, const FixedLengthList<BenchmarkElement> &outputResults);
   } // namespace Embedded
 } // namespace Anki
 

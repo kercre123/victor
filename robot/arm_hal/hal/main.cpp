@@ -27,15 +27,7 @@ namespace Anki
       void IMUInit();
 
       TimeStamp_t GetTimeStamp(void){ return (TimeStamp_t)0; }
-      
-      int GetRobotID(){ return 0; }
-      void UpdateDisplay(){ }
-      //bool RadioSendMessage(Anki::Cozmo::Messages::ID, const void*, u32){ return true; }
-      
-      Result Init(){ return RESULT_OK; }
-      Result Step(){ return RESULT_OK; }
-      void Destroy(){ }
-      
+
       int UARTGetFreeSpace();
       
       //const CameraInfo* GetHeadCamInfo(){ return 0; }

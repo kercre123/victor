@@ -30,8 +30,8 @@ namespace Anki {
 
           s32 frameNumber = 0;
 
-          static f32 computeBenchmarkResults_start;
-          static f32 computeBenchmarkResults_end;
+          static u32 computeBenchmarkResults_start;
+          static u32 computeBenchmarkResults_end;
 
           const Vision::CameraResolution debugStreamResolution_ = Vision::CAMERA_RES_QQQVGA;
         } // private namespace
@@ -39,8 +39,7 @@ namespace Anki {
         Result SendBuffer(SerializedBuffer &toSend, MemoryStack scratch)
         {
 #if SEND_DEBUG_STREAM
-          const f32 curTime = GetTimeF32();
-          const s32 curSecond = Round<s32>(curTime);
+          const f32 curSecond = Round<s32>(GetTimeF32());
 
           // Hack, to prevent overwhelming the send buffer
           if(curSecond != lastSecond) {
@@ -54,46 +53,48 @@ namespace Anki {
             }
           }
 
+          /*for(s32 i=0; i<500; i++) {
+            BeginBenchmark("Test");
+            EndBenchmark("Test");
+          }*/
+          
           EndBenchmark("TotalTime");
 
-          const f32 lastComputeBenchmarkResults_elapsedTime = computeBenchmarkResults_end - computeBenchmarkResults_start;
+          const u32 lastComputeBenchmarkResults_elapsedTime = computeBenchmarkResults_end - computeBenchmarkResults_start;
 
-          computeBenchmarkResults_start = GetTimeF32();
+          computeBenchmarkResults_start = GetTimeU32();
 
           FixedLengthList<BenchmarkElement> benchmarks = ComputeBenchmarkResults(scratch);
 
-          // Hack to add the time for computing the benchmark to the compiled times
-          if(benchmarks.get_size() < benchmarks.get_maximumSize()) {
-            BenchmarkElement newElement("ComputeBenchmarkResults");
-            newElement.inclusive_mean = lastComputeBenchmarkResults_elapsedTime;
-            newElement.inclusive_min = lastComputeBenchmarkResults_elapsedTime;
-            newElement.inclusive_max = lastComputeBenchmarkResults_elapsedTime;
-            newElement.inclusive_total = lastComputeBenchmarkResults_elapsedTime;
-            newElement.exclusive_mean = lastComputeBenchmarkResults_elapsedTime;
-            newElement.exclusive_min = lastComputeBenchmarkResults_elapsedTime;
-            newElement.exclusive_max = lastComputeBenchmarkResults_elapsedTime;
-            newElement.exclusive_total = lastComputeBenchmarkResults_elapsedTime;
-            newElement.numEvents = 1;
+          const s32 totalTimeIndex = GetNameIndex("TotalTime", benchmarks);
+          if(totalTimeIndex >= 0) {
+            // Hack to add the time for computing the benchmark to the compiled times
+            if(benchmarks.get_size() < benchmarks.get_maximumSize()) {
+              BenchmarkElement newElement("ComputeBenchmarkResults");
+              newElement.inclusive_mean = lastComputeBenchmarkResults_elapsedTime;
+              newElement.inclusive_min = lastComputeBenchmarkResults_elapsedTime;
+              newElement.inclusive_max = lastComputeBenchmarkResults_elapsedTime;
+              newElement.inclusive_total = lastComputeBenchmarkResults_elapsedTime;
+              newElement.exclusive_mean = lastComputeBenchmarkResults_elapsedTime;
+              newElement.exclusive_min = lastComputeBenchmarkResults_elapsedTime;
+              newElement.exclusive_max = lastComputeBenchmarkResults_elapsedTime;
+              newElement.exclusive_total = lastComputeBenchmarkResults_elapsedTime;
+              newElement.numEvents = 1;
 
-            const s32 numBenchmarks = benchmarks.get_size();
-            BenchmarkElement * restrict pBenchmarks = benchmarks.Pointer(0);
+              const s32 numBenchmarks = benchmarks.get_size();
+              BenchmarkElement * restrict pBenchmarks = benchmarks.Pointer(0);
 
-            // Iterate backwards, because "TotalTime" is probably the last BenchmarkElement
-            for(s32 i=numBenchmarks-1; i>=0; i--) {
-              if(strcmp(pBenchmarks[i].name, "TotalTime") == 0) {
-                pBenchmarks[i].inclusive_total += lastComputeBenchmarkResults_elapsedTime;
-                break;
-              }
+              pBenchmarks[totalTimeIndex].inclusive_total += lastComputeBenchmarkResults_elapsedTime;
+              
+              benchmarks.PushBack(newElement);
             }
 
-            benchmarks.PushBack(newElement);
-          }
-
-          toSend.PushBack<BenchmarkElement>("Benchmarks", benchmarks);
+            toSend.PushBack<BenchmarkElement>("Benchmarks", benchmarks);
+          } // if(totalTimeIndex >= 0)
 
           InitBenchmarking();
 
-          computeBenchmarkResults_end = GetTimeF32();
+          computeBenchmarkResults_end = GetTimeU32();
 
           BeginBenchmark("TotalTime");
 
@@ -128,8 +129,6 @@ namespace Anki {
           Result result = RESULT_OK;
 
 #if SEND_DEBUG_STREAM
-          const f32 curTime = GetTimeF32();
-
           debugStreamBuffer_ = SerializedBuffer(&debugStreamBufferData_[0], DEBUG_STREAM_BUFFER_SIZE);
 
           if(markers.get_size() != 0) {
@@ -174,8 +173,6 @@ namespace Anki {
           Result result = RESULT_OK;
 
 #if SEND_DEBUG_STREAM
-          const f32 curTime = GetTimeF32();
-
           const s32 height = CameraModeInfo[debugStreamResolution_].height;
           const s32 width  = CameraModeInfo[debugStreamResolution_].width;
 
@@ -251,8 +248,6 @@ namespace Anki {
           Result result = RESULT_OK;
 
 #if SEND_DEBUG_STREAM
-          const f32 curTime = GetTimeF32();
-
           const s32 height = CameraModeInfo[debugStreamResolution_].height;
           const s32 width  = CameraModeInfo[debugStreamResolution_].width;
 
@@ -293,7 +288,7 @@ namespace Anki {
 
           tracker.Serialize("Binary Tracker", debugStreamBuffer_);
 
-          return SendBuffer(debugStreamBuffer_);
+          return SendBuffer(debugStreamBuffer_, offchipScratch);
 #else
           return RESULT_OK;
 #endif // #if SEND_DEBUG_STREAM
@@ -356,7 +351,7 @@ namespace Anki {
 
           debugStreamBuffer_.PushBack(objectName, imageSmall);
 
-          result = SendBuffer(debugStreamBuffer_);
+          result = SendBuffer(debugStreamBuffer_, offchipScratch);
 
 #endif // #if SEND_DEBUG_STREAM
 

@@ -161,11 +161,20 @@ namespace Anki {
         
         // Send header and message content
         const u8 size = Messages::GetSize(msgID);
-        server.Send((char*)header, HEADER_LENGTH);
-        server.Send((char*)buffer, size);
+        u32 bytesSent = 0;
+        bytesSent = server.Send((char*)header, HEADER_LENGTH);
+        if (bytesSent < HEADER_LENGTH) {
+          printf("ERROR: Failed to send header (%d bytes sent)\n", bytesSent);
+        }
+        bytesSent = server.Send((char*)buffer, size);
+        if (bytesSent < size) {
+          printf("ERROR: Failed to send msg contents (%d bytes sent)\n", bytesSent);
+        }
         
         // Send footer
-        if (server.Send((char*)RADIO_PACKET_FOOTER, sizeof(RADIO_PACKET_FOOTER)) < 0 ) {
+        bytesSent = server.Send((char*)RADIO_PACKET_FOOTER, sizeof(RADIO_PACKET_FOOTER));
+        if (bytesSent < sizeof(RADIO_PACKET_FOOTER)) {
+          printf("ERROR: Failed to send footer\n");
           DisconnectRadio();
           return false;
         }
@@ -194,11 +203,11 @@ namespace Anki {
     } // RadioSendMessage()
     
     
-    u32 HAL::RadioGetNumBytesAvailable(void)
+    u32 RadioGetNumBytesAvailable(void)
     {
-      if (!server.HasClient())
+      if (!server.HasClient()) {
         return 0;
-      
+      }
       
       // Check for incoming data and add it to receive buffer
       int dataSize;

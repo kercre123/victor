@@ -431,6 +431,9 @@ namespace Anki
         this->centerOffset = SerializedBuffer::DeserializeRawBasicType<Point<f32> >(NULL, buffer, bufferLength);
         this->initialPointsAreZeroCentered = SerializedBuffer::DeserializeRawBasicType<bool>(NULL, buffer, bufferLength);
 
+        AnkiConditionalErrorAndReturnValue(this->homography.IsValid(),
+          RESULT_FAIL, "PlanarTransformation_f32::Deserialize", "Parsing error");
+
         return RESULT_OK;
       }
 

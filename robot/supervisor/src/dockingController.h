@@ -20,6 +20,10 @@
 #include "anki/common/types.h"
 #include "anki/vision/MarkerCodeDefinitions.h"
 
+#if(ALT_HIGH_BLOCK_DOCK_METHOD)
+#include "anki/common/robot/geometry_declarations.h"
+#endif
+
 namespace Anki {
   
   namespace Cozmo {
@@ -58,6 +62,15 @@ namespace Anki {
       void StartDocking(const Vision::MarkerType& codeToDockWith,
                         const f32 markerWidth_mm,
                         f32 dockOffsetDistX, f32 dockOffsetDistY = 0, f32 dockOffsetAngle = 0);
+
+      // Keep lift crossbar just below the camera's field of view.
+      // Required for docking to high blocks.
+      void TrackCamWithLift(bool on);
+      
+#if(ALT_HIGH_BLOCK_DOCK_METHOD)
+      // Get the last observed block marker position
+      const Embedded::Point3<f32>& GetLastGoodMarkerPt();
+#endif
       
     } // namespace DockingController
   } // namespace Cozmo

@@ -53,12 +53,18 @@ namespace Anki {
       bool IsCarryingBlock();
       bool DidLastActionSucceed();
 
+      // Picks up block with the specified marker.
       // level: 0 = block is at same height as robot (i.e. robot floor height)
       //        1 = block is at one block height above robot floor height.
       void PickUpBlock(const Vision::MarkerType blockID, const f32 markerWidth_mm, const u8 level);
       
+      // Places the block that is currently being carried on the block with the
+      // specified marker, and backs out.
       void PlaceOnBlock(const Vision::MarkerType blockID,
                         const f32 horizontal_offset, const f32 angular_offset);
+
+      // Places block on ground and backs out.
+      void PlaceOnGround();
       
       // Abort whatever pick or place action we're currently doing
       void Reset();

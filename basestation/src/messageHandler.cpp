@@ -199,16 +199,19 @@ namespace Anki {
                        "  pose (%f,%f,%f,%f)\n"
                        "  wheel speeds (l=%f, r=%f)\n"
                        "  headAngle %f\n"
+                       "  liftAngle %f\n"
                        "  liftHeight %f\n",
                        robot->get_ID(),
                        msg.pose_x, msg.pose_y, msg.pose_z, msg.pose_angle,
                        msg.lwheel_speed_mmps, msg.rwheel_speed_mmps,
-                       msg.headAngle, msg.liftHeight);
+                       msg.headAngle, msg.liftAngle, msg.liftHeight);
       */
       
       // Update head angle
       robot->set_headAngle(msg.headAngle);
 
+      // Update lift angle
+      robot->set_liftAngle(msg.liftAngle);
       
       // Update robot pose
       Vec3f axis(0,0,1);
@@ -224,7 +227,8 @@ namespace Anki {
 
     Result MessageHandler::ProcessMessage(Robot* robot, MessagePrintText const& msg)
     {
-      static char text[512];  // Local storage for large messages which may come across in multiple packets
+      const u32 MAX_PRINT_STRING_LENGTH = 1024;
+      static char text[MAX_PRINT_STRING_LENGTH];  // Local storage for large messages which may come across in multiple packets
       static u32 textIdx = 0;
 
       char *newText = (char*)&(msg.text.front());
@@ -244,7 +248,15 @@ namespace Anki {
       } else {
         // This message is part of a larger text. Copy to local buffer. There is more to come!
         memcpy(text + textIdx, newText, PRINT_TEXT_MSG_LENGTH);
-        textIdx += PRINT_TEXT_MSG_LENGTH;
+        textIdx = MIN(textIdx + PRINT_TEXT_MSG_LENGTH, MAX_PRINT_STRING_LENGTH-1);
+        
+        // The message received was too long or garbled (i.e. chunks somehow lost)
+        if (textIdx == MAX_PRINT_STRING_LENGTH-1) {
+          text[MAX_PRINT_STRING_LENGTH-1] = 0;
+          printf("ROBOT-PRINT-garbled (%d): %s", robot->get_ID(), text);
+          textIdx = 0;
+        }
+        
       }
 
       return RESULT_OK;
@@ -294,11 +306,12 @@ namespace Anki {
         
       // When dataSize matches the expected size, print to file
       if (dataSize >= totalImgSize) {
+#if(0)
         char imgCaptureFilename[64];
         snprintf(imgCaptureFilename, sizeof(imgCaptureFilename), "robot%d_img%d.pgm", robot->get_ID(), imgID);
         PRINT_INFO("Printing image to %s\n", imgCaptureFilename);
         Vision::WritePGM(imgCaptureFilename, data, width, height);
-        
+#endif
         VizManager::getInstance()->SendGreyImage(data, (Vision::CameraResolution)msg.resolution);
       }
       
@@ -313,6 +326,8 @@ namespace Anki {
     Result MessageHandler::ProcessMessage(Robot* robot, MessageDriveWheelsCurvature const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageMoveLift const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageMoveHead const&){return RESULT_FAIL;}
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageSetLiftHeight const&){return RESULT_FAIL;}
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageSetHeadAngle const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageStopAllMotors const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageRobotAvailable const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageMatMarkerObserved const&){return RESULT_FAIL;}
@@ -327,6 +342,8 @@ namespace Anki {
     Result MessageHandler::ProcessMessage(Robot* robot, MessageAbsLocalizationUpdate const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageHeadAngleUpdate const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageImageRequest const&){return RESULT_FAIL;}
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageStartTestMode const&){return RESULT_FAIL;}
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageSetHeadlight const&){return RESULT_FAIL;}
     
   } // namespace Cozmo
 } // namespace Anki

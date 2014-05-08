@@ -28,6 +28,16 @@ foundFloatRegisters = findRegisters(text, floatRegisterNames);
 printUsed(foundIntRegisters, intRegisterNames)
 printUsed(foundFloatRegisters, floatRegisterNames)
 
+numIntUsed = (length(foundIntRegisters) - sum(ismember(foundIntRegisters, 'sp')));
+numFloatUsed = length(foundFloatRegisters);
+
+percentIntUsed = 100 * numIntUsed / (length(intRegisterNames)-1);
+percentFloatUsed = 100 * numFloatUsed / length(floatRegisterNames);
+
+disp(sprintf('Using:\nint: %d/%d = %d%%\nflt: %d/%d = %d%%\n',...
+    numIntUsed, (length(intRegisterNames)-1), round(percentIntUsed),...
+    numFloatUsed, length(floatRegisterNames), round(percentFloatUsed)));
+
 % keyboard
 
 function printUsed(foundNames, registerNames)
@@ -62,7 +72,6 @@ function foundNames = findRegisters(text, registerNames)
         
         found = false;
         for i = startIndexCandidates
-            disp(text(i:(i+5)))
             if ~isempty(find(strcmp(text(i-1), prefixCharacters),1)) &&...
                ~isempty(find(strcmp(text(i+registerNameLength), suffixCharacters),1))
            

@@ -1,4 +1,5 @@
 #include "anki/cozmo/robot/hal.h"
+#include "anki/cozmo/shared/cozmoTypes.h"
 #include "messages.h"
 #include "localization.h"
 #include "visionSystem.h"
@@ -10,6 +11,7 @@
 #include "headController.h"
 #include "dockingController.h"
 #include "pickAndPlaceController.h"
+#include "testModeController.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -136,6 +138,27 @@ namespace Anki {
         return true;
         
       }
+
+      
+      void UpdateRobotStateMsg()
+      {
+        robotState_.timestamp = HAL::GetTimeStamp();
+        
+        Radians poseAngle;
+        
+        Localization::GetCurrentMatPose(robotState_.pose_x, robotState_.pose_y, poseAngle);
+        robotState_.pose_z = 0;
+        robotState_.pose_angle = poseAngle.ToFloat();
+        
+        WheelController::GetFilteredWheelSpeeds(robotState_.lwheel_speed_mmps, robotState_.rwheel_speed_mmps);
+        
+        robotState_.headAngle  = HeadController::GetAngleRad();
+        robotState_.liftAngle  = LiftController::GetAngleRad();
+        robotState_.liftHeight = LiftController::GetHeightMM();
+        
+        robotState_.isTraversingPath = PathFollower::IsTraversingPath() ? 1 : 0;
+        robotState_.isCarryingBlock = PickAndPlaceController::IsCarryingBlock() ? 1 : 0;
+      }
       
       RobotState const& GetRobotStateMsg() {
         return robotState_;
@@ -147,11 +170,12 @@ namespace Anki {
       
       void ProcessRobotAddedToWorldMessage(const RobotAddedToWorld& msg)
       {
+        /* XXX - RobotIDs are not available in real HAL, so this should be rethought
         if(msg.robotID != HAL::GetRobotID()) {
           PRINT("Robot received ADDED_TO_WORLD handshake with "
                 " wrong robotID (%d instead of %d).\n",
                 msg.robotID, HAL::GetRobotID());
-        }
+        }*/
         
         PRINT("Robot received handshake from basestation, "
               "sending camera calibration.\n");
@@ -177,6 +201,13 @@ namespace Anki {
       
       void ProcessAbsLocalizationUpdateMessage(const AbsLocalizationUpdate& msg)
       {
+        // Don't modify localization while running path following test.
+        // The point of the test is to see how well it follows a path
+        // assuming perfect localization.
+        if (TestModeController::GetMode() == TM_PATH_FOLLOW) {
+          return;
+        }
+        
         // TODO: Double-check that size matches expected size?
         
         // TODO: take advantage of timestamp
@@ -278,6 +309,11 @@ namespace Anki {
       }
 
       void ProcessDriveWheelsMessage(const DriveWheels& msg) {
+        
+        // Do not process external drive commands if following a test path
+        if (PathFollower::IsTraversingPath()) {
+          return;
+        }
         //PathFollower::ClearPath();
         SteeringController::ExecuteDirectDrive(msg.lwheel_speed_mmps, msg.rwheel_speed_mmps);
       }
@@ -293,11 +329,19 @@ namespace Anki {
       }
       
       void ProcessMoveLiftMessage(const MoveLift& msg) {
+        LiftController::SetAngularVelocity(msg.speed_rad_per_sec);
+      }
+      
+      void ProcessMoveHeadMessage(const MoveHead& msg) {
+        HeadController::SetAngularVelocity(msg.speed_rad_per_sec);
+      }
+      
+      void ProcessSetLiftHeightMessage(const SetLiftHeight& msg) {
         LiftController::SetSpeedAndAccel(msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
         LiftController::SetDesiredHeight(msg.height_mm);
       }
       
-      void ProcessMoveHeadMessage(const MoveHead& msg) {
+      void ProcessSetHeadAngleMessage(const SetHeadAngle& msg) {
         HeadController::SetSpeedAndAccel(msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
         HeadController::SetDesiredAngle(msg.angle_rad);
       }
@@ -312,8 +356,26 @@ namespace Anki {
         HeadController::SetAngleRad(msg.newAngle);
       }
       
+      void ProcessStartTestModeMessage(const StartTestMode& msg)
+      {
+        if (msg.mode < TM_NUM_TESTS) {
+          TestModeController::Start((TestMode)(msg.mode));
+        } else {
+          PRINT("Unknown test mode %d received\n", msg.mode);
+        }
+      }
+      
       void ProcessImageRequestMessage(const ImageRequest& msg) {
-        VisionSystem::SendNextImage((Vision::CameraResolution)msg.resolution);
+        PRINT("Image requested (mode: %d, resolution: %d)\n", msg.imageSendMode, msg.resolution);
+        VisionSystem::SetImageSendMode((ImageSendMode_t)msg.imageSendMode, (Vision::CameraResolution)msg.resolution);
+      }
+      
+      void ProcessSetHeadlightMessage(const SetHeadlight& msg) {
+        if (msg.intensity > 0) {
+          HAL::SetLED(HAL::LED_RIGHT_EYE_TOP, (HAL::LEDColor)(HAL::LED_RED | HAL::LED_GREEN | HAL::LED_BLUE));
+        } else {
+          HAL::SetLED(HAL::LED_RIGHT_EYE_TOP, HAL::LED_OFF);
+        }
       }
       
       
@@ -361,22 +423,6 @@ namespace Anki {
       
       Result SendRobotStateMsg()
       {
-        robotState_.timestamp = HAL::GetTimeStamp();
-        
-        Radians poseAngle;
-        
-        Localization::GetCurrentMatPose(robotState_.pose_x, robotState_.pose_y, poseAngle);
-        robotState_.pose_z = 0;
-        robotState_.pose_angle = poseAngle.ToFloat();
-        
-        WheelController::GetFilteredWheelSpeeds(robotState_.lwheel_speed_mmps, robotState_.rwheel_speed_mmps);
-
-        robotState_.headAngle  = HeadController::GetAngleRad();
-        robotState_.liftHeight = LiftController::GetHeightMM();
-
-        robotState_.isTraversingPath = PathFollower::IsTraversingPath() ? 1 : 0;
-        robotState_.isCarryingBlock = PickAndPlaceController::IsCarryingBlock() ? 1 : 0;
-        
         if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RobotState), &robotState_) == true) {
           return RESULT_OK;
         } else {
@@ -385,17 +431,24 @@ namespace Anki {
       }
       
       
-      void SendText(const char *format, ...)
+      int SendText(const char *format, ...)
+      {
+        va_list argptr;
+        va_start(argptr, format);
+        SendText(format, argptr);
+        va_end(argptr);
+        
+        return 0;
+      }
+
+      int SendText(const char *format, va_list vaList)
       {
         #define MAX_SEND_TEXT_LENGTH 512
         char text[MAX_SEND_TEXT_LENGTH];
         memset(text, 0, MAX_SEND_TEXT_LENGTH);
 
         // Create formatted text
-        va_list argptr;
-        va_start(argptr, format);
-        vsnprintf(text, MAX_SEND_TEXT_LENGTH, format, argptr);
-        va_end(argptr);
+        vsnprintf(text, MAX_SEND_TEXT_LENGTH, format, vaList);
         
         // Breakup and send in multiple messages if necessary
         Messages::PrintText m;
@@ -411,6 +464,8 @@ namespace Anki {
           HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::PrintText), &m);
           numMsgs++;
         }
+        
+        return 0;
       }
       
       

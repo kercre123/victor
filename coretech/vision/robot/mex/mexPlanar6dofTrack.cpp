@@ -62,7 +62,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   // TODO: Make this a passed-in parameter
   const f32 filterWidthFraction = 0.5f;
   
-  if(nrhs == 11) {
+  if(nrhs == 13) {
     //
     // Tracker Init
     //
@@ -110,12 +110,16 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     const s32 numPyramidLevels           = static_cast<s32>(mxGetScalar(prhs[argIndex++]));
     const s32 maxSamplesAtBaseLevel      = static_cast<s32>(mxGetScalar(prhs[argIndex++]));
     const s32 numSamplingRegions         = static_cast<s32>(mxGetScalar(prhs[argIndex++]));
+    const s32 numFiducialSquareSamples   = static_cast<s32>(mxGetScalar(prhs[argIndex++]));
+    const f32 fiducialSqareWidthFraction = static_cast<f32>(mxGetScalar(prhs[argIndex++]));
     
     tracker = TemplateTracker::LucasKanadeTracker_SampledPlanar6dof(grayscaleImage,
                                                                     initialQuad,
                                                                     scaleTemplateRegionPercent,
                                                                     numPyramidLevels,
                                                                     Transformations::TRANSFORM_PROJECTIVE,
+                                                                    numFiducialSquareSamples,
+                                                                    fiducialSqareWidthFraction,
                                                                     maxSamplesAtBaseLevel,
                                                                     numSamplingRegions,
                                                                     focalLength_x,
@@ -252,7 +256,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     mexPrintf("\t\tscaleTemplateRegionPercent, \n");
     mexPrintf("\t\tnumPyramidLevels, \n");
     mexPrintf("\t\tmaxSamplesAtBaseLevel, \n");
-    mexPrintf("\t\tnumSamplingRegions)\n");
+    mexPrintf("\t\tnumSamplingRegions, \n");
+    mexPrintf("\t\tnumFiducialSamples, \n");
+    mexPrintf("\t\tfiducialSquareWidthFraction)\n");
     
     mexPrintf("\nTrack with: \n\n");
     mexPrintf("\t[converged, verify_meanAbsDiff, verify_numInBounds, verify_numSimilarPixels, \n");

@@ -1,6 +1,7 @@
 #include "anki/common/robot/trig_fast.h"
 #include "imuFilter.h"
 #include "headController.h"
+#include "wheelController.h"
 #include "anki/cozmo/robot/hal.h"
 
 // For event callbacks
@@ -29,7 +30,13 @@ namespace Anki {
 
         f32 accel_filt[3];
         f32 accel_robot_frame_filt[3];
+        f32 prev_accel_robot_frame_filt[3] = {0,0,0};
         const f32 ACCEL_FILT_COEFF = 0.4f;
+        
+        u32 lastMotionDetectedTime_us = 0;
+        const u32 MOTION_DETECT_TIMEOUT_US = 1000000;
+        const f32 ACCEL_MOTION_THRESHOLD = 60.f;
+        const f32 GYRO_MOTION_THRESHOLD = 0.22f;
         
         
         // ====== Event detection vars ======
@@ -91,7 +98,7 @@ namespace Anki {
       
       void TurnOnIndicatorLight()
       {
-        TestModeController::Start(TestModeController::TM_NONE);
+        TestModeController::Start(TM_NONE);
         HAL::SetLED(INDICATOR_LED_ID, HAL::LED_RED);
       }
       void TurnOffIndicatorLight()
@@ -101,19 +108,19 @@ namespace Anki {
       
       void StartPickAndPlaceTest()
       {
-        TestModeController::Start(TestModeController::TM_PICK_AND_PLACE);
+        TestModeController::Start(TM_PICK_AND_PLACE);
         TurnOffIndicatorLight();
       }
       
       void StartPathFollowTest()
       {
-        TestModeController::Start(TestModeController::TM_PATH_FOLLOW);
+        TestModeController::Start(TM_PATH_FOLLOW);
         TurnOffIndicatorLight();
       }
       
       void StartLiftTest()
       {
-        TestModeController::Start(TestModeController::TM_LIFT);
+        TestModeController::Start(TM_LIFT);
         TurnOffIndicatorLight();
       }
       
@@ -150,8 +157,8 @@ namespace Anki {
       void DetectNsideDown()
       {
         eventStateRaw_[UPSIDE_DOWN] = accel_robot_frame_filt[2] < -NSIDE_DOWN_THRESH_MMPS2;
-        eventStateRaw_[RIGHTSIDE_DOWN] = accel_robot_frame_filt[1] < -NSIDE_DOWN_THRESH_MMPS2;
-        eventStateRaw_[LEFTSIDE_DOWN] = accel_robot_frame_filt[1] > NSIDE_DOWN_THRESH_MMPS2;
+        eventStateRaw_[LEFTSIDE_DOWN] = accel_robot_frame_filt[1] < -NSIDE_DOWN_THRESH_MMPS2;
+        eventStateRaw_[RIGHTSIDE_DOWN] = accel_robot_frame_filt[1] > NSIDE_DOWN_THRESH_MMPS2;
         eventStateRaw_[FRONTSIDE_DOWN] = accel_robot_frame_filt[0] < -NSIDE_DOWN_THRESH_MMPS2;
         eventStateRaw_[BACKSIDE_DOWN] = accel_robot_frame_filt[0] > NSIDE_DOWN_THRESH_MMPS2;
       }
@@ -220,6 +227,32 @@ namespace Anki {
         
       }
       
+      // Update the last time motion was detected
+      void DetectMotion()
+      {
+        u32 currTime = HAL::GetMicroCounter();
+        
+        // Are wheels being powered?
+        if (WheelController::AreWheelsPowered()) {
+          lastMotionDetectedTime_us = currTime;
+        }
+        
+        // Was motion detected by accel or gyro?
+        for(u8 i=0; i<3; ++i) {
+          // Check accelerometer
+          f32 dAccel = ABS(accel_robot_frame_filt[i] - prev_accel_robot_frame_filt[i]);
+          prev_accel_robot_frame_filt[i] = accel_robot_frame_filt[i];
+          if (dAccel > ACCEL_MOTION_THRESHOLD) {
+            lastMotionDetectedTime_us = currTime;
+          }
+          
+          // Check gyro
+          if (ABS(gyro_robot_frame_filt[i]) > GYRO_MOTION_THRESHOLD) {
+            lastMotionDetectedTime_us = currTime;
+          }
+        }
+      }
+      
       Result Update()
       {
         Result retVal = RESULT_OK;
@@ -263,13 +296,8 @@ namespace Anki {
         // TODO: We actually only care about gyro_robot_frame_filt[2]. Any point in computing the others?
         
         
-        // XY-plane rotation rate is robot frame z-axis rotation rate
-        rotSpeed_ = gyro_robot_frame_filt[2];
         
         
-        // Update orientation
-        f32 dAngle = rotSpeed_ * CONTROL_DT;
-        rot_ += dAngle;
         
         
         
@@ -287,6 +315,9 @@ namespace Anki {
         const f32 accel_angle_imu_frame = atan2_fast(accel_filt[2], accel_filt[0]);
         const f32 accel_angle_robot_frame = accel_angle_imu_frame + headAngle;
         
+        prev_accel_robot_frame_filt[0] = accel_robot_frame_filt[0];
+        prev_accel_robot_frame_filt[1] = accel_robot_frame_filt[1];
+        prev_accel_robot_frame_filt[2] = accel_robot_frame_filt[2];
         
         accel_robot_frame_filt[0] = xzAccelMagnitude * cosf(accel_angle_robot_frame);
         accel_robot_frame_filt[1] = accel_filt[1];
@@ -299,6 +330,54 @@ namespace Anki {
                        accel_robot_frame_filt[1],
                        accel_robot_frame_filt[2]);
 #endif
+
+
+#if(0)
+        // Measure peak readings every 2 seconds
+        static f32 max_gyro[3] = {0,0,0};
+        static f32 max_accel[3] = {0,0,0};
+        for (int i=0; i<3; ++i) {
+          if(ABS(gyro_robot_frame_filt[i]) > max_gyro[i]) {
+            max_gyro[i] = ABS(gyro_robot_frame_filt[i]);
+          }
+          
+          if (prev_accel_robot_frame_filt[i] != 0) {
+            f32 dAccel = ABS(accel_robot_frame_filt[i] - prev_accel_robot_frame_filt[i]);
+            if(dAccel > max_accel[i]) {
+              max_accel[i] = dAccel;
+            }
+          }
+        }
+        
+        static u32 measurement_cycles = 0;
+        if (measurement_cycles++ == 400) {
+          PRINT("Max gyro: %f %f %f\n",
+                         max_gyro[0],
+                         max_gyro[1],
+                         max_gyro[2]);
+          PRINT("Max accel_delta: %f %f %f\n",
+                         max_accel[0],
+                         max_accel[1],
+                         max_accel[2]);
+          
+            measurement_cycles = 0;
+          for (int i=0; i<3; ++i) {
+            max_accel[i] = 0;
+            max_gyro[i] = 0;
+          }
+        }
+#endif
+        
+        DetectMotion();
+        
+        // XY-plane rotation rate is robot frame z-axis rotation rate
+        rotSpeed_ = gyro_robot_frame_filt[2];
+        
+        // Update orientation if motion detected or expected
+        if ((lastMotionDetectedTime_us + MOTION_DETECT_TIMEOUT_US) > HAL::GetMicroCounter()) {
+          f32 dAngle = rotSpeed_ * CONTROL_DT;
+          rot_ += dAngle;
+        }
         
         
         UpdateEventDetection();

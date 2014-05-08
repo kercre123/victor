@@ -50,10 +50,12 @@ namespace Anki {
       const Vision::Camera& get_camDown() const;
       const Vision::Camera& get_camHead() const;
       OperationMode get_operationMode() const;
-      const Radians get_headAngle() const;
+      const f32 get_headAngle() const;
+      const f32 get_liftAngle() const;
       
       void set_pose(const Pose3d &newPose);
-      void set_headAngle(const Radians& angle);
+      void set_headAngle(const f32& angle);
+      void set_liftAngle(const f32& angle);
       void set_camCalibration(const Vision::CameraCalibration& calib);
       
       void queueIncomingMessage(const u8 *msg, const u8 msgSize);
@@ -72,6 +74,9 @@ namespace Anki {
       bool IsCarryingBlock() {return isCarryingBlock_;}
       
       ///////// Messaging ////////
+      // TODO: Most of these send functions should be private and wrapped in
+      // relevant state modifying functions. e.g. SendStopAllMotors() should be
+      // called from StopAllMotors().
       
       // Request camera calibration from robot
       Result SendRequestCamCalib() const;
@@ -88,12 +93,19 @@ namespace Anki {
                                    const f32 markerWidth_mm,
                                    const DockAction_t dockAction) const;
       
-      // Sends a message to the robot to move the lift to the specified height
-      Result SendMoveLift(const f32 height_mm,
-                              const f32 max_speed_rad_per_sec,
-                              const f32 accel_rad_per_sec2) const;
+      // Sends message to move lift at specified speed
+      Result SendMoveLift(const f32 speed_rad_per_sec) const;
       
-      Result SendMoveHead(const f32 angle_rad,
+      // Sends message to move head at specified speed
+      Result SendMoveHead(const f32 speed_rad_per_sec) const;
+      
+      // Sends a message to the robot to move the lift to the specified height
+      Result SendSetLiftHeight(const f32 height_mm,
+                               const f32 max_speed_rad_per_sec,
+                               const f32 accel_rad_per_sec2) const;
+
+      // Sends a message to the robot to move the head to the specified angle
+      Result SendSetHeadAngle(const f32 angle_rad,
                               const f32 max_speed_rad_per_sec,
                               const f32 accel_rad_per_sec2) const;
       
@@ -109,7 +121,13 @@ namespace Anki {
       Result SendHeadAngleUpdate() const;
 
       // Request camera snapshot from robot
-      Result SendImageRequest() const;
+      Result SendImageRequest(const ImageSendMode_t mode) const;
+
+      // Run a test mode
+      Result SendStartTestMode(const TestMode mode) const;
+      
+      // Turn on/off headlight LEDs
+      Result SendHeadlight(u8 intensity);
       
     protected:
       // The robot's identifier
@@ -133,7 +151,8 @@ namespace Anki {
       const Pose3d headCamPose; // in canonical (untilted) position w.r.t. neck joint
       const Pose3d liftBasePose; // around which the base rotates/lifts
 
-      Radians currentHeadAngle;
+      f32 currentHeadAngle;
+      f32 currentLiftAngle;
       
       OperationMode mode, nextMode;
       bool setOperationMode(OperationMode newMode);
@@ -173,8 +192,11 @@ namespace Anki {
     inline bool Robot::hasOutgoingMessages() const
     { return not this->messagesOut.empty(); }
     
-    inline const Radians Robot::get_headAngle() const
+    inline const f32 Robot::get_headAngle() const
     { return this->currentHeadAngle; }
+    
+    inline const f32 Robot::get_liftAngle() const
+    { return this->currentLiftAngle; }
     
     //
     // RobotManager class for keeping up with available robots, by their ID

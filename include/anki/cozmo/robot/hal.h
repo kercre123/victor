@@ -151,8 +151,6 @@ extern "C" {
 
 #endif // #if(DISABLE_PRINT_MACROS)
 
-#define REG_WORD(x) *(volatile u32*)(x)
-
 namespace Anki
 {
   namespace Cozmo
@@ -179,19 +177,14 @@ namespace Anki
 
       //////////////////////
 
-
       //
-      // Typedefs
+      // Simulator-only functions - not needed by real hardware
+      // TBD:  If these aren't hardware features, can they go elsewhere?
       //
-
+#ifndef ROBOT_HARDWARE
       // Define a function pointer type for returning a frame like so:
       //   img = fcn();
       typedef const u8* (*FrameGrabber)(void);
-
-
-      //
-      // Hardware Interface Methods:
-      //
 
       Result Init(void);
       void Destroy(void);
@@ -199,29 +192,37 @@ namespace Anki
       // Gripper control
       bool IsGripperEngaged();
 
-      // Misc
+      // Misc simulator-only stuff
       bool IsInitialized();
       void UpdateDisplay();
 
+      s32 GetRobotID(void);
+
+      // Take a step (needed for webots only)
+      Result Step(void);
+
+      // Ground truth (no-op if not in simulation)
+      void GetGroundTruthPose(f32 &x, f32 &y, f32& rad);
+
+      // For simulator only to activate connector for gripping.
+      // Does not actually guarantee a physical connection.
+      void EngageGripper();
+      void DisengageGripper();
+      
+      // Returns pointer to IPv4 address
+      const char* const GetLocalIP();
+#endif
+
+      //
+      // Hardware Interface Methods:
+      //
+            
       // Get the number of microseconds since boot
       u32 GetMicroCounter(void);
       void MicroWait(u32 microseconds);
 
-      // Get the CPU's core frequency
-      u32 GetCoreFrequencyMHz();
-
       // Get a sync'd timestamp (e.g. for messages), in milliseconds
       TimeStamp_t GetTimeStamp(void);
-
-      s32 GetRobotID(void);
-
-      // Take a step (needed for webots, possibly a no-op for real robot?)
-      Result Step(void);
-
-      // Ground truth (no-op if not in simulation?)
-      void GetGroundTruthPose(f32 &x, f32 &y, f32& rad);
-
-      // .....................
 
 // #pragma mark --- Audio ---
       /////////////////////////////////////////////////////////////////////
@@ -258,8 +259,6 @@ namespace Anki
 
       // Read acceleration and rate
       void IMUReadData(IMU_DataStructure &IMUData);
-
-
 
 // #pragma mark --- UART/Wifi ---
       /////////////////////////////////////////////////////////////////////
@@ -308,13 +307,6 @@ namespace Anki
       // Measures the unitless load on all motors
       s32 MotorGetLoad();
 
-#ifdef SIMULATOR
-      // For simulator only to activate connector for gripping.
-      // Does not actually guarantee a physical connection.
-      void EngageGripper();
-      void DisengageGripper();
-#endif
-      
 // #pragma mark --- Cameras ---
       /////////////////////////////////////////////////////////////////////
       // CAMERAS
@@ -339,20 +331,13 @@ namespace Anki
 
       // Sets the camera exposure (non-blocking call)
       // exposure is clipped to [0.0, 1.0]
-      void CameraSetExposure(f32 exposure);
+      void CameraSetParameters(f32 exposure, bool enableVignettingCorrection);
       
       // Starts camera frame synchronization (blocking call)
       void CameraGetFrame(u8* frame, Vision::CameraResolution res, bool enableLight);
 
       // Get the number of lines received so far for the specified camera
       //u32 CameraGetReceivedLines(CameraID cameraID);
-
-      // Returns whether or not the specfied camera has received a full frame
-      //bool CameraIsEndOfFrame(CameraID cameraID);
-
-      // TODO: At some point, isEOF should be set automatically by the HAL,
-      // but currently, the consumer has to set it
-      //void CameraSetIsEndOfFrame(CameraID cameraID, bool isEOF);
 
 // #pragma mark --- Battery ---
       /////////////////////////////////////////////////////////////////////
@@ -402,27 +387,13 @@ namespace Anki
       /////////////////////////////////////////////////////////////////////
       // RADIO
       //
-      enum RadioState
-      {
-        RADIO_STATE_ADVERTISING = 0,
-        RADIO_STATE_CONNECTED
-      };
-
-      const u32 RADIO_BUFFER_SIZE = 100;
-
       bool RadioIsConnected();
-
-      u32 RadioGetNumBytesAvailable(void);
 
       Messages::ID RadioGetNextMessage(u8* buffer);
 
       // Returns true if the message has been sent to the basestation
       bool RadioSendMessage(const Messages::ID msgID, const void *buffer, TimeStamp_t ts = HAL::GetTimeStamp());
 
-#ifdef SIMULATOR
-      // Returns pointer to IPv4 address
-      const char* const GetLocalIP();
-#endif
       
       /////////////////////////////////////////////////////////////////////
       // POWER MANAGEMENT
@@ -455,9 +426,6 @@ namespace Anki
       };
 
       const BirthCertificate& GetBirthCertificate();
-
-      // TODO: remove when interrupts don't cause problems
-      //void DisableCamera(CameraID cameraID);
     } // namespace HAL
   } // namespace Cozmo
 } // namespace Anki

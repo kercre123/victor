@@ -59,6 +59,61 @@ namespace Anki
     }
 #endif //#if ANKICORETECH_EMBEDDED_USE_OPENCV
 
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
+    void CvPutTextFixedWidth(
+      cv::Mat& img, const char * text, cv::Point org,
+      int fontFace, double fontScale, cv::Scalar color,
+      int thickness, int lineType,
+      bool bottomLeftOrigin)
+    {
+      static int last_fontFace = -1;
+      static double last_fontScale = -1.0;
+      static int last_thickness = -1;
+      static int last_lineType = -1;
+      static int maxWidth = -1;
+
+      // If the font has changed since last call, compute the new font width
+      if(last_fontFace != fontFace || last_fontScale != fontScale || last_thickness != thickness || last_lineType != lineType) {
+        last_fontFace = fontFace;
+        last_fontScale = fontScale;
+        last_thickness = thickness;
+        last_lineType = lineType;
+
+        /*// All characters
+        const s32 numCharacters = 93;
+        const char characters[numCharacters] = "abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789~!@#$%^&*()_+-=[]{},.<>/?;':\"";*/
+
+        // These are generally the largest characters
+        const s32 numCharacters = 12;
+        const char characters[numCharacters] = "mwMW@%^&+-=";
+
+        maxWidth = 0;
+        for(s32 i=0; i<(numCharacters-1); i++) {
+          char tmpBuffer[2];
+          tmpBuffer[0] = characters[i];
+          tmpBuffer[1] = '\0';
+
+          cv::Size textSize = cv::getTextSize(std::string(tmpBuffer), fontFace, fontScale, thickness, NULL);
+          //printf("%c = %dx%d\n", characters[i], textSize.width, textSize.height);
+          maxWidth = MAX(maxWidth, textSize.width);
+        }
+      }
+
+      const s32 stringLength = strlen(text);
+
+      cv::Point curOrg = org;
+      for(s32 iChar=0; iChar<stringLength; iChar++) {
+        char tmpBuffer[2];
+        tmpBuffer[0] = text[iChar];
+        tmpBuffer[1] = '\0';
+
+        cv::putText(img, std::string(tmpBuffer), curOrg, fontFace, fontScale, color, thickness, lineType, bottomLeftOrigin);
+
+        curOrg.x += maxWidth - 1;
+      }
+    }
+#endif //#if ANKICORETECH_EMBEDDED_USE_OPENCV
+
     s32 FindBytePattern(const void * restrict buffer, const s32 bufferLength, const u8 * restrict bytePattern, const s32 bytePatternLength)
     {
       s32 curIndex = 0;
@@ -107,7 +162,7 @@ namespace Anki
       return num;
     }
 
-    f32 GetTimeF32(void)
+    f32 GetTimeF32()
     {
 #if defined(_MSC_VER)
       f32 timeInSeconds;
@@ -153,7 +208,7 @@ namespace Anki
       return timeInSeconds;
     }
 
-    f64 GetTimeF64(void)
+    f64 GetTimeF64()
     {
 #if defined(_MSC_VER)
       f64 timeInSeconds;
@@ -197,6 +252,41 @@ namespace Anki
 #endif
 
       return timeInSeconds;
+    }
+
+    u32 GetTimeU32()
+    {
+#if defined(_MSC_VER)
+      static LONGLONG startCounter = 0;
+
+      LARGE_INTEGER counter;
+
+      QueryPerformanceCounter(&counter);
+
+      // Subtract startCounter, so the floating point number has reasonable precision
+      if(startCounter == 0) {
+        startCounter = counter.QuadPart;
+      }
+
+      return static_cast<u32>((counter.QuadPart - startCounter) & 0xFFFFFFFF);
+#elif defined(__APPLE_CC__)
+      struct timeval time;
+      gettimeofday(&time, NULL);
+
+      // Subtract startSeconds, so the floating point number has reasonable precision
+      static long startSeconds = 0;
+      if(startSeconds == 0) {
+        startSeconds = time.tv_sec;
+      }
+
+      return (u32)(time.tv_sec-startSeconds)*1000000 + (u32)time.tv_usec;
+#elif defined (__EDG__)  // MDK-ARM
+      return Anki::Cozmo::HAL::GetMicroCounter();
+#else
+      timespec ts;
+      clock_gettime(CLOCK_MONOTONIC, &ts);
+      return (u32)ts.tv_sec * 1000000 + (u32)(ts.tv_nsec/1000);
+#endif
     }
   } // namespace Embedded
 } // namespace Anki

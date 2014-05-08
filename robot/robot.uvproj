@@ -409,6 +409,16 @@
               <FilePath>..\include\anki\cozmo\robot\hal.h</FilePath>
             </File>
             <File>
+              <FileName>imu.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\imu.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>lights.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\lights.cpp</FilePath>
+            </File>
+            <File>
               <FileName>main.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\main.cpp</FilePath>
@@ -447,16 +457,6 @@
               <FileName>usb_radio.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\usb_radio.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>imu.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\imu.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>lights.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\lights.cpp</FilePath>
             </File>
             <File>
               <FileName>wifi.cpp</FileName>
@@ -879,6 +879,11 @@
               <FilePath>..\coretech\common\robot\src\utilities_c.c</FilePath>
             </File>
             <File>
+              <FileName>utilities_shared.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\shared\src\utilities_shared.cpp</FilePath>
+            </File>
+            <File>
               <FileName>velocityProfileGenerator.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\shared\src\velocityProfileGenerator.cpp</FilePath>
@@ -899,14 +904,14 @@
           <GroupName>coretech-vision</GroupName>
           <Files>
             <File>
-              <FileName>autoExposure.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\autoExposure.cpp</FilePath>
-            </File>
-            <File>
               <FileName>binaryTracker.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\binaryTracker.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>cameraImagingPipeline.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\cameraImagingPipeline.cpp</FilePath>
             </File>
             <File>
               <FileName>cascadeClassifier.cpp</FileName>
@@ -1532,6 +1537,16 @@
               <FilePath>..\include\anki\cozmo\robot\hal.h</FilePath>
             </File>
             <File>
+              <FileName>imu.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\imu.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>lights.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\lights.cpp</FilePath>
+            </File>
+            <File>
               <FileName>main.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\main.cpp</FilePath>
@@ -1611,16 +1626,6 @@
                   </Cads>
                 </FileArmAds>
               </FileOption>
-            </File>
-            <File>
-              <FileName>imu.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\imu.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>lights.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\lights.cpp</FilePath>
             </File>
             <File>
               <FileName>wifi.cpp</FileName>
@@ -2100,6 +2105,11 @@
               <FilePath>..\coretech\common\robot\src\utilities_c.c</FilePath>
             </File>
             <File>
+              <FileName>utilities_shared.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\shared\src\utilities_shared.cpp</FilePath>
+            </File>
+            <File>
               <FileName>velocityProfileGenerator.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\shared\src\velocityProfileGenerator.cpp</FilePath>
@@ -2177,14 +2187,14 @@
           <GroupName>coretech-vision</GroupName>
           <Files>
             <File>
-              <FileName>autoExposure.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\autoExposure.cpp</FilePath>
-            </File>
-            <File>
               <FileName>binaryTracker.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\binaryTracker.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>cameraImagingPipeline.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\cameraImagingPipeline.cpp</FilePath>
             </File>
             <File>
               <FileName>cascadeClassifier.cpp</FileName>

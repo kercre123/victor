@@ -1,8 +1,13 @@
 PROTO BlockWorldComms [
   field SFString name "BlockWorldComms"
+  field SFVec3f translation 0 0 0.08
+  field SFRotation rotation 0 0 1 0
 ]
 {
 Supervisor {
+
+  translation IS translation
+  rotation IS rotation
   
   children [
     # For receiving messages from all robots
@@ -64,6 +69,36 @@ Supervisor {
       type "radio"
       channel 4
     }
+
+
+
+    GPS {
+      name "gps"
+      translation 0 0 0
+    }    
+    Compass {
+      name "compass"
+    }
+    
+    Transform {
+      translation -0.015 0 0
+      rotation 0 0 1 -1.5707963
+      children [
+        Shape {
+          appearance Appearance {
+            material Material {
+              diffuseColor 0.1 0.8 0.1
+            }
+          }
+          geometry Cone {
+            bottomRadius 0.01
+            height 0.03
+          }
+        }
+      ]
+    }
+      
+
   ]
   name IS name
   controller "blockworld_controller"

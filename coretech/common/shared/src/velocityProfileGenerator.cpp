@@ -7,13 +7,11 @@
 
 #include <assert.h>
 #include <math.h>
+#include "anki/common/shared/utilities_shared.h"
 #include "anki/common/shared/velocityProfileGenerator.h"
 #include "anki/common/constantsAndMacros.h"
 
 #define DEBUG_VPG 0
-#if(DEBUG_VPG && defined(SIMULATOR))
-#include <stdio.h>
-#endif
 
 namespace Anki {
  
@@ -76,7 +74,7 @@ namespace Anki {
       maxReachableVel_ = sqrt( ((2*accel*fabs(totalDistToTarget_)) + (endVel_*endVel_) + (startVel_*startVel_)) * 0.5f );
       maxReachableVel_ *= direction_;
 #if(DEBUG_VPG)
-      printf("VPG new V_max: %f (d = %f)\n", maxReachableVel_, d);
+      CORETECH_PRINT("VPG new V_max: %f (d = %f)\n", maxReachableVel_, d);
 #endif
     }
     
@@ -102,9 +100,9 @@ namespace Anki {
     currTime_ = 0;
     
 #if(DEBUG_VPG)
-    printf("VPG: startVel %f, startPos %f, maxSpeed %f, accel %f\n", startVel_, startPos_, maxVel_, accel_);
-    printf("     endVel %f, endPos %f, timestep %f\n", endVel_, endPos_, timeStep_);
-    printf("     deltaVel %f, maxReachableVel %f, totalDist %f, decelDistToTarget %f, dir %f\n", deltaVelPerTimeStep_, maxReachableVel_, totalDistToTarget_, decelDistToTarget_, direction_);
+    CORETECH_PRINT("VPG: startVel %f, startPos %f, maxSpeed %f, accel %f\n", startVel_, startPos_, maxVel_, accel_);
+    CORETECH_PRINT("     endVel %f, endPos %f, timestep %f\n", endVel_, endPos_, timeStep_);
+    CORETECH_PRINT("     deltaVel %f, maxReachableVel %f, totalDist %f, decelDistToTarget %f, dir %f\n", deltaVelPerTimeStep_, maxReachableVel_, totalDistToTarget_, decelDistToTarget_, direction_);
 #endif
   }
   
@@ -161,7 +159,7 @@ namespace Anki {
     
     
 #if(DEBUG_VPG)
-    printf("VPG::Step() - currVel %f, currPos %f, currDistToTarget %f, isDecel %d\n", currVel_, currPos_, currDistToTarget, isDecel_);
+    CORETECH_PRINT("VPG::Step() - currVel %f, currPos %f, currDistToTarget %f, isDecel %d\n", currVel_, currPos_, currDistToTarget, isDecel_);
 #endif
     
     

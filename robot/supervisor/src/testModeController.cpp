@@ -131,9 +131,19 @@ namespace Anki {
         };
         u8 pickAndPlaceState_ = PAP_WAITING_FOR_PICKUP_BLOCK;
         
+        // The block to pick up
         const Vision::MarkerType BLOCK_TO_PICK_UP = Vision::MARKER_FIRE;
+        
+        // The block to place the picked up block on
+        //const Vision::MarkerType BLOCK_TO_PLACE_ON = Vision::MARKER_ANGRYFACE;
         const Vision::MarkerType BLOCK_TO_PLACE_ON = Vision::MARKER_SQUAREPLUSCORNERS;
+        
+        // The width of the marker
         const f32 BLOCK_MARKER_WIDTH = DEFAULT_BLOCK_MARKER_WIDTH_MM;
+        
+        // Whether the PICK_UP block is on ground level (0) or on top of another block (1).
+        // If 1, the place part of this test will just the block on the ground.
+        const u8 BLOCK_TO_PICK_UP_LEVEL = 0;
         ////// End of PickAndPlaceTest ////
         
         
@@ -178,6 +188,7 @@ namespace Anki {
       // Bring robot to normal state and stops all motors
       Result Reset()
       {
+        PRINT("TestMode reset\n");
         // Stop wheels and vision system
         PickAndPlaceController::Reset();
         
@@ -186,6 +197,8 @@ namespace Anki {
         LiftController::SetAngularVelocity(0);
         LiftController::Enable();
         HeadController::SetAngularVelocity(0);
+        
+        return RESULT_OK;
       }
       
       
@@ -203,15 +216,20 @@ namespace Anki {
           case PAP_WAITING_FOR_PICKUP_BLOCK:
           {
             PRINT("PAPT: Docking to block %d\n", BLOCK_TO_PICK_UP);
-            PickAndPlaceController::PickUpBlock(BLOCK_TO_PICK_UP, BLOCK_MARKER_WIDTH, 0);
+            PickAndPlaceController::PickUpBlock(BLOCK_TO_PICK_UP, BLOCK_MARKER_WIDTH, BLOCK_TO_PICK_UP_LEVEL);
             pickAndPlaceState_ = PAP_DOCKING;
             break;
           }
           case PAP_DOCKING:
             if (!PickAndPlaceController::IsBusy()) {
               if (PickAndPlaceController::DidLastActionSucceed()) {
-                PRINT("PAPT: Placing on other block %d\n", BLOCK_TO_PLACE_ON);
-                PickAndPlaceController::PlaceOnBlock(BLOCK_TO_PLACE_ON, 0, 0);
+                if (BLOCK_TO_PICK_UP_LEVEL == 0) {
+                  PRINT("PAPT: Placing on other block %d\n", BLOCK_TO_PLACE_ON);
+                  PickAndPlaceController::PlaceOnBlock(BLOCK_TO_PLACE_ON, 0, 0);
+                } else {
+                  PRINT("PAPT: Placing on ground\n");
+                  PickAndPlaceController::PlaceOnGround();
+                }
                 pickAndPlaceState_ = PAP_PLACING;
               } else {
                 pickAndPlaceState_ = PAP_WAITING_FOR_PICKUP_BLOCK;
@@ -224,8 +242,12 @@ namespace Anki {
                 PRINT("PAPT: Success\n");
                 pickAndPlaceState_ = PAP_WAITING_FOR_PICKUP_BLOCK;
               } else {
-                PickAndPlaceController::PlaceOnBlock(BLOCK_TO_PLACE_ON, 0, 0);
-                pickAndPlaceState_ = PAP_PLACING;
+                if (BLOCK_TO_PICK_UP_LEVEL == 0) {
+                  PickAndPlaceController::PlaceOnBlock(BLOCK_TO_PLACE_ON, 0, 0);
+                  //pickAndPlaceState_ = PAP_PLACING;
+                } else {
+                  PickAndPlaceController::PlaceOnGround();
+                }
               }
             }
             break;
@@ -304,7 +326,10 @@ namespace Anki {
         if (!pathStarted_ && HAL::GetMicroCounter() > startDriveTime_us) {
           
           // Create a path and follow it
+          PathFollower::ClearPath();
 #if(PATH_FOLLOW_ALIGNED_START)
+          Localization::SetCurrentMatPose(0, 0, -PIDIV2_F);
+          
           //PathFollower::AppendPathSegment_PointTurn(0, 0, 0, -PIDIV2_F, -1.5f, 2.f, 2.f);
           
           float arc1_radius = sqrt((float)5000);  // Radius of sqrt(50^2 + 50^2)
@@ -804,7 +829,7 @@ namespace Anki {
         return RESULT_OK;
       }
       
-      Result Start(TestMode mode)
+      Result Start(const TestMode mode)
       {
         Result ret = RESULT_OK;
 #if(!FREE_DRIVE_DUBINS_TEST)

@@ -211,6 +211,7 @@ namespace Anki {
     void ProcessVizSetLabelMessage(const VizSetLabel& msg){};
     void ProcessVizDockingErrorSignalMessage(const VizDockingErrorSignal& msg){};
     void ProcessVizImageChunkMessage(const VizImageChunk& msg){};
+    void ProcessVizSetRobotMessage(const VizSetRobot& msg){};
     
   } // namespace Cozmo
 } // namespace Anki

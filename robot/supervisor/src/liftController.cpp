@@ -380,7 +380,7 @@ namespace Anki {
           }
         } else {
           if (  (desiredAngle_ == LIFT_ANGLE_LOW_LIMIT && desiredHeight_ != LIFT_HEIGHT_LOWDOCK)
-             || (desiredAngle_ == LIFT_ANGLE_HIGH_DOCK && desiredHeight_ == LIFT_HEIGHT_CARRY)
+             || (desiredHeight_ == LIFT_HEIGHT_CARRY)
               ) {
             HAL::EngageGripper();
           }
