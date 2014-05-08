@@ -1,5 +1,6 @@
 #include "anki/common/robot/geometry.h"
 #include "anki/common/robot/interpolate.h"
+#include "anki/common/robot/benchmarking.h"
 
 #include "anki/vision/robot/fiducialDetection.h"
 
@@ -25,6 +26,8 @@ namespace Anki {
                                Array<f32>& refinedHomography,
                                MemoryStack scratch)
     {
+      BeginBenchmark("vme_quadrefine_init");
+      
       Result lastResult = RESULT_OK;
       
       AnkiConditionalErrorAndReturnValue(refinedHomography.IsValid() &&
@@ -128,7 +131,7 @@ namespace Anki {
       AnkiConditionalErrorAndReturnValue(Ty.IsValid(), RESULT_FAIL_MEMORY,
                                          "RefineQuadrilateral",
                                          "Failed to allocate Ty Array.");
-      
+           
       //
       // Fill in the top and bottom coordinates and derivatives
       //
@@ -472,7 +475,12 @@ namespace Anki {
       f32 AWAt_raw[8][8];
       f32 b_raw[8];
       
+      EndBenchmark("vme_quadrefine_init");
+      
+      BeginBenchmark("vme_quadrefine_mainLoop");
       for(s32 iteration=0; iteration<maxIterations; iteration++) {
+        
+        //BeginBenchmark("vme_quadrefine_mainLoop_init");
 
         const f32 h00 = refinedHomography[0][0]; const f32 h01 = refinedHomography[0][1]; const f32 h02 = refinedHomography[0][2];
         const f32 h10 = refinedHomography[1][0]; const f32 h11 = refinedHomography[1][1]; const f32 h12 = refinedHomography[1][2];
@@ -490,7 +498,13 @@ namespace Anki {
         
         s32 numInBounds = 0;
         
+        //EndBenchmark("vme_quadrefine_mainLoop_init");
+        
+        
+        //BeginBenchmark("vme_quadrefine_mainLoop_samples");
         for(s32 iSample=0; iSample<actualNumSamples; iSample++) {
+        
+          //BeginBenchmark("vme_quadrefine_mainLoop_samples1");
           
           const f32 xOriginal = pX[iSample];
           const f32 yOriginal = pY[iSample];
@@ -516,8 +530,13 @@ namespace Anki {
           
           // If out of bounds, continue
           if(x0 < xyReferenceMin || x1 > xReferenceMax || y0 < xyReferenceMin || y1 > yReferenceMax) {
+            //EndBenchmark("vme_quadrefine_mainLoop_samples1");
             continue;
           }
+          
+          //EndBenchmark("vme_quadrefine_mainLoop_samples1");
+          
+          //BeginBenchmark("vme_quadrefine_mainLoop_samples2");
           
           numInBounds++;
           
@@ -544,15 +563,25 @@ namespace Anki {
           
           const f32 tGradientValue = oneOverTwoFiftyFive * (interpolatedPixelF32 - templatePixelValue);
           
+          //EndBenchmark("vme_quadrefine_mainLoop_samples2");
+          
+          //BeginBenchmark("vme_quadrefine_mainLoop_samples3");
+          
           for(s32 ia=0; ia<8; ia++) {
             for(s32 ja=ia; ja<8; ja++) {
-              AWAt_raw[ia][ja] += A[ia][iSample] * A[ja][iSample];
+              AWAt_raw[ia][ja] += Arow[ia][iSample] * Arow[ja][iSample];
             }
-            b_raw[ia] += A[ia][iSample] * tGradientValue;
+            b_raw[ia] += Arow[ia][iSample] * tGradientValue;
           }
+          
+          //EndBenchmark("vme_quadrefine_mainLoop_samples3");
           
         } // for each sample
       
+        //EndBenchmark("vme_quadrefine_mainLoop_samples");
+        
+        //BeginBenchmark("vme_quadrefine_mainLoop_finalize");
+        
         // Put the raw A and b matrices into the Array containers
         for(s32 ia=0; ia<8; ia++) {
           for(s32 ja=ia; ja<8; ja++) {
@@ -625,8 +654,14 @@ namespace Anki {
         }
 #endif
       
+        //EndBenchmark("vme_quadrefine_mainLoop_finalize");
+        
+        
       } // for each iteration
       
+      EndBenchmark("vme_quadrefine_mainLoop");
+      
+      BeginBenchmark("vme_quadrefine_finalize");
       
       // Compute the final refined corners
       const f32 h00 = refinedHomography[0][0]; const f32 h01 = refinedHomography[0][1]; const f32 h02 = refinedHomography[0][2];
@@ -660,6 +695,8 @@ namespace Anki {
                               "     'Tag', 'refinedQuad'); drawnow");
       }
 #endif
+      
+      EndBenchmark("vme_quadrefine_finalize");
       
       return RESULT_OK;
       
