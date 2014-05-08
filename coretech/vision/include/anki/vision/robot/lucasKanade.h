@@ -481,7 +481,14 @@ namespace Anki
         static Result ApproximateSelect(const Array<f32> &magnitudeVector, const s32 numBins, const s32 numToSelect, s32 &numSelected, Array<s32> &magnitudeIndexes);
         
         static Result ApproximateSelect(const Array<f32> &magnitudeImage, const s32 numBins, const s32 numRegions, const s32 numToSelect, s32 &numSelected, Array<s32> &magnitudeIndexes);
-                
+        
+        Result CreateVerificationSamples(const Array<u8>& image,
+                                         const LinearSequence<f32>& Xlocations,
+                                         const LinearSequence<f32>& Ylocations,
+                                         const f32 verifyCoordScalarInv,
+                                         s32& startIndex,
+                                         MemoryStack scratch);
+        
       }; // class LucasKanadeTracker_SampledPlanar6dof
       
       

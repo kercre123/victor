@@ -876,60 +876,103 @@ namespace Anki
         } // for each scale
         
         //
-        // Create Grid of Verification Samples
+        // Create Verification Samples
         //
         {
-          const f32 halfWidth = scaleTemplateRegionPercent*templateHalfWidth;
-
           this->verificationSamples.set_size(verifyGridSize*verifyGridSize);
           
-          Meshgrid<f32> verifyCoordinates(Linspace(-halfWidth, halfWidth, verifyGridSize),
-                                          Linspace(-halfWidth, halfWidth, verifyGridSize));
-
-          Array<f32> verifyGrayscaleVector(1, verifyGridSize*verifyGridSize, offchipScratch);
-          {
-            PUSH_MEMORY_STACK(offchipScratch);
-            
-            Array<f32> verifyImage(verifyGridSize, verifyGridSize, offchipScratch);
-            
-            if((lastResult = Interp2_Projective<u8,f32>(templateImage, verifyCoordinates,
-              this->transformation.get_homography(),
-              this->transformation.get_centerOffset(initialImageScaleF32),
-              verifyImage, INTERPOLATE_LINEAR)) != RESULT_OK) {
-                AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
-                  "Interp2_Projective for verification image failed with code 0x%x", lastResult);
-                return;
-            }
-
-            // Turn verifyImage into a vector
-            if((lastResult = Matrix::Vectorize<f32,f32>(false, verifyImage, verifyGrayscaleVector)) != RESULT_OK) {
-              AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
-                "Matrix::Vectorize failed with code 0x%x", lastResult);
-            }
-          } // pop verifyImage
-
-          Array<f32> yVerifyVector = verifyCoordinates.EvaluateY1(false, offchipScratch);
-          Array<f32> xVerifyVector = verifyCoordinates.EvaluateX1(false, offchipScratch);
-
-          const f32 * restrict pYCoordinates = yVerifyVector.Pointer(0,0);
-          const f32 * restrict pXCoordinates = xVerifyVector.Pointer(0,0);
-          const f32 * restrict pGrayvalues   = verifyGrayscaleVector.Pointer(0,0);
-
-          const f32 verifyCoordScalarInv = static_cast<f32>(s8_MAX) / halfWidth;
-
-          for(s32 i=0; i<verifyGridSize*verifyGridSize; ++i)
-          {
-            VerifySample curVerifySample;
-            curVerifySample.xCoordinate = static_cast<s8>(pXCoordinates[i] * verifyCoordScalarInv);
-            curVerifySample.yCoordinate = static_cast<s8>(pYCoordinates[i] * verifyCoordScalarInv);
-            curVerifySample.grayvalue   = static_cast<u8>(pGrayvalues[i]);
-
-            this->verificationSamples[i] = curVerifySample;
-          }
-
+          const f32 verifyCoordScalarInv = static_cast<f32>(s8_MAX) / templateHalfWidth;
+          
           // Store the scalar we need at tracking time to take the stored s8
           // coordinates into f32 values:
           this->verifyCoordScalar = 1.f / verifyCoordScalarInv;
+          
+          s32 interiorStartIndex;
+          s32 interiorGridSize;
+          f32 interiorHalfWidth;
+          
+          if(numFiducialSquareSamples > 0) {
+            // Sample within fiducial, within neighboring interior gap, and the
+            // rest from interior region
+            interiorGridSize  = verifyGridSize - 4;
+            
+            interiorHalfWidth = 0.5f*templateWidth_mm*(1.f - 4.f*fiducialSquareWidthFraction);
+            
+            const f32 fiducialSquareCenter = 0.5f * (1.f - fiducialSquareWidthFraction)*templateWidth_mm;
+            const f32 gapCenter = 0.5f * (1.f - 3.f*fiducialSquareWidthFraction)*templateWidth_mm;
+            const f32 gapSidesStart = 0.5f * (1.f - 4.f*fiducialSquareWidthFraction)*templateWidth_mm;
+            
+            // Top/Bottom Bars of the Square
+            interiorStartIndex = 0;
+            lastResult = CreateVerificationSamples(templateImage,
+                                                   Linspace(-fiducialSquareCenter, fiducialSquareCenter, verifyGridSize),
+                                                   Linspace(-fiducialSquareCenter, fiducialSquareCenter, 2),
+                                                   verifyCoordScalarInv,
+                                                   interiorStartIndex,
+                                                   onchipScratch);
+            
+            AnkiConditionalErrorAndReturn(lastResult == RESULT_OK,
+                                          "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
+                                          "CreateVerificationSamples for Top/Bottom Square Bars failed with code 0x%x", lastResult);
+            
+            
+            // Left/Right Bars of the Square
+            lastResult = CreateVerificationSamples(templateImage,
+                                                   Linspace(-fiducialSquareCenter, fiducialSquareCenter, 2),
+                                                   Linspace(-gapCenter, gapCenter, verifyGridSize-2),
+                                                   verifyCoordScalarInv,
+                                                   interiorStartIndex,
+                                                   onchipScratch);
+            
+            AnkiConditionalErrorAndReturn(lastResult == RESULT_OK,
+                                          "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
+                                          "CreateVerificationSamples for Left/Right Square Bars failed with code 0x%x", lastResult);
+            
+            // Top/Bottom Bars of the Gap
+            lastResult = CreateVerificationSamples(templateImage,
+                                                   Linspace(-gapCenter, gapCenter, verifyGridSize-2),
+                                                   Linspace(-gapCenter, gapCenter, 2),
+                                                   verifyCoordScalarInv,
+                                                   interiorStartIndex,
+                                                   onchipScratch);
+            
+            AnkiConditionalErrorAndReturn(lastResult == RESULT_OK,
+                                          "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
+                                          "CreateVerificationSamples for Top/Bottom Gap Bars failed with code 0x%x", lastResult);
+            
+            // Left/Right Bars of the Gap
+            lastResult = CreateVerificationSamples(templateImage,
+                                                   Linspace(-gapCenter, gapCenter, 2),
+                                                   Linspace(-gapSidesStart, gapSidesStart, verifyGridSize-4),
+                                                   verifyCoordScalarInv,
+                                                   interiorStartIndex,
+                                                   onchipScratch);
+            
+            AnkiConditionalErrorAndReturn(lastResult == RESULT_OK,
+                                          "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
+                                          "CreateVerificationSamples for Left/Right Gap Bars failed with code 0x%x", lastResult);
+            
+          } else {
+            // Use regular grid of samples
+            interiorHalfWidth = scaleTemplateRegionPercent*templateHalfWidth;
+            interiorGridSize  = verifyGridSize;
+            interiorStartIndex = 0;
+          }
+          
+          // Create the interior regular grid of samples
+          lastResult = CreateVerificationSamples(templateImage,
+                                                 Linspace(-interiorHalfWidth, interiorHalfWidth, interiorGridSize),
+                                                 Linspace(-interiorHalfWidth, interiorHalfWidth, interiorGridSize),
+                                                 verifyCoordScalarInv,
+                                                 interiorStartIndex,
+                                                 onchipScratch);
+          
+          AnkiConditionalErrorAndReturn(lastResult == RESULT_OK,
+                                        "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
+                                        "CreateVerificationSamples failed with code 0x%x", lastResult);
+          
+          
+          
         } // create grid of verification samples
 
         this->isValid = true;
@@ -938,6 +981,89 @@ namespace Anki
       }
       
       
+      
+      Result LucasKanadeTracker_SampledPlanar6dof::CreateVerificationSamples(const Array<u8>& image,
+                                                                             const LinearSequence<f32>& Xlocations,
+                                                                             const LinearSequence<f32>& Ylocations,
+                                                                             const f32 verifyCoordScalarInv,
+                                                                             s32& startIndex,
+                                                                             MemoryStack scratch)
+      {
+        //static Matlab matlab(false);
+        //matlab.EvalStringEcho("figure, h_axes = axes; hold on");//, imshow(img), hold on");
+        
+        Result lastResult = RESULT_OK;
+       
+        AnkiConditionalErrorAndReturnValue(startIndex < this->verificationSamples.get_size(),
+                                           RESULT_FAIL_INVALID_PARAMETER,
+                                           "Result LucasKanadeTracker_SampledPlanar6dof::CreateVerificationSamples",
+                                           "Start index not valid.");
+        
+        Meshgrid<f32> verifyCoordinates(Xlocations, Ylocations);
+        
+        const s32 numSamplesX = verifyCoordinates.get_xGridVector().get_size();
+        const s32 numSamplesY = verifyCoordinates.get_yGridVector().get_size();
+        
+        Array<f32> verifyGrayscaleVector(1, numSamplesX*numSamplesY, scratch);
+        {
+          PUSH_MEMORY_STACK(scratch); // necessary?
+          
+          Array<f32> verifyImage(numSamplesY, numSamplesX, scratch);
+          
+          lastResult = Interp2_Projective<u8,f32>(image, verifyCoordinates,
+                                                  this->transformation.get_homography(),
+                                                  this->transformation.get_centerOffset(1.f),
+                                                  verifyImage, INTERPOLATE_LINEAR);
+          
+          AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
+                                             "LucasKanadeTracker_SampledPlanar6dof::CreateVerificationSamples",
+                                               "Interp2_Projective for verification image failed with code 0x%x", lastResult);
+
+          // Turn verifyImage into a vector
+          lastResult = Matrix::Vectorize<f32,f32>(false, verifyImage, verifyGrayscaleVector);
+          
+          AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
+                                             "LucasKanadeTracker_SampledPlanar6dof::CreateVerificationSamples",
+                                             "Matrix::Vectorize failed with code 0x%x", lastResult);
+          
+        } // pop verifyImage
+        
+        Array<f32> yVerifyVector = verifyCoordinates.EvaluateY1(false, scratch);
+        Array<f32> xVerifyVector = verifyCoordinates.EvaluateX1(false, scratch);
+        
+        AnkiConditionalErrorAndReturnValue(xVerifyVector.IsValid(), RESULT_FAIL_MEMORY,
+                                           "LucasKanadeTracker_SampledPlanar6dof::CreateVerificationSamples",
+                                           "Failed to allocate xVerifyVector.");
+        
+        AnkiConditionalErrorAndReturnValue(yVerifyVector.IsValid(), RESULT_FAIL_MEMORY,
+                                           "LucasKanadeTracker_SampledPlanar6dof::CreateVerificationSamples",
+                                           "Failed to allocate yVerifyVector.");
+        
+        const f32 * restrict pYCoordinates = yVerifyVector.Pointer(0,0);
+        const f32 * restrict pXCoordinates = xVerifyVector.Pointer(0,0);
+        const f32 * restrict pGrayvalues   = verifyGrayscaleVector.Pointer(0,0);
+        
+        VerifySample * restrict pVerifySamples = this->verificationSamples.Pointer(0);
+        
+        for(s32 i=0; i<numSamplesX*numSamplesY; ++i)
+        {
+          VerifySample curVerifySample;
+          curVerifySample.xCoordinate = static_cast<s8>(pXCoordinates[i] * verifyCoordScalarInv);
+          curVerifySample.yCoordinate = static_cast<s8>(pYCoordinates[i] * verifyCoordScalarInv);
+          curVerifySample.grayvalue   = static_cast<u8>(pGrayvalues[i]);
+          
+          //matlab.EvalStringEcho("plot(%d, %d, 'ro');", curVerifySample.xCoordinate, curVerifySample.yCoordinate);
+          
+          pVerifySamples[startIndex + i] = curVerifySample;
+        }
+        
+        startIndex += numSamplesX*numSamplesY;
+        
+        //matlab.EvalStringEcho("set(h_axes, 'XLim', [-130 130], 'YLim', [-130 130]); grid on");
+
+        return RESULT_OK;
+        
+      } // CreateVerificationSamples()
       
       
 
