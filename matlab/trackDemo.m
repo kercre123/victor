@@ -141,7 +141,7 @@ end
                     end
                     
                     if NumFiducialSamples > 0
-                        regionWidth = 1 - VisionMarkerTrained.SquareWidthFraction - TemplateRegionPaddingFraction;
+                        regionWidth = 1 - (2*VisionMarkerTrained.SquareWidthFraction) - TemplateRegionPaddingFraction;
                     else
                         regionWidth = 1 + TemplateRegionPaddingFraction;
                     end
