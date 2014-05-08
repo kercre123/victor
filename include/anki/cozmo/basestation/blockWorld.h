@@ -41,6 +41,10 @@ namespace Anki
     class BlockWorld
     {
     public:
+      
+      typedef std::map<ObjectID_t, Vision::ObservableObject*> ObjectsMapByID_t;
+      typedef std::map<ObjectType_t, ObjectsMapByID_t > ObjectsMap_t;
+      
       //static const unsigned int MaxRobots = 4;
       //static bool ZAxisPointsUp; // normally true, false for Webots
 
@@ -65,8 +69,12 @@ namespace Anki
       void CommandRobotToDock(const RobotID_t whichRobot,
                               const Block&    whichBlock);
       
+      // Clears all existing blocks in the world
+      void ClearAllExistingBlocks();
+      
       const Vision::ObservableObjectLibrary& GetBlockLibrary() const;
-      const std::map<ObjectID_t, Vision::ObservableObject*>& GetExistingBlocks(const ObjectType_t blockType) const;
+      const ObjectsMapByID_t& GetExistingBlocks(const ObjectType_t blockType) const;
+      const ObjectsMap_t& GetAllExistingBlocks() const {return existingBlocks_;}
       const Vision::ObservableObjectLibrary& GetMatLibrary() const;
       
       ~BlockWorld();
@@ -92,11 +100,10 @@ namespace Anki
       Vision::ObservableObjectLibrary otherObjectsLibrary_;
       
       // Store all observed objects, indexed first by Type, then by ID
-      typedef std::map<ObjectType_t, std::map<ObjectID_t, Vision::ObservableObject*> > ObjectsMap_t;
       ObjectsMap_t existingBlocks_;
       ObjectsMap_t existingMatPieces_;
       
-      static const std::map<ObjectID_t, Vision::ObservableObject*> EmptyObjectMap;
+      static const ObjectsMapByID_t EmptyObjectMap;
       
       
       void FindOverlappingObjects(const Vision::ObservableObject* objectSeen,
@@ -107,6 +114,10 @@ namespace Anki
       //template<class ObjectType>
       void AddAndUpdateObjects(const std::vector<Vision::ObservableObject*> objectsSeen,
                                    ObjectsMap_t& objectsExisting);
+      
+      // Global counter for assigning IDs to objects as they are created.
+      // This means every object in the world has a unique ObjectID!
+      ObjectID_t globalIDCounter;
       
     }; // class BlockWorld
 
@@ -121,7 +132,7 @@ namespace Anki
     }
      */
     
-    inline const std::map<ObjectID_t, Vision::ObservableObject*>& BlockWorld::GetExistingBlocks(const ObjectType_t blockType) const
+    inline const BlockWorld::ObjectsMapByID_t& BlockWorld::GetExistingBlocks(const ObjectType_t blockType) const
     {
       auto blocksWithID = existingBlocks_.find(blockType);
       if(blocksWithID != existingBlocks_.end()) {

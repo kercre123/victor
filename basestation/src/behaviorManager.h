@@ -38,6 +38,13 @@ namespace Anki {
       void StartMode(BehaviorMode mode);
       
       void Update();
+
+      Robot* GetRobot() const {return robot_;}
+      
+      const ObjectID_t GetBlockOfInterest() const {return blockOfInterest_;}
+      
+      // Select the next object in blockWorld as the block of interest
+      void SelectNextBlockOfInterest();
       
     protected:
       
@@ -62,6 +69,9 @@ namespace Anki {
       
       Robot* robot_;
 
+      // Block that the robot is currently travelling to, docking to,
+      ObjectID_t blockOfInterest_;
+      
       void Reset();
       
       //bool GetPathToPreDockPose(const Block& b, Path& p);

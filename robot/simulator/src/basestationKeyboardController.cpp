@@ -1,7 +1,9 @@
 #include "basestationKeyboardController.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "vizManager.h"
+#include "behaviorManager.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -31,6 +33,9 @@ namespace Anki {
         RobotManager* robotMgr_;
         Robot* robot_;
         
+        BlockWorld* blockWorld_;
+        BehaviorManager* behaviorMgr_;
+        
         int lastKeyPressed_ = 0;
         int lastKeyAndModPressed_ = 0;
         
@@ -42,9 +47,11 @@ namespace Anki {
       } // private namespace
       
       
-      void BSKeyboardController::Init(RobotManager *robotMgr)
+      void BSKeyboardController::Init(RobotManager *robotMgr, BlockWorld *blockWorld, BehaviorManager *behaviorMgr)
       {
         robotMgr_ = robotMgr;
+        blockWorld_ = blockWorld;
+        behaviorMgr_ = behaviorMgr;
         
         gps_ = basestationController.getGPS("gps");
         compass_ = basestationController.getCompass("compass");
@@ -98,6 +105,10 @@ namespace Anki {
         const s32 CKEY_DISPLAY_TOGGLE = 68;  // d
         const s32 CKEY_HEADLIGHT   = 72;  // h
         const s32 CKEY_GOTO_POSE   = 71;  // g
+        const s32 CKEY_CLEAR_BLOCKS = 67; // c
+        //const s32 CKEY_COMMA   = 44;  // ,
+        const s32 CKEY_CYCLE_BLOCK_SELECT   = 46;  // .
+        //const s32 CKEY_BACKSLASH   = 92 // \
 
         // Get robot
         robot_ = NULL;
@@ -291,6 +302,16 @@ namespace Anki {
               
               // Execute path to pose
               robot_->ExecutePathToPose(pose);
+              break;
+            }
+            case CKEY_CYCLE_BLOCK_SELECT:
+            {
+              behaviorMgr_->SelectNextBlockOfInterest();
+              break;
+            }
+            case CKEY_CLEAR_BLOCKS:
+            {
+              blockWorld_->ClearAllExistingBlocks();
               break;
             }
             default:

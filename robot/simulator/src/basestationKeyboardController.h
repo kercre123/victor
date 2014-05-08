@@ -4,11 +4,13 @@
 namespace Anki {
   namespace Cozmo {
     class RobotManager;
+    class BlockWorld;
+    class BehaviorManager;
     
     namespace Sim {
       namespace BSKeyboardController {
 
-        void Init(RobotManager *robotMgr);
+        void Init(RobotManager *robotMgr, BlockWorld* blockWorld, BehaviorManager* behaviorMgr);
         void Enable(void);
         void Disable(void);
         bool IsEnabled(void);

@@ -18,7 +18,8 @@
 namespace Anki {
   namespace Cozmo {
         
-    BehaviorManager::BehaviorManager()
+    BehaviorManager::BehaviorManager() :
+    robotMgr_(nullptr), world_(nullptr)
     {
       Reset();
     }
@@ -50,6 +51,70 @@ namespace Anki {
       nextState_ = state_;
       updateFcn_ = NULL;
       robot_ = NULL;
+    }
+    
+    
+    // TODO: Make this a blockWorld function?
+    void BehaviorManager::SelectNextBlockOfInterest()
+    {
+      bool currBlockOfInterestFound = false;
+      bool newBlockOfInterestSet = false;
+      u32 numTotalObjects = 0;
+      
+      // Iterate through the Object
+      BlockWorld::ObjectsMap_t blockMap = world_->GetAllExistingBlocks();
+      for (auto const & blockType : blockMap) {
+        numTotalObjects += blockType.second.size();
+        
+        PRINT_INFO("currType: %d\n", blockType.first);
+        BlockWorld::ObjectsMapByID_t blockMapByID = blockType.second;
+        for (auto const & block : blockMapByID) {
+
+          PRINT_INFO("currID: %d\n", block.first);
+          if (currBlockOfInterestFound) {
+            // Current block of interest has been found.
+            // Set the new block of interest to the next block in the list.
+            blockOfInterest_ = block.first;
+            newBlockOfInterestSet = true;
+            PRINT_INFO("new block found: id %d  type %d\n", block.first, blockType.first);
+            break;
+          } else if (block.first == blockOfInterest_) {
+            currBlockOfInterestFound = true;
+            PRINT_INFO("curr block found: id %d  type %d\n", block.first, blockType.first);
+          }
+        }
+        if (newBlockOfInterestSet)
+          break;
+      }
+      
+      // If the current block of interest was found, but a new one was not set
+      // it must have been the last block in the map. Set the new block of interest
+      // to the first block in the map as long as it's not the same block.
+      if (!currBlockOfInterestFound || !newBlockOfInterestSet) {
+        
+        // Find first block
+        ObjectID_t firstBlock = u16_MAX;
+        for (auto const & blockType : blockMap) {
+          for (auto const & block : blockType.second) {
+            firstBlock = block.first;
+            break;
+          }
+          if (firstBlock != u16_MAX) {
+            break;
+          }
+        }
+
+        
+        if (firstBlock == blockOfInterest_){
+          PRINT_INFO("Only one block in existence.");
+        } else {
+          PRINT_INFO("Setting block of interest to first block\n");
+          blockOfInterest_ = firstBlock;
+        }
+      }
+      
+      PRINT_INFO("Block of interest: id %d  (total objects %d)\n", blockOfInterest_, numTotalObjects);
+      
     }
     
     void BehaviorManager::Update()

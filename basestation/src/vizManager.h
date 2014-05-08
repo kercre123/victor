@@ -27,7 +27,9 @@ namespace Anki {
     // List of color IDs
     enum VIZ_COLOR_ID {
       VIZ_COLOR_EXECUTED_PATH,
-      VIZ_COLOR_PREDOCKPOSE
+      VIZ_COLOR_PREDOCKPOSE,
+      VIZ_COLOR_SELECTED_OBJECT,
+      VIZ_COLOR_DEFAULT = u32_MAX
     };
     
     // === VizObject ID ranges ===
@@ -74,16 +76,16 @@ namespace Anki {
       
       void DrawRobot(const u32 robotID,
                      const Pose3d &pose,
-                     const u32 colorID = DEFAULT_COLOR_ID);
+                     const u32 colorID = VIZ_COLOR_DEFAULT);
       
       void DrawCuboid(const u32 blockID,
                       const Point3f &size,
                       const Pose3d &pose,
-                      const u32 colorID = DEFAULT_COLOR_ID);
+                      const u32 colorID = VIZ_COLOR_DEFAULT);
       
       void DrawPreDockPose(const u32 preDockPoseID,
                            const Pose3d &pose,
-                           const u32 colorID = DEFAULT_COLOR_ID);
+                           const u32 colorID = VIZ_COLOR_DEFAULT);
       
       //void DrawRamp();
       
@@ -97,7 +99,7 @@ namespace Anki {
       void DrawObject(const u32 objectID, const u32 objectTypeID,
                       const Point3f &size,
                       const Pose3d &pose,
-                      const u32 colorID = DEFAULT_COLOR_ID);
+                      const u32 colorID = VIZ_COLOR_DEFAULT);
       
       // Erases the object corresponding to the objectID
       void EraseVizObject(const u32 objectID);
@@ -110,7 +112,7 @@ namespace Anki {
       
       void DrawPath(const u32 pathID,
                     const Planning::Path& p,
-                    const u32 colorID = DEFAULT_COLOR_ID);
+                    const u32 colorID = VIZ_COLOR_DEFAULT);
       
       // Appends the specified line segment to the path with id pathID
       void AppendPathSegmentLine(const u32 pathID,

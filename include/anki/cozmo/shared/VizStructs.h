@@ -16,8 +16,6 @@ namespace Anki {
 
     const u32 ALL_PATH_IDs = u32_MAX;
     const u32 ALL_OBJECT_IDs = u32_MAX;
-
-    const u32 DEFAULT_COLOR_ID = u32_MAX;
     
     enum VizObjectTypes {
       VIZ_ROBOT,
