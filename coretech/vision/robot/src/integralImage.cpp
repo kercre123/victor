@@ -180,6 +180,11 @@ namespace Anki
 
     Result ScrollingIntegralImage_u8_s32::FilterRow(const Rectangle<s16> &filter, const s32 imageRow, Array<s32> &output) const
     {
+      return this->FilterRow(filter, imageRow, 1, 0, output);
+    }
+
+    Result ScrollingIntegralImage_u8_s32::FilterRow(const Rectangle<s16> &filter, const s32 imageRow, const s32 outputMultiply, const s32 outputRightShift, Array<s32> &output) const
+    {
       AnkiAssert(this->IsValid());
       AnkiAssert(output.IsValid());
 
@@ -216,8 +221,14 @@ namespace Anki
       if(minX > 0)
         memset(pOutput, 0, minX*sizeof(s32));
 
-      for(x=minX; x<=maxX; x++) {
-        pOutput[x] = pIntegralImage_11[x] - pIntegralImage_10[x] + pIntegralImage_00[x] - pIntegralImage_01[x];
+      if(outputMultiply == 1 && outputRightShift == 0) {
+        for(x=minX; x<=maxX; x++) {
+          pOutput[x] = pIntegralImage_11[x] - pIntegralImage_10[x] + pIntegralImage_00[x] - pIntegralImage_01[x];
+        }
+      } else {
+        for(x=minX; x<=maxX; x++) {
+          pOutput[x] = ((pIntegralImage_11[x] - pIntegralImage_10[x] + pIntegralImage_00[x] - pIntegralImage_01[x]) * outputMultiply) >> outputRightShift;
+        }
       }
 
       if((maxX+1) < imageWidth)

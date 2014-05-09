@@ -2667,8 +2667,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
 
     printf("totalTime: %dms\n", Round<s32>(1000*(time1-time0)));
 
-    // TODO: add back
-    //ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
+    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
     ASSERT_TRUE(result == RESULT_OK);
   }

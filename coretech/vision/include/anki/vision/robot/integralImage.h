@@ -79,6 +79,10 @@ namespace Anki
       // borders will be zeros.
       Result FilterRow(const Rectangle<s16> &filter, const s32 imageRow, Array<s32> &output) const;
 
+      // Same as the above, but the final output = (filtered * outputMultiply) >> outputShift;
+      // Useful for normalization or scaling
+      Result FilterRow(const Rectangle<s16> &filter, const s32 imageRow, const s32 outputMultiply, const s32 outputRightShift, Array<s32> &output) const;
+
       // Get the current min and max rows that can be filtered with FilterRow(), for a give filter
       // that extends filterHalfHeight above or below its center.
       //

@@ -39,19 +39,21 @@ namespace Anki
 
       // For the given row of the image, compute the blurred version for each level of the pyramid
       for(s32 pyramidLevel=0; pyramidLevel<=scaleImage_numPyramidLevels; pyramidLevel++) {
+        //BeginBenchmark("ecvcs_filterRows_init");
         const s32 filterHalfWidth = 1 << (pyramidLevel+1); // filterHalfWidth = 2^pyramidLevel;
         const Rectangle<s16> filter(-filterHalfWidth, filterHalfWidth, -filterHalfWidth, filterHalfWidth);
 
-        // Compute the sums using the integral image
-        integralImage.FilterRow(filter, imageY, filteredRows[pyramidLevel]);
-
-        // Normalize the sums
-        s32 * restrict pFilteredRow = filteredRows[pyramidLevel][0];
         const s32 multiply = normalizationMultiply[pyramidLevel];
         const s32 shift = normalizationBitShifts[pyramidLevel];
-        for(s32 x=0; x<imageWidth; x++) {
-          pFilteredRow[x] = (pFilteredRow[x] * multiply) >> shift;
-        }
+
+        //EndBenchmark("ecvcs_filterRows_init");
+
+        //BeginBenchmark("ecvcs_filterRows_filter&normalize");
+
+        // Compute the sums using the integral image
+        integralImage.FilterRow(filter, imageY, multiply, shift, filteredRows[pyramidLevel]);
+
+        //EndBenchmark("ecvcs_filterRows_filter&normalize");
       } // for(s32 pyramidLevel=0; pyramidLevel<=numLevels; pyramidLevel++)
     } // staticInline ecvcs_filterRows()
 
