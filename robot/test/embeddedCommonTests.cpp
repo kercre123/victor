@@ -3021,6 +3021,9 @@ GTEST_TEST(CoreTech_Common, MemoryStackAlignment)
 #ifdef TEST_BENCHMARKING
 GTEST_TEST(CoreTech_Common, Benchmarking)
 {
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(scratchOffchip.IsValid());
+  
   InitBenchmarking();
 
   BeginBenchmark("testOuterSpace");
@@ -3056,7 +3059,7 @@ GTEST_TEST(CoreTech_Common, Benchmarking)
 
   EndBenchmark("testOuterSpace");
 
-  ComputeAndPrintBenchmarkResults(true, true);
+  ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
   printf("Done with benchmarking test\n");
 
