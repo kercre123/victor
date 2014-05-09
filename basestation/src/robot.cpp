@@ -374,12 +374,12 @@ namespace Anki {
       // Send path segments
       for (u8 i=0; i<path.GetNumSegments(); i++)
       {
-        switch (path[i].GetType())
+        switch (path.GetSegmentConstRef(i).GetType())
         {
           case Planning::PST_LINE:
           {
             MessageAppendPathSegmentLine m;
-            const Planning::PathSegmentDef::s_line* l = &(path[i].GetDef().line);
+            const Planning::PathSegmentDef::s_line* l = &(path.GetSegmentConstRef(i).GetDef().line);
             m.x_start_mm = l->startPt_x;
             m.y_start_mm = l->startPt_y;
             m.x_end_mm = l->endPt_x;
@@ -387,9 +387,9 @@ namespace Anki {
             m.pathID = 0;
             m.segmentID = i;
             
-            m.targetSpeed = path[i].GetTargetSpeed();
-            m.accel = path[i].GetAccel();
-            m.decel = path[i].GetDecel();
+            m.targetSpeed = path.GetSegmentConstRef(i).GetTargetSpeed();
+            m.accel = path.GetSegmentConstRef(i).GetAccel();
+            m.decel = path.GetSegmentConstRef(i).GetDecel();
             
             if (msgHandler_->SendMessage(ID_, m) == RESULT_FAIL)
               return RESULT_FAIL;
@@ -398,7 +398,7 @@ namespace Anki {
           case Planning::PST_ARC:
           {
             MessageAppendPathSegmentArc m;
-            const Planning::PathSegmentDef::s_arc* a = &(path[i].GetDef().arc);
+            const Planning::PathSegmentDef::s_arc* a = &(path.GetSegmentConstRef(i).GetDef().arc);
             m.x_center_mm = a->centerPt_x;
             m.y_center_mm = a->centerPt_y;
             m.radius_mm = a->radius;
@@ -407,9 +407,9 @@ namespace Anki {
             m.pathID = 0;
             m.segmentID = i;
             
-            m.targetSpeed = path[i].GetTargetSpeed();
-            m.accel = path[i].GetAccel();
-            m.decel = path[i].GetDecel();
+            m.targetSpeed = path.GetSegmentConstRef(i).GetTargetSpeed();
+            m.accel = path.GetSegmentConstRef(i).GetAccel();
+            m.decel = path.GetSegmentConstRef(i).GetDecel();
             
             if (msgHandler_->SendMessage(ID_, m) == RESULT_FAIL)
               return RESULT_FAIL;
