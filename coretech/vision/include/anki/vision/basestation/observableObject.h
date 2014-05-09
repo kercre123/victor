@@ -127,6 +127,11 @@ namespace Anki {
       // at all.
       std::list<Pose3d> possiblePoses_;
       */
+    private:
+      // Don't allow a copy constuctor, because it won't handle fixing the
+      // marker pointers and pose parents
+      ObservableObject(const ObservableObject& other);
+      
     };
     
     //
@@ -268,7 +273,7 @@ namespace Anki {
                               const ObservableObject*         libObject,
                               const float distThreshold, const Radians angleThreshold,
                               std::vector<PoseCluster>& poseClusters) const;
-      
+
     }; // class ObservableObjectLibrary
     
     
