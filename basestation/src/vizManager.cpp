@@ -32,6 +32,11 @@ namespace Anki {
       DefineColor(VIZ_COLOR_PREDOCKPOSE,   1.0, 0.0, 0.0, 0.75);
       DefineColor(VIZ_COLOR_SELECTED_OBJECT, 0.0, 1.0, 0.0, 0.0);
       
+      // Compute the max IDs permitted by VizObject type
+      for (u32 i=0; i<NUM_VIZ_OBJECT_TYPES; ++i) {
+        VizObjectMaxID[i] = VizObjectBaseID[i+1] - VizObjectBaseID[i];
+      }
+      
       return isInitialized_ ? RESULT_OK : RESULT_FAIL;
     }
     
@@ -98,10 +103,10 @@ namespace Anki {
                                const Pose3d &pose,
                                const u32 colorID)
     {
-      CORETECH_ASSERT(robotID < CUBOID_ID_BASE);
+      CORETECH_ASSERT(robotID < VizObjectMaxID[VIZ_ROBOT]);
       
       Anki::Point3f dims; // junk
-      DrawObject(ROBOT_ID_BASE + robotID,
+      DrawObject(VizObjectBaseID[VIZ_ROBOT] + robotID,
                  VIZ_ROBOT,
                  dims,
                  pose,
@@ -113,9 +118,9 @@ namespace Anki {
                                 const Pose3d &pose,
                                 const u32 colorID)
     {
-      CORETECH_ASSERT(blockID < (RAMP_ID_BASE - CUBOID_ID_BASE));
+      CORETECH_ASSERT(blockID < VizObjectMaxID[VIZ_CUBOID]);
       
-      DrawObject(CUBOID_ID_BASE + blockID,
+      DrawObject(VizObjectMaxID[VIZ_CUBOID] + blockID,
                  VIZ_CUBOID,
                  size,
                  pose,
@@ -126,10 +131,10 @@ namespace Anki {
                                      const Pose3d &pose,
                                      const u32 colorID)
     {
-      //CORETECH_ASSERT(preDockPoseID < ([[NEXT_OBJECT_ID_BASE]] - PREDOCKPOSE_ID_BASE));
+      CORETECH_ASSERT(preDockPoseID < VizObjectMaxID[VIZ_PREDOCKPOSE]);
       
       Anki::Point3f dims; // junk
-      DrawObject(PREDOCKPOSE_ID_BASE + preDockPoseID,
+      DrawObject(VizObjectMaxID[VIZ_PREDOCKPOSE] + preDockPoseID,
                  VIZ_PREDOCKPOSE,
                  dims,
                  pose,
@@ -187,6 +192,17 @@ namespace Anki {
       SendMessage( GET_MESSAGE_ID(VizEraseObject), &v );
     }
     
+    void VizManager::EraseVizObjectType(const VizObjectType type)
+    {
+      VizEraseObject v;
+      v.objectID = OBJECT_ID_RANGE;
+      v.lower_bound_id = VizObjectBaseID[type];
+      v.upper_bound_id = VizObjectBaseID[type+1]-1;
+      
+      SendMessage( GET_MESSAGE_ID(VizEraseObject), &v );
+    }
+
+    
     // ================== Path drawing methods ====================
     
     void VizManager::DrawPath(const u32 pathID,
@@ -196,8 +212,8 @@ namespace Anki {
       ErasePath(pathID);
       
       for (int s=0; s < p.GetNumSegments(); ++s) {
-        const Planning::PathSegmentDef& seg = p[s].GetDef();
-        switch(p[s].GetType()) {
+        const Planning::PathSegmentDef& seg = p.GetSegmentConstRef(s).GetDef();
+        switch(p.GetSegmentConstRef(s).GetType()) {
           case Planning::PST_LINE:
             AppendPathSegmentLine(pathID,
                                   seg.line.startPt_x, seg.line.startPt_y,

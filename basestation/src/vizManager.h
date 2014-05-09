@@ -32,16 +32,6 @@ namespace Anki {
       VIZ_COLOR_DEFAULT = u32_MAX
     };
     
-    // === VizObject ID ranges ===
-    // [0,    999]:  Robots
-    // [1000, 1099]: Cuboids
-    // [1100, 1199]: Ramps
-    // [1200, 1299]: PreDockPoses
-    const u32 ROBOT_ID_BASE       = 0;
-    const u32 CUBOID_ID_BASE      = 1000;
-    const u32 RAMP_ID_BASE        = 1100;
-    const u32 PREDOCKPOSE_ID_BASE = 1200;    
-    
     
     // NOTE: this is a singleton class
     class VizManager
@@ -106,6 +96,9 @@ namespace Anki {
       
       // Erases all objects. (Not paths)
       void EraseAllVizObjects();
+      
+      // Erase all objects of a certain type
+      void EraseVizObjectType(const VizObjectType type);
       
       
       // ===== Path draw functions ====
@@ -172,6 +165,9 @@ namespace Anki {
 
       // Image sending
       u8 imgID;
+    
+      // Stores the maximum ID permitted for a given VizObject type
+      u32 VizObjectMaxID[NUM_VIZ_OBJECT_TYPES];
       
     }; // class VizManager
     

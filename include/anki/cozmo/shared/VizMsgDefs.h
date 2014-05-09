@@ -47,6 +47,8 @@ END_MESSAGE_DEFINITION(VizObject)
 // EraseObject
 START_MESSAGE_DEFINITION(VizEraseObject, 1)
 ADD_MESSAGE_MEMBER(u32, objectID)
+ADD_MESSAGE_MEMBER(u32, lower_bound_id)
+ADD_MESSAGE_MEMBER(u32, upper_bound_id)
 END_MESSAGE_DEFINITION(VizEraseObject)
 
 // VizSetRobot
