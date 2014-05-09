@@ -108,7 +108,8 @@ namespace Anki {
         const s32 CKEY_CLEAR_BLOCKS = 67; // c
         //const s32 CKEY_COMMA   = 44;  // ,
         const s32 CKEY_CYCLE_BLOCK_SELECT   = 46;  // .
-        //const s32 CKEY_BACKSLASH   = 92 // \
+        //const s32 CKEY_BACKSLASH   = 92 // '\'
+        const s32 CKEY_DOCK_TO_BLOCK  = 80;  // p
 
         // Get robot
         robot_ = NULL;
@@ -312,6 +313,12 @@ namespace Anki {
             case CKEY_CLEAR_BLOCKS:
             {
               blockWorld_->ClearAllExistingBlocks();
+              VizManager::getInstance()->EraseVizObjectType(VIZ_CUBOID);
+              break;
+            }
+            case CKEY_DOCK_TO_BLOCK:
+            {
+              behaviorMgr_->StartMode(BM_PickAndPlace);
               break;
             }
             default:

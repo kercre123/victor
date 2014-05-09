@@ -402,7 +402,6 @@ namespace Anki
     void BlockWorld::ClearAllExistingBlocks() {
       existingBlocks_.clear();
       globalIDCounter = 0;
-      VizManager::getInstance()->EraseAllVizObjects();
     }
     
     
