@@ -163,6 +163,15 @@ namespace Anki {
       
     } // Constructor: Block(type)
     
+    
+    Block::Block(const Block& otherBlock)
+    : Block(otherBlock.GetType()) // just create an all-new block of the same type
+    {
+      // Put this new block at the new at the same pose as the other block
+      SetPose(otherBlock.GetPose());
+      
+    } // Copy Constructor: Block(otherBlock)
+    
     Quad3f Block::GetBoundingQuadInPlane(const Point3f& planeNormal, const f32 padding) const
     {
       return GetBoundingQuadInPlane(planeNormal, pose_, padding);

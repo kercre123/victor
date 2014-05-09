@@ -82,6 +82,8 @@ namespace Anki {
       
       Block(const ObjectType_t type);
       
+      Block(const Block& other); 
+      
       ~Block();
       
       //static unsigned int get_numBlocks();

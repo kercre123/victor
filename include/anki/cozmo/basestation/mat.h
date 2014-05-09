@@ -16,8 +16,14 @@ namespace Anki {
       
       virtual ObservableObject* Clone() const
       {
-        // Call the copy constructor
-        return new MatPiece(static_cast<const MatPiece&>(*this));
+        // Create an all-new mat piece of this type, to keep all the
+        // bookkeeping and pointers (e.g. the pose tree) kosher.
+        MatPiece* clone = new MatPiece(this->GetType());
+        
+        // Move the clone to this mat piece's pose
+        clone->SetPose(this->GetPose());
+        
+        return clone;
       }
       
       virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const;
