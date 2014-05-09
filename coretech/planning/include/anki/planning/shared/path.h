@@ -102,6 +102,10 @@ namespace Anki
       f32 GetTargetSpeed() const {return targetSpeed_;}
       f32 GetAccel() const {return accel_;}
       f32 GetDecel() const {return decel_;}
+      
+      f32 SetTargetSpeed(const f32 speed) {return targetSpeed_ = speed;}
+      f32 SetAccel(const f32 accel) {return accel_ = accel;}
+      f32 SetDecel(const f32 decel) {return decel_ = decel;}
 
     private:
       SegmentRangeStatus GetDistToLineSegment(const f32 x, const f32 y, const f32 angle,
@@ -146,7 +150,8 @@ namespace Anki
                            f32 targetRotSpeed, f32 rotAccel, f32 rotDecel);
        
       // Accessor for PathSegment at specified index
-      const PathSegment& operator[](const u8 idx) const {return path_[idx];}
+      PathSegment& operator[](const u8 idx) {return path_[idx];}
+      const PathSegment& GetSegmentConstRef(const u8 idx) const {return path_[idx];}
 
       // Verifies that the path segment at the specified index
       // starts at where the previous segments ends with some tolerance
