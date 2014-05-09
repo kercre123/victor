@@ -140,7 +140,7 @@ namespace Anki {
       BlockWorld*   world_;
       
       PathPlanner* pathPlanner_;
-      
+      Planning::Path path_;
       
       Pose3d pose;
       void updatePose();

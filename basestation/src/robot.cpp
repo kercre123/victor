@@ -115,6 +115,19 @@ namespace Anki {
       // ...
       
       
+     
+      // Visualize path if robot has just started traversing it.
+      // Clear the path when it has stopped.
+      static bool wasTraversingPath = false;
+      if (!wasTraversingPath && IsTraversingPath() && path_.GetNumSegments() > 0) {
+        VizManager::getInstance()->DrawPath(ID_,path_,VIZ_COLOR_EXECUTED_PATH);
+        wasTraversingPath = true;
+      } else if (wasTraversingPath && !IsTraversingPath()){
+        path_.Clear();
+        VizManager::getInstance()->ErasePath(ID_);
+        wasTraversingPath = false;
+      }
+      
     } // step()
 
     
@@ -328,15 +341,23 @@ namespace Anki {
     Result Robot::GetPathToPose(const Pose3d& targetPose, Planning::Path& path)
     {
       
-      return pathPlanner_->GetPlan(path, get_pose(), targetPose);
+      Result res = pathPlanner_->GetPlan(path, get_pose(), targetPose);
       
+      // TODO: Make some sort of ApplySpeedProfile() function.
+      //       Currently, we just set the speed of last segment to something slow.
+      if (res == RESULT_OK) {
+        path[path.GetNumSegments()-1].SetTargetSpeed(20);
+        path[path.GetNumSegments()-1].SetDecel(100);
+      }
       
+      return res;
     }
     
     Result Robot::ExecutePathToPose(const Pose3d& pose)
     {
       Planning::Path p;
       if (GetPathToPose(pose, p) == RESULT_OK) {
+        path_ = p;
         return SendExecutePath(p);
       }
         
@@ -423,9 +444,6 @@ namespace Anki {
             return RESULT_FAIL;
             
         }
-        
-        // Visualize path
-        VizManager::getInstance()->DrawPath(ID_,path,VIZ_COLOR_EXECUTED_PATH);
       }
       
       // Send start path execution message
