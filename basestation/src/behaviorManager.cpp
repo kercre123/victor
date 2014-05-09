@@ -11,9 +11,11 @@
 
 #include "behaviorManager.h"
 #include "pathPlanner.h"
+#include "vizManager.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/common/basestation/general.h"
+#include "anki/cozmo/robot/cozmoConfig.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -33,7 +35,13 @@ namespace Anki {
     void BehaviorManager::StartMode(BehaviorMode mode)
     {
       switch(mode) {
+        case BM_None:
+          state_ = WAITING_FOR_ROBOT;
+          nextState_ = state_;
+          updateFcn_ = nullptr;
+          break;
         case BM_PickAndPlace:
+          dockBlock_ = nullptr;
           nextState_ = WAITING_FOR_PICKUP_BLOCK;
           updateFcn_ = &BehaviorManager::Update_PickAndPlaceBlock;
           break;
@@ -42,15 +50,17 @@ namespace Anki {
           return;
       }
       
-      assert(updateFcn_ != NULL);
+      //assert(updateFcn_ != nullptr);
     }
     
     void BehaviorManager::Reset()
     {
       state_ = WAITING_FOR_ROBOT;
       nextState_ = state_;
-      updateFcn_ = NULL;
-      robot_ = NULL;
+      updateFcn_ = nullptr;
+      robot_ = nullptr;
+      
+      dockBlock_ = nullptr;
     }
     
     
@@ -62,25 +72,25 @@ namespace Anki {
       u32 numTotalObjects = 0;
       
       // Iterate through the Object
-      BlockWorld::ObjectsMap_t blockMap = world_->GetAllExistingBlocks();
+      auto const & blockMap = world_->GetAllExistingBlocks();
       for (auto const & blockType : blockMap) {
         numTotalObjects += blockType.second.size();
         
-        PRINT_INFO("currType: %d\n", blockType.first);
-        BlockWorld::ObjectsMapByID_t blockMapByID = blockType.second;
+        //PRINT_INFO("currType: %d\n", blockType.first);
+        auto const & blockMapByID = blockType.second;
         for (auto const & block : blockMapByID) {
 
-          PRINT_INFO("currID: %d\n", block.first);
+          //PRINT_INFO("currID: %d\n", block.first);
           if (currBlockOfInterestFound) {
             // Current block of interest has been found.
             // Set the new block of interest to the next block in the list.
             blockOfInterest_ = block.first;
             newBlockOfInterestSet = true;
-            PRINT_INFO("new block found: id %d  type %d\n", block.first, blockType.first);
+            //PRINT_INFO("new block found: id %d  type %d\n", block.first, blockType.first);
             break;
           } else if (block.first == blockOfInterest_) {
             currBlockOfInterestFound = true;
-            PRINT_INFO("curr block found: id %d  type %d\n", block.first, blockType.first);
+            //PRINT_INFO("curr block found: id %d  type %d\n", block.first, blockType.first);
           }
         }
         if (newBlockOfInterestSet)
@@ -106,9 +116,9 @@ namespace Anki {
 
         
         if (firstBlock == blockOfInterest_){
-          PRINT_INFO("Only one block in existence.");
+          //PRINT_INFO("Only one block in existence.");
         } else {
-          PRINT_INFO("Setting block of interest to first block\n");
+          //PRINT_INFO("Setting block of interest to first block\n");
           blockOfInterest_ = firstBlock;
         }
       }
@@ -131,7 +141,11 @@ namespace Anki {
           break;
         }
         default:
-          (this->*updateFcn_)();
+          if (updateFcn_) {
+            (this->*updateFcn_)();
+          } else {
+            state_ = nextState_ = WAITING_FOR_ROBOT;
+          }
           break;
       }
 
@@ -155,14 +169,10 @@ namespace Anki {
      ********************************************************/
     void BehaviorManager::Update_PickAndPlaceBlock()
     {
-
-      const Pose2d p_2d(0, 200, 400);
-      const Pose3d p(p_2d);
-      const float distThresh = 50;
+      // Params for determining whether the predock pose has been reached
+      const f32 distThresh_mm = 50;
       const Radians angThresh(0.1);
       
-      
-      const Block::Type PICKUP_BLOCK_TYPE = Block::Type::BULLSEYE_BLOCK_TYPE;
       const Block::Type PLACEMENT_BLOCK_TYPE = Block::Type::FUEL_BLOCK_TYPE;
       
       switch(state_) {
@@ -176,8 +186,54 @@ namespace Anki {
           // 4) Find a collision-free path to one of the docking poses
           // 5) Command path to that docking pose
           
-          // HACK: For now just generate a random path to anywhere.
-          if (robot_->ExecutePathToPose(p) == RESULT_OK)
+          
+          // Get block object
+          const Vision::ObservableObject* oObject = world_->GetObservableObjectByID(blockOfInterest_);
+          if (oObject == nullptr) {
+            break;
+          }
+          dockBlock_ = (Block*)oObject;
+        
+
+          // Get predock poses
+          std::vector<Block::PoseMarkerPair_t> preDockPoseMarkerPairs;
+          dockBlock_->GetPreDockPoses(PREDOCK_DISTANCE_MM, preDockPoseMarkerPairs);
+         
+          
+          // Select (closest) predock pose
+          const Pose3d& robotPose = robot_->get_pose();
+
+          if (!preDockPoseMarkerPairs.empty()) {
+            f32 shortestDist2Pose = -1;
+            for (auto const & poseMarkerPair : preDockPoseMarkerPairs) {
+              
+              PRINT_INFO("Candidate pose: (%f %f %f), (%f %f %f %f)\n",
+                         poseMarkerPair.first.get_translation().x(),
+                         poseMarkerPair.first.get_translation().y(),
+                         poseMarkerPair.first.get_translation().z(),
+                         poseMarkerPair.first.get_rotationAxis().x(),
+                         poseMarkerPair.first.get_rotationAxis().y(),
+                         poseMarkerPair.first.get_rotationAxis().z(),
+                         poseMarkerPair.first.get_rotationAngle().ToFloat() );
+              
+              f32 dist2Pose = computeDistanceBetween(poseMarkerPair.first, robotPose);
+              if (dist2Pose < shortestDist2Pose || shortestDist2Pose < 0) {
+                shortestDist2Pose = dist2Pose;
+                nearestPreDockPose_ = poseMarkerPair.first;
+                preDockMarkerCode_ = poseMarkerPair.second.GetCode();
+                preDockMarkerWidth_mm_ = poseMarkerPair.second.GetSize();
+              }
+            }
+          } else {
+            PRINT_INFO("No docking pose found\n");
+            StartMode(BM_None);
+            return;
+          }
+
+          
+          // Generate path to predock pose
+          // TODO: Generate collision-free path!!!
+          if (robot_->ExecutePathToPose(nearestPreDockPose_) == RESULT_OK)
             state_ = EXECUTING_PATH_TO_DOCK_POSE;
           
           break;
@@ -186,19 +242,17 @@ namespace Anki {
         {
           // Once robot is confirmed at the docking pose, execute docking.
           if(!robot_->IsTraversingPath()) {
-            if (robot_->get_pose().IsSameAs(p, distThresh, angThresh)) {
+            
+            if (robot_->get_pose().IsSameAs(nearestPreDockPose_, distThresh_mm, angThresh)) {
               PRINT_INFO("Dock pose reached\n");
               
               // TODO: Confirm that expected marker is within view
               // ...
               
-              // TODO: Get marker info
-              f32 markerWidth = 30;
-
               
               // Start dock
-              PRINT_INFO("Picking up block with marker %d\n", PICKUP_BLOCK_TYPE);
-              robot_->SendDockWithBlock(PICKUP_BLOCK_TYPE, markerWidth, DA_PICKUP_LOW);
+              PRINT_INFO("Picking up block with marker %d\n", preDockMarkerCode_);
+              robot_->SendDockWithBlock(preDockMarkerCode_,  preDockMarkerWidth_mm_, DA_PICKUP_LOW);
               state_ = EXECUTING_DOCK;
               
             } else {

@@ -77,6 +77,8 @@ namespace Anki
       const ObjectsMap_t& GetAllExistingBlocks() const {return existingBlocks_;}
       const Vision::ObservableObjectLibrary& GetMatLibrary() const;
       
+      const Vision::ObservableObject* GetObservableObjectByID(const ObjectID_t objectID) const;
+      
       ~BlockWorld();
       
     protected:
@@ -148,6 +150,18 @@ namespace Anki
     
     inline const Vision::ObservableObjectLibrary& BlockWorld::GetMatLibrary() const {
       return matLibrary_;
+    }
+    
+    inline const Vision::ObservableObject* BlockWorld::GetObservableObjectByID(const ObjectID_t objectID) const
+    {
+      for (auto const & block : existingBlocks_) {
+        auto const & objectByIdMap = block.second;
+        auto objectIt = objectByIdMap.find(objectID);
+        if (objectIt != objectByIdMap.end()) {
+          return objectIt->second;
+        }
+      }
+      return nullptr;
     }
     
   } // namespace Cozmo

@@ -15,6 +15,8 @@
 #define BEHAVIOR_MANAGER_H
 
 #include "anki/common/types.h"
+#include "anki/common/basestation/math/pose.h"
+#include "anki/vision/basestation/visionMarker.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -25,6 +27,7 @@ namespace Anki {
     class Block;
     
     typedef enum {
+      BM_None,
       BM_PickAndPlace
     } BehaviorMode;
     
@@ -78,6 +81,21 @@ namespace Anki {
       
       // Behavior state machines
       void Update_PickAndPlaceBlock();
+      
+      
+      /////// PickAndPlace vars ///////
+    
+      // Block to dock with
+      Block* dockBlock_;
+      
+      // Target pose for predock
+      Pose3d nearestPreDockPose_;
+      
+      // Expected marker at predock pose
+      Vision::Marker::Code preDockMarkerCode_;
+      
+      // Width of expected marker
+      f32 preDockMarkerWidth_mm_;
       
       
     }; // class BehaviorManager
