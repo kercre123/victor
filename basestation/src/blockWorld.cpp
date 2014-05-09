@@ -45,6 +45,8 @@ namespace Anki
       // 1x1 Cubes
       //
       blockLibrary_.AddObject(new Block_Cube1x1(Block::FUEL_BLOCK_TYPE));
+      
+      blockLibrary_.AddObject(new Block_Cube1x1(Block::ANGRYFACE_BLOCK_TYPE));
 
       blockLibrary_.AddObject(new Block_Cube1x1(Block::BULLSEYE_BLOCK_TYPE));
       
@@ -305,15 +307,6 @@ namespace Anki
         } // if/else overlapping existing blocks found
      
       } // for each block seen
-      
-      // Create a list of current cameras
-      // TODO: Keep this elsewhere and only update when robots are added/deleted?
-      std::vector<const Vision::Camera*> cameras;
-      for(auto & id : robotMgr_->GetRobotIDList()) {
-        const Robot* robot = robotMgr_->GetRobotByID(id);
-        cameras.push_back(&robot->get_camHead());
-      }
-      CORETECH_ASSERT(cameras.size() == robotMgr_->GetNumRobots());
       
       // Project any unobserved existing blocks into each camera, using
       // their old poses.  Note that this is conservative: these objects may
