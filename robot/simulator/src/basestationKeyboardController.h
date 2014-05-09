@@ -15,7 +15,7 @@ namespace Anki {
         void Disable(void);
         bool IsEnabled(void);
         void ProcessKeystroke(void);
-        
+        void PrintHelp(void);
         
       } // namespace KeyboardController
     } // namespace Sim 

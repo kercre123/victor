@@ -66,11 +66,7 @@ namespace Anki {
         
         isEnabled_ = true;
 
-        printf("\nBasestation keyboard control\n");
-        printf("===============================\n");
-        printf("Drive: arrows\n");
-        printf("Lift low/high/carry: 1/2/3\n");
-        printf("Head down/forward/up: 4/5/6\n\n");
+        PrintHelp();
 
       } // Enable()
       
@@ -86,6 +82,28 @@ namespace Anki {
         return isEnabled_;
       }
       
+      
+      void BSKeyboardController::PrintHelp()
+      {
+        printf("\nBasestation keyboard control\n");
+        printf("===============================\n");
+        printf("                    Drive:  arrows  (Hold shift for slower speeds)\n");
+        printf("        Move lift up/down:  a/z\n");
+        printf("        Move head up/down:  s/x\n");
+        printf("      Lift low/high/carry:  1/2/3\n");
+        printf("     Head down/forward/up:  4/5/6\n");
+        printf("         Toggle headlight:  h\n");
+        printf("            Request image:  i\n");
+        printf("      Toggle image stream:  Shift+i\n");
+        printf(" Toggle VizObject display:  d\n");
+        printf("   Goto green pose marker:  g\n");
+        printf("       Cycle block select:  .\n");
+        printf("       Clear known blocks:  c\n");
+        printf("   Dock to selected block:  p\n");
+        printf("               Test modes:  Alt + Testmode#\n");
+        printf("               Print help:  ?\n");
+        printf("\n");
+      }
       
       //Check the keyboard keys and issue robot commands
       void BSKeyboardController::ProcessKeystroke()
@@ -108,8 +126,10 @@ namespace Anki {
         const s32 CKEY_CLEAR_BLOCKS = 67; // c
         //const s32 CKEY_COMMA   = 44;  // ,
         const s32 CKEY_CYCLE_BLOCK_SELECT   = 46;  // .
+        //const s32 CKEY_FWDSLASH    = 47; // '/'
         //const s32 CKEY_BACKSLASH   = 92 // '\'
         const s32 CKEY_DOCK_TO_BLOCK  = 80;  // p
+        const s32 CKEY_QUESTION_MARK  = 63; // '/'
 
         // Get robot
         robot_ = NULL;
@@ -319,6 +339,11 @@ namespace Anki {
             case CKEY_DOCK_TO_BLOCK:
             {
               behaviorMgr_->StartMode(BM_PickAndPlace);
+              break;
+            }
+            case CKEY_QUESTION_MARK:
+            {
+              PrintHelp();
               break;
             }
             default:
