@@ -25,11 +25,11 @@ namespace Anki
 #define MAX_ALPHAS 128
 
     // These are not inlined, to make it easier to hand-optimize them. Inlining them will probably only slightly increase speed.
-    NO_INLINE void ecvcs_filterRows(const ScrollingIntegralImage_u8_s32 &integralImage, const s32 scaleImage_numPyramidLevels, const s32 imageY, const s32 imageWidth, Array<s32> * restrict filteredRows);
-    NO_INLINE void ecvcs_computeBinaryImage_numPyramids3(const Array<u8> &image, const Array<s32> * restrict filteredRows, const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier, const s32 imageY, const s32 imageWidth, u8 * restrict pBinaryImageRow);
-    NO_INLINE void ecvcs_computeBinaryImage(const Array<u8> &image, const Array<s32> * restrict filteredRows, const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier, const s32 imageY, const s32 imageWidth, u8 * restrict pBinaryImageRow);
+    NO_INLINE void ecvcs_filterRows(const ScrollingIntegralImage_u8_s32 &integralImage, const s32 scaleImage_numPyramidLevels, const s32 imageY, const s32 imageWidth, Array<u8> * restrict filteredRows);
+    NO_INLINE void ecvcs_computeBinaryImage_numPyramids3(const Array<u8> &image, const Array<u8> * restrict filteredRows, const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier, const s32 imageY, const s32 imageWidth, u8 * restrict pBinaryImageRow);
+    NO_INLINE void ecvcs_computeBinaryImage(const Array<u8> &image, const Array<u8> * restrict filteredRows, const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier, const s32 imageY, const s32 imageWidth, u8 * restrict pBinaryImageRow);
 
-    NO_INLINE void ecvcs_filterRows(const ScrollingIntegralImage_u8_s32 &integralImage, const s32 scaleImage_numPyramidLevels, const s32 imageY, const s32 imageWidth, Array<s32> * restrict filteredRows)
+    NO_INLINE void ecvcs_filterRows(const ScrollingIntegralImage_u8_s32 &integralImage, const s32 scaleImage_numPyramidLevels, const s32 imageY, const s32 imageWidth, Array<u8> * restrict filteredRows)
     {
       // To normalize a sum of 1 / ((2*n+1)^2), we approximate a division as a mulitiply and shift.
       // These multiply coefficients were computed in matlab by typing:
@@ -57,24 +57,24 @@ namespace Anki
       } // for(s32 pyramidLevel=0; pyramidLevel<=numLevels; pyramidLevel++)
     } // staticInline ecvcs_filterRows()
 
-    NO_INLINE void ecvcs_computeBinaryImage_numPyramids3(const Array<u8> &image, const Array<s32> * restrict filteredRows, const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier, const s32 imageY, const s32 imageWidth, u8 * restrict pBinaryImageRow)
+    NO_INLINE void ecvcs_computeBinaryImage_numPyramids3(const Array<u8> &image, const Array<u8> * restrict filteredRows, const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier, const s32 imageY, const s32 imageWidth, u8 * restrict pBinaryImageRow)
     {
       const s32 thresholdMultiplier_numFractionalBits = 16;
 
       const u8 * restrict pImage = image[imageY];
 
-      const s32 * restrict pFilteredRows0 = filteredRows[0][0];
-      const s32 * restrict pFilteredRows1 = filteredRows[1][0];
-      const s32 * restrict pFilteredRows2 = filteredRows[2][0];
-      const s32 * restrict pFilteredRows3 = filteredRows[3][0];
+      const u8 * restrict pFilteredRows0 = filteredRows[0][0];
+      const u8 * restrict pFilteredRows1 = filteredRows[1][0];
+      const u8 * restrict pFilteredRows2 = filteredRows[2][0];
+      const u8 * restrict pFilteredRows3 = filteredRows[3][0];
 
       for(s32 x=imageWidth-1; x>=0; x--) {
         s32 scaleValue;
 
         //for(s32 pyramidLevel=0; pyramidLevel<3; pyramidLevel++) {
-        const s32 dog0 = ABS(pFilteredRows1[x] - pFilteredRows0[x]);
-        const s32 dog1 = ABS(pFilteredRows2[x] - pFilteredRows1[x]);
-        const s32 dog2 = ABS(pFilteredRows3[x] - pFilteredRows2[x]);
+        const s32 dog0 = ABS(static_cast<s32>(pFilteredRows1[x]) - static_cast<s32>(pFilteredRows0[x]));
+        const s32 dog1 = ABS(static_cast<s32>(pFilteredRows2[x]) - static_cast<s32>(pFilteredRows1[x]));
+        const s32 dog2 = ABS(static_cast<s32>(pFilteredRows3[x]) - static_cast<s32>(pFilteredRows2[x]));
 
         if(dog0 > dog1) {
           if(dog0 > dog2) {
@@ -99,13 +99,13 @@ namespace Anki
       } // for(s32 x=0; x<imageWidth; x++)
     } // staticInline void ecvcs_computeBinaryImage()
 
-    NO_INLINE void ecvcs_computeBinaryImage(const Array<u8> &image, const Array<s32> * restrict filteredRows, const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier, const s32 imageY, const s32 imageWidth, u8 * restrict pBinaryImageRow)
+    NO_INLINE void ecvcs_computeBinaryImage(const Array<u8> &image, const Array<u8> * restrict filteredRows, const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier, const s32 imageY, const s32 imageWidth, u8 * restrict pBinaryImageRow)
     {
       const s32 thresholdMultiplier_numFractionalBits = 16;
 
       const u8 * restrict pImage = image[imageY];
 
-      const s32 * restrict pFilteredRows[5];
+      const u8 * restrict pFilteredRows[5];
       for(s32 pyramidLevel=0; pyramidLevel<=scaleImage_numPyramidLevels; pyramidLevel++) {
         pFilteredRows[pyramidLevel] = filteredRows[pyramidLevel][0];
       }
@@ -114,7 +114,7 @@ namespace Anki
         s32 scaleValue = -1;
         s32 dogMax = s32_MIN;
         for(s32 pyramidLevel=0; pyramidLevel<scaleImage_numPyramidLevels; pyramidLevel++) {
-          const s32 dog = ABS(pFilteredRows[pyramidLevel+1][x] - pFilteredRows[pyramidLevel][x]);
+          const s32 dog = ABS(static_cast<s32>(pFilteredRows[pyramidLevel+1][x]) - static_cast<s32>(pFilteredRows[pyramidLevel][x]));
 
           if(dog > dogMax) {
             dogMax = dog;
@@ -188,9 +188,9 @@ namespace Anki
         return lastResult;
 
       // Prepare the memory for the filtered rows for each level of the pyramid
-      Array<s32> filteredRows[9];
+      Array<u8> filteredRows[9];
       for(s32 i=0; i<=scaleImage_numPyramidLevels; i++) {
-        filteredRows[i] = Array<s32>(1, imageWidth, fastScratch);
+        filteredRows[i] = Array<u8>(1, imageWidth, fastScratch);
       }
 
       Array<u8> binaryImageRow(1, imageWidth, fastScratch);

@@ -3,8 +3,6 @@ File: integralImage.h
 Author: Peter Barnum
 Created: 2013
 
-A ScrollingIntegralImage is a class that hold a small part of an integral image in memory. The integral image is used to box filter.
-
 Copyright Anki, Inc. 2013
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
 **/
@@ -15,109 +13,65 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/config.h"
 #include "anki/common/robot/array2d.h"
 
+#include "anki/vision/robot/integralImage_declarations.h"
+
 namespace Anki
 {
   namespace Embedded
   {
-    class IntegralImage_u8_s32 : public Array<s32>
+    template<typename OutType> Result ScrollingIntegralImage_u8_s32::FilterRow(const Rectangle<s16> &filter, const s32 imageRow, const s32 outputMultiply, const s32 outputRightShift, Array<OutType> &output) const
     {
-    public:
-      // Simple, memory-inefficient version of an integral image
-      // The top row and left column are all zeros
-      // The integral image has one more row and column than the original image
+      AnkiAssert(this->IsValid());
+      AnkiAssert(output.IsValid());
 
-      IntegralImage_u8_s32();
+      // TODO: support these
+      AnkiAssert(filter.left <= 0);
+      AnkiAssert(filter.top <= 0);
+      AnkiAssert(filter.right >= 0);
+      AnkiAssert(filter.bottom >= 0);
 
-      IntegralImage_u8_s32(const Array<u8> &image, MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false,false));
-    };
+      const bool insufficientBorderPixels_left = (-filter.left+1) > this->numBorderPixels;
+      const bool insufficientBorderPixels_right = (filter.right) > this->numBorderPixels;
 
-    // #pragma mark --- ScrollingIntegralImage Class Definition ---
+      // These min and max coordinates are in the original image's coordinate frame
+      const s32 minX = insufficientBorderPixels_left ? -(this->numBorderPixels + filter.left - 1) : 0;
+      const s32 maxX = insufficientBorderPixels_right ? (this->get_size(1) - 1 - filter.right + this->numBorderPixels) : (this->get_imageWidth()-1);
 
-    // A ScrollingIntegralImage computes and integral image from and input image. To save memory,
-    // the entire Integral Image isn't computed at once. Instead, the ScrollingIntegralImage
-    // computes and stores a small window, plus optional border padding.
-    //
-    // For example, for an input image of size MxN, a ScrollingIntegralImage could be of size OxN
-    // (where O < N) The suffix is _InputType_AccumulatorType
-    class ScrollingIntegralImage_u8_s32 : public Array<s32>
-    {
-    public:
-      ScrollingIntegralImage_u8_s32();
+      // Get the four pointers to the corners of the filter in the integral image.
+      // The x offset is added at the end, because it might be invalid for x==0.
+      // The -1 terms are because the rectangular sums should be inclusive.
+      const s32 topOffset = imageRow - this->rowOffset + filter.top - 1 ;
+      const s32 bottomOffset = imageRow - this->rowOffset + filter.bottom;
+      const s32 leftOffset = filter.left - 1 + this->numBorderPixels;
+      const s32 rightOffset = filter.right + this->numBorderPixels;
 
-      // Allocate this ScrollingIntegralImage from "MemoryStack memory".
-      //
-      // "imageWidth" is the size of the original image, not including the extra numBorderPixels.
-      //
-      // "bufferHeight" is the height of this ScrollingIntegralImage, not the original image
-      //
-      // This ScrollingIntegralImage will not be usable until it ScrollDown() is called, and at
-      // least part of the integral image is valid.
-      //
-      // To allow outputs that don't have zero borders, this ScrollingIntegralImage can be created
-      // with "numBorderPixels" extra pixels. For example, using a 5x5 filter would require an extra
-      // 3 border pixels, because floor(5/2)+1 = 3. When numBorderPixels>0, then the outermost pixel
-      // will be replicated to estimate the unknown values.
-      ScrollingIntegralImage_u8_s32(const s32 bufferHeight, const s32 imageWidth, const s32 numBorderPixels, MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false,false));
+      const s32 * restrict pIntegralImage_00 = this->Pointer(topOffset, 0) + leftOffset;
+      const s32 * restrict pIntegralImage_01 = this->Pointer(topOffset, 0) + rightOffset;
+      const s32 * restrict pIntegralImage_10 = this->Pointer(bottomOffset, 0) + leftOffset;
+      const s32 * restrict pIntegralImage_11 = this->Pointer(bottomOffset, 0) + rightOffset;
 
-      // Using the data from "image", scroll this integral image down. For example, if the integral
-      // image is windowed between rows 0 to 100, then scrolling down by 10 lines would make it
-      // windowed between 10 to 110.
-      Result ScrollDown(const Array<u8> &image, s32 numRowsToScroll, MemoryStack scratch);
+      OutType * restrict pOutput = output.Pointer(0,0);
 
-      // Compute a box filter on one row of the image. The Rectangle filter defines offsets from the
-      // center. For example, the Rectangle with (top,bottom,left,right) = (-2,2,-3,3) will sum with
-      // a rectangular area that is 5 high and 7 wide.
-      //
-      // The variable "imageRow" refers to the row on
-      // the original "Array<u8> image", not the offset from the top of this ScrollingIntegralImage.
-      //
-      // Note that the filter top and left coordinates are inclusive, and do not have to be offset
-      // by -1 as with normal integral image filtering. So the filter between (3,3) and (5,5) will
-      // sum 9 different pixels, not 4 different pixels.
-      //
-      // If the filter is larger than this ScrollingIntegralImage's numBorderPixels, then the
-      // borders will be zeros.
-      Result FilterRow(const Rectangle<s16> &filter, const s32 imageRow, Array<s32> &output) const;
+      s32 x;
 
-      // Same as the above, but the final output = (filtered * outputMultiply) >> outputShift;
-      // Useful for normalization or scaling
-      Result FilterRow(const Rectangle<s16> &filter, const s32 imageRow, const s32 outputMultiply, const s32 outputRightShift, Array<s32> &output) const;
+      if(minX > 0)
+        memset(pOutput, 0, minX*sizeof(OutType));
 
-      // Get the current min and max rows that can be filtered with FilterRow(), for a give filter
-      // that extends filterHalfHeight above or below its center.
-      //
-      // Note that for a given filterHalfHeight, the minRow can be greater than the maxRow. This
-      // will happen if the filter size is too large for this ScrollingIntegralImage, or due to
-      // assymetric filters.
-      //s32 get_minRow(const s32 filterHalfHeight) const;
-      s32 get_maxRow(const s32 filterHalfHeight) const;
+      if(outputMultiply == 1 && outputRightShift == 0) {
+        for(x=minX; x<=maxX; x++) {
+          pOutput[x] = static_cast<OutType>( pIntegralImage_11[x] - pIntegralImage_10[x] + pIntegralImage_00[x] - pIntegralImage_01[x] );
+        }
+      } else {
+        for(x=minX; x<=maxX; x++) {
+          pOutput[x] = static_cast<OutType>( ((pIntegralImage_11[x] - pIntegralImage_10[x] + pIntegralImage_00[x] - pIntegralImage_01[x]) * outputMultiply) >> outputRightShift ) ;
+        }
+      }
 
-      // Return the width of the original image (this integral image is imageWidth + 2*numBorderPixels wide).
-      s32 get_imageWidth() const;
+      if((maxX+1) < imageWidth)
+        memset(pOutput+maxX+1, 0, (imageWidth - (maxX+1))*sizeof(OutType));
 
-      s32 get_rowOffset() const;
-
-      s32 get_numBorderPixels() const;
-
-    protected:
-      s32 imageWidth; //< width of the original image
-      //s32 minRow, maxRow; //< Min and max rows that can be filtered with a height==1 filter
-      s32 maxRow;
-      s32 rowOffset; //< Row 0 of this integral image corresponds to which row of the original image (can be negative)
-      s32 numBorderPixels;
-
-      // Compute the first row of an integral image
-      static void ComputeIntegralImageRow(const u8 * restrict paddedImage_currentRow, s32 * restrict integralImage_currentRow, const s32 integralImageWidth);
-
-      // Compute the nth row of an integral image
-      static void ComputeIntegralImageRow(const u8 * restrict paddedImage_currentRow, const s32 * restrict integralImage_previousRow, s32 * restrict integralImage_currentRow, const s32 integralImageWidth);
-
-      // Virtually zero-pads to the left and right of an image row
-      Result PadImageRow_unsafe(const Array<u8> &image, const s32 whichRow, Array<u8> &paddedRow);
-      Result PadImageRow(const Array<u8> &image, const s32 whichRow, Array<u8> &paddedRow);
-    };
-
-    // #pragma mark --- ScrollingIntegralImage Implementations ---
+      return RESULT_OK;
+    }
   } // namespace Embedded
 } //namespace Anki
 
