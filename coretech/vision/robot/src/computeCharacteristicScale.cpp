@@ -61,42 +61,97 @@ namespace Anki
     {
       const s32 thresholdMultiplier_numFractionalBits = 16;
 
-      const u8 * restrict pImage = image[imageY];
+      const u32 * restrict pImage = reinterpret_cast<const u32*>(image[imageY]);
 
-      const u8 * restrict pFilteredRows0 = filteredRows[0][0];
-      const u8 * restrict pFilteredRows1 = filteredRows[1][0];
-      const u8 * restrict pFilteredRows2 = filteredRows[2][0];
-      const u8 * restrict pFilteredRows3 = filteredRows[3][0];
+      const u32 * restrict pFilteredRows0 = reinterpret_cast<const u32*>(filteredRows[0][0]);
+      const u32 * restrict pFilteredRows1 = reinterpret_cast<const u32*>(filteredRows[1][0]);
+      const u32 * restrict pFilteredRows2 = reinterpret_cast<const u32*>(filteredRows[2][0]);
+      const u32 * restrict pFilteredRows3 = reinterpret_cast<const u32*>(filteredRows[3][0]);
 
-      for(s32 x=imageWidth-1; x>=0; x--) {
-        s32 scaleValue;
+      u32 * restrict pBinaryImageRowU32 = reinterpret_cast<u32*>(pBinaryImageRow);
 
-        //for(s32 pyramidLevel=0; pyramidLevel<3; pyramidLevel++) {
-        const s32 dog0 = ABS(static_cast<s32>(pFilteredRows1[x]) - static_cast<s32>(pFilteredRows0[x]));
-        const s32 dog1 = ABS(static_cast<s32>(pFilteredRows2[x]) - static_cast<s32>(pFilteredRows1[x]));
-        const s32 dog2 = ABS(static_cast<s32>(pFilteredRows3[x]) - static_cast<s32>(pFilteredRows2[x]));
+      const s32 imageWidth4 = imageWidth / 4;
 
-        if(dog0 > dog1) {
-          if(dog0 > dog2) {
-            scaleValue = pFilteredRows1[x];
-          } else {
-            scaleValue = pFilteredRows3[x];
-          }
-        } else if(dog1 > dog2) {
-          scaleValue = pFilteredRows2[x];
+      const u32 scaleImage_thresholdMultiplierU32 = scaleImage_thresholdMultiplier;
+
+      for(s32 x=0; x<imageWidth4; x++) {
+        const u32 filteredRows0 = pFilteredRows0[x];
+        const u32 filteredRows1 = pFilteredRows1[x];
+        const u32 filteredRows2 = pFilteredRows2[x];
+        const u32 filteredRows3 = pFilteredRows3[x];
+
+        const s32 dog0_row0 = ABS(static_cast<s32>(filteredRows1 & 0xFF) - static_cast<s32>(filteredRows0 & 0xFF));
+        const s32 dog1_row0 = ABS(static_cast<s32>(filteredRows2 & 0xFF) - static_cast<s32>(filteredRows1 & 0xFF));
+        const s32 dog2_row0 = ABS(static_cast<s32>(filteredRows3 & 0xFF) - static_cast<s32>(filteredRows2 & 0xFF));
+
+        const s32 dog0_row1 = ABS(static_cast<s32>((filteredRows1 & 0xFF00) >> 8) - static_cast<s32>((filteredRows0 & 0xFF00) >> 8));
+        const s32 dog1_row1 = ABS(static_cast<s32>((filteredRows2 & 0xFF00) >> 8) - static_cast<s32>((filteredRows1 & 0xFF00) >> 8));
+        const s32 dog2_row1 = ABS(static_cast<s32>((filteredRows3 & 0xFF00) >> 8) - static_cast<s32>((filteredRows2 & 0xFF00) >> 8));
+
+        const s32 dog0_row2 = ABS(static_cast<s32>((filteredRows1 & 0xFF0000) >> 16) - static_cast<s32>((filteredRows0 & 0xFF0000) >> 16));
+        const s32 dog1_row2 = ABS(static_cast<s32>((filteredRows2 & 0xFF0000) >> 16) - static_cast<s32>((filteredRows1 & 0xFF0000) >> 16));
+        const s32 dog2_row2 = ABS(static_cast<s32>((filteredRows3 & 0xFF0000) >> 16) - static_cast<s32>((filteredRows2 & 0xFF0000) >> 16));
+
+        const s32 dog0_row3 = ABS(static_cast<s32>((filteredRows1 & 0xFF000000) >> 24) - static_cast<s32>((filteredRows0 & 0xFF000000) >> 24));
+        const s32 dog1_row3 = ABS(static_cast<s32>((filteredRows2 & 0xFF000000) >> 24) - static_cast<s32>((filteredRows1 & 0xFF000000) >> 24));
+        const s32 dog2_row3 = ABS(static_cast<s32>((filteredRows3 & 0xFF000000) >> 24) - static_cast<s32>((filteredRows2 & 0xFF000000) >> 24));
+
+        u32 scaleValue_row0;
+        u32 scaleValue_row1;
+        u32 scaleValue_row2;
+        u32 scaleValue_row3;
+
+        if(dog0_row0 > dog1_row0) {
+          if(dog0_row0 > dog2_row0) { scaleValue_row0 = pFilteredRows1[x] & 0xFF; }
+          else { scaleValue_row0 = pFilteredRows3[x] & 0xFF; }
+        } else if(dog1_row0 > dog2_row0) {
+          scaleValue_row0 = pFilteredRows2[x] & 0xFF;
         } else {
-          scaleValue = pFilteredRows3[x];
+          scaleValue_row0 = pFilteredRows3[x] & 0xFF;
         }
 
-        //} // for(s32 pyramidLevel=0; pyramidLevel<3; scaleImage_numPyramidLevels++)
-
-        const s32 thresholdValue = (scaleValue*scaleImage_thresholdMultiplier) >> thresholdMultiplier_numFractionalBits;
-        if(pImage[x] < thresholdValue) {
-          pBinaryImageRow[x] = 1;
+        if(dog0_row1 > dog1_row1) {
+          if(dog0_row1 > dog2_row1) { scaleValue_row1 = (pFilteredRows1[x] & 0xFF00) >> 8; }
+          else { scaleValue_row1 = (pFilteredRows3[x] & 0xFF00) >> 8; }
+        } else if(dog1_row1 > dog2_row1) {
+          scaleValue_row1 = (pFilteredRows2[x] & 0xFF00) >> 8;
         } else {
-          pBinaryImageRow[x] = 0;
+          scaleValue_row1 = (pFilteredRows3[x] & 0xFF00) >> 8;
         }
-      } // for(s32 x=0; x<imageWidth; x++)
+
+        if(dog0_row2 > dog1_row2) {
+          if(dog0_row2 > dog2_row2) { scaleValue_row2 = (pFilteredRows1[x] & 0xFF0000) >> 16; }
+          else { scaleValue_row2 = (pFilteredRows3[x] & 0xFF0000) >> 16; }
+        } else if(dog1_row2 > dog2_row2) {
+          scaleValue_row2 = (pFilteredRows2[x] & 0xFF0000) >> 16;
+        } else {
+          scaleValue_row2 = (pFilteredRows3[x] & 0xFF0000) >> 16;
+        }
+
+        if(dog0_row3 > dog1_row3) {
+          if(dog0_row3 > dog2_row3) { scaleValue_row3 = (pFilteredRows1[x] & 0xFF000000) >> 24; }
+          else { scaleValue_row3 = (pFilteredRows3[x] & 0xFF000000) >> 24; }
+        } else if(dog1_row3 > dog2_row3) {
+          scaleValue_row3 = (pFilteredRows2[x] & 0xFF000000) >> 24;
+        } else {
+          scaleValue_row3 = (pFilteredRows3[x] & 0xFF000000) >> 24;
+        }
+
+        const u32 thresholdValue_row0 = (scaleValue_row0*scaleImage_thresholdMultiplierU32) >> thresholdMultiplier_numFractionalBits;
+        const u32 thresholdValue_row1 = (scaleValue_row1*scaleImage_thresholdMultiplierU32) >> thresholdMultiplier_numFractionalBits;
+        const u32 thresholdValue_row2 = (scaleValue_row2*scaleImage_thresholdMultiplierU32) >> thresholdMultiplier_numFractionalBits;
+        const u32 thresholdValue_row3 = (scaleValue_row3*scaleImage_thresholdMultiplierU32) >> thresholdMultiplier_numFractionalBits;
+
+        const u32 curPixel = pImage[x];
+
+        u32 binaryRow = 0;
+        if((curPixel & 0xFF)               < thresholdValue_row0) { binaryRow |= 1; }
+        if(((curPixel & 0xFF00) >> 8)      < thresholdValue_row1) { binaryRow |= (1 << 8); }
+        if(((curPixel & 0xFF0000) >> 16)   < thresholdValue_row2) { binaryRow |= (1 << 16); }
+        if(((curPixel & 0xFF000000) >> 24) < thresholdValue_row3) { binaryRow |= (1 << 24); }
+
+        pBinaryImageRowU32[x] = binaryRow;
+      } // for(s32 x=0; x<imageWidth4; x++)
     } // staticInline void ecvcs_computeBinaryImage()
 
     NO_INLINE void ecvcs_computeBinaryImage(const Array<u8> &image, const Array<u8> * restrict filteredRows, const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier, const s32 imageY, const s32 imageWidth, u8 * restrict pBinaryImageRow)
