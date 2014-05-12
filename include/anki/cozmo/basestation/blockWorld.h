@@ -114,7 +114,7 @@ namespace Anki
       
       
       //template<class ObjectType>
-      void AddAndUpdateObjects(const std::vector<Vision::ObservableObject*> objectsSeen,
+      void AddAndUpdateObjects(const std::vector<Vision::ObservableObject*>& objectsSeen,
                                    ObjectsMap_t& objectsExisting);
       
     }; // class BlockWorld

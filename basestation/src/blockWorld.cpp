@@ -230,7 +230,7 @@ namespace Anki
     
     
     
-    void BlockWorld::AddAndUpdateObjects(const std::vector<Vision::ObservableObject*> objectsSeen,
+    void BlockWorld::AddAndUpdateObjects(const std::vector<Vision::ObservableObject*>& objectsSeen,
                                          ObjectsMap_t& objectsExisting)
     {
       
@@ -440,11 +440,17 @@ namespace Anki
     uint32_t BlockWorld::UpdateBlockPoses()
     {
       std::vector<Vision::ObservableObject*> blocksSeen;
-      blockLibrary_.CreateObjectsFromMarkers(obsMarkers_, blocksSeen);
       
-      // Use them to add or update existing blocks in our world
-      AddAndUpdateObjects(blocksSeen, existingBlocks_);
-
+      // Don't bother with this update at all if we didn't see at least one
+      // marker (which is our indication we got an update from the robot's
+      // vision system
+      if(not obsMarkers_.empty()) {
+        blockLibrary_.CreateObjectsFromMarkers(obsMarkers_, blocksSeen);
+        
+        // Use them to add or update existing blocks in our world
+        AddAndUpdateObjects(blocksSeen, existingBlocks_);
+      }
+      
       return blocksSeen.size();
       
     } // UpdateBlockPoses()
@@ -519,6 +525,26 @@ namespace Anki
             
             VizManager::getInstance()->DrawQuad(block->GetID(), quadOnGround3d, VIZ_COLOR_BLOCK_BOUNDING_QUAD);
           }
+          
+          // Draw all face markers
+          // XXX: Debug
+          {
+            Vision::Camera& camera = robotMgr_->GetRobotByID(robotMgr_->GetRobotIDList().front())->get_camHead();
+            
+            ObjectID_t quadId = block->GetID();
+            for(auto & marker : block->GetMarkers()) {
+              // Get the marker's pose relative to the camera
+              Pose3d markerPoseWrtCamera( marker.GetPose().getWithRespectTo( Pose3d::World ) ); //&camera.get_pose()) );
+              
+              // Get the 3D positions of the marker's corners relative to the camera
+              //Quad3f markerCornersWrtCamera;
+              //markerPoseWrtCamera.applyTo(, markerCornersWrtCamera);
+              
+              // Draw the quad
+              VizManager::getInstance()->DrawQuad(quadId++, marker.Get3dCorners(markerPoseWrtCamera), Cozmo::VIZ_COLOR_PREDOCKPOSE);
+            }
+          }
+
 
         } // FOR each ID of this type
       } // FOR each type
