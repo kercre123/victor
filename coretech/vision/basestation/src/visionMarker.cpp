@@ -74,17 +74,25 @@ namespace Anki {
       //
       // And also update the 3d corners accordingly...
       //
-      
+      corners3d_ = Get3dCorners(pose_);
+    }
+    
+    
+    Quad3f KnownMarker::Get3dCorners(const Pose3d& atPose) const
+    {
       // Start with canonical 3d quad corners:
-      corners3d_ = KnownMarker::canonicalCorners3d_;
+      Quad3f corners3dAtPose(KnownMarker::canonicalCorners3d_);
       
       // Scale to this marker's physical size:
-      corners3d_ *= size_;
+      corners3dAtPose *= size_;
       
       // Transform the canonical corners to this new pose
-      pose_.applyTo(corners3d_, corners3d_);
+      atPose.applyTo(corners3dAtPose, corners3dAtPose);
       
-    }
+      return corners3dAtPose;
+      
+    } // KnownMarker::Get3dCorners(atPose)
+    
     
     bool KnownMarker::IsVisibleFrom(Camera& camera,
                                     const f32 maxAngleRad,

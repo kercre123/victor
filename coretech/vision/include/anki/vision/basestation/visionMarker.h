@@ -89,9 +89,11 @@ namespace Anki {
                          const f32 minImageSize) const;
       
       // Accessors
-      inline const Quad3f& Get3dCorners() const;
-      inline const Pose3d& GetPose()      const;
-      inline const f32&    GetSize()      const;
+      Quad3f const& Get3dCorners() const; // at current pose
+      Pose3d const& GetPose()      const;
+      f32    const& GetSize()      const;
+      
+      Quad3f Get3dCorners(const Pose3d& atPose) const;
       
     protected:
       static const Quad3f canonicalCorners3d_;
