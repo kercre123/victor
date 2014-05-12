@@ -211,15 +211,19 @@ namespace Anki {
       
       v.xUpperLeft  = MM_TO_M(static_cast<f32>(quad[Quad::TopLeft].x()));
       v.yUpperLeft  = MM_TO_M(static_cast<f32>(quad[Quad::TopLeft].y()));
+      v.zUpperLeft  = MM_TO_M(static_cast<f32>(quad[Quad::TopLeft].z()));
       
       v.xLowerLeft  = MM_TO_M(static_cast<f32>(quad[Quad::BottomLeft].x()));
       v.yLowerLeft  = MM_TO_M(static_cast<f32>(quad[Quad::BottomLeft].y()));
+      v.zLowerLeft  = MM_TO_M(static_cast<f32>(quad[Quad::BottomLeft].z()));
       
       v.xUpperRight = MM_TO_M(static_cast<f32>(quad[Quad::TopRight].x()));
       v.yUpperRight = MM_TO_M(static_cast<f32>(quad[Quad::TopRight].y()));
+      v.zUpperRight = MM_TO_M(static_cast<f32>(quad[Quad::TopRight].z()));
       
       v.xLowerRight = MM_TO_M(static_cast<f32>(quad[Quad::BottomRight].x()));
       v.yLowerRight = MM_TO_M(static_cast<f32>(quad[Quad::BottomRight].y()));
+      v.zLowerRight = MM_TO_M(static_cast<f32>(quad[Quad::BottomRight].z()));
       
       v.color = colorID;
       
