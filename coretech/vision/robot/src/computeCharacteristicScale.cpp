@@ -17,6 +17,24 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 //#define HAVE_64_BIT_ARITHMETIC
 
+#define USE_ARM_ACCELERATION
+
+#if defined(__EDG__)
+#ifndef USE_ARM_ACCELERATION
+#warning not using USE_ARM_ACCELERATION
+#endif
+#else
+#undef USE_ARM_ACCELERATION
+#endif
+
+#if defined(USE_ARM_ACCELERATION)
+#ifdef USING_CHIP_SIMULATOR
+#include <ARMCM4.h>
+#else
+#include <stm32f4xx.h>
+#endif
+#endif
+
 namespace Anki
 {
   namespace Embedded
@@ -27,6 +45,7 @@ namespace Anki
     // These are not inlined, to make it easier to hand-optimize them. Inlining them will probably only slightly increase speed.
     NO_INLINE void ecvcs_filterRows(const ScrollingIntegralImage_u8_s32 &integralImage, const s32 scaleImage_numPyramidLevels, const s32 imageY, const s32 imageWidth, Array<u8> * restrict filteredRows);
     NO_INLINE void ecvcs_computeBinaryImage_numPyramids3(const Array<u8> &image, const Array<u8> * restrict filteredRows, const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier, const s32 imageY, const s32 imageWidth, u8 * restrict pBinaryImageRow);
+    NO_INLINE void ecvcs_computeBinaryImage_numPyramids3_thresholdMultiplier1(const Array<u8> &image, const Array<u8> * restrict filteredRows, const s32 scaleImage_numPyramidLevels, const s32 imageY, const s32 imageWidth, u8 * restrict pBinaryImageRow);
     NO_INLINE void ecvcs_computeBinaryImage(const Array<u8> &image, const Array<u8> * restrict filteredRows, const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier, const s32 imageY, const s32 imageWidth, u8 * restrict pBinaryImageRow);
 
     NO_INLINE void ecvcs_filterRows(const ScrollingIntegralImage_u8_s32 &integralImage, const s32 scaleImage_numPyramidLevels, const s32 imageY, const s32 imageWidth, Array<u8> * restrict filteredRows)
@@ -61,6 +80,46 @@ namespace Anki
     {
       const s32 thresholdMultiplier_numFractionalBits = 16;
 
+      const u8 * restrict pImage = image[imageY];
+
+      const u8 * restrict pFilteredRows0 = filteredRows[0][0];
+      const u8 * restrict pFilteredRows1 = filteredRows[1][0];
+      const u8 * restrict pFilteredRows2 = filteredRows[2][0];
+      const u8 * restrict pFilteredRows3 = filteredRows[3][0];
+
+      for(s32 x=imageWidth-1; x>=0; x--) {
+        s32 scaleValue;
+
+        //for(s32 pyramidLevel=0; pyramidLevel<3; pyramidLevel++) {
+        const s32 dog0 = ABS(pFilteredRows1[x] - pFilteredRows0[x]);
+        const s32 dog1 = ABS(pFilteredRows2[x] - pFilteredRows1[x]);
+        const s32 dog2 = ABS(pFilteredRows3[x] - pFilteredRows2[x]);
+
+        if(dog0 > dog1) {
+          if(dog0 > dog2) {
+            scaleValue = pFilteredRows1[x];
+          } else {
+            scaleValue = pFilteredRows3[x];
+          }
+        } else if(dog1 > dog2) {
+          scaleValue = pFilteredRows2[x];
+        } else {
+          scaleValue = pFilteredRows3[x];
+        }
+
+        //} // for(s32 pyramidLevel=0; pyramidLevel<3; scaleImage_numPyramidLevels++)
+
+        const s32 thresholdValue = (scaleValue*scaleImage_thresholdMultiplier) >> thresholdMultiplier_numFractionalBits;
+        if(pImage[x] < thresholdValue) {
+          pBinaryImageRow[x] = 1;
+        } else {
+          pBinaryImageRow[x] = 0;
+        }
+      } // for(s32 x=0; x<imageWidth; x++)
+    } // staticInline void ecvcs_computeBinaryImage()
+
+    NO_INLINE void ecvcs_computeBinaryImage_numPyramids3_thresholdMultiplier1(const Array<u8> &image, const Array<u8> * restrict filteredRows, const s32 scaleImage_numPyramidLevels, const s32 imageY, const s32 imageWidth, u8 * restrict pBinaryImageRow)
+    {
       const u32 * restrict pImage = reinterpret_cast<const u32*>(image[imageY]);
 
       const u32 * restrict pFilteredRows0 = reinterpret_cast<const u32*>(filteredRows[0][0]);
@@ -72,7 +131,9 @@ namespace Anki
 
       const s32 imageWidth4 = imageWidth / 4;
 
-      const u32 scaleImage_thresholdMultiplierU32 = scaleImage_thresholdMultiplier;
+#if defined(USE_ARM_ACCELERATION)
+      const u32 twoFiftyFourX4 = 0xFEFEFEFEU;
+#endif
 
       for(s32 x=0; x<imageWidth4; x++) {
         const u32 filteredRows0 = pFilteredRows0[x];
@@ -137,10 +198,10 @@ namespace Anki
           scaleValue_row3 = (pFilteredRows3[x] & 0xFF000000) >> 24;
         }
 
-        const u32 thresholdValue_row0 = (scaleValue_row0*scaleImage_thresholdMultiplierU32) >> thresholdMultiplier_numFractionalBits;
-        const u32 thresholdValue_row1 = (scaleValue_row1*scaleImage_thresholdMultiplierU32) >> thresholdMultiplier_numFractionalBits;
-        const u32 thresholdValue_row2 = (scaleValue_row2*scaleImage_thresholdMultiplierU32) >> thresholdMultiplier_numFractionalBits;
-        const u32 thresholdValue_row3 = (scaleValue_row3*scaleImage_thresholdMultiplierU32) >> thresholdMultiplier_numFractionalBits;
+        const u32 thresholdValue_row0 = scaleValue_row0;
+        const u32 thresholdValue_row1 = scaleValue_row1;
+        const u32 thresholdValue_row2 = scaleValue_row2;
+        const u32 thresholdValue_row3 = scaleValue_row3;
 
         const u32 curPixel = pImage[x];
 
@@ -149,6 +210,56 @@ namespace Anki
         if(((curPixel & 0xFF00) >> 8)      < thresholdValue_row1) { binaryRow |= (1 << 8); }
         if(((curPixel & 0xFF0000) >> 16)   < thresholdValue_row2) { binaryRow |= (1 << 16); }
         if(((curPixel & 0xFF000000) >> 24) < thresholdValue_row3) { binaryRow |= (1 << 24); }
+#else // if !defined(USE_ARM_ACCELERATION)
+        // M4 intrinsic version of 4-way simd calculation
+
+        //
+        // Compute the Difference of Gaussians (DoG)
+        //
+
+        // dog0 is 4-way absolute value of filteredRows0 and filteredRows1
+        const u32 uqsub10 = __UQSUB8(filteredRows1, filteredRows0);
+        const u32 uqsub01 = __UQSUB8(filteredRows0, filteredRows1);
+        const u32 dog0 = uqsub10 | uqsub01;
+
+        const u32 uqsub21 = __UQSUB8(filteredRows2, filteredRows1);
+        const u32 uqsub12 = __UQSUB8(filteredRows1, filteredRows2);
+        const u32 dog1 = uqsub21 | uqsub12;
+
+        const u32 uqsub32 = __UQSUB8(filteredRows3, filteredRows2);
+        const u32 uqsub23 = __UQSUB8(filteredRows2, filteredRows3);
+        const u32 dog2 = uqsub32 | uqsub23;
+
+        //
+        // Compute the filteredRows corresponding to the maximum Difference of Gaussian
+        //
+
+        // dogMax012 is 4-way max of dog0, dog1, and dog2
+        __USUB8(dog0, dog1); // The answer is irrelevant, we just need to set the GE bits
+        const u32 dogMax01 = __SEL(dog0, dog1);
+
+        __USUB8(dogMax01, dog2); // The answer is irrelevant, we just need to set the GE bits
+        const u32 dogMax012 = __SEL(dogMax01, dog2);
+
+        // For the maximum dog, put the corresponding filtered row into thresholdValue
+        u32 thresholdValue = filteredRows1;
+
+        __USUB8(dog1, dogMax012); // The answer is irrelevant, we just need to set the GE bits
+        thresholdValue = __SEL(filteredRows2, thresholdValue);
+
+        __USUB8(dog2, dogMax012); // The answer is irrelevant, we just need to set the GE bits
+        thresholdValue = __SEL(filteredRows3, thresholdValue);
+
+        //
+        // Binarize the output
+        //
+
+        const u32 curPixel = pImage[x];
+
+        const u32 compareWithThreshold = __UQSUB8(thresholdValue, curPixel);
+        const u32 compareWithThresholdAndSaturate = __UQADD8(compareWithThreshold, twoFiftyFourX4);
+        const u32 binaryRow = __UQSUB8(compareWithThresholdAndSaturate, twoFiftyFourX4);
+#endif // if !defined(USE_ARM_ACCELERATION) ... #else
 
         pBinaryImageRowU32[x] = binaryRow;
       } // for(s32 x=0; x<imageWidth4; x++)
@@ -271,8 +382,11 @@ namespace Anki
         if(scaleImage_numPyramidLevels != 3) {
           ecvcs_computeBinaryImage(image, filteredRows, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, imageY, imageWidth, pBinaryImageRow);
         } else {
-          ecvcs_computeBinaryImage_numPyramids3(image, filteredRows, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, imageY, imageWidth, pBinaryImageRow);
-        }
+          if(scaleImage_thresholdMultiplier == 65536) {
+            ecvcs_computeBinaryImage_numPyramids3_thresholdMultiplier1(image, filteredRows, scaleImage_numPyramidLevels, imageY, imageWidth, pBinaryImageRow);
+          } else {
+            ecvcs_computeBinaryImage_numPyramids3(image, filteredRows, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, imageY, imageWidth, pBinaryImageRow);
+          }
         //EndBenchmark("ecvcs_computeBinaryImage");
 
         // Extract the next line of connected components
