@@ -109,8 +109,7 @@ namespace Anki {
       }
       
       // Get the 3D positions of the marker's corners relative to the camera
-      Quad3f markerCornersWrtCamera;
-      markerPoseWrtCamera.applyTo(corners3d_, markerCornersWrtCamera);
+      Quad3f markerCornersWrtCamera( Get3dCorners(markerPoseWrtCamera) );
       
       // Make sure the face of the marker is pointed towards the camera
       // Use "TopLeft" canonical corner as the local origin for computing the
@@ -125,7 +124,7 @@ namespace Anki {
       
       const Point3f faceNormal( cross(sideLine, topLine) );
       const f32 dotProd = dot(faceNormal, Z_AXIS_3D); // TODO: Optimize to just: faceNormal.z()?
-      if(dotProd > 0.f || acosf(dotProd) > maxAngleRad) {
+      if(dotProd > 0.f || acos(-dotProd) > maxAngleRad) {
         return false;
       }
       
