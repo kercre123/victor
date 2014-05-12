@@ -141,6 +141,7 @@ namespace Anki
         const u32 filteredRows2 = pFilteredRows2[x];
         const u32 filteredRows3 = pFilteredRows3[x];
 
+#if !defined(USE_ARM_ACCELERATION)
         const s32 dog0_row0 = ABS(static_cast<s32>(filteredRows1 & 0xFF) - static_cast<s32>(filteredRows0 & 0xFF));
         const s32 dog1_row0 = ABS(static_cast<s32>(filteredRows2 & 0xFF) - static_cast<s32>(filteredRows1 & 0xFF));
         const s32 dog2_row0 = ABS(static_cast<s32>(filteredRows3 & 0xFF) - static_cast<s32>(filteredRows2 & 0xFF));
@@ -387,6 +388,7 @@ namespace Anki
           } else {
             ecvcs_computeBinaryImage_numPyramids3(image, filteredRows, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, imageY, imageWidth, pBinaryImageRow);
           }
+        }
         //EndBenchmark("ecvcs_computeBinaryImage");
 
         // Extract the next line of connected components
