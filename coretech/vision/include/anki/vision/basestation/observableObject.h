@@ -2,6 +2,7 @@
 #define ANKI_VISION_OBSERVABLE_OBJECT_H
 
 #include <list>
+#include <set>
 
 #include "anki/vision/basestation/visionMarker.h"
 
@@ -224,12 +225,12 @@ namespace Anki {
       // Return a pointer to a vector of pointers to known objects with at
       // least one of the specified markers or codes on it. If  there is no
       // object with that marker/code, a NULL pointer is returned.
-      std::vector<const ObservableObject*> const& GetObjectsWithMarker(const Marker& marker) const;
-      std::vector<const ObservableObject*> const& GetObjectsWithCode(const Marker::Code& code) const;
+      std::set<const ObservableObject*> const& GetObjectsWithMarker(const Marker& marker) const;
+      std::set<const ObservableObject*> const& GetObjectsWithCode(const Marker::Code& code) const;
       
     protected:
       
-      static const std::vector<const ObservableObject*> sEmptyObjectVector;
+      static const std::set<const ObservableObject*> sEmptyObjectVector;
       
       //std::list<const ObservableObject*> knownObjects_;
       std::map<ObjectType_t, const ObservableObject*> knownObjects_;
@@ -237,7 +238,8 @@ namespace Anki {
       // Store a list of pointers to all objects that have at least one marker
       // with that code.  You can then use the objects' GetMarkersWithCode()
       // method to get the list of markers on each object.
-      std::map<Marker::Code, std::vector<const ObservableObject*> > objectsWithCode_;
+      //std::map<Marker::Code, std::vector<const ObservableObject*> > objectsWithCode_;
+      std::map<Marker::Code, std::set<const ObservableObject*> > objectsWithCode_;
       
       // A PoseCluster is a pairing of a single pose and all the marker matches
       // that imply that pose

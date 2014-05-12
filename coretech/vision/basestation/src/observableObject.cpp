@@ -126,7 +126,7 @@ namespace Anki {
     
 #pragma mark --- ObservableObjectLibrary Implementations ---
     
-    const std::vector<const ObservableObject*> ObservableObjectLibrary::sEmptyObjectVector(0);
+    const std::set<const ObservableObject*> ObservableObjectLibrary::sEmptyObjectVector;
     
     const ObservableObject* ObservableObjectLibrary::GetObjectWithType(const ObjectType_t type) const
     {
@@ -140,7 +140,7 @@ namespace Anki {
     }
     
     
-    std::vector<const ObservableObject*> const& ObservableObjectLibrary::GetObjectsWithCode(const Marker::Code& code) const
+    std::set<const ObservableObject*> const& ObservableObjectLibrary::GetObjectsWithCode(const Marker::Code& code) const
     {
       auto temp = objectsWithCode_.find(code);
       if(temp != objectsWithCode_.end()) {
@@ -151,7 +151,7 @@ namespace Anki {
       }
     }
     
-    std::vector<const ObservableObject*> const& ObservableObjectLibrary::GetObjectsWithMarker(const Marker& marker) const
+    std::set<const ObservableObject*> const& ObservableObjectLibrary::GetObjectsWithMarker(const Marker& marker) const
     {
       return GetObjectsWithCode(marker.GetCode());
     }
@@ -161,7 +161,7 @@ namespace Anki {
       // TODO: Warn/error if we are overwriting an existing object with this type?
       knownObjects_[object->GetType()] = object;
       for(auto marker : object->GetMarkers()) {
-        objectsWithCode_[marker.GetCode()].push_back(object);
+        objectsWithCode_[marker.GetCode()].insert(object);
       }
     }
     
@@ -185,7 +185,7 @@ namespace Anki {
         if(seenOnlyBy == NULL || &marker.GetSeenBy() == seenOnlyBy)
         {
           // Find all objects which use this marker...
-          std::vector<const ObservableObject*> const& objectsWithMarker = GetObjectsWithMarker(marker);
+          std::set<const ObservableObject*> const& objectsWithMarker = GetObjectsWithMarker(marker);
           
           // ...if there are any, add this marker to the list of observed markers
           // that corresponds to this object type.
@@ -200,7 +200,7 @@ namespace Anki {
                }
                */
             }
-            markersWithObjectType[objectsWithMarker.front()->GetType()].push_back(&marker);
+            markersWithObjectType[(*objectsWithMarker.begin())->GetType()].push_back(&marker);
             used = true;
           } // IF objectsWithMarker != NULL
         } // IF seenOnlyBy
