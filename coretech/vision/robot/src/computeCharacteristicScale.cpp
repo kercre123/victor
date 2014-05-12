@@ -91,9 +91,9 @@ namespace Anki
         s32 scaleValue;
 
         //for(s32 pyramidLevel=0; pyramidLevel<3; pyramidLevel++) {
-        const s32 dog0 = ABS(pFilteredRows1[x] - pFilteredRows0[x]);
-        const s32 dog1 = ABS(pFilteredRows2[x] - pFilteredRows1[x]);
-        const s32 dog2 = ABS(pFilteredRows3[x] - pFilteredRows2[x]);
+        const s32 dog0 = ABS(static_cast<s32>(pFilteredRows1[x]) - static_cast<s32>(pFilteredRows0[x]));
+        const s32 dog1 = ABS(static_cast<s32>(pFilteredRows2[x]) - static_cast<s32>(pFilteredRows1[x]));
+        const s32 dog2 = ABS(static_cast<s32>(pFilteredRows3[x]) - static_cast<s32>(pFilteredRows2[x]));
 
         if(dog0 > dog1) {
           if(dog0 > dog2) {
