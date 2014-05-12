@@ -302,10 +302,20 @@ namespace Anki {
       
       void ProcessDockWithBlockMessage(const DockWithBlock& msg)
       {
-        DockingController::StartDocking(static_cast<Vision::MarkerType>(msg.markerType),
-                                        msg.markerWidth_mm,
-                                        msg.horizontalOffset_mm,
-                                        0, 0);
+        if (msg.pixel_radius < u8_MAX) {
+          Embedded::Point2f markerCenter(static_cast<f32>(msg.image_pixel_x), static_cast<f32>(msg.image_pixel_y));
+          
+          PickAndPlaceController::DockToBlock(static_cast<Vision::MarkerType>(msg.markerType),
+                                              msg.markerWidth_mm,
+                                              markerCenter,
+                                              msg.pixel_radius,
+                                              static_cast<DockAction_t>(msg.dockAction));
+        } else {
+          
+          PickAndPlaceController::DockToBlock(static_cast<Vision::MarkerType>(msg.markerType),
+                                              msg.markerWidth_mm,
+                                              static_cast<DockAction_t>(msg.dockAction));
+        }
       }
 
       void ProcessDriveWheelsMessage(const DriveWheels& msg) {

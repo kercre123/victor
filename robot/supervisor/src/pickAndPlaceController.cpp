@@ -33,7 +33,7 @@ namespace Anki {
         // to the lift when it is in the low docking position.
         const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 28.f;
         const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 20.f;
-        const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 26.f;  // TODO: Technically, this should be the same as ORIGIN_TO_HIGH_LIFT_DIST_MM
+        const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 20.f;  // TODO: Technically, this should be the same as ORIGIN_TO_HIGH_LIFT_DIST_MM
 
         Mode mode_ = IDLE;
         
@@ -44,6 +44,11 @@ namespace Anki {
         f32 dockOffsetDistX_ = 0;
         f32 dockOffsetDistY_ = 0;
         f32 dockOffsetAng_ = 0;
+        
+        // Expected location of the desired dock marker in the image.
+        // If not specified, marker may be located anywhere in the image.
+        Embedded::Point2f markerCenter_;
+        f32 pixelSearchRadius_;
         
         bool isCarryingBlock_ = false;
         bool lastActionSucceeded_ = false;
@@ -160,11 +165,22 @@ namespace Anki {
             PERIODIC_PRINT(200, "PAP: MLP %d %d\n", LiftController::IsInPosition(), HeadController::IsInPosition());
 #endif
             if (LiftController::IsInPosition() && HeadController::IsInPosition()) {
-              DockingController::StartDocking(dockToMarker_,
-                                              markerWidth_,
-                                              dockOffsetDistX_,
-                                              dockOffsetDistX_,
-                                              dockOffsetAng_);
+              
+              if (pixelSearchRadius_ < 0) {
+                DockingController::StartDocking(dockToMarker_,
+                                                markerWidth_,
+                                                dockOffsetDistX_,
+                                                dockOffsetDistX_,
+                                                dockOffsetAng_);
+              } else {
+                DockingController::StartDocking(dockToMarker_,
+                                                markerWidth_,
+                                                markerCenter_,
+                                                pixelSearchRadius_,
+                                                dockOffsetDistX_,
+                                                dockOffsetDistX_,
+                                                dockOffsetAng_);
+              }
               mode_ = DOCKING;
 #if(DEBUG_PAP_CONTROLLER)
               PRINT("PAP: DOCKING\n");
@@ -482,43 +498,42 @@ namespace Anki {
       {
         return isCarryingBlock_;
       }
-                
-      void PickUpBlock(const Vision::MarkerType blockMarker, const f32 markerWidth_mm, const u8 level)
+      
+      
+      void DockToBlock(const Vision::MarkerType blockMarker,
+                       const f32 markerWidth_mm,
+                       const DockAction_t action)
       {
-        // TODO: If block blockID is on level 1, the robot should first
-        // identify the block directly below it and then dock to that
-        // block's marker with a horizontal offset that will align
-        // the fork with block blockID.
-        // ...
 #if(DEBUG_PAP_CONTROLLER)
-        PRINT("PAP: PICKING UP BLOCK %d\n", blockMarker);
+        PRINT("PAP: DOCK TO BLOCK %d (action %d)\n", blockMarker, action);
 #endif
-        if (level == 0) {
-          action_ = DA_PICKUP_LOW;
-        } else {
-          action_ = DA_PICKUP_HIGH;
+        if (action == DA_PLACE_LOW) {
+          PRINT("Invalid action %d for DockToBlock()\n", action);
+          return;
         }
         
+        action_ = action;
         dockToMarker_ = blockMarker;
         markerWidth_  = markerWidth_mm;
+        
+        markerCenter_.x = -1.f;
+        markerCenter_.y = -1.f;
+        pixelSearchRadius_ = -1.f;
         
         mode_ = SET_LIFT_PREDOCK;
         lastActionSucceeded_ = false;
       }
       
-      void PlaceOnBlock(const Vision::MarkerType blockMarker,
-                        const f32 horizontal_offset, const f32 angular_offset)
+      void DockToBlock(const Vision::MarkerType blockMarker,
+                       const f32 markerWidth_mm,
+                       const Embedded::Point2f& markerCenter,
+                       const f32 pixelSearchRadius,
+                       const DockAction_t action)
       {
-        // TODO: Confirm that blockID is on level 0?
+        DockToBlock(blockMarker, markerWidth_mm, action);
         
-        // TODO: Pass along docking offset to DockingController
-#if(DEBUG_PAP_CONTROLLER)
-        PRINT("PAP: PLACING BLOCK on %d\n", blockMarker);
-#endif
-        action_ = DA_PLACE_HIGH;
-        dockToMarker_ = blockMarker;
-        mode_ = SET_LIFT_PREDOCK;
-        lastActionSucceeded_ = false;        
+        markerCenter_ = markerCenter;
+        pixelSearchRadius_ = pixelSearchRadius;
       }
       
       void PlaceOnGround()
