@@ -180,95 +180,95 @@ namespace Anki {
           {
             case webots::Robot::KEYBOARD_UP:
             {
-              robot_->SendDriveWheels(wheelSpeed, wheelSpeed);
+              robot_->DriveWheels(wheelSpeed, wheelSpeed);
               break;
             }
               
             case webots::Robot::KEYBOARD_DOWN:
             {
-              robot_->SendDriveWheels(-wheelSpeed, -wheelSpeed);
+              robot_->DriveWheels(-wheelSpeed, -wheelSpeed);
               break;
             }
               
             case webots::Robot::KEYBOARD_LEFT:
             {
-              robot_->SendDriveWheels(-wheelSpeed, wheelSpeed);
+              robot_->DriveWheels(-wheelSpeed, wheelSpeed);
               break;
             }
               
             case webots::Robot::KEYBOARD_RIGHT:
             {
-              robot_->SendDriveWheels(wheelSpeed, -wheelSpeed);
+              robot_->DriveWheels(wheelSpeed, -wheelSpeed);
               break;
             }
               
             case CKEY_HEAD_UP: //s-key: move head UP
             {
               const f32 speed((modifier_key == webots::Supervisor::KEYBOARD_SHIFT) ? 0.5 * HEAD_SPEED_RAD_PER_SEC : HEAD_SPEED_RAD_PER_SEC);
-              robot_->SendMoveHead(speed);
+              robot_->MoveHead(speed);
               break;
             }
               
             case CKEY_HEAD_DOWN: //x-key: move head DOWN
             {
               const f32 speed((modifier_key == webots::Supervisor::KEYBOARD_SHIFT) ? 0.5 * HEAD_SPEED_RAD_PER_SEC : HEAD_SPEED_RAD_PER_SEC);
-              robot_->SendMoveHead(-speed);
+              robot_->MoveHead(-speed);
               break;
             }
               
             case CKEY_LIFT_UP: //a-key: move lift up
             {
               const f32 speed((modifier_key == webots::Supervisor::KEYBOARD_SHIFT) ? 0.25 * LIFT_SPEED_RAD_PER_SEC : 0.5 * LIFT_SPEED_RAD_PER_SEC);
-              robot_->SendMoveLift(speed);
+              robot_->MoveLift(speed);
               break;
             }
               
             case CKEY_LIFT_DOWN: //z-key: move lift down
             {
               const f32 speed((modifier_key == webots::Supervisor::KEYBOARD_SHIFT) ? 0.25 * LIFT_SPEED_RAD_PER_SEC : 0.5 * LIFT_SPEED_RAD_PER_SEC);
-              robot_->SendMoveLift(-speed);
+              robot_->MoveLift(-speed);
               break;
             }
 
             case '1': //set lift to low dock height
             {
-              robot_->SendSetLiftHeight(LIFT_HEIGHT_LOWDOCK, LIFT_SPEED_RAD_PER_SEC, LIFT_ACCEL_RAD_PER_SEC2);
+              robot_->MoveLiftToHeight(LIFT_HEIGHT_LOWDOCK, LIFT_SPEED_RAD_PER_SEC, LIFT_ACCEL_RAD_PER_SEC2);
               break;
             }
               
             case '2': //set lift to high dock height
             {
-              robot_->SendSetLiftHeight(LIFT_HEIGHT_HIGHDOCK, LIFT_SPEED_RAD_PER_SEC, LIFT_ACCEL_RAD_PER_SEC2);
+              robot_->MoveLiftToHeight(LIFT_HEIGHT_HIGHDOCK, LIFT_SPEED_RAD_PER_SEC, LIFT_ACCEL_RAD_PER_SEC2);
               break;
             }
               
             case '3': //set lift to carry height
             {
-              robot_->SendSetLiftHeight(LIFT_HEIGHT_CARRY, LIFT_SPEED_RAD_PER_SEC, LIFT_ACCEL_RAD_PER_SEC2);
+              robot_->MoveLiftToHeight(LIFT_HEIGHT_CARRY, LIFT_SPEED_RAD_PER_SEC, LIFT_ACCEL_RAD_PER_SEC2);
               break;
             }
               
             case '4': //set head to look all the way down
             {
-              robot_->SendSetHeadAngle(MIN_HEAD_ANGLE, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
+              robot_->MoveHeadToAngle(MIN_HEAD_ANGLE, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
               break;
             }
 
             case '5': //set head to straight ahead
             {
-              robot_->SendSetHeadAngle(0, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
+              robot_->MoveHeadToAngle(0, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
               break;
             }
               
             case '6': //set head to look all the way up
             {
-              robot_->SendSetHeadAngle(MAX_HEAD_ANGLE, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
+              robot_->MoveHeadToAngle(MAX_HEAD_ANGLE, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
               break;
             }
 
             case CKEY_UNLOCK: // Stop all motors
             {
-              robot_->SendStopAllMotors();
+              robot_->StopAllMotors();
               break;
             }
               
@@ -300,7 +300,7 @@ namespace Anki {
             {
               static bool headlightsOn = false;
               headlightsOn = !headlightsOn;
-              robot_->SendHeadlight(headlightsOn ? 128 : 0);
+              robot_->SetHeadlight(headlightsOn ? 128 : 0);
               break;
             }
             case CKEY_GOTO_POSE:
@@ -349,16 +349,16 @@ namespace Anki {
             default:
             {
               // Stop wheels
-              robot_->SendDriveWheels(0, 0);
+              robot_->DriveWheels(0, 0);
               
               // If the last key pressed was a move lift key then stop it.
               if (lastKeyPressed_ == CKEY_LIFT_UP || lastKeyPressed_ == CKEY_LIFT_DOWN) {
-                robot_->SendMoveLift(0);
+                robot_->MoveLift(0);
               }
               
               // If the last key pressed was a move head key then stop it.
               if (lastKeyPressed_ == CKEY_HEAD_UP || lastKeyPressed_ == CKEY_HEAD_DOWN) {
-                robot_->SendMoveHead(0);
+                robot_->MoveHead(0);
               }
               
             }
