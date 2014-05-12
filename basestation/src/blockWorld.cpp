@@ -386,12 +386,11 @@ namespace Anki
                                                 block->GetSize(),
                                                 block->GetPose());
           
-          std::vector<Pose3d> poses;
-          //block->GetPreDockPoses(PREDOCK_DISTANCE_MM, poses);
-          block->GetPreDockPoses(Vision::MARKER_BATTERIES, PREDOCK_DISTANCE_MM, poses);
+          std::vector<Block::PoseMarkerPair_t> poseMarkerPairs;
+          block->GetPreDockPoses(PREDOCK_DISTANCE_MM, poseMarkerPairs);
           u32 poseID = 0;
-          for(auto pose : poses) {
-            VizManager::getInstance()->DrawPreDockPose(6*block->GetID()+poseID++, pose, VIZ_COLOR_PREDOCKPOSE);
+          for(auto poseMarkerPair : poseMarkerPairs) {
+            VizManager::getInstance()->DrawPreDockPose(6*block->GetID()+poseID++, poseMarkerPair.first, VIZ_COLOR_PREDOCKPOSE);
             ++poseID;
           }
 
