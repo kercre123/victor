@@ -125,7 +125,7 @@ namespace Anki
         mat->AddMarker(Vision::MARKER_J,
                        Pose3d(1.570796, {-1.000000,0.000000,0.000000}, {-66.666667,200.000000,0.000000}),
                        65.000000);
-        mat->AddMarker(Vision::MARKER_N,
+        mat->AddMarker(Vision::MARKER_4,
                        Pose3d(1.570796, {-1.000000,0.000000,0.000000}, {66.666667,200.000000,0.000000}),
                        65.000000);
         mat->AddMarker(Vision::MARKER_Y,

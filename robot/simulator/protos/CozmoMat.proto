@@ -234,7 +234,7 @@ Solid {
 	    children [
 		  Shape {
 		    appearance Appearance {
-			  #texture ImageTexture { url ["ankiMat15.png"] }
+			  texture ImageTexture { url ["ankiMat15.png"] }
 			  material Material { diffuseColor 1 1 1 }
 		    }
 		    geometry Box {
