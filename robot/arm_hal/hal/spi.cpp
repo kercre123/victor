@@ -164,7 +164,7 @@ void DMA2_Stream2_IRQHandler(void)
   
   s_failedTransferCount = 0;
   
-	// Hack to allow timing events longer than bout 50ms
+	// Hack to allow timing events longer than about 50ms
 	GetMicroCounter();
 	
   // Run MainExecution
