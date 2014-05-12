@@ -55,12 +55,10 @@ namespace Anki {
         WAITING_FOR_ROBOT,
         
         // PickAndPlaceBlock
-        WAITING_FOR_PICKUP_BLOCK,
+        WAITING_FOR_DOCK_BLOCK,
         EXECUTING_PATH_TO_DOCK_POSE,
-        EXECUTING_DOCK,
-        WAITING_FOR_PLACEMENT_BLOCK,
-        EXECUTING_PATH_TO_PLACEMENT_POSE,
-        EXECUTING_PLACEMENT
+        CONFIRM_BLOCK_IS_VISIBLE,
+        EXECUTING_DOCK
         
       } BehaviorState;
       
@@ -87,16 +85,13 @@ namespace Anki {
     
       // Block to dock with
       Block* dockBlock_;
+      const Vision::KnownMarker *dockMarker_;
       
       // Target pose for predock
       Pose3d nearestPreDockPose_;
       
-      // Expected marker at predock pose
-      Vision::Marker::Code preDockMarkerCode_;
-      
-      // Width of expected marker
-      f32 preDockMarkerWidth_mm_;
-      
+      // A general time value for gating state transitions
+      double waitUntilTime_;
       
     }; // class BehaviorManager
     
