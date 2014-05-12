@@ -795,9 +795,13 @@ namespace Anki
 #endif
         } // if(multiClassLabel != MARKER_UNKNOWN)
       } else {
+        // This is relatively common (and reasonable/expected), so maybe we
+        // don't want to print these messages?
+        /*
 #ifdef OUTPUT_FAILED_MARKER_STEPS
         AnkiWarn("VisionMarker::Extract", "Poor contrast marker detected");
 #endif
+         */
       } // if contrast is sufficient
 
       if(!this->isValid) {
