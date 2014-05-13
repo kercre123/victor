@@ -12,6 +12,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/common/constantsAndMacros.h"
 
+#include "anki/common/robot/benchmarking.h"
+
 //using namespace std;
 
 namespace Anki
@@ -42,47 +44,6 @@ namespace Anki
           shiftMagnitude = 0;
         }
       } // static void GetBitShiftDirectionAndMagnitude()
-
-      FixedPointArray<s32> Get1dGaussianKernel(const s32 sigma, const s32 numSigmaFractionalBits, const s32 numStandardDeviations, MemoryStack &scratch)
-      {
-        // halfWidth = ceil(num_std*sigma);
-        const s32 halfWidth = 1 + ((sigma*numStandardDeviations) >> numSigmaFractionalBits);
-        const f32 halfWidthF32 = static_cast<f32>(halfWidth);
-
-        FixedPointArray<s32> gaussianKernel(1, 2*halfWidth + 1, numSigmaFractionalBits, scratch, Flags::Buffer(false,false,false));
-        s32 * restrict pGaussianKernel = gaussianKernel.Pointer(0,0);
-
-        {
-          PUSH_MEMORY_STACK(scratch);
-
-          Array<f32> gaussianKernelF32(1, 2*halfWidth + 1, scratch);
-          f32 * restrict pGaussianKernelF32 = gaussianKernelF32.Pointer(0,0);
-
-          const f32 twoTimesSigmaSquared = static_cast<f32>(2*sigma*sigma) / powf(2.0f, static_cast<f32>(numSigmaFractionalBits*2));
-
-          s32 i = 0;
-          f32 sum = 0;
-          for(f32 x=-halfWidthF32; i<(2*halfWidth+1); x++, i++) {
-            const f32 g = expf(-(x*x) / twoTimesSigmaSquared);
-            pGaussianKernelF32[i] = g;
-            sum += g;
-          }
-
-          // Normalize to sum to one
-          const f32 sumInverse = 1.0f / sum;
-          const f32 twoToNumBits = powf(2.0f, static_cast<f32>(numSigmaFractionalBits));
-          for(s32 i=0; i<(2*halfWidth+1); i++) {
-            const f32 gScaled = pGaussianKernelF32[i] * sumInverse * twoToNumBits;
-            pGaussianKernel[i] = Round<s32>(gScaled);
-          }
-
-          // gaussianKernelF32.Print("gaussianKernelF32");
-        } // PUSH_MEMORY_STACK(scratch);
-
-        // gaussianKernel.Print("gaussianKernel");
-
-        return gaussianKernel;
-      }
 
       // NOTE: uses a 32-bit accumulator, so be careful of overflows
       Result Correlate1d(const FixedPointArray<s32> &in1, const FixedPointArray<s32> &in2, FixedPointArray<s32> &out)
@@ -197,6 +158,8 @@ namespace Anki
       // NOTE: uses a 32-bit accumulator, so be careful of overflows
       Result Correlate1dCircularAndSameSizeOutput(const FixedPointArray<s32> &image, const FixedPointArray<s32> &filter, FixedPointArray<s32> &out)
       {
+        BeginBenchmark("Correlate1dCircularAndSameSizeOutput");
+
         const s32 imageHeight = image.get_size(0);
         const s32 imageWidth = image.get_size(1);
 
@@ -262,68 +225,68 @@ namespace Anki
           }
         }
 
+        EndBenchmark("Correlate1dCircularAndSameSizeOutput");
+
         return RESULT_OK;
       } // Result Correlate1dCircularAndSameSizeOutput(const FixedPointArray<s32> &in1, const FixedPointArray<s32> &in2, FixedPointArray<s32> &out)
-      
+
       /*
       // This is a general function with specializations defined for relevant
       // types
       template<typename Type> Type GetImageTypeMean(void);
-      
+
       // TODO: these should be in a different .cpp file (imageProcessing.cpp?)
       template<> f32 GetImageTypeMean<f32>() { return 0.5f; }
       template<> u8  GetImageTypeMean<u8>()  { return 128;  }
       template<> f64 GetImageTypeMean<f64>() { return 0.5f; }
-     */
-      
-      
-      
+      */
+
       Result BoxFilterNormalize(const Array<u8> &image, const s32 boxSize, const u8 padValue,
-                                Array<u8> &imageNorm, MemoryStack scratch)
+        Array<u8> &imageNorm, MemoryStack scratch)
       {
         Result lastResult = RESULT_OK;
-        
+
         AnkiConditionalErrorAndReturnValue(image.IsValid(),
-                                           RESULT_FAIL_INVALID_OBJECT,
-                                           "BoxFilterNormalize",
-                                           "Input image is invalid.");
-        
+          RESULT_FAIL_INVALID_OBJECT,
+          "BoxFilterNormalize",
+          "Input image is invalid.");
+
         const s32 imageHeight = image.get_size(0);
         const s32 imageWidth  = image.get_size(1);
-        
+
         AnkiConditionalErrorAndReturnValue(imageNorm.IsValid(),
-                                           RESULT_FAIL_INVALID_OBJECT,
-                                           "BoxFilterNormalize",
-                                           "Output normalized image is invalid.");
-        
+          RESULT_FAIL_INVALID_OBJECT,
+          "BoxFilterNormalize",
+          "Output normalized image is invalid.");
+
         AnkiConditionalErrorAndReturnValue(imageNorm.get_size(0) == imageHeight &&
-                                           imageNorm.get_size(1) == imageWidth,
-                                           RESULT_FAIL_INVALID_SIZE,
-                                           "BoxFilterNormalize",
-                                           "Output normalized image must match input image's size.");
-        
+          imageNorm.get_size(1) == imageWidth,
+          RESULT_FAIL_INVALID_SIZE,
+          "BoxFilterNormalize",
+          "Output normalized image must match input image's size.");
+
         Array<f32> integralImage(imageHeight, imageWidth, scratch);
-        
+
         AnkiConditionalErrorAndReturnValue(integralImage.IsValid(),
-                                           RESULT_FAIL_OUT_OF_MEMORY,
-                                           "BoxFilterNormalize",
-                                           "Could not allocate integral image (out of memory?).");
-        
+          RESULT_FAIL_OUT_OF_MEMORY,
+          "BoxFilterNormalize",
+          "Could not allocate integral image (out of memory?).");
+
         if((lastResult = CreateIntegralImage(image, integralImage)) != RESULT_OK) {
           return lastResult;
         }
-        
+
         // Divide each input pixel by box filter results computed from integral image
         const s32 halfWidth = MIN(MIN(imageWidth,imageHeight)-1, boxSize)/2;
         const s32 boxWidth  = 2*halfWidth + 1;
         const f32 boxArea   = static_cast<f32>(boxWidth*boxWidth);
         const f32 outMean = 128.f; //static_cast<f32>(GetImageTypeMean<u8>());
-        
+
         for(s32 y=0; y<imageHeight; y++) {
           // Input/Output pixel pointers:
           const u8 * restrict pImageRow     = image.Pointer(y,0);
           u8       * restrict pImageRowNorm = imageNorm.Pointer(y,0);
-          
+
           // Integral image pointers for top and bottom of summing box
           s32 rowAhead  = y + halfWidth;
           s32 rowBehind = y - halfWidth - 1;
@@ -336,20 +299,20 @@ namespace Anki
             inBoundsHeight = y+halfWidth+1;
             rowBehind = 0;
           }
-          
+
           const f32 * restrict pIntegralImageRowBehind = integralImage.Pointer(rowBehind,0);
           const f32 * restrict pIntegralImageRowAhead  = integralImage.Pointer(rowAhead, 0);
-          
+
           // Left side
           for(s32 x=0; x<=halfWidth; x++) {
             f32 OutOfBoundsArea = static_cast<f32>(boxArea - (x+halfWidth+1)*inBoundsHeight);
-            
+
             f32 boxSum = (pIntegralImageRowAhead[x+halfWidth] -
-                          pIntegralImageRowAhead[0] -
-                          pIntegralImageRowBehind[x+halfWidth] +
-                          pIntegralImageRowBehind[0] +
-                          OutOfBoundsArea*static_cast<f32>(padValue));
-            
+              pIntegralImageRowAhead[0] -
+              pIntegralImageRowBehind[x+halfWidth] +
+              pIntegralImageRowBehind[0] +
+              OutOfBoundsArea*static_cast<f32>(padValue));
+
             pImageRowNorm[x] = static_cast<u8>(CLIP(outMean * (static_cast<f32>(pImageRow[x]) * boxArea) / boxSum, 0.f, 255.f));
           }
 
@@ -358,33 +321,30 @@ namespace Anki
           const f32 paddingSum = OutOfBoundsArea * static_cast<f32>(padValue);
           for(s32 x=halfWidth+1; x<imageWidth-halfWidth; x++) {
             f32 boxSum = (pIntegralImageRowAhead[x+halfWidth] -
-                          pIntegralImageRowAhead[x-halfWidth-1] -
-                          pIntegralImageRowBehind[x+halfWidth] +
-                          pIntegralImageRowBehind[x-halfWidth-1] +
-                          paddingSum);
-            
+              pIntegralImageRowAhead[x-halfWidth-1] -
+              pIntegralImageRowBehind[x+halfWidth] +
+              pIntegralImageRowBehind[x-halfWidth-1] +
+              paddingSum);
+
             pImageRowNorm[x] = static_cast<u8>(CLIP(outMean * (static_cast<f32>(pImageRow[x]) * boxArea) / boxSum, 0.f, 255.f));
           }
-          
+
           // Right side
           for(s32 x=imageWidth-halfWidth; x<imageWidth; x++) {
             f32 OutOfBoundsArea = static_cast<f32>(boxArea - (imageWidth-x+halfWidth)*inBoundsHeight);
-            
+
             f32 boxSum = (pIntegralImageRowAhead[imageWidth-1] -
-                          pIntegralImageRowAhead[x-halfWidth-1] -
-                          pIntegralImageRowBehind[imageWidth-1] +
-                          pIntegralImageRowBehind[x-halfWidth-1] +
-                          OutOfBoundsArea*static_cast<f32>(padValue));
-            
+              pIntegralImageRowAhead[x-halfWidth-1] -
+              pIntegralImageRowBehind[imageWidth-1] +
+              pIntegralImageRowBehind[x-halfWidth-1] +
+              OutOfBoundsArea*static_cast<f32>(padValue));
+
             pImageRowNorm[x] = static_cast<u8>(CLIP(outMean * (static_cast<f32>(pImageRow[x]) * boxArea) / boxSum, 0.f, 255.f));
           }
         }
-        
+
         return RESULT_OK;
-        
       } // BoxFilterNormalize()
-      
-      
     } // namespace ImageProcessing
   } // namespace Embedded
 } // namespace Anki

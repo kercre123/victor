@@ -35,25 +35,27 @@ namespace Anki
       // Handles edges by replicating the border pixel
       template<typename InType, typename IntermediateType, typename OutType> Result BinomialFilter(const Array<InType> &image, Array<OutType> &imageFiltered, MemoryStack scratch);
 
-      FixedPointArray<s32> Get1dGaussianKernel(const s32 sigma, const s32 numSigmaFractionalBits, const s32 numStandardDeviations, MemoryStack &scratch);
+      // A 1 dimensional, fixed point Gaussian kernel
+      template<typename Type> FixedPointArray<Type> Get1dGaussianKernel(const s32 sigma, const s32 numSigmaFractionalBits, const s32 numStandardDeviations, MemoryStack &scratch);
 
       // NOTE: uses a 32-bit accumulator, so be careful of overflows
       Result Correlate1d(const FixedPointArray<s32> &in1, const FixedPointArray<s32> &in2, FixedPointArray<s32> &out);
 
       // NOTE: uses a 32-bit accumulator, so be careful of overflows
       Result Correlate1dCircularAndSameSizeOutput(const FixedPointArray<s32> &image, const FixedPointArray<s32> &filter, FixedPointArray<s32> &out);
+      Result Correlate1dCircularAndSameSizeOutput(const FixedPointArray<s16> &image, const FixedPointArray<s32> &filter, FixedPointArray<s32> &out);
 
       // Populate a full integral image created from the input image.
       template<typename InType, typename OutType>
       Result CreateIntegralImage(const Array<InType> &image, Array<OutType> integralImage);
-      
+
       // Divide each pixel by the box-filter average of its neighborhood
       // This is not memory efficient: it internally creates a full f32 integral
       // image the same size as the input image, and thus requires enough
       // scratch memory to store that integral image.
       Result BoxFilterNormalize(const Array<u8> &image, const s32 boxSize, const u8 padValue,
-                                Array<u8> &imageNorm, MemoryStack scratch);
-      
+        Array<u8> &imageNorm, MemoryStack scratch);
+
       //
       // Image resizing
       //

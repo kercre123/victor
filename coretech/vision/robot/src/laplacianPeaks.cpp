@@ -10,6 +10,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/fiducialDetection.h"
 #include "anki/vision/robot/imageProcessing.h"
 
+#include "anki/common/robot/benchmarking.h"
+
 //using namespace std;
 
 namespace Anki
@@ -18,6 +20,8 @@ namespace Anki
   {
     Result ExtractLaplacianPeaks(const FixedLengthList<Point<s16> > &boundary, FixedLengthList<Point<s16> > &peaks, MemoryStack scratch)
     {
+      BeginBenchmark("elp_part1");
+
       AnkiConditionalErrorAndReturnValue(boundary.IsValid(),
         RESULT_FAIL_INVALID_OBJECT, "ComputeQuadrilateralsFromConnectedComponents", "boundary is not valid");
 
@@ -54,7 +58,7 @@ namespace Anki
       *stencil.Pointer(0, stencil.get_size(1)-1) = 1;
 
       //dg2 = conv(stencil, gaussian_kernel(sigma));
-      FixedPointArray<s32> gaussian = ImageProcessing::Get1dGaussianKernel(sigma, numSigmaFractionalBits, numStandardDeviations, scratch); // SQ23.8
+      FixedPointArray<s32> gaussian = ImageProcessing::Get1dGaussianKernel<s32>(sigma, numSigmaFractionalBits, numStandardDeviations, scratch); // SQ23.8
       FixedPointArray<s32> differenceOfGaussian(1, gaussian.get_size(1)+stencil.get_size(1)-1, numSigmaFractionalBits, scratch, Flags::Buffer(false,false,false)); // SQ23.8
 
       if((lastResult = ImageProcessing::Correlate1d(stencil, gaussian, differenceOfGaussian)) != RESULT_OK)
@@ -66,7 +70,14 @@ namespace Anki
       if(!boundaryYFiltered.IsValid())
         return RESULT_FAIL_INVALID_OBJECT;
 
-      //differenceOfGaussian.Print("differenceOfGaussian");
+      gaussian.Print("gaussian");
+      differenceOfGaussian.Print("differenceOfGaussian");
+
+      EndBenchmark("elp_part1");
+
+      BeginBenchmark("elp_part2");
+
+      differenceOfGaussian.Print("differenceOfGaussian");
 
       //r_smooth = imfilter(boundary, dg2(:), 'circular');
       {
@@ -113,6 +124,10 @@ namespace Anki
         //boundaryYFiltered.Print("boundaryYFiltered");
       } // PUSH_MEMORY_STACK(scratch);
 
+      EndBenchmark("elp_part2");
+
+      BeginBenchmark("elp_part3");
+
       //r_smooth = sum(r_smooth.^2, 2);
       FixedPointArray<s32> boundaryFilteredAndCombined(1, boundary.get_size(), 2*numSigmaFractionalBits, scratch, Flags::Buffer(false,false,false)); // SQ15.16
       s32 * restrict pBoundaryFilteredAndCombined = boundaryFilteredAndCombined.Pointer(0,0);
@@ -133,6 +148,10 @@ namespace Anki
       FixedLengthList<s32> localMaxima(maximumTemporaryPeaks, scratch, Flags::Buffer(false,false,false));
 
       const s32 * restrict pConstBoundaryFilteredAndCombined = boundaryFilteredAndCombined.Pointer(0,0);
+
+      EndBenchmark("elp_part3");
+
+      BeginBenchmark("elp_part4");
 
       // Find local maxima -- these should correspond to the corners of the square.
       // NOTE: one of the comparisons is >= while the other is >, in order to
@@ -162,6 +181,10 @@ namespace Anki
       //}
 
       //localMaxima.Print("localMaxima");
+
+      EndBenchmark("elp_part4");
+
+      BeginBenchmark("elp_part5");
 
       const Point<s16> * restrict pConstBoundary = boundary.Pointer(0);
 
@@ -216,6 +239,8 @@ namespace Anki
           peaks.PushBack(pConstBoundary[maximaIndexes[curMinIndex]]);
         }
       }
+
+      EndBenchmark("elp_part5");
 
       //boundary.Print();
       //peaks.Print();
