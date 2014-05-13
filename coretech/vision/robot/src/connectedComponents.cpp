@@ -9,6 +9,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/vision/robot/connectedComponents.h"
 
+#include "anki/common/robot/benchmarking.h"
+
 namespace Anki
 {
   namespace Embedded
@@ -153,12 +155,16 @@ namespace Anki
 
       u16 * restrict pEquivalentComponents = equivalentComponents.Pointer(0);
 
+      BeginBenchmark("e2dc_pr_nextRow_extract");
       ConnectedComponents::Extract1dComponents(binaryImageRow, static_cast<s16>(imageWidth), minComponentWidth, maxSkipDistance, currentComponents1d);
+      EndBenchmark("e2dc_pr_nextRow_extract");
 
       const s32 numCurrentComponents1d = currentComponents1d.get_size();
       const s32 numPreviousComponents1d = previousComponents1d.get_size();
 
       newPreviousComponents1d.set_size(numCurrentComponents1d);
+
+      BeginBenchmark("e2dc_pr_nextRow_mainLoop");
 
       for(s32 iCurrent=0; iCurrent<numCurrentComponents1d; iCurrent++) {
         bool foundMatch = false;
@@ -218,8 +224,14 @@ namespace Anki
         } // if(!foundMatch)
       } // for(s32 iCurrent=0; iCurrent<numCurrentComponents1d; iCurrent++)
 
+      EndBenchmark("e2dc_pr_nextRow_mainLoop");
+
+      BeginBenchmark("e2dc_pr_nextRow_finalize");
+
       // Update previousComponents1d to be newPreviousComponents1d
       Swap(previousComponents1d, newPreviousComponents1d);
+
+      EndBenchmark("e2dc_pr_nextRow_finalize");
 
       return RESULT_OK;
     } // Result ConnectedComponents::Extract2dComponents_PerRow_NextRow(const Array<u8> &binaryImageRow, const s16 minComponentWidth, const s16 maxSkipDistance)

@@ -324,31 +324,54 @@ namespace Anki
 
     void ScrollingIntegralImage_u8_s32::ComputeIntegralImageRow(const u8* restrict paddedImage_currentRow, s32 * restrict integralImage_currentRow, const s32 integralImageWidth)
     {
-      //integralImage_currentRow[0] = paddedImage_currentRow[0];
+      const s32 integralImageWidth4 = (integralImageWidth+3) / 4;
 
-      //for(s32 x=1; x<integralImageWidth; x++) {
-      //  integralImage_currentRow[x] = paddedImage_currentRow[x] + integralImage_currentRow[x-1];
-      //}
+      const u32 * restrict paddedImage_currentRowU32 = reinterpret_cast<const u32*>(paddedImage_currentRow);
 
       s32 horizontalSum = 0;
-      for(s32 x=0; x<integralImageWidth; x++) {
-        horizontalSum += paddedImage_currentRow[x];
-        integralImage_currentRow[x] = horizontalSum;
+      for(s32 x=0; x<integralImageWidth4; x++) {
+        const u32 curPixel = paddedImage_currentRowU32[x];
+
+        horizontalSum += curPixel & 0xFF;
+        integralImage_currentRow[4*x] = horizontalSum;
+
+        horizontalSum += (curPixel & 0xFF00) >> 8;
+        integralImage_currentRow[4*x + 1] = horizontalSum;
+
+        horizontalSum += (curPixel & 0xFF0000) >> 16;
+        integralImage_currentRow[4*x + 2] = horizontalSum;
+
+        horizontalSum += (curPixel & 0xFF000000) >> 24;
+        integralImage_currentRow[4*x + 3] = horizontalSum;
       }
     }
 
     void ScrollingIntegralImage_u8_s32::ComputeIntegralImageRow(const u8 * restrict paddedImage_currentRow, const s32 * restrict integralImage_previousRow, s32 * restrict integralImage_currentRow, const s32 integralImageWidth)
     {
-      //integralImage_currentRow[0] = paddedImage_currentRow[0] + integralImage_previousRow[0];
+      const s32 integralImageWidth4 = (integralImageWidth+3) / 4;
 
-      //for(s32 x=1; x<integralImageWidth; x++) {
-      //  integralImage_currentRow[x] = paddedImage_currentRow[x] + integralImage_currentRow[x-1] + integralImage_previousRow[x] - integralImage_previousRow[x-1];
-      //}
+      const u32 * restrict paddedImage_currentRowU32 = reinterpret_cast<const u32*>(paddedImage_currentRow);
 
       s32 horizontalSum = 0;
-      for(s32 x=0; x<integralImageWidth; x++) {
-        horizontalSum += paddedImage_currentRow[x];
-        integralImage_currentRow[x] = horizontalSum + integralImage_previousRow[x];
+      //for(s32 x=0; x<integralImageWidth; x++) {
+      //  horizontalSum += paddedImage_currentRow[x];
+      //  integralImage_currentRow[x] = horizontalSum + integralImage_previousRow[x];
+      //}
+
+      for(s32 x=0; x<integralImageWidth4; x++) {
+        const u32 curPixel = paddedImage_currentRowU32[x];
+
+        horizontalSum += curPixel & 0xFF;
+        integralImage_currentRow[4*x] = horizontalSum + integralImage_previousRow[4*x];
+
+        horizontalSum += (curPixel & 0xFF00) >> 8;
+        integralImage_currentRow[4*x + 1] = horizontalSum + integralImage_previousRow[4*x + 1];
+
+        horizontalSum += (curPixel & 0xFF0000) >> 16;
+        integralImage_currentRow[4*x + 2] = horizontalSum + integralImage_previousRow[4*x + 2];
+
+        horizontalSum += (curPixel & 0xFF000000) >> 24;
+        integralImage_currentRow[4*x + 3] = horizontalSum + integralImage_previousRow[4*x + 3];
       }
     }
   } // namespace Embedded
