@@ -355,23 +355,24 @@ namespace Anki
       AnkiAssert((2*numPadPixels + originalImageWidth) == integralImageWidth);
 
       s32 xIn = 0;
+      s32 xOut = 0;
       s32 horizontalSum = 0;
 
       const u8 leftPixelValue = currentRow[0];
-      for(s32 xPad=0; xPad<numPadPixels; xPad++) {
+      for(xOut=0; xOut<numPadPixels; xOut++) {
         horizontalSum += leftPixelValue;
-        integralImage_currentRow[xPad] = horizontalSum;
+        integralImage_currentRow[xOut] = horizontalSum;
       }
 
-      for(; xIn<originalImageWidth; xIn++) {
+      for(; xIn<originalImageWidth; xIn++, xOut++) {
         horizontalSum += currentRow[xIn];
-        integralImage_currentRow[xIn+numPadPixels] = horizontalSum;
+        integralImage_currentRow[xOut] = horizontalSum;
       }
 
       const u8 rightPixelValue = currentRow[originalImageWidth-1];
-      for(s32 xPad=0; xPad<numPadPixels; xPad++) {
+      for(s32 xPad=0; xPad<numPadPixels; xPad++, xOut++) {
         horizontalSum += rightPixelValue;
-        integralImage_currentRow[xIn+numPadPixels+xPad] = horizontalSum;
+        integralImage_currentRow[xOut] = horizontalSum;
       }
     }
 
@@ -389,23 +390,24 @@ namespace Anki
       AnkiAssert((2*numPadPixels + originalImageWidth) == integralImageWidth);
 
       s32 xIn = 0;
+      s32 xOut = 0;
       s32 horizontalSum = 0;
 
       const u8 leftPixelValue = currentRow[0];
-      for(s32 xPad=0; xPad<numPadPixels; xPad++) {
+      for(xOut=0; xOut<numPadPixels; xOut++) {
         horizontalSum += leftPixelValue;
-        integralImage_currentRow[xPad] = horizontalSum + integralImage_previousRow[xPad];
+        integralImage_currentRow[xOut] = horizontalSum + integralImage_previousRow[xOut];
       }
 
-      for(; xIn<originalImageWidth; xIn++) {
+      for(; xIn<originalImageWidth; xIn++, xOut++) {
         horizontalSum += currentRow[xIn];
-        integralImage_currentRow[xIn+numPadPixels] = horizontalSum + integralImage_previousRow[xIn+numPadPixels];
+        integralImage_currentRow[xOut] = horizontalSum + integralImage_previousRow[xOut];
       }
 
       const u8 rightPixelValue = currentRow[originalImageWidth-1];
-      for(s32 xPad=0; xPad<numPadPixels; xPad++) {
+      for(s32 xPad=0; xPad<numPadPixels; xPad++, xOut++) {
         horizontalSum += rightPixelValue;
-        integralImage_currentRow[xIn+numPadPixels+xPad] = horizontalSum + integralImage_previousRow[xIn+numPadPixels+xPad];
+        integralImage_currentRow[xOut] = horizontalSum + integralImage_previousRow[xOut];
       }
     }
   } // namespace Embedded
