@@ -269,6 +269,8 @@ namespace Anki {
         
         MatchList matches_;
         
+        std::set<const ObservedMarker*> obsMarkerSet_;
+        
       }; // class PoseCluster
       
       void ClusterObjectPoses(const std::vector<PoseMatchPair>& possiblePoses,
