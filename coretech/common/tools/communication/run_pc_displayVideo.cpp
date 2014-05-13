@@ -140,7 +140,8 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
     //PrintBenchmarkResults(benchmarks, false, false);
 
     FixedLengthList<ShowBenchmarkParameters> namesToDisplay(128, scratch);
-    namesToDisplay.PushBack(ShowBenchmarkParameters("VisionSystem_CameraGetFrame", false, red));
+    namesToDisplay.PushBack(ShowBenchmarkParameters("CameraGetFrame_wait", false, red));
+    namesToDisplay.PushBack(ShowBenchmarkParameters("CameraGetFrame_convert", false, red));
     namesToDisplay.PushBack(ShowBenchmarkParameters("ComputeBenchmarkResults", false, maroon));
     namesToDisplay.PushBack(ShowBenchmarkParameters("UARTPutMessage", false, maroon));
     namesToDisplay.PushBack(ShowBenchmarkParameters("VisionSystem_CameraImagingPipeline", false, maroon));

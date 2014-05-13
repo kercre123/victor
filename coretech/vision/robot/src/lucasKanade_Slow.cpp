@@ -644,6 +644,7 @@ namespace Anki
 
           if(minChange < convergenceTolerance) {
             verify_converged = true;
+            EndBenchmark("IterativelyRefineTrack.checkForCompletion");
             return RESULT_OK;
           }
 

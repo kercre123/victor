@@ -2667,8 +2667,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
 
     printf("totalTime: %dms\n", Round<s32>(1000*(time1-time0)));
 
-    // TODO: add back
-    //ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
+    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
     ASSERT_TRUE(result == RESULT_OK);
   }
@@ -3917,7 +3916,7 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   numFailedTests = 0;
 
   CALL_GTEST_TEST(CoreTech_Vision, Vignetting);
-  /*CALL_GTEST_TEST(CoreTech_Vision, FaceDetection);
+  CALL_GTEST_TEST(CoreTech_Vision, FaceDetection);
   CALL_GTEST_TEST(CoreTech_Vision, ResizeImage);
   CALL_GTEST_TEST(CoreTech_Vision, DecisionTreeVision);
   CALL_GTEST_TEST(CoreTech_Vision, BinaryTracker);
@@ -3953,7 +3952,7 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   CALL_GTEST_TEST(CoreTech_Vision, DownsampleByFactor);
   CALL_GTEST_TEST(CoreTech_Vision, SolveQuartic);
   CALL_GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation);
-  CALL_GTEST_TEST(CoreTech_Vision, BoxFilterNormalize);*/
+  CALL_GTEST_TEST(CoreTech_Vision, BoxFilterNormalize);
 
   return numFailedTests;
 } // int RUN_ALL_VISION_TESTS()

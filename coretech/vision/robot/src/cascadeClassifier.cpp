@@ -695,7 +695,7 @@ namespace Anki
         for(f32 factor = 1; ; factor *= scaleFactor) {
           PUSH_MEMORY_STACK(fastScratch);
 
-          BeginBenchmark("CascadeClassifier_LBP::DetectMultiScale main loop");
+          //BeginBenchmark("CascadeClassifier_LBP::DetectMultiScale main loop");
 
           const s32 windowHeight = Round<s32>(this->data.origWinHeight*factor);
           const s32 windowWidth = Round<s32>(this->data.origWinWidth*factor);
@@ -736,7 +736,7 @@ namespace Anki
             break;
           }
 
-          EndBenchmark("CascadeClassifier_LBP::DetectMultiScale main loop");
+          //EndBenchmark("CascadeClassifier_LBP::DetectMultiScale main loop");
         } // for(f32 factor = 1; ; factor *= scaleFactor)
 
         objects.set_size(candidates.get_size());

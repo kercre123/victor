@@ -124,6 +124,11 @@ namespace Anki {
           return RESULT_OK;
         }
 
+        Result SendBenchmarksOnly(MemoryStack scratch)
+        {
+          return SendBuffer(debugStreamBuffer_, scratch);
+        }
+        
         Result SendFiducialDetection(const Array<u8> &image, const FixedLengthList<VisionMarker> &markers, MemoryStack ccmScratch, MemoryStack onchipScratch, MemoryStack offchipScratch)
         {
           Result result = RESULT_OK;

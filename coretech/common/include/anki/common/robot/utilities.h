@@ -21,19 +21,33 @@ namespace Anki
 {
   namespace Embedded
   {
-    // #pragma mark
-
-    template<typename Type> inline Type RoundUp(const Type number, const Type multiple)
+    //template<typename Type> inline Type RoundUp(const Type number, const Type multiple)
+    template<> inline u32 RoundUp(const u32 number, const u32 multiple)
     {
-      return multiple*( (number-1)/multiple + 1 );
-
-      // For unsigned only?
-      // return (number + (multiple-1)) & ~(multiple-1);
+      return (number + (multiple-1)) & ~(multiple-1);
     }
 
-    template<typename Type> inline Type RoundDown(const Type number, const Type multiple)
+    template<> inline s32 RoundUp(const s32 number, const s32 multiple)
+    {
+      if(number <= 0) {
+        return multiple*( number/multiple );
+      } else {
+        return multiple*( (number-1)/multiple + 1 );
+      }
+    }
+
+    template<> inline u32 RoundDown(const u32 number, const u32 multiple)
     {
       return multiple * (number/multiple);
+    }
+
+    template<> inline s32 RoundDown(const s32 number, const s32 multiple)
+    {
+      if(number < 0) {
+        return multiple * ((number-multiple+1) / multiple);
+      } else {
+        return multiple * (number/multiple);
+      }
     }
 
     template<typename Type> Type ApproximateExp(const Type exponent, const s32 numTerms)

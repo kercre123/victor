@@ -5,6 +5,7 @@
 
 #include "anki/cozmo/robot/cozmoConfig.h" // for calibration parameters
 #include "anki/common/robot/config.h"
+#include "anki/common/robot/benchmarking.h"
 
 namespace Anki
 {
@@ -343,8 +344,8 @@ namespace Anki
         TIM_OCInitStructure.TIM_OCIdleState = TIM_OCIdleState_Set;
         TIM_OCInitStructure.TIM_OCNIdleState = TIM_OCIdleState_Reset;
 
-        TIM_TimeBaseStructure.TIM_Period = 31;  // 180MHz/N+1
-        TIM_OCInitStructure.TIM_Pulse = 16;     // Half of (period+1)
+        TIM_TimeBaseStructure.TIM_Period = 15;  // clockFrequency = 180MHz / (period+1)
+        TIM_OCInitStructure.TIM_Pulse = 8;     // pulse = (period+1) / 2
 
         TIM_TimeBaseInit(TIM9, &TIM_TimeBaseStructure);
         TIM_OC2Init(TIM9, &TIM_OCInitStructure);
@@ -450,13 +451,21 @@ namespace Anki
 
       void CameraGetFrame(u8* frame, Vision::CameraResolution res, bool enableLight)
       {
+        Anki::Embedded::BeginBenchmark("CameraGetFrame");
+        
+        Anki::Embedded::BeginBenchmark("CameraGetFrame_wait");
+        
         m_isEOF = false;
 
         // Wait until the frame has completed (based on DMA_FLAG_TCIF1)
         while (!m_isEOF)
         {
         }
-
+        
+        Anki::Embedded::EndBenchmark("CameraGetFrame_wait");
+        
+        Anki::Embedded::BeginBenchmark("CameraGetFrame_convert");
+        
         // TODO: Change this to DMA mem-to-mem when we have a different camera
         // and we support resolution changes in the actual hardware
 
@@ -513,6 +522,10 @@ namespace Anki
             }
           }
         }
+        
+        Anki::Embedded::EndBenchmark("CameraGetFrame_convert");
+        
+        Anki::Embedded::EndBenchmark("CameraGetFrame");
       }
 
       const CameraInfo* GetHeadCamInfo(void)

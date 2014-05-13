@@ -35,6 +35,113 @@ For internal use only. No part of this code may be used without a signed non-dis
 using namespace Anki;
 using namespace Anki::Embedded;
 
+GTEST_TEST(CoreTech_Common, RoundUpAndDown)
+{
+  ASSERT_TRUE(RoundUp<u32>(0,1) == 0);
+  ASSERT_TRUE(RoundUp<u32>(1,1) == 1);
+  ASSERT_TRUE(RoundUp<u32>(2,1) == 2);
+  ASSERT_TRUE(RoundUp<u32>(3,1) == 3);
+
+  ASSERT_TRUE(RoundUp<u32>(0,2) == 0);
+  ASSERT_TRUE(RoundUp<u32>(1,2) == 2);
+  ASSERT_TRUE(RoundUp<u32>(2,2) == 2);
+  ASSERT_TRUE(RoundUp<u32>(3,2) == 4);
+
+  ASSERT_TRUE(RoundUp<u32>(0 ,16) == 0);
+  ASSERT_TRUE(RoundUp<u32>(1 ,16) == 16);
+  ASSERT_TRUE(RoundUp<u32>(2 ,16) == 16);
+  ASSERT_TRUE(RoundUp<u32>(3 ,16) == 16);
+  ASSERT_TRUE(RoundUp<u32>(14,16) == 16);
+  ASSERT_TRUE(RoundUp<u32>(15,16) == 16);
+  ASSERT_TRUE(RoundUp<u32>(16,16) == 16);
+  ASSERT_TRUE(RoundUp<u32>(17,16) == 32);
+
+  ASSERT_TRUE(RoundUp<s32>(-3,1) == -3);
+  ASSERT_TRUE(RoundUp<s32>(-2,1) == -2);
+  ASSERT_TRUE(RoundUp<s32>(-1,1) == -1);
+  ASSERT_TRUE(RoundUp<s32>(0 ,1) == 0);
+  ASSERT_TRUE(RoundUp<s32>(1 ,1) == 1);
+  ASSERT_TRUE(RoundUp<s32>(2 ,1) == 2);
+  ASSERT_TRUE(RoundUp<s32>(3 ,1) == 3);
+
+  ASSERT_TRUE(RoundUp<s32>(-3,2) == -2);
+  ASSERT_TRUE(RoundUp<s32>(-2,2) == -2);
+  ASSERT_TRUE(RoundUp<s32>(-1,2) == 0);
+  ASSERT_TRUE(RoundUp<s32>(0 ,2) == 0);
+  ASSERT_TRUE(RoundUp<s32>(1 ,2) == 2);
+  ASSERT_TRUE(RoundUp<s32>(2 ,2) == 2);
+  ASSERT_TRUE(RoundUp<s32>(3 ,2) == 4);
+
+  ASSERT_TRUE(RoundUp<s32>(-17,16) == -16);
+  ASSERT_TRUE(RoundUp<s32>(-16,16) == -16);
+  ASSERT_TRUE(RoundUp<s32>(-15,16) == 0);
+  ASSERT_TRUE(RoundUp<s32>(-14,16) == 0);
+  ASSERT_TRUE(RoundUp<s32>(-3 ,16) == 0);
+  ASSERT_TRUE(RoundUp<s32>(-2 ,16) == 0);
+  ASSERT_TRUE(RoundUp<s32>(-1 ,16) == 0);
+  ASSERT_TRUE(RoundUp<s32>(0  ,16) == 0);
+  ASSERT_TRUE(RoundUp<s32>(1  ,16) == 16);
+  ASSERT_TRUE(RoundUp<s32>(2  ,16) == 16);
+  ASSERT_TRUE(RoundUp<s32>(3  ,16) == 16);
+  ASSERT_TRUE(RoundUp<s32>(14 ,16) == 16);
+  ASSERT_TRUE(RoundUp<s32>(15 ,16) == 16);
+  ASSERT_TRUE(RoundUp<s32>(16 ,16) == 16);
+  ASSERT_TRUE(RoundUp<s32>(17 ,16) == 32);
+
+  ASSERT_TRUE(RoundDown<u32>(0,1) == 0);
+  ASSERT_TRUE(RoundDown<u32>(1,1) == 1);
+  ASSERT_TRUE(RoundDown<u32>(2,1) == 2);
+  ASSERT_TRUE(RoundDown<u32>(3,1) == 3);
+
+  ASSERT_TRUE(RoundDown<u32>(0,2) == 0);
+  ASSERT_TRUE(RoundDown<u32>(1,2) == 0);
+  ASSERT_TRUE(RoundDown<u32>(2,2) == 2);
+  ASSERT_TRUE(RoundDown<u32>(3,2) == 2);
+
+  ASSERT_TRUE(RoundDown<u32>(0 ,16) == 0);
+  ASSERT_TRUE(RoundDown<u32>(1 ,16) == 0);
+  ASSERT_TRUE(RoundDown<u32>(2 ,16) == 0);
+  ASSERT_TRUE(RoundDown<u32>(3 ,16) == 0);
+  ASSERT_TRUE(RoundDown<u32>(14,16) == 0);
+  ASSERT_TRUE(RoundDown<u32>(15,16) == 0);
+  ASSERT_TRUE(RoundDown<u32>(16,16) == 16);
+  ASSERT_TRUE(RoundDown<u32>(17,16) == 16);
+
+  ASSERT_TRUE(RoundDown<s32>(-3,1) == -3);
+  ASSERT_TRUE(RoundDown<s32>(-2,1) == -2);
+  ASSERT_TRUE(RoundDown<s32>(-1,1) == -1);
+  ASSERT_TRUE(RoundDown<s32>(0 ,1) == 0);
+  ASSERT_TRUE(RoundDown<s32>(1 ,1) == 1);
+  ASSERT_TRUE(RoundDown<s32>(2 ,1) == 2);
+  ASSERT_TRUE(RoundDown<s32>(3 ,1) == 3);
+
+  ASSERT_TRUE(RoundDown<s32>(-3,2) == -4);
+  ASSERT_TRUE(RoundDown<s32>(-2,2) == -2);
+  ASSERT_TRUE(RoundDown<s32>(-1,2) == -2);
+  ASSERT_TRUE(RoundDown<s32>(0 ,2) == 0);
+  ASSERT_TRUE(RoundDown<s32>(1 ,2) == 0);
+  ASSERT_TRUE(RoundDown<s32>(2 ,2) == 2);
+  ASSERT_TRUE(RoundDown<s32>(3 ,2) == 2);
+
+  ASSERT_TRUE(RoundDown<s32>(-17,16) == -32);
+  ASSERT_TRUE(RoundDown<s32>(-16,16) == -16);
+  ASSERT_TRUE(RoundDown<s32>(-15,16) == -16);
+  ASSERT_TRUE(RoundDown<s32>(-14,16) == -16);
+  ASSERT_TRUE(RoundDown<s32>(-3 ,16) == -16);
+  ASSERT_TRUE(RoundDown<s32>(-2 ,16) == -16);
+  ASSERT_TRUE(RoundDown<s32>(-1 ,16) == -16);
+  ASSERT_TRUE(RoundDown<s32>(0  ,16) == 0);
+  ASSERT_TRUE(RoundDown<s32>(1  ,16) == 0);
+  ASSERT_TRUE(RoundDown<s32>(2  ,16) == 0);
+  ASSERT_TRUE(RoundDown<s32>(3  ,16) == 0);
+  ASSERT_TRUE(RoundDown<s32>(14 ,16) == 0);
+  ASSERT_TRUE(RoundDown<s32>(15 ,16) == 0);
+  ASSERT_TRUE(RoundDown<s32>(16 ,16) == 16);
+  ASSERT_TRUE(RoundDown<s32>(17 ,16) == 16);
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Common, RoundUpAndDown)
+
 GTEST_TEST(CoreTech_Common, RoundAndSaturate)
 {
   //
@@ -3021,6 +3128,9 @@ GTEST_TEST(CoreTech_Common, MemoryStackAlignment)
 #ifdef TEST_BENCHMARKING
 GTEST_TEST(CoreTech_Common, Benchmarking)
 {
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(scratchOffchip.IsValid());
+
   InitBenchmarking();
 
   BeginBenchmark("testOuterSpace");
@@ -3056,7 +3166,7 @@ GTEST_TEST(CoreTech_Common, Benchmarking)
 
   EndBenchmark("testOuterSpace");
 
-  ComputeAndPrintBenchmarkResults(true, true);
+  ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
   printf("Done with benchmarking test\n");
 
@@ -3156,6 +3266,7 @@ s32 RUN_ALL_COMMON_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   numPassedTests = 0;
   numFailedTests = 0;
 
+  CALL_GTEST_TEST(CoreTech_Common, RoundUpAndDown);
   CALL_GTEST_TEST(CoreTech_Common, RoundAndSaturate);
   CALL_GTEST_TEST(CoreTech_Common, RunLengthEncode);
   CALL_GTEST_TEST(CoreTech_Common, IsConvex);
