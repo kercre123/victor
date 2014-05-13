@@ -511,7 +511,7 @@ namespace Anki
       } // Get1dGaussianKernel
 
       // NOTE: uses a 32-bit accumulator, so be careful of overflows
-      template<typename InType, typename IntermediateType, typename OutType> Result Correlate1d(const FixedPointArray<InType> &in1, const FixedPointArray<InType> &in2, FixedPointArray<OutType> &out)
+      template<typename InType, typename IntermediateType, typename OutType> NO_INLINE Result Correlate1d(const FixedPointArray<InType> &in1, const FixedPointArray<InType> &in2, FixedPointArray<OutType> &out)
       {
         const s32 outputLength = in1.get_size(1) + in2.get_size(1) - 1;
 
@@ -617,7 +617,7 @@ namespace Anki
         return RESULT_OK;
       } // Result Correlate1d(const FixedPointArray<s32> &in1, const FixedPointArray<s32> &in2, FixedPointArray<s32> &out)
 
-      template<typename InType, typename IntermediateType, typename OutType> Result Correlate1dCircularAndSameSizeOutput(const FixedPointArray<InType> &image, const FixedPointArray<InType> &filter, FixedPointArray<OutType> &out)
+      template<typename InType, typename IntermediateType, typename OutType> NO_INLINE Result Correlate1dCircularAndSameSizeOutput(const FixedPointArray<InType> &image, const FixedPointArray<InType> &filter, FixedPointArray<OutType> &out)
       {
         BeginBenchmark("Correlate1dCircularAndSameSizeOutput");
 
@@ -653,6 +653,10 @@ namespace Anki
         bool shiftRight;
         GetBitShiftDirectionAndMagnitude(image.get_numFractionalBits(), filter.get_numFractionalBits(), out.get_numFractionalBits(), shiftMagnitude, shiftRight);
 
+        s32 shiftType = !!shiftMagnitude;
+        if(shiftRight)
+          shiftType = 2;
+
         const s32 filterHalfWidth = filterWidth >> 1;
 
         // Filter the middle part
@@ -672,9 +676,15 @@ namespace Anki
             sum += toAdd;
           }
 
-          if(shiftRight) {
+          //if(shiftRight) {
+          //  sum >>= shiftMagnitude;
+          //} else if(shiftMagnitude != 0) {
+          //  sum <<= shiftMagnitude;
+          //}
+
+          if(shiftType == 2) {
             sum >>= shiftMagnitude;
-          } else {
+          } else if(shiftType == 1) {
             sum <<= shiftMagnitude;
           }
 
