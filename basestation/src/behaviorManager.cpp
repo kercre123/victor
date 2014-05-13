@@ -242,6 +242,7 @@ namespace Anki {
           // TODO: Generate collision-free path!!!
           if (robot_->get_pose().IsSameAs(nearestPreDockPose_, distThresh_mm, angThresh) ||
               robot_->ExecutePathToPose(nearestPreDockPose_) == RESULT_OK) {
+            waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.25f;
             state_ = EXECUTING_PATH_TO_DOCK_POSE;
           }
           
@@ -250,7 +251,7 @@ namespace Anki {
         case EXECUTING_PATH_TO_DOCK_POSE:
         {
           // Once robot is confirmed at the docking pose, execute docking.
-          if(!robot_->IsTraversingPath()) {
+          if(!robot_->IsTraversingPath() && waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) {
             
             if (robot_->get_pose().IsSameAs(nearestPreDockPose_, distThresh_mm, angThresh)) {
               PRINT_INFO("Dock pose reached\n");
@@ -290,7 +291,8 @@ namespace Anki {
                          nearestPreDockPose_.get_translation().z(),
                          nearestPreDockPose_.get_rotationAngle().ToFloat()
                          );
-              state_ = WAITING_FOR_DOCK_BLOCK;
+              StartMode(BM_None);
+              return;
             }
           }
           break;
