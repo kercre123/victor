@@ -108,14 +108,14 @@ namespace Anki
       s32 numBorderPixels;
 
       // Compute the first row of an integral image
-      static void ComputeIntegralImageRow(const u8 * restrict paddedImage_currentRow, s32 * restrict integralImage_currentRow, const s32 integralImageWidth);
+      static void ComputeIntegralImageRow(const u8 * restrict currentRow, s32 * restrict integralImage_currentRow, const s32 originalImageWidth, const s32 integralImageWidth);
 
       // Compute the nth row of an integral image
-      static void ComputeIntegralImageRow(const u8 * restrict paddedImage_currentRow, const s32 * restrict integralImage_previousRow, s32 * restrict integralImage_currentRow, const s32 integralImageWidth);
+      static void ComputeIntegralImageRow(const u8 * restrict currentRow, const s32 * restrict integralImage_previousRow, s32 * restrict integralImage_currentRow,  const s32 originalImageWidth, const s32 integralImageWidth);
 
       // Virtually zero-pads to the left and right of an image row
-      Result PadImageRow_unsafe(const Array<u8> &image, const s32 whichRow, Array<u8> &paddedRow);
-      Result PadImageRow(const Array<u8> &image, const s32 whichRow, Array<u8> &paddedRow);
+      //Result PadImageRow_unsafe(const Array<u8> &image, const s32 whichRow, Array<u8> &paddedRow);
+      //Result PadImageRow(const Array<u8> &image, const s32 whichRow, Array<u8> &paddedRow);
     };
   } // namespace Embedded
 } //namespace Anki
