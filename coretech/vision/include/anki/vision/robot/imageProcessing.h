@@ -659,26 +659,14 @@ namespace Anki
 
         const s32 filterHalfWidth = filterWidth >> 1;
 
-        // Filter the middle part
         for(s32 x=0; x<imageWidth; x++) {
           IntermediateType sum = 0;
-
-          //const s32 xImageStart = x - filterHalfWidth;
-
-          //for(s32 xFilter=0; xFilter<filterHalfWidth; xFilter++) {
-          //  s32 xImage = x - filterHalfWidth + imageWidth + xFilter;
-
-          //  const IntermediateType toAdd = pImage[xImage] * pFilter[xFilter];
-          //  sum += toAdd;
-          //}
 
           const s32 xImageStart = x - filterHalfWidth;
           const s32 xImageEnd = x - filterHalfWidth + filterWidth - 1;
 
           if(xImageStart < 0) {
             // Filter extends past the left edge of the image
-
-            //xImageStart += imageWidth;
 
             const s32 leftExtent = -xImageStart;
 
@@ -713,31 +701,48 @@ namespace Anki
           } else {
             // Filter is in the middle of the image (easy case)
 
-            for(s32 xFilter=0; xFilter<filterWidth; xFilter++) {
-              const s32 xImage = x - filterHalfWidth + xFilter;
-              const IntermediateType toAdd = static_cast<IntermediateType>(pImage[xImage] * pFilter[xFilter]);
-              sum += toAdd;
+            if(sizeof(InType) == 4 && Flags::TypeCharacteristics<InType>::isSigned) {
+              const s32 filterWidthSimdMax = RoundDown(filterWidth, 2);
+              for(s32 xFilter=0; xFilter<filterWidthSimdMax; xFilter+=2) {
+                const s32 xImage = x - filterHalfWidth + xFilter;
+
+                const IntermediateType toAdd0 = static_cast<IntermediateType>(pImage[xImage] * pFilter[xFilter]);
+                const IntermediateType toAdd1 = static_cast<IntermediateType>(pImage[xImage+1] * pFilter[xFilter+1]);
+
+                sum += toAdd0 + toAdd1;
+              }
+
+              for(s32 xFilter=filterWidthSimdMax; xFilter<filterWidth; xFilter++) {
+                const s32 xImage = x - filterHalfWidth + xFilter;
+                const IntermediateType toAdd = static_cast<IntermediateType>(pImage[xImage] * pFilter[xFilter]);
+                sum += toAdd;
+              }
+            } else if(sizeof(InType) == 2 && Flags::TypeCharacteristics<InType>::isSigned) {
+              const s32 filterWidthSimdMax = RoundDown(filterWidth, 4);
+              for(s32 xFilter=0; xFilter<filterWidthSimdMax; xFilter+=4) {
+                const s32 xImage = x - filterHalfWidth + xFilter;
+
+                const IntermediateType toAdd0 = static_cast<IntermediateType>(pImage[xImage] * pFilter[xFilter]);
+                const IntermediateType toAdd1 = static_cast<IntermediateType>(pImage[xImage+1] * pFilter[xFilter+1]);
+                const IntermediateType toAdd2 = static_cast<IntermediateType>(pImage[xImage+2] * pFilter[xFilter+2]);
+                const IntermediateType toAdd3 = static_cast<IntermediateType>(pImage[xImage+3] * pFilter[xFilter+3]);
+
+                sum += toAdd0 + toAdd1 + toAdd2 + toAdd3;
+              }
+
+              for(s32 xFilter=filterWidthSimdMax; xFilter<filterWidth; xFilter++) {
+                const s32 xImage = x - filterHalfWidth + xFilter;
+                const IntermediateType toAdd = static_cast<IntermediateType>(pImage[xImage] * pFilter[xFilter]);
+                sum += toAdd;
+              }
+            } else {
+              for(s32 xFilter=0; xFilter<filterWidth; xFilter++) {
+                const s32 xImage = x - filterHalfWidth + xFilter;
+                const IntermediateType toAdd = static_cast<IntermediateType>(pImage[xImage] * pFilter[xFilter]);
+                sum += toAdd;
+              }
             }
           }
-
-          /*for(s32 xFilter=0; xFilter<filterWidth; xFilter++) {
-          s32 xImage = x - filterHalfWidth + xFilter;
-
-          if(xImage < 0) {
-          xImage += imageWidth;
-          } else if(xImage >= imageWidth) {
-          xImage -= imageWidth;
-          }
-
-          const IntermediateType toAdd = pImage[xImage] * pFilter[xFilter];
-          sum += toAdd;
-          }*/
-
-          //if(shiftRight) {
-          //  sum >>= shiftMagnitude;
-          //} else if(shiftMagnitude != 0) {
-          //  sum <<= shiftMagnitude;
-          //}
 
           if(shiftType == 2) {
             sum >>= shiftMagnitude;
