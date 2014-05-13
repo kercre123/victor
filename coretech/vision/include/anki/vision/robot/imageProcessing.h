@@ -694,65 +694,61 @@ namespace Anki
 
         const s32 filterHalfWidth = filterWidth >> 1;
 
-        //s32 numLeft = 0;
-        //s32 numRight = 0;
-        //s32 numCenter = 0;
-
         for(s32 x=0; x<imageWidth; x++) {
           IntermediateType sum = 0;
 
-          //          if(sizeof(InType) == 4 && Flags::TypeCharacteristics<InType>::isSigned) {
-          //            const s32 filterWidthSimdMax = RoundDown(filterWidth, 2);
-          //            for(s32 xFilter=0; xFilter<filterWidthSimdMax; xFilter+=2) {
-          //              const s32 xImage = x - filterHalfWidth + xFilter;
-          //
-          //              const IntermediateType toAdd0 = static_cast<IntermediateType>(pImage[xImage] * pFilter[xFilter]);
-          //              const IntermediateType toAdd1 = static_cast<IntermediateType>(pImage[xImage+1] * pFilter[xFilter+1]);
-          //
-          //              sum += toAdd0 + toAdd1;
-          //            }
-          //
-          //            for(s32 xFilter=filterWidthSimdMax; xFilter<filterWidth; xFilter++) {
-          //              const s32 xImage = x - filterHalfWidth + xFilter;
-          //              const IntermediateType toAdd = static_cast<IntermediateType>(pImage[xImage] * pFilter[xFilter]);
-          //              sum += toAdd;
-          //            }
-          //          } else if(sizeof(InType) == 2 && Flags::TypeCharacteristics<InType>::isSigned) {
-          //            const s32 filterWidthSimdMax = RoundDown(filterWidth, 4);
-          //            for(s32 xFilter=0; xFilter<filterWidthSimdMax; xFilter+=4) {
-          //              const s32 xImage = x - filterHalfWidth + xFilter;
-          //
-          //#if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING)
-          //              const IntermediateType toAdd0 = static_cast<IntermediateType>(pImage[xImage] * pFilter[xFilter]);
-          //              const IntermediateType toAdd1 = static_cast<IntermediateType>(pImage[xImage+1] * pFilter[xFilter+1]);
-          //              const IntermediateType toAdd2 = static_cast<IntermediateType>(pImage[xImage+2] * pFilter[xFilter+2]);
-          //              const IntermediateType toAdd3 = static_cast<IntermediateType>(pImage[xImage+3] * pFilter[xFilter+3]);
-          //
-          //              sum += toAdd0 + toAdd1 + toAdd2 + toAdd3;
-          //#else // #if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING)
-          //              const u32 image01 = *reinterpret_cast<const u32*>(&pImage[xImage]);
-          //              const u32 image23 = *reinterpret_cast<const u32*>(&pImage[xImage+2]);
-          //
-          //              const u32 filter01 = *reinterpret_cast<const u32*>(&pFilter[xFilter]);
-          //              const u32 filter23 = *reinterpret_cast<const u32*>(&pFilter[xFilter+2]);
-          //
-          //              sum = __SMLAD(image01, filter01, sum);
-          //              sum = __SMLAD(image23, filter23, sum);
-          //#endif // #if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING) ... #else
-          //            }
-          //
-          //            for(s32 xFilter=filterWidthSimdMax; xFilter<filterWidth; xFilter++) {
-          //              const s32 xImage = x - filterHalfWidth + xFilter;
-          //              const IntermediateType toAdd = static_cast<IntermediateType>(pImage[xImage] * pFilter[xFilter]);
-          //              sum += toAdd;
-          //            }
-          //          } else {
-          for(s32 xFilter=0; xFilter<filterWidth; xFilter++) {
-            const s32 xImage = x - filterHalfWidth + filterWidth - 1 + xFilter;
-            const IntermediateType toAdd = static_cast<IntermediateType>(pPaddedImage[xImage] * pFilter[xFilter]);
-            sum += toAdd;
+          if(sizeof(InType) == 4 && Flags::TypeCharacteristics<InType>::isSigned) {
+            const s32 filterWidthSimdMax = RoundDown(filterWidth, 2);
+            for(s32 xFilter=0; xFilter<filterWidthSimdMax; xFilter+=2) {
+              const s32 xImage = x - filterHalfWidth + filterWidth - 1 + xFilter;
+
+              const IntermediateType toAdd0 = static_cast<IntermediateType>(pPaddedImage[xImage] * pFilter[xFilter]);
+              const IntermediateType toAdd1 = static_cast<IntermediateType>(pPaddedImage[xImage+1] * pFilter[xFilter+1]);
+
+              sum += toAdd0 + toAdd1;
+            }
+
+            for(s32 xFilter=filterWidthSimdMax; xFilter<filterWidth; xFilter++) {
+              const s32 xImage = x - filterHalfWidth + filterWidth - 1 + xFilter;
+              const IntermediateType toAdd = static_cast<IntermediateType>(pPaddedImage[xImage] * pFilter[xFilter]);
+              sum += toAdd;
+            }
+          } else if(sizeof(InType) == 2 && Flags::TypeCharacteristics<InType>::isSigned) {
+            const s32 filterWidthSimdMax = RoundDown(filterWidth, 4);
+            for(s32 xFilter=0; xFilter<filterWidthSimdMax; xFilter+=4) {
+              const s32 xImage = x - filterHalfWidth + filterWidth - 1 + xFilter;
+
+#if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING)
+              const IntermediateType toAdd0 = static_cast<IntermediateType>(pPaddedImage[xImage] * pFilter[xFilter]);
+              const IntermediateType toAdd1 = static_cast<IntermediateType>(pPaddedImage[xImage+1] * pFilter[xFilter+1]);
+              const IntermediateType toAdd2 = static_cast<IntermediateType>(pPaddedImage[xImage+2] * pFilter[xFilter+2]);
+              const IntermediateType toAdd3 = static_cast<IntermediateType>(pPaddedImage[xImage+3] * pFilter[xFilter+3]);
+
+              sum += toAdd0 + toAdd1 + toAdd2 + toAdd3;
+#else // #if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING)
+              const u32 image01 = *reinterpret_cast<const u32*>(&pPaddedImage[xImage]);
+              const u32 image23 = *reinterpret_cast<const u32*>(&pPaddedImage[xImage+2]);
+
+              const u32 filter01 = *reinterpret_cast<const u32*>(&pFilter[xFilter]);
+              const u32 filter23 = *reinterpret_cast<const u32*>(&pFilter[xFilter+2]);
+
+              sum = __SMLAD(image01, filter01, sum);
+              sum = __SMLAD(image23, filter23, sum);
+#endif // #if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING) ... #else
+            }
+
+            for(s32 xFilter=filterWidthSimdMax; xFilter<filterWidth; xFilter++) {
+              const s32 xImage = x - filterHalfWidth + filterWidth - 1 + xFilter;
+              const IntermediateType toAdd = static_cast<IntermediateType>(pPaddedImage[xImage] * pFilter[xFilter]);
+              sum += toAdd;
+            }
+          } else {
+            for(s32 xFilter=0; xFilter<filterWidth; xFilter++) {
+              const s32 xImage = x - filterHalfWidth + filterWidth - 1 + xFilter;
+              const IntermediateType toAdd = static_cast<IntermediateType>(pPaddedImage[xImage] * pFilter[xFilter]);
+              sum += toAdd;
+            }
           }
-          //}
 
           if(shiftType == 2) {
             sum >>= shiftMagnitude;
