@@ -2814,7 +2814,7 @@ GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput)
 
   const s32 out_groundTruth[] = {140, 110, 110, 140, 170, 200, 230, 260, 290, 320, 350, 380, 410, 290, 200};
 
-  const Result result = ImageProcessing::Correlate1dCircularAndSameSizeOutput<s32,s32,s32>(image, filter, out);
+  const Result result = ImageProcessing::Correlate1dCircularAndSameSizeOutput<s32,s32,s32>(image, filter, out, ms);
   ASSERT_TRUE(result == RESULT_OK);
 
   for(s32 i=0; i<out.get_size(1); i++) {

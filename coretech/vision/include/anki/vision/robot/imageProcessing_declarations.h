@@ -44,7 +44,7 @@ namespace Anki
       //Result Correlate1dCircularAndSameSizeOutput(const FixedPointArray<s32> &image, const FixedPointArray<s32> &filter, FixedPointArray<s32> &out);
       //Result Correlate1dCircularAndSameSizeOutput(const FixedPointArray<s16> &image, const FixedPointArray<s32> &filter, FixedPointArray<s32> &out);
 
-      template<typename InType, typename IntermediateType, typename OutType> Result Correlate1dCircularAndSameSizeOutput(const FixedPointArray<InType> &image, const FixedPointArray<InType> &filter, FixedPointArray<OutType> &out);
+      template<typename InType, typename IntermediateType, typename OutType> Result Correlate1dCircularAndSameSizeOutput(const FixedPointArray<InType> &image, const FixedPointArray<InType> &filter, FixedPointArray<OutType> &out, MemoryStack scratch);
 
       // Populate a full integral image created from the input image.
       template<typename InType, typename OutType>

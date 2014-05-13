@@ -93,7 +93,7 @@ namespace Anki
           pBoundaryX[i] = pConstBoundary[i].x;
         }
 
-        if((lastResult = ImageProcessing::Correlate1dCircularAndSameSizeOutput<s16,s32,s16>(boundaryX, differenceOfGaussian, boundaryXFiltered)) != RESULT_OK)
+        if((lastResult = ImageProcessing::Correlate1dCircularAndSameSizeOutput<s16,s32,s16>(boundaryX, differenceOfGaussian, boundaryXFiltered, scratch)) != RESULT_OK)
           return lastResult;
 
         //boundaryX.Print("boundaryX");
@@ -115,7 +115,7 @@ namespace Anki
           pBoundaryY[i] = pConstBoundary[i].y;
         }
 
-        if((lastResult = ImageProcessing::Correlate1dCircularAndSameSizeOutput<s16,s32,s16>(boundaryY, differenceOfGaussian, boundaryYFiltered)) != RESULT_OK)
+        if((lastResult = ImageProcessing::Correlate1dCircularAndSameSizeOutput<s16,s32,s16>(boundaryY, differenceOfGaussian, boundaryYFiltered, scratch)) != RESULT_OK)
           return lastResult;
 
         //boundaryY.Print("boundaryY");
