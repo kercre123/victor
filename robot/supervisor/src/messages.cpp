@@ -427,6 +427,10 @@ namespace Anki {
       void ProcessImageChunkMessage(const ImageChunk& msg) {
         PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
       }
+
+      void ProcessTrackerQuadMessage(const TrackerQuad& msg) {
+        PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
+      }
       
 // ----------- Send messages -----------------
       

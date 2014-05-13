@@ -365,6 +365,25 @@ namespace Anki {
         ++v.chunkId;
       }
     }
+
+    void VizManager::SendTrackerQuad(const u16 topLeft_x, const u16 topLeft_y,
+                                     const u16 topRight_x, const u16 topRight_y,
+                                     const u16 bottomRight_x, const u16 bottomRight_y,
+                                     const u16 bottomLeft_x, const u16 bottomLeft_y)
+    {
+      VizTrackerQuad v;
+      v.topLeft_x = topLeft_x;
+      v.topLeft_y = topLeft_y;
+      v.topRight_x = topRight_x;
+      v.topRight_y = topRight_y;
+      v.bottomRight_x = bottomRight_x;
+      v.bottomRight_y = bottomRight_y;
+      v.bottomLeft_x = bottomLeft_x;
+      v.bottomLeft_y = bottomLeft_y;
+      
+      SendMessage(GET_MESSAGE_ID(VizTrackerQuad), &v);
+    }
+    
     
   } // namespace Cozmo
 } // namespace Anki

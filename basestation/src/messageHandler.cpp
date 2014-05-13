@@ -320,6 +320,26 @@ namespace Anki {
     }
     
     
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageTrackerQuad const& msg)
+    {
+      /*
+      PRINT_INFO("TrackerQuad: (%d,%d) (%d,%d) (%d,%d) (%d,%d)\n",
+                 msg.topLeft_x, msg.topLeft_y,
+                 msg.topRight_x, msg.topRight_y,
+                 msg.bottomRight_x, msg.bottomRight_y,
+                 msg.bottomLeft_x, msg.bottomRight_y);
+      */
+     
+      // Send tracker quad info to viz
+      VizManager::getInstance()->SendTrackerQuad(msg.topLeft_x, msg.topLeft_y,
+                                                 msg.topRight_x, msg.topRight_y,
+                                                 msg.bottomRight_x, msg.bottomRight_y,
+                                                 msg.bottomLeft_x, msg.bottomRight_y);
+      
+      return RESULT_OK;
+    }
+    
+    
     // STUBS:
     Result MessageHandler::ProcessMessage(Robot* robot, MessageClearPath const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageDriveWheels const&){return RESULT_FAIL;}
