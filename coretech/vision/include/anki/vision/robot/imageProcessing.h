@@ -566,7 +566,7 @@ namespace Anki
         for(s32 x=0; x<midStartIndex; x++) {
           IntermediateType sum = 0;
           for(s32 xx=0; xx<=x; xx++) {
-            const IntermediateType toAdd = (pU[xx] * pV[vLength-x+xx-1]);
+            const IntermediateType toAdd = static_cast<IntermediateType>(pU[xx] * pV[vLength-x+xx-1]);
             sum += toAdd;
           }
 
@@ -583,7 +583,7 @@ namespace Anki
         for(s32 x=midStartIndex; x<=midEndIndex; x++) {
           IntermediateType sum = 0;
           for(s32 xx=0; xx<vLength; xx++) {
-            const IntermediateType toAdd = (pU[x+xx-midStartIndex] * pV[xx]);
+            const IntermediateType toAdd = static_cast<IntermediateType>(pU[x+xx-midStartIndex] * pV[xx]);
             sum += toAdd;
           }
 
@@ -601,7 +601,7 @@ namespace Anki
           const s32 vEnd = outputLength - x;
           IntermediateType sum = 0;
           for(s32 xx=0; xx<vEnd; xx++) {
-            const IntermediateType toAdd = (pU[x+xx-midStartIndex] * pV[xx]);
+            const IntermediateType toAdd = static_cast<IntermediateType>(pU[x+xx-midStartIndex] * pV[xx]);
             sum += toAdd;
           }
 
@@ -662,19 +662,76 @@ namespace Anki
         // Filter the middle part
         for(s32 x=0; x<imageWidth; x++) {
           IntermediateType sum = 0;
-          for(s32 xFilter=0; xFilter<filterWidth; xFilter++) {
-            // TODO: if this is too slow, pull out of the loop
-            s32 xImage = (x - filterHalfWidth + xFilter);
-            //s32 xImage = (x - filterWidth + xFilter + 1);
-            if(xImage < 0) {
-              xImage += imageWidth;
-            } else if(xImage >= imageWidth) {
-              xImage -= imageWidth;
+
+          //const s32 xImageStart = x - filterHalfWidth;
+
+          //for(s32 xFilter=0; xFilter<filterHalfWidth; xFilter++) {
+          //  s32 xImage = x - filterHalfWidth + imageWidth + xFilter;
+
+          //  const IntermediateType toAdd = pImage[xImage] * pFilter[xFilter];
+          //  sum += toAdd;
+          //}
+
+          const s32 xImageStart = x - filterHalfWidth;
+          const s32 xImageEnd = x - filterHalfWidth + filterWidth - 1;
+
+          if(xImageStart < 0) {
+            // Filter extends past the left edge of the image
+
+            //xImageStart += imageWidth;
+
+            const s32 leftExtent = -xImageStart;
+
+            for(s32 xFilter=0; xFilter<leftExtent; xFilter++) {
+              const s32 xImage = x - filterHalfWidth + imageWidth + xFilter;
+              const IntermediateType toAdd = static_cast<IntermediateType>(pImage[xImage] * pFilter[xFilter]);
+              sum += toAdd;
             }
 
-            const IntermediateType toAdd = pImage[xImage] * pFilter[xFilter];
-            sum += toAdd;
+            for(s32 xFilter=leftExtent; xFilter<filterWidth; xFilter++) {
+              const s32 xImage = x - filterHalfWidth + xFilter;
+              const IntermediateType toAdd = static_cast<IntermediateType>(pImage[xImage] * pFilter[xFilter]);
+              sum += toAdd;
+            }
+          } else if(xImageEnd >= imageWidth) {
+            // Filter extends past the right edge of the image
+
+            const s32 rightExtent = xImageEnd - imageWidth + 1;
+            const s32 filterCenterMax = filterWidth - rightExtent;
+
+            for(s32 xFilter=0; xFilter<filterCenterMax; xFilter++) {
+              const s32 xImage = x - filterHalfWidth + xFilter;
+              const IntermediateType toAdd = static_cast<IntermediateType>(pImage[xImage] * pFilter[xFilter]);
+              sum += toAdd;
+            }
+
+            for(s32 xFilter=filterCenterMax; xFilter<filterWidth; xFilter++) {
+              const s32 xImage = x - filterHalfWidth - imageWidth + xFilter;
+              const IntermediateType toAdd = static_cast<IntermediateType>(pImage[xImage] * pFilter[xFilter]);
+              sum += toAdd;
+            }
+          } else {
+            // Filter is in the middle of the image (easy case)
+
+            for(s32 xFilter=0; xFilter<filterWidth; xFilter++) {
+              const s32 xImage = x - filterHalfWidth + xFilter;
+              const IntermediateType toAdd = static_cast<IntermediateType>(pImage[xImage] * pFilter[xFilter]);
+              sum += toAdd;
+            }
           }
+
+          /*for(s32 xFilter=0; xFilter<filterWidth; xFilter++) {
+          s32 xImage = x - filterHalfWidth + xFilter;
+
+          if(xImage < 0) {
+          xImage += imageWidth;
+          } else if(xImage >= imageWidth) {
+          xImage -= imageWidth;
+          }
+
+          const IntermediateType toAdd = pImage[xImage] * pFilter[xFilter];
+          sum += toAdd;
+          }*/
 
           //if(shiftRight) {
           //  sum >>= shiftMagnitude;
