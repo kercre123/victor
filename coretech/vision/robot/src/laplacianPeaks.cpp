@@ -58,10 +58,10 @@ namespace Anki
       *stencil.Pointer(0, stencil.get_size(1)-1) = 1;
 
       //dg2 = conv(stencil, gaussian_kernel(sigma));
-      FixedPointArray<s32> gaussian = ImageProcessing::Get1dGaussianKernel<s32>(sigma, numSigmaFractionalBits, numStandardDeviations, scratch); // SQ23.8
-      FixedPointArray<s32> differenceOfGaussian(1, gaussian.get_size(1)+stencil.get_size(1)-1, numSigmaFractionalBits, scratch, Flags::Buffer(false,false,false)); // SQ23.8
+      FixedPointArray<s32> gaussian = ImageProcessing::Get1dGaussianKernel<s32>(sigma, numSigmaFractionalBits, numStandardDeviations, scratch); // SQ7.8
+      FixedPointArray<s32> differenceOfGaussian(1, gaussian.get_size(1)+stencil.get_size(1)-1, numSigmaFractionalBits, scratch, Flags::Buffer(false,false,false)); // SQ7.8
 
-      if((lastResult = ImageProcessing::Correlate1d(stencil, gaussian, differenceOfGaussian)) != RESULT_OK)
+      if((lastResult = ImageProcessing::Correlate1d<s32,s32,s32>(stencil, gaussian, differenceOfGaussian)) != RESULT_OK)
         return lastResult;
 
       FixedPointArray<s32> boundaryXFiltered(1, boundary.get_size(), numSigmaFractionalBits, scratch, Flags::Buffer(false,false,false)); // SQ23.8
@@ -70,14 +70,12 @@ namespace Anki
       if(!boundaryYFiltered.IsValid())
         return RESULT_FAIL_INVALID_OBJECT;
 
-      gaussian.Print("gaussian");
-      differenceOfGaussian.Print("differenceOfGaussian");
+      //gaussian.Print("gaussian");
+      //differenceOfGaussian.Print("differenceOfGaussian");
 
       EndBenchmark("elp_part1");
 
       BeginBenchmark("elp_part2");
-
-      differenceOfGaussian.Print("differenceOfGaussian");
 
       //r_smooth = imfilter(boundary, dg2(:), 'circular');
       {
@@ -95,7 +93,7 @@ namespace Anki
           pBoundaryX[i] = pConstBoundary[i].x;
         }
 
-        if((lastResult = ImageProcessing::Correlate1dCircularAndSameSizeOutput(boundaryX, differenceOfGaussian, boundaryXFiltered)) != RESULT_OK)
+        if((lastResult = ImageProcessing::Correlate1dCircularAndSameSizeOutput<s32,s32,s32>(boundaryX, differenceOfGaussian, boundaryXFiltered)) != RESULT_OK)
           return lastResult;
 
         //boundaryX.Print("boundaryX");
@@ -117,7 +115,7 @@ namespace Anki
           pBoundaryY[i] = pConstBoundary[i].y;
         }
 
-        if((lastResult = ImageProcessing::Correlate1dCircularAndSameSizeOutput(boundaryY, differenceOfGaussian, boundaryYFiltered)) != RESULT_OK)
+        if((lastResult = ImageProcessing::Correlate1dCircularAndSameSizeOutput<s32,s32,s32>(boundaryY, differenceOfGaussian, boundaryYFiltered)) != RESULT_OK)
           return lastResult;
 
         //boundaryY.Print("boundaryY");

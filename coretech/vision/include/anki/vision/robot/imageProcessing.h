@@ -16,6 +16,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/interpolate.h"
 
 #include "anki/common/robot/array2d.h"
+#include "anki/common/robot/benchmarking.h"
 
 namespace Anki
 {
@@ -23,6 +24,15 @@ namespace Anki
   {
     namespace ImageProcessing
     {
+      // Helper for several fixed-point filtering operations
+      // Compute the direction and number of bits to shift
+      void GetBitShiftDirectionAndMagnitude(
+        const s32 in1_numFractionalBits,
+        const s32 in2_numFractionalBit,
+        const s32 out_numFractionalBit,
+        s32 &shiftMagnitude,
+        bool &shiftRight);
+
       template<typename InType, typename IntermediateType, typename OutType> Result ComputeXGradient(const Array<InType> &in, Array<OutType> &out)
       {
         const s32 imageHeight = in.get_size(0);
@@ -499,6 +509,182 @@ namespace Anki
 
         return gaussianKernel;
       } // Get1dGaussianKernel
+
+      // NOTE: uses a 32-bit accumulator, so be careful of overflows
+      template<typename InType, typename IntermediateType, typename OutType> Result Correlate1d(const FixedPointArray<InType> &in1, const FixedPointArray<InType> &in2, FixedPointArray<OutType> &out)
+      {
+        const s32 outputLength = in1.get_size(1) + in2.get_size(1) - 1;
+
+        AnkiConditionalErrorAndReturnValue(in1.IsValid(),
+          RESULT_FAIL_INVALID_OBJECT, "Correlate1d", "in1 is not valid");
+
+        AnkiConditionalErrorAndReturnValue(in2.IsValid(),
+          RESULT_FAIL_INVALID_OBJECT, "Correlate1d", "in2 is not valid");
+
+        AnkiConditionalErrorAndReturnValue(out.IsValid(),
+          RESULT_FAIL_INVALID_OBJECT, "Correlate1d", "out is not valid");
+
+        AnkiConditionalErrorAndReturnValue(in1.get_size(0)==1 && in2.get_size(0)==1 && out.get_size(0)==1,
+          RESULT_FAIL_INVALID_SIZE, "Correlate1d", "Arrays must be 1d and horizontal");
+
+        AnkiConditionalErrorAndReturnValue(out.get_size(1) == outputLength,
+          RESULT_FAIL_INVALID_SIZE, "Correlate1d", "Out must be the size of in1 + in2 - 1");
+
+        AnkiConditionalErrorAndReturnValue(in1.get_rawDataPointer() != in2.get_rawDataPointer() && in1.get_rawDataPointer() != out.get_rawDataPointer(),
+          RESULT_FAIL_ALIASED_MEMORY, "Correlate1d", "in1, in2, and out must be in different memory locations");
+
+        const InType * restrict pU;
+        const InType * restrict pV;
+        OutType * restrict pOut = out.Pointer(0,0);
+
+        // To simplify things, u is the longer of the two,
+        // and v is the shorter of the two
+        s32 uLength;
+        s32 vLength;
+        if(in1.get_size(1) > in2.get_size(1)) {
+          pU = in1.Pointer(0,0);
+          pV = in2.Pointer(0,0);
+          uLength = in1.get_size(1);
+          vLength = in2.get_size(1);
+        } else {
+          pU = in2.Pointer(0,0);
+          pV = in1.Pointer(0,0);
+          uLength = in2.get_size(1);
+          vLength = in1.get_size(1);
+        }
+
+        const s32 midStartIndex = vLength - 1;
+        const s32 midEndIndex = midStartIndex + uLength - vLength;
+
+        s32 shiftMagnitude;
+        bool shiftRight;
+        GetBitShiftDirectionAndMagnitude(in1.get_numFractionalBits(), in2.get_numFractionalBits(), out.get_numFractionalBits(), shiftMagnitude, shiftRight);
+
+        s32 iOut = 0;
+
+        // Filter the left part
+        for(s32 x=0; x<midStartIndex; x++) {
+          IntermediateType sum = 0;
+          for(s32 xx=0; xx<=x; xx++) {
+            const IntermediateType toAdd = (pU[xx] * pV[vLength-x+xx-1]);
+            sum += toAdd;
+          }
+
+          if(shiftRight) {
+            sum >>= shiftMagnitude;
+          } else {
+            sum <<= shiftMagnitude;
+          }
+
+          pOut[iOut++] = static_cast<OutType>(sum);
+        }
+
+        // Filter the middle part
+        for(s32 x=midStartIndex; x<=midEndIndex; x++) {
+          IntermediateType sum = 0;
+          for(s32 xx=0; xx<vLength; xx++) {
+            const IntermediateType toAdd = (pU[x+xx-midStartIndex] * pV[xx]);
+            sum += toAdd;
+          }
+
+          if(shiftRight) {
+            sum >>= shiftMagnitude;
+          } else {
+            sum <<= shiftMagnitude;
+          }
+
+          pOut[iOut++] = static_cast<OutType>(sum);
+        }
+
+        // Filter the right part
+        for(s32 x=midEndIndex+1; x<outputLength; x++) {
+          const s32 vEnd = outputLength - x;
+          IntermediateType sum = 0;
+          for(s32 xx=0; xx<vEnd; xx++) {
+            const IntermediateType toAdd = (pU[x+xx-midStartIndex] * pV[xx]);
+            sum += toAdd;
+          }
+
+          if(shiftRight) {
+            sum >>= shiftMagnitude;
+          } else {
+            sum <<= shiftMagnitude;
+          }
+
+          pOut[iOut++] = static_cast<OutType>(sum);
+        }
+
+        return RESULT_OK;
+      } // Result Correlate1d(const FixedPointArray<s32> &in1, const FixedPointArray<s32> &in2, FixedPointArray<s32> &out)
+
+      template<typename InType, typename IntermediateType, typename OutType> Result Correlate1dCircularAndSameSizeOutput(const FixedPointArray<InType> &image, const FixedPointArray<InType> &filter, FixedPointArray<OutType> &out)
+      {
+        BeginBenchmark("Correlate1dCircularAndSameSizeOutput");
+
+        const s32 imageHeight = image.get_size(0);
+        const s32 imageWidth = image.get_size(1);
+
+        const s32 filterHeight = filter.get_size(0);
+        const s32 filterWidth = filter.get_size(1);
+
+        AnkiConditionalErrorAndReturnValue(image.IsValid(),
+          RESULT_FAIL_INVALID_OBJECT, "Correlate1dCircularAndSameSizeOutput", "image is not valid");
+
+        AnkiConditionalErrorAndReturnValue(filter.IsValid(),
+          RESULT_FAIL_INVALID_OBJECT, "Correlate1dCircularAndSameSizeOutput", "filter is not valid");
+
+        AnkiConditionalErrorAndReturnValue(out.IsValid(),
+          RESULT_FAIL_INVALID_OBJECT, "Correlate1dCircularAndSameSizeOutput", "out is not valid");
+
+        AnkiConditionalErrorAndReturnValue(imageHeight==1 && filterHeight==1 && out.get_size(0)==1,
+          RESULT_FAIL_INVALID_SIZE, "Correlate1dCircularAndSameSizeOutput", "Arrays must be 1d and horizontal");
+
+        AnkiConditionalErrorAndReturnValue(imageWidth > filterWidth,
+          RESULT_FAIL_INVALID_SIZE, "Correlate1dCircularAndSameSizeOutput", "The image must be larger than the filter");
+
+        AnkiConditionalErrorAndReturnValue(image.get_rawDataPointer() != filter.get_rawDataPointer() && image.get_rawDataPointer() != out.get_rawDataPointer(),
+          RESULT_FAIL_ALIASED_MEMORY, "Correlate1dCircularAndSameSizeOutput", "in1, in2, and out must be in different memory locations");
+
+        const InType * restrict pImage = image.Pointer(0,0);
+        const InType * restrict pFilter = filter.Pointer(0,0);
+        OutType * restrict pOut = out.Pointer(0,0);
+
+        s32 shiftMagnitude;
+        bool shiftRight;
+        GetBitShiftDirectionAndMagnitude(image.get_numFractionalBits(), filter.get_numFractionalBits(), out.get_numFractionalBits(), shiftMagnitude, shiftRight);
+
+        const s32 filterHalfWidth = filterWidth >> 1;
+
+        // Filter the middle part
+        for(s32 x=0; x<imageWidth; x++) {
+          IntermediateType sum = 0;
+          for(s32 xFilter=0; xFilter<filterWidth; xFilter++) {
+            // TODO: if this is too slow, pull out of the loop
+            s32 xImage = (x - filterHalfWidth + xFilter);
+            //s32 xImage = (x - filterWidth + xFilter + 1);
+            if(xImage < 0) {
+              xImage += imageWidth;
+            } else if(xImage >= imageWidth) {
+              xImage -= imageWidth;
+            }
+
+            const IntermediateType toAdd = pImage[xImage] * pFilter[xFilter];
+            sum += toAdd;
+          }
+
+          if(shiftRight) {
+            sum >>= shiftMagnitude;
+          } else {
+            sum <<= shiftMagnitude;
+          }
+
+          pOut[x] = static_cast<OutType>(sum);
+        }
+
+        EndBenchmark("Correlate1dCircularAndSameSizeOutput");
+
+        return RESULT_OK;
+      } // Result Correlate1dCircularAndSameSizeOutput(const FixedPointArray<s32> &in1, const FixedPointArray<s32> &in2, FixedPointArray<s32> &out)
     } // namespace ImageProcessing
   } // namespace Embedded
 } //namespace Anki

@@ -38,12 +38,13 @@ namespace Anki
       // A 1 dimensional, fixed point Gaussian kernel
       template<typename Type> FixedPointArray<Type> Get1dGaussianKernel(const s32 sigma, const s32 numSigmaFractionalBits, const s32 numStandardDeviations, MemoryStack &scratch);
 
-      // NOTE: uses a 32-bit accumulator, so be careful of overflows
-      Result Correlate1d(const FixedPointArray<s32> &in1, const FixedPointArray<s32> &in2, FixedPointArray<s32> &out);
+      template<typename InType, typename IntermediateType, typename OutType> Result Correlate1d(const FixedPointArray<InType> &in1, const FixedPointArray<InType> &in2, FixedPointArray<OutType> &out);
 
-      // NOTE: uses a 32-bit accumulator, so be careful of overflows
-      Result Correlate1dCircularAndSameSizeOutput(const FixedPointArray<s32> &image, const FixedPointArray<s32> &filter, FixedPointArray<s32> &out);
-      Result Correlate1dCircularAndSameSizeOutput(const FixedPointArray<s16> &image, const FixedPointArray<s32> &filter, FixedPointArray<s32> &out);
+      //// NOTE: uses a 32-bit accumulator, so be careful of overflows
+      //Result Correlate1dCircularAndSameSizeOutput(const FixedPointArray<s32> &image, const FixedPointArray<s32> &filter, FixedPointArray<s32> &out);
+      //Result Correlate1dCircularAndSameSizeOutput(const FixedPointArray<s16> &image, const FixedPointArray<s32> &filter, FixedPointArray<s32> &out);
+
+      template<typename InType, typename IntermediateType, typename OutType> Result Correlate1dCircularAndSameSizeOutput(const FixedPointArray<InType> &image, const FixedPointArray<InType> &filter, FixedPointArray<OutType> &out);
 
       // Populate a full integral image created from the input image.
       template<typename InType, typename OutType>
