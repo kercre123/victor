@@ -243,45 +243,6 @@ namespace Anki
       return rowOffset;
     }
 
-    Result ScrollingIntegralImage_u8_s32::PadImageRow_unsafe(const Array<u8> &image, const s32 whichRow, Array<u8> &paddedRow)
-    {
-      const s32 imageHeight = image.get_size(0);
-      const s32 imageWidth = image.get_size(1);
-
-      AnkiAssert(image.IsValid());
-      AnkiAssert(paddedRow.IsValid());
-      AnkiAssert(paddedRow.get_size(1) == (imageWidth+2*numBorderPixels));
-      AnkiAssert(paddedRow.get_size(0) == 1);
-      AnkiAssert(whichRow >= 0);
-      AnkiAssert(whichRow < imageHeight);
-
-      const u8 * restrict pImage = image.Pointer(whichRow, 0);
-      u8 * restrict pPaddedRow = paddedRow.Pointer(0, 0);
-
-      const u8 firstPixel = pImage[0];
-      const u8 lastPixel = pImage[imageWidth-1];
-
-      //paddedImageRow = zeros([1,size(image,2)+2*extraBorderWidth], 'int32');
-      s32 xPad = 0;
-
-      // paddedImageRow(1:extraBorderWidth) = image(y,1);
-      for(s32 x=0; x<numBorderPixels; x++) {
-        pPaddedRow[xPad++] = firstPixel;
-      }
-
-      //paddedImageRow((1+extraBorderWidth):(extraBorderWidth+size(image,2))) = image(y,:);
-      for(s32 xImage = 0; xImage<imageWidth; xImage++) {
-        pPaddedRow[xPad++] = pImage[xImage];
-      }
-
-      //paddedImageRow((1+extraBorderWidth+size(image,2)):end) = image(y,end);
-      for(s32 x=0; x<numBorderPixels; x++) {
-        pPaddedRow[xPad++] = lastPixel;
-      }
-
-      return RESULT_OK;
-    }
-
     Result ScrollingIntegralImage_u8_s32::PadImageRow(const Array<u8> &image, const s32 whichRow, Array<u8> &paddedRow)
     {
       const s32 imageHeight = image.get_size(0);

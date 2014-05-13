@@ -114,7 +114,6 @@ namespace Anki
       static void ComputeIntegralImageRow(const u8 * restrict paddedImage_currentRow, const s32 * restrict integralImage_previousRow, s32 * restrict integralImage_currentRow, const s32 integralImageWidth);
 
       // Virtually zero-pads to the left and right of an image row
-      Result PadImageRow_unsafe(const Array<u8> &image, const s32 whichRow, Array<u8> &paddedRow);
       Result PadImageRow(const Array<u8> &image, const s32 whichRow, Array<u8> &paddedRow);
     };
   } // namespace Embedded
