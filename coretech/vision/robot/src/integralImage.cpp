@@ -298,30 +298,20 @@ namespace Anki
       const u32 * restrict image_u32rowPointer = reinterpret_cast<const u32*>(image.Pointer(whichRow, 0));
       const u8 * restrict image_u8rowPointer = image.Pointer(whichRow, 0);
 
+      // Technically aliases, but the writes don't overlap
       u8 * restrict paddedRow_u8rowPointer = paddedRow.Pointer(0, 0);
+      u32 * restrict paddedRow_u32rowPointerPxpad = reinterpret_cast<u32*>(paddedRow_u8rowPointer + numBorderPixels);
 
       const u8 firstPixel = image_u8rowPointer[0];
       const u8 lastPixel = image_u8rowPointer[imageWidth-1];
 
       s32 xPad = 0;
-
-      xPad += numBorderPixels;
-
-      //u32 * restrict paddedRow_u32rowPointerPxpad = reinterpret_cast<u32*>(paddedRow.Pointer(0, xPad));
-
-      // First, load everything to the beginning of the buffer (SPARC doesn't have unaligned store)
-      u32 * restrict paddedRow_u32rowPointerPxpad = reinterpret_cast<u32*>(paddedRow_u8rowPointer);
-      for(s32 xImage = 0; xImage<imageWidth4; xImage++) {
-        paddedRow_u32rowPointerPxpad[xImage] = image_u32rowPointer[xImage];
-      }
-
-      // Second, move the image data to the unaligned location
-      memmove(paddedRow_u8rowPointer+xPad, paddedRow_u8rowPointer, imageWidth);
-
-      // Last, set the beginning and end pixels
-      xPad = 0;
       for(s32 x=0; x<numBorderPixels; x++) {
         paddedRow_u8rowPointer[xPad++] = firstPixel;
+      }
+
+      for(s32 xImage = 0; xImage<imageWidth4; xImage++) {
+        paddedRow_u32rowPointerPxpad[xImage] = image_u32rowPointer[xImage];
       }
 
       xPad += imageWidth;
