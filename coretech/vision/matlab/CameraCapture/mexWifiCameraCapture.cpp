@@ -1,3 +1,7 @@
+#if !defined(__APPLE_CC__)
+#error This file only builds in XCode
+#endif
+
 #include "mex.h"
 
 #include "anki/common/robot/matlabInterface.h"
@@ -15,19 +19,17 @@ static const s32 port = 5551;
 static DebugStreamClient *parserThread = NULL; //(ipAddress, port);
 
 void closeHelper(void) {
-  
   if(parserThread != NULL) {
     mexPrintf("Closing parserThread.\n");
-       
+
     if(parserThread->Close() != RESULT_OK) {
       mexWarnMsgTxt("Failed to close the parserThread cleanly!");
     }
-    
+
     //mexPrintf("NOTE: not actually deleting the parser -- was crashing matlab.  Investigate.\n");
     delete parserThread;
     parserThread = NULL;
   }
-
 
 #if USE_OPENCV_DISPLAY
   cv::destroyWindow("Robot Image");
@@ -44,25 +46,25 @@ enum Command {
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
   // Necessary when using TCP (vs. UART)
-  #define USE_SOCKET
-  
+#define USE_SOCKET
+
   mexAtExit(closeHelper);
 
   mxAssert(nrhs >= 1, "At least one input required.");
 
   Command cmd = static_cast<Command>(static_cast<int>(floor(mxGetScalar(prhs[0])+0.5)));
-  
+
   switch(cmd)
   {
-    case OPEN:
+  case OPEN:
     {
       if(nrhs < 2) {
         mexErrMsgTxt("You must specify a device with the OPEN command.");
       }
-      
+
       //printf("Starting display\n");
       SetLogSilence(true);
-      
+
       std::string ipAddress(DEFAULT_IP_PREFIX);
       if(mxIsChar(prhs[1])) {
         char buffer[256];
@@ -73,19 +75,19 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         int device = static_cast<int>(mxGetScalar(prhs[1]));
         ipAddress += std::to_string(device);
       }
-      
+
       //device = (int) mxGetScalar(prhs[1]);
-      
+
       // Close device (if necessary) before reopening it:
       closeHelper();
-      
+
       mexPrintf("Opening capture on IP %s.\n", ipAddress.c_str());
       parserThread = new DebugStreamClient(ipAddress.c_str(), port);
-      
+
       //DEBUG_MSG(1, "Initialization pause...");
       mexEvalString("pause(1)");
       //DEBUG_MSG(1, "Done.\n");
-      
+
       if(nlhs>0) {
         // If an output was requested with an OPEN command, trigger
         // a grab to happen below
@@ -93,24 +95,23 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       }
       break;
     }
-      
-    case CLOSE:
+
+  case CLOSE:
     {
       closeHelper();
       break;
     }
-      
-    case GRAB:
+
+  case GRAB:
     {
       if(nlhs==0) {
         mexErrMsgTxt("No output argument provided for GRAB.");
       }
       break;
     }
-      
-    default:
-      mexErrMsgTxt("Unknown command.");
-      
+
+  default:
+    mexErrMsgTxt("Unknown command.");
   } // SWITCH(cmd)
 
   if(cmd == GRAB)
@@ -121,10 +122,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     if(parserThread == NULL) {
       mexErrMsgTxt("No camera open.");
     }
-    
+
     DebugStreamClient::Object newObject = parserThread->GetNextObject(10);
     //printf("Received %s %s\n", newObject.typeName, newObject.newObject.objectName);
-    
+
     // Simple example to display an image
     if(strcmp(newObject.objectName, "Robot Image") == 0) {
       Array<u8> image = *(reinterpret_cast<Array<u8>*>(newObject.startOfPayload));
@@ -138,12 +139,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       //mexWarnMsgTxt("Returning empty frame!");
       plhs[0] = mxCreateNumericMatrix(0,0, mxUINT8_CLASS, mxREAL);
     }
-    
+
     if(newObject.buffer) {
       free(newObject.buffer);
       newObject.buffer = NULL;
     }
-
   } // IF(cmd==GRAB)
-  
 } // mexFunction()
