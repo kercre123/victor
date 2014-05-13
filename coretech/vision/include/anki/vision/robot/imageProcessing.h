@@ -18,6 +18,24 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/array2d.h"
 #include "anki/common/robot/benchmarking.h"
 
+#define USE_ARM_ACCELERATION_IMAGE_PROCESSING
+
+#if defined(__EDG__)
+#ifndef USE_ARM_ACCELERATION_IMAGE_PROCESSING
+#warning not using USE_ARM_ACCELERATION_IMAGE_PROCESSING
+#endif
+#else
+#undef USE_ARM_ACCELERATION_IMAGE_PROCESSING
+#endif
+
+#if defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING)
+#ifdef USING_CHIP_SIMULATOR
+#include <ARMCM4.h>
+#else
+#include <stm32f4xx.h>
+#endif
+#endif
+
 namespace Anki
 {
   namespace Embedded
@@ -732,12 +750,23 @@ namespace Anki
               for(s32 xFilter=0; xFilter<filterWidthSimdMax; xFilter+=4) {
                 const s32 xImage = x - filterHalfWidth + xFilter;
 
+#if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING)
                 const IntermediateType toAdd0 = static_cast<IntermediateType>(pImage[xImage] * pFilter[xFilter]);
                 const IntermediateType toAdd1 = static_cast<IntermediateType>(pImage[xImage+1] * pFilter[xFilter+1]);
                 const IntermediateType toAdd2 = static_cast<IntermediateType>(pImage[xImage+2] * pFilter[xFilter+2]);
                 const IntermediateType toAdd3 = static_cast<IntermediateType>(pImage[xImage+3] * pFilter[xFilter+3]);
 
                 sum += toAdd0 + toAdd1 + toAdd2 + toAdd3;
+#else // #if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING)
+                const u32 image01 = *reinterpret_cast<const u32*>(&pImage[xImage]);
+                const u32 image23 = *reinterpret_cast<const u32*>(&pImage[xImage+2]);
+
+                const u32 filter01 = *reinterpret_cast<const u32*>(&pFilter[xFilter]);
+                const u32 filter23 = *reinterpret_cast<const u32*>(&pFilter[xFilter+2]);
+
+                sum = __SMLAD(image01, filter01, sum);
+                sum = __SMLAD(image23, filter23, sum);
+#endif // #if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING) ... #else
               }
 
               for(s32 xFilter=filterWidthSimdMax; xFilter<filterWidth; xFilter++) {
