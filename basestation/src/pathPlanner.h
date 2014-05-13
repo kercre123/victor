@@ -20,17 +20,35 @@
 namespace Anki {
   namespace Cozmo {
     
-    class PathPlanner
+    class IPathPlanner
+    {
+    public:
+      virtual Result GetPlan(Planning::Path &path, const Pose3d &startPose, const Pose3d &targetPose) = 0;
+      
+    }; // Interface IPathPlanner
+    
+    class PathPlanner : public IPathPlanner
     {
     public:
       PathPlanner();
       
-      Result GetPlan(Planning::Path &path, const Pose3d &startPose, const Pose3d &targetPose);
+      virtual Result GetPlan(Planning::Path &path, const Pose3d &startPose, const Pose3d &targetPose);
       
     protected:
       
       
     }; // class PathPlanner
+    
+    class PathPlannerStub : public IPathPlanner
+    {
+    public:
+      PathPlannerStub() { }
+      
+      virtual Result GetPlan(Planning::Path &path, const Pose3d &startPose, const Pose3d &targetPose) {
+        return RESULT_OK;
+      }
+      
+    }; // class PathPlannerStub
     
     
   } // namespace Cozmo

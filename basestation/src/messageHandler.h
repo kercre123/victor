@@ -32,46 +32,45 @@ namespace Anki {
     
 #include "anki/cozmo/shared/MessageDefinitions.h"
     
-    
-#define USE_SINGLETON_MESSAGE_HANDLER 0
-    
     class Robot;
     class RobotManager;
     class BlockWorld;
     
-    // TODO: make singleton or not?
-    class MessageHandler
+    class IMessageHandler
     {
     public:
       
-#if USE_SINGLETON_MESSAGE_HANDLER
-      // Get a pointer to the singleton instance
-      inline static MessageHandler* getInstance();
-#else
-      MessageHandler(); // Force construction with stuff in Init()?
-#endif
+      // TODO: Change these to interface references so they can be stubbed as well
+      virtual Result Init(Comms::IComms* comms,
+                          RobotManager*  robotMgr,
+                          BlockWorld*    blockWorld) = 0;
       
+      virtual Result ProcessMessages() = 0;
+      
+      virtual Result SendMessage(const RobotID_t robotID, const Message& msg) = 0;
+      
+    }; // IMessageHandler
+    
+    
+    class MessageHandler : IMessageHandler
+    {
+    public:
+      
+      MessageHandler(); // Force construction with stuff in Init()?
+
       // Set the message handler's communications manager
-      Result Init(Comms::IComms* comms,
+      virtual Result Init(Comms::IComms* comms,
                       RobotManager*  robotMgr,
                       BlockWorld*    blockWorld);
       
       // As long as there are messages available from the comms object,
       // process them and pass them along to robots.
-      Result ProcessMessages();
+      virtual Result ProcessMessages();
       
       // Send a message to a specified ID
-      Result SendMessage(const RobotID_t robotID, const Message& msg);
+      virtual Result SendMessage(const RobotID_t robotID, const Message& msg);
       
     protected:
-      
-#if USE_SINGLETON_MESSAGE_HANDLER
-      // Protected default constructor for singleton.  This grabs a pointer
-      // to the singleton RobotManager.
-      MessageHandler();
-      
-      static MessageHandler* singletonInstance_;
-#endif
       
       Comms::IComms* comms_;
       RobotManager* robotMgr_;
@@ -104,18 +103,32 @@ namespace Anki {
       
     }; // class MessageHandler
     
-
-#if USE_SINGLETON_MESSAGE_HANDLER
-    inline MessageHandler* MessageHandler::getInstance()
+    
+    class MessageHandlerStub : public IMessageHandler
     {
-      // If we haven't already instantiated the singleton, do so now.
-      if(0 == singletonInstance_) {
-        singletonInstance_ = new MessageHandler();
+    public:
+      MessageHandlerStub() { }
+      
+      Result Init(Comms::IComms* comms,
+                  RobotManager*  robotMgr,
+                  BlockWorld*    blockWorld)
+      {
+        return RESULT_OK;
       }
       
-      return singletonInstance_;
-    }
-#endif
+      // As long as there are messages available from the comms object,
+      // process them and pass them along to robots.
+      Result ProcessMessages() {
+        return RESULT_OK;
+      }
+      
+      // Send a message to a specified ID
+      Result SendMessage(const RobotID_t robotID, const Message& msg) {
+        return RESULT_OK;
+      }
+      
+    }; // MessageHandlerStub
+    
     
   } // namespace Cozmo
 } // namespace Anki

@@ -34,7 +34,7 @@ namespace Anki {
       
     }
     
-    Result RobotManager::Init(MessageHandler* msgHandler, BlockWorld* blockWorld, PathPlanner* pathPlanner)
+    Result RobotManager::Init(IMessageHandler* msgHandler, BlockWorld* blockWorld, IPathPlanner* pathPlanner)
     {
       msgHandler_ = msgHandler;
       blockWorld_ = blockWorld;
@@ -86,7 +86,7 @@ namespace Anki {
     
 #pragma mark --- Robot Class Implementations ---
     
-    Robot::Robot(const RobotID_t robotID, MessageHandler* msgHandler, BlockWorld* world, PathPlanner* pathPlanner)
+    Robot::Robot(const RobotID_t robotID, IMessageHandler* msgHandler, BlockWorld* world, IPathPlanner* pathPlanner)
     : ID_(robotID), msgHandler_(msgHandler), world_(world), pathPlanner_(pathPlanner),
       pose(-M_PI_2, Z_AXIS_3D, {{0.f, 0.f, 0.f}}),
       neckPose(0.f,Y_AXIS_3D, {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &pose),
