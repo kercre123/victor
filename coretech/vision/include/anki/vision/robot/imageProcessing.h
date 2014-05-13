@@ -659,6 +659,10 @@ namespace Anki
 
         const s32 filterHalfWidth = filterWidth >> 1;
 
+        //s32 numLeft = 0;
+        //s32 numRight = 0;
+        //s32 numCenter = 0;
+
         for(s32 x=0; x<imageWidth; x++) {
           IntermediateType sum = 0;
 
@@ -667,6 +671,8 @@ namespace Anki
 
           if(xImageStart < 0) {
             // Filter extends past the left edge of the image
+
+            //numLeft++;
 
             const s32 leftExtent = -xImageStart;
 
@@ -684,6 +690,8 @@ namespace Anki
           } else if(xImageEnd >= imageWidth) {
             // Filter extends past the right edge of the image
 
+            //numRight++;
+
             const s32 rightExtent = xImageEnd - imageWidth + 1;
             const s32 filterCenterMax = filterWidth - rightExtent;
 
@@ -700,6 +708,8 @@ namespace Anki
             }
           } else {
             // Filter is in the middle of the image (easy case)
+
+            //numCenter++;
 
             if(sizeof(InType) == 4 && Flags::TypeCharacteristics<InType>::isSigned) {
               const s32 filterWidthSimdMax = RoundDown(filterWidth, 2);
@@ -754,6 +764,8 @@ namespace Anki
         }
 
         EndBenchmark("Correlate1dCircularAndSameSizeOutput");
+
+        //printf("numLeft:%d numRight:%d numCenter:%d\n", numLeft, numRight, numCenter);
 
         return RESULT_OK;
       } // Result Correlate1dCircularAndSameSizeOutput(const FixedPointArray<s32> &in1, const FixedPointArray<s32> &in2, FixedPointArray<s32> &out)

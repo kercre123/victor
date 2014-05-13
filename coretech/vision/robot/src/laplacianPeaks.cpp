@@ -51,21 +51,21 @@ namespace Anki
 
       //  stencil = [1 zeros(1, spacing-2) -2 zeros(1, spacing-2) 1];
       const s32 stencilLength = 1 + spacing - 2 + 1 + spacing - 2 + 1;
-      FixedPointArray<s32> stencil(1, stencilLength, 0, scratch, Flags::Buffer(false,false,false)); // SQ31.0
+      FixedPointArray<s16> stencil(1, stencilLength, 0, scratch, Flags::Buffer(false,false,false)); // SQ15.0
       stencil.SetZero();
       *stencil.Pointer(0, 0) = 1;
       *stencil.Pointer(0, spacing-1) = -2;
       *stencil.Pointer(0, stencil.get_size(1)-1) = 1;
 
       //dg2 = conv(stencil, gaussian_kernel(sigma));
-      FixedPointArray<s32> gaussian = ImageProcessing::Get1dGaussianKernel<s32>(sigma, numSigmaFractionalBits, numStandardDeviations, scratch); // SQ7.8
-      FixedPointArray<s32> differenceOfGaussian(1, gaussian.get_size(1)+stencil.get_size(1)-1, numSigmaFractionalBits, scratch, Flags::Buffer(false,false,false)); // SQ7.8
+      FixedPointArray<s16> gaussian = ImageProcessing::Get1dGaussianKernel<s16>(sigma, numSigmaFractionalBits, numStandardDeviations, scratch); // SQ7.8
+      FixedPointArray<s16> differenceOfGaussian(1, gaussian.get_size(1)+stencil.get_size(1)-1, numSigmaFractionalBits, scratch, Flags::Buffer(false,false,false)); // SQ7.8
 
-      if((lastResult = ImageProcessing::Correlate1d<s32,s32,s32>(stencil, gaussian, differenceOfGaussian)) != RESULT_OK)
+      if((lastResult = ImageProcessing::Correlate1d<s16,s32,s16>(stencil, gaussian, differenceOfGaussian)) != RESULT_OK)
         return lastResult;
 
-      FixedPointArray<s32> boundaryXFiltered(1, boundary.get_size(), numSigmaFractionalBits, scratch, Flags::Buffer(false,false,false)); // SQ23.8
-      FixedPointArray<s32> boundaryYFiltered(1, boundary.get_size(), numSigmaFractionalBits, scratch, Flags::Buffer(false,false,false)); // SQ23.8
+      FixedPointArray<s16> boundaryXFiltered(1, boundary.get_size(), numSigmaFractionalBits, scratch, Flags::Buffer(false,false,false)); // SQ23.8
+      FixedPointArray<s16> boundaryYFiltered(1, boundary.get_size(), numSigmaFractionalBits, scratch, Flags::Buffer(false,false,false)); // SQ23.8
 
       if(!boundaryYFiltered.IsValid())
         return RESULT_FAIL_INVALID_OBJECT;
@@ -80,20 +80,20 @@ namespace Anki
       //r_smooth = imfilter(boundary, dg2(:), 'circular');
       {
         PUSH_MEMORY_STACK(scratch);
-        FixedPointArray<s32> boundaryX(1, boundary.get_size(), 0, scratch, Flags::Buffer(false,false,false)); // SQ31.0
+        FixedPointArray<s16> boundaryX(1, boundary.get_size(), 0, scratch, Flags::Buffer(false,false,false)); // SQ15.0
 
         if(!boundaryX.IsValid())
           return RESULT_FAIL_INVALID_OBJECT;
 
         const Point<s16> * restrict pConstBoundary = boundary.Pointer(0);
-        s32 * restrict pBoundaryX = boundaryX.Pointer(0,0);
+        s16 * restrict pBoundaryX = boundaryX.Pointer(0,0);
 
         const s32 lengthBoundary = boundary.get_size();
         for(s32 i=0; i<lengthBoundary; i++) {
           pBoundaryX[i] = pConstBoundary[i].x;
         }
 
-        if((lastResult = ImageProcessing::Correlate1dCircularAndSameSizeOutput<s32,s32,s32>(boundaryX, differenceOfGaussian, boundaryXFiltered)) != RESULT_OK)
+        if((lastResult = ImageProcessing::Correlate1dCircularAndSameSizeOutput<s16,s32,s16>(boundaryX, differenceOfGaussian, boundaryXFiltered)) != RESULT_OK)
           return lastResult;
 
         //boundaryX.Print("boundaryX");
@@ -102,20 +102,20 @@ namespace Anki
 
       {
         PUSH_MEMORY_STACK(scratch);
-        FixedPointArray<s32> boundaryY(1, boundary.get_size(), 0, scratch); // SQ31.0
+        FixedPointArray<s16> boundaryY(1, boundary.get_size(), 0, scratch); // SQ15.0
 
         if(!boundaryY.IsValid())
           return RESULT_FAIL_INVALID_OBJECT;
 
         const Point<s16> * restrict pConstBoundary = boundary.Pointer(0);
-        s32 * restrict pBoundaryY = boundaryY.Pointer(0,0);
+        s16 * restrict pBoundaryY = boundaryY.Pointer(0,0);
 
         const s32 lengthBoundary = boundary.get_size();
         for(s32 i=0; i<lengthBoundary; i++) {
           pBoundaryY[i] = pConstBoundary[i].y;
         }
 
-        if((lastResult = ImageProcessing::Correlate1dCircularAndSameSizeOutput<s32,s32,s32>(boundaryY, differenceOfGaussian, boundaryYFiltered)) != RESULT_OK)
+        if((lastResult = ImageProcessing::Correlate1dCircularAndSameSizeOutput<s16,s32,s16>(boundaryY, differenceOfGaussian, boundaryYFiltered)) != RESULT_OK)
           return lastResult;
 
         //boundaryY.Print("boundaryY");
@@ -130,8 +130,8 @@ namespace Anki
       FixedPointArray<s32> boundaryFilteredAndCombined(1, boundary.get_size(), 2*numSigmaFractionalBits, scratch, Flags::Buffer(false,false,false)); // SQ15.16
       s32 * restrict pBoundaryFilteredAndCombined = boundaryFilteredAndCombined.Pointer(0,0);
 
-      const s32 * restrict pConstBoundaryXFiltered = boundaryXFiltered.Pointer(0,0);
-      const s32 * restrict pConstBoundaryYFiltered = boundaryYFiltered.Pointer(0,0);
+      const s16 * restrict pConstBoundaryXFiltered = boundaryXFiltered.Pointer(0,0);
+      const s16 * restrict pConstBoundaryYFiltered = boundaryYFiltered.Pointer(0,0);
 
       const s32 lengthBoundary = boundary.get_size();
       for(s32 i=0; i<lengthBoundary; i++) {
