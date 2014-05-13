@@ -9,6 +9,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/vision/robot/integralImage.h"
 
+#include "anki/common/robot/benchmarking.h"
+
 namespace Anki
 {
   namespace Embedded
@@ -91,6 +93,8 @@ namespace Anki
       // If we are asked to scroll all rows, we won't keep track of any of the previous data, so
       // we'll start by initializing the first rows
       if(numRowsToScroll == integralImageHeight) {
+        BeginBenchmark("scrolling_first");
+
         if((lastResult = PadImageRow(image, 0, paddedRow)) != RESULT_OK)
           return lastResult;
 
@@ -113,7 +117,11 @@ namespace Anki
 
         numRowsToScroll--;
         curImageY = 0;
+
+        EndBenchmark("scrolling_first");
       } else { // if(numRowsToScroll == integralImageHeight)
+        BeginBenchmark("scrolling_nth");
+
         curImageY = this->maxRow;
         curIntegralImageY = integralImageHeight - numRowsToScroll;
 
@@ -126,10 +134,14 @@ namespace Anki
           memcpy(pIntegralImage_yDst, pIntegralImage_ySrc, this->get_stride());
         }
         this->rowOffset += numRowsToScroll;
+
+        EndBenchmark("scrolling_nth");
       } // if(numRowsToScroll == integralImageHeight) ... else
 
       // Compute the non-padded integral image rows
       if(curImageY < imageHeight) {
+        BeginBenchmark("scrolling_nonPadded");
+
         //for iy = 1:numRowsToScroll
         while(numRowsToScroll > 0) {
           curImageY++;
@@ -148,6 +160,8 @@ namespace Anki
           numRowsToScroll--;
           curIntegralImageY++;
         }
+
+        EndBenchmark("scrolling_nonPadded");
       } else {
         curImageY = imageHeight - 1;
       }
@@ -157,6 +171,8 @@ namespace Anki
 
       // If we're at the bottom of the image, compute the extra bottom padded rows
       if(numRowsToScroll > 0) {
+        BeginBenchmark("scrolling_scroll");
+
         //paddedImageRow = padImageRow(image, curImageY, numBorderPixels);
         if((lastResult = PadImageRow(image, curImageY, paddedRow)) != RESULT_OK)
           return lastResult;
@@ -173,6 +189,8 @@ namespace Anki
           numRowsToScroll--;
           //this->minRow++;
         }
+
+        EndBenchmark("scrolling_scroll");
       }
 
       return RESULT_OK;
