@@ -11,6 +11,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/utilities.h"
 #include "anki/common/robot/errorHandling.h"
 
+#include "anki/common/shared/utilities_shared.h"
+
 #include <stdio.h>
 
 #define STRING_LENGTH 1024
@@ -104,7 +106,7 @@ Result Serial::Open(
   AnkiConditionalErrorAndReturnValue(isPurged,
     RESULT_FAIL, "Serial::Open", "Could not clear errors");
 
-  printf("Com port %d opened at %d baud\n", comPort, baudRate);
+  CoreTechPrint("Com port %d opened at %d baud\n", comPort, baudRate);
 
   return RESULT_OK;
 #else // #ifdef _MSC_VER

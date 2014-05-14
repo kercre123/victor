@@ -3,7 +3,10 @@
 #
 # mexCameraCapture
 #
-set(MEX_LINK_LIBRARIES ${OPENCV_LIBS})
+set(MEX_LINK_LIBRARIES 
+  CoreTech_Common_Robot
+  CoreTech_Vision_Robot
+  ${OPENCV_LIBS})
 
 build_mex(mexCameraCapture.cpp)
 

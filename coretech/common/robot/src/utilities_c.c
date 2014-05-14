@@ -481,7 +481,7 @@ void InitializeCRC32Table()
       crc = (crc >> 1) ^ (0xEDB88320 & mask);
     }
     crc32Table[byte] = crc;
-    printf("0x%x, ", crc);
+    CoreTechPrint("0x%x, ", crc);
   }
 }
 #endif // #ifdef REINITIALZE_CRC32_TABLE
@@ -495,9 +495,9 @@ u32 ComputeCRC32(const void * data, const s32 dataLength, const u32 initialCRC)
   for(i=0; i<dataLength; i++) {
     const s32 index = i;
     const u32 byte = ((u8*)data)[index];
-    //printf("%d\n", byte);
+    //CoreTechPrint("%d\n", byte);
     crc = (crc >> 8) ^ crc32Table[(crc ^ byte) & 0xFF];
-    //printf("%d (%d) = 0x%x\n", i, byte, crc);
+    //CoreTechPrint("%d (%d) = 0x%x\n", i, byte, crc);
   }
 
   // Technically, this should return ~crc, but that would make it wierd to chain multiple calls of this function

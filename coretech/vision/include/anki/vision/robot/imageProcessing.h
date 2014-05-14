@@ -773,7 +773,7 @@ namespace Anki
 
         EndBenchmark("Correlate1dCircularAndSameSizeOutput");
 
-        //printf("numLeft:%d numRight:%d numCenter:%d\n", numLeft, numRight, numCenter);
+        //CoreTechPrint("numLeft:%d numRight:%d numCenter:%d\n", numLeft, numRight, numCenter);
 
         return RESULT_OK;
       } // Result Correlate1dCircularAndSameSizeOutput(const FixedPointArray<s32> &in1, const FixedPointArray<s32> &in2, FixedPointArray<s32> &out)

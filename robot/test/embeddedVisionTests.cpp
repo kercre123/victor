@@ -143,7 +143,7 @@ GTEST_TEST(CoreTech_Vision, FaceDetection_All)
   //cc.SaveAsHeader("c:/tmp/cascade.h", "lbpcascade_frontalface");
 
   if( !face_cascade.load( face_cascade_name ) ) {
-    printf("Could not load %s\n", face_cascade_name.c_str());
+    CoreTechPrint("Could not load %s\n", face_cascade_name.c_str());
     return;
   }
 
@@ -227,7 +227,7 @@ GTEST_TEST(CoreTech_Vision, FaceDetection_All)
 
       const f32 t2 = GetTimeF32();
 
-      printf("OpenCV took %f seconds and Anki took %f seconds\n", t1-t0, t2-t1);
+      CoreTechPrint("OpenCV took %f seconds and Anki took %f seconds\n", t1-t0, t2-t1);
 
       cv::Mat toShow;
 
@@ -257,7 +257,7 @@ GTEST_TEST(CoreTech_Vision, FaceDetection_All)
 
       const s32 maxChars = 1024;
       char outname[maxChars];
-      snprintf(outname, "Detected faces %d", in);
+      snCoreTechPrint(outname, "Detected faces %d", in);
 
       //-- Show what you got
       cv::imshow(outname, toShow);
@@ -365,7 +365,7 @@ GTEST_TEST(CoreTech_Vision, FaceDetection)
 
   const f32 t2 = GetTimeF32();
 
-  printf("Detection took %f seconds (setup time %f seconds)\n", t2-t1, t1-t0);
+  CoreTechPrint("Detection took %f seconds (setup time %f seconds)\n", t2-t1, t1-t0);
 
   ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
@@ -555,7 +555,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTrackerHeaderTemplate)
     PUSH_MEMORY_STACK(scratchOnchip);
     PUSH_MEMORY_STACK(scratchOffchip);
 
-    printf("Skip 0 nonlist\n");
+    CoreTechPrint("Skip 0 nonlist\n");
     edgeDetectionParams_template.everyNLines = 1;
 
     InitBenchmarking();
@@ -645,7 +645,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     PUSH_MEMORY_STACK(scratchOnchip);
     PUSH_MEMORY_STACK(scratchOffchip);
 
-    printf("Skip 0 nonlist\n");
+    CoreTechPrint("Skip 0 nonlist\n");
     edgeDetectionParams_template.everyNLines = 1;
 
     InitBenchmarking();
@@ -717,7 +717,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     PUSH_MEMORY_STACK(scratchOnchip);
     PUSH_MEMORY_STACK(scratchOffchip);
 
-    printf("\nSkip 1 nonlist\n");
+    CoreTechPrint("\nSkip 1 nonlist\n");
     edgeDetectionParams_template.everyNLines = 2;
 
     InitBenchmarking();
@@ -787,7 +787,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     PUSH_MEMORY_STACK(scratchOnchip);
     PUSH_MEMORY_STACK(scratchOffchip);
 
-    printf("\nSkip 0 list\n");
+    CoreTechPrint("\nSkip 0 list\n");
     edgeDetectionParams_template.everyNLines = 1;
 
     InitBenchmarking();
@@ -857,7 +857,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     PUSH_MEMORY_STACK(scratchOnchip);
     PUSH_MEMORY_STACK(scratchOffchip);
 
-    printf("\nSkip 1 list\n");
+    CoreTechPrint("\nSkip 1 list\n");
     edgeDetectionParams_template.everyNLines = 2;
 
     InitBenchmarking();
@@ -927,7 +927,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     PUSH_MEMORY_STACK(scratchOnchip);
     PUSH_MEMORY_STACK(scratchOffchip);
 
-    printf("\nSkip 0 ransac\n");
+    CoreTechPrint("\nSkip 0 ransac\n");
     edgeDetectionParams_template.everyNLines = 1;
 
     InitBenchmarking();
@@ -966,7 +966,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     ASSERT_TRUE(result == RESULT_OK);
 
-    printf("numMatches = %d / %d\n", verify_numMatches, numTemplatePixels);
+    CoreTechPrint("numMatches = %d / %d\n", verify_numMatches, numTemplatePixels);
 
     // TODO: verify this number manually
     //ASSERT_TRUE(verify_numMatches == );
@@ -993,7 +993,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
     PUSH_MEMORY_STACK(scratchOnchip);
     PUSH_MEMORY_STACK(scratchOffchip);
 
-    printf("\nSkip 1 ransac\n");
+    CoreTechPrint("\nSkip 1 ransac\n");
     edgeDetectionParams_template.everyNLines = 2;
 
     InitBenchmarking();
@@ -1032,7 +1032,7 @@ GTEST_TEST(CoreTech_Vision, BinaryTracker)
 
     ASSERT_TRUE(result == RESULT_OK);
 
-    printf("numMatches = %d / %d\n", verify_numMatches, numTemplatePixels);
+    CoreTechPrint("numMatches = %d / %d\n", verify_numMatches, numTemplatePixels);
 
     // TODO: verify this number manually
     //ASSERT_TRUE(verify_numMatches == );
@@ -1305,7 +1305,7 @@ GTEST_TEST(CoreTech_Vision, DownsampleByPowerOfTwo)
   const Result result = ImageProcessing::DownsampleByPowerOfTwo<u8,u32,u8>(in, 2, out, scratchOffchip);
   ASSERT_TRUE(result == RESULT_OK);
 
-  printf("%d %d %d %d", out[0][0], out[0][17], out[40][80-1], out[59][80-3]);
+  CoreTechPrint("%d %d %d %d", out[0][0], out[0][17], out[40][80-1], out[59][80-3]);
 
   ASSERT_TRUE(out[0][0] == 155);
   ASSERT_TRUE(out[0][17] == 157);
@@ -1323,7 +1323,7 @@ GTEST_TEST(CoreTech_Vision, DownsampleByPowerOfTwo)
 
 bool IsBlockImage50_320x240Valid(const u8 * const imageBuffer, const bool isBigEndian)
 {
-  //printf("%d %d %d %d\n", imageBuffer[0], imageBuffer[1000], imageBuffer[320*120], imageBuffer[320*240-1]);
+  //CoreTechPrint("%d %d %d %d\n", imageBuffer[0], imageBuffer[1000], imageBuffer[320*120], imageBuffer[320*240-1]);
 
   if(isBigEndian) {
     const u8 pixel1 = ((((int*)(&blockImage50_320x240[0]))[0]) & 0xFF000000)>>24;
@@ -1445,7 +1445,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
 
     const f64 time2 = GetTimeF32();
 
-    printf("Translation-only LK_SampledProjective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
+    CoreTechPrint("Translation-only LK_SampledProjective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
     ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
     tracker.get_transformation().Print("Translation-only LK_SampledProjective");
@@ -1493,7 +1493,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
 
     const f64 time2 = GetTimeF32();
 
-    printf("Affine LK_SampledProjective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
+    CoreTechPrint("Affine LK_SampledProjective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
     ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
     tracker.get_transformation().Print("Affine LK_SampledProjective");
@@ -1542,7 +1542,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
 
     const f64 time2 = GetTimeF32();
 
-    printf("Projective LK_SampledProjective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
+    CoreTechPrint("Projective LK_SampledProjective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
     ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
     tracker.get_transformation().Print("Projective LK_SampledProjective");
@@ -1641,7 +1641,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledPlanar6dof)
   //
   //    const f64 time2 = GetTimeF32();
   //
-  //    printf("Translation-only LK_SampledPlanar6dof totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
+  //    CoreTechPrint("Translation-only LK_SampledPlanar6dof totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
   //    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
   //
   //    tracker.get_transformation().Print("Translation-only LK_SampledPlanar6dof");
@@ -1690,7 +1690,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledPlanar6dof)
   //
   //    const f64 time2 = GetTimeF32();
   //
-  //    printf("Affine LK_SampledProjective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
+  //    CoreTechPrint("Affine LK_SampledProjective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
   //    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
   //
   //    tracker.get_transformation().Print("Affine LK_SampledProjective");
@@ -1746,7 +1746,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledPlanar6dof)
   //
   //    const f64 time2 = GetTimeF32();
   //
-  //    printf("Projective LK_SampledPlanar6dof totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
+  //    CoreTechPrint("Projective LK_SampledPlanar6dof totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
   //    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
   //
   //    tracker.get_transformation().Print("Projective LK_SampledPlanar6dof");
@@ -1800,7 +1800,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
   image2.Set(blockImages00190_80x60, imageWidth*imageHeight);
 
   ASSERT_TRUE(*image1.Pointer(0,0) == 45);
-  //printf("%d %d %d %d\n", *image1.Pointer(0,0), *image1.Pointer(0,1), *image1.Pointer(0,2), *image1.Pointer(0,3));
+  //CoreTechPrint("%d %d %d %d\n", *image1.Pointer(0,0), *image1.Pointer(0,1), *image1.Pointer(0,2), *image1.Pointer(0,3));
   /*image1.Print("image1");
   image2.Print("image2");*/
 
@@ -1832,7 +1832,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
 
     const f64 time2 = GetTimeF32();
 
-    printf("Translation-only LK_Projective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
+    CoreTechPrint("Translation-only LK_Projective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
     ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
     tracker.get_transformation().Print("Translation-only LK_Projective");
@@ -1873,7 +1873,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
 
     const f64 time2 = GetTimeF32();
 
-    printf("Affine LK_Projective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
+    CoreTechPrint("Affine LK_Projective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
     ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
     tracker.get_transformation().Print("Affine LK_Projective");
@@ -1915,7 +1915,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
 
     const f64 time2 = GetTimeF32();
 
-    printf("Projective LK_Projective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
+    CoreTechPrint("Projective LK_Projective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
     ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
     tracker.get_transformation().Print("Projective LK_Projective");
@@ -1966,7 +1966,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
   image2.Set(blockImages00190_80x60, imageWidth*imageHeight);
 
   ASSERT_TRUE(*image1.Pointer(0,0) == 45);
-  //printf("%d %d %d %d\n", *image1.Pointer(0,0), *image1.Pointer(0,1), *image1.Pointer(0,2), *image1.Pointer(0,3));
+  //CoreTechPrint("%d %d %d %d\n", *image1.Pointer(0,0), *image1.Pointer(0,1), *image1.Pointer(0,2), *image1.Pointer(0,3));
   /*image1.Print("image1");
   image2.Print("image2");*/
 
@@ -1998,7 +1998,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
 
     const f64 time2 = GetTimeF32();
 
-    printf("Translation-only FAST-LK totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
+    CoreTechPrint("Translation-only FAST-LK totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
     ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
     tracker.get_transformation().Print("Translation-only LK_Affine");
@@ -2038,7 +2038,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
 
     const f64 time2 = GetTimeF32();
 
-    printf("Affine FAST-LK totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
+    CoreTechPrint("Affine FAST-LK totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
     ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
     tracker.get_transformation().Print("Affine LK_Affine");
@@ -2090,7 +2090,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
   image2.Set(blockImages00190_80x60, imageWidth*imageHeight);
 
   ASSERT_TRUE(*image1.Pointer(0,0) == 45);
-  //printf("%d %d %d %d\n", *image1.Pointer(0,0), *image1.Pointer(0,1), *image1.Pointer(0,2), *image1.Pointer(0,3));
+  //CoreTechPrint("%d %d %d %d\n", *image1.Pointer(0,0), *image1.Pointer(0,1), *image1.Pointer(0,2), *image1.Pointer(0,3));
   /*image1.Print("image1");
   image2.Print("image2");*/
 
@@ -2115,7 +2115,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
 
     const f64 time2 = GetTimeF32();
 
-    printf("Translation-only LK totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
+    CoreTechPrint("Translation-only LK totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
     ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
     tracker.get_transformation().Print("Translation-only LK");
@@ -2148,7 +2148,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
 
     const f64 time2 = GetTimeF32();
 
-    printf("Affine LK totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
+    CoreTechPrint("Affine LK totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
     ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
     tracker.get_transformation().Print("Affine LK");
@@ -2183,7 +2183,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
 
     const f64 time2 = GetTimeF32();
 
-    printf("Projective LK totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
+    CoreTechPrint("Projective LK totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
     ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
     tracker.get_transformation().Print("Projective LK");
@@ -2674,7 +2674,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
       scratchOffchip);
     const f64 time1 = GetTimeF32();
 
-    printf("totalTime: %dms\n", Round<s32>(1000*(time1-time0)));
+    CoreTechPrint("totalTime: %dms\n", Round<s32>(1000*(time1-time0)));
 
     ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
@@ -3372,7 +3372,7 @@ GTEST_TEST(CoreTech_Vision, ComponentsSize)
   const s32 usedBytes0 = ms.get_usedBytes();
 
 #ifdef PRINTF_SIZE_RESULTS
-  printf("Original size: %d\n", usedBytes0);
+  CoreTechPrint("Original size: %d\n", usedBytes0);
 #endif
 
   FixedLengthList<ConnectedComponentSegment> segmentList(numComponents, ms);
@@ -3381,7 +3381,7 @@ GTEST_TEST(CoreTech_Vision, ComponentsSize)
   const double actualSizePlusOverhead = double(usedBytes1 - usedBytes0) / double(numComponents);
 
 #ifdef PRINTF_SIZE_RESULTS
-  printf("Final size: %d\n"
+  CoreTechPrint("Final size: %d\n"
     "Difference: %d\n"
     "Expected size of a components: %d\n"
     "Actual size (includes overhead): %d\n",
@@ -3634,10 +3634,10 @@ GTEST_TEST(CoreTech_Vision, BinomialFilter)
 
   const Result result = ImageProcessing::BinomialFilter<u8,u32,u8>(image, imageFiltered, ms);
 
-  //printf("image:\n");
+  //CoreTechPrint("image:\n");
   //image.Print();
 
-  //printf("imageFiltered:\n");
+  //CoreTechPrint("imageFiltered:\n");
   //imageFiltered.Print();
 
   ASSERT_TRUE(result == RESULT_OK);
@@ -3646,7 +3646,7 @@ GTEST_TEST(CoreTech_Vision, BinomialFilter)
 
   for(s32 y=0; y<imageHeight; y++) {
     for(s32 x=0; x<imageWidth; x++) {
-      //printf("(%d,%d) expected:%d actual:%d\n", y, x, correctResults[y][x], *(imageFiltered.Pointer(y,x)));
+      //CoreTechPrint("(%d,%d) expected:%d actual:%d\n", y, x, correctResults[y][x], *(imageFiltered.Pointer(y,x)));
       ASSERT_TRUE(correctResults[y][x] == *imageFiltered.Pointer(y,x));
     }
   }
@@ -3684,7 +3684,7 @@ GTEST_TEST(CoreTech_Vision, DownsampleByFactor)
 
   for(s32 y=0; y<imageDownsampled.get_size(0); y++) {
     for(s32 x=0; x<imageDownsampled.get_size(1); x++) {
-      //printf("(%d,%d) expected:%d actual:%d\n", y, x, correctResults[y][x], *(imageDownsampled.Pointer(y,x)));
+      //CoreTechPrint("(%d,%d) expected:%d actual:%d\n", y, x, correctResults[y][x], *(imageDownsampled.Pointer(y,x)));
       ASSERT_TRUE(correctResults[y][x] == *imageDownsampled.Pointer(y,x));
     }
   }

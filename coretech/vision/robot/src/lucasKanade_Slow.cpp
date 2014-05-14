@@ -576,7 +576,7 @@ namespace Anki
           //  matlab.PutArray(AWAt, "AWAt_tmp");
           //  matlab.EvalStringEcho("if ~exist('A', 'var') A=cell(0); AW=cell(0); AWAt=cell(0); end;");
           //  matlab.EvalStringEcho("A{end+1}=A_tmp; AW{end+1}=AW_tmp; AWAt{end+1}=AWAt_tmp;");
-          //  printf("");
+          //  CoreTechPrint("");
           //}
 
           Array<f32> ridgeWeightMatrix = Eye<f32>(numSystemParameters, numSystemParameters, scratch);
@@ -598,7 +598,7 @@ namespace Anki
           //  //matlab.PutArray(ridgeWeightMatrix, "ridgeWeightMatrix");
           //  matlab.EvalStringEcho("if ~exist('b', 'var') b=cell(0); end;");
           //  matlab.EvalStringEcho("b{end+1}=b_tmp;");
-          //  printf("");
+          //  CoreTechPrint("");
           //}
 
           // update = AtWA\b;
@@ -634,7 +634,7 @@ namespace Anki
 
           //  matlab.EvalStringEcho("if ~exist('update', 'var') update=cell(0); homography=cell(0); end;");
           //  matlab.EvalStringEcho("update{end+1}=update_tmp; homography{end+1}=homography_tmp;");
-          //  printf("");
+          //  CoreTechPrint("");
           //}
 
           BeginBenchmark("IterativelyRefineTrack.checkForCompletion");

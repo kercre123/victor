@@ -113,17 +113,30 @@ namespace Anki
 
         AnkiAssert(currentSegment.xStart >= 0);
         for(s32 x=currentSegment.xStart; x<=currentSegment.xEnd; x++) {
-          //edge_top(xStart:xEnd) = min(edge_top(xStart:xEnd), y);
-          //edge_bottom(xStart:xEnd) = max(edge_top(xStart:xEnd), y);
           edge_top[x] = MIN(edge_top[x], currentSegment.y);
           edge_bottom[x] = MAX(edge_bottom[x], currentSegment.y);
 
-          //edge_left(y) = min(edge_left(y), xStart);
-          //edge_right(y) = max(edge_right(y), xEnd);
           edge_left[currentSegment.y] = MIN(edge_left[currentSegment.y], currentSegment.xStart);
           edge_right[currentSegment.y] = MAX(edge_right[currentSegment.y], currentSegment.xEnd);
         } // for(s32 x=currentSegment.xStart; x<=currentSegment.xEnd; x++)
       } // for(s32 iSegment=startComponentIndex; iSegment<=endComponentIndex; iSegment++)
+
+      //#define PRINT_OUT_EDGE_LIMITS
+#ifdef PRINT_OUT_EDGE_LIMITS
+      CoreTechPrint("  ");
+      for(s32 i=0; i<boxWidth;i++){
+        CoreTechPrint("%d ", edge_top[i]);
+      }
+      CoreTechPrint("\n");
+
+      for(s32 i=0; i<boxHeight;i++){
+        CoreTechPrint("%d                    %d\n", edge_left[i], edge_right[i]);
+      }
+
+      for(s32 i=0; i<boxWidth;i++){
+        CoreTechPrint("%d ", edge_bottom[i]);
+      }
+#endif // #ifdef PRINT_OUT_EDGE_LIMITS
 
       // TODO: perform this check?
       //if ~isempty(find(isinf(edge_top), 1)) || ~isempty(find(isinf(edge_bottom), 1)) || ~isempty(find(isinf(edge_left), 1)) || ~isempty(find(isinf(edge_right), 1))
@@ -131,22 +144,19 @@ namespace Anki
       //    keyboard
       //end
 
-      //#define PRINT_OUT_EDGE_LIMITS
-#ifdef PRINT_OUT_EDGE_LIMITS
-      printf("  ");
-      for(s32 i=0; i<boxWidth;i++){
-        printf("%d ", edge_top[i]);
-      }
-      printf("\n");
-
-      for(s32 i=0; i<boxHeight;i++){
-        printf("%d                    %d\n", edge_left[i], edge_right[i]);
+#if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS
+      for(s32 y=0; y<boxHeight; y++) {
+        if(edge_left[y] == s16_MAX || edge_right[y] == s16_MIN) {
+          AnkiError("TraceNextExteriorBoundary", "edge_left[%d]=%d edge_right[%d]=%d", y, edge_left[y], y, edge_right[y]);
+        }
       }
 
-      for(s32 i=0; i<boxWidth;i++){
-        printf("%d ", edge_bottom[i]);
+      for(s32 x=0; x<boxWidth; x++) {
+        if(edge_top[x] == s16_MAX || edge_bottom[x] == s16_MIN) {
+          AnkiError("TraceNextExteriorBoundary", "edge_left[%d]=%d edge_right[%d]=%d", x, edge_left[x], x, edge_right[x]);
+        }
       }
-#endif // #ifdef PRINT_OUT_EDGE_LIMITS
+#endif // #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS
 
       //boundary = zeros(0, 2);
 

@@ -27,8 +27,8 @@ namespace Anki
 
     void ConnectedComponentSegment::Print() const
     {
-      //printf("[%d: (%d->%d, %d)] ", static_cast<s32>(this->id), static_cast<s32>(this->xStart), static_cast<s32>(this->xEnd), static_cast<s32>(this->y));
-      printf("[%d: (%d->%d, %d)] ", this->id, this->xStart, this->xEnd, this->y);
+      //CoreTechPrint("[%d: (%d->%d, %d)] ", static_cast<s32>(this->id), static_cast<s32>(this->xStart), static_cast<s32>(this->xEnd), static_cast<s32>(this->y));
+      CoreTechPrint("[%d: (%d->%d, %d)] ", this->id, this->xStart, this->xEnd, this->y);
     } // void ConnectedComponentSegment::Print() const
 
     bool ConnectedComponentSegment::operator== (const ConnectedComponentSegment &component2) const
@@ -67,7 +67,7 @@ namespace Anki
             if(numSkipped > maxSkipDistance) {
               const s16 componentWidth = x - componentStart;
               if(componentWidth >= minComponentWidth) {
-                //                printf("one: %d %d\n", componentStart, x-numSkipped);
+                //                CoreTechPrint("one: %d %d\n", componentStart, x-numSkipped);
                 components.PushBack(ConnectedComponentSegment(componentStart, x-numSkipped));
               }
               onComponent = false;
@@ -87,7 +87,7 @@ namespace Anki
       if(onComponent) {
         const s16 componentWidth = binaryImageWidth - componentStart;
         if(componentWidth >= minComponentWidth) {
-          //          printf("two: %d %d\n", componentStart, binaryImageWidth-numSkipped-1);
+          //          CoreTechPrint("two: %d %d\n", componentStart, binaryImageWidth-numSkipped-1);
           components.PushBack(ConnectedComponentSegment(componentStart, binaryImageWidth-numSkipped-1));
         }
       }

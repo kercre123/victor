@@ -62,9 +62,9 @@ namespace Anki {
         "Input initial homography array must be valid and 3x3.");
 
 #if VISUALIZE_WITH_MATLAB
-      printf("Initial quad: ");
+      CoreTechPrint("Initial quad: ");
       initialQuad.Print();
-      printf("\n");
+      CoreTechPrint("\n");
 
       matlab.PutArray(image, "img");
       matlab.PutQuad(initialQuad, "initialQuad");
@@ -750,9 +750,9 @@ namespace Anki {
       }
 
 #if VISUALIZE_WITH_MATLAB
-      printf("Final quad: ");
+      CoreTechPrint("Final quad: ");
       refinedQuad.Print();
-      printf("\n");
+      CoreTechPrint("\n");
       {
         matlab.PutQuad(refinedQuad, "refinedQuad");
         matlab.EvalStringEcho("refinedQuad = double(refinedQuad); "

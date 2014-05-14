@@ -195,12 +195,12 @@ namespace Anki
 
       Result PlanarTransformation_f32::Print(const char * const variableName) const
       {
-        printf(variableName);
-        printf(": center");
+        CoreTechPrint(variableName);
+        CoreTechPrint(": center");
         this->centerOffset.Print();
-        printf(" initialCorners");
+        CoreTechPrint(" initialCorners");
         this->initialCorners.Print();
-        printf("\n");
+        CoreTechPrint("\n");
 
         return this->homography.Print("homography");
       }

@@ -175,7 +175,7 @@ namespace Anki
 
       //boundaryFilteredAndCombined.Print("boundaryFilteredAndCombined");
       //for(s32 i=0; i<boundaryFilteredAndCombined.get_size(1); i++) {
-      //  printf("%d\n", boundaryFilteredAndCombined[0][i]);
+      //  CoreTechPrint("%d\n", boundaryFilteredAndCombined[0][i]);
       //}
 
       //localMaxima.Print("localMaxima");
@@ -208,7 +208,7 @@ namespace Anki
             maximaIndexes[iMax] = localMaximaIndex;
           }
         }
-        //printf("Maxima %d/%d is #%d %d\n", iMax, 4, maximaIndexes[iMax], maximaValues[iMax]);
+        //CoreTechPrint("Maxima %d/%d is #%d %d\n", iMax, 4, maximaIndexes[iMax], maximaValues[iMax]);
         pBoundaryFilteredAndCombined[maximaIndexes[iMax]] = s32_MIN;
       }
 

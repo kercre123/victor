@@ -61,7 +61,7 @@ namespace Anki
 
     template<typename Type> void Point<Type>::Print() const
     {
-      printf("(%d,%d) ", this->x, this->y);
+      CoreTechPrint("(%d,%d) ", this->x, this->y);
     }
 
     template<typename Type> bool Point<Type>::operator== (const Point<Type> &point2) const
@@ -172,7 +172,7 @@ namespace Anki
 
     template<typename Type> void Point3<Type>::Print() const
     {
-      printf("(%d,%d,%d) ", this->x, this->y, this->z);
+      CoreTechPrint("(%d,%d,%d) ", this->x, this->y, this->z);
     }
 
     template<typename Type> bool Point3<Type>::operator== (const Point3<Type> &point2) const
@@ -327,7 +327,7 @@ namespace Anki
 
     template<typename Type> void Rectangle<Type>::Print() const
     {
-      printf("(%d,%d)->(%d,%d) ", this->left, this->top, this->right, this->bottom);
+      CoreTechPrint("(%d,%d)->(%d,%d) ", this->left, this->top, this->right, this->bottom);
     }
 
     template<typename Type> template<typename OutType> Point<OutType> Rectangle<Type>::ComputeCenter() const
@@ -443,7 +443,7 @@ namespace Anki
 
     template<typename Type> void Quadrilateral<Type>::Print() const
     {
-      printf("{(%d,%d), (%d,%d), (%d,%d), (%d,%d)} ",
+      CoreTechPrint("{(%d,%d), (%d,%d), (%d,%d), (%d,%d)} ",
         this->corners[0].x, this->corners[0].y,
         this->corners[1].x, this->corners[1].y,
         this->corners[2].x, this->corners[2].y,

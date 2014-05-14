@@ -180,7 +180,7 @@ namespace Anki
     {
       this->isRunning = true;
 
-      //printf("Starting DebugStreamClient\n");
+      //CoreTechPrint("Starting DebugStreamClient\n");
 
       this->rawMessageQueue = ThreadSafeQueue<DebugStreamClient::RawBuffer>();
       this->parsedObjectQueue = ThreadSafeQueue<DebugStreamClient::Object>();
@@ -201,7 +201,7 @@ namespace Anki
 
       pthread_create(&connectionThread, &connectionAttr, DebugStreamClient::ConnectionThread, (void *)this);
 #endif
-      //printf("Connection thread created\n");
+      //CoreTechPrint("Connection thread created\n");
 
 #ifdef _MSC_VER
       DWORD parseBufferThreadId = -1;
@@ -218,7 +218,7 @@ namespace Anki
 
       pthread_create(&parseBufferThread, &parsingAttr, DebugStreamClient::ParseBufferThread, (void *)this);
 #endif // #ifdef _MSC_VER ... else
-      //printf("Parsing thread created\n");
+      //CoreTechPrint("Parsing thread created\n");
 
 #ifdef _MSC_VER
       DWORD saveObjectThreadId = -1;
@@ -235,7 +235,7 @@ namespace Anki
 
       pthread_create(&saveObjectThread, &savingAttr, DebugStreamClient::SaveObjectThread, (void *)this);
 #endif // #ifdef _MSC_VER ... else
-      //printf("Saving thread created\n");
+      //CoreTechPrint("Saving thread created\n");
 
       this->isValid = true;
 
@@ -295,7 +295,7 @@ namespace Anki
       rawBuffer.timeReceived = 0;
 
       if(rawBuffer.rawDataPointer == NULL) {
-        //printf("Could not allocate memory");
+        //CoreTechPrint("Could not allocate memory");
         rawBuffer.data = NULL;
         rawBuffer.maxDataLength = 0;
       }
@@ -341,7 +341,7 @@ namespace Anki
         newObject.typeName[SerializedBuffer::DESCRIPTION_STRING_LENGTH - 1] = '\0';
         newObject.objectName[SerializedBuffer::DESCRIPTION_STRING_LENGTH - 1] = '\0';
 
-        //printf("Next segment is (%d,%d): ", dataLength, type);
+        //CoreTechPrint("Next segment is (%d,%d): ", dataLength, type);
         if(strcmp(typeName, "Basic Type Buffer") == 0) {
           u16 sizeOfType;
           bool isBasicType;
@@ -353,7 +353,7 @@ namespace Anki
           s32 tmpDataLength = dataLength - 2*SerializedBuffer::DESCRIPTION_STRING_LENGTH;
           SerializedBuffer::EncodedBasicTypeBuffer::Deserialize(false, sizeOfType, isBasicType, isInteger, isSigned, isFloat, numElements, &tmpDataSegment, tmpDataLength);
 
-          //printf("Basic type buffer segment \"%s\" (%d, %d, %d, %d, %d)\n", objectName, sizeOfType, isInteger, isSigned, isFloat, numElements);
+          //CoreTechPrint("Basic type buffer segment \"%s\" (%d, %d, %d, %d, %d)\n", objectName, sizeOfType, isInteger, isSigned, isFloat, numElements);
 
           newObject.bufferLength = 512 + static_cast<s32>(sizeOfType) * numElements;
           newObject.buffer = malloc(newObject.bufferLength);
@@ -483,7 +483,7 @@ namespace Anki
           else if(basicType_sizeOfType == 252) { result = CopyPayload_Array<252>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
           else if(basicType_sizeOfType == 256) { result = CopyPayload_Array<256>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
           else {
-            //printf("Unusual size %d. Add a case to parse objects of this Type.\n", basicType_sizeOfType);
+            //CoreTechPrint("Unusual size %d. Add a case to parse objects of this Type.\n", basicType_sizeOfType);
             continue;
           }
 
@@ -604,7 +604,7 @@ namespace Anki
           else if(basicType_sizeOfType == 252) { result = CopyPayload_ArraySlice<252>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
           else if(basicType_sizeOfType == 256) { result = CopyPayload_ArraySlice<256>(newObject.startOfPayload, &dataSegment, dataLength, localMemory); }
           else {
-            //printf("Unusual size %d. Add a case to parse objects of this Type.\n", basicType_sizeOfType);
+            //CoreTechPrint("Unusual size %d. Add a case to parse objects of this Type.\n", basicType_sizeOfType);
             continue;
           }
 
@@ -645,7 +645,7 @@ namespace Anki
         if(newObject.IsValid())
           parsedObjectQueue.Push(newObject);
 
-        //printf("Received %s %s\n", newObject.typeName, newObject.objectName);
+        //CoreTechPrint("Received %s %s\n", newObject.typeName, newObject.objectName);
       } // while(iterator.HasNext())
 
       free(buffer.rawDataPointer);
@@ -684,7 +684,7 @@ namespace Anki
 
       if(callingObject->isSocket) {
         while(socket.Open(callingObject->socket_ipAddress, callingObject->socket_port) != RESULT_OK) {
-          //printf("Trying again to open socket.\n");
+          //CoreTechPrint("Trying again to open socket.\n");
 #ifdef _MSC_VER
           Sleep(1000);
 #else
@@ -693,7 +693,7 @@ namespace Anki
         }
       } else {
         while(serial.Open(callingObject->serial_comPort, callingObject->serial_baudRate, callingObject->serial_parity, callingObject->serial_dataBits, callingObject->serial_stopBits) != RESULT_OK) {
-          //printf("Trying again to open serial.\n");
+          //CoreTechPrint("Trying again to open serial.\n");
 #ifdef _MSC_VER
           Sleep(1000);
 #else
@@ -711,7 +711,7 @@ namespace Anki
         if(callingObject->isSocket) {
           while(socket.Read(usbBuffer, CONNECTION_BUFFER_SIZE-2, bytesRead) != RESULT_OK)
           {
-            //printf("socket read failure. Retrying...\n");
+            //CoreTechPrint("socket read failure. Retrying...\n");
 #ifdef _MSC_VER
             Sleep(1);
 #else
@@ -721,7 +721,7 @@ namespace Anki
         } else {
           while(serial.Read(usbBuffer, CONNECTION_BUFFER_SIZE-2, bytesRead) != RESULT_OK)
           {
-            //printf("serial read failure. Retrying...\n");
+            //CoreTechPrint("serial read failure. Retrying...\n");
 #ifdef _MSC_VER
             Sleep(1);
 #else
@@ -770,7 +770,7 @@ namespace Anki
 
             if((nextRawBuffer.curDataLength + numBytesToCopy + 16) > nextRawBuffer.maxDataLength) {
               nextRawBuffer = AllocateNewRawBuffer(MESSAGE_BUFFER_SIZE);
-              //printf("Buffer trashed\n");
+              //CoreTechPrint("Buffer trashed\n");
               continue;
             }
 
@@ -794,12 +794,12 @@ namespace Anki
           // If we've filled up the buffer, just trash it
           if((nextRawBuffer.curDataLength + numBytesToCopy + 16) > nextRawBuffer.maxDataLength) {
             nextRawBuffer = AllocateNewRawBuffer(MESSAGE_BUFFER_SIZE);
-            //printf("Buffer trashed\n");
+            //CoreTechPrint("Buffer trashed\n");
             continue;
           }
 
           if(numBytesToCopy <= 0) {
-            //printf("negative numBytesToCopy");
+            //CoreTechPrint("negative numBytesToCopy");
             continue;
           }
 
@@ -816,7 +816,7 @@ namespace Anki
             // If we've filled up the buffer, just trash it
             if((nextRawBuffer.curDataLength + numBytesToCopy + 16) > nextRawBuffer.maxDataLength) {
               nextRawBuffer = AllocateNewRawBuffer(MESSAGE_BUFFER_SIZE);
-              //printf("Buffer trashed\n");
+              //CoreTechPrint("Buffer trashed\n");
               continue;
             }
 
