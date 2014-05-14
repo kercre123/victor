@@ -2617,8 +2617,8 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
   const f32 decode_minContrastRatio = 1.25;
 
   const s32 maxMarkers = 100;
-  //const s32 maxConnectedComponentSegments = 5000; // 25000/4 = 6250
-  const s32 maxConnectedComponentSegments = 39000; // 322*240/2 = 38640
+  //const u16 maxConnectedComponentSegments = 5000; // 25000/4 = 6250
+  const u16 maxConnectedComponentSegments = 39000; // 322*240/2 = 38640
 
   const s32 quadRefinementIterations = 5;
 

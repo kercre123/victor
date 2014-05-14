@@ -16,6 +16,7 @@
 #include "anki/common/types.h"
 #include "anki/common/constantsAndMacros.h"
 #include "anki/common/robot/trig_fast.h"
+#include "anki/common/robot/errorHandling.h"
 
 // For larger input values to atan, use approximations
 // at fixed steps. (Essentially extends the LUT with courser
@@ -247,11 +248,7 @@ float asin_fast(float x)
 
 float atan2_fast(float y, float x)
 {
-#ifdef __EDG__
-#warning assert does not link on m4
-#else
-  assert( !(y == 0 && x == 0) );
-#endif
+  AnkiAssert( !(y == 0 && x == 0) );
 
   if (x>0) {
     return atan_fast(y/x);
@@ -270,11 +267,7 @@ float atan2_fast(float y, float x)
 
 float atan2_acc(float y, float x)
 {
-#ifdef __EDG__
-#warning assert does not link on m4
-#else
-  assert(y != 0 || x != 0);
-#endif
+  AnkiAssert(y != 0 || x != 0);
 
   float arg = y/x;
   float atan_val = asinf( arg / sqrtf(arg*arg + 1));

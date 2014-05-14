@@ -54,7 +54,7 @@ namespace Anki
 
       // Constructor for a ConnectedComponents, pointing to user-allocated MemoryStack
       // The memory should remain valid for the entire life of the object
-      ConnectedComponents(const s32 maxComponentSegments, const s32 maxImageWidth, MemoryStack &memory);
+      ConnectedComponents(const u16 maxComponentSegments, const u16 maxImageWidth, MemoryStack &memory);
 
       // Extract 2d connected components from binaryImage All extracted components are stored in a
       // single list of ComponentSegments

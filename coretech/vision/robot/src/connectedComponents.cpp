@@ -100,11 +100,14 @@ namespace Anki
     {
     }
 
-    ConnectedComponents::ConnectedComponents(const s32 maxComponentSegments, const s32 maxImageWidth, MemoryStack &memory)
+    ConnectedComponents::ConnectedComponents(const u16 maxComponentSegments, const u16 maxImageWidth, MemoryStack &memory)
       : curState(STATE_INVALID), isSortedInId(true), isSortedInY(true), isSortedInX(true), maximumId(0), maxImageWidth(maxImageWidth), maxComponentSegments(maxComponentSegments)
     {
-      AnkiConditionalError(maxComponentSegments > 0 && maxComponentSegments <= u16_MAX,
-        "ConnectedComponents::ConnectedComponents", "maxComponentSegments must be greater than zero and less than 0xFFFF");
+      //AnkiConditionalErrorAndReturn(maxComponentSegments > 0 && maxComponentSegments <= u16_MAX,
+      //  "ConnectedComponents::ConnectedComponents", "maxComponentSegments must be greater than zero and less than 0xFFFF");
+
+      AnkiConditionalErrorAndReturn(maxImageWidth > 0 && maxImageWidth <= s16_MAX,
+        "ConnectedComponents::ConnectedComponents", "maxImageWidth must be less than 0x7FFF");
 
       this->components = FixedLengthList<ConnectedComponentSegment>(maxComponentSegments, memory);
 
