@@ -5,9 +5,9 @@
          "BlockPose" : {
             "Angle" : 0.7853979999999999,
             "Axis" : [ 0.0, 0.0, 1.0 ],
-            "Translation" : [ 70.0, 70.0, 21.754750 ]
+            "Translation" : [ 145.0, 60.0, 21.754750 ]
          },
-         "Type" : 2
+         "Type" : 3
       }
    ],
    "CameraCalibration" : {
@@ -29,34 +29,34 @@
             "Angle" : 1.0471980,
             "Axis" : [ 0.0, 0.0, 1.0 ],
             "HeadAngle" : -0.3839720,
-            "Translation" : [ -65.0, -145.0, 58.20 ]
+            "Translation" : [ -15.0, -145.0, 44.0 ]
          },
          "VisionMarkers" : [
             {
                "Name" : "MessageVisionMarker",
-               "code" : [ 2, 86, 106, 64, 24, 13, 56, 0, 56, 96, 48 ],
-               "timestamp" : 1818137448,
-               "x_imgLowerLeft" : 147.3653869628906,
-               "x_imgLowerRight" : 181.423339843750,
-               "x_imgUpperLeft" : 146.9623107910156,
-               "x_imgUpperRight" : 182.0440063476562,
-               "y_imgLowerLeft" : 87.49665832519531,
-               "y_imgLowerRight" : 90.55865478515625,
-               "y_imgUpperLeft" : 53.06943893432617,
-               "y_imgUpperRight" : 54.64633178710938
+               "markerType" : 19,
+               "timestamp" : 0,
+               "x_imgLowerLeft" : 182.6332550048828,
+               "x_imgLowerRight" : 217.4163360595703,
+               "x_imgUpperLeft" : 183.6780242919922,
+               "x_imgUpperRight" : 219.6145629882812,
+               "y_imgLowerLeft" : 87.37579345703125,
+               "y_imgLowerRight" : 90.27217102050781,
+               "y_imgUpperLeft" : 53.09781646728516,
+               "y_imgUpperRight" : 54.89166259765625
             },
             {
                "Name" : "MessageVisionMarker",
-               "code" : [ 35, 98, 2, 196, 136, 9, 24, 0, 32, 34, 98 ],
-               "timestamp" : 1818137448,
-               "x_imgLowerLeft" : 84.05525207519531,
-               "x_imgLowerRight" : 228.3347930908203,
-               "x_imgUpperLeft" : 42.91758346557617,
-               "x_imgUpperRight" : 155.3618011474609,
-               "y_imgLowerLeft" : 202.2336730957031,
-               "y_imgLowerRight" : 157.3429565429688,
-               "y_imgUpperLeft" : 133.9812164306641,
-               "y_imgUpperRight" : 111.6863021850586
+               "markerType" : 25,
+               "timestamp" : 0,
+               "x_imgLowerLeft" : 81.07318115234375,
+               "x_imgLowerRight" : 172.2308654785156,
+               "x_imgUpperLeft" : 54.62352752685547,
+               "x_imgUpperRight" : 132.0090942382812,
+               "y_imgLowerLeft" : 129.7364959716797,
+               "y_imgLowerRight" : 111.1198959350586,
+               "y_imgUpperLeft" : 99.78278350830078,
+               "y_imgUpperRight" : 87.61542510986328
             }
          ]
       }
