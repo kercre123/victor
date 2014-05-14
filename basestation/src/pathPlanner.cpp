@@ -13,9 +13,9 @@
 #include "anki/common/basestation/general.h"
 //#include "anki/cozmo/robot/cozmoConfig.h"
 
-#define DUBINS_TARGET_SPEED_MMPS 100
+#define DUBINS_TARGET_SPEED_MMPS 50
 #define DUBINS_ACCEL_MMPS2 200
-#define DUBINS_DECEL_MMPS2 500
+#define DUBINS_DECEL_MMPS2 200
 
 #define DUBINS_START_RADIUS_MM 50
 #define DUBINS_END_RADIUS_MM 50
