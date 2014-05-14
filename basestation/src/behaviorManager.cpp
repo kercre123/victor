@@ -172,7 +172,7 @@ namespace Anki {
     {
       // Params for determining whether the predock pose has been reached
       const f32 distThresh_mm = 20;
-      const Radians angThresh(0.1);
+      const Radians angThresh(0.15);
 
       
       switch(state_) {
@@ -242,7 +242,11 @@ namespace Anki {
           // TODO: Generate collision-free path!!!
           if (robot_->get_pose().IsSameAs(nearestPreDockPose_, distThresh_mm, angThresh) ||
               robot_->ExecutePathToPose(nearestPreDockPose_) == RESULT_OK) {
-            waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.25f;
+            PRINT_INFO("Executing path to pose %f %f %f\n",
+                       nearestPreDockPose_.get_translation().x(),
+                       nearestPreDockPose_.get_translation().y(),
+                       nearestPreDockPose_.get_rotationAngle().ToFloat());
+            waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5f;
             state_ = EXECUTING_PATH_TO_DOCK_POSE;
           }
           
@@ -270,9 +274,9 @@ namespace Anki {
               // Move head if necessary based on block height.
               f32 dockBlockHeight = dockBlock_->GetPose().get_translation().z();
               if (dockBlockHeight > 44.f) {
-                robot_->MoveHeadToAngle(0.175, 1, 1);
+                robot_->MoveHeadToAngle(0.25, 1, 1);
               } else {
-                robot_->MoveHeadToAngle(-0.175, 1, 1);
+                robot_->MoveHeadToAngle(-0.25, 1, 1);
               }
               
               // Wait long enough for head to move and a message with the expected marker to be received.
@@ -308,31 +312,33 @@ namespace Anki {
             
             // Get dock action
             f32 dockBlockHeight = dockBlock_->GetPose().get_translation().z();
-            DockAction_t dockAction = DA_PICKUP_LOW;
+            dockAction_ = DA_PICKUP_LOW;
             if (dockBlockHeight > dockBlock_->GetSize().z()) {
               if (robot_->IsCarryingBlock()) {
                 PRINT_INFO("Already carrying block. Can't dock to high block. Aborting.\n");
                 StartMode(BM_None);
                 return;
               } else {
-                dockAction = DA_PICKUP_HIGH;
+                dockAction_ = DA_PICKUP_HIGH;
               }
             } else if (robot_->IsCarryingBlock()) {
-              dockAction = DA_PLACE_HIGH;
+              dockAction_ = DA_PLACE_HIGH;
             }
             
             // Start dock
-            PRINT_INFO("Docking with marker %d (action = %d)\n", dockMarker_->GetCode(), dockAction);
-            robot_->DockWithBlock(dockMarker_->GetCode(),  dockMarker_->GetSize(), dockAction);
+            PRINT_INFO("Docking with marker %d (action = %d)\n", dockMarker_->GetCode(), dockAction_);
+            robot_->DockWithBlock(dockMarker_->GetCode(),  dockMarker_->GetSize(), dockAction_);
+            waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5;
             state_ = EXECUTING_DOCK;
           }
           break;
         }
         case EXECUTING_DOCK:
         {
-          if (!robot_->IsTraversingPath()) {
+          if (!robot_->IsPickingOrPlacing() && waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) {
             // Stopped executing docking path. Did it successfully dock?
-            if (robot_->IsCarryingBlock()) {
+            if (((dockAction_ == DA_PICKUP_LOW || dockAction_ == DA_PICKUP_HIGH) && robot_->IsCarryingBlock()) ||
+                ((dockAction_ == DA_PLACE_HIGH) && !robot_->IsCarryingBlock()) ) {
               PRINT_INFO("Docking successful!\n");
             } else {
               PRINT_INFO("Dock failed! Aborting\n");

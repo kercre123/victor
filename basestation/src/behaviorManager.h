@@ -17,6 +17,7 @@
 #include "anki/common/types.h"
 #include "anki/common/basestation/math/pose.h"
 #include "anki/vision/basestation/visionMarker.h"
+#include "anki/cozmo/shared/cozmoTypes.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -92,6 +93,8 @@ namespace Anki {
       
       // A general time value for gating state transitions
       double waitUntilTime_;
+
+      DockAction_t dockAction_;
       
     }; // class BehaviorManager
     
