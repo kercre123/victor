@@ -582,57 +582,66 @@ namespace Anki {
             b_raw[ia] += Arow[ia][iSample] * tGradientValue;
           }
 #else // #if !defined(USE_ARM_ACCELERATION)
-          AWAt_raw[0][0] += Arow[0][iSample] * Arow[0][iSample];
-          AWAt_raw[0][1] += Arow[0][iSample] * Arow[1][iSample];
-          AWAt_raw[0][2] += Arow[0][iSample] * Arow[2][iSample];
-          AWAt_raw[0][3] += Arow[0][iSample] * Arow[3][iSample];
-          AWAt_raw[0][4] += Arow[0][iSample] * Arow[4][iSample];
-          AWAt_raw[0][5] += Arow[0][iSample] * Arow[5][iSample];
-          AWAt_raw[0][6] += Arow[0][iSample] * Arow[6][iSample];
-          AWAt_raw[0][7] += Arow[0][iSample] * Arow[7][iSample];
-          b_raw[0] += Arow[0][iSample] * tGradientValue;
+          const f32 a0 = Arow[0][iSample];
+          const f32 a1 = Arow[1][iSample];
+          const f32 a2 = Arow[2][iSample];
+          const f32 a3 = Arow[3][iSample];
+          const f32 a4 = Arow[4][iSample];
+          const f32 a5 = Arow[5][iSample];
+          const f32 a6 = Arow[6][iSample];
+          const f32 a7 = Arow[7][iSample];
 
-          AWAt_raw[1][1] += Arow[1][iSample] * Arow[1][iSample];
-          AWAt_raw[1][2] += Arow[1][iSample] * Arow[2][iSample];
-          AWAt_raw[1][3] += Arow[1][iSample] * Arow[3][iSample];
-          AWAt_raw[1][4] += Arow[1][iSample] * Arow[4][iSample];
-          AWAt_raw[1][5] += Arow[1][iSample] * Arow[5][iSample];
-          AWAt_raw[1][6] += Arow[1][iSample] * Arow[6][iSample];
-          AWAt_raw[1][7] += Arow[1][iSample] * Arow[7][iSample];
-          b_raw[1] += Arow[1][iSample] * tGradientValue;
+          AWAt_raw[0][0] += a0 * a0;
+          AWAt_raw[0][1] += a0 * a1;
+          AWAt_raw[0][2] += a0 * a2;
+          AWAt_raw[0][3] += a0 * a3;
+          AWAt_raw[0][4] += a0 * a4;
+          AWAt_raw[0][5] += a0 * a5;
+          AWAt_raw[0][6] += a0 * a6;
+          AWAt_raw[0][7] += a0 * a7;
+          b_raw[0] += a0 * tGradientValue;
 
-          AWAt_raw[2][2] += Arow[2][iSample] * Arow[2][iSample];
-          AWAt_raw[2][3] += Arow[2][iSample] * Arow[3][iSample];
-          AWAt_raw[2][4] += Arow[2][iSample] * Arow[4][iSample];
-          AWAt_raw[2][5] += Arow[2][iSample] * Arow[5][iSample];
-          AWAt_raw[2][6] += Arow[2][iSample] * Arow[6][iSample];
-          AWAt_raw[2][7] += Arow[2][iSample] * Arow[7][iSample];
-          b_raw[2] += Arow[2][iSample] * tGradientValue;
+          AWAt_raw[1][1] += a1 * a1;
+          AWAt_raw[1][2] += a1 * a2;
+          AWAt_raw[1][3] += a1 * a3;
+          AWAt_raw[1][4] += a1 * a4;
+          AWAt_raw[1][5] += a1 * a5;
+          AWAt_raw[1][6] += a1 * a6;
+          AWAt_raw[1][7] += a1 * a7;
+          b_raw[1] += a1 * tGradientValue;
 
-          AWAt_raw[3][3] += Arow[3][iSample] * Arow[3][iSample];
-          AWAt_raw[3][4] += Arow[3][iSample] * Arow[4][iSample];
-          AWAt_raw[3][5] += Arow[3][iSample] * Arow[5][iSample];
-          AWAt_raw[3][6] += Arow[3][iSample] * Arow[6][iSample];
-          AWAt_raw[3][7] += Arow[3][iSample] * Arow[7][iSample];
-          b_raw[3] += Arow[3][iSample] * tGradientValue;
+          AWAt_raw[2][2] += a2 * a2;
+          AWAt_raw[2][3] += a2 * a3;
+          AWAt_raw[2][4] += a2 * a4;
+          AWAt_raw[2][5] += a2 * a5;
+          AWAt_raw[2][6] += a2 * a6;
+          AWAt_raw[2][7] += a2 * a7;
+          b_raw[2] += a2 * tGradientValue;
 
-          AWAt_raw[4][4] += Arow[4][iSample] * Arow[4][iSample];
-          AWAt_raw[4][5] += Arow[4][iSample] * Arow[5][iSample];
-          AWAt_raw[4][6] += Arow[4][iSample] * Arow[6][iSample];
-          AWAt_raw[4][7] += Arow[4][iSample] * Arow[7][iSample];
-          b_raw[4] += Arow[4][iSample] * tGradientValue;
+          AWAt_raw[3][3] += a3 * a3;
+          AWAt_raw[3][4] += a3 * a4;
+          AWAt_raw[3][5] += a3 * a5;
+          AWAt_raw[3][6] += a3 * a6;
+          AWAt_raw[3][7] += a3 * a7;
+          b_raw[3] += a3 * tGradientValue;
 
-          AWAt_raw[5][5] += Arow[5][iSample] * Arow[5][iSample];
-          AWAt_raw[5][6] += Arow[5][iSample] * Arow[6][iSample];
-          AWAt_raw[5][7] += Arow[5][iSample] * Arow[7][iSample];
-          b_raw[5] += Arow[5][iSample] * tGradientValue;
+          AWAt_raw[4][4] += a4 * a4;
+          AWAt_raw[4][5] += a4 * a5;
+          AWAt_raw[4][6] += a4 * a6;
+          AWAt_raw[4][7] += a4 * a7;
+          b_raw[4] += a4 * tGradientValue;
 
-          AWAt_raw[6][6] += Arow[6][iSample] * Arow[6][iSample];
-          AWAt_raw[6][7] += Arow[6][iSample] * Arow[7][iSample];
-          b_raw[6] += Arow[6][iSample] * tGradientValue;
+          AWAt_raw[5][5] += a5 * a5;
+          AWAt_raw[5][6] += a5 * a6;
+          AWAt_raw[5][7] += a5 * a7;
+          b_raw[5] += a5 * tGradientValue;
 
-          AWAt_raw[7][7] += Arow[7][iSample] * Arow[7][iSample];
-          b_raw[7] += Arow[7][iSample] * tGradientValue;
+          AWAt_raw[6][6] += a6 * a6;
+          AWAt_raw[6][7] += a6 * a7;
+          b_raw[6] += a6 * tGradientValue;
+
+          AWAt_raw[7][7] += a7 * a7;
+          b_raw[7] += a7 * tGradientValue;
 #endif // #if !defined(USE_ARM_ACCELERATION) ... #else
 
           //EndBenchmark("vme_quadrefine_mainLoop_samples3");
