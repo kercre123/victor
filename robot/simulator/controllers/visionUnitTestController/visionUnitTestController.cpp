@@ -57,16 +57,15 @@ Anki::Vision::CameraCalibration::CameraCalibration(const webots::Camera* camera)
   f32 fov_hor = camera->getFov();
   f32 fov_ver = fov_hor / aspect;
   
+  f32 fx = width / (2.f * std::tan(0.5f*fov_hor));
   f32 fy = height / (2.f * std::tan(0.5f*fov_ver));
-  
-  focalLength_x = fy;
-  focalLength_y = fy;
-  center.x()    = 0.5f*width;
-  center.y()    = 0.5f*height;
-  skew          = 0.f;
-  
-  // TODO: Add radial distortion coefficients
-  
+ 
+ focalLength_x = fx;
+ focalLength_y = fy;
+ 
+ center_x      = 0.5f*width;
+ center_y      = 0.5f*height;
+ skew          = 0.f;
 }
 #endif
 
@@ -240,7 +239,7 @@ int main(int argc, char **argv)
       webotRobot_.step(TIME_STEP);
       headErr  = fabs(headMotor_->getPosition()  - headMotor_->getTargetposition());
       liftErr  = fabs(liftMotor_->getPosition()  - liftMotor_->getTargetposition());
-      fprintf(stdout, "HeadErr = %.4f, LiftErr = %.4f\n", headErr, liftErr);
+      //fprintf(stdout, "HeadErr = %.4f, LiftErr = %.4f\n", headErr, liftErr);
     } while(headErr > TOL || liftErr > TOL);
     //fprintf(stdout, "Head and lift in position. Continuing.\n");
     

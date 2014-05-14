@@ -308,11 +308,11 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
 // This is the list of JSON files containing vision test worlds:
 // TODO: automatically get all available tests from some directory?
 const char *visionTestJsonFiles[] = {
-//  "visionTest_VaryingDistance.json",
+  "visionTest_VaryingDistance.json",
 //  "visionTest_MatPoseTest.json",
   "visionTest_TwoBlocksOnePose.json",
 //  "visionTest_RepeatedBlock.json",
-//  "visionTest_OffTheMat.json"
+  "visionTest_OffTheMat.json"
 };
 
 

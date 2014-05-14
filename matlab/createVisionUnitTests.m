@@ -105,7 +105,7 @@ TestWorld = CozmoTestWorldCreator('WorldFile', ...
 
 poses = {};
 %d = 0:5:350;
-d = 0:50:300;
+d = 0:50:250;
 for i = 1:length(d)
     poses{end+1} = Pose(0*[0 0 1], [-d(i) 0 0]); %#ok<SAGROW>
 end
@@ -122,10 +122,10 @@ headAngles = [headAngles headAngles];
 
 TestWorld.AddRobot('Name', 'Cozmo_1', ...
     'RobotPose', poses, ...
-    'HeadAngle', headAngles);
+    'HeadAngle', headAngles, 'CameraResolution', 2*[320 240]);
 
 TestWorld.AddBlock('BlockPose', Pose(0*[0 0 1], [80 0 BLOCK_DIM/2]), ...
-    'BlockProto', 'Block1x1', 'BlockType', 1, 'FrontFace', 'angryFace');
+    'BlockProto', 'Block1x1', 'BlockType', 5, 'FrontFace', 'angryFace');
 
 TestWorld.Run();
 
