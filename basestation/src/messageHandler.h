@@ -52,7 +52,7 @@ namespace Anki {
     }; // IMessageHandler
     
     
-    class MessageHandler : IMessageHandler
+    class MessageHandler : public IMessageHandler
     {
     public:
       
