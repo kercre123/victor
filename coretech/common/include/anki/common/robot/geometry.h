@@ -17,6 +17,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/memory.h"
 #include "anki/common/robot/matrix.h"
 
+#include "anki/common/shared/utilities_shared.h"
+
 namespace Anki
 {
   namespace Embedded
