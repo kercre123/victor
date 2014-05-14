@@ -56,13 +56,13 @@ namespace Anki {
         gps_ = basestationController.getGPS("gps");
         compass_ = basestationController.getCompass("compass");
         
-        gps_->enable(TIME_STEP);
-        compass_->enable(TIME_STEP);
+        gps_->enable(BS_TIME_STEP);
+        compass_->enable(BS_TIME_STEP);
       }
       
       void BSKeyboardController::Enable(void)
       {
-        basestationController.keyboardEnable(TIME_STEP);
+        basestationController.keyboardEnable(BS_TIME_STEP);
         
         isEnabled_ = true;
 
