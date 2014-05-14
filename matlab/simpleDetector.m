@@ -5,7 +5,8 @@ usePyramid = true;
 usePerimeterCheck = false;
 minQuadArea = 100; % about 10 pixels per side
 computeTransformFromBoundary = true;
-quadRefinementMethod = 'none'; % 'ICP' or 'fminsearch' or 'none'
+%quadRefinementMethod = 'none'; % 'ICP' or 'fminsearch' or 'none'
+quadRefinementIterations = 25;
 cornerMethod = 'laplacianPeaks'; % 'laplacianPeaks', 'harrisScore', or 'radiusPeaks'
 decodeDownsampleFactor = 1; % use lower resolution image for decoding
 minDistanceFromImageEdge = 2; % if a quad has an corner that is too close to the edge, reject it
@@ -13,7 +14,7 @@ DEBUG_DISPLAY = nargout==0;
 embeddedConversions = EmbeddedConversionsManager; % 1-cp2tform, 2-opencv_cp2tform
 showTiming = false;
 thresholdFraction = 1; % fraction of local mean to use as threshold
-maxSmoothingFraction = 0.1; % fraction of max dim
+maxSmoothingFraction = 0.025; % fraction of max dim
 decodeMarkers = true;
 showComponents = false;
 returnInvalid = false;
@@ -103,7 +104,7 @@ else % if strcmp(embeddedConversions.completeCImplementationType, 'c_DetectFiduc
         imagesc(componentsImage);
     end
     
-    [quads, quadTforms] = simpleDetector_step4_computeQuads(nrows, ncols, numRegions, indexList, centroid, minQuadArea, cornerMethod, computeTransformFromBoundary, quadRefinementMethod, components2d, minDistanceFromImageEdge, embeddedConversions, DEBUG_DISPLAY);
+    [quads, quadTforms] = simpleDetector_step4_computeQuads(nrows, ncols, numRegions, indexList, centroid, minQuadArea, cornerMethod, computeTransformFromBoundary, 'none', components2d, minDistanceFromImageEdge, embeddedConversions, DEBUG_DISPLAY);
 
     if showTiming
         fprintf('Square detection took %.3f seconds.\n', toc(t_squareDetect));
@@ -155,7 +156,9 @@ else % if strcmp(embeddedConversions.completeCImplementationType, 'c_DetectFiduc
     end
 
     % Decode to find BlockMarker2D objects
-    [markers, validQuads] = simpleDetector_step5_decodeMarkers(img_decode, quads_decode, quadTforms, minQuadArea, embeddedConversions, showTiming, DEBUG_DISPLAY);
+    [markers, validQuads] = simpleDetector_step5_decodeMarkers(img_decode, ...
+        quads_decode, quadTforms, minQuadArea, quadRefinementIterations, ...
+        embeddedConversions, showTiming, DEBUG_DISPLAY);
 
     if ~returnInvalid
        keep = cellfun(@(m)m.isValid, markers);

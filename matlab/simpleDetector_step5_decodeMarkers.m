@@ -1,4 +1,4 @@
-function [markers, validQuads] = simpleDetector_step5_decodeMarkers(img, quads, quadTforms, minQuadArea, embeddedConversions, showTiming, DEBUG_DISPLAY)
+function [markers, validQuads] = simpleDetector_step5_decodeMarkers(img, quads, quadTforms, minQuadArea, quadRefinementIterations, embeddedConversions, showTiming, DEBUG_DISPLAY)
 
 markers = {};
 validQuads = false(size(quads));
@@ -53,7 +53,8 @@ if ~isempty(quads)
 %         end
         
 %marker = VisionMarker(img, 'Corners', corners); 
-markers{end+1} = VisionMarkerTrained(img, 'Corners', corners);  %#ok<AGROW>
+markers{end+1} = VisionMarkerTrained(img, 'Corners', corners, ...
+    'CornerRefinementIterations', quadRefinementIterations);  %#ok<AGROW>
 %if marker.isValid
 %    markers{end+1} = marker; %#ok<AGROW>
 %end
