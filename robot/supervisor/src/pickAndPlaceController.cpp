@@ -507,10 +507,11 @@ namespace Anki {
 #if(DEBUG_PAP_CONTROLLER)
         PRINT("PAP: DOCK TO BLOCK %d (action %d)\n", blockMarker, action);
 #endif
-        if (action == DA_PLACE_LOW) {
+				#warning fix me!
+        /*if (action == DA_PLACE_LOW) {
           PRINT("Invalid action %d for DockToBlock()\n", action);
           return;
-        }
+        }*/
         
         action_ = action;
         dockToMarker_ = blockMarker;
