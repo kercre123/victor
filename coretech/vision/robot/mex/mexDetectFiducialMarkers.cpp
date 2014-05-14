@@ -24,9 +24,9 @@ using namespace Anki::Embedded;
 // image = imresize(imread('??'), [240,320]);
 
 // image = imresize(rgb2gray(imread('C:\Anki\blockImages\testTrainedCodes.png')), [240,320]);
-// imageSize = size(image);
 
-//scaleImage_thresholdMultiplier = .75;
+//imageSize = size(image);
+//scaleImage_thresholdMultiplier = 1.0;
 //scaleImage_numPyramidLevels = 3;
 //component1d_minComponentWidth = 0;
 //component1d_maxSkipDistance = 0;
@@ -43,7 +43,7 @@ using namespace Anki::Embedded;
 // decode_minContrastRatio = 1.25;
 // quadRefinementIterations = 5;
 // returnInvalidMarkers = 0;
-// [quads, markerTypes, markerNames] = mexDetectFiducialMarkers(image, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, returnInvalidMarkers);
+// [quads, markerTypes, markerNames] = mexDetectFiducialMarkers(image, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, quadRefinementIterations, returnInvalidMarkers);
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
   const s32 maxMarkers = 500;
@@ -70,7 +70,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   const s32  quads_quadSymmetryThreshold       = Round<s32>(pow(2,8)*mxGetScalar(prhs[11])); // Convert from double to SQ23.8
   const s32  quads_minDistanceFromImageEdge    = static_cast<s32>(mxGetScalar(prhs[12]));
   const f32  decode_minContrastRatio           = static_cast<f32>(mxGetScalar(prhs[13]));
-  
+
   const s32 quadRefinementIterations           = static_cast<s32>(mxGetScalar(prhs[14]));
   const bool returnInvalidMarkers              = static_cast<bool>(Round<s32>(mxGetScalar(prhs[15])));
 

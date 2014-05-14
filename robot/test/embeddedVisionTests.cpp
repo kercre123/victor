@@ -2814,7 +2814,7 @@ GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput)
 
   const s32 out_groundTruth[] = {140, 110, 110, 140, 170, 200, 230, 260, 290, 320, 350, 380, 410, 290, 200};
 
-  const Result result = ImageProcessing::Correlate1dCircularAndSameSizeOutput(image, filter, out);
+  const Result result = ImageProcessing::Correlate1dCircularAndSameSizeOutput<s32,s32,s32>(image, filter, out, ms);
   ASSERT_TRUE(result == RESULT_OK);
 
   for(s32 i=0; i<out.get_size(1); i++) {
@@ -2880,7 +2880,7 @@ GTEST_TEST(CoreTech_Vision, Correlate1d)
 
     const s32 out_groundTruth[] = {2, 4, 6, 8};
 
-    const Result result = ImageProcessing::Correlate1d(in1, in2, out);
+    const Result result = ImageProcessing::Correlate1d<s32,s32,s32>(in1, in2, out);
     ASSERT_TRUE(result == RESULT_OK);
 
     //out.Print();
@@ -2907,7 +2907,7 @@ GTEST_TEST(CoreTech_Vision, Correlate1d)
 
     const s32 out_groundTruth[] = {0, 2, 3, 5, 6, 8, 4, 1};
 
-    const Result result = ImageProcessing::Correlate1d(in1, in2, out);
+    const Result result = ImageProcessing::Correlate1d<s32,s32,s32>(in1, in2, out);
     ASSERT_TRUE(result == RESULT_OK);
 
     //out.Print();
@@ -2934,7 +2934,7 @@ GTEST_TEST(CoreTech_Vision, Correlate1d)
 
     const s32 out_groundTruth[] = {4, 11, 20, 30, 20, 11, 4};
 
-    const Result result = ImageProcessing::Correlate1d(in1, in2, out);
+    const Result result = ImageProcessing::Correlate1d<s32,s32,s32>(in1, in2, out);
     ASSERT_TRUE(result == RESULT_OK);
 
     //out.Print();
@@ -2961,7 +2961,7 @@ GTEST_TEST(CoreTech_Vision, Correlate1d)
 
     const s32 out_groundTruth[] = {32, 88, 160, 240, 320, 208, 112, 40};
 
-    const Result result = ImageProcessing::Correlate1d(in1, in2, out);
+    const Result result = ImageProcessing::Correlate1d<s32,s32,s32>(in1, in2, out);
     ASSERT_TRUE(result == RESULT_OK);
 
     //out.Print();
