@@ -168,8 +168,8 @@ namespace Anki {
       //
       // Check if it's vertically oriented
       //
-      const float DOT_TOLERANCE   = .15f;
-      const float ANGLE_TOLERANCE = DEG_TO_RAD(15);
+      const float DOT_TOLERANCE   = .35f;
+      const float ANGLE_TOLERANCE = DEG_TO_RAD(35);
       
       // Get vector, v, from center of block to this point
       Point3f v(dockingPt);
