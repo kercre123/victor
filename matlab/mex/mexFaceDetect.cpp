@@ -9,6 +9,8 @@
 #include "anki/common/matlab/mexWrappers.h"
 #include "anki/common/constantsAndMacros.h"
 
+#include "anki/common/shared/utilities_shared.h"
+
 cv::CascadeClassifier *face_cascade = NULL;
 cv::CascadeClassifier *eyes_cascade = NULL;
 
@@ -29,6 +31,8 @@ void closeHelper(void) {
 //int main(int argc, const char** argv)
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
+  Anki::SetCoreTechPrintFunctionPtr(mexPrintf);
+
   mexAtExit(closeHelper);
 
   if(face_cascade == NULL) {

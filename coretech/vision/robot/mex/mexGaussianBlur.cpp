@@ -2,10 +2,14 @@
 #include "opencv2/imgproc/imgproc.hpp"
 #include "anki/common/matlab/mexWrappers.h"
 
+#include "anki/common/shared/utilities_shared.h"
+
 #define VERBOSITY 0
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
+  Anki::SetCoreTechPrintFunctionPtr(mexPrintf);
+
   cv::Mat src, dst;
   mxArray2cvMat(prhs[0], src);
 
