@@ -219,8 +219,9 @@ namespace Anki {
       robot->set_pose(Pose3d(msg.pose_angle, axis, translation));
       
       // Update other state vars
-      robot->SetTraversingPath( msg.isTraversingPath );
-      robot->SetCarryingBlock( msg.isCarryingBlock );
+      robot->SetTraversingPath( msg.status & IS_TRAVERSING_PATH );
+      robot->SetCarryingBlock( msg.status & IS_CARRYING_BLOCK );
+      robot->SetPickingOrPlacing( msg.status & IS_PICKING_OR_PLACING );
       
       return RESULT_OK;
     }

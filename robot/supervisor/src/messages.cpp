@@ -156,8 +156,10 @@ namespace Anki {
         robotState_.liftAngle  = LiftController::GetAngleRad();
         robotState_.liftHeight = LiftController::GetHeightMM();
         
-        robotState_.isTraversingPath = PathFollower::IsTraversingPath() ? 1 : 0;
-        robotState_.isCarryingBlock = PickAndPlaceController::IsCarryingBlock() ? 1 : 0;
+        robotState_.status = 0;
+        robotState_.status |= (PathFollower::IsTraversingPath() ? IS_TRAVERSING_PATH : 0);
+        robotState_.status |= (PickAndPlaceController::IsCarryingBlock() ? IS_CARRYING_BLOCK : 0);
+        robotState_.status |= (PickAndPlaceController::IsBusy() ? IS_PICKING_OR_PLACING : 0);
       }
       
       RobotState const& GetRobotStateMsg() {
