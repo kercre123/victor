@@ -15,6 +15,8 @@
 #define BEHAVIOR_MANAGER_H
 
 #include "anki/common/types.h"
+#include "anki/common/basestation/math/pose.h"
+#include "anki/vision/basestation/visionMarker.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -25,6 +27,7 @@ namespace Anki {
     class Block;
     
     typedef enum {
+      BM_None,
       BM_PickAndPlace
     } BehaviorMode;
     
@@ -38,6 +41,13 @@ namespace Anki {
       void StartMode(BehaviorMode mode);
       
       void Update();
+
+      Robot* GetRobot() const {return robot_;}
+      
+      const ObjectID_t GetBlockOfInterest() const {return blockOfInterest_;}
+      
+      // Select the next object in blockWorld as the block of interest
+      void SelectNextBlockOfInterest();
       
     protected:
       
@@ -45,12 +55,10 @@ namespace Anki {
         WAITING_FOR_ROBOT,
         
         // PickAndPlaceBlock
-        WAITING_FOR_PICKUP_BLOCK,
+        WAITING_FOR_DOCK_BLOCK,
         EXECUTING_PATH_TO_DOCK_POSE,
-        EXECUTING_DOCK,
-        WAITING_FOR_PLACEMENT_BLOCK,
-        EXECUTING_PATH_TO_PLACEMENT_POSE,
-        EXECUTING_PLACEMENT
+        CONFIRM_BLOCK_IS_VISIBLE,
+        EXECUTING_DOCK
         
       } BehaviorState;
       
@@ -62,6 +70,9 @@ namespace Anki {
       
       Robot* robot_;
 
+      // Block that the robot is currently travelling to, docking to,
+      ObjectID_t blockOfInterest_;
+      
       void Reset();
       
       //bool GetPathToPreDockPose(const Block& b, Path& p);
@@ -69,6 +80,18 @@ namespace Anki {
       // Behavior state machines
       void Update_PickAndPlaceBlock();
       
+      
+      /////// PickAndPlace vars ///////
+    
+      // Block to dock with
+      Block* dockBlock_;
+      const Vision::KnownMarker *dockMarker_;
+      
+      // Target pose for predock
+      Pose3d nearestPreDockPose_;
+      
+      // A general time value for gating state transitions
+      double waitUntilTime_;
       
     }; // class BehaviorManager
     

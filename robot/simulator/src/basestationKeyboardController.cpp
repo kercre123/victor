@@ -1,7 +1,9 @@
 #include "basestationKeyboardController.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "vizManager.h"
+#include "behaviorManager.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -31,6 +33,9 @@ namespace Anki {
         RobotManager* robotMgr_;
         Robot* robot_;
         
+        BlockWorld* blockWorld_;
+        BehaviorManager* behaviorMgr_;
+        
         int lastKeyPressed_ = 0;
         int lastKeyAndModPressed_ = 0;
         
@@ -42,9 +47,11 @@ namespace Anki {
       } // private namespace
       
       
-      void BSKeyboardController::Init(RobotManager *robotMgr)
+      void BSKeyboardController::Init(RobotManager *robotMgr, BlockWorld *blockWorld, BehaviorManager *behaviorMgr)
       {
         robotMgr_ = robotMgr;
+        blockWorld_ = blockWorld;
+        behaviorMgr_ = behaviorMgr;
         
         gps_ = basestationController.getGPS("gps");
         compass_ = basestationController.getCompass("compass");
@@ -59,11 +66,7 @@ namespace Anki {
         
         isEnabled_ = true;
 
-        printf("\nBasestation keyboard control\n");
-        printf("===============================\n");
-        printf("Drive: arrows\n");
-        printf("Lift low/high/carry: 1/2/3\n");
-        printf("Head down/forward/up: 4/5/6\n\n");
+        PrintHelp();
 
       } // Enable()
       
@@ -79,6 +82,28 @@ namespace Anki {
         return isEnabled_;
       }
       
+      
+      void BSKeyboardController::PrintHelp()
+      {
+        printf("\nBasestation keyboard control\n");
+        printf("===============================\n");
+        printf("                    Drive:  arrows  (Hold shift for slower speeds)\n");
+        printf("        Move lift up/down:  a/z\n");
+        printf("        Move head up/down:  s/x\n");
+        printf("      Lift low/high/carry:  1/2/3\n");
+        printf("     Head down/forward/up:  4/5/6\n");
+        printf("         Toggle headlight:  h\n");
+        printf("            Request image:  i\n");
+        printf("      Toggle image stream:  Shift+i\n");
+        printf(" Toggle VizObject display:  d\n");
+        printf("   Goto green pose marker:  g\n");
+        printf("       Cycle block select:  .\n");
+        printf("       Clear known blocks:  c\n");
+        printf("   Dock to selected block:  p\n");
+        printf("               Test modes:  Alt + Testmode#\n");
+        printf("               Print help:  ?\n");
+        printf("\n");
+      }
       
       //Check the keyboard keys and issue robot commands
       void BSKeyboardController::ProcessKeystroke()
@@ -98,6 +123,13 @@ namespace Anki {
         const s32 CKEY_DISPLAY_TOGGLE = 68;  // d
         const s32 CKEY_HEADLIGHT   = 72;  // h
         const s32 CKEY_GOTO_POSE   = 71;  // g
+        const s32 CKEY_CLEAR_BLOCKS = 67; // c
+        //const s32 CKEY_COMMA   = 44;  // ,
+        const s32 CKEY_CYCLE_BLOCK_SELECT   = 46;  // .
+        //const s32 CKEY_FWDSLASH    = 47; // '/'
+        //const s32 CKEY_BACKSLASH   = 92 // '\'
+        const s32 CKEY_DOCK_TO_BLOCK  = 80;  // p
+        const s32 CKEY_QUESTION_MARK  = 63; // '/'
 
         // Get robot
         robot_ = NULL;
@@ -148,95 +180,95 @@ namespace Anki {
           {
             case webots::Robot::KEYBOARD_UP:
             {
-              robot_->SendDriveWheels(wheelSpeed, wheelSpeed);
+              robot_->DriveWheels(wheelSpeed, wheelSpeed);
               break;
             }
               
             case webots::Robot::KEYBOARD_DOWN:
             {
-              robot_->SendDriveWheels(-wheelSpeed, -wheelSpeed);
+              robot_->DriveWheels(-wheelSpeed, -wheelSpeed);
               break;
             }
               
             case webots::Robot::KEYBOARD_LEFT:
             {
-              robot_->SendDriveWheels(-wheelSpeed, wheelSpeed);
+              robot_->DriveWheels(-wheelSpeed, wheelSpeed);
               break;
             }
               
             case webots::Robot::KEYBOARD_RIGHT:
             {
-              robot_->SendDriveWheels(wheelSpeed, -wheelSpeed);
+              robot_->DriveWheels(wheelSpeed, -wheelSpeed);
               break;
             }
               
             case CKEY_HEAD_UP: //s-key: move head UP
             {
               const f32 speed((modifier_key == webots::Supervisor::KEYBOARD_SHIFT) ? 0.5 * HEAD_SPEED_RAD_PER_SEC : HEAD_SPEED_RAD_PER_SEC);
-              robot_->SendMoveHead(speed);
+              robot_->MoveHead(speed);
               break;
             }
               
             case CKEY_HEAD_DOWN: //x-key: move head DOWN
             {
               const f32 speed((modifier_key == webots::Supervisor::KEYBOARD_SHIFT) ? 0.5 * HEAD_SPEED_RAD_PER_SEC : HEAD_SPEED_RAD_PER_SEC);
-              robot_->SendMoveHead(-speed);
+              robot_->MoveHead(-speed);
               break;
             }
               
             case CKEY_LIFT_UP: //a-key: move lift up
             {
               const f32 speed((modifier_key == webots::Supervisor::KEYBOARD_SHIFT) ? 0.25 * LIFT_SPEED_RAD_PER_SEC : 0.5 * LIFT_SPEED_RAD_PER_SEC);
-              robot_->SendMoveLift(speed);
+              robot_->MoveLift(speed);
               break;
             }
               
             case CKEY_LIFT_DOWN: //z-key: move lift down
             {
               const f32 speed((modifier_key == webots::Supervisor::KEYBOARD_SHIFT) ? 0.25 * LIFT_SPEED_RAD_PER_SEC : 0.5 * LIFT_SPEED_RAD_PER_SEC);
-              robot_->SendMoveLift(-speed);
+              robot_->MoveLift(-speed);
               break;
             }
 
             case '1': //set lift to low dock height
             {
-              robot_->SendSetLiftHeight(LIFT_HEIGHT_LOWDOCK, LIFT_SPEED_RAD_PER_SEC, LIFT_ACCEL_RAD_PER_SEC2);
+              robot_->MoveLiftToHeight(LIFT_HEIGHT_LOWDOCK, LIFT_SPEED_RAD_PER_SEC, LIFT_ACCEL_RAD_PER_SEC2);
               break;
             }
               
             case '2': //set lift to high dock height
             {
-              robot_->SendSetLiftHeight(LIFT_HEIGHT_HIGHDOCK, LIFT_SPEED_RAD_PER_SEC, LIFT_ACCEL_RAD_PER_SEC2);
+              robot_->MoveLiftToHeight(LIFT_HEIGHT_HIGHDOCK, LIFT_SPEED_RAD_PER_SEC, LIFT_ACCEL_RAD_PER_SEC2);
               break;
             }
               
             case '3': //set lift to carry height
             {
-              robot_->SendSetLiftHeight(LIFT_HEIGHT_CARRY, LIFT_SPEED_RAD_PER_SEC, LIFT_ACCEL_RAD_PER_SEC2);
+              robot_->MoveLiftToHeight(LIFT_HEIGHT_CARRY, LIFT_SPEED_RAD_PER_SEC, LIFT_ACCEL_RAD_PER_SEC2);
               break;
             }
               
             case '4': //set head to look all the way down
             {
-              robot_->SendSetHeadAngle(MIN_HEAD_ANGLE, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
+              robot_->MoveHeadToAngle(MIN_HEAD_ANGLE, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
               break;
             }
 
             case '5': //set head to straight ahead
             {
-              robot_->SendSetHeadAngle(0, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
+              robot_->MoveHeadToAngle(0, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
               break;
             }
               
             case '6': //set head to look all the way up
             {
-              robot_->SendSetHeadAngle(MAX_HEAD_ANGLE, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
+              robot_->MoveHeadToAngle(MAX_HEAD_ANGLE, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
               break;
             }
 
             case CKEY_UNLOCK: // Stop all motors
             {
-              robot_->SendStopAllMotors();
+              robot_->StopAllMotors();
               break;
             }
               
@@ -268,7 +300,7 @@ namespace Anki {
             {
               static bool headlightsOn = false;
               headlightsOn = !headlightsOn;
-              robot_->SendHeadlight(headlightsOn ? 128 : 0);
+              robot_->SetHeadlight(headlightsOn ? 128 : 0);
               break;
             }
             case CKEY_GOTO_POSE:
@@ -293,19 +325,40 @@ namespace Anki {
               robot_->ExecutePathToPose(pose);
               break;
             }
+            case CKEY_CYCLE_BLOCK_SELECT:
+            {
+              behaviorMgr_->SelectNextBlockOfInterest();
+              break;
+            }
+            case CKEY_CLEAR_BLOCKS:
+            {
+              blockWorld_->ClearAllExistingBlocks();
+              VizManager::getInstance()->EraseVizObjectType(VIZ_CUBOID);
+              break;
+            }
+            case CKEY_DOCK_TO_BLOCK:
+            {
+              behaviorMgr_->StartMode(BM_PickAndPlace);
+              break;
+            }
+            case CKEY_QUESTION_MARK:
+            {
+              PrintHelp();
+              break;
+            }
             default:
             {
               // Stop wheels
-              robot_->SendDriveWheels(0, 0);
+              robot_->DriveWheels(0, 0);
               
               // If the last key pressed was a move lift key then stop it.
               if (lastKeyPressed_ == CKEY_LIFT_UP || lastKeyPressed_ == CKEY_LIFT_DOWN) {
-                robot_->SendMoveLift(0);
+                robot_->MoveLift(0);
               }
               
               // If the last key pressed was a move head key then stop it.
               if (lastKeyPressed_ == CKEY_HEAD_UP || lastKeyPressed_ == CKEY_HEAD_DOWN) {
-                robot_->SendMoveHead(0);
+                robot_->MoveHead(0);
               }
               
             }

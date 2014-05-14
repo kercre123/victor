@@ -296,6 +296,16 @@ namespace Anki {
     };
   
     
+    void ProcessVizTrackerQuadMessage(const VizTrackerQuad& msg)
+    {
+      camDisp->setColor(0x0000ff);
+      camDisp->drawLine(msg.topLeft_x, msg.topLeft_y, msg.topRight_x, msg.topRight_y);
+      camDisp->setColor(0x00ff00);
+      camDisp->drawLine(msg.topRight_x, msg.topRight_y, msg.bottomRight_x, msg.bottomRight_y);
+      camDisp->drawLine(msg.bottomRight_x, msg.bottomRight_y, msg.bottomLeft_x, msg.bottomLeft_y);
+      camDisp->drawLine(msg.bottomLeft_x, msg.bottomLeft_y, msg.topLeft_x, msg.topLeft_y);
+    }
+    
     
     // Stubs
     // These messages are handled by cozmo_physics.
@@ -349,6 +359,7 @@ int main(int argc, char **argv)
         case VizDockingErrorSignal_ID:
         case VizImageChunk_ID:
         case VizSetRobot_ID:
+        case VizTrackerQuad_ID:
           (*Anki::Cozmo::DispatchTable_[msgID])((unsigned char*)(data + 1));
           break;
         // All other messages are forwarded to cozmo_physics plugin

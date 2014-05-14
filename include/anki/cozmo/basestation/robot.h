@@ -67,11 +67,63 @@ namespace Anki {
       Result GetPathToPose(const Pose3d& pose, Planning::Path& path);
       Result ExecutePathToPose(const Pose3d& pose);
       
+      // Clears the path that the robot is executing which also stops the robot
+      Result ClearPath();
+      
+      // Sends a path to the robot to be immediately executed
+      Result ExecutePath(const Planning::Path& path);
+      
       void SetTraversingPath(bool t) {isTraversingPath_ = t;}
       bool IsTraversingPath() {return isTraversingPath_;}
 
       void SetCarryingBlock(bool t) {isCarryingBlock_ = t;}
       bool IsCarryingBlock() {return isCarryingBlock_;}
+      
+      
+      ///////// Motor commands  ///////////
+      
+      // Sends message to move lift at specified speed
+      Result MoveLift(const f32 speed_rad_per_sec);
+      
+      // Sends message to move head at specified speed
+      Result MoveHead(const f32 speed_rad_per_sec);
+      
+      // Sends a message to the robot to move the lift to the specified height
+      Result MoveLiftToHeight(const f32 height_mm,
+                              const f32 max_speed_rad_per_sec,
+                              const f32 accel_rad_per_sec2);
+      
+      // Sends a message to the robot to move the head to the specified angle
+      Result MoveHeadToAngle(const f32 angle_rad,
+                             const f32 max_speed_rad_per_sec,
+                             const f32 accel_rad_per_sec2);
+      
+      Result DriveWheels(const f32 lwheel_speed_mmps,
+                         const f32 rwheel_speed_mmps);
+      
+      Result StopAllMotors();
+      
+      
+      // Sends a message to the robot to dock with the specified block
+      // that it should currently be seeing.
+      Result DockWithBlock(const u8 markerType,
+                           const f32 markerWidth_mm,
+                           const DockAction_t dockAction);
+      
+      // Sends a message to the robot to dock with the specified block
+      // that it should currently be seeing. If pixel_radius == u8_MAX,
+      // the marker can be seen anywhere in the image (same as above function), otherwise the
+      // marker's center must be seen at the specified image coordinates
+      // with pixel_radius pixels.
+      Result DockWithBlock(const u8 markerType,
+                           const f32 markerWidth_mm,
+                           const DockAction_t dockAction,
+                           const u16 image_pixel_x,
+                           const u16 image_pixel_y,
+                           const u8 pixel_radius);
+
+      // Turn on/off headlight LEDs
+      Result SetHeadlight(u8 intensity);
       
       ///////// Messaging ////////
       // TODO: Most of these send functions should be private and wrapped in
@@ -80,39 +132,6 @@ namespace Anki {
       
       // Request camera calibration from robot
       Result SendRequestCamCalib() const;
-      
-      // Clears the path that the robot is executing which also stops the robot
-      Result SendClearPath() const;
-      
-      // Sends a path to the robot to be immediately executed
-      Result SendExecutePath(const Planning::Path& path) const;
-      
-      // Sends a message to the robot to dock with the specified block
-      // that it should currently be seeing.
-      Result SendDockWithBlock(const u8 markerType,
-                                   const f32 markerWidth_mm,
-                                   const DockAction_t dockAction) const;
-      
-      // Sends message to move lift at specified speed
-      Result SendMoveLift(const f32 speed_rad_per_sec) const;
-      
-      // Sends message to move head at specified speed
-      Result SendMoveHead(const f32 speed_rad_per_sec) const;
-      
-      // Sends a message to the robot to move the lift to the specified height
-      Result SendSetLiftHeight(const f32 height_mm,
-                               const f32 max_speed_rad_per_sec,
-                               const f32 accel_rad_per_sec2) const;
-
-      // Sends a message to the robot to move the head to the specified angle
-      Result SendSetHeadAngle(const f32 angle_rad,
-                              const f32 max_speed_rad_per_sec,
-                              const f32 accel_rad_per_sec2) const;
-      
-      Result SendDriveWheels(const f32 lwheel_speed_mmps,
-                                 const f32 rwheel_speed_mmps) const;
-      
-      Result SendStopAllMotors() const;
       
       // Send's robot's current pose
       Result SendAbsLocalizationUpdate() const;
@@ -126,8 +145,6 @@ namespace Anki {
       // Run a test mode
       Result SendStartTestMode(const TestMode mode) const;
       
-      // Turn on/off headlight LEDs
-      Result SendHeadlight(u8 intensity);
       
     protected:
       // The robot's identifier
@@ -140,7 +157,7 @@ namespace Anki {
       BlockWorld*   world_;
       
       PathPlanner* pathPlanner_;
-      
+      Planning::Path path_;
       
       Pose3d pose;
       void updatePose();
@@ -168,7 +185,58 @@ namespace Anki {
       typedef std::queue<MessageType> MessageQueue;
       MessageQueue messagesOut;
       
-            
+      
+      ///////// Messaging ////////
+      
+      // Sends message to move lift at specified speed
+      Result SendMoveLift(const f32 speed_rad_per_sec) const;
+      
+      // Sends message to move head at specified speed
+      Result SendMoveHead(const f32 speed_rad_per_sec) const;
+      
+      // Sends a message to the robot to move the lift to the specified height
+      Result SendSetLiftHeight(const f32 height_mm,
+                               const f32 max_speed_rad_per_sec,
+                               const f32 accel_rad_per_sec2) const;
+      
+      // Sends a message to the robot to move the head to the specified angle
+      Result SendSetHeadAngle(const f32 angle_rad,
+                              const f32 max_speed_rad_per_sec,
+                              const f32 accel_rad_per_sec2) const;
+      
+      Result SendDriveWheels(const f32 lwheel_speed_mmps,
+                             const f32 rwheel_speed_mmps) const;
+      
+      Result SendStopAllMotors() const;
+
+      // Clears the path that the robot is executing which also stops the robot
+      Result SendClearPath() const;
+      
+      // Sends a path to the robot to be immediately executed
+      Result SendExecutePath(const Planning::Path& path) const;
+      
+      // Sends a message to the robot to dock with the specified block
+      // that it should currently be seeing.
+      Result SendDockWithBlock(const u8 markerType,
+                               const f32 markerWidth_mm,
+                               const DockAction_t dockAction) const;
+      
+      // Sends a message to the robot to dock with the specified block
+      // that it should currently be seeing. If pixel_radius == u8_MAX,
+      // the marker can be seen anywhere in the image (same as above function), otherwise the
+      // marker's center must be seen at the specified image coordinates
+      // with pixel_radius pixels.
+      Result SendDockWithBlock(const u8 markerType,
+                               const f32 markerWidth_mm,
+                               const DockAction_t dockAction,
+                               const u16 image_pixel_x,
+                               const u16 image_pixel_y,
+                               const u8 pixel_radius) const;
+
+      // Turn on/off headlight LEDs
+      Result SendHeadlight(u8 intensity);
+      
+      
     }; // class Robot
 
     //

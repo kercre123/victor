@@ -83,8 +83,8 @@ namespace Anki {
 
           ErasePath(0);
           for (u8 i=0; i<p.GetNumSegments(); ++i) {
-            const Planning::PathSegmentDef& ps = p[i].GetDef();
-            switch(p[i].GetType()) {
+            const Planning::PathSegmentDef& ps = p.GetSegmentConstRef(i).GetDef();
+            switch(p.GetSegmentConstRef(i).GetType()) {
               case Planning::PST_LINE:
                 AppendPathSegmentLine(0,
                                       ps.line.startPt_x,

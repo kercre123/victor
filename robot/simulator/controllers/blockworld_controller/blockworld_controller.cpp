@@ -62,10 +62,15 @@ int main(int argc, char **argv)
   blockWorld.Init(&robotMgr);
   behaviorMgr.Init(&robotMgr, &blockWorld);
   
+  
+  // Allow webots to step once first to ensure that
+  // the messages sent in VizManager::Init() have
+  // somewhere to go.
+  Sim::basestationController.step(TIME_STEP);
   VizManager::getInstance()->Init();
   
 #if(ENABLE_BS_KEYBOARD_CONTROL)
-  Sim::BSKeyboardController::Init(&robotMgr);
+  Sim::BSKeyboardController::Init(&robotMgr, &blockWorld, &behaviorMgr);
   Sim::BSKeyboardController::Enable();
 #endif
   
@@ -136,6 +141,77 @@ int main(int argc, char **argv)
     // module(s) would do.  e.g. Some combination of game state, build planner,
     // personality planner, etc.
     behaviorMgr.Update();
+    
+    
+    
+
+    /////////// Update visualization ////////////
+    
+    // Get selected block of interest from Behavior manager
+    static ObjectID_t prev_boi = 0;      // Previous block of interest
+    static u32 prevNumPreDockPoses = 0;  // Previous number of predock poses
+    
+    // Get current block of interest
+    const ObjectID_t boi = behaviorMgr.GetBlockOfInterest();
+    
+    // Draw all blocks we know about
+    for(auto blocksByType : blockWorld.GetAllExistingBlocks()) {
+      for(auto blocksByID : blocksByType.second) {
+
+        const Block* block = dynamic_cast<Block*>(blocksByID.second);
+        
+        u32 color = VIZ_COLOR_DEFAULT;
+
+        // Special treatment for block of interest
+        if (blocksByID.first == boi) {
+          // Set different color
+          color = VIZ_COLOR_SELECTED_OBJECT;
+
+          // Get predock poses
+          std::vector<Block::PoseMarkerPair_t> poses;
+          block->GetPreDockPoses(PREDOCK_DISTANCE_MM, poses);
+          
+          // Erase previous predock pose marker for previous block of interest
+          if (prev_boi != boi || poses.size() != prevNumPreDockPoses) {
+            PRINT_INFO("BOI %d (prev %d), numPoses %d (prev %d)\n", boi, prev_boi, (u32)poses.size(), prevNumPreDockPoses);
+            VizManager::getInstance()->EraseVizObjectType(VIZ_PREDOCKPOSE);
+            prev_boi = boi;
+            prevNumPreDockPoses = poses.size();
+          }
+          
+          // Draw predock poses
+          u32 poseID = 0;
+          for(auto pose : poses) {
+            VizManager::getInstance()->DrawPreDockPose(6*block->GetID()+poseID++, pose.first, VIZ_COLOR_PREDOCKPOSE);
+            ++poseID;
+          }
+        }
+        
+        // Draw cuboid
+        VizManager::getInstance()->DrawCuboid(block->GetID(),
+                                              //block->GetType(),
+                                              block->GetSize(),
+                                              block->GetPose(),
+                                              color);
+        
+      } // FOR each ID of this type
+    } // FOR each type
+    
+    
+    // Draw all robot poses
+    // TODO: Only send when pose has changed?
+    for(auto robotID : robotMgr.GetRobotIDList())
+    {
+      Robot* robot = robotMgr.GetRobotByID(robotID);
+      
+      // Triangle pose marker
+      VizManager::getInstance()->DrawRobot(robotID, robot->get_pose());
+      
+      // Full Webots CozmoBot model
+      VizManager::getInstance()->DrawRobot(robotID, robot->get_pose(), robot->get_headAngle(), robot->get_liftAngle());
+    }
+
+    /////////// End visualization update ////////////
     
 
     // Process keyboard input

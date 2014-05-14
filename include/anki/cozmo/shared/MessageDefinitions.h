@@ -149,6 +149,10 @@ END_MESSAGE_DEFINITION(ExecutePath)
 START_MESSAGE_DEFINITION(DockWithBlock, 1)
 ADD_MESSAGE_MEMBER(f32, horizontalOffset_mm)  // Offset wrt to docking block. Don't know if this will work yet.
 ADD_MESSAGE_MEMBER(f32, markerWidth_mm)
+ADD_MESSAGE_MEMBER(u16, image_pixel_x)
+ADD_MESSAGE_MEMBER(u16, image_pixel_y)
+ADD_MESSAGE_MEMBER(u8, pixel_radius)  // Marker must be found within this many pixels of specified coordinates,
+                                      // unless pixel_radius == u8_MAX in which case marker may be located anywhere.
 ADD_MESSAGE_MEMBER(u8, dockAction)  // See DockAction_t
 ADD_MESSAGE_MEMBER(u8, markerType)
 END_MESSAGE_DEFINITION(DockWithBlock)
@@ -300,3 +304,16 @@ END_MESSAGE_DEFINITION(StartTestMode)
 START_MESSAGE_DEFINITION(SetHeadlight, 1)
 ADD_MESSAGE_MEMBER(u8, intensity)
 END_MESSAGE_DEFINITION(SetHeadlight)
+
+// TrackerQuad
+START_MESSAGE_DEFINITION(TrackerQuad, 1)
+ADD_MESSAGE_MEMBER(u16, topLeft_x)
+ADD_MESSAGE_MEMBER(u16, topLeft_y)
+ADD_MESSAGE_MEMBER(u16, topRight_x)
+ADD_MESSAGE_MEMBER(u16, topRight_y)
+ADD_MESSAGE_MEMBER(u16, bottomRight_x)
+ADD_MESSAGE_MEMBER(u16, bottomRight_y)
+ADD_MESSAGE_MEMBER(u16, bottomLeft_x)
+ADD_MESSAGE_MEMBER(u16, bottomLeft_y)
+END_MESSAGE_DEFINITION(TrackerQuad)
+

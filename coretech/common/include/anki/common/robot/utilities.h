@@ -36,6 +36,13 @@ namespace Anki
       }
     }
 
+#if defined(__APPLE_CC__) // Apple Xcode
+    template<> inline unsigned long RoundUp(const unsigned long number, const unsigned long multiple)
+    {
+      return (number + (multiple-1)) & ~(multiple-1);
+    }
+#endif
+
     template<> inline u32 RoundDown(const u32 number, const u32 multiple)
     {
       return multiple * (number/multiple);
@@ -50,6 +57,14 @@ namespace Anki
       }
     }
 
+#if defined(__APPLE_CC__) // Apple Xcode
+    template<> inline unsigned long RoundDown(const unsigned long number, const unsigned long multiple)
+    {
+      return multiple * (number/multiple);
+    }
+#endif
+    
+    
     template<typename Type> Type ApproximateExp(const Type exponent, const s32 numTerms)
     {
       AnkiAssert(numTerms > 2);
@@ -144,8 +159,13 @@ namespace Anki
 
     template<typename Type> void Cart2Pol(const Type x, const Type y, Type &rho, Type &theta)
     {
-      theta = atan2_acc(y, x);
-      rho = sqrtf(x*x + y*y);
+      if (x==0 && y==0) {
+        theta = 0;
+        rho = 0;
+      } else {
+        theta = atan2f(y, x);
+        rho = sqrtf(x*x + y*y);
+      }
     }
 
     template<typename Type> void Pol2Cart(const Type rho, const Type theta, Type &x, Type &y)

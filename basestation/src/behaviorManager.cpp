@@ -9,16 +9,20 @@
  * Copyright: Anki, Inc. 2014
  **/
 
+#include "anki/common/basestation/utils/timer.h"
 #include "behaviorManager.h"
 #include "pathPlanner.h"
+#include "vizManager.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/common/basestation/general.h"
+#include "anki/cozmo/robot/cozmoConfig.h"
 
 namespace Anki {
   namespace Cozmo {
         
-    BehaviorManager::BehaviorManager()
+    BehaviorManager::BehaviorManager() :
+    robotMgr_(nullptr), world_(nullptr)
     {
       Reset();
     }
@@ -32,8 +36,14 @@ namespace Anki {
     void BehaviorManager::StartMode(BehaviorMode mode)
     {
       switch(mode) {
+        case BM_None:
+          state_ = WAITING_FOR_ROBOT;
+          nextState_ = state_;
+          updateFcn_ = nullptr;
+          break;
         case BM_PickAndPlace:
-          nextState_ = WAITING_FOR_PICKUP_BLOCK;
+          dockBlock_ = nullptr;
+          nextState_ = WAITING_FOR_DOCK_BLOCK;
           updateFcn_ = &BehaviorManager::Update_PickAndPlaceBlock;
           break;
         default:
@@ -41,15 +51,81 @@ namespace Anki {
           return;
       }
       
-      assert(updateFcn_ != NULL);
+      //assert(updateFcn_ != nullptr);
     }
     
     void BehaviorManager::Reset()
     {
       state_ = WAITING_FOR_ROBOT;
       nextState_ = state_;
-      updateFcn_ = NULL;
-      robot_ = NULL;
+      updateFcn_ = nullptr;
+      robot_ = nullptr;
+      
+      dockBlock_ = nullptr;
+    }
+    
+    
+    // TODO: Make this a blockWorld function?
+    void BehaviorManager::SelectNextBlockOfInterest()
+    {
+      bool currBlockOfInterestFound = false;
+      bool newBlockOfInterestSet = false;
+      u32 numTotalObjects = 0;
+      
+      // Iterate through the Object
+      auto const & blockMap = world_->GetAllExistingBlocks();
+      for (auto const & blockType : blockMap) {
+        numTotalObjects += blockType.second.size();
+        
+        //PRINT_INFO("currType: %d\n", blockType.first);
+        auto const & blockMapByID = blockType.second;
+        for (auto const & block : blockMapByID) {
+
+          //PRINT_INFO("currID: %d\n", block.first);
+          if (currBlockOfInterestFound) {
+            // Current block of interest has been found.
+            // Set the new block of interest to the next block in the list.
+            blockOfInterest_ = block.first;
+            newBlockOfInterestSet = true;
+            //PRINT_INFO("new block found: id %d  type %d\n", block.first, blockType.first);
+            break;
+          } else if (block.first == blockOfInterest_) {
+            currBlockOfInterestFound = true;
+            //PRINT_INFO("curr block found: id %d  type %d\n", block.first, blockType.first);
+          }
+        }
+        if (newBlockOfInterestSet)
+          break;
+      }
+      
+      // If the current block of interest was found, but a new one was not set
+      // it must have been the last block in the map. Set the new block of interest
+      // to the first block in the map as long as it's not the same block.
+      if (!currBlockOfInterestFound || !newBlockOfInterestSet) {
+        
+        // Find first block
+        ObjectID_t firstBlock = u16_MAX;
+        for (auto const & blockType : blockMap) {
+          for (auto const & block : blockType.second) {
+            firstBlock = block.first;
+            break;
+          }
+          if (firstBlock != u16_MAX) {
+            break;
+          }
+        }
+
+        
+        if (firstBlock == blockOfInterest_){
+          //PRINT_INFO("Only one block in existence.");
+        } else {
+          //PRINT_INFO("Setting block of interest to first block\n");
+          blockOfInterest_ = firstBlock;
+        }
+      }
+      
+      PRINT_INFO("Block of interest: id %d  (total objects %d)\n", blockOfInterest_, numTotalObjects);
+      
     }
     
     void BehaviorManager::Update()
@@ -66,7 +142,11 @@ namespace Anki {
           break;
         }
         default:
-          (this->*updateFcn_)();
+          if (updateFcn_) {
+            (this->*updateFcn_)();
+          } else {
+            state_ = nextState_ = WAITING_FOR_ROBOT;
+          }
           break;
       }
 
@@ -90,18 +170,13 @@ namespace Anki {
      ********************************************************/
     void BehaviorManager::Update_PickAndPlaceBlock()
     {
-
-      const Pose2d p_2d(0, 200, 400);
-      const Pose3d p(p_2d);
-      const float distThresh = 50;
+      // Params for determining whether the predock pose has been reached
+      const f32 distThresh_mm = 20;
       const Radians angThresh(0.1);
-      
-      
-      const Block::Type PICKUP_BLOCK_TYPE = Block::Type::BULLSEYE_BLOCK_TYPE;
-      const Block::Type PLACEMENT_BLOCK_TYPE = Block::Type::FUEL_BLOCK_TYPE;
+
       
       switch(state_) {
-        case WAITING_FOR_PICKUP_BLOCK:
+        case WAITING_FOR_DOCK_BLOCK:
         {
           // TODO: BlockWorld needs function for retrieving collision-free docking poses for a given block
           //
@@ -111,35 +186,145 @@ namespace Anki {
           // 4) Find a collision-free path to one of the docking poses
           // 5) Command path to that docking pose
           
-          // HACK: For now just generate a random path to anywhere.
-          if (robot_->ExecutePathToPose(p) == RESULT_OK)
+          
+          // Get block object
+          const Vision::ObservableObject* oObject = world_->GetObservableObjectByID(blockOfInterest_);
+          if (oObject == nullptr) {
+            break;
+          }
+          dockBlock_ = (Block*)oObject;
+        
+          
+          // Check that we're not already carrying a block if the block of interest is a high block.
+          if (dockBlock_->GetPose().get_translation().z() > 44.f && robot_->IsCarryingBlock()) {
+            PRINT_INFO("Already carrying block. Can't dock to high block. Aborting (0).\n");
+            StartMode(BM_None);
+            return;
+          }
+          
+
+          // Get predock poses
+          std::vector<Block::PoseMarkerPair_t> preDockPoseMarkerPairs;
+          dockBlock_->GetPreDockPoses(PREDOCK_DISTANCE_MM, preDockPoseMarkerPairs);
+         
+          
+          // Select (closest) predock pose
+          const Pose3d& robotPose = robot_->get_pose();
+
+          if (!preDockPoseMarkerPairs.empty()) {
+            f32 shortestDist2Pose = -1;
+            for (auto const & poseMarkerPair : preDockPoseMarkerPairs) {
+              
+              PRINT_INFO("Candidate pose: (%f %f %f), (%f %f %f %f)\n",
+                         poseMarkerPair.first.get_translation().x(),
+                         poseMarkerPair.first.get_translation().y(),
+                         poseMarkerPair.first.get_translation().z(),
+                         poseMarkerPair.first.get_rotationAxis().x(),
+                         poseMarkerPair.first.get_rotationAxis().y(),
+                         poseMarkerPair.first.get_rotationAxis().z(),
+                         poseMarkerPair.first.get_rotationAngle().ToFloat() );
+              
+              f32 dist2Pose = computeDistanceBetween(poseMarkerPair.first, robotPose);
+              if (dist2Pose < shortestDist2Pose || shortestDist2Pose < 0) {
+                shortestDist2Pose = dist2Pose;
+                nearestPreDockPose_ = poseMarkerPair.first;
+                dockMarker_ = &(poseMarkerPair.second);
+              }
+            }
+          } else {
+            PRINT_INFO("No docking pose found\n");
+            StartMode(BM_None);
+            return;
+          }
+
+          
+          // Generate path to predock pose
+          // TODO: Generate collision-free path!!!
+          if (robot_->get_pose().IsSameAs(nearestPreDockPose_, distThresh_mm, angThresh) ||
+              robot_->ExecutePathToPose(nearestPreDockPose_) == RESULT_OK) {
+            waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.25f;
             state_ = EXECUTING_PATH_TO_DOCK_POSE;
+          }
           
           break;
         }
         case EXECUTING_PATH_TO_DOCK_POSE:
         {
           // Once robot is confirmed at the docking pose, execute docking.
-          if(!robot_->IsTraversingPath()) {
-            if (robot_->get_pose().IsSameAs(p, distThresh, angThresh)) {
+          if(!robot_->IsTraversingPath() && waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) {
+            
+            if (robot_->get_pose().IsSameAs(nearestPreDockPose_, distThresh_mm, angThresh)) {
               PRINT_INFO("Dock pose reached\n");
-              
-              // TODO: Confirm that expected marker is within view
-              // ...
-              
-              // TODO: Get marker info
-              f32 markerWidth = 30;
+
+              // Verify that the block of interest still exists in case it somehow disappeared while
+              // the robot was travelling to the predock pose.
+              const Vision::ObservableObject* oObject = world_->GetObservableObjectByID(blockOfInterest_);
+              if (oObject == nullptr) {
+                PRINT_INFO("Block of interest no longer present.\n");
+                state_ = WAITING_FOR_DOCK_BLOCK;
+                break;
+              }
 
               
-              // Start dock
-              PRINT_INFO("Picking up block with marker %d\n", PICKUP_BLOCK_TYPE);
-              robot_->SendDockWithBlock(PICKUP_BLOCK_TYPE, markerWidth, DA_PICKUP_LOW);
-              state_ = EXECUTING_DOCK;
+              // Need to confirm that expected marker is within view.
+              // Move head if necessary based on block height.
+              f32 dockBlockHeight = dockBlock_->GetPose().get_translation().z();
+              if (dockBlockHeight > 44.f) {
+                robot_->MoveHeadToAngle(0.175, 1, 1);
+              } else {
+                robot_->MoveHeadToAngle(-0.175, 1, 1);
+              }
+              
+              // Wait long enough for head to move and a message with the expected marker to be received.
+              waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 2;
+
+              state_ = CONFIRM_BLOCK_IS_VISIBLE;
               
             } else {
-              PRINT_INFO("Not at expected position at the end of the path. Looking for docking block again\n.");
-              state_ = WAITING_FOR_PICKUP_BLOCK;
+              PRINT_INFO("Not at expected position at the end of the path. Looking for docking block again (Robot: %f %f %f %f, Dock %f %f %f %f)\n.",
+                         robot_->get_pose().get_translation().x(),
+                         robot_->get_pose().get_translation().y(),
+                         robot_->get_pose().get_translation().z(),
+                         robot_->get_pose().get_rotationAngle().ToFloat(),
+                         nearestPreDockPose_.get_translation().x(),
+                         nearestPreDockPose_.get_translation().y(),
+                         nearestPreDockPose_.get_translation().z(),
+                         nearestPreDockPose_.get_rotationAngle().ToFloat()
+                         );
+              StartMode(BM_None);
+              return;
             }
+          }
+          break;
+        }
+        case CONFIRM_BLOCK_IS_VISIBLE:
+        {
+          if (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > waitUntilTime_) {
+            // TODO: Check that the marker was recently seen at roughly the expected image location
+            // ...
+            //const Point2f& imgCorners = dockMarker_->GetImageCorners().computeCentroid();
+            // For now, just docking to the marker no matter where it is in the image.
+
+            
+            // Get dock action
+            f32 dockBlockHeight = dockBlock_->GetPose().get_translation().z();
+            DockAction_t dockAction = DA_PICKUP_LOW;
+            if (dockBlockHeight > dockBlock_->GetSize().z()) {
+              if (robot_->IsCarryingBlock()) {
+                PRINT_INFO("Already carrying block. Can't dock to high block. Aborting.\n");
+                StartMode(BM_None);
+                return;
+              } else {
+                dockAction = DA_PICKUP_HIGH;
+              }
+            } else if (robot_->IsCarryingBlock()) {
+              dockAction = DA_PLACE_HIGH;
+            }
+            
+            // Start dock
+            PRINT_INFO("Docking with marker %d (action = %d)\n", dockMarker_->GetCode(), dockAction);
+            robot_->DockWithBlock(dockMarker_->GetCode(),  dockMarker_->GetSize(), dockAction);
+            state_ = EXECUTING_DOCK;
           }
           break;
         }
@@ -148,40 +333,23 @@ namespace Anki {
           if (!robot_->IsTraversingPath()) {
             // Stopped executing docking path. Did it successfully dock?
             if (robot_->IsCarryingBlock()) {
-              PRINT_INFO("Pickup successful! Looking for placement block\n");
-              state_ = WAITING_FOR_PLACEMENT_BLOCK;
+              PRINT_INFO("Docking successful!\n");
             } else {
-              
+              PRINT_INFO("Dock failed! Aborting\n");
             }
-          }
-          break;
-        }
-        case WAITING_FOR_PLACEMENT_BLOCK:
-        {
-          auto observedBlocks = world_->GetExistingBlocks(PLACEMENT_BLOCK_TYPE);
-          for (auto & observedBlock : observedBlocks) {
-            // Take first block in the list and get docking poses.
-            // ...
             
-            // Plan a path to a docking pose
-            // ...
-            
-            state_ = EXECUTING_PATH_TO_PLACEMENT_POSE;
-            break;
+            StartMode(BM_None);
+            return;
+
           }
-          break;
-        }
-        case EXECUTING_PATH_TO_PLACEMENT_POSE:
-        {
-          break;
-        }
-        case EXECUTING_PLACEMENT:
-        {
           break;
         }
         default:
+        {
           PRINT_NAMED_ERROR("BehaviorManager.UnknownBehaviorState", "Transitioned to unknown state %d!", state_);
-          break;
+          StartMode(BM_None);
+          return;
+        }
       }
       
     }

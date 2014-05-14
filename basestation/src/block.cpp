@@ -168,8 +168,8 @@ namespace Anki {
       //
       // Check if it's vertically oriented
       //
-      const float DOT_TOLERANCE   = .05f;
-      const float ANGLE_TOLERANCE = DEG_TO_RAD(5);
+      const float DOT_TOLERANCE   = .15f;
+      const float ANGLE_TOLERANCE = DEG_TO_RAD(15);
       
       // Get vector, v, from center of block to this point
       Point3f v(dockingPt);
@@ -187,6 +187,7 @@ namespace Anki {
            NEAR(angle, DEG_TO_RAD(90),  ANGLE_TOLERANCE) ||
            NEAR(angle, DEG_TO_RAD(180), ANGLE_TOLERANCE) )
         {
+          dockingPt.z() = 0.f;  // Project to floor plane
           preDockPose.set_translation(dockingPt);
           preDockPose.set_rotation(atan2f(-v.y(), -v.x()), Z_AXIS_3D);
           dockingPointFound = true;

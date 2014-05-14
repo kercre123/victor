@@ -30,7 +30,7 @@ namespace Anki
     
     
     BlockWorld::BlockWorld( )
-    : robotMgr_(NULL)
+    : robotMgr_(NULL), globalIDCounter(0)
 //    : robotMgr_(RobotManager::getInstance()),
 //      msgHandler_(MessageHandler::getInstance())
     {
@@ -125,7 +125,7 @@ namespace Anki
         mat->AddMarker(Vision::MARKER_J,
                        Pose3d(1.570796, {-1.000000,0.000000,0.000000}, {-66.666667,200.000000,0.000000}),
                        65.000000);
-        mat->AddMarker(Vision::MARKER_N,
+        mat->AddMarker(Vision::MARKER_4,
                        Pose3d(1.570796, {-1.000000,0.000000,0.000000}, {66.666667,200.000000,0.000000}),
                        65.000000);
         mat->AddMarker(Vision::MARKER_Y,
@@ -210,7 +210,7 @@ namespace Anki
         if(overlappingObjects.empty()) {
           // no existing blocks overlapped with the block we saw, so add it
           // as a new block
-          objSeen->SetID(objectsExisting[objSeen->GetType()].size());
+          objSeen->SetID(++globalIDCounter);
           objectsExisting[objSeen->GetType()][objSeen->GetID()] = objSeen;
           
           fprintf(stdout, "Adding new block with type=%hu and ID=%hu at (%.1f, %.1f, %.1f)\n",
@@ -369,48 +369,7 @@ namespace Anki
         PRINT_INFO("%u messages did not match any known objects and went unused.\n",
                    numUnused);
       }
-
-      
-      //
-      // Update visualization:
-      //
-      
-      // Draw all blocks we know about (and their pre-dock poses)
-      VizManager::getInstance()->EraseAllVizObjects();
-      for(auto blocksByType : existingBlocks_) {
-        for(auto blocksByID : blocksByType.second) {
-          
-          const Block* block = dynamic_cast<Block*>(blocksByID.second);
-          VizManager::getInstance()->DrawCuboid(block->GetID(),
-                                                //block->GetType(),
-                                                block->GetSize(),
-                                                block->GetPose());
-          
-          std::vector<Block::PoseMarkerPair_t> poseMarkerPairs;
-          block->GetPreDockPoses(PREDOCK_DISTANCE_MM, poseMarkerPairs);
-          u32 poseID = 0;
-          for(auto poseMarkerPair : poseMarkerPairs) {
-            VizManager::getInstance()->DrawPreDockPose(6*block->GetID()+poseID++, poseMarkerPair.first, VIZ_COLOR_PREDOCKPOSE);
-            ++poseID;
-          }
-
-        } // FOR each ID of this type
-      } // FOR each type
-      
-      
-      // Draw all robot poses
-      // TODO: Only send when pose has changed?
-      for(auto robotID : robotMgr_->GetRobotIDList())
-      {
-        Robot* robot = robotMgr_->GetRobotByID(robotID);
-        
-        // Triangle pose marker
-        VizManager::getInstance()->DrawRobot(robotID, robot->get_pose());
-        
-        // Full Webots CozmoBot model
-        VizManager::getInstance()->DrawRobot(robotID, robot->get_pose(), robot->get_headAngle(), robot->get_liftAngle());
-      }
-      
+  
     } // Update()
     
     
@@ -440,6 +399,11 @@ namespace Anki
       }
     } // commandRobotToDock()
 
+    void BlockWorld::ClearAllExistingBlocks() {
+      existingBlocks_.clear();
+      globalIDCounter = 0;
+    }
+    
     
   } // namespace Cozmo
 } // namespace Anki

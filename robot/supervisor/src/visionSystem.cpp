@@ -1917,6 +1917,8 @@ namespace Anki {
 
           HAL::CameraSetParameters(exposureTime, vignettingCorrection == VignettingCorrection_CameraHardware);
 
+          DownsampleAndSendImage(grayscaleImage);
+          
           // NOTE: This will change grayscaleImage!
           // NOTE: This is currently off-chip for memory reasons, so it's slow!
           if((lastResult = BrightnessNormalizeImage(grayscaleImage, trackingQuad_,
@@ -1969,6 +1971,26 @@ namespace Anki {
           {
             Quadrilateral<f32> currentQuad = GetTrackerQuad(VisionMemory::onchipScratch_);
             FillDockErrMsg(currentQuad, dockErrMsg, VisionMemory::onchipScratch_);
+            
+            // Send tracker quad if image streaming
+            if (imageSendMode_ == ISM_STREAM) {
+              f32 scale = 1.f;
+              for (u8 s = (u8)Vision::CAMERA_RES_QVGA; s<(u8)nextSendImageResolution_; ++s) {
+                scale *= 0.5f;
+              }
+              
+              Messages::TrackerQuad m;
+              m.topLeft_x = static_cast<u16>(currentQuad[Quadrilateral<f32>::TopLeft].x * scale);
+              m.topLeft_y = static_cast<u16>(currentQuad[Quadrilateral<f32>::TopLeft].y * scale);
+              m.topRight_x = static_cast<u16>(currentQuad[Quadrilateral<f32>::TopRight].x * scale);
+              m.topRight_y = static_cast<u16>(currentQuad[Quadrilateral<f32>::TopRight].y * scale);
+              m.bottomRight_x = static_cast<u16>(currentQuad[Quadrilateral<f32>::BottomRight].x * scale);
+              m.bottomRight_y = static_cast<u16>(currentQuad[Quadrilateral<f32>::BottomRight].y * scale);
+              m.bottomLeft_x = static_cast<u16>(currentQuad[Quadrilateral<f32>::BottomLeft].x * scale);
+              m.bottomLeft_y = static_cast<u16>(currentQuad[Quadrilateral<f32>::BottomLeft].y * scale);
+              
+              HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::TrackerQuad), &m);
+            }
 
             // Reset the failure counter
             numTrackFailures_ = 0;
