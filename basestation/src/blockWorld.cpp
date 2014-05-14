@@ -46,6 +46,8 @@ namespace Anki
       blockLibrary_.AddObject(new Block_Cube1x1(Block::SQTARGET_BLOCK_TYPE));
       
       blockLibrary_.AddObject(new Block_Cube1x1(Block::FIRE_BLOCK_TYPE));
+
+      blockLibrary_.AddObject(new Block_Cube1x1(Block::ANGRYFACE_BLOCK_TYPE));
       
       blockLibrary_.AddObject(new Block_Cube1x1(Block::ANKILOGO_BLOCK_TYPE));
 
