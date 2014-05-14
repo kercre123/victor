@@ -323,7 +323,7 @@ namespace Anki {
 
     
     void Camera::project3dPoint(const Point3f& objPoint,
-                                Point2f&       imgPoint)
+                                Point2f&       imgPoint) const
     {
       if(not isCalibrationSet) {
         CORETECH_THROW("Camera::project3dPoint() called before calibration set.");
@@ -384,7 +384,7 @@ namespace Anki {
     
     template<class PointContainer3d, class PointContainer2d>
     void Camera::project3dPointHelper(const PointContainer3d& objPoints,
-                                      PointContainer2d& imgPoints)  
+                                      PointContainer2d& imgPoints) const
     {
       CORETECH_ASSERT(objPoints.size() == imgPoints.size());
       
@@ -403,14 +403,14 @@ namespace Anki {
     
     // Compute the projected image locations of a set of 3D points:
     void Camera::project3dPoints(const std::vector<Point3f>& objPoints,
-                                 std::vector<Point2f>&       imgPoints)
+                                 std::vector<Point2f>&       imgPoints) const
     {
       imgPoints.resize(objPoints.size());
       project3dPointHelper(objPoints, imgPoints);
     } // project3dPoints(std::vectors)
     
     void Camera::project3dPoints(const Quad3f& objPoints,
-                                 Quad2f&       imgPoints)
+                                 Quad2f&       imgPoints) const
     {
       for(Quad::CornerName i_corner=Quad::FirstCorner;
           i_corner < Quad::NumCorners; ++i_corner)

@@ -19,7 +19,6 @@ namespace Anki {
   namespace Vision {
     
     OccluderList::OccluderList()
-    : isSorted_(false)
     {
       
     }
@@ -27,7 +26,6 @@ namespace Anki {
     void OccluderList::Clear()
     {
       rectDepthPairs_.clear();
-      isSorted_ = false;
     }
     
     /* Moved to Camera class
@@ -66,21 +64,22 @@ namespace Anki {
     template<class PointContainer>
     void OccluderList::AddOccluderHelper(const PointContainer& points, const f32 atDistance)
     {
-      rectDepthPairs_.push_back(std::make_pair(Rectangle<f32>(points), atDistance));
+      Rectangle<f32> occluder(points);
       
-      // If we add a new occluder, mark the vector as unsorted
-      isSorted_ = false;
-      
+      auto currentOccluderAtDistance = rectDepthPairs_.find(atDistance);
+      if(currentOccluderAtDistance != rectDepthPairs_.end()) {
+        // Already have an occluder at this distance.  Keep the larger one
+        if(occluder.area() > currentOccluderAtDistance->second.area()) {
+          currentOccluderAtDistance->second = occluder;
+        }
+      } else {
+        rectDepthPairs_[atDistance] = occluder;
+      }
     }
     
     
-    bool OccluderList::IsOccluded(const Quad2f &quad, const f32 atDistance)
+    bool OccluderList::IsOccluded(const Quad2f &quad, const f32 atDistance) const
     {
-      if(not isSorted_) {
-        std::sort(rectDepthPairs_.begin(), rectDepthPairs_.end(), CompareSecond<Rectangle<f32>, f32>());
-        isSorted_ = true;
-      }
-      
       // Model the quad by its axis-aligned rectangle for simpler intersection
       // checking
       Rectangle<f32> boundingBox(quad);
@@ -91,9 +90,9 @@ namespace Anki {
       // checking, since the vector is sorted
       auto currentOccluder = rectDepthPairs_.begin();
       auto end = rectDepthPairs_.end();
-      while(atDistance > currentOccluder->second && currentOccluder != end) {
+      while(atDistance > currentOccluder->first && currentOccluder != end) {
         
-        if( boundingBox.Intersect(currentOccluder->first).area() > 0 ) {
+        if( boundingBox.Intersect(currentOccluder->second).area() > 0 ) {
           // The bounding box intersects this occluder, and is thus occluded
           // by it.
           return true;
@@ -108,12 +107,8 @@ namespace Anki {
     } // OccluderList::IsOccluded()
     
     
-    bool OccluderList::IsOccluded(const Point2f &point, const f32 atDistance)
+    bool OccluderList::IsOccluded(const Point2f &point, const f32 atDistance) const
     {
-      if(not isSorted_) {
-        std::sort(rectDepthPairs_.begin(), rectDepthPairs_.end(), CompareSecond<Rectangle<f32>, f32>());
-        isSorted_ = true;
-      }
       
       // Don't need to check against occluders in the container that are further
       // away than the quad I'm checking (they can't possibly be occluding), so
@@ -121,9 +116,9 @@ namespace Anki {
       // checking, since the vector is sorted
       auto currentOccluder = rectDepthPairs_.begin();
       auto end = rectDepthPairs_.end();
-      while(atDistance > currentOccluder->second && currentOccluder != end) {
+      while(atDistance > currentOccluder->first && currentOccluder != end) {
         
-        if(currentOccluder->first.Contains(point)) {
+        if(currentOccluder->second.Contains(point)) {
           // This occluder contains the point, and thus occludes it.
           return true;
         }

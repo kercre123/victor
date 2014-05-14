@@ -35,8 +35,8 @@ namespace Anki {
       
       //void AddOccluder(const ObservableObject* object, const Camera& camera);
       
-      bool IsOccluded(const Quad2f& quad, const f32 atDistance);
-      bool IsOccluded(const Point2f& point, const f32 atDistance);
+      bool IsOccluded(const Quad2f& quad, const f32 atDistance)   const;
+      bool IsOccluded(const Point2f& point, const f32 atDistance) const;
       
       void Clear();
       
@@ -45,9 +45,11 @@ namespace Anki {
     protected:
       //std::priority_queue<std::pair<Quad2f,f32>, CompareSecond<Quad2f,f32>() > quadDepthPairs_;
       
-      std::vector<std::pair<Rectangle<f32>,f32> > rectDepthPairs_;
+      //std::vector<std::pair<Rectangle<f32>,f32> > rectDepthPairs_;
       
-      bool isSorted_;
+      std::map<f32, Rectangle<f32> > rectDepthPairs_;
+      
+      //bool isSorted_;
       
       template<class PointContainer>
       void AddOccluderHelper(const PointContainer& points, const f32 atDistance);

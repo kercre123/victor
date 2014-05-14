@@ -186,19 +186,17 @@ namespace Anki {
       // Compute the projected image locations of 3D point(s):
       // (Resulting projected image points can be tested for being behind the
       //  camera or visible using the functions below.)
-      // NOTE: these projection functions are not const because they may
-      //   check for inclusion, which could trigger a sort of the occluders
-      void project3dPoint(const Point3f& objPoint, Point2f& imgPoint);
+      void project3dPoint(const Point3f& objPoint, Point2f& imgPoint) const;
       
       void project3dPoints(const std::vector<Point3f> &objPoints,
-                           std::vector<Point2f>       &imgPoints);
+                           std::vector<Point2f>       &imgPoints) const;
       
       void project3dPoints(const Quad3f &objPoints,
-                           Quad2f       &imgPoints);
+                           Quad2f       &imgPoints) const;
       
       template<size_t NumPoints>
       void project3dPoints(const std::array<Point3f,NumPoints> &objPoints,
-                           std::array<Point2f,NumPoints>       &imgPoints);
+                           std::array<Point2f,NumPoints>       &imgPoints) const;
       
       
       // Returns true when the point (computed by one of the projection functions
@@ -228,7 +226,7 @@ namespace Anki {
       
       template<class PointContainer3d, class PointContainer2d>
       void project3dPointHelper(const PointContainer3d& objPoints,
-                                PointContainer2d& imgPoints);
+                                PointContainer2d& imgPoints) const;
       
 #if ANKICORETECH_USE_OPENCV
       Pose3d computeObjectPoseHelper(const std::vector<cv::Point2f>& cvImagePoints,
@@ -257,7 +255,7 @@ namespace Anki {
     
     template<size_t NumPoints>
     void Camera::project3dPoints(const std::array<Point3f,NumPoints> &objPoints,
-                                 std::array<Point2f,NumPoints>       &imgPoints)
+                                 std::array<Point2f,NumPoints>       &imgPoints) const
     {
       for(size_t i = 0; i<NumPoints; ++i)
       {
