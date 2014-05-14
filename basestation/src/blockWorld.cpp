@@ -35,7 +35,7 @@ namespace Anki
     
     
     BlockWorld::BlockWorld( )
-    : robotMgr_(NULL)
+    : isInitialized_(false), robotMgr_(NULL)
 //    : robotMgr_(RobotManager::getInstance()),
 //      msgHandler_(MessageHandler::getInstance())
     {
@@ -158,6 +158,8 @@ namespace Anki
     void BlockWorld::Init(RobotManager* robotMgr)
     {
       robotMgr_ = robotMgr;
+      
+      isInitialized_ = true;
     }
     
     
@@ -457,6 +459,8 @@ namespace Anki
     
     void BlockWorld::Update(void)
     {
+      CORETECH_ASSERT(robotMgr_ != NULL);
+      
       robotMgr_->UpdateAllRobots();
       
       //

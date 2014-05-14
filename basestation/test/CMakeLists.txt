@@ -2,6 +2,8 @@
 
 file(GLOB TEST_SRC_FILES "*.cpp")
 
+include_directories(${PROJECT_SOURCE_DIR}/basestation/src)
+
 if(NOT WIN32)
   add_executable(run_CozmoTests ${TEST_SRC_FILES})
   

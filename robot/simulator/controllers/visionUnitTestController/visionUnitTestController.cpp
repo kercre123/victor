@@ -30,12 +30,16 @@
 
 #include "anki/cozmo/basestation/messages.h"
 
+#include "anki/vision/robot/visionMarkerDecisionTrees.h"
 
 #define USE_MATLAB_DETECTION 1
 
 #if USE_MATLAB_DETECTION
 #include "anki/common/robot/matlabInterface.h"
-#endif
+#else
+#include "visionParameters.h"
+#include "anki/vision/robot/fidcuialDetection.h"
+#endif // #if USE_MATLAB_DETECTION
 
 using namespace Anki;
 
@@ -98,6 +102,9 @@ int main(int argc, char **argv)
   // Create a Matlab engine and initialize the path
   Embedded::Matlab matlab(false);
   matlab.EvalStringEcho("run(fullfile('..', '..', '..', '..', 'matlab', 'initCozmoPath'));");
+#else
+  Anki::Cozmo::VisionSystem::DetectFiducialMarkersParameters detectionParams;
+  detectionParams.Initialize();
 #endif
   
   webots::Supervisor webotRobot_;
@@ -290,7 +297,12 @@ int main(int argc, char **argv)
       msg.x_imgLowerRight = x_corners[3]-1.f;
       msg.y_imgLowerRight = y_corners[3]-1.f;
       
-      msg.markerType = static_cast<u16>(mxGetScalar(matlab.GetArray("code")));
+      // Look up unoriented code
+      using namespace Anki;
+      Vision::MarkerType orientedMarkerCode = static_cast<Vision::MarkerType>(mxGetScalar(matlab.GetArray("code"))-1);
+      
+      msg.markerType = static_cast<u16>(Embedded::VisionMarkerDecisionTree::RemoveOrientationLUT[orientedMarkerCode]);
+      
       /*
       mxArray* mxByteArray = matlab.GetArray("byteArray");
       CORETECH_ASSERT(mxGetNumberOfElements(mxByteArray) == VISION_MARKER_CODE_LENGTH);
@@ -302,9 +314,43 @@ int main(int argc, char **argv)
       
     } // for each marker
 #else
-    // TODO: process with embedded vision instead of needing Matlab
-    fprintf(stderr, "Non-matlab detection not implemented yet.\n");
-    return -1;
+    
+    {
+      using namespace Anki::Embedded;
+
+      AnkiAssert(detectionParams.isInitialized);
+      
+      const s32 maxMarkers = markers.get_maximumSize();
+      
+      FixedLengthList<Array<f32> > homographies(maxMarkers, ccmScratch);
+      
+      markers.set_size(maxMarkers);
+      homographies.set_size(maxMarkers);
+      
+      for(s32 i=0; i<maxMarkers; i++) {
+        Array<f32> newArray(3, 3, ccmScratch);
+        homographies[i] = newArray;
+      }
+      
+      const Result result = DetectFiducialMarkers(image,
+                                                  markers,
+                                                  homographies,
+                                                  detectionParams.scaleImage_numPyramidLevels, parameters.scaleImage_thresholdMultiplier,
+                                                  detectionParams.component1d_minComponentWidth, parameters.component1d_maxSkipDistance,
+                                                  detectionParams.component_minimumNumPixels, parameters.component_maximumNumPixels,
+                                                  detectionParams.component_sparseMultiplyThreshold, parameters.component_solidMultiplyThreshold,
+                                                  detectionParams.component_minHollowRatio,
+                                                  detectionParams.quads_minQuadArea, parameters.quads_quadSymmetryThreshold, parameters.quads_minDistanceFromImageEdge,
+                                                  detectionParams.decode_minContrastRatio,
+                                                  detectionParams.maxConnectedComponentSegments,
+                                                  detectionParams.maxExtractedQuads,
+                                                  detectionParams.quadRefinementIterations,
+                                                  false,
+                                                  ccmScratch, onchipScratch, offchipScratch);
+      
+      AnkiAssert(result == RESULT_OK);
+    }
+    
 #endif
     
     // Store the VisionMarkers
@@ -312,9 +358,9 @@ int main(int argc, char **argv)
     for(auto & marker : markers) {
       Json::Value jsonMarker = marker.CreateJson();
       
-      fprintf(stdout, "Creating JSON for marker type %d with corners (%.1f,%.1f), (%.1f,%.1f), "
+      fprintf(stdout, "Creating JSON for marker type %s with corners (%.1f,%.1f), (%.1f,%.1f), "
               "(%.1f,%.1f), (%.1f,%.1f)\n",
-              marker.markerType,
+              Vision::MarkerTypeStrings[marker.markerType],
               marker.x_imgUpperLeft,  marker.y_imgUpperLeft,
               marker.x_imgLowerLeft,  marker.y_imgLowerLeft,
               marker.x_imgUpperRight, marker.y_imgUpperRight,
@@ -337,7 +383,7 @@ int main(int argc, char **argv)
   jsonFile << root.toStyledString();
   jsonFile.close();
   
-  webotRobot_.simulationQuit(RESULT_OK);
+  //webotRobot_.simulationQuit(RESULT_OK);
   
   return 0;
 }
