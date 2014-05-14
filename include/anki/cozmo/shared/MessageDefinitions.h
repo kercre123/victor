@@ -54,8 +54,7 @@ ADD_MESSAGE_MEMBER(f32, rwheel_speed_mmps)
 ADD_MESSAGE_MEMBER(f32, headAngle)
 ADD_MESSAGE_MEMBER(f32, liftAngle)
 ADD_MESSAGE_MEMBER(f32, liftHeight) // TODO: Need this?
-ADD_MESSAGE_MEMBER(u8, isTraversingPath)
-ADD_MESSAGE_MEMBER(u8, isCarryingBlock)
+ADD_MESSAGE_MEMBER(u8, status)  // See RobotStatusFlag
 // ...
 END_MESSAGE_DEFINITION(RobotState)
 

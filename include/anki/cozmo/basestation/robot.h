@@ -78,7 +78,9 @@ namespace Anki {
 
       void SetCarryingBlock(bool t) {isCarryingBlock_ = t;}
       bool IsCarryingBlock() {return isCarryingBlock_;}
-      
+
+      void SetPickingOrPlacing(bool t) {isPickingOrPlacing_ = t;}
+      bool IsPickingOrPlacing() {return isPickingOrPlacing_;}
       
       ///////// Motor commands  ///////////
       
@@ -174,8 +176,8 @@ namespace Anki {
       OperationMode mode, nextMode;
       bool setOperationMode(OperationMode newMode);
       bool isCarryingBlock_;
-      
       bool isTraversingPath_;
+      bool isPickingOrPlacing_;
       
       //std::vector<BlockMarker3d*>  visibleFaces;
       //std::vector<Block*>          visibleBlocks;

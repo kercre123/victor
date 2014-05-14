@@ -64,6 +64,14 @@ namespace Anki {
       
       TM_NUM_TESTS
     } TestMode;
+
+    
+    // Bit flags for RobotState message
+    typedef enum {
+      IS_TRAVERSING_PATH    = 1,
+      IS_CARRYING_BLOCK     = 2,
+      IS_PICKING_OR_PLACING = 4
+    } RobotStatusFlag;
     
   }
 }

@@ -10,8 +10,6 @@ For internal use only. No part of this code may be used without a signed non-dis
 #ifndef _ANKICORETECHEMBEDDED_COMMON_SHARED_UTILITIES_H_
 #define _ANKICORETECHEMBEDDED_COMMON_SHARED_UTILITIES_H_
 
-#define CORETECH_PRINT(...) CoreTechPrint(__VA_ARGS__)
-
 #include <stdarg.h>
 
 namespace Anki

@@ -74,7 +74,7 @@ namespace Anki {
       maxReachableVel_ = sqrt( ((2*accel*fabs(totalDistToTarget_)) + (endVel_*endVel_) + (startVel_*startVel_)) * 0.5f );
       maxReachableVel_ *= direction_;
 #if(DEBUG_VPG)
-      CORETECH_PRINT("VPG new V_max: %f (d = %f)\n", maxReachableVel_, d);
+      CoreTechPrint("VPG new V_max: %f (d = %f)\n", maxReachableVel_, d);
 #endif
     }
     
@@ -100,9 +100,9 @@ namespace Anki {
     currTime_ = 0;
     
 #if(DEBUG_VPG)
-    CORETECH_PRINT("VPG: startVel %f, startPos %f, maxSpeed %f, accel %f\n", startVel_, startPos_, maxVel_, accel_);
-    CORETECH_PRINT("     endVel %f, endPos %f, timestep %f\n", endVel_, endPos_, timeStep_);
-    CORETECH_PRINT("     deltaVel %f, maxReachableVel %f, totalDist %f, decelDistToTarget %f, dir %f\n", deltaVelPerTimeStep_, maxReachableVel_, totalDistToTarget_, decelDistToTarget_, direction_);
+    CoreTechPrint("VPG: startVel %f, startPos %f, maxSpeed %f, accel %f\n", startVel_, startPos_, maxVel_, accel_);
+    CoreTechPrint("     endVel %f, endPos %f, timestep %f\n", endVel_, endPos_, timeStep_);
+    CoreTechPrint("     deltaVel %f, maxReachableVel %f, totalDist %f, decelDistToTarget %f, dir %f\n", deltaVelPerTimeStep_, maxReachableVel_, totalDistToTarget_, decelDistToTarget_, direction_);
 #endif
   }
   
@@ -159,7 +159,7 @@ namespace Anki {
     
     
 #if(DEBUG_VPG)
-    CORETECH_PRINT("VPG::Step() - currVel %f, currPos %f, currDistToTarget %f, isDecel %d\n", currVel_, currPos_, currDistToTarget, isDecel_);
+    CoreTechPrint("VPG::Step() - currVel %f, currPos %f, currDistToTarget %f, isDecel %d\n", currVel_, currPos_, currDistToTarget, isDecel_);
 #endif
     
     

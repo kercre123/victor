@@ -139,6 +139,28 @@ Block1x1 {
     "textures/squarePlusCorners.png"
   ]
 }
+Block1x1 {
+  translation 0.4 0.4 0.022
+  rotation 0 0 1 0.1
+  facemarkerFront [
+    "textures/angryFace.png"
+  ]
+  facemarkerBack [
+    "textures/angryFace.png"
+  ]
+  facemarkerLeft [
+    "textures/angryFace.png"
+  ]
+  facemarkerRight [
+    "textures/angryFace.png"
+  ]
+  facemarkerTop [
+    "textures/angryFace.png"
+  ]
+  facemarkerBottom [
+    "textures/angryFace.png"
+  ]
+}
 
 DEF Cozmo_1 CozmoBot {
   name "CozmoBot_1"
