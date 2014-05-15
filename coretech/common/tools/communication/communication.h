@@ -20,6 +20,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #else
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/select.h>
 #include <netinet/in.h>
 #include <netdb.h>
 #endif
