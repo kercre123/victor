@@ -213,6 +213,7 @@ namespace Anki
 
         const s32 in2Height = in2.get_size(0);
         const s32 in2Width = in2.get_size(1);
+        const s32 in2Stride = in2.get_stride();
 
         AnkiConditionalErrorAndReturnValue(in1Width == in2Height,
           RESULT_FAIL_INVALID_SIZE, "Multiply", "Input matrices are incompatible sizes");
@@ -224,15 +225,42 @@ namespace Anki
           RESULT_FAIL_INVALID_SIZE, "Multiply", "Input and Output matrices are incompatible sizes");
 
         for(s32 y1=0; y1<in1Height; y1++) {
-          const InType * restrict pMat1 = in1.Pointer(y1, 0);
-          OutType * restrict pMatOut = out.Pointer(y1, 0);
+          const InType * restrict pIn1 = in1.Pointer(y1, 0);
+          OutType * restrict pOut = out.Pointer(y1, 0);
 
           for(s32 x2=0; x2<in2Width; x2++) {
-            pMatOut[x2] = 0;
+            const u8 * restrict pIn2 = reinterpret_cast<const u8*>(in2.Pointer(0, x2));
 
-            for(s32 y2=0; y2<in2Height; y2++) {
-              pMatOut[x2] += pMat1[y2] * (*in2.Pointer(y2, x2));
+            OutType accumulator = 0;
+
+            s32 y2;
+            for(y2=0; y2<in2Height-3; y2+=4) {
+              const InType in1_0 = pIn1[y2];
+              const InType in1_1 = pIn1[y2+1];
+              const InType in1_2 = pIn1[y2+2];
+              const InType in1_3 = pIn1[y2+3];
+
+              const InType in2_0 = *reinterpret_cast<const InType*>(pIn2);
+              const InType in2_1 = *reinterpret_cast<const InType*>(pIn2 + in2Stride);
+              const InType in2_2 = *reinterpret_cast<const InType*>(pIn2 + 2*in2Stride);
+              const InType in2_3 = *reinterpret_cast<const InType*>(pIn2 + 3*in2Stride);
+
+              accumulator +=
+                in1_0 * in2_0 +
+                in1_1 * in2_1 +
+                in1_2 * in2_2 +
+                in1_3 * in2_3;
+
+              pIn2 += 4*in2Stride;
             }
+
+            for(; y2<in2Height; y2++) {
+              accumulator += pIn1[y2] * (*reinterpret_cast<const InType*>(pIn2));
+
+              pIn2 += in2Stride;
+            }
+
+            pOut[x2] = accumulator;
           }
         }
 
@@ -258,25 +286,24 @@ namespace Anki
 
         for(s32 y1=0; y1<in1Height; y1++)
         {
-          const InType * restrict pMat1 = in1.Pointer(y1, 0);
+          const InType * restrict pIn1 = in1.Pointer(y1, 0);
 
           for(s32 y2=0; y2<in2TransposedHeight; y2++) {
-            const InType * restrict pMat2 = in2Transposed.Pointer(y2, 0);
-            OutType * restrict pMatOut = out.Pointer(y1, y2);
+            const InType * restrict pIn2 = in2Transposed.Pointer(y2, 0);
 
             OutType accumulator = 0;
 
             s32 x;
             for(x=0; x<in2TransposedWidth-3; x+=4) {
-              const InType in1_0 = pMat1[x];
-              const InType in1_1 = pMat1[x+1];
-              const InType in1_2 = pMat1[x+2];
-              const InType in1_3 = pMat1[x+3];
+              const InType in1_0 = pIn1[x];
+              const InType in1_1 = pIn1[x+1];
+              const InType in1_2 = pIn1[x+2];
+              const InType in1_3 = pIn1[x+3];
 
-              const InType in2_0 = pMat2[x];
-              const InType in2_1 = pMat2[x+1];
-              const InType in2_2 = pMat2[x+2];
-              const InType in2_3 = pMat2[x+3];
+              const InType in2_0 = pIn2[x];
+              const InType in2_1 = pIn2[x+1];
+              const InType in2_2 = pIn2[x+2];
+              const InType in2_3 = pIn2[x+3];
 
               accumulator +=
                 in1_0 * in2_0 +
@@ -286,10 +313,10 @@ namespace Anki
             }
 
             for(; x<in2TransposedWidth; x++) {
-              accumulator += pMat1[x] * pMat2[x];
+              accumulator += pIn1[x] * pIn2[x];
             }
 
-            *pMatOut = accumulator;
+            *out.Pointer(y1, y2) = accumulator;
           }
         }
 
