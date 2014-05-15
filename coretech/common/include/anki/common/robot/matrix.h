@@ -267,34 +267,22 @@ namespace Anki
             OutType accumulator = 0;
 
             s32 x;
-            for(x=0; x<in2TransposedWidth-7; x+=8) {
+            for(x=0; x<in2TransposedWidth-3; x+=4) {
               const InType in1_0 = pMat1[x];
               const InType in1_1 = pMat1[x+1];
               const InType in1_2 = pMat1[x+2];
               const InType in1_3 = pMat1[x+3];
-              const InType in1_4 = pMat1[x+4];
-              const InType in1_5 = pMat1[x+5];
-              const InType in1_6 = pMat1[x+6];
-              const InType in1_7 = pMat1[x+7];
 
               const InType in2_0 = pMat2[x];
               const InType in2_1 = pMat2[x+1];
               const InType in2_2 = pMat2[x+2];
               const InType in2_3 = pMat2[x+3];
-              const InType in2_4 = pMat2[x+4];
-              const InType in2_5 = pMat2[x+5];
-              const InType in2_6 = pMat2[x+6];
-              const InType in2_7 = pMat2[x+7];
 
               accumulator +=
                 in1_0 * in2_0 +
                 in1_1 * in2_1 +
                 in1_2 * in2_2 +
-                in1_3 * in2_3 +
-                in1_4 * in2_4 +
-                in1_5 * in2_5 +
-                in1_6 * in2_6 +
-                in1_7 * in2_7;
+                in1_3 * in2_3;
             }
 
             for(; x<in2TransposedWidth; x++) {
@@ -651,34 +639,16 @@ namespace Anki
           s32 xIn;
           s32 outOffset0 = 0;
 
-          for(xIn=0; xIn<inWidth-7; xIn+=8) {
+          for(xIn=0; xIn<inWidth-1; xIn+=2) {
             const InType in0 = pIn[xIn];
             const InType in1 = pIn[xIn+1];
-            const InType in2 = pIn[xIn+2];
-            const InType in3 = pIn[xIn+3];
-            const InType in4 = pIn[xIn+4];
-            const InType in5 = pIn[xIn+5];
-            const InType in6 = pIn[xIn+6];
-            const InType in7 = pIn[xIn+7];
 
             const s32 outOffset1 = outOffset0 + outStride;
-            const s32 outOffset2 = outOffset1 + outStride;
-            const s32 outOffset3 = outOffset2 + outStride;
-            const s32 outOffset4 = outOffset3 + outStride;
-            const s32 outOffset5 = outOffset4 + outStride;
-            const s32 outOffset6 = outOffset5 + outStride;
-            const s32 outOffset7 = outOffset6 + outStride;
 
             *reinterpret_cast<OutType*>(pOut + outOffset0) = static_cast<OutType>(in0);
             *reinterpret_cast<OutType*>(pOut + outOffset1) = static_cast<OutType>(in1);
-            *reinterpret_cast<OutType*>(pOut + outOffset2) = static_cast<OutType>(in2);
-            *reinterpret_cast<OutType*>(pOut + outOffset3) = static_cast<OutType>(in3);
-            *reinterpret_cast<OutType*>(pOut + outOffset4) = static_cast<OutType>(in4);
-            *reinterpret_cast<OutType*>(pOut + outOffset5) = static_cast<OutType>(in5);
-            *reinterpret_cast<OutType*>(pOut + outOffset6) = static_cast<OutType>(in6);
-            *reinterpret_cast<OutType*>(pOut + outOffset7) = static_cast<OutType>(in7);
 
-            outOffset0 += 8*outStride;
+            outOffset0 += 2*outStride;
           }
 
           for(; xIn<inWidth; xIn++) {
