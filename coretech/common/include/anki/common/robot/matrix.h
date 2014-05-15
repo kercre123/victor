@@ -239,7 +239,7 @@ namespace Anki
         return RESULT_OK;
       } // template<typename InType, typename OutType> Result Multiply(const Array<InType> &in1, const Array<InType> &in2, Array<OutType> &out)
 
-      template<typename InType, typename OutType> Result MultiplyTranspose(const Array<InType> &in1, const Array<InType> &in2Transposed, Array<OutType> &out)
+      template<typename InType, typename OutType> NO_INLINE Result MultiplyTranspose(const Array<InType> &in1, const Array<InType> &in2Transposed, Array<OutType> &out)
       {
         const s32 in1Height = in1.get_size(0);
         const s32 in1Width = in1.get_size(1);
@@ -264,11 +264,44 @@ namespace Anki
             const InType * restrict pMat2 = in2Transposed.Pointer(y2, 0);
             OutType * restrict pMatOut = out.Pointer(y1, y2);
 
-            *pMatOut = 0;
+            OutType accumulator = 0;
 
-            for(s32 x=0; x<in2TransposedWidth; x++) {
-              *pMatOut += pMat1[x] * pMat2[x];
+            s32 x;
+            for(x=0; x<in2TransposedWidth-7; x+=8) {
+              const InType in1_0 = pMat1[x];
+              const InType in1_1 = pMat1[x+1];
+              const InType in1_2 = pMat1[x+2];
+              const InType in1_3 = pMat1[x+3];
+              const InType in1_4 = pMat1[x+4];
+              const InType in1_5 = pMat1[x+5];
+              const InType in1_6 = pMat1[x+6];
+              const InType in1_7 = pMat1[x+7];
+
+              const InType in2_0 = pMat2[x];
+              const InType in2_1 = pMat2[x+1];
+              const InType in2_2 = pMat2[x+2];
+              const InType in2_3 = pMat2[x+3];
+              const InType in2_4 = pMat2[x+4];
+              const InType in2_5 = pMat2[x+5];
+              const InType in2_6 = pMat2[x+6];
+              const InType in2_7 = pMat2[x+7];
+
+              accumulator +=
+                in1_0 * in2_0 +
+                in1_1 * in2_1 +
+                in1_2 * in2_2 +
+                in1_3 * in2_3 +
+                in1_4 * in2_4 +
+                in1_5 * in2_5 +
+                in1_6 * in2_6 +
+                in1_7 * in2_7;
             }
+
+            for(; x<in2TransposedWidth; x++) {
+              accumulator += pMat1[x] * pMat2[x];
+            }
+
+            *pMatOut = accumulator;
           }
         }
 
@@ -462,23 +495,28 @@ namespace Anki
 
         EndBenchmark("EstimateHomography_At");
 
-        BeginBenchmark("EstimateHomography_AtA&Atb");
+        BeginBenchmark("EstimateHomography_AtA");
 
-        Array<Type> AtA(8, 8, scratch);
-        Array<Type> Atb(8, 1, scratch);
+        Array<Type> AtA(8, 8, scratch, Flags::Buffer(false,false,false));
+        Array<Type> Atb(8, 1, scratch, Flags::Buffer(false,false,false));
 
         Matrix::Multiply(At, A, AtA);
-        Matrix::MultiplyTranspose(At, bt, Atb);
 
-        EndBenchmark("EstimateHomography_AtA&Atb");
+        EndBenchmark("EstimateHomography_AtA");
 
         BeginBenchmark("EstimateHomography_Atb");
+
+        Matrix::MultiplyTranspose(At, bt, Atb);
+
+        EndBenchmark("EstimateHomography_Atb");
+
+        BeginBenchmark("EstimateHomography_transposeAtb");
 
         Array<Type> Atbt(1, 8, scratch);
 
         Matrix::Transpose(Atb, Atbt);
 
-        EndBenchmark("EstimateHomography_Atb");
+        EndBenchmark("EstimateHomography_transposeAtb");
 
         BeginBenchmark("EstimateHomography_cholesky");
 
@@ -630,7 +668,7 @@ namespace Anki
             const s32 outOffset5 = outOffset4 + outStride;
             const s32 outOffset6 = outOffset5 + outStride;
             const s32 outOffset7 = outOffset6 + outStride;
-            
+
             *reinterpret_cast<OutType*>(pOut + outOffset0) = static_cast<OutType>(in0);
             *reinterpret_cast<OutType*>(pOut + outOffset1) = static_cast<OutType>(in1);
             *reinterpret_cast<OutType*>(pOut + outOffset2) = static_cast<OutType>(in2);
