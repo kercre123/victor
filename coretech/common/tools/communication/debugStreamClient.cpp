@@ -655,6 +655,18 @@ namespace Anki
       return;
     } // void ProcessRawBuffer()
 
+    static void WaitForOpenSocket(const char * ipAddress, const s32 port, Socket &socket)
+    {
+      while(socket.Open(ipAddress, port) != RESULT_OK) {
+        //CoreTechPrint("Trying again to open socket.\n");
+#ifdef _MSC_VER
+        Sleep(1000);
+#else
+        usleep(1000000);
+#endif
+      }
+    }
+
     ThreadResult DebugStreamClient::ConnectionThread(void *threadParameter)
     {
 #ifdef _MSC_VER
@@ -683,14 +695,7 @@ namespace Anki
       Serial serial;
 
       if(callingObject->isSocket) {
-        while(socket.Open(callingObject->socket_ipAddress, callingObject->socket_port) != RESULT_OK) {
-          //CoreTechPrint("Trying again to open socket.\n");
-#ifdef _MSC_VER
-          Sleep(1000);
-#else
-          usleep(1000000);
-#endif
-        }
+        WaitForOpenSocket(callingObject->socket_ipAddress, callingObject->socket_port, socket);
       } else {
         while(serial.Open(callingObject->serial_comPort, callingObject->serial_baudRate, callingObject->serial_parity, callingObject->serial_dataBits, callingObject->serial_stopBits) != RESULT_OK) {
           //CoreTechPrint("Trying again to open serial.\n");
@@ -709,14 +714,19 @@ namespace Anki
         s32 bytesRead = 0;
 
         if(callingObject->isSocket) {
-          while(socket.Read(usbBuffer, CONNECTION_BUFFER_SIZE-2, bytesRead) != RESULT_OK)
+          Result lastError;
+          while((lastError = socket.Read(usbBuffer, CONNECTION_BUFFER_SIZE-2, bytesRead)) != RESULT_OK)
           {
-            //CoreTechPrint("socket read failure. Retrying...\n");
+            //CoreTechPrint("Socket read error. Attempting to reconnect...\n");
+            if(lastError == RESULT_FAIL_IO_TIMEOUT) {
 #ifdef _MSC_VER
-            Sleep(1);
+              Sleep(1);
 #else
-            usleep(1000);
+              usleep(1000);
 #endif
+            } else {
+              WaitForOpenSocket(callingObject->socket_ipAddress, callingObject->socket_port, socket);
+            }
           }
         } else {
           while(serial.Read(usbBuffer, CONNECTION_BUFFER_SIZE-2, bytesRead) != RESULT_OK)

@@ -211,6 +211,16 @@ Result Socket::Open(
     return RESULT_FAIL_IO; //Couldn't create the socket
   }
 
+  // Set timeout
+  struct timeval tv;
+
+  tv.tv_sec = 5;
+  tv.tv_usec = 0;
+
+  setsockopt(socketHandle, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval));
+
+  // connect
+
   const s32 connectResult = connect(socketHandle, (SOCKADDR *)&target, sizeof(target));
   if (connectResult < 0) {
     return RESULT_FAIL_IO; //Couldn't connect
@@ -234,6 +244,15 @@ Result Socket::Open(
     return RESULT_FAIL_IO; //Couldn't create the socket
   }
 
+  // Set timeout
+  struct timeval tv;
+
+  tv.tv_sec = 1;
+  tv.tv_usec = 0;
+
+  setsockopt(socketHandle, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval));
+
+  // connect
   const s32 connectResult = connect(socketHandle, (struct sockaddr *)&target, sizeof(target));
   if (connectResult < 0) {
     socketHandle = 0;
@@ -242,7 +261,7 @@ Result Socket::Open(
 
 #endif // #ifdef _MSC_VER ... #else
 
-  isOpen = true;
+  this->isOpen = true;
 
   return RESULT_OK;
 } // Result Socket::Open()
@@ -257,6 +276,8 @@ Result Socket::Close()
     shutdown(socketHandle, 2);
 #endif
 
+  this->isOpen = false;
+
   return RESULT_OK;
 } // Result Socket::Close()
 
@@ -264,8 +285,53 @@ Result Socket::Read(void * buffer, s32 bufferLength, s32 &bytesRead)
 {
   bytesRead = recv(socketHandle, reinterpret_cast<char*>(buffer), bufferLength, 0);
 
-  if(bytesRead < 0)
-    return RESULT_FAIL_IO;
+  if(bytesRead < 0) {
+    fd_set fds;
+
+    FD_ZERO(&fds);
+    FD_SET(socketHandle, &fds);
+
+    struct timeval timeout;
+    timeout.tv_sec = 1;
+    timeout.tv_usec = 0;
+
+    const s32 result = select(socketHandle + 1, &fds, NULL, NULL, &timeout);
+
+    if(result <= 0) {
+      this->Close();
+      return RESULT_FAIL_IO;
+    } else {
+      return RESULT_FAIL_IO_TIMEOUT;
+    }
+
+    //printf("");
+
+    /*s32 errorCode;
+    getsockopt(socketHandle, SOL_SOCKET, SO_ERROR, &errorCode, sizeof(errorCode))*/
+
+    //#ifdef _MSC_VER
+    //    const s32 lastError = WSAGetLastError();
+    //
+    //    //printf("Last Error: %d 0x%x\n", lastError, lastError);
+    //
+    //    if(lastError == WSAETIMEDOUT) {
+    //      return RESULT_FAIL_IO_TIMEOUT;
+    //    } else {
+    //      this->Close();
+    //      return RESULT_FAIL_IO;
+    //    }
+    //
+    //#else
+    //    //printf("Last Error: %d 0x%x\n", errno, errno);
+    //
+    //    if(errno == EAGAIN) {
+    //      return RESULT_FAIL_IO_TIMEOUT;
+    //    } else {
+    //      this->Close();
+    //      return RESULT_FAIL_IO;
+    //    }
+    //#endif
+  }
 
   return RESULT_OK;
 } // Result Socket::Read()
