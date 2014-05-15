@@ -449,7 +449,7 @@ namespace Anki
         MemoryStack scratch //!< Scratch memory
         )
       {
-        BeginBenchmark("EstimateHomography_init");
+        //BeginBenchmark("EstimateHomography_init");
 
         const s32 numPoints = originalPoints.get_size();
 
@@ -479,9 +479,9 @@ namespace Anki
 
         Type * restrict pBt = bt.Pointer(0,0);
 
-        EndBenchmark("EstimateHomography_init");
+        //EndBenchmark("EstimateHomography_init");
 
-        BeginBenchmark("EstimateHomography_a&b");
+        //BeginBenchmark("EstimateHomography_a&b");
 
         for(s32 i=0; i<numPoints; i++) {
           Type * restrict A_y1 = A.Pointer(2*i, 0);
@@ -500,40 +500,40 @@ namespace Anki
           pBt[2*i + 1] = xp;
         }
 
-        EndBenchmark("EstimateHomography_a&b");
+        //EndBenchmark("EstimateHomography_a&b");
 
-        BeginBenchmark("EstimateHomography_At");
+        //BeginBenchmark("EstimateHomography_At");
 
         Array<Type> At(2*numPoints, 8, scratch);
 
         Matrix::Transpose(A, At);
 
-        EndBenchmark("EstimateHomography_At");
+        //EndBenchmark("EstimateHomography_At");
 
-        BeginBenchmark("EstimateHomography_AtA");
+        //BeginBenchmark("EstimateHomography_AtA");
 
         Array<Type> AtA(8, 8, scratch, Flags::Buffer(false,false,false));
         Array<Type> Atb(8, 1, scratch, Flags::Buffer(false,false,false));
 
         Matrix::Multiply(At, A, AtA);
 
-        EndBenchmark("EstimateHomography_AtA");
+        //EndBenchmark("EstimateHomography_AtA");
 
-        BeginBenchmark("EstimateHomography_Atb");
+        //BeginBenchmark("EstimateHomography_Atb");
 
         Matrix::MultiplyTranspose(At, bt, Atb);
 
-        EndBenchmark("EstimateHomography_Atb");
+        //EndBenchmark("EstimateHomography_Atb");
 
-        BeginBenchmark("EstimateHomography_transposeAtb");
+        //BeginBenchmark("EstimateHomography_transposeAtb");
 
         Array<Type> Atbt(1, 8, scratch);
 
         Matrix::Transpose(Atb, Atbt);
 
-        EndBenchmark("EstimateHomography_transposeAtb");
+        //EndBenchmark("EstimateHomography_transposeAtb");
 
-        BeginBenchmark("EstimateHomography_cholesky");
+        //BeginBenchmark("EstimateHomography_cholesky");
 
         bool numericalFailure;
 
@@ -553,7 +553,7 @@ namespace Anki
         homography[1][0] = pAtbt[3]; homography[1][1] = pAtbt[4]; homography[1][2] = pAtbt[5];
         homography[2][0] = pAtbt[6]; homography[2][1] = pAtbt[7]; homography[2][2] = static_cast<Type>(1);
 
-        EndBenchmark("EstimateHomography_cholesky");
+        //EndBenchmark("EstimateHomography_cholesky");
 
         return RESULT_OK;
       }
