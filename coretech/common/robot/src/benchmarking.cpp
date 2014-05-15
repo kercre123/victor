@@ -9,6 +9,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/common/robot/benchmarking.h"
 #include "anki/common/robot/utilities.h"
+#include "anki/common/robot/fixedLengthList.h"
 
 #if defined(_MSC_VER)
 #include <windows.h>

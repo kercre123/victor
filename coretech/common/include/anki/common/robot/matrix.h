@@ -16,6 +16,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/array2d.h"
 #include "anki/common/robot/arraySlices.h"
 #include "anki/common/robot/trig_fast.h"
+#include "anki/common/robot/benchmarking.h"
 
 namespace Anki
 {
@@ -102,20 +103,20 @@ namespace Anki
 
         return mean;
       }
-      
+
       template<typename Array_Type, typename Accumulator_Type> Result MeanAndVar(const ConstArraySliceExpression<Array_Type> &mat,
-                                                                                 Accumulator_Type& mean, Accumulator_Type& var)
+        Accumulator_Type& mean, Accumulator_Type& var)
       {
         const Array<Array_Type> &array = mat.get_array();
-        
+
         AnkiConditionalErrorAndReturnValue(array.IsValid(),
-                                           RESULT_FAIL_INVALID_OBJECT, "Matrix::MeanAndVar", "Array<Type> is not valid");
-        
+          RESULT_FAIL_INVALID_OBJECT, "Matrix::MeanAndVar", "Array<Type> is not valid");
+
         const ArraySliceLimits_in1_out0<s32> limits(mat.get_ySlice(), mat.get_xSlice());
-        
+
         AnkiConditionalErrorAndReturnValue(limits.isValid,
-                                           RESULT_FAIL_INVALID_OBJECT, "Matrix::MeanAndVar", "Limits is not valid");
-        
+          RESULT_FAIL_INVALID_OBJECT, "Matrix::MeanAndVar", "Limits is not valid");
+
         Accumulator_Type sum = 0;
         Accumulator_Type sumSq = 0;
         for(s32 y=limits.rawIn1Limits.yStart; y<=limits.rawIn1Limits.yEnd; y+=limits.rawIn1Limits.yIncrement) {
@@ -126,16 +127,14 @@ namespace Anki
             sumSq += val*val;
           }
         }
-        
+
         const Accumulator_Type numElements = static_cast<Accumulator_Type>(mat.get_ySlice().get_size() * mat.get_xSlice().get_size());
 
         mean = sum / numElements;                  // mean = E[x]
         var  = (sumSq / numElements) - (mean*mean);  // var  = E[x^2] - E[x]^2
-        
+
         return RESULT_OK;
-        
       } // template<typename Array_Type, typename Accumulator_Type> Accumulator_Type Sum(const Array<Array_Type> &image)
-      
 
       template<typename InType, typename IntermediateType, typename OutType> Result Add(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out)
       {
@@ -395,14 +394,15 @@ namespace Anki
         return RESULT_OK;
       }
 
-      
-      template<typename Type> Result EstimateHomography(
+      template<typename Type> NO_INLINE Result EstimateHomography(
         const FixedLengthList<Point<Type> > &originalPoints,    //!< Four points in the original coordinate system
         const FixedLengthList<Point<Type> > &transformedPoints, //!< Four points in the transformed coordinate system
         Array<Type> &homography, //!< A 3x3 transformation matrix
         MemoryStack scratch //!< Scratch memory
         )
       {
+        BeginBenchmark("EstimateHomography_init");
+
         const s32 numPoints = originalPoints.get_size();
 
         AnkiConditionalErrorAndReturnValue(originalPoints.IsValid(),
@@ -431,6 +431,10 @@ namespace Anki
 
         Type * restrict pBt = bt.Pointer(0,0);
 
+        EndBenchmark("EstimateHomography_init");
+
+        BeginBenchmark("EstimateHomography_a&b");
+
         for(s32 i=0; i<numPoints; i++) {
           Type * restrict A_y1 = A.Pointer(2*i, 0);
           Type * restrict A_y2 = A.Pointer(2*i + 1, 0);
@@ -448,9 +452,17 @@ namespace Anki
           pBt[2*i + 1] = xp;
         }
 
+        EndBenchmark("EstimateHomography_a&b");
+
+        BeginBenchmark("EstimateHomography_At");
+
         Array<Type> At(2*numPoints, 8, scratch);
 
         Matrix::Transpose(A, At);
+
+        EndBenchmark("EstimateHomography_At");
+
+        BeginBenchmark("EstimateHomography_AtA&Atb");
 
         Array<Type> AtA(8, 8, scratch);
         Array<Type> Atb(8, 1, scratch);
@@ -458,9 +470,17 @@ namespace Anki
         Matrix::Multiply(At, A, AtA);
         Matrix::MultiplyTranspose(At, bt, Atb);
 
+        EndBenchmark("EstimateHomography_AtA&Atb");
+
+        BeginBenchmark("EstimateHomography_Atb");
+
         Array<Type> Atbt(1, 8, scratch);
 
         Matrix::Transpose(Atb, Atbt);
+
+        EndBenchmark("EstimateHomography_Atb");
+
+        BeginBenchmark("EstimateHomography_cholesky");
 
         bool numericalFailure;
 
@@ -479,6 +499,8 @@ namespace Anki
         homography[0][0] = pAtbt[0]; homography[0][1] = pAtbt[1]; homography[0][2] = pAtbt[2];
         homography[1][0] = pAtbt[3]; homography[1][1] = pAtbt[4]; homography[1][2] = pAtbt[5];
         homography[2][0] = pAtbt[6]; homography[2][1] = pAtbt[7]; homography[2][2] = static_cast<Type>(1);
+
+        EndBenchmark("EstimateHomography_cholesky");
 
         return RESULT_OK;
       }
@@ -570,6 +592,8 @@ namespace Anki
         const s32 inHeight = in.get_size(0);
         const s32 inWidth = in.get_size(1);
 
+        const s32 outStride = out.get_stride();
+
         AnkiConditionalErrorAndReturnValue(in.IsValid(),
           RESULT_FAIL_INVALID_OBJECT, "Transpose", "in is not valid");
 
@@ -584,8 +608,43 @@ namespace Anki
 
         for(s32 yIn=0; yIn<inHeight; yIn++) {
           const InType * restrict pIn = in.Pointer(yIn, 0);
-          for(s32 xIn=0; xIn<inWidth; xIn++) {
-            out[xIn][yIn] = static_cast<OutType>(pIn[xIn]);
+          u8 * restrict pOut = reinterpret_cast<u8*>(out.Pointer(0,yIn));
+
+          s32 xIn;
+          s32 outOffset0 = 0;
+
+          for(xIn=0; xIn<inWidth-7; xIn+=8) {
+            const InType in0 = pIn[xIn];
+            const InType in1 = pIn[xIn+1];
+            const InType in2 = pIn[xIn+2];
+            const InType in3 = pIn[xIn+3];
+            const InType in4 = pIn[xIn+4];
+            const InType in5 = pIn[xIn+5];
+            const InType in6 = pIn[xIn+6];
+            const InType in7 = pIn[xIn+7];
+
+            const s32 outOffset1 = outOffset0 + outStride;
+            const s32 outOffset2 = outOffset1 + outStride;
+            const s32 outOffset3 = outOffset2 + outStride;
+            const s32 outOffset4 = outOffset3 + outStride;
+            const s32 outOffset5 = outOffset4 + outStride;
+            const s32 outOffset6 = outOffset5 + outStride;
+            const s32 outOffset7 = outOffset6 + outStride;
+            
+            *reinterpret_cast<OutType*>(pOut + outOffset0) = static_cast<OutType>(in0);
+            *reinterpret_cast<OutType*>(pOut + outOffset1) = static_cast<OutType>(in1);
+            *reinterpret_cast<OutType*>(pOut + outOffset2) = static_cast<OutType>(in2);
+            *reinterpret_cast<OutType*>(pOut + outOffset3) = static_cast<OutType>(in3);
+            *reinterpret_cast<OutType*>(pOut + outOffset4) = static_cast<OutType>(in4);
+            *reinterpret_cast<OutType*>(pOut + outOffset5) = static_cast<OutType>(in5);
+            *reinterpret_cast<OutType*>(pOut + outOffset6) = static_cast<OutType>(in6);
+            *reinterpret_cast<OutType*>(pOut + outOffset7) = static_cast<OutType>(in7);
+
+            outOffset0 += 8*outStride;
+          }
+
+          for(; xIn<inWidth; xIn++) {
+            *out.Pointer(xIn,yIn) = static_cast<OutType>(pIn[xIn]);
           }
         }
 

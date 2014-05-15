@@ -19,7 +19,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define _ANKICORETECHEMBEDDED_COMMON_BENCHMARKING_H_
 
 #include "anki/common/robot/config.h"
-#include "anki/common/robot/fixedLengthList.h"
+#include "anki/common/robot/fixedLengthList_declarations.h"
 
 namespace Anki
 {
