@@ -13,8 +13,8 @@
    "CameraCalibration" : {
       "center_x" : 160.0,
       "center_y" : 120.0,
-      "focalLength_x" : 333.9153442382812,
-      "focalLength_y" : 333.9153442382812,
+      "focalLength_x" : 338.5799865722656,
+      "focalLength_y" : 338.5799865722656,
       "ncols" : 320,
       "nrows" : 240,
       "skew" : 0.0

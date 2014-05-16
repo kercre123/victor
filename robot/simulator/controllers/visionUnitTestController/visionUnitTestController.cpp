@@ -64,7 +64,7 @@ Anki::Vision::CameraCalibration::CameraCalibration(const webots::Camera* camera)
   //f32 fx = width / (2.f * std::tan(0.5f*fov_hor));
   //f32 fy = height / (2.f * std::tan(0.5f*fov_ver));
   //
-  const f32 f = Cozmo::HEAD_CAM_CALIB_FOV;
+  const f32 f = Cozmo::HEAD_CAM_CALIB_FOCAL_LENGTH;
  
  focalLength_x = f;
  focalLength_y = f;
