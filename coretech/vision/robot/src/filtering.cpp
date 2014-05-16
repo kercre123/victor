@@ -156,6 +156,110 @@ namespace Anki
 
         return RESULT_OK;
       } // BoxFilterNormalize()
+
+      Result BoxFilter(const Array<u8> &image, const s32 boxHeight, const s32 boxWidth, Array<u16> &filtered, MemoryStack scratch)
+      {
+        AnkiConditionalErrorAndReturnValue(image.IsValid() && filtered.IsValid(),
+          RESULT_FAIL_INVALID_OBJECT, "BoxFilter", "Image is invalid");
+
+        const s32 imageHeight = image.get_size(0);
+        const s32 imageWidth  = image.get_size(1);
+
+        const s32 boxHeight2 = boxHeight / 2;
+        const s32 boxWidth2 = boxWidth / 2;
+
+        AnkiConditionalErrorAndReturnValue(filtered.get_size(0) == imageHeight && filtered.get_size(1) == imageWidth,
+          RESULT_FAIL_INVALID_SIZE, "BoxFilter", "Output normalized image must match input image's size.");
+
+        AnkiConditionalErrorAndReturnValue(imageWidth%2 == 0,
+          RESULT_FAIL_INVALID_SIZE, "BoxFilter", "Image width must be divisible by 2");
+
+        AnkiConditionalErrorAndReturnValue(boxHeight > 2 && boxWidth > 2 && IsOdd(boxWidth) && IsOdd(boxHeight),
+          RESULT_FAIL_INVALID_SIZE, "BoxFilter", "Box filter must be greater than two and odd");
+
+        AnkiConditionalWarn(boxHeight*boxWidth <= 256,
+          "BoxFilter", "Filtering may overflow");
+
+        s32 y;
+
+        u16 * restrict verticalAccumulator = reinterpret_cast<u16*>( scratch.Allocate(imageWidth*sizeof(u16)) );
+        memset(verticalAccumulator, 0, imageWidth*sizeof(u16));
+
+        // Accumulate a whole boxHeight
+        for(y=0; y<boxHeight; y++) {
+          const u8 * restrict pImage = image.Pointer(y,0);
+          for(s32 x=0; x<imageWidth; x++) {
+            verticalAccumulator[x] += pImage[x];
+          }
+        }
+
+        //
+        // Add the first row to the filtered image
+        //
+
+        filtered(0,boxHeight2-1,0,-1).Set(0);
+
+        {
+          // Grab the pointer to the horizontally negative-offset location in the filtered image
+          u16 * restrict pFiltered = filtered.Pointer(boxHeight2,0) - boxWidth2;
+
+          u16 horizontalAccumulator = 0;
+
+          s32 x;
+          for(x=0; x<boxWidth; x++) {
+            horizontalAccumulator += verticalAccumulator[x];
+          }
+
+          filtered(boxHeight2,boxHeight2,0,boxWidth2-1).Set(0);
+
+          pFiltered[x-1] = horizontalAccumulator;
+
+          for(; x<imageWidth; x++) {
+            horizontalAccumulator += verticalAccumulator[x] - verticalAccumulator[x-boxWidth];
+            pFiltered[x] = horizontalAccumulator;
+          }
+
+          filtered(boxHeight2,boxHeight2,-boxWidth2,-1).Set(0);
+        }
+
+        //
+        // Add the remaining rows to the filtered image
+        //
+
+        for(; y<imageHeight; y++) {
+          // Grab the pointer to the horizontally negative-offset location in the filtered image
+          u16 * restrict pFiltered = filtered.Pointer(y - boxHeight2,0) - boxWidth2;
+
+          const u8 * restrict pImageOld = image.Pointer(y-boxHeight,0);
+          const u8 * restrict pImageNew = image.Pointer(y,0);
+
+          for(s32 x=0; x<imageWidth; x++) {
+            verticalAccumulator[x] += pImageNew[x] - pImageOld[x];
+          }
+
+          u16 horizontalAccumulator = 0;
+
+          s32 x;
+          for(x=0; x<boxWidth; x++) {
+            horizontalAccumulator += verticalAccumulator[x];
+          }
+
+          filtered(y-boxHeight2,y-boxHeight2,0,boxWidth2-1).Set(0);
+
+          pFiltered[x-1] = horizontalAccumulator;
+
+          for(; x<imageWidth; x++) {
+            horizontalAccumulator += verticalAccumulator[x] - verticalAccumulator[x-boxWidth];
+            pFiltered[x] = horizontalAccumulator;
+          }
+
+          filtered(y-boxHeight2,y-boxHeight2,-boxWidth2,-1).Set(0);
+        }
+
+        filtered(-boxHeight2,-1,0,-1).Set(0);
+
+        return RESULT_OK;
+      }
     } // namespace ImageProcessing
   } // namespace Embedded
 } // namespace Anki

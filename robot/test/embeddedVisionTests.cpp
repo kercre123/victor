@@ -9,7 +9,7 @@ Copyright Anki, Inc. 2013
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
 **/
 
-//#define JUST_FIDUCIAL_DETECTION
+#define JUST_FIDUCIAL_DETECTION
 
 #include "anki/common/robot/config.h"
 #include "anki/common/robot/gtestLight.h"
@@ -60,6 +60,144 @@ using namespace Anki;
 using namespace Anki::Embedded;
 
 //#define RUN_FACE_DETECTION_GUI
+
+GTEST_TEST(CoreTech_Vision, BoxFilterU8U16)
+{
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  ASSERT_TRUE(scratchCcm.IsValid());
+
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(scratchOnchip.IsValid());
+
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(scratchOffchip.IsValid());
+
+  InitBenchmarking();
+
+  // Correctness test
+  {
+    PUSH_MEMORY_STACK(scratchCcm);
+    PUSH_MEMORY_STACK(scratchOnchip);
+    PUSH_MEMORY_STACK(scratchOffchip);
+
+    const s32 imageHeight = 5;
+    const s32 imageWidth = 6;
+
+    const s32 boxHeight = 3;
+    const s32 boxWidth = 3;
+
+    Array<u8> image(imageHeight, imageWidth, scratchOffchip);
+
+    for(s32 y=0; y<imageHeight; y++) {
+      for(s32 x=0; x<imageWidth; x++) {
+        image[y][x] = static_cast<u8>(x + y);
+      }
+    }
+
+    Array<u16> filtered(imageHeight, imageWidth, scratchOffchip);
+    filtered.Set(0xFFFF);
+
+    const Result result = ImageProcessing::BoxFilter(image, boxHeight, boxWidth, filtered, scratchOnchip);
+
+    //Matlab matlab(false);
+    //matlab.PutArray(image, "image");
+    //matlab.PutArray(filtered, "filtered");
+
+    Array<u16> filtered_groundTruth(imageHeight, imageWidth, scratchOffchip);
+
+    const u16 filtered_groundTruthData[imageHeight*imageWidth] = {
+      0, 0, 0, 0, 0, 0,
+      0, 18, 27, 36, 45, 0,
+      0, 27, 36, 45, 54, 0,
+      0, 36, 45, 54, 63, 0,
+      0, 0, 0, 0, 0, 0};
+
+    filtered_groundTruth.Set(filtered_groundTruthData, imageHeight*imageWidth);
+
+    ASSERT_TRUE(AreElementwiseEqual<u16>(filtered, filtered_groundTruth));
+
+    ASSERT_TRUE(result == RESULT_OK);
+  } // Correctness test
+
+  // Benchmarking test
+  {
+    PUSH_MEMORY_STACK(scratchCcm);
+    PUSH_MEMORY_STACK(scratchOnchip);
+    PUSH_MEMORY_STACK(scratchOffchip);
+
+    const s32 imageHeight = 120;
+    const s32 imageWidth = 320;
+
+    const s32 boxHeight = 15;
+    const s32 boxWidth = 15;
+
+    Array<u8> image(imageHeight, imageWidth, scratchOnchip);
+
+    for(s32 y=0; y<imageHeight; y++) {
+      for(s32 x=0; x<imageWidth; x++) {
+        image[y][x] = static_cast<u8>(x + y);
+      }
+    }
+
+    Array<u16> filtered(imageHeight, imageWidth, scratchOnchip);
+    filtered.Set(0xFFFF);
+
+    BeginBenchmark("BoxFilter");
+
+    const Result result = ImageProcessing::BoxFilter(image, boxHeight, boxWidth, filtered, scratchOnchip);
+
+    EndBenchmark("BoxFilter");
+
+    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
+
+    ASSERT_TRUE(result == RESULT_OK);
+  } // Benchmarking test
+
+  GTEST_RETURN_HERE;
+}
+
+/*GTEST_TEST(CoreTech_Vision, IntegralImageU16)
+{
+MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+ASSERT_TRUE(scratchCcm.IsValid());
+
+MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+ASSERT_TRUE(scratchOnchip.IsValid());
+
+MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+ASSERT_TRUE(scratchOffchip.IsValid());
+
+const s32 imageHeight = 200;
+const s32 imageWidth = 200;
+
+Array<u8> im(imageHeight, imageWidth, scratchOffchip);
+im.Set(255);
+
+Array<u16> filtered(imageHeight, imageWidth, scratchOffchip);
+
+IntegralImage_u8_u16 ii(im, scratchOffchip);
+
+const s32 averagingWidth = 21;
+const s32 averagingWidth2 = averagingWidth / 2;
+
+for(s32 y=averagingWidth2+1; y<(imageHeight-averagingWidth2-1); y++) {
+for(s32 x=averagingWidth2+1; x<(imageWidth-averagingWidth2-1); x++) {
+filtered[y][x] =
+ii[y+averagingWidth2][x+averagingWidth2] -
+ii[y+averagingWidth2][x-averagingWidth2] +
+ii[y-averagingWidth2][x-averagingWidth2] -
+ii[y-averagingWidth2][x+averagingWidth2];
+}
+}
+
+Matlab matlab(false);
+matlab.PutArray(im, "im");
+matlab.PutArray(filtered, "filtered");
+
+printf("");
+
+GTEST_RETURN_HERE;
+}*/
 
 #if !defined(JUST_FIDUCIAL_DETECTION)
 GTEST_TEST(CoreTech_Vision, Vignetting)
@@ -3926,6 +4064,8 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
 {
   numPassedTests = 0;
   numFailedTests = 0;
+
+  CALL_GTEST_TEST(CoreTech_Vision, BoxFilterU8U16);
 
 #if !defined(JUST_FIDUCIAL_DETECTION)
   CALL_GTEST_TEST(CoreTech_Vision, Vignetting);

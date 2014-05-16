@@ -57,6 +57,8 @@ namespace Anki
       Result BoxFilterNormalize(const Array<u8> &image, const s32 boxSize, const u8 padValue,
         Array<u8> &imageNorm, MemoryStack scratch);
 
+      Result BoxFilter(const Array<u8> &image, const s32 boxHeight, const s32 boxWidth, Array<u16> &filtered, MemoryStack scratch);
+
       //
       // Image resizing
       //
