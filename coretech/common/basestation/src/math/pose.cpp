@@ -184,6 +184,14 @@ namespace Anki {
     return Pose3d(newRotation, newTranslation);
   } // operator*(Pose3d)
   
+  
+  bool Pose3d::operator==(const Pose3d &other) const
+  {
+    return (rotationVector == other.rotationVector &&
+            rotationMatrix == other.rotationMatrix &&
+            translation == other.translation);
+  }
+  
   // Composition: this = other * this
   void Pose3d::preComposeWith(const Pose3d &other)
   {

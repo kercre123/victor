@@ -190,6 +190,7 @@ namespace Anki {
     // Composition with another Pose
     void   operator*=(const Pose3d &other); // in place
     Pose3d operator*(const Pose3d &other) const;
+    bool operator==(const Pose3d &other) const;
     void preComposeWith(const Pose3d &other);
     
     void rotateBy(const Radians& angle); // around existing axis

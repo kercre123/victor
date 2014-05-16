@@ -53,6 +53,8 @@ namespace Anki {
     RotationVector3d(const Vec3f &rvec);
     RotationVector3d(const RotationMatrix3d &rmat);
     
+    bool operator==(const RotationVector3d &other) const;
+    
     // Accessors for angle and axis.  Note that it is more efficient
     // to request both simultaneously if you need both, because the
     // angle must be computed to get the axis anyway.
