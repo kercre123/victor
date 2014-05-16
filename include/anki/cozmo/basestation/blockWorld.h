@@ -84,7 +84,7 @@ namespace Anki
       //static BlockWorld* singletonInstance_;
       
       //BlockWorld(); // protected constructor for singleton
-      
+      bool             isInitialized_;
       RobotManager*    robotMgr_;
       //MessageHandler*  msgHandler_;
       
