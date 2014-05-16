@@ -171,8 +171,8 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(filtered.get_size(0) == imageHeight && filtered.get_size(1) == imageWidth,
           RESULT_FAIL_INVALID_SIZE, "BoxFilter", "Output normalized image must match input image's size.");
 
-        AnkiConditionalErrorAndReturnValue(imageWidth%2 == 0,
-          RESULT_FAIL_INVALID_SIZE, "BoxFilter", "Image width must be divisible by 2");
+        AnkiConditionalErrorAndReturnValue(imageWidth%8 == 0,
+          RESULT_FAIL_INVALID_SIZE, "BoxFilter", "Image width must be divisible by 8");
 
         AnkiConditionalErrorAndReturnValue(boxHeight > 2 && boxWidth > 2 && IsOdd(boxWidth) && IsOdd(boxHeight),
           RESULT_FAIL_INVALID_SIZE, "BoxFilter", "Box filter must be greater than two and odd");
@@ -182,14 +182,27 @@ namespace Anki
 
         s32 y;
 
+        //u16 * restrict verticalAccumulator = reinterpret_cast<u16*>( scratch.Allocate(imageWidth*sizeof(u16)) );
         u16 * restrict verticalAccumulator = reinterpret_cast<u16*>( scratch.Allocate(imageWidth*sizeof(u16)) );
         memset(verticalAccumulator, 0, imageWidth*sizeof(u16));
 
         // Accumulate a whole boxHeight
         for(y=0; y<boxHeight; y++) {
           const u8 * restrict pImage = image.Pointer(y,0);
-          for(s32 x=0; x<imageWidth; x++) {
-            verticalAccumulator[x] += pImage[x];
+          for(s32 x=0; x<imageWidth; x+=8) {
+            const u32 image0123 = *reinterpret_cast<const u32*>(pImage + x);
+            const u32 image4567 = *reinterpret_cast<const u32*>(pImage + x + 4);
+
+            const u32 toAdd01 =  (image0123 & 0xFF)            | ((image0123 & 0xFF00)     << 8);
+            const u32 toAdd23 = ((image0123 & 0xFF0000) >> 16) | ((image0123 & 0xFF000000) >> 8);
+
+            const u32 toAdd45 =  (image4567 & 0xFF)            | ((image4567 & 0xFF00)     << 8);
+            const u32 toAdd67 = ((image4567 & 0xFF0000) >> 16) | ((image4567 & 0xFF000000) >> 8);
+
+            *reinterpret_cast<u32*>(verticalAccumulator + x)     += toAdd01;
+            *reinterpret_cast<u32*>(verticalAccumulator + x + 2) += toAdd23;
+            *reinterpret_cast<u32*>(verticalAccumulator + x + 4) += toAdd45;
+            *reinterpret_cast<u32*>(verticalAccumulator + x + 6) += toAdd67;
           }
         }
 
@@ -233,8 +246,33 @@ namespace Anki
           const u8 * restrict pImageOld = image.Pointer(y-boxHeight,0);
           const u8 * restrict pImageNew = image.Pointer(y,0);
 
-          for(s32 x=0; x<imageWidth; x++) {
-            verticalAccumulator[x] += pImageNew[x] - pImageOld[x];
+          /*for(s32 x=0; x<imageWidth; x++) {
+          verticalAccumulator[x] += pImageNew[x] - pImageOld[x];
+          }*/
+
+          for(s32 x=0; x<imageWidth; x+=4) {
+            const u32 imageNew0123 = *reinterpret_cast<const u32*>(pImageNew + x);
+            //const u32 imageNew4567 = *reinterpret_cast<const u32*>(pImageNew + x + 4);
+
+            const u32 imageOld0123 = *reinterpret_cast<const u32*>(pImageOld + x);
+            //const u32 imageOld4567 = *reinterpret_cast<const u32*>(pImageOld + x + 4);
+
+            const u32 toAdd01 =  (imageNew0123 & 0xFF)            | ((imageNew0123 & 0xFF00)     << 8);
+            const u32 toAdd23 = ((imageNew0123 & 0xFF0000) >> 16) | ((imageNew0123 & 0xFF000000) >> 8);
+
+            //const u32 toAdd45 =  (imageNew4567 & 0xFF)            | ((imageNew4567 & 0xFF00)     << 8);
+            //const u32 toAdd67 = ((imageNew4567 & 0xFF0000) >> 16) | ((imageNew4567 & 0xFF000000) >> 8);
+
+            const u32 toSub01 =  (imageOld0123 & 0xFF)            | ((imageOld0123 & 0xFF00)     << 8);
+            const u32 toSub23 = ((imageOld0123 & 0xFF0000) >> 16) | ((imageOld0123 & 0xFF000000) >> 8);
+
+            //const u32 toSub45 =  (imageOld4567 & 0xFF)            | ((imageOld4567 & 0xFF00)     << 8);
+            //const u32 toSub67 = ((imageOld4567 & 0xFF0000) >> 16) | ((imageOld4567 & 0xFF000000) >> 8);
+
+            *reinterpret_cast<u32*>(verticalAccumulator + x)     += toAdd01 - toSub01;
+            *reinterpret_cast<u32*>(verticalAccumulator + x + 2) += toAdd23 - toSub23;
+            //*reinterpret_cast<u32*>(verticalAccumulator + x + 4) += toAdd45 - toSub45;
+            //*reinterpret_cast<u32*>(verticalAccumulator + x + 6) += toAdd67 - toSub67;
           }
 
           u16 horizontalAccumulator = 0;

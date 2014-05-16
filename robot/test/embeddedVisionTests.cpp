@@ -81,7 +81,7 @@ GTEST_TEST(CoreTech_Vision, BoxFilterU8U16)
     PUSH_MEMORY_STACK(scratchOffchip);
 
     const s32 imageHeight = 5;
-    const s32 imageWidth = 6;
+    const s32 imageWidth = 8;
 
     const s32 boxHeight = 3;
     const s32 boxWidth = 3;
@@ -99,6 +99,8 @@ GTEST_TEST(CoreTech_Vision, BoxFilterU8U16)
 
     const Result result = ImageProcessing::BoxFilter(image, boxHeight, boxWidth, filtered, scratchOnchip);
 
+    //filtered.Print("filtered");
+
     //Matlab matlab(false);
     //matlab.PutArray(image, "image");
     //matlab.PutArray(filtered, "filtered");
@@ -106,13 +108,15 @@ GTEST_TEST(CoreTech_Vision, BoxFilterU8U16)
     Array<u16> filtered_groundTruth(imageHeight, imageWidth, scratchOffchip);
 
     const u16 filtered_groundTruthData[imageHeight*imageWidth] = {
-      0, 0, 0, 0, 0, 0,
-      0, 18, 27, 36, 45, 0,
-      0, 27, 36, 45, 54, 0,
-      0, 36, 45, 54, 63, 0,
-      0, 0, 0, 0, 0, 0};
+      0, 0, 0, 0, 0, 0, 0, 0,
+      0, 18, 27, 36, 45, 54, 63, 0,
+      0, 27, 36, 45, 54, 63, 72, 0,
+      0, 36, 45, 54, 63, 72, 81, 0,
+      0, 0, 0, 0, 0, 0, 0, 0};
 
     filtered_groundTruth.Set(filtered_groundTruthData, imageHeight*imageWidth);
+
+    //filtered_groundTruth.Print("filtered_groundTruth");
 
     ASSERT_TRUE(AreElementwiseEqual<u16>(filtered, filtered_groundTruth));
 
