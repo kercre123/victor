@@ -30,6 +30,8 @@
 
 #include "anki/cozmo/basestation/messages.h"
 
+#include "anki/cozmo/robot/cozmoConfig.h"
+
 #include "anki/vision/robot/visionMarkerDecisionTrees.h"
 
 #define USE_MATLAB_DETECTION 1
@@ -50,21 +52,25 @@ Anki::Vision::CameraCalibration::CameraCalibration(const webots::Camera* camera)
   nrows  = static_cast<u16>(camera->getHeight());
   ncols  = static_cast<u16>(camera->getWidth());
   
-  f32 width  = static_cast<f32>(ncols);
-  f32 height = static_cast<f32>(nrows);
-  f32 aspect = width/height;
+  const f32 width  = static_cast<f32>(ncols);
+  const f32 height = static_cast<f32>(nrows);
+  //f32 aspect = width/height;
   
-  f32 fov_hor = camera->getFov();
-  f32 fov_ver = fov_hor / aspect;
-  
-  f32 fx = width / (2.f * std::tan(0.5f*fov_hor));
-  f32 fy = height / (2.f * std::tan(0.5f*fov_ver));
+  // See sim_hal::FillCameraInfo() for more info
+  //
+  //f32 fov_hor = camera->getFov();
+  //f32 fov_ver = fov_hor / aspect;
+  //
+  //f32 fx = width / (2.f * std::tan(0.5f*fov_hor));
+  //f32 fy = height / (2.f * std::tan(0.5f*fov_ver));
+  //
+  const f32 f = Cozmo::HEAD_CAM_CALIB_FOV;
  
- focalLength_x = fx;
- focalLength_y = fy;
+ focalLength_x = f;
+ focalLength_y = f;
  
- center_x      = 0.5f*width;
- center_y      = 0.5f*height;
+ center.x()    = 0.5f*width;
+ center.y()    = 0.5f*height;
  skew          = 0.f;
 }
 #endif
