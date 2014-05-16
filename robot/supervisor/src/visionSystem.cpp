@@ -421,6 +421,9 @@ namespace Anki {
 
         MatlabVisualization::ResetFiducialDetection(grayscaleImage);
 
+#if USE_MATLAB_DETECTOR
+        const Result result = MatlabVisionProcessor::DetectMarkers(grayscaleImage, markers, homographies, ccmScratch);
+#else
         const Result result = DetectFiducialMarkers(
           grayscaleImage,
           markers,
@@ -437,7 +440,8 @@ namespace Anki {
           parameters.quadRefinementIterations,
           false,
           ccmScratch, onchipScratch, offchipScratch);
-
+#endif
+        
         if(result != RESULT_OK) {
           return result;
         }

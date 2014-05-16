@@ -14,11 +14,17 @@
 
 namespace Anki {
   namespace Cozmo {
+    
     namespace MatlabVisionProcessor {
       
       using namespace Embedded;
       
       Result Initialize();
+      
+      Result DetectMarkers(const Array<u8>& img,
+                           FixedLengthList<VisionMarker>& markers,
+                           FixedLengthList<Array<f32> >& homographies,
+                           MemoryStack scratch);
       
       Result InitTemplate(const Array<u8>& imgFull,
                               const Quadrilateral<f32>& trackingQuad,
