@@ -82,6 +82,18 @@ namespace Anki
       return this->array.IsValid();
     } // bool FixedLengthList<Type>::IsValid() const
 
+    template<typename Type> Result FixedLengthList<Type>::Resize(s32 maximumSize, MemoryStack &memory)
+    {
+      const Result resizeResult = this->array.Resize(1, maximumSize, memory);
+
+      if(resizeResult != RESULT_OK)
+        return resizeResult;
+
+      this->xSlice = LinearSequence<s32>(0, MIN(this->xSlice.get_end(), maximumSize-1));
+
+      return RESULT_OK;
+    }
+
     template<typename Type> Result FixedLengthList<Type>::PushBack(const Type &value)
     {
       const s32 curSize = this->get_size();
