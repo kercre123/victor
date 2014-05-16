@@ -57,6 +57,8 @@ namespace Anki
       const s32 aperture_size,
       MemoryStack scratch)
     {
+      BeginBenchmark("Canny_init");
+
       const s32 imageHeight = src.get_size(0);
       const s32 imageWidth = src.get_size(1);
 
@@ -101,6 +103,10 @@ namespace Anki
 
       u8 **stack_top = &stack[0];
       u8 **stack_bottom = &stack[0];
+
+      EndBenchmark("Canny_init");
+
+      BeginBenchmark("Canny_candidateLoop");
 
       /* sector numbers
       *  (Top-Left Origin)
@@ -220,6 +226,10 @@ __ocv_canny_push:
         mag_buf[2] = _mag;
       }
 
+      EndBenchmark("Canny_candidateLoop");
+
+      BeginBenchmark("Canny_hysteresisLoop");
+
       // now track the edges (hysteresis thresholding)
       while (stack_top > stack_bottom)
       {
@@ -248,6 +258,10 @@ __ocv_canny_push:
         if (!m[mapstep+1])  CANNY_PUSH(m + mapstep + 1);
       }
 
+      EndBenchmark("Canny_hysteresisLoop");
+
+      BeginBenchmark("Canny_finalize");
+
       // the final pass, form the final image
       const u8* pmap = map + mapstep + 1;
       u8* pdst = dst.Pointer(0, 0);
@@ -257,6 +271,8 @@ __ocv_canny_push:
         for (int j = 0; j < imageWidth; j++)
           pdst[j] = (u8)-(pmap[j] >> 1);
       }
+
+      EndBenchmark("Canny_finalize");
 
       return RESULT_OK;
     } // CannyEdgeDetection
