@@ -1,8 +1,13 @@
 #include <mex.h>
 #include <cmath>
 
+#include "anki/common/matlab/mexWrappers.h"
+#include "anki/common/shared/utilities_shared.h"
+
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
+  Anki::SetCoreTechPrintFunctionPtr(mexPrintf);
+
   // ASSUMES data is scaled between 0 and 1
   const double *data = mxGetPr(prhs[0]);
   const int numData = (int) mxGetNumberOfElements(prhs[0]);

@@ -6,6 +6,8 @@
 #include "anki/common/matlab/mexWrappers.h"
 #include "anki/common/robot/matlabInterface.h"
 
+#include "anki/common/shared/utilities_shared.h"
+
 #define VERBOSITY 0
 
 using namespace cv;
@@ -13,6 +15,8 @@ using namespace Anki::Embedded;
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
+  Anki::SetCoreTechPrintFunctionPtr(mexPrintf);
+
   // TODO: Remove these if they aren't needed
   /* Unused
   const mwSize array0_numDimensions = mxGetNumberOfDimensions(prhs[0]);

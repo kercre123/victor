@@ -7,6 +7,9 @@
 
 #include "anki/vision/robot/lucasKanade.h"
 
+#include "anki/common/matlab/mexWrappers.h"
+#include "anki/common/shared/utilities_shared.h"
+
 #define VERBOSITY 0
 
 using namespace Anki::Embedded;
@@ -23,8 +26,9 @@ using namespace Anki::Embedded;
 // newHomography = mexTrackLucasKanade(uint8(templateImage), double(templateRegionRectangle), double(numPyramidLevels), double(transformType), double(ridgeWeight), uint8(nextImage), double(maxIterations), double(convergenceTolerance), double(homography))
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
-
 {
+  Anki::SetCoreTechPrintFunctionPtr(mexPrintf);
+
   AnkiConditionalErrorAndReturn(nrhs == 9 && nlhs == 1, "mexTrackLucasKanade", "Call this function as following: newHomography = mexTrackLucasKanade(uint8(templateImage), double(templateRegionRectangle), double(numPyramidLevels), double(transformType), double(ridgeWeight), uint8(nextImage), double(maxIterations), double(convergenceTolerance), double(homography));");
 
   const s32 bufferSize = 10000000;

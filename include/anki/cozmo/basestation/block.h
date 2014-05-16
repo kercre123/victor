@@ -133,8 +133,9 @@ namespace Anki {
       
       // Same as above, except no code is specified, and all docking points are
       // returned.
+      typedef std::pair<Pose3d,const Vision::KnownMarker&> PoseMarkerPair_t;
       void GetPreDockPoses(const float distance_mm,
-                           std::vector<Pose3d>& poses) const;
+                           std::vector<PoseMarkerPair_t>& poseMarkerPairs) const;
       
       // Projects the box in its current 3D pose (or a given 3D pose) onto the
       // XY plane and returns the corresponding 2D quadrilateral. Scales the

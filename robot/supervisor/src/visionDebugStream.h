@@ -18,6 +18,8 @@ namespace Anki {
         
         Result Initialize();
         
+        Result SendBenchmarksOnly(MemoryStack scratch);
+        
         Result SendFiducialDetection(const Array<u8> &image,
                                          const FixedLengthList<VisionMarker> &markers,
                                          MemoryStack ccmScratch,

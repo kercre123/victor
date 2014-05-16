@@ -9,6 +9,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/vision/robot/connectedComponents.h"
 
+#include "anki/common/robot/benchmarking.h"
+
 namespace Anki
 {
   namespace Embedded
@@ -25,8 +27,8 @@ namespace Anki
 
     void ConnectedComponentSegment::Print() const
     {
-      //printf("[%d: (%d->%d, %d)] ", static_cast<s32>(this->id), static_cast<s32>(this->xStart), static_cast<s32>(this->xEnd), static_cast<s32>(this->y));
-      printf("[%d: (%d->%d, %d)] ", this->id, this->xStart, this->xEnd, this->y);
+      //CoreTechPrint("[%d: (%d->%d, %d)] ", static_cast<s32>(this->id), static_cast<s32>(this->xStart), static_cast<s32>(this->xEnd), static_cast<s32>(this->y));
+      CoreTechPrint("[%d: (%d->%d, %d)] ", this->id, this->xStart, this->xEnd, this->y);
     } // void ConnectedComponentSegment::Print() const
 
     bool ConnectedComponentSegment::operator== (const ConnectedComponentSegment &component2) const
@@ -65,7 +67,7 @@ namespace Anki
             if(numSkipped > maxSkipDistance) {
               const s16 componentWidth = x - componentStart;
               if(componentWidth >= minComponentWidth) {
-                //                printf("one: %d %d\n", componentStart, x-numSkipped);
+                //                CoreTechPrint("one: %d %d\n", componentStart, x-numSkipped);
                 components.PushBack(ConnectedComponentSegment(componentStart, x-numSkipped));
               }
               onComponent = false;
@@ -85,7 +87,7 @@ namespace Anki
       if(onComponent) {
         const s16 componentWidth = binaryImageWidth - componentStart;
         if(componentWidth >= minComponentWidth) {
-          //          printf("two: %d %d\n", componentStart, binaryImageWidth-numSkipped-1);
+          //          CoreTechPrint("two: %d %d\n", componentStart, binaryImageWidth-numSkipped-1);
           components.PushBack(ConnectedComponentSegment(componentStart, binaryImageWidth-numSkipped-1));
         }
       }
@@ -98,11 +100,14 @@ namespace Anki
     {
     }
 
-    ConnectedComponents::ConnectedComponents(const s32 maxComponentSegments, const s32 maxImageWidth, MemoryStack &memory)
+    ConnectedComponents::ConnectedComponents(const u16 maxComponentSegments, const u16 maxImageWidth, MemoryStack &memory)
       : curState(STATE_INVALID), isSortedInId(true), isSortedInY(true), isSortedInX(true), maximumId(0), maxImageWidth(maxImageWidth), maxComponentSegments(maxComponentSegments)
     {
-      AnkiConditionalError(maxComponentSegments > 0 && maxComponentSegments <= u16_MAX,
-        "ConnectedComponents::ConnectedComponents", "maxComponentSegments must be greater than zero and less than 0xFFFF");
+      //AnkiConditionalErrorAndReturn(maxComponentSegments > 0 && maxComponentSegments <= u16_MAX,
+      //  "ConnectedComponents::ConnectedComponents", "maxComponentSegments must be greater than zero and less than 0xFFFF");
+
+      AnkiConditionalErrorAndReturn(maxImageWidth > 0 && maxImageWidth <= s16_MAX,
+        "ConnectedComponents::ConnectedComponents", "maxImageWidth must be less than 0x7FFF");
 
       this->components = FixedLengthList<ConnectedComponentSegment>(maxComponentSegments, memory);
 
@@ -153,12 +158,16 @@ namespace Anki
 
       u16 * restrict pEquivalentComponents = equivalentComponents.Pointer(0);
 
+      BeginBenchmark("e2dc_pr_nextRow_extract");
       ConnectedComponents::Extract1dComponents(binaryImageRow, static_cast<s16>(imageWidth), minComponentWidth, maxSkipDistance, currentComponents1d);
+      EndBenchmark("e2dc_pr_nextRow_extract");
 
       const s32 numCurrentComponents1d = currentComponents1d.get_size();
       const s32 numPreviousComponents1d = previousComponents1d.get_size();
 
       newPreviousComponents1d.set_size(numCurrentComponents1d);
+
+      BeginBenchmark("e2dc_pr_nextRow_mainLoop");
 
       for(s32 iCurrent=0; iCurrent<numCurrentComponents1d; iCurrent++) {
         bool foundMatch = false;
@@ -218,8 +227,14 @@ namespace Anki
         } // if(!foundMatch)
       } // for(s32 iCurrent=0; iCurrent<numCurrentComponents1d; iCurrent++)
 
+      EndBenchmark("e2dc_pr_nextRow_mainLoop");
+
+      BeginBenchmark("e2dc_pr_nextRow_finalize");
+
       // Update previousComponents1d to be newPreviousComponents1d
       Swap(previousComponents1d, newPreviousComponents1d);
+
+      EndBenchmark("e2dc_pr_nextRow_finalize");
 
       return RESULT_OK;
     } // Result ConnectedComponents::Extract2dComponents_PerRow_NextRow(const Array<u8> &binaryImageRow, const s16 minComponentWidth, const s16 maxSkipDistance)

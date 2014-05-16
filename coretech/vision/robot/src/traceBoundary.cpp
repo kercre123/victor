@@ -113,40 +113,60 @@ namespace Anki
 
         AnkiAssert(currentSegment.xStart >= 0);
         for(s32 x=currentSegment.xStart; x<=currentSegment.xEnd; x++) {
-          //edge_top(xStart:xEnd) = min(edge_top(xStart:xEnd), y);
-          //edge_bottom(xStart:xEnd) = max(edge_top(xStart:xEnd), y);
           edge_top[x] = MIN(edge_top[x], currentSegment.y);
           edge_bottom[x] = MAX(edge_bottom[x], currentSegment.y);
 
-          //edge_left(y) = min(edge_left(y), xStart);
-          //edge_right(y) = max(edge_right(y), xEnd);
           edge_left[currentSegment.y] = MIN(edge_left[currentSegment.y], currentSegment.xStart);
           edge_right[currentSegment.y] = MAX(edge_right[currentSegment.y], currentSegment.xEnd);
         } // for(s32 x=currentSegment.xStart; x<=currentSegment.xEnd; x++)
       } // for(s32 iSegment=startComponentIndex; iSegment<=endComponentIndex; iSegment++)
 
-      // TODO: perform this check?
-      //if ~isempty(find(isinf(edge_top), 1)) || ~isempty(find(isinf(edge_bottom), 1)) || ~isempty(find(isinf(edge_left), 1)) || ~isempty(find(isinf(edge_right), 1))
-      //    disp('This should only happen if the component is buggy, but it should probably be either detector or corrected for');
-      //    keyboard
-      //end
-
       //#define PRINT_OUT_EDGE_LIMITS
 #ifdef PRINT_OUT_EDGE_LIMITS
-      printf("  ");
+      CoreTechPrint("  ");
       for(s32 i=0; i<boxWidth;i++){
-        printf("%d ", edge_top[i]);
+        CoreTechPrint("%d ", edge_top[i]);
       }
-      printf("\n");
+      CoreTechPrint("\n");
 
       for(s32 i=0; i<boxHeight;i++){
-        printf("%d                    %d\n", edge_left[i], edge_right[i]);
+        CoreTechPrint("%d                    %d\n", edge_left[i], edge_right[i]);
       }
+      CoreTechPrint("\n");
 
       for(s32 i=0; i<boxWidth;i++){
-        printf("%d ", edge_bottom[i]);
+        CoreTechPrint("%d ", edge_bottom[i]);
       }
+
+      CoreTechPrint("\n");
 #endif // #ifdef PRINT_OUT_EDGE_LIMITS
+
+      // The components are computed with an approximate method. This means that for complex shapes,
+      // it is possible to have non-contiguous components. These checks are for such non-contiguous components.
+      //
+      // It is possible to use a heuristic to compute the boundary of non-continguous components,
+      // but I think they will generally not occur with good, non-occluded fiducial markers.
+      bool isNonContiguous = false;
+
+      for(s32 y=0; y<boxHeight; y++) {
+        if(edge_left[y] == s16_MAX || edge_right[y] == s16_MIN) {
+          //CoreTechPrint("edge_left[%d]=%d edge_right[%d]=%d\n", y, static_cast<s32>(edge_left[y]), y, static_cast<s32>(edge_right[y]));
+          //AnkiWarn("TraceNextExteriorBoundary", "Bad edge");
+          isNonContiguous = true;
+        }
+      }
+
+      for(s32 x=0; x<boxWidth; x++) {
+        if(edge_top[x] == s16_MAX || edge_bottom[x] == s16_MIN) {
+          //CoreTechPrint("edge_top[%d]=%d edge_bottom[%d]=%d\n", x, static_cast<s32>(edge_left[x]), x, static_cast<s32>(edge_right[x]));
+          //AnkiWarn("TraceNextExteriorBoundary", "Bad edge");
+          isNonContiguous = true;
+        }
+      }
+
+      if(isNonContiguous) {
+        return RESULT_OK;
+      }
 
       //boundary = zeros(0, 2);
 

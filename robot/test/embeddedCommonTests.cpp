@@ -35,6 +35,113 @@ For internal use only. No part of this code may be used without a signed non-dis
 using namespace Anki;
 using namespace Anki::Embedded;
 
+GTEST_TEST(CoreTech_Common, RoundUpAndDown)
+{
+  ASSERT_TRUE(RoundUp<u32>(0,1) == 0);
+  ASSERT_TRUE(RoundUp<u32>(1,1) == 1);
+  ASSERT_TRUE(RoundUp<u32>(2,1) == 2);
+  ASSERT_TRUE(RoundUp<u32>(3,1) == 3);
+
+  ASSERT_TRUE(RoundUp<u32>(0,2) == 0);
+  ASSERT_TRUE(RoundUp<u32>(1,2) == 2);
+  ASSERT_TRUE(RoundUp<u32>(2,2) == 2);
+  ASSERT_TRUE(RoundUp<u32>(3,2) == 4);
+
+  ASSERT_TRUE(RoundUp<u32>(0 ,16) == 0);
+  ASSERT_TRUE(RoundUp<u32>(1 ,16) == 16);
+  ASSERT_TRUE(RoundUp<u32>(2 ,16) == 16);
+  ASSERT_TRUE(RoundUp<u32>(3 ,16) == 16);
+  ASSERT_TRUE(RoundUp<u32>(14,16) == 16);
+  ASSERT_TRUE(RoundUp<u32>(15,16) == 16);
+  ASSERT_TRUE(RoundUp<u32>(16,16) == 16);
+  ASSERT_TRUE(RoundUp<u32>(17,16) == 32);
+
+  ASSERT_TRUE(RoundUp<s32>(-3,1) == -3);
+  ASSERT_TRUE(RoundUp<s32>(-2,1) == -2);
+  ASSERT_TRUE(RoundUp<s32>(-1,1) == -1);
+  ASSERT_TRUE(RoundUp<s32>(0 ,1) == 0);
+  ASSERT_TRUE(RoundUp<s32>(1 ,1) == 1);
+  ASSERT_TRUE(RoundUp<s32>(2 ,1) == 2);
+  ASSERT_TRUE(RoundUp<s32>(3 ,1) == 3);
+
+  ASSERT_TRUE(RoundUp<s32>(-3,2) == -2);
+  ASSERT_TRUE(RoundUp<s32>(-2,2) == -2);
+  ASSERT_TRUE(RoundUp<s32>(-1,2) == 0);
+  ASSERT_TRUE(RoundUp<s32>(0 ,2) == 0);
+  ASSERT_TRUE(RoundUp<s32>(1 ,2) == 2);
+  ASSERT_TRUE(RoundUp<s32>(2 ,2) == 2);
+  ASSERT_TRUE(RoundUp<s32>(3 ,2) == 4);
+
+  ASSERT_TRUE(RoundUp<s32>(-17,16) == -16);
+  ASSERT_TRUE(RoundUp<s32>(-16,16) == -16);
+  ASSERT_TRUE(RoundUp<s32>(-15,16) == 0);
+  ASSERT_TRUE(RoundUp<s32>(-14,16) == 0);
+  ASSERT_TRUE(RoundUp<s32>(-3 ,16) == 0);
+  ASSERT_TRUE(RoundUp<s32>(-2 ,16) == 0);
+  ASSERT_TRUE(RoundUp<s32>(-1 ,16) == 0);
+  ASSERT_TRUE(RoundUp<s32>(0  ,16) == 0);
+  ASSERT_TRUE(RoundUp<s32>(1  ,16) == 16);
+  ASSERT_TRUE(RoundUp<s32>(2  ,16) == 16);
+  ASSERT_TRUE(RoundUp<s32>(3  ,16) == 16);
+  ASSERT_TRUE(RoundUp<s32>(14 ,16) == 16);
+  ASSERT_TRUE(RoundUp<s32>(15 ,16) == 16);
+  ASSERT_TRUE(RoundUp<s32>(16 ,16) == 16);
+  ASSERT_TRUE(RoundUp<s32>(17 ,16) == 32);
+
+  ASSERT_TRUE(RoundDown<u32>(0,1) == 0);
+  ASSERT_TRUE(RoundDown<u32>(1,1) == 1);
+  ASSERT_TRUE(RoundDown<u32>(2,1) == 2);
+  ASSERT_TRUE(RoundDown<u32>(3,1) == 3);
+
+  ASSERT_TRUE(RoundDown<u32>(0,2) == 0);
+  ASSERT_TRUE(RoundDown<u32>(1,2) == 0);
+  ASSERT_TRUE(RoundDown<u32>(2,2) == 2);
+  ASSERT_TRUE(RoundDown<u32>(3,2) == 2);
+
+  ASSERT_TRUE(RoundDown<u32>(0 ,16) == 0);
+  ASSERT_TRUE(RoundDown<u32>(1 ,16) == 0);
+  ASSERT_TRUE(RoundDown<u32>(2 ,16) == 0);
+  ASSERT_TRUE(RoundDown<u32>(3 ,16) == 0);
+  ASSERT_TRUE(RoundDown<u32>(14,16) == 0);
+  ASSERT_TRUE(RoundDown<u32>(15,16) == 0);
+  ASSERT_TRUE(RoundDown<u32>(16,16) == 16);
+  ASSERT_TRUE(RoundDown<u32>(17,16) == 16);
+
+  ASSERT_TRUE(RoundDown<s32>(-3,1) == -3);
+  ASSERT_TRUE(RoundDown<s32>(-2,1) == -2);
+  ASSERT_TRUE(RoundDown<s32>(-1,1) == -1);
+  ASSERT_TRUE(RoundDown<s32>(0 ,1) == 0);
+  ASSERT_TRUE(RoundDown<s32>(1 ,1) == 1);
+  ASSERT_TRUE(RoundDown<s32>(2 ,1) == 2);
+  ASSERT_TRUE(RoundDown<s32>(3 ,1) == 3);
+
+  ASSERT_TRUE(RoundDown<s32>(-3,2) == -4);
+  ASSERT_TRUE(RoundDown<s32>(-2,2) == -2);
+  ASSERT_TRUE(RoundDown<s32>(-1,2) == -2);
+  ASSERT_TRUE(RoundDown<s32>(0 ,2) == 0);
+  ASSERT_TRUE(RoundDown<s32>(1 ,2) == 0);
+  ASSERT_TRUE(RoundDown<s32>(2 ,2) == 2);
+  ASSERT_TRUE(RoundDown<s32>(3 ,2) == 2);
+
+  ASSERT_TRUE(RoundDown<s32>(-17,16) == -32);
+  ASSERT_TRUE(RoundDown<s32>(-16,16) == -16);
+  ASSERT_TRUE(RoundDown<s32>(-15,16) == -16);
+  ASSERT_TRUE(RoundDown<s32>(-14,16) == -16);
+  ASSERT_TRUE(RoundDown<s32>(-3 ,16) == -16);
+  ASSERT_TRUE(RoundDown<s32>(-2 ,16) == -16);
+  ASSERT_TRUE(RoundDown<s32>(-1 ,16) == -16);
+  ASSERT_TRUE(RoundDown<s32>(0  ,16) == 0);
+  ASSERT_TRUE(RoundDown<s32>(1  ,16) == 0);
+  ASSERT_TRUE(RoundDown<s32>(2  ,16) == 0);
+  ASSERT_TRUE(RoundDown<s32>(3  ,16) == 0);
+  ASSERT_TRUE(RoundDown<s32>(14 ,16) == 0);
+  ASSERT_TRUE(RoundDown<s32>(15 ,16) == 0);
+  ASSERT_TRUE(RoundDown<s32>(16 ,16) == 16);
+  ASSERT_TRUE(RoundDown<s32>(17 ,16) == 16);
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Common, RoundUpAndDown)
+
 GTEST_TEST(CoreTech_Common, RoundAndSaturate)
 {
   //
@@ -202,7 +309,7 @@ GTEST_TEST(CoreTech_Common, RoundAndSaturate)
   ASSERT_TRUE(saturate_cast<u64>(static_cast<f32>(0XFFFFFF7FFFFFFC00ULL)) == 0xFFFFFF0000000000ULL);
 
   const u64 a = saturate_cast<u64>(static_cast<f32>(0XFFFFFF7FFFFFFFFFULL));
-#ifdef __EDG__
+#if defined(__EDG__) || defined(__APPLE_CC__)
   ASSERT_TRUE(a == 0xFFFFFF0000000000ULL);
 #else
   ASSERT_TRUE(a == 0xFFFFFFFFFFFFFFFFULL);
@@ -253,7 +360,7 @@ GTEST_TEST(CoreTech_Common, RoundAndSaturate)
   ASSERT_TRUE(saturate_cast<s64>(static_cast<f32>(0x7FFFFFBFFFFFFE00LL)) == 0x7FFFFF8000000000LL);
 
   const s64 c = saturate_cast<s64>(static_cast<f32>(0x7FFFFFBFFFFFFE01LL));
-#ifdef __EDG__
+#if defined(__EDG__) || defined(__APPLE_CC__)
   ASSERT_TRUE(c == 0x7FFFFF8000000000LL);
 #else
   ASSERT_TRUE(c == 0x7FFFFFFFFFFFFFFFLL);
@@ -263,7 +370,7 @@ GTEST_TEST(CoreTech_Common, RoundAndSaturate)
   ASSERT_TRUE(saturate_cast<s64>(static_cast<f64>(0x7FFFFFFFFFFFFDFFLL)) == 0x7FFFFFFFFFFFFC00LL);
 
   const s64 d = saturate_cast<s64>(static_cast<f64>(0x7FFFFFFFFFFFFE00LL));
-#ifdef __EDG__
+#if defined(__EDG__) || defined(__APPLE_CC__)
   ASSERT_TRUE(d == 0x7FFFFFFFFFFFFFFFLL);
 #else
   ASSERT_TRUE(d == 0x7FFFFFFFFFFFFC00LL);
@@ -286,7 +393,7 @@ GTEST_TEST(CoreTech_Common, RoundAndSaturate)
   {
   const f64 v = 10e30;
   for(s64 i=0x7ffffffffffffdffLL; i<0x7fffffffffffffffLL; i+=0x1LL) {
-  printf("0x%llx = 0x%llx\n", i, Round<s64>( MIN((f64)i, MAX((f64)0, (f64)v)) ));
+  CoreTechPrint("0x%llx = 0x%llx\n", i, Round<s64>( MIN((f64)i, MAX((f64)0, (f64)v)) ));
   }
   }*/
 
@@ -431,7 +538,7 @@ GTEST_TEST(CoreTech_Common, RoundFloat)
   for(s32 i=0; i<numNumbers; i++) {
     s32s[i] = Round<s32>(f32s[i]);
 
-    //printf("%f = %d\n", f32s[i], s32s[i]);
+    //CoreTechPrint("%f = %d\n", f32s[i], s32s[i]);
     ASSERT_TRUE(s32s[i] == s32s_groundTruth[i]);
   }
 
@@ -533,7 +640,7 @@ GTEST_TEST(CoreTech_Common, CRC32Code)
 
   const u32 crc_groundTruth = 0xF2939FF3;
 
-  printf("CRC code: 0x%x\n", crc);
+  CoreTechPrint("CRC code: 0x%x\n", crc);
 
   ASSERT_TRUE(crc == crc_groundTruth);
 
@@ -551,7 +658,7 @@ GTEST_TEST(CoreTech_Common, MemoryStackIterator)
   ////Anki::Cozmo::HAL::USBPutChar('\n');
   ////Anki::Cozmo::HAL::USBPutChar('\n');
   ////Anki::Cozmo::HAL::USBPutChar('\n');
-  ////printf("\n\n\n\n");
+  ////CoreTechPrint("\n\n\n\n");
 
   //Anki::Cozmo::HAL::USBSendBuffer(reinterpret_cast<u8*>(&buffer[0]), 100*sizeof(u32));
 
@@ -2324,9 +2431,9 @@ GTEST_TEST(CoreTech_Common, SliceArrayCompileTest)
 
   ASSERT_TRUE(slice2.get_array().IsValid());
 
-  //printf("%d %d %d\n", slice1.get_xSlice().get_start(), slice1.get_xSlice().get_end(), *slice1.get_array().Pointer(0,0));
-  //printf("%d %d %d\n", slice1b.get_xSlice().get_start(), slice1b.get_xSlice().get_end(), *slice1b.get_array().Pointer(0,0));
-  //printf("%d %d %d\n", slice2.get_xSlice().get_start(), slice2.get_xSlice().get_end(), *slice2.get_array().Pointer(0,0));
+  //CoreTechPrint("%d %d %d\n", slice1.get_xSlice().get_start(), slice1.get_xSlice().get_end(), *slice1.get_array().Pointer(0,0));
+  //CoreTechPrint("%d %d %d\n", slice1b.get_xSlice().get_start(), slice1b.get_xSlice().get_end(), *slice1b.get_array().Pointer(0,0));
+  //CoreTechPrint("%d %d %d\n", slice2.get_xSlice().get_start(), slice2.get_xSlice().get_end(), *slice2.get_array().Pointer(0,0));
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Common, SliceArrayCompileTest)
@@ -2443,7 +2550,7 @@ GTEST_TEST(CoreTech_Common, LinearSequence)
 
   for(s32 i=0; i<15; i++) {
     LinearSequence<s32> sequence(sequenceLimits1[i][0], sequenceLimits1[i][1], sequenceLimits1[i][2]);
-    //printf("A %d) %d %d\n", i, sequence.get_size(), length1_groundTruth[i]);
+    //CoreTechPrint("A %d) %d %d\n", i, sequence.get_size(), length1_groundTruth[i]);
     ASSERT_TRUE(sequence.get_size() == length1_groundTruth[i]);
   }
 
@@ -2459,7 +2566,7 @@ GTEST_TEST(CoreTech_Common, LinearSequence)
 
   for(s32 i=0; i<25; i++) {
     LinearSequence<f32> sequence(sequenceLimits2[i][0], sequenceLimits2[i][1], sequenceLimits2[i][2]);
-    //printf("B %d) %d %d\n", i, sequence.get_size(), length2_groundTruth[i]);
+    //CoreTechPrint("B %d) %d %d\n", i, sequence.get_size(), length2_groundTruth[i]);
     ASSERT_TRUE(sequence.get_size() == length2_groundTruth[i]);
   }
 
@@ -2522,7 +2629,7 @@ GTEST_TEST(CoreTech_Common, LinearSequence)
 
 GTEST_TEST(CoreTech_Common, MemoryStackId)
 {
-  //printf("%f %f %f %f %f\n", 43423442334324.010203, 15.500, 15.0, 0.05, 0.12004333);
+  //CoreTechPrint("%f %f %f %f %f\n", 43423442334324.010203, 15.500, 15.0, 0.05, 0.12004333);
 
   const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 5000);
   ASSERT_TRUE(offchipBuffer != NULL);
@@ -2895,49 +3002,49 @@ GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
   // Check that the templated OpenCV matrix works
   {
     cv::Mat_<s16> &simpleArray_cvMat = simpleArray.get_CvMat_();
-    printf("simpleArray(2,0) = %d\n", *simpleArray.Pointer(2,0));
-    printf("simpleArray_cvMat(2,0) = %d\n", simpleArray_cvMat(2,0));
+    CoreTechPrint("simpleArray(2,0) = %d\n", *simpleArray.Pointer(2,0));
+    CoreTechPrint("simpleArray_cvMat(2,0) = %d\n", simpleArray_cvMat(2,0));
 
     ASSERT_EQ(7, *simpleArray.Pointer(2,0));
     ASSERT_EQ(7, simpleArray_cvMat(2,0));
 
-    printf("Setting OpenCV matrix\n");
+    CoreTechPrint("Setting OpenCV matrix\n");
     simpleArray_cvMat(2,0) = 100;
-    printf("simpleArray(2,0) = %d\n", *simpleArray.Pointer(2,0));
+    CoreTechPrint("simpleArray(2,0) = %d\n", *simpleArray.Pointer(2,0));
 
-    printf("simpleArray_cvMat(2,0) = %d\n", simpleArray_cvMat(2,0));
+    CoreTechPrint("simpleArray_cvMat(2,0) = %d\n", simpleArray_cvMat(2,0));
     ASSERT_EQ(100, *simpleArray.Pointer(2,0));
     ASSERT_EQ(100, simpleArray_cvMat(2,0));
 
-    printf("Setting CoreTech_Common matrix\n");
+    CoreTechPrint("Setting CoreTech_Common matrix\n");
     *simpleArray.Pointer(2,0) = 42;
-    printf("simpleArray(2,0) = %d\n", *simpleArray.Pointer(2,0));
-    printf("simpleArray_cvMat(2,0) = %d\n", simpleArray_cvMat(2,0));
+    CoreTechPrint("simpleArray(2,0) = %d\n", *simpleArray.Pointer(2,0));
+    CoreTechPrint("simpleArray_cvMat(2,0) = %d\n", simpleArray_cvMat(2,0));
     ASSERT_EQ(42, *simpleArray.Pointer(2,0));
     ASSERT_EQ(42, simpleArray_cvMat(2,0));
   }
 
-  printf("\n\n");
+  CoreTechPrint("\n\n");
 
   // Check that the non-templated OpenCV matrix works
   {
     cv::Mat &simpleArray_cvMat = simpleArray.get_CvMat_();
-    printf("simpleArray(2,0) = %d\n", *simpleArray.Pointer(2,0));
-    printf("simpleArray_cvMat(2,0) = %d\n", simpleArray_cvMat.at<s16>(2,0));
+    CoreTechPrint("simpleArray(2,0) = %d\n", *simpleArray.Pointer(2,0));
+    CoreTechPrint("simpleArray_cvMat(2,0) = %d\n", simpleArray_cvMat.at<s16>(2,0));
     ASSERT_EQ(42, *simpleArray.Pointer(2,0));
     ASSERT_EQ(42, simpleArray_cvMat.at<s16>(2,0));
 
-    printf("Setting OpenCV matrix\n");
+    CoreTechPrint("Setting OpenCV matrix\n");
     simpleArray_cvMat.at<s16>(2,0) = 300;
-    printf("simpleArray(2,0) = %d\n", *simpleArray.Pointer(2,0));
-    printf("simpleArray_cvMat(2,0) = %d\n", simpleArray_cvMat.at<s16>(2,0));
+    CoreTechPrint("simpleArray(2,0) = %d\n", *simpleArray.Pointer(2,0));
+    CoreTechPrint("simpleArray_cvMat(2,0) = %d\n", simpleArray_cvMat.at<s16>(2,0));
     ASSERT_EQ(300, *simpleArray.Pointer(2,0));
     ASSERT_EQ(300, simpleArray_cvMat.at<s16>(2,0));
 
-    printf("Setting CoreTech_Common matrix\n");
+    CoreTechPrint("Setting CoreTech_Common matrix\n");
     *simpleArray.Pointer(2,0) = 90;
-    printf("simpleArray(2,0) = %d\n", *simpleArray.Pointer(2,0));
-    printf("simpleArray_cvMat(2,0) = %d\n", simpleArray_cvMat.at<s16>(2,0));
+    CoreTechPrint("simpleArray(2,0) = %d\n", *simpleArray.Pointer(2,0));
+    CoreTechPrint("simpleArray_cvMat(2,0) = %d\n", simpleArray_cvMat.at<s16>(2,0));
     ASSERT_EQ(90, *simpleArray.Pointer(2,0));
     ASSERT_EQ(90, simpleArray_cvMat.at<s16>(2,0));
   }
@@ -2963,7 +3070,7 @@ GTEST_TEST(CoreTech_Common, ArraySpecifiedClass)
 
   simpleArray.SetCast<s32>(imgData, ArraySpecifiedClass_imgDataLength);
 
-  printf("*simpleArray.Pointer(0,0) = %d\n", *simpleArray.Pointer(0,0));
+  CoreTechPrint("*simpleArray.Pointer(0,0) = %d\n", *simpleArray.Pointer(0,0));
 
   simpleArray.Print("simpleArray");
 
@@ -3021,6 +3128,9 @@ GTEST_TEST(CoreTech_Common, MemoryStackAlignment)
 #ifdef TEST_BENCHMARKING
 GTEST_TEST(CoreTech_Common, Benchmarking)
 {
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(scratchOffchip.IsValid());
+
   InitBenchmarking();
 
   BeginBenchmark("testOuterSpace");
@@ -3056,9 +3166,9 @@ GTEST_TEST(CoreTech_Common, Benchmarking)
 
   EndBenchmark("testOuterSpace");
 
-  ComputeAndPrintBenchmarkResults(true, true);
+  ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
-  printf("Done with benchmarking test\n");
+  CoreTechPrint("Done with benchmarking test\n");
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Common, Benchmarking)
@@ -3070,7 +3180,7 @@ GTEST_TEST(CoreTech_Common, SimpleMatlabTest1)
   matlab.EvalStringEcho("simpleVector = double([1.1,2.1,3.1,4.1,5.1]);");
   double *simpleVector = matlab.Get<double>("simpleVector");
 
-  printf("simple vector:\n%f %f %f %f %f\n", simpleVector[0], simpleVector[1], simpleVector[2], simpleVector[3], simpleVector[4]);
+  CoreTechPrint("simple vector:\n%f %f %f %f %f\n", simpleVector[0], simpleVector[1], simpleVector[2], simpleVector[3], simpleVector[4]);
 
   ASSERT_EQ(1.1, simpleVector[0]);
   ASSERT_EQ(2.1, simpleVector[1]);
@@ -3092,7 +3202,7 @@ GTEST_TEST(CoreTech_Common, SimpleMatlabTest2)
 
   matlab.EvalStringEcho("simpleArray = int16([1,2,3,4,5;6,7,8,9,10]);");
   Array<s16> simpleArray = matlab.GetArray<s16>("simpleArray", ms);
-  printf("simple matrix:\n");
+  CoreTechPrint("simple matrix:\n");
   simpleArray.Print();
 
   ASSERT_EQ(1, *simpleArray.Pointer(0,0));
@@ -3132,7 +3242,7 @@ GTEST_TEST(CoreTech_Common, SimpleOpenCVTest)
 
   cv::GaussianBlur(src, dst, ksize, sigma, sigma, cv::BORDER_REFLECT_101);
 
-  printf("%f %f\n%f %f\n%f %f\n",
+  CoreTechPrint("%f %f\n%f %f\n%f %f\n",
     src.at<double>(50, 0), src.at<double>(50, 1), *( ((double*)src.data) + 50*6), *( ((double*)src.data) + 50*6 + 1), dst.at<double>(50, 0), dst.at<double>(50, 1));
   /*std::cout << src.at<double>(50, 0) << " "
   << src.at<double>(50, 1) << "\n"
@@ -3156,6 +3266,7 @@ s32 RUN_ALL_COMMON_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   numPassedTests = 0;
   numFailedTests = 0;
 
+  CALL_GTEST_TEST(CoreTech_Common, RoundUpAndDown);
   CALL_GTEST_TEST(CoreTech_Common, RoundAndSaturate);
   CALL_GTEST_TEST(CoreTech_Common, RunLengthEncode);
   CALL_GTEST_TEST(CoreTech_Common, IsConvex);

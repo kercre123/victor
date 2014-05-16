@@ -141,9 +141,10 @@ namespace Anki {
         // The width of the marker
         const f32 BLOCK_MARKER_WIDTH = DEFAULT_BLOCK_MARKER_WIDTH_MM;
         
-        // Whether the PICK_UP block is on ground level (0) or on top of another block (1).
-        // If 1, the place part of this test will just the block on the ground.
-        const u8 BLOCK_TO_PICK_UP_LEVEL = 0;
+        // This pick up action depends on whether the block is expected to be on
+        // the ground or on top of another block.
+        // If DA_PICKUP_HIGH, the place part of this test will just the block on the ground.
+        const DockAction_t PICKUP_ACTION = DA_PICKUP_HIGH;
         ////// End of PickAndPlaceTest ////
         
         
@@ -216,16 +217,16 @@ namespace Anki {
           case PAP_WAITING_FOR_PICKUP_BLOCK:
           {
             PRINT("PAPT: Docking to block %d\n", BLOCK_TO_PICK_UP);
-            PickAndPlaceController::PickUpBlock(BLOCK_TO_PICK_UP, BLOCK_MARKER_WIDTH, BLOCK_TO_PICK_UP_LEVEL);
+            PickAndPlaceController::DockToBlock(BLOCK_TO_PICK_UP, BLOCK_MARKER_WIDTH, PICKUP_ACTION);
             pickAndPlaceState_ = PAP_DOCKING;
             break;
           }
           case PAP_DOCKING:
             if (!PickAndPlaceController::IsBusy()) {
               if (PickAndPlaceController::DidLastActionSucceed()) {
-                if (BLOCK_TO_PICK_UP_LEVEL == 0) {
+                if (PICKUP_ACTION == DA_PICKUP_LOW) {
                   PRINT("PAPT: Placing on other block %d\n", BLOCK_TO_PLACE_ON);
-                  PickAndPlaceController::PlaceOnBlock(BLOCK_TO_PLACE_ON, 0, 0);
+                  PickAndPlaceController::DockToBlock(BLOCK_TO_PICK_UP, BLOCK_MARKER_WIDTH, DA_PLACE_HIGH);
                 } else {
                   PRINT("PAPT: Placing on ground\n");
                   PickAndPlaceController::PlaceOnGround();
@@ -242,8 +243,8 @@ namespace Anki {
                 PRINT("PAPT: Success\n");
                 pickAndPlaceState_ = PAP_WAITING_FOR_PICKUP_BLOCK;
               } else {
-                if (BLOCK_TO_PICK_UP_LEVEL == 0) {
-                  PickAndPlaceController::PlaceOnBlock(BLOCK_TO_PLACE_ON, 0, 0);
+                if (PICKUP_ACTION == DA_PICKUP_LOW) {
+                  PickAndPlaceController::DockToBlock(BLOCK_TO_PICK_UP, BLOCK_MARKER_WIDTH, DA_PLACE_HIGH);
                   //pickAndPlaceState_ = PAP_PLACING;
                 } else {
                   PickAndPlaceController::PlaceOnGround();

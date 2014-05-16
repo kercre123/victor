@@ -159,7 +159,7 @@ namespace Anki
           break;
         }
 
-        //printf("%d) %d %x %x\n", index, state, rawBufferU8[index], SERIALIZED_BUFFER_FOOTER[state]);
+        //CoreTechPrint("%d) %d %x %x\n", index, state, rawBufferU8[index], SERIALIZED_BUFFER_FOOTER[state]);
 
         if(reinterpret_cast<const u8*>(rawBuffer)[index] == SERIALIZED_BUFFER_FOOTER[state]) {
           state++;

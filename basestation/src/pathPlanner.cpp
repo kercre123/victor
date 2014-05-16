@@ -13,9 +13,9 @@
 #include "anki/common/basestation/general.h"
 //#include "anki/cozmo/robot/cozmoConfig.h"
 
-#define DUBINS_TARGET_SPEED_MMPS 100
+#define DUBINS_TARGET_SPEED_MMPS 50
 #define DUBINS_ACCEL_MMPS2 200
-#define DUBINS_DECEL_MMPS2 500
+#define DUBINS_DECEL_MMPS2 200
 
 #define DUBINS_START_RADIUS_MM 50
 #define DUBINS_END_RADIUS_MM 50
@@ -30,9 +30,38 @@ namespace Anki {
       Vec3f startPt = startPose.get_translation();
       f32 startAngle = startPose.get_rotationAngle().ToFloat(); // Assuming robot is not tilted
       
+      // Currently, we can only deal with rotations around (0,0,1) or (0,0,-1).
+      // If it's something else, then quit.
+      // TODO: Something smarter?
+      Vec3f rotAxis = startPose.get_rotationAxis();
+      if (!FLT_NEAR(rotAxis.x(), 0.f) || !FLT_NEAR(rotAxis.y(), 0.f) || !FLT_NEAR(ABS(rotAxis.z()), 1.f)) {
+        PRINT_NAMED_ERROR("PathPlanner.GetPlan.NonZAxisRot_start",
+                          "GetPlan() does not support rotations around anything other than z-axis (%f %f %f)\n",
+                          rotAxis.x(), rotAxis.y(), rotAxis.z());
+        return RESULT_FAIL;
+      }
+      if (FLT_NEAR(rotAxis.z(), -1.f)) {
+        startAngle *= -1;
+      }
+      
+      
       Vec3f targetPt = targetPose.get_translation();
       f32 targetAngle = targetPose.get_rotationAngle().ToFloat(); // Assuming robot is not tilted
-      
+
+      // Currently, we can only deal with rotations around (0,0,1) or (0,0,-1).
+      // If it's something else, then quit.
+      // TODO: Something smarter?
+      rotAxis = targetPose.get_rotationAxis();
+      if (!FLT_NEAR(rotAxis.x(), 0.f) || !FLT_NEAR(rotAxis.y(), 0.f) || !FLT_NEAR(ABS(rotAxis.z()), 1.f)) {
+        PRINT_NAMED_ERROR("PathPlanner.GetPlan.NonZAxisRot_target",
+                          "GetPlan() does not support rotations around anything other than z-axis (%f %f %f)\n",
+                          rotAxis.x(), rotAxis.y(), rotAxis.z());
+        return RESULT_FAIL;
+      }
+      if (FLT_NEAR(rotAxis.z(), -1.f)) {
+        targetAngle *= -1;
+      }
+
 
       if (Planning::GenerateDubinsPath(path,
                                        startPt.x(), startPt.y(), startAngle,

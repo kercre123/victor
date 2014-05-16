@@ -20,6 +20,8 @@
 
 #include "anki/common/types.h"
 #include "anki/vision/MarkerCodeDefinitions.h"
+#include "anki/common/robot/geometry_declarations.h"
+#include "anki/cozmo/shared/cozmoTypes.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -53,16 +55,21 @@ namespace Anki {
       bool IsCarryingBlock();
       bool DidLastActionSucceed();
 
-      // Picks up block with the specified marker.
-      // level: 0 = block is at same height as robot (i.e. robot floor height)
-      //        1 = block is at one block height above robot floor height.
-      void PickUpBlock(const Vision::MarkerType blockID, const f32 markerWidth_mm, const u8 level);
       
-      // Places the block that is currently being carried on the block with the
-      // specified marker, and backs out.
-      void PlaceOnBlock(const Vision::MarkerType blockID,
-                        const f32 horizontal_offset, const f32 angular_offset);
-
+      // Picks up the specified block, or places the block in hand on top of the specified block
+      // depending on the specified action.
+      void DockToBlock(const Vision::MarkerType blockID,
+                       const f32 markerWidth_mm,
+                       const DockAction_t action);
+      
+      // Same as above except docking will only occur if the specified marker is found
+      // at the specified image coordinates within pixelSearchRadius
+      void DockToBlock(const Vision::MarkerType blockMarker,
+                       const f32 markerWidth_mm,
+                       const Embedded::Point2f& markerCenter,
+                       const f32 pixelSearchRadius,
+                       const DockAction_t action);
+       
       // Places block on ground and backs out.
       void PlaceOnGround();
       

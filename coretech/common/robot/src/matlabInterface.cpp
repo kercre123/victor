@@ -134,35 +134,34 @@ namespace Anki
       return std::string("unknown");
     } // std::string convertToMatlabTypeString(const char *typeName, size_t byteDepth)
 
-    
     template<> mxClassID Matlab::GetMatlabClassID<u8>() {
       return mxUINT8_CLASS;
     }
-    
+
     template<> mxClassID Matlab::GetMatlabClassID<u16>() {
       return mxUINT16_CLASS;
     }
-    
+
     template<> mxClassID Matlab::GetMatlabClassID<s16>() {
       return mxINT16_CLASS;
     }
-    
+
     template<> mxClassID Matlab::GetMatlabClassID<s32>() {
       return mxINT32_CLASS;
     }
-    
+
     template<> mxClassID Matlab::GetMatlabClassID<u32>() {
       return mxUINT32_CLASS;
     }
-    
+
     template<> mxClassID Matlab::GetMatlabClassID<f32>() {
       return mxSINGLE_CLASS;
     }
-    
+
     template<> mxClassID Matlab::GetMatlabClassID<f64>() {
       return mxDOUBLE_CLASS;
     }
-    
+
     Matlab::Matlab(bool clearWorkspace)
     {
       // Multithreading under Windows requires this command
@@ -356,7 +355,7 @@ namespace Anki
           mismatch = false;
         }
       } else {
-        printf("Error: Class ID not supported for %s\n", name.data());
+        CoreTechPrint("Error: Class ID not supported for %s\n", name.data());
         EvalString("clear %s;", tmpName);
         return -1;
       }
@@ -364,7 +363,7 @@ namespace Anki
       mxDestroyArray(arrayTmp);
 
       if(mismatch) {
-        printf("Error: Class mismatch for %s\n", name.data());
+        CoreTechPrint("Error: Class mismatch for %s\n", name.data());
         EvalString("clear %s;", tmpName);
         return -1;
       }
@@ -387,7 +386,7 @@ namespace Anki
       mwSize nDims = mxGetNumberOfDimensions(arrayTmp);
 
       if(nDims != 2) {
-        printf("Error: Matrix %s must be 2D\n", name.data());
+        CoreTechPrint("Error: Matrix %s must be 2D\n", name.data());
         return matrix;
       }
 
@@ -415,7 +414,7 @@ namespace Anki
         matrix = cvCreateMat((int)dims[1], (int)dims[0], CV_32S);
         for(int i = 0; i<(int)size; i++) { matrix->data.i[i] = valTmp[i]; }
       } else {
-        printf("Error: Class ID not supported for %s\n", name.data());
+        CoreTechPrint("Error: Class ID not supported for %s\n", name.data());
         EvalString("clear %s;", tmpName);
         return matrix;
       }
@@ -467,13 +466,13 @@ namespace Anki
           mismatch = false;
         }
       } else {
-        printf("Error: Class ID not supported for %s\n", name.data());
+        CoreTechPrint("Error: Class ID not supported for %s\n", name.data());
         EvalString("clear %s;", tmpName);
         return -1;
       }
 
       if(mismatch) {
-        printf("Error: Class mismatch for %s\n", name.data());
+        CoreTechPrint("Error: Class mismatch for %s\n", name.data());
         EvalString("clear %s;", tmpName);
         return -1;
       }

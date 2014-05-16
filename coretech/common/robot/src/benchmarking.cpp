@@ -223,7 +223,7 @@ namespace Anki
 
       Snprint(buffer, bufferLength, verbose, microseconds, minCharacterToPrint);
 
-      printf(buffer);
+      CoreTechPrint(buffer);
     }
 
     class CompileBenchmarkResults
@@ -235,7 +235,7 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(numBenchmarkEvents > 0 && numBenchmarkEvents < MAX_BENCHMARK_EVENTS,
           FixedLengthList<BenchmarkElement>(), "ComputeBenchmarkResults", "Invalid numBenchmarkEvents");
 
-        FixedLengthList<BenchmarkElement> outputResults(numBenchmarkEvents, memory, Flags::Buffer(false, false, false));
+        FixedLengthList<BenchmarkElement> outputResults(numBenchmarkEvents/2, memory, Flags::Buffer(false, false, false));
 
 #if defined(_MSC_VER)
         LARGE_INTEGER frequency;
@@ -247,9 +247,9 @@ namespace Anki
         {
           PUSH_MEMORY_STACK(memory);
 
-          FixedLengthList<BasicBenchmarkElement> basicOutputResults(numBenchmarkEvents, memory, Flags::Buffer(false, false, false));
-          FixedLengthList<BenchmarkInstance> fullList(numBenchmarkEvents, memory, Flags::Buffer(false, false, false));
-          FixedLengthList<BenchmarkInstance> parseStack(numBenchmarkEvents, memory, Flags::Buffer(false, false, false));
+          FixedLengthList<BasicBenchmarkElement> basicOutputResults(numBenchmarkEvents/2, memory, Flags::Buffer(false, false, false));
+          FixedLengthList<BenchmarkInstance> fullList(numBenchmarkEvents/2, memory, Flags::Buffer(false, false, false));
+          FixedLengthList<BenchmarkInstance> parseStack(numBenchmarkEvents/2, memory, Flags::Buffer(false, false, false));
 
           AnkiConditionalErrorAndReturnValue(outputResults.IsValid() && basicOutputResults.IsValid() && fullList.IsValid() && parseStack.IsValid(),
             FixedLengthList<BenchmarkElement>(), "ComputeBenchmarkResults", "Out of memory");
@@ -411,21 +411,21 @@ namespace Anki
           const s32 bufferLength = 128;
           char buffer[bufferLength];
 
-          //printf("Exclusive Mean:%fs Exclusive Min:%fs Exclusive Max:%fs Inclusive Mean:%fs Inclusive Min:%fs Inclusive Max:%fs (Exclusive Total:%fs Inclusive Total:%fs NumEvents:%d)\n",
+          //CoreTechPrint("Exclusive Mean:%fs Exclusive Min:%fs Exclusive Max:%fs Inclusive Mean:%fs Inclusive Min:%fs Inclusive Max:%fs (Exclusive Total:%fs Inclusive Total:%fs NumEvents:%d)\n",
 
-          printf("%s: ", this->name);
+          CoreTechPrint("%s: ", this->name);
 
           SnprintfCommasS32(buffer, bufferLength, this->exclusiveTimeElapsed);
-          printf("exclusiveTimeElapsed:%sus ", buffer);
+          CoreTechPrint("exclusiveTimeElapsed:%sus ", buffer);
 
           SnprintfCommasS32(buffer, bufferLength, this->inclusiveTimeElapsed);
-          printf("inclusiveTimeElapsed:%sus ", buffer);
+          CoreTechPrint("inclusiveTimeElapsed:%sus ", buffer);
 
           SnprintfCommasS32(buffer, bufferLength, this->startTime);
-          printf("startTime:%sus ", buffer);
+          CoreTechPrint("startTime:%sus ", buffer);
 
           SnprintfCommasS32(buffer, bufferLength, this->level);
-          printf("NumEvents:%s\n", buffer);
+          CoreTechPrint("NumEvents:%s\n", buffer);
         }
       } BenchmarkInstance;
     }; // class CompileBenchmarkResults
@@ -453,7 +453,7 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(minCharacterToPrint.IsValid(),
         RESULT_FAIL_OUT_OF_MEMORY, "PrintBenchmarkResults", "Out of memory");
 
-      printf("Benchmark Results: (Exc=Exclusive Inc=Inclusive Tot=Total N=NumberOf)\n");
+      CoreTechPrint("Benchmark Results: (Exc=Exclusive Inc=Inclusive Tot=Total N=NumberOf)\n");
 
       const s32 numResults = results.get_size();
       const BenchmarkElement * const pResults = results.Pointer(0);
@@ -487,10 +487,10 @@ namespace Anki
 
       for(s32 x=0; x<numResults; x++) {
         pResults[x].Print(verbose, microseconds, &minCharacterToPrint);
-        printf("\n");
+        CoreTechPrint("\n");
       }
 
-      printf("\n");
+      CoreTechPrint("\n");
 
       return RESULT_OK;
     }

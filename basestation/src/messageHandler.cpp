@@ -219,8 +219,9 @@ namespace Anki {
       robot->set_pose(Pose3d(msg.pose_angle, axis, translation));
       
       // Update other state vars
-      robot->SetTraversingPath( msg.isTraversingPath );
-      robot->SetCarryingBlock( msg.isCarryingBlock );
+      robot->SetTraversingPath( msg.status & IS_TRAVERSING_PATH );
+      robot->SetCarryingBlock( msg.status & IS_CARRYING_BLOCK );
+      robot->SetPickingOrPlacing( msg.status & IS_PICKING_OR_PLACING );
       
       return RESULT_OK;
     }
@@ -315,6 +316,26 @@ namespace Anki {
         VizManager::getInstance()->SendGreyImage(data, (Vision::CameraResolution)msg.resolution);
       }
       
+      
+      return RESULT_OK;
+    }
+    
+    
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageTrackerQuad const& msg)
+    {
+      /*
+      PRINT_INFO("TrackerQuad: (%d,%d) (%d,%d) (%d,%d) (%d,%d)\n",
+                 msg.topLeft_x, msg.topLeft_y,
+                 msg.topRight_x, msg.topRight_y,
+                 msg.bottomRight_x, msg.bottomRight_y,
+                 msg.bottomLeft_x, msg.bottomRight_y);
+      */
+     
+      // Send tracker quad info to viz
+      VizManager::getInstance()->SendTrackerQuad(msg.topLeft_x, msg.topLeft_y,
+                                                 msg.topRight_x, msg.topRight_y,
+                                                 msg.bottomRight_x, msg.bottomRight_y,
+                                                 msg.bottomLeft_x, msg.bottomRight_y);
       
       return RESULT_OK;
     }

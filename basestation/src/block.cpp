@@ -388,8 +388,8 @@ namespace Anki {
       //
       // Check if it's vertically oriented
       //
-      const float DOT_TOLERANCE   = .05f;
-      const float ANGLE_TOLERANCE = DEG_TO_RAD(5);
+      const float DOT_TOLERANCE   = .35f;
+      const float ANGLE_TOLERANCE = DEG_TO_RAD(35);
       
       // Get vector, v, from center of block to this point
       Point3f v(dockingPt);
@@ -407,6 +407,7 @@ namespace Anki {
            NEAR(angle, DEG_TO_RAD(90),  ANGLE_TOLERANCE) ||
            NEAR(angle, DEG_TO_RAD(180), ANGLE_TOLERANCE) )
         {
+          dockingPt.z() = 0.f;  // Project to floor plane
           preDockPose.set_translation(dockingPt);
           preDockPose.set_rotation(atan2f(-v.y(), -v.x()), Z_AXIS_3D);
           dockingPointFound = true;
@@ -418,14 +419,15 @@ namespace Anki {
     
     
     void Block::GetPreDockPoses(const float distance_mm,
-                                std::vector<Pose3d>& points) const
+                                std::vector<PoseMarkerPair_t>& poseMarkerPairs) const
     {
       Pose3d preDockPose;
       
-      for(auto & canonicalPoint : Block::CanonicalDockingPoints)
+      //for(auto & canonicalPoint : Block::CanonicalDockingPoints)
+      for(FaceName i_face = FIRST_FACE; i_face < NUM_FACES; ++i_face)
       {
-        if(GetPreDockPose(canonicalPoint, distance_mm, this->pose_, preDockPose) == true) {
-          points.emplace_back(preDockPose);
+        if(GetPreDockPose(CanonicalDockingPoints[i_face], distance_mm, this->pose_, preDockPose) == true) {
+          poseMarkerPairs.emplace_back(preDockPose, GetMarker(i_face));
         }
       } // for each canonical docking point
       

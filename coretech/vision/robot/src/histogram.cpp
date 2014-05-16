@@ -58,7 +58,7 @@ namespace Anki
       const s32 numX = ((imageRegionOfInterest.right - imageRegionOfInterest.left) / xIncrement) + 1;
       this->numElements = numY * numX;
 
-      printf("%d %d", this->numElements, numPoints);*/
+      CoreTechPrint("%d %d", this->numElements, numPoints);*/
     }
 
     s32 IntegerCounts::ComputePercentile(const f32 percentile) const

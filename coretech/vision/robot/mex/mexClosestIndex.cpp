@@ -1,7 +1,12 @@
 #include <mex.h>
 
+#include "anki/common/matlab/mexWrappers.h"
+#include "anki/common/shared/utilities_shared.h"
+
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
+  Anki::SetCoreTechPrintFunctionPtr(mexPrintf);
+
   const double *x1 = mxGetPr(prhs[0]);
   const int     N1 = (int) mxGetM(prhs[0]);
   const double *y1 = x1 + N1;

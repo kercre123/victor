@@ -27,16 +27,16 @@
 // Types for paths
 typedef std::vector<float> PathVertex_t;
 typedef std::vector<PathVertex_t> Path_t;
-typedef std::map<int, Path_t > PathMap_t;
+typedef std::map<u32, Path_t > PathMap_t;
 
 // Map of all paths indexed by robotID and pathID
 static PathMap_t pathMap_;
 
 // Map of pathID to colorID
-static std::map<int, int> pathColorMap_;
+static std::map<u32, u32> pathColorMap_;
 
 // Static objects
-typedef std::map<int, Anki::Cozmo::VizObject> VizObject_t;
+typedef std::map<u32, Anki::Cozmo::VizObject> VizObject_t;
 static VizObject_t objectMap_;
 
 // Static quads
@@ -44,7 +44,7 @@ typedef std::map<int, Anki::Cozmo::VizQuad> VizQuadMap_t;
 static VizQuadMap_t quadMap_;
 
 // Color map
-typedef std::map<int, Anki::Cozmo::VizDefineColor> VizColorDef_t;
+typedef std::map<u32, Anki::Cozmo::VizDefineColor> VizColorDef_t;
 static VizColorDef_t colorMap_;
 
 // Default color for all objects and paths
@@ -118,6 +118,18 @@ namespace Anki {
       
       if (msg.objectID == ALL_OBJECT_IDs) {
         objectMap_.clear();
+      } else if (msg.objectID == OBJECT_ID_RANGE) {
+        // Get lower bound iterator
+        VizObject_t::iterator lowerIt = objectMap_.lower_bound(msg.lower_bound_id);
+        if (lowerIt == objectMap_.end())
+          return;
+        
+        // Get upper bound iterator
+        VizObject_t::iterator upperIt = objectMap_.upper_bound(msg.upper_bound_id);
+        
+        // Erase objects in bounds
+        objectMap_.erase(lowerIt, upperIt);
+        
       } else {
         objectMap_.erase(msg.objectID);
       }
@@ -236,6 +248,7 @@ namespace Anki {
     void ProcessVizDockingErrorSignalMessage(const VizDockingErrorSignal& msg){};
     void ProcessVizImageChunkMessage(const VizImageChunk& msg){};
     void ProcessVizSetRobotMessage(const VizSetRobot& msg){};
+    void ProcessVizTrackerQuadMessage(const VizTrackerQuad& msg){};
     
   } // namespace Cozmo
 } // namespace Anki

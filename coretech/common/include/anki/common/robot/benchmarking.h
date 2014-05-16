@@ -25,7 +25,7 @@ namespace Anki
 {
   namespace Embedded
   {
-    const s32 MAX_BENCHMARK_EVENTS = 4000;
+    const s32 MAX_BENCHMARK_EVENTS = 16000;
 
     typedef struct BenchmarkElement
     {
@@ -52,7 +52,7 @@ namespace Anki
 
       BenchmarkElement(const char * name);
 
-      // Print with printf()
+      // Print with CoreTechPrint()
       void Print(const bool verbose=true, const bool microseconds=true, const FixedLengthList<s32> * minCharacterToPrint=NULL) const;
 
       // Like snprintf(). Returns the number of characters printed, not including the final null byte.
@@ -93,7 +93,7 @@ namespace Anki
     // Compile all the benchmark events that were recorded
     FixedLengthList<BenchmarkElement> ComputeBenchmarkResults(MemoryStack &memory);
 
-    // printf() the benchmark results
+    // CoreTechPrint() the benchmark results
     // WARNING: This doesn't work well with multi-threaded programs
     Result PrintBenchmarkResults(const FixedLengthList<BenchmarkElement> &results, const bool verbose=true, const bool microseconds=true);
 

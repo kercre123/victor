@@ -12,6 +12,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/errorHandling.h"
 #include "anki/common/robot/utilities_c.h"
 
+#include "anki/common/shared/utilities_shared.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -49,18 +51,18 @@ extern "C" {
         file += lastSlashIndex + 1;
       }
 
-      printf("LOG[%d] - %s@%d - %s - ", logLevel, file, line, eventName);
+      Anki::CoreTechPrint("LOG[%d] - %s@%d - %s - ", logLevel, file, line, eventName);
 
       va_start(argList, line);
-      vprintf(eventValue, argList);
+      Anki::CoreTechPrint(eventValue, argList);
       va_end(argList);
 
-      printf("\n");
+      Anki::CoreTechPrint("\n");
       //fflush(stdout);
     }
 #endif // #if ANKI_OUTPUT_DEBUG_LEVEL == ANKI_OUTPUT_DEBUG_PRINTF
 
-    printf(""); // This is here, just so a breakpoint can be set
+    Anki::CoreTechPrint(""); // This is here, just so a breakpoint can be set
   }
 
 #ifdef _MSC_VER

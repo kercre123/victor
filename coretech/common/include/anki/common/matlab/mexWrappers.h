@@ -6,6 +6,8 @@
 #include <string>
 #include <sstream>
 
+#include "anki/common/shared/utilities_shared.h"
+
 #define USE_OPENCV 1
 #define USE_ANKI_CORE_LIBRARIES 1
 
@@ -112,6 +114,9 @@ void pauseMatlab(double time = 0.0);
 mxClassID convertToMatlabType(const char *typeName, size_t byteDepth);
 
 std::string convertToMatlabTypeString(const char *typeName, size_t byteDepth);
+
+// A wrapper for mexPrintf that work with SetCoreTechPrintFunctionPtr()
+int mexPrintf(const char *format, va_list vaList);
 
 ///////////////////////////////////////////////////////////////////////////
 // Implementations:
@@ -233,7 +238,7 @@ mxArray * image2mxArray(const T *img,
 
   const mwSize outputDims[3] = {static_cast<mwSize>(ncols),
     static_cast<mwSize>(nrows), static_cast<mwSize>(nbands)};
-  
+
   mxArray *outputArray = mxCreateNumericArray(3, outputDims,
     mxSINGLE_CLASS, mxREAL);
 
@@ -468,7 +473,7 @@ void mapCvMat2mxArray(const cv::Mat &mat, const int nbands, mxArray *array)
   const mwSize numOpenCvElements = npixels * mat.channels();
 
   if(numMatlabElements != numOpenCvElements) {
-    printf("Matlab array has a different number of elements than the OpenCV Mat(%d != %d)\n", numMatlabElements, numOpenCvElements);
+    Anki::CoreTechPrint("Matlab array has a different number of elements than the OpenCV Mat(%d != %d)\n", numMatlabElements, numOpenCvElements);
     return;
   }
 
@@ -505,7 +510,7 @@ void mapMxArray2cvMat(const mxArray *array, const int nbands, cv::Mat &mat)
   const mwSize numOpenCvElements = npixels * mat.channels();
 
   if(numMatlabElements != numOpenCvElements) {
-    printf("Matlab array has a different number of elements than the OpenCV Mat(%d != %d)\n", numMatlabElements, numOpenCvElements);
+    Anki::CoreTechPrint("Matlab array has a different number of elements than the OpenCV Mat(%d != %d)\n", numMatlabElements, numOpenCvElements);
     return;
   }
 
@@ -535,22 +540,22 @@ template <class T> std::vector<cv::Point_<T> > mxArray2CvPointVector(const mxArr
   std::vector<cv::Point_<T> > points;
 
   if(numMatlabElements%2 != 0) {
-    printf("Matlab array number of elements must be divisible by two\n");
+    Anki::CoreTechPrint("Matlab array number of elements must be divisible by two\n");
     return points;
   }
 
   if(numDimensions != 2) {
-    printf("Matlab array must be 2D\n");
+    Anki::CoreTechPrint("Matlab array must be 2D\n");
     return points;
   }
 
   if(dimensions[0]!=2 && dimensions[1]!=2) {
-    printf("Matlab array must be 2xN or Nx2\n");
+    Anki::CoreTechPrint("Matlab array must be 2xN or Nx2\n");
     return points;
   }
 
   if(dimensions[0]==2 && dimensions[1]==2) {
-    printf("Warning: Matlab array is 2x2, which is ambiguous\n");
+    Anki::CoreTechPrint("Warning: Matlab array is 2x2, which is ambiguous\n");
   }
 
   const mwSize numPoints = (dimensions[0]==2 ? dimensions[1] : dimensions[0]);

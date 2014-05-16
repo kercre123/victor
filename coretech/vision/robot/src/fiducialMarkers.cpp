@@ -40,7 +40,7 @@ namespace Anki
 
     void BlockMarker::Print() const
     {
-      printf("[%d,%d: (%d,%d) (%d,%d) (%d,%d) (%d,%d)] ", blockType, faceType, corners[0].x, corners[0].y, corners[1].x, corners[1].y, corners[2].x, corners[2].y, corners[3].x, corners[3].y);
+      CoreTechPrint("[%d,%d: (%d,%d) (%d,%d) (%d,%d) (%d,%d)] ", blockType, faceType, corners[0].x, corners[0].y, corners[1].x, corners[1].y, corners[2].x, corners[2].y, corners[3].x, corners[3].y);
     }
 
     FiducialMarkerParserBit::FiducialMarkerParserBit(MemoryStack &memory)
@@ -361,11 +361,11 @@ namespace Anki
 
         bitReadingOrder[0] = 24; bitReadingOrder[1] = 23; bitReadingOrder[2] = 22; bitReadingOrder[3] = 21; bitReadingOrder[4] = 20; bitReadingOrder[5] = 19; bitReadingOrder[6] = 18; bitReadingOrder[7] = 17; bitReadingOrder[8] = 16; bitReadingOrder[9] = 15; bitReadingOrder[10] = 14; bitReadingOrder[11] = 13; bitReadingOrder[12] = 12; bitReadingOrder[13] = 11; bitReadingOrder[14] = 10; bitReadingOrder[15] = 9; bitReadingOrder[16] = 8; bitReadingOrder[17] = 7; bitReadingOrder[18] = 6; bitReadingOrder[19] = 5; bitReadingOrder[20] = 4; bitReadingOrder[21] = 3; bitReadingOrder[22] = 2; bitReadingOrder[23] = 1; bitReadingOrder[24] = 0;
 
-        //printf("readingOrder:\n");
+        //CoreTechPrint("readingOrder:\n");
         //for(s32 i=0; i<NUM_BITS; i++) {
-        //  printf("(%d) ", bitReadingOrder[i]);
+        //  CoreTechPrint("(%d) ", bitReadingOrder[i]);
         //}
-        //printf("\n");
+        //CoreTechPrint("\n");
       } else if(leftBitValue == maxValue) {
         marker.orientation = BlockMarker::ORIENTATION_LEFT;
         marker.corners = Quadrilateral<s16>(marker.corners[1], marker.corners[3], marker.corners[0], marker.corners[2]);
@@ -373,11 +373,11 @@ namespace Anki
 
         bitReadingOrder[0] = 4; bitReadingOrder[1] = 9; bitReadingOrder[2] = 14; bitReadingOrder[3] = 19; bitReadingOrder[4] = 24; bitReadingOrder[5] = 3; bitReadingOrder[6] = 8; bitReadingOrder[7] = 13; bitReadingOrder[8] = 18; bitReadingOrder[9] = 23; bitReadingOrder[10] = 2; bitReadingOrder[11] = 7; bitReadingOrder[12] = 12; bitReadingOrder[13] = 17; bitReadingOrder[14] = 22; bitReadingOrder[15] = 1; bitReadingOrder[16] = 6; bitReadingOrder[17] = 11; bitReadingOrder[18] = 16; bitReadingOrder[19] = 21; bitReadingOrder[20] = 0; bitReadingOrder[21] = 5; bitReadingOrder[22] = 10; bitReadingOrder[23] = 15; bitReadingOrder[24] = 20;
 
-        //printf("readingOrder:\n");
+        //CoreTechPrint("readingOrder:\n");
         //for(s32 i=0; i<NUM_BITS; i++) {
-        //  printf("(%d) ", bitReadingOrder[i]);
+        //  CoreTechPrint("(%d) ", bitReadingOrder[i]);
         //}
-        //printf("\n");
+        //CoreTechPrint("\n");
       } else {
         marker.orientation = BlockMarker::ORIENTATION_RIGHT;
         marker.corners = Quadrilateral<s16>(marker.corners[2], marker.corners[0], marker.corners[3], marker.corners[1]);
@@ -385,11 +385,11 @@ namespace Anki
 
         bitReadingOrder[0] = 20; bitReadingOrder[1] = 15; bitReadingOrder[2] = 10; bitReadingOrder[3] = 5; bitReadingOrder[4] = 0; bitReadingOrder[5] = 21; bitReadingOrder[6] = 16; bitReadingOrder[7] = 11; bitReadingOrder[8] = 6; bitReadingOrder[9] = 1; bitReadingOrder[10] = 22; bitReadingOrder[11] = 17; bitReadingOrder[12] = 12; bitReadingOrder[13] = 7; bitReadingOrder[14] = 2; bitReadingOrder[15] = 23; bitReadingOrder[16] = 18; bitReadingOrder[17] = 13; bitReadingOrder[18] = 8; bitReadingOrder[19] = 3; bitReadingOrder[20] = 24; bitReadingOrder[21] = 19; bitReadingOrder[22] = 14; bitReadingOrder[23] = 9; bitReadingOrder[24] = 4;
 
-        //printf("readingOrder:\n");
+        //CoreTechPrint("readingOrder:\n");
         //for(s32 i=0; i<NUM_BITS; i++) {
-        //  printf("(%d) ", bitReadingOrder[i]);
+        //  CoreTechPrint("(%d) ", bitReadingOrder[i]);
         //}
-        //printf("\n");
+        //CoreTechPrint("\n");
       }
 
       if(static_cast<f32>(brightValue) < minContrastRatio * static_cast<f32>(darkValue)) {
@@ -507,7 +507,7 @@ namespace Anki
         typeString = Vision::MarkerTypeStrings[markerType];
       }
 
-      printf("[Type %d-%s]: (%0.2f,%0.2f) (%0.2f,%0.2f) (%0.2f,%0.2f) (%0.2f,%0.2f)] ",
+      CoreTechPrint("[Type %d-%s]: (%0.2f,%0.2f) (%0.2f,%0.2f) (%0.2f,%0.2f) (%0.2f,%0.2f)] ",
         markerType, typeString,
         corners[0].x, corners[0].y,
         corners[1].x, corners[1].y,
@@ -727,8 +727,8 @@ namespace Anki
           {
             // TODO: Don't fail? Just warn and keep original quad?
             AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
-                                               "RefineQuadrilateral",
-                                               "RefineQuadrilateral() failed with code %0x.", lastResult);
+              "RefineQuadrilateral",
+              "RefineQuadrilateral() failed with code %0x.", lastResult);
           }
 
           EndBenchmark("vme_quadrefine");

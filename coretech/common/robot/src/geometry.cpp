@@ -17,32 +17,32 @@ namespace Anki
   {
     template<> void Point<f32>::Print() const
     {
-      printf("(%f,%f) ", this->x, this->y);
+      CoreTechPrint("(%f,%f) ", this->x, this->y);
     }
 
     template<> void Point<f64>::Print() const
     {
-      printf("(%f,%f) ", this->x, this->y);
+      CoreTechPrint("(%f,%f) ", this->x, this->y);
     }
-    
+
     template<> void Point3<f32>::Print() const
     {
-      printf("(%f,%f,%f) ", this->x, this->y, this->z);
+      CoreTechPrint("(%f,%f,%f) ", this->x, this->y, this->z);
     }
-    
+
     template<> void Point3<f64>::Print() const
     {
-      printf("(%f,%f,%f) ", this->x, this->y, this->z);
+      CoreTechPrint("(%f,%f,%f) ", this->x, this->y, this->z);
     }
 
     template<> void Rectangle<f32>::Print() const
     {
-      printf("(%f,%f)->(%f,%f) ", this->left, this->top, this->right, this->bottom);
+      CoreTechPrint("(%f,%f)->(%f,%f) ", this->left, this->top, this->right, this->bottom);
     }
 
     template<> void Rectangle<f64>::Print() const
     {
-      printf("(%f,%f)->(%f,%f) ", this->left, this->top, this->right, this->bottom);
+      CoreTechPrint("(%f,%f)->(%f,%f) ", this->left, this->top, this->right, this->bottom);
     }
 
     template<> f32 Rectangle<f32>::get_width() const
@@ -67,7 +67,7 @@ namespace Anki
 
     template<> void Quadrilateral<f32>::Print() const
     {
-      printf("{(%f,%f), (%f,%f), (%f,%f), (%f,%f)} ",
+      CoreTechPrint("{(%f,%f), (%f,%f), (%f,%f), (%f,%f)} ",
         this->corners[0].x, this->corners[0].y,
         this->corners[1].x, this->corners[1].y,
         this->corners[2].x, this->corners[2].y,
@@ -76,7 +76,7 @@ namespace Anki
 
     template<> void Quadrilateral<f64>::Print() const
     {
-      printf("{(%f,%f), (%f,%f), (%f,%f), (%f,%f)} ",
+      CoreTechPrint("{(%f,%f), (%f,%f), (%f,%f), (%f,%f)} ",
         this->corners[0].x, this->corners[0].y,
         this->corners[1].x, this->corners[1].y,
         this->corners[2].x, this->corners[2].y,

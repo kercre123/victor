@@ -164,6 +164,9 @@ void DMA2_Stream2_IRQHandler(void)
   
   s_failedTransferCount = 0;
   
+	// Hack to allow timing events longer than about 50ms
+	GetMicroCounter();
+	
   // Run MainExecution
   Anki::Cozmo::Robot::step_MainExecution();
 }

@@ -121,6 +121,10 @@ namespace Anki {
       return code_;
     }
     
+    inline f32 const& KnownMarker::GetSize() const {
+      return size_;
+    }
+    
     inline Camera const& ObservedMarker::GetSeenBy() const {
       return seenBy_;
     }

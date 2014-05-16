@@ -22,6 +22,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/sequences.h"
 #include "anki/common/robot/matrix.h"
 
+#include "anki/common/shared/utilities_shared.h"
+
 namespace Anki
 {
   namespace Embedded
@@ -310,16 +312,16 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(this->IsValid(),
         RESULT_FAIL_INVALID_OBJECT, "Array<Type>::Print", "Array<Type> is not valid");
 
-      printf(variableName);
-      printf(":\n");
+      CoreTechPrint(variableName);
+      CoreTechPrint(":\n");
       for(s32 y=MAX(0,minY); y<MIN(maxY+1,size[0]); y++) {
         const Type * const pThisData = this->Pointer(y, 0);
         for(s32 x=MAX(0,minX); x<MIN(maxX+1,size[1]); x++) {
           pThisData[x].Print();
         }
-        printf("\n");
+        CoreTechPrint("\n");
       }
-      printf("\n");
+      CoreTechPrint("\n");
 
       return RESULT_OK;
     }
@@ -329,38 +331,32 @@ namespace Anki
       return this->Print(variableName, minY, maxY, minX, maxX);
     }
 
-    
     template<typename Type> bool Array<Type>::IsNearlyEqualTo(const Array<Type>& other, const Type epsilon) const
     {
       bool isSame = false;
       if(this->IsValid() && other.IsValid()) {
-        
         const s32 nrows = this->get_size(0);
         const s32 ncols = this->get_size(1);
 
         if(other.get_size(0)==nrows && other.get_size(1) == ncols) {
-
           isSame = true;
           for(s32 i=0; i<nrows && isSame; ++i) {
             const Type * restrict pThis  = this->Pointer(i,0);
             const Type * restrict pOther = other.Pointer(i,0);
-            
+
             for(s32 j=0; j<ncols; ++j) {
               if(!NEAR(pThis[j], pOther[j], epsilon)) {
                 isSame = false;
                 break;
               }
             } // for j
-            
           } // for i
-          
         } // if sizes match
       } // if both valid
-      
+
       return isSame;
-      
     } // IsNearlyEqualTo()
-    
+
     template<typename Type> bool Array<Type>::IsValid() const
     {
       if(this->data == NULL) {
@@ -649,28 +645,28 @@ namespace Anki
       const s32 realMinY = MAX(0,minY);
       const s32 realMaxY = MIN(maxY+1,size[0]);
 
-      printf("%s type(int:%d,signed:%d,float:%d,sizeof:%d):\n", variableName, Flags::TypeCharacteristics<Type>::isInteger, Flags::TypeCharacteristics<Type>::isSigned, Flags::TypeCharacteristics<Type>::isFloat, sizeof(Type));
+      CoreTechPrint("%s type(int:%d,signed:%d,float:%d,sizeof:%d):\n", variableName, Flags::TypeCharacteristics<Type>::isInteger, Flags::TypeCharacteristics<Type>::isSigned, Flags::TypeCharacteristics<Type>::isFloat, sizeof(Type));
 
       for(s32 y=realMinY; y<realMaxY; y++) {
         const Type * const pThisData = this->Pointer(y, 0);
         for(s32 x=realMinX; x<realMaxX; x++) {
           if(Flags::TypeCharacteristics<Type>::isBasicType) {
             if(Flags::TypeCharacteristics<Type>::isInteger) {
-              printf("%d ", static_cast<s32>(pThisData[x]));
+              CoreTechPrint("%d ", static_cast<s32>(pThisData[x]));
             } else {
               if(version==1) {
-                printf("%f ", (float)pThisData[x]);
+                CoreTechPrint("%f ", (float)pThisData[x]);
               } else {
-                printf("%e ", (float)pThisData[x]);
+                CoreTechPrint("%e ", (float)pThisData[x]);
               }
             }
           } else {
-            printf("! ");
+            CoreTechPrint("! ");
           }
         }
-        printf("\n");
+        CoreTechPrint("\n");
       }
-      printf("\n");
+      CoreTechPrint("\n");
 
       return RESULT_OK;
     }

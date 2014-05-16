@@ -156,8 +156,10 @@ namespace Anki {
         robotState_.liftAngle  = LiftController::GetAngleRad();
         robotState_.liftHeight = LiftController::GetHeightMM();
         
-        robotState_.isTraversingPath = PathFollower::IsTraversingPath() ? 1 : 0;
-        robotState_.isCarryingBlock = PickAndPlaceController::IsCarryingBlock() ? 1 : 0;
+        robotState_.status = 0;
+        robotState_.status |= (PathFollower::IsTraversingPath() ? IS_TRAVERSING_PATH : 0);
+        robotState_.status |= (PickAndPlaceController::IsCarryingBlock() ? IS_CARRYING_BLOCK : 0);
+        robotState_.status |= (PickAndPlaceController::IsBusy() ? IS_PICKING_OR_PLACING : 0);
       }
       
       RobotState const& GetRobotStateMsg() {
@@ -302,10 +304,20 @@ namespace Anki {
       
       void ProcessDockWithBlockMessage(const DockWithBlock& msg)
       {
-        DockingController::StartDocking(static_cast<Vision::MarkerType>(msg.markerType),
-                                        msg.markerWidth_mm,
-                                        msg.horizontalOffset_mm,
-                                        0, 0);
+        if (msg.pixel_radius < u8_MAX) {
+          Embedded::Point2f markerCenter(static_cast<f32>(msg.image_pixel_x), static_cast<f32>(msg.image_pixel_y));
+          
+          PickAndPlaceController::DockToBlock(static_cast<Vision::MarkerType>(msg.markerType),
+                                              msg.markerWidth_mm,
+                                              markerCenter,
+                                              msg.pixel_radius,
+                                              static_cast<DockAction_t>(msg.dockAction));
+        } else {
+          
+          PickAndPlaceController::DockToBlock(static_cast<Vision::MarkerType>(msg.markerType),
+                                              msg.markerWidth_mm,
+                                              static_cast<DockAction_t>(msg.dockAction));
+        }
       }
 
       void ProcessDriveWheelsMessage(const DriveWheels& msg) {
@@ -415,6 +427,10 @@ namespace Anki {
       }
       
       void ProcessImageChunkMessage(const ImageChunk& msg) {
+        PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
+      }
+
+      void ProcessTrackerQuadMessage(const TrackerQuad& msg) {
         PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
       }
       

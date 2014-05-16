@@ -35,7 +35,7 @@ namespace Anki
     
     
     BlockWorld::BlockWorld( )
-    : isInitialized_(false), robotMgr_(NULL)
+    : isInitialized_(false), robotMgr_(NULL), didBlocksChange_(false), globalIDCounter(0)
 //    : robotMgr_(RobotManager::getInstance()),
 //      msgHandler_(MessageHandler::getInstance())
     {
@@ -132,7 +132,7 @@ namespace Anki
         mat->AddMarker(Vision::MARKER_J,
                        Pose3d(1.570796, {-1.000000,0.000000,0.000000}, {-66.666667,200.000000,0.000000}),
                        65.000000);
-        mat->AddMarker(Vision::MARKER_N,
+        mat->AddMarker(Vision::MARKER_4,
                        Pose3d(1.570796, {-1.000000,0.000000,0.000000}, {66.666667,200.000000,0.000000}),
                        65.000000);
         mat->AddMarker(Vision::MARKER_Y,
@@ -171,7 +171,7 @@ namespace Anki
       // TODO: We should really be taking uncertainty/distance into account
       //const float distThresholdFraction = 0.05f;
       const float   distThresh_mm = 20.f; // large to handle higher error at a distance
-      const Radians angleThresh( DEG_TO_RAD(15.f) );
+      const Radians angleThresh( DEG_TO_RAD(45.f) );
       
       // TODO: make angle threshold also vary with distance?
       // TODO: make these parameters/arguments
@@ -266,8 +266,8 @@ namespace Anki
         
         if(overlappingObjects.empty()) {
           // no existing blocks overlapped with the block we saw, so add it
-          // as a new block (and mark it as seen)
-          objSeen->SetID(objectsExisting[objSeen->GetType()].size());
+          // as a new block
+          objSeen->SetID(++globalIDCounter);
           objSeen->SetWhetherObserved(true);
           objectsExisting[objSeen->GetType()][objSeen->GetID()] = objSeen;
           
@@ -308,6 +308,7 @@ namespace Anki
           
         } // if/else overlapping existing blocks found
      
+        didBlocksChange_ = true;
       } // for each block seen
       
       // Project any unobserved existing blocks into each camera, using
@@ -316,12 +317,12 @@ namespace Anki
       // seen objects that they would have occluded.
       // Meanwhile, create a list of unobserved objects for further
       // consideration below.
-      std::vector<std::pair<ObjectsMap_t::iterator, ObjectIdMap_t::iterator> > unobservedObjects;
+      std::vector<std::pair<ObjectsMap_t::iterator, ObjectsMapByID_t::iterator> > unobservedObjects;
       //for(auto & objectTypes : objectsExisting) {
       for(auto objectTypeIter = objectsExisting.begin();
           objectTypeIter != objectsExisting.end(); ++objectTypeIter)
       {
-        ObjectIdMap_t& objectIdMap = objectTypeIter->second;
+        ObjectsMapByID_t& objectIdMap = objectTypeIter->second;
         for(auto objectIter = objectIdMap.begin();
             objectIter != objectIdMap.end(); ++objectIter)
         {
@@ -347,16 +348,28 @@ namespace Anki
           if(object->IsVisibleFrom(robot->get_camHead(), DEG_TO_RAD(45), 20.f))
           {
             // We "should" have seen the object! Delete it or mark it somehow
-            CORETECH_PRINT("Removing object %d, which should have been seen, "
-                           "but wasn't.\n", object->GetID());
+            CoreTechPrint("Removing object %d, which should have been seen, "
+                          "but wasn't.\n", object->GetID());
+
+            // Erase the vizualized block and its projected quad
+            VizManager::getInstance()->EraseVizObject(unobserved.second->second->GetID());
+            VizManager::getInstance()->EraseQuad(unobserved.second->second->GetID());
             
+            // Actually erase the object from blockWorld's container of
+            // existing objects, using the iterator pointing to it
             unobserved.first->second.erase(unobserved.second);
+
+            didBlocksChange_ = true;
           }
         } // for each camera
       } // for each unobserved object
 
       
     } // AddAndUpdateObjects()
+    
+    bool BlockWorld::DidBlocksChange() const {
+      return didBlocksChange_;
+    }
     
     
     bool BlockWorld::UpdateRobotPose(Robot* robot)
@@ -441,6 +454,8 @@ namespace Anki
     
     uint32_t BlockWorld::UpdateBlockPoses()
     {
+      didBlocksChange_ = false;
+      
       std::vector<Vision::ObservableObject*> blocksSeen;
       
       // Don't bother with this update at all if we didn't see at least one
@@ -460,9 +475,7 @@ namespace Anki
     void BlockWorld::Update(void)
     {
       CORETECH_ASSERT(robotMgr_ != NULL);
-     
-      const size_t numObservedMarkers = obsMarkers_.size();
-      
+           
       robotMgr_->UpdateAllRobots();
       
       //
@@ -493,80 +506,7 @@ namespace Anki
         PRINT_INFO("%u messages did not match any known objects and went unused.\n",
                    numUnused);
       }
-
-      
-      //
-      // Update visualization:
-      //
-      if(numObservedMarkers > 0) {
-        // Draw all blocks we know about (and their pre-dock poses)
-        VizManager::getInstance()->EraseAllVizObjects();
-        VizManager::getInstance()->EraseAllQuads();
-        for(auto blocksByType : existingBlocks_) {
-          for(auto blocksByID : blocksByType.second) {
-            
-            const Block* block = dynamic_cast<Block*>(blocksByID.second);
-            VizManager::getInstance()->DrawCuboid(block->GetID(),
-                                                  //block->GetType(),
-                                                  block->GetSize(),
-                                                  block->GetPose());
-            
-            std::vector<Pose3d> poses;
-            //block->GetPreDockPoses(PREDOCK_DISTANCE_MM, poses);
-            block->GetPreDockPoses(Vision::MARKER_BATTERIES, PREDOCK_DISTANCE_MM, poses);
-            u32 poseID = 0;
-            for(auto pose : poses) {
-              VizManager::getInstance()->DrawPreDockPose(6*block->GetID()+poseID++, pose, VIZ_COLOR_PREDOCKPOSE);
-              ++poseID;
-            }
-            
-            {
-              using namespace Quad;
-              Quad2f quadOnGround2d = block->GetBoundingQuadXY();
-              
-              Quad3f quadOnGround3d(Point3f(quadOnGround2d[TopLeft].x(),     quadOnGround2d[TopLeft].y(),     0.5f),
-                                    Point3f(quadOnGround2d[BottomLeft].x(),  quadOnGround2d[BottomLeft].y(),  0.5f),
-                                    Point3f(quadOnGround2d[TopRight].x(),    quadOnGround2d[TopRight].y(),    0.5f),
-                                    Point3f(quadOnGround2d[BottomRight].x(), quadOnGround2d[BottomRight].y(), 0.5f));
-              
-              VizManager::getInstance()->DrawQuad(block->GetID(), quadOnGround3d, VIZ_COLOR_BLOCK_BOUNDING_QUAD);
-            }
-            
-            // Draw all face markers
-            // XXX: Debug
-            {              
-              ObjectID_t quadId = block->GetID();
-              for(auto & marker : block->GetMarkers()) {
-                // Get the marker's pose relative to the camera
-                Pose3d markerPoseWrtCamera( marker.GetPose().getWithRespectTo( Pose3d::World ) ); //&camera.get_pose()) );
-                
-                // Get the 3D positions of the marker's corners relative to the camera
-                //Quad3f markerCornersWrtCamera;
-                //markerPoseWrtCamera.applyTo(, markerCornersWrtCamera);
-                
-                // Draw the quad
-                VizManager::getInstance()->DrawQuad(quadId++, marker.Get3dCorners(markerPoseWrtCamera), Cozmo::VIZ_COLOR_PREDOCKPOSE);
-              }
-            }
-            
-            
-          } // FOR each ID of this type
-        } // FOR each type
-      } // if(numObservedMarkers > 0)
-      
-      // Draw all robot poses
-      // TODO: Only send when pose has changed?
-      for(auto robotID : robotMgr_->GetRobotIDList())
-      {
-        Robot* robot = robotMgr_->GetRobotByID(robotID);
-        
-        // Triangle pose marker
-        VizManager::getInstance()->DrawRobot(robotID, robot->get_pose());
-        
-        // Full Webots CozmoBot model
-        VizManager::getInstance()->DrawRobot(robotID, robot->get_pose(), robot->get_headAngle(), robot->get_liftAngle());
-      }
-      
+  
     } // Update()
     
     
@@ -596,25 +536,11 @@ namespace Anki
       }
     } // commandRobotToDock()
 
+    void BlockWorld::ClearAllExistingBlocks() {
+      existingBlocks_.clear();
+      globalIDCounter = 0;
+    }
     
-    void BlockWorld::GetBlockBoundingBoxesXY(const f32 minHeight, const f32 maxHeight,
-                                             const f32 padding,
-                                             std::vector<Quad2f>& rectangles) const
-    {
-      for(auto & blocksByType : existingBlocks_) {
-        for(auto & blocksByID : blocksByType.second) {
-          const Block * block = dynamic_cast<const Block*>(blocksByID.second);
-          
-          const Pose3d& blockPose = block->GetPose();
-          const f32 blockHeight = blockPose.get_translation().z();
-          
-          if(blockHeight >= minHeight && blockHeight <= maxHeight) {
-            rectangles.emplace_back(block->GetBoundingQuadXY(padding));
-          } // if block is within specified height range
-        } // for each block of the current type
-      } // for each block type
-      
-    } // ProjectBlockOutlinessOntoPlane()
     
   } // namespace Cozmo
 } // namespace Anki

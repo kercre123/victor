@@ -28,20 +28,10 @@ namespace Anki {
     enum VIZ_COLOR_ID {
       VIZ_COLOR_EXECUTED_PATH,
       VIZ_COLOR_PREDOCKPOSE,
-      VIZ_COLOR_BLOCK_BOUNDING_QUAD
+      VIZ_COLOR_SELECTED_OBJECT,
+      VIZ_COLOR_BLOCK_BOUNDING_QUAD,
+      VIZ_COLOR_DEFAULT = u32_MAX
     };
-    
-    // === VizObject ID ranges ===
-    // [0,    999]:  Robots
-    // [1000, 1099]: Cuboids
-    // [1100, 1199]: Ramps
-    // [1200, 1299]: PreDockPoses
-    // [1300, 1399]: Quads
-    const u32 ROBOT_ID_BASE       = 0;
-    const u32 CUBOID_ID_BASE      = 1000;
-    const u32 RAMP_ID_BASE        = 1100;
-    const u32 PREDOCKPOSE_ID_BASE = 1200;    
-    const u32 QUAD_ID_BASE        = 1300;
     
     
     // NOTE: this is a singleton class
@@ -77,16 +67,16 @@ namespace Anki {
       
       void DrawRobot(const u32 robotID,
                      const Pose3d &pose,
-                     const u32 colorID = DEFAULT_COLOR_ID);
+                     const u32 colorID = VIZ_COLOR_DEFAULT);
       
       void DrawCuboid(const u32 blockID,
                       const Point3f &size,
                       const Pose3d &pose,
-                      const u32 colorID = DEFAULT_COLOR_ID);
+                      const u32 colorID = VIZ_COLOR_DEFAULT);
       
       void DrawPreDockPose(const u32 preDockPoseID,
                            const Pose3d &pose,
-                           const u32 colorID = DEFAULT_COLOR_ID);
+                           const u32 colorID = VIZ_COLOR_DEFAULT);
       
       //void DrawRamp();
       
@@ -100,7 +90,7 @@ namespace Anki {
       void DrawObject(const u32 objectID, const u32 objectTypeID,
                       const Point3f &size,
                       const Pose3d &pose,
-                      const u32 colorID = DEFAULT_COLOR_ID);
+                      const u32 colorID = VIZ_COLOR_DEFAULT);
       
       // Erases the object corresponding to the objectID
       void EraseVizObject(const u32 objectID);
@@ -108,12 +98,15 @@ namespace Anki {
       // Erases all objects. (Not paths)
       void EraseAllVizObjects();
       
+      // Erase all objects of a certain type
+      void EraseVizObjectType(const VizObjectType type);
+      
       
       // ===== Path draw functions ====
       
       void DrawPath(const u32 pathID,
                     const Planning::Path& p,
-                    const u32 colorID = DEFAULT_COLOR_ID);
+                    const u32 colorID = VIZ_COLOR_DEFAULT);
       
       // Appends the specified line segment to the path with id pathID
       void AppendPathSegmentLine(const u32 pathID,
@@ -170,6 +163,11 @@ namespace Anki {
 
       void SendGreyImage(const u8* data, const Vision::CameraResolution res);
       
+      void SendTrackerQuad(const u16 topLeft_x, const u16 topLeft_y,
+                           const u16 topRight_x, const u16 topRight_y,
+                           const u16 bottomRight_x, const u16 bottomRight_y,
+                           const u16 bottomLeft_x, const u16 bottomLeft_y);
+      
     protected:
       
       // Protected default constructor for singleton.
@@ -186,6 +184,9 @@ namespace Anki {
 
       // Image sending
       u8 imgID;
+    
+      // Stores the maximum ID permitted for a given VizObject type
+      u32 VizObjectMaxID[NUM_VIZ_OBJECT_TYPES];
       
     }; // class VizManager
     
@@ -207,7 +208,7 @@ namespace Anki {
     {
       using namespace Quad;
       VizQuad v;
-      v.quadID = quadID + QUAD_ID_BASE;
+      v.quadID = quadID;
       
       v.xUpperLeft  = MM_TO_M(static_cast<f32>(quad[Quad::TopLeft].x()));
       v.yUpperLeft  = MM_TO_M(static_cast<f32>(quad[Quad::TopLeft].y()));

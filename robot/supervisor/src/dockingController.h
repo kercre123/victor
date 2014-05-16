@@ -19,10 +19,8 @@
 
 #include "anki/common/types.h"
 #include "anki/vision/MarkerCodeDefinitions.h"
-
-#if(ALT_HIGH_BLOCK_DOCK_METHOD)
 #include "anki/common/robot/geometry_declarations.h"
-#endif
+
 
 namespace Anki {
   
@@ -61,7 +59,15 @@ namespace Anki {
       // dockOffsetAngle: Docking offset angle. +ve means block is facing robot's right side.
       void StartDocking(const Vision::MarkerType& codeToDockWith,
                         const f32 markerWidth_mm,
-                        f32 dockOffsetDistX, f32 dockOffsetDistY = 0, f32 dockOffsetAngle = 0);
+                        const f32 dockOffsetDistX, const f32 dockOffsetDistY = 0, const f32 dockOffsetAngle = 0);
+      
+      // Same as above except the marker must be found within the image at the specified location.
+      // If pixel_radius == u8_MAX, the location is ignored and this function becomes identical
+      // to the above function.
+      void StartDocking(const Vision::MarkerType& codeToDockWith,
+                        const f32 markerWidth_mm,
+                        const Embedded::Point2f &markerCenter, const u8 pixel_radius,
+                        const f32 dockOffsetDistX, const f32 dockOffsetDistY = 0, const f32 dockOffsetAngle = 0);
 
       // Keep lift crossbar just below the camera's field of view.
       // Required for docking to high blocks.

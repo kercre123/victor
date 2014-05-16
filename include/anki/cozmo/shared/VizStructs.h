@@ -15,18 +15,30 @@ namespace Anki {
     const u32 PHYSICS_PLUGIN_SERVER_PORT = 5253;
 
     const u32 ALL_PATH_IDs   = u32_MAX;
-    const u32 ALL_OBJECT_IDs = u32_MAX;
     const u32 ALL_QUAD_IDs   = u32_MAX;
-
-    const u32 DEFAULT_COLOR_ID = u32_MAX;
+    const u32 ALL_OBJECT_IDs = u32_MAX;
+    const u32 OBJECT_ID_RANGE = ALL_OBJECT_IDs - 1;
     
-    enum VizObjectTypes {
-      VIZ_ROBOT,
+    enum VizObjectType {
+      VIZ_ROBOT = 0,
       VIZ_CUBOID,
       VIZ_RAMP,
-      VIZ_PREDOCKPOSE
+      VIZ_PREDOCKPOSE,
+      
+      NUM_VIZ_OBJECT_TYPES
     };
+    
+    // Base IDs for each VizObject type
+    const u32 VizObjectBaseID[NUM_VIZ_OBJECT_TYPES+1] = {
+      0,    // VIZ_ROBOT
+      1000, // VIZ_CUBOID
+      2000, // VIZ_RAMP
+      3000, // VIZ_PREDOCKPOSE
 
+      u32_MAX - 100 // Last valid object ID allowed
+    };
+        
+    
     enum VizRobotMarkerType {
       VIZ_ROBOT_MARKER_SMALL_TRIANGLE,
       VIZ_ROBOT_MARKER_BIG_TRIANGLE

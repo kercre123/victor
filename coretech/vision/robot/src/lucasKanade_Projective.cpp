@@ -457,7 +457,7 @@ namespace Anki
 
                 const f32 tGradientValue = oneOverTwoFiftyFive * (interpolatedPixelF32 - templatePixelValue);
 
-                //printf("%f ", xOriginal);
+                //CoreTechPrint("%f ", xOriginal);
                 const f32 values[6] = {
                   xOriginal * xGradientValue,
                   yOriginal * xGradientValue,
@@ -467,9 +467,9 @@ namespace Anki
                   yGradientValue};
 
                 //for(s32 ia=0; ia<6; ia++) {
-                //  printf("%f ", values[ia]);
+                //  CoreTechPrint("%f ", values[ia]);
                 //}
-                //printf("\n");
+                //CoreTechPrint("\n");
 
                 //f32 AWAt_raw[6][6];
                 //f32 b_raw[6];
@@ -675,7 +675,7 @@ namespace Anki
 
                 const f32 tGradientValue = oneOverTwoFiftyFive * (interpolatedPixelF32 - templatePixelValue);
 
-                //printf("%f ", xOriginal);
+                //CoreTechPrint("%f ", xOriginal);
 
                 const f32 values[8] = {
                   xOriginal * xGradientValue,

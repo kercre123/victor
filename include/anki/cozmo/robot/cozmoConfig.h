@@ -157,7 +157,7 @@ namespace Anki {
     
     const f32 IMU_POSITION[3] = {5.8f, 0.f, -13.5f};  // relative to neck joint
     
-    const f32 PREDOCK_DISTANCE_MM = 100.f;
+    const f32 PREDOCK_DISTANCE_MM = 120.f;
     
     /*
     // This is the width of the *outside* of the square fiducial!

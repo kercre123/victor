@@ -30,7 +30,7 @@ int main(int argc, char ** argv)
 
   const f64 waitBeforeStarting = 0.0; // Optionally wait a few seconds before starting saving, to flush the buffer
 
-  printf("Starting display\n");
+  CoreTechPrint("Starting display\n");
   SetLogSilence(true);
 
 #ifdef USE_SOCKET
@@ -60,7 +60,7 @@ int main(int argc, char ** argv)
 
   while(true) {
     DebugStreamClient::Object newObject = parserThread.GetNextObject();
-    //printf("Received %s %s\n", newObject.typeName, newObject.newObject.objectName);
+    //CoreTechPrint("Received %s %s\n", newObject.typeName, newObject.newObject.objectName);
 
     if (strcmp(newObject.objectName, "Robot Image") == 0) {
       rawFrameNumber++;
@@ -79,7 +79,7 @@ int main(int argc, char ** argv)
         }
       }
 
-      printf("Waiting for %f more seconds\n", waitingTime);
+      CoreTechPrint("Waiting for %f more seconds\n", waitingTime);
 
       free(newObject.buffer); newObject.buffer = NULL;
       continue;
@@ -104,7 +104,7 @@ int main(int argc, char ** argv)
       last_tm_min = currentTime->tm_min;
       last_tm_hour = currentTime->tm_hour;
 
-      printf("Saving %s\n", outputFilename);
+      CoreTechPrint("Saving %s\n", outputFilename);
 
       Array<u8> *imageRaw = (reinterpret_cast<Array<u8>*>(newObject.startOfPayload));
 

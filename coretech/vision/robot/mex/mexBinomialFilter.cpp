@@ -6,7 +6,9 @@
 #include "anki/common/robot/matlabInterface.h"
 
 #include "anki/vision/robot/imageProcessing.h"
-#include "anki/vision/robot/imageProcessing.h"
+
+#include "anki/common/matlab/mexWrappers.h"
+#include "anki/common/shared/utilities_shared.h"
 
 #define VERBOSITY 0
 
@@ -14,6 +16,8 @@ using namespace Anki::Embedded;
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
+  Anki::SetCoreTechPrintFunctionPtr(mexPrintf);
+
   const s32 bufferSize = 10000000;
   MemoryStack memory(malloc(bufferSize), bufferSize);
   AnkiConditionalErrorAndReturn(memory.IsValid(), "mexBinomialFilter", "Memory could not be allocated");
@@ -28,7 +32,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   AnkiConditionalErrorAndReturn(img.get_rawDataPointer() != 0, "mexBinomialFilter", "Could not allocate Array<u8> imgFiltered");
 
   if(ImageProcessing::BinomialFilter<u8,u32,u8>(img, imgFiltered, memory) != Anki::RESULT_OK) {
-    printf("Error: mexBinomialFilter\n");
+    Anki::CoreTechPrint("Error: mexBinomialFilter\n");
   }
 
   plhs[0] = arrayToMxArray<u8>(imgFiltered);

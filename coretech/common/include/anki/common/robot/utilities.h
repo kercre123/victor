@@ -21,21 +21,50 @@ namespace Anki
 {
   namespace Embedded
   {
-    // #pragma mark
-
-    template<typename Type> inline Type RoundUp(const Type number, const Type multiple)
+    //template<typename Type> inline Type RoundUp(const Type number, const Type multiple)
+    template<> inline u32 RoundUp(const u32 number, const u32 multiple)
     {
-      return multiple*( (number-1)/multiple + 1 );
-
-      // For unsigned only?
-      // return (number + (multiple-1)) & ~(multiple-1);
+      return (number + (multiple-1)) & ~(multiple-1);
     }
 
-    template<typename Type> inline Type RoundDown(const Type number, const Type multiple)
+    template<> inline s32 RoundUp(const s32 number, const s32 multiple)
+    {
+      if(number <= 0) {
+        return multiple*( number/multiple );
+      } else {
+        return multiple*( (number-1)/multiple + 1 );
+      }
+    }
+
+#if defined(__APPLE_CC__) // Apple Xcode
+    template<> inline unsigned long RoundUp(const unsigned long number, const unsigned long multiple)
+    {
+      return (number + (multiple-1)) & ~(multiple-1);
+    }
+#endif
+
+    template<> inline u32 RoundDown(const u32 number, const u32 multiple)
     {
       return multiple * (number/multiple);
     }
 
+    template<> inline s32 RoundDown(const s32 number, const s32 multiple)
+    {
+      if(number < 0) {
+        return multiple * ((number-multiple+1) / multiple);
+      } else {
+        return multiple * (number/multiple);
+      }
+    }
+
+#if defined(__APPLE_CC__) // Apple Xcode
+    template<> inline unsigned long RoundDown(const unsigned long number, const unsigned long multiple)
+    {
+      return multiple * (number/multiple);
+    }
+#endif
+    
+    
     template<typename Type> Type ApproximateExp(const Type exponent, const s32 numTerms)
     {
       AnkiAssert(numTerms > 2);
@@ -130,8 +159,13 @@ namespace Anki
 
     template<typename Type> void Cart2Pol(const Type x, const Type y, Type &rho, Type &theta)
     {
-      theta = atan2_acc(y, x);
-      rho = sqrtf(x*x + y*y);
+      if (x==0 && y==0) {
+        theta = 0;
+        rho = 0;
+      } else {
+        theta = atan2f(y, x);
+        rho = sqrtf(x*x + y*y);
+      }
     }
 
     template<typename Type> void Pol2Cart(const Type rho, const Type theta, Type &x, Type &y)
