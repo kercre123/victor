@@ -11,10 +11,7 @@ namespace Anki
 {
   namespace Embedded
   {
-    void CannyEdgeDetection(
-      InputArray _src, OutputArray _dst,
-      double low_thresh, double high_thresh,
-      int aperture_size, bool L2gradient );
+    
   } // namespace Embedded
 } // namespace Anki
 

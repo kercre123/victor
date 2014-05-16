@@ -29,6 +29,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/perspectivePoseEstimation.h"
 #include "anki/vision/robot/classifier.h"
 #include "anki/vision/robot/cameraImagingPipeline.h"
+#include "anki/vision/robot/opencvLight_vision.h"
 
 #include "anki/vision/MarkerCodeDefinitions.h"
 
@@ -42,10 +43,11 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "data/cozmo_date2014_01_29_time11_41_05_frame10_320x240.h"
 #include "data/cozmo_date2014_01_29_time11_41_05_frame12_320x240.h"
 #include "data/cozmo_date2014_04_04_time17_40_08_frame0.h"
-#include "data/cozmo_date2014_04_10_time16_15_40_frame0.h"
 
 #include "anki/vision/robot/lbpcascade_frontalface.h"
 #endif
+
+#include "data/cozmo_date2014_04_10_time16_15_40_frame0.h"
 
 #include "embeddedTests.h"
 
@@ -60,6 +62,120 @@ using namespace Anki;
 using namespace Anki::Embedded;
 
 //#define RUN_FACE_DETECTION_GUI
+
+GTEST_TEST(CoreTech_Vision, Canny)
+{
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  ASSERT_TRUE(scratchCcm.IsValid());
+
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(scratchOnchip.IsValid());
+
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(scratchOffchip.IsValid());
+
+  InitBenchmarking();
+
+  //Array<u8> im(240, 320, scratchOffchip);
+  //Array<u8> canny(240, 320, scratchOffchip);
+  //cv::Mat imCv = cv::imread("Z:/Documents/Box Documents/Cozmo SE/blockImages/Screen Shot 2014-05-13 at 6.35.03 PM gray.png");
+  //im.Set(imCv);
+
+  //const Result result = CannyEdgeDetection(
+  //  im, canny,
+  //  low_thresh, high_thresh,
+  //  aperture_size,
+  //  scratchOffchip);
+
+  //im.Show("im", false);
+  //canny.Show("canny", true);
+
+  //printf("");
+
+  // Correctness test
+  {
+    PUSH_MEMORY_STACK(scratchCcm);
+    PUSH_MEMORY_STACK(scratchOnchip);
+    PUSH_MEMORY_STACK(scratchOffchip);
+
+    const s32 low_thresh = 50;
+    const s32 high_thresh = 100;
+    const s32 aperture_size = 3;
+
+    const s32 imageHeight = 5;
+    const s32 imageWidth = 8;
+
+    Array<u8> image(imageHeight, imageWidth, scratchOffchip);
+    Array<u8> canny(imageHeight, imageWidth, scratchOffchip);
+
+    for(s32 y=0; y<imageHeight; y++) {
+      for(s32 x=0; x<imageWidth; x++) {
+        image[y][x] = static_cast<u8>(x*x*x + y);
+      }
+    }
+
+    const Result result = CannyEdgeDetection(
+      image, canny,
+      low_thresh, high_thresh,
+      aperture_size,
+      scratchOffchip);
+
+    //image.Print("image");
+    //canny.Print("canny");
+
+    ASSERT_TRUE(result == RESULT_OK);
+
+    Array<u8> canny_groundTruth(imageHeight, imageWidth, scratchOffchip);
+
+    const u8 canny_groundTruthData[imageHeight*imageWidth] = {
+      0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 255, 0, 0,
+      0, 0, 0, 0, 0, 255, 0, 0,
+      0, 0, 0, 0, 0, 255, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0};
+
+    canny_groundTruth.Set(canny_groundTruthData, imageHeight*imageWidth);
+
+    //canny_groundTruth.Print("canny_groundTruth");
+
+    ASSERT_TRUE(AreElementwiseEqual<u8>(canny, canny_groundTruth));
+  } // Correctness test
+
+  // Benchmarking test
+  {
+    PUSH_MEMORY_STACK(scratchCcm);
+    PUSH_MEMORY_STACK(scratchOnchip);
+    PUSH_MEMORY_STACK(scratchOffchip);
+
+    const s32 low_thresh = 50;
+    const s32 high_thresh = 100;
+    const s32 aperture_size = 3;
+
+    const s32 imageHeight = 240;
+    const s32 imageWidth = 320;
+
+    Array<u8> image(imageHeight, imageWidth, scratchOnchip);
+    Array<u8> canny(imageHeight, imageWidth, scratchOffchip);
+
+    image.Set(&cozmo_date2014_04_10_time16_15_40_frame0[0], imageHeight*imageWidth);
+
+    BeginBenchmark("CannyEdgeDetection");
+
+    const Result result = CannyEdgeDetection(
+      image, canny,
+      low_thresh, high_thresh,
+      aperture_size,
+      scratchOffchip);
+
+    EndBenchmark("CannyEdgeDetection");
+
+    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
+
+    ASSERT_TRUE(result == RESULT_OK);
+  }
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Vision, Canny)
 
 GTEST_TEST(CoreTech_Vision, BoxFilterU8U16)
 {
@@ -158,7 +274,7 @@ GTEST_TEST(CoreTech_Vision, BoxFilterU8U16)
   } // Benchmarking test
 
   GTEST_RETURN_HERE;
-}
+} // GTEST_TEST(CoreTech_Vision, BoxFilterU8U16)
 
 /*GTEST_TEST(CoreTech_Vision, IntegralImageU16)
 {
@@ -4069,9 +4185,10 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   numPassedTests = 0;
   numFailedTests = 0;
 
-  CALL_GTEST_TEST(CoreTech_Vision, BoxFilterU8U16);
+  CALL_GTEST_TEST(CoreTech_Vision, Canny);
 
 #if !defined(JUST_FIDUCIAL_DETECTION)
+  CALL_GTEST_TEST(CoreTech_Vision, BoxFilterU8U16);
   CALL_GTEST_TEST(CoreTech_Vision, Vignetting);
   CALL_GTEST_TEST(CoreTech_Vision, FaceDetection);
   CALL_GTEST_TEST(CoreTech_Vision, ResizeImage);

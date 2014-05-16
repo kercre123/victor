@@ -198,8 +198,6 @@ namespace Anki
 
         s32 y;
 
-        //u16 * restrict verticalAccumulator = reinterpret_cast<u16*>( scratch.Allocate(imageWidth*sizeof(u16)) );
-
         // Includes extra padding for simd
         u16 * restrict verticalAccumulator = reinterpret_cast<u16*>( scratch.Allocate(imageWidth*sizeof(u16) + 16) );
         memset(verticalAccumulator, 0, imageWidth*sizeof(u16));
@@ -353,7 +351,35 @@ namespace Anki
         filtered(-boxHeight2,-1,0,-1).Set(0);
 
         return RESULT_OK;
-      }
+      } // Result BoxFilter(const Array<u8> &image, const s32 boxHeight, const s32 boxWidth, Array<u16> &filtered, MemoryStack scratch)
+
+      //Result FastGradient(const Array<u8> &in, Array<s8> &dx, Array<s8> &dy, MemoryStack scratch)
+      //{
+      //  const s32 imageHeight = in.get_size(0);
+      //  const s32 imageWidth = in.get_size(1);
+
+      //  AnkiConditionalErrorAndReturnValue(in.IsValid() && dy.IsValid() && dx.IsValid() && scratch.IsValid(),
+      //    RESULT_FAIL_INVALID_OBJECT, "FastGradient", "Image is invalid");
+
+      //  AnkiConditionalErrorAndReturnValue(
+      //    imageHeight == dx.get_size(0) && imageHeight == dy.get_size(0) &&
+      //    imageWidth == dx.get_size(1) && imageWidth == dy.get_size(1),
+      //    RESULT_FAIL_INVALID_SIZE, "FastGradient", "Images must be the same size");
+
+      //  for(s32 y=1; y<(imageHeight-1); y++) {
+      //    const u8 * restrict pIn_ym1 = in.Pointer(y-1,0);
+      //    const u8 * restrict pIn_y0  = in.Pointer(y,0);
+      //    const u8 * restrict pIn_yp1 = in.Pointer(y+1,0);
+
+      //    s8 * restrict pDx = dx.Pointer(y,0);
+      //    s8 * restrict pDy = dy.Pointer(y,0);
+
+      //    for(s32 x=1; x<(imageWidth-1); x++) {
+      //    } // for(s32 x=1; x<(imageWidth-1); x++)
+      //  } // for(s32 y=1; y<(imageHeight-1); y++)
+
+      //  return RESULT_OK;
+      //} // Result FastGradient(const Array<u8> &in, Array<s8> &dx, Array<s8> &dy, MemoryStack scratch)
     } // namespace ImageProcessing
   } // namespace Embedded
 } // namespace Anki
