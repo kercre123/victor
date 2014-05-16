@@ -260,17 +260,34 @@ namespace Anki
       const s32 inHeight = in.rows;
       const s32 inWidth = in.cols;
 
-      AnkiConditionalErrorAndReturnValue(inHeight == this->size[0] && inWidth == this->size[1],
-        0, "Array<Type>::Set", "input cv::Mat is the incorrect size");
+      AnkiConditionalErrorAndReturnValue(inHeight != 0,
+        0, "Array<Type>::Set", "input cv::Mat is invalid. If you use the release OpenCV libraries with the debug build, lots of things like file loading don't work.");
 
-      for(s32 y=0; y<inHeight; y++) {
+      const bool isColor = in.channels() == 3 || inWidth == this->size[1]*3;
+
+      if(isColor) {
+        AnkiConditionalErrorAndReturnValue(inHeight == this->size[0],
+          0, "Array<Type>::Set", "input cv::Mat is the incorrect size.");
+      } else {
+        AnkiConditionalErrorAndReturnValue(inHeight == this->size[0] && inWidth == this->size[1],
+          0, "Array<Type>::Set", "input cv::Mat is the incorrect size.");
+      }
+
+      for(s32 y=0; y<this->size[0]; y++) {
         const Type * restrict pIn = reinterpret_cast<const Type*>(in.ptr(y,0));
         Type * restrict pThis = this->Pointer(y,0);
 
-        memcpy(pThis, pIn, inWidth*sizeof(Type));
+        // If grayscale, just copy. If color, convert to grayscale
+        if(isColor) {
+          for(s32 x=0; x<this->size[1]; x++) {
+            pThis[x] = (pIn[3*x] + pIn[3*x + 1] + pIn[3*x + 2]) / 3;
+          }
+        } else {
+          memcpy(pThis, pIn, inWidth*sizeof(Type));
+        }
       }
 
-      return inHeight*inWidth;
+      return this->size[0]*this->size[1];
     }
 #endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
