@@ -142,6 +142,26 @@ namespace Anki {
     }
     
     
+    void VizManager::EraseRobot(const u32 robotID)
+    {
+      CORETECH_ASSERT(robotID < VizObjectMaxID[VIZ_ROBOT]);
+      EraseVizObject(VizObjectBaseID[VIZ_ROBOT] + robotID);
+    }
+    
+    void VizManager::EraseCuboid(const u32 blockID)
+    {
+      CORETECH_ASSERT(blockID < VizObjectMaxID[VIZ_CUBOID]);
+      EraseVizObject(VizObjectMaxID[VIZ_CUBOID] + blockID);
+    }
+    
+    void VizManager::ErasePreDockPose(const u32 preDockPoseID)
+    {
+      CORETECH_ASSERT(preDockPoseID < VizObjectMaxID[VIZ_PREDOCKPOSE]);
+      EraseVizObject(VizObjectBaseID[VIZ_PREDOCKPOSE] + preDockPoseID);
+    }
+    
+    
+    
     // ================== Object drawing methods ====================
     
     void VizManager::DrawObject(const u32 objectID,

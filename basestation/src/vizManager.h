@@ -80,6 +80,11 @@ namespace Anki {
       //void DrawRamp();
       
       
+      void EraseRobot(const u32 robotID);
+      void EraseCuboid(const u32 blockID);
+      void ErasePreDockPose(const u32 preDockPoseID);
+      
+      
       // ===== Static object draw functions ====
       
       // Sets the id objectID to correspond to a drawable object of
