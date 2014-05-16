@@ -460,6 +460,8 @@ namespace Anki
     void BlockWorld::Update(void)
     {
       CORETECH_ASSERT(robotMgr_ != NULL);
+     
+      const size_t numObservedMarkers = obsMarkers_.size();
       
       robotMgr_->UpdateAllRobots();
       
@@ -496,63 +498,61 @@ namespace Anki
       //
       // Update visualization:
       //
-      
-      // Draw all blocks we know about (and their pre-dock poses)
-      VizManager::getInstance()->EraseAllVizObjects();
-      VizManager::getInstance()->EraseAllQuads();
-      for(auto blocksByType : existingBlocks_) {
-        for(auto blocksByID : blocksByType.second) {
-          
-          const Block* block = dynamic_cast<Block*>(blocksByID.second);
-          VizManager::getInstance()->DrawCuboid(block->GetID(),
-                                                //block->GetType(),
-                                                block->GetSize(),
-                                                block->GetPose());
-          
-          std::vector<Pose3d> poses;
-          //block->GetPreDockPoses(PREDOCK_DISTANCE_MM, poses);
-          block->GetPreDockPoses(Vision::MARKER_BATTERIES, PREDOCK_DISTANCE_MM, poses);
-          u32 poseID = 0;
-          for(auto pose : poses) {
-            VizManager::getInstance()->DrawPreDockPose(6*block->GetID()+poseID++, pose, VIZ_COLOR_PREDOCKPOSE);
-            ++poseID;
-          }
-          
-          {
-            using namespace Quad;
-            Quad2f quadOnGround2d = block->GetBoundingQuadXY();
+      if(numObservedMarkers > 0) {
+        // Draw all blocks we know about (and their pre-dock poses)
+        VizManager::getInstance()->EraseAllVizObjects();
+        VizManager::getInstance()->EraseAllQuads();
+        for(auto blocksByType : existingBlocks_) {
+          for(auto blocksByID : blocksByType.second) {
             
-            Quad3f quadOnGround3d(Point3f(quadOnGround2d[TopLeft].x(),     quadOnGround2d[TopLeft].y(),     0.5f),
-                                  Point3f(quadOnGround2d[BottomLeft].x(),  quadOnGround2d[BottomLeft].y(),  0.5f),
-                                  Point3f(quadOnGround2d[TopRight].x(),    quadOnGround2d[TopRight].y(),    0.5f),
-                                  Point3f(quadOnGround2d[BottomRight].x(), quadOnGround2d[BottomRight].y(), 0.5f));
+            const Block* block = dynamic_cast<Block*>(blocksByID.second);
+            VizManager::getInstance()->DrawCuboid(block->GetID(),
+                                                  //block->GetType(),
+                                                  block->GetSize(),
+                                                  block->GetPose());
             
-            VizManager::getInstance()->DrawQuad(block->GetID(), quadOnGround3d, VIZ_COLOR_BLOCK_BOUNDING_QUAD);
-          }
-          
-          // Draw all face markers
-          // XXX: Debug
-          {
-            Vision::Camera& camera = robotMgr_->GetRobotByID(robotMgr_->GetRobotIDList().front())->get_camHead();
-            
-            ObjectID_t quadId = block->GetID();
-            for(auto & marker : block->GetMarkers()) {
-              // Get the marker's pose relative to the camera
-              Pose3d markerPoseWrtCamera( marker.GetPose().getWithRespectTo( Pose3d::World ) ); //&camera.get_pose()) );
-              
-              // Get the 3D positions of the marker's corners relative to the camera
-              //Quad3f markerCornersWrtCamera;
-              //markerPoseWrtCamera.applyTo(, markerCornersWrtCamera);
-              
-              // Draw the quad
-              VizManager::getInstance()->DrawQuad(quadId++, marker.Get3dCorners(markerPoseWrtCamera), Cozmo::VIZ_COLOR_PREDOCKPOSE);
+            std::vector<Pose3d> poses;
+            //block->GetPreDockPoses(PREDOCK_DISTANCE_MM, poses);
+            block->GetPreDockPoses(Vision::MARKER_BATTERIES, PREDOCK_DISTANCE_MM, poses);
+            u32 poseID = 0;
+            for(auto pose : poses) {
+              VizManager::getInstance()->DrawPreDockPose(6*block->GetID()+poseID++, pose, VIZ_COLOR_PREDOCKPOSE);
+              ++poseID;
             }
-          }
-
-
-        } // FOR each ID of this type
-      } // FOR each type
-      
+            
+            {
+              using namespace Quad;
+              Quad2f quadOnGround2d = block->GetBoundingQuadXY();
+              
+              Quad3f quadOnGround3d(Point3f(quadOnGround2d[TopLeft].x(),     quadOnGround2d[TopLeft].y(),     0.5f),
+                                    Point3f(quadOnGround2d[BottomLeft].x(),  quadOnGround2d[BottomLeft].y(),  0.5f),
+                                    Point3f(quadOnGround2d[TopRight].x(),    quadOnGround2d[TopRight].y(),    0.5f),
+                                    Point3f(quadOnGround2d[BottomRight].x(), quadOnGround2d[BottomRight].y(), 0.5f));
+              
+              VizManager::getInstance()->DrawQuad(block->GetID(), quadOnGround3d, VIZ_COLOR_BLOCK_BOUNDING_QUAD);
+            }
+            
+            // Draw all face markers
+            // XXX: Debug
+            {              
+              ObjectID_t quadId = block->GetID();
+              for(auto & marker : block->GetMarkers()) {
+                // Get the marker's pose relative to the camera
+                Pose3d markerPoseWrtCamera( marker.GetPose().getWithRespectTo( Pose3d::World ) ); //&camera.get_pose()) );
+                
+                // Get the 3D positions of the marker's corners relative to the camera
+                //Quad3f markerCornersWrtCamera;
+                //markerPoseWrtCamera.applyTo(, markerCornersWrtCamera);
+                
+                // Draw the quad
+                VizManager::getInstance()->DrawQuad(quadId++, marker.Get3dCorners(markerPoseWrtCamera), Cozmo::VIZ_COLOR_PREDOCKPOSE);
+              }
+            }
+            
+            
+          } // FOR each ID of this type
+        } // FOR each type
+      } // if(numObservedMarkers > 0)
       
       // Draw all robot poses
       // TODO: Only send when pose has changed?
