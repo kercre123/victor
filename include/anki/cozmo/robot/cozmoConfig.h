@@ -83,7 +83,14 @@ namespace Anki {
     // multiple times.
     const s32 VISION_TIME_STEP = 20;
     
-
+    // Note that we are hard-coding an empircally-computed/calibrated focal
+    // length, even for the simulated camera! So if we change the simulated FOV
+    // of the camera, we need to recalibrate this focal length. This is because,
+    // for completely unknown / not-understood reasons, computing the focal
+    // length from fov_hor directly does not give us an accurate value for
+    // the Webots camera.
+    const f32 HEAD_CAM_CALIB_FOV          = 0.92f;
+    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH = 338.58f;
     
     ////////// Simulator comms //////////
     

@@ -14,7 +14,8 @@ namespace Anki {
     // cozmo_physics plugin. Basestation or robot can draw via cozmo_viz_controller.
     const u32 PHYSICS_PLUGIN_SERVER_PORT = 5253;
 
-    const u32 ALL_PATH_IDs = u32_MAX;
+    const u32 ALL_PATH_IDs   = u32_MAX;
+    const u32 ALL_QUAD_IDs   = u32_MAX;
     const u32 ALL_OBJECT_IDs = u32_MAX;
     const u32 OBJECT_ID_RANGE = ALL_OBJECT_IDs - 1;
     
@@ -33,6 +34,7 @@ namespace Anki {
       1000, // VIZ_CUBOID
       2000, // VIZ_RAMP
       3000, // VIZ_PREDOCKPOSE
+
       u32_MAX - 100 // Last valid object ID allowed
     };
         

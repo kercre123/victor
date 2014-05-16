@@ -506,20 +506,35 @@ namespace Anki {
                         HAL::CameraInfo &info)
     {
       
-      u16 nrows  = static_cast<u16>(camera->getHeight());
-      u16 ncols  = static_cast<u16>(camera->getWidth());
-      f32 width  = static_cast<f32>(ncols);
-      f32 height = static_cast<f32>(nrows);
-      f32 aspect = width/height;
+      const u16 nrows  = static_cast<u16>(camera->getHeight());
+      const u16 ncols  = static_cast<u16>(camera->getWidth());
+      const f32 width  = static_cast<f32>(ncols);
+      const f32 height = static_cast<f32>(nrows);
+      //f32 aspect = width/height;
       
-      f32 fov_hor = camera->getFov();
-      f32 fov_ver = fov_hor / aspect;
+      const f32 fov_hor = camera->getFov();
+      //f32 fov_ver = fov_hor / aspect; // This is wrong! It ignores the tan()'s.
+      // Correct would be:
+      //
+      //   fov_ver = 2*atan( nrows/ncols * tan(fov_hor/2) );
+      //
       
-      f32 fx = width / (2.f * std::tan(0.5f*fov_hor));
-      f32 fy = height / (2.f * std::tan(0.5f*fov_ver));
+      // Make sure the fov reported by webots matches the one used to empircally
+      // calibrate the Webots camera.
+      AnkiAssert(NEAR(fov_hor, HEAD_CAM_CALIB_FOV, 0.001f));
       
-      info.focalLength_x = fx;
-      info.focalLength_y = fy;
+      // Ideally, we would compute the focal length from the FOV dynamically,
+      // but that isn't working for some reason, so just use the value
+      // hard-coded in the config file.
+      //const f32 f = width / (2.f * std::tan(0.5f*fov_hor));
+      const f32 f = HEAD_CAM_CALIB_FOCAL_LENGTH;
+      
+      // There should only be ONE focal length, because simulated pixels are
+      // square, so no need to compute/define a separate fy
+      //f32 fy = height / (2.f * std::tan(0.5f*fov_ver));
+      
+      info.focalLength_x = f;
+      info.focalLength_y = f;
       //info.fov_ver       = fov_ver;
       info.center_x      = 0.5f*width;
       info.center_y      = 0.5f*height;

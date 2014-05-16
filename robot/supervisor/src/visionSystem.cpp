@@ -139,7 +139,12 @@ namespace Anki {
         // TODO: Should these be moved to (their own struct in) visionParameters.h/cpp?
         static f32 exposureTime;
 
+#ifdef SIMULATOR
+        // Simulator doesn't need vignetting correction on by default
+        static VignettingCorrection vignettingCorrection = VignettingCorrection_Off;
+#else
         static VignettingCorrection vignettingCorrection = VignettingCorrection_Software;
+#endif
         static const f32 vignettingCorrectionParameters[5] = {1.56852140958887f, -0.00619880766167132f, -0.00364222219719291f, 2.75640497906470e-05f, 1.75476361058157e-05f}; //< for vignettingCorrection == VignettingCorrection_Software, computed by fit2dCurve.m
 
         static s32 frameNumber;
@@ -421,6 +426,9 @@ namespace Anki {
 
         MatlabVisualization::ResetFiducialDetection(grayscaleImage);
 
+#if USE_MATLAB_DETECTOR
+        const Result result = MatlabVisionProcessor::DetectMarkers(grayscaleImage, markers, homographies, ccmScratch);
+#else
         const Result result = DetectFiducialMarkers(
           grayscaleImage,
           markers,
@@ -437,7 +445,8 @@ namespace Anki {
           parameters.quadRefinementIterations,
           false,
           ccmScratch, onchipScratch, offchipScratch);
-
+#endif
+        
         if(result != RESULT_OK) {
           return result;
         }

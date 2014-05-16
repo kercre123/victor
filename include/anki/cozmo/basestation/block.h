@@ -76,10 +76,13 @@ namespace Anki {
         LEFT_BACK_TOP =      4,
         RIGHT_BACK_TOP =     5,
         LEFT_BACK_BOTTOM =   6,
-        RIGHT_BACK_BOTTOM =  7
+        RIGHT_BACK_BOTTOM =  7,
+        NUM_CORNERS       =  8
       };
       
       Block(const ObjectType_t type);
+      
+      Block(const Block& other); 
       
       ~Block();
       
@@ -87,9 +90,9 @@ namespace Anki {
       
       // Accessors:
       Point3f const& GetSize() const;
-      float          GetWidth()  const;
-      float          GetHeight() const;
-      float          GetDepth()  const;
+      float          GetWidth()  const;  // X dimension
+      float          GetHeight() const;  // Z dimension
+      float          GetDepth()  const;  // Y dimension
       //virtual float GetMinDim() const;
       //using Vision::ObservableObjectBase<Block>::GetMinDim;
 
@@ -111,6 +114,14 @@ namespace Anki {
       // should be caught in the constructor).
       Vision::KnownMarker const& GetMarker(FaceName onFace) const;
       
+      /* Defined in ObservableObject class
+      // Get the block's corners at its current pose
+      void GetCorners(std::array<Point3f,8>& corners) const;
+      */
+      // Get the block's corners at a specified pose
+      virtual void GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const;
+      
+      
       // Get possible poses to start docking/tracking procedure. These will e
       // a point a given distance away from each vertical face that has the
       // specified code, in the direction orthogonal to that face.  The points
@@ -125,6 +136,19 @@ namespace Anki {
       typedef std::pair<Pose3d,const Vision::KnownMarker&> PoseMarkerPair_t;
       void GetPreDockPoses(const float distance_mm,
                            std::vector<PoseMarkerPair_t>& poseMarkerPairs) const;
+      
+      // Projects the box in its current 3D pose (or a given 3D pose) onto the
+      // XY plane and returns the corresponding 2D quadrilateral. Scales the
+      // quadrilateral (around its center) by the optional padding if desired.
+      // padding if desired.
+      Quad2f GetBoundingQuadXY(const f32 paddingScale = 1.f) const;
+      Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 paddingScale = 1.f) const;
+      
+      // Projects the box in its current 3D pose (or a given 3D pose) onto the
+      // XY plane and returns the corresponding quadrilateral. Adds optional
+      // padding if desired.
+      Quad3f GetBoundingQuadInPlane(const Point3f& planeNormal, const f32 padding) const;
+      Quad3f GetBoundingQuadInPlane(const Point3f& planeNormal, const Pose3d& atPose, const f32 padding) const;
       
     protected:
       
@@ -161,11 +185,13 @@ namespace Anki {
       
       static const std::array<Point3f,NUM_FACES> CanonicalDockingPoints;
       
+      static const std::array<Point3f,NUM_CORNERS> CanonicalCorners;
+      
       Color       color_;
       Point3f     size_;
       std::string name_;
       
-      std::vector<Point3f> blockCorners_;
+      //std::vector<Point3f> blockCorners_;
       
     }; // class Block
     

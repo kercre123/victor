@@ -310,6 +310,8 @@ namespace Anki {
     // Stubs
     // These messages are handled by cozmo_physics.
     void ProcessVizObjectMessage(const VizObject& msg){};
+    void ProcessVizQuadMessage(const VizQuad& msg){};
+    void ProcessVizEraseQuadMessage(const VizEraseQuad& msg){};
     void ProcessVizErasePathMessage(const VizErasePath& msg){};
     void ProcessVizDefineColorMessage(const VizDefineColor& msg){};
     void ProcessVizEraseObjectMessage(const VizEraseObject& msg){};

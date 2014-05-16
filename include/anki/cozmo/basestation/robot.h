@@ -28,8 +28,8 @@ namespace Anki {
     
     // Forward declarations:
     class BlockWorld;
-    class MessageHandler;
-    class PathPlanner;
+    class IMessageHandler;
+    class IPathPlanner;
     
     class Robot
     {
@@ -41,7 +41,7 @@ namespace Anki {
         DOCK
       };
       
-      Robot(const RobotID_t robotID, MessageHandler* msgHandler, BlockWorld* world, PathPlanner* pathPlanner);
+      Robot(const RobotID_t robotID, IMessageHandler* msgHandler, BlockWorld* world, IPathPlanner* pathPlanner);
       
       void Update();
       
@@ -49,6 +49,8 @@ namespace Anki {
       const Pose3d& get_pose() const;
       const Vision::Camera& get_camDown() const;
       const Vision::Camera& get_camHead() const;
+      Vision::Camera& get_camHead(void);
+      
       OperationMode get_operationMode() const;
       const f32 get_headAngle() const;
       const f32 get_liftAngle() const;
@@ -153,12 +155,12 @@ namespace Anki {
       RobotID_t     ID_;
       
       // A reference to the MessageHandler that the robot uses for outgoing comms
-      MessageHandler* msgHandler_;
+      IMessageHandler* msgHandler_;
       
       // A reference to the BlockWorld the robot lives in
       BlockWorld*   world_;
       
-      PathPlanner* pathPlanner_;
+      IPathPlanner* pathPlanner_;
       Planning::Path path_;
       
       Pose3d pose;
@@ -253,6 +255,9 @@ namespace Anki {
     inline const Vision::Camera& Robot::get_camHead(void) const
     { return this->camHead; }
     
+    inline Vision::Camera& Robot::get_camHead(void)
+    { return this->camHead; }
+    
     inline Robot::OperationMode Robot::get_operationMode() const
     { return this->mode; }
     
@@ -286,7 +291,8 @@ namespace Anki {
 #endif
 
       // Sets pointers to other managers
-      Result Init(MessageHandler* msgHandler, BlockWorld* blockWorld, PathPlanner* pathPlanner);
+      // TODO: Change these to interface pointers so they can't be NULL
+      Result Init(IMessageHandler* msgHandler, BlockWorld* blockWorld, IPathPlanner* pathPlanner);
       
       // Get the list of known robot ID's
       std::vector<RobotID_t> const& GetRobotIDList() const;
@@ -316,9 +322,9 @@ namespace Anki {
       static RobotManager* singletonInstance_;
 #endif
       
-      MessageHandler* msgHandler_;
+      IMessageHandler* msgHandler_;
       BlockWorld* blockWorld_;
-      PathPlanner* pathPlanner_;
+      IPathPlanner* pathPlanner_;
       
       std::map<RobotID_t,Robot*> robots_;
       std::vector<RobotID_t>     ids_;

@@ -81,6 +81,8 @@ namespace Anki
       f32 Length() const;
     }; // class Point<Type>
 
+    typedef Point<float> Point2f;
+    
 #if 0
 #pragma mark --- 3D Point Class Declaration ---
 #endif
@@ -189,7 +191,7 @@ namespace Anki
       Type get_height() const;
     }; // class Rectangle<Type>
 
-    typedef Point<float> Point2f;
+
 
 #if 0
 #pragma mark --- Pose2d Class Declaration ---

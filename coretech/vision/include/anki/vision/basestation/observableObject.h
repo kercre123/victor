@@ -2,6 +2,7 @@
 #define ANKI_VISION_OBSERVABLE_OBJECT_H
 
 #include <list>
+#include <set>
 
 #include "anki/vision/basestation/visionMarker.h"
 
@@ -51,6 +52,15 @@ namespace Anki {
       void ComputePossiblePoses(const ObservedMarker*     obsMarker,
                                 std::vector<PoseMatchPair>& possiblePoses) const;
       
+      bool GetWhetherObserved(void) const;
+      void SetWhetherObserved(bool wasObserved);
+      
+      // Return true if any of the object's markers is visible from the given
+      // camera. See also KnownMarker::IsVisibleFrom().
+      bool IsVisibleFrom(Camera& camera,
+                         const f32 maxFaceNormalAngle,
+                         const f32 minMarkerImageSize) const;
+      
       // Accessors:
       ObjectID_t      GetID()     const;
       ObjectType_t    GetType()   const;
@@ -78,6 +88,9 @@ namespace Anki {
       // ObservableObjectBase below
       virtual ObservableObject* Clone() const = 0;
       
+      virtual void GetCorners(std::vector<Point3f>& corners) const;
+      virtual void GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const = 0;
+      
     protected:
       
       //static const std::vector<RotationMatrix3d> rotationAmbiguities_;
@@ -96,6 +109,8 @@ namespace Anki {
       
       Pose3d pose_;
       
+      bool wasObserved_;
+      
       /*
       // Canonical pose used as the parent pose for the object's markers so
       // possiblePoses for this object can be computed from observations of its
@@ -113,6 +128,11 @@ namespace Anki {
       // at all.
       std::list<Pose3d> possiblePoses_;
       */
+    private:
+      // Don't allow a copy constuctor, because it won't handle fixing the
+      // marker pointers and pose parents
+      ObservableObject(const ObservableObject& other);
+      
     };
     
     //
@@ -205,12 +225,12 @@ namespace Anki {
       // Return a pointer to a vector of pointers to known objects with at
       // least one of the specified markers or codes on it. If  there is no
       // object with that marker/code, a NULL pointer is returned.
-      std::vector<const ObservableObject*> const& GetObjectsWithMarker(const Marker& marker) const;
-      std::vector<const ObservableObject*> const& GetObjectsWithCode(const Marker::Code& code) const;
+      std::set<const ObservableObject*> const& GetObjectsWithMarker(const Marker& marker) const;
+      std::set<const ObservableObject*> const& GetObjectsWithCode(const Marker::Code& code) const;
       
     protected:
       
-      static const std::vector<const ObservableObject*> sEmptyObjectVector;
+      static const std::set<const ObservableObject*> sEmptyObjectVector;
       
       //std::list<const ObservableObject*> knownObjects_;
       std::map<ObjectType_t, const ObservableObject*> knownObjects_;
@@ -218,7 +238,8 @@ namespace Anki {
       // Store a list of pointers to all objects that have at least one marker
       // with that code.  You can then use the objects' GetMarkersWithCode()
       // method to get the list of markers on each object.
-      std::map<Marker::Code, std::vector<const ObservableObject*> > objectsWithCode_;
+      //std::map<Marker::Code, std::vector<const ObservableObject*> > objectsWithCode_;
+      std::map<Marker::Code, std::set<const ObservableObject*> > objectsWithCode_;
       
       // A PoseCluster is a pairing of a single pose and all the marker matches
       // that imply that pose
@@ -248,13 +269,15 @@ namespace Anki {
         
         MatchList matches_;
         
+        std::set<const ObservedMarker*> obsMarkerSet_;
+        
       }; // class PoseCluster
       
       void ClusterObjectPoses(const std::vector<PoseMatchPair>& possiblePoses,
                               const ObservableObject*         libObject,
                               const float distThreshold, const Radians angleThreshold,
                               std::vector<PoseCluster>& poseClusters) const;
-      
+
     }; // class ObservableObjectLibrary
     
     

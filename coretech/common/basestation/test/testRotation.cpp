@@ -118,6 +118,89 @@ GTEST_TEST(TestRotation, PointRotation2d)
   
 } // TestRotation:PointRotation2d
 
+GTEST_TEST(TestRotation, ExtractAnglesFromMatrix)
+{
+  std::vector<f32> testAngles = {
+    0.f, 30.f, 45.f, 60.f, 90.f, 121.f, 147.f, 180.f, 182.f, 233.f, 270.f,
+    291.f, 333.f, 352.f, 360.f, 378.f
+  };
+  
+  const f32 signs[2] = {-1.f, 1.f};
+  
+  const f32 TOLERANCE = 1e-6f;
+  
+  for(auto angle : testAngles) {
+    for(auto sign : signs) {
+      const Radians curAngle = DEG_TO_RAD(sign*angle);
+      
+      RotationMatrix3d Rx(curAngle, X_AXIS_3D);
+      RotationMatrix3d Ry(curAngle, Y_AXIS_3D);
+      RotationMatrix3d Rz(curAngle, Z_AXIS_3D);
+      
+      EXPECT_NEAR((Rx.GetAngleAroundXaxis() - curAngle).ToFloat(), 0.f, TOLERANCE);
+      //EXPECT_NEAR(Rx.GetAngleAroundYaxis().ToFloat(), 0.f, TOLERANCE);
+      //EXPECT_NEAR(Rx.GetAngleAroundZaxis().ToFloat(), 0.f, TOLERANCE);
+
+      EXPECT_NEAR((Ry.GetAngleAroundYaxis() - curAngle).ToFloat(), 0.f, TOLERANCE);
+      //EXPECT_NEAR(Ry.GetAngleAroundXaxis().ToFloat(), 0.f, TOLERANCE);
+      //EXPECT_NEAR(Ry.GetAngleAroundZaxis().ToFloat(), 0.f, TOLERANCE);
+
+      EXPECT_NEAR((Rz.GetAngleAroundZaxis() - curAngle).ToFloat(), 0.f, TOLERANCE);
+      //EXPECT_NEAR(Rz.GetAngleAroundXaxis().ToFloat(), 0.f, TOLERANCE);
+      //EXPECT_NEAR(Rz.GetAngleAroundYaxis().ToFloat(), 0.f, TOLERANCE);
+      
+    }
+  }
+  
+} // TestRotation:ExtractAnglesFromMatrix
+
+/*
+GTEST_TEST(TestRotation, EulerAngles)
+{
+  std::vector<f32> testAngles = {
+    0.f, 30.f, 45.f, 60.f, 90.f, 121.f, 147.f, 180.f, 182.f, 233.f, 270.f,
+    291.f, 333.f, 352.f, 360.f, 378.f
+  };
+  
+  const f32 signs[2] = {-1.f, 1.f};
+  
+  const f32 TOLERANCE = 1e-6f;
+  
+  for(auto Xangle : testAngles) {
+    for(auto Xsign : signs) {
+      for(auto Yangle : testAngles) {
+        for(auto Ysign : signs) {
+          for(auto Zangle : testAngles) {
+            for(auto Zsign : signs) {
+              const Radians curXangle = DEG_TO_RAD(Xsign*Xangle);
+              const Radians curYangle = DEG_TO_RAD(Ysign*Yangle);
+              const Radians curZangle = DEG_TO_RAD(Zsign*Zangle);
+              
+              RotationMatrix3d Rx(curXangle, X_AXIS_3D);
+              RotationMatrix3d Ry(curYangle, Y_AXIS_3D);
+              RotationMatrix3d Rz(curZangle, Z_AXIS_3D);
+
+              EXPECT_NEAR((Rx.GetAngleAroundXaxis() - curXangle).ToFloat(), 0.f, TOLERANCE);
+              EXPECT_NEAR((Ry.GetAngleAroundYaxis() - curYangle).ToFloat(), 0.f, TOLERANCE);
+              EXPECT_NEAR((Rz.GetAngleAroundZaxis() - curZangle).ToFloat(), 0.f, TOLERANCE);
+
+              RotationMatrix3d R( Rz*Ry*Rx );
+              
+              Radians checkXangle, checkYangle, checkZangle;
+              R.GetEulerAngles(checkXangle, checkYangle, checkZangle);
+              EXPECT_NEAR((checkXangle - curXangle).ToFloat(), 0.f, TOLERANCE);
+              EXPECT_NEAR((checkYangle - curYangle).ToFloat(), 0.f, TOLERANCE);
+              EXPECT_NEAR((checkZangle - curZangle).ToFloat(), 0.f, TOLERANCE);
+            }
+          }
+        }
+      }
+    }
+  }
+ 
+  
+} // TestRotation:EuelerAngles
+*/
 
 GTEST_TEST(TestRotation, AxisRotation3d)
 {
@@ -219,3 +302,6 @@ GTEST_TEST(TestPose, IsSameWithAmbiguity)
   EXPECT_TRUE(T_perturb.IsSameAs(P_diff, .01f, .1*M_PI/180.f, P_temp));
   
 } // TestPose:IsSameWithAmbiguity
+
+
+

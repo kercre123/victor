@@ -5,14 +5,19 @@
 #include <array>
 
 #include "anki/common/basestation/exceptions.h"
+#include "anki/common/basestation/general.h"
+#include "anki/common/basestation/math/linearAlgebra_impl.h"
 #include "anki/common/basestation/math/point.h"
 
 #if ANKICORETECH_USE_OPENCV
 #include "opencv2/core/core.hpp"
+#include "opencv2/imgproc/imgproc.hpp" // for minAreaRect
 #endif
 
 namespace Anki {
 
+  typedef size_t QuadDimType;
+  
   namespace Quad {
     
     enum CornerName {
@@ -28,11 +33,11 @@ namespace Anki {
     CornerName& operator++(CornerName& cname);
 
     // postfix operator (cname++)
-    CornerName operator++(CornerName& cname, int);   
+    CornerName operator++(CornerName& cname, int);
     
+    CornerName operator+(CornerName& cname, int value);
+        
   } // namespace Quad
-  
-  typedef size_t QuadDimType;
   
   template<QuadDimType N, typename T>
   class Quadrilateral : public std::array<Point<N,T>, 4>
@@ -58,6 +63,9 @@ namespace Anki {
     Quadrilateral<N,T>& operator+=(const Quadrilateral<N,T> &quad2);
     Quadrilateral<N,T>& operator-=(const Quadrilateral<N,T> &quad2);
     Quadrilateral<N,T>& operator*=(const T value);
+
+    Quadrilateral<N,T>& operator+=(const Point<N,T> &point);
+    Quadrilateral<N,T>& operator-=(const Point<N,T> &point);
     
     // Scale around centroid:
     Quadrilateral<N,T>  getScaled(const T scaleFactor) const;
@@ -80,6 +88,19 @@ namespace Anki {
     
     using std::array<Point<N,T>, 4>::operator=;
     
+    // WARNING:
+    // The width and height of a floating point Rectangle is different than that of an integer rectangle.
+    //template<typename OutType> Rectangle<OutType> ComputeBoundingRectangle() const;
+    
+    // Sorts the quad's corners, so they are clockwise around the centroid, with
+    // respect to the given plane normal.
+    // Warning: This may give weird results for non-convex quadrilaterals
+    Quadrilateral<N,T> SortCornersClockwise(const Point<N,T>& aroundNormal) const; // in place
+
+    // Special version for 2D quads: no normal needed, since they exist in a 2D
+    // plane by definition.
+    Quadrilateral<2,T> SortCornersClockwise(void) const;
+
   protected:
     
     //Point<N,T> corners[4];
@@ -89,6 +110,15 @@ namespace Anki {
   
   typedef Quadrilateral<2,float> Quad2f;
   typedef Quadrilateral<3,float> Quad3f;
+  
+  // Find the minimum bounding quad for a set of points. Note that this will
+  // actually be a rotated rectangle (i.e. not a completely general
+  // quadrilateral. It also only works for N==2 for now.
+  // TODO: Take in more generic STL containers of points beyond just std::vector?
+  // TODO: Make a 3D version too, with a projector?
+  template<typename T>
+  Quadrilateral<2,T> GetBoundingQuad(std::vector<Point<2,T> >& points);
+
   
   
 #pragma mark --- Quadrilateral Implementations ---
@@ -162,6 +192,26 @@ namespace Anki {
     using namespace Quad;
     for(CornerName i=FirstCorner; i<NumCorners; ++i) {
       (*this)[i] *= value;
+    }
+    return *this;
+  }
+  
+  template<QuadDimType N, typename T>
+  inline Quadrilateral<N,T>&  Quadrilateral<N,T>::operator+=(const Point<N,T> &point)
+  {
+    using namespace Quad;
+    for(CornerName i=FirstCorner; i<NumCorners; ++i) {
+      (*this)[i] += point;
+    }
+    return *this;
+  }
+  
+  template<QuadDimType N, typename T>
+  inline Quadrilateral<N,T>&  Quadrilateral<N,T>::operator-=(const Point<N,T> &point)
+  {
+    using namespace Quad;
+    for(CornerName i=FirstCorner; i<NumCorners; ++i) {
+      (*this)[i] -= point;
     }
     return *this;
   }
@@ -257,6 +307,119 @@ namespace Anki {
   {
     //return this->corners[whichCorner];
     return std::array<Point<N,T>,4>::operator[](static_cast<int>(whichCorner));
+  }
+  
+  template<QuadDimType N, typename T>
+  Quadrilateral<2,T> Quadrilateral<N,T>::SortCornersClockwise() const
+  {
+    // Catch invalid usage of this method with a non-2D quad at compile time.
+    static_assert(N==2, "No normal should be supplied when sorting a 2D Quadrilateral's corners.");
+
+    using namespace Quad;
+    
+    std::array<std::pair<f32,Quad::CornerName>,4> angleIndexPairs;
+    
+    Point<N,T> center = this->computeCentroid();
+    
+    for(CornerName i=FirstCorner; i<NumCorners; ++i) {
+      Point<N,T> corner((*this)[i]);
+      corner -= center;
+      
+      angleIndexPairs[i].first  = atan2f(static_cast<f32>(corner.y()), static_cast<f32>(corner.x()));
+      angleIndexPairs[i].second = i;
+    }
+    
+    // Sort by angle, bringing corner index along for the ride
+    std::sort(angleIndexPairs.begin(), angleIndexPairs.end(), CompareFirst<f32,Quad::CornerName>());
+    
+    // Re-order the corners using the sorted indices
+    const Quadrilateral<2,T> sortedQuad((*this)[angleIndexPairs[0].second],   // TopLeft    (min angle)
+                                        (*this)[angleIndexPairs[3].second],   // BottomLeft (max angle)
+                                        (*this)[angleIndexPairs[1].second],   // TopRight
+                                        (*this)[angleIndexPairs[2].second]);
+    
+    return sortedQuad;
+    
+  } // SortCornersClockWise(), Specialized for N==2
+  
+  
+  template<QuadDimType N, typename T>
+  Quadrilateral<N,T> Quadrilateral<N,T>::SortCornersClockwise(const Point<N,T>& aroundNormal) const
+  {
+    // Catch invalid usage of this method with a 2D quad at compile time.
+    static_assert(N != 2, "A normal must be supplied when sorting an ND Quadrilateral's corners.");
+    
+    using namespace Quad;
+    
+    Point<N,T> unitNormal(aroundNormal);
+    unitNormal.makeUnitLength();
+
+    Point<N,T> center = this->computeCentroid();
+    SmallSquareMatrix<N,T> P = GetProjectionOperator(unitNormal);
+    center = P * center;
+
+    // Need to establish an arbitrary coordinate system in the plane.
+    // Use the first corner as the first coordinate axis.
+    Point<N,T> unitU(P * (*this)[Quad::FirstCorner]);
+    unitU -= center;
+    unitU.makeUnitLength();
+    
+    // The cross product of the first coordinate axis vector with the normal
+    // to define the (orthogonal) other coordinate axis vector
+    Point<N,T> unitV( cross(unitNormal, unitU) );
+    
+    // By definition, the first corner's angle is 0.  Sort the other three
+    // relative to it, using the plane's coordinate system we just established
+    std::array<std::pair<f32,CornerName>,3> angleIndexPairs;
+    for(s32 i=0; i<3; i++)
+    {
+      CornerName index = static_cast<CornerName>(i+1);
+      Point<N,T> corner( P * (*this)[index] );
+      corner -= center;
+      
+      const T u = dot(corner, unitU);
+      const T v = dot(corner, unitV);
+      
+      angleIndexPairs[i].first = atan2f(static_cast<f32>(v), static_cast<f32>(u));
+      angleIndexPairs[i].second = index;
+    }
+    
+    // Sort by angle, taking the corner index along for the ride
+    std::sort(angleIndexPairs.begin(), angleIndexPairs.end(), CompareFirst<f32,Quad::CornerName>());
+    
+    const Quadrilateral<N,T> sortedQuad((*this)[Quad::FirstCorner],
+                                        (*this)[angleIndexPairs[0].second],
+                                        (*this)[angleIndexPairs[1].second],
+                                        (*this)[angleIndexPairs[2].second]);
+              
+    return sortedQuad;
+  }
+  
+  template<typename T>
+  Quadrilateral<2,T> GetBoundingQuad(std::vector<Point<2,T> >& points)
+  {
+#if ANKICORETECH_USE_OPENCV
+    cv::vector<cv::Point2f> cvPoints(points.size());
+    for(s32 i_corner = 0; i_corner < points.size(); ++i_corner) {
+      cvPoints[i_corner].x = static_cast<f32>(points[i_corner].x());
+      cvPoints[i_corner].y = static_cast<f32>(points[i_corner].y());
+    }
+    
+    cv::RotatedRect cvRotatedRect = cv::minAreaRect(cvPoints);
+    cv::Point2f cvQuad[4];
+    cvRotatedRect.points(cvQuad);
+    Quad2f boundingQuad(Point<2,T>(static_cast<T>(cvQuad[0].x), static_cast<T>(cvQuad[0].y)),
+                        Point<2,T>(static_cast<T>(cvQuad[1].x), static_cast<T>(cvQuad[1].y)),
+                        Point<2,T>(static_cast<T>(cvQuad[2].x), static_cast<T>(cvQuad[2].y)),
+                        Point<2,T>(static_cast<T>(cvQuad[3].x), static_cast<T>(cvQuad[3].y)));
+    
+    boundingQuad = boundingQuad.SortCornersClockwise();
+    
+#else
+    CORETECH_THROW("GetBoundingQuad() currently requires OpenCV.");
+#endif
+    
+    return boundingQuad;
   }
   
   /*

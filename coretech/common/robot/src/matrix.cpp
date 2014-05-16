@@ -23,14 +23,14 @@ namespace Anki {
                                            "GetEulerAngles",
                                            "R should be a valid 3x3 Array.");
         
-        if(FLT_NEAR(R[2][0], 1.f) ){
+        if(FLT_NEAR(fabs(R[2][0]), 1.f) ){
           angle_z = 0.f;
           if(R[2][0] > 0) { // R(2,0) = +1
             angle_y = M_PI_2;
-            angle_x = atan2_acc(R[0][1], R[1][1]);
+            angle_x = atan2_acc(R[0][1], R[0][2]);
           } else { // R(2,0) = -1
             angle_y = -M_PI_2;
-            angle_x = atan2_acc(-R[0][1], R[1][1]);
+            angle_x = atan2_acc(-R[0][1], -R[0][2]);
           }
         } else {
           angle_y = asinf(R[2][0]);

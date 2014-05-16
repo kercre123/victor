@@ -11,10 +11,37 @@ namespace Anki {
     const std::vector<const KnownMarker*> ObservableObject::sEmptyMarkerVector(0);
     
     ObservableObject::ObservableObject(ObjectType_t objType)
-    : type_(objType), ID_(0)
+    : type_(objType), ID_(0), wasObserved_(false)
     {
       //ID_ = ObservableObject::ObjectCounter++;
     }
+    
+    bool ObservableObject::GetWhetherObserved() const
+    {
+      return wasObserved_;
+    }
+    
+    void ObservableObject::SetWhetherObserved(const bool wasObserved)
+    {
+      wasObserved_ = wasObserved;
+    }
+    
+    bool ObservableObject::IsVisibleFrom(Camera &camera,
+                                         const f32 maxFaceNormalAngle,
+                                         const f32 minMarkerImageSize) const
+    {
+      // Return true if any of this object's markers are visible from the
+      // given camera
+      for(auto & marker : markers_) {
+        if(marker.IsVisibleFrom(camera, maxFaceNormalAngle, minMarkerImageSize)) {
+          return true;
+        }
+      }
+      
+      return false;
+      
+    } // ObservableObject::IsObservableBy()
+    
     
     Vision::KnownMarker const& ObservableObject::AddMarker(const Marker::Code&  withCode,
                                                            const Pose3d&        atPose,
@@ -29,7 +56,7 @@ namespace Anki {
       markersWithCode_[withCode].push_back(&markers_.back());
       
       return markers_.back();
-    }
+    } // ObservableObject::AddMarker()
     
     std::vector<const KnownMarker*> const& ObservableObject::GetMarkersWithCode(const Marker::Code& withCode) const
     {
@@ -40,7 +67,7 @@ namespace Anki {
       else {
         return ObservableObject::sEmptyMarkerVector;
       }
-    }
+    } // ObservableObject::GetMarkersWithCode()
     
     bool ObservableObject::IsSameAs(const ObservableObject&  otherObject,
                                     const float              distThreshold,
@@ -88,11 +115,18 @@ namespace Anki {
       }
       
     } // ComputePossiblePoses()
+
+    
+    void ObservableObject::GetCorners(std::vector<Point3f>& corners) const
+    {
+      this->GetCorners(pose_, corners);
+    }
+    
     
     
 #pragma mark --- ObservableObjectLibrary Implementations ---
     
-    const std::vector<const ObservableObject*> ObservableObjectLibrary::sEmptyObjectVector(0);
+    const std::set<const ObservableObject*> ObservableObjectLibrary::sEmptyObjectVector;
     
     const ObservableObject* ObservableObjectLibrary::GetObjectWithType(const ObjectType_t type) const
     {
@@ -106,7 +140,7 @@ namespace Anki {
     }
     
     
-    std::vector<const ObservableObject*> const& ObservableObjectLibrary::GetObjectsWithCode(const Marker::Code& code) const
+    std::set<const ObservableObject*> const& ObservableObjectLibrary::GetObjectsWithCode(const Marker::Code& code) const
     {
       auto temp = objectsWithCode_.find(code);
       if(temp != objectsWithCode_.end()) {
@@ -117,7 +151,7 @@ namespace Anki {
       }
     }
     
-    std::vector<const ObservableObject*> const& ObservableObjectLibrary::GetObjectsWithMarker(const Marker& marker) const
+    std::set<const ObservableObject*> const& ObservableObjectLibrary::GetObjectsWithMarker(const Marker& marker) const
     {
       return GetObjectsWithCode(marker.GetCode());
     }
@@ -127,7 +161,7 @@ namespace Anki {
       // TODO: Warn/error if we are overwriting an existing object with this type?
       knownObjects_[object->GetType()] = object;
       for(auto marker : object->GetMarkers()) {
-        objectsWithCode_[marker.GetCode()].push_back(object);
+        objectsWithCode_[marker.GetCode()].insert(object);
       }
     }
     
@@ -151,7 +185,7 @@ namespace Anki {
         if(seenOnlyBy == NULL || &marker.GetSeenBy() == seenOnlyBy)
         {
           // Find all objects which use this marker...
-          std::vector<const ObservableObject*> const& objectsWithMarker = GetObjectsWithMarker(marker);
+          std::set<const ObservableObject*> const& objectsWithMarker = GetObjectsWithMarker(marker);
           
           // ...if there are any, add this marker to the list of observed markers
           // that corresponds to this object type.
@@ -166,7 +200,7 @@ namespace Anki {
                }
                */
             }
-            markersWithObjectType[objectsWithMarker.front()->GetType()].push_back(&marker);
+            markersWithObjectType[(*objectsWithMarker.begin())->GetType()].push_back(&marker);
             used = true;
           } // IF objectsWithMarker != NULL
         } // IF seenOnlyBy
@@ -263,7 +297,16 @@ namespace Anki {
     ObservableObjectLibrary::PoseCluster::PoseCluster(const PoseMatchPair& match)
     : pose_(match.first)
     {
-      matches_.emplace_back(match.second.first, *match.second.second);
+      const MarkerMatch& markerMatch = match.second;
+      const ObservedMarker* obsMarker = markerMatch.first;
+      const KnownMarker* knownMarker  = markerMatch.second;
+      matches_.emplace_back(obsMarker, *knownMarker);
+      
+      // Keep a unique set of observed markers as part of the cluster so that
+      // we don't add multiple (ambiguous) poses to one cluster that
+      // were generated by the same observed marker.
+      obsMarkerSet_.insert(obsMarker);
+      
     }
     
     bool ObservableObjectLibrary::PoseCluster::TryToAddMatch(const PoseMatchPair& match,
@@ -282,7 +325,19 @@ namespace Anki {
                                                 distThreshold, angleThreshold, true, P_diff);
       } // if/else the ambiguities list is empty
       
-      if(wasAdded) {
+      // Note that we check to see if a pose stemming from this match's
+      // observed marker is already present in this cluster so that
+      // we don't add multiple (ambiguous) poses to one cluster that
+      // were generated by the same observed marker.  We will still return
+      // this match as "added" though since it matched this cluster's pose.
+      // That way it will get marked as "assigned" and not used in another
+      // cluster.  We just don't want to use a bunch of clusters that all
+      // actually came from the same observed marker in a "RecomputePose"
+      // call later.
+      if(wasAdded && obsMarkerSet_.count(match.second.first)==0) {
+        
+        obsMarkerSet_.insert(match.second.first);
+        
         // Create a match between the original observed marker pointer
         // and a copy of the original KnownMarker.
         matches_.emplace_back(match.second.first, *match.second.second);

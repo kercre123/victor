@@ -176,6 +176,7 @@ Supervisor {
 					height IS cameraHeight
 					fieldOfView IS fieldOfView
 					near 0.006
+					antialiasing TRUE
 				  }
 				  Gyro {
 				  	name "gyro"
@@ -364,7 +365,7 @@ Supervisor {
 			  geometry DEF CASTER_SHAPE Cylinder {
 				height 0.024
 				radius 0.0045
-				subdivision 16
+				subdivision 32
 			  }
 			}
 		  ]
@@ -430,7 +431,7 @@ Supervisor {
 				geometry Cylinder {
 				  height 0.003
 				  radius 0.0142
-				  subdivision 22
+				  subdivision 32
 				}
 			  }
 			]

@@ -79,6 +79,19 @@ namespace Anki
       
       const Vision::ObservableObject* GetObservableObjectByID(const ObjectID_t objectID) const;
       
+      // Finds all blocks in the world whose centers are within the specified
+      // heights off the ground (z dimension) and returns a vector of rectangles
+      // of their outlines on the ground plane (z=0).  Can also add pad the
+      // rectangles by a specified amount.
+      void GetBlockBoundingBoxesXY(const f32 minHeight, const f32 maxHeight,
+                                   const f32 padding,
+                                   std::vector<Quad2f>& rectangles) const;
+      
+      // Returns true if any blocks were moved, added, or deleted on the
+      // last update. Useful, for example, to know whether to update the
+      // visualization.
+      bool DidBlocksChange() const;
+      
       ~BlockWorld();
       
     protected:
@@ -86,7 +99,7 @@ namespace Anki
       //static BlockWorld* singletonInstance_;
       
       //BlockWorld(); // protected constructor for singleton
-      
+      bool             isInitialized_;
       RobotManager*    robotMgr_;
       //MessageHandler*  msgHandler_;
       
@@ -105,6 +118,8 @@ namespace Anki
       ObjectsMap_t existingBlocks_;
       ObjectsMap_t existingMatPieces_;
       
+      bool didBlocksChange_;
+      
       static const ObjectsMapByID_t EmptyObjectMap;
       
       
@@ -114,7 +129,7 @@ namespace Anki
       
       
       //template<class ObjectType>
-      void AddAndUpdateObjects(const std::vector<Vision::ObservableObject*> objectsSeen,
+      void AddAndUpdateObjects(const std::vector<Vision::ObservableObject*>& objectsSeen,
                                    ObjectsMap_t& objectsExisting);
       
       // Global counter for assigning IDs to objects as they are created.

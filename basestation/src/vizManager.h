@@ -29,6 +29,7 @@ namespace Anki {
       VIZ_COLOR_EXECUTED_PATH,
       VIZ_COLOR_PREDOCKPOSE,
       VIZ_COLOR_SELECTED_OBJECT,
+      VIZ_COLOR_BLOCK_BOUNDING_QUAD,
       VIZ_COLOR_DEFAULT = u32_MAX
     };
     
@@ -129,6 +130,19 @@ namespace Anki {
       
       // Erases all paths
       void EraseAllPaths();
+      
+      // ==== Quad functions =====
+      
+      // Draws a 3D quadrilateral
+      template<typename T> void DrawQuad(const u32 quadID,
+                                         const Quadrilateral<3,T>& quad,
+                                         const u32 colorID);
+      
+      // Erases the quad corresponding to quadID
+      void EraseQuad(const u32 quadID);
+      
+      // Erases all quads
+      void EraseAllQuads();
     
       // ==== Text functions =====
       void SetText(const u32 labelID, const u32 colorID, const char* format, ...);
@@ -185,6 +199,36 @@ namespace Anki {
       }
       
       return singletonInstance_;
+    }
+    
+    template<typename T>
+    void VizManager::DrawQuad(const u32 quadID,
+                              const Quadrilateral<3,T>& quad,
+                              const u32 colorID)
+    {
+      using namespace Quad;
+      VizQuad v;
+      v.quadID = quadID;
+      
+      v.xUpperLeft  = MM_TO_M(static_cast<f32>(quad[Quad::TopLeft].x()));
+      v.yUpperLeft  = MM_TO_M(static_cast<f32>(quad[Quad::TopLeft].y()));
+      v.zUpperLeft  = MM_TO_M(static_cast<f32>(quad[Quad::TopLeft].z()));
+      
+      v.xLowerLeft  = MM_TO_M(static_cast<f32>(quad[Quad::BottomLeft].x()));
+      v.yLowerLeft  = MM_TO_M(static_cast<f32>(quad[Quad::BottomLeft].y()));
+      v.zLowerLeft  = MM_TO_M(static_cast<f32>(quad[Quad::BottomLeft].z()));
+      
+      v.xUpperRight = MM_TO_M(static_cast<f32>(quad[Quad::TopRight].x()));
+      v.yUpperRight = MM_TO_M(static_cast<f32>(quad[Quad::TopRight].y()));
+      v.zUpperRight = MM_TO_M(static_cast<f32>(quad[Quad::TopRight].z()));
+      
+      v.xLowerRight = MM_TO_M(static_cast<f32>(quad[Quad::BottomRight].x()));
+      v.yLowerRight = MM_TO_M(static_cast<f32>(quad[Quad::BottomRight].y()));
+      v.zLowerRight = MM_TO_M(static_cast<f32>(quad[Quad::BottomRight].z()));
+      
+      v.color = colorID;
+      
+      SendMessage( GET_MESSAGE_ID(VizQuad), &v );
     }
     
   } // namespace Cozmo

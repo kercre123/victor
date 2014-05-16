@@ -2,6 +2,11 @@
 // TODO: this include is shared b/w BS and Robot.  Move up a level.
 #include "anki/cozmo/robot/cozmoConfig.h"
 
+#include "anki/common/shared/utilities_shared.h"
+
+#include "anki/common/basestation/general.h"
+#include "anki/common/basestation/math/rect.h"
+
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/mat.h"
@@ -30,7 +35,7 @@ namespace Anki
     
     
     BlockWorld::BlockWorld( )
-    : robotMgr_(NULL), globalIDCounter(0)
+    : isInitialized_(false), robotMgr_(NULL), didBlocksChange_(false), globalIDCounter(0)
 //    : robotMgr_(RobotManager::getInstance()),
 //      msgHandler_(MessageHandler::getInstance())
     {
@@ -40,14 +45,14 @@ namespace Anki
       // 1x1 Cubes
       //
       blockLibrary_.AddObject(new Block_Cube1x1(Block::FUEL_BLOCK_TYPE));
+      
+      blockLibrary_.AddObject(new Block_Cube1x1(Block::ANGRYFACE_BLOCK_TYPE));
 
       blockLibrary_.AddObject(new Block_Cube1x1(Block::BULLSEYE_BLOCK_TYPE));
       
       blockLibrary_.AddObject(new Block_Cube1x1(Block::SQTARGET_BLOCK_TYPE));
       
       blockLibrary_.AddObject(new Block_Cube1x1(Block::FIRE_BLOCK_TYPE));
-
-      blockLibrary_.AddObject(new Block_Cube1x1(Block::ANGRYFACE_BLOCK_TYPE));
       
       blockLibrary_.AddObject(new Block_Cube1x1(Block::ANKILOGO_BLOCK_TYPE));
 
@@ -153,6 +158,8 @@ namespace Anki
     void BlockWorld::Init(RobotManager* robotMgr)
     {
       robotMgr_ = robotMgr;
+      
+      isInitialized_ = true;
     }
     
     
@@ -197,13 +204,61 @@ namespace Anki
     } // FindOverlappingObjects()
     
     
-    void BlockWorld::AddAndUpdateObjects(const std::vector<Vision::ObservableObject*> objectsSeen,
+    
+    void ClearAllOcclusionMaps(RobotManager* robotMgr)
+    {
+      for(auto robotID : robotMgr->GetRobotIDList()) {
+        Robot* robot = robotMgr->GetRobotByID(robotID);
+        CORETECH_ASSERT(robot != NULL);
+        Vision::Camera& camera = robot->get_camHead();
+        camera.ClearOccluders();
+      }
+    } // ClearAllOcclusionMaps()
+
+    void AddToOcclusionMaps(const Vision::ObservableObject* object,
+                            RobotManager* robotMgr)
+    {
+
+      for(auto robotID : robotMgr->GetRobotIDList()) {
+        Robot* robot = robotMgr->GetRobotByID(robotID);
+        CORETECH_ASSERT(robot != NULL);
+        
+        Vision::Camera& camera = robot->get_camHead();
+        
+        camera.AddOccluder(object);
+      }
+      
+    } // AddToOcclusionMaps()
+    
+    
+    
+    void BlockWorld::AddAndUpdateObjects(const std::vector<Vision::ObservableObject*>& objectsSeen,
                                          ObjectsMap_t& objectsExisting)
     {
+      
+      ClearAllOcclusionMaps(robotMgr_);
+      
+      // First, mark all existing blocks as unseen
+      for(auto & objectTypes : objectsExisting) {
+        /* Using a lambda construction:
+        ObjectIdMap_t objectIdMap = objectTypes.second;
+        
+        std::for_each(objectIdMap.begin(), objectIdMap.end(),
+                      [](std::pair<ObjectID_t, Vision::ObservableObject*>& objectIdPair){objectIdPair.second->SetWhetherObserved(false);});
+         */
+        
+        
+        for(auto & objectID : objectTypes.second) {
+          objectID.second->SetWhetherObserved(false);
+        }
+        
+      }
+      
+      
+    
       for(auto objSeen : objectsSeen) {
         
         //const float minDimSeen = objSeen->GetMinDim();
-        
         
         // Store pointers to any existing blocks that overlap with this one
         std::vector<Vision::ObservableObject*> overlappingObjects;
@@ -213,6 +268,7 @@ namespace Anki
           // no existing blocks overlapped with the block we saw, so add it
           // as a new block
           objSeen->SetID(++globalIDCounter);
+          objSeen->SetWhetherObserved(true);
           objectsExisting[objSeen->GetType()][objSeen->GetID()] = objSeen;
           
           fprintf(stdout, "Adding new block with type=%hu and ID=%hu at (%.1f, %.1f, %.1f)\n",
@@ -220,6 +276,10 @@ namespace Anki
                   objSeen->GetPose().get_translation().x(),
                   objSeen->GetPose().get_translation().y(),
                   objSeen->GetPose().get_translation().z());
+          
+          // Project this new block into each camera
+          AddToOcclusionMaps(objSeen, robotMgr_);
+          
         }
         else {
           if(overlappingObjects.size() > 1) {
@@ -236,15 +296,80 @@ namespace Anki
           // TODO: better way of merging existing/observed block pose
           overlappingObjects[0]->SetPose( objSeen->GetPose() );
           
+          // Mark the existing object as seen
+          overlappingObjects[0]->SetWhetherObserved(true);
+          
+          // Project this existing block into each camera, using its new pose
+          AddToOcclusionMaps(overlappingObjects[0], robotMgr_);
+
           // Now that we've merged in objSeen, we can delete it because we
           // will no longer be using it.  Otherwise, we'd leak.
           delete objSeen;
           
         } // if/else overlapping existing blocks found
      
+        didBlocksChange_ = true;
       } // for each block seen
-     
+      
+      // Project any unobserved existing blocks into each camera, using
+      // their old poses.  Note that this is conservative: these objects may
+      // in fact be gone, but we will still not worry about not having
+      // seen objects that they would have occluded.
+      // Meanwhile, create a list of unobserved objects for further
+      // consideration below.
+      std::vector<std::pair<ObjectsMap_t::iterator, ObjectsMapByID_t::iterator> > unobservedObjects;
+      //for(auto & objectTypes : objectsExisting) {
+      for(auto objectTypeIter = objectsExisting.begin();
+          objectTypeIter != objectsExisting.end(); ++objectTypeIter)
+      {
+        ObjectsMapByID_t& objectIdMap = objectTypeIter->second;
+        for(auto objectIter = objectIdMap.begin();
+            objectIter != objectIdMap.end(); ++objectIter)
+        {
+          Vision::ObservableObject* object = objectIter->second;;
+          if(object->GetWhetherObserved() == false) {
+            AddToOcclusionMaps(object, robotMgr_);
+            unobservedObjects.emplace_back(objectTypeIter, objectIter);
+          } // if object was not observed
+        } // for object IDs of this type
+      } // for each object type
+      
+      // Now that the occlusion maps are complete, check each unobserved object's
+      // visibility in each camera
+      for(auto unobserved : unobservedObjects) {
+        Vision::ObservableObject* object = unobserved.second->second;
+        
+        for(auto robotID : robotMgr_->GetRobotIDList()) {
+          
+          Robot* robot = robotMgr_->GetRobotByID(robotID);
+          CORETECH_ASSERT(robot != NULL);
+          
+          // TODO: expose these angle/distance parameters 
+          if(object->IsVisibleFrom(robot->get_camHead(), DEG_TO_RAD(45), 20.f))
+          {
+            // We "should" have seen the object! Delete it or mark it somehow
+            CoreTechPrint("Removing object %d, which should have been seen, "
+                          "but wasn't.\n", object->GetID());
+
+            // Erase the vizualized block and its projected quad
+            VizManager::getInstance()->EraseVizObject(unobserved.second->second->GetID());
+            VizManager::getInstance()->EraseQuad(unobserved.second->second->GetID());
+            
+            // Actually erase the object from blockWorld's container of
+            // existing objects, using the iterator pointing to it
+            unobserved.first->second.erase(unobserved.second);
+
+            didBlocksChange_ = true;
+          }
+        } // for each camera
+      } // for each unobserved object
+
+      
     } // AddAndUpdateObjects()
+    
+    bool BlockWorld::DidBlocksChange() const {
+      return didBlocksChange_;
+    }
     
     
     bool BlockWorld::UpdateRobotPose(Robot* robot)
@@ -329,18 +454,28 @@ namespace Anki
     
     uint32_t BlockWorld::UpdateBlockPoses()
     {
-      std::vector<Vision::ObservableObject*> blocksSeen;
-      blockLibrary_.CreateObjectsFromMarkers(obsMarkers_, blocksSeen);
+      didBlocksChange_ = false;
       
-      // Use them to add or update existing blocks in our world
-      AddAndUpdateObjects(blocksSeen, existingBlocks_);
-
+      std::vector<Vision::ObservableObject*> blocksSeen;
+      
+      // Don't bother with this update at all if we didn't see at least one
+      // marker (which is our indication we got an update from the robot's
+      // vision system
+      if(not obsMarkers_.empty()) {
+        blockLibrary_.CreateObjectsFromMarkers(obsMarkers_, blocksSeen);
+        
+        // Use them to add or update existing blocks in our world
+        AddAndUpdateObjects(blocksSeen, existingBlocks_);
+      }
+      
       return blocksSeen.size();
       
     } // UpdateBlockPoses()
     
     void BlockWorld::Update(void)
     {
+      CORETECH_ASSERT(robotMgr_ != NULL);
+           
       robotMgr_->UpdateAllRobots();
       
       //
