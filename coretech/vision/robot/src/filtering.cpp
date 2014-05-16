@@ -245,15 +245,7 @@ namespace Anki
 
           pFiltered[x-1] = horizontalAccumulator;
 
-          //const s32 origX = x;
-
-          /*for(; x<imageWidth; x++) {
-          horizontalAccumulator += verticalAccumulator[x] - verticalAccumulator[x-boxWidth];
-          pFiltered[x] = horizontalAccumulator;
-          //printf("0x%x ", horizontalAccumulator);
-          }*/
-
-          for(; x<imageWidth; x+=4) {
+          for(; x<imageWidth-3; x+=4) {
             const u32 toAdd01 = *reinterpret_cast<const u32*>(verticalAccumulator + x);
             const u32 toAdd23 = *reinterpret_cast<const u32*>(verticalAccumulator + x + 2);
 
@@ -273,19 +265,16 @@ namespace Anki
             toSub23 += toSub23 << 16; // [32, 2]
             total23 -= toSub23;
 
-            //printf("0x%x 0x%x 0x%x 0x%x\n", total01 & 0xFFFF, total01 >> 16, total23 & 0xFFFF, total23 >> 16);
-
             horizontalAccumulator = total23 >> 16;
-
-            //pFiltered[x] = horizontalAccumulator;
 
             *reinterpret_cast<u32*>(pFiltered + x) = total01;
             *reinterpret_cast<u32*>(pFiltered + x + 2) = total23;
           }
 
-          //for(x=origX; x<imageWidth; x++) {
-          //  printf("0x%x ", pFiltered[x]);
-          //}
+          for(; x<imageWidth; x++) {
+            horizontalAccumulator += verticalAccumulator[x] - verticalAccumulator[x-boxWidth];
+            pFiltered[x] = horizontalAccumulator;
+          }
 
           filtered(boxHeight2,boxHeight2,-boxWidth2,-1).Set(0);
         }
@@ -326,6 +315,32 @@ namespace Anki
           filtered(y-boxHeight2,y-boxHeight2,0,boxWidth2-1).Set(0);
 
           pFiltered[x-1] = horizontalAccumulator;
+
+          for(; x<imageWidth-3; x+=4) {
+            const u32 toAdd01 = *reinterpret_cast<const u32*>(verticalAccumulator + x);
+            const u32 toAdd23 = *reinterpret_cast<const u32*>(verticalAccumulator + x + 2);
+
+            u32 toSub01 = *reinterpret_cast<const u32*>(verticalAccumulator + x - boxWidth);
+            u32 toSub23 = *reinterpret_cast<const u32*>(verticalAccumulator + x - boxWidth + 2);
+
+            // h is previous horizontal accumulator
+            u32 total01 = toAdd01 + horizontalAccumulator; // [1, 0h]
+            total01 += total01 << 16; // [10h, 0h]
+
+            toSub01 += toSub01 << 16; // [10, 0]
+            total01 -= toSub01;
+
+            u32 total23 = toAdd23 + (total01 >> 16); // [3, 210h]
+            total23 += total23 << 16; // [3210h, 210h]
+
+            toSub23 += toSub23 << 16; // [32, 2]
+            total23 -= toSub23;
+
+            horizontalAccumulator = total23 >> 16;
+
+            *reinterpret_cast<u32*>(pFiltered + x) = total01;
+            *reinterpret_cast<u32*>(pFiltered + x + 2) = total23;
+          }
 
           for(; x<imageWidth; x++) {
             horizontalAccumulator += verticalAccumulator[x] - verticalAccumulator[x-boxWidth];
