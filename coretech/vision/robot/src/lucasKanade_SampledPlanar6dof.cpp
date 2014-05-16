@@ -695,7 +695,7 @@ namespace Anki
           //
           if(numFiducialSquareSamples > 0)
           {
-            const f32 fiducialSampleGrayValue = 0.5f*static_cast<f32>(templateBrightValue + templateDarkValue);
+            const u8 fiducialSampleGrayValue = (templateBrightValue + templateDarkValue)/2;
 
             const f32 contrast = static_cast<f32>(templateBrightValue - templateDarkValue);
             //const f32 derivMagnitude = (0.5f / 255.f) * contrast * templateQuadDiagonal; // NOTE: scale in numerator and denominator cancel
