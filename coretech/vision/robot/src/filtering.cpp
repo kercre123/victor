@@ -383,16 +383,24 @@ namespace Anki
             pDx[x] = static_cast<s8>( (static_cast<s32>(pIn_y0[x+1]) >> 1) - (static_cast<s32>(pIn_y0[x-1]) >> 1) );
           }
 #else // #if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING)
-          for(x = 0; x<(imageWidth-3); x+=4) {
+          for(x = 0; x<(imageWidth-7); x+=8) {
             const u32 inM0123 = *reinterpret_cast<const u32*>(pIn_y0 + x - 1);
+            const u32 inM4567 = *reinterpret_cast<const u32*>(pIn_y0 + x + 3);
+
             const u32 inP0123 = *reinterpret_cast<const u32*>(pIn_y0 + x + 1);
+            const u32 inP4567 = *reinterpret_cast<const u32*>(pIn_y0 + x + 5);
 
             const u32 inM0123Half = (inM0123 >> 1) & 0x7f7f7f7f;
+            const u32 inM4567Half = (inM4567 >> 1) & 0x7f7f7f7f;
+
             const u32 inP0123Half = (inP0123 >> 1) & 0x7f7f7f7f;
+            const u32 inP4567Half = (inP4567 >> 1) & 0x7f7f7f7f;
 
-            const u32 out = __SSUB8(inP0123Half, inM0123Half);
+            const u32 out0123 = __SSUB8(inP0123Half, inM0123Half);
+            const u32 out4567 = __SSUB8(inP4567Half, inM4567Half);
 
-            *reinterpret_cast<u32*>(pDx + x) = out;
+            *reinterpret_cast<u32*>(pDx + x) = out0123;
+            *reinterpret_cast<u32*>(pDx + x + 4) = out4567;
           }
 #endif // #if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING) ... #else
 
@@ -409,16 +417,24 @@ namespace Anki
             pDy[x] = static_cast<s8>( (static_cast<s32>(pIn_yp1[x]) >> 1) - (static_cast<s32>(pIn_ym1[x]) >> 1) );
           }
 #else // #if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING)
-          for(x = 0; x<(imageWidth-3); x+=4) {
+          for(x = 0; x<(imageWidth-7); x+=8) {
             const u32 inM0123 = *reinterpret_cast<const u32*>(pIn_ym1 + x);
+            const u32 inM4567 = *reinterpret_cast<const u32*>(pIn_ym1 + x + 4);
+
             const u32 inP0123 = *reinterpret_cast<const u32*>(pIn_yp1 + x);
+            const u32 inP4567 = *reinterpret_cast<const u32*>(pIn_yp1 + x + 4);
 
             const u32 inM0123Half = (inM0123 >> 1) & 0x7f7f7f7f;
+            const u32 inM4567Half = (inM4567 >> 1) & 0x7f7f7f7f;
+
             const u32 inP0123Half = (inP0123 >> 1) & 0x7f7f7f7f;
+            const u32 inP4567Half = (inP4567 >> 1) & 0x7f7f7f7f;
 
-            const u32 out = __SSUB8(inP0123Half, inM0123Half);
+            const u32 out0123 = __SSUB8(inP0123Half, inM0123Half);
+            const u32 out4567 = __SSUB8(inP4567Half, inM4567Half);
 
-            *reinterpret_cast<u32*>(pDy + x) = out;
+            *reinterpret_cast<u32*>(pDy + x) = out0123;
+            *reinterpret_cast<u32*>(pDy + x + 4) = out4567;
           }
 #endif // #if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING) ... #else
 
