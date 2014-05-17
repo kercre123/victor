@@ -138,12 +138,12 @@ GTEST_TEST(CoreTech_Vision, FastGradient)
     PUSH_MEMORY_STACK(scratchOnchip);
     PUSH_MEMORY_STACK(scratchOffchip);
 
-    const s32 imageHeight = 240;
+    const s32 imageHeight = 120;
     const s32 imageWidth = 320;
 
     Array<u8> image(imageHeight, imageWidth, scratchOnchip);
-    Array<s8> dx(imageHeight, imageWidth, scratchOffchip);
-    Array<s8> dy(imageHeight, imageWidth, scratchOffchip);
+    Array<s8> dx(imageHeight, imageWidth, scratchOnchip);
+    Array<s8> dy(imageHeight, imageWidth, scratchOnchip);
 
     BeginBenchmark("FastGradient");
 
