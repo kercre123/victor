@@ -382,36 +382,17 @@ namespace Anki
           for(x=1; x<(imageWidth-1); x++) {
             pDx[x] = static_cast<s8>( (static_cast<s32>(pIn_y0[x+1]) >> 1) - (static_cast<s32>(pIn_y0[x-1]) >> 1) );
           }
-
-          //for(x = 0; x<(imageWidth-3); x+=4) {
-          //  const u32 inM1 = *reinterpret_cast<const u32*>(pIn_y0 + x - 1);
-          //  const u32 inP1 = *reinterpret_cast<const u32*>(pIn_y0 + x + 1);
-
-          //  const s8 out0 = static_cast<s8>( (static_cast<s32>(inP1 & 0xFF) - static_cast<s32>(inM1 & 0xFF)) >> 1 );
-          //  const s8 out1 = static_cast<s8>( (static_cast<s32>((inP1 & 0xFF00) >> 8) - static_cast<s32>((inM1 & 0xFF00) >> 8)) >> 1 );
-          //  const s8 out2 = static_cast<s8>( (static_cast<s32>((inP1 & 0xFF0000) >> 16) - static_cast<s32>((inM1 & 0xFF0000) >> 16)) >> 1 );
-          //  const s8 out3 = static_cast<s8>( (static_cast<s32>((inP1 & 0xFF000000) >> 24) - static_cast<s32>((inM1 & 0xFF000000) >> 24)) >> 1 );
-
-          //  // Pack all 4 into one u32
-          //  // TODO: can this be done without the reinterpret cast?
-          //  const u32 out = out0 | out1 << 8 | out2 << 16 | (*reinterpret_cast<const u32*>(&out3) << 24);
-
-          //  *reinterpret_cast<u32*>(pDx + x) = out; // 0, 4, 13, 28, 49, 76, -19, 0,
-          //}
 #else // #if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING)
           for(x = 0; x<(imageWidth-3); x+=4) {
-            const u32 inM1 = *reinterpret_cast<const u32*>(pIn_y0 + x - 1);
-            const u32 inP1 = *reinterpret_cast<const u32*>(pIn_y0 + x + 1);
+            const u32 inM0123 = *reinterpret_cast<const u32*>(pIn_y0 + x - 1);
+            const u32 inP0123 = *reinterpret_cast<const u32*>(pIn_y0 + x + 1);
 
-            //const u32 inM1Half = ((inM1 & 0xFF) >> 1) | ((inM1 & 0xFF00) >> 1) | ((inM1 & 0xFF0000) >> 1) | ((inM1 & 0xFF000000) >> 1);
-            //const u32 inP1Half = ((inP1 & 0xFF) >> 1) | ((inP1 & 0xFF00) >> 1) | ((inP1 & 0xFF0000) >> 1) | ((inP1 & 0xFF000000) >> 1);
+            const u32 inM0123Half = (inM0123 >> 1) & 0x7f7f7f7f;
+            const u32 inP0123Half = (inP0123 >> 1) & 0x7f7f7f7f;
 
-            const u32 inM1Half = (inM1 >> 1) & 0x7f7f7f7f;
-            const u32 inP1Half = (inP1 >> 1) & 0x7f7f7f7f;
+            const u32 out = __SSUB8(inP0123Half, inM0123Half);
 
-            const u32 out = __SSUB8(inP1Half, inM1Half);
-
-            *reinterpret_cast<u32*>(pDx + x) = out; // 0, 4, 13, 28, 49, 76, -19, 0,
+            *reinterpret_cast<u32*>(pDx + x) = out;
           }
 #endif // #if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING) ... #else
 
@@ -425,15 +406,19 @@ namespace Anki
 
 #if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING)
           for(x=1; x<(imageWidth-1); x++) {
-            pDy[x] = static_cast<s8>( (static_cast<s32>(pIn_yp1[x]) - static_cast<s32>(pIn_ym1[x])) >> 1 );
+            pDy[x] = static_cast<s8>( (static_cast<s32>(pIn_yp1[x]) >> 1) - (static_cast<s32>(pIn_ym1[x]) >> 1) );
           }
 #else // #if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING)
-          for(x=1; x<4; x++) {
-            pDy[x] = static_cast<s8>( (static_cast<s32>(pIn_yp1[x]) - static_cast<s32>(pIn_ym1[x])) >> 1 );
-          }
+          for(x = 0; x<(imageWidth-3); x+=4) {
+            const u32 inM0123 = *reinterpret_cast<const u32*>(pIn_ym1 + x);
+            const u32 inP0123 = *reinterpret_cast<const u32*>(pIn_yp1 + x);
 
-          for(; x<(imageWidth-1); x++) {
-            pDy[x] = static_cast<s8>( (static_cast<s32>(pIn_yp1[x]) - static_cast<s32>(pIn_ym1[x])) >> 1 );
+            const u32 inM0123Half = (inM0123 >> 1) & 0x7f7f7f7f;
+            const u32 inP0123Half = (inP0123 >> 1) & 0x7f7f7f7f;
+
+            const u32 out = __SSUB8(inP0123Half, inM0123Half);
+
+            *reinterpret_cast<u32*>(pDy + x) = out;
           }
 #endif // #if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING) ... #else
 
