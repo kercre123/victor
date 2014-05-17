@@ -353,33 +353,50 @@ namespace Anki
         return RESULT_OK;
       } // Result BoxFilter(const Array<u8> &image, const s32 boxHeight, const s32 boxWidth, Array<u16> &filtered, MemoryStack scratch)
 
-      //Result FastGradient(const Array<u8> &in, Array<s8> &dx, Array<s8> &dy, MemoryStack scratch)
-      //{
-      //  const s32 imageHeight = in.get_size(0);
-      //  const s32 imageWidth = in.get_size(1);
+      Result FastGradient(const Array<u8> &in, Array<s8> &dx, Array<s8> &dy, MemoryStack scratch)
+      {
+        const s32 imageHeight = in.get_size(0);
+        const s32 imageWidth = in.get_size(1);
 
-      //  AnkiConditionalErrorAndReturnValue(in.IsValid() && dy.IsValid() && dx.IsValid() && scratch.IsValid(),
-      //    RESULT_FAIL_INVALID_OBJECT, "FastGradient", "Image is invalid");
+        AnkiConditionalErrorAndReturnValue(in.IsValid() && dy.IsValid() && dx.IsValid() && scratch.IsValid(),
+          RESULT_FAIL_INVALID_OBJECT, "FastGradient", "Image is invalid");
 
-      //  AnkiConditionalErrorAndReturnValue(
-      //    imageHeight == dx.get_size(0) && imageHeight == dy.get_size(0) &&
-      //    imageWidth == dx.get_size(1) && imageWidth == dy.get_size(1),
-      //    RESULT_FAIL_INVALID_SIZE, "FastGradient", "Images must be the same size");
+        AnkiConditionalErrorAndReturnValue(
+          imageHeight == dx.get_size(0) && imageHeight == dy.get_size(0) &&
+          imageWidth == dx.get_size(1) && imageWidth == dy.get_size(1),
+          RESULT_FAIL_INVALID_SIZE, "FastGradient", "Images must be the same size");
 
-      //  for(s32 y=1; y<(imageHeight-1); y++) {
-      //    const u8 * restrict pIn_ym1 = in.Pointer(y-1,0);
-      //    const u8 * restrict pIn_y0  = in.Pointer(y,0);
-      //    const u8 * restrict pIn_yp1 = in.Pointer(y+1,0);
+        dx(0,0,0,-1).Set(0);
 
-      //    s8 * restrict pDx = dx.Pointer(y,0);
-      //    s8 * restrict pDy = dy.Pointer(y,0);
+        for(s32 y=1; y<(imageHeight-1); y++) {
+          const u8 * restrict pIn_ym1 = in.Pointer(y-1,0);
+          const u8 * restrict pIn_y0  = in.Pointer(y,0);
+          const u8 * restrict pIn_yp1 = in.Pointer(y+1,0);
 
-      //    for(s32 x=1; x<(imageWidth-1); x++) {
-      //    } // for(s32 x=1; x<(imageWidth-1); x++)
-      //  } // for(s32 y=1; y<(imageHeight-1); y++)
+          s8 * restrict pDx = dx.Pointer(y,0);
+          s8 * restrict pDy = dy.Pointer(y,0);
 
-      //  return RESULT_OK;
-      //} // Result FastGradient(const Array<u8> &in, Array<s8> &dx, Array<s8> &dy, MemoryStack scratch)
+          pDx[0] = 0;
+
+          for(s32 x=1; x<(imageWidth-1); x++) {
+            pDx[x] = static_cast<s8>( (static_cast<s32>(pIn_y0[x+1]) - static_cast<s32>(pIn_y0[x-1])) >> 1 );
+          } // for(s32 x=1; x<(imageWidth-1); x++)
+
+          pDx[imageWidth-1] = 0;
+
+          pDy[0] = 0;
+
+          for(s32 x=1; x<(imageWidth-1); x++) {
+            pDy[x] = static_cast<s8>( (static_cast<s32>(pIn_yp1[x]) - static_cast<s32>(pIn_ym1[x])) >> 1 );
+          } // for(s32 x=1; x<(imageWidth-1); x++)
+
+          pDy[imageWidth-1] = 0;
+        } // for(s32 y=1; y<(imageHeight-1); y++)
+
+        dx(-1,-1,0,-1).Set(0);
+
+        return RESULT_OK;
+      } // Result FastGradient(const Array<u8> &in, Array<s8> &dx, Array<s8> &dy, MemoryStack scratch)
     } // namespace ImageProcessing
   } // namespace Embedded
 } // namespace Anki

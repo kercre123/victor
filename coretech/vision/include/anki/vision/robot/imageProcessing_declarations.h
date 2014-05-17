@@ -32,7 +32,7 @@ namespace Anki
       template<typename InType, typename IntermediateType, typename OutType> Result ComputeYGradient(const Array<InType> &in, Array<OutType> &out);
 
       // Note: Output gradient is divided by two, so the output is between [-127,127]
-      //Result FastGradient(const Array<u8> &in, Array<s8> &dx, Array<s8> &dy, MemoryStack scratch);
+      Result FastGradient(const Array<u8> &in, Array<s8> &dx, Array<s8> &dy, MemoryStack scratch);
 
       // Filter with a horizontal and vertical [1, 4, 6, 4, 1] filter
       // Handles edges by replicating the border pixel

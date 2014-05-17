@@ -73,17 +73,22 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(low_thresh <= high_thresh,
         RESULT_FAIL_INVALID_PARAMETER, "CannyEdgeDetection", "Invalid threshold");
 
-      Array<s16> dx(imageHeight, imageWidth, scratch);
-      Array<s16> dy(imageHeight, imageWidth, scratch);
+      Array<s16> dx(imageHeight, imageWidth, scratch, Flags::Buffer(false, false, false));
+      Array<s16> dy(imageHeight, imageWidth, scratch, Flags::Buffer(false, false, false));
 
       //Sobel(src, dx, CV_16S, 1, 0, aperture_size, 1, 0, cv::BORDER_REPLICATE);
       //Sobel(src, dy, CV_16S, 0, 1, aperture_size, 1, 0, cv::BORDER_REPLICATE);
 
+      BeginBenchmark("Canny_init_gradient");
+
       ImageProcessing::ComputeXGradient<u8,s16,s16>(src, dx);
       ImageProcessing::ComputeYGradient<u8,s16,s16>(src, dy);
 
+      EndBenchmark("Canny_init_gradient");
+
       size_t mapstep = imageWidth + 2;
-      u8 * buffer = reinterpret_cast<u8*>( scratch.Allocate((imageWidth+2)*(imageHeight+2) + mapstep * 3 * sizeof(int)) );
+      s32 numBufferBytes;
+      u8 * buffer = reinterpret_cast<u8*>( scratch.Allocate((imageWidth+2)*(imageHeight+2) + mapstep * 3 * sizeof(int), false, numBufferBytes) );
 
       int* mag_buf[3];
       mag_buf[0] = (int*)(u8*)buffer;

@@ -69,12 +69,14 @@ namespace Anki
 
           OutType * restrict pOut = out.Pointer(y,0);
 
+          // Fill in left boundary
+          pOut[0] = 0;
+
           for(s32 x=1; x<imageWidth-1; x++) {
             pOut[x] = static_cast<IntermediateType>(pIn[x+1]) - static_cast<IntermediateType>(pIn[x-1]);
           }
 
-          // Fill in left/right boundaries
-          pOut[0] = 0;
+          // Fill in right boundary
           pOut[imageWidth-1] = 0;
         }
 
@@ -106,12 +108,14 @@ namespace Anki
 
           OutType * restrict pOut = out.Pointer(y,0);
 
+          // Fill in left boundary
+          pOut[0] = 0;
+
           for(s32 x=1; x<imageWidth-1; x++) {
             pOut[x] = static_cast<IntermediateType>(pIn_yp1[x]) - static_cast<IntermediateType>(pIn_ym1[x]);
           }
 
-          // Fill in left/right boundaries
-          pOut[0] = 0;
+          // Fill in right boundary
           pOut[imageWidth-1] = 0;
         }
 

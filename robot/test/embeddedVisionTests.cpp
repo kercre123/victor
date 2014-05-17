@@ -63,6 +63,105 @@ using namespace Anki::Embedded;
 
 //#define RUN_FACE_DETECTION_GUI
 
+GTEST_TEST(CoreTech_Vision, FastGradient)
+{
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  ASSERT_TRUE(scratchCcm.IsValid());
+
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(scratchOnchip.IsValid());
+
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(scratchOffchip.IsValid());
+
+  InitBenchmarking();
+
+  // Correctness test
+  {
+    PUSH_MEMORY_STACK(scratchCcm);
+    PUSH_MEMORY_STACK(scratchOnchip);
+    PUSH_MEMORY_STACK(scratchOffchip);
+
+    const s32 imageHeight = 5;
+    const s32 imageWidth = 8;
+
+    Array<u8> image(imageHeight, imageWidth, scratchOffchip);
+    Array<s8> dx(imageHeight, imageWidth, scratchOffchip);
+    Array<s8> dy(imageHeight, imageWidth, scratchOffchip);
+
+    for(s32 y=0; y<imageHeight; y++) {
+      for(s32 x=0; x<imageWidth; x++) {
+        image[y][x] = static_cast<u8>(x*x*x + y);
+      }
+    }
+
+    image[2][2] = 50;
+
+    const Result result = ImageProcessing::FastGradient(
+      image,
+      dx, dy,
+      scratchCcm);
+
+    //image.Print("image");
+    //dx.Print("dx");
+    //dy.Print("dy");
+
+    ASSERT_TRUE(result == RESULT_OK);
+
+    Array<s8> dx_groundTruth(imageHeight, imageWidth, scratchOffchip);
+    Array<s8> dy_groundTruth(imageHeight, imageWidth, scratchOffchip);
+
+    const s8 dx_groundTruthData[imageHeight*imageWidth] = {
+      0, 0, 0, 0, 0, 0, 0, 0,
+      0, 4, 13, 28, 49, 76, -19, 0,
+      0, 24, 13, 8, 49, 76, -19, 0,
+      0, 4, 13, 28, 49, 76, -19, 0,
+      0, 0, 0, 0, 0, 0, 0, 0};
+
+    const s8 dy_groundTruthData[imageHeight*imageWidth] = {
+      0, 0, 0, 0, 0, 0, 0, 0,
+      0, 1, 21, 1, 1, 1, 1, 0,
+      0, 1, 1, 1, 1, 1, 1, 0,
+      0, 1, -19, 1, 1, 1, 1, 0,
+      0, 0, 0, 0, 0, 0, 0, 0};
+
+    dx_groundTruth.Set(dx_groundTruthData, imageHeight*imageWidth);
+    dy_groundTruth.Set(dy_groundTruthData, imageHeight*imageWidth);
+
+    ASSERT_TRUE(AreElementwiseEqual<s8>(dx, dx_groundTruth));
+    ASSERT_TRUE(AreElementwiseEqual<s8>(dy, dy_groundTruth));
+  } // Correctness test
+
+  // Benchmarking test
+  {
+    PUSH_MEMORY_STACK(scratchCcm);
+    PUSH_MEMORY_STACK(scratchOnchip);
+    PUSH_MEMORY_STACK(scratchOffchip);
+
+    const s32 imageHeight = 240;
+    const s32 imageWidth = 320;
+
+    Array<u8> image(imageHeight, imageWidth, scratchOnchip);
+    Array<s8> dx(imageHeight, imageWidth, scratchOffchip);
+    Array<s8> dy(imageHeight, imageWidth, scratchOffchip);
+
+    BeginBenchmark("FastGradient");
+
+    const Result result = ImageProcessing::FastGradient(
+      image,
+      dx, dy,
+      scratchCcm);
+
+    EndBenchmark("FastGradient");
+
+    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
+
+    ASSERT_TRUE(result == RESULT_OK);
+  }
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Vision, FastGradient)
+
 GTEST_TEST(CoreTech_Vision, Canny)
 {
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
@@ -4185,9 +4284,10 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   numPassedTests = 0;
   numFailedTests = 0;
 
-  CALL_GTEST_TEST(CoreTech_Vision, Canny);
+  CALL_GTEST_TEST(CoreTech_Vision, FastGradient);
 
 #if !defined(JUST_FIDUCIAL_DETECTION)
+  CALL_GTEST_TEST(CoreTech_Vision, Canny);
   CALL_GTEST_TEST(CoreTech_Vision, BoxFilterU8U16);
   CALL_GTEST_TEST(CoreTech_Vision, Vignetting);
   CALL_GTEST_TEST(CoreTech_Vision, FaceDetection);
