@@ -366,30 +366,78 @@ namespace Anki
           imageWidth == dx.get_size(1) && imageWidth == dy.get_size(1),
           RESULT_FAIL_INVALID_SIZE, "FastGradient", "Images must be the same size");
 
+        AnkiConditionalErrorAndReturnValue(imageWidth%8 == 0,
+          RESULT_FAIL_INVALID_SIZE, "FastGradient", "Image width must be divisible by 8");
+
         dx(0,0,0,-1).Set(0);
 
         for(s32 y=1; y<(imageHeight-1); y++) {
-          const u8 * restrict pIn_ym1 = in.Pointer(y-1,0);
           const u8 * restrict pIn_y0  = in.Pointer(y,0);
-          const u8 * restrict pIn_yp1 = in.Pointer(y+1,0);
 
           s8 * restrict pDx = dx.Pointer(y,0);
-          s8 * restrict pDy = dy.Pointer(y,0);
+
+          s32 x;
+
+#if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING)
+          for(x=1; x<(imageWidth-1); x++) {
+            pDx[x] = static_cast<s8>( (static_cast<s32>(pIn_y0[x+1]) >> 1) - (static_cast<s32>(pIn_y0[x-1]) >> 1) );
+          }
+
+          //for(x = 0; x<(imageWidth-3); x+=4) {
+          //  const u32 inM1 = *reinterpret_cast<const u32*>(pIn_y0 + x - 1);
+          //  const u32 inP1 = *reinterpret_cast<const u32*>(pIn_y0 + x + 1);
+
+          //  const s8 out0 = static_cast<s8>( (static_cast<s32>(inP1 & 0xFF) - static_cast<s32>(inM1 & 0xFF)) >> 1 );
+          //  const s8 out1 = static_cast<s8>( (static_cast<s32>((inP1 & 0xFF00) >> 8) - static_cast<s32>((inM1 & 0xFF00) >> 8)) >> 1 );
+          //  const s8 out2 = static_cast<s8>( (static_cast<s32>((inP1 & 0xFF0000) >> 16) - static_cast<s32>((inM1 & 0xFF0000) >> 16)) >> 1 );
+          //  const s8 out3 = static_cast<s8>( (static_cast<s32>((inP1 & 0xFF000000) >> 24) - static_cast<s32>((inM1 & 0xFF000000) >> 24)) >> 1 );
+
+          //  // Pack all 4 into one u32
+          //  // TODO: can this be done without the reinterpret cast?
+          //  const u32 out = out0 | out1 << 8 | out2 << 16 | (*reinterpret_cast<const u32*>(&out3) << 24);
+
+          //  *reinterpret_cast<u32*>(pDx + x) = out; // 0, 4, 13, 28, 49, 76, -19, 0,
+          //}
+#else // #if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING)
+          for(x = 0; x<(imageWidth-3); x+=4) {
+            const u32 inM1 = *reinterpret_cast<const u32*>(pIn_y0 + x - 1);
+            const u32 inP1 = *reinterpret_cast<const u32*>(pIn_y0 + x + 1);
+
+            //const u32 inM1Half = ((inM1 & 0xFF) >> 1) | ((inM1 & 0xFF00) >> 1) | ((inM1 & 0xFF0000) >> 1) | ((inM1 & 0xFF000000) >> 1);
+            //const u32 inP1Half = ((inP1 & 0xFF) >> 1) | ((inP1 & 0xFF00) >> 1) | ((inP1 & 0xFF0000) >> 1) | ((inP1 & 0xFF000000) >> 1);
+
+            const u32 inM1Half = (inM1 >> 1) & 0x7f7f7f7f;
+            const u32 inP1Half = (inP1 >> 1) & 0x7f7f7f7f;
+
+            const u32 out = __SSUB8(inP1Half, inM1Half);
+
+            *reinterpret_cast<u32*>(pDx + x) = out; // 0, 4, 13, 28, 49, 76, -19, 0,
+          }
+#endif // #if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING) ... #else
 
           pDx[0] = 0;
-
-          for(s32 x=1; x<(imageWidth-1); x++) {
-            pDx[x] = static_cast<s8>( (static_cast<s32>(pIn_y0[x+1]) - static_cast<s32>(pIn_y0[x-1])) >> 1 );
-          } // for(s32 x=1; x<(imageWidth-1); x++)
-
           pDx[imageWidth-1] = 0;
 
-          pDy[0] = 0;
+          const u8 * restrict pIn_ym1 = in.Pointer(y-1,0);
+          const u8 * restrict pIn_yp1 = in.Pointer(y+1,0);
 
-          for(s32 x=1; x<(imageWidth-1); x++) {
+          s8 * restrict pDy = dy.Pointer(y,0);
+
+#if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING)
+          for(x=1; x<(imageWidth-1); x++) {
             pDy[x] = static_cast<s8>( (static_cast<s32>(pIn_yp1[x]) - static_cast<s32>(pIn_ym1[x])) >> 1 );
-          } // for(s32 x=1; x<(imageWidth-1); x++)
+          }
+#else // #if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING)
+          for(x=1; x<4; x++) {
+            pDy[x] = static_cast<s8>( (static_cast<s32>(pIn_yp1[x]) - static_cast<s32>(pIn_ym1[x])) >> 1 );
+          }
 
+          for(; x<(imageWidth-1); x++) {
+            pDy[x] = static_cast<s8>( (static_cast<s32>(pIn_yp1[x]) - static_cast<s32>(pIn_ym1[x])) >> 1 );
+          }
+#endif // #if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING) ... #else
+
+          pDy[0] = 0;
           pDy[imageWidth-1] = 0;
         } // for(s32 y=1; y<(imageHeight-1); y++)
 
