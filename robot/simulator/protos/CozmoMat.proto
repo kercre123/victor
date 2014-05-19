@@ -34,7 +34,7 @@ Solid {
 	    ]
     }
     Solid {
-	    translation -0.0667 -0.2000 0.0025
+	    translation -0.1429 -0.2000 0.0025
 	    rotation 0 0 1 0.000000
 	    children [
 		  Shape {
@@ -49,7 +49,7 @@ Solid {
 	    ]
     }
     Solid {
-	    translation 0.0667 -0.2000 0.0025
+	    translation -0.0857 -0.2000 0.0025
 	    rotation 0 0 1 0.000000
 	    children [
 		  Shape {
@@ -64,7 +64,7 @@ Solid {
 	    ]
     }
     Solid {
-	    translation 0.2000 -0.2000 0.0025
+	    translation -0.0286 -0.2000 0.0025
 	    rotation 0 0 1 0.000000
 	    children [
 		  Shape {
@@ -79,7 +79,7 @@ Solid {
 	    ]
     }
     Solid {
-	    translation -0.2000 -0.0667 0.0025
+	    translation 0.0286 -0.2000 0.0025
 	    rotation 0 0 1 0.000000
 	    children [
 		  Shape {
@@ -94,7 +94,7 @@ Solid {
 	    ]
     }
     Solid {
-	    translation -0.0667 -0.0667 0.0025
+	    translation 0.0857 -0.2000 0.0025
 	    rotation 0 0 1 0.000000
 	    children [
 		  Shape {
@@ -109,7 +109,7 @@ Solid {
 	    ]
     }
     Solid {
-	    translation 0.0667 -0.0667 0.0025
+	    translation 0.1429 -0.2000 0.0025
 	    rotation 0 0 1 0.000000
 	    children [
 		  Shape {
@@ -124,7 +124,7 @@ Solid {
 	    ]
     }
     Solid {
-	    translation 0.2000 -0.0667 0.0025
+	    translation 0.2000 -0.2000 0.0025
 	    rotation 0 0 1 0.000000
 	    children [
 		  Shape {
@@ -139,7 +139,7 @@ Solid {
 	    ]
     }
     Solid {
-	    translation -0.2000 0.0667 0.0025
+	    translation -0.2000 -0.1429 0.0025
 	    rotation 0 0 1 0.000000
 	    children [
 		  Shape {
@@ -154,7 +154,7 @@ Solid {
 	    ]
     }
     Solid {
-	    translation -0.0667 0.0667 0.0025
+	    translation -0.1429 -0.1429 0.0025
 	    rotation 0 0 1 0.000000
 	    children [
 		  Shape {
@@ -169,7 +169,7 @@ Solid {
 	    ]
     }
     Solid {
-	    translation 0.0667 0.0667 0.0025
+	    translation -0.0857 -0.1429 0.0025
 	    rotation 0 0 1 0.000000
 	    children [
 		  Shape {
@@ -184,7 +184,7 @@ Solid {
 	    ]
     }
     Solid {
-	    translation 0.2000 0.0667 0.0025
+	    translation -0.0286 -0.1429 0.0025
 	    rotation 0 0 1 0.000000
 	    children [
 		  Shape {
@@ -199,7 +199,7 @@ Solid {
 	    ]
     }
     Solid {
-	    translation -0.2000 0.2000 0.0025
+	    translation 0.0286 -0.1429 0.0025
 	    rotation 0 0 1 0.000000
 	    children [
 		  Shape {
@@ -214,7 +214,7 @@ Solid {
 	    ]
     }
     Solid {
-	    translation -0.0667 0.2000 0.0025
+	    translation 0.0857 -0.1429 0.0025
 	    rotation 0 0 1 0.000000
 	    children [
 		  Shape {
@@ -229,7 +229,7 @@ Solid {
 	    ]
     }
     Solid {
-	    translation 0.0667 0.2000 0.0025
+	    translation 0.1429 -0.1429 0.0025
 	    rotation 0 0 1 0.000000
 	    children [
 		  Shape {
@@ -244,12 +244,732 @@ Solid {
 	    ]
     }
     Solid {
-	    translation 0.2000 0.2000 0.0025
+	    translation 0.2000 -0.1429 0.0025
 	    rotation 0 0 1 0.000000
 	    children [
 		  Shape {
 		    appearance Appearance {
 			  texture ImageTexture { url ["ankiMat16.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation -0.2000 -0.0857 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat17.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation -0.1429 -0.0857 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat18.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation -0.0857 -0.0857 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat19.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation -0.0286 -0.0857 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat20.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation 0.0286 -0.0857 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat21.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation 0.0857 -0.0857 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat22.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation 0.1429 -0.0857 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat23.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation 0.2000 -0.0857 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat24.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation -0.2000 -0.0286 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat25.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation -0.1429 -0.0286 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat26.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation -0.0857 -0.0286 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat27.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation -0.0286 -0.0286 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat28.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation 0.0286 -0.0286 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat29.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation 0.0857 -0.0286 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat30.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation 0.1429 -0.0286 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat31.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation 0.2000 -0.0286 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat32.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation -0.2000 0.0286 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat33.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation -0.1429 0.0286 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat34.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation -0.0857 0.0286 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat35.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation -0.0286 0.0286 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat36.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation 0.0286 0.0286 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat37.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation 0.0857 0.0286 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat38.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation 0.1429 0.0286 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat39.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation 0.2000 0.0286 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat40.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation -0.2000 0.0857 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat41.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation -0.1429 0.0857 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat42.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation -0.0857 0.0857 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat43.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation -0.0286 0.0857 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat44.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation 0.0286 0.0857 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat45.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation 0.0857 0.0857 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat46.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation 0.1429 0.0857 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat47.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation 0.2000 0.0857 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat48.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation -0.2000 0.1429 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat49.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation -0.1429 0.1429 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat50.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation -0.0857 0.1429 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat51.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation -0.0286 0.1429 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat52.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation 0.0286 0.1429 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat53.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation 0.0857 0.1429 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat54.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation 0.1429 0.1429 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat55.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation 0.2000 0.1429 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat56.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation -0.2000 0.2000 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat57.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation -0.1429 0.2000 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat58.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation -0.0857 0.2000 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat59.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation -0.0286 0.2000 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat60.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation 0.0286 0.2000 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat61.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation 0.0857 0.2000 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat62.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation 0.1429 0.2000 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat63.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.030000 0.030000 0.00001
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation 0.2000 0.2000 0.0025
+	    rotation 0 0 1 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat64.png"] }
 			  material Material { diffuseColor 1 1 1 }
 		    }
 		    geometry Box {

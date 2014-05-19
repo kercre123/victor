@@ -10,18 +10,69 @@
 %             0     0      90];
 %         
 %         anki = imread('~/Box Sync/Cozmo SE/VisionMarkers/ankiLogo.png');
-     
-markerSize_mm = 30;
+ 
+% % Letters:
+% markerSize_mm = 30;
+% matMarkerPath = '~/Box Sync/Cozmo SE/VisionMarkers/lettersWithFiducials/unpadded';
+% fnames = {'A', 'B', 'C', 'D';
+%     'E', 'F', 'G', 'J';
+%     'K', 'L', 'M', '4';
+%     'P', 'R', 'T', 'Y'};
+% fnames = cellfun(@(name)fullfile(matMarkerPath, [name '.png']), fnames, 'UniformOutput', false);
+% angles = zeros(4);
+% fidColors = zeros(1,3);
 
-% Letters:
-matMarkerPath = '~/Box Sync/Cozmo SE/VisionMarkers/lettersWithFiducials/unpadded';
-fnames = {'A', 'B', 'C', 'D';
-    'E', 'F', 'G', 'J';
-    'K', 'L', 'M', '4';
-    'P', 'R', 'T', 'Y'};
-fnames = cellfun(@(name)fullfile(matMarkerPath, [name '.png']), fnames, 'UniformOutput', false);
-angles = zeros(4);
-fidColors = zeros(1,3);
+%% Anki Logo with 8-bit code
+markerSize_mm = 30;
+matMarkerPath = '~/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat';
+gridSize = 8;
+outputImageSize = 512;
+TransparentColor = [1 1 1];
+
+ankiLogo  = imread(fullfile(matMarkerPath, 'ankiLogo.png'));
+[nrows,ncols,~] = size(ankiLogo);
+bitImages = cell(1,8);
+for i = 1:8
+    bitImages{i} = imresize(imread(fullfile(matMarkerPath, sprintf('bit%d.png', i-1))), [nrows ncols], 'bilinear');
+end
+
+fnames = cell(gridSize);
+for iGrid = 1:gridSize^2
+    currentImage = ankiLogo;
+    whichBits = dec2bin(iGrid, 8);
+    for iBit = 1:8
+        if whichBits(iBit) == '1'
+            currentImage = min(currentImage, bitImages{iBit});
+        end
+    end
+    
+    % Create the logo with the fiducial
+    [logoWithFiducial, AlphaChannel] = VisionMarkerTrained.AddFiducial(...
+        currentImage, ...
+        'CropImage', false, ...
+        'OutputSize', outputImageSize, ...
+        'PadOutside', false, ...
+        'FiducialColor', [.106 .51 .757], ...
+        'TransparentColor', TransparentColor, ...
+        'TransparencyTolerance', 0.25);
+    
+    %subplot(gridSize, gridSize, iGrid)
+    %imagesc(logoWithFiducial, 'AlphaData', AlphaChannel), axis image off
+    fnames{iGrid} = fullfile(matMarkerPath, 'unpadded', sprintf('ankiLogoWithBits%.3d.png', iGrid));
+    imwrite(logoWithFiducial, fnames{iGrid}, 'Alpha', AlphaChannel);
+end
+
+%%
+[xgrid,ygrid] = meshgrid(linspace(-200,200,gridSize));
+numCorners = zeros(gridSize); % TODO: remove
+angles = zeros(gridSize);
+
+createWebotsMat(fnames, numCorners', xgrid', ygrid', angles', ...
+    markerSize_mm, fnames, ...
+    'ForegroundColor', zeros(1,3), 'BackgroundColor', ones(1,3));
+
+
+%%
 
 % % Cozmo/Anki Logos
 % matMarkerPath = '~/Box Sync/Cozmo SE/VisionMarkers/matWithFiducials/unpadded'; 
