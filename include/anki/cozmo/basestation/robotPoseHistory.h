@@ -16,73 +16,109 @@
 namespace Anki {
   namespace Cozmo {
     
-    // Snapshot of robot pose
+    /*
+     * RobotPoseStamp
+     *
+     * Snapshot of robot pose along with head angle and the pose frame ID
+     */
     class RobotPoseStamp
     {
     public:
-      RobotPoseStamp() {}
-      RobotPoseStamp(const f32 pose_x, const f32 pose_y, const f32 pose_z,
+      RobotPoseStamp();
+      RobotPoseStamp(const PoseFrameId frameID,
+                     const f32 pose_x, const f32 pose_y, const f32 pose_z,
                      const f32 pose_angle,
                      const f32 head_angle);
       
-      void SetPose(const f32 pose_x, const f32 pose_y, const f32 pose_z,
+      void SetPose(const PoseFrameId frameID,
+                   const f32 pose_x, const f32 pose_y, const f32 pose_z,
                    const f32 pose_angle,
                    const f32 head_angle);
+
+      void SetPose(const PoseFrameId frameID,
+                   const Pose3d& pose,
+                   const f32 head_angle);
+
       
       const Pose3d& GetPose() const {return pose_;}
       const f32 GetHeadAngle() const {return headAngle_;}
-      
-      //const Vision::Camera& GetCam() const {return cam_;}
-      //void SetCamCalib(const Vision::CameraCalibration& calib) {cam_.set_calibration(calib);}
-      //const Pose3d& GetRobot2NeckPose() const {return robot2NeckPose_;}
+      const PoseFrameId GetFrameId() const {return frame_;}
       
     private:
+      PoseFrameId frame_;
       Pose3d pose_;  // robot pose
-      //Pose3d robot2NeckPose_;
       f32 headAngle_;
-      
-      //Vision::Camera cam_;
     };
     
     
+    /*
+     * RobotPoseHistory
+     *
+     * A collection of timestamped RobotPoseStamps for a specified time range.
+     * Can be used to compute better pose estimated based on a combination of 
+     * raw odometry based poses from the robot and vision-based poses computed by Blockworld.
+     *
+     */
     class RobotPoseHistory
     {
     public:
       
       RobotPoseHistory();
-      
+    
+      // Clear all history
       void Clear();
-      u32 Size() const {return poses_.size();}
       
-      // Specify the maximum time span of poses that can be held
+      // Returns the number of poses that were added via AddRawOdomPose() that still remain in history
+      u32 GetNumRawPoses() const {return poses_.size();}
+      
+      // Returns the number of poses that were added via AddVisionOnlyPose() that still remain in history
+      u32 GetNumVisionPoses() const {return visPoses_.size();}
+      
+      // Specify the maximum time span of poses that can be held.
+      // Poses that are older than the newest/largest timestamp stored
+      // minus windowSize_ms are automatically removed.
       void SetTimeWindow(const u32 windowSize_ms);
       
-      // Adds a timestamped pose to the history.
-      // Returns RESULT_FAIL if an entry for that timestamp already exists.
-      Result AddPose(const TimeStamp_t t,
-                     const f32 pose_x, const f32 pose_y, const f32 pose_z,
-                     const f32 pose_angle,
-                     const f32 head_angle,
-                     bool groundTruth = false);
+      // Adds a timestamped pose received from the robot to the history.
+      // Returns RESULT_FAIL if an entry for that timestamp already exists
+      // or the pose is too old to be added.
+      Result AddRawOdomPose(const TimeStamp_t t,
+                            const PoseFrameId frameID,
+                            const f32 pose_x, const f32 pose_y, const f32 pose_z,
+                            const f32 pose_angle,
+                            const f32 head_angle);
 
-      Result AddPose(const TimeStamp_t t,
-                     const RobotPoseStamp& p,
-                     bool groundTruth = false);
+      Result AddRawOdomPose(const TimeStamp_t t,
+                            const RobotPoseStamp& p);
+
+      // Adds a timestamped pose based off of a vision marker to the history.
+      // These are used in conjunction with raw odometry poses to compute
+      // better estimates of the pose at any point t in the history.
+      Result AddVisionOnlyPose(const TimeStamp_t t,
+                                const PoseFrameId frameID,
+                                const f32 pose_x, const f32 pose_y, const f32 pose_z,
+                                const f32 pose_angle,
+                                const f32 head_angle);
+
+      Result AddVisionOnlyPose(const TimeStamp_t t,
+                                const RobotPoseStamp& p);
       
-      
-      // Sets p to the pose nearest the given timestamp t.
+      // Sets p to the raw odometry pose nearest the given timestamp t in the history.
       // Interpolates pose if withInterpolation == true.
       // Returns OK if t is between the oldest and most recent timestamps stored.
-      //
-      // TODO: When an interpolated pose is requested, add it to the history as well so that
-      // the reference persists?
-      Result GetPoseAt(const TimeStamp_t t_request,
+      Result GetRawPoseAt(const TimeStamp_t t_request,
+                          TimeStamp_t& t, RobotPoseStamp& p,
+                          bool withInterpolation = false) const;
+      
+      // Same as above except that it uses the last vision-based
+      // pose that exists at or before t_request to compute a
+      // better estimate of the pose at time t.
+      Result ComputePoseAt(const TimeStamp_t t_request,
                        TimeStamp_t& t, RobotPoseStamp& p,
                        bool withInterpolation = false) const;
       
       TimeStamp_t GetOldestTimeStamp() const;
       TimeStamp_t GetNewestTimeStamp() const;
-      
       
       
     private:
@@ -95,16 +131,10 @@ namespace Anki {
       typedef std::map<TimeStamp_t, RobotPoseStamp>::const_iterator const_PoseMapIter_t;
       PoseMap_t poses_;
 
-      // Map of timestamps of ground truth poses in poses_
-      typedef std::map<TimeStamp_t, PoseMapIter_t> GTPoseMap_t;
-      typedef std::map<TimeStamp_t, PoseMapIter_t>::iterator GTPoseMapIter_t;
-      typedef std::map<TimeStamp_t, PoseMapIter_t>::const_iterator const_GTPoseMapIter_t;
-      GTPoseMap_t gtPoses_;
+      // Map of timestamps of vision-based poses as computed from mat markers
+      PoseMap_t visPoses_;
       
-      
-      // Pose corrections as computed by mat marker updates
-      PoseMap_t corrections_;
-      
+      // Size of history time window (ms)
       u32 windowSize_;
       
     }; // class RobotPoseHistory
