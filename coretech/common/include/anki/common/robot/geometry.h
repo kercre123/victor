@@ -505,7 +505,7 @@ namespace Anki
           rho, thetas[0][i]);
       }
 
-      Matrix::Sort(thetas, indexes, 1);
+      Matrix::InsertionSort(thetas, indexes, 1);
 
       const Quadrilateral<OutType> sortedQuad(
         Point<OutType>(static_cast<OutType>(this->corners[indexes[0][0]].x), static_cast<OutType>(this->corners[indexes[0][0]].y)),

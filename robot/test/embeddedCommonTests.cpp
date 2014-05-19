@@ -841,7 +841,7 @@ GTEST_TEST(CoreTech_Common, MatrixSortWithIndexes)
   // sortWhichDimension==0 sortAscending==false
   {
     ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
-    ASSERT_TRUE(Matrix::Sort(arr, arrIndexes, 0, false) == RESULT_OK);
+    ASSERT_TRUE(Matrix::InsertionSort(arr, arrIndexes, 0, false) == RESULT_OK);
 
     //arr.Print("sortWhichDimension==0 sortAscending==false");
     //arrIndexes.Print("Indexes: sortWhichDimension==0 sortAscending==false");
@@ -864,7 +864,7 @@ GTEST_TEST(CoreTech_Common, MatrixSortWithIndexes)
   // sortWhichDimension==0 sortAscending==true
   {
     ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
-    ASSERT_TRUE(Matrix::Sort(arr, arrIndexes, 0, true) == RESULT_OK);
+    ASSERT_TRUE(Matrix::InsertionSort(arr, arrIndexes, 0, true) == RESULT_OK);
 
     //arr.Print("Values: sortWhichDimension==0 sortAscending==true");
     //arrIndexes.Print("Indexes: sortWhichDimension==0 sortAscending==true");
@@ -883,7 +883,7 @@ GTEST_TEST(CoreTech_Common, MatrixSortWithIndexes)
   // sortWhichDimension==1 sortAscending==false
   {
     ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
-    ASSERT_TRUE(Matrix::Sort(arr, arrIndexes, 1, false) == RESULT_OK);
+    ASSERT_TRUE(Matrix::InsertionSort(arr, arrIndexes, 1, false) == RESULT_OK);
 
     //arr.Print("sortWhichDimension==1 sortAscending==false");
     //arrIndexes.Print("Indexes: sortWhichDimension==1 sortAscending==false");
@@ -902,7 +902,7 @@ GTEST_TEST(CoreTech_Common, MatrixSortWithIndexes)
   // sortWhichDimension==1 sortAscending==true
   {
     ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
-    ASSERT_TRUE(Matrix::Sort(arr, arrIndexes, 1, true) == RESULT_OK);
+    ASSERT_TRUE(Matrix::InsertionSort(arr, arrIndexes, 1, true) == RESULT_OK);
 
     //arr.Print("sortWhichDimension==1 sortAscending==true");
     //arrIndexes.Print("Indexes: sortWhichDimension==1 sortAscending==true");
@@ -937,7 +937,7 @@ GTEST_TEST(CoreTech_Common, MatrixSort)
   // sortWhichDimension==0 sortAscending==false
   {
     ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
-    ASSERT_TRUE(Matrix::Sort(arr, 0, false) == RESULT_OK);
+    ASSERT_TRUE(Matrix::InsertionSort(arr, 0, false) == RESULT_OK);
 
     //arr.Print("sortWhichDimension==0 sortAscending==false");
 
@@ -950,7 +950,7 @@ GTEST_TEST(CoreTech_Common, MatrixSort)
   // sortWhichDimension==0 sortAscending==true
   {
     ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
-    ASSERT_TRUE(Matrix::Sort(arr, 0, true) == RESULT_OK);
+    ASSERT_TRUE(Matrix::InsertionSort(arr, 0, true) == RESULT_OK);
 
     //arr.Print("sortWhichDimension==0 sortAscending==true");
 
@@ -963,7 +963,7 @@ GTEST_TEST(CoreTech_Common, MatrixSort)
   // sortWhichDimension==1 sortAscending==false
   {
     ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
-    ASSERT_TRUE(Matrix::Sort(arr, 1, false) == RESULT_OK);
+    ASSERT_TRUE(Matrix::InsertionSort(arr, 1, false) == RESULT_OK);
 
     //arr.Print("sortWhichDimension==1 sortAscending==false");
 
@@ -976,7 +976,7 @@ GTEST_TEST(CoreTech_Common, MatrixSort)
   // sortWhichDimension==1 sortAscending==true
   {
     ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
-    ASSERT_TRUE(Matrix::Sort(arr, 1, true) == RESULT_OK);
+    ASSERT_TRUE(Matrix::InsertionSort(arr, 1, true) == RESULT_OK);
 
     //arr.Print("sortWhichDimension==1 sortAscending==true");
 

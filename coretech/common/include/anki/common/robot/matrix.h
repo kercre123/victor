@@ -787,7 +787,7 @@ namespace Anki
         return RESULT_OK;
       }
 
-      template<typename Type> Result Sort(Array<Type> &arr, const s32 sortWhichDimension, const bool sortAscending)
+      template<typename Type> Result InsertionSort(Array<Type> &arr, const s32 sortWhichDimension, const bool sortAscending)
       {
         const s32 arrHeight = arr.get_size(0);
         const s32 arrWidth = arr.get_size(1);
@@ -872,7 +872,7 @@ namespace Anki
         return RESULT_OK;
       }
 
-      template<typename Type> Result Sort(Array<Type> &arr, Array<s32> &indexes, const s32 sortWhichDimension, const bool sortAscending)
+      template<typename Type> Result InsertionSort(Array<Type> &arr, Array<s32> &indexes, const s32 sortWhichDimension, const bool sortAscending)
       {
         const s32 arrHeight = arr.get_size(0);
         const s32 arrWidth = arr.get_size(1);
