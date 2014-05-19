@@ -89,6 +89,7 @@ namespace Anki {
     Robot::Robot(const RobotID_t robotID, MessageHandler* msgHandler, BlockWorld* world, PathPlanner* pathPlanner)
     : ID_(robotID), msgHandler_(msgHandler), world_(world), pathPlanner_(pathPlanner),
       pose(-M_PI_2, Z_AXIS_3D, {{0.f, 0.f, 0.f}}),
+      frameId_(0),
       neckPose(0.f,Y_AXIS_3D, {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &pose),
       headCamPose({0,0,1,  -1,0,0,  0,-1,0},
                   {{HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}}, &neckPose),
@@ -661,6 +662,27 @@ namespace Anki {
       m.intensity = intensity;
       return msgHandler_->SendMessage(ID_, m);
     }
+    
+    // ============ Pose history ===============
+    
+    Result Robot::AddRawOdomPoseToHistory(const TimeStamp_t t,
+                                          const PoseFrameId frameID,
+                                          const f32 pose_x, const f32 pose_y, const f32 pose_z,
+                                          const f32 pose_angle,
+                                          const f32 head_angle)
+    {
+      return poseHistory_.AddRawOdomPose(t, frameID, pose_x, pose_y, pose_z, pose_angle, head_angle);
+    }
+    
+    Result Robot::AddVisionOnlyPoseToHistory(const TimeStamp_t t,
+                                             const PoseFrameId frameID,
+                                             const f32 pose_x, const f32 pose_y, const f32 pose_z,
+                                             const f32 pose_angle,
+                                             const f32 head_angle)
+    {
+      return poseHistory_.AddVisionOnlyPose(t, frameID, pose_x, pose_y, pose_z, pose_angle, head_angle);
+    }
+
     
   } // namespace Cozmo
 } // namespace Anki

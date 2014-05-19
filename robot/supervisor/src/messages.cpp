@@ -146,6 +146,8 @@ namespace Anki {
         
         Radians poseAngle;
         
+        robotState_.pose_frame_id = Localization::GetPoseFrameId();
+        
         Localization::GetCurrentMatPose(robotState_.pose_x, robotState_.pose_y, poseAngle);
         robotState_.pose_z = 0;
         robotState_.pose_angle = poseAngle.ToFloat();
@@ -217,6 +219,7 @@ namespace Anki {
         f32 currentMatX       = msg.xPosition;
         f32 currentMatY       = msg.yPosition;
         Radians currentMatHeading = msg.headingAngle;
+        Localization::SetPoseFrameId(msg.pose_frame_id);
         Localization::SetCurrentMatPose(currentMatX, currentMatY, currentMatHeading);
         
         PRINT("Robot received localization update from "

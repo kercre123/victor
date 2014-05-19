@@ -18,6 +18,11 @@ namespace Anki {
 
       // Get orientation of robot on current mat
       Radians GetCurrentMatOrientation();
+
+      // Set/Get the current pose frame ID
+      void SetPoseFrameId(PoseFrameId id);
+      PoseFrameId GetPoseFrameId();
+      
       
       void Update();
 

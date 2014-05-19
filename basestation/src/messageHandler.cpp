@@ -223,6 +223,16 @@ namespace Anki {
       robot->SetCarryingBlock( msg.status & IS_CARRYING_BLOCK );
       robot->SetPickingOrPlacing( msg.status & IS_PICKING_OR_PLACING );
       
+      
+      // Add to history
+      if (robot->AddRawOdomPoseToHistory(msg.timestamp,
+                                         msg.pose_frame_id,
+                                         msg.pose_x, msg.pose_y, msg.pose_z,
+                                         msg.pose_angle,
+                                         msg.headAngle) == RESULT_FAIL) {
+        PRINT_NAMED_WARNING("ProcessMessageRobotState.AddPoseError", "");
+      }
+      
       return RESULT_OK;
     }
 

@@ -22,6 +22,7 @@
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/messages.h"
+#include "anki/cozmo/basestation/robotPoseHistory.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -53,10 +54,16 @@ namespace Anki {
       const f32 get_headAngle() const;
       const f32 get_liftAngle() const;
       
+      const Pose3d& get_neckPose() const {return neckPose;}
+      const Pose3d& get_headCamPose() const {return headCamPose;}
+      
       void set_pose(const Pose3d &newPose);
       void set_headAngle(const f32& angle);
       void set_liftAngle(const f32& angle);
       void set_camCalibration(const Vision::CameraCalibration& calib);
+      
+      void IncrementPoseFrameID() {++frameId_;}
+      PoseFrameId GetPoseFrameID() const {return frameId_;}
       
       void queueIncomingMessage(const u8 *msg, const u8 msgSize);
       bool hasOutgoingMessages() const;
@@ -148,6 +155,22 @@ namespace Anki {
       Result SendStartTestMode(const TestMode mode) const;
       
       
+      // =========== Pose history =============
+      // Returns ref to robot's pose history
+      const RobotPoseHistory& GetPoseHistory() {return poseHistory_;}
+      
+      Result AddRawOdomPoseToHistory(const TimeStamp_t t,
+                                     const PoseFrameId frameID,
+                                     const f32 pose_x, const f32 pose_y, const f32 pose_z,
+                                     const f32 pose_angle,
+                                     const f32 head_angle);
+      
+      Result AddVisionOnlyPoseToHistory(const TimeStamp_t t,
+                                      const PoseFrameId frameID,
+                                      const f32 pose_x, const f32 pose_y, const f32 pose_z,
+                                      const f32 pose_angle,
+                                      const f32 head_angle);
+      
     protected:
       // The robot's identifier
       RobotID_t     ID_;
@@ -163,6 +186,7 @@ namespace Anki {
       
       Pose3d pose;
       void updatePose();
+      PoseFrameId frameId_;
       
       Vision::Camera camHead;
 
@@ -181,6 +205,11 @@ namespace Anki {
       
       //std::vector<BlockMarker3d*>  visibleFaces;
       //std::vector<Block*>          visibleBlocks;
+      
+      // Pose history
+      RobotPoseHistory poseHistory_;
+
+      
       
       // Message handling
       typedef std::vector<u8> MessageType;
