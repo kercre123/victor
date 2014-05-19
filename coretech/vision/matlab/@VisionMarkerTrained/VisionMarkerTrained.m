@@ -11,7 +11,7 @@ classdef VisionMarkerTrained
             '~/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/rotated'};
         
         ProbeParameters = struct( ...
-            'Radius', 0.02, ...  % As a fraction of a canonical unit square 
+            'GridSize', 32, ...            %'Radius', 0.02, ...  % As a fraction of a canonical unit square 
             'NumAngles', 8, ...       % How many samples around ring to sample
             'Method', 'mean');        % How to combine points in a probe
                 
@@ -20,6 +20,9 @@ classdef VisionMarkerTrained
         SquareWidthFraction = 0.1; % as a fraction of the fiducial width
         FiducialPaddingFraction = 0.1; % as a fraction of the fiducial width
         
+        ProbeRegion = [VisionMarkerTrained.SquareWidthFraction+VisionMarkerTrained.FiducialPaddingFraction ...
+            1-(VisionMarkerTrained.SquareWidthFraction+VisionMarkerTrained.FiducialPaddingFraction)];
+
         ProbePattern = VisionMarkerTrained.CreateProbePattern();
         
         ProbeTree = VisionMarkerTrained.LoadProbeTree();
