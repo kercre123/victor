@@ -24,7 +24,15 @@ namespace Anki
   {
     namespace Matrix
     {
-      // #pragma mark
+      template<typename Type> void InsertionSort_sortAscendingDimension0(Array<Type> &arr, const s32 trueMinIndex, const s32 trueMaxIndex);
+      template<typename Type> void InsertionSort_sortDescendingDimension0(Array<Type> &arr, const s32 trueMinIndex, const s32 trueMaxIndex);
+      template<typename Type> void InsertionSort_sortAscendingDimension1(Array<Type> &arr, const s32 trueMinIndex, const s32 trueMaxIndex);
+      template<typename Type> void InsertionSort_sortDescendingDimension1(Array<Type> &arr, const s32 trueMinIndex, const s32 trueMaxIndex);
+
+      template<typename Type> void InsertionSort_sortAscendingDimension0(Array<Type> &arr, Array<s32> &indexes, const s32 trueMinIndex, const s32 trueMaxIndex);
+      template<typename Type> void InsertionSort_sortDescendingDimension0(Array<Type> &arr, Array<s32> &indexes, const s32 trueMinIndex, const s32 trueMaxIndex);
+      template<typename Type> void InsertionSort_sortAscendingDimension1(Array<Type> &arr, Array<s32> &indexes, const s32 trueMinIndex, const s32 trueMaxIndex);
+      template<typename Type> void InsertionSort_sortDescendingDimension1(Array<Type> &arr, Array<s32> &indexes, const s32 trueMinIndex, const s32 trueMaxIndex);
 
       template<typename Type> Type Min(const ConstArraySliceExpression<Type> &mat)
       {
@@ -47,7 +55,7 @@ namespace Anki
         }
 
         return minValue;
-      }
+      } // template<typename Type> Type Min(const ConstArraySliceExpression<Type> &mat)
 
       template<typename Type> Type Max(const ConstArraySliceExpression<Type> &mat)
       {
@@ -70,7 +78,7 @@ namespace Anki
         }
 
         return maxValue;
-      }
+      } // template<typename Type> Type Max(const ConstArraySliceExpression<Type> &mat)
 
       template<typename Array_Type, typename Accumulator_Type> Accumulator_Type Sum(const ConstArraySliceExpression<Array_Type> &mat)
       {
@@ -102,7 +110,7 @@ namespace Anki
         const Array_Type mean = static_cast<Array_Type>(sum / numElements);
 
         return mean;
-      }
+      } // template<typename Array_Type, typename Accumulator_Type> Array_Type Mean(const ConstArraySliceExpression<Array_Type> &mat)
 
       template<typename Array_Type, typename Accumulator_Type> Result MeanAndVar(const ConstArraySliceExpression<Array_Type> &mat,
         Accumulator_Type& mean, Accumulator_Type& var)
@@ -440,7 +448,7 @@ namespace Anki
         }
 
         return RESULT_OK;
-      }
+      } // SolveLeastSquaresWithCholesky()
 
       template<typename Type> NO_INLINE Result EstimateHomography(
         const FixedLengthList<Point<Type> > &originalPoints,    //!< Four points in the original coordinate system
@@ -556,7 +564,7 @@ namespace Anki
         //EndBenchmark("EstimateHomography_cholesky");
 
         return RESULT_OK;
-      }
+      } // EstimateHomography()
 
       template<typename InType, typename OutType> Result Reshape(const bool isColumnMajor, const Array<InType> &in, Array<OutType> &out)
       {
@@ -609,7 +617,7 @@ namespace Anki
         } // if(isColumnMajor) ... else
 
         return RESULT_OK;
-      }
+      } // Reshape()
 
       template<typename InType, typename OutType> Array<OutType> Reshape(const bool isColumnMajor, const Array<InType> &in, const s32 newHeight, const s32 newWidth, MemoryStack &memory)
       {
@@ -684,7 +692,7 @@ namespace Anki
         }
 
         return RESULT_OK;
-      }
+      } // Transpose()
 
       template<typename InType, typename OutType> Result Rotate90(const Array<InType> &in, Array<OutType> &out)
       {
@@ -719,7 +727,7 @@ namespace Anki
         }
 
         return RESULT_OK;
-      }
+      } // Rotate90()
 
       template<typename InType, typename OutType> Result Rotate180(const Array<InType> &in, Array<OutType> &out)
       {
@@ -750,7 +758,7 @@ namespace Anki
         }
 
         return RESULT_OK;
-      }
+      } // Rotate180()
 
       template<typename InType, typename OutType> Result Rotate270(const Array<InType> &in, Array<OutType> &out)
       {
@@ -785,9 +793,195 @@ namespace Anki
         }
 
         return RESULT_OK;
-      }
+      } // Rotate270()
 
-      template<typename Type> Result InsertionSort(Array<Type> &arr, const s32 sortWhichDimension, const bool sortAscending)
+      template<typename Type> void InsertionSort_sortAscendingDimension0(Array<Type> &arr, const s32 trueMinIndex, const s32 trueMaxIndex)
+      {
+        const s32 arrWidth = arr.get_size(1);
+
+        for(s32 x=0; x<arrWidth; x++) {
+          for(s32 y=(trueMinIndex+1); y<=trueMaxIndex; y++) {
+            const Type valueToInsert = arr[y][x];
+
+            s32 holePosition = y;
+
+            while(holePosition > trueMinIndex && valueToInsert < arr[holePosition-1][x]) {
+              arr[holePosition][x] = arr[holePosition-1][x];
+              holePosition--;
+            }
+
+            arr[holePosition][x] = valueToInsert;
+          }
+        } // for(s32 x=0; x<arrWidth; x++)
+      } // InsertionSort_sortAscendingDimension0()
+
+      template<typename Type> void InsertionSort_sortDescendingDimension0(Array<Type> &arr, const s32 trueMinIndex, const s32 trueMaxIndex)
+      {
+        const s32 arrWidth = arr.get_size(1);
+
+        for(s32 x=0; x<arrWidth; x++) {
+          for(s32 y=(trueMinIndex+1); y<=trueMaxIndex; y++) {
+            const Type valueToInsert = arr[y][x];
+
+            s32 holePosition = y;
+
+            while(holePosition > trueMinIndex && valueToInsert > arr[holePosition-1][x]) {
+              arr[holePosition][x] = arr[holePosition-1][x];
+              holePosition--;
+            }
+
+            arr[holePosition][x] = valueToInsert;
+          }
+        } // for(s32 x=0; x<arrWidth; x++)
+      } // InsertionSort_sortDescendingDimension0
+
+      template<typename Type> void InsertionSort_sortAscendingDimension1(Array<Type> &arr, const s32 trueMinIndex, const s32 trueMaxIndex)
+      {
+        const s32 arrHeight = arr.get_size(0);
+
+        for(s32 y=0; y<arrHeight; y++) {
+          Type * const pArr = arr[y];
+
+          for(s32 x=(trueMinIndex+1); x<=trueMaxIndex; x++) {
+            const Type valueToInsert = pArr[x];
+
+            s32 holePosition = x;
+
+            while(holePosition > trueMinIndex && valueToInsert < pArr[holePosition-1]) {
+              pArr[holePosition] = pArr[holePosition-1];
+              holePosition--;
+            }
+
+            pArr[holePosition] = valueToInsert;
+          }
+        } // for(s32 x=0; x<arrWidth; x++)
+      } // InsertionSort_sortAscendingDimension1()
+
+      template<typename Type> void InsertionSort_sortDescendingDimension1(Array<Type> &arr, const s32 trueMinIndex, const s32 trueMaxIndex)
+      {
+        const s32 arrHeight = arr.get_size(0);
+
+        for(s32 y=0; y<arrHeight; y++) {
+          Type * const pArr = arr[y];
+
+          for(s32 x=(trueMinIndex+1); x<=trueMaxIndex; x++) {
+            const Type valueToInsert = pArr[x];
+
+            s32 holePosition = x;
+
+            while(holePosition > trueMinIndex && valueToInsert > pArr[holePosition-1]) {
+              pArr[holePosition] = pArr[holePosition-1];
+              holePosition--;
+            }
+
+            pArr[holePosition] = valueToInsert;
+          }
+        } // for(s32 x=0; x<arrWidth; x++)
+      } // InsertionSort_sortAscendingDimension1()
+
+      template<typename Type> void InsertionSort_sortAscendingDimension0(Array<Type> &arr, Array<s32> &indexes, const s32 trueMinIndex, const s32 trueMaxIndex)
+      {
+        const s32 arrWidth = arr.get_size(1);
+
+        for(s32 x=0; x<arrWidth; x++) {
+          indexes[0][x] = 0;
+
+          for(s32 y=(trueMinIndex+1); y<=trueMaxIndex; y++) {
+            const Type valueToInsert = arr[y][x];
+
+            s32 holePosition = y;
+
+            while(holePosition > trueMinIndex && valueToInsert < arr[holePosition-1][x]) {
+              arr[holePosition][x] = arr[holePosition-1][x];
+              indexes[holePosition][x] = indexes[holePosition-1][x];
+              holePosition--;
+            }
+
+            arr[holePosition][x] = valueToInsert;
+            indexes[holePosition][x] = y;
+          }
+        } // for(s32 x=0; x<arrWidth; x++)
+      } // InsertionSort_sortAscendingDimension0()
+
+      template<typename Type> void InsertionSort_sortDescendingDimension0(Array<Type> &arr, Array<s32> &indexes, const s32 trueMinIndex, const s32 trueMaxIndex)
+      {
+        const s32 arrWidth = arr.get_size(1);
+
+        for(s32 x=0; x<arrWidth; x++) {
+          indexes[0][x] = 0;
+
+          for(s32 y=(trueMinIndex+1); y<=trueMaxIndex; y++) {
+            const Type valueToInsert = arr[y][x];
+
+            s32 holePosition = y;
+
+            while(holePosition > trueMinIndex && valueToInsert > arr[holePosition-1][x]) {
+              arr[holePosition][x] = arr[holePosition-1][x];
+              indexes[holePosition][x] = indexes[holePosition-1][x];
+              holePosition--;
+            }
+
+            arr[holePosition][x] = valueToInsert;
+            indexes[holePosition][x] = y;
+          }
+        } // for(s32 x=0; x<arrWidth; x++)
+      } // InsertionSort_sortDescendingDimension0()
+
+      template<typename Type> void InsertionSort_sortAscendingDimension1(Array<Type> &arr, Array<s32> &indexes, const s32 trueMinIndex, const s32 trueMaxIndex)
+      {
+        const s32 arrHeight = arr.get_size(0);
+
+        for(s32 y=0; y<arrHeight; y++) {
+          Type * const pArr = arr[y];
+          s32 * const pIndexes = indexes[y];
+
+          pIndexes[0] = 0;
+
+          for(s32 x=(trueMinIndex+1); x<=trueMaxIndex; x++) {
+            const Type valueToInsert = pArr[x];
+
+            s32 holePosition = x;
+
+            while(holePosition > trueMinIndex && valueToInsert < pArr[holePosition-1]) {
+              pArr[holePosition] = pArr[holePosition-1];
+              pIndexes[holePosition] = pIndexes[holePosition-1];
+              holePosition--;
+            }
+
+            pArr[holePosition] = valueToInsert;
+            pIndexes[holePosition] = x;
+          }
+        } // for(s32 x=0; x<arrWidth; x++)
+      } // InsertionSort_sortAscendingDimension1()
+
+      template<typename Type> void InsertionSort_sortDescendingDimension1(Array<Type> &arr, Array<s32> &indexes, const s32 trueMinIndex, const s32 trueMaxIndex)
+      {
+        const s32 arrHeight = arr.get_size(0);
+
+        for(s32 y=0; y<arrHeight; y++) {
+          Type * const pArr = arr[y];
+          s32 * const pIndexes = indexes[y];
+
+          pIndexes[0] = 0;
+
+          for(s32 x=(trueMinIndex+1); x<=trueMaxIndex; x++) {
+            const Type valueToInsert = pArr[x];
+
+            s32 holePosition = x;
+
+            while(holePosition > trueMinIndex && valueToInsert > pArr[holePosition-1]) {
+              pArr[holePosition] = pArr[holePosition-1];
+              pIndexes[holePosition] = pIndexes[holePosition-1];
+              holePosition--;
+            }
+
+            pArr[holePosition] = valueToInsert;
+            pIndexes[holePosition] = x;
+          }
+        } // for(s32 x=0; x<arrWidth; x++)
+      } // InsertionSort_sortDescendingDimension1()
+
+      template<typename Type> Result InsertionSort(Array<Type> &arr, const s32 sortWhichDimension, const bool sortAscending, const s32 minIndex, const s32 maxIndex)
       {
         const s32 arrHeight = arr.get_size(0);
         const s32 arrWidth = arr.get_size(1);
@@ -798,81 +992,28 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(sortWhichDimension==0 || sortWhichDimension==1,
           RESULT_FAIL_INVALID_PARAMETER, "Sort", "sortWhichDimension must be zero or one");
 
+        const s32 trueMinIndex = CLIP(minIndex, 0, arr.get_size(sortWhichDimension) - 1);
+        const s32 trueMaxIndex = CLIP(maxIndex, 0, arr.get_size(sortWhichDimension) - 1);
+
         if(sortWhichDimension == 0) {
           // TODO: This columnwise sorting could be sped up, with smarter array indexing.
           if(sortAscending) {
-            for(s32 x=0; x<arrWidth; x++) {
-              for(s32 y=1; y<arrHeight; y++) {
-                const Type valueToInsert = arr[y][x];
-
-                s32 holePosition = y;
-
-                while(holePosition > 0 && valueToInsert < arr[holePosition-1][x]) {
-                  arr[holePosition][x] = arr[holePosition-1][x];
-                  holePosition--;
-                }
-
-                arr[holePosition][x] = valueToInsert;
-              }
-            } // for(s32 x=0; x<arrWidth; x++)
+            InsertionSort_sortAscendingDimension0(arr, trueMinIndex, trueMaxIndex);
           } else { // if(sortAscending)
-            for(s32 x=0; x<arrWidth; x++) {
-              for(s32 y=1; y<arrHeight; y++) {
-                const Type valueToInsert = arr[y][x];
-
-                s32 holePosition = y;
-
-                while(holePosition > 0 && valueToInsert > arr[holePosition-1][x]) {
-                  arr[holePosition][x] = arr[holePosition-1][x];
-                  holePosition--;
-                }
-
-                arr[holePosition][x] = valueToInsert;
-              }
-            } // for(s32 x=0; x<arrWidth; x++)
+            InsertionSort_sortDescendingDimension0(arr, trueMinIndex, trueMaxIndex);
           } // if(sortAscending) ... else
         } else { // sortWhichDimension == 1
           if(sortAscending) {
-            for(s32 y=0; y<arrHeight; y++) {
-              Type * const pArr = arr[y];
-
-              for(s32 x=1; x<arrWidth; x++) {
-                const Type valueToInsert = pArr[x];
-
-                s32 holePosition = x;
-
-                while(holePosition > 0 && valueToInsert < pArr[holePosition-1]) {
-                  pArr[holePosition] = pArr[holePosition-1];
-                  holePosition--;
-                }
-
-                pArr[holePosition] = valueToInsert;
-              }
-            } // for(s32 x=0; x<arrWidth; x++)
+            InsertionSort_sortAscendingDimension1(arr, trueMinIndex, trueMaxIndex);
           } else { // if(sortAscending)
-            for(s32 y=0; y<arrHeight; y++) {
-              Type * const pArr = arr[y];
-
-              for(s32 x=1; x<arrWidth; x++) {
-                const Type valueToInsert = pArr[x];
-
-                s32 holePosition = x;
-
-                while(holePosition > 0 && valueToInsert > pArr[holePosition-1]) {
-                  pArr[holePosition] = pArr[holePosition-1];
-                  holePosition--;
-                }
-
-                pArr[holePosition] = valueToInsert;
-              }
-            } // for(s32 x=0; x<arrWidth; x++)
+            InsertionSort_sortDescendingDimension1(arr, trueMinIndex, trueMaxIndex);
           } // if(sortAscending) ... else
         } // if(sortWhichDimension == 0) ... else
 
         return RESULT_OK;
-      }
+      } // InsertionSort()
 
-      template<typename Type> Result InsertionSort(Array<Type> &arr, Array<s32> &indexes, const s32 sortWhichDimension, const bool sortAscending)
+      template<typename Type> Result InsertionSort(Array<Type> &arr, Array<s32> &indexes, const s32 sortWhichDimension, const bool sortAscending, const s32 minIndex, const s32 maxIndex)
       {
         const s32 arrHeight = arr.get_size(0);
         const s32 arrWidth = arr.get_size(1);
@@ -889,97 +1030,26 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(indexes.get_size(0) == arrHeight && indexes.get_size(1) == arrWidth,
           RESULT_FAIL_INVALID_SIZE, "Sort", "indexes must be the same size as arr");
 
+        const s32 trueMinIndex = CLIP(minIndex, 0, arr.get_size(sortWhichDimension) - 1);
+        const s32 trueMaxIndex = CLIP(maxIndex, 0, arr.get_size(sortWhichDimension) - 1);
+
         if(sortWhichDimension == 0) {
           // TODO: This columnwise sorting could be sped up, with smarter array indexing.
           if(sortAscending) {
-            for(s32 x=0; x<arrWidth; x++) {
-              indexes[0][x] = 0;
-
-              for(s32 y=1; y<arrHeight; y++) {
-                const Type valueToInsert = arr[y][x];
-
-                s32 holePosition = y;
-
-                while(holePosition > 0 && valueToInsert < arr[holePosition-1][x]) {
-                  arr[holePosition][x] = arr[holePosition-1][x];
-                  indexes[holePosition][x] = indexes[holePosition-1][x];
-                  holePosition--;
-                }
-
-                arr[holePosition][x] = valueToInsert;
-                indexes[holePosition][x] = y;
-              }
-            } // for(s32 x=0; x<arrWidth; x++)
+            InsertionSort_sortAscendingDimension0(arr, indexes, trueMinIndex, trueMaxIndex);
           } else { // if(sortAscending)
-            for(s32 x=0; x<arrWidth; x++) {
-              indexes[0][x] = 0;
-
-              for(s32 y=1; y<arrHeight; y++) {
-                const Type valueToInsert = arr[y][x];
-
-                s32 holePosition = y;
-
-                while(holePosition > 0 && valueToInsert > arr[holePosition-1][x]) {
-                  arr[holePosition][x] = arr[holePosition-1][x];
-                  indexes[holePosition][x] = indexes[holePosition-1][x];
-                  holePosition--;
-                }
-
-                arr[holePosition][x] = valueToInsert;
-                indexes[holePosition][x] = y;
-              }
-            } // for(s32 x=0; x<arrWidth; x++)
+            InsertionSort_sortDescendingDimension0(arr, indexes, trueMinIndex, trueMaxIndex);
           } // if(sortAscending) ... else
         } else { // sortWhichDimension == 1
           if(sortAscending) {
-            for(s32 y=0; y<arrHeight; y++) {
-              Type * const pArr = arr[y];
-              s32 * const pIndexes = indexes[y];
-
-              pIndexes[0] = 0;
-
-              for(s32 x=1; x<arrWidth; x++) {
-                const Type valueToInsert = pArr[x];
-
-                s32 holePosition = x;
-
-                while(holePosition > 0 && valueToInsert < pArr[holePosition-1]) {
-                  pArr[holePosition] = pArr[holePosition-1];
-                  pIndexes[holePosition] = pIndexes[holePosition-1];
-                  holePosition--;
-                }
-
-                pArr[holePosition] = valueToInsert;
-                pIndexes[holePosition] = x;
-              }
-            } // for(s32 x=0; x<arrWidth; x++)
+            InsertionSort_sortAscendingDimension1(arr, indexes, trueMinIndex, trueMaxIndex);
           } else { // if(sortAscending)
-            for(s32 y=0; y<arrHeight; y++) {
-              Type * const pArr = arr[y];
-              s32 * const pIndexes = indexes[y];
-
-              pIndexes[0] = 0;
-
-              for(s32 x=1; x<arrWidth; x++) {
-                const Type valueToInsert = pArr[x];
-
-                s32 holePosition = x;
-
-                while(holePosition > 0 && valueToInsert > pArr[holePosition-1]) {
-                  pArr[holePosition] = pArr[holePosition-1];
-                  pIndexes[holePosition] = pIndexes[holePosition-1];
-                  holePosition--;
-                }
-
-                pArr[holePosition] = valueToInsert;
-                pIndexes[holePosition] = x;
-              }
-            } // for(s32 x=0; x<arrWidth; x++)
+            InsertionSort_sortDescendingDimension1(arr, indexes, trueMinIndex, trueMaxIndex);
           } // if(sortAscending) ... else
         } // if(sortWhichDimension == 0) ... else
 
         return RESULT_OK;
-      }
+      } // InsertionSort()
 
       template<typename Type> Result MakeSymmetric(Type &arr, bool lowerToUpper)
       {

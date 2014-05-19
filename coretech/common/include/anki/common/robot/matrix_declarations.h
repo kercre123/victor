@@ -168,11 +168,12 @@ namespace Anki
 
       // Works the same as the Matlab sort() for matrices.
       // InsertionSort(X) sorts each column of X in ascending order.
+      // The minIndex and maxIndex are for the sortWhichDimension. maxIndex is automatically clipped to the size of the input Array.
       // NOTE: this currently uses insertion sort, so may be slow for large, badly-unsorted arrays
-      template<typename Type> Result InsertionSort(Array<Type> &arr, const s32 sortWhichDimension=0, const bool sortAscending=true);
+      template<typename Type> Result InsertionSort(Array<Type> &arr, const s32 sortWhichDimension=0, const bool sortAscending=true, const s32 minIndex=0, const s32 maxIndex=0x7FFFFFE);
 
       // indexes must be allocated, but will be overwritten by InsertionSort()
-      template<typename Type> Result InsertionSort(Array<Type> &arr, Array<s32> &indexes, const s32 sortWhichDimension=0, const bool sortAscending=true);
+      template<typename Type> Result InsertionSort(Array<Type> &arr, Array<s32> &indexes, const s32 sortWhichDimension=0, const bool sortAscending=true, const s32 minIndex=0, const s32 maxIndex=0x7FFFFFE);
 
       // For a square array, either:
       // 1. When lowerToUpper==true,  copies the lower (left)  triangle to the upper (right) triangle
