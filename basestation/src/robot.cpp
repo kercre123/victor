@@ -666,7 +666,7 @@ namespace Anki {
     // ============ Pose history ===============
     
     Result Robot::AddRawOdomPoseToHistory(const TimeStamp_t t,
-                                          const PoseFrameId frameID,
+                                          const PoseFrameID_t frameID,
                                           const f32 pose_x, const f32 pose_y, const f32 pose_z,
                                           const f32 pose_angle,
                                           const f32 head_angle)
@@ -675,7 +675,7 @@ namespace Anki {
     }
     
     Result Robot::AddVisionOnlyPoseToHistory(const TimeStamp_t t,
-                                             const PoseFrameId frameID,
+                                             const PoseFrameID_t frameID,
                                              const f32 pose_x, const f32 pose_y, const f32 pose_z,
                                              const f32 pose_angle,
                                              const f32 head_angle)

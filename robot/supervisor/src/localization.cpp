@@ -50,7 +50,7 @@ namespace Anki {
         
         f32 gyroRotOffset_ = 0;
         
-        PoseFrameId frameId_ = 0;
+        PoseFrameID_t frameId_ = 0;
         
       }
 
@@ -256,12 +256,12 @@ namespace Anki {
       }
 
       
-      void SetPoseFrameId(PoseFrameId id)
+      void SetPoseFrameId(PoseFrameID_t id)
       {
         frameId_ = id;
       }
 
-      PoseFrameId GetPoseFrameId()
+      PoseFrameID_t GetPoseFrameId()
       {
         return frameId_;
       }

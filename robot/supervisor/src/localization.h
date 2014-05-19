@@ -20,8 +20,8 @@ namespace Anki {
       Radians GetCurrentMatOrientation();
 
       // Set/Get the current pose frame ID
-      void SetPoseFrameId(PoseFrameId id);
-      PoseFrameId GetPoseFrameId();
+      void SetPoseFrameId(PoseFrameID_t id);
+      PoseFrameID_t GetPoseFrameId();
       
       
       void Update();

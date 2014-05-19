@@ -20,7 +20,7 @@ TEST(RobotPoseHistory, AddGetPose)
   RobotPoseStamp p;
   TimeStamp_t t;
   
-  PoseFrameId frameID = 0;
+  PoseFrameID_t frameID = 0;
   
   // Pose 1, 2, and 3
   const Pose3d p1(0, Vec3f(0,0,1), Vec3f(0,0,0) );
@@ -129,7 +129,7 @@ TEST(RobotPoseHistory, GroundTruthPose)
   RobotPoseStamp p;
   TimeStamp_t t;
   
-  PoseFrameId frameID = 0;
+  PoseFrameID_t frameID = 0;
   
   // Pose 1, 2, and 3
   const Pose3d p1(0.25*PI_F, Vec3f(0,0,1), Vec3f(1,0,0) );

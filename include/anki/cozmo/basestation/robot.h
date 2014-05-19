@@ -63,7 +63,7 @@ namespace Anki {
       void set_camCalibration(const Vision::CameraCalibration& calib);
       
       void IncrementPoseFrameID() {++frameId_;}
-      PoseFrameId GetPoseFrameID() const {return frameId_;}
+      PoseFrameID_t GetPoseFrameID() const {return frameId_;}
       
       void queueIncomingMessage(const u8 *msg, const u8 msgSize);
       bool hasOutgoingMessages() const;
@@ -160,13 +160,13 @@ namespace Anki {
       const RobotPoseHistory& GetPoseHistory() {return poseHistory_;}
       
       Result AddRawOdomPoseToHistory(const TimeStamp_t t,
-                                     const PoseFrameId frameID,
+                                     const PoseFrameID_t frameID,
                                      const f32 pose_x, const f32 pose_y, const f32 pose_z,
                                      const f32 pose_angle,
                                      const f32 head_angle);
       
       Result AddVisionOnlyPoseToHistory(const TimeStamp_t t,
-                                      const PoseFrameId frameID,
+                                      const PoseFrameID_t frameID,
                                       const f32 pose_x, const f32 pose_y, const f32 pose_z,
                                       const f32 pose_angle,
                                       const f32 head_angle);
@@ -186,7 +186,7 @@ namespace Anki {
       
       Pose3d pose;
       void updatePose();
-      PoseFrameId frameId_;
+      PoseFrameID_t frameId_;
       
       Vision::Camera camHead;
 

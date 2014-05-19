@@ -19,7 +19,7 @@ namespace Anki {
     RobotPoseStamp::RobotPoseStamp()
     { }
     
-    RobotPoseStamp::RobotPoseStamp(const PoseFrameId frameID,
+    RobotPoseStamp::RobotPoseStamp(const PoseFrameID_t frameID,
                                    const f32 pose_x, const f32 pose_y, const f32 pose_z,
                                    const f32 pose_angle,
                                    const f32 head_angle)
@@ -28,7 +28,7 @@ namespace Anki {
     }
 
 
-    void RobotPoseStamp::SetPose(const PoseFrameId frameID,
+    void RobotPoseStamp::SetPose(const PoseFrameID_t frameID,
                                  const f32 pose_x, const f32 pose_y, const f32 pose_z,
                                  const f32 pose_angle,
                                  const f32 head_angle)
@@ -40,7 +40,7 @@ namespace Anki {
       headAngle_ = head_angle;
     }
     
-    void RobotPoseStamp::SetPose(const PoseFrameId frameID,
+    void RobotPoseStamp::SetPose(const PoseFrameID_t frameID,
                                  const Pose3d& pose,
                                  const f32 head_angle)
     {
@@ -83,7 +83,7 @@ namespace Anki {
 
     // Adds a pose to the history
     Result RobotPoseHistory::AddRawOdomPose(const TimeStamp_t t,
-                                            const PoseFrameId frameID,
+                                            const PoseFrameID_t frameID,
                                             const f32 pose_x, const f32 pose_y, const f32 pose_z,
                                             const f32 pose_angle,
                                             const f32 head_angle)
@@ -121,7 +121,7 @@ namespace Anki {
     }
     
     Result RobotPoseHistory::AddVisionOnlyPose(const TimeStamp_t t,
-                                                const PoseFrameId frameID,
+                                                const PoseFrameID_t frameID,
                                                 const f32 pose_x, const f32 pose_y, const f32 pose_z,
                                                 const f32 pose_angle,
                                                 const f32 head_angle)
@@ -279,6 +279,18 @@ namespace Anki {
       pTransform.preComposeWith(git->second.GetPose());
       p.SetPose(p1.GetFrameId(), pTransform, p1.GetHeadAngle());
       
+      return RESULT_OK;
+    }
+    
+    Result RobotPoseHistory::ComputeAndInsertPoseAt(const TimeStamp_t t_request,
+                                                    TimeStamp_t& t, RobotPoseStamp& p,
+                                                    bool withInterpolation)
+    {
+      if (ComputePoseAt(t_request, t, p, withInterpolation) == RESULT_FAIL) {
+        return RESULT_FAIL;
+      }
+      
+      AddVisionOnlyPose(t, p);
       return RESULT_OK;
     }
     
