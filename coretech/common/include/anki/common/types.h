@@ -50,6 +50,12 @@ namespace Anki
   //       bytes), has implications for message alignment since it currently
   //       comes first in the message structs.
   typedef u32 TimeStamp_t;
+  
+  // PoseFrameId is used to denote a set of poses that were recorded since
+  // the last absolute localization update. This is required in order to
+  // know which pose updates coming from the robot are of the robot before
+  // or after the last absolute pose update was sent to the robot.
+  typedef u32 PoseFrameId;
 
 #ifdef __cplusplus
 } // namespace Anki

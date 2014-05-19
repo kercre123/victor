@@ -239,6 +239,8 @@ namespace Anki {
                                 const Radians angleThreshold,
                                 const bool    useAbsRotation,
                                 Pose3d& P_diff) const;
+
+    void Print() const;
     
   protected:
     

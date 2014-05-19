@@ -1,6 +1,7 @@
 
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/math/matrix.h"
+#include "anki/common/shared/utilities_shared.h"
 
 #include <stdexcept>
 
@@ -489,6 +490,17 @@ namespace Anki {
     return isSame;
     
   } // IsSameAs_WithAmbiguity()
+  
+  
+  
+  void Pose3d::Print() const
+  {
+    CoreTechPrint("Point (%f, %f %f), RotVec (%f %f %f), RotAng %f rad\n",
+                  translation.x(), translation.y(), translation.z(),
+                  rotationVector.get_axis().x(), rotationVector.get_axis().y(), rotationVector.get_axis().z(),
+                  rotationVector.get_angle().ToFloat()
+                  );
+  }
   
   
 #pragma mark --- Global Functions ---
