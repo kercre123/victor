@@ -13,6 +13,7 @@ addRotations = false;
 numPerturbations = 100;
 perturbSigma = 1;
 saveTree = true;
+leafNodeFraction = 1;
 
 probeRegion = VisionMarkerTrained.ProbeRegion; 
 
@@ -81,15 +82,6 @@ else
     labelNames = cell(1,numImages);
     img = cell(1, numImages);
     
-    
-    
-    %resamplingResolution = ceil(1/(probeRegion(2)-probeRegion(1))*workingResolution);
-    
-    
-    
-    %resamplingResolution = 4*workingResolution;
-   
-%     [xgrid,ygrid] = meshgrid(imageCoords);
     corners = [0 0; 0 1; 1 0; 1 1];
     sigma = perturbSigma/workingResolution;
     
@@ -162,23 +154,24 @@ else
         end
         colormap(gray);
     end
-  
-%     %% Add all four rotations
-%     if addRotations
-%         img = cat(3, img, imrotate(img,90), imrotate(img,180), imrotate(img, 270)); %#ok<UNRCH>
-%         if ~numPerturbations
-%             distMap = cat(3, distMap, imrotate(distMap,90), imrotate(distMap,180), imrotate(distMap, 270));
-%         end
-%         
-%         labels = repmat(labels, [1 4]);
-%         
-%         numImages = 4*numImages;
-%     end
-  
     
+    %     %% Add all four rotations
+    %     if addRotations
+    %         img = cat(3, img, imrotate(img,90), imrotate(img,180), imrotate(img, 270)); %#ok<UNRCH>
+    %         if ~numPerturbations
+    %             distMap = cat(3, distMap, imrotate(distMap,90), imrotate(distMap,180), imrotate(distMap, 270));
+    %         end
+    %
+    %         labels = repmat(labels, [1 4]);
+    %
+    %         numImages = 4*numImages;
+    %     end
+
     save trainingState.mat
     
 end % if loadSavedProbeValues
+
+
 
 %% Train the decision tree
 
@@ -430,7 +423,7 @@ end
         remainingNodes = labels(node.remaining);
         counts = hist(remainingNodes, length(remainingNodes));
         [maxCount, maxIndex] = max(counts);
-        if maxCount > .6*length(counts)
+        if maxCount >= leafNodeFraction*length(counts)
             node.labelID = labels(remainingNodes(maxIndex));
             node.labelName = labelNames{node.labelID};
             fprintf('LeafNode for label = %d, or "%s"\n', node.labelID, node.labelName);
