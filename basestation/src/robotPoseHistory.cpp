@@ -10,6 +10,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/common/basestation/general.h"
 
+#define DEBUG_ROBOT_POSE_HISTORY 0
 
 namespace Anki {
   namespace Cozmo {
@@ -27,6 +28,13 @@ namespace Anki {
       SetPose(frameID, pose_x, pose_y, pose_z, pose_angle, head_angle);
     }
 
+    RobotPoseStamp::RobotPoseStamp(const PoseFrameID_t frameID,
+                                   const Pose3d& pose,
+                                   const f32 head_angle)
+    {
+      SetPose(frameID, pose, head_angle);
+    }
+    
 
     void RobotPoseStamp::SetPose(const PoseFrameID_t frameID,
                                  const f32 pose_x, const f32 pose_y, const f32 pose_z,
@@ -108,40 +116,46 @@ namespace Anki {
       return RESULT_OK;
     }
 
+    
     Result RobotPoseHistory::AddVisionOnlyPose(const TimeStamp_t t,
-                                                const RobotPoseStamp& p)
+                                               const PoseFrameID_t frameID,
+                                               const f32 pose_x, const f32 pose_y, const f32 pose_z,
+                                               const f32 pose_angle,
+                                               const f32 head_angle)
     {
-      return AddVisionOnlyPose(t,
-                                p.GetFrameId(),
-                                p.GetPose().get_translation().x(),
-                                p.GetPose().get_translation().y(),
-                                p.GetPose().get_translation().z(),
-                                p.GetPose().get_rotationAngle().ToFloat(),
-                                p.GetHeadAngle());
+      RobotPoseStamp p(frameID, pose_x, pose_y, pose_z, pose_angle, head_angle);
+      return AddVisionOnlyPose(t, p);
     }
     
     Result RobotPoseHistory::AddVisionOnlyPose(const TimeStamp_t t,
-                                                const PoseFrameID_t frameID,
-                                                const f32 pose_x, const f32 pose_y, const f32 pose_z,
-                                                const f32 pose_angle,
-                                                const f32 head_angle)
+                                               const RobotPoseStamp& p)
     {
       // Should the pose be added?
-      TimeStamp_t newestTime = visPoses_.rbegin()->first;
-      if (newestTime > windowSize_ && t < newestTime - windowSize_) {
-        return RESULT_FAIL;
+      // Check if the pose's timestamp is too old.
+      if (!poses_.empty()) {
+        TimeStamp_t newestTime = poses_.rbegin()->first;
+        if (newestTime > windowSize_ && t < newestTime - windowSize_) {
+          return RESULT_FAIL;
+        }
       }
       
-      std::pair<PoseMapIter_t, bool> res;
-      res = visPoses_.emplace(std::piecewise_construct,
-                             std::make_tuple(t),
-                             std::make_tuple(frameID, pose_x, pose_y, pose_z, pose_angle, head_angle));
+      // If visPose entry exist at t, then overwrite it
+      PoseMapIter_t it = visPoses_.find(t);
+      if (it != visPoses_.end()) {
+        it->second.SetPose(p.GetFrameId(), p.GetPose(), p.GetHeadAngle());
+      } else {
       
-      if (!res.second) {
-        return RESULT_FAIL;
+        std::pair<PoseMapIter_t, bool> res;
+        res = visPoses_.emplace(std::piecewise_construct,
+                                std::make_tuple(t),
+                                std::make_tuple(p.GetFrameId(), p.GetPose(), p.GetHeadAngle()));
+      
+        if (!res.second) {
+          return RESULT_FAIL;
+        }
+        
+        CullToWindowSize();
       }
-      
-      CullToWindowSize();
       
       return RESULT_OK;
     }
@@ -212,6 +226,15 @@ namespace Anki {
       return RESULT_OK;
     }
 
+    Result RobotPoseHistory::GetVisionOnlyPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p)
+    {
+      PoseMapIter_t it = visPoses_.find(t_request);
+      if (it != visPoses_.end()) {
+        *p = &(it->second);
+        return RESULT_OK;
+      }
+      return RESULT_FAIL;
+    }
     
     Result RobotPoseHistory::ComputePoseAt(const TimeStamp_t t_request,
                                            TimeStamp_t& t, RobotPoseStamp& p,
@@ -253,28 +276,42 @@ namespace Anki {
       // then just return the raw pose of the requested frame id since it
       // is already based on the previous vision-based pose.
       if (git->second.GetFrameId() < p1.GetFrameId()) {
+        //printf("FRAME %d < %d\n", git->second.GetFrameId(), p1.GetFrameId());
         p = p1;
         return RESULT_OK;
       }
       
-      //printf("gt: %d\n", git->first);
-      //git->second.GetPose().Print();
+#if(DEBUG_ROBOT_POSE_HISTORY)
+      static bool printDbg = false;
+      if(printDbg) {
+        printf("gt: %d\n", git->first);
+        git->second.GetPose().Print();
+      }
+#endif
       
       // git now points to the latest vision-based pose that exists before time t.
       // Now get the pose in poses_ that immediately follows the vision-based pose's time.
       const_PoseMapIter_t p0_it = poses_.lower_bound(git->first);
 
-      //printf("p0_it: %d\n", p0_it->first);
-      //p0_it->second.GetPose().Print();
+#if(DEBUG_ROBOT_POSE_HISTORY)
+      if (printDbg) {
+        printf("p0_it: %d\n", p0_it->first);
+        p0_it->second.GetPose().Print();
       
-      //printf("p1: %d\n", t);
-      //p1.GetPose().Print();
+        printf("p1: %d\n", t);
+        p1.GetPose().Print();
+      }
+#endif
       
       // Compute relative pose between p0_it and p1 and append to the vision-based pose.
       Pose3d pTransform = p1.GetPose().getWithRespectTo(&(p0_it->second.GetPose()));
 
-      //printf("pTrans: %d\n", t);
-      //pTransform.Print();
+#if(DEBUG_ROBOT_POSE_HISTORY)
+      if (printDbg) {
+        printf("pTrans: %d\n", t);
+        pTransform.Print();
+      }
+#endif
       
       pTransform.preComposeWith(git->second.GetPose());
       p.SetPose(p1.GetFrameId(), pTransform, p1.GetHeadAngle());
@@ -283,14 +320,18 @@ namespace Anki {
     }
     
     Result RobotPoseHistory::ComputeAndInsertPoseAt(const TimeStamp_t t_request,
-                                                    TimeStamp_t& t, RobotPoseStamp& p,
+                                                    TimeStamp_t& t, RobotPoseStamp** p,
                                                     bool withInterpolation)
     {
-      if (ComputePoseAt(t_request, t, p, withInterpolation) == RESULT_FAIL) {
+      RobotPoseStamp ps;
+      //printf("COMPUTE+INSERT\n");
+      if (ComputePoseAt(t_request, t, ps, withInterpolation) == RESULT_FAIL ||
+          AddVisionOnlyPose(t, ps) == RESULT_FAIL ||
+          GetVisionOnlyPoseAt(t, p) == RESULT_FAIL) {
+        *p = nullptr;
         return RESULT_FAIL;
       }
       
-      AddVisionOnlyPose(t, p);
       return RESULT_OK;
     }
     

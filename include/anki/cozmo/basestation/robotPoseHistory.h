@@ -30,6 +30,10 @@ namespace Anki {
                      const f32 pose_angle,
                      const f32 head_angle);
       
+      RobotPoseStamp(const PoseFrameID_t frameID,
+                     const Pose3d& pose,
+                     const f32 head_angle);
+      
       void SetPose(const PoseFrameID_t frameID,
                    const f32 pose_x, const f32 pose_y, const f32 pose_z,
                    const f32 pose_angle,
@@ -101,7 +105,7 @@ namespace Anki {
                                 const f32 head_angle);
 
       Result AddVisionOnlyPose(const TimeStamp_t t,
-                                const RobotPoseStamp& p);
+                               const RobotPoseStamp& p);
       
       // Sets p to the raw odometry pose nearest the given timestamp t in the history.
       // Interpolates pose if withInterpolation == true.
@@ -109,6 +113,11 @@ namespace Anki {
       Result GetRawPoseAt(const TimeStamp_t t_request,
                           TimeStamp_t& t, RobotPoseStamp& p,
                           bool withInterpolation = false) const;
+      
+      // Returns OK and points p to a vision-based pose at the specified time if such a pose exists.
+      // Note: The pose that p points to may be invalidated by subsequent calls to
+      //       the history like Clear() or Add...(). Use carefully!
+      Result GetVisionOnlyPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p);
       
       // Same as above except that it uses the last vision-based
       // pose that exists at or before t_request to compute a
@@ -120,7 +129,7 @@ namespace Anki {
       // Same as above except that it also inserts the resulting pose
       // as a vision-based pose back into history.
       Result ComputeAndInsertPoseAt(const TimeStamp_t t_request,
-                                    TimeStamp_t& t, RobotPoseStamp& p,
+                                    TimeStamp_t& t, RobotPoseStamp** p,
                                     bool withInterpolation = false);
 
       

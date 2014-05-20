@@ -166,10 +166,13 @@ namespace Anki {
                                      const f32 head_angle);
       
       Result AddVisionOnlyPoseToHistory(const TimeStamp_t t,
-                                      const PoseFrameID_t frameID,
-                                      const f32 pose_x, const f32 pose_y, const f32 pose_z,
-                                      const f32 pose_angle,
-                                      const f32 head_angle);
+                                        const RobotPoseStamp& p);
+
+      Result ComputeAndInsertPoseIntoHistory(const TimeStamp_t t_request,
+                                             TimeStamp_t& t, RobotPoseStamp** p,
+                                             bool withInterpolation = false);
+
+      Result GetVisionOnlyPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p);
       
     protected:
       // The robot's identifier
