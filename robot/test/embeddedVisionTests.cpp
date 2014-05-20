@@ -828,7 +828,7 @@ GTEST_TEST(CoreTech_Vision, DecisionTreeVision)
   treeData[6].leftChildIndex = 0xFFFF;
   treeData[6].label = 6 + (1<<15);
 
-  FiducialMarkerDecisionTree tree(reinterpret_cast<u8*>(&treeData[0]), treeDataLength, treeDataNumFractionalBits, treeMaxDepth, probeXOffsets, probeYOffsets, numProbeOffsets);
+  FiducialMarkerDecisionTree tree(reinterpret_cast<u8*>(&treeData[0]), treeDataLength, treeDataNumFractionalBits, treeMaxDepth, probeXOffsets, probeYOffsets, numProbeOffsets, NULL, 0);
 
   Array<f32> homography = Eye<f32>(3,3,scratchOnchip);
   Array<u8> image(1,3,scratchOnchip);
