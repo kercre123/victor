@@ -18,13 +18,17 @@ namespace Anki
     {
     }
 
-    DecisionTree::DecisionTree(const void * restrict treeData, const s32 treeDataLength, const s32 treeDataNumFractionalBits, const s32 treeMaxDepth)
-      : treeData(NULL), treeDataLength(-1), treeDataNumFractionalBits(-1), treeMaxDepth(-1)
+    DecisionTree::DecisionTree(const void * restrict treeData, const s32 treeDataLength, const s32 treeDataNumFractionalBits, const s32 treeMaxDepth, const u16 * restrict leafLabels, const s32 numLeafLabels)
+      : treeData(NULL), treeDataLength(-1), treeDataNumFractionalBits(-1), treeMaxDepth(-1), leafLabels(leafLabels), numLeafLabels(numLeafLabels)
     {
       AnkiConditionalErrorAndReturn(treeData != NULL, "DecisionTree::DecisionTree", "treeData is NULL");
       AnkiConditionalErrorAndReturn(treeDataLength > 0, "DecisionTree::DecisionTree", "treeDataLength <= 0");
       AnkiConditionalErrorAndReturn(treeDataNumFractionalBits >= 0 && treeDataNumFractionalBits <= 32, "DecisionTree::DecisionTree", "0 <= treeDataNumFractionalBits <= 32");
 
+      if(this->leafLabels == NULL) {
+        AnkiConditionalError(this->numLeafLabels==0, "DecisionTree::DecisionTree", "With NULL leafNode array, numLeafLabels must be 0.");
+      }
+      
       this->treeData = treeData;
       this->treeDataLength = treeDataLength;
       this->treeDataNumFractionalBits = treeDataNumFractionalBits;
