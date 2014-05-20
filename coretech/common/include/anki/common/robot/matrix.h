@@ -894,10 +894,9 @@ namespace Anki
         const s32 arrWidth = arr.get_size(1);
 
         for(s32 x=0; x<arrWidth; x++) {
-          indexes[0][x] = 0;
-
           for(s32 y=(trueMinIndex+1); y<=trueMaxIndex; y++) {
             const Type valueToInsert = arr[y][x];
+            const s32 indexToInsert = indexes[y][x];
 
             s32 holePosition = y;
 
@@ -908,7 +907,7 @@ namespace Anki
             }
 
             arr[holePosition][x] = valueToInsert;
-            indexes[holePosition][x] = y;
+            indexes[holePosition][x] = indexToInsert;
           }
         } // for(s32 x=0; x<arrWidth; x++)
       } // InsertionSort_sortAscendingDimension0()
@@ -922,6 +921,7 @@ namespace Anki
 
           for(s32 y=(trueMinIndex+1); y<=trueMaxIndex; y++) {
             const Type valueToInsert = arr[y][x];
+            const s32 indexToInsert = indexes[y][x];
 
             s32 holePosition = y;
 
@@ -932,7 +932,7 @@ namespace Anki
             }
 
             arr[holePosition][x] = valueToInsert;
-            indexes[holePosition][x] = y;
+            indexes[holePosition][x] = indexToInsert;
           }
         } // for(s32 x=0; x<arrWidth; x++)
       } // InsertionSort_sortDescendingDimension0()
@@ -949,6 +949,7 @@ namespace Anki
 
           for(s32 x=(trueMinIndex+1); x<=trueMaxIndex; x++) {
             const Type valueToInsert = pArr[x];
+            const s32 indexToInsert = pIndexes[x];
 
             s32 holePosition = x;
 
@@ -959,7 +960,7 @@ namespace Anki
             }
 
             pArr[holePosition] = valueToInsert;
-            pIndexes[holePosition] = x;
+            pIndexes[holePosition] = indexToInsert;
           }
         } // for(s32 x=0; x<arrWidth; x++)
       } // InsertionSort_sortAscendingDimension1()
@@ -976,6 +977,7 @@ namespace Anki
 
           for(s32 x=(trueMinIndex+1); x<=trueMaxIndex; x++) {
             const Type valueToInsert = pArr[x];
+            const s32 indexToInsert = pIndexes[x];
 
             s32 holePosition = x;
 
@@ -986,7 +988,7 @@ namespace Anki
             }
 
             pArr[holePosition] = valueToInsert;
-            pIndexes[holePosition] = x;
+            pIndexes[holePosition] = indexToInsert;
           }
         } // for(s32 x=0; x<arrWidth; x++)
       } // InsertionSort_sortDescendingDimension1()
@@ -1618,6 +1620,13 @@ namespace Anki
         const s32 trueMaxIndex = CLIP(maxIndex, 0, arr.get_size(sortWhichDimension) - 1);
 
         if(sortWhichDimension == 0) {
+          for(s32 y=0; y<arrHeight; y++) {
+            s32 * restrict pIndexes = indexes.Pointer(y,0);
+            for(s32 x=0; x<arrWidth; x++) {
+              pIndexes[x] = y;
+            }
+          }
+
           // TODO: This columnwise sorting could be sped up, with smarter array indexing.
           if(sortAscending) {
             InsertionSort_sortAscendingDimension0(arr, indexes, trueMinIndex, trueMaxIndex);
@@ -1625,6 +1634,13 @@ namespace Anki
             InsertionSort_sortDescendingDimension0(arr, indexes, trueMinIndex, trueMaxIndex);
           } // if(sortAscending) ... else
         } else { // sortWhichDimension == 1
+          for(s32 y=0; y<arrHeight; y++) {
+            s32 * restrict pIndexes = indexes.Pointer(y,0);
+            for(s32 x=0; x<arrWidth; x++) {
+              pIndexes[x] = x;
+            }
+          }
+
           if(sortAscending) {
             InsertionSort_sortAscendingDimension1(arr, indexes, trueMinIndex, trueMaxIndex);
           } else { // if(sortAscending)
@@ -1656,27 +1672,36 @@ namespace Anki
           // TODO: This columnwise sorting could be sped up, with smarter array indexing.
           if(sortAscending) {
             for(s32 x=0; x<arrWidth; x++) {
-              QuickSort_sortAscendingDimension0(arr, trueMinIndex, trueMaxIndex, x, insertionSortSize);
+              QuickSort_sortAscendingDimension0<Type>(arr, trueMinIndex, trueMaxIndex, x, insertionSortSize);
             }
+
+            if(insertionSortSize > 1)
+              InsertionSort_sortAscendingDimension0<Type>(arr, trueMinIndex, trueMaxIndex);
           } else { // if(sortAscending)
             for(s32 x=0; x<arrWidth; x++) {
-              QuickSort_sortDescendingDimension0(arr, trueMinIndex, trueMaxIndex, x, insertionSortSize);
+              QuickSort_sortDescendingDimension0<Type>(arr, trueMinIndex, trueMaxIndex, x, insertionSortSize);
             }
+
+            if(insertionSortSize > 1)
+              InsertionSort_sortDescendingDimension0<Type>(arr, trueMinIndex, trueMaxIndex);
           } // if(sortAscending) ... else
         } else { // sortWhichDimension == 1
           if(sortAscending) {
             for(s32 y=0; y<arrHeight; y++) {
-              QuickSort_sortAscendingDimension1(arr, trueMinIndex, trueMaxIndex, y, insertionSortSize);
+              QuickSort_sortAscendingDimension1<Type>(arr, trueMinIndex, trueMaxIndex, y, insertionSortSize);
             }
+
+            if(insertionSortSize > 1)
+              InsertionSort_sortAscendingDimension1<Type>(arr, trueMinIndex, trueMaxIndex);
           } else { // if(sortAscending)
             for(s32 y=0; y<arrHeight; y++) {
-              QuickSort_sortDescendingDimension1(arr, trueMinIndex, trueMaxIndex, y, insertionSortSize);
+              QuickSort_sortDescendingDimension1<Type>(arr, trueMinIndex, trueMaxIndex, y, insertionSortSize);
             }
+
+            if(insertionSortSize > 1)
+              InsertionSort_sortDescendingDimension1<Type>(arr, trueMinIndex, trueMaxIndex);
           } // if(sortAscending) ... else
         } // if(sortWhichDimension == 0) ... else
-
-        if(insertionSortSize > 1)
-          InsertionSort<Type>(arr, sortWhichDimension, sortAscending, minIndex, maxIndex);
 
         return RESULT_OK;
       } // QuickSort()
@@ -1705,30 +1730,53 @@ namespace Anki
         const s32 trueMaxIndex = CLIP(maxIndex, 0, arr.get_size(sortWhichDimension) - 1);
 
         if(sortWhichDimension == 0) {
+          for(s32 y=0; y<arrHeight; y++) {
+            s32 * restrict pIndexes = indexes.Pointer(y,0);
+            for(s32 x=0; x<arrWidth; x++) {
+              pIndexes[x] = y;
+            }
+          }
+
           // TODO: This columnwise sorting could be sped up, with smarter array indexing.
           if(sortAscending) {
             for(s32 x=0; x<arrWidth; x++) {
-              QuickSort_sortAscendingDimension0(arr, indexes, trueMinIndex, trueMaxIndex);
+              QuickSort_sortAscendingDimension0<Type>(arr, indexes, trueMinIndex, trueMaxIndex, x, insertionSortSize);
             }
+
+            if(insertionSortSize > 1)
+              InsertionSort_sortAscendingDimension0<Type>(arr, indexes, trueMinIndex, trueMaxIndex);
           } else { // if(sortAscending)
             for(s32 x=0; x<arrWidth; x++) {
-              QuickSort_sortDescendingDimension0(arr, indexes, trueMinIndex, trueMaxIndex);
+              QuickSort_sortDescendingDimension0<Type>(arr, indexes, trueMinIndex, trueMaxIndex, x, insertionSortSize);
             }
+
+            if(insertionSortSize > 1)
+              InsertionSort_sortDescendingDimension0<Type>(arr, indexes, trueMinIndex, trueMaxIndex);
           } // if(sortAscending) ... else
         } else { // sortWhichDimension == 1
+          for(s32 y=0; y<arrHeight; y++) {
+            s32 * restrict pIndexes = indexes.Pointer(y,0);
+            for(s32 x=0; x<arrWidth; x++) {
+              pIndexes[x] = x;
+            }
+          }
+
           if(sortAscending) {
             for(s32 y=0; y<arrHeight; y++) {
-              QuickSort_sortAscendingDimension1(arr, indexes, trueMinIndex, trueMaxIndex);
+              QuickSort_sortAscendingDimension1<Type>(arr, indexes, trueMinIndex, trueMaxIndex, y, insertionSortSize);
             }
+
+            if(insertionSortSize > 1)
+              InsertionSort_sortAscendingDimension1<Type>(arr, indexes, trueMinIndex, trueMaxIndex);
           } else { // if(sortAscending)
             for(s32 y=0; y<arrHeight; y++) {
-              QuickSort_sortDescendingDimension1(arr, indexes, trueMinIndex, trueMaxIndex);
+              QuickSort_sortDescendingDimension1<Type>(arr, indexes, trueMinIndex, trueMaxIndex, y, insertionSortSize);
             }
+
+            if(insertionSortSize > 1)
+              InsertionSort_sortDescendingDimension1<Type>(arr, indexes, trueMinIndex, trueMaxIndex);
           } // if(sortAscending) ... else
         } // if(sortWhichDimension == 0) ... else
-
-        if(insertionSortSize > 1)
-          InsertionSort<Type>(arr, indexes, sortWhichDimension, sortAscending, minIndex, maxIndex);
 
         return RESULT_OK;
       } // QuickSort()
