@@ -1,7 +1,7 @@
-function [array, maxDepth] = CreateTreeArray(root)
+function [array, maxDepth, leafLabels] = CreateTreeArray(root)
 % Convert node-with-child-pointers tree to flat array.
 %
-% [array, maxDepth] = CreateTreeArray(root)
+% [array, maxDepth, leafLabels] = CreateTreeArray(root)
 %
 %
 % 
@@ -14,7 +14,7 @@ function [array, maxDepth] = CreateTreeArray(root)
 maxDepth = GetTreeMaxDepth(root);
 
 array = GetEmptyNode();
-array = CreateTreeArrayHelper(root, array, 1);
+[array, leafLabels] = CreateTreeArrayHelper(root, array, 1, []);
 
 % Sanity check:
 numNodes = GetTreeNumNodes(root);
@@ -35,13 +35,24 @@ node = struct('x', [], 'y', [], 'leftIndex', [], 'label', []);
 
 end
 
-function array = CreateTreeArrayHelper(root, array, index)
+function [array, leafLabels] = CreateTreeArrayHelper(root, array, index, leafLabels)
     
 assert(length(array)>=index, 'This node should have already been created.');
     
-if isfield(root, 'labelName')
+if isfield(root, 'labelID')
     % This is a leaf node
-    array(index).label = root.labelID;
+    if isscalar(root.labelID)
+        % This leaf has a single label
+        array(index).x = 0;
+        array(index).y = 0;
+        array(index).label = root.labelID;
+    else
+        % This leaf has multiple labels
+        array(index).x = length(leafLabels) + 1;
+        array(index).label = -1;
+        leafLabels = [leafLabels row(root.labelID)];
+        array(index).y = length(leafLabels) + 1;        
+    end
 else
     assert(all(isfield(root, {'leftChild', 'rightChild'})));
     
@@ -59,8 +70,8 @@ else
     array(rightIndex) = GetEmptyNode();
    
     % Recurse on each child
-    array = CreateTreeArrayHelper(root.leftChild,  array, leftIndex);
-    array = CreateTreeArrayHelper(root.rightChild, array, rightIndex);
+    [array, leafLabels] = CreateTreeArrayHelper(root.leftChild,  array, leftIndex,  leafLabels);
+    [array, leafLabels] = CreateTreeArrayHelper(root.rightChild, array, rightIndex, leafLabels);
    
 end
     

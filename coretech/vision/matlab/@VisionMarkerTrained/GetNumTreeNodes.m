@@ -3,10 +3,16 @@ function [numMulticlassNodes, numVerificationNodes] = GetNumTreeNodes()
 
 numMulticlassNodes = GetNumNodesHelper(VisionMarkerTrained.ProbeTree);
 
-numVerificationNodes = 0;
-for iVerify = 1:length(VisionMarkerTrained.ProbeTree.verifiers)
-    numVerificationNodes = numVerificationNodes + ...
-        GetNumNodesHelper(VisionMarkerTrained.ProbeTree.verifiers(iVerify));
+if all(isfield(VisionMarkerTrained.ProbeTree, {'verifyTreeRed', 'verifyTreeBlack'}))
+   numVerificationNodes = ...
+       GetNumNodesHelper(VisionMarkerTrained.ProbeTree.verifyTreeRed) + ...
+       GetNumNodesHelper(VisionMarkerTrained.ProbeTree.verifyTreeBlack);
+else
+    numVerificationNodes = 0;
+    for iVerify = 1:length(VisionMarkerTrained.ProbeTree.verifiers)
+        numVerificationNodes = numVerificationNodes + ...
+            GetNumNodesHelper(VisionMarkerTrained.ProbeTree.verifiers(iVerify));
+    end
 end
 
 

@@ -31,7 +31,14 @@ namespace Anki
   namespace Embedded
   {
     FiducialMarkerDecisionTree VisionMarker::multiClassTree;
+
+#if USE_RED_BLACK_VERIFICATION_TREES
+    FiducialMarkerDecisionTree VisionMarker::verifyRedTree;
+    FiducialMarkerDecisionTree VisionMarker::verifyBlackTree;
+#else
     FiducialMarkerDecisionTree VisionMarker::verificationTrees[VisionMarkerDecisionTree::NUM_MARKER_LABELS_ORIENTED];
+#endif
+    
     bool VisionMarker::areTreesInitialized = false;
 
     BlockMarker::BlockMarker()
@@ -566,8 +573,26 @@ namespace Anki
           TREE_NUM_FRACTIONAL_BITS,
           MAX_DEPTH_MULTICLASS,
           ProbePoints_X, ProbePoints_Y,
-          NUM_PROBE_POINTS);
+          NUM_PROBE_POINTS, NULL, 0);
 
+#if USE_RED_BLACK_VERIFICATION_TREES
+        VisionMarker::verifyRedTree = FiducialMarkerDecisionTree(reinterpret_cast<const u8*>(VerifyRedNodes),
+                                                                 NUM_NODES_VERIFY_RED,
+                                                                 TREE_NUM_FRACTIONAL_BITS,
+                                                                 MAX_DEPTH_VERIFY_RED,
+                                                                 ProbePoints_X, ProbePoints_Y,
+                                                                 NUM_PROBE_POINTS,
+                                                                 VerifyRedLeafLabels, NUM_LEAF_LABELS_RED);
+        
+        VisionMarker::verifyBlackTree = FiducialMarkerDecisionTree(reinterpret_cast<const u8*>(VerifyBlackNodes),
+                                                                 NUM_NODES_VERIFY_BLACK,
+                                                                 TREE_NUM_FRACTIONAL_BITS,
+                                                                 MAX_DEPTH_VERIFY_BLACK,
+                                                                 ProbePoints_X, ProbePoints_Y,
+                                                                 NUM_PROBE_POINTS,
+                                                                 VerifyBlackLeafLabels, NUM_LEAF_LABELS_BLACK);
+        
+#else
         for(s32 i=0; i<NUM_MARKER_LABELS_ORIENTED; ++i)
         {
           VisionMarker::verificationTrees[i] = FiducialMarkerDecisionTree(reinterpret_cast<const u8*>(VerifyNodes[i]),
@@ -577,7 +602,7 @@ namespace Anki
             ProbePoints_X, ProbePoints_Y,
             NUM_PROBE_POINTS);
         }
-
+#endif
         VisionMarker::areTreesInitialized = true;
       } // IF trees initialized
     }
@@ -755,14 +780,34 @@ namespace Anki
 
         if(multiClassLabel != MARKER_UNKNOWN) {
           BeginBenchmark("vme_verify");
+#if USE_RED_BLACK_VERIFICATION_TREES
+          bool isVerified = false;
+          
+          if((lastResult = VisionMarker::verifyRedTree.Verify(image, homography, meanGrayvalueThreshold,
+                                                              multiClassLabel, isVerified)) != RESULT_OK) {
+            return lastResult;
+          }
+          
+          if(isVerified) {
+            if((lastResult = VisionMarker::verifyBlackTree.Verify(image, homography, meanGrayvalueThreshold,
+                                                                  multiClassLabel, isVerified)) != RESULT_OK) {
+              return lastResult;
+            }
+          }
+          
+#else
           if((lastResult = VisionMarker::verificationTrees[multiClassLabel].Classify(image, homography,
             meanGrayvalueThreshold, tempLabel)) != RESULT_OK)
           {
             return lastResult;
           }
-
+          
           const OrientedMarkerLabel verifyLabel = static_cast<OrientedMarkerLabel>(tempLabel);
-          if(verifyLabel == multiClassLabel)
+          const bool isVerified = verifyLabel == multiClassLabel;
+#endif
+          EndBenchmark("vme_verify");
+          
+          if(isVerified)
           {
             // We have a valid, verified classification.
 
@@ -788,7 +833,7 @@ namespace Anki
 #endif
           } // if(verifyLabel == multiClassLabel)
 
-          EndBenchmark("vme_verify");
+
         } else {
 #ifdef OUTPUT_FAILED_MARKER_STEPS
           AnkiWarn("VisionMarker::Extract", "MARKER_UNKNOWN detected");
