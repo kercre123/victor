@@ -28,7 +28,7 @@ Solid {
 			  material Material { diffuseColor 1 1 1 }
 		    }
 		    geometry Box {
-            size 0.065000 0.065000 0.00001
+            size 0.030000 0.030000 0.00001
   		}
 		  }
 	    ]
@@ -43,7 +43,7 @@ Solid {
 			  material Material { diffuseColor 1 1 1 }
 		    }
 		    geometry Box {
-            size 0.065000 0.065000 0.00001
+            size 0.030000 0.030000 0.00001
   		}
 		  }
 	    ]
@@ -58,7 +58,7 @@ Solid {
 			  material Material { diffuseColor 1 1 1 }
 		    }
 		    geometry Box {
-            size 0.065000 0.065000 0.00001
+            size 0.030000 0.030000 0.00001
   		}
 		  }
 	    ]
@@ -73,7 +73,7 @@ Solid {
 			  material Material { diffuseColor 1 1 1 }
 		    }
 		    geometry Box {
-            size 0.065000 0.065000 0.00001
+            size 0.030000 0.030000 0.00001
   		}
 		  }
 	    ]
@@ -88,7 +88,7 @@ Solid {
 			  material Material { diffuseColor 1 1 1 }
 		    }
 		    geometry Box {
-            size 0.065000 0.065000 0.00001
+            size 0.030000 0.030000 0.00001
   		}
 		  }
 	    ]
@@ -103,7 +103,7 @@ Solid {
 			  material Material { diffuseColor 1 1 1 }
 		    }
 		    geometry Box {
-            size 0.065000 0.065000 0.00001
+            size 0.030000 0.030000 0.00001
   		}
 		  }
 	    ]
@@ -118,7 +118,7 @@ Solid {
 			  material Material { diffuseColor 1 1 1 }
 		    }
 		    geometry Box {
-            size 0.065000 0.065000 0.00001
+            size 0.030000 0.030000 0.00001
   		}
 		  }
 	    ]
@@ -133,7 +133,7 @@ Solid {
 			  material Material { diffuseColor 1 1 1 }
 		    }
 		    geometry Box {
-            size 0.065000 0.065000 0.00001
+            size 0.030000 0.030000 0.00001
   		}
 		  }
 	    ]
@@ -148,7 +148,7 @@ Solid {
 			  material Material { diffuseColor 1 1 1 }
 		    }
 		    geometry Box {
-            size 0.065000 0.065000 0.00001
+            size 0.030000 0.030000 0.00001
   		}
 		  }
 	    ]
@@ -163,7 +163,7 @@ Solid {
 			  material Material { diffuseColor 1 1 1 }
 		    }
 		    geometry Box {
-            size 0.065000 0.065000 0.00001
+            size 0.030000 0.030000 0.00001
   		}
 		  }
 	    ]
@@ -178,7 +178,7 @@ Solid {
 			  material Material { diffuseColor 1 1 1 }
 		    }
 		    geometry Box {
-            size 0.065000 0.065000 0.00001
+            size 0.030000 0.030000 0.00001
   		}
 		  }
 	    ]
@@ -193,7 +193,7 @@ Solid {
 			  material Material { diffuseColor 1 1 1 }
 		    }
 		    geometry Box {
-            size 0.065000 0.065000 0.00001
+            size 0.030000 0.030000 0.00001
   		}
 		  }
 	    ]
@@ -208,7 +208,7 @@ Solid {
 			  material Material { diffuseColor 1 1 1 }
 		    }
 		    geometry Box {
-            size 0.065000 0.065000 0.00001
+            size 0.030000 0.030000 0.00001
   		}
 		  }
 	    ]
@@ -223,7 +223,7 @@ Solid {
 			  material Material { diffuseColor 1 1 1 }
 		    }
 		    geometry Box {
-            size 0.065000 0.065000 0.00001
+            size 0.030000 0.030000 0.00001
   		}
 		  }
 	    ]
@@ -238,7 +238,7 @@ Solid {
 			  material Material { diffuseColor 1 1 1 }
 		    }
 		    geometry Box {
-            size 0.065000 0.065000 0.00001
+            size 0.030000 0.030000 0.00001
   		}
 		  }
 	    ]
@@ -253,7 +253,7 @@ Solid {
 			  material Material { diffuseColor 1 1 1 }
 		    }
 		    geometry Box {
-            size 0.065000 0.065000 0.00001
+            size 0.030000 0.030000 0.00001
   		}
 		  }
 	    ]

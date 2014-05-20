@@ -11,7 +11,7 @@
 %         
 %         anki = imread('~/Box Sync/Cozmo SE/VisionMarkers/ankiLogo.png');
      
-markerSize_mm = 65;
+markerSize_mm = 30;
 
 % Letters:
 matMarkerPath = '~/Box Sync/Cozmo SE/VisionMarkers/lettersWithFiducials/unpadded';
