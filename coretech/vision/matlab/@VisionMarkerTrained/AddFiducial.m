@@ -9,6 +9,10 @@ TransparencyTolerance = 0.1;
 
 parseVarargin(varargin{:});
 
+if ischar(img)
+    [img, AlphaChannel] = imread(img);
+end
+
 img = im2double(img);
 if size(img,3)==1
     img = repmat(img,[1 1 3]);
@@ -121,6 +125,7 @@ else
     imgNew = imresize(imgNew, OutputSize*[1 1]);
 end
 
+imgNew = max(0, min(1, imgNew));
 
 if ~isempty(TransparentColor)
     transImg = repmat(reshape(TransparentColor, [1 1 3]), OutputSize*[1 1]);

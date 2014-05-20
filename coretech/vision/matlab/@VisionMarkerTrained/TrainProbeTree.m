@@ -3,14 +3,15 @@ function probeTree = TrainProbeTree(varargin)
 % TODO: Use parameters from a derived class below, insetad of VisionMarkerTrained.*
 
 %% Parameters
+loadSavedProbeValues = false;
 markerImageDir = VisionMarkerTrained.TrainingImageDir;
-workingResolution = 30;
+workingResolution = 40;
 %maxSamples = 100;
 minInfoGain = 0;
-maxDepth = 50;
+maxDepth = 100;
 addRotations = false;
 numPerturbations = 100;
-perturbSigma = 1;
+perturbSigma = 0.5;
 saveTree = true;
 
 probeRegion = [VisionMarkerTrained.SquareWidthFraction+VisionMarkerTrained.FiducialPaddingFraction ...
@@ -51,134 +52,140 @@ if ~saveTree && nargout==0
     end
 end
 
-%% Load marker images
-numDirs = length(markerImageDir);
-fnames = cell(numDirs,1);
-for i_dir = 1:numDirs
-    fnames{i_dir} = getfnames(markerImageDir{i_dir}, 'images', 'useFullPath', true);
-end
-fnames = vertcat(fnames{:});
-
-if isempty(fnames)
-    error('No image files found.');
-end
-
-fprintf('Found %d total image files to train on.\n', length(fnames));
-
-%fnames = {'angryFace.png', 'ankiLogo.png', 'batteries3.png', ...
-%    'bullseye2.png', 'fire.png', 'squarePlusCorners.png'};
-
-numImages = length(fnames);
-labelNames = cell(1,numImages);
-img = cell(1, numImages);
-
-resamplingResolution = ceil(1/(probeRegion(2)-probeRegion(1))*workingResolution);
-%resamplingResolution = 4*workingResolution;
-
-for i = 1:numImages
-    [img{i}, ~, alpha] = imread(fnames{i});
-    img{i} = mean(im2double(img{i}),3);
-    img{i}(alpha < .5) = 1;
-    img{i} = imresize(img{i}, resamplingResolution*[1 1], 'bilinear');
+if loadSavedProbeValues
+    load trainingState.mat
+else
     
-    [~,labelNames{i}] = fileparts(fnames{i});
+    %% Load marker images
+    numDirs = length(markerImageDir);
+    fnames = cell(numDirs,1);
+    for i_dir = 1:numDirs
+        fnames{i_dir} = getfnames(markerImageDir{i_dir}, 'images', 'useFullPath', true);
+    end
+    fnames = vertcat(fnames{:});
     
-end
-
-labels = 1:numImages;
-numLabels = numImages;
- 
-%[xgrid,ygrid] = meshgrid(linspace(0,1,workingResolution));
-imageCoords = linspace(imageCoords(1), imageCoords(2), resamplingResolution);
-
-%% Perturb corners
-[xgrid,ygrid] = meshgrid(imageCoords);
-if numPerturbations > 0
-    fprintf('Creating perturbed images...');
+    if isempty(fnames)
+        error('No image files found.');
+    end
     
-    img_perturb = cell(numPerturbations, numImages);
-    %corners = [0 0; 0 workingResolution; workingResolution 0; workingResolution workingResolution] + 0.5;
-    corners = [0 0; 0 1; 1 0; 1 1];
-    sigma = perturbSigma/workingResolution;
-    for i = 1:numPerturbations
-        perturbation = max(-3*sigma, min(3*sigma, sigma*randn(4,2)));
-        corners_i = corners + perturbation;
-        T = cp2tform(corners_i, corners, 'projective');
-        [xi,yi] = tforminv(T, xgrid, ygrid);
+    fprintf('Found %d total image files to train on.\n', length(fnames));
+    
+    %fnames = {'angryFace.png', 'ankiLogo.png', 'batteries3.png', ...
+    %    'bullseye2.png', 'fire.png', 'squarePlusCorners.png'};
+    
+    numImages = length(fnames);
+    labelNames = cell(1,numImages);
+    img = cell(1, numImages);
+    
+    resamplingResolution = ceil(1/(probeRegion(2)-probeRegion(1))*workingResolution);
+    %resamplingResolution = 4*workingResolution;
+    
+    for i = 1:numImages
+        [img{i}, ~, alpha] = imread(fnames{i});
+        img{i} = mean(im2double(img{i}),3);
+        img{i}(alpha < .5) = 1;
+        img{i} = imresize(img{i}, resamplingResolution*[1 1], 'bilinear');
         
-        for i_img = 1:numImages
-            %img_perturb{i,i_img} = separable_filter(interp2(img{i_img}, xi, yi, 'linear', 1), probeKernel, [], 'replicate');
-            img_perturb{i,i_img} = interp2(imageCoords, imageCoords, img{i_img}, xi, yi, 'linear', 1);
-        end
+        [~,labelNames{i}] = fileparts(fnames{i});
+        
     end
     
-    if DEBUG_DISPLAY
-        namedFigure('Average Perturbed Images'); clf
-        for j = 1:numImages
-            subplot(2,ceil(numImages/2),j), hold off
-            imagesc(imageCoords([1 end]), imageCoords([1 end]), ...
-                mean(cat(3, img_perturb{:,j}),3)), axis image, hold on
-            plot(corners(:,1), corners(:,2), 'y+');
+    labels = 1:numImages;
+    numLabels = numImages;
+    
+    %[xgrid,ygrid] = meshgrid(linspace(0,1,workingResolution));
+    imageCoords = linspace(imageCoords(1), imageCoords(2), resamplingResolution);
+    
+    %% Perturb corners
+    [xgrid,ygrid] = meshgrid(imageCoords);
+    if numPerturbations > 0
+        fprintf('Creating perturbed images...');
+        
+        img_perturb = cell(numPerturbations, numImages);
+        %corners = [0 0; 0 workingResolution; workingResolution 0; workingResolution workingResolution] + 0.5;
+        corners = [0 0; 0 1; 1 0; 1 1];
+        sigma = perturbSigma/workingResolution;
+        for i = 1:numPerturbations
+            perturbation = max(-3*sigma, min(3*sigma, sigma*randn(4,2)));
+            corners_i = corners + perturbation;
+            T = cp2tform(corners_i, corners, 'projective');
+            [xi,yi] = tforminv(T, xgrid, ygrid);
+            
+            for i_img = 1:numImages
+                %img_perturb{i,i_img} = separable_filter(interp2(img{i_img}, xi, yi, 'linear', 1), probeKernel, [], 'replicate');
+                img_perturb{i,i_img} = interp2(imageCoords, imageCoords, img{i_img}, xi, yi, 'linear', 1);
+            end
         end
-        colormap(gray);
+        
+        if DEBUG_DISPLAY
+            namedFigure('Average Perturbed Images'); clf
+            for j = 1:numImages
+                subplot(2,ceil(numImages/2),j), hold off
+                imagesc(imageCoords([1 end]), imageCoords([1 end]), ...
+                    mean(cat(3, img_perturb{:,j}),3)), axis image, hold on
+                plot(corners(:,1), corners(:,2), 'y+');
+            end
+            colormap(gray);
+        end
+        
+        labels = [labels row(repmat(labels, [numPerturbations 1]))];
+        img = [img(:); img_perturb(:)];
+        fprintf('Done.\n');
+    end
+    img = cat(3, img{:});
+    numImages = size(img,3);
+    
+    %% Add all four rotations
+    if addRotations
+        img = cat(3, img, imrotate(img,90), imrotate(img,180), imrotate(img, 270)); %#ok<UNRCH>
+        if ~numPerturbations
+            distMap = cat(3, distMap, imrotate(distMap,90), imrotate(distMap,180), imrotate(distMap, 270));
+        end
+        
+        labels = repmat(labels, [1 4]);
+        
+        numImages = 4*numImages;
     end
     
-    labels = [labels row(repmat(labels, [numPerturbations 1]))];
-    img = [img(:); img_perturb(:)];
+    %% Add all-white & all-black images
+    % Force the tree to use at least one black and one white probe from each
+    % image we actually care about.
+    
+    img = cat(3, img, ones(resamplingResolution), zeros(resamplingResolution));
+    labelNames{end+1} = 'ALLWHITE';
+    labelNames{end+1} = 'ALLBLACK';
+    labels = [labels numLabels+1 numLabels+2];
+    numLabels = numLabels + 2;
+    numImages = numImages + 2;
+    
+    %% Create gradient weight map
+    % Ix = (image_right(img) - image_left(img))/2;
+    % Iy = (image_down(img) - image_up(img))/2;
+    % gradMag = sqrt(Ix.^2 + Iy.^2);
+    
+    
+    %% Create samples
+    %probeValues = reshape(img, [], numImages);
+    fprintf('Computing probe values...');
+    [xgrid,ygrid] = meshgrid(linspace(probeRegion(1),probeRegion(2),workingResolution)); %1:workingResolution);
+    probeValues = zeros(workingResolution^2, numImages);
+    X = probePattern.x(ones(workingResolution^2,1),:) + xgrid(:)*ones(1,length(probePattern.x));
+    Y = probePattern.y(ones(workingResolution^2,1),:) + ygrid(:)*ones(1,length(probePattern.y));
+    
+    assert(isequal(size(img(:,:,1)), resamplingResolution*[1 1]))
+    % Note working resolution is the resoultion of the code image, without the
+    % fiducial, which is what the GetFiducialPixelSize function expects
+    Corners = VisionMarkerTrained.GetFiducialCorners(resamplingResolution, false);
+    tform = cp2tform([0 0 1 1; 0 1 0 1]', Corners, 'projective');
+    [xi,yi] = tformfwd(tform, X, Y);
+    for i = 1:numImages
+        probeValues(:,i) = mean(interp2(img(:,:,i), xi, yi, 'linear', 1),2);
+    end
     fprintf('Done.\n');
-end
-img = cat(3, img{:});
-numImages = size(img,3);
-
-%% Add all four rotations
-if addRotations
-    img = cat(3, img, imrotate(img,90), imrotate(img,180), imrotate(img, 270)); %#ok<UNRCH>
-    if ~numPerturbations
-        distMap = cat(3, distMap, imrotate(distMap,90), imrotate(distMap,180), imrotate(distMap, 270));
-    end
     
-    labels = repmat(labels, [1 4]);
+    save trainingState.mat
     
-    numImages = 4*numImages;
-end
-
-%% Add all-white & all-black images
-% Force the tree to use at least one black and one white probe from each
-% image we actually care about.
-
-img = cat(3, img, ones(resamplingResolution), zeros(resamplingResolution));
-labelNames{end+1} = 'ALLWHITE';
-labelNames{end+1} = 'ALLBLACK';
-labels = [labels numLabels+1 numLabels+2];
-numLabels = numLabels + 2;
-numImages = numImages + 2;
-
-%% Create gradient weight map
-% Ix = (image_right(img) - image_left(img))/2;
-% Iy = (image_down(img) - image_up(img))/2;
-% gradMag = sqrt(Ix.^2 + Iy.^2);
-
-
-%% Create samples 
-%probeValues = reshape(img, [], numImages);
-fprintf('Computing probe values...');
-[xgrid,ygrid] = meshgrid(linspace(probeRegion(1),probeRegion(2),workingResolution)); %1:workingResolution);
-probeValues = zeros(workingResolution^2, numImages);
-X = probePattern.x(ones(workingResolution^2,1),:) + xgrid(:)*ones(1,length(probePattern.x));
-Y = probePattern.y(ones(workingResolution^2,1),:) + ygrid(:)*ones(1,length(probePattern.y));
-
-assert(isequal(size(img(:,:,1)), resamplingResolution*[1 1]))
-% Note working resolution is the resoultion of the code image, without the
-% fiducial, which is what the GetFiducialPixelSize function expects
-Corners = VisionMarkerTrained.GetFiducialCorners(resamplingResolution, false);
-tform = cp2tform([0 0 1 1; 0 1 0 1]', Corners, 'projective');
-[xi,yi] = tformfwd(tform, X, Y);
-for i = 1:numImages
-   probeValues(:,i) = mean(interp2(img(:,:,i), xi, yi, 'linear', 1),2);
-end
-fprintf('Done.\n');
-
-
+end % if loadSavedProbeValues
 
 %% Train the decision tree
 

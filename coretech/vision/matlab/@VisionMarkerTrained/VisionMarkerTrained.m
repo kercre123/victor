@@ -7,7 +7,8 @@ classdef VisionMarkerTrained
         
         TrainingImageDir = { ...
             '~/Box Sync/Cozmo SE/VisionMarkers/lettersWithFiducials/unpadded/rotated', ... '~/Box Sync/Cozmo SE/VisionMarkers/matWithFiducials/unpadded/rotated', ...
-            '~/Box Sync/Cozmo SE/VisionMarkers/symbolsWithFiducials/unpadded/rotated'};
+            '~/Box Sync/Cozmo SE/VisionMarkers/symbolsWithFiducials/unpadded/rotated', ...
+            '~/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/rotated'};
         
         ProbeParameters = struct( ...
             'Radius', 0.02, ...  % As a fraction of a canonical unit square 
@@ -43,6 +44,8 @@ classdef VisionMarkerTrained
         [threshold, bright, dark] = ComputeThreshold(img, tform);
         outputString = GenerateHeaderFiles(varargin);
         
+        [numMulticlassNodes, numVerificationNodes] = GetNumTreeNodes();
+        
     end % Static Methods
     
     methods(Static = true, Access = 'protected')
@@ -52,7 +55,7 @@ classdef VisionMarkerTrained
         tree = LoadProbeTree();
         
         probes = CreateProbes(probeType); 
-                
+        
     end % Protected Static Methods
     
     properties(SetAccess = 'protected')
