@@ -146,13 +146,45 @@ classdef VisionMarkerTrained
                         [verificationResult, verifiedID] = TestTree( ...
                             VisionMarkerTrained.ProbeTree.verifiers(this.codeID), ...
                             img, tform, threshold, oneProbe);
+                        
+                        this.isValid = verifiedID ~= 1;
                     else 
-                        [verificationResult, verifiedID] = TestTree( ...
-                            VisionMarkerTrained.ProbeTree.verifiers(this.codeID), ...
-                            img, tform, threshold, VisionMarkerTrained.ProbePattern);
+                        if all(isfield(VisionMarkerTrained.ProbeTree, ...
+                                {'verifyTreeRed', 'verifyTreeBlack'}))
+                            
+                            verificationResult = this.codeName;
+                            this.isValid = false;
+                            
+                            [redResult, redLabelID] = TestTree( ...
+                                VisionMarkerTrained.ProbeTree.verifyTreeRed, ...
+                                img, tform, threshold, VisionMarkerTrained.ProbePattern);
+                            
+                            if any(this.codeID == redLabelID)
+                                assert(any(strcmp(this.codeName, redResult)));
+                                
+                                [blackResult, blackLabelID] = TestTree(...
+                                    VisionMarkerTrained.ProbeTree.verifyTreeBlack, ...
+                                    img, tform, threshold, VisionMarkerTrained.ProbePattern);
+                            
+                                if any(this.codeID == blackLabelID)
+                                    assert(any(strcmp(this.codeName, blackResult)));
+                                    
+                                    this.isValid = true;
+                                end
+                            end
+                            
+                        else
+                            assert(isfield(VisionMarkerTrained.ProbeTree, 'verifiers'));
+                            
+                            [verificationResult, verifiedID] = TestTree( ...
+                                VisionMarkerTrained.ProbeTree.verifiers(this.codeID), ...
+                                img, tform, threshold, VisionMarkerTrained.ProbePattern);
+                            
+                            this.isValid = verifiedID ~= 1;
+                        end
                     end
                     
-                    this.isValid = verifiedID ~= 1;
+                    
                     if this.isValid
                         assert(strcmp(verificationResult, this.codeName));
                         

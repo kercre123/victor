@@ -8,7 +8,8 @@ markerImageDir = VisionMarkerTrained.TrainingImageDir;
 workingResolution = VisionMarkerTrained.ProbeParameters.GridSize;
 %maxSamples = 100;
 minInfoGain = 0;
-maxDepth = 50;
+redBlackVerifyDepth = 10;
+%maxDepth = 50;
 addRotations = false;
 numPerturbations = 100;
 perturbSigma = 1;
@@ -21,7 +22,7 @@ probeRegion = VisionMarkerTrained.ProbeRegion;
 %imageCoords = [-VisionMarkerTrained.FiducialPaddingFraction ...
 %    1+VisionMarkerTrained.FiducialPaddingFraction];
 
-DEBUG_DISPLAY = true;
+DEBUG_DISPLAY = false;
 DrawTrees = false;
 
 parseVarargin(varargin{:});
@@ -203,6 +204,10 @@ catch E
     end
 end
 
+if isempty(probeTree)
+    error('Training failed!');
+end
+
 if DEBUG_DISPLAY && DrawTrees
     namedFigure('Multiclass DecisionTree'), clf
     fprintf('Drawing multi-class tree...');
@@ -210,38 +215,58 @@ if DEBUG_DISPLAY && DrawTrees
     fprintf('Done.\n');
 end
 
-%% Train one-vs-all trees
+%% Train Red/Black Verify trees
 
-assert(length(labelNames) == numLabels);
-
-pBar.set_message('Building one-vs-all verification trees');
-pBar.set_increment(1/numLabels);
+pBar.set_message('Training red/black verification trees');
+pBar.set_increment(0.5);
 pBar.set(0);
 
-verifier = struct('depth', 0, 'infoGain', 0, 'remaining', 1:numImages);
-for i_label = 1:numLabels
-    
-    fprintf('\n\nTraining one-vs-all tree for "%s"\n', labelNames{i_label});
-    
-    currentLabels = double(labels == i_label) + 1;
-    currentLabelNames = {'UNKNOWN', labelNames{i_label}};
-    
-    probeTree.verifiers(i_label) = buildTree(verifier, ...
-        false(workingResolution), currentLabels, currentLabelNames);
-    
-    if DEBUG_DISPLAY && DrawTrees
-        namedFigure(sprintf('%s DecisionTree', labelNames{i_label})), clf
-        fprintf('Drawing %s tree...', labelNames{i_label});
-        DrawTree(probeTree.verifiers(i_label), 0);
-        fprintf('Done.\n');
-    end
+redMask = false(workingResolution);
+redMask(1:2:end,1:2:end) = true;
+redMask(2:2:end,2:2:end) = true;
 
-    pBar.increment();
-end
+probeTree.verifyTreeRed = struct('depth', 0, 'infoGain', 0, 'remaining', 1:numImages);
+probeTree.verifyTreeRed.labels = labelNames;
+probeTree.verifyTreeRed = buildTree(probeTree.verifyTreeRed, redMask, labels, labelNames, redBlackVerifyDepth);
+pBar.increment();
 
-if isempty(probeTree)
-    error('Training failed!');
-end
+blackMask = ~redMask;
+probeTree.verifyTreeBlack = struct('depth', 0, 'infoGain', 0, 'remaining', 1:numImages);
+probeTree.verifyTreeBlack.labels = labelNames;
+probeTree.verifyTreeBlack = buildTree(probeTree.verifyTreeBlack, blackMask, labels, labelNames, redBlackVerifyDepth);
+pBar.increment();
+
+
+%% Train one-vs-all trees
+
+% assert(length(labelNames) == numLabels);
+% 
+% pBar.set_message('Building one-vs-all verification trees');
+% pBar.set_increment(1/numLabels);
+% pBar.set(0);
+% 
+% verifier = struct('depth', 0, 'infoGain', 0, 'remaining', 1:numImages);
+% for i_label = 1:numLabels
+%     
+%     fprintf('\n\nTraining one-vs-all tree for "%s"\n', labelNames{i_label});
+%     
+%     currentLabels = double(labels == i_label) + 1;
+%     currentLabelNames = {'UNKNOWN', labelNames{i_label}};
+%     
+%     probeTree.verifiers(i_label) = buildTree(verifier, ...
+%         false(workingResolution), currentLabels, currentLabelNames);
+%     
+%     if DEBUG_DISPLAY && DrawTrees
+%         namedFigure(sprintf('%s DecisionTree', labelNames{i_label})), clf
+%         fprintf('Drawing %s tree...', labelNames{i_label});
+%         DrawTree(probeTree.verifiers(i_label), 0);
+%         fprintf('Done.\n');
+%     end
+% 
+%     pBar.increment();
+% end
+
+
 
 
 %% Test on Training Data
@@ -363,12 +388,22 @@ for iImg = 1:length(fnames)
     tform = cp2tform([0 0 1 1; 0 1 0 1]', Corners, 'projective');
     
     [result, labelID] = TestTree(probeTree, testImg, tform, 0.5, probePattern);
+   
+    [redResult, redLabelID] = TestTree(probeTree.verifyTreeRed, testImg, tform, 0.5, probePattern);
+    [blackResult, blackLabelID] = TestTree(probeTree.verifyTreeBlack, testImg, tform, 0.5, probePattern);
     
-    [verificationResult, verifiedID] = TestTree(probeTree.verifiers(labelID), testImg, tform, 0.5, probePattern);
-    verified(iImg) = verifiedID == 2;
-    if verified(iImg)
-        assert(strcmp(verificationResult, result));
+    if any(labelID == redLabelID) && any(labelID == blackLabelID)
+        assert(any(strcmp(result, redResult)) && ...
+            any(strcmp(result, blackResult)));
+        verified(iImg) = true;
     end
+    
+    
+%     [verificationResult, verifiedID] = TestTree(probeTree.verifiers(labelID), testImg, tform, 0.5, probePattern);
+%     verified(iImg) = verifiedID == 2;
+%     if verified(iImg)
+%         assert(strcmp(verificationResult, result));
+%     end
     
     if ischar(result)
         correct(iImg) = strcmp(result, labelNames{labelID});
@@ -429,7 +464,11 @@ end
 
 %% buildTree() Nested Function
 
-    function node = buildTree(node, used, labels, labelNames)
+    function node = buildTree(node, used, labels, labelNames, maxDepth)
+        
+        if nargin < 5
+            maxDepth = inf;
+        end
         
         if all(used(:))
             error('All probes used.');
@@ -442,7 +481,12 @@ end
             node.labelID = maxIndex;
             node.labelName = labelNames{node.labelID};
             fprintf('LeafNode for label = %d, or "%s"\n', node.labelID, node.labelName);
-           
+            
+        elseif node.depth == maxDepth
+            node.labelID = unique(labels(node.remaining));
+            node.labelName = labelNames(node.labelID);
+            fprintf('MaxDepth LeafNode for labels = {%s\b}\n', sprintf('%s,', node.labelName{:}));
+            
         else            
             unusedProbes = find(~used);
             
@@ -498,10 +542,10 @@ end
                 used(node.whichProbe) = true;
                 node = buildTree(node, used, labels, labelNames);
                 
-            elseif node.depth+1 > maxDepth
-                error('BuildTree:MaxDepth', ...
-                        'Reached max depth with [%s\b] remaining.', ...
-                        sprintf('%s ', labelNames{labels(leftRemaining)}));
+%             elseif node.depth+1 > maxDepth
+%                 error('BuildTree:MaxDepth', ...
+%                         'Reached max depth with [%s\b] remaining.', ...
+%                         sprintf('%s ', labelNames{labels(leftRemaining)}));
                     
             else
                 % Recurse left
@@ -510,7 +554,7 @@ end
                 
                 leftChild.remaining = leftRemaining;
                 leftChild.depth = node.depth+1;
-                node.leftChild = buildTree(leftChild, usedLeft, labels, labelNames);
+                node.leftChild = buildTree(leftChild, usedLeft, labels, labelNames, maxDepth);
                 
                 % Recurse right
                 rightRemaining = node.remaining(~goLeft);
@@ -521,7 +565,7 @@ end
                 
                 rightChild.remaining = rightRemaining;
                 rightChild.depth = node.depth+1;
-                node.rightChild = buildTree(rightChild, usedRight, labels, labelNames);
+                node.rightChild = buildTree(rightChild, usedRight, labels, labelNames, maxDepth);
                 
             end
         end
