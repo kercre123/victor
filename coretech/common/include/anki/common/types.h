@@ -23,6 +23,7 @@
 #define ANKICORETECH_COMMON_TYPES_H_
 
 #include <stdint.h>
+#include "constantsAndMacros.h"
 
 typedef uint8_t  u8;
 typedef int8_t   s8;
@@ -40,6 +41,8 @@ typedef u16 BlockID_t;
 typedef u16 ObjectID_t;
 typedef u16 ObjectType_t;
 typedef u32 CameraID_t;
+
+const CameraID_t ANY_CAMERA = u32_MAX;
 
 // If we're using c++, Result is in a namespace. In c, it's not.
 #ifdef __cplusplus

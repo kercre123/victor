@@ -150,9 +150,10 @@ namespace Anki {
       
       // Constructors:
       Camera();
-      Camera(const CameraCalibration &calib, const Pose3d &pose);
+      Camera(const CameraID_t cam_id, const CameraCalibration &calib, const Pose3d &pose);
       
       // Accessors:
+      const CameraID_t          get_id()          const;
       const Pose3d&             get_pose()        const;
       const CameraCalibration&  get_calibration() const;
       
@@ -206,6 +207,7 @@ namespace Anki {
       
       
     protected:
+      CameraID_t         camID;
       CameraCalibration  calibration;
       bool               isCalibrationSet;
       Pose3d             pose;
@@ -221,6 +223,9 @@ namespace Anki {
     }; // class Camera
     
     // Inline accessors:
+    inline const CameraID_t Camera::get_id(void) const
+    { return this->camID; }
+    
     inline const Pose3d& Camera::get_pose(void) const
     { return this->pose; }
     

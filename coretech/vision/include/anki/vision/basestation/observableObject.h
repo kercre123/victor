@@ -60,6 +60,9 @@ namespace Anki {
       void SetID(const ObjectID_t newID);
       void SetPose(const Pose3d& newPose);
       
+      void SetLastObservedTime(TimeStamp_t t) {lastObservedTime_ = t;}
+      const TimeStamp_t GetLastObservedTime() const {return lastObservedTime_;}
+      
       // Return true if this object is the same as the other. Sub-classes can
       // overload this function to provide for rotational ambiguity when
       // comparing, e.g. for cubes or other blocks.
@@ -85,6 +88,7 @@ namespace Anki {
       
       ObjectType_t type_;
       ObjectID_t   ID_;
+      TimeStamp_t  lastObservedTime_;
       
       // Using a list here so that adding new markers does not affect references
       // to pre-existing markers
@@ -196,7 +200,7 @@ namespace Anki {
       // seen by that camera will be considered.
       void CreateObjectsFromMarkers(std::list<ObservedMarker>& markers,
                                     std::vector<ObservableObject*>& objectsSeen,
-                                    const Camera* seenOnlyBy = NULL) const;
+                                    const CameraID_t seenOnlyBy = ANY_CAMERA) const;
       
       // Only one object in a library can have each type. Return a pointer to
       // that object, or NULL if none exists.

@@ -11,7 +11,7 @@ namespace Anki {
     const std::vector<const KnownMarker*> ObservableObject::sEmptyMarkerVector(0);
     
     ObservableObject::ObservableObject(ObjectType_t objType)
-    : type_(objType), ID_(0)
+    : type_(objType), ID_(0), lastObservedTime_(0)
     {
       //ID_ = ObservableObject::ObjectCounter++;
     }
@@ -136,7 +136,7 @@ namespace Anki {
     // Outputs: the objects seen and the unused markers
     void ObservableObjectLibrary::CreateObjectsFromMarkers(std::list<ObservedMarker>& markers,
                                                            std::vector<ObservableObject*>& objectsSeen,
-                                                           const Camera* seenOnlyBy) const
+                                                           const CameraID_t seenOnlyBy) const
     {
       // Group the markers by object type
       std::map<ObjectType_t, std::vector<const ObservedMarker*>> markersWithObjectType;
@@ -148,7 +148,7 @@ namespace Anki {
         
         // If seenOnlyBy was specified, make sure this marker was seen by that
         // camera
-        if(seenOnlyBy == NULL || &marker.GetSeenBy() == seenOnlyBy)
+        if(seenOnlyBy == ANY_CAMERA || marker.GetSeenBy().get_id() == seenOnlyBy)
         {
           // Find all objects which use this marker...
           std::vector<const ObservableObject*> const& objectsWithMarker = GetObjectsWithMarker(marker);
@@ -190,8 +190,26 @@ namespace Anki {
         
         const Vision::ObservableObject* libObject = GetObjectWithType(objTypeMarkersPair.first);
         
+        // HACK: Get timestamp of the observed markers so that I can set the lastSeenTime of the observable object.
+        //       If more than one timestamp exists, just use the latest one.
+        //       Need to fix this by simultaneously processing only those markers with the same timestamp.
+        //       Will therefore need to loop through this logic as many times as there are uniquely observed timestamps.
+        TimeStamp_t observedTime = 0;
         for(auto obsMarker : objTypeMarkersPair.second)
         {
+          if (observedTime < obsMarker->GetTimeStamp()) {
+            observedTime = obsMarker->GetTimeStamp();
+          }
+        }
+          
+        
+        for(auto obsMarker : objTypeMarkersPair.second)
+        {
+          if (obsMarker->GetTimeStamp() != observedTime) {
+            printf("HACK: Tossing observedMarker %d\n", obsMarker->GetCode());
+            continue;
+          }
+          
           // For each observed marker, we add to the list of possible poses
           // (each paired with the observed/known marker match from which the
           // pose was computed).
@@ -238,7 +256,7 @@ namespace Anki {
           // Add to list of objects seen -- using pose in World frame
           objectsSeen.push_back(libObject->Clone());
           objectsSeen.back()->SetPose(poseCluster.GetPose().getWithRespectTo(Pose3d::World));
-          
+          objectsSeen.back()->SetLastObservedTime(observedTime);
         } // FOR each pose cluster
         
         /*

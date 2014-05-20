@@ -33,9 +33,10 @@ namespace Anki {
       
     } // Constructor: Camera()
     
-    Camera::Camera(const CameraCalibration &calib_in,
+    Camera::Camera(const CameraID_t cam_id,
+                   const CameraCalibration &calib_in,
                    const Pose3d& pose_in)
-    : calibration(calib_in), isCalibrationSet(true), pose(pose_in)
+    : camID(cam_id), calibration(calib_in), isCalibrationSet(true), pose(pose_in)
     {
       
     } // Constructor: Camera(calibration, pose)
