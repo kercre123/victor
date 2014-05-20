@@ -51,12 +51,21 @@ if ~saveTree && nargout==0
     end
 end
 
-pBar = ProgressBar('VisionMarkerTrained ProbeTree', 'CancelButton', true);
-pBar.showTimingInfo = true;
 
 if loadSavedProbeValues
+    % This load will kill the current pBar, so save that
     load trainingState.mat
+
+    pBar = ProgressBar('VisionMarkerTrained ProbeTree', 'CancelButton', true);
+    pBar.showTimingInfo = true;
+    pBarCleanup = onCleanup(@()delete(pBar));
+
 else
+    
+    pBar = ProgressBar('VisionMarkerTrained ProbeTree', 'CancelButton', true);
+    pBar.showTimingInfo = true;
+    pBarCleanup = onCleanup(@()delete(pBar));
+
     
     %% Load marker images
     numDirs = length(markerImageDir);
@@ -143,8 +152,9 @@ else
     probeValues = [probeValues{:}];
     labels = [labels{:}];
     numLabels = numImages;
+    numImages = length(labels);
         
-    if DEBUG_DISPLAY
+    if false && DEBUG_DISPLAY
         namedFigure('Average Perturbed Images'); clf
         for j = 1:numImages
             subplot(2,ceil(numImages/2),j), hold off
@@ -235,90 +245,92 @@ end
 
 
 %% Test on Training Data
-
-fprintf('Testing on %d training images...', numImages);
-pBar.set_message(sprintf('Testing on %d training images...', numImages));
-pBar.set_increment(1/numImages);
-pBar.set(0);
-
-if DEBUG_DISPLAY
-    namedFigure('Sampled Test Results'); clf
-    colormap(gray)
-    maxDisplay = 48;
-else
-    maxDisplay = 0; %#ok<UNRCH>
-end
-correct = false(1,numImages);
-verified = false(1,numImages);
-randIndex = row(randperm(numImages));
-for i_rand = 1:numImages
-    iImg = randIndex(i_rand);
-   
-    testImg = img(:,:,iImg);
-    
-    Corners = VisionMarkerTrained.GetFiducialCorners(size(testImg,1), false);
-    %Corners = VisionMarkerTrained.GetMarkerCorners(size(testImg,1), false);
-    if i_rand <= maxDisplay
-        subplot(6, maxDisplay/6, i_rand), hold off
-        imagesc(testImg), axis image, hold on
-        plot(Corners(:,1), Corners(:,2), 'y+');
-        doDisplay = true;
-    else 
-        doDisplay = false;
-    end
-    
-    [result, labelID] = TestTree(probeTree, testImg, tform, 0.5, probePattern, doDisplay);
-    
-    assert(labelID>0 && labelID<=length(probeTree.verifiers));
-    
-    [verificationResult, verifiedID] = TestTree(probeTree.verifiers(labelID), testImg, tform, 0.5, probePattern);
-    verified(iImg) = verifiedID == 2;
-    if verified(iImg)
-        assert(strcmp(verificationResult, result));
-    end
-    
-    if ischar(result)
-        correct(iImg) = strcmp(result, labelNames{labels(iImg)});
-        if ~verified(iImg)
-            color = 'b';
-        else
-            if ~correct(iImg)
-                color = 'r';
-            else
-                color = 'g';
-            end
-        end
-        
-        if i_rand <= maxDisplay
-            set(gca, 'XColor', color, 'YColor', color);
-            title(result)
-        end
-                
-    else
-        warning('Reached node with multiple remaining labels: ')
-        for j = 1:length(result)
-            fprintf('%s, ', labelNames{labels(result(j))});
-        end
-        fprintf('\b\b\n');
-    end
-    
-    pBar.increment();
-    if pBar.cancelled
-       fprintf('User cancelled testing on training images.\n');
-       break; 
-    end
-end
-fprintf(' Got %d of %d training images right (%.1f%%)\n', ...
-    sum(correct), length(correct), sum(correct)/length(correct)*100);
-if sum(correct) ~= length(correct)
-    warning('We should have ZERO training error!');
-end
-
-fprintf(' %d of %d training images verified.\n', ...
-    sum(verified), length(verified));
-if sum(verified) ~= length(verified)
-    warning('All training images should verify!');
-end
+% 
+% fprintf('Testing on %d training images...', numImages);
+% pBar.set_message(sprintf('Testing on %d training images...', numImages));
+% pBar.set_increment(1/numImages);
+% pBar.set(0);
+% 
+% if DEBUG_DISPLAY
+%     namedFigure('Sampled Test Results'); clf
+%     colormap(gray)
+%     maxDisplay = 48;
+% else
+%     maxDisplay = 0; %#ok<UNRCH>
+% end
+% correct = false(1,numImages);
+% verified = false(1,numImages);
+% randIndex = row(randperm(numImages));
+% for i_rand = 1:numImages
+%     iImg = randIndex(i_rand);
+%    
+%     testImg = reshape(probeValues(:,iImg), workingResolution*[1 1]);
+%     
+%     Corners = VisionMarkerTrained.GetFiducialCorners(size(testImg,1), false);
+%     %Corners = VisionMarkerTrained.GetMarkerCorners(size(testImg,1), false);
+%     if i_rand <= maxDisplay
+%         subplot(6, maxDisplay/6, i_rand), hold off
+%         imagesc(testImg), axis image, hold on
+%         plot(Corners(:,1), Corners(:,2), 'y+');
+%         doDisplay = true;
+%     else 
+%         doDisplay = false;
+%     end
+%     
+%     tform = cp2tform([0 0 1 1; 0 1 0 1]', Corners, 'projective');
+%     
+%     [result, labelID] = TestTree(probeTree, testImg, tform, 0.5, probePattern, doDisplay);
+%     
+%     assert(labelID>0 && labelID<=length(probeTree.verifiers));
+%     
+%     [verificationResult, verifiedID] = TestTree(probeTree.verifiers(labelID), testImg, tform, 0.5, probePattern);
+%     verified(iImg) = verifiedID == 2;
+%     if verified(iImg)
+%         assert(strcmp(verificationResult, result));
+%     end
+%     
+%     if ischar(result)
+%         correct(iImg) = strcmp(result, labelNames{labels(iImg)});
+%         if ~verified(iImg)
+%             color = 'b';
+%         else
+%             if ~correct(iImg)
+%                 color = 'r';
+%             else
+%                 color = 'g';
+%             end
+%         end
+%         
+%         if i_rand <= maxDisplay
+%             set(gca, 'XColor', color, 'YColor', color);
+%             title(result)
+%         end
+%                 
+%     else
+%         warning('Reached node with multiple remaining labels: ')
+%         for j = 1:length(result)
+%             fprintf('%s, ', labelNames{labels(result(j))});
+%         end
+%         fprintf('\b\b\n');
+%     end
+%     
+%     pBar.increment();
+%     if pBar.cancelled
+%        fprintf('User cancelled testing on training images.\n');
+%        break; 
+%     end
+% end
+% fprintf(' Got %d of %d training images right (%.1f%%)\n', ...
+%     sum(correct), length(correct), sum(correct)/length(correct)*100);
+% if sum(correct) ~= length(correct)
+%     warning('We should have ZERO training error!');
+% end
+% 
+% fprintf(' %d of %d training images verified.\n', ...
+%     sum(verified), length(verified));
+% if sum(verified) ~= length(verified)
+%     warning('All training images should verify!');
+% end
 
 %% Test on original images
 
@@ -334,7 +346,11 @@ if DEBUG_DISPLAY
     numDisplayRows = floor(sqrt(length(fnames)));
     numDisplayCols = ceil(length(fnames)/numDisplayRows);
 end
-for iImg = 1:length(fnames)   
+for iImg = 1:length(fnames) 
+    if any(strcmp(fnames{iImg}, {'ALLWHITE', 'ALLBLACK'}))
+        continue;
+    end
+    
     [testImg,~,alpha] = imread(fnames{iImg});
     testImg = mean(im2double(testImg),3);
     testImg(alpha < .5) = 1;
@@ -355,7 +371,7 @@ for iImg = 1:length(fnames)
     end
     
     if ischar(result)
-        correct(iImg) = strcmp(result, labelNames{labels(iImg)});
+        correct(iImg) = strcmp(result, labelNames{labelID});
         
         if DEBUG_DISPLAY % && ~correct(i)
             h_axes = subplot(numDisplayRows,numDisplayCols,iImg);
@@ -420,11 +436,10 @@ end
         end
         
         %if all(labels(node.remaining)==labels(node.remaining(1)))
-        remainingNodes = labels(node.remaining);
-        counts = hist(remainingNodes, length(remainingNodes));
+        counts = hist(labels(node.remaining), 1:length(labelNames));
         [maxCount, maxIndex] = max(counts);
-        if maxCount >= leafNodeFraction*length(counts)
-            node.labelID = labels(remainingNodes(maxIndex));
+        if maxCount >= leafNodeFraction*length(node.remaining)
+            node.labelID = maxIndex;
             node.labelName = labelNames{node.labelID};
             fprintf('LeafNode for label = %d, or "%s"\n', node.labelID, node.labelName);
            
