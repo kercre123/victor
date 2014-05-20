@@ -44,6 +44,7 @@
 
 #include "anki/common/robot/errorHandling.h"
 #include "anki/common/robot/matrix.h"
+#include "anki/common/robot/comparisons.h"
 
 #include "anki/vision/robot/imageProcessing.h"
 
@@ -64,6 +65,9 @@ namespace Anki
 
       AnkiConditionalErrorAndReturnValue(src.IsValid() && dst.IsValid() && scratch.IsValid(),
         RESULT_FAIL_INVALID_OBJECT, "CannyEdgeDetection", "Invalid objects");
+
+      AnkiConditionalErrorAndReturnValue(AreEqualSize(src, dst),
+        RESULT_FAIL_INVALID_SIZE, "CannyEdgeDetection", "src and dst must be the same size");
 
       if ((aperture_size & 1) == 0 || (aperture_size != -1 && (aperture_size < 3 || aperture_size > 7))) {
         AnkiError("CannyEdgeDetection", "invalid aperture_size");
@@ -298,38 +302,44 @@ __ocv_canny_push:
     CvWSQueue;
 
     static CvWSNode*
-      icvAllocWSNodes( CvMemStorage* storage )
+      icvAllocWSNodes( MemoryStack &storage )
     {
       CvWSNode* n = 0;
 
-      int i, count = (storage->block_size - sizeof(CvMemBlock))/sizeof(*n) - 1;
+      int i;
+      //int count = (block_size - sizeof(CvMemBlock))/sizeof(*n) - 1;
+      const int count = 100;
 
-      n = (CvWSNode*)cvMemStorageAlloc( storage, count*sizeof(*n) );
-      for( i = 0; i < count-1; i++ )
+      n = (CvWSNode*) storage.Allocate(count*sizeof(*n) );
+
+      for( i = 0; i < count-1; i++ ) {
         n[i].next = n + i + 1;
+      }
+
       n[count-1].next = 0;
 
       return n;
     }
 
-    CV_IMPL void
-      cvWatershed( const CvArr* srcarr, CvArr* dstarr )
+    Result cvWatershed(const Array<u8> &src, Array<s32> &dst, MemoryStack scratch)
     {
       const int IN_QUEUE = -2;
       const int WSHED = -1;
       const int NQ = 256;
-      cv::Ptr<CvMemStorage> storage;
 
-      CvMat sstub, *src;
-      CvMat dstub, *dst;
-      CvSize size;
+      const s32 imageHeight = src.get_size(0);
+      const s32 imageWidth = src.get_size(1);
+
+      //CvMat sstub;
+      //CvMat dstub;
+      //CvSize size;
       CvWSNode* free_node = 0, *node;
       CvWSQueue q[NQ];
       int active_queue;
       int i, j;
       int db, dg, dr;
-      int* mask;
-      uchar* img;
+      //int* mask;
+      //u8* img;
       int mstep, istep;
       int subs_tab[513];
 
@@ -338,7 +348,7 @@ __ocv_canny_push:
       // MIN(a,b) = a - MAX(a-b,0)
 #define ws_min(a,b) ((a) - subs_tab[(a)-(b)+NQ])
 
-#define ws_push(idx,mofs,iofs)  \
+#define ws_push(idx,mofs,iofs,storage)  \
       {                               \
       if( !free_node )            \
       free_node = icvAllocWSNodes( storage );\
@@ -376,26 +386,23 @@ __ocv_canny_push:
       assert( 0 <= diff && diff <= 255 ); \
       }
 
-      src = cvGetMat( srcarr, &sstub );
-      dst = cvGetMat( dstarr, &dstub );
+      AnkiConditionalErrorAndReturnValue(src.IsValid() && dst.IsValid() && scratch.IsValid(),
+        RESULT_FAIL_INVALID_OBJECT, "CannyEdgeDetection", "Invalid objects");
 
-      if( CV_MAT_TYPE(src->type) != CV_8UC3 )
-        CV_Error( CV_StsUnsupportedFormat, "Only 8-bit, 3-channel input images are supported" );
+      //AnkiConditionalErrorAndReturnValue(AreEqualSize(src, dst),
+      AnkiConditionalErrorAndReturnValue(src.get_size(0) == dst.get_size(0) && src.get_size(1) == 3*dst.get_size(1),
+        RESULT_FAIL_INVALID_SIZE, "CannyEdgeDetection", "src and dst must be the same size");
 
-      if( CV_MAT_TYPE(dst->type) != CV_32SC1 )
-        CV_Error( CV_StsUnsupportedFormat,
-        "Only 32-bit, 1-channel output images are supported" );
+      //size = cvGetMatSize(src);
+      //storage = cvCreateMemStorage();
 
-      if( !CV_ARE_SIZES_EQ( src, dst ))
-        CV_Error( CV_StsUnmatchedSizes, "The input and output images must have the same size" );
+      //img = src.data.ptr;
+      //mask = dst.data.i;
 
-      size = cvGetMatSize(src);
-      storage = cvCreateMemStorage();
-
-      istep = src->step;
-      img = src->data.ptr;
-      mstep = dst->step / sizeof(mask[0]);
-      mask = dst->data.i;
+      //istep = src.step;
+      //mstep = dst.step / sizeof(mask[0]);
+      istep = src.get_stride();
+      mstep = dst.get_stride() / sizeof(s32);
 
       memset( q, 0, NQ*sizeof(q[0]) );
 
@@ -405,23 +412,31 @@ __ocv_canny_push:
         subs_tab[i] = i - 256;
 
       // draw a pixel-wide border of dummy "watershed" (i.e. boundary) pixels
-      for( j = 0; j < size.width; j++ )
-        mask[j] = mask[j + mstep*(size.height-1)] = WSHED;
+      //for( j = 0; j < imageWidth; j++ )
+      //  mask[j] = mask[j + mstep*(imageHeight-1)] = WSHED;
+      dst(0,0,0,-1).Set(WSHED);
+      dst(-1,-1,0,-1).Set(WSHED);
+      dst(0,-1,0,0).Set(WSHED);
+      dst(0,-1,-1,-1).Set(WSHED);
 
       // initial phase: put all the neighbor pixels of each marker to the ordered queue -
       // determine the initial boundaries of the basins
-      for( i = 1; i < size.height-1; i++ )
+      for( i = 1; i < imageHeight-1; i++ )
       {
-        img += istep; mask += mstep;
-        mask[0] = mask[size.width-1] = WSHED;
+        //img += istep;
+        //mask += mstep;
+        const u8 * restrict pSrc = src.Pointer(i, 0);
+        s32 * restrict pDst = dst.Pointer(i, 0);
 
-        for( j = 1; j < size.width-1; j++ )
+        pDst[0] = pDst[imageWidth-1] = WSHED;
+
+        for( j = 1; j < imageWidth-1; j++ )
         {
-          int* m = mask + j;
+          int* m = pDst + j;
           if( m[0] < 0 ) m[0] = 0;
           if( m[0] == 0 && (m[-1] > 0 || m[1] > 0 || m[-mstep] > 0 || m[mstep] > 0) )
           {
-            uchar* ptr = img + j*3;
+            const u8* ptr = pSrc + j*3;
             int idx = 256, t;
             if( m[-1] > 0 )
               c_diff( ptr, ptr - 3, idx );
@@ -440,8 +455,8 @@ __ocv_canny_push:
               c_diff( ptr, ptr + istep, t );
               idx = ws_min( idx, t );
             }
-            assert( 0 <= idx && idx <= 255 );
-            ws_push( idx, i*mstep + j, i*istep + j*3 );
+            AnkiAssert( 0 <= idx && idx <= 255 );
+            ws_push( idx, i*mstep + j, i*istep + j*3, scratch );
             m[0] = IN_QUEUE;
           }
         }
@@ -454,11 +469,14 @@ __ocv_canny_push:
 
       // if there is no markers, exit immediately
       if( i == NQ )
-        return;
+        return RESULT_OK;
 
       active_queue = i;
-      img = src->data.ptr;
-      mask = dst->data.i;
+
+      //img = src.data.ptr;
+      //mask = dst.data.i;
+      const u8 * restrict pSrc = src.Pointer(0, 0);
+      s32 * restrict pDst = dst.Pointer(0, 0);
 
       // recursively fill the basins
       for(;;)
@@ -466,7 +484,7 @@ __ocv_canny_push:
         int mofs, iofs;
         int lab = 0, t;
         int* m;
-        uchar* ptr;
+        const u8* ptr;
 
         if( q[active_queue].first == 0 )
         {
@@ -480,8 +498,8 @@ __ocv_canny_push:
 
         ws_pop( active_queue, mofs, iofs );
 
-        m = mask + mofs;
-        ptr = img + iofs;
+        m = pDst + mofs;
+        ptr = pSrc + iofs;
         t = m[-1];
         if( t > 0 ) lab = t;
         t = m[1];
@@ -510,32 +528,34 @@ __ocv_canny_push:
         if( m[-1] == 0 )
         {
           c_diff( ptr, ptr - 3, t );
-          ws_push( t, mofs - 1, iofs - 3 );
+          ws_push( t, mofs - 1, iofs - 3, scratch );
           active_queue = ws_min( active_queue, t );
           m[-1] = IN_QUEUE;
         }
         if( m[1] == 0 )
         {
           c_diff( ptr, ptr + 3, t );
-          ws_push( t, mofs + 1, iofs + 3 );
+          ws_push( t, mofs + 1, iofs + 3, scratch );
           active_queue = ws_min( active_queue, t );
           m[1] = IN_QUEUE;
         }
         if( m[-mstep] == 0 )
         {
           c_diff( ptr, ptr - istep, t );
-          ws_push( t, mofs - mstep, iofs - istep );
+          ws_push( t, mofs - mstep, iofs - istep, scratch );
           active_queue = ws_min( active_queue, t );
           m[-mstep] = IN_QUEUE;
         }
         if( m[mstep] == 0 )
         {
           c_diff( ptr, ptr + istep, t );
-          ws_push( t, mofs + mstep, iofs + istep );
+          ws_push( t, mofs + mstep, iofs + istep, scratch );
           active_queue = ws_min( active_queue, t );
           m[mstep] = IN_QUEUE;
         }
       }
+
+      return RESULT_OK;
     } // cvWatershed
   } // namespace Embedded
 } // namespace Anki
