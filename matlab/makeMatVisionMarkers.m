@@ -11,16 +11,17 @@
 %         
 %         anki = imread('~/Box Sync/Cozmo SE/VisionMarkers/ankiLogo.png');
  
-% % Letters:
-% markerSize_mm = 30;
-% matMarkerPath = '~/Box Sync/Cozmo SE/VisionMarkers/lettersWithFiducials/unpadded';
-% fnames = {'A', 'B', 'C', 'D';
-%     'E', 'F', 'G', 'J';
-%     'K', 'L', 'M', '4';
-%     'P', 'R', 'T', 'Y'};
-% fnames = cellfun(@(name)fullfile(matMarkerPath, [name '.png']), fnames, 'UniformOutput', false);
-% angles = zeros(4);
-% fidColors = zeros(1,3);
+%% 4x4 Letters:
+gridSize = 4;
+markerSize_mm = 30;
+matMarkerPath = '~/Box Sync/Cozmo SE/VisionMarkers/lettersWithFiducials/unpadded';
+fnames = {'A', 'B', 'C', 'D';
+    'E', 'F', 'G', 'J';
+    'K', 'L', 'M', '4';
+    'P', 'R', 'T', 'Y'};
+fnames = cellfun(@(name)fullfile(matMarkerPath, [name '.png']), fnames, 'UniformOutput', false);
+angles = zeros(4);
+fidColors = zeros(1,3);
 
 %% Anki Logo with 8-bit code
 markerSize_mm = 30;

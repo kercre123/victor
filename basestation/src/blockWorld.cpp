@@ -86,7 +86,8 @@ namespace Anki
       {
         MatPiece* mat = new MatPiece(++matType);
         
-#include "anki/cozmo/basestation/Mat_AnkiLogoPlus8Bits_8x8.def"
+//#include "anki/cozmo/basestation/Mat_AnkiLogoPlus8Bits_8x8.def"
+#include "anki/cozmo/basestation/Mat_Letters_30mm_4x4.def"
         
         matLibrary_.AddObject(mat);
       }
