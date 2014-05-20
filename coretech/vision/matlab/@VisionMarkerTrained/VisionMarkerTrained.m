@@ -46,9 +46,8 @@ classdef VisionMarkerTrained
         corners = GetFiducialCorners(imageSize, isPadded);
         [threshold, bright, dark] = ComputeThreshold(img, tform);
         outputString = GenerateHeaderFiles(varargin);
-        
         [numMulticlassNodes, numVerificationNodes] = GetNumTreeNodes();
-        
+
     end % Static Methods
     
     methods(Static = true, Access = 'protected')
