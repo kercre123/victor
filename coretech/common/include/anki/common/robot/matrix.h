@@ -991,10 +991,6 @@ namespace Anki
         } // for(s32 x=0; x<arrWidth; x++)
       } // InsertionSort_sortDescendingDimension1()
 
-      template<typename Type> Type ThreeWayMedian(const Type a, const Type b, const Type c)
-      {
-      }
-
       template<typename Type> void QuickSort_sortAscendingDimension0(Array<Type> &arr, const s32 trueMinIndex, const s32 trueMaxIndex, const s32 x, const s32 insertionSortSize)
       {
         if((trueMaxIndex - trueMinIndex + 1) <= insertionSortSize) {
@@ -1002,6 +998,7 @@ namespace Anki
         }
 
         // Select the median value of the first, middle, and last elements as the pivot
+        // Also, put the min of the three at the beginning, the median in the middle, and the max at the end
 
         const s32 midIndex = (trueMaxIndex + trueMinIndex) / 2;
 
@@ -1019,7 +1016,8 @@ namespace Anki
         s32 j = trueMaxIndex - 2;
 
         if(i >= j) {
-          // This really means your insertionSortSize value is too low
+          // If there are 3 or less elements, the [min,median,max] ordering is a complete sort
+          // NOTE: This really means your insertionSortSize value is too low
           return;
         }
 
@@ -1050,40 +1048,232 @@ namespace Anki
           }
         }
 
+        // Replace the pivot
         Swap<Type>(*arr.Pointer(i,x), *arr.Pointer(trueMaxIndex - 1, x));
 
-        QuickSort_sortAscendingDimension0(arr, trueMinIndex, i-1, x, insertionSortSize);
+        // Recurse
+        QuickSort_sortAscendingDimension0<Type>(arr, trueMinIndex, i-1, x, insertionSortSize);
 
-        QuickSort_sortAscendingDimension0(arr, i+1, trueMaxIndex, x, insertionSortSize);
-      }
+        QuickSort_sortAscendingDimension0<Type>(arr, i+1, trueMaxIndex, x, insertionSortSize);
+      } // QuickSort_sortAscendingDimension0
 
       template<typename Type> void QuickSort_sortDescendingDimension0(Array<Type> &arr, const s32 trueMinIndex, const s32 trueMaxIndex, const s32 x, const s32 insertionSortSize)
       {
-      }
+        if((trueMaxIndex - trueMinIndex + 1) <= insertionSortSize) {
+          return;
+        }
+
+        // Select the median value of the first, middle, and last elements as the pivot
+        // Also, put the max of the three at the beginning, the median in the middle, and the min at the end
+
+        const s32 midIndex = (trueMaxIndex + trueMinIndex) / 2;
+
+        if(*arr.Pointer(midIndex, x) < *arr.Pointer(trueMaxIndex, x))
+          Swap<Type>(*arr.Pointer(midIndex, x), *arr.Pointer(trueMaxIndex, x));
+
+        if(*arr.Pointer(trueMinIndex, x) < *arr.Pointer(trueMaxIndex, x))
+          Swap<Type>(*arr.Pointer(trueMinIndex, x), *arr.Pointer(trueMaxIndex, x));
+
+        if(*arr.Pointer(trueMinIndex, x) < *arr.Pointer(midIndex, x))
+          Swap<Type>(*arr.Pointer(trueMinIndex, x), *arr.Pointer(midIndex, x));
+
+        // Search from the beginning to before the moved pivot
+        s32 i = trueMinIndex;
+        s32 j = trueMaxIndex - 2;
+
+        if(i >= j) {
+          // If there are 3 or less elements, the [min,median,max] ordering is a complete sort
+          // NOTE: This really means your insertionSortSize value is too low
+          return;
+        }
+
+        // Move the pivot to the end-1 (right before the 3-way max element)
+
+        const Type pivot = *arr.Pointer(midIndex, x);
+
+        Swap<Type>(*arr.Pointer(midIndex, x), *arr.Pointer(trueMaxIndex - 1, x));
+
+        // Main partitioning loop
+        while(true) {
+          // We don't need to check that i get too low, because the value at index trueMinIndex is <= pivot
+          while(*arr.Pointer(i,x) > pivot) {
+            i++;
+          }
+
+          // We don't need to check that j get too high, because the value at index (trueMaxIndex - 1) is == pivot
+          while(*arr.Pointer(j,x) < pivot) {
+            j--;
+          }
+
+          if(i < j) {
+            Swap<Type>(*arr.Pointer(i,x), *arr.Pointer(j,x));
+            i++;
+            j--;
+          } else {
+            break;
+          }
+        }
+
+        // Replace the pivot
+        Swap<Type>(*arr.Pointer(i,x), *arr.Pointer(trueMaxIndex - 1, x));
+
+        // Recurse
+        QuickSort_sortDescendingDimension0<Type>(arr, trueMinIndex, i-1, x, insertionSortSize);
+
+        QuickSort_sortDescendingDimension0<Type>(arr, i+1, trueMaxIndex, x, insertionSortSize);
+      } // QuickSort_sortDescendingDimension0
 
       template<typename Type> void QuickSort_sortAscendingDimension1(Array<Type> &arr, const s32 trueMinIndex, const s32 trueMaxIndex, const s32 y, const s32 insertionSortSize)
       {
-      }
+        if((trueMaxIndex - trueMinIndex + 1) <= insertionSortSize) {
+          return;
+        }
+
+        Type * restrict pArr = arr.Pointer(y,0);
+
+        // Select the median value of the first, middle, and last elements as the pivot
+        // Also, put the min of the three at the beginning, the median in the middle, and the max at the end
+
+        const s32 midIndex = (trueMaxIndex + trueMinIndex) / 2;
+
+        if(pArr[midIndex] < pArr[trueMinIndex])
+          Swap<Type>(pArr[midIndex], pArr[trueMinIndex]);
+
+        if(pArr[trueMaxIndex] < pArr[trueMinIndex])
+          Swap<Type>(pArr[trueMaxIndex], pArr[trueMinIndex]);
+
+        if(pArr[trueMaxIndex] < pArr[midIndex])
+          Swap<Type>(pArr[trueMaxIndex], pArr[midIndex]);
+
+        // Search from the beginning to before the moved pivot
+        s32 i = trueMinIndex;
+        s32 j = trueMaxIndex - 2;
+
+        if(i >= j) {
+          // If there are 3 or less elements, the [min,median,max] ordering is a complete sort
+          // NOTE: This really means your insertionSortSize value is too low
+          return;
+        }
+
+        // Move the pivot to the end-1 (right before the 3-way max element)
+
+        const Type pivot = pArr[midIndex];
+
+        Swap<Type>(pArr[midIndex], pArr[trueMaxIndex - 1]);
+
+        // Main partitioning loop
+        while(true) {
+          // We don't need to check that i get too low, because the value at index trueMinIndex is <= pivot
+          while(pArr[i] < pivot) {
+            i++;
+          }
+
+          // We don't need to check that j get too high, because the value at index (trueMaxIndex - 1) is == pivot
+          while(pArr[j] > pivot) {
+            j--;
+          }
+
+          if(i < j) {
+            Swap<Type>(pArr[i], pArr[j]);
+            i++;
+            j--;
+          } else {
+            break;
+          }
+        }
+
+        // Replace the pivot
+        Swap<Type>(pArr[i], pArr[trueMaxIndex - 1]);
+
+        // Recurse
+        QuickSort_sortAscendingDimension1<Type>(arr, trueMinIndex, i-1, y, insertionSortSize);
+
+        QuickSort_sortAscendingDimension1<Type>(arr, i+1, trueMaxIndex, y, insertionSortSize);
+      } // QuickSort_sortAscendingDimension1
 
       template<typename Type> void QuickSort_sortDescendingDimension1(Array<Type> &arr, const s32 trueMinIndex, const s32 trueMaxIndex, const s32 y, const s32 insertionSortSize)
       {
-      }
+        if((trueMaxIndex - trueMinIndex + 1) <= insertionSortSize) {
+          return;
+        }
+
+        Type * restrict pArr = arr.Pointer(y,0);
+
+        // Select the median value of the first, middle, and last elements as the pivot
+        // Also, put the max of the three at the beginning, the median in the middle, and the min at the end
+
+        const s32 midIndex = (trueMaxIndex + trueMinIndex) / 2;
+
+        if(pArr[midIndex] < pArr[trueMaxIndex])
+          Swap<Type>(pArr[midIndex], pArr[trueMaxIndex]);
+
+        if(pArr[trueMinIndex] < pArr[trueMaxIndex])
+          Swap<Type>(pArr[trueMinIndex], pArr[trueMaxIndex]);
+
+        if(pArr[trueMinIndex] < pArr[midIndex])
+          Swap<Type>(pArr[trueMinIndex], pArr[midIndex]);
+
+        // Search from the beginning to before the moved pivot
+        s32 i = trueMinIndex;
+        s32 j = trueMaxIndex - 2;
+
+        if(i >= j) {
+          // If there are 3 or less elements, the [min,median,max] ordering is a complete sort
+          // NOTE: This really means your insertionSortSize value is too low
+          return;
+        }
+
+        // Move the pivot to the end-1 (right before the 3-way max element)
+
+        const Type pivot = pArr[midIndex];
+
+        Swap<Type>(pArr[midIndex], pArr[trueMaxIndex - 1]);
+
+        // Main partitioning loop
+        while(true) {
+          // We don't need to check that i get too low, because the value at index trueMinIndex is <= pivot
+          while(pArr[i] > pivot) {
+            i++;
+          }
+
+          // We don't need to check that j get too high, because the value at index (trueMaxIndex - 1) is == pivot
+          while(pArr[j] < pivot) {
+            j--;
+          }
+
+          if(i < j) {
+            Swap<Type>(pArr[i], pArr[j]);
+            i++;
+            j--;
+          } else {
+            break;
+          }
+        }
+
+        // Replace the pivot
+        Swap<Type>(pArr[i], pArr[trueMaxIndex - 1]);
+
+        // Recurse
+        QuickSort_sortDescendingDimension1<Type>(arr, trueMinIndex, i-1, y, insertionSortSize);
+
+        QuickSort_sortDescendingDimension1<Type>(arr, i+1, trueMaxIndex, y, insertionSortSize);
+      } // QuickSort_sortDescendingDimension1
 
       template<typename Type> void QuickSort_sortAscendingDimension0(Array<Type> &arr, Array<s32> &indexes, const s32 trueMinIndex, const s32 trueMaxIndex, const s32 x, const s32 insertionSortSize)
       {
-      }
+      } // QuickSort_sortAscendingDimension0
 
       template<typename Type> void QuickSort_sortDescendingDimension0(Array<Type> &arr, Array<s32> &indexes, const s32 trueMinIndex, const s32 trueMaxIndex, const s32 x, const s32 insertionSortSize)
       {
-      }
+      } // QuickSort_sortDescendingDimension0
 
       template<typename Type> void QuickSort_sortAscendingDimension1(Array<Type> &arr, Array<s32> &indexes, const s32 trueMinIndex, const s32 trueMaxIndex, const s32 y, const s32 insertionSortSize)
       {
-      }
+      } // QuickSort_sortAscendingDimension1
 
       template<typename Type> void QuickSort_sortDescendingDimension1(Array<Type> &arr, Array<s32> &indexes, const s32 trueMinIndex, const s32 trueMaxIndex, const s32 y, const s32 insertionSortSize)
       {
-      }
+      } // QuickSort_sortDescendingDimension1
 
       template<typename Type> Result InsertionSort(Array<Type> &arr, const s32 sortWhichDimension, const bool sortAscending, const s32 minIndex, const s32 maxIndex)
       {
