@@ -822,9 +822,14 @@ GTEST_TEST(CoreTech_Common, ExplicitPrintf)
 
 GTEST_TEST(CoreTech_Common, MatrixSortWithIndexes)
 {
-  ASSERT_TRUE(offchipBuffer != NULL);
-  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  ASSERT_TRUE(scratchCcm.IsValid());
+
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(scratchOnchip.IsValid());
+
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(scratchOffchip.IsValid());
 
   const s32 arr_data[15] = {
     81, 10, 16,
@@ -833,11 +838,11 @@ GTEST_TEST(CoreTech_Common, MatrixSortWithIndexes)
     91, 96, 49,
     63, 96, 80};
 
-  Array<s32> arr(5,3,ms);
-  Array<s32> arrIndexes(5,3,ms);
+  Array<s32> arr(5,3,scratchOnchip);
+  Array<s32> arrIndexes(5,3,scratchOnchip);
 
-  Array<s32> sortedArr_groundTruth(5,3,ms);
-  Array<s32> sortedArrIndexes_groundTruth(5,3,ms);
+  Array<s32> sortedArr_groundTruth(5,3,scratchOnchip);
+  Array<s32> sortedArrIndexes_groundTruth(5,3,scratchOnchip);
 
   ASSERT_TRUE(arr.IsValid());
   ASSERT_TRUE(sortedArr_groundTruth.IsValid());
@@ -981,14 +986,53 @@ GTEST_TEST(CoreTech_Common, MatrixSortWithIndexes)
     ASSERT_TRUE(AreElementwiseEqual(arrIndexes, sortedArrIndexes_groundTruth));
   }
 
+  // Benchmark tests
+  const s32 bigArrayHeight = 20;
+  const s32 bigArrayWidth = 1000;
+  Array<s32> bigArray(bigArrayHeight,bigArrayWidth , scratchOnchip);
+  Array<s32> bigArrayIndexes(bigArrayHeight,bigArrayWidth , scratchOnchip);
+
+  for(s32 insertionSortSize=1; insertionSortSize<1000; insertionSortSize+=3) {
+    for(s32 y=0; y<bigArrayHeight; y++) {
+      s32 * restrict pBigArray = bigArray.Pointer(y,0);
+      for(s32 x=0; x<bigArrayWidth; x++) {
+        pBigArray[x] = static_cast<u8>(x + 5*y);
+      }
+    }
+
+    const u32 t0 = GetTimeU32();
+    Matrix::QuickSort(bigArray, bigArrayIndexes, 1, true, 0, 0xFFFF, insertionSortSize);
+    const u32 t1 = GetTimeU32();
+
+    CoreTechPrint("insertionSortSize %d took %ums\n", insertionSortSize, t1-t0);
+
+    for(s32 y=0; y<bigArrayHeight; y++) {
+      s32 * restrict pBigArray = bigArray.Pointer(y,0);
+      for(s32 x=1; x<bigArrayWidth; x++) {
+        ASSERT_TRUE(pBigArray[x] >= pBigArray[x-1]);
+      }
+    }
+
+    if(insertionSortSize > 100) {
+      insertionSortSize += 99;
+    } else if(insertionSortSize > 30) {
+      insertionSortSize += 5;
+    }
+  }
+
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Common, MatrixSortWithIndexes)
 
 GTEST_TEST(CoreTech_Common, MatrixSort)
 {
-  ASSERT_TRUE(offchipBuffer != NULL);
-  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  ASSERT_TRUE(scratchCcm.IsValid());
+
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(scratchOnchip.IsValid());
+
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(scratchOffchip.IsValid());
 
   const s32 arr_data[200] = {
     50, 40, 30, 50, 93, 40, 45, 57, 51, 99,
@@ -1012,8 +1056,8 @@ GTEST_TEST(CoreTech_Common, MatrixSort)
     64, 88, 27, 59, 65, 15, 83, 39, 96, 89,
     23, 5, 74, 88, 7, 89, 60, 39, 57, 59};
 
-  Array<s32> arr(20,10,ms);
-  Array<s32> sortedArr_groundTruth(20,10,ms);
+  Array<s32> arr(20,10,scratchOnchip);
+  Array<s32> sortedArr_groundTruth(20,10,scratchOnchip);
 
   ASSERT_TRUE(arr.IsValid());
   ASSERT_TRUE(sortedArr_groundTruth.IsValid());
