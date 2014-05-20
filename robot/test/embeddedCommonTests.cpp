@@ -942,11 +942,6 @@ GTEST_TEST(CoreTech_Common, MatrixSort)
 
   // sortWhichDimension==0 sortAscending==false
   {
-    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
-    ASSERT_TRUE(Matrix::InsertionSort(arr, 0, false) == RESULT_OK);
-
-    //arr.Print("sortWhichDimension==0 sortAscending==false");
-
     const s32 sortedArr_groundTruthData[15] = {
       91, 96, 97,
       91, 96, 96,
@@ -954,18 +949,15 @@ GTEST_TEST(CoreTech_Common, MatrixSort)
       63, 28, 49,
       13, 10, 16};
 
+    // Insertion sort
+    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
+    ASSERT_TRUE(Matrix::InsertionSort(arr, 0, false) == RESULT_OK);
     ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData, 15) == 15);
-
     ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
   }
 
   // sortWhichDimension==0 sortAscending==false
   {
-    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
-    ASSERT_TRUE(Matrix::InsertionSort(arr, 0, false, 0, 3) == RESULT_OK);
-
-    //arr.Print("sortWhichDimension==0 sortAscending==false");
-
     const s32 sortedArr_groundTruthData[15] = {
       91, 96, 97,
       91, 55, 96,
@@ -973,18 +965,15 @@ GTEST_TEST(CoreTech_Common, MatrixSort)
       13, 10, 16,
       63, 96, 80};
 
+    // Insertion sort
+    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
+    ASSERT_TRUE(Matrix::InsertionSort(arr, 0, false, 0, 3) == RESULT_OK);
     ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData, 15) == 15);
-
     ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
   }
 
   // sortWhichDimension==0 sortAscending==true
   {
-    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
-    ASSERT_TRUE(Matrix::InsertionSort(arr, 0, true) == RESULT_OK);
-
-    //arr.Print("sortWhichDimension==0 sortAscending==true");
-
     const s32 sortedArr_groundTruthData[15] = {
       13, 10, 16,
       63, 28, 49,
@@ -992,18 +981,15 @@ GTEST_TEST(CoreTech_Common, MatrixSort)
       91, 96, 96,
       91, 96, 97};
 
+    // Insertion sort
+    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
+    ASSERT_TRUE(Matrix::InsertionSort(arr, 0, true) == RESULT_OK);
     ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData, 15) == 15);
-
     ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
   }
 
   // sortWhichDimension==0 sortAscending==true
   {
-    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
-    ASSERT_TRUE(Matrix::InsertionSort(arr, 0, true, 1, 4) == RESULT_OK);
-
-    //arr.Print("sortWhichDimension==0 sortAscending==true");
-
     const s32 sortedArr_groundTruthData[15] = {
       81, 10, 16,
       13, 28, 49,
@@ -1011,18 +997,20 @@ GTEST_TEST(CoreTech_Common, MatrixSort)
       91, 96, 96,
       91, 96, 97};
 
+    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
+    ASSERT_TRUE(Matrix::InsertionSort(arr, 0, true, 1, 4) == RESULT_OK);
     ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData, 15) == 15);
+    ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
 
+    // Quicksort
+    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
+    ASSERT_TRUE(Matrix::QuickSort(arr, 0, true, 1, 4, 1) == RESULT_OK);
+    ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData, 15) == 15);
     ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
   }
 
   // sortWhichDimension==1 sortAscending==false
   {
-    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
-    ASSERT_TRUE(Matrix::InsertionSort(arr, 1, false) == RESULT_OK);
-
-    //arr.Print("sortWhichDimension==1 sortAscending==false");
-
     const s32 sortedArr_groundTruthData[15] = {
       81, 16, 10,
       97, 91, 28,
@@ -1030,18 +1018,15 @@ GTEST_TEST(CoreTech_Common, MatrixSort)
       96, 91, 49,
       96, 80, 63};
 
+    // Insertion sort
+    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
+    ASSERT_TRUE(Matrix::InsertionSort(arr, 1, false) == RESULT_OK);
     ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData, 15) == 15);
-
     ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
   }
 
   // sortWhichDimension==1 sortAscending==false
   {
-    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
-    ASSERT_TRUE(Matrix::InsertionSort(arr, 1, false, 0, 1) == RESULT_OK);
-
-    //arr.Print("sortWhichDimension==1 sortAscending==false");
-
     const s32 sortedArr_groundTruthData[15] = {
       81, 10, 16,
       91, 28, 97,
@@ -1049,18 +1034,15 @@ GTEST_TEST(CoreTech_Common, MatrixSort)
       96, 91, 49,
       96, 63, 80};
 
+    // Insertion sort
+    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
+    ASSERT_TRUE(Matrix::InsertionSort(arr, 1, false, 0, 1) == RESULT_OK);
     ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData, 15) == 15);
-
     ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
   }
 
   // sortWhichDimension==1 sortAscending==true
   {
-    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
-    ASSERT_TRUE(Matrix::InsertionSort(arr, 1, true) == RESULT_OK);
-
-    //arr.Print("sortWhichDimension==1 sortAscending==true");
-
     const s32 sortedArr_groundTruthData[15] = {
       10, 16, 81,
       28, 91, 97,
@@ -1068,18 +1050,15 @@ GTEST_TEST(CoreTech_Common, MatrixSort)
       49, 91, 96,
       63, 80, 96};
 
+    // Insertion sort
+    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
+    ASSERT_TRUE(Matrix::InsertionSort(arr, 1, true) == RESULT_OK);
     ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData, 15) == 15);
-
     ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
   }
 
   // sortWhichDimension==1 sortAscending==true
   {
-    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
-    ASSERT_TRUE(Matrix::InsertionSort(arr, 1, true, 1, 2) == RESULT_OK);
-
-    //arr.Print("sortWhichDimension==1 sortAscending==true");
-
     const s32 sortedArr_groundTruthData[15] = {
       81, 10, 16,
       91, 28, 97,
@@ -1087,18 +1066,15 @@ GTEST_TEST(CoreTech_Common, MatrixSort)
       91, 49, 96,
       63, 80, 96};
 
+    // Insertion sort
+    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
+    ASSERT_TRUE(Matrix::InsertionSort(arr, 1, true, 1, 2) == RESULT_OK);
     ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData, 15) == 15);
-
     ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
   }
 
   // sortWhichDimension==1 sortAscending==true
   {
-    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
-    ASSERT_TRUE(Matrix::InsertionSort(arr, 1, true, 1, 1) == RESULT_OK);
-
-    //arr.Print("sortWhichDimension==1 sortAscending==true");
-
     const s32 sortedArr_groundTruthData[15] = {
       81, 10, 16,
       91, 28, 97,
@@ -1106,8 +1082,10 @@ GTEST_TEST(CoreTech_Common, MatrixSort)
       91, 96, 49,
       63, 96, 80};
 
+    // Insertion sort
+    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
+    ASSERT_TRUE(Matrix::InsertionSort(arr, 1, true, 1, 1) == RESULT_OK);
     ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData, 15) == 15);
-
     ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
   }
 

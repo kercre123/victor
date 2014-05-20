@@ -34,6 +34,16 @@ namespace Anki
       template<typename Type> void InsertionSort_sortAscendingDimension1(Array<Type> &arr, Array<s32> &indexes, const s32 trueMinIndex, const s32 trueMaxIndex);
       template<typename Type> void InsertionSort_sortDescendingDimension1(Array<Type> &arr, Array<s32> &indexes, const s32 trueMinIndex, const s32 trueMaxIndex);
 
+      template<typename Type> void QuickSort_sortAscendingDimension0(Array<Type> &arr, const s32 trueMinIndex, const s32 trueMaxIndex, const s32 x, const s32 insertionSortSize);
+      template<typename Type> void QuickSort_sortDescendingDimension0(Array<Type> &arr, const s32 trueMinIndex, const s32 trueMaxIndex, const s32 x, const s32 insertionSortSize);
+      template<typename Type> void QuickSort_sortAscendingDimension1(Array<Type> &arr, const s32 trueMinIndex, const s32 trueMaxIndex, const s32 y, const s32 insertionSortSize);
+      template<typename Type> void QuickSort_sortDescendingDimension1(Array<Type> &arr, const s32 trueMinIndex, const s32 trueMaxIndex, const s32 y, const s32 insertionSortSize);
+
+      template<typename Type> void QuickSort_sortAscendingDimension0(Array<Type> &arr, Array<s32> &indexes, const s32 trueMinIndex, const s32 trueMaxIndex, const s32 x, const s32 insertionSortSize);
+      template<typename Type> void QuickSort_sortDescendingDimension0(Array<Type> &arr, Array<s32> &indexes, const s32 trueMinIndex, const s32 trueMaxIndex, const s32 x, const s32 insertionSortSize);
+      template<typename Type> void QuickSort_sortAscendingDimension1(Array<Type> &arr, Array<s32> &indexes, const s32 trueMinIndex, const s32 trueMaxIndex, const s32 y, const s32 insertionSortSize);
+      template<typename Type> void QuickSort_sortDescendingDimension1(Array<Type> &arr, Array<s32> &indexes, const s32 trueMinIndex, const s32 trueMaxIndex, const s32 y, const s32 insertionSortSize);
+
       template<typename Type> Type Min(const ConstArraySliceExpression<Type> &mat)
       {
         const Array<Type> &array = mat.get_array();
@@ -981,6 +991,100 @@ namespace Anki
         } // for(s32 x=0; x<arrWidth; x++)
       } // InsertionSort_sortDescendingDimension1()
 
+      template<typename Type> Type ThreeWayMedian(const Type a, const Type b, const Type c)
+      {
+      }
+
+      template<typename Type> void QuickSort_sortAscendingDimension0(Array<Type> &arr, const s32 trueMinIndex, const s32 trueMaxIndex, const s32 x, const s32 insertionSortSize)
+      {
+        if((trueMaxIndex - trueMinIndex + 1) <= insertionSortSize) {
+          return;
+        }
+
+        // Select the median value of the first, middle, and last elements as the pivot
+
+        const s32 midIndex = (trueMaxIndex + trueMinIndex) / 2;
+
+        if(*arr.Pointer(midIndex, x) < *arr.Pointer(trueMinIndex, x))
+          Swap<Type>(*arr.Pointer(midIndex, x), *arr.Pointer(trueMinIndex, x));
+
+        if(*arr.Pointer(trueMaxIndex, x) < *arr.Pointer(trueMinIndex, x))
+          Swap<Type>(*arr.Pointer(trueMaxIndex, x), *arr.Pointer(trueMinIndex, x));
+
+        if(*arr.Pointer(trueMaxIndex, x) < *arr.Pointer(midIndex, x))
+          Swap<Type>(*arr.Pointer(trueMaxIndex, x), *arr.Pointer(midIndex, x));
+
+        // Search from the beginning to before the moved pivot
+        s32 i = trueMinIndex;
+        s32 j = trueMaxIndex - 2;
+
+        if(i >= j) {
+          // This really means your insertionSortSize value is too low
+          return;
+        }
+
+        // Move the pivot to the end-1 (right before the 3-way max element)
+
+        const Type pivot = *arr.Pointer(midIndex, x);
+
+        Swap<Type>(*arr.Pointer(midIndex, x), *arr.Pointer(trueMaxIndex - 1, x));
+
+        // Main partitioning loop
+        while(true) {
+          // We don't need to check that i get too low, because the value at index trueMinIndex is <= pivot
+          while(*arr.Pointer(i,x) < pivot) {
+            i++;
+          }
+
+          // We don't need to check that j get too high, because the value at index (trueMaxIndex - 1) is == pivot
+          while(*arr.Pointer(j,x) > pivot) {
+            j--;
+          }
+
+          if(i < j) {
+            Swap<Type>(*arr.Pointer(i,x), *arr.Pointer(j,x));
+            i++;
+            j--;
+          } else {
+            break;
+          }
+        }
+
+        Swap<Type>(*arr.Pointer(i,x), *arr.Pointer(trueMaxIndex - 1, x));
+
+        QuickSort_sortAscendingDimension0(arr, trueMinIndex, i-1, x, insertionSortSize);
+
+        QuickSort_sortAscendingDimension0(arr, i+1, trueMaxIndex, x, insertionSortSize);
+      }
+
+      template<typename Type> void QuickSort_sortDescendingDimension0(Array<Type> &arr, const s32 trueMinIndex, const s32 trueMaxIndex, const s32 x, const s32 insertionSortSize)
+      {
+      }
+
+      template<typename Type> void QuickSort_sortAscendingDimension1(Array<Type> &arr, const s32 trueMinIndex, const s32 trueMaxIndex, const s32 y, const s32 insertionSortSize)
+      {
+      }
+
+      template<typename Type> void QuickSort_sortDescendingDimension1(Array<Type> &arr, const s32 trueMinIndex, const s32 trueMaxIndex, const s32 y, const s32 insertionSortSize)
+      {
+      }
+
+      template<typename Type> void QuickSort_sortAscendingDimension0(Array<Type> &arr, Array<s32> &indexes, const s32 trueMinIndex, const s32 trueMaxIndex, const s32 x, const s32 insertionSortSize)
+      {
+      }
+
+      template<typename Type> void QuickSort_sortDescendingDimension0(Array<Type> &arr, Array<s32> &indexes, const s32 trueMinIndex, const s32 trueMaxIndex, const s32 x, const s32 insertionSortSize)
+      {
+      }
+
+      template<typename Type> void QuickSort_sortAscendingDimension1(Array<Type> &arr, Array<s32> &indexes, const s32 trueMinIndex, const s32 trueMaxIndex, const s32 y, const s32 insertionSortSize)
+      {
+      }
+
+      template<typename Type> void QuickSort_sortDescendingDimension1(Array<Type> &arr, Array<s32> &indexes, const s32 trueMinIndex, const s32 trueMaxIndex, const s32 y, const s32 insertionSortSize)
+      {
+      }
+
       template<typename Type> Result InsertionSort(Array<Type> &arr, const s32 sortWhichDimension, const bool sortAscending, const s32 minIndex, const s32 maxIndex)
       {
         const s32 arrHeight = arr.get_size(0);
@@ -1050,6 +1154,104 @@ namespace Anki
 
         return RESULT_OK;
       } // InsertionSort()
+
+      template<typename Type> Result QuickSort(Array<Type> &arr, const s32 sortWhichDimension, const bool sortAscending, const s32 minIndex, const s32 maxIndex, const s32 insertionSortSize)
+      {
+        const s32 arrHeight = arr.get_size(0);
+        const s32 arrWidth = arr.get_size(1);
+
+        AnkiConditionalErrorAndReturnValue(arr.IsValid(),
+          RESULT_FAIL_INVALID_OBJECT, "Sort", "Input array is invalid");
+
+        AnkiConditionalErrorAndReturnValue(sortWhichDimension==0 || sortWhichDimension==1,
+          RESULT_FAIL_INVALID_PARAMETER, "Sort", "sortWhichDimension must be zero or one");
+
+        AnkiConditionalErrorAndReturnValue(insertionSortSize >= 1,
+          RESULT_FAIL_INVALID_PARAMETER, "Sort", "insertionSortSize must be >= 1");
+
+        const s32 trueMinIndex = CLIP(minIndex, 0, arr.get_size(sortWhichDimension) - 1);
+        const s32 trueMaxIndex = CLIP(maxIndex, 0, arr.get_size(sortWhichDimension) - 1);
+
+        if(sortWhichDimension == 0) {
+          // TODO: This columnwise sorting could be sped up, with smarter array indexing.
+          if(sortAscending) {
+            for(s32 x=0; x<arrWidth; x++) {
+              QuickSort_sortAscendingDimension0(arr, trueMinIndex, trueMaxIndex, x, insertionSortSize);
+            }
+          } else { // if(sortAscending)
+            for(s32 x=0; x<arrWidth; x++) {
+              QuickSort_sortDescendingDimension0(arr, trueMinIndex, trueMaxIndex, x, insertionSortSize);
+            }
+          } // if(sortAscending) ... else
+        } else { // sortWhichDimension == 1
+          if(sortAscending) {
+            for(s32 y=0; y<arrHeight; y++) {
+              QuickSort_sortAscendingDimension1(arr, trueMinIndex, trueMaxIndex, y, insertionSortSize);
+            }
+          } else { // if(sortAscending)
+            for(s32 y=0; y<arrHeight; y++) {
+              QuickSort_sortDescendingDimension1(arr, trueMinIndex, trueMaxIndex, y, insertionSortSize);
+            }
+          } // if(sortAscending) ... else
+        } // if(sortWhichDimension == 0) ... else
+
+        if(insertionSortSize > 1)
+          InsertionSort<Type>(arr, sortWhichDimension, sortAscending, minIndex, maxIndex);
+
+        return RESULT_OK;
+      } // QuickSort()
+
+      template<typename Type> Result QuickSort(Array<Type> &arr, Array<s32> &indexes, const s32 sortWhichDimension, const bool sortAscending, const s32 minIndex, const s32 maxIndex, const s32 insertionSortSize)
+      {
+        const s32 arrHeight = arr.get_size(0);
+        const s32 arrWidth = arr.get_size(1);
+
+        AnkiConditionalErrorAndReturnValue(arr.IsValid(),
+          RESULT_FAIL_INVALID_OBJECT, "Sort", "Input array is invalid");
+
+        AnkiConditionalErrorAndReturnValue(indexes.IsValid(),
+          RESULT_FAIL_INVALID_OBJECT, "Sort", "indexes array is invalid");
+
+        AnkiConditionalErrorAndReturnValue(sortWhichDimension==0 || sortWhichDimension==1,
+          RESULT_FAIL_INVALID_PARAMETER, "Sort", "sortWhichDimension must be zero or one");
+
+        AnkiConditionalErrorAndReturnValue(insertionSortSize >= 1,
+          RESULT_FAIL_INVALID_PARAMETER, "Sort", "insertionSortSize must be >= 1");
+
+        AnkiConditionalErrorAndReturnValue(indexes.get_size(0) == arrHeight && indexes.get_size(1) == arrWidth,
+          RESULT_FAIL_INVALID_SIZE, "Sort", "indexes must be the same size as arr");
+
+        const s32 trueMinIndex = CLIP(minIndex, 0, arr.get_size(sortWhichDimension) - 1);
+        const s32 trueMaxIndex = CLIP(maxIndex, 0, arr.get_size(sortWhichDimension) - 1);
+
+        if(sortWhichDimension == 0) {
+          // TODO: This columnwise sorting could be sped up, with smarter array indexing.
+          if(sortAscending) {
+            for(s32 x=0; x<arrWidth; x++) {
+              QuickSort_sortAscendingDimension0(arr, indexes, trueMinIndex, trueMaxIndex);
+            }
+          } else { // if(sortAscending)
+            for(s32 x=0; x<arrWidth; x++) {
+              QuickSort_sortDescendingDimension0(arr, indexes, trueMinIndex, trueMaxIndex);
+            }
+          } // if(sortAscending) ... else
+        } else { // sortWhichDimension == 1
+          if(sortAscending) {
+            for(s32 y=0; y<arrHeight; y++) {
+              QuickSort_sortAscendingDimension1(arr, indexes, trueMinIndex, trueMaxIndex);
+            }
+          } else { // if(sortAscending)
+            for(s32 y=0; y<arrHeight; y++) {
+              QuickSort_sortDescendingDimension1(arr, indexes, trueMinIndex, trueMaxIndex);
+            }
+          } // if(sortAscending) ... else
+        } // if(sortWhichDimension == 0) ... else
+
+        if(insertionSortSize > 1)
+          InsertionSort<Type>(arr, indexes, sortWhichDimension, sortAscending, minIndex, maxIndex);
+
+        return RESULT_OK;
+      } // QuickSort()
 
       template<typename Type> Result MakeSymmetric(Type &arr, bool lowerToUpper)
       {

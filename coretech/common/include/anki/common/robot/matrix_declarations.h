@@ -172,8 +172,13 @@ namespace Anki
       // NOTE: this currently uses insertion sort, so may be slow for large, badly-unsorted arrays
       template<typename Type> Result InsertionSort(Array<Type> &arr, const s32 sortWhichDimension=0, const bool sortAscending=true, const s32 minIndex=0, const s32 maxIndex=0x7FFFFFE);
 
+      // Subsections less-than-or-equal-to insertionSortSize are sorted with insertion sort
+      template<typename Type> Result QuickSort(Array<Type> &arr, const s32 sortWhichDimension=0, const bool sortAscending=true, const s32 minIndex=0, const s32 maxIndex=0x7FFFFFE, const s32 insertionSortSize=10);
+
       // indexes must be allocated, but will be overwritten by InsertionSort()
       template<typename Type> Result InsertionSort(Array<Type> &arr, Array<s32> &indexes, const s32 sortWhichDimension=0, const bool sortAscending=true, const s32 minIndex=0, const s32 maxIndex=0x7FFFFFE);
+
+      template<typename Type> Result QuickSort(Array<Type> &arr, Array<s32> &indexes, const s32 sortWhichDimension=0, const bool sortAscending=true, const s32 minIndex=0, const s32 maxIndex=0x7FFFFFE, const s32 insertionSortSize=10);
 
       // For a square array, either:
       // 1. When lowerToUpper==true,  copies the lower (left)  triangle to the upper (right) triangle
