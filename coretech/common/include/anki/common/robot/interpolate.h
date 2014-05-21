@@ -52,17 +52,8 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(interpolationType == INTERPOLATE_LINEAR,
         RESULT_FAIL_INVALID_PARAMETER, "Interp2", "Only INTERPOLATE_LINEAR is supported");
 
-      AnkiConditionalErrorAndReturnValue(reference.IsValid(),
-        RESULT_FAIL_INVALID_OBJECT, "Interp2", "reference is not valid");
-
-      AnkiConditionalErrorAndReturnValue(xCoordinates.IsValid(),
-        RESULT_FAIL_INVALID_OBJECT, "Interp2", "xCoordinates is not valid");
-
-      AnkiConditionalErrorAndReturnValue(yCoordinates.IsValid(),
-        RESULT_FAIL_INVALID_OBJECT, "Interp2", "yCoordinates is not valid");
-
-      AnkiConditionalErrorAndReturnValue(out.IsValid(),
-        RESULT_FAIL_INVALID_OBJECT, "Interp2", "out is not valid");
+      AnkiConditionalErrorAndReturnValue(AreValid(reference, xCoordinates, yCoordinates, out),
+        RESULT_FAIL_INVALID_OBJECT, "Interp2", "Invalid objects");
 
       const s32 referenceHeight = reference.get_size(0);
       const s32 referenceWidth = reference.get_size(1);
@@ -153,11 +144,8 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(interpolationType == INTERPOLATE_LINEAR,
         RESULT_FAIL_INVALID_PARAMETER, "Interp2_Affine", "Only INTERPOLATE_LINEAR is supported");
 
-      AnkiConditionalErrorAndReturnValue(reference.IsValid(),
-        RESULT_FAIL_INVALID_OBJECT, "Interp2_Affine", "reference is not valid");
-
-      AnkiConditionalErrorAndReturnValue(out.IsValid(),
-        RESULT_FAIL_INVALID_OBJECT, "Interp2_Affine", "out is not valid");
+      AnkiConditionalErrorAndReturnValue(AreValid(reference, out),
+        RESULT_FAIL_INVALID_OBJECT, "Interp2_Affine", "Invalid objects");
 
       AnkiConditionalErrorAndReturnValue(NotAliased(reference, out),
         RESULT_FAIL_ALIASED_MEMORY, "Interp2_Affine", "reference cannot be the same as out");
@@ -288,11 +276,8 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(interpolationType == INTERPOLATE_LINEAR,
         RESULT_FAIL_INVALID_PARAMETER, "Interp2_Projective", "Only INTERPOLATE_LINEAR is supported");
 
-      AnkiConditionalErrorAndReturnValue(reference.IsValid(),
-        RESULT_FAIL_INVALID_OBJECT, "Interp2_Projective", "reference is not valid");
-
-      AnkiConditionalErrorAndReturnValue(out.IsValid(),
-        RESULT_FAIL_INVALID_OBJECT, "Interp2_Projective", "out is not valid");
+      AnkiConditionalErrorAndReturnValue(AreValid(reference, out),
+        RESULT_FAIL_INVALID_OBJECT, "Interp2_Projective", "Invalid objects");
 
       AnkiConditionalErrorAndReturnValue(NotAliased(reference, out),
         RESULT_FAIL_ALIASED_MEMORY, "Interp2_Projective", "reference cannot be the same as out");

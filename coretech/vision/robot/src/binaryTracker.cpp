@@ -97,8 +97,8 @@ namespace Anki
         AnkiConditionalErrorAndReturn(templateImageHeight > 0 && templateImageWidth > 0,
           "BinaryTracker::BinaryTracker", "template widths and heights must be greater than zero");
 
-        AnkiConditionalErrorAndReturn(templateImage.IsValid(),
-          "BinaryTracker::BinaryTracker", "templateImage is not valid");
+        AnkiConditionalErrorAndReturn(AreValid(templateImage, fastMemory, slowMemory),
+          "BinaryTracker::BinaryTracker", "Invalid objects");
 
         // TODO: make this work for non-qvga resolution
         Point<f32> centerOffset((templateImageWidth-1) / 2.0f, (templateImageHeight-1) / 2.0f);

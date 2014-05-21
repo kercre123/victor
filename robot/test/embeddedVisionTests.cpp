@@ -9,7 +9,7 @@ Copyright Anki, Inc. 2013
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
 **/
 
-#define JUST_FIDUCIAL_DETECTION
+//#define JUST_FIDUCIAL_DETECTION
 
 #include "anki/common/robot/config.h"
 #include "anki/common/robot/gtestLight.h"
@@ -66,13 +66,10 @@ using namespace Anki::Embedded;
 GTEST_TEST(CoreTech_Vision, FastGradient)
 {
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
-  ASSERT_TRUE(scratchCcm.IsValid());
-
   MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(scratchOnchip.IsValid());
-
   MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(scratchOffchip.IsValid());
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
   InitBenchmarking();
 
@@ -165,13 +162,10 @@ GTEST_TEST(CoreTech_Vision, FastGradient)
 GTEST_TEST(CoreTech_Vision, Canny)
 {
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
-  ASSERT_TRUE(scratchCcm.IsValid());
-
   MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(scratchOnchip.IsValid());
-
   MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(scratchOffchip.IsValid());
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
   InitBenchmarking();
 
@@ -279,13 +273,10 @@ GTEST_TEST(CoreTech_Vision, Canny)
 GTEST_TEST(CoreTech_Vision, BoxFilterU8U16)
 {
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
-  ASSERT_TRUE(scratchCcm.IsValid());
-
   MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(scratchOnchip.IsValid());
-
   MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(scratchOffchip.IsValid());
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
   InitBenchmarking();
 
@@ -378,13 +369,10 @@ GTEST_TEST(CoreTech_Vision, BoxFilterU8U16)
 /*GTEST_TEST(CoreTech_Vision, IntegralImageU16)
 {
 MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
-ASSERT_TRUE(scratchCcm.IsValid());
-
 MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
-ASSERT_TRUE(scratchOnchip.IsValid());
-
 MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
-ASSERT_TRUE(scratchOffchip.IsValid());
+
+ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
 const s32 imageHeight = 200;
 const s32 imageWidth = 200;
@@ -422,13 +410,10 @@ GTEST_RETURN_HERE;
 GTEST_TEST(CoreTech_Vision, Vignetting)
 {
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
-  ASSERT_TRUE(scratchCcm.IsValid());
-
   MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(scratchOnchip.IsValid());
-
   MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(scratchOffchip.IsValid());
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
   const s32 imageHeight = 4;
   const s32 imageWidth = 16;
@@ -493,9 +478,6 @@ GTEST_TEST(CoreTech_Vision, FaceDetection_All)
   //const char * face_cascade_name = "C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_frontalface_alt_tree";
   const char * face_cascade_name = "C:/Anki/coretech-external/opencv-2.4.8/data/lbpcascades/lbpcascade_frontalface";
 
-  //MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
-  //ASSERT_TRUE(scratchOffchip.IsValid());
-
   //Classifier::CascadeClassifier cc(face_cascade_name.data(), scratchOffchip);
   //cc.SaveAsHeader("c:/tmp/cascade.h", "lbpcascade_frontalface");
 
@@ -506,8 +488,11 @@ GTEST_TEST(CoreTech_Vision, FaceDetection_All)
 
   std::ifstream faceFilenames("C:/datasets/faces/lfw/allFiles.txt");
 
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
   MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(scratchOffchip.IsValid());
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
   const double scaleFactor = 1.1;
   const int minNeighbors = 2;
@@ -641,18 +626,15 @@ GTEST_TEST(CoreTech_Vision, FaceDetection_All)
 GTEST_TEST(CoreTech_Vision, FaceDetection)
 {
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
-  ASSERT_TRUE(scratchCcm.IsValid());
-
   MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(scratchOnchip.IsValid());
-
   MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(scratchOffchip.IsValid());
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
   //const char * face_cascade_name = "C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_frontalface_alt";
   //const char * face_cascade_name = "C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_frontalface_alt2";
   //const char * face_cascade_name = "C:/Anki/coretech-external/opencv-2.4.8/data/haarcascades/haarcascade_frontalface_alt_tree";
-  const char * face_cascade_name = "C:/Anki/coretech-external/opencv-2.4.8/data/lbpcascades/lbpcascade_frontalface.xml";
+  //const char * face_cascade_name = "C:/Anki/coretech-external/opencv-2.4.8/data/lbpcascades/lbpcascade_frontalface.xml";
 
   const s32 imageHeight = 240;
   const s32 imageWidth = 320;
@@ -734,8 +716,11 @@ GTEST_TEST(CoreTech_Vision, FaceDetection)
 
 GTEST_TEST(CoreTech_Vision, ResizeImage)
 {
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
   MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(scratchOnchip.IsValid());
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
   Array<f32> in(2, 5, scratchOnchip);
   Array<f32> outBig(3, 6, scratchOnchip);
@@ -780,8 +765,11 @@ GTEST_TEST(CoreTech_Vision, ResizeImage)
 
 GTEST_TEST(CoreTech_Vision, DecisionTreeVision)
 {
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
   MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(scratchOnchip.IsValid());
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
   const s32 numNodes = 7;
   const s32 treeDataLength = numNodes * sizeof(FiducialMarkerDecisionTree::Node);
@@ -852,13 +840,10 @@ GTEST_TEST(CoreTech_Vision, BinaryTrackerHeaderTemplate)
   const s32 imageWidth = 320;
 
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
-  ASSERT_TRUE(scratchCcm.IsValid());
-
   MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(scratchOnchip.IsValid());
-
   MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(scratchOffchip.IsValid());
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
   Array<u8> templateImage(imageHeight, imageWidth, scratchOnchip);
 
@@ -882,27 +867,27 @@ GTEST_TEST(CoreTech_Vision, BinaryTrackerHeaderTemplate)
     1     // s32 everyNLines; //< As many as you have time for
     );
 
-  TemplateTracker::BinaryTracker::EdgeDetectionParameters edgeDetectionParams_update = edgeDetectionParams_template;
-  edgeDetectionParams_update.maxDetectionsPerType = 2500;
+  //TemplateTracker::BinaryTracker::EdgeDetectionParameters edgeDetectionParams_update = edgeDetectionParams_template;
+  //edgeDetectionParams_update.maxDetectionsPerType = 2500;
 
-  const s32 updateEdgeDetection_maxDetectionsPerType = 2500;
+  //const s32 updateEdgeDetection_maxDetectionsPerType = 2500;
 
-  const s32 normal_matching_maxTranslationDistance = 7;
-  const s32 normal_matching_maxProjectiveDistance = 7;
+  //const s32 normal_matching_maxTranslationDistance = 7;
+  //const s32 normal_matching_maxProjectiveDistance = 7;
 
   const f32 scaleTemplateRegionPercent = 1.05f;
 
-  const s32 verify_maxTranslationDistance = 1;
+  //const s32 verify_maxTranslationDistance = 1;
 
-  const u8 verify_maxPixelDifference = 30;
+  //const u8 verify_maxPixelDifference = 30;
 
-  const s32 verify_coordinateIncrement = 3;
+  //const s32 verify_coordinateIncrement = 3;
 
-  const s32 ransac_matching_maxProjectiveDistance = normal_matching_maxProjectiveDistance;
+  //const s32 ransac_matching_maxProjectiveDistance = normal_matching_maxProjectiveDistance;
 
-  const s32 ransac_maxIterations = 20;
-  const s32 ransac_numSamplesPerType = 8;
-  const s32 ransac_inlinerDistance = verify_maxTranslationDistance;
+  //const s32 ransac_maxIterations = 20;
+  //const s32 ransac_numSamplesPerType = 8;
+  //const s32 ransac_inlinerDistance = verify_maxTranslationDistance;
 
   templateImage.Set(&cozmo_date2014_04_04_time17_40_08_frame0[0], imageHeight*imageWidth);
 
@@ -945,13 +930,10 @@ GTEST_TEST(CoreTech_Vision, BinaryTrackerHeaderTemplate)
 GTEST_TEST(CoreTech_Vision, BinaryTracker)
 {
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
-  ASSERT_TRUE(scratchCcm.IsValid());
-
   MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(scratchOnchip.IsValid());
-
   MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(scratchOffchip.IsValid());
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
   Array<u8> templateImage(cozmo_date2014_01_29_time11_41_05_frame10_320x240_HEIGHT, cozmo_date2014_01_29_time11_41_05_frame10_320x240_WIDTH, scratchOnchip);
   Array<u8> nextImage(cozmo_date2014_01_29_time11_41_05_frame12_320x240_HEIGHT, cozmo_date2014_01_29_time11_41_05_frame12_320x240_WIDTH, scratchOnchip);
@@ -1428,8 +1410,11 @@ GTEST_TEST(CoreTech_Vision, DetectBlurredEdge_DerivativeThreshold)
   const s32 maxExtrema = 500;
   const s32 everyNLines = 1;
 
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
   MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(scratchOffchip.IsValid());
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
   const s32 imageHeight = 48;
   const s32 imageWidth = 64;
@@ -1521,8 +1506,11 @@ GTEST_TEST(CoreTech_Vision, DetectBlurredEdge_GrayvalueThreshold)
   const s32 maxExtrema = 500;
   const s32 everyNLines = 1;
 
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
   MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(scratchOffchip.IsValid());
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
   const s32 imageHeight = 48;
   const s32 imageWidth = 64;
@@ -1647,9 +1635,11 @@ GTEST_TEST(CoreTech_Vision, DetectBlurredEdge_GrayvalueThreshold)
 
 GTEST_TEST(CoreTech_Vision, DownsampleByPowerOfTwo)
 {
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
   MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  ASSERT_TRUE(scratchOffchip.IsValid());
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
   ASSERT_TRUE(blockImage50_320x240_WIDTH % MEMORY_ALIGNMENT == 0);
   ASSERT_TRUE(reinterpret_cast<size_t>(&blockImage50_320x240[0]) % MEMORY_ALIGNMENT == 0);
@@ -1740,14 +1730,11 @@ GTEST_RETURN_HERE;
 
 GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
 {
-  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(scratchOnchip.IsValid());
-
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
-  ASSERT_TRUE(scratchCcm.IsValid());
-
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
   MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(scratchOffchip.IsValid());
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
   Array<u8> templateImage(cozmo_date2014_01_29_time11_41_05_frame10_320x240_HEIGHT, cozmo_date2014_01_29_time11_41_05_frame10_320x240_WIDTH, scratchOffchip);
   Array<u8> nextImage(cozmo_date2014_01_29_time11_41_05_frame12_320x240_HEIGHT, cozmo_date2014_01_29_time11_41_05_frame12_320x240_WIDTH, scratchOnchip);
@@ -1923,14 +1910,11 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
 
 GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledPlanar6dof)
 {
-  //  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
-  //  ASSERT_TRUE(scratchOnchip.IsValid());
-  //
-  //  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
-  //  ASSERT_TRUE(scratchCcm.IsValid());
-  //
-  //  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
-  //  ASSERT_TRUE(scratchOffchip.IsValid());
+  //MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  //MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  //MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+
+  //ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
   //
   //  Array<u8> templateImage(cozmo_date2014_01_29_time11_41_05_frame10_320x240_HEIGHT, cozmo_date2014_01_29_time11_41_05_frame10_320x240_WIDTH, scratchOffchip);
   //  Array<u8> nextImage(cozmo_date2014_01_29_time11_41_05_frame12_320x240_HEIGHT, cozmo_date2014_01_29_time11_41_05_frame12_320x240_WIDTH, scratchOnchip);
@@ -2144,8 +2128,11 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Projective)
 
   // TODO: add check that images were loaded correctly
 
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
   MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(scratchOffchip.IsValid());
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
   ASSERT_TRUE(blockImages00189_80x60_HEIGHT == imageHeight && blockImages00190_80x60_HEIGHT == imageHeight);
   ASSERT_TRUE(blockImages00189_80x60_WIDTH == imageWidth && blockImages00190_80x60_WIDTH == imageWidth);
@@ -2309,9 +2296,11 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Affine)
 
   // TODO: add check that images were loaded correctly
 
-  MemoryStack scratchOffchip(&offchipBuffer[0], 600000);
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  ASSERT_TRUE(scratchOffchip.IsValid());
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
   ASSERT_TRUE(blockImages00189_80x60_HEIGHT == imageHeight && blockImages00190_80x60_HEIGHT == imageHeight);
   ASSERT_TRUE(blockImages00189_80x60_WIDTH == imageWidth && blockImages00190_80x60_WIDTH == imageWidth);
@@ -2431,11 +2420,11 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
 
   // TODO: add check that images were loaded correctly
 
-  //MemoryStack scratch0(&ddrBuffer[0], 80*60*2 + 256);
-  MemoryStack scratchOffchip(&offchipBuffer[0], 600000);
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  //ASSERT_TRUE(scratch0.IsValid());
-  ASSERT_TRUE(scratchOffchip.IsValid());
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
   ASSERT_TRUE(blockImages00189_80x60_HEIGHT == imageHeight && blockImages00190_80x60_HEIGHT == imageHeight);
   ASSERT_TRUE(blockImages00189_80x60_WIDTH == imageWidth && blockImages00190_80x60_WIDTH == imageWidth);
@@ -2580,9 +2569,11 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
 //  const s32 bigBufferSize = 10000000;
 //  char * bigBuffer = reinterpret_cast<char*>(malloc(bigBufferSize));
 //
-//  MemoryStack scratchOffchip(bigBuffer, bigBufferSize);
+//MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+//  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+//  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 //
-//  ASSERT_TRUE(scratchOffchip.IsValid());
+//  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 //
 //  Array<u8> image1Tmp(imageTmpHeight, imageTmpWidth, scratchOffchip);
 //  image1Tmp.Set(templateImage, imageTmpWidth*imageTmpHeight);
@@ -2612,10 +2603,13 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_Slow)
 
 GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering)
 {
-  MemoryStack ms(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  Array<u8> image(3,16,ms);
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  Array<u8> image(3,16,scratchOnchip);
   ASSERT_TRUE(image.IsValid());
 
   image[0][0] = 1; image[0][1] = 2; image[0][2] = 3;
@@ -2624,7 +2618,7 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering)
 
   //image.Print("image");
 
-  Array<u8> image2(4,16,ms);
+  Array<u8> image2(4,16,scratchOnchip);
   ASSERT_TRUE(image2.IsValid());
 
   image2[0][0] = 1; image2[0][1] = 2; image2[0][2] = 3;
@@ -2634,14 +2628,14 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering)
 
   //image2.Print("image2");
 
-  Array<s32> filteredOutput(1, 16, ms);
+  Array<s32> filteredOutput(1, 16, scratchOnchip);
 
   //
   // Test with border of 2
   //
 
-  ScrollingIntegralImage_u8_s32 ii_border2(4, 16, 2, ms);
-  ASSERT_TRUE(ii_border2.ScrollDown(image, 4, ms) == RESULT_OK);
+  ScrollingIntegralImage_u8_s32 ii_border2(4, 16, 2, scratchOnchip);
+  ASSERT_TRUE(ii_border2.ScrollDown(image, 4, scratchOnchip) == RESULT_OK);
 
   {
     Rectangle<s16> filter_testBorder2_0(-1, 1, -1, 1);
@@ -2657,7 +2651,7 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering)
     }
   }
 
-  ASSERT_TRUE(ii_border2.ScrollDown(image, 2, ms) == RESULT_OK);
+  ASSERT_TRUE(ii_border2.ScrollDown(image, 2, scratchOnchip) == RESULT_OK);
 
   {
     Rectangle<s16> filter_testBorder2_1(-1, 1, -1, 1);
@@ -2678,9 +2672,9 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering)
 
   // imBig2 = [1,1,2,3,3;1,1,2,3,3;9,9,9,9,9;0,0,0,1,1;0,0,0,1,1];
 
-  ScrollingIntegralImage_u8_s32 ii_border1(4, 16, 1, ms);
+  ScrollingIntegralImage_u8_s32 ii_border1(4, 16, 1, scratchOnchip);
 
-  ASSERT_TRUE(ii_border1.ScrollDown(image, 4, ms) == RESULT_OK);
+  ASSERT_TRUE(ii_border1.ScrollDown(image, 4, scratchOnchip) == RESULT_OK);
 
   {
     Rectangle<s16> filter_testBorder1_0(0, 0, 0, 2);
@@ -2695,7 +2689,7 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering)
     }
   }
 
-  ASSERT_TRUE(ii_border1.ScrollDown(image, 1, ms) == RESULT_OK);
+  ASSERT_TRUE(ii_border1.ScrollDown(image, 1, scratchOnchip) == RESULT_OK);
 
   {
     Rectangle<s16> filter_testBorder1_1(0, 1, 0, 2);
@@ -2714,11 +2708,11 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering)
   // Test with border of 0
   //
 
-  ScrollingIntegralImage_u8_s32 ii_border0(3, 16, 0, ms);
+  ScrollingIntegralImage_u8_s32 ii_border0(3, 16, 0, scratchOnchip);
 
   ASSERT_TRUE(ii_border0.get_rowOffset() == 0);
 
-  ASSERT_TRUE(ii_border0.ScrollDown(image2, 3, ms) == RESULT_OK);
+  ASSERT_TRUE(ii_border0.ScrollDown(image2, 3, scratchOnchip) == RESULT_OK);
 
   {
     Rectangle<s16> filter_testBorder2_0(-1, 0, 0, 0);
@@ -2733,7 +2727,7 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering)
     }
   }
 
-  ASSERT_TRUE(ii_border0.ScrollDown(image2, 1, ms) == RESULT_OK);
+  ASSERT_TRUE(ii_border0.ScrollDown(image2, 1, scratchOnchip) == RESULT_OK);
 
   {
     Rectangle<s16> filter_testBorder2_1(0, 1, 0, 0);
@@ -2753,17 +2747,20 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering)
 
 GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageGeneration)
 {
-  MemoryStack ms(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  Array<u8> image(3,16,ms);
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  Array<u8> image(3,16,scratchOnchip);
   ASSERT_TRUE(image.IsValid());
 
   image[0][0] = 1; image[0][1] = 2; image[0][2] = 3;
   image[1][0] = 9; image[1][1] = 9; image[1][2] = 9;
   image[2][0] = 0; image[2][1] = 0; image[2][2] = 1;
 
-  Array<u8> image2(4,16,ms);
+  Array<u8> image2(4,16,scratchOnchip);
   ASSERT_TRUE(image2.IsValid());
 
   image2[0][0] = 1; image2[0][1] = 2; image2[0][2] = 3;
@@ -2785,13 +2782,13 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageGeneration)
     {12, 24, 36, 51, 71},
     {12, 24, 36, 51, 72}};
 
-  ScrollingIntegralImage_u8_s32 ii_border2(3, 16, 2, ms);
+  ScrollingIntegralImage_u8_s32 ii_border2(3, 16, 2, scratchOnchip);
   ASSERT_TRUE(ii_border2.get_rowOffset() == -2);
 
   //Result ScrollDown(const Array<u8> &image, s32 numRowsToScroll, MemoryStack scratch);
 
   // initialII = computeScrollingIntegralImage(im, zeros(3,size(im,2)+4,'int32'), 1, 3, 2)
-  ASSERT_TRUE(ii_border2.ScrollDown(image, 3, ms) == RESULT_OK);
+  ASSERT_TRUE(ii_border2.ScrollDown(image, 3, scratchOnchip) == RESULT_OK);
 
   //ASSERT_TRUE(ii_border2.get_minRow(1) == 0);
   ASSERT_TRUE(ii_border2.get_maxRow(1) == -1);
@@ -2806,7 +2803,7 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageGeneration)
   }
 
   // scrolledII = computeScrollingIntegralImage(im, initialII, 1+3-2, 2, 2)
-  ASSERT_TRUE(ii_border2.ScrollDown(image, 2, ms) == RESULT_OK);
+  ASSERT_TRUE(ii_border2.ScrollDown(image, 2, scratchOnchip) == RESULT_OK);
 
   //ASSERT_TRUE(ii_border2.get_minRow(1) == 2);
   ASSERT_TRUE(ii_border2.get_maxRow(1) == 1);
@@ -2821,7 +2818,7 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageGeneration)
   }
 
   // scrolledII2 = computeScrollingIntegralImage(im, scrolledII, 1+3-2+2, 2, 2)
-  ASSERT_TRUE(ii_border2.ScrollDown(image, 2, ms) == RESULT_OK);
+  ASSERT_TRUE(ii_border2.ScrollDown(image, 2, scratchOnchip) == RESULT_OK);
 
   //ASSERT_TRUE(ii_border2.get_minRow(1) == 2);
   ASSERT_TRUE(ii_border2.get_maxRow(1) == 3);
@@ -2847,12 +2844,12 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageGeneration)
     {11, 22, 35, 51},
     {11, 22, 35, 52}};
 
-  ScrollingIntegralImage_u8_s32 ii_border1(3, 16, 1, ms);
+  ScrollingIntegralImage_u8_s32 ii_border1(3, 16, 1, scratchOnchip);
 
   ASSERT_TRUE(ii_border1.get_rowOffset() == -1);
 
   // initialII = computeScrollingIntegralImage(im, zeros(3,size(im,2)+2,'int32'), 1, 3, 1)
-  ASSERT_TRUE(ii_border1.ScrollDown(image, 3, ms) == RESULT_OK);
+  ASSERT_TRUE(ii_border1.ScrollDown(image, 3, scratchOnchip) == RESULT_OK);
 
   //ASSERT_TRUE(ii_border1.get_minRow(1) == 0);
   ASSERT_TRUE(ii_border1.get_maxRow(1) == 0);
@@ -2867,7 +2864,7 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageGeneration)
   }
 
   // scrolledII = computeScrollingIntegralImage(im, initialII, 1+3-1, 1, 1)
-  ASSERT_TRUE(ii_border1.ScrollDown(image, 1, ms) == RESULT_OK);
+  ASSERT_TRUE(ii_border1.ScrollDown(image, 1, scratchOnchip) == RESULT_OK);
 
   //ASSERT_TRUE(ii_border1.get_minRow(1) == 0);
   ASSERT_TRUE(ii_border1.get_maxRow(1) == 1);
@@ -2882,7 +2879,7 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageGeneration)
   }
 
   // scrolledII2 = computeScrollingIntegralImage(im, scrolledII, 1+3-1+1, 1, 1)
-  ASSERT_TRUE(ii_border1.ScrollDown(image, 1, ms) == RESULT_OK);
+  ASSERT_TRUE(ii_border1.ScrollDown(image, 1, scratchOnchip) == RESULT_OK);
 
   //ASSERT_TRUE(ii_border1.get_minRow(1) == 1);
   ASSERT_TRUE(ii_border1.get_maxRow(1) == 2);
@@ -2906,12 +2903,12 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageGeneration)
     {10, 21, 34},
     {15, 31, 49}};
 
-  ScrollingIntegralImage_u8_s32 ii_border0(3, 16, 0, ms);
+  ScrollingIntegralImage_u8_s32 ii_border0(3, 16, 0, scratchOnchip);
 
   ASSERT_TRUE(ii_border0.get_rowOffset() == 0);
 
   // initialII = computeScrollingIntegralImage(im, zeros(3,size(im,2),'int32'), 1, 3, 0)
-  ASSERT_TRUE(ii_border0.ScrollDown(image2, 3, ms) == RESULT_OK);
+  ASSERT_TRUE(ii_border0.ScrollDown(image2, 3, scratchOnchip) == RESULT_OK);
 
   //ASSERT_TRUE(ii_border0.get_minRow(1) == 0);
   ASSERT_TRUE(ii_border0.get_maxRow(1) == 1);
@@ -2926,7 +2923,7 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageGeneration)
   }
 
   // scrolledII = computeScrollingIntegralImage(im, initialII, 1+3, 1, 0)
-  ASSERT_TRUE(ii_border0.ScrollDown(image2, 1, ms) == RESULT_OK);
+  ASSERT_TRUE(ii_border0.ScrollDown(image2, 1, scratchOnchip) == RESULT_OK);
 
   //ASSERT_TRUE(ii_border0.get_minRow(1) == 1);
   ASSERT_TRUE(ii_border0.get_maxRow(1) == 2);
@@ -2979,13 +2976,11 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
 
   const s32 quadRefinementIterations = 5;
 
-  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
-  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  ASSERT_TRUE(scratchOffchip.IsValid());
-  ASSERT_TRUE(scratchOnchip.IsValid());
-  ASSERT_TRUE(scratchCcm.IsValid());
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
   Array<u8> image(newFiducials_320x240_HEIGHT, newFiducials_320x240_WIDTH, scratchOffchip);
   image.Set(newFiducials_320x240, newFiducials_320x240_WIDTH*newFiducials_320x240_HEIGHT);
@@ -3112,17 +3107,20 @@ GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents)
   const s32 imageWidth = 640;
   const s32 minDistanceFromImageEdge = 2;
 
-  MemoryStack ms(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  FixedLengthList<BlockMarker> markers(50, ms);
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  FixedLengthList<BlockMarker> markers(50, scratchOnchip);
 
   // TODO: check these by hand
   const Quadrilateral<s16> quads_groundTruth[] = {
     Quadrilateral<s16>(Point<s16>(24,4), Point<s16>(10,4), Point<s16>(24,18), Point<s16>(10,18)) ,
     Quadrilateral<s16>(Point<s16>(129,50),  Point<s16>(100,50), Point<s16>(129,79), Point<s16>(100,79)) };
 
-  ConnectedComponents components(numComponents, imageWidth, ms);
+  ConnectedComponents components(numComponents, imageWidth, scratchOnchip);
 
   // Small square
   for(s32 y=0; y<15; y++) {
@@ -3145,11 +3143,11 @@ GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents)
     components.PushBack(ConnectedComponentSegment(10,14,y,4));
   }
 
-  FixedLengthList<Quadrilateral<s16> > extractedQuads(2, ms);
+  FixedLengthList<Quadrilateral<s16> > extractedQuads(2, scratchOnchip);
 
   components.SortConnectedComponentSegments();
 
-  const Result result =  ComputeQuadrilateralsFromConnectedComponents(components, minQuadArea, quadSymmetryThreshold, minDistanceFromImageEdge, imageHeight, imageWidth, extractedQuads, ms);
+  const Result result =  ComputeQuadrilateralsFromConnectedComponents(components, minQuadArea, quadSymmetryThreshold, minDistanceFromImageEdge, imageHeight, imageWidth, extractedQuads, scratchOnchip);
   ASSERT_TRUE(result == RESULT_OK);
 
   // extractedQuads.Print("extractedQuads");
@@ -3163,13 +3161,15 @@ GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents)
 
 GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput)
 {
-  const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 5000);
-  MemoryStack ms(&offchipBuffer[0], numBytes);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  FixedPointArray<s32> image(1,15,2,ms);
-  FixedPointArray<s32> filter(1,5,2,ms);
-  FixedPointArray<s32> out(1,15,4,ms);
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  FixedPointArray<s32> image(1,15,2,scratchOnchip);
+  FixedPointArray<s32> filter(1,5,2,scratchOnchip);
+  FixedPointArray<s32> out(1,15,4,scratchOnchip);
 
   for(s32 i=0; i<image.get_size(1); i++) {
     *image.Pointer(0,i) = 1 + i;
@@ -3181,7 +3181,7 @@ GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput)
 
   const s32 out_groundTruth[] = {140, 110, 110, 140, 170, 200, 230, 260, 290, 320, 350, 380, 410, 290, 200};
 
-  const Result result = ImageProcessing::Correlate1dCircularAndSameSizeOutput<s32,s32,s32>(image, filter, out, ms);
+  const Result result = ImageProcessing::Correlate1dCircularAndSameSizeOutput<s32,s32,s32>(image, filter, out, scratchOnchip);
   ASSERT_TRUE(result == RESULT_OK);
 
   for(s32 i=0; i<out.get_size(1); i++) {
@@ -3194,12 +3194,13 @@ GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput)
 GTEST_TEST(CoreTech_Vision, LaplacianPeaks)
 {
 #define LaplacianPeaks_BOUNDARY_LENGTH 65
-  const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 5000);
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  MemoryStack ms(&offchipBuffer[0], numBytes);
-  ASSERT_TRUE(ms.IsValid());
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
-  FixedLengthList<Point<s16> > boundary(LaplacianPeaks_BOUNDARY_LENGTH, ms);
+  FixedLengthList<Point<s16> > boundary(LaplacianPeaks_BOUNDARY_LENGTH, scratchOnchip);
 
   const s32 componentsX_groundTruth[66] = {105, 105, 106, 107, 108, 109, 109, 108, 107, 106, 105, 105, 105, 105, 106, 107, 108, 109, 108, 107, 106, 105, 105, 104, 104, 104, 104, 104, 103, 103, 103, 103, 103, 102, 101, 101, 101, 101, 101, 100, 100, 100, 100, 100, 101, 102, 103, 104, 104, 104, 103, 102, 101, 100, 100, 101, 102, 102, 102, 102, 102, 103, 104, 104, 105};
   const s32 componentsY_groundTruth[66] = {200, 201, 201, 201, 201, 201, 202, 202, 202, 202, 202, 203, 204, 205, 205, 205, 205, 205, 205, 205, 205, 205, 206, 206, 207, 208, 209, 210, 210, 209, 208, 207, 206, 206, 206, 207, 208, 209, 210, 210, 209, 208, 207, 206, 206, 206, 206, 206, 205, 204, 204, 204, 204, 204, 203, 203, 203, 202, 201, 200, 201, 201, 201, 200, 200};
@@ -3208,9 +3209,9 @@ GTEST_TEST(CoreTech_Vision, LaplacianPeaks)
     boundary.PushBack(Point<s16>(componentsX_groundTruth[i], componentsY_groundTruth[i]));
   }
 
-  FixedLengthList<Point<s16> > peaks(4, ms);
+  FixedLengthList<Point<s16> > peaks(4, scratchOnchip);
 
-  const Result result = ExtractLaplacianPeaks(boundary, peaks, ms);
+  const Result result = ExtractLaplacianPeaks(boundary, peaks, scratchOnchip);
   ASSERT_TRUE(result == RESULT_OK);
 
   //boundary.Print("boundary");
@@ -3226,16 +3227,18 @@ GTEST_TEST(CoreTech_Vision, LaplacianPeaks)
 
 GTEST_TEST(CoreTech_Vision, Correlate1d)
 {
-  const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 5000);
-  MemoryStack ms(&offchipBuffer[0], numBytes);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
   {
-    PUSH_MEMORY_STACK(ms);
+    PUSH_MEMORY_STACK(scratchOnchip);
 
-    FixedPointArray<s32> in1(1,1,2,ms);
-    FixedPointArray<s32> in2(1,4,2,ms);
-    FixedPointArray<s32> out(1,4,4,ms);
+    FixedPointArray<s32> in1(1,1,2,scratchOnchip);
+    FixedPointArray<s32> in2(1,4,2,scratchOnchip);
+    FixedPointArray<s32> out(1,4,4,scratchOnchip);
 
     for(s32 i=0; i<in1.get_size(1); i++) {
       *in1.Pointer(0,i) = 1 + i;
@@ -3258,11 +3261,11 @@ GTEST_TEST(CoreTech_Vision, Correlate1d)
   }
 
   {
-    PUSH_MEMORY_STACK(ms);
+    PUSH_MEMORY_STACK(scratchOnchip);
 
-    FixedPointArray<s32> in1(1,3,5,ms);
-    FixedPointArray<s32> in2(1,6,1,ms);
-    FixedPointArray<s32> out(1,8,3,ms);
+    FixedPointArray<s32> in1(1,3,5,scratchOnchip);
+    FixedPointArray<s32> in2(1,6,1,scratchOnchip);
+    FixedPointArray<s32> out(1,8,3,scratchOnchip);
 
     for(s32 i=0; i<in1.get_size(1); i++) {
       *in1.Pointer(0,i) = 1 + i;
@@ -3285,11 +3288,11 @@ GTEST_TEST(CoreTech_Vision, Correlate1d)
   }
 
   {
-    PUSH_MEMORY_STACK(ms);
+    PUSH_MEMORY_STACK(scratchOnchip);
 
-    FixedPointArray<s32> in1(1,4,2,ms);
-    FixedPointArray<s32> in2(1,4,2,ms);
-    FixedPointArray<s32> out(1,7,3,ms);
+    FixedPointArray<s32> in1(1,4,2,scratchOnchip);
+    FixedPointArray<s32> in2(1,4,2,scratchOnchip);
+    FixedPointArray<s32> out(1,7,3,scratchOnchip);
 
     for(s32 i=0; i<in1.get_size(1); i++) {
       *in1.Pointer(0,i) = 1 + i;
@@ -3312,11 +3315,11 @@ GTEST_TEST(CoreTech_Vision, Correlate1d)
   }
 
   {
-    PUSH_MEMORY_STACK(ms);
+    PUSH_MEMORY_STACK(scratchOnchip);
 
-    FixedPointArray<s32> in1(1,4,1,ms);
-    FixedPointArray<s32> in2(1,5,5,ms);
-    FixedPointArray<s32> out(1,8,8,ms);
+    FixedPointArray<s32> in1(1,4,1,scratchOnchip);
+    FixedPointArray<s32> in2(1,5,5,scratchOnchip);
+    FixedPointArray<s32> out(1,8,8,scratchOnchip);
 
     for(s32 i=0; i<in1.get_size(1); i++) {
       *in1.Pointer(0,i) = 1 + i;
@@ -3347,10 +3350,13 @@ GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary)
   const s32 boundaryLength = 65;
   const s32 startComponentIndex = 0;
 
-  MemoryStack ms(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  ConnectedComponents components(numComponents, 640, ms);
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  ConnectedComponents components(numComponents, 640, scratchOnchip);
 
   const s32 yValues[128] = {200, 200, 201, 201, 202, 203, 204, 205, 206, 207, 207, 208, 208, 209, 209, 210, 210};
   const s32 xStartValues[128] = {102, 104, 102, 108, 102, 100, 100, 104, 100, 100, 103, 100, 103, 100, 103, 100, 103};
@@ -3379,11 +3385,11 @@ GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary)
   }
 #endif // DRAW_TraceNextExteriorBoundary
 
-  FixedLengthList<Point<s16> > extractedBoundary(boundaryLength, ms);
+  FixedLengthList<Point<s16> > extractedBoundary(boundaryLength, scratchOnchip);
 
   {
     s32 endComponentIndex = -1;
-    const Result result = TraceNextExteriorBoundary(components, startComponentIndex, extractedBoundary, endComponentIndex, ms);
+    const Result result = TraceNextExteriorBoundary(components, startComponentIndex, extractedBoundary, endComponentIndex, scratchOnchip);
     ASSERT_TRUE(result == RESULT_OK);
   }
 
@@ -3400,10 +3406,13 @@ GTEST_TEST(CoreTech_Vision, ComputeComponentBoundingBoxes)
 {
   const s32 numComponents = 10;
 
-  MemoryStack ms(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  ConnectedComponents components(numComponents, 640, ms);
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  ConnectedComponents components(numComponents, 640, scratchOnchip);
 
   const ConnectedComponentSegment component0 = ConnectedComponentSegment(0, 10, 0, 1);
   const ConnectedComponentSegment component1 = ConnectedComponentSegment(12, 12, 1, 1);
@@ -3427,7 +3436,7 @@ GTEST_TEST(CoreTech_Vision, ComputeComponentBoundingBoxes)
   components.PushBack(component8);
   components.PushBack(component9);
 
-  FixedLengthList<Anki::Embedded::Rectangle<s16> > componentBoundingBoxes(numComponents, ms);
+  FixedLengthList<Anki::Embedded::Rectangle<s16> > componentBoundingBoxes(numComponents, scratchOnchip);
   {
     const Result result = components.ComputeComponentBoundingBoxes(componentBoundingBoxes);
     ASSERT_TRUE(result == RESULT_OK);
@@ -3446,10 +3455,13 @@ GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids)
 {
   const s32 numComponents = 10;
 
-  MemoryStack ms(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  ConnectedComponents components(numComponents, 640, ms);
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  ConnectedComponents components(numComponents, 640, scratchOnchip);
 
   const ConnectedComponentSegment component0 = ConnectedComponentSegment(0, 10, 0, 1);
   const ConnectedComponentSegment component1 = ConnectedComponentSegment(12, 12, 1, 1);
@@ -3473,9 +3485,9 @@ GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids)
   components.PushBack(component8);
   components.PushBack(component9);
 
-  FixedLengthList<Point<s16> > componentCentroids(numComponents, ms);
+  FixedLengthList<Point<s16> > componentCentroids(numComponents, scratchOnchip);
   {
-    const Result result = components.ComputeComponentCentroids(componentCentroids, ms);
+    const Result result = components.ComputeComponentCentroids(componentCentroids, scratchOnchip);
     ASSERT_TRUE(result == RESULT_OK);
   }
 
@@ -3493,10 +3505,13 @@ GTEST_TEST(CoreTech_Vision, InvalidateFilledCenterComponents_hollowRows)
   const s32 numComponents = 10;
   const f32 minHollowRatio = 0.7f;
 
-  MemoryStack ms(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  ConnectedComponents components(numComponents, 640, ms);
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  ConnectedComponents components(numComponents, 640, scratchOnchip);
 
   const ConnectedComponentSegment component0 = ConnectedComponentSegment(0, 2, 5, 1);
   const ConnectedComponentSegment component1 = ConnectedComponentSegment(4, 6, 5, 1);
@@ -3521,7 +3536,7 @@ GTEST_TEST(CoreTech_Vision, InvalidateFilledCenterComponents_hollowRows)
   components.PushBack(component9);
 
   {
-    const Result result = components.InvalidateFilledCenterComponents_hollowRows(minHollowRatio, ms);
+    const Result result = components.InvalidateFilledCenterComponents_hollowRows(minHollowRatio, scratchOnchip);
     ASSERT_TRUE(result == RESULT_OK);
   }
 
@@ -3547,10 +3562,13 @@ GTEST_TEST(CoreTech_Vision, InvalidateSolidOrSparseComponents)
   const s32 sparseMultiplyThreshold = 10 << 5;
   const s32 solidMultiplyThreshold = 2 << 5;
 
-  MemoryStack ms(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  ConnectedComponents components(numComponents, 640, ms);
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  ConnectedComponents components(numComponents, 640, scratchOnchip);
 
   const ConnectedComponentSegment component0 = ConnectedComponentSegment(0, 10, 0, 1); // Ok
   const ConnectedComponentSegment component1 = ConnectedComponentSegment(0, 10, 3, 1);
@@ -3575,7 +3593,7 @@ GTEST_TEST(CoreTech_Vision, InvalidateSolidOrSparseComponents)
   components.PushBack(component9);
 
   {
-    const Result result = components.InvalidateSolidOrSparseComponents(sparseMultiplyThreshold, solidMultiplyThreshold, ms);
+    const Result result = components.InvalidateSolidOrSparseComponents(sparseMultiplyThreshold, solidMultiplyThreshold, scratchOnchip);
     ASSERT_TRUE(result == RESULT_OK);
   }
 
@@ -3599,10 +3617,13 @@ GTEST_TEST(CoreTech_Vision, InvalidateSmallOrLargeComponents)
   const s32 minimumNumPixels = 6;
   const s32 maximumNumPixels = 1000;
 
-  MemoryStack ms(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  ConnectedComponents components(numComponents, 640, ms);
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  ConnectedComponents components(numComponents, 640, scratchOnchip);
 
   const ConnectedComponentSegment component0 = ConnectedComponentSegment(0, 10, 0, 1);
   const ConnectedComponentSegment component1 = ConnectedComponentSegment(12, 12, 1, 1);
@@ -3627,7 +3648,7 @@ GTEST_TEST(CoreTech_Vision, InvalidateSmallOrLargeComponents)
   components.PushBack(component9);
 
   {
-    const Result result = components.InvalidateSmallOrLargeComponents(minimumNumPixels, maximumNumPixels, ms);
+    const Result result = components.InvalidateSmallOrLargeComponents(minimumNumPixels, maximumNumPixels, scratchOnchip);
     ASSERT_TRUE(result == RESULT_OK);
   }
 
@@ -3643,7 +3664,7 @@ GTEST_TEST(CoreTech_Vision, InvalidateSmallOrLargeComponents)
   ASSERT_TRUE(components.Pointer(9)->id == 0);
 
   {
-    const Result result = components.CompressConnectedComponentSegmentIds(ms);
+    const Result result = components.CompressConnectedComponentSegmentIds(scratchOnchip);
     ASSERT_TRUE(result == RESULT_OK);
 
     const s32 maximumId = components.get_maximumId();
@@ -3668,10 +3689,13 @@ GTEST_TEST(CoreTech_Vision, CompressComponentIds)
 {
   const s32 numComponents = 10;
 
-  MemoryStack ms(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  ConnectedComponents components(numComponents, 640, ms);
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  ConnectedComponents components(numComponents, 640, scratchOnchip);
 
   const ConnectedComponentSegment component0 = ConnectedComponentSegment(0, 0, 0, 5);  // 3
   const ConnectedComponentSegment component1 = ConnectedComponentSegment(0, 0, 0, 10); // 4
@@ -3696,7 +3720,7 @@ GTEST_TEST(CoreTech_Vision, CompressComponentIds)
   components.PushBack(component9);
 
   {
-    const Result result = components.CompressConnectedComponentSegmentIds(ms);
+    const Result result = components.CompressConnectedComponentSegmentIds(scratchOnchip);
     ASSERT_TRUE(result == RESULT_OK);
 
     const s32 maximumId = components.get_maximumId();
@@ -3721,20 +3745,22 @@ GTEST_TEST(CoreTech_Vision, CompressComponentIds)
 GTEST_TEST(CoreTech_Vision, ComponentsSize)
 {
   const s32 numComponents = 500;
-  const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 10000);
 
-  MemoryStack ms(&offchipBuffer[0], numBytes);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  const s32 usedBytes0 = ms.get_usedBytes();
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  const s32 usedBytes0 = scratchOnchip.get_usedBytes();
 
 #ifdef PRINTF_SIZE_RESULTS
   CoreTechPrint("Original size: %d\n", usedBytes0);
 #endif
 
-  FixedLengthList<ConnectedComponentSegment> segmentList(numComponents, ms);
+  FixedLengthList<ConnectedComponentSegment> segmentList(numComponents, scratchOnchip);
 
-  const s32 usedBytes1 = ms.get_usedBytes();
+  const s32 usedBytes1 = scratchOnchip.get_usedBytes();
   const double actualSizePlusOverhead = double(usedBytes1 - usedBytes0) / double(numComponents);
 
 #ifdef PRINTF_SIZE_RESULTS
@@ -3758,10 +3784,13 @@ GTEST_TEST(CoreTech_Vision, SortComponents)
 {
   const s32 numComponents = 10;
 
-  MemoryStack ms(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  ConnectedComponents components(numComponents, 640, ms);
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  ConnectedComponents components(numComponents, 640, scratchOnchip);
 
   const ConnectedComponentSegment component0 = ConnectedComponentSegment(50, 100, 50, u16_MAX); // 2
   const ConnectedComponentSegment component1 = ConnectedComponentSegment(s16_MAX, s16_MAX, s16_MAX, 0); // 9
@@ -3806,10 +3835,13 @@ GTEST_TEST(CoreTech_Vision, SortComponentsById)
 {
   const s32 numComponents = 10;
 
-  MemoryStack ms(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  ConnectedComponents components(numComponents, 640, ms);
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  ConnectedComponents components(numComponents, 640, scratchOnchip);
 
   const ConnectedComponentSegment component0 = ConnectedComponentSegment(1, 1, 1, 3); // 6
   const ConnectedComponentSegment component1 = ConnectedComponentSegment(2, 2, 2, 1); // 0
@@ -3833,7 +3865,7 @@ GTEST_TEST(CoreTech_Vision, SortComponentsById)
   components.PushBack(component8);
   components.PushBack(component9);
 
-  const Result result = components.SortConnectedComponentSegmentsById(ms);
+  const Result result = components.SortConnectedComponentSegmentsById(scratchOnchip);
   ASSERT_TRUE(result == RESULT_OK);
 
   ASSERT_TRUE(components.get_size() == 9);
@@ -3860,9 +3892,11 @@ GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
   const s32 maxSkipDistance = 0;
   const s32 maxComponentSegments = 100;
 
-  // Allocate memory from the heap, for the memory allocator
-  MemoryStack ms(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
 #define ApproximateConnectedComponents2d_binaryImageDataLength (18*5)
   const s32 binaryImageData[] = {
@@ -3895,7 +3929,7 @@ GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
 #endif // #ifdef SORTED_BY_ID_GROUND_TRUTH_ApproximateConnectedComponents2d
 #endif // #ifdef UNSORTED_GROUND_TRUTH_ApproximateConnectedComponents2d ... #else
 
-  Array<u8> binaryImage(imageHeight, imageWidth, ms);
+  Array<u8> binaryImage(imageHeight, imageWidth, scratchOnchip);
   ASSERT_TRUE(binaryImage.IsValid());
 
   //binaryImage.Print("binaryImage");
@@ -3904,14 +3938,14 @@ GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
 
   //binaryImage.Print("binaryImage");
 
-  //FixedLengthList<ConnectedComponentSegment> extractedComponents(maxComponentSegments, ms);
-  ConnectedComponents components(maxComponentSegments, imageWidth, ms);
+  //FixedLengthList<ConnectedComponentSegment> extractedComponents(maxComponentSegments, scratchOnchip);
+  ConnectedComponents components(maxComponentSegments, imageWidth, scratchOnchip);
   ASSERT_TRUE(components.IsValid());
 
-  const Result result = components.Extract2dComponents_FullImage(binaryImage, minComponentWidth, maxSkipDistance, ms);
+  const Result result = components.Extract2dComponents_FullImage(binaryImage, minComponentWidth, maxSkipDistance, scratchOnchip);
   ASSERT_TRUE(result == RESULT_OK);
 
-  ASSERT_TRUE(components.SortConnectedComponentSegmentsById(ms) == RESULT_OK);
+  ASSERT_TRUE(components.SortConnectedComponentSegmentsById(scratchOnchip) == RESULT_OK);
 
   ASSERT_TRUE(components.get_size() == 13);
 
@@ -3929,21 +3963,21 @@ GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
 
 GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d)
 {
-  const s32 imageWidth = 50;
-  const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 5000);
-
+  const s32 imageWidth = 50;  
   const s32 minComponentWidth = 3;
   const s32 maxComponents = 10;
   const s32 maxSkipDistance = 1;
 
-  // Allocate memory from the heap, for the memory allocator
-  MemoryStack ms(&offchipBuffer[0], numBytes);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  u8 * binaryImageRow = reinterpret_cast<u8*>(ms.Allocate(imageWidth));
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  u8 * binaryImageRow = reinterpret_cast<u8*>(scratchOnchip.Allocate(imageWidth));
   memset(binaryImageRow, 0, imageWidth);
 
-  FixedLengthList<ConnectedComponentSegment> extractedComponentSegments(maxComponents, ms);
+  FixedLengthList<ConnectedComponentSegment> extractedComponentSegments(maxComponents, scratchOnchip);
 
   for(s32 i=10; i<=15; i++) binaryImageRow[i] = 1;
   for(s32 i=25; i<=35; i++) binaryImageRow[i] = 1;
@@ -3970,17 +4004,17 @@ GTEST_TEST(CoreTech_Vision, BinomialFilter)
 {
   const s32 imageWidth = 10;
   const s32 imageHeight = 5;
-  const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 5000);
+  
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  // Allocate memory from the heap, for the memory allocator
-  MemoryStack ms(&offchipBuffer[0], numBytes);
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
-  ASSERT_TRUE(ms.IsValid());
-
-  Array<u8> image(imageHeight, imageWidth, ms);
+  Array<u8> image(imageHeight, imageWidth, scratchOnchip);
   image.SetZero();
 
-  Array<u8> imageFiltered(imageHeight, imageWidth, ms);
+  Array<u8> imageFiltered(imageHeight, imageWidth, scratchOnchip);
 
   ASSERT_TRUE(image.get_buffer()!= NULL);
   ASSERT_TRUE(imageFiltered.get_buffer()!= NULL);
@@ -3989,7 +4023,7 @@ GTEST_TEST(CoreTech_Vision, BinomialFilter)
     *image.Pointer(2,x) = static_cast<u8>(x);
   }
 
-  const Result result = ImageProcessing::BinomialFilter<u8,u32,u8>(image, imageFiltered, ms);
+  const Result result = ImageProcessing::BinomialFilter<u8,u32,u8>(image, imageFiltered, scratchOnchip);
 
   //CoreTechPrint("image:\n");
   //image.Print();
@@ -4016,15 +4050,14 @@ GTEST_TEST(CoreTech_Vision, DownsampleByFactor)
   const s32 imageWidth = 10;
   const s32 imageHeight = 4;
 
-  // Allocate memory from the heap, for the memory allocator
-  const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 1000);
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  MemoryStack ms(&offchipBuffer[0], numBytes);
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
-  ASSERT_TRUE(ms.IsValid());
-
-  Array<u8> image(imageHeight, imageWidth, ms);
-  Array<u8> imageDownsampled(imageHeight/2, imageWidth/2, ms);
+  Array<u8> image(imageHeight, imageWidth, scratchOnchip);
+  Array<u8> imageDownsampled(imageHeight/2, imageWidth/2, scratchOnchip);
 
   ASSERT_TRUE(image.get_buffer()!= NULL);
   ASSERT_TRUE(imageDownsampled.get_buffer()!= NULL);
@@ -4079,12 +4112,11 @@ GTEST_TEST(CoreTech_Vision, P3P_PerspectivePoseEstimation)
 
   InitBenchmarking();
 
-  // Allocate memory from the heap, for the memory allocator
-  // TODO: How much memory do i need here?
-  const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 250*sizeof(PRECISION));
-
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
   MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(scratchOffchip.IsValid());
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
   // Parameters
   Array<PRECISION> Rtrue = Array<PRECISION>(3,3,scratchOffchip);

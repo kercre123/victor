@@ -237,8 +237,8 @@ namespace Anki
       {
         Result lastResult;
 
-        AnkiConditionalErrorAndReturnValue(in.IsValid() && out.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "PlanarTransformation_f32::Transform", "inputs are not valid");
+        AnkiConditionalErrorAndReturnValue(AreValid(in, out),
+          RESULT_FAIL_INVALID_OBJECT, "PlanarTransformation_f32::Transform", "Invalid objects");
 
         AnkiConditionalErrorAndReturnValue(AreEqualSize(in, out),
           RESULT_FAIL_INVALID_SIZE, "PlanarTransformation_f32::Transform", "input and output are different sizes");
@@ -307,8 +307,8 @@ namespace Anki
         const f32 scale
         ) const
       {
-        AnkiConditionalErrorAndReturnValue(in.IsValid() && out.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "PlanarTransformation_f32::Transform", "inputs are not valid");
+        AnkiConditionalErrorAndReturnValue(AreValid(in, out),
+          RESULT_FAIL_INVALID_OBJECT, "PlanarTransformation_f32::Transform", "Invalid objects");
 
         AnkiConditionalErrorAndReturnValue(in.get_size() == out.get_size(),
           RESULT_FAIL_INVALID_SIZE, "PlanarTransformation_f32::Transform", "input and output are different sizes");
@@ -542,17 +542,13 @@ namespace Anki
         const bool outputPointsAreZeroCentered,
         Array<f32> &xOut, Array<f32> &yOut)
       {
-        AnkiConditionalErrorAndReturnValue(homography.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "PlanarTransformation_f32::TransformPoints", "homography is not valid");
-
-        AnkiConditionalErrorAndReturnValue(xIn.IsValid() && yIn.IsValid() && xOut.IsValid() && yOut.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "PlanarTransformation_f32::TransformPoints", "All inputs and outputs must be allocated and valid");
+        AnkiConditionalErrorAndReturnValue(AreValid(homography, xIn, yIn, xOut, yOut),
+          RESULT_FAIL_INVALID_OBJECT, "PlanarTransformation_f32::TransformPoints", "Invalid objects");
 
         AnkiConditionalErrorAndReturnValue(NotAliased(xIn, xOut, yIn, yOut),
           RESULT_FAIL_ALIASED_MEMORY, "PlanarTransformation_f32::TransformPoints", "In and Out arrays must be in different memory locations");
 
-        AnkiConditionalErrorAndReturnValue(
-          AreEqualSize(xIn, yIn, xOut, yOut),
+        AnkiConditionalErrorAndReturnValue(AreEqualSize(xIn, yIn, xOut, yOut),
           RESULT_FAIL_INVALID_SIZE, "PlanarTransformation_f32::TransformPoints", "All inputs and outputs must be the same size");
 
         const s32 numPointsY = xIn.get_size(0);
@@ -695,11 +691,8 @@ namespace Anki
       {
         Result lastResult;
 
-        AnkiConditionalErrorAndReturnValue(homography.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "ComputeHomographyFromQuad", "homography is not valid");
-
-        AnkiConditionalErrorAndReturnValue(scratch.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "ComputeHomographyFromQuad", "scratch is not valid");
+        AnkiConditionalErrorAndReturnValue(AreValid(homography, scratch),
+          RESULT_FAIL_INVALID_OBJECT, "ComputeHomographyFromQuad", "Invalid objects");
 
         // TODO: I got rid of sorting, but now we have an extra copy here that can be removed.
         //Quadrilateral<s16> sortedQuad = quad.ComputeClockwiseCorners();

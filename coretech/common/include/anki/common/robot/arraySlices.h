@@ -41,6 +41,11 @@ namespace Anki
       return expression;
     }
 
+    template<typename Type> bool ConstArraySlice<Type>::IsValid() const
+    {
+      return this->array.IsValid();
+    }
+
     template<typename Type> const LinearSequence<s32>& ConstArraySlice<Type>::get_ySlice() const
     {
       return ySlice;
@@ -76,11 +81,8 @@ namespace Anki
 
     template<typename Type> s32 ArraySlice<Type>::Set(const ConstArraySliceExpression<Type> &input, bool automaticTranspose)
     {
-      AnkiConditionalErrorAndReturnValue(this->get_array().IsValid(),
-        0, "ArraySlice<Type>::Set", "Invalid array");
-
-      AnkiConditionalErrorAndReturnValue(input.get_array().IsValid(),
-        0, "ArraySlice<Type>::Set", "Invalid array");
+      AnkiConditionalErrorAndReturnValue(AreValid(*this, input),
+        0, "ArraySlice<Type>::Set", "Invalid objects");
 
       AnkiConditionalErrorAndReturnValue(this->get_array().get_buffer() != input.get_array().get_buffer(),
         0, "ArraySlice<Type>::Set", "Arrays must be in different memory locations");

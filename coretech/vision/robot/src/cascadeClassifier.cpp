@@ -278,8 +278,8 @@ namespace Anki
         const FixedLengthList<s32> &subsets)
         : isValid(false)
       {
-        AnkiConditionalErrorAndReturn(stages.IsValid() && classifiers.IsValid() && nodes.IsValid() && leaves.IsValid() && subsets.IsValid(),
-          "CascadeClassifier::CascadeClassifier", "Some inputs are not valid");
+        AnkiConditionalErrorAndReturn(AreValid(stages, classifiers, nodes, leaves, subsets),
+          "CascadeClassifier::CascadeClassifier", "Invalid objects");
 
         this->data.isStumpBased = isStumpBased;
         this->data.stageType = stageType;
@@ -302,19 +302,7 @@ namespace Anki
         if(!isValid)
           return false;
 
-        if(!data.stages.IsValid())
-          return false;
-
-        if(!data.classifiers.IsValid())
-          return false;
-
-        if(!data.nodes.IsValid())
-          return false;
-
-        if(!data.leaves.IsValid())
-          return false;
-
-        if(!data.subsets.IsValid())
+        if(!AreValid(data.stages, data.classifiers, data.nodes, data.leaves, data.subsets))
           return false;
 
         if(data.stages.get_size() != data.stages.get_maximumSize())
@@ -385,7 +373,7 @@ namespace Anki
         this->features = FixedLengthList<LBPFeature>(static_cast<s32>(evaluator->features->size()), memory);
         this->features.set_size(static_cast<s32>(evaluator->features->size()));
 
-        AnkiConditionalErrorAndReturn(this->data.stages.IsValid() && this->data.classifiers.IsValid() && this->data.nodes.IsValid() && this->data.leaves.IsValid() && this->data.subsets.IsValid() && this->features.IsValid(),
+        AnkiConditionalErrorAndReturn(AreValid(this->data.stages, this->data.classifiers, this->data.nodes, this->data.leaves, this->data.subsets, this->features),
           "CascadeClassifier::CascadeClassifier", "Out of memory copying %s", filename);
 
         for(s32 i=0; i<this->data.stages.get_size(); i++) {
@@ -648,8 +636,8 @@ namespace Anki
 
         this->features = FixedLengthList<LBPFeature>(featureRectangles.get_size(), memory, Flags::Buffer(true, false, true));
 
-        AnkiConditionalErrorAndReturn(featureRectangles.IsValid() && this->features.IsValid(),
-          "CascadeClassifier_LBP::CascadeClassifier_LBP", "Some inputs are not valid");
+        AnkiConditionalErrorAndReturn(AreValid(featureRectangles, this->features),
+          "CascadeClassifier_LBP::CascadeClassifier_LBP", "Invalid objects");
 
         const s32 numFeatures = featureRectangles.get_size();
 
@@ -683,7 +671,7 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(this->IsValid(),
           RESULT_FAIL_INVALID_OBJECT, "CascadeClassifier::DetectMultiScale", "This object is invalid");
 
-        AnkiConditionalErrorAndReturnValue(image.IsValid() && objects.IsValid(),
+        AnkiConditionalErrorAndReturnValue(AreValid(image, objects),
           RESULT_FAIL_INVALID_OBJECT, "CascadeClassifier::DetectMultiScale", "Invalid inputs");
 
         BeginBenchmark("CascadeClassifier_LBP::DetectMultiScale");

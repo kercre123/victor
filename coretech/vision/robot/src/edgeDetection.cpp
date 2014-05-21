@@ -43,8 +43,8 @@ namespace Anki
 
     Result DetectBlurredEdges_GrayvalueThreshold(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const u8 grayvalueThreshold, const s32 minComponentWidth, const s32 everyNLines, EdgeLists &edgeLists)
     {
-      AnkiConditionalErrorAndReturnValue(image.IsValid() && edgeLists.xDecreasing.IsValid() && edgeLists.xIncreasing.IsValid() && edgeLists.yDecreasing.IsValid() && edgeLists.yIncreasing.IsValid(),
-        RESULT_FAIL_INVALID_OBJECT, "DetectBlurredEdges", "Arrays are not valid");
+      AnkiConditionalErrorAndReturnValue(AreValid(image, edgeLists.xDecreasing, edgeLists.xIncreasing, edgeLists.yDecreasing, edgeLists.yIncreasing),
+        RESULT_FAIL_INVALID_OBJECT, "DetectBlurredEdges", "Invalid objects");
 
       AnkiConditionalErrorAndReturnValue(minComponentWidth > 0,
         RESULT_FAIL_INVALID_SIZE, "DetectBlurredEdges", "minComponentWidth is too small");
@@ -84,8 +84,8 @@ namespace Anki
 
     Result DetectBlurredEdges_DerivativeThreshold(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const s32 combHalfWidth, const s32 combResponseThreshold, const s32 everyNLines, EdgeLists &edgeLists)
     {
-      AnkiConditionalErrorAndReturnValue(image.IsValid() && edgeLists.xDecreasing.IsValid() && edgeLists.xIncreasing.IsValid() && edgeLists.yDecreasing.IsValid() && edgeLists.yIncreasing.IsValid(),
-        RESULT_FAIL_INVALID_OBJECT, "DetectBlurredEdges", "Arrays are not valid");
+      AnkiConditionalErrorAndReturnValue(AreValid(image, edgeLists.xDecreasing, edgeLists.xIncreasing, edgeLists.yDecreasing, edgeLists.yIncreasing),
+        RESULT_FAIL_INVALID_OBJECT, "DetectBlurredEdges", "Invalid objects");
 
       AnkiConditionalErrorAndReturnValue(combHalfWidth > 0 && combResponseThreshold >= 0,
         RESULT_FAIL_INVALID_SIZE, "DetectBlurredEdges", "combHalfWidth or combResponseThreshold are too small");
@@ -601,8 +601,8 @@ namespace Anki
 
       AnkiConditionalErrorAndReturnValue(
         imageHeight > 0 && imageHeight < 2000 && imageWidth > 0 && imageWidth < 2000 &&
-        indexPoints1.IsValid() && indexPoints2.IsValid() && indexPoints3.IsValid() && indexPoints4.IsValid(),
-        cv::Mat(), "EdgeLists::DrawIndexes", "inputs are not valid");
+        AreValid(indexPoints1, indexPoints2, indexPoints3, indexPoints4),
+        cv::Mat(), "EdgeLists::DrawIndexes", "Invalid objects");
 
       const s32 scratchSize = 10000000;
       MemoryStack scratch(malloc(scratchSize), scratchSize);

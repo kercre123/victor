@@ -34,11 +34,8 @@ namespace Anki
       const s32 imageHeight = image.get_size(0);
       const s32 imageWidth = image.get_size(1);
 
-      AnkiConditionalErrorAndReturnValue(image.IsValid() && homography.IsValid(),
-        RESULT_FAIL_INVALID_OBJECT, "FiducialMarkerDecisionTree::Classify", "Inputs are not valid");
-
-      AnkiConditionalErrorAndReturnValue(this->IsValid(),
-        RESULT_FAIL_INVALID_OBJECT, "FiducialMarkerDecisionTree::Classify", "This object is not valid");
+      AnkiConditionalErrorAndReturnValue(AreValid(*this, image, homography),
+        RESULT_FAIL_INVALID_OBJECT, "FiducialMarkerDecisionTree::Classify", "Invalid objects");
 
       // This function is optimized for 9 or fewer probes, but this is not a big issue
       AnkiAssert(numProbeOffsets <= 9);
