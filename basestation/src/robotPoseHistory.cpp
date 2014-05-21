@@ -7,7 +7,6 @@
 //
 
 #include "anki/cozmo/basestation/robotPoseHistory.h"
-#include "anki/cozmo/basestation/robot.h"
 #include "anki/common/basestation/general.h"
 
 #define DEBUG_ROBOT_POSE_HISTORY 0
@@ -303,8 +302,12 @@ namespace Anki {
       }
 #endif
       
+      CORETECH_ASSERT((p1.GetPose().get_parent() == Pose3d::World) &&
+                      (p0_it->second.GetPose().get_parent() == Pose3d::World));
+      
       // Compute relative pose between p0_it and p1 and append to the vision-based pose.
-      Pose3d pTransform = p1.GetPose().getWithRespectTo(&(p0_it->second.GetPose()));
+      Pose3d pTransform = p0_it->second.GetPose().getInverse() * p1.GetPose();
+      
 
 #if(DEBUG_ROBOT_POSE_HISTORY)
       if (printDbg) {
