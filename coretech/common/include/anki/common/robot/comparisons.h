@@ -70,15 +70,101 @@ namespace Anki
       return true;
     }
 
-    template<typename Type1, typename Type2> bool AreEqualSize(const Array<Type1> &array1, const Array<Type2> &array2)
+    template<typename Type1, typename Type2> bool AreEqualSize(const Type1 &object1, const Type2 &object2)
     {
-      if(!array1.IsValid())
+      if(!object1.IsValid() || !object2.IsValid())
         return false;
 
-      if(!array2.IsValid())
+      if(object1.get_size(0) != object2.get_size(0) || object1.get_size(1) != object2.get_size(1))
         return false;
 
-      if(array1.get_size(0) != array2.get_size(0) || array1.get_size(1) != array2.get_size(1))
+      return true;
+    }
+
+    template<typename Type1, typename Type2, typename Type3> bool AreEqualSize(const Type1 &object1, const Type2 &object2, const Type3 &object3)
+    {
+      if(!object1.IsValid() || !object2.IsValid() || !object3.IsValid())
+        return false;
+
+      if(object1.get_size(0) != object2.get_size(0) || object1.get_size(1) != object2.get_size(1) ||
+        object1.get_size(0) != object3.get_size(0) || object1.get_size(1) != object3.get_size(1))
+        return false;
+
+      return true;
+    }
+
+    template<typename Type1, typename Type2, typename Type3, typename Type4> bool AreEqualSize(const Type1 &object1, const Type2 &object2, const Type3 &object3, const Type4 &object4)
+    {
+      if(!object1.IsValid() || !object2.IsValid() || !object3.IsValid() || !object4.IsValid())
+        return false;
+
+      if(object1.get_size(0) != object2.get_size(0) || object1.get_size(1) != object2.get_size(1) ||
+        object1.get_size(0) != object3.get_size(0) || object1.get_size(1) != object3.get_size(1) ||
+        object1.get_size(0) != object4.get_size(0) || object1.get_size(1) != object4.get_size(1))
+        return false;
+
+      return true;
+    }
+
+    template<typename Type1, typename Type2, typename Type3, typename Type4, typename Type5> bool AreEqualSize(const Type1 &object1, const Type2 &object2, const Type3 &object3, const Type4 &object4, const Type5 &object5)
+    {
+      if(!object1.IsValid() || !object2.IsValid() || !object3.IsValid() || !object4.IsValid() || !object5.IsValid())
+        return false;
+
+      if(object1.get_size(0) != object2.get_size(0) || object1.get_size(1) != object2.get_size(1) ||
+        object1.get_size(0) != object3.get_size(0) || object1.get_size(1) != object3.get_size(1) ||
+        object1.get_size(0) != object4.get_size(0) || object1.get_size(1) != object4.get_size(1) ||
+        object1.get_size(0) != object5.get_size(0) || object1.get_size(1) != object5.get_size(1))
+        return false;
+
+      return true;
+    }
+
+    template<typename Type1, typename Type2> bool NotAliased(const Type1 &object1, const Type2 &object2)
+    {
+      if(!object1.IsValid() || !object2.IsValid())
+        return false;
+
+      if(object1.get_buffer() == object2.get_buffer())
+        return false;
+
+      return true;
+    }
+
+    template<typename Type1, typename Type2, typename Type3> bool NotAliased(const Type1 &object1, const Type2 &object2, const Type3 &object3)
+    {
+      if(!object1.IsValid() || !object2.IsValid() || !object3.IsValid())
+        return false;
+
+      if(object1.get_buffer() == object2.get_buffer() ||
+        object1.get_buffer() == object3.get_buffer())
+        return false;
+
+      return true;
+    }
+
+    template<typename Type1, typename Type2, typename Type3, typename Type4> bool NotAliased(const Type1 &object1, const Type2 &object2, const Type3 &object3, const Type4 &object4)
+    {
+      if(!object1.IsValid() || !object2.IsValid() || !object3.IsValid() || !object4.IsValid())
+        return false;
+
+      if(object1.get_buffer() == object2.get_buffer() ||
+        object1.get_buffer() == object3.get_buffer() ||
+        object1.get_buffer() == object4.get_buffer())
+        return false;
+
+      return true;
+    }
+
+    template<typename Type1, typename Type2, typename Type3, typename Type4, typename Type5> bool NotAliased(const Type1 &object1, const Type2 &object2, const Type3 &object3, const Type4 &object4, const Type5 &object5)
+    {
+      if(!object1.IsValid() || !object2.IsValid() || !object3.IsValid() || !object4.IsValid() || !object5.IsValid())
+        return false;
+
+      if(object1.get_buffer() == object2.get_buffer() ||
+        object1.get_buffer() == object3.get_buffer() ||
+        object1.get_buffer() == object4.get_buffer() ||
+        object1.get_buffer() == object5.get_buffer())
         return false;
 
       return true;

@@ -3422,7 +3422,7 @@ GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
 
   // Create a matrix, and manually set a few values
   Array<s16> simpleArray(10, 6, ms);
-  ASSERT_TRUE(simpleArray.get_rawDataPointer() != NULL);
+  ASSERT_TRUE(simpleArray.get_buffer() != NULL);
   *simpleArray.Pointer(0,0) = 1;
   *simpleArray.Pointer(0,1) = 2;
   *simpleArray.Pointer(0,2) = 3;

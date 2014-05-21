@@ -3982,8 +3982,8 @@ GTEST_TEST(CoreTech_Vision, BinomialFilter)
 
   Array<u8> imageFiltered(imageHeight, imageWidth, ms);
 
-  ASSERT_TRUE(image.get_rawDataPointer()!= NULL);
-  ASSERT_TRUE(imageFiltered.get_rawDataPointer()!= NULL);
+  ASSERT_TRUE(image.get_buffer()!= NULL);
+  ASSERT_TRUE(imageFiltered.get_buffer()!= NULL);
 
   for(s32 x=0; x<imageWidth; x++) {
     *image.Pointer(2,x) = static_cast<u8>(x);
@@ -4026,8 +4026,8 @@ GTEST_TEST(CoreTech_Vision, DownsampleByFactor)
   Array<u8> image(imageHeight, imageWidth, ms);
   Array<u8> imageDownsampled(imageHeight/2, imageWidth/2, ms);
 
-  ASSERT_TRUE(image.get_rawDataPointer()!= NULL);
-  ASSERT_TRUE(imageDownsampled.get_rawDataPointer()!= NULL);
+  ASSERT_TRUE(image.get_buffer()!= NULL);
+  ASSERT_TRUE(imageDownsampled.get_buffer()!= NULL);
 
   for(s32 x=0; x<imageWidth; x++) {
     *image.Pointer(2,x) = static_cast<u8>(x);

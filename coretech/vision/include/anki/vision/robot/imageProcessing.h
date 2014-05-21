@@ -17,6 +17,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/common/robot/array2d.h"
 #include "anki/common/robot/benchmarking.h"
+#include "anki/common/robot/comparisons.h"
 
 //#include "anki/common/robot/matlabInterface.h"
 
@@ -61,7 +62,7 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(in.IsValid() && out.IsValid(),
           RESULT_FAIL_INVALID_OBJECT, "ComputeXGradient", "An input is not valid");
 
-        AnkiConditionalErrorAndReturnValue(out.get_size(0) == imageHeight && out.get_size(1) == imageWidth,
+        AnkiConditionalErrorAndReturnValue(AreEqualSize(in, out),
           RESULT_FAIL_INVALID_SIZE, "ComputeXGradient", "Image sizes don't match");
 
         for(s32 y=1; y<imageHeight-1; y++) {
@@ -99,7 +100,7 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(in.IsValid() && out.IsValid(),
           RESULT_FAIL_INVALID_OBJECT, "ComputeYGradient", "An input is not valid");
 
-        AnkiConditionalErrorAndReturnValue(out.get_size(0) == imageHeight && out.get_size(1) == imageWidth,
+        AnkiConditionalErrorAndReturnValue(AreEqualSize(in, out),
           RESULT_FAIL_INVALID_SIZE, "ComputeYGradient", "Image sizes don't match");
 
         for(s32 y=1; y<imageHeight-1; y++) {
@@ -154,7 +155,7 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(imageHeight == imageFiltered.get_size(0) && imageWidth == imageFiltered.get_size(1),
           RESULT_FAIL_INVALID_SIZE, "BinomialFilter", "size(image) != size(imageFiltered) (%dx%d != %dx%d)", imageHeight, imageWidth, imageHeight, imageWidth);
 
-        AnkiConditionalErrorAndReturnValue(image.get_rawDataPointer() != imageFiltered.get_rawDataPointer(),
+        AnkiConditionalErrorAndReturnValue(NotAliased(image, imageFiltered),
           RESULT_FAIL_ALIASED_MEMORY, "BinomialFilter", "image and imageFiltered must be different");
 
         const s32 requiredScratch = imageHeight * RoundUp<s32>(imageWidth*sizeof(IntermediateType), MEMORY_ALIGNMENT);
@@ -261,8 +262,7 @@ namespace Anki
         const s32 imageHeight = image.get_size(0);
         const s32 imageWidth  = image.get_size(1);
 
-        AnkiConditionalErrorAndReturnValue(integralImage.get_size(0) == imageHeight &&
-          integralImage.get_size(1) == imageWidth,
+        AnkiConditionalErrorAndReturnValue(AreEqualSize(image, integralImage),
           RESULT_FAIL_INVALID_SIZE,
           "ImageProcessing::CreateIntegralImage",
           "Output integralImage array must match input image's size.");
@@ -554,7 +554,7 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(out.get_size(1) == outputLength,
           RESULT_FAIL_INVALID_SIZE, "Correlate1d", "Out must be the size of in1 + in2 - 1");
 
-        AnkiConditionalErrorAndReturnValue(in1.get_rawDataPointer() != in2.get_rawDataPointer() && in1.get_rawDataPointer() != out.get_rawDataPointer(),
+        AnkiConditionalErrorAndReturnValue(NotAliased(in1, in2, out),
           RESULT_FAIL_ALIASED_MEMORY, "Correlate1d", "in1, in2, and out must be in different memory locations");
 
         const InType * restrict pU;
@@ -666,7 +666,7 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(imageWidth > filterWidth,
           RESULT_FAIL_INVALID_SIZE, "Correlate1dCircularAndSameSizeOutput", "The image must be larger than the filter");
 
-        AnkiConditionalErrorAndReturnValue(image.get_rawDataPointer() != filter.get_rawDataPointer() && image.get_rawDataPointer() != out.get_rawDataPointer(),
+        AnkiConditionalErrorAndReturnValue(NotAliased(image, filter, out),
           RESULT_FAIL_ALIASED_MEMORY, "Correlate1dCircularAndSameSizeOutput", "in1, in2, and out must be in different memory locations");
 
         Array<InType> paddedImage(1, imageWidth + 2*(filterWidth-1), scratch);

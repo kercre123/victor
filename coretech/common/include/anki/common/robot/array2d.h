@@ -543,12 +543,12 @@ namespace Anki
       return stride;
     }
 
-    template<typename Type> void* Array<Type>::get_rawDataPointer()
+    template<typename Type> void* Array<Type>::get_buffer()
     {
       return data;
     }
 
-    template<typename Type> const void* Array<Type>::get_rawDataPointer() const
+    template<typename Type> const void* Array<Type>::get_buffer() const
     {
       return data;
     }

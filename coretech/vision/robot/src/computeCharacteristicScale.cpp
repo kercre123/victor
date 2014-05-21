@@ -334,7 +334,7 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(fastScratch.IsValid() && slowScratch.IsValid(),
         RESULT_FAIL_INVALID_OBJECT, "ExtractComponentsViaCharacteristicScale", "scratch is not valid");
 
-      AnkiConditionalErrorAndReturnValue(fastScratch.get_buffer() != slowScratch.get_buffer(),
+      AnkiConditionalErrorAndReturnValue(NotAliased(fastScratch, slowScratch),
         RESULT_FAIL_ALIASED_MEMORY, "ExtractComponentsViaCharacteristicScale", "fast and slow scratch buffers cannot be the same object");
 
       AnkiConditionalErrorAndReturnValue(image.IsValid(),

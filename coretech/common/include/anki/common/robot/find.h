@@ -15,12 +15,13 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/find_declarations.h"
 #include "anki/common/robot/array2d.h"
 #include "anki/common/robot/geometry.h"
+#include "anki/common/robot/comparisons.h"
 
 namespace Anki
 {
   namespace Embedded
   {
-// #pragma mark
+    // #pragma mark
 
     template<typename Type1, typename Operator, typename Type2> Find<Type1,Operator,Type2>::Find(const Array<Type1> &array1, const Array<Type2> &array2)
       : array1(array1), compareWithValue(false), array2(array2), value(static_cast<Type2>(0)), numOutputDimensions(0)
@@ -81,8 +82,7 @@ namespace Anki
         } // for(s32 x=0; x<arrayWidth; x++)
       } else { // if(this->compareWithValue)
         // These should be checked earlier
-        AnkiAssert(array1.get_size(0) == array2.get_size(0));
-        AnkiAssert(array1.get_size(1) == array2.get_size(1));
+        AnkiAssert(AreEqualSize(array1, array2));
 
         const s32 y = 0;
         const Type1 * const pArray1 = array1.Pointer(y, 0);
@@ -129,8 +129,7 @@ namespace Anki
         } // for(s32 y=0; y<arrayHeight; y++)
       } else { // if(this->compareWithValue)
         // These should be checked earlier
-        AnkiAssert(array1.get_size(0) == array2.get_size(0));
-        AnkiAssert(array1.get_size(1) == array2.get_size(1));
+        AnkiAssert(AreEqualSize(array1, array2));
 
         for(s32 y=0; y<arrayHeight; y++) {
           const Type1 * const pArray1 = array1.Pointer(y, 0);
@@ -186,8 +185,7 @@ namespace Anki
         } // for(s32 y=0; y<arrayHeight; y++)
       } else { // if(this->compareWithValue)
         // These should be checked earlier
-        AnkiAssert(array1.get_size(0) == array2.get_size(0));
-        AnkiAssert(array1.get_size(1) == array2.get_size(1));
+        AnkiAssert(AreEqualSize(array1, array2));
 
         for(s32 y=0; y<arrayHeight; y++) {
           const Type1 * const pArray1 = array1.Pointer(y, 0);
@@ -234,8 +232,7 @@ namespace Anki
         } // for(s32 y=0; y<arrayHeight; y++)
       } else { // if(this->compareWithValue)
         // These should be checked earlier
-        AnkiAssert(array1.get_size(0) == array2.get_size(0));
-        AnkiAssert(array1.get_size(1) == array2.get_size(1));
+        AnkiAssert(AreEqualSize(array1, array2));
 
         for(s32 y=0; y<arrayHeight; y++) {
           const Type1 * const pArray1 = array1.Pointer(y, 0);
@@ -279,7 +276,7 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(out.IsValid(),
         RESULT_FAIL_INVALID_OBJECT, "Find.SetArray", "out is invalid");
 
-      AnkiConditionalErrorAndReturnValue(out.get_size(0) == arrayHeight && out.get_size(1) == arrayWidth,
+      AnkiConditionalErrorAndReturnValue(AreEqualSize(array1, out),
         RESULT_FAIL_INVALID_SIZE, "Find.SetArray", "out is not the same size as the input(s)");
 
       if(this->compareWithValue) {
@@ -296,8 +293,7 @@ namespace Anki
         } // for(s32 y=0; y<arrayHeight; y++)
       } else { // if(this->compareWithValue)
         // These should be checked earlier
-        AnkiAssert(array1.get_size(0) == array2.get_size(0));
-        AnkiAssert(array1.get_size(1) == array2.get_size(1));
+        AnkiAssert(AreEqualSize(array1, array2));
 
         for(s32 y=0; y<arrayHeight; y++) {
           const Type1 * const pArray1 = array1.Pointer(y, 0);
@@ -407,8 +403,7 @@ namespace Anki
         } // if(findWhichDimension == 0) ... else
       } else { // if(this->compareWithValue)
         // These should be checked earlier
-        AnkiAssert(array1.get_size(0) == array2.get_size(0));
-        AnkiAssert(array1.get_size(1) == array2.get_size(1));
+        AnkiAssert(AreEqualSize(array1, array2));
 
         if(findWhichDimension == 0) {
           const Type1 * const pArray1 = array1.Pointer(0, 0);

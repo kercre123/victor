@@ -201,8 +201,8 @@ namespace Anki
       //
       // These are for very low-level access to the buffers. Probably you want to be using one of
       // the Pointer() accessor methods instead of these.
-      void* get_rawDataPointer();
-      const void* get_rawDataPointer() const;
+      void* get_buffer();
+      const void* get_buffer() const;
 
     protected:
       static const s32 HEADER_LENGTH = 8;

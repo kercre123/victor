@@ -82,7 +82,7 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(input.get_array().IsValid(),
         0, "ArraySlice<Type>::Set", "Invalid array");
 
-      AnkiConditionalErrorAndReturnValue(this->get_array().get_rawDataPointer() != input.get_array().get_rawDataPointer(),
+      AnkiConditionalErrorAndReturnValue(this->get_array().get_buffer() != input.get_array().get_buffer(),
         0, "ArraySlice<Type>::Set", "Arrays must be in different memory locations");
 
       ArraySliceLimits_in1_out1<s32> limits(

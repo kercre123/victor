@@ -17,6 +17,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/arraySlices.h"
 #include "anki/common/robot/trig_fast.h"
 #include "anki/common/robot/benchmarking.h"
+#include "anki/common/robot/comparisons.h"
 
 namespace Anki
 {
@@ -671,10 +672,10 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(out.IsValid(),
           RESULT_FAIL_INVALID_OBJECT, "Transpose", "out is not valid");
 
-        AnkiConditionalErrorAndReturnValue(out.get_size(0) == inWidth && out.get_size(1) == inHeight,
+        AnkiConditionalErrorAndReturnValue(AreEqualSize(in, out),
           RESULT_FAIL_INVALID_SIZE, "Transpose", "out is not the correct size");
 
-        AnkiConditionalErrorAndReturnValue(in.get_rawDataPointer() != out.get_rawDataPointer(),
+        AnkiConditionalErrorAndReturnValue(NotAliased(in, out),
           RESULT_FAIL_ALIASED_MEMORY, "Transpose", "in and out cannot be the same array");
 
         for(s32 yIn=0; yIn<inHeight; yIn++) {
@@ -720,7 +721,7 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(out.get_size(0) == arrWidth && out.get_size(1) == arrWidth,
           RESULT_FAIL_INVALID_SIZE, "Rotate90", "in and out must be square");
 
-        AnkiConditionalErrorAndReturnValue(in.get_rawDataPointer() != out.get_rawDataPointer(),
+        AnkiConditionalErrorAndReturnValue(NotAliased(in, out),
           RESULT_FAIL_ALIASED_MEMORY, "Rotate90", "in and out cannot be the same array");
 
         const s32 outStride = out.get_stride();
@@ -755,7 +756,7 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(out.get_size(0) == arrWidth && out.get_size(1) == arrWidth,
           RESULT_FAIL_INVALID_SIZE, "Rotate180", "in and out must be square");
 
-        AnkiConditionalErrorAndReturnValue(in.get_rawDataPointer() != out.get_rawDataPointer(),
+        AnkiConditionalErrorAndReturnValue(NotAliased(in, out),
           RESULT_FAIL_ALIASED_MEMORY, "Rotate180", "in and out cannot be the same array");
 
         for(s32 yIn=0; yIn<arrWidth; yIn++) {
@@ -786,7 +787,7 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(out.get_size(0) == arrWidth && out.get_size(1) == arrWidth,
           RESULT_FAIL_INVALID_SIZE, "Rotate270", "in and out must be square");
 
-        AnkiConditionalErrorAndReturnValue(in.get_rawDataPointer() != out.get_rawDataPointer(),
+        AnkiConditionalErrorAndReturnValue(NotAliased(in, out),
           RESULT_FAIL_ALIASED_MEMORY, "Rotate270", "in and out cannot be the same array");
 
         const s32 outStride = out.get_stride();
@@ -1613,7 +1614,7 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(sortWhichDimension==0 || sortWhichDimension==1,
           RESULT_FAIL_INVALID_PARAMETER, "Sort", "sortWhichDimension must be zero or one");
 
-        AnkiConditionalErrorAndReturnValue(indexes.get_size(0) == arrHeight && indexes.get_size(1) == arrWidth,
+        AnkiConditionalErrorAndReturnValue(AreEqualSize(arr, indexes),
           RESULT_FAIL_INVALID_SIZE, "Sort", "indexes must be the same size as arr");
 
         const s32 trueMinIndex = CLIP(minIndex, 0, arr.get_size(sortWhichDimension) - 1);
@@ -1723,7 +1724,7 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(insertionSortSize >= 1,
           RESULT_FAIL_INVALID_PARAMETER, "Sort", "insertionSortSize must be >= 1");
 
-        AnkiConditionalErrorAndReturnValue(indexes.get_size(0) == arrHeight && indexes.get_size(1) == arrWidth,
+        AnkiConditionalErrorAndReturnValue(AreEqualSize(arr, indexes),
           RESULT_FAIL_INVALID_SIZE, "Sort", "indexes must be the same size as arr");
 
         const s32 trueMinIndex = CLIP(minIndex, 0, arr.get_size(sortWhichDimension) - 1);
