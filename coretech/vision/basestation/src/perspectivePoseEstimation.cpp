@@ -279,8 +279,10 @@ namespace Anki {
         solveQuartic(factors, realRoots);
         
         // Backsubstitution of each solution
-        MATRIX Tt = T.getTranspose();
-        MATRIX Nt = N.getTranspose();
+        MATRIX Tt;
+        T.GetTranspose(Tt);
+        MATRIX Nt;
+        N.GetTranspose(Nt);
         for(s32 i=0; i<4; i++)
         {
           PRECISION cot_alpha = (-f_1*p_1/f_2-realRoots[i]*p_2+d_12*b)/(-f_1*realRoots[i]*p_2/f_2+p_1-d_12);

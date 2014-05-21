@@ -355,7 +355,7 @@ GTEST_TEST(TestMatrix, MatrixInverse)
   
   Matrix<float> Ainv, I;
   
-  Ainv = A.getInverse();
+  A.GetInverse(Ainv);
   I = A*Ainv;
   
   
@@ -386,9 +386,9 @@ GTEST_TEST(TestMatrix, MatrixInverse)
   
   
   // Invert non-square matrix
-  Matrix<float> B(3,4,0.f);
+  Matrix<float> B(3,4,0.f), Binv;
   
-  ASSERT_ANY_THROW(B.getInverse());
+  ASSERT_ANY_THROW(B.GetInverse(Binv));
   ASSERT_ANY_THROW(B.Invert());
 }
 
@@ -401,7 +401,7 @@ GTEST_TEST(TestMatrix, SmallMatrixInverse)
   Matrix_3x3f A(initValsA);
   Matrix_3x3f Ainv, I;
   
-  Ainv = A.getInverse();
+  A.GetInverse(Ainv);
   I = A*Ainv;
   
   
@@ -456,7 +456,7 @@ GTEST_TEST(TestMatrix, MatrixTranspose)
   A(2,0) = 7.f;    A(2,1) = 8.f;     A(2,2) = 9.f;
   
   Matrix<float> A_t;
-  A_t = A.getTranpose();
+  A.GetTranspose(A_t);
   
 #ifdef DEBUG_TEST_MATRIX
   cout << "Matrix A: \n" << A << "\n";
@@ -488,7 +488,8 @@ GTEST_TEST(TestMatrix, MatrixTranspose)
   B(1,0) = 5.f;   B(1,1) = 6.f;   B(1,2) = 7.f;   B(1,3) = 8.f;
   B(2,0) = 9.f;   B(2,1) = 10.f;  B(2,2) = 11.f;  B(2,3) = 12.f;
   
-  Matrix<float> B_t = B.getTranpose();
+  Matrix<float> B_t;
+  B.GetTranspose(B_t);
   
 #ifdef DEBUG_TEST_MATRIX
   cout << "Matrix B: \n" << B << "\n";
@@ -524,7 +525,7 @@ GTEST_TEST(TestMatrix, SmallMatrixTranspose)
   Matrix_3x3f A(initValsA);
   
   Matrix_3x3f A_t;
-  A_t = A.getTranspose();
+  A.GetTranspose(A_t);
   
 #ifdef DEBUG_TEST_MATRIX
   cout << "SmallMatrix A: \n" << A << "\n";
@@ -544,7 +545,8 @@ GTEST_TEST(TestMatrix, SmallMatrixTranspose)
                        9, 10, 11, 12};
   Matrix_3x4f B(initValsB);
   
-  SmallMatrix<4,3,float> B_t = B.getTranspose();
+  SmallMatrix<4,3,float> B_t;
+  B.GetTranspose(B_t);
   
 #ifdef DEBUG_TEST_MATRIX
   cout << "SmallMatrix B: \n" << B << "\n";
