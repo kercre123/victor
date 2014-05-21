@@ -29,8 +29,7 @@ namespace Anki {
     // Forward Declarations:
     class Robot;
 
-    typedef u8  FaceType;
-    
+    using FaceType = u8;
     
     //
     // Block Class
@@ -40,7 +39,7 @@ namespace Anki {
     class Block : public Vision::ObservableObject //Base<Block>
     {
     public:
-      typedef Point3<unsigned char> Color;
+      using Color = Point3<u8>;
       
 #include "anki/cozmo/basestation/BlockDefinitions.h"
       
@@ -119,7 +118,7 @@ namespace Anki {
       void GetCorners(std::array<Point3f,8>& corners) const;
       */
       // Get the block's corners at a specified pose
-      virtual void GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const;
+      virtual void GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const override;
       
       
       // Get possible poses to start docking/tracking procedure. These will e
@@ -133,7 +132,7 @@ namespace Anki {
       
       // Same as above, except no code is specified, and all docking points are
       // returned.
-      typedef std::pair<Pose3d,const Vision::KnownMarker&> PoseMarkerPair_t;
+      using PoseMarkerPair_t = std::pair<Pose3d,const Vision::KnownMarker&>;
       void GetPreDockPoses(const float distance_mm,
                            std::vector<PoseMarkerPair_t>& poseMarkerPairs) const;
       
@@ -211,9 +210,9 @@ namespace Anki {
       
       Block_Cube1x1(Type type);
       
-      virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const;
+      virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const override;
       
-      virtual Block* Clone() const
+      virtual Block* Clone() const override
       {
         // Call the copy constructor
         return new Block_Cube1x1(*this);
@@ -233,9 +232,9 @@ namespace Anki {
     public:
       Block_2x1(Type type);
       
-      virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const;
+      virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const override;
       
-      virtual Block* Clone() const
+      virtual Block* Clone() const override
       {
         // Call the copy constructor
         return new Block_2x1(*this);
