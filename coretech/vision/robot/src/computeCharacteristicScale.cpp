@@ -331,7 +331,7 @@ namespace Anki
 
       Result lastResult;
 
-      AnkiConditionalErrorAndReturnValue(fastScratch.IsValid() && slowScratch.IsValid(),
+      AnkiConditionalErrorAndReturnValue(AreValid(fastScratch, slowScratch),
         RESULT_FAIL_INVALID_OBJECT, "ExtractComponentsViaCharacteristicScale", "scratch is not valid");
 
       AnkiConditionalErrorAndReturnValue(NotAliased(fastScratch, slowScratch),

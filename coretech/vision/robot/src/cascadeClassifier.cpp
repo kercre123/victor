@@ -668,11 +668,8 @@ namespace Anki
         const s32 imageHeight = image.get_size(0);
         const s32 imageWidth = image.get_size(1);
 
-        AnkiConditionalErrorAndReturnValue(this->IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "CascadeClassifier::DetectMultiScale", "This object is invalid");
-
-        AnkiConditionalErrorAndReturnValue(AreValid(image, objects),
-          RESULT_FAIL_INVALID_OBJECT, "CascadeClassifier::DetectMultiScale", "Invalid inputs");
+        AnkiConditionalErrorAndReturnValue(AreValid(*this, image, objects),
+          RESULT_FAIL_INVALID_OBJECT, "CascadeClassifier::DetectMultiScale", "Invalid objects");
 
         BeginBenchmark("CascadeClassifier_LBP::DetectMultiScale");
 
