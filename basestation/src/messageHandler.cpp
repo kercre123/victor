@@ -139,9 +139,11 @@ namespace Anki {
       }
       else {
         CORETECH_ASSERT(robot != NULL);
-        const Vision::Camera& camera = robot->get_camHead();
+        Vision::Camera camera(robot->get_camHead());
         
         if(camera.isCalibrated()) {
+          
+          // Get corners
           Quad2f corners;
           
           corners[Quad::TopLeft].x()     = msg.x_imgUpperLeft;
@@ -156,7 +158,35 @@ namespace Anki {
           corners[Quad::BottomRight].x() = msg.x_imgLowerRight;
           corners[Quad::BottomRight].y() = msg.y_imgLowerRight;
           
-          Vision::ObservedMarker marker(msg.markerType, corners, camera);
+          
+          // Get historical robot pose at specified timestamp to get
+          // head angle and to attach as parent of the camera pose.
+          TimeStamp_t t;
+          RobotPoseStamp* p = nullptr;
+          if (robot->ComputeAndInsertPoseIntoHistory(msg.timestamp, t, &p) == RESULT_FAIL) {
+            PRINT_NAMED_WARNING("MessageHandler.ProcessMessageVisionMarker.HistoricalPoseNotFound", "");
+            return RESULT_FAIL;
+          }
+          
+          // Compute pose from robot body to camera
+          // Start with canonical (untilted) headPose
+          Pose3d camPose(robot->get_headCamPose());
+
+          // Rotate that by the given angle
+          RotationVector3d Rvec(-p->GetHeadAngle(), Y_AXIS_3D);
+          camPose.rotateBy(Rvec);
+          
+          // Precompute with robot body to neck pose
+          camPose.preComposeWith(robot->get_neckPose());
+          
+          // Set parent pose to be the historical robot pose
+          camPose.set_parent(&(p->GetPose()));
+          
+          // Update the head camera's pose
+          camera.set_pose(camPose);
+
+          // Create observed marker
+          Vision::ObservedMarker marker(t, msg.markerType, corners, camera);
           
           // Give this vision marker to BlockWorld for processing
           blockWorld_->QueueObservedMarker(marker);
@@ -222,6 +252,16 @@ namespace Anki {
       robot->SetTraversingPath( msg.status & IS_TRAVERSING_PATH );
       robot->SetCarryingBlock( msg.status & IS_CARRYING_BLOCK );
       robot->SetPickingOrPlacing( msg.status & IS_PICKING_OR_PLACING );
+      
+      
+      // Add to history
+      if (robot->AddRawOdomPoseToHistory(msg.timestamp,
+                                         msg.pose_frame_id,
+                                         msg.pose_x, msg.pose_y, msg.pose_z,
+                                         msg.pose_angle,
+                                         msg.headAngle) == RESULT_FAIL) {
+        PRINT_NAMED_WARNING("ProcessMessageRobotState.AddPoseError", "");
+      }
       
       return RESULT_OK;
     }

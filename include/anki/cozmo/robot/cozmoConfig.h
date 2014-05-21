@@ -21,6 +21,9 @@ namespace Anki {
     // Cozmo control loop is 200Hz.
     const s32 TIME_STEP = 5;
     
+    // Basestation control loop
+    const s32 BS_TIME_STEP = 60;
+    
     // Packet headers/footers:
     // TODO: Do we need this?  Only used in simulation I think? (Add #ifdef SIMULATOR?)
     const u8 RADIO_PACKET_HEADER[2] = {0xBE, 0xEF};

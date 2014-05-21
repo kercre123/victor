@@ -126,7 +126,10 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
       
       // TODO: get the camera of the robot corresponding to the one that saw this VisionMarker
       const Vision::Camera& camera = robot.get_camHead();
-      Vision::ObservedMarker marker(msg.markerType, corners, camera);
+      Vision::ObservedMarker marker(msg.timestamp, msg.markerType, corners, camera);
+      
+      RobotPoseStamp p(0, robot.get_pose(), robot.get_headAngle());
+      robot.AddVisionOnlyPoseToHistory(msg.timestamp, p);
       
       // Give this vision marker to BlockWorld for processing
       blockWorld.QueueObservedMarker(marker);

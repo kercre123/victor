@@ -1,6 +1,7 @@
 
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/math/matrix.h"
+#include "anki/common/shared/utilities_shared.h"
 
 #include <stdexcept>
 
@@ -180,6 +181,13 @@ namespace Anki {
     
     return Pose3d(newRotation, newTranslation);
   } // operator*(Pose3d)
+  
+  
+  bool Pose3d::operator==(const Pose3d &other) const
+  {
+    return (rotationMatrix == other.rotationMatrix &&
+            translation == other.translation);
+  }
   
   // Composition: this = other * this
   void Pose3d::preComposeWith(const Pose3d &other)
@@ -480,6 +488,17 @@ namespace Anki {
     return isSame;
     
   } // IsSameAs_WithAmbiguity()
+  
+  
+  
+  void Pose3d::Print() const
+  {
+    CoreTechPrint("Point (%f, %f %f), RotVec (%f %f %f), RotAng %f rad\n",
+                  translation.x(), translation.y(), translation.z(),
+                  get_rotationAxis().x(), get_rotationAxis().y(), get_rotationAxis().z(),
+                  get_rotationAngle().ToFloat()
+                  );
+  }
   
   
 #pragma mark --- Global Functions ---

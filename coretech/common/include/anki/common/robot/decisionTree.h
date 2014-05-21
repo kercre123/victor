@@ -26,7 +26,7 @@ namespace Anki
 
       // treeDataLength is the number of bytes in the treeData buffer
       // Warning: The input treeData buffer is not copied, and must be globally available
-      DecisionTree(const void * restrict treeData, const s32 treeDataLength, const s32 treeDataNumFractionalBits, const s32 treeMaxDepth);
+      DecisionTree(const void * restrict treeData, const s32 treeDataLength, const s32 treeDataNumFractionalBits, const s32 treeMaxDepth, const u16 * restrict leafLabels, const s32 numLeafLabels);
 
       // TODO: These could be virtual methods, but I'm avoiding such things on the embedded side
 
@@ -43,6 +43,10 @@ namespace Anki
       s32 treeDataLength;
       s32 treeDataNumFractionalBits;
       s32 treeMaxDepth;
+      
+      const u16 * restrict leafLabels;
+      s32 numLeafLabels;
+      
     }; // class DecisionTree
   } // namespace Embedded
 } // namespace Anki

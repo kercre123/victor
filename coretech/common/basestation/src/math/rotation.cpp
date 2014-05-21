@@ -58,7 +58,13 @@ namespace Anki {
   {
     Rodrigues(Rmat, *this);
   }
-  
+
+  bool RotationVector3d::operator==(const RotationVector3d &other) const
+  {
+    return ( (axis == other.axis && angle == other.angle)
+            || (-axis == other.axis && -angle == other.angle)
+            || (angle == other.angle == 0));
+  }
   
   UnitQuaternion::UnitQuaternion(const RotationVector3d& Rvec)
   {

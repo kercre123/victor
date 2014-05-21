@@ -7,10 +7,11 @@ classdef VisionMarkerTrained
         
         TrainingImageDir = { ...
             '~/Box Sync/Cozmo SE/VisionMarkers/lettersWithFiducials/unpadded/rotated', ... '~/Box Sync/Cozmo SE/VisionMarkers/matWithFiducials/unpadded/rotated', ...
-            '~/Box Sync/Cozmo SE/VisionMarkers/symbolsWithFiducials/unpadded/rotated'};
+            '~/Box Sync/Cozmo SE/VisionMarkers/symbolsWithFiducials/unpadded/rotated' }; %, ...
+%             '~/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/rotated'};
         
         ProbeParameters = struct( ...
-            'Radius', 0.02, ...  % As a fraction of a canonical unit square 
+            'GridSize', 32, ...            %'Radius', 0.02, ...  % As a fraction of a canonical unit square 
             'NumAngles', 8, ...       % How many samples around ring to sample
             'Method', 'mean');        % How to combine points in a probe
                 
@@ -19,6 +20,9 @@ classdef VisionMarkerTrained
         SquareWidthFraction = 0.1; % as a fraction of the fiducial width
         FiducialPaddingFraction = 0.1; % as a fraction of the fiducial width
         
+        ProbeRegion = [VisionMarkerTrained.SquareWidthFraction+VisionMarkerTrained.FiducialPaddingFraction ...
+            1-(VisionMarkerTrained.SquareWidthFraction+VisionMarkerTrained.FiducialPaddingFraction)];
+
         ProbePattern = VisionMarkerTrained.CreateProbePattern();
         
         ProbeTree = VisionMarkerTrained.LoadProbeTree();
@@ -42,7 +46,8 @@ classdef VisionMarkerTrained
         corners = GetFiducialCorners(imageSize, isPadded);
         [threshold, bright, dark] = ComputeThreshold(img, tform);
         outputString = GenerateHeaderFiles(varargin);
-        
+        [numMulticlassNodes, numVerificationNodes] = GetNumTreeNodes();
+
     end % Static Methods
     
     methods(Static = true, Access = 'protected')
@@ -52,7 +57,7 @@ classdef VisionMarkerTrained
         tree = LoadProbeTree();
         
         probes = CreateProbes(probeType); 
-                
+        
     end % Protected Static Methods
     
     properties(SetAccess = 'protected')
@@ -141,13 +146,45 @@ classdef VisionMarkerTrained
                         [verificationResult, verifiedID] = TestTree( ...
                             VisionMarkerTrained.ProbeTree.verifiers(this.codeID), ...
                             img, tform, threshold, oneProbe);
+                        
+                        this.isValid = verifiedID ~= 1;
                     else 
-                        [verificationResult, verifiedID] = TestTree( ...
-                            VisionMarkerTrained.ProbeTree.verifiers(this.codeID), ...
-                            img, tform, threshold, VisionMarkerTrained.ProbePattern);
+                        if all(isfield(VisionMarkerTrained.ProbeTree, ...
+                                {'verifyTreeRed', 'verifyTreeBlack'}))
+                            
+                            verificationResult = this.codeName;
+                            this.isValid = false;
+                            
+                            [redResult, redLabelID] = TestTree( ...
+                                VisionMarkerTrained.ProbeTree.verifyTreeRed, ...
+                                img, tform, threshold, VisionMarkerTrained.ProbePattern);
+                            
+                            if any(this.codeID == redLabelID)
+                                assert(any(strcmp(this.codeName, redResult)));
+                                
+                                [blackResult, blackLabelID] = TestTree(...
+                                    VisionMarkerTrained.ProbeTree.verifyTreeBlack, ...
+                                    img, tform, threshold, VisionMarkerTrained.ProbePattern);
+                            
+                                if any(this.codeID == blackLabelID)
+                                    assert(any(strcmp(this.codeName, blackResult)));
+                                    
+                                    this.isValid = true;
+                                end
+                            end
+                            
+                        else
+                            assert(isfield(VisionMarkerTrained.ProbeTree, 'verifiers'));
+                            
+                            [verificationResult, verifiedID] = TestTree( ...
+                                VisionMarkerTrained.ProbeTree.verifiers(this.codeID), ...
+                                img, tform, threshold, VisionMarkerTrained.ProbePattern);
+                            
+                            this.isValid = verifiedID ~= 1;
+                        end
                     end
                     
-                    this.isValid = verifiedID ~= 1;
+                    
                     if this.isValid
                         assert(strcmp(verificationResult, this.codeName));
                         
