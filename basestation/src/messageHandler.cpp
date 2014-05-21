@@ -141,7 +141,7 @@ namespace Anki {
         CORETECH_ASSERT(robot != NULL);
         const Vision::Camera& camera = robot->get_camHead();
         
-        if(camera.isCalibrated()) {
+        if(camera.IsCalibrated()) {
           Quad2f corners;
           
           corners[Quad::TopLeft].x()     = msg.x_imgUpperLeft;

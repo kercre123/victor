@@ -248,7 +248,7 @@ namespace Anki {
           Quad3f dots3D_goal;
           virtualBlockFace.getDockingTarget(dots3D_goal, &(this->camHead.get_pose()));
           
-          this->camHead.project3dPoints(dots3D_goal, dots2D_goal);
+          this->camHead.Project3dPoints(dots3D_goal, dots2D_goal);
           
           if(this->camHead.isBehind(dots2D_goal[Quad::TopLeft]) ||
              this->camHead.isBehind(dots2D_goal[Quad::TopRight]) ||
@@ -296,7 +296,7 @@ namespace Anki {
         Quad3f searchWin3D;
         closestFace->getDockingBoundingBox(searchWin3D,
                                            &(this->camHead.get_pose()));
-        this->camHead.project3dPoints(searchWin3D, searchWin2D);
+        this->camHead.Project3dPoints(searchWin3D, searchWin2D);
         
       } // if carrying a block
 
