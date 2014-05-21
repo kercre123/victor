@@ -97,18 +97,18 @@ namespace Anki {
   RotationMatrix3d::RotationMatrix3d(const Matrix_3x3f &matrix3x3)
   : Matrix_3x3f(matrix3x3)
   {
-    CORETECH_ASSERT(std::abs(this->getColumn(0).length() - 1.f) < 1e-6f &&
-                    std::abs(this->getColumn(1).length() - 1.f) < 1e-6f &&
-                    std::abs(this->getColumn(2).length() - 1.f) < 1e-6f);
+    CORETECH_ASSERT(std::abs(this->GetColumn(0).length() - 1.f) < 1e-6f &&
+                    std::abs(this->GetColumn(1).length() - 1.f) < 1e-6f &&
+                    std::abs(this->GetColumn(2).length() - 1.f) < 1e-6f);
   }
   
   
   RotationMatrix3d::RotationMatrix3d(std::initializer_list<float> initValues)
   : Matrix_3x3f(initValues)
   {
-    CORETECH_ASSERT(std::abs(this->getColumn(0).length() - 1.f) < 1e-6f &&
-                    std::abs(this->getColumn(1).length() - 1.f) < 1e-6f &&
-                    std::abs(this->getColumn(2).length() - 1.f) < 1e-6f);
+    CORETECH_ASSERT(std::abs(this->GetColumn(0).length() - 1.f) < 1e-6f &&
+                    std::abs(this->GetColumn(1).length() - 1.f) < 1e-6f &&
+                    std::abs(this->GetColumn(2).length() - 1.f) < 1e-6f);
     
     //Rodrigues(*this, rotationVector);
   }

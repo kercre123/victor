@@ -463,7 +463,7 @@ namespace Anki {
         
         if(useAbsRotation) {
           // The ambiguities are assumed to be defined up various sign flips
-          R.abs();
+          R.Abs();
         }
         
         // Check to see if the rotational part of the pose difference is
