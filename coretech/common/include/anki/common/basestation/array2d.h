@@ -50,8 +50,8 @@ namespace Anki
     Array2d<T>& operator= (const Array2d<T> &other);
 
     // Access by row, col (for isolated access):
-    T  operator() (const unsigned int row, const unsigned int col) const;
-    T& operator() (const unsigned int row, const unsigned int col);
+    T  operator() (const int row, const int col) const;
+    T& operator() (const int row, const int col);
 
 #if ANKICORETECH_USE_OPENCV
     // Create an Array2d from a cv::Mat_<T> without copying any data
@@ -197,8 +197,7 @@ namespace Anki
   }
 
   template<typename T>
-  T  Array2d<T>::operator() (const unsigned int row,
-    const unsigned int col) const
+  T  Array2d<T>::operator() (const int row, const int col) const
   {
     CORETECH_THROW_IF(row >= numRows() || col >= numCols());
     
@@ -209,7 +208,7 @@ namespace Anki
   }
 
   template<typename T>
-  T& Array2d<T>::operator() (const unsigned int row, const unsigned int col)
+  T& Array2d<T>::operator() (const int row, const int col)
   {
     CORETECH_THROW_IF(row >= numRows() || col >= numCols());
     

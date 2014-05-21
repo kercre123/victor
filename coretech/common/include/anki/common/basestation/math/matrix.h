@@ -84,7 +84,7 @@ namespace Anki {
 
   // The type for representing matrix dimensions
   // (Should this be something else? unsigned int? uchar? int?)
-  typedef size_t MatDimType;
+  using MatDimType = size_t;
   
   // A class for small matrices, whose size is known at compile time
   template<MatDimType NROWS, MatDimType NCOLS, typename T>
@@ -115,19 +115,19 @@ namespace Anki {
     const T& operator() (MatDimType i, MatDimType j) const;
 
     // Extract a single row or column as a point
-    Point<NCOLS,T> getRow(const MatDimType i) const;
-    Point<NROWS,T> getColumn(const MatDimType j) const;
+    Point<NCOLS,T> GetRow(const MatDimType i) const;
+    Point<NROWS,T> GetColumn(const MatDimType j) const;
     
     // Matrix multiplication:
     // Matrix[MxN] * Matrix[NxK] = Matrix[MxK]
-    template<size_t KCOLS, typename T_other, typename T_work=T>
+    template<MatDimType KCOLS, typename T_other, typename T_work=T>
     SmallMatrix<NROWS,KCOLS,T_work> operator* (const SmallMatrix<NCOLS,KCOLS,T_other> &other) const;
     
     // Matrix transpose:
     SmallMatrix<NCOLS,NROWS,T> getTranspose(void) const;
     
     // Take absolute value of all elements (return reference to self)
-    SmallMatrix<NROWS,NCOLS,T>& abs();
+    SmallMatrix<NROWS,NCOLS,T>& Abs();
     
     // TODO: Add explicit pseudo-inverse? (inv(A'A)*A')
     // SmallMatrix<T,NCOLS,NROWS> getPsuedoInverse(void) const;
@@ -222,10 +222,10 @@ namespace Anki {
   }; // class SmallSquareMatrix
   
     
-  // Typedef some common small matrix sizes, like 3x3
-  typedef SmallSquareMatrix<2,float> Matrix_2x2f;
-  typedef SmallSquareMatrix<3,float> Matrix_3x3f;
-  typedef SmallMatrix<3,4,float> Matrix_3x4f;
+  // Alias some common small matrix sizes, like 3x3
+  using Matrix_2x2f = SmallSquareMatrix<2,float>;
+  using Matrix_3x3f = SmallSquareMatrix<3,float>;
+  using Matrix_3x4f = SmallMatrix<3,4,float>;
   
   // Common 2D matrix-point multiplication:
   template<typename Tmat, typename Tpt, typename Twork=Tpt>
@@ -554,7 +554,7 @@ namespace Anki {
 
   
   template<MatDimType NROWS, MatDimType NCOLS, typename T>
-  Point<NCOLS,T> SmallMatrix<NROWS,NCOLS,T>::getRow(const MatDimType i) const
+  Point<NCOLS,T> SmallMatrix<NROWS,NCOLS,T>::GetRow(const MatDimType i) const
   {
     CORETECH_THROW_IF(i >= NROWS);
     
@@ -567,7 +567,7 @@ namespace Anki {
   }
   
   template<MatDimType NROWS, MatDimType NCOLS, typename T>
-  Point<NROWS,T> SmallMatrix<NROWS,NCOLS,T>::getColumn(const MatDimType j) const
+  Point<NROWS,T> SmallMatrix<NROWS,NCOLS,T>::GetColumn(const MatDimType j) const
   {
     CORETECH_THROW_IF(j >= NCOLS);
     
