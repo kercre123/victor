@@ -21,7 +21,7 @@
 
 // Set to 1 to use OpenCV's iterative pose estimation for quads.
 // Otherwise, the closed form P3P solution is used.
-// NOTE: this currently only affects the computeObjectPose() that takes in quads.
+// NOTE: this currently only affects the ComputeObjectPose() that takes in quads.
 #define USE_ITERATIVE_QUAD_POSE_ESTIMATION 1
 
 namespace Anki {
@@ -109,7 +109,7 @@ namespace Anki {
     
     
 #if ANKICORETECH_USE_OPENCV
-    Pose3d Camera::computeObjectPoseHelper(const std::vector<cv::Point2f>& cvImagePoints,
+    Pose3d Camera::ComputeObjectPoseHelper(const std::vector<cv::Point2f>& cvImagePoints,
                                            const std::vector<cv::Point3f>& cvObjPoints) const
     {
       cv::Vec3d cvRvec, cvTranslation;
@@ -128,16 +128,16 @@ namespace Anki {
       // Return Pose object w.r.t. the camera's pose
       return Pose3d(rvec, translation, &(this->pose));
       
-    } // computeObjectPoseHelper()
+    } // ComputeObjectPoseHelper()
     
 #endif
     
     
-    Pose3d Camera::computeObjectPose(const std::vector<Point2f>& imgPoints,
+    Pose3d Camera::ComputeObjectPose(const std::vector<Point2f>& imgPoints,
                                      const std::vector<Point3f>& objPoints) const
     {
       if(not isCalibrationSet) {
-        CORETECH_THROW("Camera::computeObjectPose() called before calibration set.");
+        CORETECH_THROW("Camera::ComputeObjectPose() called before calibration set.");
       }
       
 #if ANKICORETECH_USE_OPENCV
@@ -152,7 +152,7 @@ namespace Anki {
         cvObjPoints.emplace_back(objPt.get_CvPoint3_());
       }
       
-      return computeObjectPoseHelper(cvImagePoints, cvObjPoints);
+      return ComputeObjectPoseHelper(cvImagePoints, cvObjPoints);
       
 #else
       // TODO: Implement!
@@ -160,14 +160,14 @@ namespace Anki {
       return Pose3d();
 #endif
       
-    } // computeObjectPose(from std::vectors)
+    } // ComputeObjectPose(from std::vectors)
     
     template<typename WORKING_PRECISION>
-    Pose3d Camera::computeObjectPose(const Quad2f& imgQuad,
+    Pose3d Camera::ComputeObjectPose(const Quad2f& imgQuad,
                                      const Quad3f& worldQuad) const
     {
       if(not isCalibrationSet) {
-        CORETECH_THROW("Camera::computeObjectPose() called before calibration set.");
+        CORETECH_THROW("Camera::ComputeObjectPose() called before calibration set.");
       }
       
 #if USE_ITERATIVE_QUAD_POSE_ESTIMATION
@@ -185,7 +185,7 @@ namespace Anki {
       cvObjPoints.emplace_back(worldQuad[Quad::TopRight].get_CvPoint3_());
       cvObjPoints.emplace_back(worldQuad[Quad::BottomRight].get_CvPoint3_());
       
-      return computeObjectPoseHelper(cvImagePoints, cvObjPoints);
+      return ComputeObjectPoseHelper(cvImagePoints, cvObjPoints);
 
 #else
       
@@ -265,7 +265,7 @@ namespace Anki {
           if(possiblePoses[i_solution].get_translation().z() > 0)
           {
             Point2f projectedPoint;
-            this->project3dPoint(possiblePoses[i_solution]*worldQuad[i_validate], projectedPoint);
+            this->Project3dPoint(possiblePoses[i_solution]*worldQuad[i_validate], projectedPoint);
             
             float error = (projectedPoint - imgQuad[i_validate]).length();
             
@@ -300,18 +300,18 @@ namespace Anki {
       
 #endif // #if USE_ITERATIVE_QUAD_POSE_ESTIMATION
       
-    } // computeObjectPose(from quads)
+    } // ComputeObjectPose(from quads)
  
     
     // Explicit instantiation for single and double precision
-    template Pose3d Camera::computeObjectPose<float>(const Quad2f& imgQuad,
+    template Pose3d Camera::ComputeObjectPose<float>(const Quad2f& imgQuad,
                                                      const Quad3f& worldQuad) const;
 
-    template Pose3d Camera::computeObjectPose<double>(const Quad2f& imgQuad,
+    template Pose3d Camera::ComputeObjectPose<double>(const Quad2f& imgQuad,
                                                       const Quad3f& worldQuad) const;
 
     
-    bool Camera::isVisible(const Point2f &projectedPoint) const
+    bool Camera::IsVisible(const Point2f &projectedPoint) const
     {
       return (not std::isnan(projectedPoint.x()) &&
               not std::isnan(projectedPoint.y()) &&
@@ -319,14 +319,14 @@ namespace Anki {
               projectedPoint.x() < this->calibration.get_ncols() &&
               projectedPoint.y() < this->calibration.get_nrows());
       
-    } // Camera::isVisible()
+    } // Camera::IsVisible()
 
     
-    void Camera::project3dPoint(const Point3f& objPoint,
+    void Camera::Project3dPoint(const Point3f& objPoint,
                                 Point2f&       imgPoint) const
     {
       if(not isCalibrationSet) {
-        CORETECH_THROW("Camera::project3dPoint() called before calibration set.");
+        CORETECH_THROW("Camera::Project3dPoint() called before calibration set.");
       }
       
       const f32 BEHIND_OR_OCCLUDED = std::numeric_limits<f32>::quiet_NaN();
@@ -342,7 +342,7 @@ namespace Anki {
         imgPoint.y() = (objPoint.y() / objPoint.z());
         
         // TODO: Add radial distortion here
-        //distortCoordinate(imgPoints[i_corner], imgPoints[i_corner]);
+        //DistortCoordinate(imgPoints[i_corner], imgPoints[i_corner]);
         
         imgPoint.x() *= this->calibration.get_focalLength_x();
         imgPoint.y() *= this->calibration.get_focalLength_y();
@@ -356,7 +356,7 @@ namespace Anki {
         imgPoint = BEHIND_OR_OCCLUDED;
       }
       
-    } // project3dPoint()
+    } // Project3dPoint()
     
     
     /* This doesn't work but it would be nice to have a "generic"
@@ -364,7 +364,7 @@ namespace Anki {
      them.
      
     template<template<class PointType> class PointContainer>
-    void project3dPointContainer(const PointContainer<Point3f>& objPoints,
+    void Project3dPointContainer(const PointContainer<Point3f>& objPoints,
                                  PointContainer<Point2f>& imgPoints)
     {
       CORETECH_ASSERT(objPoints.size() == imgPoints.size());
@@ -374,7 +374,7 @@ namespace Anki {
       
       while(objPointIter != objPoints.end()) {
         
-        project3dPoint(*objPointIter, *imgPointIter);
+        Project3dPoint(*objPointIter, *imgPointIter);
         
         ++objPointIter;
         ++imgPointIter;
@@ -383,7 +383,7 @@ namespace Anki {
      */
     
     template<class PointContainer3d, class PointContainer2d>
-    void Camera::project3dPointHelper(const PointContainer3d& objPoints,
+    void Camera::Project3dPointHelper(const PointContainer3d& objPoints,
                                       PointContainer2d& imgPoints) const
     {
       CORETECH_ASSERT(objPoints.size() == imgPoints.size());
@@ -393,31 +393,31 @@ namespace Anki {
       
       while(objPointIter != objPoints.end()) {
         
-        project3dPoint(*objPointIter, *imgPointIter);
+        Project3dPoint(*objPointIter, *imgPointIter);
         
         ++objPointIter;
         ++imgPointIter;
       }
-    } // Camera::project3dPointHelper()
+    } // Camera::Project3dPointHelper()
     
     
     // Compute the projected image locations of a set of 3D points:
-    void Camera::project3dPoints(const std::vector<Point3f>& objPoints,
+    void Camera::Project3dPoints(const std::vector<Point3f>& objPoints,
                                  std::vector<Point2f>&       imgPoints) const
     {
       imgPoints.resize(objPoints.size());
-      project3dPointHelper(objPoints, imgPoints);
-    } // project3dPoints(std::vectors)
+      Project3dPointHelper(objPoints, imgPoints);
+    } // Project3dPoints(std::vectors)
     
-    void Camera::project3dPoints(const Quad3f& objPoints,
+    void Camera::Project3dPoints(const Quad3f& objPoints,
                                  Quad2f&       imgPoints) const
     {
       for(Quad::CornerName i_corner=Quad::FirstCorner;
           i_corner < Quad::NumCorners; ++i_corner)
       {
-        project3dPoint(objPoints[i_corner], imgPoints[i_corner]);
+        Project3dPoint(objPoints[i_corner], imgPoints[i_corner]);
       }
-    } // project3dPoints(Quads)
+    } // Project3dPoints(Quads)
     
     
     void Camera::ClearOccluders()
@@ -436,7 +436,7 @@ namespace Anki {
       // Project the objects's corners into the image and create an occluding
       // bounding rectangle from that
       object->GetCorners(objectPoseWrtCamera, cornersAtPose);
-      project3dPoints(cornersAtPose, projectedCorners);
+      Project3dPoints(cornersAtPose, projectedCorners);
       
       occluderList.AddOccluder(projectedCorners, objectPoseWrtCamera.get_translation().z());
     }

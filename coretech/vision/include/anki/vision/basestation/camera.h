@@ -152,7 +152,7 @@ namespace Anki {
       
       // Constructors:
       Camera();
-      Camera(const CameraCalibration &calib, const Pose3d &pose);
+      Camera(const CameraCalibration &calib, const Pose3d& pose);
       
       // Accessors:
       const Pose3d&             get_pose()        const;
@@ -161,7 +161,7 @@ namespace Anki {
       void set_pose(const Pose3d& newPose);
       void set_calibration(const CameraCalibration& calib);
       
-      bool isCalibrated() const;
+      bool IsCalibrated() const;
       
       //
       // Methods:
@@ -171,7 +171,7 @@ namespace Anki {
       // corresponding observed positions in the image.  The returned Pose will
       // be w.r.t. the camera's pose, unless the input camPose is non-NULL, in
       // which case the returned Pose will be w.r.t. that pose.
-      Pose3d computeObjectPose(const std::vector<Point2f> &imgPoints,
+      Pose3d ComputeObjectPose(const std::vector<Point2f> &imgPoints,
                                const std::vector<Point3f> &objPoints) const;
       
       // Use three points of a quadrilateral and the P3P algorithm  to compute
@@ -179,23 +179,23 @@ namespace Anki {
       // pose. Do this four times (once using each corner as the validation
       // point) and choose the best.  
       template<typename WORKING_PRECISION=double> // TODO: Make default float?
-      Pose3d computeObjectPose(const Quad2f &imgPoints,
+      Pose3d ComputeObjectPose(const Quad2f &imgPoints,
                                const Quad3f &objPoints) const;
       
       
       // Compute the projected image locations of 3D point(s):
       // (Resulting projected image points can be tested for being behind the
       //  camera or visible using the functions below.)
-      void project3dPoint(const Point3f& objPoint, Point2f& imgPoint) const;
+      void Project3dPoint(const Point3f& objPoint, Point2f& imgPoint) const;
       
-      void project3dPoints(const std::vector<Point3f> &objPoints,
+      void Project3dPoints(const std::vector<Point3f> &objPoints,
                            std::vector<Point2f>       &imgPoints) const;
       
-      void project3dPoints(const Quad3f &objPoints,
+      void Project3dPoints(const Quad3f &objPoints,
                            Quad2f       &imgPoints) const;
       
       template<size_t NumPoints>
-      void project3dPoints(const std::array<Point3f,NumPoints> &objPoints,
+      void Project3dPoints(const std::array<Point3f,NumPoints> &objPoints,
                            std::array<Point2f,NumPoints>       &imgPoints) const;
       
       
@@ -203,9 +203,9 @@ namespace Anki {
       // above) is BOTH in front of the camera AND within image dimensions.
       // If there are occluders registered (using AddOccluder() below), those
       // will be considered as well.
-      bool isVisible(const Point2f& projectedPoint) const;
+      bool IsVisible(const Point2f& projectedPoint) const;
       
-      bool isVisible(const Quad2f& projectedQuad) const;
+      bool IsVisible(const Quad2f& projectedQuad) const;
       
       // TODO: Method to remove radial distortion from an image
       // (This requires an image class)
@@ -222,14 +222,14 @@ namespace Anki {
       OccluderList       occluderList;
       
       // TODO: Include const reference or pointer to a parent Robot object?
-      void distortCoordinate(const Point2f& ptIn, Point2f& ptDistorted);
+      void DistortCoordinate(const Point2f& ptIn, Point2f& ptDistorted);
       
       template<class PointContainer3d, class PointContainer2d>
-      void project3dPointHelper(const PointContainer3d& objPoints,
+      void Project3dPointHelper(const PointContainer3d& objPoints,
                                 PointContainer2d& imgPoints) const;
       
 #if ANKICORETECH_USE_OPENCV
-      Pose3d computeObjectPoseHelper(const std::vector<cv::Point2f>& cvImagePoints,
+      Pose3d ComputeObjectPoseHelper(const std::vector<cv::Point2f>& cvImagePoints,
                                      const std::vector<cv::Point3f>& cvObjPoints) const;
 #endif
       
@@ -248,20 +248,20 @@ namespace Anki {
     inline void Camera::set_pose(const Pose3d& newPose)
     { this->pose = newPose; }
     
-    inline bool Camera::isCalibrated() const {
+    inline bool Camera::IsCalibrated() const {
       return this->isCalibrationSet;
     }
     
     
     template<size_t NumPoints>
-    void Camera::project3dPoints(const std::array<Point3f,NumPoints> &objPoints,
+    void Camera::Project3dPoints(const std::array<Point3f,NumPoints> &objPoints,
                                  std::array<Point2f,NumPoints>       &imgPoints) const
     {
       for(size_t i = 0; i<NumPoints; ++i)
       {
-        project3dPoint(objPoints[i], imgPoints[i]);
+        Project3dPoint(objPoints[i], imgPoints[i]);
       }
-    } // // project3dPoints(std::array)
+    } // // Project3dPoints(std::array)
     
   } // namesapce Vision
 } // namespace Anki

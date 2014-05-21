@@ -39,7 +39,7 @@ namespace Anki {
       // Project the objects's corners into the image and create an occluding
       // bounding rectangle from that
       object->GetCorners(cornersAtPose);
-      camera.project3dPoints(cornersAtPose, projectedCorners);
+      camera.Project3dPoints(cornersAtPose, projectedCorners);
       
       AddOccluderHelper(projectedCorners, objectPoseWrtCamera.get_translation().z());
     }

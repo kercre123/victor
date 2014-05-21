@@ -77,7 +77,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   Vision::Camera camera;
   camera.set_calibration(calib);
-  Pose3d pose = camera.computeObjectPose<double>(imgQuad, worldQuad);
+  Pose3d pose = camera.ComputeObjectPose<double>(imgQuad, worldQuad);
 
   plhs[0] = mxCreateDoubleMatrix(3, 3, mxREAL);
   double* R = mxGetPr(plhs[0]);

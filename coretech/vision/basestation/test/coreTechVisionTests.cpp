@@ -92,7 +92,7 @@ GTEST_TEST(PoseEstimation, FromQuads)
   camera.set_calibration(calib);
   
   Quad2f proj;
-  camera.project3dPoints(marker3d_atPose, proj);
+  camera.Project3dPoints(marker3d_atPose, proj);
   
   // Add noise
   proj += projNoise;
@@ -109,7 +109,7 @@ GTEST_TEST(PoseEstimation, FromQuads)
   }
 
   // Compute the pose of the marker w.r.t. camera from the noisy projection
-  Pose3d poseEst = camera.computeObjectPose(proj, marker3d);
+  Pose3d poseEst = camera.ComputeObjectPose(proj, marker3d);
   
   // Check if the estimated pose matches the true pose
   Pose3d poseDiff;
@@ -127,7 +127,7 @@ GTEST_TEST(PoseEstimation, FromQuads)
   Quad2f reproj;
   Quad3f marker3d_est;
   poseEst.applyTo(marker3d, marker3d_est);
-  camera.project3dPoints(marker3d_est, reproj);
+  camera.Project3dPoints(marker3d_est, reproj);
   for(Quad::CornerName i_corner=Quad::FirstCorner; i_corner<Quad::NumCorners; ++i_corner) {
     EXPECT_NEAR(reproj[i_corner].x(), proj[i_corner].x(), pixelErrThreshold);
     EXPECT_NEAR(reproj[i_corner].y(), proj[i_corner].y(), pixelErrThreshold);

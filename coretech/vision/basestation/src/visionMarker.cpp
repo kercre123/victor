@@ -131,11 +131,11 @@ namespace Anki {
       // Make sure the projected corners are within the image
       // TODO: add some border padding?
       Quad2f imgCorners;
-      camera.project3dPoints(markerCornersWrtCamera, imgCorners);
-      if(not camera.isVisible(imgCorners[TopLeft]) ||
-         not camera.isVisible(imgCorners[TopRight]) ||
-         not camera.isVisible(imgCorners[BottomLeft]) ||
-         not camera.isVisible(imgCorners[BottomRight]))
+      camera.Project3dPoints(markerCornersWrtCamera, imgCorners);
+      if(not camera.IsVisible(imgCorners[TopLeft]) ||
+         not camera.IsVisible(imgCorners[TopRight]) ||
+         not camera.IsVisible(imgCorners[BottomLeft]) ||
+         not camera.IsVisible(imgCorners[BottomRight]))
       {
         return false;
       }
@@ -156,7 +156,7 @@ namespace Anki {
     Pose3d KnownMarker::EstimateObservedPose(const ObservedMarker& obsMarker) const
     {
       const Camera& camera = obsMarker.GetSeenBy();
-      return camera.computeObjectPose(obsMarker.GetImageCorners(),
+      return camera.ComputeObjectPose(obsMarker.GetImageCorners(),
                                       this->corners3d_);
     }
     
