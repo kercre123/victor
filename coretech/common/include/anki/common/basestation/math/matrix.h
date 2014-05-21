@@ -67,17 +67,17 @@ namespace Anki {
     // NOTE: element access inherited from Array2d
     
     // Matrix multiplication:
-    Matrix<T> operator*(const Matrix<T> &other) const;
+    Matrix<T>  operator* (const Matrix<T> &other) const;
     Matrix<T>& operator*=(const Matrix<T> &other);
     
     // Matrix inversion:
     // TODO: provide way to specify method
-    void      Invert(void); // in place
-    Matrix<T> getInverse(void) const;
+    Matrix<T>& Invert(void); // in place
+    void       GetInverse(Matrix<T>& outInverse) const;
     
     // Matrix tranpose:
-    Matrix<T> getTranpose(void) const;
-    void      Transpose(void); // in place
+    void       GetTranspose(Matrix<T>& outTransposed) const;
+    Matrix<T>& Transpose(void); // in place
     
     
   }; // class Matrix
@@ -124,7 +124,7 @@ namespace Anki {
     SmallMatrix<NROWS,KCOLS,T_work> operator* (const SmallMatrix<NCOLS,KCOLS,T_other> &other) const;
     
     // Matrix transpose:
-    SmallMatrix<NCOLS,NROWS,T> getTranspose(void) const;
+    void GetTranspose(SmallMatrix<NCOLS,NROWS,T>& outTransposed) const;
     
     // Take absolute value of all elements (return reference to self)
     SmallMatrix<NROWS,NCOLS,T>& Abs();
@@ -152,8 +152,8 @@ namespace Anki {
     // Do we want to provide non-square matrix inversion?
     // I'm putting this here so the SmallSquareMatrix subclass can get
     // access to cv::Matx::inv() though.
-    void Invert(void); // in place
-    SmallMatrix<NROWS,NCOLS,T> getInverse(void) const;
+    SmallMatrix<NROWS,NCOLS,T>& Invert(void); // in place
+    void GetInverse(SmallMatrix<NROWS,NCOLS,T>& outInverse) const;
 
   }; // class SmallMatrix
   
@@ -209,12 +209,12 @@ namespace Anki {
     void preMultiplyBy(const SmallSquareMatrix<DIM,T_other> &other);
        
     // Transpose: (Note that we can transpose square matrices in place)
-    using SmallMatrix<DIM,DIM,T>::getTranspose;
+    using SmallMatrix<DIM,DIM,T>::GetTranspose;
     SmallSquareMatrix<DIM,T>& Transpose(void);
     
     // Matrix inversion:
-    void Invert(void); // in place
-    SmallSquareMatrix<DIM,T> getInverse(void) const;
+    SmallSquareMatrix<DIM,T>& Invert(void); // in place
+    void GetInverse(SmallSquareMatrix<DIM,T>& outInverse) const;
     
     // Compute the trace (sum of diagonal elements)
     T Trace(void) const;
@@ -357,7 +357,7 @@ namespace Anki {
   
   
   template<typename T>
-  void Matrix<T>::Invert(void)
+  Matrix<T>& Matrix<T>::Invert(void)
   {
     CORETECH_THROW_IF(this->numRows() != this->numCols());
     
@@ -368,45 +368,45 @@ namespace Anki {
     CORETECH_ASSERT(false);
     // TODO: Define our own opencv-free inverse?
 #endif
+    
+    return *this;
   } // Matrix<T>::Invert()
   
   template<typename T>
-  Matrix<T> Matrix<T>::getInverse(void) const
+  void Matrix<T>::GetInverse(Matrix<T>& outInverse) const
   {
     CORETECH_THROW_IF(this->numRows() != this->numCols());
     
 #if ANKICORETECH_USE_OPENCV
     // For now (?), rely on OpenCV for matrix inversion:
-    Matrix<T> result(this->get_CvMat_().inv());
+    outInverse = *this;
+    outInverse.Invert();
 #else
     CORETECH_ASSERT(false);
     // TODO: Define our own opencv-free transpose?
 #endif
     
-    return result;
   } // Matrix<T>::getInverse()
   
                    
   
   template<typename T>
-  Matrix<T> Matrix<T>::getTranpose(void) const
+  void Matrix<T>::GetTranspose(Matrix<T>& outTranspose) const
   {
     
 #if ANKICORETECH_USE_OPENCV
-    Matrix<T> result;
-    cv::transpose(this->get_CvMat_(), result.get_CvMat_());
+    outTranspose = *this;
+    outTranspose.Transpose();
 #else
     CORETECH_ASSERT(false);
     // TODO: Define our own opencv-free tranpose?
 #endif
     
-    return result;
-    
   } // Matrix<T>::getTranspose()
   
   
   template<typename T>
-  void Matrix<T>::Transpose(void)
+  Matrix<T>& Matrix<T>::Transpose(void)
   {
 #if ANKICORETECH_USE_OPENCV
     cv::transpose(this->get_CvMat_(), this->get_CvMat_());
@@ -414,6 +414,8 @@ namespace Anki {
     CORETECH_ASSERT(false);
     // TODO: Define our own opencv-free tranpose?
 #endif
+    
+    return *this;
   } // Matrix<T>::Tranpose()
   
   
@@ -617,10 +619,10 @@ namespace Anki {
   
   // Matrix transpose:
   template<MatDimType NROWS, MatDimType NCOLS, typename T>
-  SmallMatrix<NCOLS,NROWS,T> SmallMatrix<NROWS,NCOLS,T>::getTranspose(void) const
+  void SmallMatrix<NROWS,NCOLS,T>::GetTranspose(SmallMatrix<NCOLS,NROWS,T>& outTransposed) const
   {
 #if ANKICORETECH_USE_OPENCV
-    return this->t();
+    outTransposed = this->t();
 #else
     CORETECH_ASSERT(false);
     // TODO: Define our own opencv-free tranpose?
@@ -628,7 +630,7 @@ namespace Anki {
   }
   
   template<MatDimType NROWS, MatDimType NCOLS, typename T>
-  SmallMatrix<NROWS,NCOLS,T>& SmallMatrix<NROWS,NCOLS,T>::abs()
+  SmallMatrix<NROWS,NCOLS,T>& SmallMatrix<NROWS,NCOLS,T>::Abs()
   {
     for(size_t i=0; i<NROWS; ++i) {
       for(size_t j=0; j<NCOLS; ++j) {
@@ -719,7 +721,7 @@ namespace Anki {
   
   // Matrix inversion:
   template<MatDimType NROWS, MatDimType NCOLS, typename T>
-  void SmallMatrix<NROWS,NCOLS,T>::Invert(void)
+  SmallMatrix<NROWS,NCOLS,T>& SmallMatrix<NROWS,NCOLS,T>::Invert(void)
   {
 #if ANKICORETECH_USE_OPENCV
     (*this) = this->inv();
@@ -728,19 +730,19 @@ namespace Anki {
     // TODO: Define our own opencv-free inverse?
 #endif
     
+    return *this;
   }
   
   template<MatDimType NROWS, MatDimType NCOLS, typename T>
-  SmallMatrix<NROWS,NCOLS,T> SmallMatrix<NROWS,NCOLS,T>::getInverse(void) const
+  void SmallMatrix<NROWS,NCOLS,T>::GetInverse(SmallMatrix<NROWS,NCOLS,T>& outInverse) const
   {
 #if ANKICORETECH_USE_OPENCV
-    SmallMatrix<NROWS,NCOLS,T> res(this->inv());
-    return res;
+    outInverse = *this;
+    outInverse.Invert();
 #else
     CORETECH_ASSERT(false);
     // TODO: Define our own opencv-free inverse?
 #endif
-    
   }
   
   
@@ -800,15 +802,17 @@ namespace Anki {
    
   // Matrix inversion:
   template<MatDimType DIM, typename T>
-  void SmallSquareMatrix<DIM,T>::Invert(void)
+  SmallSquareMatrix<DIM,T>& SmallSquareMatrix<DIM,T>::Invert(void)
   {
     this->SmallMatrix<DIM,DIM,T>::Invert();
+    return *this;
   }
   
   template<MatDimType DIM, typename T>
-  SmallSquareMatrix<DIM,T> SmallSquareMatrix<DIM,T>::getInverse(void) const
+  void SmallSquareMatrix<DIM,T>::GetInverse(SmallSquareMatrix<DIM,T>& outInverse) const
   {
-    return this->SmallMatrix<DIM,DIM,T>::getInverse();
+    outInverse = *this;
+    outInverse.Invert();
   }
   
   
