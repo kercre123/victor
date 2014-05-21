@@ -81,7 +81,7 @@ namespace Anki
         // Lens correction control
         //0x46, 0x01, // Vignetting correction on and grayscale
         0x46, 0x00, // Vignetting correction off
-        
+
         0x47, 0x00, // x center
         0x48, 0x00, // y center
         0x49, 0x20, // RGB (or G) coefficient
@@ -128,7 +128,7 @@ namespace Anki
 
       // Camera exposure value
       u16 m_exposure;
-      
+
       bool m_enableVignettingCorrection;
 
       // DMA is limited to 256KB - 1
@@ -417,7 +417,7 @@ namespace Anki
         u8 exp;
 
         const f32 expF32 = floorf(exposure * 0xFF + 0.5f);
-        
+
         if(expF32 < 0.0f)
         {
           exp = 0;
@@ -435,37 +435,37 @@ namespace Anki
 
           //CamWrite(0x08, (exposure >> 8));  // AEC[15:8]
           //MicroWait(100);
-          CamWrite(0x10, m_exposure);  // AEC[7:0]          
+          CamWrite(0x10, m_exposure);  // AEC[7:0]
         }
-        
+
         if(m_enableVignettingCorrection != enableVignettingCorrection)
         {
           m_enableVignettingCorrection = enableVignettingCorrection;
-          
+
           const u8 newValue = enableVignettingCorrection ? 0x01 : 0x00;
-          
+
           MicroWait(100);
           CamWrite(0x46, newValue);
-        }        
+        }
       }
 
       void CameraGetFrame(u8* frame, Vision::CameraResolution res, bool enableLight)
       {
         Anki::Embedded::BeginBenchmark("CameraGetFrame");
-        
+
         Anki::Embedded::BeginBenchmark("CameraGetFrame_wait");
-        
+
         m_isEOF = false;
 
         // Wait until the frame has completed (based on DMA_FLAG_TCIF1)
         while (!m_isEOF)
         {
         }
-        
+
         Anki::Embedded::EndBenchmark("CameraGetFrame_wait");
-        
+
         Anki::Embedded::BeginBenchmark("CameraGetFrame_convert");
-        
+
         // TODO: Change this to DMA mem-to-mem when we have a different camera
         // and we support resolution changes in the actual hardware
 
@@ -478,38 +478,27 @@ namespace Anki
         u32 ySkip = 240 / yRes;
 
         if(xSkip == 1 && ySkip == 1) {
-          // Fast (one load and one store per output pixel)
-          /*
-          const u32 numPixels = 320*240;
-          for(u32 iOut=0; iOut<numPixels; iOut++) {
-            frame[iOut] = m_buffer[iOut*2];
-          }*/
-
-          // Faster (32 -> 16) (one load and one store per 2 output pixels)
-          /*const u32 numPixels2 = (320*240) >> 1;
-
-          const u32 * restrict pMBufferU32 = reinterpret_cast<u32*>(m_buffer);
-          u16 * restrict pFrameU16 = reinterpret_cast<u16*>(frame);
-
-          for(u32 iPixel=0; iPixel<numPixels2; iPixel++) {
-            const u32 inPixel = pMBufferU32[iPixel];
-            // const u16 outPixel = ((inPixel & 0x00FF)>>8) | ((inPixel & 0xFF000000) >> 24);
-            const u32 outPixel = (inPixel & 0xFF) | ((inPixel & 0xFF0000) >> 8);
-            pFrameU16[iPixel] = outPixel & 0xFFFF;
-          }*/
-
           // Fastest (64 -> 32) (two loads and one store per 4 output pixels)
           const u32 numPixels4 = (320*240) >> 2;
 
-          const u32 * restrict pMBufferU32 = reinterpret_cast<u32*>(m_buffer);
+          const u64 * restrict pMBufferU64 = reinterpret_cast<u64*>(m_buffer);
           u32 * restrict pFrameU32 = reinterpret_cast<u32*>(frame);
 
-          for(u32 iPixel=0; iPixel<numPixels4; iPixel++) {
-            const u32 inPixel1 = pMBufferU32[2*iPixel];
-            const u32 inPixel2 = pMBufferU32[2*iPixel+1];
+          for(u32 iPixel=0; iPixel<numPixels4; iPixel+=4) {
+            const u64 in01 = pMBufferU64[iPixel];
+            const u64 in23 = pMBufferU64[iPixel+1];
+            const u64 in45 = pMBufferU64[iPixel+2];
+            const u64 in67 = pMBufferU64[iPixel+3];
 
-            const u32 outPixel = (inPixel1 & 0xFF) | ((inPixel1 & 0xFF0000) >> 8) | ((inPixel2 & 0xFF)<<16) | ((inPixel2 & 0xFF0000) << 8);
-            pFrameU32[iPixel] = outPixel;
+            const u32 out01 = (in01 & 0xFF) | ((in01 & 0xFF0000) >> 8) | ((in01 & 0xFF00000000)>>16) | ((in01 & 0xFF000000000000) >> 24);
+            const u32 out23 = (in23 & 0xFF) | ((in23 & 0xFF0000) >> 8) | ((in23 & 0xFF00000000)>>16) | ((in23 & 0xFF000000000000) >> 24);
+            const u32 out45 = (in45 & 0xFF) | ((in45 & 0xFF0000) >> 8) | ((in45 & 0xFF00000000)>>16) | ((in45 & 0xFF000000000000) >> 24);
+            const u32 out67 = (in67 & 0xFF) | ((in67 & 0xFF0000) >> 8) | ((in67 & 0xFF00000000)>>16) | ((in67 & 0xFF000000000000) >> 24);
+
+            pFrameU32[iPixel] = out01;
+            pFrameU32[iPixel+1] = out23;
+            pFrameU32[iPixel+2] = out45;
+            pFrameU32[iPixel+3] = out67;
           }
         } else {
           u32 dataY = 0;
@@ -522,9 +511,9 @@ namespace Anki
             }
           }
         }
-        
+
         Anki::Embedded::EndBenchmark("CameraGetFrame_convert");
-        
+
         Anki::Embedded::EndBenchmark("CameraGetFrame");
       }
 

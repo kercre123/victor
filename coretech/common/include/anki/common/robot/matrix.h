@@ -16,6 +16,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/array2d.h"
 #include "anki/common/robot/arraySlices.h"
 #include "anki/common/robot/trig_fast.h"
+#include "anki/common/robot/benchmarking.h"
 
 namespace Anki
 {
@@ -23,7 +24,25 @@ namespace Anki
   {
     namespace Matrix
     {
-      // #pragma mark
+      template<typename Type> void InsertionSort_sortAscendingDimension0(Array<Type> &arr, const s32 trueMinIndex, const s32 trueMaxIndex);
+      template<typename Type> void InsertionSort_sortDescendingDimension0(Array<Type> &arr, const s32 trueMinIndex, const s32 trueMaxIndex);
+      template<typename Type> void InsertionSort_sortAscendingDimension1(Array<Type> &arr, const s32 trueMinIndex, const s32 trueMaxIndex);
+      template<typename Type> void InsertionSort_sortDescendingDimension1(Array<Type> &arr, const s32 trueMinIndex, const s32 trueMaxIndex);
+
+      template<typename Type> void InsertionSort_sortAscendingDimension0(Array<Type> &arr, Array<s32> &indexes, const s32 trueMinIndex, const s32 trueMaxIndex);
+      template<typename Type> void InsertionSort_sortDescendingDimension0(Array<Type> &arr, Array<s32> &indexes, const s32 trueMinIndex, const s32 trueMaxIndex);
+      template<typename Type> void InsertionSort_sortAscendingDimension1(Array<Type> &arr, Array<s32> &indexes, const s32 trueMinIndex, const s32 trueMaxIndex);
+      template<typename Type> void InsertionSort_sortDescendingDimension1(Array<Type> &arr, Array<s32> &indexes, const s32 trueMinIndex, const s32 trueMaxIndex);
+
+      template<typename Type> void QuickSort_sortAscendingDimension0(Array<Type> &arr, const s32 trueMinIndex, const s32 trueMaxIndex, const s32 x, const s32 insertionSortSize);
+      template<typename Type> void QuickSort_sortDescendingDimension0(Array<Type> &arr, const s32 trueMinIndex, const s32 trueMaxIndex, const s32 x, const s32 insertionSortSize);
+      template<typename Type> void QuickSort_sortAscendingDimension1(Array<Type> &arr, const s32 trueMinIndex, const s32 trueMaxIndex, const s32 y, const s32 insertionSortSize);
+      template<typename Type> void QuickSort_sortDescendingDimension1(Array<Type> &arr, const s32 trueMinIndex, const s32 trueMaxIndex, const s32 y, const s32 insertionSortSize);
+
+      template<typename Type> void QuickSort_sortAscendingDimension0(Array<Type> &arr, Array<s32> &indexes, const s32 trueMinIndex, const s32 trueMaxIndex, const s32 x, const s32 insertionSortSize);
+      template<typename Type> void QuickSort_sortDescendingDimension0(Array<Type> &arr, Array<s32> &indexes, const s32 trueMinIndex, const s32 trueMaxIndex, const s32 x, const s32 insertionSortSize);
+      template<typename Type> void QuickSort_sortAscendingDimension1(Array<Type> &arr, Array<s32> &indexes, const s32 trueMinIndex, const s32 trueMaxIndex, const s32 y, const s32 insertionSortSize);
+      template<typename Type> void QuickSort_sortDescendingDimension1(Array<Type> &arr, Array<s32> &indexes, const s32 trueMinIndex, const s32 trueMaxIndex, const s32 y, const s32 insertionSortSize);
 
       template<typename Type> Type Min(const ConstArraySliceExpression<Type> &mat)
       {
@@ -46,7 +65,7 @@ namespace Anki
         }
 
         return minValue;
-      }
+      } // template<typename Type> Type Min(const ConstArraySliceExpression<Type> &mat)
 
       template<typename Type> Type Max(const ConstArraySliceExpression<Type> &mat)
       {
@@ -69,7 +88,7 @@ namespace Anki
         }
 
         return maxValue;
-      }
+      } // template<typename Type> Type Max(const ConstArraySliceExpression<Type> &mat)
 
       template<typename Array_Type, typename Accumulator_Type> Accumulator_Type Sum(const ConstArraySliceExpression<Array_Type> &mat)
       {
@@ -101,21 +120,21 @@ namespace Anki
         const Array_Type mean = static_cast<Array_Type>(sum / numElements);
 
         return mean;
-      }
-      
+      } // template<typename Array_Type, typename Accumulator_Type> Array_Type Mean(const ConstArraySliceExpression<Array_Type> &mat)
+
       template<typename Array_Type, typename Accumulator_Type> Result MeanAndVar(const ConstArraySliceExpression<Array_Type> &mat,
-                                                                                 Accumulator_Type& mean, Accumulator_Type& var)
+        Accumulator_Type& mean, Accumulator_Type& var)
       {
         const Array<Array_Type> &array = mat.get_array();
-        
+
         AnkiConditionalErrorAndReturnValue(array.IsValid(),
-                                           RESULT_FAIL_INVALID_OBJECT, "Matrix::MeanAndVar", "Array<Type> is not valid");
-        
+          RESULT_FAIL_INVALID_OBJECT, "Matrix::MeanAndVar", "Array<Type> is not valid");
+
         const ArraySliceLimits_in1_out0<s32> limits(mat.get_ySlice(), mat.get_xSlice());
-        
+
         AnkiConditionalErrorAndReturnValue(limits.isValid,
-                                           RESULT_FAIL_INVALID_OBJECT, "Matrix::MeanAndVar", "Limits is not valid");
-        
+          RESULT_FAIL_INVALID_OBJECT, "Matrix::MeanAndVar", "Limits is not valid");
+
         Accumulator_Type sum = 0;
         Accumulator_Type sumSq = 0;
         for(s32 y=limits.rawIn1Limits.yStart; y<=limits.rawIn1Limits.yEnd; y+=limits.rawIn1Limits.yIncrement) {
@@ -126,16 +145,14 @@ namespace Anki
             sumSq += val*val;
           }
         }
-        
+
         const Accumulator_Type numElements = static_cast<Accumulator_Type>(mat.get_ySlice().get_size() * mat.get_xSlice().get_size());
 
         mean = sum / numElements;                  // mean = E[x]
         var  = (sumSq / numElements) - (mean*mean);  // var  = E[x^2] - E[x]^2
-        
+
         return RESULT_OK;
-        
       } // template<typename Array_Type, typename Accumulator_Type> Accumulator_Type Sum(const Array<Array_Type> &image)
-      
 
       template<typename InType, typename IntermediateType, typename OutType> Result Add(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out)
       {
@@ -214,6 +231,7 @@ namespace Anki
 
         const s32 in2Height = in2.get_size(0);
         const s32 in2Width = in2.get_size(1);
+        const s32 in2Stride = in2.get_stride();
 
         AnkiConditionalErrorAndReturnValue(in1Width == in2Height,
           RESULT_FAIL_INVALID_SIZE, "Multiply", "Input matrices are incompatible sizes");
@@ -225,22 +243,49 @@ namespace Anki
           RESULT_FAIL_INVALID_SIZE, "Multiply", "Input and Output matrices are incompatible sizes");
 
         for(s32 y1=0; y1<in1Height; y1++) {
-          const InType * restrict pMat1 = in1.Pointer(y1, 0);
-          OutType * restrict pMatOut = out.Pointer(y1, 0);
+          const InType * restrict pIn1 = in1.Pointer(y1, 0);
+          OutType * restrict pOut = out.Pointer(y1, 0);
 
           for(s32 x2=0; x2<in2Width; x2++) {
-            pMatOut[x2] = 0;
+            const u8 * restrict pIn2 = reinterpret_cast<const u8*>(in2.Pointer(0, x2));
 
-            for(s32 y2=0; y2<in2Height; y2++) {
-              pMatOut[x2] += pMat1[y2] * (*in2.Pointer(y2, x2));
+            OutType accumulator = 0;
+
+            s32 y2;
+            for(y2=0; y2<in2Height-3; y2+=4) {
+              const InType in1_0 = pIn1[y2];
+              const InType in1_1 = pIn1[y2+1];
+              const InType in1_2 = pIn1[y2+2];
+              const InType in1_3 = pIn1[y2+3];
+
+              const InType in2_0 = *reinterpret_cast<const InType*>(pIn2);
+              const InType in2_1 = *reinterpret_cast<const InType*>(pIn2 + in2Stride);
+              const InType in2_2 = *reinterpret_cast<const InType*>(pIn2 + 2*in2Stride);
+              const InType in2_3 = *reinterpret_cast<const InType*>(pIn2 + 3*in2Stride);
+
+              accumulator +=
+                in1_0 * in2_0 +
+                in1_1 * in2_1 +
+                in1_2 * in2_2 +
+                in1_3 * in2_3;
+
+              pIn2 += 4*in2Stride;
             }
+
+            for(; y2<in2Height; y2++) {
+              accumulator += pIn1[y2] * (*reinterpret_cast<const InType*>(pIn2));
+
+              pIn2 += in2Stride;
+            }
+
+            pOut[x2] = accumulator;
           }
         }
 
         return RESULT_OK;
       } // template<typename InType, typename OutType> Result Multiply(const Array<InType> &in1, const Array<InType> &in2, Array<OutType> &out)
 
-      template<typename InType, typename OutType> Result MultiplyTranspose(const Array<InType> &in1, const Array<InType> &in2Transposed, Array<OutType> &out)
+      template<typename InType, typename OutType> NO_INLINE Result MultiplyTranspose(const Array<InType> &in1, const Array<InType> &in2Transposed, Array<OutType> &out)
       {
         const s32 in1Height = in1.get_size(0);
         const s32 in1Width = in1.get_size(1);
@@ -259,17 +304,37 @@ namespace Anki
 
         for(s32 y1=0; y1<in1Height; y1++)
         {
-          const InType * restrict pMat1 = in1.Pointer(y1, 0);
+          const InType * restrict pIn1 = in1.Pointer(y1, 0);
 
           for(s32 y2=0; y2<in2TransposedHeight; y2++) {
-            const InType * restrict pMat2 = in2Transposed.Pointer(y2, 0);
-            OutType * restrict pMatOut = out.Pointer(y1, y2);
+            const InType * restrict pIn2 = in2Transposed.Pointer(y2, 0);
 
-            *pMatOut = 0;
+            OutType accumulator = 0;
 
-            for(s32 x=0; x<in2TransposedWidth; x++) {
-              *pMatOut += pMat1[x] * pMat2[x];
+            s32 x;
+            for(x=0; x<in2TransposedWidth-3; x+=4) {
+              const InType in1_0 = pIn1[x];
+              const InType in1_1 = pIn1[x+1];
+              const InType in1_2 = pIn1[x+2];
+              const InType in1_3 = pIn1[x+3];
+
+              const InType in2_0 = pIn2[x];
+              const InType in2_1 = pIn2[x+1];
+              const InType in2_2 = pIn2[x+2];
+              const InType in2_3 = pIn2[x+3];
+
+              accumulator +=
+                in1_0 * in2_0 +
+                in1_1 * in2_1 +
+                in1_2 * in2_2 +
+                in1_3 * in2_3;
             }
+
+            for(; x<in2TransposedWidth; x++) {
+              accumulator += pIn1[x] * pIn2[x];
+            }
+
+            *out.Pointer(y1, y2) = accumulator;
           }
         }
 
@@ -393,16 +458,17 @@ namespace Anki
         }
 
         return RESULT_OK;
-      }
+      } // SolveLeastSquaresWithCholesky()
 
-      
-      template<typename Type> Result EstimateHomography(
+      template<typename Type> NO_INLINE Result EstimateHomography(
         const FixedLengthList<Point<Type> > &originalPoints,    //!< Four points in the original coordinate system
         const FixedLengthList<Point<Type> > &transformedPoints, //!< Four points in the transformed coordinate system
         Array<Type> &homography, //!< A 3x3 transformation matrix
         MemoryStack scratch //!< Scratch memory
         )
       {
+        //BeginBenchmark("EstimateHomography_init");
+
         const s32 numPoints = originalPoints.get_size();
 
         AnkiConditionalErrorAndReturnValue(originalPoints.IsValid(),
@@ -431,6 +497,10 @@ namespace Anki
 
         Type * restrict pBt = bt.Pointer(0,0);
 
+        //EndBenchmark("EstimateHomography_init");
+
+        //BeginBenchmark("EstimateHomography_a&b");
+
         for(s32 i=0; i<numPoints; i++) {
           Type * restrict A_y1 = A.Pointer(2*i, 0);
           Type * restrict A_y2 = A.Pointer(2*i + 1, 0);
@@ -448,19 +518,40 @@ namespace Anki
           pBt[2*i + 1] = xp;
         }
 
+        //EndBenchmark("EstimateHomography_a&b");
+
+        //BeginBenchmark("EstimateHomography_At");
+
         Array<Type> At(2*numPoints, 8, scratch);
 
         Matrix::Transpose(A, At);
 
-        Array<Type> AtA(8, 8, scratch);
-        Array<Type> Atb(8, 1, scratch);
+        //EndBenchmark("EstimateHomography_At");
+
+        //BeginBenchmark("EstimateHomography_AtA");
+
+        Array<Type> AtA(8, 8, scratch, Flags::Buffer(false,false,false));
+        Array<Type> Atb(8, 1, scratch, Flags::Buffer(false,false,false));
 
         Matrix::Multiply(At, A, AtA);
+
+        //EndBenchmark("EstimateHomography_AtA");
+
+        //BeginBenchmark("EstimateHomography_Atb");
+
         Matrix::MultiplyTranspose(At, bt, Atb);
+
+        //EndBenchmark("EstimateHomography_Atb");
+
+        //BeginBenchmark("EstimateHomography_transposeAtb");
 
         Array<Type> Atbt(1, 8, scratch);
 
         Matrix::Transpose(Atb, Atbt);
+
+        //EndBenchmark("EstimateHomography_transposeAtb");
+
+        //BeginBenchmark("EstimateHomography_cholesky");
 
         bool numericalFailure;
 
@@ -480,8 +571,10 @@ namespace Anki
         homography[1][0] = pAtbt[3]; homography[1][1] = pAtbt[4]; homography[1][2] = pAtbt[5];
         homography[2][0] = pAtbt[6]; homography[2][1] = pAtbt[7]; homography[2][2] = static_cast<Type>(1);
 
+        //EndBenchmark("EstimateHomography_cholesky");
+
         return RESULT_OK;
-      }
+      } // EstimateHomography()
 
       template<typename InType, typename OutType> Result Reshape(const bool isColumnMajor, const Array<InType> &in, Array<OutType> &out)
       {
@@ -534,7 +627,7 @@ namespace Anki
         } // if(isColumnMajor) ... else
 
         return RESULT_OK;
-      }
+      } // Reshape()
 
       template<typename InType, typename OutType> Array<OutType> Reshape(const bool isColumnMajor, const Array<InType> &in, const s32 newHeight, const s32 newWidth, MemoryStack &memory)
       {
@@ -570,6 +663,8 @@ namespace Anki
         const s32 inHeight = in.get_size(0);
         const s32 inWidth = in.get_size(1);
 
+        const s32 outStride = out.get_stride();
+
         AnkiConditionalErrorAndReturnValue(in.IsValid(),
           RESULT_FAIL_INVALID_OBJECT, "Transpose", "in is not valid");
 
@@ -584,13 +679,30 @@ namespace Anki
 
         for(s32 yIn=0; yIn<inHeight; yIn++) {
           const InType * restrict pIn = in.Pointer(yIn, 0);
-          for(s32 xIn=0; xIn<inWidth; xIn++) {
-            out[xIn][yIn] = static_cast<OutType>(pIn[xIn]);
+          u8 * restrict pOut = reinterpret_cast<u8*>(out.Pointer(0,yIn));
+
+          s32 xIn;
+          s32 outOffset0 = 0;
+
+          for(xIn=0; xIn<inWidth-1; xIn+=2) {
+            const InType in0 = pIn[xIn];
+            const InType in1 = pIn[xIn+1];
+
+            const s32 outOffset1 = outOffset0 + outStride;
+
+            *reinterpret_cast<OutType*>(pOut + outOffset0) = static_cast<OutType>(in0);
+            *reinterpret_cast<OutType*>(pOut + outOffset1) = static_cast<OutType>(in1);
+
+            outOffset0 += 2*outStride;
+          }
+
+          for(; xIn<inWidth; xIn++) {
+            *out.Pointer(xIn,yIn) = static_cast<OutType>(pIn[xIn]);
           }
         }
 
         return RESULT_OK;
-      }
+      } // Transpose()
 
       template<typename InType, typename OutType> Result Rotate90(const Array<InType> &in, Array<OutType> &out)
       {
@@ -625,7 +737,7 @@ namespace Anki
         }
 
         return RESULT_OK;
-      }
+      } // Rotate90()
 
       template<typename InType, typename OutType> Result Rotate180(const Array<InType> &in, Array<OutType> &out)
       {
@@ -656,7 +768,7 @@ namespace Anki
         }
 
         return RESULT_OK;
-      }
+      } // Rotate180()
 
       template<typename InType, typename OutType> Result Rotate270(const Array<InType> &in, Array<OutType> &out)
       {
@@ -691,9 +803,771 @@ namespace Anki
         }
 
         return RESULT_OK;
-      }
+      } // Rotate270()
 
-      template<typename Type> Result Sort(Array<Type> &arr, const s32 sortWhichDimension, const bool sortAscending)
+      template<typename Type> void InsertionSort_sortAscendingDimension0(Array<Type> &arr, const s32 trueMinIndex, const s32 trueMaxIndex)
+      {
+        const s32 arrWidth = arr.get_size(1);
+
+        for(s32 x=0; x<arrWidth; x++) {
+          for(s32 y=(trueMinIndex+1); y<=trueMaxIndex; y++) {
+            const Type valueToInsert = arr[y][x];
+
+            s32 holePosition = y;
+
+            while(holePosition > trueMinIndex && valueToInsert < arr[holePosition-1][x]) {
+              arr[holePosition][x] = arr[holePosition-1][x];
+              holePosition--;
+            }
+
+            arr[holePosition][x] = valueToInsert;
+          }
+        } // for(s32 x=0; x<arrWidth; x++)
+      } // InsertionSort_sortAscendingDimension0()
+
+      template<typename Type> void InsertionSort_sortDescendingDimension0(Array<Type> &arr, const s32 trueMinIndex, const s32 trueMaxIndex)
+      {
+        const s32 arrWidth = arr.get_size(1);
+
+        for(s32 x=0; x<arrWidth; x++) {
+          for(s32 y=(trueMinIndex+1); y<=trueMaxIndex; y++) {
+            const Type valueToInsert = arr[y][x];
+
+            s32 holePosition = y;
+
+            while(holePosition > trueMinIndex && valueToInsert > arr[holePosition-1][x]) {
+              arr[holePosition][x] = arr[holePosition-1][x];
+              holePosition--;
+            }
+
+            arr[holePosition][x] = valueToInsert;
+          }
+        } // for(s32 x=0; x<arrWidth; x++)
+      } // InsertionSort_sortDescendingDimension0
+
+      template<typename Type> void InsertionSort_sortAscendingDimension1(Array<Type> &arr, const s32 trueMinIndex, const s32 trueMaxIndex)
+      {
+        const s32 arrHeight = arr.get_size(0);
+
+        for(s32 y=0; y<arrHeight; y++) {
+          Type * const pArr = arr[y];
+
+          for(s32 x=(trueMinIndex+1); x<=trueMaxIndex; x++) {
+            const Type valueToInsert = pArr[x];
+
+            s32 holePosition = x;
+
+            while(holePosition > trueMinIndex && valueToInsert < pArr[holePosition-1]) {
+              pArr[holePosition] = pArr[holePosition-1];
+              holePosition--;
+            }
+
+            pArr[holePosition] = valueToInsert;
+          }
+        } // for(s32 x=0; x<arrWidth; x++)
+      } // InsertionSort_sortAscendingDimension1()
+
+      template<typename Type> void InsertionSort_sortDescendingDimension1(Array<Type> &arr, const s32 trueMinIndex, const s32 trueMaxIndex)
+      {
+        const s32 arrHeight = arr.get_size(0);
+
+        for(s32 y=0; y<arrHeight; y++) {
+          Type * const pArr = arr[y];
+
+          for(s32 x=(trueMinIndex+1); x<=trueMaxIndex; x++) {
+            const Type valueToInsert = pArr[x];
+
+            s32 holePosition = x;
+
+            while(holePosition > trueMinIndex && valueToInsert > pArr[holePosition-1]) {
+              pArr[holePosition] = pArr[holePosition-1];
+              holePosition--;
+            }
+
+            pArr[holePosition] = valueToInsert;
+          }
+        } // for(s32 x=0; x<arrWidth; x++)
+      } // InsertionSort_sortAscendingDimension1()
+
+      template<typename Type> void InsertionSort_sortAscendingDimension0(Array<Type> &arr, Array<s32> &indexes, const s32 trueMinIndex, const s32 trueMaxIndex)
+      {
+        const s32 arrWidth = arr.get_size(1);
+
+        for(s32 x=0; x<arrWidth; x++) {
+          for(s32 y=(trueMinIndex+1); y<=trueMaxIndex; y++) {
+            const Type valueToInsert = arr[y][x];
+            const s32 indexToInsert = indexes[y][x];
+
+            s32 holePosition = y;
+
+            while(holePosition > trueMinIndex && valueToInsert < arr[holePosition-1][x]) {
+              arr[holePosition][x] = arr[holePosition-1][x];
+              indexes[holePosition][x] = indexes[holePosition-1][x];
+              holePosition--;
+            }
+
+            arr[holePosition][x] = valueToInsert;
+            indexes[holePosition][x] = indexToInsert;
+          }
+        } // for(s32 x=0; x<arrWidth; x++)
+      } // InsertionSort_sortAscendingDimension0()
+
+      template<typename Type> void InsertionSort_sortDescendingDimension0(Array<Type> &arr, Array<s32> &indexes, const s32 trueMinIndex, const s32 trueMaxIndex)
+      {
+        const s32 arrWidth = arr.get_size(1);
+
+        for(s32 x=0; x<arrWidth; x++) {
+          indexes[0][x] = 0;
+
+          for(s32 y=(trueMinIndex+1); y<=trueMaxIndex; y++) {
+            const Type valueToInsert = arr[y][x];
+            const s32 indexToInsert = indexes[y][x];
+
+            s32 holePosition = y;
+
+            while(holePosition > trueMinIndex && valueToInsert > arr[holePosition-1][x]) {
+              arr[holePosition][x] = arr[holePosition-1][x];
+              indexes[holePosition][x] = indexes[holePosition-1][x];
+              holePosition--;
+            }
+
+            arr[holePosition][x] = valueToInsert;
+            indexes[holePosition][x] = indexToInsert;
+          }
+        } // for(s32 x=0; x<arrWidth; x++)
+      } // InsertionSort_sortDescendingDimension0()
+
+      template<typename Type> void InsertionSort_sortAscendingDimension1(Array<Type> &arr, Array<s32> &indexes, const s32 trueMinIndex, const s32 trueMaxIndex)
+      {
+        const s32 arrHeight = arr.get_size(0);
+
+        for(s32 y=0; y<arrHeight; y++) {
+          Type * const pArr = arr[y];
+          s32 * const pIndexes = indexes[y];
+
+          pIndexes[0] = 0;
+
+          for(s32 x=(trueMinIndex+1); x<=trueMaxIndex; x++) {
+            const Type valueToInsert = pArr[x];
+            const s32 indexToInsert = pIndexes[x];
+
+            s32 holePosition = x;
+
+            while(holePosition > trueMinIndex && valueToInsert < pArr[holePosition-1]) {
+              pArr[holePosition] = pArr[holePosition-1];
+              pIndexes[holePosition] = pIndexes[holePosition-1];
+              holePosition--;
+            }
+
+            pArr[holePosition] = valueToInsert;
+            pIndexes[holePosition] = indexToInsert;
+          }
+        } // for(s32 x=0; x<arrWidth; x++)
+      } // InsertionSort_sortAscendingDimension1()
+
+      template<typename Type> void InsertionSort_sortDescendingDimension1(Array<Type> &arr, Array<s32> &indexes, const s32 trueMinIndex, const s32 trueMaxIndex)
+      {
+        const s32 arrHeight = arr.get_size(0);
+
+        for(s32 y=0; y<arrHeight; y++) {
+          Type * const pArr = arr[y];
+          s32 * const pIndexes = indexes[y];
+
+          pIndexes[0] = 0;
+
+          for(s32 x=(trueMinIndex+1); x<=trueMaxIndex; x++) {
+            const Type valueToInsert = pArr[x];
+            const s32 indexToInsert = pIndexes[x];
+
+            s32 holePosition = x;
+
+            while(holePosition > trueMinIndex && valueToInsert > pArr[holePosition-1]) {
+              pArr[holePosition] = pArr[holePosition-1];
+              pIndexes[holePosition] = pIndexes[holePosition-1];
+              holePosition--;
+            }
+
+            pArr[holePosition] = valueToInsert;
+            pIndexes[holePosition] = indexToInsert;
+          }
+        } // for(s32 x=0; x<arrWidth; x++)
+      } // InsertionSort_sortDescendingDimension1()
+
+      template<typename Type> void QuickSort_sortAscendingDimension0(Array<Type> &arr, const s32 trueMinIndex, const s32 trueMaxIndex, const s32 x, const s32 insertionSortSize)
+      {
+        if((trueMaxIndex - trueMinIndex + 1) <= insertionSortSize) {
+          return;
+        }
+
+        // Select the median value of the first, middle, and last elements as the pivot
+        // Also, put the min of the three at the beginning, the median in the middle, and the max at the end
+
+        const s32 midIndex = (trueMaxIndex + trueMinIndex) / 2;
+
+        if(*arr.Pointer(midIndex, x) < *arr.Pointer(trueMinIndex, x))
+          Swap<Type>(*arr.Pointer(midIndex, x), *arr.Pointer(trueMinIndex, x));
+
+        if(*arr.Pointer(trueMaxIndex, x) < *arr.Pointer(trueMinIndex, x))
+          Swap<Type>(*arr.Pointer(trueMaxIndex, x), *arr.Pointer(trueMinIndex, x));
+
+        if(*arr.Pointer(trueMaxIndex, x) < *arr.Pointer(midIndex, x))
+          Swap<Type>(*arr.Pointer(trueMaxIndex, x), *arr.Pointer(midIndex, x));
+
+        // Search from the beginning to before the moved pivot
+        s32 i = trueMinIndex;
+        s32 j = trueMaxIndex - 2;
+
+        if(i >= j) {
+          // If there are 3 or less elements, the [min,median,max] ordering is a complete sort
+          // NOTE: This really means your insertionSortSize value is too low
+          return;
+        }
+
+        // Move the pivot to the end-1 (right before the 3-way max element)
+
+        const Type pivot = *arr.Pointer(midIndex, x);
+
+        Swap<Type>(*arr.Pointer(midIndex, x), *arr.Pointer(trueMaxIndex - 1, x));
+
+        // Main partitioning loop
+        while(true) {
+          // We don't need to check that i get too low, because the value at index trueMinIndex is <= pivot
+          while(*arr.Pointer(i,x) < pivot) {
+            i++;
+          }
+
+          // We don't need to check that j get too high, because the value at index (trueMaxIndex - 1) is == pivot
+          while(*arr.Pointer(j,x) > pivot) {
+            j--;
+          }
+
+          if(i < j) {
+            Swap<Type>(*arr.Pointer(i,x), *arr.Pointer(j,x));
+            i++;
+            j--;
+          } else {
+            break;
+          }
+        }
+
+        // Replace the pivot
+        Swap<Type>(*arr.Pointer(i,x), *arr.Pointer(trueMaxIndex - 1, x));
+
+        // Recurse
+        QuickSort_sortAscendingDimension0<Type>(arr, trueMinIndex, i-1, x, insertionSortSize);
+
+        QuickSort_sortAscendingDimension0<Type>(arr, i+1, trueMaxIndex, x, insertionSortSize);
+      } // QuickSort_sortAscendingDimension0
+
+      template<typename Type> void QuickSort_sortDescendingDimension0(Array<Type> &arr, const s32 trueMinIndex, const s32 trueMaxIndex, const s32 x, const s32 insertionSortSize)
+      {
+        if((trueMaxIndex - trueMinIndex + 1) <= insertionSortSize) {
+          return;
+        }
+
+        // Select the median value of the first, middle, and last elements as the pivot
+        // Also, put the max of the three at the beginning, the median in the middle, and the min at the end
+
+        const s32 midIndex = (trueMaxIndex + trueMinIndex) / 2;
+
+        if(*arr.Pointer(midIndex, x) < *arr.Pointer(trueMaxIndex, x))
+          Swap<Type>(*arr.Pointer(midIndex, x), *arr.Pointer(trueMaxIndex, x));
+
+        if(*arr.Pointer(trueMinIndex, x) < *arr.Pointer(trueMaxIndex, x))
+          Swap<Type>(*arr.Pointer(trueMinIndex, x), *arr.Pointer(trueMaxIndex, x));
+
+        if(*arr.Pointer(trueMinIndex, x) < *arr.Pointer(midIndex, x))
+          Swap<Type>(*arr.Pointer(trueMinIndex, x), *arr.Pointer(midIndex, x));
+
+        // Search from the beginning to before the moved pivot
+        s32 i = trueMinIndex;
+        s32 j = trueMaxIndex - 2;
+
+        if(i >= j) {
+          // If there are 3 or less elements, the [min,median,max] ordering is a complete sort
+          // NOTE: This really means your insertionSortSize value is too low
+          return;
+        }
+
+        // Move the pivot to the end-1 (right before the 3-way max element)
+
+        const Type pivot = *arr.Pointer(midIndex, x);
+
+        Swap<Type>(*arr.Pointer(midIndex, x), *arr.Pointer(trueMaxIndex - 1, x));
+
+        // Main partitioning loop
+        while(true) {
+          // We don't need to check that i get too low, because the value at index trueMinIndex is <= pivot
+          while(*arr.Pointer(i,x) > pivot) {
+            i++;
+          }
+
+          // We don't need to check that j get too high, because the value at index (trueMaxIndex - 1) is == pivot
+          while(*arr.Pointer(j,x) < pivot) {
+            j--;
+          }
+
+          if(i < j) {
+            Swap<Type>(*arr.Pointer(i,x), *arr.Pointer(j,x));
+            i++;
+            j--;
+          } else {
+            break;
+          }
+        }
+
+        // Replace the pivot
+        Swap<Type>(*arr.Pointer(i,x), *arr.Pointer(trueMaxIndex - 1, x));
+
+        // Recurse
+        QuickSort_sortDescendingDimension0<Type>(arr, trueMinIndex, i-1, x, insertionSortSize);
+
+        QuickSort_sortDescendingDimension0<Type>(arr, i+1, trueMaxIndex, x, insertionSortSize);
+      } // QuickSort_sortDescendingDimension0
+
+      template<typename Type> void QuickSort_sortAscendingDimension1(Array<Type> &arr, const s32 trueMinIndex, const s32 trueMaxIndex, const s32 y, const s32 insertionSortSize)
+      {
+        if((trueMaxIndex - trueMinIndex + 1) <= insertionSortSize) {
+          return;
+        }
+
+        Type * restrict pArr = arr.Pointer(y,0);
+
+        // Select the median value of the first, middle, and last elements as the pivot
+        // Also, put the min of the three at the beginning, the median in the middle, and the max at the end
+
+        const s32 midIndex = (trueMaxIndex + trueMinIndex) / 2;
+
+        if(pArr[midIndex] < pArr[trueMinIndex])
+          Swap<Type>(pArr[midIndex], pArr[trueMinIndex]);
+
+        if(pArr[trueMaxIndex] < pArr[trueMinIndex])
+          Swap<Type>(pArr[trueMaxIndex], pArr[trueMinIndex]);
+
+        if(pArr[trueMaxIndex] < pArr[midIndex])
+          Swap<Type>(pArr[trueMaxIndex], pArr[midIndex]);
+
+        // Search from the beginning to before the moved pivot
+        s32 i = trueMinIndex;
+        s32 j = trueMaxIndex - 2;
+
+        if(i >= j) {
+          // If there are 3 or less elements, the [min,median,max] ordering is a complete sort
+          // NOTE: This really means your insertionSortSize value is too low
+          return;
+        }
+
+        // Move the pivot to the end-1 (right before the 3-way max element)
+
+        const Type pivot = pArr[midIndex];
+
+        Swap<Type>(pArr[midIndex], pArr[trueMaxIndex - 1]);
+
+        // Main partitioning loop
+        while(true) {
+          // We don't need to check that i get too low, because the value at index trueMinIndex is <= pivot
+          while(pArr[i] < pivot) {
+            i++;
+          }
+
+          // We don't need to check that j get too high, because the value at index (trueMaxIndex - 1) is == pivot
+          while(pArr[j] > pivot) {
+            j--;
+          }
+
+          if(i < j) {
+            Swap<Type>(pArr[i], pArr[j]);
+            i++;
+            j--;
+          } else {
+            break;
+          }
+        }
+
+        // Replace the pivot
+        Swap<Type>(pArr[i], pArr[trueMaxIndex - 1]);
+
+        // Recurse
+        QuickSort_sortAscendingDimension1<Type>(arr, trueMinIndex, i-1, y, insertionSortSize);
+
+        QuickSort_sortAscendingDimension1<Type>(arr, i+1, trueMaxIndex, y, insertionSortSize);
+      } // QuickSort_sortAscendingDimension1
+
+      template<typename Type> void QuickSort_sortDescendingDimension1(Array<Type> &arr, const s32 trueMinIndex, const s32 trueMaxIndex, const s32 y, const s32 insertionSortSize)
+      {
+        if((trueMaxIndex - trueMinIndex + 1) <= insertionSortSize) {
+          return;
+        }
+
+        Type * restrict pArr = arr.Pointer(y,0);
+
+        // Select the median value of the first, middle, and last elements as the pivot
+        // Also, put the max of the three at the beginning, the median in the middle, and the min at the end
+
+        const s32 midIndex = (trueMaxIndex + trueMinIndex) / 2;
+
+        if(pArr[midIndex] < pArr[trueMaxIndex])
+          Swap<Type>(pArr[midIndex], pArr[trueMaxIndex]);
+
+        if(pArr[trueMinIndex] < pArr[trueMaxIndex])
+          Swap<Type>(pArr[trueMinIndex], pArr[trueMaxIndex]);
+
+        if(pArr[trueMinIndex] < pArr[midIndex])
+          Swap<Type>(pArr[trueMinIndex], pArr[midIndex]);
+
+        // Search from the beginning to before the moved pivot
+        s32 i = trueMinIndex;
+        s32 j = trueMaxIndex - 2;
+
+        if(i >= j) {
+          // If there are 3 or less elements, the [min,median,max] ordering is a complete sort
+          // NOTE: This really means your insertionSortSize value is too low
+          return;
+        }
+
+        // Move the pivot to the end-1 (right before the 3-way max element)
+
+        const Type pivot = pArr[midIndex];
+
+        Swap<Type>(pArr[midIndex], pArr[trueMaxIndex - 1]);
+
+        // Main partitioning loop
+        while(true) {
+          // We don't need to check that i get too low, because the value at index trueMinIndex is <= pivot
+          while(pArr[i] > pivot) {
+            i++;
+          }
+
+          // We don't need to check that j get too high, because the value at index (trueMaxIndex - 1) is == pivot
+          while(pArr[j] < pivot) {
+            j--;
+          }
+
+          if(i < j) {
+            Swap<Type>(pArr[i], pArr[j]);
+            i++;
+            j--;
+          } else {
+            break;
+          }
+        }
+
+        // Replace the pivot
+        Swap<Type>(pArr[i], pArr[trueMaxIndex - 1]);
+
+        // Recurse
+        QuickSort_sortDescendingDimension1<Type>(arr, trueMinIndex, i-1, y, insertionSortSize);
+
+        QuickSort_sortDescendingDimension1<Type>(arr, i+1, trueMaxIndex, y, insertionSortSize);
+      } // QuickSort_sortDescendingDimension1
+
+      template<typename Type> void QuickSort_sortAscendingDimension0(Array<Type> &arr, Array<s32> &indexes, const s32 trueMinIndex, const s32 trueMaxIndex, const s32 x, const s32 insertionSortSize)
+      {
+        if((trueMaxIndex - trueMinIndex + 1) <= insertionSortSize) {
+          return;
+        }
+
+        // Select the median value of the first, middle, and last elements as the pivot
+        // Also, put the min of the three at the beginning, the median in the middle, and the max at the end
+
+        const s32 midIndex = (trueMaxIndex + trueMinIndex) / 2;
+
+        if(*arr.Pointer(midIndex, x) < *arr.Pointer(trueMinIndex, x)) {
+          Swap<Type>(*arr.Pointer(midIndex, x), *arr.Pointer(trueMinIndex, x));
+          Swap<s32>(*indexes.Pointer(midIndex, x), *indexes.Pointer(trueMinIndex, x));
+        }
+
+        if(*arr.Pointer(trueMaxIndex, x) < *arr.Pointer(trueMinIndex, x)) {
+          Swap<Type>(*arr.Pointer(trueMaxIndex, x), *arr.Pointer(trueMinIndex, x));
+          Swap<s32>(*indexes.Pointer(trueMaxIndex, x), *indexes.Pointer(trueMinIndex, x));
+        }
+
+        if(*arr.Pointer(trueMaxIndex, x) < *arr.Pointer(midIndex, x)) {
+          Swap<Type>(*arr.Pointer(trueMaxIndex, x), *arr.Pointer(midIndex, x));
+          Swap<s32>(*indexes.Pointer(trueMaxIndex, x), *indexes.Pointer(midIndex, x));
+        }
+
+        // Search from the beginning to before the moved pivot
+        s32 i = trueMinIndex;
+        s32 j = trueMaxIndex - 2;
+
+        if(i >= j) {
+          // If there are 3 or less elements, the [min,median,max] ordering is a complete sort
+          // NOTE: This really means your insertionSortSize value is too low
+          return;
+        }
+
+        // Move the pivot to the end-1 (right before the 3-way max element)
+
+        const Type pivot = *arr.Pointer(midIndex, x);
+
+        Swap<Type>(*arr.Pointer(midIndex, x), *arr.Pointer(trueMaxIndex - 1, x));
+        Swap<s32>(*indexes.Pointer(midIndex, x), *indexes.Pointer(trueMaxIndex - 1, x));
+
+        // Main partitioning loop
+        while(true) {
+          // We don't need to check that i get too low, because the value at index trueMinIndex is <= pivot
+          while(*arr.Pointer(i,x) < pivot) {
+            i++;
+          }
+
+          // We don't need to check that j get too high, because the value at index (trueMaxIndex - 1) is == pivot
+          while(*arr.Pointer(j,x) > pivot) {
+            j--;
+          }
+
+          if(i < j) {
+            Swap<Type>(*arr.Pointer(i,x), *arr.Pointer(j,x));
+            Swap<s32>(*indexes.Pointer(i,x), *indexes.Pointer(j,x));
+            i++;
+            j--;
+          } else {
+            break;
+          }
+        }
+
+        // Replace the pivot
+        Swap<Type>(*arr.Pointer(i,x), *arr.Pointer(trueMaxIndex - 1, x));
+        Swap<s32>(*indexes.Pointer(i,x), *indexes.Pointer(trueMaxIndex - 1, x));
+
+        // Recurse
+        QuickSort_sortAscendingDimension0<Type>(arr, indexes, trueMinIndex, i-1, x, insertionSortSize);
+
+        QuickSort_sortAscendingDimension0<Type>(arr, indexes, i+1, trueMaxIndex, x, insertionSortSize);
+      } // QuickSort_sortAscendingDimension0
+
+      template<typename Type> void QuickSort_sortDescendingDimension0(Array<Type> &arr, Array<s32> &indexes, const s32 trueMinIndex, const s32 trueMaxIndex, const s32 x, const s32 insertionSortSize)
+      {
+        if((trueMaxIndex - trueMinIndex + 1) <= insertionSortSize) {
+          return;
+        }
+
+        // Select the median value of the first, middle, and last elements as the pivot
+        // Also, put the max of the three at the beginning, the median in the middle, and the min at the end
+
+        const s32 midIndex = (trueMaxIndex + trueMinIndex) / 2;
+
+        if(*arr.Pointer(midIndex, x) < *arr.Pointer(trueMaxIndex, x)) {
+          Swap<Type>(*arr.Pointer(midIndex, x), *arr.Pointer(trueMaxIndex, x));
+          Swap<s32>(*indexes.Pointer(midIndex, x), *indexes.Pointer(trueMaxIndex, x));
+        }
+
+        if(*arr.Pointer(trueMinIndex, x) < *arr.Pointer(trueMaxIndex, x)) {
+          Swap<Type>(*arr.Pointer(trueMinIndex, x), *arr.Pointer(trueMaxIndex, x));
+          Swap<s32>(*indexes.Pointer(trueMinIndex, x), *indexes.Pointer(trueMaxIndex, x));
+        }
+
+        if(*arr.Pointer(trueMinIndex, x) < *arr.Pointer(midIndex, x)) {
+          Swap<Type>(*arr.Pointer(trueMinIndex, x), *arr.Pointer(midIndex, x));
+          Swap<s32>(*indexes.Pointer(trueMinIndex, x), *indexes.Pointer(midIndex, x));
+        }
+
+        // Search from the beginning to before the moved pivot
+        s32 i = trueMinIndex;
+        s32 j = trueMaxIndex - 2;
+
+        if(i >= j) {
+          // If there are 3 or less elements, the [min,median,max] ordering is a complete sort
+          // NOTE: This really means your insertionSortSize value is too low
+          return;
+        }
+
+        // Move the pivot to the end-1 (right before the 3-way max element)
+
+        const Type pivot = *arr.Pointer(midIndex, x);
+
+        Swap<Type>(*arr.Pointer(midIndex, x), *arr.Pointer(trueMaxIndex - 1, x));
+        Swap<s32>(*indexes.Pointer(midIndex, x), *indexes.Pointer(trueMaxIndex - 1, x));
+
+        // Main partitioning loop
+        while(true) {
+          // We don't need to check that i get too low, because the value at index trueMinIndex is <= pivot
+          while(*arr.Pointer(i,x) > pivot) {
+            i++;
+          }
+
+          // We don't need to check that j get too high, because the value at index (trueMaxIndex - 1) is == pivot
+          while(*arr.Pointer(j,x) < pivot) {
+            j--;
+          }
+
+          if(i < j) {
+            Swap<Type>(*arr.Pointer(i,x), *arr.Pointer(j,x));
+            Swap<s32>(*indexes.Pointer(i,x), *indexes.Pointer(j,x));
+            i++;
+            j--;
+          } else {
+            break;
+          }
+        }
+
+        // Replace the pivot
+        Swap<Type>(*arr.Pointer(i,x), *arr.Pointer(trueMaxIndex - 1, x));
+        Swap<s32>(*indexes.Pointer(i,x), *indexes.Pointer(trueMaxIndex - 1, x));
+
+        // Recurse
+        QuickSort_sortDescendingDimension0<Type>(arr, indexes, trueMinIndex, i-1, x, insertionSortSize);
+
+        QuickSort_sortDescendingDimension0<Type>(arr, indexes, i+1, trueMaxIndex, x, insertionSortSize);
+      } // QuickSort_sortDescendingDimension0
+
+      template<typename Type> void QuickSort_sortAscendingDimension1(Array<Type> &arr, Array<s32> &indexes, const s32 trueMinIndex, const s32 trueMaxIndex, const s32 y, const s32 insertionSortSize)
+      {
+        if((trueMaxIndex - trueMinIndex + 1) <= insertionSortSize) {
+          return;
+        }
+
+        Type * restrict pArr = arr.Pointer(y,0);
+        s32 * restrict pIndexes = indexes.Pointer(y,0);
+
+        // Select the median value of the first, middle, and last elements as the pivot
+        // Also, put the min of the three at the beginning, the median in the middle, and the max at the end
+
+        const s32 midIndex = (trueMaxIndex + trueMinIndex) / 2;
+
+        if(pArr[midIndex] < pArr[trueMinIndex]) {
+          Swap<Type>(pArr[midIndex], pArr[trueMinIndex]);
+          Swap<s32>(pIndexes[midIndex], pIndexes[trueMinIndex]);
+        }
+
+        if(pArr[trueMaxIndex] < pArr[trueMinIndex]) {
+          Swap<Type>(pArr[trueMaxIndex], pArr[trueMinIndex]);
+          Swap<s32>(pIndexes[trueMaxIndex], pIndexes[trueMinIndex]);
+        }
+
+        if(pArr[trueMaxIndex] < pArr[midIndex]) {
+          Swap<Type>(pArr[trueMaxIndex], pArr[midIndex]);
+          Swap<s32>(pIndexes[trueMaxIndex], pIndexes[midIndex]);
+        }
+
+        // Search from the beginning to before the moved pivot
+        s32 i = trueMinIndex;
+        s32 j = trueMaxIndex - 2;
+
+        if(i >= j) {
+          // If there are 3 or less elements, the [min,median,max] ordering is a complete sort
+          // NOTE: This really means your insertionSortSize value is too low
+          return;
+        }
+
+        // Move the pivot to the end-1 (right before the 3-way max element)
+
+        const Type pivot = pArr[midIndex];
+
+        Swap<Type>(pArr[midIndex], pArr[trueMaxIndex - 1]);
+        Swap<s32>(pIndexes[midIndex], pIndexes[trueMaxIndex - 1]);
+
+        // Main partitioning loop
+        while(true) {
+          // We don't need to check that i get too low, because the value at index trueMinIndex is <= pivot
+          while(pArr[i] < pivot) {
+            i++;
+          }
+
+          // We don't need to check that j get too high, because the value at index (trueMaxIndex - 1) is == pivot
+          while(pArr[j] > pivot) {
+            j--;
+          }
+
+          if(i < j) {
+            Swap<Type>(pArr[i], pArr[j]);
+            Swap<s32>(pIndexes[i], pIndexes[j]);
+            i++;
+            j--;
+          } else {
+            break;
+          }
+        }
+
+        // Replace the pivot
+        Swap<Type>(pArr[i], pArr[trueMaxIndex - 1]);
+        Swap<s32>(pIndexes[i], pIndexes[trueMaxIndex - 1]);
+
+        // Recurse
+        QuickSort_sortAscendingDimension1<Type>(arr, indexes, trueMinIndex, i-1, y, insertionSortSize);
+
+        QuickSort_sortAscendingDimension1<Type>(arr, indexes, i+1, trueMaxIndex, y, insertionSortSize);
+      } // QuickSort_sortAscendingDimension1
+
+      template<typename Type> void QuickSort_sortDescendingDimension1(Array<Type> &arr, Array<s32> &indexes, const s32 trueMinIndex, const s32 trueMaxIndex, const s32 y, const s32 insertionSortSize)
+      {
+        if((trueMaxIndex - trueMinIndex + 1) <= insertionSortSize) {
+          return;
+        }
+
+        Type * restrict pArr = arr.Pointer(y,0);
+        s32 * restrict pIndexes = indexes.Pointer(y,0);
+
+        // Select the median value of the first, middle, and last elements as the pivot
+        // Also, put the max of the three at the beginning, the median in the middle, and the min at the end
+
+        const s32 midIndex = (trueMaxIndex + trueMinIndex) / 2;
+
+        if(pArr[midIndex] < pArr[trueMaxIndex]) {
+          Swap<Type>(pArr[midIndex], pArr[trueMaxIndex]);
+          Swap<s32>(pIndexes[midIndex], pIndexes[trueMaxIndex]);
+        }
+
+        if(pArr[trueMinIndex] < pArr[trueMaxIndex]) {
+          Swap<Type>(pArr[trueMinIndex], pArr[trueMaxIndex]);
+          Swap<s32>(pIndexes[trueMinIndex], pIndexes[trueMaxIndex]);
+        }
+
+        if(pArr[trueMinIndex] < pArr[midIndex]) {
+          Swap<Type>(pArr[trueMinIndex], pArr[midIndex]);
+          Swap<s32>(pIndexes[trueMinIndex], pIndexes[midIndex]);
+        }
+
+        // Search from the beginning to before the moved pivot
+        s32 i = trueMinIndex;
+        s32 j = trueMaxIndex - 2;
+
+        if(i >= j) {
+          // If there are 3 or less elements, the [min,median,max] ordering is a complete sort
+          // NOTE: This really means your insertionSortSize value is too low
+          return;
+        }
+
+        // Move the pivot to the end-1 (right before the 3-way max element)
+
+        const Type pivot = pArr[midIndex];
+
+        Swap<Type>(pArr[midIndex], pArr[trueMaxIndex - 1]);
+        Swap<s32>(pIndexes[midIndex], pIndexes[trueMaxIndex - 1]);
+
+        // Main partitioning loop
+        while(true) {
+          // We don't need to check that i get too low, because the value at index trueMinIndex is <= pivot
+          while(pArr[i] > pivot) {
+            i++;
+          }
+
+          // We don't need to check that j get too high, because the value at index (trueMaxIndex - 1) is == pivot
+          while(pArr[j] < pivot) {
+            j--;
+          }
+
+          if(i < j) {
+            Swap<Type>(pArr[i], pArr[j]);
+            Swap<s32>(pIndexes[i], pIndexes[j]);
+            i++;
+            j--;
+          } else {
+            break;
+          }
+        }
+
+        // Replace the pivot
+        Swap<Type>(pArr[i], pArr[trueMaxIndex - 1]);
+        Swap<s32>(pIndexes[i], pIndexes[trueMaxIndex - 1]);
+
+        // Recurse
+        QuickSort_sortDescendingDimension1<Type>(arr, indexes, trueMinIndex, i-1, y, insertionSortSize);
+
+        QuickSort_sortDescendingDimension1<Type>(arr, indexes, i+1, trueMaxIndex, y, insertionSortSize);
+      } // QuickSort_sortDescendingDimension1
+
+      template<typename Type> Result InsertionSort(Array<Type> &arr, const s32 sortWhichDimension, const bool sortAscending, const s32 minIndex, const s32 maxIndex)
       {
         const s32 arrHeight = arr.get_size(0);
         const s32 arrWidth = arr.get_size(1);
@@ -704,81 +1578,28 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(sortWhichDimension==0 || sortWhichDimension==1,
           RESULT_FAIL_INVALID_PARAMETER, "Sort", "sortWhichDimension must be zero or one");
 
+        const s32 trueMinIndex = CLIP(minIndex, 0, arr.get_size(sortWhichDimension) - 1);
+        const s32 trueMaxIndex = CLIP(maxIndex, 0, arr.get_size(sortWhichDimension) - 1);
+
         if(sortWhichDimension == 0) {
           // TODO: This columnwise sorting could be sped up, with smarter array indexing.
           if(sortAscending) {
-            for(s32 x=0; x<arrWidth; x++) {
-              for(s32 y=1; y<arrHeight; y++) {
-                const Type valueToInsert = arr[y][x];
-
-                s32 holePosition = y;
-
-                while(holePosition > 0 && valueToInsert < arr[holePosition-1][x]) {
-                  arr[holePosition][x] = arr[holePosition-1][x];
-                  holePosition--;
-                }
-
-                arr[holePosition][x] = valueToInsert;
-              }
-            } // for(s32 x=0; x<arrWidth; x++)
+            InsertionSort_sortAscendingDimension0(arr, trueMinIndex, trueMaxIndex);
           } else { // if(sortAscending)
-            for(s32 x=0; x<arrWidth; x++) {
-              for(s32 y=1; y<arrHeight; y++) {
-                const Type valueToInsert = arr[y][x];
-
-                s32 holePosition = y;
-
-                while(holePosition > 0 && valueToInsert > arr[holePosition-1][x]) {
-                  arr[holePosition][x] = arr[holePosition-1][x];
-                  holePosition--;
-                }
-
-                arr[holePosition][x] = valueToInsert;
-              }
-            } // for(s32 x=0; x<arrWidth; x++)
+            InsertionSort_sortDescendingDimension0(arr, trueMinIndex, trueMaxIndex);
           } // if(sortAscending) ... else
         } else { // sortWhichDimension == 1
           if(sortAscending) {
-            for(s32 y=0; y<arrHeight; y++) {
-              Type * const pArr = arr[y];
-
-              for(s32 x=1; x<arrWidth; x++) {
-                const Type valueToInsert = pArr[x];
-
-                s32 holePosition = x;
-
-                while(holePosition > 0 && valueToInsert < pArr[holePosition-1]) {
-                  pArr[holePosition] = pArr[holePosition-1];
-                  holePosition--;
-                }
-
-                pArr[holePosition] = valueToInsert;
-              }
-            } // for(s32 x=0; x<arrWidth; x++)
+            InsertionSort_sortAscendingDimension1(arr, trueMinIndex, trueMaxIndex);
           } else { // if(sortAscending)
-            for(s32 y=0; y<arrHeight; y++) {
-              Type * const pArr = arr[y];
-
-              for(s32 x=1; x<arrWidth; x++) {
-                const Type valueToInsert = pArr[x];
-
-                s32 holePosition = x;
-
-                while(holePosition > 0 && valueToInsert > pArr[holePosition-1]) {
-                  pArr[holePosition] = pArr[holePosition-1];
-                  holePosition--;
-                }
-
-                pArr[holePosition] = valueToInsert;
-              }
-            } // for(s32 x=0; x<arrWidth; x++)
+            InsertionSort_sortDescendingDimension1(arr, trueMinIndex, trueMaxIndex);
           } // if(sortAscending) ... else
         } // if(sortWhichDimension == 0) ... else
 
         return RESULT_OK;
-      }
+      } // InsertionSort()
 
-      template<typename Type> Result Sort(Array<Type> &arr, Array<s32> &indexes, const s32 sortWhichDimension, const bool sortAscending)
+      template<typename Type> Result InsertionSort(Array<Type> &arr, Array<s32> &indexes, const s32 sortWhichDimension, const bool sortAscending, const s32 minIndex, const s32 maxIndex)
       {
         const s32 arrHeight = arr.get_size(0);
         const s32 arrWidth = arr.get_size(1);
@@ -795,97 +1616,170 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(indexes.get_size(0) == arrHeight && indexes.get_size(1) == arrWidth,
           RESULT_FAIL_INVALID_SIZE, "Sort", "indexes must be the same size as arr");
 
+        const s32 trueMinIndex = CLIP(minIndex, 0, arr.get_size(sortWhichDimension) - 1);
+        const s32 trueMaxIndex = CLIP(maxIndex, 0, arr.get_size(sortWhichDimension) - 1);
+
         if(sortWhichDimension == 0) {
+          for(s32 y=0; y<arrHeight; y++) {
+            s32 * restrict pIndexes = indexes.Pointer(y,0);
+            for(s32 x=0; x<arrWidth; x++) {
+              pIndexes[x] = y;
+            }
+          }
+
           // TODO: This columnwise sorting could be sped up, with smarter array indexing.
           if(sortAscending) {
-            for(s32 x=0; x<arrWidth; x++) {
-              indexes[0][x] = 0;
-
-              for(s32 y=1; y<arrHeight; y++) {
-                const Type valueToInsert = arr[y][x];
-
-                s32 holePosition = y;
-
-                while(holePosition > 0 && valueToInsert < arr[holePosition-1][x]) {
-                  arr[holePosition][x] = arr[holePosition-1][x];
-                  indexes[holePosition][x] = indexes[holePosition-1][x];
-                  holePosition--;
-                }
-
-                arr[holePosition][x] = valueToInsert;
-                indexes[holePosition][x] = y;
-              }
-            } // for(s32 x=0; x<arrWidth; x++)
+            InsertionSort_sortAscendingDimension0(arr, indexes, trueMinIndex, trueMaxIndex);
           } else { // if(sortAscending)
-            for(s32 x=0; x<arrWidth; x++) {
-              indexes[0][x] = 0;
-
-              for(s32 y=1; y<arrHeight; y++) {
-                const Type valueToInsert = arr[y][x];
-
-                s32 holePosition = y;
-
-                while(holePosition > 0 && valueToInsert > arr[holePosition-1][x]) {
-                  arr[holePosition][x] = arr[holePosition-1][x];
-                  indexes[holePosition][x] = indexes[holePosition-1][x];
-                  holePosition--;
-                }
-
-                arr[holePosition][x] = valueToInsert;
-                indexes[holePosition][x] = y;
-              }
-            } // for(s32 x=0; x<arrWidth; x++)
+            InsertionSort_sortDescendingDimension0(arr, indexes, trueMinIndex, trueMaxIndex);
           } // if(sortAscending) ... else
         } else { // sortWhichDimension == 1
+          for(s32 y=0; y<arrHeight; y++) {
+            s32 * restrict pIndexes = indexes.Pointer(y,0);
+            for(s32 x=0; x<arrWidth; x++) {
+              pIndexes[x] = x;
+            }
+          }
+
           if(sortAscending) {
-            for(s32 y=0; y<arrHeight; y++) {
-              Type * const pArr = arr[y];
-              s32 * const pIndexes = indexes[y];
-
-              pIndexes[0] = 0;
-
-              for(s32 x=1; x<arrWidth; x++) {
-                const Type valueToInsert = pArr[x];
-
-                s32 holePosition = x;
-
-                while(holePosition > 0 && valueToInsert < pArr[holePosition-1]) {
-                  pArr[holePosition] = pArr[holePosition-1];
-                  pIndexes[holePosition] = pIndexes[holePosition-1];
-                  holePosition--;
-                }
-
-                pArr[holePosition] = valueToInsert;
-                pIndexes[holePosition] = x;
-              }
-            } // for(s32 x=0; x<arrWidth; x++)
+            InsertionSort_sortAscendingDimension1(arr, indexes, trueMinIndex, trueMaxIndex);
           } else { // if(sortAscending)
-            for(s32 y=0; y<arrHeight; y++) {
-              Type * const pArr = arr[y];
-              s32 * const pIndexes = indexes[y];
-
-              pIndexes[0] = 0;
-
-              for(s32 x=1; x<arrWidth; x++) {
-                const Type valueToInsert = pArr[x];
-
-                s32 holePosition = x;
-
-                while(holePosition > 0 && valueToInsert > pArr[holePosition-1]) {
-                  pArr[holePosition] = pArr[holePosition-1];
-                  pIndexes[holePosition] = pIndexes[holePosition-1];
-                  holePosition--;
-                }
-
-                pArr[holePosition] = valueToInsert;
-                pIndexes[holePosition] = x;
-              }
-            } // for(s32 x=0; x<arrWidth; x++)
+            InsertionSort_sortDescendingDimension1(arr, indexes, trueMinIndex, trueMaxIndex);
           } // if(sortAscending) ... else
         } // if(sortWhichDimension == 0) ... else
 
         return RESULT_OK;
-      }
+      } // InsertionSort()
+
+      template<typename Type> Result QuickSort(Array<Type> &arr, const s32 sortWhichDimension, const bool sortAscending, const s32 minIndex, const s32 maxIndex, const s32 insertionSortSize)
+      {
+        const s32 arrHeight = arr.get_size(0);
+        const s32 arrWidth = arr.get_size(1);
+
+        AnkiConditionalErrorAndReturnValue(arr.IsValid(),
+          RESULT_FAIL_INVALID_OBJECT, "Sort", "Input array is invalid");
+
+        AnkiConditionalErrorAndReturnValue(sortWhichDimension==0 || sortWhichDimension==1,
+          RESULT_FAIL_INVALID_PARAMETER, "Sort", "sortWhichDimension must be zero or one");
+
+        AnkiConditionalErrorAndReturnValue(insertionSortSize >= 1,
+          RESULT_FAIL_INVALID_PARAMETER, "Sort", "insertionSortSize must be >= 1");
+
+        const s32 trueMinIndex = CLIP(minIndex, 0, arr.get_size(sortWhichDimension) - 1);
+        const s32 trueMaxIndex = CLIP(maxIndex, 0, arr.get_size(sortWhichDimension) - 1);
+
+        if(sortWhichDimension == 0) {
+          // TODO: This columnwise sorting could be sped up, with smarter array indexing.
+          if(sortAscending) {
+            for(s32 x=0; x<arrWidth; x++) {
+              QuickSort_sortAscendingDimension0<Type>(arr, trueMinIndex, trueMaxIndex, x, insertionSortSize);
+            }
+
+            if(insertionSortSize > 1)
+              InsertionSort_sortAscendingDimension0<Type>(arr, trueMinIndex, trueMaxIndex);
+          } else { // if(sortAscending)
+            for(s32 x=0; x<arrWidth; x++) {
+              QuickSort_sortDescendingDimension0<Type>(arr, trueMinIndex, trueMaxIndex, x, insertionSortSize);
+            }
+
+            if(insertionSortSize > 1)
+              InsertionSort_sortDescendingDimension0<Type>(arr, trueMinIndex, trueMaxIndex);
+          } // if(sortAscending) ... else
+        } else { // sortWhichDimension == 1
+          if(sortAscending) {
+            for(s32 y=0; y<arrHeight; y++) {
+              QuickSort_sortAscendingDimension1<Type>(arr, trueMinIndex, trueMaxIndex, y, insertionSortSize);
+            }
+
+            if(insertionSortSize > 1)
+              InsertionSort_sortAscendingDimension1<Type>(arr, trueMinIndex, trueMaxIndex);
+          } else { // if(sortAscending)
+            for(s32 y=0; y<arrHeight; y++) {
+              QuickSort_sortDescendingDimension1<Type>(arr, trueMinIndex, trueMaxIndex, y, insertionSortSize);
+            }
+
+            if(insertionSortSize > 1)
+              InsertionSort_sortDescendingDimension1<Type>(arr, trueMinIndex, trueMaxIndex);
+          } // if(sortAscending) ... else
+        } // if(sortWhichDimension == 0) ... else
+
+        return RESULT_OK;
+      } // QuickSort()
+
+      template<typename Type> Result QuickSort(Array<Type> &arr, Array<s32> &indexes, const s32 sortWhichDimension, const bool sortAscending, const s32 minIndex, const s32 maxIndex, const s32 insertionSortSize)
+      {
+        const s32 arrHeight = arr.get_size(0);
+        const s32 arrWidth = arr.get_size(1);
+
+        AnkiConditionalErrorAndReturnValue(arr.IsValid(),
+          RESULT_FAIL_INVALID_OBJECT, "Sort", "Input array is invalid");
+
+        AnkiConditionalErrorAndReturnValue(indexes.IsValid(),
+          RESULT_FAIL_INVALID_OBJECT, "Sort", "indexes array is invalid");
+
+        AnkiConditionalErrorAndReturnValue(sortWhichDimension==0 || sortWhichDimension==1,
+          RESULT_FAIL_INVALID_PARAMETER, "Sort", "sortWhichDimension must be zero or one");
+
+        AnkiConditionalErrorAndReturnValue(insertionSortSize >= 1,
+          RESULT_FAIL_INVALID_PARAMETER, "Sort", "insertionSortSize must be >= 1");
+
+        AnkiConditionalErrorAndReturnValue(indexes.get_size(0) == arrHeight && indexes.get_size(1) == arrWidth,
+          RESULT_FAIL_INVALID_SIZE, "Sort", "indexes must be the same size as arr");
+
+        const s32 trueMinIndex = CLIP(minIndex, 0, arr.get_size(sortWhichDimension) - 1);
+        const s32 trueMaxIndex = CLIP(maxIndex, 0, arr.get_size(sortWhichDimension) - 1);
+
+        if(sortWhichDimension == 0) {
+          for(s32 y=0; y<arrHeight; y++) {
+            s32 * restrict pIndexes = indexes.Pointer(y,0);
+            for(s32 x=0; x<arrWidth; x++) {
+              pIndexes[x] = y;
+            }
+          }
+
+          // TODO: This columnwise sorting could be sped up, with smarter array indexing.
+          if(sortAscending) {
+            for(s32 x=0; x<arrWidth; x++) {
+              QuickSort_sortAscendingDimension0<Type>(arr, indexes, trueMinIndex, trueMaxIndex, x, insertionSortSize);
+            }
+
+            if(insertionSortSize > 1)
+              InsertionSort_sortAscendingDimension0<Type>(arr, indexes, trueMinIndex, trueMaxIndex);
+          } else { // if(sortAscending)
+            for(s32 x=0; x<arrWidth; x++) {
+              QuickSort_sortDescendingDimension0<Type>(arr, indexes, trueMinIndex, trueMaxIndex, x, insertionSortSize);
+            }
+
+            if(insertionSortSize > 1)
+              InsertionSort_sortDescendingDimension0<Type>(arr, indexes, trueMinIndex, trueMaxIndex);
+          } // if(sortAscending) ... else
+        } else { // sortWhichDimension == 1
+          for(s32 y=0; y<arrHeight; y++) {
+            s32 * restrict pIndexes = indexes.Pointer(y,0);
+            for(s32 x=0; x<arrWidth; x++) {
+              pIndexes[x] = x;
+            }
+          }
+
+          if(sortAscending) {
+            for(s32 y=0; y<arrHeight; y++) {
+              QuickSort_sortAscendingDimension1<Type>(arr, indexes, trueMinIndex, trueMaxIndex, y, insertionSortSize);
+            }
+
+            if(insertionSortSize > 1)
+              InsertionSort_sortAscendingDimension1<Type>(arr, indexes, trueMinIndex, trueMaxIndex);
+          } else { // if(sortAscending)
+            for(s32 y=0; y<arrHeight; y++) {
+              QuickSort_sortDescendingDimension1<Type>(arr, indexes, trueMinIndex, trueMaxIndex, y, insertionSortSize);
+            }
+
+            if(insertionSortSize > 1)
+              InsertionSort_sortDescendingDimension1<Type>(arr, indexes, trueMinIndex, trueMaxIndex);
+          } // if(sortAscending) ... else
+        } // if(sortWhichDimension == 0) ... else
+
+        return RESULT_OK;
+      } // QuickSort()
 
       template<typename Type> Result MakeSymmetric(Type &arr, bool lowerToUpper)
       {

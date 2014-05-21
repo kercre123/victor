@@ -19,7 +19,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define _ANKICORETECHEMBEDDED_COMMON_BENCHMARKING_H_
 
 #include "anki/common/robot/config.h"
-#include "anki/common/robot/fixedLengthList.h"
+#include "anki/common/robot/fixedLengthList_declarations.h"
 
 namespace Anki
 {
@@ -52,7 +52,7 @@ namespace Anki
 
       BenchmarkElement(const char * name);
 
-      // Print with printf()
+      // Print with CoreTechPrint()
       void Print(const bool verbose=true, const bool microseconds=true, const FixedLengthList<s32> * minCharacterToPrint=NULL) const;
 
       // Like snprintf(). Returns the number of characters printed, not including the final null byte.
@@ -93,7 +93,7 @@ namespace Anki
     // Compile all the benchmark events that were recorded
     FixedLengthList<BenchmarkElement> ComputeBenchmarkResults(MemoryStack &memory);
 
-    // printf() the benchmark results
+    // CoreTechPrint() the benchmark results
     // WARNING: This doesn't work well with multi-threaded programs
     Result PrintBenchmarkResults(const FixedLengthList<BenchmarkElement> &results, const bool verbose=true, const bool microseconds=true);
 

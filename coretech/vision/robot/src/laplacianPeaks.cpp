@@ -20,7 +20,7 @@ namespace Anki
   {
     Result ExtractLaplacianPeaks(const FixedLengthList<Point<s16> > &boundary, FixedLengthList<Point<s16> > &peaks, MemoryStack scratch)
     {
-      BeginBenchmark("elp_part1");
+      //BeginBenchmark("elp_part1");
 
       AnkiConditionalErrorAndReturnValue(boundary.IsValid(),
         RESULT_FAIL_INVALID_OBJECT, "ComputeQuadrilateralsFromConnectedComponents", "boundary is not valid");
@@ -73,9 +73,9 @@ namespace Anki
       //gaussian.Print("gaussian");
       //differenceOfGaussian.Print("differenceOfGaussian");
 
-      EndBenchmark("elp_part1");
+      //EndBenchmark("elp_part1");
 
-      BeginBenchmark("elp_part2");
+      //BeginBenchmark("elp_part2");
 
       //r_smooth = imfilter(boundary, dg2(:), 'circular');
       {
@@ -122,9 +122,9 @@ namespace Anki
         //boundaryYFiltered.Print("boundaryYFiltered");
       } // PUSH_MEMORY_STACK(scratch);
 
-      EndBenchmark("elp_part2");
+      //EndBenchmark("elp_part2");
 
-      BeginBenchmark("elp_part3");
+      //BeginBenchmark("elp_part3");
 
       //r_smooth = sum(r_smooth.^2, 2);
       FixedPointArray<s32> boundaryFilteredAndCombined(1, boundary.get_size(), 2*numSigmaFractionalBits, scratch, Flags::Buffer(false,false,false)); // SQ15.16
@@ -147,9 +147,9 @@ namespace Anki
 
       const s32 * restrict pConstBoundaryFilteredAndCombined = boundaryFilteredAndCombined.Pointer(0,0);
 
-      EndBenchmark("elp_part3");
+      //EndBenchmark("elp_part3");
 
-      BeginBenchmark("elp_part4");
+      //BeginBenchmark("elp_part4");
 
       // Find local maxima -- these should correspond to the corners of the square.
       // NOTE: one of the comparisons is >= while the other is >, in order to
@@ -175,14 +175,14 @@ namespace Anki
 
       //boundaryFilteredAndCombined.Print("boundaryFilteredAndCombined");
       //for(s32 i=0; i<boundaryFilteredAndCombined.get_size(1); i++) {
-      //  printf("%d\n", boundaryFilteredAndCombined[0][i]);
+      //  CoreTechPrint("%d\n", boundaryFilteredAndCombined[0][i]);
       //}
 
       //localMaxima.Print("localMaxima");
 
-      EndBenchmark("elp_part4");
+      //EndBenchmark("elp_part4");
 
-      BeginBenchmark("elp_part5");
+      //BeginBenchmark("elp_part5");
 
       const Point<s16> * restrict pConstBoundary = boundary.Pointer(0);
 
@@ -208,7 +208,7 @@ namespace Anki
             maximaIndexes[iMax] = localMaximaIndex;
           }
         }
-        //printf("Maxima %d/%d is #%d %d\n", iMax, 4, maximaIndexes[iMax], maximaValues[iMax]);
+        //CoreTechPrint("Maxima %d/%d is #%d %d\n", iMax, 4, maximaIndexes[iMax], maximaValues[iMax]);
         pBoundaryFilteredAndCombined[maximaIndexes[iMax]] = s32_MIN;
       }
 
@@ -238,7 +238,7 @@ namespace Anki
         }
       }
 
-      EndBenchmark("elp_part5");
+      //EndBenchmark("elp_part5");
 
       //boundary.Print();
       //peaks.Print();

@@ -14,6 +14,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/config.h"
 #include "anki/common/robot/matlabInterface.h"
 
+#include "anki/common/shared/utilities_shared.h"
+
 //#include <float.h>
 //#pragma fenv_access (on)
 //#pragma STDC FENV_ACCESS ON
@@ -37,7 +39,7 @@ int main()
 #if ANKICORETECH_EMBEDDED_USE_GTEST
 
   char * filterString = "--gtest_filter=*"; // Run all tests
-  //char * filterString = "--gtest_filter=*Benchmarking"; // Run only some tests
+  //char * filterString = "--gtest_filter=*DetectFiducialMarkers"; // Run only some tests
 
   argc++;
   argv[argc-1] = filterString;
@@ -59,7 +61,7 @@ int main()
   const s32 numPassedTests = numPassedTests_common + numPassedTests_vision;
   const s32 numFailedTests = numFailedTests_common + numFailedTests_vision;
 
-  printf(
+  CoreTechPrint(
     "\n"
     "========================================================================\n"
     "UNIT TEST RESULTS:\n"
@@ -71,7 +73,7 @@ int main()
 
 #endif // #if ANKICORETECH_EMBEDDED_USE_GTEST ... #else
 
-  printf("\n");
+  Anki::CoreTechPrint("\n");
   return result;
 }
 #endif

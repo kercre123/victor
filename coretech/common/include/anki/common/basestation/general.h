@@ -181,14 +181,20 @@ bool GetFilesInDir(std::string dir, std::vector<std::string> &files, char *conta
   
 // Compare functions for pairs based on first or second element only
 template < class X , class Y >
-bool CompareFirst (const std::pair<X,Y>& a, const std::pair<X,Y>& b) {
-  return a.first < b.first;
-}
+struct CompareFirst  : public std::binary_function<std::pair<X,Y>, std::pair<X,Y>, bool>
+{
+  bool operator() (const std::pair<X,Y>& a, const std::pair<X,Y>& b) {
+    return a.first < b.first;
+  }
+};
 
 template < class X , class Y >
-bool CompareSecond (const std::pair<X,Y>& a, const std::pair<X,Y>& b) {
-  return a.second < b.second;
-}
+struct CompareSecond  : public std::binary_function<std::pair<X,Y>, std::pair<X,Y>, bool>
+{
+  bool operator() (const std::pair<X,Y>& a, const std::pair<X,Y>& b) {
+    return a.second < b.second;
+  }
+};
 
   
 ///////////////////////////////////////////////////////////////////

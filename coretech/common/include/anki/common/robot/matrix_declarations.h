@@ -42,7 +42,7 @@ namespace Anki
 
       // Simultaneously compute the mean and variance of every element in the Array
       template<typename Array_Type, typename Accumulator_Type> Result MeanAndVar(const ConstArraySliceExpression<Array_Type> &mat,
-                                                                                 Accumulator_Type& mean, Accumulator_Type& var);
+        Accumulator_Type& mean, Accumulator_Type& var);
 
       //
       // Elementwise matrix operations
@@ -86,18 +86,15 @@ namespace Anki
       // Note that this is the naive O(n^3) Definition
       // MultiplyTranspose has better access patterns than Multiply for certain types of arrays, so could be a lot faster (and easier to accelerate)
       template<typename InType, typename OutType> Result MultiplyTranspose(const Array<InType> &in1, const Array<InType> &in2Transposed, Array<OutType> &out);
-      
-      
+
       //
       // Rotation Matrices
       //
-      
+
       // TODO: Add other rotation-related math, like Rodrigues' formula, or Pose chaining...
-      
+
       // Compute the three Euler angles from a given 3x3 Rotation Matrix.
       Result GetEulerAngles(const Array<f32>& R, f32& angle_x, f32& angle_y, f32& angle_z);
-
-      
 
       //
       // Linear Algebra and Linear Solvers
@@ -111,7 +108,6 @@ namespace Anki
         bool &numericalFailure //!< If true, the solver failed because of numerical instability
         );
 
-      
       // Compute the homography such that "transformedPoints = homography * originalPoints"
       //
       // WARNING: This uses the inhomogeneous solution and the Cholesky decomposition, therefore it
@@ -171,12 +167,18 @@ namespace Anki
       //
 
       // Works the same as the Matlab sort() for matrices.
-      // Sort(X) sorts each column of X in ascending order.
+      // InsertionSort(X) sorts each column of X in ascending order.
+      // The minIndex and maxIndex are for the sortWhichDimension. maxIndex is automatically clipped to the size of the input Array.
       // NOTE: this currently uses insertion sort, so may be slow for large, badly-unsorted arrays
-      template<typename Type> Result Sort(Array<Type> &arr, const s32 sortWhichDimension=0, const bool sortAscending=true);
+      template<typename Type> Result InsertionSort(Array<Type> &arr, const s32 sortWhichDimension=0, const bool sortAscending=true, const s32 minIndex=0, const s32 maxIndex=0x7FFFFFE);
 
-      // indexes must be allocated, but will be overwritten by Sort()
-      template<typename Type> Result Sort(Array<Type> &arr, Array<s32> &indexes, const s32 sortWhichDimension=0, const bool sortAscending=true);
+      // Subsections less-than-or-equal-to insertionSortSize are sorted with insertion sort
+      template<typename Type> Result QuickSort(Array<Type> &arr, const s32 sortWhichDimension=0, const bool sortAscending=true, const s32 minIndex=0, const s32 maxIndex=0x7FFFFFE, const s32 insertionSortSize=10);
+
+      // indexes must be allocated, but will be overwritten by InsertionSort()
+      template<typename Type> Result InsertionSort(Array<Type> &arr, Array<s32> &indexes, const s32 sortWhichDimension=0, const bool sortAscending=true, const s32 minIndex=0, const s32 maxIndex=0x7FFFFFE);
+
+      template<typename Type> Result QuickSort(Array<Type> &arr, Array<s32> &indexes, const s32 sortWhichDimension=0, const bool sortAscending=true, const s32 minIndex=0, const s32 maxIndex=0x7FFFFFE, const s32 insertionSortSize=10);
 
       // For a square array, either:
       // 1. When lowerToUpper==true,  copies the lower (left)  triangle to the upper (right) triangle

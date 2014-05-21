@@ -174,8 +174,9 @@ namespace Anki {
 
     // Accessors:
     const RotationMatrix3d& get_rotationMatrix() const;
-    const RotationVector3d& get_rotationVector() const;
     const Vec3f&            get_translation()    const;
+    
+    RotationVector3d        get_rotationVector() const;
     Vec3f                   get_rotationAxis()   const;
     Radians                 get_rotationAngle()  const;
     
@@ -244,7 +245,7 @@ namespace Anki {
     
   protected:
     
-    RotationVector3d  rotationVector;
+    //RotationVector3d  rotationVector;
     RotationMatrix3d  rotationMatrix;
     Vec3f             translation;
     
@@ -316,38 +317,38 @@ namespace Anki {
   inline const RotationMatrix3d& Pose3d::get_rotationMatrix() const
   { return this->rotationMatrix; }
   
-  inline const RotationVector3d& Pose3d::get_rotationVector() const
-  { return this->rotationVector; }
+  inline RotationVector3d Pose3d::get_rotationVector() const
+  { return RotationVector3d(this->rotationMatrix); }
   
   inline const Vec3f& Pose3d::get_translation() const
   { return this->translation; }
   
   inline Vec3f Pose3d::get_rotationAxis() const
-  { return this->rotationVector.get_axis(); }
+  { return get_rotationVector().get_axis(); }
   
   inline Radians Pose3d::get_rotationAngle() const
-  { return this->rotationVector.get_angle(); }
+  { return get_rotationVector().get_angle(); }
   
   inline void Pose3d::set_rotation(const RotationMatrix3d &Rmat)
   {
     if(&(this->rotationMatrix) != &Rmat) {
       this->rotationMatrix = Rmat;
     }
-    this->rotationVector = RotationVector3d(Rmat);
+    //this->rotationVector = RotationVector3d(Rmat);
   }
   
   inline void Pose3d::set_rotation(const RotationVector3d &Rvec)
   {
-    if(&(this->rotationVector) != &Rvec) {
-      this->rotationVector = Rvec;
-    }
+    //if(&(this->rotationVector) != &Rvec) {
+    //  this->rotationVector = Rvec;
+    //}
     this->rotationMatrix = RotationMatrix3d(Rvec);
   }
   
   inline void Pose3d::set_rotation(const Radians angle, const Vec3f &axis)
   {
-    this->rotationVector = RotationVector3d(angle, axis);
-    this->rotationMatrix = RotationMatrix3d(this->rotationVector);
+    //this->rotationVector = RotationVector3d(angle, axis);
+    this->rotationMatrix = RotationMatrix3d(angle, axis);
   }
   
   inline void Pose3d::set_translation(const Vec3f &T)

@@ -105,6 +105,7 @@ namespace Anki {
     Point<N,T> operator* (const T value) const;
     Point<N,T>& operator+= (const Point<N,T> &other);
     Point<N,T>& operator-= (const Point<N,T> &other);
+    Point<N,T>& operator*= (const Point<N,T> &other);
     Point<N,T>  operator-() const;
     
     // Math methods:
@@ -206,7 +207,10 @@ namespace Anki {
   template<PointDimType N, typename T>
   T computeDistanceBetween(const Point<N,T>& point1, const Point<N,T>& point2);
   
+  
+#if 0
 #pragma mark --- Point Implementations ---
+#endif
   
   template<PointDimType N, typename T>
   Point<N,T>::Point( void )
@@ -359,6 +363,15 @@ namespace Anki {
   {
     for(PointDimType i=0; i<N; ++i) {
       this->data[i] -= other[i];
+    }
+    return *this;
+  }
+  
+  template<PointDimType N, typename T>
+  Point<N,T>& Point<N,T>::operator*= (const Point<N,T> &other)
+  {
+    for(PointDimType i=0; i<N; ++i) {
+      this->data[i] *= other[i];
     }
     return *this;
   }

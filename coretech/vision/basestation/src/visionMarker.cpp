@@ -74,17 +74,83 @@ namespace Anki {
       //
       // And also update the 3d corners accordingly...
       //
-      
+      corners3d_ = Get3dCorners(pose_);
+    }
+    
+    
+    Quad3f KnownMarker::Get3dCorners(const Pose3d& atPose) const
+    {
       // Start with canonical 3d quad corners:
-      corners3d_ = KnownMarker::canonicalCorners3d_;
+      Quad3f corners3dAtPose(KnownMarker::canonicalCorners3d_);
       
       // Scale to this marker's physical size:
-      corners3d_ *= size_;
+      corners3dAtPose *= size_;
       
       // Transform the canonical corners to this new pose
-      pose_.applyTo(corners3d_, corners3d_);
+      atPose.applyTo(corners3dAtPose, corners3dAtPose);
       
-    }
+      return corners3dAtPose;
+      
+    } // KnownMarker::Get3dCorners(atPose)
+    
+    
+    bool KnownMarker::IsVisibleFrom(Camera& camera,
+                                    const f32 maxAngleRad,
+                                    const f32 minImageSize) const
+    {
+      using namespace Quad;
+      
+      // Get the marker's pose relative to the camera
+      Pose3d markerPoseWrtCamera( pose_.getWithRespectTo(&camera.get_pose()) );
+      
+      // Make sure the marker is at least in front of the camera!
+      if(markerPoseWrtCamera.get_translation().z() <= 0.f) {
+        return false;
+      }
+      
+      // Get the 3D positions of the marker's corners relative to the camera
+      Quad3f markerCornersWrtCamera( Get3dCorners(markerPoseWrtCamera) );
+      
+      // Make sure the face of the marker is pointed towards the camera
+      // Use "TopLeft" canonical corner as the local origin for computing the
+      // face normal
+      Vec3f topLine(markerCornersWrtCamera[TopRight]);
+      topLine -= markerCornersWrtCamera[TopLeft];
+      topLine.makeUnitLength();
+      
+      Vec3f sideLine(markerCornersWrtCamera[BottomLeft]);
+      sideLine -= markerCornersWrtCamera[TopLeft];
+      sideLine.makeUnitLength();
+      
+      const Point3f faceNormal( cross(sideLine, topLine) );
+      const f32 dotProd = dot(faceNormal, Z_AXIS_3D); // TODO: Optimize to just: faceNormal.z()?
+      if(dotProd > 0.f || acos(-dotProd) > maxAngleRad) {
+        return false;
+      }
+      
+      // Make sure the projected corners are within the image
+      // TODO: add some border padding?
+      Quad2f imgCorners;
+      camera.project3dPoints(markerCornersWrtCamera, imgCorners);
+      if(not camera.isVisible(imgCorners[TopLeft]) ||
+         not camera.isVisible(imgCorners[TopRight]) ||
+         not camera.isVisible(imgCorners[BottomLeft]) ||
+         not camera.isVisible(imgCorners[BottomRight]))
+      {
+        return false;
+      }
+      
+      // Make sure the projected marker size is big enough
+      if((imgCorners[BottomRight] - imgCorners[TopLeft]).length() < minImageSize ||
+         (imgCorners[BottomLeft]  - imgCorners[TopRight]).length() < minImageSize)
+      {
+        return false;
+      }
+      
+      // We passed all the checks, so the marker is visible
+      return true;
+      
+    } // KnownMarker::IsVisibleFrom()
     
     
     Pose3d KnownMarker::EstimateObservedPose(const ObservedMarker& obsMarker) const

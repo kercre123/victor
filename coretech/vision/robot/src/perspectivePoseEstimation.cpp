@@ -129,10 +129,10 @@ namespace Anki {
         realRoots[3] = temp.real();
 
         /*
-        printf("factors = %f, %f, %f, %f, %f\n",
+        CoreTechPrint("factors = %f, %f, %f, %f, %f\n",
         factors[0], factors[1], factors[2], factors[3], factors[4]);
 
-        printf("realRoots = %f, %f, %f, %f\n",
+        CoreTechPrint("realRoots = %f, %f, %f, %f\n",
         realRoots[0], realRoots[1], realRoots[2], realRoots[3]);
         */
 
@@ -165,13 +165,13 @@ namespace Anki {
         BeginBenchmark("cpml_init");
 
         /*
-        printf("  worldPoint1 = (%f, %f, %f)\n", worldPoint1.x, worldPoint1.y, worldPoint1.z);
-        printf("  worldPoint2 = (%f, %f, %f)\n", worldPoint2.x, worldPoint2.y, worldPoint2.z);
-        printf("  worldPoint3 = (%f, %f, %f)\n", worldPoint3.x, worldPoint3.y, worldPoint3.z);
+        CoreTechPrint("  worldPoint1 = (%f, %f, %f)\n", worldPoint1.x, worldPoint1.y, worldPoint1.z);
+        CoreTechPrint("  worldPoint2 = (%f, %f, %f)\n", worldPoint2.x, worldPoint2.y, worldPoint2.z);
+        CoreTechPrint("  worldPoint3 = (%f, %f, %f)\n", worldPoint3.x, worldPoint3.y, worldPoint3.z);
 
-        printf("  imageRay1 = (%f, %f, %f)\n", imageRay1.x, imageRay1.y, imageRay1.z);
-        printf("  imageRay2 = (%f, %f, %f)\n", imageRay2.x, imageRay2.y, imageRay2.z);
-        printf("  imageRay3 = (%f, %f, %f)\n", imageRay3.x, imageRay3.y, imageRay3.z);
+        CoreTechPrint("  imageRay1 = (%f, %f, %f)\n", imageRay1.x, imageRay1.y, imageRay1.z);
+        CoreTechPrint("  imageRay2 = (%f, %f, %f)\n", imageRay2.x, imageRay2.y, imageRay2.z);
+        CoreTechPrint("  imageRay3 = (%f, %f, %f)\n", imageRay3.x, imageRay3.y, imageRay3.z);
         */
 
         POINT P1(worldPoint1);
@@ -457,7 +457,7 @@ namespace Anki {
           imgRays[i_corner].z = PRECISION(1);
 
           /*
-          printf("point %d (%f, %f) became ray (%f, %f, %f) ",
+          CoreTechPrint("point %d (%f, %f) became ray (%f, %f, %f) ",
           i_corner,
           imgQuad[i_corner].x, imgQuad[i_corner].y,
           imgRays[i_corner].x, imgRays[i_corner].y, imgRays[i_corner].z);
@@ -465,7 +465,7 @@ namespace Anki {
 
           imgRays[i_corner].MakeUnitLength();
 
-          //printf(" which normalized to (%f, %f, %f)\n",
+          //CoreTechPrint(" which normalized to (%f, %f, %f)\n",
           //       imgRays[i_corner].x, imgRays[i_corner].y, imgRays[i_corner].z);
         }
 
@@ -495,7 +495,7 @@ namespace Anki {
           // corner. Use the remaining three to estimate the pose.
           const s32 i_validate = cornerList[0];
 
-          //printf("Validating with %d, estimating with %d, %d, %d\n",
+          //CoreTechPrint("Validating with %d, estimating with %d, %d, %d\n",
           //       i_validate, cornerList[1], cornerList[2], cornerList[3]);
 
           if((lastResult = P3P::computePossiblePoses(*worldPoints[cornerList[1]],
@@ -543,7 +543,7 @@ namespace Anki {
               // Compare to the validation image point
               float error = projectedPoint.Dist(imgQuad[i_validate]);
 
-              //printf("Solution %d reprojection error when validating with corner %d = %f\n",
+              //CoreTechPrint("Solution %d reprojection error when validating with corner %d = %f\n",
               //        i_solution, i_validate, error);
 
               if(error < minErrorInner) {
@@ -555,7 +555,7 @@ namespace Anki {
 
           AnkiAssert(bestSolution >= 0);
 
-          //printf("Best solution when validating with corner %d was %d with error %f\n",
+          //CoreTechPrint("Best solution when validating with corner %d was %d with error %f\n",
           //       i_validate, bestSolution, minErrorInner);
 
           // If the pose using this validation corner is better than the
@@ -575,7 +575,7 @@ namespace Anki {
           EndBenchmark("computePose_mainLoop");
         } // for each validation corner
 
-        //printf("Best solution had error of %f\n", minErrorOuter);
+        //CoreTechPrint("Best solution had error of %f\n", minErrorOuter);
 
         return RESULT_OK;
       } // computePose()

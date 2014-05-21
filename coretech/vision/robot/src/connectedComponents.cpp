@@ -27,8 +27,8 @@ namespace Anki
 
     void ConnectedComponentSegment::Print() const
     {
-      //printf("[%d: (%d->%d, %d)] ", static_cast<s32>(this->id), static_cast<s32>(this->xStart), static_cast<s32>(this->xEnd), static_cast<s32>(this->y));
-      printf("[%d: (%d->%d, %d)] ", this->id, this->xStart, this->xEnd, this->y);
+      //CoreTechPrint("[%d: (%d->%d, %d)] ", static_cast<s32>(this->id), static_cast<s32>(this->xStart), static_cast<s32>(this->xEnd), static_cast<s32>(this->y));
+      CoreTechPrint("[%d: (%d->%d, %d)] ", this->id, this->xStart, this->xEnd, this->y);
     } // void ConnectedComponentSegment::Print() const
 
     bool ConnectedComponentSegment::operator== (const ConnectedComponentSegment &component2) const
@@ -67,7 +67,7 @@ namespace Anki
             if(numSkipped > maxSkipDistance) {
               const s16 componentWidth = x - componentStart;
               if(componentWidth >= minComponentWidth) {
-                //                printf("one: %d %d\n", componentStart, x-numSkipped);
+                //                CoreTechPrint("one: %d %d\n", componentStart, x-numSkipped);
                 components.PushBack(ConnectedComponentSegment(componentStart, x-numSkipped));
               }
               onComponent = false;
@@ -87,7 +87,7 @@ namespace Anki
       if(onComponent) {
         const s16 componentWidth = binaryImageWidth - componentStart;
         if(componentWidth >= minComponentWidth) {
-          //          printf("two: %d %d\n", componentStart, binaryImageWidth-numSkipped-1);
+          //          CoreTechPrint("two: %d %d\n", componentStart, binaryImageWidth-numSkipped-1);
           components.PushBack(ConnectedComponentSegment(componentStart, binaryImageWidth-numSkipped-1));
         }
       }
@@ -100,11 +100,14 @@ namespace Anki
     {
     }
 
-    ConnectedComponents::ConnectedComponents(const s32 maxComponentSegments, const s32 maxImageWidth, MemoryStack &memory)
+    ConnectedComponents::ConnectedComponents(const u16 maxComponentSegments, const u16 maxImageWidth, MemoryStack &memory)
       : curState(STATE_INVALID), isSortedInId(true), isSortedInY(true), isSortedInX(true), maximumId(0), maxImageWidth(maxImageWidth), maxComponentSegments(maxComponentSegments)
     {
-      AnkiConditionalError(maxComponentSegments > 0 && maxComponentSegments <= u16_MAX,
-        "ConnectedComponents::ConnectedComponents", "maxComponentSegments must be greater than zero and less than 0xFFFF");
+      //AnkiConditionalErrorAndReturn(maxComponentSegments > 0 && maxComponentSegments <= u16_MAX,
+      //  "ConnectedComponents::ConnectedComponents", "maxComponentSegments must be greater than zero and less than 0xFFFF");
+
+      AnkiConditionalErrorAndReturn(maxImageWidth > 0 && maxImageWidth <= s16_MAX,
+        "ConnectedComponents::ConnectedComponents", "maxImageWidth must be less than 0x7FFF");
 
       this->components = FixedLengthList<ConnectedComponentSegment>(maxComponentSegments, memory);
 

@@ -21,7 +21,7 @@ namespace Anki
   {
     // TODO: make this into a parameter stored elsewhere?
     const f32 FIDUCIAL_SQUARE_WIDTH_FRACTION = 0.1f;
-    
+
     // The primary wrapper function for detecting fiducial markers in an image
     Result DetectFiducialMarkers(
       const Array<u8> &image,
@@ -35,7 +35,7 @@ namespace Anki
       const f32 component_minHollowRatio,
       const s32 quads_minQuadArea, const s32 quads_quadSymmetryThreshold, const s32 quads_minDistanceFromImageEdge,
       const f32 decode_minContrastRatio,
-      const s32 maxConnectedComponentSegments,
+      const u16 maxConnectedComponentSegments,
       const s32 maxExtractedQuads,
       const s32 quadRefinementIterations,
       const bool returnInvalidMarkers,
@@ -80,7 +80,7 @@ namespace Anki
     //
     // Requires ??? bytes of scratch
     Result ExtractLaplacianPeaks(const FixedLengthList<Point<s16> > &boundary, FixedLengthList<Point<s16> > &peaks, MemoryStack scratch);
-    
+
     // Used by DetectFiducialMarkers
     //
     // Uses projective Lucas-Kanade to refine an initial on-pixel quadrilateral
@@ -88,17 +88,16 @@ namespace Anki
     // of a black square fiducial on a white background.
     //
     Result RefineQuadrilateral(const Quadrilateral<s16>& initialQuad,
-                               const Array<f32>& initialHomography,
-                               const Array<u8> &image,
-                               const f32 squareWidthFraction,
-                               const s32 maxIterations,
-                               const f32 darkValue,
-                               const f32 brightValue,
-                               const s32 numSamples,
-                               Quadrilateral<f32>& refinedQuad,
-                               Array<f32>& refinedHomography,
-                               MemoryStack scratch);
-    
+      const Array<f32>& initialHomography,
+      const Array<u8> &image,
+      const f32 squareWidthFraction,
+      const s32 maxIterations,
+      const f32 darkValue,
+      const f32 brightValue,
+      const s32 numSamples,
+      Quadrilateral<f32>& refinedQuad,
+      Array<f32>& refinedHomography,
+      MemoryStack scratch);
   } // namespace Embedded
 } // namespace Anki
 

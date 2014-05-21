@@ -3,25 +3,26 @@ function probeTree = TrainProbeTree(varargin)
 % TODO: Use parameters from a derived class below, insetad of VisionMarkerTrained.*
 
 %% Parameters
+loadSavedProbeValues = false;
 markerImageDir = VisionMarkerTrained.TrainingImageDir;
-workingResolution = 30;
+workingResolution = VisionMarkerTrained.ProbeParameters.GridSize;
 %maxSamples = 100;
 minInfoGain = 0;
-maxDepth = 50;
+redBlackVerifyDepth = 10;
+%maxDepth = 50;
 addRotations = false;
 numPerturbations = 100;
 perturbSigma = 1;
 saveTree = true;
+leafNodeFraction = 1;
 
-probeRegion = [VisionMarkerTrained.SquareWidthFraction+VisionMarkerTrained.FiducialPaddingFraction ...
-    1-(VisionMarkerTrained.SquareWidthFraction+VisionMarkerTrained.FiducialPaddingFraction)];
+probeRegion = VisionMarkerTrained.ProbeRegion; 
 
 % Now using unpadded images to train
 %imageCoords = [-VisionMarkerTrained.FiducialPaddingFraction ...
 %    1+VisionMarkerTrained.FiducialPaddingFraction];
-imageCoords = [0 1];
 
-DEBUG_DISPLAY = true;
+DEBUG_DISPLAY = false;
 DrawTrees = false;
 
 parseVarargin(varargin{:});
@@ -51,132 +52,133 @@ if ~saveTree && nargout==0
     end
 end
 
-%% Load marker images
-numDirs = length(markerImageDir);
-fnames = cell(numDirs,1);
-for i_dir = 1:numDirs
-    fnames{i_dir} = getfnames(markerImageDir{i_dir}, 'images', 'useFullPath', true);
-end
-fnames = vertcat(fnames{:});
 
-if isempty(fnames)
-    error('No image files found.');
-end
+if loadSavedProbeValues
+    % This load will kill the current pBar, so save that
+    load trainingState.mat
 
-fprintf('Found %d total image files to train on.\n', length(fnames));
+    pBar = ProgressBar('VisionMarkerTrained ProbeTree', 'CancelButton', true);
+    pBar.showTimingInfo = true;
+    pBarCleanup = onCleanup(@()delete(pBar));
 
-%fnames = {'angryFace.png', 'ankiLogo.png', 'batteries3.png', ...
-%    'bullseye2.png', 'fire.png', 'squarePlusCorners.png'};
-
-numImages = length(fnames);
-labelNames = cell(1,numImages);
-img = cell(1, numImages);
-
-resamplingResolution = ceil(1/(probeRegion(2)-probeRegion(1))*workingResolution);
-%resamplingResolution = 4*workingResolution;
-
-for i = 1:numImages
-    [img{i}, ~, alpha] = imread(fnames{i});
-    img{i} = mean(im2double(img{i}),3);
-    img{i}(alpha < .5) = 1;
-    img{i} = imresize(img{i}, resamplingResolution*[1 1], 'bilinear');
+else
     
-    [~,labelNames{i}] = fileparts(fnames{i});
-    
-end
+    pBar = ProgressBar('VisionMarkerTrained ProbeTree', 'CancelButton', true);
+    pBar.showTimingInfo = true;
+    pBarCleanup = onCleanup(@()delete(pBar));
 
-labels = 1:numImages;
-numLabels = numImages;
- 
-%[xgrid,ygrid] = meshgrid(linspace(0,1,workingResolution));
-imageCoords = linspace(imageCoords(1), imageCoords(2), resamplingResolution);
-
-%% Perturb corners
-[xgrid,ygrid] = meshgrid(imageCoords);
-if numPerturbations > 0
-    fprintf('Creating perturbed images...');
     
-    img_perturb = cell(numPerturbations, numImages);
-    %corners = [0 0; 0 workingResolution; workingResolution 0; workingResolution workingResolution] + 0.5;
+    %% Load marker images
+    numDirs = length(markerImageDir);
+    fnames = cell(numDirs,1);
+    for i_dir = 1:numDirs
+        fnames{i_dir} = getfnames(markerImageDir{i_dir}, 'images', 'useFullPath', true);
+    end
+    fnames = vertcat(fnames{:});
+    
+    if isempty(fnames)
+        error('No image files found.');
+    end
+    
+    fprintf('Found %d total image files to train on.\n', length(fnames));
+    
+    % Add special all-white and all-black images
+    fnames = [fnames; 'ALLWHITE'; 'ALLBLACK'];
+    
+    %fnames = {'angryFace.png', 'ankiLogo.png', 'batteries3.png', ...
+    %    'bullseye2.png', 'fire.png', 'squarePlusCorners.png'};
+    
+    numImages = length(fnames);
+    labelNames = cell(1,numImages);
+    img = cell(1, numImages);
+    
     corners = [0 0; 0 1; 1 0; 1 1];
     sigma = perturbSigma/workingResolution;
-    for i = 1:numPerturbations
+    
+    [xgrid,ygrid] = meshgrid(linspace(probeRegion(1),probeRegion(2),workingResolution)); %1:workingResolution);
+    %probeValues = zeros(workingResolution^2, numImages);
+    probeValues = cell(1,numImages);
+    labels      = cell(1,numImages);
+    
+    X = probePattern.x(ones(workingResolution^2,1),:) + xgrid(:)*ones(1,length(probePattern.x));
+    Y = probePattern.y(ones(workingResolution^2,1),:) + ygrid(:)*ones(1,length(probePattern.y));
+    
+    % Precompute all the perturbed probe locations once
+    pBar.set_message(sprintf('Computing %d perturbed probe locations', numPerturbations));
+    pBar.set_increment(1/numPerturbations);
+    pBar.set(0);    
+    xPerturb = cell(1, numPerturbations);
+    yPerturb = cell(1, numPerturbations);
+    for iPerturb = 1:numPerturbations
         perturbation = max(-3*sigma, min(3*sigma, sigma*randn(4,2)));
         corners_i = corners + perturbation;
         T = cp2tform(corners_i, corners, 'projective');
-        [xi,yi] = tforminv(T, xgrid, ygrid);
+        [xPerturb{iPerturb}, yPerturb{iPerturb}] = tforminv(T, X, Y);
         
-        for i_img = 1:numImages
-            %img_perturb{i,i_img} = separable_filter(interp2(img{i_img}, xi, yi, 'linear', 1), probeKernel, [], 'replicate');
-            img_perturb{i,i_img} = interp2(imageCoords, imageCoords, img{i_img}, xi, yi, 'linear', 1);
-        end
+        pBar.increment();
     end
     
-    if DEBUG_DISPLAY
+    % Compute the perturbed probe values
+    pBar.set_message(sprintf('Interpolating perturbed probe locations from %d images', numImages));
+    pBar.set_increment(1/numImages);
+    pBar.set(0);
+    for iImg = 1:numImages
+        
+        if strcmp(fnames{iImg}, 'ALLWHITE')
+            img{iImg} = ones(workingResolution);
+        elseif strcmp(fnames{iImg}, 'ALLBLACK')
+            img{iImg} = zeros(workingResolution);
+        else
+            [img{iImg}, ~, alpha] = imread(fnames{iImg});
+            img{iImg} = mean(im2double(img{iImg}),3);
+            img{iImg}(alpha < .5) = 1;
+        end
+        
+        imageCoordsX = linspace(0, 1, size(img{iImg},2));
+        imageCoordsY = linspace(0, 1, size(img{iImg},1));
+        
+        [~,labelNames{iImg}] = fileparts(fnames{iImg});
+        probeValues{iImg} = zeros(workingResolution^2, numPerturbations);
+        for iPerturb = 1:numPerturbations
+            probeValues{iImg}(:,iPerturb) = mean(interp2(imageCoordsX, imageCoordsY, img{iImg}, ...
+                xPerturb{iPerturb}, yPerturb{iPerturb}, 'linear', 1), 2);            
+        end
+        labels{iImg} = iImg*ones(1,numPerturbations);
+        
+        pBar.increment();
+    end
+    
+    probeValues = [probeValues{:}];
+    labels = [labels{:}];
+    numLabels = numImages;
+    numImages = length(labels);
+        
+    if false && DEBUG_DISPLAY
         namedFigure('Average Perturbed Images'); clf
         for j = 1:numImages
             subplot(2,ceil(numImages/2),j), hold off
-            imagesc(imageCoords([1 end]), imageCoords([1 end]), ...
-                mean(cat(3, img_perturb{:,j}),3)), axis image, hold on
+            imagesc([0 1], [0 1], reshape(mean(probeValues(:,labels==j),2), workingResolution*[1 1]));
+            axis image, hold on
             plot(corners(:,1), corners(:,2), 'y+');
         end
         colormap(gray);
     end
     
-    labels = [labels row(repmat(labels, [numPerturbations 1]))];
-    img = [img(:); img_perturb(:)];
-    fprintf('Done.\n');
-end
-img = cat(3, img{:});
-numImages = size(img,3);
+    %     %% Add all four rotations
+    %     if addRotations
+    %         img = cat(3, img, imrotate(img,90), imrotate(img,180), imrotate(img, 270)); %#ok<UNRCH>
+    %         if ~numPerturbations
+    %             distMap = cat(3, distMap, imrotate(distMap,90), imrotate(distMap,180), imrotate(distMap, 270));
+    %         end
+    %
+    %         labels = repmat(labels, [1 4]);
+    %
+    %         numImages = 4*numImages;
+    %     end
 
-%% Add all four rotations
-if addRotations
-    img = cat(3, img, imrotate(img,90), imrotate(img,180), imrotate(img, 270)); %#ok<UNRCH>
-    if ~numPerturbations
-        distMap = cat(3, distMap, imrotate(distMap,90), imrotate(distMap,180), imrotate(distMap, 270));
-    end
+    save trainingState.mat
     
-    labels = repmat(labels, [1 4]);
-    
-    numImages = 4*numImages;
-end
-
-%% Add all-white & all-black images
-% Force the tree to use at least one black and one white probe from each
-% image we actually care about.
-
-img = cat(3, img, ones(resamplingResolution), zeros(resamplingResolution));
-labelNames{end+1} = 'ALLWHITE';
-labelNames{end+1} = 'ALLBLACK';
-labels = [labels numLabels+1 numLabels+2];
-numLabels = numLabels + 2;
-numImages = numImages + 2;
-
-%% Create gradient weight map
-% Ix = (image_right(img) - image_left(img))/2;
-% Iy = (image_down(img) - image_up(img))/2;
-% gradMag = sqrt(Ix.^2 + Iy.^2);
-
-
-%% Create samples 
-%probeValues = reshape(img, [], numImages);
-fprintf('Computing probe values...');
-[xgrid,ygrid] = meshgrid(linspace(probeRegion(1),probeRegion(2),workingResolution)); %1:workingResolution);
-probeValues = zeros(workingResolution^2, numImages);
-X = probePattern.x(ones(workingResolution^2,1),:) + xgrid(:)*ones(1,length(probePattern.x));
-Y = probePattern.y(ones(workingResolution^2,1),:) + ygrid(:)*ones(1,length(probePattern.y));
-
-assert(isequal(size(img(:,:,1)), resamplingResolution*[1 1]))
-% Note working resolution is the resoultion of the code image, without the
-% fiducial, which is what the GetFiducialPixelSize function expects
-Corners = VisionMarkerTrained.GetFiducialCorners(resamplingResolution, false);
-tform = cp2tform([0 0 1 1; 0 1 0 1]', Corners, 'projective');
-[xi,yi] = tformfwd(tform, X, Y);
-for i = 1:numImages
-   probeValues(:,i) = mean(interp2(img(:,:,i), xi, yi, 'linear', 1),2);
-end
-fprintf('Done.\n');
+end % if loadSavedProbeValues
 
 
 
@@ -200,6 +202,10 @@ catch E
     end
 end
 
+if isempty(probeTree)
+    error('Training failed!');
+end
+
 if DEBUG_DISPLAY && DrawTrees
     namedFigure('Multiclass DecisionTree'), clf
     fprintf('Drawing multi-class tree...');
@@ -207,115 +213,155 @@ if DEBUG_DISPLAY && DrawTrees
     fprintf('Done.\n');
 end
 
+%% Train Red/Black Verify trees
+
+pBar.set_message('Training red/black verification trees');
+pBar.set_increment(0.5);
+pBar.set(0);
+
+redMask = false(workingResolution);
+redMask(1:2:end,1:2:end) = true;
+redMask(2:2:end,2:2:end) = true;
+
+probeTree.verifyTreeRed = struct('depth', 0, 'infoGain', 0, 'remaining', 1:numImages);
+probeTree.verifyTreeRed.labels = labelNames;
+probeTree.verifyTreeRed = buildTree(probeTree.verifyTreeRed, redMask, labels, labelNames, redBlackVerifyDepth);
+pBar.increment();
+
+blackMask = ~redMask;
+probeTree.verifyTreeBlack = struct('depth', 0, 'infoGain', 0, 'remaining', 1:numImages);
+probeTree.verifyTreeBlack.labels = labelNames;
+probeTree.verifyTreeBlack = buildTree(probeTree.verifyTreeBlack, blackMask, labels, labelNames, redBlackVerifyDepth);
+pBar.increment();
+
+
 %% Train one-vs-all trees
 
-assert(length(labelNames) == numLabels);
+% assert(length(labelNames) == numLabels);
+% 
+% pBar.set_message('Building one-vs-all verification trees');
+% pBar.set_increment(1/numLabels);
+% pBar.set(0);
+% 
+% verifier = struct('depth', 0, 'infoGain', 0, 'remaining', 1:numImages);
+% for i_label = 1:numLabels
+%     
+%     fprintf('\n\nTraining one-vs-all tree for "%s"\n', labelNames{i_label});
+%     
+%     currentLabels = double(labels == i_label) + 1;
+%     currentLabelNames = {'UNKNOWN', labelNames{i_label}};
+%     
+%     probeTree.verifiers(i_label) = buildTree(verifier, ...
+%         false(workingResolution), currentLabels, currentLabelNames);
+%     
+%     if DEBUG_DISPLAY && DrawTrees
+%         namedFigure(sprintf('%s DecisionTree', labelNames{i_label})), clf
+%         fprintf('Drawing %s tree...', labelNames{i_label});
+%         DrawTree(probeTree.verifiers(i_label), 0);
+%         fprintf('Done.\n');
+%     end
+% 
+%     pBar.increment();
+% end
 
-verifier = struct('depth', 0, 'infoGain', 0, 'remaining', 1:numImages);
-for i_label = 1:numLabels
-    
-    fprintf('\n\nTraining one-vs-all tree for "%s"\n', labelNames{i_label});
-    
-    currentLabels = double(labels == i_label) + 1;
-    currentLabelNames = {'UNKNOWN', labelNames{i_label}};
-    
-    probeTree.verifiers(i_label) = buildTree(verifier, ...
-        false(workingResolution), currentLabels, currentLabelNames);
-    
-    if DEBUG_DISPLAY && DrawTrees
-        namedFigure(sprintf('%s DecisionTree', labelNames{i_label})), clf
-        fprintf('Drawing %s tree...', labelNames{i_label});
-        DrawTree(probeTree.verifiers(i_label), 0);
-        fprintf('Done.\n');
-    end
 
-end
-
-if isempty(probeTree)
-    error('Training failed!');
-end
 
 
 %% Test on Training Data
-
-fprintf('Testing on %d training images...', numImages);
-if DEBUG_DISPLAY
-    namedFigure('Sampled Test Results'); clf
-    colormap(gray)
-    maxDisplay = 48;
-else
-    maxDisplay = 0; %#ok<UNRCH>
-end
-correct = false(1,numImages);
-verified = false(1,numImages);
-randIndex = row(randperm(numImages));
-for i_rand = 1:numImages
-    i = randIndex(i_rand);
-   
-    testImg = img(:,:,i);
-    
-    Corners = VisionMarkerTrained.GetFiducialCorners(size(testImg,1), false);
-    %Corners = VisionMarkerTrained.GetMarkerCorners(size(testImg,1), false);
-    if i_rand <= maxDisplay
-        subplot(6, maxDisplay/6, i_rand), hold off
-        imagesc(testImg), axis image, hold on
-        plot(Corners(:,1), Corners(:,2), 'y+');
-        doDisplay = true;
-    else 
-        doDisplay = false;
-    end
-    
-    [result, labelID] = TestTree(probeTree, testImg, tform, 0.5, probePattern, doDisplay);
-    
-    assert(labelID>0 && labelID<=length(probeTree.verifiers));
-    
-    [verificationResult, verifiedID] = TestTree(probeTree.verifiers(labelID), testImg, tform, 0.5, probePattern);
-    verified(i) = verifiedID == 2;
-    if verified(i)
-        assert(strcmp(verificationResult, result));
-    end
-    
-    if ischar(result)
-        correct(i) = strcmp(result, labelNames{labels(i)});
-        if ~verified(i)
-            color = 'b';
-        else
-            if ~correct(i)
-                color = 'r';
-            else
-                color = 'g';
-            end
-        end
-        
-        if i_rand <= maxDisplay
-            set(gca, 'XColor', color, 'YColor', color);
-            title(result)
-        end
-                
-    else
-        warning('Reached node with multiple remaining labels: ')
-        for j = 1:length(result)
-            fprintf('%s, ', labelNames{labels(result(j))});
-        end
-        fprintf('\b\b\n');
-    end
-    
-end
-fprintf(' Got %d of %d training images right (%.1f%%)\n', ...
-    sum(correct), length(correct), sum(correct)/length(correct)*100);
-if sum(correct) ~= length(correct)
-    warning('We should have ZERO training error!');
-end
-
-fprintf(' %d of %d training images verified.\n', ...
-    sum(verified), length(verified));
-if sum(verified) ~= length(verified)
-    warning('All training images should verify!');
-end
+% 
+% fprintf('Testing on %d training images...', numImages);
+% pBar.set_message(sprintf('Testing on %d training images...', numImages));
+% pBar.set_increment(1/numImages);
+% pBar.set(0);
+% 
+% if DEBUG_DISPLAY
+%     namedFigure('Sampled Test Results'); clf
+%     colormap(gray)
+%     maxDisplay = 48;
+% else
+%     maxDisplay = 0; %#ok<UNRCH>
+% end
+% correct = false(1,numImages);
+% verified = false(1,numImages);
+% randIndex = row(randperm(numImages));
+% for i_rand = 1:numImages
+%     iImg = randIndex(i_rand);
+%    
+%     testImg = reshape(probeValues(:,iImg), workingResolution*[1 1]);
+%     
+%     Corners = VisionMarkerTrained.GetFiducialCorners(size(testImg,1), false);
+%     %Corners = VisionMarkerTrained.GetMarkerCorners(size(testImg,1), false);
+%     if i_rand <= maxDisplay
+%         subplot(6, maxDisplay/6, i_rand), hold off
+%         imagesc(testImg), axis image, hold on
+%         plot(Corners(:,1), Corners(:,2), 'y+');
+%         doDisplay = true;
+%     else 
+%         doDisplay = false;
+%     end
+%     
+%     tform = cp2tform([0 0 1 1; 0 1 0 1]', Corners, 'projective');
+%     
+%     [result, labelID] = TestTree(probeTree, testImg, tform, 0.5, probePattern, doDisplay);
+%     
+%     assert(labelID>0 && labelID<=length(probeTree.verifiers));
+%     
+%     [verificationResult, verifiedID] = TestTree(probeTree.verifiers(labelID), testImg, tform, 0.5, probePattern);
+%     verified(iImg) = verifiedID == 2;
+%     if verified(iImg)
+%         assert(strcmp(verificationResult, result));
+%     end
+%     
+%     if ischar(result)
+%         correct(iImg) = strcmp(result, labelNames{labels(iImg)});
+%         if ~verified(iImg)
+%             color = 'b';
+%         else
+%             if ~correct(iImg)
+%                 color = 'r';
+%             else
+%                 color = 'g';
+%             end
+%         end
+%         
+%         if i_rand <= maxDisplay
+%             set(gca, 'XColor', color, 'YColor', color);
+%             title(result)
+%         end
+%                 
+%     else
+%         warning('Reached node with multiple remaining labels: ')
+%         for j = 1:length(result)
+%             fprintf('%s, ', labelNames{labels(result(j))});
+%         end
+%         fprintf('\b\b\n');
+%     end
+%     
+%     pBar.increment();
+%     if pBar.cancelled
+%        fprintf('User cancelled testing on training images.\n');
+%        break; 
+%     end
+% end
+% fprintf(' Got %d of %d training images right (%.1f%%)\n', ...
+%     sum(correct), length(correct), sum(correct)/length(correct)*100);
+% if sum(correct) ~= length(correct)
+%     warning('We should have ZERO training error!');
+% end
+% 
+% fprintf(' %d of %d training images verified.\n', ...
+%     sum(verified), length(verified));
+% if sum(verified) ~= length(verified)
+%     warning('All training images should verify!');
+% end
 
 %% Test on original images
 
 fprintf('Testing on %d original images...', length(fnames));
+pBar.set_message(sprintf('Testing on %d original images...', length(fnames)));
+pBar.set_increment(1/length(fnames));
+pBar.set(0);
+
 correct = false(1,length(fnames));
 verified = false(1,length(fnames));
 if DEBUG_DISPLAY
@@ -323,8 +369,12 @@ if DEBUG_DISPLAY
     numDisplayRows = floor(sqrt(length(fnames)));
     numDisplayCols = ceil(length(fnames)/numDisplayRows);
 end
-for i = 1:length(fnames)   
-    [testImg,~,alpha] = imread(fnames{i});
+for iImg = 1:length(fnames) 
+    if any(strcmp(fnames{iImg}, {'ALLWHITE', 'ALLBLACK'}))
+        continue;
+    end
+    
+    [testImg,~,alpha] = imread(fnames{iImg});
     testImg = mean(im2double(testImg),3);
     testImg(alpha < .5) = 1;
     
@@ -336,27 +386,37 @@ for i = 1:length(fnames)
     tform = cp2tform([0 0 1 1; 0 1 0 1]', Corners, 'projective');
     
     [result, labelID] = TestTree(probeTree, testImg, tform, 0.5, probePattern);
+   
+    [redResult, redLabelID] = TestTree(probeTree.verifyTreeRed, testImg, tform, 0.5, probePattern);
+    [blackResult, blackLabelID] = TestTree(probeTree.verifyTreeBlack, testImg, tform, 0.5, probePattern);
     
-    [verificationResult, verifiedID] = TestTree(probeTree.verifiers(labelID), testImg, tform, 0.5, probePattern);
-    verified(i) = verifiedID == 2;
-    if verified(i)
-        assert(strcmp(verificationResult, result));
+    if any(labelID == redLabelID) && any(labelID == blackLabelID)
+        assert(any(strcmp(result, redResult)) && ...
+            any(strcmp(result, blackResult)));
+        verified(iImg) = true;
     end
     
+    
+%     [verificationResult, verifiedID] = TestTree(probeTree.verifiers(labelID), testImg, tform, 0.5, probePattern);
+%     verified(iImg) = verifiedID == 2;
+%     if verified(iImg)
+%         assert(strcmp(verificationResult, result));
+%     end
+    
     if ischar(result)
-        correct(i) = strcmp(result, labelNames{labels(i)});
+        correct(iImg) = strcmp(result, labelNames{labelID});
         
         if DEBUG_DISPLAY % && ~correct(i)
-            h_axes = subplot(numDisplayRows,numDisplayCols,i);
+            h_axes = subplot(numDisplayRows,numDisplayCols,iImg);
             imagesc(testImg, 'Parent', h_axes); hold on
             axis(h_axes, 'image');
             TestTree(probeTree, testImg, tform, 0.5, probePattern, true);
             plot(Corners(:,1), Corners(:,2), 'y+');
             title(h_axes, result);
-            if ~verified(i)
+            if ~verified(iImg)
                 color = 'b';
             else
-                if correct(i)
+                if correct(iImg)
                     color = 'g';
                 else
                     color = 'r';
@@ -372,7 +432,12 @@ for i = 1:length(fnames)
         end
         fprintf('\b\b\n');
     end
-    
+   
+    pBar.increment();
+    if pBar.cancelled
+        fprintf('User cancelled testing on original images.\n');
+        break;
+    end
 end
 fprintf('Got %d of %d original images right (%.1f%%)\n', ...
     sum(correct), length(correct), sum(correct)/length(correct)*100);
@@ -397,17 +462,29 @@ end
 
 %% buildTree() Nested Function
 
-    function node = buildTree(node, used, labels, labelNames)
+    function node = buildTree(node, used, labels, labelNames, maxDepth)
+        
+        if nargin < 5
+            maxDepth = inf;
+        end
         
         if all(used(:))
             error('All probes used.');
         end
         
-        if all(labels(node.remaining)==labels(node.remaining(1)))
-            node.labelID = labels(node.remaining(1));
+        %if all(labels(node.remaining)==labels(node.remaining(1)))
+        counts = hist(labels(node.remaining), 1:length(labelNames));
+        [maxCount, maxIndex] = max(counts);
+        if maxCount >= leafNodeFraction*length(node.remaining)
+            node.labelID = maxIndex;
             node.labelName = labelNames{node.labelID};
             fprintf('LeafNode for label = %d, or "%s"\n', node.labelID, node.labelName);
-           
+            
+        elseif node.depth == maxDepth
+            node.labelID = unique(labels(node.remaining));
+            node.labelName = labelNames(node.labelID);
+            fprintf('MaxDepth LeafNode for labels = {%s\b}\n', sprintf('%s,', node.labelName{:}));
+            
         else            
             unusedProbes = find(~used);
             
@@ -463,10 +540,10 @@ end
                 used(node.whichProbe) = true;
                 node = buildTree(node, used, labels, labelNames);
                 
-            elseif node.depth+1 > maxDepth
-                error('BuildTree:MaxDepth', ...
-                        'Reached max depth with [%s\b] remaining.', ...
-                        sprintf('%s ', labelNames{labels(leftRemaining)}));
+%             elseif node.depth+1 > maxDepth
+%                 error('BuildTree:MaxDepth', ...
+%                         'Reached max depth with [%s\b] remaining.', ...
+%                         sprintf('%s ', labelNames{labels(leftRemaining)}));
                     
             else
                 % Recurse left
@@ -475,7 +552,7 @@ end
                 
                 leftChild.remaining = leftRemaining;
                 leftChild.depth = node.depth+1;
-                node.leftChild = buildTree(leftChild, usedLeft, labels, labelNames);
+                node.leftChild = buildTree(leftChild, usedLeft, labels, labelNames, maxDepth);
                 
                 % Recurse right
                 rightRemaining = node.remaining(~goLeft);
@@ -486,7 +563,7 @@ end
                 
                 rightChild.remaining = rightRemaining;
                 rightChild.depth = node.depth+1;
-                node.rightChild = buildTree(rightChild, usedRight, labels, labelNames);
+                node.rightChild = buildTree(rightChild, usedRight, labels, labelNames, maxDepth);
                 
             end
         end

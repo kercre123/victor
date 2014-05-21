@@ -2278,7 +2278,7 @@ namespace Anki
             const s32 index_yDecreasing = RandS32(0, num_yDecreasing);
             const s32 index_yIncreasing = RandS32(0, num_yIncreasing);
 
-            //printf("Samples: %d %d %d %d\n", index_xDecreasing, index_xIncreasing, index_yDecreasing, index_yIncreasing);
+            //CoreTechPrint("Samples: %d %d %d %d\n", index_xDecreasing, index_xIncreasing, index_yDecreasing, index_yIncreasing);
 
             pSampledMatchingIndexes_xDecreasing[iSample] = pMatchingIndexes_xDecreasing[index_xDecreasing];
             pSampledMatchingIndexes_xIncreasing[iSample] = pMatchingIndexes_xIncreasing[index_xIncreasing];
@@ -2366,7 +2366,7 @@ namespace Anki
               if(numInliers > bestNumInliers) {
                 bestNumInliers = numInliers;
                 bestHomography.Set(this->transformation.get_homography());
-                //printf("inliers: %d\n", numInliers);
+                //CoreTechPrint("inliers: %d\n", numInliers);
                 //bestHomography.Print("bestHomography");
               }
             } // if(!numericalFailure)

@@ -31,6 +31,9 @@ namespace Anki
       template<typename InType, typename IntermediateType, typename OutType> Result ComputeXGradient(const Array<InType> &in, Array<OutType> &out);
       template<typename InType, typename IntermediateType, typename OutType> Result ComputeYGradient(const Array<InType> &in, Array<OutType> &out);
 
+      // Note: Output gradient is divided by two, so the output is between [-127,127]
+      Result FastGradient(const Array<u8> &in, Array<s8> &dx, Array<s8> &dy, MemoryStack scratch);
+
       // Filter with a horizontal and vertical [1, 4, 6, 4, 1] filter
       // Handles edges by replicating the border pixel
       template<typename InType, typename IntermediateType, typename OutType> Result BinomialFilter(const Array<InType> &image, Array<OutType> &imageFiltered, MemoryStack scratch);
@@ -56,6 +59,8 @@ namespace Anki
       // scratch memory to store that integral image.
       Result BoxFilterNormalize(const Array<u8> &image, const s32 boxSize, const u8 padValue,
         Array<u8> &imageNorm, MemoryStack scratch);
+
+      Result BoxFilter(const Array<u8> &image, const s32 boxHeight, const s32 boxWidth, Array<u16> &filtered, MemoryStack scratch);
 
       //
       // Image resizing

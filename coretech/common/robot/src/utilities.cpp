@@ -94,7 +94,7 @@ namespace Anki
           tmpBuffer[1] = '\0';
 
           cv::Size textSize = cv::getTextSize(std::string(tmpBuffer), fontFace, fontScale, thickness, NULL);
-          //printf("%c = %dx%d\n", characters[i], textSize.width, textSize.height);
+          //CoreTechPrint("%c = %dx%d\n", characters[i], textSize.width, textSize.height);
           maxWidth = MAX(maxWidth, textSize.width);
         }
       }

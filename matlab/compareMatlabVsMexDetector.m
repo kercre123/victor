@@ -25,7 +25,7 @@ if isempty(img) || any(size(img)==0)
 end
 
 %% Matlab detection
-matlabDetections = simpleDetector(img);
+matlabDetections = simpleDetector(img, 'quadRefinementIterations', 0);
 
 %% Mex Detection
 scaleImage_thresholdMultiplier = .75;
@@ -44,8 +44,9 @@ quads_quadSymmetryThreshold = 2.0;
 quads_minDistanceFromImageEdge = 2;
 decode_minContrastRatio = 1.25;
 returnInvalidMarkers = 0;
+quadRefinementIterations = 0;
 
-[quads, ~, markerNames] = mexDetectFiducialMarkers(img, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, returnInvalidMarkers);
+[quads, ~, markerNames] = mexDetectFiducialMarkers(img, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, quadRefinementIterations, returnInvalidMarkers);
 
 for i = 1:length(quads)
     quads{i} = quads{i} + 1;

@@ -96,6 +96,17 @@ namespace Anki {
     Radians GetAngleDiffFrom(const RotationMatrix3d &other) const;
     
     /*
+    // Return the Euler angles, under the convention that the
+    // rotation matrix is the composition of three ordered rotations around
+    // each of the axes, namely:  R = Rz * Ry * Rx    
+    void GetEulerAngles(Radians& angle_x, Radians& angle_y, Radians& angle_z) const;
+    */
+    
+    Radians GetAngleAroundXaxis() const;
+    Radians GetAngleAroundYaxis() const;
+    Radians GetAngleAroundZaxis() const;
+    
+    /*
     // Overload math operations to keep rotation vector updated:
     void operator*=(const RotationMatrix3d &other);
     void preMultiplyBy(const RotationMatrix3d &other);

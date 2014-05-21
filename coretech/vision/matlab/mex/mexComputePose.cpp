@@ -8,8 +8,13 @@
 
 #include "anki/vision/basestation/perspectivePoseEstimation.h"
 
+#include "anki/common/matlab/mexWrappers.h"
+#include "anki/common/shared/utilities_shared.h"
+
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
+  Anki::SetCoreTechPrintFunctionPtr(mexPrintf);
+
   using namespace Anki;
 
   // Inputs:

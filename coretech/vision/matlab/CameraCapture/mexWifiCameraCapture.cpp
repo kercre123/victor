@@ -6,6 +6,9 @@
 
 #include "anki/common/robot/matlabInterface.h"
 
+#include "anki/common/matlab/mexWrappers.h"
+#include "anki/common/shared/utilities_shared.h"
+
 #include "debugStreamClient.h"
 
 #define VERBOSITY 0
@@ -45,6 +48,8 @@ enum Command {
 // A Simple Wifi Camera Capture wrapper
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
+  Anki::SetCoreTechPrintFunctionPtr(mexPrintf);
+
   // Necessary when using TCP (vs. UART)
 #define USE_SOCKET
 

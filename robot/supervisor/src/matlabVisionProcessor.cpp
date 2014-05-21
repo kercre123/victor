@@ -36,6 +36,7 @@ namespace Anki {
       static bool initTrackerAtFullRes_;
       
       static VisionSystem::TrackerParameters trackerParameters_;
+      static VisionSystem::DetectFiducialMarkersParameters detectionParameters_;
       
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_AFFINE
       static Transformations::TransformType transformType_ = Transformations::TRANSFORM_AFFINE;
@@ -72,6 +73,7 @@ namespace Anki {
                                      VisionSystem::GetCameraCalibration()->center_y);
           
           trackerParameters_.Initialize();
+          detectionParameters_.Initialize();
           
           initTrackerAtFullRes_ = false;
           
@@ -89,6 +91,73 @@ namespace Anki {
         
         return RESULT_OK;
       } // MatlabVisionProcess::Initialize()
+      
+      
+      
+      Result DetectMarkers(const Array<u8>& img,
+                           FixedLengthList<VisionMarker>& markers,
+                           FixedLengthList<Array<f32> >& homographies,
+                           MemoryStack scratch)
+      {
+        if(!isInitialized_) {
+          return RESULT_FAIL;
+        }
+        
+        matlabProc_.PutArray(img, "img");
+        
+        // TODO: Pass through more parameters to the matlab detector
+        matlabProc_.EvalStringEcho("markers = simpleDetector(img, "
+                                   "  'quadRefinementIterations', %d); "
+                                   "numMarkers = length(markers); ",
+                                   detectionParameters_.quadRefinementIterations);
+        
+        const s32 numMarkers = static_cast<s32>(mxGetScalar(matlabProc_.GetArray("numMarkers")));
+        
+        AnkiConditionalErrorAndReturnValue(numMarkers < markers.get_maximumSize(),
+                                           RESULT_FAIL_INVALID_SIZE,
+                                           "MatlabVisionProcessor::DetectMarkers",
+                                           "More markers detected than there was room for in output markers list.");
+        
+        AnkiConditionalErrorAndReturnValue(numMarkers < homographies.get_maximumSize(),
+                                           RESULT_FAIL_INVALID_SIZE,
+                                           "MatlabVisionProcessor::DetectMarkers",
+                                           "More markers detected than there was room for in homographies list.");
+        
+        for(s32 i=0; i<numMarkers; ++i) {
+          VisionMarker& currentMarker = markers[i];
+          
+          matlabProc_.EvalStringEcho("marker     = markers{%d}; "
+                                     "corners    = marker.corners - 1; "
+                                     "markerType = uint32(marker.codeID) - 1; "
+                                     "H          = single(marker.H); ",
+                                     i+1);
+          
+          currentMarker.corners    = matlabProc_.GetQuad<f32>("corners");
+          
+          {
+            // Matlab produces an oriented marker type (code). We will use that
+            // to get the unoriented code using the LUT here:
+            using namespace VisionMarkerDecisionTree;
+            OrientedMarkerLabel orientedMarkerType = static_cast<OrientedMarkerLabel>(mxGetScalar(matlabProc_.GetArray("markerType")));
+            currentMarker.markerType = RemoveOrientationLUT[orientedMarkerType];
+          }
+
+          currentMarker.isValid    = true;
+          
+          homographies[i].Set(matlabProc_.GetArray<f32>("H", scratch));
+          
+          // TODO: Set observedOrientation? or is it used anywhere?
+          // currentMarker.observedOrientation = ?
+          
+        } // for each marker
+        
+        markers.set_size(numMarkers);
+        homographies.set_size(numMarkers);
+        
+        return RESULT_OK;
+      
+      } // DetectMarkers()
+      
       
       Result InitTemplate(const Array<u8>& imgFull,
                               const Quadrilateral<f32>& trackingQuad,
@@ -129,6 +198,7 @@ namespace Anki {
                                    "  'TemplateRegionPaddingFraction', %f, "
                                    "  'NumScales', %d, "
                                    "  'NumSamples', %d, "
+                                   "  'Num"
                                    "  'CalibrationMatrix', [%f 0 %f; 0 %f %f; 0 0 1] / %d, "
                                    "  'MarkerWidth', %f);",
                                    transformTypeStr_,
@@ -136,7 +206,7 @@ namespace Anki {
                                    trackerParameters_.trackingImageHeight,
                                    trackerParameters_.scaleTemplateRegionPercent - 1.f,
                                    trackerParameters_.numPyramidLevels,
-                                   trackerParameters_.maxSamplesAtBaseLevel,
+                                   trackerParameters_.numInteriorSamples,
                                    VisionSystem::GetCameraCalibration()->focalLength_x,
                                    VisionSystem::GetCameraCalibration()->center_x,
                                    VisionSystem::GetCameraCalibration()->focalLength_y,

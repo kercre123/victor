@@ -16,6 +16,7 @@
 #endif
 
 #include "anki/vision/basestation/camera.h"
+#include "anki/vision/basestation/observableObject.h"
 #include "anki/vision/basestation/perspectivePoseEstimation.h"
 
 // Set to 1 to use OpenCV's iterative pose estimation for quads.
@@ -311,20 +312,31 @@ namespace Anki {
                                                       const Quad3f& worldQuad) const;
 
     
-    void  Camera::project3dPoint(const Point3f& objPoint,
-                                 Point2f&       imgPoint) const
+    bool Camera::isVisible(const Point2f &projectedPoint) const
+    {
+      return (not std::isnan(projectedPoint.x()) &&
+              not std::isnan(projectedPoint.y()) &&
+              projectedPoint.x() >= 0.f && projectedPoint.y() >= 0.f &&
+              projectedPoint.x() < this->calibration.get_ncols() &&
+              projectedPoint.y() < this->calibration.get_nrows());
+      
+    } // Camera::isVisible()
+
+    
+    void Camera::project3dPoint(const Point3f& objPoint,
+                                Point2f&       imgPoint) const
     {
       if(not isCalibrationSet) {
         CORETECH_THROW("Camera::project3dPoint() called before calibration set.");
       }
       
-      const f32 BEHIND_CAM = std::numeric_limits<f32>::quiet_NaN();
+      const f32 BEHIND_OR_OCCLUDED = std::numeric_limits<f32>::quiet_NaN();
       
       if(objPoint.z() <= 0.f)
       {
         // Point not visible (not in front of camera)
-        imgPoint = BEHIND_CAM;
-        
+        imgPoint = BEHIND_OR_OCCLUDED;
+
       } else {
         // Point visible, project it
         imgPoint.x() = (objPoint.x() / objPoint.z());
@@ -339,17 +351,63 @@ namespace Anki {
         imgPoint += this->calibration.get_center();
       }
       
+      if(not occluderList.IsEmpty() &&
+         occluderList.IsOccluded(imgPoint, objPoint.z()))
+      {
+        imgPoint = BEHIND_OR_OCCLUDED;
+      }
+      
     } // project3dPoint()
+    
+    
+    /* This doesn't work but it would be nice to have a "generic"
+     wrapper here for looping over various containers of points and projecting
+     them.
+     
+    template<template<class PointType> class PointContainer>
+    void project3dPointContainer(const PointContainer<Point3f>& objPoints,
+                                 PointContainer<Point2f>& imgPoints)
+    {
+      CORETECH_ASSERT(objPoints.size() == imgPoints.size());
+      
+      auto objPointIter = objPoints.begin();
+      auto imgPointIter = imgPoints.begin();
+      
+      while(objPointIter != objPoints.end()) {
+        
+        project3dPoint(*objPointIter, *imgPointIter);
+        
+        ++objPointIter;
+        ++imgPointIter;
+      }
+    }
+     */
+    
+    template<class PointContainer3d, class PointContainer2d>
+    void Camera::project3dPointHelper(const PointContainer3d& objPoints,
+                                      PointContainer2d& imgPoints) const
+    {
+      CORETECH_ASSERT(objPoints.size() == imgPoints.size());
+      
+      auto objPointIter = objPoints.begin();
+      auto imgPointIter = imgPoints.begin();
+      
+      while(objPointIter != objPoints.end()) {
+        
+        project3dPoint(*objPointIter, *imgPointIter);
+        
+        ++objPointIter;
+        ++imgPointIter;
+      }
+    } // Camera::project3dPointHelper()
+    
     
     // Compute the projected image locations of a set of 3D points:
     void Camera::project3dPoints(const std::vector<Point3f>& objPoints,
                                  std::vector<Point2f>&       imgPoints) const
     {
       imgPoints.resize(objPoints.size());
-      for(size_t i = 0; i<objPoints.size(); ++i)
-      {
-        project3dPoint(objPoints[i], imgPoints[i]);
-      }
+      project3dPointHelper(objPoints, imgPoints);
     } // project3dPoints(std::vectors)
     
     void Camera::project3dPoints(const Quad3f& objPoints,
@@ -361,6 +419,29 @@ namespace Anki {
         project3dPoint(objPoints[i_corner], imgPoints[i_corner]);
       }
     } // project3dPoints(Quads)
+    
+    
+    void Camera::ClearOccluders()
+    {
+      occluderList.Clear();
+    }
+    
+    
+    void Camera::AddOccluder(const ObservableObject* object)
+    {
+      const Pose3d objectPoseWrtCamera(object->GetPose().getWithRespectTo(&pose));
+      
+      std::vector<Point3f> cornersAtPose;
+      std::vector<Point2f> projectedCorners;
+      
+      // Project the objects's corners into the image and create an occluding
+      // bounding rectangle from that
+      object->GetCorners(objectPoseWrtCamera, cornersAtPose);
+      project3dPoints(cornersAtPose, projectedCorners);
+      
+      occluderList.AddOccluder(projectedCorners, objectPoseWrtCamera.get_translation().z());
+    }
+    
     
   } // namespace Vision
 } // namespace Anki

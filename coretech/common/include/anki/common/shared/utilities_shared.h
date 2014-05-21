@@ -1,5 +1,5 @@
 /**
-File: utilities.h
+File: utilities_shared.h
 Author: Kevin Yoon
 Created: 2014
 
@@ -18,12 +18,11 @@ namespace Anki
   // Calls printf() by default, but can be made to use an externally
   // defined function via SetCoreTechPrintFunctionPtr().
   int CoreTechPrint(const char * format, ...);
-  
+
   // Sets the function pointer that CoreTechPrint() uses.
   // Convenient for on-robot print which could be more complex
   // than just printf().
-  void SetCoreTechPrintFunctionPtr( int (*fp)(const char * format, va_list) = 0);
-    
+  void SetCoreTechPrintFunctionPtr( int (*fp)(const char * format, va_list) );
 } // namespace Anki
 
 #endif // _ANKICORETECHEMBEDDED_COMMON_SHARED_UTILITIES_H_

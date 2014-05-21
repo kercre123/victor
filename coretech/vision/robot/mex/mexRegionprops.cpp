@@ -2,8 +2,13 @@
 
 #include <vector>
 
+#include "anki/common/matlab/mexWrappers.h"
+#include "anki/common/shared/utilities_shared.h"
+
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
+  Anki::SetCoreTechPrintFunctionPtr(mexPrintf);
+
   if(nrhs != 2 || nlhs != 4) {
     mexErrMsgTxt("\nUsage:\n\t[area, indexList, boundingBox, centroid] = mexRegionprops(regionMap, numRegions)");
   }

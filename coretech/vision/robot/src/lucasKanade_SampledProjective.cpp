@@ -163,7 +163,7 @@ namespace Anki
             LucasKanadeTracker_SampledProjective::ApproximateSelect(magnitudeVector, numSelectBins, numSamples, numSelected, magnitudeIndexes);
 
             //const f32 t2 = GetTimeF32();
-            //printf("%f %f\n", t1-t0, t2-t1);
+            //CoreTechPrint("%f %f\n", t1-t0, t2-t1);
 
             if(numSelected == 0) {
               return;
@@ -641,7 +641,7 @@ namespace Anki
 
               const f32 tGradientValue = oneOverTwoFiftyFive * (interpolatedPixelF32 - templatePixelValue);
 
-              //printf("%f ", xOriginal);
+              //CoreTechPrint("%f ", xOriginal);
               const f32 values[6] = {
                 xOriginal * xGradientValue,
                 yOriginal * xGradientValue,
@@ -651,9 +651,9 @@ namespace Anki
                 yGradientValue};
 
               //for(s32 ia=0; ia<6; ia++) {
-              //  printf("%f ", values[ia]);
+              //  CoreTechPrint("%f ", values[ia]);
               //}
-              //printf("\n");
+              //CoreTechPrint("\n");
 
               //f32 AWAt_raw[6][6];
               //f32 b_raw[6];
@@ -833,7 +833,7 @@ namespace Anki
 
               const f32 tGradientValue = oneOverTwoFiftyFive * (interpolatedPixelF32 - templatePixelValue);
 
-              //printf("%f ", xOriginal);
+              //CoreTechPrint("%f ", xOriginal);
 
               const f32 values[8] = {
                 xOriginal * xGradientValue,

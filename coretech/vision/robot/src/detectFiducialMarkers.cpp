@@ -17,7 +17,6 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/common/robot/matlabInterface.h"
 
-//#define SEND_DRAWN_COMPONENTS
 //#define SHOW_DRAWN_COMPONENTS
 
 namespace Anki
@@ -35,7 +34,7 @@ namespace Anki
       const f32 component_minHollowRatio,
       const s32 quads_minQuadArea, const s32 quads_quadSymmetryThreshold, const s32 quads_minDistanceFromImageEdge,
       const f32 decode_minContrastRatio,
-      const s32 maxConnectedComponentSegments,
+      const u16 maxConnectedComponentSegments,
       const s32 maxExtractedQuads,
       const s32 quadRefinementIterations,
       const bool returnInvalidMarkers,

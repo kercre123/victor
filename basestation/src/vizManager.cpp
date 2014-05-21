@@ -28,9 +28,10 @@ namespace Anki {
       }
     
       // Define colors
-      DefineColor(VIZ_COLOR_EXECUTED_PATH, 1.0, 0.0, 0.0, 1.0);
-      DefineColor(VIZ_COLOR_PREDOCKPOSE,   1.0, 0.0, 0.0, 0.75);
-      DefineColor(VIZ_COLOR_SELECTED_OBJECT, 0.0, 1.0, 0.0, 0.0);
+      DefineColor(VIZ_COLOR_EXECUTED_PATH,       1.0, 0.0, 0.0, 1.0);
+      DefineColor(VIZ_COLOR_PREDOCKPOSE,         1.0, 0.0, 0.0, 0.75);
+      DefineColor(VIZ_COLOR_SELECTED_OBJECT,     0.0, 1.0, 0.0, 0.0);
+      DefineColor(VIZ_COLOR_BLOCK_BOUNDING_QUAD, 0.0, 0.0, 1.0, 0.75);
       
       // Compute the max IDs permitted by VizObject type
       for (u32 i=0; i<NUM_VIZ_OBJECT_TYPES; ++i) {
@@ -141,6 +142,7 @@ namespace Anki {
                  colorID);
     }
     
+
     
     void VizManager::EraseRobot(const u32 robotID)
     {
@@ -303,8 +305,7 @@ namespace Anki {
       
       SendMessage( GET_MESSAGE_ID(VizErasePath), &v );
     }
-
-
+    
     void VizManager::SetPathColor(const u32 pathID, const u32 colorID)
     {
       VizSetPathColor v;
@@ -313,6 +314,23 @@ namespace Anki {
       
       SendMessage( GET_MESSAGE_ID(VizSetPathColor), &v );
     }
+    
+    
+    // =============== Quad methods ==================
+    
+    void VizManager::EraseQuad(const u32 quadID)
+    {
+      VizEraseQuad v;
+      v.quadID = quadID;
+      
+      SendMessage( GET_MESSAGE_ID(VizEraseQuad), &v );
+    }
+    
+    void VizManager::EraseAllQuads()
+    {
+      EraseQuad(ALL_QUAD_IDs);
+    }
+
     
     // =============== Text methods ==================
 

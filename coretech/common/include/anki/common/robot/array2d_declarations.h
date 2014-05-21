@@ -128,6 +128,7 @@ namespace Anki
       cv::Mat_<Type>& get_CvMat_();
       const cv::Mat_<Type>& get_CvMat_() const;
 
+      // Copies the OpenCV Mat. If needed, it converts from color to grayscale by averaging the color channels.
       s32 Set(const cv::Mat_<Type> &in);
 #endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
@@ -148,7 +149,7 @@ namespace Anki
       // per-element varation, epsilon. If the arrays are not the same size,
       // false is returned.
       bool IsNearlyEqualTo(const Array<Type>& other, const Type epsilon) const;
-      
+
       // Checks the basic parameters of this Array, and if it is allocated.
       bool IsValid() const;
 

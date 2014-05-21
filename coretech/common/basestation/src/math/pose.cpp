@@ -79,8 +79,7 @@ namespace Anki {
   } // Constructor: Pose3d()  
   
   Pose3d::Pose3d(const RotationVector3d &Rvec_in, const Vec3f &T_in, const Pose3d *parentPose)
-  : rotationVector(Rvec_in),
-    rotationMatrix(rotationVector),
+  : rotationMatrix(Rvec_in),
     translation(T_in),
     parent(parentPose)
   {
@@ -97,8 +96,7 @@ namespace Anki {
   */
   
   Pose3d::Pose3d(const RotationMatrix3d &Rmat_in, const Vec3f &T_in, const Pose3d *parentPose)
-  : rotationVector(Rmat_in),
-    rotationMatrix(Rmat_in),
+  : rotationMatrix(Rmat_in),
     translation(T_in),
     parent(parentPose)
   {
@@ -107,8 +105,7 @@ namespace Anki {
   
   Pose3d::Pose3d(const Radians angle, const Vec3f axis,
                  const Vec3f T, const Pose3d *parentPose)
-  : rotationVector(angle, axis),
-    rotationMatrix(rotationVector),
+  : rotationMatrix(angle, axis),
     translation(T),
     parent(parentPose)
   {
@@ -222,7 +219,8 @@ namespace Anki {
   
   void Pose3d::rotateBy(const Radians& angleIn) {
     // Keep same rotation axis, but add the incoming angle
-    RotationMatrix3d Rnew(angleIn, this->get_rotationAxis());
+    RotationVector3d Rvec(this->rotationMatrix);
+    RotationMatrix3d Rnew(angleIn, Rvec.get_axis());
     this->translation = Rnew * this->translation;
     Rnew *= this->rotationMatrix;
     this->set_rotation(Rnew);
@@ -345,7 +343,7 @@ namespace Anki {
           return P_to;
         }
         
-        --depthDiff;
+        ++depthDiff;
       }
       
       // Treedepths should now match:
@@ -414,7 +412,8 @@ namespace Anki {
     if(P_diff.get_translation().length() < distThreshold) {
       
       // Next check to see if the rotational difference is small
-      if(P_diff.get_rotationAngle() < angleThreshold) {
+      RotationVector3d Rvec(P_diff.get_rotationMatrix());
+      if(Rvec.get_angle() < angleThreshold) {
         isSame = true;
       }
 
@@ -461,8 +460,8 @@ namespace Anki {
     if(P_diff.get_translation().length() < distThreshold) {
       
       // Next check to see if the rotational difference is small
-      
-      if(P_diff.get_rotationAngle() < angleThreshold) {
+      RotationVector3d Rvec(P_diff.get_rotationMatrix());
+      if(Rvec.get_angle() < angleThreshold) {
         // Rotation is same, without even considering the ambiguities
         isSame = true;
       }

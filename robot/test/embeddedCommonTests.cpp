@@ -393,7 +393,7 @@ GTEST_TEST(CoreTech_Common, RoundAndSaturate)
   {
   const f64 v = 10e30;
   for(s64 i=0x7ffffffffffffdffLL; i<0x7fffffffffffffffLL; i+=0x1LL) {
-  printf("0x%llx = 0x%llx\n", i, Round<s64>( MIN((f64)i, MAX((f64)0, (f64)v)) ));
+  CoreTechPrint("0x%llx = 0x%llx\n", i, Round<s64>( MIN((f64)i, MAX((f64)0, (f64)v)) ));
   }
   }*/
 
@@ -538,7 +538,7 @@ GTEST_TEST(CoreTech_Common, RoundFloat)
   for(s32 i=0; i<numNumbers; i++) {
     s32s[i] = Round<s32>(f32s[i]);
 
-    //printf("%f = %d\n", f32s[i], s32s[i]);
+    //CoreTechPrint("%f = %d\n", f32s[i], s32s[i]);
     ASSERT_TRUE(s32s[i] == s32s_groundTruth[i]);
   }
 
@@ -640,7 +640,7 @@ GTEST_TEST(CoreTech_Common, CRC32Code)
 
   const u32 crc_groundTruth = 0xF2939FF3;
 
-  printf("CRC code: 0x%x\n", crc);
+  CoreTechPrint("CRC code: 0x%x\n", crc);
 
   ASSERT_TRUE(crc == crc_groundTruth);
 
@@ -658,7 +658,7 @@ GTEST_TEST(CoreTech_Common, MemoryStackIterator)
   ////Anki::Cozmo::HAL::USBPutChar('\n');
   ////Anki::Cozmo::HAL::USBPutChar('\n');
   ////Anki::Cozmo::HAL::USBPutChar('\n');
-  ////printf("\n\n\n\n");
+  ////CoreTechPrint("\n\n\n\n");
 
   //Anki::Cozmo::HAL::USBSendBuffer(reinterpret_cast<u8*>(&buffer[0]), 100*sizeof(u32));
 
@@ -822,17 +822,27 @@ GTEST_TEST(CoreTech_Common, ExplicitPrintf)
 
 GTEST_TEST(CoreTech_Common, MatrixSortWithIndexes)
 {
-  ASSERT_TRUE(offchipBuffer != NULL);
-  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  ASSERT_TRUE(scratchCcm.IsValid());
 
-  const s32 arr_data[15] = {81, 10, 16, 91, 28, 97, 13, 55, 96, 91, 96, 49, 63, 96, 80};
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(scratchOnchip.IsValid());
 
-  Array<s32> arr(5,3,ms);
-  Array<s32> arrIndexes(5,3,ms);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(scratchOffchip.IsValid());
 
-  Array<s32> sortedArr_groundTruth(5,3,ms);
-  Array<s32> sortedArrIndexes_groundTruth(5,3,ms);
+  const s32 arr_data[15] = {
+    81, 10, 16,
+    91, 28, 97,
+    13, 55, 96,
+    91, 96, 49,
+    63, 96, 80};
+
+  Array<s32> arr(5,3,scratchOnchip);
+  Array<s32> arrIndexes(5,3,scratchOnchip);
+
+  Array<s32> sortedArr_groundTruth(5,3,scratchOnchip);
+  Array<s32> sortedArrIndexes_groundTruth(5,3,scratchOnchip);
 
   ASSERT_TRUE(arr.IsValid());
   ASSERT_TRUE(sortedArr_groundTruth.IsValid());
@@ -840,82 +850,174 @@ GTEST_TEST(CoreTech_Common, MatrixSortWithIndexes)
 
   // sortWhichDimension==0 sortAscending==false
   {
-    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
-    ASSERT_TRUE(Matrix::Sort(arr, arrIndexes, 0, false) == RESULT_OK);
+    const s32 sortedArr_groundTruthData[15] = {
+      91, 96, 97,
+      91, 96, 96,
+      81, 55, 80,
+      63, 28, 49,
+      13, 10, 16};
 
-    //arr.Print("sortWhichDimension==0 sortAscending==false");
-    //arrIndexes.Print("Indexes: sortWhichDimension==0 sortAscending==false");
+    // These indexes are different, because quicksort doesn't maintain order of identical elements
+    const s32 sortedArrIndexes_insertionGroundTruthData[15] = {
+      1, 3, 1,
+      3, 4, 2,
+      0, 2, 4,
+      4, 1, 3,
+      2, 0, 0};
 
-    const s32 sortedArr_groundTruthData[15] = {91, 96, 97, 91, 96, 96, 81, 55, 80, 63, 28, 49, 13, 10, 16};
+    const s32 sortedArrIndexes_quickGroundTruthData[15] = {
+      3, 4, 1,
+      1, 3, 2,
+      0, 2, 4,
+      4, 1, 3,
+      2, 0, 0};
 
     ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData, 15) == 15);
     ASSERT_TRUE(sortedArr_groundTruth[0][0] == 91);
 
-    const s32 sortedArrIndexes_groundTruthData[15] = {2, 4, 2, 4, 5, 3, 1, 3, 5, 5, 2, 4, 3, 1, 1};
-    ASSERT_TRUE(sortedArrIndexes_groundTruth.Set(sortedArrIndexes_groundTruthData, 15) == 15);
-
-    Matrix::Subtract<s32,s32,s32>(sortedArrIndexes_groundTruth, 1, sortedArrIndexes_groundTruth); // Matlab -> C indexing
-    //sortedArrIndexes_groundTruth.Print("sortedArrIndexes_groundTruth");
-
+    // Insertion sort
+    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
+    ASSERT_TRUE(Matrix::InsertionSort(arr, arrIndexes, 0, false) == RESULT_OK);
     ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
+    ASSERT_TRUE(sortedArrIndexes_groundTruth.Set(sortedArrIndexes_insertionGroundTruthData, 15) == 15);
+    ASSERT_TRUE(AreElementwiseEqual(arrIndexes, sortedArrIndexes_groundTruth));
+
+    // Quick sort
+    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
+    ASSERT_TRUE(Matrix::QuickSort(arr, arrIndexes, 0, false, 0, 0xFFFF, 1) == RESULT_OK);
+    ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
+    ASSERT_TRUE(sortedArrIndexes_groundTruth.Set(sortedArrIndexes_quickGroundTruthData, 15) == 15);
     ASSERT_TRUE(AreElementwiseEqual(arrIndexes, sortedArrIndexes_groundTruth));
   }
 
   // sortWhichDimension==0 sortAscending==true
   {
-    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
-    ASSERT_TRUE(Matrix::Sort(arr, arrIndexes, 0, true) == RESULT_OK);
+    const s32 sortedArr_groundTruthData[15] = {
+      13, 10, 16,
+      63, 28, 49,
+      81, 55, 80,
+      91, 96, 96,
+      91, 96, 97};
 
-    //arr.Print("Values: sortWhichDimension==0 sortAscending==true");
-    //arrIndexes.Print("Indexes: sortWhichDimension==0 sortAscending==true");
+    const s32 sortedArrIndexes_groundTruthData[15] = {
+      2, 0, 0,
+      4, 1, 3,
+      0, 2, 4,
+      1, 3, 2,
+      3, 4, 1};
 
-    const s32 sortedArr_groundTruthData[15] = {13, 10, 16, 63, 28, 49, 81, 55, 80, 91, 96, 96, 91, 96, 97};
     ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData, 15) == 15);
-
-    const s32 sortedArrIndexes_groundTruthData[15] = {3, 1, 1, 5, 2, 4, 1, 3, 5, 2, 4, 3, 4, 5, 2};
     ASSERT_TRUE(sortedArrIndexes_groundTruth.Set(sortedArrIndexes_groundTruthData, 15) == 15);
-    Matrix::Subtract<s32,s32,s32>(sortedArrIndexes_groundTruth, 1, sortedArrIndexes_groundTruth); // Matlab -> C indexing
 
+    // Insertion sort
+    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
+    ASSERT_TRUE(Matrix::InsertionSort(arr, arrIndexes, 0, true) == RESULT_OK);
+    ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
+    ASSERT_TRUE(AreElementwiseEqual(arrIndexes, sortedArrIndexes_groundTruth));
+
+    // Quick sort
+    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
+    ASSERT_TRUE(Matrix::QuickSort(arr, arrIndexes, 0, true, 0, 0xFFFF, 1) == RESULT_OK);
     ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
     ASSERT_TRUE(AreElementwiseEqual(arrIndexes, sortedArrIndexes_groundTruth));
   }
 
   // sortWhichDimension==1 sortAscending==false
   {
-    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
-    ASSERT_TRUE(Matrix::Sort(arr, arrIndexes, 1, false) == RESULT_OK);
+    const s32 sortedArr_groundTruthData[15] = {
+      81, 16, 10,
+      97, 91, 28,
+      96, 55, 13,
+      96, 91, 49,
+      96, 80, 63};
 
-    //arr.Print("sortWhichDimension==1 sortAscending==false");
-    //arrIndexes.Print("Indexes: sortWhichDimension==1 sortAscending==false");
+    const s32 sortedArrIndexes_groundTruthData[15] = {
+      0, 2, 1,
+      2, 0, 1,
+      2, 1, 0,
+      1, 0, 2,
+      1, 2, 0};
 
-    const s32 sortedArr_groundTruthData[15] = {81, 16, 10, 97, 91, 28, 96, 55, 13, 96, 91, 49, 96, 80, 63};
     ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData, 15) == 15);
-
-    const s32 sortedArrIndexes_groundTruthData[15] = {1, 3, 2, 3, 1, 2, 3, 2, 1, 2, 1, 3, 2, 3, 1};
     ASSERT_TRUE(sortedArrIndexes_groundTruth.Set(sortedArrIndexes_groundTruthData, 15) == 15);
-    Matrix::Subtract<s32,s32,s32>(sortedArrIndexes_groundTruth, 1, sortedArrIndexes_groundTruth); // Matlab -> C indexing
 
+    // Insertion sort
+    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
+    ASSERT_TRUE(Matrix::InsertionSort(arr, arrIndexes, 1, false) == RESULT_OK);
+    ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
+    ASSERT_TRUE(AreElementwiseEqual(arrIndexes, sortedArrIndexes_groundTruth));
+
+    // Quick sort
+    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
+    ASSERT_TRUE(Matrix::QuickSort(arr, arrIndexes, 1, false, 0, 0xFFFF, 1) == RESULT_OK);
     ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
     ASSERT_TRUE(AreElementwiseEqual(arrIndexes, sortedArrIndexes_groundTruth));
   }
 
   // sortWhichDimension==1 sortAscending==true
   {
-    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
-    ASSERT_TRUE(Matrix::Sort(arr, arrIndexes, 1, true) == RESULT_OK);
+    const s32 sortedArr_groundTruthData[15] = {
+      10, 16, 81,
+      28, 91, 97,
+      13, 55, 96,
+      49, 91, 96,
+      63, 80, 96};
 
-    //arr.Print("sortWhichDimension==1 sortAscending==true");
-    //arrIndexes.Print("Indexes: sortWhichDimension==1 sortAscending==true");
+    const s32 sortedArrIndexes_groundTruthData[15] = {
+      1, 2, 0,
+      1, 0, 2,
+      0, 1, 2,
+      2, 0, 1,
+      0, 2, 1};
 
-    const s32 sortedArr_groundTruthData[15] = {10, 16, 81, 28, 91, 97, 13, 55, 96, 49, 91, 96, 63, 80, 96};
     ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData, 15) == 15);
-
-    const s32 sortedArrIndexes_groundTruthData[15] = {2, 3, 1, 2, 1, 3, 1, 2, 3, 3, 1, 2, 1, 3, 2};
     ASSERT_TRUE(sortedArrIndexes_groundTruth.Set(sortedArrIndexes_groundTruthData, 15) == 15);
-    Matrix::Subtract<s32,s32,s32>(sortedArrIndexes_groundTruth, 1, sortedArrIndexes_groundTruth); // Matlab -> C indexing
 
+    // Insertion sort
+    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
+    ASSERT_TRUE(Matrix::InsertionSort(arr, arrIndexes, 1, true) == RESULT_OK);
     ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
     ASSERT_TRUE(AreElementwiseEqual(arrIndexes, sortedArrIndexes_groundTruth));
+
+    // Quick sort
+    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
+    ASSERT_TRUE(Matrix::QuickSort(arr, arrIndexes, 1, true, 0, 0xFFFF, 1) == RESULT_OK);
+    ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
+    ASSERT_TRUE(AreElementwiseEqual(arrIndexes, sortedArrIndexes_groundTruth));
+  }
+
+  // Benchmark tests
+  const s32 bigArrayHeight = 20;
+  const s32 bigArrayWidth = 1000;
+  Array<s32> bigArray(bigArrayHeight,bigArrayWidth , scratchOnchip);
+  Array<s32> bigArrayIndexes(bigArrayHeight,bigArrayWidth , scratchOnchip);
+
+  for(s32 insertionSortSize=1; insertionSortSize<1000; insertionSortSize+=3) {
+    for(s32 y=0; y<bigArrayHeight; y++) {
+      s32 * restrict pBigArray = bigArray.Pointer(y,0);
+      for(s32 x=0; x<bigArrayWidth; x++) {
+        pBigArray[x] = static_cast<u8>(x + 5*y);
+      }
+    }
+
+    const u32 t0 = GetTimeU32();
+    Matrix::QuickSort(bigArray, bigArrayIndexes, 1, true, 0, 0xFFFF, insertionSortSize);
+    const u32 t1 = GetTimeU32();
+
+    CoreTechPrint("insertionSortSize %d took %ums\n", insertionSortSize, t1-t0);
+
+    for(s32 y=0; y<bigArrayHeight; y++) {
+      s32 * restrict pBigArray = bigArray.Pointer(y,0);
+      for(s32 x=1; x<bigArrayWidth; x++) {
+        ASSERT_TRUE(pBigArray[x] >= pBigArray[x-1]);
+      }
+    }
+
+    if(insertionSortSize > 100) {
+      insertionSortSize += 99;
+    } else if(insertionSortSize > 30) {
+      insertionSortSize += 5;
+    }
   }
 
   GTEST_RETURN_HERE;
@@ -923,66 +1025,407 @@ GTEST_TEST(CoreTech_Common, MatrixSortWithIndexes)
 
 GTEST_TEST(CoreTech_Common, MatrixSort)
 {
-  ASSERT_TRUE(offchipBuffer != NULL);
-  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  ASSERT_TRUE(scratchCcm.IsValid());
 
-  const s32 arr_data[15] = {81, 10, 16, 91, 28, 97, 13, 55, 96, 91, 96, 49, 63, 96, 80};
-  Array<s32> arr(5,3,ms);
-  Array<s32> sortedArr_groundTruth(5,3,ms);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(scratchOnchip.IsValid());
+
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+  ASSERT_TRUE(scratchOffchip.IsValid());
+
+  const s32 arr_data[200] = {
+    50, 40, 30, 50, 93, 40, 45, 57, 51, 99,
+    48, 12, 5, 64, 54, 66, 20, 32, 65, 55,
+    87, 27, 19, 30, 72, 92, 89, 45, 94, 51,
+    35, 26, 71, 14, 57, 80, 75, 71, 72, 33,
+    44, 33, 71, 47, 3, 48, 87, 88, 40, 43,
+    95, 15, 87, 36, 44, 75, 28, 71, 82, 49,
+    4, 34, 58, 78, 64, 41, 67, 2, 13, 7,
+    96, 12, 7, 77, 52, 96, 66, 67, 6, 88,
+    19, 88, 91, 66, 37, 98, 12, 43, 8, 6,
+    66, 9, 79, 13, 93, 86, 40, 43, 16, 43,
+    58, 92, 28, 2, 82, 38, 27, 12, 32, 82,
+    67, 40, 54, 55, 84, 45, 71, 81, 30, 39,
+    36, 5, 97, 30, 37, 24, 28, 32, 1, 61,
+    61, 34, 71, 93, 59, 78, 89, 24, 53, 81,
+    80, 73, 83, 97, 86, 87, 82, 34, 9, 88,
+    2, 79, 43, 28, 92, 90, 39, 37, 15, 92,
+    8, 54, 47, 79, 66, 55, 49, 54, 62, 19,
+    97, 68, 56, 89, 20, 59, 69, 56, 85, 26,
+    64, 88, 27, 59, 65, 15, 83, 39, 96, 89,
+    23, 5, 74, 88, 7, 89, 60, 39, 57, 59};
+
+  Array<s32> arr(20,10,scratchOnchip);
+  Array<s32> sortedArr_groundTruth(20,10,scratchOnchip);
 
   ASSERT_TRUE(arr.IsValid());
   ASSERT_TRUE(sortedArr_groundTruth.IsValid());
 
   // sortWhichDimension==0 sortAscending==false
   {
-    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
-    ASSERT_TRUE(Matrix::Sort(arr, 0, false) == RESULT_OK);
+    // toArray(sort(arr, 1, 'descend'))
+    const s32 sortedArr_groundTruthData[200] = {
+      97, 92, 97, 97, 93, 98, 89, 88, 96, 99,
+      96, 88, 91, 93, 93, 96, 89, 81, 94, 92,
+      95, 88, 87, 89, 92, 92, 87, 71, 85, 89,
+      87, 79, 83, 88, 86, 90, 83, 71, 82, 88,
+      80, 73, 79, 79, 84, 89, 82, 67, 72, 88,
+      67, 68, 74, 78, 82, 87, 75, 57, 65, 82,
+      66, 54, 71, 77, 72, 86, 71, 56, 62, 81,
+      64, 40, 71, 66, 66, 80, 69, 54, 57, 61,
+      61, 40, 71, 64, 65, 78, 67, 45, 53, 59,
+      58, 34, 58, 59, 64, 75, 66, 43, 51, 55,
+      50, 34, 56, 55, 59, 66, 60, 43, 40, 51,
+      48, 33, 54, 50, 57, 59, 49, 39, 32, 49,
+      44, 27, 47, 47, 54, 55, 45, 39, 30, 43,
+      36, 26, 43, 36, 52, 48, 40, 37, 16, 43,
+      35, 15, 30, 30, 44, 45, 39, 34, 15, 39,
+      23, 12, 28, 30, 37, 41, 28, 32, 13, 33,
+      19, 12, 27, 28, 37, 40, 28, 32, 9, 26,
+      8, 9, 19, 14, 20, 38, 27, 24, 8, 19,
+      4, 5, 7, 13, 7, 24, 20, 12, 6, 7,
+      2, 5, 5, 2, 3, 15, 12, 2, 1, 6,};
 
-    //arr.Print("sortWhichDimension==0 sortAscending==false");
+    ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData,200) == 200);
 
-    const s32 sortedArr_groundTruthData[15] = {91, 96, 97, 91, 96, 96, 81, 55, 80, 63, 28, 49, 13, 10, 16};
-    ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData, 15) == 15);
+    // Insertion sort
+    ASSERT_TRUE(arr.Set(arr_data,200) == 200);
+    ASSERT_TRUE(Matrix::InsertionSort(arr, 0, false) == RESULT_OK);
+    ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
 
+    // Quicksort
+    ASSERT_TRUE(arr.Set(arr_data,200) == 200);
+    ASSERT_TRUE(Matrix::QuickSort(arr, 0, false, 0, 0xFFFF, 1) == RESULT_OK);
+    ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
+
+    // Quicksort
+    ASSERT_TRUE(arr.Set(arr_data,200) == 200);
+    ASSERT_TRUE(Matrix::QuickSort(arr, 0, false, 0, 0xFFFF, 5) == RESULT_OK);
+    ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
+  }
+
+  // sortWhichDimension==0 sortAscending==false
+  {
+    // toArray([sort(arr(1:4,:), 1, 'descend'); arr(5:end,:)])
+    const s32 sortedArr_groundTruthData[200] = {
+      87, 40, 71, 64, 93, 92, 89, 71, 94, 99,
+      50, 27, 30, 50, 72, 80, 75, 57, 72, 55,
+      48, 26, 19, 30, 57, 66, 45, 45, 65, 51,
+      35, 12, 5, 14, 54, 40, 20, 32, 51, 33,
+      44, 33, 71, 47, 3, 48, 87, 88, 40, 43,
+      95, 15, 87, 36, 44, 75, 28, 71, 82, 49,
+      4, 34, 58, 78, 64, 41, 67, 2, 13, 7,
+      96, 12, 7, 77, 52, 96, 66, 67, 6, 88,
+      19, 88, 91, 66, 37, 98, 12, 43, 8, 6,
+      66, 9, 79, 13, 93, 86, 40, 43, 16, 43,
+      58, 92, 28, 2, 82, 38, 27, 12, 32, 82,
+      67, 40, 54, 55, 84, 45, 71, 81, 30, 39,
+      36, 5, 97, 30, 37, 24, 28, 32, 1, 61,
+      61, 34, 71, 93, 59, 78, 89, 24, 53, 81,
+      80, 73, 83, 97, 86, 87, 82, 34, 9, 88,
+      2, 79, 43, 28, 92, 90, 39, 37, 15, 92,
+      8, 54, 47, 79, 66, 55, 49, 54, 62, 19,
+      97, 68, 56, 89, 20, 59, 69, 56, 85, 26,
+      64, 88, 27, 59, 65, 15, 83, 39, 96, 89,
+      23, 5, 74, 88, 7, 89, 60, 39, 57, 59, };
+
+    ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData,200) == 200);
+
+    // Insertion sort
+    ASSERT_TRUE(arr.Set(arr_data,200) == 200);
+    ASSERT_TRUE(Matrix::InsertionSort(arr, 0, false, 0, 3) == RESULT_OK);
+    ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
+
+    // Quicksort
+    ASSERT_TRUE(arr.Set(arr_data,200) == 200);
+    ASSERT_TRUE(Matrix::QuickSort(arr, 0, false, 0, 3, 1) == RESULT_OK);
     ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
   }
 
   // sortWhichDimension==0 sortAscending==true
   {
-    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
-    ASSERT_TRUE(Matrix::Sort(arr, 0, true) == RESULT_OK);
+    // toArray(sort(arr, 1, 'ascend'))
+    const s32 sortedArr_groundTruthData[200] = {
+      2, 5, 5, 2, 3, 15, 12, 2, 1, 6,
+      4, 5, 7, 13, 7, 24, 20, 12, 6, 7,
+      8, 9, 19, 14, 20, 38, 27, 24, 8, 19,
+      19, 12, 27, 28, 37, 40, 28, 32, 9, 26,
+      23, 12, 28, 30, 37, 41, 28, 32, 13, 33,
+      35, 15, 30, 30, 44, 45, 39, 34, 15, 39,
+      36, 26, 43, 36, 52, 48, 40, 37, 16, 43,
+      44, 27, 47, 47, 54, 55, 45, 39, 30, 43,
+      48, 33, 54, 50, 57, 59, 49, 39, 32, 49,
+      50, 34, 56, 55, 59, 66, 60, 43, 40, 51,
+      58, 34, 58, 59, 64, 75, 66, 43, 51, 55,
+      61, 40, 71, 64, 65, 78, 67, 45, 53, 59,
+      64, 40, 71, 66, 66, 80, 69, 54, 57, 61,
+      66, 54, 71, 77, 72, 86, 71, 56, 62, 81,
+      67, 68, 74, 78, 82, 87, 75, 57, 65, 82,
+      80, 73, 79, 79, 84, 89, 82, 67, 72, 88,
+      87, 79, 83, 88, 86, 90, 83, 71, 82, 88,
+      95, 88, 87, 89, 92, 92, 87, 71, 85, 89,
+      96, 88, 91, 93, 93, 96, 89, 81, 94, 92,
+      97, 92, 97, 97, 93, 98, 89, 88, 96, 99, };
 
-    //arr.Print("sortWhichDimension==0 sortAscending==true");
+    ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData,200) == 200);
 
-    const s32 sortedArr_groundTruthData[15] = {13, 10, 16, 63, 28, 49, 81, 55, 80, 91, 96, 96, 91, 96, 97};
-    ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData, 15) == 15);
+    // Insertion sort
+    ASSERT_TRUE(arr.Set(arr_data,200) == 200);
+    ASSERT_TRUE(Matrix::InsertionSort(arr, 0, true) == RESULT_OK);
+    ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
 
+    // Quicksort
+    ASSERT_TRUE(arr.Set(arr_data,200) == 200);
+    ASSERT_TRUE(Matrix::QuickSort(arr, 0, true, 0, 0xFFFF, 1) == RESULT_OK);
+    ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
+
+    // Quicksort
+    ASSERT_TRUE(arr.Set(arr_data,200) == 200);
+    ASSERT_TRUE(Matrix::QuickSort(arr, 0, true, 0, 0xFFFF, 7) == RESULT_OK);
+    ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
+  }
+
+  // sortWhichDimension==0 sortAscending==true
+  {
+    // toArray([arr(1,:); sort(arr(2:5,:), 1, 'ascend'); arr(6:end,:)])
+    const s32 sortedArr_groundTruthData[200] = {
+      50, 40, 30, 50, 93, 40, 45, 57, 51, 99,
+      35, 12, 5, 14, 3, 48, 20, 32, 40, 33,
+      44, 26, 19, 30, 54, 66, 75, 45, 65, 43,
+      48, 27, 71, 47, 57, 80, 87, 71, 72, 51,
+      87, 33, 71, 64, 72, 92, 89, 88, 94, 55,
+      95, 15, 87, 36, 44, 75, 28, 71, 82, 49,
+      4, 34, 58, 78, 64, 41, 67, 2, 13, 7,
+      96, 12, 7, 77, 52, 96, 66, 67, 6, 88,
+      19, 88, 91, 66, 37, 98, 12, 43, 8, 6,
+      66, 9, 79, 13, 93, 86, 40, 43, 16, 43,
+      58, 92, 28, 2, 82, 38, 27, 12, 32, 82,
+      67, 40, 54, 55, 84, 45, 71, 81, 30, 39,
+      36, 5, 97, 30, 37, 24, 28, 32, 1, 61,
+      61, 34, 71, 93, 59, 78, 89, 24, 53, 81,
+      80, 73, 83, 97, 86, 87, 82, 34, 9, 88,
+      2, 79, 43, 28, 92, 90, 39, 37, 15, 92,
+      8, 54, 47, 79, 66, 55, 49, 54, 62, 19,
+      97, 68, 56, 89, 20, 59, 69, 56, 85, 26,
+      64, 88, 27, 59, 65, 15, 83, 39, 96, 89,
+      23, 5, 74, 88, 7, 89, 60, 39, 57, 59, };
+
+    ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData,200) == 200);
+
+    // Insertion sort
+    ASSERT_TRUE(arr.Set(arr_data,200) == 200);
+    ASSERT_TRUE(Matrix::InsertionSort(arr, 0, true, 1, 4) == RESULT_OK);
+    ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
+
+    // Quicksort
+    ASSERT_TRUE(arr.Set(arr_data,200) == 200);
+    ASSERT_TRUE(Matrix::QuickSort(arr, 0, true, 1, 4, 1) == RESULT_OK);
+    ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
+
+    // Quicksort
+    ASSERT_TRUE(arr.Set(arr_data,200) == 200);
+    ASSERT_TRUE(Matrix::QuickSort(arr, 0, true, 1, 4, 2) == RESULT_OK);
     ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
   }
 
   // sortWhichDimension==1 sortAscending==false
   {
-    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
-    ASSERT_TRUE(Matrix::Sort(arr, 1, false) == RESULT_OK);
+    // toArray(sort(arr, 2, 'descend'))
+    const s32 sortedArr_groundTruthData[200] = {
+      99, 93, 57, 51, 50, 50, 45, 40, 40, 30,
+      66, 65, 64, 55, 54, 48, 32, 20, 12, 5,
+      94, 92, 89, 87, 72, 51, 45, 30, 27, 19,
+      80, 75, 72, 71, 71, 57, 35, 33, 26, 14,
+      88, 87, 71, 48, 47, 44, 43, 40, 33, 3,
+      95, 87, 82, 75, 71, 49, 44, 36, 28, 15,
+      78, 67, 64, 58, 41, 34, 13, 7, 4, 2,
+      96, 96, 88, 77, 67, 66, 52, 12, 7, 6,
+      98, 91, 88, 66, 43, 37, 19, 12, 8, 6,
+      93, 86, 79, 66, 43, 43, 40, 16, 13, 9,
+      92, 82, 82, 58, 38, 32, 28, 27, 12, 2,
+      84, 81, 71, 67, 55, 54, 45, 40, 39, 30,
+      97, 61, 37, 36, 32, 30, 28, 24, 5, 1,
+      93, 89, 81, 78, 71, 61, 59, 53, 34, 24,
+      97, 88, 87, 86, 83, 82, 80, 73, 34, 9,
+      92, 92, 90, 79, 43, 39, 37, 28, 15, 2,
+      79, 66, 62, 55, 54, 54, 49, 47, 19, 8,
+      97, 89, 85, 69, 68, 59, 56, 56, 26, 20,
+      96, 89, 88, 83, 65, 64, 59, 39, 27, 15,
+      89, 88, 74, 60, 59, 57, 39, 23, 7, 5, };
 
-    //arr.Print("sortWhichDimension==1 sortAscending==false");
+    ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData,200) == 200);
 
-    const s32 sortedArr_groundTruthData[15] = {81, 16, 10, 97, 91, 28, 96, 55, 13, 96, 91, 49, 96, 80, 63};
-    ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData, 15) == 15);
+    // Insertion sort
+    ASSERT_TRUE(arr.Set(arr_data,200) == 200);
+    ASSERT_TRUE(Matrix::InsertionSort(arr, 1, false) == RESULT_OK);
+    ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
 
+    // Quicksort
+    ASSERT_TRUE(arr.Set(arr_data,200) == 200);
+    ASSERT_TRUE(Matrix::QuickSort(arr, 1, false, 0, 0xFFFF, 1) == RESULT_OK);
+    ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
+
+    // Quicksort
+    ASSERT_TRUE(arr.Set(arr_data,200) == 200);
+    ASSERT_TRUE(Matrix::QuickSort(arr, 1, false, 0, 0xFFFF, 4) == RESULT_OK);
+    ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
+  }
+
+  // sortWhichDimension==1 sortAscending==false
+  {
+    // toArray([sort(arr(:,1:2), 2, 'descend'), arr(:,3:end)])
+    const s32 sortedArr_groundTruthData[200] = {
+      50, 40, 30, 50, 93, 40, 45, 57, 51, 99,
+      48, 12, 5, 64, 54, 66, 20, 32, 65, 55,
+      87, 27, 19, 30, 72, 92, 89, 45, 94, 51,
+      35, 26, 71, 14, 57, 80, 75, 71, 72, 33,
+      44, 33, 71, 47, 3, 48, 87, 88, 40, 43,
+      95, 15, 87, 36, 44, 75, 28, 71, 82, 49,
+      34, 4, 58, 78, 64, 41, 67, 2, 13, 7,
+      96, 12, 7, 77, 52, 96, 66, 67, 6, 88,
+      88, 19, 91, 66, 37, 98, 12, 43, 8, 6,
+      66, 9, 79, 13, 93, 86, 40, 43, 16, 43,
+      92, 58, 28, 2, 82, 38, 27, 12, 32, 82,
+      67, 40, 54, 55, 84, 45, 71, 81, 30, 39,
+      36, 5, 97, 30, 37, 24, 28, 32, 1, 61,
+      61, 34, 71, 93, 59, 78, 89, 24, 53, 81,
+      80, 73, 83, 97, 86, 87, 82, 34, 9, 88,
+      79, 2, 43, 28, 92, 90, 39, 37, 15, 92,
+      54, 8, 47, 79, 66, 55, 49, 54, 62, 19,
+      97, 68, 56, 89, 20, 59, 69, 56, 85, 26,
+      88, 64, 27, 59, 65, 15, 83, 39, 96, 89,
+      23, 5, 74, 88, 7, 89, 60, 39, 57, 59,};
+
+    ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData,200) == 200);
+
+    // Insertion sort
+    ASSERT_TRUE(arr.Set(arr_data,200) == 200);
+    ASSERT_TRUE(Matrix::InsertionSort(arr, 1, false, 0, 1) == RESULT_OK);
+    ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
+
+    // Quicksort
+    ASSERT_TRUE(arr.Set(arr_data,200) == 200);
+    ASSERT_TRUE(Matrix::QuickSort(arr, 1, false, 0, 1, 1) == RESULT_OK);
     ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
   }
 
   // sortWhichDimension==1 sortAscending==true
   {
-    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
-    ASSERT_TRUE(Matrix::Sort(arr, 1, true) == RESULT_OK);
+    // toArray(sort(arr, 2, 'ascend'))
+    const s32 sortedArr_groundTruthData[200] = {
+      30, 40, 40, 45, 50, 50, 51, 57, 93, 99,
+      5, 12, 20, 32, 48, 54, 55, 64, 65, 66,
+      19, 27, 30, 45, 51, 72, 87, 89, 92, 94,
+      14, 26, 33, 35, 57, 71, 71, 72, 75, 80,
+      3, 33, 40, 43, 44, 47, 48, 71, 87, 88,
+      15, 28, 36, 44, 49, 71, 75, 82, 87, 95,
+      2, 4, 7, 13, 34, 41, 58, 64, 67, 78,
+      6, 7, 12, 52, 66, 67, 77, 88, 96, 96,
+      6, 8, 12, 19, 37, 43, 66, 88, 91, 98,
+      9, 13, 16, 40, 43, 43, 66, 79, 86, 93,
+      2, 12, 27, 28, 32, 38, 58, 82, 82, 92,
+      30, 39, 40, 45, 54, 55, 67, 71, 81, 84,
+      1, 5, 24, 28, 30, 32, 36, 37, 61, 97,
+      24, 34, 53, 59, 61, 71, 78, 81, 89, 93,
+      9, 34, 73, 80, 82, 83, 86, 87, 88, 97,
+      2, 15, 28, 37, 39, 43, 79, 90, 92, 92,
+      8, 19, 47, 49, 54, 54, 55, 62, 66, 79,
+      20, 26, 56, 56, 59, 68, 69, 85, 89, 97,
+      15, 27, 39, 59, 64, 65, 83, 88, 89, 96,
+      5, 7, 23, 39, 57, 59, 60, 74, 88, 89,};
 
-    //arr.Print("sortWhichDimension==1 sortAscending==true");
+    ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData,200) == 200);
 
-    const s32 sortedArr_groundTruthData[15] = {10, 16, 81, 28, 91, 97, 13, 55, 96, 49, 91, 96, 63, 80, 96};
-    ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData, 15) == 15);
+    // Insertion sort
+    ASSERT_TRUE(arr.Set(arr_data,200) == 200);
+    ASSERT_TRUE(Matrix::InsertionSort(arr, 1, true) == RESULT_OK);
+    ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
 
+    // Quicksort
+    ASSERT_TRUE(arr.Set(arr_data,200) == 200);
+    ASSERT_TRUE(Matrix::QuickSort(arr, 1, true, 0, 0xFFFF, 1) == RESULT_OK);
+    ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
+
+    // Quicksort
+    ASSERT_TRUE(arr.Set(arr_data,200) == 200);
+    ASSERT_TRUE(Matrix::QuickSort(arr, 1, true, 0, 0xFFFF, 19) == RESULT_OK);
+    ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
+  }
+
+  // sortWhichDimension==1 sortAscending==true
+  {
+    // toArray([arr(:,1), sort(arr(:,2:3), 2, 'ascend'), arr(:,4:end)])
+    const s32 sortedArr_groundTruthData[200] = {
+      50, 30, 40, 50, 93, 40, 45, 57, 51, 99,
+      48, 5, 12, 64, 54, 66, 20, 32, 65, 55,
+      87, 19, 27, 30, 72, 92, 89, 45, 94, 51,
+      35, 26, 71, 14, 57, 80, 75, 71, 72, 33,
+      44, 33, 71, 47, 3, 48, 87, 88, 40, 43,
+      95, 15, 87, 36, 44, 75, 28, 71, 82, 49,
+      4, 34, 58, 78, 64, 41, 67, 2, 13, 7,
+      96, 7, 12, 77, 52, 96, 66, 67, 6, 88,
+      19, 88, 91, 66, 37, 98, 12, 43, 8, 6,
+      66, 9, 79, 13, 93, 86, 40, 43, 16, 43,
+      58, 28, 92, 2, 82, 38, 27, 12, 32, 82,
+      67, 40, 54, 55, 84, 45, 71, 81, 30, 39,
+      36, 5, 97, 30, 37, 24, 28, 32, 1, 61,
+      61, 34, 71, 93, 59, 78, 89, 24, 53, 81,
+      80, 73, 83, 97, 86, 87, 82, 34, 9, 88,
+      2, 43, 79, 28, 92, 90, 39, 37, 15, 92,
+      8, 47, 54, 79, 66, 55, 49, 54, 62, 19,
+      97, 56, 68, 89, 20, 59, 69, 56, 85, 26,
+      64, 27, 88, 59, 65, 15, 83, 39, 96, 89,
+      23, 5, 74, 88, 7, 89, 60, 39, 57, 59, };
+
+    ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData,200) == 200);
+
+    // Insertion sort
+    ASSERT_TRUE(arr.Set(arr_data,200) == 200);
+    ASSERT_TRUE(Matrix::InsertionSort(arr, 1, true, 1, 2) == RESULT_OK);
+    ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
+
+    // Quicksort
+    ASSERT_TRUE(arr.Set(arr_data,200) == 200);
+    ASSERT_TRUE(Matrix::QuickSort(arr, 1, true, 1, 2, 1) == RESULT_OK);
+    ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
+  }
+
+  // sortWhichDimension==1 sortAscending==true
+  {
+    // toArray([arr(:,1), sort(arr(:,2:2), 2, 'ascend'), arr(:,3:end)])
+    const s32 sortedArr_groundTruthData[200] = {
+      50, 40, 30, 50, 93, 40, 45, 57, 51, 99,
+      48, 12, 5, 64, 54, 66, 20, 32, 65, 55,
+      87, 27, 19, 30, 72, 92, 89, 45, 94, 51,
+      35, 26, 71, 14, 57, 80, 75, 71, 72, 33,
+      44, 33, 71, 47, 3, 48, 87, 88, 40, 43,
+      95, 15, 87, 36, 44, 75, 28, 71, 82, 49,
+      4, 34, 58, 78, 64, 41, 67, 2, 13, 7,
+      96, 12, 7, 77, 52, 96, 66, 67, 6, 88,
+      19, 88, 91, 66, 37, 98, 12, 43, 8, 6,
+      66, 9, 79, 13, 93, 86, 40, 43, 16, 43,
+      58, 92, 28, 2, 82, 38, 27, 12, 32, 82,
+      67, 40, 54, 55, 84, 45, 71, 81, 30, 39,
+      36, 5, 97, 30, 37, 24, 28, 32, 1, 61,
+      61, 34, 71, 93, 59, 78, 89, 24, 53, 81,
+      80, 73, 83, 97, 86, 87, 82, 34, 9, 88,
+      2, 79, 43, 28, 92, 90, 39, 37, 15, 92,
+      8, 54, 47, 79, 66, 55, 49, 54, 62, 19,
+      97, 68, 56, 89, 20, 59, 69, 56, 85, 26,
+      64, 88, 27, 59, 65, 15, 83, 39, 96, 89,
+      23, 5, 74, 88, 7, 89, 60, 39, 57, 59, };
+
+    ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData,200) == 200);
+
+    // Insertion sort
+    ASSERT_TRUE(arr.Set(arr_data,200) == 200);
+    ASSERT_TRUE(Matrix::InsertionSort(arr, 1, true, 1, 1) == RESULT_OK);
+    ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
+
+    // Quicksort
+    ASSERT_TRUE(arr.Set(arr_data,200) == 200);
+    ASSERT_TRUE(Matrix::QuickSort(arr, 1, true, 1, 1, 1) == RESULT_OK);
     ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
   }
 
@@ -2431,9 +2874,9 @@ GTEST_TEST(CoreTech_Common, SliceArrayCompileTest)
 
   ASSERT_TRUE(slice2.get_array().IsValid());
 
-  //printf("%d %d %d\n", slice1.get_xSlice().get_start(), slice1.get_xSlice().get_end(), *slice1.get_array().Pointer(0,0));
-  //printf("%d %d %d\n", slice1b.get_xSlice().get_start(), slice1b.get_xSlice().get_end(), *slice1b.get_array().Pointer(0,0));
-  //printf("%d %d %d\n", slice2.get_xSlice().get_start(), slice2.get_xSlice().get_end(), *slice2.get_array().Pointer(0,0));
+  //CoreTechPrint("%d %d %d\n", slice1.get_xSlice().get_start(), slice1.get_xSlice().get_end(), *slice1.get_array().Pointer(0,0));
+  //CoreTechPrint("%d %d %d\n", slice1b.get_xSlice().get_start(), slice1b.get_xSlice().get_end(), *slice1b.get_array().Pointer(0,0));
+  //CoreTechPrint("%d %d %d\n", slice2.get_xSlice().get_start(), slice2.get_xSlice().get_end(), *slice2.get_array().Pointer(0,0));
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Common, SliceArrayCompileTest)
@@ -2550,7 +2993,7 @@ GTEST_TEST(CoreTech_Common, LinearSequence)
 
   for(s32 i=0; i<15; i++) {
     LinearSequence<s32> sequence(sequenceLimits1[i][0], sequenceLimits1[i][1], sequenceLimits1[i][2]);
-    //printf("A %d) %d %d\n", i, sequence.get_size(), length1_groundTruth[i]);
+    //CoreTechPrint("A %d) %d %d\n", i, sequence.get_size(), length1_groundTruth[i]);
     ASSERT_TRUE(sequence.get_size() == length1_groundTruth[i]);
   }
 
@@ -2566,7 +3009,7 @@ GTEST_TEST(CoreTech_Common, LinearSequence)
 
   for(s32 i=0; i<25; i++) {
     LinearSequence<f32> sequence(sequenceLimits2[i][0], sequenceLimits2[i][1], sequenceLimits2[i][2]);
-    //printf("B %d) %d %d\n", i, sequence.get_size(), length2_groundTruth[i]);
+    //CoreTechPrint("B %d) %d %d\n", i, sequence.get_size(), length2_groundTruth[i]);
     ASSERT_TRUE(sequence.get_size() == length2_groundTruth[i]);
   }
 
@@ -2629,7 +3072,7 @@ GTEST_TEST(CoreTech_Common, LinearSequence)
 
 GTEST_TEST(CoreTech_Common, MemoryStackId)
 {
-  //printf("%f %f %f %f %f\n", 43423442334324.010203, 15.500, 15.0, 0.05, 0.12004333);
+  //CoreTechPrint("%f %f %f %f %f\n", 43423442334324.010203, 15.500, 15.0, 0.05, 0.12004333);
 
   const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 5000);
   ASSERT_TRUE(offchipBuffer != NULL);
@@ -3002,49 +3445,49 @@ GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
   // Check that the templated OpenCV matrix works
   {
     cv::Mat_<s16> &simpleArray_cvMat = simpleArray.get_CvMat_();
-    printf("simpleArray(2,0) = %d\n", *simpleArray.Pointer(2,0));
-    printf("simpleArray_cvMat(2,0) = %d\n", simpleArray_cvMat(2,0));
+    CoreTechPrint("simpleArray(2,0) = %d\n", *simpleArray.Pointer(2,0));
+    CoreTechPrint("simpleArray_cvMat(2,0) = %d\n", simpleArray_cvMat(2,0));
 
     ASSERT_EQ(7, *simpleArray.Pointer(2,0));
     ASSERT_EQ(7, simpleArray_cvMat(2,0));
 
-    printf("Setting OpenCV matrix\n");
+    CoreTechPrint("Setting OpenCV matrix\n");
     simpleArray_cvMat(2,0) = 100;
-    printf("simpleArray(2,0) = %d\n", *simpleArray.Pointer(2,0));
+    CoreTechPrint("simpleArray(2,0) = %d\n", *simpleArray.Pointer(2,0));
 
-    printf("simpleArray_cvMat(2,0) = %d\n", simpleArray_cvMat(2,0));
+    CoreTechPrint("simpleArray_cvMat(2,0) = %d\n", simpleArray_cvMat(2,0));
     ASSERT_EQ(100, *simpleArray.Pointer(2,0));
     ASSERT_EQ(100, simpleArray_cvMat(2,0));
 
-    printf("Setting CoreTech_Common matrix\n");
+    CoreTechPrint("Setting CoreTech_Common matrix\n");
     *simpleArray.Pointer(2,0) = 42;
-    printf("simpleArray(2,0) = %d\n", *simpleArray.Pointer(2,0));
-    printf("simpleArray_cvMat(2,0) = %d\n", simpleArray_cvMat(2,0));
+    CoreTechPrint("simpleArray(2,0) = %d\n", *simpleArray.Pointer(2,0));
+    CoreTechPrint("simpleArray_cvMat(2,0) = %d\n", simpleArray_cvMat(2,0));
     ASSERT_EQ(42, *simpleArray.Pointer(2,0));
     ASSERT_EQ(42, simpleArray_cvMat(2,0));
   }
 
-  printf("\n\n");
+  CoreTechPrint("\n\n");
 
   // Check that the non-templated OpenCV matrix works
   {
     cv::Mat &simpleArray_cvMat = simpleArray.get_CvMat_();
-    printf("simpleArray(2,0) = %d\n", *simpleArray.Pointer(2,0));
-    printf("simpleArray_cvMat(2,0) = %d\n", simpleArray_cvMat.at<s16>(2,0));
+    CoreTechPrint("simpleArray(2,0) = %d\n", *simpleArray.Pointer(2,0));
+    CoreTechPrint("simpleArray_cvMat(2,0) = %d\n", simpleArray_cvMat.at<s16>(2,0));
     ASSERT_EQ(42, *simpleArray.Pointer(2,0));
     ASSERT_EQ(42, simpleArray_cvMat.at<s16>(2,0));
 
-    printf("Setting OpenCV matrix\n");
+    CoreTechPrint("Setting OpenCV matrix\n");
     simpleArray_cvMat.at<s16>(2,0) = 300;
-    printf("simpleArray(2,0) = %d\n", *simpleArray.Pointer(2,0));
-    printf("simpleArray_cvMat(2,0) = %d\n", simpleArray_cvMat.at<s16>(2,0));
+    CoreTechPrint("simpleArray(2,0) = %d\n", *simpleArray.Pointer(2,0));
+    CoreTechPrint("simpleArray_cvMat(2,0) = %d\n", simpleArray_cvMat.at<s16>(2,0));
     ASSERT_EQ(300, *simpleArray.Pointer(2,0));
     ASSERT_EQ(300, simpleArray_cvMat.at<s16>(2,0));
 
-    printf("Setting CoreTech_Common matrix\n");
+    CoreTechPrint("Setting CoreTech_Common matrix\n");
     *simpleArray.Pointer(2,0) = 90;
-    printf("simpleArray(2,0) = %d\n", *simpleArray.Pointer(2,0));
-    printf("simpleArray_cvMat(2,0) = %d\n", simpleArray_cvMat.at<s16>(2,0));
+    CoreTechPrint("simpleArray(2,0) = %d\n", *simpleArray.Pointer(2,0));
+    CoreTechPrint("simpleArray_cvMat(2,0) = %d\n", simpleArray_cvMat.at<s16>(2,0));
     ASSERT_EQ(90, *simpleArray.Pointer(2,0));
     ASSERT_EQ(90, simpleArray_cvMat.at<s16>(2,0));
   }
@@ -3070,7 +3513,7 @@ GTEST_TEST(CoreTech_Common, ArraySpecifiedClass)
 
   simpleArray.SetCast<s32>(imgData, ArraySpecifiedClass_imgDataLength);
 
-  printf("*simpleArray.Pointer(0,0) = %d\n", *simpleArray.Pointer(0,0));
+  CoreTechPrint("*simpleArray.Pointer(0,0) = %d\n", *simpleArray.Pointer(0,0));
 
   simpleArray.Print("simpleArray");
 
@@ -3168,7 +3611,7 @@ GTEST_TEST(CoreTech_Common, Benchmarking)
 
   ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
 
-  printf("Done with benchmarking test\n");
+  CoreTechPrint("Done with benchmarking test\n");
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Common, Benchmarking)
@@ -3180,7 +3623,7 @@ GTEST_TEST(CoreTech_Common, SimpleMatlabTest1)
   matlab.EvalStringEcho("simpleVector = double([1.1,2.1,3.1,4.1,5.1]);");
   double *simpleVector = matlab.Get<double>("simpleVector");
 
-  printf("simple vector:\n%f %f %f %f %f\n", simpleVector[0], simpleVector[1], simpleVector[2], simpleVector[3], simpleVector[4]);
+  CoreTechPrint("simple vector:\n%f %f %f %f %f\n", simpleVector[0], simpleVector[1], simpleVector[2], simpleVector[3], simpleVector[4]);
 
   ASSERT_EQ(1.1, simpleVector[0]);
   ASSERT_EQ(2.1, simpleVector[1]);
@@ -3202,7 +3645,7 @@ GTEST_TEST(CoreTech_Common, SimpleMatlabTest2)
 
   matlab.EvalStringEcho("simpleArray = int16([1,2,3,4,5;6,7,8,9,10]);");
   Array<s16> simpleArray = matlab.GetArray<s16>("simpleArray", ms);
-  printf("simple matrix:\n");
+  CoreTechPrint("simple matrix:\n");
   simpleArray.Print();
 
   ASSERT_EQ(1, *simpleArray.Pointer(0,0));
@@ -3242,7 +3685,7 @@ GTEST_TEST(CoreTech_Common, SimpleOpenCVTest)
 
   cv::GaussianBlur(src, dst, ksize, sigma, sigma, cv::BORDER_REFLECT_101);
 
-  printf("%f %f\n%f %f\n%f %f\n",
+  CoreTechPrint("%f %f\n%f %f\n%f %f\n",
     src.at<double>(50, 0), src.at<double>(50, 1), *( ((double*)src.data) + 50*6), *( ((double*)src.data) + 50*6 + 1), dst.at<double>(50, 0), dst.at<double>(50, 1));
   /*std::cout << src.at<double>(50, 0) << " "
   << src.at<double>(50, 1) << "\n"

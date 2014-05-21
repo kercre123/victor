@@ -14,7 +14,23 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/common/robot/benchmarking.h"
 
-//using namespace std;
+#define USE_ARM_ACCELERATION
+
+#if defined(__EDG__)
+#ifndef USE_ARM_ACCELERATION
+#warning not using USE_ARM_ACCELERATION
+#endif
+#else
+#undef USE_ARM_ACCELERATION
+#endif
+
+#if defined(USE_ARM_ACCELERATION)
+#ifdef USING_CHIP_SIMULATOR
+#include <ARMCM4.h>
+#else
+#include <stm32f4xx.h>
+#endif
+#endif
 
 namespace Anki
 {
@@ -156,6 +172,280 @@ namespace Anki
 
         return RESULT_OK;
       } // BoxFilterNormalize()
+
+      Result BoxFilter(const Array<u8> &image, const s32 boxHeight, const s32 boxWidth, Array<u16> &filtered, MemoryStack scratch)
+      {
+        AnkiConditionalErrorAndReturnValue(image.IsValid() && filtered.IsValid(),
+          RESULT_FAIL_INVALID_OBJECT, "BoxFilter", "Image is invalid");
+
+        const s32 imageHeight = image.get_size(0);
+        const s32 imageWidth  = image.get_size(1);
+
+        const s32 boxHeight2 = boxHeight / 2;
+        const s32 boxWidth2 = boxWidth / 2;
+
+        AnkiConditionalErrorAndReturnValue(filtered.get_size(0) == imageHeight && filtered.get_size(1) == imageWidth,
+          RESULT_FAIL_INVALID_SIZE, "BoxFilter", "Output normalized image must match input image's size.");
+
+        AnkiConditionalErrorAndReturnValue(imageWidth%8 == 0,
+          RESULT_FAIL_INVALID_SIZE, "BoxFilter", "Image width must be divisible by 8");
+
+        AnkiConditionalErrorAndReturnValue(boxHeight > 2 && boxWidth > 2 && IsOdd(boxWidth) && IsOdd(boxHeight),
+          RESULT_FAIL_INVALID_SIZE, "BoxFilter", "Box filter must be greater than two and odd");
+
+        AnkiConditionalWarn(boxHeight*boxWidth <= 256,
+          "BoxFilter", "Filtering may overflow");
+
+        s32 y;
+
+        // Includes extra padding for simd
+        u16 * restrict verticalAccumulator = reinterpret_cast<u16*>( scratch.Allocate(imageWidth*sizeof(u16) + 16) );
+        memset(verticalAccumulator, 0, imageWidth*sizeof(u16));
+
+        // Accumulate a whole boxHeight
+        for(y=0; y<boxHeight; y++) {
+          const u8 * restrict pImage = image.Pointer(y,0);
+          for(s32 x=0; x<imageWidth; x+=8) {
+            const u32 image0123 = *reinterpret_cast<const u32*>(pImage + x);
+            const u32 image4567 = *reinterpret_cast<const u32*>(pImage + x + 4);
+
+            const u32 toAdd01 =  (image0123 & 0xFF)            | ((image0123 & 0xFF00)     << 8);
+            const u32 toAdd23 = ((image0123 & 0xFF0000) >> 16) | ((image0123 & 0xFF000000) >> 8);
+
+            const u32 toAdd45 =  (image4567 & 0xFF)            | ((image4567 & 0xFF00)     << 8);
+            const u32 toAdd67 = ((image4567 & 0xFF0000) >> 16) | ((image4567 & 0xFF000000) >> 8);
+
+            *reinterpret_cast<u32*>(verticalAccumulator + x)     += toAdd01;
+            *reinterpret_cast<u32*>(verticalAccumulator + x + 2) += toAdd23;
+            *reinterpret_cast<u32*>(verticalAccumulator + x + 4) += toAdd45;
+            *reinterpret_cast<u32*>(verticalAccumulator + x + 6) += toAdd67;
+          }
+        }
+
+        //
+        // Add the first row to the filtered image
+        //
+
+        filtered(0,boxHeight2-1,0,-1).Set(0);
+
+        {
+          // Grab the pointer to the horizontally negative-offset location in the filtered image
+          u16 * restrict pFiltered = filtered.Pointer(boxHeight2,0) - boxWidth2;
+
+          u16 horizontalAccumulator = 0;
+
+          s32 x;
+          for(x=0; x<boxWidth; x++) {
+            horizontalAccumulator += verticalAccumulator[x];
+          }
+
+          filtered(boxHeight2,boxHeight2,0,boxWidth2-1).Set(0);
+
+          pFiltered[x-1] = horizontalAccumulator;
+
+          for(; x<imageWidth-3; x+=4) {
+            const u32 toAdd01 = *reinterpret_cast<const u32*>(verticalAccumulator + x);
+            const u32 toAdd23 = *reinterpret_cast<const u32*>(verticalAccumulator + x + 2);
+
+            u32 toSub01 = *reinterpret_cast<const u32*>(verticalAccumulator + x - boxWidth);
+            u32 toSub23 = *reinterpret_cast<const u32*>(verticalAccumulator + x - boxWidth + 2);
+
+            // h is previous horizontal accumulator
+            u32 total01 = toAdd01 + horizontalAccumulator; // [1, 0h]
+            total01 += total01 << 16; // [10h, 0h]
+
+            toSub01 += toSub01 << 16; // [10, 0]
+            total01 -= toSub01;
+
+            u32 total23 = toAdd23 + (total01 >> 16); // [3, 210h]
+            total23 += total23 << 16; // [3210h, 210h]
+
+            toSub23 += toSub23 << 16; // [32, 2]
+            total23 -= toSub23;
+
+            horizontalAccumulator = total23 >> 16;
+
+            *reinterpret_cast<u32*>(pFiltered + x) = total01;
+            *reinterpret_cast<u32*>(pFiltered + x + 2) = total23;
+          }
+
+          for(; x<imageWidth; x++) {
+            horizontalAccumulator += verticalAccumulator[x] - verticalAccumulator[x-boxWidth];
+            pFiltered[x] = horizontalAccumulator;
+          }
+
+          filtered(boxHeight2,boxHeight2,-boxWidth2,-1).Set(0);
+        }
+
+        //
+        // Add the remaining rows to the filtered image
+        //
+
+        for(; y<imageHeight; y++) {
+          // Grab the pointer to the horizontally negative-offset location in the filtered image
+          u16 * restrict pFiltered = filtered.Pointer(y - boxHeight2,0) - boxWidth2;
+
+          const u8 * restrict pImageOld = image.Pointer(y-boxHeight,0);
+          const u8 * restrict pImageNew = image.Pointer(y,0);
+
+          for(s32 x=0; x<imageWidth; x+=4) {
+            const u32 imageNew0123 = *reinterpret_cast<const u32*>(pImageNew + x);
+
+            const u32 imageOld0123 = *reinterpret_cast<const u32*>(pImageOld + x);
+
+            const u32 toAdd01 =  (imageNew0123 & 0xFF)            | ((imageNew0123 & 0xFF00)     << 8);
+            const u32 toAdd23 = ((imageNew0123 & 0xFF0000) >> 16) | ((imageNew0123 & 0xFF000000) >> 8);
+
+            const u32 toSub01 =  (imageOld0123 & 0xFF)            | ((imageOld0123 & 0xFF00)     << 8);
+            const u32 toSub23 = ((imageOld0123 & 0xFF0000) >> 16) | ((imageOld0123 & 0xFF000000) >> 8);
+
+            *reinterpret_cast<u32*>(verticalAccumulator + x)     += toAdd01 - toSub01;
+            *reinterpret_cast<u32*>(verticalAccumulator + x + 2) += toAdd23 - toSub23;
+          }
+
+          u16 horizontalAccumulator = 0;
+
+          s32 x;
+          for(x=0; x<boxWidth; x++) {
+            horizontalAccumulator += verticalAccumulator[x];
+          }
+
+          filtered(y-boxHeight2,y-boxHeight2,0,boxWidth2-1).Set(0);
+
+          pFiltered[x-1] = horizontalAccumulator;
+
+          for(; x<imageWidth-3; x+=4) {
+            const u32 toAdd01 = *reinterpret_cast<const u32*>(verticalAccumulator + x);
+            const u32 toAdd23 = *reinterpret_cast<const u32*>(verticalAccumulator + x + 2);
+
+            u32 toSub01 = *reinterpret_cast<const u32*>(verticalAccumulator + x - boxWidth);
+            u32 toSub23 = *reinterpret_cast<const u32*>(verticalAccumulator + x - boxWidth + 2);
+
+            // h is previous horizontal accumulator
+            u32 total01 = toAdd01 + horizontalAccumulator; // [1, 0h]
+            total01 += total01 << 16; // [10h, 0h]
+
+            toSub01 += toSub01 << 16; // [10, 0]
+            total01 -= toSub01;
+
+            u32 total23 = toAdd23 + (total01 >> 16); // [3, 210h]
+            total23 += total23 << 16; // [3210h, 210h]
+
+            toSub23 += toSub23 << 16; // [32, 2]
+            total23 -= toSub23;
+
+            horizontalAccumulator = total23 >> 16;
+
+            *reinterpret_cast<u32*>(pFiltered + x) = total01;
+            *reinterpret_cast<u32*>(pFiltered + x + 2) = total23;
+          }
+
+          for(; x<imageWidth; x++) {
+            horizontalAccumulator += verticalAccumulator[x] - verticalAccumulator[x-boxWidth];
+            pFiltered[x] = horizontalAccumulator;
+          }
+
+          filtered(y-boxHeight2,y-boxHeight2,-boxWidth2,-1).Set(0);
+        }
+
+        filtered(-boxHeight2,-1,0,-1).Set(0);
+
+        return RESULT_OK;
+      } // Result BoxFilter(const Array<u8> &image, const s32 boxHeight, const s32 boxWidth, Array<u16> &filtered, MemoryStack scratch)
+
+      Result FastGradient(const Array<u8> &in, Array<s8> &dx, Array<s8> &dy, MemoryStack scratch)
+      {
+        const s32 imageHeight = in.get_size(0);
+        const s32 imageWidth = in.get_size(1);
+
+        AnkiConditionalErrorAndReturnValue(in.IsValid() && dy.IsValid() && dx.IsValid() && scratch.IsValid(),
+          RESULT_FAIL_INVALID_OBJECT, "FastGradient", "Image is invalid");
+
+        AnkiConditionalErrorAndReturnValue(
+          imageHeight == dx.get_size(0) && imageHeight == dy.get_size(0) &&
+          imageWidth == dx.get_size(1) && imageWidth == dy.get_size(1),
+          RESULT_FAIL_INVALID_SIZE, "FastGradient", "Images must be the same size");
+
+        AnkiConditionalErrorAndReturnValue(imageWidth%8 == 0,
+          RESULT_FAIL_INVALID_SIZE, "FastGradient", "Image width must be divisible by 8");
+
+        dx(0,0,0,-1).Set(0);
+
+        for(s32 y=1; y<(imageHeight-1); y++) {
+          const u8 * restrict pIn_y0  = in.Pointer(y,0);
+
+          s8 * restrict pDx = dx.Pointer(y,0);
+
+          s32 x;
+
+#if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING)
+          for(x=1; x<(imageWidth-1); x++) {
+            pDx[x] = static_cast<s8>( (static_cast<s32>(pIn_y0[x+1]) >> 1) - (static_cast<s32>(pIn_y0[x-1]) >> 1) );
+          }
+#else // #if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING)
+          for(x = 0; x<(imageWidth-7); x+=8) {
+            const u32 inM0123 = *reinterpret_cast<const u32*>(pIn_y0 + x - 1);
+            const u32 inM4567 = *reinterpret_cast<const u32*>(pIn_y0 + x + 3);
+
+            const u32 inP0123 = *reinterpret_cast<const u32*>(pIn_y0 + x + 1);
+            const u32 inP4567 = *reinterpret_cast<const u32*>(pIn_y0 + x + 5);
+
+            const u32 inM0123Half = (inM0123 >> 1) & 0x7f7f7f7f;
+            const u32 inM4567Half = (inM4567 >> 1) & 0x7f7f7f7f;
+
+            const u32 inP0123Half = (inP0123 >> 1) & 0x7f7f7f7f;
+            const u32 inP4567Half = (inP4567 >> 1) & 0x7f7f7f7f;
+
+            const u32 out0123 = __SSUB8(inP0123Half, inM0123Half);
+            const u32 out4567 = __SSUB8(inP4567Half, inM4567Half);
+
+            *reinterpret_cast<u32*>(pDx + x) = out0123;
+            *reinterpret_cast<u32*>(pDx + x + 4) = out4567;
+          }
+#endif // #if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING) ... #else
+
+          pDx[0] = 0;
+          pDx[imageWidth-1] = 0;
+
+          const u8 * restrict pIn_ym1 = in.Pointer(y-1,0);
+          const u8 * restrict pIn_yp1 = in.Pointer(y+1,0);
+
+          s8 * restrict pDy = dy.Pointer(y,0);
+
+#if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING)
+          for(x=1; x<(imageWidth-1); x++) {
+            pDy[x] = static_cast<s8>( (static_cast<s32>(pIn_yp1[x]) >> 1) - (static_cast<s32>(pIn_ym1[x]) >> 1) );
+          }
+#else // #if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING)
+          for(x = 0; x<(imageWidth-7); x+=8) {
+            const u32 inM0123 = *reinterpret_cast<const u32*>(pIn_ym1 + x);
+            const u32 inM4567 = *reinterpret_cast<const u32*>(pIn_ym1 + x + 4);
+
+            const u32 inP0123 = *reinterpret_cast<const u32*>(pIn_yp1 + x);
+            const u32 inP4567 = *reinterpret_cast<const u32*>(pIn_yp1 + x + 4);
+
+            const u32 inM0123Half = (inM0123 >> 1) & 0x7f7f7f7f;
+            const u32 inM4567Half = (inM4567 >> 1) & 0x7f7f7f7f;
+
+            const u32 inP0123Half = (inP0123 >> 1) & 0x7f7f7f7f;
+            const u32 inP4567Half = (inP4567 >> 1) & 0x7f7f7f7f;
+
+            const u32 out0123 = __SSUB8(inP0123Half, inM0123Half);
+            const u32 out4567 = __SSUB8(inP4567Half, inM4567Half);
+
+            *reinterpret_cast<u32*>(pDy + x) = out0123;
+            *reinterpret_cast<u32*>(pDy + x + 4) = out4567;
+          }
+#endif // #if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING) ... #else
+
+          pDy[0] = 0;
+          pDy[imageWidth-1] = 0;
+        } // for(s32 y=1; y<(imageHeight-1); y++)
+
+        dx(-1,-1,0,-1).Set(0);
+
+        return RESULT_OK;
+      } // Result FastGradient(const Array<u8> &in, Array<s8> &dx, Array<s8> &dy, MemoryStack scratch)
     } // namespace ImageProcessing
   } // namespace Embedded
 } // namespace Anki

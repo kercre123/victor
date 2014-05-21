@@ -355,3 +355,14 @@ void pauseMatlab(double time)
     mexEvalString("pause");
   }
 }
+
+int mexPrintf(const char *format, va_list vaList)
+{
+  const int BUFFER_LENGTH = 512;
+
+  char text[BUFFER_LENGTH];
+
+  vsnprintf(text, BUFFER_LENGTH, format, vaList);
+
+  return mexPrintf(text);
+}

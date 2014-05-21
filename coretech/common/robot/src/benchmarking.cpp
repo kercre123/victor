@@ -9,6 +9,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/common/robot/benchmarking.h"
 #include "anki/common/robot/utilities.h"
+#include "anki/common/robot/fixedLengthList.h"
 
 #if defined(_MSC_VER)
 #include <windows.h>
@@ -223,7 +224,7 @@ namespace Anki
 
       Snprint(buffer, bufferLength, verbose, microseconds, minCharacterToPrint);
 
-      printf(buffer);
+      CoreTechPrint(buffer);
     }
 
     class CompileBenchmarkResults
@@ -411,21 +412,21 @@ namespace Anki
           const s32 bufferLength = 128;
           char buffer[bufferLength];
 
-          //printf("Exclusive Mean:%fs Exclusive Min:%fs Exclusive Max:%fs Inclusive Mean:%fs Inclusive Min:%fs Inclusive Max:%fs (Exclusive Total:%fs Inclusive Total:%fs NumEvents:%d)\n",
+          //CoreTechPrint("Exclusive Mean:%fs Exclusive Min:%fs Exclusive Max:%fs Inclusive Mean:%fs Inclusive Min:%fs Inclusive Max:%fs (Exclusive Total:%fs Inclusive Total:%fs NumEvents:%d)\n",
 
-          printf("%s: ", this->name);
+          CoreTechPrint("%s: ", this->name);
 
           SnprintfCommasS32(buffer, bufferLength, this->exclusiveTimeElapsed);
-          printf("exclusiveTimeElapsed:%sus ", buffer);
+          CoreTechPrint("exclusiveTimeElapsed:%sus ", buffer);
 
           SnprintfCommasS32(buffer, bufferLength, this->inclusiveTimeElapsed);
-          printf("inclusiveTimeElapsed:%sus ", buffer);
+          CoreTechPrint("inclusiveTimeElapsed:%sus ", buffer);
 
           SnprintfCommasS32(buffer, bufferLength, this->startTime);
-          printf("startTime:%sus ", buffer);
+          CoreTechPrint("startTime:%sus ", buffer);
 
           SnprintfCommasS32(buffer, bufferLength, this->level);
-          printf("NumEvents:%s\n", buffer);
+          CoreTechPrint("NumEvents:%s\n", buffer);
         }
       } BenchmarkInstance;
     }; // class CompileBenchmarkResults
@@ -453,7 +454,7 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(minCharacterToPrint.IsValid(),
         RESULT_FAIL_OUT_OF_MEMORY, "PrintBenchmarkResults", "Out of memory");
 
-      printf("Benchmark Results: (Exc=Exclusive Inc=Inclusive Tot=Total N=NumberOf)\n");
+      CoreTechPrint("Benchmark Results: (Exc=Exclusive Inc=Inclusive Tot=Total N=NumberOf)\n");
 
       const s32 numResults = results.get_size();
       const BenchmarkElement * const pResults = results.Pointer(0);
@@ -487,10 +488,10 @@ namespace Anki
 
       for(s32 x=0; x<numResults; x++) {
         pResults[x].Print(verbose, microseconds, &minCharacterToPrint);
-        printf("\n");
+        CoreTechPrint("\n");
       }
 
-      printf("\n");
+      CoreTechPrint("\n");
 
       return RESULT_OK;
     }

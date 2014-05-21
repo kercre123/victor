@@ -1024,6 +1024,11 @@
               <FilePath>..\coretech\vision\robot\src\lucasKanade_Slow.cpp</FilePath>
             </File>
             <File>
+              <FileName>opencvLight_vision.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\opencvLight_vision.cpp</FilePath>
+            </File>
+            <File>
               <FileName>perspectivePoseEstimation.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\perspectivePoseEstimation.cpp</FilePath>
@@ -2305,6 +2310,11 @@
               <FileName>lucasKanade_Slow.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\vision\robot\src\lucasKanade_Slow.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>opencvLight_vision.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\opencvLight_vision.cpp</FilePath>
             </File>
             <File>
               <FileName>perspectivePoseEstimation.cpp</FileName>

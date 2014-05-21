@@ -36,6 +36,13 @@ namespace Anki
 
       bool IsValid() const;
 
+      // Resize will use MemoryStack::Reallocate() to change the FixedLengthList's size. It only works if this
+      // FixedLengthList was the last thing allocated. The reallocated memory will not be cleared
+      //
+      // WARNING:
+      // This will not update any references to the memory, you must update all references manually.
+      Result Resize(s32 maximumSize, MemoryStack &memory);
+
       Result PushBack(const Type &value);
 
       // Will act as a normal pop, except when the list is empty. Then subsequent

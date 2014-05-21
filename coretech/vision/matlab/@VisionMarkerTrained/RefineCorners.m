@@ -14,9 +14,12 @@ function [newCorners, newH] = RefineCorners(this, img, varargin)
 MaxIterations = 10;
 DebugDisplay = false;
 NumSamples = 500; % divided evenly amongst the 8 square sides
-Contrast = 1;
+DarkValue = 0;
+BrightValue = 1;
 
 parseVarargin(varargin{:});
+
+Contrast = BrightValue - DarkValue;
 
 diagonal = sqrt(max( sum((this.corners(1,:)-this.corners(4,:)).^2), ...
     sum((this.corners(2,:)-this.corners(3,:)).^2))) / sqrt(2);
@@ -45,7 +48,7 @@ xsquare = [xSquareInner xSquareOuter]';
 ysquare = [ySquareInner ySquareOuter]';
 Tx = Contrast/2 * diagonal*[TxInner TxOuter]'; 
 Ty = Contrast/2 * diagonal*[TyInner TyOuter]';
-template = (Contrast/2)*ones(size(xsquare));
+template = ((DarkValue+BrightValue)/2)*ones(size(xsquare));
 
 A = [ xsquare.*Tx  ysquare.*Tx  Tx  ...
     xsquare.*Ty  ysquare.*Ty  Ty ...

@@ -16,6 +16,8 @@
 //#include "anki/common/types.h"
 #include "anki/common/basestation/math/pose.h"
 
+#include "anki/vision/basestation/occluderList.h"
+
 #ifdef SIMULATOR
 #include <webots/Camera.hpp>
 #endif
@@ -193,18 +195,24 @@ namespace Anki {
       void project3dPoints(const Quad3f &objPoints,
                            Quad2f       &imgPoints) const;
       
-      // Returns true when the point (computed by one of the projection functions
-      // above) is behind the camera.  Otherwise it is false -- even if the point
-      // is outside image dimensions.
-      bool isBehind(const Point2f& projectedPoint) const;
+      template<size_t NumPoints>
+      void project3dPoints(const std::array<Point3f,NumPoints> &objPoints,
+                           std::array<Point2f,NumPoints>       &imgPoints) const;
+      
       
       // Returns true when the point (computed by one of the projection functions
       // above) is BOTH in front of the camera AND within image dimensions.
+      // If there are occluders registered (using AddOccluder() below), those
+      // will be considered as well.
       bool isVisible(const Point2f& projectedPoint) const;
+      
+      bool isVisible(const Quad2f& projectedQuad) const;
       
       // TODO: Method to remove radial distortion from an image
       // (This requires an image class)
       
+      void AddOccluder(const Vision::ObservableObject* object);
+      void ClearOccluders();
       
     protected:
       CameraID_t         camID;
@@ -212,8 +220,14 @@ namespace Anki {
       bool               isCalibrationSet;
       Pose3d             pose;
       
+      OccluderList       occluderList;
+      
       // TODO: Include const reference or pointer to a parent Robot object?
       void distortCoordinate(const Point2f& ptIn, Point2f& ptDistorted);
+      
+      template<class PointContainer3d, class PointContainer2d>
+      void project3dPointHelper(const PointContainer3d& objPoints,
+                                PointContainer2d& imgPoints) const;
       
 #if ANKICORETECH_USE_OPENCV
       Pose3d computeObjectPoseHelper(const std::vector<cv::Point2f>& cvImagePoints,
@@ -238,22 +252,19 @@ namespace Anki {
     inline void Camera::set_pose(const Pose3d& newPose)
     { this->pose = newPose; }
     
-    inline bool Camera::isBehind(const Point2f &projectedPoint) const
-    {
-      return (std::isnan(projectedPoint.x()) || std::isnan(projectedPoint.y()));
-    }
-    
-    inline bool Camera::isVisible(const Point2f &projectedPoint) const
-    {
-      return (not isBehind(projectedPoint) &&
-              projectedPoint.x() >= 0.f && projectedPoint.y() >= 0.f &&
-              projectedPoint.x() < this->calibration.get_ncols() &&
-              projectedPoint.y() < this->calibration.get_nrows());
-    }
-    
     inline bool Camera::isCalibrated() const {
       return this->isCalibrationSet;
     }
+    
+    template<size_t NumPoints>
+    void Camera::project3dPoints(const std::array<Point3f,NumPoints> &objPoints,
+                                 std::array<Point2f,NumPoints>       &imgPoints) const
+    {
+      for(size_t i = 0; i<NumPoints; ++i)
+      {
+        project3dPoint(objPoints[i], imgPoints[i]);
+      }
+    } // // project3dPoints(std::array)
     
   } // namesapce Vision
 } // namespace Anki

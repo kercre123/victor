@@ -25,6 +25,10 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define MAX_FIDUCIAL_MARKER_BITS 25
 #define MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS 81
 
+// Set to 1 to use two "red/black" verification trees
+// Set to 0 to use (older) one-vs-all verifiers for each class
+#define USE_RED_BLACK_VERIFICATION_TREES 1
+
 #define NUM_BYTES_probeLocationsBuffer (sizeof(Point<s16>)*MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS + MEMORY_ALIGNMENT + 32)
 #define NUM_BYTES_probeWeightsBuffer (sizeof(s16)*MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS  + MEMORY_ALIGNMENT + 32)
 #define NUM_BYTES_bitsBuffer (sizeof(FiducialMarkerParserBit)*MAX_FIDUCIAL_MARKER_BITS + MEMORY_ALIGNMENT + 32)
@@ -94,7 +98,12 @@ namespace Anki
       
       static bool areTreesInitialized;
       static FiducialMarkerDecisionTree multiClassTree;
+      
+#if USE_RED_BLACK_VERIFICATION_TREES
+      static FiducialMarkerDecisionTree verifyRedTree, verifyBlackTree;
+#else
       static FiducialMarkerDecisionTree verificationTrees[VisionMarkerDecisionTree::NUM_MARKER_LABELS_ORIENTED];
+#endif
     }; // class VisionMarker
 
     // A FiducialMarkerParserBit object samples an input image, to determine if a given image

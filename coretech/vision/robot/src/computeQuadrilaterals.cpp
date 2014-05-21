@@ -134,6 +134,9 @@ namespace Anki
         if((lastResult = TraceNextExteriorBoundary(components, startComponentIndex, extractedBoundary, endComponentIndex, scratch)) != RESULT_OK)
           return lastResult;
 
+        if(extractedBoundary.get_size() == 0)
+          continue;
+
         startComponentIndex = endComponentIndex + 1;
 
         // 2. Compute the Laplacian peaks

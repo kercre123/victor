@@ -256,7 +256,7 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
       cv::imshow("Robot Image", toShowImage);
       cv::moveWindow("Robot Image", 150, 540);
       const s32 pressedKey = cv::waitKey(10);
-      //printf("%d\n", pressedKey);
+      //CoreTechPrint("%d\n", pressedKey);
       if(pressedKey == 'c') {
         const time_t t = time(0);   // get time now
         const struct tm * currentTime = localtime(&t);
@@ -267,7 +267,7 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
           0,
           "png");
 
-        printf("Saving to %s\n", outputFilename);
+        CoreTechPrint("Saving to %s\n", outputFilename);
         cv::imwrite(outputFilename, lastImage);
       }
     } else { // if(lastImage.rows > 0)
@@ -316,39 +316,39 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
       const s32 isFloat = reinterpret_cast<s32*>(newObject.buffer)[4];
       const s32 numElements = reinterpret_cast<s32*>(newObject.buffer)[5];
 
-      printf("%s: ", newObject.objectName);
+      CoreTechPrint("%s: ", newObject.objectName);
 
       if(isBasicType)
         if(isFloat) {
           if(sizeOfType == 4) {
-            for(s32 i=0; i<numElements; i++) { printf("%0.5f, ", reinterpret_cast<f32*>(newObject.startOfPayload)[i]); }
+            for(s32 i=0; i<numElements; i++) { CoreTechPrint("%0.5f, ", reinterpret_cast<f32*>(newObject.startOfPayload)[i]); }
           } else if(sizeOfType == 8) {
-            for(s32 i=0; i<numElements; i++) { printf("%0.5f, ", reinterpret_cast<f64*>(newObject.startOfPayload)[i]); }
+            for(s32 i=0; i<numElements; i++) { CoreTechPrint("%0.5f, ", reinterpret_cast<f64*>(newObject.startOfPayload)[i]); }
           }
         } else {
           if(isSigned) {
             if(sizeOfType == 1) {
-              for(s32 i=0; i<numElements; i++) { printf("%d, ", reinterpret_cast<s8*>(newObject.startOfPayload)[i]); }
+              for(s32 i=0; i<numElements; i++) { CoreTechPrint("%d, ", reinterpret_cast<s8*>(newObject.startOfPayload)[i]); }
             } else if(sizeOfType == 2) {
-              for(s32 i=0; i<numElements; i++) { printf("%d, ", reinterpret_cast<s16*>(newObject.startOfPayload)[i]); }
+              for(s32 i=0; i<numElements; i++) { CoreTechPrint("%d, ", reinterpret_cast<s16*>(newObject.startOfPayload)[i]); }
             } else if(sizeOfType == 4) {
-              for(s32 i=0; i<numElements; i++) { printf("%d, ", reinterpret_cast<s32*>(newObject.startOfPayload)[i]); }
+              for(s32 i=0; i<numElements; i++) { CoreTechPrint("%d, ", reinterpret_cast<s32*>(newObject.startOfPayload)[i]); }
             } else if(sizeOfType == 8) {
-              for(s32 i=0; i<numElements; i++) { printf("%lld, ", reinterpret_cast<s64*>(newObject.startOfPayload)[i]); }
+              for(s32 i=0; i<numElements; i++) { CoreTechPrint("%lld, ", reinterpret_cast<s64*>(newObject.startOfPayload)[i]); }
             }
           } else {
             if(sizeOfType == 1) {
-              for(s32 i=0; i<numElements; i++) { printf("%d, ", reinterpret_cast<u8*>(newObject.startOfPayload)[i]); }
+              for(s32 i=0; i<numElements; i++) { CoreTechPrint("%d, ", reinterpret_cast<u8*>(newObject.startOfPayload)[i]); }
             } else if(sizeOfType == 2) {
-              for(s32 i=0; i<numElements; i++) { printf("%d, ", reinterpret_cast<u16*>(newObject.startOfPayload)[i]); }
+              for(s32 i=0; i<numElements; i++) { CoreTechPrint("%d, ", reinterpret_cast<u16*>(newObject.startOfPayload)[i]); }
             } else if(sizeOfType == 4) {
-              for(s32 i=0; i<numElements; i++) { printf("%u, ", reinterpret_cast<u32*>(newObject.startOfPayload)[i]); }
+              for(s32 i=0; i<numElements; i++) { CoreTechPrint("%u, ", reinterpret_cast<u32*>(newObject.startOfPayload)[i]); }
             } else if(sizeOfType == 8) {
-              for(s32 i=0; i<numElements; i++) { printf("%llu, ", reinterpret_cast<u64*>(newObject.startOfPayload)[i]); }
+              for(s32 i=0; i<numElements; i++) { CoreTechPrint("%llu, ", reinterpret_cast<u64*>(newObject.startOfPayload)[i]); }
             }
           }
         }
-        printf("\n");
+        CoreTechPrint("\n");
     }
   } else if(strcmp(newObject.typeName, "Array") == 0) {
     if (strcmp(newObject.objectName, "Robot Image") == 0) {
@@ -413,7 +413,7 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
       }
     }
   } else if(strcmp(newObject.typeName, "String") == 0) {
-    printf("Board>> %s\n", reinterpret_cast<const char*>(newObject.startOfPayload));
+    CoreTechPrint("Board>> %s\n", reinterpret_cast<const char*>(newObject.startOfPayload));
   } else if(strcmp(newObject.typeName, "VisionMarker") == 0) {
     VisionMarker marker = *reinterpret_cast<VisionMarker*>(newObject.startOfPayload);
 
@@ -425,12 +425,12 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
       time (&rawtime);
       string timeString = string(ctime(&rawtime));
       timeString[timeString.length()-6] = '\0';
-      printf("%s>> ", timeString.data());
+      CoreTechPrint("%s>> ", timeString.data());
       aMessageAlreadyPrinted = true;
     }
 
     marker.Print();
-    printf("\n");
+    CoreTechPrint("\n");
     visionMarkerList.push_back(marker);
 
     isTracking = false;
@@ -472,11 +472,11 @@ static void DisplayDebuggingInfo(const DebugStreamClient::Object &newObject)
 
     memcpy(toPrint, newObject.typeName, 31);
     toPrint[31] = '\0';
-    printf("Unknown Type \"%s\"", toPrint);
+    CoreTechPrint("Unknown Type \"%s\"", toPrint);
 
     memcpy(toPrint, newObject.objectName, 31);
     toPrint[31] = '\0';
-    printf(" \"%s\"\n", toPrint);
+    CoreTechPrint(" \"%s\"\n", toPrint);
   }
 } // void DisplayDebuggingInfo()
 
@@ -485,7 +485,7 @@ int main(int argc, char ** argv)
   // Comment out to use serial
 #define USE_SOCKET
 
-  printf("Starting display\n");
+  CoreTechPrint("Starting display\n");
   SetLogSilence(true);
 
 #ifdef USE_SOCKET
@@ -503,7 +503,7 @@ int main(int argc, char ** argv)
 
   while(true) {
     DebugStreamClient::Object newObject = parserThread.GetNextObject();
-    //printf("Received %s %s\n", newObject.typeName, newObject.newObject.objectName);
+    //CoreTechPrint("Received %s %s\n", newObject.typeName, newObject.newObject.objectName);
 
     DisplayDebuggingInfo(newObject);
 
