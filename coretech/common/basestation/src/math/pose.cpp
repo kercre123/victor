@@ -185,8 +185,7 @@ namespace Anki {
   
   bool Pose3d::operator==(const Pose3d &other) const
   {
-    return (rotationVector == other.rotationVector &&
-            rotationMatrix == other.rotationMatrix &&
+    return (rotationMatrix == other.rotationMatrix &&
             translation == other.translation);
   }
   
@@ -496,8 +495,8 @@ namespace Anki {
   {
     CoreTechPrint("Point (%f, %f %f), RotVec (%f %f %f), RotAng %f rad\n",
                   translation.x(), translation.y(), translation.z(),
-                  rotationVector.get_axis().x(), rotationVector.get_axis().y(), rotationVector.get_axis().z(),
-                  rotationVector.get_angle().ToFloat()
+                  get_rotationAxis().x(), get_rotationAxis().y(), get_rotationAxis().z(),
+                  get_rotationAngle().ToFloat()
                   );
   }
   
