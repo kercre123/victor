@@ -152,7 +152,8 @@ namespace Anki {
     //
     
     // R = R_this * R_other^T
-    RotationMatrix3d R(other.getTranspose());
+    RotationMatrix3d R;
+    other.GetTranspose(R);
     R.preMultiplyBy(*this);
     
     //const Radians angleDiff( std::acos(0.5f*(R.Trace() - 1.f)) );
@@ -305,21 +306,22 @@ namespace Anki {
     return *this;
   } // Transpose()
   
-  RotationMatrix3d  RotationMatrix3d::getTranspose() const
+  void RotationMatrix3d::GetTranspose(RotationMatrix3d& outTransposed) const
   {
-    RotationMatrix3d Rt(*this);
-    Rt.Transpose();
-    return Rt;
+    outTransposed = *this;
+    outTransposed.Transpose();
   }
   
-  void RotationMatrix3d::Invert(void)
+  RotationMatrix3d& RotationMatrix3d::Invert(void)
   {
     this->Transpose();
+    return *this;
   }
   
-  RotationMatrix3d RotationMatrix3d::getInverse(void) const
+  void RotationMatrix3d::GetInverse(RotationMatrix3d& outInverted) const
   {
-    return this->getTranspose();
+    outInverted = *this;
+    outInverted.Invert();
   }
   
   
