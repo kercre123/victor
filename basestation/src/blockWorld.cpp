@@ -322,13 +322,13 @@ namespace Anki
     }
     
     
-    bool BlockWorld::UpdateRobotPose(Robot* robot)
+    bool BlockWorld::UpdateRobotPose(Robot* robot, ObsMarkerList_t& obsMarkersAtTimestamp)
     {
       bool wasPoseUpdated = false;
       
       // Get all mat objects *seen by this robot's camera*
       std::vector<Vision::ObservableObject*> matsSeen;
-      matLibrary_.CreateObjectsFromMarkers(obsMarkers_, matsSeen,
+      matLibrary_.CreateObjectsFromMarkers(obsMarkersAtTimestamp, matsSeen,
                                            (robot->get_camHead().get_id()));
       
       // TODO: what to do when a robot sees multiple mat pieces at the same time
@@ -434,7 +434,7 @@ namespace Anki
     } // UpdateRobotPose()
     
     
-    uint32_t BlockWorld::UpdateBlockPoses()
+    uint32_t BlockWorld::UpdateBlockPoses(ObsMarkerList_t& obsMarkersAtTimestamp)
     {
       didBlocksChange_ = false;
       
@@ -444,7 +444,7 @@ namespace Anki
       // marker (which is our indication we got an update from the robot's
       // vision system
       if(not obsMarkers_.empty()) {
-        blockLibrary_.CreateObjectsFromMarkers(obsMarkers_, blocksSeen);
+        blockLibrary_.CreateObjectsFromMarkers(obsMarkersAtTimestamp, blocksSeen);
         
         // Use them to add or update existing blocks in our world
         AddAndUpdateObjects(blocksSeen, existingBlocks_);
@@ -454,55 +454,80 @@ namespace Anki
       
     } // UpdateBlockPoses()
     
-    void BlockWorld::Update(void)
+    void BlockWorld::Update(uint32_t& numBlocksObserved)
     {
+      CORETECH_ASSERT(isInitialized_);
       CORETECH_ASSERT(robotMgr_ != NULL);
-           
+      
+      // Let the robot manager do whatever it's gotta do to update the
+      // robots in the world. Most importantly for us here, that includes
+      // looping over the robots' ObservedMarker messages and queueing them
+      // up for BlockWorld to process.
       robotMgr_->UpdateAllRobots();
       
-      //
-      // Localize robots using mat observations
-      //
-      for(auto robotID : robotMgr_->GetRobotIDList())
+      numBlocksObserved = 0;
+      
+      // Now we're going to process all the observed messages, grouped by
+      // timestamp
+      size_t numUnusedMarkers = 0;
+      for(auto obsMarkerListMapIter = obsMarkers_.begin();
+          obsMarkerListMapIter != obsMarkers_.end();
+          ++obsMarkerListMapIter)
       {
-        Robot* robot = robotMgr_->GetRobotByID(robotID);
         
-        CORETECH_ASSERT(robot != NULL);
+        ObsMarkerList_t& obsMarkersAtTimestamp = obsMarkerListMapIter->second;
         
-        UpdateRobotPose(robot);
+        //
+        // Localize robots using mat observations
+        //
+        for(auto robotID : robotMgr_->GetRobotIDList())
+        {
+          Robot* robot = robotMgr_->GetRobotByID(robotID);
+          
+          CORETECH_ASSERT(robot != NULL);
+          
+          // Note that this removes markers from the list that it uses
+          UpdateRobotPose(robot, obsMarkersAtTimestamp);
         
-      } // FOR each robotID
+        } // FOR each robotID
       
       
-      //
-      // Find any observed blocks from the remaining markers
-      //
-      UpdateBlockPoses();
+        //
+        // Find any observed blocks from the remaining markers
+        //
+        // Note that this removes markers from the list that it uses
+        numBlocksObserved += UpdateBlockPoses(obsMarkersAtTimestamp);
+     
+        // TODO: Deal with unknown markers?
+        
+        
+        // Keep track of how many markers went unused by either robot or block
+        // pose updating processes above
+        numUnusedMarkers += obsMarkersAtTimestamp.size();
+        
+      } // for element in obsMarkers_
       
       
-      // TODO: Deal with unknown markers?
-      
-      // Toss any remaining markers?
-      uint32_t numUnused = ClearObservedMarkers();
-      if(numUnused > 0) {
-        PRINT_INFO("%u messages did not match any known objects and went unused.\n",
-                   numUnused);
+      if(numUnusedMarkers > 0) {
+        CoreTechPrint("%u observed markers did not match any known objects and went unused.\n",
+                      numUnusedMarkers);
       }
-  
+     
+      // Toss any remaining markers?
+      ClearAllObservedMarkers();
+      
     } // Update()
     
     
     void BlockWorld::QueueObservedMarker(const Vision::ObservedMarker& marker)
     {
-      obsMarkers_.emplace_back(marker);
+      obsMarkers_[marker.GetTimeStamp()].emplace_back(marker);
       //obsMarkersByRobot_[seenByRobot].push_back(&obsMarkers_.back());
     }
     
-    uint32_t BlockWorld::ClearObservedMarkers()
+    void BlockWorld::ClearAllObservedMarkers()
     {
-      uint32_t numCleared = obsMarkers_.size();
       obsMarkers_.clear();
-      return numCleared;
     }
     
     void BlockWorld::CommandRobotToDock(const RobotID_t whichRobot,

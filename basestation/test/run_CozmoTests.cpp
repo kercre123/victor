@@ -144,12 +144,12 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
     ASSERT_TRUE(JsonTools::GetValueOptional(jsonData["RobotPose"], "HeadAngle", headAngle));
     robot.set_headAngle(headAngle);
     
+    // Process all the markers we've queued
+    uint32_t numBlocksObserved = 0;
+    blockWorld.Update(numBlocksObserved);
     
     if(checkRobotPose) {
-      // Use all the VisionMarkers to update the blockworld's pose estimates for
-      // all the robots
       // TODO: loop over all robots
-      ASSERT_TRUE(blockWorld.UpdateRobotPose(&robot));
       
       // Make sure the estimated robot pose matches the ground truth pose
       Pose3d P_diff;
@@ -177,14 +177,8 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
     
     // Use the rest of the VisionMarkers to update the blockworld's pose
     // estimates for the blocks
-    uint32_t numBlocksObserved = blockWorld.UpdateBlockPoses();
+    //uint32_t numBlocksObserved = blockWorld.UpdateBlockPoses();
     
-    // Toss unused markers
-    uint32_t numUnusedMarkers = blockWorld.ClearObservedMarkers();
-    if(numUnusedMarkers > 0) {
-      fprintf(stdout, "%u observed markers went unused for block/robot "
-              "localization.\n", numUnusedMarkers);
-    }
     
     if(jsonRoot.isMember("Blocks"))
     {

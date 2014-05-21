@@ -42,8 +42,8 @@ namespace Anki
     {
     public:
       
-      typedef std::map<ObjectID_t, Vision::ObservableObject*> ObjectsMapByID_t;
-      typedef std::map<ObjectType_t, ObjectsMapByID_t > ObjectsMap_t;
+      using ObjectsMapByID_t = std::map<ObjectID_t, Vision::ObservableObject*>;
+      using ObjectsMap_t     = std::map<ObjectType_t, ObjectsMapByID_t >;
       
       //static const unsigned int MaxRobots = 4;
       //static bool ZAxisPointsUp; // normally true, false for Webots
@@ -53,15 +53,12 @@ namespace Anki
       
       void Init(RobotManager* robotMgr);
       
-      void Update(void);
+      // Update the BlockWorld's state by processing all queued ObservedMarkers
+      // and updating robots' poses and blocks' poses from them.
+      void Update(uint32_t& numBlocksObserved);
       
-      bool UpdateRobotPose(Robot* robot);
-      
-      uint32_t UpdateBlockPoses();
-      
-      // Empties the queue of observed markers, returning the number that were
-      // still in it before being cleared.
-      uint32_t ClearObservedMarkers();
+      // Empties the queue of all observed markers
+      void ClearAllObservedMarkers();
       
       void QueueObservedMarker(const Vision::ObservedMarker& marker);
                                //Robot* seenByRobot);
@@ -96,14 +93,40 @@ namespace Anki
       
     protected:
       
-      //static BlockWorld* singletonInstance_;
+      // Typedefs / Aliases
+      //using ObsMarkerContainer_t = std::multiset<Vision::ObservedMarker, Vision::ObservedMarker::Sorter()>;
+      using ObsMarkerList_t = std::list<Vision::ObservedMarker>;
+      using ObsMarkerListMap_t = std::map<TimeStamp_t, ObsMarkerList_t>;
+      
+      
+      // Methods
       
       //BlockWorld(); // protected constructor for singleton
+
+      bool UpdateRobotPose(Robot* robot, ObsMarkerList_t& obsMarkersAtTimestamp);
+      
+      uint32_t UpdateBlockPoses(ObsMarkerList_t& obsMarkersAtTimestamp);
+      
+      void FindOverlappingObjects(const Vision::ObservableObject* objectSeen,
+                                  const ObjectsMap_t& objectsExisting,
+                                  std::vector<Vision::ObservableObject*>& overlappingExistingObjects) const;
+      
+      
+      //template<class ObjectType>
+      void AddAndUpdateObjects(const std::vector<Vision::ObservableObject*>& objectsSeen,
+                               ObjectsMap_t& objectsExisting);
+      
+      
+
+      // Member Variables
+      
+      //static BlockWorld* singletonInstance_;
+      
       bool             isInitialized_;
       RobotManager*    robotMgr_;
       //MessageHandler*  msgHandler_;
       
-      std::list<Vision::ObservedMarker> obsMarkers_;
+      ObsMarkerListMap_t obsMarkers_;
       //std::map<Robot*, std::list<Vision::ObservedMarker*> > obsMarkersByRobot_;
       
       // Store all known observable objects (these are everything we know about,
@@ -121,16 +144,6 @@ namespace Anki
       bool didBlocksChange_;
       
       static const ObjectsMapByID_t EmptyObjectMap;
-      
-      
-      void FindOverlappingObjects(const Vision::ObservableObject* objectSeen,
-                                  const ObjectsMap_t& objectsExisting,
-                                  std::vector<Vision::ObservableObject*>& overlappingExistingObjects) const;
-      
-      
-      //template<class ObjectType>
-      void AddAndUpdateObjects(const std::vector<Vision::ObservableObject*>& objectsSeen,
-                                   ObjectsMap_t& objectsExisting);
       
       // Global counter for assigning IDs to objects as they are created.
       // This means every object in the world has a unique ObjectID!
