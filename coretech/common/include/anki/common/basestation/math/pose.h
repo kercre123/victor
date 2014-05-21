@@ -293,7 +293,7 @@ namespace Anki {
   inline void Pose2d::set_planeNormal(const Vec3f &normal)
   {
     this->planeNormal = normal;
-    this->planeNormal.makeUnitLength();
+    this->planeNormal.MakeUnitLength();
   }
   
   inline const Vec3f& Pose2d::get_planeNormal() const

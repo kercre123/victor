@@ -36,7 +36,7 @@ namespace Anki {
   RotationVector3d::RotationVector3d(const Radians angleIn, const Vec3f &axisIn)
   : angle(angleIn), axis(axisIn)
   {
-    f32 axisLength = axis.makeUnitLength();
+    f32 axisLength = axis.MakeUnitLength();
     if(axisLength != 1.f) {
       // TODO: Issue a warning that axis provided was not unit length?
     }
@@ -45,7 +45,7 @@ namespace Anki {
   RotationVector3d::RotationVector3d(const Vec3f &rvec)
   : axis(rvec)
   {
-    this->angle = axis.makeUnitLength();
+    this->angle = axis.MakeUnitLength();
     if(this->angle == Radians(0)) {
       // If the specified vector was all zero, then the axis is ambiguous,
       // so default to the X axis
@@ -97,18 +97,18 @@ namespace Anki {
   RotationMatrix3d::RotationMatrix3d(const Matrix_3x3f &matrix3x3)
   : Matrix_3x3f(matrix3x3)
   {
-    CORETECH_ASSERT(std::abs(this->GetColumn(0).length() - 1.f) < 1e-6f &&
-                    std::abs(this->GetColumn(1).length() - 1.f) < 1e-6f &&
-                    std::abs(this->GetColumn(2).length() - 1.f) < 1e-6f);
+    CORETECH_ASSERT(std::abs(this->GetColumn(0).Length() - 1.f) < 1e-6f &&
+                    std::abs(this->GetColumn(1).Length() - 1.f) < 1e-6f &&
+                    std::abs(this->GetColumn(2).Length() - 1.f) < 1e-6f);
   }
   
   
   RotationMatrix3d::RotationMatrix3d(std::initializer_list<float> initValues)
   : Matrix_3x3f(initValues)
   {
-    CORETECH_ASSERT(std::abs(this->GetColumn(0).length() - 1.f) < 1e-6f &&
-                    std::abs(this->GetColumn(1).length() - 1.f) < 1e-6f &&
-                    std::abs(this->GetColumn(2).length() - 1.f) < 1e-6f);
+    CORETECH_ASSERT(std::abs(this->GetColumn(0).Length() - 1.f) < 1e-6f &&
+                    std::abs(this->GetColumn(1).Length() - 1.f) < 1e-6f &&
+                    std::abs(this->GetColumn(2).Length() - 1.f) < 1e-6f);
     
     //Rodrigues(*this, rotationVector);
   }

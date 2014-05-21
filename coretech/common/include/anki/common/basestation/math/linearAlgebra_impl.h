@@ -29,7 +29,7 @@ namespace Anki {
     SmallSquareMatrix<N,T> P;
   
     // Normal needs to be a unit vector!
-    CORETECH_ASSERT(normal.length() == 1.f);
+    CORETECH_ASSERT(normal.Length() == 1.f);
     
     for(MatDimType i=0; i<N; ++i) {
       // Fill in diagonal elements

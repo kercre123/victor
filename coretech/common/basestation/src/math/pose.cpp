@@ -400,7 +400,7 @@ namespace Anki {
     
     // First, check to see if the translational difference between the two
     // poses is small enough to call them a match
-    if(P_diff.get_translation().length() < distThreshold) {
+    if(P_diff.get_translation().Length() < distThreshold) {
       
       // Next check to see if the rotational difference is small
       RotationVector3d Rvec(P_diff.get_rotationMatrix());
@@ -448,7 +448,7 @@ namespace Anki {
     
     // First, check to see if the translational difference between the two
     // poses is small enough to call them a match
-    if(P_diff.get_translation().length() < distThreshold) {
+    if(P_diff.get_translation().Length() < distThreshold) {
       
       // Next check to see if the rotational difference is small
       RotationVector3d Rvec(P_diff.get_rotationMatrix());
@@ -490,7 +490,8 @@ namespace Anki {
     // TODO: take rotation into account?
     Vec3f distVec(pose1.get_translation());
     distVec -= pose2.get_translation();
-    return distVec.length();
+    const float dist = distVec.Length();
+    return dist;
   }
 
   

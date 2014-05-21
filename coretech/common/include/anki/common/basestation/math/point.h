@@ -25,8 +25,6 @@
 #ifndef _ANKICORETECH_COMMON_POINT_H_
 #define _ANKICORETECH_COMMON_POINT_H_
 
-#include <cmath>
-
 #include "anki/common/types.h"
 #include "anki/common/basestation/exceptions.h"
 
@@ -34,9 +32,12 @@
 #include "opencv2/core/core.hpp"
 #endif
 
+#include <cmath>
+#include <array>
+
 namespace Anki {
   
-  typedef size_t PointDimType;
+  using PointDimType = size_t;
   
   // Generic N-dimensional Point class
   template<PointDimType N, typename T>
@@ -110,17 +111,17 @@ namespace Anki {
     // Math methods:
     
     // Return length of the vector from the origin to the point
-    T length(void) const;
+    T Length(void) const;
     
     // Makes the point into a unit vector from the origin, while
     // returning its original length. IMPORTANT: if the point was
     // originally the origin, it cannot be made into a unit vector
     // and will be left at the origin, and zero will be returned.
-    T makeUnitLength(void);
+    T MakeUnitLength(void);
     
   protected:
-    // TODO: Switch to std::array<T,N> here?
-    T data[N];
+    
+    std::array<T,N> data;
     
   }; // class Point
   
@@ -131,11 +132,11 @@ namespace Anki {
   template <typename T>
   using Point3 = Point<3, T>;
   
-  typedef Point2<f32> Point2f;
-  typedef Point3<f32> Point3f;
+  using Point2f = Point2<f32>;
+  using Point3f = Point3<f32>;
   
-  typedef Point2f Vec2f;
-  typedef Point3f Vec3f;
+  using Vec2f = Point2f;
+  using Vec3f = Point3f;
   
   const Vec2f X_AXIS_2D(1.f, 0.f);
   const Vec2f Y_AXIS_2D(0.f, 1.f);
@@ -487,7 +488,7 @@ namespace Anki {
   }
   
   template<PointDimType N, typename T>
-  T Point<N,T>::length(void) const
+  T Point<N,T>::Length(void) const
   {
     CORETECH_ASSERT(N>0);
     T retVal = (*this)[0]*(*this)[0];
@@ -499,9 +500,9 @@ namespace Anki {
   }
   
   template<PointDimType N, typename T>
-  T Point<N,T>::makeUnitLength(void)
+  T Point<N,T>::MakeUnitLength(void)
   {
-    const T length = this->length();
+    const T length = this->Length();
     if(length > 0) {
       (*this) *= T(1)/length;
     }

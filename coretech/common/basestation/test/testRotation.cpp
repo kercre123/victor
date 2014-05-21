@@ -46,7 +46,7 @@ GTEST_TEST(TestRotation, Rotation3dNegativeAngle)
 {
   const Radians angle = M_PI/3.f;
   Vec3f axis(0.3f, 0.4f, -.15f);
-  axis.makeUnitLength();
+  axis.MakeUnitLength();
   
   RotationVector3d Rvec(angle, axis);
   RotationMatrix3d Rmat(Rvec);

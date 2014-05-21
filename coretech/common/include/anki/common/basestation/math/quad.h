@@ -352,7 +352,7 @@ namespace Anki {
     using namespace Quad;
     
     Point<N,T> unitNormal(aroundNormal);
-    unitNormal.makeUnitLength();
+    unitNormal.MakeUnitLength();
 
     Point<N,T> center = this->computeCentroid();
     SmallSquareMatrix<N,T> P = GetProjectionOperator(unitNormal);
@@ -362,7 +362,7 @@ namespace Anki {
     // Use the first corner as the first coordinate axis.
     Point<N,T> unitU(P * (*this)[Quad::FirstCorner]);
     unitU -= center;
-    unitU.makeUnitLength();
+    unitU.MakeUnitLength();
     
     // The cross product of the first coordinate axis vector with the normal
     // to define the (orthogonal) other coordinate axis vector
