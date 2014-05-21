@@ -147,8 +147,6 @@ else
         
         pBar.increment();
     end
-    img = cat(3, img{:});
-    numImages = size(img,3);
     
     probeValues = [probeValues{:}];
     labels = [labels{:}];
