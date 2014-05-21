@@ -2037,8 +2037,7 @@ GTEST_TEST(CoreTech_Common, Find_SetArray1)
     Array<s16> outB = find.SetArray(inB, 0, ms);
     ASSERT_TRUE(outB.IsValid());
 
-    ASSERT_TRUE(outB.get_size(0) == 3);
-    ASSERT_TRUE(outB.get_size(1) == 6);
+    ASSERT_TRUE(AreEqualSize(3, 6, outB));
 
     for(s32 y=0; y<3; y++) {
       for(s32 x=0; x<6; x++) {
@@ -2054,8 +2053,7 @@ GTEST_TEST(CoreTech_Common, Find_SetArray1)
     Array<s16> outB = find.SetArray(inB, 1, ms);
     ASSERT_TRUE(outB.IsValid());
 
-    ASSERT_TRUE(outB.get_size(0) == 6);
-    ASSERT_TRUE(outB.get_size(1) == 3);
+    ASSERT_TRUE(AreEqualSize(6, 3, outB));
 
     for(s32 y=0; y<6; y++) {
       for(s32 x=0; x<3; x++) {
@@ -2109,8 +2107,7 @@ GTEST_TEST(CoreTech_Common, Find_SetArray2)
     Array<s16> outB = find.SetArray(inB, 0, ms);
     ASSERT_TRUE(outB.IsValid());
 
-    ASSERT_TRUE(outB.get_size(0) == 3);
-    ASSERT_TRUE(outB.get_size(1) == 6);
+    ASSERT_TRUE(AreEqualSize(3, 6, outB));
 
     for(s32 y=0; y<3; y++) {
       for(s32 x=0; x<6; x++) {
@@ -2126,8 +2123,7 @@ GTEST_TEST(CoreTech_Common, Find_SetArray2)
     Array<s16> outB = find.SetArray(inB, 1, ms);
     ASSERT_TRUE(outB.IsValid());
 
-    ASSERT_TRUE(outB.get_size(0) == 6);
-    ASSERT_TRUE(outB.get_size(1) == 3);
+    ASSERT_TRUE(AreEqualSize(6, 3, outB));
 
     for(s32 y=0; y<6; y++) {
       for(s32 x=0; x<3; x++) {
@@ -2273,11 +2269,8 @@ GTEST_TEST(CoreTech_Common, Find_Evaluate1D)
 
     ASSERT_TRUE(find.Evaluate(yIndexes, xIndexes, ms) == RESULT_OK);
 
-    ASSERT_TRUE(yIndexes.get_size(0) == 1);
-    ASSERT_TRUE(yIndexes.get_size(1) == 3);
-
-    ASSERT_TRUE(xIndexes.get_size(0) == 1);
-    ASSERT_TRUE(xIndexes.get_size(1) == 3);
+    ASSERT_TRUE(AreEqualSize(1, 3, yIndexes));
+    ASSERT_TRUE(AreEqualSize(1, 3, xIndexes));
 
     //yIndexes.Print("yIndexes");
     //xIndexes.Print("xIndexes");
@@ -2299,8 +2292,7 @@ GTEST_TEST(CoreTech_Common, Find_Evaluate1D)
 
     ASSERT_TRUE(find.Evaluate(indexes, ms) == RESULT_OK);
 
-    ASSERT_TRUE(indexes.get_size(0) == 1);
-    ASSERT_TRUE(indexes.get_size(1) == 3);
+    ASSERT_TRUE(AreEqualSize(1, 3, indexes));
 
     //indexes.Print("indexes");
 
@@ -2320,11 +2312,8 @@ GTEST_TEST(CoreTech_Common, Find_Evaluate1D)
 
     ASSERT_TRUE(findB.Evaluate(yIndexes, xIndexes, ms) == RESULT_OK);
 
-    ASSERT_TRUE(yIndexes.get_size(0) == 1);
-    ASSERT_TRUE(yIndexes.get_size(1) == 3);
-
-    ASSERT_TRUE(xIndexes.get_size(0) == 1);
-    ASSERT_TRUE(xIndexes.get_size(1) == 3);
+    ASSERT_TRUE(AreEqualSize(1, 3, yIndexes));
+    ASSERT_TRUE(AreEqualSize(1, 3, xIndexes));
 
     //yIndexes.Print("yIndexes");
     //xIndexes.Print("xIndexes");
@@ -2398,11 +2387,8 @@ GTEST_TEST(CoreTech_Common, Find_Evaluate2D)
   ASSERT_TRUE(find.Evaluate(yIndexes, ms) == RESULT_FAIL_INVALID_PARAMETER);
   ASSERT_TRUE(find.Evaluate(yIndexes, xIndexes, ms) == RESULT_OK);
 
-  ASSERT_TRUE(yIndexes.get_size(0) == 1);
-  ASSERT_TRUE(yIndexes.get_size(1) == 22);
-
-  ASSERT_TRUE(xIndexes.get_size(0) == 1);
-  ASSERT_TRUE(xIndexes.get_size(1) == 22);
+  ASSERT_TRUE(AreEqualSize(1, 22, yIndexes));
+  ASSERT_TRUE(AreEqualSize(1, 22, xIndexes));
 
   //yIndexes.Print("yIndexes");
   //xIndexes.Print("xIndexes");
@@ -3025,8 +3011,7 @@ GTEST_TEST(CoreTech_Common, LinearSequence)
 
     const s32 sequenceArray_groundTruth[5] = {-4, -2, 0, 2, 4};
 
-    ASSERT_TRUE(sequenceArray.get_size(0) == 1);
-    ASSERT_TRUE(sequenceArray.get_size(1) == 5);
+    ASSERT_TRUE(AreEqualSize(1, 5, sequenceArray));
 
     for(s32 i=0; i<5; i++) {
       ASSERT_TRUE(sequenceArray[0][i] == sequenceArray_groundTruth[i]);

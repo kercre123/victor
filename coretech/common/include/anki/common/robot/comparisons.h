@@ -120,6 +120,61 @@ namespace Anki
       return true;
     }
 
+    template<typename Type1> bool AreEqualSize(const s32 height, const s32 width, const Type1 &object1)
+    {
+      if(!object1.IsValid())
+        return false;
+
+      if(object1.get_size(0) != height || object1.get_size(1) != width)
+        return false;
+
+      return true;
+    }
+
+    template<typename Type1, typename Type2> bool AreEqualSize(const s32 height, const s32 width, const Type1 &object1, const Type2 &object2)
+    {
+      if(!object1.IsValid() || !object2.IsValid())
+        return false;
+
+      if(object1.get_size(0) != height || object1.get_size(1) != width)
+        return false;
+
+      return AreEqualSize(object1, object2);
+    }
+
+    template<typename Type1, typename Type2, typename Type3> bool AreEqualSize(const s32 height, const s32 width, const Type1 &object1, const Type2 &object2, const Type3 &object3)
+    {
+      if(!object1.IsValid() || !object2.IsValid() || !object3.IsValid())
+        return false;
+
+      if(object1.get_size(0) != height || object1.get_size(1) != width)
+        return false;
+
+      return AreEqualSize(object1, object2, object3);
+    }
+
+    template<typename Type1, typename Type2, typename Type3, typename Type4> bool AreEqualSize(const s32 height, const s32 width, const Type1 &object1, const Type2 &object2, const Type3 &object3, const Type4 &object4)
+    {
+      if(!object1.IsValid() || !object2.IsValid() || !object3.IsValid() || !object4.IsValid())
+        return false;
+
+      if(object1.get_size(0) != height || object1.get_size(1) != width)
+        return false;
+
+      return AreEqualSize(object1, object2, object3, object4);
+    }
+
+    template<typename Type1, typename Type2, typename Type3, typename Type4, typename Type5> bool AreEqualSize(const s32 height, const s32 width, const Type1 &object1, const Type2 &object2, const Type3 &object3, const Type4 &object4, const Type5 &object5)
+    {
+      if(!object1.IsValid() || !object2.IsValid() || !object3.IsValid() || !object4.IsValid() || !object5.IsValid())
+        return false;
+
+      if(object1.get_size(0) != height || object1.get_size(1) != width)
+        return false;
+
+      return AreEqualSize(object1, object2, object3, object4, object5);
+    }
+
     template<typename Type1, typename Type2> bool NotAliased(const Type1 &object1, const Type2 &object2)
     {
       if(!object1.IsValid() || !object2.IsValid())

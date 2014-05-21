@@ -237,10 +237,7 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(in1Width == in2Height,
           RESULT_FAIL_INVALID_SIZE, "Multiply", "Input matrices are incompatible sizes");
 
-        AnkiConditionalErrorAndReturnValue(out.get_size(0) == in1Height,
-          RESULT_FAIL_INVALID_SIZE, "Multiply", "Input and Output matrices are incompatible sizes");
-
-        AnkiConditionalErrorAndReturnValue(out.get_size(1) == in2Width,
+        AnkiConditionalErrorAndReturnValue(AreEqualSize(in1Height, in2Width, out),
           RESULT_FAIL_INVALID_SIZE, "Multiply", "Input and Output matrices are incompatible sizes");
 
         for(s32 y1=0; y1<in1Height; y1++) {
@@ -297,10 +294,7 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(in1Width == in2TransposedWidth,
           RESULT_FAIL_INVALID_SIZE, "Multiply", "Input matrices are incompatible sizes");
 
-        AnkiConditionalErrorAndReturnValue(out.get_size(0) == in1Height,
-          RESULT_FAIL_INVALID_SIZE, "Multiply", "Input and Output matrices are incompatible sizes");
-
-        AnkiConditionalErrorAndReturnValue(out.get_size(1) == in2TransposedHeight,
+        AnkiConditionalErrorAndReturnValue(AreEqualSize(in1Height, in2TransposedHeight, out),
           RESULT_FAIL_INVALID_SIZE, "Multiply", "Input and Output matrices are incompatible sizes");
 
         for(s32 y1=0; y1<in1Height; y1++)
@@ -487,7 +481,7 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(transformedPoints.get_size() == numPoints && numPoints >= 4,
           RESULT_FAIL_INVALID_SIZE, "EstimateHomography", "originalPoints and transformedPoints must be the same size, and have at least four points apiece.");
 
-        AnkiConditionalErrorAndReturnValue(homography.get_size(0) == 3 && homography.get_size(1) == 3,
+        AnkiConditionalErrorAndReturnValue(AreEqualSize(3, 3, homography),
           RESULT_FAIL_INVALID_SIZE, "EstimateHomography", "homography must be 3x3");
 
         Array<Type> A(8, 2*numPoints, scratch);
@@ -672,7 +666,7 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(out.IsValid(),
           RESULT_FAIL_INVALID_OBJECT, "Transpose", "out is not valid");
 
-        AnkiConditionalErrorAndReturnValue(AreEqualSize(in, out),
+        AnkiConditionalErrorAndReturnValue(AreEqualSize(in.get_size(1), in.get_size(0), out),
           RESULT_FAIL_INVALID_SIZE, "Transpose", "out is not the correct size");
 
         AnkiConditionalErrorAndReturnValue(NotAliased(in, out),
@@ -718,7 +712,7 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(in.get_size(0) == in.get_size(1),
           RESULT_FAIL_INVALID_SIZE, "Rotate90", "in and out must be square");
 
-        AnkiConditionalErrorAndReturnValue(out.get_size(0) == arrWidth && out.get_size(1) == arrWidth,
+        AnkiConditionalErrorAndReturnValue(AreEqualSize(arrWidth, arrWidth, out),
           RESULT_FAIL_INVALID_SIZE, "Rotate90", "in and out must be square");
 
         AnkiConditionalErrorAndReturnValue(NotAliased(in, out),
@@ -753,7 +747,7 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(in.get_size(0) == in.get_size(1),
           RESULT_FAIL_INVALID_SIZE, "Rotate180", "in and out must be square");
 
-        AnkiConditionalErrorAndReturnValue(out.get_size(0) == arrWidth && out.get_size(1) == arrWidth,
+        AnkiConditionalErrorAndReturnValue(AreEqualSize(arrWidth, arrWidth, out),
           RESULT_FAIL_INVALID_SIZE, "Rotate180", "in and out must be square");
 
         AnkiConditionalErrorAndReturnValue(NotAliased(in, out),
@@ -784,7 +778,7 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(in.get_size(0) == in.get_size(1),
           RESULT_FAIL_INVALID_SIZE, "Rotate270", "in and out must be square");
 
-        AnkiConditionalErrorAndReturnValue(out.get_size(0) == arrWidth && out.get_size(1) == arrWidth,
+        AnkiConditionalErrorAndReturnValue(AreEqualSize(arrWidth, arrWidth, out),
           RESULT_FAIL_INVALID_SIZE, "Rotate270", "in and out must be square");
 
         AnkiConditionalErrorAndReturnValue(NotAliased(in, out),

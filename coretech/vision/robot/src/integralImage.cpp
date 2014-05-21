@@ -287,8 +287,7 @@ namespace Anki
 
       AnkiAssert(image.IsValid());
       AnkiAssert(paddedRow.IsValid());
-      AnkiAssert(paddedRow.get_size(1) == (imageWidth+2*numBorderPixels));
-      AnkiAssert(paddedRow.get_size(0) == 1);
+      AnkiAssert(AreEqualSize(1, imageWidth+2*numBorderPixels, paddedRow));
       AnkiAssert(whichRow >= 0);
       AnkiAssert(whichRow < imageHeight);
 

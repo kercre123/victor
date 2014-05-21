@@ -80,7 +80,7 @@ namespace Anki
 
       if(isOutputOneDimensional) {
         AnkiConditionalErrorAndReturnValue(
-          out.get_size(0) == 1 && out.get_size(1) == numOutputElements,
+          AreEqualSize(1, numOutputElements, out),
           RESULT_FAIL_INVALID_SIZE, "Interp2", "If out is a row vector, then out, xCoordinates, and yCoordinates must all be 1xN");
       }
 

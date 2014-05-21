@@ -396,7 +396,7 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(out.IsValid(),
           RESULT_FAIL_INVALID_OBJECT, "DownsampleByFactor", "out is not valid");
 
-        AnkiConditionalErrorAndReturnValue(out.get_size(0) == (inHeight / 2) && out.get_size(1) == (inWidth / 2),
+        AnkiConditionalErrorAndReturnValue(AreEqualSize(inHeight / 2, inWidth / 2, out),
           RESULT_FAIL_INVALID_SIZE, "DownsampleByFactor", "size(out) is not equal to size(in) >> downsampleFactor");
 
         const s32 maxY = 2 * out.get_size(0);
@@ -441,7 +441,7 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(scratch.IsValid(),
           RESULT_FAIL_INVALID_OBJECT, "DownsampleByFactor", "scratch is not valid");
 
-        AnkiConditionalErrorAndReturnValue(out.get_size(0) == smallHeight && out.get_size(1) == smallWidth,
+        AnkiConditionalErrorAndReturnValue(AreEqualSize(smallHeight, smallWidth, out),
           RESULT_FAIL_INVALID_SIZE, "DownsampleByFactor", "size(out) is not equal to size(in) >> downsampleFactor");
 
         AnkiConditionalErrorAndReturnValue(largeWidth % 4 == 0,
@@ -548,7 +548,7 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(out.IsValid(),
           RESULT_FAIL_INVALID_OBJECT, "Correlate1d", "out is not valid");
 
-        AnkiConditionalErrorAndReturnValue(in1.get_size(0)==1 && in2.get_size(0)==1 && out.get_size(0)==1,
+        AnkiConditionalErrorAndReturnValue(in1.get_size(0) == 1 && in2.get_size(0) == 1 && out.get_size(0) == 1,
           RESULT_FAIL_INVALID_SIZE, "Correlate1d", "Arrays must be 1d and horizontal");
 
         AnkiConditionalErrorAndReturnValue(out.get_size(1) == outputLength,

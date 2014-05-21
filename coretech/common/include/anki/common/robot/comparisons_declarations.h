@@ -39,6 +39,13 @@ namespace Anki
     template<typename Type1, typename Type2, typename Type3, typename Type4> bool AreEqualSize(const Type1 &object1, const Type2 &object2, const Type3 &object3, const Type4 &object4);
     template<typename Type1, typename Type2, typename Type3, typename Type4, typename Type5> bool AreEqualSize(const Type1 &object1, const Type2 &object2, const Type3 &object3, const Type4 &object4, const Type5 &object5);
 
+    // Check sizes against an input height and width
+    template<typename Type1> bool AreEqualSize(const s32 height, const s32 width, const Type1 &object1);
+    template<typename Type1, typename Type2> bool AreEqualSize(const s32 height, const s32 width, const Type1 &object1, const Type2 &object2);
+    template<typename Type1, typename Type2, typename Type3> bool AreEqualSize(const s32 height, const s32 width, const Type1 &object1, const Type2 &object2, const Type3 &object3);
+    template<typename Type1, typename Type2, typename Type3, typename Type4> bool AreEqualSize(const s32 height, const s32 width, const Type1 &object1, const Type2 &object2, const Type3 &object3, const Type4 &object4);
+    template<typename Type1, typename Type2, typename Type3, typename Type4, typename Type5> bool AreEqualSize(const s32 height, const s32 width, const Type1 &object1, const Type2 &object2, const Type3 &object3, const Type4 &object4, const Type5 &object5);
+
     // If the Arrays are aliased (pointing to the same location in memory) or uninitialized, then return false
     // NOTE: the objects must have IsValid() and get_buffer() methods
     template<typename Type1, typename Type2> bool NotAliased(const Type1 &object1, const Type2 &object2);
