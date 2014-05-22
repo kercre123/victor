@@ -1,6 +1,8 @@
 #include "anki/vision/basestation/camera.h"
 #include "anki/vision/basestation/observableObject.h"
 
+#include "anki/common/basestation/exceptions.h"
+
 
 namespace Anki {
   namespace Vision {
