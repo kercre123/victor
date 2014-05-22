@@ -22,11 +22,11 @@ end
 if CropImage
     [nrows,ncols,~] = size(img);
     
-    row = any(any(img<1,3),1); 
+    row = any(any(img<0.5,3),1); 
     xmin = find(row, 1, 'first');
     xmax = find(row, 1, 'last');
     
-    col = any(any(img<1,3),2);
+    col = any(any(img<0.5,3),2);
     ymin = find(col, 1, 'first');
     ymax = find(col, 1, 'last');
     
