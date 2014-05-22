@@ -44,7 +44,7 @@ namespace Anki
       //
       // 1x1 Cubes
       //
-      blockLibrary_.AddObject(new Block_Cube1x1(Block::FUEL_BLOCK_TYPE));
+      //blockLibrary_.AddObject(new Block_Cube1x1(Block::FUEL_BLOCK_TYPE));
       
       blockLibrary_.AddObject(new Block_Cube1x1(Block::ANGRYFACE_BLOCK_TYPE));
 
@@ -55,6 +55,8 @@ namespace Anki
       blockLibrary_.AddObject(new Block_Cube1x1(Block::FIRE_BLOCK_TYPE));
       
       blockLibrary_.AddObject(new Block_Cube1x1(Block::ANKILOGO_BLOCK_TYPE));
+      
+      blockLibrary_.AddObject(new Block_Cube1x1(Block::DICE_BLOCK_TYPE));
 
       
       //
