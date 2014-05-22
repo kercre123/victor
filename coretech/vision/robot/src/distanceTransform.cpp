@@ -138,19 +138,19 @@ namespace Anki
 
             // TODO: If all of the image pixels are background, set zero without doing the computation
 
-            const u32 backgroundThreshold_0 = static_cast<u32>(backgroundThreshold);
-            const u32 backgroundThreshold_right8 = static_cast<u32>(backgroundThreshold) << 8;
-            const u32 backgroundThreshold_right16 = static_cast<u32>(backgroundThreshold) << 16;
-            const u32 backgroundThreshold_right24 = static_cast<u32>(backgroundThreshold) << 24;
+            const u16 backgroundThreshold_0 = static_cast<u16>(backgroundThreshold);
+            const u16 backgroundThreshold_right8 = static_cast<u16>(backgroundThreshold) << 8;
+            //const u32 backgroundThreshold_right16 = static_cast<u32>(backgroundThreshold) << 16;
+            //const u32 backgroundThreshold_right24 = static_cast<u32>(backgroundThreshold) << 24;
 
             // First SIMD the top-left, top, top-right
-            for(s32 x=4; x<imageWidth-3; x+=4) {
-              const u32 image3210 = *reinterpret_cast<const u32*>(pImage_y0 + x);
+            for(s32 x=4; x<imageWidth-1; x+=2) {
+              const u16 image10 = *reinterpret_cast<const u16*>(pImage_y0 + x);
 
               u32 distance10 = 0;
-              u32 distance32 = 0;
+              //u32 distance32 = 0;
 
-              if((image3210 & 0xFF) >= backgroundThreshold_0) {
+              if((image10 & 0xFF) >= backgroundThreshold_0) {
                 const u16 left = pDistance_y0[x-1] + a;
                 const u16 leftUp = pDistance_ym1[x-1] + b;
                 const u16 up = pDistance_ym1[x] + a;
@@ -159,7 +159,7 @@ namespace Anki
                 distance10 |= MIN(MIN(MIN(left, leftUp), up), rightUp);
               }
 
-              if((image3210 & 0xFF00) >= backgroundThreshold_right8) {
+              if((image10 & 0xFF00) >= backgroundThreshold_right8) {
                 const u16 left = (distance10&0xFFFF) + a;
                 const u16 leftUp = pDistance_ym1[x] + b;
                 const u16 up = pDistance_ym1[x+1] + a;
@@ -168,38 +168,7 @@ namespace Anki
                 distance10 |= MIN(MIN(MIN(left, leftUp), up), rightUp) << 16;
               }
 
-              if((image3210 & 0xFF0000) >= backgroundThreshold_right16) {
-                const u16 left = ((distance10&0xFFFF0000) >> 16) + a;
-                const u16 leftUp = pDistance_ym1[x+1] + b;
-                const u16 up = pDistance_ym1[x+2] + a;
-                const u16 rightUp = pDistance_ym1[x+3] + b;
-
-                distance32 |= MIN(MIN(MIN(left, leftUp), up), rightUp);
-              }
-
-              if((image3210 & 0xFF000000) >= backgroundThreshold_right24) {
-                const u16 left = (distance32&0xFFFF) + a;
-                const u16 leftUp = pDistance_ym1[x+2] + b;
-                const u16 up = pDistance_ym1[x+3] + a;
-                const u16 rightUp = pDistance_ym1[x+5] + b;
-
-                distance32 |= MIN(MIN(MIN(left, leftUp), up), rightUp) << 16;
-              }
-
-              //const u32 image10 = (image3210 & 0xFF) | ((image3210 & 0xFF00) << 8);
-              //const u32 image32 = ((image3210 & 0xFF0000) >> 16) | ((image3210 & 0xFF000000) >> 8);
-
-              //const u32 leftUp10  = *reinterpret_cast<const u32*>(pDistance_ym1 + x - 1) + bX2;
-              //const u32 leftUp32  = *reinterpret_cast<const u32*>(pDistance_ym1 + x + 1) + bX2;
-
-              //const u32 up10      = *reinterpret_cast<const u32*>(pDistance_ym1 + x)     + aX2;
-              //const u32 up32      = *reinterpret_cast<const u32*>(pDistance_ym1 + x + 2) + aX2;
-
-              //const u32 rightUp10 = *reinterpret_cast<const u32*>(pDistance_ym1 + x + 1) + bX2;
-              //const u32 rightUp32 = *reinterpret_cast<const u32*>(pDistance_ym1 + x + 3) + bX2;
-
               *reinterpret_cast<u32*>(pDistance_y0 + x) = distance10;
-              *reinterpret_cast<u32*>(pDistance_y0 + x + 2) = distance32;
             } // for(s32 x=4; x<imageWidth-3; x+=4)
 
             // Compute the right-edge pixels (forward pass)
