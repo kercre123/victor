@@ -302,7 +302,7 @@ namespace Anki
                           "but wasn't.\n", object->GetID());
 
             // Erase the vizualized block and its projected quad
-            VizManager::getInstance()->EraseVizObject(unobserved.second->second->GetID());
+            VizManager::getInstance()->EraseCuboid(unobserved.second->second->GetID());
             VizManager::getInstance()->EraseQuad(unobserved.second->second->GetID());
             
             // Actually erase the object from blockWorld's container of

@@ -148,9 +148,6 @@ int main(int argc, char **argv)
     /////////// Update visualization ////////////
     if(blockWorld.DidBlocksChange())
     {
-      // TODO: Remove this one EraseVizObject() is fixed
-      VizManager::getInstance()->EraseAllVizObjects();
-      
       // Get selected block of interest from Behavior manager
       static ObjectID_t prev_boi = 0;      // Previous block of interest
       static u32 prevNumPreDockPoses = 0;  // Previous number of predock poses
