@@ -1,6 +1,10 @@
 
 #include "anki/common/basestation/math/pose.h"
-#include "anki/common/basestation/math/matrix.h"
+
+#include "anki/common/basestation/math/matrix_impl.h"
+#include "anki/common/basestation/math/point_impl.h"
+#include "anki/common/basestation/math/quad_impl.h"
+
 #include "anki/common/shared/utilities_shared.h"
 
 #include <stdexcept>

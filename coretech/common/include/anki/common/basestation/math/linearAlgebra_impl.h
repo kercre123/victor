@@ -21,6 +21,9 @@
 
 #include "anki/common/basestation/math/linearAlgebra.h"
 
+#include "anki/common/basestation/math/point_impl.h"
+#include "anki/common/basestation/math/matrix_impl.h"
+
 namespace Anki {
   
   template<size_t N, typename T>

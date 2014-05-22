@@ -8,6 +8,9 @@
 
 #include "anki/common/basestation/math/rotation.h"
 
+#include "anki/common/basestation/math/matrix_impl.h"
+#include "anki/common/basestation/math/point_impl.h"
+
 #if ANKICORETECH_USE_OPENCV
 #include "opencv2/calib3d/calib3d.hpp"
 #endif

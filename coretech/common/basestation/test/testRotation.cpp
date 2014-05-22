@@ -5,6 +5,8 @@
 
 #include "anki/common/basestation/math/pose.h"
 
+#include "anki/common/basestation/math/matrix_impl.h"
+
 #include <iostream>
 
 // For test debug printing

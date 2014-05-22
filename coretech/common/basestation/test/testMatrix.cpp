@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 
 #include "anki/common/basestation/general.h"
-#include "anki/common/basestation/math/matrix.h"
+#include "anki/common/basestation/math/matrix_impl.h"
 #include <iostream>
 
 // For test debug printing
