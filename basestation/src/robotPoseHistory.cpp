@@ -44,7 +44,7 @@ namespace Anki {
     {
       frame_ = frameID;
       
-      pose_.set_rotation(pose_angle, Vec3f(0,0,1));
+      pose_.set_rotation(pose_angle, Z_AXIS_3D);
       pose_.set_translation(Vec3f(pose_x, pose_y, pose_z));
       headAngle_ = head_angle;
     }
@@ -85,7 +85,7 @@ namespace Anki {
                             p.GetPose().get_translation().x(),
                             p.GetPose().get_translation().y(),
                             p.GetPose().get_translation().z(),
-                            p.GetPose().get_rotationAngle().ToFloat(),
+                            p.GetPose().get_rotationMatrix().GetAngleAroundZaxis().ToFloat(),
                             p.GetHeadAngle());
     }
 
