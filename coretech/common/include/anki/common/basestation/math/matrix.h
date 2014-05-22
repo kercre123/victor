@@ -4,13 +4,11 @@
  * Author: Andrew Stein (andrew)
  * Created: 9/10/2013
  *
- * Information on last revision to this file:
- *    $LastChangedDate$
- *    $LastChangedBy$
- *    $LastChangedRevision$
  *
- * Description: Implements a few classes for storing matrices.  All are 
+ * Description: Defines a few classes for storing matrices.  All are
  *              on storage type.
+ *
+ // TODO: Move these classes to separate files
  *
  *              - "Matrix" is a general container for a matrix whose size is
  *                unknown at compile time.  It inherits from Array2d and adds 

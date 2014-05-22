@@ -27,6 +27,7 @@
 
 #include "anki/common/basestation/math/matrix.h"
 
+#include "anki/common/basestation/array2d_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
 
 #include <ostream>

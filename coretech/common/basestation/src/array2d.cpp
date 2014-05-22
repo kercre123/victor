@@ -1,4 +1,4 @@
-#include "anki/common/basestation/array2d.h"
+#include "anki/common/basestation/array2d_impl.h"
 
 #include <iostream>
 

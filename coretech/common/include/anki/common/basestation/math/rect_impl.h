@@ -1,3 +1,17 @@
+/**
+ * File: rect_impl.h
+ *
+ * Author: Andrew Stein (andrew)
+ * Created: 5/10/2014
+ *
+ *
+ * Description: Defines a templated class for storing 2D rectangles according to
+ *              their upper left corner and width + height.
+ *
+ * Copyright: Anki, Inc. 2014
+ *
+ **/
+
 #ifndef _ANKICORETECH_COMMON_RECT_IMPL_H_
 #define _ANKICORETECH_COMMON_RECT_IMPL_H_
 

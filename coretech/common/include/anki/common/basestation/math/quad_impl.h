@@ -1,3 +1,17 @@
+/**
+ * File: quad_impl.h
+ *
+ * Author: Andrew Stein (andrew)
+ * Created: 9/10/2013
+ *
+ *
+ * Description: Implements a general N-dimensional Quadrilateral class for holding
+ *              four points in arbitrary positions.
+ *
+ * Copyright: Anki, Inc. 2013
+ *
+ **/
+
 #ifndef _ANKICORETECH_COMMON_QUAD_IMPL_H_
 #define _ANKICORETECH_COMMON_QUAD_IMPL_H_
 
