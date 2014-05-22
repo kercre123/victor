@@ -15,6 +15,7 @@
 
 #include "anki/common/basestation/math/quad.h"
 #include "anki/common/basestation/math/pose.h"
+#include "anki/vision/basestation/camera.h"
 
 namespace Anki {
   namespace Vision{
@@ -47,16 +48,19 @@ namespace Anki {
     public:
       // Instantiate a Marker from a given code, seen by a given camera with
       // the corners observed at the specified image coordinates.
-      ObservedMarker(const Code& type, const Quad2f& corners,
+      ObservedMarker(const TimeStamp_t t,
+                     const Code& type, const Quad2f& corners,
                      const Camera& seenBy);
       
       // Accessors:
+      inline const TimeStamp_t GetTimeStamp() const;
       inline const Quad2f& GetImageCorners() const;
       inline const Camera& GetSeenBy()       const;
       
     protected:
+      TimeStamp_t    t_;
       Quad2f         imgCorners_;
-      Camera const&  seenBy_;
+      Camera         seenByCam_;
       
     }; // class ObservedMarker
     
@@ -104,6 +108,9 @@ namespace Anki {
 
     }; // class KnownMarker
     
+    inline const TimeStamp_t ObservedMarker::GetTimeStamp() const {
+      return t_;
+    }
     
     inline Quad2f const& ObservedMarker::GetImageCorners() const {
       return imgCorners_;
@@ -126,7 +133,7 @@ namespace Anki {
     }
     
     inline Camera const& ObservedMarker::GetSeenBy() const {
-      return seenBy_;
+      return seenByCam_;
     }
     
 

@@ -329,7 +329,7 @@ namespace Anki
       // Get all mat objects *seen by this robot's camera*
       std::vector<Vision::ObservableObject*> matsSeen;
       matLibrary_.CreateObjectsFromMarkers(obsMarkers_, matsSeen,
-                                           &robot->get_camHead());
+                                           (robot->get_camHead().get_id()));
       
       // TODO: what to do when a robot sees multiple mat pieces at the same time
       if(not matsSeen.empty()) {
@@ -363,8 +363,18 @@ namespace Anki
         Pose3d newPose( robot->get_pose().getWithRespectTo(matWrtCamera) );
         */
         
+        // TODO:
+        // Add the new vision-based pose to the robot's history.
+        // First get RobotPoseStamp at the time the object was observed.
+        RobotPoseStamp* posePtr = nullptr;
+        if (robot->GetVisionOnlyPoseAt(matsSeen[0]->GetLastObservedTime(), &posePtr) == RESULT_FAIL) {
+          PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.CouldNotFindHistoricalPose", "");
+          return false;
+        }
+        
         const Pose3d* matPose = &(matsSeen[0]->GetPose());
-        Pose3d newPose( robot->get_pose().getWithRespectTo(matPose) );
+        //Pose3d newPose( robot->get_pose().getWithRespectTo(matPose) );
+        Pose3d newPose( posePtr->GetPose().getWithRespectTo(matPose) );
         
         /*
         Pose3d P_diff;
@@ -380,7 +390,29 @@ namespace Anki
          (*matWrtCamera)).getInverse() );
          */
         newPose.set_parent(Pose3d::World); // robot->get_pose().get_parent() );
-        robot->set_pose(newPose);
+        
+        // Make sure that the rotation angle assumes a rotation axis of roughly (0,0,1).
+        // TODO: Should grab the actual z-axis rotation here instead of assuming the rotationAngle is good enough.
+        Vec3f rotAxis = newPose.get_rotationAxis();
+        if ( !NEAR(rotAxis.x(), 0, 0.1) || !NEAR(rotAxis.y(), 0, 0.1) || !NEAR(ABS(rotAxis.z()), 1, 0.1)) {
+          PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.RotAxisIsNotVertical", "");
+          return false;
+        }
+        
+        RobotPoseStamp p(robot->GetPoseFrameID(), newPose, posePtr->GetHeadAngle());
+        robot->AddVisionOnlyPoseToHistory(matsSeen[0]->GetLastObservedTime(), p);
+
+        // We have a new ("ground truth") key frame. Increment the pose frame!
+        robot->IncrementPoseFrameID();
+        
+
+        // TODO: Compute the new "current" pose from history which uses the past ground truth pose we just computed.
+        TimeStamp_t t;
+        robot->GetPoseHistory().ComputePoseAt(robot->GetPoseHistory().GetNewestTimeStamp(), t, p, false);
+        robot->set_pose(p.GetPose());
+        
+                                              
+        //robot->set_pose(newPose);
         wasPoseUpdated = true;
         
         PRINT_INFO("Using mat %d to localize robot %d at (%.3f,%.3f,%.3f), %.1fdeg@(%.2f,%.2f,%.2f)\n",

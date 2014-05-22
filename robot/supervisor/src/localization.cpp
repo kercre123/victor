@@ -49,6 +49,9 @@ namespace Anki {
         f32 prevRightWheelPos_ = 0;
         
         f32 gyroRotOffset_ = 0;
+        
+        PoseFrameID_t frameId_ = 0;
+        
       }
 
       Result Init() {
@@ -250,6 +253,17 @@ namespace Anki {
       Radians GetCurrentMatOrientation()
       {
         return currentMatHeading_;
+      }
+
+      
+      void SetPoseFrameId(PoseFrameID_t id)
+      {
+        frameId_ = id;
+      }
+
+      PoseFrameID_t GetPoseFrameId()
+      {
+        return frameId_;
       }
       
     }

@@ -66,7 +66,7 @@ int main(int argc, char **argv)
   // Allow webots to step once first to ensure that
   // the messages sent in VizManager::Init() have
   // somewhere to go.
-  Sim::basestationController.step(TIME_STEP);
+  Sim::basestationController.step(BS_TIME_STEP);
   VizManager::getInstance()->Init();
   
 #if(ENABLE_BS_KEYBOARD_CONTROL)
@@ -77,7 +77,7 @@ int main(int argc, char **argv)
   //
   // Main Execution loop: step the world forward forever
   //
-  while (Sim::basestationController.step(TIME_STEP) != -1)
+  while (Sim::basestationController.step(BS_TIME_STEP) != -1)
   {
     // Update time
     // (To be done from iOS eventually)

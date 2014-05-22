@@ -23,6 +23,7 @@
 #define ANKICORETECH_COMMON_TYPES_H_
 
 #include <stdint.h>
+#include "constantsAndMacros.h"
 
 typedef uint8_t  u8;
 typedef int8_t   s8;
@@ -39,6 +40,9 @@ typedef u32 RobotID_t;
 typedef u16 BlockID_t;
 typedef u16 ObjectID_t;
 typedef u16 ObjectType_t;
+typedef u32 CameraID_t;
+
+const CameraID_t ANY_CAMERA = u32_MAX;
 
 // If we're using c++, Result is in a namespace. In c, it's not.
 #ifdef __cplusplus
@@ -50,6 +54,12 @@ namespace Anki
   //       bytes), has implications for message alignment since it currently
   //       comes first in the message structs.
   typedef u32 TimeStamp_t;
+  
+  // PoseFrameID_t is used to denote a set of poses that were recorded since
+  // the last absolute localization update. This is required in order to
+  // know which pose updates coming from the robot are of the robot before
+  // or after the last absolute pose update was sent to the robot.
+  typedef u32 PoseFrameID_t;
 
 #ifdef __cplusplus
 } // namespace Anki
