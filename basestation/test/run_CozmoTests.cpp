@@ -98,6 +98,20 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
   {
     const Json::Value& jsonData = jsonRoot["Poses"][i_pose];
     
+    // Put the robot's head at the right angle *before* queueing up the markers
+    float headAngle;
+    ASSERT_TRUE(JsonTools::GetValueOptional(jsonData["RobotPose"], "HeadAngle", headAngle));
+    robot.set_headAngle(headAngle);
+    
+    Pose3d trueRobotPose;
+    ASSERT_TRUE(JsonTools::GetPoseOptional(jsonData, "RobotPose", trueRobotPose));
+    
+    // If we're not going to be checking the robot's pose, we need to set it
+    // to the ground truth now, *before* queueing up the markers
+    if(!checkRobotPose) {
+      robot.set_pose(trueRobotPose);
+    }
+
     int NumMarkers;
     ASSERT_TRUE(JsonTools::GetValueOptional(jsonData, "NumMarkers", NumMarkers));
     
@@ -137,13 +151,6 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
     } // for each VisionMarker in the jsonFile
     
     
-    Pose3d trueRobotPose;
-    ASSERT_TRUE(JsonTools::GetPoseOptional(jsonData, "RobotPose", trueRobotPose));
-    
-    float headAngle;
-    ASSERT_TRUE(JsonTools::GetValueOptional(jsonData["RobotPose"], "HeadAngle", headAngle));
-    robot.set_headAngle(headAngle);
-    
     // Process all the markers we've queued
     uint32_t numBlocksObserved = 0;
     blockWorld.Update(numBlocksObserved);
@@ -162,17 +169,10 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
                     P_diff.get_translation().y()*P_diff.get_translation().y()),
               P_diff.get_translation().z());
       
-      EXPECT_TRUE(robotPoseMatches);
+      // If the robot's pose is not correct, we can't continue, because
+      // all the blocks' poses will also be incorrect
+      ASSERT_TRUE(robotPoseMatches);
       
-      
-      if(not robotPoseMatches) {
-        // Use ground truth pose so we can continue
-        robot.set_pose(trueRobotPose);
-      }
-    }
-    else {
-      // Just set the robot's pose to the ground truth in the JSON file
-      robot.set_pose(trueRobotPose);
     }
     
     // Use the rest of the VisionMarkers to update the blockworld's pose
@@ -308,7 +308,7 @@ const char *visionTestJsonFiles[] = {
   "visionTest_VaryingDistance.json",
   "visionTest_MatPoseTest.json",
   "visionTest_TwoBlocksOnePose.json",
-//  "visionTest_RepeatedBlock.json",
+  "visionTest_RepeatedBlock.json",
   "visionTest_OffTheMat.json"
 };
 

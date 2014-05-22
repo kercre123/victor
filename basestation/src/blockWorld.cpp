@@ -385,17 +385,23 @@ namespace Anki
         */
         
         /*
-         Pose3d newPose( (*(robot->get_camHead().get_pose().get_parent()) *
+         Pose3d newPose
+         ( (*(robot->get_camHead().get_pose().get_parent()) *
          robot->get_camHead().get_pose() *
          (*matWrtCamera)).getInverse() );
          */
         newPose.set_parent(Pose3d::World); // robot->get_pose().get_parent() );
         
-        // Make sure that the rotation angle assumes a rotation axis of roughly (0,0,1).
+        // If there is any significant rotation, make sure that it is roughly
+        // around the Z axis
         // TODO: Should grab the actual z-axis rotation here instead of assuming the rotationAngle is good enough.
-        Vec3f rotAxis = newPose.get_rotationAxis();
-        if ( !NEAR(rotAxis.x(), 0, 0.1) || !NEAR(rotAxis.y(), 0, 0.1) || !NEAR(ABS(rotAxis.z()), 1, 0.1)) {
-          PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.RotAxisIsNotVertical", "");
+        Radians rotAngle;
+        Vec3f rotAxis;
+        newPose.get_rotationVector().get_angleAndAxis(rotAngle, rotAxis);
+        const float dotProduct = dot(rotAxis, Z_AXIS_3D);
+        const float dotProductThreshold = 0.0152f; // 1.f - std::cos(DEG_TO_RAD(10)); // within 10 degrees
+        if(!NEAR(rotAngle.ToFloat(), 0, DEG_TO_RAD(10)) && !NEAR(std::abs(dotProduct), 1.f, dotProductThreshold)) {
+          PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.RobotNotOnHorizontalPlane", "");
           return false;
         }
         
