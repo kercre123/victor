@@ -83,6 +83,14 @@ namespace Anki
       //
 
       Result YUVToGrayscale(const Array<u16> &yuvImage, Array<u8> &grayscaleImage);
+
+      //
+      // 2D-to-2D transformations
+      //
+
+      // 3x3 window, fixed-point, approximate Euclidian distance transform. Based on Borgefors "Distance transformations in digital images" 1986
+      // Any pixel with grayvalue less than backgroundThreshold is treated as background
+      Result DistanceTransform(const Array<u8> image, const u8 backgroundThreshold, FixedPointArray<s16> &distance);
     } // namespace ImageProcessing
   } // namespace Embedded
 } //namespace Anki

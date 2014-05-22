@@ -63,6 +63,99 @@ using namespace Anki::Embedded;
 
 //#define RUN_FACE_DETECTION_GUI
 
+GTEST_TEST(CoreTech_Vision, DistanceTransform)
+{
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  InitBenchmarking();
+
+  // Correctness test
+  {
+    PUSH_MEMORY_STACK(scratchCcm);
+    PUSH_MEMORY_STACK(scratchOnchip);
+    PUSH_MEMORY_STACK(scratchOffchip);
+
+    const s32 imageHeight = 6;
+    const s32 imageWidth = 8;
+    const s32 numFractionalBits = 3;
+
+    Array<u8> image(imageHeight, imageWidth, scratchOffchip);
+    FixedPointArray<s16> distance(imageHeight, imageWidth, numFractionalBits, scratchOffchip);
+
+    const u8 image_data[imageHeight*imageWidth] = {
+      9, 9, 9, 9, 9, 4, 9, 9,
+      3, 9, 9, 9, 9, 9, 9, 9,
+      9, 9, 9, 9, 9, 9, 9, 2,
+      9, 9, 9, 1, 9, 9, 9, 9,
+      9, 9, 9, 9, 9, 9, 9, 9,
+      9, 9, 9, 9, 9, 9, 9, 0};
+
+    const u8 backgroundThreshold = 5;
+
+    image.Set(image_data, imageHeight*imageWidth);
+
+    const Result result = ImageProcessing::DistanceTransform(image, backgroundThreshold, distance);
+
+    //image.Print("image");
+    //distance.Print("distance");
+
+    ASSERT_TRUE(result == RESULT_OK);
+
+    FixedPointArray<s16> distance_groundTruth(imageHeight, imageWidth, numFractionalBits, scratchOffchip);
+
+    const s16 distance_groundTruthData[imageHeight*imageWidth] = {
+      8, 11, 19, 16, 8, 0, 8, 16,
+      0, 8, 16, 16, 11, 8, 11, 8,
+      8, 11, 11, 8, 11, 16, 8, 0,
+      16, 16, 8, 0, 8, 16, 11, 8,
+      24, 19, 11, 8, 11, 19, 11, 8,
+      30, 22, 19, 16, 19, 16, 8, 0};
+
+    distance_groundTruth.Set(distance_groundTruthData, imageHeight*imageWidth);
+
+    ASSERT_TRUE(AreElementwiseEqual<s16>(distance, distance_groundTruth));
+  } // Correctness test
+
+  // Benchmarking test
+  {
+    PUSH_MEMORY_STACK(scratchCcm);
+    PUSH_MEMORY_STACK(scratchOnchip);
+    PUSH_MEMORY_STACK(scratchOffchip);
+
+    const s32 imageHeight = 320;
+    const s32 imageWidth = 120;
+    const s32 numFractionalBits = 3;
+
+    Array<u8> image(imageHeight, imageWidth, scratchOnchip);
+    FixedPointArray<s16> distance(imageHeight, imageWidth, numFractionalBits, scratchOnchip);
+
+    for(s32 y=0; y<imageHeight; y++) {
+      u8 * restrict pImage = image.Pointer(y,0);
+      for(s32 x=0; x<imageWidth; x++) {
+        pImage[x] = static_cast<u8>(30*x + 10*y);
+      }
+    }
+
+    const u8 backgroundThreshold = 128;
+
+    BeginBenchmark("DistanceTransform");
+
+    const Result result = ImageProcessing::DistanceTransform(image, backgroundThreshold, distance);
+
+    EndBenchmark("DistanceTransform");
+
+    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
+
+    ASSERT_TRUE(result == RESULT_OK);
+  }
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Vision, DistanceTransform)
+
 GTEST_TEST(CoreTech_Vision, FastGradient)
 {
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
@@ -4318,9 +4411,10 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   numPassedTests = 0;
   numFailedTests = 0;
 
-  CALL_GTEST_TEST(CoreTech_Vision, FastGradient);
+  CALL_GTEST_TEST(CoreTech_Vision, DistanceTransform);
 
 #if !defined(JUST_FIDUCIAL_DETECTION)
+  CALL_GTEST_TEST(CoreTech_Vision, FastGradient);
   CALL_GTEST_TEST(CoreTech_Vision, Canny);
   CALL_GTEST_TEST(CoreTech_Vision, BoxFilterU8U16);
   CALL_GTEST_TEST(CoreTech_Vision, Vignetting);
