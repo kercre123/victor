@@ -40,6 +40,8 @@ namespace Anki
       // Any pixel with grayvalue less than backgroundThreshold is treated as background
       Result DistanceTransform(const Array<u8> image, const u8 backgroundThreshold, FixedPointArray<s16> &distance)
       {
+        BeginBenchmark("dt_init");
+
         const s32 numFractionalBits = distance.get_numFractionalBits();
 
         // For numFractionalBits==3, a==8 and b==11
@@ -61,9 +63,13 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(numFractionalBits >= 0 && numFractionalBits < 15,
           RESULT_FAIL_INVALID_PARAMETER, "DistanceTransform", "numFractionalBits is out of range");
 
+        EndBenchmark("dt_init");
+
         //
         // Forward pass (left and down)
         //
+
+        BeginBenchmark("dt_forward1");
 
         // Compute the left and top image edges (forward pass)
         {
@@ -97,6 +103,10 @@ namespace Anki
           }
         } // Compute the left and top image edges (forward pass)
 
+        EndBenchmark("dt_forward1");
+
+        BeginBenchmark("dt_forward2");
+
         // Compute the non left-right-top pixels (forward pass)
         {
           for(s32 y=1; y<imageHeight; y++) {
@@ -120,6 +130,10 @@ namespace Anki
           }
         } // Compute the non left-right-top pixels (forward pass)
 
+        EndBenchmark("dt_forward2");
+
+        BeginBenchmark("dt_forward3");
+
         // Compute the right-edge pixels (forward pass)
         {
           const s32 x = imageWidth - 1;
@@ -142,9 +156,13 @@ namespace Anki
           }
         } // Compute the right-edge pixels (forward pass)
 
+        EndBenchmark("dt_forward3");
+
         //
         // Backward pass (right and up)
         //
+
+        BeginBenchmark("dt_backward1");
 
         // Compute the right and bottom image edges (backward pass)
         {
@@ -160,6 +178,10 @@ namespace Anki
             *distance.Pointer(y,imageWidth-1) = MIN(*distance.Pointer(y,imageWidth-1), *distance.Pointer(y+1,imageWidth-1) + a);
           }
         } // Compute the right and bottom image edges (backward pass)
+
+        EndBenchmark("dt_backward1");
+
+        BeginBenchmark("dt_backward2");
 
         // Compute the non left-right-top pixels (backward pass)
         {
@@ -181,6 +203,10 @@ namespace Anki
           }
         } // Compute the non left-right-top pixels (backward pass)
 
+        EndBenchmark("dt_backward2");
+
+        BeginBenchmark("dt_backward3");
+
         // Compute the left edge (backward pass)
         {
           const s32 x = 0;
@@ -199,6 +225,8 @@ namespace Anki
             }
           }
         } // Compute the left edge (backward pass)
+
+        EndBenchmark("dt_backward3");
 
         return RESULT_OK;
       }
