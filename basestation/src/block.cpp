@@ -15,6 +15,8 @@
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/robot.h"
 
+#include "anki/common/basestation/math/quad_impl.h"
+
 
 #if ANKICORETECH_USE_OPENCV
 #include "opencv2/imgproc/imgproc.hpp"

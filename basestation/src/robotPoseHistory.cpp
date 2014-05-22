@@ -9,6 +9,8 @@
 #include "anki/cozmo/basestation/robotPoseHistory.h"
 #include "anki/common/basestation/general.h"
 
+#include "anki/common/basestation/math/point_impl.h"
+
 #define DEBUG_ROBOT_POSE_HISTORY 0
 
 namespace Anki {

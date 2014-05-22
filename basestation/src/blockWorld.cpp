@@ -5,7 +5,7 @@
 #include "anki/common/shared/utilities_shared.h"
 
 #include "anki/common/basestation/general.h"
-#include "anki/common/basestation/math/rect.h"
+//#include "anki/common/basestation/math/rect.h"
 
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/block.h"

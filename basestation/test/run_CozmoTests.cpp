@@ -217,7 +217,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
         // The threshold will vary with how far away the block actually is
         const float blockPoseDistThreshold_mm = (blockPoseDistThresholdFraction *
                                                  (groundTruthBlock->GetPose().get_translation() -
-                                                  trueRobotPose.get_translation()).length());
+                                                  trueRobotPose.get_translation()).Length());
         
         for(auto & observedBlock : observedBlocks)
         {
@@ -230,7 +230,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
               // We just found multiple matches for this ground truth block
               fprintf(stdout, "Match #%d found for one ground truth block. "
                       "T_diff = %.2fmm (vs. %.2fmm), Angle_diff = %.1fdeg (vs. %.1fdeg)\n",
-                      matchesFound+1, P_diff.get_translation().length(),
+                      matchesFound+1, P_diff.get_translation().Length(),
                       blockPoseDistThreshold_mm,
                       P_diff.get_rotationAngle().getDegrees(),
                       blockPoseAngleThreshold.getDegrees());
@@ -243,7 +243,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
             if(matchesFound == 0) {
               fprintf(stdout, "Match found for observed block with "
                       "T_diff = %.2fmm (vs. %.2fmm), Angle_diff = %.1fdeg (vs %.1fdeg)\n",
-                      P_diff.get_translation().length(),
+                      P_diff.get_translation().Length(),
                       blockPoseDistThreshold_mm,
                       P_diff.get_rotationAngle().getDegrees(),
                       blockPoseAngleThreshold.getDegrees());
