@@ -259,7 +259,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
                (T_true - observedBlock.second->GetPose().get_translation()).length(),
                ().length());
                */
-              //errorVsDist.push_back(std::make_pair( distance, dot(T_error, T_dir) ));
+              //errorVsDist.push_back(std::make_pair( distance, DotProduct(T_error, T_dir) ));
               //errorVsDist.push_back(std::make_pair(distance, (T_true - observedBlock.second->GetPose().get_translation()).length()));
               errorVsDist.emplace_back(trueRobotPose.get_translation(),
                                        groundTruthBlock->GetPose().get_translation(), observedBlock.second->GetPose().get_translation());

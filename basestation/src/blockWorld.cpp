@@ -398,7 +398,7 @@ namespace Anki
         Radians rotAngle;
         Vec3f rotAxis;
         newPose.get_rotationVector().get_angleAndAxis(rotAngle, rotAxis);
-        const float dotProduct = dot(rotAxis, Z_AXIS_3D);
+        const float dotProduct = DotProduct(rotAxis, Z_AXIS_3D);
         const float dotProductThreshold = 0.0152f; // 1.f - std::cos(DEG_TO_RAD(10)); // within 10 degrees
         if(!NEAR(rotAngle.ToFloat(), 0, DEG_TO_RAD(10)) && !NEAR(std::abs(dotProduct), 1.f, dotProductThreshold)) {
           PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.RobotNotOnHorizontalPlane", "");
