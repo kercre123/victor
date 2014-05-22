@@ -64,7 +64,7 @@ namespace Anki {
         Point3<PRECISION> e2 = CrossProduct(e3, e1);
 
         // The e vectors are the rows of the T matrix (and T should already be allocated)
-        AnkiAssert(T.get_size(0) == 3 && T.get_size(1) == 3);
+        AnkiAssert(AreEqualSize(3, 3, T));
         T[0][0] = e1.x;   T[0][1] = e1.y;   T[0][2] = e1.z;
         T[1][0] = e2.x;   T[1][1] = e2.y;   T[1][2] = e2.z;
         T[2][0] = e3.x;   T[2][1] = e3.y;   T[2][2] = e3.z;
@@ -428,7 +428,7 @@ namespace Anki {
         MemoryStack scratch(buffer, SCRATCH_BUFFER_SIZE);
 
         // Output rotation should already be allocated
-        AnkiConditionalErrorAndReturnValue(R.get_size(0)==3 && R.get_size(1)==3,
+        AnkiConditionalErrorAndReturnValue(AreEqualSize(3, 3, R),
           RESULT_FAIL_INVALID_SIZE,
           "P3P::computePose()",
           "Rotation matrix should be 3x3.");

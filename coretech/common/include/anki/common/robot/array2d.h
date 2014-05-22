@@ -351,7 +351,7 @@ namespace Anki
     template<typename Type> bool Array<Type>::IsNearlyEqualTo(const Array<Type>& other, const Type epsilon) const
     {
       bool isSame = false;
-      if(this->IsValid() && other.IsValid()) {
+      if(AreValid(*this, other)) {
         const s32 nrows = this->get_size(0);
         const s32 ncols = this->get_size(1);
 
@@ -448,11 +448,8 @@ namespace Anki
       const s32 inHeight = in.get_size(0);
       const s32 inWidth = in.get_size(1);
 
-      AnkiConditionalErrorAndReturnValue(this->IsValid(),
-        0, "Array<Type>::Set", "this Array is not valid");
-
-      AnkiConditionalErrorAndReturnValue(in.IsValid(),
-        0, "Array<Type>::Set", "Array in is not valid");
+      AnkiConditionalErrorAndReturnValue(AreValid(*this, in),
+        0, "Array<Type>::Set", "Invalid objects");
 
       AnkiConditionalErrorAndReturnValue(inHeight == this->size[0] && inWidth == this->size[1],
         0, "Array<Type>::Set", "Array sizes don't match");
@@ -543,12 +540,12 @@ namespace Anki
       return stride;
     }
 
-    template<typename Type> void* Array<Type>::get_rawDataPointer()
+    template<typename Type> void* Array<Type>::get_buffer()
     {
       return data;
     }
 
-    template<typename Type> const void* Array<Type>::get_rawDataPointer() const
+    template<typename Type> const void* Array<Type>::get_buffer() const
     {
       return data;
     }

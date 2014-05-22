@@ -252,7 +252,7 @@ namespace Anki
           FixedLengthList<BenchmarkInstance> fullList(numBenchmarkEvents/2, memory, Flags::Buffer(false, false, false));
           FixedLengthList<BenchmarkInstance> parseStack(numBenchmarkEvents/2, memory, Flags::Buffer(false, false, false));
 
-          AnkiConditionalErrorAndReturnValue(outputResults.IsValid() && basicOutputResults.IsValid() && fullList.IsValid() && parseStack.IsValid(),
+          AnkiConditionalErrorAndReturnValue(AreValid(outputResults, basicOutputResults, fullList, parseStack),
             FixedLengthList<BenchmarkElement>(), "ComputeBenchmarkResults", "Out of memory");
 
           BenchmarkInstance * pParseStack = parseStack.Pointer(0);
@@ -444,6 +444,9 @@ namespace Anki
       const s32 stringBufferLength = 128;
       char stringBuffer[stringBufferLength];
 
+      AnkiConditionalErrorAndReturnValue(AreValid(results),
+        RESULT_FAIL_OUT_OF_MEMORY, "PrintBenchmarkResults", "Invalid objects");
+
       MemoryStack scratch(scratchBuffer, scratchBufferLength);
 
       AnkiConditionalErrorAndReturnValue(scratch.IsValid(),
@@ -498,13 +501,10 @@ namespace Anki
 
     Result ComputeAndPrintBenchmarkResults(const bool verbose, const bool microseconds, MemoryStack scratch)
     {
-      AnkiConditionalErrorAndReturnValue(scratch.IsValid(),
-        RESULT_FAIL_OUT_OF_MEMORY, "PrintBenchmarkResults", "Out of memory");
-
       FixedLengthList<BenchmarkElement> results = ComputeBenchmarkResults(scratch);
 
-      AnkiConditionalErrorAndReturnValue(results.IsValid(),
-        RESULT_FAIL_INVALID_OBJECT, "PrintBenchmarkResults", "results is not valid");
+      AnkiConditionalErrorAndReturnValue(AreValid(scratch, results),
+        RESULT_FAIL_INVALID_OBJECT, "PrintBenchmarkResults", "Invalid objects");
 
       return PrintBenchmarkResults(results, verbose, microseconds);
     }

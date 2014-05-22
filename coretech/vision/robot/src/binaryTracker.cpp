@@ -97,8 +97,8 @@ namespace Anki
         AnkiConditionalErrorAndReturn(templateImageHeight > 0 && templateImageWidth > 0,
           "BinaryTracker::BinaryTracker", "template widths and heights must be greater than zero");
 
-        AnkiConditionalErrorAndReturn(templateImage.IsValid(),
-          "BinaryTracker::BinaryTracker", "templateImage is not valid");
+        AnkiConditionalErrorAndReturn(AreValid(templateImage, fastMemory, slowMemory),
+          "BinaryTracker::BinaryTracker", "Invalid objects");
 
         // TODO: make this work for non-qvga resolution
         Point<f32> centerOffset((templateImageWidth-1) / 2.0f, (templateImageHeight-1) / 2.0f);
@@ -116,9 +116,7 @@ namespace Anki
 
         this->originalTemplateOrientation = 0.0f;
 
-        AnkiConditionalErrorAndReturn(
-          this->templateEdges.xDecreasing.IsValid() && this->templateEdges.xIncreasing.IsValid() &&
-          this->templateEdges.yDecreasing.IsValid() && this->templateEdges.yIncreasing.IsValid(),
+        AnkiConditionalErrorAndReturn(AreValid(this->templateEdges.xDecreasing, this->templateEdges.xIncreasing, this->templateEdges.yDecreasing, this->templateEdges.yIncreasing),
           "BinaryTracker::BinaryTracker", "Could not allocate local memory");
 
         const Rectangle<s32> edgeDetection_imageRegionOfInterest = templateQuad.ComputeBoundingRectangle<s32>().ComputeScaledRectangle<s32>(edgeDetectionParams.threshold_scaleRegionPercent);
@@ -192,9 +190,7 @@ namespace Anki
         this->templateImage = Array<u8>(templateImageHeight, templateImageWidth, slowMemory);
 
         AnkiConditionalErrorAndReturn(
-          this->templateEdges.xDecreasing.IsValid() && this->templateEdges.xIncreasing.IsValid() &&
-          this->templateEdges.yDecreasing.IsValid() && this->templateEdges.yIncreasing.IsValid() &&
-          this->templateImage.IsValid(),
+          AreValid(this->templateEdges.xDecreasing, this->templateEdges.xIncreasing, this->templateEdges.yDecreasing, this->templateEdges.yIncreasing, this->templateImage),
           "BinaryTracker::BinaryTracker", "Could not allocate local memory");
 
         this->templateImage.Set(templateImage);
@@ -418,16 +414,7 @@ namespace Anki
         if(!this->isValid)
           return false;
 
-        if(!templateEdges.xDecreasing.IsValid())
-          return false;
-
-        if(!templateEdges.xIncreasing.IsValid())
-          return false;
-
-        if(!templateEdges.yDecreasing.IsValid())
-          return false;
-
-        if(!templateEdges.yIncreasing.IsValid())
+        if(!AreValid(templateEdges.xDecreasing, templateEdges.xIncreasing, templateEdges.yDecreasing, templateEdges.yIncreasing))
           return false;
 
         return true;
@@ -534,10 +521,7 @@ namespace Anki
         allLimits.yIncreasing_xStartIndexes = Array<s32>(1, imageEdges.imageWidth+1, memory, Flags::Buffer(false,false,false));
 
         AnkiConditionalErrorAndReturnValue(
-          allLimits.xDecreasing_yStartIndexes.IsValid() &&
-          allLimits.xIncreasing_yStartIndexes.IsValid() &&
-          allLimits.yDecreasing_xStartIndexes.IsValid() &&
-          allLimits.yIncreasing_xStartIndexes.IsValid(),
+          AreValid(allLimits.xDecreasing_yStartIndexes, allLimits.xIncreasing_yStartIndexes, allLimits.yDecreasing_xStartIndexes, allLimits.yIncreasing_xStartIndexes),
           RESULT_FAIL_OUT_OF_MEMORY, "BinaryTracker::ComputeAllIndexLimits", "Could not allocate local memory");
 
         ComputeIndexLimitsVertical(imageEdges.xDecreasing, allLimits.xDecreasing_yStartIndexes);
@@ -655,7 +639,7 @@ namespace Anki
         nextImageEdges.yDecreasing = FixedLengthList<Point<s16> >(edgeDetectionParams.maxDetectionsPerType, fastScratch);
         nextImageEdges.yIncreasing = FixedLengthList<Point<s16> >(edgeDetectionParams.maxDetectionsPerType, fastScratch);
 
-        AnkiConditionalErrorAndReturnValue(nextImageEdges.xDecreasing.IsValid() && nextImageEdges.xIncreasing.IsValid() && nextImageEdges.yDecreasing.IsValid() && nextImageEdges.yIncreasing.IsValid(),
+        AnkiConditionalErrorAndReturnValue(AreValid(nextImageEdges.xDecreasing, nextImageEdges.xIncreasing, nextImageEdges.yDecreasing, nextImageEdges.yIncreasing),
           RESULT_FAIL_OUT_OF_MEMORY, "BinaryTracker::UpdateTrack", "Could not allocate local scratch");
 
         BeginBenchmark("ut_DetectEdges");

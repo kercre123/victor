@@ -17,6 +17,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/arraySlices.h"
 #include "anki/common/robot/trig_fast.h"
 #include "anki/common/robot/benchmarking.h"
+#include "anki/common/robot/comparisons.h"
 
 namespace Anki
 {
@@ -122,8 +123,10 @@ namespace Anki
         return mean;
       } // template<typename Array_Type, typename Accumulator_Type> Array_Type Mean(const ConstArraySliceExpression<Array_Type> &mat)
 
-      template<typename Array_Type, typename Accumulator_Type> Result MeanAndVar(const ConstArraySliceExpression<Array_Type> &mat,
-        Accumulator_Type& mean, Accumulator_Type& var)
+      template<typename Array_Type, typename Accumulator_Type> Result MeanAndVar(
+        const ConstArraySliceExpression<Array_Type> &mat,
+        Accumulator_Type& mean,
+        Accumulator_Type& var)
       {
         const Array<Array_Type> &array = mat.get_array();
 
@@ -236,10 +239,7 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(in1Width == in2Height,
           RESULT_FAIL_INVALID_SIZE, "Multiply", "Input matrices are incompatible sizes");
 
-        AnkiConditionalErrorAndReturnValue(out.get_size(0) == in1Height,
-          RESULT_FAIL_INVALID_SIZE, "Multiply", "Input and Output matrices are incompatible sizes");
-
-        AnkiConditionalErrorAndReturnValue(out.get_size(1) == in2Width,
+        AnkiConditionalErrorAndReturnValue(AreEqualSize(in1Height, in2Width, out),
           RESULT_FAIL_INVALID_SIZE, "Multiply", "Input and Output matrices are incompatible sizes");
 
         for(s32 y1=0; y1<in1Height; y1++) {
@@ -296,10 +296,7 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(in1Width == in2TransposedWidth,
           RESULT_FAIL_INVALID_SIZE, "Multiply", "Input matrices are incompatible sizes");
 
-        AnkiConditionalErrorAndReturnValue(out.get_size(0) == in1Height,
-          RESULT_FAIL_INVALID_SIZE, "Multiply", "Input and Output matrices are incompatible sizes");
-
-        AnkiConditionalErrorAndReturnValue(out.get_size(1) == in2TransposedHeight,
+        AnkiConditionalErrorAndReturnValue(AreEqualSize(in1Height, in2TransposedHeight, out),
           RESULT_FAIL_INVALID_SIZE, "Multiply", "Input and Output matrices are incompatible sizes");
 
         for(s32 y1=0; y1<in1Height; y1++)
@@ -353,11 +350,8 @@ namespace Anki
 
         numericalFailure = false;
 
-        AnkiConditionalErrorAndReturnValue(A_L.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "CholeskyDecomposition", "A_L is not valid");
-
-        AnkiConditionalErrorAndReturnValue(Bt_Xt.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "CholeskyDecomposition", "Bt_Xt is not valid");
+        AnkiConditionalErrorAndReturnValue(AreValid(A_L, Bt_Xt),
+          RESULT_FAIL_INVALID_OBJECT, "CholeskyDecomposition", "Invalid objects");
 
         AnkiConditionalErrorAndReturnValue(matrixHeight == A_L.get_size(1),
           RESULT_FAIL_INVALID_SIZE, "CholeskyDecomposition", "A_L is not square");
@@ -471,22 +465,13 @@ namespace Anki
 
         const s32 numPoints = originalPoints.get_size();
 
-        AnkiConditionalErrorAndReturnValue(originalPoints.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "EstimateHomography", "originalPoints is not valid");
-
-        AnkiConditionalErrorAndReturnValue(transformedPoints.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "EstimateHomography", "transformedPoints is not valid");
-
-        AnkiConditionalErrorAndReturnValue(homography.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "EstimateHomography", "homography is not valid");
-
-        AnkiConditionalErrorAndReturnValue(scratch.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "EstimateHomography", "scratch is not valid");
+        AnkiConditionalErrorAndReturnValue(AreValid(originalPoints, transformedPoints, homography, scratch),
+          RESULT_FAIL_INVALID_OBJECT, "EstimateHomography", "Invalid objects");
 
         AnkiConditionalErrorAndReturnValue(transformedPoints.get_size() == numPoints && numPoints >= 4,
           RESULT_FAIL_INVALID_SIZE, "EstimateHomography", "originalPoints and transformedPoints must be the same size, and have at least four points apiece.");
 
-        AnkiConditionalErrorAndReturnValue(homography.get_size(0) == 3 && homography.get_size(1) == 3,
+        AnkiConditionalErrorAndReturnValue(AreEqualSize(3, 3, homography),
           RESULT_FAIL_INVALID_SIZE, "EstimateHomography", "homography must be 3x3");
 
         Array<Type> A(8, 2*numPoints, scratch);
@@ -665,16 +650,13 @@ namespace Anki
 
         const s32 outStride = out.get_stride();
 
-        AnkiConditionalErrorAndReturnValue(in.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "Transpose", "in is not valid");
+        AnkiConditionalErrorAndReturnValue(AreValid(in, out),
+          RESULT_FAIL_INVALID_OBJECT, "Transpose", "Invalid objects");
 
-        AnkiConditionalErrorAndReturnValue(out.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "Transpose", "out is not valid");
-
-        AnkiConditionalErrorAndReturnValue(out.get_size(0) == inWidth && out.get_size(1) == inHeight,
+        AnkiConditionalErrorAndReturnValue(AreEqualSize(in.get_size(1), in.get_size(0), out),
           RESULT_FAIL_INVALID_SIZE, "Transpose", "out is not the correct size");
 
-        AnkiConditionalErrorAndReturnValue(in.get_rawDataPointer() != out.get_rawDataPointer(),
+        AnkiConditionalErrorAndReturnValue(NotAliased(in, out),
           RESULT_FAIL_ALIASED_MEMORY, "Transpose", "in and out cannot be the same array");
 
         for(s32 yIn=0; yIn<inHeight; yIn++) {
@@ -708,19 +690,16 @@ namespace Anki
       {
         const s32 arrWidth = in.get_size(1);
 
-        AnkiConditionalErrorAndReturnValue(in.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "Rotate90", "in is not valid");
-
-        AnkiConditionalErrorAndReturnValue(out.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "Rotate90", "out is not valid");
+        AnkiConditionalErrorAndReturnValue(AreValid(in, out),
+          RESULT_FAIL_INVALID_OBJECT, "Rotate90", "Invalid objects");
 
         AnkiConditionalErrorAndReturnValue(in.get_size(0) == in.get_size(1),
           RESULT_FAIL_INVALID_SIZE, "Rotate90", "in and out must be square");
 
-        AnkiConditionalErrorAndReturnValue(out.get_size(0) == arrWidth && out.get_size(1) == arrWidth,
+        AnkiConditionalErrorAndReturnValue(AreEqualSize(arrWidth, arrWidth, out),
           RESULT_FAIL_INVALID_SIZE, "Rotate90", "in and out must be square");
 
-        AnkiConditionalErrorAndReturnValue(in.get_rawDataPointer() != out.get_rawDataPointer(),
+        AnkiConditionalErrorAndReturnValue(NotAliased(in, out),
           RESULT_FAIL_ALIASED_MEMORY, "Rotate90", "in and out cannot be the same array");
 
         const s32 outStride = out.get_stride();
@@ -743,19 +722,16 @@ namespace Anki
       {
         const s32 arrWidth = in.get_size(1);
 
-        AnkiConditionalErrorAndReturnValue(in.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "Rotate180", "in is not valid");
-
-        AnkiConditionalErrorAndReturnValue(out.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "Rotate180", "out is not valid");
+        AnkiConditionalErrorAndReturnValue(AreValid(in, out),
+          RESULT_FAIL_INVALID_OBJECT, "Rotate180", "Invalid objects");
 
         AnkiConditionalErrorAndReturnValue(in.get_size(0) == in.get_size(1),
           RESULT_FAIL_INVALID_SIZE, "Rotate180", "in and out must be square");
 
-        AnkiConditionalErrorAndReturnValue(out.get_size(0) == arrWidth && out.get_size(1) == arrWidth,
+        AnkiConditionalErrorAndReturnValue(AreEqualSize(arrWidth, arrWidth, out),
           RESULT_FAIL_INVALID_SIZE, "Rotate180", "in and out must be square");
 
-        AnkiConditionalErrorAndReturnValue(in.get_rawDataPointer() != out.get_rawDataPointer(),
+        AnkiConditionalErrorAndReturnValue(NotAliased(in, out),
           RESULT_FAIL_ALIASED_MEMORY, "Rotate180", "in and out cannot be the same array");
 
         for(s32 yIn=0; yIn<arrWidth; yIn++) {
@@ -774,19 +750,16 @@ namespace Anki
       {
         const s32 arrWidth = in.get_size(1);
 
-        AnkiConditionalErrorAndReturnValue(in.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "Rotate270", "in is not valid");
-
-        AnkiConditionalErrorAndReturnValue(out.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "Rotate270", "out is not valid");
+        AnkiConditionalErrorAndReturnValue(AreValid(in, out),
+          RESULT_FAIL_INVALID_OBJECT, "Rotate270", "Invalid objects");
 
         AnkiConditionalErrorAndReturnValue(in.get_size(0) == in.get_size(1),
           RESULT_FAIL_INVALID_SIZE, "Rotate270", "in and out must be square");
 
-        AnkiConditionalErrorAndReturnValue(out.get_size(0) == arrWidth && out.get_size(1) == arrWidth,
+        AnkiConditionalErrorAndReturnValue(AreEqualSize(arrWidth, arrWidth, out),
           RESULT_FAIL_INVALID_SIZE, "Rotate270", "in and out must be square");
 
-        AnkiConditionalErrorAndReturnValue(in.get_rawDataPointer() != out.get_rawDataPointer(),
+        AnkiConditionalErrorAndReturnValue(NotAliased(in, out),
           RESULT_FAIL_ALIASED_MEMORY, "Rotate270", "in and out cannot be the same array");
 
         const s32 outStride = out.get_stride();
@@ -1604,16 +1577,13 @@ namespace Anki
         const s32 arrHeight = arr.get_size(0);
         const s32 arrWidth = arr.get_size(1);
 
-        AnkiConditionalErrorAndReturnValue(arr.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "Sort", "Input array is invalid");
-
-        AnkiConditionalErrorAndReturnValue(indexes.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "Sort", "indexes array is invalid");
+        AnkiConditionalErrorAndReturnValue(AreValid(arr, indexes),
+          RESULT_FAIL_INVALID_OBJECT, "Sort", "Objects are invalid");
 
         AnkiConditionalErrorAndReturnValue(sortWhichDimension==0 || sortWhichDimension==1,
           RESULT_FAIL_INVALID_PARAMETER, "Sort", "sortWhichDimension must be zero or one");
 
-        AnkiConditionalErrorAndReturnValue(indexes.get_size(0) == arrHeight && indexes.get_size(1) == arrWidth,
+        AnkiConditionalErrorAndReturnValue(AreEqualSize(arr, indexes),
           RESULT_FAIL_INVALID_SIZE, "Sort", "indexes must be the same size as arr");
 
         const s32 trueMinIndex = CLIP(minIndex, 0, arr.get_size(sortWhichDimension) - 1);
@@ -1711,11 +1681,8 @@ namespace Anki
         const s32 arrHeight = arr.get_size(0);
         const s32 arrWidth = arr.get_size(1);
 
-        AnkiConditionalErrorAndReturnValue(arr.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "Sort", "Input array is invalid");
-
-        AnkiConditionalErrorAndReturnValue(indexes.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "Sort", "indexes array is invalid");
+        AnkiConditionalErrorAndReturnValue(AreValid(arr, indexes),
+          RESULT_FAIL_INVALID_OBJECT, "Sort", "Objects are invalid");
 
         AnkiConditionalErrorAndReturnValue(sortWhichDimension==0 || sortWhichDimension==1,
           RESULT_FAIL_INVALID_PARAMETER, "Sort", "sortWhichDimension must be zero or one");
@@ -1723,7 +1690,7 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(insertionSortSize >= 1,
           RESULT_FAIL_INVALID_PARAMETER, "Sort", "insertionSortSize must be >= 1");
 
-        AnkiConditionalErrorAndReturnValue(indexes.get_size(0) == arrHeight && indexes.get_size(1) == arrWidth,
+        AnkiConditionalErrorAndReturnValue(AreEqualSize(arr, indexes),
           RESULT_FAIL_INVALID_SIZE, "Sort", "indexes must be the same size as arr");
 
         const s32 trueMinIndex = CLIP(minIndex, 0, arr.get_size(sortWhichDimension) - 1);
@@ -1808,14 +1775,8 @@ namespace Anki
           const Array<InType> &in2Array = in2.get_array();
           Array<OutType> &out1Array = out.get_array();
 
-          AnkiConditionalErrorAndReturnValue(in1Array.IsValid(),
-            RESULT_FAIL_INVALID_OBJECT, "Matrix::Elementwise::ApplyOperation", "Invalid array in1");
-
-          AnkiConditionalErrorAndReturnValue(in2Array.IsValid(),
-            RESULT_FAIL_INVALID_OBJECT, "Matrix::Elementwise::ApplyOperation", "Invalid array in2");
-
-          AnkiConditionalErrorAndReturnValue(out1Array.IsValid(),
-            RESULT_FAIL_INVALID_OBJECT, "Matrix::Elementwise::ApplyOperation", "Invalid array out");
+          AnkiConditionalErrorAndReturnValue(AreValid(in1Array, in2Array, out1Array),
+            RESULT_FAIL_INVALID_OBJECT, "Matrix::Elementwise::ApplyOperation", "Invalid objects");
 
           ArraySliceLimits_in2_out1<s32> limits(
             in1.get_ySlice(), in1.get_xSlice(), in1.get_isTransposed(),
@@ -1878,11 +1839,8 @@ namespace Anki
           const Array<InType> &in1Array = in1.get_array();
           Array<OutType> &out1Array = out.get_array();
 
-          AnkiConditionalErrorAndReturnValue(in1Array.IsValid(),
-            RESULT_FAIL_INVALID_OBJECT, "Matrix::Elementwise::ApplyOperation", "Invalid array in1");
-
-          AnkiConditionalErrorAndReturnValue(out1Array.IsValid(),
-            RESULT_FAIL_INVALID_OBJECT, "Matrix::Elementwise::ApplyOperation", "Invalid array out");
+          AnkiConditionalErrorAndReturnValue(AreValid(in1Array, out1Array),
+            RESULT_FAIL_INVALID_OBJECT, "Matrix::Elementwise::ApplyOperation", "Invalid objects");
 
           ArraySliceLimits_in1_out1<s32> limits(
             in1.get_ySlice(), in1.get_xSlice(), in1.get_isTransposed(),
@@ -1939,11 +1897,8 @@ namespace Anki
           const Array<InType> &in2Array = in2.get_array();
           Array<OutType> &out1Array = out.get_array();
 
-          AnkiConditionalErrorAndReturnValue(in2Array.IsValid(),
-            RESULT_FAIL_INVALID_OBJECT, "Matrix::Elementwise::ApplyOperation", "Invalid array in2");
-
-          AnkiConditionalErrorAndReturnValue(out1Array.IsValid(),
-            RESULT_FAIL_INVALID_OBJECT, "Matrix::Elementwise::ApplyOperation", "Invalid array out");
+          AnkiConditionalErrorAndReturnValue(AreValid(in2Array, out1Array),
+            RESULT_FAIL_INVALID_OBJECT, "Matrix::Elementwise::ApplyOperation", "Invalid objects");
 
           ArraySliceLimits_in1_out1<s32> limits(
             in2.get_ySlice(), in2.get_xSlice(), in2.get_isTransposed(),

@@ -208,8 +208,7 @@ namespace Anki
             Array<f32> yIn = templateCoordinates[iScale].EvaluateY2(memory);
             EndBenchmark("InitializeTemplate.evaluateMeshgrid");
 
-            AnkiAssert(xIn.get_size(0) == yIn.get_size(0));
-            AnkiAssert(xIn.get_size(1) == yIn.get_size(1));
+            AnkiAssert(AreEqualSize(xIn, yIn));
 
             Array<f32> xTransformed(numPointsY, numPointsX, memory);
             Array<f32> yTransformed(numPointsY, numPointsX, memory);

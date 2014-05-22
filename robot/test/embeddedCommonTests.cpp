@@ -404,15 +404,17 @@ GTEST_TEST(CoreTech_Common, Rotate90)
 {
   const s32 arrayHeight = 4;
 
-  ASSERT_TRUE(offchipBuffer != NULL);
-  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  Array<s16> in(arrayHeight, arrayHeight, ms);
-  Array<s16> out(arrayHeight, arrayHeight, ms);
-  Array<s16> out90_groundTruth(arrayHeight, arrayHeight, ms);
-  Array<s16> out180_groundTruth(arrayHeight, arrayHeight, ms);
-  Array<s16> out270_groundTruth(arrayHeight, arrayHeight, ms);
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  Array<s16> in(arrayHeight, arrayHeight, scratchOnchip);
+  Array<s16> out(arrayHeight, arrayHeight, scratchOnchip);
+  Array<s16> out90_groundTruth(arrayHeight, arrayHeight, scratchOnchip);
+  Array<s16> out180_groundTruth(arrayHeight, arrayHeight, scratchOnchip);
+  Array<s16> out270_groundTruth(arrayHeight, arrayHeight, scratchOnchip);
 
   in[0][0] = 0;  in[0][1] = 0;  in[0][2] = 2;  in[0][3] = 3;
   in[1][0] = 4;  in[1][1] = 5;  in[1][2] = 0;  in[1][3] = 7;
@@ -464,12 +466,14 @@ GTEST_TEST(CoreTech_Common, RunLengthEncode)
   const s32 arrayWidth = 16;
   const s32 maxCompressedLength = arrayHeight * arrayWidth;
 
-  ASSERT_TRUE(offchipBuffer != NULL);
-  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  Array<u8> original(arrayHeight, arrayWidth, ms);
-  u8 * compressed = reinterpret_cast<u8*>( ms.Allocate(maxCompressedLength) );
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  Array<u8> original(arrayHeight, arrayWidth, scratchOnchip);
+  u8 * compressed = reinterpret_cast<u8*>( scratchOnchip.Allocate(maxCompressedLength) );
 
   original(1,3,1,5).Set(1);
   original(2,2,8,10).Set(1);
@@ -485,7 +489,7 @@ GTEST_TEST(CoreTech_Common, RunLengthEncode)
   Array<u8> uncompressed = DecodeRunLengthBinary<u8>(
     compressed, compressedLength,
     arrayHeight, arrayWidth, Flags::Buffer(false,false,false),
-    ms);
+    scratchOnchip);
 
   ASSERT_TRUE(AreElementwiseEqual<u8>(original, uncompressed));
 
@@ -551,13 +555,15 @@ GTEST_TEST(CoreTech_Common, SerializedBuffer)
   const s32 segment2Length = 64;
   const s32 segment3Length = 128;
 
-  ASSERT_TRUE(offchipBuffer != NULL);
-  MemoryStack ms(offchipBuffer, 5000);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  u8 * segment1 = reinterpret_cast<u8*>( ms.Allocate(segment1Length) );
-  u8 * segment2 = reinterpret_cast<u8*>( ms.Allocate(segment2Length) );
-  u8 * segment3 = reinterpret_cast<u8*>( ms.Allocate(segment3Length) );
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  u8 * segment1 = reinterpret_cast<u8*>( scratchOnchip.Allocate(segment1Length) );
+  u8 * segment2 = reinterpret_cast<u8*>( scratchOnchip.Allocate(segment2Length) );
+  u8 * segment3 = reinterpret_cast<u8*>( scratchOnchip.Allocate(segment3Length) );
 
   ASSERT_TRUE(segment1 != NULL);
   ASSERT_TRUE(segment2 != NULL);
@@ -668,19 +674,21 @@ GTEST_TEST(CoreTech_Common, MemoryStackIterator)
   const s32 segment2Length = 64;
   const s32 segment3Length = 128;
 
-  ASSERT_TRUE(offchipBuffer != NULL);
-  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  void * segment1 = ms.Allocate(segment1Length);
-  void * segment2 = ms.Allocate(segment2Length);
-  void * segment3 = ms.Allocate(segment3Length);
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  void * segment1 = scratchOnchip.Allocate(segment1Length);
+  void * segment2 = scratchOnchip.Allocate(segment2Length);
+  void * segment3 = scratchOnchip.Allocate(segment3Length);
 
   ASSERT_TRUE(segment1 != NULL);
   ASSERT_TRUE(segment2 != NULL);
   ASSERT_TRUE(segment3 != NULL);
 
-  MemoryStackIterator msi(ms);
+  MemoryStackIterator msi(scratchOnchip);
 
   s32 segment1bLength = -1;
   s32 segment2bLength = -1;
@@ -708,17 +716,19 @@ GTEST_TEST(CoreTech_Common, MemoryStackIterator)
 
 GTEST_TEST(CoreTech_Common, MatrixTranspose)
 {
-  ASSERT_TRUE(offchipBuffer != NULL);
-  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
   const s32 in_data[12] = {
     1, 2, 3, 4,
     5, 6, 7, 8,
     9, 10, 11, 12};
 
-  Array<s32> in(3,4,ms);
-  Array<s16> out(4,3,ms);
+  Array<s32> in(3,4,scratchOnchip);
+  Array<s16> out(4,3,scratchOnchip);
 
   in.Set(in_data, 12);
 
@@ -730,7 +740,7 @@ GTEST_TEST(CoreTech_Common, MatrixTranspose)
     3, 7, 11,
     4, 8, 12};
 
-  Array<s16> out_groundTruth(4,3,ms);
+  Array<s16> out_groundTruth(4,3,scratchOnchip);
 
   out_groundTruth.SetCast<s32>(out_groundTruth_data, 12);
 
@@ -744,9 +754,11 @@ GTEST_TEST(CoreTech_Common, MatrixTranspose)
 
 GTEST_TEST(CoreTech_Common, CholeskyDecomposition)
 {
-  ASSERT_TRUE(offchipBuffer != NULL);
-  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
   const f32 A_data[9] = {
     2.7345f, 1.8859f, 2.0785f,
@@ -757,8 +769,8 @@ GTEST_TEST(CoreTech_Common, CholeskyDecomposition)
     1.0f, 3.0f, 5.0f,
     2.0f, 4.0f, 6.0f};
 
-  Array<f32> A_L(3,3,ms);
-  Array<f32> Bt_Xt(2,3,ms);
+  Array<f32> A_L(3,3,scratchOnchip);
+  Array<f32> Bt_Xt(2,3,scratchOnchip);
 
   ASSERT_TRUE(A_L.IsValid());
   ASSERT_TRUE(Bt_Xt.IsValid());
@@ -787,8 +799,8 @@ GTEST_TEST(CoreTech_Common, CholeskyDecomposition)
     -2.4188f, 0.1750f, 3.5046f,
     -2.2968f, 0.4769f, 3.5512f};
 
-  Array<f32> L_groundTruth(3,3,ms);
-  Array<f32> Xt_groundTruth(2,3,ms);
+  Array<f32> L_groundTruth(3,3,scratchOnchip);
+  Array<f32> Xt_groundTruth(2,3,scratchOnchip);
 
   L_groundTruth.Set(L_groundTruth_data, 9);
   Xt_groundTruth.Set(Xt_groundTruth_data, 6);
@@ -823,13 +835,10 @@ GTEST_TEST(CoreTech_Common, ExplicitPrintf)
 GTEST_TEST(CoreTech_Common, MatrixSortWithIndexes)
 {
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
-  ASSERT_TRUE(scratchCcm.IsValid());
-
   MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(scratchOnchip.IsValid());
-
   MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(scratchOffchip.IsValid());
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
   const s32 arr_data[15] = {
     81, 10, 16,
@@ -1026,13 +1035,10 @@ GTEST_TEST(CoreTech_Common, MatrixSortWithIndexes)
 GTEST_TEST(CoreTech_Common, MatrixSort)
 {
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
-  ASSERT_TRUE(scratchCcm.IsValid());
-
   MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(scratchOnchip.IsValid());
-
   MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(scratchOffchip.IsValid());
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
   const s32 arr_data[200] = {
     50, 40, 30, 50, 93, 40, 45, 57, 51, 99,
@@ -1434,12 +1440,14 @@ GTEST_TEST(CoreTech_Common, MatrixSort)
 
 GTEST_TEST(CoreTech_Common, MatrixMultiplyTranspose)
 {
-  ASSERT_TRUE(offchipBuffer != NULL);
-  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  Array<s32> in1(2,3,ms);
-  Array<s32> in2(2,3,ms);
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  Array<s32> in1(2,3,scratchOnchip);
+  Array<s32> in2(2,3,scratchOnchip);
 
   in1[0][0] = 1; in1[0][1] = 2; in1[0][2] = 3;
   in1[1][0] = 4; in1[1][1] = 5; in1[1][2] = 6;
@@ -1448,9 +1456,9 @@ GTEST_TEST(CoreTech_Common, MatrixMultiplyTranspose)
   in2[1][0] = 13; in2[1][1] = 14; in2[1][2] = 15;
 
   {
-    PUSH_MEMORY_STACK(ms);
+    PUSH_MEMORY_STACK(scratchOnchip);
 
-    Array<s32> out(2,2,ms);
+    Array<s32> out(2,2,scratchOnchip);
     const Result result = Matrix::MultiplyTranspose<s32,s32>(in1, in2, out);
     ASSERT_TRUE(result == RESULT_OK);
 
@@ -1463,9 +1471,9 @@ GTEST_TEST(CoreTech_Common, MatrixMultiplyTranspose)
   }
 
   {
-    PUSH_MEMORY_STACK(ms);
+    PUSH_MEMORY_STACK(scratchOnchip);
 
-    Array<s32> out(2,2,ms);
+    Array<s32> out(2,2,scratchOnchip);
     const Result result = Matrix::MultiplyTranspose<s32,s32>(in2, in1, out);
     ASSERT_TRUE(result == RESULT_OK);
 
@@ -1480,18 +1488,20 @@ GTEST_TEST(CoreTech_Common, MatrixMultiplyTranspose)
 
 GTEST_TEST(CoreTech_Common, Reshape)
 {
-  ASSERT_TRUE(offchipBuffer != NULL);
-  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  Array<s32> in(2,2,ms);
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  Array<s32> in(2,2,scratchOnchip);
   in[0][0] = 1; in[0][1] = 2;
   in[1][0] = 3; in[1][1] = 4;
 
   {
-    PUSH_MEMORY_STACK(ms);
+    PUSH_MEMORY_STACK(scratchOnchip);
 
-    Array<s32> out = Matrix::Reshape<s32,s32>(true, in, 4, 1, ms);
+    Array<s32> out = Matrix::Reshape<s32,s32>(true, in, 4, 1, scratchOnchip);
 
     ASSERT_TRUE(out[0][0] == 1);
     ASSERT_TRUE(out[1][0] == 3);
@@ -1500,9 +1510,9 @@ GTEST_TEST(CoreTech_Common, Reshape)
   }
 
   {
-    PUSH_MEMORY_STACK(ms);
+    PUSH_MEMORY_STACK(scratchOnchip);
 
-    Array<s32> out = Matrix::Reshape<s32,s32>(false, in, 4, 1, ms);
+    Array<s32> out = Matrix::Reshape<s32,s32>(false, in, 4, 1, scratchOnchip);
 
     ASSERT_TRUE(out[0][0] == 1);
     ASSERT_TRUE(out[1][0] == 2);
@@ -1511,9 +1521,9 @@ GTEST_TEST(CoreTech_Common, Reshape)
   }
 
   {
-    PUSH_MEMORY_STACK(ms);
+    PUSH_MEMORY_STACK(scratchOnchip);
 
-    Array<s32> out = Matrix::Reshape<s32,s32>(true, in, 1, 4, ms);
+    Array<s32> out = Matrix::Reshape<s32,s32>(true, in, 1, 4, scratchOnchip);
 
     ASSERT_TRUE(out[0][0] == 1);
     ASSERT_TRUE(out[0][1] == 3);
@@ -1522,9 +1532,9 @@ GTEST_TEST(CoreTech_Common, Reshape)
   }
 
   {
-    PUSH_MEMORY_STACK(ms);
+    PUSH_MEMORY_STACK(scratchOnchip);
 
-    Array<s32> out = Matrix::Reshape<s32,s32>(false, in, 1, 4, ms);
+    Array<s32> out = Matrix::Reshape<s32,s32>(false, in, 1, 4, scratchOnchip);
 
     ASSERT_TRUE(out[0][0] == 1);
     ASSERT_TRUE(out[0][1] == 2);
@@ -1537,17 +1547,19 @@ GTEST_TEST(CoreTech_Common, Reshape)
 
 GTEST_TEST(CoreTech_Common, ArrayPatterns)
 {
-  ASSERT_TRUE(offchipBuffer != NULL);
-  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
   const s32 arrayHeight = 3;
   const s32 arrayWidth = 2;
 
   {
-    PUSH_MEMORY_STACK(ms);
+    PUSH_MEMORY_STACK(scratchOnchip);
 
-    Array<s16> out = Zeros<s16>(arrayHeight, arrayWidth, ms);
+    Array<s16> out = Zeros<s16>(arrayHeight, arrayWidth, scratchOnchip);
 
     for(s32 y=0; y<arrayHeight; y++) {
       const s16 * const pOut = out.Pointer(y, 0);
@@ -1559,9 +1571,9 @@ GTEST_TEST(CoreTech_Common, ArrayPatterns)
   }
 
   {
-    PUSH_MEMORY_STACK(ms);
+    PUSH_MEMORY_STACK(scratchOnchip);
 
-    Array<u8> out = Ones<u8>(arrayHeight, arrayWidth, ms);
+    Array<u8> out = Ones<u8>(arrayHeight, arrayWidth, scratchOnchip);
 
     for(s32 y=0; y<arrayHeight; y++) {
       const u8 * const pOut = out.Pointer(y, 0);
@@ -1573,8 +1585,8 @@ GTEST_TEST(CoreTech_Common, ArrayPatterns)
   }
 
   {
-    PUSH_MEMORY_STACK(ms);
-    Array<f64> out = Eye<f64>(arrayHeight, arrayWidth, ms);
+    PUSH_MEMORY_STACK(scratchOnchip);
+    Array<f64> out = Eye<f64>(arrayHeight, arrayWidth, scratchOnchip);
 
     for(s32 y=0; y<arrayHeight; y++) {
       const f64 * const pOut = out.Pointer(y, 0);
@@ -1590,19 +1602,19 @@ GTEST_TEST(CoreTech_Common, ArrayPatterns)
   }
 
   {
-    PUSH_MEMORY_STACK(ms);
+    PUSH_MEMORY_STACK(scratchOnchip);
 
     // [logspace(-3,1,5), 3.14159]
     const f32 inData[6] = {0.001f, 0.01f, 0.1f, 1.0f, 10.0f, 3.14159f};
 
-    Array<f32> expIn(arrayHeight, arrayWidth, ms);
+    Array<f32> expIn(arrayHeight, arrayWidth, scratchOnchip);
     expIn.Set(inData, 6);
 
-    Array<f32> out = Exp<f32>(expIn, ms);
+    Array<f32> out = Exp<f32>(expIn, scratchOnchip);
 
     const f32 out_groundTruthData[6] = {1.00100050016671f, 1.01005016708417f, 1.10517091807565f, 2.71828182845905f, 22026.4657948067f, 23.1406312269550f};
 
-    Array<f32> out_groundTruth = Array<f32>(3,2,ms);
+    Array<f32> out_groundTruth = Array<f32>(3,2,scratchOnchip);
     out_groundTruth.Set(out_groundTruthData, 6);
 
     //out.Print("out");
@@ -1616,11 +1628,13 @@ GTEST_TEST(CoreTech_Common, ArrayPatterns)
 
 GTEST_TEST(CoreTech_Common, Interp2_Projective_oneDimensional)
 {
-  ASSERT_TRUE(offchipBuffer != NULL);
-  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  Array<u8> reference(3,5,ms);
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  Array<u8> reference(3,5,scratchOnchip);
 
   // reference = [1:5; 11:15; 21:25];
   reference(0,0,0,-1).Set(LinearSequence<u8>(1,5));
@@ -1630,7 +1644,7 @@ GTEST_TEST(CoreTech_Common, Interp2_Projective_oneDimensional)
   // [xGridVector, yGridVector] = meshgrid((-0.9:0.9:6), (-1:1:4));
   Meshgrid<f32> mesh(LinearSequence<f32>(-0.9f,0.9f,6.0f), LinearSequence<f32>(-1.0f,1.0f,4.0f));
 
-  Array<f32> homography = Eye<f32>(3,3,ms);
+  Array<f32> homography = Eye<f32>(3,3,scratchOnchip);
   homography[0][0] = 1.5f;
   homography[1][2] = 1.0f;
   homography[2][0] = 0.05f;
@@ -1651,7 +1665,7 @@ GTEST_TEST(CoreTech_Common, Interp2_Projective_oneDimensional)
   const Point<f32> centerOffset(0.0f, 0.0f);
 
   const s32 numElements = mesh.get_yGridVector().get_size() * mesh.get_xGridVector().get_size();
-  Array<u8> result(1, numElements, ms);
+  Array<u8> result(1, numElements, scratchOnchip);
   const Result lastResult = Interp2_Projective<u8,u8>(reference, mesh, homography, centerOffset, result);
   ASSERT_TRUE(lastResult == RESULT_OK);
 
@@ -1668,11 +1682,13 @@ GTEST_TEST(CoreTech_Common, Interp2_Projective_oneDimensional)
 
 GTEST_TEST(CoreTech_Common, Interp2_Projective_twoDimensional)
 {
-  ASSERT_TRUE(offchipBuffer != NULL);
-  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  Array<u8> reference(3,5,ms);
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  Array<u8> reference(3,5,scratchOnchip);
 
   // reference = [1:5; 11:15; 21:25];
   reference(0,0,0,-1).Set(LinearSequence<u8>(1,5));
@@ -1682,7 +1698,7 @@ GTEST_TEST(CoreTech_Common, Interp2_Projective_twoDimensional)
   // [xGridVector, yGridVector] = meshgrid((-0.9:0.9:6), (-1:1:4));
   Meshgrid<f32> mesh(LinearSequence<f32>(-0.9f,0.9f,6.0f), LinearSequence<f32>(-1.0f,1.0f,4.0f));
 
-  Array<f32> homography = Eye<f32>(3,3,ms);
+  Array<f32> homography = Eye<f32>(3,3,scratchOnchip);
   homography[0][0] = 1.5f;
   homography[1][2] = 1.0f;
   homography[2][0] = 0.05f;
@@ -1701,7 +1717,7 @@ GTEST_TEST(CoreTech_Common, Interp2_Projective_twoDimensional)
 
   const Point<f32> centerOffset(0.0f, 0.0f);
 
-  Array<u8> result(mesh.get_yGridVector().get_size(), mesh.get_xGridVector().get_size(), ms);
+  Array<u8> result(mesh.get_yGridVector().get_size(), mesh.get_xGridVector().get_size(), scratchOnchip);
   const Result lastResult = Interp2_Projective<u8,u8>(reference, mesh, homography, centerOffset, result);
   ASSERT_TRUE(lastResult == RESULT_OK);
 
@@ -1726,11 +1742,13 @@ GTEST_TEST(CoreTech_Common, Interp2_Projective_twoDimensional)
 
 GTEST_TEST(CoreTech_Common, Interp2_Affine_twoDimensional)
 {
-  ASSERT_TRUE(offchipBuffer != NULL);
-  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  Array<u8> reference(3,5,ms);
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  Array<u8> reference(3,5,scratchOnchip);
 
   // reference = [1:5; 11:15; 21:25];
   reference(0,0,0,-1).Set(LinearSequence<u8>(1,5));
@@ -1740,7 +1758,7 @@ GTEST_TEST(CoreTech_Common, Interp2_Affine_twoDimensional)
   // [xGridVector, yGridVector] = meshgrid((-0.9:0.9:6), (-1:1:4));
   Meshgrid<f32> mesh(LinearSequence<f32>(-0.9f,0.9f,6.0f), LinearSequence<f32>(-1.0f,1.0f,4.0f));
 
-  Array<f32> homography = Eye<f32>(3,3,ms);
+  Array<f32> homography = Eye<f32>(3,3,scratchOnchip);
   homography[0][0] = 1.5f;
   homography[1][2] = 1.0f;
   // homography = [1.5, 0, 0.0; 0.0, 1.0, 1.0; 0.0, 0.0, 1.0];
@@ -1756,7 +1774,7 @@ GTEST_TEST(CoreTech_Common, Interp2_Affine_twoDimensional)
   const Point<f32> centerOffset(0.0f, 0.0f);
 
   // result = round(interp2(reference, 1+warpedXGridVector, 1+warpedYGridVector)); result(isnan(result)) = 0
-  Array<u8> result(mesh.get_yGridVector().get_size(), mesh.get_xGridVector().get_size(), ms);
+  Array<u8> result(mesh.get_yGridVector().get_size(), mesh.get_xGridVector().get_size(), scratchOnchip);
   const Result lastResult = Interp2_Affine<u8,u8>(reference, mesh, homography, centerOffset, result);
   ASSERT_TRUE(lastResult == RESULT_OK);
 
@@ -1781,11 +1799,13 @@ GTEST_TEST(CoreTech_Common, Interp2_Affine_twoDimensional)
 
 GTEST_TEST(CoreTech_Common, Interp2_Affine_oneDimensional)
 {
-  ASSERT_TRUE(offchipBuffer != NULL);
-  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  Array<u8> reference(3,5,ms);
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  Array<u8> reference(3,5,scratchOnchip);
 
   // reference = [1:5; 11:15; 21:25];
   reference(0,0,0,-1).Set(LinearSequence<u8>(1,5));
@@ -1795,7 +1815,7 @@ GTEST_TEST(CoreTech_Common, Interp2_Affine_oneDimensional)
   // [xGridVector, yGridVector] = meshgrid((-0.9:0.9:6), (-1:1:4));
   Meshgrid<f32> mesh(LinearSequence<f32>(-0.9f,0.9f,6.0f), LinearSequence<f32>(-1.0f,1.0f,4.0f));
 
-  Array<f32> homography = Eye<f32>(3,3,ms);
+  Array<f32> homography = Eye<f32>(3,3,scratchOnchip);
   homography[0][0] = 1.5f;
   homography[1][2] = 1.0f;
   // homography = [1.5, 0, 0.0; 0.0, 1.0, 1.0; 0.0, 0.0, 1.0];
@@ -1813,7 +1833,7 @@ GTEST_TEST(CoreTech_Common, Interp2_Affine_oneDimensional)
   // result = round(interp2(reference, 1+warpedXGridVector, 1+warpedYGridVector)); result(isnan(result)) = 0;
   // r = result'; r(:)'
   const s32 numElements = mesh.get_yGridVector().get_size() * mesh.get_xGridVector().get_size();
-  Array<u8> result(1, numElements, ms);
+  Array<u8> result(1, numElements, scratchOnchip);
   const Result lastResult = Interp2_Affine<u8,u8>(reference, mesh, homography, centerOffset, result);
   ASSERT_TRUE(lastResult == RESULT_OK);
 
@@ -1830,11 +1850,13 @@ GTEST_TEST(CoreTech_Common, Interp2_Affine_oneDimensional)
 
 GTEST_TEST(CoreTech_Common, Interp2_twoDimensional)
 {
-  ASSERT_TRUE(offchipBuffer != NULL);
-  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  Array<u8> reference(3,5,ms);
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  Array<u8> reference(3,5,scratchOnchip);
 
   // reference = [1:5; 11:15; 21:25];
   reference(0,0,0,-1).Set(LinearSequence<u8>(1,5));
@@ -1843,11 +1865,11 @@ GTEST_TEST(CoreTech_Common, Interp2_twoDimensional)
 
   // [xGridVector, yGridVector] = meshgrid(1+(-0.9:0.9:6), 1+(-1:1:4));
   Meshgrid<f32> mesh(LinearSequence<f32>(-0.9f,0.9f,6.0f), LinearSequence<f32>(-1.0f,1.0f,4.0f));
-  Array<f32> xGridMatrix = mesh.EvaluateX2(ms);
-  Array<f32> yGridMatrix = mesh.EvaluateY2(ms);
+  Array<f32> xGridMatrix = mesh.EvaluateX2(scratchOnchip);
+  Array<f32> yGridMatrix = mesh.EvaluateY2(scratchOnchip);
 
   // result = round(interp2(reference, xGridVector, yGridVector)); result(isnan(result)) = 0
-  Array<u8> result(xGridMatrix.get_size(0), xGridMatrix.get_size(1), ms);
+  Array<u8> result(xGridMatrix.get_size(0), xGridMatrix.get_size(1), scratchOnchip);
   ASSERT_TRUE(Interp2(reference, xGridMatrix, yGridMatrix, result) == RESULT_OK);
 
   const u8 result_groundTruth[6][8] = {
@@ -1871,11 +1893,13 @@ GTEST_TEST(CoreTech_Common, Interp2_twoDimensional)
 
 GTEST_TEST(CoreTech_Common, Interp2_oneDimensional)
 {
-  ASSERT_TRUE(offchipBuffer != NULL);
-  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  Array<u8> reference(3,5,ms);
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  Array<u8> reference(3,5,scratchOnchip);
 
   // reference = [1:5; 11:15; 21:25];
   reference(0,0,0,-1).Set(LinearSequence<u8>(1,5));
@@ -1884,11 +1908,11 @@ GTEST_TEST(CoreTech_Common, Interp2_oneDimensional)
 
   // [xGridVector, yGridVector] = meshgrid(1+(-0.9:0.9:6), 1+(-1:1:4));
   Meshgrid<f32> mesh(LinearSequence<f32>(-0.9f,0.9f,6.0f), LinearSequence<f32>(-1.0f,1.0f,4.0f));
-  Array<f32> xGridVector = mesh.EvaluateX1(true, ms);
-  Array<f32> yGridVector = mesh.EvaluateY1(true, ms);
+  Array<f32> xGridVector = mesh.EvaluateX1(true, scratchOnchip);
+  Array<f32> yGridVector = mesh.EvaluateY1(true, scratchOnchip);
 
   // result = round(interp2(reference, xGridVector(:), yGridVector(:)))
-  Array<u8> result(1, xGridVector.get_size(1), ms);
+  Array<u8> result(1, xGridVector.get_size(1), scratchOnchip);
   ASSERT_TRUE(Interp2(reference, xGridVector, yGridVector, result) == RESULT_OK);
 
   const u8 result_groundTruth[48] = {0, 0, 0, 0, 0, 0, 0, 1, 11, 21, 0, 0, 0, 2, 12, 22, 0, 0, 0, 3, 13, 23, 0, 0, 0, 4, 14, 24, 0, 0, 0, 5, 15, 25, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -1904,14 +1928,16 @@ GTEST_TEST(CoreTech_Common, Interp2_oneDimensional)
 
 GTEST_TEST(CoreTech_Common, Meshgrid_twoDimensional)
 {
-  ASSERT_TRUE(offchipBuffer != NULL);
-  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
   // [x,y] = meshgrid(1:5,1:3)
   Meshgrid<s32> mesh(LinearSequence<s32>(1,5), LinearSequence<s32>(1,3));
 
-  Array<s32> out(20,20,ms);
+  Array<s32> out(20,20,scratchOnchip);
   ASSERT_TRUE(out.IsValid());
 
   {
@@ -1939,14 +1965,16 @@ GTEST_TEST(CoreTech_Common, Meshgrid_twoDimensional)
 
 GTEST_TEST(CoreTech_Common, Meshgrid_oneDimensional)
 {
-  ASSERT_TRUE(offchipBuffer != NULL);
-  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
   // [x,y] = meshgrid(1:5,1:3)
   Meshgrid<s32> mesh(LinearSequence<s32>(1,5), LinearSequence<s32>(1,3));
 
-  Array<s32> out(20,20,ms);
+  Array<s32> out(20,20,scratchOnchip);
   ASSERT_TRUE(out.IsValid());
 
   {
@@ -1986,9 +2014,11 @@ GTEST_TEST(CoreTech_Common, Meshgrid_oneDimensional)
 
 GTEST_TEST(CoreTech_Common, Linspace)
 {
-  ASSERT_TRUE(offchipBuffer != NULL);
-  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
   LinearSequence<f32> sequence1 = Linspace<f32>(0,9,10);
   LinearSequence<f32> sequence2 = Linspace<f32>(0,9,1<<29);
@@ -2005,11 +2035,13 @@ GTEST_TEST(CoreTech_Common, Linspace)
 
 GTEST_TEST(CoreTech_Common, Find_SetArray1)
 {
-  ASSERT_TRUE(offchipBuffer != NULL);
-  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  Array<s32> in1(1,6,ms); //in1: 2000 2000 2000 3 4 5
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  Array<s32> in1(1,6,scratchOnchip); //in1: 2000 2000 2000 3 4 5
 
   ASSERT_TRUE(in1.IsValid());
 
@@ -2021,7 +2053,7 @@ GTEST_TEST(CoreTech_Common, Find_SetArray1)
 
   Find<s32,Comparison::LessThanOrEqual<s32,s32>,s32> find(in1, 5);
 
-  Array<s16> inB(6,6,ms);
+  Array<s16> inB(6,6,scratchOnchip);
 
   s16 i1 = 0;
   for(s32 y=0; y<6; y++) {
@@ -2032,13 +2064,12 @@ GTEST_TEST(CoreTech_Common, Find_SetArray1)
 
   // Case 1-1
   {
-    PUSH_MEMORY_STACK(ms);
+    PUSH_MEMORY_STACK(scratchOnchip);
 
-    Array<s16> outB = find.SetArray(inB, 0, ms);
+    Array<s16> outB = find.SetArray(inB, 0, scratchOnchip);
     ASSERT_TRUE(outB.IsValid());
 
-    ASSERT_TRUE(outB.get_size(0) == 3);
-    ASSERT_TRUE(outB.get_size(1) == 6);
+    ASSERT_TRUE(AreEqualSize(3, 6, outB));
 
     for(s32 y=0; y<3; y++) {
       for(s32 x=0; x<6; x++) {
@@ -2049,13 +2080,12 @@ GTEST_TEST(CoreTech_Common, Find_SetArray1)
 
   // Case 1-2
   {
-    PUSH_MEMORY_STACK(ms);
+    PUSH_MEMORY_STACK(scratchOnchip);
 
-    Array<s16> outB = find.SetArray(inB, 1, ms);
+    Array<s16> outB = find.SetArray(inB, 1, scratchOnchip);
     ASSERT_TRUE(outB.IsValid());
 
-    ASSERT_TRUE(outB.get_size(0) == 6);
-    ASSERT_TRUE(outB.get_size(1) == 3);
+    ASSERT_TRUE(AreEqualSize(6, 3, outB));
 
     for(s32 y=0; y<6; y++) {
       for(s32 x=0; x<3; x++) {
@@ -2069,12 +2099,14 @@ GTEST_TEST(CoreTech_Common, Find_SetArray1)
 
 GTEST_TEST(CoreTech_Common, Find_SetArray2)
 {
-  ASSERT_TRUE(offchipBuffer != NULL);
-  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  Array<f32> in1(1,6,ms);
-  Array<f32> in2(1,6,ms);
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  Array<f32> in1(1,6,scratchOnchip);
+  Array<f32> in2(1,6,scratchOnchip);
 
   ASSERT_TRUE(in1.IsValid());
   ASSERT_TRUE(in2.IsValid());
@@ -2091,7 +2123,7 @@ GTEST_TEST(CoreTech_Common, Find_SetArray2)
 
   Find<f32,Comparison::LessThanOrEqual<f32,f32>,f32> find(in1, in2);
 
-  Array<s16> inB(6,6,ms);
+  Array<s16> inB(6,6,scratchOnchip);
 
   {
     s16 i1 = 0;
@@ -2104,13 +2136,12 @@ GTEST_TEST(CoreTech_Common, Find_SetArray2)
 
   // Case 2-1
   {
-    PUSH_MEMORY_STACK(ms);
+    PUSH_MEMORY_STACK(scratchOnchip);
 
-    Array<s16> outB = find.SetArray(inB, 0, ms);
+    Array<s16> outB = find.SetArray(inB, 0, scratchOnchip);
     ASSERT_TRUE(outB.IsValid());
 
-    ASSERT_TRUE(outB.get_size(0) == 3);
-    ASSERT_TRUE(outB.get_size(1) == 6);
+    ASSERT_TRUE(AreEqualSize(3, 6, outB));
 
     for(s32 y=0; y<3; y++) {
       for(s32 x=0; x<6; x++) {
@@ -2121,13 +2152,12 @@ GTEST_TEST(CoreTech_Common, Find_SetArray2)
 
   // Case 2-2
   {
-    PUSH_MEMORY_STACK(ms);
+    PUSH_MEMORY_STACK(scratchOnchip);
 
-    Array<s16> outB = find.SetArray(inB, 1, ms);
+    Array<s16> outB = find.SetArray(inB, 1, scratchOnchip);
     ASSERT_TRUE(outB.IsValid());
 
-    ASSERT_TRUE(outB.get_size(0) == 6);
-    ASSERT_TRUE(outB.get_size(1) == 3);
+    ASSERT_TRUE(AreEqualSize(6, 3, outB));
 
     for(s32 y=0; y<6; y++) {
       for(s32 x=0; x<3; x++) {
@@ -2141,12 +2171,14 @@ GTEST_TEST(CoreTech_Common, Find_SetArray2)
 
 GTEST_TEST(CoreTech_Common, Find_SetValue)
 {
-  ASSERT_TRUE(offchipBuffer != NULL);
-  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  Array<u16> in1(5,6,ms);
-  Array<u16> in2(5,6,ms);
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  Array<u16> in1(5,6,scratchOnchip);
+  Array<u16> in2(5,6,scratchOnchip);
 
   ASSERT_TRUE(in1.IsValid());
   ASSERT_TRUE(in2.IsValid());
@@ -2191,12 +2223,14 @@ GTEST_TEST(CoreTech_Common, Find_SetValue)
 
 GTEST_TEST(CoreTech_Common, ZeroSizedArray)
 {
-  ASSERT_TRUE(offchipBuffer != NULL);
-  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  Array<s32> in1(1,6,ms);
-  Array<s32> in2(1,6,ms);
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  Array<s32> in1(1,6,scratchOnchip);
+  Array<s32> in2(1,6,scratchOnchip);
 
   ASSERT_TRUE(in1.IsValid());
   ASSERT_TRUE(in2.IsValid());
@@ -2212,7 +2246,7 @@ GTEST_TEST(CoreTech_Common, ZeroSizedArray)
   Array<s32> yIndexes;
   Array<s32> xIndexes;
 
-  ASSERT_TRUE(find.Evaluate(yIndexes, xIndexes, ms) == RESULT_OK);
+  ASSERT_TRUE(find.Evaluate(yIndexes, xIndexes, scratchOnchip) == RESULT_OK);
 
   ASSERT_TRUE(!yIndexes.IsValid());
   ASSERT_TRUE(!xIndexes.IsValid());
@@ -2226,15 +2260,17 @@ GTEST_TEST(CoreTech_Common, ZeroSizedArray)
 
 GTEST_TEST(CoreTech_Common, Find_Evaluate1D)
 {
-  ASSERT_TRUE(offchipBuffer != NULL);
-  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  Array<s32> in1(1,6,ms);
-  Array<s32> in2(1,6,ms);
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
-  Array<s32> in1b(6,1,ms);
-  Array<s32> in2b(6,1,ms);
+  Array<s32> in1(1,6,scratchOnchip);
+  Array<s32> in2(1,6,scratchOnchip);
+
+  Array<s32> in1b(6,1,scratchOnchip);
+  Array<s32> in2b(6,1,scratchOnchip);
 
   ASSERT_TRUE(in1.IsValid());
   ASSERT_TRUE(in2.IsValid());
@@ -2266,18 +2302,15 @@ GTEST_TEST(CoreTech_Common, Find_Evaluate1D)
 
   // 2D indexes horizontal
   {
-    PUSH_MEMORY_STACK(ms);
+    PUSH_MEMORY_STACK(scratchOnchip);
 
     Array<s32> yIndexes;
     Array<s32> xIndexes;
 
-    ASSERT_TRUE(find.Evaluate(yIndexes, xIndexes, ms) == RESULT_OK);
+    ASSERT_TRUE(find.Evaluate(yIndexes, xIndexes, scratchOnchip) == RESULT_OK);
 
-    ASSERT_TRUE(yIndexes.get_size(0) == 1);
-    ASSERT_TRUE(yIndexes.get_size(1) == 3);
-
-    ASSERT_TRUE(xIndexes.get_size(0) == 1);
-    ASSERT_TRUE(xIndexes.get_size(1) == 3);
+    ASSERT_TRUE(AreEqualSize(1, 3, yIndexes));
+    ASSERT_TRUE(AreEqualSize(1, 3, xIndexes));
 
     //yIndexes.Print("yIndexes");
     //xIndexes.Print("xIndexes");
@@ -2289,18 +2322,17 @@ GTEST_TEST(CoreTech_Common, Find_Evaluate1D)
       ASSERT_TRUE(yIndexes[0][i] == yIndexes_groundTruth[i]);
       ASSERT_TRUE(xIndexes[0][i] == xIndexes_groundTruth[i]);
     }
-  } // PUSH_MEMORY_STACK(ms)
+  } // PUSH_MEMORY_STACK(scratchOnchip)
 
   // 1D indexes horizontal
   {
-    PUSH_MEMORY_STACK(ms);
+    PUSH_MEMORY_STACK(scratchOnchip);
 
     Array<s32> indexes;
 
-    ASSERT_TRUE(find.Evaluate(indexes, ms) == RESULT_OK);
+    ASSERT_TRUE(find.Evaluate(indexes, scratchOnchip) == RESULT_OK);
 
-    ASSERT_TRUE(indexes.get_size(0) == 1);
-    ASSERT_TRUE(indexes.get_size(1) == 3);
+    ASSERT_TRUE(AreEqualSize(1, 3, indexes));
 
     //indexes.Print("indexes");
 
@@ -2309,22 +2341,19 @@ GTEST_TEST(CoreTech_Common, Find_Evaluate1D)
     for(s32 i=0; i<3; i++) {
       ASSERT_TRUE(indexes[0][i] == indexes_groundTruth[i]);
     }
-  } // PUSH_MEMORY_STACK(ms)
+  } // PUSH_MEMORY_STACK(scratchOnchip)
 
   // 2D indexes vertical
   {
-    PUSH_MEMORY_STACK(ms);
+    PUSH_MEMORY_STACK(scratchOnchip);
 
     Array<s32> yIndexes;
     Array<s32> xIndexes;
 
-    ASSERT_TRUE(findB.Evaluate(yIndexes, xIndexes, ms) == RESULT_OK);
+    ASSERT_TRUE(findB.Evaluate(yIndexes, xIndexes, scratchOnchip) == RESULT_OK);
 
-    ASSERT_TRUE(yIndexes.get_size(0) == 1);
-    ASSERT_TRUE(yIndexes.get_size(1) == 3);
-
-    ASSERT_TRUE(xIndexes.get_size(0) == 1);
-    ASSERT_TRUE(xIndexes.get_size(1) == 3);
+    ASSERT_TRUE(AreEqualSize(1, 3, yIndexes));
+    ASSERT_TRUE(AreEqualSize(1, 3, xIndexes));
 
     //yIndexes.Print("yIndexes");
     //xIndexes.Print("xIndexes");
@@ -2336,28 +2365,30 @@ GTEST_TEST(CoreTech_Common, Find_Evaluate1D)
       ASSERT_TRUE(yIndexes[0][i] == yIndexes_groundTruth[i]);
       ASSERT_TRUE(xIndexes[0][i] == xIndexes_groundTruth[i]);
     }
-  } // PUSH_MEMORY_STACK(ms)
+  } // PUSH_MEMORY_STACK(scratchOnchip)
 
   // 1D indexes vertical
   {
-    PUSH_MEMORY_STACK(ms);
+    PUSH_MEMORY_STACK(scratchOnchip);
 
     Array<s32> indexes;
 
-    ASSERT_TRUE(findB.Evaluate(indexes, ms) == RESULT_FAIL_INVALID_PARAMETER);
-  } // PUSH_MEMORY_STACK(ms)
+    ASSERT_TRUE(findB.Evaluate(indexes, scratchOnchip) == RESULT_FAIL_INVALID_PARAMETER);
+  } // PUSH_MEMORY_STACK(scratchOnchip)
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Common, Find_Evaluate1D)
 
 GTEST_TEST(CoreTech_Common, Find_Evaluate2D)
 {
-  ASSERT_TRUE(offchipBuffer != NULL);
-  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  Array<s32> in1(5,6,ms);
-  Array<s32> in2(5,6,ms);
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  Array<s32> in1(5,6,scratchOnchip);
+  Array<s32> in2(5,6,scratchOnchip);
 
   ASSERT_TRUE(in1.IsValid());
   ASSERT_TRUE(in2.IsValid());
@@ -2395,14 +2426,11 @@ GTEST_TEST(CoreTech_Common, Find_Evaluate2D)
   Array<s32> yIndexes;
   Array<s32> xIndexes;
 
-  ASSERT_TRUE(find.Evaluate(yIndexes, ms) == RESULT_FAIL_INVALID_PARAMETER);
-  ASSERT_TRUE(find.Evaluate(yIndexes, xIndexes, ms) == RESULT_OK);
+  ASSERT_TRUE(find.Evaluate(yIndexes, scratchOnchip) == RESULT_FAIL_INVALID_PARAMETER);
+  ASSERT_TRUE(find.Evaluate(yIndexes, xIndexes, scratchOnchip) == RESULT_OK);
 
-  ASSERT_TRUE(yIndexes.get_size(0) == 1);
-  ASSERT_TRUE(yIndexes.get_size(1) == 22);
-
-  ASSERT_TRUE(xIndexes.get_size(0) == 1);
-  ASSERT_TRUE(xIndexes.get_size(1) == 22);
+  ASSERT_TRUE(AreEqualSize(1, 22, yIndexes));
+  ASSERT_TRUE(AreEqualSize(1, 22, xIndexes));
 
   //yIndexes.Print("yIndexes");
   //xIndexes.Print("xIndexes");
@@ -2420,13 +2448,15 @@ GTEST_TEST(CoreTech_Common, Find_Evaluate2D)
 
 GTEST_TEST(CoreTech_Common, Find_NumMatchesAndBoundingRectangle)
 {
-  ASSERT_TRUE(offchipBuffer != NULL);
-  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  Array<s32> in1(5,6,ms);
-  Array<s32> in2(5,6,ms);
-  Array<s32> out(5,6,ms);
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  Array<s32> in1(5,6,scratchOnchip);
+  Array<s32> in2(5,6,scratchOnchip);
+  Array<s32> out(5,6,scratchOnchip);
 
   ASSERT_TRUE(in1.IsValid());
   ASSERT_TRUE(in2.IsValid());
@@ -2471,13 +2501,15 @@ GTEST_TEST(CoreTech_Common, Find_NumMatchesAndBoundingRectangle)
 
 GTEST_TEST(CoreTech_Common, MatrixElementwise)
 {
-  ASSERT_TRUE(offchipBuffer != NULL);
-  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  Array<s32> in1(5,6,ms);
-  Array<s32> in2(5,6,ms);
-  Array<s32> out(5,6,ms);
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  Array<s32> in1(5,6,scratchOnchip);
+  Array<s32> in2(5,6,scratchOnchip);
+  Array<s32> out(5,6,scratchOnchip);
 
   ASSERT_TRUE(in1.IsValid());
   ASSERT_TRUE(in2.IsValid());
@@ -2768,12 +2800,14 @@ GTEST_TEST(CoreTech_Common, MatrixElementwise)
 
 GTEST_TEST(CoreTech_Common, SliceArrayAssignment)
 {
-  ASSERT_TRUE(offchipBuffer != NULL);
-  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  Array<u8> array1(5,6,ms);
-  Array<u8> array2(5,6,ms);
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  Array<u8> array1(5,6,scratchOnchip);
+  Array<u8> array2(5,6,scratchOnchip);
 
   ASSERT_TRUE(array1.IsValid());
   ASSERT_TRUE(array2.IsValid());
@@ -2848,18 +2882,20 @@ GTEST_TEST(CoreTech_Common, SliceArrayAssignment)
 GTEST_TEST(CoreTech_Common, SliceArrayCompileTest)
 {
   // This is just a compile test, and should always pass unless there's a very serious error
-  ASSERT_TRUE(offchipBuffer != NULL);
-  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  Array<u8> array1(20,30,ms);
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  Array<u8> array1(20,30,scratchOnchip);
 
   // This is okay
   ArraySlice<u8> slice1 = array1(LinearSequence<s32>(1,5), LinearSequence<s32>(0,7,30));
 
-  ASSERT_TRUE(slice1.get_array().IsValid());
+  ASSERT_TRUE(slice1.IsValid());
 
-  const Array<u8> array2(20,30,ms);
+  const Array<u8> array2(20,30,scratchOnchip);
 
   // Will not compile
   //ArraySlice<u8> slice2 = array2(LinearSequence<s32>(1,5), LinearSequence<s32>(0,7,30));
@@ -2867,12 +2903,12 @@ GTEST_TEST(CoreTech_Common, SliceArrayCompileTest)
   // This is okay
   ConstArraySlice<u8> slice1b = array1(LinearSequence<s32>(1,5), LinearSequence<s32>(0,7,30));
 
-  ASSERT_TRUE(slice1b.get_array().IsValid());
+  ASSERT_TRUE(slice1b.IsValid());
 
   // This is okay
   ConstArraySlice<u8> slice2 = array2(LinearSequence<s32>(1,5), LinearSequence<s32>(0,7,30));
 
-  ASSERT_TRUE(slice2.get_array().IsValid());
+  ASSERT_TRUE(slice2.IsValid());
 
   //CoreTechPrint("%d %d %d\n", slice1.get_xSlice().get_start(), slice1.get_xSlice().get_end(), *slice1.get_array().Pointer(0,0));
   //CoreTechPrint("%d %d %d\n", slice1b.get_xSlice().get_start(), slice1b.get_xSlice().get_end(), *slice1b.get_array().Pointer(0,0));
@@ -2883,11 +2919,13 @@ GTEST_TEST(CoreTech_Common, SliceArrayCompileTest)
 
 GTEST_TEST(CoreTech_Common, MatrixMinAndMaxAndSum)
 {
-  ASSERT_TRUE(offchipBuffer != NULL);
-  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  Array<u8> array(5,5,ms);
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  Array<u8> array(5,5,scratchOnchip);
 
   s32 i = 0;
   for(s32 y=0; y<5; y++) {
@@ -2925,28 +2963,30 @@ GTEST_TEST(CoreTech_Common, MatrixMinAndMaxAndSum)
 
 GTEST_TEST(CoreTech_Common, ReallocateArray)
 {
-  ASSERT_TRUE(offchipBuffer != NULL);
-  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  Array<u8> array1(20,30,ms);
-  Array<u8> array2(20,30,ms);
-  Array<u8> array3(20,30,ms);
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  Array<u8> array1(20,30,scratchOnchip);
+  Array<u8> array2(20,30,scratchOnchip);
+  Array<u8> array3(20,30,scratchOnchip);
 
   ASSERT_TRUE(array1.IsValid());
   ASSERT_TRUE(array2.IsValid());
   ASSERT_TRUE(array3.IsValid());
 
   ASSERT_TRUE(array1.IsValid());
-  ASSERT_TRUE(array1.Resize(20,15,ms) == RESULT_FAIL_UNINITIALIZED_MEMORY);
+  ASSERT_TRUE(array1.Resize(20,15,scratchOnchip) == RESULT_FAIL_UNINITIALIZED_MEMORY);
   ASSERT_TRUE(!array1.IsValid());
 
   ASSERT_TRUE(array3.IsValid());
-  ASSERT_TRUE(array3.Resize(20,15,ms) == RESULT_OK);
+  ASSERT_TRUE(array3.Resize(20,15,scratchOnchip) == RESULT_OK);
   ASSERT_TRUE(array3.IsValid());
 
   ASSERT_TRUE(array2.IsValid());
-  ASSERT_TRUE(array2.Resize(20,15,ms) == RESULT_FAIL_UNINITIALIZED_MEMORY);
+  ASSERT_TRUE(array2.Resize(20,15,scratchOnchip) == RESULT_FAIL_UNINITIALIZED_MEMORY);
   ASSERT_TRUE(!array2.IsValid());
 
   GTEST_RETURN_HERE;
@@ -2954,24 +2994,26 @@ GTEST_TEST(CoreTech_Common, ReallocateArray)
 
 GTEST_TEST(CoreTech_Common, ReallocateMemoryStack)
 {
-  ASSERT_TRUE(offchipBuffer != NULL);
-  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  void *memory1 = ms.Allocate(100);
-  void *memory2 = ms.Allocate(100);
-  void *memory3 = ms.Allocate(100);
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  void *memory1 = scratchOnchip.Allocate(100);
+  void *memory2 = scratchOnchip.Allocate(100);
+  void *memory3 = scratchOnchip.Allocate(100);
 
   ASSERT_TRUE(memory3 != NULL);
-  memory3 = ms.Reallocate(memory3, 50);
+  memory3 = scratchOnchip.Reallocate(memory3, 50);
   ASSERT_TRUE(memory3 != NULL);
 
   ASSERT_TRUE(memory2 != NULL);
-  memory2 = ms.Reallocate(memory2, 50);
+  memory2 = scratchOnchip.Reallocate(memory2, 50);
   ASSERT_TRUE(memory2 == NULL);
 
   ASSERT_TRUE(memory1 != NULL);
-  memory1 = ms.Reallocate(memory1, 50);
+  memory1 = scratchOnchip.Reallocate(memory1, 50);
   ASSERT_TRUE(memory1 == NULL);
 
   GTEST_RETURN_HERE;
@@ -2979,9 +3021,11 @@ GTEST_TEST(CoreTech_Common, ReallocateMemoryStack)
 
 GTEST_TEST(CoreTech_Common, LinearSequence)
 {
-  ASSERT_TRUE(offchipBuffer != NULL);
-  MemoryStack ms(offchipBuffer, OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
   // Test s32 sequences
   const s32 sequenceLimits1[15][3] = {{0,1,1}, {0,2,1}, {-1,1,1}, {-1,2,1}, {-1,3,1},
@@ -3018,26 +3062,25 @@ GTEST_TEST(CoreTech_Common, LinearSequence)
 
   // Test a normal Array
   {
-    PUSH_MEMORY_STACK(ms);
-    Array<s32> sequenceArray = sequence.Evaluate(ms);
+    PUSH_MEMORY_STACK(scratchOnchip);
+    Array<s32> sequenceArray = sequence.Evaluate(scratchOnchip);
 
     ASSERT_TRUE(sequenceArray.IsValid());
 
     const s32 sequenceArray_groundTruth[5] = {-4, -2, 0, 2, 4};
 
-    ASSERT_TRUE(sequenceArray.get_size(0) == 1);
-    ASSERT_TRUE(sequenceArray.get_size(1) == 5);
+    ASSERT_TRUE(AreEqualSize(1, 5, sequenceArray));
 
     for(s32 i=0; i<5; i++) {
       ASSERT_TRUE(sequenceArray[0][i] == sequenceArray_groundTruth[i]);
     }
-  } // PUSH_MEMORY_STACK(ms)
+  } // PUSH_MEMORY_STACK(scratchOnchip)
 
   // Test an ArraySlice
   {
-    PUSH_MEMORY_STACK(ms);
+    PUSH_MEMORY_STACK(scratchOnchip);
 
-    Array<s32> sequenceArray(4,100,ms);
+    Array<s32> sequenceArray(4,100,scratchOnchip);
 
     ASSERT_TRUE(sequenceArray.IsValid());
 
@@ -3065,7 +3108,7 @@ GTEST_TEST(CoreTech_Common, LinearSequence)
         ASSERT_TRUE(sequenceArray[y][x] == 0);
       }
     }
-  } // PUSH_MEMORY_STACK(ms)
+  } // PUSH_MEMORY_STACK(scratchOnchip)
 
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Common, LinearSequence)
@@ -3075,6 +3118,7 @@ GTEST_TEST(CoreTech_Common, MemoryStackId)
   //CoreTechPrint("%f %f %f %f %f\n", 43423442334324.010203, 15.500, 15.0, 0.05, 0.12004333);
 
   const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 5000);
+
   ASSERT_TRUE(offchipBuffer != NULL);
   MemoryStack ms(offchipBuffer, numBytes);
   ASSERT_TRUE(ms.IsValid());
@@ -3150,9 +3194,12 @@ GTEST_TEST(CoreTech_Common, ApproximateExp)
 GTEST_TEST(CoreTech_Common, MatrixMultiply)
 {
   const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 5000);
-  ASSERT_TRUE(offchipBuffer != NULL);
-  MemoryStack ms(offchipBuffer, numBytes);
-  ASSERT_TRUE(ms.IsValid());
+
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
 #define MatrixMultiply_mat1DataLength 10
 #define MatrixMultiply_mat2DataLength 15
@@ -3173,10 +3220,10 @@ GTEST_TEST(CoreTech_Common, MatrixMultiply)
     1158, 1230, 1302,
     4843, 5161, 5489};
 
-  Array<f64> mat1(2, 5, ms);
-  Array<f64> mat2(5, 3, ms);
-  Array<f64> matOut(2, 3, ms);
-  Array<f64> matOut_groundTruth(2, 3, ms);
+  Array<f64> mat1(2, 5, scratchOnchip);
+  Array<f64> mat2(5, 3, scratchOnchip);
+  Array<f64> matOut(2, 3, scratchOnchip);
+  Array<f64> matOut_groundTruth(2, 3, scratchOnchip);
 
   ASSERT_TRUE(mat1.IsValid());
   ASSERT_TRUE(mat2.IsValid());
@@ -3199,17 +3246,20 @@ GTEST_TEST(CoreTech_Common, MatrixMultiply)
 GTEST_TEST(CoreTech_Common, ComputeHomography)
 {
   const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 5000);
-  ASSERT_TRUE(offchipBuffer != NULL);
-  MemoryStack ms(offchipBuffer, numBytes);
-  ASSERT_TRUE(ms.IsValid());
 
-  Array<f64> homography_groundTruth(3, 3, ms);
-  Array<f64> homography(3, 3, ms);
-  Array<f64> originalPoints(3, 4, ms);
-  Array<f64> transformedPoints(3, 4, ms);
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  FixedLengthList<Point<f64> > originalPointsList(4, ms);
-  FixedLengthList<Point<f64> > transformedPointsList(4, ms);
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  Array<f64> homography_groundTruth(3, 3, scratchOnchip);
+  Array<f64> homography(3, 3, scratchOnchip);
+  Array<f64> originalPoints(3, 4, scratchOnchip);
+  Array<f64> transformedPoints(3, 4, scratchOnchip);
+
+  FixedLengthList<Point<f64> > originalPointsList(4, scratchOnchip);
+  FixedLengthList<Point<f64> > transformedPointsList(4, scratchOnchip);
 
   ASSERT_TRUE(homography_groundTruth.IsValid());
   ASSERT_TRUE(homography.IsValid());
@@ -3252,7 +3302,7 @@ GTEST_TEST(CoreTech_Common, ComputeHomography)
   originalPointsList.Print("originalPointsList");
   transformedPointsList.Print("transformedPointsList");
 
-  const Result result = Matrix::EstimateHomography(originalPointsList, transformedPointsList, homography, ms);
+  const Result result = Matrix::EstimateHomography(originalPointsList, transformedPointsList, homography, scratchOnchip);
 
   ASSERT_TRUE(result == RESULT_OK);
 
@@ -3269,6 +3319,7 @@ GTEST_TEST(CoreTech_Common, MemoryStack)
 
   const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 200);
   void * alignedBuffer = reinterpret_cast<void*>(RoundUp(reinterpret_cast<size_t>(offchipBuffer), MEMORY_ALIGNMENT));
+
   ASSERT_TRUE(offchipBuffer != NULL);
   MemoryStack ms(alignedBuffer, numBytes);
   ASSERT_TRUE(ms.IsValid());
@@ -3357,6 +3408,7 @@ s32 CheckConstCasting(const MemoryStack ms, s32 numBytes)
 GTEST_TEST(CoreTech_Common, MemoryStack_call)
 {
   const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 100);
+
   ASSERT_TRUE(offchipBuffer != NULL);
   MemoryStack ms(offchipBuffer, numBytes);
 
@@ -3415,14 +3467,15 @@ GTEST_TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1)
 
 GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
 {
-  // Allocate memory from the heap, for the memory allocator
-  const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 1000);
-  ASSERT_TRUE(offchipBuffer != NULL);
-  MemoryStack ms(offchipBuffer, numBytes);
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
   // Create a matrix, and manually set a few values
-  Array<s16> simpleArray(10, 6, ms);
-  ASSERT_TRUE(simpleArray.get_rawDataPointer() != NULL);
+  Array<s16> simpleArray(10, 6, scratchOnchip);
+  ASSERT_TRUE(simpleArray.get_buffer() != NULL);
   *simpleArray.Pointer(0,0) = 1;
   *simpleArray.Pointer(0,1) = 2;
   *simpleArray.Pointer(0,2) = 3;
@@ -3498,12 +3551,13 @@ GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
 
 GTEST_TEST(CoreTech_Common, ArraySpecifiedClass)
 {
-  const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 1000);
-  ASSERT_TRUE(offchipBuffer != NULL);
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  MemoryStack ms(offchipBuffer, numBytes);
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
-  Array<u8> simpleArray(3, 3, ms);
+  Array<u8> simpleArray(3, 3, scratchOnchip);
 
 #define ArraySpecifiedClass_imgDataLength 9
   const s32 imgData[ArraySpecifiedClass_imgDataLength] = {
@@ -3571,8 +3625,11 @@ GTEST_TEST(CoreTech_Common, MemoryStackAlignment)
 #ifdef TEST_BENCHMARKING
 GTEST_TEST(CoreTech_Common, Benchmarking)
 {
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
   MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
-  ASSERT_TRUE(scratchOffchip.IsValid());
+
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
   InitBenchmarking();
 

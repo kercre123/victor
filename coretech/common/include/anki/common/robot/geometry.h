@@ -271,7 +271,7 @@ namespace Anki
     Point3<Type> operator* (const Array<Type>& M, const Point3<Type>& p)
     {
       // Matrix M must be 3x3
-      AnkiAssert(M.get_size(0) == 3 && M.get_size(1) == 3);
+      AnkiAssert(AreEqualSize(3, 3, M));
 
       return Point3<Type>(M[0][0]*p.x + M[0][1]*p.y + M[0][2]*p.z,
         M[1][0]*p.x + M[1][1]*p.y + M[1][2]*p.z,
@@ -293,9 +293,9 @@ namespace Anki
       MemoryStack scratch)
     {
       // All the rotation matrices should be 3x3
-      AnkiAssert(R1.get_size(0)    == 3 && R1.get_size(1)    == 3);
-      AnkiAssert(R2.get_size(0)    == 3 && R2.get_size(1)    == 3);
-      AnkiAssert(Rdiff.get_size(0) == 3 && Rdiff.get_size(1) == 3);
+      AnkiAssert(AreEqualSize(3, 3, R1));
+      AnkiAssert(AreEqualSize(3, 3, R2));
+      AnkiAssert(AreEqualSize(3, 3, Rdiff));
 
       Array<Type> invR1 = Array<Type>(3,3,scratch);
       Matrix::Transpose(R1, invR1);

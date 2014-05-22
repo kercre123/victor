@@ -13,6 +13,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/constantsAndMacros.h"
 
 #include "anki/common/robot/benchmarking.h"
+#include "anki/common/robot/comparisons.h"
 
 #define USE_ARM_ACCELERATION
 
@@ -86,8 +87,7 @@ namespace Anki
           "BoxFilterNormalize",
           "Output normalized image is invalid.");
 
-        AnkiConditionalErrorAndReturnValue(imageNorm.get_size(0) == imageHeight &&
-          imageNorm.get_size(1) == imageWidth,
+        AnkiConditionalErrorAndReturnValue(AreEqualSize(image, imageNorm),
           RESULT_FAIL_INVALID_SIZE,
           "BoxFilterNormalize",
           "Output normalized image must match input image's size.");
@@ -184,7 +184,7 @@ namespace Anki
         const s32 boxHeight2 = boxHeight / 2;
         const s32 boxWidth2 = boxWidth / 2;
 
-        AnkiConditionalErrorAndReturnValue(filtered.get_size(0) == imageHeight && filtered.get_size(1) == imageWidth,
+        AnkiConditionalErrorAndReturnValue(AreEqualSize(image, filtered),
           RESULT_FAIL_INVALID_SIZE, "BoxFilter", "Output normalized image must match input image's size.");
 
         AnkiConditionalErrorAndReturnValue(imageWidth%8 == 0,

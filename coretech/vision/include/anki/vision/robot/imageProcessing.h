@@ -17,6 +17,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/common/robot/array2d.h"
 #include "anki/common/robot/benchmarking.h"
+#include "anki/common/robot/comparisons.h"
 
 //#include "anki/common/robot/matlabInterface.h"
 
@@ -58,10 +59,10 @@ namespace Anki
         const s32 imageHeight = in.get_size(0);
         const s32 imageWidth = in.get_size(1);
 
-        AnkiConditionalErrorAndReturnValue(in.IsValid() && out.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "ComputeXGradient", "An input is not valid");
+        AnkiConditionalErrorAndReturnValue(AreValid(in, out),
+          RESULT_FAIL_INVALID_OBJECT, "ComputeXGradient", "Invalid objects");
 
-        AnkiConditionalErrorAndReturnValue(out.get_size(0) == imageHeight && out.get_size(1) == imageWidth,
+        AnkiConditionalErrorAndReturnValue(AreEqualSize(in, out),
           RESULT_FAIL_INVALID_SIZE, "ComputeXGradient", "Image sizes don't match");
 
         for(s32 y=1; y<imageHeight-1; y++) {
@@ -96,10 +97,10 @@ namespace Anki
         const s32 imageHeight = in.get_size(0);
         const s32 imageWidth = in.get_size(1);
 
-        AnkiConditionalErrorAndReturnValue(in.IsValid() && out.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "ComputeYGradient", "An input is not valid");
+        AnkiConditionalErrorAndReturnValue(AreValid(in, out),
+          RESULT_FAIL_INVALID_OBJECT, "ComputeYGradient", "Invalid objects");
 
-        AnkiConditionalErrorAndReturnValue(out.get_size(0) == imageHeight && out.get_size(1) == imageWidth,
+        AnkiConditionalErrorAndReturnValue(AreEqualSize(in, out),
           RESULT_FAIL_INVALID_SIZE, "ComputeYGradient", "Image sizes don't match");
 
         for(s32 y=1; y<imageHeight-1; y++) {
@@ -139,11 +140,8 @@ namespace Anki
         const s32 imageHeight = image.get_size(0);
         const s32 imageWidth = image.get_size(1);
 
-        AnkiConditionalErrorAndReturnValue(image.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "BinomialFilter", "image is not valid");
-
-        AnkiConditionalErrorAndReturnValue(imageFiltered.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "BinomialFilter", "imageFiltered is not valid");
+        AnkiConditionalErrorAndReturnValue(AreValid(image, imageFiltered, scratch),
+          RESULT_FAIL_INVALID_OBJECT, "BinomialFilter", "Invalid objects");
 
         AnkiConditionalWarnAndReturnValue(16 == (kernel[0] + kernel[1] + kernel[2] + kernel[3] + kernel[4]),
           RESULT_FAIL, "BinomialFilter", "Kernel count is wrong");
@@ -154,7 +152,7 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(imageHeight == imageFiltered.get_size(0) && imageWidth == imageFiltered.get_size(1),
           RESULT_FAIL_INVALID_SIZE, "BinomialFilter", "size(image) != size(imageFiltered) (%dx%d != %dx%d)", imageHeight, imageWidth, imageHeight, imageWidth);
 
-        AnkiConditionalErrorAndReturnValue(image.get_rawDataPointer() != imageFiltered.get_rawDataPointer(),
+        AnkiConditionalErrorAndReturnValue(NotAliased(image, imageFiltered),
           RESULT_FAIL_ALIASED_MEMORY, "BinomialFilter", "image and imageFiltered must be different");
 
         const s32 requiredScratch = imageHeight * RoundUp<s32>(imageWidth*sizeof(IntermediateType), MEMORY_ALIGNMENT);
@@ -248,21 +246,15 @@ namespace Anki
       template<typename InType, typename OutType>
       Result CreateIntegralImage(const Array<InType> &image, Array<OutType> integralImage)
       {
-        AnkiConditionalErrorAndReturnValue(image.IsValid(),
+        AnkiConditionalErrorAndReturnValue(AreValid(image, integralImage),
           RESULT_FAIL_INVALID_OBJECT,
-          "ImageProcessing::CreateIntgralImage",
-          "Input image is invalid.");
-
-        AnkiConditionalErrorAndReturnValue(integralImage.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT,
-          "ImageProcessing::CreateIntgralImage",
-          "Input image is invalid.");
+          "ImageProcessing::CreateIntegralImage",
+          "Invalid objects");
 
         const s32 imageHeight = image.get_size(0);
         const s32 imageWidth  = image.get_size(1);
 
-        AnkiConditionalErrorAndReturnValue(integralImage.get_size(0) == imageHeight &&
-          integralImage.get_size(1) == imageWidth,
+        AnkiConditionalErrorAndReturnValue(AreEqualSize(image, integralImage),
           RESULT_FAIL_INVALID_SIZE,
           "ImageProcessing::CreateIntegralImage",
           "Output integralImage array must match input image's size.");
@@ -294,11 +286,8 @@ namespace Anki
 
       template<typename InType, typename OutType> Result Resize(const Array<InType> &in, Array<OutType> &out)
       {
-        AnkiConditionalErrorAndReturnValue(in.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "Resize", "in is not valid");
-
-        AnkiConditionalErrorAndReturnValue(out.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "Resize", "out is not valid");
+        AnkiConditionalErrorAndReturnValue(AreValid(in, out),
+          RESULT_FAIL_INVALID_OBJECT, "Resize", "Invalid objects");
 
         const s32 inHeight = in.get_size(0);
         const s32 inWidth  = in.get_size(1);
@@ -390,13 +379,10 @@ namespace Anki
         const s32 inHeight = in.get_size(0);
         const s32 inWidth = in.get_size(1);
 
-        AnkiConditionalErrorAndReturnValue(in.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "DownsampleByFactor", "in is not valid");
+        AnkiConditionalErrorAndReturnValue(AreValid(in, out),
+          RESULT_FAIL_INVALID_OBJECT, "DownsampleByFactor", "Invalid objects");
 
-        AnkiConditionalErrorAndReturnValue(out.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "DownsampleByFactor", "out is not valid");
-
-        AnkiConditionalErrorAndReturnValue(out.get_size(0) == (inHeight / 2) && out.get_size(1) == (inWidth / 2),
+        AnkiConditionalErrorAndReturnValue(AreEqualSize(inHeight / 2, inWidth / 2, out),
           RESULT_FAIL_INVALID_SIZE, "DownsampleByFactor", "size(out) is not equal to size(in) >> downsampleFactor");
 
         const s32 maxY = 2 * out.get_size(0);
@@ -432,16 +418,10 @@ namespace Anki
 
         const s32 downsampleFactor = 1 << downsamplePower;
 
-        AnkiConditionalErrorAndReturnValue(in.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "DownsampleByFactor", "in is not valid");
+        AnkiConditionalErrorAndReturnValue(AreValid(in, out , scratch),
+          RESULT_FAIL_INVALID_OBJECT, "DownsampleByFactor", "Invalid objects");
 
-        AnkiConditionalErrorAndReturnValue(out.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "DownsampleByFactor", "out is not valid");
-
-        AnkiConditionalErrorAndReturnValue(scratch.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "DownsampleByFactor", "scratch is not valid");
-
-        AnkiConditionalErrorAndReturnValue(out.get_size(0) == smallHeight && out.get_size(1) == smallWidth,
+        AnkiConditionalErrorAndReturnValue(AreEqualSize(smallHeight, smallWidth, out),
           RESULT_FAIL_INVALID_SIZE, "DownsampleByFactor", "size(out) is not equal to size(in) >> downsampleFactor");
 
         AnkiConditionalErrorAndReturnValue(largeWidth % 4 == 0,
@@ -539,22 +519,16 @@ namespace Anki
       {
         const s32 outputLength = in1.get_size(1) + in2.get_size(1) - 1;
 
-        AnkiConditionalErrorAndReturnValue(in1.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "Correlate1d", "in1 is not valid");
+        AnkiConditionalErrorAndReturnValue(AreValid(in1, in2, out),
+          RESULT_FAIL_INVALID_OBJECT, "Correlate1d", "Invalid objects");
 
-        AnkiConditionalErrorAndReturnValue(in2.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "Correlate1d", "in2 is not valid");
-
-        AnkiConditionalErrorAndReturnValue(out.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "Correlate1d", "out is not valid");
-
-        AnkiConditionalErrorAndReturnValue(in1.get_size(0)==1 && in2.get_size(0)==1 && out.get_size(0)==1,
+        AnkiConditionalErrorAndReturnValue(in1.get_size(0) == 1 && in2.get_size(0) == 1 && out.get_size(0) == 1,
           RESULT_FAIL_INVALID_SIZE, "Correlate1d", "Arrays must be 1d and horizontal");
 
         AnkiConditionalErrorAndReturnValue(out.get_size(1) == outputLength,
           RESULT_FAIL_INVALID_SIZE, "Correlate1d", "Out must be the size of in1 + in2 - 1");
 
-        AnkiConditionalErrorAndReturnValue(in1.get_rawDataPointer() != in2.get_rawDataPointer() && in1.get_rawDataPointer() != out.get_rawDataPointer(),
+        AnkiConditionalErrorAndReturnValue(NotAliased(in1, in2, out),
           RESULT_FAIL_ALIASED_MEMORY, "Correlate1d", "in1, in2, and out must be in different memory locations");
 
         const InType * restrict pU;
@@ -651,14 +625,8 @@ namespace Anki
         const s32 filterHeight = filter.get_size(0);
         const s32 filterWidth = filter.get_size(1);
 
-        AnkiConditionalErrorAndReturnValue(image.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "Correlate1dCircularAndSameSizeOutput", "image is not valid");
-
-        AnkiConditionalErrorAndReturnValue(filter.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "Correlate1dCircularAndSameSizeOutput", "filter is not valid");
-
-        AnkiConditionalErrorAndReturnValue(out.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "Correlate1dCircularAndSameSizeOutput", "out is not valid");
+        AnkiConditionalErrorAndReturnValue(AreValid(image, filter, out),
+          RESULT_FAIL_INVALID_OBJECT, "Correlate1dCircularAndSameSizeOutput", "Invalid objects");
 
         AnkiConditionalErrorAndReturnValue(imageHeight==1 && filterHeight==1 && out.get_size(0)==1,
           RESULT_FAIL_INVALID_SIZE, "Correlate1dCircularAndSameSizeOutput", "Arrays must be 1d and horizontal");
@@ -666,7 +634,7 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(imageWidth > filterWidth,
           RESULT_FAIL_INVALID_SIZE, "Correlate1dCircularAndSameSizeOutput", "The image must be larger than the filter");
 
-        AnkiConditionalErrorAndReturnValue(image.get_rawDataPointer() != filter.get_rawDataPointer() && image.get_rawDataPointer() != out.get_rawDataPointer(),
+        AnkiConditionalErrorAndReturnValue(NotAliased(image, filter, out),
           RESULT_FAIL_ALIASED_MEMORY, "Correlate1dCircularAndSameSizeOutput", "in1, in2, and out must be in different memory locations");
 
         Array<InType> paddedImage(1, imageWidth + 2*(filterWidth-1), scratch);
