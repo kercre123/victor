@@ -149,12 +149,11 @@ namespace Anki
               const u32 rightUp10 = *reinterpret_cast<const u32*>(pDistance_ym1 + x + 1) + bX2;
               const u32 rightUp32 = *reinterpret_cast<const u32*>(pDistance_ym1 + x + 3) + bX2;
 
-              //#if !defined(USE_ARM_ACCELERATION)
-
-              // Compute the minimum of left, up, and right
               u32 distance10 = leftUp10;
               u32 distance32 = leftUp32;
 
+              // Compute the minimum of left, up, and right
+#if !defined(USE_ARM_ACCELERATION)
               if( (up10 & 0xFFFF) < (distance10 & 0xFFFF)) {
                 distance10 &= 0xFFFF0000;
                 distance10 |= up10 & 0xFFFF;
@@ -195,11 +194,28 @@ namespace Anki
                 distance32 |= rightUp32 & 0xFFFF0000;
               }
 
+#else // #if !defined(USE_ARM_ACCELERATION)
+              __USUB16(leftUp10, distance10);
+              distance10 = __SEL(distance10, leftUp10);
+
+              __USUB16(leftUp32, distance32);
+              distance32 = __SEL(distance32, leftUp32);
+
+              __USUB16(up10, distance10);
+              distance10 = __SEL(distance10, up10);
+
+              __USUB16(up32, distance32);
+              distance32 = __SEL(distance32, up32);
+
+              __USUB16(rightUp10, distance10);
+              distance10 = __SEL(distance10, rightUp10);
+
+              __USUB16(rightUp32, distance32);
+              distance32 = __SEL(distance32, rightUp32);
+#endif // #if !defined(USE_ARM_ACCELERATION) ... #else
+
               *reinterpret_cast<u32*>(pDistance_y0 + x) = distance10;
               *reinterpret_cast<u32*>(pDistance_y0 + x + 2) = distance32;
-
-              //#else // #if !defined(USE_ARM_ACCELERATION)
-              //#endif // #if !defined(USE_ARM_ACCELERATION) ... #else
             } // for(s32 x=4; x<imageWidth-3; x+=4)
 
             // Second SIMD the left
