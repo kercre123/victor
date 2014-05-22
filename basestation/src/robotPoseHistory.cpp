@@ -247,7 +247,7 @@ namespace Anki {
         return RESULT_OK;
       }
       
-      // Get the pose at the requested timestamp
+      // Get the raw pose at the requested timestamp
       RobotPoseStamp p1;
       if (GetRawPoseAt(t_request, t, p1, withInterpolation) == RESULT_FAIL) {
         return RESULT_FAIL;
@@ -274,8 +274,8 @@ namespace Anki {
       // If the vision pose frame id does not match the requested frame id
       // then just return the raw pose of the requested frame id since it
       // is already based on the previous vision-based pose.
-      if (git->second.GetFrameId() < p1.GetFrameId()) {
-        //printf("FRAME %d < %d\n", git->second.GetFrameId(), p1.GetFrameId());
+      if (git->second.GetFrameId() <= p1.GetFrameId()) {
+        //printf("FRAME %d <= %d\n", git->second.GetFrameId(), p1.GetFrameId());
         p = p1;
         return RESULT_OK;
       }
@@ -317,7 +317,7 @@ namespace Anki {
 #endif
       
       pTransform.preComposeWith(git->second.GetPose());
-      p.SetPose(p1.GetFrameId(), pTransform, p1.GetHeadAngle());
+      p.SetPose(git->second.GetFrameId(), pTransform, p1.GetHeadAngle());
       
       return RESULT_OK;
     }
@@ -328,14 +328,56 @@ namespace Anki {
     {
       RobotPoseStamp ps;
       //printf("COMPUTE+INSERT\n");
-      if (ComputePoseAt(t_request, t, ps, withInterpolation) == RESULT_FAIL ||
-          AddVisionOnlyPose(t, ps) == RESULT_FAIL ||
-          GetVisionOnlyPoseAt(t, p) == RESULT_FAIL) {
+      if (ComputePoseAt(t_request, t, ps, withInterpolation) == RESULT_FAIL) {
         *p = nullptr;
         return RESULT_FAIL;
       }
       
+      // If computedPose entry exist at t, then overwrite it
+      PoseMapIter_t it = computedPoses_.find(t);
+      if (it != computedPoses_.end()) {
+        it->second.SetPose(ps.GetFrameId(), ps.GetPose(), ps.GetHeadAngle());
+        *p = &(it->second);
+      } else {
+        
+        std::pair<PoseMapIter_t, bool> res;
+        res = computedPoses_.emplace(std::piecewise_construct,
+                                     std::forward_as_tuple(t),
+                                     std::forward_as_tuple(ps.GetFrameId(), ps.GetPose(), ps.GetHeadAngle()));
+        
+        if (!res.second) {
+          return RESULT_FAIL;
+        }
+        
+        *p = &(res.first->second);
+      }
+      
       return RESULT_OK;
+    }
+    
+    Result RobotPoseHistory::GetComputedPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p)
+    {
+      PoseMapIter_t it = computedPoses_.find(t_request);
+      if (it != computedPoses_.end()) {
+        *p = &(it->second);
+        return RESULT_OK;
+      }
+      
+      // TODO: Compute the pose if it doesn't exist already?
+      // ...
+      
+      return RESULT_FAIL;
+    }
+    
+    Result RobotPoseHistory::GetLatestVisionOnlyPose(TimeStamp_t& t, RobotPoseStamp& p) const
+    {
+      if (!visPoses_.empty()) {
+        t = visPoses_.rbegin()->first;
+        p = visPoses_.rbegin()->second;
+        return RESULT_OK;
+      }
+      
+      return RESULT_FAIL;
     }
     
     
@@ -355,6 +397,7 @@ namespace Anki {
         TimeStamp_t oldestAllowedTime = mostRecentTime - windowSize_;
         const_PoseMapIter_t it = poses_.upper_bound(oldestAllowedTime);
         const_PoseMapIter_t git = visPoses_.upper_bound(oldestAllowedTime);
+        const_PoseMapIter_t cit = computedPoses_.upper_bound(oldestAllowedTime);
         
         // Delete everything before the oldest allowed timestamp
         if (oldestAllowedTime > poses_.begin()->first) {
@@ -362,6 +405,9 @@ namespace Anki {
         }
         if (oldestAllowedTime > visPoses_.begin()->first) {
           visPoses_.erase(visPoses_.begin(), git);
+        }
+        if (oldestAllowedTime > computedPoses_.begin()->first) {
+          computedPoses_.erase(computedPoses_.begin(), cit);
         }
       }
     }

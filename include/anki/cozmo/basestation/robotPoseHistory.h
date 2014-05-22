@@ -132,6 +132,13 @@ namespace Anki {
                                     TimeStamp_t& t, RobotPoseStamp** p,
                                     bool withInterpolation = false);
 
+      // Points *p to a computed pose in the history that was insert via ComputeAndInsertPoseAt
+      Result GetComputedPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p);
+
+      // If at least one vision only pose exists, the most recent one is returned in p
+      // and the time it occured at in t.
+      Result GetLatestVisionOnlyPose(TimeStamp_t& t, RobotPoseStamp& p) const;
+      
       
       TimeStamp_t GetOldestTimeStamp() const;
       TimeStamp_t GetNewestTimeStamp() const;
@@ -149,6 +156,10 @@ namespace Anki {
 
       // Map of timestamps of vision-based poses as computed from mat markers
       PoseMap_t visPoses_;
+
+      // Map of poses that were computed with ComputeAt
+      PoseMap_t computedPoses_;
+      
       
       // Size of history time window (ms)
       u32 windowSize_;

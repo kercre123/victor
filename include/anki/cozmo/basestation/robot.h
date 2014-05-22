@@ -175,6 +175,11 @@ namespace Anki {
                                              bool withInterpolation = false);
 
       Result GetVisionOnlyPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p);
+      Result GetComputedPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p);
+      
+      // Updates the current pose to the best estimate based on
+      // historical poses including vision-based poses.
+      void UpdateCurrPoseFromHistory();
       
     protected:
       // The robot's identifier
