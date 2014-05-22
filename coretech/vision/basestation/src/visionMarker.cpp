@@ -122,8 +122,8 @@ namespace Anki {
       sideLine -= markerCornersWrtCamera[TopLeft];
       sideLine.makeUnitLength();
       
-      const Point3f faceNormal( cross(sideLine, topLine) );
-      const f32 dotProd = dot(faceNormal, Z_AXIS_3D); // TODO: Optimize to just: faceNormal.z()?
+      const Point3f faceNormal( CrossProduct(sideLine, topLine) );
+      const f32 dotProd = DotProduct(faceNormal, Z_AXIS_3D); // TODO: Optimize to just: faceNormal.z()?
       if(dotProd > 0.f || acos(-dotProd) > maxAngleRad) {
         return false;
       }

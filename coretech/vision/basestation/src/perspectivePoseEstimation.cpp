@@ -57,9 +57,9 @@ namespace Anki {
                                                      SmallSquareMatrix<3,PRECISION>& T)
       {
         Point<3,PRECISION> e1 = f1;
-        Point<3,PRECISION> e3 = cross(f1, f2);
+        Point<3,PRECISION> e3 = CrossProduct(f1, f2);
         e3.makeUnitLength();
-        Point<3,PRECISION> e2 = cross(e3, e1);
+        Point<3,PRECISION> e2 = CrossProduct(e3, e1);
        
         // The e vectors are the rows of the T matrix
         T = {e1, e2, e3};
@@ -162,7 +162,7 @@ namespace Anki {
         POINT P3(worldPoint3);
         
         // Verify the world points are not colinear
-        if(cross(P2 - P1, P3 - P1).length() == 0) {
+        if(CrossProduct(P2 - P1, P3 - P1).length() == 0) {
           return RESULT_FAIL;
         }
         
@@ -193,10 +193,10 @@ namespace Anki {
         POINT n1 = P2 - P1;
         n1.makeUnitLength();
         
-        POINT n3(cross(n1, (P3-P1)));
+        POINT n3(CrossProduct(n1, (P3-P1)));
         n3.makeUnitLength();
         
-        POINT n2(cross(n3,n1));
+        POINT n2(CrossProduct(n3,n1));
         
         // the n vectors are the rows of the N matrix (and thus the columns
         // of the N^T matrix)
@@ -213,7 +213,7 @@ namespace Anki {
         PRECISION p_1 = P3[0];
         PRECISION p_2 = P3[1];
         
-        PRECISION cos_beta = dot(f1, f2);
+        PRECISION cos_beta = DotProduct(f1, f2);
         PRECISION b = 1/(1-cos_beta*cos_beta) - 1;
         
         if (cos_beta < 0) {
