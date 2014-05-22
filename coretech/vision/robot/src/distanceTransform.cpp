@@ -45,14 +45,14 @@ namespace Anki
         const s32 numFractionalBits = distance.get_numFractionalBits();
 
         // For numFractionalBits==3, a==8 and b==11
-        const s16 a = saturate_cast<s16>(0.95509 * pow(2.0,numFractionalBits));
-        const s16 b = saturate_cast<s16>(1.3693 * pow(2.0,numFractionalBits));
+        const u16 a = saturate_cast<u16>(0.95509 * pow(2.0,numFractionalBits));
+        const u16 b = saturate_cast<u16>(1.3693 * pow(2.0,numFractionalBits));
 
         const s32 imageHeight = image.get_size(0);
         const s32 imageWidth = image.get_size(1);
 
         // To prevent overflow, maxDistance is a bit less than s16_MAX
-        const s16 maxDistance = s16_MAX - ( MAX(a,b) * (imageHeight + imageWidth) * (1<<numFractionalBits) );
+        const u16 maxDistance = s16_MAX - ( MAX(a,b) * (imageHeight + imageWidth) * (1<<numFractionalBits) );
 
         AnkiConditionalErrorAndReturnValue(AreValid(image, distance),
           RESULT_FAIL_INVALID_OBJECT, "DistanceTransform", "Invalid objects");
@@ -62,6 +62,9 @@ namespace Anki
 
         AnkiConditionalErrorAndReturnValue(numFractionalBits >= 0 && numFractionalBits < 15,
           RESULT_FAIL_INVALID_PARAMETER, "DistanceTransform", "numFractionalBits is out of range");
+
+        AnkiConditionalErrorAndReturnValue(imageWidth%4 == 0,
+          RESULT_FAIL_INVALID_SIZE, "FastGradient", "Image width must be divisible by 4");
 
         EndBenchmark("dt_init");
 
@@ -75,7 +78,7 @@ namespace Anki
         {
           const u8 * restrict pImage = image.Pointer(0,0);
 
-          s16 * restrict pDistance = distance.Pointer(0,0);
+          u16 * restrict pDistance = reinterpret_cast<u16*>( distance.Pointer(0,0) );
 
           // Top left
           if(pImage[0] < backgroundThreshold) {
@@ -112,51 +115,42 @@ namespace Anki
           for(s32 y=1; y<imageHeight; y++) {
             const u8 * restrict pImage_y0 = image.Pointer(y,0);
 
-            const s16 * restrict pDistance_ym1 = distance.Pointer(y-1,0);
-            s16 * restrict pDistance_y0 = distance.Pointer(y,0);
+            const u16 * restrict pDistance_ym1 = reinterpret_cast<u16*>( distance.Pointer(y-1,0) );
+            u16 * restrict pDistance_y0 = reinterpret_cast<u16*>( distance.Pointer(y,0) );
 
             for(s32 x=1; x<imageWidth; x++) {
               if(pImage_y0[x] < backgroundThreshold) {
                 pDistance_y0[x] = 0;
               } else {
-                const s16 left = pDistance_y0[x-1] + a;
-                const s16 leftUp = pDistance_ym1[x-1] + b;
-                const s16 up = pDistance_ym1[x] + a;
-                const s16 rightUp = pDistance_ym1[x+1] + b;
+                const u16 left = pDistance_y0[x-1] + a;
+                const u16 leftUp = pDistance_ym1[x-1] + b;
+                const u16 up = pDistance_ym1[x] + a;
+                const u16 rightUp = pDistance_ym1[x+1] + b;
 
                 pDistance_y0[x] = MIN(MIN(MIN(left, leftUp), up), rightUp);
               }
             }
-          }
+
+            // Compute the right-edge pixels (forward pass)
+            {
+              const s32 x = imageWidth - 1;
+
+              if(pImage_y0[x] < backgroundThreshold) {
+                pDistance_y0[x] = 0;
+              } else {
+                const u16 left = pDistance_y0[x-1] + a;
+                const u16 leftUp = pDistance_ym1[x-1] + b;
+                const u16 up = pDistance_ym1[x] + a;
+
+                pDistance_y0[x] = MIN(MIN(left, leftUp), up);
+              }
+            } // Compute the right-edge pixels (forward pass)
+          } // for(s32 y=1; y<imageHeight; y++)
         } // Compute the non left-right-top pixels (forward pass)
 
         EndBenchmark("dt_forward2");
 
-        BeginBenchmark("dt_forward3");
-
-        // Compute the right-edge pixels (forward pass)
-        {
-          const s32 x = imageWidth - 1;
-
-          for(s32 y=1; y<imageHeight; y++) {
-            const u8 * restrict pImage_y0 = image.Pointer(y,0);
-
-            const s16 * restrict pDistance_ym1 = distance.Pointer(y-1,0);
-            s16 * restrict pDistance_y0 = distance.Pointer(y,0);
-
-            if(pImage_y0[x] < backgroundThreshold) {
-              pDistance_y0[x] = 0;
-            } else {
-              const s16 left = pDistance_y0[x-1] + a;
-              const s16 leftUp = pDistance_ym1[x-1] + b;
-              const s16 up = pDistance_ym1[x] + a;
-
-              pDistance_y0[x] = MIN(MIN(left, leftUp), up);
-            }
-          }
-        } // Compute the right-edge pixels (forward pass)
-
-        EndBenchmark("dt_forward3");
+        //distance.Print("distance");
 
         //
         // Backward pass (right and up)
@@ -166,7 +160,7 @@ namespace Anki
 
         // Compute the right and bottom image edges (backward pass)
         {
-          s16 * restrict pDistance = distance.Pointer(imageHeight-1,0);
+          u16 * restrict pDistance = reinterpret_cast<u16*>( distance.Pointer(imageHeight-1,0) );
 
           // Right to left
           for(s32 x=imageWidth-2; x>=0; x--) {
@@ -186,47 +180,38 @@ namespace Anki
         // Compute the non left-right-top pixels (backward pass)
         {
           for(s32 y=imageHeight-2; y>=0; y--) {
-            const s16 * restrict pDistance_yp1 = distance.Pointer(y+1,0);
-            s16 * restrict pDistance_y0 = distance.Pointer(y,0);
+            const u16 * restrict pDistance_yp1 = reinterpret_cast<u16*>( distance.Pointer(y+1,0) );
+            u16 * restrict pDistance_y0 = reinterpret_cast<u16*>( distance.Pointer(y,0) );
 
             for(s32 x=imageWidth-2; x>0; x--) {
-              const s16 center = pDistance_y0[x];
+              const u16 center = pDistance_y0[x];
               if(center != 0) {
-                const s16 right = pDistance_y0[x+1] + a;
-                const s16 rightDown = pDistance_yp1[x+1] + b;
-                const s16 down = pDistance_yp1[x] + a;
-                const s16 leftDown = pDistance_yp1[x-1] + b;
+                const u16 right = pDistance_y0[x+1] + a;
+                const u16 rightDown = pDistance_yp1[x+1] + b;
+                const u16 down = pDistance_yp1[x] + a;
+                const u16 leftDown = pDistance_yp1[x-1] + b;
 
                 pDistance_y0[x] = MIN(MIN(MIN(MIN(right, rightDown), down), leftDown), center);
               }
             }
-          }
+
+            // Compute the left edge (backward pass)
+            {
+              const s32 x = 0;
+
+              const u16 center = pDistance_y0[x];
+              if(center != 0) {
+                const u16 right = pDistance_y0[x+1] + a;
+                const u16 rightDown = pDistance_yp1[x+1] + b;
+                const u16 down = pDistance_yp1[x] + a;
+
+                pDistance_y0[x] = MIN(MIN(MIN(right, rightDown), down), center);
+              }
+            } // Compute the left edge (backward pass)
+          } // for(s32 y=imageHeight-2; y>=0; y--)
         } // Compute the non left-right-top pixels (backward pass)
 
         EndBenchmark("dt_backward2");
-
-        BeginBenchmark("dt_backward3");
-
-        // Compute the left edge (backward pass)
-        {
-          const s32 x = 0;
-
-          for(s32 y=imageHeight-2; y>=0; y--) {
-            const s16 * restrict pDistance_yp1 = distance.Pointer(y+1,0);
-            s16 * restrict pDistance_y0 = distance.Pointer(y,0);
-
-            const s16 center = pDistance_y0[x];
-            if(center != 0) {
-              const s16 right = pDistance_y0[x+1] + a;
-              const s16 rightDown = pDistance_yp1[x+1] + b;
-              const s16 down = pDistance_yp1[x] + a;
-
-              pDistance_y0[x] = MIN(MIN(MIN(right, rightDown), down), center);
-            }
-          }
-        } // Compute the left edge (backward pass)
-
-        EndBenchmark("dt_backward3");
 
         return RESULT_OK;
       }
