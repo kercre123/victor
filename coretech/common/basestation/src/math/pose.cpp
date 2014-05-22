@@ -137,7 +137,7 @@ namespace Anki {
     
     const Vec3f Zaxis(0.f, 0.f, 1.f);
     
-    const float dotProduct = dot(pose2d.get_planeNormal(), Zaxis);
+    const float dotProduct = DotProduct(pose2d.get_planeNormal(), Zaxis);
     
     CORETECH_ASSERT(std::abs(dotProduct) <= 1.f);
     
@@ -146,7 +146,7 @@ namespace Anki {
     // the cross product gives us the axis around which we will
     // rotate.
     Radians angle3d = std::acos(dotProduct);
-    Vec3f   axis3d  = cross(Zaxis, pose2d.get_planeNormal());
+    Vec3f   axis3d  = CrossProduct(Zaxis, pose2d.get_planeNormal());
     
     Pose3d planePose(angle3d, axis3d, pose2d.get_planeOrigin());
     this->preComposeWith(planePose);

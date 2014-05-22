@@ -198,10 +198,10 @@ namespace Anki {
   Point<N,T> operator- (const Point<N,T> &point1, const Point<N,T> &point2);
   
   template<PointDimType N, typename T>
-  T dot(const Point<N,T> &point1, const Point<N,T> &point2);
-  
+  T DotProduct(const Point<N,T> &point1, const Point<N,T> &point2);
+
   template<typename T>
-  Point3<T> cross(const Point3<T> &point1, const Point3<T> &point2);
+  Point3<T> CrossProduct(const Point3<T> &point1, const Point3<T> &point2);
   
   // TODO: should output type always be float/double?
   template<PointDimType N, typename T>
@@ -476,7 +476,7 @@ namespace Anki {
   }
   
   template<PointDimType N, typename T>
-  T dot(const Point<N,T> &point1, const Point<N,T> &point2)
+  T DotProduct(const Point<N,T> &point1, const Point<N,T> &point2)
   {
     CORETECH_ASSERT(N>0);
     
@@ -519,7 +519,7 @@ namespace Anki {
   }
 
   template<typename T>
-  Point3<T> cross(const Point3<T> &point1, const Point3<T> &point2)
+  Point3<T> CrossProduct(const Point3<T> &point1, const Point3<T> &point2)
   {
     return Point3<T>(point1.y()*point2.z() - point2.y()*point1.z(),
                      point2.x()*point1.z() - point1.x()*point2.z(),

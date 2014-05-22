@@ -148,7 +148,7 @@ namespace Anki {
     // TODO: use quaternion difference?  Might be cheaper than the matrix multiplication below
     //     UnitQuaternion qThis(this->rotationVector), qOther(otherPose.rotationVector);
     //
-    // const Radians angleDiff( 2.f*std::acos(std::abs(dot(qThis, qOther))) );
+    // const Radians angleDiff( 2.f*std::acos(std::abs(DotProduct(qThis, qOther))) );
     //
     
     // R = R_this * R_other^T
