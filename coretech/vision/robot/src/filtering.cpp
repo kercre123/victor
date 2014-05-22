@@ -206,19 +206,19 @@ namespace Anki
         for(y=0; y<boxHeight; y++) {
           const u8 * restrict pImage = image.Pointer(y,0);
           for(s32 x=0; x<imageWidth; x+=8) {
-            const u32 image0123 = *reinterpret_cast<const u32*>(pImage + x);
-            const u32 image4567 = *reinterpret_cast<const u32*>(pImage + x + 4);
+            const u32 image3210 = *reinterpret_cast<const u32*>(pImage + x);
+            const u32 image7654 = *reinterpret_cast<const u32*>(pImage + x + 4);
 
-            const u32 toAdd01 =  (image0123 & 0xFF)            | ((image0123 & 0xFF00)     << 8);
-            const u32 toAdd23 = ((image0123 & 0xFF0000) >> 16) | ((image0123 & 0xFF000000) >> 8);
+            const u32 toAdd10 =  (image3210 & 0xFF)            | ((image3210 & 0xFF00)     << 8);
+            const u32 toAdd32 = ((image3210 & 0xFF0000) >> 16) | ((image3210 & 0xFF000000) >> 8);
 
-            const u32 toAdd45 =  (image4567 & 0xFF)            | ((image4567 & 0xFF00)     << 8);
-            const u32 toAdd67 = ((image4567 & 0xFF0000) >> 16) | ((image4567 & 0xFF000000) >> 8);
+            const u32 toAdd54 =  (image7654 & 0xFF)            | ((image7654 & 0xFF00)     << 8);
+            const u32 toAdd76 = ((image7654 & 0xFF0000) >> 16) | ((image7654 & 0xFF000000) >> 8);
 
-            *reinterpret_cast<u32*>(verticalAccumulator + x)     += toAdd01;
-            *reinterpret_cast<u32*>(verticalAccumulator + x + 2) += toAdd23;
-            *reinterpret_cast<u32*>(verticalAccumulator + x + 4) += toAdd45;
-            *reinterpret_cast<u32*>(verticalAccumulator + x + 6) += toAdd67;
+            *reinterpret_cast<u32*>(verticalAccumulator + x)     += toAdd10;
+            *reinterpret_cast<u32*>(verticalAccumulator + x + 2) += toAdd32;
+            *reinterpret_cast<u32*>(verticalAccumulator + x + 4) += toAdd54;
+            *reinterpret_cast<u32*>(verticalAccumulator + x + 6) += toAdd76;
           }
         }
 
@@ -244,29 +244,29 @@ namespace Anki
           pFiltered[x-1] = horizontalAccumulator;
 
           for(; x<imageWidth-3; x+=4) {
-            const u32 toAdd01 = *reinterpret_cast<const u32*>(verticalAccumulator + x);
-            const u32 toAdd23 = *reinterpret_cast<const u32*>(verticalAccumulator + x + 2);
+            const u32 toAdd10 = *reinterpret_cast<const u32*>(verticalAccumulator + x);
+            const u32 toAdd32 = *reinterpret_cast<const u32*>(verticalAccumulator + x + 2);
 
-            u32 toSub01 = *reinterpret_cast<const u32*>(verticalAccumulator + x - boxWidth);
-            u32 toSub23 = *reinterpret_cast<const u32*>(verticalAccumulator + x - boxWidth + 2);
+            u32 toSub10 = *reinterpret_cast<const u32*>(verticalAccumulator + x - boxWidth);
+            u32 toSub32 = *reinterpret_cast<const u32*>(verticalAccumulator + x - boxWidth + 2);
 
             // h is previous horizontal accumulator
-            u32 total01 = toAdd01 + horizontalAccumulator; // [1, 0h]
-            total01 += total01 << 16; // [10h, 0h]
+            u32 total10 = toAdd10 + horizontalAccumulator; // [1, 0h]
+            total10 += total10 << 16; // [10h, 0h]
 
-            toSub01 += toSub01 << 16; // [10, 0]
-            total01 -= toSub01;
+            toSub10 += toSub10 << 16; // [10, 0]
+            total10 -= toSub10;
 
-            u32 total23 = toAdd23 + (total01 >> 16); // [3, 210h]
-            total23 += total23 << 16; // [3210h, 210h]
+            u32 total32 = toAdd32 + (total10 >> 16); // [3, 210h]
+            total32 += total32 << 16; // [3210h, 210h]
 
-            toSub23 += toSub23 << 16; // [32, 2]
-            total23 -= toSub23;
+            toSub32 += toSub32 << 16; // [32, 2]
+            total32 -= toSub32;
 
-            horizontalAccumulator = total23 >> 16;
+            horizontalAccumulator = total32 >> 16;
 
-            *reinterpret_cast<u32*>(pFiltered + x) = total01;
-            *reinterpret_cast<u32*>(pFiltered + x + 2) = total23;
+            *reinterpret_cast<u32*>(pFiltered + x) = total10;
+            *reinterpret_cast<u32*>(pFiltered + x + 2) = total32;
           }
 
           for(; x<imageWidth; x++) {
@@ -289,18 +289,18 @@ namespace Anki
           const u8 * restrict pImageNew = image.Pointer(y,0);
 
           for(s32 x=0; x<imageWidth; x+=4) {
-            const u32 imageNew0123 = *reinterpret_cast<const u32*>(pImageNew + x);
+            const u32 imageNew3210 = *reinterpret_cast<const u32*>(pImageNew + x);
 
-            const u32 imageOld0123 = *reinterpret_cast<const u32*>(pImageOld + x);
+            const u32 imageOld3210 = *reinterpret_cast<const u32*>(pImageOld + x);
 
-            const u32 toAdd01 =  (imageNew0123 & 0xFF)            | ((imageNew0123 & 0xFF00)     << 8);
-            const u32 toAdd23 = ((imageNew0123 & 0xFF0000) >> 16) | ((imageNew0123 & 0xFF000000) >> 8);
+            const u32 toAdd10 =  (imageNew3210 & 0xFF)            | ((imageNew3210 & 0xFF00)     << 8);
+            const u32 toAdd32 = ((imageNew3210 & 0xFF0000) >> 16) | ((imageNew3210 & 0xFF000000) >> 8);
 
-            const u32 toSub01 =  (imageOld0123 & 0xFF)            | ((imageOld0123 & 0xFF00)     << 8);
-            const u32 toSub23 = ((imageOld0123 & 0xFF0000) >> 16) | ((imageOld0123 & 0xFF000000) >> 8);
+            const u32 toSub10 =  (imageOld3210 & 0xFF)            | ((imageOld3210 & 0xFF00)     << 8);
+            const u32 toSub32 = ((imageOld3210 & 0xFF0000) >> 16) | ((imageOld3210 & 0xFF000000) >> 8);
 
-            *reinterpret_cast<u32*>(verticalAccumulator + x)     += toAdd01 - toSub01;
-            *reinterpret_cast<u32*>(verticalAccumulator + x + 2) += toAdd23 - toSub23;
+            *reinterpret_cast<u32*>(verticalAccumulator + x)     += toAdd10 - toSub10;
+            *reinterpret_cast<u32*>(verticalAccumulator + x + 2) += toAdd32 - toSub32;
           }
 
           u16 horizontalAccumulator = 0;
@@ -315,29 +315,29 @@ namespace Anki
           pFiltered[x-1] = horizontalAccumulator;
 
           for(; x<imageWidth-3; x+=4) {
-            const u32 toAdd01 = *reinterpret_cast<const u32*>(verticalAccumulator + x);
-            const u32 toAdd23 = *reinterpret_cast<const u32*>(verticalAccumulator + x + 2);
+            const u32 toAdd10 = *reinterpret_cast<const u32*>(verticalAccumulator + x);
+            const u32 toAdd32 = *reinterpret_cast<const u32*>(verticalAccumulator + x + 2);
 
-            u32 toSub01 = *reinterpret_cast<const u32*>(verticalAccumulator + x - boxWidth);
-            u32 toSub23 = *reinterpret_cast<const u32*>(verticalAccumulator + x - boxWidth + 2);
+            u32 toSub10 = *reinterpret_cast<const u32*>(verticalAccumulator + x - boxWidth);
+            u32 toSub32 = *reinterpret_cast<const u32*>(verticalAccumulator + x - boxWidth + 2);
 
             // h is previous horizontal accumulator
-            u32 total01 = toAdd01 + horizontalAccumulator; // [1, 0h]
-            total01 += total01 << 16; // [10h, 0h]
+            u32 total10 = toAdd10 + horizontalAccumulator; // [1, 0h]
+            total10 += total10 << 16; // [10h, 0h]
 
-            toSub01 += toSub01 << 16; // [10, 0]
-            total01 -= toSub01;
+            toSub10 += toSub10 << 16; // [10, 0]
+            total10 -= toSub10;
 
-            u32 total23 = toAdd23 + (total01 >> 16); // [3, 210h]
-            total23 += total23 << 16; // [3210h, 210h]
+            u32 total32 = toAdd32 + (total10 >> 16); // [3, 210h]
+            total32 += total32 << 16; // [3210h, 210h]
 
-            toSub23 += toSub23 << 16; // [32, 2]
-            total23 -= toSub23;
+            toSub32 += toSub32 << 16; // [32, 2]
+            total32 -= toSub32;
 
-            horizontalAccumulator = total23 >> 16;
+            horizontalAccumulator = total32 >> 16;
 
-            *reinterpret_cast<u32*>(pFiltered + x) = total01;
-            *reinterpret_cast<u32*>(pFiltered + x + 2) = total23;
+            *reinterpret_cast<u32*>(pFiltered + x) = total10;
+            *reinterpret_cast<u32*>(pFiltered + x + 2) = total32;
           }
 
           for(; x<imageWidth; x++) {
@@ -384,23 +384,23 @@ namespace Anki
           }
 #else // #if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING)
           for(x = 0; x<(imageWidth-7); x+=8) {
-            const u32 inM0123 = *reinterpret_cast<const u32*>(pIn_y0 + x - 1);
-            const u32 inM4567 = *reinterpret_cast<const u32*>(pIn_y0 + x + 3);
+            const u32 inM3210 = *reinterpret_cast<const u32*>(pIn_y0 + x - 1);
+            const u32 inM7654 = *reinterpret_cast<const u32*>(pIn_y0 + x + 3);
 
-            const u32 inP0123 = *reinterpret_cast<const u32*>(pIn_y0 + x + 1);
-            const u32 inP4567 = *reinterpret_cast<const u32*>(pIn_y0 + x + 5);
+            const u32 inP3210 = *reinterpret_cast<const u32*>(pIn_y0 + x + 1);
+            const u32 inP7654 = *reinterpret_cast<const u32*>(pIn_y0 + x + 5);
 
-            const u32 inM0123Half = (inM0123 >> 1) & 0x7f7f7f7f;
-            const u32 inM4567Half = (inM4567 >> 1) & 0x7f7f7f7f;
+            const u32 inM3210Half = (inM3210 >> 1) & 0x7f7f7f7f;
+            const u32 inM7654Half = (inM7654 >> 1) & 0x7f7f7f7f;
 
-            const u32 inP0123Half = (inP0123 >> 1) & 0x7f7f7f7f;
-            const u32 inP4567Half = (inP4567 >> 1) & 0x7f7f7f7f;
+            const u32 inP3210Half = (inP3210 >> 1) & 0x7f7f7f7f;
+            const u32 inP7654Half = (inP7654 >> 1) & 0x7f7f7f7f;
 
-            const u32 out0123 = __SSUB8(inP0123Half, inM0123Half);
-            const u32 out4567 = __SSUB8(inP4567Half, inM4567Half);
+            const u32 out3210 = __SSUB8(inP3210Half, inM3210Half);
+            const u32 out7654 = __SSUB8(inP7654Half, inM7654Half);
 
-            *reinterpret_cast<u32*>(pDx + x) = out0123;
-            *reinterpret_cast<u32*>(pDx + x + 4) = out4567;
+            *reinterpret_cast<u32*>(pDx + x) = out3210;
+            *reinterpret_cast<u32*>(pDx + x + 4) = out7654;
           }
 #endif // #if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING) ... #else
 
@@ -418,23 +418,23 @@ namespace Anki
           }
 #else // #if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING)
           for(x = 0; x<(imageWidth-7); x+=8) {
-            const u32 inM0123 = *reinterpret_cast<const u32*>(pIn_ym1 + x);
-            const u32 inM4567 = *reinterpret_cast<const u32*>(pIn_ym1 + x + 4);
+            const u32 inM3210 = *reinterpret_cast<const u32*>(pIn_ym1 + x);
+            const u32 inM7654 = *reinterpret_cast<const u32*>(pIn_ym1 + x + 4);
 
-            const u32 inP0123 = *reinterpret_cast<const u32*>(pIn_yp1 + x);
-            const u32 inP4567 = *reinterpret_cast<const u32*>(pIn_yp1 + x + 4);
+            const u32 inP3210 = *reinterpret_cast<const u32*>(pIn_yp1 + x);
+            const u32 inP7654 = *reinterpret_cast<const u32*>(pIn_yp1 + x + 4);
 
-            const u32 inM0123Half = (inM0123 >> 1) & 0x7f7f7f7f;
-            const u32 inM4567Half = (inM4567 >> 1) & 0x7f7f7f7f;
+            const u32 inM3210Half = (inM3210 >> 1) & 0x7f7f7f7f;
+            const u32 inM7654Half = (inM7654 >> 1) & 0x7f7f7f7f;
 
-            const u32 inP0123Half = (inP0123 >> 1) & 0x7f7f7f7f;
-            const u32 inP4567Half = (inP4567 >> 1) & 0x7f7f7f7f;
+            const u32 inP3210Half = (inP3210 >> 1) & 0x7f7f7f7f;
+            const u32 inP7654Half = (inP7654 >> 1) & 0x7f7f7f7f;
 
-            const u32 out0123 = __SSUB8(inP0123Half, inM0123Half);
-            const u32 out4567 = __SSUB8(inP4567Half, inM4567Half);
+            const u32 out3210 = __SSUB8(inP3210Half, inM3210Half);
+            const u32 out7654 = __SSUB8(inP7654Half, inM7654Half);
 
-            *reinterpret_cast<u32*>(pDy + x) = out0123;
-            *reinterpret_cast<u32*>(pDy + x + 4) = out4567;
+            *reinterpret_cast<u32*>(pDy + x) = out3210;
+            *reinterpret_cast<u32*>(pDy + x + 4) = out7654;
           }
 #endif // #if !defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING) ... #else
 
