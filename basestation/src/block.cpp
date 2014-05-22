@@ -397,7 +397,7 @@ namespace Anki {
       
       // Dot product of this vector with the z axis should be near zero
       // TODO: make dot product tolerance in terms of an angle?
-      if( NEAR(dot(Z_AXIS_3D, v), 0.f,  distance_mm * DOT_TOLERANCE) ) {
+      if( NEAR(DotProduct(Z_AXIS_3D, v), 0.f,  distance_mm * DOT_TOLERANCE) ) {
         
         // Rotation of block around v should be a multiple of 90 degrees
         RotationMatrix3d R(0, v);

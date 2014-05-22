@@ -134,7 +134,8 @@ int main(int argc, char **argv)
     } // for each robot
     
     // Update the world (force robots to process their messages)
-    blockWorld.Update();
+    uint32_t numBlocksObserved = 0;
+    blockWorld.Update(numBlocksObserved);
     
     // Update the behavior manager.
     // TODO: This object encompasses, for the time-being, what some higher level
