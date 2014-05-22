@@ -10,6 +10,7 @@
 #include <list>
 
 #include "anki/common/basestation/jsonTools.h"
+#include "anki/common/basestation/math/point_impl.h"
 
 #if ANKICORETECH_USE_OPENCV
 #include "opencv2/calib3d/calib3d.hpp"
@@ -18,6 +19,7 @@
 #include "anki/vision/basestation/camera.h"
 #include "anki/vision/basestation/observableObject.h"
 #include "anki/vision/basestation/perspectivePoseEstimation.h"
+
 
 // Set to 1 to use OpenCV's iterative pose estimation for quads.
 // Otherwise, the closed form P3P solution is used.

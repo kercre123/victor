@@ -9,6 +9,8 @@
 #include "anki/vision/basestation/camera.h"
 #include "anki/vision/basestation/visionMarker.h"
 
+#include "anki/common/basestation/math/quad_impl.h"
+
 namespace Anki {
   namespace Vision{
   
@@ -116,11 +118,11 @@ namespace Anki {
       // face normal
       Vec3f topLine(markerCornersWrtCamera[TopRight]);
       topLine -= markerCornersWrtCamera[TopLeft];
-      topLine.makeUnitLength();
+      topLine.MakeUnitLength();
       
       Vec3f sideLine(markerCornersWrtCamera[BottomLeft]);
       sideLine -= markerCornersWrtCamera[TopLeft];
-      sideLine.makeUnitLength();
+      sideLine.MakeUnitLength();
       
       const Point3f faceNormal( CrossProduct(sideLine, topLine) );
       const f32 dotProd = DotProduct(faceNormal, Z_AXIS_3D); // TODO: Optimize to just: faceNormal.z()?
@@ -141,8 +143,8 @@ namespace Anki {
       }
       
       // Make sure the projected marker size is big enough
-      if((imgCorners[BottomRight] - imgCorners[TopLeft]).length() < minImageSize ||
-         (imgCorners[BottomLeft]  - imgCorners[TopRight]).length() < minImageSize)
+      if((imgCorners[BottomRight] - imgCorners[TopLeft]).Length() < minImageSize ||
+         (imgCorners[BottomLeft]  - imgCorners[TopRight]).Length() < minImageSize)
       {
         return false;
       }

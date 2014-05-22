@@ -46,6 +46,10 @@
 
 #include "anki/vision/basestation/perspectivePoseEstimation.h"
 
+#include "anki/common/basestation/math/matrix_impl.h"
+#include "anki/common/basestation/math/point_impl.h"
+#include "anki/common/basestation/math/quad_impl.h"
+
 namespace Anki {
   namespace Vision {
     namespace P3P {
@@ -58,7 +62,7 @@ namespace Anki {
       {
         Point<3,PRECISION> e1 = f1;
         Point<3,PRECISION> e3 = CrossProduct(f1, f2);
-        e3.makeUnitLength();
+        e3.MakeUnitLength();
         Point<3,PRECISION> e2 = CrossProduct(e3, e1);
        
         // The e vectors are the rows of the T matrix
@@ -162,7 +166,7 @@ namespace Anki {
         POINT P3(worldPoint3);
         
         // Verify the world points are not colinear
-        if(CrossProduct(P2 - P1, P3 - P1).length() == 0) {
+        if(CrossProduct(P2 - P1, P3 - P1).Length() == 0) {
           return RESULT_FAIL;
         }
         
@@ -191,10 +195,10 @@ namespace Anki {
         
         // Creation of intermediate world frame
         POINT n1 = P2 - P1;
-        n1.makeUnitLength();
+        n1.MakeUnitLength();
         
         POINT n3(CrossProduct(n1, (P3-P1)));
-        n3.makeUnitLength();
+        n3.MakeUnitLength();
         
         POINT n2(CrossProduct(n3,n1));
         
@@ -207,7 +211,7 @@ namespace Anki {
         
         P3 = N*(P3-P1);
         
-        PRECISION d_12 = (P2-P1).length();
+        PRECISION d_12 = (P2-P1).Length();
         PRECISION f_1 = f3[0]/f3[2];
         PRECISION f_2 = f3[1]/f3[2];
         PRECISION p_1 = P3[0];

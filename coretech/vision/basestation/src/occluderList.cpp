@@ -7,8 +7,8 @@
 //
 
 #include "anki/common/basestation/general.h"
-#include "anki/common/basestation/math/quad.h"
-#include "anki/common/basestation/math/rect.h"
+#include "anki/common/basestation/math/quad_impl.h"
+#include "anki/common/basestation/math/rect_impl.h"
 
 #include "anki/vision/basestation/camera.h"
 #include "anki/vision/basestation/occluderList.h"

@@ -5,6 +5,9 @@
 #include "anki/common/types.h"
 #include "anki/common/basestation/math/pose.h"
 
+#include "anki/common/basestation/math/point_impl.h"
+#include "anki/common/basestation/math/quad_impl.h"
+
 #include "anki/vision/basestation/camera.h"
 #include "anki/vision/basestation/perspectivePoseEstimation.h"
 
@@ -120,7 +123,7 @@ GTEST_TEST(PoseEstimation, FromQuads)
          angleThreshold.getDegrees());
   
   printf("Translation difference is %f, threshold = %f\n",
-         poseDiff.get_translation().length(),  distThreshold);
+         poseDiff.get_translation().Length(),  distThreshold);
   
   
   // Check if the reprojected points match the originals
