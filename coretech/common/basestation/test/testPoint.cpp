@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 
 #include "anki/common/basestation/general.h"
-#include "anki/common/basestation/math/point.h"
+#include "anki/common/basestation/math/point_impl.h"
 
 #include <iostream>
 
@@ -45,13 +45,13 @@ GTEST_TEST(TestPoint, DotProductAndLength)
   
   const float eps = 10.f*std::numeric_limits<float>::epsilon();
   
-  EXPECT_EQ(dot(x,y), 32.f);
-  EXPECT_TRUE(NEAR(std::sqrt(dot(x,x)), x.length(), eps));
+  EXPECT_EQ(DotProduct(x,y), 32.f);
+  EXPECT_TRUE(NEAR(std::sqrt(DotProduct(x,x)), x.Length(), eps));
   
   Point<5,float> a(1.f, 2.f, 3.f, 4.f, 5.f);
   Point<5,float> b(2.f, 3.f, 4.f, 5.f, 6.f);
   
-  EXPECT_EQ(dot(a,b), 70.f);
-  EXPECT_TRUE(NEAR(std::sqrt(dot(a,a)), a.length(), eps));
+  EXPECT_EQ(DotProduct(a,b), 70.f);
+  EXPECT_TRUE(NEAR(std::sqrt(DotProduct(a,a)), a.Length(), eps));
   
 }

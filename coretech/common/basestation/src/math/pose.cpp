@@ -1,6 +1,10 @@
 
 #include "anki/common/basestation/math/pose.h"
-#include "anki/common/basestation/math/matrix.h"
+
+#include "anki/common/basestation/math/matrix_impl.h"
+#include "anki/common/basestation/math/point_impl.h"
+#include "anki/common/basestation/math/quad_impl.h"
+
 #include "anki/common/shared/utilities_shared.h"
 
 #include <stdexcept>
@@ -138,7 +142,7 @@ namespace Anki {
     
     const Vec3f Zaxis(0.f, 0.f, 1.f);
     
-    const float dotProduct = dot(pose2d.get_planeNormal(), Zaxis);
+    const float dotProduct = DotProduct(pose2d.get_planeNormal(), Zaxis);
     
     CORETECH_ASSERT(std::abs(dotProduct) <= 1.f);
     
@@ -147,7 +151,7 @@ namespace Anki {
     // the cross product gives us the axis around which we will
     // rotate.
     Radians angle3d = std::acos(dotProduct);
-    Vec3f   axis3d  = cross(Zaxis, pose2d.get_planeNormal());
+    Vec3f   axis3d  = CrossProduct(Zaxis, pose2d.get_planeNormal());
     
     Pose3d planePose(angle3d, axis3d, pose2d.get_planeOrigin());
     this->preComposeWith(planePose);
@@ -408,7 +412,7 @@ namespace Anki {
     
     // First, check to see if the translational difference between the two
     // poses is small enough to call them a match
-    if(P_diff.get_translation().length() < distThreshold) {
+    if(P_diff.get_translation().Length() < distThreshold) {
       
       // Next check to see if the rotational difference is small
       RotationVector3d Rvec(P_diff.get_rotationMatrix());
@@ -456,7 +460,7 @@ namespace Anki {
     
     // First, check to see if the translational difference between the two
     // poses is small enough to call them a match
-    if(P_diff.get_translation().length() < distThreshold) {
+    if(P_diff.get_translation().Length() < distThreshold) {
       
       // Next check to see if the rotational difference is small
       RotationVector3d Rvec(P_diff.get_rotationMatrix());
@@ -471,7 +475,7 @@ namespace Anki {
         
         if(useAbsRotation) {
           // The ambiguities are assumed to be defined up various sign flips
-          R.abs();
+          R.Abs();
         }
         
         // Check to see if the rotational part of the pose difference is
@@ -509,7 +513,8 @@ namespace Anki {
     // TODO: take rotation into account?
     Vec3f distVec(pose1.get_translation());
     distVec -= pose2.get_translation();
-    return distVec.length();
+    const float dist = distVec.Length();
+    return dist;
   }
 
   

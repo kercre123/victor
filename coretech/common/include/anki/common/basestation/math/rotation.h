@@ -115,9 +115,9 @@ namespace Anki {
     // Matrix inversion and transpose just negate the change the sign of the
     // rotation angle
     RotationMatrix3d& Transpose(void);
-    RotationMatrix3d  getTranspose() const;
-    void Invert(void); // same as transpose
-    RotationMatrix3d getInverse(void) const;
+    void              GetTranspose(RotationMatrix3d& outTransposed) const;
+    RotationMatrix3d& Invert(void); // same as transpose
+    void              GetInverse(RotationMatrix3d& outInverted) const;
     
     
   protected:

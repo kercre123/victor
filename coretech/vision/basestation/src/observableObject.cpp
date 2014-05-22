@@ -1,6 +1,8 @@
 #include "anki/vision/basestation/camera.h"
 #include "anki/vision/basestation/observableObject.h"
 
+#include "anki/common/basestation/exceptions.h"
+
 
 namespace Anki {
   namespace Vision {
@@ -424,7 +426,7 @@ namespace Anki {
         // Compute the object pose from all the corresponding 2d (image)
         // and 3d (object) points
         const Pose3d* originalParent = pose_.get_parent();
-        pose_ = camera->computeObjectPose(imgPoints, objPoints);
+        pose_ = camera->ComputeObjectPose(imgPoints, objPoints);
         if(pose_.get_parent() != originalParent) {
           pose_ = pose_.getWithRespectTo(originalParent);
         }

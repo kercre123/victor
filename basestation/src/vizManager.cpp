@@ -13,6 +13,7 @@
 #include "vizManager.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/common/basestation/general.h"
+#include "anki/common/basestation/exceptions.h"
 
 namespace Anki {
   namespace Cozmo {

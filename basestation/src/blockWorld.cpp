@@ -5,7 +5,7 @@
 #include "anki/common/shared/utilities_shared.h"
 
 #include "anki/common/basestation/general.h"
-#include "anki/common/basestation/math/rect.h"
+//#include "anki/common/basestation/math/rect.h"
 
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/block.h"
@@ -322,13 +322,13 @@ namespace Anki
     }
     
     
-    bool BlockWorld::UpdateRobotPose(Robot* robot)
+    bool BlockWorld::UpdateRobotPose(Robot* robot, ObsMarkerList_t& obsMarkersAtTimestamp)
     {
       bool wasPoseUpdated = false;
       
       // Get all mat objects *seen by this robot's camera*
       std::vector<Vision::ObservableObject*> matsSeen;
-      matLibrary_.CreateObjectsFromMarkers(obsMarkers_, matsSeen,
+      matLibrary_.CreateObjectsFromMarkers(obsMarkersAtTimestamp, matsSeen,
                                            (robot->get_camHead().get_id()));
       
       // TODO: what to do when a robot sees multiple mat pieces at the same time
@@ -382,17 +382,23 @@ namespace Anki
         */
         
         /*
-         Pose3d newPose( (*(robot->get_camHead().get_pose().get_parent()) *
+         Pose3d newPose
+         ( (*(robot->get_camHead().get_pose().get_parent()) *
          robot->get_camHead().get_pose() *
          (*matWrtCamera)).getInverse() );
          */
         newPose.set_parent(Pose3d::World); // robot->get_pose().get_parent() );
         
-        // Make sure that the rotation angle assumes a rotation axis of roughly (0,0,1).
+        // If there is any significant rotation, make sure that it is roughly
+        // around the Z axis
         // TODO: Should grab the actual z-axis rotation here instead of assuming the rotationAngle is good enough.
-        Vec3f rotAxis = newPose.get_rotationAxis();
-        if ( !NEAR(rotAxis.x(), 0, 0.1) || !NEAR(rotAxis.y(), 0, 0.1) || !NEAR(ABS(rotAxis.z()), 1, 0.1)) {
-          PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.RotAxisIsNotVertical", "");
+        Radians rotAngle;
+        Vec3f rotAxis;
+        newPose.get_rotationVector().get_angleAndAxis(rotAngle, rotAxis);
+        const float dotProduct = DotProduct(rotAxis, Z_AXIS_3D);
+        const float dotProductThreshold = 0.0152f; // 1.f - std::cos(DEG_TO_RAD(10)); // within 10 degrees
+        if(!NEAR(rotAngle.ToFloat(), 0, DEG_TO_RAD(10)) && !NEAR(std::abs(dotProduct), 1.f, dotProductThreshold)) {
+          PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.RobotNotOnHorizontalPlane", "");
           return false;
         }
 
@@ -429,7 +435,7 @@ namespace Anki
     } // UpdateRobotPose()
     
     
-    uint32_t BlockWorld::UpdateBlockPoses()
+    uint32_t BlockWorld::UpdateBlockPoses(ObsMarkerList_t& obsMarkersAtTimestamp)
     {
       didBlocksChange_ = false;
       
@@ -439,7 +445,7 @@ namespace Anki
       // marker (which is our indication we got an update from the robot's
       // vision system
       if(not obsMarkers_.empty()) {
-        blockLibrary_.CreateObjectsFromMarkers(obsMarkers_, blocksSeen);
+        blockLibrary_.CreateObjectsFromMarkers(obsMarkersAtTimestamp, blocksSeen);
         
         // Use them to add or update existing blocks in our world
         AddAndUpdateObjects(blocksSeen, existingBlocks_);
@@ -449,55 +455,80 @@ namespace Anki
       
     } // UpdateBlockPoses()
     
-    void BlockWorld::Update(void)
+    void BlockWorld::Update(uint32_t& numBlocksObserved)
     {
+      CORETECH_ASSERT(isInitialized_);
       CORETECH_ASSERT(robotMgr_ != NULL);
-           
+      
+      // Let the robot manager do whatever it's gotta do to update the
+      // robots in the world. Most importantly for us here, that includes
+      // looping over the robots' ObservedMarker messages and queueing them
+      // up for BlockWorld to process.
       robotMgr_->UpdateAllRobots();
       
-      //
-      // Localize robots using mat observations
-      //
-      for(auto robotID : robotMgr_->GetRobotIDList())
+      numBlocksObserved = 0;
+      
+      // Now we're going to process all the observed messages, grouped by
+      // timestamp
+      size_t numUnusedMarkers = 0;
+      for(auto obsMarkerListMapIter = obsMarkers_.begin();
+          obsMarkerListMapIter != obsMarkers_.end();
+          ++obsMarkerListMapIter)
       {
-        Robot* robot = robotMgr_->GetRobotByID(robotID);
         
-        CORETECH_ASSERT(robot != NULL);
+        ObsMarkerList_t& obsMarkersAtTimestamp = obsMarkerListMapIter->second;
         
-        UpdateRobotPose(robot);
+        //
+        // Localize robots using mat observations
+        //
+        for(auto robotID : robotMgr_->GetRobotIDList())
+        {
+          Robot* robot = robotMgr_->GetRobotByID(robotID);
+          
+          CORETECH_ASSERT(robot != NULL);
+          
+          // Note that this removes markers from the list that it uses
+          UpdateRobotPose(robot, obsMarkersAtTimestamp);
         
-      } // FOR each robotID
+        } // FOR each robotID
       
       
-      //
-      // Find any observed blocks from the remaining markers
-      //
-      UpdateBlockPoses();
+        //
+        // Find any observed blocks from the remaining markers
+        //
+        // Note that this removes markers from the list that it uses
+        numBlocksObserved += UpdateBlockPoses(obsMarkersAtTimestamp);
+     
+        // TODO: Deal with unknown markers?
+        
+        
+        // Keep track of how many markers went unused by either robot or block
+        // pose updating processes above
+        numUnusedMarkers += obsMarkersAtTimestamp.size();
+        
+      } // for element in obsMarkers_
       
       
-      // TODO: Deal with unknown markers?
-      
-      // Toss any remaining markers?
-      uint32_t numUnused = ClearObservedMarkers();
-      if(numUnused > 0) {
-        PRINT_INFO("%u messages did not match any known objects and went unused.\n",
-                   numUnused);
+      if(numUnusedMarkers > 0) {
+        CoreTechPrint("%u observed markers did not match any known objects and went unused.\n",
+                      numUnusedMarkers);
       }
-  
+     
+      // Toss any remaining markers?
+      ClearAllObservedMarkers();
+      
     } // Update()
     
     
     void BlockWorld::QueueObservedMarker(const Vision::ObservedMarker& marker)
     {
-      obsMarkers_.emplace_back(marker);
+      obsMarkers_[marker.GetTimeStamp()].emplace_back(marker);
       //obsMarkersByRobot_[seenByRobot].push_back(&obsMarkers_.back());
     }
     
-    uint32_t BlockWorld::ClearObservedMarkers()
+    void BlockWorld::ClearAllObservedMarkers()
     {
-      uint32_t numCleared = obsMarkers_.size();
       obsMarkers_.clear();
-      return numCleared;
     }
     
     void BlockWorld::CommandRobotToDock(const RobotID_t whichRobot,

@@ -21,8 +21,7 @@ namespace Anki
   {
     template<typename OutType> NO_INLINE Result ScrollingIntegralImage_u8_s32::FilterRow(const Rectangle<s16> &filter, const s32 imageRow, const s32 outputMultiply, const s32 outputRightShift, Array<OutType> &output) const
     {
-      AnkiAssert(this->IsValid());
-      AnkiAssert(output.IsValid());
+      AnkiAssert(AreValid(*this, output));
 
       // TODO: support these
       AnkiAssert(filter.left <= 0);

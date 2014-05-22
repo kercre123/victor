@@ -46,6 +46,10 @@
 
 #include "anki/vision/basestation/perspectivePoseEstimation.h"
 
+#include "anki/common/basestation/math/matrix_impl.h"
+#include "anki/common/basestation/math/point_impl.h"
+#include "anki/common/basestation/math/quad_impl.h"
+
 namespace Anki {
   namespace Vision {
     namespace P3P {
@@ -57,9 +61,9 @@ namespace Anki {
                                                      SmallSquareMatrix<3,PRECISION>& T)
       {
         Point<3,PRECISION> e1 = f1;
-        Point<3,PRECISION> e3 = cross(f1, f2);
-        e3.makeUnitLength();
-        Point<3,PRECISION> e2 = cross(e3, e1);
+        Point<3,PRECISION> e3 = CrossProduct(f1, f2);
+        e3.MakeUnitLength();
+        Point<3,PRECISION> e2 = CrossProduct(e3, e1);
        
         // The e vectors are the rows of the T matrix
         T = {e1, e2, e3};
@@ -162,7 +166,7 @@ namespace Anki {
         POINT P3(worldPoint3);
         
         // Verify the world points are not colinear
-        if(cross(P2 - P1, P3 - P1).length() == 0) {
+        if(CrossProduct(P2 - P1, P3 - P1).Length() == 0) {
           return RESULT_FAIL;
         }
         
@@ -191,12 +195,12 @@ namespace Anki {
         
         // Creation of intermediate world frame
         POINT n1 = P2 - P1;
-        n1.makeUnitLength();
+        n1.MakeUnitLength();
         
-        POINT n3(cross(n1, (P3-P1)));
-        n3.makeUnitLength();
+        POINT n3(CrossProduct(n1, (P3-P1)));
+        n3.MakeUnitLength();
         
-        POINT n2(cross(n3,n1));
+        POINT n2(CrossProduct(n3,n1));
         
         // the n vectors are the rows of the N matrix (and thus the columns
         // of the N^T matrix)
@@ -207,13 +211,13 @@ namespace Anki {
         
         P3 = N*(P3-P1);
         
-        PRECISION d_12 = (P2-P1).length();
+        PRECISION d_12 = (P2-P1).Length();
         PRECISION f_1 = f3[0]/f3[2];
         PRECISION f_2 = f3[1]/f3[2];
         PRECISION p_1 = P3[0];
         PRECISION p_2 = P3[1];
         
-        PRECISION cos_beta = dot(f1, f2);
+        PRECISION cos_beta = DotProduct(f1, f2);
         PRECISION b = 1/(1-cos_beta*cos_beta) - 1;
         
         if (cos_beta < 0) {
@@ -279,8 +283,10 @@ namespace Anki {
         solveQuartic(factors, realRoots);
         
         // Backsubstitution of each solution
-        MATRIX Tt = T.getTranspose();
-        MATRIX Nt = N.getTranspose();
+        MATRIX Tt;
+        T.GetTranspose(Tt);
+        MATRIX Nt;
+        N.GetTranspose(Nt);
         for(s32 i=0; i<4; i++)
         {
           PRECISION cot_alpha = (-f_1*p_1/f_2-realRoots[i]*p_2+d_12*b)/(-f_1*realRoots[i]*p_2/f_2+p_1-d_12);

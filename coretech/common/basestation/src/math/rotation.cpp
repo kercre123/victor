@@ -8,6 +8,9 @@
 
 #include "anki/common/basestation/math/rotation.h"
 
+#include "anki/common/basestation/math/matrix_impl.h"
+#include "anki/common/basestation/math/point_impl.h"
+
 #if ANKICORETECH_USE_OPENCV
 #include "opencv2/calib3d/calib3d.hpp"
 #endif
@@ -36,7 +39,7 @@ namespace Anki {
   RotationVector3d::RotationVector3d(const Radians angleIn, const Vec3f &axisIn)
   : angle(angleIn), axis(axisIn)
   {
-    f32 axisLength = axis.makeUnitLength();
+    f32 axisLength = axis.MakeUnitLength();
     if(axisLength != 1.f) {
       // TODO: Issue a warning that axis provided was not unit length?
     }
@@ -45,7 +48,7 @@ namespace Anki {
   RotationVector3d::RotationVector3d(const Vec3f &rvec)
   : axis(rvec)
   {
-    this->angle = axis.makeUnitLength();
+    this->angle = axis.MakeUnitLength();
     if(this->angle == Radians(0)) {
       // If the specified vector was all zero, then the axis is ambiguous,
       // so default to the X axis
@@ -103,18 +106,18 @@ namespace Anki {
   RotationMatrix3d::RotationMatrix3d(const Matrix_3x3f &matrix3x3)
   : Matrix_3x3f(matrix3x3)
   {
-    CORETECH_ASSERT(std::abs(this->getColumn(0).length() - 1.f) < 1e-6f &&
-                    std::abs(this->getColumn(1).length() - 1.f) < 1e-6f &&
-                    std::abs(this->getColumn(2).length() - 1.f) < 1e-6f);
+    CORETECH_ASSERT(std::abs(this->GetColumn(0).Length() - 1.f) < 1e-6f &&
+                    std::abs(this->GetColumn(1).Length() - 1.f) < 1e-6f &&
+                    std::abs(this->GetColumn(2).Length() - 1.f) < 1e-6f);
   }
   
   
   RotationMatrix3d::RotationMatrix3d(std::initializer_list<float> initValues)
   : Matrix_3x3f(initValues)
   {
-    CORETECH_ASSERT(std::abs(this->getColumn(0).length() - 1.f) < 1e-6f &&
-                    std::abs(this->getColumn(1).length() - 1.f) < 1e-6f &&
-                    std::abs(this->getColumn(2).length() - 1.f) < 1e-6f);
+    CORETECH_ASSERT(std::abs(this->GetColumn(0).Length() - 1.f) < 1e-6f &&
+                    std::abs(this->GetColumn(1).Length() - 1.f) < 1e-6f &&
+                    std::abs(this->GetColumn(2).Length() - 1.f) < 1e-6f);
     
     //Rodrigues(*this, rotationVector);
   }
@@ -154,11 +157,12 @@ namespace Anki {
     // TODO: use quaternion difference?  Might be cheaper than the matrix multiplication below
     //     UnitQuaternion qThis(this->rotationVector), qOther(otherPose.rotationVector);
     //
-    // const Radians angleDiff( 2.f*std::acos(std::abs(dot(qThis, qOther))) );
+    // const Radians angleDiff( 2.f*std::acos(std::abs(DotProduct(qThis, qOther))) );
     //
     
     // R = R_this * R_other^T
-    RotationMatrix3d R(other.getTranspose());
+    RotationMatrix3d R;
+    other.GetTranspose(R);
     R.preMultiplyBy(*this);
     
     //const Radians angleDiff( std::acos(0.5f*(R.Trace() - 1.f)) );
@@ -311,21 +315,22 @@ namespace Anki {
     return *this;
   } // Transpose()
   
-  RotationMatrix3d  RotationMatrix3d::getTranspose() const
+  void RotationMatrix3d::GetTranspose(RotationMatrix3d& outTransposed) const
   {
-    RotationMatrix3d Rt(*this);
-    Rt.Transpose();
-    return Rt;
+    outTransposed = *this;
+    outTransposed.Transpose();
   }
   
-  void RotationMatrix3d::Invert(void)
+  RotationMatrix3d& RotationMatrix3d::Invert(void)
   {
     this->Transpose();
+    return *this;
   }
   
-  RotationMatrix3d RotationMatrix3d::getInverse(void) const
+  void RotationMatrix3d::GetInverse(RotationMatrix3d& outInverted) const
   {
-    return this->getTranspose();
+    outInverted = *this;
+    outInverted.Invert();
   }
   
   

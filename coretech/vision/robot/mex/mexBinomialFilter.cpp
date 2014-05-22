@@ -26,10 +26,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   Array<u8> img = mxArrayToArray<u8>(prhs[0], memory);
 
-  AnkiConditionalErrorAndReturn(img.get_rawDataPointer() != 0, "mexBinomialFilter", "Could not allocate Array<u8> img");
+  AnkiConditionalErrorAndReturn(img.get_buffer() != 0, "mexBinomialFilter", "Could not allocate Array<u8> img");
 
   Array<u8> imgFiltered(img.get_size(0), img.get_size(1), memory);
-  AnkiConditionalErrorAndReturn(img.get_rawDataPointer() != 0, "mexBinomialFilter", "Could not allocate Array<u8> imgFiltered");
+  AnkiConditionalErrorAndReturn(img.get_buffer() != 0, "mexBinomialFilter", "Could not allocate Array<u8> imgFiltered");
 
   if(ImageProcessing::BinomialFilter<u8,u32,u8>(img, imgFiltered, memory) != Anki::RESULT_OK) {
     Anki::CoreTechPrint("Error: mexBinomialFilter\n");

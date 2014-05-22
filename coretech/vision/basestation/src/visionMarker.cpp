@@ -9,6 +9,8 @@
 #include "anki/vision/basestation/camera.h"
 #include "anki/vision/basestation/visionMarker.h"
 
+#include "anki/common/basestation/math/quad_impl.h"
+
 namespace Anki {
   namespace Vision{
   
@@ -116,14 +118,14 @@ namespace Anki {
       // face normal
       Vec3f topLine(markerCornersWrtCamera[TopRight]);
       topLine -= markerCornersWrtCamera[TopLeft];
-      topLine.makeUnitLength();
+      topLine.MakeUnitLength();
       
       Vec3f sideLine(markerCornersWrtCamera[BottomLeft]);
       sideLine -= markerCornersWrtCamera[TopLeft];
-      sideLine.makeUnitLength();
+      sideLine.MakeUnitLength();
       
-      const Point3f faceNormal( cross(sideLine, topLine) );
-      const f32 dotProd = dot(faceNormal, Z_AXIS_3D); // TODO: Optimize to just: faceNormal.z()?
+      const Point3f faceNormal( CrossProduct(sideLine, topLine) );
+      const f32 dotProd = DotProduct(faceNormal, Z_AXIS_3D); // TODO: Optimize to just: faceNormal.z()?
       if(dotProd > 0.f || acos(-dotProd) > maxAngleRad) {
         return false;
       }
@@ -131,18 +133,18 @@ namespace Anki {
       // Make sure the projected corners are within the image
       // TODO: add some border padding?
       Quad2f imgCorners;
-      camera.project3dPoints(markerCornersWrtCamera, imgCorners);
-      if(not camera.isVisible(imgCorners[TopLeft]) ||
-         not camera.isVisible(imgCorners[TopRight]) ||
-         not camera.isVisible(imgCorners[BottomLeft]) ||
-         not camera.isVisible(imgCorners[BottomRight]))
+      camera.Project3dPoints(markerCornersWrtCamera, imgCorners);
+      if(not camera.IsVisible(imgCorners[TopLeft]) ||
+         not camera.IsVisible(imgCorners[TopRight]) ||
+         not camera.IsVisible(imgCorners[BottomLeft]) ||
+         not camera.IsVisible(imgCorners[BottomRight]))
       {
         return false;
       }
       
       // Make sure the projected marker size is big enough
-      if((imgCorners[BottomRight] - imgCorners[TopLeft]).length() < minImageSize ||
-         (imgCorners[BottomLeft]  - imgCorners[TopRight]).length() < minImageSize)
+      if((imgCorners[BottomRight] - imgCorners[TopLeft]).Length() < minImageSize ||
+         (imgCorners[BottomLeft]  - imgCorners[TopRight]).Length() < minImageSize)
       {
         return false;
       }
@@ -156,7 +158,7 @@ namespace Anki {
     Pose3d KnownMarker::EstimateObservedPose(const ObservedMarker& obsMarker) const
     {
       const Camera& camera = obsMarker.GetSeenBy();
-      return camera.computeObjectPose(obsMarker.GetImageCorners(),
+      return camera.ComputeObjectPose(obsMarker.GetImageCorners(),
                                       this->corners3d_);
     }
     

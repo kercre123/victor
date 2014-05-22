@@ -47,16 +47,12 @@ namespace Anki {
 
       Result lastResult = RESULT_OK;
 
-      AnkiConditionalErrorAndReturnValue(refinedHomography.IsValid() &&
-        refinedHomography.get_size(0) == 3 &&
-        refinedHomography.get_size(1) == 3,
+      AnkiConditionalErrorAndReturnValue(AreEqualSize(3, 3, refinedHomography),
         RESULT_FAIL_INVALID_SIZE,
         "RefineQuadrilateral",
         "Output refined homography array must be valid and 3x3.");
 
-      AnkiConditionalErrorAndReturnValue(initialHomography.IsValid() &&
-        initialHomography.get_size(0) == 3 &&
-        initialHomography.get_size(1) == 3,
+      AnkiConditionalErrorAndReturnValue(AreEqualSize(3, 3, initialHomography),
         RESULT_FAIL_INVALID_SIZE,
         "RefineQuadrilateral",
         "Input initial homography array must be valid and 3x3.");

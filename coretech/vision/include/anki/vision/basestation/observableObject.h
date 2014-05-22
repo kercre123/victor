@@ -13,10 +13,10 @@ namespace Anki {
     class Camera;
     
     // A marker match is a pairing of an ObservedMarker with a KnownMarker
-    typedef std::pair<const Vision::ObservedMarker*, const Vision::KnownMarker*> MarkerMatch;
+    using MarkerMatch = std::pair<const Vision::ObservedMarker*, const Vision::KnownMarker*>;
     
     // Pairing of a pose and the match which implies it
-    typedef std::pair<Pose3d, MarkerMatch> PoseMatchPair;
+    using PoseMatchPair = std::pair<Pose3d, MarkerMatch>;
     
     
     class ObservableObject

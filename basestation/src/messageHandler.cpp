@@ -141,7 +141,7 @@ namespace Anki {
         CORETECH_ASSERT(robot != NULL);
         Vision::Camera camera(robot->get_camHead());
         
-        if(camera.isCalibrated()) {
+        if(camera.IsCalibrated()) {
           
           // Get corners
           Quad2f corners;

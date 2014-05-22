@@ -79,7 +79,7 @@ namespace Anki
         return false;
       }
 
-      return this->array.IsValid();
+      return ArraySlice<Type>::IsValid();
     } // bool FixedLengthList<Type>::IsValid() const
 
     template<typename Type> Result FixedLengthList<Type>::Resize(s32 maximumSize, MemoryStack &memory)

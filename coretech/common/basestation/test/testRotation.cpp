@@ -5,6 +5,8 @@
 
 #include "anki/common/basestation/math/pose.h"
 
+#include "anki/common/basestation/math/matrix_impl.h"
+
 #include <iostream>
 
 // For test debug printing
@@ -46,7 +48,7 @@ GTEST_TEST(TestRotation, Rotation3dNegativeAngle)
 {
   const Radians angle = M_PI/3.f;
   Vec3f axis(0.3f, 0.4f, -.15f);
-  axis.makeUnitLength();
+  axis.MakeUnitLength();
   
   RotationVector3d Rvec(angle, axis);
   RotationMatrix3d Rmat(Rvec);

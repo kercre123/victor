@@ -36,27 +36,27 @@
                "Name" : "MessageVisionMarker",
                "markerType" : 19,
                "timestamp" : 0,
-               "x_imgLowerLeft" : 182.6332550048828,
-               "x_imgLowerRight" : 217.4163360595703,
-               "x_imgUpperLeft" : 183.6780242919922,
-               "x_imgUpperRight" : 219.6145629882812,
-               "y_imgLowerLeft" : 87.37579345703125,
-               "y_imgLowerRight" : 90.27217102050781,
-               "y_imgUpperLeft" : 53.09781646728516,
-               "y_imgUpperRight" : 54.89166259765625
+               "x_imgLowerLeft" : 182.633300781250,
+               "x_imgLowerRight" : 217.4163055419922,
+               "x_imgUpperLeft" : 183.6780700683594,
+               "x_imgUpperRight" : 219.6145172119141,
+               "y_imgLowerLeft" : 87.37574768066406,
+               "y_imgLowerRight" : 90.27210998535156,
+               "y_imgUpperLeft" : 53.09787750244141,
+               "y_imgUpperRight" : 54.89170837402344
             },
             {
                "Name" : "MessageVisionMarker",
                "markerType" : 25,
                "timestamp" : 0,
-               "x_imgLowerLeft" : 81.07318115234375,
-               "x_imgLowerRight" : 172.2308654785156,
-               "x_imgUpperLeft" : 54.62352752685547,
-               "x_imgUpperRight" : 132.0090942382812,
-               "y_imgLowerLeft" : 129.7364959716797,
-               "y_imgLowerRight" : 111.1198959350586,
-               "y_imgUpperLeft" : 99.78278350830078,
-               "y_imgUpperRight" : 87.61542510986328
+               "x_imgLowerLeft" : 98.21678924560547,
+               "x_imgLowerRight" : 137.9810028076172,
+               "x_imgUpperLeft" : 84.42063140869141,
+               "x_imgUpperRight" : 121.3601150512695,
+               "y_imgLowerLeft" : 115.5173797607422,
+               "y_imgLowerRight" : 107.7035293579102,
+               "y_imgUpperLeft" : 102.5975418090820,
+               "y_imgUpperRight" : 96.35567474365234
             }
          ]
       }

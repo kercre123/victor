@@ -83,7 +83,7 @@ namespace Anki
     {
       ArraySlice<Bytes<num> > arr = SerializedBuffer::DeserializeRawArraySlice<Bytes<num> >(NULL, buffer, bufferLength, memory);
 
-      if(!arr.get_array().IsValid())
+      if(!arr.IsValid())
         return RESULT_FAIL;
 
       memcpy(startOfPayload, &arr, sizeof(arr));

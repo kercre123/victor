@@ -48,6 +48,8 @@ namespace Anki
       // ArraySlice Transpose doesn't modify the data, it just sets a flag
       ConstArraySliceExpression<Type> Transpose() const;
 
+      bool IsValid() const;
+
       const LinearSequence<s32>& get_ySlice() const;
 
       const LinearSequence<s32>& get_xSlice() const;

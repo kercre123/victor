@@ -5,6 +5,9 @@
 #include "anki/common/types.h"
 #include "anki/common/basestation/math/pose.h"
 
+#include "anki/common/basestation/math/point_impl.h"
+#include "anki/common/basestation/math/quad_impl.h"
+
 #include "anki/vision/basestation/camera.h"
 #include "anki/vision/basestation/perspectivePoseEstimation.h"
 
@@ -92,7 +95,7 @@ GTEST_TEST(PoseEstimation, FromQuads)
   camera.set_calibration(calib);
   
   Quad2f proj;
-  camera.project3dPoints(marker3d_atPose, proj);
+  camera.Project3dPoints(marker3d_atPose, proj);
   
   // Add noise
   proj += projNoise;
@@ -109,7 +112,7 @@ GTEST_TEST(PoseEstimation, FromQuads)
   }
 
   // Compute the pose of the marker w.r.t. camera from the noisy projection
-  Pose3d poseEst = camera.computeObjectPose(proj, marker3d);
+  Pose3d poseEst = camera.ComputeObjectPose(proj, marker3d);
   
   // Check if the estimated pose matches the true pose
   Pose3d poseDiff;
@@ -120,14 +123,14 @@ GTEST_TEST(PoseEstimation, FromQuads)
          angleThreshold.getDegrees());
   
   printf("Translation difference is %f, threshold = %f\n",
-         poseDiff.get_translation().length(),  distThreshold);
+         poseDiff.get_translation().Length(),  distThreshold);
   
   
   // Check if the reprojected points match the originals
   Quad2f reproj;
   Quad3f marker3d_est;
   poseEst.applyTo(marker3d, marker3d_est);
-  camera.project3dPoints(marker3d_est, reproj);
+  camera.Project3dPoints(marker3d_est, reproj);
   for(Quad::CornerName i_corner=Quad::FirstCorner; i_corner<Quad::NumCorners; ++i_corner) {
     EXPECT_NEAR(reproj[i_corner].x(), proj[i_corner].x(), pixelErrThreshold);
     EXPECT_NEAR(reproj[i_corner].y(), proj[i_corner].y(), pixelErrThreshold);

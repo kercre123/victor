@@ -91,7 +91,7 @@ namespace Anki
         return RESULT_FAIL_OUT_OF_MEMORY;
       }
 
-      AnkiConditionalErrorAndReturnValue(in.get_array().IsValid(),
+      AnkiConditionalErrorAndReturnValue(in.IsValid(),
         RESULT_FAIL, "SerializedBuffer::EncodedArraySlice", "in Array is invalid");
 
       const LinearSequence<s32>& ySlice = in.get_ySlice();
@@ -165,7 +165,7 @@ namespace Anki
 
     template<typename Type> Result SerializedBuffer::SerializeRawArraySlice(const char *objectName, const ConstArraySlice<Type> &in, void ** buffer, s32 &bufferLength)
     {
-      AnkiConditionalErrorAndReturnValue(in.get_array().IsValid(),
+      AnkiConditionalErrorAndReturnValue(in.IsValid(),
         RESULT_FAIL, "SerializedBuffer::SerializeRawArraySlice", "in ArraySlice is not Valid");
 
       if(SerializeDescriptionStrings("ArraySlice", objectName, buffer, bufferLength) != RESULT_OK)
@@ -396,7 +396,7 @@ namespace Anki
     {
       ArraySlice<Type> arraySlice = SerializedBuffer::DeserializeRawArraySlice<Type>(objectName, buffer, bufferLength, memory);
 
-      if(!arraySlice.get_array().IsValid())
+      if(!arraySlice.IsValid())
         return FixedLengthList<Type>();
 
       FixedLengthList<Type> out;
