@@ -366,7 +366,7 @@ namespace Anki {
     
     // The cross product of the first coordinate axis vector with the normal
     // to define the (orthogonal) other coordinate axis vector
-    Point<N,T> unitV( cross(unitNormal, unitU) );
+    Point<N,T> unitV( CrossProduct(unitNormal, unitU) );
     
     // By definition, the first corner's angle is 0.  Sort the other three
     // relative to it, using the plane's coordinate system we just established
@@ -377,8 +377,8 @@ namespace Anki {
       Point<N,T> corner( P * (*this)[index] );
       corner -= center;
       
-      const T u = dot(corner, unitU);
-      const T v = dot(corner, unitV);
+      const T u = DotProduct(corner, unitU);
+      const T v = DotProduct(corner, unitV);
       
       angleIndexPairs[i].first = atan2f(static_cast<f32>(v), static_cast<f32>(u));
       angleIndexPairs[i].second = index;
