@@ -1058,7 +1058,7 @@ namespace Anki
       Result LucasKanadeTracker_SampledPlanar6dof::get_rotationMatrix(Array<f32>& R,
         bool skipLastColumn) const
       {
-        AnkiConditionalErrorAndReturnValue(R.get_size(0)==3 && R.get_size(1)==3, RESULT_FAIL_INVALID_SIZE,
+        AnkiConditionalErrorAndReturnValue(AreEqualSize(3, 3, R), RESULT_FAIL_INVALID_SIZE,
           "LucasKanadeTracker_SampledPlanar6dof::get_rotationMatrix",
           "R should be a 3x3 matrix.");
 
@@ -1903,7 +1903,7 @@ namespace Anki
           }
         } // for(s32 iteration=0; iteration<maxIterations; iteration++)
 
-          //snprintf(this->resultMessageBuffer, RESULT_MSG_LENGTH,
+        //snprintf(this->resultMessageBuffer, RESULT_MSG_LENGTH,
         //         "Failed to converge at scale %f with minChange of %f\n", scale, minChange);
 
         return RESULT_OK;

@@ -16,6 +16,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/common/robot/sequences.h"
 #include "anki/common/robot/geometry.h"
+#include "anki/common/robot/comparisons.h"
 
 namespace Anki
 {
@@ -51,17 +52,8 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(interpolationType == INTERPOLATE_LINEAR,
         RESULT_FAIL_INVALID_PARAMETER, "Interp2", "Only INTERPOLATE_LINEAR is supported");
 
-      AnkiConditionalErrorAndReturnValue(reference.IsValid(),
-        RESULT_FAIL_INVALID_OBJECT, "Interp2", "reference is not valid");
-
-      AnkiConditionalErrorAndReturnValue(xCoordinates.IsValid(),
-        RESULT_FAIL_INVALID_OBJECT, "Interp2", "xCoordinates is not valid");
-
-      AnkiConditionalErrorAndReturnValue(yCoordinates.IsValid(),
-        RESULT_FAIL_INVALID_OBJECT, "Interp2", "yCoordinates is not valid");
-
-      AnkiConditionalErrorAndReturnValue(out.IsValid(),
-        RESULT_FAIL_INVALID_OBJECT, "Interp2", "out is not valid");
+      AnkiConditionalErrorAndReturnValue(AreValid(reference, xCoordinates, yCoordinates, out),
+        RESULT_FAIL_INVALID_OBJECT, "Interp2", "Invalid objects");
 
       const s32 referenceHeight = reference.get_size(0);
       const s32 referenceWidth = reference.get_size(1);
@@ -73,21 +65,18 @@ namespace Anki
 
       const bool isOutputOneDimensional = (out.get_size(0) == 1);
 
+      AnkiConditionalErrorAndReturnValue(
+        AreEqualSize(out, xCoordinates, yCoordinates),
+        RESULT_FAIL_INVALID_SIZE, "Interp2", "xCoordinates, yCoordinates, and out must all be the same sizes");
+
       if(isOutputOneDimensional) {
         AnkiConditionalErrorAndReturnValue(
-          out.get_size(1) == numOutputElements && xCoordinates.get_size(1) == numOutputElements && yCoordinates.get_size(1) == numOutputElements &&
-          xCoordinates.get_size(0) == 1 && yCoordinates.get_size(0) == 1,
+          AreEqualSize(1, numOutputElements, out),
           RESULT_FAIL_INVALID_SIZE, "Interp2", "If out is a row vector, then out, xCoordinates, and yCoordinates must all be 1xN");
-      } else {
-        AnkiConditionalErrorAndReturnValue(
-          xCoordinates.get_size(0) == outHeight && xCoordinates.get_size(1) == outWidth &&
-          yCoordinates.get_size(0) == outHeight && yCoordinates.get_size(1) == outWidth,
-          RESULT_FAIL_INVALID_SIZE, "Interp2", "If the out is not 1 dimensional, then xCoordinates, yCoordinates, and out must all be the same sizes");
       }
 
-      AnkiConditionalErrorAndReturnValue(xCoordinates.get_rawDataPointer() != out.get_rawDataPointer() &&
-        yCoordinates.get_rawDataPointer() != out.get_rawDataPointer() &&
-        reference.get_rawDataPointer() != out.get_rawDataPointer(),
+      AnkiConditionalErrorAndReturnValue(
+        NotAliased(out, xCoordinates, yCoordinates, reference),
         RESULT_FAIL_ALIASED_MEMORY, "Interp2", "xCoordinates, yCoordinates, and reference cannot be the same as out");
 
       const f32 xyReferenceMin = 0.0f;
@@ -155,13 +144,10 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(interpolationType == INTERPOLATE_LINEAR,
         RESULT_FAIL_INVALID_PARAMETER, "Interp2_Affine", "Only INTERPOLATE_LINEAR is supported");
 
-      AnkiConditionalErrorAndReturnValue(reference.IsValid(),
-        RESULT_FAIL_INVALID_OBJECT, "Interp2_Affine", "reference is not valid");
+      AnkiConditionalErrorAndReturnValue(AreValid(reference, out),
+        RESULT_FAIL_INVALID_OBJECT, "Interp2_Affine", "Invalid objects");
 
-      AnkiConditionalErrorAndReturnValue(out.IsValid(),
-        RESULT_FAIL_INVALID_OBJECT, "Interp2_Affine", "out is not valid");
-
-      AnkiConditionalErrorAndReturnValue(reference.get_rawDataPointer() != out.get_rawDataPointer(),
+      AnkiConditionalErrorAndReturnValue(NotAliased(reference, out),
         RESULT_FAIL_ALIASED_MEMORY, "Interp2_Affine", "reference cannot be the same as out");
 
       const s32 referenceHeight = reference.get_size(0);
@@ -290,13 +276,10 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(interpolationType == INTERPOLATE_LINEAR,
         RESULT_FAIL_INVALID_PARAMETER, "Interp2_Projective", "Only INTERPOLATE_LINEAR is supported");
 
-      AnkiConditionalErrorAndReturnValue(reference.IsValid(),
-        RESULT_FAIL_INVALID_OBJECT, "Interp2_Projective", "reference is not valid");
+      AnkiConditionalErrorAndReturnValue(AreValid(reference, out),
+        RESULT_FAIL_INVALID_OBJECT, "Interp2_Projective", "Invalid objects");
 
-      AnkiConditionalErrorAndReturnValue(out.IsValid(),
-        RESULT_FAIL_INVALID_OBJECT, "Interp2_Projective", "out is not valid");
-
-      AnkiConditionalErrorAndReturnValue(reference.get_rawDataPointer() != out.get_rawDataPointer(),
+      AnkiConditionalErrorAndReturnValue(NotAliased(reference, out),
         RESULT_FAIL_ALIASED_MEMORY, "Interp2_Projective", "reference cannot be the same as out");
 
       //AnkiConditionalErrorAndReturnValue(FLT_NEAR(homography[2][2], 1.0f),

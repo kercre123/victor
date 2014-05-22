@@ -8,6 +8,9 @@ For internal use only. No part of this code may be used without a signed non-dis
 **/
 
 #include "anki/common/robot/config.h"
+#include "anki/common/robot/comparisons.h"
+#include "anki/common/robot/comparisons.h"
+
 #include "anki/vision/robot/imageProcessing.h"
 
 namespace Anki
@@ -21,7 +24,7 @@ namespace Anki
         const s32 imageHeight = grayscaleImage.get_size(0);
         const s32 imageWidth  = grayscaleImage.get_size(1);
 
-        AnkiConditionalErrorAndReturnValue(yuvImage.get_size(0) == imageHeight && yuvImage.get_size(1) == imageWidth,
+        AnkiConditionalErrorAndReturnValue(AreEqualSize(yuvImage, grayscaleImage),
           RESULT_FAIL_INVALID_SIZE, "YUVToGrayscaleHelper", "inputs must be the same size");
 
         for(s32 y=0; y<imageHeight; y++) {

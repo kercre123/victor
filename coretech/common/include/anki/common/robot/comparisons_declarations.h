@@ -19,7 +19,7 @@ namespace Anki
 {
   namespace Embedded
   {
-// #pragma mark --- Declarations ---
+    // #pragma mark --- Declarations ---
     // Check every element of this array against the input array. If the arrays are different
     // sizes, uninitialized, or if any element is more different than the threshold, then
     // return false.
@@ -32,8 +32,50 @@ namespace Anki
     // maximum of the two).
     template<typename Type> bool AreElementwiseEqual_PercentThreshold(const Array<Type> &array1, const Array<Type> &array2, const double percentThreshold = 0.01, const double absoluteThreshold = 0.0001);
 
-    // If this array or array2 are different sizes or uninitialized, then return false.
-    template<typename Type1, typename Type2> bool AreEqualSize(const Array<Type1> &array1, const Array<Type2> &array2);
+    // If any of the input objects are not valid, then return false
+    // NOTE: the objects must have an IsValid() method
+    template<typename Type1> bool AreValid(const Type1 &object1);
+    template<typename Type1, typename Type2> bool AreValid(const Type1 &object1, const Type2 &object2);
+    template<typename Type1, typename Type2, typename Type3> bool AreValid(const Type1 &object1, const Type2 &object2, const Type3 &object3);
+    template<typename Type1, typename Type2, typename Type3, typename Type4> bool AreValid(const Type1 &object1, const Type2 &object2, const Type3 &object3, const Type4 &object4);
+    template<typename Type1, typename Type2, typename Type3, typename Type4, typename Type5> bool AreValid(const Type1 &object1, const Type2 &object2, const Type3 &object3, const Type4 &object4, const Type5 &object5);
+    template<typename Type1, typename Type2, typename Type3, typename Type4, typename Type5, typename Type6> bool AreValid(const Type1 &object1, const Type2 &object2, const Type3 &object3, const Type4 &object4, const Type5 &object5, const Type6 &object6);
+    template<typename Type1, typename Type2, typename Type3, typename Type4, typename Type5, typename Type6, typename Type7> bool AreValid(const Type1 &object1, const Type2 &object2, const Type3 &object3, const Type4 &object4, const Type5 &object5, const Type6 &object6, const Type7 &object7);
+    template<typename Type1, typename Type2, typename Type3, typename Type4, typename Type5, typename Type6, typename Type7, typename Type8> bool AreValid(const Type1 &object1, const Type2 &object2, const Type3 &object3, const Type4 &object4, const Type5 &object5, const Type6 &object6, const Type7 &object7, const Type8 &object8);
+    template<typename Type1, typename Type2, typename Type3, typename Type4, typename Type5, typename Type6, typename Type7, typename Type8, typename Type9> bool AreValid(const Type1 &object1, const Type2 &object2, const Type3 &object3, const Type4 &object4, const Type5 &object5, const Type6 &object6, const Type7 &object7, const Type8 &object8, const Type9 &object9);
+
+    // If the objects have different sizes or are uninitialized, then return false.
+    // NOTE: the objects must have IsValid() and get_buffer() methods
+    template<typename Type1, typename Type2> bool AreEqualSize(const Type1 &object1, const Type2 &object2);
+    template<typename Type1, typename Type2, typename Type3> bool AreEqualSize(const Type1 &object1, const Type2 &object2, const Type3 &object3);
+    template<typename Type1, typename Type2, typename Type3, typename Type4> bool AreEqualSize(const Type1 &object1, const Type2 &object2, const Type3 &object3, const Type4 &object4);
+    template<typename Type1, typename Type2, typename Type3, typename Type4, typename Type5> bool AreEqualSize(const Type1 &object1, const Type2 &object2, const Type3 &object3, const Type4 &object4, const Type5 &object5);
+    template<typename Type1, typename Type2, typename Type3, typename Type4, typename Type5, typename Type6> bool AreEqualSize(const Type1 &object1, const Type2 &object2, const Type3 &object3, const Type4 &object4, const Type5 &object5, const Type6 &object6);
+    template<typename Type1, typename Type2, typename Type3, typename Type4, typename Type5, typename Type6, typename Type7> bool AreEqualSize(const Type1 &object1, const Type2 &object2, const Type3 &object3, const Type4 &object4, const Type5 &object5, const Type6 &object6, const Type7 &object7);
+    template<typename Type1, typename Type2, typename Type3, typename Type4, typename Type5, typename Type6, typename Type7, typename Type8> bool AreEqualSize(const Type1 &object1, const Type2 &object2, const Type3 &object3, const Type4 &object4, const Type5 &object5, const Type6 &object6, const Type7 &object7, const Type8 &object8);
+    template<typename Type1, typename Type2, typename Type3, typename Type4, typename Type5, typename Type6, typename Type7, typename Type8, typename Type9> bool AreEqualSize(const Type1 &object1, const Type2 &object2, const Type3 &object3, const Type4 &object4, const Type5 &object5, const Type6 &object6, const Type7 &object7, const Type8 &object8, const Type9 &object9);
+
+    // Check sizes against an input height and width
+    template<typename Type1> bool AreEqualSize(const s32 height, const s32 width, const Type1 &object1);
+    template<typename Type1, typename Type2> bool AreEqualSize(const s32 height, const s32 width, const Type1 &object1, const Type2 &object2);
+    template<typename Type1, typename Type2, typename Type3> bool AreEqualSize(const s32 height, const s32 width, const Type1 &object1, const Type2 &object2, const Type3 &object3);
+    template<typename Type1, typename Type2, typename Type3, typename Type4> bool AreEqualSize(const s32 height, const s32 width, const Type1 &object1, const Type2 &object2, const Type3 &object3, const Type4 &object4);
+    template<typename Type1, typename Type2, typename Type3, typename Type4, typename Type5> bool AreEqualSize(const s32 height, const s32 width, const Type1 &object1, const Type2 &object2, const Type3 &object3, const Type4 &object4, const Type5 &object5);
+    template<typename Type1, typename Type2, typename Type3, typename Type4, typename Type5, typename Type6> bool AreEqualSize(const s32 height, const s32 width, const Type1 &object1, const Type2 &object2, const Type3 &object3, const Type4 &object4, const Type5 &object5, const Type6 &object6);
+    template<typename Type1, typename Type2, typename Type3, typename Type4, typename Type5, typename Type6, typename Type7> bool AreEqualSize(const s32 height, const s32 width, const Type1 &object1, const Type2 &object2, const Type3 &object3, const Type4 &object4, const Type5 &object5, const Type6 &object6, const Type7 &object7);
+    template<typename Type1, typename Type2, typename Type3, typename Type4, typename Type5, typename Type6, typename Type7, typename Type8> bool AreEqualSize(const s32 height, const s32 width, const Type1 &object1, const Type2 &object2, const Type3 &object3, const Type4 &object4, const Type5 &object5, const Type6 &object6, const Type7 &object7, const Type8 &object8);
+    template<typename Type1, typename Type2, typename Type3, typename Type4, typename Type5, typename Type6, typename Type7, typename Type8, typename Type9> bool AreEqualSize(const s32 height, const s32 width, const Type1 &object1, const Type2 &object2, const Type3 &object3, const Type4 &object4, const Type5 &object5, const Type6 &object6, const Type7 &object7, const Type8 &object8, const Type9 &object9);
+
+    // If the Arrays are aliased (pointing to the same location in memory) or uninitialized, then return false
+    // NOTE: the objects must have IsValid() and get_buffer() methods
+    template<typename Type1, typename Type2> bool NotAliased(const Type1 &object1, const Type2 &object2);
+    template<typename Type1, typename Type2, typename Type3> bool NotAliased(const Type1 &object1, const Type2 &object2, const Type3 &object3);
+    template<typename Type1, typename Type2, typename Type3, typename Type4> bool NotAliased(const Type1 &object1, const Type2 &object2, const Type3 &object3, const Type4 &object4);
+    template<typename Type1, typename Type2, typename Type3, typename Type4, typename Type5> bool NotAliased(const Type1 &object1, const Type2 &object2, const Type3 &object3, const Type4 &object4, const Type5 &object5);
+    template<typename Type1, typename Type2, typename Type3, typename Type4, typename Type5, typename Type6> bool NotAliased(const Type1 &object1, const Type2 &object2, const Type3 &object3, const Type4 &object4, const Type5 &object5, const Type6 &object6);
+    template<typename Type1, typename Type2, typename Type3, typename Type4, typename Type5, typename Type6, typename Type7> bool NotAliased(const Type1 &object1, const Type2 &object2, const Type3 &object3, const Type4 &object4, const Type5 &object5, const Type6 &object6, const Type7 &object7);
+    template<typename Type1, typename Type2, typename Type3, typename Type4, typename Type5, typename Type6, typename Type7, typename Type8> bool NotAliased(const Type1 &object1, const Type2 &object2, const Type3 &object3, const Type4 &object4, const Type5 &object5, const Type6 &object6, const Type7 &object7, const Type8 &object8);
+    template<typename Type1, typename Type2, typename Type3, typename Type4, typename Type5, typename Type6, typename Type7, typename Type8, typename Type9> bool NotAliased(const Type1 &object1, const Type2 &object2, const Type3 &object3, const Type4 &object4, const Type5 &object5, const Type6 &object6, const Type7 &object7, const Type8 &object8, const Type9 &object9);
   } // namespace Embedded
 } // namespace Anki
 
