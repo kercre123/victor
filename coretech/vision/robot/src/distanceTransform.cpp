@@ -138,257 +138,65 @@ namespace Anki
 
             // TODO: If all of the image pixels are background, set zero without doing the computation
 
+            const u32 backgroundThreshold_0 = static_cast<u32>(backgroundThreshold);
+            const u32 backgroundThreshold_right8 = static_cast<u32>(backgroundThreshold) << 8;
+            const u32 backgroundThreshold_right16 = static_cast<u32>(backgroundThreshold) << 16;
+            const u32 backgroundThreshold_right24 = static_cast<u32>(backgroundThreshold) << 24;
+
             // First SIMD the top-left, top, top-right
             for(s32 x=4; x<imageWidth-3; x+=4) {
-              const u32 leftUp10  = *reinterpret_cast<const u32*>(pDistance_ym1 + x - 1) + bX2;
-              const u32 leftUp32  = *reinterpret_cast<const u32*>(pDistance_ym1 + x + 1) + bX2;
-
-              const u32 up10      = *reinterpret_cast<const u32*>(pDistance_ym1 + x)     + aX2;
-              const u32 up32      = *reinterpret_cast<const u32*>(pDistance_ym1 + x + 2) + aX2;
-
-              const u32 rightUp10 = *reinterpret_cast<const u32*>(pDistance_ym1 + x + 1) + bX2;
-              const u32 rightUp32 = *reinterpret_cast<const u32*>(pDistance_ym1 + x + 3) + bX2;
-
-              u32 distance10 = leftUp10;
-              u32 distance32 = leftUp32;
-
-              // Compute the minimum of left, up, and right
-#if !defined(USE_ARM_ACCELERATION)
-              if( (up10 & 0xFFFF) < (distance10 & 0xFFFF)) {
-                distance10 &= 0xFFFF0000;
-                distance10 |= up10 & 0xFFFF;
-              }
-
-              if( (up10 & 0xFFFF0000) < (distance10 & 0xFFFF0000)) {
-                distance10 &= 0x0000FFFF;
-                distance10 |= up10 & 0xFFFF0000;
-              }
-
-              if( (up32 & 0xFFFF) < (distance32 & 0xFFFF)) {
-                distance32 &= 0xFFFF0000;
-                distance32 |= up32 & 0xFFFF;
-              }
-
-              if( (up32 & 0xFFFF0000) < (distance32 & 0xFFFF0000)) {
-                distance32 &= 0x0000FFFF;
-                distance32 |= up32 & 0xFFFF0000;
-              }
-
-              if( (rightUp10 & 0xFFFF) < (distance10 & 0xFFFF)) {
-                distance10 &= 0xFFFF0000;
-                distance10 |= rightUp10 & 0xFFFF;
-              }
-
-              if( (rightUp10 & 0xFFFF0000) < (distance10 & 0xFFFF0000)) {
-                distance10 &= 0x0000FFFF;
-                distance10 |= rightUp10 & 0xFFFF0000;
-              }
-
-              if( (rightUp32 & 0xFFFF) < (distance32 & 0xFFFF)) {
-                distance32 &= 0xFFFF0000;
-                distance32 |= rightUp32 & 0xFFFF;
-              }
-
-              if( (rightUp32 & 0xFFFF0000) < (distance32 & 0xFFFF0000)) {
-                distance32 &= 0x0000FFFF;
-                distance32 |= rightUp32 & 0xFFFF0000;
-              }
-
-#else // #if !defined(USE_ARM_ACCELERATION)
-              __USUB16(leftUp10, distance10);
-              distance10 = __SEL(distance10, leftUp10);
-
-              __USUB16(leftUp32, distance32);
-              distance32 = __SEL(distance32, leftUp32);
-
-              __USUB16(up10, distance10);
-              distance10 = __SEL(distance10, up10);
-
-              __USUB16(up32, distance32);
-              distance32 = __SEL(distance32, up32);
-
-              __USUB16(rightUp10, distance10);
-              distance10 = __SEL(distance10, rightUp10);
-
-              __USUB16(rightUp32, distance32);
-              distance32 = __SEL(distance32, rightUp32);
-#endif // #if !defined(USE_ARM_ACCELERATION) ... #else
-
-              *reinterpret_cast<u32*>(pDistance_y0 + x) = distance10;
-              *reinterpret_cast<u32*>(pDistance_y0 + x + 2) = distance32;
-            } // for(s32 x=4; x<imageWidth-3; x+=4)
-
-            // Second SIMD the left
-            for(s32 x=4; x<imageWidth-3; x+=4) {
               const u32 image3210 = *reinterpret_cast<const u32*>(pImage_y0 + x);
 
-              const u32 image10 = (image3210 & 0xFF) | ((image3210 & 0xFF00) << 8);
-              const u32 image32 = ((image3210 & 0xFF0000) >> 16) | ((image3210 & 0xFF000000) >> 8);
+              u32 distance10 = 0;
+              u32 distance32 = 0;
 
-              const u32 previousDistance = pDistance_y0[x-1];
+              if((image3210 & 0xFF) >= backgroundThreshold_0) {
+                const u16 left = pDistance_y0[x-1] + a;
+                const u16 leftUp = pDistance_ym1[x-1] + b;
+                const u16 up = pDistance_ym1[x] + a;
+                const u16 rightUp = pDistance_ym1[x+1] + b;
 
-              u32 distance10 = *reinterpret_cast<u32*>(pDistance_y0 + x);
-              u32 distance32 = *reinterpret_cast<u32*>(pDistance_y0 + x + 2);
-
-              //#if !defined(USE_ARM_ACCELERATION)
-
-              // If any pixels are zero, set the distance to zero
-              // Otherwise, each is the min of its "left + a" and its current value
-              if( (image10 & 0xFF) < backgroundThreshold) {
-                distance10 &= 0xFFFF0000;
-              } else {
-                const u32 minDistance0 = MIN(distance10 & 0xFFFF, previousDistance + a);
-                distance10 &= 0xFFFF0000;
-                distance10 |= minDistance0;
+                distance10 |= MIN(MIN(MIN(left, leftUp), up), rightUp);
               }
 
-              if( (image10 & 0xFF0000) < (static_cast<u32>(backgroundThreshold)<<16)) {
-                distance10 &= 0x0000FFFF;
-              } else {
-                const u32 minDistance1 = MIN(distance10 & 0xFFFF0000, ((distance10 & 0x0000FFFF) + a) << 16);
-                distance10 &= 0x0000FFFF;
-                distance10 |= minDistance1;
+              if((image3210 & 0xFF00) >= backgroundThreshold_right8) {
+                const u16 left = (distance10&0xFFFF) + a;
+                const u16 leftUp = pDistance_ym1[x] + b;
+                const u16 up = pDistance_ym1[x+1] + a;
+                const u16 rightUp = pDistance_ym1[x+2] + b;
+
+                distance10 |= MIN(MIN(MIN(left, leftUp), up), rightUp) << 16;
               }
 
-              if( (image32 & 0xFF) < backgroundThreshold) {
-                distance32 &= 0xFFFF0000;
-              } else {
-                const u32 minDistance2 = MIN(distance32 & 0xFFFF, ((distance10 & 0xFFFF0000) >> 16) + a);
-                distance32 &= 0xFFFF0000;
-                distance32 |= minDistance2;
+              if((image3210 & 0xFF0000) >= backgroundThreshold_right16) {
+                const u16 left = ((distance10&0xFFFF0000) >> 16) + a;
+                const u16 leftUp = pDistance_ym1[x+1] + b;
+                const u16 up = pDistance_ym1[x+2] + a;
+                const u16 rightUp = pDistance_ym1[x+3] + b;
+
+                distance32 |= MIN(MIN(MIN(left, leftUp), up), rightUp);
               }
 
-              if( (image32 & 0xFF0000) < (static_cast<u32>(backgroundThreshold)<<16)) {
-                distance32 &= 0x0000FFFF;
-              } else {
-                const u32 minDistance3 = MIN(distance32 & 0xFFFF0000, ((distance32 & 0x0000FFFF) + a) << 16);
-                distance32 &= 0x0000FFFF;
-                distance32 |= minDistance3;
+              if((image3210 & 0xFF000000) >= backgroundThreshold_right24) {
+                const u16 left = (distance32&0xFFFF) + a;
+                const u16 leftUp = pDistance_ym1[x+2] + b;
+                const u16 up = pDistance_ym1[x+3] + a;
+                const u16 rightUp = pDistance_ym1[x+5] + b;
+
+                distance32 |= MIN(MIN(MIN(left, leftUp), up), rightUp) << 16;
               }
 
-              //#else // #if !defined(USE_ARM_ACCELERATION)
-              //#endif // #if !defined(USE_ARM_ACCELERATION) ... #else
+              //const u32 image10 = (image3210 & 0xFF) | ((image3210 & 0xFF00) << 8);
+              //const u32 image32 = ((image3210 & 0xFF0000) >> 16) | ((image3210 & 0xFF000000) >> 8);
 
-              *reinterpret_cast<u32*>(pDistance_y0 + x) = distance10;
-              *reinterpret_cast<u32*>(pDistance_y0 + x + 2) = distance32;
-            } // for(s32 x=4; x<imageWidth-3; x+=4)
+              //const u32 leftUp10  = *reinterpret_cast<const u32*>(pDistance_ym1 + x - 1) + bX2;
+              //const u32 leftUp32  = *reinterpret_cast<const u32*>(pDistance_ym1 + x + 1) + bX2;
 
-            // TODO: If all of the image pixels are background, set zero without doing the computation
+              //const u32 up10      = *reinterpret_cast<const u32*>(pDistance_ym1 + x)     + aX2;
+              //const u32 up32      = *reinterpret_cast<const u32*>(pDistance_ym1 + x + 2) + aX2;
 
-            // First do the top-left, top, top-right
-            for(s32 x=4; x<imageWidth-3; x+=4) {
-              const u32 leftUp10  = *reinterpret_cast<const u32*>(pDistance_ym1 + x - 1) + bX2;
-              const u32 leftUp32  = *reinterpret_cast<const u32*>(pDistance_ym1 + x + 1) + bX2;
-
-              const u32 up10      = *reinterpret_cast<const u32*>(pDistance_ym1 + x)     + aX2;
-              const u32 up32      = *reinterpret_cast<const u32*>(pDistance_ym1 + x + 2) + aX2;
-
-              const u32 rightUp10 = *reinterpret_cast<const u32*>(pDistance_ym1 + x + 1) + bX2;
-              const u32 rightUp32 = *reinterpret_cast<const u32*>(pDistance_ym1 + x + 3) + bX2;
-
-              //#if !defined(USE_ARM_ACCELERATION)
-
-              // Compute the minimum of left, up, and right
-              u32 distance10 = leftUp10;
-              u32 distance32 = leftUp32;
-
-              if( (up10 & 0xFFFF) < (distance10 & 0xFFFF)) {
-                distance10 &= 0xFFFF0000;
-                distance10 |= up10 & 0xFFFF;
-              }
-
-              if( (up10 & 0xFFFF0000) < (distance10 & 0xFFFF0000)) {
-                distance10 &= 0x0000FFFF;
-                distance10 |= up10 & 0xFFFF0000;
-              }
-
-              if( (up32 & 0xFFFF) < (distance32 & 0xFFFF)) {
-                distance32 &= 0xFFFF0000;
-                distance32 |= up32 & 0xFFFF;
-              }
-
-              if( (up32 & 0xFFFF0000) < (distance32 & 0xFFFF0000)) {
-                distance32 &= 0x0000FFFF;
-                distance32 |= up32 & 0xFFFF0000;
-              }
-
-              if( (rightUp10 & 0xFFFF) < (distance10 & 0xFFFF)) {
-                distance10 &= 0xFFFF0000;
-                distance10 |= rightUp10 & 0xFFFF;
-              }
-
-              if( (rightUp10 & 0xFFFF0000) < (distance10 & 0xFFFF0000)) {
-                distance10 &= 0x0000FFFF;
-                distance10 |= rightUp10 & 0xFFFF0000;
-              }
-
-              if( (rightUp32 & 0xFFFF) < (distance32 & 0xFFFF)) {
-                distance32 &= 0xFFFF0000;
-                distance32 |= rightUp32 & 0xFFFF;
-              }
-
-              if( (rightUp32 & 0xFFFF0000) < (distance32 & 0xFFFF0000)) {
-                distance32 &= 0x0000FFFF;
-                distance32 |= rightUp32 & 0xFFFF0000;
-              }
-
-              *reinterpret_cast<u32*>(pDistance_y0 + x) = distance10;
-              *reinterpret_cast<u32*>(pDistance_y0 + x + 2) = distance32;
-
-              //#else // #if !defined(USE_ARM_ACCELERATION)
-              //#endif // #if !defined(USE_ARM_ACCELERATION) ... #else
-            } // for(s32 x=4; x<imageWidth-3; x+=4)
-
-            // Second do left
-
-            for(s32 x=4; x<imageWidth-3; x+=4) {
-              const u32 image3210 = *reinterpret_cast<const u32*>(pImage_y0 + x);
-
-              const u32 image10 = (image3210 & 0xFF) | ((image3210 & 0xFF00) << 8);
-              const u32 image32 = ((image3210 & 0xFF0000) >> 16) | ((image3210 & 0xFF000000) >> 8);
-
-              const u32 previousDistance = pDistance_y0[x-1];
-
-              u32 distance10 = *reinterpret_cast<u32*>(pDistance_y0 + x);
-              u32 distance32 = *reinterpret_cast<u32*>(pDistance_y0 + x + 2);
-
-              //#if !defined(USE_ARM_ACCELERATION)
-
-              // If any pixels are zero, set the distance to zero
-              if( (image10 & 0xFF) < backgroundThreshold) {
-                distance10 &= 0xFFFF0000;
-              } else {
-                const u32 minDistance0 = MIN(distance10 & 0xFFFF, previousDistance + a);
-                distance10 &= 0xFFFF0000;
-                distance10 |= minDistance0;
-              }
-
-              if( (image10 & 0xFF0000) < (static_cast<u32>(backgroundThreshold)<<16)) {
-                distance10 &= 0x0000FFFF;
-              } else {
-                const u32 minDistance1 = MIN(distance10 & 0xFFFF0000, ((distance10 & 0x0000FFFF) + a) << 16);
-                distance10 &= 0x0000FFFF;
-                distance10 |= minDistance1;
-              }
-
-              if( (image32 & 0xFF) < backgroundThreshold) {
-                distance32 &= 0xFFFF0000;
-              } else {
-                const u32 minDistance2 = MIN(distance32 & 0xFFFF, ((distance10 & 0xFFFF0000) >> 16) + a);
-                distance32 &= 0xFFFF0000;
-                distance32 |= minDistance2;
-              }
-
-              if( (image32 & 0xFF0000) < (static_cast<u32>(backgroundThreshold)<<16)) {
-                distance32 &= 0x0000FFFF;
-              } else {
-                const u32 minDistance3 = MIN(distance32 & 0xFFFF0000, ((distance32 & 0x0000FFFF) + a) << 16);
-                distance32 &= 0x0000FFFF;
-                distance32 |= minDistance3;
-              }
-
-              //#else // #if !defined(USE_ARM_ACCELERATION)
-              //#endif // #if !defined(USE_ARM_ACCELERATION) ... #else
+              //const u32 rightUp10 = *reinterpret_cast<const u32*>(pDistance_ym1 + x + 1) + bX2;
+              //const u32 rightUp32 = *reinterpret_cast<const u32*>(pDistance_ym1 + x + 3) + bX2;
 
               *reinterpret_cast<u32*>(pDistance_y0 + x) = distance10;
               *reinterpret_cast<u32*>(pDistance_y0 + x + 2) = distance32;
