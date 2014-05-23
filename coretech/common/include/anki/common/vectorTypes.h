@@ -479,6 +479,13 @@ typedef struct register32
 
     f32   _f32;
   };
+
+  register32() {}
+  register32(const u32 bits) : _u32(bits) {}
+
+  inline operator u32&() { return _u32; }
+  inline operator const u32&() const { return _u32; }
+  inline register32& operator =(const u32 bits) { this->_u32 = bits; return *this; }
 } register32;
 
 typedef struct register64
@@ -498,6 +505,13 @@ typedef struct register64
     f32x2 _f32x2;
     f64   _f64;
   };
+
+  register64() {}
+  register64(const u64 bits) : _u64(bits) {}
+
+  inline operator u64&() { return _u64; }
+  inline operator const u64&() const { return _u64; }
+  inline register64& operator =(const u64 bits) { this->_u64 = bits; return *this; }
 } register64;
 
 typedef struct register128
@@ -517,6 +531,11 @@ typedef struct register128
     f32x4 _f32x4;
     f64x2 _f64x2;
   };
+
+  register128() {}
+  register128(const u64 bits[2]) { this->_u64x2.bits[0] = bits[0]; this->_u64x2.bits[1] = bits[1]; }
+
+  inline register128& operator =(const u64 bits[2]) { this->_u64x2.bits[0] = bits[0]; this->_u64x2.bits[1] = bits[1]; return *this; }
 } register128;
 
 #endif // ANKICORETECH_COMMON_VECTOR_TYPES_H_

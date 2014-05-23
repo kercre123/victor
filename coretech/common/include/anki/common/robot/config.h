@@ -65,6 +65,10 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define ANKI_DEBUG_LEVEL ANKI_DEBUG_ERRORS
 #endif
 
+#ifndef USE_M4_HOST_INTRINSICS
+#define USE_M4_HOST_INTRINSICS 1
+#endif
+
 // Warning: High levels of compiler optimization could cause this test to not work
 #define isnan(a) ((a) != (a))
 
@@ -91,6 +95,10 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define NO_INLINE
 #endif
 
+#ifndef USE_M4_HOST_INTRINSICS
+#define USE_M4_HOST_INTRINSICS 1
+#endif
+
 #define ANKI_DEBUG_LEVEL ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS
 
 #endif // #if defined(__APPLE_CC__)
@@ -110,6 +118,9 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define NO_INLINE __declspec(noinline)
 #endif
 
+#ifndef USE_M4_HOST_INTRINSICS
+#define USE_M4_HOST_INTRINSICS 0
+#endif
 
 // Allow anonymous unions in Keil
 #pragma anon_unions

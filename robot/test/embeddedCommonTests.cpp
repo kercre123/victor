@@ -30,11 +30,52 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/utilities.h"
 #include "anki/common/robot/serialize.h"
 #include "anki/common/robot/compress.h"
+#include "anki/common/robot/hostIntrinsics_m4.h"
 
 #include "embeddedTests.h"
 
 using namespace Anki;
 using namespace Anki::Embedded;
+
+GTEST_TEST(CoreTech_Common, HostIntrinsics_m4)
+{
+  const u32 a = 0xFF007F30;
+  const u32 b = 0x00FF7F31;
+
+  {
+    const u32 out = __USUB8(a, b);
+    const u32 selected = __SEL(a, b);
+
+    ASSERT_TRUE(out == 0xFF0100FF);
+    ASSERT_TRUE(selected == 0xFFFF7F31);
+  }
+
+  {
+    const u32 out = __SSUB8(a, b);
+    const u32 selected = __SEL(a, b);
+
+    ASSERT_TRUE(out == 0xFF0100FF);
+    ASSERT_TRUE(selected == 0x00007f31);
+  }
+
+  {
+    const u32 out = __USUB16(a, b);
+    const u32 selected = __SEL(a, b);
+
+    ASSERT_TRUE(out == 0xFE01FFFF);
+    ASSERT_TRUE(selected == 0xFF007F31);
+  }
+
+  {
+    const u32 out = __SSUB16(a, b);
+    const u32 selected = __SEL(a, b);
+
+    ASSERT_TRUE(out == 0xFE01FFFF);
+    ASSERT_TRUE(selected == 0x00FF7F31);
+  }
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Common, HostIntrinsics_m4)
 
 GTEST_TEST(CoreTech_Common, VectorTypes)
 {
@@ -3916,6 +3957,7 @@ s32 RUN_ALL_COMMON_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   numPassedTests = 0;
   numFailedTests = 0;
 
+  CALL_GTEST_TEST(CoreTech_Common, HostIntrinsics_m4);
   CALL_GTEST_TEST(CoreTech_Common, VectorTypes);
   CALL_GTEST_TEST(CoreTech_Common, RoundUpAndDown);
   CALL_GTEST_TEST(CoreTech_Common, RoundAndSaturate);

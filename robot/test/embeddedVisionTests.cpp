@@ -71,8 +71,6 @@ GTEST_TEST(CoreTech_Vision, DistanceTransform)
 
   ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
-  InitBenchmarking();
-
   // Correctness test
   {
     PUSH_MEMORY_STACK(scratchCcm);
@@ -142,6 +140,8 @@ GTEST_TEST(CoreTech_Vision, DistanceTransform)
 
     const u8 backgroundThreshold = 128;
 
+    InitBenchmarking();
+
     BeginBenchmark("DistanceTransform");
 
     const Result result = ImageProcessing::DistanceTransform(image, backgroundThreshold, distance);
@@ -163,8 +163,6 @@ GTEST_TEST(CoreTech_Vision, FastGradient)
   MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
   ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
-
-  InitBenchmarking();
 
   // Correctness test
   {
@@ -234,6 +232,8 @@ GTEST_TEST(CoreTech_Vision, FastGradient)
     Array<u8> image(imageHeight, imageWidth, scratchOnchip);
     Array<s8> dx(imageHeight, imageWidth, scratchOnchip);
     Array<s8> dy(imageHeight, imageWidth, scratchOnchip);
+
+    InitBenchmarking();
 
     BeginBenchmark("FastGradient");
 
