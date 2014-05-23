@@ -29,11 +29,28 @@ namespace Anki
 {
   namespace Embedded
   {
+    u32 __UQADD8(const u32 val1, const u32 val2);
+    u32 __QADD8(const u32 val1, const u32 val2);
+
+    u32 __UQADD16(const u32 val1, const u32 val2);
+    u32 __QADD16(const u32 val1, const u32 val2);
+
     u32 __USUB8(const u32 val1, const u32 val2);
     u32 __SSUB8(const u32 val1, const u32 val2);
 
     u32 __USUB16(const u32 val1, const u32 val2);
     u32 __SSUB16(const u32 val1, const u32 val2);
+
+    u32 __UQSUB8(const u32 val1, const u32 val2);
+    u32 __QSUB8(const u32 val1, const u32 val2);
+
+    u32 __UQSUB16(const u32 val1, const u32 val2);
+    u32 __QSUB16(const u32 val1, const u32 val2);
+
+    s32 __SMLAD(const u32 val1, const u32 val2, const s32 accumulator);
+
+    u32 __USAT(const u32 val, const u8 n);
+    s32 __SSAT(const s32 val, const u8 n);
 
     u32 __SEL(const u32 val1, const u32 val2);
   } // namespace Embedded
