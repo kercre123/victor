@@ -14,7 +14,7 @@
 %% 4x4 Letters:
 gridSize = 4;
 markerSize_mm = 30;
-matMarkerPath = '~/Box Sync/Cozmo SE/VisionMarkers/lettersWithFiducials/unpadded';
+matMarkerPath = '~/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials';
 fnames = {'A', 'B', 'C', 'D';
     'E', 'F', 'G', 'J';
     'K', 'L', 'M', '4';
@@ -22,6 +22,8 @@ fnames = {'A', 'B', 'C', 'D';
 fnames = cellfun(@(name)fullfile(matMarkerPath, [name '.png']), fnames, 'UniformOutput', false);
 angles = zeros(4);
 fidColors = zeros(1,3);
+
+matDefinitionFile = '~/Code/products-cozmo/include/anki/cozmo/basestation/Mat_Letters_30mm_4x4.def';
 
 %% Anki Logo with 8-bit code
 markerSize_mm = 30;
@@ -63,6 +65,8 @@ for iGrid = 1:gridSize^2
     imwrite(logoWithFiducial, fnames{iGrid}, 'Alpha', AlphaChannel);
 end
 
+matDefinitionFile = '~/Code/products-cozmo/include/anki/cozmo/basestation/Mat_AnkiLogoPlus8Bits_8x8.def';
+
 %%
 [xgrid,ygrid] = meshgrid(linspace(-200,200,gridSize));
 numCorners = zeros(gridSize); % TODO: remove
@@ -70,31 +74,7 @@ angles = zeros(gridSize);
 
 createWebotsMat(fnames, numCorners', xgrid', ygrid', angles', ...
     markerSize_mm, fnames, ...
-    'ForegroundColor', zeros(1,3), 'BackgroundColor', ones(1,3));
+    'ForegroundColor', zeros(1,3), 'BackgroundColor', ones(1,3), ...
+    'DefinitionFile', matDefinitionFile);
 
-
-%%
-
-% % Cozmo/Anki Logos
-% matMarkerPath = '~/Box Sync/Cozmo SE/VisionMarkers/matWithFiducials/unpadded'; 
-% fnames = getfnames(matMarkerPath, '*.png', 'useFullPath', true);
-% fnames = fnames([1:2:end 2:2:end]);
-% angles = [zeros(2,4); 180*ones(2,4)];
-% fidColors = permute(reshape(repmat([78 82 89; 27 130 193]/255, [8 1]), [4 4 3]), [2 1 3]);
-
-numImages = numel(fnames);
-assert(numImages == 16, 'Expecting to find 16 images.');
-images = fnames; %cell(4,4);
-% for i = 1:numImages
-%     images{i} = imread(fullfile(matMarkerPath, fnames{i}));
-% end
-
-[xgrid,ygrid] = meshgrid(linspace(-200,200,4));
-numCorners = zeros(4,4); % TODO: remove
-        
-createWebotsMat(images, numCorners', xgrid', ygrid', angles', ...
-    markerSize_mm, fnames,'FiducialColor', fidColors, ...
-    'ForegroundColor', zeros(1,3), 'BackgroundColor', ones(1,3));
-
-%markerLibrary.Save();
 
