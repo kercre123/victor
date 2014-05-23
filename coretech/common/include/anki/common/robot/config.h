@@ -110,6 +110,10 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define NO_INLINE __declspec(noinline)
 #endif
 
+
+// Allow anonymous unions in Keil
+#pragma anon_unions
+
 #define ANKI_DEBUG_LEVEL ANKI_DEBUG_ERRORS
 
 //#define ARM_MATH_CM4
@@ -144,7 +148,6 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
-
 
 #define ANKICORETECHEMBEDDED_VERSION_MAJOR 0
 #define ANKICORETECHEMBEDDED_VERSION_MINOR 1

@@ -14,6 +14,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #endif
 
 #include "anki/common/robot/config.h"
+#include "anki/common/vectorTypes.h"
 #include "anki/common/robot/array2d.h"
 #include "anki/common/robot/benchmarking.h"
 #include "anki/common/robot/fixedLengthList.h"
@@ -34,6 +35,159 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 using namespace Anki;
 using namespace Anki::Embedded;
+
+GTEST_TEST(CoreTech_Common, VectorTypes)
+{
+  {
+    u8x2 a_u8x2;
+    a_u8x2.v0 = 0x1; a_u8x2.v1 = 0x2;
+    ASSERT_TRUE(u16(a_u8x2) == 0x0201);
+  }
+
+  {
+    s8x2 a_s8x2;
+    a_s8x2.v0 = -0x1; a_s8x2.v1 = -0x2;
+    ASSERT_TRUE(u16(a_s8x2) == 0xfeff);
+  }
+
+  {
+    u8x4 a_u8x4;
+    a_u8x4.v0 = 0x3; a_u8x4.v1 = 0x4; a_u8x4.v2 = 0x5; a_u8x4.v3 = 0x6;
+    ASSERT_TRUE(u32(a_u8x4) == 0x06050403);
+  }
+
+  {
+    s8x4 a_s8x4;
+    a_s8x4.v0 = -0x3; a_s8x4.v1 = -0x4; a_s8x4.v2 = -0x5; a_s8x4.v3 = -0x6;
+    ASSERT_TRUE(u32(a_s8x4) == 0xfafbfcfd);
+  }
+
+  {
+    u8x8 a_u8x8;
+    a_u8x8.v0 = 0x7; a_u8x8.v1 = 0x8; a_u8x8.v2 = 0x9; a_u8x8.v3 = 0xa; a_u8x8.v4 = 0xb; a_u8x8.v5 = 0xc; a_u8x8.v6 = 0xd; a_u8x8.v7 = 0xe;
+    ASSERT_TRUE(u64(a_u8x8) == 0x0e0d0c0b0a090807);
+  }
+
+  {
+    s8x8 a_s8x8;
+    a_s8x8.v0 = -0x7; a_s8x8.v1 = -0x8; a_s8x8.v2 = -0x9; a_s8x8.v3 = -0xa; a_s8x8.v4 = -0xb; a_s8x8.v5 = -0xc; a_s8x8.v6 = -0xd; a_s8x8.v7 = -0xe;
+    ASSERT_TRUE(u64(a_s8x8) == 0xf2f3f4f5f6f7f8f9);
+  }
+
+  {
+    u8x16 a_u8x16;
+    a_u8x16.v0 = 0xf; a_u8x16.v1 = 0x10; a_u8x16.v2 = 0x11; a_u8x16.v3 = 0x12; a_u8x16.v4 = 0x13; a_u8x16.v5 = 0x14; a_u8x16.v6 = 0x15; a_u8x16.v7 = 0x16; a_u8x16.v8 = 0x17; a_u8x16.v9 = 0x18; a_u8x16.va = 0x19; a_u8x16.vb = 0x1a; a_u8x16.vc = 0x1b; a_u8x16.vd = 0x1c; a_u8x16.ve = 0x1d; a_u8x16.vf = 0x1e;
+    ASSERT_TRUE(a_u8x16.bits[0] == 0x161514131211100f);
+    ASSERT_TRUE(a_u8x16.bits[1] == 0x1e1d1c1b1a191817);
+  }
+
+  {
+    s8x16 a_s8x16;
+    a_s8x16.v0 = -0xf; a_s8x16.v1 = -0x10; a_s8x16.v2 = -0x11; a_s8x16.v3 = -0x12; a_s8x16.v4 = -0x13; a_s8x16.v5 = -0x14; a_s8x16.v6 = -0x15; a_s8x16.v7 = -0x16; a_s8x16.v8 = -0x17; a_s8x16.v9 = -0x18; a_s8x16.va = -0x19; a_s8x16.vb = -0x1a; a_s8x16.vc = -0x1b; a_s8x16.vd = -0x1c; a_s8x16.ve = -0x1d; a_s8x16.vf = -0x1e;
+    ASSERT_TRUE(a_s8x16.bits[0] == 0xeaebecedeeeff0f1);
+    ASSERT_TRUE(a_s8x16.bits[1] == 0xe2e3e4e5e6e7e8e9);
+  }
+
+  {
+    u16x2 a_u16x2;
+    a_u16x2.v0 = 0x1f; a_u16x2.v1 = 0x20;
+    ASSERT_TRUE(u32(a_u16x2) == 0x0020001f);
+  }
+
+  {
+    s16x2 a_s16x2;
+    a_s16x2.v0 = -0x1f; a_s16x2.v1 = -0x20;
+    ASSERT_TRUE(u32(a_s16x2) == 0xffe0ffe1);
+  }
+
+  {
+    u16x4 a_u16x4;
+    a_u16x4.v0 = 0x21; a_u16x4.v1 = 0x22; a_u16x4.v2 = 0x23; a_u16x4.v3 = 0x24;
+    ASSERT_TRUE(u64(a_u16x4) == 0x0024002300220021);
+  }
+
+  {
+    s16x4 a_s16x4;
+    a_s16x4.v0 = -0x21; a_s16x4.v1 = -0x22; a_s16x4.v2 = -0x23; a_s16x4.v3 = -0x24;
+    ASSERT_TRUE(u64(a_s16x4) == 0xffdcffddffdeffdf);
+  }
+
+  {
+    u16x8 a_u16x8;
+    a_u16x8.v0 = 0x25; a_u16x8.v1 = 0x26; a_u16x8.v2 = 0x27; a_u16x8.v3 = 0x28; a_u16x8.v4 = 0x29; a_u16x8.v5 = 0x2a; a_u16x8.v6 = 0x2b; a_u16x8.v7 = 0x2c;
+    ASSERT_TRUE(a_u16x8.bits[0] == 0x0028002700260025);
+    ASSERT_TRUE(a_u16x8.bits[1] == 0x002c002b002a0029);
+  }
+
+  {
+    s16x8 a_s16x8;
+    a_s16x8.v0 = -0x25; a_s16x8.v1 = -0x26; a_s16x8.v2 = -0x27; a_s16x8.v3 = -0x28; a_s16x8.v4 = -0x29; a_s16x8.v5 = -0x2a; a_s16x8.v6 = -0x2b; a_s16x8.v7 = -0x2c;
+    ASSERT_TRUE(a_s16x8.bits[0] == 0xffd8ffd9ffdaffdb);
+    ASSERT_TRUE(a_s16x8.bits[1] == 0xffd4ffd5ffd6ffd7);
+  }
+
+  {
+    u32x2 a_u32x2;
+    a_u32x2.v0 = 0x2d; a_u32x2.v1 = 0x2e;
+    ASSERT_TRUE(u64(a_u32x2) == 0x0000002e0000002d);
+  }
+
+  {
+    s32x2 a_s32x2;
+    a_s32x2.v0 = -0x2d; a_s32x2.v1 = -0x2e;
+    ASSERT_TRUE(u64(a_s32x2) == 0xffffffd2ffffffd3);
+  }
+
+  {
+    u32x4 a_u32x4;
+    a_u32x4.v0 = 0x2f; a_u32x4.v1 = 0x30; a_u32x4.v2 = 0x31; a_u32x4.v3 = 0x32;
+    ASSERT_TRUE(a_u32x4.bits[0] == 0x000000300000002f);
+    ASSERT_TRUE(a_u32x4.bits[1] == 0x0000003200000031);
+  }
+
+  {
+    s32x4 a_s32x4;
+    a_s32x4.v0 = -0x2f; a_s32x4.v1 = -0x30; a_s32x4.v2 = -0x31; a_s32x4.v3 = -0x32;
+    ASSERT_TRUE(a_s32x4.bits[0] == 0xffffffd0ffffffd1);
+    ASSERT_TRUE(a_s32x4.bits[1] == 0xffffffceffffffcf);
+  }
+
+  {
+    u64x2 a_u64x2;
+    a_u64x2.v0 = 0x33; a_u64x2.v1 = 0x34;
+    ASSERT_TRUE(a_u64x2.bits[0] == 0x0000000000000033);
+    ASSERT_TRUE(a_u64x2.bits[1] == 0x0000000000000034);
+  }
+
+  {
+    s64x2 a_s64x2;
+    a_s64x2.v0 = -0x33; a_s64x2.v1 = -0x34;
+    ASSERT_TRUE(a_s64x2.bits[0] == 0xffffffffffffffcd);
+    ASSERT_TRUE(a_s64x2.bits[1] == 0xffffffffffffffcc);
+  }
+
+  {
+    f32x2 a_f32x2;
+    a_f32x2.v0 = 0x35; a_f32x2.v1 = 0x36;
+    ASSERT_TRUE(u64(a_f32x2) == 0x4258000042540000);
+  }
+
+  {
+    f32x4 a_f32x4;
+    a_f32x4.v0 = 0x37; a_f32x4.v1 = 0x38; a_f32x4.v2 = 0x39; a_f32x4.v3 = 0x3a;
+    ASSERT_TRUE(a_f32x4.bits[0] == 0x42600000425c0000);
+    ASSERT_TRUE(a_f32x4.bits[1] == 0x4268000042640000);
+  }
+
+  {
+    f64x2 a_f64x2;
+    a_f64x2.v0 = 0x3b; a_f64x2.v1 = 0x3c;
+    ASSERT_TRUE(a_f64x2.bits[0] == 0x404d800000000000);
+    ASSERT_TRUE(a_f64x2.bits[1] == 0x404e000000000000);
+  }
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Common, VectorTypes)
 
 GTEST_TEST(CoreTech_Common, RoundUpAndDown)
 {
@@ -3193,8 +3347,6 @@ GTEST_TEST(CoreTech_Common, ApproximateExp)
 
 GTEST_TEST(CoreTech_Common, MatrixMultiply)
 {
-  const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 5000);
-
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
   MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
   MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
@@ -3245,8 +3397,6 @@ GTEST_TEST(CoreTech_Common, MatrixMultiply)
 
 GTEST_TEST(CoreTech_Common, ComputeHomography)
 {
-  const s32 numBytes = MIN(OFFCHIP_BUFFER_SIZE, 5000);
-
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
   MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
   MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
@@ -3766,6 +3916,7 @@ s32 RUN_ALL_COMMON_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   numPassedTests = 0;
   numFailedTests = 0;
 
+  CALL_GTEST_TEST(CoreTech_Common, VectorTypes);
   CALL_GTEST_TEST(CoreTech_Common, RoundUpAndDown);
   CALL_GTEST_TEST(CoreTech_Common, RoundAndSaturate);
   CALL_GTEST_TEST(CoreTech_Common, RunLengthEncode);
