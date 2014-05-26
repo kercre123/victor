@@ -9,9 +9,21 @@ class MotionPrimitiveSet:
     def __init__(self):
         self.numAngles = 16
         self.resolution_mm = 1.0
+        self.minRadius = 8.0
+
+        # dictionary of properties for each action
         self.actions = {}
+
+        # the angle in radians (index is discrete angle index)
         self.angles = []
+
+        # the exact coordinates that define each angle
         self.angleCells = []
+
+        # motion primitives, first index will be angle, second will be action id (integer)
+        self.primitivesPerAngle = []
+
+        self.numActions = 0
 
     def addAction(self, name, angleOffset, length, costFactor = 1.0):
         """Add an action to the primitive set.
@@ -22,11 +34,23 @@ class MotionPrimitiveSet:
 
         if name in self.actions:
             raise DuplicateActionError(name)
-        self.actions[name] = Action(name, angleOffset, length, costFactor)
+        self.actions[name] = Action(name, angleOffset, length, self.numActions, costFactor)
+        self.numActions += 1
+
+    def createPrimitives(self):
+        "After calling addAction to add all the actions, this will generate the motion primitives"
+        self.generateAngles()
+
+        for angleIdx in range(len(self.angles)):
+            # initialize empty list for primitives
+            self.primitivesPerAngle[angleIdx] = [None for i in range(self.numActions)]
+            for action in self.actions.values():
+                self.primitivesPerAngle[angleIdx][action.index] = action.generate(angleIdx, self)
 
     def generateAngles(self):
         "create numAngles worth of grid-aligned angles, as close as possible to 2*pi / numAngles radians each"
 
+        self.primitivesPerAngle = [None for i in range(self.numAngles)]
         self.angles = []
         self.angleCells = []
 
@@ -44,7 +68,7 @@ class MotionPrimitiveSet:
                 theta = atan2(y, x)
                 self.angles.append(theta)
 
-                denom = gcd(x, y)
+                denom = gcd(abs(x), abs(y))
                 self.angleCells.append((x / denom, y / denom))
                 
                 # print i, x, y, theta
@@ -76,12 +100,23 @@ class MotionPrimitiveSet:
                 else:
                     raise RuntimeError("invalid direction '%s'!" % direction)
 
+        print "generated %d discrete angles" % len(self.angles)
+
     def computeTurn(self, startPose, endPose):
         # math from http://sbpl.net/node/53
-        c0 = cos(self.angles[startPose.theta])
-        s0 = sin(self.angles[startPose.theta])
-        c1 = cos(self.angles[endPose.theta])
-        s1 = sin(self.angles[endPose.theta])
+        try:
+            c0 = cos(self.angles[startPose.theta])
+            s0 = sin(self.angles[startPose.theta])
+        except IndexError:
+            print "index error! startPose = '%s', len(self.angles) = %d" % (startPose, len(self.angles))
+            raise
+        try:
+            c1 = cos(self.angles[endPose.theta])
+            s1 = sin(self.angles[endPose.theta])
+        except IndexError:
+            print "index error! endPose = '%s', len(self.angles) = %d" % (endPose, len(self.angles))
+            raise
+
         x0 = startPose.x * self.resolution_mm
         y0 = startPose.y * self.resolution_mm
         x1 = endPose.x * self.resolution_mm
@@ -94,18 +129,79 @@ class MotionPrimitiveSet:
         # index 0 is l, 1 is r
         return X.reshape(-1).tolist()[0]
 
-    def findTurn(self, startPose, deltaTheta, minR):
+    def quadrant(self, rads):
+        if abs(rads - 0.0)  < 1e-6:
+            return set([1,4])
+        elif abs(rads - pi/2)  < 1e-6:
+            return set([1,2])
+        elif abs(rads - pi)  < 1e-6:
+            return set([2,3])
+        elif abs(rads - -pi/2)  < 1e-6:
+            return set([3,4])
+
+        elif 0.0 < rads < pi/2:
+            return set([1])
+        elif pi/2 < rads < pi:
+            return set([2])
+        elif 0.0 > rads > -pi/2:
+            return set([4])
+        else:
+            return set([3])
+
+    def inQuadrant(self, x, y, quadSet):
+        if x == 0 and y == 0:
+            return True
+        if x == 0 and y > 0:
+            return 1 in quadSet or 2 in quadSet
+        if x == 0 and y < 0:
+            return 3 in quadSet or 4 in quadSet
+
+        if x > 0 and y == 0:
+            return 1 in quadSet or 4 in quadSet
+        if x < 0 and y == 0:
+            return 2 in quadSet or 3 in quadSet
+
+        if x > 0 and y > 0:
+            return 1 in quadSet
+        if x > 0 and y < 0:
+            return 4 in quadSet
+        if x < 0 and y > 0:
+            return 2 in quadSet
+        if x < 0 and y < 0:
+            return 3 in quadSet
+        
+        raise RuntimeError("bug!")
+
+
+    def findTurn(self, startPose, deltaTheta):
+        newAngle = startPose.theta + deltaTheta
+        while newAngle < 0:
+            newAngle += self.numAngles
+        while newAngle >= self.numAngles:
+            newAngle -= self.numAngles
+
+        # constrain the solution so that the turn ends in the quadrant
+        # that the ending angle is in
+        quads = self.quadrant(self.angles[startPose.theta])
+        quads.union(self.quadrant(self.angles[newAngle]))
+        
         bestScore = 99999.9
         best = None
-        for x in range(startPose.x, startPose.x+10):
-            for y in range(startPose.y, startPose.y+10):
-                endPose = Pose(x, y, startPose.theta + deltaTheta)
-                turn = self.computeTurn(startPose, endPose)
-                if turn[1] > minR and turn[0] >= 0.0:
-                    score = turn[0]**2 + turn[1]**2
-                    if score < bestScore:
-                        bestScore = score
-                        best = [x, y, turn]
+        for x in range(startPose.x - 9, startPose.x + 10):
+            for y in range(startPose.y - 9, startPose.y + 10):
+                if self.inQuadrant(x,y,quads):
+                    endPose = Pose(x, y, newAngle)
+                    turn = self.computeTurn(startPose, endPose)
+                    if abs(turn[1]) > self.minRadius and turn[0] >= 0.0:
+                        score = 10.0*turn[0] + turn[1]**2
+                        if score < bestScore:
+                            bestScore = score
+                            best = [x, y, turn]
+
+        if not best:
+            print "failed to find turn to angle",rads
+            print "xRange:", xRange
+            print "yRange:", yRange
 
         return best
         
@@ -113,19 +209,20 @@ class MotionPrimitiveSet:
 class DuplicateActionError(Exception):
     def __init__(self, value):
         self.value = value
-    def __str__(self):
+    def __repr__(self):
         return "Action named '%s' already defined" % self.value
 
 class Action:
     "A type of action that will create a primitive from every starting angle."
     
-    def __init__(self, name, angleOffset, length, costFactor = 1.0):
+    def __init__(self, name, angleOffset, length, index, costFactor = 1.0):
         self.name = name
         self.length = length
         self.angleOffset = angleOffset
         self.costFactor = costFactor
+        self.index = index
 
-    def __str__(self):
+    def __repr__(self):
         return "%s: %+d angles, %+d length, costFactor=%f" % (
             self.name,
             self.angleOffset,
@@ -144,18 +241,29 @@ class Action:
             # find the closest multiple of the angle cell that matches the length
             angleCellLength = sqrt(primSet.angleCells[startingAngle][0]**2 + primSet.angleCells[startingAngle][1]**2)
             numLengths = round(self.length / angleCellLength)
+            if numLengths <= 0 and self.length > 0:
+                numLengths = 1
+            elif numLengths >= 0 and self.length < 0:
+                numLengths = -1
             x = primSet.angleCells[startingAngle][0] * numLengths
             y = primSet.angleCells[startingAngle][1] * numLengths
             ret = MotionPrimitive(self.name, x, y, startingAngle)
 
         else:
-            return NotImplementedError("sorry, not done yet")
+            startPose = Pose(0, 0, startingAngle)
+            # straight followed by an arc
+            turn = primSet.findTurn(startPose, self.angleOffset)
+            if not turn:
+                print "Error: turn could not be found from angle %d for action '%s'" % (startingAngle, self)
+                return None
+            ret = MotionPrimitive(self.name, turn[0], turn[1], startingAngle + self.angleOffset)
 
         # clean up primitive
-        if ret.endPose.theta < 0:
-            ret.endPose.theta += primSet.numAngles
-        if ret.endPose.theta >= primSet.numAngles:
-            ret.endPose.theta -= primSet.numAngles
+        while ret.endPose.theta < 0:
+            ret.endPose = Pose(ret.endPose.x, ret.endPose.y, ret.endPose.theta + primSet.numAngles)
+        while ret.endPose.theta >= primSet.numAngles:
+            ret.endPose = Pose(ret.endPose.x, ret.endPose.y, ret.endPose.theta - primSet.numAngles)
+        assert ret.endPose.theta < primSet.numAngles
 
         return ret
             
@@ -169,3 +277,6 @@ class MotionPrimitive:
         self.endPose = Pose(x, y, theta)
         self.intermediatePoses = []
         self.actionName = actionName
+
+    def __repr__(self):
+        return "'%s' --> %s" % (self.actionName, self.endPose)
