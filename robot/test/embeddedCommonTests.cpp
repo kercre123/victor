@@ -127,11 +127,17 @@ GTEST_TEST(CoreTech_Common, HostIntrinsics_m4)
     ASSERT_TRUE(__USAT(0xFFFFFFFFu, 5) == 0);
     ASSERT_TRUE(__USAT(0x7FFFFFFFu, 5) == 31);
     ASSERT_TRUE(__USAT(0x80000000u, 5) == 0);
+
+    //ASSERT_TRUE(__USAT((s32)1, 5) == 1);
+    //ASSERT_TRUE(__USAT((s32)100, 5) == 31);
+    //ASSERT_TRUE(__USAT((s32)-1, 5) == 0);
+    //ASSERT_TRUE(__USAT((s32)s32_MAX, 5) == 31);
+    //ASSERT_TRUE(__USAT((s32)s32_MIN, 5) == 0);
   }
 
   {
     const s32 out = __SSAT(a, 5);
-    ASSERT_TRUE(out == 0xfffffff0);
+    ASSERT_TRUE(out == 0xfffffff0); // -16
   }
 
   GTEST_RETURN_HERE;

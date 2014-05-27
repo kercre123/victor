@@ -49,7 +49,7 @@ namespace Anki
 
     s32 __SMLAD(const u32 val1, const u32 val2, const s32 accumulator);
 
-    u32 __USAT(const u32 val, const u8 n);
+    u32 __USAT(const s32 val, const u8 n);
     s32 __SSAT(const s32 val, const u8 n);
 
     u32 __SEL(const u32 val1, const u32 val2);

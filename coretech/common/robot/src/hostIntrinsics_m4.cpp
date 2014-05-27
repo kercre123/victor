@@ -226,24 +226,23 @@ namespace Anki
       }
 
       return accumulator + thisAccumulator;
-    } // u32 __SMLAD(const u32 val1, const u32 val2, const u32 accumulator)
+    } // s32 __SMLAD(const u32 val1, const u32 val2, const s32 accumulator)
 
-    u32 __USAT(const u32 val, const u8 n)
+    u32 __USAT(const s32 val, const u8 n)
     {
       u32 result;
 
       AnkiAssert(n < 32);
 
-      // The M4 appears to reinterpret-cast val as s32 first, so anything above 0x7fffffff is 0
-      if(val > 0x7fffffff)
-        result = 0;
-      else if(n == 31)
+      if(n == 31) {
         result = val;
-      else
-        result = MIN(val, static_cast<u32>(1<<n) - 1);
+      } else {
+        const s32 maxValue = static_cast<s32>(1<<n) - 1;
+        result = CLIP(val, 0, maxValue);
+      }
 
       return result;
-    } // u32 __USAT(const u8 n, const u32 val)
+    } // u32 __USAT(const s32 val, const u8 n)
 
     s32 __SSAT(const s32 val, const u8 n)
     {
@@ -260,7 +259,7 @@ namespace Anki
       }
 
       return result;
-    } // s32 __SSAT(const u8 n, const s32 val)
+    } // s32 __SSAT(const s32 val, const u8 n)
 
     u32 __SEL(const u32 val1, const u32 val2)
     {
