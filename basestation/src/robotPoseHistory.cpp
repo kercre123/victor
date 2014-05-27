@@ -58,6 +58,12 @@ namespace Anki {
       headAngle_ = head_angle;
     }
     
+    void RobotPoseStamp::Print() const
+    {
+      printf("Frame %d, headAng %f, ", frame_, headAngle_);
+      pose_.Print();
+    }
+    
     /////////////////////// RobotPoseHistory /////////////////////////////
     
     RobotPoseHistory::RobotPoseHistory()
@@ -422,6 +428,40 @@ namespace Anki {
     TimeStamp_t RobotPoseHistory::GetNewestTimeStamp() const
     {
       return (poses_.empty() ? 0 : poses_.rbegin()->first);
+    }
+    
+    void RobotPoseHistory::Print() const
+    {
+      // Create merged map of all poses
+      std::multimap<TimeStamp_t, std::pair<std::string, const_PoseMapIter_t> > mergedPoses;
+      std::multimap<TimeStamp_t, std::pair<std::string, const_PoseMapIter_t> >::iterator mergedIt;
+      const_PoseMapIter_t pit;
+      
+      for(pit = poses_.begin(); pit != poses_.end(); ++pit) {
+        mergedPoses.emplace(std::piecewise_construct,
+                            std::forward_as_tuple(pit->first),
+                            std::forward_as_tuple("  ", pit));
+      }
+
+      for(pit = visPoses_.begin(); pit != visPoses_.end(); ++pit) {
+        mergedPoses.emplace(std::piecewise_construct,
+                            std::forward_as_tuple(pit->first),
+                            std::forward_as_tuple("v ", pit));
+      }
+
+      for(pit = computedPoses_.begin(); pit != computedPoses_.end(); ++pit) {
+        mergedPoses.emplace(std::piecewise_construct,
+                            std::forward_as_tuple(pit->first),
+                            std::forward_as_tuple("c ", pit));
+      }
+      
+      
+      printf("\nRobotPoseHistory\n");
+      printf("================\n");
+      for(mergedIt = mergedPoses.begin(); mergedIt != mergedPoses.end(); ++mergedIt) {
+        printf("%s%d: ", mergedIt->second.first.c_str(), mergedIt->first);
+        mergedIt->second.second->second.Print();
+      }
     }
     
   } // namespace Cozmo

@@ -47,6 +47,8 @@ namespace Anki {
       const Pose3d& GetPose() const {return pose_;}
       const f32 GetHeadAngle() const {return headAngle_;}
       const PoseFrameID_t GetFrameId() const {return frame_;}
+
+      void Print() const;
       
     private:
       PoseFrameID_t frame_;
@@ -142,7 +144,9 @@ namespace Anki {
       
       TimeStamp_t GetOldestTimeStamp() const;
       TimeStamp_t GetNewestTimeStamp() const;
-      
+
+      // Prints the entire history
+      void Print() const;
       
     private:
       
