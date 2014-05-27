@@ -10,6 +10,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 **/
 
 //#define RUN_PC_ONLY_TESTS
+#define JUST_FIDUCIAL_DETECTION
 
 #include "anki/common/robot/config.h"
 #include "anki/common/robot/gtestLight.h"
