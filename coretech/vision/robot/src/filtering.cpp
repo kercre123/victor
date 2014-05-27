@@ -14,23 +14,12 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/common/robot/benchmarking.h"
 #include "anki/common/robot/comparisons.h"
+#include "anki/common/robot/hostIntrinsics_m4.h"
 
 #define USE_ARM_ACCELERATION
 
-#if defined(__EDG__)
 #ifndef USE_ARM_ACCELERATION
 #warning not using USE_ARM_ACCELERATION
-#endif
-#else
-#undef USE_ARM_ACCELERATION
-#endif
-
-#if defined(USE_ARM_ACCELERATION)
-#ifdef USING_CHIP_SIMULATOR
-#include <ARMCM4.h>
-#else
-#include <stm32f4xx.h>
-#endif
 #endif
 
 namespace Anki

@@ -13,6 +13,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define COZMO_ROBOT
 #endif
 
+// #define RUN_PC_ONLY_TESTS
+
 #include "anki/common/robot/config.h"
 #include "anki/common/vectorTypes.h"
 #include "anki/common/robot/array2d.h"
@@ -3931,6 +3933,8 @@ GTEST_TEST(CoreTech_Common, Benchmarking)
 } // GTEST_TEST(CoreTech_Common, Benchmarking)
 #endif //#ifdef TEST_BENCHMARKING
 
+#ifdef RUN_PC_ONLY_TESTS
+
 #if ANKICORETECH_EMBEDDED_USE_MATLAB
 GTEST_TEST(CoreTech_Common, SimpleMatlabTest1)
 {
@@ -4016,6 +4020,7 @@ GTEST_TEST(CoreTech_Common, SimpleOpenCVTest)
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Common, SimpleOpenCVTest)
 #endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
+#endif // #ifdef RUN_PC_ONLY_TESTS
 
 #if !defined(ANKICORETECH_EMBEDDED_USE_GTEST)
 s32 RUN_ALL_COMMON_TESTS(s32 &numPassedTests, s32 &numFailedTests)
@@ -4027,6 +4032,7 @@ s32 RUN_ALL_COMMON_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   CALL_GTEST_TEST(CoreTech_Common, VectorTypes);
   CALL_GTEST_TEST(CoreTech_Common, RoundUpAndDown);
   CALL_GTEST_TEST(CoreTech_Common, RoundAndSaturate);
+  CALL_GTEST_TEST(CoreTech_Common, Rotate90);
   CALL_GTEST_TEST(CoreTech_Common, RunLengthEncode);
   CALL_GTEST_TEST(CoreTech_Common, IsConvex);
   CALL_GTEST_TEST(CoreTech_Common, RoundFloat);
@@ -4041,6 +4047,8 @@ s32 RUN_ALL_COMMON_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   CALL_GTEST_TEST(CoreTech_Common, MatrixMultiplyTranspose);
   CALL_GTEST_TEST(CoreTech_Common, Reshape);
   CALL_GTEST_TEST(CoreTech_Common, ArrayPatterns);
+  CALL_GTEST_TEST(CoreTech_Common, Interp2_Projective_oneDimensional);
+  CALL_GTEST_TEST(CoreTech_Common, Interp2_Projective_twoDimensional);
   CALL_GTEST_TEST(CoreTech_Common, Interp2_Affine_twoDimensional);
   CALL_GTEST_TEST(CoreTech_Common, Interp2_Affine_oneDimensional);
   CALL_GTEST_TEST(CoreTech_Common, Interp2_twoDimensional);
@@ -4077,10 +4085,6 @@ s32 RUN_ALL_COMMON_TESTS(s32 &numPassedTests, s32 &numFailedTests)
 #ifdef TEST_BENCHMARKING
   CALL_GTEST_TEST(CoreTech_Common, Benchmarking);
 #endif
-
-  //CALL_GTEST_TEST(CoreTech_Common, SimpleMatlabTest1);
-  //CALL_GTEST_TEST(CoreTech_Common, SimpleMatlabTest2);
-  //CALL_GTEST_TEST(CoreTech_Common, SimpleOpenCVTest);
 
   return numFailedTests;
 } // int RUN_ALL_COMMON_TESTS()

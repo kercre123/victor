@@ -9,25 +9,14 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/common/robot/config.h"
 #include "anki/common/robot/comparisons.h"
+#include "anki/common/robot/hostIntrinsics_m4.h"
 
 #include "anki/vision/robot/imageProcessing.h"
 
 #define USE_ARM_ACCELERATION
 
-#if defined(__EDG__)
 #ifndef USE_ARM_ACCELERATION
 #warning not using USE_ARM_ACCELERATION
-#endif
-#else
-#undef USE_ARM_ACCELERATION
-#endif
-
-#if defined(USE_ARM_ACCELERATION)
-#ifdef USING_CHIP_SIMULATOR
-#include <ARMCM4.h>
-#else
-#include <stm32f4xx.h>
-#endif
 #endif
 
 namespace Anki
@@ -140,15 +129,13 @@ namespace Anki
 
             const u16 backgroundThreshold_0 = static_cast<u16>(backgroundThreshold);
             const u16 backgroundThreshold_right8 = static_cast<u16>(backgroundThreshold) << 8;
-            //const u32 backgroundThreshold_right16 = static_cast<u32>(backgroundThreshold) << 16;
-            //const u32 backgroundThreshold_right24 = static_cast<u32>(backgroundThreshold) << 24;
 
             // First SIMD the top-left, top, top-right
             for(s32 x=4; x<imageWidth-1; x+=2) {
               const u16 image10 = *reinterpret_cast<const u16*>(pImage_y0 + x);
 
+              //#if !defined(USE_ARM_ACCELERATION)
               u32 distance10 = 0;
-              //u32 distance32 = 0;
 
               if((image10 & 0xFF) >= backgroundThreshold_0) {
                 const u16 left = pDistance_y0[x-1] + a;
@@ -167,6 +154,42 @@ namespace Anki
 
                 distance10 |= MIN(MIN(MIN(left, leftUp), up), rightUp) << 16;
               }
+              //#else // #if !defined(USE_ARM_ACCELERATION)
+              //
+              //              const u32 leftUp10  = *reinterpret_cast<const u32*>(pDistance_ym1 + x - 1) + bX2;
+              //              const u32 up10      = *reinterpret_cast<const u32*>(pDistance_ym1 + x    ) + aX2;
+              //              const u32 rightUp10 = *reinterpret_cast<const u32*>(pDistance_ym1 + x + 1) + bX2;
+              //
+              //              u32 distance10 = leftUp10;
+              //
+              //              printf("up10:0x%x distance10:0x%x\n", up10, distance10);
+              //              __USUB16(up10, distance10);
+              //              distance10 = __SEL(distance10, up10);
+              //              printf("up10:0x%x distance10:0x%x\n", up10, distance10);
+              //
+              //              __USUB16(rightUp10, distance10);
+              //              distance10 = __SEL(distance10, rightUp10);
+              //
+              //              const u32 left0 = pDistance_y0[x-1] + a;
+              //              if(left0 < (distance10 & 0xFFFF)) {
+              //                distance10 &= 0xFFFF0000;
+              //                distance10 |= left0;
+              //              }
+              //
+              //              if((image10 & 0xFF) >= backgroundThreshold_0) {
+              //                distance10 &= 0xFFFF0000;
+              //              }
+              //
+              //              const u32 left1 = ((distance10 & 0xFFFF)+a) << 16;
+              //              if(left1 < (distance10 & 0xFFFF0000)) {
+              //                distance10 &= 0x0000FFFF;
+              //                distance10 |= left1;
+              //              }
+              //
+              //              if((image10 & 0xFF00) >= backgroundThreshold_right8) {
+              //                distance10 &= 0x0000FFFF;
+              //              }
+              //#endif // #if !defined(USE_ARM_ACCELERATION) ... #else
 
               *reinterpret_cast<u32*>(pDistance_y0 + x) = distance10;
             } // for(s32 x=4; x<imageWidth-3; x+=4)

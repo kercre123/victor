@@ -21,22 +21,12 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 //#include "anki/common/robot/matlabInterface.h"
 
+#include "anki/common/robot/hostIntrinsics_m4.h"
+
 #define USE_ARM_ACCELERATION_IMAGE_PROCESSING
 
-#if defined(__EDG__)
 #ifndef USE_ARM_ACCELERATION_IMAGE_PROCESSING
 #warning not using USE_ARM_ACCELERATION_IMAGE_PROCESSING
-#endif
-#else
-#undef USE_ARM_ACCELERATION_IMAGE_PROCESSING
-#endif
-
-#if defined(USE_ARM_ACCELERATION_IMAGE_PROCESSING)
-#ifdef USING_CHIP_SIMULATOR
-#include <ARMCM4.h>
-#else
-#include <stm32f4xx.h>
-#endif
 #endif
 
 namespace Anki
