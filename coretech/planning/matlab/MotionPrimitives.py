@@ -23,6 +23,9 @@ class MotionPrimitiveSet:
         # motion primitives, first index will be angle, second will be action id (integer)
         self.primitivesPerAngle = []
 
+        # distance between samples for intermediatePoints
+        self.sampleLength = 0.5
+
         self.numActions = 0
 
     def addAction(self, name, angleOffset, length, costFactor = 1.0):
@@ -199,10 +202,34 @@ class MotionPrimitiveSet:
                             best = [x, y, turn]
 
         if not best:
-            print "failed to find turn to angle",rads
-            print "xRange:", xRange
-            print "yRange:", yRange
+            print "failed to find turn to angle",startPose.theta
+            print "quads:", quads
+            return None
+        else:
+            # compute arc parameters
+            l = best[2][0]
+            r = best[2][1]
+            theta0 = self.angles[startPose.theta]
+            theta1 = self.angles[newAngle]
 
+            # compute the center of the circle (x_c, y_c)
+            x_c = l*cos(theta0) - r*sin(theta0)
+            y_c = l*sin(theta0) + r*cos(theta0)
+
+            # from the center, comptue the starting angle
+            startRads = theta0 - pi/2
+
+            # how many radians we move through during the arc (+ is CCW)
+            sweepRads = theta1 - theta0
+
+            if sweepRads < -pi/2:
+                sweepRads += 2*pi
+            if sweepRads > pi/2:
+                sweepRads -= 2*pi
+
+            arc = Arc(x_c, y_c, r, startRads, sweepRads)
+
+            return [best[0], best[1], l, arc]
         return best
         
 
@@ -234,7 +261,8 @@ class Action:
 
         if self.length == 0:
             # turn in place action
-            ret = MotionPrimitive(self.name, 0, 0, startingAngle + self.angleOffset)
+            endPose = Pose(0, 0, startingAngle + self.angleOffset)
+            ret = MotionPrimitive(self.name, endPose, 0.0)
             # TODO: intermediate poses
 
         elif self.angleOffset == 0:
@@ -247,7 +275,9 @@ class Action:
                 numLengths = -1
             x = primSet.angleCells[startingAngle][0] * numLengths
             y = primSet.angleCells[startingAngle][1] * numLengths
-            ret = MotionPrimitive(self.name, x, y, startingAngle)
+            endPose = Pose(x, y, startingAngle)
+            realLength = sqrt(float(x**2 + y**2))
+            ret = MotionPrimitive(self.name, endPose, realLength)
 
         else:
             startPose = Pose(0, 0, startingAngle)
@@ -256,7 +286,11 @@ class Action:
             if not turn:
                 print "Error: turn could not be found from angle %d for action '%s'" % (startingAngle, self)
                 return None
-            ret = MotionPrimitive(self.name, turn[0], turn[1], startingAngle + self.angleOffset)
+            endPose = Pose(turn[0], turn[1], startingAngle + self.angleOffset)
+            l = turn[2]
+            arc = turn[3]
+            ret = MotionPrimitive(self.name, endPose, l)
+            ret.arc = arc
 
         # clean up primitive
         while ret.endPose.theta < 0:
@@ -265,18 +299,59 @@ class Action:
             ret.endPose = Pose(ret.endPose.x, ret.endPose.y, ret.endPose.theta - primSet.numAngles)
         assert ret.endPose.theta < primSet.numAngles
 
+        ret.sample(primSet.angles[startingAngle], primSet)
+
         return ret
             
 Pose = namedtuple('Pose', ['x', 'y', 'theta'])
 Pose_mm = namedtuple('Pose_mm', ['x_mm', 'y_mm', 'theta_mm'])
+Arc = namedtuple('Arc', ['centerPt_x', 'centerPt_y', 'radius', 'startRad', 'sweepRad'])
 
 class MotionPrimitive:
     "A primitive for a given starting angle and action"
 
-    def __init__(self, actionName, x, y, theta):
-        self.endPose = Pose(x, y, theta)
+    def __init__(self, actionName, endPose, l):
+        self.endPose = endPose
+        self.l = l
         self.intermediatePoses = []
         self.actionName = actionName
+        self.arc = None
 
     def __repr__(self):
-        return "'%s' --> %s" % (self.actionName, self.endPose)
+        if self.arc:
+            return "%15s: l:%+7.3f <Arc: x_c:%+5.2f y_c:%+5.2f r:%5.2f start:%+6.3f sweep:%+6.3f> --> %s" % (
+                self.actionName,
+                self.l,
+                self.arc.centerPt_x,
+                self.arc.centerPt_y,
+                self.arc.radius,
+                self.arc.startRad,
+                self.arc.sweepRad,
+                self.endPose)
+        else:
+            return "%15s: l:%+7.3f --> %s" % (self.actionName, self.l, self.endPose)
+
+    def sample(self, startRads, primSet):
+        "fill in intermediatePoses with samples every sampleLength mm"
+
+        # simulate linear portion, if needed
+        if self.l > 0.0:
+            for t in numpy.arange(0.0, self.l, primSet.sampleLength):
+                x = t*cos(startRads)
+                y = t*sin(startRads)
+                pose = Pose_mm(x, y, startRads)
+                self.intermediatePoses.append(pose)
+
+        #simulate arc, if there is one
+        if self.arc:
+            # compute the step size in radians
+            radStep = primSet.sampleLength / self.arc.radius
+
+            for t in numpy.arange(0.0, self.arc.sweepRad, radStep):
+                theta = self.arc.startRad + t
+                x = self.arc.centerPt_x + self.arc.radius * cos(theta)
+                y = self.arc.centerPt_y + self.arc.radius * sin(theta)
+                pose = Pose_mm(x, y, theta + pi/2)
+                self.intermediatePoses.append(pose)
+
+        self.intermediatePoses.append(Pose_mm(self.endPose.x, self.endPose.y, primSet.angles[self.endPose.theta]))
