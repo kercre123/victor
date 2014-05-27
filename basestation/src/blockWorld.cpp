@@ -394,7 +394,9 @@ namespace Anki
          robot->get_camHead().get_pose() *
          (*matWrtCamera)).getInverse() );
          */
-        newPose.set_parent(Pose3d::World); // robot->get_pose().get_parent() );
+        
+        //newPose.set_parent(Pose3d::World); // robot->get_pose().get_parent() );
+        newPose = newPose.getWithRespectTo(Pose3d::World);
         
         // If there is any significant rotation, make sure that it is roughly
         // around the Z axis
@@ -532,8 +534,50 @@ namespace Anki
     void BlockWorld::QueueObservedMarker(const Vision::ObservedMarker& marker)
     {
       obsMarkers_[marker.GetTimeStamp()].emplace_back(marker);
-      //obsMarkersByRobot_[seenByRobot].push_back(&obsMarkers_.back());
-    }
+
+      // Visualize the marker in 3D
+      // TODO: disable this block when not debugging / visualizing
+      if(true){
+        // Note that this incurs extra computation to compute the 3D pose of
+        // each observed marker so that we can draw in the 3D world, but this is
+        // purely for debug / visualization
+        u32 quadID = 0;
+        
+        // When requesting the markers' 3D corners below, we want them
+        // not to be relative to the object the marker is part of, so we
+        // will request them at a "canonical" pose (no rotation/translation)
+        const Pose3d canonicalPose;
+        
+        // Block Markers
+        std::set<const Vision::ObservableObject*> const& blocks = blockLibrary_.GetObjectsWithMarker(marker);
+        for(auto block : blocks) {
+          std::vector<const Vision::KnownMarker*> const& blockMarkers = block->GetMarkersWithCode(marker.GetCode());
+
+          for(auto blockMarker : blockMarkers) {
+            
+            Pose3d markerPose = marker.GetSeenBy().ComputeObjectPose(marker.GetImageCorners(),
+                                                                     blockMarker->Get3dCorners(canonicalPose));
+            markerPose = markerPose.getWithRespectTo(Pose3d::World);
+            VizManager::getInstance()->DrawQuad(quadID++, blockMarker->Get3dCorners(markerPose), VIZ_COLOR_OBSERVED_QUAD);
+          }
+        }
+        
+        // Mat Markers
+        std::set<const Vision::ObservableObject*> const& mats = matLibrary_.GetObjectsWithMarker(marker);
+        for(auto mat : mats) {
+          std::vector<const Vision::KnownMarker*> const& matMarkers = mat->GetMarkersWithCode(marker.GetCode());
+          
+          for(auto matMarker : matMarkers) {
+            Pose3d markerPose = marker.GetSeenBy().ComputeObjectPose(marker.GetImageCorners(),
+                                                                     matMarker->Get3dCorners(canonicalPose));
+            markerPose = markerPose.getWithRespectTo(Pose3d::World);
+            VizManager::getInstance()->DrawQuad(quadID++, matMarker->Get3dCorners(markerPose), VIZ_COLOR_OBSERVED_QUAD);
+          }
+        }
+        
+      } // 3D marker visualization
+      
+    } // QueueObservedMarker()
     
     void BlockWorld::ClearAllObservedMarkers()
     {
@@ -549,7 +593,7 @@ namespace Anki
         robot->dockWithBlock(whichBlock);
         
       } else {
-        fprintf(stdout, "Invalid robot commanded to Dock.\n");
+        CoreTechPrint("Invalid robot commanded to Dock.\n");
       }
     } // commandRobotToDock()
 
