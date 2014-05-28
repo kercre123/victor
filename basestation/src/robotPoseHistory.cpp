@@ -279,50 +279,82 @@ namespace Anki {
       }
       
       // Check frame ID
-      // If the vision pose frame id does not match the requested frame id
+      // If the vision pose frame id <= requested frame id
       // then just return the raw pose of the requested frame id since it
-      // is already based on the previous vision-based pose.
+      // is already based on the vision-based pose.
       if (git->second.GetFrameId() <= p1.GetFrameId()) {
         //printf("FRAME %d <= %d\n", git->second.GetFrameId(), p1.GetFrameId());
         p = p1;
         return RESULT_OK;
       }
       
-#if(DEBUG_ROBOT_POSE_HISTORY)
+      #if(DEBUG_ROBOT_POSE_HISTORY)
       static bool printDbg = false;
       if(printDbg) {
         printf("gt: %d\n", git->first);
         git->second.GetPose().Print();
       }
-#endif
+      #endif
       
       // git now points to the latest vision-based pose that exists before time t.
       // Now get the pose in poses_ that immediately follows the vision-based pose's time.
       const_PoseMapIter_t p0_it = poses_.lower_bound(git->first);
 
-#if(DEBUG_ROBOT_POSE_HISTORY)
+      #if(DEBUG_ROBOT_POSE_HISTORY)
       if (printDbg) {
-        printf("p0_it: %d\n", p0_it->first);
+        printf("p0_it: t: %d  frame: %d\n", p0_it->first, p0_it->second.GetFrameId());
         p0_it->second.GetPose().Print();
       
-        printf("p1: %d\n", t);
+        printf("p1: t: %d  frame: %d\n", t, p1.GetFrameId());
         p1.GetPose().Print();
       }
-#endif
+      #endif
       
       CORETECH_ASSERT((p1.GetPose().get_parent() == Pose3d::World) &&
                       (p0_it->second.GetPose().get_parent() == Pose3d::World));
       
       // Compute relative pose between p0_it and p1 and append to the vision-based pose.
-      Pose3d pTransform = p0_it->second.GetPose().getInverse() * p1.GetPose();
+      // Need to account for intermediate frames between p0 and p1 if any.
+      // pMid0 and pMid1 are used to denote the start and end poses of
+      // every intermediate frame.
+      Pose3d pTransform = p0_it->second.GetPose().getInverse();
+      const_PoseMapIter_t pMid0 = p0_it;
+      const_PoseMapIter_t pMid1 = p0_it;
+      for (pMid1 = p0_it; pMid1->first != t; ++pMid1) {
+        if (pMid1->second.GetFrameId() > pMid0->second.GetFrameId()) {
+          
+          #if(DEBUG_ROBOT_POSE_HISTORY)
+          if (printDbg) {
+            printf(" ComputePoseAt: frame %d (t=%d) to frame %d (t=%d)\n", pMid0->second.GetFrameId(), pMid0->first, pMid1->second.GetFrameId(), pMid1->first);
+          }
+          #endif
+          
+          // Point pMid1 to the last pose of the same frame as pMid0
+          // and multiply with pTransform to get the transform for pMid0's frame.
+          --pMid1;
+          pTransform *= pMid1->second.GetPose();
+          
+          // Now point pMid0 and pMid1 to the first pose of the next frame
+          // and multiply the inverse with pTransform to get the first part of the transform
+          // for the next frame.
+          ++pMid1;
+          pTransform *= pMid1->second.GetPose().getInverse();
+          
+          pMid0 = pMid1;
+        }
+        if (pMid1->second.GetFrameId() == p1.GetFrameId()) {
+          break;
+        }
+      }
+      pTransform *= p1.GetPose();
       
 
-#if(DEBUG_ROBOT_POSE_HISTORY)
+      #if(DEBUG_ROBOT_POSE_HISTORY)
       if (printDbg) {
         printf("pTrans: %d\n", t);
         pTransform.Print();
       }
-#endif
+      #endif
       
       pTransform.preComposeWith(git->second.GetPose());
       p.SetPose(git->second.GetFrameId(), pTransform, p1.GetHeadAngle());
