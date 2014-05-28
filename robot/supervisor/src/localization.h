@@ -19,13 +19,19 @@ namespace Anki {
       // Get orientation of robot on current mat
       Radians GetCurrentMatOrientation();
 
-      // Set/Get the current pose frame ID
-      void SetPoseFrameId(PoseFrameID_t id);
+      // Get the current pose frame ID
       PoseFrameID_t GetPoseFrameId();
-      
       
       void Update();
 
+      
+      // Uses the keyframe ("ground truth") pose at some past time as given
+      // by the basestation after it has processed a mat marker to
+      // update the current pose by transforming the given keyframe pose
+      // by the pose-diff between the historical at time t and the current pose.
+      // Also updates the current pose frame ID.
+      Result UpdatePoseWithKeyframe(PoseFrameID_t frameID, TimeStamp_t t, const f32 x, const f32 y, const f32 angle);
+      
     } // Localization
   } // Cozmo
 } // Anki

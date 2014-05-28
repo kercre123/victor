@@ -616,14 +616,22 @@ namespace Anki {
       // TODO: Add z?
       MessageAbsLocalizationUpdate m;
       
-      // TODO: need sync'd timestamps!
-      m.timestamp = 0;
+      // Look in history for the last vis pose and send it.
+      TimeStamp_t t;
+      RobotPoseStamp p;
+      if (poseHistory_.GetLatestVisionOnlyPose(t, p) == RESULT_FAIL) {
+        PRINT_NAMED_WARNING("Robot.SendAbsLocUpdate.NoVizPoseFound", "");
+        return RESULT_FAIL;
+      }
+
+      m.timestamp = t;
       
-      m.xPosition = pose.get_translation().x();
-      m.yPosition = pose.get_translation().y();
+      m.pose_frame_id = p.GetFrameId();
       
-      m.headingAngle = atan2(pose.get_rotationMatrix()(1,0),
-                             pose.get_rotationMatrix()(0,0));
+      m.xPosition = p.GetPose().get_translation().x();
+      m.yPosition = p.GetPose().get_translation().y();
+
+      m.headingAngle = p.GetPose().get_rotationMatrix().GetAngleAroundZaxis().ToFloat();
       
       return msgHandler_->SendMessage(ID_, m);
     }
@@ -691,6 +699,23 @@ namespace Anki {
     {
       return poseHistory_.GetVisionOnlyPoseAt(t_request, p);
     }
+
+    Result Robot::GetComputedPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p)
+    {
+      return poseHistory_.GetComputedPoseAt(t_request, p);
+    }
+
+    void Robot::UpdateCurrPoseFromHistory()
+    {
+      TimeStamp_t t;
+      RobotPoseStamp p;
+      if (poseHistory_.ComputePoseAt(poseHistory_.GetNewestTimeStamp(), t, p) == RESULT_OK) {
+        if (p.GetFrameId() == GetPoseFrameID()) {
+          pose = p.GetPose();
+        }
+      }
+    }
+    
     
   } // namespace Cozmo
 } // namespace Anki

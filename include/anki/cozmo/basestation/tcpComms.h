@@ -16,10 +16,20 @@
 
 #include <map>
 #include <vector>
+#include <deque>
 #include <anki/messaging/basestation/IComms.h>
 #include "anki/messaging/shared/TcpClient.h"
 #include "anki/messaging/shared/UdpClient.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
+
+// Set to 1 to simulate a send/receive latencies
+// beyond the actual latency of TCP.
+// Note that the resolution of these latencies is currently equal to
+// the Basestation frequency since that's what defines how often Update() is called.
+#define DO_SIM_COMMS_LATENCY 0
+#define SIM_RECV_LATENCY_SEC 0.3
+#define SIM_SEND_LATENCY_SEC 0.3
+
 
 
 namespace Anki {
@@ -53,8 +63,9 @@ namespace Cozmo {
     // Returns true if we are ready to use TCP
     virtual bool IsInitialized();
     
-    // Returns the number of messages ready for processing in the BLEVehicleMgr. Returns 0 if no messages are available.
-    virtual int GetNumPendingMsgPackets() { return recvdMsgPackets_.size(); };
+    // Returns the number of messages ready for processing in the BLEVehicleMgr.
+    // Returns 0 if no messages are available.
+    virtual int GetNumPendingMsgPackets();
   
     virtual int Send(const Comms::MsgPacket &p);
 
@@ -62,7 +73,7 @@ namespace Cozmo {
     
     
     // when game is unpaused we need to dump old messages
-    virtual void ClearMsgPackets() { recvdMsgPackets_.clear(); };
+    virtual void ClearMsgPackets();
     
     //virtual void SetCurrentTimestamp(BaseStationTime_t timestamp);
   
@@ -111,8 +122,23 @@ namespace Cozmo {
     typedef std::map<int, ConnectedRobotInfo>::iterator connectedRobotsIt_t;
     std::map<int, ConnectedRobotInfo> connectedRobots_;
     
-    // 'Queue' of received messages from all connected robots
-    std::multimap<TimeStamp_t, Comms::MsgPacket> recvdMsgPackets_;
+    // 'Queue' of received messages from all connected robots with their received times.
+    //std::multimap<TimeStamp_t, Comms::MsgPacket> recvdMsgPackets_;
+    //std::deque<Comms::MsgPacket> recvdMsgPackets_;
+    typedef std::deque< std::pair<f32, Comms::MsgPacket> > PacketQueue_t;
+    PacketQueue_t recvdMsgPackets_;
+    
+#if(DO_SIM_COMMS_LATENCY)
+    // The number of messages that have been in recvdMsgPackets for at least
+    // SIM_RECV_LATENCY_SEC and are now available for reading.
+    s32 numRecvRdyMsgs_;
+    
+    // Queue of messages to be sent with the times they should be sent at
+    PacketQueue_t sendMsgPackets_;
+
+    // The actual function that does the sending when we're simulating latency
+    int RealSend(const Comms::MsgPacket &p);
+#endif
     
   };
 
