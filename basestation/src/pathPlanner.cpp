@@ -33,8 +33,12 @@ namespace Anki {
       // Currently, we can only deal with rotations around (0,0,1) or (0,0,-1).
       // If it's something else, then quit.
       // TODO: Something smarter?
-      Vec3f rotAxis = startPose.get_rotationAxis();
-      if (!FLT_NEAR(rotAxis.x(), 0.f) || !FLT_NEAR(rotAxis.y(), 0.f) || !FLT_NEAR(ABS(rotAxis.z()), 1.f)) {
+      Vec3f rotAxis;
+      Radians rotAngle;
+      startPose.get_rotationVector().get_angleAndAxis(rotAngle, rotAxis);
+      float dotProduct = DotProduct(rotAxis, Z_AXIS_3D);
+      const float dotProductThreshold = 0.0152f; // 1.f - std::cos(DEG_TO_RAD(10)); // within 10 degrees
+      if(!NEAR(rotAngle.ToFloat(), 0, DEG_TO_RAD(10)) && !NEAR(std::abs(dotProduct), 1.f, dotProductThreshold)) {
         PRINT_NAMED_ERROR("PathPlanner.GetPlan.NonZAxisRot_start",
                           "GetPlan() does not support rotations around anything other than z-axis (%f %f %f)\n",
                           rotAxis.x(), rotAxis.y(), rotAxis.z());
@@ -51,8 +55,9 @@ namespace Anki {
       // Currently, we can only deal with rotations around (0,0,1) or (0,0,-1).
       // If it's something else, then quit.
       // TODO: Something smarter?
-      rotAxis = targetPose.get_rotationAxis();
-      if (!FLT_NEAR(rotAxis.x(), 0.f) || !FLT_NEAR(rotAxis.y(), 0.f) || !FLT_NEAR(ABS(rotAxis.z()), 1.f)) {
+      targetPose.get_rotationVector().get_angleAndAxis(rotAngle, rotAxis);
+      dotProduct = DotProduct(rotAxis, Z_AXIS_3D);
+      if(!NEAR(rotAngle.ToFloat(), 0, DEG_TO_RAD(10)) && !NEAR(std::abs(dotProduct), 1.f, dotProductThreshold)) {
         PRINT_NAMED_ERROR("PathPlanner.GetPlan.NonZAxisRot_target",
                           "GetPlan() does not support rotations around anything other than z-axis (%f %f %f)\n",
                           rotAxis.x(), rotAxis.y(), rotAxis.z());

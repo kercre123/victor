@@ -226,7 +226,7 @@ namespace Anki
 
     // Compute the difference between two 3D poses (Rotations+Translations)
     // All R matrices should be 3x3.
-    //    [R2 T2] = [Rdiff Tdiff] * [R1 T1]
+    //    [R2 T2] = [R1 T1] * [Rdiff Tdiff]
     // I.e., the diff pose is the one that takes pose 1 to pose 2.
     template<typename Type>
     Result ComputePoseDiff(const Array<Type>& R1, const Point3<Type>& T1,

@@ -497,10 +497,11 @@ namespace Anki {
   
   void Pose3d::Print() const
   {
-    CoreTechPrint("Point (%f, %f %f), RotVec (%f %f %f), RotAng %f rad\n",
+    CoreTechPrint("Point (%f, %f %f), RotVec (%f %f %f), RotAng %f rad, parent 0x%x\n",
                   translation.x(), translation.y(), translation.z(),
                   get_rotationAxis().x(), get_rotationAxis().y(), get_rotationAxis().z(),
-                  get_rotationAngle().ToFloat()
+                  get_rotationAngle().ToFloat(),
+                  parent
                   );
   }
   

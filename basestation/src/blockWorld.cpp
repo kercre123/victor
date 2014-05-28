@@ -306,7 +306,7 @@ namespace Anki
                           "but wasn't.\n", object->GetID());
 
             // Erase the vizualized block and its projected quad
-            VizManager::getInstance()->EraseVizObject(unobserved.second->second->GetID());
+            VizManager::getInstance()->EraseCuboid(unobserved.second->second->GetID());
             VizManager::getInstance()->EraseQuad(unobserved.second->second->GetID());
             
             // Actually erase the object from blockWorld's container of
@@ -367,17 +367,14 @@ namespace Anki
         Pose3d newPose( robot->get_pose().getWithRespectTo(matWrtCamera) );
         */
         
-        // TODO:
-        // Add the new vision-based pose to the robot's history.
-        // First get RobotPoseStamp at the time the object was observed.
+        // Get computed RobotPoseStamp at the time the object was observed.
         RobotPoseStamp* posePtr = nullptr;
-        if (robot->GetVisionOnlyPoseAt(matsSeen[0]->GetLastObservedTime(), &posePtr) == RESULT_FAIL) {
+        if (robot->GetComputedPoseAt(matsSeen[0]->GetLastObservedTime(), &posePtr) == RESULT_FAIL) {
           PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.CouldNotFindHistoricalPose", "");
           return false;
         }
         
         const Pose3d* matPose = &(matsSeen[0]->GetPose());
-        //Pose3d newPose( robot->get_pose().getWithRespectTo(matPose) );
         Pose3d newPose( posePtr->GetPose().getWithRespectTo(matPose) );
         
         /*
@@ -410,21 +407,21 @@ namespace Anki
           PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.RobotNotOnHorizontalPlane", "");
           return false;
         }
-        
-        RobotPoseStamp p(robot->GetPoseFrameID(), newPose, posePtr->GetHeadAngle());
-        robot->AddVisionOnlyPoseToHistory(matsSeen[0]->GetLastObservedTime(), p);
 
         // We have a new ("ground truth") key frame. Increment the pose frame!
         robot->IncrementPoseFrameID();
         
-
-        // TODO: Compute the new "current" pose from history which uses the past ground truth pose we just computed.
-        TimeStamp_t t;
-        robot->GetPoseHistory().ComputePoseAt(robot->GetPoseHistory().GetNewestTimeStamp(), t, p, false);
-        robot->set_pose(p.GetPose());
+        // Add the new vision-based pose to the robot's history.
+        RobotPoseStamp p(robot->GetPoseFrameID(), newPose, posePtr->GetHeadAngle());
+        robot->AddVisionOnlyPoseToHistory(matsSeen[0]->GetLastObservedTime(), p);
         
-                                              
-        //robot->set_pose(newPose);
+        // Update the computed pose as well so that subsequent block pose updates
+        // use obsMarkers whose camera's parent pose is correct
+        posePtr->SetPose(robot->GetPoseFrameID(), newPose, posePtr->GetHeadAngle());
+
+        // Compute the new "current" pose from history which uses the
+        // past vision-based "ground truth" pose we just computed.
+        robot->UpdateCurrPoseFromHistory();
         wasPoseUpdated = true;
         
         PRINT_INFO("Using mat %d to localize robot %d at (%.3f,%.3f,%.3f), %.1fdeg@(%.2f,%.2f,%.2f)\n",
@@ -437,6 +434,8 @@ namespace Anki
                    robot->get_pose().get_rotationAxis().y(),
                    robot->get_pose().get_rotationAxis().z());
         
+        // Send the ground truth pose that was computed instead of the new current pose and let the robot deal with
+        // updating its current pose based on the history that it keeps.
         robot->SendAbsLocalizationUpdate();
         
       } // IF any mat piece was seen

@@ -243,10 +243,12 @@ namespace Anki {
       // Update lift angle
       robot->set_liftAngle(msg.liftAngle);
       
+      /*
       // Update robot pose
       Vec3f axis(0,0,1);
       Vec3f translation(msg.pose_x, msg.pose_y, msg.pose_z);
       robot->set_pose(Pose3d(msg.pose_angle, axis, translation));
+      */
       
       // Update other state vars
       robot->SetTraversingPath( msg.status & IS_TRAVERSING_PATH );
@@ -262,6 +264,8 @@ namespace Anki {
                                          msg.headAngle) == RESULT_FAIL) {
         PRINT_NAMED_WARNING("ProcessMessageRobotState.AddPoseError", "");
       }
+      
+      robot->UpdateCurrPoseFromHistory();
       
       return RESULT_OK;
     }

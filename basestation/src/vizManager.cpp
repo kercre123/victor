@@ -35,16 +35,18 @@ namespace Anki {
       DefineColor(VIZ_COLOR_BLOCK_BOUNDING_QUAD, 0.0, 0.0, 1.0, 0.75);
       DefineColor(VIZ_COLOR_OBSERVED_QUAD,       1.0, 0.0, 0.0, 0.75);
       
-      // Compute the max IDs permitted by VizObject type
-      for (u32 i=0; i<NUM_VIZ_OBJECT_TYPES; ++i) {
-        VizObjectMaxID[i] = VizObjectBaseID[i+1] - VizObjectBaseID[i];
-      }
+      isInitialized_ = true;
       
       return isInitialized_ ? RESULT_OK : RESULT_FAIL;
     }
     
     VizManager::VizManager()
     {
+      // Compute the max IDs permitted by VizObject type
+      for (u32 i=0; i<NUM_VIZ_OBJECT_TYPES; ++i) {
+        VizObjectMaxID[i] = VizObjectBaseID[i+1] - VizObjectBaseID[i];
+      }
+      
       isInitialized_ = false;
       imgID = 0;
     }

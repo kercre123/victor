@@ -35,6 +35,10 @@ namespace Cozmo {
     
     // TODO: Should this be done inside the poorly named Connect()?
     advertisingChannelClient_.Send("1", 1);  // Send anything just to get recognized as a client for advertising service.
+    
+#if(DO_SIM_COMMS_LATENCY)
+    numRecvRdyMsgs_ = 0;
+#endif
   }
   
   TCPComms::~TCPComms()
@@ -54,6 +58,25 @@ namespace Cozmo {
     // TODO: Instead of sending immediately, maybe we should queue them and send them all at
     // once to more closely emulate BTLE.
 
+#if(DO_SIM_COMMS_LATENCY)
+    // If no send latency, just send now
+    if (SIM_SEND_LATENCY_SEC == 0) {
+      return RealSend(p);
+    }
+    
+    // Otherwise add to send queue
+    sendMsgPackets_.emplace_back(std::piecewise_construct,
+                                 std::forward_as_tuple((f32)(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + SIM_SEND_LATENCY_SEC)),
+                                 std::forward_as_tuple(p));
+    
+    // Fake the number of bytes sent
+    int numBytesSent = sizeof(RADIO_PACKET_HEADER) + p.dataLen + sizeof(RADIO_PACKET_FOOTER);
+    return numBytesSent;
+  }
+  
+  int TCPComms::RealSend(const Comms::MsgPacket &p)
+  {
+#endif
     
     connectedRobotsIt_t it = connectedRobots_.find(p.destId);
     if (it != connectedRobots_.end()) {
@@ -87,6 +110,8 @@ namespace Cozmo {
   void TCPComms::Update()
   {
     
+    f32 currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    
     // Read datagrams and update advertising robots list.
     RobotAdvertisement advMsg;
     int bytes_recvd = 0;
@@ -101,7 +126,7 @@ namespace Cozmo {
 #endif
         
         advertisingRobots_[advMsg.robotID].robotInfo = advMsg;
-        advertisingRobots_[advMsg.robotID].lastSeenTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+        advertisingRobots_[advMsg.robotID].lastSeenTime = currTime;
       }
     } while(bytes_recvd > 0);
     
@@ -110,9 +135,9 @@ namespace Cozmo {
     // Remove robots from advertising list if they're already connected.
     advertisingRobotsIt_t it = advertisingRobots_.begin();
     while(it != advertisingRobots_.end()) {
-      if (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - it->second.lastSeenTime > ROBOT_ADVERTISING_TIMEOUT_S) {
+      if (currTime - it->second.lastSeenTime > ROBOT_ADVERTISING_TIMEOUT_S) {
 #if(DEBUG_TCPCOMMS)
-        printf("Removing robot %d from advertising list. (Last seen: %f, curr time: %f)\n", it->second.robotInfo.robotID, it->second.lastSeenTime, BaseStationTimer::getInstance()->GetCurrentTimeInSeconds());
+        printf("Removing robot %d from advertising list. (Last seen: %f, curr time: %f)\n", it->second.robotInfo.robotID, it->second.lastSeenTime, currTime);
 #endif
         advertisingRobots_.erase(it++);
       } else {
@@ -122,6 +147,31 @@ namespace Cozmo {
     
     // Read all messages from all connected robots
     ReadAllMsgPackets();
+    
+#if(DO_SIM_COMMS_LATENCY)
+    // Update number of ready to receive messages
+    numRecvRdyMsgs_ = 0;
+    PacketQueue_t::iterator iter;
+    for (iter = recvdMsgPackets_.begin(); iter != recvdMsgPackets_.end(); ++iter) {
+      if (iter->first <= currTime) {
+        ++numRecvRdyMsgs_;
+      } else {
+        break;
+      }
+    }
+    
+    //printf("TIME %f: Total: %d, rel: %d\n", currTime, recvdMsgPackets_.size(), numRecvRdyMsgs_);
+    
+    // Send messages that are scheduled to be sent
+    while (!sendMsgPackets_.empty()) {
+      if (sendMsgPackets_.front().first <= currTime) {
+        RealSend(sendMsgPackets_.front().second);
+        sendMsgPackets_.pop_front();
+      } else {
+        break;
+      }
+    }
+#endif
   }
   
   
@@ -199,6 +249,7 @@ namespace Cozmo {
           // Footer was found.
           // Move complete message to recvdMsgPackets
           
+          /*
           // Get timestamp
           TimeStamp_t *ts = (TimeStamp_t*)&(c.recvBuf[header.length()]);
           
@@ -207,12 +258,27 @@ namespace Cozmo {
           p.sourceId = it->first;
           p.dataLen = n - HEADER_AND_TS_SIZE;
           memcpy(p.data, &c.recvBuf[HEADER_AND_TS_SIZE], p.dataLen);
-          
           recvdMsgPackets_.insert(std::pair<TimeStamp_t,Comms::MsgPacket>(*ts, p) );
+          */
+          
+          u8 dataLen = n - HEADER_AND_TS_SIZE;
+
+          f32 recvTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+#if(DO_SIM_COMMS_LATENCY)
+          recvTime += SIM_RECV_LATENCY_SEC;
+#endif
+          recvdMsgPackets_.emplace_back(std::piecewise_construct,
+                                        std::forward_as_tuple(recvTime),
+                                        std::forward_as_tuple(
+                                        (s32)(it->first),
+                                        (s32)-1,
+                                        dataLen,
+                                        (u8*)(&c.recvBuf[HEADER_AND_TS_SIZE])));
+
           
           // Shift recvBuf contents down
-          memcpy(c.recvBuf, c.recvBuf + n + FOOTER_SIZE, c.recvDataSize - p.dataLen - HEADER_AND_TS_SIZE - FOOTER_SIZE);
-          c.recvDataSize -= p.dataLen + HEADER_AND_TS_SIZE + FOOTER_SIZE;
+          memcpy(c.recvBuf, c.recvBuf + n + FOOTER_SIZE, c.recvDataSize - dataLen - HEADER_AND_TS_SIZE - FOOTER_SIZE);
+          c.recvDataSize -= dataLen + HEADER_AND_TS_SIZE + FOOTER_SIZE;
           
           //PrintRecvBuf(it->first);
           
@@ -302,14 +368,40 @@ namespace Cozmo {
   // Returns true if a MsgPacket was successfully gotten
   bool TCPComms::GetNextMsgPacket(Comms::MsgPacket& p)
   {
+#if(DO_SIM_COMMS_LATENCY)
+    if (numRecvRdyMsgs_ > 0) {
+      --numRecvRdyMsgs_;
+#else
     if (!recvdMsgPackets_.empty()) {
+#endif
       p = recvdMsgPackets_.begin()->second;
-      recvdMsgPackets_.erase(recvdMsgPackets_.begin());
+      recvdMsgPackets_.pop_front();
       return true;
     }
     
     return false;
   }
+  
+  
+  int TCPComms::GetNumPendingMsgPackets()
+  {
+#if(DO_SIM_COMMS_LATENCY)
+    return numRecvRdyMsgs_;
+#else
+    return recvdMsgPackets_.size();
+#endif
+  };
+  
+  void TCPComms::ClearMsgPackets()
+  {
+    recvdMsgPackets_.clear();
+    
+#if(DO_SIM_COMMS_LATENCY)
+    numRecvRdyMsgs_ = 0;
+#endif
+  };
+  
+  
   
 }  // namespace Cozmo
 }  // namespace Anki

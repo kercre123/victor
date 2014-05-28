@@ -34,12 +34,51 @@
 
 namespace Anki {
   
-  class RotationMatrix2d : public Matrix_2x2f
+  template<MatDimType DIM>
+  class RotationMatrixBase : public SmallSquareMatrix<DIM, float>
   {
   public:
-    RotationMatrix2d(const Radians angle = 0.f);
+    RotationMatrixBase(); // init to identity matrix
+    RotationMatrixBase(const SmallSquareMatrix<DIM, float> &matrix);
+    RotationMatrixBase(std::initializer_list<float> initValues);
     
-  }; // class RotationMatrix
+    // Matrix multiplication operations just call base class functions but then
+    // also make sure things stay normalized
+    RotationMatrixBase<DIM>  operator* (const RotationMatrixBase<DIM>& R_other) const;
+    RotationMatrixBase<DIM>& operator*=(const RotationMatrixBase<DIM>& R_other);
+    RotationMatrixBase<DIM>& preMultiplyBy(const RotationMatrixBase<DIM>& R_other);
+    
+    // Matrix inversion and transpose just negate the change the sign of the
+    // rotation angle
+    RotationMatrixBase<DIM>& Transpose(void);
+    void              GetTranspose(RotationMatrixBase<DIM>& outTransposed) const;
+    RotationMatrixBase<DIM>& Invert(void); // same as transpose
+    void              GetInverse(RotationMatrixBase<DIM>& outInverted) const;
+
+    
+    bool IsValid(const float tolerance = 1e-6f) const;
+    
+  protected:
+    constexpr static const float OrthogonalityToleranceLow  = 1e-6f;
+    constexpr static const float OrthogonalityToleranceHigh = 1e-2f;
+    
+    // Keep this an orthogonal matrix.  Throw exception if things get too
+    // far from orthogonal, i.e. if any of the rows' norms are more than
+    // OrthogonalityTolerance from 1.f.
+    void Renormalize();
+    
+  }; // class RotationMatrixBase
+  
+  
+  class RotationMatrix2d : public RotationMatrixBase<2>
+  {
+  public:
+    RotationMatrix2d();
+    RotationMatrix2d(const Radians angle);
+    RotationMatrix2d(const Matrix_2x2f &matrix2x2);
+    RotationMatrix2d(std::initializer_list<float> initVals);
+    
+  }; // class RotationMatrix2d
   
   // Forward declaratin:
   class RotationMatrix3d;
@@ -68,16 +107,56 @@ namespace Anki {
     
   }; // class RotationVector3d
   
-  
-  class UnitQuaternion : public Point<4, float>
+  // A class for working with UnitQuaternions.
+  // Type T must be float or double.
+  template<typename T>
+  class UnitQuaternion : public Point<4,T>
   {
   public:
-    UnitQuaternion(const RotationVector3d& Rvec);
+    UnitQuaternion();
+    UnitQuaternion(const UnitQuaternion& other);
+    UnitQuaternion(const T w, const T x, const T y, const T z); // will normalize the inputs
+    
+    // Named accessors for the four elements of the quatnerion (w,x,y,z)
+    inline T w() const { return this->operator[](0); }
+    inline T x() const { return this->operator[](1); }
+    inline T y() const { return this->operator[](2); }
+    inline T z() const { return this->operator[](3); }
+    
+    inline T& w() { return this->operator[](0); }
+    inline T& x() { return this->operator[](1); }
+    inline T& y() { return this->operator[](2); }
+    inline T& z() { return this->operator[](3); }
+    
+    // Quaternion multiplication
+    UnitQuaternion<T>  operator* (const UnitQuaternion<T>& other) const;
+    UnitQuaternion<T>& operator*=(const UnitQuaternion<T>& other);
+    
+    // Normalize to unit length
+    UnitQuaternion<T>& Normalize();
+    
+    // How far from unit length the quaternion needs to get in order to trigger
+    // a renormalization
+    static T NormalizationTolerance;
     
   }; // class UnitQuaternion
   
   
-  class RotationMatrix3d : public Matrix_3x3f
+  class Rotation3d
+  {
+  public:
+    Rotation3d(const Radians& angle, const Vec3f& axis);
+    Rotation3d(const RotationVector3d& Rvec);
+    
+    Rotation3d operator*(const Rotation3d& other) const;
+    
+  private:
+    UnitQuaternion<float> q;
+    
+  }; // Rotation3d
+  
+  
+  class RotationMatrix3d : public RotationMatrixBase<3>
   {
   public:
     RotationMatrix3d(); // 3x3 identity matrix (no rotation)
@@ -85,9 +164,6 @@ namespace Anki {
     RotationMatrix3d(const Matrix_3x3f &matrix3x3);
     RotationMatrix3d(std::initializer_list<float> initVals);
     RotationMatrix3d(const Radians angle, const Vec3f &axis);
-  
-    //Radians  get_angle() const;
-    //Vec3f    get_axis()  const;
     
     // Return total angular rotation from the identity (no rotation)
     Radians GetAngle() const;
@@ -106,22 +182,6 @@ namespace Anki {
     Radians GetAngleAroundYaxis() const;
     Radians GetAngleAroundZaxis() const;
     
-    /*
-    // Overload math operations to keep rotation vector updated:
-    void operator*=(const RotationMatrix3d &other);
-    void preMultiplyBy(const RotationMatrix3d &other);
-    */
-    
-    // Matrix inversion and transpose just negate the change the sign of the
-    // rotation angle
-    RotationMatrix3d& Transpose(void);
-    void              GetTranspose(RotationMatrix3d& outTransposed) const;
-    RotationMatrix3d& Invert(void); // same as transpose
-    void              GetInverse(RotationMatrix3d& outInverted) const;
-    
-    
-  protected:
-    //RotationVector3d rotationVector;
     
   }; // class RotationMatrix3d
   

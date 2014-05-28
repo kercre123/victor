@@ -116,6 +116,10 @@ namespace Anki {
     Point<NCOLS,T> GetRow(const MatDimType i) const;
     Point<NROWS,T> GetColumn(const MatDimType j) const;
     
+    // Set a single row or column from a point
+    void SetRow(const MatDimType i, const Point<NCOLS,T>& row);
+    void SetColumn(const MatDimType j, const Point<NROWS,T>& col);
+    
     // Matrix multiplication:
     // Matrix[MxN] * Matrix[NxK] = Matrix[MxK]
     template<MatDimType KCOLS, typename T_other, typename T_work=T>
@@ -190,10 +194,10 @@ namespace Anki {
     // Matrix multiplication in place...
     // ... this = this * other;
     template<typename T_other>
-    void operator*=(const SmallSquareMatrix<DIM,T_other> &other);
+    SmallSquareMatrix<DIM,T>& operator*=(const SmallSquareMatrix<DIM,T_other> &other);
     // ... this = other * this;
     template<typename T_other>
-    void preMultiplyBy(const SmallSquareMatrix<DIM,T_other> &other);
+    SmallSquareMatrix<DIM,T>& preMultiplyBy(const SmallSquareMatrix<DIM,T_other> &other);
        
     // Transpose: (Note that we can transpose square matrices in place)
     using SmallMatrix<DIM,DIM,T>::GetTranspose;

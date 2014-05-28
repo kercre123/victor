@@ -142,8 +142,12 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
       const Vision::Camera& camera = robot.get_camHead();
       Vision::ObservedMarker marker(msg.timestamp, msg.markerType, corners, camera);
       
-      RobotPoseStamp p(0, robot.get_pose(), robot.get_headAngle());
+      RobotPoseStamp p(robot.GetPoseFrameID(), robot.get_pose(), robot.get_headAngle());
       robot.AddVisionOnlyPoseToHistory(msg.timestamp, p);
+      
+      TimeStamp_t t_actual;
+      RobotPoseStamp *rps;
+      robot.ComputeAndInsertPoseIntoHistory(msg.timestamp, t_actual, &rps);
       
       // Give this vision marker to BlockWorld for processing
       blockWorld.QueueObservedMarker(marker);

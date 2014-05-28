@@ -216,8 +216,9 @@ namespace Anki {
       // Groups markers referring to the same type, and clusters them into
       // observed objects, returned in objectsSeen.  Used markers will be
       // removed from the input list, so markers referring to objects unknown
-      // to this library will remain.  If seenOnlyBy is non-NULL, only markers
-      // seen by that camera will be considered.
+      // to this library will remain.  If seenOnlyBy is not ANY_CAMERA, only markers
+      // seen by that camera will be considered and objectSeen poses will be returned
+      // wrt to that camera. If seenOnlyBy is ANY_CAMERA, the poses are returned wrt the world.
       void CreateObjectsFromMarkers(std::list<ObservedMarker>& markers,
                                     std::vector<ObservableObject*>& objectsSeen,
                                     const CameraID_t seenOnlyBy = ANY_CAMERA) const;
