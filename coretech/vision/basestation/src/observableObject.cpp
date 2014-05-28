@@ -291,7 +291,14 @@ namespace Anki {
           
           // Add to list of objects seen -- using pose in World frame
           objectsSeen.push_back(libObject->Clone());
-          objectsSeen.back()->SetPose(poseCluster.GetPose().getWithRespectTo(Pose3d::World));
+          
+          // Compute pose wrt camera, or world if no camera specified
+          if (seenOnlyBy == ANY_CAMERA) {
+            objectsSeen.back()->SetPose(poseCluster.GetPose().getWithRespectTo(Pose3d::World));
+          } else {
+            objectsSeen.back()->SetPose(poseCluster.GetPose());
+          }
+          
           objectsSeen.back()->SetLastObservedTime(observedTime);
         } // FOR each pose cluster
         
