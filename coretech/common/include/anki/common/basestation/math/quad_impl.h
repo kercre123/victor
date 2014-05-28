@@ -22,6 +22,7 @@
 
 #include "anki/common/basestation/math/linearAlgebra_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
+#include "anki/common/basestation/math/triangle_impl.h"
 
 #if ANKICORETECH_USE_OPENCV
 #include "opencv2/core/core.hpp"
@@ -50,6 +51,13 @@ namespace Anki {
     (*this)[Quad::TopRight]    = cornerTopRight;
     (*this)[Quad::BottomLeft]  = cornerBottomLeft;
     (*this)[Quad::BottomRight] = cornerBottomRight;
+  }
+  
+  template<QuadDimType N, typename T>
+  Quadrilateral<N,T>::Quadrilateral(std::initializer_list<Point<N,T> >& points)
+  : std::array<Point<N,T>, 4>(points)
+  {
+    
   }
   
   template<QuadDimType N, typename T>
@@ -332,6 +340,39 @@ namespace Anki {
     
     return boundingQuad;
   }
+ 
+  
+  template<QuadDimType N, typename T>
+  bool Quadrilateral<N,T>::Contains(const Point<2,T>& point) const
+  {
+    using namespace Quad;
+    
+    // Catch invalid usage of this method with a non-2D quad at compile time.
+    static_assert(N==2, "Contains() method only available for 2D quads.");
+    
+    // Using the two triangles in this quad, sharing an edge cutting diagonally
+    // across from TopLeft to BottomRight, we can test to see if the point is
+    // within either triangle (in which case it is within the Quad).  Note that
+    // this assumes the quad is CONVEX!
+    
+    // Try with first triangle
+    std::array<const Point<N,T>*,3> triangle = {{
+      &this->operator[](TopLeft),
+      &this->operator[](BottomLeft),
+      &this->operator[](BottomRight)
+    }};
+    bool isContained = IsPointWithinTriangle(point, triangle);
+    
+    if(!isContained) {
+      // Try again with the other triangle (swap out the middle vertex)
+      triangle[1] = &this->operator[](TopRight);
+      isContained = IsPointWithinTriangle(point, triangle);
+    }
+    
+    return isContained;
+    
+  } // Contains()
+  
   
   /*
   template<QuadDimType N, typename T>
