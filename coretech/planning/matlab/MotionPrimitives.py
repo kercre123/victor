@@ -178,10 +178,7 @@ class MotionPrimitiveSet:
 
     def findTurn(self, startPose, deltaTheta):
         newAngle = startPose.theta + deltaTheta
-        while newAngle < 0:
-            newAngle += self.numAngles
-        while newAngle >= self.numAngles:
-            newAngle -= self.numAngles
+        newAngle = fixTheta(newAngle, self.numAngles) # between 0 and numAngles
 
         # constrain the solution so that the turn ends in the quadrant
         # that the ending angle is in
@@ -221,11 +218,7 @@ class MotionPrimitiveSet:
 
             # how many radians we move through during the arc (+ is CCW)
             sweepRads = theta1 - theta0
-
-            if sweepRads < -pi/2:
-                sweepRads += 2*pi
-            if sweepRads > pi/2:
-                sweepRads -= 2*pi
+            sweepRads = fixTheta_rads(sweepRads)
 
             arc = Arc(x_c, y_c, r, startRads, sweepRads)
 
@@ -293,10 +286,7 @@ class Action:
             ret.arc = arc
 
         # clean up primitive
-        while ret.endPose.theta < 0:
-            ret.endPose = Pose(ret.endPose.x, ret.endPose.y, ret.endPose.theta + primSet.numAngles)
-        while ret.endPose.theta >= primSet.numAngles:
-            ret.endPose = Pose(ret.endPose.x, ret.endPose.y, ret.endPose.theta - primSet.numAngles)
+        ret.endPose = fixPose(ret.endPose, primSet.numAngles)
         assert ret.endPose.theta < primSet.numAngles
 
         ret.sample(primSet.angles[startingAngle], primSet)
@@ -304,8 +294,30 @@ class Action:
         return ret
             
 Pose = namedtuple('Pose', ['x', 'y', 'theta'])
-Pose_mm = namedtuple('Pose_mm', ['x_mm', 'y_mm', 'theta_mm'])
+Pose_mm = namedtuple('Pose_mm', ['x_mm', 'y_mm', 'theta_rads'])
 Arc = namedtuple('Arc', ['centerPt_x', 'centerPt_y', 'radius', 'startRad', 'sweepRad'])
+
+def fixTheta_rads(theta):
+    scaled = theta
+    while scaled > pi:
+        scaled -= 2*pi
+    while scaled < -pi:
+        scaled += 2*pi
+    return scaled
+
+def fixTheta(theta, numAngles):
+    scaled = theta
+    while scaled >= numAngles:
+        scaled -= numAngles
+    while scaled < 0:
+        scaled += numAngles
+    return scaled
+
+def fixPose(oldPose, numAngles):
+    return Pose(oldPose.x, oldPose.y, fixTheta(oldPose.theta, numAngles))
+
+def fixPose_mm(oldPose):
+    return Pose_mm(oldPose.x_mm, oldPose.y_mm, fixTheta_rads(oldPose.theta_rads))
 
 class MotionPrimitive:
     "A primitive for a given starting angle and action"
@@ -352,6 +364,6 @@ class MotionPrimitive:
                 x = self.arc.centerPt_x + self.arc.radius * cos(theta)
                 y = self.arc.centerPt_y + self.arc.radius * sin(theta)
                 pose = Pose_mm(x, y, theta + pi/2)
-                self.intermediatePoses.append(pose)
+                self.intermediatePoses.append(fixPose_mm(pose))
 
         self.intermediatePoses.append(Pose_mm(self.endPose.x, self.endPose.y, primSet.angles[self.endPose.theta]))
