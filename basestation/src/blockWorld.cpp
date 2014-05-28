@@ -408,6 +408,10 @@ namespace Anki
         // Add the new vision-based pose to the robot's history.
         RobotPoseStamp p(robot->GetPoseFrameID(), newPose, posePtr->GetHeadAngle());
         robot->AddVisionOnlyPoseToHistory(matsSeen[0]->GetLastObservedTime(), p);
+        
+        // Update the computed pose as well so that subsequent block pose updates
+        // use obsMarkers whose camera's parent pose is correct
+        posePtr->SetPose(robot->GetPoseFrameID(), newPose, posePtr->GetHeadAngle());
 
         // Compute the new "current" pose from history which uses the
         // past vision-based "ground truth" pose we just computed.
