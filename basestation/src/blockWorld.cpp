@@ -391,9 +391,7 @@ namespace Anki
          robot->get_camHead().get_pose() *
          (*matWrtCamera)).getInverse() );
          */
-        
-        //newPose.set_parent(Pose3d::World); // robot->get_pose().get_parent() );
-        newPose = newPose.getWithRespectTo(Pose3d::World);
+        newPose.set_parent(Pose3d::World); // robot->get_pose().get_parent() );
         
         // If there is any significant rotation, make sure that it is roughly
         // around the Z axis
