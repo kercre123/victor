@@ -220,10 +220,7 @@ namespace Anki {
           newAngle *= -1;
         }
         
-        currentMatX_ = currPoseTrans.x;
-        currentMatY_ = currPoseTrans.y;
-        currentMatHeading_ = newAngle;
-        
+        SetCurrentMatPose(currPoseTrans.x, currPoseTrans.y, newAngle);
         
         #if(DEBUG_POSE_HISTORY)
         f32 pDiffAngle = acosf(pDiffRot[0][0]);
