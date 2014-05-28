@@ -45,81 +45,8 @@ GTEST_TEST(CoreTech_Common, HostIntrinsics_m4)
   const u32 b = 0x00FF7F31;
 
   {
-    const u32 out = __UQADD8(a, b);
-    ASSERT_TRUE(out == 0xfffffe61);
-  }
-
-  {
-    const u32 out = __QADD8(a, b);
-    ASSERT_TRUE(out == 0xffff7f61);
-  }
-
-  {
-    const u32 out = __UQADD16(a, b);
-    ASSERT_TRUE(out == 0xfffffe61);
-  }
-
-  {
-    const u32 out = __QADD16(a, b);
-    ASSERT_TRUE(out == 0xffff7fff);
-  }
-
-  {
-    const u32 out = __USUB8(a, b);
-    const u32 selected = __SEL(a, b);
-
-    ASSERT_TRUE(out == 0xff0100ff);
-    ASSERT_TRUE(selected == 0xffff7f31);
-  }
-
-  {
-    const u32 out = __SSUB8(a, b);
-    const u32 selected = __SEL(a, b);
-
-    ASSERT_TRUE(out == 0xff0100ff);
-    ASSERT_TRUE(selected == 0x00007f31);
-  }
-
-  {
-    const u32 out = __USUB16(a, b);
-    const u32 selected = __SEL(a, b);
-
-    ASSERT_TRUE(out == 0xfE01ffff);
-    ASSERT_TRUE(selected == 0xff007f31);
-  }
-
-  {
-    const u32 out = __SSUB16(a, b);
-    const u32 selected = __SEL(a, b);
-
-    ASSERT_TRUE(out == 0xfE01ffff);
-    ASSERT_TRUE(selected == 0x00ff7f31);
-  }
-
-  {
-    const u32 out =  __UQSUB8(a, b);
-    ASSERT_TRUE(out == 0xff000000);
-  }
-
-  {
-    const u32 out =  __QSUB8(a, b);
-    ASSERT_TRUE(out == 0xff0100ff);
-  }
-
-  {
-    const u32 out =  __UQSUB16(a, b);
-    ASSERT_TRUE(out == 0xfe010000);
-  }
-
-  {
-    const u32 out =  __QSUB16(a, b);
-    ASSERT_TRUE(out == 0xfe01ffff);
-  }
-
-  {
-    const s32 accumulator = 5;
-    const s32 out = __SMLAD(a, b, accumulator);
-    ASSERT_TRUE(out == 0x3f302935);
+    const s32 out = __SSAT(a, 5);
+    ASSERT_TRUE(out == 0xfffffff0); // -16
   }
 
   {
@@ -138,8 +65,81 @@ GTEST_TEST(CoreTech_Common, HostIntrinsics_m4)
   }
 
   {
-    const s32 out = __SSAT(a, 5);
-    ASSERT_TRUE(out == 0xfffffff0); // -16
+    const u32 out = __QADD8(a, b);
+    ASSERT_TRUE(out == 0xffff7f61);
+  }
+
+  {
+    const u32 out = __UQADD8(a, b);
+    ASSERT_TRUE(out == 0xfffffe61);
+  }
+
+  {
+    const u32 out = __SSUB8(a, b);
+    const u32 selected = __SEL(a, b);
+
+    ASSERT_TRUE(out == 0xff0100ff);
+    ASSERT_TRUE(selected == 0x00007f31);
+  }
+
+  {
+    const u32 out =  __QSUB8(a, b);
+    ASSERT_TRUE(out == 0xff0100ff);
+  }
+
+  {
+    const u32 out = __USUB8(a, b);
+    const u32 selected = __SEL(a, b);
+
+    ASSERT_TRUE(out == 0xff0100ff);
+    ASSERT_TRUE(selected == 0xffff7f31);
+  }
+
+  {
+    const u32 out =  __UQSUB8(a, b);
+    ASSERT_TRUE(out == 0xff000000);
+  }
+
+  {
+    const u32 out = __QADD16(a, b);
+    ASSERT_TRUE(out == 0xffff7fff);
+  }
+
+  {
+    const u32 out = __UQADD16(a, b);
+    ASSERT_TRUE(out == 0xfffffe61);
+  }
+
+  {
+    const u32 out = __SSUB16(a, b);
+    const u32 selected = __SEL(a, b);
+
+    ASSERT_TRUE(out == 0xfE01ffff);
+    ASSERT_TRUE(selected == 0x00ff7f31);
+  }
+
+  {
+    const u32 out =  __QSUB16(a, b);
+    ASSERT_TRUE(out == 0xfe01ffff);
+  }
+
+  {
+    const u32 out = __USUB16(a, b);
+    const u32 selected = __SEL(a, b);
+
+    ASSERT_TRUE(out == 0xfE01ffff);
+    ASSERT_TRUE(selected == 0xff007f31);
+  }
+
+  {
+    const u32 out =  __UQSUB16(a, b);
+    ASSERT_TRUE(out == 0xfe010000);
+  }
+
+  {
+    const s32 accumulator = 5;
+    const s32 out = __SMLAD(a, b, accumulator);
+    ASSERT_TRUE(out == 0x3f302935);
   }
 
   GTEST_RETURN_HERE;
