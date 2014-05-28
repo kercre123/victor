@@ -1,10 +1,11 @@
 #ifndef _ANKICORETECH_PLANNING_XYTHETA_ENVIRONMENT_H_
 #define _ANKICORETECH_PLANNING_XYTHETA_ENVIRONMENT_H_
 
-#include <vector>
-#include <string>
 #include "json/json-forwards.h"
+#include <assert.h>
 #include <math.h>
+#include <string>
+#include <vector>
 
 namespace Anki
 {
@@ -43,7 +44,7 @@ public:
   State(StateXY x, StateXY y, StateTheta theta) : x(x), y(y), theta(theta) {};
 
   // returns true if successful
-  bool Import(Json::Value& config);
+  bool Import(const Json::Value& config);
 
   bool operator==(const State& other) const;
 
@@ -70,7 +71,7 @@ public:
 };
 
 // continuous states are set up with the exact state being at the
-// bottom left of the cell // TODO:(bn) think more about that
+// bottom left of the cell // TODO:(bn) think more about that, should probably add half a cell width
 class State_c
 {
 public:
@@ -78,7 +79,7 @@ public:
   State_c(float x, float y, float theta) : x_mm(x), y_mm(y), theta(theta) {};
 
   // returns true if successful
-  bool Import(Json::Value& config);
+  bool Import(const Json::Value& config);
 
   float x_mm;
   float y_mm;
@@ -92,7 +93,7 @@ public:
   MotionPrimitive() {}
 
   // returns true if successful
-  bool Import(Json::Value& config, StateTheta startingAngle);
+  bool Import(const Json::Value& config, StateTheta startingAngle, const xythetaEnvironment& env);
 
   // id of this action (unique per starting angle)
   ActionID id;
@@ -112,9 +113,6 @@ public:
   // vector containing continuous relative offsets for positions in
   // between (0,0,startTheta) and (end)
   std::vector<State_c> intermediatePositions;
-
-  // user-defined human readable name for the action (may be empty)
-  std::string name;
 };
 
 class Successor
@@ -170,6 +168,26 @@ public:
   void Clear() {actions_.clear();}
 };
 
+// This class contains generic information for a type of action
+class ActionType
+{
+public:
+  
+  ActionType();
+
+  // returns true if successful
+  bool Import(const Json::Value& config);
+
+  const std::string& GetName() const {return name_;}
+  Cost GetExtraCostFactor() const {return extraCostFactor_;}  
+
+private:
+
+  Cost extraCostFactor_;
+  ActionID id_;
+  std::string name_;
+};
+
 class xythetaEnvironment
 {
   friend class SuccessorIterator;
@@ -178,9 +196,13 @@ public:
   xythetaEnvironment();
 
   // just for now, eventually we won't use filenames like this, obviously......
+  // TEMP: remove this and only use Init instead
   xythetaEnvironment(const char* mprimFilename, const char* mapFile);
 
   ~xythetaEnvironment();
+
+  // returns true if everything worked
+  bool Init(const char* mprimFilename, const char* mapFile);
 
   // Imports motion primitives from the given json file. Returns true if success
   bool ReadMotionPrimitives(const char* mprimFilename);
@@ -208,14 +230,24 @@ public:
   float GetDistanceBetween(const State_c& start, const State& end) const;
   static float GetDistanceBetween(const State_c& start, const State_c& end);
 
-
   // Get a motion primitive. Returns true if the action is retrieved,
   // false otherwise. Returns primitive in arguments
   inline bool GetMotion(StateTheta theta, ActionID actionID, MotionPrimitive& prim) const;
 
+  inline size_t GetNumActions() const { return actionTypes_.size(); }
+  
+  inline const ActionType& GetActionType(ActionID aid) const { return actionTypes_[aid]; }
+
   // This function fills up the given vector with (x,y,theta) coordinates of
   // following the plan
   void ConvertToXYPlan(const xythetaPlan& plan, std::vector<State_c>& continuousPlan) const;
+
+  // TODO:(bn) move these??
+
+  double GetHalfWheelBase_mm() const {return halfWheelBase_mm_;}
+  double GetMaxVelocity_mmps() const {return maxVelocity_mmps_;}
+
+  double GetOneOverMaxVelocity() const {return oneOverMaxVelocity_;}
 
 private:
 
@@ -227,6 +259,9 @@ private:
   float oneOverResolution_;
 
   unsigned int numAngles_;
+
+  // NOTE: these are approximate. The actual angles aren't evenly
+  // distrubuted, but this will get you close
   float radiansPerAngle_;
   float oneOverRadiansPerAngle_;
 
@@ -236,6 +271,19 @@ private:
   // Obstacles
   std::vector<Rectangle*> obstacles_;
 
+  // index is actionID
+  std::vector<ActionType> actionTypes_;
+
+  // index is StateTheta, value is theta in radians, between -pi and
+  // pi. If there are more than 8 angles, they are not perfectly
+  // evenly divided (see docs)  // TODO:(bn) write docs....
+  std::vector<float> angles_;
+
+  // robot parameters. These probably don't belong here, but are needed for computing costs
+
+  double halfWheelBase_mm_;
+  double maxVelocity_mmps_;
+  double oneOverMaxVelocity_;
 };
 
 bool xythetaEnvironment::GetMotion(StateTheta theta, ActionID actionID, MotionPrimitive& prim) const
@@ -290,7 +338,8 @@ float xythetaEnvironment::GetY_mm(StateXY y) const
 
 float xythetaEnvironment::GetTheta_c(StateTheta theta) const
 {
-  return theta * radiansPerAngle_;
+  assert(theta >= 0 && theta < angles_.size());
+  return angles_[theta];
 }
 
 StateXY xythetaEnvironment::GetX(float x_mm) const
@@ -305,7 +354,12 @@ StateXY xythetaEnvironment::GetY(float y_mm) const
 
 StateTheta xythetaEnvironment::GetTheta(float theta_rad) const
 {
-  return (StateTheta) roundf(theta_rad * oneOverRadiansPerAngle_);
+  float positiveTheta = theta_rad;
+  // TODO:(bn) something faster (std::remainder ??)
+  while(positiveTheta < 0.0) {
+    positiveTheta += 2*M_PI;
+  }
+  return (StateTheta) roundf(positiveTheta * oneOverRadiansPerAngle_);
 }
 
 

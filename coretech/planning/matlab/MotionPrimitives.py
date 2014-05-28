@@ -2,6 +2,7 @@ from collections import namedtuple
 from math import *
 from fractions import gcd
 import numpy
+import json
 
 class MotionPrimitiveSet:
     "A set of motion primitives for use in the xytheta lattice planner"
@@ -49,6 +50,110 @@ class MotionPrimitiveSet:
             self.primitivesPerAngle[angleIdx] = [None for i in range(self.numActions)]
             for action in self.actions.values():
                 self.primitivesPerAngle[angleIdx][action.index] = action.generate(angleIdx, self)
+
+    def dumpJson(self, filename):
+        J = self.createDict()
+        outfile = open(filename, 'w')
+        json.dump(J, outfile, indent=2, separators=(',', ': '), sort_keys=True)
+        outfile.close()
+        
+    def createDict(self):
+        J = {}
+        J["angle_definitions"] = self.angles
+        J["num_angles"] = self.numAngles
+        J["resolution_mm"] = self.resolution_mm
+
+        J["actions"] = [None for i in range(self.numActions)]
+        for name in self.actions:
+            action = self.actions[name]
+            J["actions"][action.index] = self.actions[name].createDict()
+
+        J["angles"] = []
+        for angle, anglePrims in enumerate(self.primitivesPerAngle):
+            J["angles"].append({"starting_angle": angle})
+            J["angles"][-1]["prims"] = []
+            
+            for prim in anglePrims:
+                J["angles"][-1]["prims"].append(prim.createDict())
+        return J
+
+    def plotEachAction(self, longLen):
+        "creates a matplotlib plot with a subplot for each action, using arrows. This function doesn't really work..."
+        import pylab
+
+        pylab.figure()
+        # set up titles any ylabels for plot
+        for name in self.actions:
+            ax = pylab.subplot(self.numActions, self.numAngles, self.numAngles * self.actions[name].index + 1)
+            ax.set_ylabel(name)
+
+        for i, rads in enumerate(self.angles):
+            ax = pylab.subplot(self.numActions, self.numAngles, i + 1)
+            ax.set_title("%+6.3f" % rads)
+
+        for angle in range(self.numAngles):
+            for actionID in range(self.numActions):
+                motion = self.primitivesPerAngle[angle][actionID]
+                # pylab.figure()
+                # ax = pylab.subplot(111, aspect='equal')
+                ax = pylab.subplot(self.numActions, self.numAngles, self.numAngles*actionID + angle + 1,  aspect='equal')
+                ax.xaxis.set_ticks([float(x) * self.resolution_mm for x in range(-longLen-2, longLen+3)])
+                ax.yaxis.set_ticks([float(x) * self.resolution_mm for x in range(-longLen-2, longLen+3)])
+                ax.grid()
+                X = [p.x_mm for p in motion.intermediatePoses]
+                Y = [p.y_mm for p in motion.intermediatePoses]
+                U = [0.5*cos(p.theta_rads) for p in motion.intermediatePoses]
+                V = [0.5*sin(p.theta_rads) for p in motion.intermediatePoses]
+                #ax.plot(X, Y, 'k-')
+                ax.quiver(X,Y,U,V, angles='xy', scale_units='xy', scale=1)
+                color = 'ro'
+                if X[-1] == 0 and Y[-1] == 0:
+                    color = 'go'
+                ax.plot(X[-1], Y[-1], color)
+        pylab.draw()
+                
+
+    def plotEachPrimitive(self, longLen):
+        "creates a matplotlib plot with a subplot for each primitive"
+        import pylab
+
+        pylab.figure() # plot each angle
+        for angle in range(16):
+            ax = pylab.subplot(4,4,angle+1, aspect='equal')
+            ax.xaxis.set_ticks([float(x) * self.resolution_mm for x in range(-longLen-2, longLen+3)])
+            ax.yaxis.set_ticks([float(x) * self.resolution_mm for x in range(-longLen-2, longLen+3)])
+            ax.grid()
+            for motion in self.primitivesPerAngle[angle]:
+                # print motion
+                # pprint.pprint(motion.intermediatePoses)
+                X = [p.x_mm for p in motion.intermediatePoses]
+                Y = [p.y_mm for p in motion.intermediatePoses]
+                ax.plot(X, Y, 'b-')
+                color = 'ro'
+                if X[-1] == 0 and Y[-1] == 0:
+                    color = 'go'
+                ax.plot(X[-1], Y[-1], color)
+        pylab.draw()
+
+    def plotPrimitives(self, longLen):
+        "creates a single plot with all primitives superimposed"
+        import pylab
+        pylab.figure()
+
+        ax = pylab.subplot(1, 1, 1, aspect='equal')
+        ax.grid()
+        ax.xaxis.set_ticks([float(x) * self.resolution_mm for x in range(-longLen-2, longLen+3)])
+        ax.yaxis.set_ticks([float(x) * self.resolution_mm for x in range(-longLen-2, longLen+3)])
+
+        for angle in range(self.numAngles):
+            for motion in self.primitivesPerAngle[angle]:
+                # print motion
+                # pprint.pprint(motion.intermediatePoses)
+                X = [p.x_mm for p in motion.intermediatePoses]
+                Y = [p.y_mm for p in motion.intermediatePoses]
+                ax.plot(X, Y, 'b-')
+                #ax.plot(X[-1], Y[-1], 'ro')
+        pylab.draw()
 
     def generateAngles(self):
         "create numAngles worth of grid-aligned angles, as close as possible to 2*pi / numAngles radians each"
@@ -106,7 +211,7 @@ class MotionPrimitiveSet:
         print "generated %d discrete angles" % len(self.angles)
 
     def computeTurn(self, startPose, endPose):
-        # math from http://sbpl.net/node/53
+        # math from http://sbpl.net/node/53 All math here is in cells
         try:
             c0 = cos(self.angles[startPose.theta])
             s0 = sin(self.angles[startPose.theta])
@@ -120,16 +225,16 @@ class MotionPrimitiveSet:
             print "index error! endPose = '%s', len(self.angles) = %d" % (endPose, len(self.angles))
             raise
 
-        x0 = startPose.x * self.resolution_mm
-        y0 = startPose.y * self.resolution_mm
-        x1 = endPose.x * self.resolution_mm
-        y1 = endPose.y * self.resolution_mm
+        x0 = startPose.x
+        y0 = startPose.y
+        x1 = endPose.x
+        y1 = endPose.y
         A = numpy.matrix([[c0, s1 - s0], [s0, c0-c1]])
         B = numpy.matrix([[x1-x0], [y1-y0]])
 
         X = A.I * B
 
-        # index 0 is l, 1 is r
+        # index 0 is l, 1 is r, both in cells
         return X.reshape(-1).tolist()[0]
 
     def quadrant(self, rads):
@@ -192,7 +297,7 @@ class MotionPrimitiveSet:
                 if self.inQuadrant(x,y,quads):
                     endPose = Pose(x, y, newAngle)
                     turn = self.computeTurn(startPose, endPose)
-                    if abs(turn[1]) > self.minRadius and turn[0] >= 0.0:
+                    if abs(turn[1]) * self.resolution_mm > self.minRadius and turn[0] >= 0.0:
                         score = abs(turn[0]) + abs(turn[1])
                         if score < bestScore:
                             bestScore = score
@@ -203,13 +308,13 @@ class MotionPrimitiveSet:
             print "quads:", quads
             return None
         else:
-            # compute arc parameters
-            l = best[2][0]
-            r = best[2][1]
+            # compute arc parameters, in mm
+            l = best[2][0] * self.resolution_mm
+            r = best[2][1] * self.resolution_mm
             theta0 = self.angles[startPose.theta]
             theta1 = self.angles[newAngle]
 
-            # compute the center of the circle (x_c, y_c)
+            # compute the center of the circle (x_c, y_c), in mm
             x_c = l*cos(theta0) - r*sin(theta0)
             y_c = l*sin(theta0) + r*cos(theta0)
 
@@ -237,7 +342,7 @@ class Action:
     
     def __init__(self, name, angleOffset, length, index, costFactor = 1.0):
         self.name = name
-        self.length = length
+        self.length = length # length in cells
         self.angleOffset = angleOffset
         self.costFactor = costFactor
         self.index = index
@@ -249,28 +354,42 @@ class Action:
             self.length,
             self.costFactor)
 
+    def createDict(self):
+        J = {}
+        J["name"] = self.name
+        J["index"] = self.index
+        J["extra_cost_factor"] = self.costFactor
+        return J
+
     def generate(self, startingAngle, primSet):
         "Turn the action into a real motion primtive"
 
         if self.length == 0:
             # turn in place action
             endPose = Pose(0, 0, startingAngle + self.angleOffset)
-            ret = MotionPrimitive(self.name, endPose, 0.0)
-            # TODO: intermediate poses
+            ret = MotionPrimitive(self.index, endPose, 0.0)
+            if self.angleOffset > 0:
+                ret.turnInPlaceDirection = +1.0
+            else:
+                ret.turnInPlaceDirection = -1.0
 
         elif self.angleOffset == 0:
             # find the closest multiple of the angle cell that matches the length
-            angleCellLength = sqrt(primSet.angleCells[startingAngle][0]**2 + primSet.angleCells[startingAngle][1]**2)
-            numLengths = round(self.length / angleCellLength)
+            x_target_cell = primSet.angleCells[startingAngle][0]
+            y_target_cell = primSet.angleCells[startingAngle][1]
+            angleCellLength_cell = sqrt(x_target_cell**2 + y_target_cell**2)
+            numLengths = round(self.length / angleCellLength_cell)
             if numLengths <= 0 and self.length > 0:
                 numLengths = 1
             elif numLengths >= 0 and self.length < 0:
                 numLengths = -1
-            x = primSet.angleCells[startingAngle][0] * numLengths
-            y = primSet.angleCells[startingAngle][1] * numLengths
+            x = x_target_cell * numLengths
+            y = y_target_cell * numLengths
             endPose = Pose(x, y, startingAngle)
-            realLength = sqrt(float(x**2 + y**2))
-            ret = MotionPrimitive(self.name, endPose, realLength)
+            realLength = sqrt(float(x**2 + y**2)) * primSet.resolution_mm
+            if self.length < 0:
+                realLength = -realLength
+            ret = MotionPrimitive(self.index, endPose, realLength)
 
         else:
             startPose = Pose(0, 0, startingAngle)
@@ -282,7 +401,7 @@ class Action:
             endPose = Pose(turn[0], turn[1], startingAngle + self.angleOffset)
             l = turn[2]
             arc = turn[3]
-            ret = MotionPrimitive(self.name, endPose, l)
+            ret = MotionPrimitive(self.index, endPose, l)
             ret.arc = arc
 
         # clean up primitive
@@ -295,7 +414,7 @@ class Action:
             
 Pose = namedtuple('Pose', ['x', 'y', 'theta'])
 Pose_mm = namedtuple('Pose_mm', ['x_mm', 'y_mm', 'theta_rads'])
-Arc = namedtuple('Arc', ['centerPt_x', 'centerPt_y', 'radius', 'startRad', 'sweepRad'])
+Arc = namedtuple('Arc', ['centerPt_x_mm', 'centerPt_y_mm', 'radius_mm', 'startRad', 'sweepRad'])
 
 def fixTheta_rads(theta):
     scaled = theta
@@ -322,48 +441,79 @@ def fixPose_mm(oldPose):
 class MotionPrimitive:
     "A primitive for a given starting angle and action"
 
-    def __init__(self, actionName, endPose, l):
+    def __init__(self, actionIndex, endPose, l):
         self.endPose = endPose
-        self.l = l
+        self.l = l # length in mm
         self.intermediatePoses = []
-        self.actionName = actionName
+        self.actionIndex = actionIndex
         self.arc = None
+        self.turnInPlaceDirection = 0
 
     def __repr__(self):
         if self.arc:
-            return "%15s: l:%+7.3f <Arc: x_c:%+5.2f y_c:%+5.2f r:%5.2f start:%+6.3f sweep:%+6.3f> --> %s" % (
-                self.actionName,
+            return "%2u: l:%+7.3f <Arc: x_c:%+5.2f y_c:%+5.2f r:%5.2f start:%+6.3f sweep:%+6.3f> --> %s" % (
+                self.actionIndex,
                 self.l,
-                self.arc.centerPt_x,
-                self.arc.centerPt_y,
-                self.arc.radius,
+                self.arc.centerPt_x_mm,
+                self.arc.centerPt_y_mm,
+                self.arc.radius_mm,
                 self.arc.startRad,
                 self.arc.sweepRad,
                 self.endPose)
         else:
-            return "%15s: l:%+7.3f --> %s" % (self.actionName, self.l, self.endPose)
+            return "%15s: l:%+7.3f --> %s" % (self.actionIndex, self.l, self.endPose)
+
+    def createDict(self):
+        J = {}
+        J["action_index"] = self.actionIndex
+        J["end_pose"] = self.endPose._asdict()
+        J["straight_length_mm"] = self.l
+        if self.arc:
+            J["arc"] = self.arc._asdict()
+        J["intermediate_poses"] = []
+        for pose in self.intermediatePoses:
+            J["intermediate_poses"].append(pose._asdict())
+        if self.turnInPlaceDirection != 0:
+            J["turn_in_place_direction"] = self.turnInPlaceDirection
+        return J
+
 
     def sample(self, startRads, primSet):
         "fill in intermediatePoses with samples every sampleLength mm"
 
         # simulate linear portion, if needed
-        if self.l > 0.0:
-            for t in numpy.arange(0.0, self.l, primSet.sampleLength):
+        if abs(self.l) > 1e-6:
+            sampleLen = primSet.sampleLength
+            if self.l < 0:
+                sampleLen = -sampleLen
+            for t in numpy.arange(0.0, self.l, sampleLen):
                 x = t*cos(startRads)
                 y = t*sin(startRads)
                 pose = Pose_mm(x, y, startRads)
                 self.intermediatePoses.append(pose)
+        else:
+            # simulate turn in place, using a factor of the angular resolution of the map
+            endRads = primSet.angles[self.endPose.theta]
+            step = self.turnInPlaceDirection * 2*pi / (4*primSet.numAngles)
+            theta = startRads
+            while abs(endRads - theta) > abs(step):
+                theta = fixTheta_rads(theta + step)
+                pose = Pose_mm(0.0, 0.0, theta)
+                self.intermediatePoses.append(pose)
+            
 
         #simulate arc, if there is one
         if self.arc:
             # compute the step size in radians
-            radStep = primSet.sampleLength / self.arc.radius
+            radStep = primSet.sampleLength / self.arc.radius_mm
 
             for t in numpy.arange(0.0, self.arc.sweepRad, radStep):
                 theta = self.arc.startRad + t
-                x = self.arc.centerPt_x + self.arc.radius * cos(theta)
-                y = self.arc.centerPt_y + self.arc.radius * sin(theta)
-                pose = Pose_mm(x, y, theta + pi/2)
+                x_mm = self.arc.centerPt_x_mm + self.arc.radius_mm * cos(theta)
+                y_mm = self.arc.centerPt_y_mm + self.arc.radius_mm * sin(theta)
+                pose = Pose_mm(x_mm, y_mm, theta + pi/2)
                 self.intermediatePoses.append(fixPose_mm(pose))
 
-        self.intermediatePoses.append(Pose_mm(self.endPose.x, self.endPose.y, primSet.angles[self.endPose.theta]))
+        self.intermediatePoses.append(Pose_mm(self.endPose.x * primSet.resolution_mm,
+                                              self.endPose.y * primSet.resolution_mm,
+                                              primSet.angles[self.endPose.theta]))
