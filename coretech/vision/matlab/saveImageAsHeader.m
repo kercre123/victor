@@ -7,6 +7,8 @@ if ~exist('outputTypename', 'var')
     outputTypename = 'u8';
 end
 
+assert(size(image, 3) == 1, 'Image must be grayscale.');
+
 image = im2uint8(image)';
 
 fileId = fopen(filename, 'w');

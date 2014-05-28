@@ -12,6 +12,7 @@ redBlackVerifyDepth = 10;
 %maxDepth = 50;
 addRotations = false;
 numPerturbations = 100;
+blurSigmas = [0 .01 .02]; % as a fraction of the image diagonal
 perturbSigma = 1;
 saveTree = true;
 leafNodeFraction = 1;
@@ -95,10 +96,12 @@ else
     corners = [0 0; 0 1; 1 0; 1 1];
     sigma = perturbSigma/workingResolution;
     
+    numBlurs = length(blurSigmas);
+    
     [xgrid,ygrid] = meshgrid(linspace(probeRegion(1),probeRegion(2),workingResolution)); %1:workingResolution);
     %probeValues = zeros(workingResolution^2, numImages);
-    probeValues = cell(1,numImages);
-    labels      = cell(1,numImages);
+    probeValues = cell(numBlurs,numImages);
+    labels      = cell(numBlurs,numImages);
     
     X = probePattern.x(ones(workingResolution^2,1),:) + xgrid(:)*ones(1,length(probePattern.x));
     Y = probePattern.y(ones(workingResolution^2,1),:) + ygrid(:)*ones(1,length(probePattern.y));
@@ -119,7 +122,8 @@ else
     end
     
     % Compute the perturbed probe values
-    pBar.set_message(sprintf('Interpolating perturbed probe locations from %d images', numImages));
+    pBar.set_message(sprintf(['Interpolating perturbed probe locations ' ...
+        'from %d images at %d blurs'], numImages, numBlurs));
     pBar.set_increment(1/numImages);
     pBar.set(0);
     for iImg = 1:numImages
@@ -134,16 +138,28 @@ else
             img{iImg}(alpha < .5) = 1;
         end
         
-        imageCoordsX = linspace(0, 1, size(img{iImg},2));
-        imageCoordsY = linspace(0, 1, size(img{iImg},1));
+        [nrows,ncols,~] = size(img{iImg});
+        imageCoordsX = linspace(0, 1, ncols);
+        imageCoordsY = linspace(0, 1, nrows);
         
         [~,labelNames{iImg}] = fileparts(fnames{iImg});
-        probeValues{iImg} = zeros(workingResolution^2, numPerturbations);
-        for iPerturb = 1:numPerturbations
-            probeValues{iImg}(:,iPerturb) = mean(interp2(imageCoordsX, imageCoordsY, img{iImg}, ...
-                xPerturb{iPerturb}, yPerturb{iPerturb}, 'linear', 1), 2);            
-        end
-        labels{iImg} = iImg*ones(1,numPerturbations);
+        
+        for iBlur = 1:numBlurs
+            imgBlur = img{iImg};
+            if blurSigmas(iBlur) > 0
+                blurSigma = blurSigmas(iBlur)*sqrt(nrows^2 + ncols^2);
+                imgBlur = separable_filter(imgBlur, gaussian_kernel(blurSigma));
+            end
+            
+            probeValues{iBlur,iImg} = zeros(workingResolution^2, numPerturbations);
+            for iPerturb = 1:numPerturbations
+                probeValues{iBlur,iImg}(:,iPerturb) = mean(interp2(imageCoordsX, imageCoordsY, imgBlur, ...
+                    xPerturb{iPerturb}, yPerturb{iPerturb}, 'linear', 1), 2);
+            end
+            
+            labels{iBlur,iImg} = iImg*ones(1,numPerturbations);
+            
+        end % FOR each blurSigma
         
         pBar.increment();
     end
@@ -450,6 +466,9 @@ if sum(verified) ~= length(verified)
     warning('All original images should verify!');
 end
 
+[numMain, numVerify] = VisionMarkerTrained.GetNumTreeNodes();
+fprintf('Training complete. Used %d main tree nodes + %d verification nodes.\n', ...
+    numMain, numVerif);
 
 %% Save Tree
 if saveTree

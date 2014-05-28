@@ -23,7 +23,7 @@
          "VisionMarkers" : [
             {
                "Name" : "MessageVisionMarker",
-               "markerType" : 23,
+               "markerType" : 31,
                "timestamp" : 0,
                "x_imgLowerLeft" : 186.8319091796875,
                "x_imgLowerRight" : 196.5223846435547,
@@ -48,7 +48,7 @@
          "VisionMarkers" : [
             {
                "Name" : "MessageVisionMarker",
-               "markerType" : 18,
+               "markerType" : 26,
                "timestamp" : 0,
                "x_imgLowerLeft" : 190.4997863769531,
                "x_imgLowerRight" : 222.6694641113281,
@@ -73,7 +73,7 @@
          "VisionMarkers" : [
             {
                "Name" : "MessageVisionMarker",
-               "markerType" : 28,
+               "markerType" : 37,
                "timestamp" : 0,
                "x_imgLowerLeft" : 204.4742736816406,
                "x_imgLowerRight" : 195.4070739746094,
@@ -98,7 +98,7 @@
          "VisionMarkers" : [
             {
                "Name" : "MessageVisionMarker",
-               "markerType" : 33,
+               "markerType" : 44,
                "timestamp" : 0,
                "x_imgLowerLeft" : 153.0918121337891,
                "x_imgLowerRight" : 123.2054595947266,
@@ -148,7 +148,7 @@
          "VisionMarkers" : [
             {
                "Name" : "MessageVisionMarker",
-               "markerType" : 20,
+               "markerType" : 28,
                "timestamp" : 0,
                "x_imgLowerLeft" : 60.48606872558594,
                "x_imgLowerRight" : 120.5397109985352,
@@ -173,7 +173,7 @@
          "VisionMarkers" : [
             {
                "Name" : "MessageVisionMarker",
-               "markerType" : 12,
+               "markerType" : 13,
                "timestamp" : 0,
                "x_imgLowerLeft" : 167.7789764404297,
                "x_imgLowerRight" : 133.7146148681641,

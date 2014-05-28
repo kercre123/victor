@@ -138,21 +138,21 @@ Block1x1 {
   rotation 1 0 0 0
   
   facemarkerFront [
-    "textures/bullseye.png"
+    "textures/symbols/bullseye2.png"
   ]
   facemarkerBack [
-	"textures/bullseye.png"  ]
+	"textures/symbols/bullseye2.png"  ]
   facemarkerLeft [
-    "textures/bullseye.png"
+    "textures/symbols/bullseye2.png"
   ]
   facemarkerRight [
-    "textures/bullseye.png"
+    "textures/symbols/bullseye2.png"
   ]
   facemarkerTop [
-    "textures/bullseye.png"
+    "textures/symbols/bullseye2.png"
   ]
   facemarkerBottom [
-    "textures/bullseye.png"
+    "textures/symbols/bullseye2.png"
   ]
 }
 
@@ -164,27 +164,27 @@ Block1x1 {
   
   facemarkerFront [
     #"textures/Block060_Face01.png"
-    "textures/batteryMarker.png"
+    "textures/symbols/bangBangBang.png"
   ]
   facemarkerBack [
     #"textures/Block060_Face02.png"
-    "textures/batteryMarker.png"
+    "textures/symbols/bangBangBang.png"
   ]
   facemarkerLeft [
     #"textures/Block060_Face03.png"
-    "textures/batteryMarker.png"
+    "textures/symbols/bangBangBang.png"
   ]
   facemarkerRight [
     #"textures/Block060_Face04.png"
-    "textures/batteryMarker.png"
+    "textures/symbols/bangBangBang.png"
   ]
   facemarkerTop [
     #"textures/Block060_Face05.png"
-    "textures/batteryMarker.png"
+    "textures/symbols/bangBangBang.png"
   ]
   facemarkerBottom [
     #"textures/Block060_Face06.png"
-    "textures/batteryMarker.png"
+    "textures/symbols/bangBangBang.png"
   ]
 }
 Block1x1 {
@@ -195,27 +195,27 @@ Block1x1 {
   
  facemarkerFront [
     #"textures/Block060_Face01.png"
-    "textures/batteryMarker.png"
+    "textures/symbols/questionMark.png"
   ]
   facemarkerBack [
     #"textures/Block060_Face02.png"
-    "textures/batteryMarker.png"
+    "textures/symbols/questionMark.png"
   ]
   facemarkerLeft [
     #"textures/Block060_Face03.png"
-    "textures/batteryMarker.png"
+    "textures/symbols/questionMark.png"
   ]
   facemarkerRight [
     #"textures/Block060_Face04.png"
-    "textures/batteryMarker.png"
+    "textures/symbols/questionMark.png"
   ]
   facemarkerTop [
     #"textures/Block060_Face05.png"
-    "textures/batteryMarker.png"
+    "textures/symbols/questionMark.png"
   ]
   facemarkerBottom [
     #"textures/Block060_Face06.png"
-    "textures/batteryMarker.png"
+    "textures/symbols/questionMark.png"
   ]
 }
 Block1x1 {
@@ -227,32 +227,32 @@ Block1x1 {
   facemarkerFront [
     #"textures/Block060_Face01.png"
     #"textures/batteryMarker.png"
-    "textures/batteries.png"
+    "textures/symbols/star5.png"
   ]
   facemarkerBack [
     #"textures/Block060_Face02.png"
     #"textures/batteryMarker.png"
-    "textures/batteries.png"
+    "textures/symbols/star5.png"
   ]
   facemarkerLeft [
     #"textures/Block060_Face03.png"
     #"textures/batteryMarker.png"
-    "textures/batteries.png"
+    "textures/symbols/star5.png"
   ]
   facemarkerRight [
     #"textures/Block060_Face04.png"
     #"textures/batteryMarker.png"
-    "textures/batteries.png"
+    "textures/symbols/star5.png"
   ]
   facemarkerTop [
     #"textures/Block060_Face05.png"
     #"textures/batteryMarker.png"
-    "textures/batteries.png"
+    "textures/symbols/star5.png"
   ]
   facemarkerBottom [
     #"textures/Block060_Face06.png"
     #"textures/batteryMarker.png"
-    "textures/batteries.png"
+    "textures/symbols/star5.png"
   ]
 }
 
@@ -263,22 +263,22 @@ Block1x1 {
   blockColor 0 0 1
   
   facemarkerFront [
-    "textures/angryFace.png"
+    "textures/symbols/angryFace.png"
   ]
   facemarkerBack [
-    "textures/angryFace.png"
+    "textures/symbols/angryFace.png"
   ]
   facemarkerLeft [
-    "textures/angryFace.png"
+    "textures/symbols/angryFace.png"
   ]
   facemarkerRight [
-    "textures/angryFace.png"
+    "textures/symbols/angryFace.png"
   ]
   facemarkerTop [
-    "textures/angryFace.png"
+    "textures/symbols/angryFace.png"
   ]
   facemarkerBottom [
-    "textures/angryFace.png"
+    "textures/symbols/angryFace.png"
   ]
 }
 
@@ -289,21 +289,21 @@ Block2x1 {
   blockColor 0.5 0.1 0.75
   
   facemarkerTop [
-    "textures/bullseye.png"
+    "textures/symbols/bullseye2.png"
   ]
   facemarkerBottom [
-    "textures/bullseye.png"
+    "textures/symbols/bullseye2.png"
   ]
   facemarkerFront [
-    "textures/bullseye.png"
+    "textures/symbols/bullseye2.png"
   ]
   facemarkerBack [
-    "textures/bullseye.png"
+    "textures/symbols/bullseye2.png"
   ]
   facemarkerLeft [
-    "textures/bullseye.png"
+    "textures/symbols/bullseye2.png"
   ]
   facemarkerRight [
-    "textures/bullseye.png"
+    "textures/symbols/bullseye2.png"
   ]
 }

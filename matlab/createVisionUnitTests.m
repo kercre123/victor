@@ -7,7 +7,7 @@ end
 WHEEL_RADIUS = 14.2;
 BLOCK_DIM = 44;
 
-% NOTE: the BlockTypes used below must match those defined in BlockDefinitions.h!
+
 
 %% TwoBlocksOnePose
 % One robot looking at one mat marker and two sides of each of two blocks 
@@ -21,10 +21,10 @@ TestWorld.AddRobot('Name', 'Cozmo_1', ...
     'CameraResolution', [320 240]);
 
 TestWorld.AddBlock('BlockPose', Pose(-pi/3*[0 0 1], [270 32+67 BLOCK_DIM/2]), ...
-    'BlockProto', 'Block1x1', 'BlockType', 5, 'FrontFace', 'angryFace');
+    'BlockProto', 'Block1x1', 'BlockName', 'angryFace', 'FrontFace', 'symbols/angryFace');
 
 TestWorld.AddBlock('BlockPose', Pose(pi/3*[0 0 1], [270 -32+67 BLOCK_DIM/2]), ...
-    'BlockProto', 'Block1x1', 'BlockType', 2, 'FrontFace', 'bullseye');
+    'BlockProto', 'Block1x1', 'BlockName', 'bullseye2', 'FrontFace', 'symbols/bullseye2');
 
 TestWorld.Run();
 
@@ -64,33 +64,33 @@ TestWorld.AddRobot('Name', 'Cozmo_1', ...
 
 % Right stack
 TestWorld.AddBlock('BlockPose', Pose(-pi/6*[0 0 1], [315 -75 BLOCK_DIM/2]), ...
-    'BlockProto', 'Block1x1', 'BlockType', 2, 'FrontFace', 'bullseye');
+    'BlockProto', 'Block1x1', 'BlockName', 'bullseye2', 'FrontFace', 'symbols/bullseye2');
 
 TestWorld.AddBlock('BlockPose', Pose(-pi/6*[0 0 1], [315 -75 BLOCK_DIM + BLOCK_DIM/2]), ...
-    'BlockProto', 'Block1x1', 'BlockType', 2, 'FrontFace', 'bullseye');
+    'BlockProto', 'Block1x1', 'BlockName', 'bullseye2', 'FrontFace', 'symbols/bullseye2');
 
 TestWorld.AddBlock('BlockPose', Pose(-pi/6*[0 0 1], [315 -75 2*BLOCK_DIM + BLOCK_DIM/2]), ...
-    'BlockProto', 'Block1x1', 'BlockType', 2, 'FrontFace', 'bullseye');
+    'BlockProto', 'Block1x1', 'BlockName', 'bullseye2', 'FrontFace', 'symbols/bullseye2');
 
 % Left stack
 TestWorld.AddBlock('BlockPose', Pose(pi/6*[0 0 1], [315 75 BLOCK_DIM/2]), ...
-    'BlockProto', 'Block1x1', 'BlockType', 2, 'FrontFace', 'bullseye');
+    'BlockProto', 'Block1x1', 'BlockName', 'bullseye2', 'FrontFace', 'symbols/bullseye2');
 
 TestWorld.AddBlock('BlockPose', Pose(pi/6*[0 0 1], [315 75 BLOCK_DIM + BLOCK_DIM/2]), ...
-    'BlockProto', 'Block1x1', 'BlockType', 2, 'FrontFace', 'bullseye');
+    'BlockProto', 'Block1x1', 'BlockName', 'bullseye2', 'FrontFace', 'symbols/bullseye2');
 
 TestWorld.AddBlock('BlockPose', Pose(pi/6*[0 0 1], [315 75 2*BLOCK_DIM + BLOCK_DIM/2]), ...
-    'BlockProto', 'Block1x1', 'BlockType', 2, 'FrontFace', 'bullseye');
+    'BlockProto', 'Block1x1', 'BlockName', 'bullseye2', 'FrontFace', 'symbols/bullseye2');
 
 % Back stack
 TestWorld.AddBlock('BlockPose', Pose(pi/2*[1 0 0], [300 0 BLOCK_DIM/2]), ...
-    'BlockProto', 'Block1x1', 'BlockType', 2, 'FrontFace', 'bullseye');
+    'BlockProto', 'Block1x1', 'BlockName', 'bullseye2', 'FrontFace', 'symbols/bullseye2');
 
 TestWorld.AddBlock('BlockPose', Pose(pi*[1 0 0], [300 0 BLOCK_DIM + BLOCK_DIM/2]), ...
-    'BlockProto', 'Block1x1', 'BlockType', 2, 'FrontFace', 'bullseye');
+    'BlockProto', 'Block1x1', 'BlockName', 'bullseye2', 'FrontFace', 'symbols/bullseye2');
 
 TestWorld.AddBlock('BlockPose', Pose(3*pi/2*[1 0 0], [300 0 2*BLOCK_DIM + BLOCK_DIM/2]), ...
-    'BlockProto', 'Block1x1', 'BlockType', 2, 'FrontFace', 'bullseye');
+    'BlockProto', 'Block1x1', 'BlockName', 'bullseye2', 'FrontFace', 'symbols/bullseye2');
 
 TestWorld.Run();
 
@@ -125,7 +125,7 @@ TestWorld.AddRobot('Name', 'Cozmo_1', ...
     'HeadAngle', headAngles, 'CameraResolution', [320 240]);
 
 TestWorld.AddBlock('BlockPose', Pose(0*[0 0 1], [80 0 BLOCK_DIM/2]), ...
-    'BlockProto', 'Block1x1', 'BlockType', 5, 'FrontFace', 'angryFace');
+    'BlockProto', 'Block1x1', 'BlockName', 'star5', 'FrontFace', 'symbols/star5');
 
 TestWorld.Run();
 
@@ -141,17 +141,17 @@ TestWorld = CozmoTestWorldCreator('WorldFile', ...
 % center for Cozmo to sit on
 center = [-30 -180 BLOCK_DIM/2];
 TestWorld.AddBlock('BlockPose', Pose([0 0 0], center+[-BLOCK_DIM/2 -BLOCK_DIM/2 0]), ...
-    'BlockProto', 'Block1x1', 'BlockType', 0);
+    'BlockProto', 'Block1x1');%, 'BlockName', 'sqtarget', 'FrontFace', 'symbols/squarePlusCorners');
 TestWorld.AddBlock('BlockPose', Pose([0 0 0], center+[-BLOCK_DIM/2  BLOCK_DIM/2 0]), ...
-    'BlockProto', 'Block1x1', 'BlockType', 0);
+    'BlockProto', 'Block1x1');%, 'BlockName', 'sqtarget', 'FrontFace', 'symbols/squarePlusCorners');
 TestWorld.AddBlock('BlockPose', Pose([0 0 0], center+[ BLOCK_DIM/2 -BLOCK_DIM/2 0]), ...
-    'BlockProto', 'Block1x1', 'BlockType', 0);
+    'BlockProto', 'Block1x1');%, 'BlockName', 'sqtarget', 'FrontFace', 'symbols/squarePlusCorners');
 TestWorld.AddBlock('BlockPose', Pose([0 0 0], center+[ BLOCK_DIM/2  BLOCK_DIM/2 0]), ...
-    'BlockProto', 'Block1x1', 'BlockType', 0);
+    'BlockProto', 'Block1x1');%, 'BlockName', 'sqtarget', 'FrontFace', 'symbols/squarePlusCorners');
 
 % One Block for him to see
 TestWorld.AddBlock('BlockPose', Pose(pi/4*[0 0 1], [145 60 BLOCK_DIM/2]), ...
-    'BlockProto', 'Block1x1', 'BlockType', 3, 'FrontFace', 'fire');
+    'BlockProto', 'Block1x1', 'BlockName', 'fire', 'FrontFace', 'symbols/fire');
 
 TestWorld.AddRobot('Name', 'Cozmo_1', ...
     'RobotPose', Pose(pi/3*[0 0 1], center+[15 35 BLOCK_DIM/2]), ...
