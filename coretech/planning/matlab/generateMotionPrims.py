@@ -4,8 +4,9 @@ import json
 from MotionPrimitives import *
 
 prim = MotionPrimitiveSet()
-prim.minRadius = 0.1
-prim.sampleLength = 0.01 # stupidly high for nice looking plots
+prim.minRadius = 1.0
+# prim.sampleLength = 0.01 # stupidly high for nice looking plots
+prim.sampleLength = 0.5
 
 longLen = 5
 
@@ -24,9 +25,11 @@ prim.createPrimitives()
 import pprint
 # pprint.pprint(prim.primitivesPerAngle)
 
-# for motion in prim.primitivesPerAngle[8]:
-#     print motion
-#     pprint.pprint(motion.intermediatePoses)
+for motion in prim.primitivesPerAngle[8]:
+    print motion
+    pprint.pprint(motion.intermediatePoses)
+
+#exit(0)
 
 from pylab import *
 
@@ -76,5 +79,6 @@ for angle in range(prim.numAngles):
         Y = [p.y_mm for p in motion.intermediatePoses]
         ax.plot(X, Y, 'b-')
         #ax.plot(X[-1], Y[-1], 'ro')
+
 
 show()

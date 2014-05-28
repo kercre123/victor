@@ -193,7 +193,7 @@ class MotionPrimitiveSet:
                     endPose = Pose(x, y, newAngle)
                     turn = self.computeTurn(startPose, endPose)
                     if abs(turn[1]) > self.minRadius and turn[0] >= 0.0:
-                        score = 10.0*turn[0] + turn[1]**2
+                        score = abs(turn[0]) + abs(turn[1])
                         if score < bestScore:
                             bestScore = score
                             best = [x, y, turn]
