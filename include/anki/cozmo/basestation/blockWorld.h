@@ -91,6 +91,14 @@ namespace Anki
       
       ~BlockWorld();
       
+      
+      // === Draw functions ===
+      void EnableDraw(bool on);
+
+      // Visualize markers in image display
+      void DrawObsMarkers() const;
+      
+      
     protected:
       
       // Typedefs / Aliases
@@ -148,6 +156,9 @@ namespace Anki
       // Global counter for assigning IDs to objects as they are created.
       // This means every object in the world has a unique ObjectID!
       ObjectID_t globalIDCounter;
+      
+      // For allowing the calling of VizManager draw functions
+      bool enableDraw_;
       
     }; // class BlockWorld
 
