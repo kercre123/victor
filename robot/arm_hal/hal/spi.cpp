@@ -244,6 +244,6 @@ void DMA_HANDLER_RX(void)
   // Run MainExecution if init is done
   if (g_halInitComplete)
   {
-    //  Anki::Cozmo::Robot::step_MainExecution();
+    Anki::Cozmo::Robot::step_MainExecution();
   }
 }
