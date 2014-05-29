@@ -471,8 +471,8 @@ namespace Anki
 				
         // Put values into IMU Data Struct
         // With head facing forward, x-axis points along robot y-axis. Putting x value into y.
-        // IMU rotated 180 around Z axis in 2.1, so flipping sign of gyro x.
-        IMUData.acc_y  = -RANGE_CONST_2G * temp_data;  // m/s^2    
+        // IMU rotated 180 around Z axis and then 180 around Y axis in 2.1, so sign of acc x is preserved.
+        IMUData.acc_y  = RANGE_CONST_2G * temp_data;  // m/s^2    
         
         temp_data_lsb = IMUWriteReadPipelined(0x00);  // ACC_ACCD_Z_LSB
         temp_data_msb = IMUWriteReadPipelined(0x00);  // ACC_ACCD_Z_MSB
@@ -483,7 +483,7 @@ namespace Anki
 				
         // Put values into IMU Data Struct
         // With head facing forward, y-axis points along robot z-axis. Putting y value into z.
-        // IMU rotated 180 around Z axis in 2.1, so flipping sign of gyro y.
+        // IMU rotated 180 around Z axis and then 180 around Y axis in 2.1, so sign of acc y is flipped.
         IMUData.acc_z  = -RANGE_CONST_2G * temp_data;      // m/s^2    
         
         temp_data_lsb = IMUWriteReadPipelined(0x00);    
@@ -495,8 +495,8 @@ namespace Anki
 				
         // Put values into IMU Data Struct
         // With head facing forward, z-axis points along robot x-axis. Putting z value into x.
-        // IMU rotated 180 around Z axis in 2.1, so sign of gyro z is preserved.
-        IMUData.acc_x  = RANGE_CONST_2G * temp_data;  // m/s^2    
+        // IMU rotated 180 around Z axis and then 180 around Y axis in 2.1, so sign of acc z is flipped.
+        IMUData.acc_x  = -RANGE_CONST_2G * temp_data;  // m/s^2    
         
         // Select gyro (accelerometer automatically deselected)
         IMUSelectDevice(IMU_GYRO);
@@ -513,8 +513,8 @@ namespace Anki
 				
         // Put values into IMU Data Struct
         // With head facing forward, x-axis points along robot y-axis. Putting x value into y.
-        // IMU rotated 180 around Z axis in 2.1, so flipping sign of gyro x.
-        IMUData.rate_y  = -RANGE_CONST_500D * temp_data;  // rad/s    
+        // IMU rotated 180 around Z axis and then 180 around Y axis in 2.1, so sign of gyro x is preserved.
+        IMUData.rate_y  = RANGE_CONST_500D * temp_data;  // rad/s    
         
         temp_data_lsb = IMUWriteReadPipelined(0x00);  // GYRO_RATE_Z_LSB
         temp_data_msb = IMUWriteReadPipelined(0x00);  // GYRO_RATE_Z_MSB
@@ -524,7 +524,7 @@ namespace Anki
 				
         // Put values into IMU Data Struct
         // With head facing forward, y-axis points along robot z-axis. Putting y value into z.
-        // IMU rotated 180 around Z axis in 2.1, so flipping sign of gyro y.
+        // IMU rotated 180 around Z axis and then 180 around Y axis in 2.1, so sign of gyro y is flipped.
         IMUData.rate_z  = -RANGE_CONST_500D * temp_data;  // rad/s    
   
         temp_data_lsb = IMUWriteReadPipelined(0x00);    
@@ -535,8 +535,8 @@ namespace Anki
 				
         // Put values into IMU Data Struct
         // With head facing forward, z-axis points along robot x-axis. Putting z value into x.
-        // IMU rotated 180 around Z axis in 2.1, so sign of gyro z is preserved.
-        IMUData.rate_x  = RANGE_CONST_500D * temp_data;  // rad/s    
+        // IMU rotated 180 around Z axis and then 180 around Y axis in 2.1, so sign of gyro z is flipped.
+        IMUData.rate_x  = -RANGE_CONST_500D * temp_data;  // rad/s    
                   
         // Deselect gyro
         IMUDeselectAll();
