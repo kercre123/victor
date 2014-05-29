@@ -115,6 +115,7 @@ namespace Anki {
                            std::make_tuple(frameID, pose_x, pose_y, pose_z, pose_angle, head_angle));
       
       if (!res.second) {
+        PRINT_NAMED_WARNING("RobotPoseHistory.AddRawOdomPose.AddFailed", "Time: %d\n", t);
         return RESULT_FAIL;
       }
 
