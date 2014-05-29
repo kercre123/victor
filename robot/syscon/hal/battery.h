@@ -7,4 +7,7 @@ void BatteryInit();
 // Update the state of the battery
 void BatteryUpdate();
 
+// Turn on power to the head
+void PowerInit();
+
 #endif

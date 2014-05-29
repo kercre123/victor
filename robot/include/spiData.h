@@ -12,7 +12,8 @@ typedef s32 Fixed;
 enum SPISource
 {
   SPI_SOURCE_HEAD = 'H',
-  SPI_SOURCE_BODY = 'B'
+  SPI_SOURCE_BODY = 'B',
+  SPI_SOURCE_CLEAR = 0
 };
 
 struct GlobalCommon
@@ -27,7 +28,8 @@ struct GlobalDataToHead
   Fixed speeds[4];
   Fixed positions[4];
   
-  uint8_t RESERVED[28];  // Pad out to 64 bytes
+  uint8_t RESERVED[27];  // Pad out to 64 bytes
+  char tail;
 };
 
 static_assert(sizeof(GlobalDataToHead) == 64,
@@ -40,7 +42,8 @@ struct GlobalDataToBody
   GlobalCommon common;
   int16_t motorPWM[4];
   
-  uint8_t RESERVED[52];  // Pad out to 64 bytes
+  uint8_t RESERVED[51];  // Pad out to 64 bytes
+  char tail;
 };
 
 static_assert(sizeof(GlobalDataToBody) == 64,

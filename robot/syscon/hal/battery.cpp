@@ -2,18 +2,21 @@
 #include "nrf.h"
 #include "nrf_gpio.h"
 #include "uart.h"
+#include "timer.h"
 
 namespace
 {
-  const u8 PIN_V_SENSE = 5;
-  const u8 PIN_I_SENSE = 6;
-  const u8 ANALOG_V_SENSE = ADC_CONFIG_PSEL_AnalogInput6;
-  const u8 ANALOG_I_SENSE = ADC_CONFIG_PSEL_AnalogInput7;
+  // Updated to 2.1
+  const u8 PIN_V_SENSE = 2;
+  const u8 PIN_I_SENSE = 0;
+  const u8 ANALOG_V_SENSE = ADC_CONFIG_PSEL_AnalogInput2;
+  // XXX - Broken in 2.1 - not valid
+  const u8 ANALOG_I_SENSE = ADC_CONFIG_PSEL_AnalogInput2;
   
-  const u8 PIN_CHARGE_S1 = 13;
-  const u8 PIN_CHARGE_S2 = 14;
-  const u8 PIN_CHARGE_HC = 15;
-  const u8 PIN_CHARGE_EN = 16;
+  const u8 PIN_CHARGE_S1 = 25;
+  //const u8 PIN_CHARGE_S2 = 14;
+  const u8 PIN_CHARGE_HC = 23;
+  const u8 PIN_CHARGE_EN = 24;
   
   const u8 ANALOG_PINS[2] =
   {
@@ -31,7 +34,7 @@ void BatteryInit()
 {
   // Configure the charger status pins as inputs
   nrf_gpio_cfg_input(PIN_CHARGE_S1, NRF_GPIO_PIN_PULLUP);
-  nrf_gpio_cfg_input(PIN_CHARGE_S2, NRF_GPIO_PIN_PULLUP);
+  //nrf_gpio_cfg_input(PIN_CHARGE_S2, NRF_GPIO_PIN_PULLUP);
   
   // Let the charge enable lines float high from external pullups
   nrf_gpio_cfg_input(PIN_CHARGE_HC, NRF_GPIO_PIN_NOPULL);
@@ -80,4 +83,31 @@ void BatteryUpdate()
   u32 result = ((NRF_ADC->RESULT * 1200 * 3 * 2) / 0x3FF);
   
   NRF_ADC->TASKS_STOP = 1;
+}
+
+
+void PowerInit()
+{
+  // Syscon power - this should always be on until battery fail
+  const u8 PIN_VDD_EN = 26;
+  nrf_gpio_pin_set(PIN_VDD_EN);        // On
+  nrf_gpio_cfg_output(PIN_VDD_EN);
+  
+  // Motor and headboard power
+  const u8 PIN_VBATs_EN = 29;
+  nrf_gpio_pin_clear(PIN_VBATs_EN);    // Off
+  nrf_gpio_cfg_output(PIN_VBATs_EN);
+  
+  // Encoder and headboard power
+  const u8 PIN_VDDs_EN = 22;
+  nrf_gpio_pin_set(PIN_VDDs_EN);      // Off
+  nrf_gpio_cfg_output(PIN_VDDs_EN);
+  
+  // Let power drain out - 10ms is plenty long enough
+  MicroWait(10000);
+  
+  // Bring up VBATs first, because camera requires 1V8 (via VBATs) before VDDs  
+  nrf_gpio_pin_set(PIN_VBATs_EN);     // On
+  MicroWait(1000);                    // Long enough for 1V8 to stabilize (datasheet says ~80uS)
+  nrf_gpio_pin_clear(PIN_VDDs_EN);    // On  
 }
