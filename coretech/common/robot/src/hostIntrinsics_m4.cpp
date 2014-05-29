@@ -20,6 +20,61 @@ namespace Anki
 {
   namespace Embedded
   {
+    u32 __REV(const u32 value)
+    {
+      register32 register1(value);
+      register32 register2;
+
+      register2._u8x4.v[0] = register1._u8x4.v[3];
+      register2._u8x4.v[1] = register1._u8x4.v[2];
+      register2._u8x4.v[2] = register1._u8x4.v[1];
+      register2._u8x4.v[3] = register1._u8x4.v[0];
+
+      return register2;
+    } // u32 __REV(const u32 value)
+
+    u32 __REV16(const u32 value)
+    {
+      register32 register1(value);
+      register32 register2;
+
+      register2._u8x4.v[0] = register1._u8x4.v[1];
+      register2._u8x4.v[1] = register1._u8x4.v[0];
+      register2._u8x4.v[2] = register1._u8x4.v[3];
+      register2._u8x4.v[3] = register1._u8x4.v[2];
+
+      return register2;
+    } // u32 __REV16(const u32 value)
+
+    s32 __REVSH(const s16 value)
+    {
+      register32 register1(value);
+      register32 register2(0);
+
+      register2._u8x4.v[0] = register1._u8x4.v[1];
+      register2._u8x4.v[1] = register1._u8x4.v[0];
+
+      if(register2._u32 & (1<<15)) {
+        register2._u8x4.v[2] = 0xFF;
+        register2._u8x4.v[3] = 0xFF;
+      }
+
+      return register2;
+    } // s32 __REVSH(const s16 value)
+
+    u32 __RBIT(const u32 value)
+    {
+      u32 bitFlipped = 0;
+
+      for(s32 i=0; i<32; i++) {
+        const u32 curBit = !!(value & (1<<i));
+
+        bitFlipped |= (curBit << (31-i));
+      }
+
+      return bitFlipped;
+    } // u32 __RBIT(const u32 value)
+
     s32 __SSAT(const s32 val, const u8 n)
     {
       u32 result;

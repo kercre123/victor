@@ -62,16 +62,16 @@ namespace Anki
     //void __DMB();
 
     //Reverse byte order(32 bit)
-    //u32 __REV(const u32 value);
+    u32 __REV(const u32 value);
 
     //Reverse byte order(16 bit)
-    //u32 __REV16(const u32 value);
+    u32 __REV16(const u32 value);
 
     //Reverse byte order in signed short value.
-    //s32 __REVSH(const s32 value);
+    s32 __REVSH(const s16 value);
 
     //Reverse bit order of value [not for Cortex-M0 variants].
-    //u32 __RBIT(const u32 value);
+    u32 __RBIT(const u32 value);
 
     //Rotate a value right by a number of bits.
     //u32 __ROR(const u32 value, const u32 shift);
