@@ -28,6 +28,8 @@ void SystemInit(void)
   }
 }
 
+const u8 PIN_CHGEN = 24;  // 2.1
+
 int main(void)
 {
   u32 failedTransferCount = 0;
@@ -35,68 +37,67 @@ int main(void)
   // Initialize the hardware peripherals
   BatteryInit();
   TimerInit();
-  MotorsInit();
+  MotorsInit();   // Must init before power goes on
+  // UARTInit();  // XXX - do not enable unless you want neck cable to break
+  
+  UARTPutString("\r\nUnbrick me now...");
+  u32 t = GetCounter();
+  while ((GetCounter() - t) < 4333333)  // 0.5 second unbrick time
+    ;
+  UARTPutString("too late!\r\n");
+
+  // Finish booting up
   SPIInit();
-  UARTInit();
-  nrf_gpio_pin_clear(17);  // Multiplex blinking LED with UART
-  nrf_gpio_cfg_output(17);
-  
-  UARTPutString("\r\nInitialized...\r\n");
-  
+  PowerInit();
+
   g_dataToHead.common.source = SPI_SOURCE_BODY;
-  
-  /*g_dataToBody.motorPWM[0] = 0; //0x7fff * 0.7;
-  g_dataToBody.motorPWM[1] = 0; //0x7fff * 0.7;
-  g_dataToBody.motorPWM[2] = 0; //0x7fff * 0.7;
-  g_dataToBody.motorPWM[3] = 0; //0x7fff * -0.3;*/
+  g_dataToHead.tail = 0x84;
   
   // Force charger on for now
-  nrf_gpio_pin_clear(16);
-  nrf_gpio_cfg_output(16);
+  nrf_gpio_pin_clear(PIN_CHGEN);
+  nrf_gpio_cfg_output(PIN_CHGEN);
   
+#if 0
+  // Motor testing, loop forever
   while (1)
   {
-#if 0
-    // Motor testing...
+    UARTPutString("Forward\n");
     for (int i = 0; i < MOTOR_COUNT; i++)
-    {
-      MotorsSetPower(i, 0x7fff);
-    }
-    
+      MotorsSetPower(i, 0x2fff);    
     MotorsUpdate();
-    
+
     u32 t = GetCounter();
     while ((GetCounter() - t) < 8333333)  // 1 second
-    {
-      MotorsPrintEncodersRaw();
-    }
+      ;
+//      MotorsPrintEncodersRaw();
     
-    for (int i = 0; i < MOTOR_COUNT; i++)
-    {
-      MotorsSetPower(i, -0x7fff);
-    }
-      
+    UARTPutString("Backward\n");
+    
+    for (int i = 0; i < MOTOR_COUNT; i++)    
+      MotorsSetPower(i, -0x2fff);
     MotorsUpdate();
     
     t = GetCounter();
     while ((GetCounter() - t) < 8333333)
-    {
-      MotorsPrintEncodersRaw();
-    }
+      ;
+//      MotorsPrintEncodersRaw();
     
-    //BatteryUpdate();
-    
+    BatteryUpdate();
+  }
+  
 #else
-    
+  while (1)
+  {    
     u32 timerStart = GetCounter();
+    g_dataToBody.common.source = SPI_SOURCE_CLEAR;
+    
     // Exchange data with the head board
     SPITransmitReceive(
       sizeof(GlobalDataToBody),
       (const u8*)&g_dataToHead,
       (u8*)&g_dataToBody);
     
-#if 1
-    NRF_UART0->PSELTXD = 17;
+#if 0
     u8* d = (u8*)&g_dataToBody;
     for (int i = 0; i < 0x10; i++)
     {
@@ -105,44 +106,36 @@ int main(void)
     }
     UARTPutChar('\n');
 #endif
-    
-    
+        
     // Verify the source
     if (g_dataToBody.common.source != SPI_SOURCE_HEAD)
     {
       // TODO: Remove 0. For now, needed to do head debugging
-      if(0 && ++failedTransferCount > MAX_FAILED_TRANSFER_COUNT)
+      if(++failedTransferCount > MAX_FAILED_TRANSFER_COUNT)
       {
         // Perform a full system reset in order to reinitialize the head board
-        NVIC_SystemReset();
+        //NVIC_SystemReset();
+        
+        // Stop all motors
+        for (int i = 0; i < MOTOR_COUNT; i++)
+          MotorsSetPower(i, 0);
       }
     } else  {
       failedTransferCount = 0;
       
-      static u32 s = 0;
-      if (++s < 10)
-      {
-        NRF_UART0->PSELTXD = 0xffffffff;
-        //nrf_gpio_pin_toggle(17);
-      } else if (++s > 20) {
-        s = 0;
-      }
-      
-      // Update motors
+      // Copy (valid) data to update motors
       for (int i = 0; i < MOTOR_COUNT; i++)
       {
         MotorsSetPower(i, g_dataToBody.motorPWM[i]);
       }
-      
-      MotorsUpdate();
     }
+         
+    MotorsUpdate();
     
     // Update at 200Hz
     // 41666 ticks * 120 ns is roughly 5ms
     while ((GetCounter() - timerStart) < 41666)
       ;
-#endif
   }
-  
-  return 0;
+#endif
 }

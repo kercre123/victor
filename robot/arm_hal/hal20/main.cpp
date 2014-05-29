@@ -16,7 +16,7 @@ namespace Anki
   {
     namespace HAL
     {
-      extern u8 g_halInitComplete;
+      extern GlobalDataToHead m_dataToHead;
       
       // Forward declarations
       void Startup();
@@ -25,9 +25,6 @@ namespace Anki
       void UARTInit();
       void FrontCameraInit();
       void IMUInit();
-      void LightsInit();
-
-      void PrintCrap();
 
       TimeStamp_t GetTimeStamp(void){ return (TimeStamp_t)0; }
 
@@ -47,55 +44,33 @@ void Wait()
   
   u32 start = GetMicroCounter();
   while ((GetMicroCounter() - start) < 500000)
-  {}
-  printf("\n");
-  for (int i = 0; i < 4; i++)
   {
-    printf("%.6f, %.6f | ",
-      MotorGetPosition((MotorID)i),
-      MotorGetSpeed((MotorID)i));
+    /*printf("%.6f, %.6f  | %.6f, %.6f\n",
+      MotorGetPosition(MOTOR_LEFT_WHEEL),
+      MotorGetSpeed(MOTOR_LEFT_WHEEL),
+      MotorGetPosition(MOTOR_RIGHT_WHEEL),
+      MotorGetSpeed(MOTOR_RIGHT_WHEEL));*/
   }
-  printf("\n");
-  PrintCrap();
-}
-
-// Belongs in powerontest.cpp
-static void MemTest()
-{
-  using namespace Anki::Cozmo::HAL;
-  // Memory test  
-  UARTPutString("Testing 64MB...");
-  MicroWait(1000);
-  for (int* pp = (int*)0xC0000000; pp < (int*)0xC4000000; pp++)
-    *pp = ((int)pp)*11917;
-  for (int* pp = (int*)0xC0000000; pp < (int*)0xC4000000; pp++)
-    if (*pp != ((int)pp)*11917)
-      UARTPutString("error");  
-  UARTPutString("Done\r\n");
 }
 
 int main(void)
 {
   using namespace Anki::Cozmo::HAL;
   
-  // Must be called FIRST in main() to do hardware sanity check
-  Startup();
-  
   // Initialize the hardware
+  Startup();
   TimerInit();
-  LightsInit();
   UARTInit();
-
-  UARTPutString("UART!");
+  
+  UARTPutString("UART!\r\n");
   
   FrontCameraInit();
   
-  IMUInit();  // The IMU must be configured before spineport  
   SPIInit();
   UARTPutString("SPI!\r\n");
   
-  while (1);
-
+  IMUInit();
+	
 #if 0
   // Motor testing...
   while (1)
@@ -112,54 +87,65 @@ int main(void)
     Wait();
     MotorSetPower(MOTOR_RIGHT_WHEEL, 0.0f);
     
-    MotorSetPower(MOTOR_LIFT, 0.6f);
+    /*MotorSetPower(MOTOR_LIFT, 0.3f);
     Wait();
-    MotorSetPower(MOTOR_LIFT, -0.6f);
+    MotorSetPower(MOTOR_LIFT, -0.3f);
     Wait();
     MotorSetPower(MOTOR_LIFT, 0.0f);
-
-    MotorSetPower(MOTOR_HEAD, 0.5f);
+    
+    MotorSetPower(MOTOR_HEAD, 0.3f);
     Wait();
-    MotorSetPower(MOTOR_HEAD, -0.5f);
+    MotorSetPower(MOTOR_HEAD, -0.3f);
     Wait();
     MotorSetPower(MOTOR_HEAD, -0.0f);
-
-    MicroWait(500000);
+    
+    MicroWait(500000); */
   }
   
 #else
   
-#ifndef SEND_IMAGE_ONLY_TEST_BASESTATION
   Anki::Cozmo::Robot::Init();
-  g_halInitComplete = true;
-   
+  
+#ifndef SEND_IMAGE_ONLY_TEST_BASESTATION
   while (Anki::Cozmo::Robot::step_LongExecution() == Anki::RESULT_OK)
   {
   }
 #else
   while(true)
   {
-    CameraGetFrame(buffer, Anki::Vision::CAMERA_RES_QVGA, false);
+    buffer[0] = 0xbe;
+    buffer[1] = 0xef;
+    buffer[2] = 0xf0;
+    buffer[3] = 0xff;
+    buffer[4] = 0xbd;
     
-    if (UARTGetFreeSpace() < (1024 * 1024 * 4) - (320*240+5))
-      continue;
+    CameraGetFrame(&buffer[5], CAMERA_MODE_QVGA, 0.25f, false);
     
-    UARTPutChar(0xbe);
-    UARTPutChar(0xef);
-    UARTPutChar(0xf0);
-    UARTPutChar(0xff);
-    UARTPutChar(0xbd);
+    UARTPutChar(buffer[0]);
+    UARTPutChar(buffer[1]);
+    UARTPutChar(buffer[2]);
+    UARTPutChar(buffer[3]);
+    UARTPutChar(buffer[4]);
     
     for (int y = 0; y < 240; y++)
     {
       for (int x = 0; x < 320; x++)
       {
-        //buffer[y*320 + x ] = (buffer[y*320 + x] * ((x & 255) ^ y)) >> 8;
-        UARTPutChar(buffer[y*320 + x]); // + buffer[y*320 + x+320] + buffer[y*320 + x+1] + buffer[y*320 + x+321])/4);
+        buffer[y*320 + x + 5] = (buffer[y*320 + x + 5] * ((x & 255) ^ y)) >> 8;
+        UARTPutChar((x & 255) ^ y);
       }
     }
+    
+    //MicroWait(2000000);
+    
+    
+    // 
+    /*if (!UARTPutBuffer(buffer, 320 * 240 + 5))
+    {
+    }*/
   }
-#endif // #ifdef SEND_IMAGE_ONLY_TEST_BASESTATION  
+#endif // #ifdef SEND_IMAGE_ONLY_TEST_BASESTATION
+  
 #endif
 }
 

@@ -17,8 +17,6 @@ extern GlobalDataToBody g_dataToBody;
 
 #define ABS(x) ((x) < 0 ? -(x) : (x))
 
-namespace
-{
   enum MotorID
   {
     MOTOR_LEFT_WHEEL,
@@ -30,8 +28,10 @@ namespace
   struct MotorInfo
   {
     // These few are constant; will refactor into separate structs again soon.
-    u8 forwardUpPin;
-    u8 backwardDownPin;
+    u8 n1Pin;
+    u8 n2Pin;
+    u8 pPin;
+    u8 isBackward;   // True if wired backward
     u8 encoderPins[2];
     
     Fixed unitsPerTick;
@@ -51,22 +51,32 @@ namespace
   
   const s16 PWM_DIVISOR = SHRT_MAX / TIMER_TICKS_END;
   
-  const u8 LEFT_WHEEL_FORWARD_PIN = 7;
-  const u8 LEFT_WHEEL_BACKWARD_PIN = 3;
-  const u8 RIGHT_WHEEL_FORWARD_PIN = 22;
-  const u8 RIGHT_WHEEL_BACKWARD_PIN = 23;
-  const u8 LIFT_UP_PIN = 24;
-  const u8 LIFT_DOWN_PIN = 25;
-  const u8 HEAD_UP_PIN = 10;
-  const u8 HEAD_DOWN_PIN = 9;
+  // Updated for 2.1
+  // N1+N2 are 0 when off, 1 when on
+  // P is 0 for P2+N1, P 1 is 1 for P1+N2
+  const u8 LEFT_P_PIN = 12;
+  const u8 LEFT_N1_PIN = 18;   // M1/Left on schematic
+  const u8 LEFT_N2_PIN = 19;
+  
+  const u8 RIGHT_P_PIN = 30;
+  const u8 RIGHT_N1_PIN = 4;   // M3/Right on schematic
+  const u8 RIGHT_N2_PIN = 5;
+  
+  const u8 LIFT_P_PIN = 28;
+  const u8 LIFT_N1_PIN = 7;    // M4/Lift on schematic
+  const u8 LIFT_N2_PIN = 6;
+  
+  const u8 HEAD_P_PIN = 13;
+  const u8 HEAD_N1_PIN = 14;   // M2/Head on schematic
+  const u8 HEAD_N2_PIN = 17;
   
   const u8 ENCODER_NONE = 0xFF;
-  const u8 ENCODER_1_PIN = 4;
-  const u8 ENCODER_2_PIN = 21;
-  const u8 ENCODER_3A_PIN = 8;
-  const u8 ENCODER_3B_PIN = 19;
-  const u8 ENCODER_4A_PIN = 20;
-  const u8 ENCODER_4B_PIN = 18;
+  const u8 ENCODER_LEFT_PIN = 15;    // M1/Left on schematic
+  const u8 ENCODER_RIGHT_PIN = 27;    // M3/Right on schematic
+  const u8 ENCODER_LIFTA_PIN = 3;    // M4/Lift on schematic
+  const u8 ENCODER_LIFTB_PIN = 9;
+  const u8 ENCODER_HEADA_PIN = 16;   // M2/Head on schematic
+  const u8 ENCODER_HEADB_PIN = 20;
   
   // Given a gear ratio of 283.5:1 and 88mm wheel circumference and 2 encoder
   // ticks per revolution, we compute the meters per tick as (using 2 edges):
@@ -76,9 +86,9 @@ namespace
   // compute the radians per tick on the lift as:
   const Fixed RADIANS_PER_LIFT_TICK = TO_FIXED((0.5 * 3.14159265359) / 729.0);
   
-  // Given a gear ratio of 67.5:1 and 4 encoder ticks per revolution, we
+  // Given a gear ratio of 108:1 and 8 encoder ticks per revolution, we
   // compute the radians per tick on the head as:
-  const Fixed RADIANS_PER_HEAD_TICK = TO_FIXED((0.5 * 3.14159265359) / 67.5);
+  const Fixed RADIANS_PER_HEAD_TICK = TO_FIXED((0.25 * 3.14159265359) / 108.0);
 
   // If no encoder activity for 200ms, we may as well be stopped
   const u32 ENCODER_TIMEOUT_COUNT = 200000 * US_PER_COUNT;
@@ -90,34 +100,42 @@ namespace
   MotorInfo m_motors[MOTOR_COUNT] =
   {
     {
-      LEFT_WHEEL_FORWARD_PIN,
-      LEFT_WHEEL_BACKWARD_PIN,
-      ENCODER_1_PIN,
+      LEFT_N1_PIN,
+      LEFT_N2_PIN,
+      LEFT_P_PIN,
+      true,   // Wired backward
+      ENCODER_LEFT_PIN,
       ENCODER_NONE,
       METERS_PER_TICK,
       0, 0, 0, 0, 0, 0
     },
     {
-      RIGHT_WHEEL_FORWARD_PIN,
-      RIGHT_WHEEL_BACKWARD_PIN,
-      ENCODER_2_PIN,
+      RIGHT_N1_PIN,
+      RIGHT_N2_PIN,
+      RIGHT_P_PIN,
+      false,   // Wired forward
+      ENCODER_RIGHT_PIN,
       ENCODER_NONE,
       METERS_PER_TICK,
       0, 0, 0, 0, 0, 0
     },
     {
-      LIFT_UP_PIN,
-      LIFT_DOWN_PIN,
-      ENCODER_3A_PIN,
-      ENCODER_3B_PIN,
+      LIFT_N1_PIN,
+      LIFT_N2_PIN,
+      LIFT_P_PIN,
+      true,   // Wired backward
+      ENCODER_LIFTA_PIN,
+      ENCODER_LIFTB_PIN,
       RADIANS_PER_LIFT_TICK,
       0, 0, 0, 0, 0, 0
     },
     {
-      HEAD_UP_PIN,
-      HEAD_DOWN_PIN,
-      ENCODER_4A_PIN,
-      ENCODER_4B_PIN,
+      HEAD_N1_PIN,
+      HEAD_N2_PIN,
+      HEAD_P_PIN,
+      true,   // Wired backward
+      ENCODER_HEADB_PIN,  // Invert direction logic on head
+      ENCODER_HEADA_PIN,
       RADIANS_PER_HEAD_TICK,
       0, 0, 0, 0, 0, 0
     },
@@ -126,7 +144,6 @@ namespace
   //const u32 MOTOR_COUNT = sizeof(m_motors) / sizeof(MotorInfo);
   
   u32 m_lastState = 0;
-}
 
 static void ConfigureTimer(NRF_TIMER_Type* timer, const u8 taskChannel, const u8 ppiChannel)
 {
@@ -199,37 +216,50 @@ static void ConfigurePinSense(u8 pin, u32 pinState)
 static void ConfigureTask(u8 motorID)
 {
   MotorInfo* motorInfo = &m_motors[motorID];
-  u8 pinPWM;
-  u8 pinHigh;
-  if (motorInfo->nextPWM > 0)
-  {
-    if (motorInfo->unitsPerTick < 0)
-          motorInfo->unitsPerTick = -motorInfo->unitsPerTick;
-    
-    pinPWM = motorInfo->forwardUpPin;
-    pinHigh = motorInfo->backwardDownPin;
-    
-    nrf_gpio_pin_set(pinHigh);
-    nrf_gpiote_task_config(motorID, pinPWM,
-      NRF_GPIOTE_POLARITY_TOGGLE, NRF_GPIOTE_INITIAL_VALUE_LOW);
-  } else if (motorInfo->nextPWM < 0) {
-    if (motorInfo->unitsPerTick > 0)
-          motorInfo->unitsPerTick = -motorInfo->unitsPerTick;
-    
-    pinPWM = motorInfo->backwardDownPin;
-    pinHigh = motorInfo->forwardUpPin;
-    
-    nrf_gpio_pin_set(pinHigh);
-    nrf_gpiote_task_config(motorID, pinPWM,
-      NRF_GPIOTE_POLARITY_TOGGLE, NRF_GPIOTE_INITIAL_VALUE_LOW);
-  } else {
+
+  // Zero
+  if (motorInfo->nextPWM == 0) {
     nrf_gpiote_unconfig(motorID);
-    __NOP();
-    __NOP();
-    __NOP();
-    nrf_gpio_pin_set(motorInfo->forwardUpPin);
-    nrf_gpio_pin_set(motorInfo->backwardDownPin);
+    nrf_gpio_pin_clear(motorInfo->n1Pin);
+    nrf_gpio_pin_clear(motorInfo->n2Pin);
+  
+  // Forward
+  } else if ((motorInfo->nextPWM > 0) != motorInfo->isBackward)
+  {
+    // Drive P2+N1
+    nrf_gpiote_unconfig(motorID);
+    nrf_gpio_pin_clear(motorInfo->n1Pin);
+    nrf_gpio_pin_clear(motorInfo->n2Pin);
+    nrf_gpio_pin_clear(motorInfo->pPin);    // P=0 is P2+N1
+    
+    MicroWait(5000);  // XXX: Let that motor cap discharge? Takes 5ms!!
+    nrf_gpiote_task_config(motorID, motorInfo->n1Pin,
+      NRF_GPIOTE_POLARITY_TOGGLE, NRF_GPIOTE_INITIAL_VALUE_HIGH);
+    
+  // Backward
+  } else {
+    if (motorInfo->unitsPerTick > 0)
+      motorInfo->unitsPerTick = -motorInfo->unitsPerTick;
+        
+    // Drive P1+N2
+    nrf_gpiote_unconfig(motorID);
+    nrf_gpio_pin_clear(motorInfo->n1Pin);
+    nrf_gpio_pin_clear(motorInfo->n2Pin);
+    nrf_gpio_pin_set(motorInfo->pPin);      // P=1 is P1+N2
+    
+    MicroWait(5000);  // XXX: Let that motor cap discharge? Takes 5ms!!
+    nrf_gpiote_task_config(motorID, motorInfo->n2Pin,
+      NRF_GPIOTE_POLARITY_TOGGLE, NRF_GPIOTE_INITIAL_VALUE_HIGH);    
   }
+  
+  // Point encoder ticks in same direction as nextPWM
+  if (motorInfo->unitsPerTick > 0 && motorInfo->nextPWM < 0)
+      motorInfo->unitsPerTick = -motorInfo->unitsPerTick;
+  if (motorInfo->unitsPerTick < 0 && motorInfo->nextPWM > 0)
+      motorInfo->unitsPerTick = -motorInfo->unitsPerTick;
+    
+  
+  motorInfo->oldPWM = motorInfo->nextPWM;
 }
 
 void MotorsInit()
@@ -267,12 +297,14 @@ void MotorsInit()
   // Configure each motor pin as an output
   for (i = 0; i < MOTOR_COUNT; i++)
   {
-    // Configure the pins for the motor bridge to be outputs and default high (stopped)
+    // Configure the pins for the motor bridge to be outputs and default low (stopped)
     MotorInfo* motorInfo = &m_motors[i];
-    nrf_gpio_pin_set(motorInfo->forwardUpPin);
-    nrf_gpio_pin_set(motorInfo->backwardDownPin);
-    nrf_gpio_cfg_output(motorInfo->backwardDownPin);
-    nrf_gpio_cfg_output(motorInfo->forwardUpPin);
+    nrf_gpio_pin_clear(motorInfo->n1Pin);
+    nrf_gpio_pin_clear(motorInfo->n2Pin);
+    nrf_gpio_pin_clear(motorInfo->pPin);
+    nrf_gpio_cfg_output(motorInfo->n1Pin);
+    nrf_gpio_cfg_output(motorInfo->n2Pin);
+    nrf_gpio_cfg_output(motorInfo->pPin);
     
     // Enable sensing for each encoder pin (only one per quadrature encoder)
     ConfigurePinSense(motorInfo->encoderPins[0], state);
@@ -296,7 +328,6 @@ void MotorsSetPower(u8 motorID, s16 power)
 
   // Store the PWM value for the MotorsUpdate() and keep the sign
   MotorInfo* motorInfo = &m_motors[motorID];
-  motorInfo->oldPWM = motorInfo->nextPWM;
   motorInfo->nextPWM = power;
 }
 
@@ -380,17 +411,16 @@ void MotorsUpdate()
 
 void MotorsPrintEncodersRaw()
 {
-  UARTPutChar('0' + nrf_gpio_pin_read(ENCODER_1_PIN));
-  UARTPutChar(' ');
-  UARTPutChar('0' + nrf_gpio_pin_read(ENCODER_2_PIN));
-  UARTPutChar(' ');
-  UARTPutChar('0' + nrf_gpio_pin_read(ENCODER_3A_PIN));
-  UARTPutChar(' ');
-  UARTPutChar('0' + nrf_gpio_pin_read(ENCODER_3B_PIN));
-  UARTPutChar(' ');
-  UARTPutChar('0' + nrf_gpio_pin_read(ENCODER_4A_PIN));
-  UARTPutChar(' ');
-  UARTPutChar('0' + nrf_gpio_pin_read(ENCODER_4B_PIN));
+  UARTPutChar('L');
+  UARTPutChar('0' + nrf_gpio_pin_read(ENCODER_LEFT_PIN));
+  UARTPutChar('R');
+  UARTPutChar('0' + nrf_gpio_pin_read(ENCODER_RIGHT_PIN));
+  UARTPutChar('A'); // Arms
+  UARTPutChar('0' + nrf_gpio_pin_read(ENCODER_LIFTA_PIN));
+  UARTPutChar('0' + nrf_gpio_pin_read(ENCODER_LIFTB_PIN));
+  UARTPutChar('H');
+  UARTPutChar('0' + nrf_gpio_pin_read(ENCODER_HEADA_PIN));
+  UARTPutChar('0' + nrf_gpio_pin_read(ENCODER_HEADB_PIN));
   UARTPutChar('\n');
 }
 

@@ -11,12 +11,172 @@
 #include "anki/common/basestation/math/matrix_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
 
+#include "anki/common/shared/utilities_shared.h"
+
 #if ANKICORETECH_USE_OPENCV
 #include "opencv2/calib3d/calib3d.hpp"
 #endif
 
 namespace Anki {
   
+#if 0
+#pragma mark --- RotationMatrixBase ----
+#endif
+  
+  template<MatDimType DIM>
+  RotationMatrixBase<DIM>::RotationMatrixBase(void)
+  {
+    for(s32 i=0; i<DIM; ++i) {
+      for(s32 j=0; j<DIM; ++j) {
+        (*this)(i,j) = static_cast<float>(i==j);
+      }
+    }
+  } // Constructor: RotationMatrixBase()
+  
+  void RenormalizeHelper(RotationMatrixBase<2>& R) {
+    // TODO: implement
+    assert(false);
+  }
+  
+  void RenormalizeHelper(RotationMatrixBase<3>& R)
+  {
+    // Convert to and from a rotation vector to get a valid orthogonal matrix
+    // TODO: consider using Quaternions instead?
+#if ANKICORETECH_USE_OPENCV
+    cv::Vec3f cvRvec;
+    cv::Rodrigues(R.get_CvMatx_(), cvRvec); // to rotation vector
+    cv::Rodrigues(cvRvec, R.get_CvMatx_()); // from rotation vector
+#else
+    assert(false);
+#endif
+  }
+  
+  template<MatDimType DIM>
+  void RotationMatrixBase<DIM>::Renormalize()
+  {
+   
+    bool needsRenormalization = false;
+    
+    for(s32 i=0; i<DIM; ++i) {
+      
+      const f32 rowNorm = this->GetRow(i).Length();
+      
+      // If the row norm is crazy, throw an exception / error
+      CORETECH_ASSERT(NEAR(rowNorm, 1.f, RotationMatrixBase<DIM>::OrthogonalityToleranceHigh));
+      
+      // If the row norm isn't crazy, but has gotten outside our tolerances
+      // then renormalize the matrix
+      if(!NEAR(rowNorm, 1.f, RotationMatrixBase<DIM>::OrthogonalityToleranceLow)) {
+        needsRenormalization = true;
+        break;
+      }
+      
+    }
+    
+    if(needsRenormalization) {
+      CoreTechPrint("Renormalizing a %dD rotation matrix.\n", DIM);
+      RenormalizeHelper(*this);
+    }
+  }
+  
+  template<MatDimType DIM>
+  bool RotationMatrixBase<DIM>::IsValid(const float tolerance) const
+  {
+    bool isValid = DIM > 0;
+    for(s32 i=0; isValid && i<DIM; ++i) {
+      isValid &= NEAR(this->GetColumn(i).Length(), 1.f, tolerance);
+    }
+    
+    return isValid;
+  }
+  
+  template<MatDimType DIM>
+  RotationMatrixBase<DIM> RotationMatrixBase<DIM>::operator* (const RotationMatrixBase<DIM>& R_other) const
+  {
+    RotationMatrixBase<DIM> Rnew( SmallSquareMatrix<DIM,float>::operator*(R_other) );
+    return Rnew;
+  }
+  
+  template<MatDimType DIM>
+  RotationMatrixBase<DIM>& RotationMatrixBase<DIM>::operator*=(const RotationMatrixBase<DIM>& R_other)
+  {
+    SmallSquareMatrix<DIM,float>::operator*=(R_other);
+    this->Renormalize();
+    return *this;
+  }
+  
+  template<MatDimType DIM>
+  RotationMatrixBase<DIM>& RotationMatrixBase<DIM>::preMultiplyBy(const RotationMatrixBase<DIM>& R_other)
+  {
+    SmallSquareMatrix<DIM,float>::preMultiplyBy(R_other);
+    this->Renormalize();
+    return *this;
+  }
+  
+  
+  template<MatDimType DIM>
+  RotationMatrixBase<DIM>::RotationMatrixBase(const SmallSquareMatrix<DIM, float> &matrix)
+  : SmallSquareMatrix<DIM, float>(matrix)
+  {
+    CORETECH_ASSERT(this->IsValid());
+    this->Renormalize();
+  }
+  
+  template<MatDimType DIM>
+  RotationMatrixBase<DIM>::RotationMatrixBase(std::initializer_list<float> initValues)
+  : SmallSquareMatrix<DIM,float>(initValues)
+  {
+    CORETECH_ASSERT(this->IsValid());
+  }
+  
+  template<MatDimType DIM>
+  RotationMatrixBase<DIM>& RotationMatrixBase<DIM>::Transpose(void)
+  {
+    SmallSquareMatrix<DIM, float>::Transpose();
+    return *this;
+  } // Transpose()
+  
+  template<MatDimType DIM>
+  void RotationMatrixBase<DIM>::GetTranspose(RotationMatrixBase<DIM>& outTransposed) const
+  {
+    outTransposed = *this;
+    outTransposed.Transpose();
+  }
+  
+  template<MatDimType DIM>
+  RotationMatrixBase<DIM>& RotationMatrixBase<DIM>::Invert(void)
+  {
+    this->Transpose();
+    return *this;
+  }
+  
+  template<MatDimType DIM>
+  void RotationMatrixBase<DIM>::GetInverse(RotationMatrixBase<DIM>& outInverted) const
+  {
+    outInverted = *this;
+    outInverted.Invert();
+  }
+
+  
+  // Explicit instantiation of 2D and 3D base class
+  template class RotationMatrixBase<2>;
+  template class RotationMatrixBase<3>;
+  
+#if 0
+#pragma mark --- RotationMatrix2d ----
+#endif
+  
+  RotationMatrix2d::RotationMatrix2d()
+  : RotationMatrixBase<2>()
+  {
+    
+  }
+  
+  RotationMatrix2d::RotationMatrix2d(std::initializer_list<float> initVals)
+  : RotationMatrixBase<2>(initVals)
+  {
+    
+  }
   
   RotationMatrix2d::RotationMatrix2d(const Radians angle)
   {
@@ -29,6 +189,16 @@ namespace Anki {
     (*this)(1,1) =  cosAngle;
   }
 
+  RotationMatrix2d::RotationMatrix2d(const Matrix_2x2f &matrix2x2)
+  : RotationMatrixBase<2>(matrix2x2)
+  {
+    
+  }
+  
+
+#if 0
+#pragma mark --- RotationVector3d ---
+#endif
   
   RotationVector3d::RotationVector3d(void)
   : angle(0.f), axis(X_AXIS_3D)
@@ -69,59 +239,81 @@ namespace Anki {
             || (angle == other.angle == 0));
   }
   
-  UnitQuaternion::UnitQuaternion(const RotationVector3d& Rvec)
+  
+#if 0
+#pragma mark --- UnitQuaternion ----
+#endif
+  
+  template<typename T>
+  T UnitQuaternion<T>::NormalizationTolerance = 1000.f * std::numeric_limits<T>::epsilon();
+  
+  template<typename T>
+  UnitQuaternion<T>::UnitQuaternion()
+  : Point<4,T>(1,0,0,0)
   {
-    const float halfAngle = Rvec.get_angle().ToFloat() * 0.5f;
-    this->data[0] = std::cos(halfAngle);
     
-    const float sinHalfAngle = std::sin(halfAngle);
-    this->data[1] = Rvec.get_axis().x() * sinHalfAngle;
-    this->data[2] = Rvec.get_axis().y() * sinHalfAngle;
-    this->data[3] = Rvec.get_axis().z() * sinHalfAngle;
+  }
+
+  template<typename T>
+  UnitQuaternion<T>::UnitQuaternion(const UnitQuaternion& other)
+  : Point<4, T>(other)
+  {
+    
   }
   
-  RotationMatrix3d::RotationMatrix3d(void)
-//  : rotationVector(0.f, {Z_AXIS_3D})
+  template<typename T>
+  UnitQuaternion<T>::UnitQuaternion(const T w, const T x, const T y, const T z)
+  : Point<4,T>(w,x,y,z)
   {
-    (*this)(0,0) = 1.f;
-    (*this)(0,1) = 0.f;
-    (*this)(0,2) = 0.f;
-    
-    (*this)(1,0) = 0.f;
-    (*this)(1,1) = 1.f;
-    (*this)(1,2) = 0.f;
-  
-    (*this)(2,0) = 0.f;
-    (*this)(2,1) = 0.f;
-    (*this)(2,2) = 1.f;
-    
-  } // Constructor: RotationMatrix3d()
-  
-  RotationMatrix3d::RotationMatrix3d(const RotationVector3d &rotVec_in)
-//  : rotationVector(rotVec_in)
-  {
-    Rodrigues(rotVec_in, *this);
+    this->Normalize();
   }
   
-  RotationMatrix3d::RotationMatrix3d(const Matrix_3x3f &matrix3x3)
-  : Matrix_3x3f(matrix3x3)
+  template<typename T>
+  UnitQuaternion<T>& UnitQuaternion<T>::Normalize()
   {
-    CORETECH_ASSERT(std::abs(this->GetColumn(0).Length() - 1.f) < 1e-6f &&
-                    std::abs(this->GetColumn(1).Length() - 1.f) < 1e-6f &&
-                    std::abs(this->GetColumn(2).Length() - 1.f) < 1e-6f);
-  }
-  
-  
-  RotationMatrix3d::RotationMatrix3d(std::initializer_list<float> initValues)
-  : Matrix_3x3f(initValues)
-  {
-    CORETECH_ASSERT(std::abs(this->GetColumn(0).Length() - 1.f) < 1e-6f &&
-                    std::abs(this->GetColumn(1).Length() - 1.f) < 1e-6f &&
-                    std::abs(this->GetColumn(2).Length() - 1.f) < 1e-6f);
+    if(Point<4,T>::MakeUnitLength() == 0) {
+      CORETECH_THROW("Tried to normalize an all-zero UnitQuaternion.\n");
+    }
     
-    //Rodrigues(*this, rotationVector);
+    return *this;
   }
-                                  
+  
+  template<typename T>
+  UnitQuaternion<T> UnitQuaternion<T>::operator*(const UnitQuaternion<T>& other) const
+  {
+    UnitQuaternion output(*this);
+    output *= other;
+    return output;
+  }
+  
+  template<typename T>
+  UnitQuaternion<T>& UnitQuaternion<T>::operator*=(const UnitQuaternion<T>& other)
+  {
+    const T wNew = (this->w()*other.w()) - (this->x()*other.x()) - (this->y()*other.y()) - (this->z()*other.z());
+    const T xNew = (this->w()*other.x()) + (this->x()*other.w()) + (this->y()*other.z()) - (this->z()*other.y());
+    const T yNew = (this->w()*other.y()) - (this->x()*other.z()) + (this->y()*other.w()) + (this->z()*other.x());
+    const T zNew = (this->w()*other.z()) + (this->x()*other.y()) - (this->y()*other.x()) + (this->z()*other.w());
+    
+    this->w() = wNew;
+    this->x() = xNew;
+    this->y() = yNew;
+    this->z() = zNew;
+    
+    const T newLength = Point<4,T>::Length();
+    if(!NEAR(newLength, 1.f, UnitQuaternion<T>::NormalizationTolerance)) {
+      Point<4,T>::operator/=(newLength);
+    }
+    
+    return *this;
+  }
+  
+  // Explicit instantiation for single and double precision
+  template class UnitQuaternion<float_t>;
+  template class UnitQuaternion<double_t>;
+  
+#if 0
+#pragma mark --- RotationMatrix 3d ----
+#endif
   
   
   RotationMatrix3d::RotationMatrix3d(const Radians angle, const Vec3f &axis)
@@ -130,23 +322,30 @@ namespace Anki {
     RotationVector3d Rvec(angle, axis);
     Rodrigues(Rvec, *this);
   }
+
   
-  /* Isn't this inherited from the base class now?
-  Point3f RotationMatrix3d::operator*(const Point3f &p) const
+  RotationMatrix3d::RotationMatrix3d(const RotationVector3d &rotVec_in)
   {
-#if ANKICORETECH_USE_OPENCV
-    // TODO: pretty sure there's a better way to do this:
-    cv::Matx<float,3,1> vec(p.x, p.y, p.z);
-    cv::Matx<float,3,1> out(this->get_CvMatx_() * vec);
-    Point3f rotatedPoint(out(0,0), out(1,0), out(2,0));
-#else
-    assert(false);
-#endif
+    Rodrigues(rotVec_in, *this);
+  }
+  
+  RotationMatrix3d::RotationMatrix3d()
+  : RotationMatrixBase<3>()
+  {
     
-    return rotatedPoint;
+  }
+  
+  RotationMatrix3d::RotationMatrix3d(const Matrix_3x3f &matrix3x3)
+  : RotationMatrixBase<3>(matrix3x3)
+  {
     
-  } // RotationMatrix3d::operator*(Point3f)
-  */
+  }
+  
+  RotationMatrix3d::RotationMatrix3d(std::initializer_list<float> initVals)
+  : RotationMatrixBase<3>(initVals)
+  {
+    
+  }
   
   
   Radians RotationMatrix3d::GetAngleDiffFrom(const RotationMatrix3d &other) const
@@ -247,6 +446,10 @@ namespace Anki {
   } // RotationMatrix3d::GetAngleAroundZaxis()
   
   
+#if 0
+#pragma mark --- Rodrigues Functions ---
+#endif
+  
   void Rodrigues(const RotationVector3d &Rvec_in,
                  RotationMatrix3d &Rmat_out)
   {
@@ -280,59 +483,6 @@ namespace Anki {
 #endif
     
   } // Rodrigues(Rmat, Rvec)
-  
-  /*
-  void RotationMatrix3d::operator*=(const RotationMatrix3d &other)
-  {
-    // Regular matrix multiplcation
-    Matrix_3x3f::operator*=(other);
-    
-    // Keep the rotation vector updated
-    Rodrigues(*this, this->rotationVector);
-  }
-  
-  void RotationMatrix3d::preMultiplyBy(const RotationMatrix3d &other)
-  {
-    // Regular matrix multiplication
-    Matrix_3x3f::preMultiplyBy(other);
-    
-    // Keep the rotation vector updated
-    Rodrigues(*this, this->rotationVector);
-  }
-   */
-  
-  RotationMatrix3d& RotationMatrix3d::Transpose(void)
-  {
-    Matrix_3x3f::Transpose();
-   
-    /*
-    // Just negate rotation angle:
-    Radians angle;
-    Vec3f   axis;
-    rotationVector.get_angleAndAxis(angle, axis);
-    rotationVector = RotationVector3d(-angle, axis);
-    */
-    return *this;
-  } // Transpose()
-  
-  void RotationMatrix3d::GetTranspose(RotationMatrix3d& outTransposed) const
-  {
-    outTransposed = *this;
-    outTransposed.Transpose();
-  }
-  
-  RotationMatrix3d& RotationMatrix3d::Invert(void)
-  {
-    this->Transpose();
-    return *this;
-  }
-  
-  void RotationMatrix3d::GetInverse(RotationMatrix3d& outInverted) const
-  {
-    outInverted = *this;
-    outInverted.Invert();
-  }
-  
   
   
 } // namespace Anki
