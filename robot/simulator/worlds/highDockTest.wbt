@@ -165,8 +165,15 @@ Block1x1 {
 DEF Cozmo_1 CozmoBot {
   name "CozmoBot_1"
   #rotation 0 0 1 -1.57
-  #controller ""
 }
+
+#DEF CozmoViz_1 CozmoBot {
+#  name "CozmoBot_1"
+#  translation 0.2 0 0
+#  vizMode TRUE
+#}
+
+
 RobotAdvertisementService {
 }
 DEF WorldComms BlockWorldComms {

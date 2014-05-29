@@ -96,11 +96,11 @@ namespace Anki {
           nodeName = nameField->getSFString();
         }
         
-        // Get the controller name
-        std::string controllerName = "";
-        webots::Field* controllerField = nd->getField("controller");
-        if (controllerField) {
-          controllerName = controllerField->getSFString();
+        // Get the vizMode status
+        bool vizMode = false;
+        webots::Field* vizModeField = nd->getField("vizMode");
+        if (vizModeField) {
+          vizMode = vizModeField->getSFBool();
         }
         
         //printf(" Node %d: name \"%s\" typeName \"%s\" controllerName \"%s\"\n",
@@ -108,7 +108,7 @@ namespace Anki {
         
         if (nd->getTypeName().find("Supervisor") != std::string::npos &&
             nodeName.find("CozmoBot") != std::string::npos &&
-            controllerName.empty()) {
+            vizMode) {
           
           printf("Found Viz robot with name %s\n", nodeName.c_str());
           CozmoBotVizParams p;

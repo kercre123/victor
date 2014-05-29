@@ -38,8 +38,8 @@ DEF Cozmo_1 CozmoBot {
   # Move robot off mat
   translation 0 1 0
 
-  # Disable controller
-  controller ""
+  # Enable vizMode
+  vizMode TRUE
 }
 RobotAdvertisementService {
 }

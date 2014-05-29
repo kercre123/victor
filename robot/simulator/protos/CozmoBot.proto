@@ -22,6 +22,9 @@ PROTO CozmoBot [
   field SFString controllerArgs ""
 
   field SFColor bodyColor 0.9 0.88 0.88
+
+  # Set to TRUE if you just want to use the model for visualization.
+  field SFBool vizMode FALSE
 ]
 {
 
@@ -29,13 +32,21 @@ Supervisor {
   translation IS translation
   rotation IS rotation
   name IS name
+
+  %{ if not fields.vizMode then }%
   controller IS controller
   controllerArgs IS controllerArgs
+  %{ else }%
+  controller ""
+  controllerArgs ""
+  %{ end }%
   
+  %{ if not fields.vizMode then }%
   physics Physics {
     density 5000
     #mass 0.17 # about 6 ounces
   }
+  %{ end }%
   
   children [
     Transform {
@@ -84,9 +95,11 @@ Supervisor {
 				position 0
 				axis 0 -1 0
 			  }
+			  %{ if not fields.vizMode then }%
 			  device RotationalMotor {
 				name "HeadMotor"
 			  }
+			  %{ end }%
 			  endPoint Solid {            
 				children [
 				  DEF EAR_SQUARES Shape {
@@ -223,10 +236,13 @@ Supervisor {
 				  }
 				]
 				name "head"
+
+				%{ if not fields.vizMode then }%
 				boundingObject USE HEAD_SPHERE
 				physics Physics {
 					density 100
 				}
+				%{ end }%
 			  }
 			}
 		  ]
@@ -284,11 +300,12 @@ Supervisor {
 			  ] # BODY_SHAPE Group children
 			} # BODY_SHAPE Group
 		  ] # BODY Solid children
-	
+		  %{ if not fields.vizMode then }%
 		  boundingObject USE BODY_SHAPE
 		  physics Physics {
 			 density 1500
 		  }
+		  %{ end }%
 		} # BODY Solid
 	
 		DEF BACKPACK Solid {
@@ -347,10 +364,13 @@ Supervisor {
 		      ]
 		    }                      
 		  ] # BACKPACK Solid children
+
+		  %{ if not fields.vizMode then }%
 	          boundingObject USE BACKPACK_GROUP
 		  physics Physics {
 			density 2000
 		  }
+		  %{ end }%
 		} # BACKPACK Solid
 
 		DEF CASTER Solid {
@@ -370,10 +390,13 @@ Supervisor {
 			}
 		  ]
 		  contactMaterial "nofriction"
+
+		  %{ if not fields.vizMode then }%
 		  boundingObject USE CASTER_SHAPE
 		  physics Physics {
 			 density 5000
 		  }	
+		  %{ end }%
 		} # CASTER Solid
 	
 		DEF LEFT_FRONT_WHEEL HingeJoint {
@@ -436,10 +459,13 @@ Supervisor {
 			  }
 			]
 			contactMaterial "highfriction"
+
+			%{ if not fields.vizMode then }%
 			boundingObject USE DRIVE_TIRE
 			physics DEF WHEEL_PHYSICS Physics {
 			  density 1000
 			}
+			%{ end }%
 		  }
 		}
 		DEF RIGHT_FRONT_WHEEL HingeJoint {
@@ -463,8 +489,11 @@ Supervisor {
 			  USE DRIVE_TIRE
 			]
 			contactMaterial "highfriction"
+
+			%{ if not fields.vizMode then }%
 			boundingObject USE DRIVE_TIRE
 			physics USE WHEEL_PHYSICS
+			%{ end }%
 		  }
 		}
 		DEF REAR_AXLE Transform {
@@ -506,8 +535,11 @@ Supervisor {
 				  }
 				]
 				contactMaterial "nofriction"
+
+				%{ if not fields.vizMode then }%
 				boundingObject USE REAR_TIRE
 				physics USE WHEEL_PHYSICS
+				%{ end }%
 			  }
 			}
 			DEF RIGHT_REAR_WHEEL HingeJoint {
@@ -526,8 +558,11 @@ Supervisor {
 				  }
 				]
 				contactMaterial "nofriction"
+
+				%{ if not fields.vizMode then }%
 				boundingObject USE REAR_TIRE
 				physics USE WHEEL_PHYSICS
+				%{ end }%
 			  }
 			}
 		  ] # Transform children
@@ -552,11 +587,13 @@ Supervisor {
 				minStop IS liftAngle_lowLimit
 				maxStop IS liftAngle_highLimit
 			  }
+			  %{ if not fields.vizMode then }%
 			  device RotationalMotor {
 				name "LiftMotor"
 				maxVelocity 2
 				maxTorque 2
 			  }
+			  %{ end }%
 			  endPoint Solid {
 				children [
 
@@ -720,10 +757,13 @@ Supervisor {
 							}
 
 						  ]
+
+						  %{ if not fields.vizMode then }%
 						  boundingObject USE LIFTER_SHAPE
 						  physics Physics {
 						    density 100
 						  }
+						  %{ end }%
 						}  # SmallFingerGripper Solid
 					  } # Hinge Joint
 					] # Transform children
@@ -797,6 +837,7 @@ Supervisor {
 			  
 				] # endPoint Solid children
 
+				%{ if not fields.vizMode then }%
 				boundingObject Group {
 				  children [
 
@@ -821,6 +862,7 @@ Supervisor {
 				physics Physics {
 				  density 100
 				}
+				%{ end }%
 
 			  } # endPoint Transform
 			} # HingeJoint
