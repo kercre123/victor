@@ -108,6 +108,50 @@ namespace Anki
       return result;
     } // u32 __USAT(const s32 val, const u8 n)
 
+    u8 __CLZ(const u32 value)
+    {
+      u8 numZeros = 0;
+
+      for(s32 i=31; i>=0; i--) {
+        if(value & (1<<i)) {
+          break;
+        } else {
+          numZeros++;
+        }
+      }
+
+      return numZeros;
+    } // u8 __CLZ(const u32 value)
+
+    u32 __SADD8(const u32 val1, const u32 val2)
+    {
+      register32 register1(val1);
+      register32 register2(val2);
+
+      geBits._u32 = 0;
+
+      for(s32 i=0; i<4; i++) {
+        s32 sum = static_cast<s32>(register1._s8x4.v[i]) + static_cast<s32>(register2._s8x4.v[i]);
+
+        // Set the GE bits
+        if(sum >= 0) {
+          geBits._u8x4.v[i] = 0xFF;
+        }
+
+        if(sum < s8_MIN) {
+          sum += 0x100;
+        } else if(sum > s8_MAX) {
+          sum -= 0x100;
+        }
+
+        AnkiAssert(CLIP(sum, s8_MIN, s8_MAX) == sum);
+
+        register1._s8x4.v[i] = static_cast<s8>(sum);
+      }
+
+      return register1;
+    } // u32 __SADD8(const u32 val1, const u32 val2)
+
     u32 __QADD8(const u32 val1, const u32 val2)
     {
       register32 register1(val1);
@@ -121,6 +165,48 @@ namespace Anki
       return register1;
     } // u32 __QADD8(const u32 val1, const u32 val2)
 
+    u32 __SHADD8(const u32 val1, const u32 val2)
+    {
+      register32 register1(val1);
+      register32 register2(val2);
+
+      for(s32 i=0; i<4; i++) {
+        s32 sum = static_cast<s32>(register1._s8x4.v[i]) + static_cast<s32>(register2._s8x4.v[i]);
+
+        sum >>= 1;
+
+        AnkiAssert(CLIP(sum, s8_MIN, s8_MAX) == sum);
+
+        register1._s8x4.v[i] = static_cast<s8>(sum);
+      }
+
+      return register1;
+    } // u32 __SHADD8(const u32 val1, const u32 val2)
+
+    u32 __UADD8(const u32 val1, const u32 val2)
+    {
+      register32 register1(val1);
+      register32 register2(val2);
+
+      geBits._u32 = 0;
+
+      for(s32 i=0; i<4; i++) {
+        u32 sum = static_cast<u32>(register1._u8x4.v[i]) + static_cast<u32>(register2._u8x4.v[i]);
+
+        // Set the GE bits
+        if(sum > u8_MAX) {
+          geBits._u8x4.v[i] = 0xFF;
+          sum -= 0x100;
+        }
+
+        AnkiAssert(CLIP(sum, 0, u8_MAX) == sum);
+
+        register1._u8x4.v[i] = static_cast<u8>(sum);
+      }
+
+      return register1;
+    } // u32 __UADD8(const u32 val1, const u32 val2)
+
     u32 __UQADD8(const u32 val1, const u32 val2)
     {
       register32 register1(val1);
@@ -133,6 +219,24 @@ namespace Anki
 
       return register1;
     } // u32 __UQADD8(const u32 val1, const u32 val2)
+
+    u32 __UHADD8(const u32 val1, const u32 val2)
+    {
+      register32 register1(val1);
+      register32 register2(val2);
+
+      for(s32 i=0; i<4; i++) {
+        u32 sum = static_cast<u32>(register1._u8x4.v[i]) + static_cast<u32>(register2._u8x4.v[i]);
+
+        sum >>= 1;
+
+        AnkiAssert(sum <= u8_MAX);
+
+        register1._u8x4.v[i] = static_cast<u8>(sum);
+      }
+
+      return register1;
+    } // u32 __UHADD8(const u32 val1, const u32 val2)
 
     u32 __SSUB8(const u32 val1, const u32 val2)
     {
@@ -167,6 +271,24 @@ namespace Anki
 
       return register1;
     } // u32 __QSUB8(const u32 val1, const u32 val2)
+
+    u32 __SHSUB8(const u32 val1, const u32 val2)
+    {
+      register32 register1(val1);
+      register32 register2(val2);
+
+      for(s32 i=0; i<4; i++) {
+        s32 result = static_cast<s32>(register1._s8x4.v[i]) - static_cast<s32>(register2._s8x4.v[i]);
+
+        result >>= 1;
+
+        AnkiAssert(CLIP(result, s8_MIN, s8_MAX) == result);
+
+        register1._s8x4.v[i] = static_cast<s8>(result);
+      }
+
+      return register1;
+    } // u32 __SHSUB8(const u32 val1, const u32 val2)
 
     u32 __USUB8(const u32 val1, const u32 val2)
     {
@@ -204,6 +326,57 @@ namespace Anki
       return register1;
     } // u32 __UQSUB8(const u32 val1, const u32 val2)
 
+    u32 __UHSUB8(const u32 val1, const u32 val2)
+    {
+      register32 register1(val1);
+      register32 register2(val2);
+
+      for(s32 i=0; i<4; i++) {
+        s32 result = static_cast<s32>(register1._u8x4.v[i]) - static_cast<s32>(register2._u8x4.v[i]);
+
+        result >>= 1;
+
+        if(result < 0) {
+          result += 0x100;
+        }
+
+        AnkiAssert(result <= u8_MAX);
+
+        register1._u8x4.v[i] = static_cast<u8>(result);
+      }
+
+      return register1;
+    } // u32 __UHSUB8(const u32 val1, const u32 val2)
+
+    u32 __SADD16(const u32 val1, const u32 val2)
+    {
+      register32 register1(val1);
+      register32 register2(val2);
+
+      geBits._u32 = 0;
+
+      for(s32 i=0; i<2; i++) {
+        s32 sum = static_cast<s32>(register1._s16x2.v[i]) + static_cast<s32>(register2._s16x2.v[i]);
+
+        // Set the GE bits
+        if(sum >= 0) {
+          geBits._u16x2.v[i] = 0xFFFF;
+        }
+
+        if(sum < s16_MIN) {
+          sum += 0x10000;
+        } else if(sum > s16_MAX) {
+          sum -= 0x10000;
+        }
+
+        AnkiAssert(CLIP(sum, s16_MIN, s16_MAX) == sum);
+
+        register1._s16x2.v[i] = static_cast<s16>(sum);
+      }
+
+      return register1;
+    } // u32 __SADD16(const u32 val1, const u32 val2)
+
     u32 __QADD16(const u32 val1, const u32 val2)
     {
       register32 register1(val1);
@@ -217,6 +390,48 @@ namespace Anki
       return register1;
     } // u32 __QADD16(const u32 val1, const u32 val2)
 
+    u32 __SHADD16(const u32 val1, const u32 val2)
+    {
+      register32 register1(val1);
+      register32 register2(val2);
+
+      for(s32 i=0; i<2; i++) {
+        s32 sum = static_cast<s32>(register1._s16x2.v[i]) + static_cast<s32>(register2._s16x2.v[i]);
+
+        sum >>= 1;
+
+        AnkiAssert(CLIP(sum, s16_MIN, s16_MAX) == sum);
+
+        register1._s16x2.v[i] = static_cast<s16>(sum);
+      }
+
+      return register1;
+    } // u32 __SHADD16(const u32 val1, const u32 val2);
+
+    u32 __UADD16(const u32 val1, const u32 val2)
+    {
+      register32 register1(val1);
+      register32 register2(val2);
+
+      geBits._u32 = 0;
+
+      for(s32 i=0; i<2; i++) {
+        u32 sum = static_cast<u32>(register1._u16x2.v[i]) + static_cast<u32>(register2._u16x2.v[i]);
+
+        // Set the GE bits
+        if(sum > u16_MAX) {
+          geBits._u16x2.v[i] = 0xFFFF;
+          sum -= 0x10000;
+        }
+
+        AnkiAssert(CLIP(sum, 0, u16_MAX) == sum);
+
+        register1._u16x2.v[i] = static_cast<u16>(sum);
+      }
+
+      return register1;
+    } //  u32 __UADD16(const u32 val1, const u32 val2);
+
     u32 __UQADD16(const u32 val1, const u32 val2)
     {
       register32 register1(val1);
@@ -229,6 +444,24 @@ namespace Anki
 
       return register1;
     } // u32 __UQADD16(const u32 val1, const u32 val2)
+
+    u32 __UHADD16(const u32 val1, const u32 val2)
+    {
+      register32 register1(val1);
+      register32 register2(val2);
+
+      for(s32 i=0; i<2; i++) {
+        u32 sum = static_cast<u32>(register1._u16x2.v[i]) + static_cast<u32>(register2._u16x2.v[i]);
+
+        sum >>= 1;
+
+        AnkiAssert(sum <= u16_MAX);
+
+        register1._u16x2.v[i] = static_cast<u16>(sum);
+      }
+
+      return register1;
+    } // u32 __UHADD16(const u32 val1, const u32 val2)
 
     u32 __SSUB16(const u32 val1, const u32 val2)
     {

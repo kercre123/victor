@@ -104,29 +104,29 @@ namespace Anki
     u32 __USAT(const s32 val, const u8 n);
 
     //Count leading zeros [not for Cortex-M0 variants].
-    //u8 __CLZ(const u32 value);
+    u8 __CLZ(const u32 value);
 
     //
     // Intrinsic functions for SIMD instructions
     //
 
     //GE setting quad 8-bit signed addition.
-    //u32 __SADD8(const u32 val1, const u32 val2);
+    u32 __SADD8(const u32 val1, const u32 val2);
 
     //Q setting quad 8-bit saturating addition.
     u32 __QADD8(const u32 val1, const u32 val2);
 
     //Quad 8-bit signed addition with halved results.
-    //u32 __SHADD8(const u32 val1, const u32 val2);
+    u32 __SHADD8(const u32 val1, const u32 val2);
 
     //GE setting quad 8-bit unsigned addition.
-    //u32 __UADD8(const u32 val1, const u32 val2);
+    u32 __UADD8(const u32 val1, const u32 val2);
 
     //Quad 8-bit unsigned saturating addition.
     u32 __UQADD8(const u32 val1, const u32 val2);
 
     //Quad 8-bit unsigned addition with halved results.
-    //u32 __UHADD8(const u32 val1, const u32 val2);
+    u32 __UHADD8(const u32 val1, const u32 val2);
 
     //GE setting quad 8-bit signed subtraction.
     u32 __SSUB8(const u32 val1, const u32 val2);
@@ -135,7 +135,7 @@ namespace Anki
     u32 __QSUB8(const u32 val1, const u32 val2);
 
     //Quad 8-bit signed subtraction with halved results.
-    //u32 __SHSUB8(const u32 val1, const u32 val2);
+    u32 __SHSUB8(const u32 val1, const u32 val2);
 
     //GE setting quad 8-bit unsigned subtract.
     u32 __USUB8(const u32 val1, const u32 val2);
@@ -144,25 +144,25 @@ namespace Anki
     u32 __UQSUB8(const u32 val1, const u32 val2);
 
     //Quad 8-bit unsigned subtraction with halved results.
-    //u32 __UHSUB8(const u32 val1, const u32 val2);
+    u32 __UHSUB8(const u32 val1, const u32 val2);
 
     //GE setting dual 16-bit signed addition.
-    //u32 __SADD16(const u32 val1, const u32 val2);
+    u32 __SADD16(const u32 val1, const u32 val2);
 
     //Q setting dual 16-bit saturating addition.
     u32 __QADD16(const u32 val1, const u32 val2);
 
     //Dual 16-bit signed addition with halved results.
-    //u32 __SHADD16(const u32 val1, const u32 val2);
+    u32 __SHADD16(const u32 val1, const u32 val2);
 
     //GE setting dual 16-bit unsigned addition.
-    //u32 __UADD16(const u32 val1, const u32 val2);
+    u32 __UADD16(const u32 val1, const u32 val2);
 
     //Dual 16-bit unsigned saturating addition.
     u32 __UQADD16(const u32 val1, const u32 val2);
 
     //Dual 16-bit unsigned addition with halved results.
-    //u32 __UHADD16(const u32 val1, const u32 val2);
+    u32 __UHADD16(const u32 val1, const u32 val2);
 
     //GE setting dual 16-bit signed subtraction.
     u32 __SSUB16(const u32 val1, const u32 val2);
