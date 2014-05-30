@@ -169,7 +169,7 @@ namespace Anki
         ,0x5687,0x68
         ,0x5688,0x03
           ,0x3500,0x00  // 16.4 exposure time msb (4 bits)
-          ,0x3501,0x08  // 16.4 exposure time middle (8 bits)
+          ,0x3501,0x01  // 16.4 exposure time middle (8 bits)
           ,0x3502,0x00  // 16.4 exposure time lsb (4.4 bits)
         ,0,0
         };
