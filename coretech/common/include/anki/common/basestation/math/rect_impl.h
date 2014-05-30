@@ -61,6 +61,31 @@ namespace Anki {
 #endif
   
   template<typename T>
+  T Rectangle<T>::GetX()      const
+  { return x; }
+  
+  template<typename T>
+  T Rectangle<T>::GetY()      const
+  { return y; }
+  
+  template<typename T>
+  T Rectangle<T>::GetWidth()  const
+  { return width; }
+  
+  template<typename T>
+  T Rectangle<T>::GetHeight() const
+  { return height; }
+  
+  template<typename T>
+  T Rectangle<T>::GetXmax()   const
+  { return x + width; }
+  
+  template<typename T>
+  T Rectangle<T>::GetYmax()   const
+  { return y + height; }
+  
+  
+  template<typename T>
   template<class PointContainer>
   void Rectangle<T>::initFromPointContainer(const PointContainer& points)
   {

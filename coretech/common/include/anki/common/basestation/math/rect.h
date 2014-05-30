@@ -48,6 +48,15 @@ namespace Anki {
     
     using cv::Rect_<T>::area;
     
+    inline T GetX()      const;
+    inline T GetY()      const;
+    inline T GetWidth()  const;
+    inline T GetHeight() const;
+    
+    // Get x+width or y+height
+    inline T GetXmax()   const;
+    inline T GetYmax()   const;
+    
     Rectangle<T> Intersect(const Rectangle<T>& other) const;
     
     bool Contains(const Point<2,T>& point) const;
