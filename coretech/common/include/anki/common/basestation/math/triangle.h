@@ -24,7 +24,7 @@ namespace Anki {
   
   template<typename T>
   bool IsPointWithinTriangle(const Point<2,T>&                      point,
-                             const std::array<const Point<2,T>, 3>& triangle);
+                             const std::array<Point<2,T>, 3>& triangle);
 
 
 } // namespace Anki

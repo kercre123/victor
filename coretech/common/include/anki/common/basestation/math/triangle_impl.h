@@ -79,7 +79,7 @@ namespace Anki {
   // Triangle given as array of 3 2D points
   template<typename T>
   bool IsPointWithinTriangle(const Point<2,T>&                      point,
-                             const std::array<const Point<2,T>, 3>& triangle)
+                             const std::array<Point<2,T>, 3>& triangle)
   {
     const f32 x1 = static_cast<f32>(triangle[0].x());
     const f32 y1 = static_cast<f32>(triangle[0].y());
