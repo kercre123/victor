@@ -78,7 +78,6 @@ namespace Anki
 
       void UARTConfigure()
       {
-        // Supporting 2.1
         GPIO_PIN_SOURCE(TX, GPIOC, 10);
         GPIO_PIN_SOURCE(RX, GPIOC, 11);
         
@@ -91,12 +90,12 @@ namespace Anki
         GPIO_InitTypeDef GPIO_InitStructure;
         GPIO_InitStructure.GPIO_Pin = PIN_TX;
         GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-        GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
-        GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;  // XXX - why not OD to interface with 3V3 PropPlug?
+        GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+        GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
         GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
         GPIO_Init(GPIO_TX, &GPIO_InitStructure);
         
-        GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+        GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
         GPIO_InitStructure.GPIO_Pin = PIN_RX;
         GPIO_Init(GPIO_RX, &GPIO_InitStructure);
         

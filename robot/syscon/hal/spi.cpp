@@ -4,80 +4,75 @@
 #include "nrf_gpio.h"
 #include "spi_master.h"
 
-namespace
-{
-  const u8 PIN_SPI_MISO = 1;
-  const u8 PIN_SPI_MOSI = 0;
-  const u8 PIN_SPI_SCK = 30;  // SPI_SCLK_HEAD
-}
+#define NRF_BAUD(x) (int)(x * 268.435456)   // 2^28/1MHz
 
-void PowerInit()
-{
-  // Ensure MOSI is low
-  nrf_gpio_pin_clear(PIN_SPI_MOSI);
-  nrf_gpio_cfg_output(PIN_SPI_MOSI);
-  
-  const u8 PIN_VINs_EN = 11;
-  nrf_gpio_pin_clear(PIN_VINs_EN);
-  nrf_gpio_cfg_output(PIN_VINs_EN);
-  
-  const u8 PIN_VDDs_EN = 12;
-  nrf_gpio_pin_set(PIN_VDDs_EN);
-  nrf_gpio_cfg_output(PIN_VDDs_EN);
-  
-  // 50ms is long enough for the head to wake up.
-  MicroWait(50000);
-  
-  nrf_gpio_pin_clear(PIN_VDDs_EN);
-  nrf_gpio_pin_set(PIN_VINs_EN);
-}
+const u32 UART_BAUDRATE = NRF_BAUD(350000);
+const u8 PIN_TX = 8;   // 2.1
+
+// Don't speak until spoken to (part of handshaking)
+static u8 m_spokenTo = 0;
 
 void SPIInit()
 {
-  // Make sure the head board is alive and ready
-  PowerInit();
+  // Power on the peripheral
+  NRF_UART0->POWER = 1;
   
-  // Configure the pins
-  nrf_gpio_cfg_output(PIN_SPI_SCK);
-  nrf_gpio_cfg_output(PIN_SPI_MOSI);
-  nrf_gpio_cfg_input(PIN_SPI_MISO, NRF_GPIO_PIN_NOPULL);
+  // Initialize the UART for the specified baudrate
+  // Mike noticed the baud rate is almost rate*268 - it's actually (2^28 / 1MHz)
+  NRF_UART0->BAUDRATE = UART_BAUDRATE;
   
-  // Not sure if it needs to be powered on or if it already is. Let's be safe.
-  NRF_SPI0->POWER = 1;
+  // Disable parity and hardware flow-control
+  NRF_UART0->CONFIG = 0;
   
-  // Configure the peripheral for the physical pins are being used for SPI
-  NRF_SPI0->PSELSCK = PIN_SPI_SCK;
-  NRF_SPI0->PSELMISO = PIN_SPI_MISO;
-  NRF_SPI0->PSELMOSI = PIN_SPI_MOSI;
-  
-  // Base frequency starts at 0x02000000
-  NRF_SPI0->FREQUENCY = (0x02000000 << Freq_4Mbps);
- 
-  // Configure for SPI_MODE0 with LSB-first transmission
-  // NOTE: Header does not match docs on these bits. Tread with care.
-  NRF_SPI0->CONFIG = (SPI_CONFIG_CPHA_Leading << SPI_CONFIG_CPHA_Pos) |
-    (SPI_CONFIG_CPOL_ActiveHigh << SPI_CONFIG_CPOL_Pos) |
-    (SPI_CONFIG_ORDER_LsbFirst << SPI_CONFIG_ORDER_Pos);
-  
-  NRF_SPI0->EVENTS_READY = 0;
-  
-  // Enable the SPI peripheral
-  NRF_SPI0->ENABLE = 1;
+  // Enable the peripheral and start the tasks
+  NRF_UART0->ENABLE = UART_ENABLE_ENABLE_Enabled << UART_ENABLE_ENABLE_Pos;
+  NRF_UART0->TASKS_STARTTX = 1;
+  NRF_UART0->TASKS_STARTRX = 1;
+  NRF_UART0->EVENTS_RXDRDY = 0;  
 }
 
+// Transmit first, then wait for a reply
 void SPITransmitReceive(u16 length, const u8* dataTX, u8* dataRX)
-{
-  u16 i;
-  
-  for (i = 0; i < length; i++)
+{  
+  // If spoken to, switch to transmit mode and send the data
+  if (m_spokenTo)
   {
-    NRF_SPI0->TXD = (u32)dataTX[i];
-    
-    while (!NRF_SPI0->EVENTS_READY)
-      ;
-    
-    dataRX[i] = NRF_SPI0->RXD;
-    
-    NRF_SPI0->EVENTS_READY = 0;
+    MicroWait(80);    // Other side waits 40uS
+    NRF_UART0->PSELRXD = 0xFFFFffff;  // Disconnect RX
+    NRF_UART0->PSELTXD = PIN_TX;
+    nrf_gpio_cfg_output(PIN_TX);
+    for (int i = 0; i < length; i++)
+    {
+      NRF_UART0->TXD = dataTX[i];
+      while (NRF_UART0->EVENTS_TXDRDY != 1)
+        {}
+      NRF_UART0->EVENTS_TXDRDY = 0;   // XXX: Needed?
+    }
+  }
+
+  // Switch to receive mode and wait for a reply
+  nrf_gpio_cfg_input(PIN_TX, NRF_GPIO_PIN_NOPULL);
+  NRF_UART0->PSELTXD = 0xFFFFffff;  // Disconnect TX
+  NRF_UART0->PSELRXD = PIN_TX;
+
+  // Wait 10uS for turnaround - 80uS on the other side
+  MicroWait(10);
+  u32 startTime = GetCounter();
+  
+  NRF_UART0->EVENTS_RXDRDY = 0;   // XXX: Needed?
+  for (int i = 0; i < length; i++)
+  {
+    // Timeout after 5ms of no communication
+    while (NRF_UART0->EVENTS_RXDRDY != 1)
+      if (m_spokenTo && GetCounter() - startTime > 41666) // 5ms
+        return;
+    NRF_UART0->EVENTS_RXDRDY = 0;   // XXX: Needed?
+    dataRX[i] = (u8)NRF_UART0->RXD;
+  }
+  
+  // Wait before first reply
+  if (!m_spokenTo) {
+    MicroWait(5000);
+    m_spokenTo = 1;    
   }
 }

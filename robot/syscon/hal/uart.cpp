@@ -2,15 +2,12 @@
 #include "nrf51.h"
 #include "nrf_gpio.h"
 
-namespace
-{
-  // It looks like we might not be able to go above 1Mbaud with this chip.
-  const u32 UART_BAUDRATE = 1000000;
+// It looks like we might not be able to go above 1Mbaud with this chip.
+const u32 UART_BAUDRATE = 1000000;
 
-  const u8 PIN_TX = 17;
-  
-  bool m_isInitialized = false;
-}
+const u8 PIN_TX = 21;   // 2.1
+
+bool m_isInitialized = false;
 
 void UARTInit()
 {
@@ -91,3 +88,4 @@ void UARTPutHex32(u32 value)
   NRF_UART0->EVENTS_RXDRDY = 0;
   return (u8)NRF_UART0->RXD;
 }*/
+
