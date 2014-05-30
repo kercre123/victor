@@ -5,6 +5,7 @@ classdef CozmoTestWorldCreator
         usbChannel;
         useOffboardVision;
         checkRobotPose;
+        blockTypeLUT;        
     end
     
     methods
@@ -22,6 +23,17 @@ classdef CozmoTestWorldCreator
             this.useOffboardVision = UseOffboardVision;
             this.checkRobotPose = CheckRobotPose;
             
+            % NOTE: the BlockTypes used below must match those defined in BlockDefinitions.h!
+            % TODO: auto build this LUT ased on BlockDefinitions.h
+            this.blockTypeLUT = containers.Map('keyType', 'char', 'valueType', 'double');
+            
+            this.blockTypeLUT('bullseye2') = 1;
+            this.blockTypeLUT('fire')      = 2;
+            this.blockTypeLUT('sqtarget')  = 3;
+            this.blockTypeLUT('angryFace') = 4;
+            this.blockTypeLUT('star5')     = 5;
+            this.blockTypeLUT('dice')      = 6;
+
             StartWorldFile(this);
             
         end % Constructor CozmoTestWorld

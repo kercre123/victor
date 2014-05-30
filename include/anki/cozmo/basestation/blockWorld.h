@@ -77,12 +77,12 @@ namespace Anki
       const Vision::ObservableObject* GetObservableObjectByID(const ObjectID_t objectID) const;
       
       // Finds all blocks in the world whose centers are within the specified
-      // heights off the ground (z dimension) and returns a vector of rectangles
-      // of their outlines on the ground plane (z=0).  Can also add pad the
-      // rectangles by a specified amount.
+      // heights off the ground (z dimension) and returns a vector of quads
+      // of their outlines on the ground plane (z=0).  Can also pad the
+      // bounding boxes by a specified amount.
       void GetBlockBoundingBoxesXY(const f32 minHeight, const f32 maxHeight,
                                    const f32 padding,
-                                   std::vector<Quad2f>& rectangles) const;
+                                   std::vector<Quad2f>& boundingBoxes) const;
       
       // Returns true if any blocks were moved, added, or deleted on the
       // last update. Useful, for example, to know whether to update the

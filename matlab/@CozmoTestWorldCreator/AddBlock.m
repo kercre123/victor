@@ -2,8 +2,7 @@ function AddBlock(this, varargin)
 
 BlockPose = Pose();
 BlockProto = 'Block1x1';
-BlockName  = 'Block';
-BlockType  = 1;
+BlockName  = '';
 FrontFace  = '';
 BackFace   = '';
 LeftFace   = '';
@@ -34,6 +33,18 @@ end
 
 T = BlockPose.T / 1000;
 
+if ~isempty(BlockName)
+    try
+        blockType = this.blockTypeLUT(BlockName);
+    catch 
+        error('No block type found for block name "%s"', BlockName);
+    end
+    BlockName = 'Block';
+else
+    blockType = 0;
+    BlockName = '';
+end
+    
 fprintf(fid, [ ...
     '%s {\n' ...
     '  name "%s"\n' ...
@@ -47,7 +58,7 @@ fprintf(fid, [ ...
     '  facemarkerTop    ["textures/%s.png"]\n', ...
     '  facemarkerBottom ["textures/%s.png"]\n', ...
     '}\n\n'], ...
-    BlockProto, BlockName, BlockType, T(1), T(2), T(3), ...
+    BlockProto, BlockName, blockType, T(1), T(2), T(3), ...
     BlockPose.axis(1), BlockPose.axis(2), BlockPose.axis(3), ...
     BlockPose.angle, ...
     FrontFace, BackFace, LeftFace, RightFace, TopFace, BottomFace);

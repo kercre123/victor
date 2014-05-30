@@ -7,7 +7,7 @@
             "Axis" : [ 0.0, 0.0, 1.0 ],
             "Translation" : [ 145.0, 60.0, 21.754750 ]
          },
-         "Type" : 3
+         "Type" : 2
       }
    ],
    "CameraCalibration" : {
@@ -34,20 +34,20 @@
          "VisionMarkers" : [
             {
                "Name" : "MessageVisionMarker",
-               "markerType" : 19,
+               "markerType" : 27,
                "timestamp" : 0,
-               "x_imgLowerLeft" : 182.633300781250,
-               "x_imgLowerRight" : 217.4163055419922,
-               "x_imgUpperLeft" : 183.6780700683594,
-               "x_imgUpperRight" : 219.6145172119141,
-               "y_imgLowerLeft" : 87.37574768066406,
-               "y_imgLowerRight" : 90.27210998535156,
-               "y_imgUpperLeft" : 53.09787750244141,
-               "y_imgUpperRight" : 54.89170837402344
+               "x_imgLowerLeft" : 182.6413879394531,
+               "x_imgLowerRight" : 217.2852630615234,
+               "x_imgUpperLeft" : 183.8571319580078,
+               "x_imgUpperRight" : 219.6047821044922,
+               "y_imgLowerLeft" : 87.27594757080078,
+               "y_imgLowerRight" : 90.16099548339844,
+               "y_imgUpperLeft" : 53.27946472167969,
+               "y_imgUpperRight" : 54.98150634765625
             },
             {
                "Name" : "MessageVisionMarker",
-               "markerType" : 25,
+               "markerType" : 33,
                "timestamp" : 0,
                "x_imgLowerLeft" : 98.21678924560547,
                "x_imgLowerRight" : 137.9810028076172,

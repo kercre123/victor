@@ -157,9 +157,13 @@ namespace Anki
         this->templateImageWidth = templateImage.get_size(1);
 
         // Only a few markers are currently supported
-        AnkiConditionalErrorAndReturn(markerType == Anki::Vision::MARKER_BATTERIES,
-          "BinaryTracker::BinaryTracker", "markerType %d is not supported for header initialization", markerType);
-
+        
+        // TODO: Update this now that we've removed the battery marker image
+        
+        //AnkiConditionalErrorAndReturn(markerType == Anki::Vision::MARKER_BATTERIES,
+        //  "BinaryTracker::BinaryTracker", "markerType %d is not supported for header initialization", markerType);
+        AnkiError("BinaryTracker::BinaryTracker", "BinaryTracker needs to be updated now that Battery marker has been removed.");
+        
         AnkiConditionalErrorAndReturn(templateImageHeight > 0 && templateImageWidth > 0,
           "BinaryTracker::BinaryTracker", "template widths and heights must be greater than zero");
 
@@ -197,7 +201,8 @@ namespace Anki
 
           Array<u8> binaryTemplate;
 
-          if(markerType == Anki::Vision::MARKER_BATTERIES) {
+          // TODO: BinaryTracker needs to be updated now that Battery marker has been removed
+          if(false) { //markerType == Anki::Vision::MARKER_BATTERIES) {
             binaryTemplate = DecodeRunLengthBinary<u8>(
               &battery[0], battery_WIDTH,
               battery_ORIGINAL_HEIGHT, battery_ORIGINAL_WIDTH, Flags::Buffer(false,false,false),

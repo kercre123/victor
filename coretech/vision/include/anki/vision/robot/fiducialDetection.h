@@ -38,6 +38,7 @@ namespace Anki
       const u16 maxConnectedComponentSegments,
       const s32 maxExtractedQuads,
       const s32 quadRefinementIterations,
+      const s32 numRefinementSamples,
       const bool returnInvalidMarkers,
       MemoryStack scratchCcm,
       MemoryStack scratchOnchip,

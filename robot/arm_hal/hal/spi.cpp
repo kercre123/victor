@@ -1,3 +1,4 @@
+// XXX: "spi.cpp" was a bad name for "spineport.cpp"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "hal/portable.h"
@@ -10,137 +11,210 @@ namespace Anki
   {
     namespace HAL
     {
-      // DMA does not work when these are in CCM.
-      ONCHIP volatile GlobalDataToHead g_dataToHead;
-      ONCHIP volatile GlobalDataToBody g_dataToBody;
+      // These are the DMA copies - they will have tearing and corruption    
+      // m_DMAtoHead is double sized so it can carry the echoed body data (to check for xmit error?)
+      // These are ONCHIP because CCM can't handle DMA
+      //typedef struct { GlobalDataToBody body; GlobalDataToHead head; } DMABodyPlusHead;
+      volatile static ONCHIP /*DMABodyPlusHead*/ GlobalDataToHead m_DMAtoHead;
+      volatile static ONCHIP GlobalDataToBody m_DMAtoBody;
       
-      GPIO_PIN_SOURCE(SPI_SCK, GPIOB, 3);
-      GPIO_PIN_SOURCE(SPI_MISO, GPIOB, 4);
-      GPIO_PIN_SOURCE(SPI_MOSI, GPIOB, 5);
+      // These are "live" copies - they won't tear or corrupt, but they will change underneath you
+      volatile ONCHIP GlobalDataToHead g_dataToHead;
+      volatile ONCHIP GlobalDataToBody g_dataToBody;
       
-      static void ConfigurePins()
+      // Set to true when it is safe to call MainExecution
+      u8 g_halInitComplete = 0;
+
+      #define BAUDRATE 350000
+
+      #define RCC_GPIO        RCC_AHB1Periph_GPIOD
+      #define RCC_DMA         RCC_AHB1Periph_DMA1
+      #define RCC_UART        RCC_APB1Periph_USART2
+      #define GPIO_AF         GPIO_AF_USART2
+      #define UART            USART2
+
+      #define DMA_STREAM_RX   DMA1_Stream5
+      #define DMA_CHANNEL_RX  DMA_Channel_4
+      #define DMA_FLAG_RX     DMA_FLAG_TCIF5    // Stream 5
+      #define DMA_IRQ_RX      DMA1_Stream5_IRQn
+      #define DMA_HANDLER_RX  DMA1_Stream5_IRQHandler
+
+      #define DMA_STREAM_TX   DMA1_Stream6
+      #define DMA_CHANNEL_TX  DMA_Channel_4
+      #define DMA_FLAG_TX     DMA_FLAG_TCIF6    // Stream 6
+      #define DMA_IRQ_TX      DMA1_Stream6_IRQn
+      #define DMA_HANDLER_TX  DMA1_Stream6_IRQHandler
+      
+      GPIO_PIN_SOURCE(TRX, GPIOD, 5);
+
+      void PrintCrap()
       {
-        // Configure the pins for SPI in AF mode
-        GPIO_PinAFConfig(GPIO_SPI_SCK, SOURCE_SPI_SCK, GPIO_AF_SPI1);
-        GPIO_PinAFConfig(GPIO_SPI_MISO, SOURCE_SPI_MISO, GPIO_AF_SPI1);
-        GPIO_PinAFConfig(GPIO_SPI_MOSI, SOURCE_SPI_MOSI, GPIO_AF_SPI1);
-        
-        GPIO_InitTypeDef GPIO_InitStructure;
-        GPIO_InitStructure.GPIO_Pin = PIN_SPI_SCK | PIN_SPI_MISO | PIN_SPI_MOSI;
-        GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-        GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-        GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-        GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_NOPULL;
-        GPIO_Init(GPIO_SPI_SCK, &GPIO_InitStructure);  // GPIOB
-        
-        // Initialize SPI in slave mode
-        SPI_I2S_DeInit(SPI1);
-        SPI_InitTypeDef SPI_InitStructure;
-        SPI_InitStructure.SPI_Direction = SPI_Direction_2Lines_FullDuplex;
-        SPI_InitStructure.SPI_Mode = SPI_Mode_Slave;
-        SPI_InitStructure.SPI_DataSize = SPI_DataSize_8b;
-        SPI_InitStructure.SPI_CPOL = SPI_CPOL_Low;
-        SPI_InitStructure.SPI_CPHA = SPI_CPHA_1Edge;
-        SPI_InitStructure.SPI_NSS = SPI_NSS_Soft;
-        SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_8;
-        SPI_InitStructure.SPI_FirstBit = SPI_FirstBit_LSB;
-        SPI_InitStructure.SPI_CRCPolynomial = 7;
-        SPI_Init(SPI1, &SPI_InitStructure);
-        
-        // Set the source to note the message is coming from the head
-        g_dataToBody.common.source = SPI_SOURCE_HEAD;
+        printf("\nTX: %d  RX: %d\n", DMA_STREAM_TX->NDTR, DMA_STREAM_RX->NDTR);
+        for (int i = 0; i < sizeof(g_dataToHead); i++)
+        {
+          printf("%02x", ((u8*)(&g_dataToHead))[i]);
+          if ((i & 63) == 63)
+            printf("\n");
+        }
       }
-      
-      static void ConfigureIRQ()
-      {
-        // Enable interrupts on SPI RX complete
-        DMA_ITConfig(DMA2_Stream2, DMA_IT_TC, ENABLE);
-        DMA_ClearFlag(DMA2_Stream2, DMA_FLAG_TCIF2);
-        
-        NVIC_InitTypeDef NVIC_InitStructure;
-        NVIC_InitStructure.NVIC_IRQChannel = DMA2_Stream2_IRQn;
-        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 3;  // MainExecution isn't THAT important...
-        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
-        NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-        NVIC_Init(&NVIC_InitStructure);
-      }
-      
-      static void ConfigureDMA()
-      {
-        // Initialize DMA for SPI
-        // SPI1_TX is DMA2_Stream5 Channel 3
-        // SPI1_RX is DMA2_Stream2 Channel 3
-        DMA_DeInit(DMA2_Stream5);
-        DMA_DeInit(DMA2_Stream2);
-        
-        DMA_InitTypeDef DMA_InitStructure;
-        DMA_InitStructure.DMA_BufferSize = sizeof(g_dataToHead);
-        DMA_InitStructure.DMA_FIFOMode = DMA_FIFOMode_Enable;  // FIFO only works with data with size divisible by 16
-        DMA_InitStructure.DMA_FIFOThreshold = DMA_FIFOThreshold_1QuarterFull;
-        DMA_InitStructure.DMA_MemoryBurst = DMA_MemoryBurst_Single;
-        DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Word;
-        DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
-        DMA_InitStructure.DMA_Mode = DMA_Mode_Circular;
-        DMA_InitStructure.DMA_PeripheralBaseAddr = (u32)&(SPI1->DR);
-        DMA_InitStructure.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;
-        DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
-        DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
-        DMA_InitStructure.DMA_Priority = DMA_Priority_VeryHigh;
-        // Configure TX DMA
-        DMA_InitStructure.DMA_Channel = DMA_Channel_3;
-        DMA_InitStructure.DMA_DIR = DMA_DIR_MemoryToPeripheral;
-        DMA_InitStructure.DMA_Memory0BaseAddr = (u32)&g_dataToBody;
-        DMA_Init(DMA2_Stream5, &DMA_InitStructure);
-        // Configure RX DMA
-        DMA_InitStructure.DMA_Channel = DMA_Channel_3;
-        DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralToMemory;
-        DMA_InitStructure.DMA_Memory0BaseAddr = (u32)&g_dataToHead;
-        DMA_Init(DMA2_Stream2, &DMA_InitStructure);
-        
-        ConfigureIRQ();
-        
-        // Enable DMA
-        DMA_Cmd(DMA2_Stream5, ENABLE);
-        DMA_Cmd(DMA2_Stream2, ENABLE);
-        
-        // Enable DMA SPI requests
-        SPI_I2S_DMACmd(SPI1, SPI_I2S_DMAReq_Tx, ENABLE);
-        SPI_I2S_DMACmd(SPI1, SPI_I2S_DMAReq_Rx, ENABLE);
-      }
-      
+
       void SPIInit()
       {
         // Clock configuration
-        RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
-        RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA2, ENABLE);
-        RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI1, ENABLE);
-
-        // Wait for body board to send a burst of data - SCK will go high
-        while (!(GPIO_READ(GPIO_SPI_SCK) & PIN_SPI_SCK))
-          ;
-        // After start of burst, wait 1ms to get into idle period
-        // XXX-NDM: This is dependent on the SPI clock speed (4MHz right now)
-        MicroWait(2000);
+        RCC_AHB1PeriphClockCmd(RCC_GPIO, ENABLE);
+        RCC_AHB1PeriphClockCmd(RCC_DMA, ENABLE);
+        RCC_APB1PeriphClockCmd(RCC_UART, ENABLE);
         
-        // We know we are in idle period - safe to enable right now        
-        ConfigurePins();
-        ConfigureDMA();
-        SPI_Cmd(SPI1, ENABLE);        
-      }
+        // Configure the pins for UART in AF mode
+        GPIO_InitTypeDef GPIO_InitStructure;
+        GPIO_InitStructure.GPIO_Pin = PIN_TRX;  
+        GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+        GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
+        GPIO_InitStructure.GPIO_OType = GPIO_OType_OD;    // Open collector transmit/receive
+        GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+        GPIO_Init(GPIO_TRX, &GPIO_InitStructure);
+        
+        GPIO_PinAFConfig(GPIO_TRX, SOURCE_TRX, GPIO_AF);
+        
+        // Configure the UART for the appropriate baudrate
+        USART_InitTypeDef USART_InitStructure;
+        USART_Cmd(UART, DISABLE);
+        USART_InitStructure.USART_BaudRate = BAUDRATE;
+        USART_InitStructure.USART_WordLength = USART_WordLength_8b;
+        USART_InitStructure.USART_StopBits = USART_StopBits_1;
+        USART_InitStructure.USART_Parity = USART_Parity_No;
+        USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
+        USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
+        USART_Init(UART, &USART_InitStructure);
+        //USART_HalfDuplexCmd(UART, ENABLE);
+        USART_Cmd(UART, ENABLE);
+        
+        // Configure DMA for receiving
+        DMA_DeInit(DMA_STREAM_RX);
+        
+        DMA_InitTypeDef DMA_InitStructure;
+        DMA_InitStructure.DMA_Channel = DMA_CHANNEL_RX;
+        DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)&UART->DR;
+        DMA_InitStructure.DMA_Memory0BaseAddr = (u32)&m_DMAtoHead;
+        DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralToMemory;
+        DMA_InitStructure.DMA_BufferSize = sizeof(m_DMAtoHead);
+        DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
+        DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
+        DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
+        DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;
+        DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;
+        DMA_InitStructure.DMA_Priority = DMA_Priority_Medium;
+        DMA_InitStructure.DMA_FIFOMode = DMA_FIFOMode_Disable;
+        DMA_InitStructure.DMA_FIFOThreshold = DMA_FIFOThreshold_Full;
+        DMA_InitStructure.DMA_MemoryBurst = DMA_MemoryBurst_Single;
+        DMA_InitStructure.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;
+        DMA_Init(DMA_STREAM_RX, &DMA_InitStructure);
+        
+        // Enable DMA
+        USART_DMACmd(UART, USART_DMAReq_Rx, ENABLE);
+        //DMA_Cmd(DMA_STREAM_RX, ENABLE);
+                        
+        // Enable interrupt on DMA transfer complete for RX.
+        DMA_ITConfig(DMA_STREAM_RX, DMA_IT_TC, ENABLE);
+        
+        NVIC_InitTypeDef NVIC_InitStructure;
+        NVIC_InitStructure.NVIC_IRQChannel = DMA_IRQ_RX;
+        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;  // Don't want this to be a very high priority
+        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+        NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+        NVIC_Init(&NVIC_InitStructure);   
+
+        // Set up first "hello" message to body
+        g_dataToBody.common.source = SPI_SOURCE_HEAD;
+        memcpy((void*)&m_DMAtoBody, (void*)&g_dataToBody, sizeof(m_DMAtoBody));
+        
+        // Configure DMA For transmitting
+        DMA_DeInit(DMA_STREAM_TX);        
+        DMA_InitStructure.DMA_Channel = DMA_CHANNEL_TX;
+        DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)&UART->DR;
+        DMA_InitStructure.DMA_Memory0BaseAddr = (u32)&m_DMAtoBody;
+        DMA_InitStructure.DMA_DIR = DMA_DIR_MemoryToPeripheral;
+        DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;
+        DMA_InitStructure.DMA_BufferSize = sizeof(m_DMAtoBody);
+        DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
+        DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
+        DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
+        DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;  // Use in combination with FIFO to increase throughput? Needs to be divisible by 1, 1/4, 1/2 of FIFO size
+        DMA_InitStructure.DMA_Priority = DMA_Priority_Medium;
+        DMA_InitStructure.DMA_FIFOMode = DMA_FIFOMode_Disable;  // See comment above
+        DMA_InitStructure.DMA_FIFOThreshold = DMA_FIFOThreshold_Full;
+        DMA_InitStructure.DMA_MemoryBurst = DMA_MemoryBurst_Single;
+        DMA_InitStructure.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;
+        DMA_Init(DMA_STREAM_TX, &DMA_InitStructure);
+        
+        // Enable interrupt on DMA transfer complete for RX.
+        DMA_ITConfig(DMA_STREAM_TX, DMA_IT_TC, ENABLE);
+        
+        NVIC_InitStructure.NVIC_IRQChannel = DMA_IRQ_TX;
+        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;  // Don't want this to be a very high priority
+        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+        NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+        NVIC_Init(&NVIC_InitStructure); 
+        
+        // Enable first UART transmission - this will tell the body we are awake and ready                
+        USART_DMACmd(UART, USART_DMAReq_Tx, ENABLE);
+        DMA_Cmd(DMA_STREAM_TX, ENABLE);
+      }                      
     }
   }
 }
 
-// DMA Completed IRQ Handler
-// This is where we synchronize MainExecution with the body board.
+// DMA transmit complete IRQ handler
+// This is where we turn around the channel to receive more data
 extern "C"
-void DMA2_Stream2_IRQHandler(void)
+void DMA_HANDLER_TX(void)
 {
   using namespace Anki::Cozmo::HAL;
-  
+    
   // Clear DMA Transfer Complete flag
-  DMA_ClearFlag(DMA2_Stream2, DMA_FLAG_TCIF2);
+  DMA_ClearFlag(DMA_STREAM_TX, DMA_FLAG_TX);
+  USART_HalfDuplexCmd(UART, ENABLE);
+  //UARTPutChar('T');
+  
+  // Wait 40uS before listening again
+  MicroWait(200);
+  
+  // Clear anything in the USART
+  while (UART->SR & USART_FLAG_RXNE)
+    volatile int x = UART->DR;
+  
+  // Turn around the connection and receive reply
+  DMA_STREAM_RX->NDTR = sizeof(m_DMAtoHead);// Buffer size
+  DMA_STREAM_RX->M0AR = (u32)&m_DMAtoHead;  // Buffer address
+  DMA_STREAM_RX->CR |= DMA_SxCR_EN; // Enable DMA
+}
 
+// DMA receive Completed IRQ Handler
+// This is where we synchronize MainExecution with the body board.
+extern "C"
+void DMA_HANDLER_RX(void)
+{
+  using namespace Anki::Cozmo::HAL;
+    
+  // Clear DMA Transfer Complete flag
+  DMA_ClearFlag(DMA_STREAM_RX, DMA_FLAG_RX);
+  USART_HalfDuplexCmd(UART, DISABLE);
+  //PrintCrap();
+  //UARTPutChar('R');
+  
+  // Atomically copy "live" buffers to/from the DMA copies
+  // XXX: There is a timing error causing an off-by-one, but I have to get into Kevin's hands
+  memcpy((void*)&g_dataToHead, ((u8*)&m_DMAtoHead) + 1, sizeof(g_dataToHead) - 1);
+  memcpy((void*)&m_DMAtoBody, (void*)&g_dataToBody, sizeof(m_DMAtoBody));
+  
+  // Wait 80uS before replying
+  MicroWait(80);
+  
+  // Turn around the connection and transmit reply
+  DMA_STREAM_TX->NDTR = sizeof(m_DMAtoBody);// Buffer size
+  DMA_STREAM_TX->M0AR = (u32)&m_DMAtoBody;  // Buffer address
+  DMA_STREAM_TX->CR |= DMA_SxCR_EN; // Enable DMA
+  
 #if 0
   volatile u8* d = (volatile u8*)&g_dataToHead;
   for (int i = 0; i < 0x10; i++)
@@ -162,11 +236,14 @@ void DMA2_Stream2_IRQHandler(void)
     }
   }
   
-  s_failedTransferCount = 0;
+  s_failedTransferCount = 0;  // XXX: We need to do something about sync loss here
   
 	// Hack to allow timing events longer than about 50ms
 	GetMicroCounter();
 	
-  // Run MainExecution
-  Anki::Cozmo::Robot::step_MainExecution();
+  // Run MainExecution if init is done
+  if (g_halInitComplete)
+  {
+    //  Anki::Cozmo::Robot::step_MainExecution();
+  }
 }

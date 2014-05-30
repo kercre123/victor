@@ -1,35 +1,16 @@
 #include "timer.h"
 #include "nrf.h"
 
-namespace
-{
-  //const u32 IRQ_PRIORITY = 1;
-  
-  //u32 m_low = 0;
-  //u8 m_high = 0;
-}
-
 void TimerInit()
 {
-  // Clear all RTC1 interrupts
-  //NRF_RTC1->INTENCLR = 0xFFFFFFFF;
-  
-  // Clear pending interrupts
-  //NVIC_ClearPendingIRQ(RTC1_IRQn);
-  //NVIC_SetPriority(RTC1_IRQn, IRQ_PRIORITY);
-  //NVIC_EnableIRQ(RTC1_IRQn);
-  
-  // XXX: Keep this section commented until we figure out a fix for the
-  // external oscillator. It doesn't seem to start up all the time.
-  
   // The synthesized LFCLK requires the 16MHz HFCLK to be running, since there's no
   // external crystal/oscillator.
-  //NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
-  //NRF_CLOCK->TASKS_HFCLKSTART = 1;
+  NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
+  NRF_CLOCK->TASKS_HFCLKSTART = 1;
   
   // Wait for the external oscillator to start
-  //while (!NRF_CLOCK->EVENTS_HFCLKSTARTED)
-  //  ;
+  while (!NRF_CLOCK->EVENTS_HFCLKSTARTED)
+    ;
   
   // Enabling constant latency as indicated by PAN 11 "HFCLK: Base current with HFCLK 
   // running is too high" found at Product Anomaly document found at

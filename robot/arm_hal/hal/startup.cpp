@@ -8,8 +8,8 @@ namespace Anki
     {
       void Startup()
       {
-        // TODO: Reset peripherals, clocks, and GPIO
-        // ...
+        // Check that we are on the correct board revision - 2.1 in this case
+        
       }
     }
   }

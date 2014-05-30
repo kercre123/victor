@@ -30,6 +30,12 @@ namespace Anki {
 
     class MsgPacket {
     public:
+      MsgPacket(){};
+      MsgPacket(const s32 sourceId, const s32 destId, const u8 dataLen, const u8* data) :
+      dataLen(dataLen), sourceId(sourceId), destId(destId) {
+        memcpy(this->data, data, dataLen);
+      }
+      
       static const u8 MAX_DATA_LEN = 128;
       u8 data[MAX_DATA_LEN];
       u8 dataLen = 0;

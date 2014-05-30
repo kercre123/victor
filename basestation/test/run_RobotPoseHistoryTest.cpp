@@ -178,7 +178,8 @@ TEST(RobotPoseHistory, GroundTruthPose)
   p.SetPose(frameID, p1, h1);
   hist.AddVisionOnlyPose(t2, p);
   
-  // Requested pose at t3 should be pose p1 modified by the pose diff between p2 and p3
+  // Since the frame ID of the ground truth pose is the same the frame of the
+  // raw pose at t3, we expect to get back the raw pose at t3.
   ASSERT_TRUE(hist.ComputePoseAt(t3, t, p) == RESULT_OK);
   /*
   printf("Pose p:\n");
@@ -187,6 +188,34 @@ TEST(RobotPoseHistory, GroundTruthPose)
   printf("Pose p1_by_p2Top3:\n");
   p1_by_p2Top3.Print();
   */
+  ASSERT_TRUE(p.GetPose().IsSameAs(p3, DIST_EQ_THRESH, ANGLE_EQ_THRESH));
+  
+  // 3) Now inserting the same ground truth pose again but with a higher frame id
+  p.SetPose(frameID+1, p1, h1);
+  hist.AddVisionOnlyPose(t2, p);
+
+  // Requested pose at t3 should be pose p1 modified by the pose diff between p2 and p3
+  ASSERT_TRUE(hist.ComputePoseAt(t3, t, p) == RESULT_OK);
+  
   ASSERT_TRUE(p.GetPose().IsSameAs(p1_by_p2Top3, DIST_EQ_THRESH, ANGLE_EQ_THRESH));
+  
+  
+  // 4) Check that there are no computed poses in history
+  RobotPoseStamp *rps = nullptr;
+  ASSERT_TRUE(hist.GetComputedPoseAt(t3, &rps) == RESULT_FAIL);
+  
+  // Compute pose at t3 again but this time insert it as well
+  ASSERT_TRUE(hist.ComputeAndInsertPoseAt(t3, t, &rps) == RESULT_OK);
+  ASSERT_TRUE(rps != nullptr);
+  
+  // Get the computed pose.
+  // Should be the exact same as rps.
+  RobotPoseStamp *rps2 = nullptr;
+  ASSERT_TRUE(hist.GetComputedPoseAt(t3, &rps2) == RESULT_OK);
+  ASSERT_TRUE(rps == rps2);
+  
+  // 5) Get latest vision only pose
+  ASSERT_TRUE(hist.GetLatestVisionOnlyPose(t, p) == RESULT_OK);
+  ASSERT_TRUE(p.GetPose() == p1);
 }
 

@@ -398,12 +398,33 @@ namespace Anki {
     CORETECH_THROW_IF(j >= NCOLS);
     
     Point<NROWS,T> column;
-    for(unsigned int i=0; i<NROWS; ++i) {
+    for(MatDimType i=0; i<NROWS; ++i) {
       column[i] = this->operator()(i,j);
     }
     
     return column;
   }
+  
+  template<MatDimType NROWS, MatDimType NCOLS, typename T>
+  void SmallMatrix<NROWS,NCOLS,T>::SetRow(const MatDimType i, const Point<NCOLS,T>& row)
+  {
+    CORETECH_THROW_IF(i >= NROWS);
+
+    for(MatDimType j=0; j<NCOLS; ++j) {
+      this->operator()(i,j) = row[j];
+    }
+  }
+  
+  template<MatDimType NROWS, MatDimType NCOLS, typename T>
+  void SmallMatrix<NROWS,NCOLS,T>::SetColumn(const MatDimType j, const Point<NROWS,T>& column)
+  {
+    CORETECH_THROW_IF(j >= NCOLS);
+    
+    for(MatDimType i=0; i<NROWS; ++i) {
+      this->operator()(i,j) = column[i];
+    }
+  }
+
   
   /*
   template<DimType NROWS, DimType NCOLS, typename T>
@@ -596,20 +617,22 @@ namespace Anki {
   
   template<MatDimType DIM, typename T>
   template<typename T_other>
-  void SmallSquareMatrix<DIM,T>::operator*=(const SmallSquareMatrix<DIM,T_other> &other)
+  SmallSquareMatrix<DIM,T>& SmallSquareMatrix<DIM,T>::operator*=(const SmallSquareMatrix<DIM,T_other> &other)
   {
     (*this) = (*this) * other;
+    return *this;
   }
 
   template<MatDimType DIM, typename T>
   template<typename T_other>
-  void SmallSquareMatrix<DIM,T>::preMultiplyBy(const SmallSquareMatrix<DIM,T_other> &other)
+  SmallSquareMatrix<DIM,T>& SmallSquareMatrix<DIM,T>::preMultiplyBy(const SmallSquareMatrix<DIM,T_other> &other)
   {
     // TODO: Come up with our own in-place, super-awesome pre-multiplcation
     // method (since opencv doesn't give us one, and this causes a copy)
     SmallSquareMatrix<DIM,T> otherCopy(other);
     otherCopy *= (*this);
     *this = otherCopy;
+    return *this;
   }
   
   template<MatDimType DIM, typename T>

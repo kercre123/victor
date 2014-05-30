@@ -2,8 +2,6 @@
 #include "anki/cozmo/robot/hal.h"
 #include "portable.h"
 
-//#define MIKES_HEAD_BOARD
-
 #define ENABLE_WIFI
 
 // Set to 1 to enable LED indicator of wifi activity
@@ -47,6 +45,14 @@ static const MACIP g_MACToIP[] =
     0x00, 0x23, 0xA7, 0x0C, 0x03, 0xF7,
     192, 168, 3, 34
   },  
+  {
+    0x00, 0x23, 0xA7, 0x0C, 0x03, 0x81,
+    192, 168, 3, 35
+  },  
+  {
+    0x00, 0x23, 0xA7, 0x0C, 0x03, 0xF8,
+    192, 168, 3, 36
+  },  
 };
 
 static int g_moduleIndex = 0;
@@ -62,6 +68,7 @@ namespace Anki
       extern s32 (*GetChar)(u32 timeout);
       
       extern int UARTGetFreeSpace();
+      void UARTPutHex(u8 c);
       
       enum WaitState
       {
@@ -264,27 +271,17 @@ namespace Anki
 
       const s32 TCP_SIZE_WITHOUT_PAYLOAD  = (sizeof(TCPPayload) - 1400);
 
+      #define WAIT_FOR_INTERRUPT() while (!(GPIO_READ(GPIO_INTERRUPT) & PIN_INTERRUPT)) {}
+      #define WAIT_FOR_SPI_READY_0() while (GPIO_READ(GPIO_SPI_READY) & PIN_SPI_READY) {}
+      #define WAIT_FOR_SPI_READY_1() while (!(GPIO_READ(GPIO_SPI_READY) & PIN_SPI_READY)) {}
 
-      #define WAIT_FOR_INTERRUPT() while (!(GPIO_READ(GPIO_INTERRUPT) & PIN_INTERRUPT)) ;
-      #define WAIT_FOR_SPI_READY_0() while (GPIO_READ(GPIO_SPI_READY) & PIN_SPI_READY) ;
-      #define WAIT_FOR_SPI_READY_1() while (!(GPIO_READ(GPIO_SPI_READY) & PIN_SPI_READY)) ;
-
-#ifdef MIKES_HEAD_BOARD
-      GPIO_PIN_SOURCE(SPI_CS, GPIOC, 12);
-      GPIO_PIN_SOURCE(SPI_SCK, GPIOB, 3);
-      GPIO_PIN_SOURCE(SPI_MISO, GPIOB, 4);
-      GPIO_PIN_SOURCE(SPI_MOSI, GPIOB, 5);
-      GPIO_PIN_SOURCE(SPI_READY, GPIOB, 5);  // Multiplexed with SPI_MOSI
-      GPIO_PIN_SOURCE(INTERRUPT, GPIOB, 3);  // Multiplexed with SPI_SCK
-#else
-      GPIO_PIN_SOURCE(SPI_CS, GPIOA, 13);  // Multiplexed with SWDIO
+      // Ported to 2.1
+      GPIO_PIN_SOURCE(SPI_CS, GPIOA, 8);      
       GPIO_PIN_SOURCE(SPI_SCK, GPIOC, 10);
       GPIO_PIN_SOURCE(SPI_MISO, GPIOC, 11);
       GPIO_PIN_SOURCE(SPI_MOSI, GPIOC, 12);
       GPIO_PIN_SOURCE(SPI_READY, GPIOC, 12);  // Multiplexed with SPI_MOSI
       GPIO_PIN_SOURCE(INTERRUPT, GPIOC, 10);  // Multiplexed with SPI_SCK
-      GPIO_PIN_SOURCE(RESET_N, GPIOA, 14);  // Multiplexed with SWCLK
-#endif
 
       extern int BUFFER_WRITE_SIZE;
       extern int BUFFER_READ_SIZE;
@@ -327,12 +324,11 @@ namespace Anki
       volatile WaitState m_waitState = WAIT_IDLE;
       
       static void WifiStateMachine();
-      
+
       static void CSLow()
       {
         PIN_AF(GPIO_SPI_MOSI, SOURCE_SPI_MOSI);
         PIN_AF(GPIO_SPI_SCK, SOURCE_SPI_SCK);
-        
         GPIO_RESET(GPIO_SPI_CS, PIN_SPI_CS);
         
         // Disable GPIO interrupts - no matter what!
@@ -344,7 +340,6 @@ namespace Anki
       static void CSHigh()
       {
         GPIO_SET(GPIO_SPI_CS, PIN_SPI_CS);
-        
         PIN_IN(GPIO_SPI_MOSI, SOURCE_SPI_MOSI);
         PIN_IN(GPIO_SPI_SCK, SOURCE_SPI_SCK);
         
@@ -656,18 +651,6 @@ namespace Anki
         // Disable the GPIO interrupts during initialization
         EXTI->IMR &= ~(PIN_INTERRUPT | PIN_SPI_READY);
         
-#ifdef MIKES_HEAD_BOARD
-        NVIC_InitStructure.NVIC_IRQChannel = EXTI9_5_IRQn;  // SPI_READY
-        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
-        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
-        NVIC_Init(&NVIC_InitStructure);
-        
-        NVIC_InitStructure.NVIC_IRQChannel = EXTI3_IRQn;  // INTERRUPT
-        NVIC_Init(&NVIC_InitStructure);
-        
-        SYSCFG_EXTILineConfig(EXTI_PortSourceGPIOB, SOURCE_SPI_READY);
-        SYSCFG_EXTILineConfig(EXTI_PortSourceGPIOB, SOURCE_INTERRUPT);
-#else
         NVIC_InitStructure.NVIC_IRQChannel = EXTI15_10_IRQn;  // SPI_READY / INTERRUPT
         NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
         NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
@@ -675,7 +658,6 @@ namespace Anki
         
         SYSCFG_EXTILineConfig(EXTI_PortSourceGPIOC, SOURCE_SPI_READY);
         SYSCFG_EXTILineConfig(EXTI_PortSourceGPIOC, SOURCE_INTERRUPT);
-#endif
       }
 
       static void WifiConfigurePins()
@@ -694,15 +676,7 @@ namespace Anki
         GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
         GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
         GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_NOPULL;
-        
-#ifndef MIKES_HEAD_BOARD
-        // Configure RESET_N
-        GPIO_RESET(GPIO_RESET_N, PIN_RESET_N);  // Force RESET_N low
-        
-        GPIO_InitStructure.GPIO_Pin = PIN_RESET_N;
-        GPIO_Init(GPIO_RESET_N, &GPIO_InitStructure);
-#endif
-        
+                
         // Configure the pins for SPI in AF mode
         GPIO_PinAFConfig(GPIO_SPI_SCK, SOURCE_SPI_SCK, GPIO_AF_SPI3);
         GPIO_PinAFConfig(GPIO_SPI_MISO, SOURCE_SPI_MISO, GPIO_AF_SPI3);
@@ -717,7 +691,7 @@ namespace Anki
         GPIO_InitStructure.GPIO_Pin = PIN_SPI_CS;
         GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
         GPIO_Init(GPIO_SPI_CS, &GPIO_InitStructure);
-        
+
         // Configure the input pins
         GPIO_InitStructure.GPIO_Pin = PIN_INTERRUPT;
         GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
@@ -743,16 +717,6 @@ namespace Anki
         
         // Ensure default state
         CSHigh();
-
-#ifndef MIKES_HEAD_BOARD
-        // Wait for RESET_N power sequence
-        // Documentation says 20ms, but it still seems to glitch... Probably unrelated...
-        MicroWait(40000);
-        GPIO_SET(GPIO_RESET_N, PIN_RESET_N);
-        MicroWait(40000);  // The vendor's library code waits for "stabilization"
-#else
-        MicroWait(100000);
-#endif
       }
 
       static int WifiJoinAP()
@@ -1065,6 +1029,8 @@ namespace Anki
       
       static int WifiConfigure()
       {
+        m_writeHead = m_writeTail = m_readTail = m_readHead = 0;
+        
         StartTransfer = WifiStateMachine;
         GetChar = WifiGetCharacter;
         
@@ -1104,6 +1070,7 @@ namespace Anki
               matches = false;
               break;
             }
+            //UARTPutHex(m_payloadRead[j]);
           }
           
           if (matches)
@@ -1134,8 +1101,6 @@ namespace Anki
         ConfigureDMA();
         ConfigureIRQ();
         
-        m_writeHead = m_writeTail = m_readTail = m_readHead = 0;
-        
         // Enable GPIO interrupts on these pins
         EXTI->IMR |= (PIN_INTERRUPT | PIN_SPI_READY);
         
@@ -1149,7 +1114,7 @@ namespace Anki
 #ifndef ENABLE_WIFI
         return false;
 #else       
-#if 1 //def AUTODETECT   // This does not work on all modules        
+#if 0 //def AUTODETECT   // This does not work on all modules        
       //  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
       //  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
       //  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
@@ -1208,32 +1173,6 @@ extern "C"
     WifiStateMachine();
   }
 
-#ifdef MIKES_HEAD_BOARD
-  // Used for INTERRUPT pin rising edge
-  void EXTI3_IRQHandler()
-  {
-    using namespace Anki::Cozmo::HAL;
-    
-    // Clear the pending bit
-    EXTI->PR = PIN_INTERRUPT;
-    
-    // Run the state machine
-    WifiStateMachine();
-  }
-
-  // Used for SPI_READY GPIO interrupt on rising and falling edges
-  void EXTI9_5_IRQHandler()
-  {
-    using namespace Anki::Cozmo::HAL;
-    
-    // Clear the pending bit
-    EXTI->PR = PIN_SPI_READY;
-    
-    // Run the state machine
-    WifiStateMachine();
-  }
-#else
-  
   // Used for SPI_READY GPIO interrupt on rising and falling edges and the
   // INTERRUPT pin on rising edge
   void EXTI15_10_IRQHandler()
@@ -1246,6 +1185,4 @@ extern "C"
     // Run the state machine
     WifiStateMachine();
   }
-  
-#endif
 }

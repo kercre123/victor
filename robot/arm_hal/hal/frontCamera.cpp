@@ -13,6 +13,7 @@ namespace Anki
   {
     namespace HAL
     {
+      // For headboard 2.1
       GPIO_PIN_SOURCE(D0, GPIOA, 9);
       GPIO_PIN_SOURCE(D1, GPIOA, 10);
       GPIO_PIN_SOURCE(D2, GPIOG, 10);
@@ -26,102 +27,152 @@ namespace Anki
       GPIO_PIN_SOURCE(PCLK, GPIOA, 6);
 
       GPIO_PIN_SOURCE(XCLK, GPIOA, 3);
-      GPIO_PIN_SOURCE(RESET_N, GPIOE, 3);
+      GPIO_PIN_SOURCE(RESET_N, GPIOE, 6); // 2.1
       GPIO_PIN_SOURCE(PWDN, GPIOE, 2);
+      
+      GPIO_PIN_SOURCE(FSIN, GPIOA, 1);  // New in 2.1
 
-      GPIO_PIN_SOURCE(SCL, GPIOB, 6);
-      GPIO_PIN_SOURCE(SDA, GPIOB, 7);
+      GPIO_PIN_SOURCE(SCL, GPIOE, 3); // 2.1
+      GPIO_PIN_SOURCE(SDA, GPIOE, 5); // 2.1
 
       const u32 DCMI_TIMEOUT_MAX = 10000;
-      const u8 I2C_ADDR = 0x42;
 
-      const u8 OV7725_VGA[][2] =
-      {
-        0x12, 0x80,
-        //0x3d, 0x03,
-        0x12, 0x40,  // QVGA | "YUV"/"Bayer"
-        0x17, 0x3f,
-        0x18, 0x50,
-        0x19, 0x03,
-        0x1a, 0x78,
-        0x32, 0x00,
-        0x29, 0x50,
-        0x2c, 0x78,
-        0x2a, 0x00,
-        0x11, 0x02,  // pre-scaler
-
-        0x15, 0x00,  // Change HREF to HSYNC
-
-        0x42, 0x7f,  // TGT_B
-        0x4d, 0x09,  // Analog fixed gain amplifier
-        0x63, 0xe0,  // AWB Control Byte 0
-        0x64, 0xfb,  // DSP_Ctrl1
-        0x65, 0x20,  // DSP_Ctrl2
-        0x0c, 0xd0,  // Vertical flip | horizontal mirror | flip Y with UV
-        0x66, 0x00,  // DSP_Ctrl3
-        //0x67, 0x4a,  // DSP_Ctrl4 - Output Selection = RAW8
-
-        0x13, 0xf0,  // COM8 - gain control stuff... | AGC enable
-        0x0d, 0xf2,  // PLL = 8x | AEC evaluate 1/4 window
-        0x0f, 0xc5,  // Reserved | auto window setting ON/OFF selection when format changes
-        0x14, 0x11,  // COM9 - Automatic Gain Ceiling | Reserved
-        0x22, 0xff,  // ff/7f/3f/1f for 60/30/15/7.5fps  -- banding filter
-        0x23, 0x01,  // 01/03/07/0f for 60/30/15/7.5fps
-        0x24, 0x40,  // AEW - AGC/AEC Stable Operation Region (Upper Limit)
-        0x25, 0x30,  // AEB - ^^^ (Lower Limit)
-        0x26, 0xa1,  // VPT - AGC/AEC Fast Mode Operating Region
-        0x2b, 0x00,  // Dummy bytes LSB
-        0x6b, 0xaa,  // AWB mode select - Simple AWB
-        //0x13, 0xe6,  // COM8 - AGC stuff... Enable all but AEC
-        //0x13, 0xe0,  // COM8 - AGC stuff
-        0x13, 0x00,  // COM8 - AGC stuff
-        0x90, 0x05,  // Sharpness Control 1 - threshold detection
-        0x91, 0x01,  // Auto De-noise Threshold Control
-
-        // Lens correction control
-        //0x46, 0x01, // Vignetting correction on and grayscale
-        0x46, 0x00, // Vignetting correction off
-
-        0x47, 0x00, // x center
-        0x48, 0x00, // y center
-        0x49, 0x20, // RGB (or G) coefficient
-        0x4a, 0x27, // radius
-//        0x4b, 0x70, // B coefficient
-        //0x4c, 0x70, // R coefficient
-
-
-        0x92, 0x00,  // Sharpness Strength Upper Limit
-        0x93, 0x00,  // Sharpness Strength Lower Limit
-        0x94, 0xb0,  // MTX1 - Matrix Coefficient 1
-        0x95, 0x9d,
-        0x96, 0x13,
-        0x97, 0x16,
-        0x98, 0x7b,
-        0x99, 0x91,  // MTX6
-        0x9a, 0x1e,  // MTX_Ctrl (sign bits and stuff)
-        0x9b, 0x08,  // Brightness Control
-        0x9c, 0x20,  // Constain Gain == Gain * 0x20
-        0x9e, 0x81,  // Auto UV Adjust Control 0
-
-        0xa6, 0x04,  // Special Digital Effect Control - Contrast/Brightness enable
-
-        0x7e, 0x0c,
-        0x7f, 0x16,
-        0x80, 0x2a,
-        0x81, 0x4e,
-        0x82, 0x61,
-        0x83, 0x6f,
-        0x84, 0x7b,
-        0x85, 0x86,
-        0x86, 0x8e,
-        0x87, 0x97,
-        0x88, 0xa4,
-        0x89, 0xaf,
-        0x8a, 0xc5,
-        0x8b, 0xd7,
-        0x8c, 0xe8,
-        0x8d, 0x20,
-      };
+      const u8 I2C_ADDR = 0x78;        // Pre-shifted address for OV7739 (0x78 for Read, 0x79 for Write)
+      
+      unsigned short m_camScript[] =
+        // YUV_QVGA_60fps
+        {
+         0x3008,0x82
+        ,0x3008,0x42
+        ,0x3104,0x03
+        ,0x3017,0x7f
+        ,0x3018,0xfc
+        ,0x3602,0x14
+        ,0x3611,0x44
+        ,0x3631,0x22
+        ,0x3622,0x00
+        ,0x3633,0x25
+        ,0x370d,0x04
+        ,0x3620,0x32
+        ,0x3714,0x2c
+        ,0x401c,0x00
+        ,0x401e,0x11
+        ,0x4702,0x01
+        ,0x5000,0x0e
+        ,0x5001,0x01
+        ,0x3a00,0x7a
+        ,0x3a18,0x00
+        ,0x3a19,0x3f
+        ,0x300f,0x88
+        ,0x3011,0x08
+        ,0x4303,0xff
+        ,0x4307,0xff
+        ,0x430b,0xff
+        ,0x4305,0x00
+        ,0x4309,0x00
+        ,0x430d,0x00
+        ,0x5000,0x4f
+        ,0x5001,0x47
+        ,0x4300,0x30
+        ,0x4301,0x80
+        ,0x501f,0x01
+        ,0x3800,0x00
+        ,0x3801,0x6e
+        ,0x3804,0x01
+        ,0x3805,0x40
+        ,0x3802,0x00
+        ,0x3803,0x0e
+        ,0x3806,0x00
+        ,0x3807,0xf0
+        ,0x3808,0x01
+        ,0x3809,0x40
+        ,0x380a,0x00
+        ,0x380b,0xf0
+        ,0x380c,0x03
+        ,0x380d,0x10
+        ,0x380e,0x01
+        ,0x380f,0x00
+        ,0x3810,0x08
+        ,0x3811,0x04
+        ,0x370d,0x0c
+        ,0x3622,0x88
+        ,0x3818,0xE1  // mirror vertical/horizontal
+        ,0x3a08,0x00
+        ,0x3a09,0x99
+        ,0x3a0a,0x00
+        ,0x3a0b,0x80
+        ,0x3a0d,0x02
+        ,0x3a0e,0x01
+        ,0x3705,0xdc
+        ,0x3a1a,0x05
+        ,0x3008,0x02
+        ,0x5180,0x02
+        ,0x5181,0x02
+        ,0x3a0f,0x35
+        ,0x3a10,0x2c
+        ,0x3a1b,0x36
+        ,0x3a1e,0x2d
+        ,0x3a11,0x90
+        ,0x3a1f,0x10
+        ,0x5000,0xcf
+        ,0x5481,0x0a
+        ,0x5482,0x13
+        ,0x5483,0x23
+        ,0x5484,0x40
+        ,0x5485,0x4d
+        ,0x5486,0x58
+        ,0x5487,0x64
+        ,0x5488,0x6e
+        ,0x5489,0x78
+        ,0x548a,0x81
+        ,0x548b,0x92
+        ,0x548c,0xa1
+        ,0x548d,0xbb
+        ,0x548e,0xcf
+        ,0x548f,0xe3
+        ,0x5490,0x26
+        ,0x5380,0x42
+        ,0x5381,0x33
+        ,0x5382,0x0f
+        ,0x5383,0x0b
+        ,0x5384,0x42
+        ,0x5385,0x4d
+        ,0x5392,0x1e
+        ,0x5801,0x00
+        ,0x5802,0x06
+        ,0x5803,0x0a
+        ,0x5804,0x42
+        ,0x5805,0x2a
+        ,0x5806,0x25
+        ,0x5001,0xc7
+        ,0x5580,0x02
+        ,0x5583,0x40
+        ,0x5584,0x26
+        ,0x5589,0x10
+        ,0x558a,0x00
+        ,0x558b,0x3e
+        ,0x5300,0x0f
+        ,0x5301,0x30
+        ,0x5302,0x0d
+        ,0x5303,0x02
+        ,0x5304,0x0e
+        ,0x5305,0x30
+        ,0x5306,0x06
+        ,0x5307,0x40
+        ,0x5680,0x00
+        ,0x5681,0x50
+        ,0x5682,0x00
+        ,0x5683,0x3c
+        ,0x5684,0x11
+        ,0x5685,0xe0
+        ,0x5686,0x0d
+        ,0x5687,0x68
+        ,0x5688,0x03
+          ,0x3500,0x00  // 16.4 exposure time msb (4 bits)
+          ,0x3501,0x08  // 16.4 exposure time middle (8 bits)
+          ,0x3502,0x00  // 16.4 exposure time lsb (4.4 bits)
+        ,0,0
+        };
 
       // Set by the DMA Transfer Complete interrupt
       volatile bool m_isEOF = false;
@@ -143,7 +194,7 @@ namespace Anki
         else
           GPIO_RESET(GPIO_SCL, PIN_SCL);
 
-        MicroWait(2);
+        MicroWait(10);  // Could be 2 (but PLL won't work)
       }
 
       static void DriveSDA(u8 bit)
@@ -153,7 +204,7 @@ namespace Anki
         else
           GPIO_RESET(GPIO_SDA, PIN_SDA);
 
-        MicroWait(2);
+        MicroWait(10);  // Could be 2 (but PLL won't work)
       }
 
       // Read SDA bit by allowing it to float for a while
@@ -209,8 +260,8 @@ namespace Anki
           DriveSDA(m & b);
 
           DriveSCL(1);
-          //if (m == 1)
-          //  ReadSDA();  // Let SDA fall prior to last bit
+          if (m == 1)
+            ReadSDA();  // Let SDA fall prior to last bit
           DriveSCL(0);
         }
 
@@ -230,27 +281,70 @@ namespace Anki
         return Write(addressRW);
       }
 
-      static void CamWrite(u8 reg, u8 val)
+      static void CamWrite(int reg, int val)
       {
         Start(I2C_ADDR);    // Base address is Write
-        Write(reg);
+        Write(reg >> 8);
+        Write(reg & 0xff);
         Write(val);
         Stop();
       }
 
-      static int CamRead(u8 reg)
+      static int CamRead(int reg)
       {
         int val;
-        Start(I2C_ADDR);      // Base address is Write (for writing address)
-        Write(reg);
+        Start(I2C_ADDR);    // Base address is Write (for writing address)
+        Write(reg >> 8);
+        Write(reg & 0xff);
         Stop();
-        Start(I2C_ADDR + 1);  // Base address + 1 is Read (for Reading address)
-        val = Read(1);        // 1 for 'last Read'
+        Start(I2C_ADDR+1);  // Base address + 1 is Read (for Reading address)
+        val = Read(1);      // 1 for 'last Read'
         Stop();
         return val;
       }
 
-      void OV7725Init()
+      void UARTPutHex(u8 c);
+      
+      // For self-test purposes only.
+      static void CamSetPulls(GPIO_TypeDef* GPIOx, u32 pin, int index)
+      {
+        GPIO_InitTypeDef GPIO_InitStructure;
+        GPIO_InitStructure.GPIO_PuPd = index ? GPIO_PuPd_UP : GPIO_PuPd_DOWN;
+        GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+        GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
+        GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
+        GPIO_InitStructure.GPIO_Pin =  pin;
+        GPIO_Init(GPIOx, &GPIO_InitStructure);
+      }
+      static int CamGetPulls(GPIO_TypeDef* GPIOx, u32 pin, int index)
+      {
+        return (!!(GPIO_READ(GPIOx) & pin)) << index;
+      }
+      static int CamReadDB(int pullup)
+      {
+        CamSetPulls(GPIO_D0, PIN_D0, pullup & 1);
+        CamSetPulls(GPIO_D1, PIN_D1, pullup & 2);
+        CamSetPulls(GPIO_D2, PIN_D2, pullup & 4);
+        CamSetPulls(GPIO_D3, PIN_D3, pullup & 8);
+        CamSetPulls(GPIO_D4, PIN_D4, pullup & 16);
+        CamSetPulls(GPIO_D5, PIN_D5, pullup & 32);
+        CamSetPulls(GPIO_D6, PIN_D6, pullup & 64);
+        CamSetPulls(GPIO_D7, PIN_D7, pullup & 128);
+        
+        MicroWait(25);
+        
+        return
+          CamGetPulls(GPIO_D0, PIN_D0, 0) |
+          CamGetPulls(GPIO_D1, PIN_D1, 1) |
+          CamGetPulls(GPIO_D2, PIN_D2, 2) |
+          CamGetPulls(GPIO_D3, PIN_D3, 3) |
+          CamGetPulls(GPIO_D4, PIN_D4, 4) |
+          CamGetPulls(GPIO_D5, PIN_D5, 5) |
+          CamGetPulls(GPIO_D6, PIN_D6, 6) |
+          CamGetPulls(GPIO_D7, PIN_D7, 7);
+      }
+
+      void OV7739Init()
       {
         m_exposure = 0;
         m_enableVignettingCorrection = false;
@@ -266,11 +360,20 @@ namespace Anki
         DCMI_InitStructure.DCMI_ExtendedDataMode = DCMI_ExtendedDataMode_8b;
         DCMI_Init(&DCMI_InitStructure);
 
-        // Write the configuration registers
-        for(u32 i = 0; i < (sizeof(OV7725_VGA) / 2); i++)
-        {
-          CamWrite(OV7725_VGA[i][0], OV7725_VGA[i][1]);
-          MicroWait(100);
+        CamRead(0x3004);        // Get the I2C bus into a proper state
+
+        CamWrite(0x3008, 0x82);  // Reset
+        MicroWait(10000);       // Stay in reset for 10ms
+        CamWrite(0x3008, 0x42);  // Powerdown
+        
+        UARTPutHex(CamRead(0x3015));  // XXX - For debug only
+
+        // Write the configuration registers        
+        unsigned short* p = m_camScript;
+        while (*p) {
+          CamWrite(p[0], p[1]);
+          p += 2;
+          MicroWait(2);
         }
 
         // Configure DMA2_Stream1 channel 1 for DMA from DCMI->DR to RAM
@@ -312,6 +415,13 @@ namespace Anki
 
         // Enable the DCMI peripheral to capture frames from vsync
         DCMI_CaptureCmd(ENABLE);
+        
+        CamWrite(0x3008,0x02);  // Exit reset
+        UARTPutHex(CamRead(0x3008));
+        
+        // Let the I2C lines float after config
+        PIN_IN(GPIO_SDA, SOURCE_SDA);
+        PIN_IN(GPIO_SCL, SOURCE_SCL);
       }
 
       void FrontCameraInit()
@@ -326,7 +436,11 @@ namespace Anki
         RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA2, ENABLE);
         RCC_AHB2PeriphClockCmd(RCC_AHB2Periph_DCMI, ENABLE);
         RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM9, ENABLE);
-
+        
+        // Check that the GPIOs are okay
+        for (u8 i = 1; i; i <<= 1)
+          printf("\r\nCam dbus: set %x, got %x", i, CamReadDB(i));        
+        
         // Configure XCLK for 12.85 MHz (evenly divisible by 180 MHz)
         TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
         TIM_OCInitTypeDef  TIM_OCInitStructure;
@@ -386,11 +500,17 @@ namespace Anki
         GPIO_Init(GPIOI, &GPIO_InitStructure);
 
         // PWDN and RESET_N are normal GPIO
+        GPIO_SET(GPIO_PWDN, PIN_PWDN);
+        GPIO_RESET(GPIO_RESET_N, PIN_RESET_N);
         GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
         GPIO_InitStructure.GPIO_Pin = PIN_PWDN | PIN_RESET_N;
         GPIO_Init(GPIOE, &GPIO_InitStructure);
 
-        // Initialize the I2C pins
+        GPIO_RESET(GPIO_FSIN, PIN_FSIN);
+        GPIO_InitStructure.GPIO_Pin = PIN_FSIN;
+        GPIO_Init(GPIO_FSIN, &GPIO_InitStructure);
+
+// Initialize the I2C pins
         GPIO_SET(GPIO_SCL, PIN_SCL);
         GPIO_SET(GPIO_SDA, PIN_SDA);
 
@@ -399,16 +519,16 @@ namespace Anki
         GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
         GPIO_InitStructure.GPIO_OType = GPIO_OType_OD;
         GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
-        GPIO_Init(GPIOB, &GPIO_InitStructure);
+        GPIO_Init(GPIOE, &GPIO_InitStructure);       
 
         // Reset the camera
-        GPIO_RESET(GPIO_RESET_N, PIN_RESET_N);
-        GPIO_RESET(GPIO_PWDN, PIN_PWDN);  // Make sure it's in normal mode
-        MicroWait(10000);
-        GPIO_SET(GPIO_RESET_N, PIN_RESET_N);
-        MicroWait(100000);
+        MicroWait(50000);
+        PIN_IN(GPIO_PWDN, SOURCE_PWDN);
+        MicroWait(50000);
+        PIN_IN(GPIO_RESET_N, SOURCE_RESET_N);
+        MicroWait(100000);  // XXX-WHY?
 
-        OV7725Init();
+        OV7739Init();
       }
 
       void CameraSetParameters(f32 exposure, bool enableVignettingCorrection)
@@ -435,7 +555,7 @@ namespace Anki
 
           //CamWrite(0x08, (exposure >> 8));  // AEC[15:8]
           //MicroWait(100);
-          CamWrite(0x10, m_exposure);  // AEC[7:0]
+          // XXX-NDM was OV7739 CamWrite(0x10, m_exposure);  // AEC[7:0]
         }
 
         if(m_enableVignettingCorrection != enableVignettingCorrection)
@@ -445,7 +565,7 @@ namespace Anki
           const u8 newValue = enableVignettingCorrection ? 0x01 : 0x00;
 
           MicroWait(100);
-          CamWrite(0x46, newValue);
+          // XXX-NDM was OV7739 CamWrite(0x46, newValue);
         }
       }
 
@@ -459,7 +579,7 @@ namespace Anki
 
         // Wait until the frame has completed (based on DMA_FLAG_TCIF1)
         while (!m_isEOF)
-        {
+        {  
         }
 
         Anki::Embedded::EndBenchmark("CameraGetFrame_wait");

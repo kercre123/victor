@@ -44,17 +44,21 @@ namespace Anki
       //
       // 1x1 Cubes
       //
-      blockLibrary_.AddObject(new Block_Cube1x1(Block::FUEL_BLOCK_TYPE));
+      //blockLibrary_.AddObject(new Block_Cube1x1(Block::FUEL_BLOCK_TYPE));
       
       blockLibrary_.AddObject(new Block_Cube1x1(Block::ANGRYFACE_BLOCK_TYPE));
 
-      blockLibrary_.AddObject(new Block_Cube1x1(Block::BULLSEYE_BLOCK_TYPE));
+      blockLibrary_.AddObject(new Block_Cube1x1(Block::BULLSEYE2_BLOCK_TYPE));
       
       blockLibrary_.AddObject(new Block_Cube1x1(Block::SQTARGET_BLOCK_TYPE));
       
       blockLibrary_.AddObject(new Block_Cube1x1(Block::FIRE_BLOCK_TYPE));
       
       blockLibrary_.AddObject(new Block_Cube1x1(Block::ANKILOGO_BLOCK_TYPE));
+      
+      blockLibrary_.AddObject(new Block_Cube1x1(Block::STAR5_BLOCK_TYPE));
+      
+      blockLibrary_.AddObject(new Block_Cube1x1(Block::DICE_BLOCK_TYPE));
 
       
       //
@@ -302,7 +306,7 @@ namespace Anki
                           "but wasn't.\n", object->GetID());
 
             // Erase the vizualized block and its projected quad
-            VizManager::getInstance()->EraseVizObject(unobserved.second->second->GetID());
+            VizManager::getInstance()->EraseCuboid(unobserved.second->second->GetID());
             VizManager::getInstance()->EraseQuad(unobserved.second->second->GetID());
             
             // Actually erase the object from blockWorld's container of
@@ -316,6 +320,23 @@ namespace Anki
 
       
     } // AddAndUpdateObjects()
+    
+    
+    void BlockWorld::GetBlockBoundingBoxesXY(const f32 minHeight, const f32 maxHeight,
+                                             const f32 padding,
+                                             std::vector<Quad2f>& rectangles) const
+    {
+      for(auto & blocksWithType : existingBlocks_) {
+        for(auto & blockAndId : blocksWithType.second) {
+          Block* block = reinterpret_cast<Block*>(blockAndId.second);
+          const f32 blockHeight = block->GetPose().get_translation().z();
+          if( (blockHeight >= minHeight) && (blockHeight <= maxHeight) ) {
+            rectangles.emplace_back(block->GetBoundingQuadXY(padding));
+          }
+        }
+      }
+    } // GetBlockBoundingBoxesXY()
+    
     
     bool BlockWorld::DidBlocksChange() const {
       return didBlocksChange_;
@@ -363,17 +384,14 @@ namespace Anki
         Pose3d newPose( robot->get_pose().getWithRespectTo(matWrtCamera) );
         */
         
-        // TODO:
-        // Add the new vision-based pose to the robot's history.
-        // First get RobotPoseStamp at the time the object was observed.
+        // Get computed RobotPoseStamp at the time the object was observed.
         RobotPoseStamp* posePtr = nullptr;
-        if (robot->GetVisionOnlyPoseAt(matsSeen[0]->GetLastObservedTime(), &posePtr) == RESULT_FAIL) {
+        if (robot->GetComputedPoseAt(matsSeen[0]->GetLastObservedTime(), &posePtr) == RESULT_FAIL) {
           PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.CouldNotFindHistoricalPose", "");
           return false;
         }
         
         const Pose3d* matPose = &(matsSeen[0]->GetPose());
-        //Pose3d newPose( robot->get_pose().getWithRespectTo(matPose) );
         Pose3d newPose( posePtr->GetPose().getWithRespectTo(matPose) );
         
         /*
@@ -404,21 +422,21 @@ namespace Anki
           PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.RobotNotOnHorizontalPlane", "");
           return false;
         }
-        
-        RobotPoseStamp p(robot->GetPoseFrameID(), newPose, posePtr->GetHeadAngle());
-        robot->AddVisionOnlyPoseToHistory(matsSeen[0]->GetLastObservedTime(), p);
 
         // We have a new ("ground truth") key frame. Increment the pose frame!
         robot->IncrementPoseFrameID();
         
-
-        // TODO: Compute the new "current" pose from history which uses the past ground truth pose we just computed.
-        TimeStamp_t t;
-        robot->GetPoseHistory().ComputePoseAt(robot->GetPoseHistory().GetNewestTimeStamp(), t, p, false);
-        robot->set_pose(p.GetPose());
+        // Add the new vision-based pose to the robot's history.
+        RobotPoseStamp p(robot->GetPoseFrameID(), newPose, posePtr->GetHeadAngle());
+        robot->AddVisionOnlyPoseToHistory(matsSeen[0]->GetLastObservedTime(), p);
         
-                                              
-        //robot->set_pose(newPose);
+        // Update the computed pose as well so that subsequent block pose updates
+        // use obsMarkers whose camera's parent pose is correct
+        posePtr->SetPose(robot->GetPoseFrameID(), newPose, posePtr->GetHeadAngle());
+
+        // Compute the new "current" pose from history which uses the
+        // past vision-based "ground truth" pose we just computed.
+        robot->UpdateCurrPoseFromHistory();
         wasPoseUpdated = true;
         
         PRINT_INFO("Using mat %d to localize robot %d at (%.3f,%.3f,%.3f), %.1fdeg@(%.2f,%.2f,%.2f)\n",
@@ -431,6 +449,8 @@ namespace Anki
                    robot->get_pose().get_rotationAxis().y(),
                    robot->get_pose().get_rotationAxis().z());
         
+        // Send the ground truth pose that was computed instead of the new current pose and let the robot deal with
+        // updating its current pose based on the history that it keeps.
         robot->SendAbsLocalizationUpdate();
         
       } // IF any mat piece was seen
@@ -528,8 +548,50 @@ namespace Anki
     void BlockWorld::QueueObservedMarker(const Vision::ObservedMarker& marker)
     {
       obsMarkers_[marker.GetTimeStamp()].emplace_back(marker);
-      //obsMarkersByRobot_[seenByRobot].push_back(&obsMarkers_.back());
-    }
+
+      // Visualize the marker in 3D
+      // TODO: disable this block when not debugging / visualizing
+      if(true){
+        // Note that this incurs extra computation to compute the 3D pose of
+        // each observed marker so that we can draw in the 3D world, but this is
+        // purely for debug / visualization
+        u32 quadID = 0;
+        
+        // When requesting the markers' 3D corners below, we want them
+        // not to be relative to the object the marker is part of, so we
+        // will request them at a "canonical" pose (no rotation/translation)
+        const Pose3d canonicalPose;
+        
+        // Block Markers
+        std::set<const Vision::ObservableObject*> const& blocks = blockLibrary_.GetObjectsWithMarker(marker);
+        for(auto block : blocks) {
+          std::vector<const Vision::KnownMarker*> const& blockMarkers = block->GetMarkersWithCode(marker.GetCode());
+
+          for(auto blockMarker : blockMarkers) {
+            
+            Pose3d markerPose = marker.GetSeenBy().ComputeObjectPose(marker.GetImageCorners(),
+                                                                     blockMarker->Get3dCorners(canonicalPose));
+            markerPose = markerPose.getWithRespectTo(Pose3d::World);
+            VizManager::getInstance()->DrawQuad(quadID++, blockMarker->Get3dCorners(markerPose), VIZ_COLOR_OBSERVED_QUAD);
+          }
+        }
+        
+        // Mat Markers
+        std::set<const Vision::ObservableObject*> const& mats = matLibrary_.GetObjectsWithMarker(marker);
+        for(auto mat : mats) {
+          std::vector<const Vision::KnownMarker*> const& matMarkers = mat->GetMarkersWithCode(marker.GetCode());
+          
+          for(auto matMarker : matMarkers) {
+            Pose3d markerPose = marker.GetSeenBy().ComputeObjectPose(marker.GetImageCorners(),
+                                                                     matMarker->Get3dCorners(canonicalPose));
+            markerPose = markerPose.getWithRespectTo(Pose3d::World);
+            VizManager::getInstance()->DrawQuad(quadID++, matMarker->Get3dCorners(markerPose), VIZ_COLOR_OBSERVED_QUAD);
+          }
+        }
+        
+      } // 3D marker visualization
+      
+    } // QueueObservedMarker()
     
     void BlockWorld::ClearAllObservedMarkers()
     {
@@ -545,7 +607,7 @@ namespace Anki
         robot->dockWithBlock(whichBlock);
         
       } else {
-        fprintf(stdout, "Invalid robot commanded to Dock.\n");
+        CoreTechPrint("Invalid robot commanded to Dock.\n");
       }
     } // commandRobotToDock()
 

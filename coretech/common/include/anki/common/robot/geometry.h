@@ -300,10 +300,8 @@ namespace Anki
       Array<Type> invR1 = Array<Type>(3,3,scratch);
       Matrix::Transpose(R1, invR1);
 
-      //Point3<Type> invT1 = -invR1*T1;
-
-      Matrix::Multiply(R2, invR1, Rdiff);
-      Tdiff = T2 - (Rdiff * T1);
+      Matrix::Multiply(invR1, R2, Rdiff);
+      Tdiff = invR1 * (T2 - T1);
 
       return RESULT_OK;
     }

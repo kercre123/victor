@@ -290,6 +290,7 @@ namespace Anki
         MOTOR_COUNT
       };
 
+      // Positive numbers move the motor forward or up, negative is back or down
       // Set the motor power in the unitless range [-1.0, 1.0]
       void MotorSetPower(MotorID motor, f32 power);
 
