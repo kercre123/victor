@@ -10,7 +10,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 **/
 
 //#define RUN_PC_ONLY_TESTS
-#define JUST_FIDUCIAL_DETECTION
+//#define JUST_FIDUCIAL_DETECTION
 
 #include "anki/common/robot/config.h"
 #include "anki/common/robot/gtestLight.h"
@@ -927,100 +927,100 @@ GTEST_TEST(CoreTech_Vision, DecisionTreeVision)
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, DecisionTreeVision)
 
-/* 
- TODO: Re-enable this test once the binary tracker isn't hard-coded to use the old battery marker.
- 
+/*
+TODO: Re-enable this test once the binary tracker isn't hard-coded to use the old battery marker.
+
 GTEST_TEST(CoreTech_Vision, BinaryTrackerHeaderTemplate)
 {
-  const s32 imageHeight = 240;
-  const s32 imageWidth = 320;
+const s32 imageHeight = 240;
+const s32 imageWidth = 320;
 
-  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
-  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
-  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
-  Array<u8> templateImage(imageHeight, imageWidth, scratchOnchip);
+Array<u8> templateImage(imageHeight, imageWidth, scratchOnchip);
 
-  const Quadrilateral<f32> templateQuad(
-    Point<f32>(90, 100),
-    Point<f32>(91, 228),
-    Point<f32>(218, 100),
-    Point<f32>(217, 227));
+const Quadrilateral<f32> templateQuad(
+Point<f32>(90, 100),
+Point<f32>(91, 228),
+Point<f32>(218, 100),
+Point<f32>(217, 227));
 
-  TemplateTracker::BinaryTracker::EdgeDetectionParameters edgeDetectionParams_template(
-    TemplateTracker::BinaryTracker::EDGE_TYPE_GRAYVALUE,
-    4,    // s32 threshold_yIncrement; //< How many pixels to use in the y direction (4 is a good value?)
-    4,    // s32 threshold_xIncrement; //< How many pixels to use in the x direction (4 is a good value?)
-    0.1f, // f32 threshold_blackPercentile; //< What percentile of histogram energy is black? (.1 is a good value)
-    0.9f, // f32 threshold_whitePercentile; //< What percentile of histogram energy is white? (.9 is a good value)
-    0.8f, // f32 threshold_scaleRegionPercent; //< How much to scale template bounding box (.8 is a good value)
-    2,    // s32 minComponentWidth; //< The smallest horizontal size of a component (1 to 4 is good)
-    500,  // s32 maxDetectionsPerType; //< As many as you have memory and time for (500 is good)
-    1,    // s32 combHalfWidth; //< How far apart to compute the derivative difference (1 is good)
-    20,   // s32 combResponseThreshold; //< The minimum absolute-value response to start an edge component (20 is good)
-    1     // s32 everyNLines; //< As many as you have time for
-    );
+TemplateTracker::BinaryTracker::EdgeDetectionParameters edgeDetectionParams_template(
+TemplateTracker::BinaryTracker::EDGE_TYPE_GRAYVALUE,
+4,    // s32 threshold_yIncrement; //< How many pixels to use in the y direction (4 is a good value?)
+4,    // s32 threshold_xIncrement; //< How many pixels to use in the x direction (4 is a good value?)
+0.1f, // f32 threshold_blackPercentile; //< What percentile of histogram energy is black? (.1 is a good value)
+0.9f, // f32 threshold_whitePercentile; //< What percentile of histogram energy is white? (.9 is a good value)
+0.8f, // f32 threshold_scaleRegionPercent; //< How much to scale template bounding box (.8 is a good value)
+2,    // s32 minComponentWidth; //< The smallest horizontal size of a component (1 to 4 is good)
+500,  // s32 maxDetectionsPerType; //< As many as you have memory and time for (500 is good)
+1,    // s32 combHalfWidth; //< How far apart to compute the derivative difference (1 is good)
+20,   // s32 combResponseThreshold; //< The minimum absolute-value response to start an edge component (20 is good)
+1     // s32 everyNLines; //< As many as you have time for
+);
 
-  //TemplateTracker::BinaryTracker::EdgeDetectionParameters edgeDetectionParams_update = edgeDetectionParams_template;
-  //edgeDetectionParams_update.maxDetectionsPerType = 2500;
+//TemplateTracker::BinaryTracker::EdgeDetectionParameters edgeDetectionParams_update = edgeDetectionParams_template;
+//edgeDetectionParams_update.maxDetectionsPerType = 2500;
 
-  //const s32 updateEdgeDetection_maxDetectionsPerType = 2500;
+//const s32 updateEdgeDetection_maxDetectionsPerType = 2500;
 
-  //const s32 normal_matching_maxTranslationDistance = 7;
-  //const s32 normal_matching_maxProjectiveDistance = 7;
+//const s32 normal_matching_maxTranslationDistance = 7;
+//const s32 normal_matching_maxProjectiveDistance = 7;
 
-  const f32 scaleTemplateRegionPercent = 1.05f;
+const f32 scaleTemplateRegionPercent = 1.05f;
 
-  //const s32 verify_maxTranslationDistance = 1;
+//const s32 verify_maxTranslationDistance = 1;
 
-  //const u8 verify_maxPixelDifference = 30;
+//const u8 verify_maxPixelDifference = 30;
 
-  //const s32 verify_coordinateIncrement = 3;
+//const s32 verify_coordinateIncrement = 3;
 
-  //const s32 ransac_matching_maxProjectiveDistance = normal_matching_maxProjectiveDistance;
+//const s32 ransac_matching_maxProjectiveDistance = normal_matching_maxProjectiveDistance;
 
-  //const s32 ransac_maxIterations = 20;
-  //const s32 ransac_numSamplesPerType = 8;
-  //const s32 ransac_inlinerDistance = verify_maxTranslationDistance;
+//const s32 ransac_maxIterations = 20;
+//const s32 ransac_numSamplesPerType = 8;
+//const s32 ransac_inlinerDistance = verify_maxTranslationDistance;
 
-  templateImage.Set(&cozmo_date2014_04_04_time17_40_08_frame0[0], imageHeight*imageWidth);
+templateImage.Set(&cozmo_date2014_04_04_time17_40_08_frame0[0], imageHeight*imageWidth);
 
-  // Skip zero rows/columns (non-list)
-  {
-    PUSH_MEMORY_STACK(scratchCcm);
-    PUSH_MEMORY_STACK(scratchOnchip);
-    PUSH_MEMORY_STACK(scratchOffchip);
+// Skip zero rows/columns (non-list)
+{
+PUSH_MEMORY_STACK(scratchCcm);
+PUSH_MEMORY_STACK(scratchOnchip);
+PUSH_MEMORY_STACK(scratchOffchip);
 
-    CoreTechPrint("Skip 0 nonlist\n");
-    edgeDetectionParams_template.everyNLines = 1;
+CoreTechPrint("Skip 0 nonlist\n");
+edgeDetectionParams_template.everyNLines = 1;
 
-    InitBenchmarking();
+InitBenchmarking();
 
-    BeginBenchmark("BinaryTracker init");
+BeginBenchmark("BinaryTracker init");
 
-    TemplateTracker::BinaryTracker tracker(
-      Anki::Vision::MARKER_ANGRYFACE,
-      templateImage, templateQuad,
-      scaleTemplateRegionPercent,
-      edgeDetectionParams_template,
-      scratchOnchip, scratchOffchip);
+TemplateTracker::BinaryTracker tracker(
+Anki::Vision::MARKER_ANGRYFACE,
+templateImage, templateQuad,
+scaleTemplateRegionPercent,
+edgeDetectionParams_template,
+scratchOnchip, scratchOffchip);
 
-    EndBenchmark("BinaryTracker init");
+EndBenchmark("BinaryTracker init");
 
-    //templateImage.Show("templateImage",false);
-    //nextImage.Show("nextImage",false);
-    //tracker.ShowTemplate(true, false);
+//templateImage.Show("templateImage",false);
+//nextImage.Show("nextImage",false);
+//tracker.ShowTemplate(true, false);
 
-    const s32 numTemplatePixels = tracker.get_numTemplatePixels();
+const s32 numTemplatePixels = tracker.get_numTemplatePixels();
 
-    ASSERT_TRUE(numTemplatePixels == 1588);
+ASSERT_TRUE(numTemplatePixels == 1588);
 
-    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
-  } // Skip zero rows/columns (non-list)
+ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
+} // Skip zero rows/columns (non-list)
 
-  GTEST_RETURN_HERE;
+GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, BinaryTrackerHeaderTemplate)
 */
 
@@ -3078,11 +3078,10 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
   markers.Print("markers");
 
   if(scaleImage_thresholdMultiplier == 65536) {
-
     // Grab the ground truth markers types and locations from the
     // auto-generated header file
-    #include "data/newFiducials_320x240_markers.h"
-    
+#include "data/newFiducials_320x240_markers.h"
+
     // Make sure the ground truth image only has one of each marker type
     bool seenThisMarkerType[numMarkers_groundTruth];
     for(s32 iMarker=0; iMarker<numMarkers_groundTruth; ++iMarker) {
@@ -3092,7 +3091,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
       ASSERT_FALSE(seenThisMarkerType[iMarker]); // if true, we've already seen one of these
       seenThisMarkerType[iMarker] = true;
     }
-    
+
     CoreTechPrint("Found %d of %d markers.\n", markers.get_size(), numMarkers_groundTruth);
     if(markers.get_size() < numMarkers_groundTruth) {
       s32 iMarker = 0;
@@ -3100,13 +3099,12 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
         ++iMarker;
       }
       CoreTechPrint("Looks like %s was not seen.\n",
-                    Vision::MarkerTypeStrings[markerTypes_groundTruth[iMarker]]);
+        Vision::MarkerTypeStrings[markerTypes_groundTruth[iMarker]]);
     }
     ASSERT_TRUE(markers.get_size() == numMarkers_groundTruth);
 
-
     const f32 cornerDistanceTolerance = 2.f*sqrtf(2.f); // in pixels
-    
+
     // For each detected marker, find the ground truth marker with the same type
     // and check that its corners are in the right place (this avoids the
     // problem that the markers are detected out of order from the way they
@@ -3114,7 +3112,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
     for(s32 iMarkerDet=0; iMarkerDet<markers.get_size(); ++iMarkerDet)
     {
       ASSERT_TRUE(markers[iMarkerDet].isValid);
-      
+
       s32 iMarkerTrue=0;
       while(markers[iMarkerDet].markerType != markerTypes_groundTruth[iMarkerTrue]) {
         ++iMarkerTrue;
@@ -3123,27 +3121,26 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
         // one)
         ASSERT_TRUE(iMarkerTrue < numMarkers_groundTruth);
       }
-      
+
       // Sort the quads to ignore differing corner orderings for markers that
       // are rotationally symmetric
       const Quadrilateral<f32> currentCorners = markers[iMarkerDet].corners.ComputeClockwiseCorners<f32>();
       Quadrilateral<f32> trueCorners(Point2f(corners_groundTruth[iMarkerTrue][0][0],
-                                             corners_groundTruth[iMarkerTrue][0][1]),
-                                     Point2f(corners_groundTruth[iMarkerTrue][1][0],
-                                             corners_groundTruth[iMarkerTrue][1][1]),
-                                     Point2f(corners_groundTruth[iMarkerTrue][2][0],
-                                             corners_groundTruth[iMarkerTrue][2][1]),
-                                     Point2f(corners_groundTruth[iMarkerTrue][3][0],
-                                             corners_groundTruth[iMarkerTrue][3][1]));
+        corners_groundTruth[iMarkerTrue][0][1]),
+        Point2f(corners_groundTruth[iMarkerTrue][1][0],
+        corners_groundTruth[iMarkerTrue][1][1]),
+        Point2f(corners_groundTruth[iMarkerTrue][2][0],
+        corners_groundTruth[iMarkerTrue][2][1]),
+        Point2f(corners_groundTruth[iMarkerTrue][3][0],
+        corners_groundTruth[iMarkerTrue][3][1]));
       trueCorners = trueCorners.ComputeClockwiseCorners<f32>();
-      
+
       for(s32 iCorner=0; iCorner<4; iCorner++) {
         const Point2f& currentCorner = currentCorners[iCorner];
         const Point2f& trueCorner    = trueCorners[iCorner];
-        
+
         ASSERT_TRUE( (currentCorner - trueCorner).Length() < cornerDistanceTolerance );
       } // FOR each corner
-
     } // FOR each detected marker
   } else {
     ASSERT_TRUE(false);
@@ -4380,7 +4377,7 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   CALL_GTEST_TEST(CoreTech_Vision, FaceDetection);
   CALL_GTEST_TEST(CoreTech_Vision, ResizeImage);
   CALL_GTEST_TEST(CoreTech_Vision, DecisionTreeVision);
-  CALL_GTEST_TEST(CoreTech_Vision, BinaryTrackerHeaderTemplate);
+  //CALL_GTEST_TEST(CoreTech_Vision, BinaryTrackerHeaderTemplate);
   CALL_GTEST_TEST(CoreTech_Vision, BinaryTracker);
   CALL_GTEST_TEST(CoreTech_Vision, DetectBlurredEdge_DerivativeThreshold);
   CALL_GTEST_TEST(CoreTech_Vision, DetectBlurredEdge_GrayvalueThreshold);
