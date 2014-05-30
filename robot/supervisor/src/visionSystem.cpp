@@ -443,6 +443,7 @@ namespace Anki {
           parameters.maxConnectedComponentSegments,
           parameters.maxExtractedQuads,
           parameters.quadRefinementIterations,
+          parameters.numRefinementSamples,
           false,
           ccmScratch, onchipScratch, offchipScratch);
 #endif

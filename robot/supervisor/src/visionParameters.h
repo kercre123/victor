@@ -93,6 +93,7 @@ namespace Anki {
         f32 decode_minContrastRatio;
         u16 maxConnectedComponentSegments;
         s32 quadRefinementIterations; // set to zero to disable
+        s32 numRefinementSamples;
         
         // Methods
         DetectFiducialMarkersParameters();
