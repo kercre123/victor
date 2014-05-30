@@ -75,7 +75,9 @@ namespace Anki
 
       Result Extract(const Array<u8> &image, const Quadrilateral<s16> &quad,
                      const Array<f32> &homography, const f32 minContrastRatio,
-                     const s32 quadRefinementIterations, MemoryStack scratch);
+                     const s32 quadRefinementIterations,
+                     const s32 numRefinementSamples,
+                     MemoryStack scratch);
 
       void Print() const;
 
@@ -94,7 +96,9 @@ namespace Anki
       //  const f32 minContrastRatio, bool &isHighContrast, u8 &meanGrayvalueThreshold);
 
       Result ComputeBrightDarkValues(const Array <u8> &image, const Array<f32> &homography,
-                                     f32& brightValue, f32& darkValue);
+                                     const f32 minContrastRatio,
+                                     f32& brightValue, f32& darkValue,
+                                     bool& enoughContrast);
       
       static bool areTreesInitialized;
       static FiducialMarkerDecisionTree multiClassTree;
