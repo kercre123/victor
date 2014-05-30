@@ -2978,6 +2978,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
   const u16 maxConnectedComponentSegments = 39000; // 322*240/2 = 38640
 
   const s32 quadRefinementIterations = 5;
+  const s32 numRefinementSamples = 100;
 
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
   MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
@@ -3022,6 +3023,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
       maxConnectedComponentSegments,
       maxExtractedQuads,
       quadRefinementIterations,
+      numRefinementSamples,
       //true, //< TODO: change back to false
       false,
       scratchCcm,

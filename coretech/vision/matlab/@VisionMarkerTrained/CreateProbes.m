@@ -1,23 +1,29 @@
 function probes = CreateProbes(probeType)
+% Creates probe locations for checking bright/dark values.
+%
+% probes = CreateProbes(probeType)
+%
+%  Creates probes in the 4 corners of the fiducial square (or the gap
+%  region) and in the middle of its 4 sides, when probeType == 'dark' (or
+%  'bright').
+%
 
 switch(probeType)
     
     case 'dark'
-        midSq = VisionMarkerTrained.SquareWidthFraction/2;
-        
-        probes = struct( ...
-            'x', [midSq midSq 1-midSq 1-midSq], ...
-            'y', [midSq 1-midSq midSq 1-midSq]);
+        midCorner = VisionMarkerTrained.SquareWidthFraction/2;
         
     case 'bright'
-        midPad = VisionMarkerTrained.SquareWidthFraction + VisionMarkerTrained.FiducialPaddingFraction/2;
-
-        probes = struct( ...
-            'x', [midPad midPad 1-midPad 1-midPad], ...
-            'y', [midPad 1-midPad midPad 1-midPad]);
+        midCorner = VisionMarkerTrained.SquareWidthFraction + VisionMarkerTrained.FiducialPaddingFraction/2;
         
     otherwise
         error('Unrecognized probe type "%s"', probeType);
 end
+
+midEdge = 0.5;
+
+probes = struct( ...
+    'x', [midCorner midCorner 1-midCorner 1-midCorner midCorner 1-midCorner midEdge midEdge], ...
+    'y', [midCorner 1-midCorner midCorner 1-midCorner midEdge midEdge midCorner 1-midCorner]);
 
 end
