@@ -279,8 +279,10 @@ namespace Anki {
                 static bool streamOn = false;
                 if (streamOn) {
                   mode = ISM_OFF;
+                  blockWorld_->EnableDraw(false);
                 } else {
                   mode = ISM_STREAM;
+                  blockWorld_->EnableDraw(true);
                 }
                 streamOn = !streamOn;
               }

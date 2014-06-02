@@ -35,7 +35,7 @@ namespace Anki
     
     
     BlockWorld::BlockWorld( )
-    : isInitialized_(false), robotMgr_(NULL), didBlocksChange_(false), globalIDCounter(0)
+    : isInitialized_(false), robotMgr_(NULL), didBlocksChange_(false), globalIDCounter(0), enableDraw_(false)
 //    : robotMgr_(RobotManager::getInstance()),
 //      msgHandler_(MessageHandler::getInstance())
     {
@@ -387,7 +387,7 @@ namespace Anki
         // Get computed RobotPoseStamp at the time the object was observed.
         RobotPoseStamp* posePtr = nullptr;
         if (robot->GetComputedPoseAt(matsSeen[0]->GetLastObservedTime(), &posePtr) == RESULT_FAIL) {
-          PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.CouldNotFindHistoricalPose", "");
+          PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.CouldNotFindHistoricalPose", "Time %d\n", matsSeen[0]->GetLastObservedTime());
           return false;
         }
         
@@ -614,6 +614,27 @@ namespace Anki
     void BlockWorld::ClearAllExistingBlocks() {
       existingBlocks_.clear();
       globalIDCounter = 0;
+    }
+
+    void BlockWorld::EnableDraw(bool on)
+    {
+      enableDraw_ = on;
+    }
+    
+    void BlockWorld::DrawObsMarkers() const
+    {
+      if (enableDraw_) {
+        for (auto markerList : obsMarkers_) {
+          for (auto marker : markerList.second) {
+            const Quad2f& q = marker.GetImageCorners();
+            const f32 scaleF = 0.5f;
+            VizManager::getInstance()->SendTrackerQuad(q[Quad::TopLeft].x()*scaleF,     q[Quad::TopLeft].y()*scaleF,
+                                                       q[Quad::TopRight].x()*scaleF,    q[Quad::TopRight].y()*scaleF,
+                                                       q[Quad::BottomRight].x()*scaleF, q[Quad::BottomRight].y()*scaleF,
+                                                       q[Quad::BottomLeft].x()*scaleF,  q[Quad::BottomLeft].y()*scaleF);
+          }
+        }
+      }
     }
     
     
