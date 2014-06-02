@@ -302,6 +302,10 @@ namespace Anki {
         PathFollower::AppendPathSegment_Line(0, msg.x_start_mm, msg.y_start_mm, msg.x_end_mm, msg.y_end_mm,
                                              msg.targetSpeed, msg.accel, msg.decel);
       }
+
+      void ProcessTrimPathMessage(const TrimPath& msg) {
+        PathFollower::TrimPath(msg.numPopFrontSegments, msg.numPopBackSegments);
+      }
       
       void ProcessExecutePathMessage(const ExecutePath& msg) {
         PathFollower::StartPathTraversal();

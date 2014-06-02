@@ -46,6 +46,8 @@ namespace Anki
       // radDiff: The amount that the robot must turn in order to be aligned with the tangent of the closest point on the path.
       bool GetPathError(f32 &shortestDistanceToPath_mm, f32 &radDiff);
       
+      void TrimPath(const u8 numPopFrontSegments, const u8 numPopBackSegments);
+      
       bool StartPathTraversal(void);
       bool IsTraversingPath(void);
       

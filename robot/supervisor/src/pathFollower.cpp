@@ -175,6 +175,14 @@ namespace Anki
       }
       
       
+      void TrimPath(const u8 numPopFrontSegments, const u8 numPopBackSegments)
+      {
+        path_.PopBack(numPopBackSegments);
+        if (path_.PopFront(numPopFrontSegments) && currPathSegment_ > 0) {
+          currPathSegment_ -= numPopFrontSegments;
+        }
+      }
+      
       bool StartPathTraversal()
       {
         // Set first path segment
