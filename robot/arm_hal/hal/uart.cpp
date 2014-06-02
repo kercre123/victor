@@ -183,10 +183,11 @@ namespace Anki
       void UARTInit()
       {
         // Try to configure wifi
-        if (WifiInit())
+        if (WifiInit())   // On success, return
           return;
         
-        // Otherwise, configure the UART
+        // Otherwise, configure the UART - and light up purple to indicate UART
+        SetLED(LED_LEFT_EYE_LEFT, LED_PURPLE);
         UARTConfigure();
       }
 

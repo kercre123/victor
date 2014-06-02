@@ -379,10 +379,10 @@ namespace Anki
         IMUWriteReadPipelined(BW_250);
         MicroWait(2);  // 2 us delay required after write
         IMUSelectDevice(IMU_ACC);  // Deselect and reselect              
-        IMUWriteReadPipelined(ACC_INT_OUT_CTRL); 
+        IMUWriteReadPipelined(IMU_WRITE | ACC_INT_OUT_CTRL);  // Set all I/O to open drain
         IMUWriteReadPipelined(ACC_INT_OPEN_DRAIN);
         MicroWait(2);  // 2 us delay required after write
-        
+
         // Verify everything that was just written
         IMUSelectDevice(IMU_ACC);  // Deselect and reselect 
         IMUWriteReadPipelined(IMU_READ | ACC_PMU_RANGE);
