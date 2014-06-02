@@ -27,7 +27,7 @@ namespace Anki {
         const f32 LIFT_SPEED_RAD_PER_SEC = 2.f;
         const f32 LIFT_ACCEL_RAD_PER_SEC2 = 10.f;
 
-        const f32 HEAD_SPEED_RAD_PER_SEC = 0.5f;
+        const f32 HEAD_SPEED_RAD_PER_SEC = 4.f;
         const f32 HEAD_ACCEL_RAD_PER_SEC2 = 10.f;
         
         RobotManager* robotMgr_;
@@ -324,7 +324,10 @@ namespace Anki {
               Anki::Pose3d pose(angle, rotAxis, transVec);
               
               // Execute path to pose
-              robot_->ExecutePathToPose(pose);
+              if (robot_->ExecutePathToPose(pose) == RESULT_OK) {
+                // Make sure head is tilted down so that it can localize well
+                robot_->MoveHeadToAngle(-0.26, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
+              }
               break;
             }
             case CKEY_CYCLE_BLOCK_SELECT:
