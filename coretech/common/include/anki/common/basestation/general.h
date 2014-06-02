@@ -127,13 +127,13 @@ extern bool _errG;
 
 #else 
   
-#define PRINT_INFO(format, ...) do{ fprintf(stdout, format, ##__VA_ARGS__); }while(0)
-#define PRINT_DEBUG(format, ...) do{ fprintf(stdout, format, ##__VA_ARGS__); }while(0)
+#define PRINT_INFO(format, ...) do{ printf(format, ##__VA_ARGS__); }while(0)
+#define PRINT_DEBUG(format, ...) do{ printf(format, ##__VA_ARGS__); }while(0)
 #define PRINT_DAS_BY_TYPE(type, format, ...)
-#define PRINT_NAMED_ERROR(name, format, ...) do{ fprintf(stdout, format, ##__VA_ARGS__); }while(0)
-#define PRINT_NAMED_WARNING(name, format, ...) do{ fprintf(stdout, format, ##__VA_ARGS__); }while(0)
-#define PRINT_NAMED_INFO(name, format, ...) do{ fprintf(stdout, format, ##__VA_ARGS__); }while(0)
-#define PRINT_NAMED_DEBUG(name, format, ...) do{ fprintf(stdout, format, ##__VA_ARGS__); }while(0)
+#define PRINT_NAMED_ERROR(name, format, ...) do{_errG=true; printf("ERROR: " name " - "); printf(format, ##__VA_ARGS__); }while(0)
+#define PRINT_NAMED_WARNING(name, format, ...) do{ printf("WARNING: " name " - "); printf(format, ##__VA_ARGS__); }while(0)
+#define PRINT_NAMED_INFO(name, format, ...) do{ printf("INFO: " name " - "); printf(format, ##__VA_ARGS__); }while(0)
+#define PRINT_NAMED_DEBUG(name, format, ...) do{ printf("DEBUG: " name " - "); printf(format, ##__VA_ARGS__); }while(0)
   
 #endif // USE_REAL_DAS
 

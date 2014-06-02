@@ -132,6 +132,9 @@ int main(int argc, char **argv)
       } // while robot i still has outgoing messages to send
       
     } // for each robot
+
+    // Draw observed markers, but only if images are being streamed
+    blockWorld.DrawObsMarkers();
     
     // Update the world (force robots to process their messages)
     uint32_t numBlocksObserved = 0;

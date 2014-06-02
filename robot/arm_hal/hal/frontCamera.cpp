@@ -96,7 +96,7 @@ namespace Anki
         ,0x3811,0x04
         ,0x370d,0x0c
         ,0x3622,0x88
-        ,0x3818,0xE1  // mirror vertical/horizontal
+        ,0x3818,0x81  // mirror vertical/horizontal
         ,0x3a08,0x00
         ,0x3a09,0x99
         ,0x3a0a,0x00
@@ -169,7 +169,7 @@ namespace Anki
         ,0x5687,0x68
         ,0x5688,0x03
           ,0x3500,0x00  // 16.4 exposure time msb (4 bits)
-          ,0x3501,0x08  // 16.4 exposure time middle (8 bits)
+          ,0x3501,0x01  // 16.4 exposure time middle (8 bits)
           ,0x3502,0x00  // 16.4 exposure time lsb (4.4 bits)
         ,0,0
         };

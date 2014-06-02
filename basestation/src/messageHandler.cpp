@@ -164,7 +164,7 @@ namespace Anki {
           TimeStamp_t t;
           RobotPoseStamp* p = nullptr;
           if (robot->ComputeAndInsertPoseIntoHistory(msg.timestamp, t, &p) == RESULT_FAIL) {
-            PRINT_NAMED_WARNING("MessageHandler.ProcessMessageVisionMarker.HistoricalPoseNotFound", "");
+            PRINT_NAMED_WARNING("MessageHandler.ProcessMessageVisionMarker.HistoricalPoseNotFound", "Time: %d, hist: %d to %d\n", msg.timestamp, robot->GetPoseHistory().GetOldestTimeStamp(), robot->GetPoseHistory().GetNewestTimeStamp());
             return RESULT_FAIL;
           }
           
@@ -379,7 +379,7 @@ namespace Anki {
       VizManager::getInstance()->SendTrackerQuad(msg.topLeft_x, msg.topLeft_y,
                                                  msg.topRight_x, msg.topRight_y,
                                                  msg.bottomRight_x, msg.bottomRight_y,
-                                                 msg.bottomLeft_x, msg.bottomRight_y);
+                                                 msg.bottomLeft_x, msg.bottomLeft_y);
       
       return RESULT_OK;
     }

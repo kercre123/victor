@@ -36,9 +36,9 @@ namespace Cozmo {
     // TODO: Should this be done inside the poorly named Connect()?
     advertisingChannelClient_.Send("1", 1);  // Send anything just to get recognized as a client for advertising service.
     
-#if(DO_SIM_COMMS_LATENCY)
+    #if(DO_SIM_COMMS_LATENCY)
     numRecvRdyMsgs_ = 0;
-#endif
+    #endif
   }
   
   TCPComms::~TCPComms()
@@ -58,7 +58,7 @@ namespace Cozmo {
     // TODO: Instead of sending immediately, maybe we should queue them and send them all at
     // once to more closely emulate BTLE.
 
-#if(DO_SIM_COMMS_LATENCY)
+    #if(DO_SIM_COMMS_LATENCY)
     // If no send latency, just send now
     if (SIM_SEND_LATENCY_SEC == 0) {
       return RealSend(p);
@@ -76,7 +76,7 @@ namespace Cozmo {
   
   int TCPComms::RealSend(const Comms::MsgPacket &p)
   {
-#endif
+    #endif // #if(DO_SIM_COMMS_LATENCY)
     
     connectedRobotsIt_t it = connectedRobots_.find(p.destId);
     if (it != connectedRobots_.end()) {
@@ -136,9 +136,9 @@ namespace Cozmo {
     advertisingRobotsIt_t it = advertisingRobots_.begin();
     while(it != advertisingRobots_.end()) {
       if (currTime - it->second.lastSeenTime > ROBOT_ADVERTISING_TIMEOUT_S) {
-#if(DEBUG_TCPCOMMS)
+        #if(DEBUG_TCPCOMMS)
         printf("Removing robot %d from advertising list. (Last seen: %f, curr time: %f)\n", it->second.robotInfo.robotID, it->second.lastSeenTime, currTime);
-#endif
+        #endif
         advertisingRobots_.erase(it++);
       } else {
         ++it;
@@ -148,7 +148,7 @@ namespace Cozmo {
     // Read all messages from all connected robots
     ReadAllMsgPackets();
     
-#if(DO_SIM_COMMS_LATENCY)
+    #if(DO_SIM_COMMS_LATENCY)
     // Update number of ready to receive messages
     numRecvRdyMsgs_ = 0;
     PacketQueue_t::iterator iter;
@@ -171,13 +171,13 @@ namespace Cozmo {
         break;
       }
     }
-#endif
+    #endif  // #if(DO_SIM_COMMS_LATENCY)
   }
   
   
   void TCPComms::PrintRecvBuf(int robotID)
   {
-#if(DEBUG_TCPCOMMS)
+    #if(DEBUG_TCPCOMMS)
     if (connectedRobots_.find(robotID) != connectedRobots_.end()) {
       int numBytes = connectedRobots_[robotID].recvDataSize;
       printf("Robot %d recv buffer (%d bytes): ", robotID, numBytes);
@@ -188,7 +188,7 @@ namespace Cozmo {
       printf("\n");
 
     }
-#endif
+    #endif
   }
   
   
@@ -210,9 +210,9 @@ namespace Cozmo {
       }
       if (bytes_recvd < 0) {
         // Disconnect client
-#if(DEBUG_TCPCOMMS)
+        #if(DEBUG_TCPCOMMS)
         printf("TcpRobotMgr: Recv failed. Disconnecting client\n");
-#endif
+        #endif
         c.client->Disconnect();
         delete c.client;
         connectedRobots_.erase(it++);
@@ -262,19 +262,26 @@ namespace Cozmo {
           */
           
           u8 dataLen = n - HEADER_AND_TS_SIZE;
+          if (n < HEADER_AND_TS_SIZE) {
+            PRINT_NAMED_WARNING("TCPComms.ReadAllMsgPackets.EmptyPacket", "n: %ld, recvDataSize: %d, bytesRecvd: %d, strBufLen: %ld\n", n, c.recvDataSize, bytes_recvd, strBuf.length());
+            PrintRecvBuf(it->first);
+            dataLen = 0;
+          } else {
 
-          f32 recvTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-#if(DO_SIM_COMMS_LATENCY)
-          recvTime += SIM_RECV_LATENCY_SEC;
-#endif
-          recvdMsgPackets_.emplace_back(std::piecewise_construct,
-                                        std::forward_as_tuple(recvTime),
-                                        std::forward_as_tuple(
-                                        (s32)(it->first),
-                                        (s32)-1,
-                                        dataLen,
-                                        (u8*)(&c.recvBuf[HEADER_AND_TS_SIZE])));
-
+            f32 recvTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+            
+            #if(DO_SIM_COMMS_LATENCY)
+            recvTime += SIM_RECV_LATENCY_SEC;
+            #endif
+            
+            recvdMsgPackets_.emplace_back(std::piecewise_construct,
+                                          std::forward_as_tuple(recvTime),
+                                          std::forward_as_tuple((s32)(it->first),
+                                                                (s32)-1,
+                                                                dataLen,
+                                                                (u8*)(&c.recvBuf[HEADER_AND_TS_SIZE]))
+                                          );
+          }
           
           // Shift recvBuf contents down
           memcpy(c.recvBuf, c.recvBuf + n + FOOTER_SIZE, c.recvDataSize - dataLen - HEADER_AND_TS_SIZE - FOOTER_SIZE);
@@ -304,9 +311,9 @@ namespace Cozmo {
       TcpClient *client = new TcpClient();
       
       if (client->Connect((char*)it->second.robotInfo.robotAddr, it->second.robotInfo.port)) {
-#if(DEBUG_TCPCOMMS)
+        #if(DEBUG_TCPCOMMS)
         printf("Connected to robot %d at %s:%d\n", it->second.robotInfo.robotID, it->second.robotInfo.robotAddr, it->second.robotInfo.port);
-#endif
+        #endif
         connectedRobots_[robotID].client = client;
         return true;
       }
@@ -368,12 +375,12 @@ namespace Cozmo {
   // Returns true if a MsgPacket was successfully gotten
   bool TCPComms::GetNextMsgPacket(Comms::MsgPacket& p)
   {
-#if(DO_SIM_COMMS_LATENCY)
+    #if(DO_SIM_COMMS_LATENCY)
     if (numRecvRdyMsgs_ > 0) {
       --numRecvRdyMsgs_;
-#else
+    #else
     if (!recvdMsgPackets_.empty()) {
-#endif
+    #endif
       p = recvdMsgPackets_.begin()->second;
       recvdMsgPackets_.pop_front();
       return true;
@@ -385,20 +392,20 @@ namespace Cozmo {
   
   int TCPComms::GetNumPendingMsgPackets()
   {
-#if(DO_SIM_COMMS_LATENCY)
+    #if(DO_SIM_COMMS_LATENCY)
     return numRecvRdyMsgs_;
-#else
+    #else
     return recvdMsgPackets_.size();
-#endif
+    #endif
   };
   
   void TCPComms::ClearMsgPackets()
   {
     recvdMsgPackets_.clear();
     
-#if(DO_SIM_COMMS_LATENCY)
+    #if(DO_SIM_COMMS_LATENCY)
     numRecvRdyMsgs_ = 0;
-#endif
+    #endif
   };
   
   

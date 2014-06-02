@@ -377,7 +377,11 @@ namespace Anki
         LED_OFF = 0,
         LED_RED = 1,
         LED_GREEN = 2,
-        LED_BLUE = 4
+        LED_YELLOW = 3,
+        LED_BLUE = 4,
+        LED_PURPLE = 5,
+        LED_CYAN = 6,
+        LED_WHITE = 7
       };
       
       // TEMP: Temporary single LED control with color

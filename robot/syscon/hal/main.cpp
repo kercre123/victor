@@ -38,7 +38,7 @@ int main(void)
   BatteryInit();
   TimerInit();
   MotorsInit();   // Must init before power goes on
-  // UARTInit();  // XXX - do not enable unless you want neck cable to break
+  //UARTInit();  // XXX - do not enable unless you want neck cable to break
   
   UARTPutString("\r\nUnbrick me now...");
   u32 t = GetCounter();
@@ -62,25 +62,29 @@ int main(void)
   while (1)
   {
     UARTPutString("Forward\n");
-    for (int i = 0; i < MOTOR_COUNT; i++)
-      MotorsSetPower(i, 0x2fff);    
+    for (int i = 0; i < 4; i++)
+      MotorsSetPower(i, 0x5fff);   
+    MotorsUpdate();
+    MicroWait(5000);
     MotorsUpdate();
 
     u32 t = GetCounter();
     while ((GetCounter() - t) < 8333333)  // 1 second
       ;
-//      MotorsPrintEncodersRaw();
+    MotorsPrintEncodersRaw();
     
     UARTPutString("Backward\n");
     
-    for (int i = 0; i < MOTOR_COUNT; i++)    
-      MotorsSetPower(i, -0x2fff);
+    for (int i = 0; i < 4; i++)    
+      MotorsSetPower(i, -0x5fff);
+    MotorsUpdate();
+    MicroWait(5000);
     MotorsUpdate();
     
     t = GetCounter();
     while ((GetCounter() - t) < 8333333)
       ;
-//      MotorsPrintEncodersRaw();
+    MotorsPrintEncodersRaw();
     
     BatteryUpdate();
   }
@@ -130,6 +134,7 @@ int main(void)
       }
     }
          
+    // Only call every loop through - not all the time
     MotorsUpdate();
     
     // Update at 200Hz

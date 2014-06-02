@@ -57,9 +57,10 @@ int main(void)
 {
   using namespace Anki::Cozmo::HAL;
   
-  // Initialize the hardware
-  Startup();
+  // Timer, than Startup, must be called FIRST in main() to do hardware sanity check
   TimerInit();
+  Startup();
+  
   UARTInit();
   
   UARTPutString("UART!\r\n");
