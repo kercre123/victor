@@ -70,6 +70,9 @@ namespace Anki {
         // TODO: Benchmark quad refinement so we can enable this by default
         quadRefinementIterations = 25;
         
+        // TODO: Could this be fewer samples?
+        numRefinementSamples = 100;
+        
         isInitialized = true;
       } // DetectFiducialMarkersParameters::Initialize()
 

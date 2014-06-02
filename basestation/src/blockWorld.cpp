@@ -321,6 +321,23 @@ namespace Anki
       
     } // AddAndUpdateObjects()
     
+    
+    void BlockWorld::GetBlockBoundingBoxesXY(const f32 minHeight, const f32 maxHeight,
+                                             const f32 padding,
+                                             std::vector<Quad2f>& rectangles) const
+    {
+      for(auto & blocksWithType : existingBlocks_) {
+        for(auto & blockAndId : blocksWithType.second) {
+          Block* block = reinterpret_cast<Block*>(blockAndId.second);
+          const f32 blockHeight = block->GetPose().get_translation().z();
+          if( (blockHeight >= minHeight) && (blockHeight <= maxHeight) ) {
+            rectangles.emplace_back(block->GetBoundingQuadXY(padding));
+          }
+        }
+      }
+    } // GetBlockBoundingBoxesXY()
+    
+    
     bool BlockWorld::DidBlocksChange() const {
       return didBlocksChange_;
     }

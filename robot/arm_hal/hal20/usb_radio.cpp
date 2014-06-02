@@ -17,6 +17,10 @@
 
 #include "anki/messaging/shared/utilMessaging.h"
 
+// Hack to prevent linker error
+// Once the intertwining between HAL and supervisor is fixed, this won't be required
+//#define RUN_EMBEDDED_TESTS
+
 namespace Anki {
   namespace Cozmo {
     
@@ -43,6 +47,7 @@ namespace Anki {
       recvBufSize_ = 0;
     }
     
+#ifndef RUN_EMBEDDED_TESTS
     bool HAL::RadioSendMessage(const Messages::ID msgID, const void *buffer, TimeStamp_t ts)
     {
 #if(USING_UART_RADIO)
@@ -59,6 +64,7 @@ namespace Anki {
 #endif      
       
     } // RadioSendMessage()
+#endif // #ifndef RUN_EMBEDDED_TESTS
 
     u32 RadioGetNumBytesAvailable(void)
     {
@@ -77,6 +83,7 @@ namespace Anki {
     } // RadioGetNumBytesAvailable()
     
     
+#ifndef RUN_EMBEDDED_TESTS    
     // TODO: would be nice to implement this in a way that is not specific to
     //       hardware vs. simulated radio receivers, and just calls lower-level
     //       radio functions.
@@ -140,6 +147,7 @@ namespace Anki {
 #endif      
       return retVal;
     } // RadioGetNextMessage()
+#endif // #ifndef RUN_EMBEDDED_TESTS
     
     void RadioUpdate()
     {

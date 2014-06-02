@@ -608,8 +608,8 @@ namespace Anki
     }
 
     Result VisionMarker::ComputeBrightDarkValues(const Array <u8> &image,
-      const Array<f32> &homography,
-      f32& brightValue, f32& darkValue)
+      const Array<f32> &homography, const f32 minContrastRatio,
+      f32& brightValue, f32& darkValue, bool& enoughContrast)
     {
       using namespace VisionMarkerDecisionTree;
 
@@ -646,7 +646,11 @@ namespace Anki
         probePointsY_F32[i_pt] = static_cast<f32>(ProbePoints_Y[i_pt]) * fixedPointDivider;
       }
 
-      u32 darkAccumulator = 0, brightAccumulator = 0;
+      enoughContrast = true;
+      
+      const f32 divisor = 1.f / static_cast<f32>(NUM_PROBE_POINTS);
+      
+      u32 totalDarkAccumulator = 0, totalBrightAccumulator = 0; // for all pairs
       for(s32 i_probe=0; i_probe<NUM_THRESHOLD_PROBES; ++i_probe) {
         const f32 xCenterDark = static_cast<f32>(ThresholdDarkProbe_X[i_probe]) * fixedPointDivider;
         const f32 yCenterDark = static_cast<f32>(ThresholdDarkProbe_Y[i_probe]) * fixedPointDivider;
@@ -654,6 +658,8 @@ namespace Anki
         const f32 xCenterBright = static_cast<f32>(ThresholdBrightProbe_X[i_probe]) * fixedPointDivider;
         const f32 yCenterBright = static_cast<f32>(ThresholdBrightProbe_Y[i_probe]) * fixedPointDivider;
 
+        u32 darkAccumulator = 0, brightAccumulator = 0; // for each bright/dark pair
+        
         // TODO: Make getting the average value of a probe pattern into a function
         for(s32 i_pt=0; i_pt<NUM_PROBE_POINTS; i_pt++) {
           { // Dark points
@@ -702,18 +708,30 @@ namespace Anki
             brightAccumulator += imageValue;
           }
         } // FOR each probe point
+        
+        brightValue = static_cast<f32>(brightAccumulator) * divisor;
+        darkValue   = static_cast<f32>(darkAccumulator)   * divisor;
+        if(brightValue < minContrastRatio * darkValue) {
+          // Something is wrong: not enough constrast at this bright/dark pair
+          enoughContrast = false;
+          return RESULT_OK;
+        }
+        
+        totalBrightAccumulator += brightAccumulator;
+        totalDarkAccumulator   += darkAccumulator;
+        
       } // FOR each probe
 
-      const f32 divisor = 1.f / static_cast<f32>(NUM_PROBE_POINTS * NUM_THRESHOLD_PROBES);
-      brightValue = static_cast<f32>(brightAccumulator) * divisor;
-      darkValue   = static_cast<f32>(darkAccumulator)   * divisor;
+      const f32 totalDivisor = 1.f / static_cast<f32>(NUM_PROBE_POINTS * NUM_THRESHOLD_PROBES);
+      brightValue = static_cast<f32>(totalBrightAccumulator) * totalDivisor;
+      darkValue   = static_cast<f32>(totalDarkAccumulator)   * totalDivisor;
 
       return lastResult;
     }
 
     Result VisionMarker::Extract(const Array<u8> &image, const Quadrilateral<s16> &initQuad,
       const Array<f32> &initHomography, const f32 minContrastRatio,
-      const s32 quadRefinementIterations,
+      const s32 quadRefinementIterations, const s32 numRefinementSamples,
       MemoryStack scratch)
     {
       using namespace VisionMarkerDecisionTree;
@@ -724,13 +742,15 @@ namespace Anki
       Initialize();
 
       BeginBenchmark("vme_brightdarkvals");
-      f32 brightValue, darkValue;
-      if((lastResult = this->ComputeBrightDarkValues(image, initHomography, brightValue, darkValue)) != RESULT_OK) {
+      f32 brightValue = 0.f, darkValue = 0.f;
+      bool enoughContrast = false;
+      if((lastResult = this->ComputeBrightDarkValues(image, initHomography, minContrastRatio,
+                                                     brightValue, darkValue, enoughContrast)) != RESULT_OK) {
         return lastResult;
       }
       EndBenchmark("vme_brightdarkvals");
 
-      if(brightValue > darkValue*minContrastRatio)
+      if(enoughContrast)
       {
         // If the contrast is sufficient, compute the threshold and parse the marker
 
@@ -745,8 +765,6 @@ namespace Anki
 
         if(quadRefinementIterations > 0) {
           BeginBenchmark("vme_quadrefine");
-
-          const s32 numRefinementSamples = 100; // TODO: make argument/parameter?
 
           if((lastResult = RefineQuadrilateral(initQuad, initHomography, image, FIDUCIAL_SQUARE_WIDTH_FRACTION, quadRefinementIterations, darkValue, brightValue, numRefinementSamples, quad, homography, scratch)) != RESULT_OK)
           {
@@ -840,6 +858,9 @@ namespace Anki
 #endif
         } // if(multiClassLabel != MARKER_UNKNOWN)
       } else {
+        // Not enough contrast at bright/dark pairs.
+        this->isValid = false;
+        
         // This is relatively common (and reasonable/expected), so maybe we
         // don't want to print these messages?
         /*
