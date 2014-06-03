@@ -60,6 +60,9 @@ namespace Anki
         ,0x4702,0x01 // undoc
         //,0x5000,0x0e // ISP CTRL00
         //,0x5001,0x01 // ISP CTRL01
+        ,0x4002,0x45
+        ,0x4008,0x10
+        ,0x4000,0x05        
         ,0x3a00,0x00 // AEC CTRL00
         //,0x3a18,0x00 // AEC GAIN CEILING
         //,0x3a19,0x3f // AEC GAIN CEILING
@@ -94,9 +97,9 @@ namespace Anki
         ,0x380f,0x00 // TIMING VTS
         ,0x3810,0x08 // TIMING HOFFS
         ,0x3811,0x04 // TIMING VOFFS
-        ,0x370d,0x0c // (0x0c vertical skip) (0x8c vertical binning)
-        ,0x3622,0x68 // (0xe0 horizontal skip) (0x68 horizontal binning)
-        ,0x3818,0x80 // no mirror vertical/horizontal
+        ,0x370d,0x4c // verical binning
+        ,0x3622,0x68 // horizontal skip or binning
+        ,0x3818,0x80 // mirror vertical/horizontal (plus some undoc bits?)
         //,0x3a08,0x00 // AEC B50 STEP
         //,0x3a09,0x99 // AEC B50 STEP
         //,0x3a0a,0x00 // AEC B60 STEP
@@ -105,7 +108,10 @@ namespace Anki
         //,0x3a0e,0x01 // AEC CTRL0E
         ,0x3705,0xdc // undoc
         ,0x3a1a,0x05 // NOT USED (But it's set?!)
+        ,0x5002,0x04 // ISP CTRL02 (ISP subsample)
         ,0x3008,0x02 // SYSTEM CTRL
+        ,0x5900,0xf1 // VAP CTRL0
+        ,0x5901,0x05 // VAP CTRL1
         //,0x5180,0x02 // AWB CTRL00
         //,0x5181,0x02 // AWB CTRL01
         //,0x3a0f,0x35 // AEC CONTROL 0F
@@ -144,22 +150,22 @@ namespace Anki
         //,0x5804,0x42 // LENC CTRL4
         //,0x5805,0x2a // LENC CTRL5
         //,0x5806,0x25 // LENC CTRL6
-        ,0x5001,0xc7 // ISP CTRL01
+        ,0x5001,0xc6 // ISP CTRL01
         //,0x5580,0x02 // Special digital effects
         //,0x5583,0x40 // Special digital effects
         //,0x5584,0x26 // Special digital effects
         //,0x5589,0x10 // Special digital effects
         //,0x558a,0x00 // Special digital effects
         //,0x558b,0x3e // Special digital effects
-        ,0x5300,0x0f // CIP CTRL0 (Sharpenmt threshold 1)
-        ,0x5301,0x30 // CIP CTRL1 (Sharpenmt threshold 2)
-        ,0x5302,0x0d // CIP CTRL2 
-        ,0x5303,0x02 // CIP CTRL3 
-        ,0x5304,0x0e // CIP CTRL4 
-        ,0x5305,0x30 // CIP CTRL5 
-        ,0x5306,0x06 // CIP CTRL6 
-        ,0x5307,0x40 // CIP CTRL7
-        //,0x5308, 0x // CIP CTRL8
+        ,0x5300,0x00 // CIP CTRL0 (Sharpenmt threshold 1)
+        ,0x5301,0x00 // CIP CTRL1 (Sharpenmt threshold 2)
+        ,0x5302,0x00 // CIP CTRL2 (Sharpenmt offset 1)
+        ,0x5303,0x00 // CIP CTRL3 (Sharpenmt offset 2)
+        ,0x5304,0x10 // CIP CTRL4 (Denoise threshold 1)
+        ,0x5305,0xce // CIP CTRL5 (Denoise threshold 2)
+        ,0x5306,0x36 // CIP CTRL6 (Denoise offset 1)
+        ,0x5307,0xff // CIP CTRL7 (Denoise offset 2)
+        //,0x5308,0x20 // CIP CTRL8 (CIP edgemt and denoise manual enable)
         ,0x5680,0x00 // Undocumented, maybe AEC related
         ,0x5681,0x50 // Undocumented, maybe AEC related
         ,0x5682,0x00 // Undocumented, maybe AEC related
@@ -170,7 +176,7 @@ namespace Anki
         ,0x5687,0x68 // Undocumented, maybe AEC related
         //,0x5688,0x03 // Definitely AEC related
         ,0x3500,0x00 // 16.4 exposure time msb (4 bits) [19:16]
-        ,0x3501,0x01 // 16.4 exposure time middle (8 bits) [15:8]
+        ,0x3501,0x05 // 16.4 exposure time middle (8 bits) [15:8]
         ,0x3502,0x00 // 16.4 exposure time lsb (4.4 bits) [7:0]
         ,0x3503,0x03 // AEC MANUAL
         ,0,0
