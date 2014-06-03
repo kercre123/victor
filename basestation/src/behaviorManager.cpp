@@ -242,6 +242,8 @@ namespace Anki {
           // TODO: Generate collision-free path!!!
           if (robot_->get_pose().IsSameAs(nearestPreDockPose_, distThresh_mm, angThresh) ||
               robot_->ExecutePathToPose(nearestPreDockPose_) == RESULT_OK) {
+            // Make sure head is tilted down so that it can localize well
+            robot_->MoveHeadToAngle(-0.26, 5, 10);
             PRINT_INFO("Executing path to pose %f %f %f\n",
                        nearestPreDockPose_.get_translation().x(),
                        nearestPreDockPose_.get_translation().y(),
