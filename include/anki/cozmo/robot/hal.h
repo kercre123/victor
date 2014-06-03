@@ -270,7 +270,7 @@ namespace Anki
 
       // Puts an entire message, with the usual header/footer
       // Returns false is there wasn't enough space to buffer the message
-      bool UARTPutMessage(u8 msgID, u32 timestamp, u8* buffer, u32 length);
+      bool UARTPutMessage(u8 msgID, u32 timestamp, u8* buffer, u8 length);
       
       void UARTPutString(const char* s);
       int UARTGetChar(u32 timeout = 0);

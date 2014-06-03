@@ -227,15 +227,15 @@ namespace Anki
         return c;
       }
 
-      bool UARTPutMessage(u8 msgID, u32 timestamp, u8* buffer, u32 length)
+      bool UARTPutMessage(u8 msgID, u32 timestamp, u8* buffer, u8 length)
       {
         bool result = false;
         
         __disable_irq();
         int bytesLeft = UARTGetFreeSpace();
         
-        // Leave one guard byte + header + footer length
-        if (bytesLeft > (length + 1 + 7 + 2))
+        // Leave one guard byte + header
+        if (bytesLeft > (length + 1 + 8))
         {
           result = true;
           
@@ -247,6 +247,7 @@ namespace Anki
           BufPutChar(timestamp >> 8);
           BufPutChar(timestamp >> 16);
           BufPutChar(timestamp >> 24);
+          BufPutChar(length+1);
           BufPutChar(msgID);
           
           bytesLeft = sizeof(m_bufferWrite) - m_writeHead;
@@ -269,10 +270,6 @@ namespace Anki
             
             m_writeHead = bytesLeft;
           }
-          
-          // Add footer
-          BufPutChar(0xFF);
-          BufPutChar(0x0F);
           
           // Enable DMA if it's not already running
           if (!m_isTransferring)

@@ -97,7 +97,6 @@ namespace Anki {
         if(bytesAvailable > 0) {
     
           const int headerSize = sizeof(RADIO_PACKET_HEADER);
-          const int footerSize = sizeof(RADIO_PACKET_FOOTER);
           
           // Look for valid header
           std::string strBuf(recvBuf_, recvBuf_ + recvBufSize_);  // TODO: Just make recvBuf a string
@@ -115,31 +114,30 @@ namespace Anki {
             recvBufSize_ = strBuf.length();
           }
           
-          
-          // Look for footer
-          n = strBuf.find((char*)RADIO_PACKET_FOOTER, 0, footerSize);
-          if (n == std::string::npos) {
-            // Footer not found at all
-            return retVal;
-          } else {
-            // Footer was found
+          // Check if expected number of bytes are in the msg
+          if (recvBufSize_ > headerSize) {
+            const u8 dataLen = recvBuf_[headerSize];
+            if (recvBufSize_ > headerSize + dataLen) {
             
-            // Check that message size is correct
-            Messages::ID msgID = static_cast<Messages::ID>(recvBuf_[headerSize]);
-            const u8 size = Messages::GetSize(msgID);
-            int msgLen = n - headerSize - 1;  // Doesn't include msgID
-            
-            if (msgLen != size) {
-              PRINT("WARNING: Message size mismatch: ID %d, expected %d bytes, but got %d bytes\n", msgID, size, msgLen);
+              // Check that message size is correct
+              Messages::ID msgID = static_cast<Messages::ID>(recvBuf_[headerSize+1]);
+              const u8 size = Messages::GetSize(msgID);
+              int msgLen = dataLen - 1;  // Doesn't include msgID
+              
+              if (msgLen != size) {
+                PRINT("WARNING: Message size mismatch: ID %d, expected %d bytes, but got %d bytes\n", msgID, size, msgLen);
+              }
+              
+              // Copy message contents to buffer
+              std::memcpy((void*)buffer, recvBuf_ + headerSize + 2, msgLen);
+              retVal = msgID;
+              
+              // Shift recvBuf contents down
+              const u8 entireMsgSize = headerSize + 1 + dataLen;
+              memcpy(recvBuf_, recvBuf_ + entireMsgSize, recvBufSize_ - entireMsgSize);
+              recvBufSize_ -= entireMsgSize;
+              
             }
-            
-            // Copy message contents to buffer
-            std::memcpy((void*)buffer, recvBuf_ + headerSize + 1, msgLen);
-            retVal = msgID;
-            
-            // Shift recvBuf contents down
-            memcpy(recvBuf_, recvBuf_ + n + footerSize, recvBufSize_ - 1 - msgLen - headerSize - footerSize);
-            recvBufSize_ -= headerSize + 1 + msgLen + footerSize;
           }
           
         } // if bytesAvailable > 0

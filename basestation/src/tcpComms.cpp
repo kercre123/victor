@@ -23,10 +23,7 @@ namespace Anki {
 namespace Cozmo {
   
   const std::string header(RADIO_PACKET_HEADER, RADIO_PACKET_HEADER + sizeof(RADIO_PACKET_HEADER));
-  const std::string footer(RADIO_PACKET_FOOTER, RADIO_PACKET_FOOTER + sizeof(RADIO_PACKET_FOOTER));
   const int HEADER_AND_TS_SIZE = header.length() + sizeof(TimeStamp_t);
-  const int FOOTER_SIZE = footer.length();
-  
 
   
   TCPComms::TCPComms()
@@ -87,10 +84,9 @@ namespace Cozmo {
       int sendBufLen = 0;
       memcpy(sendBuf, RADIO_PACKET_HEADER, sizeof(RADIO_PACKET_HEADER));
       sendBufLen += sizeof(RADIO_PACKET_HEADER);
+      sendBuf[sendBufLen++] = p.dataLen;
       memcpy(sendBuf + sendBufLen, p.data, p.dataLen);
       sendBufLen += p.dataLen;
-      memcpy(sendBuf + sendBufLen, RADIO_PACKET_FOOTER, sizeof(RADIO_PACKET_FOOTER));
-      sendBufLen += sizeof(RADIO_PACKET_FOOTER);
 
       /*
       printf("SENDBUF (hex): ");
@@ -234,40 +230,29 @@ namespace Cozmo {
         } else if (n != 0) {
           // Header was not found at the beginning.
           // Delete everything up until the header.
+          PRINT_NAMED_WARNING("TCPComms.PartialMsgRecvd", "Header not found where expected. Dropping preceding bytes\n");
           strBuf = strBuf.substr(n);
           memcpy(c.recvBuf, strBuf.c_str(), strBuf.length());
           c.recvDataSize = strBuf.length();
         }
         
-        
-        // Look for footer
-        n = strBuf.find(footer);
-        if (n == std::string::npos) {
-          // Footer not found at all
-          break;
-        } else {
-          // Footer was found.
-          // Move complete message to recvdMsgPackets
-          
-          /*
-          // Get timestamp
-          TimeStamp_t *ts = (TimeStamp_t*)&(c.recvBuf[header.length()]);
-          
-          // Create RobotMsgPacket
-          Comms::MsgPacket p;
-          p.sourceId = it->first;
-          p.dataLen = n - HEADER_AND_TS_SIZE;
-          memcpy(p.data, &c.recvBuf[HEADER_AND_TS_SIZE], p.dataLen);
-          recvdMsgPackets_.insert(std::pair<TimeStamp_t,Comms::MsgPacket>(*ts, p) );
-          */
-          
-          u8 dataLen = n - HEADER_AND_TS_SIZE;
-          if (n < HEADER_AND_TS_SIZE) {
-            PRINT_NAMED_WARNING("TCPComms.ReadAllMsgPackets.EmptyPacket", "n: %ld, recvDataSize: %d, bytesRecvd: %d, strBufLen: %ld\n", n, c.recvDataSize, bytes_recvd, strBuf.length());
-            PrintRecvBuf(it->first);
-            dataLen = 0;
-          } else {
-
+        // Check if expected number of bytes are in the msg
+        if (c.recvDataSize > HEADER_AND_TS_SIZE) {
+          const u8 dataLen = c.recvBuf[HEADER_AND_TS_SIZE];
+          if (c.recvDataSize > HEADER_AND_TS_SIZE + dataLen) {
+            
+            /*
+             // Get timestamp
+             TimeStamp_t *ts = (TimeStamp_t*)&(c.recvBuf[header.length()]);
+             
+             // Create RobotMsgPacket
+             Comms::MsgPacket p;
+             p.sourceId = it->first;
+             p.dataLen = n - HEADER_AND_TS_SIZE;
+             memcpy(p.data, &c.recvBuf[HEADER_AND_TS_SIZE], p.dataLen);
+             recvdMsgPackets_.insert(std::pair<TimeStamp_t,Comms::MsgPacket>(*ts, p) );
+             */
+            
             f32 recvTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
             
             #if(DO_SIM_COMMS_LATENCY)
@@ -279,17 +264,21 @@ namespace Cozmo {
                                           std::forward_as_tuple((s32)(it->first),
                                                                 (s32)-1,
                                                                 dataLen,
-                                                                (u8*)(&c.recvBuf[HEADER_AND_TS_SIZE]))
+                                                                (u8*)(&c.recvBuf[HEADER_AND_TS_SIZE+1]))
                                           );
+            
+            // Shift recvBuf contents down
+            const u8 entireMsgSize = HEADER_AND_TS_SIZE + 1 + dataLen;
+            memcpy(c.recvBuf, c.recvBuf + entireMsgSize, c.recvDataSize - entireMsgSize);
+            c.recvDataSize -= entireMsgSize;
+            
+          } else {
+            break;
           }
-          
-          // Shift recvBuf contents down
-          memcpy(c.recvBuf, c.recvBuf + n + FOOTER_SIZE, c.recvDataSize - dataLen - HEADER_AND_TS_SIZE - FOOTER_SIZE);
-          c.recvDataSize -= dataLen + HEADER_AND_TS_SIZE + FOOTER_SIZE;
-          
-          //PrintRecvBuf(it->first);
-          
+        } else {
+          break;
         }
+        
       } // end while (there are still messages in the recvBuf)
       
       it++;
