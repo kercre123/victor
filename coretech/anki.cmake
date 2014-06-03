@@ -28,7 +28,7 @@ set(DEFAULT_USE_OPENCV 1)
 set(DEFAULT_EMBEDDED_USE_OPENCV 1)
 set(DEFAULT_USE_GTEST 1)
 set(DEFAULT_EMBEDDED_USE_GTEST 1)
-set(DEFAULT_EMBEDDED_USE_HEATSHRINK 1)
+set(DEFAULT_EMBEDDED_USE_HEATSHRINK 0)
 
 set(PKG_OPTIONS
   USE_MATLAB USE_GTEST USE_OPENCV
@@ -274,10 +274,15 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/build/${CMAKE_GENERATOR}/bin/${
 link_directories(
   ${LIBRARY_OUTPUT_PATH}
   ${EXTERNAL_DIR}/build/${CMAKE_GENERATOR}/lib/${BUILD_TYPE_DIR}
-  ${MATLAB_MEX_LIBRARY_PATH}
-  ${MATLAB_MX_LIBRARY_PATH}
-  ${MATLAB_ENG_LIBRARY_PATH}
 )
+
+if(ANKICORETECH_USE_MATLAB)
+  link_directories(
+    ${MATLAB_MEX_LIBRARY_PATH}
+    ${MATLAB_MX_LIBRARY_PATH}
+    ${MATLAB_ENG_LIBRARY_PATH}
+  )
+endif()
 
 # Of course, OpenCV is special... (it won't (?) obey the OUTPUT_PATHs specified
 # above, so we'll add link directories for where it put its products)
@@ -383,15 +388,20 @@ if( MATLAB_FOUND AND (ANKICORETECH_USE_MATLAB OR ANKICORETECHEMBEDDED_USE_MATLAB
   endif()
   
   target_link_libraries(${OUTPUT_NAME}
-    ${MATLAB_MEX_LIBRARY}
-    ${MATLAB_MX_LIBRARY}
-    ${MATLAB_ENG_LIBRARY}
   #  ${OPENCV_LIBS}
   #  ${ANKI_LIBRARIES}
     ${ZLIB_LIBRARY}
     ${HEATSHRINK_LIBRARY}
     jsoncpp
   )
+
+  if(ANKICORETECH_USE_MATLAB)
+    target_link_libraries(${OUTPUT_NAME}
+      ${MATLAB_MEX_LIBRARY}
+      ${MATLAB_MX_LIBRARY}
+      ${MATLAB_ENG_LIBRARY}
+    )
+  endif()
 
   #message(STATUS "For MEX file ${OUTPUT_NAME}, linking against ${MEX_LINK_LIBRARIES}")
 

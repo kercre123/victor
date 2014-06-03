@@ -65,11 +65,11 @@ if(NOT WIN32)
     CoreTech_Common_Robot # for matlab interface?
     CoreTech_Vision_Basestation
     #CoreTech_Messaging_Shared
-    mx 
-    eng
+    # mx 
+    # eng
     jsoncpp
     ${OPENCV_LIBS}
-    #${ALL_EMBEDDED_LIBRARIES}
+    ${ALL_EMBEDDED_LIBRARIES}
   )
 
   set_target_properties(
