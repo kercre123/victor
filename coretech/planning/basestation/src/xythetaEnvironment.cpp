@@ -11,10 +11,10 @@
  **/
 
 #include "anki/common/basestation/jsonTools.h"
+#include "anki/common/basestation/math/rotatedRect.h"
 #include "anki/common/shared/radians.h"
 #include "anki/planning/basestation/xythetaEnvironment.h"
 #include "json/json.h"
-#include "rectangle.h"
 #include <fstream>
 #include <iostream>
 #include <math.h>

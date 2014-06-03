@@ -1,4 +1,4 @@
-#include "rectangle.h"
+#include "anki/common/basestation/math/rotatedRect.h"
 #include <math.h>
 
 namespace Anki {

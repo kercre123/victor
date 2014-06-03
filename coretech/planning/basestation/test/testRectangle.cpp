@@ -1,5 +1,5 @@
-#include "../src/rectangle.h"
 #include "anki/common/basestation/general.h"
+#include "anki/common/basestation/math/rotatedRect.h"
 #include "gtest/gtest.h"
 #include <set>
 #include <vector>
