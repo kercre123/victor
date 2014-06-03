@@ -58,11 +58,11 @@ namespace Anki
         ,0x401c,0x00 // undoc
         ,0x401e,0x11 // undoc
         ,0x4702,0x01 // undoc
-        ,0x5000,0x0e // ISP CTRL00
-        ,0x5001,0x01 // ISP CTRL01
+        //,0x5000,0x0e // ISP CTRL00
+        //,0x5001,0x01 // ISP CTRL01
         ,0x3a00,0x00 // AEC CTRL00
-        ,0x3a18,0x00 // AEC GAIN CEILING
-        ,0x3a19,0x3f // AEC GAIN CEILING
+        //,0x3a18,0x00 // AEC GAIN CEILING
+        //,0x3a19,0x3f // AEC GAIN CEILING
         ,0x300f,0x88 // PLL1 CTRL00
         ,0x3011,0x08 // PLL1 CTRL02
         ,0x4303,0xff // YMAX VALUE (Set Y max clip value[7:0])
@@ -71,9 +71,9 @@ namespace Anki
         ,0x4305,0x00 // YMIN VALUE (Set Y min clip value[7:0])
         ,0x4309,0x00 // UMIN VALUE (Set U min clip value[7:0])
         ,0x430d,0x00 // VMIN VALUE (Set V min clip value[7:0]) 
-        ,0x5000,0x4f // ISP CTRL00
-        ,0x5001,0x46 // ISP CTRL01
-        ,0x4300,0x30 // FORMAT CTRL00 (Output format selection)
+        //,0x5000,0x4f // ISP CTRL00
+        //,0x5001,0x46 // ISP CTRL01
+        ,0x4300,0x30 // FORMAT CTRL00 (Output format selection) (YUV422 0x30)
         ,0x4301,0x80 // undoc (possibly format related?)
         ,0x501f,0x01 // ISP CTRL1F (ISP raw 0x00) (YUV422 0x01)
         ,0x3800,0x00 // image cropping (horizontal start)
@@ -97,53 +97,53 @@ namespace Anki
         ,0x370d,0x0c // (0x0c vertical skip) (0x8c vertical binning)
         ,0x3622,0x68 // (0xe0 horizontal skip) (0x68 horizontal binning)
         ,0x3818,0x80 // no mirror vertical/horizontal
-        ,0x3a08,0x00 // AEC B50 STEP
-        ,0x3a09,0x99 // AEC B50 STEP
-        ,0x3a0a,0x00 // AEC B60 STEP
-        ,0x3a0b,0x80 // AEC B60 STEP
-        ,0x3a0d,0x02 // AEC CTRL0D
-        ,0x3a0e,0x01 // AEC CTRL0E
+        //,0x3a08,0x00 // AEC B50 STEP
+        //,0x3a09,0x99 // AEC B50 STEP
+        //,0x3a0a,0x00 // AEC B60 STEP
+        //,0x3a0b,0x80 // AEC B60 STEP
+        //,0x3a0d,0x02 // AEC CTRL0D
+        //,0x3a0e,0x01 // AEC CTRL0E
         ,0x3705,0xdc // undoc
         ,0x3a1a,0x05 // NOT USED (But it's set?!)
         ,0x3008,0x02 // SYSTEM CTRL
-        ,0x5180,0x02 // AWB CTRL00
-        ,0x5181,0x02 // AWB CTRL01
-        ,0x3a0f,0x35 // AEC CONTROL 0F
-        ,0x3a10,0x2c // AEC CONTROL 10
-        ,0x3a1b,0x36 // AEC CONTROL 1B
-        ,0x3a1e,0x2d // AEC CONTROL 1E
-        ,0x3a11,0x90 // AEC CONTROL 11
-        ,0x3a1f,0x10 // AEC CONTROL 1F
-        ,0x5000,0x4f // ISP CTRL00
-        ,0x5481,0x0a // GAMMA YST1
-        ,0x5482,0x13 // GAMMA YST2
-        ,0x5483,0x23 // GAMMA YST3
-        ,0x5484,0x40 // GAMMA YST4
-        ,0x5485,0x4d // GAMMA YST5
-        ,0x5486,0x58 // GAMMA YST6
-        ,0x5487,0x64 // GAMMA YST7
-        ,0x5488,0x6e // GAMMA YST8
-        ,0x5489,0x78 // GAMMA YST9
-        ,0x548a,0x81 // GAMMA YST10
-        ,0x548b,0x92 // GAMMA YST11
-        ,0x548c,0xa1 // GAMMA YST12
-        ,0x548d,0xbb // GAMMA YST13
-        ,0x548e,0xcf // GAMMA YST14
-        ,0x548f,0xe3 // GAMMA YST15
-        ,0x5490,0x26 // GAMMA YSLP15
-        ,0x5380,0x42 // CMX COEFFICIENT11 
-        ,0x5381,0x33 // CMX COEFFICIENT12
-        ,0x5382,0x0f // CMX COEFFICIENT13
-        ,0x5383,0x0b // CMX COEFFICIENT14
-        ,0x5384,0x42 // CMX COEFFICIENT15
-        ,0x5385,0x4d // CMX COEFFICIENT16
-        ,0x5392,0x1e // CMX SIGN
-        ,0x5801,0x00 // LENC CTRL1
-        ,0x5802,0x06 // LENC CTRL2
-        ,0x5803,0x0a // LENC CTRL3
-        ,0x5804,0x42 // LENC CTRL4
-        ,0x5805,0x2a // LENC CTRL5
-        ,0x5806,0x25 // LENC CTRL6
+        //,0x5180,0x02 // AWB CTRL00
+        //,0x5181,0x02 // AWB CTRL01
+        //,0x3a0f,0x35 // AEC CONTROL 0F
+        //,0x3a10,0x2c // AEC CONTROL 10
+        //,0x3a1b,0x36 // AEC CONTROL 1B
+        //,0x3a1e,0x2d // AEC CONTROL 1E
+        //,0x3a11,0x90 // AEC CONTROL 11
+        //,0x3a1f,0x10 // AEC CONTROL 1F
+        ,0x5000,0x07 // ISP CTRL00
+        //,0x5481,0x0a // GAMMA YST1
+        //,0x5482,0x13 // GAMMA YST2
+        //,0x5483,0x23 // GAMMA YST3
+        //,0x5484,0x40 // GAMMA YST4
+        //,0x5485,0x4d // GAMMA YST5
+        //,0x5486,0x58 // GAMMA YST6
+        //,0x5487,0x64 // GAMMA YST7
+        //,0x5488,0x6e // GAMMA YST8
+        //,0x5489,0x78 // GAMMA YST9
+        //,0x548a,0x81 // GAMMA YST10
+        //,0x548b,0x92 // GAMMA YST11
+        //,0x548c,0xa1 // GAMMA YST12
+        //,0x548d,0xbb // GAMMA YST13
+        //,0x548e,0xcf // GAMMA YST14
+        //,0x548f,0xe3 // GAMMA YST15
+        //,0x5490,0x26 // GAMMA YSLP15
+        //,0x5380,0x42 // CMX COEFFICIENT11 
+        //,0x5381,0x33 // CMX COEFFICIENT12
+        //,0x5382,0x0f // CMX COEFFICIENT13
+        //,0x5383,0x0b // CMX COEFFICIENT14
+        //,0x5384,0x42 // CMX COEFFICIENT15
+        //,0x5385,0x4d // CMX COEFFICIENT16
+        //,0x5392,0x1e // CMX SIGN
+        //,0x5801,0x00 // LENC CTRL1
+        //,0x5802,0x06 // LENC CTRL2
+        //,0x5803,0x0a // LENC CTRL3
+        //,0x5804,0x42 // LENC CTRL4
+        //,0x5805,0x2a // LENC CTRL5
+        //,0x5806,0x25 // LENC CTRL6
         ,0x5001,0xc7 // ISP CTRL01
         //,0x5580,0x02 // Special digital effects
         //,0x5583,0x40 // Special digital effects
@@ -168,7 +168,7 @@ namespace Anki
         ,0x5685,0xe0 // Undocumented, maybe AEC related
         ,0x5686,0x0d // Undocumented, maybe AEC related
         ,0x5687,0x68 // Undocumented, maybe AEC related
-        ,0x5688,0x03 // Definitely AEC related
+        //,0x5688,0x03 // Definitely AEC related
           ,0x3500,0x00  // 16.4 exposure time msb (4 bits)
           ,0x3501,0x01  // 16.4 exposure time middle (8 bits)
           ,0x3502,0x00  // 16.4 exposure time lsb (4.4 bits)
