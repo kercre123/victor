@@ -221,7 +221,12 @@ classdef VisionMarkerTrained
                             
                             this.corners = this.corners(reorder(:),:);
                             
-                        end
+                        end % if ~isempty(underscoreIndex)
+                        
+                        % Use code names that match what gets put into
+                        % the C++ enums by auto code generation after
+                        % training
+                        this.codeName = sprintf('MARKER_%s', upper(this.codeName));
                     end
                 end
             end % IF threshold < 0
