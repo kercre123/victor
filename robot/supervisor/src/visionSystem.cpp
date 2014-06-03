@@ -1271,8 +1271,7 @@ namespace Anki {
           Simulator::Initialize();
 
 #ifdef RUN_SIMPLE_TRACKING_TEST
-          Anki::Cozmo::VisionSystem::SetMarkerToTrack(Vision::MARKER_BATTERIES,
-            DEFAULT_BLOCK_MARKER_WIDTH_MM);
+          Anki::Cozmo::VisionSystem::SetMarkerToTrack(Vision::MARKER_FIRE, DEFAULT_BLOCK_MARKER_WIDTH_MM);
 #endif
 
           result = VisionMemory::Initialize();
