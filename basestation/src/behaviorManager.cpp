@@ -46,6 +46,10 @@ namespace Anki {
           nextState_ = WAITING_FOR_DOCK_BLOCK;
           updateFcn_ = &BehaviorManager::Update_PickAndPlaceBlock;
           break;
+        case BM_June2014DiceDemo:
+          state_     = WAITING_FOR_ROBOT;
+          nextState_ = WAITING_FOR_FIRST_DICE;
+          updateFcn_ = &BehaviorManager::Update_June2014DiceDemo;
         default:
           PRINT_NAMED_ERROR("BehaviorManager.InvalidMode", "Invalid behavior mode");
           return;
@@ -360,7 +364,34 @@ namespace Anki {
         }
       }
       
-    }
+    } // Update_PickAndPlaceBlock()
+    
+    
+    /********************************************************
+     * June2014DiceDemo
+     *
+     * Look for two dice rolls. Look for the block with the 
+     * number corresponding to the first roll and pick it up.
+     * Place it on the block with the number corresponding to
+     * the second roll.
+     *
+     ********************************************************/
+    void BehaviorManager::Update_June2014DiceDemo()
+    {
+      switch(state_) {
+          
+        case WAITING_FOR_FIRST_DICE:
+
+        default:
+        {
+          PRINT_NAMED_ERROR("BehaviorManager.UnknownBehaviorState", "Transitioned to unknown state %d!", state_);
+          StartMode(BM_None);
+          return;
+        }
+      } // switch(state_)
+      
+    } // Update_June2014DiceDemo()
+
     
   } // namespace Cozmo
 } // namespace Anki

@@ -29,7 +29,8 @@ namespace Anki {
     
     typedef enum {
       BM_None,
-      BM_PickAndPlace
+      BM_PickAndPlace,
+      BM_June2014DiceDemo
     } BehaviorMode;
     
     class BehaviorManager
@@ -54,12 +55,17 @@ namespace Anki {
       
       typedef enum {
         WAITING_FOR_ROBOT,
+        ACKNOWLEDGEMENT_NOD,
         
         // PickAndPlaceBlock
         WAITING_FOR_DOCK_BLOCK,
         EXECUTING_PATH_TO_DOCK_POSE,
         CONFIRM_BLOCK_IS_VISIBLE,
-        EXECUTING_DOCK
+        EXECUTING_DOCK,
+        
+        // June2014DiceDemo
+        WAITING_FOR_FIRST_DICE,
+        WAITING_FOR_SECOND_DICE
         
       } BehaviorState;
       
@@ -80,6 +86,7 @@ namespace Anki {
       
       // Behavior state machines
       void Update_PickAndPlaceBlock();
+      void Update_June2014DiceDemo();
       
       
       /////// PickAndPlace vars ///////
