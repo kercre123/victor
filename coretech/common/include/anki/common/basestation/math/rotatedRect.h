@@ -1,18 +1,29 @@
-#ifndef COZMO_CORETECH_PLANNING_RECTANGLE_H_
-#define COZMO_CORETECH_PLANNING_RECTANGLE_H_
+/**
+ * File: rotatedRect.h
+ *
+ * Author: Brad Neuman
+ * Created: 2014-06-03
+ *
+ * Description: A 2D rectangle with a rotation.
+ *
+ * Copyright: Anki, Inc. 2014
+ *
+ **/
+
+#ifndef _ANKICORETECH_COMMON_ROTATEDRECT_H_
+#define _ANKICORETECH_COMMON_ROTATEDRECT_H_
 
 /**
- * A class representing a rectangle in the rectangle world
- * environment. This class provides a constructor that can create a
- * rectangle out of the parameters in a line in an environment
- * file. It will also automatically compute unit vectors as needed and
- * provides a checkPoint function to check if a given point is inside
- * the rectangle.
+ * A class representing a rectangle in a planar (2D) environment. This
+ * class provides a constructor that can create a rectangle out of the
+ * parameters in a line in an environment file, or out of any convex
+ * polygon. It will also automatically compute unit vectors as needed
+ * and provides a checkPoint function to check if a given point is
+ * inside the rectangle.
  */
 namespace Anki {
-namespace Planning {
 
-class Rectangle
+class RotatedRectangle
 {
 public:
 
@@ -21,12 +32,12 @@ public:
    * the length defines the other side, which is perpendicular to the
    * first.
    */
-  Rectangle(float x0, float y0, float x1, float y1, float otherSideLength);
+  RotatedRectangle(float x0, float y0, float x1, float y1, float otherSideLength);
 
   /** Returns true if the given (x,y) point is inside (or on the
    * border of) this rectangle
    */
-  bool IsPointInside(float x, float y) const;
+  bool Contains(float x, float y) const;
 
 private:
 
@@ -40,7 +51,6 @@ private:
 
 };
 
-}
 }
 
 #endif

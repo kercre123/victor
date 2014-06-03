@@ -2,9 +2,8 @@
 #include <math.h>
 
 namespace Anki {
-namespace Planning {
 
-Rectangle::Rectangle(float x0, float y0, float x1, float y1, float otherSideLength)
+RotatedRectangle::RotatedRectangle(float x0, float y0, float x1, float y1, float otherSideLength)
 {
   length0 = sqrt(pow(x1 - x0, 2) + pow(y1 - y0, 2));
   length1 = otherSideLength;
@@ -25,7 +24,7 @@ Rectangle::Rectangle(float x0, float y0, float x1, float y1, float otherSideLeng
   // TODO:(bn) assert here too
 }
 
-bool Rectangle::IsPointInside(float x, float y) const
+bool RotatedRectangle::Contains(float x, float y) const
 {
   // given the corner point and unit vectors, we can take a dot
   // product of the vector from the corner to the given point. This
@@ -47,6 +46,4 @@ bool Rectangle::IsPointInside(float x, float y) const
   return true;
 }
 
-
-}
 }

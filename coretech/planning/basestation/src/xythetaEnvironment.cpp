@@ -140,7 +140,7 @@ void SuccessorIterator::Next()
         float x,y;
         x = start_c_.x_mm + prim->intermediatePositions[pointIdx].x_mm;
         y = start_c_.y_mm + prim->intermediatePositions[pointIdx].y_mm;
-        if(obstacles_[obsIdx]->IsPointInside(x, y)) {
+        if(obstacles_[obsIdx]->Contains(x, y)) {
           collision = true;
           break;
         }
@@ -437,7 +437,7 @@ bool xythetaEnvironment::ReadEnvironment(FILE* fEnv)
   float x0,y0,x1,y1,len;
 
   while(fscanf(fEnv, "%f %f %f %f %f", &x0, &y0, &x1, &y1, &len) == 5) {
-    obstacles_.push_back(new Rectangle(x0, y0, x1, y1, len));
+    obstacles_.push_back(new RotatedRectangle(x0, y0, x1, y1, len));
   }
 
   return true;

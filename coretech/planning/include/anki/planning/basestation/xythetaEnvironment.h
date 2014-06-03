@@ -9,6 +9,9 @@
 
 namespace Anki
 {
+
+class RotatedRectangle;
+
 namespace Planning
 {
 
@@ -29,7 +32,6 @@ typedef int16_t StateXY;
 typedef float Cost;
 typedef uint8_t ActionID;
 
-class Rectangle;
 class xythetaEnvironment;
 class State;
 class StateID;
@@ -154,7 +156,7 @@ private:
   Successor nextSucc_;
 
   const std::vector<MotionPrimitive>& motionPrimitives_;
-  const std::vector<Rectangle*>& obstacles_;
+  const std::vector<RotatedRectangle*>& obstacles_;
 };
 
 // TODO:(bn) move some of these to seperate files
@@ -272,7 +274,7 @@ private:
   std::vector< std::vector<MotionPrimitive> > allMotionPrimitives_;
 
   // Obstacles
-  std::vector<Rectangle*> obstacles_;
+  std::vector<RotatedRectangle*> obstacles_;
 
   // index is actionID
   std::vector<ActionType> actionTypes_;
