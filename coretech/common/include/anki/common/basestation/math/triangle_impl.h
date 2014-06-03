@@ -17,6 +17,47 @@
 namespace Anki {
   
   template<typename T>
+  Triangle<T>::Triangle(const Point2<T>& point1,
+                        const Point2<T>& point2,
+                        const Point2<T>& point3)
+  : std::array<Point<2,T>,3>{{point1, point2, point3}}
+  {
+    
+  }
+  
+  
+  template<typename T>
+  Triangle<T>::Triangle(std::initializer_list<Point2<T> >& points)
+  : std::array<Point2<T>,3>(points)
+  {
+    
+  }
+  
+  template<typename T>
+  bool Triangle<T>::Contains(const Point<2,T>& point) const
+  {
+    return IsPointWithinTriangle(point, *this);
+  }
+  
+  template<typename T>
+  T Triangle<T>::GetArea() const
+  {
+    // Area is half the length of the cross product of the vectors pointing
+    // from one of the points to the other two
+    
+    const T x1 = (*this)[1].x() - (*this)[0].x();
+    const T y1 = (*this)[1].y() - (*this)[0].y();
+    
+    const T x2 = (*this)[2].x() - (*this)[0].x();
+    const T y2 = (*this)[2].y() - (*this)[0].y();
+    
+    const T area = (x1*y2 - x2*y1) / T(2);
+    
+    return area;
+  }
+  
+  
+  template<typename T>
   bool IsPointWithinTriangleHelper(const Point<2,T>& point,
                                    const f32 x1, const f32 y1,
                                    const f32 x2, const f32 y2,

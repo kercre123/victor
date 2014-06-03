@@ -13,6 +13,27 @@
 
 namespace Anki {
   
+  // A class for storing 2D triangles
+  template<typename T>
+  class Triangle : public std::array<Point<2,T>, 3>
+  {
+  public:
+    
+    Triangle() { }
+    
+    Triangle(const Point2<T>& point1,
+             const Point2<T>& point2,
+             const Point2<T>& point3);
+    
+    Triangle(std::initializer_list<Point2<T> >& points);
+    
+    bool Contains(const Point<2,T>& point) const;
+    
+    T GetArea() const;
+    
+  }; // class Triangle
+  
+  
   // Each method returns true if the given point is within the given triangle,
   // and false otherwise.  The only difference is whether the triangle is
   // given as three 2D Points or three _pointers_ to 2D points.
@@ -23,7 +44,7 @@ namespace Anki {
   
   
   template<typename T>
-  bool IsPointWithinTriangle(const Point<2,T>&                      point,
+  bool IsPointWithinTriangle(const Point<2,T>&                point,
                              const std::array<Point<2,T>, 3>& triangle);
 
 
