@@ -21,7 +21,7 @@
 
 namespace Anki {
 
-  typedef size_t QuadDimType;
+  using QuadDimType = size_t;
   
   namespace Quad {
     
