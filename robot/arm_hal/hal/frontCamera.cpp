@@ -169,9 +169,10 @@ namespace Anki
         ,0x5686,0x0d // Undocumented, maybe AEC related
         ,0x5687,0x68 // Undocumented, maybe AEC related
         //,0x5688,0x03 // Definitely AEC related
-          ,0x3500,0x00  // 16.4 exposure time msb (4 bits)
-          ,0x3501,0x01  // 16.4 exposure time middle (8 bits)
-          ,0x3502,0x00  // 16.4 exposure time lsb (4.4 bits)
+        ,0x3500,0x00 // 16.4 exposure time msb (4 bits) [19:16]
+        ,0x3501,0x01 // 16.4 exposure time middle (8 bits) [15:8]
+        ,0x3502,0x00 // 16.4 exposure time lsb (4.4 bits) [7:0]
+        ,0x3503,0x03 // AEC MANUAL
         ,0,0
         };
 
