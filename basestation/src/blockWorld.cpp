@@ -59,7 +59,15 @@ namespace Anki
       blockLibrary_.AddObject(new Block_Cube1x1(Block::STAR5_BLOCK_TYPE));
       
       blockLibrary_.AddObject(new Block_Cube1x1(Block::DICE_BLOCK_TYPE));
+      
+      blockLibrary_.AddObject(new Block_Cube1x1(Block::NUMBER1_BLOCK_TYPE));
+      blockLibrary_.AddObject(new Block_Cube1x1(Block::NUMBER2_BLOCK_TYPE));
+      blockLibrary_.AddObject(new Block_Cube1x1(Block::NUMBER3_BLOCK_TYPE));
+      blockLibrary_.AddObject(new Block_Cube1x1(Block::NUMBER4_BLOCK_TYPE));
+      blockLibrary_.AddObject(new Block_Cube1x1(Block::NUMBER5_BLOCK_TYPE));
+      blockLibrary_.AddObject(new Block_Cube1x1(Block::NUMBER6_BLOCK_TYPE));
 
+      blockLibrary_.AddObject(new Block_Cube1x1(Block::BANGBANGBANG_BLOCK_TYPE));
       
       //
       // 2x1

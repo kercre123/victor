@@ -34,29 +34,29 @@
          "VisionMarkers" : [
             {
                "Name" : "MessageVisionMarker",
-               "markerType" : 27,
+               "markerType" : 29,
                "timestamp" : 0,
-               "x_imgLowerLeft" : 182.6413879394531,
-               "x_imgLowerRight" : 217.2852630615234,
-               "x_imgUpperLeft" : 183.8571319580078,
-               "x_imgUpperRight" : 219.6047821044922,
-               "y_imgLowerLeft" : 87.27594757080078,
-               "y_imgLowerRight" : 90.16099548339844,
-               "y_imgUpperLeft" : 53.27946472167969,
-               "y_imgUpperRight" : 54.98150634765625
+               "x_imgLowerLeft" : 182.6405029296875,
+               "x_imgLowerRight" : 217.2861022949219,
+               "x_imgUpperLeft" : 183.8561859130859,
+               "x_imgUpperRight" : 219.6056671142578,
+               "y_imgLowerLeft" : 87.27693176269531,
+               "y_imgLowerRight" : 90.16189575195312,
+               "y_imgUpperLeft" : 53.27843856811523,
+               "y_imgUpperRight" : 54.98062515258789
             },
             {
                "Name" : "MessageVisionMarker",
-               "markerType" : 33,
+               "markerType" : 35,
                "timestamp" : 0,
-               "x_imgLowerLeft" : 98.21678924560547,
-               "x_imgLowerRight" : 137.9810028076172,
-               "x_imgUpperLeft" : 84.42063140869141,
-               "x_imgUpperRight" : 121.3601150512695,
-               "y_imgLowerLeft" : 115.5173797607422,
-               "y_imgLowerRight" : 107.7035293579102,
-               "y_imgUpperLeft" : 102.5975418090820,
-               "y_imgUpperRight" : 96.35567474365234
+               "x_imgLowerLeft" : 98.22859191894531,
+               "x_imgLowerRight" : 137.9535827636719,
+               "x_imgUpperLeft" : 84.45065307617188,
+               "x_imgUpperRight" : 121.3432540893555,
+               "y_imgLowerLeft" : 115.5151062011719,
+               "y_imgLowerRight" : 107.7041091918945,
+               "y_imgUpperLeft" : 102.5962829589844,
+               "y_imgUpperRight" : 96.36243438720703
             }
          ]
       }

@@ -1,0 +1,284 @@
+#VRML_SIM V7.4.3 utf8
+WorldInfo {
+  info [
+    "June 20, 2014 Demo World. All rights reserved. Copyright (c) Anki, Inc."
+    "Author: Andrew Stein <andrew@anki.com>"
+    "Date: 02 June 2014"
+    ""
+  ]
+  gravity 0 0 -9.81
+  physics "cozmo_physics"
+  basicTimeStep 5
+  contactProperties [
+    DEF FLOOR_FRONTWHEEL ContactProperties {
+      material1 "cmat_floor"
+      material2 "highfriction"
+      coulombFriction 50
+      bounce 0.01
+    }
+    DEF RAMP_FRONTWHEEL ContactProperties {
+      material1 "cmat_ramp"
+      material2 "highfriction"
+      coulombFriction 50
+    }
+    DEF BLOCK_FRONTWHEEL ContactProperties {
+      material1 "cmat_block"
+      material2 "highfriction"
+      coulombFriction 50
+      bounce 0.01
+    }
+    DEF BLOCK_REARWHEEL ContactProperties {
+      material1 "cmat_block"
+      material2 "nofriction"
+      coulombFriction 0.0001
+      bounce 0.001
+    }
+    DEF FLOOR_REARWHEEL ContactProperties {
+      material1 "cmat_floor"
+      material2 "nofriction"
+      coulombFriction 0.0001
+      bounce 0.001
+    }
+    DEF RAMP_REARWHEEL ContactProperties {
+      material1 "cmat_ramp"
+      material2 "nofriction"
+      coulombFriction 0.0001
+      bounce 0.001
+    }
+    DEF FLOOR_BLOCK ContactProperties {
+      material1 "cmat_floor"
+      material2 "cmat_block"
+      coulombFriction 5000
+      bounce 0.001
+    }
+    DEF BLOCK_BLOCK ContactProperties {
+      material1 "cmat_block"
+      material2 "cmat_block"
+      coulombFriction 5000
+      bounce 0.001
+    }
+    DEF RAMP_BLOCK ContactProperties {
+      material1 "cmat_ramp"
+      material2 "cmat_block"
+      coulombFriction 5000
+      bounce 0.001
+    }
+    DEF RAMP_RAMP ContactProperties {
+      material1 "cmat_ramp"
+      material2 "cmat_ramp"
+      coulombFriction 5000
+      bounce 0.001
+    }
+    DEF FLOOR_RAMP ContactProperties {
+      material1 "cmat_ramp"
+      material2 "cmat_block"
+      coulombFriction 5000
+      bounce 0.001
+    }
+  ]
+}
+Viewpoint {
+  orientation -0.328355 0.493707 0.805255 4.12497
+  position -1.21239 0.464924 0.781295
+}
+Background {
+  skyColor [
+    0.4 0.7 1
+  ]
+}
+DirectionalLight {
+  ambientIntensity 0.6
+  direction 1 -0.5 -2
+  castShadows FALSE
+}
+DirectionalLight {
+  ambientIntensity 0.6
+  direction -1 0.5 2
+  castShadows FALSE
+}
+CozmoMat {
+}
+RobotAdvertisementService {
+}
+XYaxesDisplay {
+}
+Block1x1 {
+  name "Number1"
+  translation 0.0823477 0.154984 0.0219929
+  rotation 1 1.28832e-12 -1.28131e-11 3.67408e-06
+  blockColor 0.85 0.5 0.5
+  facemarkerFront [
+    "textures/letters/1.png"
+  ]
+  facemarkerBack [
+    "textures/letters/1.png"
+  ]
+  facemarkerLeft [
+    "textures/letters/1.png"
+  ]
+  facemarkerRight [
+    "textures/letters/1.png"
+  ]
+  facemarkerTop [
+    "textures/letters/1.png"
+  ]
+  facemarkerBottom [
+    "textures/letters/1.png"
+  ]
+}
+Block1x1 {
+  name "Number2"
+  translation 0.252889 0.0290524 0.0219929
+  rotation 0 0 1 0.05
+  blockColor 0.249821 0.85098 0.264027
+  facemarkerFront [
+    "textures/letters/2.png"
+  ]
+  facemarkerBack [
+    "textures/letters/2.png"
+  ]
+  facemarkerLeft [
+    "textures/letters/2.png"
+  ]
+  facemarkerRight [
+    "textures/letters/2.png"
+  ]
+  facemarkerTop [
+    "textures/letters/2.png"
+  ]
+  facemarkerBottom [
+    "textures/letters/2.png"
+  ]
+}
+Block1x1 {
+  name "Number3"
+  translation 0.216778 -0.130033 0.0219929
+  rotation 0 0 1 0.05
+  blockColor 0.326848 0.541238 0.85098
+  facemarkerFront [
+    "textures/letters/3.png"
+  ]
+  facemarkerBack [
+    "textures/letters/3.png"
+  ]
+  facemarkerLeft [
+    "textures/letters/3.png"
+  ]
+  facemarkerRight [
+    "textures/letters/3.png"
+  ]
+  facemarkerTop [
+    "textures/letters/3.png"
+  ]
+  facemarkerBottom [
+    "textures/letters/3.png"
+  ]
+}
+Block1x1 {
+  name "Number4"
+  translation 0.0149741 -0.182442 0.0219929
+  rotation 0 0 1 0.05
+  blockColor 0.63505 0.424613 0.85098
+  facemarkerFront [
+    "textures/letters/4.png"
+  ]
+  facemarkerBack [
+    "textures/letters/4.png"
+  ]
+  facemarkerLeft [
+    "textures/letters/4.png"
+  ]
+  facemarkerRight [
+    "textures/letters/4.png"
+  ]
+  facemarkerTop [
+    "textures/letters/4.png"
+  ]
+  facemarkerBottom [
+    "textures/letters/4.png"
+  ]
+}
+Block1x1 {
+  name "Number5"
+  translation -0.160499 -0.0780674 0.0219929
+  rotation 0 0 1 0.05
+  blockColor 0.85098 0.802457 0.50779
+  facemarkerFront [
+    "textures/letters/5.png"
+  ]
+  facemarkerBack [
+    "textures/letters/5.png"
+  ]
+  facemarkerLeft [
+    "textures/letters/5.png"
+  ]
+  facemarkerRight [
+    "textures/letters/5.png"
+  ]
+  facemarkerTop [
+    "textures/letters/5.png"
+  ]
+  facemarkerBottom [
+    "textures/letters/5.png"
+  ]
+}
+Block1x1 {
+  name "Number6"
+  translation -0.157611 0.140151 0.0219929
+  rotation 0 0 1 0.05
+  blockColor 0.5 0.5 0.85
+  facemarkerFront [
+    "textures/letters/6.png"
+  ]
+  facemarkerBack [
+    "textures/letters/6.png"
+  ]
+  facemarkerLeft [
+    "textures/letters/6.png"
+  ]
+  facemarkerRight [
+    "textures/letters/6.png"
+  ]
+  facemarkerTop [
+    "textures/letters/6.png"
+  ]
+  facemarkerBottom [
+    "textures/letters/6.png"
+  ]
+}
+Block1x1 {
+  name "Bang"
+  translation 0.357611 0.350151 0.0219929
+  rotation 0 0 1 0.05
+  blockColor 0.85098 0.444236 0.0568704
+  facemarkerFront [
+    "textures/symbols/bangBangBang.png"
+  ]
+  facemarkerBack [
+    "textures/symbols/bangBangBang.png"
+  ]
+  facemarkerLeft [
+    "textures/symbols/bangBangBang.png"
+  ]
+  facemarkerRight [
+    "textures/symbols/bangBangBang.png"
+  ]
+  facemarkerTop [
+    "textures/symbols/bangBangBang.png"
+  ]
+  facemarkerBottom [
+    "textures/symbols/bangBangBang.png"
+  ]
+}
+Dice {
+  translation 0.0823757 0.0254788 0.008
+  color 0.74522 1 0.958907
+}
+DEF Cozmo_1 CozmoBot {
+  name "CozmoBot_1"
+  usbChannel 10
+}
+BlockWorldComms {
+}
+CozmoVizDisplay {
+}
