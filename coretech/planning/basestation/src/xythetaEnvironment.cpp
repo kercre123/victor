@@ -169,6 +169,7 @@ ActionType::ActionType()
   : extraCostFactor_(0.0)
   , id_(-1)
   , name_("<invalid>")
+  , reverse_(false)
 {
 }
 
@@ -181,6 +182,8 @@ bool ActionType::Import(const Json::Value& config)
     JsonTools::PrintJson(config, 1);
     return false;
   }
+  JsonTools::GetValueOptional(config, "reverse_action", reverse_);
+
   return true;
 }
 
@@ -200,6 +203,7 @@ xythetaEnvironment::xythetaEnvironment()
   halfWheelBase_mm_ = 25.0;
   maxVelocity_mmps_ = 50.0;
   oneOverMaxVelocity_ = 1.0 / maxVelocity_mmps_;
+  maxReverseVelocity_mmps_ = 25.0;
 }
 
 xythetaEnvironment::xythetaEnvironment(const char* mprimFilename, const char* mapFile)
@@ -208,6 +212,7 @@ xythetaEnvironment::xythetaEnvironment(const char* mprimFilename, const char* ma
   halfWheelBase_mm_ = 25.0;
   maxVelocity_mmps_ = 50.0;
   oneOverMaxVelocity_ = 1.0 / maxVelocity_mmps_;
+  maxReverseVelocity_mmps_ = 25.0;
 }
 
 
@@ -350,6 +355,11 @@ bool MotionPrimitive::Import(const Json::Value& config, StateTheta startingAngle
     return false;
   }
 
+  double oneOverLinearSpeed = env.GetOneOverMaxVelocity();
+  if(env.GetActionType(id).IsReverseAction()) {
+    oneOverLinearSpeed = 1.0 / env.GetMaxReverseVelocity_mmps();
+  }
+
   // Compute cost based on the action. Cost is time in seconds
   cost = 0.0;
   if(config.isMember("arc")) {
@@ -360,7 +370,7 @@ bool MotionPrimitive::Import(const Json::Value& config, StateTheta startingAngle
     double radius_mm = std::abs(config["arc"]["radius_mm"].asDouble()) + env.GetHalfWheelBase_mm();
 
     // the total time is the arclength of the outer wheel arc divided by the max outer wheel speed
-    cost += deltaTheta * radius_mm * env.GetOneOverMaxVelocity();
+    cost += deltaTheta * radius_mm * oneOverLinearSpeed;
   }
   else if(config.isMember("turn_in_place_direction")) {
     double direction = config["turn_in_place_direction"].asDouble();
@@ -369,12 +379,12 @@ bool MotionPrimitive::Import(const Json::Value& config, StateTheta startingAngle
     Radians startRads(env.GetTheta_c(startTheta));
     double deltaTheta = startRads.angularDistance(env.GetTheta_c(endStateOffset.theta), direction < 0);
 
-    cost +=  std::abs(deltaTheta) * env.GetHalfWheelBase_mm() * env.GetOneOverMaxVelocity();
+    cost +=  std::abs(deltaTheta) * env.GetHalfWheelBase_mm() * oneOverLinearSpeed;
   }
 
   double length = std::abs(config["straight_length_mm"].asDouble());
   if(length > 0.0) {
-    cost += length * env.GetOneOverMaxVelocity();
+    cost += length * oneOverLinearSpeed;
   }
 
   assert(env.GetNumActions() > id);

@@ -3,6 +3,7 @@ from math import *
 from fractions import gcd
 import numpy
 import json
+import copy
 
 class MotionPrimitiveSet:
     "A set of motion primitives for use in the xytheta lattice planner"
@@ -29,16 +30,19 @@ class MotionPrimitiveSet:
 
         self.numActions = 0
 
-    def addAction(self, name, angleOffset, length, costFactor = 1.0):
+    def addAction(self, name, angleOffset, length, costFactor = 1.0, backwardsCostFactor = 0.0):
         """Add an action to the primitive set.
         * angleOffset is number of discrete angles to transition (signed int)
         * length is approximate length of the action in number of cells (signed int)
           The length may be adjusted to fit the grid
-        * costFactor is optional and is a multiple of the cost of the action"""
+        * costFactor is optional and is a multiple of the cost of the action
+        * backwardsCostFactor is optional. If set to 0.0 (the default) this action is normal
+            otherwise, the action will be duplicated as a backwards action with the specified
+            cost factor."""
 
         if name in self.actions:
             raise DuplicateActionError(name)
-        self.actions[name] = Action(name, angleOffset, length, self.numActions, costFactor)
+        self.actions[name] = Action(name, angleOffset, length, self.numActions, costFactor, backwardsCostFactor)
         self.numActions += 1
 
     def createPrimitives(self):
@@ -50,6 +54,43 @@ class MotionPrimitiveSet:
             self.primitivesPerAngle[angleIdx] = [None for i in range(self.numActions)]
             for action in self.actions.values():
                 self.primitivesPerAngle[angleIdx][action.index] = action.generate(angleIdx, self)
+
+        # now if there are any backwards actions, go through and copy them over from the opposite angles
+        newActions = {}
+        for action in self.actions.values():
+            if action.backwardsCostFactor > 1e-5:
+                backwardsAction = copy.deepcopy(action)
+                backwardsAction.isReverseAction = True
+                backwardsAction.name = "backwards " + backwardsAction.name
+                backwardsAction.costFactor = action.backwardsCostFactor
+                backwardsAction.index = len(self.actions) + len(newActions)
+                newActions[backwardsAction.name] = backwardsAction
+                assert(backwardsAction.index == self.numActions)
+                self.numActions += 1
+
+                # copy primitives over as well, changing only the ending angle
+                for angleIdx in range(len(self.angles)):
+                    oppositeAngle = (angleIdx + (self.numAngles / 2)) % self.numAngles
+                    backwardsPrim = copy.deepcopy(self.primitivesPerAngle[oppositeAngle][action.index])
+                    newTheta = fixTheta(angleIdx + backwardsAction.angleOffset, self.numAngles)
+                    backwardsPrim.endPose = Pose(backwardsPrim.endPose.x, backwardsPrim.endPose.y, newTheta)
+                    backwardsPrim.actionIndex = backwardsAction.index
+                    backwardsPrim.l *= -1
+                    if backwardsPrim.arc:
+                        newStartRad = fixTheta_rads(backwardsPrim.arc.startRad + pi)
+                        newThetaRads = backwardsPrim.arc.sweepRad * -1.0
+                        backwardsPrim.arc = Arc(backwardsPrim.arc.centerPt_x_mm,
+                                                backwardsPrim.arc.centerPt_y_mm,
+                                                backwardsPrim.arc.radius_mm,
+                                                newStartRad,
+                                                newThetaRads)
+                    newPoses = []
+                    for pose in backwardsPrim.intermediatePoses:
+                        newPoses.append(Pose_mm(pose.x_mm, pose.y_mm, fixTheta_rads(pose.theta_rads + pi)))
+                    backwardsPrim.intermediatePoses = newPoses
+                    self.primitivesPerAngle[angleIdx].append(backwardsPrim)
+
+        self.actions.update(newActions)
 
     def dumpJson(self, filename):
         J = self.createDict()
@@ -340,16 +381,19 @@ class DuplicateActionError(Exception):
 class Action:
     "A type of action that will create a primitive from every starting angle."
     
-    def __init__(self, name, angleOffset, length, index, costFactor = 1.0):
+    def __init__(self, name, angleOffset, length, index, costFactor = 1.0, backwardsCostFactor = 0.0):
         self.name = name
         self.length = length # length in cells
         self.angleOffset = angleOffset
         self.costFactor = costFactor
         self.index = index
+        self.backwardsCostFactor = backwardsCostFactor
+        self.isReverseAction = False
 
     def __repr__(self):
-        return "%s: %+d angles, %+d length, costFactor=%f" % (
+        return "%s (%d): %+d angles, %+d length, costFactor=%f" % (
             self.name,
+            self.index,
             self.angleOffset,
             self.length,
             self.costFactor)
@@ -359,6 +403,8 @@ class Action:
         J["name"] = self.name
         J["index"] = self.index
         J["extra_cost_factor"] = self.costFactor
+        if self.isReverseAction:
+            J["reverse_action"] = True
         return J
 
     def generate(self, startingAngle, primSet):

@@ -14,15 +14,14 @@ prim.resolution_mm = 10.0
 # how long the long straights should be in cells (approximately)
 longLen = 5
 
-prim.addAction("short straight", 0, 1)
+prim.addAction("short straight", 0, 1, backwardsCostFactor = 1.1)
 prim.addAction("long straight", 0, longLen)
-prim.addAction("backup", 0, -1, 5.0)
-prim.addAction("slight left", 1, longLen)
-prim.addAction("slight right", -1, longLen)
-prim.addAction("hard left", 3, longLen)
-prim.addAction("hard right", -3, longLen)
-prim.addAction("inplace left", 1, 0)
-prim.addAction("inplace right", -1, 0)
+prim.addAction("slight left", 1, longLen, backwardsCostFactor = 1.1)
+prim.addAction("slight right", -1, longLen, backwardsCostFactor = 1.1)
+prim.addAction("hard left", 3, longLen, 1.0)
+prim.addAction("hard right", -3, longLen, 1.0)
+prim.addAction("inplace left", 1, 0, 2.0)
+prim.addAction("inplace right", -1, 0, 2.0)
 
 prim.createPrimitives()
 
@@ -35,7 +34,7 @@ import pprint
 # exit(0)
 
 prim.dumpJson("newPrim.json")
-#exit(0)
+exit(0)
 
 from pylab import *
 

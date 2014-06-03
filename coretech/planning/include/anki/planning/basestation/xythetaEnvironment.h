@@ -180,12 +180,14 @@ public:
 
   const std::string& GetName() const {return name_;}
   Cost GetExtraCostFactor() const {return extraCostFactor_;}  
+  bool IsReverseAction() const {return reverse_;}
 
 private:
 
   Cost extraCostFactor_;
   ActionID id_;
   std::string name_;
+  bool reverse_;
 };
 
 class xythetaEnvironment
@@ -246,6 +248,7 @@ public:
 
   double GetHalfWheelBase_mm() const {return halfWheelBase_mm_;}
   double GetMaxVelocity_mmps() const {return maxVelocity_mmps_;}
+  double GetMaxReverseVelocity_mmps() const {return maxReverseVelocity_mmps_;}
 
   double GetOneOverMaxVelocity() const {return oneOverMaxVelocity_;}
 
@@ -283,6 +286,7 @@ private:
 
   double halfWheelBase_mm_;
   double maxVelocity_mmps_;
+  double maxReverseVelocity_mmps_;
   double oneOverMaxVelocity_;
 };
 
