@@ -7,7 +7,7 @@
 using namespace std;
 using namespace Anki;
 
-GTEST_TEST(TestPlannerRectangle, RectangleIntersectionsRotated)
+GTEST_TEST(TestRotatedRectangle, RectangleIntersectionsRotated)
 {
   RotatedRectangle R0(-0.2, 1.0, 1.2, -0.5, 0.4);
   set< pair<float, float> > pointsInR0;
@@ -47,7 +47,7 @@ GTEST_TEST(TestPlannerRectangle, RectangleIntersectionsRotated)
   EXPECT_EQ(inside, pointsInR0.size());
 }
 
-GTEST_TEST(TestPlannerRectangle, RectangleIntersectionsAligned)
+GTEST_TEST(TestRotatedRectangle, RectangleIntersectionsAligned)
 {
   RotatedRectangle R0(-1.0, 0.0, 0.0, 0.0, 0.5);
   set< pair<float, float> > pointsInR0;

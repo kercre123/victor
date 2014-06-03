@@ -20,7 +20,6 @@ if(NOT WIN32)
 
   add_executable(run_coreTechPlanningTests
           run_coreTechPlanningTests.cpp
-          testRectangle.cpp
           testEnvironment.cpp
   )
 
