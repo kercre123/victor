@@ -93,11 +93,7 @@ int main(void)
   IMUInit();  // The IMU must be configured before spineport  
   SPIInit();
   UARTPutString("SPI!\r\n");
-<<<<<<< HEAD
-  
-=======
 
->>>>>>> 23db19ed2597e17002dcbfa0f2a6e62e8765fb31
 #if 0
   // Motor testing...
   while (1)
