@@ -78,6 +78,9 @@ namespace Anki {
       
       // Clears the path that the robot is executing which also stops the robot
       Result ClearPath();
+
+      // Removes the specified number of segments from the front and back of the path
+      Result TrimPath(const u8 numPopFrontSegments, const u8 numPopBackSegments);
       
       // Sends a path to the robot to be immediately executed
       Result ExecutePath(const Planning::Path& path);
@@ -252,6 +255,9 @@ namespace Anki {
 
       // Clears the path that the robot is executing which also stops the robot
       Result SendClearPath() const;
+
+      // Removes the specified number of segments from the front and back of the path
+      Result SendTrimPath(const u8 numPopFrontSegments, const u8 numPopBackSegments) const;
       
       // Sends a path to the robot to be immediately executed
       Result SendExecutePath(const Planning::Path& path) const;

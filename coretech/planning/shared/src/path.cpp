@@ -4,6 +4,7 @@
 #include "anki/common/constantsAndMacros.h"
 #include <assert.h>
 #include <math.h>
+#include <string.h>
 
 #define DEBUG_PATH 0
 
@@ -824,6 +825,39 @@ namespace Anki
       return path.GetNumSegments();
     }
   
+    bool Path::PopFront(const u8 numSegments)
+    {
+      if (numSegments <= numPathSegments_) {
+        numPathSegments_ -= numSegments;
+        
+        // Shift path segments to front down
+        memcpy(path_, &(path_[numSegments]), numPathSegments_*sizeof(PathSegment));
+        
+        return true;
+      } else {
+        #if(DEBUG_PATH)
+        CoreTechPrint("WARNING(Path::PopFront): Can't pop %d segments from %d segment path\n", numSegments, numPathSegments_);
+        #endif
+      }
+      
+      return false;
+    }
+    
+    bool Path::PopBack(const u8 numSegments)
+    {
+      if (numSegments <= numPathSegments_) {
+        numPathSegments_ -= numSegments;
+        return true;
+      } else {
+#if(DEBUG_PATH)
+        CoreTechPrint("WARNING(Path::PopBack): Can't pop %d segments from %d segment path\n", numSegments, numPathSegments_);
+#endif
+      }
+      
+      return false;
+    }
+    
+    
 
     // TODO: Eventually, this function should also be made to check that
     // orientation is not discontiuous and that velocity profile is smooth

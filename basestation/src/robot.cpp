@@ -406,6 +406,11 @@ namespace Anki {
     {
       return SendStopAllMotors();
     }
+
+    Result Robot::TrimPath(const u8 numPopFrontSegments, const u8 numPopBackSegments)
+    {
+      return SendTrimPath(numPopFrontSegments, numPopBackSegments);
+    }
     
     // Clears the path that the robot is executing which also stops the robot
     Result Robot::ClearPath()
@@ -466,6 +471,16 @@ namespace Anki {
       MessageClearPath m;
       m.pathID = 0;
       
+      return msgHandler_->SendMessage(ID_, m);
+    }
+    
+    // Removes the specified number of segments from the front and back of the path
+    Result Robot::SendTrimPath(const u8 numPopFrontSegments, const u8 numPopBackSegments) const
+    {
+      MessageTrimPath m;
+      m.numPopFrontSegments = numPopFrontSegments;
+      m.numPopBackSegments = numPopBackSegments;
+
       return msgHandler_->SendMessage(ID_, m);
     }
     
