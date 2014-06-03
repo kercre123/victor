@@ -152,6 +152,11 @@ namespace Anki
       // Accessor for PathSegment at specified index
       PathSegment& operator[](const u8 idx) {return path_[idx];}
       const PathSegment& GetSegmentConstRef(const u8 idx) const {return path_[idx];}
+      
+      // Remove the specified number of segments from the front or back of the path.
+      // Returns true if popped successfully.
+      bool PopFront(const u8 numSegments);
+      bool PopBack(const u8 numSegments);
 
       // Verifies that the path segment at the specified index
       // starts at where the previous segments ends with some tolerance
