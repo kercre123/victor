@@ -220,20 +220,22 @@ namespace Cozmo {
       
       // Look for valid header
       while (1) {
-        std::string strBuf(c.recvBuf, c.recvBuf + c.recvDataSize);  // TODO: Just make recvBuf a string
-        std::size_t n = strBuf.find(header);
-        if (n == std::string::npos) {
+        
+        char* hPtr = std::strstr(c.recvBuf,(char*)RADIO_PACKET_HEADER);
+        if (hPtr == NULL) {
           // Header not found at all
           // Delete everything
           c.recvDataSize = 0;
           break;
-        } else if (n != 0) {
+        }
+        
+        int n = hPtr - c.recvBuf;
+        if (n != 0) {
           // Header was not found at the beginning.
           // Delete everything up until the header.
-          PRINT_NAMED_WARNING("TCPComms.PartialMsgRecvd", "Header not found where expected. Dropping preceding bytes\n");
-          strBuf = strBuf.substr(n);
-          memcpy(c.recvBuf, strBuf.c_str(), strBuf.length());
-          c.recvDataSize = strBuf.length();
+          PRINT_NAMED_WARNING("TCPComms.PartialMsgRecvd", "Header not found where expected. Dropping preceding %d bytes\n", n);
+          c.recvDataSize -= n;
+          memcpy(c.recvBuf, hPtr, c.recvDataSize);
         }
         
         // Check if expected number of bytes are in the msg

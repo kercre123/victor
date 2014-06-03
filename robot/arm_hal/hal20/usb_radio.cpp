@@ -99,19 +99,20 @@ namespace Anki {
           const int headerSize = sizeof(RADIO_PACKET_HEADER);
           
           // Look for valid header
-          std::string strBuf(recvBuf_, recvBuf_ + recvBufSize_);  // TODO: Just make recvBuf a string
-          std::size_t n = strBuf.find((char*)RADIO_PACKET_HEADER, 0, headerSize);
-          if (n == std::string::npos) {
+          const char* hPtr = std::strstr((const char*)recvBuf_,(const char*)RADIO_PACKET_HEADER);
+          if (hPtr == NULL) {
             // Header not found at all
             // Delete everything
             recvBufSize_ = 0;
             return retVal;
-          } else if (n != 0) {
+          }
+					
+          s32 n = (s32)hPtr - (s32)recvBuf_;
+          if (n != 0) {
             // Header was not found at the beginning.
             // Delete everything up until the header.
-            strBuf = strBuf.substr(n);
-            memcpy(recvBuf_, strBuf.c_str(), strBuf.length());
-            recvBufSize_ = strBuf.length();
+            recvBufSize_ -= n;
+            memcpy(recvBuf_, hPtr, recvBufSize_); 
           }
           
           // Check if expected number of bytes are in the msg
