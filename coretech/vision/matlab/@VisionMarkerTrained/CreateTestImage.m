@@ -58,7 +58,8 @@ ycenters = imageSize(2)*ycenters(2:end-1);
 
 [xgrid,ygrid] = meshgrid(xcenters,ycenters);
 
-set(gcf, 'Units', 'pixels'); %, 'Position', [400 400 320 240]);
+pos = get(gcf, 'Pos');
+set(gcf, 'Units', 'pixels', 'Position', [pos(1:2) imageSize]); 
 h_axes = axes('Units', 'pixels', 'Position', [1 1 imageSize]);
 set(h_axes, 'XLim', [0.5 imageSize(1)+.5], 'YLim', [0.5 imageSize(2)+.5]);
 hold(h_axes, 'on')

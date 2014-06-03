@@ -10,7 +10,10 @@ TransparencyTolerance = 0.1;
 parseVarargin(varargin{:});
 
 if ischar(img)
-    [img, AlphaChannel] = imread(img);
+    [img, ~, AlphaChannel] = imread(img);
+    if isempty(AlphaChannel) 
+        AlphaChannel = ones(size(img,1),size(img,2));
+    end
 end
 
 img = im2double(img);
@@ -33,6 +36,7 @@ if CropImage
     %imgDim = max(ymax-ymin+1, xmax-xmin+1);
     
     img = img(ymin:ymax, xmin:xmax,:);
+    AlphaChannel = AlphaChannel(ymin:ymax, xmin:xmax);
 end
 
 [nrows,ncols,~] = size(img);
@@ -44,6 +48,7 @@ if nrows > ncols
         padding = [floor(padding/2) ceil(padding/2)];
     end
     img = padarray(padarray(img, [0 padding(1)], 1, 'pre'), [0 padding(2)], 1, 'post');
+    AlphaChannel = padarray(padarray(AlphaChannel, [0 padding(1)], 1, 'pre'), [0 padding(2)], 1, 'post');
     
 elseif ncols > nrows
     padding = ncols - nrows;
@@ -53,6 +58,7 @@ elseif ncols > nrows
         padding = [floor(padding/2) ceil(padding/2)];
     end
     img = padarray(padarray(img, [padding(1) 0], 1, 'pre'), [padding(2) 0], 1, 'post');
+    AlphaChannel = padarray(padarray(AlphaChannel, [padding(1) 0], 1, 'pre'), [padding(2) 0], 1, 'post');
 end
 
 [nrows,ncols,~] = size(img);
@@ -63,6 +69,7 @@ assert(nrows==ncols, 'By now, image should be square.');
 
 if PadOutside
     imgNew = padarray(img, round(2*padding_pix+squareWidth_pix)*[1 1], 1, 'both');
+    AlphaChannel = padarray(AlphaChannel, round(2*padding_pix+squareWidth_pix)*[1 1], 1, 'both');
     
     padding_pix = round(padding_pix);
     squareWidth_pix = round(squareWidth_pix);
@@ -77,6 +84,7 @@ if PadOutside
     end
 else
     imgNew = padarray(img, round(padding_pix+squareWidth_pix)*[1 1], 1, 'both'); %#ok<UNRCH>
+    AlphaChannel = padarray(AlphaChannel, round(padding_pix+squareWidth_pix)*[1 1], 1, 'both'); %#ok<UNRCH>
     
     padding_pix = round(padding_pix);
     squareWidth_pix = round(squareWidth_pix);
@@ -89,7 +97,7 @@ else
 end
 
 if nargout == 0
-    subplot 131, imagesc(img), axis image
+    subplot 131, imagesc(img, 'AlphaData', AlphaChannel), axis image
     
     squareFrac = VisionMarkerTrained.SquareWidthFraction;
     paddingFrac = VisionMarkerTrained.FiducialPaddingFraction;
@@ -123,15 +131,15 @@ if nargout == 0
     colormap(gray)
 else
     imgNew = imresize(imgNew, OutputSize*[1 1]);
+    AlphaChannel = imresize(AlphaChannel, OutputSize*[1 1]);
 end
 
 imgNew = max(0, min(1, imgNew));
+AlphaChannel = max(0, min(1, AlphaChannel));
 
 if ~isempty(TransparentColor)
     transImg = repmat(reshape(TransparentColor, [1 1 3]), OutputSize*[1 1]);
-    AlphaChannel = double(any(abs(imgNew - transImg)>TransparencyTolerance,3));
-else
-    AlphaChannel = ones(OutputSize);
-end
+    AlphaChannel = double(AlphaChannel) .* double(any(abs(imgNew - transImg)>TransparencyTolerance,3));
+end   
 
 end
