@@ -4,6 +4,9 @@
 
 #define ENABLE_WIFI
 
+// Enable the following for low level wifi debug on UART7/PF7
+// #define ENABLE_WIFI_UART
+
 // Set to 1 to enable LED indicator of wifi activity
 #define ENABLE_WIFI_LED 1
 
@@ -324,6 +327,27 @@ namespace Anki
       volatile WaitState m_waitState = WAIT_IDLE;
       
       static void WifiStateMachine();
+    
+      // For wifi driver debugging purposes
+#ifdef ENABLE_WIFI_UART
+      static int WifiPutChar(int c);      
+      static void WifiPutString(const char* s)
+      {
+        while (*s)
+          WifiPutChar(*s++);
+      }      
+      static void WifiPutHex(u8 c)
+      {
+        static u8 hex[] = "0123456789ABCDEF";
+        WifiPutChar(hex[c >> 4]);
+        WifiPutChar(hex[c & 0xF]);
+        WifiPutChar(' ');
+      }
+#else
+      static int WifiPutChar(int c) {}
+      static void WifiPutString(const char* s) {}
+      static void WifiPutHex(u8 c) {}      
+#endif      
 
       static void CSLow()
       {
@@ -336,7 +360,7 @@ namespace Anki
         
         MicroWait(1);  // Wait for pin to settle
       }
-
+      
       static void CSHigh()
       {
         GPIO_SET(GPIO_SPI_CS, PIN_SPI_CS);
@@ -368,6 +392,14 @@ namespace Anki
           ;
         
         CSHigh();
+        
+        WifiPutString("\r\nCPU->WIFI: ");
+        for (int i = 0; i < length; i++)
+          WifiPutHex(dataTX[i]);
+        WifiPutString("\r\nWIFI->CPU: ");
+        for (int i = 0; i < length; i++)
+          WifiPutHex(dataRX[i]);
+        WifiPutString("\r\n");
       }
 
       static void WifiTxSpiReady0(WifiTransmitCommand commandID, u16 length)
@@ -622,7 +654,7 @@ namespace Anki
         
         SPI_I2S_DMACmd(SPI3, SPI_I2S_DMAReq_Tx, ENABLE);
       }
-
+      
       static void ConfigureIRQ()
       {
         // Enable interrupt on DMA transfer complete
@@ -717,7 +749,58 @@ namespace Anki
         
         // Ensure default state
         CSHigh();
+      
+// Turn on wifi UART if required
+#ifdef ENABLE_WIFI_UART
+        #define UART UART7        
+        #define BAUDRATE 1000000
+        
+        static u8 s_wifiEnabled = 0;
+        if (s_wifiEnabled) {
+          WifiPutString("Wifi trying again!\r\n");
+          return;
+        }
+        s_wifiEnabled = true;
+        
+        GPIO_PIN_SOURCE(TX, GPIOF, 7);
+        
+        // Clock configuration
+        RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOF, ENABLE);
+        RCC_APB1PeriphClockCmd(RCC_APB1Periph_UART7, ENABLE);
+        
+        // Configure the pins for UART in AF mode
+        GPIO_InitStructure.GPIO_Pin = PIN_TX;
+        GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+        GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
+        GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;  // XXX - why not OD to interface with 3V3 PropPlug?
+        GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+        GPIO_Init(GPIO_TX, &GPIO_InitStructure);
+        
+        GPIO_PinAFConfig(GPIO_TX, SOURCE_TX, GPIO_AF_UART7);
+        
+        // Configure the UART for the appropriate baudrate
+        USART_InitTypeDef USART_InitStructure;
+        USART_Cmd(UART, DISABLE);
+        USART_InitStructure.USART_BaudRate = BAUDRATE;
+        USART_InitStructure.USART_WordLength = USART_WordLength_8b;
+        USART_InitStructure.USART_StopBits = USART_StopBits_1;
+        USART_InitStructure.USART_Parity = USART_Parity_No;
+        USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
+        USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
+        USART_Init(UART, &USART_InitStructure);
+        USART_Cmd(UART, ENABLE);
+        
+        WifiPutString("\r\nWIFI debug enabled\r\n");
       }
+      
+      static int WifiPutChar(int c)
+      {
+        UART->DR = c;
+        while (!(UART->SR & USART_FLAG_TXE))
+          ;
+        return c;
+#endif
+      }       
 
       static int WifiJoinAP()
       {
@@ -727,6 +810,7 @@ namespace Anki
         strlcpy((char*)&data[4], ssid, sizeof(data) - 4);
         
         // Scan for access points (needs to be done, even though we know which to connect to)
+        WifiPutString("Scan for access points...\r\n");
         if (WifiCommand(WIFI_TX_SCAN, sizeof(data), data) < 0)
           return -1;
         
@@ -739,6 +823,7 @@ namespace Anki
         strlcpy(join.ssid, ssid, sizeof(join.ssid));
         join.ssidLength = strlen(ssid);
         
+        WifiPutString("Join hidden AP...\r\n");
         if (WifiCommand(WIFI_TX_JOIN, sizeof(join), (u8*)&join) < 0)
           return -1;
         
@@ -751,9 +836,11 @@ namespace Anki
           255,255,248,0,    // Netmask
           192,168,3,1       // Gateway
         };
+        WifiPutString("Set up my IP address...\r\n");
         if (WifiCommand(WIFI_TX_SET_IP_PARAMETERS, sizeof(parameters), parameters) < 0)
           return -1;
         
+        WifiPutString("Open listener...\r\n");
         if (WifiCreateSocket() < 0)
           return -1;
         
@@ -1038,16 +1125,19 @@ namespace Anki
         
         SetLED(WIFI_LED_ID, LED_RED);
         
+        WifiPutString("Trying to enter card ready...\r\n");
         if (WifiEnterCardReadyState() < 0)
           return -1;
         
         // Set operating mode to 0 - must be the first command after reset
+        WifiPutString("Set op mode 0...\r\n");
         u8 mode = 0;
         if (WifiCommand(WIFI_TX_SET_OPERATING_MODE, 1, &mode) < 0)
           return -1;
         
         // Band == 0: 2.4 GHz
         // Band == 1: 5 GHz
+        WifiPutString("Set 5GHz...\r\n");
         mode = 1;
         if (WifiCommand(WIFI_TX_BAND, 1, &mode) < 0)
           return -1;
@@ -1055,6 +1145,7 @@ namespace Anki
         // Initialize internal stuff
         // This command programs the module's baseband and RF components and
         // returns the MAC address of the module
+        WifiPutString("Get MAC address...\r\n");
         WifiCommand(WIFI_TX_INIT, 0, NULL);
         
         // Verify the MAC address
@@ -1070,7 +1161,6 @@ namespace Anki
               matches = false;
               break;
             }
-            //UARTPutHex(m_payloadRead[j]);
           }
           
           if (matches)
@@ -1085,7 +1175,7 @@ namespace Anki
         {
           // Force enable the LED
           //g_wifiLEDs = true;
-          
+          WifiPutString("Unknown module!\r\n");
           while (1)
           {
             SetLED(LED_LEFT_EYE_TOP, (LEDColor)(LED_RED | LED_BLUE | LED_GREEN));
@@ -1095,9 +1185,11 @@ namespace Anki
           }
         }
         
+        WifiPutString("Join access point...\r\n");
         if (WifiJoinAP() < 0)
           return -1;
         
+        WifiPutString("Configured, prepare to run!\r\n");
         ConfigureDMA();
         ConfigureIRQ();
         
@@ -1113,45 +1205,23 @@ namespace Anki
       {
 #ifndef ENABLE_WIFI
         return false;
-#else       
-#if 0 //def AUTODETECT   // This does not work on all modules        
-      //  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
-      //  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
-      //  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
-
-        // Auto-detect the wifi module
-        PIN_PULLUP(GPIO_SPI_MOSI, SOURCE_SPI_MOSI);
-        PIN_IN(GPIO_SPI_MOSI, SOURCE_SPI_MOSI);
+#else 
+        // Auto detect wifi module by checking for CS pull-up
+        RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
+        RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
         
-        PIN_PULLUP(GPIO_SPI_MISO, SOURCE_SPI_MISO);
-        PIN_IN(GPIO_SPI_MISO, SOURCE_SPI_MISO);
+        // Check interrupt pin instead - it will be pulled up if module is healthy/booted
+        // XXX-NDM:  This doesn't work right since CS is pulled up with 47K instead of 10K
+        GPIO_RESET(GPIO_SPI_CS, PIN_SPI_CS);
+        PIN_OUT(GPIO_SPI_CS, SOURCE_SPI_CS);        
+        MicroWait(1);  // Drain pin
+        PIN_IN(GPIO_SPI_CS, SOURCE_SPI_CS);
+        MicroWait(1);  // Float pin
         
-        PIN_PULLUP(GPIO_SPI_SCK, SOURCE_SPI_SCK);
-        PIN_IN(GPIO_SPI_SCK, SOURCE_SPI_SCK);
-        
-        MicroWait(1);  // Wait for pins to settle
-        
-        u32 mask = PIN_SPI_MOSI | PIN_SPI_MISO | PIN_SPI_SCK;        
-        if ((GPIO_READ(GPIO_SPI_MOSI) & mask) == mask)
-        {
-          PIN_PULLDOWN(GPIO_SPI_MOSI, SOURCE_SPI_MOSI);
-          PIN_PULLDOWN(GPIO_SPI_MISO, SOURCE_SPI_MISO);
-          PIN_PULLDOWN(GPIO_SPI_SCK, SOURCE_SPI_SCK);
-          MicroWait(1);  // Wait for pins to settle
-          
-          if ((GPIO_READ(GPIO_SPI_MOSI) & mask) == 0)
-          {
-            while (WifiConfigure() < 0)
-              ;
-            return true;
-          }
-        }
-        return false;
-#else
-        while (WifiConfigure() < 0)
-          ;
-        return true;        
-#endif
+        if (GPIO_READ(GPIO_SPI_CS) & PIN_SPI_CS)
+          return WifiConfigure() >= 0;    // Bad is -1, good is 0.. grr!
+        else
+          return false;
 #endif        
       }
     }

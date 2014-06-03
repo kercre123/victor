@@ -78,11 +78,11 @@ int main(void)
 {
   using namespace Anki::Cozmo::HAL;
   
-  // Must be called FIRST in main() to do hardware sanity check
+  // Timer, than Startup, must be called FIRST in main() to do hardware sanity check
+  TimerInit();
   Startup();
   
   // Initialize the hardware
-  TimerInit();
   LightsInit();
   UARTInit();
 

@@ -32,6 +32,7 @@ extern GlobalDataToBody g_dataToBody;
     u8 n2Pin;
     u8 pPin;
     u8 isBackward;   // True if wired backward
+    u8 lastP;        // Last value of pPin
     u8 encoderPins[2];
     
     Fixed unitsPerTick;
@@ -41,7 +42,7 @@ extern GlobalDataToBody g_dataToBody;
     u32 lastCount;
     
     s16 nextPWM;
-    s16 oldPWM;
+    s16 oldPWM;    
   };
  
   const u32 IRQ_PRIORITY = 1;
@@ -104,6 +105,7 @@ extern GlobalDataToBody g_dataToBody;
       LEFT_N2_PIN,
       LEFT_P_PIN,
       true,   // Wired backward
+      0,
       ENCODER_LEFT_PIN,
       ENCODER_NONE,
       METERS_PER_TICK,
@@ -114,6 +116,7 @@ extern GlobalDataToBody g_dataToBody;
       RIGHT_N2_PIN,
       RIGHT_P_PIN,
       false,   // Wired forward
+      0,
       ENCODER_RIGHT_PIN,
       ENCODER_NONE,
       METERS_PER_TICK,
@@ -124,6 +127,7 @@ extern GlobalDataToBody g_dataToBody;
       LIFT_N2_PIN,
       LIFT_P_PIN,
       true,   // Wired backward
+      0,
       ENCODER_LIFTA_PIN,
       ENCODER_LIFTB_PIN,
       RADIANS_PER_LIFT_TICK,
@@ -134,6 +138,7 @@ extern GlobalDataToBody g_dataToBody;
       HEAD_N2_PIN,
       HEAD_P_PIN,
       true,   // Wired backward
+      0,
       ENCODER_HEADB_PIN,  // Invert direction logic on head
       ENCODER_HEADA_PIN,
       RADIANS_PER_HEAD_TICK,
@@ -213,7 +218,7 @@ static void ConfigurePinSense(u8 pin, u32 pinState)
 
 // Reset Nordic tasks to allow less glitchy changes.
 // Without a reset, the polarity will become permanently inverted.
-static void ConfigureTask(u8 motorID)
+static void ConfigureTask(u8 motorID, volatile u32 *timer)
 {
   MotorInfo* motorInfo = &m_motors[motorID];
 
@@ -232,9 +237,15 @@ static void ConfigureTask(u8 motorID)
     nrf_gpio_pin_clear(motorInfo->n2Pin);
     nrf_gpio_pin_clear(motorInfo->pPin);    // P=0 is P2+N1
     
-    MicroWait(5000);  // XXX: Let that motor cap discharge? Takes 5ms!!
-    nrf_gpiote_task_config(motorID, motorInfo->n1Pin,
-      NRF_GPIOTE_POLARITY_TOGGLE, NRF_GPIOTE_INITIAL_VALUE_HIGH);
+    // XXX: If P drive doesn't match, wait until next update to start motor - to workaround 2.1 hardware glitch
+    if (0 != motorInfo->lastP)
+    {
+      motorInfo->lastP = 0;
+      return;   // Don't update oldPWM, so we come in here again
+    } else {
+      nrf_gpiote_task_config(motorID, motorInfo->n1Pin,
+        NRF_GPIOTE_POLARITY_TOGGLE, NRF_GPIOTE_INITIAL_VALUE_HIGH);      
+    }
     
   // Backward
   } else {
@@ -247,9 +258,15 @@ static void ConfigureTask(u8 motorID)
     nrf_gpio_pin_clear(motorInfo->n2Pin);
     nrf_gpio_pin_set(motorInfo->pPin);      // P=1 is P1+N2
     
-    MicroWait(5000);  // XXX: Let that motor cap discharge? Takes 5ms!!
-    nrf_gpiote_task_config(motorID, motorInfo->n2Pin,
-      NRF_GPIOTE_POLARITY_TOGGLE, NRF_GPIOTE_INITIAL_VALUE_HIGH);    
+    // XXX: If P drive doesn't match, wait until next update to start motor - to workaround 2.1 hardware glitch
+    if (1 != motorInfo->lastP)
+    {
+      motorInfo->lastP = 1;
+      return;   // Don't update oldPWM, so we come in here again
+    } else {
+      nrf_gpiote_task_config(motorID, motorInfo->n2Pin,
+        NRF_GPIOTE_POLARITY_TOGGLE, NRF_GPIOTE_INITIAL_VALUE_HIGH);    
+    }
   }
   
   // Point encoder ticks in same direction as nextPWM
@@ -257,9 +274,11 @@ static void ConfigureTask(u8 motorID)
       motorInfo->unitsPerTick = -motorInfo->unitsPerTick;
   if (motorInfo->unitsPerTick < 0 && motorInfo->nextPWM > 0)
       motorInfo->unitsPerTick = -motorInfo->unitsPerTick;
-    
-  
+      
   motorInfo->oldPWM = motorInfo->nextPWM;
+  
+  // Update the timer channel
+  *timer = motorInfo->nextPWM < 0 ? -motorInfo->nextPWM : motorInfo->nextPWM;  
 }
 
 void MotorsInit()
@@ -370,14 +389,10 @@ void MotorsUpdate()
     NRF_TIMER1->TASKS_STOP = 1;
     NRF_TIMER1->TASKS_CLEAR = 1;
     
-    // Reconfigure the GPIOTE for the motors
-    ConfigureTask(MOTOR_LEFT_WHEEL);
-    ConfigureTask(MOTOR_RIGHT_WHEEL);
-    
-    // Update the PWM values
-    NRF_TIMER1->CC[0] = m_motors[0].nextPWM < 0 ? -m_motors[0].nextPWM : m_motors[0].nextPWM;
-    NRF_TIMER1->CC[1] = m_motors[1].nextPWM < 0 ? -m_motors[1].nextPWM : m_motors[1].nextPWM;
-    
+    // Try to reconfigure the motors - if there are any faults, bail out
+    ConfigureTask(MOTOR_LEFT_WHEEL, &(NRF_TIMER1->CC[0]));
+    ConfigureTask(MOTOR_RIGHT_WHEEL, &(NRF_TIMER1->CC[1]));
+
     // Restart the timer
     NRF_TIMER1->TASKS_START = 1;
   }
@@ -388,12 +403,11 @@ void MotorsUpdate()
     NRF_TIMER2->TASKS_STOP = 1;
     NRF_TIMER2->TASKS_CLEAR = 1;
     
-    ConfigureTask(MOTOR_LIFT);
-    ConfigureTask(MOTOR_HEAD);
-    
-    NRF_TIMER2->CC[0] = m_motors[2].nextPWM < 0 ? -m_motors[2].nextPWM : m_motors[2].nextPWM;
-    NRF_TIMER2->CC[1] = m_motors[3].nextPWM < 0 ? -m_motors[3].nextPWM : m_motors[3].nextPWM;
-    
+    // Try to reconfigure the motors - if there are any faults, bail out
+    ConfigureTask(MOTOR_LIFT, &(NRF_TIMER2->CC[0]));
+    ConfigureTask(MOTOR_HEAD, &(NRF_TIMER2->CC[1]));
+
+    // Restart the timer
     NRF_TIMER2->TASKS_START = 1;
   }
   
@@ -411,6 +425,11 @@ void MotorsUpdate()
 
 void MotorsPrintEncodersRaw()
 {
+  UARTPutHex32(m_motors[0].position);
+  UARTPutChar(' ');
+  UARTPutHex32(m_motors[1].position);
+  UARTPutChar(' ');
+  
   UARTPutChar('L');
   UARTPutChar('0' + nrf_gpio_pin_read(ENCODER_LEFT_PIN));
   UARTPutChar('R');

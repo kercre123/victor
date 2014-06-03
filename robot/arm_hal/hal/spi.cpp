@@ -24,7 +24,10 @@ namespace Anki
       
       // Set to true when it is safe to call MainExecution
       u8 g_halInitComplete = 0;
-
+      
+      // Used for debug only - blinks eye LEDs to indicate head/body sync
+      void BlinkOnSync(bool on);
+      
       #define BAUDRATE 350000
 
       #define RCC_GPIO        RCC_AHB1Periph_GPIOD
@@ -175,6 +178,7 @@ void DMA_HANDLER_TX(void)
   DMA_ClearFlag(DMA_STREAM_TX, DMA_FLAG_TX);
   USART_HalfDuplexCmd(UART, ENABLE);
   //UARTPutChar('T');
+  BlinkOnSync(true);
   
   // Wait 40uS before listening again
   MicroWait(200);
@@ -201,6 +205,11 @@ void DMA_HANDLER_RX(void)
   USART_HalfDuplexCmd(UART, DISABLE);
   //PrintCrap();
   //UARTPutChar('R');
+  static u8 blinktime = 0;
+  if (++blinktime > 40) { // 5 Hz
+    BlinkOnSync(false);
+    blinktime = 0;
+  }
   
   // Atomically copy "live" buffers to/from the DMA copies
   // XXX: There is a timing error causing an off-by-one, but I have to get into Kevin's hands
