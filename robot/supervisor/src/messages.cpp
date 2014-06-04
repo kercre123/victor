@@ -172,35 +172,17 @@ namespace Anki {
 // #pragma --- Message Dispatch Functions ---
       
       
-      void ProcessRobotAddedToWorldMessage(const RobotAddedToWorld& msg)
+      void ProcessRobotInitMessage(const RobotInit& msg)
       {
-        /* XXX - RobotIDs are not available in real HAL, so this should be rethought
-        if(msg.robotID != HAL::GetRobotID()) {
-          PRINT("Robot received ADDED_TO_WORLD handshake with "
-                " wrong robotID (%d instead of %d).\n",
-                msg.robotID, HAL::GetRobotID());
-        }*/
+   
+        PRINT("Robot received init message from basestation with ID=%d and syncTime=%d.\n");
         
-        PRINT("Robot received handshake from basestation, "
-              "sending camera calibration.\n");
-        const HAL::CameraInfo *headCamInfo = HAL::GetHeadCamInfo();
+        // TODO: Compare message ID to robot ID as a handshake?
         
-        //
-        // Send head camera calibration
-        //
-        //   TODO: do we send x or y focal length, or both?
-        HeadCameraCalibration headCalibMsg = {
-          headCamInfo->focalLength_x,
-          headCamInfo->focalLength_y,
-          headCamInfo->center_x,
-          headCamInfo->center_y,
-          headCamInfo->skew,
-          headCamInfo->nrows,
-          headCamInfo->ncols};
         
-        HAL::RadioSendMessage(GET_MESSAGE_ID(HeadCameraCalibration), &headCalibMsg);
         
-      } // ProcessRobotAddedMessage()
+        
+      } // ProcessRobotInit()
       
       
       void ProcessAbsLocalizationUpdateMessage(const AbsLocalizationUpdate& msg)

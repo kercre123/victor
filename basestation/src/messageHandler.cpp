@@ -396,7 +396,7 @@ namespace Anki {
     Result MessageHandler::ProcessMessage(Robot* robot, MessageStopAllMotors const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageRobotAvailable const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageMatMarkerObserved const&){return RESULT_FAIL;}
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageRobotAddedToWorld const&){return RESULT_FAIL;}
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageRobotInit const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageAppendPathSegmentArc const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageTrimPath const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageExecutePath const&){return RESULT_FAIL;}
@@ -410,6 +410,7 @@ namespace Anki {
     Result MessageHandler::ProcessMessage(Robot* robot, MessageImageRequest const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageStartTestMode const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageSetHeadlight const&){return RESULT_FAIL;}
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageSyncTime const&){return RESULT_FAIL;}
     
   } // namespace Cozmo
 } // namespace Anki

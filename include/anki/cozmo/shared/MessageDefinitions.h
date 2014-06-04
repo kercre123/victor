@@ -257,11 +257,12 @@ ADD_MESSAGE_MEMBER(u32, robotID)
 // TODO: Add other members here?
 END_MESSAGE_DEFINITION(RobotAvailable)
 
-// RobotAddedToWorld
-START_MESSAGE_DEFINITION(RobotAddedToWorld, 1)
+// RobotInit
+START_MESSAGE_DEFINITION(RobotInit, 1)
 ADD_MESSAGE_MEMBER(u32, robotID)
+ADD_MESSAGE_MEMBER(u32, syncTime)
 // TODO: Add other members here?
-END_MESSAGE_DEFINITION(RobotAddedToWorld)
+END_MESSAGE_DEFINITION(RobotInit)
 
 /*
 // TemplateInitialized
