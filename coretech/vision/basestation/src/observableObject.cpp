@@ -253,26 +253,19 @@ namespace Anki {
         
         const Vision::ObservableObject* libObject = GetObjectWithType(objTypeMarkersPair.first);
         
-        // HACK: Get timestamp of the observed markers so that I can set the lastSeenTime of the observable object.
-        //       If more than one timestamp exists, just use the latest one.
-        //       Need to fix this by simultaneously processing only those markers with the same timestamp.
-        //       Will therefore need to loop through this logic as many times as there are uniquely observed timestamps.
-        TimeStamp_t observedTime = 0;
-        for(auto obsMarker : objTypeMarkersPair.second)
-        {
-          if (observedTime < obsMarker->GetTimeStamp()) {
-            observedTime = obsMarker->GetTimeStamp();
-          }
+        // Get timestamp of the observed markers so that I can set the
+        // lastSeenTime of the observable object.
+        auto obsMarker = objTypeMarkersPair.second.begin();
+        const TimeStamp_t observedTime = (*obsMarker)->GetTimeStamp();
+
+        // Check that all remaining markers also have the same timestamp (which
+        // they now should, since we are processing grouped by timestamp)
+        while(++obsMarker != objTypeMarkersPair.second.end()) {
+          CORETECH_ASSERT(observedTime == (*obsMarker)->GetTimeStamp());
         }
-          
         
         for(auto obsMarker : objTypeMarkersPair.second)
-        {
-          if (obsMarker->GetTimeStamp() != observedTime) {
-            printf("HACK: Tossing observedMarker %d\n", obsMarker->GetCode());
-            continue;
-          }
-          
+        {         
           // For each observed marker, we add to the list of possible poses
           // (each paired with the observed/known marker match from which the
           // pose was computed).
