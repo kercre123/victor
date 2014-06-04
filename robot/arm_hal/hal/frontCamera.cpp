@@ -425,9 +425,9 @@ namespace Anki
         
         CamWrite(0x3008,0x02);  // Exit reset
         
-        // Let the I2C lines float after config
-        PIN_IN(GPIO_SDA, SOURCE_SDA);
-        PIN_IN(GPIO_SCL, SOURCE_SCL);
+        // // Let the I2C lines float after config
+        //PIN_IN(GPIO_SDA, SOURCE_SDA);
+        //PIN_IN(GPIO_SCL, SOURCE_SCL);
       }
 
       void FrontCameraInit()

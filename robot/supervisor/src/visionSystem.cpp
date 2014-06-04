@@ -154,10 +154,10 @@ namespace Anki {
 
         static s32 frameNumber;
         static const bool autoExposure_enabled = true;
-        static const s32 autoExposure_integerCountsIncrement = 2;
-        static const f32 autoExposure_minExposureTime = 0.03f;
-        static const f32 autoExposure_maxExposureTime = 0.97f;
-        static const f32 autoExposure_percentileToSaturate = 0.95f;
+        static const s32 autoExposure_integerCountsIncrement = 3;
+        static const f32 autoExposure_minExposureTime = 0.02f;
+        static const f32 autoExposure_maxExposureTime = 0.98f;
+        static const f32 autoExposure_percentileToSaturate = 0.97f;
         static const s32 autoExposure_adjustEveryNFrames = 1;
 
         // Tracking marker related members
@@ -1595,10 +1595,22 @@ namespace Anki {
         DebugStream::SendBinaryImage(grayscaleImage, "Binary Robot Image", tracker_, trackerParameters_, VisionMemory::ccmScratch_, VisionMemory::onchipScratch_, VisionMemory::offchipScratch_);
         HAL::MicroWait(250000);
 #else
-        DebugStream::SendImage(grayscaleImage, exposureTime, "Robot Image", VisionMemory::offchipScratch_);
-        HAL::MicroWait(166666); // 6fps
-        //HAL::MicroWait(140000); //7fps
-        //HAL::MicroWait(125000); //8fps
+        {
+          const bool sendSmall = false;
+          
+          if(sendSmall) {
+            MemoryStack ccmScratch_local = MemoryStack(VisionMemory::ccmScratch_);
+            
+            Array<u8> grayscaleImageSmall(30, 40, ccmScratch_local);
+            u32 downsampleFactor = DownsampleHelper(grayscaleImage, grayscaleImageSmall, ccmScratch_local);
+            DebugStream::SendImage(grayscaleImageSmall, exposureTime, "Robot Image", VisionMemory::offchipScratch_);
+          } else {
+            DebugStream::SendImage(grayscaleImage, exposureTime, "Robot Image", VisionMemory::offchipScratch_);
+            HAL::MicroWait(166666); // 6fps
+            //HAL::MicroWait(140000); //7fps
+            //HAL::MicroWait(125000); //8fps
+          }
+        }
 #endif
 
         return RESULT_OK;
