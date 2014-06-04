@@ -11,19 +11,33 @@ function probes = CreateProbes(probeType)
 switch(probeType)
     
     case 'dark'
-        midCorner = VisionMarkerTrained.SquareWidthFraction/2;
+        midBarWidth = VisionMarkerTrained.SquareWidthFraction/2;
         
     case 'bright'
-        midCorner = VisionMarkerTrained.SquareWidthFraction + VisionMarkerTrained.FiducialPaddingFraction/2;
+        midBarWidth = VisionMarkerTrained.SquareWidthFraction + VisionMarkerTrained.FiducialPaddingFraction/2;
         
     otherwise
         error('Unrecognized probe type "%s"', probeType);
 end
 
-midEdge = 0.5;
+endBarLength = VisionMarkerTrained.SquareWidthFraction + ...
+    VisionMarkerTrained.FiducialPaddingFraction/2;
 
+midBarLength = 0.5;
+
+% NOTE: for bright probes, we're actually creating two copies of the
+% same probe in the same location (in the corners of the gap region). This
+% is simpler for continuing to compare pairs of bright/dark probes at run
+% time, even though it isn't the most efficient.  
 probes = struct( ...
-    'x', [midCorner midCorner 1-midCorner 1-midCorner midCorner 1-midCorner midEdge midEdge], ...
-    'y', [midCorner 1-midCorner midCorner 1-midCorner midEdge midEdge midCorner 1-midCorner]);
-
+    'x', [endBarLength midBarLength 1-endBarLength ...
+          midBarWidth               1-midBarWidth ...
+          midBarWidth               1-midBarWidth ...
+          midBarWidth               1-midBarWidth ...
+          endBarLength midBarLength 1-endBarLength], ...
+    'y', [midBarWidth  midBarWidth  midBarWidth ...
+          endBarLength              endBarLength ...
+          midBarLength              midBarLength ...
+          1-endBarLength            1-endBarLength ...
+          1-midBarWidth 1-midBarWidth 1-midBarWidth]);
 end

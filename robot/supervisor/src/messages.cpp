@@ -328,6 +328,11 @@ namespace Anki {
                                               static_cast<DockAction_t>(msg.dockAction));
         }
       }
+      
+      void ProcessPlaceBlockOnGroundMessage(const PlaceBlockOnGround& msg)
+      {
+        PickAndPlaceController::PlaceOnGround(msg.rel_x_mm, msg.rel_y_mm, msg.rel_angle);
+      }
 
       void ProcessDriveWheelsMessage(const DriveWheels& msg) {
         

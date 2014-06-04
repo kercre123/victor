@@ -401,6 +401,7 @@ namespace Anki {
     Result MessageHandler::ProcessMessage(Robot* robot, MessageTrimPath const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageExecutePath const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageDockWithBlock const&){return RESULT_FAIL;}
+    Result MessageHandler::ProcessMessage(Robot* robot, MessagePlaceBlockOnGround const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageAppendPathSegmentLine const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageBlockMarkerObserved const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageMatCameraCalibration const&){return RESULT_FAIL;}
