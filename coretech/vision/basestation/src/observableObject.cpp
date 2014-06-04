@@ -10,7 +10,7 @@ namespace Anki {
 #pragma mark --- ObservableObject Implementations ---
     
     //ObjectID_t ObservableObject::ObjectCounter = 0;
-    const std::vector<const KnownMarker*> ObservableObject::sEmptyMarkerVector(0);
+    const std::vector<KnownMarker*> ObservableObject::sEmptyMarkerVector(0);
     
     ObservableObject::ObservableObject(ObjectType_t objType)
     : type_(objType), ID_(0), lastObservedTime_(0), wasObserved_(false)
@@ -60,7 +60,7 @@ namespace Anki {
       return markers_.back();
     } // ObservableObject::AddMarker()
     
-    std::vector<const KnownMarker*> const& ObservableObject::GetMarkersWithCode(const Marker::Code& withCode) const
+    std::vector<KnownMarker*> const& ObservableObject::GetMarkersWithCode(const Marker::Code& withCode) const
     {
       auto returnVec = markersWithCode_.find(withCode);
       if(returnVec != markersWithCode_.end()) {
@@ -123,6 +123,33 @@ namespace Anki {
     {
       this->GetCorners(pose_, corners);
     }
+    
+    
+    void ObservableObject::GetObservedMarkers(std::vector<const KnownMarker*>& observedMarkers) const
+    {
+      observedMarkers.clear();
+      for(auto const& marker : this->markers_)
+      {
+        if(marker.GetWasObserved()) {
+          observedMarkers.push_back(&marker);
+        }
+      }
+    } // GetObservedMarkers()
+    
+    
+    void ObservableObject::SetMarkersAsObserved(const Marker::Code& withCode)
+    {
+      auto markers = markersWithCode_.find(withCode);
+      if(markers != markersWithCode_.end()) {
+        for(auto marker : markers->second) {
+          marker->SetWasObserved(true);
+        }
+      }
+      else {
+        // TODO: Issue warning?
+      }
+      
+    } // SetMarkersAsObserved()
     
     
     
@@ -299,7 +326,15 @@ namespace Anki {
             objectsSeen.back()->SetPose(poseCluster.GetPose());
           }
           
+          // Set the markers in the object corresponding to those from the pose
+          // cluster from which it was computed as "observed"
+          for(auto & match : poseCluster.GetMatches()) {
+            const KnownMarker& marker = match.second;
+            objectsSeen.back()->SetMarkersAsObserved(marker.GetCode());
+          }
+          
           objectsSeen.back()->SetLastObservedTime(observedTime);
+          
         } // FOR each pose cluster
         
         /*
@@ -328,6 +363,9 @@ namespace Anki {
       const ObservedMarker* obsMarker = markerMatch.first;
       const KnownMarker* knownMarker  = markerMatch.second;
       matches_.emplace_back(obsMarker, *knownMarker);
+      
+      // Mark the new KnownMarker object in this match as observed
+      //matches_.back().second.SetWasObserved(true);
       
       // Keep a unique set of observed markers as part of the cluster so that
       // we don't add multiple (ambiguous) poses to one cluster that
@@ -369,6 +407,9 @@ namespace Anki {
         // and a copy of the original KnownMarker.
         matches_.emplace_back(match.second.first, *match.second.second);
         
+        // Mark the new KnownMarker object in this match as observed
+        //matches_.back().second.SetWasObserved(true);
+        
         // If there were rotation ambiguities to look for, modify
         // the original (canonical) KnownMarker's pose based on P_diff
         // so that all cluster members' KnownMarkers will be in the same
@@ -407,7 +448,7 @@ namespace Anki {
         {
           const Vision::ObservedMarker* obsMarker = match.first;
           
-          if(&obsMarker->GetSeenBy() == camera)
+          if(obsMarker->GetSeenBy().get_id() == camera->get_id())
           {
             const Vision::KnownMarker* libMarker = &match.second;
             
