@@ -30,7 +30,7 @@ namespace Anki {
     
     
     KnownMarker::KnownMarker(const Code& withCode, const Pose3d& atPose, const f32 size_mm)
-    : Marker(withCode), size_(size_mm)
+    : Marker(withCode), size_(size_mm), wasObserved_(false)
     {
       SetPose(atPose);
     }
@@ -94,6 +94,35 @@ namespace Anki {
       return corners3dAtPose;
       
     } // KnownMarker::Get3dCorners(atPose)
+    
+    // TODO: Make this part of Quadrilateral class?
+    // NOTE: It assumes the quad is planar, which is not generally true for 3d quads
+    inline Vec3f ComputeNormalHelper(const Quad3f& corners)
+    {
+      Vec3f edge1(corners[Quad::TopRight]);
+      edge1 -= corners[Quad::TopLeft];
+      
+      Vec3f edge2(corners[Quad::BottomLeft]);
+      edge2 -= corners[Quad::TopLeft];
+      
+      Vec3f normal( CrossProduct(edge2, edge1) );
+      
+      const f32 normalLength = normal.MakeUnitLength();
+      CORETECH_ASSERT(normalLength > 0.f);
+      
+      return normal;
+    } // ComputeNormalHelper()
+    
+    Vec3f KnownMarker::ComputeNormal() const
+    {
+      return ComputeNormalHelper(Get3dCorners());
+    } // ComputeNormal()
+    
+    
+    Vec3f KnownMarker::ComputeNormal(const Pose3d& atPose) const
+    {
+      return ComputeNormalHelper(Get3dCorners(atPose));
+    } // ComputeNormal(atPose)
     
     
     bool KnownMarker::IsVisibleFrom(Camera& camera,

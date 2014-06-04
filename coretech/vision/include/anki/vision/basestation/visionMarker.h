@@ -99,12 +99,20 @@ namespace Anki {
       
       Quad3f Get3dCorners(const Pose3d& atPose) const;
       
+      // Return a Unit Normal vector to the face of the known marker
+      Vec3f ComputeNormal() const; // at current pose
+      Vec3f ComputeNormal(const Pose3d& atPose) const;
+      
+      void SetWasObserved(const bool wasObserved);
+      bool GetWasObserved() const;
+      
     protected:
       static const Quad3f canonicalCorners3d_;
       
       Pose3d pose_;
       f32    size_; // in mm
       Quad3f corners3d_;
+      bool   wasObserved_;
 
     }; // class KnownMarker
     
@@ -134,6 +142,14 @@ namespace Anki {
     
     inline Camera const& ObservedMarker::GetSeenBy() const {
       return seenByCam_;
+    }
+    
+    inline void KnownMarker::SetWasObserved(const bool wasObserved) {
+      wasObserved_ = wasObserved;
+    }
+    
+    inline bool KnownMarker::GetWasObserved() const {
+      return wasObserved_;
     }
     
 
