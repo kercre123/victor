@@ -624,6 +624,26 @@ namespace Anki
       globalIDCounter = 0;
     }
 
+    bool BlockWorld::ClearBlock(const BlockID_t withID)
+    {
+      bool wasCleared = false;
+      
+      for(auto & blocksByType : existingBlocks_) {
+        auto blockWithID = blocksByType.second.find(withID);
+        if(blockWithID != blocksByType.second.end()) {
+          if(wasCleared) {
+            // If wasCleared is already true, there must have been >= 2
+            // with the specified ID, which should not happend
+            CoreTechPrint("Found multiple blocks with ID=%d in BlockWorld::ClearBlock().\n", withID);
+          }
+          blocksByType.second.erase(blockWithID);
+          wasCleared = true;
+        }
+      }
+      
+      return wasCleared;
+    } // ClearBlock()
+    
     void BlockWorld::EnableDraw(bool on)
     {
       enableDraw_ = on;

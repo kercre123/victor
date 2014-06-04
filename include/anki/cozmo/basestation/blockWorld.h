@@ -69,6 +69,10 @@ namespace Anki
       // Clears all existing blocks in the world
       void ClearAllExistingBlocks();
       
+      // Clear a block with a specific ID. Returns true if block with that ID
+      // is found and cleared, false otherwise.
+      bool ClearBlock(const BlockID_t withID);
+      
       const Vision::ObservableObjectLibrary& GetBlockLibrary() const;
       const ObjectsMapByID_t& GetExistingBlocks(const ObjectType_t blockType) const;
       const ObjectsMap_t& GetAllExistingBlocks() const {return existingBlocks_;}
