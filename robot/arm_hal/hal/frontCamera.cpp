@@ -169,7 +169,7 @@ namespace Anki
         ,0x5687,0x68 // Undocumented, maybe AEC related
         ,0x5688,0x03 // Undocumented, but definitely AEC related
         ,0x3500,0x00 // 16.4 exposure time msb (4 bits) [19:16]
-        ,0x3501,0x08 // 16.4 exposure time middle (8 bits) [15:8]
+        ,0x3501,0x0f // 16.4 exposure time middle (8 bits) [15:8]
         ,0x3502,0x00 // 16.4 exposure time lsb (4.4 bits) [7:0]
         ,0x3503,0x03 // AEC MANUAL
         ,0,0
@@ -179,7 +179,7 @@ namespace Anki
       volatile bool m_isEOF = false;
 
       // Camera exposure value
-      u16 m_exposure;
+      u32 m_exposure;
 
       bool m_enableVignettingCorrection;
 
@@ -347,7 +347,7 @@ namespace Anki
 
       void OV7739Init()
       {
-        m_exposure = 0;
+        m_exposure = u32_MAX;
         m_enableVignettingCorrection = false;
 
         // Configure the camera interface
@@ -534,31 +534,36 @@ namespace Anki
 
       void CameraSetParameters(f32 exposure, bool enableVignettingCorrection)
       {
-        // Update the exposure
-        u8 exp;
-
-        const f32 expF32 = floorf(exposure * 0xFF + 0.5f);
-
-        if(expF32 < 0.0f)
+        //TODO: vignetting correction
+        
+        const f32 maxExposure = 0xf00; // Determined empirically
+        
+        f32 correctedExposure = exposure;
+        
+        if(exposure < 0.0f)
         {
-          exp = 0;
-        } else if(expF32 > 255.0f)
+          correctedExposure = 0;
+        } else if(exposure > 1.0f)
         {
-          exp = 255;
-        } else
+          correctedExposure = 1.0f;
+        } 
+        
+        const u32 exposureU32 = (u32) floorf(correctedExposure * maxExposure + 0.5f);
+        
+        if (m_exposure != exposureU32)
         {
-          exp = (u8) expF32;
+          m_exposure = exposureU32;
+          
+          CamWrite(0x3501, (exposureU32 >> 8) & 0xFF);
+          MicroWait(100);
+          CamWrite(0x3502, exposureU32 & 0xFF);
         }
 
-        if (m_exposure != exp)
-        {
-          m_exposure = exp;
-
-          //CamWrite(0x08, (exposure >> 8));  // AEC[15:8]
-          //MicroWait(100);
-          // XXX-NDM was OV7739 CamWrite(0x10, m_exposure);  // AEC[7:0]
+        if(enableVignettingCorrection) {
+          AnkiAssert(false);
         }
-
+        
+        /*
         if(m_enableVignettingCorrection != enableVignettingCorrection)
         {
           m_enableVignettingCorrection = enableVignettingCorrection;
@@ -568,6 +573,7 @@ namespace Anki
           MicroWait(100);
           // XXX-NDM was OV7739 CamWrite(0x46, newValue);
         }
+        */
       }
 
       void CameraGetFrame(u8* frame, Vision::CameraResolution res, bool enableLight)
