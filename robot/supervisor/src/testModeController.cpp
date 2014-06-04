@@ -145,6 +145,12 @@ namespace Anki {
         // the ground or on top of another block.
         // If DA_PICKUP_HIGH, the place part of this test will just the block on the ground.
         const DockAction_t PICKUP_ACTION = DA_PICKUP_HIGH;
+        
+        // Relative pose of desired block placement on ground
+        const f32 PLACE_ON_GROUND_DIST_X = 100;
+        const f32 PLACE_ON_GROUND_DIST_Y = -10;
+        const f32 PLACE_ON_GROUND_DIST_ANG = 0;
+        
         ////// End of PickAndPlaceTest ////
         
         
@@ -191,12 +197,13 @@ namespace Anki {
       {
         PRINT("TestMode reset\n");
         // Stop wheels and vision system
+        WheelController::Enable();
         PickAndPlaceController::Reset();
         
         // Stop lift and head
         LiftController::Enable();
         LiftController::SetAngularVelocity(0);
-        LiftController::Enable();
+        HeadController::Enable();
         HeadController::SetAngularVelocity(0);
         
         return RESULT_OK;
@@ -229,7 +236,7 @@ namespace Anki {
                   PickAndPlaceController::DockToBlock(BLOCK_TO_PICK_UP, BLOCK_MARKER_WIDTH, DA_PLACE_HIGH);
                 } else {
                   PRINT("PAPT: Placing on ground\n");
-                  PickAndPlaceController::PlaceOnGround();
+                  PickAndPlaceController::PlaceOnGround(PLACE_ON_GROUND_DIST_X, PLACE_ON_GROUND_DIST_Y, PLACE_ON_GROUND_DIST_ANG);
                 }
                 pickAndPlaceState_ = PAP_PLACING;
               } else {
@@ -247,7 +254,7 @@ namespace Anki {
                   PickAndPlaceController::DockToBlock(BLOCK_TO_PICK_UP, BLOCK_MARKER_WIDTH, DA_PLACE_HIGH);
                   //pickAndPlaceState_ = PAP_PLACING;
                 } else {
-                  PickAndPlaceController::PlaceOnGround();
+                  PickAndPlaceController::PlaceOnGround(PLACE_ON_GROUND_DIST_X, PLACE_ON_GROUND_DIST_Y, PLACE_ON_GROUND_DIST_ANG);
                 }
               }
             }
