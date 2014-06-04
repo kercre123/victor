@@ -131,12 +131,12 @@ namespace Anki
         //,0x548e,0xcf // GAMMA YST14
         //,0x548f,0xe3 // GAMMA YST15
         //,0x5490,0x26 // GAMMA YSLP15 
-        //,0x5380,0x42 // CMX COEFFICIENT11 
-        //,0x5381,0x33 // CMX COEFFICIENT12
-        //,0x5382,0x0f // CMX COEFFICIENT13
-        //,0x5383,0x0b // CMX COEFFICIENT14
-        //,0x5384,0x42 // CMX COEFFICIENT15
-        //,0x5385,0x4d // CMX COEFFICIENT16
+        //,0x5380,0x47 // CMX COEFFICIENT11 
+        //,0x5381,0x3c // CMX COEFFICIENT12
+        //,0x5382,0x06 // CMX COEFFICIENT13
+        //,0x5383,0x17 // CMX COEFFICIENT14
+        //,0x5384,0x3a // CMX COEFFICIENT15
+        //,0x5385,0x52 // CMX COEFFICIENT16
         //,0x5392,0x1e // CMX SIGN
         //,0x5801,0x00 // LENC CTRL1
         //,0x5802,0x06 // LENC CTRL2
@@ -144,7 +144,7 @@ namespace Anki
         //,0x5804,0x42 // LENC CTRL4
         //,0x5805,0x2a // LENC CTRL5
         //,0x5806,0x25 // LENC CTRL6
-        ,0x5001,0x46 // ISP CTRL01
+        ,0x5001,0x42 // ISP CTRL01
         ,0x5580,0x00 // Special digital effects
         //,0x5583,0x40 // Special digital effects
         //,0x5584,0x26 // Special digital effects
