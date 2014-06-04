@@ -227,7 +227,7 @@ namespace Anki
         return c;
       }
 
-      bool UARTPutMessage(u8 msgID, u32 timestamp, u8* buffer, u8 length)
+      bool UARTPutMessage(u8 msgID, u32 timestamp, u8* buffer, u32 length)
       {
         bool result = false;
         
