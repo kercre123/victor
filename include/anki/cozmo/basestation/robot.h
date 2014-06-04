@@ -144,8 +144,9 @@ namespace Anki {
       // relevant state modifying functions. e.g. SendStopAllMotors() should be
       // called from StopAllMotors().
       
-      // Request camera calibration from robot
-      Result SendRequestCamCalib() const;
+      // Sync time with physical robot and trigger it robot to send back camera
+      // calibration
+      Result SendInit() const;
       
       // Send's robot's current pose
       Result SendAbsLocalizationUpdate() const;

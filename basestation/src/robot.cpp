@@ -11,7 +11,11 @@
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/messages.h"
 #include "anki/cozmo/basestation/robot.h"
+
+
 #include "anki/common/basestation/general.h"
+#include "anki/common/basestation/utils/timer.h"
+
 #include "anki/vision/CameraSettings.h"
 
 // TODO: This is shared between basestation and robot and should be moved up
@@ -459,9 +463,13 @@ namespace Anki {
     
     // ============ Messaging ================
     
-    Result Robot::SendRequestCamCalib() const
+    // Sync time with physical robot and trigger it robot to send back camera calibration
+    Result Robot::SendInit() const
     {
-      MessageRequestCamCalib m;
+      MessageRobotInit m;
+      m.robotID  = ID_;
+      m.syncTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+      
       return msgHandler_->SendMessage(ID_, m);
     }
     
