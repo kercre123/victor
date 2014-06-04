@@ -568,6 +568,7 @@ namespace Anki
       // Visualize the marker in 3D
       // TODO: disable this block when not debugging / visualizing
       if(true){
+        
         // Note that this incurs extra computation to compute the 3D pose of
         // each observed marker so that we can draw in the 3D world, but this is
         // purely for debug / visualization
@@ -578,6 +579,7 @@ namespace Anki
         // will request them at a "canonical" pose (no rotation/translation)
         const Pose3d canonicalPose;
         
+        /*
         // Block Markers
         std::set<const Vision::ObservableObject*> const& blocks = blockLibrary_.GetObjectsWithMarker(marker);
         for(auto block : blocks) {
@@ -591,6 +593,7 @@ namespace Anki
             VizManager::getInstance()->DrawQuad(quadID++, blockMarker->Get3dCorners(markerPose), VIZ_COLOR_OBSERVED_QUAD);
           }
         }
+         */
         
         // Mat Markers
         std::set<const Vision::ObservableObject*> const& mats = matLibrary_.GetObjectsWithMarker(marker);
@@ -630,6 +633,7 @@ namespace Anki
     void BlockWorld::ClearAllExistingBlocks() {
       existingBlocks_.clear();
       globalIDCounter = 0;
+      didBlocksChange_ = true;
     }
 
     bool BlockWorld::ClearBlock(const BlockID_t withID)
@@ -644,8 +648,17 @@ namespace Anki
             // with the specified ID, which should not happend
             CoreTechPrint("Found multiple blocks with ID=%d in BlockWorld::ClearBlock().\n", withID);
           }
+          
+          // Erase the vizualized block and its projected quad
+          VizManager::getInstance()->EraseCuboid(withID);
+          VizManager::getInstance()->EraseQuad(withID);
+
+          // Remove the block from the world
           blocksByType.second.erase(blockWithID);
+          
+          // Flag that we removed a block
           wasCleared = true;
+          didBlocksChange_ = true;
         }
       }
       

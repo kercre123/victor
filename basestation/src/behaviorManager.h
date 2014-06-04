@@ -65,7 +65,8 @@ namespace Anki {
         
         // June2014DiceDemo
         WAITING_TO_SEE_DICE,
-        WAITING_FOR_DICE_TO_DISAPPEAR
+        WAITING_FOR_DICE_TO_DISAPPEAR,
+        EXPLORING
         
       } BehaviorState;
       
@@ -105,6 +106,7 @@ namespace Anki {
       
       
       /////// June2014DiceDemo vars ///////
+      const TimeStamp_t TimeBetweenDice_ms = 2000; // 2 sec
       ObjectType_t blockToPickUp_;
       ObjectType_t blockToPlaceOn_;
       TimeStamp_t  diceDeletionTime_;
