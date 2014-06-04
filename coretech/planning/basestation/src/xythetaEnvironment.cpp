@@ -25,6 +25,12 @@ using namespace std;
 namespace Anki {
 namespace Planning {
 
+#define LATTICE_PLANNER_ACCEL 200
+#define LATTICE_PLANNER_DECEL 200
+
+#define LATTICE_PLANNER_ROT_ACCEL 10
+#define LATTICE_PLANNER_ROT_DECEL 10
+
 State::State(StateID sid)
   :
   x(xythetaEnvironment::GetXFromStateID(sid)),
@@ -216,6 +222,12 @@ xythetaEnvironment::xythetaEnvironment(const char* mprimFilename, const char* ma
 }
 
 
+bool xythetaEnvironment::Init(const Json::Value& mprimJson)
+{
+  ClearObstacles();
+  return ParseMotionPrims(mprimJson);
+}
+
 bool xythetaEnvironment::Init(const char* mprimFilename, const char* mapFile)
 {
   if(ReadMotionPrimitives(mprimFilename)) {
@@ -256,7 +268,7 @@ bool xythetaEnvironment::ReadMotionPrimitives(const char* mprimFilename)
   return ParseMotionPrims(mprimTree);
 }
 
-bool xythetaEnvironment::ParseMotionPrims(Json::Value& config)
+bool xythetaEnvironment::ParseMotionPrims(const Json::Value& config)
 {
   if(!JsonTools::GetValueOptional(config, "resolution_mm", resolution_mm_) ||
          !JsonTools::GetValueOptional(config, "num_angles", numAngles_)) {
@@ -319,6 +331,18 @@ bool xythetaEnvironment::ParseMotionPrims(Json::Value& config)
   return true;
 }
 
+void xythetaEnvironment::AddObstacle(RotatedRectangle* rect)
+{
+  obstacles_.push_back(rect);
+}
+
+void xythetaEnvironment::ClearObstacles()
+{
+  for(size_t i=0; i<obstacles_.size(); ++i)
+    delete obstacles_[i];
+}
+
+
 bool MotionPrimitive::Import(const Json::Value& config, StateTheta startingAngle, const xythetaEnvironment& env)
 {
   startTheta = startingAngle;
@@ -355,13 +379,32 @@ bool MotionPrimitive::Import(const Json::Value& config, StateTheta startingAngle
     return false;
   }
 
+  double linearSpeed = env.GetMaxVelocity_mmps();
   double oneOverLinearSpeed = env.GetOneOverMaxVelocity();
   if(env.GetActionType(id).IsReverseAction()) {
+    linearSpeed = env.GetMaxReverseVelocity_mmps();
     oneOverLinearSpeed = 1.0 / env.GetMaxReverseVelocity_mmps();
   }
 
   // Compute cost based on the action. Cost is time in seconds
   cost = 0.0;
+
+  double length = std::abs(config["straight_length_mm"].asDouble());
+  if(length > 0.0) {
+    cost += length * oneOverLinearSpeed;
+
+    PathSegment seg;
+    seg.DefineLine(0.0,
+                       0.0,
+                       length * cos(env.GetTheta_c(startingAngle)),
+                       length * sin(env.GetTheta_c(startingAngle)),
+                       linearSpeed,
+                       LATTICE_PLANNER_ACCEL,
+                       LATTICE_PLANNER_DECEL);
+
+    pathSegments_.push_back(seg);
+  }
+
   if(config.isMember("arc")) {
     // the section of the angle we will sweep through
     double deltaTheta = std::abs(config["arc"]["sweepRad"].asDouble());
@@ -371,6 +414,17 @@ bool MotionPrimitive::Import(const Json::Value& config, StateTheta startingAngle
 
     // the total time is the arclength of the outer wheel arc divided by the max outer wheel speed
     cost += deltaTheta * radius_mm * oneOverLinearSpeed;
+
+    PathSegment seg;
+    seg.DefineArc(config["arc"]["centerPt_x_mm"].asFloat(),
+                      config["arc"]["centerPt_y_mm"].asFloat(),
+                      config["arc"]["radius_mm"].asFloat(),
+                      config["arc"]["startRad"].asFloat(),
+                      config["arc"]["sweepRad"].asFloat(),
+                      linearSpeed,  // TODO:(bn) ask kevin!!  // TODO:(bn) this is definitely wrong
+                      LATTICE_PLANNER_ACCEL,
+                      LATTICE_PLANNER_DECEL);
+    pathSegments_.push_back(seg);
   }
   else if(config.isMember("turn_in_place_direction")) {
     double direction = config["turn_in_place_direction"].asDouble();
@@ -379,12 +433,19 @@ bool MotionPrimitive::Import(const Json::Value& config, StateTheta startingAngle
     Radians startRads(env.GetTheta_c(startTheta));
     double deltaTheta = startRads.angularDistance(env.GetTheta_c(endStateOffset.theta), direction < 0);
 
-    cost +=  std::abs(deltaTheta) * env.GetHalfWheelBase_mm() * oneOverLinearSpeed;
-  }
+    Cost turnTime = std::abs(deltaTheta) * env.GetHalfWheelBase_mm() * oneOverLinearSpeed;
+    cost +=  turnTime;
 
-  double length = std::abs(config["straight_length_mm"].asDouble());
-  if(length > 0.0) {
-    cost += length * oneOverLinearSpeed;
+    float rotSpeed = deltaTheta / turnTime;
+
+    PathSegment seg;
+    seg.DefinePointTurn(0.0,
+                            0.0,
+                            env.GetTheta_c(endStateOffset.theta),
+                            rotSpeed,
+                            LATTICE_PLANNER_ROT_ACCEL,
+                            LATTICE_PLANNER_ROT_DECEL);
+    pathSegments_.push_back(seg);
   }
 
   assert(env.GetNumActions() > id);
@@ -413,6 +474,28 @@ bool MotionPrimitive::Import(const Json::Value& config, StateTheta startingAngle
 
   return true;
 }
+
+void MotionPrimitive::AddSegmentsToPath(State_c start, Path& path) const
+{
+  State_c curr(start);
+
+  for(const auto& seg : pathSegments_) {
+    PathSegment segment(seg);
+    segment.OffsetStart(curr.x_mm, curr.y_mm);
+
+    float xx, yy;
+    segment.GetStartPoint(xx,yy);
+    printf("start: (%f, %f)\n", xx, yy);
+
+    // segment.GetEndPoint(curr.x_mm, curr.y_mm);
+    path.AppendSegment(segment);
+
+    segment.GetEndPoint(xx,yy);
+    printf("end: (%f, %f)\n", xx, yy);
+
+  }
+}
+
 
 float xythetaEnvironment::GetDistanceBetween(const State_c& start, const State& end) const
 {
@@ -443,10 +526,40 @@ bool xythetaEnvironment::ReadEnvironment(FILE* fEnv)
   return true;
 }
 
+void xythetaEnvironment::WriteEnvironment(const char *filename) const
+{
+  ofstream outfile(filename);
+  for(const auto& it : obstacles_) {
+    it->Dump(outfile);
+  }
+}
 
 SuccessorIterator xythetaEnvironment::GetSuccessors(StateID startID, Cost currG) const
 {
   return SuccessorIterator(this, startID, currG);
+}
+
+void xythetaEnvironment::ConvertToPath(const xythetaPlan& plan, Path& path) const
+{
+  path.Clear();
+
+  State curr = plan.start_;
+  for(const auto& actionID : plan.actions_) {
+    if(curr.theta >= allMotionPrimitives_.size() || actionID >= allMotionPrimitives_[curr.theta].size()) {
+      printf("ERROR: can't look up prim for angle %d and action id %d\n", curr.theta, actionID);
+      break;
+    }
+
+    printf("%s\n", actionTypes_[actionID].GetName().c_str());
+
+
+    const MotionPrimitive* prim = &allMotionPrimitives_[curr.theta][actionID];
+    prim->AddSegmentsToPath(State2State_c(curr), path);
+
+    curr.x += prim->endStateOffset.x;
+    curr.y += prim->endStateOffset.y;
+    curr.theta = prim->endStateOffset.theta;
+  }
 }
 
 void xythetaEnvironment::ConvertToXYPlan(const xythetaPlan& plan, std::vector<State_c>& continuousPlan) const

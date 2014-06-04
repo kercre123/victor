@@ -16,9 +16,12 @@
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/types.h"
 #include "anki/planning/shared/path.h"
+#include "json/json-forwards.h"
 
 namespace Anki {
   namespace Cozmo {
+
+    class BlockWorld;
     
     class IPathPlanner
     {
@@ -26,7 +29,8 @@ namespace Anki {
       virtual Result GetPlan(Planning::Path &path, const Pose3d &startPose, const Pose3d &targetPose) = 0;
       
     }; // Interface IPathPlanner
-    
+
+    // This is the Dubbins planner
     class PathPlanner : public IPathPlanner
     {
     public:
@@ -38,6 +42,19 @@ namespace Anki {
       
       
     }; // class PathPlanner
+
+  class LatticePlannerImpl;
+    class LatticePlanner : public IPathPlanner
+    {
+    public:
+      LatticePlanner(const BlockWorld* blockWorld, const Json::Value& mprims);
+      virtual ~LatticePlanner();
+      
+      virtual Result GetPlan(Planning::Path &path, const Pose3d &startPose, const Pose3d &targetPose);
+
+    protected:
+      LatticePlannerImpl* impl_;
+    };
     
     class PathPlannerStub : public IPathPlanner
     {

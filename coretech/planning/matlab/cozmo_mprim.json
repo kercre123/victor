@@ -31,12 +31,12 @@
       "name": "hard right"
     },
     {
-      "extra_cost_factor": 2.0,
+      "extra_cost_factor": 20000.0,
       "index": 6,
       "name": "inplace left"
     },
     {
-      "extra_cost_factor": 2.0,
+      "extra_cost_factor": 20000.0,
       "index": 7,
       "name": "inplace right"
     },

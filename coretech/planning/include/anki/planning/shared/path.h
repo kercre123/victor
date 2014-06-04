@@ -3,7 +3,7 @@
 
 #include "anki/common/types.h"
 
-#define MAX_NUM_PATH_SEGMENTS 10
+#define MAX_NUM_PATH_SEGMENTS 100  // TEMP: 
 
 
 namespace Anki
@@ -84,6 +84,9 @@ namespace Anki
       
       // Sets the speed parameters of the current segment
       void SetSpeedProfile(f32 targetSpeed, f32 accel, f32 decel);
+
+      // Offsets the motion by the given amount
+      void OffsetStart(f32 xOffset, f32 yOffset);
       
       // Returns length of the segment
       f32 GetLength() const;
@@ -148,6 +151,8 @@ namespace Anki
       
       bool AppendPointTurn(u32 matID, f32 x, f32 y, f32 targetAngle,
                            f32 targetRotSpeed, f32 rotAccel, f32 rotDecel);
+
+      bool AppendSegment(const PathSegment& segment);
        
       // Accessor for PathSegment at specified index
       PathSegment& operator[](const u8 idx) {return path_[idx];}

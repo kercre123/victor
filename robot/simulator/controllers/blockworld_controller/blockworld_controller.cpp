@@ -9,6 +9,8 @@
 #include <cstdio>
 #include <queue>
 #include <unistd.h>
+#include <fstream>
+
 
 #include <webots/Supervisor.hpp>
 #include "basestationKeyboardController.h"
@@ -25,8 +27,10 @@
 #include "vizManager.h"
 #include "pathPlanner.h"
 #include "behaviorManager.h"
+#include "anki/common/basestation/jsonTools.h"
 
 #include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/common/basestation/platformPathManager.h"
 
 #include "anki/cozmo/basestation/tcpComms.h"
 
@@ -54,8 +58,19 @@ int main(int argc, char **argv)
   BlockWorld blockWorld;
   RobotManager robotMgr;
   MessageHandler msgHandler;
-  PathPlanner pathPlanner;
   BehaviorManager behaviorMgr;
+
+  // read planner motion primitives
+  Json::Value mprims;
+  const std::string subPath("coretech/planning/matlab/cozmo_mprim.json");
+  const std::string jsonFilename = PREPEND_SCOPED_PATH(Config, subPath);
+
+  Json::Reader reader;
+  std::ifstream jsonFile(jsonFilename);
+  reader.parse(jsonFile, mprims);
+  jsonFile.close();
+
+  LatticePlanner pathPlanner(&blockWorld, mprims);
   
   // Initialize the modules by telling them about each other:
   msgHandler.Init(&robotComms, &robotMgr, &blockWorld);

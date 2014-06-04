@@ -88,7 +88,29 @@ namespace Anki
       return 0;
     }
     
-    
+    void PathSegment::OffsetStart(f32 xOffset, f32 yOffset)
+    {
+      switch(type_) {
+      case PST_LINE:
+        def_.line.startPt_x += xOffset;
+        def_.line.startPt_y += yOffset;
+        def_.line.endPt_x += xOffset;
+        def_.line.endPt_y += yOffset;
+        break;
+      case PST_ARC:
+        def_.arc.centerPt_x += xOffset;
+        def_.arc.centerPt_y += yOffset;
+        break;
+      case PST_POINT_TURN:
+        def_.turn.x += xOffset;
+        def_.turn.y += yOffset;
+        break;
+      default:
+        CoreTechPrint("ERROR (OffsetStart): Undefined segment %d\n", type_);
+        assert(false);
+      }
+    }
+
     void PathSegment::GetStartPoint(f32 &x, f32 &y) const
     {
       switch(type_){
@@ -1013,7 +1035,19 @@ namespace Anki
       
       return true;
     }
-  
+
+    bool Path::AppendSegment(const PathSegment& segment)
+    {
+      if (numPathSegments_ >= MAX_NUM_PATH_SEGMENTS) {
+        CoreTechPrint("ERROR (AppendSegment): Exceeded path size\n");
+        return false;
+      }
+
+      path_[numPathSegments_] = segment;
+      numPathSegments_++;
+
+      return true;
+    }  
     
 
   } // namespace Cozmo

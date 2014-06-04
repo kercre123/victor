@@ -113,7 +113,7 @@ int main(int argc, char *argv[])
 
     planner.SetGoal(goal);
     planner.SetStart(start);
-    planner.AllowFreeTurnInPlaceAtGoal();
+    // planner.AllowFreeTurnInPlaceAtGoal();
 
     planner.ComputePath();
 

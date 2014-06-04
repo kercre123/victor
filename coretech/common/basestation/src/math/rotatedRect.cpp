@@ -197,4 +197,15 @@ bool RotatedRectHelper::CheckBoundingRect(const std::vector<Point2f>& polygon,
   return false;
 }
 
+void RotatedRectangle::Dump(std::ostream& out) const
+{
+  float x1 = cornerX;
+  float y1 = cornerY;
+
+  float x0 = x1 - vec1Y * length0;
+  float y0 = vec1X * length0 + y1;
+
+  out<<x0<<' '<<y0<<' '<<x1<<' '<<y1<<' '<<length1<<std::endl;
+}
+
 }

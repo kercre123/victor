@@ -53,6 +53,11 @@ public:
    */
   bool Contains(float x, float y) const;
 
+  /** Outputs in same format as input to the constructor, separated by
+   * a space.
+   */
+  void Dump(std::ostream& out) const;
+
   float GetWidth() const {return std::abs(length0);}
   float GetHeight() const {return std::abs(length1);}
   float GetX() const {return cornerX;}
