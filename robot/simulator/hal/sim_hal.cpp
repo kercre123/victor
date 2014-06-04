@@ -53,6 +53,8 @@ namespace Anki {
       
       s32 robotID_ = -1;
       
+      TimeStamp_t timeStamp_ = 0;
+      
       // Motors
       webots::Motor* leftWheelMotor_;
       webots::Motor* rightWheelMotor_;
@@ -681,8 +683,14 @@ namespace Anki {
     
     TimeStamp_t HAL::GetTimeStamp(void)
     {
-      return static_cast<TimeStamp_t>(webotRobot_.getTime() * 1000.0);
+      //return static_cast<TimeStamp_t>(webotRobot_.getTime() * 1000.0);
+      return timeStamp_;
     }
+    
+    void HAL::SetTimeStamp(TimeStamp_t t)
+    {
+      timeStamp_ = t;
+    };
     
     s32 HAL::GetRobotID(void)
     {

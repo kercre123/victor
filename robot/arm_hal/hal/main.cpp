@@ -29,7 +29,10 @@ namespace Anki
 
       void PrintCrap();
 
-      TimeStamp_t GetTimeStamp(void){ return (TimeStamp_t)0; }
+      //TimeStamp_t GetTimeStamp(void){ return (TimeStamp_t)0; }
+      TimeStamp_t t_;
+      TimeStamp_t GetTimeStamp(void){ return t_; }
+      void SetTimeStamp(TimeStamp_t t) {t_ = t;}
 
       int UARTGetFreeSpace();
       

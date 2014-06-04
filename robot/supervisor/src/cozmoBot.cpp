@@ -177,6 +177,9 @@ namespace Anki {
       
       Result step_MainExecution()
       {
+        // HACK: Manually setting timestamp here in mainExecution until
+        // until Nathan implements this the correct way.
+        HAL::SetTimeStamp(HAL::GetTimeStamp()+TIME_STEP);
 
 // TBD - This should be moved to simulator just before step_MainExecution is called
 #ifndef ROBOT_HARDWARE

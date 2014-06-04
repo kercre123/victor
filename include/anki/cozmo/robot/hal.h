@@ -223,6 +223,7 @@ namespace Anki
 
       // Get a sync'd timestamp (e.g. for messages), in milliseconds
       TimeStamp_t GetTimeStamp(void);
+      void SetTimeStamp(TimeStamp_t t);
 
 // #pragma mark --- Audio ---
       /////////////////////////////////////////////////////////////////////
