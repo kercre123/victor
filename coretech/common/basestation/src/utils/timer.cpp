@@ -104,6 +104,8 @@ void BaseStationTimer::UpdateTime(BaseStationTime_t currTime)
 
   currentTimeInNanoSeconds_ = currTime;
   currentTimeInSeconds_ = NANOS_TO_SEC(currTime);
+  
+  //printf("Updating basestation time to %llu\n", currentTimeInNanoSeconds_);
 }
 
 
@@ -130,7 +132,7 @@ BaseStationTime_t BaseStationTimer::GetTimeSinceLastTickInNanoSeconds() const
 
 TimeStamp_t BaseStationTimer::GetCurrentTimeStamp() const
 {
-  return static_cast<TimeStamp_t>(round(currentTimeInNanoSeconds_ / 1000.));
+  return static_cast<TimeStamp_t>(currentTimeInNanoSeconds_ / 1000000);
 }
   
   /*
