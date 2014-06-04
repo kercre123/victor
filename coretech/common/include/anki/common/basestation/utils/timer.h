@@ -19,10 +19,12 @@
 #ifndef BASESTATION_UTILS_TIMER_H_
 #define BASESTATION_UTILS_TIMER_H_
 
-#include <queue>
-#include <unistd.h>
+//#include <queue>
+//#include <unistd.h>
 #include <time.h>
+
 #include "anki/common/basestation/general.h"
+#include "anki/common/types.h"
 
 #include <sys/time.h>
 
@@ -52,21 +54,24 @@ class BaseStationTimer
   // Gets time in seconds since the start of the program
   // WARNING: This value updates only once every tick! So measuring time differneces with in one update loop
   // will result in ZERO time passed.
-  double GetCurrentTimeInSeconds();
+  double GetCurrentTimeInSeconds() const;
 
   // Gets time in nanoseconds since the start of the program
   // WARNING: This value updates only once every tick! So measuring time differneces with in one update loop
   // will result in ZERO time passed.
-  BaseStationTime_t GetCurrentTimeInNanoSeconds();
+  BaseStationTime_t GetCurrentTimeInNanoSeconds() const;
 
   // Gets elapsed time since last tick in seconds
-  double GetTimeSinceLastTickInSeconds();
+  double GetTimeSinceLastTickInSeconds() const;
 
   // Gets elapsed time since last tick in nanoseconds
-  BaseStationTime_t GetTimeSinceLastTickInNanoSeconds();
+  BaseStationTime_t GetTimeSinceLastTickInNanoSeconds() const;
 
   // Updates the current system time used for tracking
   void UpdateTime(BaseStationTime_t currTime);
+  
+  // Gets current time in TimeStamp units
+  TimeStamp_t GetCurrentTimeStamp() const;
   
 private:
   // Constructor
@@ -84,6 +89,8 @@ private:
 
 };
 
+  /* Not used by Cozmo
+   
 // A timer class that can be used to measure periods of real time repeatedly.
 // After it is initialized, calls to IsReady() will return whether the necessary
 // period has elapsed while simultaneously resetting the time target for the
@@ -147,7 +154,8 @@ private:
   bool firedFirstTime_;
 
 };
-
+*/
+  
 } // namespace Anki
 
 #endif // BASESTATION_UTILS_TIMER_H_

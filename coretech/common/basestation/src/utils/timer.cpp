@@ -24,6 +24,7 @@
 
 namespace Anki {
 
+  /*
 int getTimeInMilliSeconds()
 {
   #ifndef LINUX
@@ -51,6 +52,7 @@ float getTimeInSeconds()
   const float secs = getTimeInMilliSeconds() / 1000.0f;
   return secs;
 }
+  */
   
 // Definition of static field
 BaseStationTimer* BaseStationTimer::_instance = 0;
@@ -106,26 +108,32 @@ void BaseStationTimer::UpdateTime(BaseStationTime_t currTime)
 
 
 //static int localCount = 0;
-double BaseStationTimer::GetCurrentTimeInSeconds()
+double BaseStationTimer::GetCurrentTimeInSeconds() const
 {
   return currentTimeInSeconds_;
 }
 
-BaseStationTime_t BaseStationTimer::GetCurrentTimeInNanoSeconds()
+BaseStationTime_t BaseStationTimer::GetCurrentTimeInNanoSeconds() const
 {
   return currentTimeInNanoSeconds_;
 }
 
-double BaseStationTimer::GetTimeSinceLastTickInSeconds()
+double BaseStationTimer::GetTimeSinceLastTickInSeconds() const
 {
   return elapsedTimeInSeconds_;
 }
 
-BaseStationTime_t BaseStationTimer::GetTimeSinceLastTickInNanoSeconds()
+BaseStationTime_t BaseStationTimer::GetTimeSinceLastTickInNanoSeconds() const
 {
   return elapsedTimeInNanoSeconds_;
 }
 
+TimeStamp_t BaseStationTimer::GetCurrentTimeStamp() const
+{
+  return static_cast<TimeStamp_t>(round(currentTimeInNanoSeconds_ / 1000.));
+}
+  
+  /*
 void SchedulingTimer::Reset(double newPeriodTime, bool repeating, bool checkForPeriodSkips)
 {
   if(newPeriodTime > 0) {
@@ -184,7 +192,7 @@ bool SchedulingTimer::IsReady()
 
   return ready;
 }
-
+*/
 
 
 
