@@ -107,6 +107,7 @@ namespace Anki {
       /////// June2014DiceDemo vars ///////
       ObjectType_t blockToPickUp_;
       ObjectType_t blockToPlaceOn_;
+      TimeStamp_t  diceDeletionTime_;
       
       
     }; // class BehaviorManager

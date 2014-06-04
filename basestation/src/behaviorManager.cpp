@@ -389,7 +389,16 @@ namespace Anki {
         {
           const BlockWorld::ObjectsMapByID_t& diceBlocks = world_->GetExistingBlocks(Block::DICE_BLOCK_TYPE);
           if(diceBlocks.empty()) {
-            state_ = WAITING_TO_SEE_DICE;
+            
+            // Check to see if the dice block has been gone for long enough
+            const TimeStamp_t DiceObservationTimeout_ms = 2000; // 2 sec
+            const TimeStamp_t timeSinceSeenDice_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp() - diceDeletionTime_;
+            if(timeSinceSeenDice_ms > DiceObservationTimeout_ms) {
+              
+              // TODO: Do a nod or some kind of acknowledgement we're ready to see next dice
+              CoreTechPrint("First dice is gone: ready for next dice!\n");
+              state_ = WAITING_TO_SEE_DICE;
+            }
           } else {
             
             if(diceBlocks.size() > 1) {
@@ -398,19 +407,10 @@ namespace Anki {
               CoreTechPrint("More than one dice block found, using first!\n");
             }
             
-            // Check to see if the dice the world still knows about is
-            // sufficiently stale (i.e. we haven't seen it in awhile)
-            // If so, tell the world to delete it and then go back to looking
-            // for dice.
-            const TimeStamp_t DiceObservationTimeout_ms = 2000; // 2 sec
-            const TimeStamp_t timeSinceSeenDice_ms = (diceBlocks.begin()->second->GetLastObservedTime() -
-                                                      BaseStationTimer::getInstance()->GetCurrentTimeStamp());
-            if(timeSinceSeenDice_ms > DiceObservationTimeout_ms) {
-              CoreTechPrint("Removing dice we haven't seen for awhile.\n");
-              const BlockID_t blockID = diceBlocks.begin()->first;
-              world_->ClearBlock(blockID);
-              state_ = WAITING_TO_SEE_DICE;
-            }
+            CoreTechPrint("Please move dice away for a moment.\n");
+            const BlockID_t blockID = diceBlocks.begin()->first;
+            world_->ClearBlock(blockID);
+            diceDeletionTime_ = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
             
           }
           break;
