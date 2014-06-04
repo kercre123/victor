@@ -167,7 +167,10 @@ namespace Anki
         ,0x5685,0xe0 // Undocumented, maybe AEC related
         ,0x5686,0x0d // Undocumented, maybe AEC related
         ,0x5687,0x68 // Undocumented, maybe AEC related
-        ,0x5688,0x03 // Undocumented, but definitely AEC related
+        ,0x5688,0x03 // AVERAGE CTRL8
+        ,0x4000,0x05 // BLC CTRL00
+        ,0x4002,0x45 // BLC CTRL02
+        ,0x4008,0x10 // BLC CTRL08
         ,0x3500,0x00 // 16.4 exposure time msb (4 bits) [19:16]
         ,0x3501,0x0f // 16.4 exposure time middle (8 bits) [15:8]
         ,0x3502,0x00 // 16.4 exposure time lsb (4.4 bits) [7:0]
