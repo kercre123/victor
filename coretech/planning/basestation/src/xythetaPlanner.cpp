@@ -23,6 +23,11 @@ void xythetaPlanner::SetGoal(const State_c& goal)
   _impl->SetGoal(goal);
 }
 
+void xythetaPlanner::SetStart(const State_c& start)
+{
+  _impl->SetStart(start);
+}
+
 void xythetaPlanner::AllowFreeTurnInPlaceAtGoal(bool allow)
 {
   _impl->freeTurnInPlaceAtGoal_ = allow;
@@ -57,12 +62,23 @@ xythetaPlannerImpl::xythetaPlannerImpl(const xythetaEnvironment& env)
 
 void xythetaPlannerImpl::SetGoal(const State_c& goal_c)
 {
+  std::cout<<goal_c.x_mm<<" "<<goal_c.y_mm<<" "<<goal_c.theta<<std::endl;
+
   State goal = env_.State_c2State(goal_c);
   goalID_ = goal.GetStateID();
+
+  std::cout<<goal<<std::endl;
 
   // convert back so this is still lined up perfectly with goalID_
   goal_c_ = env_.State2State_c(goal);
 }
+
+void xythetaPlannerImpl::SetStart(const State_c& start)
+{
+  start_ = env_.State_c2State(start);
+  startID_ = start_.GetStateID();
+}
+
 
 void xythetaPlannerImpl::Reset()
 {
@@ -75,6 +91,9 @@ void xythetaPlannerImpl::Reset()
 
 void xythetaPlannerImpl::ComputePath()
 {
+
+  std::cout<<"planning from '"<<start_<<"' to '"<<State(goalID_)<<"'\n";
+
   Reset();
 
   if(PLANNER_DEBUG_PLOT_STATES_CONSIDERED) {
@@ -125,6 +144,9 @@ void xythetaPlannerImpl::ComputePath()
 
   if(foundGoal)
     BuildPlan();
+  else {
+    printf("no path found!\n");
+  }
 
   if(PLANNER_DEBUG_PLOT_STATES_CONSIDERED) {
     fclose(debugExpPlotFile_);
@@ -186,7 +208,7 @@ Cost xythetaPlannerImpl::heur(StateID sid)
   State s(sid);
   // return euclidean distance in mm
 
-  return env_.GetDistanceBetween(goal_c_, s);
+  return env_.GetDistanceBetween(goal_c_, s) * env_.GetOneOverMaxVelocity();
 }
 
 void xythetaPlannerImpl::BuildPlan()

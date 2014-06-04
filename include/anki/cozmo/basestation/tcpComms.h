@@ -43,7 +43,7 @@ namespace Cozmo {
   
   class ConnectedRobotInfo {
   public:
-    static const int MAX_RECV_BUF_SIZE = 19200;
+    static const int MAX_RECV_BUF_SIZE = 1920000;
     TcpClient* client;
     char recvBuf[MAX_RECV_BUF_SIZE];
     int recvDataSize = 0;

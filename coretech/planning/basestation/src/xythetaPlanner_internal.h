@@ -26,6 +26,7 @@ struct xythetaPlannerImpl
   xythetaPlannerImpl(const xythetaEnvironment& env);
 
   void SetGoal(const State_c& goal);
+  void SetStart(const State_c& start);
 
   void ComputePath();
 

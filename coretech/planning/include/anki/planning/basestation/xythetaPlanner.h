@@ -35,6 +35,9 @@ public:
   // set a goal in meters and radians
   void SetGoal(const State_c& goal);
 
+  // set the starting state. Will be rounded to the nearest continuous state
+  void SetStart(const State_c& start);
+
   // Allow (or disallow) free turn-in-place at the goal
   void AllowFreeTurnInPlaceAtGoal(bool allow = true);
 
