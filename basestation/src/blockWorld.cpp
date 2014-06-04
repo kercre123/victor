@@ -261,6 +261,14 @@ namespace Anki
           // Mark the existing object as seen
           overlappingObjects[0]->SetWhetherObserved(true);
           
+          // Make sure any markers observed on the seen block are also marked
+          // as seen in the existing block
+          std::vector<const Vision::KnownMarker*> obsMarkers;
+          objSeen->GetObservedMarkers(obsMarkers);
+          for(auto obsMarker : obsMarkers) {
+            overlappingObjects[0]->SetMarkersAsObserved(obsMarker->GetCode());
+          }
+          
           // Project this existing block into each camera, using its new pose
           AddToOcclusionMaps(overlappingObjects[0], robotMgr_);
 
@@ -573,7 +581,7 @@ namespace Anki
         // Block Markers
         std::set<const Vision::ObservableObject*> const& blocks = blockLibrary_.GetObjectsWithMarker(marker);
         for(auto block : blocks) {
-          std::vector<const Vision::KnownMarker*> const& blockMarkers = block->GetMarkersWithCode(marker.GetCode());
+          std::vector<Vision::KnownMarker*> const& blockMarkers = block->GetMarkersWithCode(marker.GetCode());
 
           for(auto blockMarker : blockMarkers) {
             
@@ -587,7 +595,7 @@ namespace Anki
         // Mat Markers
         std::set<const Vision::ObservableObject*> const& mats = matLibrary_.GetObjectsWithMarker(marker);
         for(auto mat : mats) {
-          std::vector<const Vision::KnownMarker*> const& matMarkers = mat->GetMarkersWithCode(marker.GetCode());
+          std::vector<Vision::KnownMarker*> const& matMarkers = mat->GetMarkersWithCode(marker.GetCode());
           
           for(auto matMarker : matMarkers) {
             Pose3d markerPose = marker.GetSeenBy().ComputeObjectPose(marker.GetImageCorners(),

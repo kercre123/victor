@@ -9,13 +9,17 @@
  * Copyright: Anki, Inc. 2014
  **/
 
-#include "anki/common/basestation/utils/timer.h"
 #include "behaviorManager.h"
 #include "pathPlanner.h"
 #include "vizManager.h"
+
+
+#include "anki/common/basestation/general.h"
+#include "anki/common/basestation/utils/timer.h"
+#include "anki/common/shared/utilities_shared.h"
+
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/blockWorld.h"
-#include "anki/common/basestation/general.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 
 namespace Anki {
@@ -48,8 +52,9 @@ namespace Anki {
           break;
         case BM_June2014DiceDemo:
           state_     = WAITING_FOR_ROBOT;
-          nextState_ = WAITING_FOR_FIRST_DICE;
+          nextState_ = WAITING_TO_SEE_DICE;
           updateFcn_ = &BehaviorManager::Update_June2014DiceDemo;
+          break;
         default:
           PRINT_NAMED_ERROR("BehaviorManager.InvalidMode", "Invalid behavior mode");
           return;
@@ -380,11 +385,141 @@ namespace Anki {
     {
       switch(state_) {
           
-        case WAITING_FOR_FIRST_DICE:
+        case WAITING_FOR_DICE_TO_DISAPPEAR:
+        {
+          const BlockWorld::ObjectsMapByID_t& diceBlocks = world_->GetExistingBlocks(Block::DICE_BLOCK_TYPE);
+          if(diceBlocks.empty()) {
+            state_ = WAITING_TO_SEE_DICE;
+          } else {
+            
+            if(diceBlocks.size() > 1) {
+              // Multiple dice blocks in the world, just use first for now.
+              // TODO: Issue warning?
+              CoreTechPrint("More than one dice block found, using first!\n");
+            }
+            
+            // Check to see if the dice the world still knows about is
+            // sufficiently stale (i.e. we haven't seen it in awhile)
+            // If so, tell the world to delete it and then go back to looking
+            // for dice.
+            const TimeStamp_t DiceObservationTimeout_ms = 2000; // 2 sec
+            const TimeStamp_t timeSinceSeenDice_ms = (diceBlocks.begin()->second->GetLastObservedTime() -
+                                                      BaseStationTimer::getInstance()->GetCurrentTimeStamp());
+            if(timeSinceSeenDice_ms > DiceObservationTimeout_ms) {
+              CoreTechPrint("Removing dice we haven't seen for awhile.\n");
+              const BlockID_t blockID = diceBlocks.begin()->first;
+              world_->ClearBlock(blockID);
+              state_ = WAITING_TO_SEE_DICE;
+            }
+            
+          }
+          break;
+        }
+          
+        case WAITING_TO_SEE_DICE:
+        {
+          const BlockWorld::ObjectsMapByID_t& diceBlocks = world_->GetExistingBlocks(Block::DICE_BLOCK_TYPE);
+          if(!diceBlocks.empty()) {
+            
+            if(diceBlocks.size() > 1) {
+              // Multiple dice blocks in the world, just use first for now.
+              // TODO: Issue warning?
+              CoreTechPrint("More than one dice block found, using first!\n");
+            }
+            
+            Vision::ObservableObject* diceBlock = diceBlocks.begin()->second;
+            
+            // Get all the observed markers on the dice and look for the one
+            // facing up (i.e. the one that is nearly aligned with the z axis)
+            const f32 dotprodThresh = 1.f - cos(DEG_TO_RAD(20));
+            std::vector<const Vision::KnownMarker*> diceMarkers;
+            diceBlock->GetObservedMarkers(diceMarkers);
+            
+            const Vision::KnownMarker* topMarker = nullptr;
+            for(auto marker : diceMarkers) {
+              //const f32 dotprod = DotProduct(marker->ComputeNormal(), Z_AXIS_3D);
+              const f32 dotprod = marker->ComputeNormal().z();
+              if(NEAR(dotprod, 1.f, dotprodThresh)) {
+                topMarker = marker;
+              }
+            }
+            
+            if(topMarker != nullptr) {
+              // We found and observed the top marker on the dice. Use it to
+              // set which block we are looking for.
+              Vision::Marker::Code blockToLookFor = Vision::MARKER_UNKNOWN;
+              switch(static_cast<Vision::MarkerType>(topMarker->GetCode()))
+              {
+                case Vision::MARKER_DICE1:
+                {
+                  blockToLookFor = Vision::MARKER_1;
+                  break;
+                }
+                case Vision::MARKER_DICE2:
+                {
+                  blockToLookFor = Vision::MARKER_2;
+                  break;
+                }
+                case Vision::MARKER_DICE3:
+                {
+                  blockToLookFor = Vision::MARKER_3;
+                  break;
+                }
+                case Vision::MARKER_DICE4:
+                {
+                  blockToLookFor = Vision::MARKER_4;
+                  break;
+                }
+                case Vision::MARKER_DICE5:
+                {
+                  blockToLookFor = Vision::MARKER_5;
+                  break;
+                }
+                case Vision::MARKER_DICE6:
+                {
+                  blockToLookFor = Vision::MARKER_6;
+                  break;
+                }
+                  
+                default:
+                  PRINT_NAMED_ERROR("BehaviorManager.UnknownDiceMarker",
+                                    "Found unexpected marker on dice: %s!",
+                                    Vision::MarkerTypeStrings[topMarker->GetCode()]);
+                  StartMode(BM_None);
+                  return;
+              } // switch(topMarker->GetCode())
+              
+              CoreTechPrint("Found top marker on dice: %s!\n",
+                            Vision::MarkerTypeStrings[blockToLookFor]);
+              
+              if(blockToPickUp_ == Vision::MARKER_UNKNOWN) {
+                blockToPickUp_ = blockToLookFor;
+                blockToPlaceOn_ = Vision::MARKER_UNKNOWN;
+                // Wait for first dice to disappear
+                state_ = WAITING_FOR_DICE_TO_DISAPPEAR;
+              } else {
+                blockToPlaceOn_ = blockToLookFor;
+                
+                // TODO: create a path to blockToPickUp_
+                
+                state_ = EXECUTING_PATH_TO_DOCK_POSE;
+              }
+              
+            } else {
+              
+              // TODO: if we don't have one facing up, try driving closer to dice
+              CoreTechPrint("Found dice, but not its top marker.\n");
+            }
+            
+          } // IF any diceBlocks available
+          
+          break;
+        } // case WAITING_FOR_FIRST_DICE
 
         default:
         {
-          PRINT_NAMED_ERROR("BehaviorManager.UnknownBehaviorState", "Transitioned to unknown state %d!", state_);
+          PRINT_NAMED_ERROR("BehaviorManager.UnknownBehaviorState",
+                            "Transitioned to unknown state %d!", state_);
           StartMode(BM_None);
           return;
         }

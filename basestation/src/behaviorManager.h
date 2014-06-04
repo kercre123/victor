@@ -64,8 +64,8 @@ namespace Anki {
         EXECUTING_DOCK,
         
         // June2014DiceDemo
-        WAITING_FOR_FIRST_DICE,
-        WAITING_FOR_SECOND_DICE
+        WAITING_TO_SEE_DICE,
+        WAITING_FOR_DICE_TO_DISAPPEAR
         
       } BehaviorState;
       
@@ -102,6 +102,12 @@ namespace Anki {
       double waitUntilTime_;
 
       DockAction_t dockAction_;
+      
+      
+      /////// June2014DiceDemo vars ///////
+      ObjectType_t blockToPickUp_;
+      ObjectType_t blockToPlaceOn_;
+      
       
     }; // class BehaviorManager
     
