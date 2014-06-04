@@ -85,6 +85,10 @@ namespace Anki {
       // Sends a path to the robot to be immediately executed
       Result ExecutePath(const Planning::Path& path);
       
+      // True if wheel speeds are non-zero in most recent RobotState message
+      bool IsMoving() const {return isMoving_;}
+      void SetIsMoving(bool t) {isMoving_ = t;}
+      
       void SetTraversingPath(bool t) {isTraversingPath_ = t;}
       bool IsTraversingPath() {return isTraversingPath_;}
 
@@ -216,6 +220,7 @@ namespace Anki {
       bool isCarryingBlock_;
       bool isTraversingPath_;
       bool isPickingOrPlacing_;
+      bool isMoving_;
       
       //std::vector<BlockMarker3d*>  visibleFaces;
       //std::vector<Block*>          visibleBlocks;

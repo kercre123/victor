@@ -255,6 +255,14 @@ namespace Anki {
       robot->SetCarryingBlock( msg.status & IS_CARRYING_BLOCK );
       robot->SetPickingOrPlacing( msg.status & IS_PICKING_OR_PLACING );
       
+      const f32 WheelSpeedToConsiderStopped = 2.f;
+      if(std::abs(msg.lwheel_speed_mmps) < WheelSpeedToConsiderStopped &&
+         std::abs(msg.rwheel_speed_mmps) < WheelSpeedToConsiderStopped)
+      {
+        robot->SetIsMoving(false);
+      } else {
+        robot->SetIsMoving(true);
+      }
       
       // Add to history
       if (robot->AddRawOdomPoseToHistory(msg.timestamp,
