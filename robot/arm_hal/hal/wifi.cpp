@@ -882,6 +882,7 @@ namespace Anki
                 m_isTransferring = true;
                 
                 SetLED(WIFI_LED_ID, LED_RED);
+                WifiPutString("v");
                 
               } else if ((UARTGetFreeSpace() < BUFFER_WRITE_SIZE) 
                           && m_isClientConnected
@@ -891,6 +892,7 @@ namespace Anki
                 m_isTransferring = true;
                 
                 SetLED(WIFI_LED_ID, LED_RED);
+                WifiPutString("^");
               } else {
                 // Nothing to do
                 
@@ -898,6 +900,11 @@ namespace Anki
                   SetLED(WIFI_LED_ID, LED_BLUE);
                 else
                   SetLED(WIFI_LED_ID, LED_GREEN);
+
+                if (UARTGetFreeSpace() < BUFFER_WRITE_SIZE)
+                  WifiPutString("o");
+                else
+                  WifiPutString(".");
                 
                 goto ret;
               }

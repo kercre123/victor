@@ -45,8 +45,8 @@ namespace Anki
          0x3008,0x82
         ,0x3008,0x42
         ,0x3104,0x03
-        ,0x3017,0x7f
-        ,0x3018,0xfc
+        ,0x3017,0x7f    // Output enable: 7f for 2.1  (7e/00 for shorted 2.1 boards)
+        ,0x3018,0xf0    // Output enable: f0 for 2.1
         ,0x3602,0x14
         ,0x3611,0x44
         ,0x3631,0x22
@@ -63,8 +63,9 @@ namespace Anki
         ,0x3a00,0x7a
         ,0x3a18,0x00
         ,0x3a19,0x3f
-        ,0x300f,0x88
-        ,0x3011,0x08
+        ,0x300f,0x88  // PLL1: bypass divider, PCLK = 1/2 XCLK 
+        ,0x3011,0x08  // PLL1: enable
+        //,0x3011,0x80  // PLL1: disable - 1/4 the framerate
         ,0x4303,0xff
         ,0x4307,0xff
         ,0x430b,0xff
@@ -169,7 +170,7 @@ namespace Anki
         ,0x5687,0x68
         ,0x5688,0x03
           ,0x3500,0x00  // 16.4 exposure time msb (4 bits)
-          ,0x3501,0x01  // 16.4 exposure time middle (8 bits)
+          ,0x3501,0x04  // 16.4 exposure time middle (8 bits)
           ,0x3502,0x00  // 16.4 exposure time lsb (4.4 bits)
         ,0,0
         };
@@ -186,6 +187,10 @@ namespace Anki
       const u32 BUFFER_SIZE = 320 * 240 * 2;
       OFFCHIP u8 m_buffer[BUFFER_SIZE];
 
+      // This delay helps miss a race condition in Omnivision-supplied configuration scripts
+      // Omnivision is aware of this problem but could not suggest a workaround
+      const u32 I2C_WAIT = 8;   // 8uS between clock edges - or 62.5KHz I2C
+        
       // Soft I2C stack, borrowed from Arduino (BSD license)
       static void DriveSCL(u8 bit)
       {
@@ -194,7 +199,7 @@ namespace Anki
         else
           GPIO_RESET(GPIO_SCL, PIN_SCL);
 
-        MicroWait(10);  // Could be 2 (but PLL won't work)
+        MicroWait(I2C_WAIT);
       }
 
       static void DriveSDA(u8 bit)
@@ -204,7 +209,7 @@ namespace Anki
         else
           GPIO_RESET(GPIO_SDA, PIN_SDA);
 
-        MicroWait(10);  // Could be 2 (but PLL won't work)
+        MicroWait(I2C_WAIT);
       }
 
       // Read SDA bit by allowing it to float for a while
@@ -212,7 +217,7 @@ namespace Anki
       static u8 ReadSDA(void)
       {
         GPIO_SET(GPIO_SDA, PIN_SDA);
-        MicroWait(10);
+        MicroWait(I2C_WAIT);
         return !!(GPIO_READ(GPIO_SDA) & PIN_SDA);
       }
 
@@ -361,10 +366,6 @@ namespace Anki
         DCMI_Init(&DCMI_InitStructure);
 
         CamRead(0x3004);        // Get the I2C bus into a proper state
-
-        CamWrite(0x3008, 0x82);  // Reset
-        MicroWait(10000);       // Stay in reset for 10ms
-        CamWrite(0x3008, 0x42);  // Powerdown
         
         UARTPutHex(CamRead(0x3015));  // XXX - For debug only
 
@@ -373,7 +374,9 @@ namespace Anki
         while (*p) {
           CamWrite(p[0], p[1]);
           p += 2;
-          MicroWait(2);
+          // This delay helps miss a race condition in Omnivision-supplied configuration scripts
+          // Omnivision is aware of this problem but could not suggest a workaround
+          MicroWait(I2C_WAIT*12);
         }
 
         // Configure DMA2_Stream1 channel 1 for DMA from DCMI->DR to RAM
@@ -417,7 +420,6 @@ namespace Anki
         DCMI_CaptureCmd(ENABLE);
         
         CamWrite(0x3008,0x02);  // Exit reset
-        UARTPutHex(CamRead(0x3008));
         
         // Let the I2C lines float after config
         PIN_IN(GPIO_SDA, SOURCE_SDA);
