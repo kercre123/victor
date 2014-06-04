@@ -82,8 +82,8 @@ if(NOT WIN32)
     CoreTech_Vision_Robot
     CoreTech_Messaging_Shared
     CoreTech_Planning_Robot
-    mx 
-    eng
+    # mx 
+    # eng
     ${ALL_EMBEDDED_LIBRARIES}
   )
 

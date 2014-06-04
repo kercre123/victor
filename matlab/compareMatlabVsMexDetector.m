@@ -24,8 +24,6 @@ if isempty(img) || any(size(img)==0)
     return
 end
 
-%% Matlab detection
-matlabDetections = simpleDetector(img, 'quadRefinementIterations', 0);
 
 %% Mex Detection
 scaleImage_thresholdMultiplier = .75;
@@ -44,13 +42,18 @@ quads_quadSymmetryThreshold = 2.0;
 quads_minDistanceFromImageEdge = 2;
 decode_minContrastRatio = 1.25;
 returnInvalidMarkers = 0;
-quadRefinementIterations = 0;
+quadRefinementIterations = 25;
+numRefinementSamples = 100;
 
-[quads, ~, markerNames] = mexDetectFiducialMarkers(img, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, quadRefinementIterations, returnInvalidMarkers);
+[quads, ~, markerNames] = mexDetectFiducialMarkers(img, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, quadRefinementIterations, numRefinementSamples, returnInvalidMarkers);
 
 for i = 1:length(quads)
     quads{i} = quads{i} + 1;
 end
+
+%% Matlab detection
+matlabDetections = simpleDetector(img, 'quadRefinementIterations', quadRefinementIterations);
+
 
 %% Display
 
@@ -65,7 +68,8 @@ end
 
 hold(h_axes, 'on')
 for i = 1:numMatlabDetections
-    matlabDetections{i}.Draw('Tag', 'VisionMarkers', 'Parent', h_axes);
+    matlabDetections{i}.Draw('Tag', 'VisionMarkers', ...
+        'FontSize', 14, 'Parent', h_axes);
 end
 order = [1 2 4 3 1];
 ncols = size(img,2);

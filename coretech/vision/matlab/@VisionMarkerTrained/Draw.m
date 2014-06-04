@@ -6,7 +6,7 @@ Tag = class(this);
 Parent = [];
 TextColor = 'y';
 FontSize = 20;
-String = this.name;
+String = strrep(this.name, 'MARKER_', ''); % the code name without prefix 'MARKER_'
 
 parseVarargin(varargin{:});
 
