@@ -87,7 +87,7 @@ namespace Anki {
     
     // Force access by enumerated CornerNames:
     const Point<N,T>& operator[] (const Quad::CornerName whichCorner) const;
-    Point<N,T>&       operator[] (const Quad::CornerName whichCorner);
+    Point<N,T>&       operator[] (const Quad::CornerName whichCorner);    
     
     //const std::vector<Point<N,T> >& get_corners() const;
     

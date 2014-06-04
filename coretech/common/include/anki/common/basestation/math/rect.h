@@ -58,6 +58,12 @@ namespace Anki {
     cv::Rect_<T>& get_CvRect_();
 #endif
     
+    // (x,y) is the top left
+    T GetX() const {return x;}
+    T GetY() const {return y;}
+    T GetWidth() const {return width;}
+    T GetHeight() const {return height;}
+
   protected:
     
     template<class PointContainer>
