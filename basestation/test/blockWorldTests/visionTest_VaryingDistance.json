@@ -36,14 +36,14 @@
                "Name" : "MessageVisionMarker",
                "markerType" : 40,
                "timestamp" : 0,
-               "x_imgLowerLeft" : 94.97321319580078,
-               "x_imgLowerRight" : 224.025878906250,
-               "x_imgUpperLeft" : 86.69302368164062,
-               "x_imgUpperRight" : 232.3210144042969,
-               "y_imgLowerLeft" : 170.4030761718750,
-               "y_imgLowerRight" : 170.4000091552734,
-               "y_imgUpperLeft" : 37.63548278808594,
-               "y_imgUpperRight" : 37.64551925659180
+               "x_imgLowerLeft" : 97.53063964843750,
+               "x_imgLowerRight" : 221.4647369384766,
+               "x_imgUpperLeft" : 89.81128692626953,
+               "x_imgUpperRight" : 229.2032775878906,
+               "y_imgLowerLeft" : 167.5755767822266,
+               "y_imgLowerRight" : 167.5744323730469,
+               "y_imgUpperLeft" : 40.53889083862305,
+               "y_imgUpperRight" : 40.54782485961914
             }
          ]
       },
@@ -61,14 +61,14 @@
                "Name" : "MessageVisionMarker",
                "markerType" : 40,
                "timestamp" : 0,
-               "x_imgLowerLeft" : 121.7997817993164,
-               "x_imgLowerRight" : 197.1973266601562,
-               "x_imgUpperLeft" : 119.4663467407227,
-               "x_imgUpperRight" : 199.5317840576172,
-               "y_imgLowerLeft" : 124.5805053710938,
-               "y_imgLowerRight" : 124.5824966430664,
-               "y_imgUpperLeft" : 47.53715133666992,
-               "y_imgUpperRight" : 47.53469085693359
+               "x_imgLowerLeft" : 123.1504669189453,
+               "x_imgLowerRight" : 195.8401031494141,
+               "x_imgUpperLeft" : 121.3960342407227,
+               "x_imgUpperRight" : 197.6117095947266,
+               "y_imgLowerLeft" : 123.3332214355469,
+               "y_imgLowerRight" : 123.3403244018555,
+               "y_imgUpperLeft" : 49.24066925048828,
+               "y_imgUpperRight" : 49.23276901245117
             }
          ]
       },
@@ -86,14 +86,14 @@
                "Name" : "MessageVisionMarker",
                "markerType" : 40,
                "timestamp" : 0,
-               "x_imgLowerLeft" : 132.6252899169922,
-               "x_imgLowerRight" : 186.3582458496094,
-               "x_imgUpperLeft" : 132.3433685302734,
-               "x_imgUpperRight" : 186.6660156250,
-               "y_imgLowerLeft" : 120.5101318359375,
-               "y_imgLowerRight" : 120.5165786743164,
-               "y_imgUpperLeft" : 66.61708068847656,
-               "y_imgUpperRight" : 66.61275482177734
+               "x_imgLowerLeft" : 133.5773315429688,
+               "x_imgLowerRight" : 185.4187622070312,
+               "x_imgUpperLeft" : 133.4711761474609,
+               "x_imgUpperRight" : 185.5336456298828,
+               "y_imgLowerLeft" : 119.4997482299805,
+               "y_imgLowerRight" : 119.5007858276367,
+               "y_imgUpperLeft" : 67.555175781250,
+               "y_imgUpperRight" : 67.55426788330078
             }
          ]
       },
@@ -111,14 +111,14 @@
                "Name" : "MessageVisionMarker",
                "markerType" : 40,
                "timestamp" : 0,
-               "x_imgLowerLeft" : 139.0486450195312,
-               "x_imgLowerRight" : 179.8341979980469,
-               "x_imgUpperLeft" : 138.3922424316406,
-               "x_imgUpperRight" : 180.6424407958984,
-               "y_imgLowerLeft" : 127.3586196899414,
-               "y_imgLowerRight" : 127.4049301147461,
-               "y_imgUpperLeft" : 86.52060699462891,
-               "y_imgUpperRight" : 86.53926849365234
+               "x_imgLowerLeft" : 139.6907806396484,
+               "x_imgLowerRight" : 179.3093414306641,
+               "x_imgUpperLeft" : 139.4893646240234,
+               "x_imgUpperRight" : 179.5104675292969,
+               "y_imgLowerLeft" : 126.6399154663086,
+               "y_imgLowerRight" : 126.6392364501953,
+               "y_imgUpperLeft" : 87.63946533203125,
+               "y_imgUpperRight" : 87.63932037353516
             }
          ]
       },
@@ -136,14 +136,14 @@
                "Name" : "MessageVisionMarker",
                "markerType" : 40,
                "timestamp" : 0,
-               "x_imgLowerLeft" : 142.7925720214844,
-               "x_imgLowerRight" : 176.2061614990234,
-               "x_imgUpperLeft" : 142.5882873535156,
-               "x_imgUpperRight" : 176.3963470458984,
-               "y_imgLowerLeft" : 140.352050781250,
-               "y_imgLowerRight" : 140.3584899902344,
-               "y_imgUpperLeft" : 106.8143997192383,
-               "y_imgUpperRight" : 106.8017120361328
+               "x_imgLowerLeft" : 143.4873657226562,
+               "x_imgLowerRight" : 175.5126342773438,
+               "x_imgUpperLeft" : 143.4873657226562,
+               "x_imgUpperRight" : 175.5126342773438,
+               "y_imgLowerLeft" : 139.5126342773438,
+               "y_imgLowerRight" : 139.5126342773438,
+               "y_imgUpperLeft" : 107.4873657226562,
+               "y_imgUpperRight" : 107.4873657226562
             }
          ]
       },
@@ -161,14 +161,14 @@
                "Name" : "MessageVisionMarker",
                "markerType" : 40,
                "timestamp" : 0,
-               "x_imgLowerLeft" : 115.6130294799805,
-               "x_imgLowerRight" : 245.3488464355469,
-               "x_imgUpperLeft" : 109.8360214233398,
-               "x_imgUpperRight" : 256.3194885253906,
-               "y_imgLowerLeft" : 168.2435607910156,
-               "y_imgLowerRight" : 172.0769653320312,
-               "y_imgUpperLeft" : 36.54349899291992,
-               "y_imgUpperRight" : 36.88491058349609
+               "x_imgLowerLeft" : 118.1167755126953,
+               "x_imgLowerRight" : 242.6277770996094,
+               "x_imgUpperLeft" : 113.0586853027344,
+               "x_imgUpperRight" : 253.2565460205078,
+               "y_imgLowerLeft" : 165.4576568603516,
+               "y_imgLowerRight" : 169.2309722900391,
+               "y_imgUpperLeft" : 39.55965423583984,
+               "y_imgUpperRight" : 39.61127090454102
             }
          ]
       },
@@ -186,14 +186,14 @@
                "Name" : "MessageVisionMarker",
                "markerType" : 40,
                "timestamp" : 0,
-               "x_imgLowerLeft" : 168.3339996337891,
-               "x_imgLowerRight" : 245.3504791259766,
-               "x_imgUpperLeft" : 168.8095855712891,
-               "x_imgUpperRight" : 250.5475769042969,
-               "y_imgLowerLeft" : 124.1716308593750,
-               "y_imgLowerRight" : 127.2018890380859,
-               "y_imgUpperLeft" : 47.41903305053711,
-               "y_imgUpperRight" : 47.70239639282227
+               "x_imgLowerLeft" : 169.9481506347656,
+               "x_imgLowerRight" : 243.8520812988281,
+               "x_imgUpperLeft" : 170.6245727539062,
+               "x_imgUpperRight" : 248.6284027099609,
+               "y_imgLowerLeft" : 122.6772308349609,
+               "y_imgLowerRight" : 125.4970855712891,
+               "y_imgUpperLeft" : 49.16853713989258,
+               "y_imgUpperRight" : 49.69782638549805
             }
          ]
       },
@@ -211,27 +211,27 @@
                "Name" : "MessageVisionMarker",
                "markerType" : 40,
                "timestamp" : 0,
-               "x_imgLowerLeft" : 206.6781005859375,
-               "x_imgLowerRight" : 262.2912902832031,
-               "x_imgUpperLeft" : 207.7530822753906,
-               "x_imgUpperRight" : 265.3284606933594,
-               "y_imgLowerLeft" : 120.8609771728516,
-               "y_imgLowerRight" : 123.0772323608398,
-               "y_imgUpperLeft" : 66.59481811523438,
-               "y_imgUpperRight" : 67.02413940429688
+               "x_imgLowerLeft" : 207.7091369628906,
+               "x_imgLowerRight" : 260.9450378417969,
+               "x_imgUpperLeft" : 208.7794189453125,
+               "x_imgUpperRight" : 264.2279663085938,
+               "y_imgLowerLeft" : 119.8361892700195,
+               "y_imgLowerRight" : 121.8463745117188,
+               "y_imgUpperLeft" : 67.54126739501953,
+               "y_imgUpperRight" : 68.43041229248047
             },
             {
                "Name" : "MessageVisionMarker",
                "markerType" : 33,
                "timestamp" : 0,
-               "x_imgLowerLeft" : 127.0968780517578,
-               "x_imgLowerRight" : 142.5622253417969,
-               "x_imgUpperLeft" : 72.48715209960938,
-               "x_imgUpperRight" : 95.67548370361328,
-               "y_imgLowerLeft" : 137.4815521240234,
-               "y_imgLowerRight" : 125.8578948974609,
-               "y_imgUpperLeft" : 134.1508026123047,
-               "y_imgUpperRight" : 123.2746734619141
+               "x_imgLowerLeft" : 127.1011199951172,
+               "x_imgLowerRight" : 142.5810852050781,
+               "x_imgUpperLeft" : 72.46972656250,
+               "x_imgUpperRight" : 95.67151641845703,
+               "y_imgLowerLeft" : 137.4912567138672,
+               "y_imgLowerRight" : 125.8519592285156,
+               "y_imgUpperLeft" : 134.1570739746094,
+               "y_imgUpperRight" : 123.2641143798828
             }
          ]
       },
@@ -249,14 +249,14 @@
                "Name" : "MessageVisionMarker",
                "markerType" : 40,
                "timestamp" : 0,
-               "x_imgLowerLeft" : 240.3300323486328,
-               "x_imgLowerRight" : 285.2190551757812,
-               "x_imgUpperLeft" : 241.7509613037109,
-               "x_imgUpperRight" : 287.2556762695312,
-               "y_imgLowerLeft" : 129.1067047119141,
-               "y_imgLowerRight" : 131.0308380126953,
-               "y_imgUpperLeft" : 86.74514770507812,
-               "y_imgUpperRight" : 87.60917663574219
+               "x_imgLowerLeft" : 241.1944427490234,
+               "x_imgLowerRight" : 284.2795715332031,
+               "x_imgUpperLeft" : 242.7750854492188,
+               "x_imgUpperRight" : 286.1495361328125,
+               "y_imgLowerLeft" : 128.1017150878906,
+               "y_imgLowerRight" : 130.2403564453125,
+               "y_imgUpperLeft" : 87.34151458740234,
+               "y_imgUpperRight" : 88.28410339355469
             }
          ]
       },
@@ -274,27 +274,27 @@
                "Name" : "MessageVisionMarker",
                "markerType" : 40,
                "timestamp" : 0,
-               "x_imgLowerLeft" : 273.4979858398438,
-               "x_imgLowerRight" : 312.1524353027344,
-               "x_imgUpperLeft" : 274.6131896972656,
-               "x_imgUpperRight" : 313.2224731445312,
-               "y_imgLowerLeft" : 142.2703552246094,
-               "y_imgLowerRight" : 144.4312438964844,
-               "y_imgUpperLeft" : 107.4842834472656,
-               "y_imgUpperRight" : 107.6595764160156
+               "x_imgLowerLeft" : 274.4069213867188,
+               "x_imgLowerRight" : 311.3309326171875,
+               "x_imgUpperLeft" : 275.222656250,
+               "x_imgUpperRight" : 312.5316162109375,
+               "y_imgLowerLeft" : 141.6564483642578,
+               "y_imgLowerRight" : 143.4659881591797,
+               "y_imgUpperLeft" : 108.3760223388672,
+               "y_imgUpperRight" : 108.4068374633789
             },
             {
                "Name" : "MessageVisionMarker",
                "markerType" : 28,
                "timestamp" : 0,
-               "x_imgLowerLeft" : 150.6109313964844,
-               "x_imgLowerRight" : 174.5504608154297,
-               "x_imgUpperLeft" : 87.09469604492188,
-               "x_imgUpperRight" : 120.3485412597656,
-               "y_imgLowerLeft" : 201.8001556396484,
-               "y_imgLowerRight" : 184.4222259521484,
-               "y_imgUpperLeft" : 193.9971923828125,
-               "y_imgUpperRight" : 178.5730438232422
+               "x_imgLowerLeft" : 150.61718750,
+               "x_imgLowerRight" : 174.5806579589844,
+               "x_imgUpperLeft" : 87.05874633789062,
+               "x_imgUpperRight" : 120.3456878662109,
+               "y_imgLowerLeft" : 201.8129272460938,
+               "y_imgLowerRight" : 184.4143218994141,
+               "y_imgUpperLeft" : 194.0021972656250,
+               "y_imgUpperRight" : 178.5609588623047
             }
          ]
       }
