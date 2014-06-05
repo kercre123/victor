@@ -302,11 +302,11 @@ function resolutionVertical_Callback(hObject, ~, ~)
 function marker_clearAll_Callback(hObject, eventdata, handles)
     global jsonTestData;
     global curPoseIndex;
-    
+
     jsonTestData.Poses{curPoseIndex} = rmfield(jsonTestData.Poses{curPoseIndex}, 'VisionMarkers');
-    
+
     poseChanged(false);
-    
+
 function marker_autoDetect_Callback(~, ~, ~)
     detectAndAddMarkers();
 
@@ -326,28 +326,62 @@ function menu_labelAllImages_Callback(~, ~, ~)
 function label_eraseAndLabel_Callback(~, ~, ~)
     global jsonTestData;
     global curPoseIndex;
-    
+
     disp('Erasing all labels and auto-labeling')
-    
+
     for iPose = 1:length(jsonTestData.Poses)
         jsonTestData.Poses{iPose} = rmfield(jsonTestData.Poses{iPose}, 'VisionMarkers');
     end
-    
+
     fixBounds();
-    
+
     for iPose = 1:length(jsonTestData.Poses)
         curPoseIndex = iPose;
-        
+
         poseChanged(true);
-        
+
         detectAndAddMarkers();
-        
+
         curImageFilename = jsonTestData.Poses{iPose}.ImageFile;
         slashIndexes = strfind(curImageFilename, '/');
         curImageFilenameWithoutPath = curImageFilename((slashIndexes(end)+1):end);
-        
+
         disp(sprintf('%d/%d "%s" detected %d markers', iPose, length(jsonTestData.Poses), curImageFilenameWithoutPath, length(jsonTestData.Poses{iPose}.VisionMarkers)));
     end
+
+function menu_replicateLabels_Callback(~, ~, ~)
+
+function menu_eraseAndReplicate_Callback(~, ~, ~)
+    global jsonTestData;
+    global curPoseIndex;
+
+    disp('Copying the markers and labels on the current pose to all poses')
+
+    fixBounds();
+
+    curPose = jsonTestData.Poses{curPoseIndex};
+
+    for iPose = 1:length(jsonTestData.Poses)
+        jsonTestData.Poses{iPose} = curPose;
+    end
+
+    poseChanged(true);
+
+function menu_eraseAll_Callback(~, ~, ~)
+
+function menu_eraseAllLabels_Callback(~, ~, ~)
+    global jsonTestData;
+    global curPoseIndex;
+
+    disp('Erasing all labels')
+
+    for iPose = 1:length(jsonTestData.Poses)
+        jsonTestData.Poses{iPose} = rmfield(jsonTestData.Poses{iPose}, 'VisionMarkers');
+    end
+
+    fixBounds();
+
+    poseChanged(true);
 
 function labelingTypePanel_SelectionChangeFcn(~, ~, ~)
     global pointsType;
@@ -436,26 +470,26 @@ function detectAndAddMarkers()
     global jsonTestData;
     global curPoseIndex;
     global image;
-    
+
     % TODO
     markers = simpleDetector(image, 'quadRefinementIterations', 0);
 
     for iMarker = 1:length(markers)
         newMarker.x_imgUpperLeft = markers{iMarker}.corners(1,1);
-        newMarker.y_imgUpperLeft = markers{iMarker}.corners(1,2);        
+        newMarker.y_imgUpperLeft = markers{iMarker}.corners(1,2);
         newMarker.x_imgLowerLeft= markers{iMarker}.corners(2,1);
-        newMarker.y_imgLowerLeft= markers{iMarker}.corners(2,2);        
+        newMarker.y_imgLowerLeft= markers{iMarker}.corners(2,2);
         newMarker.x_imgUpperRight = markers{iMarker}.corners(3,1);
-        newMarker.y_imgUpperRight = markers{iMarker}.corners(3,2);        
+        newMarker.y_imgUpperRight = markers{iMarker}.corners(3,2);
         newMarker.x_imgLowerRight = markers{iMarker}.corners(4,1);
         newMarker.y_imgLowerRight = markers{iMarker}.corners(4,2);
         newMarker.markerType = markers{iMarker}.name;
-        
+
         jsonTestData.Poses{curPoseIndex}.VisionMarkers{end+1} = newMarker;
     end
-    
+
     poseChanged(false);
-    
+
 function maxIndex = getMaxMarkerIndex(poseIndex)
     global jsonTestData;
 
@@ -651,7 +685,7 @@ function poseChanged(resetZoom)
     set(allHandles.resolutionHorizontal, 'String', num2str(resolutionHorizontal))
     set(allHandles.resolutionVertical, 'String', num2str(resolutionVertical))
     set(allHandles.marker_max, 'String', num2str(length(jsonTestData.Poses{curPoseIndex}.VisionMarkers)));
-    
+
     if isfield(jsonTestData.Poses{curPoseIndex}, 'VisionMarkers') && length(jsonTestData.Poses{curPoseIndex}.VisionMarkers) >= curMarkerIndex
         set(allHandles.markerType, 'String', jsonTestData.Poses{curPoseIndex}.VisionMarkers{curMarkerIndex}.markerType);
     else
@@ -759,10 +793,14 @@ function poseChanged(resetZoom)
                     yScaleInv*([cornersY(1),cornersY(2),cornersY(3),cornersY(4),cornersY(1)]+0.5),...
                     linePlotType);
                 set(plotHandle, 'HitTest', 'off')
+
+                markerName = jsonTestData.Poses{curPoseIndex}.VisionMarkers{iMarker}.markerType(8:end);
+                textHandle = text((cornersX(1)+cornersX(4))/2, (cornersY(1)+cornersY(4))/2, markerName, 'Color', linePlotType);
+                set(textHandle, 'HitTest', 'off')
             end
 
             for i = 1:length(cornersX)
-                scatterHandle = scatter(xScaleInv*(cornersX(i)+0.5), yScaleInv*(cornersY(i)+0.5), [linePlotType,'+']);
+                scatterHandle = scatter(xScaleInv*(cornersX(i)+0.5), yScaleInv*(cornersY(i)+0.5), [linePlotType,'o']);
                 set(scatterHandle, 'HitTest', 'off')
             end
         end % for iMarker = 1:length(jsonTestData.Poses{curPoseIndex}.VisionMarkers)
@@ -908,5 +946,4 @@ function ButtonClicked(~, ~, ~)
     end
 
     poseChanged(false);
-
 
