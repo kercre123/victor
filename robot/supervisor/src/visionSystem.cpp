@@ -345,6 +345,15 @@ namespace Anki {
       {
         // Only downsample if normal capture res is QVGA
         if (imageSendMode_ != ISM_OFF && captureResolution_ == Vision::CAMERA_RES_QVGA) {
+          
+          // Time to send frame?
+          static u8 streamFrameCnt = 0;
+          if (imageSendMode_ == ISM_STREAM && streamFrameCnt++ != IMG_STREAM_SKIP_FRAMES) {
+            return;
+          }
+          streamFrameCnt = 0;
+          
+          
           static u8 imgID = 0;
 
           // Downsample and split into image chunk message
