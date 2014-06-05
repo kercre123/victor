@@ -88,8 +88,9 @@ typedef enum {
 #define MACRO_CONCAT( x, y ) CONCAT_IMPL( x, y )
 
 // a while loop that executes a limited number of execution (throws exception)
+// TODO:(bn) throw exception instead of assert
 #define MAKE_NAME MACRO_CONCAT(_bvar_, __LINE__)
-#define BOUNDED_WHILE(n, exp) unsigned int MAKE_NAME=0; while(MAKE_NAME++ > (n) ? throw ::BaseStation::ET_INFINITE_LOOP : (exp))
+#define BOUNDED_WHILE(n, exp) unsigned int MAKE_NAME=0; while(MAKE_NAME++ > (n) ? assert("infinite loop!" == nullptr), false : (exp))
 
 // global error flag so we can check if PRINT_ERROR was called for unit testing
 extern bool _errG;
