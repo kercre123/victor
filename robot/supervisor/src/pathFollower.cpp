@@ -44,7 +44,7 @@ namespace Anki
         const f32 TOO_FAR_FROM_PATH_DIST_MM = 50;
 
         Planning::Path path_;
-        s16 currPathSegment_ = -1;
+        s8 currPathSegment_ = -1;
         
         // Shortest distance to path
         f32 distToPath_mm_ = 0;
@@ -207,9 +207,12 @@ namespace Anki
           currPathSegment_ = GetClosestSegment(x,y,angle.ToFloat());
 
           // Set speed
-          SpeedController::SetUserCommandedDesiredVehicleSpeed( path_[currPathSegment_].GetTargetSpeed() );
-          SpeedController::SetUserCommandedAcceleration( path_[currPathSegment_].GetAccel() );
-          SpeedController::SetUserCommandedDeceleration( path_[currPathSegment_].GetDecel() );
+          // (Except for point turns whose speeds are handled at the steering controller level)
+          if (path_[currPathSegment_].GetType() != Planning::PST_POINT_TURN) {
+            SpeedController::SetUserCommandedDesiredVehicleSpeed( path_[currPathSegment_].GetTargetSpeed() );
+            SpeedController::SetUserCommandedAcceleration( path_[currPathSegment_].GetAccel() );
+            SpeedController::SetUserCommandedDeceleration( path_[currPathSegment_].GetDecel() );
+          }
 
 #if(DEBUG_PATH_FOLLOWER)
           PRINT("*** PATH START SEGMENT %d: speed = %f, accel = %f, decel = %f\n",
@@ -235,6 +238,10 @@ namespace Anki
         return currPathSegment_ >= 0;
       }
       
+      s8 GetCurrPathSegment()
+      {
+        return currPathSegment_;
+      }
       
       Planning::SegmentRangeStatus ProcessPathSegment(f32 &shortestDistanceToPath_mm, f32 &radDiff)
       {
@@ -410,10 +417,12 @@ namespace Anki
           }
           
           // Command new speed for segment
-          SpeedController::SetUserCommandedDesiredVehicleSpeed( path_[currPathSegment_].GetTargetSpeed() );
-          SpeedController::SetUserCommandedAcceleration( path_[currPathSegment_].GetAccel() );
-          SpeedController::SetUserCommandedDeceleration( path_[currPathSegment_].GetDecel() );
-          
+          // (Except for point turns whose speeds are handled at the steering controller level)
+          if (path_[currPathSegment_].GetType() != Planning::PST_POINT_TURN) {
+            SpeedController::SetUserCommandedDesiredVehicleSpeed( path_[currPathSegment_].GetTargetSpeed() );
+            SpeedController::SetUserCommandedAcceleration( path_[currPathSegment_].GetAccel() );
+            SpeedController::SetUserCommandedDeceleration( path_[currPathSegment_].GetDecel() );
+          }
 #if(DEBUG_PATH_FOLLOWER)
           PRINT("*** PATH SEGMENT %d: speed = %f, accel = %f, decel = %f\n",
                 currPathSegment_,

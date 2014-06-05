@@ -85,8 +85,9 @@ namespace Anki {
       // Sends a path to the robot to be immediately executed
       Result ExecutePath(const Planning::Path& path);
       
-      void SetTraversingPath(bool t) {isTraversingPath_ = t;}
-      bool IsTraversingPath() {return isTraversingPath_;}
+      void SetCurrPathSegment(const s8 s) {currPathSegment_ = s;}
+      s8 GetCurrPathSegment() {return currPathSegment_;}
+      bool IsTraversingPath() {return currPathSegment_ >= 0;}
 
       void SetCarryingBlock(bool t) {isCarryingBlock_ = t;}
       bool IsCarryingBlock() {return isCarryingBlock_;}
@@ -210,10 +211,11 @@ namespace Anki {
       f32 currentHeadAngle;
       f32 currentLiftAngle;
       
+      s8 currPathSegment_;
+      
       OperationMode mode, nextMode;
       bool setOperationMode(OperationMode newMode);
       bool isCarryingBlock_;
-      bool isTraversingPath_;
       bool isPickingOrPlacing_;
       
       //std::vector<BlockMarker3d*>  visibleFaces;

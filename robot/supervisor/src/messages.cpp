@@ -157,9 +157,10 @@ namespace Anki {
         robotState_.headAngle  = HeadController::GetAngleRad();
         robotState_.liftAngle  = LiftController::GetAngleRad();
         robotState_.liftHeight = LiftController::GetHeightMM();
+
+        robotState_.currPathSegment = PathFollower::GetCurrPathSegment();
         
         robotState_.status = 0;
-        robotState_.status |= (PathFollower::IsTraversingPath() ? IS_TRAVERSING_PATH : 0);
         robotState_.status |= (PickAndPlaceController::IsCarryingBlock() ? IS_CARRYING_BLOCK : 0);
         robotState_.status |= (PickAndPlaceController::IsBusy() ? IS_PICKING_OR_PLACING : 0);
       }
@@ -294,15 +295,22 @@ namespace Anki {
       }
 
       void ProcessAppendPathSegmentArcMessage(const AppendPathSegmentArc& msg) {
-        PathFollower::AppendPathSegment_Arc(0, msg.x_center_mm, msg.y_center_mm, msg.radius_mm, msg.startRad, msg.sweepRad,
+        PathFollower::AppendPathSegment_Arc(0, msg.x_center_mm, msg.y_center_mm,
+                                            msg.radius_mm, msg.startRad, msg.sweepRad,
                                             msg.targetSpeed, msg.accel, msg.decel);
       }
       
       void ProcessAppendPathSegmentLineMessage(const AppendPathSegmentLine& msg) {
-        PathFollower::AppendPathSegment_Line(0, msg.x_start_mm, msg.y_start_mm, msg.x_end_mm, msg.y_end_mm,
+        PathFollower::AppendPathSegment_Line(0, msg.x_start_mm, msg.y_start_mm,
+                                             msg.x_end_mm, msg.y_end_mm,
                                              msg.targetSpeed, msg.accel, msg.decel);
       }
 
+      void ProcessAppendPathSegmentPointTurnMessage(const AppendPathSegmentPointTurn& msg) {
+        PathFollower::AppendPathSegment_PointTurn(0, msg.x_center_mm, msg.y_center_mm, msg.targetRad,
+                                                  msg.targetSpeed, msg.accel, msg.decel);
+      }
+      
       void ProcessTrimPathMessage(const TrimPath& msg) {
         PathFollower::TrimPath(msg.numPopFrontSegments, msg.numPopBackSegments);
       }

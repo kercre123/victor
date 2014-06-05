@@ -4,6 +4,7 @@
 #include "anki/common/constantsAndMacros.h"
 #include "anki/common/types.h"
 #include "anki/cozmo/robot/debug.h"
+#include "anki/vision/CameraSettings.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -159,8 +160,8 @@ namespace Anki {
     const f32 MAX_HEAD_ANGLE = DEG_TO_RAD( 35.f);
     
     const f32 NECK_JOINT_POSITION[3] = {-13.f, 0.f, 33.5f + WHEEL_RAD_TO_MM}; // relative to robot origin
-    const f32 HEAD_CAM_POSITION[3]   = {11.45f, 0.f, -6.f}; // relative to neck joint
-    const f32 LIFT_BASE_POSITION[3]  = {-40.0f, 0.f, 27.5f + WHEEL_RAD_TO_MM}; // relative to robot origin
+    const f32 HEAD_CAM_POSITION[3]   = {8.8f, 0.f, -6.f}; // relative to neck joint
+    const f32 LIFT_BASE_POSITION[3]  = {-40.0f, 0.f, 29.5f + WHEEL_RAD_TO_MM}; // relative to robot origin
     //const f32 MAT_CAM_POSITION[3]   =  {-25.0f, 0.f, -3.f}; // relative to robot origin
     
     
@@ -177,6 +178,12 @@ namespace Anki {
     
     // TODO: This needs to be sync'd with whatever is in BlockDefinitions.h
     const f32 DEFAULT_BLOCK_MARKER_WIDTH_MM = 25.f;
+    
+    // Resolution of images that are streamed to basestation (dev purposes)
+    const Vision::CameraResolution IMG_STREAM_RES = Vision::CAMERA_RES_QQQVGA;
+    
+    // Number of frames to skip when streaming images to basestation
+    const u8 IMG_STREAM_SKIP_FRAMES = 2;
     
   } // namespace Cozmo
 } // namespace Anki
