@@ -69,6 +69,10 @@ if isempty(markerImageDir)
     upOneDir = '..';
 end
 
+if ~iscell(markerImageDir)
+    markerImageDir = { markerImageDir };
+end    
+
 numDirs = length(markerImageDir);
 for i_dir = 1:numDirs
     fnames = getfnames(fullfile(markerImageDir{i_dir}, upOneDir), 'images', 'useFullPath', true);
