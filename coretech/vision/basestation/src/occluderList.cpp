@@ -91,7 +91,7 @@ namespace Anki {
         // checking, since the vector is sorted
         auto currentOccluder = rectDepthPairs_.begin();
         auto end = rectDepthPairs_.end();
-        while(atDistance > currentOccluder->first && currentOccluder != end) {
+        while(currentOccluder != end && atDistance > currentOccluder->first) {
           
           if( boundingBox.Intersect(currentOccluder->second).area() > 0 ) {
             // The bounding box intersects this occluder, and is thus occluded
@@ -118,7 +118,7 @@ namespace Anki {
         // checking, since the vector is sorted
         auto currentOccluder = rectDepthPairs_.begin();
         auto end = rectDepthPairs_.end();
-        while(atDistance > currentOccluder->first && currentOccluder != end) {
+        while(currentOccluder != end && atDistance > currentOccluder->first) {
           
           if(currentOccluder->second.Contains(point)) {
             // This occluder contains the point, and thus occludes it.
@@ -141,7 +141,7 @@ namespace Anki {
         // Jump to first occluder farther away than the given point
         auto currentOccluder = rectDepthPairs_.begin();
         auto end = rectDepthPairs_.end();
-        while(atDistance > currentOccluder->first && currentOccluder != end) {
+        while(currentOccluder != end && atDistance >= currentOccluder->first) {
           ++currentOccluder;
         }
         
@@ -159,6 +159,39 @@ namespace Anki {
           ++currentOccluder;
         }
           
+      } // if not empty
+      
+      return false;
+      
+    } // IsAnythingBehind()
+    
+    
+    bool OccluderList::IsAnythingBehind(const Quad2f &quad, const f32 atDistance) const
+    {
+      if(!IsEmpty()) {
+        // Jump to first occluder farther away than the given point
+        auto currentOccluder = rectDepthPairs_.begin();
+        auto end = rectDepthPairs_.end();
+        while(currentOccluder != end && atDistance >= currentOccluder->first) {
+          ++currentOccluder;
+        }
+        
+        const Rectangle<f32> boundingBox(quad);
+        
+        // Check the remaining occluders from here back, if there are any
+        while(currentOccluder != end) {
+          // If we get here, the current occluder should be one that is further
+          // away than the specified distance
+          CORETECH_ASSERT(atDistance < currentOccluder->first);
+          
+          if(boundingBox.Intersect(currentOccluder->second).area() > 0) {
+            // If the quad's bounding box intersects the occluder, then the occluder is behind it
+            return true;
+          }
+          
+          ++currentOccluder;
+        }
+        
       } // if not empty
       
       return false;

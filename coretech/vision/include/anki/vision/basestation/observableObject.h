@@ -1,3 +1,21 @@
+/**
+ * File: observableObject.h
+ *
+ * Author: Andrew Stein
+ * Date:   (various)
+ *
+ * Description: Defines an abstract ObservableObject class, which is an 
+ *              general 3D object, with type, ID, and pose, and a set of Markers
+ *              on it at known locations.  Thus, it is "observable" by virtue of
+ *              having these markers, and its 3D / 6DoF pose can be estimated by
+ *              matching up ObservedMarkers with the KnownMarkers it possesses.
+ *
+ *
+ * Copyright: Anki, Inc. 2014
+ **/
+
+// TODO: Separate ObservableObjectLibrary into its own h/cpp files
+
 #ifndef ANKI_VISION_OBSERVABLE_OBJECT_H
 #define ANKI_VISION_OBSERVABLE_OBJECT_H
 
@@ -139,6 +157,7 @@ namespace Anki {
       ObservableObject(const ObservableObject& other);
       
     };
+  
     
     //
     // Inline accessors

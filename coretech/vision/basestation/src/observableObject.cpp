@@ -1,3 +1,20 @@
+/**
+ * File: observableObject.cpp
+ *
+ * Author: Andrew Stein
+ * Date:   (various)
+ *
+ * Description: Implements an abstract ObservableObject class, which is an
+ *              general 3D object, with type, ID, and pose, and a set of Markers
+ *              on it at known locations.  Thus, it is "observable" by virtue of
+ *              having these markers, and its 3D / 6DoF pose can be estimated by
+ *              matching up ObservedMarkers with the KnownMarkers it possesses.
+ *
+ *
+ * Copyright: Anki, Inc. 2014
+ **/
+
+
 #include "anki/vision/basestation/camera.h"
 #include "anki/vision/basestation/observableObject.h"
 

@@ -216,8 +216,9 @@ namespace Anki {
       bool IsOccluded(const Point2f& projectedPoint, const f32 atDistance) const;
       
       // Returns true when there is a registered "occluder" behind the specified
-      // point at the given distance.
+      // point or quad at the given distance.
       bool IsAnythingBehind(const Point2f& projectedPoint, const f32 atDistance) const;
+      bool IsAnythingBehind(const Quad2f&  projectedQuad,  const f32 atDistance) const;
 
       // TODO: Method to remove radial distortion from an image
       // (This requires an image class)
@@ -271,6 +272,11 @@ namespace Anki {
     inline bool Camera::IsAnythingBehind(const Point2f& projectedPoint, const f32 atDistance) const {
       return occluderList.IsAnythingBehind(projectedPoint, atDistance);
     }
+
+    inline bool Camera::IsAnythingBehind(const Quad2f& projectedQuad, const f32 atDistance) const {
+      return occluderList.IsAnythingBehind(projectedQuad, atDistance);
+    }
+
     
     template<size_t NumPoints>
     void Camera::Project3dPoints(const std::array<Point3f,NumPoints> &objPoints,

@@ -162,14 +162,15 @@ namespace Anki {
       }
       
       if(requireSomethingBehind) {
-        // Make sure there was something visible behind the at least one of the
-        // corners of the marker. Otherwise, we don't know if we should have seen
+        // Make sure there was something visible behind the marker's quad.
+        // Otherwise, we don't know if we should have seen
         // it or if detection failed for some reason
-        // TODO: make this check optional?
-        if(not camera.IsAnythingBehind(imgCorners[TopLeft]    , markerCornersWrtCamera[TopLeft].z())    &&
-           not camera.IsAnythingBehind(imgCorners[TopRight]   , markerCornersWrtCamera[TopRight].z())   &&
-           not camera.IsAnythingBehind(imgCorners[BottomLeft] , markerCornersWrtCamera[BottomLeft].z()) &&
-           not camera.IsAnythingBehind(imgCorners[BottomRight], markerCornersWrtCamera[BottomRight].z()))
+        const f32 atDistance = 0.25f*(markerCornersWrtCamera[TopLeft].z() +
+                                      markerCornersWrtCamera[TopRight].z() +
+                                      markerCornersWrtCamera[BottomLeft].z() +
+                                      markerCornersWrtCamera[BottomRight].z());
+        
+        if(not camera.IsAnythingBehind(imgCorners, atDistance))
         {
           return false;
         }
