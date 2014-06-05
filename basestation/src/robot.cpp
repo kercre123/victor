@@ -98,8 +98,8 @@ namespace Anki {
       headCamPose({0,0,1,  -1,0,0,  0,-1,0},
                   {{HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}}, &neckPose),
       liftBasePose(0.f, Y_AXIS_3D, {{LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}}, &pose),
-      currentHeadAngle(0), currentLiftAngle(0),
-      isCarryingBlock_(false), isTraversingPath_(false), isPickingOrPlacing_(false)
+      currentHeadAngle(0), currentLiftAngle(0), currPathSegment_(-1),
+      isCarryingBlock_(false), isPickingOrPlacing_(false)
     {
       this->set_headAngle(currentHeadAngle);
       
@@ -540,8 +540,23 @@ namespace Anki {
             break;
           }
           case Planning::PST_POINT_TURN:
-            PRINT_NAMED_ERROR("PointTurnNotImplemented", "Point turns not working yet");
-            return RESULT_FAIL;
+          {
+            MessageAppendPathSegmentPointTurn m;
+            const Planning::PathSegmentDef::s_turn* t = &(path.GetSegmentConstRef(i).GetDef().turn);
+            m.x_center_mm = t->x;
+            m.y_center_mm = t->y;
+            m.targetRad = t->targetAngle;
+            m.pathID = 0;
+            m.segmentID = i;
+            
+            m.targetSpeed = path.GetSegmentConstRef(i).GetTargetSpeed();
+            m.accel = path.GetSegmentConstRef(i).GetAccel();
+            m.decel = path.GetSegmentConstRef(i).GetDecel();
+
+            if (msgHandler_->SendMessage(ID_, m) == RESULT_FAIL)
+              return RESULT_FAIL;
+            break;
+          }
           default:
             PRINT_NAMED_ERROR("Invalid path segment", "Can't send path segment of unknown type");
             return RESULT_FAIL;
@@ -673,7 +688,7 @@ namespace Anki {
       MessageImageRequest m;
       
       m.imageSendMode = mode;
-      m.resolution = Vision::CAMERA_RES_QQVGA;
+      m.resolution = IMG_STREAM_RES;
       
       return msgHandler_->SendMessage(ID_, m);
     }

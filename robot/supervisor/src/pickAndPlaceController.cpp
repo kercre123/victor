@@ -148,6 +148,9 @@ namespace Anki {
                 dockOffsetDistX_ = ORIGIN_TO_HIGH_LIFT_DIST_MM;
 #endif  //#if(ALT_HIGH_BLOCK_DOCK_METHOD)
                 break;
+              case DA_PLACE_LOW:
+                LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
+                break;
               case DA_PLACE_HIGH:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
                 dockOffsetDistX_ = ORIGIN_TO_HIGH_PLACEMENT_DIST_MM;
@@ -166,20 +169,26 @@ namespace Anki {
 #endif
             if (LiftController::IsInPosition() && HeadController::IsInPosition()) {
               
-              if (pixelSearchRadius_ < 0) {
-                DockingController::StartDocking(dockToMarker_,
-                                                markerWidth_,
-                                                dockOffsetDistX_,
-                                                dockOffsetDistX_,
-                                                dockOffsetAng_);
+              if (action_ == DA_PLACE_LOW) {
+                DockingController::StartDockingToRelPose(dockOffsetDistX_,
+                                                         dockOffsetDistY_,
+                                                         dockOffsetAng_);
               } else {
-                DockingController::StartDocking(dockToMarker_,
-                                                markerWidth_,
-                                                markerCenter_,
-                                                pixelSearchRadius_,
-                                                dockOffsetDistX_,
-                                                dockOffsetDistX_,
-                                                dockOffsetAng_);
+                if (pixelSearchRadius_ < 0) {
+                  DockingController::StartDocking(dockToMarker_,
+                                                  markerWidth_,
+                                                  dockOffsetDistX_,
+                                                  dockOffsetDistY_,
+                                                  dockOffsetAng_);
+                } else {
+                  DockingController::StartDocking(dockToMarker_,
+                                                  markerWidth_,
+                                                  markerCenter_,
+                                                  pixelSearchRadius_,
+                                                  dockOffsetDistX_,
+                                                  dockOffsetDistY_,
+                                                  dockOffsetAng_);
+                }
               }
               mode_ = DOCKING;
 #if(DEBUG_PAP_CONTROLLER)
@@ -404,6 +413,9 @@ namespace Anki {
 #endif
             mode_ = MOVING_LIFT_POSTDOCK;
             switch(action_) {
+              case DA_PLACE_LOW:
+                LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
+                break;
               case DA_PICKUP_LOW:
               case DA_PICKUP_HIGH:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
@@ -429,6 +441,7 @@ namespace Anki {
                   break;
                 case DA_PICKUP_HIGH:
                   isCarryingBlock_ = true;
+                case DA_PLACE_LOW:
                 case DA_PLACE_HIGH:
                   SteeringController::ExecuteDirectDrive(BACKOUT_SPEED_MMPS, BACKOUT_SPEED_MMPS);
                   transitionTime_ = HAL::GetMicroCounter() + BACKOUT_TIME;
@@ -447,6 +460,7 @@ namespace Anki {
               SteeringController::ExecuteDirectDrive(0,0);
               
               switch(action_) {
+                case DA_PLACE_LOW:
                 case DA_PICKUP_LOW:
                 case DA_PICKUP_HIGH:
                   mode_ = IDLE;
@@ -521,6 +535,10 @@ namespace Anki {
         markerCenter_.y = -1.f;
         pixelSearchRadius_ = -1.f;
         
+        dockOffsetDistX_ = 0;
+        dockOffsetDistY_ = 0;
+        dockOffsetAng_ = 0;
+        
         mode_ = SET_LIFT_PREDOCK;
         lastActionSucceeded_ = false;
       }
@@ -537,9 +555,15 @@ namespace Anki {
         pixelSearchRadius_ = pixelSearchRadius;
       }
       
-      void PlaceOnGround()
+      void PlaceOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle)
       {
-        // TODO: ...
+        action_ = DA_PLACE_LOW;
+        dockOffsetDistX_ = rel_x;
+        dockOffsetDistY_ = rel_y;
+        dockOffsetAng_ = rel_angle;
+        
+        mode_ = SET_LIFT_PREDOCK;
+        lastActionSucceeded_ = false;
       }
       
       

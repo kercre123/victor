@@ -71,7 +71,7 @@ namespace Anki {
                        const DockAction_t action);
        
       // Places block on ground and backs out.
-      void PlaceOnGround();
+      void PlaceOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle);
       
       // Abort whatever pick or place action we're currently doing
       void Reset();

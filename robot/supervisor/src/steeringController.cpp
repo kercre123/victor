@@ -62,7 +62,7 @@ namespace Anki {
       
       VelocityProfileGenerator vpg_;
       
-      const f32 POINT_TURN_TERMINAL_VEL_RAD_PER_S = 0.7f;
+      const f32 POINT_TURN_TERMINAL_VEL_RAD_PER_S = 0.1f;
       
     } // Private namespace
     
@@ -410,19 +410,26 @@ namespace Anki {
       // Compute target angle that is on the appropriate side of currAngle given the maxAngularVel
       // which determines the turning direction.
       f32 destAngle = targetRad_.ToFloat();
-      if (currAngle > destAngle && maxAngularVel > 0) {
+      if (currAngle > destAngle && maxAngularVel_ > 0) {
         destAngle += 2*PI_F;
-      } else if (currAngle < destAngle && maxAngularVel < 0) {
+      } else if (currAngle < destAngle && maxAngularVel_ < 0) {
         destAngle -= 2*PI_F;
+      }
+      
+      // Check that the maxAngularVel is greater than the terminal speed
+      // If not, make it at least that big.
+      if (ABS(maxAngularVel_) < POINT_TURN_TERMINAL_VEL_RAD_PER_S) {
+        maxAngularVel_ = POINT_TURN_TERMINAL_VEL_RAD_PER_S * (maxAngularVel_ > 0 ? 1 : -1);
+        PRINT("WARNING (PointTurn.TooSlow): Speeding up commanded point turn of %f rad/s to %f rad/s\n", maxAngularVel, maxAngularVel_);
       }
       
       // Generate velocity profile
       // TODO: Use IMUFilter::GetRotationSpeed() for start speed?
       vpg_.StartProfile(0,
                         currAngle,
-                        maxAngularVel,
-                        angularAccel,
-                        maxAngularVel > 0 ? POINT_TURN_TERMINAL_VEL_RAD_PER_S : -POINT_TURN_TERMINAL_VEL_RAD_PER_S,
+                        maxAngularVel_,
+                        angularAccel_,
+                        maxAngularVel_ > 0 ? POINT_TURN_TERMINAL_VEL_RAD_PER_S : -POINT_TURN_TERMINAL_VEL_RAD_PER_S,
                         destAngle,
                         CONTROL_DT);
     }

@@ -75,6 +75,11 @@ namespace Anki {
         
         // Whether or not the last docking attempt succeeded
         bool success_  = false;
+
+        // True if docking off one relative position signal
+        // received via StartDockingToRelPose().
+        // i.e. no vision marker required.
+        bool markerlessDocking_ = false;
         
         // Whether or not a valid path was generated from the received error signal
         bool createdValidPath_ = false;
@@ -275,7 +280,7 @@ namespace Anki {
           case APPROACH_FOR_DOCK:
           {
             // Stop if we haven't received error signal for a while
-            if (HAL::GetMicroCounter() - lastDockingErrorSignalRecvdTime_ > STOPPED_TRACKING_TIMEOUT_US) {
+            if (!markerlessDocking_ && HAL::GetMicroCounter() - lastDockingErrorSignalRecvdTime_ > STOPPED_TRACKING_TIMEOUT_US) {
               PathFollower::ClearPath();
               SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
               mode_ = LOOKING_FOR_BLOCK;
@@ -516,6 +521,14 @@ namespace Anki {
         
         success_ = false;
       }
+      
+      void StartDockingToRelPose(const f32 rel_x, const f32 rel_y, const f32 rel_angle)
+      {
+        mode_ = LOOKING_FOR_BLOCK;
+        markerlessDocking_ = true;
+        SetRelDockPose(rel_x, rel_y, rel_angle);
+        success_ = false;
+      }
 
 
       void ResetDocker() {
@@ -525,11 +538,10 @@ namespace Anki {
         SteeringController::ExecuteDirectDrive(0,0);
         mode_ = IDLE;
         
-        
         // Command VisionSystem to stop processing images
         VisionSystem::StopTracking();
 
-
+        markerlessDocking_ = false;
         success_ = false;
       }
       

@@ -315,7 +315,7 @@ namespace Anki
           CORETECH_ASSERT(robot != NULL);
           
           // TODO: expose these angle/distance parameters 
-          if(object->IsVisibleFrom(robot->get_camHead(), DEG_TO_RAD(45), 20.f))
+          if(object->IsVisibleFrom(robot->get_camHead(), DEG_TO_RAD(45), 20.f, true))
           {
             // We "should" have seen the object! Delete it or mark it somehow
             CoreTechPrint("Removing object %d, which should have been seen, "
@@ -676,7 +676,23 @@ namespace Anki
         for (auto markerList : obsMarkers_) {
           for (auto marker : markerList.second) {
             const Quad2f& q = marker.GetImageCorners();
-            const f32 scaleF = 0.5f;
+            f32 scaleF = 1.0f;
+            switch(IMG_STREAM_RES) {
+              case Vision::CAMERA_RES_QVGA:
+                break;
+              case Vision::CAMERA_RES_QQVGA:
+                scaleF *= 0.5;
+                break;
+              case Vision::CAMERA_RES_QQQVGA:
+                scaleF *= 0.25;
+                break;
+              case Vision::CAMERA_RES_QQQQVGA:
+                scaleF *= 0.125;
+                break;
+              default:
+                printf("WARNING (DrawObsMarkers): Unsupported streaming res %d\n", IMG_STREAM_RES);
+                break;
+            }
             VizManager::getInstance()->SendTrackerQuad(q[Quad::TopLeft].x()*scaleF,     q[Quad::TopLeft].y()*scaleF,
                                                        q[Quad::TopRight].x()*scaleF,    q[Quad::TopRight].y()*scaleF,
                                                        q[Quad::BottomRight].x()*scaleF, q[Quad::BottomRight].y()*scaleF,
