@@ -251,7 +251,7 @@ namespace Anki {
       */
       
       // Update other state vars
-      robot->SetTraversingPath( msg.status & IS_TRAVERSING_PATH );
+      robot->SetCurrPathSegment( msg.currPathSegment );
       robot->SetCarryingBlock( msg.status & IS_CARRYING_BLOCK );
       robot->SetPickingOrPlacing( msg.status & IS_PICKING_OR_PLACING );
       

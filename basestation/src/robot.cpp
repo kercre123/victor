@@ -94,8 +94,8 @@ namespace Anki {
       headCamPose({0,0,1,  -1,0,0,  0,-1,0},
                   {{HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}}, &neckPose),
       liftBasePose(0.f, Y_AXIS_3D, {{LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}}, &pose),
-      currentHeadAngle(0), currentLiftAngle(0),
-      isCarryingBlock_(false), isTraversingPath_(false), isPickingOrPlacing_(false)
+      currentHeadAngle(0), currentLiftAngle(0), currPathSegment_(-1),
+      isCarryingBlock_(false), isPickingOrPlacing_(false)
     {
       this->set_headAngle(currentHeadAngle);
       
