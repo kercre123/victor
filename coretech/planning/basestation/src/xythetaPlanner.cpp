@@ -225,8 +225,6 @@ void xythetaPlannerImpl::BuildPlan()
 
     assert(it != table_.end());
 
-    std::cout<<State(curr)<<" <-- "<<(int)it->second.backpointerAction_<<std::endl;
-
     plan_.Push(it->second.backpointerAction_);
     curr = it->second.backpointer_;
   }

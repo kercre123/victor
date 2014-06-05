@@ -3,7 +3,7 @@ import json
 from MotionPrimitives import *
 
 prim = MotionPrimitiveSet()
-prim.minRadius = 1.0
+prim.minRadius = 15.0
 
 # how often to sample (in mm)
 #prim.sampleLength = 0.01 # stupidly high for nice looking plots
@@ -20,8 +20,8 @@ prim.addAction("slight left", 1, longLen, backwardsCostFactor = 1.1)
 prim.addAction("slight right", -1, longLen, backwardsCostFactor = 1.1)
 prim.addAction("hard left", 3, longLen, 1.0)
 prim.addAction("hard right", -3, longLen, 1.0)
-prim.addAction("inplace left", 1, 0, 2.0)
-prim.addAction("inplace right", -1, 0, 2.0)
+# prim.addAction("inplace left", 1, 0, 2.0)
+# prim.addAction("inplace right", -1, 0, 2.0)
 
 prim.createPrimitives()
 
@@ -34,14 +34,14 @@ import pprint
 # exit(0)
 
 prim.dumpJson("newPrim.json")
-exit(0)
+#exit(0)
 
-from pylab import *
+# from pylab import *
 
-prim.plotEachPrimitive(longLen)
-prim.plotPrimitives(longLen)
+# prim.plotEachPrimitive(longLen)
+# prim.plotPrimitives(longLen)
 
 #this one doesn't really work
 #prim.plotEachAction(longLen)
-show()
+# show()
 

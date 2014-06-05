@@ -394,11 +394,13 @@ bool MotionPrimitive::Import(const Json::Value& config, StateTheta startingAngle
   if(length > 0.0) {
     cost += length * oneOverLinearSpeed;
 
+    float signedLength = config["straight_length_mm"].asFloat();
+
     PathSegment seg;
     seg.DefineLine(0.0,
                        0.0,
-                       length * cos(env.GetTheta_c(startingAngle)),
-                       length * sin(env.GetTheta_c(startingAngle)),
+                       signedLength * cos(env.GetTheta_c(startingAngle)),
+                       signedLength * sin(env.GetTheta_c(startingAngle)),
                        linearSpeed,
                        LATTICE_PLANNER_ACCEL,
                        LATTICE_PLANNER_DECEL);
@@ -411,10 +413,14 @@ bool MotionPrimitive::Import(const Json::Value& config, StateTheta startingAngle
     double deltaTheta = std::abs(config["arc"]["sweepRad"].asDouble());
 
     // the radius of the circle that the outer wheel will follow
-    double radius_mm = std::abs(config["arc"]["radius_mm"].asDouble()) + env.GetHalfWheelBase_mm();
+    double turningRadius = std::abs(config["arc"]["radius_mm"].asDouble());
+    double radius_mm = turningRadius + env.GetHalfWheelBase_mm();
 
     // the total time is the arclength of the outer wheel arc divided by the max outer wheel speed
-    cost += deltaTheta * radius_mm * oneOverLinearSpeed;
+    Cost arcTime = deltaTheta * radius_mm * oneOverLinearSpeed;
+    cost += arcTime;
+
+    Cost arcSpeed = deltaTheta * turningRadius / arcTime;
 
     PathSegment seg;
     seg.DefineArc(config["arc"]["centerPt_x_mm"].asFloat(),
@@ -422,7 +428,7 @@ bool MotionPrimitive::Import(const Json::Value& config, StateTheta startingAngle
                       config["arc"]["radius_mm"].asFloat(),
                       config["arc"]["startRad"].asFloat(),
                       config["arc"]["sweepRad"].asFloat(),
-                      linearSpeed,  // TODO:(bn) ask kevin!!  // TODO:(bn) this is definitely wrong
+                      arcSpeed,
                       LATTICE_PLANNER_ACCEL,
                       LATTICE_PLANNER_DECEL);
     pathSegments_.push_back(seg);
@@ -486,7 +492,7 @@ void MotionPrimitive::AddSegmentsToPath(State_c start, Path& path) const
 
     float xx, yy;
     segment.GetStartPoint(xx,yy);
-    printf("start: (%f, %f)\n", xx, yy);
+    // printf("start: (%f, %f)\n", xx, yy);
 
     // if this segment can be combined with the previous one, do
     // that. otherwise, append a new segment.
@@ -533,7 +539,7 @@ void MotionPrimitive::AddSegmentsToPath(State_c start, Path& path) const
       path.AppendSegment(segment);
 
     segment.GetEndPoint(xx,yy);
-    printf("end: (%f, %f)\n", xx, yy);
+    // printf("end: (%f, %f)\n", xx, yy);
   }
 }
 
@@ -592,7 +598,6 @@ void xythetaEnvironment::ConvertToPath(const xythetaPlan& plan, Path& path) cons
     }
 
     printf("%s\n", actionTypes_[actionID].GetName().c_str());
-
 
     const MotionPrimitive* prim = &allMotionPrimitives_[curr.theta][actionID];
     prim->AddSegmentsToPath(State2State_c(curr), path);
