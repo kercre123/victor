@@ -59,7 +59,6 @@ namespace Anki
       def_.turn.x = x;
       def_.turn.y = y;
       def_.turn.targetAngle = targetAngle;
-      def_.turn.targetRotSpeed = targetRotSpeed;
       
       SetSpeedProfile(targetRotSpeed, rotAccel, rotDecel);
     }
@@ -476,13 +475,13 @@ namespace Anki
       
 #if(DEBUG_PATH)
       CoreTechPrint("currPathSeg: %d, TURN (%f, %f), targetAngle: %f, targetRotSpeed: %f\n",
-            currPathSegment_, seg->x, seg->y, seg->targetAngle, seg->targetRotSpeed);
+            currPathSegment_, seg->x, seg->y, seg->targetAngle, GetTargetSpeed());
 #endif
       
       shortestDistanceToPath = sqrtf( (x - seg->x)*(x - seg->x) + (y - seg->y)*(y - seg->y) );
       Radians currAngle(angle);
       Radians targetAngle(seg->targetAngle);
-      radDiff = currAngle.angularDistance(targetAngle,seg->targetRotSpeed < 0);
+      radDiff = currAngle.angularDistance(targetAngle,GetTargetSpeed() < 0);
       
       return IN_SEGMENT_RANGE;
     }

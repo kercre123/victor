@@ -53,7 +53,6 @@ namespace Anki
         f32 x;
         f32 y;
         f32 targetAngle;
-        f32 targetRotSpeed;
       } turn;
     } PathSegmentDef;
     

@@ -207,9 +207,12 @@ namespace Anki
           currPathSegment_ = GetClosestSegment(x,y,angle.ToFloat());
 
           // Set speed
-          SpeedController::SetUserCommandedDesiredVehicleSpeed( path_[currPathSegment_].GetTargetSpeed() );
-          SpeedController::SetUserCommandedAcceleration( path_[currPathSegment_].GetAccel() );
-          SpeedController::SetUserCommandedDeceleration( path_[currPathSegment_].GetDecel() );
+          // (Except for point turns whose speeds are handled at the steering controller level)
+          if (path_[currPathSegment_].GetType() != Planning::PST_POINT_TURN) {
+            SpeedController::SetUserCommandedDesiredVehicleSpeed( path_[currPathSegment_].GetTargetSpeed() );
+            SpeedController::SetUserCommandedAcceleration( path_[currPathSegment_].GetAccel() );
+            SpeedController::SetUserCommandedDeceleration( path_[currPathSegment_].GetDecel() );
+          }
 
 #if(DEBUG_PATH_FOLLOWER)
           PRINT("*** PATH START SEGMENT %d: speed = %f, accel = %f, decel = %f\n",
@@ -410,10 +413,12 @@ namespace Anki
           }
           
           // Command new speed for segment
-          SpeedController::SetUserCommandedDesiredVehicleSpeed( path_[currPathSegment_].GetTargetSpeed() );
-          SpeedController::SetUserCommandedAcceleration( path_[currPathSegment_].GetAccel() );
-          SpeedController::SetUserCommandedDeceleration( path_[currPathSegment_].GetDecel() );
-          
+          // (Except for point turns whose speeds are handled at the steering controller level)
+          if (path_[currPathSegment_].GetType() != Planning::PST_POINT_TURN) {
+            SpeedController::SetUserCommandedDesiredVehicleSpeed( path_[currPathSegment_].GetTargetSpeed() );
+            SpeedController::SetUserCommandedAcceleration( path_[currPathSegment_].GetAccel() );
+            SpeedController::SetUserCommandedDeceleration( path_[currPathSegment_].GetDecel() );
+          }
 #if(DEBUG_PATH_FOLLOWER)
           PRINT("*** PATH SEGMENT %d: speed = %f, accel = %f, decel = %f\n",
                 currPathSegment_,

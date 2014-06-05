@@ -107,7 +107,7 @@ namespace Anki {
             return retVal;
           }
 					
-          s32 n = (s32)hPtr - (s32)recvBuf_;
+          const s32 n = (s32)hPtr - (s32)recvBuf_;
           if (n != 0) {
             // Header was not found at the beginning.
             // Delete everything up until the header.
@@ -117,24 +117,34 @@ namespace Anki {
           
           // Check if expected number of bytes are in the msg
           if (recvBufSize_ > headerSize) {
-            const u8 dataLen = recvBuf_[headerSize];
-            if (recvBufSize_ > headerSize + dataLen) {
+            u32 dataLen = recvBuf_[headerSize] +
+                          (recvBuf_[headerSize+1] << 8) +
+                          (recvBuf_[headerSize+2] << 16) +
+                          (recvBuf_[headerSize+3] << 24);
+						
+            if (dataLen > 255) {
+              // We shouldn't be sending huge messages to the robot
+              PRINT("WARNING(RecvdMsgTooBig): %d bytes\n", dataLen);
+              dataLen = 255;
+            }
+						
+            if (recvBufSize_ >= headerSize + 4 + dataLen) {
             
               // Check that message size is correct
-              Messages::ID msgID = static_cast<Messages::ID>(recvBuf_[headerSize+1]);
+              Messages::ID msgID = static_cast<Messages::ID>(recvBuf_[headerSize+4]);
               const u8 size = Messages::GetSize(msgID);
-              int msgLen = dataLen - 1;  // Doesn't include msgID
+              u32 msgLen = dataLen - 1;  // Doesn't include msgID
               
               if (msgLen != size) {
                 PRINT("WARNING: Message size mismatch: ID %d, expected %d bytes, but got %d bytes\n", msgID, size, msgLen);
               }
               
               // Copy message contents to buffer
-              std::memcpy((void*)buffer, recvBuf_ + headerSize + 2, msgLen);
+              std::memcpy((void*)buffer, recvBuf_ + headerSize + 4 + 1, msgLen);
               retVal = msgID;
               
               // Shift recvBuf contents down
-              const u8 entireMsgSize = headerSize + 1 + dataLen;
+              const u32 entireMsgSize = headerSize + 4 + dataLen;
               memcpy(recvBuf_, recvBuf_ + entireMsgSize, recvBufSize_ - entireMsgSize);
               recvBufSize_ -= entireMsgSize;
               

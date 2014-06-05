@@ -324,7 +324,7 @@ namespace Anki {
         
         // IMPORTANT: The static robot state message is being passed in here
         //   *by value*, NOT by reference.  This is because step_LongExecution()
-        //   can be interuppted by step_MainExecution().
+        //   can be interupted by step_MainExecution().
         retVal = VisionSystem::Update(Messages::GetRobotStateMsg());
         
         return retVal;

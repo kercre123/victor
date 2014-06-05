@@ -137,6 +137,14 @@ ADD_MESSAGE_MEMBER(f32, sweepRad)
 ADD_COMMON_PATH_SEGMENT_MEMBERS
 END_MESSAGE_DEFINITION(AppendPathSegmentArc)
 
+// AppendPathSegmentPointTurn
+START_MESSAGE_DEFINITION(AppendPathSegmentPointTurn, 1)
+ADD_MESSAGE_MEMBER(f32, x_center_mm)
+ADD_MESSAGE_MEMBER(f32, y_center_mm)
+ADD_MESSAGE_MEMBER(f32, targetRad)
+ADD_COMMON_PATH_SEGMENT_MEMBERS  // targetSpeed indicates rotational speed in rad/s
+END_MESSAGE_DEFINITION(AppendPathSegmentPointTurn)
+
 // TrimPath
 START_MESSAGE_DEFINITION(TrimPath, 1)
 ADD_MESSAGE_MEMBER(u8, numPopFrontSegments)
