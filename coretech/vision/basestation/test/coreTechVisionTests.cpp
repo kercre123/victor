@@ -136,5 +136,14 @@ GTEST_TEST(PoseEstimation, FromQuads)
     EXPECT_NEAR(reproj[i_corner].y(), proj[i_corner].y(), pixelErrThreshold);
   }
   
-} // TestRotation:Rotation2dNegativeAngle
+} // GTEST_TEST(PoseEstimation, FromQuads)
 
+
+GTEST_TEST(Camera, VisibilityChecks)
+{
+  // Create a camera looking at several objects, check to see that expected
+  // objects are visible / occluded
+  
+  
+  
+} // GTEST_TEST(Camera, VisibilityChecks)

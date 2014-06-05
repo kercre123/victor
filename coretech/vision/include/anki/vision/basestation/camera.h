@@ -184,9 +184,11 @@ namespace Anki {
                                const Quad3f &objPoints) const;
       
       
-      // Compute the projected image locations of 3D point(s):
-      // (Resulting projected image points can be tested for being behind the
-      //  camera or visible using the functions below.)
+      // Compute the projected image locations of 3D point(s). The points
+      //  should already be in the camera's coordinate system (i.e. relative to
+      //  its origin.
+      // After projection, points' visibility can be checked using the helpers
+      //  below.
       void Project3dPoint(const Point3f& objPoint, Point2f& imgPoint) const;
       
       void Project3dPoints(const std::vector<Point3f> &objPoints,
@@ -198,21 +200,27 @@ namespace Anki {
       template<size_t NumPoints>
       void Project3dPoints(const std::array<Point3f,NumPoints> &objPoints,
                            std::array<Point2f,NumPoints>       &imgPoints) const;
-      
+
+      // Register an object as an "occluder" for this camera
+      void AddOccluder(const Vision::ObservableObject* object);
+      void ClearOccluders();
       
       // Returns true when the point (computed by one of the projection functions
       // above) is BOTH in front of the camera AND within image dimensions.
-      // If there are occluders registered (using AddOccluder() below), those
-      // will be considered as well.
-      bool IsVisible(const Point2f& projectedPoint) const;
+      // Occlusion by registered occluders is not considered.
+      bool IsWithinFieldOfView(const Point2f& projectedPoint) const;
+      //bool IsVisible(const Quad2f& projectedQuad) const; // TODO: Implement
+
+      // Returns true when a point in image, seen at the specified distance,
+      // is occluded by a registered occluder.
+      bool IsOccluded(const Point2f& projectedPoint, const f32 atDistance) const;
       
-      bool IsVisible(const Quad2f& projectedQuad) const;
-      
+      // Returns true when there is a registered "occluder" behind the specified
+      // point at the given distance.
+      bool IsAnythingBehind(const Point2f& projectedPoint, const f32 atDistance) const;
+
       // TODO: Method to remove radial distortion from an image
       // (This requires an image class)
-      
-      void AddOccluder(const Vision::ObservableObject* object);
-      void ClearOccluders();
       
     protected:
       CameraID_t         camID;
@@ -256,6 +264,14 @@ namespace Anki {
       return this->isCalibrationSet;
     }
     
+    inline bool Camera::IsOccluded(const Point2f& projectedPoint, const f32 atDistance) const {
+      return occluderList.IsOccluded(projectedPoint, atDistance);
+    }
+    
+    inline bool Camera::IsAnythingBehind(const Point2f& projectedPoint, const f32 atDistance) const {
+      return occluderList.IsAnythingBehind(projectedPoint, atDistance);
+    }
+    
     template<size_t NumPoints>
     void Camera::Project3dPoints(const std::array<Point3f,NumPoints> &objPoints,
                                  std::array<Point2f,NumPoints>       &imgPoints) const
@@ -265,6 +281,7 @@ namespace Anki {
         Project3dPoint(objPoints[i], imgPoints[i]);
       }
     } // // Project3dPoints(std::array)
+    
     
   } // namesapce Vision
 } // namespace Anki

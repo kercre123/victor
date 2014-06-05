@@ -80,57 +80,90 @@ namespace Anki {
     
     bool OccluderList::IsOccluded(const Quad2f &quad, const f32 atDistance) const
     {
-      // Model the quad by its axis-aligned rectangle for simpler intersection
-      // checking
-      Rectangle<f32> boundingBox(quad);
-      
-      // Don't need to check against occluders in the container that are further
-      // away than the quad I'm checking (they can't possibly be occluding), so
-      // we only have to go until the current occluder is behind the quad we're
-      // checking, since the vector is sorted
-      auto currentOccluder = rectDepthPairs_.begin();
-      auto end = rectDepthPairs_.end();
-      while(atDistance > currentOccluder->first && currentOccluder != end) {
+      if(!IsEmpty()) {
+        // Model the quad by its axis-aligned rectangle for simpler intersection
+        // checking
+        Rectangle<f32> boundingBox(quad);
         
-        if( boundingBox.Intersect(currentOccluder->second).area() > 0 ) {
-          // The bounding box intersects this occluder, and is thus occluded
-          // by it.
-          return true;
+        // Don't need to check against occluders in the container that are further
+        // away than the quad I'm checking (they can't possibly be occluding), so
+        // we only have to go until the current occluder is behind the quad we're
+        // checking, since the vector is sorted
+        auto currentOccluder = rectDepthPairs_.begin();
+        auto end = rectDepthPairs_.end();
+        while(atDistance > currentOccluder->first && currentOccluder != end) {
+          
+          if( boundingBox.Intersect(currentOccluder->second).area() > 0 ) {
+            // The bounding box intersects this occluder, and is thus occluded
+            // by it.
+            return true;
+          }
+          
+          ++currentOccluder;
         }
-        
-        ++currentOccluder;
-      }
+      } // if not empty
       
       // No intersections with occluders found
       return false;
       
-    } // OccluderList::IsOccluded()
+    } // OccluderList::IsOccluded(quad)
     
     
     bool OccluderList::IsOccluded(const Point2f &point, const f32 atDistance) const
     {
-      
-      // Don't need to check against occluders in the container that are further
-      // away than the quad I'm checking (they can't possibly be occluding), so
-      // we only have to go until the current occluder is behind the quad we're
-      // checking, since the vector is sorted
-      auto currentOccluder = rectDepthPairs_.begin();
-      auto end = rectDepthPairs_.end();
-      while(atDistance > currentOccluder->first && currentOccluder != end) {
-        
-        if(currentOccluder->second.Contains(point)) {
-          // This occluder contains the point, and thus occludes it.
-          return true;
+      if(!IsEmpty()) {
+        // Don't need to check against occluders in the container that are further
+        // away than the quad I'm checking (they can't possibly be occluding), so
+        // we only have to go until the current occluder is behind the quad we're
+        // checking, since the vector is sorted
+        auto currentOccluder = rectDepthPairs_.begin();
+        auto end = rectDepthPairs_.end();
+        while(atDistance > currentOccluder->first && currentOccluder != end) {
+          
+          if(currentOccluder->second.Contains(point)) {
+            // This occluder contains the point, and thus occludes it.
+            return true;
+          }
+          
+          ++currentOccluder;
         }
-        
-        ++currentOccluder;
-      }
+      } // if not empty
       
       // No intersections with occluders found
       return false;
       
-    } // OccluderList::IsOccluded()
+    } // OccluderList::IsOccluded(point)
 
+    
+    bool OccluderList::IsAnythingBehind(const Point2f &point, const f32 atDistance) const
+    {
+      if(!IsEmpty()) {
+        // Jump to first occluder farther away than the given point
+        auto currentOccluder = rectDepthPairs_.begin();
+        auto end = rectDepthPairs_.end();
+        while(atDistance > currentOccluder->first && currentOccluder != end) {
+          ++currentOccluder;
+        }
+        
+        // Check the remaining occluders from here back, if there are any
+        while(currentOccluder != end) {
+          // If we get here, the current occluder should be one that is further
+          // away than the specified distance
+          CORETECH_ASSERT(atDistance < currentOccluder->first);
+          
+          if(currentOccluder->second.Contains(point)) {
+            // If the point is within the occluder, then the occluder is behind it
+            return true;
+          }
+          
+          ++currentOccluder;
+        }
+          
+      } // if not empty
+      
+      return false;
+      
+    } // IsAnythingBehind()
     
     
   } // namespace Vision

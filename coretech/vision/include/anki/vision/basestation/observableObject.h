@@ -57,9 +57,10 @@ namespace Anki {
       
       // Return true if any of the object's markers is visible from the given
       // camera. See also KnownMarker::IsVisibleFrom().
-      bool IsVisibleFrom(Camera& camera,
+      bool IsVisibleFrom(const Camera& camera,
                          const f32 maxFaceNormalAngle,
-                         const f32 minMarkerImageSize) const;
+                         const f32 minMarkerImageSize,
+                         const bool requireSomethingBehind) const;
       
       // Accessors:
       ObjectID_t      GetID()     const;

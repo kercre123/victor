@@ -38,6 +38,8 @@ namespace Anki {
       bool IsOccluded(const Quad2f& quad, const f32 atDistance)   const;
       bool IsOccluded(const Point2f& point, const f32 atDistance) const;
       
+      bool IsAnythingBehind(const Point2f& point, const f32 atDistance) const;
+      
       void Clear();
       
       bool IsEmpty() const;

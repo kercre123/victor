@@ -28,14 +28,15 @@ namespace Anki {
       wasObserved_ = wasObserved;
     }
     
-    bool ObservableObject::IsVisibleFrom(Camera &camera,
+    bool ObservableObject::IsVisibleFrom(const Camera &camera,
                                          const f32 maxFaceNormalAngle,
-                                         const f32 minMarkerImageSize) const
+                                         const f32 minMarkerImageSize,
+                                         const bool requireSomethingBehind) const
     {
       // Return true if any of this object's markers are visible from the
       // given camera
       for(auto & marker : markers_) {
-        if(marker.IsVisibleFrom(camera, maxFaceNormalAngle, minMarkerImageSize)) {
+        if(marker.IsVisibleFrom(camera, maxFaceNormalAngle, minMarkerImageSize, requireSomethingBehind)) {
           return true;
         }
       }

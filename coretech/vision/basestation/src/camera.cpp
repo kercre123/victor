@@ -314,7 +314,7 @@ namespace Anki {
                                                       const Quad3f& worldQuad) const;
 
     
-    bool Camera::IsVisible(const Point2f &projectedPoint) const
+    bool Camera::IsWithinFieldOfView(const Point2f &projectedPoint) const
     {
       return (not std::isnan(projectedPoint.x()) &&
               not std::isnan(projectedPoint.y()) &&
@@ -351,12 +351,6 @@ namespace Anki {
         imgPoint.y() *= this->calibration.get_focalLength_y();
         
         imgPoint += this->calibration.get_center();
-      }
-      
-      if(not occluderList.IsEmpty() &&
-         occluderList.IsOccluded(imgPoint, objPoint.z()))
-      {
-        imgPoint = BEHIND_OR_OCCLUDED;
       }
       
     } // Project3dPoint()
@@ -444,6 +438,7 @@ namespace Anki {
       occluderList.AddOccluder(projectedCorners, objectPoseWrtCamera.get_translation().z());
     }
     
+
     
   } // namespace Vision
 } // namespace Anki
