@@ -143,16 +143,21 @@ namespace Anki {
         // Simulator doesn't need vignetting correction on by default
         static VignettingCorrection vignettingCorrection = VignettingCorrection_Off;
 #else
-        static VignettingCorrection vignettingCorrection = VignettingCorrection_Software;
+        static VignettingCorrection vignettingCorrection = VignettingCorrection_Off;
 #endif
-        static const f32 vignettingCorrectionParameters[5] = {1.56852140958887f, -0.00619880766167132f, -0.00364222219719291f, 2.75640497906470e-05f, 1.75476361058157e-05f}; //< for vignettingCorrection == VignettingCorrection_Software, computed by fit2dCurve.m
+        // For OV7725 (cozmo 2.0)
+        //static const f32 vignettingCorrectionParameters[5] = {1.56852140958887f, -0.00619880766167132f, -0.00364222219719291f, 2.75640497906470e-05f, 1.75476361058157e-05f}; //< for vignettingCorrection == VignettingCorrection_Software, computed by fit2dCurve.m
+        
+        // For OV7739 (cozmo 2.1)
+        // TODO: figure these out
+        static const f32 vignettingCorrectionParameters[5] = {0,0,0,0,0};
 
         static s32 frameNumber;
         static const bool autoExposure_enabled = true;
-        static const s32 autoExposure_integerCountsIncrement = 2;
-        static const f32 autoExposure_minExposureTime = 0.03f;
-        static const f32 autoExposure_maxExposureTime = 0.97f;
-        static const f32 autoExposure_percentileToSaturate = 0.95f;
+        static const s32 autoExposure_integerCountsIncrement = 3;
+        static const f32 autoExposure_minExposureTime = 0.02f;
+        static const f32 autoExposure_maxExposureTime = 0.98f;
+        static const f32 autoExposure_percentileToSaturate = 0.97f;
         static const s32 autoExposure_adjustEveryNFrames = 1;
 
         // Tracking marker related members
@@ -1280,8 +1285,7 @@ namespace Anki {
           Simulator::Initialize();
 
 #ifdef RUN_SIMPLE_TRACKING_TEST
-          Anki::Cozmo::VisionSystem::SetMarkerToTrack(Vision::MARKER_BATTERIES,
-            DEFAULT_BLOCK_MARKER_WIDTH_MM);
+          Anki::Cozmo::VisionSystem::SetMarkerToTrack(Vision::MARKER_FIRE, DEFAULT_BLOCK_MARKER_WIDTH_MM);
 #endif
 
           result = VisionMemory::Initialize();
@@ -1600,10 +1604,22 @@ namespace Anki {
         DebugStream::SendBinaryImage(grayscaleImage, "Binary Robot Image", tracker_, trackerParameters_, VisionMemory::ccmScratch_, VisionMemory::onchipScratch_, VisionMemory::offchipScratch_);
         HAL::MicroWait(250000);
 #else
-        DebugStream::SendImage(grayscaleImage, exposureTime, "Robot Image", VisionMemory::offchipScratch_);
-        HAL::MicroWait(166666); // 6fps
-        //HAL::MicroWait(140000); //7fps
-        //HAL::MicroWait(125000); //8fps
+        {
+          const bool sendSmall = false;
+          
+          if(sendSmall) {
+            MemoryStack ccmScratch_local = MemoryStack(VisionMemory::ccmScratch_);
+            
+            Array<u8> grayscaleImageSmall(30, 40, ccmScratch_local);
+            u32 downsampleFactor = DownsampleHelper(grayscaleImage, grayscaleImageSmall, ccmScratch_local);
+            DebugStream::SendImage(grayscaleImageSmall, exposureTime, "Robot Image", VisionMemory::offchipScratch_);
+          } else {
+            DebugStream::SendImage(grayscaleImage, exposureTime, "Robot Image", VisionMemory::offchipScratch_);
+            HAL::MicroWait(166666); // 6fps
+            //HAL::MicroWait(140000); //7fps
+            //HAL::MicroWait(125000); //8fps
+          }
+        }
 #endif
 
         return RESULT_OK;

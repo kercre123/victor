@@ -470,7 +470,7 @@ namespace Anki
                                       s32 &verify_meanAbsoluteDifference,
                                       s32 &verify_numInBounds,
                                       s32 &verify_numSimilarPixels,
-                                      MemoryStack scratch) const;
+                                      MemoryStack scratch);
         
         Result IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance_angle, const f32 convergenceTolerance_distance, const Transformations::TransformType curTransformType, bool &converged, MemoryStack scratch);
         

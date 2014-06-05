@@ -176,7 +176,8 @@ namespace Anki {
     const f32 BLOCK_MARKER_WIDTH_MM = 32.f;
     */
     
-    const f32 DEFAULT_BLOCK_MARKER_WIDTH_MM = 26.f;
+    // TODO: This needs to be sync'd with whatever is in BlockDefinitions.h
+    const f32 DEFAULT_BLOCK_MARKER_WIDTH_MM = 25.f;
     
     // Resolution of images that are streamed to basestation (dev purposes)
     const Vision::CameraResolution IMG_STREAM_RES = Vision::CAMERA_RES_QQQVGA;

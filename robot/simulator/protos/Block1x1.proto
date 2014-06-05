@@ -96,7 +96,7 @@ Robot {
                 }
               }
               geometry DEF FACE_BOX Box {
-                size 0.026 0.0225 0.026
+                size 0.025 0.0221 0.025
               }
             }
           ] 

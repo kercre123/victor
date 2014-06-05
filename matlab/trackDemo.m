@@ -35,6 +35,10 @@ if strcmp(TrackerType, 'homography')
         calibration.cc = calibration.cc / Downsample;
     end
     
+elseif strncmp(TrackerType, 'planar6dof', 10)
+    assert(~isempty(CalibrationMatrix), 'CalibrationMatrix required.');
+    assert(~isempty(MarkerWidth) && MarkerWidth > 0, ...
+        'MarkerWidth must be non-empty and greater than zero.');
 end
    
 LKtracker = [];

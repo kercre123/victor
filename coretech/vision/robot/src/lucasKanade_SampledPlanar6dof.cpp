@@ -34,6 +34,8 @@ non-disclosure agreement with Anki, inc.
 // If 0, just uses nearest pixel
 #define USE_LINEAR_INTERPOLATION_FOR_VERIFICATION 0
 
+#define UPDATE_VERIFICATION_SAMPLES_DURING_TRACKING 1
+
 #if USE_OPENCV_ITERATIVE_POSE_INIT
 #include "opencv2/calib3d/calib3d.hpp"
 #endif
@@ -1915,7 +1917,7 @@ namespace Anki
         s32 &verify_meanAbsoluteDifference,
         s32 &verify_numInBounds,
         s32 &verify_numSimilarPixels,
-        MemoryStack scratch) const
+        MemoryStack scratch) 
       {
         // This method is heavily based on Interp2_Projective
         // The call would be like: Interp2_Projective<u8,u8>(nextImage, originalCoordinates, interpolationHomography, centerOffset, nextImageTransformed2d, INTERPOLATE_LINEAR, 0);
@@ -1951,7 +1953,7 @@ namespace Anki
           const f32 yOriginal = static_cast<f32>(curSample.yCoordinate) * this->verifyCoordScalar;
           const f32 xOriginal = static_cast<f32>(curSample.xCoordinate) * this->verifyCoordScalar;
 
-          const s32 templatePixelValue = static_cast<s32>(curSample.grayvalue);
+          const s32 verificationPixelValue = static_cast<s32>(curSample.grayvalue);
 
           // TODO: These two could be strength reduced
           const f32 xTransformedRaw = h00*xOriginal + h01*yOriginal + h02;
@@ -2017,7 +2019,7 @@ namespace Anki
           verify_numInBounds++;
 
           // ...compare that value to the template sample
-          const s32 grayvalueDifference = ABS(interpolatedPixelValue - templatePixelValue);
+          const s32 grayvalueDifference = ABS(interpolatedPixelValue - verificationPixelValue);
 
           // Keep track of the total difference
           totalGrayvalueDifference += grayvalueDifference;
@@ -2025,6 +2027,14 @@ namespace Anki
           if(grayvalueDifference <= verify_maxPixelDifferenceS32) {
             verify_numSimilarPixels++;
           }
+          
+#if UPDATE_VERIFICATION_SAMPLES_DURING_TRACKING
+          // Now that we're done using it, replace this verification sample
+          // with the value we read out.  If tracking is deemed a success by
+          // the caller, this will be the new verification value that gets
+          // used for the next tracker update.
+          this->verificationSamples[iSample].grayvalue = saturate_cast<u8>(interpolatedPixelValue);
+#endif
         } // for(s32 iSample=0; iSample<numTemplateSamples; iSample++)
 
         if(verify_numInBounds > 0) {
