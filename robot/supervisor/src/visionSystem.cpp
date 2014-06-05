@@ -1511,7 +1511,7 @@ namespace Anki {
           rotation, translation);
       } // GetVisionMarkerPose()
 
-#ifdef SEND_IMAGE_ONLY
+#if defined(SEND_IMAGE_ONLY)
       // In SEND_IMAGE_ONLY mode, just create a special version of update
 
       Result Update(const Messages::RobotState robotState)
@@ -1615,8 +1615,48 @@ namespace Anki {
 
         return RESULT_OK;
       } // Update() [SEND_IMAGE_ONLY]
+#elif defined(RUN_GROUND_TRUTHING_CAPTURE) // #if defined(SEND_IMAGE_ONLY)
+      Result Update(const Messages::RobotState robotState)
+      {
+        // This should be called from elsewhere first, but calling it again won't hurt
+        Init();
 
-#elif defined(RUN_SIMPLE_FACE_DETECTION_TEST) // #ifdef SEND_IMAGE_ONLY
+        VisionMemory::ResetBuffers();
+
+        frameNumber++;
+
+        const s32 captureHeight = CameraModeInfo[captureResolution_].height;
+        const s32 captureWidth  = CameraModeInfo[captureResolution_].width;
+
+        Array<u8> grayscaleImage(captureHeight, captureWidth, VisionMemory::onchipScratch_, Flags::Buffer(false,false,false));
+
+        HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_buffer()), captureResolution_, false);
+
+        if(vignettingCorrection == VignettingCorrection_Software) {
+          MemoryStack onchipScratch_local = VisionMemory::onchipScratch_;
+          FixedLengthList<f32> polynomialParameters(5, onchipScratch_local, Flags::Buffer(false, false, true));
+
+          for(s32 i=0; i<5; i++)
+            polynomialParameters[i] = vignettingCorrectionParameters[i];
+
+          CorrectVignetting(grayscaleImage, polynomialParameters);
+        } // if(vignettingCorrection == VignettingCorrection_Software)
+        
+        DebugStream::SendImage(grayscaleImage, exposureTime, "Robot Image", VisionMemory::offchipScratch_);
+        
+        HAL::CameraSetParameters(exposureTime, vignettingCorrection == VignettingCorrection_CameraHardware);
+        
+        exposureTime += .1f;
+        
+        if(exposureTime > 1.01f) {
+          exposureTime = 0.0f;
+        }
+        
+        HAL::MicroWait(1000000);
+
+        return RESULT_OK;
+      } // Update() [RUN_GROUND_TRUTHING_CAPTURE]
+#elif defined(RUN_SIMPLE_FACE_DETECTION_TEST) // #elif defined(RUN_GROUND_TRUTHING_CAPTURE)
 
       Result Update(const Messages::RobotState robotState)
       {
@@ -1733,7 +1773,7 @@ namespace Anki {
         return RESULT_OK;
       } // Update() [SEND_IMAGE_ONLY]
 
-#else // #elseif RUN_SIMPLE_FACE_DETECTION_TEST
+#else // #elif defined(RUN_SIMPLE_FACE_DETECTION_TEST)
 
       // This is the regular Update() call
       Result Update(const Messages::RobotState robotState)

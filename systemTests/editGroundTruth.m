@@ -630,7 +630,12 @@ function poseChanged(resetZoom)
     fixBounds();
 
     curImageFilename = [dataPath, jsonTestData.Poses{curPoseIndex}.ImageFile];
-    image = imread(curImageFilename);
+    try
+        image = imread(curImageFilename);
+    catch
+        disp(sprintf('Could not load %s', curImageFilename));
+        return;
+    end
 
     slashIndexes = strfind(curImageFilename, '/');
     curImageFilenameWithoutPath = curImageFilename((slashIndexes(end)+1):end);
