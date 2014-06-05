@@ -313,8 +313,13 @@ namespace Anki {
         
         // Do not process external drive commands if following a test path
         if (PathFollower::IsTraversingPath()) {
+          PRINT("Ignoring DriveWheels message because robot is currently following a path.\n");
           return;
         }
+        
+        //PRINT("Executing DriveWheels message: left=%f, right=%f\n",
+        //      msg.lwheel_speed_mmps, msg.rwheel_speed_mmps);
+        
         //PathFollower::ClearPath();
         SteeringController::ExecuteDirectDrive(msg.lwheel_speed_mmps, msg.rwheel_speed_mmps);
       }
