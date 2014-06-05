@@ -10,7 +10,8 @@ function CreatePrintableCodeSheet(varargin)
 %   - Set Orientation to Landscape (if specified page size is landscape)
 %   - Set Units to Centimeters
 %   - Set Placement to Manual, set Left/Top=0, and set Width/Height to
-%     match pageSize (see below), converted to cm
+%     match pageSize (see below), converted to cm (8.5"x11" is 
+%     width=27.94cm and height=21.59cm)
 %
 %  Parameters[default]:
 %
