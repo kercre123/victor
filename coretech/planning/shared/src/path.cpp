@@ -923,8 +923,7 @@ namespace Anki
       // Just check specified segment
       return CheckSegmentContinuity(tolerance_distance_squared, pathSegmentIdx);
     }
-  
-    
+
     // Add path segment
     // tODO: Change units to meters
     bool Path::AppendLine(u32 matID, f32 x_start, f32 y_start, f32 x_end, f32 y_end,

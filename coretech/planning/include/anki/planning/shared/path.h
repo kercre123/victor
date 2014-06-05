@@ -100,6 +100,7 @@ namespace Anki
                                          f32 &shortestDistanceToPath, f32 &radDiff) const;
       
       PathSegmentType GetType() const {return type_;}
+      PathSegmentDef& GetDef() {return def_;}
       const PathSegmentDef& GetDef() const {return def_;}
       
       f32 GetTargetSpeed() const {return targetSpeed_;}

@@ -3,6 +3,7 @@
 #include <iostream>
 #include <assert.h>
 #include "xythetaPlanner_internal.h"
+#include "anki/common/basestation/general.h"
 
 namespace Anki {
 namespace Planning {
@@ -84,6 +85,11 @@ void xythetaPlannerImpl::Reset()
 {
   plan_.Clear();
 
+  // TODO:(bn) shouln't need to clear these if I use searchNum_
+  // properly
+  table_.Clear();
+  open_.clear();
+
   expansions_ = 0;
   considerations_ = 0;
   collisionChecks_ = 0;
@@ -91,9 +97,6 @@ void xythetaPlannerImpl::Reset()
 
 void xythetaPlannerImpl::ComputePath()
 {
-
-  std::cout<<"planning from '"<<start_<<"' to '"<<State(goalID_)<<"'\n";
-
   Reset();
 
   if(PLANNER_DEBUG_PLOT_STATES_CONSIDERED) {
@@ -217,11 +220,12 @@ void xythetaPlannerImpl::BuildPlan()
   // until we get to the start id
 
   StateID curr = goalID_;
-  // BOUNDED_WHILE(1000, curr != startID_) { // TODO:(bn) include this
-  while(!(curr == startID_)) {
+  BOUNDED_WHILE(1000, !(curr == startID_)) {
     auto it = table_.find(curr);
 
     assert(it != table_.end());
+
+    std::cout<<State(curr)<<" <-- "<<(int)it->second.backpointerAction_<<std::endl;
 
     plan_.Push(it->second.backpointerAction_);
     curr = it->second.backpointer_;

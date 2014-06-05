@@ -340,6 +340,7 @@ void xythetaEnvironment::ClearObstacles()
 {
   for(size_t i=0; i<obstacles_.size(); ++i)
     delete obstacles_[i];
+  obstacles_.clear();
 }
 
 
@@ -466,9 +467,9 @@ bool MotionPrimitive::Import(const Json::Value& config, StateTheta startingAngle
 
   if(cost < 1e-6) {
     printf("ERROR: final action cost is %f (%f x) for action %d '%s\n",
-               cost,
-               env.GetActionType(id).GetExtraCostFactor(),
-               id, env.GetActionType(id).GetName().c_str());
+           cost,
+           env.GetActionType(id).GetExtraCostFactor(),
+           id, env.GetActionType(id).GetName().c_str());
     return false;
   }
 
@@ -487,12 +488,52 @@ void MotionPrimitive::AddSegmentsToPath(State_c start, Path& path) const
     segment.GetStartPoint(xx,yy);
     printf("start: (%f, %f)\n", xx, yy);
 
-    // segment.GetEndPoint(curr.x_mm, curr.y_mm);
-    path.AppendSegment(segment);
+    // if this segment can be combined with the previous one, do
+    // that. otherwise, append a new segment.
+    bool shouldAdd = true;
+    if(path.GetNumSegments() > 0 && path[path.GetNumSegments()-1].GetType() == segment.GetType()) {
+      size_t endIdx = path.GetNumSegments()-1;
+
+      switch(segment.GetType()) {
+
+      case PST_LINE:
+        path[endIdx].GetDef().line.endPt_x = segment.GetDef().line.endPt_x;
+        path[endIdx].GetDef().line.endPt_y = segment.GetDef().line.endPt_y;
+        shouldAdd = false;
+        break;
+
+      case PST_ARC:
+        if(FLT_NEAR(path[endIdx].GetDef().arc.centerPt_x, segment.GetDef().arc.centerPt_x) &&
+               FLT_NEAR(path[endIdx].GetDef().arc.centerPt_y, segment.GetDef().arc.centerPt_y) &&
+               FLT_NEAR(path[endIdx].GetDef().arc.radius, segment.GetDef().arc.radius)) {
+
+          path[endIdx].GetDef().arc.sweepRad += segment.GetDef().arc.sweepRad;
+          shouldAdd = false;
+        }
+        break;
+
+      case PST_POINT_TURN:
+        // only combine point turns if they are the same and the new
+        // target angle is less that 180 degrees away from the current
+        // angle
+        if(FLT_NEAR(path[endIdx].GetDef().turn.x, segment.GetDef().turn.x) &&
+               FLT_NEAR(path[endIdx].GetDef().turn.y, segment.GetDef().turn.y) &&
+               FLT_NEAR(path[endIdx].GetDef().turn.targetRotSpeed, segment.GetDef().turn.targetRotSpeed)) {
+          path[endIdx].GetDef().turn.targetAngle = segment.GetDef().turn.targetAngle;
+        shouldAdd = false;
+        }
+
+      default:
+        printf("ERROR (AddSewgmentsToPath): Undefined segment %d\n", segment.GetType());
+        assert(false);
+      }
+    }
+
+    if(shouldAdd)
+      path.AppendSegment(segment);
 
     segment.GetEndPoint(xx,yy);
     printf("end: (%f, %f)\n", xx, yy);
-
   }
 }
 
