@@ -85,6 +85,9 @@ namespace Cozmo {
       memcpy(sendBuf, RADIO_PACKET_HEADER, sizeof(RADIO_PACKET_HEADER));
       sendBufLen += sizeof(RADIO_PACKET_HEADER);
       sendBuf[sendBufLen++] = p.dataLen;
+      sendBuf[sendBufLen++] = 0;
+      sendBuf[sendBufLen++] = 0;
+      sendBuf[sendBufLen++] = 0;
       memcpy(sendBuf + sendBufLen, p.data, p.dataLen);
       sendBufLen += p.dataLen;
 
@@ -240,8 +243,17 @@ namespace Cozmo {
         
         // Check if expected number of bytes are in the msg
         if (c.recvDataSize > HEADER_AND_TS_SIZE) {
-          const u8 dataLen = c.recvBuf[HEADER_AND_TS_SIZE];
-          if (c.recvDataSize > HEADER_AND_TS_SIZE + dataLen) {
+          u32 dataLen = c.recvBuf[HEADER_AND_TS_SIZE] +
+                              (c.recvBuf[HEADER_AND_TS_SIZE + 1] << 8) +
+                              (c.recvBuf[HEADER_AND_TS_SIZE + 2] << 16) +
+                              (c.recvBuf[HEADER_AND_TS_SIZE + 3] << 24);
+          
+          if (dataLen > 255) {
+            PRINT_NAMED_WARNING("TCPComms.MsgTooBig", "Can't handle messages larger than 255\n");
+            dataLen = 255;
+          }
+          
+          if (c.recvDataSize >= HEADER_AND_TS_SIZE + 4 + dataLen) {
             
             /*
              // Get timestamp
@@ -266,11 +278,11 @@ namespace Cozmo {
                                           std::forward_as_tuple((s32)(it->first),
                                                                 (s32)-1,
                                                                 dataLen,
-                                                                (u8*)(&c.recvBuf[HEADER_AND_TS_SIZE+1]))
+                                                                (u8*)(&c.recvBuf[HEADER_AND_TS_SIZE+4]))
                                           );
             
             // Shift recvBuf contents down
-            const u8 entireMsgSize = HEADER_AND_TS_SIZE + 1 + dataLen;
+            const u8 entireMsgSize = HEADER_AND_TS_SIZE + 4 + dataLen;
             memcpy(c.recvBuf, c.recvBuf + entireMsgSize, c.recvDataSize - entireMsgSize);
             c.recvDataSize -= entireMsgSize;
             
