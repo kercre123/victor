@@ -85,8 +85,13 @@ namespace Anki {
       // Sends a path to the robot to be immediately executed
       Result ExecutePath(const Planning::Path& path);
       
-      void SetTraversingPath(bool t) {isTraversingPath_ = t;}
-      bool IsTraversingPath() {return isTraversingPath_;}
+      // True if wheel speeds are non-zero in most recent RobotState message
+      bool IsMoving() const {return isMoving_;}
+      void SetIsMoving(bool t) {isMoving_ = t;}
+      
+      void SetCurrPathSegment(const s8 s) {currPathSegment_ = s;}
+      s8 GetCurrPathSegment() {return currPathSegment_;}
+      bool IsTraversingPath() {return currPathSegment_ >= 0;}
 
       void SetCarryingBlock(bool t) {isCarryingBlock_ = t;}
       bool IsCarryingBlock() {return isCarryingBlock_;}
@@ -160,6 +165,9 @@ namespace Anki {
       // Run a test mode
       Result SendStartTestMode(const TestMode mode) const;
       
+      Quad2f GetBoundingQuadXY(const f32 paddingScale) const;
+      Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 paddingScale) const;
+      
       
       // =========== Pose history =============
       // Returns ref to robot's pose history
@@ -211,11 +219,13 @@ namespace Anki {
       f32 currentHeadAngle;
       f32 currentLiftAngle;
       
+      s8 currPathSegment_;
+      
       OperationMode mode, nextMode;
       bool setOperationMode(OperationMode newMode);
       bool isCarryingBlock_;
-      bool isTraversingPath_;
       bool isPickingOrPlacing_;
+      bool isMoving_;
       
       //std::vector<BlockMarker3d*>  visibleFaces;
       //std::vector<Block*>          visibleBlocks;
@@ -223,7 +233,7 @@ namespace Anki {
       // Pose history
       RobotPoseHistory poseHistory_;
 
-      
+      static const Quad2f CanonicalBoundingBoxXY;
       
       // Message handling
       typedef std::vector<u8> MessageType;

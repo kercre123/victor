@@ -361,8 +361,14 @@ namespace Anki {
             }
             default:
             {
-              // Stop wheels
-              robot_->DriveWheels(0, 0);
+              // If the last key pressed was a move wheels key, then stop wheels
+              if (lastKeyPressed_ == webots::Robot::KEYBOARD_UP   ||
+                  lastKeyPressed_ == webots::Robot::KEYBOARD_DOWN ||
+                  lastKeyPressed_ == webots::Robot::KEYBOARD_LEFT ||
+                  lastKeyPressed_ == webots::Robot::KEYBOARD_RIGHT)
+              {
+                robot_->DriveWheels(0, 0);
+              }
               
               // If the last key pressed was a move lift key then stop it.
               if (lastKeyPressed_ == CKEY_LIFT_UP || lastKeyPressed_ == CKEY_LIFT_DOWN) {

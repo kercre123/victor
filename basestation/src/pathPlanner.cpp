@@ -17,8 +17,8 @@
 #define DUBINS_ACCEL_MMPS2 200
 #define DUBINS_DECEL_MMPS2 200
 
-#define DUBINS_START_RADIUS_MM 50
-#define DUBINS_END_RADIUS_MM 50
+#define DUBINS_START_RADIUS_MM 50.f
+#define DUBINS_END_RADIUS_MM 50.f
 
 namespace Anki {
   namespace Cozmo {
@@ -67,11 +67,13 @@ namespace Anki {
         targetAngle *= -1;
       }
 
-
+      const f32 dubinsRadius = (targetPt - startPt).Length() * 0.25f;
+      
       if (Planning::GenerateDubinsPath(path,
                                        startPt.x(), startPt.y(), startAngle,
                                        targetPt.x(), targetPt.y(), targetAngle,
-                                       DUBINS_START_RADIUS_MM, DUBINS_END_RADIUS_MM,
+                                       std::min(DUBINS_START_RADIUS_MM, dubinsRadius),
+                                       std::min(DUBINS_END_RADIUS_MM, dubinsRadius),
                                        DUBINS_TARGET_SPEED_MMPS, DUBINS_ACCEL_MMPS2, DUBINS_DECEL_MMPS2) == 0) {
         PRINT_NAMED_INFO("GetPlan.NoPathFound", "Could not generate Dubins path (startPose %f %f %f, targetPose %f %f %f)\n", startPt.x(), startPt.y(), startAngle, targetPt.x(), targetPt.y(), targetAngle);
         return RESULT_FAIL;

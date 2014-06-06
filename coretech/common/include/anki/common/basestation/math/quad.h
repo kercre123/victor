@@ -21,7 +21,7 @@
 
 namespace Anki {
 
-  typedef size_t QuadDimType;
+  using QuadDimType = size_t;
   
   namespace Quad {
     
@@ -55,6 +55,8 @@ namespace Anki {
                   const Point<N,T> &cornerBottomLeft,
                   const Point<N,T> &cornerTopRight,
                   const Point<N,T> &cornerBottomRight);
+    
+    Quadrilateral(std::initializer_list<Point<N,T> >& points);
     
     Quadrilateral(const Quadrilateral<N,T>& quad);
     
@@ -105,7 +107,20 @@ namespace Anki {
     // Special version for 2D quads: no normal needed, since they exist in a 2D
     // plane by definition.
     Quadrilateral<2,T> SortCornersClockwise(void) const;
+    
+    // Determine if a 2D point is contained within a 2D quad.
+    // NOTE: This method is ONLY available for 2D quads!
+    // ASSUMPTIONS:
+    //  - the quad is *convex*
+    //  - the corners are ordered such that TopLeft/BottomRight are opposite
+    //    one antoher and BottomLeft/TopRight are opposite one another
+    bool Contains(const Point<2,T>& point) const;
 
+    // Returns true if the two quads intersect.
+    // Only valid for 2D quads. Assumes quads are convex and checks whether
+    // any points of one are inside the other.
+    bool Intersects(const Quadrilateral<2,T>& other) const;
+    
   protected:
     
     //Point<N,T> corners[4];

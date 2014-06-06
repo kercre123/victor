@@ -14,6 +14,7 @@
 
 
 #include "anki/common/basestation/general.h"
+#include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/utils/timer.h"
 
 #include "anki/vision/CameraSettings.h"
@@ -98,8 +99,8 @@ namespace Anki {
       headCamPose({0,0,1,  -1,0,0,  0,-1,0},
                   {{HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}}, &neckPose),
       liftBasePose(0.f, Y_AXIS_3D, {{LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}}, &pose),
-      currentHeadAngle(0), currentLiftAngle(0),
-      isCarryingBlock_(false), isTraversingPath_(false), isPickingOrPlacing_(false)
+      currentHeadAngle(0), currentLiftAngle(0), currPathSegment_(-1),
+      isCarryingBlock_(false), isPickingOrPlacing_(false)
     {
       this->set_headAngle(currentHeadAngle);
       
@@ -540,8 +541,23 @@ namespace Anki {
             break;
           }
           case Planning::PST_POINT_TURN:
-            PRINT_NAMED_ERROR("PointTurnNotImplemented", "Point turns not working yet");
-            return RESULT_FAIL;
+          {
+            MessageAppendPathSegmentPointTurn m;
+            const Planning::PathSegmentDef::s_turn* t = &(path.GetSegmentConstRef(i).GetDef().turn);
+            m.x_center_mm = t->x;
+            m.y_center_mm = t->y;
+            m.targetRad = t->targetAngle;
+            m.pathID = 0;
+            m.segmentID = i;
+            
+            m.targetSpeed = path.GetSegmentConstRef(i).GetTargetSpeed();
+            m.accel = path.GetSegmentConstRef(i).GetAccel();
+            m.decel = path.GetSegmentConstRef(i).GetDecel();
+
+            if (msgHandler_->SendMessage(ID_, m) == RESULT_FAIL)
+              return RESULT_FAIL;
+            break;
+          }
           default:
             PRINT_NAMED_ERROR("Invalid path segment", "Can't send path segment of unknown type");
             return RESULT_FAIL;
@@ -673,7 +689,7 @@ namespace Anki {
       MessageImageRequest m;
       
       m.imageSendMode = mode;
-      m.resolution = Vision::CAMERA_RES_QQVGA;
+      m.resolution = IMG_STREAM_RES;
       
       return msgHandler_->SendMessage(ID_, m);
     }
@@ -693,6 +709,42 @@ namespace Anki {
       m.intensity = intensity;
       return msgHandler_->SendMessage(ID_, m);
     }
+    
+    const Quad2f Robot::CanonicalBoundingBoxXY({{-0.5f*ROBOT_BOUNDING_WIDTH, ROBOT_BOUNDING_FRONT_DISTANCE}},
+                                               {{-0.5f*ROBOT_BOUNDING_WIDTH, ROBOT_BOUNDING_FRONT_DISTANCE-ROBOT_BOUNDING_LENGTH}},
+                                               {{ 0.5f*ROBOT_BOUNDING_WIDTH, ROBOT_BOUNDING_FRONT_DISTANCE}},
+                                               {{ 0.5f*ROBOT_BOUNDING_WIDTH, ROBOT_BOUNDING_FRONT_DISTANCE-ROBOT_BOUNDING_LENGTH}});
+    
+    Quad2f Robot::GetBoundingQuadXY(const f32 paddingScale) const
+    {
+      return GetBoundingQuadXY(pose, paddingScale);
+    }
+    
+    Quad2f Robot::GetBoundingQuadXY(const Pose3d& atPose, const f32 paddingScale) const
+    {
+      const RotationMatrix2d R(atPose.get_rotationMatrix().GetAngleAroundZaxis());
+      
+      Quad2f boundingQuad;
+
+      using namespace Quad;
+      for(CornerName iCorner = FirstCorner; iCorner < NumCorners; ++iCorner) {
+        // Rotate to given pose
+        boundingQuad[iCorner] = R*Robot::CanonicalBoundingBoxXY[iCorner];
+      }
+      
+      // scale and re-center (Note: we don't need to use Quadrilateral::scale()
+      // here because we know the points are zero-centered and can thus just
+      // multiply them by padding directly.)
+      Point2f center(atPose.get_translation().x(), atPose.get_translation().y());
+      if(paddingScale != 1.f) {
+        boundingQuad *= paddingScale;
+      }
+      boundingQuad += center;
+      
+      return boundingQuad;
+      
+    } // GetBoundingBoxXY()
+    
     
     // ============ Pose history ===============
     

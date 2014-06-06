@@ -23,7 +23,7 @@ namespace Anki {
     
     
     ObservedMarker::ObservedMarker(const TimeStamp_t t, const Code& withCode, const Quad2f& corners, const Camera& seenBy)
-    : t_(t), Marker(withCode), imgCorners_(corners), seenByCam_(seenBy)
+    : Marker(withCode), observationTime_(t), imgCorners_(corners), seenByCam_(seenBy)
     {
 
     }
@@ -125,9 +125,10 @@ namespace Anki {
     } // ComputeNormal(atPose)
     
     
-    bool KnownMarker::IsVisibleFrom(Camera& camera,
+    bool KnownMarker::IsVisibleFrom(const Camera& camera,
                                     const f32 maxAngleRad,
-                                    const f32 minImageSize) const
+                                    const f32 minImageSize,
+                                    const bool requireSomethingBehind) const
     {
       using namespace Quad;
       
@@ -155,27 +156,53 @@ namespace Anki {
       
       const Point3f faceNormal( CrossProduct(sideLine, topLine) );
       const f32 dotProd = DotProduct(faceNormal, Z_AXIS_3D); // TODO: Optimize to just: faceNormal.z()?
-      if(dotProd > 0.f || acos(-dotProd) > maxAngleRad) {
+      if(dotProd > 0.f || acos(-dotProd) > maxAngleRad) { // TODO: Optimize to simple dotProd comparison
         return false;
       }
       
-      // Make sure the projected corners are within the image
-      // TODO: add some border padding?
+      // Project the marker corners into the image
       Quad2f imgCorners;
       camera.Project3dPoints(markerCornersWrtCamera, imgCorners);
-      if(not camera.IsVisible(imgCorners[TopLeft]) ||
-         not camera.IsVisible(imgCorners[TopRight]) ||
-         not camera.IsVisible(imgCorners[BottomLeft]) ||
-         not camera.IsVisible(imgCorners[BottomRight]))
-      {
-        return false;
-      }
       
       // Make sure the projected marker size is big enough
       if((imgCorners[BottomRight] - imgCorners[TopLeft]).Length() < minImageSize ||
          (imgCorners[BottomLeft]  - imgCorners[TopRight]).Length() < minImageSize)
       {
         return false;
+      }
+      
+      // Make sure the projected corners are within the camera's field of view
+      // TODO: add some border padding?
+      if(not camera.IsWithinFieldOfView(imgCorners[TopLeft])    ||
+         not camera.IsWithinFieldOfView(imgCorners[TopRight])   ||
+         not camera.IsWithinFieldOfView(imgCorners[BottomLeft]) ||
+         not camera.IsWithinFieldOfView(imgCorners[BottomRight]))
+      {
+        return false;
+      }
+      
+      // Make sure none of the projected corners are occluded
+      if(camera.IsOccluded(imgCorners[TopLeft]    , markerCornersWrtCamera[TopLeft].z())    ||
+         camera.IsOccluded(imgCorners[TopRight]   , markerCornersWrtCamera[TopRight].z())   ||
+         camera.IsOccluded(imgCorners[BottomLeft] , markerCornersWrtCamera[BottomLeft].z()) ||
+         camera.IsOccluded(imgCorners[BottomRight], markerCornersWrtCamera[BottomRight].z()))
+      {
+        return false;
+      }
+      
+      if(requireSomethingBehind) {
+        // Make sure there was something visible behind the marker's quad.
+        // Otherwise, we don't know if we should have seen
+        // it or if detection failed for some reason
+        const f32 atDistance = 0.25f*(markerCornersWrtCamera[TopLeft].z() +
+                                      markerCornersWrtCamera[TopRight].z() +
+                                      markerCornersWrtCamera[BottomLeft].z() +
+                                      markerCornersWrtCamera[BottomRight].z());
+        
+        if(not camera.IsAnythingBehind(imgCorners, atDistance))
+        {
+          return false;
+        }
       }
       
       // We passed all the checks, so the marker is visible

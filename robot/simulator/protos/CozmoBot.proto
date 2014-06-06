@@ -109,7 +109,7 @@ Supervisor {
 					  }
 					}
 					geometry Box {
-					  size 0.005 0.039 0.005
+					  size 0.005 0.0405 0.005
 					}
 				  }
 				  DEF EARS Shape {
@@ -119,7 +119,7 @@ Supervisor {
 					  }
 					}
 					geometry Cylinder {
-					  height 0.038
+					  height 0.040
 					  radius 0.007
 					  subdivision 16
 					}
@@ -183,12 +183,13 @@ Supervisor {
 				  }
 				  Camera {
 					name "HeadCamera"
-					translation 0.01145 0 -0.006
+					# Note: 8.8mm to lens face, but we really want optical center
+					translation 0.0088 0 -0.006
 					rotation 0.57735 -0.57735 -0.57735 2.0944
 					width IS cameraWidth
 					height IS cameraHeight
 					fieldOfView IS fieldOfView
-					near 0.006
+					near 0.015
 					antialiasing TRUE
 				  }
 				  Gyro {
@@ -230,7 +231,7 @@ Supervisor {
 					  }
 					}  
 					geometry Sphere {
-					  radius 0.018
+					  radius 0.020
 					  subdivision 3
 					}
 				  }
@@ -263,7 +264,7 @@ Supervisor {
 						}
 					  }  
 					  geometry Cylinder {
-						height 0.0312
+						height 0.0322
 						radius 0.013
 						subdivision 16
 					  }
@@ -280,7 +281,7 @@ Supervisor {
 						}
 					  }  
 					  geometry Cylinder {
-						height 0.0312
+						height 0.0322
 						radius 0.013
 						subdivision 16
 					  }
@@ -294,7 +295,7 @@ Supervisor {
 					}
 				  }  
 				  geometry Box {
-					size 0.03 0.0312 0.026
+					size 0.03 0.0322 0.026
 				  }
 				}
 			  ] # BODY_SHAPE Group children
@@ -309,7 +310,7 @@ Supervisor {
 		} # BODY Solid
 	
 		DEF BACKPACK Solid {
-		  translation -0.04 0 0.0192
+		  translation -0.04 0 0.018
 		  children [
 		    DEF BACKPACK_GROUP Group {
 		      children [
@@ -322,13 +323,13 @@ Supervisor {
 					}
 				  }  
 				  geometry Box {
-					size 0.03 0.039 0.018
+					size 0.03 0.03905 0.0206
 				  }
 				}
 			  ]
 			}
 			Transform {
-			  translation 0 0 0.009
+			  translation 0 0 0.0113
 			  children [
 				Shape {
 				  appearance Appearance {
@@ -345,7 +346,7 @@ Supervisor {
 			  ]
 			}
 			Transform {
-			  translation 0 0 -0.009
+			  translation 0 0 -0.0113
 			  children [
 				Shape {
 				  appearance Appearance {
@@ -374,7 +375,7 @@ Supervisor {
 		} # BACKPACK Solid
 
 		DEF CASTER Solid {
-		  translation -0.03 0 -0.0097
+		  translation -0.03 0 -0.009575
 		  children [
 			Shape {
 			  appearance Appearance {
@@ -383,8 +384,8 @@ Supervisor {
 				}
 			  }
 			  geometry DEF CASTER_SHAPE Cylinder {
-				height 0.024
-				radius 0.0045
+				height 0.010
+				radius 0.004625
 				subdivision 32
 			  }
 			}
@@ -409,7 +410,7 @@ Supervisor {
 			maxVelocity 30
 		  }
 		  endPoint Solid {
-			translation 0 0.02385 0
+			translation 0 0.0216 0
 			children [
 			  Transform {
 				translation 0 -0.0025 0
@@ -423,7 +424,7 @@ Supervisor {
 						  }
 						}
 						geometry Cylinder {
-						  height 0.0115
+						  height 0.011
 						  radius 0.0132
 						  subdivision 22
 						}
@@ -478,7 +479,7 @@ Supervisor {
 			maxVelocity 30
 		  }
 		  endPoint Solid {
-			translation 0 -0.02385 0
+			translation 0 -0.0216 0
 			children [
 			  Transform {
 				translation 0 0.0025 0
@@ -504,7 +505,7 @@ Supervisor {
 				axis 0 1 0
 			  }
 			  endPoint Solid {
-				translation 0 0.02385 0
+				translation 0 0.0216 0
 				children [
 				  Transform {
 					translation 0 -0.0025 0
@@ -514,7 +515,7 @@ Supervisor {
 						  material USE WHEEL_HUB_MATERIAL
 						}
 						geometry Cylinder {
-						  height 0.0115
+						  height 0.011
 						  radius 0.0127
 						  subdivision 22
 						}
@@ -547,7 +548,7 @@ Supervisor {
 				axis 0 1 0
 			  }
 			  endPoint Solid {
-				translation 0 -0.02385 0
+				translation 0 -0.0216 0
 				children [
 				  USE REAR_TIRE
 				  Transform {
@@ -569,7 +570,7 @@ Supervisor {
 		} # Rear Wheel Transform
 	
 		DEF LIFT Transform {
-		  translation -0.04 0 0.0275
+		  translation -0.04 0 0.0295
 	  
 		  children [
 			Shape {
@@ -625,16 +626,16 @@ Supervisor {
 											coord Coordinate {
 											  point [
 												0 0.00075 0
-												0 0.00075 0.008
-												0.0033 0.00075 0.008
-												0.0034 0.00075 0.0108
+												0 0.00075 0.0075
+												0.0026 0.00075 0.0075
+												0.0046 0.00075 0.0108
 												0.006 0.00075 0.0108
 												0.006 0.00075 0.008
 												0.0034 0.00075 0
 												0 -0.00075 0
 												0 -0.00075 0.008
-												0.0033 -0.00075 0.008
-												0.0034 -0.00075 0.0108
+												0.0026 -0.00075 0.008
+												0.0046 -0.00075 0.0108
 												0.006 -0.00075 0.0108
 												0.006 -0.00075 0.008
 												0.0034 -0.00075 0
@@ -693,57 +694,57 @@ Supervisor {
 								}
 							   ]
 							 }
-							DEF CALIBRATION_RIG Group {
-							  children [
-							    Transform {
-							      translation 0 -.0125 -0.0135
-							      children [
-							        DEF CALIBRATION_TAB Group {
-							          children [
-							            Shape {
-							              geometry Box {
-							                size .003 .003 .003
-							              }
-							            }
-							            Transform {
-							              translation -.0015 0 0
-							              children [
-							                Shape {
-							                  geometry Box {
-							                    size .0002 .0029 .0029
-							                  }
-							                  appearance Appearance {
-               						            texture ImageTexture {
-					                              url "textures/calibrationDot.png"
-                						        }
-                						      }
-                						    }
-                						  ] # Transform children
-                						} # Transform
-                					  ] # CALIBRATION_TAB Group Children
-              						} # CALIBRATION_TAB Group   
-							      ] # Transform Children
-							    } # Transform
-							    Transform {
-							      translation 0 .0125 -0.0135
-							      children [
-							        USE CALIBRATION_TAB
-							      ]
-							    }
-							    Transform {
-							      translation 0 .0125 0.0035
-							      children [
-							        USE CALIBRATION_TAB
-							      ]
-							    }
-							    Transform {
-							      translation 0 -.0125 0.0035
-							      children [
-							        USE CALIBRATION_TAB
-							      ]
-							    }
-							  ] # CALIBRATION_RIG children
-							} # CALIBRATION_RIG Group
+#							DEF CALIBRATION_RIG Group {
+# 							  children [
+# 							    Transform {
+# 							      translation 0 -.0125 -0.0135
+# 							      children [
+# 							        DEF CALIBRATION_TAB Group {
+# 							          children [
+# 							            Shape {
+# 							              geometry Box {
+# 							                size .003 .003 .003
+# 							              }
+# 							            }
+# 							            Transform {
+# 							              translation -.0015 0 0
+# 							              children [
+# 							                Shape {
+# 							                  geometry Box {
+# 							                    size .0002 .0029 .0029
+# 							                  }
+# 							                  appearance Appearance {
+#                						            texture ImageTexture {
+# 					                              url "textures/calibrationDot.png"
+#                 						        }
+#                 						      }
+#                 						    }
+#                 						  ] # Transform children
+#                 						} # Transform
+#                 					  ] # CALIBRATION_TAB Group Children
+#               						} # CALIBRATION_TAB Group   
+# 							      ] # Transform Children
+# 							    } # Transform
+# 							    Transform {
+# 							      translation 0 .0125 -0.0135
+# 							      children [
+# 							        USE CALIBRATION_TAB
+# 							      ]
+# 							    }
+# 							    Transform {
+# 							      translation 0 .0125 0.0035
+# 							      children [
+# 							        USE CALIBRATION_TAB
+# 							      ]
+# 							    }
+# 							    Transform {
+# 							      translation 0 -.0125 0.0035
+# 							      children [
+# 							        USE CALIBRATION_TAB
+# 							      ]
+# 							    }
+# 							  ] # CALIBRATION_RIG children
+# 							} # CALIBRATION_RIG Group
               
 							Connector {
 							  name "gripperConnector"
@@ -779,14 +780,14 @@ Supervisor {
 							  0 0.002 -0.0025
 							  0 0.002 0.0025
 							  0.043 0.002 0.0025
-							  0.0627 0.002 -0.0102
-							  0.0627 0.002 -0.0152
+							  0.0626 0.002 -0.0108
+							  0.0626 0.002 -0.0158
 							  0.043 0.002 -0.0025
 							  0 -0.002 -0.0025
 							  0 -0.002 0.0025
 							  0.043 -0.002 0.0025
-							  0.0627 -0.002 -0.0102
-							  0.0627 -0.002 -0.0152
+							  0.0626 -0.002 -0.0102
+							  0.0626 -0.002 -0.0152
 							  0.043 -0.002 -0.0025
 							]
 						  }
@@ -804,7 +805,7 @@ Supervisor {
 						}
 					  }
 					  Transform {
-						translation 0.0627 -0.0025 -0.0127
+						translation 0.0626 -0.0025 -0.0127
 						children [
 						  Shape {
 							geometry Cylinder {
@@ -822,7 +823,7 @@ Supervisor {
 					children [
 					  USE LIFT_ARM_SHAPE
 					  Transform {
-						translation 0.0627 0.0025 -0.0127
+						translation 0.0626 0.0025 -0.0127
 						children [
 						  Shape {
 							geometry Cylinder {

@@ -8,6 +8,7 @@ if(NOT WIN32)
     run_coreTechCommonTests.cpp 
     testMatrix.cpp
     testPoint.cpp
+    testQuad.cpp
     testRotation.cpp
     testrotatedrectangle.cpp
     testConfigTreeJsonCpp.cpp)

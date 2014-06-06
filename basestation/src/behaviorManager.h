@@ -60,12 +60,13 @@ namespace Anki {
         // PickAndPlaceBlock
         WAITING_FOR_DOCK_BLOCK,
         EXECUTING_PATH_TO_DOCK_POSE,
-        CONFIRM_BLOCK_IS_VISIBLE,
+        BEGIN_DOCKING,
         EXECUTING_DOCK,
         
         // June2014DiceDemo
         WAITING_TO_SEE_DICE,
         WAITING_FOR_DICE_TO_DISAPPEAR,
+        BEGIN_EXPLORING,
         EXPLORING
         
       } BehaviorState;
@@ -73,13 +74,17 @@ namespace Anki {
       RobotManager* robotMgr_;
       BlockWorld* world_;
       
-      BehaviorState state_, nextState_;
+      BehaviorState state_, nextState_, problemState_;
       void (BehaviorManager::*updateFcn_)();
       
       Robot* robot_;
 
       // Block that the robot is currently travelling to, docking to,
       ObjectID_t blockOfInterest_;
+      
+      // Thresholds for knowing we're done with a path traversal
+      f32    distThresh_mm_;
+      f32    angThresh_;
       
       void Reset();
       
@@ -89,11 +94,33 @@ namespace Anki {
       void Update_PickAndPlaceBlock();
       void Update_June2014DiceDemo();
       
+      // Waits until the current path is complete / timeout occurs.
+      // If the blockOfInterest_ is no longer present in the
+      //   world at the end of the path, we transition to problemState_.
+      // Otherwise, we tilt the head and transition to nextState_.
+      // If we don't end up at the right position at the end of the path, we
+      //   reset, calling StartMode(BM_None)
+      void FollowPathHelper();
+      
+      // Confirms dockingMarker_ is present in image where expected, chooses
+      // low or high dock, actually begins docking procedure, and transitions
+      // to EXECUTING_DOCK state.
+      void BeginDockingHelper();
+      
+      // Gets the closest predock pose to the robot for the Block currently
+      //  pointed to by dockBlock_, at the specified pre-dock distance, with
+      //  the specified head angle.
+      // Sets nearestPreDockPose_, dockMarker_, and waitUntilTime_ accordingly.
+      // Sets state_ to EXECUTING_PATH_DOCK_POSE on success, leaves state_
+      //  unchanged otherwise.
+      // If no pre-dock pose is found, StartMode(BM_None) is called.
+      void GoToNearestPreDockPoseHelper(const f32 preDockDistance,
+                                        const f32 desiredHeadAngle);
       
       /////// PickAndPlace vars ///////
     
       // Block to dock with
-      Block* dockBlock_;
+      const Block* dockBlock_;
       const Vision::KnownMarker *dockMarker_;
       
       // Target pose for predock

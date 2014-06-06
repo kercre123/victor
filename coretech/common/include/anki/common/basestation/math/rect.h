@@ -48,6 +48,16 @@ namespace Anki {
     
     using cv::Rect_<T>::area;
     
+    // (x,y) is the top left
+    inline T GetX()      const;
+    inline T GetY()      const;
+    inline T GetWidth()  const;
+    inline T GetHeight() const;
+    
+    // Get x+width or y+height
+    inline T GetXmax()   const;
+    inline T GetYmax()   const;
+    
     Rectangle<T> Intersect(const Rectangle<T>& other) const;
     
     bool Contains(const Point<2,T>& point) const;
@@ -58,12 +68,6 @@ namespace Anki {
     cv::Rect_<T>& get_CvRect_();
 #endif
     
-    // (x,y) is the top left
-    T GetX() const {return x;}
-    T GetY() const {return y;}
-    T GetWidth() const {return width;}
-    T GetHeight() const {return height;}
-
   protected:
     
     template<class PointContainer>

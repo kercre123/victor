@@ -51,6 +51,9 @@ namespace Anki {
         NUM_BLOCK_TYPES
       };
       
+      // LUT for String Names for each enumerated block ID
+      static const std::string IDtoStringLUT[NUM_BLOCK_TYPES];
+      
       // NOTE: if the ordering of these is modified, you must also update
       //       the static OppositeFaceLUT.
       enum FaceName {

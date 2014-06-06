@@ -55,6 +55,7 @@ ADD_MESSAGE_MEMBER(f32, rwheel_speed_mmps)
 ADD_MESSAGE_MEMBER(f32, headAngle)
 ADD_MESSAGE_MEMBER(f32, liftAngle)
 ADD_MESSAGE_MEMBER(f32, liftHeight) // TODO: Need this?
+ADD_MESSAGE_MEMBER(s8, currPathSegment) // -1 if not traversing a path
 ADD_MESSAGE_MEMBER(u8, status)  // See RobotStatusFlag
 // ...
 END_MESSAGE_DEFINITION(RobotState)
@@ -116,7 +117,7 @@ ADD_MESSAGE_MEMBER(f32, targetSpeed) \
 ADD_MESSAGE_MEMBER(f32, accel) \
 ADD_MESSAGE_MEMBER(f32, decel) \
 ADD_MESSAGE_MEMBER(u16, pathID) \
-ADD_MESSAGE_MEMBER(u8,  segmentID)
+ADD_MESSAGE_MEMBER(s8,  segmentID)
 
 // AppendPathSegmentLine
 START_MESSAGE_DEFINITION(AppendPathSegmentLine, 1)
@@ -136,6 +137,14 @@ ADD_MESSAGE_MEMBER(f32, startRad)
 ADD_MESSAGE_MEMBER(f32, sweepRad)
 ADD_COMMON_PATH_SEGMENT_MEMBERS
 END_MESSAGE_DEFINITION(AppendPathSegmentArc)
+
+// AppendPathSegmentPointTurn
+START_MESSAGE_DEFINITION(AppendPathSegmentPointTurn, 1)
+ADD_MESSAGE_MEMBER(f32, x_center_mm)
+ADD_MESSAGE_MEMBER(f32, y_center_mm)
+ADD_MESSAGE_MEMBER(f32, targetRad)
+ADD_COMMON_PATH_SEGMENT_MEMBERS  // targetSpeed indicates rotational speed in rad/s
+END_MESSAGE_DEFINITION(AppendPathSegmentPointTurn)
 
 // TrimPath
 START_MESSAGE_DEFINITION(TrimPath, 1)
@@ -162,6 +171,13 @@ ADD_MESSAGE_MEMBER(u8, pixel_radius)  // Marker must be found within this many p
 ADD_MESSAGE_MEMBER(u8, dockAction)  // See DockAction_t
 ADD_MESSAGE_MEMBER(u8, markerType)
 END_MESSAGE_DEFINITION(DockWithBlock)
+
+// PlaceBlockOnGround
+START_MESSAGE_DEFINITION(PlaceBlockOnGround, 1)
+ADD_MESSAGE_MEMBER(f32, rel_x_mm)    // Distance of block face center in forward axis
+ADD_MESSAGE_MEMBER(f32, rel_y_mm)    // Distance of block face center in horizontal axis. (Left of robot is +ve)
+ADD_MESSAGE_MEMBER(f32, rel_angle)   // Angle between of block face normal and robot. (Block normal pointing right of robot is +ve)
+END_MESSAGE_DEFINITION(PlaceBlockOnGround)
 
 
 START_TIMESTAMPED_MESSAGE_DEFINITION(VisionMarker, 1)

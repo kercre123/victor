@@ -53,7 +53,6 @@ namespace Anki
         f32 x;
         f32 y;
         f32 targetAngle;
-        f32 targetRotSpeed;
       } turn;
     } PathSegmentDef;
     
@@ -138,7 +137,7 @@ namespace Anki
       Path();
       
       void Clear(void);
-      int GetNumSegments(void) const {return numPathSegments_;};
+      u8 GetNumSegments(void) const {return numPathSegments_;};
       
       void PrintPath() const;
       void PrintSegment(u8 segment) const;
@@ -169,14 +168,14 @@ namespace Anki
       // specified by tolerance_distance_squared.
       // If pathSegmentIdx == -1, the check is performed over the entire path
       // Returns true if continuous.
-      bool CheckContinuity(f32 tolerance_distance_squared, s16 pathSegmentIdx = -1) const;
+      bool CheckContinuity(f32 tolerance_distance_squared, s8 pathSegmentIdx = -1) const;
       
     private:
       
       PathSegment path_[MAX_NUM_PATH_SEGMENTS];
-      s16 numPathSegments_;
+      u8 numPathSegments_;
 
-      bool CheckSegmentContinuity(f32 tolerance_distance_squared, u8 pathSegmentIdx) const;
+      bool CheckSegmentContinuity(f32 tolerance_distance_squared, s8 pathSegmentIdx) const;
       
       void AddArc(f32 x_center, f32 y_center, f32 radius, f32 startRad, f32 sweepRad,
                   f32 targetSpeed, f32 accel, f32 decel);

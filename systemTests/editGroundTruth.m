@@ -108,7 +108,7 @@ function pose_filename_CreateFcn(~, ~, ~)
 function displayType_parameter1_CreateFcn(hObject, ~, ~)
     global displayParameters;
     setDefaultGuiObjectColor(hObject);
-    
+
     if ~isempty(displayParameters)
         set(hObject,'String',num2str(displayParameters{1}));
     end
@@ -116,7 +116,7 @@ function displayType_parameter1_CreateFcn(hObject, ~, ~)
 function displayType_parameter2_CreateFcn(hObject, ~, ~)
     global displayParameters;
     setDefaultGuiObjectColor(hObject);
-    
+
     if ~isempty(displayParameters)
         set(hObject,'String',num2str(displayParameters{2}));
     end
@@ -154,7 +154,7 @@ function resolutionVertical_CreateFcn(hObject, ~, ~)
 %
 
 function testJsonFilename_Callback(~, ~, ~)
-    loadAllTestsFile()
+    loadTestFile()
 
 function setDefaultGuiObjectColor(hObject)
     if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
@@ -299,17 +299,55 @@ function resolutionVertical_Callback(hObject, ~, ~)
     resolutionVertical = str2double(get(hObject,'String'));
     poseChanged(true);
 
+function marker_clearAll_Callback(hObject, eventdata, handles)
+    global jsonTestData;
+    global curPoseIndex;
+    
+    jsonTestData.Poses{curPoseIndex} = rmfield(jsonTestData.Poses{curPoseIndex}, 'VisionMarkers');
+    
+    poseChanged(false);
+    
 function marker_autoDetect_Callback(~, ~, ~)
-% TODO
+    detectAndAddMarkers();
 
 function markerType_Callback(hObject, ~, ~)
     global jsonTestData;
     global curPoseIndex;
     global curMarkerIndex;
-    
+
     jsonTestData.Poses{curPoseIndex}.VisionMarkers{curMarkerIndex}.markerType = get(hObject,'String');
-    
+
     Save()
+
+function menu_label_Callback(~, ~, ~)
+
+function menu_labelAllImages_Callback(~, ~, ~)
+
+function label_eraseAndLabel_Callback(~, ~, ~)
+    global jsonTestData;
+    global curPoseIndex;
+    
+    disp('Erasing all labels and auto-labeling')
+    
+    for iPose = 1:length(jsonTestData.Poses)
+        jsonTestData.Poses{iPose} = rmfield(jsonTestData.Poses{iPose}, 'VisionMarkers');
+    end
+    
+    fixBounds();
+    
+    for iPose = 1:length(jsonTestData.Poses)
+        curPoseIndex = iPose;
+        
+        poseChanged(true);
+        
+        detectAndAddMarkers();
+        
+        curImageFilename = jsonTestData.Poses{iPose}.ImageFile;
+        slashIndexes = strfind(curImageFilename, '/');
+        curImageFilenameWithoutPath = curImageFilename((slashIndexes(end)+1):end);
+        
+        disp(sprintf('%d/%d "%s" detected %d markers', iPose, length(jsonTestData.Poses), curImageFilenameWithoutPath, length(jsonTestData.Poses{iPose}.VisionMarkers)));
+    end
 
 function labelingTypePanel_SelectionChangeFcn(~, ~, ~)
     global pointsType;
@@ -393,23 +431,47 @@ function [cornersX, cornersY, whichCorners] = getFiducialCorners(poseIndex, mark
         cornersY(end+1) = curMarkerData.y_imgLowerLeft;
         whichCorners(4) = 1;
     end
+
+function detectAndAddMarkers()
+    global jsonTestData;
+    global curPoseIndex;
+    global image;
+    
+    % TODO
+    markers = simpleDetector(image, 'quadRefinementIterations', 0);
+
+    for iMarker = 1:length(markers)
+        newMarker.x_imgUpperLeft = markers{iMarker}.corners(1,1);
+        newMarker.y_imgUpperLeft = markers{iMarker}.corners(1,2);        
+        newMarker.x_imgLowerLeft= markers{iMarker}.corners(2,1);
+        newMarker.y_imgLowerLeft= markers{iMarker}.corners(2,2);        
+        newMarker.x_imgUpperRight = markers{iMarker}.corners(3,1);
+        newMarker.y_imgUpperRight = markers{iMarker}.corners(3,2);        
+        newMarker.x_imgLowerRight = markers{iMarker}.corners(4,1);
+        newMarker.y_imgLowerRight = markers{iMarker}.corners(4,2);
+        newMarker.markerType = markers{iMarker}.name;
+        
+        jsonTestData.Poses{curPoseIndex}.VisionMarkers{end+1} = newMarker;
+    end
+    
+    poseChanged(false);
     
 function maxIndex = getMaxMarkerIndex(poseIndex)
     global jsonTestData;
 
-    numMarkers = length(jsonTestData.Poses{poseIndex}.VisionMarkers);    
-    
+    numMarkers = length(jsonTestData.Poses{poseIndex}.VisionMarkers);
+
     if numMarkers == 0
         maxIndex = 1;
         return;
     end
-    
+
     [cornersX, ~, ~] = getFiducialCorners(poseIndex, numMarkers);
-    
+
     if length(cornersX) == 4
         maxIndex = numMarkers + 1;
     else
-        maxIndex = numMarkers; 
+        maxIndex = numMarkers;
     end
 
 function loadTestFile()
@@ -483,32 +545,32 @@ function sanitizeJson()
         if ~isfield(jsonTestData.Poses{iPose}, 'VisionMarkers')
             jsonTestData.Poses{iPose}.VisionMarkers = [];
         end
-        
+
         if ~isfield(jsonTestData.Poses{iPose}, 'ImageFile')
             assert(false);
         end
-        
+
         if ~isfield(jsonTestData.Poses{iPose}, 'NumMarkers')
             jsonTestData.Poses{iPose}.NumMarkers = 0;
         end
-        
+
         if ~isfield(jsonTestData.Poses{iPose}, 'RobotPose')
             jsonTestData.Poses{iPose}.RobotPose.Angle = 0;
             jsonTestData.Poses{iPose}.RobotPose.Axis = [1,0,0];
             jsonTestData.Poses{iPose}.RobotPose.HeadAngle = 0;
             jsonTestData.Poses{iPose}.RobotPose.Translation = [0,0,0];
         end
-                        
+
         if isstruct(jsonTestData.Poses{iPose}.VisionMarkers)
             jsonTestData.Poses{iPose}.VisionMarkers = {jsonTestData.Poses{iPose}.VisionMarkers};
         end
 
-        maxMarkerIndex = getMaxMarkerIndex(iPose);
-        
+        maxMarkerIndex = length(jsonTestData.Poses{iPose}.VisionMarkers);
+
         if length(jsonTestData.Poses{iPose}.VisionMarkers) < maxMarkerIndex
             jsonTestData.Poses{iPose}.VisionMarkers{end+1} = [];
         end
-        
+
         for iMarker = 1:maxMarkerIndex
             if ~isfield(jsonTestData.Poses{iPose}.VisionMarkers{iMarker}, 'Name')
                 jsonTestData.Poses{iPose}.VisionMarkers{iMarker}.Name = 'MessageVisionMarker';
@@ -522,7 +584,7 @@ function sanitizeJson()
                 jsonTestData.Poses{iPose}.VisionMarkers{iMarker}.timestamp = 0;
             end
         end
-        
+
         if isstruct(jsonTestData.Poses{iPose}.RobotPose)
             jsonTestData.Poses{iPose}.RobotPose = {jsonTestData.Poses{iPose}.RobotPose};
         end
@@ -574,7 +636,7 @@ function poseChanged(resetZoom)
     curImageFilenameWithoutPath = curImageFilename((slashIndexes(end)+1):end);
     set(allHandles.pose_current, 'String', num2str(curPoseIndex))
     set(allHandles.pose_max, 'String', num2str(length(jsonTestData.Poses)))
-    set(allHandles.marker_current, 'String', num2str(curMarkerIndex))   
+    set(allHandles.marker_current, 'String', num2str(curMarkerIndex))
     set(allHandles.displayType_current, 'String', num2str(curDisplayType))
     set(allHandles.displayType_max, 'String', num2str(maxDisplayType))
     set(allHandles.displayType_parameter1, 'String', num2str(displayParameters{1}))
@@ -583,14 +645,18 @@ function poseChanged(resetZoom)
     set(allHandles.displayType_parameter4, 'String', num2str(displayParameters{4}))
     set(allHandles.resolutionHorizontal, 'String', num2str(resolutionHorizontal))
     set(allHandles.resolutionVertical, 'String', num2str(resolutionVertical))
-    set(allHandles.marker_max, 'String', num2str(getMaxMarkerIndex(curPoseIndex)));
-    set(allHandles.markerType, 'String', jsonTestData.Poses{curPoseIndex}.VisionMarkers{curMarkerIndex}.markerType);
+    set(allHandles.marker_max, 'String', num2str(length(jsonTestData.Poses{curPoseIndex}.VisionMarkers)));
     
-    
+    if isfield(jsonTestData.Poses{curPoseIndex}, 'VisionMarkers') && length(jsonTestData.Poses{curPoseIndex}.VisionMarkers) >= curMarkerIndex
+        set(allHandles.markerType, 'String', jsonTestData.Poses{curPoseIndex}.VisionMarkers{curMarkerIndex}.markerType);
+    else
+        set(allHandles.markerType, 'String', 'NO MARKER');
+    end
+
     slashIndexes = strfind(jsonTestData.Poses{curPoseIndex}.ImageFile, '/');
-    imageFilename = jsonTestData.Poses{curPoseIndex}.ImageFile((slashIndexes(end)+1):end);    
+    imageFilename = jsonTestData.Poses{curPoseIndex}.ImageFile((slashIndexes(end)+1):end);
     set(allHandles.pose_filename, 'String', imageFilename);
-        
+
     if strcmp(pointsType, 'template')
         set(allHandles.templatePoints, 'Value', 1);
         set(allHandles.fiducialMarkerPoints, 'Value', 0);
@@ -702,27 +768,27 @@ function poseChanged(resetZoom)
 function Save()
     global jsonTestData;
     global jsonTestFilename;
-    
+
     fixBounds();
-    
+
     jsonTestDataToSave = jsonTestData;
-    
+
     % Remove any marker with fewer than four corners
     for iPose = 1:length(jsonTestData.Poses)
-        originalMarkers = jsonTestData.Poses{1}.VisionMarkers;
+        originalMarkers = jsonTestData.Poses{iPose}.VisionMarkers;
         newMarkers = {};
-        
+
         for iMarker = 1:length(originalMarkers)
             [cornersX, ~, ~] = getFiducialCorners(iPose, iMarker);
             if length(cornersX) == 4
-                newMarkers{end+1} = originalMarkers{iMarker};
+                newMarkers{end+1} = originalMarkers{iMarker}; %#ok<AGROW>
             end
         end
-        
+
         jsonTestDataToSave.Poses{iPose}.VisionMarkers = newMarkers;
         jsonTestDataToSave.Poses{iPose}.NumMarkers = length(newMarkers);
     end
-    
+
     savejson('',jsonTestDataToSave,jsonTestFilename);
 
 function ButtonClicked(~, ~, ~)
@@ -800,7 +866,7 @@ function ButtonClicked(~, ~, ~)
                 if ~whichCorners(i)
                     continue;
                 end
-                
+
                 ci = ci + 1;
 
                 dist = sqrt((cornersX(ci)*xScaleInv - imPosition(1))^2 + (cornersY(ci)*yScaleInv - imPosition(2))^2);

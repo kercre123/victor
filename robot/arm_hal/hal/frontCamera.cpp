@@ -42,136 +42,140 @@ namespace Anki
       unsigned short m_camScript[] =
         // YUV_QVGA_60fps
         {
-         0x3008,0x82
-        ,0x3008,0x42
-        ,0x3104,0x03
-        ,0x3017,0x7f    // Output enable: 7f for 2.1  (7e/00 for shorted 2.1 boards)
-        ,0x3018,0xf0    // Output enable: f0 for 2.1
-        ,0x3602,0x14
-        ,0x3611,0x44
-        ,0x3631,0x22
-        ,0x3622,0x00
-        ,0x3633,0x25
-        ,0x370d,0x04
-        ,0x3620,0x32
-        ,0x3714,0x2c
-        ,0x401c,0x00
-        ,0x401e,0x11
-        ,0x4702,0x01
-        ,0x5000,0x0e
-        ,0x5001,0x01
-        ,0x3a00,0x7a
-        ,0x3a18,0x00
-        ,0x3a19,0x3f
-        ,0x300f,0x88  // PLL1: bypass divider, PCLK = 1/2 XCLK 
-        ,0x3011,0x08  // PLL1: enable
+        0x3008,0x82 // SYSTEM CTRL
+        ,0x3008,0x42 // SYSTEM CTRL
+        ,0x3104,0x03 // OTP something
+        ,0x3017,0x7f // PAD OEN01 (Output enable: 7f for 2.1  (7e/00 for shorted 2.1 boards))
+        ,0x3018,0xf0 // PAD OEN02 (Output enable: f0 for 2.1)
+        ,0x3602,0x14 // undoc
+        ,0x3611,0x44 // undoc
+        ,0x3631,0x22 // undoc
+        ,0x3622,0x00 // ANA ARRAY02
+        ,0x3633,0x25 // undoc
+        ,0x370d,0x04 // ARRAY CTRL02
+        ,0x3620,0x32 // undoc
+        ,0x3714,0x2c // undoc
+        ,0x401c,0x00 // undoc
+        ,0x401e,0x11 // undoc
+        ,0x4702,0x01 // undoc
+        ,0x5000,0x0e // ISP CTRL00
+        ,0x5001,0x01 // ISP CTRL01
+        ,0x3a00,0x7a // AEC CTRL00
+        ,0x3a18,0x00 // AEC GAIN CEILING
+        ,0x3a19,0x3f // AEC GAIN CEILING
+        ,0x300f,0x88 // PLL1 CTRL00
+        ,0x3011,0x08 // PLL1 CTRL02
         //,0x3011,0x80  // PLL1: disable - 1/4 the framerate
-        ,0x4303,0xff
-        ,0x4307,0xff
-        ,0x430b,0xff
-        ,0x4305,0x00
-        ,0x4309,0x00
-        ,0x430d,0x00
-        ,0x5000,0x4f
-        ,0x5001,0x47
-        ,0x4300,0x30
-        ,0x4301,0x80
-        ,0x501f,0x01
-        ,0x3800,0x00
-        ,0x3801,0x6e
-        ,0x3804,0x01
-        ,0x3805,0x40
-        ,0x3802,0x00
-        ,0x3803,0x0e
-        ,0x3806,0x00
-        ,0x3807,0xf0
-        ,0x3808,0x01
-        ,0x3809,0x40
-        ,0x380a,0x00
-        ,0x380b,0xf0
-        ,0x380c,0x03
-        ,0x380d,0x10
-        ,0x380e,0x01
-        ,0x380f,0x00
-        ,0x3810,0x08
-        ,0x3811,0x04
-        ,0x370d,0x0c
-        ,0x3622,0x88
-        ,0x3818,0x81  // mirror vertical/horizontal
-        ,0x3a08,0x00
-        ,0x3a09,0x99
-        ,0x3a0a,0x00
-        ,0x3a0b,0x80
-        ,0x3a0d,0x02
-        ,0x3a0e,0x01
-        ,0x3705,0xdc
-        ,0x3a1a,0x05
-        ,0x3008,0x02
-        ,0x5180,0x02
-        ,0x5181,0x02
-        ,0x3a0f,0x35
-        ,0x3a10,0x2c
-        ,0x3a1b,0x36
-        ,0x3a1e,0x2d
-        ,0x3a11,0x90
-        ,0x3a1f,0x10
-        ,0x5000,0xcf
-        ,0x5481,0x0a
-        ,0x5482,0x13
-        ,0x5483,0x23
-        ,0x5484,0x40
-        ,0x5485,0x4d
-        ,0x5486,0x58
-        ,0x5487,0x64
-        ,0x5488,0x6e
-        ,0x5489,0x78
-        ,0x548a,0x81
-        ,0x548b,0x92
-        ,0x548c,0xa1
-        ,0x548d,0xbb
-        ,0x548e,0xcf
-        ,0x548f,0xe3
-        ,0x5490,0x26
-        ,0x5380,0x42
-        ,0x5381,0x33
-        ,0x5382,0x0f
-        ,0x5383,0x0b
-        ,0x5384,0x42
-        ,0x5385,0x4d
-        ,0x5392,0x1e
-        ,0x5801,0x00
-        ,0x5802,0x06
-        ,0x5803,0x0a
-        ,0x5804,0x42
-        ,0x5805,0x2a
-        ,0x5806,0x25
-        ,0x5001,0xc7
-        ,0x5580,0x02
-        ,0x5583,0x40
-        ,0x5584,0x26
-        ,0x5589,0x10
-        ,0x558a,0x00
-        ,0x558b,0x3e
-        ,0x5300,0x0f
-        ,0x5301,0x30
-        ,0x5302,0x0d
-        ,0x5303,0x02
-        ,0x5304,0x0e
-        ,0x5305,0x30
-        ,0x5306,0x06
-        ,0x5307,0x40
-        ,0x5680,0x00
-        ,0x5681,0x50
-        ,0x5682,0x00
-        ,0x5683,0x3c
-        ,0x5684,0x11
-        ,0x5685,0xe0
-        ,0x5686,0x0d
-        ,0x5687,0x68
-        ,0x5688,0x03
-          ,0x3500,0x00  // 16.4 exposure time msb (4 bits)
-          ,0x3501,0x04  // 16.4 exposure time middle (8 bits)
-          ,0x3502,0x00  // 16.4 exposure time lsb (4.4 bits)
+        ,0x4303,0xff // YMAX VALUE (Set Y max clip value[7:0])
+        ,0x4307,0xff // UMAX VALUE (Set U max clip value[7:0])
+        ,0x430b,0xff // VMAX VALUE (Set V max clip value[7:0])
+        ,0x4305,0x00 // YMIN VALUE (Set Y min clip value[7:0])
+        ,0x4309,0x00 // UMIN VALUE (Set U min clip value[7:0])
+        ,0x430d,0x00 // VMIN VALUE (Set V min clip value[7:0])
+        //,0x5000,0x4f // ISP CTRL00
+        //,0x5001,0x47 // ISP CTRL01
+        ,0x4300,0x30 // FORMAT CTRL00 (Output format selection) (YUV422 0x30)
+        ,0x4301,0x80 // undoc (possibly format related?)
+        ,0x501f,0x01 // ISP CTRL1F (ISP raw 0x00) (YUV422 0x01)
+        ,0x3800,0x00 // image cropping (horizontal start)
+        ,0x3801,0x6e // image cropping (horizontal start)
+        ,0x3804,0x01 // image cropping (horizontal width)
+        ,0x3805,0x40 // image cropping (horizontal width)
+        ,0x3802,0x00 // image cropping (vertical start)
+        ,0x3803,0x0e // image cropping (vertical start)
+        ,0x3806,0x00 // image cropping (vertical height)
+        ,0x3807,0xf0 // image cropping (vertical height)
+        ,0x3808,0x01 // TIMING DVPHO
+        ,0x3809,0x40 // TIMING DVPHO
+        ,0x380a,0x00 // TIMING DVPVO
+        ,0x380b,0xf0 // TIMING DVPVO
+        ,0x380c,0x03 // TIMING HTS
+        ,0x380d,0x10 // TIMING HTS
+        ,0x380e,0x01 // TIMING VTS
+        ,0x380f,0x00 // TIMING VTS
+        ,0x3810,0x08 // TIMING HOFFS
+        ,0x3811,0x04 // TIMING VOFFS
+        ,0x370d,0x0c // vertical binning
+        ,0x3622,0x88 // horizontal skip or binning
+        ,0x3818,0x81 // mirror vertical/horizontal (plus some undoc bits?)
+        ,0x3a08,0x00 // AEC B50 STEP
+        ,0x3a09,0x99 // AEC B50 STEP
+        ,0x3a0a,0x00 // AEC B60 STEP
+        ,0x3a0b,0x80 // AEC B60 STEP
+        ,0x3a0d,0x02 // AEC CTRL0D
+        ,0x3a0e,0x01 // AEC CTRL0E 
+        ,0x3705,0xdc // undoc
+        ,0x3a1a,0x05 // NOT USED (But it's set?!)
+        ,0x3008,0x02 // ISP CTRL02 (ISP subsample)
+        ,0x5180,0x02 // SYSTEM CTRL
+        //,0x5181,0x02 // AWB CTRL01
+        //,0x3a0f,0x35 // AEC CONTROL 0F
+        //,0x3a10,0x2c // AEC CONTROL 10
+        //,0x3a1b,0x36 // AEC CONTROL 1B
+        //,0x3a1e,0x2d // AEC CONTROL 1E
+        //,0x3a11,0x90 // AEC CONTROL 11
+        //,0x3a1f,0x10 // AEC CONTROL 1F
+        ,0x5000,0x07 // ISP CTRL00
+        //,0x5481,0x0a // GAMMA YST1
+        //,0x5482,0x13 // GAMMA YST2
+        //,0x5483,0x23 // GAMMA YST3
+        //,0x5484,0x40 // GAMMA YST4
+        //,0x5485,0x4d // GAMMA YST5
+        //,0x5486,0x58 // GAMMA YST6
+        //,0x5487,0x64 // GAMMA YST7
+        //,0x5488,0x6e // GAMMA YST8
+        //,0x5489,0x78 // GAMMA YST9
+        //,0x548a,0x81 // GAMMA YST10
+        //,0x548b,0x92 // GAMMA YST11
+        //,0x548c,0xa1 // GAMMA YST12
+        //,0x548d,0xbb // GAMMA YST13
+        //,0x548e,0xcf // GAMMA YST14
+        //,0x548f,0xe3 // GAMMA YST15
+        //,0x5490,0x26 // GAMMA YSLP15 
+        //,0x5380,0x47 // CMX COEFFICIENT11 
+        //,0x5381,0x3c // CMX COEFFICIENT12
+        //,0x5382,0x06 // CMX COEFFICIENT13
+        //,0x5383,0x17 // CMX COEFFICIENT14
+        //,0x5384,0x3a // CMX COEFFICIENT15
+        //,0x5385,0x52 // CMX COEFFICIENT16
+        //,0x5392,0x1e // CMX SIGN
+        //,0x5801,0x00 // LENC CTRL1
+        //,0x5802,0x06 // LENC CTRL2
+        //,0x5803,0x0a // LENC CTRL3
+        //,0x5804,0x42 // LENC CTRL4
+        //,0x5805,0x2a // LENC CTRL5
+        //,0x5806,0x25 // LENC CTRL6
+        ,0x5001,0x42 // ISP CTRL01
+        ,0x5580,0x00 // Special digital effects
+        //,0x5583,0x40 // Special digital effects
+        //,0x5584,0x26 // Special digital effects
+        //,0x5589,0x10 // Special digital effects
+        //,0x558a,0x00 // Special digital effects
+        //,0x558b,0x3e // Special digital effects
+        ,0x5300,0x00 // CIP CTRL0 (Sharpenmt threshold 1)
+        ,0x5301,0x00 // CIP CTRL1 (Sharpenmt threshold 2)
+        ,0x5302,0x00 // CIP CTRL2 (Sharpenmt offset 1)
+        ,0x5303,0x00 // CIP CTRL3 (Sharpenmt offset 2)
+        ,0x5304,0x10 // CIP CTRL4 (Denoise threshold 1)
+        ,0x5305,0xce // CIP CTRL5 (Denoise threshold 2)
+        ,0x5306,0x06 // CIP CTRL6 (Denoise offset 1)
+        ,0x5307,0xd0 // CIP CTRL7 (Denoise offset 2)
+        ,0x5680,0x00 // Undocumented, maybe AEC related
+        ,0x5681,0x50 // Undocumented, maybe AEC related
+        ,0x5682,0x00 // Undocumented, maybe AEC related
+        ,0x5683,0x3c // Undocumented, maybe AEC related
+        ,0x5684,0x11 // Undocumented, maybe AEC related
+        ,0x5685,0xe0 // Undocumented, maybe AEC related
+        ,0x5686,0x0d // Undocumented, maybe AEC related
+        ,0x5687,0x68 // Undocumented, maybe AEC related
+        ,0x5688,0x03 // AVERAGE CTRL8
+        ,0x4000,0x05 // BLC CTRL00
+        ,0x4002,0x45 // BLC CTRL02
+        ,0x4008,0x10 // BLC CTRL08
+        ,0x3500,0x00 // 16.4 exposure time msb (4 bits) [19:16]
+        ,0x3501,0x0f // 16.4 exposure time middle (8 bits) [15:8]
+        ,0x3502,0x00 // 16.4 exposure time lsb (4.4 bits) [7:0]
+        ,0x3503,0x03 // AEC MANUAL
         ,0,0
         };
 
@@ -179,7 +183,7 @@ namespace Anki
       volatile bool m_isEOF = false;
 
       // Camera exposure value
-      u16 m_exposure;
+      u32 m_exposure;
 
       bool m_enableVignettingCorrection;
 
@@ -351,7 +355,7 @@ namespace Anki
 
       void OV7739Init()
       {
-        m_exposure = 0;
+        m_exposure = u32_MAX;
         m_enableVignettingCorrection = false;
 
         // Configure the camera interface
@@ -421,9 +425,9 @@ namespace Anki
         
         CamWrite(0x3008,0x02);  // Exit reset
         
-        // Let the I2C lines float after config
-        PIN_IN(GPIO_SDA, SOURCE_SDA);
-        PIN_IN(GPIO_SCL, SOURCE_SCL);
+        // // Let the I2C lines float after config
+        //PIN_IN(GPIO_SDA, SOURCE_SDA);
+        //PIN_IN(GPIO_SCL, SOURCE_SCL);
       }
 
       void FrontCameraInit()
@@ -535,31 +539,36 @@ namespace Anki
 
       void CameraSetParameters(f32 exposure, bool enableVignettingCorrection)
       {
-        // Update the exposure
-        u8 exp;
-
-        const f32 expF32 = floorf(exposure * 0xFF + 0.5f);
-
-        if(expF32 < 0.0f)
+        //TODO: vignetting correction
+        
+        const f32 maxExposure = 0xf00; // Determined empirically
+        
+        f32 correctedExposure = exposure;
+        
+        if(exposure < 0.0f)
         {
-          exp = 0;
-        } else if(expF32 > 255.0f)
+          correctedExposure = 0;
+        } else if(exposure > 1.0f)
         {
-          exp = 255;
-        } else
+          correctedExposure = 1.0f;
+        } 
+        
+        const u32 exposureU32 = (u32) floorf(correctedExposure * maxExposure + 0.5f);
+        
+        if (m_exposure != exposureU32)
         {
-          exp = (u8) expF32;
+          m_exposure = exposureU32;
+          
+          CamWrite(0x3501, (exposureU32 >> 8) & 0xFF);
+          MicroWait(100);
+          CamWrite(0x3502, exposureU32 & 0xFF);
         }
 
-        if (m_exposure != exp)
-        {
-          m_exposure = exp;
-
-          //CamWrite(0x08, (exposure >> 8));  // AEC[15:8]
-          //MicroWait(100);
-          // XXX-NDM was OV7739 CamWrite(0x10, m_exposure);  // AEC[7:0]
+        if(enableVignettingCorrection) {
+          AnkiAssert(false);
         }
-
+        
+        /*
         if(m_enableVignettingCorrection != enableVignettingCorrection)
         {
           m_enableVignettingCorrection = enableVignettingCorrection;
@@ -569,6 +578,7 @@ namespace Anki
           MicroWait(100);
           // XXX-NDM was OV7739 CamWrite(0x46, newValue);
         }
+        */
       }
 
       void CameraGetFrame(u8* frame, Vision::CameraResolution res, bool enableLight)

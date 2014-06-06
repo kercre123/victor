@@ -149,10 +149,10 @@ namespace Anki {
         // Send the message header (0xBEEF + timestamp + robotID + msgID)
         // For TCP comms, send timestamp immediately after the header.
         // This is needed on the basestation side to properly order messages.
-        const u8 HEADER_LENGTH = 8;
+        const u8 HEADER_LENGTH = 11;
         u8 header[HEADER_LENGTH];
         const u8 size = Messages::GetSize(msgID);
-        UtilMsgError packRes = UtilMsgPack(header, HEADER_LENGTH, NULL, "ccicc",
+        UtilMsgError packRes = UtilMsgPack(header, HEADER_LENGTH, NULL, "cciic",
                     RADIO_PACKET_HEADER[0],
                     RADIO_PACKET_HEADER[1],
                     ts,
@@ -255,7 +255,7 @@ namespace Anki {
         const u32 bytesAvailable = RadioGetNumBytesAvailable();
         if(bytesAvailable > 0) {
     
-          const int headerSize = sizeof(RADIO_PACKET_HEADER);
+          const u32 headerSize = sizeof(RADIO_PACKET_HEADER);
           
           // Look for valid header
           std::string strBuf(recvBuf_, recvBuf_ + recvBufSize_);  // TODO: Just make recvBuf a string
@@ -275,24 +275,27 @@ namespace Anki {
           
           // Check if expected number of bytes are in the msg
           if (recvBufSize_ > headerSize) {
-            const u8 dataLen = recvBuf_[headerSize];
-            if (recvBufSize_ > headerSize + dataLen) {
+            const u32 dataLen = recvBuf_[headerSize] +
+                                (recvBuf_[headerSize+1] << 8) +
+                                (recvBuf_[headerSize+2] << 16) +
+                                (recvBuf_[headerSize+3] << 24);
+            if (recvBufSize_ >= headerSize + 4 + dataLen) {
             
               // Check that message size is correct
-              Messages::ID msgID = static_cast<Messages::ID>(recvBuf_[headerSize+1]);
+              Messages::ID msgID = static_cast<Messages::ID>(recvBuf_[headerSize+4]);
               const u8 size = Messages::GetSize(msgID);
-              int msgLen = dataLen - 1;  // Doesn't include msgID
+              const u32 msgLen = dataLen - 1;  // Doesn't include msgID
               
               if (msgLen != size) {
                 PRINT("WARNING: Message size mismatch: ID %d, expected %d bytes, but got %d bytes\n", msgID, size, msgLen);
               }
               
               // Copy message contents to buffer
-              std::memcpy((void*)buffer, recvBuf_ + headerSize + 2, msgLen);
+              std::memcpy((void*)buffer, recvBuf_ + headerSize + 4 + 1, msgLen);
               retVal = msgID;
               
               // Shift recvBuf contents down
-              const u8 entireMsgSize = headerSize + 1 + dataLen;
+              const u32 entireMsgSize = headerSize + 4 + 1 + msgLen;
               memcpy(recvBuf_, recvBuf_ + entireMsgSize, recvBufSize_ - entireMsgSize);
               recvBufSize_ -= entireMsgSize;
               

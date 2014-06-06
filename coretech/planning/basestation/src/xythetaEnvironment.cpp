@@ -524,7 +524,7 @@ void MotionPrimitive::AddSegmentsToPath(State_c start, Path& path) const
         // angle
         if(FLT_NEAR(path[endIdx].GetDef().turn.x, segment.GetDef().turn.x) &&
                FLT_NEAR(path[endIdx].GetDef().turn.y, segment.GetDef().turn.y) &&
-               FLT_NEAR(path[endIdx].GetDef().turn.targetRotSpeed, segment.GetDef().turn.targetRotSpeed)) {
+               FLT_NEAR(path[endIdx].GetTargetSpeed(), segment.GetTargetSpeed())) {
           path[endIdx].GetDef().turn.targetAngle = segment.GetDef().turn.targetAngle;
         shouldAdd = false;
         }
