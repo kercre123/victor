@@ -165,6 +165,9 @@ namespace Anki {
       // Run a test mode
       Result SendStartTestMode(const TestMode mode) const;
       
+      Quad2f GetBoundingQuadXY(const f32 paddingScale) const;
+      Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 paddingScale) const;
+      
       
       // =========== Pose history =============
       // Returns ref to robot's pose history
@@ -230,7 +233,7 @@ namespace Anki {
       // Pose history
       RobotPoseHistory poseHistory_;
 
-      
+      static const Quad2f CanonicalBoundingBoxXY;
       
       // Message handling
       typedef std::vector<u8> MessageType;
