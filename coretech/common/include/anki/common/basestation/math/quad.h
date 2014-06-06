@@ -116,6 +116,11 @@ namespace Anki {
     //    one antoher and BottomLeft/TopRight are opposite one another
     bool Contains(const Point<2,T>& point) const;
 
+    // Returns true if the two quads intersect.
+    // Only valid for 2D quads. Assumes quads are convex and checks whether
+    // any points of one are inside the other.
+    bool Intersects(const Quadrilateral<2,T>& other) const;
+    
   protected:
     
     //Point<N,T> corners[4];

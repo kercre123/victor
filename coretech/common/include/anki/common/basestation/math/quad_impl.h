@@ -373,6 +373,27 @@ namespace Anki {
     
   } // Contains()
   
+  template<QuadDimType N, typename T>
+  bool Quadrilateral<N,T>::Intersects(const Quadrilateral<2,T>& other) const
+  {
+    static_assert(N==2, "Quad intersection check only valid for 2D quads.");
+    
+    for(auto & point : other) {
+      if(this->Contains(point)) {
+        return true;
+      }
+    }
+    
+    for(auto & point : *this) {
+      if(other.Contains(point)) {
+        return true;
+      }
+    }
+    
+    return false;
+    
+  } // Intersects()
+  
   
   /*
   template<QuadDimType N, typename T>
