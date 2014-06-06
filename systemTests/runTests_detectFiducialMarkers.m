@@ -7,8 +7,6 @@ function [resultsData, resultsString] = runTests_detectFiducialMarkers(testJsonP
 % useUndistortion = false;
 maxMatchDistance = 5; % If all corners of a quad are not detected within this threshold, it is considered a complete failure
 
-showExtractedQuads = true;
-
 assert(exist('testJsonPattern', 'var') == 1);
 assert(exist('resultsFilename', 'var') == 1);
 
@@ -42,9 +40,11 @@ testFunctionNames = {...
     'C-with'};
 
 resultsData = cell(length(allTestFilenames), 1);
+sceneData = cell(length(allTestFilenames), 1);
 resultsString = '';
 
 for iTest = 1:length(allTestFilenames)
+% for iTest = length(allTestFilenames)
     tic;
     
     jsonData = loadjson(allTestFilenames{iTest});
@@ -54,15 +54,19 @@ for iTest = 1:length(allTestFilenames)
     end
     
     resultsData{iTest} = cell(length(jsonData.Poses), 1);
+    sceneData{iTest} = cell(length(jsonData.Poses), 1);
     
     for iPose = 1:length(jsonData.Poses)
         image = imread([testPath, jsonData.Poses{iPose}.ImageFile]);
         
         resultsData{iTest}{iPose} = cell(length(testFunctions), 1);
+        sceneData{iTest}{iPose} = cell(length(testFunctions), 1);
         
         if ~isfield(jsonData.Poses{iPose}, 'VisionMarkers')
             continue;
         end
+        
+        sceneData{iTest}{iPose} = jsonData.Poses{iPose}.Scene;
         
         groundTruthQuads = jsonToQuad(jsonData.Poses{iPose}.VisionMarkers);
         
@@ -75,29 +79,37 @@ for iTest = 1:length(allTestFilenames)
             
             [markers_bestDistances_mean, markers_bestDistances_max, markers_bestIndexes, markers_areRotationsCorrect] = findClosestMatches(groundTruthQuads, markersToQuad(detectedMarkers));
             
+%             min(markers_areRotationsCorrect)
             
-            markerNames = cell(length(detectedMarkers), 2);
+            markerNames = cell(length(detectedMarkers), 1);
             maxDimensionInPixels = zeros(length(detectedMarkers), 1);
             
-            for iMarker = 1:length(detectedMarkers)
-                markerNames{iMarker,1} = detectedMarkers{iMarker}.name;
-                markerNames{iMarker,2} = jsonData.Poses{iPose}.VisionMarkers{markers_bestIndexes(iMarker)}.markerType;
-               
+            for iMarker = 1:length(groundTruthQuads)
+                markerNames{iMarker,1} = jsonData.Poses{iPose}.VisionMarkers{iMarker}.markerType;
+                
                 maxDimensionInPixels(iMarker) = ...
-                    max(max(groundTruthQuads{markers_bestIndexes(iMarker)}(:,1)) - min(groundTruthQuads{markers_bestIndexes(iMarker)}(:,1)),...
-                    max(groundTruthQuads{markers_bestIndexes(iMarker)}(:,2)) - min(groundTruthQuads{markers_bestIndexes(iMarker)}(:,2)));
+                    max(max(groundTruthQuads{iMarker}(:,1)) - min(groundTruthQuads{iMarker}(:,1)),...
+                    max(groundTruthQuads{iMarker}(:,2)) - min(groundTruthQuads{iMarker}(:,2)));
+                
+%                 markerNames{iMarker,1} = detectedMarkers{markers_bestIndexes(iMarker)}.name;
+%                 markerNames{iMarker,2} = jsonData.Poses{iPose}.VisionMarkers{iMarker}.markerType;%                
             end
             
-            resultsData{iTest}{iPose}{iTestFunction} = {...
-                justQuads_bestDistances_mean,...
-                justQuads_bestDistances_max,...
-                justQuads_bestIndexes,...
-                markers_bestDistances_mean,...
-                markers_bestDistances_max,...
-                markers_bestIndexes,...
-                markers_areRotationsCorrect,...
-                maxDimensionInPixels,...
-                markerNames};
+            allDetectedMarkerNames = cell(length(detectedMarkers), 1);
+            for iMarker = 1:length(detectedMarkers)
+                allDetectedMarkerNames{iMarker} = detectedMarkers{iMarker}.name;
+            end
+            
+            resultsData{iTest}{iPose}{iTestFunction}.justQuads_bestDistances_mean = justQuads_bestDistances_mean;
+            resultsData{iTest}{iPose}{iTestFunction}.justQuads_bestDistances_max = justQuads_bestDistances_max;
+            resultsData{iTest}{iPose}{iTestFunction}.justQuads_bestIndexes = justQuads_bestIndexes;
+            resultsData{iTest}{iPose}{iTestFunction}.markers_bestDistances_mean = markers_bestDistances_mean;
+            resultsData{iTest}{iPose}{iTestFunction}.markers_bestDistances_max = markers_bestDistances_max;
+            resultsData{iTest}{iPose}{iTestFunction}.markers_bestIndexes = markers_bestIndexes;
+            resultsData{iTest}{iPose}{iTestFunction}.markers_areRotationsCorrect = markers_areRotationsCorrect;
+            resultsData{iTest}{iPose}{iTestFunction}.maxDimensionInPixels = maxDimensionInPixels;
+            resultsData{iTest}{iPose}{iTestFunction}.markerNames = markerNames;
+            resultsData{iTest}{iPose}{iTestFunction}.allDetectedMarkerNames = allDetectedMarkerNames;
                         
 %             figure(1); 
 %             hold off;
@@ -113,19 +125,21 @@ for iTest = 1:length(allTestFilenames)
     disp(sprintf('Finished test %d/%d in %f seconds', iTest, length(allTestFilenames), toc()));
 end % for iTest = 1:length(allTestFilenames)
 
+save c:/tmp/tmp3.mat *
+
 keyboard
 
 function [bestDistances_mean, bestDistances_max, bestIndexes, areRotationsCorrect] = findClosestMatches(groundTruthQuads, queryQuads)
-    bestDistances_mean = Inf * ones(length(queryQuads), 1);
-    bestDistances_max = Inf * ones(length(queryQuads), 1);
-    bestIndexes = -1 * ones(length(queryQuads), 1);
-    areRotationsCorrect = false * ones(length(queryQuads), 1);
+    bestDistances_mean = Inf * ones(length(groundTruthQuads), 1);
+    bestDistances_max = Inf * ones(length(groundTruthQuads), 1);
+    bestIndexes = -1 * ones(length(groundTruthQuads), 1);
+    areRotationsCorrect = false * ones(length(groundTruthQuads), 1);
         
-    for iQuery = 1:length(queryQuads)
-        queryQuad = queryQuads{iQuery};
-        
-        for iGroundTruth = 1:length(groundTruthQuads)
-            gtQuad = groundTruthQuads{iGroundTruth};
+    for iGroundTruth = 1:length(groundTruthQuads)
+        gtQuad = groundTruthQuads{iGroundTruth};
+            
+        for iQuery = 1:length(queryQuads)
+            queryQuad = queryQuads{iQuery};
 
             for iRotation = 0:3
                 distances = sqrt(sum((queryQuad - gtQuad).^2, 2));
@@ -133,22 +147,22 @@ function [bestDistances_mean, bestDistances_max, bestIndexes, areRotationsCorrec
                 % Compute the closest match based on the mean distance
                 distance_mean = mean(distances);
                 
-                if distance_mean < bestDistances_mean(iQuery)
-                    bestDistances_mean(iQuery) = distance_mean;
-                    bestDistances_max(iQuery) = max(distances);
-                    bestIndexes(iQuery) = iGroundTruth;
+                if distance_mean < bestDistances_mean(iGroundTruth)
+                    bestDistances_mean(iGroundTruth) = distance_mean;
+                    bestDistances_max(iGroundTruth) = max(distances);
+                    bestIndexes(iGroundTruth) = iQuery;
                     
                     if iRotation == 0
-                        areRotationsCorrect(iQuery) = true;
+                        areRotationsCorrect(iGroundTruth) = true;
                     else
-                        areRotationsCorrect(iQuery) = false;
+                        areRotationsCorrect(iGroundTruth) = false;
                     end                    
                 end
                 
 %                 figure(iRotation+1); plot(gtQuad(:,1), gtQuad(:,2));
                 
                 % rotate the quad
-                gtQuad = gtQuad([3,1,4,2],:);
+                queryQuad = queryQuad([3,1,4,2],:);
             end
         end
     end
@@ -179,27 +193,27 @@ function quads = markersToQuad(markers)
         quads{iQuad} = markers{iQuad}.corners;
     end
     
-function plotQuads(image, extractedQuads, isExtractedQuadsMatched, groundTruthCorners, scale, titleString)
-    hold off;
-    imshow(image);
-    hold on;
-    
-    title(titleString);
-    
-    for i=1:length(extractedQuads)
-        if isExtractedQuadsMatched(i)
-            plotString = 'b';
-        else
-            plotString = 'r';
-        end
-        plot((1/scale)*extractedQuads{i}([1:4,1],1), (1/scale)*extractedQuads{i}([1:4,1],2), plotString);
-    end
-    
-    for i=1:length(groundTruthCorners)
-        curQuadX = [groundTruthCorners{i}{1}.x, groundTruthCorners{i}{2}.x, groundTruthCorners{i}{3}.x, groundTruthCorners{i}{4}.x, groundTruthCorners{i}{1}.x];
-        curQuadY = [groundTruthCorners{i}{1}.y, groundTruthCorners{i}{2}.y, groundTruthCorners{i}{3}.y, groundTruthCorners{i}{4}.y, groundTruthCorners{i}{1}.y];
-        plot(curQuadX, curQuadY, 'g--');
-    end
+% function plotQuads(image, extractedQuads, isExtractedQuadsMatched, groundTruthCorners, scale, titleString)
+%     hold off;
+%     imshow(image);
+%     hold on;
+%     
+%     title(titleString);
+%     
+%     for i=1:length(extractedQuads)
+%         if isExtractedQuadsMatched(i)
+%             plotString = 'b';
+%         else
+%             plotString = 'r';
+%         end
+%         plot((1/scale)*extractedQuads{i}([1:4,1],1), (1/scale)*extractedQuads{i}([1:4,1],2), plotString);
+%     end
+%     
+%     for i=1:length(groundTruthCorners)
+%         curQuadX = [groundTruthCorners{i}{1}.x, groundTruthCorners{i}{2}.x, groundTruthCorners{i}{3}.x, groundTruthCorners{i}{4}.x, groundTruthCorners{i}{1}.x];
+%         curQuadY = [groundTruthCorners{i}{1}.y, groundTruthCorners{i}{2}.y, groundTruthCorners{i}{3}.y, groundTruthCorners{i}{4}.y, groundTruthCorners{i}{1}.y];
+%         plot(curQuadX, curQuadY, 'g--');
+%     end
 
 function [allQuads, markers] = extractMarkers_matlabOriginal_noRefinement(image)
     allQuads = simpleDetector(image, 'decodeMarkers', false, 'quadRefinementIterations', 0);

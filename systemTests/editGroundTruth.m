@@ -354,6 +354,10 @@ function label_eraseAndLabel_Callback(~, ~, ~)
 
         disp(sprintf('%d/%d "%s" detected %d markers', iPose, length(jsonTestData.Poses), curImageFilenameWithoutPath, length(jsonTestData.Poses{iPose}.VisionMarkers)));
     end
+    
+    poseChanged(true);
+    
+    Save();
 
 function menu_replicateLabels_Callback(~, ~, ~)
 
@@ -368,10 +372,13 @@ function menu_eraseAndReplicate_Callback(~, ~, ~)
     curPose = jsonTestData.Poses{curPoseIndex};
 
     for iPose = 1:length(jsonTestData.Poses)
-        jsonTestData.Poses{iPose} = curPose;
+        jsonTestData.Poses{iPose}.NumMarkers = curPose.NumMarkers;
+        jsonTestData.Poses{iPose}.VisionMarkers = curPose.VisionMarkers;
     end
 
     poseChanged(true);
+    
+    Save();
 
 function menu_eraseAll_Callback(~, ~, ~)
 
@@ -388,6 +395,8 @@ function menu_eraseAllLabels_Callback(~, ~, ~)
     fixBounds();
 
     poseChanged(true);
+    
+    Save();
 
 function labelingTypePanel_SelectionChangeFcn(~, ~, ~)
     global pointsType;
