@@ -29,7 +29,7 @@ namespace Anki {
     : robotMgr_(nullptr)
     , world_(nullptr)
     , distThresh_mm_(20.f)
-    , angThresh_(0.15f)
+    , angThresh_(DEG_TO_RAD(10))
     , dockBlock_(nullptr)
     , dockMarker_(nullptr)
     , blockToPickUp_(Vision::MARKER_UNKNOWN)
@@ -215,15 +215,15 @@ namespace Anki {
           
         } else {
           PRINT_INFO("Not at expected position at the end of the path. "
-                     "Resetting BehaviorManager. (Robot: %f %f %f %f, Goal: %f %f %f %f)\n.",
+                     "Resetting BehaviorManager. (Robot: (%.2f %.2f %.2f) @ %.1fdeg VS. Goal: (%.2f %.2f %.2f) @ %.1fdeg)\n.",
                      robot_->get_pose().get_translation().x(),
                      robot_->get_pose().get_translation().y(),
                      robot_->get_pose().get_translation().z(),
-                     robot_->get_pose().get_rotationAngle().ToFloat(),
+                     robot_->get_pose().get_rotationAngle().getDegrees(),
                      nearestPreDockPose_.get_translation().x(),
                      nearestPreDockPose_.get_translation().y(),
                      nearestPreDockPose_.get_translation().z(),
-                     nearestPreDockPose_.get_rotationAngle().ToFloat()
+                     nearestPreDockPose_.get_rotationAngle().getDegrees()
                      );
           StartMode(BM_None);
           return;
@@ -295,7 +295,7 @@ namespace Anki {
         // For now, just docking to the marker no matter where it is in the image.
         
         // Get dock action
-        f32 dockBlockHeight = dockBlock_->GetPose().get_translation().z();
+        const f32 dockBlockHeight = dockBlock_->GetPose().get_translation().z();
         dockAction_ = DA_PICKUP_LOW;
         if (dockBlockHeight > dockBlock_->GetSize().z()) {
           if (robot_->IsCarryingBlock()) {
@@ -557,6 +557,7 @@ namespace Anki {
                   CoreTechPrint("Set blockToPlaceOn = %s\n",
                                 Block::IDtoStringLUT[blockToPlaceOn_].c_str());
                   
+                  waitUntilTime_ = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5f;
                   state_ = BEGIN_EXPLORING;
                 }
                 
@@ -589,7 +590,7 @@ namespace Anki {
           // try to locate blocks
           if(!robot_->IsMoving() && waitUntilTime_ < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) {
             PRINT_INFO("Beginning exploring\n");
-            robot_->DriveWheels(20.f, -20.f);
+            robot_->DriveWheels(15.f, -15.f);
             robot_->MoveHeadToAngle(DEG_TO_RAD(-5), 1, 1);
             
             if(robot_->IsCarryingBlock()) {
