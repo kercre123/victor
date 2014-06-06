@@ -92,9 +92,12 @@ function displayType_max_CreateFcn(hObject, ~, ~)
     global maxDisplayType;
     set(hObject,'String',num2str(maxDisplayType));
 
-function testJsonFilename_CreateFcn(hObject, ~, ~)
+function testJsonFilename1_CreateFcn(hObject, ~, ~)
     setDefaultGuiObjectColor(hObject);
 
+function testJsonFilename2_CreateFcn(hObject, ~, ~)
+    setDefaultGuiObjectColor(hObject);
+    
 function figure1_CreateFcn(~, ~, ~)
 
 function pose_previous1_CreateFcn(~, ~, ~)
@@ -153,7 +156,10 @@ function resolutionVertical_CreateFcn(hObject, ~, ~)
 % Callback Functions
 %
 
-function testJsonFilename_Callback(~, ~, ~)
+function testJsonFilename1_Callback(~, ~, ~)
+    loadTestFile()
+
+function testJsonFilename2_Callback(~, ~, ~)
     loadTestFile()
 
 function setDefaultGuiObjectColor(hObject)
@@ -489,6 +495,8 @@ function detectAndAddMarkers()
     end
 
     poseChanged(false);
+    
+    Save();
 
 function maxIndex = getMaxMarkerIndex(poseIndex)
     global jsonTestData;
@@ -516,15 +524,34 @@ function loadTestFile()
     global image;
     global imageFigureHandle;
     global pointsType;
+    global curPoseIndex;
+    global curMarkerIndex;
 
-    jsonTestFilename = get(allHandles.testJsonFilename, 'String'); %#ok<*NASGU>
+    jsonTestFilename = [get(allHandles.testJsonFilename1, 'String'), '/', get(allHandles.testJsonFilename2, 'String')];
     jsonTestFilename = strrep(jsonTestFilename, '\', '/');
     slashIndexes = strfind(jsonTestFilename, '/');
     dataPath = jsonTestFilename(1:(slashIndexes(end)));
 
+    % Try to load the file, then add a .json extension and try again
+    
+    loadSucceeded = false;    
     try
         jsonTestData = loadjson(jsonTestFilename);
-    catch
+        loadSucceeded = true;
+    catch        
+    end
+    
+    if ~loadSucceeded
+        jsonTestFilename = [jsonTestFilename, '.json'];
+        
+        try
+            jsonTestData = loadjson(jsonTestFilename);
+            loadSucceeded = true;
+        catch        
+        end
+    end
+    
+    if ~loadSucceeded
         disp(sprintf('Could not load json file %s', jsonTestFilename));
         return;
     end
@@ -558,6 +585,9 @@ function loadTestFile()
 
     set(imageFigureHandle,'Pointer','custom','PointerShapeCData',pointer,'PointerShapeHotSpot',(size(pointer))/2)
 
+    curPoseIndex = 1;
+    curMarkerIndex = 1;
+    
     poseChanged(true)
 
     return;
@@ -795,7 +825,7 @@ function poseChanged(resetZoom)
                 set(plotHandle, 'HitTest', 'off')
 
                 markerName = jsonTestData.Poses{curPoseIndex}.VisionMarkers{iMarker}.markerType(8:end);
-                textHandle = text((cornersX(1)+cornersX(4))/2, (cornersY(1)+cornersY(4))/2, markerName, 'Color', linePlotType);
+                textHandle = text((cornersX(1)+cornersX(4))/2 + 5, (cornersY(1)+cornersY(4))/2, markerName, 'Color', linePlotType);
                 set(textHandle, 'HitTest', 'off')
             end
 
