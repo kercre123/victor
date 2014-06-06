@@ -105,7 +105,7 @@ namespace Anki {
       void ProcessMessage(const ID msgID, const u8* buffer)
       {
         if(LookupTable_[msgID].dispatchFcn != NULL) {
-          PRINT("ProcessMessage(): Dispatching message with ID=%d.\n", msgID);
+          //PRINT("ProcessMessage(): Dispatching message with ID=%d.\n", msgID);
           
           (*LookupTable_[msgID].dispatchFcn)(buffer);
         }
