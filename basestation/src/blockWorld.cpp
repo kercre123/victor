@@ -188,7 +188,7 @@ namespace Anki
         
         Vision::Camera& camera = robot->get_camHead();
         
-        camera.AddOccluder(object);
+        camera.AddOccluder(*object);
       }
       
     } // AddToOcclusionMaps()
@@ -198,9 +198,6 @@ namespace Anki
     void BlockWorld::AddAndUpdateObjects(const std::vector<Vision::ObservableObject*>& objectsSeen,
                                          ObjectsMap_t& objectsExisting)
     {
-      
-      ClearAllOcclusionMaps(robotMgr_);
-      
       for(auto objSeen : objectsSeen) {
         
         //const float minDimSeen = objSeen->GetMinDim();
@@ -286,7 +283,7 @@ namespace Anki
       } // for each object type
       
       // Now that the occlusion maps are complete, check each unobserved object's
-      // visibility in each camera and its intersection with any robot
+      // visibility in each camera
       for(auto unobserved : unobservedObjects) {
         // NOTE: this is assuming all objects are blocks
         Vision::ObservableObject* object = unobserved.second->second;
@@ -358,6 +355,16 @@ namespace Anki
                               "the same time; will only use first for now.",
                               robot->get_ID());
         }
+        
+        // Add observed mat markers to the occlusion map of the camera that saw
+        // them, so we can use them to delete objects that should have been
+        // seen between that marker and the robot
+        std::vector<const Vision::KnownMarker *> observedMarkers;
+        matsSeen[0]->GetObservedMarkers(observedMarkers);
+        for(auto obsMarker : observedMarkers) {
+          robot->get_camHead().AddOccluder(*obsMarker);
+        }
+        
        /*
         // At this point the mat's pose should be relative to the robot's
         // camera's pose
@@ -479,7 +486,8 @@ namespace Anki
       
       // Use them to add or update existing blocks in our world
       // NOTE: we still want to run this even if we didn't see markers because
-      // we want to possibly delete any _unobserved_ objects.
+      // we want to possibly delete any _unobserved_ objects (e.g. ones behind
+      // whom we saw mat markers)
       AddAndUpdateObjects(blocksSeen, existingBlocks_);
       
       return blocksSeen.size();
@@ -498,6 +506,10 @@ namespace Anki
       robotMgr_->UpdateAllRobots();
       
       numBlocksObserved = 0;
+      
+      // New timestep, new set of occluders.  Get rid of anything registered as
+      // an occluder with any robot's camera
+      ClearAllOcclusionMaps(robotMgr_);
       
       // First, mark all existing blocks as unseen
       for(auto & objectTypes : existingBlocks_) {
