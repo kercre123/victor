@@ -24,6 +24,10 @@ namespace Anki {
   
   namespace Vision {
     
+    // Forward declarations:
+    class ObservableObject;
+    class KnownMarker;
+    
     class Camera
     {
     public:
@@ -80,7 +84,12 @@ namespace Anki {
                            std::array<Point2f,NumPoints>       &imgPoints) const;
 
       // Register an object as an "occluder" for this camera
-      void AddOccluder(const Vision::ObservableObject* object);
+      void AddOccluder(const ObservableObject& object);
+      
+      // Register a KnownMarker as an "occluder" for this camera
+      void AddOccluder(const KnownMarker& marker);
+      
+      // Clear all occluders known to this camera
       void ClearOccluders();
       
       // Returns true when the point (computed by one of the projection functions

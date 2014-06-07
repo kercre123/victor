@@ -358,22 +358,47 @@ namespace Anki {
     }
     
     
-    void Camera::AddOccluder(const ObservableObject* object)
+    void Camera::AddOccluder(const ObservableObject& object)
     {
-      const Pose3d objectPoseWrtCamera(object->GetPose().getWithRespectTo(&pose));
+      const Pose3d objectPoseWrtCamera(object.GetPose().getWithRespectTo(&pose));
       
       std::vector<Point3f> cornersAtPose;
       std::vector<Point2f> projectedCorners;
       
       // Project the objects's corners into the image and create an occluding
       // bounding rectangle from that
-      object->GetCorners(objectPoseWrtCamera, cornersAtPose);
+      object.GetCorners(objectPoseWrtCamera, cornersAtPose);
       Project3dPoints(cornersAtPose, projectedCorners);
       
       occluderList.AddOccluder(projectedCorners, objectPoseWrtCamera.get_translation().z());
-    }
+      
+    } // AddOccluder(ObservableObject)
     
+    
+    void Camera::AddOccluder(const KnownMarker& marker)
+    {
+      const Pose3d markerPoseWrtCamera = marker.GetPose().getWithRespectTo(&this->pose);
+      
+      const Quad3f markerCorners = marker.Get3dCorners(markerPoseWrtCamera);
+      
+      Quad2f imgCorners;
+      Project3dPoints(markerCorners, imgCorners);
 
+      // Use closest point as the distance to the quad
+      auto cornerIter = markerCorners.begin();
+      f32 atDistance = cornerIter->z();
+      ++cornerIter;
+      while(cornerIter != markerCorners.end()) {
+        if(cornerIter->z() < atDistance) {
+          atDistance = cornerIter->z();
+        }
+        ++cornerIter;
+      }
+      
+      occluderList.AddOccluder(imgCorners, atDistance);
+
+    } // AddOccluder(Quad3f)
+    
     
   } // namespace Vision
 } // namespace Anki
