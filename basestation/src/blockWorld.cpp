@@ -37,7 +37,11 @@ namespace Anki
     
     
     BlockWorld::BlockWorld( )
-    : isInitialized_(false), robotMgr_(NULL), didBlocksChange_(false), globalIDCounter(0), enableDraw_(false)
+    : isInitialized_(false)
+    , robotMgr_(NULL)
+    , didBlocksChange_(false)
+    , globalIDCounter(0)
+    , enableDraw_(false)
 //    : robotMgr_(RobotManager::getInstance()),
 //      msgHandler_(MessageHandler::getInstance())
     {
@@ -97,15 +101,10 @@ namespace Anki
       ObjectType_t matType=0;
       
       // Webots mat:
-      {
-        MatPiece* mat = new MatPiece(++matType);
+      MatPiece* mat = new MatPiece(++matType);
         
-//#include "anki/cozmo/basestation/Mat_AnkiLogoPlus8Bits_8x8.def"
-#include "anki/cozmo/basestation/Mat_Letters_30mm_4x4.def"
-        
-        matLibrary_.AddObject(mat);
-      }
-
+      matLibrary_.AddObject(mat);
+      
     } // BlockWorld() Constructor
     
     BlockWorld::~BlockWorld()
@@ -451,6 +450,12 @@ namespace Anki
         // Send the ground truth pose that was computed instead of the new current pose and let the robot deal with
         // updating its current pose based on the history that it keeps.
         robot->SendAbsLocalizationUpdate();
+        
+        // Done using mat pieces to localize, which were cloned from library
+        // mat objects.  Delete them now so we don't leak.
+        for(auto matSeen : matsSeen) {
+          delete matSeen;
+        }
         
       } // IF any mat piece was seen
 
