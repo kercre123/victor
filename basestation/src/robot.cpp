@@ -349,12 +349,12 @@ namespace Anki {
       
       Result res = pathPlanner_->GetPlan(path, get_pose(), targetPose);
       
-      // TODO: Make some sort of ApplySpeedProfile() function.
-      //       Currently, we just set the speed of last segment to something slow.
-      if (res == RESULT_OK) {
-        path[path.GetNumSegments()-1].SetTargetSpeed(20);
-        path[path.GetNumSegments()-1].SetDecel(100);
-      }
+      // // TODO: Make some sort of ApplySpeedProfile() function.
+      // //       Currently, we just set the speed of last segment to something slow.
+      // if (res == RESULT_OK) {
+      //   path[path.GetNumSegments()-1].SetTargetSpeed(20);
+      //   path[path.GetNumSegments()-1].SetDecel(100);
+      // }
       
       return res;
     }

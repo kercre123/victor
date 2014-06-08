@@ -105,6 +105,8 @@ Result LatticePlanner::GetPlan(Planning::Path &path, const Pose3d &startPose, co
 
   impl_->env_.ConvertToPath(impl_->planner_.GetPlan(), path);
 
+  path.PrintPath();
+
   // impl_->env_.WriteEnvironment("/Users/bneuman/blockWorld.env");
 
   // TODO:(bn) return value!
