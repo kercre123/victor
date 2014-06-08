@@ -28,8 +28,8 @@ namespace Planning {
 #define LATTICE_PLANNER_ACCEL 200
 #define LATTICE_PLANNER_DECEL 200
 
-#define LATTICE_PLANNER_ROT_ACCEL 10
-#define LATTICE_PLANNER_ROT_DECEL 10
+#define LATTICE_PLANNER_ROT_ACCEL 100
+#define LATTICE_PLANNER_ROT_DECEL 100
 
 State::State(StateID sid)
   :
@@ -441,7 +441,7 @@ bool MotionPrimitive::Import(const Json::Value& config, StateTheta startingAngle
     double deltaTheta = startRads.angularDistance(env.GetTheta_c(endStateOffset.theta), direction < 0);
 
     Cost turnTime = std::abs(deltaTheta) * env.GetHalfWheelBase_mm() * oneOverLinearSpeed;
-    cost +=  turnTime;
+    cost += turnTime;
 
     float rotSpeed = deltaTheta / turnTime;
 
@@ -528,9 +528,10 @@ void MotionPrimitive::AddSegmentsToPath(State_c start, Path& path) const
           path[endIdx].GetDef().turn.targetAngle = segment.GetDef().turn.targetAngle;
         shouldAdd = false;
         }
+        break;
 
       default:
-        printf("ERROR (AddSewgmentsToPath): Undefined segment %d\n", segment.GetType());
+        printf("ERROR (AddSegmentsToPath): Undefined segment %d\n", segment.GetType());
         assert(false);
       }
     }
