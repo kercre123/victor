@@ -335,6 +335,11 @@ class MotionPrimitiveSet:
         best = None
         for x in range(startPose.x - 9, startPose.x + 10):
             for y in range(startPose.y - 9, startPose.y + 10):
+
+                # TEMP: testing
+                if abs(x) + abs(y) < 4:
+                    continue
+
                 if self.inQuadrant(x,y,quads):
                     endPose = Pose(x, y, newAngle)
                     turn = self.computeTurn(startPose, endPose)
