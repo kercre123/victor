@@ -112,7 +112,8 @@ namespace Anki {
       
     protected:
       CameraID_t               _camID;
-      CameraCalibration _calibration;
+      bool                     _isCalibrated;
+      CameraCalibration        _calibration;
       Pose3d                   _pose;
       
       OccluderList             _occluderList;
@@ -142,13 +143,13 @@ namespace Anki {
     { return _calibration; }
     
     inline void Camera::SetCalibration(const CameraCalibration &calib)
-    { _calibration = calib;}
+    { _calibration = calib; _isCalibrated = true; }
     
     inline void Camera::SetPose(const Pose3d& newPose)
     { _pose = newPose; }
     
     inline bool Camera::IsCalibrated() const {
-      return true; //(_calibration != nullptr);
+      return _isCalibrated; //(_calibration != nullptr);
     }
     
     inline bool Camera::IsOccluded(const Point2f& projectedPoint, const f32 atDistance) const {

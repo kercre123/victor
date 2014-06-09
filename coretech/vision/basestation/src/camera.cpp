@@ -31,7 +31,8 @@ namespace Anki {
   namespace Vision {
     
     Camera::Camera(void)
-    : _camID(0) //, _calibration(nullptr)
+    : _camID(0)
+    , _isCalibrated(false) //, _calibration(nullptr)
     {
       
     } // Constructor: Camera()
@@ -39,7 +40,10 @@ namespace Anki {
     Camera::Camera(const CameraID_t cam_id,
                    const CameraCalibration &calibration,
                    const Pose3d& pose_in)
-    : _camID(cam_id), _calibration(calibration), _pose(pose_in)
+    : _camID(cam_id)
+    , _isCalibrated(true)
+    , _calibration(calibration)
+    , _pose(pose_in)
     {
       
     } // Constructor: Camera(calibration, pose)
