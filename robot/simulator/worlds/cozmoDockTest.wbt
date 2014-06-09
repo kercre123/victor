@@ -93,7 +93,7 @@ Background {
 DirectionalLight {
   ambientIntensity 0.75
   direction 1 -.5 -2
-  castShadows TRUE
+  castShadows FALSE
 }
 
 CozmoMat {

@@ -46,11 +46,10 @@
 using namespace Anki;
 
 #ifdef SIMULATOR
-// TODO: put this elsewhere?
-Anki::Vision::CameraCalibration::CameraCalibration(const webots::Camera* camera)
+Anki::Vision::CameraCalibration GetCameraCalibration(const webots::Camera* camera)
 {
-  nrows  = static_cast<u16>(camera->getHeight());
-  ncols  = static_cast<u16>(camera->getWidth());
+  const u16 nrows  = static_cast<u16>(camera->getHeight());
+  const u16 ncols  = static_cast<u16>(camera->getWidth());
   
   const f32 width  = static_cast<f32>(ncols);
   const f32 height = static_cast<f32>(nrows);
@@ -65,13 +64,13 @@ Anki::Vision::CameraCalibration::CameraCalibration(const webots::Camera* camera)
   //f32 fy = height / (2.f * std::tan(0.5f*fov_ver));
   //
   const f32 f = Cozmo::HEAD_CAM_CALIB_FOCAL_LENGTH;
- 
- focalLength_x = f;
- focalLength_y = f;
- 
- center.x()    = 0.5f*width;
- center.y()    = 0.5f*height;
- skew          = 0.f;
+  
+  const f32 center_x = 0.5f*width;
+  const f32 center_y = 0.5f*height;
+  
+  const f32 skew = 0.f;
+  
+  return Anki::Vision::CameraCalibration(nrows, ncols, f, f, center_x, center_y, skew);
 }
 #endif
 
@@ -128,7 +127,7 @@ int main(int argc, char **argv)
   // Camera
   webots::Camera* headCam_ = webotRobot_.getCamera("HeadCamera");
   headCam_->enable(TIME_STEP);
-  Vision::CameraCalibration calib(headCam_);
+  Vision::CameraCalibration calib = GetCameraCalibration(headCam_);
   Json::Value jsonCalib;
   calib.CreateJson(jsonCalib);
   

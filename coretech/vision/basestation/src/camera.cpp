@@ -45,71 +45,6 @@ namespace Anki {
     } // Constructor: Camera(calibration, pose)
     
     
-    CameraCalibration::CameraCalibration()
-    : nrows(480), ncols(640), focalLength_x(1.f), focalLength_y(1.f),
-    center(0.f,0.f),
-    skew(0.f)
-    {
-      /*
-       std::fill(this->distortionCoeffs.begin(),
-       this->distortionCoeffs.end(),
-       0.f);
-       */
-    }
-    
-    CameraCalibration::CameraCalibration(const u16 nrowsIn, const u16 ncolsIn,
-                                         const f32 fx,    const f32 fy,
-                                         const f32 cenx,  const f32 ceny,
-                                         const f32 skew_in)
-    : nrows(nrowsIn), ncols(ncolsIn),
-    focalLength_x(fx), focalLength_y(fy),
-    center(cenx, ceny), skew(skew_in)
-    {
-      /*
-       std::fill(this->distortionCoeffs.begin(),
-       this->distortionCoeffs.end(),
-       0.f);
-       */
-    }
-    
-    CameraCalibration::CameraCalibration(const Json::Value &jsonNode)
-    {
-      CORETECH_ASSERT(jsonNode.isMember("nrows"));
-      nrows = JsonTools::GetValue<u16>(jsonNode["nrows"]);
-      
-      CORETECH_ASSERT(jsonNode.isMember("ncols"));
-      ncols = JsonTools::GetValue<u16>(jsonNode["ncols"]);
-      
-      CORETECH_ASSERT(jsonNode.isMember("focalLength_x"));
-      focalLength_x = JsonTools::GetValue<f32>(jsonNode["focalLength_x"]);
-      
-      CORETECH_ASSERT(jsonNode.isMember("focalLength_y"))
-      focalLength_y = JsonTools::GetValue<f32>(jsonNode["focalLength_y"]);
-      
-      CORETECH_ASSERT(jsonNode.isMember("center_x"))
-      center.x() = JsonTools::GetValue<f32>(jsonNode["center_x"]);
-      
-      CORETECH_ASSERT(jsonNode.isMember("center_y"))
-      center.y() = JsonTools::GetValue<f32>(jsonNode["center_y"]);
-      
-      CORETECH_ASSERT(jsonNode.isMember("skew"))
-      skew = JsonTools::GetValue<f32>(jsonNode["skew"]);
-      
-      // TODO: Add distortion coefficients
-    }
-
-    
-    void CameraCalibration::CreateJson(Json::Value& jsonNode) const
-    {
-      jsonNode["nrows"] = nrows;
-      jsonNode["ncols"] = ncols;
-      jsonNode["focalLength_x"] = focalLength_x;
-      jsonNode["focalLength_y"] = focalLength_y;
-      jsonNode["center_x"] = center.x();
-      jsonNode["center_y"] = center.y();
-      jsonNode["skew"] = skew;
-    }
-    
     
 #if ANKICORETECH_USE_OPENCV
     Pose3d Camera::ComputeObjectPoseHelper(const std::vector<cv::Point2f>& cvImagePoints,
@@ -314,7 +249,7 @@ namespace Anki {
                                                       const Quad3f& worldQuad) const;
 
     
-    bool Camera::IsVisible(const Point2f &projectedPoint) const
+    bool Camera::IsWithinFieldOfView(const Point2f &projectedPoint) const
     {
       return (not std::isnan(projectedPoint.x()) &&
               not std::isnan(projectedPoint.y()) &&
@@ -351,12 +286,6 @@ namespace Anki {
         imgPoint.y() *= this->calibration.get_focalLength_y();
         
         imgPoint += this->calibration.get_center();
-      }
-      
-      if(not occluderList.IsEmpty() &&
-         occluderList.IsOccluded(imgPoint, objPoint.z()))
-      {
-        imgPoint = BEHIND_OR_OCCLUDED;
       }
       
     } // Project3dPoint()
@@ -444,6 +373,7 @@ namespace Anki {
       occluderList.AddOccluder(projectedCorners, objectPoseWrtCamera.get_translation().z());
     }
     
+
     
   } // namespace Vision
 } // namespace Anki

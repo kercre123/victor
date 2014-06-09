@@ -299,7 +299,7 @@ namespace Anki
           CORETECH_ASSERT(robot != NULL);
           
           // TODO: expose these angle/distance parameters 
-          if(object->IsVisibleFrom(robot->get_camHead(), DEG_TO_RAD(45), 20.f))
+          if(object->IsVisibleFrom(robot->get_camHead(), DEG_TO_RAD(45), 20.f, true))
           {
             // We "should" have seen the object! Delete it or mark it somehow
             CoreTechPrint("Removing object %d, which should have been seen, "

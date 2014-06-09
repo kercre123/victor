@@ -60,7 +60,7 @@ namespace Anki {
       inline void MarkUsed(bool used);
       inline bool IsUsed();
     protected:
-      TimeStamp_t    t_;
+      TimeStamp_t    observationTime_;
       Quad2f         imgCorners_;
       Camera         seenByCam_;
       
@@ -91,9 +91,10 @@ namespace Anki {
       // given angle tolerance of being front-parallel to the camera (i.e.
       // facing it) and have a diaonal image size at least the given image size
       // tolerance.
-      bool IsVisibleFrom(Camera& camera,
+      bool IsVisibleFrom(const Camera& camera,
                          const f32 maxAngleRad,
-                         const f32 minImageSize) const;
+                         const f32 minImageSize,
+                         const bool requireSomethingBehind) const;
       
       // Accessors
       Quad3f const& Get3dCorners() const; // at current pose
@@ -112,7 +113,7 @@ namespace Anki {
     }; // class KnownMarker
     
     inline const TimeStamp_t ObservedMarker::GetTimeStamp() const {
-      return t_;
+      return observationTime_;
     }
     
     inline Quad2f const& ObservedMarker::GetImageCorners() const {
