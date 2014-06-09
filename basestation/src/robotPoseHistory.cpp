@@ -66,14 +66,20 @@ namespace Anki {
     
     /////////////////////// RobotPoseHistory /////////////////////////////
     
+    HistPoseKey RobotPoseHistory::currHistPoseKey_ = 0;
+    
     RobotPoseHistory::RobotPoseHistory()
-    : windowSize_(1000)
+    : windowSize_(3000)
     {}
 
     void RobotPoseHistory::Clear()
     {
       poses_.clear();
       visPoses_.clear();
+      computedPoses_.clear();
+      
+      tsByKeyMap_.clear();
+      keyByTsMap_.clear();
     }
     
     void RobotPoseHistory::SetTimeWindow(const u32 windowSize_ms)
@@ -365,6 +371,7 @@ namespace Anki {
     
     Result RobotPoseHistory::ComputeAndInsertPoseAt(const TimeStamp_t t_request,
                                                     TimeStamp_t& t, RobotPoseStamp** p,
+                                                    HistPoseKey* key,
                                                     bool withInterpolation)
     {
       RobotPoseStamp ps;
@@ -379,6 +386,10 @@ namespace Anki {
       if (it != computedPoses_.end()) {
         it->second.SetPose(ps.GetFrameId(), ps.GetPose(), ps.GetHeadAngle());
         *p = &(it->second);
+        
+        if (key) {
+          *key = keyByTsMap_[t];
+        }
       } else {
         
         std::pair<PoseMapIter_t, bool> res;
@@ -391,16 +402,42 @@ namespace Anki {
         }
         
         *p = &(res.first->second);
+        
+        
+        // Create key associated with computed pose
+        ++currHistPoseKey_;
+        tsByKeyMap_.emplace(std::piecewise_construct,
+                            std::forward_as_tuple(currHistPoseKey_),
+                            std::forward_as_tuple(t));
+        keyByTsMap_.emplace(std::piecewise_construct,
+                                  std::forward_as_tuple(t),
+                                  std::forward_as_tuple(currHistPoseKey_));
+        
+        if (key) {
+          *key = currHistPoseKey_;
+        }
+
       }
       
       return RESULT_OK;
     }
     
-    Result RobotPoseHistory::GetComputedPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p)
+    Result RobotPoseHistory::GetComputedPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p, HistPoseKey* key)
     {
       PoseMapIter_t it = computedPoses_.find(t_request);
       if (it != computedPoses_.end()) {
         *p = &(it->second);
+        
+        // Get key for the computed pose
+        if (key){
+          KeyByTimestampMapIter_t kIt = keyByTsMap_.find(it->first);
+          if (kIt == keyByTsMap_.end()) {
+            PRINT_NAMED_WARNING("RobotPoseHistory.GetComputedPoseAt.KeyNotFound","");
+            return RESULT_FAIL;
+          }
+          *key = kIt->second;
+        }
+        
         return RESULT_OK;
       }
       
@@ -448,9 +485,26 @@ namespace Anki {
           visPoses_.erase(visPoses_.begin(), git);
         }
         if (oldestAllowedTime > computedPoses_.begin()->first) {
+
+          // For all computedPoses up until cit, remove their associated keys.
+          for(PoseMapIter_t delIt = computedPoses_.begin(); delIt != cit; ++delIt) {
+            KeyByTimestampMapIter_t kbtIt = keyByTsMap_.find(delIt->first);
+            if (kbtIt == keyByTsMap_.end()) {
+              PRINT_NAMED_WARNING("RobotPoseHistory.CullToWindowSize.KeyNotFound", "");
+              break;
+            }
+            tsByKeyMap_.erase(kbtIt->second);
+            keyByTsMap_.erase(kbtIt);
+          }
+
           computedPoses_.erase(computedPoses_.begin(), cit);
         }
       }
+    }
+    
+    bool RobotPoseHistory::IsValidPoseKey(const HistPoseKey key) const
+    {
+      return (tsByKeyMap_.find(key) != tsByKeyMap_.end());
     }
     
     TimeStamp_t RobotPoseHistory::GetOldestTimeStamp() const

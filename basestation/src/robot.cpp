@@ -720,9 +720,10 @@ namespace Anki {
 
     Result Robot::ComputeAndInsertPoseIntoHistory(const TimeStamp_t t_request,
                                                   TimeStamp_t& t, RobotPoseStamp** p,
+                                                  HistPoseKey* key,
                                                   bool withInterpolation)
     {
-      return poseHistory_.ComputeAndInsertPoseAt(t_request, t, p, withInterpolation);
+      return poseHistory_.ComputeAndInsertPoseAt(t_request, t, p, key, withInterpolation);
     }
 
     Result Robot::GetVisionOnlyPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p)
@@ -730,11 +731,16 @@ namespace Anki {
       return poseHistory_.GetVisionOnlyPoseAt(t_request, p);
     }
 
-    Result Robot::GetComputedPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p)
+    Result Robot::GetComputedPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p, HistPoseKey* key)
     {
-      return poseHistory_.GetComputedPoseAt(t_request, p);
+      return poseHistory_.GetComputedPoseAt(t_request, p, key);
     }
 
+    bool Robot::IsValidPoseKey(const HistPoseKey key) const
+    {
+      return poseHistory_.IsValidPoseKey(key);
+    }
+    
     void Robot::UpdateCurrPoseFromHistory()
     {
       TimeStamp_t t;
