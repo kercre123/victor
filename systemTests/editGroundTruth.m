@@ -203,7 +203,7 @@ function pose_next3_Callback(~, ~, ~)
     fixBounds();
     poseChanged(true);
 
-function pose_current_Callback(~, ~, ~)
+function pose_current_Callback(hObject, ~, ~)
     global curPoseIndex;
     curPoseIndex = str2double(get(hObject,'String'));
     fixBounds();
@@ -245,7 +245,7 @@ function marker_previous3_Callback(~, ~, ~)
     fixBounds();
     poseChanged(false);
 
-function marker_current_Callback(~, ~, ~)
+function marker_current_Callback(hObject, ~, ~)
     global curMarkerIndex;
     curMarkerIndex = str2double(get(hObject,'String'));
     fixBounds();
@@ -305,7 +305,7 @@ function resolutionVertical_Callback(hObject, ~, ~)
     resolutionVertical = str2double(get(hObject,'String'));
     poseChanged(true);
 
-function marker_clearAll_Callback(hObject, eventdata, handles)
+function marker_clearAll_Callback(~, ~, ~)
     global jsonTestData;
     global curPoseIndex;
 

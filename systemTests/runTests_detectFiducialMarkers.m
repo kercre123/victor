@@ -14,8 +14,9 @@ maxMatchDistance_pixels = 5;
 maxMatchDistance_percent = 0.2;
 
 showImageDetections = true;
+showImageDetectionWidth = 640;
 
-recompileBasics = false;
+recompileBasics = true;
 basicsFilename = 'basicsResults.mat';
 markerDirectoryList = {'Z:/Documents/Box Documents/Cozmo SE/VisionMarkers/symbols/withFiducials/', 'Z:/Documents/Box Documents/Cozmo SE/VisionMarkers/letters/withFiducials', 'Z:/Documents/Box Documents/Cozmo SE/VisionMarkers/dice/withFiducials'};
 
@@ -34,13 +35,13 @@ if showImageDetections
     close 1
 end
 
-allCompiledResults = compileStats(resultsData, testPath, allTestFilenames, testFunctions, testFunctionNames, resultsDirectory, showImageDetections);
+allCompiledResults = compileStats(resultsData, testPath, allTestFilenames, testFunctionNames, resultsDirectory, showImageDetections, showImageDetectionWidth);
 
 save([resultsDirectory, 'allCompiledResults.mat'], 'allCompiledResults');
 
 keyboard
 
-function allCompiledResults = compileStats(resultsData, testPath, allTestFilenames, testFunctions, testFunctionNames, resultsDirectory, showImageDetections)
+function allCompiledResults = compileStats(resultsData, testPath, allTestFilenames, testFunctionNames, resultsDirectory, showImageDetections, showImageDetectionWidth)
 % TODO: At different distances / angles
 
 global useImpixelinfo;
@@ -50,6 +51,8 @@ if exist('useImpixelinfo', 'var')
 else
     old_useImpixelinfo = -1;
 end
+
+showImageDetectionsScale = 1;
 
 allCompiledResults = cell(length(resultsData), 1);
 
@@ -66,7 +69,7 @@ for iTest = 1:length(resultsData)
         
         for iTestFunction = 1:length(allCompiledResults{iTest}{iPose})
             curResultsData = resultsData{iTest}{iPose}{iTestFunction};
-            
+                        
             if showImageDetections
                 image = imread([testPath, jsonData.Poses{iPose}.ImageFile]);
                 
@@ -78,6 +81,13 @@ for iTest = 1:length(resultsData)
                 hold off;
                 
                 useImpixelinfo = false;
+                                
+                if showImageDetectionWidth(1) ~= size(image,2)
+                    showImageDetectionsScale = showImageDetectionWidth(1) / size(image,2);                    
+                    imageWithBorder = imresize(imageWithBorder, size(imageWithBorder)*showImageDetectionsScale, 'nearest');
+                else
+                    showImageDetectionsScale = 1;                    
+                end
                 
                 imshow(imageWithBorder);
                 
@@ -91,9 +101,9 @@ for iTest = 1:length(resultsData)
             end % if showImageDetections
             
             
-            [curCompiled.numQuadsTotal, curCompiled.numQuadsDetected] = compileQuadResults(curResultsData, showImageDetections);
+            [curCompiled.numQuadsTotal, curCompiled.numQuadsDetected] = compileQuadResults(curResultsData, showImageDetections, showImageDetectionsScale);
             
-            [curCompiled.numCorrect_positionLabelRotation, curCompiled.numCorrect_positionLabel, curCompiled.numCorrect_position, curCompiled.numSpurriousDetections, curCompiled.numUndetected] = compileMarkerResults(curResultsData, showImageDetections);
+            [curCompiled.numCorrect_positionLabelRotation, curCompiled.numCorrect_positionLabel, curCompiled.numCorrect_position, curCompiled.numSpurriousDetections, curCompiled.numUndetected] = compileMarkerResults(curResultsData, showImageDetections, showImageDetectionsScale);
             
             allCompiledResults{iTest}{iPose}{iTestFunction} = curCompiled;
             
@@ -108,7 +118,7 @@ for iTest = 1:length(resultsData)
                     curCompiled.numCorrect_positionLabelRotation, curCompiled.numCorrect_positionLabel, curCompiled.numCorrect_position, curCompiled.numQuadsDetected, curCompiled.numQuadsTotal,...
                     curCompiled.numSpurriousDetections);
                 
-                text(0, size(image,1) + 25, resultsText, 'Color', 'r');
+                text(0, size(image,1)*showImageDetectionsScale, resultsText, 'Color', [.95,.95,.95], 'FontSize', 8*showImageDetectionsScale, 'VerticalAlignment', 'top');
                 
                 outputFilename = [resultsDirectory, sprintf('detection_dist%d_angle%d_expose%0.1f_light%d_%s.png',...
                     jsonData.Poses{iPose}.Scene.Distance,...
@@ -130,7 +140,7 @@ for iTest = 1:length(resultsData)
     end % for iPose = 1:length(allCompiledResults{iTest})
 end % for iTest = 1:length(resultsData)
 
-function [numTotal, numGood] = compileQuadResults(curResultsData, showImageDetections)
+function [numTotal, numGood] = compileQuadResults(curResultsData, showImageDetections, showImageDetectionsScale)
 global maxMatchDistance_pixels;
 global maxMatchDistance_percent;
 
@@ -154,12 +164,12 @@ end % for iQuad = 1:numTotal
 
 if showImageDetections
     for iQuad = 1:length(curResultsData.detectedQuads)
-        plot(curResultsData.detectedQuads{iQuad}([1,2,4,3,1],1), curResultsData.detectedQuads{iQuad}([1,2,4,3,1],2), 'Color', [.95,.95,.95], 'LineWidth', 3);
-        plot(curResultsData.detectedQuads{iQuad}([1,2,4,3,1],1), curResultsData.detectedQuads{iQuad}([1,2,4,3,1],2), 'Color', [0,0,0], 'LineWidth', 1);
+        plot(curResultsData.detectedQuads{iQuad}([1,2,4,3,1],1)*showImageDetectionsScale, curResultsData.detectedQuads{iQuad}([1,2,4,3,1],2)*showImageDetectionsScale, 'Color', [.95,.95,.95], 'LineWidth', 3); % .95 not 1, because printing converts pure white into pure black
+        plot(curResultsData.detectedQuads{iQuad}([1,2,4,3,1],1)*showImageDetectionsScale, curResultsData.detectedQuads{iQuad}([1,2,4,3,1],2)*showImageDetectionsScale, 'Color', [0,0,0], 'LineWidth', 1);
     end
 end % if showImageDetections
 
-function [numCorrect_positionLabelRotation, numCorrect_positionLabel, numCorrect_position, numSpurriousDetections, numUndetected] = compileMarkerResults(curResultsData, showImageDetections)
+function [numCorrect_positionLabelRotation, numCorrect_positionLabel, numCorrect_position, numSpurriousDetections, numUndetected] = compileMarkerResults(curResultsData, showImageDetections, showImageDetectionsScale)
 global maxMatchDistance_pixels;
 global maxMatchDistance_percent;
 
@@ -189,21 +199,21 @@ for iMarker = 1:length(curResultsData.markerNames_groundTruth)
                 numCorrect_position = numCorrect_position + 1;
                 
                 if showImageDetections
-                    plotOneMarker(curResultsData.detectedMarkers{matchIndex}.corners, curResultsData.markerNames_detected{matchIndex}(8:end), 'g', 'k');
+                    plotOneMarker(curResultsData.detectedMarkers{matchIndex}.corners, curResultsData.markerNames_detected{matchIndex}(8:end), showImageDetectionsScale, 'g', 'k');
                 end
             else
                 numCorrect_positionLabel = numCorrect_positionLabel + 1;
                 numCorrect_position = numCorrect_position + 1;
                 
                 if showImageDetections
-                    plotOneMarker(curResultsData.detectedMarkers{matchIndex}.corners, curResultsData.markerNames_detected{matchIndex}(8:end), 'b', 'k');
+                    plotOneMarker(curResultsData.detectedMarkers{matchIndex}.corners, curResultsData.markerNames_detected{matchIndex}(8:end), showImageDetectionsScale, 'b', 'k');
                 end
             end
         else
             numCorrect_position = numCorrect_position + 1;
             
             if showImageDetections
-                plotOneMarker(curResultsData.detectedMarkers{matchIndex}.corners, curResultsData.markerNames_detected{matchIndex}(8:end), 'y', 'k');
+                plotOneMarker(curResultsData.detectedMarkers{matchIndex}.corners, curResultsData.markerNames_detected{matchIndex}(8:end), showImageDetectionsScale, 'y', 'k');
             end
         end
     else
@@ -218,33 +228,22 @@ for iMarker = 1:length(curResultsData.markerNames_detected)
         numSpurriousDetections = numSpurriousDetections + 1;
         
         if showImageDetections
-            plotOneMarker(curResultsData.detectedMarkers{iMarker}.corners, curResultsData.markerNames_detected{iMarker}(8:end), 'r', 'k');
+            plotOneMarker(curResultsData.detectedMarkers{iMarker}.corners, curResultsData.markerNames_detected{iMarker}(8:end), showImageDetectionsScale, 'r', 'k');
         end
     end
 end
 
-function plotOneMarker(corners, name, quadColor, topBarColor)
-% sortedXValues = sortrows([curResultsData.detectedMarkers{iMarker}.corners(:,1)'; 1:4]', 1);
-%
-% firstCorner = sortedXValues(1,2);
-% secondCorner = sortedXValues(2,2);
-%
-% plot(curResultsData.detectedMarkers{iMarker}.corners([1,2,4,3,1],1), curResultsData.detectedMarkers{iMarker}.corners([1,2,4,3,1],2), 'g', 'LineWidth', 3);
-% plot(curResultsData.detectedMarkers{iMarker}.corners([1,3],1), curResultsData.detectedMarkers{iMarker}.corners([1,3],2), 'b', 'LineWidth', 3);
-% midX = (curResultsData.detectedMarkers{iMarker}.corners(firstCorner,1) + curResultsData.detectedMarkers{iMarker}.corners(secondCorner,1)) / 2;
-% midY = (curResultsData.detectedMarkers{iMarker}.corners(firstCorner,2) + curResultsData.detectedMarkers{iMarker}.corners(secondCorner,2)) / 2;
-% text(midX + 5, midY, curResultsData.markerNames_detected{iMarker}(8:end), 'Color', 'g');
-
+function plotOneMarker(corners, name, showImageDetectionsScale, quadColor, topBarColor)
 sortedXValues = sortrows([corners(:,1)'; 1:4]', 1);
 
 firstCorner = sortedXValues(1,2);
 secondCorner = sortedXValues(2,2);
 
-plot(corners([1,2,4,3,1],1), corners([1,2,4,3,1],2), quadColor, 'LineWidth', 3);
-plot(corners([1,3],1), corners([1,3],2), topBarColor, 'LineWidth', 3);
+plot(corners([1,2,4,3,1],1)*showImageDetectionsScale, corners([1,2,4,3,1],2)*showImageDetectionsScale, quadColor, 'LineWidth', 3);
+plot(corners([1,3],1)*showImageDetectionsScale, corners([1,3],2)*showImageDetectionsScale, topBarColor, 'LineWidth', 3);
 midX = (corners(firstCorner,1) + corners(secondCorner,1)) / 2;
 midY = (corners(firstCorner,2) + corners(secondCorner,2)) / 2;
-text(midX + 5, midY, name, 'Color', quadColor);
+text(midX*showImageDetectionsScale + 5, midY*showImageDetectionsScale, name, 'Color', quadColor);
 
 function [resultsData, testPath, allTestFilenames, testFunctions, testFunctionNames] = computeBasics(markerDirectoryList, testJsonPattern)
 global rotationList;
