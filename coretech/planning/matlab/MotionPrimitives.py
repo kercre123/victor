@@ -496,7 +496,7 @@ def fixPose_mm(oldPose):
 class MotionPrimitive:
     "A primitive for a given starting angle and action"
 
-    def __init__(self, actionIndex, endPose, l):
+    def __init__(self, actionIndex, endPose=None, l=None):
         self.endPose = endPose
         self.l = l # length in mm
         self.intermediatePoses = []
