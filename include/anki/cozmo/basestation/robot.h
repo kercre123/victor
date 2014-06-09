@@ -70,9 +70,7 @@ namespace Anki {
       void queueIncomingMessage(const u8 *msg, const u8 msgSize);
       bool hasOutgoingMessages() const;
       void getOutgoingMessage(u8 *msgOut, u8 &msgSize);
-      
-      void dockWithBlock(const Block& block);
-      
+            
       Result GetPathToPose(const Pose3d& pose, Planning::Path& path);
       Result ExecutePathToPose(const Pose3d& pose);
       

@@ -667,19 +667,6 @@ namespace Anki
     {
       obsMarkers_.clear();
     }
-    
-    void BlockWorld::CommandRobotToDock(const RobotID_t whichRobot,
-                                        const Block&    whichBlock)
-    {
-      Robot* robot = robotMgr_->GetRobotByID(whichRobot);
-      if(robot != 0)
-      {
-        robot->dockWithBlock(whichBlock);
-        
-      } else {
-        CoreTechPrint("Invalid robot commanded to Dock.\n");
-      }
-    } // commandRobotToDock()
 
     void BlockWorld::ClearAllExistingBlocks() {
       existingBlocks_.clear();

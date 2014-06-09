@@ -63,9 +63,6 @@ namespace Anki
       void QueueObservedMarker(const Vision::ObservedMarker& marker);
                                //Robot* seenByRobot);
       
-      void CommandRobotToDock(const RobotID_t whichRobot,
-                              const Block&    whichBlock);
-      
       // Clears all existing blocks in the world
       void ClearAllExistingBlocks();
       
