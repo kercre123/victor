@@ -584,7 +584,7 @@ namespace Anki
           // This shouldn't happen! If it does, robotStateMsgs may be buffering up somewhere.
           // Increasing history time window would fix this, but it's not really a solution.
           for(auto poseKeyMarkerPair = obsMarkersAtTimestamp.begin(); poseKeyMarkerPair != obsMarkersAtTimestamp.end();) {
-            if ((poseKeyMarkerPair->second.GetSeenBy().get_id() == robot->get_camHead().get_id()) &&
+            if ((poseKeyMarkerPair->second.GetSeenBy().GetId() == robot->get_camHead().GetId()) &&
                 !robot->IsValidPoseKey(poseKeyMarkerPair->first)) {
               PRINT_NAMED_WARNING("BlockWorld.Update.InvalidHistPoseKey", "key=%d\n", poseKeyMarkerPair->first);
               poseKeyMarkerPair = obsMarkersAtTimestamp.erase(poseKeyMarkerPair++);
