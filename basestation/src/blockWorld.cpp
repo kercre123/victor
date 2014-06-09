@@ -345,7 +345,7 @@ namespace Anki
       // Get all mat objects *seen by this robot's camera*
       std::vector<Vision::ObservableObject*> matsSeen;
       matLibrary_.CreateObjectsFromMarkers(obsMarkersAtTimestamp, matsSeen,
-                                           (robot->get_camHead().get_id()));
+                                           (robot->get_camHead().GetId()));
       
       // TODO: what to do when a robot sees multiple mat pieces at the same time
       if(not matsSeen.empty()) {

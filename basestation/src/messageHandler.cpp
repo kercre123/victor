@@ -183,7 +183,7 @@ namespace Anki {
           camPose.set_parent(&(p->GetPose()));
           
           // Update the head camera's pose
-          camera.set_pose(camPose);
+          camera.SetPose(camPose);
 
           // Create observed marker
           Vision::ObservedMarker marker(t, msg.markerType, corners, camera);

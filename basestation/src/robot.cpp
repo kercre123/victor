@@ -184,7 +184,7 @@ namespace Anki {
       newHeadPose.rotateBy(Rvec);
       
       // Update the head camera's pose
-      this->camHead.set_pose(newHeadPose);
+      this->camHead.SetPose(newHeadPose);
       
     } // set_headAngle()
 

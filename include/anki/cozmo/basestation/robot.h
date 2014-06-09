@@ -316,7 +316,7 @@ namespace Anki {
     { return this->mode; }
     
     inline void Robot::set_camCalibration(const Vision::CameraCalibration& calib)
-    { this->camHead.set_calibration(calib); }
+    { this->camHead.SetCalibration(calib); }
     
     inline bool Robot::hasOutgoingMessages() const
     { return not this->messagesOut.empty(); }
