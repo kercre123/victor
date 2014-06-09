@@ -27,6 +27,11 @@ namespace Anki {
     {
     public:
       virtual Result GetPlan(Planning::Path &path, const Pose3d &startPose, const Pose3d &targetPose) = 0;
+
+      // Replan if needed because the environment changed. Returns
+      // true if there is a new path, otherwise it doesn't update the
+      // path and returns false. Assumes the goal pose didn't change
+      virtual bool ReplanIfNeeded(Planning::Path &path, const Pose3d& startPose) {return false;};
       
     }; // Interface IPathPlanner
 
@@ -43,7 +48,8 @@ namespace Anki {
       
     }; // class PathPlanner
 
-  class LatticePlannerImpl;
+    class LatticePlannerImpl;
+
     class LatticePlanner : public IPathPlanner
     {
     public:
@@ -51,6 +57,8 @@ namespace Anki {
       virtual ~LatticePlanner();
       
       virtual Result GetPlan(Planning::Path &path, const Pose3d &startPose, const Pose3d &targetPose);
+
+      virtual bool ReplanIfNeeded(Planning::Path &path, const Pose3d& startPose);
 
     protected:
       LatticePlannerImpl* impl_;

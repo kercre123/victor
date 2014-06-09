@@ -120,11 +120,29 @@ namespace Anki {
       // TODO: State update
       // ...
       
+      static bool wasTraversingPath = false;
       
+      // If the robot is traversing a path, consider replanning it
+      // TODO:(bn) only check this if the blocks have been updated
+      if(IsTraversingPath()) {
+        Planning::Path newPath;
+        if(pathPlanner_->ReplanIfNeeded(newPath, get_pose())) {
+          path_.Clear();
+          VizManager::getInstance()->ErasePath(ID_);
+          wasTraversingPath = false;
+
+          PRINT_NAMED_INFO("Robot.Update.ClearPath", "sending message to clear old path");
+          MessageClearPath clearMessage;
+          msgHandler_->SendMessage(ID_, clearMessage);
+
+          path_ = newPath;
+          PRINT_NAMED_INFO("Robot.Update.UpdatePath", "sending new path to robot");
+          SendExecutePath(path_);
+        }
+      }
      
       // Visualize path if robot has just started traversing it.
       // Clear the path when it has stopped.
-      static bool wasTraversingPath = false;
       if (!wasTraversingPath && IsTraversingPath() && path_.GetNumSegments() > 0) {
         VizManager::getInstance()->DrawPath(ID_,path_,VIZ_COLOR_EXECUTED_PATH);
         wasTraversingPath = true;
