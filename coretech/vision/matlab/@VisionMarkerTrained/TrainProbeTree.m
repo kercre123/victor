@@ -468,7 +468,7 @@ end
 
 [numMain, numVerify] = VisionMarkerTrained.GetNumTreeNodes();
 fprintf('Training complete. Used %d main tree nodes + %d verification nodes.\n', ...
-    numMain, numVerif);
+    numMain, numVerify);
 
 %% Save Tree
 if saveTree

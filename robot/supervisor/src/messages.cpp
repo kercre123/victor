@@ -105,7 +105,7 @@ namespace Anki {
       void ProcessMessage(const ID msgID, const u8* buffer)
       {
         if(LookupTable_[msgID].dispatchFcn != NULL) {
-          PRINT("ProcessMessage(): Dispatching message with ID=%d.\n", msgID);
+          //PRINT("ProcessMessage(): Dispatching message with ID=%d.\n", msgID);
           
           (*LookupTable_[msgID].dispatchFcn)(buffer);
         }
@@ -173,35 +173,42 @@ namespace Anki {
 // #pragma --- Message Dispatch Functions ---
       
       
-      void ProcessRobotAddedToWorldMessage(const RobotAddedToWorld& msg)
+      void ProcessRobotInitMessage(const RobotInit& msg)
       {
-        /* XXX - RobotIDs are not available in real HAL, so this should be rethought
-        if(msg.robotID != HAL::GetRobotID()) {
-          PRINT("Robot received ADDED_TO_WORLD handshake with "
-                " wrong robotID (%d instead of %d).\n",
-                msg.robotID, HAL::GetRobotID());
-        }*/
+   
+        PRINT("Robot received init message from basestation with ID=%d and syncTime=%d.\n",
+              msg.robotID, msg.syncTime);
         
-        PRINT("Robot received handshake from basestation, "
-              "sending camera calibration.\n");
-        const HAL::CameraInfo *headCamInfo = HAL::GetHeadCamInfo();
+        // TODO: Compare message ID to robot ID as a handshake?
         
-        //
-        // Send head camera calibration
-        //
-        //   TODO: do we send x or y focal length, or both?
-        HeadCameraCalibration headCalibMsg = {
-          headCamInfo->focalLength_x,
-          headCamInfo->focalLength_y,
-          headCamInfo->center_x,
-          headCamInfo->center_y,
-          headCamInfo->skew,
-          headCamInfo->nrows,
-          headCamInfo->ncols};
+        // Poor-man's time sync to basestation, for now.
+        HAL::SetTimeStamp(msg.syncTime);
         
-        HAL::RadioSendMessage(GET_MESSAGE_ID(HeadCameraCalibration), &headCalibMsg);
+        // Send back camera calibration
+        const HAL::CameraInfo* headCamInfo = HAL::GetHeadCamInfo();
+        if(headCamInfo == NULL) {
+          PRINT("NULL HeadCamInfo retrieved from HAL.\n");
+        }
+        else {
+          Messages::HeadCameraCalibration headCalibMsg = {
+            headCamInfo->focalLength_x,
+            headCamInfo->focalLength_y,
+            headCamInfo->center_x,
+            headCamInfo->center_y,
+            headCamInfo->skew,
+            headCamInfo->nrows,
+            headCamInfo->ncols
+          };
+          
+          
+          if(!HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::HeadCameraCalibration),
+                                    &headCalibMsg))
+          {
+            PRINT("Failed to send camera calibration message.\n");
+          }
+        }
         
-      } // ProcessRobotAddedMessage()
+      } // ProcessRobotInit()
       
       
       void ProcessAbsLocalizationUpdateMessage(const AbsLocalizationUpdate& msg)
@@ -240,33 +247,6 @@ namespace Anki {
         
       } // ProcessAbsLocalizationUpdateMessage()
       
-      
-      void ProcessRequestCamCalibMessage(const RequestCamCalib& msg)
-      {
-        const HAL::CameraInfo* headCamInfo = HAL::GetHeadCamInfo();
-        if(headCamInfo == NULL) {
-          PRINT("NULL HeadCamInfo retrieved from HAL.\n");
-        }
-        else {
-          Messages::HeadCameraCalibration headCalibMsg = {
-            headCamInfo->focalLength_x,
-            headCamInfo->focalLength_y,
-            headCamInfo->center_x,
-            headCamInfo->center_y,
-            headCamInfo->skew,
-            headCamInfo->nrows,
-            headCamInfo->ncols
-          };
-          
-          
-          if(!HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::HeadCameraCalibration),
-                                   &headCalibMsg))
-          {
-            PRINT("Failed to send camera calibration message.\n");
-          }
-        }
-
-      }
       
       void ProcessDockingErrorSignalMessage(const DockingErrorSignal& msg)
       {
@@ -346,8 +326,13 @@ namespace Anki {
         
         // Do not process external drive commands if following a test path
         if (PathFollower::IsTraversingPath()) {
+          PRINT("Ignoring DriveWheels message because robot is currently following a path.\n");
           return;
         }
+        
+        //PRINT("Executing DriveWheels message: left=%f, right=%f\n",
+        //      msg.lwheel_speed_mmps, msg.rwheel_speed_mmps);
+        
         //PathFollower::ClearPath();
         SteeringController::ExecuteDirectDrive(msg.lwheel_speed_mmps, msg.rwheel_speed_mmps);
       }

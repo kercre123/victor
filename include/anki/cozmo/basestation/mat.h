@@ -1,3 +1,18 @@
+/**
+ * File: mat.h
+ *
+ * Author: Andrew Stein
+ * Date:   (various)
+ *
+ * Description: Defines a MatPiece object, which is a "mat" that Cozmo drives 
+ *              around on with VisionMarkers at known locations for localization.
+ *
+ *              MatPiece inherits from the generic Vision::ObservableObject.
+ *
+ *
+ * Copyright: Anki, Inc. 2014
+ **/
+
 #ifndef __Products_Cozmo__Mat__
 #define __Products_Cozmo__Mat__
 
@@ -7,10 +22,10 @@ namespace Anki {
   
   namespace Cozmo {
 
-    class MatPiece : public Vision::ObservableObject //Base<MatPiece>
+    class MatPiece : public Vision::ObservableObject 
     {
     public:
-      MatPiece(ObjectType_t type) : Vision::ObservableObject(type) {};
+      MatPiece(ObjectType_t type);
       
       //virtual float GetMinDim() const {return 0;}
       

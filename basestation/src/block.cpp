@@ -25,6 +25,13 @@
 namespace Anki {
   namespace Cozmo {
     
+    const std::string Block::IDtoStringLUT[NUM_BLOCK_TYPES] = {
+      "UNKNOWN_BLOCK_TYPE",
+#define BLOCK_DEFINITION_MODE BLOCK_ID_TO_STRING_LUT_MODE
+#include "anki/cozmo/basestation/BlockDefinitions.h"
+    };
+
+    
     const Block::BlockInfoTableEntry_t Block::BlockInfoLUT_[NUM_BLOCK_TYPES] = {
       {.name = "UNKNOWN"}
 #define BLOCK_DEFINITION_MODE BLOCK_LUT_MODE

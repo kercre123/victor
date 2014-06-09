@@ -85,6 +85,10 @@ namespace Anki {
       // Sends a path to the robot to be immediately executed
       Result ExecutePath(const Planning::Path& path);
       
+      // True if wheel speeds are non-zero in most recent RobotState message
+      bool IsMoving() const {return isMoving_;}
+      void SetIsMoving(bool t) {isMoving_ = t;}
+      
       void SetCurrPathSegment(const s8 s) {currPathSegment_ = s;}
       s8 GetCurrPathSegment() {return currPathSegment_;}
       bool IsTraversingPath() {return currPathSegment_ >= 0;}
@@ -145,8 +149,9 @@ namespace Anki {
       // relevant state modifying functions. e.g. SendStopAllMotors() should be
       // called from StopAllMotors().
       
-      // Request camera calibration from robot
-      Result SendRequestCamCalib() const;
+      // Sync time with physical robot and trigger it robot to send back camera
+      // calibration
+      Result SendInit() const;
       
       // Send's robot's current pose
       Result SendAbsLocalizationUpdate() const;
@@ -159,6 +164,9 @@ namespace Anki {
 
       // Run a test mode
       Result SendStartTestMode(const TestMode mode) const;
+      
+      Quad2f GetBoundingQuadXY(const f32 paddingScale) const;
+      Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 paddingScale) const;
       
       
       // =========== Pose history =============
@@ -220,6 +228,7 @@ namespace Anki {
       bool setOperationMode(OperationMode newMode);
       bool isCarryingBlock_;
       bool isPickingOrPlacing_;
+      bool isMoving_;
       
       //std::vector<BlockMarker3d*>  visibleFaces;
       //std::vector<Block*>          visibleBlocks;
@@ -227,7 +236,7 @@ namespace Anki {
       // Pose history
       RobotPoseHistory poseHistory_;
 
-      
+      static const Quad2f CanonicalBoundingBoxXY;
       
       // Message handling
       typedef std::vector<u8> MessageType;
@@ -310,7 +319,7 @@ namespace Anki {
     { return this->mode; }
     
     inline void Robot::set_camCalibration(const Vision::CameraCalibration& calib)
-    { this->camHead.set_calibration(calib); }
+    { this->camHead.SetCalibration(calib); }
     
     inline bool Robot::hasOutgoingMessages() const
     { return not this->messagesOut.empty(); }

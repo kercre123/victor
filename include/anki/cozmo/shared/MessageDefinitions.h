@@ -242,10 +242,6 @@ ADD_MESSAGE_MEMBER(f32, yPosition)
 ADD_MESSAGE_MEMBER(f32, headingAngle)
 END_MESSAGE_DEFINITION(AbsLocalizationUpdate)
 
-// RequestCamCalib
-START_TIMESTAMPED_MESSAGE_DEFINITION(RequestCamCalib, 1)
-END_MESSAGE_DEFINITION(RequestCamCalib)
-
 // Common Camera Calibration Message Members:
 // TODO: Assume zero skew and remove that member?
 #define ADD_COMMON_CAMERA_CALIBRATION_MEMBERS \
@@ -273,11 +269,12 @@ ADD_MESSAGE_MEMBER(u32, robotID)
 // TODO: Add other members here?
 END_MESSAGE_DEFINITION(RobotAvailable)
 
-// RobotAddedToWorld
-START_MESSAGE_DEFINITION(RobotAddedToWorld, 1)
+// RobotInit
+START_MESSAGE_DEFINITION(RobotInit, 1)
 ADD_MESSAGE_MEMBER(u32, robotID)
+ADD_MESSAGE_MEMBER(u32, syncTime)
 // TODO: Add other members here?
-END_MESSAGE_DEFINITION(RobotAddedToWorld)
+END_MESSAGE_DEFINITION(RobotInit)
 
 /*
 // TemplateInitialized

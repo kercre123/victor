@@ -60,7 +60,12 @@ namespace Anki {
       // Return a const reference to a vector all this object's Markers with the
       // specified code. The returned vector will be empty if there are no markers
       // with that code.
-      std::vector<const KnownMarker*> const& GetMarkersWithCode(const Marker::Code& whichCode) const;
+      std::vector<KnownMarker*> const& GetMarkersWithCode(const Marker::Code& whichCode) const;
+      
+      // Pupolate a vector of const pointers to all this object's markers that
+      // have been observed.  The vector will be empty if no markers are set as
+      // observed.
+      void GetObservedMarkers(std::vector<const KnownMarker*>& observedMarkers) const;
 
       // Add possible poses implied by seeing the observed marker to the list.
       // Each pose will be paired with a pointer to the known marker on this
@@ -72,6 +77,8 @@ namespace Anki {
       
       bool GetWhetherObserved(void) const;
       void SetWhetherObserved(bool wasObserved);
+      
+      void SetMarkersAsObserved(const Marker::Code& withCode);
       
       // Return true if any of the object's markers is visible from the given
       // camera. See also KnownMarker::IsVisibleFrom().
@@ -116,7 +123,7 @@ namespace Anki {
     protected:
       
       //static const std::vector<RotationMatrix3d> rotationAmbiguities_;
-      static const std::vector<const KnownMarker*> sEmptyMarkerVector;
+      static const std::vector<KnownMarker*> sEmptyMarkerVector;
       
       ObjectType_t type_;
       ObjectID_t   ID_;
@@ -128,7 +135,7 @@ namespace Anki {
       
       // Holds a LUT (by code) to all the markers of this object which have that
       // code.
-      std::map<Marker::Code, std::vector<const KnownMarker*> > markersWithCode_;
+      std::map<Marker::Code, std::vector<KnownMarker*> > markersWithCode_;
       
       Pose3d pose_;
       
@@ -271,7 +278,7 @@ namespace Anki {
       class PoseCluster
       {
       public:
-        typedef std::list<std::pair<const ObservedMarker*, KnownMarker> > MatchList;
+        using MatchList = std::list<std::pair<const ObservedMarker*, KnownMarker> >;
         
         PoseCluster(const PoseMatchPair& match);
         
@@ -283,7 +290,7 @@ namespace Anki {
         const Pose3d& GetPose() const { return pose_; }
         const size_t  GetSize() const { return matches_.size(); }
         
-        const MatchList& GetMatches() const;
+        const MatchList& GetMatches() const { return matches_; }
         
         // Updates pose based on all member matches. Does nothing if there is
         // only one member.

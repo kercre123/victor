@@ -93,7 +93,7 @@ GTEST_TEST(PoseEstimation, FromQuads)
                                   0.f);           // skew
 
   Vision::Camera camera;
-  camera.set_calibration(calib);
+  camera.SetCalibration(calib);
   
   Quad2f proj;
   camera.Project3dPoints(marker3d_atPose, proj);
@@ -145,55 +145,6 @@ GTEST_TEST(Camera, VisibilityAndOcclusion)
   // Create a camera looking at several objects, check to see that expected
   // objects are visible / occluded
   
-  // Create a very simple test object derived from (abstract) ObservableObject.
-  // It's just a quad with a single marker on it, the same size as the object
-  // itself.
-  class TestObject : public Vision::ObservableObject
-  {
-  public:
-    TestObject(const f32 size, const Vision::Marker::Code& withCode, const Pose3d& atPose)
-    : _size(size)
-    , _marker( AddMarker(withCode, Pose3d(), _size) )
-    , _quad( _marker.Get3dCorners() )
-    {
-      SetPose(atPose);
-    }
-    
-    TestObject(const TestObject& other)
-    : TestObject(_size, _marker.GetCode(), other.GetPose())
-    {
-    
-    }
-    
-    virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const override
-    {
-      return _EmptyRotationAmbiguities;
-    }
-    
-    virtual TestObject* Clone() const override
-    {
-      // Call the copy constructor
-      return new TestObject(*this);
-    }
-    
-    virtual void GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const override
-    {
-      using namespace Quad;
-      corners.clear();
-      for(CornerName iCorner = FirstCorner; iCorner != NumCorners; ++iCorner) {
-        corners.emplace_back(atPose * _quad[iCorner]);
-      }
-    }
-    
-  protected:
-    const f32                   _size;
-    const Vision::KnownMarker&  _marker;
-    const Quad3f                _quad;
-    
-    const std::vector<RotationMatrix3d> _EmptyRotationAmbiguities;
-    
-  }; // class TestObject
-  
   const Pose3d camPose(0.f, Z_AXIS_3D, {{0.f, 0.f, 0.f}});
   
   const Vision::CameraCalibration calib(240, 320,
@@ -204,9 +155,9 @@ GTEST_TEST(Camera, VisibilityAndOcclusion)
   
   // Note that object pose is in camera coordinates
   const Pose3d obj1Pose(M_PI_2, X_AXIS_3D, {{0.f, 0.f, 100.f}});
-  TestObject object1(15.f, 0, obj1Pose);
+  Vision::KnownMarker object1(0, obj1Pose, 15.f);
 
-  camera.AddOccluder(&object1);
+  camera.AddOccluder(object1);
   
   // For readability below:
   const bool RequireObjectBehind      = true;
@@ -224,9 +175,9 @@ GTEST_TEST(Camera, VisibilityAndOcclusion)
   
   // Add another object behind first, again in camera coordinates
   const Pose3d obj2Pose(M_PI_2, X_AXIS_3D, {{0.f, 0.f, 150.f}});
-  TestObject object2(20.f, 0, obj2Pose);
+  Vision::KnownMarker object2(0, obj2Pose, 20.f);
   
-  camera.AddOccluder(&object2);
+  camera.AddOccluder(object2);
   
   // Now, object2 is behind object 1...
   // ... we expect object2 not to be visible, irrespective of the

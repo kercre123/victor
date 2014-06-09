@@ -1,8 +1,9 @@
 
 #ifndef BLOCK_DEFINITION_MODE
 
-#define BLOCK_ENUM_MODE 0
-#define BLOCK_LUT_MODE  1
+#define BLOCK_ENUM_MODE              0
+#define BLOCK_LUT_MODE               1
+#define BLOCK_ID_TO_STRING_LUT_MODE  2
 
 #define START_BLOCK_DEFINITION(__NAME__, __SIZE__, __COLOR__)
 #define ADD_FACE_CODE(__WHICHFACE__, __SIZE__, __CODE__)
@@ -16,12 +17,20 @@
 #undef ADD_ALL_FACES
 #undef END_BLOCK_DEFINITION
 
+//
+// Block ID Enumeration Mode
+//
 #if BLOCK_DEFINITION_MODE == BLOCK_ENUM_MODE
+
 #define START_BLOCK_DEFINITION(__NAME__, __SIZE__, __COLOR__) __NAME__##_BLOCK_TYPE,
 #define ADD_FACE_CODE(__WHICHFACE__, __SIZE__, __CODE__)
 #define END_BLOCK_DEFINITION
 
+//
+// Block Property LUT Mode
+//
 #elif BLOCK_DEFINITION_MODE == BLOCK_LUT_MODE
+
 #define UNWRAP(...) __VA_ARGS__
 #define START_BLOCK_DEFINITION(__NAME__, __SIZE__, __COLOR__) \
 ,{.name = QUOTE(__NAME__), .color = {UNWRAP __COLOR__}, .size = {UNWRAP __SIZE__}, .faces = {
@@ -31,6 +40,18 @@
 
 #define END_BLOCK_DEFINITION  } }
 
+//
+// Block ID to String LUT Mode
+//
+#elif BLOCK_DEFINITION_MODE == BLOCK_ID_TO_STRING_LUT_MODE
+
+#define START_BLOCK_DEFINITION(__NAME__, __SIZE__, __COLOR__) QUOTE(__NAME__##_BLOCK_TYPE),
+#define ADD_FACE_CODE(__WHICHFACE__, __SIZE__, __CODE__)
+#define END_BLOCK_DEFINITION
+
+//
+// Unknown mode! (Error)
+//
 #else
 #error Unknown BLOCK_DEFINITION_MODE!
 

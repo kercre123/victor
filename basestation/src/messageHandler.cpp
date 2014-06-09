@@ -184,7 +184,7 @@ namespace Anki {
           camPose.set_parent(&(p->GetPose()));
           
           // Update the head camera's pose
-          camera.set_pose(camPose);
+          camera.SetPose(camPose);
 
           // Create observed marker
           Vision::ObservedMarker marker(t, msg.markerType, corners, camera);
@@ -256,6 +256,14 @@ namespace Anki {
       robot->SetCarryingBlock( msg.status & IS_CARRYING_BLOCK );
       robot->SetPickingOrPlacing( msg.status & IS_PICKING_OR_PLACING );
       
+      const f32 WheelSpeedToConsiderStopped = 2.f;
+      if(std::abs(msg.lwheel_speed_mmps) < WheelSpeedToConsiderStopped &&
+         std::abs(msg.rwheel_speed_mmps) < WheelSpeedToConsiderStopped)
+      {
+        robot->SetIsMoving(false);
+      } else {
+        robot->SetIsMoving(true);
+      }
       
       // Add to history
       if (robot->AddRawOdomPoseToHistory(msg.timestamp,
@@ -397,7 +405,7 @@ namespace Anki {
     Result MessageHandler::ProcessMessage(Robot* robot, MessageStopAllMotors const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageRobotAvailable const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageMatMarkerObserved const&){return RESULT_FAIL;}
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageRobotAddedToWorld const&){return RESULT_FAIL;}
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageRobotInit const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageAppendPathSegmentArc const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageAppendPathSegmentPointTurn const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageTrimPath const&){return RESULT_FAIL;}
@@ -407,7 +415,6 @@ namespace Anki {
     Result MessageHandler::ProcessMessage(Robot* robot, MessageAppendPathSegmentLine const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageBlockMarkerObserved const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageMatCameraCalibration const&){return RESULT_FAIL;}
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageRequestCamCalib const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageAbsLocalizationUpdate const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageHeadAngleUpdate const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageImageRequest const&){return RESULT_FAIL;}

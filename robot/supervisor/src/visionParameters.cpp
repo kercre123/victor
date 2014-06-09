@@ -42,7 +42,8 @@ namespace Anki {
         detectionWidth  = CameraModeInfo[detectionResolution].width;
         detectionHeight = CameraModeInfo[detectionResolution].height;
         
-        scaleImage_thresholdMultiplier = 65536; // 1.0*(2^16)=65536
+        // scaleImage_thresholdMultiplier = 65536; // 1.0*(2^16)=65536
+        scaleImage_thresholdMultiplier = 32768; // 0.5*(2^16)=32768
         scaleImage_numPyramidLevels = 3;
         
         component1d_minComponentWidth = 0;

@@ -95,7 +95,7 @@
    "NumBlocks" : 9,
    "Poses" : [
       {
-         "ImageFile" : "/Users/andrew/Code/products-cozmo/basestation/test/blockWorldTests/visionTest_RepeatedBlock0.png",
+         "ImageFile" : "basestation/test/blockWorldTests/visionTest_RepeatedBlock0.png",
          "NumMarkers" : 9,
          "RobotPose" : {
             "Angle" : 0.0,
@@ -106,7 +106,7 @@
          "VisionMarkers" : [
             {
                "Name" : "MessageVisionMarker",
-               "markerType" : 15,
+               "markerType" : "MARKER_BULLSEYE2",
                "timestamp" : 0,
                "x_imgLowerLeft" : 136.6257324218750,
                "x_imgLowerRight" : 136.4957122802734,
@@ -119,7 +119,7 @@
             },
             {
                "Name" : "MessageVisionMarker",
-               "markerType" : 15,
+               "markerType" : "MARKER_BULLSEYE2",
                "timestamp" : 0,
                "x_imgLowerLeft" : 28.92951583862305,
                "x_imgLowerRight" : 72.23732757568359,
@@ -132,7 +132,7 @@
             },
             {
                "Name" : "MessageVisionMarker",
-               "markerType" : 15,
+               "markerType" : "MARKER_BULLSEYE2",
                "timestamp" : 0,
                "x_imgLowerLeft" : 246.7899932861328,
                "x_imgLowerRight" : 289.8341979980469,
@@ -145,7 +145,7 @@
             },
             {
                "Name" : "MessageVisionMarker",
-               "markerType" : 15,
+               "markerType" : "MARKER_BULLSEYE2",
                "timestamp" : 0,
                "x_imgLowerLeft" : 135.8081817626953,
                "x_imgLowerRight" : 135.5608520507812,
@@ -158,7 +158,7 @@
             },
             {
                "Name" : "MessageVisionMarker",
-               "markerType" : 15,
+               "markerType" : "MARKER_BULLSEYE2",
                "timestamp" : 0,
                "x_imgLowerLeft" : 25.31465339660645,
                "x_imgLowerRight" : 70.00954437255859,
@@ -171,7 +171,7 @@
             },
             {
                "Name" : "MessageVisionMarker",
-               "markerType" : 15,
+               "markerType" : "MARKER_BULLSEYE2",
                "timestamp" : 0,
                "x_imgLowerLeft" : 247.683105468750,
                "x_imgLowerRight" : 248.9826354980469,
@@ -184,7 +184,7 @@
             },
             {
                "Name" : "MessageVisionMarker",
-               "markerType" : 15,
+               "markerType" : "MARKER_BULLSEYE2",
                "timestamp" : 0,
                "x_imgLowerLeft" : 20.95877265930176,
                "x_imgLowerRight" : 67.46427917480469,
@@ -197,7 +197,7 @@
             },
             {
                "Name" : "MessageVisionMarker",
-               "markerType" : 15,
+               "markerType" : "MARKER_BULLSEYE2",
                "timestamp" : 0,
                "x_imgLowerLeft" : 251.52832031250,
                "x_imgLowerRight" : 298.0324401855469,
@@ -210,7 +210,7 @@
             },
             {
                "Name" : "MessageVisionMarker",
-               "markerType" : 15,
+               "markerType" : "MARKER_BULLSEYE2",
                "timestamp" : 0,
                "x_imgLowerLeft" : 134.4082794189453,
                "x_imgLowerRight" : 184.5891723632812,
