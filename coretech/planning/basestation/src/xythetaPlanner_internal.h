@@ -25,10 +25,10 @@ struct xythetaPlannerImpl
 {
   xythetaPlannerImpl(const xythetaEnvironment& env);
 
-  void SetGoal(const State_c& goal);
-  void SetStart(const State_c& start);
+  bool SetGoal(const State_c& goal);
+  bool SetStart(const State_c& start);
 
-  void ComputePath();
+  bool ComputePath();
 
   // helper functions
 
@@ -48,6 +48,9 @@ struct xythetaPlannerImpl
   OpenList open_;
   StateTable table_;
 
+  bool hasStart_;
+  bool hasGoal_;
+  
   bool freeTurnInPlaceAtGoal_;
 
   xythetaPlan plan_;

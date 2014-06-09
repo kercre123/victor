@@ -229,6 +229,10 @@ public:
   // Returns an iterator to the successors from state "start"
   SuccessorIterator GetSuccessors(StateID startID, Cost currG) const;
 
+  // Returns true if there is a collision at the given state
+  bool IsInCollision(State s) const;
+  bool IsInCollision(State_c c) const;
+
   inline State_c State2State_c(const State& s) const;
   inline State_c StateID2State_c(StateID sid) const;
 

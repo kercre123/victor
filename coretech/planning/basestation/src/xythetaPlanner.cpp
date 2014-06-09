@@ -19,14 +19,14 @@ xythetaPlanner::~xythetaPlanner()
   _impl = NULL;
 }
 
-void xythetaPlanner::SetGoal(const State_c& goal)
+bool xythetaPlanner::SetGoal(const State_c& goal)
 {
-  _impl->SetGoal(goal);
+  return _impl->SetGoal(goal);
 }
 
-void xythetaPlanner::SetStart(const State_c& start)
+bool xythetaPlanner::SetStart(const State_c& start)
 {
-  _impl->SetStart(start);
+  return _impl->SetStart(start);
 }
 
 void xythetaPlanner::AllowFreeTurnInPlaceAtGoal(bool allow)
@@ -35,9 +35,9 @@ void xythetaPlanner::AllowFreeTurnInPlaceAtGoal(bool allow)
 }
 
 
-void xythetaPlanner::ComputePath()
+bool xythetaPlanner::ComputePath()
 {
-  _impl->ComputePath();
+  return _impl->ComputePath();
 }
 
 const xythetaPlan& xythetaPlanner::GetPlan() const
@@ -55,29 +55,56 @@ xythetaPlannerImpl::xythetaPlannerImpl(const xythetaEnvironment& env)
   : env_(env),
     start_(0,0,0),
     searchNum_(0),
-    freeTurnInPlaceAtGoal_(false)
+    freeTurnInPlaceAtGoal_(false),
+    hasStart_(false),
+    hasGoal_(false)
 {
   startID_ = start_.GetStateID();
   Reset();
 }
 
-void xythetaPlannerImpl::SetGoal(const State_c& goal_c)
+bool xythetaPlannerImpl::SetGoal(const State_c& goal_c)
 {
-  std::cout<<goal_c.x_mm<<" "<<goal_c.y_mm<<" "<<goal_c.theta<<std::endl;
+  if(env_.IsInCollision(goal_c)) {
+    printf("goal is in collision!\n");
+    return false;
+  }
 
   State goal = env_.State_c2State(goal_c);
+
+  if(env_.IsInCollision(goal)) {
+    printf("looks like goal is in collision but goal_c isn't. This is a failure but will be fixed soon...\n");
+    return false;
+  }
   goalID_ = goal.GetStateID();
 
   std::cout<<goal<<std::endl;
 
   // convert back so this is still lined up perfectly with goalID_
   goal_c_ = env_.State2State_c(goal);
+
+  hasGoal_ = true;
+  return true;
 }
 
-void xythetaPlannerImpl::SetStart(const State_c& start)
+bool xythetaPlannerImpl::SetStart(const State_c& start)
 {
+  if(env_.IsInCollision(start)) {
+    printf("start is in collision!\n");
+    return false;
+  }
+
   start_ = env_.State_c2State(start);
+
+  if(env_.IsInCollision(start_)) {
+    printf("rounded start is in collision! This is a failure for now, will be fixed soon.....\n");
+    return false;
+  }
+
   startID_ = start_.GetStateID();
+
+  hasStart_ = true;
+  return true;
 }
 
 
@@ -93,10 +120,23 @@ void xythetaPlannerImpl::Reset()
   expansions_ = 0;
   considerations_ = 0;
   collisionChecks_ = 0;
+
+  hasStart_ = false;
+  hasGoal_ = false;
 }
 
-void xythetaPlannerImpl::ComputePath()
+bool xythetaPlannerImpl::ComputePath()
 {
+  if(!hasGoal_) {
+    printf("error: trying to plan with no valid goal!\n");
+    return false;
+  }
+
+  if(!hasStart_) {
+    printf("error: trying to plan with no valid start!\n");
+    return false;
+  }
+
   Reset();
 
   if(PLANNER_DEBUG_PLOT_STATES_CONSIDERED) {
@@ -156,6 +196,8 @@ void xythetaPlannerImpl::ComputePath()
   }
 
   printf("finished after %d expansions\n", expansions_);
+
+  return foundGoal;
 }
 
 void xythetaPlannerImpl::ExpandState(StateID currID)

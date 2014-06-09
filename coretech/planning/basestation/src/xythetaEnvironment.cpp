@@ -171,6 +171,27 @@ void SuccessorIterator::Next()
   nextAction_++;
 }
 
+bool xythetaEnvironment::IsInCollision(State s) const
+{
+  size_t endObs = obstacles_.size();
+  for(size_t obsIdx=0; obsIdx<endObs; ++obsIdx) {
+    if(obstacles_[obsIdx]->Contains(GetX_mm(s.x), GetX_mm(s.y)))
+      return true;
+  }
+  return false;
+}
+
+bool xythetaEnvironment::IsInCollision(State_c c) const
+{
+  size_t endObs = obstacles_.size();
+  for(size_t obsIdx=0; obsIdx<endObs; ++obsIdx) {
+    if(obstacles_[obsIdx]->Contains(c.x_mm, c.y_mm))
+      return true;
+  }
+  return false;
+}
+
+
 ActionType::ActionType()
   : extraCostFactor_(0.0)
   , id_(-1)

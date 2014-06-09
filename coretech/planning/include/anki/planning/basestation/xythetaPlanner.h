@@ -32,16 +32,19 @@ public:
   xythetaPlanner(const xythetaEnvironment& env);
   ~xythetaPlanner();
 
-  // set a goal in meters and radians
-  void SetGoal(const State_c& goal);
+  // set a goal in meters and radians. Returns true if it is valid,
+  // false otherwise
+  bool SetGoal(const State_c& goal);
 
-  // set the starting state. Will be rounded to the nearest continuous state
-  void SetStart(const State_c& start);
+  // set the starting state. Will be rounded to the nearest continuous
+  // state. Returns true if it is valid, false otherwise
+  bool SetStart(const State_c& start);
 
   // Allow (or disallow) free turn-in-place at the goal
   void AllowFreeTurnInPlaceAtGoal(bool allow = true);
 
-  void ComputePath();
+  // Returns true if path found, false otherwise
+  bool ComputePath();
 
   // must call compute path before getting the plan
   const xythetaPlan& GetPlan() const;
