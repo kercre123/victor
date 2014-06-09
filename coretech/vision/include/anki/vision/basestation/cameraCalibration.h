@@ -51,14 +51,15 @@ namespace Anki {
       
       
       // Accessors:
-      u16     get_nrows()         const;
-      u16     get_ncols()         const;
-      f32     get_focalLength_x() const;
-      f32     get_focalLength_y() const;
-      f32     get_center_x()      const;
-      f32     get_center_y()      const;
-      f32     get_skew()          const;
-      const Point2f& get_center() const;
+      u16     GetNrows()         const;
+      u16     GetNcols()         const;
+      f32     GetFocalLength_x() const;
+      f32     GetFocalLength_y() const;
+      f32     GetCenter_x()      const;
+      f32     GetCenter_y()      const;
+      f32     GetSkew()          const;
+      const Point2f& GetCenter() const;
+      
       //const   DistortionCoeffVector& get_distortionCoeffs() const;
       
       // Returns the 3x3 camera calibration matrix:
@@ -66,50 +67,51 @@ namespace Anki {
       //   0      fy     center_y;
       //   0       0         1    ]
       template<typename PRECISION = float>
-      SmallSquareMatrix<3,PRECISION> get_calibrationMatrix() const;
+      SmallSquareMatrix<3,PRECISION> GetCalibrationMatrix() const;
       
       // Returns the inverse calibration matrix (e.g. for computing
       // image rays)
       template<typename PRECISION = float>
-      SmallSquareMatrix<3,PRECISION> get_invCalibrationMatrix() const;
+      SmallSquareMatrix<3,PRECISION> GetInvCalibrationMatrix() const;
       
       void CreateJson(Json::Value& jsonNode) const;
       
     protected:
       
-      u16  nrows, ncols;
-      f32  focalLength_x, focalLength_y;
-      Point2f center;
-      f32  skew;
+      u16     _nrows, _ncols;
+      f32     _focalLength_x, _focalLength_y;
+      Point2f _center;
+      f32     _skew;
+      
       //DistortionCoeffVector distortionCoeffs; // radial distortion coefficients
       
     }; // class CameraCalibration
     
     
     // Inline accessor definitions:
-    inline u16 CameraCalibration::get_nrows() const
-    { return this->nrows; }
+    inline u16 CameraCalibration::GetNrows() const
+    { return _nrows; }
     
-    inline u16 CameraCalibration::get_ncols() const
-    { return this->ncols; }
+    inline u16 CameraCalibration::GetNcols() const
+    { return _ncols; }
     
-    inline f32 CameraCalibration::get_focalLength_x() const
-    { return this->focalLength_x; }
+    inline f32 CameraCalibration::GetFocalLength_x() const
+    { return _focalLength_x; }
     
-    inline f32 CameraCalibration::get_focalLength_y() const
-    { return this->focalLength_y; }
+    inline f32 CameraCalibration::GetFocalLength_y() const
+    { return _focalLength_y; }
     
-    inline f32 CameraCalibration::get_center_x() const
-    { return this->center.x(); }
+    inline f32 CameraCalibration::GetCenter_x() const
+    { return _center.x(); }
     
-    inline f32 CameraCalibration::get_center_y() const
-    { return this->center.y(); }
+    inline f32 CameraCalibration::GetCenter_y() const
+    { return _center.y(); }
     
-    inline const Point2f& CameraCalibration::get_center() const
-    { return this->center; }
+    inline const Point2f& CameraCalibration::GetCenter() const
+    { return _center; }
     
-    inline f32  CameraCalibration::get_skew() const
-    { return this->skew; }
+    inline f32  CameraCalibration::GetSkew() const
+    { return _skew; }
     
     
   } // namesapce Vision

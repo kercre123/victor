@@ -31,15 +31,15 @@ namespace Anki {
   namespace Vision {
     
     Camera::Camera(void)
-    : isCalibrationSet(false)
+    : _camID(0) //, _calibration(nullptr)
     {
       
     } // Constructor: Camera()
     
     Camera::Camera(const CameraID_t cam_id,
-                   const CameraCalibration &calib_in,
+                   const CameraCalibration &calibration,
                    const Pose3d& pose_in)
-    : camID(cam_id), calibration(calib_in), isCalibrationSet(true), pose(pose_in)
+    : _camID(cam_id), _calibration(calibration), _pose(pose_in)
     {
       
     } // Constructor: Camera(calibration, pose)
@@ -50,9 +50,11 @@ namespace Anki {
     Pose3d Camera::ComputeObjectPoseHelper(const std::vector<cv::Point2f>& cvImagePoints,
                                            const std::vector<cv::Point3f>& cvObjPoints) const
     {
+      CORETECH_THROW_IF(this->IsCalibrated() == false);
+      
       cv::Vec3d cvRvec, cvTranslation;
       
-      Matrix_3x3f calibMatrix(this->calibration.get_calibrationMatrix());
+      Matrix_3x3f calibMatrix(_calibration.GetCalibrationMatrix());
       
       cv::Mat distortionCoeffs; // TODO: currently empty, use radial distoration?
       cv::solvePnP(cvObjPoints, cvImagePoints,
@@ -64,7 +66,9 @@ namespace Anki {
       Vec3f translation(cvTranslation[0], cvTranslation[1], cvTranslation[2]);
       
       // Return Pose object w.r.t. the camera's pose
-      return Pose3d(rvec, translation, &(this->pose));
+      const Pose3d pose(rvec, translation, &(_pose));
+      
+      return pose;
       
     } // ComputeObjectPoseHelper()
     
@@ -74,7 +78,7 @@ namespace Anki {
     Pose3d Camera::ComputeObjectPose(const std::vector<Point2f>& imgPoints,
                                      const std::vector<Point3f>& objPoints) const
     {
-      if(not isCalibrationSet) {
+      if(this->IsCalibrated() == false) {
         CORETECH_THROW("Camera::ComputeObjectPose() called before calibration set.");
       }
       
@@ -104,7 +108,7 @@ namespace Anki {
     Pose3d Camera::ComputeObjectPose(const Quad2f& imgQuad,
                                      const Quad3f& worldQuad) const
     {
-      if(not isCalibrationSet) {
+      if(this->IsCalibrated() == false) {
         CORETECH_THROW("Camera::ComputeObjectPose() called before calibration set.");
       }
       
@@ -132,7 +136,7 @@ namespace Anki {
       
       // Turn the three image points into unit vectors corresponding to rays
       // in the direction of the image points
-      const SmallSquareMatrix<3,WORKING_PRECISION> invK = this->get_calibration().get_invCalibrationMatrix<WORKING_PRECISION>();
+      const SmallSquareMatrix<3,WORKING_PRECISION> invK = this->GetCalibration().GetInvCalibrationMatrix<WORKING_PRECISION>();
       
       Quadrilateral<3, WORKING_PRECISION> imgRays, worldPoints;
       
@@ -153,7 +157,7 @@ namespace Anki {
                imgRays[i_corner].x(), imgRays[i_corner].y(), imgRays[i_corner].z());
         */
         
-        imgRays[i_corner].makeUnitLength();
+        imgRays[i_corner].MakeUnitLength();
         
         //printf(" which normalized to (%f, %f, %f)\n",
         //       imgRays[i_corner].x(), imgRays[i_corner].y(), imgRays[i_corner].z());
@@ -205,7 +209,7 @@ namespace Anki {
             Point2f projectedPoint;
             this->Project3dPoint(possiblePoses[i_solution]*worldQuad[i_validate], projectedPoint);
             
-            float error = (projectedPoint - imgQuad[i_validate]).length();
+            float error = (projectedPoint - imgQuad[i_validate]).Length();
             
             if(error < minErrorInner) {
               minErrorInner = error;
@@ -232,7 +236,7 @@ namespace Anki {
       } // for each validation corner
       
       // Make sure to make the returned pose w.r.t. the camera!
-      pose.set_parent(&this->pose);
+      pose.set_parent(&_pose);
       
       return pose;
       
@@ -251,11 +255,13 @@ namespace Anki {
     
     bool Camera::IsWithinFieldOfView(const Point2f &projectedPoint) const
     {
+      CORETECH_THROW_IF(this->IsCalibrated() == false);
+      
       return (not std::isnan(projectedPoint.x()) &&
               not std::isnan(projectedPoint.y()) &&
               projectedPoint.x() >= 0.f && projectedPoint.y() >= 0.f &&
-              projectedPoint.x() < this->calibration.get_ncols() &&
-              projectedPoint.y() < this->calibration.get_nrows());
+              projectedPoint.x() < _calibration.GetNcols() &&
+              projectedPoint.y() < _calibration.GetNrows());
       
     } // Camera::IsVisible()
 
@@ -263,7 +269,7 @@ namespace Anki {
     void Camera::Project3dPoint(const Point3f& objPoint,
                                 Point2f&       imgPoint) const
     {
-      if(not isCalibrationSet) {
+      if(this->IsCalibrated() == false) {
         CORETECH_THROW("Camera::Project3dPoint() called before calibration set.");
       }
       
@@ -282,10 +288,10 @@ namespace Anki {
         // TODO: Add radial distortion here
         //DistortCoordinate(imgPoints[i_corner], imgPoints[i_corner]);
         
-        imgPoint.x() *= this->calibration.get_focalLength_x();
-        imgPoint.y() *= this->calibration.get_focalLength_y();
+        imgPoint.x() *= _calibration.GetFocalLength_x();
+        imgPoint.y() *= _calibration.GetFocalLength_y();
         
-        imgPoint += this->calibration.get_center();
+        imgPoint += _calibration.GetCenter();
       }
       
     } // Project3dPoint()
@@ -354,13 +360,13 @@ namespace Anki {
     
     void Camera::ClearOccluders()
     {
-      occluderList.Clear();
+      _occluderList.Clear();
     }
     
     
     void Camera::AddOccluder(const ObservableObject& object)
     {
-      const Pose3d objectPoseWrtCamera(object.GetPose().getWithRespectTo(&pose));
+      const Pose3d objectPoseWrtCamera(object.GetPose().getWithRespectTo(&_pose));
       
       std::vector<Point3f> cornersAtPose;
       std::vector<Point2f> projectedCorners;
@@ -370,14 +376,14 @@ namespace Anki {
       object.GetCorners(objectPoseWrtCamera, cornersAtPose);
       Project3dPoints(cornersAtPose, projectedCorners);
       
-      occluderList.AddOccluder(projectedCorners, objectPoseWrtCamera.get_translation().z());
+      _occluderList.AddOccluder(projectedCorners, objectPoseWrtCamera.get_translation().z());
       
     } // AddOccluder(ObservableObject)
     
     
     void Camera::AddOccluder(const KnownMarker& marker)
     {
-      const Pose3d markerPoseWrtCamera = marker.GetPose().getWithRespectTo(&this->pose);
+      const Pose3d markerPoseWrtCamera = marker.GetPose().getWithRespectTo(&_pose);
       
       const Quad3f markerCorners = marker.Get3dCorners(markerPoseWrtCamera);
       
@@ -395,7 +401,7 @@ namespace Anki {
         ++cornerIter;
       }
       
-      occluderList.AddOccluder(imgCorners, atDistance);
+      _occluderList.AddOccluder(imgCorners, atDistance);
 
     } // AddOccluder(Quad3f)
     

@@ -133,7 +133,7 @@ namespace Anki {
       using namespace Quad;
       
       // Get the marker's pose relative to the camera
-      Pose3d markerPoseWrtCamera( pose_.getWithRespectTo(&camera.get_pose()) );
+      Pose3d markerPoseWrtCamera( pose_.getWithRespectTo(&camera.GetPose()) );
       
       // Make sure the marker is at least in front of the camera!
       if(markerPoseWrtCamera.get_translation().z() <= 0.f) {

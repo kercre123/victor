@@ -93,7 +93,7 @@ GTEST_TEST(PoseEstimation, FromQuads)
                                   0.f);           // skew
 
   Vision::Camera camera;
-  camera.set_calibration(calib);
+  camera.SetCalibration(calib);
   
   Quad2f proj;
   camera.Project3dPoints(marker3d_atPose, proj);
