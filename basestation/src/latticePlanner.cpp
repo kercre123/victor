@@ -85,12 +85,16 @@ Result LatticePlanner::GetPlan(Planning::Path &path, const Pose3d &startPose, co
   State_c start(startPose.get_translation().x(),
                     startPose.get_translation().y(),
                     startPose.get_rotationAngle().ToFloat());
-  impl_->planner_.SetStart(start);
+
+  if(!impl_->planner_.SetStart(start))
+    return RESULT_FAIL_INVALID_PARAMETER;
 
   State_c target(targetPose.get_translation().x(),
                     targetPose.get_translation().y(),
                     targetPose.get_rotationAngle().ToFloat());
-  impl_->planner_.SetGoal(target);
+
+  if(!impl_->planner_.SetGoal(target))
+    return RESULT_FAIL_INVALID_PARAMETER;
 
   printf("planning from (%f, %f, %f) to (%f %f %f)\n",
              start.x_mm, start.y_mm, start.theta,
@@ -101,7 +105,9 @@ Result LatticePlanner::GetPlan(Planning::Path &path, const Pose3d &startPose, co
   impl_->planner_.AllowFreeTurnInPlaceAtGoal(false);
 
   printf("planning....\n");
-  impl_->planner_.ComputePath();
+  if(!impl_->planner_.ComputePath()) {
+    return RESULT_FAIL;
+  }
 
   impl_->env_.ConvertToPath(impl_->planner_.GetPlan(), path);
 
