@@ -36,6 +36,9 @@ public:
   // false otherwise
   bool SetGoal(const State_c& goal);
 
+  // Re-checks the existing goal to see if it is valid
+  bool GoalIsValid() const;
+
   // set the starting state. Will be rounded to the nearest continuous
   // state. Returns true if it is valid, false otherwise
   bool SetStart(const State_c& start);

@@ -24,6 +24,11 @@ bool xythetaPlanner::SetGoal(const State_c& goal)
   return _impl->SetGoal(goal);
 }
 
+bool xythetaPlanner::GoalIsValid() const
+{
+  return _impl->GoalIsValid();
+}
+
 bool xythetaPlanner::SetStart(const State_c& start)
 {
   return _impl->SetStart(start);
@@ -99,6 +104,12 @@ bool xythetaPlannerImpl::SetGoal(const State_c& goal_c)
   goalChanged_ = true;
   return true;
 }
+
+bool xythetaPlannerImpl::GoalIsValid() const
+{
+  return !env_.IsInCollision(goal_c_);
+}
+
 
 bool xythetaPlannerImpl::SetStart(const State_c& start)
 {

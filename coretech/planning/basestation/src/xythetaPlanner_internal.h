@@ -28,6 +28,8 @@ struct xythetaPlannerImpl
   bool SetGoal(const State_c& goal);
   bool SetStart(const State_c& start);
 
+  bool GoalIsValid() const;
+
   bool ComputePath();
 
   // helper functions
