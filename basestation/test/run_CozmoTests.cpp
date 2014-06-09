@@ -147,10 +147,11 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
       
       TimeStamp_t t_actual;
       RobotPoseStamp *rps;
-      robot.ComputeAndInsertPoseIntoHistory(msg.timestamp, t_actual, &rps);
+      HistPoseKey poseKey;
+      robot.ComputeAndInsertPoseIntoHistory(msg.timestamp, t_actual, &rps, &poseKey);
       
       // Give this vision marker to BlockWorld for processing
-      blockWorld.QueueObservedMarker(marker);
+      blockWorld.QueueObservedMarker(marker, poseKey);
       
     } // for each VisionMarker in the jsonFile
     
