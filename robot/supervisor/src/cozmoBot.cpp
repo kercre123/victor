@@ -47,7 +47,7 @@ namespace Anki {
         
         // For only sending robot state messages every STATE_MESSAGE_FREQUENCY
         // times through the main loop
-        robotStateMessageCounter_ = 0;
+        s32 robotStateMessageCounter_ = 0;
 
       } // Robot private namespace
       
