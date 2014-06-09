@@ -46,11 +46,10 @@
 using namespace Anki;
 
 #ifdef SIMULATOR
-// TODO: put this elsewhere?
-Anki::Vision::CameraCalibration::CameraCalibration(const webots::Camera* camera)
+Anki::Vision::CameraCalibration GetCameraCalibration(const webots::Camera* camera)
 {
-  nrows  = static_cast<u16>(camera->getHeight());
-  ncols  = static_cast<u16>(camera->getWidth());
+  const u16 nrows  = static_cast<u16>(camera->getHeight());
+  const u16 ncols  = static_cast<u16>(camera->getWidth());
   
   const f32 width  = static_cast<f32>(ncols);
   const f32 height = static_cast<f32>(nrows);
@@ -65,13 +64,13 @@ Anki::Vision::CameraCalibration::CameraCalibration(const webots::Camera* camera)
   //f32 fy = height / (2.f * std::tan(0.5f*fov_ver));
   //
   const f32 f = Cozmo::HEAD_CAM_CALIB_FOCAL_LENGTH;
- 
- focalLength_x = f;
- focalLength_y = f;
- 
- center.x()    = 0.5f*width;
- center.y()    = 0.5f*height;
- skew          = 0.f;
+  
+  const f32 center_x = 0.5f*width;
+  const f32 center_y = 0.5f*height;
+  
+  const f32 skew = 0.f;
+  
+  return Anki::Vision::CameraCalibration(nrows, ncols, f, f, center_x, center_y, skew);
 }
 #endif
 
@@ -128,7 +127,7 @@ int main(int argc, char **argv)
   // Camera
   webots::Camera* headCam_ = webotRobot_.getCamera("HeadCamera");
   headCam_->enable(TIME_STEP);
-  Vision::CameraCalibration calib(headCam_);
+  Vision::CameraCalibration calib = GetCameraCalibration(headCam_);
   Json::Value jsonCalib;
   calib.CreateJson(jsonCalib);
   
@@ -206,7 +205,9 @@ int main(int argc, char **argv)
   
   CORETECH_ASSERT(root.isMember("WorldTitle"));
   
-  std::string outputPath = PlatformPathManager::getInstance()->PrependPath(PlatformPathManager::Test, "basestation/test/blockWorldTests/") + root["WorldTitle"].asString();
+  //std::string outputPath = PlatformPathManager::getInstance()->PrependPath(PlatformPathManager::Test, "basestation/test/blockWorldTests/") + root["WorldTitle"].asString();
+  std::string outputPath("basestation/test/blockWorldTests/");
+  outputPath += root["WorldTitle"].asString();
   
   for(int i_pose=0; i_pose<numPoses; ++i_pose,
       rotIndex+=NUM_POSE_VALS, transIndex+=NUM_POSE_VALS, headAngleIndex+=NUM_POSE_VALS)
@@ -253,7 +254,7 @@ int main(int argc, char **argv)
 
     // Store the image from the current position
     std::string imgFilename = outputPath + std::to_string(i_pose) + ".png";
-    headCam_->saveImage(imgFilename, 100);
+    headCam_->saveImage(PlatformPathManager::getInstance()->PrependPath(PlatformPathManager::Test, imgFilename), 100);
     
     // Store the associated image file
     currentPose["ImageFile"]  = imgFilename;
@@ -275,13 +276,16 @@ int main(int argc, char **argv)
                           "imwrite(img, '%s'); "
                           "markers = simpleDetector(img); "
                           "numMarkers = length(markers);",
-                          imgFilename.c_str(), imgFilename.c_str());
+                          PlatformPathManager::getInstance()->PrependPath(PlatformPathManager::Test, imgFilename).c_str(),
+                          PlatformPathManager::getInstance()->PrependPath(PlatformPathManager::Test, imgFilename).c_str());
 
     const int numMarkers = static_cast<int>(*matlab.Get<double>("numMarkers"));
     fprintf(stdout, "Detected %d markers at pose %d.\n", numMarkers, i_pose);
     
     for(int i_marker=0; i_marker<numMarkers; ++i_marker) {
       Cozmo::MessageVisionMarker msg;
+      msg.timestamp = 0;
+      
       matlab.EvalStringEcho("marker = markers{%d}; "
                             "corners = marker.corners; "
                             "code = marker.codeID; ", i_marker+1);
@@ -363,9 +367,19 @@ int main(int argc, char **argv)
     for(auto & marker : markers) {
       Json::Value jsonMarker = marker.CreateJson();
       
+      // Kludge to replace the marker type enum with its name instead of its
+      // value.  This makes the file more human-readable and means we don't
+      // have to recreate it every time the list of enums changes (e.g. after
+      // retraining)
+      {
+        CORETECH_ASSERT(jsonMarker.isMember("markerType"));
+        const Vision::MarkerType markerType = static_cast<Vision::MarkerType>(jsonMarker["markerType"].asInt());
+        jsonMarker["markerType"] = Vision::MarkerTypeStrings[markerType];
+      }
+      
       fprintf(stdout, "Creating JSON for marker type %s with corners (%.1f,%.1f), (%.1f,%.1f), "
               "(%.1f,%.1f), (%.1f,%.1f)\n",
-              Vision::MarkerTypeStrings[marker.markerType],
+              jsonMarker["markerType"].asString().c_str(), //Vision::MarkerTypeStrings[marker.markerType],
               marker.x_imgUpperLeft,  marker.y_imgUpperLeft,
               marker.x_imgLowerLeft,  marker.y_imgLowerLeft,
               marker.x_imgUpperRight, marker.y_imgUpperRight,
@@ -381,7 +395,7 @@ int main(int argc, char **argv)
  
   // Actually write the Json to file
   
-  std::string jsonFilename = outputPath + ".json";
+  std::string jsonFilename = PlatformPathManager::getInstance()->PrependPath(PlatformPathManager::Test, outputPath) + ".json";
   std::ofstream jsonFile(jsonFilename, std::ofstream::out);
   
   fprintf(stdout, "Writing JSON to file %s.\n", jsonFilename.c_str());

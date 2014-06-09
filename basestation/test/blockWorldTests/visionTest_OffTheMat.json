@@ -23,40 +23,40 @@
    "NumBlocks" : 1,
    "Poses" : [
       {
-         "ImageFile" : "/Users/andrew/Code/products-cozmo/basestation/test/blockWorldTests/visionTest_OffTheMat0.png",
+         "ImageFile" : "basestation/test/blockWorldTests/visionTest_OffTheMat0.png",
          "NumMarkers" : 2,
          "RobotPose" : {
             "Angle" : 1.0471980,
             "Axis" : [ 0.0, 0.0, 1.0 ],
             "HeadAngle" : -0.3839720,
-            "Translation" : [ -15.0, -145.0, 44.0 ]
+            "Translation" : [ -15.0, -115.0, 44.0 ]
          },
          "VisionMarkers" : [
             {
                "Name" : "MessageVisionMarker",
-               "markerType" : 27,
+               "markerType" : "MARKER_FIRE",
                "timestamp" : 0,
-               "x_imgLowerLeft" : 183.3562316894531,
-               "x_imgLowerRight" : 216.4420471191406,
-               "x_imgUpperLeft" : 184.6379547119141,
-               "x_imgUpperRight" : 218.8802795410156,
-               "y_imgLowerLeft" : 86.61611938476562,
-               "y_imgLowerRight" : 89.29812622070312,
-               "y_imgUpperLeft" : 53.73781967163086,
-               "y_imgUpperRight" : 55.74196243286133
+               "x_imgLowerLeft" : 206.5626220703125,
+               "x_imgLowerRight" : 242.9065399169922,
+               "x_imgUpperLeft" : 208.7932434082031,
+               "x_imgUpperRight" : 246.687011718750,
+               "y_imgLowerLeft" : 97.46368408203125,
+               "y_imgLowerRight" : 100.6468276977539,
+               "y_imgUpperLeft" : 62.39920425415039,
+               "y_imgUpperRight" : 64.80155181884766
             },
             {
                "Name" : "MessageVisionMarker",
-               "markerType" : 33,
+               "markerType" : "MARKER_M",
                "timestamp" : 0,
-               "x_imgLowerLeft" : 98.20982360839844,
-               "x_imgLowerRight" : 138.0372009277344,
-               "x_imgUpperLeft" : 84.38500213623047,
-               "x_imgUpperRight" : 121.3577575683594,
-               "y_imgLowerLeft" : 115.5390167236328,
-               "y_imgLowerRight" : 107.7123947143555,
-               "y_imgUpperLeft" : 102.5891113281250,
-               "y_imgUpperRight" : 96.33080291748047
+               "x_imgLowerLeft" : 117.1902084350586,
+               "x_imgLowerRight" : 159.3173065185547,
+               "x_imgUpperLeft" : 100.2236938476562,
+               "x_imgUpperRight" : 139.1963195800781,
+               "y_imgLowerLeft" : 130.5578918457031,
+               "y_imgLowerRight" : 121.3136749267578,
+               "y_imgUpperLeft" : 115.1863479614258,
+               "y_imgUpperRight" : 107.5385589599609
             }
          ]
       }

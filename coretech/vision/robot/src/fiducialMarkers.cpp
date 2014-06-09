@@ -847,14 +847,14 @@ namespace Anki
             this->isValid = true;
           } else {
 #ifdef OUTPUT_FAILED_MARKER_STEPS
-            AnkiWarn("VisionMarker::Extract", "verifyLabel failed detected");
+            AnkiWarn("VisionMarker::Extract", "verifyLabel failed detected\n");
 #endif
           } // if(verifyLabel == multiClassLabel)
 
 
         } else {
 #ifdef OUTPUT_FAILED_MARKER_STEPS
-          AnkiWarn("VisionMarker::Extract", "MARKER_UNKNOWN detected");
+          AnkiWarn("VisionMarker::Extract", "MARKER_UNKNOWN detected\n");
 #endif
         } // if(multiClassLabel != MARKER_UNKNOWN)
       } else {

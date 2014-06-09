@@ -12,6 +12,7 @@
 #include "anki/common/types.h"
 #include "anki/common/basestation/math/pose.h"
 #include "anki/vision/basestation/camera.h"
+#include "anki/cozmo/shared/cozmoTypes.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -132,14 +133,18 @@ namespace Anki {
       // as a vision-based pose back into history.
       Result ComputeAndInsertPoseAt(const TimeStamp_t t_request,
                                     TimeStamp_t& t, RobotPoseStamp** p,
+                                    HistPoseKey* key = nullptr,
                                     bool withInterpolation = false);
 
       // Points *p to a computed pose in the history that was insert via ComputeAndInsertPoseAt
-      Result GetComputedPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p);
+      Result GetComputedPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p, HistPoseKey* key = nullptr);
 
       // If at least one vision only pose exists, the most recent one is returned in p
       // and the time it occured at in t.
       Result GetLatestVisionOnlyPose(TimeStamp_t& t, RobotPoseStamp& p) const;
+      
+      // Checks whether or not the given key is associated with a valid computed pose
+      bool IsValidPoseKey(const HistPoseKey key) const;
       
       
       TimeStamp_t GetOldestTimeStamp() const;
@@ -154,8 +159,8 @@ namespace Anki {
       
       // Pose history as reported by robot
       typedef std::map<TimeStamp_t, RobotPoseStamp> PoseMap_t;
-      typedef std::map<TimeStamp_t, RobotPoseStamp>::iterator PoseMapIter_t;
-      typedef std::map<TimeStamp_t, RobotPoseStamp>::const_iterator const_PoseMapIter_t;
+      typedef PoseMap_t::iterator PoseMapIter_t;
+      typedef PoseMap_t::const_iterator const_PoseMapIter_t;
       PoseMap_t poses_;
 
       // Map of timestamps of vision-based poses as computed from mat markers
@@ -163,7 +168,17 @@ namespace Anki {
 
       // Map of poses that were computed with ComputeAt
       PoseMap_t computedPoses_;
+
+      // The last pose key assigned to a computed pose
+      static HistPoseKey currHistPoseKey_;
       
+      // Map of HistPoseKeys to timestamps and vice versa
+      typedef std::map<HistPoseKey, TimeStamp_t> TimestampByKeyMap_t;
+      typedef TimestampByKeyMap_t::iterator TimestampByKeyMapIter_t;
+      typedef std::map<TimeStamp_t, HistPoseKey> KeyByTimestampMap_t;
+      typedef KeyByTimestampMap_t::iterator KeyByTimestampMapIter_t;
+      TimestampByKeyMap_t tsByKeyMap_;
+      KeyByTimestampMap_t keyByTsMap_;
       
       // Size of history time window (ms)
       u32 windowSize_;

@@ -57,11 +57,14 @@ namespace Anki {
       inline const Quad2f& GetImageCorners() const;
       inline const Camera& GetSeenBy()       const;
       
+      inline void MarkUsed(bool used);
+      inline bool IsUsed();
     protected:
-      TimeStamp_t    t_;
+      TimeStamp_t    observationTime_;
       Quad2f         imgCorners_;
       Camera         seenByCam_;
       
+      bool           used_;
     }; // class ObservedMarker
     
     
@@ -88,9 +91,10 @@ namespace Anki {
       // given angle tolerance of being front-parallel to the camera (i.e.
       // facing it) and have a diaonal image size at least the given image size
       // tolerance.
-      bool IsVisibleFrom(Camera& camera,
+      bool IsVisibleFrom(const Camera& camera,
                          const f32 maxAngleRad,
-                         const f32 minImageSize) const;
+                         const f32 minImageSize,
+                         const bool requireSomethingBehind) const;
       
       // Accessors
       Quad3f const& Get3dCorners() const; // at current pose
@@ -99,17 +103,25 @@ namespace Anki {
       
       Quad3f Get3dCorners(const Pose3d& atPose) const;
       
+      // Return a Unit Normal vector to the face of the known marker
+      Vec3f ComputeNormal() const; // at current pose
+      Vec3f ComputeNormal(const Pose3d& atPose) const;
+      
+      void SetWasObserved(const bool wasObserved);
+      bool GetWasObserved() const;
+      
     protected:
       static const Quad3f canonicalCorners3d_;
       
       Pose3d pose_;
       f32    size_; // in mm
       Quad3f corners3d_;
+      bool   wasObserved_;
 
     }; // class KnownMarker
     
     inline const TimeStamp_t ObservedMarker::GetTimeStamp() const {
-      return t_;
+      return observationTime_;
     }
     
     inline Quad2f const& ObservedMarker::GetImageCorners() const {
@@ -136,6 +148,21 @@ namespace Anki {
       return seenByCam_;
     }
     
+    inline void ObservedMarker::MarkUsed(bool used) {
+      used_ = used;
+    }
+    
+    inline bool ObservedMarker::IsUsed() {
+      return used_;
+    }
+    
+    inline void KnownMarker::SetWasObserved(const bool wasObserved) {
+      wasObserved_ = wasObserved;
+    }
+    
+    inline bool KnownMarker::GetWasObserved() const {
+      return wasObserved_;
+    }
 
   } // namespace Vision
 } // namespace Anki

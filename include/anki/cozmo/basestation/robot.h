@@ -85,8 +85,13 @@ namespace Anki {
       // Sends a path to the robot to be immediately executed
       Result ExecutePath(const Planning::Path& path);
       
-      void SetTraversingPath(bool t) {isTraversingPath_ = t;}
-      bool IsTraversingPath() {return isTraversingPath_;}
+      // True if wheel speeds are non-zero in most recent RobotState message
+      bool IsMoving() const {return isMoving_;}
+      void SetIsMoving(bool t) {isMoving_ = t;}
+      
+      void SetCurrPathSegment(const s8 s) {currPathSegment_ = s;}
+      s8 GetCurrPathSegment() {return currPathSegment_;}
+      bool IsTraversingPath() {return currPathSegment_ >= 0;}
 
       void SetCarryingBlock(bool t) {isCarryingBlock_ = t;}
       bool IsCarryingBlock() {return isCarryingBlock_;}
@@ -144,8 +149,9 @@ namespace Anki {
       // relevant state modifying functions. e.g. SendStopAllMotors() should be
       // called from StopAllMotors().
       
-      // Request camera calibration from robot
-      Result SendRequestCamCalib() const;
+      // Sync time with physical robot and trigger it robot to send back camera
+      // calibration
+      Result SendInit() const;
       
       // Send's robot's current pose
       Result SendAbsLocalizationUpdate() const;
@@ -158,6 +164,9 @@ namespace Anki {
 
       // Run a test mode
       Result SendStartTestMode(const TestMode mode) const;
+      
+      Quad2f GetBoundingQuadXY(const f32 paddingScale) const;
+      Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 paddingScale) const;
       
       
       // =========== Pose history =============
@@ -175,10 +184,13 @@ namespace Anki {
 
       Result ComputeAndInsertPoseIntoHistory(const TimeStamp_t t_request,
                                              TimeStamp_t& t, RobotPoseStamp** p,
+                                             HistPoseKey* key = nullptr,
                                              bool withInterpolation = false);
 
       Result GetVisionOnlyPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p);
-      Result GetComputedPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p);
+      Result GetComputedPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p, HistPoseKey* key = nullptr);
+      
+      bool IsValidPoseKey(const HistPoseKey key) const;
       
       // Updates the current pose to the best estimate based on
       // historical poses including vision-based poses.
@@ -210,11 +222,13 @@ namespace Anki {
       f32 currentHeadAngle;
       f32 currentLiftAngle;
       
+      s8 currPathSegment_;
+      
       OperationMode mode, nextMode;
       bool setOperationMode(OperationMode newMode);
       bool isCarryingBlock_;
-      bool isTraversingPath_;
       bool isPickingOrPlacing_;
+      bool isMoving_;
       
       //std::vector<BlockMarker3d*>  visibleFaces;
       //std::vector<Block*>          visibleBlocks;
@@ -222,7 +236,7 @@ namespace Anki {
       // Pose history
       RobotPoseHistory poseHistory_;
 
-      
+      static const Quad2f CanonicalBoundingBoxXY;
       
       // Message handling
       typedef std::vector<u8> MessageType;
@@ -305,7 +319,7 @@ namespace Anki {
     { return this->mode; }
     
     inline void Robot::set_camCalibration(const Vision::CameraCalibration& calib)
-    { this->camHead.set_calibration(calib); }
+    { this->camHead.SetCalibration(calib); }
     
     inline bool Robot::hasOutgoingMessages() const
     { return not this->messagesOut.empty(); }

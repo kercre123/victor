@@ -11,7 +11,12 @@
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/messages.h"
 #include "anki/cozmo/basestation/robot.h"
+
+
 #include "anki/common/basestation/general.h"
+#include "anki/common/basestation/math/point_impl.h"
+#include "anki/common/basestation/utils/timer.h"
+
 #include "anki/vision/CameraSettings.h"
 
 // TODO: This is shared between basestation and robot and should be moved up
@@ -94,8 +99,8 @@ namespace Anki {
       headCamPose({0,0,1,  -1,0,0,  0,-1,0},
                   {{HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}}, &neckPose),
       liftBasePose(0.f, Y_AXIS_3D, {{LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}}, &pose),
-      currentHeadAngle(0), currentLiftAngle(0),
-      isCarryingBlock_(false), isTraversingPath_(false), isPickingOrPlacing_(false)
+      currentHeadAngle(0), currentLiftAngle(0), currPathSegment_(-1),
+      isCarryingBlock_(false), isPickingOrPlacing_(false)
     {
       this->set_headAngle(currentHeadAngle);
       
@@ -179,7 +184,7 @@ namespace Anki {
       newHeadPose.rotateBy(Rvec);
       
       // Update the head camera's pose
-      this->camHead.set_pose(newHeadPose);
+      this->camHead.SetPose(newHeadPose);
       
     } // set_headAngle()
 
@@ -459,9 +464,13 @@ namespace Anki {
     
     // ============ Messaging ================
     
-    Result Robot::SendRequestCamCalib() const
+    // Sync time with physical robot and trigger it robot to send back camera calibration
+    Result Robot::SendInit() const
     {
-      MessageRequestCamCalib m;
+      MessageRobotInit m;
+      m.robotID  = ID_;
+      m.syncTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+      
       return msgHandler_->SendMessage(ID_, m);
     }
     
@@ -701,6 +710,42 @@ namespace Anki {
       return msgHandler_->SendMessage(ID_, m);
     }
     
+    const Quad2f Robot::CanonicalBoundingBoxXY({{-0.5f*ROBOT_BOUNDING_WIDTH, ROBOT_BOUNDING_FRONT_DISTANCE}},
+                                               {{-0.5f*ROBOT_BOUNDING_WIDTH, ROBOT_BOUNDING_FRONT_DISTANCE-ROBOT_BOUNDING_LENGTH}},
+                                               {{ 0.5f*ROBOT_BOUNDING_WIDTH, ROBOT_BOUNDING_FRONT_DISTANCE}},
+                                               {{ 0.5f*ROBOT_BOUNDING_WIDTH, ROBOT_BOUNDING_FRONT_DISTANCE-ROBOT_BOUNDING_LENGTH}});
+    
+    Quad2f Robot::GetBoundingQuadXY(const f32 paddingScale) const
+    {
+      return GetBoundingQuadXY(pose, paddingScale);
+    }
+    
+    Quad2f Robot::GetBoundingQuadXY(const Pose3d& atPose, const f32 paddingScale) const
+    {
+      const RotationMatrix2d R(atPose.get_rotationMatrix().GetAngleAroundZaxis());
+      
+      Quad2f boundingQuad;
+
+      using namespace Quad;
+      for(CornerName iCorner = FirstCorner; iCorner < NumCorners; ++iCorner) {
+        // Rotate to given pose
+        boundingQuad[iCorner] = R*Robot::CanonicalBoundingBoxXY[iCorner];
+      }
+      
+      // scale and re-center (Note: we don't need to use Quadrilateral::scale()
+      // here because we know the points are zero-centered and can thus just
+      // multiply them by padding directly.)
+      Point2f center(atPose.get_translation().x(), atPose.get_translation().y());
+      if(paddingScale != 1.f) {
+        boundingQuad *= paddingScale;
+      }
+      boundingQuad += center;
+      
+      return boundingQuad;
+      
+    } // GetBoundingBoxXY()
+    
+    
     // ============ Pose history ===============
     
     Result Robot::AddRawOdomPoseToHistory(const TimeStamp_t t,
@@ -720,9 +765,10 @@ namespace Anki {
 
     Result Robot::ComputeAndInsertPoseIntoHistory(const TimeStamp_t t_request,
                                                   TimeStamp_t& t, RobotPoseStamp** p,
+                                                  HistPoseKey* key,
                                                   bool withInterpolation)
     {
-      return poseHistory_.ComputeAndInsertPoseAt(t_request, t, p, withInterpolation);
+      return poseHistory_.ComputeAndInsertPoseAt(t_request, t, p, key, withInterpolation);
     }
 
     Result Robot::GetVisionOnlyPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p)
@@ -730,11 +776,16 @@ namespace Anki {
       return poseHistory_.GetVisionOnlyPoseAt(t_request, p);
     }
 
-    Result Robot::GetComputedPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p)
+    Result Robot::GetComputedPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p, HistPoseKey* key)
     {
-      return poseHistory_.GetComputedPoseAt(t_request, p);
+      return poseHistory_.GetComputedPoseAt(t_request, p, key);
     }
 
+    bool Robot::IsValidPoseKey(const HistPoseKey key) const
+    {
+      return poseHistory_.IsValidPoseKey(key);
+    }
+    
     void Robot::UpdateCurrPoseFromHistory()
     {
       TimeStamp_t t;

@@ -69,10 +69,15 @@ namespace Anki {
     
     // Bit flags for RobotState message
     typedef enum {
-      IS_TRAVERSING_PATH    = 1,
+      //IS_TRAVERSING_PATH    = 1,
       IS_CARRYING_BLOCK     = 2,
       IS_PICKING_OR_PLACING = 4
     } RobotStatusFlag;
+    
+    
+    // A key associated with each computed pose retrieved from history
+    // to be used to check its validity at a later time.
+    typedef u32 HistPoseKey;
     
   }
 }

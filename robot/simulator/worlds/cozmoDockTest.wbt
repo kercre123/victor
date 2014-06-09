@@ -93,7 +93,7 @@ Background {
 DirectionalLight {
   ambientIntensity 0.75
   direction 1 -.5 -2
-  castShadows TRUE
+  castShadows FALSE
 }
 
 CozmoMat {
@@ -140,7 +140,7 @@ DEF AngryFaceBlock Block1x1 {
     "textures/symbols/angryFace.png"
   ]
   facemarkerBack [
-    "textures/symbols/aAngryFace.png"
+    "textures/symbols/angryFace.png"
   ]
   facemarkerLeft [
     "textures/symbols/angryFace.png"

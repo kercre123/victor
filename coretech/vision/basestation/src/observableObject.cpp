@@ -1,3 +1,20 @@
+/**
+ * File: observableObject.cpp
+ *
+ * Author: Andrew Stein
+ * Date:   (various)
+ *
+ * Description: Implements an abstract ObservableObject class, which is an
+ *              general 3D object, with type, ID, and pose, and a set of Markers
+ *              on it at known locations.  Thus, it is "observable" by virtue of
+ *              having these markers, and its 3D / 6DoF pose can be estimated by
+ *              matching up ObservedMarkers with the KnownMarkers it possesses.
+ *
+ *
+ * Copyright: Anki, Inc. 2014
+ **/
+
+
 #include "anki/vision/basestation/camera.h"
 #include "anki/vision/basestation/observableObject.h"
 
@@ -10,7 +27,7 @@ namespace Anki {
 #pragma mark --- ObservableObject Implementations ---
     
     //ObjectID_t ObservableObject::ObjectCounter = 0;
-    const std::vector<const KnownMarker*> ObservableObject::sEmptyMarkerVector(0);
+    const std::vector<KnownMarker*> ObservableObject::sEmptyMarkerVector(0);
     
     ObservableObject::ObservableObject(ObjectType_t objType)
     : type_(objType), ID_(0), lastObservedTime_(0), wasObserved_(false)
@@ -28,14 +45,15 @@ namespace Anki {
       wasObserved_ = wasObserved;
     }
     
-    bool ObservableObject::IsVisibleFrom(Camera &camera,
+    bool ObservableObject::IsVisibleFrom(const Camera &camera,
                                          const f32 maxFaceNormalAngle,
-                                         const f32 minMarkerImageSize) const
+                                         const f32 minMarkerImageSize,
+                                         const bool requireSomethingBehind) const
     {
       // Return true if any of this object's markers are visible from the
       // given camera
       for(auto & marker : markers_) {
-        if(marker.IsVisibleFrom(camera, maxFaceNormalAngle, minMarkerImageSize)) {
+        if(marker.IsVisibleFrom(camera, maxFaceNormalAngle, minMarkerImageSize, requireSomethingBehind)) {
           return true;
         }
       }
@@ -60,7 +78,7 @@ namespace Anki {
       return markers_.back();
     } // ObservableObject::AddMarker()
     
-    std::vector<const KnownMarker*> const& ObservableObject::GetMarkersWithCode(const Marker::Code& withCode) const
+    std::vector<KnownMarker*> const& ObservableObject::GetMarkersWithCode(const Marker::Code& withCode) const
     {
       auto returnVec = markersWithCode_.find(withCode);
       if(returnVec != markersWithCode_.end()) {
@@ -125,6 +143,33 @@ namespace Anki {
     }
     
     
+    void ObservableObject::GetObservedMarkers(std::vector<const KnownMarker*>& observedMarkers) const
+    {
+      observedMarkers.clear();
+      for(auto const& marker : this->markers_)
+      {
+        if(marker.GetWasObserved()) {
+          observedMarkers.push_back(&marker);
+        }
+      }
+    } // GetObservedMarkers()
+    
+    
+    void ObservableObject::SetMarkersAsObserved(const Marker::Code& withCode)
+    {
+      auto markers = markersWithCode_.find(withCode);
+      if(markers != markersWithCode_.end()) {
+        for(auto marker : markers->second) {
+          marker->SetWasObserved(true);
+        }
+      }
+      else {
+        // TODO: Issue warning?
+      }
+      
+    } // SetMarkersAsObserved()
+    
+    
     
 #pragma mark --- ObservableObjectLibrary Implementations ---
     
@@ -170,24 +215,23 @@ namespace Anki {
     
     // Input:   list of observed markers
     // Outputs: the objects seen and the unused markers
-    void ObservableObjectLibrary::CreateObjectsFromMarkers(std::list<ObservedMarker>& markers,
+    void ObservableObjectLibrary::CreateObjectsFromMarkers(const std::list<ObservedMarker*>& markers,
                                                            std::vector<ObservableObject*>& objectsSeen,
                                                            const CameraID_t seenOnlyBy) const
     {
       // Group the markers by object type
       std::map<ObjectType_t, std::vector<const ObservedMarker*>> markersWithObjectType;
-      std::list<ObservedMarker> markersUnused;
       
-      for(auto & marker : markers) {
+      for(auto marker : markers) {
         
-        bool used = false;
+        marker->MarkUsed(false);
         
         // If seenOnlyBy was specified, make sure this marker was seen by that
         // camera
-        if(seenOnlyBy == ANY_CAMERA || marker.GetSeenBy().get_id() == seenOnlyBy)
+        if(seenOnlyBy == ANY_CAMERA || marker->GetSeenBy().GetId() == seenOnlyBy)
         {
           // Find all objects which use this marker...
-          std::set<const ObservableObject*> const& objectsWithMarker = GetObjectsWithMarker(marker);
+          std::set<const ObservableObject*> const& objectsWithMarker = GetObjectsWithMarker(*marker);
           
           // ...if there are any, add this marker to the list of observed markers
           // that corresponds to this object type.
@@ -202,15 +246,10 @@ namespace Anki {
                }
                */
             }
-            markersWithObjectType[(*objectsWithMarker.begin())->GetType()].push_back(&marker);
-            used = true;
+            markersWithObjectType[(*objectsWithMarker.begin())->GetType()].push_back(marker);
+            marker->MarkUsed(true);
           } // IF objectsWithMarker != NULL
         } // IF seenOnlyBy
-        
-        if(not used) {
-          // Keep track of which markers went unused
-          markersUnused.push_back(marker);
-        }
         
       } // For each marker we saw
       
@@ -226,26 +265,19 @@ namespace Anki {
         
         const Vision::ObservableObject* libObject = GetObjectWithType(objTypeMarkersPair.first);
         
-        // HACK: Get timestamp of the observed markers so that I can set the lastSeenTime of the observable object.
-        //       If more than one timestamp exists, just use the latest one.
-        //       Need to fix this by simultaneously processing only those markers with the same timestamp.
-        //       Will therefore need to loop through this logic as many times as there are uniquely observed timestamps.
-        TimeStamp_t observedTime = 0;
-        for(auto obsMarker : objTypeMarkersPair.second)
-        {
-          if (observedTime < obsMarker->GetTimeStamp()) {
-            observedTime = obsMarker->GetTimeStamp();
-          }
+        // Get timestamp of the observed markers so that I can set the
+        // lastSeenTime of the observable object.
+        auto obsMarker = objTypeMarkersPair.second.begin();
+        const TimeStamp_t observedTime = (*obsMarker)->GetTimeStamp();
+
+        // Check that all remaining markers also have the same timestamp (which
+        // they now should, since we are processing grouped by timestamp)
+        while(++obsMarker != objTypeMarkersPair.second.end()) {
+          CORETECH_ASSERT(observedTime == (*obsMarker)->GetTimeStamp());
         }
-          
         
         for(auto obsMarker : objTypeMarkersPair.second)
-        {
-          if (obsMarker->GetTimeStamp() != observedTime) {
-            printf("HACK: Tossing observedMarker %d\n", obsMarker->GetCode());
-            continue;
-          }
-          
+        {         
           // For each observed marker, we add to the list of possible poses
           // (each paired with the observed/known marker match from which the
           // pose was computed).
@@ -299,7 +331,15 @@ namespace Anki {
             objectsSeen.back()->SetPose(poseCluster.GetPose());
           }
           
+          // Set the markers in the object corresponding to those from the pose
+          // cluster from which it was computed as "observed"
+          for(auto & match : poseCluster.GetMatches()) {
+            const KnownMarker& marker = match.second;
+            objectsSeen.back()->SetMarkersAsObserved(marker.GetCode());
+          }
+          
           objectsSeen.back()->SetLastObservedTime(observedTime);
+          
         } // FOR each pose cluster
         
         /*
@@ -315,9 +355,6 @@ namespace Anki {
         
       } // FOR each objectType
       
-      // Return the unused markers
-      std::swap(markers, markersUnused);
-      
     } // CreateObjectsFromMarkers()
     
     
@@ -328,6 +365,9 @@ namespace Anki {
       const ObservedMarker* obsMarker = markerMatch.first;
       const KnownMarker* knownMarker  = markerMatch.second;
       matches_.emplace_back(obsMarker, *knownMarker);
+      
+      // Mark the new KnownMarker object in this match as observed
+      //matches_.back().second.SetWasObserved(true);
       
       // Keep a unique set of observed markers as part of the cluster so that
       // we don't add multiple (ambiguous) poses to one cluster that
@@ -369,6 +409,9 @@ namespace Anki {
         // and a copy of the original KnownMarker.
         matches_.emplace_back(match.second.first, *match.second.second);
         
+        // Mark the new KnownMarker object in this match as observed
+        //matches_.back().second.SetWasObserved(true);
+        
         // If there were rotation ambiguities to look for, modify
         // the original (canonical) KnownMarker's pose based on P_diff
         // so that all cluster members' KnownMarkers will be in the same
@@ -407,7 +450,7 @@ namespace Anki {
         {
           const Vision::ObservedMarker* obsMarker = match.first;
           
-          if(&obsMarker->GetSeenBy() == camera)
+          if(obsMarker->GetSeenBy().GetId() == camera->GetId())
           {
             const Vision::KnownMarker* libMarker = &match.second;
             

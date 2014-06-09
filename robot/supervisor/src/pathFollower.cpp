@@ -44,7 +44,7 @@ namespace Anki
         const f32 TOO_FAR_FROM_PATH_DIST_MM = 50;
 
         Planning::Path path_;
-        s16 currPathSegment_ = -1;
+        s8 currPathSegment_ = -1;
         
         // Shortest distance to path
         f32 distToPath_mm_ = 0;
@@ -238,6 +238,10 @@ namespace Anki
         return currPathSegment_ >= 0;
       }
       
+      s8 GetCurrPathSegment()
+      {
+        return currPathSegment_;
+      }
       
       Planning::SegmentRangeStatus ProcessPathSegment(f32 &shortestDistanceToPath_mm, f32 &radDiff)
       {

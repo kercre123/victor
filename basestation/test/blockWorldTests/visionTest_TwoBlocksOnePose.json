@@ -32,7 +32,7 @@
    "NumBlocks" : 2,
    "Poses" : [
       {
-         "ImageFile" : "/Users/andrew/Code/products-cozmo/basestation/test/blockWorldTests/visionTest_TwoBlocksOnePose0.png",
+         "ImageFile" : "basestation/test/blockWorldTests/visionTest_TwoBlocksOnePose0.png",
          "NumMarkers" : 3,
          "RobotPose" : {
             "Angle" : 0.0,
@@ -43,42 +43,42 @@
          "VisionMarkers" : [
             {
                "Name" : "MessageVisionMarker",
-               "markerType" : 10,
+               "markerType" : "MARKER_ANGRYFACE",
                "timestamp" : 0,
-               "x_imgLowerLeft" : 86.41732025146484,
-               "x_imgLowerRight" : 137.7942810058594,
-               "x_imgUpperLeft" : 82.42925262451172,
-               "x_imgUpperRight" : 136.9417724609375,
-               "y_imgLowerLeft" : 81.20991516113281,
-               "y_imgLowerRight" : 76.11281585693359,
-               "y_imgUpperLeft" : 21.71822547912598,
-               "y_imgUpperRight" : 20.55762481689453
+               "x_imgLowerLeft" : 89.15277099609375,
+               "x_imgLowerRight" : 138.6402130126953,
+               "x_imgUpperLeft" : 85.42778778076172,
+               "x_imgUpperRight" : 137.6554870605469,
+               "y_imgLowerLeft" : 82.61186981201172,
+               "y_imgLowerRight" : 77.65028381347656,
+               "y_imgUpperLeft" : 25.39871978759766,
+               "y_imgUpperRight" : 24.31875991821289
             },
             {
                "Name" : "MessageVisionMarker",
-               "markerType" : 15,
+               "markerType" : "MARKER_BULLSEYE2",
                "timestamp" : 0,
-               "x_imgLowerLeft" : 181.2085113525391,
-               "x_imgLowerRight" : 232.5398254394531,
-               "x_imgUpperLeft" : 182.2321624755859,
-               "x_imgUpperRight" : 236.7888183593750,
-               "y_imgLowerLeft" : 76.05390167236328,
-               "y_imgLowerRight" : 81.39253234863281,
-               "y_imgUpperLeft" : 20.64025497436523,
-               "y_imgUpperRight" : 21.83948516845703
+               "x_imgLowerLeft" : 180.4002685546875,
+               "x_imgLowerRight" : 229.7949218750,
+               "x_imgUpperLeft" : 181.50683593750,
+               "x_imgUpperRight" : 233.6721801757812,
+               "y_imgLowerLeft" : 77.62920379638672,
+               "y_imgLowerRight" : 82.67893981933594,
+               "y_imgUpperLeft" : 24.36477470397949,
+               "y_imgUpperRight" : 25.63522338867188
             },
             {
                "Name" : "MessageVisionMarker",
-               "markerType" : 42,
+               "markerType" : "MARKER_T",
                "timestamp" : 0,
-               "x_imgLowerLeft" : 214.9611511230469,
-               "x_imgLowerRight" : 202.1042938232422,
-               "x_imgUpperLeft" : 106.3882217407227,
-               "x_imgUpperRight" : 118.4533843994141,
-               "y_imgLowerLeft" : 158.6546478271484,
-               "y_imgLowerRight" : 123.6387786865234,
-               "y_imgUpperLeft" : 158.5603942871094,
-               "y_imgUpperRight" : 123.7621231079102
+               "x_imgLowerLeft" : 211.7118072509766,
+               "x_imgLowerRight" : 200.4190368652344,
+               "x_imgUpperLeft" : 109.3644638061523,
+               "x_imgUpperRight" : 120.2316818237305,
+               "y_imgLowerLeft" : 156.4458770751953,
+               "y_imgLowerRight" : 123.7048416137695,
+               "y_imgUpperLeft" : 156.4429016113281,
+               "y_imgUpperRight" : 123.7817459106445
             }
          ]
       }

@@ -55,6 +55,7 @@ ADD_MESSAGE_MEMBER(f32, rwheel_speed_mmps)
 ADD_MESSAGE_MEMBER(f32, headAngle)
 ADD_MESSAGE_MEMBER(f32, liftAngle)
 ADD_MESSAGE_MEMBER(f32, liftHeight) // TODO: Need this?
+ADD_MESSAGE_MEMBER(s8, currPathSegment) // -1 if not traversing a path
 ADD_MESSAGE_MEMBER(u8, status)  // See RobotStatusFlag
 // ...
 END_MESSAGE_DEFINITION(RobotState)
@@ -116,7 +117,7 @@ ADD_MESSAGE_MEMBER(f32, targetSpeed) \
 ADD_MESSAGE_MEMBER(f32, accel) \
 ADD_MESSAGE_MEMBER(f32, decel) \
 ADD_MESSAGE_MEMBER(u16, pathID) \
-ADD_MESSAGE_MEMBER(u8,  segmentID)
+ADD_MESSAGE_MEMBER(s8,  segmentID)
 
 // AppendPathSegmentLine
 START_MESSAGE_DEFINITION(AppendPathSegmentLine, 1)
@@ -241,10 +242,6 @@ ADD_MESSAGE_MEMBER(f32, yPosition)
 ADD_MESSAGE_MEMBER(f32, headingAngle)
 END_MESSAGE_DEFINITION(AbsLocalizationUpdate)
 
-// RequestCamCalib
-START_TIMESTAMPED_MESSAGE_DEFINITION(RequestCamCalib, 1)
-END_MESSAGE_DEFINITION(RequestCamCalib)
-
 // Common Camera Calibration Message Members:
 // TODO: Assume zero skew and remove that member?
 #define ADD_COMMON_CAMERA_CALIBRATION_MEMBERS \
@@ -272,11 +269,12 @@ ADD_MESSAGE_MEMBER(u32, robotID)
 // TODO: Add other members here?
 END_MESSAGE_DEFINITION(RobotAvailable)
 
-// RobotAddedToWorld
-START_MESSAGE_DEFINITION(RobotAddedToWorld, 1)
+// RobotInit
+START_MESSAGE_DEFINITION(RobotInit, 1)
 ADD_MESSAGE_MEMBER(u32, robotID)
+ADD_MESSAGE_MEMBER(u32, syncTime)
 // TODO: Add other members here?
-END_MESSAGE_DEFINITION(RobotAddedToWorld)
+END_MESSAGE_DEFINITION(RobotInit)
 
 /*
 // TemplateInitialized

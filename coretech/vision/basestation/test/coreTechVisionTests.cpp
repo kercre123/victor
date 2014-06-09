@@ -9,6 +9,7 @@
 #include "anki/common/basestation/math/quad_impl.h"
 
 #include "anki/vision/basestation/camera.h"
+#include "anki/vision/basestation/observableObject.h"
 #include "anki/vision/basestation/perspectivePoseEstimation.h"
 
 using namespace Anki;
@@ -92,7 +93,7 @@ GTEST_TEST(PoseEstimation, FromQuads)
                                   0.f);           // skew
 
   Vision::Camera camera;
-  camera.set_calibration(calib);
+  camera.SetCalibration(calib);
   
   Quad2f proj;
   camera.Project3dPoints(marker3d_atPose, proj);
@@ -136,5 +137,82 @@ GTEST_TEST(PoseEstimation, FromQuads)
     EXPECT_NEAR(reproj[i_corner].y(), proj[i_corner].y(), pixelErrThreshold);
   }
   
-} // TestRotation:Rotation2dNegativeAngle
+} // GTEST_TEST(PoseEstimation, FromQuads)
 
+
+GTEST_TEST(Camera, VisibilityAndOcclusion)
+{
+  // Create a camera looking at several objects, check to see that expected
+  // objects are visible / occluded
+  
+  const Pose3d camPose(0.f, Z_AXIS_3D, {{0.f, 0.f, 0.f}});
+  
+  const Vision::CameraCalibration calib(240, 320,
+                                  300.f, 300.f,
+                                  160.f, 120.f);
+  
+  Vision::Camera camera(0, calib, camPose);
+  
+  // Note that object pose is in camera coordinates
+  const Pose3d obj1Pose(M_PI_2, X_AXIS_3D, {{0.f, 0.f, 100.f}});
+  Vision::KnownMarker object1(0, obj1Pose, 15.f);
+
+  camera.AddOccluder(object1);
+  
+  // For readability below:
+  const bool RequireObjectBehind      = true;
+  const bool DoNotRequireObjectBehind = false;
+  
+  // Without any occluders, we expect this object, positioned right in front
+  // of the camera, to be visible from the camera -- if we don't require
+  // there to be an object behind it to say it is visible.
+  EXPECT_TRUE( object1.IsVisibleFrom(camera, DEG_TO_RAD(5), 5.f, DoNotRequireObjectBehind) );
+  
+  // Same check, but now we require there to be an object behind the object
+  // to consider it visible.  There are no other objects, so we can't have seen
+  // anything behind this object, so we want this to return false.
+  EXPECT_FALSE( object1.IsVisibleFrom(camera, DEG_TO_RAD(5), 5.f, RequireObjectBehind) );
+  
+  // Add another object behind first, again in camera coordinates
+  const Pose3d obj2Pose(M_PI_2, X_AXIS_3D, {{0.f, 0.f, 150.f}});
+  Vision::KnownMarker object2(0, obj2Pose, 20.f);
+  
+  camera.AddOccluder(object2);
+  
+  // Now, object2 is behind object 1...
+  // ... we expect object2 not to be visible, irrespective of the
+  // "requireObjectBehind" flag, because it is occlued by object1.
+  EXPECT_FALSE( object2.IsVisibleFrom(camera, DEG_TO_RAD(5), 5.f, RequireObjectBehind) );
+  EXPECT_FALSE( object2.IsVisibleFrom(camera, DEG_TO_RAD(5), 5.f, DoNotRequireObjectBehind) );
+  
+  // ... and we now _do_ expect to see object1 when requireObjectBehind is true,
+  // unlike above.
+  EXPECT_TRUE( object1.IsVisibleFrom(camera, DEG_TO_RAD(5), 5.f, RequireObjectBehind) );
+  
+  // If we clear the occluders, object2 should also be visible, now that it is
+  // not occluded, but only if we do not require there to be an object behind
+  // it
+  camera.ClearOccluders();
+  EXPECT_TRUE( object2.IsVisibleFrom(camera, DEG_TO_RAD(5), 5.f, DoNotRequireObjectBehind) );
+  EXPECT_FALSE( object2.IsVisibleFrom(camera, DEG_TO_RAD(5), 5.f, RequireObjectBehind) );
+  
+  // Move object1 around and make sure it is NOT visible when...
+  // ...it is not facing the camera
+  object1.SetPose(Pose3d(M_PI_4, X_AXIS_3D, {{0.f, 0.f, 100.f}}));
+  EXPECT_FALSE( object1.IsVisibleFrom(camera, DEG_TO_RAD(5), 5.f, DoNotRequireObjectBehind) );
+  object1.SetPose(Pose3d(0, X_AXIS_3D, {{0.f, 0.f, 100.f}}));
+  EXPECT_FALSE( object1.IsVisibleFrom(camera, DEG_TO_RAD(5), 5.f, DoNotRequireObjectBehind) );
+  
+  // ...it is too far away (and thus too small in the image)
+  object1.SetPose(Pose3d(3*M_PI_2, X_AXIS_3D, {{0.f, 0.f, 1000.f}}));
+  EXPECT_FALSE( object1.IsVisibleFrom(camera, DEG_TO_RAD(5), 5.f, DoNotRequireObjectBehind) );
+  
+  // ...it is not within the field of view
+  object1.SetPose(Pose3d(M_PI_2, X_AXIS_3D, {{100.f, 0.f, 100.f}}));
+  EXPECT_FALSE( object1.IsVisibleFrom(camera, DEG_TO_RAD(5), 5.f, DoNotRequireObjectBehind) );
+  
+  // ...it is behind the camera
+  object1.SetPose(Pose3d(M_PI_2, X_AXIS_3D, {{100.f, 0.f, -100.f}}));
+  EXPECT_FALSE( object1.IsVisibleFrom(camera, DEG_TO_RAD(5), 5.f, DoNotRequireObjectBehind) );
+
+} // GTEST_TEST(Camera, VisibilityAndOcclusion)

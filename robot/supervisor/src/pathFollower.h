@@ -50,6 +50,10 @@ namespace Anki
       
       bool StartPathTraversal(void);
       bool IsTraversingPath(void);
+
+      // Returns the index of the path segment that is currently being traversed.
+      // Returns -1 if not traversing a path.
+      s8 GetCurrPathSegment(void);
       
       void PrintPath();
       void PrintPathSegment(s16 segment);

@@ -223,7 +223,7 @@ namespace Anki
       // Point of intersection is solution to mx + b == (-1/m)*x + b_inv where b_inv = y-(-1/m)*x
       
 #if(DEBUG_PATH)
-      CoreTechPrint("currPathSeg: %d, LINE (%f, %f, %f, %f)\n", currPathSegment_, seg->startPt_x, seg->startPt_y, seg->endPt_x, seg->endPt_y);
+      CoreTechPrint("LINE (%f, %f, %f, %f)\n", seg->startPt_x, seg->startPt_y, seg->endPt_x, seg->endPt_y);
       CoreTechPrint("Robot Pose: x: %f, y: %f ang: %f\n", x,y,angle.ToFloat());
 #endif
       
@@ -474,8 +474,8 @@ namespace Anki
       const PathSegmentDef::s_turn* seg = &(def_.turn);
       
 #if(DEBUG_PATH)
-      CoreTechPrint("currPathSeg: %d, TURN (%f, %f), targetAngle: %f, targetRotSpeed: %f\n",
-            currPathSegment_, seg->x, seg->y, seg->targetAngle, GetTargetSpeed());
+      CoreTechPrint("TURN (%f, %f), targetAngle: %f, targetRotSpeed: %f\n",
+            seg->x, seg->y, seg->targetAngle, GetTargetSpeed());
 #endif
       
       shortestDistanceToPath = sqrtf( (x - seg->x)*(x - seg->x) + (y - seg->y)*(y - seg->y) );
@@ -861,7 +861,7 @@ namespace Anki
     // TODO: Eventually, this function should also be made to check that
     // orientation is not discontiuous and that velocity profile is smooth
     // at transition points.
-    bool Path::CheckSegmentContinuity(f32 tolerance_distance_squared, u8 pathSegmentIdx) const
+    bool Path::CheckSegmentContinuity(f32 tolerance_distance_squared, s8 pathSegmentIdx) const
     {
       // If checking continuity on non-existent piece
       if (pathSegmentIdx >= numPathSegments_)
@@ -884,7 +884,7 @@ namespace Anki
       return false;
     }
   
-    bool Path::CheckContinuity(f32 tolerance_distance_squared, s16 pathSegmentIdx) const
+    bool Path::CheckContinuity(f32 tolerance_distance_squared, s8 pathSegmentIdx) const
     {
       // Check entire path?
       if (pathSegmentIdx < 0) {

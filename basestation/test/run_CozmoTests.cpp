@@ -37,7 +37,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
   using namespace Cozmo;
   
   // TODO: Tighten/loosen thresholds?
-  const float   blockPoseDistThresholdFraction = 0.03f; // within 3% of actual distance
+  const float   blockPoseDistThresholdFraction = 0.05f; // within 5% of actual distance
   const Radians blockPoseAngleThreshold    = DEG_TO_RAD(15.f); // TODO: make dependent on distance?
   const float   robotPoseDistThreshold_mm  = 10.f;
   const Radians robotPoseAngleThreshold    = DEG_TO_RAD(3.f);
@@ -122,7 +122,14 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
     std::vector<MessageVisionMarker> messages;
     messages.reserve(jsonMessages.size());
     
-    for(auto const& jsonMsg : jsonMessages) {
+    for(auto & jsonMsg : jsonMessages) {
+
+      // Kludge to convert the string MarkerType stored in the JSON back to an
+      // enum value so we can use the (auto-generated) JSON constructor for
+      // messages.
+      CORETECH_ASSERT(jsonMsg.isMember("markerType"));
+      jsonMsg["markerType"] = Vision::StringToMarkerType.at(jsonMsg["markerType"].asString());
+      
       MessageVisionMarker msg(jsonMsg);
       
       Quad2f corners;
@@ -147,10 +154,11 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
       
       TimeStamp_t t_actual;
       RobotPoseStamp *rps;
-      robot.ComputeAndInsertPoseIntoHistory(msg.timestamp, t_actual, &rps);
+      HistPoseKey poseKey;
+      robot.ComputeAndInsertPoseIntoHistory(msg.timestamp, t_actual, &rps, &poseKey);
       
       // Give this vision marker to BlockWorld for processing
-      blockWorld.QueueObservedMarker(marker);
+      blockWorld.QueueObservedMarker(marker, poseKey);
       
     } // for each VisionMarker in the jsonFile
     

@@ -1801,7 +1801,14 @@ namespace Anki {
 
         UpdateRobotState(robotState);
 
-        const TimeStamp_t imageTimeStamp = HAL::GetTimeStamp();
+        // Use the timestamp of passed-in robot state as our frame capture's
+        // timestamp.  This is not totally correct, since the image will be
+        // grabbed some (trivial?) number of cycles later, once we get to the
+        // CameraGetFrame() calls below.  But this enforces, for now, that we
+        // always send a RobotState message off to basestation with a matching
+        // timestamp to every VisionMarker message.
+        //const TimeStamp_t imageTimeStamp = HAL::GetTimeStamp();
+        const TimeStamp_t imageTimeStamp = robotState.timestamp;
 
         if(mode_ == VISION_MODE_IDLE) {
           // Nothing to do!

@@ -97,7 +97,7 @@ int main(int argc, char **argv)
           if (robotComms.ConnectToRobotByID(robotID)) {
             printf("Connected to robot %d\n", robotID);
             robotMgr.AddRobot(robotID);
-            robotMgr.GetRobotByID(robotID)->SendRequestCamCalib();
+            robotMgr.GetRobotByID(robotID)->SendInit();
             break;
           } else {
             printf("Failed to connect to robot %d\n", robotID);

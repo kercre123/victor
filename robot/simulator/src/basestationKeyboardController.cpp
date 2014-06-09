@@ -100,6 +100,7 @@ namespace Anki {
         printf("       Cycle block select:  .\n");
         printf("       Clear known blocks:  c\n");
         printf("   Dock to selected block:  p\n");
+        printf("Start June 2014 dice demo:  j\n");
         printf("               Test modes:  Alt + Testmode#\n");
         printf("               Print help:  ?\n");
         printf("\n");
@@ -130,6 +131,8 @@ namespace Anki {
         //const s32 CKEY_BACKSLASH   = 92 // '\'
         const s32 CKEY_DOCK_TO_BLOCK  = 80;  // p
         const s32 CKEY_QUESTION_MARK  = 63; // '/'
+        
+        const s32 CKEY_START_DICE_DEMO= 74; // 'j' for "June"
 
         // Get robot
         robot_ = NULL;
@@ -346,6 +349,11 @@ namespace Anki {
               behaviorMgr_->StartMode(BM_PickAndPlace);
               break;
             }
+            case CKEY_START_DICE_DEMO:
+            {
+              behaviorMgr_->StartMode(BM_June2014DiceDemo);
+              break;
+            }
             case CKEY_QUESTION_MARK:
             {
               PrintHelp();
@@ -353,8 +361,14 @@ namespace Anki {
             }
             default:
             {
-              // Stop wheels
-              robot_->DriveWheels(0, 0);
+              // If the last key pressed was a move wheels key, then stop wheels
+              if (lastKeyPressed_ == webots::Robot::KEYBOARD_UP   ||
+                  lastKeyPressed_ == webots::Robot::KEYBOARD_DOWN ||
+                  lastKeyPressed_ == webots::Robot::KEYBOARD_LEFT ||
+                  lastKeyPressed_ == webots::Robot::KEYBOARD_RIGHT)
+              {
+                robot_->DriveWheels(0, 0);
+              }
               
               // If the last key pressed was a move lift key then stop it.
               if (lastKeyPressed_ == CKEY_LIFT_UP || lastKeyPressed_ == CKEY_LIFT_DOWN) {

@@ -163,7 +163,8 @@ namespace Anki {
           // head angle and to attach as parent of the camera pose.
           TimeStamp_t t;
           RobotPoseStamp* p = nullptr;
-          if (robot->ComputeAndInsertPoseIntoHistory(msg.timestamp, t, &p) == RESULT_FAIL) {
+          HistPoseKey poseKey;
+          if (robot->ComputeAndInsertPoseIntoHistory(msg.timestamp, t, &p, &poseKey) == RESULT_FAIL) {
             PRINT_NAMED_WARNING("MessageHandler.ProcessMessageVisionMarker.HistoricalPoseNotFound", "Time: %d, hist: %d to %d\n", msg.timestamp, robot->GetPoseHistory().GetOldestTimeStamp(), robot->GetPoseHistory().GetNewestTimeStamp());
             return RESULT_FAIL;
           }
@@ -183,13 +184,13 @@ namespace Anki {
           camPose.set_parent(&(p->GetPose()));
           
           // Update the head camera's pose
-          camera.set_pose(camPose);
+          camera.SetPose(camPose);
 
           // Create observed marker
           Vision::ObservedMarker marker(t, msg.markerType, corners, camera);
           
           // Give this vision marker to BlockWorld for processing
-          blockWorld_->QueueObservedMarker(marker);
+          blockWorld_->QueueObservedMarker(marker, poseKey);
         }
         else {
           PRINT_NAMED_WARNING("MessageHandler::CalibrationNotSet",
@@ -251,10 +252,18 @@ namespace Anki {
       */
       
       // Update other state vars
-      robot->SetTraversingPath( msg.status & IS_TRAVERSING_PATH );
+      robot->SetCurrPathSegment( msg.currPathSegment );
       robot->SetCarryingBlock( msg.status & IS_CARRYING_BLOCK );
       robot->SetPickingOrPlacing( msg.status & IS_PICKING_OR_PLACING );
       
+      const f32 WheelSpeedToConsiderStopped = 2.f;
+      if(std::abs(msg.lwheel_speed_mmps) < WheelSpeedToConsiderStopped &&
+         std::abs(msg.rwheel_speed_mmps) < WheelSpeedToConsiderStopped)
+      {
+        robot->SetIsMoving(false);
+      } else {
+        robot->SetIsMoving(true);
+      }
       
       // Add to history
       if (robot->AddRawOdomPoseToHistory(msg.timestamp,
@@ -396,7 +405,7 @@ namespace Anki {
     Result MessageHandler::ProcessMessage(Robot* robot, MessageStopAllMotors const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageRobotAvailable const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageMatMarkerObserved const&){return RESULT_FAIL;}
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageRobotAddedToWorld const&){return RESULT_FAIL;}
+    Result MessageHandler::ProcessMessage(Robot* robot, MessageRobotInit const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageAppendPathSegmentArc const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageAppendPathSegmentPointTurn const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageTrimPath const&){return RESULT_FAIL;}
@@ -406,7 +415,6 @@ namespace Anki {
     Result MessageHandler::ProcessMessage(Robot* robot, MessageAppendPathSegmentLine const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageBlockMarkerObserved const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageMatCameraCalibration const&){return RESULT_FAIL;}
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageRequestCamCalib const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageAbsLocalizationUpdate const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageHeadAngleUpdate const&){return RESULT_FAIL;}
     Result MessageHandler::ProcessMessage(Robot* robot, MessageImageRequest const&){return RESULT_FAIL;}
