@@ -122,7 +122,14 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
     std::vector<MessageVisionMarker> messages;
     messages.reserve(jsonMessages.size());
     
-    for(auto const& jsonMsg : jsonMessages) {
+    for(auto & jsonMsg : jsonMessages) {
+
+      // Kludge to convert the string MarkerType stored in the JSON back to an
+      // enum value so we can use the (auto-generated) JSON constructor for
+      // messages.
+      CORETECH_ASSERT(jsonMsg.isMember("markerType"));
+      jsonMsg["markerType"] = Vision::StringToMarkerType.at(jsonMsg["markerType"].asString());
+      
       MessageVisionMarker msg(jsonMsg);
       
       Quad2f corners;
