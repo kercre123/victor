@@ -23,7 +23,7 @@ namespace Anki {
     
     
     ObservedMarker::ObservedMarker(const TimeStamp_t t, const Code& withCode, const Quad2f& corners, const Camera& seenBy)
-    : t_(t), Marker(withCode), imgCorners_(corners), seenByCam_(seenBy)
+    : t_(t), Marker(withCode), imgCorners_(corners), seenByCam_(seenBy), used_(false)
     {
 
     }
