@@ -40,6 +40,11 @@ struct xythetaPlannerImpl
 
   void BuildPlan();
 
+  // checks if we need to replan from scratch
+  bool NeedsReplan() const;
+
+  bool PlanIsSafe() const;
+
   StateID goalID_;
   State_c goal_c_;
   State start_;
@@ -48,8 +53,8 @@ struct xythetaPlannerImpl
   OpenList open_;
   StateTable table_;
 
-  bool hasStart_;
-  bool hasGoal_;
+  bool goalChanged_;
+  bool fromScratch_;
   
   bool freeTurnInPlaceAtGoal_;
 

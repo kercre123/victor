@@ -117,6 +117,8 @@ int main(int argc, char *argv[])
 
     planner.ComputePath();
 
+    assert(planner.PlanIsSafe());
+
     writePath("path.txt", env, planner.GetPlan());
     cout<<"done! check path.txt\n";
   }

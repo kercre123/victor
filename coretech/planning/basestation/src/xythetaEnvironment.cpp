@@ -45,6 +45,12 @@ bool operator==(const StateID& lhs, const StateID& rhs)
   return lhs.theta == rhs.theta && lhs.x == rhs.x && lhs.y == rhs.y;
 }
 
+bool operator!=(const StateID& lhs, const StateID& rhs)
+{
+  // TODO:(bn) efficient comparison of bit fields?
+  return lhs.theta != rhs.theta || lhs.x != rhs.x || lhs.y != rhs.y;
+}
+
 
 bool State::Import(const Json::Value& config)
 {
@@ -73,6 +79,12 @@ bool State::operator==(const State& other) const
 {
   // TODO:(bn) use union?
   return x==other.x && y==other.y && theta==other.theta;
+}
+
+bool State::operator!=(const State& other) const
+{
+  // TODO:(bn) use union?
+  return x!=other.x || y!=other.y || theta!=other.theta;
 }
 
 bool StateID::operator<(const StateID& rhs) const
@@ -127,6 +139,41 @@ SuccessorIterator::SuccessorIterator(const xythetaEnvironment* env, StateID star
 bool SuccessorIterator::Done() const
 {
   return nextAction_ > motionPrimitives_.size();
+}
+
+bool xythetaEnvironment::ApplyAction(const ActionID& action, StateID& stateID) const
+{
+  State curr(stateID);
+  float start_x = GetX_mm(curr.x);
+  float start_y = GetY_mm(curr.y);
+
+  assert(curr.theta >= 0);
+  assert(curr.theta < allMotionPrimitives_.size());
+
+  if(action >= allMotionPrimitives_[curr.theta].size())
+    return false;
+
+  const MotionPrimitive* prim = & allMotionPrimitives_[curr.theta][action];
+
+  size_t endObs = obstacles_.size();
+  size_t endPoints = prim->intermediatePositions.size();
+  for(size_t point=0; point < endPoints; ++point) {
+    for(size_t obs=0; obs < endObs; ++obs) {
+      float x = start_x + prim->intermediatePositions[point].x_mm;
+      float y = start_y + prim->intermediatePositions[point].y_mm;
+      if(obstacles_[obs]->Contains(x, y)) {
+        return false;
+      }
+    }
+  }
+
+  State result(curr);
+  result.x += prim->endStateOffset.x;
+  result.y += prim->endStateOffset.y;
+  result.theta = prim->endStateOffset.theta;
+
+  stateID = result.GetStateID();
+  return true;
 }
 
 void SuccessorIterator::Next()

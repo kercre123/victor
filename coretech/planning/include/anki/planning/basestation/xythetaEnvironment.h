@@ -50,6 +50,7 @@ public:
   bool Import(const Json::Value& config);
 
   bool operator==(const State& other) const;
+  bool operator!=(const State& other) const;
 
   StateID GetStateID() const;
 
@@ -226,8 +227,15 @@ public:
   void AddObstacle(RotatedRectangle* rect);
   void ClearObstacles();
 
-  // Returns an iterator to the successors from state "start"
+  // Returns an iterator to the successors from state "start". Use
+  // this one if you want to check each action
   SuccessorIterator GetSuccessors(StateID startID, Cost currG) const;
+
+  // This function tries to apply the given action to the state. If it
+  // is a valid, collision-free action, it updates state to be the
+  // successor and returns true, otherwise it returns false and does
+  // not change state
+  bool ApplyAction(const ActionID& action, StateID& stateID) const;
 
   // Returns true if there is a collision at the given state
   bool IsInCollision(State s) const;

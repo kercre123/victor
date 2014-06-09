@@ -34,10 +34,19 @@ void xythetaPlanner::AllowFreeTurnInPlaceAtGoal(bool allow)
   _impl->freeTurnInPlaceAtGoal_ = allow;
 }
 
+bool xythetaPlanner::PlanIsSafe() const
+{
+  return _impl->PlanIsSafe();
+}
 
-bool xythetaPlanner::ComputePath()
+bool xythetaPlanner::Replan()
 {
   return _impl->ComputePath();
+}
+
+void xythetaPlanner::SetReplanFromScratch()
+{
+  _impl->fromScratch_ = true;
 }
 
 const xythetaPlan& xythetaPlanner::GetPlan() const
@@ -56,8 +65,7 @@ xythetaPlannerImpl::xythetaPlannerImpl(const xythetaEnvironment& env)
     start_(0,0,0),
     searchNum_(0),
     freeTurnInPlaceAtGoal_(false),
-    hasStart_(false),
-    hasGoal_(false)
+    goalChanged_(false)
 {
   startID_ = start_.GetStateID();
   Reset();
@@ -83,7 +91,12 @@ bool xythetaPlannerImpl::SetGoal(const State_c& goal_c)
   // convert back so this is still lined up perfectly with goalID_
   goal_c_ = env_.State2State_c(goal);
 
-  hasGoal_ = true;
+  // TEMP: for now, replan if the goal changes, but this isn't
+  // necessary. Instead, we could just re-order the open list and
+  // continue as usual
+  fromScratch_ = true;
+
+  goalChanged_ = true;
   return true;
 }
 
@@ -103,7 +116,9 @@ bool xythetaPlannerImpl::SetStart(const State_c& start)
 
   startID_ = start_.GetStateID();
 
-  hasStart_ = true;
+  // if the start changes, can't re-use anything
+  fromScratch_ = true;
+
   return true;
 }
 
@@ -121,23 +136,49 @@ void xythetaPlannerImpl::Reset()
   considerations_ = 0;
   collisionChecks_ = 0;
 
-  hasStart_ = false;
-  hasGoal_ = false;
+  goalChanged_ = false;
+  fromScratch_ = false;
+}
+
+bool xythetaPlannerImpl::NeedsReplan() const
+{
+  return !PlanIsSafe();
+}
+
+bool xythetaPlannerImpl::PlanIsSafe() const
+{
+  // collision check the old plan. If it starts at 'start' and ends at
+  // 'goal' and doesn't have any collisions, then we are good.
+
+  if(plan_.actions_.empty() || start_ != plan_.start_)
+    return false;
+
+  size_t i=0;
+  size_t numActions = plan_.actions_.size();
+
+  StateID curr(start_.GetStateID());
+
+  BOUNDED_WHILE(1000, i < numActions && env_.ApplyAction(plan_.actions_[i], curr)) {
+    if(curr == goalID_)
+      return true;
+    i++;
+  }
+
+  // if we get here, we either failed to apply an action, or reached
+  // the end of the plan. If we are now at the goal, we don't need to
+  // replan, so return true
+  return curr == goalID_;
 }
 
 bool xythetaPlannerImpl::ComputePath()
 {
-  if(!hasGoal_) {
-    printf("error: trying to plan with no valid goal!\n");
-    return false;
+  if(fromScratch_ || NeedsReplan()) {
+    Reset();
   }
-
-  if(!hasStart_) {
-    printf("error: trying to plan with no valid start!\n");
-    return false;
+  else {
+    printf("No replan needed!\n");
+    return true;
   }
-
-  Reset();
 
   if(PLANNER_DEBUG_PLOT_STATES_CONSIDERED) {
     debugExpPlotFile_ = fopen("expanded.txt", "w");
