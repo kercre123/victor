@@ -612,8 +612,6 @@ namespace Anki
       } // for element in obsMarkers_
       
       // Check for unobserved blocks that overlap with any robot's position
-      // TODO: expose the padding scale?
-      const f32 paddingScale = 0.95f; // < 1 to get more conservative deletion?
       for(auto & blocksOfType : existingBlocks_) {
         
         for(auto blockIter = blocksOfType.second.begin();
@@ -630,7 +628,7 @@ namespace Anki
               Robot* robot = robotMgr_->GetRobotByID(robotID);
               CORETECH_ASSERT(robot != NULL);
 
-              if(block->GetBoundingQuadXY(paddingScale).Intersects(robot->GetBoundingQuadXY(paddingScale))) {
+              if(block->GetBoundingQuadXY().Intersects(robot->GetBoundingQuadXY())) {
                 CoreTechPrint("Removing block %d, which intersects robot %d's bounding quad.\n",
                               block->GetID(), robot->get_ID());
                 

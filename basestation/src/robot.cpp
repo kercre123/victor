@@ -14,6 +14,7 @@
 
 
 #include "anki/common/basestation/general.h"
+#include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/utils/timer.h"
 
@@ -737,30 +738,32 @@ namespace Anki {
                                                {{ROBOT_BOUNDING_X_FRONT - ROBOT_BOUNDING_X, -0.5f*ROBOT_BOUNDING_Y}},
                                                {{ROBOT_BOUNDING_X_FRONT - ROBOT_BOUNDING_X,  0.5f*ROBOT_BOUNDING_Y}});
     
-    Quad2f Robot::GetBoundingQuadXY(const f32 paddingScale) const
+    Quad2f Robot::GetBoundingQuadXY(const f32 padding_mm) const
     {
-      return GetBoundingQuadXY(pose, paddingScale);
+      return GetBoundingQuadXY(pose, padding_mm);
     }
     
-    Quad2f Robot::GetBoundingQuadXY(const Pose3d& atPose, const f32 paddingScale) const
+    Quad2f Robot::GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm) const
     {
       const RotationMatrix2d R(atPose.get_rotationMatrix().GetAngleAroundZaxis());
       
-      Quad2f boundingQuad;
-
+      Quad2f boundingQuad(Robot::CanonicalBoundingBoxXY);
+      if(padding_mm != 0.f) {
+        Quad2f paddingQuad({{ padding_mm, -padding_mm}},
+                           {{ padding_mm,  padding_mm}},
+                           {{-padding_mm, -padding_mm}},
+                           {{-padding_mm,  padding_mm}});
+        boundingQuad += paddingQuad;
+      }
+      
       using namespace Quad;
       for(CornerName iCorner = FirstCorner; iCorner < NumCorners; ++iCorner) {
         // Rotate to given pose
         boundingQuad[iCorner] = R*Robot::CanonicalBoundingBoxXY[iCorner];
       }
       
-      // scale and re-center (Note: we don't need to use Quadrilateral::scale()
-      // here because we know the points are zero-centered and can thus just
-      // multiply them by padding directly.)
+      // Re-center
       Point2f center(atPose.get_translation().x(), atPose.get_translation().y());
-      if(paddingScale != 1.f) {
-        boundingQuad *= paddingScale;
-      }
       boundingQuad += center;
       
       return boundingQuad;

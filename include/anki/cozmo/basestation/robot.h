@@ -165,8 +165,8 @@ namespace Anki {
       // Run a test mode
       Result SendStartTestMode(const TestMode mode) const;
       
-      Quad2f GetBoundingQuadXY(const f32 paddingScale) const;
-      Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 paddingScale) const;
+      Quad2f GetBoundingQuadXY(const f32 padding_mm = 0.f) const;
+      Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 paddingScale = 0.f) const;
       
       
       // =========== Pose history =============

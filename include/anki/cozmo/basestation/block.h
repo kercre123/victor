@@ -140,17 +140,16 @@ namespace Anki {
                            std::vector<PoseMarkerPair_t>& poseMarkerPairs) const;
       
       // Projects the box in its current 3D pose (or a given 3D pose) onto the
-      // XY plane and returns the corresponding 2D quadrilateral. Scales the
+      // XY plane and returns the corresponding 2D quadrilateral. Pads the
       // quadrilateral (around its center) by the optional padding if desired.
-      // padding if desired.
-      Quad2f GetBoundingQuadXY(const f32 paddingScale = 1.f) const;
-      Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 paddingScale = 1.f) const;
+      Quad2f GetBoundingQuadXY(const f32 padding_mm = 0.f) const;
+      Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm = 0.f) const;
       
       // Projects the box in its current 3D pose (or a given 3D pose) onto the
       // XY plane and returns the corresponding quadrilateral. Adds optional
       // padding if desired.
-      Quad3f GetBoundingQuadInPlane(const Point3f& planeNormal, const f32 padding) const;
-      Quad3f GetBoundingQuadInPlane(const Point3f& planeNormal, const Pose3d& atPose, const f32 padding) const;
+      Quad3f GetBoundingQuadInPlane(const Point3f& planeNormal, const f32 padding_mm) const;
+      Quad3f GetBoundingQuadInPlane(const Point3f& planeNormal, const Pose3d& atPose, const f32 padding_mm) const;
       
     protected:
       

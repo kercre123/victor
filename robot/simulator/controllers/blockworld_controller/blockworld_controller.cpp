@@ -220,12 +220,8 @@ int main(int argc, char **argv)
           // Draw blocks' projected quads on the mat
           {
             using namespace Quad;
-            // TODO:(bn) ask andrew why its like this
-            // TODO:(bn) real parameters
-            float paddingRadius = 65.0;
-            float blockRadius = 44.0;
-            float paddingFactor = (paddingRadius + blockRadius) / blockRadius;
-            Quad2f quadOnGround2d = block->GetBoundingQuadXY(paddingFactor);
+
+            Quad2f quadOnGround2d = block->GetBoundingQuadXY(ROBOT_BOUNDING_RADIUS);
 
             RotatedRectangle boundingRect;
             boundingRect.ImportQuad(quadOnGround2d);
@@ -261,7 +257,7 @@ int main(int argc, char **argv)
       
       // Robot bounding box
       using namespace Quad;
-      Quad2f quadOnGround2d = robot->GetBoundingQuadXY(1.f);
+      Quad2f quadOnGround2d = robot->GetBoundingQuadXY();
       Quad3f quadOnGround3d(Point3f(quadOnGround2d[TopLeft].x(),     quadOnGround2d[TopLeft].y(),     0.5f),
                             Point3f(quadOnGround2d[BottomLeft].x(),  quadOnGround2d[BottomLeft].y(),  0.5f),
                             Point3f(quadOnGround2d[TopRight].x(),    quadOnGround2d[TopRight].y(),    0.5f),

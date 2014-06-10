@@ -13,6 +13,7 @@
 
 #include "anki/common/basestation/math/rotatedRect.h"
 #include "anki/cozmo/basestation/blockWorld.h"
+#include "anki/cozmo/robot/cozmoConfig.h"
 #include "pathPlanner.h"
 #include "anki/planning/basestation/xythetaPlanner.h"
 #include "anki/planning/basestation/xythetaEnvironment.h"
@@ -64,12 +65,7 @@ Result LatticePlanner::GetPlan(Planning::Path &path, const Pose3d &startPose, co
           
       const Block* block = dynamic_cast<Block*>(blocksByID.second);
 
-      // TODO:(bn) ask andrew why its like this
-      // TODO:(bn) real parameters
-      float paddingRadius = 65.0;
-      float blockRadius = 44.0;
-      float paddingFactor = (paddingRadius + blockRadius) / blockRadius;
-      Quad2f quadOnGround2d = block->GetBoundingQuadXY(paddingFactor);
+      Quad2f quadOnGround2d = block->GetBoundingQuadXY(ROBOT_BOUNDING_RADIUS);
 
       // TODO:(bn) who frees this??
       RotatedRectangle *boundingRect = new RotatedRectangle;
@@ -133,12 +129,7 @@ bool LatticePlanner::ReplanIfNeeded(Planning::Path &path, const Pose3d& startPos
           
       const Block* block = dynamic_cast<Block*>(blocksByID.second);
 
-      // TODO:(bn) ask andrew why its like this
-      // TODO:(bn) real parameters
-      float paddingRadius = 65.0;
-      float blockRadius = 44.0;
-      float paddingFactor = (paddingRadius + blockRadius) / blockRadius;
-      Quad2f quadOnGround2d = block->GetBoundingQuadXY(paddingFactor);
+      Quad2f quadOnGround2d = block->GetBoundingQuadXY(ROBOT_BOUNDING_RADIUS);
 
       // TODO:(bn) who frees this??
       RotatedRectangle *boundingRect = new RotatedRectangle;
