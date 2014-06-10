@@ -34,6 +34,9 @@ public:
       env_.Init(mprims);
     }
 
+  // imports and pads obstacles
+  void ImportBlockworldObstacles(float paddingRadius);
+
   const BlockWorld* blockWorld_;
   xythetaEnvironment env_;
   xythetaPlanner planner_;
@@ -49,38 +52,42 @@ LatticePlanner::~LatticePlanner()
   delete impl_;
   impl_ = nullptr;
 }
-      
-Result LatticePlanner::GetPlan(Planning::Path &path, const Pose3d &startPose, const Pose3d &targetPose)
+
+void LatticePlannerImpl::ImportBlockworldObstacles(float paddingRadius)
 {
-  impl_->env_.ClearObstacles();
+  env_.ClearObstacles();
 
-  assert(impl_->blockWorld_);
+  assert(blockWorld_);
 
-  printf("setting up environment...\n");
-  unsigned int numAdded = 0;
-
-  for(auto blocksByType : impl_->blockWorld_->GetAllExistingBlocks()) {
+  for(auto blocksByType : blockWorld_->GetAllExistingBlocks()) {
     for(auto blocksByID : blocksByType.second) {
           
       const Block* block = dynamic_cast<Block*>(blocksByID.second);
 
-      // TODO:(bn) ask andrew why its like this
       // TODO:(bn) real parameters
-      float paddingRadius = 65.0;
       float blockRadius = 44.0;
       float paddingFactor = (paddingRadius + blockRadius) / blockRadius;
       Quad2f quadOnGround2d = block->GetBoundingQuadXY(paddingFactor);
 
-      // TODO:(bn) who frees this??
       RotatedRectangle *boundingRect = new RotatedRectangle;
       boundingRect->ImportQuad(quadOnGround2d);
 
-      impl_->env_.AddObstacle(boundingRect);
-      numAdded++;
+      printf("adding obstacle (%f padding): (%f, %f) width: %f height: %f\n",
+             paddingRadius,
+             boundingRect->GetX(),
+             boundingRect->GetY(),
+             boundingRect->GetWidth(),
+             boundingRect->GetHeight());
+
+      env_.AddObstacle(boundingRect);
     }
   }
+}
 
-  printf("Added %u blocks\n", numAdded);
+      
+Result LatticePlanner::GetPlan(Planning::Path &path, const Pose3d &startPose, const Pose3d &targetPose)
+{
+  impl_->ImportBlockworldObstacles(65.0);
 
   State_c start(startPose.get_translation().x(),
                     startPose.get_translation().y(),
@@ -124,29 +131,12 @@ bool LatticePlanner::ReplanIfNeeded(Planning::Path &path, const Pose3d& startPos
 
   // TODO:(bn) don't do this every time! Get an update from BlockWorld
   // if a new block shows up or one moves significantly
-  impl_->env_.ClearObstacles();
 
-  assert(impl_->blockWorld_);
+  // TODO:(bn) parameters!
 
-  for(auto blocksByType : impl_->blockWorld_->GetAllExistingBlocks()) {
-    for(auto blocksByID : blocksByType.second) {
-          
-      const Block* block = dynamic_cast<Block*>(blocksByID.second);
-
-      // TODO:(bn) ask andrew why its like this
-      // TODO:(bn) real parameters
-      float paddingRadius = 65.0;
-      float blockRadius = 44.0;
-      float paddingFactor = (paddingRadius + blockRadius) / blockRadius;
-      Quad2f quadOnGround2d = block->GetBoundingQuadXY(paddingFactor);
-
-      // TODO:(bn) who frees this??
-      RotatedRectangle *boundingRect = new RotatedRectangle;
-      boundingRect->ImportQuad(quadOnGround2d);
-
-      impl_->env_.AddObstacle(boundingRect);
-    }
-  }
+  // pad slightly less than when doing planning so we don't trigger a
+  // replan if the blocks move very slightly
+  impl_->ImportBlockworldObstacles(60.0);
 
   if(!impl_->planner_.PlanIsSafe()) {
     printf("old plan unsafe! Will replan.\n");
@@ -165,6 +155,9 @@ bool LatticePlanner::ReplanIfNeeded(Planning::Path &path, const Pose3d& startPos
     }
     else {
       impl_->planner_.SetReplanFromScratch();
+
+      // use real padding for re-plab
+      impl_->ImportBlockworldObstacles(65.0);
 
       printf("(re-)planning from (%f, %f, %f)\n",
              start.x_mm, start.y_mm, start.theta);
