@@ -66,11 +66,11 @@ const xythetaPlan& xythetaPlanner::GetPlan() const
 #define PLANNER_DEBUG_PLOT_STATES_CONSIDERED 0
 
 xythetaPlannerImpl::xythetaPlannerImpl(const xythetaEnvironment& env)
-  : env_(env),
-    start_(0,0,0),
-    searchNum_(0),
-    freeTurnInPlaceAtGoal_(false),
-    goalChanged_(false)
+  : start_(0,0,0)
+  , env_(env)
+  , goalChanged_(false)
+  , freeTurnInPlaceAtGoal_(false)
+  , searchNum_(0)
 {
   startID_ = start_.GetStateID();
   Reset();
