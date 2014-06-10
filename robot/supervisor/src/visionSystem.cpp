@@ -1798,7 +1798,11 @@ namespace Anki {
         if(!Simulator::IsFrameReady()) {
           return RESULT_OK;
         }
-
+        
+        // Make sure that we send the robot state message associated with the
+        // image we are about to process.
+        Messages::SendRobotStateMsg(&robotState);
+        
         UpdateRobotState(robotState);
 
         // Use the timestamp of passed-in robot state as our frame capture's
