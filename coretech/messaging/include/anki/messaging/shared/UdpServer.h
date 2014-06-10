@@ -27,7 +27,7 @@ public:
   //int GetNumBytesAvailable();
   
 private:
-  struct addrinfo *host_info_list; // Pointer to the to the linked list of host_info's.
+  //struct addrinfo *host_info_list; // Pointer to the to the linked list of host_info's.
   struct sockaddr_in cliaddr;
 
   void set_nonblock(int socket);
