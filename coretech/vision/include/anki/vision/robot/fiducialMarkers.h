@@ -66,10 +66,10 @@ namespace Anki
     public:
       
       enum ValidityCode {
-        VALID,
-        LOW_CONTRAST,
-        UNVERIFIED,
-        UNKNOWN
+        VALID = 0,
+        LOW_CONTRAST = 1,
+        UNVERIFIED = 2,
+        UNKNOWN = 3
       };
 
       //Quadrilateral<s16> corners; // SQ 15.0 (Though may be changed later)
