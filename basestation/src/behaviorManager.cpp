@@ -565,7 +565,8 @@ namespace Anki {
                 
                 CoreTechPrint("Found dice, but not its top marker.\n");
                 
-                dockBlock_ = reinterpret_cast<Block*>(diceBlock);
+                dockBlock_ = dynamic_cast<Block*>(diceBlock);
+                CORETECH_THROW_IF(dockBlock_ == nullptr);
                 
                 // Try driving closer to dice
                 const f32 diceViewingDistance_mm = 50.f;
@@ -613,7 +614,8 @@ namespace Anki {
           if(!blocks.empty()) {
             // Dock with the first block of the right type that we see
             // TODO: choose the closest?
-            dockBlock_ = reinterpret_cast<Block*>(blocks.begin()->second);
+            dockBlock_ = dynamic_cast<Block*>(blocks.begin()->second);
+            CORETECH_THROW_IF(dockBlock_ == nullptr);
             
             robot_->DriveWheels(0.f, 0.f);
             

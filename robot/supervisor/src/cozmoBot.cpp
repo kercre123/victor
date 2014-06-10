@@ -332,14 +332,6 @@ namespace Anki {
       {
         Result retVal = RESULT_OK;
         
-        // Always send a robot state message corresponding to the start of the a
-        // call to step_LongExecution().  We will pass this same state into the
-        // VisionSystem::Update() call below and use its timestamp as the
-        // captured frame's timestamp, and thus any corresponding messages sent
-        // by the Vision System.
-        Messages::UpdateRobotStateMsg();
-        Messages::SendRobotStateMsg();
-        
         // IMPORTANT: The static robot state message is being passed in here
         //   *by value*, NOT by reference.  This is because step_LongExecution()
         //   can be interupted by step_MainExecution().
