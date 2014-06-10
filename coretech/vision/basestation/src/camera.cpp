@@ -32,7 +32,8 @@ namespace Anki {
     
     Camera::Camera(void)
     : _camID(0)
-    , _isCalibrated(false) //, _calibration(nullptr)
+    , _isCalibrated(false)
+    , _calibration(nullptr)
     {
       
     } // Constructor: Camera()
@@ -42,7 +43,7 @@ namespace Anki {
                    const Pose3d& pose_in)
     : _camID(cam_id)
     , _isCalibrated(true)
-    , _calibration(calibration)
+    , _calibration(&calibration)
     , _pose(pose_in)
     {
       
@@ -58,7 +59,7 @@ namespace Anki {
       
       cv::Vec3d cvRvec, cvTranslation;
       
-      Matrix_3x3f calibMatrix(_calibration.GetCalibrationMatrix());
+      Matrix_3x3f calibMatrix(_calibration->GetCalibrationMatrix());
       
       cv::Mat distortionCoeffs; // TODO: currently empty, use radial distoration?
       cv::solvePnP(cvObjPoints, cvImagePoints,
@@ -264,8 +265,8 @@ namespace Anki {
       return (not std::isnan(projectedPoint.x()) &&
               not std::isnan(projectedPoint.y()) &&
               projectedPoint.x() >= 0.f && projectedPoint.y() >= 0.f &&
-              projectedPoint.x() < _calibration.GetNcols() &&
-              projectedPoint.y() < _calibration.GetNrows());
+              projectedPoint.x() < _calibration->GetNcols() &&
+              projectedPoint.y() < _calibration->GetNrows());
       
     } // Camera::IsVisible()
 
@@ -292,10 +293,10 @@ namespace Anki {
         // TODO: Add radial distortion here
         //DistortCoordinate(imgPoints[i_corner], imgPoints[i_corner]);
         
-        imgPoint.x() *= _calibration.GetFocalLength_x();
-        imgPoint.y() *= _calibration.GetFocalLength_y();
+        imgPoint.x() *= _calibration->GetFocalLength_x();
+        imgPoint.y() *= _calibration->GetFocalLength_y();
         
-        imgPoint += _calibration.GetCenter();
+        imgPoint += _calibration->GetCenter();
       }
       
     } // Project3dPoint()
